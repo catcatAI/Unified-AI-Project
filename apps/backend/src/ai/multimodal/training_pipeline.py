@@ -17,6 +17,10 @@ from ai.multimodal.quality_metrics import snr
 logger = logging.getLogger(__name__)
 
 
+# Type alias for contrastive pair: (mod_a, feat_a, mod_b, feat_b)
+ContrastivePair = Tuple[str, np.ndarray, str, np.ndarray]
+
+
 class ContrastiveBatchTrainer:
     """Batch contrastive trainer for SharedLatentSpace.
 
@@ -38,8 +42,8 @@ class ContrastiveBatchTrainer:
         Returns (pos_pairs, neg_pairs) where each element is
         (mod_a, feat_a, mod_b, feat_b).
         """
-        pos_pairs: List = []
-        neg_pairs: List = []
+        pos_pairs: List[ContrastivePair] = []
+        neg_pairs: List[ContrastivePair] = []
         rng = np.random.RandomState(42)
         for _ in range(n_pairs):
             seed = rng.randn(img_dim).astype(np.float32)
@@ -64,6 +68,24 @@ class ContrastiveBatchTrainer:
         """Full training run. Returns dict with final_loss and loss_history."""
         pos_pairs, neg_pairs = self.generate_pairs(n_pairs_per_epoch)
         return self._ls.train(pos_pairs, neg_pairs, epochs=n_epochs,
+                              lr=lr, margin=margin)
+
+    def train_on_real_pairs(self, pos_pairs: List[ContrastivePair],
+                            neg_pairs: List[ContrastivePair],
+                            epochs: int = 5, lr: float = 0.01,
+                            margin: float = 0.5) -> Dict:
+        """Train on real data pairs from data loaders.
+
+        Args:
+            pos_pairs: List of (mod, feat, mod, feat) — same-class pairs
+            neg_pairs: List of (mod, feat, mod, feat) — different-class pairs
+            epochs: Number of training epochs
+            lr: Learning rate
+
+        Returns:
+            dict with 'final_loss' and 'history'
+        """
+        return self._ls.train(pos_pairs, neg_pairs, epochs=epochs,
                               lr=lr, margin=margin)
 
 
@@ -92,7 +114,7 @@ class ReconstructionTrainer:
         return result
 
     def train(self, n_epochs: int = 10, n_samples: int = 10, lr: float = 0.005) -> Dict:
-        """Train reconstruction cycle over all modalities.
+        """Train reconstruction cycle over all modalities using synthetic features.
 
         Returns dict per modality with final_loss and history.
         """
@@ -109,12 +131,39 @@ class ReconstructionTrainer:
             }
         return results
 
+    def train_on_real_features(self,
+                               real_features: Dict[str, List[np.ndarray]],
+                               epochs: int = 5, lr: float = 0.005) -> Dict:
+        """Train reconstruction on real encoded features.
+
+        Args:
+            real_features: {modality: [feature_vectors]}
+            epochs: Training epochs
+            lr: Learning rate
+
+        Returns:
+            dict per modality with 'final_loss' and 'history'
+        """
+        results: Dict[str, Dict] = {}
+        for mod, features in real_features.items():
+            if not features:
+                continue
+            mod_results = self._rc.train(mod, features, epochs=epochs, lr=lr)
+            results[mod] = {
+                "final_loss": mod_results["final_loss"],
+                "history": mod_results["history"][-5:] if mod_results.get("history") else [],
+            }
+        return results
+
 
 class FullTrainingPipeline:
     """End-to-end training pipeline: contrastive pre-training + reconstruction fine-tuning.
 
-    Pure numpy — no external data dependencies. Uses synthetic data to train
+    P27: Pure numpy — no external data dependencies. Uses synthetic data to train
     the projection matrices and decoder weights.
+
+    P28: Supports real data via RealDataProvider. When real data is available,
+    uses ESC-50 audio + CIFAR-10 images instead of random noise.
     """
 
     def __init__(self, latent_space: Optional[SharedLatentSpace] = None,
@@ -164,21 +213,99 @@ class FullTrainingPipeline:
             "reconstruction": recon_result,
         }
 
-    def evaluate(self, n_samples: int = 5) -> Dict:
-        """Evaluate current model quality on synthetic data.
+    def run_on_real(self,
+                    data_provider: 'RealDataProvider',
+                    contrastive_epochs: int = 5,
+                    recon_epochs: int = 5,
+                    pairs_per_modality: int = 30,
+                    recon_samples_per_modality: int = 30,
+                    lr: float = 0.01) -> Dict:
+        """Run full training pipeline on real data from RealDataProvider.
+
+        Phase 1: Contrastive pre-training with real class-labeled pairs.
+        Phase 2: Reconstruction fine-tuning with real encoded features.
+
+        Falls back to synthetic data if real data is unavailable.
+        """
+        from ai.multimodal.data_loader import RealDataProvider as RDP
+
+        if not isinstance(data_provider, RDP) or not data_provider.has_data():
+            logger.warning("Real data unavailable, falling back to synthetic")
+            return self.run(
+                contrastive_epochs=contrastive_epochs,
+                contrastive_pairs=pairs_per_modality,
+                recon_epochs=recon_epochs,
+                recon_samples=recon_samples_per_modality,
+                lr=lr,
+            )
+
+        logger.info("=== Phase 1: Real contrastive training ===")
+        pos_pairs, neg_pairs = data_provider.contrastive_pairs(
+            n_per_modality=pairs_per_modality, same_prob=0.5
+        )
+        logger.info("  Generated %d pos + %d neg pairs from real data",
+                    len(pos_pairs), len(neg_pairs))
+        contrastive_result = self._ls.train(
+            pos_pairs, neg_pairs, epochs=contrastive_epochs, lr=lr,
+        )
+        logger.info("  Contrastive final loss: %.6f", contrastive_result["final_loss"])
+
+        logger.info("=== Phase 2: Real reconstruction training ===")
+        recon_features = data_provider.reconstruction_samples(
+            n_per_modality=recon_samples_per_modality
+        )
+        recon_result = {}
+        trainer = ReconstructionTrainer(self._ls, self._reconstruction)
+        for mod, features in recon_features.items():
+            if not features:
+                continue
+            mod_result = trainer.train_on_real_features(
+                {mod: features}, epochs=recon_epochs, lr=lr * 0.5
+            )
+            if mod in mod_result:
+                recon_result[mod] = mod_result[mod]
+                logger.info("  %s reconstruction final loss: %.6f",
+                            mod, mod_result[mod]["final_loss"])
+
+        return {
+            "contrastive": contrastive_result,
+            "reconstruction": recon_result,
+            "data_source": "real",
+        }
+
+    def evaluate(self, n_samples: int = 5,
+                 real_features: Optional[Dict[str, List[np.ndarray]]] = None) -> Dict:
+        """Evaluate current model quality on synthetic or real data.
+
+        Args:
+            n_samples: Number of synthetic samples (ignored if real_features given)
+            real_features: Optional dict of real encoded features per modality
 
         Returns dict of quality metrics per modality.
         """
         result: Dict = {}
-        rng = np.random.RandomState(999)
-        for mod in ["vision", "audio"]:
-            feat_dim = 256 if mod == "vision" else 128
-            losses = []
-            for _ in range(n_samples):
-                f = rng.randn(feat_dim).astype(np.float32)
-                loss = self._reconstruction.train_step(mod, f, lr=0.0)
-                losses.append(loss)
-            result[mod] = {
-                "avg_reconstruction_loss": float(np.mean(losses)),
-            }
+
+        if real_features:
+            for mod, features in real_features.items():
+                if not features:
+                    continue
+                losses = []
+                for f in features[:n_samples]:
+                    loss = self._reconstruction.train_step(mod, f, lr=0.0)
+                    losses.append(loss)
+                result[mod] = {
+                    "avg_reconstruction_loss": float(np.mean(losses)),
+                }
+        else:
+            rng = np.random.RandomState(999)
+            for mod in ["vision", "audio"]:
+                feat_dim = 256 if mod == "vision" else 128
+                losses = []
+                for _ in range(n_samples):
+                    f = rng.randn(feat_dim).astype(np.float32)
+                    loss = self._reconstruction.train_step(mod, f, lr=0.0)
+                    losses.append(loss)
+                result[mod] = {
+                    "avg_reconstruction_loss": float(np.mean(losses)),
+                }
         return result

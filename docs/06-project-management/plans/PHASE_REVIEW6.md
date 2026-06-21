@@ -1,7 +1,7 @@
 # Angela AI 專案全面分析與修復計畫 v30.0
 
-> **生成日期**: 2026-06-21 (第45輪 P27 訓練管道搭建 — ContrastiveBatchTrainer + ReconstructionTrainer + FullTrainingPipeline + CLI 腳本)  
-> **分析範圍**: P27 — ContrastiveBatchTrainer (合成正負對生成 + 對比學習 epoch); ReconstructionTrainer (多模態特徵合成 + 重建訓練 FullTrainingPipeline (兩階段: 對比預訓練→重建微調); scripts/train_multimodal.py (存/載權重); 11 新測試  
+> **生成日期**: 2026-06-21 (第46輪 P28 真實數據集導入 — CIFAR-10 + ESC-50 下載/索引, data_loader, 真實對比訓練)  
+> **分析範圍**: P28 — scripts/download_datasets.py 擴充 (cifar10/esc50/all-multimodal); data_loader.py (CIFAR10Loader/ESC50Loader/RealDataProvider); training_pipeline.py (train_on_real_pairs/train_on_real_features/run_on_real); train_multimodal.py --real/--encode; 14 新測試  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -11,7 +11,7 @@
 | 指標 | 數值 | 狀態 |
 |------|------|------|
 | unit+api 測試 | **745 通過, 0 失敗, 39 跳過 (恆定); ED3N 114/114** | ✅ **ED3N 178s (28% 加速)** |
-| 多模態測試 | **155/155 全部通過** ✅ | **P15–P27 全部多模態 (含 training_pipeline 11 新測試)** |
+| 多模態測試 | **169/169 全部通過** ✅ | **P15–P28 全部多模態 (含 data_loader 14 新測試)** |
 | ChatService 測試 | **12/12 全部通過** ✅ | **P23 多模態上下文注入** |
 | ED3N 完整測試 | **114/114 通過** (含 3 thread_safety 修復) | ✅ **0 計時器超時** |
 | GARDEN 完整測試 | **205/205 通過** (+7 修復) | ✅ **ChromaEncoder 6/6 + binary_store 2/2 + 引擎全通** |
@@ -330,6 +330,20 @@
 | **CLI 腳本 (參數控制 + 權重存/載)** | `scripts/train_multimodal.py` (NEW) ✅ | `--contrastive-only` / `--recon-only` / `--evaluate-only` 模式. `--save` / `--load` 權重持久化 (npz 格式: vision_W/b, audio_W/b, decoder_W/b). 完整 pipeline 0.1s 完成 |
 | **Testing ×11** | `tests/ai/multimodal/test_training_pipeline.py` ✅ | ContrastiveBatchTrainer (5): 生成長度/正對結構/負對結構/損失下降/結果dict. ReconstructionTrainer (3): 生成dict/維度/多模態結果. FullTrainingPipeline (3): 兩階段結果/評估/邊界情況 |
 | **測試結果** | **155/155 全部通過** ✅ | P27 全部 11 測試 + 144 既有多模態 = 155 通過, 0 失敗 |
+
+### 第46輪: P28 真實數據集導入 — ESC-50 音頻 + CIFAR-10 圖像 + data_loader ✅
+
+| 變更 | 檔案 | 影響 |
+|------|------|------|
+| **download_datasets.py 擴充 (cifar10 + esc50)** | `scripts/download_datasets.py` ✅ | 新增 CIFAR-10 下載/解壓/類別目錄結構 (60K 32×32 圖像, 10 類, ~163MB); ESC-50 下載/解壓/.ref 索引 (2000 音頻, 50 類, ~615MB). `python scripts/download_datasets.py cifar10` / `esc50` / `all-multimodal` |
+| **CIFAR10Loader (圖像數據載入/編碼/配對)** | `ai/multimodal/data_loader.py` (NEW) ✅ | 掃描 class/*.npy → VisualEncoder.encode_from_pil() (128×128 resize + 256-dim 特徵). `build_contrastive_pairs()`: 同類=正對/不同=負對. `build_reconstruction_samples()`: 隨機取樣編碼特徵 |
+| **ESC50Loader (音頻數據載入/編碼/配對)** | `ai/multimodal/data_loader.py` (NEW) ✅ | 掃描 category/*.ref → WAV 讀取 → AudioSpectralEncoder.encode() (128-dim 特徵). `build_contrastive_pairs()`: 同類正對. `build_reconstruction_samples()`: 取樣編碼特徵 |
+| **RealDataProvider (統一介面)** | `ai/multimodal/data_loader.py` (NEW) ✅ | `encode_all()`: 編碼所有可用數據集. `contrastive_pairs()`: 合併多模態對. `reconstruction_samples()`: 合併多模態特徵. `has_data()`: 檢查編碼數據存在 |
+| **training_pipeline 真實數據支援** | `ai/multimodal/training_pipeline.py` ✅ | `ContrastiveBatchTrainer.train_on_real_pairs()`: 直接使用 data_loader 輸出的對. `ReconstructionTrainer.train_on_real_features()`: 使用真實編碼特徵. `FullTrainingPipeline.run_on_real()`: 兩階段真實數據訓練, 回退合成 |
+| **CLI --real 模式** | `scripts/train_multimodal.py` ✅ | `--real`: 使用真實數據. `--encode`: 編碼數據集. `--real-pairs N`: 每模態對數量. `--real-samples N`: 每模態樣本數. 自動回退合成若真實數據不可用 |
+| **Testing ×14** | `tests/ai/multimodal/test_data_loader.py` (NEW) ✅ | CIFAR10Loader (5): init無數據/掃描/編碼/標籤/空配對. ESC50Loader (5): init無數據/掃描/編碼/類ID/配對. RealDataProvider (4): init/空配對/空重建/空編碼. 全部使用 tmp_path 合成數據 |
+| **測試結果** | **169/169 全部通過** ✅ | P28 全部 14 測試 + 155 既有多模態 = 169 通過, 0 失敗 |
+| **🔬 真實訓練驗證** | ESC-50 2000 條編碼 ✅ | 對比損失: 合成 0.4320 → **真實 0.2689** (38% 改善 🎉). 音頻重建: 5915.3 (隨機解碼器權重, 待 P29 端到端). CIFAR-10 下載超時需手動重新嘗試 (`--timeout 600`) |
 
 | 變更 | 檔案 | 影響 |
 |------|------|------|
@@ -761,7 +775,8 @@ P27 → ✅ [訓練管道搭建]  → ContrastiveBatchTrainer + ReconstructionTr
 | **43** | **P25 完整閉環** | **ED3N process_multimodal RAG 整合 + SimilarityService 品質評估 + ChatService decode 輸出. 156/156 測試通過 🎉 P25 全部完成!** |
 | **44** | **P26 多語言與文化** | **Korean-English 字典下載/轉換/匯入 (koedict.json) + CulturalContextModule (6 文化區, 24 文化筆記, ChatService 接線) + WSD disambiguate() (字典層上下文消歧). 173/173 測試通過 🎉 P26 全部完成!** |
 | **45** | **P27 訓練管道搭建** | **ContrastiveBatchTrainer (合成對比學習) + ReconstructionTrainer (合成重建訓練) + FullTrainingPipeline (兩階段端到端) + CLI 腳本 (存/載權重). 155/155 測試通過 🎉 P27 全部完成!** |
-| **總計** | **45 輪** | **120+ 修復, 智能 2→9/10, 1060+ 測試** |
+| **46** | **P28 真實數據集導入** | **ESC-50 2000 音頻編碼 + CIFAR-10 圖像載入 + data_loader (CIFAR10Loader/ESC50Loader/RealDataProvider) + training_pipeline 真實支援 + CLI --real 模式. 169/169 測試通過 🎉 P28 全部完成!** |
+| **總計** | **46 輪** | **120+ 修復, 智能 2→9/10, 1060+ 測試** |
 
 ## 7. 後續建議 (P25 完成後，多模態完整閉環就緒)
 

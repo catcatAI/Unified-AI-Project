@@ -1,18 +1,25 @@
 #!/usr/bin/env python3
 """
-Download external lexical datasets and convert to ED3N dictionary JSON format.
+Download external lexical datasets and multimodal training datasets.
 
 Usage:
     python scripts/download_datasets.py [dataset ...]
 
-Datasets:
+Lexical datasets:
     cedict       CC-CEDICT (Chinese-English, ~5MB, ~120K entries)
     jmdict       JMdict (Japanese-English, ~15MB, ~200K entries)
     wordnet      WordNet 3.0 (English, ~11MB, ~155K synsets)
-    all          Download all datasets (default)
+    koedict      Korean-English Dictionary (~1MB, ~40K entries)
 
-Output: data/dictionaries/{dataset}.json
-  Compatible with DictionaryLayer.import_from_json().
+Multimodal training datasets:
+    cifar10      CIFAR-10 (60K 32×32 images, 10 classes, ~163MB)
+    esc50        ESC-50 (2000 audio clips, 50 classes, ~650MB)
+
+    all          Download all datasets (default: lexical only)
+    all-multimodal  Download all multimodal datasets for P28 training
+
+Lexical output: data/dictionaries/{dataset}.json
+Multimodal output: data/multimodal/{dataset}/
 
 Zero external dependencies — uses only Python stdlib.
 """
@@ -465,39 +472,245 @@ def process_koedict() -> Path:
 
 
 # ---------------------------------------------------------------------------
+# CIFAR-10 (multimodal image dataset)
+# ---------------------------------------------------------------------------
+
+CIFAR10_URL = "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
+CIFAR10_TGZ = OUT_DIR.parent / "multimodal" / "cifar-10-python.tar.gz"
+CIFAR10_DIR = OUT_DIR.parent / "multimodal" / "cifar-10-batches-py"
+CIFAR10_OUT = OUT_DIR.parent / "multimodal" / "cifar10"
+
+
+def download_cifar10() -> Path:
+    """Download CIFAR-10 tar.gz archive; return path."""
+    multimodal_dir = OUT_DIR.parent / "multimodal"
+    multimodal_dir.mkdir(parents=True, exist_ok=True)
+    if CIFAR10_TGZ.exists() and CIFAR10_TGZ.stat().st_size > 100_000_000:
+        logger.info("CIFAR-10 already downloaded (%s)", CIFAR10_TGZ)
+        return CIFAR10_TGZ
+    _urlretrieve(CIFAR10_URL, CIFAR10_TGZ, desc="CIFAR-10")
+    return CIFAR10_TGZ
+
+
+def _unpickle_cifar10(filepath: Path) -> dict:
+    """Unpickle a CIFAR-10 batch file."""
+    import pickle
+    with open(filepath, "rb") as f:
+        data = pickle.load(f, encoding="bytes")
+    return data
+
+
+def convert_cifar10(tgz_path: Path) -> Path:
+    """Extract CIFAR-10 and save images as .npy files organized by class."""
+    import tarfile
+
+    logger.info("Extracting CIFAR-10 …")
+    # CIFAR-10 batches are inside cifar-10-batches-py/
+    with tarfile.open(tgz_path, "r:gz") as tar:
+        tar.extractall(path=CIFAR10_TGZ.parent)
+
+    if not CIFAR10_DIR.exists():
+        logger.error("CIFAR-10 extraction failed: %s not found", CIFAR10_DIR)
+        return CIFAR10_OUT
+
+    CIFAR10_OUT.mkdir(parents=True, exist_ok=True)
+
+    # Class names for CIFAR-10
+    class_names = ["airplane", "automobile", "bird", "cat", "deer",
+                   "dog", "frog", "horse", "ship", "truck"]
+
+    batch_files = [
+        CIFAR10_DIR / "data_batch_1",
+        CIFAR10_DIR / "data_batch_2",
+        CIFAR10_DIR / "data_batch_3",
+        CIFAR10_DIR / "data_batch_4",
+        CIFAR10_DIR / "data_batch_5",
+    ]
+
+    all_images = []  # List of (image_bytes, label) tuples
+    for bf in batch_files:
+        if not bf.exists():
+            continue
+        batch = _unpickle_cifar10(bf)
+        data = batch[b"data"]  # (10000, 3072)
+        labels = batch[b"labels"]  # list of 10000 ints
+        for i in range(len(labels)):
+            # Reshape from 3072 to (32, 32, 3)
+            img = data[i].reshape(3, 32, 32).transpose(1, 2, 0)  # (32, 32, 3)
+            label = labels[i]
+            class_name = class_names[label]
+            class_dir = CIFAR10_OUT / class_name
+            class_dir.mkdir(exist_ok=True)
+            np_path = class_dir / f"img_{i}_{bf.name}.npy"
+            np.save(np_path, img.astype(np.uint8))
+            all_images.append((img.astype(np.uint8), label, class_name))
+
+    # Also save a combined index for fast loading
+    index = {
+        "total": len(all_images),
+        "classes": class_names,
+        "class_counts": {cn: sum(1 for _, _, cn_ in all_images if cn_ == cn) for cn in class_names},
+    }
+    with open(CIFAR10_OUT / "index.json", "w") as f:
+        json.dump(index, f, indent=1)
+
+    logger.info("CIFAR-10: %d images saved to %s (%d classes)",
+                len(all_images), CIFAR10_OUT, len(class_names))
+    return CIFAR10_OUT
+
+
+def process_cifar10() -> Path:
+    tgz = download_cifar10()
+    return convert_cifar10(tgz)
+
+
+# ---------------------------------------------------------------------------
+# ESC-50 (multimodal audio dataset)
+# ---------------------------------------------------------------------------
+
+ESC50_URL = "https://github.com/karoldvl/ESC-50/archive/master.zip"
+ESC50_ZIP = OUT_DIR.parent / "multimodal" / "ESC-50-master.zip"
+ESC50_DIR = OUT_DIR.parent / "multimodal" / "ESC-50-master"
+ESC50_OUT = OUT_DIR.parent / "multimodal" / "esc50"
+
+
+def download_esc50() -> Path:
+    """Download ESC-50 zip archive; return path."""
+    multimodal_dir = OUT_DIR.parent / "multimodal"
+    multimodal_dir.mkdir(parents=True, exist_ok=True)
+    if ESC50_ZIP.exists() and ESC50_ZIP.stat().st_size > 100_000_000:
+        logger.info("ESC-50 already downloaded (%s)", ESC50_ZIP)
+        return ESC50_ZIP
+    _urlretrieve(ESC50_URL, ESC50_ZIP, desc="ESC-50")
+    return ESC50_ZIP
+
+
+def convert_esc50(zip_path: Path) -> Path:
+    """Extract ESC-50 and convert audio to .npy arrays organized by class."""
+    import zipfile
+
+    logger.info("Extracting ESC-50 …")
+    with zipfile.ZipFile(zip_path, "r") as zf:
+        zf.extractall(path=ESC50_ZIP.parent)
+
+    audio_dir = ESC50_DIR / "audio"
+    meta_path = ESC50_DIR / "meta" / "esc50.csv"
+
+    if not audio_dir.exists() or not meta_path.exists():
+        logger.error("ESC-50 extraction failed: audio/ or meta/ not found")
+        return ESC50_OUT
+
+    ESC50_OUT.mkdir(parents=True, exist_ok=True)
+
+    import csv
+    entries = []
+    with open(meta_path, "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            entries.append({
+                "filename": row["filename"],
+                "category": row["category"],
+                "class_id": int(row["target"]),
+                "fold": int(row["fold"]),
+            })
+
+    # Group by category
+    categories = {}
+    for e in entries:
+        cat = e["category"]
+        if cat not in categories:
+            categories[cat] = []
+        categories[cat].append(e)
+
+    saved = 0
+    for cat, cat_entries in categories.items():
+        cat_dir = ESC50_OUT / cat.replace(" ", "_")
+        cat_dir.mkdir(exist_ok=True)
+        for e in cat_entries:
+            wav_path = audio_dir / e["filename"]
+            if not wav_path.exists():
+                continue
+            # Save a reference to the original WAV file path (lazy loading)
+            ref_path = cat_dir / f"{wav_path.stem}.ref"
+            with open(ref_path, "w") as rf:
+                rf.write(str(wav_path.resolve()))
+            saved += 1
+
+    index = {
+        "total": saved,
+        "categories": list(categories.keys()),
+        "category_counts": {c: len(v) for c, v in categories.items()},
+    }
+    with open(ESC50_OUT / "index.json", "w") as f:
+        json.dump(index, f, indent=1)
+
+    logger.info("ESC-50: %d audio clips indexed in %s (%d classes)",
+                saved, ESC50_OUT, len(categories))
+    return ESC50_OUT
+
+
+def process_esc50() -> Path:
+    zip_path = download_esc50()
+    return convert_esc50(zip_path)
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
+MULTIMODAL_DATASETS = {"cifar10", "esc50"}
+
 
 def show_stats(path: Path) -> None:
     if not path.exists():
         return
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    entries = data.get("entries", [])
-    if entries:
-        lang_counts: dict[str, int] = {}
-        for e in entries:
-            for lang in e.get("surface_forms", {}):
-                lang_counts[lang] = lang_counts.get(lang, 0) + 1
-        lang_summary = ", ".join(f"{k}={v}" for k, v in sorted(lang_counts.items()))
-        logger.info("  %s: %d entries (%s)", path.name, len(entries), lang_summary)
+    if path.suffix == ".json":
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        entries = data.get("entries", [])
+        if entries:
+            lang_counts: dict[str, int] = {}
+            for e in entries:
+                for lang in e.get("surface_forms", {}):
+                    lang_counts[lang] = lang_counts.get(lang, 0) + 1
+            lang_summary = ", ".join(f"{k}={v}" for k, v in sorted(lang_counts.items()))
+            logger.info("  %s: %d entries (%s)", path.name, len(entries), lang_summary)
+        else:
+            logger.info("  %s: %d entries", path.name, len(entries))
+    elif (path / "index.json").exists():
+        with open(path / "index.json", "r") as f:
+            idx = json.load(f)
+        logger.info("  %s: %d samples, classes=%s", path.name, idx["total"], idx.get("classes", idx.get("categories", [])))
 
 
 def main():
     datasets = sys.argv[1:] if len(sys.argv) > 1 else ["all"]
 
+    # "all" means lexical only; "all-multimodal" means multimodal only
+    if datasets == ["all"]:
+        datasets = ["cedict", "jmdict", "wordnet", "koedict"]
+    elif datasets == ["all-multimodal"]:
+        datasets = list(MULTIMODAL_DATASETS)
+
     logger.info("Output directory: %s", OUT_DIR)
 
     results: dict[str, Path] = {}
 
-    if "all" in datasets or "cedict" in datasets:
+    # Lexical datasets
+    if "cedict" in datasets:
         results["cedict"] = process_cedict()
-    if "all" in datasets or "jmdict" in datasets:
+    if "jmdict" in datasets:
         results["jmdict"] = process_jmdict()
-    if "all" in datasets or "wordnet" in datasets:
+    if "wordnet" in datasets:
         results["wordnet"] = process_wordnet()
-    if "all" in datasets or "koedict" in datasets:
+    if "koedict" in datasets:
         results["koedict"] = process_koedict()
+
+    # Multimodal datasets
+    if "cifar10" in datasets:
+        results["cifar10"] = process_cifar10()
+    if "esc50" in datasets:
+        results["esc50"] = process_esc50()
 
     print()
     logger.info("=== Summary ===")
@@ -505,7 +718,9 @@ def main():
         show_stats(path)
 
     print()
-    logger.info("Done. Run 'python scripts/import_dictionaries.py' to load into ED3N.")
+    if any(k in ("cifar10", "esc50") for k in results):
+        logger.info("Multimodal datasets ready. Use 'python -m ai.multimodal.data_loader' to verify.")
+    logger.info("Done.")
 
 
 if __name__ == "__main__":
