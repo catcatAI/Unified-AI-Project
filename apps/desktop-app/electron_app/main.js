@@ -518,6 +518,13 @@ function createMainWindow() {
         },
         { type: 'separator' },
         {
+          label: 'Multimodal Panel',
+          click: () => {
+            createMultimodalWindow();
+          },
+        },
+        { type: 'separator' },
+        {
           label: 'Restart',
           click: () => {
             app.relaunch()
@@ -1028,6 +1035,53 @@ ipcMain.handle('set-click-through-regions', (event, regions) => {
     mainWindow.setIgnoreMouseEvents(false)
   }
 })
+
+// Multimodal panel window
+let multimodalWindow = null;
+
+function createMultimodalWindow() {
+  if (multimodalWindow && !multimodalWindow.isDestroyed()) {
+    multimodalWindow.focus();
+    return;
+  }
+
+  multimodalWindow = new BrowserWindow({
+    width: 1000,
+    height: 800,
+    minWidth: 700,
+    minHeight: 600,
+    frame: true,
+    resizable: true,
+    title: 'Multimodal Panel — Angela AI',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  multimodalWindow.loadFile('multimodal-panel.html');
+
+  multimodalWindow.on('closed', () => {
+    multimodalWindow = null;
+  });
+
+  // Open DevTools in dev mode
+  if (!app.isPackaged) {
+    multimodalWindow.webContents.openDevTools();
+  }
+}
+
+ipcMain.on('multimodal-open', () => {
+  createMultimodalWindow();
+});
+
+ipcMain.handle('multimodal-is-open', () => {
+  return multimodalWindow !== null && !multimodalWindow.isDestroyed();
+});
+
+// Add multimodal to the context menu
+// (The context menu is created in createMainWindow() - we'll add the item there)
 
 // Live2D model management
   // Settings IPC

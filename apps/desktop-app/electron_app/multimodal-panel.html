@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multimodal Panel — Angela AI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-hover: #0f3460;
+            --accent: #4facfe;
+            --accent2: #00f2fe;
+            --text: #e0e0e0;
+            --text-dim: #8899aa;
+            --success: #00ff80;
+            --warning: #ffcc00;
+            --danger: #ff4040;
+            --border: rgba(255,255,255,0.08);
+            --radius: 12px;
+            --shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.offline { background: var(--danger); animation: none; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .grid-full { grid-column: 1 / -1; }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 16px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .upload-zone {
+            border: 2px dashed rgba(79,172,254,0.3);
+            border-radius: 8px;
+            padding: 32px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(79,172,254,0.08);
+        }
+
+        .upload-zone-icon { font-size: 32px; margin-bottom: 8px; }
+        .upload-zone-text { font-size: 13px; color: var(--text-dim); }
+        .upload-zone-text strong { color: var(--text); }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
+        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-secondary { background: rgba(255,255,255,0.08); color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.12); }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-danger:hover { filter: brightness(1.1); }
+        .btn-success { background: var(--success); color: #000; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+        .result-card {
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 8px;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .result-card .key { color: var(--accent); font-weight: 500; }
+        .result-card .value { color: var(--text); }
+
+        .preview-img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+
+        .tab-bar {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 4px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-dim);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .tab:hover:not(.active) { color: var(--text); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .metric:last-child { border-bottom: none; }
+        .metric-label { color: var(--text-dim); }
+        .metric-value { font-weight: 600; color: var(--accent); }
+        .metric-value.good { color: var(--success); }
+        .metric-value.warn { color: var(--warning); }
+        .metric-value.bad { color: var(--danger); }
+
+        .latent-canvas {
+            width: 100%;
+            height: 240px;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.3);
+            margin-top: 8px;
+        }
+
+        .record-btn {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            border: 3px solid var(--danger);
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            margin: 0 auto;
+        }
+
+        .record-btn.recording {
+            background: var(--danger);
+            animation: record-pulse 1s infinite;
+        }
+
+        @keyframes record-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .record-btn-inner {
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            background: var(--danger);
+            transition: all 0.3s;
+        }
+
+        .record-btn.recording .record-btn-inner {
+            border-radius: 4px;
+            background: #fff;
+        }
+
+        .loader-sm {
+            width: 16px; height: 16px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .health-bar {
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255,255,255,0.1);
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .health-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s, background 0.5s;
+        }
+
+        .health-bar-fill.good { background: var(--success); }
+        .health-bar-fill.warn { background: var(--warning); }
+        .health-bar-fill.bad { background: var(--danger); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+
+        @media (max-width: 800px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧠 Multimodal Panel</h1>
+        <div class="header-status">
+            <span class="status-dot" id="status-dot"></span>
+            <span id="status-text">Disconnected</span>
+        </div>
+    </div>
+
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+        <button class="tab active" data-tab="encode">🎯 Encode</button>
+        <button class="tab" data-tab="compare">🔗 Compare</button>
+        <button class="tab" data-tab="generate">✨ Generate</button>
+        <button class="tab" data-tab="train">📈 Train</button>
+        <button class="tab" data-tab="quality">📊 Quality</button>
+    </div>
+
+    <!-- ============ ENCODE TAB ============ -->
+    <div class="tab-content active" id="tab-encode">
+        <div class="grid">
+            <!-- Vision Upload -->
+            <div class="card">
+                <div class="card-title">🖼️ Vision Encode</div>
+                <div class="upload-zone" id="vision-upload">
+                    <div class="upload-zone-icon">🖼️</div>
+                    <div class="upload-zone-text">Drop image here or <strong>click to upload</strong></div>
+                    <input type="file" id="vision-file-input" accept="image/png,image/jpeg" style="display:none">
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="btn-vision-encode">🔮 Encode</button>
+                    <button class="btn btn-secondary" id="btn-vision-decode">🔄 Decode</button>
+                </div>
+                <div id="vision-preview"></div>
+                <div id="vision-result" class="result-card" style="display:none"></div>
+            </div>
+
+            <!-- Audio Upload -->
+            <div class="card">
+                <div class="card-title">🎵 Audio Encode</div>
+                <div class="upload-zone" id="audio-upload">
+                    <div class="upload-zone-icon">🎵</div>
+                    <div class="upload-zone-text">Drop audio here or <strong>click to upload</strong></div>
+                    <input type="file" id="audio-file-input" accept="audio/wav" style="display:none">
+                </div>
+                <div style="text-align:center;margin-top:8px">
+                    <div class="record-btn" id="record-btn">
+                        <div class="record-btn-inner"></div>
+                    </div>
+                    <div style="font-size:12px;color:var(--text-dim);margin-top:4px">Record Audio</div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="btn-audio-encode">🔮 Encode</button>
+                    <button class="btn btn-secondary" id="btn-audio-decode">🔄 Decode</button>
+                </div>
+                <div id="audio-result" class="result-card" style="display:none"></div>
+            </div>
+
+            <!-- Items List -->
+            <div class="card grid-full">
+                <div class="card-title">📋 Registered Items</div>
+                <div id="items-list" style="font-size:13px;color:var(--text-dim)">No items registered.</div>
+                <div class="btn-group">
+                    <button class="btn btn-secondary" id="btn-refresh-items">🔄 Refresh</button>
+                    <button class="btn btn-danger" id="btn-clear-items">🗑️ Clear All</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ COMPARE TAB ============ -->
+    <div class="tab-content" id="tab-compare">
+        <div class="card">
+            <div class="card-title">🔗 Cross-Modal Comparison</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+                <select id="compare-item-a" style="flex:1;padding:8px;border-radius:8px;background:rgba(0,0,0,0.3);color:var(--text);border:1px solid var(--border)">
+                    <option value="">Select item A...</option>
+                </select>
+                <select id="compare-item-b" style="flex:1;padding:8px;border-radius:8px;background:rgba(0,0,0,0.3);color:var(--text);border:1px solid var(--border)">
+                    <option value="">Select item B...</option>
+                </select>
+                <button class="btn btn-primary" id="btn-compare">🔍 Compare</button>
+            </div>
+            <div id="compare-result" class="result-card" style="display:none"></div>
+        </div>
+    </div>
+
+    <!-- ============ GENERATE TAB ============ -->
+    <div class="tab-content" id="tab-generate">
+        <div class="card">
+            <div class="card-title">✨ Cross-Modal Generation</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+                <select id="generate-source" style="flex:1;padding:8px;border-radius:8px;background:rgba(0,0,0,0.3);color:var(--text);border:1px solid var(--border)">
+                    <option value="">Select source item...</option>
+                </select>
+                <select id="generate-target" style="flex:1;padding:8px;border-radius:8px;background:rgba(0,0,0,0.3);color:var(--text);border:1px solid var(--border)">
+                    <option value="audio">→ Audio</option>
+                    <option value="vision">→ Vision</option>
+                </select>
+                <button class="btn btn-primary" id="btn-generate">✨ Generate</button>
+            </div>
+            <div id="generate-result" class="result-card" style="display:none"></div>
+        </div>
+        <div class="card" style="margin-top:16px">
+            <div class="card-title">🔀 Cross-Modal Inference</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+                <select id="cross-modality" style="flex:1;padding:8px;border-radius:8px;background:rgba(0,0,0,0.3);color:var(--text);border:1px solid var(--border)">
+                    <option value="cross">Cross-Modal</option>
+                    <option value="vision">Vision Only</option>
+                    <option value="audio">Audio Only</option>
+                </select>
+                <select id="cross-mode" style="flex:1;padding:8px;border-radius:8px;background:rgba(0,0,0,0.3);color:var(--text);border:1px solid var(--border)">
+                    <option value="compare">Compare</option>
+                    <option value="pipeline">Full Pipeline</option>
+                </select>
+                <button class="btn btn-primary" id="btn-cross-infer">🔀 Infer</button>
+            </div>
+            <div id="cross-result" class="result-card" style="display:none"></div>
+        </div>
+    </div>
+
+    <!-- ============ TRAIN TAB ============ -->
+    <div class="tab-content" id="tab-train">
+        <div class="card">
+            <div class="card-title">📈 Training Pipeline</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+                <select id="train-mode" style="flex:1;padding:8px;border-radius:8px;background:rgba(0,0,0,0.3);color:var(--text);border:1px solid var(--border)">
+                    <option value="full">Full (Contrastive + Recon)</option>
+                    <option value="contrastive">Contrastive Only</option>
+                    <option value="recon">Reconstruction Only</option>
+                </select>
+                <input type="number" id="train-epochs" value="5" min="1" max="50" style="width:60px;padding:8px;border-radius:8px;background:rgba(0,0,0,0.3);color:var(--text);border:1px solid var(--border)">
+                <button class="btn btn-primary" id="btn-train">🚀 Train</button>
+                <button class="btn btn-secondary" id="btn-evaluate">📋 Evaluate</button>
+            </div>
+            <div id="train-result" class="result-card" style="display:none"></div>
+        </div>
+    </div>
+
+    <!-- ============ QUALITY TAB ============ -->
+    <div class="tab-content" id="tab-quality">
+        <div class="grid">
+            <div class="card">
+                <div class="card-title">👁️ Vision Quality</div>
+                <div id="vision-quality-metrics">
+                    <div class="metric"><span class="metric-label">SSIM</span><span class="metric-value" id="q-ssim">—</span></div>
+                    <div class="metric"><span class="metric-label">PSNR</span><span class="metric-value" id="q-psnr">—</span></div>
+                    <div class="metric"><span class="metric-label">Total Calls</span><span class="metric-value" id="q-vision-calls">0</span></div>
+                    <div class="metric"><span class="metric-label">Avg Time</span><span class="metric-value" id="q-vision-time">—</span></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">🎵 Audio Quality</div>
+                <div id="audio-quality-metrics">
+                    <div class="metric"><span class="metric-label">SNR</span><span class="metric-value" id="q-snr">—</span></div>
+                    <div class="metric"><span class="metric-label">Total Calls</span><span class="metric-value" id="q-audio-calls">0</span></div>
+                    <div class="metric"><span class="metric-label">Avg Time</span><span class="metric-value" id="q-audio-time">—</span></div>
+                </div>
+            </div>
+            <div class="card grid-full">
+                <div class="card-title">❤️ Overall Health</div>
+                <div class="health-bar">
+                    <div class="health-bar-fill" id="health-bar-fill" style="width:0%"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:12px;color:var(--text-dim)">
+                    <span id="health-label">No data</span>
+                    <span id="health-score">—</span>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="btn-refresh-quality">🔄 Refresh</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/multimodal-client.js"></script>
+    <script src="js/multimodal-panel.js"></script>
+</body>
+</html>

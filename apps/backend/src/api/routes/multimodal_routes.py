@@ -308,6 +308,37 @@ async def visualize_endpoint(
     return {"success": True, "points": points, "count": len(points)}
 
 
+# --- List items ---
+
+@router.get("/multimodal/items")
+async def list_items_endpoint():
+    """List all registered multimodal items with metadata.
+
+    Returns dict of {item_id: {modality, timestamp}} and count.
+    Used by frontend for rendering item dropdowns and lists.
+    """
+    svc = _get_service()
+    if svc is None:
+        return {"success": False, "items": {}, "count": 0}
+    items = await svc.list_items()
+    return {"success": True, **items}
+
+
+# --- Clear items ---
+
+@router.post("/multimodal/clear")
+async def clear_items_endpoint():
+    """Clear all registered items and reset latent space.
+
+    Returns status confirmation.
+    """
+    svc = _get_service()
+    if svc is None:
+        raise HTTPException(status_code=503, detail="MultimodalService not available")
+    result = await svc.clear_items()
+    return {"success": True, **result}
+
+
 # --- Health ---
 
 @router.get("/multimodal/health")
