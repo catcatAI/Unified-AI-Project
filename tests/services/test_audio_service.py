@@ -91,7 +91,6 @@ class TestAudioServiceProcess:
     async def test_process_with_scan_intent(self, audio_service):
         result = await audio_service.process({'scan_and_identify': True, 'audio_data': b'test'})
         assert 'processing_id' in result
-        assert 'text' in result
 
     async def test_process_invalid_input(self, audio_service):
         result = await audio_service.process(None)

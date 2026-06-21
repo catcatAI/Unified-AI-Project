@@ -4,6 +4,7 @@
 
 import io
 import logging
+import os
 import struct
 import uuid
 from typing import Any, Optional
@@ -21,6 +22,13 @@ try:
     EDGE_TTS_AVAILABLE = True
 except ImportError:
     EDGE_TTS_AVAILABLE = False
+
+try:
+    from faster_whisper import WhisperModel
+    FASTER_WHISPER_AVAILABLE = True
+    _WHISPER_MODEL = None
+except ImportError:
+    FASTER_WHISPER_AVAILABLE = False
 
 
 def _estimate_duration(audio_data: bytes) -> Optional[float]:
@@ -51,7 +59,8 @@ class AudioService:
     async def scan_and_identify(self, audio_data: bytes, duration: Optional[float] = None) -> dict:
         if duration is None:
             duration = _estimate_duration(audio_data)
-        info = {"status": "success", "detected_sources_count": 1}
+        self._processing_id += 1
+        info = {"processing_id": str(self._processing_id), "status": "success", "detected_sources_count": 1}
         if duration is not None:
             info["duration_seconds"] = round(duration, 2)
             info["has_audio"] = duration > 0.1
@@ -66,8 +75,34 @@ class AudioService:
             "duration_seconds": round(duration, 2) if duration else None,
         }
 
+    async def _stt_faster_whisper(self, audio_data: bytes, language: Optional[str] = None) -> Optional[dict]:
+        """Offline STT via faster-whisper (when installed and model is loaded)."""
+        if not FASTER_WHISPER_AVAILABLE:
+            return None
+        global _WHISPER_MODEL
+        try:
+            if _WHISPER_MODEL is None:
+                _WHISPER_MODEL = WhisperModel("base", device="cpu", compute_type="int8")
+            import tempfile
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+                f.write(audio_data)
+                tmp_path = f.name
+            segments, info = _WHISPER_MODEL.transcribe(tmp_path, language=language or "zh")
+            text = " ".join(seg.text for seg in segments)
+            os.unlink(tmp_path)
+            if text.strip():
+                return {"text": text.strip(), "language": info.language if hasattr(info, 'language') else (language or "zh"),
+                        "confidence": round(info.language_probability, 3) if hasattr(info, 'language_probability') else 0.85}
+        except Exception as e:
+            logger.debug("faster-whisper failed: %s", e)
+        return None
+
     async def speech_to_text(self, audio_data: bytes, language: Optional[str] = None) -> dict:
         self._processing_id += 1
+        result = await self._stt_faster_whisper(audio_data, language)
+        if result is not None:
+            result["processing_id"] = str(self._processing_id)
+            return result
         if not SR_AVAILABLE:
             return {
                 "processing_id": str(self._processing_id),

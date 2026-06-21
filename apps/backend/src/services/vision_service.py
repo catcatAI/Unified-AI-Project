@@ -1,4 +1,5 @@
 # This module will handle image understanding, object detection, OCR, etc.
+import io
 import logging
 import random
 import hashlib
@@ -17,6 +18,12 @@ from integrations.os_bridge_adapter import OSBridgeAdapter
 logger = logging.getLogger(__name__)
 
 _MAX_PROCESSING_HISTORY = 500
+
+try:
+    import pytesseract
+    PYTESSERACT_AVAILABLE = True
+except ImportError:
+    PYTESSERACT_AVAILABLE = False
 
 
 class VisionService:
@@ -502,14 +509,30 @@ class VisionService:
         return True
 
     async def _extract_text_ocr(self, image_data: bytes) -> Dict[str, Any]:
-        """Real OCR using OS Bridge."""
-        ocr_res = await self.os_bridge.get_screen_text()
-        return {
-            "text": ocr_res.get("text", ""),
-            "language": "auto",
-            "confidence": 0.95,
-            "status": ocr_res.get("status")
-        }
+        """Extract text from image using pytesseract (when available).
+
+        Falls back gracefully when pytesseract or the tesseract binary is
+        not installed.
+        """
+        await asyncio.sleep(timing_value("vision.processing_ocr", 0.05))
+        if not PYTESSERACT_AVAILABLE:
+            return {"text": "", "language": "auto", "confidence": 0.0,
+                    "status": "pytesseract not installed (pip install pytesseract)"}
+        try:
+            from PIL import Image
+            img = Image.open(io.BytesIO(image_data))
+            text = pytesseract.image_to_string(img)
+            lang = pytesseract.get_languages()
+            return {
+                "text": text.strip(),
+                "language": lang[-1] if lang else "auto",
+                "confidence": 0.85 if text.strip() else 0.0,
+                "status": "success" if text.strip() else "no_text_found",
+            }
+        except Exception as e:
+            logger.debug("pytesseract OCR failed: %s", e)
+            return {"text": "", "language": "auto", "confidence": 0.0,
+                    "status": f"ocr_failed: {e}"}
 
     async def _detect_faces(self, image_data: bytes) -> List[Dict[str, Any]]:
         """臉部檢測 — ML model required; returns image metadata when model unavailable"""
