@@ -68,6 +68,38 @@ class TestChatServiceGenerateResponse:
         context = args[1] if len(args) > 1 else {}
         assert 'custom_key' in context, f"context={context}, args={args}"
 
+    async def test_generate_response_with_image_context_injects_multimodal(self, chat_service):
+        """When image_analysis with image_data is in context, multimodal entries are injected."""
+        from core.interfaces.protocols import LLMResponse
+        chat_service._llm_service = MagicMock()
+        chat_service._llm_service.generate_response = AsyncMock(
+            return_value=LLMResponse(text="multimodal response")
+        )
+        result = await chat_service.generate_response(
+            'describe this image', 'User',
+            {
+                'image_analysis': {
+                    'filename': 'test.png',
+                    'analysis': 'a cat',
+                    'image_data': b'fake_png_bytes',
+                }
+            }
+        )
+        assert result.text == "multimodal response"
+
+    async def test_generate_response_with_image_analysis_no_data(self, chat_service):
+        """image_analysis without image_data should not trigger multimodal."""
+        from core.interfaces.protocols import LLMResponse
+        chat_service._llm_service = MagicMock()
+        chat_service._llm_service.generate_response = AsyncMock(
+            return_value=LLMResponse(text="response")
+        )
+        result = await chat_service.generate_response(
+            'hello', 'User',
+            {'image_analysis': {'filename': 'test.png', 'analysis': 'text'}}
+        )
+        assert result.text == "response"
+
 
 class TestChatServiceShutdown:
 

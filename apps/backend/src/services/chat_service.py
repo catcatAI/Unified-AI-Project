@@ -162,6 +162,28 @@ class ChatService:
                          len(merged_context.get("dictionary_context", [])),
                          len(merged_context.get("conversation_memory", [])))
 
+        # Multimodal context injection: retrieve related entries from image/audio query
+        image_analysis = merged_context.get("image_analysis")
+        if image_analysis and isinstance(image_analysis, dict):
+            image_data = image_analysis.get("image_data")
+            if image_data:
+                try:
+                    from ai.multimodal.multimodal_ed3n_adapter import MultimodalED3NAdapter
+                    mm_adapter = MultimodalED3NAdapter()
+                    # Index this image for future cross-modal retrieval
+                    mm_adapter.index_image_for_retrieval(
+                        image_data,
+                        key=f"chat_{abs(hash(image_data[:100])) & 0xFFFFFFFF:08x}",
+                        label=merged_context.get("user_name", "user"),
+                        metadata={"source": "chat_service", "message": user_message[:100]},
+                    )
+                    # Inject multimodal retrieval results into context
+                    merged_context = mm_adapter.inject_into_context(
+                        merged_context, image_data=image_data, top_k=3
+                    )
+                except Exception as e:
+                    logger.debug("Multimodal retrieval failed (non-critical): %s", e)
+
         response = await self._llm_service.generate_response(user_message, merged_context)
 
         response = self._post_process_response(response, merged_context)

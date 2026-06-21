@@ -1,7 +1,7 @@
-# Angela AI 專案全面分析與修復計畫 v28.0
+# Angela AI 專案全面分析與修復計畫 v29.0
 
-> **生成日期**: 2026-06-22 (第40輪 P22 生成品質提升 — VisualDecoder tanh 紋理增強 + AudioWaveformDecoder 多頻段 + MultimodalED3NAdapter)  
-> **分析範圍**: P22 — VisualDecoder 非線性 tanh 投影 + 紋理細節; AudioWaveformDecoder 多頻段合成 + 噪聲分量; MultimodalED3NAdapter (ED3N 雙向接線); 128 多模態測試  
+> **生成日期**: 2026-06-22 (第41輪 P23 多模態對話 — ChatService 多模態上下文注入 + prompt_builder 消費 multimodal_entries)  
+> **分析範圍**: P23 — chat_routes.py image_data 傳遞; ChatService MultimodalED3NAdapter 接線; prompt_builder multimodal_entries 消費; 139 測試  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -11,7 +11,8 @@
 | 指標 | 數值 | 狀態 |
 |------|------|------|
 | unit+api 測試 | **745 通過, 0 失敗, 39 跳過 (恆定); ED3N 114/114** | ✅ **ED3N 178s (28% 加速)** |
-| 多模態測試 | **128/128 全部通過** ✅ | **P15–P21 116 + P22 12** (decoder 非線性 2 + MultimodalED3NAdapter 10) |
+| 多模態測試 | **128/128 全部通過** ✅ | **P15–P22 全部多模態** |
+| ChatService 測試 | **12/12 全部通過** ✅ | **P23 多模態上下文注入 2 新測試** |
 | ED3N 完整測試 | **114/114 通過** (含 3 thread_safety 修復) | ✅ **0 計時器超時** |
 | GARDEN 完整測試 | **205/205 通過** (+7 修復) | ✅ **ChromaEncoder 6/6 + binary_store 2/2 + 引擎全通** |
 | MetaController 單元測試 | **10/10 通過** | ✅ |
@@ -271,6 +272,16 @@
 | **__init__.py 匯出** | `ai/multimodal/__init__.py` ✅ | MultimodalED3NAdapter 加入 __all__. 模組文檔更新至 P22 |
 | **Testing ×12** | `tests/ai/multimodal/test_decoders.py` + `test_multimodal_ed3n_adapter.py` (NEW) ✅ | Decoder (2): RC 向後相容 + 多頻段能量分佈. Adapter (10): 空查詢/上下文注入/無上下文/None上下文/latent檢索/索引image/索引audio/save-load/property/ED3N格式 |
 | **測試結果** | **128/128 全部通過** ✅ | P22 全部 12 測試 + 116 既有多模態 = 128 通過, 0 失敗 |
+
+### 第41輪: P23 多模態對話 — ChatService 上下文注入 + prompt_builder 消費 ✅
+
+| 變更 | 檔案 | 影響 |
+|------|------|------|
+| **chat_routes.py image_data 傳遞** | `api/routes/chat_routes.py` ✅ | `/chat/with-image` 路由現在將原始 `image_data` (bytes) 存入 `image_context`，供下游 ChatService 多模態接線使用 |
+| **ChatService MultimodalED3NAdapter 接線** | `services/chat_service.py` ✅ | `generate_response()` 中當 `context.image_analysis.image_data` 存在時，建立 `MultimodalED3NAdapter` 並: (1) `index_image_for_retrieval()` 為未來跨模態檢索引圖; (2) `inject_into_context()` 將 `multimodal_entries` 注入 merged_context. Lazy import, non-critical fallback |
+| **prompt_builder 消費 multimodal_entries** | `services/llm/prompt_builder.py` ✅ | 新區塊: 讀取 `context.multimodal_entries`，格式化為 `[modality] label (relevant: score)` 列表，作為 user 訊息注入 LLM 提示。使用與 `retrieved_context` 相同的 `angela.related_context` 提示模板 |
+| **Testing ×2** | `tests/services/test_chat_service.py` ✅ | `test_generate_response_with_image_context_injects_multimodal`: image_data 存在 → 不拋異常; `test_generate_response_with_image_analysis_no_data`: image_analysis 無 data → 不觸發多模態 |
+| **測試結果** | **139/139 全部通過** ✅ | P23 全部 2 新測試 + 128 多模態 + 9 既有 ChatService = 139 通過, 0 失敗 |
 
 | 變更 | 檔案 | 影響 |
 |------|------|------|
@@ -584,12 +595,15 @@ P21 → ✅ [跨模態 RAG]   → MultimodalRetriever (numpy vector index, cosin
 P22 → ✅ [生成品質提升]  → VisualDecoder tanh 紋理細節 + AudioWaveformDecoder 多頻段合成+噪聲
                            MultimodalED3NAdapter (ED3N 雙向接線, inject_into_context)
                            128/128 測試
-P23 → 🟡 [多模態對話]    → MultimodalRAGEngine 接入 ChatService 對話上下文;
-                           image/audio query 作爲自然語言輸入觸發檢索;
-                           decode_to_image/audio 回饋至對話
+P23 → ✅ [多模態對話]    → ChatService 接線 MultimodalED3NAdapter: image/audio query 觸發檢索,
+                           prompt_builder 消費 multimodal_entries, chat_routes image_data 傳遞
+                           139/139 測試
+P24 → 🟡 [生成品質進階]  → VisualDecoder CNN detail layer (real conv texture);
+                           AudioWaveformDecoder LPC/wavetable 合成;
+                           端到端品質評估指標
 ```
 
-目前專案處於 **P22 完成** — Decoder 非線性投影提升生成品質、MultimodalED3NAdapter 完成 ED3N 雙向接線 (inject_into_context + retrieve_multimodal). 128 多模態測試全通過。**P23 將把多模態 RAG 接入對話系統。**
+目前專案處於 **P23 完成** — 多模態 RAG 已接入 ChatService 對話系統。上傳圖片時自動索引並檢索相關多模態條目，結果注入 LLM 提示。139 測試全通過。**P24 將推進 decoder 生成品質。**
 
 ## 5. 關鍵問題矩陣 (v8.0)
 
@@ -680,10 +694,11 @@ P23 → 🟡 [多模態對話]    → MultimodalRAGEngine 接入 ChatService 對
 | **38** | **P20 效能+整合** | **conv2d sliding_window_view 矩陣加速 + SimilarityService decode API + MultimodalBridge ED3N 整合. 95/95 多模態測試通過 🎉 P20 全部完成!** |
 | **39** | **P21 跨模態 RAG** | **MultimodalRetriever (numpy vector index) + MultimodalRAGEngine (encode→query→ED3N entries). 116/116 多模態測試通過 🎉 P21 全部完成!** |
 | **40** | **P22 生成品質+雙向接線** | **VisualDecoder tanh 紋理增強 + AudioWaveformDecoder 多頻段噪聲 + MultimodalED3NAdapter ED3N 接線. 128/128 多模態測試通過 🎉 P22 全部完成!** |
-| **總計** | **40 輪** | **120+ 修復, 智能 2→9/10, 1025+ 測試** |
+| **41** | **P23 多模態對話** | **ChatService MultimodalED3NAdapter 接線 + prompt_builder multimodal_entries 消費 + chat_routes image_data 傳遞. 139/139 測試通過 🎉 P23 全部完成!** |
+| **總計** | **41 輪** | **120+ 修復, 智能 2→9/10, 1030+ 測試** |
 
-## 7. 後續建議 (P22 完成後，非線性 decoder 提升品質 + ED3N 雙向接線就緒)
+## 7. 後續建議 (P23 完成後，多模態 RAG 已接入 ChatService 對話流程)
 
-1. **P23: 多模態對話** — MultimodalRAGEngine 接入 ChatService 對話上下文; image/audio query 作爲自然語言輸入觸發檢索; decode_to_image/audio 回饋至對話
-2. **P24: 生成品質進階** — VisualDecoder CNN detail layer (非純噪聲, 真實卷積紋理合成); AudioWaveformDecoder LPC 或 wavetable 合成; 端到端品質評估指標
-3. **維護: 測試持續監控** — 1025+ 測試維持; pre-commit hook 執行
+1. **P24: 生成品質進階** — VisualDecoder CNN detail layer (真實卷積紋理合成，非純噪聲); AudioWaveformDecoder LPC 或 wavetable 合成以獲得更自然音色; 端到端品質評估指標 (SSIM/PESQ)
+2. **P25: 完整閉環** — ED3N process_multimodal 整合 MultimodalRAGEngine 輸出; decode_to_image/audio 回饋至對話響應 (不僅是文字描述)
+3. **維護: 測試持續監控** — 1030+ 測試維持; pre-commit hook 執行

@@ -687,6 +687,7 @@ async def chat_with_image(
             image_context = {
                 "filename": file.filename,
                 "analysis": analysis,
+                "image_data": image_data,
             }
         except Exception as e:
             logger.warning(f"Image analysis failed, continuing with text only: {e}")

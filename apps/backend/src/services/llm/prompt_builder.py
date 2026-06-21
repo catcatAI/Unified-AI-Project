@@ -396,7 +396,20 @@ def construct_angela_prompt(
             content = item.get("content", "")[:200]
             score = item.get("relevance", 0)
             retrieved_block += f"- [{role}] {content} {prompt('angela.relevance', score=score)}\n"
-        messages.append({"role": "user", "content": retrieved_block})
+            messages.append({"role": "user", "content": retrieved_block})
+
+    multimodal_entries = context.get("multimodal_entries")
+    if multimodal_entries:
+        multimodal_block = f"\n{prompt('angela.related_context')}\n"
+        for entry in multimodal_entries:
+            label = entry.get("surface_forms", {}).get("en", entry["key"])
+            score = entry.get("confidence", 0.0)
+            mod = "unknown"
+            ctx_list = entry.get("contexts", [])
+            if ctx_list:
+                mod = ctx_list[0].get("modality", "unknown")
+            multimodal_block += f"- [{mod}] {label} (relevant: {score:.2f})\n"
+        messages.append({"role": "user", "content": multimodal_block})
 
     # ========== Dialogue Context (Cross-turn) ==========
     dialogue_ctx = context.get("dialogue_context")
