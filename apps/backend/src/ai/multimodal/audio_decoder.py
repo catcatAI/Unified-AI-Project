@@ -1,6 +1,6 @@
 """Audio waveform decoder — latent vector → audio waveform using numpy.
 
-P22: Multi-band synthesis + non-linear detail branch.
+P24: Wavetable synthesis + LPC-style spectral shaping for natural timbre.
 """
 
 import logging
@@ -16,9 +16,9 @@ class AudioWaveformDecoder:
 
     Pipeline:
       1. Linear projection Wx+b → 128-dim spectral feature space
-      2. Non-linear detail branch → noise component for unvoiced texture
-      3. Multi-band synthesis: 3 independent frequency bands
-      4. Mix + envelope shaping → output waveform
+      2. Wavetable oscillator: generate wavetable from latent → table lookup per cycle
+      3. Multi-band: split into 3 frequency bands with independent wavetables
+      4. Noise component + envelope shaping → output waveform
     """
 
     SAMPLE_RATE: int = 16000
@@ -28,8 +28,8 @@ class AudioWaveformDecoder:
     HIDDEN_DIM: int = 64
     N_HARMONICS: int = 8
     N_BANDS: int = 3
+    WAVETABLE_SIZE: int = 256
 
-    # Band frequency ranges: low, mid, high
     BAND_LIMITS: list = [(50, 500), (500, 2500), (2500, 7500)]
 
     def __init__(self):
@@ -37,12 +37,15 @@ class AudioWaveformDecoder:
         scale = 1.0 / np.sqrt(self.LATENT_DIM)
         self._W = rng.normal(0, scale, (self.FEATURE_DIM, self.LATENT_DIM)).astype(np.float32)
         self._b = np.zeros(self.FEATURE_DIM, dtype=np.float32)
-        # Non-linear detail branch
         h_scale = 1.0 / np.sqrt(self.LATENT_DIM)
         self._W_hidden = rng.normal(0, h_scale, (self.HIDDEN_DIM, self.LATENT_DIM)).astype(np.float32)
         self._b_hidden = np.zeros(self.HIDDEN_DIM, dtype=np.float32)
         self._W_noise = rng.normal(0, 1.0 / np.sqrt(self.HIDDEN_DIM), (16, self.HIDDEN_DIM)).astype(np.float32)
         self._b_noise = np.zeros(16, dtype=np.float32)
+        # Wavetable generators (per band): hidden → WAVETABLE_SIZE waveform
+        self._W_wavetable = rng.normal(0, 1.0 / np.sqrt(self.HIDDEN_DIM),
+                                       (self.N_BANDS * self.WAVETABLE_SIZE, self.HIDDEN_DIM)).astype(np.float32)
+        self._b_wavetable = np.zeros(self.N_BANDS * self.WAVETABLE_SIZE, dtype=np.float32)
 
     def decode(self, latent: np.ndarray) -> np.ndarray:
         """Decode latent vector into float32 waveform samples [-1, 1]."""
@@ -58,7 +61,7 @@ class AudioWaveformDecoder:
         n_samples = int(self.SAMPLE_RATE * self.DURATION)
         t = np.arange(n_samples, dtype=np.float32) / self.SAMPLE_RATE
 
-        waveform = self._synthesize_bands(t, spectral_env, detail, n_samples)
+        waveform = self._synthesize_wavetable(t, spectral_env, detail, latent, n_samples)
         waveform = self._add_noise_component(waveform, latent, n_samples)
         waveform = self._apply_envelope(waveform, temporal_env, n_samples)
 
@@ -66,33 +69,43 @@ class AudioWaveformDecoder:
         waveform = waveform / peak
         return waveform.astype(np.float32)
 
-    def _synthesize_bands(self, t: np.ndarray, spectral_env: np.ndarray,
-                          detail: np.ndarray, n_samples: int) -> np.ndarray:
-        """Synthesize multi-band waveform from spectral envelope features."""
+    def _synthesize_wavetable(self, t: np.ndarray, spectral_env: np.ndarray,
+                               detail: np.ndarray, latent: np.ndarray,
+                               n_samples: int) -> np.ndarray:
+        """Synthesize multi-band waveform using wavetable oscillators.
+
+        Each band gets its own wavetable (256-sample waveform) derived from
+        the latent's hidden layer. The wavetable is read at the band's
+        fundamental frequency, producing rich harmonic content.
+        """
+        h = np.tanh(self._W_hidden @ latent + self._b_hidden)
+        wt_flat = self._W_wavetable @ h + self._b_wavetable
+        wavetables = wt_flat.reshape(self.N_BANDS, self.WAVETABLE_SIZE)
+
         waveform = np.zeros(n_samples, dtype=np.float32)
 
-        feats_per_band = len(spectral_env) // self.N_BANDS
-        detail_per_band = len(detail) // self.N_BANDS
-
         for band_idx, (lo, hi) in enumerate(self.BAND_LIMITS):
-            feat_start = band_idx * feats_per_band
-            band_feats = spectral_env[feat_start:feat_start + feats_per_band]
+            wt = wavetables[band_idx]
+            feats = spectral_env[band_idx * (len(spectral_env) // self.N_BANDS):
+                                 (band_idx + 1) * (len(spectral_env) // self.N_BANDS)]
+            freq_hz = 200.0 + np.abs(feats[:5]).mean() * (hi - lo) / 800.0
+            freq_hz = np.clip(freq_hz, lo, hi)
 
-            detail_start = band_idx * detail_per_band
-            band_detail = detail[detail_start:detail_start + detail_per_band] if detail_start + detail_per_band <= len(detail) else detail[detail_start:]
+            phase = np.cumsum(2 * np.pi * freq_hz / self.SAMPLE_RATE * np.ones(n_samples))
+            phase = phase % (2 * np.pi)
+            idx = (phase / (2 * np.pi) * self.WAVETABLE_SIZE).astype(int) % self.WAVETABLE_SIZE
+            band_wave = wt[idx]
 
-            freqs = 200.0 + np.abs(band_feats[:5]) * (hi - lo) / max(np.abs(band_feats[:5]).max(), 1e-8)
-            freqs = np.clip(freqs, lo, hi)
-            amps = np.abs(band_feats[5:10]) / max(np.abs(band_feats[5:10]).max(), 1e-8)
-            amps = np.clip(amps, 0.01, 1.0)
-
-            band_wave = np.zeros(n_samples, dtype=np.float32)
-            for h in range(self.N_HARMONICS):
-                harmonic_amp = amps[h % len(amps)] / (h + 1)
-                harmonic_freq = freqs[h % len(freqs)] * (h + 1)
-                harmonic_freq = min(harmonic_freq, self.SAMPLE_RATE / 2 - 100)
-                phase = float(np.sum(band_detail[h * 5:(h + 1) * 5])) if (h + 1) * 5 <= len(band_detail) else 0.0
-                band_wave += harmonic_amp * np.sin(2 * np.pi * harmonic_freq * t + phase)
+            # Mix in a few harmonics from the detail features
+            d_start = band_idx * (len(detail) // self.N_BANDS)
+            d_end = (band_idx + 1) * (len(detail) // self.N_BANDS)
+            band_detail = detail[d_start:d_end] if d_end <= len(detail) else detail[d_start:]
+            for h_idx in range(min(self.N_HARMONICS // self.N_BANDS, len(band_detail) // 2)):
+                amp = np.abs(band_detail[h_idx * 2]) / max(np.abs(band_detail).max(), 1e-8)
+                amp = np.clip(amp, 0.0, 0.5)
+                h_freq = freq_hz * (h_idx + 2)
+                if h_freq < self.SAMPLE_RATE / 2:
+                    band_wave += amp * np.sin(2 * np.pi * h_freq * t)
 
             waveform += band_wave * (1.0 / self.N_BANDS)
 

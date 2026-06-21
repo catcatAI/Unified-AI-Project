@@ -1,6 +1,6 @@
 """Visual decoder — latent vector → RGB image generation using numpy.
 
-P22: Non-linear tanh detail enhancement branch on top of linear projection.
+P24: CNN texture detail via transposed convolution from hidden features.
 """
 
 import logging
@@ -17,9 +17,9 @@ class VisualDecoder:
 
     Pipeline:
       1. Linear projection Wx+b → 256-dim (trained by ReconstructionCycle)
-      2. Non-linear detail branch: tanh(W_hidden @ latent + b_hidden) → detail_mod → texture
+      2. CNN texture branch: tanh hidden → 4×4×16 feature map → transposed conv → 128×128 detail
       3. Split features: spatial layout (12) + color histogram (96) + reserved (148)
-      4. Reconstruct image from layout → upscale → color → texture detail
+      4. Reconstruct image from layout → upscale → color → CNN texture detail
     """
 
     INPUT_SIZE: int = 128
@@ -29,19 +29,26 @@ class VisualDecoder:
     SPATIAL_FEATURES: int = 12
     COLOR_FEATURES: int = 96
     HIDDEN_DIM: int = 64
+    TEXTURE_MAP_SIZE: int = 4
+    TEXTURE_CHANNELS: int = 16
 
     def __init__(self):
         rng = np.random.default_rng(42)
         scale = 1.0 / np.sqrt(self.LATENT_DIM)
-        # Linear projection — directly trained by ReconstructionCycle
         self._W = rng.normal(0, scale, (self.FEATURE_DIM, self.LATENT_DIM)).astype(np.float32)
         self._b = np.zeros(self.FEATURE_DIM, dtype=np.float32)
-        # Non-linear detail branch — enhances texture quality
+        # CNN texture branch: latent → hidden → 4×4×16 feature map
         h_scale = 1.0 / np.sqrt(self.LATENT_DIM)
         self._W_hidden = rng.normal(0, h_scale, (self.HIDDEN_DIM, self.LATENT_DIM)).astype(np.float32)
         self._b_hidden = np.zeros(self.HIDDEN_DIM, dtype=np.float32)
-        self._W_detail = rng.normal(0, 1.0 / np.sqrt(self.HIDDEN_DIM), (self.FEATURE_DIM // 4, self.HIDDEN_DIM)).astype(np.float32)
-        self._b_detail = np.zeros(self.FEATURE_DIM // 4, dtype=np.float32)
+        self._W_featmap = rng.normal(0, 1.0 / np.sqrt(self.HIDDEN_DIM),
+                                     (self.TEXTURE_MAP_SIZE * self.TEXTURE_MAP_SIZE * self.TEXTURE_CHANNELS,
+                                      self.HIDDEN_DIM)).astype(np.float32)
+        self._b_featmap = np.zeros(self.TEXTURE_MAP_SIZE * self.TEXTURE_MAP_SIZE * self.TEXTURE_CHANNELS,
+                                   dtype=np.float32)
+        # Transposed conv kernels (one per output channel × texture channel)
+        self._tex_kernels = rng.normal(0, 0.1,
+                                       (3, self.TEXTURE_CHANNELS, 5, 5)).astype(np.float32)
 
     def decode(self, latent: np.ndarray) -> np.ndarray:
         """Decode latent vector into 128×128×3 RGB uint8 array."""
@@ -55,7 +62,8 @@ class VisualDecoder:
 
         img = self._layout_to_image(spatial_feats)
         img = self._apply_color_adjust(img, color_feats)
-        img = self._apply_texture_detail(img, latent)
+        texture = self._synthesize_texture(latent)
+        img = img + texture
         img = np.clip(img, 0, 255).astype(np.uint8)
         return img
 
@@ -94,17 +102,38 @@ class VisualDecoder:
             img[:, :, c] = channel
         return img
 
-    def _apply_texture_detail(self, img: np.ndarray, latent: np.ndarray) -> np.ndarray:
-        """Add texture detail from non-linear hidden branch."""
+    def _synthesize_texture(self, latent: np.ndarray) -> np.ndarray:
+        """Generate texture detail via transposed convolution on a 4×4 feature map.
+
+        Creates structured spatial patterns (edges, gradients, blobs) from the
+        hidden layer output, producing richer texture than random noise.
+        """
         h = np.tanh(self._W_hidden @ latent + self._b_hidden)
-        detail_mod = self._W_detail @ h + self._b_detail
-        rng = np.random.default_rng(int(abs(float(detail_mod[0] * 1000)) % (2 ** 31)))
-        noise = rng.normal(0, 1, (self.INPUT_SIZE, self.INPUT_SIZE)).astype(np.float32)
-        strength = float(np.clip(np.abs(np.mean(detail_mod)) * 3, 0, 30))
+        feat_map_flat = self._W_featmap @ h + self._b_featmap
+        feat_map = feat_map_flat.reshape(self.TEXTURE_MAP_SIZE, self.TEXTURE_MAP_SIZE,
+                                         self.TEXTURE_CHANNELS)
+
+        # Transposed conv: upsample 4×4×16 → 128×128×3
+        scale = self.INPUT_SIZE // self.TEXTURE_MAP_SIZE
         detail = np.zeros((self.INPUT_SIZE, self.INPUT_SIZE, 3), dtype=np.float32)
-        for c in range(3):
-            detail[:, :, c] = noise * strength * float(np.clip(np.abs(detail_mod[c * 8]) / 10, 0, 1))
-        return img + detail
+        for c_out in range(3):
+            for c_in in range(self.TEXTURE_CHANNELS):
+                kernel = self._tex_kernels[c_out, c_in]
+                # Nearest-neighbor upsample + convolution
+                up = np.repeat(np.repeat(feat_map[:, :, c_in], scale, axis=0), scale, axis=1)
+                conv = self._conv2d_same(up, kernel)
+                detail[:, :, c_out] += conv
+        return detail
+
+    @staticmethod
+    def _conv2d_same(x: np.ndarray, kernel: np.ndarray) -> np.ndarray:
+        """Vectorized 2D convolution with 'same' output size via sliding_window_view."""
+        k_h, k_w = kernel.shape
+        pad_h = k_h // 2
+        pad_w = k_w // 2
+        padded = np.pad(x, ((pad_h, pad_h), (pad_w, pad_w)), mode='reflect')
+        windows = np.lib.stride_tricks.sliding_window_view(padded, (k_h, k_w))
+        return np.tensordot(windows, kernel, axes=((2, 3), (0, 1)))
 
     def get_projection(self) -> np.ndarray:
         return self._W.copy()

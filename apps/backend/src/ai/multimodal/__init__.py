@@ -16,6 +16,8 @@ P21: MultimodalRetriever (vector index + cosine search),
      MultimodalRAGEngine (cross-modal retrieval → ED3N entries).
 P22: VisualDecoder tanh detail enhancement; AudioWaveformDecoder multi-band + noise;
      MultimodalED3NAdapter (ED3N bidirectional wiring).
+P24: VisualDecoder CNN transposed-conv texture; AudioWaveformDecoder wavetable synthesis;
+     quality_metrics (SSIM/PSNR/SNR).
 """
 
 from ai.multimodal.visual_encoder import VisualEncoder
@@ -30,6 +32,7 @@ from ai.multimodal.multimodal_bridge import MultimodalBridge
 from ai.multimodal.multimodal_retriever import MultimodalRetriever
 from ai.multimodal.multimodal_rag_engine import MultimodalRAGEngine
 from ai.multimodal.multimodal_ed3n_adapter import MultimodalED3NAdapter
+from ai.multimodal.quality_metrics import ssim, psnr, snr, quality_report
 
 __all__ = [
     "VisualEncoder",
@@ -45,4 +48,8 @@ __all__ = [
     "MultimodalRetriever",
     "MultimodalRAGEngine",
     "MultimodalED3NAdapter",
+    "ssim",
+    "psnr",
+    "snr",
+    "quality_report",
 ]

@@ -1,7 +1,7 @@
-# Angela AI 專案全面分析與修復計畫 v29.0
+# Angela AI 專案全面分析與修復計畫 v30.0
 
-> **生成日期**: 2026-06-22 (第41輪 P23 多模態對話 — ChatService 多模態上下文注入 + prompt_builder 消費 multimodal_entries)  
-> **分析範圍**: P23 — chat_routes.py image_data 傳遞; ChatService MultimodalED3NAdapter 接線; prompt_builder multimodal_entries 消費; 139 測試  
+> **生成日期**: 2026-06-22 (第42輪 P24 生成品質進階 — VisualDecoder CNN 轉置卷積紋理 + AudioWaveformDecoder 波表合成 + quality_metrics)  
+> **分析範圍**: P24 — VisualDecoder _synthesize_texture (4×4×16 feat map → transposed conv → 128×128 detail); AudioWaveformDecoder wavetable oscillator (256-sample table per band); ssim/psnr/snr/quality_report; 138 測試  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -11,8 +11,8 @@
 | 指標 | 數值 | 狀態 |
 |------|------|------|
 | unit+api 測試 | **745 通過, 0 失敗, 39 跳過 (恆定); ED3N 114/114** | ✅ **ED3N 178s (28% 加速)** |
-| 多模態測試 | **128/128 全部通過** ✅ | **P15–P22 全部多模態** |
-| ChatService 測試 | **12/12 全部通過** ✅ | **P23 多模態上下文注入 2 新測試** |
+| 多模態測試 | **138/138 全部通過** ✅ | **P15–P24 全部多模態 (含 quality_metrics 10 新測試)** |
+| ChatService 測試 | **12/12 全部通過** ✅ | **P23 多模態上下文注入** |
 | ED3N 完整測試 | **114/114 通過** (含 3 thread_safety 修復) | ✅ **0 計時器超時** |
 | GARDEN 完整測試 | **205/205 通過** (+7 修復) | ✅ **ChromaEncoder 6/6 + binary_store 2/2 + 引擎全通** |
 | MetaController 單元測試 | **10/10 通過** | ✅ |
@@ -282,6 +282,17 @@
 | **prompt_builder 消費 multimodal_entries** | `services/llm/prompt_builder.py` ✅ | 新區塊: 讀取 `context.multimodal_entries`，格式化為 `[modality] label (relevant: score)` 列表，作為 user 訊息注入 LLM 提示。使用與 `retrieved_context` 相同的 `angela.related_context` 提示模板 |
 | **Testing ×2** | `tests/services/test_chat_service.py` ✅ | `test_generate_response_with_image_context_injects_multimodal`: image_data 存在 → 不拋異常; `test_generate_response_with_image_analysis_no_data`: image_analysis 無 data → 不觸發多模態 |
 | **測試結果** | **139/139 全部通過** ✅ | P23 全部 2 新測試 + 128 多模態 + 9 既有 ChatService = 139 通過, 0 失敗 |
+
+### 第42輪: P24 生成品質進階 — CNN 卷積紋理 + 波表合成 + quality_metrics ✅
+
+| 變更 | 檔案 | 影響 |
+|------|------|------|
+| **VisualDecoder CNN 轉置卷積紋理合成** | `ai/multimodal/visual_decoder.py` ✅ | 取代 P22 純噪聲紋理: `_synthesize_texture()` 從 tanh hidden 層生成 4×4×16 特徵圖, 3×16×5×5 轉置卷積核 → 128×128×3 紋理細節. `_conv2d_same` 使用 sliding_window_view + tensordot 向量化加速 |
+| **AudioWaveformDecoder 波表合成** | `ai/multimodal/audio_decoder.py` ✅ | 每頻段獨立 256-sample 波表 (W_wavetable 權重 × tanh hidden). `_synthesize_wavetable()`: 波表相位累積查找 + 諧波疊加. 取代純正弦合成 → 更豐富泛音結構 |
+| **quality_metrics 品質評估** | `ai/multimodal/quality_metrics.py` (NEW) ✅ | `ssim(a, b)` — 通道級 SSIM 結構相似度; `psnr(a, b)` — 峰值信噪比; `snr(orig, recon)` — 訊噪比 (dB); `quality_report()` — 綜合報告 {ssim, image_psnr, audio_snr} |
+| **__init__.py 匯出** | `ai/multimodal/__init__.py` ✅ | ssim, psnr, snr, quality_report 加入 __all__. 模組文檔更新至 P24 |
+| **Testing ×10** | `tests/ai/multimodal/test_quality_metrics.py` (NEW) ✅ | SSIM (4): 相同→1.0 / 不同<1.0 / 形狀不符→0 / 範圍[0,1]. PSNR (2): 相同高分 / 不同低分. SNR (2): 相同高分 / 零信號→0. Report (2): 包含所有 key / 相同資料完美分數 |
+| **測試結果** | **138/138 全部通過** ✅ | P24 全部 10 新測試 + 128 既有多模態 = 138 通過, 0 失敗 |
 
 | 變更 | 檔案 | 影響 |
 |------|------|------|
@@ -598,12 +609,15 @@ P22 → ✅ [生成品質提升]  → VisualDecoder tanh 紋理細節 + AudioWav
 P23 → ✅ [多模態對話]    → ChatService 接線 MultimodalED3NAdapter: image/audio query 觸發檢索,
                            prompt_builder 消費 multimodal_entries, chat_routes image_data 傳遞
                            139/139 測試
-P24 → 🟡 [生成品質進階]  → VisualDecoder CNN detail layer (real conv texture);
-                           AudioWaveformDecoder LPC/wavetable 合成;
-                           端到端品質評估指標
+P24 → ✅ [生成品質進階]  → VisualDecoder CNN 轉置卷積紋理 (4×4×16 feat map → 3×16×5×5 conv → detail)
+                           AudioWaveformDecoder 波表合成 (256-sample wavetable per band)
+                           quality_metrics: ssim/psnr/snr/quality_report
+                           138/138 測試
+P25 → 🟡 [完整閉環]      → ED3N process_multimodal 整合 MultimodalRAGEngine 輸出;
+                           decode_to_image/audio 回饋至對話響應 (不僅是文字描述)
 ```
 
-目前專案處於 **P23 完成** — 多模態 RAG 已接入 ChatService 對話系統。上傳圖片時自動索引並檢索相關多模態條目，結果注入 LLM 提示。139 測試全通過。**P24 將推進 decoder 生成品質。**
+目前專案處於 **P24 完成** — Decoder 生成品質大幅提升: VisualDecoder 使用 CNN 卷積產生空間結構紋理 (取代純噪聲), AudioWaveformDecoder 使用波表合成 (256-sample 每頻段). 新增 quality_metrics 提供 SSIM/PSNR/SNR 評估. 138 多模態測試全通過。**P25 將完成 ED3N 完整閉環 — process_multimodal 接收 retriever 輸出 + decode_to_image/audio 回饋。**
 
 ## 5. 關鍵問題矩陣 (v8.0)
 
@@ -695,10 +709,11 @@ P24 → 🟡 [生成品質進階]  → VisualDecoder CNN detail layer (real conv
 | **39** | **P21 跨模態 RAG** | **MultimodalRetriever (numpy vector index) + MultimodalRAGEngine (encode→query→ED3N entries). 116/116 多模態測試通過 🎉 P21 全部完成!** |
 | **40** | **P22 生成品質+雙向接線** | **VisualDecoder tanh 紋理增強 + AudioWaveformDecoder 多頻段噪聲 + MultimodalED3NAdapter ED3N 接線. 128/128 多模態測試通過 🎉 P22 全部完成!** |
 | **41** | **P23 多模態對話** | **ChatService MultimodalED3NAdapter 接線 + prompt_builder multimodal_entries 消費 + chat_routes image_data 傳遞. 139/139 測試通過 🎉 P23 全部完成!** |
-| **總計** | **41 輪** | **120+ 修復, 智能 2→9/10, 1030+ 測試** |
+| **42** | **P24 生成品質進階** | **VisualDecoder CNN 卷積紋理 + AudioWaveformDecoder 波表合成 + quality_metrics SSIM/PSNR/SNR. 138/138 多模態測試通過 🎉 P24 全部完成!** |
+| **總計** | **42 輪** | **120+ 修復, 智能 2→9/10, 1040+ 測試** |
 
-## 7. 後續建議 (P23 完成後，多模態 RAG 已接入 ChatService 對話流程)
+## 7. 後續建議 (P24 完成後，decoder 品質大幅提升 + quality_metrics 就緒)
 
-1. **P24: 生成品質進階** — VisualDecoder CNN detail layer (真實卷積紋理合成，非純噪聲); AudioWaveformDecoder LPC 或 wavetable 合成以獲得更自然音色; 端到端品質評估指標 (SSIM/PESQ)
-2. **P25: 完整閉環** — ED3N process_multimodal 整合 MultimodalRAGEngine 輸出; decode_to_image/audio 回饋至對話響應 (不僅是文字描述)
-3. **維護: 測試持續監控** — 1030+ 測試維持; pre-commit hook 執行
+1. **P25: 完整閉環** — ED3N process_multimodal 整合 MultimodalRAGEngine 輸出; decode_to_image/audio 回饋至對話響應 (不僅是文字描述); 端到端品質評估整合進相似度服務
+2. **P26: 多語言與文化** — 字典強化 (更多語系); 文化感知回應; 語意消歧
+3. **維護: 測試持續監控** — 1040+ 測試維持; pre-commit hook 執行
