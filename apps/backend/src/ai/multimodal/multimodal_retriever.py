@@ -113,6 +113,8 @@ class MultimodalRetriever:
 
     def save(self, filepath: str) -> None:
         """Save index to disk (npy + JSON)."""
+        if not filepath.endswith(".npy"):
+            filepath += ".npy"
         os.makedirs(os.path.dirname(filepath) or ".", exist_ok=True)
         if self._vectors:
             stack = np.stack(self._vectors, axis=0)
@@ -129,10 +131,12 @@ class MultimodalRetriever:
 
     def load(self, filepath: str) -> int:
         """Load index from disk (npy + JSON). Returns entry count."""
+        if not filepath.endswith(".npy"):
+            filepath += ".npy"
         meta_path = filepath.replace(".npy", ".json")
         if not os.path.exists(filepath) or not os.path.exists(meta_path):
             return 0
-        vectors = np.load(filepath)
+        vectors = np.load(filepath, allow_pickle=False)
         with open(meta_path, "r", encoding="utf-8") as f:
             meta = json.load(f)
         self._keys = meta["keys"]

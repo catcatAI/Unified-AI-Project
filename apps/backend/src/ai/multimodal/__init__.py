@@ -14,6 +14,8 @@ P20: Vectorized conv2d (10-100x faster), decoders in SimilarityService,
      MultimodalBridge for ED3N integration.
 P21: MultimodalRetriever (vector index + cosine search),
      MultimodalRAGEngine (cross-modal retrieval → ED3N entries).
+P22: VisualDecoder tanh detail enhancement; AudioWaveformDecoder multi-band + noise;
+     MultimodalED3NAdapter (ED3N bidirectional wiring).
 """
 
 from ai.multimodal.visual_encoder import VisualEncoder
@@ -27,6 +29,7 @@ from ai.multimodal.reconstruction_cycle import ReconstructionCycle, CrossModalSy
 from ai.multimodal.multimodal_bridge import MultimodalBridge
 from ai.multimodal.multimodal_retriever import MultimodalRetriever
 from ai.multimodal.multimodal_rag_engine import MultimodalRAGEngine
+from ai.multimodal.multimodal_ed3n_adapter import MultimodalED3NAdapter
 
 __all__ = [
     "VisualEncoder",
@@ -41,4 +44,5 @@ __all__ = [
     "MultimodalBridge",
     "MultimodalRetriever",
     "MultimodalRAGEngine",
+    "MultimodalED3NAdapter",
 ]

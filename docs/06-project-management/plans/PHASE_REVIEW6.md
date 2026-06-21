@@ -1,7 +1,7 @@
-# Angela AI 專案全面分析與修復計畫 v27.0
+# Angela AI 專案全面分析與修復計畫 v28.0
 
-> **生成日期**: 2026-06-22 (第39輪 P21 跨模態 RAG — MultimodalRetriever 向量索引 + MultimodalRAGEngine ED3N 檢索)  
-> **分析範圍**: P21 — MultimodalRetriever (numpy cosine brute-force index) + MultimodalRAGEngine (encode→index→query→ED3N entries) + 116 多模態測試  
+> **生成日期**: 2026-06-22 (第40輪 P22 生成品質提升 — VisualDecoder tanh 紋理增強 + AudioWaveformDecoder 多頻段 + MultimodalED3NAdapter)  
+> **分析範圍**: P22 — VisualDecoder 非線性 tanh 投影 + 紋理細節; AudioWaveformDecoder 多頻段合成 + 噪聲分量; MultimodalED3NAdapter (ED3N 雙向接線); 128 多模態測試  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -11,7 +11,7 @@
 | 指標 | 數值 | 狀態 |
 |------|------|------|
 | unit+api 測試 | **745 通過, 0 失敗, 39 跳過 (恆定); ED3N 114/114** | ✅ **ED3N 178s (28% 加速)** |
-| 多模態測試 | **116/116 全部通過** ✅ | **P15–P20 95 + P21 21** (MultimodalRetriever 11 + MultimodalRAGEngine 10) |
+| 多模態測試 | **128/128 全部通過** ✅ | **P15–P21 116 + P22 12** (decoder 非線性 2 + MultimodalED3NAdapter 10) |
 | ED3N 完整測試 | **114/114 通過** (含 3 thread_safety 修復) | ✅ **0 計時器超時** |
 | GARDEN 完整測試 | **205/205 通過** (+7 修復) | ✅ **ChromaEncoder 6/6 + binary_store 2/2 + 引擎全通** |
 | MetaController 單元測試 | **10/10 通過** | ✅ |
@@ -259,6 +259,18 @@
 | **ED3N 整合路徑** | 系統架構 ✅ | `MultimodalRAGEngine.retrieve_entries(image_data)` → `to_ed3n_entries()` → ED3N `DictionaryLayer.bulk_add_entries()`. 現有 `modality_encoders` hook 可直接接受 retriever 輸出 |
 | **Testing ×21** | `tests/ai/multimodal/test_multimodal_rag.py` (NEW) ✅ | Retriever (11): add/count/wrong dim/search top-k/empty/wrong dim/modality filter/list/clear/save+load/empty. RAGEngine (10): index image/audio/invalid/query image/query audio/cross-modal/to_ed3n/retrieve entries/no input/persistence |
 | **測試結果** | **116/116 全部通過** ✅ | P21 全部 21 測試 + 95 既有多模態 = 116 通過, 0 失敗 |
+
+### 第40輪: P22 生成品質提升 — 非線性投影 + 多頻段合成 + ED3N 雙向接線 ✅
+
+| 變更 | 檔案 | 影響 |
+|------|------|------|
+| **VisualDecoder 非線性 tanh 投影 + 紋理細節** | `ai/multimodal/visual_decoder.py` ✅ | 新增 `_W_hidden`/`_b_hidden` (64-dim tanh hidden layer) + `_W_detail`/`_b_detail` (detail modulation). `_apply_texture_detail()` 從 hidden latent 生成強度控制的隨機紋理噪聲. 保留 `_W`/`_b` 屬性供 ReconstructionCycle 向後相容. 非線性增強保留了反向傳播相容性 |
+| **AudioWaveformDecoder 多頻段合成 + 噪聲分量** | `ai/multimodal/audio_decoder.py` ✅ | 分割頻譜特徵為 3 頻段 (低 50-500Hz, 中 500-2500Hz, 高 2500-7500Hz), 各頻段獨立合成諧波. 新增 `_W_hidden`/`_b_hidden` + `_W_noise`/`_b_noise` 噪聲分量 (tanh hidden → noise_strength control). `_add_noise_component()` 增加非週期成分以豐富音色 |
+| **MultimodalED3NAdapter (ED3N 雙向接線)** | `ai/multimodal/multimodal_ed3n_adapter.py` (NEW) ✅ | `retrieve_multimodal(image/audio/latent)` → ED3N-compatible entries. `inject_into_context(context, image/audio)` → 注入 `multimodal_entries` 至 ED3N context. `index_image_for_retrieval()`/`index_audio_for_retrieval()` 索引. `save_index()`/`load_index()` 持久化 |
+| **MultimodalRetriever save/load 修復** | `ai/multimodal/multimodal_retriever.py` ✅ | `save()`/`load()` 自動 `.npy` 擴展名處理 + `allow_pickle=False` 安全載入 |
+| **__init__.py 匯出** | `ai/multimodal/__init__.py` ✅ | MultimodalED3NAdapter 加入 __all__. 模組文檔更新至 P22 |
+| **Testing ×12** | `tests/ai/multimodal/test_decoders.py` + `test_multimodal_ed3n_adapter.py` (NEW) ✅ | Decoder (2): RC 向後相容 + 多頻段能量分佈. Adapter (10): 空查詢/上下文注入/無上下文/None上下文/latent檢索/索引image/索引audio/save-load/property/ED3N格式 |
+| **測試結果** | **128/128 全部通過** ✅ | P22 全部 12 測試 + 116 既有多模態 = 128 通過, 0 失敗 |
 
 | 變更 | 檔案 | 影響 |
 |------|------|------|
@@ -569,11 +581,15 @@ P21 → ✅ [跨模態 RAG]   → MultimodalRetriever (numpy vector index, cosin
                            MultimodalRAGEngine (index_image/audio, query_by_image/audio,
                            to_ed3n_entries, retrieve_entries unified API)
                            116/116 測試
-P22 → 🟡 [生成品質提升]  → Decoder 非線性投影 (tanh hidden layer); 視覺生成更豐富紋理;
-                           音頻生成多頻段合成; ED3N 完整雙向接線
+P22 → ✅ [生成品質提升]  → VisualDecoder tanh 紋理細節 + AudioWaveformDecoder 多頻段合成+噪聲
+                           MultimodalED3NAdapter (ED3N 雙向接線, inject_into_context)
+                           128/128 測試
+P23 → 🟡 [多模態對話]    → MultimodalRAGEngine 接入 ChatService 對話上下文;
+                           image/audio query 作爲自然語言輸入觸發檢索;
+                           decode_to_image/audio 回饋至對話
 ```
 
-目前專案處於 **P21 完成** — 跨模態 RAG 管線完整: encode→index→query→ED3N entries. 支援 image/audio 查詢檢索任意模態. 持久化 save/load. 116 多模態測試全通過。**P22 將提升 decoder 生成品質並完成 ED3N 雙向接線。**
+目前專案處於 **P22 完成** — Decoder 非線性投影提升生成品質、MultimodalED3NAdapter 完成 ED3N 雙向接線 (inject_into_context + retrieve_multimodal). 128 多模態測試全通過。**P23 將把多模態 RAG 接入對話系統。**
 
 ## 5. 關鍵問題矩陣 (v8.0)
 
@@ -663,10 +679,11 @@ P22 → 🟡 [生成品質提升]  → Decoder 非線性投影 (tanh hidden laye
 | **37** | **P19 閉環演化** | **ReconstructionCycle (feature-level autoencoder) + CrossModalSynthesizer (latent blend + cross-generation). 74/74 多模態測試通過 🎉 P19 全部完成!** |
 | **38** | **P20 效能+整合** | **conv2d sliding_window_view 矩陣加速 + SimilarityService decode API + MultimodalBridge ED3N 整合. 95/95 多模態測試通過 🎉 P20 全部完成!** |
 | **39** | **P21 跨模態 RAG** | **MultimodalRetriever (numpy vector index) + MultimodalRAGEngine (encode→query→ED3N entries). 116/116 多模態測試通過 🎉 P21 全部完成!** |
-| **總計** | **39 輪** | **120+ 修復, 智能 2→9/10, 1010+ 測試** |
+| **40** | **P22 生成品質+雙向接線** | **VisualDecoder tanh 紋理增強 + AudioWaveformDecoder 多頻段噪聲 + MultimodalED3NAdapter ED3N 接線. 128/128 多模態測試通過 🎉 P22 全部完成!** |
+| **總計** | **40 輪** | **120+ 修復, 智能 2→9/10, 1025+ 測試** |
 
-## 7. 後續建議 (P21 完成後，跨模態 RAG 管線完整 — encode→index→query→ED3N entries)
+## 7. 後續建議 (P22 完成後，非線性 decoder 提升品質 + ED3N 雙向接線就緒)
 
-1. **P22: 生成品質提升** — Decoder 非線性投影 (tanh hidden layer); VisualDecoder 紋理豐富化 (noise injection + CNN detail); AudioWaveformDecoder 多頻段合成; ED3N 完整雙向接線 (engine.process_multimodal 接收 retriever 輸出)
-2. **P23: 多模態對話** — MultimodalRAGEngine 接入 ChatService 對話上下文; image/audio query 作爲自然語言輸入觸發檢索; decode_to_image/audio 回饋至對話
-3. **維護: 測試持續監控** — 1010+ 測試維持; pre-commit hook 執行
+1. **P23: 多模態對話** — MultimodalRAGEngine 接入 ChatService 對話上下文; image/audio query 作爲自然語言輸入觸發檢索; decode_to_image/audio 回饋至對話
+2. **P24: 生成品質進階** — VisualDecoder CNN detail layer (非純噪聲, 真實卷積紋理合成); AudioWaveformDecoder LPC 或 wavetable 合成; 端到端品質評估指標
+3. **維護: 測試持續監控** — 1025+ 測試維持; pre-commit hook 執行

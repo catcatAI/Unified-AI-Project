@@ -66,6 +66,15 @@ class TestVisualDecoder:
         visual_decoder.set_projection(W_new)
         assert np.allclose(visual_decoder.get_projection(), W_new)
 
+    def test_reconstruction_cycle_backward_compat(self, visual_decoder):
+        """Verify _W and _b are writable arrays for ReconstructionCycle compatibility."""
+        l = np.random.default_rng(42).normal(0, 1, 64).astype(np.float32)
+        before = visual_decoder.decode(l)
+        visual_decoder._W[:] = 0.0
+        visual_decoder._b[:] = 0.0
+        after = visual_decoder.decode(l)
+        assert not np.array_equal(before, after)
+
 
 class TestAudioWaveformDecoder:
 
@@ -108,3 +117,16 @@ class TestAudioWaveformDecoder:
     def test_get_projection_shape(self, audio_decoder):
         W = audio_decoder.get_projection()
         assert W.shape == (128, 64)
+
+    def test_multi_band_frequency_distribution(self, audio_decoder, latent):
+        """Verify multi-band synthesis produces energy across band ranges."""
+        wav = audio_decoder.decode(latent)
+        spec = np.abs(np.fft.rfft(wav))
+        freqs = np.fft.rfftfreq(len(wav), d=1.0 / 16000)
+        band_energies = []
+        for lo, hi in [(50, 500), (500, 2500), (2500, 7500)]:
+            mask = (freqs >= lo) & (freqs <= hi)
+            energy = float(np.sum(spec[mask] ** 2)) if np.any(mask) else 0.0
+            band_energies.append(energy)
+        active = sum(1 for e in band_energies if e > 0.01 * max(band_energies))
+        assert active >= 2, f"Expected >=2 active bands, got {active}: {band_energies}"
