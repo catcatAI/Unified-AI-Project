@@ -324,6 +324,86 @@ async def list_items_endpoint():
     return {"success": True, **items}
 
 
+# --- CML (Continuous Multimodal Learning) ---
+
+@router.get("/multimodal/cml/stats")
+async def cml_stats_endpoint():
+    """Get CML statistics (total encodes, training runs, buffer size)."""
+    svc = _get_service()
+    if svc is None:
+        return {"success": False, "error": "MultimodalService not available"}
+    stats = await svc.cml_stats()
+    return {"success": True, **stats}
+
+
+@router.get("/multimodal/cml/trend")
+async def cml_trend_endpoint():
+    """Get CML quality trend assessment."""
+    svc = _get_service()
+    if svc is None:
+        return {"success": False, "error": "MultimodalService not available"}
+    trend = await svc.cml_trend()
+    return {"success": True, **trend}
+
+
+@router.post("/multimodal/cml/train")
+async def cml_train_endpoint(epochs: int = Form(3)):
+    """Manually trigger CML micro-training cycle."""
+    svc = _get_service()
+    if svc is None:
+        raise HTTPException(status_code=503, detail="MultimodalService not available")
+    result = await svc.cml_micro_train(epochs)
+    return {"success": result.get("status") == "completed", **result}
+
+
+# --- Memory store ---
+
+@router.post("/multimodal/memory/store")
+async def memory_store_endpoint(item_id: str = Form(...)):
+    """Store a registered item into multimodal memory."""
+    svc = _get_service()
+    if svc is None:
+        raise HTTPException(status_code=503, detail="MultimodalService not available")
+    entry_id = await svc.memory_store(item_id)
+    if entry_id is None:
+        raise HTTPException(status_code=400, detail=f"Item not found: {item_id}")
+    return {"success": True, "entry_id": entry_id}
+
+
+@router.post("/multimodal/memory/search")
+async def memory_search_endpoint(
+    query_item_id: str = Form(...),
+    top_k: int = Form(5),
+    modality_filter: Optional[str] = Form(None),
+):
+    """Search memory by latent similarity to a registered item."""
+    svc = _get_service()
+    if svc is None:
+        return {"success": False, "results": [], "count": 0}
+    results = await svc.memory_search(query_item_id, top_k, modality_filter)
+    return {"success": True, "results": results, "count": len(results)}
+
+
+@router.post("/multimodal/memory/recall")
+async def memory_recall_endpoint(hours: float = Form(24)):
+    """Recall entries from memory within a time window."""
+    svc = _get_service()
+    if svc is None:
+        return {"success": False, "entries": [], "count": 0}
+    entries = await svc.memory_recall(hours=hours)
+    return {"success": True, "entries": entries, "count": len(entries)}
+
+
+@router.get("/multimodal/memory/stats")
+async def memory_stats_endpoint():
+    """Get multimodal memory statistics."""
+    svc = _get_service()
+    if svc is None:
+        return {"success": False, "error": "MultimodalService not available"}
+    stats = await svc.memory_stats()
+    return {"success": True, **stats}
+
+
 # --- Clear items ---
 
 @router.post("/multimodal/clear")

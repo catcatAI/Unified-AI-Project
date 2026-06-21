@@ -33,6 +33,8 @@ from ai.multimodal.multimodal_retriever import MultimodalRetriever
 from ai.multimodal.multimodal_rag_engine import MultimodalRAGEngine
 from ai.multimodal.multimodal_ed3n_adapter import MultimodalED3NAdapter
 from ai.multimodal.quality_metrics import ssim, psnr, snr, quality_report
+from ai.multimodal.continuous_multimodal_learning import ContinuousMultimodalLearning, CMLExample
+from ai.multimodal.multimodal_memory import MultimodalMemoryStore
 
 __all__ = [
     "VisualEncoder",
@@ -52,4 +54,7 @@ __all__ = [
     "psnr",
     "snr",
     "quality_report",
+    "ContinuousMultimodalLearning",
+    "CMLExample",
+    "MultimodalMemoryStore",
 ]

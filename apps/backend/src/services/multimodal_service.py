@@ -59,6 +59,9 @@ class MultimodalService:
         self._audio_quality_monitor = None
         self._registered_items: Dict[str, Dict[str, Any]] = {}
         self._items_lock = asyncio.Lock()
+        # P36: Continuous multimodal learning + memory
+        self._cml = None
+        self._memory_store = None
 
     # --- Lazy initialization ---
 
@@ -133,6 +136,114 @@ class MultimodalService:
             from ai.audio.quality_monitor import AudioQualityMonitor
             self._audio_quality_monitor = AudioQualityMonitor()
         return self._audio_quality_monitor
+
+    # --- P36: Continuous learning ---
+
+    def _get_cml(self):
+        """Get or create the ContinuousMultimodalLearning instance."""
+        if self._cml is None:
+            from ai.multimodal.continuous_multimodal_learning import (
+                ContinuousMultimodalLearning
+            )
+            self._cml = ContinuousMultimodalLearning(
+                buffer_max=64,
+                auto_train_threshold=32,
+                min_interval_sec=60.0,
+            )
+        return self._cml
+
+    def _get_memory_store(self):
+        """Get or create the MultimodalMemoryStore instance."""
+        if self._memory_store is None:
+            from ai.multimodal.multimodal_memory import MultimodalMemoryStore
+            self._memory_store = MultimodalMemoryStore(
+                store_dir=None,  # Will be set if data/ dir is available
+                max_entries=5000,
+            )
+        return self._memory_store
+
+    # --- CML-integrated encode ---
+
+    async def cml_encode(self, data: bytes, modality: str,
+                         item_id: Optional[str] = None) -> Dict[str, Any]:
+        """Encode with automatic CML recording.
+
+        Same as encode() but also records the example in CML buffer
+        for autonomous micro-training. Extracts quality scores
+        from pipeline results (SSIM for vision, SNR for audio).
+        """
+        result = await self.encode(data, modality, item_id)
+        if result.get("error") is None and "latent" in result:
+            cml = self._get_cml()
+            # Extract quality score from the pipeline run
+            quality_score = 0.0
+            if modality == "vision":
+                qm = self._get_quality_monitor()
+                report = qm.report()
+                quality_score = report.get("avg_ssim", 0.0)
+            elif modality == "audio":
+                qm = self._get_audio_quality_monitor()
+                report = qm.report()
+                quality_score = report.get("avg_snr", 0.0) / 30.0  # Normalize [0,1]
+            cml.record_encode(
+                modality=modality,
+                feature_vector=result.get("feature_vector", []),
+                latent=result["latent"],
+                quality_score=quality_score,
+            )
+            # Check if CML should auto-train
+            if cml.should_train():
+                train_result = cml.micro_train()
+                result["cml_trained"] = train_result.get("status") == "completed"
+        return result
+
+    async def cml_quality_feedback(self, modality: str,
+                                   metrics: Dict[str, Any]) -> None:
+        """Record quality feedback to CML."""
+        self._get_cml().record_quality(metrics)
+
+    async def cml_stats(self) -> Dict[str, Any]:
+        """Get CML statistics."""
+        return self._get_cml().get_stats()
+
+    async def cml_trend(self) -> Dict[str, Any]:
+        """Get CML quality trend."""
+        return self._get_cml().quality_trend()
+
+    async def cml_micro_train(self, epochs: int = 3) -> Dict[str, Any]:
+        """Manually trigger a CML micro-training cycle."""
+        return self._get_cml().micro_train(epochs=epochs)
+
+    # --- Memory store operations ---
+
+    async def memory_store(self, item_id: str) -> Optional[str]:
+        """Store a registered item into multimodal memory."""
+        async with self._items_lock:
+            item = self._registered_items.get(item_id)
+        if item is None:
+            return None
+        store = self._get_memory_store()
+        return await store.store_from_item(item_id, item)
+
+    async def memory_search(self, query_item_id: str, top_k: int = 5,
+                            modality_filter: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Search memory by latent similarity to a registered item."""
+        async with self._items_lock:
+            item = self._registered_items.get(query_item_id)
+        if item is None or "latent" not in item:
+            return []
+        store = self._get_memory_store()
+        return await store.search(item["latent"], top_k, modality_filter)
+
+    async def memory_recall(self, hours: float = 24) -> List[Dict[str, Any]]:
+        """Recall entries from memory within a time window."""
+        store = self._get_memory_store()
+        return await store.recall_by_time(hours=hours)
+
+    async def memory_stats(self) -> Dict[str, Any]:
+        """Get memory statistics."""
+        store = self._get_memory_store()
+        return await store.stats()
 
     def _get_pipeline(self):
         if self._pipeline is None:
