@@ -732,6 +732,35 @@ P26 → 🟡 [多語言與文化]  → 字典強化 (更多語系); 文化感知
 
 ## 7. 後續建議 (P25 完成後，多模態完整閉環就緒)
 
+### 🚨 根本瓶頸：全系統零訓練
+
+整個多模態 pipeline 目前是 **zero training** — encoder 是手造濾波器 (Gabor/MFCC)，decoder 權重隨機初始化，檢索是 brute-force cosine。**沒有任何資料集參與過學習。** encoder 看到的事物沒有語義錨點，decoder 從未見過真實影像/音頻分布，RAG 相似度分數沒有經過校準。
+
+#### 缺失數據集
+
+| 缺失 | 用途 | 候選數據集 |
+|------|------|-----------|
+| 單模態影像分類 | VisualEncoder 學習識別物體（不只是邊緣） | ImageNet-1k (1.2M, 1000 classes) |
+| 單模態音頻事件 | AudioEncoder 學習識別聲音事件 | AudioSet (2M clips, 527 classes) / ESC-50 |
+| 多模態圖文對齊 | SharedLatentSpace 學習「圖中有雞」↔「雞」 | COCO Captions (330k images) / CC-12M |
+| 音文對齊 | 音頻 encoder 學習「公雞叫」↔「公雞」 | AudioCaps (50k audio-caption) / Clotho |
+| 生成對訓練 | Decoder 學習真實分布 | ImageNet (image gen) / LibriSpeech (audio gen) |
+| 跨模態檢索 | Retriever embedding 空間語義距離調校 | MS-COCO / Flickr30k eval |
+
+#### 缺失訓練
+
+| 訓練 | 要訓練什麼 | 當前狀態 → 目標 |
+|------|-----------|----------------|
+| VisualEncoder | CNN backbone supervised fine-tune | Gabor 256-dim (手造) → learned 1024-dim |
+| AudioEncoder | AST/Wav2Vec 2.0 自監督 | MFCC 128-dim (手造) → learned 512-dim |
+| SharedLatentSpace | CLIP-style 對比學習 (image-caption pairs) | 合成 pair → 真數據 batch 訓練 |
+| Autoencoder (decoder) | VQ-VAE 端到端重建 | 隨機權重 → learned 重建 |
+| Retriever embedding | Dense retriever fine-tune (DPR/ColBERT) | 原始 cosine → fine-tuned 語義空間 |
+| ED3N network | 從 dictionary 學習關聯權重 | symbolic 加權 → learned 關聯 |
+
+### 路線
+
 1. **P26: 多語言與文化** — 字典強化 (更多語系); 文化感知回應; 語意消歧
-2. **P27: 效能優化** — ED3N 字典載入 <10s; 檢索延遲優化; 記憶體使用量降低
-3. **維護: 測試持續監控** — 1050+ 測試維持; pre-commit hook 執行
+2. **P27: 模型訓練 pipeline** — 搭建資料集下載+預處理 pipeline; 編碼器對比預訓練
+3. **P28: 端到端訓練** — VAE 重建訓練 + 檢索 embedding 微調 + ED3N 權重學習
+4. **維護: 測試持續監控** — 1050+ 測試維持; pre-commit hook 執行
