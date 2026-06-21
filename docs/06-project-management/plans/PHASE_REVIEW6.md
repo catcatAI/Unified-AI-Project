@@ -1,7 +1,7 @@
-# Angela AI 專案全面分析與修復計畫 v12.0
+# Angela AI 專案全面分析與修復計畫 v13.0
 
-> **生成日期**: 2026-06-20 (第25輪 P8 置信度閉環 — MetaController→LLM + GARDEN 信心 + 測試擴充)  
-> **分析範圍**: P8 閉環 — MetaController 接線 / GARDENEngine 置信度 / 專屬測試  
+> **生成日期**: 2026-06-20 (第26輪 P9 置信度儀表板 + 校準閉環 + 別名清理)  
+> **分析範圍**: P9 可觀測性 — MetaController API / 動態校準 / 別名清理  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -80,6 +80,7 @@
 | **P6 強化** | v8.0→v9.0 ✅ | **元認知 4→5 / 觸覺 2→4 / 反射 0→4** |
 | **P7 強化** | v9.0→v10.0 ✅ | **ED3N 真實置信度 → ModelBus / Tactile 全橋接** |
 | **P8 強化** | v10.0→v11.0 ✅ | **MetaController→LLM 閉環 / GARDEN 置信度 / 10 新測試** |
+| **P9 強化** | v11.0→v12.0 ✅ | **MetaController API 儀表板 / 校準閉環 / 別名清理** |
 
 ### 第22輪: P5 導入路徑清理 — N3 技術債還清 ✅
 
@@ -88,6 +89,17 @@
 ### 第24輪: P7 置信度管道 — ED3N 真實置信度 + ModelBus 整合 ✅
 
 ### 第25輪: P8 置信度閉環 — MetaController→LLM + GARDEN 信心 + 測試擴充 ✅
+
+### 第26輪: P9 置信度儀表板 + 校準閉環 + 別名清理 ✅
+
+| 變更 | 檔案 | 影響 |
+|------|------|------|
+| **MetaController API 端點** | `api/routes/meta_routes.py` (NEW) ✅ | `GET /api/v1/meta/confidence/summary` 返回全局校準摘要; `GET /api/v1/meta/confidence/calibration/{source}` 返回單源報告 |
+| **API 路由註冊** | `api/router.py` ✅ | meta_routes 以 `/api/v1` 前綴註冊, try/except ImportError 模式 |
+| **校準閉環 (router.py 門檻)** | `services/llm/router.py` ✅ | `_try_template_match()` 0.8/0.4 硬編碼 → MetaController 動態調整 (`direct_threshold`/`draft_low`) |
+| **Live2D 別名清理** | `core/engine/live2d_integration.py` ✅ | `Live2DExpression`/`Live2DAction` 向後相容別名移除 (2 個 dead export) |
+| **Autonomous __init__ 清理** | `core/autonomous/__init__.py` ✅ | 對應 import/__all__ 更新 |
+| **測試** | 68 測試全部通過 ✅ | meta_controller 10 + model_bus 36 + tactile 11 + tickle 11 |
 
 | 變更 | 檔案 | 影響 |
 |------|------|------|
@@ -135,6 +147,8 @@
 | MetaController→LLM | router.py 接線 | ✅ |
 | GARDEN `_last_confidence` | 7 路徑信心追蹤 | ✅ |
 | MetaController 測試 | 10 專屬測試 (NEW) | ✅ |
+| MetaController API | summary + calibration 端點 | ✅ |
+| Live2D 別名清理 | Live2DExpression/Live2DAction 移除 | ✅ |
 
 ## 4. 智能水準 🟢 8/10 綜合評估
 
@@ -358,6 +372,10 @@
 | — | GARDEN 置信度 | P8 | ✅ **7 路徑 `_last_confidence`** |
 | — | MetaController 測試 | P8 | ✅ **10 專屬測試** |
 | — | **P8 全部完成!** | — | 🎉 **P8 里程碑達成!** |
+| — | MetaController API | P9 | ✅ **summary + calibration 端點** |
+| — | 校準閉環 | P9 | ✅ **router.py 動態門檻** |
+| — | Live2D 別名清理 | P9 | ✅ **2 dead export 移除** |
+| — | **P9 全部完成!** | — | 🎉 **P9 里程碑達成!** |
 
 ## 6. 二十輪修復總計
 
@@ -380,12 +398,12 @@
 | **23** | **P6 元認知 + 觸覺 + 小腦** | **MetaController 接線 + Tactile 橋接 + TickleReflex 實作 🎉 P6 全部完成!** |
 | **24** | **P7 置信度管道** | **ED3N _last_confidence + ModelBus 真實置信度 + Tactile 全橋接 🎉 P7 全部完成!** |
 | **25** | **P8 置信度閉環** | **MetaController→LLM + GARDEN 信心 + 測試擴充 🎉 P8 全部完成!** |
-| **總計** | **25 輪** | **81+ 修復, 智能 2→9/10** |
+| **26** | **P9 置信度儀表板** | **MetaController API + 校準閉環 + Live2D 別名清理 🎉 P9 全部完成!** |
+| **總計** | **26 輪** | **84+ 修復, 智能 2→9/10** |
 
-## 7. 後續建議 (P8 完成後)
+## 7. 後續建議 (P9 完成後)
 
-1. **P9: 全引擎 MetaController 校準** — 閉合 ED3N/GARDEN/LLM 置信度校準迴圈; 自動調整各引擎 routing 門檻基於歷史校準誤差
-2. **P9: 多模態 ML 整合** — 視覺 (4→6): 整合 OpenCV/tesseract 真實 OCR; 聽覺 (3.5→5): 整合 faster-whisper 真實 STT
-3. **P9: 置信度監控儀表板** — MetaController.get_summary() API 端點暴露; WebSocket 推送校準狀態
-4. **P9: 殘留導入路徑清理** — 評估 `live2d_integration.py` / `art_learning_system.py` 別名檔案
-5. **維護: 測試持續監控** — 734+ 測試維持; 新功能添加對應測試; pre-commit hook 執行
+1. **P10: 多模態 ML 整合** — 視覺 (4→6): 整合 OpenCV/tesseract 真實 OCR; 聽覺 (3.5→5): 整合 faster-whisper 真實 STT
+2. **P10: 測試擴充** — ED3N 信心整合測試 / GARDEN `_last_confidence` 驗證 / MetaController API 端點測試
+3. **P10: 效能優化** — ED3N 460K 字典載入速度 (20.9s); GARDEN SNN 推理延遲; 大型測試耗時
+4. **維護: 測試持續監控** — 734+ 測試維持; pre-commit hook 執行
