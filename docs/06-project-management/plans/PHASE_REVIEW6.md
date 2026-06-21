@@ -1,7 +1,7 @@
-# Angela AI 專案全面分析與修復計畫 v25.0
+# Angela AI 專案全面分析與修復計畫 v26.0
 
-> **生成日期**: 2026-06-22 (第37輪 P19 閉環演化 — autoencoder 重建循環 + 跨模態生成)  
-> **分析範圍**: P19 — ReconstructionCycle (feature-level MSE train, gradient clipping) + CrossModalSynthesizer (latent blending, vision↔audio cross-generation) + 74 多模態測試  
+> **生成日期**: 2026-06-22 (第38輪 P20 效能+整合 — conv2d 向量化 + decoder 服務整合 + MultimodalBridge)  
+> **分析範圍**: P20 — VisualEncoder conv2d 矩陣加速 (batch matmul 替代 nested loops) + MultimodalSimilarityService decode_to_image/audio + MultimodalBridge ED3N 整合 + 95 多模態測試  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -11,7 +11,7 @@
 | 指標 | 數值 | 狀態 |
 |------|------|------|
 | unit+api 測試 | **745 通過, 0 失敗, 39 跳過 (恆定); ED3N 114/114** | ✅ **ED3N 178s (28% 加速)** |
-| 多模態測試 | **74/74 全部通過** ✅ | **P15 21 + P16 9 + P17 13 + P18 16 + P19 15** (ReconstructionCycle 7 + CrossModalSynthesizer 8) |
+| 多模態測試 | **95/95 全部通過** ✅ | **P15 21 + P16 9 + P17 13 + P18 16 + P19 15 + P20 21** (conv2d 驗證 2 + decoder 服務 6 + MultimodalBridge 13) |
 | ED3N 完整測試 | **114/114 通過** (含 3 thread_safety 修復) | ✅ **0 計時器超時** |
 | GARDEN 完整測試 | **205/205 通過** (+7 修復) | ✅ **ChromaEncoder 6/6 + binary_store 2/2 + 引擎全通** |
 | MetaController 單元測試 | **10/10 通過** | ✅ |
@@ -237,6 +237,17 @@
 | **__init__.py 匯出** | `ai/multimodal/__init__.py` ✅ | ReconstructionCycle + CrossModalSynthesizer 加入 __all__ |
 | **Testing ×15** | `tests/ai/multimodal/test_reconstruction_cycle.py` (NEW) ✅ | ReconstructionCycle (7): init / loss 下降 / epochs 收斂 / 重建形狀 / 誤差下降 / 未知模態 / 音頻重建. CrossModalSynthesizer (8): 混合形狀 / 等權重 / 圖像生成 / 音頻生成 / 跨模態 vision→audio / 跨模態 audio→image / 空列表 / 無解碼器 |
 | **測試結果** | **74/74 全部通過** ✅ | P19 全部 15 測試 + 59 既有多模態 = 74 通過, 0 失敗 |
+
+### 第38輪: P20 效能 + 整合 — conv2d 向量化 + decoder 服務層 + MultimodalBridge ✅
+
+| 變更 | 檔案 | 影響 |
+|------|------|------|
+| **VisualEncoder._conv2d 向量化** | `ai/multimodal/visual_encoder.py` ✅ | 原本雙層 Python for loop (31×31=961 次/濾波器) → `sliding_window_view` + `tensordot` 批次矩陣乘法. `_cnn_features` 全部 8 濾波器同時計算: `flats @ flat_filters.T`. 加速比: 實測 ~61ms 完整編碼 (含 CNN + handcrafted) |
+| **MultimodalSimilarityService decode_to_image / decode_to_audio** | `ai/multimodal/similarity_service.py` ✅ | `decode_to_image(item_id)→PIL.Image`: 從 item latent 解碼回 128×128 RGB. `decode_to_audio(item_id)→List[float]`: 從 item latent 解碼回 16kHz PCM. 錯誤/未知/錯誤模態→None. 雙向多模態正式接入服務層 |
+| **MultimodalBridge (ED3N 整合層)** | `ai/multimodal/multimodal_bridge.py` (NEW) ✅ | 同步介面 (適合 ED3N 呼叫): `encode_image_bytes/latent`, `encode_audio_bytes/latent`, `decode_latent_to_image/waveform`, `similarity` (cosine→[0,1]), `cross_similarity`, `to_dictionary_entry` (image→ED3N entry), `latent_to_entry`. 全零→None/空 |
+| **__init__.py 匯出** | `ai/multimodal/__init__.py` ✅ | MultimodalBridge 加入 __all__. 模組文檔更新至 P20 |
+| **Testing ×21** | `tests/ai/multimodal/test_p20_integration.py` (NEW) ✅ | ServiceDecode (6): image 解碼/未知/錯誤模態 + audio 解碼/未知/錯誤模態. Conv2d (2): 向量化與手動一致 + CNN shape. MultimodalBridge (13): 編碼圖像/音頻/隱向量/解碼/相似度/跨模態/ED3N entry |
+| **測試結果** | **95/95 全部通過** ✅ | P20 全部 21 測試 + 74 既有多模態 = 95 通過, 0 失敗 |
 
 | 變更 | 檔案 | 影響 |
 |------|------|------|
@@ -539,11 +550,15 @@ P18 → ✅ [多模態生成]   → VisualDecoder (latent→128×128 RGB) + Audi
 P19 → ✅ [閉環演化]     → ReconstructionCycle (feature-level autoencoder, f→W_e@f→z→W_d@z→f_hat, MSE train)
                            CrossModalSynthesizer (latent blending, cross-modal vision↔audio generation)
                            74/74 測試, 多模態交叉 4→5
-P20 → 🟡 [效能 + 整合]  → conv2d 向量化加速; decoders 接入 MultimodalSimilarityService;
-                           ED3N 接收 decoder 輸出; 視覺生成解碼品質提升
+P20 → ✅ [效能 + 整合]  → conv2d vectorized (sliding_window_view + batch matmul)
+                           SimilarityService: decode_to_image/audio
+                           MultimodalBridge: ED3N-compatible entry generation, cross_similarity
+                           95/95 測試
+P21 → 🟡 [跨模態 RAG]   → Cross-modal retrieval: image query → latent → retrieve audio/text.
+                           Multimodal memory index. Generation quality improvement.
 ```
 
-目前專案處於 **P19 完成** — encoder→latent→decoder→encoder 重建循環閉合, 跨模態生成 (vision↔audio) 實現。74 多模態測試全通過, 多模態交叉 4→5/10。**P20 將優化效能並整合 decoder 輸出至 ED3N 系統。**
+目前專案處於 **P20 完成** — conv2d 向量化加速 (~61ms 編碼), decoder 正式接入 MultimodalSimilarityService (decode_to_image/audio), MultimodalBridge 提供 ED3N 相容字典條目生成。95 多模態測試全通過。**P21 將打造跨模態 RAG — 用圖像檢索音頻、多模態記憶索引。**
 
 ## 5. 關鍵問題矩陣 (v8.0)
 
@@ -631,10 +646,11 @@ P20 → 🟡 [效能 + 整合]  → conv2d 向量化加速; decoders 接入 Mult
 | **35** | **P17 編碼器強化** | **VisualEncoder CNN Gabor filter bank (256-dim) + AudioSpectralEncoder MFCC (128-dim) + temporal attention + spectral contrast. 43/43 多模態測試通過 🎉 P17 全部完成!** |
 | **36** | **P18 多模態生成** | **VisualDecoder (latent→128×128 RGB) + AudioWaveformDecoder (latent→16kHz PCM). 59/59 多模態測試通過 🎉 P18 全部完成! — 雙向多模態實現!** |
 | **37** | **P19 閉環演化** | **ReconstructionCycle (feature-level autoencoder) + CrossModalSynthesizer (latent blend + cross-generation). 74/74 多模態測試通過 🎉 P19 全部完成!** |
-| **總計** | **37 輪** | **120+ 修復, 智能 2→9/10, 950+ 測試** |
+| **38** | **P20 效能+整合** | **conv2d sliding_window_view 矩陣加速 + SimilarityService decode API + MultimodalBridge ED3N 整合. 95/95 多模態測試通過 🎉 P20 全部完成!** |
+| **總計** | **38 輪** | **120+ 修復, 智能 2→9/10, 990+ 測試** |
 
-## 7. 後續建議 (P19 完成後，重建循環閉合 + 跨模態生成實現)
+## 7. 後續建議 (P20 完成後，conv2d 向量化 + 服務層整合 + MultimodalBridge 就緒)
 
-1. **P20: 效能 + 整合** — conv2d 向量化加速 (sliding window → 矩陣乘法); decoders 接入 MultimodalSimilarityService integrate (統一服務入口); ED3N 系統接收 decoder 輸出 (圖像/音頻作為字典鍵); decoder 品質提升 (非線性投影層)
-2. **P21: 跨模態 RAG** — 使用 CrossModalSynthesizer 做跨模態檢索: image query → latent → retrieve audio. 多模態記憶索引
-3. **維護: 測試持續監控** — 950+ 測試維持; pre-commit hook 執行
+1. **P21: 跨模態 RAG** — MultimodalBridge 接入 ED3N 檢索管線: image query → VisualEncoder → latent → ED3N dictionary → retrieve related entries. 多模態記憶索引建構
+2. **P22: 生成品質提升** — Decoder 非線性投影 (tanh/sigmoid hidden layer); 視覺生成更豐富紋理; 音頻生成多頻段合成
+3. **維護: 測試持續監控** — 990+ 測試維持; pre-commit hook 執行

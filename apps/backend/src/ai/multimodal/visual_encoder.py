@@ -69,33 +69,40 @@ class VisualEncoder:
         return self._cnn_filters
 
     def _conv2d(self, img: np.ndarray, kernel: np.ndarray) -> np.ndarray:
-        """Manual 2D convolution (valid padding) using numpy."""
+        """Vectorized 2D convolution using sliding window view."""
         k_h, k_w = kernel.shape
         s = self.CNN_STRIDE
-        h_out = (img.shape[0] - k_h) // s + 1
-        w_out = (img.shape[1] - k_w) // s + 1
-        out = np.zeros((h_out, w_out), dtype=np.float32)
-        for y in range(0, h_out * s, s):
-            for x in range(0, w_out * s, s):
-                out[y // s, x // s] = np.sum(img[y:y + k_h, x:x + k_w] * kernel)
-        return out
+        windows = np.lib.stride_tricks.sliding_window_view(img, (k_h, k_w))[::s, ::s]
+        return np.tensordot(windows, kernel, axes=2)
 
     def _cnn_features(self, arr: np.ndarray) -> np.ndarray:
-        """Apply CNN filter bank and return pooled statistics as feature vector."""
+        """Apply CNN filter bank and return pooled statistics as feature vector.
+
+        Vectorized: all filters applied simultaneously via batched convolution.
+        """
         gray = np.mean(arr, axis=2)
-        filters = self._build_filters()
+        filters = self._build_filters()  # (N, fs, fs)
+        k_h, k_w = filters.shape[1], filters.shape[2]
+        s = self.CNN_STRIDE
+        windows = np.lib.stride_tricks.sliding_window_view(gray, (k_h, k_w))[::s, ::s]
+        n_win_h, n_win_w = windows.shape[0], windows.shape[1]
+        flats = windows.reshape(n_win_h * n_win_w, k_h * k_w)
+        flat_filters = filters.reshape(filters.shape[0], -1)  # (N, k_h*k_w)
+        activations_2d = flats @ flat_filters.T  # (n_windows, N)
+        activations_2d = activations_2d.reshape(n_win_h, n_win_w, -1)  # (H, W, N)
+
         activations = []
-        for k in filters:
-            feat_map = self._conv2d(gray, k)
+        for k in range(filters.shape[0]):
+            fm = activations_2d[:, :, k]
             activations.extend([
-                float(feat_map.mean()),
-                float(feat_map.std()),
-                float(np.max(feat_map)),
-                float(np.percentile(feat_map, 25)),
-                float(np.percentile(feat_map, 75)),
-                float(np.mean(np.abs(feat_map))),
-                float(np.sqrt(np.mean(feat_map**2))),
-                float(np.sum(feat_map > 0) / max(feat_map.size, 1)),
+                float(fm.mean()),
+                float(fm.std()),
+                float(np.max(fm)),
+                float(np.percentile(fm, 25)),
+                float(np.percentile(fm, 75)),
+                float(np.mean(np.abs(fm))),
+                float(np.sqrt(np.mean(fm**2))),
+                float(np.sum(fm > 0) / max(fm.size, 1)),
             ])
         vec = np.array(activations, dtype=np.float32)
         target = self.CNN_FEATURE_DIM

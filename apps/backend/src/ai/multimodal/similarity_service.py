@@ -1,25 +1,32 @@
-"""Cross-modal similarity service — orchestrates encoding and latent-space comparison."""
+"""Cross-modal similarity service — orchestrates encoding/decoding and latent-space comparison."""
 
 import logging
 from typing import Dict, List, Optional
 
 import numpy as np
+from PIL import Image
 
 from ai.multimodal.visual_encoder import VisualEncoder
 from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
 from ai.multimodal.shared_latent_space import SharedLatentSpace
+from ai.multimodal.visual_decoder import VisualDecoder
+from ai.multimodal.audio_decoder import AudioWaveformDecoder
 
 logger = logging.getLogger(__name__)
 
 
 class MultimodalSimilarityService:
-    """Orchestrates encoding of different modalities and cross-modal comparison.
+    """Orchestrates encoding/decoding of different modalities and cross-modal comparison.
+
+    P20: Added decode_to_image() and decode_to_audio() — true bidirectional multimodality.
 
     Usage:
         service = MultimodalSimilarityService()
         await service.encode_vision(image_bytes, "my_image")
         await service.encode_audio(audio_bytes, "my_audio")
         sim = service.compare("my_image", "my_audio")
+        img = service.decode_to_image("my_image")
+        wav = service.decode_to_audio("my_audio")
     """
 
     VISION_DIM: int = 256
@@ -29,6 +36,8 @@ class MultimodalSimilarityService:
     def __init__(self):
         self._visual_encoder = VisualEncoder(feature_dim=self.VISION_DIM)
         self._audio_encoder = AudioSpectralEncoder(feature_dim=self.AUDIO_DIM)
+        self._visual_decoder = VisualDecoder()
+        self._audio_decoder = AudioWaveformDecoder()
         self._latent_space = SharedLatentSpace(latent_dim=self.LATENT_DIM)
         self._items: Dict[str, str] = {}
 
@@ -52,6 +61,33 @@ class MultimodalSimilarityService:
         self._latent_space.project("audio", vec)
         self._items[item_id] = "audio"
         return vec.tolist()
+
+    def decode_to_image(self, item_id: str) -> Optional[Image.Image]:
+        """Decode a previously encoded item's latent back to a PIL Image.
+
+        Returns None if item not found or not a vision modality.
+        """
+        modality = self._items.get(item_id)
+        if modality != "vision":
+            return None
+        latent = self._latent_space.get_embedding("vision")
+        if latent is None:
+            return None
+        return self._visual_decoder.decode_to_pil(latent)
+
+    def decode_to_audio(self, item_id: str) -> Optional[List[float]]:
+        """Decode a previously encoded item's latent back to waveform samples.
+
+        Returns List[float] PCM samples or None.
+        """
+        modality = self._items.get(item_id)
+        if modality != "audio":
+            return None
+        latent = self._latent_space.get_embedding("audio")
+        if latent is None:
+            return None
+        wav = self._audio_decoder.decode(latent)
+        return wav.tolist()
 
     def compare(self, item_a: str, item_b: str) -> float:
         """Compare two items via cross-modal similarity in latent space."""

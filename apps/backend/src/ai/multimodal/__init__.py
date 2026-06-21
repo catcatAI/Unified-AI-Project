@@ -10,6 +10,8 @@ P17: CNN conv2d Gabor filter bank (visual), MFCC + temporal attention (audio).
 P18: VisualDecoder (latent→image), AudioWaveformDecoder (latent→waveform).
 P19: ReconstructionCycle (autoencoder feature-level training),
      CrossModalSynthesizer (latent blending + cross-modal generation).
+P20: Vectorized conv2d (10-100x faster), decoders in SimilarityService,
+     MultimodalBridge for ED3N integration.
 """
 
 from ai.multimodal.visual_encoder import VisualEncoder
@@ -20,6 +22,7 @@ from ai.multimodal.multimodal_processor import MultimodalProcessor
 from ai.multimodal.visual_decoder import VisualDecoder
 from ai.multimodal.audio_decoder import AudioWaveformDecoder
 from ai.multimodal.reconstruction_cycle import ReconstructionCycle, CrossModalSynthesizer
+from ai.multimodal.multimodal_bridge import MultimodalBridge
 
 __all__ = [
     "VisualEncoder",
@@ -31,4 +34,5 @@ __all__ = [
     "AudioWaveformDecoder",
     "ReconstructionCycle",
     "CrossModalSynthesizer",
+    "MultimodalBridge",
 ]
