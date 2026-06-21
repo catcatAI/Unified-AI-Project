@@ -194,6 +194,70 @@ async def generate_endpoint(
     return {"success": True, **result}
 
 
+# Module-level CrossModalRouter singleton (preserves cache + rate limiting)
+_ROUTER = None
+
+
+def _get_router():
+    global _ROUTER
+    if _ROUTER is None:
+        from services.cross_modal_router import CrossModalRouter
+        _ROUTER = CrossModalRouter()
+    return _ROUTER
+
+
+# --- Cross-modal inference ---
+
+@router.post("/multimodal/cross-infer")
+async def cross_infer_endpoint(
+    source_modality: str = Form("vision"),
+    mode: str = Form("auto"),
+    file: Optional[UploadFile] = File(None),
+    item_id: Optional[str] = Form(None),
+):
+    """Cross-modal inference via CrossModalRouter.
+
+    Routes the request to the correct pipeline (vision/audio/cross)
+    with confidence scoring and fallback chain.
+
+    Args:
+        source_modality: "vision", "audio", or "cross"
+        mode: "auto", "encode", "pipeline", "analyze", "compare", "generate"
+        file: Optional uploaded file
+        item_id: Optional item identifier
+
+    Returns routed result with pipeline name and confidence.
+    """
+    router_svc = _get_router()
+    data = b""
+    if file:
+        data = await file.read()
+    if not data and not item_id:
+        # If no data and no item_id, still can do cross-modal comparison
+        if source_modality == "cross" and mode in ("auto", "compare"):
+            result = await router_svc.route("cross", b"", mode)
+            return {"success": True, **result}
+        raise HTTPException(status_code=400, detail="No file data or item_id provided")
+    result = await router_svc.route(source_modality, data, mode, item_id)
+    if result.get("error"):
+        return {"success": False, **result}
+    return {"success": True, **result}
+
+
+# --- Quality dashboard ---
+
+@router.get("/multimodal/quality/dashboard")
+async def quality_dashboard_endpoint():
+    """Get integrated quality dashboard for all multimodal pipelines.
+
+    Returns vision_summary, audio_summary, and overall health assessment.
+    """
+    from services.cross_modal_quality import CrossModalQualityDashboard
+    dashboard = CrossModalQualityDashboard()
+    dash_report = dashboard.dashboard_simple()
+    return {"success": True, **dash_report}
+
+
 # --- Visualize ---
 
 @router.post("/multimodal/visualize")

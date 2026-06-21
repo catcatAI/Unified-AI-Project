@@ -173,18 +173,37 @@ class MultimodalService:
             return {"modality": modality, "error": "Empty data provided"}
         try:
             if modality == "vision":
-                encoder = self._get_visual_encoder()
-                vec = encoder.encode(data)
+                # P33: Use VisionPipeline for full pipeline (encode→latent→decode→ssim)
+                pipeline = self._get_vision_pipeline()
+                pipe_result = await asyncio.to_thread(pipeline.process, data)
+                if pipe_result.get("error"):
+                    return {"modality": modality, "error": pipe_result["error"]}
+                vec = pipe_result.get("feature_vector")
+                latent = pipe_result.get("latent")
+                ssim_val = pipe_result.get("ssim", 0.0)
+                # Record quality
+                self._get_quality_monitor().record(pipe_result)
             elif modality == "audio":
-                encoder = self._get_audio_encoder()
-                vec = encoder.encode(data)
+                # P33: Use AudioPipeline for full pipeline
+                pipeline = self._get_audio_pipeline()
+                pipe_result = await asyncio.to_thread(pipeline.process, data)
+                if pipe_result.get("error"):
+                    return {"modality": modality, "error": pipe_result["error"]}
+                vec = pipe_result.get("feature_vector")
+                latent = pipe_result.get("latent")
+                snr_val = pipe_result.get("snr", 0.0)
+                # Record quality
+                self._get_audio_quality_monitor().record(pipe_result)
             else:
                 return {"modality": modality, "error": f"Unknown modality: {modality}"}
 
             if vec is None or (hasattr(vec, 'size') and vec.size == 0):
                 return {"modality": modality, "error": "Encoding returned empty feature vector"}
 
-            latent = self._get_latent_space().project(modality, vec)
+            # Ensure latent is projected through shared latent space
+            if latent is None:
+                ls = self._get_latent_space()
+                latent = ls.project(modality, np.array(vec))
 
             if item_id is None:
                 item_id = f"{modality}_{int(t0 * 1000)}_{hash(data) & 0xFFFFFF:06x}"
@@ -192,7 +211,7 @@ class MultimodalService:
             async with self._items_lock:
                 self._registered_items[item_id] = {
                     "modality": modality,
-                    "feature_vector": vec.tolist() if hasattr(vec, 'tolist') else vec,
+                    "feature_vector": vec.tolist() if hasattr(vec, 'tolist') else (latent.tolist() if isinstance(vec, np.ndarray) else vec),
                     "latent": latent.tolist() if hasattr(latent, 'tolist') else latent,
                     "timestamp": t0,
                 }
@@ -454,11 +473,24 @@ class MultimodalService:
                     item = self._registered_items.get(item_id)
                 if item is None:
                     return {"error": f"Item not found: {item_id}"}
-                # Encode → decode → compare
+                # P33: Use quality monitors for real evaluation
                 if item["modality"] == "vision":
-                    result["metrics"] = {"note": "Feature-level evaluation"}
+                    qm = self._get_quality_monitor()
+                    report = qm.report()
+                    result["metrics"] = {
+                        "ssim": report.get("avg_ssim", 0.0),
+                        "psnr": report.get("avg_psnr", 0.0),
+                        "total_encoded": report.get("total_calls", 0),
+                        "source": "vision_pipeline_quality_monitor",
+                    }
                 elif item["modality"] == "audio":
-                    result["metrics"] = {"note": "Feature-level evaluation"}
+                    qm = self._get_audio_quality_monitor()
+                    report = qm.report()
+                    result["metrics"] = {
+                        "snr": report.get("avg_snr", 0.0),
+                        "total_encoded": report.get("total_calls", 0),
+                        "source": "audio_pipeline_quality_monitor",
+                    }
             else:
                 pipeline = self._get_pipeline()
                 eval_result = pipeline.evaluate(n_samples=n_samples)
@@ -596,6 +628,20 @@ class MultimodalService:
             status["latent_space"] = True
         except Exception:
             status["latent_space"] = False
+        try:
+            # P33: Check vision pipeline health
+            vp = self._get_vision_pipeline()
+            if hasattr(vp, 'get_stats'):
+                status["vision_pipeline"] = vp.get_stats()
+        except Exception:
+            pass
+        try:
+            # P33: Check audio pipeline health
+            ap = self._get_audio_pipeline()
+            if hasattr(ap, 'get_stats'):
+                status["audio_pipeline"] = ap.get_stats()
+        except Exception:
+            pass
         try:
             async with self._items_lock:
                 status["registered_items"] = len(self._registered_items)
