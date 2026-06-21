@@ -165,33 +165,6 @@ class AudioPipeline:
         """Return current cache size."""
         return len(self._cache)
 
-    # --- P40: Semantic caption ---
-
-    def caption(self, audio_data: bytes, prompt: Optional[str] = None,
-                language: str = "zh", mode: str = "auto") -> Dict[str, Any]:
-        """Generate a semantic caption for the audio using LLM Audio API.
-
-        Uses AudioCaptionService to describe the audio content semantically.
-        This is a synchronous wrapper; the async call happens in MultimodalService.
-
-        Args:
-            audio_data: Raw WAV bytes
-            prompt: Optional custom prompt
-            language: "zh" for Chinese, "en" for English
-            mode: "auto", "transcribe", or "describe"
-
-        Returns:
-            dict with caption text, backend, language, mode, and pipeline info.
-        """
-        return {
-            "caption": "",
-            "backend": "none",
-            "language": language,
-            "mode": mode,
-            "pipeline_ready": True,
-            "note": "Call MultimodalService.audio_caption() for async LLM caption generation",
-        }
-
     # --- Utility methods ---
 
     def encode_only(self, audio_data: bytes) -> np.ndarray:

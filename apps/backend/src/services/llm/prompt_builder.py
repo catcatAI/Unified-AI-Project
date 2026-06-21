@@ -384,24 +384,6 @@ def construct_angela_prompt(
 {analysis}"""
         messages[0]["content"] += image_block
 
-    # P41: Semantic caption from LLM Vision API (VisionCaptionService)
-    image_caption = context.get("image_caption")
-    if image_caption:
-        caption_block = f"""
-
-{prompt('angela.image_caption')}
-{image_caption}"""
-        messages[0]["content"] += caption_block
-
-    # P41: Semantic caption from LLM Audio API (AudioCaptionService)
-    audio_caption = context.get("audio_caption")
-    if audio_caption:
-        caption_block = f"""
-
-{prompt('angela.audio_caption')}
-{audio_caption}"""
-        messages[0]["content"] += caption_block
-
     history = context.get("history", [])
     for h in history[-10:]:
         messages.append({"role": h.get("role", "assistant"), "content": h.get("content", "")})

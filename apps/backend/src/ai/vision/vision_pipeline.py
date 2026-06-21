@@ -177,34 +177,6 @@ class VisionPipeline:
         """Return current cache size."""
         return len(self._cache)
 
-    # --- P39: Semantic caption ---
-
-    def caption(self, image_data: bytes, prompt: Optional[str] = None,
-                language: str = "zh") -> Dict[str, Any]:
-        """Generate a semantic caption for the image using LLM Vision API.
-
-        Uses VisionCaptionService to describe the image content semantically.
-        This is a synchronous wrapper; the async call happens in MultimodalService.
-
-        Args:
-            image_data: Raw image bytes
-            prompt: Optional custom prompt
-            language: "zh" for Chinese, "en" for English
-
-        Returns:
-            dict with caption text, backend, language, time_ms, and cache info.
-        """
-        # This is a placeholder that delegates to MultimodalService's async caption method.
-        # The actual LLM Vision API call happens in vision_caption_service.py.
-        # We return a marker dict so MultimodalService knows the pipeline is ready.
-        return {
-            "caption": "",
-            "backend": "none",
-            "language": language,
-            "pipeline_ready": True,
-            "note": "Call MultimodalService.caption() for async LLM caption generation",
-        }
-
     # --- Utility methods ---
 
     def encode_only(self, image_data: bytes) -> np.ndarray:
