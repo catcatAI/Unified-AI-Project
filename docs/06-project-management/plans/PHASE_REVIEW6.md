@@ -1,7 +1,7 @@
 # Angela AI 專案全面分析與修復計畫 v30.0
 
-> **生成日期**: 2026-06-22 (第42輪 P24 生成品質進階 — VisualDecoder CNN 轉置卷積紋理 + AudioWaveformDecoder 波表合成 + quality_metrics)  
-> **分析範圍**: P24 — VisualDecoder _synthesize_texture (4×4×16 feat map → transposed conv → 128×128 detail); AudioWaveformDecoder wavetable oscillator (256-sample table per band); ssim/psnr/snr/quality_report; 138 測試  
+> **生成日期**: 2026-06-21 (第45輪 P27 訓練管道搭建 — ContrastiveBatchTrainer + ReconstructionTrainer + FullTrainingPipeline + CLI 腳本)  
+> **分析範圍**: P27 — ContrastiveBatchTrainer (合成正負對生成 + 對比學習 epoch); ReconstructionTrainer (多模態特徵合成 + 重建訓練 FullTrainingPipeline (兩階段: 對比預訓練→重建微調); scripts/train_multimodal.py (存/載權重); 11 新測試  
 > **專案版本**: 7.5.0-dev  
 
 ---
@@ -11,7 +11,7 @@
 | 指標 | 數值 | 狀態 |
 |------|------|------|
 | unit+api 測試 | **745 通過, 0 失敗, 39 跳過 (恆定); ED3N 114/114** | ✅ **ED3N 178s (28% 加速)** |
-| 多模態測試 | **138/138 全部通過** ✅ | **P15–P24 全部多模態 (含 quality_metrics 10 新測試)** |
+| 多模態測試 | **155/155 全部通過** ✅ | **P15–P27 全部多模態 (含 training_pipeline 11 新測試)** |
 | ChatService 測試 | **12/12 全部通過** ✅ | **P23 多模態上下文注入** |
 | ED3N 完整測試 | **114/114 通過** (含 3 thread_safety 修復) | ✅ **0 計時器超時** |
 | GARDEN 完整測試 | **205/205 通過** (+7 修復) | ✅ **ChromaEncoder 6/6 + binary_store 2/2 + 引擎全通** |
@@ -319,6 +319,17 @@
 | **Testing ×14** | `tests/ai/context/test_cultural_context.py` (NEW) ✅ | TestDetectCulture (6): 代碼/文字/CJK/한글/阿拉伯/預設. TestCulturalNotes (3): 區域列表/未知空列表/問候建議. TestEnrichContext (4): 區域注入/備註注入/保留 key/空文字 |
 | **Testing ×4** | `tests/ai/test_dictionary_layer.py` (NEW) ✅ | TestDisambiguate: 回傳所有 keys/空 context 保留原始/空 keys 回傳空/context 重排序 |
 | **測試結果** | **173/173 全部通過** ✅ | P26 新增 18 測試: 14 文化 + 4 WSD. 既有多模態 138 + 聊天 11 + ED3N 2 + 品質 4 = 173 通過, 0 失敗 |
+
+### 第45輪: P27 訓練管道搭建 — 對比預訓練 + 重建微調 + CLI 腳本 ✅
+
+| 變更 | 檔案 | 影響 |
+|------|------|------|
+| **ContrastiveBatchTrainer (合成數據對比學習)** | `ai/multimodal/training_pipeline.py` (NEW) ✅ | `generate_pairs(n_pairs)`: 生成合成正負訓練對 (shared seed + noise 為正, random 為負). `train_epoch()`: 委託 SharedLatentSpace._train_epoch() 執行單 epoch. `train()`: 完整訓練迴圈回傳 `{final_loss, history}`. 零外部數據依賴 |
+| **ReconstructionTrainer (合成數據重建訓練)** | `ai/multimodal/training_pipeline.py` (NEW) ✅ | `generate_features(n_samples)`: 為每個已註冊模態生成正確維度的隨機特徵向量. `train()`: 對每個模態調用 ReconstructionCycle.train() 進行多 epoch 重建訓練. 回傳每模態 `{final_loss, history}` |
+| **FullTrainingPipeline (兩階段端到端)** | `ai/multimodal/training_pipeline.py` (NEW) ✅ | **Phase 1**: 對比預訓練 SharedLatentSpace (合成正負對). **Phase 2**: 重建微調 decoders (合成特徵). `run()`: 執行兩階段, 回傳 `{contrastive, reconstruction}`. `evaluate()`: 在合成數據上評估重建損失 |
+| **CLI 腳本 (參數控制 + 權重存/載)** | `scripts/train_multimodal.py` (NEW) ✅ | `--contrastive-only` / `--recon-only` / `--evaluate-only` 模式. `--save` / `--load` 權重持久化 (npz 格式: vision_W/b, audio_W/b, decoder_W/b). 完整 pipeline 0.1s 完成 |
+| **Testing ×11** | `tests/ai/multimodal/test_training_pipeline.py` ✅ | ContrastiveBatchTrainer (5): 生成長度/正對結構/負對結構/損失下降/結果dict. ReconstructionTrainer (3): 生成dict/維度/多模態結果. FullTrainingPipeline (3): 兩階段結果/評估/邊界情況 |
+| **測試結果** | **155/155 全部通過** ✅ | P27 全部 11 測試 + 144 既有多模態 = 155 通過, 0 失敗 |
 
 | 變更 | 檔案 | 影響 |
 |------|------|------|
@@ -648,10 +659,13 @@ P26 → ✅ [多語言與文化]  → KOEDict 韓英字典 (koedict.json);
                            WSD disambiguate() 字典層語意消歧;
                            ChatService 文化感知接線
                            173/173 測試
-P27 → 🟡 [訓練管道搭建]  → 資料集下載 pipeline; 編碼器對比預訓練; VAE 重建訓練
+P27 → ✅ [訓練管道搭建]  → ContrastiveBatchTrainer + ReconstructionTrainer + FullTrainingPipeline
+                           scripts/train_multimodal.py (CLI 存/載權重); 11 新測試; 155/155 通過
 ```
 
-目前專案處於 **P26 完成** — 新增韓語字典、文化感知模組、語意消歧。韓語成為繼中/日/英後第四語言。CulturalContextModule 注入 6 文化區 × 4 社交概念的文化筆記至對話 context，讓 LLM 可做出文化適配回應。字典層 WSD 依 context 重新排序匹配 keys。173 測試全通過。**P27 將搭建真實訓練管道。**
+目前專案處於 **P27 完成** — 訓練管道搭建完畢: ContrastiveBatchTrainer (合成對比學習), ReconstructionTrainer (合成重建訓練), FullTrainingPipeline (兩階段端到端). `scripts/train_multimodal.py` CLI 支援 `--save`/`--load` 權重持久化. 155 測試全通過。
+
+**❄️ 當前限制**: pipeline 使用合成數據(隨機高斯噪聲)，編碼/解碼器從未見過真實影像/音頻分布。下一步 P28 將接入真實數據集。
 
 ## 5. 關鍵問題矩陣 (v8.0)
 
@@ -746,7 +760,8 @@ P27 → 🟡 [訓練管道搭建]  → 資料集下載 pipeline; 編碼器對比
 | **42** | **P24 生成品質進階** | **VisualDecoder CNN 卷積紋理 + AudioWaveformDecoder 波表合成 + quality_metrics SSIM/PSNR/SNR. 138/138 多模態測試通過 🎉 P24 全部完成!** |
 | **43** | **P25 完整閉環** | **ED3N process_multimodal RAG 整合 + SimilarityService 品質評估 + ChatService decode 輸出. 156/156 測試通過 🎉 P25 全部完成!** |
 | **44** | **P26 多語言與文化** | **Korean-English 字典下載/轉換/匯入 (koedict.json) + CulturalContextModule (6 文化區, 24 文化筆記, ChatService 接線) + WSD disambiguate() (字典層上下文消歧). 173/173 測試通過 🎉 P26 全部完成!** |
-| **總計** | **44 輪** | **120+ 修復, 智能 2→9/10, 1060+ 測試** |
+| **45** | **P27 訓練管道搭建** | **ContrastiveBatchTrainer (合成對比學習) + ReconstructionTrainer (合成重建訓練) + FullTrainingPipeline (兩階段端到端) + CLI 腳本 (存/載權重). 155/155 測試通過 🎉 P27 全部完成!** |
+| **總計** | **45 輪** | **120+ 修復, 智能 2→9/10, 1060+ 測試** |
 
 ## 7. 後續建議 (P25 完成後，多模態完整閉環就緒)
 
@@ -778,6 +793,7 @@ P27 → 🟡 [訓練管道搭建]  → 資料集下載 pipeline; 編碼器對比
 
 ### 路線
 
-1. **P27: 訓練管道搭建** — 資料集下載 pipeline (ImageNet subset / AudioSet / COCO); 編碼器對比預訓練; VAE 重建訓練
-2. **P28: 端到端訓練** — Encoder→Decoder→Retriever→ED3N, 全系統 fine-tune pipeline
-3. **維護: 測試持續監控** — 1060+ 測試維持; pre-commit hook 執行
+1. **P27: 訓練管道搭建** — ✅ **已完成!** ContrastiveBatchTrainer + ReconstructionTrainer + FullTrainingPipeline + CLI 腳本. 155/155 測試
+2. **P28: 真實數據集導入** — ImageNet subset / COCO Captions / ESC-50 / AudioCaps 下載; 數據轉換為 encoder-compatible 格式; 真實 pair 訓練取代合成數據
+3. **P29: 端到端訓練** — Encoder→Decoder→Retriever→ED3N, 全系統 fine-tune pipeline, 真實數據 closed-loop
+4. **維護: 測試持續監控** — 1060+ 測試維持; pre-commit hook 執行
