@@ -38,6 +38,7 @@ from ai.multimodal.multimodal_memory import MultimodalMemoryStore
 from ai.multimodal.semantic_visual import SemanticVisualEncoder
 from ai.multimodal.semantic_audio import SemanticAudioEncoder
 from ai.multimodal.dual_encoder_router import DualEncoderRouter
+from ai.multimodal.semantic_key_mapper import SemanticKeyMapper
 
 __all__ = [
     "VisualEncoder",
@@ -63,4 +64,5 @@ __all__ = [
     "SemanticVisualEncoder",
     "SemanticAudioEncoder",
     "DualEncoderRouter",
+    "SemanticKeyMapper",
 ]

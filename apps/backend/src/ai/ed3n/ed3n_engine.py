@@ -162,6 +162,8 @@ class ED3NEngine:
         self._continuous_learning = continuous_learning
         self._external_dicts_loaded = False
         self._last_confidence = 0.0
+        self._dual_encoder_router: Optional[Any] = None
+        self._semantic_key_mapper: Optional[Any] = None
         self.enable_multimodal()
         if auto_load_presets:
             self.load_presets()
@@ -594,8 +596,73 @@ class ED3NEngine:
         self.multimodal_adapter = adapter
         logger.info("MultimodalED3NAdapter set on ED3NEngine")
 
+    def set_dual_encoder_router(self, router: Any) -> None:
+        """Set the DualEncoderRouter (P42) for semantic encoding of non-text modalities.
+
+        When set, ``process_multimodal()`` will use the router's semantic
+        latents to find relevant concept keys via SemanticKeyMapper,
+        enabling the lower-bound semantic understanding path.
+        """
+        self._dual_encoder_router = router
+        logger.info("DualEncoderRouter set on ED3NEngine")
+
+    def _get_semantic_key_mapper(self):
+        """Lazy-create the SemanticKeyMapper (P44)."""
+        if self._semantic_key_mapper is None:
+            from ai.multimodal.semantic_key_mapper import SemanticKeyMapper
+            self._semantic_key_mapper = SemanticKeyMapper(max_entries=10000)
+        return self._semantic_key_mapper
+
     def is_multimodal_available(self) -> bool:
         return self.image_encoder is not None or self.audio_encoder is not None
+
+    def _process_semantic_keys(self,
+                                image_data: Optional[Any] = None,
+                                audio_data: Optional[Any] = None) -> List[str]:
+        """Use DualEncoderRouter + SemanticKeyMapper to find concept keys
+        from semantic latent vectors (P44).
+
+        This is the key lower-bound path: instead of converting non-text
+        modalities to text first, it encodes to semantic latents, then
+        maps those latents to the closest ED3N concept keys.
+
+        Returns a list of concept key strings (empty if no router/mapper).
+        """
+        router = self._dual_encoder_router
+        if router is None:
+            return []
+
+        mapper = self._get_semantic_key_mapper()
+        semantic_keys: List[str] = []
+        query_latents: List[np.ndarray] = []
+
+        if image_data:
+            try:
+                result = router.encode_vision(image_data, include_semantic=True)
+                combined = result.get("latent")
+                if combined is not None:
+                    query_latents.append(combined)
+            except Exception as e:
+                logger.debug("Semantic vision encoding failed: %s", e)
+
+        if audio_data:
+            try:
+                result = router.encode_audio(audio_data, include_semantic=True)
+                combined = result.get("latent")
+                if combined is not None:
+                    query_latents.append(combined)
+            except Exception as e:
+                logger.debug("Semantic audio encoding failed: %s", e)
+
+        for latent in query_latents:
+            matches = mapper.map_latent_to_keys(latent, top_k=3, mode="combined")
+            for m in matches:
+                key = m.get("key", "")
+                score = m.get("score", 0.0)
+                if key and score > 0.3 and key not in semantic_keys:
+                    semantic_keys.append(key)
+
+        return semantic_keys
 
     def process_multimodal(
         self,
@@ -638,6 +705,20 @@ class ED3NEngine:
                         combined_keys.insert(0, key)
             except Exception as e:
                 logger.debug("Multimodal RAG retrieval failed (non-critical): %s", e)
+
+        # P44: Semantic Key Mapping — use DualEncoderRouter's semantic latents
+        # to find closest concept keys, bypassing the old text-only path.
+        if self._dual_encoder_router is not None:
+            try:
+                semantic_keys = self._process_semantic_keys(
+                    image_data=image_data,
+                    audio_data=audio_data,
+                )
+                for key in semantic_keys:
+                    if key and key not in combined_keys:
+                        combined_keys.insert(0, key)
+            except Exception as e:
+                logger.debug("Semantic key retrieval failed (non-critical): %s", e)
 
         if not combined_keys:
             return self._fallback_str(text or "")
