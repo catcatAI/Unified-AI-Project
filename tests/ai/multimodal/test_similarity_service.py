@@ -43,7 +43,7 @@ class TestVisionServiceEncode:
     async def test_encode_image_returns_list(self, vision_service):
         result = await vision_service.encode_image(_sample_image_bytes())
         assert isinstance(result, list)
-        assert len(result) == 128
+        assert len(result) == 256
         assert all(isinstance(v, float) for v in result)
 
     async def test_encode_image_empty_returns_empty(self, vision_service):
@@ -53,7 +53,7 @@ class TestVisionServiceEncode:
     async def test_encode_image_zero_vector_on_bad_data(self, vision_service):
         result = await vision_service.encode_image(b"\x00\x00")
         assert isinstance(result, list)
-        assert len(result) == 128
+        assert len(result) == 256
 
 
 class TestAudioServiceEncode:
@@ -61,7 +61,7 @@ class TestAudioServiceEncode:
     async def test_encode_audio_returns_list(self, audio_service):
         result = await audio_service.encode_audio(_sample_audio_wav())
         assert isinstance(result, list)
-        assert len(result) == 32
+        assert len(result) == 128
         assert all(isinstance(v, float) for v in result)
 
     async def test_encode_audio_empty_returns_empty(self, audio_service):
@@ -71,7 +71,7 @@ class TestAudioServiceEncode:
     async def test_encode_audio_zero_vector_on_bad_data(self, audio_service):
         result = await audio_service.encode_audio(b"\x00\x00")
         assert isinstance(result, list)
-        assert len(result) == 32
+        assert len(result) == 128
 
 
 class TestMultimodalSimilarityService:
@@ -84,11 +84,11 @@ class TestMultimodalSimilarityService:
     async def test_encode_and_compare(self, sim_service):
         img_vec = await sim_service.encode_vision(_sample_image_bytes(), "img1")
         assert img_vec is not None
-        assert len(img_vec) == 128
+        assert len(img_vec) == 256
 
         aud_vec = await sim_service.encode_audio(_sample_audio_wav(), "aud1")
         assert aud_vec is not None
-        assert len(aud_vec) == 32
+        assert len(aud_vec) == 128
 
         assert sim_service.registered_item_count() == 2
         sim = sim_service.compare("img1", "aud1")

@@ -23,7 +23,7 @@ class TestVisualEncoder:
     def test_encode_returns_vector(self, encoder, sample_image_bytes):
         vec = encoder.encode(sample_image_bytes)
         assert isinstance(vec, np.ndarray)
-        assert vec.shape == (128,)
+        assert vec.shape == (256,)
         assert vec.dtype == np.float32
 
     def test_encode_empty_returns_zeros(self, encoder):
@@ -33,7 +33,7 @@ class TestVisualEncoder:
     def test_encode_from_pil(self, encoder):
         img = Image.new("RGB", (32, 32), color=(255, 0, 0))
         vec = encoder.encode_from_pil(img)
-        assert vec.shape == (128,)
+        assert vec.shape == (256,)
         assert not np.all(vec == 0.0)
 
     def test_different_images_different_vectors(self, encoder):

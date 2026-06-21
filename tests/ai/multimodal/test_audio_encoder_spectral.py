@@ -30,7 +30,7 @@ class TestAudioSpectralEncoder:
         wav_data = _make_sine_wav(440, 0.5)
         vec = encoder.encode(wav_data)
         assert isinstance(vec, np.ndarray)
-        assert vec.shape == (32,)
+        assert vec.shape == (128,)
         assert vec.dtype == np.float32
 
     def test_encode_empty_returns_zeros(self, encoder):

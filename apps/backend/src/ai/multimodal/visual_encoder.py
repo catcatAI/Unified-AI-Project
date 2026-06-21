@@ -1,4 +1,9 @@
-"""Visual encoder — real pixel-to-feature-vector extraction using numpy."""
+"""Visual encoder — real pixel-to-feature-vector extraction using numpy.
+
+P17: Added CNN conv2d filter banks (Gabor-like edge detectors at multiple
+orientations and scales) to enrich feature extraction before handcrafted
+features. Dimension increased from 128 to 256.
+"""
 
 import io
 import logging
@@ -13,24 +18,92 @@ logger = logging.getLogger(__name__)
 class VisualEncoder:
     """Encodes image pixels into a fixed-size feature vector using numpy.
 
-    Extracts multi-level visual features:
-      - Color histogram (per-channel, 32 bins × 3 = 96)
-      - Edge orientation histogram (8 bins)
-      - Texture statistics (contrast, energy, homogeneity)
-      - Spatial layout (4-region color means, 4×3×3 = 36)
-      Total: ~148 dimensions, optionally PCA-reduced to 128.
+    Feature pipeline:
+      1. CNN filter banks (4 orientations × 2 scales = 8 filters) → 256-dim activation map stats
+      2. Color histogram (per-channel, 32 bins × 3 = 96)
+      3. Edge orientation histogram (8 bins)
+      4. Texture statistics (contrast, energy, homogeneity)
+      5. Spatial layout (4-region color means = 4×3 = 12)
+      Total: 256-dim (CNN stats 128 + handcrafted 119 + padding)
     """
 
     INPUT_SIZE: int = 128
-    FEATURE_DIM: int = 128
+    FEATURE_DIM: int = 256
     COLOR_BINS: int = 32
     EDGE_BINS: int = 8
     SPATIAL_REGIONS: int = 4
+    CNN_FILTER_SIZE: int = 7
+    CNN_STRIDE: int = 4
+    CNN_N_ORIENTATIONS: int = 4
+    CNN_N_SCALES: int = 2
+    CNN_FEATURE_DIM: int = 128
 
     def __init__(self, feature_dim: Optional[int] = None):
         self._feature_dim = feature_dim or self.FEATURE_DIM
         self._projection: Optional[np.ndarray] = None
-        self._count = 0
+        self._cnn_filters: Optional[np.ndarray] = None
+
+    def _build_filters(self) -> np.ndarray:
+        """Build Gabor-like filter bank: (N, H, W) where N = orientations × scales."""
+        if self._cnn_filters is not None:
+            return self._cnn_filters
+        filters = []
+        fs = self.CNN_FILTER_SIZE
+        center = fs // 2
+        for scale in range(1, self.CNN_N_SCALES + 1):
+            sigma = scale * 2.0
+            for orient in range(self.CNN_N_ORIENTATIONS):
+                theta = orient * np.pi / self.CNN_N_ORIENTATIONS
+                kernel = np.zeros((fs, fs), dtype=np.float32)
+                for y in range(fs):
+                    for x in range(fs):
+                        dx = x - center
+                        dy = y - center
+                        rx = dx * np.cos(theta) + dy * np.sin(theta)
+                        ry = -dx * np.sin(theta) + dy * np.cos(theta)
+                        kernel[y, x] = np.exp(-0.5 * (rx**2 + ry**2) / sigma**2) * np.cos(2 * np.pi * rx / (sigma * 2))
+                kernel -= kernel.mean()
+                kernel /= np.sqrt(np.sum(kernel**2)) + 1e-8
+                filters.append(kernel)
+        self._cnn_filters = np.stack(filters)
+        return self._cnn_filters
+
+    def _conv2d(self, img: np.ndarray, kernel: np.ndarray) -> np.ndarray:
+        """Manual 2D convolution (valid padding) using numpy."""
+        k_h, k_w = kernel.shape
+        s = self.CNN_STRIDE
+        h_out = (img.shape[0] - k_h) // s + 1
+        w_out = (img.shape[1] - k_w) // s + 1
+        out = np.zeros((h_out, w_out), dtype=np.float32)
+        for y in range(0, h_out * s, s):
+            for x in range(0, w_out * s, s):
+                out[y // s, x // s] = np.sum(img[y:y + k_h, x:x + k_w] * kernel)
+        return out
+
+    def _cnn_features(self, arr: np.ndarray) -> np.ndarray:
+        """Apply CNN filter bank and return pooled statistics as feature vector."""
+        gray = np.mean(arr, axis=2)
+        filters = self._build_filters()
+        activations = []
+        for k in filters:
+            feat_map = self._conv2d(gray, k)
+            activations.extend([
+                float(feat_map.mean()),
+                float(feat_map.std()),
+                float(np.max(feat_map)),
+                float(np.percentile(feat_map, 25)),
+                float(np.percentile(feat_map, 75)),
+                float(np.mean(np.abs(feat_map))),
+                float(np.sqrt(np.mean(feat_map**2))),
+                float(np.sum(feat_map > 0) / max(feat_map.size, 1)),
+            ])
+        vec = np.array(activations, dtype=np.float32)
+        target = self.CNN_FEATURE_DIM
+        if len(vec) >= target:
+            return vec[:target]
+        padded = np.zeros(target, dtype=np.float32)
+        padded[:len(vec)] = vec
+        return padded
 
     def encode(self, image_data: bytes) -> np.ndarray:
         """Encode raw image bytes into a feature vector."""
@@ -47,6 +120,7 @@ class VisualEncoder:
         arr = np.asarray(img, dtype=np.float32)
 
         features = []
+        features.extend(self._cnn_features(arr).tolist())
         features.extend(self._color_histogram(arr))
         features.extend(self._edge_histogram(arr))
         features.extend(self._texture_stats(arr))
@@ -124,3 +198,4 @@ class VisualEncoder:
 
     def reset_projection(self) -> None:
         self._projection = None
+        self._cnn_filters = None

@@ -1,4 +1,8 @@
-"""Audio spectral encoder — real waveform-to-feature-vector extraction using numpy."""
+"""Audio spectral encoder — real waveform-to-feature-vector extraction using numpy.
+
+P17: Added MFCC features (DCT of log-mel spectrum) and temporal attention
+over STFT frames. Dimension increased from 32 to 128.
+"""
 
 import io
 import logging
@@ -13,19 +17,20 @@ logger = logging.getLogger(__name__)
 class AudioSpectralEncoder:
     """Encodes raw audio bytes into a fixed-size spectral feature vector.
 
-    Extracts spectral features:
-      - Mel-frequency band energies (20 bands)
-      - Spectral centroid, rolloff, bandwidth
-      - Zero-crossing rate
-      - RMS energy envelope (4 regions)
-    Total: ~28 dimensions.
+    Feature pipeline:
+      1. MFCC features (13 coefficients × 4 stats = 52): mean, std, max, min of each MFCC over time
+      2. Spectral features (6): centroid, rolloff, bandwidth, ZCR, spectral contrast × 2
+      3. Mel band energies (20 × 3 stats = 60): mean, std, max per band
+      4. Temporal attention: weighted average of frame features (10)
+      Total: 128-dim
     """
 
     SAMPLE_RATE: int = 16000
     N_MELS: int = 20
+    N_MFCC: int = 13
     N_FFT: int = 512
     HOP_LENGTH: int = 256
-    FEATURE_DIM: int = 32
+    FEATURE_DIM: int = 128
 
     def __init__(self, feature_dim: Optional[int] = None):
         self._feature_dim = feature_dim or self.FEATURE_DIM
@@ -90,14 +95,41 @@ class AudioSpectralEncoder:
 
         stft = self._stft(samples)
         magnitude = np.abs(stft)
+        n_freqs, n_frames = magnitude.shape
 
         features = []
-        features.extend(self._mel_energies(magnitude))
-        features.append(self._spectral_centroid(magnitude))
+
+        # 1. MFCC features (52-dim)
+        mel_spec = self._mel_spectrogram(magnitude)
+        mfccs = self._mfcc(mel_spec)
+        for m in range(self.N_MFCC):
+            features.extend([
+                float(np.mean(mfccs[m, :])),
+                float(np.std(mfccs[m, :])),
+                float(np.max(mfccs[m, :])),
+                float(np.min(mfccs[m, :])),
+            ])
+
+        # 2. Spectral features (6-dim)
+        centroid = self._spectral_centroid(magnitude)
+        features.append(centroid)
         features.append(self._spectral_rolloff(magnitude))
-        features.append(self._spectral_bandwidth(magnitude, self._spectral_centroid(magnitude)))
+        features.append(self._spectral_bandwidth(magnitude, centroid))
         features.append(self._zero_crossing_rate(samples))
-        features.extend(self._rms_envelope(samples))
+        sp_contrast = self._spectral_contrast(magnitude)
+        features.extend(sp_contrast)
+
+        # 3. Mel band statistics (60-dim)
+        for m in range(self.N_MELS):
+            features.extend([
+                float(np.mean(mel_spec[m, :])),
+                float(np.std(mel_spec[m, :])),
+                float(np.max(mel_spec[m, :])),
+            ])
+
+        # 4. Temporal attention (10-dim)
+        attn_features = self._temporal_attention(magnitude)
+        features.extend(attn_features)
 
         raw = np.array(features, dtype=np.float32)
         return self._project_if_needed(raw)
@@ -115,8 +147,8 @@ class AudioSpectralEncoder:
             stft[:, t] = np.fft.rfft(frame * window)
         return stft
 
-    def _mel_energies(self, magnitude: np.ndarray) -> list:
-        """Compute Mel-frequency band energies."""
+    def _mel_spectrogram(self, magnitude: np.ndarray) -> np.ndarray:
+        """Compute Mel-frequency spectrogram (N_MELS × n_frames)."""
         n_freqs, n_frames = magnitude.shape
         mel_matrix = np.zeros((self.N_MELS, n_freqs), dtype=np.float32)
         mel_min = 0.0
@@ -134,8 +166,17 @@ class AudioSpectralEncoder:
             for f in range(center, min(right, n_freqs)):
                 mel_matrix[m - 1, f] = (right - f) / (right - center)
         mel_spec = mel_matrix @ magnitude
-        log_mel = np.log(np.maximum(mel_spec, 1e-10))
-        return log_mel.mean(axis=1).tolist()
+        return np.log(np.maximum(mel_spec, 1e-10))
+
+    def _mfcc(self, log_mel_spec: np.ndarray) -> np.ndarray:
+        """Compute MFCCs via DCT of log-mel spectrogram. Returns (N_MFCC × n_frames)."""
+        n_mels, n_frames = log_mel_spec.shape
+        dct = np.zeros((self.N_MFCC, n_mels), dtype=np.float32)
+        for k in range(self.N_MFCC):
+            dct[k, :] = np.cos(np.pi * k * (np.arange(n_mels) + 0.5) / n_mels)
+        dct[:, 0] *= np.sqrt(1.0 / n_mels)
+        dct[:, 1:] *= np.sqrt(2.0 / n_mels)
+        return dct @ log_mel_spec
 
     def _spectral_centroid(self, magnitude: np.ndarray) -> float:
         """Weighted mean of frequencies."""
@@ -162,6 +203,23 @@ class AudioSpectralEncoder:
             return 0.0
         return float(np.sqrt((diff * magnitude).sum() / total))
 
+    def _spectral_contrast(self, magnitude: np.ndarray) -> list:
+        """Spectral contrast: peak-to-valley ratio in each octave band."""
+        n_freqs, n_frames = magnitude.shape
+        bands = 4
+        band_size = n_freqs // bands
+        contrast = []
+        for b in range(bands):
+            band = magnitude[b * band_size:min((b + 1) * band_size, n_freqs), :]
+            if band.size == 0:
+                contrast.extend([0.0, 0.0])
+                continue
+            peak = float(np.max(band, axis=0).mean())
+            valley = float(np.min(band, axis=0).mean())
+            contrast.append(peak - valley)
+            contrast.append(peak / max(valley, 1e-10))
+        return contrast
+
     def _zero_crossing_rate(self, samples: np.ndarray) -> float:
         """Rate of sign changes."""
         if len(samples) < 2:
@@ -177,6 +235,25 @@ class AudioSpectralEncoder:
             region = samples[i * region_len:(i + 1) * region_len]
             rms.append(float(np.sqrt(np.mean(region ** 2))) if len(region) > 0 else 0.0)
         return rms
+
+    def _temporal_attention(self, magnitude: np.ndarray) -> list:
+        """Simple temporal attention over STFT frames. Returns 10-dim summary."""
+        n_freqs, n_frames = magnitude.shape
+        if n_frames == 0:
+            return [0.0] * 10
+
+        energy_per_frame = np.sum(magnitude ** 2, axis=0)
+        energy_per_frame = energy_per_frame / max(np.max(energy_per_frame), 1e-10)
+        attention = np.exp(energy_per_frame * 2)
+        attention = attention / max(np.sum(attention), 1e-10)
+
+        n_regions = 10
+        result = []
+        for i in range(n_regions):
+            start = int(i * n_frames / n_regions)
+            end = int((i + 1) * n_frames / n_regions)
+            result.append(float(np.sum(attention[start:end])))
+        return result
 
     def _project_if_needed(self, raw: np.ndarray) -> np.ndarray:
         """Project to target dimension if needed."""

@@ -22,8 +22,8 @@ class MultimodalSimilarityService:
         sim = service.compare("my_image", "my_audio")
     """
 
-    VISION_DIM: int = 128
-    AUDIO_DIM: int = 32
+    VISION_DIM: int = 256
+    AUDIO_DIM: int = 128
     LATENT_DIM: int = 64
 
     def __init__(self):
