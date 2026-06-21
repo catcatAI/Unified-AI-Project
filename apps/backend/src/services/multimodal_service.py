@@ -55,6 +55,8 @@ class MultimodalService:
         self._pipeline = None
         self._vision_pipeline = None
         self._quality_monitor = None
+        self._audio_pipeline = None
+        self._audio_quality_monitor = None
         self._registered_items: Dict[str, Dict[str, Any]] = {}
         self._items_lock = asyncio.Lock()
 
@@ -117,6 +119,20 @@ class MultimodalService:
             from ai.vision.quality_monitor import VisionQualityMonitor
             self._quality_monitor = VisionQualityMonitor()
         return self._quality_monitor
+
+    def _get_audio_pipeline(self):
+        """Get or create the AudioPipeline (P32)."""
+        if self._audio_pipeline is None:
+            from ai.audio.audio_pipeline import AudioPipeline
+            self._audio_pipeline = AudioPipeline()
+        return self._audio_pipeline
+
+    def _get_audio_quality_monitor(self):
+        """Get or create the AudioQualityMonitor (P32)."""
+        if self._audio_quality_monitor is None:
+            from ai.audio.quality_monitor import AudioQualityMonitor
+            self._audio_quality_monitor = AudioQualityMonitor()
+        return self._audio_quality_monitor
 
     def _get_pipeline(self):
         if self._pipeline is None:

@@ -167,5 +167,46 @@ class AudioService:
             logger.warning("AudioSpectralEncoder failed: %s", e)
             return []
 
+    async def encode_with_pipeline(self, audio_data: bytes) -> dict:
+        """Run the full audio pipeline: encode → latent → decode → SNR.
+
+        P32: Uses AudioPipeline for end-to-end processing.
+        Returns dict with pipeline result including feature_vector, latent, snr.
+        """
+        if not audio_data:
+            return {"error": "Empty audio data"}
+        try:
+            from ai.audio.audio_pipeline import AudioPipeline
+            pipeline = AudioPipeline()
+            result = pipeline.process(audio_data)
+            return result
+        except Exception as e:
+            logger.warning("AudioPipeline failed: %s", e)
+            return {"error": str(e)}
+
+    async def batch_encode(self, audio_list: list) -> list:
+        """Run AudioPipeline on multiple audio clips in batch.
+
+        Args:
+            audio_list: List of raw WAV byte arrays
+
+        Returns:
+            List of pipeline result dicts
+        """
+        results = []
+        for audio_data in audio_list:
+            result = await self.encode_with_pipeline(audio_data)
+            results.append(result)
+        return results
+
+    def clear_audio_pipeline_cache(self) -> None:
+        """Clear AudioPipeline internal cache."""
+        try:
+            from ai.audio.audio_pipeline import AudioPipeline
+            p = AudioPipeline()
+            p.clear_cache()
+        except Exception as e:
+            logger.debug("Clear cache failed: %s", e)
+
     def set_peer_services(self, services: dict) -> None:
         self.peer_services = services
