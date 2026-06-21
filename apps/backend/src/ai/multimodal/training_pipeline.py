@@ -3,7 +3,9 @@
 # =============================================================================
 
 import logging
+import os
 import time
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -19,6 +21,11 @@ logger = logging.getLogger(__name__)
 
 # Type alias for contrastive pair: (mod_a, feat_a, mod_b, feat_b)
 ContrastivePair = Tuple[str, np.ndarray, str, np.ndarray]
+
+
+# Default weight save path
+DEFAULT_WEIGHTS_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent.parent / "data" / "multimodal" / "weights"
+DEFAULT_WEIGHTS_PATH = str(DEFAULT_WEIGHTS_DIR / "p29_trained.npz")
 
 
 class ContrastiveBatchTrainer:
@@ -272,6 +279,71 @@ class FullTrainingPipeline:
             "reconstruction": recon_result,
             "data_source": "real",
         }
+
+    def save_weights(self, path: Optional[str] = None) -> str:
+        """Save trained weights to a .npz file.
+
+        Args:
+            path: Output path (default: data/multimodal/weights/p29_trained.npz)
+
+        Returns:
+            Path where weights were saved, or empty string on failure.
+        """
+        save_path = path or DEFAULT_WEIGHTS_PATH
+        try:
+            vis = self._ls._projections.get("vision", {})
+            aud = self._ls._projections.get("audio", {})
+            save_data = {
+                "vision_W": vis.get("W", np.zeros(1)).copy(),
+                "vision_b": vis.get("b", np.zeros(1)).copy(),
+                "audio_W": aud.get("W", np.zeros(1)).copy(),
+                "audio_b": aud.get("b", np.zeros(1)).copy(),
+                "visual_decoder_W": self._visual_decoder._W.copy(),
+                "visual_decoder_b": self._visual_decoder._b.copy(),
+                "audio_decoder_W": self._audio_decoder._W.copy(),
+                "audio_decoder_b": self._audio_decoder._b.copy(),
+            }
+            Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+            np.savez(save_path, **save_data)
+            logger.info("Trained weights saved to %s", save_path)
+            return save_path
+        except Exception as e:
+            logger.warning("Failed to save weights: %s", e)
+            return ""
+
+    def load_weights(self, path: str) -> bool:
+        """Load trained weights from a .npz file.
+
+        Args:
+            path: Path to .npz weights file
+
+        Returns:
+            True on success
+        """
+        try:
+            data = np.load(path, allow_pickle=False)
+        except Exception as e:
+            logger.warning("Failed to load weights from %s: %s", path, e)
+            return False
+
+        try:
+            if "vision_W" in data:
+                self._ls._projections["vision"]["W"][:] = data["vision_W"]
+                self._ls._projections["vision"]["b"][:] = data["vision_b"]
+            if "audio_W" in data:
+                self._ls._projections["audio"]["W"][:] = data["audio_W"]
+                self._ls._projections["audio"]["b"][:] = data["audio_b"]
+            if "visual_decoder_W" in data:
+                self._visual_decoder._W[:] = data["visual_decoder_W"]
+                self._visual_decoder._b[:] = data["visual_decoder_b"]
+            if "audio_decoder_W" in data:
+                self._audio_decoder._W[:] = data["audio_decoder_W"]
+                self._audio_decoder._b[:] = data["audio_decoder_b"]
+            logger.info("Weights loaded from %s", path)
+            return True
+        except Exception as e:
+            logger.warning("Failed to apply weights: %s", e)
+            return False
 
     def evaluate(self, n_samples: int = 5,
                  real_features: Optional[Dict[str, List[np.ndarray]]] = None) -> Dict:

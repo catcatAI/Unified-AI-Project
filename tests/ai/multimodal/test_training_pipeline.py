@@ -1,5 +1,7 @@
 """Tests for multimodal training pipeline — contrastive + reconstruction training."""
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 
@@ -111,3 +113,51 @@ class TestFullTrainingPipeline:
                               recon_epochs=1, recon_samples=2, lr=0.01)
         assert isinstance(result["contrastive"]["final_loss"], float)
         assert result["contrastive"]["final_loss"] > 0
+
+    # --- P29: Weight persistence tests ---
+
+    def test_save_weights_creates_file(self, pipeline, tmp_path):
+        """save_weights should create a .npz file."""
+        save_path = str(tmp_path / "test_weights.npz")
+        result = pipeline.save_weights(save_path)
+        assert result != ""
+        assert Path(save_path).exists()
+
+    def test_save_and_load_weights_roundtrip(self, pipeline, tmp_path):
+        """After save+load, the weights should be identical."""
+        save_path = str(tmp_path / "roundtrip.npz")
+
+        # Train a bit to change weights from initial random
+        pipeline.run(contrastive_epochs=2, contrastive_pairs=5,
+                     recon_epochs=1, recon_samples=3, lr=0.01)
+
+        # Save post-training weights
+        pipeline.save_weights(save_path)
+
+        # Snapshot the trained weights
+        import numpy as np
+        data_before = np.load(save_path, allow_pickle=False)
+        w_before = data_before["vision_W"].copy()
+
+        # Create a fresh pipeline (random weights) and load
+        from ai.multimodal.training_pipeline import FullTrainingPipeline
+        fresh = FullTrainingPipeline()
+        loaded = fresh.load_weights(save_path)
+        assert loaded
+
+        # Verify weights match
+        vis_W_now = fresh._ls._projections["vision"]["W"]
+        assert np.allclose(vis_W_now, w_before)
+
+    def test_load_weights_invalid_path(self, pipeline):
+        """load_weights on nonexistent path should return False."""
+        assert not pipeline.load_weights("/nonexistent/path.npz")
+
+    def test_save_weights_default_path(self, pipeline):
+        """save_weights() with no args should use DEFAULT_WEIGHTS_PATH."""
+        from ai.multimodal.training_pipeline import DEFAULT_WEIGHTS_PATH
+        result = pipeline.save_weights()
+        assert result != ""
+        assert Path(result).exists()
+        # Clean up
+        Path(result).unlink(missing_ok=True)

@@ -112,6 +112,69 @@ class MultimodalSimilarityService:
             return None
         return emb.tolist()
 
+    def load_weights(self, weights_path: str) -> bool:
+        """Load trained weights from a .npz file into SharedLatentSpace and decoders.
+
+        Expected keys: vision_W, vision_b, audio_W, audio_b,
+                       visual_decoder_W, visual_decoder_b,
+                       audio_decoder_W, audio_decoder_b.
+
+        Returns True on success, False if file not found or invalid.
+        """
+        try:
+            import numpy as np
+            data = np.load(weights_path, allow_pickle=False)
+        except Exception as e:
+            logger.warning("Failed to load weights from %s: %s", weights_path, e)
+            return False
+
+        try:
+            if "vision_W" in data:
+                self._latent_space._projections["vision"]["W"][:] = data["vision_W"]
+                self._latent_space._projections["vision"]["b"][:] = data["vision_b"]
+            if "audio_W" in data:
+                self._latent_space._projections["audio"]["W"][:] = data["audio_W"]
+                self._latent_space._projections["audio"]["b"][:] = data["audio_b"]
+            if "visual_decoder_W" in data:
+                self._visual_decoder._W[:] = data["visual_decoder_W"]
+                self._visual_decoder._b[:] = data["visual_decoder_b"]
+            if "audio_decoder_W" in data:
+                self._audio_decoder._W[:] = data["audio_decoder_W"]
+                self._audio_decoder._b[:] = data["audio_decoder_b"]
+            logger.info("Trained weights loaded from %s", weights_path)
+            return True
+        except Exception as e:
+            logger.warning("Failed to apply weights: %s", e)
+            return False
+
+    def save_weights(self, weights_path: str) -> bool:
+        """Save current weights to a .npz file.
+
+        Useful for snapshotting before/after training comparisons.
+        """
+        try:
+            import numpy as np
+            from pathlib import Path
+            vis = self._latent_space._projections.get("vision", {})
+            aud = self._latent_space._projections.get("audio", {})
+            save_data = {
+                "vision_W": vis.get("W", np.zeros(1)).copy(),
+                "vision_b": vis.get("b", np.zeros(1)).copy(),
+                "audio_W": aud.get("W", np.zeros(1)).copy(),
+                "audio_b": aud.get("b", np.zeros(1)).copy(),
+                "visual_decoder_W": self._visual_decoder._W.copy(),
+                "visual_decoder_b": self._visual_decoder._b.copy(),
+                "audio_decoder_W": self._audio_decoder._W.copy(),
+                "audio_decoder_b": self._audio_decoder._b.copy(),
+            }
+            Path(weights_path).parent.mkdir(parents=True, exist_ok=True)
+            np.savez(weights_path, **save_data)
+            logger.info("Weights saved to %s", weights_path)
+            return True
+        except Exception as e:
+            logger.warning("Failed to save weights: %s", e)
+            return False
+
     def registered_item_count(self) -> int:
         return len(self._items)
 

@@ -132,3 +132,36 @@ class MultimodalBridge:
             return {"key": "", "value": label, "vector": []}
         key = f"mm_latent_{hash(tuple(latent[:8])) & 0xFFFFFFFF:08x}"
         return {"key": key, "value": label, "vector": latent}
+
+    # --- Weight persistence (P29) ---
+
+    def load_weights(self, weights_path: str) -> bool:
+        """Load trained weights from a .npz file.
+
+        See SimilarityService.load_weights for the expected format.
+        """
+        try:
+            import numpy as np
+            data = np.load(weights_path, allow_pickle=False)
+        except Exception as e:
+            logger.warning("Bridge load_weights failed: %s", e)
+            return False
+
+        try:
+            if "vision_W" in data:
+                self._latent_space._projections["vision"]["W"][:] = data["vision_W"]
+                self._latent_space._projections["vision"]["b"][:] = data["vision_b"]
+            if "audio_W" in data:
+                self._latent_space._projections["audio"]["W"][:] = data["audio_W"]
+                self._latent_space._projections["audio"]["b"][:] = data["audio_b"]
+            if "visual_decoder_W" in data:
+                self._visual_decoder._W[:] = data["visual_decoder_W"]
+                self._visual_decoder._b[:] = data["visual_decoder_b"]
+            if "audio_decoder_W" in data:
+                self._audio_decoder._W[:] = data["audio_decoder_W"]
+                self._audio_decoder._b[:] = data["audio_decoder_b"]
+            logger.info("Bridge: trained weights loaded from %s", weights_path)
+            return True
+        except Exception as e:
+            logger.warning("Bridge: failed to apply weights: %s", e)
+            return False

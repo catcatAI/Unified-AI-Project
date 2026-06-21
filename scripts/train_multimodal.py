@@ -50,6 +50,12 @@ def main():
                         help="Number of contrastive pairs per modality (default: 30)")
     parser.add_argument("--real-samples", type=int, default=30,
                         help="Number of reconstruction samples per modality (default: 30)")
+    parser.add_argument("--auto-save", action="store_true",
+                        help="Save trained weights automatically after training")
+    parser.add_argument("--auto-load", type=str, default="", nargs="?", const="auto",
+                        help="Load trained weights before training (path or 'auto' for default)")
+    parser.add_argument("--eval-before", action="store_true",
+                        help="Evaluate quality before training (for before/after comparison)")
     args = parser.parse_args()
 
     print("=" * 60)
@@ -58,23 +64,18 @@ def main():
 
     pipeline = FullTrainingPipeline()
 
-    if args.load:
-        print(f"\nLoading weights from {args.load}...")
-        import numpy as np
-        data = np.load(args.load, allow_pickle=True).item()
-        if "vision_W" in data:
-            pipeline._ls._projections["vision"]["W"][:] = data["vision_W"]
-            pipeline._ls._projections["vision"]["b"][:] = data["vision_b"]
-        if "audio_W" in data:
-            pipeline._ls._projections["audio"]["W"][:] = data["audio_W"]
-            pipeline._ls._projections["audio"]["b"][:] = data["audio_b"]
-        if "visual_decoder_W" in data:
-            pipeline._visual_decoder._W[:] = data["visual_decoder_W"]
-            pipeline._visual_decoder._b[:] = data["visual_decoder_b"]
-        if "audio_decoder_W" in data:
-            pipeline._audio_decoder._W[:] = data["audio_decoder_W"]
-            pipeline._audio_decoder._b[:] = data["audio_decoder_b"]
-        print("  Loaded successfully")
+    # Auto-load weights before training (P29: end-to-end pipeline)
+    load_path = args.load
+    if args.auto_load and args.auto_load != "":
+        load_path = args.auto_load if args.auto_load != "auto" else None
+    if load_path:
+        from ai.multimodal.training_pipeline import DEFAULT_WEIGHTS_PATH
+        wpath = load_path if load_path != "auto" else DEFAULT_WEIGHTS_PATH
+        print(f"\nLoading weights from {wpath}...")
+        if pipeline.load_weights(wpath):
+            print("  Loaded successfully")
+        else:
+            print("  No weights found or load failed (will train from scratch)")
 
     # Real data mode: load and optionally encode real datasets
     data_provider = None
@@ -101,15 +102,18 @@ def main():
         except Exception as e:
             print(f"  Warning: real data load failed: {e}")
 
-    if args.evaluate_only:
-        print("\n=== Evaluation only ===")
+    # Optional: evaluate BEFORE training (for before/after comparison)
+    if args.eval_before:
+        print("\n=== Evaluation BEFORE training ===")
         if data_provider and data_provider.has_data():
             recon_features = data_provider.reconstruction_samples(n_per_modality=5)
-            results = pipeline.evaluate(n_samples=5, real_features=recon_features)
+            before_results = pipeline.evaluate(n_samples=5, real_features=recon_features)
         else:
-            results = pipeline.evaluate(n_samples=5)
-        for mod, res in results.items():
-            print(f"  {mod}: avg_reconstruction_loss={res['avg_reconstruction_loss']:.6f}")
+            before_results = pipeline.evaluate(n_samples=5)
+        for mod, res in before_results.items():
+            print(f"  {mod} (before): avg_loss={res['avg_reconstruction_loss']:.6f}")
+
+    if args.evaluate_only:
         return
 
     t_start = time.perf_counter()
@@ -187,25 +191,22 @@ def main():
             for mod, res in result.get("reconstruction", {}).items():
                 print(f"  {mod} reconstruction loss:  {res['final_loss']:.6f}")
 
+    # Save weights (explicit --save or automatic --auto-save)
     if args.save:
-        import numpy as np
-        save_data = {
-            "vision_W": pipeline._ls._projections.get("vision", {}).get("W", np.zeros(1)).copy(),
-            "vision_b": pipeline._ls._projections.get("vision", {}).get("b", np.zeros(1)).copy(),
-            "audio_W": pipeline._ls._projections.get("audio", {}).get("W", np.zeros(1)).copy(),
-            "audio_b": pipeline._ls._projections.get("audio", {}).get("b", np.zeros(1)).copy(),
-            "visual_decoder_W": pipeline._visual_decoder._W.copy(),
-            "visual_decoder_b": pipeline._visual_decoder._b.copy(),
-            "audio_decoder_W": pipeline._audio_decoder._W.copy(),
-            "audio_decoder_b": pipeline._audio_decoder._b.copy(),
-        }
-        Path(args.save).parent.mkdir(parents=True, exist_ok=True)
-        np.savez(args.save, **save_data)
+        pipeline.save_weights(args.save)
         print(f"Weights saved to {args.save}")
+    if args.auto_save:
+        saved_path = pipeline.save_weights()
+        if saved_path:
+            print(f"Auto-saved weights to {saved_path}")
 
     # Final evaluation
     print("\n=== Final evaluation ===")
-    results = pipeline.evaluate(n_samples=5)
+    if data_provider and data_provider.has_data():
+        recon_features = data_provider.reconstruction_samples(n_per_modality=5)
+        results = pipeline.evaluate(n_samples=5, real_features=recon_features)
+    else:
+        results = pipeline.evaluate(n_samples=5)
     for mod, res in results.items():
         print(f"  {mod}: avg_reconstruction_loss={res['avg_reconstruction_loss']:.6f}")
 
