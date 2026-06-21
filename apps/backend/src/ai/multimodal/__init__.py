@@ -1,9 +1,21 @@
 # =============================================================================
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
 # =============================================================================
+"""
+Multimodal module — real modality encoders and shared latent space.
 
-# =============================================================================
-# DEPRECATED: This subpackage has no production consumers.
-# Retained for reference — not wired into the running system.
-# See MASTER_CONSOLIDATED_PLAN.md § Phase 4 Priority 2.
-# =============================================================================
+P15: VisualEncoder (pixel→vector), AudioSpectralEncoder (waveform→vector),
+     SharedLatentSpace (unified embedding space with cross-modal similarity).
+"""
+
+from ai.multimodal.visual_encoder import VisualEncoder
+from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
+from ai.multimodal.shared_latent_space import SharedLatentSpace
+from ai.multimodal.multimodal_processor import MultimodalProcessor
+
+__all__ = [
+    "VisualEncoder",
+    "AudioSpectralEncoder",
+    "SharedLatentSpace",
+    "MultimodalProcessor",
+]
