@@ -177,9 +177,3 @@ class TestEdgeCases:
         k.append("new_key")
         assert seeded_mapper.count == 5
 
-    def test_index_from_dictionary_no_data(self, mapper):
-        """E6: index_from_dictionary with empty dict does nothing."""
-        class MockDict:
-            entries = {}
-        count = mapper.index_from_dictionary(MockDict(), None)
-        assert count == 0

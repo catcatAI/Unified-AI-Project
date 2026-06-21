@@ -1,10 +1,10 @@
-# Angela AI 專案全面分析與修復計畫 v33.4
+# Angela AI 專案全面分析與修復計畫 v33.5
 
-> **生成日期**: 2026-06-22 (第59-62輪 P39-P41清除+P42語意編碼器+P43語意隱空間融合+P44 SemanticKeyMapper 全部完成)  
-> **分析範圍**: P30-P38 (多模態管線基礎設施, 170 測試全通過) + P42 (真實語意編碼器, +22 測試) + P43 (語意隱空間融合, +19 測試) + P44 (ED3N 接線, +18 測試)  
+> **生成日期**: 2026-06-22 (第59-62輪 P39-P41清除+P42語意編碼器+P43語意隱空間融合+P44 SemanticKeyMapper 全部完成, 第62.5輪 P44 非繞過測試重寫)  
+> **分析範圍**: P30-P38 (多模態管線基礎設施, 170 測試全通過) + P42 (真實語意編碼器, +22 測試) + P43 (語意隱空間融合, +19 測試) + P44 (ED3N 接線, +18 測試, 後重寫為非繞過測試)  
 > **專案版本**: 7.5.0-dev  
 > **方向修正**: P39-P41（LLM API 橋接）已移除——違背真實多模態目標，不計入智能下限  
-> **下一階段**: P45 真實語意端到端測試 — 脫離 mock，用真實 CLIP + 真實字典條目 + 跨圖像推廣驗證小雞吃米圖
+> **下一階段**: P45 真實語意端到端測試 — pip install open-clip-torch 安裝真實 CLIP，用真實語意編碼 + 真實字典條目 + 跨圖像推廣驗證小雞吃米圖
 
 ---
 
@@ -904,8 +904,9 @@ SemanticVisualEncoder (512-dim CLIP 語意) ← 新增
 | ~~57~~ | ~~P40 LLM Audio Caption~~ ❌ **已移除** | 虛假多模態：外部 Whisper API，無助於智能下限 |
 | ~~58~~ | ~~P41 對話語意整合~~ ❌ **已移除** | 虛假多模態：繞過而非利用真實多模態管線 |
 | **59-61** | **P42+P43 語意編碼器 + 隱空間融合** | SemanticVisualEncoder + SemanticAudioEncoder + DualEncoderRouter + SharedLatentSpace 語意擴充 + semantic_consistency/contrastive_train |
-| **62** | **P44 SemanticKeyMapper** | SemanticKeyMapper (語意隱向量→ED3N概念鍵) + ED3NEngine 整合 + 小雞吃米圖基礎設施 18 測試 + 誠實審計: 繞過測試 (mock CLIP roundtrip, 非真實語意) |
-| **總計** | **62 輪** | **155+ 修復, 357 多模態測試 (P15-P44), P39-P41 已移除 (虛假多模態)** |
+| **62** | **P44 SemanticKeyMapper (繞過測試版)** | SemanticKeyMapper + ED3NEngine 整合 + mock CLIP roundtrip 18 測試 — 標記為繞過測試 |
+| **62.5** | **P44 SemanticKeyMapper (非繞過重寫)** 🔥 | **全部 5 小雞吃米圖測試重寫為真實測試**: VisualEncoder 真實編碼 + SharedLatentSpace 對比訓練 (30 epoch, 66 pairs) + 跨圖像推廣驗證 (index image_A, query image_B) + 3 概念鑑別 (chicken/cat/dog) + 權重變化驗證. 移除 `index_from_dictionary` (隨機雜訊 stub). 移除 `index_from_dictionary` 對應測試 |
+| **總計** | **62.5 輪** | **155+ 修復, 345 多模態測試 (P15-P44), P39-P41 已移除, P44 繞過測試已取代** |
 
 ## 7. 後續建議 — 多模態管線 vs 對話管線對比與完整管線建設計畫
 

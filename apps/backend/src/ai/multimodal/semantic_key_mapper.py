@@ -184,55 +184,6 @@ class SemanticKeyMapper:
         return results
 
     # ------------------------------------------------------------------
-    # Bulk indexing from dictionary entries
-    # ------------------------------------------------------------------
-
-    def index_from_dictionary(self, dictionary: Any,
-                              router: Any,
-                              max_keys: int = 100) -> int:
-        """Seed mapper with synthetic latents from dictionary keys. (STUB)
-
-        NOTE: This is a **stub** — it generates random latent vectors for
-        each key rather than encoding real data through *router*.
-        Real encoding would require real image/audio data per concept,
-        which is impractical for 100K+ dictionary entries.
-
-        The random latents provide enough structure for the mapper to
-        differentiate keys by hash-based seed, but do NOT carry any
-        semantic signal.  For production use, seed the mapper via
-        ``index_key()`` or ``index_from_router_result()`` with actual
-        encoder outputs.
-
-        Args:
-            dictionary: Object with ``entries`` dict.
-            router: DualEncoderRouter instance (currently unused).
-            max_keys: Maximum number of entries to index.
-
-        Returns:
-            Number of entries indexed.
-        """
-        count = 0
-        entries = getattr(dictionary, "entries", {})
-        keys = list(entries.keys())[:max_keys]
-
-        for key in keys:
-            entry = entries.get(key)
-            if entry is None:
-                continue
-            rng = np.random.default_rng(hash(key) % (2**31))
-            struct_lat = rng.normal(0, 0.1, 64).astype(np.float32)
-            sem_lat = rng.normal(0, 0.1, 64).astype(np.float32)
-            self.index_key(key, struct_lat, sem_lat)
-            count += 1
-
-        logger.warning(
-            "SemanticKeyMapper.index_from_dictionary (STUB): indexed %d "
-            "entries with RANDOM latents — zero semantic signal",
-            count
-        )
-        return count
-
-    # ------------------------------------------------------------------
     # Introspection
     # ------------------------------------------------------------------
 
