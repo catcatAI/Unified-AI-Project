@@ -499,27 +499,30 @@ class TestContinuousLearningPipeline:
 
     def test_thread_safety_encode(self, engine: ED3NEngine):
         import concurrent.futures
+        engine.warm_up()
         dl = engine.dictionary
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
             futures = [pool.submit(dl.encode, t) for t in ["你好", "hello", "再见", "谢谢"] * 8]
-            results = [f.result() for f in futures]
+            results = [f.result(timeout=120) for f in futures]
         assert len(results) == 32
         assert all(isinstance(r, list) for r in results)
 
     def test_thread_safety_process(self, engine: ED3NEngine):
         import concurrent.futures
+        engine.warm_up()
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
             futures = [pool.submit(engine.process, t) for t in ["你好", "hello", "再见", "谢谢"] * 8]
-            results = [f.result() for f in futures]
+            results = [f.result(timeout=120) for f in futures]
         assert len(results) == 32
         assert all(isinstance(r, str) for r in results)
 
     def test_thread_safety_cl(self, engine: ED3NEngine):
         import concurrent.futures
+        engine.warm_up()
         cl = ContinuousLearningPipeline(engine=engine, auto_grow=False)
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
             futures = [pool.submit(cl.process_interaction, f"test_{i}", f"resp_{i}", {}) for i in range(20)]
-            results = [f.result() for f in futures]
+            results = [f.result(timeout=120) for f in futures]
         assert len(results) == 20
         assert cl._interaction_count == 20
 
