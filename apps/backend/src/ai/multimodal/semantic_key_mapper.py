@@ -44,6 +44,7 @@ class SemanticKeyMapper:
         self._structural_latents: List[np.ndarray] = []  # 64-dim each
         self._semantic_latents: List[np.ndarray] = []    # 64-dim each
         self._combined_latents: List[np.ndarray] = []    # 64-dim each
+        self._raw_semantic_vectors: List[np.ndarray] = []  # 512/384-dim CLIP/Whisper
 
     # ------------------------------------------------------------------
     # Indexing
@@ -52,12 +53,16 @@ class SemanticKeyMapper:
     def index_key(self, key: str,
                   structural_latent: Optional[np.ndarray] = None,
                   semantic_latent: Optional[np.ndarray] = None,
-                  combined_latent: Optional[np.ndarray] = None) -> None:
+                  combined_latent: Optional[np.ndarray] = None,
+                  raw_semantic: Optional[np.ndarray] = None) -> None:
         """Register a concept key with its latent projections.
 
         At least one of *structural_latent* or *semantic_latent* must be
         provided.  If *combined_latent* is not given, it defaults to the
         semantic (or structural) latent.
+
+        *raw_semantic* stores the original high-dim CLIP/Whisper vector
+        (512/384-dim) for more accurate similarity search when available.
         """
         if structural_latent is None and semantic_latent is None:
             logger.warning("SemanticKeyMapper.index_key: no latents provided for '%s'", key)
@@ -69,6 +74,8 @@ class SemanticKeyMapper:
             self._structural_latents.pop(0)
             self._semantic_latents.pop(0)
             self._combined_latents.pop(0)
+            if self._raw_semantic_vectors:
+                self._raw_semantic_vectors.pop(0)
 
         flat_struct = structural_latent.flatten().astype(np.float32) if structural_latent is not None else np.zeros(64, dtype=np.float32)
         flat_sem = semantic_latent.flatten().astype(np.float32) if semantic_latent is not None else np.zeros(64, dtype=np.float32)
@@ -83,24 +90,34 @@ class SemanticKeyMapper:
             self._structural_latents[idx] = flat_struct
             self._semantic_latents[idx] = flat_sem
             self._combined_latents[idx] = combined
+            if raw_semantic is not None:
+                if idx < len(self._raw_semantic_vectors):
+                    self._raw_semantic_vectors[idx] = raw_semantic.flatten().astype(np.float32)
+                else:
+                    self._raw_semantic_vectors.append(raw_semantic.flatten().astype(np.float32))
         else:
             self._keys.append(key)
             self._structural_latents.append(flat_struct)
             self._semantic_latents.append(flat_sem)
             self._combined_latents.append(combined)
+            self._raw_semantic_vectors.append(
+                raw_semantic.flatten().astype(np.float32) if raw_semantic is not None
+                else np.zeros(0, dtype=np.float32)
+            )
 
     def index_from_router_result(self, key: str,
                                  router_result: Dict[str, Any]) -> None:
         """Register a key using the result dict from DualEncoderRouter.
 
-        Extracts ``structural_latent``, ``semantic_latent``, and ``latent``
-        from the router result.
+        Extracts ``structural_latent``, ``semantic_latent``, ``latent``,
+        and ``semantic`` (raw CLIP/Whisper vector) from the router result.
         """
         self.index_key(
             key=key,
             structural_latent=router_result.get("structural_latent"),
             semantic_latent=router_result.get("semantic_latent"),
             combined_latent=router_result.get("latent"),
+            raw_semantic=router_result.get("semantic"),
         )
 
     def index_batch(self, keys_and_latents: List[Tuple[str, Optional[np.ndarray],
@@ -128,7 +145,8 @@ class SemanticKeyMapper:
         """Find the *top_k* closest registered keys to *query_latent*.
 
         Args:
-            query_latent: 64-dim SharedLatentSpace vector.
+            query_latent: SharedLatentSpace vector (64-dim) or raw CLIP/Whisper
+                          vector (512/384-dim) when mode="raw".
             top_k: Number of results to return.
             mode: Which latent pool to compare against:
                   - "auto" (default): uses ``_combined_latents`` if
@@ -137,6 +155,8 @@ class SemanticKeyMapper:
                   - "combined": always use ``_combined_latents``.
                   - "semantic": use ``_semantic_latents``.
                   - "structural": use ``_structural_latents``.
+                  - "raw": use ``_raw_semantic_vectors`` (512/384-dim CLIP/Whisper).
+                    Falls back to "auto" if no raw vectors available.
 
         Returns:
             List of ``{key, score}`` dicts, sorted by descending cosine
@@ -146,9 +166,37 @@ class SemanticKeyMapper:
             return []
 
         query = query_latent.flatten().astype(np.float32)
-        q_norm = np.linalg.norm(query)
-        if q_norm > 0:
-            query = query / q_norm
+
+        # "raw" mode: use high-dim CLIP/Whisper vectors for better accuracy
+        if mode == "raw":
+            has_raw = any(v.size > 0 for v in self._raw_semantic_vectors)
+            if has_raw:
+                pool = self._raw_semantic_vectors
+                # Pad query if needed (match pool dim)
+                pool_dim = max(v.size for v in pool if v.size > 0)
+                if query.size < pool_dim:
+                    query = np.pad(query, (0, pool_dim - query.size), dtype=np.float32)
+                elif query.size > pool_dim:
+                    query = query[:pool_dim]
+                q_norm = np.linalg.norm(query)
+                if q_norm > 0:
+                    query = query / q_norm
+
+                # Filter to entries with raw vectors
+                valid = [(i, v) for i, v in enumerate(self._raw_semantic_vectors) if v.size > 0]
+                if not valid:
+                    mode = "auto"  # fallback
+                else:
+                    indices, vecs = zip(*valid)
+                    pool_np = np.array(vecs, dtype=np.float32)
+                    norms = np.linalg.norm(pool_np, axis=1, keepdims=True)
+                    norms[norms == 0] = 1.0
+                    pool_np = pool_np / norms
+                    scores = pool_np @ query
+                    top_idx = np.argsort(scores)[-top_k:][::-1]
+                    return [{"key": self._keys[indices[i]], "score": round(float(scores[i]), 4)} for i in top_idx]
+            else:
+                mode = "auto"  # fallback
 
         # Determine which pool to query
         if mode == "auto":
@@ -200,3 +248,4 @@ class SemanticKeyMapper:
         self._structural_latents.clear()
         self._semantic_latents.clear()
         self._combined_latents.clear()
+        self._raw_semantic_vectors.clear()

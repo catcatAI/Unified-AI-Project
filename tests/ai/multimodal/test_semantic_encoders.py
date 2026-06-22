@@ -106,18 +106,19 @@ class TestSemanticVisualEncoderInit:
 
     def test_encode_returns_512dim(self, sample_png):
         """S4: encode with mock CLIP backend returns 512-dim vector."""
-        # Mock the entire CLIP forward pass
         with patch('ai.multimodal.semantic_visual._lazy_init_clip') as mock_init:
             mock_model = MagicMock()
             mock_processor = MagicMock()
             mock_init.return_value = (mock_model, mock_processor)
-            mock_emb = MagicMock()
-            mock_emb.cpu.return_value.numpy.return_value = np.random.randn(1, 512).astype(np.float32)
-            mock_model.get_image_features.return_value = mock_emb
+            np_emb = np.random.randn(1, 512).astype(np.float32)
+            mock_tensor = MagicMock()
+            mock_tensor.cpu.return_value.numpy.return_value = np_emb
+            mock_output = MagicMock()
+            mock_output.pooler_output = mock_tensor
+            mock_model.get_image_features.return_value = mock_output
 
-            # Clear instance state so _get_backend calls the patched _lazy_init_clip
             sve = SemanticVisualEncoder()
-            sve._model = None  # Force re-init
+            sve._model = None
             sve._processor = None
             result = sve.encode(sample_png)
             assert result is not None
@@ -132,9 +133,12 @@ class TestSemanticVisualEncoderInit:
 
         mock_model = MagicMock()
         mock_processor = MagicMock()
-        mock_emb = MagicMock()
-        mock_emb.cpu.return_value.numpy.return_value = np.random.randn(1, 512).astype(np.float32)
-        mock_model.get_image_features.return_value = mock_emb
+        np_emb = np.random.randn(1, 512).astype(np.float32)
+        mock_tensor = MagicMock()
+        mock_tensor.cpu.return_value.numpy.return_value = np_emb
+        mock_output = MagicMock()
+        mock_output.pooler_output = mock_tensor
+        mock_model.get_image_features.return_value = mock_output
 
         with patch.object(SemanticVisualEncoder, '_get_backend',
                           return_value=(mock_model, mock_processor)):
