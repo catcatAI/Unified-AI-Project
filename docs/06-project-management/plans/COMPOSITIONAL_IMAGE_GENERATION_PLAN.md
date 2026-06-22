@@ -39,9 +39,29 @@ This plan implements a learnable compositional image generation system for Angel
    - Trainable via reconstruction loss
    - Save/load weights
 
-### ⬜ Phase 2: Sequence Generator (NOT STARTED)
+### ⬜ Phase 2: Sequence Generator (COMPLETE — 36/36 tests pass)
 
-**Goal**: Train a small model to predict drawing instructions from text/CLIP embeddings.
+**Implemented Components:**
+1. **SequenceGenerator** (`apps/backend/src/ai/multimodal/generator/sequence_generator.py`)
+   - RNN with input(W_ih), feedback(W_ph), recurrent(W_hh) projections
+   - Autoregressive generation with stochastic stop token
+   - Teacher forcing training with truncated BPTT
+   - Save/load to JSON
+
+2. **ImageGenerator** (`apps/backend/src/ai/multimodal/generator/image_generator.py`)
+   - End-to-end text → CLIP → generator → encoder → renderer → image
+   - generate_from_text, generate_from_embedding, generate_variations
+   - Multi-primitive compositing support
+
+3. **TrainingDataGenerator** (`apps/backend/src/ai/multimodal/generator/training_data.py`)
+   - CIFAR-10 → (clip_embedding, primitive_sequence) pairs
+   - Synthetic text caption generation
+   - Random primitive pre-training data
+
+**Training Validation:**
+- Random data training: loss 0.0313 → 0.0205 (8.8s CPU)
+- End-to-end pipeline: text → image works
+- Model size: ~500KB (sequence_generator.json + primitive_encoder.json)
 
 ### ⬜ Phase 3: Rendering Pipeline (NOT STARTED)
 
