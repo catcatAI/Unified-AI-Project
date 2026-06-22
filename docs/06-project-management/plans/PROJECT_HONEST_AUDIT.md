@@ -514,7 +514,12 @@ Phase 4: 外部模組
 
 ### 中期目標
 
-5. **圖像生成**：二選一——(a) 整合 AUTOMATIC1111 SD API（需要用戶啟動伺服器），或 (b) 承認目前無法生成
+5. **圖像生成**：✅ **已決定路徑** — 採用組合式圖像生成（非 SD），見 `COMPOSITIONAL_IMAGE_GENERATION_PLAN.md`
+   - 原理：學會把圖片拆解成基元（點線面體+曲型色），再根據文本描述重組
+   - 優勢：CPU 可訓練、模型小（~50-100MB）、可解釋、已有 Phase 1 基礎（38 個測試通過）
+   - 不依賴外部伺服器（SD API 需要 GPU + 伺服器運行）
+   - Phase 1 ✅ 完成（PrimitiveTypes + Renderer + Library + Encoder）
+   - Phase 2 ⬜ 待做（SequenceGenerator：文本→繪圖指令）
 6. **ED3N + GARDEN 整合**：兩個做同樣事的引擎，應該合併或明確分工
 7. **砍掉 25+ 個「部分實現」子系統**：只保留能跑通的
 
