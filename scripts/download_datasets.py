@@ -503,6 +503,7 @@ def _unpickle_cifar10(filepath: Path) -> dict:
 def convert_cifar10(tgz_path: Path) -> Path:
     """Extract CIFAR-10 and save images as .npy files organized by class."""
     import tarfile
+    import numpy as np
 
     logger.info("Extracting CIFAR-10 …")
     # CIFAR-10 batches are inside cifar-10-batches-py/

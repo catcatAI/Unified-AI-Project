@@ -182,7 +182,7 @@ class TestErrorRecoveryState:
     async def test_crisis_log_write(self, error_recovery, tmp_path):
         """_write_crisis_log appends to crisis_log.txt."""
         log_path = str(tmp_path / "crisis_log.txt")
-        with patch("services.multimodal_error_recovery.CRISIS_LOG_PATH", log_path):
+        with patch("core.crisis_log.CRISIS_LOG_PATH", log_path):
             _write_crisis_log(3, {"test": True})
             with open(log_path, "r") as f:
                 content = f.read()

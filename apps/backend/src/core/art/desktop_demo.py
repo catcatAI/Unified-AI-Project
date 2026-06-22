@@ -21,11 +21,16 @@ logger = logging.getLogger(__name__)
 
 def _setup_generation_environment() -> tuple:
     """Set up desktop path and timestamp."""
-    desktop = Path.home() / "OneDrive" / "Desktop"
+    # 自動偵測桌面路徑（Windows: USERPROFILE/Desktop, 無 OneDrive 回退）
+    desktop = Path.home() / "Desktop"
+    if not desktop.exists():
+        # fallback: 嘗試 OneDrive 桌面
+        onedrive_desktop = Path.home() / "OneDrive" / "Desktop"
+        if onedrive_desktop.exists():
+            desktop = onedrive_desktop
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     logger.info("🎨 Angela 开始创作...")
     logger.info(f"📂 保存位置: {desktop}")
-    logger.info()
     return desktop, timestamp
 
 
@@ -202,11 +207,9 @@ def _report_completion(desktop: Path, artworks: list) -> None:
     logger.info("✅ 创作完成!")
     logger.info(f"📂 所有文件保存在: {desktop}")
     logger.info(f"🖼️  美术作品: {len(artworks)} 幅")
-    logger.info()
     logger.info("📁 文件列表:")
     for path in artworks:
         logger.info(f"   → {path.name}")
-    logger.info()
     logger.info("🎉 请在桌面查看 Angela 的作品!")
     logger.info("=" * 60)
 
@@ -229,6 +232,7 @@ async def generate_and_save_to_desktop() -> str:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     try:
         asyncio.run(generate_and_save_to_desktop())
     except KeyboardInterrupt:

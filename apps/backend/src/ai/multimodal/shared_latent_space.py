@@ -124,8 +124,11 @@ class SharedLatentSpace:
         if len(features_list) < 2:
             return 0.0
 
-        latents = [self._l2_normalize(self.project(semantic_name, f))
-                   for f in features_list]
+        proj = self._projections.get(semantic_name)
+        if proj is None:
+            return 0.0
+        W, b = proj["W"], proj["b"]
+        latents = [self._l2_normalize(W @ f + b) for f in features_list]
 
         total_sim = 0.0
         count = 0

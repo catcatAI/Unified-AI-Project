@@ -104,7 +104,14 @@ class SemanticVisualEncoder:
             img = Image.open(io.BytesIO(image_data)).convert("RGB")
             inputs = processor(images=img, return_tensors="pt")
             with torch.no_grad():
-                emb = model.get_image_features(**inputs)
+                outputs = model.get_image_features(**inputs)
+                # get_image_features() may return BaseModelOutputWithPooling named tuple
+                if hasattr(outputs, 'pooler_output'):
+                    emb = outputs.pooler_output
+                elif hasattr(outputs, 'image_embeds'):
+                    emb = outputs.image_embeds
+                else:
+                    emb = outputs
             vec = emb.cpu().numpy().flatten().astype(np.float32)
             # L2 normalize
             norm = np.linalg.norm(vec)
@@ -125,7 +132,13 @@ class SemanticVisualEncoder:
 
             inputs = processor(images=img, return_tensors="pt")
             with torch.no_grad():
-                emb = model.get_image_features(**inputs)
+                outputs = model.get_image_features(**inputs)
+                if hasattr(outputs, 'pooler_output'):
+                    emb = outputs.pooler_output
+                elif hasattr(outputs, 'image_embeds'):
+                    emb = outputs.image_embeds
+                else:
+                    emb = outputs
             vec = emb.cpu().numpy().flatten().astype(np.float32)
             norm = np.linalg.norm(vec)
             if norm > 0:
