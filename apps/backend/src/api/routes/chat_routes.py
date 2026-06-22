@@ -669,14 +669,60 @@ async def chat_with_image(
     """Chat with optional image context.
 
     Combines image analysis with chat message for multimodal conversation.
+    CLIP-first: tries zero-shot classification before LLM fallback.
     """
     if not session_id:
         session_id = f"img-{uuid.uuid4().hex[:8]}"
 
-    image_context = None
+    clip_response = None
     if file and file.content_type and file.content_type.startswith("image/"):
         try:
             image_data = await file.read()
+
+            from ai.multimodal.semantic_visual import SemanticVisualEncoder
+            from ai.multimodal.concept_library import ConceptLibrary
+            from ai.multimodal.vision_response_generator import VisionResponseGenerator
+            from ai.ed3n.ed3n_engine import ED3NEngine
+
+            encoder = SemanticVisualEncoder()
+            if encoder.is_available:
+                ed3n = ED3NEngine.get_shared()
+                if len(ed3n.dictionary.entries) < 100:
+                    ed3n.load_external_dictionaries()
+
+                from ai.multimodal.semantic_key_mapper import SemanticKeyMapper
+                mapper = SemanticKeyMapper(max_entries=1000)
+                library = ConceptLibrary(
+                    semantic_encoder=encoder,
+                    dictionary=ed3n.dictionary,
+                    key_mapper=mapper,
+                )
+                library.build()
+
+                results = library.classify(image_data, top_k=1)
+                if results and results[0]["confidence"] > 0.15:
+                    generator = VisionResponseGenerator(dictionary=ed3n.dictionary)
+                    for cname, info in library._concepts.items():
+                        generator.register_concept(cname, info["dict_key"], info["labels"])
+                    clip_response = generator.generate_response(
+                        results, language="zh", action=message or None
+                    )
+        except Exception as e:
+            logger.debug(f"CLIP classification failed, falling back to LLM: {e}")
+
+    if clip_response:
+        return {
+            "response": clip_response,
+            "session_id": session_id,
+            "source": "clip_classify",
+            "confidence": results[0]["confidence"],
+        }
+
+    image_context = None
+    if file and file.content_type and file.content_type.startswith("image/"):
+        try:
+            if not image_data:
+                image_data = await file.read()
             from services.vision_service import VisionService
             vision = VisionService()
             analysis = await vision.process({
