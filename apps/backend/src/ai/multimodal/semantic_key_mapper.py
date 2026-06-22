@@ -57,14 +57,14 @@ class SemanticKeyMapper:
                   raw_semantic: Optional[np.ndarray] = None) -> None:
         """Register a concept key with its latent projections.
 
-        At least one of *structural_latent* or *semantic_latent* must be
-        provided.  If *combined_latent* is not given, it defaults to the
-        semantic (or structural) latent.
+        At least one of *structural_latent*, *semantic_latent*, or
+        *raw_semantic* must be provided.  If *combined_latent* is not
+        given, it defaults to the semantic (or structural) latent.
 
         *raw_semantic* stores the original high-dim CLIP/Whisper vector
         (512/384-dim) for more accurate similarity search when available.
         """
-        if structural_latent is None and semantic_latent is None:
+        if structural_latent is None and semantic_latent is None and raw_semantic is None:
             logger.warning("SemanticKeyMapper.index_key: no latents provided for '%s'", key)
             return
 

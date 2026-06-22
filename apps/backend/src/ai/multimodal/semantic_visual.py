@@ -14,7 +14,7 @@ The DualEncoderRouter combines both outputs.
 
 import io
 import logging
-from typing import Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from PIL import Image
@@ -147,3 +147,83 @@ class SemanticVisualEncoder:
         except Exception as e:
             logger.debug("SemanticVisualEncoder encode_from_pil failed: %s", e)
             return None
+
+    def encode_text(self, texts: List[str]) -> Optional[np.ndarray]:
+        """Encode text strings into CLIP text embeddings.
+
+        Returns text vectors in the SAME 512-dim space as image vectors,
+        enabling cosine similarity comparison between images and text.
+
+        Args:
+            texts: List of text strings to encode.
+
+        Returns:
+            [N, 512] float32 array, L2-normalized per row.
+            None if CLIP is unavailable.
+        """
+        model, processor = self._get_backend()
+        if model is None or processor is None:
+            return None
+        try:
+            import torch
+
+            inputs = processor(text=texts, return_tensors="pt",
+                               padding=True, truncation=True, max_length=77)
+            with torch.no_grad():
+                outputs = model.get_text_features(**inputs)
+            if hasattr(outputs, 'pooler_output'):
+                text_features = outputs.pooler_output
+            elif hasattr(outputs, 'text_embeds'):
+                text_features = outputs.text_embeds
+            else:
+                text_features = outputs
+            vecs = text_features.cpu().numpy().astype(np.float32)
+            norms = np.linalg.norm(vecs, axis=1, keepdims=True)
+            norms[norms == 0] = 1.0
+            return vecs / norms
+        except Exception as e:
+            logger.debug("SemanticVisualEncoder encode_text failed: %s", e)
+            return None
+
+    def classify_image(self, image_data: bytes, labels: List[str],
+                       confidence_threshold: float = 0.15) -> List[Dict[str, Any]]:
+        """Zero-shot classify an image against text labels using CLIP.
+
+        Compares the image embedding against text embeddings for each label.
+        Returns ranked results with softmax probabilities.
+
+        Args:
+            image_data: Raw image bytes (PNG, JPEG, etc.)
+            labels: Text labels to classify against
+                    (e.g. ["a photo of a chicken", "a photo of a cat"]).
+            confidence_threshold: Minimum probability to include in results.
+
+        Returns:
+            List of {label, confidence, raw_score, rank}, sorted by
+            descending confidence. Empty if CLIP unavailable or encoding fails.
+        """
+        img_vec = self.encode(image_data)
+        if img_vec is None:
+            return []
+        text_vecs = self.encode_text(labels)
+        if text_vecs is None:
+            return []
+        scores = text_vecs @ img_vec
+        temp = 0.01
+        scores_scaled = scores / temp
+        exp_scores = np.exp(scores_scaled - scores_scaled.max())
+        probs = exp_scores / exp_scores.sum()
+
+        results = []
+        for i, (label, prob) in enumerate(zip(labels, probs)):
+            if prob >= confidence_threshold:
+                results.append({
+                    "label": label,
+                    "confidence": round(float(prob), 4),
+                    "raw_score": round(float(scores[i]), 4),
+                    "rank": 0,
+                })
+        results.sort(key=lambda x: x["confidence"], reverse=True)
+        for i, r in enumerate(results):
+            r["rank"] = i + 1
+        return results
