@@ -704,8 +704,11 @@ async def chat_with_image(
                     generator = VisionResponseGenerator(dictionary=ed3n.dictionary)
                     for cname, info in library._concepts.items():
                         generator.register_concept(cname, info["dict_key"], info["labels"])
+                    top_concept = results[0]["concept_name"]
+                    concept_info = library._concepts.get(top_concept, {})
+                    action = concept_info.get("action", "") or message or ""
                     clip_response = generator.generate_response(
-                        results, language="zh", action=message or None
+                        results, language="zh", action=action
                     )
         except Exception as e:
             logger.debug(f"CLIP classification failed, falling back to LLM: {e}")

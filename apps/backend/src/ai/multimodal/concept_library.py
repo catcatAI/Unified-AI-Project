@@ -181,8 +181,9 @@ class ConceptLibrary:
 
     @staticmethod
     def _default_concepts() -> List[Dict]:
-        """Built-in animal concept definitions with CLIP-friendly labels."""
+        """Built-in concept definitions with CLIP-friendly labels."""
         return [
+            # --- Animals ---
             {
                 "name": "chicken",
                 "dict_key": "concept_chicken",
@@ -193,7 +194,6 @@ class ConceptLibrary:
                     "a photo of a small yellow chicken",
                     "a photo of a chick",
                     "a drawing of a chicken",
-                    "an illustration of a chicken",
                 ],
                 "action": "在吃米",
             },
@@ -204,10 +204,8 @@ class ConceptLibrary:
                 "en": "cat",
                 "labels": [
                     "a photo of a cat",
-                    "a photo of a yellow cat",
                     "a photo of a kitten",
                     "a drawing of a cat",
-                    "an illustration of a cat",
                 ],
                 "action": "在坐著",
             },
@@ -218,10 +216,8 @@ class ConceptLibrary:
                 "en": "dog",
                 "labels": [
                     "a photo of a dog",
-                    "a photo of a yellow dog",
                     "a photo of a puppy",
                     "a drawing of a dog",
-                    "an illustration of a dog",
                 ],
                 "action": "在跑",
             },
@@ -236,5 +232,213 @@ class ConceptLibrary:
                     "a drawing of a bird",
                 ],
                 "action": "在飛",
+            },
+            {
+                "name": "fish",
+                "dict_key": "concept_fish",
+                "zh": "鱼",
+                "en": "fish",
+                "labels": [
+                    "a photo of a fish",
+                    "a photo of a goldfish",
+                    "a drawing of a fish",
+                ],
+                "action": "在游水",
+            },
+            {
+                "name": "horse",
+                "dict_key": "concept_horse",
+                "zh": "马",
+                "en": "horse",
+                "labels": [
+                    "a photo of a horse",
+                    "a photo of a brown horse",
+                    "a drawing of a horse",
+                ],
+                "action": "在跑",
+            },
+            {
+                "name": "rabbit",
+                "dict_key": "concept_rabbit",
+                "zh": "兔子",
+                "en": "rabbit",
+                "labels": [
+                    "a photo of a rabbit",
+                    "a photo of a white rabbit",
+                    "a drawing of a rabbit",
+                ],
+                "action": "在跳",
+            },
+            {
+                "name": "elephant",
+                "dict_key": "concept_elephant",
+                "zh": "大象",
+                "en": "elephant",
+                "labels": [
+                    "a photo of an elephant",
+                    "a photo of a large elephant",
+                    "a drawing of an elephant",
+                ],
+                "action": "在走",
+            },
+            {
+                "name": "bear",
+                "dict_key": "concept_bear",
+                "zh": "熊",
+                "en": "bear",
+                "labels": [
+                    "a photo of a bear",
+                    "a photo of a brown bear",
+                    "a drawing of a bear",
+                ],
+                "action": "在站",
+            },
+            # --- Food ---
+            {
+                "name": "apple",
+                "dict_key": "concept_apple",
+                "zh": "苹果",
+                "en": "apple",
+                "labels": [
+                    "a photo of an apple",
+                    "a photo of a red apple",
+                    "a drawing of an apple",
+                ],
+                "action": "",
+            },
+            {
+                "name": "banana",
+                "dict_key": "concept_banana",
+                "zh": "香蕉",
+                "en": "banana",
+                "labels": [
+                    "a photo of a banana",
+                    "a photo of yellow bananas",
+                    "a drawing of a banana",
+                ],
+                "action": "",
+            },
+            {
+                "name": "rice",
+                "dict_key": "concept_rice",
+                "zh": "米饭",
+                "en": "rice",
+                "labels": [
+                    "a photo of a bowl of rice",
+                    "a photo of cooked rice",
+                    "a drawing of rice",
+                ],
+                "action": "",
+            },
+            # --- Objects ---
+            {
+                "name": "car",
+                "dict_key": "concept_car",
+                "zh": "汽车",
+                "en": "car",
+                "labels": [
+                    "a photo of a car",
+                    "a photo of a red car",
+                    "a drawing of a car",
+                ],
+                "action": "在開",
+            },
+            {
+                "name": "house",
+                "dict_key": "concept_house",
+                "zh": "房子",
+                "en": "house",
+                "labels": [
+                    "a photo of a house",
+                    "a photo of a small house",
+                    "a drawing of a house",
+                ],
+                "action": "",
+            },
+            {
+                "name": "tree",
+                "dict_key": "concept_tree",
+                "zh": "树",
+                "en": "tree",
+                "labels": [
+                    "a photo of a tree",
+                    "a photo of a green tree",
+                    "a drawing of a tree",
+                ],
+                "action": "",
+            },
+            {
+                "name": "flower",
+                "dict_key": "concept_flower",
+                "zh": "花",
+                "en": "flower",
+                "labels": [
+                    "a photo of a flower",
+                    "a photo of a red flower",
+                    "a drawing of a flower",
+                ],
+                "action": "",
+            },
+            {
+                "name": "book",
+                "dict_key": "concept_book",
+                "zh": "书",
+                "en": "book",
+                "labels": [
+                    "a photo of a book",
+                    "a photo of an open book",
+                    "a drawing of a book",
+                ],
+                "action": "",
+            },
+            {
+                "name": "chair",
+                "dict_key": "concept_chair",
+                "zh": "椅子",
+                "en": "chair",
+                "labels": [
+                    "a photo of a chair",
+                    "a photo of a wooden chair",
+                    "a drawing of a chair",
+                ],
+                "action": "",
+            },
+            # --- Outdoor scenes ---
+            {
+                "name": "mountain",
+                "dict_key": "concept_mountain",
+                "zh": "山",
+                "en": "mountain",
+                "labels": [
+                    "a photo of a mountain",
+                    "a photo of snow-capped mountains",
+                    "a drawing of a mountain",
+                ],
+                "action": "",
+            },
+            {
+                "name": "ocean",
+                "dict_key": "concept_ocean",
+                "zh": "海",
+                "en": "ocean",
+                "labels": [
+                    "a photo of the ocean",
+                    "a photo of ocean waves",
+                    "a drawing of the sea",
+                ],
+                "action": "",
+            },
+            {
+                "name": "person",
+                "dict_key": "concept_person",
+                "zh": "人",
+                "en": "person",
+                "labels": [
+                    "a photo of a person",
+                    "a photo of a man",
+                    "a photo of a woman",
+                    "a drawing of a person",
+                ],
+                "action": "",
             },
         ]

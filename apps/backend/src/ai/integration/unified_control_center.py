@@ -16,7 +16,7 @@ from core.prompt_manager import prompt
 from ai.compression.alpha_deep_model import (
     AlphaDeepModel,
 )
-from ai.world_model.environment_simulator import EnvironmentSimulator
+
 from ai.evaluation.task_evaluator import TaskExecutionEvaluator
 from ai.meta.adaptive_learning_controller import AdaptiveLearningController
 from ai.alignment.reasoning_system import ReasoningSystem
@@ -71,12 +71,7 @@ class UnifiedControlCenter:
         """初始化所有核心 AI 組件"""
         logger.info("Initializing Unified Control Center components...")
         try:
-            # 1. World Model
-            self.components["world_model"] = EnvironmentSimulator(
-                self.config.get("world_model", {})
-            )
-
-            # 2. Reasoning & Ethics
+            # 1. Reasoning & Ethics
             self.components["reasoning_system"] = ReasoningSystem(f"{self.system_id}_reasoning")
 
             # 3. Learning & Adaptation
@@ -187,13 +182,9 @@ class UnifiedControlCenter:
                 logger.warning(f"Angela is overwhelmed (Gap: {gap:.2f}), delaying task.", exc_info=True)
 
         try:
-            # 1. Simulation Phase
-            world_model = self.components["world_model"]
-            simulation = await world_model.simulate_action_consequences({}, task)
-
-            # 2. Ethics & Reasoning Phase
+            # 1. Ethics & Reasoning Phase
             reasoning = self.components["reasoning_system"]
-            ethics_eval = reasoning.evaluate_action(task, simulation.get("predicted_state", {}))
+            ethics_eval = reasoning.evaluate_action(task, {})
 
             if ethics_eval.score < 0.6:
                 logger.warning(
@@ -206,8 +197,8 @@ class UnifiedControlCenter:
                     "details": ethics_eval.reasoning,
                 }
 
-            # 3. Execution Phase (Real Action Dispatch in Phase 14)
-            execution_result = await self._dispatch_to_agents(task, simulation)
+            # 2. Execution Phase (Real Action Dispatch in Phase 14)
+            execution_result = await self._dispatch_to_agents(task, {})
 
             # 4. Evaluation Phase
             evaluator = self.components["task_evaluator"]
