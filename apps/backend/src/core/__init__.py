@@ -81,11 +81,8 @@ _LAZY_IMPORTS = {
     "create_maturity_system": "core.maturity.maturity_system",
     # Creative Systems
     "generate_and_save_to_desktop": "core.art.desktop_demo",
-    "AngelaRealCreator": "core.art.real_creator",
-    "ComfyUIClient": "core.art.real_creator",
     "AngelaRealVoice": "core.art.real_edge_tts",
     "AngelaRealBrowser": "core.art.real_playwright_browser",
-    "AngelaRealPainter": "core.art.real_comfyui_api",
     # Metamorphosis
     "SoulCore": "core.metamorphosis.soul_core",
     "SoulSignature": "core.metamorphosis.soul_core",
@@ -250,11 +247,8 @@ __all__ = [
     "create_maturity_system",
     # Creative Systems
     "generate_and_save_to_desktop",
-    "AngelaRealCreator",
-    "ComfyUIClient",
     "AngelaRealVoice",
     "AngelaRealBrowser",
-    "AngelaRealPainter",
     # Metamorphosis Systems
     # Soul Core
     "SoulCore",

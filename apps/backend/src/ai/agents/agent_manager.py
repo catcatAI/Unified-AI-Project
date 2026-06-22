@@ -148,12 +148,6 @@ class DefaultAgentResultEvaluator(AgentResultEvaluator):
             impact.beta["learning"] = 0.05
             impact.alpha["focus"] = 0.05
 
-        elif result.agent_type == "ImageGenerationAgent":
-            # 图像生成成功会增加创造力和快乐
-            impact.gamma["creativity"] = 0.1
-            impact.gamma["happiness"] = 0.05
-            impact.beta["creativity"] = 0.05
-
         elif result.agent_type == "FantasyDMAgent":
             # 奇幻敘事與煉金成功增加好奇心、創造力與演化感
             impact.beta["curiosity"] = 0.15

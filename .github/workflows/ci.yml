@@ -52,7 +52,6 @@ jobs:
           grep -q "$EXPECTED" apps/backend/package.json || { echo "❌ apps/backend/package.json: not $EXPECTED"; ERR=1; }
           grep -q "major=7" apps/backend/src/core/version.py && grep -q "minor=5" apps/backend/src/core/version.py && grep -q "patch=0" apps/backend/src/core/version.py && grep -q "phase=ReleasePhase.DEV" apps/backend/src/core/version.py || { echo "❌ apps/backend/src/core/version.py: not major=7, minor=5, patch=0, phase=DEV"; ERR=1; }
           grep -q "$EXPECTED" apps/desktop-app/electron_app/package.json || { echo "❌ apps/desktop-app/electron_app/package.json: not $EXPECTED"; ERR=1; }
-          grep -q "1.2.0-dev" apps/mobile-app/package.json || { echo "❌ apps/mobile-app/package.json: not 1.2.0-dev"; ERR=1; }
           grep -q "1.1.0" packages/cli/package.json || { echo "❌ packages/cli/package.json: not 1.1.0"; ERR=1; }
           grep -q "VERSION: $EXPECTED" README.md || { echo "❌ README.md: expected $EXPECTED"; ERR=1; }
           grep -q "VERSION: $EXPECTED" AGENTS.md || { echo "❌ AGENTS.md: expected $EXPECTED"; ERR=1; }

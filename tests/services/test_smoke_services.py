@@ -16,8 +16,3 @@ def test_import_math_verifier():
 def test_import_vision_service():
     from services.vision_service import VisionService
     assert VisionService is not None
-
-
-def test_import_tactile_service():
-    from services.tactile_service import TactileService
-    assert TactileService is not None

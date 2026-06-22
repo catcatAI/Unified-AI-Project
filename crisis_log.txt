@@ -25,3 +25,21 @@
 [2026-06-19 11:01:38.688773] CRISIS_LOG: Level 1 event. Details: {'input_text': 'help', 'context': {}}
 [2026-06-19 13:04:13.435726] CRISIS_LOG: Level 1 event. Details: {'input_text': 'help', 'context': {}}
 [2026-06-19 13:46:32.125623] CRISIS_LOG: Level 1 event. Details: {'input_text': 'help', 'context': {}}
+[2026-06-22 00:54:49.742988] CRISIS_LOG: Level 1 event. Details: {'operation': 'encode:vision', 'error': 'err4', 'attempts': 4, 'modality': 'vision'}
+[2026-06-22 00:54:49.841765] CRISIS_LOG: Level 4 event. Details: {'operation': 'train:contrastive', 'error': 'Training failed', 'checkpoint': 'fail_cp', 'checkpoint_path': 'data\\multimodal\\checkpoints\\fail_cp'}
+[2026-06-22 00:58:03.378089] CRISIS_LOG: Level 1 event. Details: {'operation': 'encode:vision', 'error': 'err4', 'attempts': 4, 'modality': 'vision'}
+[2026-06-22 00:58:03.516297] CRISIS_LOG: Level 4 event. Details: {'operation': 'train:contrastive', 'error': 'Training failed', 'checkpoint': 'fail_cp', 'checkpoint_path': 'data\\multimodal\\checkpoints\\fail_cp'}
+[2026-06-22 00:59:12.387113] CRISIS_LOG: Level 1 event. Details: {'operation': 'encode:vision', 'error': 'err4', 'attempts': 4, 'modality': 'vision'}
+[2026-06-22 00:59:12.473080] CRISIS_LOG: Level 4 event. Details: {'operation': 'train:contrastive', 'error': 'Training failed', 'checkpoint': 'fail_cp', 'checkpoint_path': 'data\\multimodal\\checkpoints\\fail_cp'}
+[2026-06-22 01:06:14.633110] CRISIS_LOG: Level 1 event. Details: {'operation': 'encode:vision', 'error': 'err4', 'attempts': 4, 'modality': 'vision'}
+[2026-06-22 01:06:14.677246] CRISIS_LOG: Level 4 event. Details: {'operation': 'train:contrastive', 'error': 'Training failed', 'checkpoint': 'fail_cp', 'checkpoint_path': 'data\\multimodal\\checkpoints\\fail_cp'}
+[2026-06-22 01:06:16.432129] CRISIS_LOG: Level 1 event. Details: {'operation': 'encode:vision', 'error': 'Empty data provided', 'attempts': 4, 'modality': 'vision'}
+[2026-06-22 01:09:20.418444] CRISIS_LOG: Level 1 event. Details: {'operation': 'encode:vision', 'error': 'err4', 'attempts': 4, 'modality': 'vision'}
+[2026-06-22 01:09:20.510253] CRISIS_LOG: Level 4 event. Details: {'operation': 'train:contrastive', 'error': 'Training failed', 'checkpoint': 'fail_cp', 'checkpoint_path': 'data\\multimodal\\checkpoints\\fail_cp'}
+[2026-06-22 01:09:32.821621] CRISIS_LOG: Level 1 event. Details: {'operation': 'encode:vision', 'error': 'Empty data provided', 'attempts': 4, 'modality': 'vision'}
+[2026-06-22 01:10:41.281550] CRISIS_LOG: Level 1 event. Details: {'operation': 'encode:vision', 'error': 'err4', 'attempts': 4, 'modality': 'vision'}
+[2026-06-22 01:10:41.382023] CRISIS_LOG: Level 4 event. Details: {'operation': 'train:contrastive', 'error': 'Training failed', 'checkpoint': 'fail_cp', 'checkpoint_path': 'data\\multimodal\\checkpoints\\fail_cp'}
+[2026-06-22 01:10:55.518611] CRISIS_LOG: Level 1 event. Details: {'operation': 'encode:vision', 'error': 'Empty data provided', 'attempts': 4, 'modality': 'vision'}
+[2026-06-22 17:41:08.962605] CRISIS_LOG: Level 1 event. Details: {'operation': 'encode:vision', 'error': 'err4', 'attempts': 4, 'modality': 'vision'}
+[2026-06-22 17:41:09.061352] CRISIS_LOG: Level 4 event. Details: {'operation': 'train:contrastive', 'error': 'Training failed', 'checkpoint': 'fail_cp', 'checkpoint_path': 'data\\multimodal\\checkpoints\\fail_cp'}
+[2026-06-22 18:02:11.407640] CRISIS_LOG: Level 1 event. Details: {'operation': 'encode:vision', 'error': 'Empty data provided', 'attempts': 4, 'modality': 'vision'}

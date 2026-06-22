@@ -491,42 +491,6 @@ class TestAnchorLearningSuggestConfig:
             pass
 
 
-class TestEgoGuardTicklePhase2:
-    """測試 EgoGuard.check_tickle_phase2() (G7)"""
-
-class TestEgoGuardTicklePhase2:
-    """測試 EgoGuard.check_tickle_phase2() (G7)"""
-
-    def test_egoguards_tickle_phase2_method_exists(self):
-        """check_tickle_phase2 方法存在"""
-        from ai.security.ego_guard import EgoGuard
-        guard = EgoGuard()
-        assert hasattr(guard, "check_tickle_phase2")
-
-    def test_egoguards_tickle_phase2_filters_contradiction(self):
-        """Phase2 矛盾過濾正確"""
-        from ai.security.ego_guard import EgoGuard
-        guard = EgoGuard()
-
-        reflex_state = {"output_mode": "comfort_seek", "animation": {"expression": "fear"}}
-        response = "這個感覺太爽了，我享受被這樣"
-
-        filtered, modified = guard.check_tickle_phase2(response, reflex_state)
-        assert modified is True
-        assert "享受" not in filtered or "[舒適地微笑]" in filtered
-
-    def test_egoguards_tickle_phase2_preserves_safe_response(self):
-        """Phase2 正常回應不受影響"""
-        from ai.security.ego_guard import EgoGuard
-        guard = EgoGuard()
-
-        reflex_state = {"output_mode": "speak", "animation": {"expression": "neutral"}}
-        response = "住手啦，很癢"
-
-        filtered, modified = guard.check_tickle_phase2(response, reflex_state)
-        assert modified is False
-
-
 class TestBuildAnchorContext:
     """測試 anchor_rules.yaml 自然語境注入 (Fix 2)"""
 

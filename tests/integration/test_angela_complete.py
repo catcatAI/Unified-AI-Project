@@ -19,7 +19,7 @@ class TestAngelaCore:
 
     def test_project_structure(self):
         """測試項目結構完整性"""
-        required_dirs = ["apps/backend", "apps/desktop-app", "apps/mobile-app", "tests", "configs"]
+        required_dirs = ["apps/backend", "apps/desktop-app", "tests", "configs"]
 
         for dir_path in required_dirs:
             assert os.path.exists(dir_path), f"Missing directory: {dir_path}"
@@ -60,17 +60,6 @@ class TestAngelaCore:
 
         for func in required_functions:
             assert func in content, f"Missing function: {func}"
-
-    def test_mobile_app_structure(self):
-        """測試移動端應用結構"""
-        mobile_files = [
-            "apps/mobile-app/package.json",
-            "apps/mobile-app/App.js",
-            "apps/mobile-app/src/security/encryption.js",
-        ]
-
-        for mobile_file in mobile_files:
-            assert os.path.exists(mobile_file), f"Missing mobile file: {mobile_file}"
 
     def test_api_endpoints(self):
         """測試API端點定義"""

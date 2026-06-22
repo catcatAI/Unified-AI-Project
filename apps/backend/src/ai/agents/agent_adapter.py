@@ -168,7 +168,6 @@ class AgentAdapter:
 # --- Agent ID → class mapping ---
 _AGENT_CLASSES: Dict[str, str] = {
     "creative_writing_agent": ("ai.agents.specialized.creative_writing_agent", "CreativeWritingAgent"),
-    "image_generation_agent": ("ai.agents.specialized.image_generation_agent", "ImageGenerationAgent"),
     "web_search_agent": ("ai.agents.specialized.web_search_agent", "WebSearchAgent"),
     "code_understanding_agent": ("ai.agents.specialized.code_understanding_agent", "CodeUnderstandingAgent"),
     "data_analysis_agent": ("ai.agents.specialized.data_analysis_agent", "DataAnalysisAgent"),

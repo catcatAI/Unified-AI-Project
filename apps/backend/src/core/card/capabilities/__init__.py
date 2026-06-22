@@ -4,11 +4,6 @@ Card Import Pipeline — capabilities subpackage.
 """
 
 try:
-    from core.card.capabilities.comic_composer import ComicComposer
-except ImportError:
-    ComicComposer = None
-
-try:
     from core.card.capabilities.roleplay_engine import RoleplayEngine
 except ImportError:
     RoleplayEngine = None
@@ -22,7 +17,6 @@ except ImportError:
     StoryWriter = None
 
 __all__ = [
-    "ComicComposer",
     "RoleplayEngine",
     "SceneInterpreter",
     "StoryWriter",

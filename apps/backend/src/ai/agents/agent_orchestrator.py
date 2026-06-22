@@ -49,7 +49,6 @@ _INTENT_AGENTS: Dict[str, str] = {
     "vision": "VisionProcessingAgent",
     "audio": "AudioProcessingAgent",
     "nlp": "NLPProcessingAgent",
-    "image_generate": "ImageGenerationAgent",
 }
 
 

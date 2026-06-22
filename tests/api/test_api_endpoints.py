@@ -217,19 +217,6 @@ class TestDesktopAPI:
         assert data["success"] is True
         assert data["result"]["status"] == "ok"
 
-    @pytest.mark.asyncio
-    @patch("api.routes.desktop_routes.get_tactile_service")
-    async def test_tactile_touch(self, mock_get_ts, client):
-        mock_tactile = AsyncMock()
-        mock_tactile.simulate_touch = AsyncMock(return_value={"feeling": "soft", "intensity": 0.8})
-        mock_get_ts.return_value = mock_tactile
-
-        resp = await client.post(
-            "/api/v1/tactile/touch",
-            json={"object_id": "cube", "contact_point": {"body_part": "hand", "pressure": 0.5}},
-        )
-        assert resp.status_code == 200
-        assert resp.json()["success"] is True
 
 
 # =============================================================================

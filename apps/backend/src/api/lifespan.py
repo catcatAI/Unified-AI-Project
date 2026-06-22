@@ -153,22 +153,8 @@ def get_audio_service():
 _tactile_service_instance = None
 
 def get_tactile_service():
-    global _tactile_service_instance
-    if _tactile_service_instance is not None:
-        return _tactile_service_instance
-    try:
-        from services.tactile_service import TactileService
-        physio = None
-        try:
-            from core.bio.physiological_tactile_system import PhysiologicalTactileSystem
-            physio = PhysiologicalTactileSystem()
-        except Exception:
-            pass
-        _tactile_service_instance = TactileService(physiological_system=physio)
-        return _tactile_service_instance
-    except Exception as e:
-        logger.warning(f"TactileService not available: {e}")
-        return None
+    """TactileService removed — all callers handle None gracefully."""
+    return None
 
 
 def get_agent_manager():
@@ -247,15 +233,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         stats["plugin_count"],
     )
 
-    # Initialize module manager (discovers and starts all 11 modules)
+    # Module manager removed (wiring.py deleted — was dead code)
     _module_manager = None
-    try:
-        from core.interfaces.service_registry import get_registry
-        from services.wiring import initialize_module_manager
-        _module_manager = await initialize_module_manager(get_registry())
-        logger.info("[ModuleManager] Module system initialized and started")
-    except Exception as e:
-        logger.error(f"[ModuleManager] Initialization failed, continuing without module system: {e}", exc_info=True)
 
     # Initialize BiologicalIntegrator subsystems
     global _bio_integrator_instance
