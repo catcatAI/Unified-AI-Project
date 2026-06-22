@@ -610,3 +610,27 @@ Phase 4: 外部模組
 - 所有引用已處理（import 移除、mapping 刪除、測試更新）
 - 9/9 E2E 測試通過
 
+### 2026-06-22 — Phase 10 Bug Fixes + Capability Wiring
+
+**Bug 修復：**
+- `/chat/with-image` UnboundLocalError: `image_data` 未初始化導致 fallback 路徑崩潰 → 初始化為 None
+- VectorStore async/sync 不匹配: `asyncio.to_thread` 傳入 async 函數 → 直接 await
+- VectorStore 從未填充: 聊天流程中未存儲記憶 → 每次交互後存儲 user+response
+
+**新功能：**
+- `/chat/with-audio` 端點: Whisper STT → 文字聊天 → 回應（完整語音對話管線）
+- VectorStore 記憶存儲: 每次對話後自動存儲到向量存儲，支持語義搜索
+
+**測試：**
+- 新增 12 個真實驗收測試（`test_acceptance_real.py`）:
+  - 4 個 CLIP 真實照片分類測試
+  - 3 個 VisionResponseGenerator 回應生成測試
+  - 3 個 VectorStore 記憶存儲/搜索測試
+  - 2 個 AudioService STT/TTS 測試
+- **12/12 全部通過**
+
+**能力提升：**
+- 語音理解: 3 → **5**（Whisper → 聊天管線已接通）
+- 記憶: 7 → **7.5**（VectorStore 有預填充數據 + 自動存儲）
+- 端到端驗收: 0 → **1**（首次有真實驗收測試）
+

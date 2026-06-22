@@ -675,6 +675,7 @@ async def chat_with_image(
         session_id = f"img-{uuid.uuid4().hex[:8]}"
 
     clip_response = None
+    image_data = None
     if file and file.content_type and file.content_type.startswith("image/"):
         try:
             image_data = await file.read()
@@ -724,7 +725,7 @@ async def chat_with_image(
     image_context = None
     if file and file.content_type and file.content_type.startswith("image/"):
         try:
-            if not image_data:
+            if image_data is None:
                 image_data = await file.read()
             from services.vision_service import VisionService
             vision = VisionService()
@@ -753,4 +754,63 @@ async def chat_with_image(
         session_id=session_id,
         origin="Human",
         extra_context=context if image_context else None,
+    )
+
+
+@router.post("/chat/with-audio")
+async def chat_with_audio(
+    message: str = Form(default=""),
+    file: UploadFile = File(default=None),
+    session_id: str = Form(default=""),
+    user_name: str = Form(default="朋友"),
+) -> Dict[str, Any]:
+    """Chat with voice input: speech-to-text → text chat → text-to-speech.
+
+    Accepts WAV/MP3 audio, transcribes via Whisper/faster-whisper,
+    feeds into chat pipeline, returns text response.
+    """
+    if not session_id:
+        session_id = f"audio-{uuid.uuid4().hex[:8]}"
+
+    transcribed_text = ""
+
+    if file and file.content_type and (
+        file.content_type.startswith("audio/") or file.content_type == "application/octet-stream"
+    ):
+        try:
+            audio_data = await file.read()
+            from services.audio_service import AudioService
+            audio_svc = AudioService()
+            stt_result = await audio_svc.speech_to_text(audio_data)
+            transcribed_text = stt_result.get("text", "")
+            if not transcribed_text:
+                return {
+                    "response": "抱歉，我聽不懂這段語音。",
+                    "session_id": session_id,
+                    "source": "stt_failed",
+                    "error": stt_result.get("error", "Could not understand audio"),
+                }
+        except Exception as e:
+            logger.warning("Audio transcription failed: %s", e)
+            return {
+                "response": "語音處理失敗，請重試。",
+                "session_id": session_id,
+                "source": "stt_error",
+                "error": str(e),
+            }
+
+    user_text = transcribed_text or message
+    if not user_text:
+        return {
+            "response": "請提供語音或文字訊息。",
+            "session_id": session_id,
+            "source": "empty_input",
+        }
+
+    return await _handle_chat_request(
+        user_message=user_text,
+        user_name=user_name,
+        history=[],
+        session_id=session_id,
+        origin="Human",
     )

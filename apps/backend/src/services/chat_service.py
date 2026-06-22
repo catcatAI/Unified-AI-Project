@@ -155,7 +155,7 @@ class ChatService:
         # Memory context injection: retrieve relevant past knowledge and conversations
         if self._vector_store is not None:
             try:
-                vs_results = await asyncio.to_thread(self._vector_store.semantic_search, user_message, 3)
+                vs_results = await self._vector_store.semantic_search(user_message, 3)
                 docs = vs_results.get("documents", [[]])[0]
                 knowledge = [str(d)[:200] for d in docs if d and isinstance(d, str)]
                 if knowledge:
@@ -248,6 +248,16 @@ class ChatService:
                     logger.info("GARDEN engine saved after %d interactions", self._garden_learn_count)
             except Exception as e:
                 logger.debug("GARDEN learning failed: %s", e)
+
+        # Store interaction in VectorStore for semantic memory retrieval
+        if self._vector_store is not None:
+            try:
+                import uuid as _uuid
+                memory_id = f"chat_{_uuid.uuid4().hex[:12]}"
+                content = f"User: {user_message}\nAngela: {response.text}"
+                await self._vector_store.add_memory(memory_id, content, {"type": "conversation"})
+            except Exception as e:
+                logger.debug("VectorStore memory store failed: %s", e)
 
         if getattr(self._llm_service, 'enable_memory_enhancement', False):
             try:
