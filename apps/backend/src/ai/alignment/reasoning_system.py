@@ -5,9 +5,21 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
 
-from ai.symbolic_space.unified_symbolic_space import UnifiedSymbolicSpace
-
 logger = logging.getLogger(__name__)
+
+
+class _SimpleSymbolicSpace:
+    """Minimal in-memory symbolic space replacing UnifiedSymbolicSpace."""
+
+    def __init__(self):
+        self._nodes: dict[str, dict] = {}
+        self._relations: dict[str, list] = {}
+
+    def add_symbol(self, name: str, node_type: str, properties: dict | None = None):
+        self._nodes[name] = {"type": node_type, "properties": properties or {}}
+
+    def get_relationships(self, node: str) -> list:
+        return self._relations.get(node, [])
 
 
 class EthicalPrinciple(Enum):
@@ -41,7 +53,7 @@ class ReasoningSystem:
         self.system_id = system_id
         self.is_active = True
         self.reasoning_history: list = []
-        self.symbolic_space = UnifiedSymbolicSpace()
+        self.symbolic_space = _SimpleSymbolicSpace()
         self.ethical_principles: dict[EthicalPrinciple, float] = {
             p: 1.0 for p in EthicalPrinciple
         }

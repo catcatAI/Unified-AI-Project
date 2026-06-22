@@ -45,9 +45,6 @@ logger = logging.getLogger(__name__)
 _MAX_SIGNIFICANT_EVENTS = 500
 _MAX_LIFE_EVENTS = 500
 
-if TYPE_CHECKING:
-    from ai.integration.unified_control_center import UnifiedControlCenter
-
 
 # =============================================================================
 # ANGELA-MATRIX: [L3] [αβγδ] [A] [L4+]
@@ -246,7 +243,7 @@ class DigitalLifeIntegrator:
         )
 
         # AGI Control Loop (Phase 11)
-        self.unified_control_center: Optional[UnifiedControlCenter] = None
+        self.unified_control_center = None
 
         # Dynamic Parameters Integration
         self.dynamic_params: Optional[DynamicThresholdManager] = None

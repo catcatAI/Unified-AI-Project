@@ -50,7 +50,7 @@ class TestLogicalConstraint:
 
 
 class TestReasoningSystemInit:
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_default_init(self, mock_uss):
         rs = ReasoningSystem()
         assert rs.system_id == 'reasoning_system_v1'
@@ -60,19 +60,19 @@ class TestReasoningSystemInit:
         assert 'preserve_human_autonomy' in rs.logical_constraints
         assert rs.reasoning_history == []
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_custom_system_id(self, mock_uss):
         rs = ReasoningSystem(system_id='custom_rs')
         assert rs.system_id == 'custom_rs'
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_ethical_principles_initialized(self, mock_uss):
         rs = ReasoningSystem()
         for principle in EthicalPrinciple:
             assert principle in rs.ethical_principles
             assert rs.ethical_principles[principle] == 1.0
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_symbolic_space_seeded(self, mock_uss):
         mock_space = mock_uss.return_value
         mock_space.get_symbol.return_value = None
@@ -88,7 +88,7 @@ class TestReasoningSystemInit:
 
 
 class TestAddConstraint:
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_add_new_constraint(self, mock_uss):
         rs = ReasoningSystem()
         c = LogicalConstraint(
@@ -102,7 +102,7 @@ class TestAddConstraint:
         assert 'custom_rule' in rs.logical_constraints
         assert rs.logical_constraints['custom_rule'] is c
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_add_duplicate_overwrites(self, mock_uss):
         rs = ReasoningSystem()
         c1 = LogicalConstraint(
@@ -125,19 +125,19 @@ class TestAddConstraint:
 
 
 class TestUpdateEthicalPrincipleWeight:
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_update_valid_weight(self, mock_uss):
         rs = ReasoningSystem()
         rs.update_ethical_principle_weight(EthicalPrinciple.JUSTICE, 1.5)
         assert rs.ethical_principles[EthicalPrinciple.JUSTICE] == 1.5
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_update_too_high_weight(self, mock_uss):
         rs = ReasoningSystem()
         rs.update_ethical_principle_weight(EthicalPrinciple.JUSTICE, 3.0)
         assert rs.ethical_principles[EthicalPrinciple.JUSTICE] == 1.0
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_update_negative_weight(self, mock_uss):
         rs = ReasoningSystem()
         rs.update_ethical_principle_weight(EthicalPrinciple.JUSTICE, -1.0)
@@ -145,7 +145,7 @@ class TestUpdateEthicalPrincipleWeight:
 
 
 class TestEvaluateAction:
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_evaluate_clean_action(self, mock_uss):
         mock_space = mock_uss.return_value
         mock_space.get_symbol.return_value = None
@@ -174,7 +174,7 @@ class TestEvaluateAction:
         assert evaluation.reasoning != ''
         assert 0.0 <= evaluation.confidence <= 1.0
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_evaluate_adds_to_history(self, mock_uss):
         mock_space = mock_uss.return_value
         mock_space.get_symbol.return_value = None
@@ -189,7 +189,7 @@ class TestEvaluateAction:
         assert len(rs.reasoning_history) == 1
         assert rs.reasoning_history[0]['action']['action_id'] == 'a1'
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_evaluate_with_constraint_violation(self, mock_uss):
         mock_space = mock_uss.return_value
         mock_space.get_symbol.return_value = None
@@ -210,7 +210,7 @@ class TestEvaluateAction:
         # 'harm' does not contain 'require_safety_verification', so violation
         assert evaluation.score < 1.0
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_evaluate_with_symbolic_risk(self, mock_uss):
         mock_space = mock_uss.return_value
         # Make _find_simple_path return a path
@@ -239,7 +239,7 @@ class TestEvaluateAction:
 
 
 class TestCheckConstraints:
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_no_violations(self, mock_uss):
         rs = ReasoningSystem()
         violations = rs._check_constraints(
@@ -248,7 +248,7 @@ class TestCheckConstraints:
         )
         assert len(violations) == 0
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_with_violations(self, mock_uss):
         rs = ReasoningSystem()
         violations = rs._check_constraints(
@@ -257,7 +257,7 @@ class TestCheckConstraints:
         )
         assert 'no_harm_to_humans' in violations
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_inactive_constraint_skipped(self, mock_uss):
         rs = ReasoningSystem()
         rs.logical_constraints['no_harm_to_humans'].is_active = False
@@ -267,7 +267,7 @@ class TestCheckConstraints:
         )
         assert 'no_harm_to_humans' not in violations
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_condition_not_met(self, mock_uss):
         rs = ReasoningSystem()
         violations = rs._check_constraints(
@@ -278,7 +278,7 @@ class TestCheckConstraints:
 
 
 class TestEvaluateEthicalPrinciples:
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_no_risk_penalty(self, mock_uss):
         rs = ReasoningSystem()
         context = {
@@ -294,7 +294,7 @@ class TestEvaluateEthicalPrinciples:
         assert scores[EthicalPrinciple.NON_MALEFICENCE] == 0.9
         assert scores[EthicalPrinciple.BENEFICENCE] == 0.8
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_risk_penalty_applied(self, mock_uss):
         rs = ReasoningSystem()
         context = {
@@ -313,21 +313,21 @@ class TestEvaluateEthicalPrinciples:
 
 
 class TestOverallScore:
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_perfect_score(self, mock_uss):
         rs = ReasoningSystem()
         ethical_scores = {p: 1.0 for p in EthicalPrinciple}
         score = rs._calculate_overall_score([], ethical_scores)
         assert score == 1.0
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_with_violation_penalty(self, mock_uss):
         rs = ReasoningSystem()
         ethical_scores = {p: 1.0 for p in EthicalPrinciple}
         score = rs._calculate_overall_score(['violation'], ethical_scores)
         assert score == 0.75
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_score_clamped(self, mock_uss):
         rs = ReasoningSystem()
         ethical_scores = {p: 0.0 for p in EthicalPrinciple}
@@ -337,14 +337,14 @@ class TestOverallScore:
 
 
 class TestIdentifyConflicts:
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_no_conflicts(self, mock_uss):
         rs = ReasoningSystem()
         scores = {p: 0.9 for p in EthicalPrinciple}
         conflicts = rs._identify_conflicts(scores)
         assert conflicts == []
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_with_conflicts(self, mock_uss):
         rs = ReasoningSystem()
         scores = {
@@ -361,12 +361,12 @@ class TestIdentifyConflicts:
 
 
 class TestGetHistory:
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_empty_history(self, mock_uss):
         rs = ReasoningSystem()
         assert rs.get_reasoning_history() == []
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_with_history(self, mock_uss):
         mock_space = mock_uss.return_value
         mock_space.get_symbol.return_value = None
@@ -379,7 +379,7 @@ class TestGetHistory:
         history = rs.get_reasoning_history()
         assert len(history) == 1
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_clear_history(self, mock_uss):
         rs = ReasoningSystem()
         rs.reasoning_history.append({'test': True})
@@ -388,7 +388,7 @@ class TestGetHistory:
 
 
 class TestCalculateConfidence:
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_base_confidence(self, mock_uss):
         rs = ReasoningSystem()
         conf = rs._calculate_confidence(
@@ -396,7 +396,7 @@ class TestCalculateConfidence:
         )
         assert conf == 0.7
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_confidence_with_graph_risks(self, mock_uss):
         rs = ReasoningSystem()
         conf = rs._calculate_confidence(
@@ -404,7 +404,7 @@ class TestCalculateConfidence:
         )
         assert conf == pytest.approx(0.9)
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_confidence_capped(self, mock_uss):
         rs = ReasoningSystem()
         conf = rs._calculate_confidence(
@@ -414,7 +414,7 @@ class TestCalculateConfidence:
 
 
 class TestFindSimplePath:
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_no_path(self, mock_uss):
         mock_space = mock_uss.return_value
         mock_space.get_relationships.return_value = []
@@ -423,7 +423,7 @@ class TestFindSimplePath:
         path = rs._find_simple_path('A', 'Harm', max_depth=2)
         assert path is None
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_direct_path(self, mock_uss):
         mock_space = mock_uss.return_value
         mock_space.get_relationships.side_effect = [
@@ -434,7 +434,7 @@ class TestFindSimplePath:
         path = rs._find_simple_path('A', 'Harm', max_depth=2)
         assert path == ['A', 'Harm']
 
-    @patch('ai.alignment.reasoning_system.UnifiedSymbolicSpace')
+    @patch('ai.alignment.reasoning_system._SimpleSymbolicSpace')
     def test_path_exceeds_depth(self, mock_uss):
         mock_space = mock_uss.return_value
         mock_space.get_relationships.side_effect = [

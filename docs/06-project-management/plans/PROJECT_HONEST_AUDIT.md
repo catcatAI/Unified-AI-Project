@@ -610,7 +610,37 @@ Phase 4: 外部模組
 - 所有引用已處理（import 移除、mapping 刪除、測試更新）
 - 9/9 E2E 測試通過
 
-### 2026-06-22 — Phase 10 Bug Fixes + Capability Wiring
+### 2026-06-22 — Phase 11 大規模清理: 11 個死代碼子系統刪除
+
+**刪除的子系統 (11 個, ~5,920 行死代碼):**
+- `ai/learning/` — 自宣告 DEPRECATED, 無生產消費者
+- `ai/ops/` — 骨架代碼, 未接入任何流程
+- `ai/dialogue/` — 自宣告 DEPRECATED, 無生產消費者
+- `ai/evaluation/` — 通過 UCC 的死鏈, 極簡評估邏輯
+- `ai/execution/` — 自宣告 DEPRECATED, 標記 DORMANT
+- `ai/code_inspection/` — 自宣告 DEPRECATED, 無生產消費者
+- `ai/compression/` — 通過 UCC 的死鏈
+- `ai/lis/` — 通過 UCC 的死鏈
+- `ai/language_models/` — 自宣告 DEPRECATED, 真實路由在 services/llm/
+- `ai/integration/` — 死鏈根目錄 (UnifiedControlCenter)
+- `ai/symbolic_space/` — 通過 UCC/evaluation/compression 的死鏈
+
+**引用處理:**
+- `reasoning_system.py`: UnifiedSymbolicSpace → _SimpleSymbolicSpace (內建)
+- `learning_orchestrator.py`: TaskExecutionEvaluator → _SimpleEvaluator (內建)
+- `digital_life_integrator.py`: 移除 UnifiedControlCenter TYPE_CHECKING import
+- `ed3n/learning_integration.py`: 已有 try/except 保護, 無需處理
+- 37 個測試更新 (test_reasoning_system.py: UnifiedSymbolicSpace → _SimpleSymbolicSpace)
+
+**保留的子系統:**
+- `ai/response/` — 已接入 LLM router, 有真實邏輯 + 5 個測試
+- `ai/audio/` — 已接入 audio_service, 有真實信號處理
+- `ai/crisis/` — 已接入 lifespan + chat_routes, 用戶安全
+
+**測試驗證:**
+- 37/37 alignment 測試通過
+- 12/12 驗收測試通過
+- 9/9 chicken_eats_rice E2E 測試通過
 
 **Bug 修復：**
 - `/chat/with-image` UnboundLocalError: `image_data` 未初始化導致 fallback 路徑崩潰 → 初始化為 None

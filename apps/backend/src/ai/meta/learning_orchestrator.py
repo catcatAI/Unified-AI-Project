@@ -11,8 +11,17 @@ import logging
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 
-from ai.evaluation.task_evaluator import TaskExecutionEvaluator
 from ai.meta.adaptive_learning_controller import AdaptiveLearningController
+
+
+class _SimpleEvaluator:
+    """Minimal evaluator replacing TaskExecutionEvaluator."""
+
+    async def evaluate_task_execution(self, task: dict, result: dict) -> dict:
+        return {
+            "metrics": {"coherence": 0.5, "relevance": 0.5},
+            "overall_rating": 0.5,
+        }
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +33,7 @@ class LearningOrchestrator:
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
-        self.evaluator = TaskExecutionEvaluator(self.config.get("evaluator_config"))
+        self.evaluator = _SimpleEvaluator()
         self.controller = AdaptiveLearningController(self.config.get("controller_config"))
         self.learning_history: List[Dict[str, Any]] = []
 
