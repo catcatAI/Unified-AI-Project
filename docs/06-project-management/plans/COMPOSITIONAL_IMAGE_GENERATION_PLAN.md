@@ -141,8 +141,9 @@ This is essentially **learnable SVG** — the model learns to produce vector gra
 | Phase 2: Sequence Generator | ✅ COMPLETE | 36 | SequenceGenerator, ImageGenerator, TrainingDataGenerator |
 | Phase 3: Evaluation | ✅ COMPLETE | 18 | GenerationEvaluator |
 | Phase 4: Expanded Primitives | ✅ COMPLETE | 92 | Circle, Arc, 263-dim vector, spatial decomposer |
+| Phase 4b: Direct Optimization | ✅ COMPLETE | — | Differentiable renderer, batch optimization, decomposer training |
 | Phase 5: PixelRefiner | 🔲 PENDING | — | Lightweight FC refinement |
-| **Total** | **4/5 PHASES** | **92** | |
+| **Total** | **4.5/5 PHASES** | **92** | |
 
 ## Architecture Summary
 
