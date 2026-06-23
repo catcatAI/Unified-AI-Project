@@ -13,9 +13,10 @@ class PrimitiveEncoder:
     and embedding space. Can be trained to learn meaningful mappings.
     """
     
-    def __init__(self, embedding_dim: int = 64):
+    def __init__(self, embedding_dim: int = 128):
         self._embedding_dim = embedding_dim
-        self._param_dim = 116  # Fixed by DrawingInstructions.to_vector()
+        from .primitive_types import TOTAL_DIM
+        self._param_dim = TOTAL_DIM  # 263
         
         rng = np.random.default_rng(42)
         
