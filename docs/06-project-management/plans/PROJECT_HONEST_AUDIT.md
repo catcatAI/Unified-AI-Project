@@ -1,7 +1,7 @@
 # Angela AI 專案全面審計 — 真實 vs 假象
 
 > **日期**: 2026-06-22  
-> **最後更新**: 2026-06-22 (Phase 9 stub deletions complete)  
+> **最後更新**: 2026-06-23 (Phase 12b complete — trust/ deleted, image gen API added)  
 > **審計範圍**: 全專案 638 個 Python 文件、4,920 個測試、54 個 API 端點  
 > **目的**: 區分真實能力 vs 基礎設施堆砌，找出偏離預期的根因
 
