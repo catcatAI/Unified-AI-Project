@@ -135,15 +135,23 @@ This is essentially **learnable SVG** — the model learns to produce vector gra
 
 ## Implementation Status Summary
 
-| Phase | Status | Tests | Components |
-|-------|--------|:-----:|------------|
-| Phase 1: Primitive Types & Renderer | ✅ COMPLETE | 38 | Types, Renderer, Library, Encoder |
-| Phase 2: Sequence Generator | ✅ COMPLETE | 36 | SequenceGenerator, ImageGenerator, TrainingDataGenerator |
-| Phase 3: Evaluation | ✅ COMPLETE | 18 | GenerationEvaluator |
-| Phase 4: Expanded Primitives | ✅ COMPLETE | 92 | Circle, Arc, 263-dim vector, spatial decomposer |
-| Phase 4b: Direct Optimization | ✅ COMPLETE | — | Differentiable renderer, batch optimization, decomposer training |
-| Phase 5: PixelRefiner | 🔲 PENDING | — | Lightweight FC refinement |
-| **Total** | **4.5/5 PHASES** | **92** | |
+| Phase | Status | Tests | Components | Note |
+|-------|--------|:-----:|------------|------|
+| Phase 1: Primitive Types & Renderer | ✅ COMPLETE | 38 | Types, Renderer, Library, Encoder | Code exists |
+| Phase 2: Sequence Generator | ✅ COMPLETE | 36 | SequenceGenerator, ImageGenerator, TrainingDataGenerator | Code exists |
+| Phase 3: Evaluation | ✅ COMPLETE | 18 | GenerationEvaluator | Code exists |
+| Phase 4: Expanded Primitives | ✅ COMPLETE | 92 | Circle, Arc, 263-dim vector, spatial decomposer | Code exists |
+| Phase 4b: Direct Optimization | ⚠️ PARTIAL | — | Differentiable renderer, batch opt | CLIP sim 0.929 but wrong architecture |
+| Phase 5: PixelRefiner | 🔲 PENDING | — | Lightweight FC refinement | |
+| Phase 6: Geometric Vocabulary | 🔲 PENDING | — | Vocabulary learning, concept mapping | **NEW — Correct architecture** |
+| Phase 7: Geometric Recognition | 🔲 PENDING | — | Visual word features, classifier | **NEW — Dual-use with generation** |
+| Phase 8: Vocabulary Expansion | 🔲 PENDING | — | Residual analysis, new primitive discovery | **NEW — Organic growth** |
+| **Total** | **4.5/8 PHASES** | **92** | | |
+
+> **⚠️ Architecture Issue Identified (2026-06-23):** Phases 1-4b built code that exists but
+> the training flow was wrong. CLIP was used for evaluating rendered output instead of
+> concept-primitive mapping. Pixel similarity was not used as the training objective.
+> Fixed in Phase 6+ with the Geometric Visual Vocabulary architecture.
 
 ## Architecture Summary
 
@@ -974,3 +982,355 @@ CLIP → Generator → Encoder → Renderer → PixelRefiner → final image
 - **Color coverage**: 0.02 (sparse primitives limit: max 10 points + 5 lines)
 - **Dense images**: CIFAR-10 32x32 → 128x128 upscaling loses detail
 - **Generator output**: Same primitive repeated (generator collapse)
+
+---
+
+## Architecture Redesign: Geometric Visual Vocabulary (GVV)
+
+> **Date**: 2026-06-23
+> **Status**: PLANNING — replaces the wrong architecture in Phases 1-4b
+
+### Problem with Previous Architecture
+
+The previous flow was:
+```
+CLIP embedding → Decomposer → 263-dim → render → CLIP similarity ← WRONG
+```
+
+**Three fundamental errors:**
+1. **CLIP used wrong**: CLIP should map concepts → which primitives compose them, not evaluate rendered output
+2. **No pixel similarity**: Training should minimize pixel difference between generated and original, not CLIP similarity
+3. **No vocabulary expansion**: When primitives are insufficient, the system should discover new types, not stay fixed
+
+### Correct Architecture: Three Learning Objectives
+
+The system must learn three things simultaneously:
+
+#### Objective 1: Concept → Primitive Vocabulary (CLIP here)
+- "cat" → which geometric types commonly appear in cat images
+- "car" → which geometric types commonly appear in car images
+- CLIP text embedding → primitive type distribution
+- **Not**: CLIP → evaluate rendered output
+
+#### Objective 2: Instance Parameter Optimization (pixel similarity here)
+- For a specific cat image: optimize primitive parameters to minimize pixel error
+- Loss = MSE(rendered, original) at pixel level
+- **Not**: CLIP similarity between rendered and original
+
+#### Objective 3: Vocabulary Expansion (residual analysis here)
+- After optimization, compute residual = original - rendered
+- If residual is too high → cluster residuals across images → discover new primitive types
+- Add new type to vocabulary → re-learn concept mappings
+- **Not**: stay with fixed 263-dim vector
+
+### Dual-Use: Generation + Recognition
+
+The same geometric vocabulary serves both purposes:
+
+```
+GENERATION (top-down):
+  Text → CLIP → Concept Dict → Primitive Types → Optimize Params → Render → Image
+
+RECOGNITION (bottom-up):
+  Image → Extract Geometric Features → Match Vocabulary → Classify
+
+VOCABULARY EXPANSION (shared):
+  High generation error → Residual analysis → New primitive types → Better for both
+```
+
+**Recognition uses the same "visual words" as generation:**
+- Which primitive types are present? (circles, arcs, lines, etc.)
+- What are their parameters? (positions, sizes, colors)
+- How are they arranged? (spatial relationships)
+- Match against concept dictionaries → classify
+
+This is **Bag of Geometric Words** — like Bag of Visual Words but with learned geometric primitives instead of hand-crafted features (SIFT/SURF).
+
+**Advantages:**
+- Interpretable: you can see which primitives were detected
+- Efficient: small vocabulary, fast matching
+- Dual-use: same representation for generation and recognition
+- Organic growth: vocabulary expands as needed
+
+### System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   GEOMETRIC VOCABULARY                       │
+│                                                              │
+│  Primitive Types: {circle, arc, line, plane, point, ...}    │
+│  Parameter Distributions: {mean, std} per type              │
+│  Concept Mappings: {cat → [circle, arc, line], ...}         │
+│  Visual Words: {small_red_circle, long_blue_line, ...}      │
+└──────────────┬──────────────────────┬───────────────────────┘
+               │                      │
+    ┌──────────▼──────────┐  ┌────────▼────────────┐
+    │   GENERATION PATH   │  │  RECOGNITION PATH   │
+    │                      │  │                      │
+    │  Text/Concept        │  │  Input Image         │
+    │    ↓                 │  │    ↓                 │
+    │  Concept Dict        │  │  Extract Features    │
+    │    ↓                 │  │    ↓                 │
+    │  Primitive Types     │  │  Vocabulary Match    │
+    │    ↓                 │  │    ↓                 │
+    │  Init Parameters     │  │  Feature Vector      │
+    │    ↓                 │  │    ↓                 │
+    │  Optimize (pixel)    │  │  Classifier          │
+    │    ↓                 │  │    ↓                 │
+    │  Render              │  │  Class Label         │
+    │    ↓                 │  │                      │
+    │  Generated Image     │  │  + Primitive Params  │
+    └──────────┬──────────┘  └────────┬────────────┘
+               │                      │
+               └──────────┬───────────┘
+                          │
+               ┌──────────▼──────────┐
+               │  VOCABULARY GROWTH  │
+               │                      │
+               │  Generation Error    │
+               │    ↓                 │
+               │  Residual Analysis   │
+               │    ↓                 │
+               │  Cluster → New Type  │
+               │    ↓                 │
+               │  Expand Vocabulary   │
+               │    ↓                 │
+               │  Re-learn Concepts   │
+               └──────────────────────┘
+```
+
+### Implementation Phases
+
+#### Phase 6: Geometric Vocabulary Learning
+
+**Goal:** Learn primitive type distributions from CIFAR-10 images.
+
+**Algorithm:**
+1. For each CIFAR-10 image:
+   - Resize to 128×128
+   - Optimize 263-dim primitive vector to minimize pixel MSE
+   - Save optimized vector + label
+2. Cluster optimized vectors by class:
+   - For each class (cat, dog, etc.): collect all optimized vectors
+   - Compute mean + std per primitive type
+   - Result: class → primitive type distribution
+3. Discover visual words:
+   - K-means on all optimized vectors
+   - Each cluster center = a visual word
+   - Visual word = (primitive type, parameter range)
+
+**Files:**
+- `apps/backend/src/ai/multimodal/primitives/geometric_vocabulary.py` — NEW
+  - `GeometricVocabulary` class
+  - `learn_from_images(images, labels)` → vocabulary
+  - `get_concept_distribution(concept)` → {type: (mean, std)}
+  - `get_visual_words()` → list of visual words
+  - `save()/load()` — persist vocabulary
+
+**Training:**
+- 500 CIFAR-10 images (50 per class)
+- Pixel-level optimization (differentiable renderer, finite differences)
+- ~30 iterations per image, ~14s per image
+- Total: ~2 hours on CPU
+
+**Output:**
+- Vocabulary with 10 concept distributions + 20 visual words
+- Each concept knows which primitive types it uses
+
+---
+
+#### Phase 7: Concept-Primitive Mapping (CLIP Integration)
+
+**Goal:** Map CLIP text embeddings → concept → primitive type distribution.
+
+**Algorithm:**
+1. For each concept (cat, dog, etc.):
+   - Encode concept name with CLIP → text embedding (512-dim)
+   - Look up concept distribution from vocabulary
+   - Store: text_embedding → primitive_distribution
+2. For new text input:
+   - Encode with CLIP → text embedding
+   - Find closest concept in vocabulary
+   - Return primitive type distribution as initialization
+
+**Files:**
+- `apps/backend/src/ai/multimodal/primitives/concept_mapper.py` — NEW
+  - `ConceptMapper` class
+  - `map_text_to_primitives(text)` → primitive type distribution
+  - `initialize_parameters(distribution)` → initial 263-dim vector
+  - `save()/load()`
+
+**Training:**
+- Use vocabulary from Phase 6
+- CLIP encoding: instant (pre-trained)
+- No additional training needed (lookup table)
+
+---
+
+#### Phase 8: Instance Optimization (Generation)
+
+**Goal:** For a specific image, optimize primitive parameters at pixel level.
+
+**Algorithm:**
+1. Input: target image + concept (from Phase 7)
+2. Initialize: use concept distribution → sample initial parameters
+3. Optimize: minimize pixel MSE between rendered and target
+   - Differentiable renderer (finite differences)
+   - ~30 iterations, ~14s per image
+4. Output: optimized 263-dim vector → render → generated image
+
+**Files:**
+- `apps/backend/src/ai/multimodal/primitives/instance_optimizer.py` — NEW
+  - `InstanceOptimizer` class
+  - `optimize(target_image, concept)` → optimized_vector
+  - `generate(text)` → PIL Image (end-to-end)
+  - Uses `DifferentiableRenderer` for gradient computation
+
+**No additional training** — optimization happens per image at inference time.
+
+---
+
+#### Phase 9: Geometric Recognition
+
+**Goal:** Use geometric vocabulary for image classification.
+
+**Algorithm:**
+1. Input: image to classify
+2. Extract geometric features:
+   - Optimize primitive parameters (same as Phase 8, but no concept given)
+   - The optimized vector IS the feature representation
+   - Alternative: extract visual words present in the image
+3. Match against vocabulary:
+   - Compute similarity to each concept distribution
+   - Classify as closest concept
+4. Output: class label + confidence + primitive parameters
+
+**Files:**
+- `apps/backend/src/ai/multimodal/recognition/geometric_recognizer.py` — NEW
+  - `GeometricRecognizer` class
+  - `recognize(image)` → {class, confidence, primitives}
+  - Uses `GeometricVocabulary` for matching
+  - Uses `InstanceOptimizer` for feature extraction
+
+**Training:**
+- Vocabulary from Phase 6
+- For each concept: compute distribution statistics
+- No additional training needed (unsupervised feature extraction)
+
+**Integration with existing systems:**
+- Can replace/augment `QueryClassifier` for image queries
+- Can feed into `ED3NEngine` for semantic processing
+- Can be used by `ChatService` for multimodal understanding
+
+---
+
+#### Phase 10: Vocabulary Expansion
+
+**Goal:** Organically grow the vocabulary when existing primitives are insufficient.
+
+**Algorithm:**
+1. Monitor generation quality:
+   - For each image, after optimization: compute residual = original - rendered
+   - If residual MSE > threshold → mark as "needs expansion"
+2. Analyze residuals:
+   - Collect residuals from many images
+   - Extract features from residuals (edges, colors, patterns)
+   - K-means clustering → find common residual patterns
+3. Discover new primitive types:
+   - Each large cluster = candidate new primitive type
+   - Define parameter space for new type
+   - Add to vocabulary
+4. Re-learn concept mappings:
+   - Re-run Phase 6 with expanded vocabulary
+   - Re-run Phase 7 with new concept distributions
+
+**Files:**
+- `apps/backend/src/ai/multimodal/primitives/vocabulary_expander.py` — NEW
+  - `VocabularyExpander` class
+  - `analyze_residuals(images, residuals)` → expansion candidates
+  - `add_primitive_type(candidate)` → updated vocabulary
+  - `relearn_concepts(vocabulary, images)` → updated concepts
+
+**Trigger:** Run periodically (e.g., every 100 images processed) or when average error exceeds threshold.
+
+---
+
+### Revised Pipeline (End-to-End)
+
+```
+TRAINING:
+  CIFAR-10 images → pixel optimization → primitive vectors
+    → cluster → Geometric Vocabulary
+    → concept analysis → Concept Mappings
+    → visual words → Recognition Features
+
+GENERATION:
+  "a photo of a cat"
+    → CLIP text encode → Concept Lookup → cat → [circle, arc, line]
+    → Initialize parameters from distribution
+    → Optimize for specific request (pixel MSE)
+    → Render → generated image
+
+RECOGNITION:
+  input image
+    → Optimize primitives (no concept given)
+    → Extract visual words
+    → Match vocabulary → "cat" (0.85 confidence)
+    → + primitive parameters (interpretable)
+
+EXPANSION:
+  High error images → Residual analysis → New primitive types
+    → Vocabulary grows → Better generation + recognition
+```
+
+### What This Fixes
+
+| Issue | Previous (Wrong) | Correct (GVV) |
+|-------|-------------------|----------------|
+| CLIP usage | Evaluate rendered output | Map concepts → primitives |
+| Training signal | CLIP similarity | Pixel MSE |
+| Vocabulary | Fixed 263-dim | Organically expanding |
+| Recognition | Not designed | Same vocabulary, dual-use |
+| New primitives | Not discovered | Residual analysis → new types |
+
+### Files to Create (Phase 6-10)
+
+```
+apps/backend/src/ai/multimodal/
+├── primitives/
+│   ├── geometric_vocabulary.py      # Phase 6: Shared vocabulary
+│   ├── concept_mapper.py            # Phase 7: CLIP → concept → primitives
+│   ├── instance_optimizer.py        # Phase 8: Pixel-level optimization
+│   ├── vocabulary_expander.py       # Phase 10: Residual → new types
+│   └── ... (existing files)
+├── recognition/
+│   ├── __init__.py
+│   └── geometric_recognizer.py      # Phase 9: Recognition via vocabulary
+└── ... (existing files)
+```
+
+### Files to Modify
+
+- `apps/backend/src/ai/multimodal/__init__.py` — add new module exports
+- `apps/backend/src/services/multimodal_service.py` — wire generation + recognition
+- `apps/backend/src/api/routes/chat_routes.py` — add /recognize endpoint
+
+### Success Criteria (Phase 6-10)
+
+- [ ] Phase 6: Vocabulary with 10+ concept distributions, 20+ visual words
+- [ ] Phase 7: Text → concept → primitive initialization works
+- [ ] Phase 8: Generated images have pixel MSE < 0.15 (vs target)
+- [ ] Phase 9: Recognition accuracy > 50% on CIFAR-10 (geometric features only)
+- [ ] Phase 10: Vocabulary expands when error is high, new types improve quality
+
+### CPU Feasibility (Phase 6-10)
+
+| Phase | Data | CPU Time | Notes |
+|-------|------|----------|-------|
+| Phase 6 | 500 images | ~2 hours | Pixel optimization per image |
+| Phase 7 | Vocabulary | instant | Lookup table |
+| Phase 8 | Per image | ~14s | Inference-time optimization |
+| Phase 9 | Per image | ~14s | Same as Phase 8 |
+| Phase 10 | Residuals | ~30 min | Periodic expansion |
+
+Total training: ~2.5 hours on CPU. Recognition/generation: ~14s per image.

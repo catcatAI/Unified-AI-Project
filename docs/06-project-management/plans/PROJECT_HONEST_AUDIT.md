@@ -1,7 +1,7 @@
 # Angela AI 專案全面審計 — 真實 vs 假象
 
 > **日期**: 2026-06-22  
-> **最後更新**: 2026-06-23 (Direct optimization + decomposer training — CLIP sim 0.929, no mode collapse)  
+> **最後更新**: 2026-06-23 (Architecture redesign: Geometric Visual Vocabulary — CLIP 用錯、需改為像素級學習 + 幾何詞彙雙用)  
 > **審計範圍**: 全專案 638 個 Python 文件、4,920 個測試、54 個 API 端點  
 > **目的**: 區分真實能力 vs 基礎設施堆砌，找出偏離預期的根因
 
@@ -243,7 +243,7 @@ AudioDecoder (向量→音) → ⚠️ 基本正弦波
 |------|-----------|-------------|
 | **ED3N 460K 字典** | 真實的中英日詞典，CC-CEDICT + JMdict + WordNet | 多語言概念理解 |
 | **CLIP 語義理解** | 真實的 CLIP ViT 模型，512-dim 向量 | 圖像↔文字語義橋接 |
-| **組合圖像生成** | CLIP→decomposer→263-dim primitives→Renderer 管線已訓練 | 文字→圖像語義匹配 0.929，loss 0.056→0.011 |
+| **組合圖像生成** | CLIP→decomposer→263-dim primitives→Renderer 管線已訓練（架構需重構） | 語義匹配 0.929，但 CLIP 用錯位置，需改為像素級學習 + 幾何詞彙雙用 |
 | **7 個 LLM 後端** | 真實的多模型路由，含本地 Ollama | 不依賴單一 API |
 | **460K 向量搜索** | 真實的 numpy 向量存儲 | 語義記憶 |
 | **對話管線** | 完整接線：情緒→安全→對齊→LLM→學習 | 端到端可用 |
@@ -463,12 +463,12 @@ Phase 4: 外部模組
 | 圖像理解 | 7 | **7** | CLIP 真實可用 |
 | 語音理解 | 5 | **3** | Whisper 裝了但未接入 |
 | 文字生成 | 7 | **6** | 依賴外部 LLM，自身生成弱 |
-| 圖像生成 | 1 | **4** | CLIP→decomposer→primitives pipeline: 0.929 CLIP sim, 80% loss reduction |
+| 圖像生成 | 1 | **3** | 有 code + CLIP sim 0.929，但架構需重構（CLIP 用錯、無像素學習、無詞彙擴展） |
 | 語音生成 | 5 | **4** | edge-tts 基本可用 |
 | 記憶 | 7 | **7** | VectorStore + HAM 真實 |
 | 推理 | 6 | **4** | 框架有但深度有限 |
 | 自主性 | 5 | **3** | 框架有但不穩定 |
-| **綜合** | **7.5** | **5.5** | 圖像生成從 0→4，decomposer 0.929 sim |
+| **綜合** | **7.5** | **5.0** | 圖像生成架構需重構，code 存在但方向需修正 |
 
 ---
 
