@@ -52,3 +52,10 @@ try:
 except ImportError as e:
     logger.warning(f"multimodal_routes not available: {e}")
 
+try:
+    from api.routes.image_generation_routes import router as image_gen_router
+    router.include_router(image_gen_router, prefix="/api/v1")
+    logger.debug("Included image_generation_routes")
+except ImportError as e:
+    logger.warning(f"image_generation_routes not available: {e}")
+
