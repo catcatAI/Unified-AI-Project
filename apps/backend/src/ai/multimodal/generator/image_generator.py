@@ -11,6 +11,7 @@ from PIL import Image
 
 from ..primitives.primitive_encoder import PrimitiveEncoder
 from ..primitives.primitive_renderer import PrimitiveRenderer
+from ..evaluation.generation_evaluator import GenerationEvaluator
 from .sequence_generator import SequenceGenerator
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,7 @@ class ImageGenerator:
         self._generator = sequence_generator or SequenceGenerator()
         self._prim_encoder = primitive_encoder or PrimitiveEncoder()
         self._renderer = renderer or PrimitiveRenderer()
+        self._evaluator = GenerationEvaluator(semantic_encoder)
     
     def generate_from_text(self, text: str, temperature: float = 0.8,
                            canvas_size: tuple = (128, 128)) -> Image.Image:
@@ -154,6 +156,20 @@ class ImageGenerator:
                 variations.append(Image.new("RGB", canvas_size, (200, 200, 200)))
         
         return variations
+    
+    def evaluate(self, text: str, canvas_size: tuple = (128, 128)) -> dict:
+        """Generate image and evaluate its quality.
+        
+        Args:
+            text: Text description
+            canvas_size: Canvas size
+            
+        Returns:
+            Dict with 'image' and 'metrics'
+        """
+        img = self.generate_from_text(text, canvas_size=canvas_size)
+        metrics = self._evaluator.evaluate(img, text=text)
+        return {"image": img, "metrics": metrics}
     
     def _encode_text(self, text: str) -> np.ndarray:
         """Encode text with CLIP.
