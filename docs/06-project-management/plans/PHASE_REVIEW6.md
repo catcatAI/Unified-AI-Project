@@ -1,10 +1,11 @@
-# Angela AI 專案全面分析與修復計畫 v33.7
+# Angela AI 專案全面分析與修復計畫 v33.13
 
-> **生成日期**: 2026-06-22 (v33.7 CLIP raw vector 驗證 + SemanticKeyMapper raw mode + 小雞吃米圖 Step 2 實測通過)  
+> **生成日期**: 2026-06-23 (v33.13 CLIP pipeline 訓練驗證 + PrimitiveEncoder b_decode 修復)  
 > **分析範圍**: P30-P44 (多模態管線框架 + 語意編碼器框架 + ED3N 接線, 259 多模態測試)  
 > **專案版本**: 7.5.0-dev  
 > **方向修正**: P39-P41（LLM API 橋接）已移除——違背真實多模態目標  
 > **v33.7 語意理解驗證完成**: CLIP 512-dim raw vector 相似度測試通過: chicken↔chicken=1.0, chicken↔dog=0.75, chicken↔car=0.63. SemanticKeyMapper 新增 `mode="raw"` 支援 512-dim CLIP 直接比較 (跳過隨機投影). 小雞吃米圖 Step 2: 語意理解 **已驗證可用**.
+> **v33.13 CLIP pipeline 訓練**: CLIP similarity 0.89-0.97 (20 images), encoder brightness 0.37-0.60, generator loss 65.8% reduction. b_decode init fix (was 0.01, now 0.37).
 > **下一步:** YOLO 物件檢測 + 前端多模態 UI + WebSocket 串流
 
 ---

@@ -58,9 +58,12 @@ This plan implements a learnable compositional image generation system for Angel
    - Synthetic text caption generation
    - Random primitive pre-training data
 
-**Training Validation:**
-- Random data training: loss 0.0313 → 0.0205 (8.8s CPU)
-- End-to-end pipeline: text → image works
+**Training Validation (CLIP, 20 images, 80 epochs):**
+- Generator loss: 0.0305 → 0.0104 (65.8% reduction, 2.1s CPU)
+- CLIP similarity: 0.89-0.97 (semantic match excellent)
+- Brightness: 0.37-0.60 (matches original images 0.45-0.77)
+- Color coverage: 0.02 (sparse primitive limit, expected)
+- Encoder loss: 0.0065 (b_decode init fix: 0.01→0.37 brightness)
 - Model size: ~500KB (sequence_generator.json + primitive_encoder.json)
 
 ### ⬜ Phase 3: Rendering Pipeline (COMPLETE — 18/18 tests pass)
@@ -885,20 +888,32 @@ tests/ai/multimodal/
 
 ## Next Steps
 
-1. **Review this plan** with the team
-2. **Create Phase 1 files** starting with primitive_types.py
-3. **Implement primitive renderer** first (easiest to test)
-4. **Implement primitive discovery** using existing CLIP encoder
-5. **Run training** on small subset of CIFAR-10
-6. **Evaluate results** and adjust parameters
-7. **Proceed to Phase 2** if Phase 1 success criteria met
+### Completed
+- ✅ Phase 1: Primitive types, renderer, encoder, library (38 tests)
+- ✅ Phase 2: Sequence generator, image generator, training data (36 tests)
+- ✅ Phase 3: Generation evaluator (18 tests)
+- ✅ Encoder fix: b_decode init to mean (brightness 0.01→0.37)
+- ✅ CLIP integration: SemanticVisualEncoder wired into pipeline
+- ✅ Full pipeline training: CLIP similarity 0.89-0.97
+
+### Remaining
+1. **Increase primitive density** — more points/lines per image for better color coverage
+2. **Train on COCO** — need COCO captions download (118K images)
+3. **End-to-end API test** — verify /api/v1/generate-image with CLIP backend
+4. **Quality evaluation** — run on 100+ images, report CLIP similarity distribution
+5. **Performance optimization** — batch encoding, caching CLIP embeddings
 
 ---
 
-## Questions for Discussion
+## Key Findings
 
-1. Should we use scikit-learn for K-means or implement from scratch?
-2. How many primitives per image should we target (5-10 vs 20-50)?
-3. Should we support both PIL and SVG rendering from the start?
-4. What's the minimum CLIP similarity threshold for "acceptable" quality?
-5. Should we integrate with existing VisualDecoder or keep separate?
+### What Works
+- **CLIP semantic matching**: 0.89-0.97 similarity (excellent)
+- **Encoder reconstruction**: loss 0.0065, brightness preserved
+- **Generator training**: 65.8% loss reduction in 80 epochs
+- **CPU training**: 20 images in ~5s, 100 images ~30s
+
+### What Doesn't Work
+- **Color coverage**: 0.02 (sparse primitives limit: max 10 points + 5 lines)
+- **Dense images**: CIFAR-10 32x32 → 128x128 upscaling loses detail
+- **Generator output**: Same primitive repeated (generator collapse)
