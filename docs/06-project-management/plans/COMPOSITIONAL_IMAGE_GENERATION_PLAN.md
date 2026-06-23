@@ -144,16 +144,15 @@ This is essentially **learnable SVG** — the model learns to produce vector gra
 | Phase 4b: Direct Optimization | ⚠️ PARTIAL | — | Differentiable renderer, batch opt | CLIP sim 0.929 but wrong architecture |
 | Phase 5: PixelRefiner | 🔲 PENDING | — | Lightweight FC refinement | |
 | Phase 6: Geometric Vocabulary | ✅ COMPLETE | — | Vocabulary learning, concept mapping | **50 images: 10 words, 10 concepts** |
-| Phase 7: Concept Mapper | ✅ COMPLETE | — | CLIP → concept → primitives | **Code complete, CLIP integration pending** |
+| Phase 7: Concept Mapper | ✅ COMPLETE | — | CLIP → concept → primitives | **CLIP text encoding wired in** |
 | Phase 8: Instance Optimizer | ✅ COMPLETE | — | Pixel-level optimization | **0.8997 init→opt similarity** |
 | Phase 9: Geometric Recognition | ✅ COMPLETE | — | Visual word features, classifier | **35% accuracy (7/20) with 50 images** |
 | Phase 10: Vocabulary Expansion | ✅ COMPLETE | — | Residual analysis, new primitive discovery | **Code complete, needs more data** |
-| **Total** | **4.5/8 PHASES** | **92** | | |
+| **Total** | **5/8 PHASES** | **92** | | |
 
-> **⚠️ Architecture Issue Identified (2026-06-23):** Phases 1-4b built code that exists but
-> the training flow was wrong. CLIP was used for evaluating rendered output instead of
-> concept-primitive mapping. Pixel similarity was not used as the training objective.
-> Fixed in Phase 6+ with the Geometric Visual Vocabulary architecture.
+> **✅ Architecture Fix Applied (2026-06-23):** Phases 1-4b had wrong CLIP usage. Fixed in Phase 6+:
+> CLIP now maps TEXT→CONCEPTS (which primitives compose a cat). Pixel MSE is the training signal.
+> GVV tests: 24/24 pass. API route updated to use GVV pipeline. ConceptMapper uses real CLIP text encoding.
 
 ## Architecture Summary
 

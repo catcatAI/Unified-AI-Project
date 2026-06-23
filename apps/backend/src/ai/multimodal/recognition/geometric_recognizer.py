@@ -147,28 +147,41 @@ class GeometricRecognizer:
     def _compute_class_scores(self, params: np.ndarray) -> Dict[str, float]:
         """Compute similarity scores for each concept class.
 
-        Uses visual word distribution matching — how similar is the image's
-        visual word distribution to each concept's distribution.
+        Uses multiple features for discrimination:
+        1. Visual word distribution (top-K words)
+        2. Color signature (background + dominant colors)
+        3. Parameter distance to concept mean
         """
         scores = {}
 
-        # Find which visual word this image maps to
-        word_id, word_dist = self._vocabulary.find_nearest_word(params)
+        # Find top-K nearest visual words (not just one)
+        K = min(3, len(self._vocabulary._visual_words))
+        word_ids, word_dists = self._vocabulary.find_nearest_word(params, top_k=K)
+
+        # Color signature: background color (first 3 dims)
+        bg_color = params[0:3]
 
         for name, concept in self._vocabulary._concept_distributions.items():
-            # Score based on visual word distribution overlap
-            # Higher score if the image's word is commonly used by this concept
-            if word_id >= 0 and word_id < len(concept.word_frequencies):
-                word_score = float(concept.word_frequencies[word_id])
-            else:
-                word_score = 0.0
+            # 1. Visual word frequency score (top-K)
+            word_score = 0.0
+            for i, wid in enumerate(word_ids):
+                if wid >= 0 and wid < len(concept.word_frequencies):
+                    # Weight by inverse distance
+                    weight = 1.0 / (1.0 + word_dists[i])
+                    word_score += concept.word_frequencies[wid] * weight
+            word_score /= K
 
-            # Parameter distance to concept mean (closer = better)
+            # 2. Color similarity (background color)
+            concept_bg = concept.param_means[0:3]
+            color_dist = float(np.sqrt(((bg_color - concept_bg) ** 2).mean()))
+            color_score = 1.0 / (1.0 + color_dist * 20)
+
+            # 3. Parameter distance (full vector)
             param_dist = float(np.sqrt(((params - concept.param_means) ** 2).mean()))
             param_score = 1.0 / (1.0 + param_dist * 10)
 
-            # Combined score
-            scores[name] = word_score * 0.7 + param_score * 0.3
+            # Weighted combination
+            scores[name] = word_score * 0.5 + color_score * 0.3 + param_score * 0.2
 
         return scores
 

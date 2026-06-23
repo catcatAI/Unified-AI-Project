@@ -280,15 +280,32 @@ class GeometricVocabulary:
                 return vw
         return None
 
-    def find_nearest_word(self, params: np.ndarray) -> Tuple[int, float]:
-        """Find the nearest visual word to a parameter vector."""
+    def find_nearest_word(self, params: np.ndarray, top_k: int = 1):
+        """Find the nearest visual word to a parameter vector.
+
+        Args:
+            params: (263,) parameter vector
+            top_k: number of nearest words to return
+
+        Returns:
+            If top_k=1: (word_id, distance)
+            If top_k>1: (list of word_ids, list of distances)
+        """
         if not self._visual_words:
-            return -1, float('inf')
+            if top_k == 1:
+                return -1, float('inf')
+            return [], []
 
         centers = np.array([vw.center for vw in self._visual_words])
         dists = np.sqrt(((centers - params) ** 2).sum(axis=1))
-        nearest = int(np.argmin(dists))
-        return nearest, float(dists[nearest])
+        sorted_indices = np.argsort(dists)
+
+        if top_k == 1:
+            return int(sorted_indices[0]), float(dists[sorted_indices[0]])
+
+        top_ids = [int(sorted_indices[i]) for i in range(min(top_k, len(sorted_indices)))]
+        top_dists = [float(dists[i]) for i in sorted_indices[:top_k]]
+        return top_ids, top_dists
 
     def initialize_from_concept(self, concept_name: str,
                                  rng: Optional[np.random.Generator] = None) -> np.ndarray:

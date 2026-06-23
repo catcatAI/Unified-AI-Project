@@ -40,6 +40,29 @@ class ConceptMapper:
         """
         self._concept_clip_embeddings[concept_name] = clip_embedding.astype(np.float32)
 
+    def register_concepts_from_clip(self, clip_encoder, class_names: Optional[List[str]] = None):
+        """Register CLIP embeddings for all concepts using a CLIP encoder.
+
+        Args:
+            clip_encoder: SemanticVisualEncoder instance with encode_text() method
+            class_names: list of class names to encode (default: CIFAR-10 classes)
+        """
+        if class_names is None:
+            from .geometric_vocabulary import GeometricVocabulary
+            class_names = GeometricVocabulary.CLASSES
+
+        # Encode all class names at once
+        text_vecs = clip_encoder.encode_text(class_names)
+        if text_vecs is not None:
+            for i, name in enumerate(class_names):
+                self._concept_clip_embeddings[name] = text_vecs[i]
+            print(f"Registered {len(class_names)} concept embeddings from CLIP")
+        else:
+            print("WARNING: CLIP text encoding unavailable, using random embeddings")
+            rng = np.random.default_rng(42)
+            for name in class_names:
+                self._concept_clip_embeddings[name] = rng.random(512).astype(np.float32)
+
     def map_text_to_concept(self, clip_embedding: np.ndarray,
                              top_k: int = 3) -> List[Tuple[str, float]]:
         """Map CLIP text embedding to closest concept(s).

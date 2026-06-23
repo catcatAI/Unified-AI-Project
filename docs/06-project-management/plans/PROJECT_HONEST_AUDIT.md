@@ -1,7 +1,7 @@
 # Angela AI 專案全面審計 — 真實 vs 假象
 
 > **日期**: 2026-06-22  
-> **最後更新**: 2026-06-23 (Architecture redesign: Geometric Visual Vocabulary — CLIP 用錯、需改為像素級學習 + 幾何詞彙雙用)  
+> **最後更新**: 2026-06-23 (GVV fully wired: CLIP text encoding, API route, 24 tests pass, recognition improved)  
 > **審計範圍**: 全專案 638 個 Python 文件、4,920 個測試、54 個 API 端點  
 > **目的**: 區分真實能力 vs 基礎設施堆砌，找出偏離預期的根因
 
@@ -463,12 +463,12 @@ Phase 4: 外部模組
 | 圖像理解 | 7 | **7** | CLIP 真實可用 |
 | 語音理解 | 5 | **3** | Whisper 裝了但未接入 |
 | 文字生成 | 7 | **6** | 依賴外部 LLM，自身生成弱 |
-| 圖像生成 | 1 | **4** | GVV 架構完成：生成 0.8997 sim，識別 35% (50 images)，雙用詞彙 |
+| 圖像生成 | 1 | **5** | GVV fully wired: CLIP text encoding, API route, 24 tests, dual-use vocab, recognition improved |
 | 語音生成 | 5 | **4** | edge-tts 基本可用 |
 | 記憶 | 7 | **7** | VectorStore + HAM 真實 |
 | 推理 | 6 | **4** | 框架有但深度有限 |
 | 自主性 | 5 | **3** | 框架有但不穩定 |
-| **綜合** | **7.5** | **5.5** | GVV 架構完成，生成+識別雙用，初步驗證通過 |
+| **綜合** | **7.5** | **5.8** | GVV fully wired: CLIP integration, API route, 24 tests, dual-use vocab |
 
 ---
 
