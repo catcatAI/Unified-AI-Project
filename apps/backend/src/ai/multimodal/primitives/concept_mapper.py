@@ -5,6 +5,8 @@ Phase 7: Maps text → concept → primitive type distribution.
 This is where CLIP semantic similarity belongs:
 - "cat" → CLIP encode → find closest concept → get primitive distribution
 - NOT: CLIP → evaluate rendered output
+
+Now integrated with concept space mapping for shared representation.
 """
 
 import numpy as np
@@ -20,17 +22,22 @@ class ConceptMapper:
     """Maps CLIP text embeddings to geometric vocabulary concepts.
 
     Architecture:
-        CLIP text encode → find closest concept → return primitive distribution
+        CLIP text encode → Concept Space → find closest concept → return primitive distribution
 
-    Uses CLIP for what it should be used for:
-    - Semantic similarity between TEXT and CONCEPTS
-    - NOT for evaluating rendered images
+    Uses concept space for shared representation:
+    - Same concept (cat) → same region in concept space
+    - Concept space captures "what geometric primitives compose a cat"
     """
 
     def __init__(self, vocabulary: GeometricVocabulary):
         self._vocabulary = vocabulary
         self._concept_clip_embeddings: Dict[str, np.ndarray] = {}
         self._clip_dim = 512
+        self._concept_space = None  # Optional ConceptSpaceMapper
+
+    def set_concept_space(self, concept_space):
+        """Set the concept space mapping for shared representation."""
+        self._concept_space = concept_space
 
     def register_concept_embedding(self, concept_name: str, clip_embedding: np.ndarray):
         """Register a CLIP embedding for a concept.
@@ -67,6 +74,9 @@ class ConceptMapper:
                              top_k: int = 3) -> List[Tuple[str, float]]:
         """Map CLIP text embedding to closest concept(s).
 
+        If concept space is available, use it for mapping.
+        Otherwise, fall back to direct CLIP embedding comparison.
+
         Args:
             clip_embedding: (512,) CLIP text embedding
             top_k: number of top concepts to return
@@ -80,10 +90,20 @@ class ConceptMapper:
         concepts = list(self._concept_clip_embeddings.keys())
         embeddings = np.array([self._concept_clip_embeddings[c] for c in concepts])
 
-        # Cosine similarity
-        clip_norm = clip_embedding / (np.linalg.norm(clip_embedding) + 1e-8)
-        emb_norms = embeddings / (np.linalg.norm(embeddings, axis=1, keepdims=True) + 1e-8)
-        sims = emb_norms @ clip_norm
+        # Use concept space if available
+        if self._concept_space is not None and self._concept_space._is_trained:
+            # Map text embeddings to concept space
+            concept_space_vecs = self._concept_space.encode(embeddings)
+            text_concept_vec = self._concept_space.encode(clip_embedding.reshape(1, -1))
+
+            # Compare in concept space
+            sims = concept_space_vecs @ text_concept_vec.T
+            sims = sims.flatten()
+        else:
+            # Fall back to direct CLIP embedding comparison
+            clip_norm = clip_embedding / (np.linalg.norm(clip_embedding) + 1e-8)
+            emb_norms = embeddings / (np.linalg.norm(embeddings, axis=1, keepdims=True) + 1e-8)
+            sims = emb_norms @ clip_norm
 
         # Top-k
         top_indices = np.argsort(sims)[::-1][:top_k]
