@@ -1094,6 +1094,24 @@ CLIP image features (512-dim) → FC → Concept Space (64-dim)
 | Primitives k-NN | 13% | 6.8s/img |
 | Random baseline | 10% | instant |
 
+### ✅ Improved Concept Space: PCA Projection (2026-06-23)
+
+**Key insight:** PCA projection preserves semantic structure better than neural network training with finite differences.
+
+**Method:** PCA projection from 512-dim CLIP features → 64-dim concept space.
+
+**Results:**
+| Method | Accuracy | Training |
+|--------|----------|----------|
+| CLIP zero-shot | 90% | None (pre-trained) |
+| **PCA concept space** | **87%** | None (instant) |
+| Linear classifier | 79% | Fast |
+| Neural network (finite diff) | 72% | Slow (20min) |
+| Primitives k-NN | 13% | Slow (2h) |
+| Random baseline | 10% | None |
+
+**Visual verification:** Generated images from mean vectors are just gray circles — primitives too simple for realistic generation. But concept space recognition works well.
+
 **What this proves:**
 - Same-class images DO map to similar regions in concept space
 - The concept space captures "what geometric primitives compose a cat"
