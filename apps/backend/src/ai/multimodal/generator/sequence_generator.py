@@ -25,13 +25,13 @@ class SequenceGenerator:
     """
     
     def __init__(self, input_dim: int = 512, hidden_dim: int = 128,
-                 primitive_dim: int = 64, max_steps: int = 20):
+                 primitive_dim: int = 128, max_steps: int = 20):
         """Initialize sequence generator.
         
         Args:
             input_dim: CLIP embedding dimension (512)
             hidden_dim: RNN hidden state dimension
-            primitive_dim: Output primitive embedding dimension (64)
+            primitive_dim: Output primitive embedding dimension (128)
             max_steps: Maximum number of primitives to generate
         """
         self._input_dim = input_dim

@@ -140,7 +140,9 @@ This is essentially **learnable SVG** — the model learns to produce vector gra
 | Phase 1: Primitive Types & Renderer | ✅ COMPLETE | 38 | Types, Renderer, Library, Encoder |
 | Phase 2: Sequence Generator | ✅ COMPLETE | 36 | SequenceGenerator, ImageGenerator, TrainingDataGenerator |
 | Phase 3: Evaluation | ✅ COMPLETE | 18 | GenerationEvaluator |
-| **Total** | **ALL PHASES COMPLETE** | **92** | |
+| Phase 4: Expanded Primitives | ✅ COMPLETE | 92 | Circle, Arc, 263-dim vector, spatial decomposer |
+| Phase 5: PixelRefiner | 🔲 PENDING | — | Lightweight FC refinement |
+| **Total** | **4/5 PHASES** | **92** | |
 
 ## Architecture Summary
 
@@ -892,16 +894,70 @@ tests/ai/multimodal/
 - ✅ Phase 1: Primitive types, renderer, encoder, library (38 tests)
 - ✅ Phase 2: Sequence generator, image generator, training data (36 tests)
 - ✅ Phase 3: Generation evaluator (18 tests)
+- ✅ Phase 4: Expanded primitives (Circle, Arc), 263-dim vector, spatial decomposer
 - ✅ Encoder fix: b_decode init to mean (brightness 0.01→0.37)
 - ✅ CLIP integration: SemanticVisualEncoder wired into pipeline
 - ✅ Full pipeline training: CLIP similarity 0.89-0.97
 
 ### Remaining
-1. **Increase primitive density** — more points/lines per image for better color coverage
-2. **Train on COCO** — need COCO captions download (118K images)
-3. **End-to-end API test** — verify /api/v1/generate-image with CLIP backend
+1. **Phase 5: PixelRefiner** — lightweight FC refinement of A's output
+2. **Download COCO** — text-image pairs for training
+3. **Train text→primitives mapping** — SequenceGenerator with COCO captions
 4. **Quality evaluation** — run on 100+ images, report CLIP similarity distribution
-5. **Performance optimization** — batch encoding, caching CLIP embeddings
+
+---
+
+## Phase 4: Enhanced Primitives (A — 主力)
+
+**Goal:** Better decomposition → more primitives → richer color/structure coverage.
+
+**Changes:**
+1. **Decomposition upgrade** (`primitive_types.py` or new `decomposer.py`):
+   - Edge detection via PIL FIND_EDGES → extract edge points with color
+   - Color quantization → multiple dominant colors (not just 1)
+   - Contour extraction → more points along edges
+   - Target: 20-30 points + 5-10 lines + 2-3 planes (was 5 points + 0 lines + 1 plane)
+
+2. **Encoder dim increase** (64 → 128):
+   - More capacity to represent richer instructions
+   - Update SequenceGenerator primitive_dim accordingly
+
+3. **Training improvement:**
+   - Teacher forcing with curriculum (start easy, increase difficulty)
+   - Gradient accumulation for small batches
+
+**Expected:** Color coverage 0.02 → 0.10+, better structure
+
+---
+
+## Phase 5: PixelRefiner (B — 補助)
+
+**Goal:** Refine A's rough output with lightweight pixel-level corrections.
+
+**Architecture:**
+```
+Input: 128x128x3 (A's rough output)
+  ↓ Flatten (49,152)
+  ↓ FC(49152 → 1024)
+  ↓ ReLU
+  ↓ FC(1024 → 49152)
+  ↓ Reshape → 128x128x3
+Output: refined image
+```
+
+**Training:**
+- Input: A's rendered output
+- Target: original CIFAR-10 image (128x128)
+- Loss: MSE + CLIP similarity loss
+- ~5000 params, fast CPU training
+
+**Pipeline:**
+```
+CLIP → Generator → Encoder → Renderer → PixelRefiner → final image
+         (A)         (A)       (A)          (B)
+```
+
+**Expected:** Edge smoothing, color correction, minor detail improvement
 
 ---
 

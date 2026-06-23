@@ -50,7 +50,7 @@ class TestGenerateRandomPrimitives:
             assert isinstance(seq, list)
             assert len(seq) > 0
             for prim in seq:
-                assert prim.shape == (64,)
+                assert prim.shape == (128,)
 
 
 class TestGenerateSyntheticCaptions:
@@ -69,7 +69,7 @@ class TestGenerateSyntheticCaptions:
         instructions = DrawingInstructions(
             points=[Point(0.5, 0.5, (255, 0, 0), 0.1)]
         )
-        emb = np.random.randn(64).astype(np.float32)
+        emb = np.random.randn(128).astype(np.float32)
         emb = emb / (np.linalg.norm(emb) + 1e-8)
         lib.add_primitive("test", instructions, emb)
         gen._library = lib

@@ -59,12 +59,14 @@ class TestDrawingInstructions:
         assert instr.background_color == (255, 255, 255)
     
     def test_to_vector_shape(self):
+        from ai.multimodal.primitives.primitive_types import TOTAL_DIM
         instr = DrawingInstructions()
         vec = instr.to_vector()
-        assert vec.shape == (116,)
+        assert vec.shape == (TOTAL_DIM,)
         assert vec.dtype == np.float32
     
     def test_to_vector_with_content(self):
+        from ai.multimodal.primitives.primitive_types import TOTAL_DIM
         instr = DrawingInstructions(
             points=[Point(0.5, 0.5, (255, 0, 0), 0.1)],
             lines=[Line(Point(0.0, 0.0, (0, 0, 0), 0.0), 
@@ -73,7 +75,7 @@ class TestDrawingInstructions:
             background_color=(0, 0, 0)
         )
         vec = instr.to_vector()
-        assert vec.shape == (116,)
+        assert vec.shape == (TOTAL_DIM,)
         # Background color should be (0, 0, 0) -> 0.0
         assert vec[0] == 0.0
         assert vec[1] == 0.0

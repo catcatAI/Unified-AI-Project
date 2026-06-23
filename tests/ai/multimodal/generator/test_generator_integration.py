@@ -30,7 +30,7 @@ class TestFullPipeline:
         # Create small training set
         n = 10
         clip_embs = [np.random.randn(512).astype(np.float32) for _ in range(n)]
-        sequences = [[np.random.randn(64).astype(np.float32) for _ in range(2)]
+        sequences = [[np.random.randn(128).astype(np.float32) for _ in range(2)]
                      for _ in range(n)]
         
         # Train
@@ -58,7 +58,7 @@ class TestFullPipeline:
         
         # Encode
         embedding = encoder.encode(instructions)
-        assert embedding.shape == (64,)
+        assert embedding.shape == (128,)
         
         # Decode
         decoded = encoder.decode(embedding)

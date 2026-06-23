@@ -69,7 +69,7 @@ class TestImageGeneratorTrained:
         
         # Create training data
         clip_embs = [np.random.randn(512).astype(np.float32) for _ in range(5)]
-        sequences = [[np.random.randn(64).astype(np.float32) for _ in range(2)]
+        sequences = [[np.random.randn(128).astype(np.float32) for _ in range(2)]
                      for _ in range(5)]
         
         gen._generator.train(clip_embs, sequences, epochs=10, lr=0.01)

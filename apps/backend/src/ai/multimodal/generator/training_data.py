@@ -115,16 +115,16 @@ class TrainingDataGenerator:
                                     if prim_emb is not None:
                                         primitive_sequences.append(prim_emb)
                                     else:
-                                        primitive_sequences.append(clip_vec[:64]
-                                            if len(clip_vec) >= 64
-                                            else np.pad(clip_vec, (0, 64 - len(clip_vec))))
+                                        primitive_sequences.append(clip_vec[:128]
+                                            if len(clip_vec) >= 128
+                                            else np.pad(clip_vec, (0, 128 - len(clip_vec))))
                                 else:
                                     # No match — use zero embedding
-                                    primitive_sequences.append(np.zeros(64, dtype=np.float32))
+                                    primitive_sequences.append(np.zeros(128, dtype=np.float32))
                             else:
-                                # No library — project CLIP to 64-dim as proxy
-                                proj = clip_vec[:64] if len(clip_vec) >= 64 \
-                                    else np.pad(clip_vec, (0, 64 - len(clip_vec)))
+                                # No library — project CLIP to 128-dim as proxy
+                                proj = clip_vec[:128] if len(clip_vec) >= 128 \
+                                    else np.pad(clip_vec, (0, 128 - len(clip_vec)))
                                 primitive_sequences.append(proj.astype(np.float32))
             except Exception as e:
                 logger.debug("Skipping %s: %s", img_info["path"], e)
@@ -195,7 +195,7 @@ class TrainingDataGenerator:
         }
     
     def generate_random_primitives(self, n_samples: int = 200,
-                                   primitive_dim: int = 64,
+                                   primitive_dim: int = 128,
                                    seed: int = 42) -> Dict[str, List]:
         """Generate random primitive sequences for pre-training.
         
