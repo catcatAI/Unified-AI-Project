@@ -143,9 +143,11 @@ This is essentially **learnable SVG** — the model learns to produce vector gra
 | Phase 4: Expanded Primitives | ✅ COMPLETE | 92 | Circle, Arc, 263-dim vector, spatial decomposer | Code exists |
 | Phase 4b: Direct Optimization | ⚠️ PARTIAL | — | Differentiable renderer, batch opt | CLIP sim 0.929 but wrong architecture |
 | Phase 5: PixelRefiner | 🔲 PENDING | — | Lightweight FC refinement | |
-| Phase 6: Geometric Vocabulary | 🔲 PENDING | — | Vocabulary learning, concept mapping | **NEW — Correct architecture** |
-| Phase 7: Geometric Recognition | 🔲 PENDING | — | Visual word features, classifier | **NEW — Dual-use with generation** |
-| Phase 8: Vocabulary Expansion | 🔲 PENDING | — | Residual analysis, new primitive discovery | **NEW — Organic growth** |
+| Phase 6: Geometric Vocabulary | ✅ COMPLETE | — | Vocabulary learning, concept mapping | **50 images: 10 words, 10 concepts** |
+| Phase 7: Concept Mapper | ✅ COMPLETE | — | CLIP → concept → primitives | **Code complete, CLIP integration pending** |
+| Phase 8: Instance Optimizer | ✅ COMPLETE | — | Pixel-level optimization | **0.8997 init→opt similarity** |
+| Phase 9: Geometric Recognition | ✅ COMPLETE | — | Visual word features, classifier | **35% accuracy (7/20) with 50 images** |
+| Phase 10: Vocabulary Expansion | ✅ COMPLETE | — | Residual analysis, new primitive discovery | **Code complete, needs more data** |
 | **Total** | **4.5/8 PHASES** | **92** | | |
 
 > **⚠️ Architecture Issue Identified (2026-06-23):** Phases 1-4b built code that exists but
