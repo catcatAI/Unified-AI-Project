@@ -147,43 +147,42 @@ class GeometricRecognizer:
     def _compute_class_scores(self, params: np.ndarray) -> Dict[str, float]:
         """Compute similarity scores for each concept class.
 
-        Uses multiple features for discrimination:
-        1. Visual word distribution (top-K words)
-        2. Color signature (background + dominant colors)
-        3. Parameter distance to concept mean
+        Uses k-NN on optimized vectors: find K nearest training vectors,
+        vote by class. This is more discriminative than concept-mean matching.
         """
-        scores = {}
+        # k-NN with K=5
+        K = 5
+        all_params = self._vocabulary._all_params
+        all_labels = self._vocabulary._all_labels
 
-        # Find top-K nearest visual words (not just one)
-        K = min(3, len(self._vocabulary._visual_words))
-        word_ids, word_dists = self._vocabulary.find_nearest_word(params, top_k=K)
+        if all_params is None or len(all_params) == 0:
+            return self._fallback_scores()
 
-        # Color signature: background color (first 3 dims)
-        bg_color = params[0:3]
+        # Compute distances to all training vectors
+        dists = np.sqrt(((all_params - params) ** 2).sum(axis=1))
+        nearest_indices = np.argsort(dists)[:K]
 
-        for name, concept in self._vocabulary._concept_distributions.items():
-            # 1. Visual word frequency score (top-K)
-            word_score = 0.0
-            for i, wid in enumerate(word_ids):
-                if wid >= 0 and wid < len(concept.word_frequencies):
-                    # Weight by inverse distance
-                    weight = 1.0 / (1.0 + word_dists[i])
-                    word_score += concept.word_frequencies[wid] * weight
-            word_score /= K
+        # Vote by class
+        scores = {name: 0.0 for name in self._vocabulary._concept_distributions}
+        for idx in nearest_indices:
+            label = int(all_labels[idx])
+            if 0 <= label < len(self._vocabulary.CLASSES):
+                class_name = self._vocabulary.CLASSES[label]
+                # Weight by inverse distance
+                weight = 1.0 / (1.0 + dists[idx])
+                scores[class_name] += weight
 
-            # 2. Color similarity (background color)
-            concept_bg = concept.param_means[0:3]
-            color_dist = float(np.sqrt(((bg_color - concept_bg) ** 2).mean()))
-            color_score = 1.0 / (1.0 + color_dist * 20)
-
-            # 3. Parameter distance (full vector)
-            param_dist = float(np.sqrt(((params - concept.param_means) ** 2).mean()))
-            param_score = 1.0 / (1.0 + param_dist * 10)
-
-            # Weighted combination
-            scores[name] = word_score * 0.5 + color_score * 0.3 + param_score * 0.2
+        # Normalize
+        total = sum(scores.values())
+        if total > 0:
+            scores = {k: v / total for k, v in scores.items()}
 
         return scores
+
+    def _fallback_scores(self) -> Dict[str, float]:
+        """Fallback uniform scores when no training data."""
+        n = len(self._vocabulary._concept_distributions)
+        return {name: 1.0 / n for name in self._vocabulary._concept_distributions}
 
     def recognize_from_vector(self, params: np.ndarray) -> Dict:
         """Recognize directly from an optimized vector (faster, no re-optimization).

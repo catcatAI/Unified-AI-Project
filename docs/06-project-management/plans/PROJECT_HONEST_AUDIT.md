@@ -463,12 +463,12 @@ Phase 4: 外部模組
 | 圖像理解 | 7 | **7** | CLIP 真實可用 |
 | 語音理解 | 5 | **3** | Whisper 裝了但未接入 |
 | 文字生成 | 7 | **6** | 依賴外部 LLM，自身生成弱 |
-| 圖像生成 | 1 | **5** | GVV fully wired: CLIP text encoding, API route, 24 tests, dual-use vocab, recognition improved |
+| 圖像生成 | 1 | **5** | GVV pipeline wired: generation 0.90 sim, CLIP 90% recognition (primitives 13% — dual-use not working) |
 | 語音生成 | 5 | **4** | edge-tts 基本可用 |
 | 記憶 | 7 | **7** | VectorStore + HAM 真實 |
 | 推理 | 6 | **4** | 框架有但深度有限 |
 | 自主性 | 5 | **3** | 框架有但不穩定 |
-| **綜合** | **7.5** | **5.8** | GVV fully wired: CLIP integration, API route, 24 tests, dual-use vocab |
+| **綜合** | **7.5** | **5.8** | GVV wired: CLIP 90% recognition, primitives 13%. Dual-use vocab not working yet |
 
 ---
 

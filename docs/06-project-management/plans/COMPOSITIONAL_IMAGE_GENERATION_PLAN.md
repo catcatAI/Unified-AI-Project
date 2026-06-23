@@ -1053,6 +1053,25 @@ This is **Bag of Geometric Words** — like Bag of Visual Words but with learned
 - Dual-use: same representation for generation and recognition
 - Organic growth: vocabulary expands as needed
 
+### ⚠️ Recognition Findings (2026-06-23)
+
+**Test results on held-out CIFAR-10 (100 images, 10/class):**
+
+| Method | Accuracy | Speed | Notes |
+|--------|----------|-------|-------|
+| CLIP zero-shot | **90%** | 2.0s/img | Pre-trained, just works |
+| Primitives k-NN | 13% | 6.8s/img | Noisy optimization |
+| Random baseline | 10% | instant | |
+
+**Conclusion:** Primitive representation is good for **generation** (rendering) but terrible for **recognition** (classification). CLIP is the opposite.
+
+**Dual-use vocabulary does NOT work with current 263-dim primitives.** The primitives capture visual appearance (for rendering) but not discriminative features (for classification).
+
+**Options to fix:**
+1. **Accept hybrid approach**: Use CLIP for recognition, primitives for generation
+2. **Learn discriminative primitives**: Train primitives to maximize both rendering quality AND classification accuracy
+3. **Add discriminative features**: Extend 263-dim vector with features optimized for classification
+
 ### System Architecture
 
 ```

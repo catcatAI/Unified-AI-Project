@@ -372,6 +372,10 @@ class GeometricVocabulary:
             "visual_words": [vw.to_dict() for vw in self._visual_words],
             "concept_distributions": {k: v.to_dict() for k, v in self._concept_distributions.items()},
         }
+        if self._all_params is not None:
+            data["all_params"] = self._all_params.tolist()
+        if self._all_labels is not None:
+            data["all_labels"] = self._all_labels.tolist()
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
         with open(path, "w") as f:
             json.dump(data, f)
@@ -391,6 +395,10 @@ class GeometricVocabulary:
         vocab._concept_distributions = {
             k: ConceptDistribution.from_dict(v) for k, v in data["concept_distributions"].items()
         }
+        if "all_params" in data:
+            vocab._all_params = np.array(data["all_params"], dtype=np.float32)
+        if "all_labels" in data:
+            vocab._all_labels = np.array(data["all_labels"], dtype=int)
         print(f"Vocabulary loaded: {len(vocab._visual_words)} words, "
               f"{len(vocab._concept_distributions)} concepts")
         return vocab
