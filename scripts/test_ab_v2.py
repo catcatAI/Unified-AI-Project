@@ -1,4 +1,7 @@
-"""Quick A-B test: 3 images, no generator, direct encode-decode."""
+"""Quick A-B test: 3 images, no generator, direct encode-decode.
+DEPRECATED: This script uses the OLD architecture (rule-based decomposer).
+For GVV architecture, see test_gvv_quick.py
+"""
 import sys, os, json
 import numpy as np
 from PIL import Image
@@ -6,10 +9,13 @@ from PIL import Image
 sys.path.insert(0, os.path.join("apps", "backend", "src"))
 print("Loading modules...", flush=True)
 
-from ai.multimodal.primitives.decomposer import decompose_enhanced
+from ai.multimodal.primitives.decomposer import decompose_spatial as decompose_enhanced
 from ai.multimodal.primitives.primitive_encoder import PrimitiveEncoder
 from ai.multimodal.primitives.primitive_renderer import PrimitiveRenderer
-from ai.multimodal.primitives.pixel_refiner import PixelRefiner
+try:
+    from ai.multimodal.primitives.pixel_refiner import PixelRefiner
+except ImportError:
+    PixelRefiner = None
 from ai.multimodal.evaluation.generation_evaluator import GenerationEvaluator
 
 print("Loading data...", flush=True)

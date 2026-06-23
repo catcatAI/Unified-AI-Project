@@ -1,15 +1,24 @@
-"""Test A→B pipeline: enhanced decomposer + PixelRefiner."""
+"""Test A→B pipeline: enhanced decomposer + PixelRefiner.
+DEPRECATED: This script uses the OLD architecture.
+For GVV architecture, see test_gvv_quick.py
+"""
 import sys, os, json, time
 import numpy as np
 from PIL import Image
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
 
-from ai.multimodal.primitives.decomposer import decompose_enhanced
+from ai.multimodal.primitives.decomposer import decompose_spatial as decompose_enhanced
 from ai.multimodal.primitives.primitive_encoder import PrimitiveEncoder
 from ai.multimodal.primitives.primitive_renderer import PrimitiveRenderer
-from ai.multimodal.primitives.pixel_refiner import PixelRefiner
-from ai.multimodal.generator.sequence_generator import SequenceGenerator
+try:
+    from ai.multimodal.primitives.pixel_refiner import PixelRefiner
+except ImportError:
+    PixelRefiner = None
+try:
+    from ai.multimodal.generator.sequence_generator import SequenceGenerator
+except ImportError:
+    SequenceGenerator = None
 from ai.multimodal.evaluation.generation_evaluator import GenerationEvaluator
 
 
