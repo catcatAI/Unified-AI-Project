@@ -3,12 +3,6 @@
 # =============================================================================
 
 # =============================================================================
-# DEPRECATED: This subpackage has no production consumers.
-# Retained for reference — not wired into the running system.
-# See MASTER_CONSOLIDATED_PLAN.md § Phase 4 Priority 2.
-# =============================================================================
-
-# =============================================================================
 # FILE_HASH: CTXINIT01
 # FILE_PATH: apps/backend/src/ai/context/__init__.py
 # FILE_TYPE: module_init
