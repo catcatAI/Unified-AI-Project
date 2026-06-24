@@ -213,23 +213,25 @@ black apps/backend/src tests/ && flake8 apps/backend/src tests/
 
 ```
 apps/
-  backend/           # Python FastAPI + AI systems
-    ai/core/         # 分類器、執行閘門、ModelBus、unicode_utils
-    ai/ed3n/         # ED3N 外部字典解耦神經網路 (含 input_enricher)
-    ai/garden/       # GARDEN 輕量推理引擎
-    ai/context/      # 上下文管理（部分 stub）
-    ai/lifecycle/    # 記憶整合循環、主動互動
-    ai/response/     # 回應組合、學習循環
-    ai/meta/         # 元學習、自適應控制
-    ai/reasoning/    # 因果推理
-    ai/alignment/    # 情緒系統、本體系統
-    ai/memory/       # HAM 記憶、數學漣漪引擎
-    ai/agents/       # 動態代理註冊
-    ai/multimodal/primitives/  # Compositional image generation (GVV + ThreeLayerVisual)
-    services/        # LLM 路由、聊天服務、處理器
-    api/routes/      # FastAPI 路由
-  desktop-app/       # Electron + Live2D
-  mobile-app/        # React Native bridge
+  backend/           # Python FastAPI + AI systems (638 Python files, ~127K lines)
+    ai/core/         # QueryClassifier, ExecutionGate, ModelBus, unicode_utils
+    ai/ed3n/         # ED3N engine (reflex → SNN → decode → cycle)
+    ai/garden/       # GARDEN lightweight inference engine
+    ai/context/      # Context management (dialogue, memory)
+    ai/lifecycle/    # Memory integration cycle, active interaction
+    ai/response/     # Response composition, learning loop
+    ai/meta/         # Meta-learning, adaptive control
+    ai/reasoning/    # Causal reasoning
+    ai/alignment/    # Emotion system, ontology system
+    ai/memory/       # HAM memory, vector store
+    ai/agents/       # Dynamic agent registration
+    ai/multimodal/primitives/  # Compositional image gen (GVV: 14 source files, ~62 tests)
+    services/        # LLM routing, chat service, handlers
+    api/routes/      # FastAPI routes (v1/*)
+  desktop-app/       # Electron + Live2D desktop app (38 JS files)
+  web-live2d-viewer/ # Web-based Live2D model viewer (41 JS files)
+  pixel-angela/      # PyQt6 pixel art rendering engine
+  gemini-os-bridge/  # OS automation microservice
 packages/
   cli/               # CLI tools
 tests/

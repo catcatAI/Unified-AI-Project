@@ -4,6 +4,7 @@ import logging
 import io
 import base64
 import os
+import warnings
 import numpy as np
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -75,9 +76,6 @@ def _get_gvv():
         return _gvv_state
 
     try:
-        import sys
-        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-
         from ai.multimodal.primitives.geometric_vocabulary import GeometricVocabulary
         from ai.multimodal.primitives.concept_mapper import ConceptMapper
         from ai.multimodal.primitives.instance_optimizer import InstanceOptimizer
@@ -129,9 +127,6 @@ def _get_three_layer():
         return _three_layer_state
 
     try:
-        import sys
-        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-
         from ai.multimodal.three_layer_visual import ThreeLayerVisual
 
         models_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "models")
@@ -172,8 +167,12 @@ def _encode_text_with_clip(text: str) -> np.ndarray:
 async def generate_image(request: GenerateImageRequest):
     """Generate an image from text using the GVV pipeline.
 
+    ⚠️ DEPRECATED: Use POST /image/generate instead.
+    This endpoint is kept for backward compatibility and will be removed in a future release.
+
     Pipeline: text → CLIP → concept space → ConceptMapper → vocabulary init → optimize → render
     """
+    warnings.warn("POST /generate-image is deprecated, use POST /image/generate", DeprecationWarning, stacklevel=2)
     gvv = _get_gvv()
     if gvv is None:
         raise HTTPException(status_code=503, detail="GVV pipeline not available")
@@ -231,8 +230,12 @@ async def generate_image(request: GenerateImageRequest):
 async def recognize_image(request: RecognizeImageRequest):
     """Recognize an image using concept space mapping.
 
+    ⚠️ DEPRECATED: Use POST /image/recognize instead.
+    This endpoint is kept for backward compatibility and will be removed in a future release.
+
     Pipeline: image → CLIP → concept space → classify
     """
+    warnings.warn("POST /recognize-image is deprecated, use POST /image/recognize", DeprecationWarning, stacklevel=2)
     gvv = _get_gvv()
     if gvv is None:
         raise HTTPException(status_code=503, detail="GVV pipeline not available")
@@ -286,8 +289,12 @@ async def recognize_image(request: RecognizeImageRequest):
 async def reconstruct_image(request: ReconstructImageRequest):
     """Reconstruct an image using ThreeLayerVisual.
 
+    ⚠️ DEPRECATED: Use POST /image/reconstruct instead.
+    This endpoint is kept for backward compatibility and will be removed in a future release.
+
     Pipeline: image → PCA encode → decode → enhance
     """
+    warnings.warn("POST /reconstruct-image is deprecated, use POST /image/reconstruct", DeprecationWarning, stacklevel=2)
     model = _get_three_layer()
     if model is None:
         raise HTTPException(status_code=503, detail="ThreeLayerVisual model not available")
@@ -341,8 +348,12 @@ async def reconstruct_image(request: ReconstructImageRequest):
 async def interpolate_classes(request: InterpolateRequest):
     """Interpolate between two class centers using ThreeLayerVisual.
 
+    ⚠️ DEPRECATED: Use POST /image/interpolate instead.
+    This endpoint is kept for backward compatibility and will be removed in a future release.
+
     Pipeline: class A center → class B center → n_steps interpolation
     """
+    warnings.warn("POST /interpolate-classes is deprecated, use POST /image/interpolate", DeprecationWarning, stacklevel=2)
     model = _get_three_layer()
     if model is None:
         raise HTTPException(status_code=503, detail="ThreeLayerVisual model not available")
@@ -379,12 +390,61 @@ async def interpolate_classes(request: InterpolateRequest):
         )
     except Exception as e:
         logger.error("Interpolation failed: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/generate-image/status")
+        raise HTTPException(status_code=500, detail=str(e))@router.get("/generate-image/status")
 async def generate_image_status():
-    """Check if image generation is available."""
+    """Check if image generation is available.
+
+    ⚠️ DEPRECATED: Use GET /image/status instead.
+    This endpoint is kept for backward compatibility and will be removed in a future release.
+    """
+    warnings.warn("GET /generate-image/status is deprecated, use GET /image/status", DeprecationWarning, stacklevel=2)
+    return await image_status()
+
+
+# =============================================================================
+# New standardized image routes (replacing deprecated /generate-image etc.)
+# =============================================================================
+
+
+@router.post("/image/generate", response_model=GenerateImageResponse)
+async def image_generate(request: GenerateImageRequest):
+    """Generate an image from text using the GVV pipeline.
+
+    Pipeline: text → CLIP → concept space → ConceptMapper → vocabulary init → optimize → render
+    """
+    return await generate_image(request)
+
+
+@router.post("/image/recognize", response_model=RecognizeImageResponse)
+async def image_recognize(request: RecognizeImageRequest):
+    """Recognize an image using concept space mapping.
+
+    Pipeline: image → CLIP → concept space → classify
+    """
+    return await recognize_image(request)
+
+
+@router.post("/image/reconstruct", response_model=ReconstructImageResponse)
+async def image_reconstruct(request: ReconstructImageRequest):
+    """Reconstruct an image using ThreeLayerVisual.
+
+    Pipeline: image → PCA encode → decode → enhance
+    """
+    return await reconstruct_image(request)
+
+
+@router.post("/image/interpolate", response_model=InterpolateResponse)
+async def image_interpolate(request: InterpolateRequest):
+    """Interpolate between two class centers using ThreeLayerVisual.
+
+    Pipeline: class A center → class B center → n_steps interpolation
+    """
+    return await interpolate_classes(request)
+
+
+@router.get("/image/status")
+async def image_status():
+    """Check if image generation is available (standardized endpoint)."""
     gvv = _get_gvv()
     three_layer = _get_three_layer()
     has_concept_space = False

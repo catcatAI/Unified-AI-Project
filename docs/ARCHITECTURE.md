@@ -178,7 +178,50 @@ unified-ai-project/
 
 ---
 
-## 6. 8D State Matrix (αβγδ εθζη)
+## 6. GVV Image Generation Pipeline (New)
+
+### Overview
+
+The GVV (Geometric Vocabulary Vector) pipeline generates images from text using a multi-stage approach:
+
+```
+Text → CLIP (512-dim) → Concept Space (PCA, 87% accuracy) → 
+ConceptMapper → GeometricVocabulary → InstanceOptimizer → Render
+```
+
+### Components
+
+| Component | Location | Responsibility |
+|-----------|----------|---------------|
+| **ConceptMapper** | `ai/multimodal/primitives/concept_mapper.py` | Maps CLIP embeddings to shared concept space |
+| **ConceptSpaceMapper** | `ai/multimodal/primitives/concept_space.py` | PCA-based projection with class centers |
+| **GeometricVocabulary** | `ai/multimodal/primitives/geometric_vocabulary.py` | Stores primitive geometric patterns |
+| **InstanceOptimizer** | `ai/multimodal/primitives/instance_optimizer.py` | Text-driven primitive optimization |
+| **LearnableDecomposer** | `ai/multimodal/primitives/learnable_decomposer.py` | Neural image→primitive decomposition |
+| **ThreeLayerVisual** | `ai/multimodal/three_layer_visual.py` | PCA encoder + nonlinear decoder (128-dim) |
+| **Primitive Renderer** | `ai/multimodal/primitives/primitive_renderer.py` | PIL-based rendering of primitives |
+
+### API Endpoints
+
+| Method | Path | Function |
+|--------|------|----------|
+| POST | `/api/v1/image/generate` | Text-to-image generation |
+| POST | `/api/v1/image/recognize` | Image recognition via concept space |
+| POST | `/api/v1/image/reconstruct` | Image reconstruction via ThreeLayerVisual |
+| POST | `/api/v1/image/interpolate` | Class interpolation |
+| GET | `/api/v1/image/status` | Pipeline health check |
+
+> **Deprecated endpoints** (kept for backward-compat): `/generate-image`, `/recognize-image`, `/reconstruct-image`, `/interpolate-classes`, `/generate-image/status`
+
+### Key Metrics
+
+- **Concept space accuracy**: 87% (PCA) vs 72% (neural net)
+- **Source files**: 14 Python files in `ai/multimodal/primitives/`
+- **Tests**: ~62 tests (38 Phase 1 + ~24 GVV)
+
+---
+
+## 7. 8D State Matrix (αβγδ εθζη)
 
 | Dimension | Name | Description | Range |
 |-----------|------|-------------|-------|
@@ -209,8 +252,8 @@ unified-ai-project/
 
 ## 9. Version Governance
 
-- Version is defined in 14 locations (see `MASTER_CONSOLIDATED_PLAN.md` S1)
-- CI validates all 14 version locations are in sync
+- Version is defined in 16+ locations (see `docs/IDEAL_ARCHITECTURE.md` §12.1)
+- CI validates all version locations are in sync
 - Only PATCH bumps allowed without human approval
 - CHANGELOG must match real git tags (unreleased = `Internal/Unreleased`)
 
@@ -223,5 +266,7 @@ unified-ai-project/
 | `AGENTS.md` | Development guide, build/test/lint commands |
 | `ANGELA_MATRIX_ANNOTATION_GUIDE.md` | Matrix annotation standards (L1-L6, αβγδ εθζη, A/B/C, L0-L11) |
 | `MASTER_CONSOLIDATED_PLAN.md` | Consolidated master plan (S/A/B/C/D graded) |
-| `FULL_ARCHITECTURE_ANALYSIS.md` | Comprehensive architecture audit (1201 lines) |
+| `COMPREHENSIVE_AUDIT_2026-06-25.md` | Latest comprehensive audit report |
+| `IDEAL_ARCHITECTURE.md` | Target architecture blueprint |
+| `REPAIR_ROADMAP.md` | Phased repair plan to reach ideal state |
 | `CHANGELOG.md` | Release history |

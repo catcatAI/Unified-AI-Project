@@ -569,7 +569,13 @@ async def send_message(session_id: str, request: Dict[str, Any] = Body(...)) -> 
 
 @router.post("/angela/chat")
 async def angela_chat(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
-    """Execute the angela chat operation."""
+    """Execute the angela chat operation.
+
+    ⚠️ DEPRECATED: Use POST /api/v1/chat/unified instead.
+    This endpoint is kept for backward compatibility and will be removed in a future release.
+    """
+    import warnings
+    warnings.warn("POST /angela/chat is deprecated, use POST /chat/unified", DeprecationWarning, stacklevel=2)
     user_message = request.get("message", request.get("text", ""))
     session_id = request.get("session_id", f"angela-{uuid.uuid4().hex[:8]}")
     user_name = request.get("user_name", "\u670b\u53cb")
@@ -580,7 +586,13 @@ async def angela_chat(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
 
 @router.post("/dialogue")
 async def dialogue(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
-    """Execute the dialogue operation."""
+    """Execute the dialogue operation.
+
+    ⚠️ DEPRECATED: Use POST /api/v1/chat/unified instead.
+    This endpoint is kept for backward compatibility and will be removed in a future release.
+    """
+    import warnings
+    warnings.warn("POST /dialogue is deprecated, use POST /chat/unified", DeprecationWarning, stacklevel=2)
     user_message = request.get("message", request.get("text", ""))
     session_id = request.get("session_id", f"angela-{uuid.uuid4().hex[:8]}")
     user_name = request.get("user_name", "\u670b\u53cb")
@@ -629,8 +641,13 @@ async def analyze_image(
 ) -> Dict[str, Any]:
     """Analyze an uploaded image using VisionService.
 
+    ⚠️ DEPRECATED: Use POST /chat/with-image instead.
+    This endpoint is kept for backward compatibility and will be removed in a future release.
+
     Accepts image file upload + optional question, returns analysis result.
     """
+    import warnings
+    warnings.warn("POST /vision/analyze is deprecated, use POST /chat/with-image", DeprecationWarning, stacklevel=2)
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Only image files are accepted")
 

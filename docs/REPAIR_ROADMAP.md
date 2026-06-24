@@ -1,10 +1,16 @@
 # Angela AI — 修復路線圖（Repair Roadmap）
 
-**版本**: 1.0.0  
+**版本**: 1.1.0  
 **最後更新**: 2026-06-25  
-**狀態**: Planning / Active  
+**狀態**: In Progress / Active  
 **目的**: 從當前狀態（審計報告）到理想狀態（IDEAL_ARCHITECTURE.md）的具體可執行修復路徑  
 **基礎文檔**: `docs/COMPREHENSIVE_AUDIT_2026-06-25.md` (審計)、`docs/IDEAL_ARCHITECTURE.md` (目標)
+
+> ✅ **Phase 0-1-2 進度更新 (2026-06-25)**: 
+> - **Phase 0 (P0)**: 全部 5 項任務完成 ✅ (pyrightconfig, dead imports, Compositional Image docs, resource bug, config yaml)
+> - **Phase 1 (P1)**: 全部 7 項任務完成 ✅ (chat deprecation, image routes, sys.path, modules removal, doc references, PLAN archive, vision deprecation)
+> - **Phase 2 (P1-P2)**: 6/7 項任務完成 ✅ (AGENTS.md, ARCHITECTURE.md, INDEX.md, CHANGELOG, README.md, CI) — 剩餘 IDEAL_ARCHITECTURE 審查
+> - **健康度**: ~62-67%（Phase 0→1 後提升 ~7%）
 
 ---
 

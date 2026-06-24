@@ -55,15 +55,15 @@
 
 **Angela AI** is a digital life system with biological simulation and LLM integration capabilities.
 
-**Quick facts**: 638 Python files in backend src (~127K lines). Electron + Live2D desktop companion (63 JS files). Pixel art engine (PyQt6 renderer). Mobile app is a skeleton. **~3,800+ tests across 481 test files.**  
-**Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · mobile `0.1.0-skeleton` · cli `1.1.0` · biology-core `1.0.0`.  
-**Architecture consistency score**: **~85-90%** (implementations complete, all aliases applied).  
-**Total project files**: ~3,000+ (638 Python in backend src · 140 JS/TS · 805+ docs · 577 config · 481 test · ~190 other).  
-See [AGENTS.md](AGENTS.md) for developer/agent guidelines and [CHANGELOG.md](CHANGELOG.md) for version history.
+**Quick facts**: 638 Python files in backend src (~127K lines). Electron + Live2D desktop companion (63 JS files across desktop+web). Pixel art engine (PyQt6 renderer). **~3,800+ tests across 481 test files.**  
+**Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · cli `7.5.0-dev` · biology-core `7.5.0-dev`.  
+**Architecture audit score**: **~62-67%** (2026-06-25 audit; up from ~55-60% after Phase 0-1 repairs).  
+**Total project files**: ~2,800+ (638 Python in backend src · 140 JS/TS · 700+ docs · 500+ config · 450+ test).  
+See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
 
-> **STATUS (2026-06-16)**: Phase 0-7 ALL COMPLETE. Chat pipeline fully wired. Orphaned systems integrated. 15 bugs fixed. Architecture doc created. i18n internationalization implemented. AgentOrchestrator, PlanningEngine, ReasoningEngines, TrustManager, ContentFilter, SafetyAudit, Web Dashboard, Docker/CI/CD, OpenTelemetry all operational.  
-> **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → LLM → causal learning → response. 11 specialized agents registered.  
-> **See**: [docs/architecture/ANGELA_FULL_ARCHITECTURE.md](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) for full system architecture.
+> **STATUS (2026-06-25)**: Phase 0-7 COMPLETE + GVV pipeline, ThreeLayerVisual, image generation API. Chat pipeline fully wired. i18n implemented. Architecture audit completed with repair roadmap.  
+> **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → LLM → causal learning → response. GVV pipeline for image generation.  
+> **See**: [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) (latest audit), [IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md) (target), [REPAIR_ROADMAP.md](docs/REPAIR_ROADMAP.md) (plan).
 
 ---
 
@@ -82,7 +82,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines and [CHANGELOG.md](CHA
 | **ModelBus** | ✅ EXTENDED | Handler registration + handler-first routing for FILE/SEARCH/CODE/EXECUTE/TASK |
 | **Autonomous Cognition** | ✅ INTEGRATED | AutonomousLifeCycle + θ Router + 5 formula metrics injected into prompts |
 | **Vision Endpoints** | ✅ IMPLEMENTED | `/vision/analyze` + `/chat/with-image` endpoints |
-| **Image Generation** | ✅ IMPLEMENTED | GVV + ThreeLayerVisual, 5 endpoints, MSE 0.0042, [docs](apps/backend/src/ai/multimodal/THREE_LAYER_VISUAL.md) |
+| **Image Generation** | ✅ IMPLEMENTED | GVV + ThreeLayerVisual, 10 endpoints (5 deprecated + 5 standardized `/image/`), 14 source files, ~62 tests |
 | **AgentOrchestrator** | ✅ COMPLETE | Intent classification, agent selection, task decomposition (Phase 2) |
 | **PlanningEngine** | ✅ COMPLETE | Goal decomposition, dependency tracking, progress monitoring (Phase 2) |
 | **ReasoningEngines** | ✅ COMPLETE | ChainOfThought, Analogical, Abductive reasoning (Phase 2) |
@@ -96,9 +96,11 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines and [CHANGELOG.md](CHA
 | **i18n System** | ✅ COMPLETE | I18nManager, PromptManager, 4 handlers + 4 LLM modules i18n'd, 45 tests (Phase 7) |
 | **Config system** | ✅ | `config_loader.py:get_config()` returns Config |
 | **Tests** | ✅ PASSING | 86/86 deep integration tests + 34/34 end-to-end pipeline tests + 45 Phase 7 tests passed |
-| **Architecture Doc** | ✅ CREATED | `docs/architecture/ANGELA_FULL_ARCHITECTURE.md` — 1183 lines, 35KB |
+| **Architecture Audit** | ✅ CREATED | `docs/COMPREHENSIVE_AUDIT_2026-06-25.md` — ~55-60% → ~62-67% after Phase 0-1 repairs |
+| **Target Blueprint** | ✅ CREATED | `docs/IDEAL_ARCHITECTURE.md` — 16-section target architecture |
+| **Repair Roadmap** | ✅ CREATED | `docs/REPAIR_ROADMAP.md` — 6-phase plan to reach ideal state |
 
-See **[ANGELA_FULL_ARCHITECTURE.md](docs/architecture/ANGELA_FULL_ARCHITECTURE.md)** (full architecture), **[COMPREHENSIVE_AUDIT_REPORT_V2.md](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md)** (audit V2), **[AGENTS.md](AGENTS.md)** (dev guidelines).
+See **[COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md)** (latest audit), **[IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md)** (target), **[REPAIR_ROADMAP.md](docs/REPAIR_ROADMAP.md)** (plan).
 
 ### Quick Start
 
@@ -251,24 +253,22 @@ npx pnpm dev:desktop
 
 ### What Does NOT Work / Is Stub
 
-- **Mobile app** — Skeleton only (3 source files) ❌
+- **Mobile app** — Removed (was skeleton) ❌
 - **AudioService** — Stub (41 lines), needs real STT/TTS integration ❌
 - **TactileService** — Stub (66 lines), needs hardware integration ❌
 - **ImageGeneration** — Agent exists but needs Stable Diffusion API key ❌
-- **Frontend multimodal** — Desktop/Web/Mobile/Pixel all text-only, no image/audio upload ❌
+- **Frontend multimodal** — Desktop/Web/Pixel all text-only, no image/audio upload ❌
 - **Agent auto-routing** — Agents registered but no pipeline auto-calls them ❌
 - **`services/wiring.py`** — `initialize_all_services()` is dead code, never called ❌
-- **`core/memory/`** — 7 stub files ❌
-- **`core/live2d/`** — 4 stub files ❌
-- **`core/biological/`** — 3 stub files ❌
 
 ### Orphaned Systems Status
 
 | Category | Count | Action |
 |----------|-------|--------|
 | **Wired into pipeline** | 6 | CrisisSystem, CausalReasoning, Level5ASI, ModelEnsemble, 11 Agents, AgentManager |
-| **Deleted (stubs/duplicates)** | 16 | services/ai_editor_config.py, services/ai_virtual_input_service.py, etc. |
-| **Retained but unwired** | 18 | real_time_monitor, event_loop_system, execution_manager, language_models/, etc.
+| **Deleted (stubs/duplicates)** | 18 | services/ai_editor_config.py, services/ai_virtual_input_service.py, plus Phase 11 deleted subsystems |
+| **Retained but unwired** | 18 | real_time_monitor, event_loop_system, execution_manager, language_models/, etc. |
+| **Deleted (Phase 1 cleanup)** | 12 | modules/ directory removed (12 wrapper files) |
 
 ### Roadmap / Future Phases
 

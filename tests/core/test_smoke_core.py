@@ -67,19 +67,19 @@ def test_import_google_drive_handler():
 
 
 def test_import_hot_reload_module():
-    from modules.hot_reload_service import HotReloadService
+    from services.hot_reload_service import HotReloadService
     h = HotReloadService()
     assert h is not None
 
 
 def test_import_math_verifier_module():
-    from modules.math_verifier import MathVerifier
+    from services.math_verifier import MathVerifier
     v = MathVerifier()
     assert v is not None
 
 
 def test_import_resource_awareness_module():
-    from modules.resource_awareness_service import ResourceAwarenessService
+    from services.resource_awareness_service import ResourceAwarenessService
     r = ResourceAwarenessService()
     assert r is not None
 
