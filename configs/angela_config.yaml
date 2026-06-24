@@ -75,7 +75,7 @@ features:
   voice_recognition: true
   text_to_speech: true
   websocket: true
-  mobile_bridge: true
+  mobile_bridge: false
   desktop_pet: true
   system_monitor: true
   
@@ -91,14 +91,14 @@ external_services:
     
 # Development Configuration
 development:
-  debug_mode: true
+  debug_mode: false
   hot_reload: true
   enable_cors: true
   mock_apis: false
   
 # Testing Configuration
 testing:
-  test_mode: true
+  test_mode: false
   mock_external_apis: true
   test_data_path: "./test_data"
   coverage_threshold: 80

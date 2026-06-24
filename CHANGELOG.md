@@ -20,6 +20,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > - **Backend**: tiered_loader.py rewritten for YAML configs, ED3N duplicate entry warning fixed
 > - See [PLAN_pixel_angela_and_live2d.md](PLAN_pixel_angela_and_live2d.md) for full details
 
+## [7.5.0-dev] - 2026-06-25 — GVV + ThreeLayerVisual + Image Generation API
+
+### Added
+- 🎨 **GVV Pipeline**: Geometric Vocabulary Vector architecture added to primitives system
+  - Concept Mapper: CLIP → shared concept space (PCA 87% accuracy)
+  - Geometric Vocabulary: Primitive pattern storage with similarity search
+  - Instance Optimizer: Text-driven primitive optimization
+  - Learnable Decomposer: Neural image→primitive decomposition
+  - Pixel Refiner: Image quality refinement
+- 🎨 **ThreeLayerVisual Architecture**: PCA encoder + nonlinear decoder
+  - 128-dim latent space for visual representation
+  - Concept space mapping from CLIP embeddings
+- 🎨 **Image Generation API Routes**: New endpoints in `image_generation_routes.py`
+  - `POST /api/v1/generate-image` — Text-to-image
+  - `POST /api/v1/recognize-image` — Image recognition
+  - `POST /api/v1/reconstruct-image` — Image reconstruction
+  - `POST /api/v1/interpolate-classes` — Class interpolation
+  - `GET /api/v1/generate-image/status` — Health check
+- 🧪 **New training scripts**: `train_gvv.py`, `train_learned_repr.py` (v1-v5)
+
+### Tests
+- 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
+- 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
+
 ## [7.5.0-dev] - 2026-06-16 — Phase 7 i18n Internationalization
 
 ### Added

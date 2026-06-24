@@ -34,7 +34,7 @@
   "stubPath": "stubs",
   "reportMissingImports": true,
   "reportMissingTypeStubs": false,
-  "pythonVersion": "3.8",
+  "pythonVersion": "3.10",
   "typeStubPath": "stubs",
   "extraPaths": [
     "apps/backend/src"

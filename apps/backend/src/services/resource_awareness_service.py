@@ -135,6 +135,12 @@ class ResourceAwarenessService:
             return 512.0
         return self.psutil.virtual_memory().available / (1024 * 1024)
 
+    def get_simulated_disk_config(self) -> Optional[SimulatedDiskConfig]:
+        """獲取模擬磁碟配置（用於測試）"""
+        if self.profile:
+            return self.profile.disk
+        return None
+
     def get_cpu_count(self) -> int:
         """獲取 CPU 邏輯核心數"""
         if not self.psutil:

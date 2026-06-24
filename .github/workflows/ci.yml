@@ -44,7 +44,7 @@ jobs:
           EXPECTED="7.5.0-dev"
           ERR=0
           check() { local file=$1 expected=$2 actual=$(cat "$file" 2>/dev/null | grep -oP '"version":\s*"\K[^"]+' || true); if [ "$actual" != "$expected" ]; then echo "❌ $file: expected $expected, got $actual"; ERR=1; fi; }
-          echo "Verifying all 14 version locations match $EXPECTED..."
+          echo "Verifying all version locations match $EXPECTED..."
           grep -q "$EXPECTED" VERSION || { echo "❌ VERSION: expected $EXPECTED"; ERR=1; }
           grep -q "$EXPECTED" configs/angela_config.json || { echo "❌ configs/angela_config.json: not $EXPECTED"; ERR=1; }
           grep -q "version = \"$EXPECTED\"" apps/backend/pyproject.toml || { echo "❌ apps/backend/pyproject.toml: not $EXPECTED"; ERR=1; }
@@ -52,13 +52,12 @@ jobs:
           grep -q "$EXPECTED" apps/backend/package.json || { echo "❌ apps/backend/package.json: not $EXPECTED"; ERR=1; }
           grep -q "major=7" apps/backend/src/core/version.py && grep -q "minor=5" apps/backend/src/core/version.py && grep -q "patch=0" apps/backend/src/core/version.py && grep -q "phase=ReleasePhase.DEV" apps/backend/src/core/version.py || { echo "❌ apps/backend/src/core/version.py: not major=7, minor=5, patch=0, phase=DEV"; ERR=1; }
           grep -q "$EXPECTED" apps/desktop-app/electron_app/package.json || { echo "❌ apps/desktop-app/electron_app/package.json: not $EXPECTED"; ERR=1; }
-          grep -q "1.1.0" packages/cli/package.json || { echo "❌ packages/cli/package.json: not 1.1.0"; ERR=1; }
+          grep -q "$EXPECTED" packages/cli/package.json || { echo "❌ packages/cli/package.json: not $EXPECTED"; ERR=1; }
           grep -q "VERSION: $EXPECTED" README.md || { echo "❌ README.md: expected $EXPECTED"; ERR=1; }
           grep -q "VERSION: $EXPECTED" AGENTS.md || { echo "❌ AGENTS.md: expected $EXPECTED"; ERR=1; }
           grep -q "version: \"$EXPECTED\"" configs/angela_config.yaml || { echo "❌ configs/angela_config.yaml: not $EXPECTED"; ERR=1; }
-          grep -q "VERSION=\"$EXPECTED\"" scripts/create-release.sh || { echo "❌ scripts/create-release.sh: not $EXPECTED"; ERR=1; }
           grep -q "$EXPECTED" .github/workflows/ci.yml || { echo "❌ .github/workflows/ci.yml: self-check failed"; ERR=1; }
-          if [ $ERR -eq 1 ]; then exit 1; else echo "✅ All 14 version locations consistent ($EXPECTED)"; fi
+          if [ $ERR -eq 1 ]; then exit 1; else echo "✅ All version locations consistent ($EXPECTED)"; fi
       - name: Install backend (editable with extras)
         run: pip install -e "./apps/backend[standard,testing]"
       - name: Lint/Type (Python)

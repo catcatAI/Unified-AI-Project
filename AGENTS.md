@@ -220,13 +220,12 @@ apps/
     ai/context/      # 上下文管理（部分 stub）
     ai/lifecycle/    # 記憶整合循環、主動互動
     ai/response/     # 回應組合、學習循環
-    ai/learning/     # 學習管理器、經驗回放
     ai/meta/         # 元學習、自適應控制
     ai/reasoning/    # 因果推理
-    ai/ops/          # 智能運維、預測維護
     ai/alignment/    # 情緒系統、本體系統
     ai/memory/       # HAM 記憶、數學漣漪引擎
     ai/agents/       # 動態代理註冊
+    ai/multimodal/primitives/  # Compositional image generation (GVV + ThreeLayerVisual)
     services/        # LLM 路由、聊天服務、處理器
     api/routes/      # FastAPI 路由
   desktop-app/       # Electron + Live2D
@@ -235,6 +234,7 @@ packages/
   cli/               # CLI tools
 tests/
   ai/garden/         # GARDEN 測試 (125 tests)
+  ai/multimodal/primitives/  # Primitives tests (38 tests, NEW)
   ai/                # ED3N/Lifecycle/Meta 測試 (37+ tests)
 ```
 

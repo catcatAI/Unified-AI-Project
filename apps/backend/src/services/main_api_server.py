@@ -283,8 +283,6 @@ from api.lifespan import (  # noqa: E402
     setup_middleware,
 )
 
-from api.routes.chat_routes import router as chat_router  # noqa: E402
-from api.routes.desktop_routes import router as desktop_router  # noqa: E402
 
 setup_middleware(app)
 app.router.lifespan_context = lifespan
