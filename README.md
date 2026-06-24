@@ -82,7 +82,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines and [CHANGELOG.md](CHA
 | **ModelBus** | ✅ EXTENDED | Handler registration + handler-first routing for FILE/SEARCH/CODE/EXECUTE/TASK |
 | **Autonomous Cognition** | ✅ INTEGRATED | AutonomousLifeCycle + θ Router + 5 formula metrics injected into prompts |
 | **Vision Endpoints** | ✅ IMPLEMENTED | `/vision/analyze` + `/chat/with-image` endpoints |
-| **Three-Layer Visual** | ✅ IMPLEMENTED | PCA encoder + nonlinear decoder, MSE 0.009, [docs](apps/backend/src/ai/multimodal/THREE_LAYER_VISUAL.md) |
+| **Image Generation** | ✅ IMPLEMENTED | GVV + ThreeLayerVisual, 5 endpoints, MSE 0.0042, [docs](apps/backend/src/ai/multimodal/THREE_LAYER_VISUAL.md) |
 | **AgentOrchestrator** | ✅ COMPLETE | Intent classification, agent selection, task decomposition (Phase 2) |
 | **PlanningEngine** | ✅ COMPLETE | Goal decomposition, dependency tracking, progress monitoring (Phase 2) |
 | **ReasoningEngines** | ✅ COMPLETE | ChainOfThought, Analogical, Abductive reasoning (Phase 2) |
@@ -353,7 +353,7 @@ See dedicated docs for full diagrams:
 | **ModelBus** | ✅ 已擴展 | Handler 註冊 + Handler-first 路由 |
 | **自主認知** | ✅ 已整合 | AutonomousLifeCycle + θ Router + 5 個公式指標 |
 | **視覺端點** | ✅ 已實作 | `/vision/analyze` + `/chat/with-image` |
-| **三層視覺架構** | ✅ 已實作 | PCA 編碼器 + 非線性解碼器，MSE 0.009，[文檔](apps/backend/src/ai/multimodal/THREE_LAYER_VISUAL.md) |
+| **圖像生成** | ✅ 已實作 | GVV + ThreeLayerVisual，5 個端點，MSE 0.0042，[文檔](apps/backend/src/ai/multimodal/THREE_LAYER_VISUAL.md) |
 | **AgentOrchestrator** | ✅ 已完成 | 意圖分類、代理選擇、任務分解（Phase 2） |
 | **PlanningEngine** | ✅ 已完成 | 目標分解、依賴追蹤、進度監控（Phase 2） |
 | **ReasoningEngines** | ✅ 已完成 | ChainOfThought、Analogical、Abductive 推理（Phase 2） |

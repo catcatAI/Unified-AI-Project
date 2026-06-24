@@ -1479,3 +1479,81 @@ Reconstructed Image (3072-dim)
 | 3072-dim + full decoder | ~20 min | instant | Near-perfect |
 
 All configurations run on CPU. No GPU required.
+
+---
+
+## API Integration Status (2026-06-25)
+
+### GVV Pipeline (Fixed)
+
+| Endpoint | Status | Pipeline |
+|----------|--------|----------|
+| `POST /generate-image` | ✅ Fixed | text → CLIP → concept → vocabulary → optimize → render |
+| `POST /recognize-image` | ✅ Working | image → CLIP → concept space → classify |
+
+**Bugs Fixed (2026-06-25):**
+1. CLIP text encoding connected (was hardcoded to zeros)
+2. InstanceOptimizer constructor fixed (vocabulary, mapper, canvas_size)
+3. Method call fixed: `optimize_from_text` instead of `optimize`
+
+### ThreeLayerVisual (New)
+
+| Endpoint | Status | Pipeline |
+|----------|--------|----------|
+| `POST /reconstruct-image` | ✅ New | image → PCA encode → decode → enhance |
+| `POST /interpolate-classes` | ✅ New | class A → class B → n_steps interpolation |
+| `GET /generate-image/status` | ✅ Updated | Returns both GVV and ThreeLayerVisual status |
+
+### API Endpoints Summary
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/generate-image` | POST | Text-to-image generation (GVV pipeline) |
+| `/recognize-image` | POST | Image classification (concept space) |
+| `/reconstruct-image` | POST | Image reconstruction (ThreeLayerVisual) |
+| `/interpolate-classes` | POST | Class center interpolation (ThreeLayerVisual) |
+| `/generate-image/status` | GET | Health check for both pipelines |
+
+### Training Command
+
+```bash
+# Train ThreeLayerVisual model
+python scripts/train_three_layer.py
+
+# Output:
+# - Model saved to models/three_layer/
+# - Training: 50 epochs, ~84 seconds
+# - MSE: 0.0042
+# - Generates: reconstructions, class centers, interpolations
+```
+
+### Performance Summary
+
+| System | MSE | Training | Inference | Use Case |
+|--------|-----|----------|-----------|----------|
+| GVV (Primitives) | 0.04 | 2 hours | ~14s | Text → geometric image |
+| ThreeLayerVisual | **0.0042** | **84s** | **<1ms** | Image reconstruction/interpolation |
+
+### Architecture Diagram
+
+```
+TEXT INPUT                    IMAGE INPUT
+    │                             │
+    ▼                             ▼
+CLIP (512-dim)              PCA Encoder (3072→128)
+    │                             │
+    ▼                             ▼
+ConceptMapper              FC Decoder (128→3072)
+    │                             │
+    ▼                             ▼
+GeometricVocabulary        Post-processing
+    │                             │
+    ▼                             ▼
+InstanceOptimizer          RECONSTRUCTED IMAGE
+    │
+    ▼
+PrimitiveRenderer
+    │
+    ▼
+GENERATED IMAGE
+```

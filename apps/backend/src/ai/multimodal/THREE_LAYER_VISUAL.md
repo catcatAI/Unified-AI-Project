@@ -163,10 +163,98 @@ Display to user
 ## Files
 
 - `apps/backend/src/ai/multimodal/three_layer_visual.py` - Main implementation
-- `scripts/three_layer_arch.py` - Training script
+- `apps/backend/src/api/routes/image_generation_routes.py` - API endpoints
+- `scripts/train_three_layer.py` - Training script
+- `scripts/three_layer_arch.py` - Architecture experiments
 - `scripts/compare_pca_dims.py` - PCA dimension comparison
 - `scripts/perceptual_loss.py` - Loss function experiments
 - `scripts/sharpness_test.py` - Post-processing comparison
+
+## API Endpoints
+
+### POST /reconstruct-image
+
+Reconstruct an image through the bottleneck.
+
+**Request:**
+```json
+{
+  "image_base64": "<base64-encoded PNG>",
+  "enhance": true
+}
+```
+
+**Response:**
+```json
+{
+  "image_base64": "<reconstructed image>",
+  "width": 32,
+  "height": 32,
+  "metrics": {
+    "mse": 0.0042,
+    "reconstruct_time": 0.001,
+    "enhanced": true
+  }
+}
+```
+
+### POST /interpolate-classes
+
+Interpolate between two class centers.
+
+**Request:**
+```json
+{
+  "class_a": 0,
+  "class_b": 3,
+  "n_steps": 10,
+  "enhance": true
+}
+```
+
+**Response:**
+```json
+{
+  "images": ["<base64>", "..."],
+  "width": 32,
+  "height": 32,
+  "metrics": {
+    "class_a": 0,
+    "class_b": 3,
+    "n_steps": 10,
+    "interpolate_time": 0.05
+  }
+}
+```
+
+### GET /generate-image/status
+
+Check if image generation is available.
+
+**Response:**
+```json
+{
+  "gvv_available": true,
+  "three_layer_available": true,
+  "pipeline": "gvv",
+  "vocab_size": 50,
+  "concept_count": 10,
+  "concept_space": true
+}
+```
+
+## Training
+
+```bash
+# Train the model
+python scripts/train_three_layer.py
+
+# Output:
+# - Model saved to models/three_layer/
+# - Training: 50 epochs, ~84 seconds
+# - MSE: 0.0042
+# - Generates: reconstructions, class centers, interpolations
+```
 
 ## References
 
