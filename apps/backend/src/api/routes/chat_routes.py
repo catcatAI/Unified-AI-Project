@@ -8,7 +8,7 @@ import logging
 import threading
 import uuid
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 
 from fastapi import APIRouter, HTTPException, Body, Request, UploadFile, File, Form
 from fastapi.responses import JSONResponse
@@ -152,345 +152,436 @@ def _get_state_matrix():
     return _state_matrix
 
 
-async def _handle_chat_request(
-    user_message: str, user_name: str, history: List[Dict[str, Any]], session_id: str, origin: str = "Human",
-    extra_context: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
-    """Handle chat request request."""
-    logger.info(f"\U0001f4e9 [LIS] Raw message received: '{user_message}' from {origin} (Session: {session_id})")
+# =============================================================================
+# Extracted helpers for _handle_chat_request (Phase 5.1 refactoring)
+# =============================================================================
 
+
+def _validate_and_truncate_input(
+    user_message: str,
+    chat_cfg: Dict[str, Any],
+) -> str:
+    """Validate user message and truncate if it exceeds the maximum length."""
     if not user_message or not user_message.strip():
         raise ValueError("訊號遺失：消息不能為空")
+    max_len = chat_cfg.get("max_message_length", 4000)
+    trunc_len = chat_cfg.get("truncation_length", 1000)
+    if len(user_message) > max_len:
+        logger.warning(f"\U0001f6df [LIS] Intercepted oversized input ({len(user_message)} chars)")
+        user_message = user_message[:trunc_len]
+    return user_message
 
-    _chat_cfg = _angela_cfg.get_authority("angela_core", {}).get("chat_flow", {}) if _angela_cfg else {}
-    _max_len = _chat_cfg.get("max_message_length", 4000)
-    _trunc_len = _chat_cfg.get("truncation_length", 1000)
-    _http_timeout = _chat_cfg.get("http_timeout", 30.0)
-    _trunc_msg = _chat_cfg.get("truncation_message", "...\uff08\u622a\u65b7\uff09")
-    _schema_ver = _chat_cfg.get("response_schema_version", "2.0")
-    if len(user_message) > _max_len:
-        logger.warning(f"\U0001f6df [LIS] Intercepted oversized input ({len(user_message)} chars)", exc_info=True)
-        user_message = user_message[:_trunc_len]
 
-    if session_id not in sessions:
-        sessions.set(session_id, {
-            "created_at": datetime.now().isoformat(),
-            "origin": origin,
-            "user_name": user_name
-        })
-
+async def _try_math_verification(
+    user_message: str,
+    user_name: str,
+    session_id: str,
+    schema_ver: str,
+    trunc_msg: str,
+) -> Optional[Dict[str, Any]]:
+    """Try dual-rail math verification. Returns response dict if math detected, else None."""
     try:
         from services.math_verifier import MathVerifier
-        is_math = False
-        try:
-            digital_life = get_digital_life()
-            matrix = digital_life.state_matrix if digital_life and hasattr(digital_life, "state_matrix") else None
-            verifier = MathVerifier(state_matrix=matrix)
-            is_math = verifier.is_math_message(user_message)
-            if is_math:
-                logger.info(f"\U0001f9ee [DualRail] Math task detected from {origin}")
-                verification = await verifier.verify(user_message, user_name)
-                if verification.response_text:
-                    return _build_math_response(verification, matrix, user_message, session_id, _schema_ver, _trunc_msg)
-                is_math = False
-        except Exception as math_err:
-            logger.warning(f"\u26a0 [DualRail] Math verification failed: {math_err}", exc_info=True)
-            is_math = False
+        digital_life = get_digital_life()
+        matrix = digital_life.state_matrix if digital_life and hasattr(digital_life, "state_matrix") else None
+        verifier = MathVerifier(state_matrix=matrix)
+        if verifier.is_math_message(user_message):
+            logger.info("\U0001f9ee [DualRail] Math task detected")
+            verification = await verifier.verify(user_message, user_name)
+            if verification.response_text:
+                return _build_math_response(verification, matrix, user_message, session_id, schema_ver, trunc_msg)
+    except Exception as e:
+        logger.warning(f"\u26a0 [DualRail] Math verification failed: {e}")
+    return None
 
-        emotion_result = None
-        try:
-            emotion_result = _get_emotion_analyzer().analyze_emotion(user_message)
-            logger.debug(f"Emotion analysis: {emotion_result}")
-        except Exception as e:
-            logger.info(f"Emotion analysis unavailable: {e}")
 
-        # Crisis safety assessment (fire-and-forget, adds context for LLM)
-        crisis_level = 0
-        try:
-            crisis_sys = get_crisis_system()
-            if crisis_sys:
-                crisis_level = crisis_sys.assess_input_for_crisis({"text": user_message})
-                if crisis_level > 0:
-                    logger.info(f"[CrisisSystem] Level {crisis_level} detected for input from {origin}")
-        except Exception as e:
-            logger.debug(f"Crisis assessment unavailable: {e}")
+async def _analyze_emotion_and_crisis(
+    user_message: str,
+    context: Dict[str, Any],
+    bio: Any,
+) -> Tuple[Optional[Dict[str, Any]], int]:
+    """Analyze user emotion + assess crisis level. Fires biological stimulus as side-effect."""
+    emotion_result: Optional[Dict[str, Any]] = None
+    try:
+        emotion_result = _get_emotion_analyzer().analyze_emotion(user_message)
+        logger.debug(f"Emotion analysis: {emotion_result}")
+    except Exception as e:
+        logger.info(f"Emotion analysis unavailable: {e}")
 
-        # Process chat as biological stimulus (fire-and-forget async)
-        try:
-            _bio = _get_bio_integrator()
-            _spawn_background_task(_bio.process_auditory_stimulus(volume=0.6, content=user_message), "auditory_stimulus")
-            if emotion_result:
-                emotion = emotion_result.get("emotion", "neutral")
-                intensity = emotion_result.get("intensity", 0.5)
-                if emotion in ("sad", "angry", "fear"):
-                    _spawn_background_task(_bio.process_stress_event(intensity=intensity * 0.3), "stress_event")
-                elif emotion in ("happy", "calm"):
-                    _spawn_background_task(_bio.process_relaxation_event(intensity=intensity * 0.2), "relaxation_event")
-        except Exception as e:
-            logger.debug(f"Biological state update from chat failed: {e}")
+    crisis_level = 0
+    try:
+        crisis_sys = get_crisis_system()
+        if crisis_sys:
+            crisis_level = crisis_sys.assess_input_for_crisis({"text": user_message})
+            if crisis_level > 0:
+                logger.info(f"[CrisisSystem] Level {crisis_level} detected")
+    except Exception as e:
+        logger.debug(f"Crisis assessment unavailable: {e}")
 
-        _chat_svc = await _get_chat_service()
-        context = {"user_name": user_name}
-        if extra_context:
-            context.update(extra_context)
+    # Fire-and-forget: biological stimulus processing
+    try:
+        _spawn_background_task(
+            bio.process_auditory_stimulus(volume=0.6, content=user_message), "auditory_stimulus")
         if emotion_result:
-            context["emotion"] = emotion_result
-        if crisis_level > 0:
-            context["crisis_level"] = crisis_level
-            context["crisis_instruction"] = (
-                f"User input has crisis level {crisis_level}. "
-                "Respond with empathy, provide support resources if appropriate, "
-                "and prioritize user safety in your response."
-            )
-            # High-crisis alignment check via Level5 ASI (fire-and-forget)
-            if crisis_level >= 2:
-                try:
-                    asi = await get_level5_asi()
-                    if asi and asi.is_running:
-                        alignment_result = await asi.process_request({
-                            "request_id": str(uuid.uuid4()),
-                            "capability_id": "chat_response",
-                            "user_intent": {"text": user_message, "crisis_level": crisis_level},
-                            "ethical_constraints": ["user_safety", "empathy", "no_harm"],
-                        })
-                        if alignment_result.get("status") == "alignment_failed":
-                            logger.warning(f"[Level5ASI] Alignment failed: {alignment_result.get('reason')}")
-                            context["alignment_override"] = "prioritize_safety"
-                except Exception as e:
-                    logger.debug(f"Level5ASI alignment check unavailable: {e}")
-        if history:
-            context["history"] = history
+            emotion = emotion_result.get("emotion", "neutral")
+            intensity = emotion_result.get("intensity", 0.5)
+            if emotion in ("sad", "angry", "fear"):
+                _spawn_background_task(
+                    bio.process_stress_event(intensity=intensity * 0.3), "stress_event")
+            elif emotion in ("happy", "calm"):
+                _spawn_background_task(
+                    bio.process_relaxation_event(intensity=intensity * 0.2), "relaxation_event")
+    except Exception as e:
+        logger.debug(f"Biological state update from chat failed: {e}")
 
-        # Get live biological state for LLM context
+    return emotion_result, crisis_level
+
+
+async def _try_alignment_check(
+    user_message: str, crisis_level: int, context: Dict[str, Any]
+) -> None:
+    """Fire-and-forget: check alignment via Level5 ASI for high-crisis inputs."""
+    if crisis_level < 2:
+        return
+    try:
+        asi = await get_level5_asi()
+        if asi and asi.is_running:
+            alignment_result = await asi.process_request({
+                "request_id": str(uuid.uuid4()),
+                "capability_id": "chat_response",
+                "user_intent": {"text": user_message, "crisis_level": crisis_level},
+                "ethical_constraints": ["user_safety", "empathy", "no_harm"],
+            })
+            if alignment_result.get("status") == "alignment_failed":
+                logger.warning(f"[Level5ASI] Alignment failed: {alignment_result.get('reason')}")
+                context["alignment_override"] = "prioritize_safety"
+    except Exception as e:
+        logger.debug(f"Level5ASI alignment check unavailable: {e}")
+
+
+async def _build_chat_context(
+    context: Dict[str, Any],
+    user_message: str,
+    user_name: str,
+    history: List[Dict[str, Any]],
+    session_id: str,
+    chat_svc: Any,
+    bio: Any,
+) -> None:
+    """Build the full LLM context: bio state, state matrix, retrieved context, dialogue, memory.
+    Mutates the `context` dict in-place."""
+    # Bio state
+    try:
+        context["bio_state"] = bio.get_biological_state()
+    except Exception as e:
+        logger.debug(f"Biological state retrieval failed: {e}")
+
+    # State matrix 4D axes
+    try:
+        sm = _get_state_matrix()
+        axes = {}
+        for ax_name in ("alpha", "beta", "gamma", "delta", "epsilon", "zeta"):
+            dim = sm.dimensions.get(ax_name)
+            if dim:
+                axes[ax_name] = {"values": dim.values.copy()}
+        th = sm.theta.values if hasattr(sm, "theta") else {}
+        context["state_for_llm"] = {
+            "axes": axes,
+            "theta": {
+                "novelty": th.get("novelty", 0.0),
+                "theta_negativity": th.get("theta_negativity", 0.0),
+                "creation_urge": th.get("creation_urge", 0.0),
+                "correction_urge": th.get("correction_urge", 0.0),
+            },
+            "eta": {"module_count": 0, "success_rate": 0.0, "structural_drift": 0.0},
+            "guidance": [],
+        }
+    except Exception as e:
+        logger.debug(f"StateMatrix4D unavailable: {e}")
+
+    # ED3N context retrieval from history
+    retrieved_ctx: List[Dict[str, Any]] = []
+    if history and len(history) > 0:
         try:
-            _bio = _get_bio_integrator()
-            context["bio_state"] = _bio.get_biological_state()
+            ed3n = _get_ed3n_engine()
+            query_keys = set(ed3n.dictionary.encode(user_message))
+            for entry in history:
+                content = entry.get("content", "")
+                if not content:
+                    continue
+                entry_keys = set(ed3n.dictionary.encode(content))
+                overlap = len(query_keys & entry_keys)
+                if overlap > 0:
+                    retrieved_ctx.append({**entry, "relevance": float(overlap)})
+            retrieved_ctx.sort(key=lambda x: x["relevance"], reverse=True)
+            retrieved_ctx = retrieved_ctx[:5]
         except Exception as e:
-            logger.debug(f"Biological state retrieval failed: {e}")
+            logger.debug(f"ED3N context retrieval failed: {e}")
+    context["retrieved_context"] = retrieved_ctx
 
-        # Fill state_for_llm for prompt builder cognitive state block
-        try:
-            _sm = _get_state_matrix()
-            _axes = {}
-            for _ax_name in ("alpha", "beta", "gamma", "delta", "epsilon", "zeta"):
-                _dim = _sm.dimensions.get(_ax_name)
-                if _dim:
-                    _axes[_ax_name] = {"values": _dim.values.copy()}
-            _th = _sm.theta.values if hasattr(_sm, "theta") else {}
-            context["state_for_llm"] = {
-                "axes": _axes,
-                "theta": {
-                    "novelty": _th.get("novelty", 0.0),
-                    "theta_negativity": _th.get("theta_negativity", 0.0),
-                    "creation_urge": _th.get("creation_urge", 0.0),
-                    "correction_urge": _th.get("correction_urge", 0.0),
-                },
-                "eta": {"module_count": 0, "success_rate": 0.0, "structural_drift": 0.0},
-                "guidance": [],
-            }
-        except Exception as e:
-            logger.debug(f"StateMatrix4D unavailable: {e}")
+    # Dialogue context injection
+    try:
+        dialogue_ctx = _get_dialogue_ctx()
+        if session_id:
+            dialogue_ctx.add_message(session_id, "Human", user_message)
+            conv_ctx = dialogue_ctx.get_conversation_context(session_id)
+            if conv_ctx:
+                context["dialogue_context"] = conv_ctx
+    except Exception as e:
+        logger.debug(f"Dialogue context unavailable: {e}")
 
-        retrieved_ctx = []
-        if history and len(history) > 0:
-            try:
-                ed3n = _get_ed3n_engine()
-                query_keys = set(ed3n.dictionary.encode(user_message))
-                for entry in history:
-                    content = entry.get("content", "")
-                    if not content:
-                        continue
-                    entry_keys = set(ed3n.dictionary.encode(content))
-                    overlap = len(query_keys & entry_keys)
-                    if overlap > 0:
-                        retrieved_ctx.append({**entry, "relevance": float(overlap)})
-                retrieved_ctx.sort(key=lambda x: x["relevance"], reverse=True)
-                retrieved_ctx = retrieved_ctx[:5]
-            except Exception as e:
-                logger.debug(f"ED3N context retrieval failed: {e}")
-        context["retrieved_context"] = retrieved_ctx
+    # Memory context injection
+    try:
+        from ai.context.memory_context import MemoryContextManager
+        memory_ctx = MemoryContextManager()
+        recent_memories = memory_ctx.get_memories_by_type("short_term", limit=5)
+        if recent_memories:
+            context["recent_memories"] = recent_memories
+    except Exception as e:
+        logger.debug(f"Memory context unavailable: {e}")
 
-        # === Context Subsystem Injection ===
-        # Wire dialogue, model, tool, and memory context into the pipeline
-        try:
-            _dialogue_ctx = _get_dialogue_ctx()
-            if session_id:
-                _dialogue_ctx.add_message(session_id, origin, user_message)
-                conv_ctx = _dialogue_ctx.get_conversation_context(session_id)
-                if conv_ctx:
-                    context["dialogue_context"] = conv_ctx
-        except Exception as e:
-            logger.debug(f"Dialogue context unavailable: {e}")
+    # History in context
+    if history:
+        context["history"] = history
 
-        try:
-            from ai.context.memory_context import MemoryContextManager
-            _memory_ctx = MemoryContextManager()
-            recent_memories = _memory_ctx.get_memories_by_type("short_term", limit=5)
-            if recent_memories:
-                context["recent_memories"] = recent_memories
-        except Exception as e:
-            logger.debug(f"Memory context unavailable: {e}")
 
-        # === Execution Gate Flow (v2) ===
-        # Handle pending confirmation from previous turn
-        pending = context.get("pending_action")
+async def _handle_execution_gate(
+    user_message: str,
+    chat_svc: Any,
+    context: Dict[str, Any],
+    schema_ver: str,
+    session_id: str,
+) -> Optional[Dict[str, Any]]:
+    """Run execution gate: intent classification → decide auto/confirm/reject.
+    Returns a response dict if gate short-circuits (confirm or reject), else None."""
+    try:
+        from ai.core.query_classifier import QueryClassifier
+        from ai.core.execution_gate import ExecutionGate
+
+        # Handle pending action from previous turn
+        pending = context.pop("pending_action", None)
         if pending:
             msg_lower = user_message.strip().lower()
-            confirm_words = {"好", "是", "确认", "ok", "yes", "sure", "确定", "对"}
-            cancel_words = {"不要", "取消", "算了", "no", "cancel", "skip", "不用"}
+            confirm_words = {"\u597d", "\u662f", "\u786e\u8ba4", "ok", "yes", "sure", "\u786e\u5b9a", "\u5bf9"}
+            cancel_words = {"\u4e0d\u8981", "\u53d6\u6d88", "\u7b97\u4e86", "no", "cancel", "skip", "\u4e0d\u7528"}
 
             if msg_lower in confirm_words:
                 handler_id = pending.get("handler")
-                if handler_id and _chat_svc and _chat_svc.model_bus:
+                if handler_id and chat_svc and chat_svc.model_bus:
                     try:
-                        action_result = await _chat_svc.model_bus.execute_handler(
+                        action_result = await chat_svc.model_bus.execute_handler(
                             handler_id, pending.get("original_query", user_message), context
                         )
                         context["last_action_result"] = action_result
-                        context["pending_action"] = None
                         context["continuation_count"] = 0
                     except Exception as e:
                         logger.warning(f"Execution gate handler failed: {e}")
-                        context["pending_action"] = None
-                else:
-                    context["pending_action"] = None
-
             elif msg_lower in cancel_words:
-                context["pending_action"] = None
                 return {
-                    "response_text": "好的，不执行。还有什么需要帮忙的吗？",
+                    "response_text": "\u597d\u7684\uff0c\u4e0d\u6267\u884c\u3002\u8fd8\u6709\u4ec0\u4e48\u9700\u8981\u5e2e\u5fd9\u7684\u5417\uff1f",
                     "source": "gate_cancel",
-                    "schema_version": _schema_ver,
+                    "schema_version": schema_ver,
                     "truncation_message": "",
                     "emotion": "neutral",
                     "emotion_confidence": 0.5,
                     "emotion_intensity": 0.5,
                     "session_id": session_id,
                 }
-            else:
-                # Not confirm or cancel → treat as new input, clear pending
-                context["pending_action"] = None
 
-        # Intent classification (QueryClassifier v2)
-        try:
-            from ai.core.query_classifier import QueryClassifier
-            classifier = QueryClassifier(ed3n_engine=_get_ed3n_engine())
-            classify_result = classifier.classify(user_message)
-
-            # Execution gate decision
-            from ai.core.execution_gate import ExecutionGate
-            gate = ExecutionGate(model_bus=_chat_svc.model_bus if _chat_svc else None)
-            decision = gate.decide(
-                query_type=classify_result.primary_type.value,
-                action_type=classify_result.action_type,
-                user_message=user_message,
-                confidence=classify_result.confidence,
-                context=context,
-            )
-
-            if decision.action == "auto_execute":
-                if decision.handler and _chat_svc and _chat_svc.model_bus:
-                    try:
-                        action_result = await _chat_svc.model_bus.execute_handler(
-                            decision.handler, user_message, context
-                        )
-                        context["last_action_result"] = action_result
-                        context["continuation_count"] = 0
-                    except Exception as e:
-                        logger.warning(f"Execution gate auto-execute failed: {e}")
-
-            elif decision.action == "confirm_then_execute":
-                context["pending_action"] = {
-                    "handler": decision.handler,
-                    "action_type": decision.action_type,
-                    "original_query": decision.original_query,
-                }
-                return {
-                    "response_text": decision.confirm_message,
-                    "source": "gate_confirm",
-                    "schema_version": _schema_ver,
-                    "truncation_message": "",
-                    "emotion": "neutral",
-                    "emotion_confidence": classify_result.confidence,
-                    "emotion_intensity": 0.5,
-                    "hit_score": classify_result.confidence,
-                    "hit_source": "gate_confirm",
-                    "route": classify_result.primary_type.value,
-                    "session_id": session_id,
-                }
-            else:
-                # reject
-                context["last_action_result"] = None
-
-        except Exception as e:
-            logger.debug(f"Execution gate unavailable: {e}")
-
-        _llm_response = await asyncio.wait_for(
-            _chat_svc.generate_response(user_message, user_name, context=context),
-            timeout=_http_timeout,
+        # Intent classification + Execution gate decision
+        classifier = QueryClassifier(ed3n_engine=_get_ed3n_engine())
+        classify_result = classifier.classify(user_message)
+        gate = ExecutionGate(model_bus=chat_svc.model_bus if chat_svc else None)
+        decision = gate.decide(
+            query_type=classify_result.primary_type.value,
+            action_type=classify_result.action_type,
+            user_message=user_message,
+            confidence=classify_result.confidence,
+            context=context,
         )
-        response_text = _llm_response.text if hasattr(_llm_response, 'text') else str(_llm_response)
-        _flow_source = _chat_cfg.get("default_flow", "angela_chat_service")
 
-        # Increment continuation count for loop protection
-        context["continuation_count"] = context.get("continuation_count", 0) + 1
+        if decision.action == "auto_execute":
+            if decision.handler and chat_svc and chat_svc.model_bus:
+                try:
+                    action_result = await chat_svc.model_bus.execute_handler(
+                        decision.handler, user_message, context
+                    )
+                    context["last_action_result"] = action_result
+                    context["continuation_count"] = 0
+                except Exception as e:
+                    logger.warning(f"Execution gate auto-execute failed: {e}")
+        elif decision.action == "confirm_then_execute":
+            context["pending_action"] = {
+                "handler": decision.handler,
+                "action_type": decision.action_type,
+                "original_query": decision.original_query,
+            }
+            return {
+                "response_text": decision.confirm_message,
+                "source": "gate_confirm",
+                "schema_version": schema_ver,
+                "truncation_message": "",
+                "emotion": "neutral",
+                "emotion_confidence": classify_result.confidence,
+                "emotion_intensity": 0.5,
+                "hit_score": classify_result.confidence,
+                "hit_source": "gate_confirm",
+                "route": classify_result.primary_type.value,
+                "session_id": session_id,
+            }
+        # reject: clear action result, continue to LLM
+        context["last_action_result"] = None
+    except Exception as e:
+        logger.debug(f"Execution gate unavailable: {e}")
+    return None
 
-        # Fire-and-forget: learn causal relationship from this interaction
-        try:
-            _causal = get_causal_reasoning()
-            if _causal and response_text:
-                _causal.learn({
-                    "variables": ["user_input", "angela_response"],
-                    "data": {"user_input": [len(user_message)], "angela_response": [len(response_text)]},
-                    "relationships": [{
-                        "cause": "user_input",
-                        "effect": "angela_response",
-                        "strength": 0.5,
-                        "source": f"chat_{session_id}",
-                    }],
-                })
-        except Exception as e:
-            logger.debug(f"Causal learning failed: {e}")
 
-        return {
-            "response_text": response_text,
-            "source": _flow_source,
-            "schema_version": _schema_ver,
-            "truncation_message": _trunc_msg if len(user_message) > _max_len else "",
-            "emotion": emotion_result.get("emotion", "neutral") if emotion_result else "neutral",
-            "emotion_confidence": emotion_result.get("confidence", 0.5) if emotion_result else 0.5,
-            "emotion_intensity": emotion_result.get("intensity", 0.5) if emotion_result else 0.5,
-            "hit_score": getattr(_llm_response, 'hit_score', 0.0),
-            "hit_source": getattr(_llm_response, 'hit_source', 'none'),
-            "route": getattr(_llm_response, 'route', 'llm'),
-            "session_id": session_id,
-        }
+def _fire_causal_learning(
+    response_text: str, user_message: str, session_id: str
+) -> None:
+    """Fire-and-forget: learn causal relationship from this interaction."""
+    try:
+        causal = get_causal_reasoning()
+        if causal and response_text:
+            causal.learn({
+                "variables": ["user_input", "angela_response"],
+                "data": {"user_input": [len(user_message)], "angela_response": [len(response_text)]},
+                "relationships": [{
+                    "cause": "user_input",
+                    "effect": "angela_response",
+                    "strength": 0.5,
+                    "source": f"chat_{session_id}",
+                }],
+            })
+    except Exception as e:
+        logger.debug(f"Causal learning failed: {e}")
 
+
+def _handle_timeout(session_id: str, schema_ver: str) -> Dict[str, Any]:
+    """Handle LLM timeout with fallback response."""
+    logger.warning(f"LLM response timeout for session: {session_id}")
+    try:
+        timeout_text = _get_ed3n_engine().process(
+            "timeout_response", context={"fallback": True}, depth="reflex"
+        )
+    except Exception as e:
+        logger.debug(f"ED3N fallback failed in timeout handler: {e}")
+        timeout_text = "\u62b1\u6b49\uff0c\u6211\u76ee\u524d\u65e0\u6cd5\u56de\u5e94\uff0c\u8bf7\u7a0d\u540e\u518d\u8bd5\u3002"
+    return {
+        "response_text": timeout_text,
+        "source": "fallback-timeout",
+        "schema_version": schema_ver,
+        "truncation_message": "",
+        "emotion": "neutral",
+        "emotion_confidence": 0.5,
+        "emotion_intensity": 0.5,
+        "session_id": session_id,
+    }
+
+
+def _format_chat_response(
+    response_text: str,
+    llm_response: Any,
+    emotion_result: Optional[Dict[str, Any]],
+    schema_ver: str,
+    trunc_msg: str,
+    user_message: str,
+    max_len: int,
+    session_id: str,
+    source: str = "angela_chat_service",
+) -> Dict[str, Any]:
+    """Build the final standardized chat response dict."""
+    return {
+        "response_text": response_text,
+        "source": source,
+        "schema_version": schema_ver,
+        "truncation_message": trunc_msg if len(user_message) > max_len else "",
+        "emotion": emotion_result.get("emotion", "neutral") if emotion_result else "neutral",
+        "emotion_confidence": emotion_result.get("confidence", 0.5) if emotion_result else 0.5,
+        "emotion_intensity": emotion_result.get("intensity", 0.5) if emotion_result else 0.5,
+        "hit_score": getattr(llm_response, 'hit_score', 0.0),
+        "hit_source": getattr(llm_response, 'hit_source', 'none'),
+        "route": getattr(llm_response, 'route', 'llm'),
+        "session_id": session_id,
+    }
+
+
+async def _handle_chat_request(
+    user_message: str, user_name: str, history: List[Dict[str, Any]], session_id: str, origin: str = "Human",
+    extra_context: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Orchestrate the full chat pipeline: validate → math dual-rail → context → emotion/crisis → execution gate → LLM."""
+    logger.info(f"\U0001f4e9 [LIS] Raw message received: '{user_message}' from {origin} (Session: {session_id})")
+
+    chat_cfg = _angela_cfg.get_authority("angela_core", {}).get("chat_flow", {}) if _angela_cfg else {}
+    max_len = chat_cfg.get("max_message_length", 4000)
+    schema_ver = chat_cfg.get("response_schema_version", "2.0")
+    trunc_msg = chat_cfg.get("truncation_message", "...\uff08\u622a\u65ad\uff09")
+    timeout = chat_cfg.get("http_timeout", 30.0)
+    flow_source = chat_cfg.get("default_flow", "angela_chat_service")
+
+    # Step 1: Validate and truncate input
+    user_message = _validate_and_truncate_input(user_message, chat_cfg)
+
+    # Step 2: Initialize session
+    if session_id not in sessions:
+        sessions.set(session_id, {
+            "created_at": datetime.now().isoformat(), "origin": origin, "user_name": user_name,
+        })
+
+    # Step 3: Math dual-rail verification (fast path — returns early if math detected)
+    math_result = await _try_math_verification(user_message, user_name, session_id, schema_ver, trunc_msg)
+    if math_result:
+        return math_result
+
+    # Step 4: Initialize base context + bio integrator
+    context: Dict[str, Any] = {"user_name": user_name}
+    if extra_context:
+        context.update(extra_context)
+
+    # Step 5: Emotion analysis + crisis assessment + biological stimulus
+    bio = _get_bio_integrator()
+    emotion_result, crisis_level = await _analyze_emotion_and_crisis(user_message, context, bio)
+    if emotion_result:
+        context["emotion"] = emotion_result
+    if crisis_level > 0:
+        context["crisis_level"] = crisis_level
+        context["crisis_instruction"] = (
+            f"User input has crisis level {crisis_level}. "
+            "Respond with empathy, provide support resources if appropriate, "
+            "and prioritize user safety in your response."
+        )
+    await _try_alignment_check(user_message, crisis_level, context)
+
+    # Step 6: Build full LLM context (bio state, state matrix, ED3N retrieval, dialogue, memory)
+    chat_svc = await _get_chat_service()
+    await _build_chat_context(context, user_message, user_name, history, session_id, chat_svc, bio)
+
+    # Step 7: Execution gate (intent classification → auto/confirm/reject — may short-circuit)
+    gate_result = await _handle_execution_gate(user_message, chat_svc, context, schema_ver, session_id)
+    if gate_result:
+        return gate_result
+
+    # Step 8: Generate LLM response
+    try:
+        llm_response = await asyncio.wait_for(
+            chat_svc.generate_response(user_message, user_name, context=context),
+            timeout=timeout,
+        )
     except asyncio.TimeoutError:
-        logger.warning(f"LLM response timeout for message: {user_message[:50]}...", exc_info=True)
-        try:
-            _timeout_text = _get_ed3n_engine().process(
-                "timeout_response", context={"fallback": True}, depth="reflex"
-            )
-        except Exception as e:
-            logger.debug(f"ED3N fallback failed in timeout handler: {e}")
-            _timeout_text = "抱歉，我目前無法回應，請稍後再試。"
-        return {
-            "response_text": _timeout_text,
-            "source": "fallback-timeout",
-            "schema_version": _schema_ver,
-            "truncation_message": "",
-            "emotion": "neutral",
-            "emotion_confidence": 0.5,
-            "emotion_intensity": 0.5,
-            "session_id": session_id,
-        }
+        return _handle_timeout(session_id, schema_ver)
     except asyncio.CancelledError:
         logger.info("Client disconnected mid-response, cancelling")
         raise
     except Exception as e:
         logger.error(f"Error in _handle_chat_request: {e}", exc_info=True)
         raise RuntimeError(f"chat request failed: {e}")
+
+    response_text = llm_response.text if hasattr(llm_response, 'text') else str(llm_response)
+    context["continuation_count"] = context.get("continuation_count", 0) + 1
+    _fire_causal_learning(response_text, user_message, session_id)
+
+    return _format_chat_response(response_text, llm_response, emotion_result, schema_ver, trunc_msg, user_message, max_len, session_id, source=flow_source)
 
 
 def _build_math_response(verification, matrix, user_message: str, session_id: str, schema_version: str = "2.0", truncation_message: str = "") -> Dict[str, Any]:
@@ -499,13 +590,13 @@ def _build_math_response(verification, matrix, user_message: str, session_id: st
         emotion, emotion_confidence, emotion_intensity = "confused", 0.7, 0.6
     elif not verification.matches:
         emotion, emotion_confidence, emotion_intensity = "surprised", 0.8, 0.7
-    elif verification.extraction and verification.extraction.confidence >= 0.8:
+    elif verification.extraction and verification.extraction.get("confidence", 0.0) >= 0.8:
         emotion, emotion_confidence, emotion_intensity = "happy", 0.9, 0.6
     else:
         emotion, emotion_confidence, emotion_intensity = "calm", 0.6, 0.4
 
     if matrix and verification.final_answer is not None:
-        epsilon_conf = verification.extraction.confidence if verification.extraction else 0.5
+        epsilon_conf = verification.extraction.get("confidence", 0.5) if verification.extraction else 0.5
         matrix.epsilon.values["certainty"] = min(1.0, 0.5 + epsilon_conf * 0.5)
         matrix.epsilon.values["complexity"] = min(1.0, len(user_message) / 50.0)
         if not verification.matches:

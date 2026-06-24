@@ -9,12 +9,12 @@
 > ✅ **Phase 0-5 進度更新 (2026-06-25)**: 
 > - **Phase 0 (P0)**: 全部 5 項任務完成 ✅
 > - **Phase 1 (P1)**: 全部 7 項任務完成 ✅
-> - **Phase 2 (P1-P2)**: 全部 7 項任務完成 ✅ (包含 IDEAL_ARCHITECTURE 審查)
+> - **Phase 2 (P1-P2)**: 全部 7 項任務完成 ✅
 > - **Phase 3 (P2)**: 全部 7 項任務完成 ✅
-> - **Phase 4 (P2-P3)**: 3 項完成 ✅ (context_storage/ 不存在 — N/A; dictionary_classifier.py 保留; ReflexTables 僅 garden 有實作 — N/A)
-> - **Phase 5 (P3)**: brain_bridge_service.py 驗證通過 ✅, SessionManager 接入 lifespan ✅
-> - **剩餘主要任務**: Phase 4 JS 共用化 (4.1-4.5), Phase 5 剩餘任務 (5.1, 5.4-5.6, 5.8-5.9)
-> - **健康度**: ~74-79%（累計提升 ~19%）
+> - **Phase 4 (P2-P3)**: 3 項完成 ✅ (context_storage/ N/A; dictionary_classifier.py 保留; ReflexTables N/A)
+> - **Phase 5 (P3)**: brain_bridge_service 驗證 ✅, SessionManager 接入 lifespan ✅, **聊天管線重構 75 行協調器 ✅**, _build_math_response 提取 bug 修復 ✅
+> - **剩餘主要任務**: Phase 4 JS 共用化 (4.1-4.5), Phase 5 測試補充 (5.4-5.6, 5.8-5.9)
+> - **健康度**: ~76-81%（累計提升 ~21%）
 
 ---
 
