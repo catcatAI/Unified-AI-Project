@@ -275,6 +275,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception as e:
         logger.warning(f"[CausalReasoning] Initialization failed: {e}")
 
+    # Initialize SessionManager for WebSocket connection management
+    try:
+        from services.connection_session import get_session_manager
+        get_session_manager()  # Initialize singleton
+        logger.info("[SessionManager] Initialized — ready for WebSocket connections")
+    except Exception as e:
+        logger.warning(f"[SessionManager] Initialization failed: {e}")
+
     # Start WebSocket state broadcast background task
     _broadcast_task = None
     try:
@@ -322,6 +330,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         except asyncio.CancelledError:
             pass
         logger.info("[Broadcast] State broadcast task stopped")
+    try:
+        from services.connection_session import shutdown_session_manager
+        await shutdown_session_manager()
+    except Exception as e:
+        logger.warning(f"[SessionManager] Shutdown error: {e}")
     if _module_manager is not None:
         try:
             await _module_manager.stop()
