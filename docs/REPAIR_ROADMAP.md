@@ -6,11 +6,15 @@
 **目的**: 從當前狀態（審計報告）到理想狀態（IDEAL_ARCHITECTURE.md）的具體可執行修復路徑  
 **基礎文檔**: `docs/COMPREHENSIVE_AUDIT_2026-06-25.md` (審計)、`docs/IDEAL_ARCHITECTURE.md` (目標)
 
-> ✅ **Phase 0-1-2 進度更新 (2026-06-25)**: 
-> - **Phase 0 (P0)**: 全部 5 項任務完成 ✅ (pyrightconfig, dead imports, Compositional Image docs, resource bug, config yaml)
-> - **Phase 1 (P1)**: 全部 7 項任務完成 ✅ (chat deprecation, image routes, sys.path, modules removal, doc references, PLAN archive, vision deprecation)
-> - **Phase 2 (P1-P2)**: 6/7 項任務完成 ✅ (AGENTS.md, ARCHITECTURE.md, INDEX.md, CHANGELOG, README.md, CI) — 剩餘 IDEAL_ARCHITECTURE 審查
-> - **健康度**: ~62-67%（Phase 0→1 後提升 ~7%）
+> ✅ **Phase 0-5 進度更新 (2026-06-25)**: 
+> - **Phase 0 (P0)**: 全部 5 項任務完成 ✅
+> - **Phase 1 (P1)**: 全部 7 項任務完成 ✅
+> - **Phase 2 (P1-P2)**: 全部 7 項任務完成 ✅ (包含 IDEAL_ARCHITECTURE 審查)
+> - **Phase 3 (P2)**: 全部 7 項任務完成 ✅ (google_drive_handler, key_generator, secure_eval, math_verifier, waiting_scheduler, ops_routes, state_matrix_api)
+> - **Phase 4 (P2-P3)**: 2 項驗證完成 ✅ (context_storage/ 不存在 — N/A; dictionary_classifier.py 確認為完整實作且活躍使用中 — 保留)
+> - **Phase 5 (P3)**: brain_bridge_service.py 所有 import 路徑驗證通過 ✅
+> - **剩餘主要任務**: Phase 4 JS 共用化 (4.1-4.5), Phase 4 ReflexTables 合併 (4.8), Phase 5 剩餘任務 (5.1-5.2, 5.4-5.6, 5.8-5.9)
+> - **健康度**: ~72-77%（Phase 0-3 累計提升 ~17%）
 
 ---
 
