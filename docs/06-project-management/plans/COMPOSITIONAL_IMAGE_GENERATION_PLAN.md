@@ -1404,3 +1404,78 @@ apps/backend/src/ai/multimodal/
 | Phase 10 | Residuals | ~30 min | Periodic expansion |
 
 Total training: ~2.5 hours on CPU. Recognition/generation: ~14s per image.
+
+---
+
+## Three-Layer Architecture Discovery (2026-06-24)
+
+### Breakthrough: PCA + Nonlinear Decoder
+
+After discovering primitives (263-dim) produce gray circles, we pivoted to a **three-layer architecture**:
+
+```
+Input Image (32×32×3 = 3072-dim)
+  ↓ PCA Encoder (learned projection)
+Latent Space (128-dim, 95.6% variance)
+  ↓ Decoder (nonlinear, torch autograd)
+Reconstructed Image (3072-dim)
+```
+
+### Results Comparison
+
+| Metric | Primitives (263-dim) | Three-Layer (128-dim) |
+|--------|----------------------|------------------------|
+| MSE | 0.04 | **0.009** |
+| Visual | Gray circles | **Colored, structured** |
+| Training | 500 epochs / 15min | 100 epochs / 2.5min |
+| Class centers | Gray blur | **Distinguishable features** |
+| Interpolation | Meaningless | **Smooth transition** |
+| Random generation | Gray | **Diverse, colorful** |
+
+### Key Insights
+
+1. **PCA components are learned primitives** — more meaningful than fixed geometric types
+2. **Concept space captures geometric essence** — class centers generate category-specific features
+3. **Decoder learns composition** — reconstructs 3072-dim from 128-dim
+4. **Interpolation is meaningful** — smooth transition between classes
+
+### Why Images Are Blurry
+
+**Root cause: PCA dimensionality reduction**
+
+- Input: 3072 dimensions (32×32×3)
+- Latent: 128 dimensions (only 95.6% variance preserved)
+- High-frequency details (edges, textures) lost in projection
+
+**The decoder cannot reconstruct what PCA discarded.**
+
+### Can We Generate Finer Images?
+
+**Yes, by keeping more PCA dimensions:**
+
+| PCA Dims | Variance | Expected MSE | Trade-off |
+|----------|----------|--------------|-----------|
+| 128 | 95.6% | 0.009 | Fast, blurry |
+| 256 | ~99% | ~0.003 | Medium |
+| 512 | ~99.5% | ~0.001 | Slower, sharper |
+| 3072 | 100% | 0 | Perfect reconstruction, no compression |
+
+**With 3072 PCA dims**, reconstruction should be nearly perfect (PCA is invertible). The decoder just needs to learn the identity mapping.
+
+### Recommended Next Steps
+
+1. **Increase PCA dimensions to 256 or 512** — should dramatically improve sharpness
+2. **Larger decoder** (3-4 layers, 512-1024 units) — more capacity for details
+3. **Perceptual loss** — instead of MSE, use feature matching (LPIPS)
+4. **VAE approach** — add KL regularization for smoother latent space
+
+### CPU Feasibility
+
+| Configuration | Training Time | Inference | Quality |
+|---------------|---------------|-----------|---------|
+| 128-dim + small decoder | 2.5 min | instant | Blurry |
+| 256-dim + medium decoder | ~5 min | instant | Better |
+| 512-dim + large decoder | ~10 min | instant | Sharp |
+| 3072-dim + full decoder | ~20 min | instant | Near-perfect |
+
+All configurations run on CPU. No GPU required.
