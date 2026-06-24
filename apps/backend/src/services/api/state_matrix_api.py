@@ -36,7 +36,8 @@ from pydantic import BaseModel, Field
 
 from core.engine.state_matrix import StateMatrix4D, CognitiveOp
 
-logger = __import__("logging").getLogger(__name__)
+import logging
+logger = logging.getLogger(__name__)
 
 # Global state matrix instance (singleton pattern for API access)
 _state_matrix_instance: Optional[StateMatrix4D] = None
@@ -217,8 +218,8 @@ async def register_port(request: Dict[str, Any]) -> dict:
     """Register a port."""
     matrix = get_state_matrix()
     if hasattr(matrix, "register_port"):
-        matrix.register_port(request.get("name"), request.get("config", {}))
-        return {"status": "registered", "port": request.get("name")}
+        return matrix.register_port(request.get("name"), request.get("config", {}))
+    logger.warning("register_port not implemented on StateMatrix4D")
     return {"status": "not_implemented", "note": "Port registration not available"}
 
 
@@ -227,8 +228,8 @@ async def unregister_port(name: str) -> dict:
     """Unregister a port."""
     matrix = get_state_matrix()
     if hasattr(matrix, "unregister_port"):
-        matrix.unregister_port(name)
-        return {"status": "unregistered", "port": name}
+        return matrix.unregister_port(name)
+    logger.warning("unregister_port not implemented on StateMatrix4D")
     return {"status": "not_implemented"}
 
 
@@ -248,6 +249,7 @@ async def apply_ripple(request: RippleRequest) -> dict:
     if hasattr(matrix, "apply_ripple"):
         matrix.apply_ripple(request.source_axis, request.source_value, request.target_axes, request.strength)
         return {"status": "applied"}
+    logger.warning("apply_ripple not implemented on StateMatrix4D")
     return {"status": "not_implemented"}
 
 
@@ -258,6 +260,7 @@ async def allocation_decide(request: AllocationRequest) -> dict:
     if hasattr(matrix, "allocation_decide"):
         decision = matrix.allocation_decide(request.candidates, request.dimension)
         return {"decision": decision}
+    logger.warning("allocation_decide not implemented on StateMatrix4D")
     return {"status": "not_implemented"}
 
 

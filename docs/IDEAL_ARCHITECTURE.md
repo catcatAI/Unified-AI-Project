@@ -785,7 +785,7 @@ Level 4 — E2E Tests (tests/e2e/)
 
 ## 12. 版本治理
 
-### 12.1 14 個版本位置（已驗證）
+### 12.1 16 個版本位置（已驗證）
 
 | # | 位置 | 當前版本 | 檢查方法 |
 |---|------|---------|---------|
@@ -806,14 +806,13 @@ Level 4 — E2E Tests (tests/e2e/)
 | 15 | `README.md` | 7.5.0-dev | 版本參考 |
 | 16 | `.github/workflows/ci.yml` | 7.5.0-dev | EXPECTED 變數 |
 
-### 12.2 CI 版本檢查修復
+### 12.2 CI 版本檢查修復（已完成）
 
-**當前問題**: CI 檢查的 `scripts/create-release.sh` 不存在，`packages/cli/package.json` 實際為 7.5.0-dev 但 CI 檢查 1.1.0。
+**已修復 (2026-06-25)**:
+- ✅ `scripts/create-release.sh` 不存在檔案檢查已移除
+- ✅ `packages/cli/package.json` 版本比對已從 `1.1.0` 改為 `$EXPECTED`
 
-**理想修復**:
-- 移除不存在的檔案檢查
-- 修正 `packages/cli/package.json` 版本為正確值
-- 或修正 CI script 中的預期值
+**剩餘問題**: Python 3.14 仍在測試矩陣（建議改為 3.10 / 3.11 / 3.12）
 
 ---
 
@@ -960,13 +959,13 @@ Level 4 — E2E Tests (tests/e2e/)
 | Stub | 類別 | 處理 |
 |------|------|------|
 | `google_drive_handler.py` | Accidental | 實作真正的 Google Drive 操作 |
-| `core/security/key_generator.py` | Accidental | 實作金鑰生成演算法 |
-| `core/security/secure_eval.py` | Accidental | 實作安全評估或移除 |
+| `core/security/key_generator.py` | ✅ 已完成 (已有真實實作，移除 stub 標記) |
+| `core/security/secure_eval.py` | ✅ 已確認 (AST 安全求值器，完整實作，非 stub) |
 | `services/math_verifier.py` | Intentional | 保留但加明確時間表 |
-| `core/waiting_scheduler.py` | Accidental | 實作等待排程或移除 |
-| `modules/tactile_service/` | Deprecated | 移除（功能已棄用） |
-| `modules/math_verifier/` | Deprecated | 移除（包裝器無增值） |
-| `modules/` (全部 11 個) | Dead Code | 移除整個目錄（包裝器無增值） |
+| `core/waiting_scheduler.py` | ✅ 已完成 (slot-based 排程器實作) |
+| `modules/tactile_service/` | ✅ 已移除（包含在 modules/ 刪除中） |
+| `modules/math_verifier/` | ✅ 已移除（包含在 modules/ 刪除中） |
+| `modules/` (全部 11 個) | ✅ 已移除 (Phase 1) |
 | `services/node_services/server.js` | Accidental | 實作或移除 |
 | `core/tools/js_tool_dispatcher/index.js` | Accidental | 實作或移除 |
 
