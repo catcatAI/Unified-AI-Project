@@ -390,7 +390,9 @@ async def interpolate_classes(request: InterpolateRequest):
         )
     except Exception as e:
         logger.error("Interpolation failed: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))@router.get("/generate-image/status")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/generate-image/status")
 async def generate_image_status():
     """Check if image generation is available.
 
