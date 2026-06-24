@@ -44,6 +44,7 @@ def _save_tasks(tasks: List[Dict[str, Any]]) -> None:
             shutil.copy2(_TASKS_FILE, _TASKS_DIR / "tasks.json.bak")
         except Exception as e:
             logger.debug(f"Task backup copy failed: {e}")
+    _TASKS_FILE.write_text(json.dumps(tasks, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 class TaskManagerHandler:
@@ -91,7 +92,7 @@ class TaskManagerHandler:
         if not title:
             return t("task_ops.specify_title")
         tasks = _load_tasks()
-        task_id = max((t.get("id", 0) for t in tasks), default=0) + 1
+        task_id = max((tk.get("id", 0) for tk in tasks), default=0) + 1
         tasks.append({
             "id": task_id,
             "title": title,
@@ -103,19 +104,19 @@ class TaskManagerHandler:
 
     def _list(self) -> str:
         tasks = _load_tasks()
-        pending = [t for t in tasks if t.get("status") == "pending"]
-        done = [t for t in tasks if t.get("status") == "completed"]
+        pending = [tk for tk in tasks if tk.get("status") == "pending"]
+        done = [tk for tk in tasks if tk.get("status") == "completed"]
         if not tasks:
             return t("task_ops.no_tasks")
         lines = [t("task_ops.task_list")]
         if pending:
             lines.append("  " + t("task_ops.pending"))
-            for t in pending[:20]:
-                lines.append(f"    #{t['id']} {t['title']}")
+            for tk in pending[:20]:
+                lines.append(f"    #{tk['id']} {tk['title']}")
         if done:
             lines.append("  " + t("task_ops.completed"))
-            for t in done[-5:]:
-                lines.append(f"    #{t['id']} {t['title']} ✓")
+            for tk in done[-5:]:
+                lines.append(f"    #{tk['id']} {tk['title']} ✓")
         return "\n".join(lines)
 
     def _complete(self, payload: Dict[str, Any]) -> str:
@@ -138,7 +139,7 @@ class TaskManagerHandler:
         task_id = payload.get("id")
         title = payload.get("title", "")
         original_len = len(tasks)
-        tasks = [t for t in tasks if not (task_id and t.get("id") == task_id) and not (title and t.get("title") == title)]
+        tasks = [tk for tk in tasks if not (task_id and tk.get("id") == task_id) and not (title and tk.get("title") == title)]
         if len(tasks) == original_len:
             return t("task_ops.task_not_found")
         _save_tasks(tasks)
