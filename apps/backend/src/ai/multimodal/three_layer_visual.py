@@ -156,11 +156,11 @@ class ThreeLayerVisual:
             def __init__(self):
                 super().__init__()
                 self.net = nn.Sequential(
-                    nn.Linear(self.LATENT_DIM, 256),
+                    nn.Linear(128, 256),
                     nn.ReLU(),
                     nn.Linear(256, 512),
                     nn.ReLU(),
-                    nn.Linear(512, self.IMG_DIM),
+                    nn.Linear(512, 3072),
                     nn.Sigmoid(),
                 )
             def forward(self, x):
@@ -421,11 +421,11 @@ class ThreeLayerVisual:
                     def __init__(self):
                         super().__init__()
                         self.net = nn.Sequential(
-                            nn.Linear(self.LATENT_DIM, 256),
+                            nn.Linear(128, 256),
                             nn.ReLU(),
                             nn.Linear(256, 512),
                             nn.ReLU(),
-                            nn.Linear(512, self.IMG_DIM),
+                            nn.Linear(512, 3072),
                             nn.Sigmoid(),
                         )
                     def forward(self, x):
