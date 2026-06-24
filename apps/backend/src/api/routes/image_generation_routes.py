@@ -1,4 +1,4 @@
-"""API routes for compositional image generation (GVV pipeline + concept space)."""
+"""API routes for compositional image generation (GVV pipeline + ThreeLayerVisual)."""
 
 import logging
 import io
@@ -18,7 +18,7 @@ class GenerateImageRequest(BaseModel):
     text: str
     canvas_size: int = 128
     num_iterations: int = 30
-    learning_rate: float = 0.1
+    learning_rate: float = 0.008
 
 
 class GenerateImageResponse(BaseModel):
@@ -38,7 +38,34 @@ class RecognizeImageResponse(BaseModel):
     class_scores: dict
 
 
+class ReconstructImageRequest(BaseModel):
+    image_base64: str
+    enhance: bool = True
+
+
+class ReconstructImageResponse(BaseModel):
+    image_base64: str
+    width: int
+    height: int
+    metrics: dict
+
+
+class InterpolateRequest(BaseModel):
+    class_a: int
+    class_b: int
+    n_steps: int = 10
+    enhance: bool = True
+
+
+class InterpolateResponse(BaseModel):
+    images: list
+    width: int
+    height: int
+    metrics: dict
+
+
 _gvv_state = None
+_three_layer_state = None
 
 
 def _get_gvv():
@@ -79,7 +106,8 @@ def _get_gvv():
         else:
             logger.warning("Concept space not found at %s", concept_space_path)
 
-        optimizer = InstanceOptimizer(vocabulary)
+        # Fix: InstanceOptimizer requires (vocabulary, concept_mapper, canvas_size)
+        optimizer = InstanceOptimizer(vocabulary, mapper, (128, 128))
 
         _gvv_state = {
             "vocabulary": vocabulary,
@@ -92,6 +120,52 @@ def _get_gvv():
     except Exception as e:
         logger.error("Failed to initialize GVV pipeline: %s", e)
         return None
+
+
+def _get_three_layer():
+    """Lazy-initialize the ThreeLayerVisual model."""
+    global _three_layer_state
+    if _three_layer_state is not None:
+        return _three_layer_state
+
+    try:
+        import sys
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+
+        from ai.multimodal.three_layer_visual import ThreeLayerVisual
+
+        models_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "models")
+        model_dir = os.path.join(models_dir, "three_layer")
+
+        model = ThreeLayerVisual(model_dir=model_dir)
+        if model.load():
+            _three_layer_state = model
+            logger.info("Loaded ThreeLayerVisual model")
+        else:
+            logger.warning("ThreeLayerVisual model not found at %s", model_dir)
+            _three_layer_state = None
+
+        return _three_layer_state
+    except Exception as e:
+        logger.error("Failed to initialize ThreeLayerVisual: %s", e)
+        return None
+
+
+def _encode_text_with_clip(text: str) -> np.ndarray:
+    """Encode text using CLIP. Returns 512-dim vector."""
+    try:
+        from ai.multimodal.semantic_visual import SemanticVisualEncoder
+        encoder = SemanticVisualEncoder()
+        if not encoder.is_available:
+            logger.warning("CLIP not available, using zeros")
+            return np.zeros(512, dtype=np.float32)
+        result = encoder.encode_text([text])
+        if result is None:
+            return np.zeros(512, dtype=np.float32)
+        return result[0].astype(np.float32)
+    except Exception as e:
+        logger.warning("CLIP encoding failed: %s, using zeros", e)
+        return np.zeros(512, dtype=np.float32)
 
 
 @router.post("/generate-image", response_model=GenerateImageResponse)
@@ -111,23 +185,26 @@ async def generate_image(request: GenerateImageRequest):
         concept_mapper = gvv["concept_mapper"]
         optimizer = gvv["optimizer"]
 
-        # Step 1: Map text → concept → initial vector
-        mapping = concept_mapper.map_text_to_primitives(np.zeros(512))
+        # Step 1: Encode text with CLIP
+        clip_vec = _encode_text_with_clip(request.text)
+
+        # Step 2: Map text → concept → initial vector
+        mapping = concept_mapper.map_text_to_primitives(clip_vec)
         concept_name = mapping["concept"]
 
-        # Step 2: Optimize for pixel similarity
-        size = (request.canvas_size, request.canvas_size)
-        result = optimizer.optimize(
-            mapping["initialization"],
-            num_iterations=request.num_iterations,
-            learning_rate=request.learning_rate,
-            target_size=size,
+        # Step 3: Optimize for pixel similarity
+        # Fix: Use optimize_from_text instead of optimize
+        result = optimizer.optimize_from_text(
+            clip_vec,
+            n_iterations=request.num_iterations,
+            lr=request.learning_rate,
         )
 
-        # Step 3: Render final image
+        # Step 4: Render final image
+        size = (request.canvas_size, request.canvas_size)
         img = render_primitives_from_vector(result["optimized_vector"], size=size)
 
-        # Step 4: Compute metrics
+        # Step 5: Compute metrics
         metrics = {
             "concept": concept_name,
             "similarity": mapping["similarity"],
@@ -205,16 +282,118 @@ async def recognize_image(request: RecognizeImageRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/reconstruct-image", response_model=ReconstructImageResponse)
+async def reconstruct_image(request: ReconstructImageRequest):
+    """Reconstruct an image using ThreeLayerVisual.
+
+    Pipeline: image → PCA encode → decode → enhance
+    """
+    model = _get_three_layer()
+    if model is None:
+        raise HTTPException(status_code=503, detail="ThreeLayerVisual model not available")
+
+    try:
+        from PIL import Image as PILImage
+
+        # Decode image
+        img_bytes = base64.b64decode(request.image_base64)
+        pil_img = PILImage.open(io.BytesIO(img_bytes)).convert("RGB")
+        pil_img = pil_img.resize((32, 32))
+        img_arr = np.array(pil_img).astype(np.float32) / 255.0
+        img_flat = img_arr.reshape(1, -1)
+
+        # Reconstruct
+        import time
+        t0 = time.time()
+        recon = model.reconstruct(img_flat, enhance=request.enhance)
+        recon_time = time.time() - t0
+
+        # Convert back to PIL
+        recon_img = (recon[0].reshape(32, 32, 3) * 255).astype(np.uint8)
+        pil_recon = PILImage.fromarray(recon_img).resize(pil_img.size)
+
+        # Compute MSE
+        orig_resized = np.array(pil_img.resize((32, 32))).astype(np.float32) / 255.0
+        mse = float(np.mean((recon[0].reshape(32, 32, 3) - orig_resized) ** 2))
+
+        buf = io.BytesIO()
+        pil_recon.save(buf, format="PNG")
+        img_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+
+        return ReconstructImageResponse(
+            image_base64=img_base64,
+            width=pil_recon.size[0],
+            height=pil_recon.size[1],
+            metrics={
+                "mse": mse,
+                "reconstruct_time": recon_time,
+                "enhanced": request.enhance,
+            },
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Image reconstruction failed: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/interpolate-classes", response_model=InterpolateResponse)
+async def interpolate_classes(request: InterpolateRequest):
+    """Interpolate between two class centers using ThreeLayerVisual.
+
+    Pipeline: class A center → class B center → n_steps interpolation
+    """
+    model = _get_three_layer()
+    if model is None:
+        raise HTTPException(status_code=503, detail="ThreeLayerVisual model not available")
+
+    try:
+        from PIL import Image as PILImage
+
+        # Interpolate
+        import time
+        t0 = time.time()
+        interp = model.interpolate(request.class_a, request.class_b, n_steps=request.n_steps,
+                                   enhance=request.enhance)
+        interp_time = time.time() - t0
+
+        # Convert to base64
+        images = []
+        for i in range(len(interp)):
+            img_arr = (interp[i].reshape(32, 32, 3) * 255).astype(np.uint8)
+            pil_img = PILImage.fromarray(img_arr)
+            buf = io.BytesIO()
+            pil_img.save(buf, format="PNG")
+            images.append(base64.b64encode(buf.getvalue()).decode("utf-8"))
+
+        return InterpolateResponse(
+            images=images,
+            width=32,
+            height=32,
+            metrics={
+                "class_a": request.class_a,
+                "class_b": request.class_b,
+                "n_steps": request.n_steps,
+                "interpolate_time": interp_time,
+            },
+        )
+    except Exception as e:
+        logger.error("Interpolation failed: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/generate-image/status")
 async def generate_image_status():
     """Check if image generation is available."""
     gvv = _get_gvv()
+    three_layer = _get_three_layer()
     has_concept_space = False
     if gvv:
         concept_mapper = gvv["concept_mapper"]
         has_concept_space = concept_mapper._concept_space is not None
     return {
-        "available": gvv is not None,
+        "gvv_available": gvv is not None,
+        "three_layer_available": three_layer is not None,
         "pipeline": "gvv",
         "vocab_size": len(gvv["vocabulary"]._visual_words) if gvv else 0,
         "concept_count": len(gvv["vocabulary"]._concept_distributions) if gvv else 0,
