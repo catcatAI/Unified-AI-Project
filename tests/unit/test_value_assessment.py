@@ -3,7 +3,7 @@ import pytest
 try:
     from apps.backend.src.ai.alignment.value_assessment import ValueAssessmentSystem
 except ImportError:
-    pytest.skip("ValueAssessmentSystem not available (stub module)", allow_module_level=True)
+    pytest.skip("ValueAssessmentSystem module API changed — tests need updating", allow_module_level=True)
 
 
 class TestValueAssessmentSystem:

@@ -1,3 +1,6 @@
+import pytest
+pytest.skip("Integration script - requires live backend server", allow_module_level=True)
+
 import sys
 import logging
 try:

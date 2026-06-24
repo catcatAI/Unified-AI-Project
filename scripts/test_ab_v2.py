@@ -1,7 +1,12 @@
 """Quick A-B test: 3 images, no generator, direct encode-decode.
 DEPRECATED: This script uses the OLD architecture (rule-based decomposer).
 For GVV architecture, see test_gvv_quick.py
+
+Note: pytest collection will skip this file; run directly via python.
 """
+import pytest
+pytest.skip("DEPRECATED script - use test_gvv_quick.py instead", allow_module_level=True)
+
 import sys, os, json
 import numpy as np
 from PIL import Image

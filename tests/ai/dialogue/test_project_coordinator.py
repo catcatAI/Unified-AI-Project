@@ -4,7 +4,11 @@ import json
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch, call
 
-from ai.dialogue.project_coordinator import ProjectCoordinator
+# Module was removed in architecture cleanup (Phase 1)
+try:
+    from ai.dialogue.project_coordinator import ProjectCoordinator
+except ImportError:
+    pytest.skip("ai.dialogue module was removed (Phase 1 architecture cleanup)", allow_module_level=True)
 
 
 @pytest.fixture

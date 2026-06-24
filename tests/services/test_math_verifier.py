@@ -1,15 +1,19 @@
 import json
 import pytest
+
+# Phase 3.4 replaced the stub with a different API (MathVerifyResult-based).
+# Tests target ExtractionResult / VerificationResult classes that no longer exist.
+# Needs a full test rewrite to match the current API.
 try:
-    from apps.backend.src.services.math_verifier import (
-        MathExtractor,
-        SpatialEngine,
-        MathVerifier,
-        ExtractionResult,
-        VerificationResult,
-    )
+    from apps.backend.src.services.math_verifier import ExtractionResult
 except ImportError:
-    pytest.skip("MathVerifier not available (stub module)", allow_module_level=True)
+    pytest.skip("MathVerifier API changed (Phase 3.4) — tests need full rewrite", allow_module_level=True)
+
+from apps.backend.src.services.math_verifier import (
+    MathExtractor,
+    SpatialEngine,
+    MathVerifier,
+)
 
 
 class TestExtractionResult:

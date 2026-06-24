@@ -3,14 +3,19 @@ Tests for the AlphaDeepModel, focusing on compression and data handling.
 """
 
 import pytest
-from ai.compression.alpha_deep_model import (
-    AlphaDeepModel,
-    DeepParameter,
-    HAMGist,
-    RelationalContext,
-    Modalities,
-    CompressionAlgorithm,
-)
+
+# Module was removed in architecture cleanup (Phase 1)
+try:
+    from ai.compression.alpha_deep_model import (
+        AlphaDeepModel,
+        DeepParameter,
+        HAMGist,
+        RelationalContext,
+        Modalities,
+        CompressionAlgorithm,
+   )
+except ImportError:
+    pytest.skip("ai.compression module was removed (Phase 1 architecture cleanup)", allow_module_level=True)
 
 
 @pytest.fixture

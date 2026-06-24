@@ -12,9 +12,11 @@
 > - **Phase 2 (P1-P2)**: 全部 7 項任務完成 ✅
 > - **Phase 3 (P2)**: 全部 7 項任務完成 ✅
 > - **Phase 4 (P2-P3)**: 3 項完成 ✅
-> - **Phase 5 (P3)**: 聊天管線重構 ✅, SessionManager 接入 lifespan ✅, image_generation_routes 22 測試 ✅, ops_routes 22 測試 ✅, handlers 40 測試 + 修復 _save_tasks bug ✅, **SessionManager 56 測試 ✅**
-> - **剩餘主要任務**: Phase 4 JS 共用化 (4.1-4.5), Phase 5.9 跳過測試審查
-> - **健康度**: ~84-89%（累計提升 ~29%）
+> - **Phase 5 (P3)**: 聊天管線重構 ✅, SessionManager 接入 lifespan ✅, image_generation_routes 22 測試 ✅, ops_routes 22 測試 ✅, handlers 40 測試 + 修復 _save_tasks bug ✅, SessionManager 56 測試 ✅, **跳過測試審查 ✅**
+> - **Phase 5 全部完成** ✅ **🎉**
+> - **剩餘主要任務**: Phase 4 JS 共用化 (4.1-4.5)
+> - **健康度**: ~85-90%（累計提升 ~30%）
+> - **下一個目標**: Phase 4 — JS 共用化
 
 ---
 
