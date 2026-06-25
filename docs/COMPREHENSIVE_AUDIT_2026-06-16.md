@@ -1,5 +1,7 @@
 # Angela AI — 全面審計報告與重構計畫
 
+> ⚠️ **SUPERSEDED (as of 2026-06-25)**: This audit (June 16) is superseded by `docs/COMPREHENSIVE_AUDIT_2026-06-25.md` (v2.0, ~85-90% health score). Recommendations herein (module merges, dead code removal, test gaps) were largely addressed in Phases 0-5.
+
 **審計日期**: 2026-06-16
 **審計範圍**: 全專案 `apps/backend/src/ai/`, `services/`, `api/`, `tests/`, `docs/`
 
