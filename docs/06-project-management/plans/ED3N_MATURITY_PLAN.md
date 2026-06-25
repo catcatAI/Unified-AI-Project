@@ -5,7 +5,7 @@
 | Metric | Value |
 |--------|-------|
 | Modules | 25+ files (includes core/, snn/, multimodal/, config/), ~4,000+ lines |
-| Tests | **86+ tests** ✅ (Phase 3 added 69 integration tests) |
+| Tests | **114 tests** ✅ (all pass, ~5.3s) |
 | Edge cases | **19 guard clauses** across 6 files ✅ |
 | CLI | `python -m ai.ed3n query/train/serve/stats/save` ✅ |
 | Config | `presets.json` + `math_presets.json` ✅ |
@@ -38,7 +38,7 @@
 ### Tier 1 — Foundation (DONE ✅)
 | # | Task | Status |
 |---|------|--------|
-| 1.1 | **Test suite** — 45 pytest tests ✅ | DONE |
+| 1.1 | **Test suite** — 114 pytest tests ✅ (was 45, grew with Phases 3-5) | DONE |
 | 1.2 | **Edge case hardening** — 19 guard clauses ✅ | DONE |
 | 1.3 | **Config-driven presets** — JSON files ✅ | DONE |
 | 1.4 | **CLI tool** — `python -m ai.ed3n` ✅ | DONE |

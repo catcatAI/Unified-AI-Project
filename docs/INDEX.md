@@ -15,7 +15,7 @@
 - **`AGENTS.md`** — 代理開發指南 (構建/測試/代碼規範)
 - **`ARCHITECTURE.md`** — System architecture overview (SSOT, outdated)
 - **`CHANGELOG.md`** — 版本歷史與變更記錄
-- **`QUICK_START.md`** — Getting started guide
+- **[`QUICK_START.md`](QUICK_START.md)** — Getting started guide (2026-06-25 更新，命令已驗證)
 - **`INDEX.md`** — This file
 - **`COMPREHENSIVE_REPAIR_ROADMAP.md`** — **全面修復路線圖 (新)** — 6 階段修復計畫，基於 OMISSIONS_CHECKLIST、PROJECT_HONEST_AUDIT、PHASE_REVIEW6 分析
 - **`OMISSIONS_CHECKLIST.md`** — **遺漏清單 (新)** — 認知/文件/任務/Git/安全/配置/程式碼/測試 9 大類遺漏追蹤
