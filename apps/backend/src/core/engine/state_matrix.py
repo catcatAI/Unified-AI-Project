@@ -57,7 +57,7 @@ CognitiveOp = None
 
 class StateMatrix4D:
     """
-    5D状态矩阵系统（αβγδεθ）/ 5D State Matrix System
+    6D状态矩阵系统（αβγδεθ）/ 6D State Matrix System
 
     A comprehensive state management system that integrates all dimensions
     of Angela's internal state into a unified multi-dimensional matrix.
