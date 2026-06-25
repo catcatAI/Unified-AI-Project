@@ -1,18 +1,83 @@
 # Service Catalog
 
-> **Last Updated**: 2026-06-16 — Phase 3-6 complete (162 new tests, ED3N continuous learning, GARDEN 5-stage pipeline)
+> **Last Updated**: 2026-06-25 — Full audit of services/ directory against actual imports
 
 Status: ✅ Active | 🟡 Partial Stub | ❌ Orphaned | 🗑️ Deprecated
 
-## Core Services (initialized in lifespan.py)
+## Services (apps/backend/src/services/)
 
-| Service | File | Status | Init Method |
+### Top-Level Services
+
+| Service | File | Imported By | Status |
+|---------|------|-------------|--------|
+| `AngelaLLMService` | `services/angela_llm_service.py` | `main_api_server.py`, `digital_life_integrator.py`, `neuro_auto_selector.py`, `cli/repl.py` | ✅ wired |
+| `AtlassianAPI` | `services/atlassian_api.py` | `main_api_server.py` | ✅ wired |
+| `AudioService` | `services/audio_service.py` | `lifespan.py`, `chat_routes.py` | ✅ wired |
+| `ChatService` | `services/chat_service.py` | `lifespan.py` | ✅ wired |
+| `ConnectionSession` | `services/connection_session.py` | `lifespan.py`, `websocket_manager.py` | ✅ wired |
+| `CrossModalQuality` | `services/cross_modal_quality.py` | `multimodal_routes.py` | ✅ wired |
+| `CrossModalRouter` | `services/cross_modal_router.py` | `multimodal_routes.py` | ✅ wired |
+| `MainAPIServer` | `services/main_api_server.py` | `cli/repl.py` | ✅ wired |
+| `MathVerifier` | `services/math_verifier.py` | `chat_routes.py` (lazy) | ✅ wired |
+| `MultimodalErrorRecovery` | `services/multimodal_error_recovery.py` | `multimodal_service.py` | ✅ wired |
+| `MultimodalQualityMonitor` | `services/multimodal_quality_monitor.py` | `multimodal_service.py` | ✅ wired |
+| `MultimodalService` | `services/multimodal_service.py` | `multimodal_routes.py`, `cross_modal_router.py`, `websocket_manager.py` | ✅ wired |
+| `MultimodalStatePersistence` | `services/multimodal_state_persistence.py` | `multimodal_service.py` | ✅ wired |
+| `ResourceAwarenessService` | `services/resource_awareness_service.py` | `neuro_auto_selector.py` | ✅ wired |
+| `VisionService` | `services/vision_service.py` | `lifespan.py`, `chat_routes.py`, `image_encoder.py` | ✅ wired |
+| `WeatherService` | `services/weather_service.py` | `proactive_interaction_system.py` | ✅ wired |
+| `WebSocketManager` | `services/websocket_manager.py` | `lifespan.py`, `main_api_server.py` | ✅ wired |
+| `BrainBridgeService` | `services/brain_bridge_service.py` | Nowhere (only in `verify_behavioral_impact.py`) | ❌ orphaned |
+| `HotReloadService` | `services/hot_reload_service.py` | Nowhere (self-contained `get_hot_reload_service()`) | ❌ orphaned |
+| `APIModels` | `services/api_models.py` | Nowhere (re-exports from `models.api_models`) | ❌ orphaned |
+
+### services/handlers/ — Intent Handlers
+
+| Handler | File | Status | Imported By |
 |---------|------|--------|-------------|
-| `ChatService` | `services/chat_service.py` | ✅ | `get_angela_chat_service()` |
-| `AngelaLLMService` | `services/llm/router.py` | ✅ | `get_llm_service()` |
-| `BiologicalIntegrator` | `core/bio/biological_integrator.py` | ✅ | `bio.initialize()` |
-| `WebSocketManager` | `services/websocket_manager.py` | ✅ | `broadcast_state_updates()` |
-| `HotReloadService` | `services/hot_reload_service.py` | ✅ | `wiring.py:47` |
+| `FileOperationHandler` | `services/handlers/file_operation_handler.py` | ✅ | `handlers/__init__.py`, `llm/router.py` |
+| `GoogleDriveHandler` | `services/handlers/google_drive_handler.py` | ✅ | `handlers/__init__.py` |
+| `WebSearchHandler` | `services/handlers/web_search_handler.py` | ✅ | `handlers/__init__.py`, `llm/router.py` |
+| `CodeExecutionHandler` | `services/handlers/code_execution_handler.py` | ✅ | `handlers/__init__.py`, `llm/router.py` |
+| `SystemCommandHandler` | `services/handlers/system_command_handler.py` | ✅ | `handlers/__init__.py`, `llm/router.py` |
+| `TaskManagerHandler` | `services/handlers/task_manager_handler.py` | ✅ | `handlers/__init__.py`, `llm/router.py` |
+| `VisionHandler` | `services/handlers/vision_handler.py` | ✅ | `handlers/__init__.py`, `llm/router.py` |
+| `LearningHandler` | `services/handlers/learning_handler.py` | ✅ | `handlers/__init__.py` |
+
+### services/llm/ — LLM Routing & Providers
+
+| Service | File | Status | Imported By |
+|---------|------|--------|-------------|
+| `LLMRouter` | `services/llm/router.py` | ✅ | `angela_llm_service.py`, `chat_service.py`, `memory_integration.py`, `lifespan.py` |
+| `EmotionAnalyzer` | `services/llm/emotion_analyzer.py` | ✅ | `llm/router.py`, `chat_routes.py` |
+| `MemoryIntegration` | `services/llm/memory_integration.py` | ✅ | `llm/router.py` |
+| `PromptBuilder` | `services/llm/prompt_builder.py` | ✅ | `llm/router.py`, `angela_llm_service.py` |
+| `LLMBackend` (registry) | `services/llm/providers/registry.py` | ✅ | `llm/router.py`, `core/interfaces/protocols.py` |
+| Provider: `Anthropic` | `services/llm/providers/anthropic.py` | ✅ | `providers/__init__.py`, `llm/router.py` |
+| Provider: `Google` | `services/llm/providers/google.py` | ✅ | `providers/__init__.py`, `llm/router.py` |
+| Provider: `OpenAI` | `services/llm/providers/openai.py` | ✅ | `providers/__init__.py`, `llm/router.py` |
+| Provider: `Ollama` | `services/llm/providers/ollama.py` | ✅ | `providers/__init__.py`, `llm/router.py` |
+| Provider: `llama.cpp` | `services/llm/providers/llamacpp.py` | ✅ | `providers/__init__.py`, `llm/router.py` |
+| Provider: `ED3N` | `services/llm/providers/ed3n.py` | ✅ | `providers/__init__.py`, `llm/router.py` |
+| Provider: `GARDEN` | `services/llm/providers/garden.py` | ✅ | `providers/__init__.py`, `llm/router.py` |
+
+### services/api/ — API Routes
+
+| Service | File | Status | Imported By |
+|---------|------|--------|-------------|
+| `StateMatrixAPI` | `services/api/state_matrix_api.py` | ✅ | `main_api_server.py`, `core/autonomous/playground.py` |
+
+### services/node_services/ — Node.js Services
+
+| Service | File | Status | Notes |
+|---------|------|--------|-------|
+| `Server` | `services/node_services/server.js` | ❌ orphaned | No references in any Python or JS source |
+
+### services/adapters/ — Empty directory
+
+Directory exists but contains no files. Candidates for cleanup.
+
+---
 
 ## ModuleManager Modules (discovered via modules/*/)
 
@@ -30,15 +95,6 @@ Status: ✅ Active | 🟡 Partial Stub | ❌ Orphaned | 🗑️ Deprecated
 | `math_verifier` | `modules/math_verifier/` | ✅ | init/start/stop |
 | `resource_awareness_service` | `modules/resource_awareness_service/` | ✅ | init/start/stop |
 
-## Intent Handlers
-
-| Handler | File | Status | Intents |
-|---------|------|--------|---------|
-| `FileOperationHandler` | `services/handlers/file_operation_handler.py` | ✅ | file_op |
-| `GoogleDriveHandler` | `services/handlers/google_drive_handler.py` | ✅ | google_drive |
-| `WebSearchHandler` | `services/handlers/web_search_handler.py` | ✅ | web_search |
-| `LearningHandler` | `services/handlers/learning_handler.py` | ✅ | learning |
-
 ## Plugin Handlers
 
 | Handler | File | Status | Hooks |
@@ -49,13 +105,8 @@ Status: ✅ Active | 🟡 Partial Stub | ❌ Orphaned | 🗑️ Deprecated
 
 | Service | File | Status | Action |
 |---------|------|--------|--------|
-| `AIEditorService` | `services/ai_editor.py` | ❌ | Schedule removal |
-| `AIEditorConfig` | `services/ai_editor_config.py` | ❌ | Schedule removal |
-| `AIVirtualInputService` | `services/ai_virtual_input_service.py` | ❌ | Schedule removal |
-| `BrainBridgeService` | `services/brain_bridge_service.py` | ❌ | Schedule removal |
-| `OSContextService` | `services/os_context_service.py` | ❌ | Schedule removal |
-| `angela_types` (TypeDefs) | `services/angela_types.py` | ❌ | Schedule removal |
-| `api_models` (re-export) | `services/api_models.py` | ❌ | Schedule removal |
+| `BrainBridgeService` | `services/brain_bridge_service.py` | ❌ | Schedule removal (only referenced in `verify_behavioral_impact.py`) |
+| `APIModels` (re-export) | `services/api_models.py` | ❌ | Schedule removal (empty re-export of `models.api_models`) |
 
 ## Deprecated Agents
 
