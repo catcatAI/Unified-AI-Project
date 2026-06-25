@@ -73,9 +73,9 @@ mypy apps/backend/src                    # Type check
 pre-commit run --all-files
 ```
 
-> ✅ **NOTE (Updated 2026-06-26)**: Repair Phases 0-5 complete + Phase 7 adapter fixes. Test collection now has **0 errors** (**4,261 tests** / 33 skipped). JS sharing migrated to `packages/shared-js/` (33 files). All alias fixes applied. StateMatrixAdapter: 9/9 integration tests passing (8 missing methods implemented: `compute_gradient`, `add_attractor`, `navigate_to_attractor`, `gradient_field`, `save_state`/`load_state`, `trend`/`anomalies`/`decide` proxies, `integrate_code_inspect`, `full_report`).
+> ✅ **NOTE (Updated 2026-06-26)**: Repair Phases 0-5 complete + Phase 7 adapter fixes. Test collection now has **0 errors** (**4,774 full / 4,261 tests/** 41 skipped). JS sharing migrated to `packages/shared-js/` (33 files). All alias fixes applied. StateMatrixAdapter: 9/9 integration tests passing (8 missing methods implemented: `compute_gradient`, `add_attractor`, `navigate_to_attractor`, `gradient_field`, `save_state`/`load_state`, `trend`/`anomalies`/`decide` proxies, `integrate_code_inspect`, `full_report`).
 > 
-> ⚠️ **Comprehensive task inventory now in `docs/06-project-management/MASTER_TASK_MAP.md`** — maps all 23 plan/task/todo documents with git/code cross-reference. Key corrections discovered: PHASE_REVIEW6 §3.2 MultimodalPanel is actually ✅ (not ❌); WebSocket handlers exist at message level (missing route only). Major gap: auto-repair pathway in `run_angela.py` was never implemented (documented Jun 13, still open Jun 26).
+> ⚠️ **Comprehensive task inventory + provenance in `docs/06-project-management/MASTER_TASK_MAP.md`** — every claim from all 23 documents cross-referenced with git commit hash + actual code path. 13 sections: complete verification for 144 claims, 16 pending items with exact blockers, 26 deleted subsystems in DO-NOT-REIMPLEMENT list, all migrations tracked source→dest→commit. Verification protocol in §XIII.
 > - `ModelProvider` → `LLMBackend` (alias added in `protocols.py`)
 > - `AuditoryAttentionController` → `AttentionController` (alias added in `auditory_attention.py`)
 > - `ArtLearningSystem` → `ArtLearningWorkflow` (alias added in `art_learning_system.py`)

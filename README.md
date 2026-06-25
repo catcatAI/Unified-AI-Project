@@ -55,13 +55,13 @@
 
 **Angela AI** is a digital life system with biological simulation and LLM integration capabilities.
 
-**Quick facts**: 612 Python files in backend src (~96K lines). Electron + Live2D desktop companion (50 JS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~4,261 tests across 480+ test files.**  
+**Quick facts**: 612 Python files in backend src (~96K lines). Electron + Live2D desktop companion (50 JS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **4,774 tests (full) / 4,261 tests (tests/) — 41 skipped.**  
 **Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · cli `7.5.0-dev` · biology-core `7.5.0-dev`.  
 **Architecture audit score**: **~85-90%** (2026-06-25; up from ~55-60% after Phases 0-5 repairs).  
 **Total project files**: ~3,500+ (620 Python in backend src · 295 JS/TS · 1,021+ docs · 500+ config · 480+ test).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
 
-> **STATUS (2026-06-26)**: All 6 repair phases COMPLETE ✅ JS sharing unified under packages/shared-js/. 4,261 tests / 33 skipped with 0 errors. StateMatrixAdapter 9/9 integration tests passing. ~85-90% health score (from ~55-60%). See [COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md) for full details.
+> **STATUS (2026-06-26)**: All 6 repair phases COMPLETE ✅ JS sharing unified under packages/shared-js/. 4,774 tests (full)/4,261 (tests/) — 41 skipped, 0 errors. StateMatrixAdapter 9/9 integration tests passing. ~85-90% health score (from ~55-60%). Intelligence: 6.0/10 (upper) 4.5/10 (lower). See [COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md) for full details.
 > **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → LLM → causal learning → response. GVV pipeline for image generation.  
 > **See**: [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) (latest audit), [IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md) (target), [COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md) (plan).
 
@@ -102,8 +102,29 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | **Architecture Audit** | ✅ CREATED | `docs/COMPREHENSIVE_AUDIT_2026-06-25.md` — ~55-60% → ~85-90% after all 6 phases |
 | **Target Blueprint** | ✅ CREATED | `docs/IDEAL_ARCHITECTURE.md` — 16-section target architecture |
 | **Repair Roadmap** | ✅ COMPLETE | `docs/COMPREHENSIVE_REPAIR_ROADMAP.md` — all 6 phases executed, 0 remaining tasks |
+| **Master Task Map** | ✅ CREATED | `docs/06-project-management/MASTER_TASK_MAP.md` — all 23 plans cross-referenced with git/code |
 
-See **[COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md)** (latest audit), **[IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md)** (target), **[COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md)** (plan).
+See **[COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md)** (latest audit), **[IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md)** (target), **[COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md)** (plan), **[MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md)** (task provenance).
+
+### Intelligence Assessment (Code-Verified 2026-06-26)
+
+Upper bound (with LLM API: OpenAI/Anthropic/Ollama) vs lower bound (ED3N+GARDEN only):
+
+| Capability | Upper | Lower | Status |
+|:-----------|:-----:|:-----:|:-------|
+| **Text understanding** | 7/10 | 5/10 | ED3N 460K dictionary + GARDEN SNN, real multilingual |
+| **Image understanding** | 7/10 | 5/10 | CLIP 512-dim real, VisionService PIL-based |
+| **Speech understanding** | 5/10 | 3/10 | Whisper installed, faster-whisper not wired to chat pipeline |
+| **Text generation** | 7/10 | 4/10 | 7 LLM backends, ED3N reflex+shallow fallback |
+| **Image generation** | 6/10 | 6/10 | GVV + ThreeLayerVisual, MSE 0.0042, no Stable Diffusion |
+| **Speech generation** | 4/10 | 2/10 | edge-tts works (reading only, no singing) |
+| **Memory** | 7/10 | 7/10 | VectorStore 460K + HAM templates + ED3N dictionaries |
+| **Reasoning** | 4/10 | 3/10 | Framework exists (causal, CoT, analogical), depth limited |
+| **Autonomy** | 3/10 | 3/10 | AutonomousLifeCycle wired, behavior unstable |
+| **Meta-cognition** | 5/10 | 4/10 | MetaController: confidence calibration + LLM thresholds |
+| **Composite** | **6.0/10** | **4.5/10** | Architecture: ~85-90%. Actual capabilities: limited by ML model depth |
+
+**Key**: Upper bound = connected to external LLM (realistic full-power scenario). Lower bound = ED3N+GARDEN only (no-cost fallback). See [PHASE_REVIEW6.md §4](docs/06-project-management/plans/PHASE_REVIEW6.md) for full methodology.
 
 ### Quick Start
 
@@ -243,7 +264,7 @@ npx pnpm dev:desktop
 
 **Core Infrastructure:**
 - **Config system** — `config_loader.py:get_config()` ✅
-- **State matrix** — 6D state matrix, 1439 lines, 61.8 KB ✅
+- **State matrix** — 6D state matrix (αβγδεθ), 1,244 lines ✅
 - **HSP connector** — 51 KB, full protocol with circuit breaker ✅
 - **Action execution** — 48 KB, priority queue, dependency resolution ✅
 - **Biological systems** — 8 modules with real code (20-46 KB each) ✅
@@ -254,15 +275,27 @@ npx pnpm dev:desktop
 - **Gemini OS bridge** — pyautogui automation ✅
 - **Test suite** — 4,261 total ✅
 
-### What Does NOT Work / Is Stub
+### What Does NOT Work / Needs Work
 
-- **Mobile app** — Removed (was skeleton) ❌
-- **AudioService** — Stub (41 lines), needs real STT/TTS integration ❌
-- **TactileService** — Stub (66 lines), needs hardware integration ❌
-- **ImageGeneration** — Agent exists but needs Stable Diffusion API key ❌
-- **Frontend multimodal** — Desktop/Web/Pixel all text-only, no image/audio upload ❌
-- **Agent auto-routing** — Agents registered but no pipeline auto-calls them ❌
-- **`services/wiring.py`** — `initialize_all_services()` is dead code, never called ❌
+- **YOLO object detection** — Not started ❌
+- **`/multimodal/stream` WebSocket route** — WS handlers exist at message level, but no HTTP route registered ❌
+- **Whisper faster-whisper in ChatService** — Installed but not wired into audio chat pipeline ❌
+- **Agent auto-routing** — Agents registered but pipeline doesn't auto-call them ❌
+- **VisualDecoder training** — Decoder weights random, CLP doesn't train decoder yet ❌
+- **P4 refactoring** — 28 long files (>100 lines), load/stress/E2E tests, desktop tray — never started ❌
+- **Auto-repair pathway** — `run_angela.py` lacks auto-install logic (documented gap since Jun 13) ❌
+
+### Deleted (Phase 9-12 Cleanup) — Do Not Re-implement
+- **Mobile app** — Was skeleton (3 files), deleted in Phase 11 🗑️
+- **TactileService** — Was stub (66 lines), no hardware support, deleted in Phase 11 🗑️
+- **ImageGenerationAgent** — Was stub always returning "unavailable", deleted in Phase 9 🗑️
+- **ComfyUIClient/AngelaRealPainter** — Stubs with `image_url: None`, deleted in Phase 10 🗑️
+- **`services/wiring.py`** — Dead code never called, deleted in Phase 11 🗑️
+- **11 dead subsystems** (learning/ops/dialogue/evaluation/execution/code_inspection/compression/lis/language_models/integration/symbolic_space) — Deleted in Phase 11b 🗑️
+- **5 dead modules** (code_understanding/personality/time/translation/distributed) — Deleted in Phase 12 🗑️
+- **Trust module** — Deleted in Phase 12b 🗑️
+- **`ai/security/`** — Empty module, deleted in Phase 9 🗑️
+- **`comic_composer.py`** — Placeholder URL, deleted in Phase 9 🗑️
 
 ### Orphaned Systems Status
 
@@ -283,12 +316,14 @@ npx pnpm dev:desktop
 | **Architecture Doc** | `ANGELA_FULL_ARCHITECTURE.md` — 1183 lines, 35KB | ✅ **DONE** | 🟡 MEDIUM |
 | **Phase 0-6** | Foundation, Core, Intelligence, Safety, Embodiment, Infrastructure, Polish | ✅ **DONE** | 🔴 CRITICAL |
 | **i18n Internationalization** | I18nManager, PromptManager, Handler/Prompt replacement, Locale files | ✅ **DONE** | 🟡 MEDIUM |
+| **YOLO Object Detection** | New feature | ⬜ | 🔴 HIGH |
+| **Auto-Repair Pathway** | run_angela.py should have auto-install | ⬜ | 🔴 HIGH |
 | **Agent Auto-Routing** | QueryClassifier/ModelBus auto-call specialized agents | ⬜ | 🔴 HIGH |
-| **Frontend Multimodal** | Image/audio upload in Desktop/Web/Mobile | ⬜ | 🔴 HIGH |
-| **WebSocket Binary** | Extend protocol for image/audio data | ⬜ | 🟡 MEDIUM |
-| **AudioService** | Real STT/TTS integration (currently 41-line stub) | ⬜ | 🟡 MEDIUM |
-| **ImageGeneration** | Stable Diffusion API integration | ⬜ | 🟢 LOW |
-| **TactileService** | Hardware integration (66-line stub) | ⬜ | 🟢 LOW |
+| **Frontend Multimodal** | Image/audio upload in Desktop/Web | ⬜ | 🔴 HIGH |
+| **Whisper ChatService Wiring** | faster-whisper into chat pipeline | ⬜ | 🟡 MEDIUM |
+| **VisualDecoder Training** | Extend CLP to train decoder | ⬜ | 🟡 MEDIUM |
+| **WebSocket Route** | Register `/multimodal/stream` endpoint | ⬜ | 🟡 MEDIUM |
+| **P4 Refactoring** | 28 long files / load tests / E2E / tray | ⬜ | 🟡 MEDIUM |
 | **Integrate Retained Systems** | real_time_monitor, event_loop_system, etc. | ⬜ | 🟢 LOW |
 
 ---
@@ -336,8 +371,8 @@ See dedicated docs for full diagrams:
 
 **Angela AI** 是一個數位生命系統，具備生物模擬、LLM 整合與完整聊天管線。
 
-**Quick facts**：620 個 Python 檔案 (backend src)、~127K 行。Electron + Live2D 桌面端、手機 stub。  
-**實際狀態**: Phase 0-7 全部完成。聊天管線完整接線、孤兒系統整合、15 個 bug 修復、架構文檔完成、i18n 國際化實作完成。AgentOrchestrator、PlanningEngine、ReasoningEngines、TrustManager、ContentFilter、SafetyAudit、Web Dashboard、Docker/CI/CD、OpenTelemetry 全部運作。  
+**Quick facts**：612 個 Python 檔案 (backend src)、~96K 行。Electron + Live2D 桌面端、33 shared JS。  
+**實際狀態**: Phase 0-7 全部完成。聊天管線完整接線、孤兒系統整合、Phase 9-12 刪除 26 個死代碼子系統、~5,920 行死代碼移除。AgentOrchestrator、PlanningEngine、ReasoningEngines、TrustManager、ContentFilter、SafetyAudit、Web Dashboard、Docker/CI/CD、OpenTelemetry 全部運作。Phase 11-12 已清理 learning/ops/dialogue/evaluation/execution 等 11 個未使用子系統。  
 **管線**: WebSocket → 情緒分析 → 危機閘門 → 對齊閘門 → LLM → 因果學習 → 回應。
 
 ---
@@ -368,7 +403,9 @@ See dedicated docs for full diagrams:
 | **OpenTelemetry** | ✅ 已完成 | 分散式追蹤中間件（Phase 5） |
 | **API Versioning** | ✅ 已完成 | 版本路由中間件（Phase 5） |
 | **i18n 系統** | ✅ 已完成 | I18nManager、PromptManager、4 個 handler + 4 個 LLM 模組 i18n、45 個測試（Phase 7） |
-| **測試** | ✅ 通過 | 4,261 tests, 0 errors, 33 intentional skips |
+| **測試** | ✅ 通過 | 4,774 (全部) / 4,261 (tests/) — 41 skip, 0 errors |
+| **智能分數** | ✅ 已評分 | 6.0/10 (有 LLM) / 4.5/10 (純 ED3N+GARDEN) |
+| **Master Task Map** | ✅ 已建立 | 23 份計畫全部交叉參照、144 項 claim 驗證、26 個 DO-NOT-REIMPLEMENT |
 | **架構文檔** | ✅ 已建立 | `docs/architecture/ANGELA_FULL_ARCHITECTURE.md` |
 
 ---
@@ -510,7 +547,7 @@ npx pnpm dev:desktop
 
 **核心基礎設施：**
 - **配置系統** — `config_loader.py:get_config()` ✅
-- **State Matrix** — 6D 狀態矩陣，1439 行 ✅
+- **State Matrix** — 6D 狀態矩陣 (αβγδεθ)，1,244 行 ✅
 - **HSP 連接器** — 51 KB，完整協議 ✅
 - **生物系統** — 8 個模組 ✅
 - **ChromaDB 記憶** — HAM 記憶 + 向量儲存 ✅
@@ -520,13 +557,21 @@ npx pnpm dev:desktop
 
 ### 什麼無法運作
 
-- **手機端** — 僅 scaffold（3 個檔案）❌
-- **AudioService** — Stub（41 行），需要 STT/TTS 整合 ❌
-- **TactileService** — Stub（66 行），需要硬體整合 ❌
-- **ImageGeneration** — 代理存在但需要 API key ❌
-- **前端多模態** — 全部僅支援文字，無圖片/音訊上傳 ❌
+- **YOLO 物件檢測** — 未開始 ❌
+- **Whisper 接線** — faster-whisper 已安裝但未接入聊天管線 ❌
 - **代理自動路由** — 代理已註冊但管線不會自動呼叫 ❌
-- **`services/wiring.py`** — `initialize_all_services()` 是死代碼，從未被呼叫 ❌
+- **VisualDecoder 訓練** — 權重隨機，未訓練 ❌
+- **P4 重構** — 28 個長檔案、負載測試、E2E 測試、桌面 tray — 從未開始 ❌
+- **自動修復路徑** — `run_angela.py` 缺少自動安裝邏輯 ❌
+
+### 已刪除 (Phase 9-12 清理) — 不要重新實作
+- **手機端** — scaffold 已刪除（Phase 11）🗑️
+- **TactileService** — stub 已刪除（Phase 11）🗑️
+- **ImageGenerationAgent** — stub 已刪除（Phase 9）🗑️
+- **ComfyUIClient** — stub 已刪除（Phase 10）🗑️
+- **`services/wiring.py`** — 死代碼已刪除（Phase 11）🗑️
+- **11 個死子系統** — 已刪除（Phase 11b）🗑️
+- **5 個死模組** — 已刪除（Phase 12）🗑️
 
 ### 孤兒系統狀態
 
@@ -548,12 +593,14 @@ npx pnpm dev:desktop
 | **架構文檔** | `ANGELA_FULL_ARCHITECTURE.md` — 1183 行 | ✅ **已完成** | 🟡 MEDIUM |
 | **Phase 0-6** | Foundation, Core, Intelligence, Safety, Embodiment, Infrastructure, Polish | ✅ **已完成** | 🔴 CRITICAL |
 | **i18n 國際化** | I18nManager, PromptManager, Handler/Prompt 替換, Locale 檔案 | ✅ **已完成** | 🟡 MEDIUM |
+| **YOLO 物件檢測** | 新功能 | ⬜ | 🔴 HIGH |
+| **自動修復路徑** | run_angela.py 應加入自動安裝邏輯 | ⬜ | 🔴 HIGH |
 | **代理自動路由** | QueryClassifier/ModelBus 自動呼叫專業代理 | ⬜ | 🔴 HIGH |
-| **前端多模態** | Desktop/Web/Mobile 圖片/音訊上傳 | ⬜ | 🔴 HIGH |
-| **WebSocket Binary** | 延伸協議支援圖片/音訊 | ⬜ | 🟡 MEDIUM |
-| **AudioService** | 真實 STT/TTS 整合 | ⬜ | 🟡 MEDIUM |
-| **ImageGeneration** | Stable Diffusion API 整合 | ⬜ | 🟢 LOW |
-| **TactileService** | 硬體整合 | ⬜ | 🟢 LOW |
+| **前端多模態** | Desktop/Web 圖片/音訊上傳 | ⬜ | 🔴 HIGH |
+| **Whisper 接線** | faster-whisper 接入聊天管線 | ⬜ | 🟡 MEDIUM |
+| **VisualDecoder 訓練** | CLP 擴展訓練 decoder | ⬜ | 🟡 MEDIUM |
+| **WebSocket 路由** | 註冊 `/multimodal/stream` 端點 | ⬜ | 🟡 MEDIUM |
+| **P4 重構** | 28 長檔案 / 負載測試 / E2E / tray | ⬜ | 🟡 MEDIUM |
 | **整合保留系統** | real_time_monitor, event_loop_system 等 | ⬜ | 🟢 LOW |
 
 ---
@@ -603,4 +650,4 @@ npx pnpm dev:desktop
 
 ---
 
-**Version**: 7.5.0-dev | **Code Stats**: 612 Python files, ~96K lines | **Tests**: 4,261 / 0 errors / 33 skipped | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Changelog](CHANGELOG.md)
+**Version**: 7.5.0-dev | **Code Stats**: 612 Python files, ~96K lines | **Tests**: 4,774 (full) / 4,261 (tests/) — 41 skipped | **Intelligence**: 6.0/10 (upper) 4.5/10 (lower) | **Architecture**: ~85-90% | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Changelog](CHANGELOG.md)

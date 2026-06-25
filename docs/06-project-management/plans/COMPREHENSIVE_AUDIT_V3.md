@@ -1,12 +1,16 @@
 <!--
   =============================================================================
   VERSION: 7.5.0-dev
-  STATUS: active
+  STATUS: superseded
   TITLE: Phase Audit Report v3 — 完整階段性審查
   AUDIENCE: developers, agents
   LAST_MODIFIED: 2026-06-07
   =============================================================================
 -->
+
+> **⚠️ SUPERSEDED — 2026-06-26**
+> This audit has been absorbed into COMPREHENSIVE_AUDIT_2026-06-25.md.
+> See docs/COMPREHENSIVE_AUDIT_2026-06-25.md for the current audit.
 
 # Comprehensive Phase Audit v3 — 完整階段性審查
 
