@@ -12,11 +12,12 @@
 
 ## 1. 測試健康度 ✅ 9.0/10
 
-> **⚠️ 數據校正 (v33.5 審計)**: 以下數據基於 2026-06-22 實際 `pytest --co` 收集結果，非歷史累計。
+> **⚠️ 數據校正 (v33.5 審計)**: 以下數據基於 2026-06-22 實際 `pytest --co` 收集結果，非歷史累計。  
+> ¹ 2026-06-26 環境驗證: `pytest tests/ --collect-only -q` 回傳 **4,261 tests / 33 skipped**。4,920 為 2026-06-22 環境值，可能受 torch/chromadb 可用性影響。
 
 | 指標 | 數值 | 狀態 |
 |------|------|------|
-| **總收集測試** | **4920 tests collected** | ✅ |
+| **總收集測試** | **4,261 tests collected**¹ | ✅ |
 | ED3N 完整測試 | **114/114 通過** | ✅ **0 計時器超時** |
 | GARDEN 完整測試 | **205/205 通過** | ✅ **ChromaEncoder + binary_store + 引擎全通** |
 | **多模態測試** | **259/259 通過** (19 個測試檔案) | ✅ **P15-P44 全部多模態** |
@@ -414,8 +415,8 @@
 | **MetaController** | 置信度校準 + API | ✅ **實際運作** | 58 測試通過 |
 | **ED3N 信心追蹤** | `_last_confidence` 9 路徑 | ✅ **實際運作** | ModelBus 整合 |
 | **GARDEN 信心追蹤** | `_last_confidence` 7 路徑 | ✅ **實際運作** | 自動整合 |
-| **前端多模態 UI** | Desktop MultimodalPanel | ❌ **未實現** | 文件聲稱有但實際未找到 `MultimodalPanel.js` |
-| **WebSocket 串流** | /multimodal/stream | ❌ **未實現** | multimodal_routes.py 中無 WebSocket 端點 |
+| **前端多模態 UI** | Desktop MultimodalPanel | ✅ **已實現** | `multimodal-panel.html` + `multimodal-panel.js` + `multimodal-client.js` (P34 commit `d1286f3cd`, 2026-06-22) |
+| **WebSocket 串流** | /multimodal/stream | 🟡 **WS message handlers exist** | `websocket_manager.py` has `_handle_multimodal_encode`/`_handle_multimodal_decode` handlers + routing dispatch. But no dedicated `/multimodal/stream` HTTP route registered. Needs route registration. |
 | **語意理解** | CLIP/YOLO 整合 | ✅ **實際運作** | CLIP 512-dim + Whisper 384-dim + DualEncoderRouter + SemanticKeyMapper, torch 已安裝 |
 | **text-to-image** | Stable Diffusion / DALL-E | ❌ **未實現** | VisualDecoder 僅抽象紋理 |
 | **真實歌唱合成** | TTS 歌唱模式 | ❌ **未實現** | edge-tts 僅朗讀, 無旋律 |
