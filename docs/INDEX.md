@@ -81,6 +81,8 @@
 | **[COMPREHENSIVE_AUDIT_2026-06-25.md](COMPREHENSIVE_AUDIT_2026-06-25.md)** | **最新全面審計報告 (2026-06-25)** — 全專案審計, 涵蓋26+發現 |
 | **[IDEAL_ARCHITECTURE.md](IDEAL_ARCHITECTURE.md)** | **理想架構規範** — 專案應有的理想狀態目標架構 |
 | **[COMPREHENSIVE_REPAIR_ROADMAP.md](COMPREHENSIVE_REPAIR_ROADMAP.md)** | **修復路線圖** — 階段性修復計畫，使實際接近理想 |
+| **[FRAMEWORK_OVERVIEW.md](FRAMEWORK_OVERVIEW.md)** | **框架概述** — 雙語架構導覽、元件目錄、競爭分析、文檔地圖 |
+| **[MASTER_TASK_MAP.md](06-project-management/MASTER_TASK_MAP.md)** | **主任務地圖** — 23份文檔144條索賠的完整來源追蹤，§X 16項待辦 |
 
 ---
-_Last Updated: 2026-06-25_ | [README.md](../README.md) | [Comprehensive Audit 2026-06-25](COMPREHENSIVE_AUDIT_2026-06-25.md) | [IDEAL_ARCHITECTURE](IDEAL_ARCHITECTURE.md) | [Repair Roadmap](COMPREHENSIVE_REPAIR_ROADMAP.md) | [Comprehensive Audit V1](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | [Comprehensive Audit V2](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md) | [Comprehensive Audit V3](06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md) | [Phase Review 1](06-project-management/plans/PHASE_REVIEW.md) | [Phase Review 2](06-project-management/plans/PHASE_REVIEW2.md) | [Phase Review 3](06-project-management/plans/PHASE_REVIEW3.md) | [Phase Review 4](06-project-management/plans/PHASE_REVIEW4.md) | [Phase Review 5](06-project-management/plans/PHASE_REVIEW5.md)
+_Last Updated: 2026-06-26_ | [README.md](../README.md) | [Comprehensive Audit 2026-06-25](COMPREHENSIVE_AUDIT_2026-06-25.md) | [IDEAL_ARCHITECTURE](IDEAL_ARCHITECTURE.md) | [Repair Roadmap](COMPREHENSIVE_REPAIR_ROADMAP.md) | [Framework Overview](FRAMEWORK_OVERVIEW.md) | [Master Task Map](06-project-management/MASTER_TASK_MAP.md)

@@ -361,7 +361,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | 3 | `/multimodal/stream` WS route | ✅ **DONE** — dedicated handler + route registered | `services/multimodal_ws_handler.py` + `main_api_server.py` line 295 | — |
 | 4 | C901 cyclomatic complexity (67 residual) | Skipped, needs manual review | 67 complex functions | Manual code review |
 | 5 | Shared code deduplication (P3-9 to P3-11) | Skipped, needs manual review | 3 pairs of duplicate code | Manual code review |
-| 6 | P4 long function refactor (28 files >100 lines) | Never started in Phase Reviews | 28 files still >100 lines | Effort (large) |
+| 6 | P4 long function refactor (28 files >100 lines) | 1/28 done (QueryClassifier.__init__: 187L→7L, Jun 26) | 27 files still >100 lines | Effort (large) |
 | 7 | P4 load/stress test framework | Never started | No framework exists | Design |
 | 8 | P4 desktop tray implementation | Never started | No tray code | Effort |
 | 9 | P4 E2E test framework | Never started | No E2E framework | Design |

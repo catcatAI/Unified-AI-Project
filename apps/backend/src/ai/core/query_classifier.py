@@ -87,12 +87,19 @@ class QueryClassifier:
 
     def __init__(self, ed3n_engine=None):
         self._ed3n = ed3n_engine
-        self._reflex_words: set = {
+        self._reflex_words = self._build_reflex_words()
+        self._patterns = self._build_patterns()
+
+    @staticmethod
+    def _build_reflex_words() -> set:
+        return {
             "hi", "ok", "okay", "hey", "yo", "oh", "ah",
             "嗯", "好", "是", "不", "啊", "哦", "喂", "嗨", "噢",
         }
 
-        self._patterns: List[Tuple[QueryType, Pattern, float]] = [
+    @staticmethod
+    def _build_patterns() -> List[Tuple[QueryType, Pattern, float]]:
+        return [
             (
                 QueryType.GREETING,
                 re.compile(
