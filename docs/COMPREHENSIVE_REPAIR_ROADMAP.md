@@ -1,9 +1,9 @@
 # Unified AI Project — Comprehensive Repair Roadmap
 
-**版本**: 1.3.0  
+**版本**: 1.4.0  
 **建立日期**: 2026-06-25  
 **最後更新**: 2026-06-25  
-**狀態**: ✅ Complete (All Phases A-F finished)  
+**狀態**: ✅ Complete (All Phases A-F finished; + Phase G: IDEAL_ARCHITECTURE Alignment)  
 **目的**: 基於全面遺漏掃描的階段式修復路線圖，整合 PROJECT_HONEST_AUDIT.md、PHASE_REVIEW6.md、OMISSIONS_CHECKLIST.md 的發現
 
 ---
@@ -417,7 +417,7 @@ Phase A ──── 文檔認知補全 (🔴 3-5 天)
 
 ## 11. 執行進度日誌
 
-### 2026-06-25 — 所有 Phase A-F 完成 ✅ (Phase B 部分待開發者決策)
+### 2026-06-25 — Phase G 完成 ✅ (All Phases A-G done; Phase B 部分待開發者決策)
 
 #### Phase A — 文檔認知補全 ✅ (100%)
 - ✅ 讀取 `docs/03-technical-architecture/` 全部 14 個文件 — 10/14 過期
@@ -468,6 +468,17 @@ Phase A ──── 文檔認知補全 (🔴 3-5 天)
 - ✅ .gitignore 標頭更新 + pyrightconfig.json 修復
 - ✅ COMPREHENSIVE_REPAIR_ROADMAP.md v1.3.0
 
+#### Phase G — IDEAL_ARCHITECTURE Alignment (2026-06-25) ✅ (100%)
+- ✅ QUICK_START.md 重寫（不存在的 .bat → 驗證過的 Python/pnpm 命令）
+- ✅ IDEAL_ARCHITECTURE.md §2.2 目錄狀態同步（5/7 處理完畢：modules/search/creation/optimization/tools ✅ removed; monitoring ⚠️ retained with rationale）
+- ✅ IDEAL_ARCHITECTURE.md §4.4 棄用路由實際狀態補充（8 路由全部有 DeprecationWarning）
+- ✅ `search/` — 16 行 stub 已移除 + `tests/search/` 移除
+- ✅ `creation/` — 95 行死代碼已移除 (CreationEngine, 0 引用)
+- ✅ `optimization/` — 300 行死代碼已移除 (PerformanceOptimizer, 0 引用)
+- ✅ `tools/` — 57 行死代碼已移除 (FileSystemTool, 0 引用)
+- ✅ ED3N_MATURITY_PLAN.md 測試數 45→114（pytest 驗證）
+- ✅ OMISSIONS_CHECKLIST.md v1.5.0 同步
+
 ---
 
-*本路線圖隨修復進展持續更新。最後更新：2026-06-25 (v1.1.0)*
+*本路線圖隨修復進展持續更新。最後更新：2026-06-25 (v1.4.0)*

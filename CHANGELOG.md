@@ -44,6 +44,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Cleaned
 - 🗑️ **`apps/backend/src/search/`** — Removed 16-line stub `SearchEngine` (no production imports, followed IDEAL_ARCHITECTURE §2.2 direction)
 - 🗑️ **`tests/search/test_search_engine.py`** — Removed alongside stub (only verified import succeeded)
+- 🗑️ **`apps/backend/src/creation/`** — `creation_engine.py` (95行), 0 imports across project, dead code
+- 🗑️ **`apps/backend/src/optimization/`** — `performance_optimizer.py` (300行), 0 imports from src/ or active tests, dead code (tests reference deleted `ai.ops.`)
+- 🗑️ **`apps/backend/src/tools/`** — `file_system_tool.py` (57行), 0 imports across project, dead code
 
 ### Repaired
 - 🔧 **Phase C — 7 Subsystem Audit**: All 61 files / ~14,744 lines reviewed — **only 1 real stub found, fixed**

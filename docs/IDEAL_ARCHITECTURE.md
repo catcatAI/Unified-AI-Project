@@ -1,7 +1,7 @@
 # Angela AI — 理想架構規範（Target Architecture）
 
 **版本**: 1.0.0  
-**最後更新**: 2026-06-25  
+**最後更新**: 2026-06-25 (v2 — §2.2/§4.4 實際狀態同步; creation/optimization/tools 已移除)  
 **狀態**: Target / Blueprint  
 **目的**: 定義 Unified AI Project 應有的理想狀態 — 完整、全面、細節、細緻的架構規範
 
@@ -192,11 +192,11 @@ unified-ai-project/
 |------|---------|:--------:|------|
 | `apps/backend/src/ai/core/__init__.py` | ✅ **應存在** | ✅ 存在 | 讓 `ai.core` 成為 namespace package |
 | `apps/backend/src/modules/` | ❌ **不應存在** | ✅ 已移除 (Phase 1) | 包裝器層無增值 |
-| `apps/backend/src/monitoring/` | ❌ **不應存在** | ⚠️ 仍存在 | 功能重複（已有 `core/monitoring/`），但 `system_monitor.py` (252行) 有測試依賴，待合併 |
-| `apps/backend/src/optimization/` | ❌ **不應存在** | ⚠️ 仍存在 | `performance_optimizer.py` (11KB)，待評估是否可合併至 `core/` |
-| `apps/backend/src/creation/` | ❌ **不應存在** | ⚠️ 仍存在 | `creation_engine.py` (95行) 模板代碼生成器，無引用，待評估 |
+| `apps/backend/src/monitoring/` | ❌ **不應存在** | ⚠️ 仍存在 | `system_monitor.py` (252行) 監控系統資源（CPU/GPU/記憶體/磁碟/網路），與 `core/monitoring/enterprise_monitor.py` (指標告警框架) 不同職責。有測試依賴，待合併至 `core/monitoring/` |
+| `apps/backend/src/optimization/` | ❌ **不應存在** | ✅ 已移除 (2026-06-25) | `performance_optimizer.py` (300行)，0 生產代碼/測試引用。測試引用已刪除的 `ai.ops.performance_optimizer` |
+| `apps/backend/src/creation/` | ❌ **不應存在** | ✅ 已移除 (2026-06-25) | `creation_engine.py` (95行)，0 引用，完全死代碼 |
 | `apps/backend/src/search/` | ❌ **不應存在** | ✅ 已移除 (2026-06-25) | 16 行 stub，無生產代碼引用 |
-| `apps/backend/src/tools/` | ❌ **不應存在** | ⚠️ 仍存在 | `file_system_tool.py` (57行)，無引用，待評估 |
+| `apps/backend/src/tools/` | ❌ **不應存在** | ✅ 已移除 (2026-06-25) | `file_system_tool.py` (57行)，0 引用，完全死代碼 |
 | `apps/mobile-app/` | ❌ **已不存在** | skeleton 已被刪除 |
 | `context_storage/` (根目錄) | ❌ **不應在根目錄** | 應在 `data/context_storage/` |
 | `packages/shared-js/` | ✅ **應新增** | 共用 JS 程式庫 |
@@ -357,17 +357,20 @@ L6 (Presentation) → L5 (API) → L4 (Services) → L3 (Core) → L2 (AI) → L
 | `GET` | `/api/v1/state/axis/{name}` | 單軸狀態 | `routes/state.py` |
 | `POST` | `/api/v1/state/axis/{name}/update` | 更新軸值 | `routes/state.py` |
 
-### 4.4 棄用路由（不應存在）
+### 4.4 棄用路由（不應存在 — 但仍有實際代碼）
 
-| 當前路由 | 應改為 | 理由 |
-|---------|-------|------|
-| `POST /api/v1/angela/chat` | `POST /api/v1/chat/send` | 與 `/dialogue` 重複 |
-| `POST /api/v1/dialogue` | `POST /api/v1/chat/send` | 與 `/angela/chat` 重複 |
-| `POST /api/v1/generate-image` | `POST /api/v1/image/generate` | 命名不一致 |
-| `POST /api/v1/reconstruct-image` | `POST /api/v1/image/reconstruct` | 同上 |
-| `POST /api/v1/recognize-image` | `POST /api/v1/image/recognize` | 同上 |
-| `POST /api/v1/interpolate-classes` | `POST /api/v1/image/interpolate` | 同上 |
-| `POST /api/v1/vision/analyze` | `POST /api/v1/multimodal/encode` | 與 `/chat/with-image` 重疊 |
+以下路由存在於實際代碼中，但已加上 `DeprecationWarning`。最終目標是移除。
+
+| 當前路由 | 實際狀態 | 應改為 | 理由 |
+|---------|:--------:|-------|------|
+| `POST /api/v1/angela/chat` | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/chat/send` | 與 `/dialogue` 重複 |
+| `POST /api/v1/dialogue` | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/chat/send` | 與 `/angela/chat` 重複 |
+| `POST /api/v1/generate-image` | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/image/generate` | 命名不一致 |
+| `POST /api/v1/reconstruct-image` | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/image/reconstruct` | 同上 |
+| `POST /api/v1/recognize-image` | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/image/recognize` | 同上 |
+| `POST /api/v1/interpolate-classes` | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/image/interpolate` | 同上 |
+| `POST /api/v1/vision/analyze` | ⚠️ 存在 (有 DeprecationWarning) | `POST /api/v1/multimodal/encode` | 與 `/chat/with-image` 重疊 |
+| `GET /generate-image/status` | ⚠️ 存在 (有 DeprecationWarning) | `GET /api/v1/image/status` | 命名不一致 |
 
 ---
 
