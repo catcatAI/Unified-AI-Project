@@ -1,0 +1,19 @@
+{
+  "name": "@angela/shared-js",
+  "version": "7.5.0-dev",
+  "description": "Angela AI - Shared JavaScript modules for desktop and web Live2D viewer",
+  "main": "js/index.js",
+  "scripts": {
+    "test": "echo \"No tests yet\""
+  },
+  "keywords": [
+    "angela",
+    "live2d",
+    "shared"
+  ],
+  "author": "Unified AI Project",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -11,12 +11,15 @@
 > - **Phase 1 (P1)**: 全部 7 項任務完成 ✅
 > - **Phase 2 (P1-P2)**: 全部 7 項任務完成 ✅
 > - **Phase 3 (P2)**: 全部 7 項任務完成 ✅
-> - **Phase 4 (P2-P3)**: 3 項完成 ✅
-> - **Phase 5 (P3)**: 聊天管線重構 ✅, SessionManager 接入 lifespan ✅, image_generation_routes 22 測試 ✅, ops_routes 22 測試 ✅, handlers 40 測試 + 修復 _save_tasks bug ✅, SessionManager 56 測試 ✅, **跳過測試審查 ✅**
-> - **Phase 5 全部完成** ✅ **🎉**
-> - **剩餘主要任務**: Phase 4 JS 共用化 (4.1-4.5)
-> - **健康度**: ~85-90%（累計提升 ~30%）
-> - **下一個目標**: Phase 4 — JS 共用化
+> - **Phase 4 (P2-P3)**: JS 共用化完成 ✅✅ **🎉**
+> - **Phase 4**: 
+>   - **4.1** ✅ 建立 shared-js 套件 (`packages/shared-js/`)
+>   - **4.2-4.3** ✅ 32 個共享 JS 檔案移至 shared-js（desktop 為 canonical）
+>   - **4.4-4.5** ✅ 更新 desktop + web 的 index.html 引用 shared-js
+>   - **4.6** ✅ 移除兩邊重複檔案，保留 app 特定檔案
+> - **Phase 5 (P3)**: **全部完成** ✅ **🎉**
+> - **剩餘主要任務**: **全部完成！** 🎉
+> - **健康度**: ~86-91%（累計提升 ~31%）
 
 ---
 
