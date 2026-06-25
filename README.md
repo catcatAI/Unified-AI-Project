@@ -61,7 +61,7 @@
 **Total project files**: ~3,500+ (620 Python in backend src · 295 JS/TS · 1,021+ docs · 500+ config · 480+ test).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
 
-> **STATUS (2026-06-26)**: All 6 repair phases COMPLETE ✅ JS sharing unified under packages/shared-js/. 4,774 tests (full)/4,261 (tests/) — 41 skipped, 0 errors. StateMatrixAdapter 9/9 integration tests passing. ~85-90% health score (from ~55-60%). Intelligence: 6.0/10 (upper) 4.5/10 (lower). Agent auto-routing now wired (Step 8). Auto-repair added to launcher. See [COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md) for full details.
+> **STATUS (2026-06-25)**: All 6 repair phases COMPLETE ✅ JS sharing unified under packages/shared-js/. 4,774 tests (full)/4,261 (tests/) — 41 skipped, 0 errors. StateMatrixAdapter 9/9 integration tests passing. ~85-90% health score (from ~55-60%). Intelligence: 6.0/10 (upper) 4.5/10 (lower). Agent auto-routing wired (Step 8). Auto-repair added to launcher. `/multimodal/stream` WS route registered. See [COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md) for full details.
 > **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → execution gate → **agent routing** → LLM → causal learning → response. GVV pipeline for image generation.  
 > **See**: [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) (latest audit), [IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md) (target), [COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md) (plan).
 
@@ -278,7 +278,7 @@ npx pnpm dev:desktop
 ### What Does NOT Work / Needs Work
 
 - **YOLO object detection** — Not started ❌
-- **`/multimodal/stream` WebSocket route** — WS handlers exist at message level, but no HTTP route registered ❌
+- **`/multimodal/stream` WebSocket route** — Dedicated handler (`multimodal_ws_handler.py`) + route registered ✅
 - **Whisper faster-whisper in ChatService** — Installed but not wired into audio chat pipeline ❌
 - **Agent auto-routing** — Wired into chat pipeline Step 8 (creative/knowledge/opinion/vision/audio) ✅
 - **VisualDecoder training** — Decoder weights random, CLP doesn't train decoder yet ❌
@@ -322,7 +322,7 @@ npx pnpm dev:desktop
 | **Frontend Multimodal** | Image/audio upload in Desktop/Web | ⬜ | 🔴 HIGH |
 | **Whisper ChatService Wiring** | faster-whisper into chat pipeline | ⬜ | 🟡 MEDIUM |
 | **VisualDecoder Training** | Extend CLP to train decoder | ⬜ | 🟡 MEDIUM |
-| **WebSocket Route** | Register `/multimodal/stream` endpoint | ⬜ | 🟡 MEDIUM |
+| **WebSocket Route** | `/multimodal/stream` registered | ✅ **DONE** | 🟡 MEDIUM |
 | **P4 Refactoring** | 28 long files / load tests / E2E / tray | ⬜ | 🟡 MEDIUM |
 | **Integrate Retained Systems** | real_time_monitor, event_loop_system, etc. | ⬜ | 🟢 LOW |
 
@@ -600,7 +600,7 @@ npx pnpm dev:desktop
 | **前端多模態** | Desktop/Web 圖片/音訊上傳 | ⬜ | 🔴 HIGH |
 | **Whisper 接線** | faster-whisper 接入聊天管線 | ⬜ | 🟡 MEDIUM |
 | **VisualDecoder 訓練** | CLP 擴展訓練 decoder | ⬜ | 🟡 MEDIUM |
-| **WebSocket 路由** | 註冊 `/multimodal/stream` 端點 | ⬜ | 🟡 MEDIUM |
+| **WebSocket 路由** | `/multimodal/stream` 已註冊 | ✅ **已完成** | 🟡 MEDIUM |
 | **P4 重構** | 28 長檔案 / 負載測試 / E2E / tray | ⬜ | 🟡 MEDIUM |
 | **整合保留系統** | real_time_monitor, event_loop_system 等 | ⬜ | 🟢 LOW |
 

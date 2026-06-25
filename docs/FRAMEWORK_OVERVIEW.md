@@ -327,8 +327,8 @@ These features have infrastructure but need implementation work:
 | Whisper in chat pipeline | faster-whisper installed, not wired | Route registration needed |
 | Agent auto-routing | Wired into chat pipeline (Step 8) | ✅ Done (commit pending) |
 | VisualDecoder training | Decoder weights random | Training loop needed |
-| `/multimodal/stream` WebSocket | WS handlers exist, no HTTP route | Route registration needed |
-| Auto-repair pathway | `run_angela.py` auto-install on missing deps | ✅ Done (--auto-repair flag) |
+| `/multimodal/stream` WebSocket | Dedicated handler + route registered | ✅ Done (commit pending) |
+| Auto-repair pathway | `run_angela.py` auto-install on missing deps (--auto-repair flag) | ✅ Done |
 | P4 refactoring | 28 long files, no load/E2E tests | Never started |
 
 ### 8. Documentation Map
@@ -469,7 +469,7 @@ pytest tests/                         # 運行測試
 | Whisper 接線 | ❌ | 已安裝未接入管線 |
 | 代理自動路由 | ✅ | 已接入聊天管線（第 8 步） |
 | VisualDecoder 訓練 | ❌ | 權重隨機 |
-| WebSocket 路由 | ❌ | `/multimodal/stream` 未註冊 |
+| WebSocket 路由 | ✅ | 專用 handler + 路由已註冊 |
 | 自動修復 | ❌ | `run_angela.py` 缺少自動安裝 |
 
 ### 8. 文件地圖

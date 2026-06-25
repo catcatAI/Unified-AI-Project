@@ -292,6 +292,9 @@ from services.websocket_manager import websocket_handler, broadcast_state_update
 
 app.websocket("/ws")(websocket_handler)
 
+from services.multimodal_ws_handler import multimodal_stream_handler  # noqa: E402
+app.websocket("/multimodal/stream")(multimodal_stream_handler)
+
 from services.atlassian_api import atlassian_router  # noqa: E402
 from services.api.state_matrix_api import state_matrix_router  # noqa: E402
 

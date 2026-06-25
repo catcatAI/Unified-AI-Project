@@ -1,5 +1,9 @@
 # Phase 6+ 計畫: Quality Finishing
 
+> **⚠️ STATUS: MOSTLY COMPLETE (2026-06-25)**  
+> P6-1, P6-2, P6-4, P7-1, P7-2 ✅ all done. P6-3 (magic number migration) 🟡 partial (~43 formulae remain in code, 65 values moved to configs). This plan is superseded by the MASTER_TASK_MAP for tracking remaining work.  
+> **Last active**: 2026-05-30
+
 > **基於**: 2026-05-30 全面審計 — 53/53 MASTER 計畫完成，READ ME 6 項過時聲明已修正
 > **目標**: 解決真正殘留的架構缺口（非 README 過時項目）
 

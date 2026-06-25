@@ -337,18 +337,18 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | `FIX_PLAN.md` | — | All rounds fixed | ✅ SUPERSEDED (2026-06-26) |
 | `EXECUTION_PLAN.md` | — | All phases complete | ✅ COMPLETE (2026-06-26) |
 | `COMPREHENSIVE_PROJECT_AUDIT.md` | 2026-06-12 | 680→612 files, 3506→4261 tests | ✅ SUPERSEDED (2026-06-26) |
-| COMPREHENSIVE_AUDIT_V3.md | — | Has corrections now absorbed into 2026-06-25 audit | Needs SUPERSEDED mark |
-| COMPREHENSIVE_AUDIT_REPORT.md | — | Pre-dates Phase Reviews | Needs SUPERSEDED mark |
+| COMPREHENSIVE_AUDIT_V3.md | — | Has corrections now absorbed into 2026-06-25 audit | ✅ Already had STATUS: superseded |
+| COMPREHENSIVE_AUDIT_REPORT.md | — | Pre-dates Phase Reviews | ✅ Already had SUPERSEDED notice |
 | PHASE_REVIEW.md (PR1) | 2026-06-02 | Superseded by PR2→PR3→PR4→PR5→PR6 | ✅ Historical |
 | PHASE_REVIEW2.md (PR2) | 2026-06-03 | Superseded by PR3 | ✅ Historical |
 | PHASE_REVIEW3.md (PR3) | 2026-06-04 | Superseded by PR4 | ✅ Historical |
 | PHASE_REVIEW4.md (PR4) | 2026-06-06 | Superseded by PR5→PR6 | ✅ Historical |
-| PHASE_REVIEW5.md | 2026-06-06 | Superseded by PR6 | 🟡 Needs SUPERSEDED mark |
-| ANGELA_CAPABILITY_PLAN.md | — | Unknown if still relevant | 🟡 Needs review |
-| ANGELA_CARD_INTEGRATION_PLAN.md | — | Reviewed by PLAN_REVIEW.md | 🟡 Needs status check |
-| CARD_INTEGRATION_PLAN_REVIEW.md | — | Same scope overlap | 🟡 Needs consolidation |
-| CARD_IMPORT_PIPELINE_PLAN.md | — | Same scope overlap | 🟡 Needs consolidation |
-| PHASE6_NEXT_PLAN.md | — | All Phase 6 items done | 🟡 Needs COMPLETE mark |
+| PHASE_REVIEW5.md | 2026-06-06 | Superseded by PR6 | ✅ SUPERSEDED marker present |
+| ANGELA_CAPABILITY_PLAN.md | 2026-06-15 | All Phases 3-6 complete | ✅ Marked FULLY EXECUTED (2026-06-25) |
+| ANGELA_CARD_INTEGRATION_PLAN.md | 2026-05-30 | ModuleManager implemented | ✅ Marked EXECUTED (2026-06-25) |
+| CARD_INTEGRATION_PLAN_REVIEW.md | 2026-05-30 | Review of v1 plan, superseded | ✅ Marked SUPERSEDED (2026-06-25) |
+| CARD_IMPORT_PIPELINE_PLAN.md | 2026-05-27 | Phase 0-6 all done | ✅ Already had ✅ completed marker |
+| PHASE6_NEXT_PLAN.md | 2026-05-30 | P6-1/2/4, P7-1/2 done; P6-3 partial | ✅ Marked MOSTLY COMPLETE (2026-06-25) |
 
 ---
 
@@ -358,7 +358,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 |:-:|:-----|:-------------|:------------|:-----------|
 | 1 | Auto-repair in run_angela.py | ✅ **DONE** (commit `7a3af4107`, Jun 25) | `run_angela.py` has `install_dependencies()`, `--auto-repair` flag | — |
 | 2 | YOLO object detection | Never started | Zero code exists | Need design |
-| 3 | `/multimodal/stream` WS route | WS handlers exist (message level) but no HTTP route | `websocket_manager.py` has handlers, `api/router.py` has no WS route | Need route registration |
+| 3 | `/multimodal/stream` WS route | ✅ **DONE** — dedicated handler + route registered | `services/multimodal_ws_handler.py` + `main_api_server.py` line 295 | — |
 | 4 | C901 cyclomatic complexity (67 residual) | Skipped, needs manual review | 67 complex functions | Manual code review |
 | 5 | Shared code deduplication (P3-9 to P3-11) | Skipped, needs manual review | 3 pairs of duplicate code | Manual code review |
 | 6 | P4 long function refactor (28 files >100 lines) | Never started in Phase Reviews | 28 files still >100 lines | Effort (large) |

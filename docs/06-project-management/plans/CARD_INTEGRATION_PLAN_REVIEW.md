@@ -1,5 +1,7 @@
 # Card Integration Plan Review
 
+> **⚠️ SUPERSEDED (2026-06-25)** — Review of a v1 plan; both plan and review are superseded by the implemented ModuleManager system. Keep for audit trail.
+
 **Date**: 2026-05-30  
 **審計目標**: `ANGELA_CARD_INTEGRATION_PLAN.md` v1（原始版本）  
 **對應 v2**: `ANGELA_CARD_INTEGRATION_PLAN.md`（重寫版本，基於 ModuleManager）  

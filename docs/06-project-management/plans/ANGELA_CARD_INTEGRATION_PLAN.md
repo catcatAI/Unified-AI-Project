@@ -1,5 +1,9 @@
 # Angela 卡片導入管道與聊天系統整合計畫 v2
 
+> **⚠️ STATUS: EXECUTED (2026-06-25)**  
+> ModuleManager (M0-M5, 6 files, 100 tests) implemented. Card pipeline wired. IntentRegistry + ChatService integration complete. All 25 review issues (6 HIGH) addressed.  
+> **Superseded by**: ModuleManager code at `apps/backend/src/core/system/module_manager/`.
+
 > **目標**: ModuleManager 驅動的架構接線 — card pipeline + ChatService + IntentRegistry + LLM 在統一模組系統下協作  
 > **基於**: 代碼審計（2026-05-30）+ ModuleManager 設計（`docs/03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md`）  
 > **審計**: 25 個問題（6 HIGH）已在設計階段標記，非等到執行才發現  
