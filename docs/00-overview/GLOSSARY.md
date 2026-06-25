@@ -34,8 +34,8 @@ A concept model that creates virtual environments for AI training and testing.
 ### Eta (η) Axis
 The 8th axis of the state matrix, responsible for **execution/operation layer** — module invocation, parameter adjustment, and structural drift tracking. Works in a dual-loop with θ (cognitive layer).
 
-### 8D State Matrix
-The expanded state matrix (αβγδεθζη) that drives Angela's autonomous behavior. Implemented as `StateMatrix4D` (4 visible + 4 latent dimensions) with `DimensionState` structs. Eight axes cover physiological (α), cognitive (β), emotional (γ), social (δ), logical (ε), meta-cognitive (θ), temporal-narrative (ζ), and execution (η) dimensions.
+### 8D State Matrix (理想目標) / StateMatrix4D (實際)
+The expanded state matrix (αβγδεθζη) that drives Angela's autonomous behavior. **實際代碼**: `StateMatrix4D` class (`core/engine/state_matrix.py`, 1,460 行, 6 軸 αβγδεθ) + `DimensionState` 結構體。8 軸規格（含 ζ Connectivity + η Execution）為理想架構目標，尚未完全實作。
 
 ## G
 

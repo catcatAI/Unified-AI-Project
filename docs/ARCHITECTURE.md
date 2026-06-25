@@ -36,7 +36,7 @@
 │                                                                              │
 │  LAYER 3 — CORE INFRASTRUCTURE                                               │
 │  HAM Memory Manager (ChromaDB) | Digital Life Integrator                     │
-│  State Matrix 8D (αβγδ εθζη) | ConfigLoader (YAML 3-tier)                   │
+│  State Matrix 6D (αβγδεθ) | ConfigLoader (YAML 3-tier)                   │
 │  Security A/B/C Keys | Neuroplasticity | Endocrine System | Metamorphosis     │
 │                                                                              │
 │  LAYER 2 — AI ENGINE                                                         │
@@ -105,13 +105,13 @@ User Input → Desktop App (Electron)
   → POST /api/v1/chat/unified (JSON)
   → FastAPI Router (CORS → SignedCommunicationMiddleware)
   → AngelaChatService
-      ├→ StateMatrix8D.update() (αβγδ εθζη)
+      ├→ StateMatrix4D.update() (αβγδεθ)
       ├→ IntentRegistry (Math | Code | General → LLM)
       ├→ ThetaRouter (meta-cognitive routing)
       ├→ HAMMemoryManager.store()
       ├→ LIS (ErrIntrospector) — detect bias
       ├→ AngelaLLMService
-      │     ├→ pack 8D state → _construct_angela_prompt()
+      │           ├→ pack 6D state → _construct_angela_prompt()
       │     ├→ LLM call (Ollama/GPT/Gemini)
       │     └→ unpack response
       ├→ ResponseComposer (merge LLM + formula + state)
@@ -119,7 +119,7 @@ User Input → Desktop App (Electron)
       └→ MetabolicHeartbeat.tick() (30s cycle)
   → WebSocket Push → Desktop App Renderer
       ├→ Live2DManager.updateExpression(emotion)
-      ├→ StateMatrixDisplay (αβγδ visualization)
+      ├→ DimensionState (αβγδεθ visualization)
       └→ ChatPanel.showResponse(text)
 ```
 
@@ -175,7 +175,7 @@ unified-ai-project/
 | Middleware | CORS → SignedCommunication | Chain of Responsibility |
 | LLM Integration | Ollama / GPT / Gemini | Strategy pattern via LLMService |
 | Memory | ChromaDB (HAM) | Layered memory hierarchy |
-| State Matrix | 8D (αβγδ εθζη) | Observer → WebSocket push |
+| State Matrix | 6D (αβγδεθ) | Observer → WebSocket push |
 | Security | Key A/B/C encryption | AES + signed middleware |
 | Configuration | YAML 3-tier (system/standard/MOD) | ConfigLoader |
 | Messaging | WebSocket | Pub/Sub |
@@ -227,7 +227,9 @@ ConceptMapper → GeometricVocabulary → InstanceOptimizer → Render
 
 ---
 
-## 8. 8D State Matrix (αβγδ εθζη)
+## 8. State Matrix (αβγδεθ — 理想目標 8D αβγδ εθζη)
+
+> **實際狀態**: 代碼中實作為 `StateMatrix4D`（`core/engine/state_matrix.py:58`，1,460 行），支援 6 維度（αβγδεθ）。8D 規格（含 ζη）為理想架構目標。
 
 | Dimension | Name | Description | Range |
 |-----------|------|-------------|-------|
