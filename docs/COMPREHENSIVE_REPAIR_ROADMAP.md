@@ -457,12 +457,14 @@ Phase A ──── 文檔認知補全 (🔴 3-5 天)
 - 🔴 剩餘 7 個 pending skips 需要開發者介入
 
 #### Phase F — 文檔同步 ✅ (100%)
-- ✅ INDEX.md 已更新（加入新文檔引用）
-- ✅ OMISSIONS_CHECKLIST.md v1.4.0
-- ✅ ARCHITECTURE.md API 全面更新（Layer 2/4/6、目錄結構、模組依賴圖）
+- ✅ INDEX.md 已更新（加入新文檔引用、修復 3 處 REPAIR_ROADMAP 連結）
+- ✅ OMISSIONS_CHECKLIST.md v1.4.1（追蹤所有 Phase A-F 修復）
+- ✅ ARCHITECTURE.md 全面更新（Layer 2/4/6、目錄結構、StateMatrix4D 符號修正）
 - ✅ CHANGELOG.md 已加入 Phase C+D+E+F 記錄
-- ✅ COMPREHENSIVE_AUDIT.md v2.0 健康度 55-60%→85-90%
+- ✅ COMPREHENSIVE_AUDIT.md v2.0 健康度 55-60%→85-90%，ED3N/GARDEN 行數修正
 - ✅ README.md 損壞連結修復（3 處 REPAIR_ROADMAP.md→COMPREHENSIVE_REPAIR_ROADMAP.md）
+- ✅ GLOSSARY.md 符號修正（StateMatrix→StateMatrix4D）+ 新增 5 缺失術語
+- ✅ UNIFIED_DOCUMENTATION_INDEX.md 標記 DEPRECATED（10/10 連結已壞）
 - ✅ .gitignore 標頭更新 + pyrightconfig.json 修復
 - ✅ COMPREHENSIVE_REPAIR_ROADMAP.md v1.3.0
 

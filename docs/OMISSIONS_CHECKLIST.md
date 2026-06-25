@@ -1,11 +1,11 @@
 # Unified AI Project — 遺漏清單 (Omissions Checklist)
 
-**版本**: 1.4.0  
+**版本**: 1.4.1  
 **最後更新**: 2026-06-25  
 **狀態**: Active  
 **目的**: 紀錄專案中所有已知的遺漏、不完整、不一致之處，確保透明化管理
 
-> **重要更新 (v1.3.0 → v1.4.0)**: 完成 Phase F 文檔同步最終輪。.gitignore 全面補強（apps/logs/ + header 日期更新）、pyrightconfig.json packages/ 排除範圍縮小、README.md 3 處損壞連結修復、COMPREHENSIVE_AUDIT.md v2.0 健康度更正為 85-90%、COMPREHENSIVE_REPAIR_ROADMAP.md v1.3.0。
+> **重要更新 (v1.4.0 → v1.4.1)**: 跨文件一致性修正——GLOSSARY.md 符號名（StateMatrix→StateMatrix4D）與缺失術語（ED3N/GARDEN/GVV）補全、UNIFIED_DOCUMENTATION_INDEX.md 標記 DEPRECATED（10/10 連結已壞）、ARCHITECTURE.md StateMatrix8D→StateMatrix4D 修正、INDEX.md REPAIR_ROADMAP 連結修復。
 
 ---
 
@@ -344,6 +344,9 @@
 | 12 | 健康度評分不一致 (6.0 vs 85-90%) | 文件 | ✅ v2.0 已統一為 85-90% |
 | 13 | `apps/models/`, `apps/training/`, `apps/logs/` 未 gitignore | Git | ✅ 已修復 |
 | 14 | pyrightconfig.json 排除 packages/ 目錄 | 配置 | ✅ 已修復 — 排除範圍縮小 |
+| 15 | GLOSSARY.md StateMatrix 符號名與實際代碼不符 | 文件 | ✅ 已修復 — StateMatrix4D + 新增 5 關鍵術語 |
+| 16 | UNIFIED_DOCUMENTATION_INDEX.md 大量連結損壞 | 文件 | ✅ 已標記 DEPRECATED + 新增當前文件速查 |
+| 17 | ARCHITECTURE.md StateMatrix8D/StateMatrixDisplay 不存在類別 | 文件 | ✅ 已修正為 StateMatrix4D/DimensionState |
 
 ### 🟢 低優先（可後續處理）
 
@@ -399,4 +402,4 @@
 
 ---
 
-*本清單將隨著修復進展持續更新。最後更新：2026-06-25 (v1.4.0 — Phase F 文檔同步最終輪 + .gitignore/pyrightconfig/README 修復 + COMPREHENSIVE_AUDIT v2.0)*
+*本清單將隨著修復進展持續更新。最後更新：2026-06-25 (v1.4.1 — 跨文件一致性修正：GLOSSARY/ARCHITECTURE/UNIFIED_INDEX/INDEX 連結與符號同步)*
