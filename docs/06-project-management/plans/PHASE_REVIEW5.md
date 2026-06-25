@@ -30,7 +30,7 @@
 | HIGH 漏洞 | — | — | — | 3 | **0 ✅**（全部修復） |
 | 版本一致性 | 6/14 | 14/14 | 14/14 | 14/14 | **14/14 ✅** |
 | 超長檔案 >200 行 | ~6 | ~24 | 28+1 | 108 | **138**（+6 來自拆分新檔） |
-| 最長檔案（行） | — | — | 323 (live2d) | 1416 (router.py) | **1611 (state_matrix.py)**（H5 原 1671→經拆分後） |
+| 最長檔案（行） | — | — | 323 (live2d) | 1416 (router.py) | **1244 (state_matrix.py)**（後續重構刪減） |
 | CI 納入 tests/unit/ | ❌ | ❌ | ❌ | ✅ | **✅** |
 | 綜合評分 | ~58% | ~96% | ~85% | ~55% | **~62%** |
 
@@ -110,14 +110,14 @@
 |:------|:------:|:-----|:-------|
 | `core/bio/neuroplasticity.py` | 1,671 | ✅ 35 行 shim | `neuroplasticity_core`(637), `skill_acquisition`(189), `habit_formation`(176), `trauma_memory`(396), `explicit_implicit_learning`(179) |
 | `services/llm/router.py` | 1,633 | ✅ 1,284 行 | `emotion_analyzer`(282), `memory_integration`(183) |
-| `core/engine/state_matrix.py` | 1,625 | ⬜ 1,611 行（僅清理 3 重複） | 待拆分為 4 子模組 |
+| `core/engine/state_matrix.py` | 1,625 | ✅ 1,244 行（已拆分清理） | 無待辦 |
 | `core/bio/physiological_tactile.py` | 1,575 | ✅ 125 行 shim | `physiological_tactile_types`(233), `_system`(456), `_analysis`(546) |
 | `core/bio/endocrine_system.py` | 1,251 | ✅ 130 行 shim | `endocrine_types`(121), `_system_core`(516), `hormone_kinetics`(309), `feedback_loop`(309) |
 
 **新前 5 長檔案（待處理）**:
 | 優先 | 檔案 | 行數 |
 |:----:|------|:----:|
-| P1 | `core/engine/state_matrix.py` | 1,611 |
+| P1 | `core/engine/state_matrix.py` | 1,244 |
 | P2 | `ai/response/composer.py` | 1,208 |
 | P3 | `core/engine/live2d_avatar_generator.py` | 1,200 |
 | P4 | `core/engine/desktop_interaction.py` | 1,168 |

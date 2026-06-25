@@ -1,3 +1,5 @@
+> ⚠️ **OUTDATED**: Superseded by `COMPREHENSIVE_AUDIT_V3.md` and `COMPREHENSIVE_AUDIT_2026-06-25.md`. Accurate as of 2026-06-06 only.
+
 # Comprehensive Audit Report V2 — Unified AI Project
 
 > **審計日期**: 2026-06-06

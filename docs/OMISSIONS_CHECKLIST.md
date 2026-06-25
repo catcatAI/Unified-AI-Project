@@ -371,6 +371,11 @@
 | 32 | COMPREHENSIVE_REPAIR_ROADMAP CI/CD 缺口描述 | 文件 | ✅ 已修正（deploy.yml 確認存在） |
 | 33 | Python 3.14 alpha 測試矩陣 | CI/CD | ⬜ 待決策 |
 | 34 | JS 測試僅佔位符 (echo) | CI/CD | ⬜ 待實作 |
+| 35 | GARDEN_MODEL_PLAN.md 參數數 100M→22M, 行數/測試數過時 | 文件 | ✅ 已更新 |
+| 36 | PHASE_REVIEW5.md state_matrix.py 行數 1611→1244 | 文件 | ✅ 已更新 |
+| 37 | COMPREHENSIVE_AUDIT_REPORT.md/v2 需標過時 | 文件 | ✅ 已加 OUTDATED 標記 |
+| 38 | DOCUMENTATION_TRUTH_MAP F-1 (ModelProvider) 未修復 | 代碼 | ✅ 已確認修復 (alias 可匯入) |
+| 39 | GARDEN_MODEL_PLAN.md hybrid_router.py 不存在 | 文件 | ✅ 已註記 |
 | 20 | `docs/multimodal/` 和 `docs/examples/` 未讀取 | 認知 | ⬜ 極低 |
 
 ### 9.8 Phase E — 41 Skipped Tests 審計結果 (2026-06-25)
@@ -416,4 +421,4 @@
 
 ---
 
-*本清單將隨著修復進展持續更新。最後更新：2026-06-25 (v1.6.0 — AGENTS.md/COMPREHENSIVE_AUDIT.md 統計同步; IDEAL_ARCHITECTURE §16.2 CI/CD 實際狀態確認; deploy.yml 發現)*
+*本清單將隨著修復進展持續更新。最後更新：2026-06-25 (v1.7.0 — GARDEN_MODEL_PLAN.md/PHASE_REVIEW5.md 行數修正; COMPREHENSIVE_AUDIT_REPORT 標記過時; DOCUMENTATION_TRUTH_MAP F-1~F-4 確認已修)*

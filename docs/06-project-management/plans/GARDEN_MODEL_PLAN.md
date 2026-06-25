@@ -2,7 +2,7 @@
 
 > **計畫代號**: **GARDEN** — Giant Associative Relation Decoupled Evolutionary Network
 > **定位**: 輕量級本地模型，屬於 Angela AI 五級擴展模型架構中的「輕量級」層，為本地端側提供高性能的向量語意與稀疏 SNN 推理。
-> **狀態**: 🔶 **部分完成 — 核心實作完成，部分項目待補** (2026-06-06)
+> **狀態**: ✅ **核心實作完成** (2026-06-25 同步 — 詳細數據已更新至實際代碼基準)
 > **建立日期**: 2026-06-06
 > **完成日期**: 2026-06-06
 
@@ -22,7 +22,7 @@
 | 級別 | 代表模型名稱 | 體量大小 | 部署環境 | 核心架構技術 | 主要適用場景 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **1. 超輕量**<br>(Ultra-Lightweight) | **ED3N** | ~100 KB | 邊緣端 / 低功耗 IoT | Trie 樹 + LRU 反射表 + 純 Python LIF 脈衝電路 | 快速反射回應、超低延遲控制、極低功耗監控 |
-| **2. 輕量**<br>(Lightweight) | **GARDEN-1G** | **~1 GB** | **本地 PC / 中端邊緣設備** | **100M 向量字典 + PyTorch 密集與稀疏 SNN 矩陣** | 本地離線常識推理、意圖識別、荷爾蒙情緒調製 |
+| **2. 輕量**<br>(Lightweight) | **GARDEN-1G** | **~1 GB** | **本地 PC / 中端邊緣設備** | **22M-33M 向量字典 (MiniLM) + PyTorch 密集與稀疏 SNN 矩陣** | 本地離線常識推理、意圖識別、荷爾蒙情緒調製 |
 | **3. 標準**<br>(Standard) | **FOREST-10G** | ~10 GB | 高端工作站 / 混合雲 | 1B LLM 語意字典 + 密集關係神經網絡 + 動態 SNN 路由 | 複雜因果推導、多輪上下文理解、中型常識庫檢索 |
 | **4. 重型**<br>(Heavy) | **BIOME-100G** | ~100 GB | 數據中心 / 專屬伺服器 | 密集型雙塔向量 SNN + LLM 深度融合 + 協同多代理網路 | 全量 Wikidata 推理、高複雜度科學推理、創意生成 |
 | **5. 超重型**<br>(Ultra-Heavy) | **ECOSYSTEM-1T** | ~1 TB | 巨型超算集群 / 分散式節點 | 行星級分散式 SNN 集群 + 量子啟發式符號引擎 | 全知智能代理、跨領域極限類比、演化自適應生命體 |
@@ -56,14 +56,14 @@
 *   整合 Hugging Face `transformers`，載入 `MiniLM` 作為編碼器。✅
 *   設計雙語（中/英）混合概念語意檢索，建立 `Top-K` 模糊對應機制。✅
 
-**文件**: `apps/backend/src/ai/garden/dictionary.py` (443 行)
+**文件**: `apps/backend/src/ai/garden/dictionary.py` (615 行)
 
 ### 🔶 Phase 2: PyTorch SNN 核心矩陣化
 *   在 `ai/garden/snn/` 下開發 `TensorSNNCore`。✅
 *   將 LIF 神經元行為矩陣化，以 `torch.sparse` 儲存百萬實體關係。⏳ **待實作**（當前使用 dense float32 矩陣 `[V, V]`）
 *   實作 PyTorch Hebbian 訓練模組，支援批次反向傳播梯度。✅
 
-**文件**: `apps/backend/src/ai/garden/snn_core.py` (343 行)
+**文件**: `apps/backend/src/ai/garden/snn_core.py` (374 行)
 
 ### 🔶 Phase 3: 百萬級語意圖譜導入
 *   編寫數據導入管線，將 ConceptNet / Wikidata 蒸餾過濾。⏳ **解析器骨架完成，需真實數據集驗證**
@@ -71,8 +71,8 @@
 *   將數據寫入二進位矩陣權重文件，實作快速 Memory-Mapped (mmap) 載入。✅
 
 **文件**: 
-* `apps/backend/src/ai/garden/kg_import.py` (668 行)
-* `apps/backend/src/ai/garden/binary_store.py` (268 行)
+* `apps/backend/src/ai/garden/kg_import.py` (578 行)
+* `apps/backend/src/ai/garden/binary_store.py` (241 行)
 
 ### ✅ Phase 4: API 服務整合與混合路由測試
 *   在後端 `providers/garden.py` 中實作 `GARDENBackend` (LLM 後端驅動)。✅
@@ -80,24 +80,27 @@
 *   支援自適應路由（根據歷史成功率動態調整閾值）。✅
 
 **文件**:
-* `apps/backend/src/services/llm/providers/garden.py` (73 行)
-* `apps/backend/src/ai/garden/hybrid_router.py` (430 行)
+* `apps/backend/src/services/llm/providers/garden.py` (63 行)
+* 混合路由功能已整合至 `garden_engine.py` + `services/llm/providers/registry.py`
 
 ### 實作總覽
 
 | 文件 | 行數 | 功能 |
 |:-----|:----:|:-----|
-| `dictionary.py` | 443 | VectorDictionary: 向量語意編碼、雙語概念檢索 |
-| `snn_core.py` | 343 | TensorSNNCore: PyTorch LIF SNN、Hebbian 學習 |
-| `garden_engine.py` | 379 | GARDENEngine: 三階段推理管線、持續學習 |
-| `binary_store.py` | 268 | BinaryStore: mmap 二進位權重矩陣 |
-| `kg_import.py` | 668 | KGImporter: 知識圖譜導入管線 |
-| `hybrid_router.py` | 430 | HybridRouter: ED3N/GARDEN/Cloud 混合路由 |
-| `__init__.py` | 32 | 模組匯出 |
-| `__main__.py` | 171 | CLI: query/stats/serve/save/load/learn |
-| `garden.py` (provider) | 73 | GARDENBackend: LLM 服務後端 |
+| `dictionary.py` | 615 | VectorDictionary: 向量語意編碼、雙語概念檢索 |
+| `snn_core.py` | 374 | TensorSNNCore: PyTorch LIF SNN、Hebbian 學習 |
+| `garden_engine.py` | 503 | GARDENEngine: 三階段推理管線、持續學習 |
+| `binary_store.py` | 241 | BinaryStore: mmap 二進位權重矩陣 |
+| `kg_import.py` | 578 | KGImporter: 知識圖譜導入管線 |
+| `vector_decoder.py` | 83 | VectorDecoder: 編碼/解碼輔助 |
+| `_import_utils.py` | 25 | 匯入工具函數 |
+| `__init__.py` | 27 | 模組匯出 |
+| `__main__.py` | 140 | CLI: query/stats/serve/save/load/learn |
+| `garden.py` (provider) | 63 | GARDENBackend: LLM 服務後端 |
 | 配置 JSON (3個) | 224 | 對話/情緒/科學知識配置 |
-| **測試套件** (6個文件) | 1573 | 6 個測試文件，~150 測試用例 |
+| **測試套件** (9個文件) | 2575 | 9 個測試文件，205 測試用例 |
+
+> ⚠️ `hybrid_router.py` (原記錄 430 行) 已不存在於專案中 — 混合路由功能已整合至 `services/llm/providers/` 或 `garden_engine.py`。
 
 ---
 

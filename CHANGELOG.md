@@ -53,6 +53,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🔄 **COMPREHENSIVE_AUDIT_2026-06-25.md** — 檔案數 620→612
 - 🔄 **COMPREHENSIVE_REPAIR_ROADMAP.md** — `CI/CD 缺口`→`CI/CD 系統確認`（deploy.yml 實際存在）
 - 🔄 **IDEAL_ARCHITECTURE.md §16.2** — CI/CD 問題表全面更新（8 項實際狀態取代 4 項過時疑慮）
+- 🔄 **GARDEN_MODEL_PLAN.md** — 參數數 100M→22M-33M, 檔案行數/測試數按實際校正, hybrid_router.py 不存在註記
+- 🔄 **PHASE_REVIEW5.md** — state_matrix.py 行數 1611→1244
+- 🔄 **COMPREHENSIVE_AUDIT_REPORT.md/v2** — 加上 OUTDATED 標記（被 V3/2026-06-25 取代）
+- 🔄 **DOCUMENTATION_TRUTH_MAP.md** 交叉引用確認：F-1 (ModelProvider) 已修復, F-3 (ED3N) 已修, F-4 (GARDEN) 已修
 
 ### Repaired
 - 🔧 **Phase C — 7 Subsystem Audit**: All 61 files / ~14,744 lines reviewed — **only 1 real stub found, fixed**
