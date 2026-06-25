@@ -9,6 +9,8 @@
 
 > ⚠️ **v2.0 重要修正**: 修正了 v1.0 的多項嚴重偏差——包括將 Phase 11 刪除誤判為「遺失的模組」、忽略 Phase C 發現（7 子系統 61 檔案僅 1 stub）、以及低估 ED3N（26 檔案, 5,521 行, 僅 1 個 intentional `except ValueError: pass`）和 GARDEN（9 檔案, 2,586 行, 僅 1 個 documented no-op `fit()`) 的 AI 引擎品質。  
 > ✅ **Phase F 最終確認**: 所有 6 個修復階段（Phase 0-5 + Phase C/D/E/F）已完成。`.gitignore` 全面補強、`pyrightconfig.json` 修復、README 損壞連結修復、OMISSIONS_CHECKLIST v1.4.0 同步。
+>
+> 📌 **v2.0 範圍說明**: 本審計聚焦**整體架構健康度**（stub 密度、死代碼、文件同步、模組完整性），與 `docs/06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md`（聚焦程式碼品質：執行緒安全、錯誤處理、邊界案例）視角不同。兩者為互補關係，不矛盾。V3 發現的 16 項 HIGH/MEDIUM 問題（H1-H16, P0-P4）已於 2026-06-07 全數修復並經程式碼驗證（`weights_only=True`、`zlib.adler32`、RLock 保護等）。
 
 ---
 
