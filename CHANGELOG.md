@@ -41,6 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🐛 **angela_config.yaml**: Fixed test_mode/debug_mode defaults
 - 🐛 **Various stale docs**: AGENTS.md, ARCHITECTURE.md, INDEX.md, README.md updated
 
+### Cleaned
+- 🗑️ **`apps/backend/src/search/`** — Removed 16-line stub `SearchEngine` (no production imports, followed IDEAL_ARCHITECTURE §2.2 direction)
+- 🗑️ **`tests/search/test_search_engine.py`** — Removed alongside stub (only verified import succeeded)
+
 ### Repaired
 - 🔧 **Phase C — 7 Subsystem Audit**: All 61 files / ~14,744 lines reviewed — **only 1 real stub found, fixed**
   - `ai/response/`, `ai/audio/`, `ai/crisis/`: 0 stubs, fully functional

@@ -188,15 +188,15 @@ unified-ai-project/
 
 ### 2.2 應該存在的目錄 vs 不該存在的目錄
 
-| 目錄 | 理想狀態 | 說明 |
-|------|---------|------|
-| `apps/backend/src/ai/core/__init__.py` | ✅ **應存在** | 讓 `ai.core` 成為 namespace package |
-| `apps/backend/src/modules/` | ❌ **不應存在** | 包裝器層無增值，應移除 |
-| `apps/backend/src/monitoring/` | ❌ **不應存在** | 功能重複（已有 `core/monitoring/`） |
-| `apps/backend/src/optimization/` | ❌ **不應存在** | 功能重複 |
-| `apps/backend/src/creation/` | ❌ **不應存在** | 極簡實作無測試 |
-| `apps/backend/src/search/` | ❌ **不應存在** | 16 行 stub |
-| `apps/backend/src/tools/` | ❌ **不應存在** | 功能分散 |
+| 目錄 | 理想狀態 | 實際狀態 | 說明 |
+|------|---------|:--------:|------|
+| `apps/backend/src/ai/core/__init__.py` | ✅ **應存在** | ✅ 存在 | 讓 `ai.core` 成為 namespace package |
+| `apps/backend/src/modules/` | ❌ **不應存在** | ✅ 已移除 (Phase 1) | 包裝器層無增值 |
+| `apps/backend/src/monitoring/` | ❌ **不應存在** | ⚠️ 仍存在 | 功能重複（已有 `core/monitoring/`），但 `system_monitor.py` (252行) 有測試依賴，待合併 |
+| `apps/backend/src/optimization/` | ❌ **不應存在** | ⚠️ 仍存在 | `performance_optimizer.py` (11KB)，待評估是否可合併至 `core/` |
+| `apps/backend/src/creation/` | ❌ **不應存在** | ⚠️ 仍存在 | `creation_engine.py` (95行) 模板代碼生成器，無引用，待評估 |
+| `apps/backend/src/search/` | ❌ **不應存在** | ✅ 已移除 (2026-06-25) | 16 行 stub，無生產代碼引用 |
+| `apps/backend/src/tools/` | ❌ **不應存在** | ⚠️ 仍存在 | `file_system_tool.py` (57行)，無引用，待評估 |
 | `apps/mobile-app/` | ❌ **已不存在** | skeleton 已被刪除 |
 | `context_storage/` (根目錄) | ❌ **不應在根目錄** | 應在 `data/context_storage/` |
 | `packages/shared-js/` | ✅ **應新增** | 共用 JS 程式庫 |

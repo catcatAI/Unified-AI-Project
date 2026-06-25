@@ -357,6 +357,10 @@
 | 17 | 6 項未來功能未實作 | 功能 | ⬜ 已知 |
 | 18 | 41 skips 合理性確認 | 測試 | ✅ **已完成 — 7 個 pending skips** |
 | 19 | `packages/shared-js/README.md` 不存在 | 文件 | ⬜ 低 |
+| 21 | QUICK_START.md 引用的 .bat 檔案全部不存在 | 文件 | ✅ 已重寫為實際 Python 命令 |
+| 22 | ED3N_MATURITY_PLAN.md 測試數 45→114 | 文件 | ✅ 已更新 |
+| 23 | search/ stub (16 行, 無引用) | 代碼 | ✅ 已移除 |
+| 24 | IDEAL_ARCHITECTURE.md §2.2 目錄狀態未反映實際 | 文件 | ✅ 已同步（search 移除, 其餘 4 個待評估） |
 | 20 | `docs/multimodal/` 和 `docs/examples/` 未讀取 | 認知 | ⬜ 極低 |
 
 ### 9.8 Phase E — 41 Skipped Tests 審計結果 (2026-06-25)
@@ -402,4 +406,4 @@
 
 ---
 
-*本清單將隨著修復進展持續更新。最後更新：2026-06-25 (v1.4.1 — 跨文件一致性修正：GLOSSARY/ARCHITECTURE/UNIFIED_INDEX/INDEX 連結與符號同步)*
+*本清單將隨著修復進展持續更新。最後更新：2026-06-25 (v1.4.2 — IDEAL_ARCHITECTURE 目錄狀態同步 + search/ stub 移除 + QUICK_START 重寫)*
