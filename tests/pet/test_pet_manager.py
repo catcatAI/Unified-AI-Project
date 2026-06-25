@@ -88,13 +88,7 @@ async def test_check_survival_needs(pet_manager) -> None:
 
 
 # 以下测试依赖特定状态值逻辑，标记为跳过
-@pytest.mark.skip(
-    reason="_update_state_over_time 方法不存在于当前API，已被apply_resource_decay替代"
-)
-def test_update_state_over_time(pet_manager) -> None:
-    """测试状态随时间更新（已过时）"""
-    pass
-
+# test_update_state_over_time 已移除：API 方法已由 apply_resource_decay 取代（已有 test_apply_resource_decay）
 
 @pytest.mark.skip(reason="需要了解具体的交互状态变化逻辑")
 def test_handle_interaction_feed(pet_manager) -> None:

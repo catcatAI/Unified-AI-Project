@@ -232,7 +232,7 @@ class AbductiveReasoner:
     """
 
     def __init__(self) -> None:
-        pass
+        """Initialize AbductiveReasoner."""
 
     def explain(self, observation: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """

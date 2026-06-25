@@ -21,7 +21,8 @@
     "**/apps/backend/venv",
     "**/apps/desktop-app",
     "**/graphic-launcher",
-    "**/packages"
+    "**/packages/shared-js",
+    "**/packages/cli"
   ],
   "ignore": [
     "apps/backend/src/hsp/external/external_connector.py",

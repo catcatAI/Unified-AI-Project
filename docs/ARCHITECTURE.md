@@ -1,7 +1,7 @@
 # Angela AI Architecture
 
 > **Source of Truth**: This document is the authoritative reference for Angela AI system architecture.
-> **Last Updated**: 2026-06-15
+> **Last Updated**: 2026-06-25
 > **Derived from**: `docs/FULL_ARCHITECTURE_ANALYSIS.md`
 > **完整感知・認知・執行架構**: [ANGELA_FULL_ARCHITECTURE.md](architecture/ANGELA_FULL_ARCHITECTURE.md)
 
@@ -16,9 +16,9 @@
 │                                                                              │
 │  LAYER 6 — EXECUTION / PRESENTATION                                          │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │  Desktop App  │  │  Mobile App  │  │  CLI / REPL  │  │  Pixel Angela│     │
-│  │  (Electron)   │  │ (ReactNative)│  │  (Python)    │  │  (PyQt6)     │     │
-│  │  Live2D + WS  │  │  QR + AES    │  │  HSP + HTTP  │  │  Voxel + WS  │     │
+│  │  Desktop App  │  │  Web         │  │  CLI / REPL  │  │  Pixel Angela│     │
+│  │  (Electron)   │  │  Dashboard   │  │  (Python)    │  │  (PyQt6)     │     │
+│  │  Live2D + WS  │  │  (Next.js)   │  │  HTTP + WS   │  │  Voxel + WS  │     │
 │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘     │
 │         └─────────────────┼──────────────────┼─────────────────┘             │
 │                    HTTP / WebSocket                                            │
@@ -31,19 +31,20 @@
 │  Session: TTLSessionManager (1h TTL, LRU, max 1000)                          │
 │                                                                              │
 │  LAYER 4 — APPLICATION SERVICES                                              │
-│  ChatService | LLMService (Multi-LLM) | Vision/Audio/Tactile Services        │
-│  EconomyManager | Wiring (DI) | AngelaTypes | MathVerifier | BrainBridge     │
+│  ChatService | LLMService (Multi-LLM) | Vision/Audio Services                │
+│  EconomyManager | AngelaTypes | MathVerifier | BrainBridge                   │
 │                                                                              │
 │  LAYER 3 — CORE INFRASTRUCTURE                                               │
-│  HAM Memory Manager (ChromaDB) | Digital Life Integrator | HSP Protocol      │
+│  HAM Memory Manager (ChromaDB) | Digital Life Integrator                     │
 │  State Matrix 8D (αβγδ εθζη) | ConfigLoader (YAML 3-tier)                   │
 │  Security A/B/C Keys | Neuroplasticity | Endocrine System | Metamorphosis     │
 │                                                                              │
 │  LAYER 2 — AI ENGINE                                                         │
-│  10+ Agents (CreativeWriting, CodeUnderstanding, DataAnalysis, etc.)         │
-│  Alignment | Learning (Experience Replay) | Reasoning (Causal-Lightweight)   │
-│  RAG Manager | Personality Manager | Response Generator                      │
-│  Formula Engine (HSM, CDM, LifeIntensity, ActiveCognition, NonParadox)       │
+│  ED3N (External Dictionary Decoupled Neural Network) | GARDEN (Lightweight)  │
+│  GVV Pipeline | ThreeLayerVisual | Agents (Creative, Code, Data, etc.)       │
+│  Alignment | Reasoning (Causal-Lightweight) | RAG Manager                    │
+│  Personality Manager | Response Composer | Formula Engine                     │
+│  (HSM, CDM, LifeIntensity, ActiveCognition, NonParadox)                      │
 │                                                                              │
 │  LAYER 1 — THEORETICAL FOUNDATION                                            │
 │  HSM Formula (spacetime mapping) | CDM Dividend (cognitive dividend)         │
@@ -52,7 +53,7 @@
 │                                                                              │
 │  CROSS-CUTTING — INTEGRATIONS                                                │
 │  Atlassian (Confluence+Jira) | Google Drive (File Ops) | MCP Protocol        │
-│  Firebase (Cloud) | OS Bridge | Rovo Dev Agent                               │
+│  Firebase (Cloud) | Gemini OS Bridge | Rovo Dev Agent                        │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -63,36 +64,36 @@
 ```
 ┌──────────┐     HTTP/WS     ┌──────────────────┐
 │  Desktop  │◄──────────────►│  main_api_server  │
-│  /Mobile  │                │  (FastAPI)        │
+│  /Web     │                │  (FastAPI)        │
 │  /CLI     │                │  ~314 lines       │
 └──────────┘                 └─────────┬──────────┘
                                        │
                           ┌────────────┼────────────┐
-                          ▼            ▼            ▼
-                   ┌──────────┐ ┌──────────┐ ┌──────────┐
-                   │api/router│ │services/ │ │wiring.py │
-                   │ (v1/*)   │ │ (chat,   │ │ (DI)     │
-                   └────┬─────┘ │  llm,   │ └──────────┘
-                        │       │  vision) │
-                        │       └────┬─────┘
-                        ▼            ▼
+                          ▼            ▼
+                   ┌──────────┐ ┌──────────────┐
+                   │api/router│ │  services/    │
+                   │ (v1/*)   │ │ (chat, llm,  │
+                   └────┬─────┘ │  vision,      │
+                        │       │  multimodal)  │
+                        │       └──────┬────────┘
+                        ▼              ▼
                    ┌─────────────────────────┐
                    │       core/              │
                    │  (infrastructure + domain)│
                    │                         │
-                   │ life │ bio │ engine │ hsp         │
-                   │ config     │ security    │
-                   │ state      │ hardware    │
-                   │ (8D matrix)│ (GPU/ACC)   │
+                   │ life │ bio │ engine     │
+                   │ config │ security       │
+                   │ state │ hardware        │
+                   │ (8D matrix) │ (GPU/ACC)  │
                    └───────────┬─────────────┘
                                ▼
-                   ┌─────────────────────────┐
-                   │        ai/               │
-                   │  (AGI/ASI engine)        │
-                   │  memory (HAM) | agents   │
-                   │  learning | lis (immune) │
-                   │  response | context      │
-                   └─────────────────────────┘
+                   ┌────────────────────────────────────┐
+                   │        ai/ (AGI/ASI engine)         │
+                   │  ED3N | GARDEN | GVV                │
+                   │  ThreeLayerVisual | memory (HAM)     │
+                   │  agents | response | context         │
+                   │  lifecycle | reasoning               │
+                   └────────────────────────────────────┘
 ```
 
 ---
@@ -136,25 +137,30 @@ unified-ai-project/
 │   ├── backend/           Python FastAPI — primary backend
 │   │   └── src/
 │   │       ├── api/           Route handlers (v1/endpoints/*)
-│   │       ├── services/      Business logic (chat, LLM, vision, audio, tactile)
+│   │       ├── services/      Business logic (chat, LLM, vision, audio)
 │   │       ├── core/          Infrastructure (life, bio, engine, config, security, state)
-│   │       ├── ai/            AGI/ASI engine (memory, agents, learning, LIS)
+│   │       ├── ai/            AGI/ASI engine (ED3N, GARDEN, memory, agents)
+│   │       │   ├── multimodal/primitives/  GVV + composition image pipeline
+│   │       │   ├── ed3n/                  External Dictionary Decoupled Net
+│   │       │   └── garden/                Lightweight inference engine
 │   │       ├── economy/       Economy system
 │   │       ├── integrations/  External integrations (Google Drive, Atlassian)
 │   │       └── system/        System-level utilities
 │   ├── desktop-app/       Electron client with Live2D
-│   ├── mobile-app/        React Native bridge
 │   ├── pixel-angela/      PyQt anatomical experiment frontend
 │   ├── web-live2d-viewer/ Live2D web preview
+│   ├── web-dashboard/     Next.js Web dashboard
 │   ├── gemini-os-bridge/  OS automation microservice
 │   └── training/          Model training directory
 ├── packages/
 │   ├── cli/               Python CLI tools
-│   └── biology-core/      Python voxel DNA core
+│   ├── biology-core/      Python voxel DNA core
+│   └── shared-js/         JS shared library (33 files)
 ├── configs/               Runtime configuration (angela_config, MCP, credentials)
-├── docs/                  Documentation
-├── scripts/               Utility scripts
-├── tests/                 Test suite (26 subdirectories)
+├── docs/                  Documentation (50+ MD files)
+├── scripts/               Utility scripts (50+ Python scripts)
+├── tests/                 Test suite (~4,776 tests)
+├── models/                Trained model artifacts (concept_space, GVV)
 ├── reports/               Analysis reports
 └── Root configs: package.json, pyproject.toml, docker-compose.yml, VERSION
 ```
@@ -172,7 +178,7 @@ unified-ai-project/
 | State Matrix | 8D (αβγδ εθζη) | Observer → WebSocket push |
 | Security | Key A/B/C encryption | AES + signed middleware |
 | Configuration | YAML 3-tier (system/standard/MOD) | ConfigLoader |
-| Messaging | WebSocket + HSP/MQTT | Pub/Sub |
+| Messaging | WebSocket | Pub/Sub |
 | Desktop Renderer | Live2D Cubism SDK 5 R5 | WebGL2 |
 | Package Manager | pnpm (workspace) | Monorepo |
 
@@ -211,7 +217,7 @@ ConceptMapper → GeometricVocabulary → InstanceOptimizer → Render
 | POST | `/api/v1/image/interpolate` | Class interpolation |
 | GET | `/api/v1/image/status` | Pipeline health check |
 
-> **Deprecated endpoints** (kept for backward-compat): `/generate-image`, `/recognize-image`, `/reconstruct-image`, `/interpolate-classes`, `/generate-image/status`
+> **Deprecated endpoints** (kept for backward-compat with deprecation warnings): `/generate-image`, `/recognize-image`, `/reconstruct-image`, `/interpolate-classes`, `/generate-image/status` → use `/api/v1/image/*` equivalents
 
 ### Key Metrics
 
@@ -221,7 +227,7 @@ ConceptMapper → GeometricVocabulary → InstanceOptimizer → Render
 
 ---
 
-## 7. 8D State Matrix (αβγδ εθζη)
+## 8. 8D State Matrix (αβγδ εθζη)
 
 | Dimension | Name | Description | Range |
 |-----------|------|-------------|-------|
@@ -236,7 +242,7 @@ ConceptMapper → GeometricVocabulary → InstanceOptimizer → Render
 
 ---
 
-## 7. Naming Conventions
+## 9. Naming Conventions
 
 | Language | Convention | Enforcement |
 |----------|-----------|-------------|
@@ -244,13 +250,13 @@ ConceptMapper → GeometricVocabulary → InstanceOptimizer → Render
 | JavaScript | camelCase, PascalCase classes, UPPER_SNAKE constants | ESLint + Prettier |
 | API Routes | /api/v1/{resource}/{action} | FastAPI router prefixes |
 
-## 8. Error Handling
+## 10. Error Handling
 
 - **Python**: Use `AngelaError` hierarchy; log with `logger.exception()` for unexpected errors
 - **JavaScript**: try/catch with `throw new Error()`
 - **API**: HTTPException with appropriate status codes (4xx for client, 5xx for server)
 
-## 9. Version Governance
+## 11. Version Governance
 
 - Version is defined in 16+ locations (see `docs/IDEAL_ARCHITECTURE.md` §12.1)
 - CI validates all version locations are in sync
@@ -259,14 +265,15 @@ ConceptMapper → GeometricVocabulary → InstanceOptimizer → Render
 
 ---
 
-## 10. Relevant Documents
+## 12. Relevant Documents
 
 | Document | Purpose |
 |----------|---------|
 | `AGENTS.md` | Development guide, build/test/lint commands |
 | `ANGELA_MATRIX_ANNOTATION_GUIDE.md` | Matrix annotation standards (L1-L6, αβγδ εθζη, A/B/C, L0-L11) |
-| `MASTER_CONSOLIDATED_PLAN.md` | Consolidated master plan (S/A/B/C/D graded) |
-| `COMPREHENSIVE_AUDIT_2026-06-25.md` | Latest comprehensive audit report |
-| `IDEAL_ARCHITECTURE.md` | Target architecture blueprint |
-| `REPAIR_ROADMAP.md` | Phased repair plan to reach ideal state |
+| `docs/COMPREHENSIVE_REPAIR_ROADMAP.md` | Phased repair roadmap (Phase A-F) |
+| `docs/OMISSIONS_CHECKLIST.md` | Known omissions and gaps tracker |
+| `docs/COMPOSITIONAL_IMAGE_GENERATION_IMPLEMENTATION_SUMMARY.md` | GVV pipeline summary |
+| `docs/06-project-management/plans/PHASE_REVIEW6.md` | 62.5-round dev log |
+| `docs/06-project-management/plans/PROJECT_HONEST_AUDIT.md` | Honest project audit (~6.0/10) |
 | `CHANGELOG.md` | Release history |

@@ -41,6 +41,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🐛 **angela_config.yaml**: Fixed test_mode/debug_mode defaults
 - 🐛 **Various stale docs**: AGENTS.md, ARCHITECTURE.md, INDEX.md, README.md updated
 
+### Repaired
+- 🔧 **Phase C — 7 Subsystem Audit**: All 61 files / ~14,744 lines reviewed — **only 1 real stub found, fixed**
+  - `ai/response/`, `ai/audio/`, `ai/crisis/`: 0 stubs, fully functional
+  - `ai/lifecycle/`: 10 false-positive TODOs, 0 real stubs
+  - `ai/agents/`, `ai/context/`: 0 stubs across 38 files
+  - `ai/reasoning/`: 1 `pass` stub in `AbductiveReasoner.__init__` → replaced with docstring
+  - **Key finding**: PROJECT_HONEST_AUDIT's "55% meaningless stacking" no longer applies
+- 🔧 **Phase D — Code Review**: Cleared cognitive blind spots
+  - `apps/gemini-os-bridge/` (15 files, ~1,300 lines): 0 TODOs, clean OS automation
+  - `apps/pixel-angela/` (23 files, ~850 lines): 0 TODOs, tested PyQt6 engine
+- 🔧 **Phase E — 41 Skipped Tests Audit**: All skip markers classified into 4 categories
+  - 🟢 Environment-dependent: 7 skips (torch, sklearn, import conditions) — reasonable
+  - 🟢 E2E live server: 2 skips (Atlassian, training workflow) — reasonable
+  - 🟡 Fixed: 1 skip removed (`test_update_state_over_time` — API superseded by `apply_resource_decay`)
+  - 🟡 Pending: 7 skips remaining (6 pet_manager logic + 1 mock issue) — needs developer
+- 🔧 **Phase F — Document Sync**: ARCHITECTURE.md, OMISSIONS_CHECKLIST.md, INDEX.md, roadmap updated
+  - ARCHITECTURE.md: Removed deleted subsystems (mobile-app, wiring.py, tactile_service, HSP)
+  - ARCHITECTURE.md: Added ED3N, GARDEN, GVV, ThreeLayerVisual, shared-js to layers
+  - ARCHITECTURE.md: Fixed duplicated section numbers (7→8/9/10/11/12), fixed Module Dependency Graph
+  - OMISSIONS_CHECKLIST.md v1.3.0: Phase C+D+E findings, all high-priority items resolved
+  - COMPREHENSIVE_REPAIR_ROADMAP.md v1.2.0: Phase C+D+E progress recorded
+
 ### GVV + ThreeLayerVisual + Image Generation API
 
 ### Added

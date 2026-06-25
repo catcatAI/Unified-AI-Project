@@ -61,9 +61,9 @@
 **Total project files**: ~3,500+ (620 Python in backend src · 295 JS/TS · 1,021+ docs · 500+ config · 480+ test).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
 
-> **STATUS (2026-06-25)**: All 6 repair phases COMPLETE ✅ JS sharing unified under packages/shared-js/. 4,776 tests collected with 0 errors. ~85-90% health score (from ~55-60%). See [REPAIR_ROADMAP.md](docs/REPAIR_ROADMAP.md) for full details.
+> **STATUS (2026-06-25)**: All 6 repair phases COMPLETE ✅ JS sharing unified under packages/shared-js/. 4,776 tests collected with 0 errors. ~85-90% health score (from ~55-60%). See [COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md) for full details.
 > **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → LLM → causal learning → response. GVV pipeline for image generation.  
-> **See**: [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) (latest audit), [IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md) (target), [REPAIR_ROADMAP.md](docs/REPAIR_ROADMAP.md) (plan).
+> **See**: [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) (latest audit), [IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md) (target), [COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md) (plan).
 
 ---
 
@@ -101,9 +101,9 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | **Skip Audit** | ✅ COMPLETE | Phase 5.9: 5 collection errors fixed, all skip reasons verified |
 | **Architecture Audit** | ✅ CREATED | `docs/COMPREHENSIVE_AUDIT_2026-06-25.md` — ~55-60% → ~85-90% after all 6 phases |
 | **Target Blueprint** | ✅ CREATED | `docs/IDEAL_ARCHITECTURE.md` — 16-section target architecture |
-| **Repair Roadmap** | ✅ COMPLETE | `docs/REPAIR_ROADMAP.md` — all 6 phases executed, 0 remaining tasks |
+| **Repair Roadmap** | ✅ COMPLETE | `docs/COMPREHENSIVE_REPAIR_ROADMAP.md` — all 6 phases executed, 0 remaining tasks |
 
-See **[COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md)** (latest audit), **[IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md)** (target), **[REPAIR_ROADMAP.md](docs/REPAIR_ROADMAP.md)** (plan).
+See **[COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md)** (latest audit), **[IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md)** (target), **[COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md)** (plan).
 
 ### Quick Start
 
