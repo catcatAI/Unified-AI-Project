@@ -48,6 +48,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🗑️ **`apps/backend/src/optimization/`** — `performance_optimizer.py` (300行), 0 imports from src/ or active tests, dead code (tests reference deleted `ai.ops.`)
 - 🗑️ **`apps/backend/src/tools/`** — `file_system_tool.py` (57行), 0 imports across project, dead code
 
+### Synced
+- 🔄 **AGENTS.md** — 檔案/行數修正 (620→612 files, ~127K→~96K lines)
+- 🔄 **COMPREHENSIVE_AUDIT_2026-06-25.md** — 檔案數 620→612
+- 🔄 **COMPREHENSIVE_REPAIR_ROADMAP.md** — `CI/CD 缺口`→`CI/CD 系統確認`（deploy.yml 實際存在）
+- 🔄 **IDEAL_ARCHITECTURE.md §16.2** — CI/CD 問題表全面更新（8 項實際狀態取代 4 項過時疑慮）
+
 ### Repaired
 - 🔧 **Phase C — 7 Subsystem Audit**: All 61 files / ~14,744 lines reviewed — **only 1 real stub found, fixed**
   - `ai/response/`, `ai/audio/`, `ai/crisis/`: 0 stubs, fully functional

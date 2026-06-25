@@ -1061,14 +1061,15 @@ jobs:
       - 驗證 CHANGELOG.md 有當前版本的條目
 ```
 
-### 16.2 CI 當前面臨的問題（需修復）
+### 16.2 CI 當前實際狀態
 
-| 問題 | 嚴重度 | 修復 |
-|------|--------|------|
-| `scripts/create-release.sh` 不存在但 CI 檢查 | 🔴 HIGH | 移除檢查或建立腳本 |
-| `packages/cli/package.json` 版本 7.5.0-dev 但 CI 檢查 1.1.0 | 🔴 HIGH | 修正 CI 預期值 |
-| Python 3.14 測試環境（alpha） | 🟡 MEDIUM | 改為 3.10 / 3.11 / 3.12 |
-| JS 測試只有 `echo "No JS unit tests configured yet"` | 🟡 MEDIUM | 加入真正的 JS 測試 |
+| 組件 | 實際狀態 | 說明 |
+|------|:--------:|------|
+| **版本一致性檢查** | ✅ 14 位置已同步 | ci.yml 內嵌檢查所有 14+ 版本位置，皆為 7.5.0-dev |
+| **Deploy pipeline** | ✅ `deploy.yml` 存在 | Docker build → ghcr.io → SSH 部署至 staging/production（含通知） |
+| **Python 3.14 測試矩陣** | ⚠️ 仍存在 | 3.14 為 alpha 版，建議改為 3.10 / 3.11 / 3.12 |
+| **JS 測試** | ⚠️ 佔位符 | `echo "No JS unit tests configured yet"` — 需加入真實 JS 測試 |
+| **編譯檢查腳本** | ✅ 不存在亦不檢查 | `scripts/create-release.sh` 不存在，但 CI 也未引用（§16.1 的疑慮已確認消除） |
 
 ---
 

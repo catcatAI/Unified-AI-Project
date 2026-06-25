@@ -365,6 +365,12 @@
 | 26 | optimization/ 死代碼 (300行, 0 引用) | 代碼 | ✅ 已移除 |
 | 27 | tools/ 死代碼 (57行, 0 引用) | 代碼 | ✅ 已移除 |
 | 28 | IDEAL_ARCHITECTURE.md §4.4 棄用路由實際狀態未說明 | 文件 | ✅ 已同步 (8 路由均標記) |
+| 29 | AGENTS.md 統計 620→612 / ~127K→~96K | 文件 | ✅ 已更新 |
+| 30 | COMPREHENSIVE_AUDIT.md 統計 620→612 | 文件 | ✅ 已更新 |
+| 31 | IDEAL_ARCHITECTURE.md §16.2 CI/CD 問題過時 | 文件 | ✅ 已更新（8 項實際狀態） |
+| 32 | COMPREHENSIVE_REPAIR_ROADMAP CI/CD 缺口描述 | 文件 | ✅ 已修正（deploy.yml 確認存在） |
+| 33 | Python 3.14 alpha 測試矩陣 | CI/CD | ⬜ 待決策 |
+| 34 | JS 測試僅佔位符 (echo) | CI/CD | ⬜ 待實作 |
 | 20 | `docs/multimodal/` 和 `docs/examples/` 未讀取 | 認知 | ⬜ 極低 |
 
 ### 9.8 Phase E — 41 Skipped Tests 審計結果 (2026-06-25)
@@ -410,4 +416,4 @@
 
 ---
 
-*本清單將隨著修復進展持續更新。最後更新：2026-06-25 (v1.5.0 — creation/optimization/tools 死代碼移除; IDEAL_ARCHITECTURE §2.2/§4.4 實際狀態同步; monitoring 保留原因確認)*
+*本清單將隨著修復進展持續更新。最後更新：2026-06-25 (v1.6.0 — AGENTS.md/COMPREHENSIVE_AUDIT.md 統計同步; IDEAL_ARCHITECTURE §16.2 CI/CD 實際狀態確認; deploy.yml 發現)*

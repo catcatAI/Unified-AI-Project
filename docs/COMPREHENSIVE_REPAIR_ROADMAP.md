@@ -3,7 +3,7 @@
 **版本**: 1.4.0  
 **建立日期**: 2026-06-25  
 **最後更新**: 2026-06-25  
-**狀態**: ✅ Complete (All Phases A-F finished; + Phase G: IDEAL_ARCHITECTURE Alignment)  
+**狀態**: ✅ Complete (All Phases A-H finished)  
 **目的**: 基於全面遺漏掃描的階段式修復路線圖，整合 PROJECT_HONEST_AUDIT.md、PHASE_REVIEW6.md、OMISSIONS_CHECKLIST.md 的發現
 
 ---
@@ -430,10 +430,11 @@ Phase A ──── 文檔認知補全 (🔴 3-5 天)
 - ✅ **.gitignore 全面補強** — 加入 `apps/models/`, `apps/training/`, `apps/logs/`, `*.pid`, `.angela_backend.pid`
 - ✅ **.gitignore 標頭更新** — VERSION 6.2.0→7.5.0-dev, LAST_MODIFIED 2026-02-19→2026-06-25
 - ✅ **pyrightconfig.json 修復** — 排除範圍從 `**/packages` 縮小至 `packages/shared-js` + `packages/cli`
-- ✅ **CI/CD 缺口確認** — ci.yml 有 version check + lint + test (3.11/3.14)，但無 deploy/docker/publish
+- ✅ **CI/CD 系統確認** — `ci.yml` (lint+test+secret scan) + `deploy.yml` (Docker build → ghcr.io → SSH staging/production) 均已存在
+- ✅ **版本一致性檢查** — ci.yml 內嵌 14+ 位置檢查（均已對齊 7.5.0-dev）
 - ✅ **過時分支確認** — 22 個 (19 dependabot + 3 backup)，待開發者確認刪除
 - ⬜ **分支清理** — 需用戶確認刪除
-- ⬜ **CI/CD 補充或 README 修正** — 待決策
+- ⬜ **Python 3.14 測試矩陣建議移除** — alpha 版可能不穩定
 
 #### Phase C — 7 子系統審計 ✅ (100%)
 - ✅ `ai/response/` (6 檔案, ~3,038 行) — 0 stub，功能完整
@@ -478,6 +479,16 @@ Phase A ──── 文檔認知補全 (🔴 3-5 天)
 - ✅ `tools/` — 57 行死代碼已移除 (FileSystemTool, 0 引用)
 - ✅ ED3N_MATURITY_PLAN.md 測試數 45→114（pytest 驗證）
 - ✅ OMISSIONS_CHECKLIST.md v1.5.0 同步
+
+---
+
+#### Phase H — CI/CD 實際驗證與文件同步 (2026-06-25) ✅ (100%)
+- ✅ AGENTS.md 統計更新 (620→612 files, ~127K→~96K lines)
+- ✅ COMPREHENSIVE_AUDIT_2026-06-25.md 檔案數 620→612
+- ✅ **IDEAL_ARCHITECTURE.md §16.2 全面更新** — 移除 2 項過時疑慮（create-release.sh 從未被 CI 引用、cli package.json 版本已正確），加入 5 項實際狀態
+- ✅ **deploy.yml 發現** — 原先 CI/CD 被標記為「缺口」，但 `deploy.yml` 已存在完整的 Docker build → ghcr.io → SSH staging/production 部署流程
+- ✅ **CI/CD 剩餘項目**: Python 3.14 alpha 測試矩陣（建議移除）+ JS 測試佔位符（待實作）— 低優先
+- ✅ CHANGELOG + OMISSIONS_CHECKLIST v1.6.0 同步
 
 ---
 
