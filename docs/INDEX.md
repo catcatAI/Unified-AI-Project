@@ -2,7 +2,7 @@
 
 ## Structure
 
-- **`00-overview/`** — Project vision, goals, roadmap, glossary
+- **`00-overview/`** — Project vision, goals, roadmap, glossary (GLOSSARY.md updated 2026-06-25)
 - **`02-game-design/`** — Game components, workflow, game-design docs
 - **`03-technical-architecture/`** — Architecture, HSP, HAM, AI components, API, testing, security, analysis
 - **`04-advanced-concepts/`** — Agent collaboration, meta-formulas (deprecated — package deleted, see Px6), advanced features
@@ -27,7 +27,7 @@
 |------|------|
 | **[COMPREHENSIVE_AUDIT_2026-06-25.md](COMPREHENSIVE_AUDIT_2026-06-25.md)** | **全面審計報告 (2026-06-25)** — 最新全專案審計, 涵蓋路由/配置/AI子模組/Desktop App/26+發現 |
 | **[IDEAL_ARCHITECTURE.md](IDEAL_ARCHITECTURE.md)** | **理想架構規範** — 16章節定義目標狀態, 目錄結構/路由標準/AI子系統/測試/CI-CD |
-| **[REPAIR_ROADMAP.md](REPAIR_ROADMAP.md)** | **修復路線圖** — 6階段修復計畫(P0-P3), 37問題映射40任務, ~28小時至90%健康度 |
+| **[COMPREHENSIVE_REPAIR_ROADMAP.md](COMPREHENSIVE_REPAIR_ROADMAP.md)** | **修復路線圖** — 6階段修復計畫(Phase A-F), 基於 OMISSIONS_CHECKLIST/PROJECT_HONEST_AUDIT/PHASE_REVIEW6 |
 | **[COMPREHENSIVE_AUDIT_REPORT.md](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md)** | **全面審計報告 V1 (2026-05-31)** — 6代理審計結果, 原始完成度判定 |
 | **[COMPREHENSIVE_AUDIT_REPORT_V2.md](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md)** | **全面審計報告 V2 (2026-06-06, 新)** — H5 衝刺後全量掃描, 3 true stubs, 20 intentional excepts, 132 超長檔案 |
 | **[PHASE_REVIEW.md](06-project-management/plans/PHASE_REVIEW.md)** | **階段審查 1 (2026-06-02)** — 首次3代理審計, 10維度深層評分 |
@@ -80,7 +80,7 @@
 |------|------|
 | **[COMPREHENSIVE_AUDIT_2026-06-25.md](COMPREHENSIVE_AUDIT_2026-06-25.md)** | **最新全面審計報告 (2026-06-25)** — 全專案審計, 涵蓋26+發現 |
 | **[IDEAL_ARCHITECTURE.md](IDEAL_ARCHITECTURE.md)** | **理想架構規範** — 專案應有的理想狀態目標架構 |
-| **[REPAIR_ROADMAP.md](REPAIR_ROADMAP.md)** | **修復路線圖** — 階段性修復計畫，使實際接近理想 |
+| **[COMPREHENSIVE_REPAIR_ROADMAP.md](COMPREHENSIVE_REPAIR_ROADMAP.md)** | **修復路線圖** — 階段性修復計畫，使實際接近理想 |
 
 ---
-_Last Updated: 2026-06-25_ | [README.md](../README.md) | [Comprehensive Audit 2026-06-25](COMPREHENSIVE_AUDIT_2026-06-25.md) | [IDEAL_ARCHITECTURE](IDEAL_ARCHITECTURE.md) | [REPAIR_ROADMAP](REPAIR_ROADMAP.md) | [Comprehensive Audit V1](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | [Comprehensive Audit V2](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md) | [Comprehensive Audit V3](06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md) | [Phase Review 1](06-project-management/plans/PHASE_REVIEW.md) | [Phase Review 2](06-project-management/plans/PHASE_REVIEW2.md) | [Phase Review 3](06-project-management/plans/PHASE_REVIEW3.md) | [Phase Review 4](06-project-management/plans/PHASE_REVIEW4.md) | [Phase Review 5](06-project-management/plans/PHASE_REVIEW5.md)
+_Last Updated: 2026-06-25_ | [README.md](../README.md) | [Comprehensive Audit 2026-06-25](COMPREHENSIVE_AUDIT_2026-06-25.md) | [IDEAL_ARCHITECTURE](IDEAL_ARCHITECTURE.md) | [Repair Roadmap](COMPREHENSIVE_REPAIR_ROADMAP.md) | [Comprehensive Audit V1](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | [Comprehensive Audit V2](06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md) | [Comprehensive Audit V3](06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md) | [Phase Review 1](06-project-management/plans/PHASE_REVIEW.md) | [Phase Review 2](06-project-management/plans/PHASE_REVIEW2.md) | [Phase Review 3](06-project-management/plans/PHASE_REVIEW3.md) | [Phase Review 4](06-project-management/plans/PHASE_REVIEW4.md) | [Phase Review 5](06-project-management/plans/PHASE_REVIEW5.md)
