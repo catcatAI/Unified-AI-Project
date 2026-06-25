@@ -1,5 +1,7 @@
 # Angela AI 全面修復計畫
 
+> ⚠️ **SUPERSEDED (as of 2026-06-25)**: This fix plan covers Rounds 1-4 (June 17-18). Significant additional work completed June 18-25 includes: Phase 3.3 vector store persistence, Phase A-D (dictionary import, GARDEN numpy backend, ED3N engine), Phases 0-5 repair completion, cross-MD sync. See `docs/COMPREHENSIVE_REPAIR_ROADMAP.md` for the active roadmap.
+
 > **建立日期**: 2026-06-17
 > **最後更新**: 2026-06-18（Round 3 完成 + Round 4 四路並行掃描 + 實際測試分析完成）
 > **分析來源**: 啟動日誌 + 原始碼深度追蹤（逐行驗證）+ 四路並行掃描
