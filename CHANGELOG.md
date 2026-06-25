@@ -20,7 +20,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > - **Backend**: tiered_loader.py rewritten for YAML configs, ED3N duplicate entry warning fixed
 > - See [PLAN_pixel_angela_and_live2d.md](PLAN_pixel_angela_and_live2d.md) for full details
 
-## [7.5.0-dev] - 2026-06-25 — GVV + ThreeLayerVisual + Image Generation API
+## [7.5.0-dev] - 2026-06-25 — Full Repair: Phases 0-5 Complete ✅
+
+### Added
+- 🧹 **Phase 4 — JS Sharing**: Created `packages/shared-js/` with 33 shared JS files
+  - Platform detection (`AngelaPlatform.isElectron/isWeb/getImageRoot`)
+  - Desktop + web now load from `../../packages/shared-js/js/` instead of local copies
+  - 0 duplicate files remaining (desktop: 7 app-specific, web: 10 app-specific)
+- 🧹 **Phase 5.8 — SessionManager Tests**: 56 new tests covering full lifecycle
+  - SessionState enum (5 states), ConnectionSession, SessionStats, SessionManager
+  - Register/unregister/send/broadcast/buffering/heartbeat/singleton mode
+- 🧹 **Phase 5.9 — Skip Test Audit**: Fixed 5 collection errors, verified all skip reasons
+  - Renamed `scripts/test_drive_integration.py` → `test_drive_integration_script.py`
+  - All collection errors resolved: 4,776 tests / 0 errors / 41 intentional skips
+
+### Fixed
+- 🐛 **pyrightconfig.json**: pythonVersion fixed from "3.8" → "3.10"
+- 🐛 **main_api_server.py**: Removed dead imports
+- 🐛 **resource_awareness_service.py**: Fixed __main__ block
+- 🐛 **angela_config.yaml**: Fixed test_mode/debug_mode defaults
+- 🐛 **Various stale docs**: AGENTS.md, ARCHITECTURE.md, INDEX.md, README.md updated
+
+### GVV + ThreeLayerVisual + Image Generation API
 
 ### Added
 - 🎨 **GVV Pipeline**: Geometric Vocabulary Vector architecture added to primitives system
