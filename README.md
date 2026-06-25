@@ -55,10 +55,10 @@
 
 **Angela AI** is a digital life system with biological simulation and LLM integration capabilities.
 
-**Quick facts**: 638 Python files in backend src (~127K lines). Electron + Live2D desktop companion (50 JS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~4,776 tests across 480+ test files.**  
+**Quick facts**: 620 Python files in backend src (~127K lines). Electron + Live2D desktop companion (50 JS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~4,776 tests across 480+ test files.**  
 **Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · cli `7.5.0-dev` · biology-core `7.5.0-dev`.  
 **Architecture audit score**: **~85-90%** (2026-06-25; up from ~55-60% after Phases 0-5 repairs).  
-**Total project files**: ~2,800+ (638 Python in backend src · 102 JS/TS · 700+ docs · 500+ config · 480+ test).  
+**Total project files**: ~3,500+ (620 Python in backend src · 295 JS/TS · 1,021+ docs · 500+ config · 480+ test).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
 
 > **STATUS (2026-06-25)**: All 6 repair phases COMPLETE ✅ JS sharing unified under packages/shared-js/. 4,776 tests collected with 0 errors. ~85-90% health score (from ~55-60%). See [REPAIR_ROADMAP.md](docs/REPAIR_ROADMAP.md) for full details.
@@ -248,11 +248,11 @@ npx pnpm dev:desktop
 - **Action execution** — 48 KB, priority queue, dependency resolution ✅
 - **Biological systems** — 8 modules with real code (20-46 KB each) ✅
 - **ChromaDB memory** — HAM memory with vector store ✅
-- **Desktop app** — Electron + Live2D, 63 JS files, Epsilon_free model ✅
+- **Desktop app** — Electron + Live2D, 7 unique + 33 shared JS files, Epsilon_free model ✅
 - **Pixel art engine** — PyQt6 renderer, numpy voxel body ✅
 - **CLI** — Unified CLI with HTTP client ✅
 - **Gemini OS bridge** — pyautogui automation ✅
-- **Test suite** — 86/86 integration tests + 34/34 pipeline tests + 45 Phase 7 tests ✅
+- **Test suite** — 4,776 total (includes 86 integration + 34 pipeline + 45 Phase 7) ✅
 
 ### What Does NOT Work / Is Stub
 
@@ -336,13 +336,13 @@ See dedicated docs for full diagrams:
 
 **Angela AI** 是一個數位生命系統，具備生物模擬、LLM 整合與完整聊天管線。
 
-**Quick facts**：638 個 Python 檔案 (backend src)、~127K 行。Electron + Live2D 桌面端、手機 stub。  
+**Quick facts**：620 個 Python 檔案 (backend src)、~127K 行。Electron + Live2D 桌面端、手機 stub。  
 **實際狀態**: Phase 0-7 全部完成。聊天管線完整接線、孤兒系統整合、15 個 bug 修復、架構文檔完成、i18n 國際化實作完成。AgentOrchestrator、PlanningEngine、ReasoningEngines、TrustManager、ContentFilter、SafetyAudit、Web Dashboard、Docker/CI/CD、OpenTelemetry 全部運作。  
 **管線**: WebSocket → 情緒分析 → 危機閘門 → 對齊閘門 → LLM → 因果學習 → 回應。
 
 ---
 
-### 當前進度（2026-06-16 代碼驗證）
+### 當前進度（2026-06-25 代碼驗證）
 
 | 領域 | 狀態 | 關鍵證據 |
 |:-----|:----:|:------|
@@ -368,7 +368,7 @@ See dedicated docs for full diagrams:
 | **OpenTelemetry** | ✅ 已完成 | 分散式追蹤中間件（Phase 5） |
 | **API Versioning** | ✅ 已完成 | 版本路由中間件（Phase 5） |
 | **i18n 系統** | ✅ 已完成 | I18nManager、PromptManager、4 個 handler + 4 個 LLM 模組 i18n、45 個測試（Phase 7） |
-| **測試** | ✅ 通過 | 86/86 整合測試 + 34/34 管線測試 + 45 Phase 7 測試 |
+| **測試** | ✅ 通過 | 4,776 測試, 0 錯誤, 41 intentional skips |
 | **架構文檔** | ✅ 已建立 | `docs/architecture/ANGELA_FULL_ARCHITECTURE.md` |
 
 ---
@@ -441,7 +441,7 @@ npx pnpm dev:desktop
 
 ---
 
-### 什麼能跑（2026-06-16 驗證）
+### 什麼能跑（2026-06-25 驗證）
 
 **聊天管線（完整接線）：**
 - **完整管線** — WebSocket → 情緒分析 → 危機閘門 → 生物刺激 → 對齊閘門 → LLM → 因果學習 → 回應 ✅
@@ -603,4 +603,4 @@ npx pnpm dev:desktop
 
 ---
 
-**Version**: 7.5.0-dev | **Code Stats**: 638 Python files, ~127K lines | **Pipeline Tests**: 4,776 / 0 errors / 41 skipped | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Changelog](CHANGELOG.md)
+**Version**: 7.5.0-dev | **Code Stats**: 620 Python files, ~127K lines | **Pipeline Tests**: 4,776 / 0 errors / 41 skipped | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Changelog](CHANGELOG.md)

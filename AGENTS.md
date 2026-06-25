@@ -7,7 +7,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: en
-  LAST_MODIFIED: 2026-06-06
+  LAST_MODIFIED: 2026-06-25
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -73,7 +73,7 @@ mypy apps/backend/src                    # Type check
 pre-commit run --all-files
 ```
 
-> ✅ **NOTE (Updated 2026-06-08)**: All alias fixes applied. Test collection now has **0 errors** (511 tests collected). Real classes exist under different names — all 5 aliases applied:
+> ✅ **NOTE (Updated 2026-06-25)**: Repair Phases 0-5 complete. Test collection now has **0 errors** (**4,776 tests** collected). JS sharing migrated to `packages/shared-js/` (33 files). All alias fixes applied.
 > - `ModelProvider` → `LLMBackend` (alias added in `protocols.py`)
 > - `AuditoryAttentionController` → `AttentionController` (alias added in `auditory_attention.py`)
 > - `ArtLearningSystem` → `ArtLearningWorkflow` (alias added in `art_learning_system.py`)
@@ -213,7 +213,7 @@ black apps/backend/src tests/ && flake8 apps/backend/src tests/
 
 ```
 apps/
-  backend/           # Python FastAPI + AI systems (638 Python files, ~127K lines)
+  backend/           # Python FastAPI + AI systems (620 Python files, ~127K lines)
     ai/core/         # QueryClassifier, ExecutionGate, ModelBus, unicode_utils
     ai/ed3n/         # ED3N engine (reflex → SNN → decode → cycle)
     ai/garden/       # GARDEN lightweight inference engine
@@ -228,11 +228,12 @@ apps/
     ai/multimodal/primitives/  # Compositional image gen (GVV: 14 source files, ~62 tests)
     services/        # LLM routing, chat service, handlers
     api/routes/      # FastAPI routes (v1/*)
-  desktop-app/       # Electron + Live2D desktop app (38 JS files)
-  web-live2d-viewer/ # Web-based Live2D model viewer (41 JS files)
+  desktop-app/       # Electron + Live2D desktop app (7 unique JS files + 33 shared)
+  web-live2d-viewer/ # Web-based Live2D model viewer (10 unique JS files + 33 shared)
   pixel-angela/      # PyQt6 pixel art rendering engine
   gemini-os-bridge/  # OS automation microservice
 packages/
+  shared-js/         # Shared JS package (33 JS files, platform detection)
   cli/               # CLI tools
 tests/
   ai/garden/         # GARDEN 測試 (125 tests)
