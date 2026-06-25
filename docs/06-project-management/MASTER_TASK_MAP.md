@@ -227,22 +227,20 @@ Each entry has:
 | Bugs fixed | 9 (2 critical) | Confirmed in code | ✅ |
 | Directories removed | 7 | Confirmed gone | ✅ |
 
-### 🔴 CRITICAL UNRESOLVED: Auto-Repair Pathway Gap
+### ✅ RESOLVED: Auto-Repair Pathway (2026-06-25)
 
-| Detail | Status |
-|:-------|:-------|
-| **Problem** | `run_angela.py` has NO auto-install logic. When deps missing, it prints `"请运行: pip install -r requirements.txt"` and exits. |
-| **Source of fix** | `tools/legacy_scripts/install_angela.py` (745 lines) and `AngelaLauncher.bat` (60 lines) contain full auto-repair |
-| **Plan said** | "Merge auto-repair logic into run_angela.py FIRST. Risk: HIGH, Impact: HIGH." |
-| **What happened** | **NOTHING** — no commit found merging this logic |
-| **Current status** | `tools/legacy_scripts/` still exists with 2 orphaned files. `run_angela.py` unchanged. |
-| **Blocked by** | No developer action since Jun 13 |
+| Detail | Resolution |
+|:-------|:-----------|
+| **Problem** | `run_angela.py` had NO auto-install logic |
+| **Fix commit** | `7a3af4107` (Jun 25) |
+| **What was done** | Added `install_dependencies()` method, `--auto-repair` flag, and interactive prompt in `main()`. When deps missing, user is asked "是否自动安装缺失依赖? (Y/n)" and auto-installs via pip. |
+| **Source** | Logic merged from `tools/legacy_scripts/install_angela.py` |
+| **Current status** | `run_angela.py` now has auto-install. `tools/legacy_scripts/` orphaned files remain on disk. |
 
 **Migration trace for install_angela.py:**
-- Original: `tools/legacy_scripts/install_angela.py` (745 lines, Jun 13) → STILL THERE
-- Planned move: `scripts/install_angela.py` → NOT DONE
-- Planned merge: auto-repair into `run_angela.py` → NOT DONE
-- Duplicate: `scripts/utils/install_angela.py` (666 lines) → **DELETED** in cleanup
+- Original: `tools/legacy_scripts/install_angela.py` (745 lines, Jun 13) → Still orphaned but no longer needed
+- Auto-repair logic merged into `scripts/run_angela.py` ✅
+- Duplicate: `scripts/utils/install_angela.py` (666 lines) → Already deleted
 
 ---
 
@@ -358,7 +356,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 
 | # | Item | Why Not Done | Code Status | Blocked By |
 |:-:|:-----|:-------------|:------------|:-----------|
-| 1 | Auto-repair in run_angela.py | No developer action since Jun 13 | `run_angela.py` has manual-install message only | Developer |
+| 1 | Auto-repair in run_angela.py | ✅ **DONE** (commit `7a3af4107`, Jun 25) | `run_angela.py` has `install_dependencies()`, `--auto-repair` flag | — |
 | 2 | YOLO object detection | Never started | Zero code exists | Need design |
 | 3 | `/multimodal/stream` WS route | WS handlers exist (message level) but no HTTP route | `websocket_manager.py` has handlers, `api/router.py` has no WS route | Need route registration |
 | 4 | C901 cyclomatic complexity (67 residual) | Skipped, needs manual review | 67 complex functions | Manual code review |
@@ -369,11 +367,11 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | 9 | P4 E2E test framework | Never started | No E2E framework | Design |
 | 10 | Whisper ChatService integration | STT pipeline not wired | `/chat/with-audio` endpoint exists, faster-whisper installed but not connected | Wiring |
 | 11 | VisualDecoder training | Weights random, CLP doesn't train decoder | `VisualDecoder` exists, `quality_metrics.py` exists | Training pipeline extension |
-| 12 | Agent auto-routing | Agents registered but ChatService doesn't call them | 11 agent files exist | Architectural decision |
+| 12 | Agent auto-routing | ✅ **DONE** (wired as Step 8 in chat pipeline) | `chat_routes.py:_try_agent_routing()` routes creative/knowledge/opinion/vision/audio agents | — |
 | 13 | Level5ASI stub classes | Need real alignment modules (P1.1) | `level5_asi_system.py` has logged stubs | External module dependency |
 | 14 | Formula system tests (P4-1) | Blocked by source/test API mismatch | Tests don't exist | API mismatch |
 | 15 | Matrix annotations (157 files missing) | ~59/216 have headers | 157 need header | Effort (cosmetic) |
-| 16 | PHASE_REVIEW5 SUPERSEDED mark | Not done | Document still marked as current | Need SUPERSEDED header |
+| 16 | PHASE_REVIEW5 SUPERSEDED mark | ✅ **DONE** (from earlier session) | `SUPERSEDED — 2026-06-26` header present | — |
 
 ---
 

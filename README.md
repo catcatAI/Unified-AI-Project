@@ -61,8 +61,8 @@
 **Total project files**: ~3,500+ (620 Python in backend src · 295 JS/TS · 1,021+ docs · 500+ config · 480+ test).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
 
-> **STATUS (2026-06-26)**: All 6 repair phases COMPLETE ✅ JS sharing unified under packages/shared-js/. 4,774 tests (full)/4,261 (tests/) — 41 skipped, 0 errors. StateMatrixAdapter 9/9 integration tests passing. ~85-90% health score (from ~55-60%). Intelligence: 6.0/10 (upper) 4.5/10 (lower). See [COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md) for full details.
-> **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → LLM → causal learning → response. GVV pipeline for image generation.  
+> **STATUS (2026-06-26)**: All 6 repair phases COMPLETE ✅ JS sharing unified under packages/shared-js/. 4,774 tests (full)/4,261 (tests/) — 41 skipped, 0 errors. StateMatrixAdapter 9/9 integration tests passing. ~85-90% health score (from ~55-60%). Intelligence: 6.0/10 (upper) 4.5/10 (lower). Agent auto-routing now wired (Step 8). Auto-repair added to launcher. See [COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md) for full details.
+> **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → execution gate → **agent routing** → LLM → causal learning → response. GVV pipeline for image generation.  
 > **See**: [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) (latest audit), [IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md) (target), [COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md) (plan).
 
 ---
@@ -280,7 +280,7 @@ npx pnpm dev:desktop
 - **YOLO object detection** — Not started ❌
 - **`/multimodal/stream` WebSocket route** — WS handlers exist at message level, but no HTTP route registered ❌
 - **Whisper faster-whisper in ChatService** — Installed but not wired into audio chat pipeline ❌
-- **Agent auto-routing** — Agents registered but pipeline doesn't auto-call them ❌
+- **Agent auto-routing** — Wired into chat pipeline Step 8 (creative/knowledge/opinion/vision/audio) ✅
 - **VisualDecoder training** — Decoder weights random, CLP doesn't train decoder yet ❌
 - **P4 refactoring** — 28 long files (>100 lines), load/stress/E2E tests, desktop tray — never started ❌
 - **Auto-repair pathway** — `run_angela.py` now has auto-install on missing deps (--auto-repair flag, or interactive prompt) ✅
@@ -318,7 +318,7 @@ npx pnpm dev:desktop
 | **i18n Internationalization** | I18nManager, PromptManager, Handler/Prompt replacement, Locale files | ✅ **DONE** | 🟡 MEDIUM |
 | **YOLO Object Detection** | New feature | ⬜ | 🔴 HIGH |
 | **Auto-Repair Pathway** | run_angela.py auto-install on missing deps | ✅ **DONE** | 🔴 HIGH |
-| **Agent Auto-Routing** | QueryClassifier/ModelBus auto-call specialized agents | ⬜ | 🔴 HIGH |
+| **Agent Auto-Routing** | Chat pipeline Step 8 wires agents | ✅ **DONE** | 🔴 HIGH |
 | **Frontend Multimodal** | Image/audio upload in Desktop/Web | ⬜ | 🔴 HIGH |
 | **Whisper ChatService Wiring** | faster-whisper into chat pipeline | ⬜ | 🟡 MEDIUM |
 | **VisualDecoder Training** | Extend CLP to train decoder | ⬜ | 🟡 MEDIUM |
@@ -374,7 +374,7 @@ See dedicated docs for full diagrams:
 
 **Quick facts**：612 個 Python 檔案 (backend src)、~96K 行。Electron + Live2D 桌面端、33 shared JS。  
 **實際狀態**: Phase 0-7 全部完成。聊天管線完整接線、孤兒系統整合、Phase 9-12 刪除 26 個死代碼子系統、~5,920 行死代碼移除。AgentOrchestrator、PlanningEngine、ReasoningEngines、TrustManager、ContentFilter、SafetyAudit、Web Dashboard、Docker/CI/CD、OpenTelemetry 全部運作。Phase 11-12 已清理 learning/ops/dialogue/evaluation/execution 等 11 個未使用子系統。  
-**管線**: WebSocket → 情緒分析 → 危機閘門 → 對齊閘門 → LLM → 因果學習 → 回應。
+**管線**: WebSocket → 情緒分析 → 危機閘門 → 對齊閘門 → 執行閘門 → **代理路由** → LLM → 因果學習 → 回應。
 
 ---
 
@@ -560,7 +560,7 @@ npx pnpm dev:desktop
 
 - **YOLO 物件檢測** — 未開始 ❌
 - **Whisper 接線** — faster-whisper 已安裝但未接入聊天管線 ❌
-- **代理自動路由** — 代理已註冊但管線不會自動呼叫 ❌
+- **代理自動路由** — 已接入聊天管線第 8 步（創意/知識/意見/視覺/聽覺）✅
 - **VisualDecoder 訓練** — 權重隨機，未訓練 ❌
 - **P4 重構** — 28 個長檔案、負載測試、E2E 測試、桌面 tray — 從未開始 ❌
 - **自動修復路徑** — `run_angela.py` 現在有自動安裝功能（--auto-repair 或互動提示）✅
@@ -596,7 +596,7 @@ npx pnpm dev:desktop
 | **i18n 國際化** | I18nManager, PromptManager, Handler/Prompt 替換, Locale 檔案 | ✅ **已完成** | 🟡 MEDIUM |
 | **YOLO 物件檢測** | 新功能 | ⬜ | 🔴 HIGH |
 | **自動修復路徑** | run_angela.py 缺失依賴時自動安裝 | ✅ **已完成** | 🔴 HIGH |
-| **代理自動路由** | QueryClassifier/ModelBus 自動呼叫專業代理 | ⬜ | 🔴 HIGH |
+| **代理自動路由** | 聊天管線第 8 步接入 agent | ✅ **已完成** | 🔴 HIGH |
 | **前端多模態** | Desktop/Web 圖片/音訊上傳 | ⬜ | 🔴 HIGH |
 | **Whisper 接線** | faster-whisper 接入聊天管線 | ⬜ | 🟡 MEDIUM |
 | **VisualDecoder 訓練** | CLP 擴展訓練 decoder | ⬜ | 🟡 MEDIUM |

@@ -280,7 +280,44 @@ Each stage in the chat pipeline (`chat_routes.py`) is a function or callable cla
 
 **Key insight**: Architecture is mature (~85-90%) but model weights are untrained (random VisualDecoder, unwired Whisper, untrained SNN). The framework structure is production-quality; the ML content needs training.
 
-### 6. Known Gaps
+### 6. Competitive Analysis — Strengths & Weaknesses
+
+#### 6.1 Differentiating Strengths
+
+| Strength | What It Means | vs LangChain | vs AutoGPT | vs Character.ai |
+|:---------|:--------------|:-------------|:-----------|:----------------|
+| **ED3N decoupled dictionaries** | Add knowledge without retraining (460K entries, 3 languages) | RAG requires vector DB + chunking | No equivalent | No equivalent |
+| **Three-layer speed fallback** | LLM → ED3N SNN → GARDEN numpy. Never fully offline. | Single LLM path, no fallback | Single LLM path | Cloud-only |
+| **Live2D desktop body** | Real-time emotion expression on a desktop avatar | No body | No body | Web chat only, no desktop app |
+| **Biological simulation** | 8 modules: energy, metabolism, endocrine, circadian | No bio sim | No bio sim | Limited personality, no body |
+| **Pure CPU inference (GARDEN)** | numpy backend, no GPU required | Most models require GPU | OpenAI API only | Cloud-only |
+| **Language-aware i18n** | PromptManager + I18nManager built in, 45 tests | Ad-hoc localization | English only | English + JP limited |
+| **6D state matrix** | Shared αβγδεθ context across all components | No shared state | No shared state | Proprietary |
+
+#### 6.2 Weaknesses (Honest)
+
+| Weakness | Impact | Root Cause |
+|:---------|:-------|:-----------|
+| **ML content < framework** | User experience far below architecture promise | Decoder random weights, unwired Whisper, untrained SNN |
+| **Complexity/function ratio** | 612 files but less functionality than expected | Tries to be too many things at once |
+| **Unclear user positioning** | Fails to attract any single audience clearly | Is it a developer framework? User product? Research platform? |
+| **No standard benchmarks** | MMLU, HumanEval, etc. all missing | Focus on infra tests (4,261) over quality tests |
+| **Agents registered but not called** | 11 agents exist but pipeline never invokes them | Architectural decision pending |
+| **Auto-routing missing** | QueryClassifier + ModelBus exist but are bypassed by direct LLM calls | Pipeline shortcuts reduce effectiveness |
+
+#### 6.3 What Actually Attracts Users
+
+| Selling Point | Target Audience | Why It's Unique |
+|:--------------|:----------------|:----------------|
+| **Offline-first AI** | Privacy-conscious users, unstable networks | ChatGPT/Claude cannot run offline |
+| **Live2D desktop pet** | Users seeking "companionship" | Character.ai has no desktop body |
+| **Extensible framework** | AI developers, hobbyists | LangChain has no bio simulation, Live2D |
+| **Bilingual i18n** | Chinese + English developers | Most frameworks are English-first |
+| **GPU-free SNN** | Low-resource environments, edge computing | TensorFlow/PyTorch require GPU for speed |
+
+**The strongest single pitch**: *"An AI that gets tired, gets hungry, lives on your desktop with a Live2D body, and runs completely offline."* — No existing project delivers all four simultaneously. The current blocker is ML model quality (4.5/10) preventing this from feeling polished.
+
+### 7. Known Gaps
 
 These features have infrastructure but need implementation work:
 
@@ -288,13 +325,13 @@ These features have infrastructure but need implementation work:
 |-----|-----------|---------|
 | YOLO object detection | Not started | Full implementation needed |
 | Whisper in chat pipeline | faster-whisper installed, not wired | Route registration needed |
-| Agent auto-routing | 11 agents registered, never called | Pipeline integration needed |
+| Agent auto-routing | Wired into chat pipeline (Step 8) | ✅ Done (commit pending) |
 | VisualDecoder training | Decoder weights random | Training loop needed |
 | `/multimodal/stream` WebSocket | WS handlers exist, no HTTP route | Route registration needed |
 | Auto-repair pathway | `run_angela.py` auto-install on missing deps | ✅ Done (--auto-repair flag) |
 | P4 refactoring | 28 long files, no load/E2E tests | Never started |
 
-### 7. Documentation Map
+### 8. Documentation Map
 
 | Document | Purpose |
 |----------|---------|
@@ -387,18 +424,55 @@ pytest tests/                         # 運行測試
 | 後設認知 | 5/10 | 4/10 | MetaController |
 | **綜合** | **6.0/10** | **4.5/10** | 架構 ~85-90% |
 
-### 6. 已知差距
+### 6. 競爭分析 — 優點與缺點
+
+#### 6.1 差異化優勢
+
+| 優勢 | 說明 | vs LangChain | vs AutoGPT | vs Character.ai |
+|:-----|:-----|:-------------|:-----------|:----------------|
+| **ED3N 字典解耦** | 加入知識不需要重新訓練（46 萬條、3 語種） | RAG 需向量資料庫 | 無對應 | 無對應 |
+| **三層速度降級** | LLM → ED3N SNN → GARDEN numpy。永不斷線。 | 單一 LLM 無降級 | 單一 LLM | 僅雲端 |
+| **Live2D 桌面身體** | 即時情緒表情的桌面角色 | 沒有身體 | 沒有身體 | Web 聊天無桌面端 |
+| **生物模擬 8 模組** | 能量、代謝、內分泌、晝夜節律 | 無生物模擬 | 無生物模擬 | 有限個性無身體 |
+| **純 CPU 推理** | GARDEN numpy 後端，不需 GPU | 多數需 GPU | OpenAI API | 僅雲端 |
+| **語言感知 i18n** | PromptManager + I18nManager，45 測試 | 臨時在地化 | 僅英文 | 英文+日文有限 |
+| **6D 狀態矩陣** | 所有元件共享 αβγδεθ 上下文 | 無共享狀態 | 無共享狀態 | 封閉 |
+
+#### 6.2 弱點（誠實）
+
+| 弱點 | 影響 | 根本原因 |
+|:-----|:-----|:---------|
+| **ML 內容跟不上框架** | 使用者體驗遠低於架構承諾 | Decoder 隨機權重、Whisper 未接線、SNN 未訓練 |
+| **複雜度/功能比過高** | 612 檔案但功能比預期少 | 試圖同時做太多事 |
+| **用戶定位不明** | 無法明確吸引任何單一群體 | 開發者框架？產品？研究平台？ |
+| **無標準基準測試** | 缺乏 MMLU、HumanEval 等 | 專注基礎設施測試而非品質測試 |
+| **代理已註冊但未呼叫** | 11 代理存在但管線不呼叫 | 架構決策未定 |
+| **自動路由缺失** | QueryClassifier + ModelBus 被繞過 | 管線捷徑降低效能 |
+
+#### 6.3 真正吸引用戶的賣點
+
+| 賣點 | 目標族群 | 為何獨特 |
+|:-----|:---------|:---------|
+| **離線優先 AI** | 注重隱私、網路不穩的用戶 | ChatGPT/Claude 無法離線 |
+| **Live2D 桌面寵物** | 尋求陪伴感的用戶 | Character.ai 沒有桌面身體 |
+| **可擴展框架** | AI 開發者、Hobbyist | LangChain 無生物模擬/Live2D |
+| **中英雙語 i18n** | 中英文開發者 | 多數框架以英文優先 |
+| **免 GPU SNN** | 低資源環境、邊緣計算 | TensorFlow/PyTorch 需要 GPU |
+
+**最強單一賣點**：*「一個會累、會餓、活在桌面上、有 Live2D 身體、可以完全離線運作的 AI」* — 沒有專案同時做到這四點。目前障礙是 ML 模型品質（4.5/10）。
+
+### 7. 已知差距
 
 | 功能 | 狀態 | 說明 |
 |------|:----:|:-----|
 | YOLO 物件偵測 | ❌ | 未開始 |
 | Whisper 接線 | ❌ | 已安裝未接入管線 |
-| 代理自動路由 | ❌ | 已註冊不會自動呼叫 |
+| 代理自動路由 | ✅ | 已接入聊天管線（第 8 步） |
 | VisualDecoder 訓練 | ❌ | 權重隨機 |
 | WebSocket 路由 | ❌ | `/multimodal/stream` 未註冊 |
 | 自動修復 | ❌ | `run_angela.py` 缺少自動安裝 |
 
-### 7. 文件地圖
+### 8. 文件地圖
 
 | 文件 | 說明 |
 |------|------|

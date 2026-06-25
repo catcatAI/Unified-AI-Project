@@ -436,6 +436,58 @@ async def _handle_execution_gate(
     return None
 
 
+async def _try_agent_routing(
+    user_message: str,
+    context: Dict[str, Any],
+    schema_ver: str,
+    session_id: str,
+) -> Optional[Dict[str, Any]]:
+    """Try agent auto-routing for non-execution intents (creative/knowledge/opinion/search).
+    Returns a response dict if an agent handled the query, else None (falls through to LLM)."""
+    try:
+        from ai.core.query_classifier import QueryClassifier, QueryType
+        from ai.agents.agent_orchestrator import AgentOrchestrator
+        from ai.agents.agent_manager import AgentManager
+        from ai.agents.agent_adapter import register_specialized_agents
+
+        classifier = QueryClassifier(ed3n_engine=_get_ed3n_engine())
+        classify_result = classifier.classify(user_message)
+
+        # Only route non-actionable intents (execution gate handles actionable ones)
+        actionable = {QueryType.FILE, QueryType.SEARCH, QueryType.CODE, QueryType.EXECUTE, QueryType.TASK}
+        if classify_result.primary_type in actionable:
+            return None
+
+        # Map QueryType to agent suitability threshold
+        agent_types = {QueryType.CREATIVE, QueryType.KNOWLEDGE, QueryType.OPINION, QueryType.VISION, QueryType.AUDIO}
+        if classify_result.primary_type not in agent_types:
+            return None
+
+        # Lazy-init agent manager + orchestrator
+        agent_mgr = AgentManager(enable_process_agents=False, enable_router=False)
+        register_specialized_agents(agent_mgr)
+        orchestrator = AgentOrchestrator(agent_manager=agent_mgr)
+        route_result = await orchestrator.route_task(user_message, context)
+
+        primary = route_result.get("results", [{}])[0] if route_result.get("results") else {}
+        agent_result = primary.get("result")
+        if agent_result and isinstance(agent_result, dict) and agent_result.get("result"):
+            response_text = str(agent_result["result"])
+            return {
+                "response_text": response_text,
+                "source": f"agent_{primary.get('agent', 'unknown')}",
+                "schema_version": schema_ver,
+                "truncation_message": "",
+                "emotion": context.get("emotion", {}).get("emotion", "neutral"),
+                "emotion_confidence": classify_result.confidence,
+                "emotion_intensity": 0.5,
+                "session_id": session_id,
+            }
+    except Exception as e:
+        logger.debug(f"Agent routing unavailable: {e}")
+    return None
+
+
 def _fire_causal_learning(
     response_text: str, user_message: str, session_id: str
 ) -> None:
@@ -510,7 +562,7 @@ async def _handle_chat_request(
     user_message: str, user_name: str, history: List[Dict[str, Any]], session_id: str, origin: str = "Human",
     extra_context: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Orchestrate the full chat pipeline: validate → math dual-rail → context → emotion/crisis → execution gate → LLM."""
+    """Orchestrate the full chat pipeline: validate → math → context → emotion/crisis → execution gate → agent routing → LLM."""
     logger.info(f"\U0001f4e9 [LIS] Raw message received: '{user_message}' from {origin} (Session: {session_id})")
 
     chat_cfg = _angela_cfg.get_authority("angela_core", {}).get("chat_flow", {}) if _angela_cfg else {}
@@ -562,7 +614,12 @@ async def _handle_chat_request(
     if gate_result:
         return gate_result
 
-    # Step 8: Generate LLM response
+    # Step 8: Agent auto-routing (creative/knowledge/opinion/vision/audio — may short-circuit)
+    agent_result = await _try_agent_routing(user_message, context, schema_ver, session_id)
+    if agent_result:
+        return agent_result
+
+    # Step 9: Generate LLM response
     try:
         llm_response = await asyncio.wait_for(
             chat_svc.generate_response(user_message, user_name, context=context),
