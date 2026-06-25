@@ -72,7 +72,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | Area | Status | Key evidence |
 |------|--------|-------------|
 | **Server starts** | ✅ IMPORTS OK | `main_api_server.py` imports successfully |
-| **Chat pipeline** | ✅ FULLY WIRED | Complete: WebSocket → emotion → crisis → alignment → LLM → causal learning → response |
+| **Chat pipeline** | ✅ FULLY WIRED | Complete: WebSocket → emotion → crisis → alignment → execution gate → agent routing → LLM → causal learning → response |
 | **CrisisSystem** | ✅ INTEGRATED | Safety gate in `chat_routes.py:142-151`, auto-reset timeout, config loaded |
 | **CausalReasoning** | ✅ INTEGRATED | Fire-and-forget learning after every response, FIFO cap (500/1000) |
 | **Level5ASI** | ✅ INTEGRATED | Alignment gate triggered at crisis_level ≥ 2, lazy-initialized |
@@ -197,7 +197,7 @@ npx pnpm dev:desktop
 ### What Actually Works (Code-Verified 2026-06-16)
 
 **Chat Pipeline (fully wired):**
-- **Complete pipeline** — WebSocket → emotion analysis → crisis gate → biological stimulus → alignment gate → LLM → causal learning → response ✅
+- **Complete pipeline** — WebSocket → emotion analysis → crisis gate → biological stimulus → alignment gate → execution gate → agent routing → LLM → causal learning → response ✅
 - **Session history** — 30-message rolling window, ED3N retrieval pool ✅
 - **Emotion analysis** — 6-category emotion keywords, emotion-aware prompt injection ✅
 - **Crisis system** — Safety gate auto-reset timeout (300s), config loaded from `apps/backend/configs/crisis_system_config.json` ✅
@@ -382,7 +382,7 @@ See dedicated docs for full diagrams:
 
 | 領域 | 狀態 | 關鍵證據 |
 |:-----|:----:|:------|
-| **聊天管線** | ✅ 完整接線 | 完整管線：情緒 → 危機 → 對齊 → LLM → 因果學習 |
+| **聊天管線** | ✅ 完整接線 | 完整管線：情緒 → 危機 → 對齊 → 執行閘門 → 代理路由 → LLM → 因果學習 |
 | **CrisisSystem** | ✅ 已整合 | 安全閘門，自動重置超時 (300s) |
 | **CausalReasoning** | ✅ 已整合 | 每次回應後觸發學習，FIFO 上限 (500/1000) |
 | **Level5ASI** | ✅ 已整合 | 對齊閘門，crisis_level ≥ 2 時觸發 |
@@ -482,7 +482,7 @@ npx pnpm dev:desktop
 ### 什麼能跑（2026-06-25 驗證）
 
 **聊天管線（完整接線）：**
-- **完整管線** — WebSocket → 情緒分析 → 危機閘門 → 生物刺激 → 對齊閘門 → LLM → 因果學習 → 回應 ✅
+- **完整管線** — WebSocket → 情緒分析 → 危機閘門 → 生物刺激 → 對齊閘門 → 執行閘門 → 代理路由 → LLM → 因果學習 → 回應 ✅
 - **Session 歷史** — 30 條訊息滾動視窗，ED3N 檢索池 ✅
 - **情緒分析** — 6 類情緒關鍵字，情緒感知 prompt 注入 ✅
 - **危機系統** — 安全閘門自動重置超時 ✅
@@ -588,7 +588,7 @@ npx pnpm dev:desktop
 
 | 階段 | 目標 | 狀態 | 優先級 |
 |:------|:-----|:----:|:--------:|
-| **聊天管線** | 完整接線：情緒 → 危機 → 對齊 → LLM → 因果學習 | ✅ **已完成** | 🔴 CRITICAL |
+| **聊天管線** | 完整接線：情緒 → 危機 → 對齊 → 執行閘門 → 代理路由 → LLM → 因果學習 | ✅ **已完成** | 🔴 CRITICAL |
 | **孤兒系統** | 接入 6 系統、刪除 16 個 stub、保留 18 個 | ✅ **已完成** | 🔴 CRITICAL |
 | **Bug 修復** | 15 個 bug 修復 | ✅ **已完成** | 🔴 CRITICAL |
 | **架構文檔** | `ANGELA_FULL_ARCHITECTURE.md` — 1183 行 | ✅ **已完成** | 🟡 MEDIUM |

@@ -25,7 +25,7 @@
 
 Angela AI is not a single application — it is a **framework** for building AI-powered digital life systems. It provides:
 
-- **A pipelined chat architecture** — WebSocket → emotion → crisis → alignment → LLM → causal learning → response — every stage is a replaceable component
+- **A pipelined chat architecture** — WebSocket → emotion → crisis → alignment → execution gate → **agent routing** → LLM → causal learning → response — every stage is a replaceable component
 - **7 LLM backends** — Anthropic, Google, OpenAI, Ollama, llama.cpp, ED3N (SNN), GARDEN (lightweight) — pluggable via strategy pattern
 - **2 local inference engines** — ED3N (460K dictionary, SNN reflex) and GARDEN (VectorDictionary + TensorSNN) — zero-cost fallback without external APIs
 - **A 6-dimensional state matrix** (αβγδεθ) — shared context for cognitive, emotional, and environmental state
@@ -88,6 +88,8 @@ User Input → WebSocket → POST /api/v1/chat/unified
   → CrisisGate (auto-reset 300s, configurable)
   → BiologicalStimulus (energy/metabolism)
   → AlignmentGate (Level5ASI at crisis ≥ 2)
+  → ExecutionGate (actionable intents: file/search/code/execute/task)
+  → AgentRouting (creative/knowledge/opinion/vision/audio agents)
   → LLM call (7 backends, strategy pattern)
   → CausalReasoning (fire-and-forget, FIFO 500/1000)
   → ResponseComposer (merge LLM + formula + state)

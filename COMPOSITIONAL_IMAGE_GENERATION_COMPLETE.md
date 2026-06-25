@@ -1,5 +1,8 @@
 # Compositional Image Generation - Implementation Complete
 
+> **⚠️ STATUS: Phase 1 only (2026-06-25)**  
+> This document describes **Phase 1** (5 core primitives files). Phase 2 added **9 GVV pipeline files** (concept_mapper, concept_space, geometric_vocabulary, instance_optimizer, vocabulary_expander, differentiable_renderer, learnable_decomposer, decomposer, pixel_refiner) — bringing the total to **14 source files** with ~62 tests. See [docs/ARCHITECTURE.md §6](docs/ARCHITECTURE.md) for the current GVV pipeline description and [docs/FRAMEWORK_OVERVIEW.md](docs/FRAMEWORK_OVERVIEW.md) for the full component catalog.
+
 ## Summary
 
 Successfully implemented Phase 1 of the compositional image generation system for Angela AI. The system provides a complete foundation for learning to decompose images into visual primitives and compose them to generate new images.
