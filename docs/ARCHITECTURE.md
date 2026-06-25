@@ -229,7 +229,7 @@ ConceptMapper → GeometricVocabulary → InstanceOptimizer → Render
 
 ## 8. State Matrix (αβγδεθ — 理想目標 8D αβγδ εθζη)
 
-> **實際狀態**: 代碼中實作為 `StateMatrix4D`（`core/engine/state_matrix.py:58`，1,460 行），支援 6 維度（αβγδεθ）。8D 規格（含 ζη）為理想架構目標。
+> **實際狀態**: 代碼中實作為 `StateMatrix4D`（`core/engine/state_matrix.py:58`，1,244 行），支援 6 維度（αβγδεθ）。8D 規格（含 ζη）為理想架構目標。
 
 | Dimension | Name | Description | Range |
 |-----------|------|-------------|-------|

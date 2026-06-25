@@ -47,7 +47,7 @@ routing:
 ### P0.2 — Merge Chat Flows A→B
 
 **Problem:** Two parallel chat flows:
-- **Flow A** (`AngelaChatService`): EgoGuard, intent detection, NeuroBlender, bio integrator, empathy, HAM memory, 7D state matrix, personality, evolution engine
+- **Flow A** (`AngelaChatService`): EgoGuard, intent detection, NeuroBlender, bio integrator, empathy, HAM memory, 6D state matrix (αβγδεθ), personality, evolution engine
 - **Flow B** (`_handle_chat_request`): Simplified path, used by HTTP endpoints, lacks ALL rich context
 
 **Fix:**

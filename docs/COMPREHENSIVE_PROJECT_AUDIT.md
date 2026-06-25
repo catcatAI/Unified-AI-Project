@@ -1,5 +1,7 @@
 # Comprehensive Project Audit Report
 
+> ⚠️ **SUPERSEDED (2026-06-12)** — This audit was conducted on 2026-06-12 and has been superseded by `docs/COMPREHENSIVE_AUDIT_2026-06-25.md` (v2.0, 2026-06-25) and `docs/COMPREHENSIVE_AUDIT_2026-06-25.md` (V3, P0-P4 code verification). Key changes since this audit: 32 stub directories in `core/` have been deleted, file count changed from 680→612, tests from 3,506→4,261, health score from ~60-65%→~85-90%. This document is retained as a historical record.
+
 **Audit Date**: 2026-06-12  
 **Auditor**: Independent Code Audit (multi-agent, read-only)  
 **Scope**: ALL code, configuration, documentation, tests  

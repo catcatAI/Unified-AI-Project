@@ -61,12 +61,13 @@
 
 ### 2.1 已確認過期的 MD 文件
 
-| 文件 | 問題 | 嚴重度 |
-|------|------|:------:|
-| `docs/COMPREHENSIVE_AUDIT_2026-06-25.md` | 健康度仍寫 ~55-60%，但實際為 ~85-90% | 🟡 中 |
-| `docs/03-technical-architecture/` 多數文件 | 2026-05 撰寫，架構已有大幅變更 | 🟡 中 |
-| `docs/06-project-management/plans/*.md` | 多數為 2026-05/06 的歷史計劃，未更新為完成狀態 | 🟢 低 |
-| `docs/04-advanced-concepts/` | INDEX.md 已標記為 "deprecated — package deleted" | 🟢 低 |
+| 文件 | 問題 | 嚴重度 | 狀態 |
+|------|------|:------:|:----:|
+| `docs/COMPREHENSIVE_AUDIT_2026-06-25.md` | v1.0 健康度 ~55-60%（v2.0 已修正為 85-90%） | 🟡 中 | ✅ v2.0 已修正 |
+| `docs/COMPREHENSIVE_PROJECT_AUDIT.md` | 2026-06-12 審計，數據過時（680→612 files, 3506→4261 tests） | 🟡 中 | ✅ 已標記 SUPERSEDED |
+| `docs/03-technical-architecture/` 多數文件 | 2026-05 撰寫，架構已有大幅變更 | 🟡 中 | 待逐步更新 |
+| `docs/06-project-management/plans/*.md` | 多數為 2026-05/06 的歷史計劃，未更新為完成狀態 | 🟢 低 | 歷史文件 |
+| `docs/04-advanced-concepts/` | INDEX.md 已標記為 "deprecated — package deleted" | 🟢 低 | 已標記 |
 
 ### 2.2 文件不一致（MD 互相比對）
 
@@ -79,12 +80,12 @@
 
 ### 2.3 文檔覆蓋缺口
 
-| 缺少的文檔 | 影響 |
-|-----------|------|
-| 無 `packages/shared-js/README.md` | 開發者不知如何使用共享 JS 套件 |
-| 無 `models/README.md` | 不知模型 artifacts 是來源還是產出 |
-| 無 `apps/gemini-os-bridge/README.md` | 不知 OS bridge 的功能與 API |
-| 無 `docs/ARCHITECTURE.md` 的 GVV 管線說明 | 架構圖缺少 image generation 部分 |
+| 缺少的文檔 | 影響 | 狀態 |
+|-----------|------|:----:|
+| 無 `packages/shared-js/README.md` | 開發者不知如何使用共享 JS 套件 | ✅ 已建立 (2026-06-25) |
+| 無 `models/README.md` | 不知模型 artifacts 是來源還是產出 | 待建立 |
+| 無 `apps/gemini-os-bridge/README.md` | 不知 OS bridge 的功能與 API | 待建立 |
+| 無 `docs/ARCHITECTURE.md` 的 GVV 管線說明 | 架構圖缺少 image generation 部分 | 待更新 |
 
 ### 2.4 關鍵文件存在卻從未讀取
 

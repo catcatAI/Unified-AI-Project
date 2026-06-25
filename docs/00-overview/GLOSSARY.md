@@ -35,7 +35,7 @@ A concept model that creates virtual environments for AI training and testing.
 The 8th axis of the state matrix, responsible for **execution/operation layer** — module invocation, parameter adjustment, and structural drift tracking. Works in a dual-loop with θ (cognitive layer).
 
 ### 8D State Matrix (理想目標) / StateMatrix4D (實際)
-The expanded state matrix (αβγδεθζη) that drives Angela's autonomous behavior. **實際代碼**: `StateMatrix4D` class (`core/engine/state_matrix.py`, 1,460 行, 6 軸 αβγδεθ) + `DimensionState` 結構體。8 軸規格（含 ζ Connectivity + η Execution）為理想架構目標，尚未完全實作。
+The expanded state matrix (αβγδεθζη) that drives Angela's autonomous behavior. **實際代碼**: `StateMatrix4D` class (`core/engine/state_matrix.py`, 1,244 行, 6 軸 αβγδεθ) + `DimensionState` 結構體。8 軸規格（含 ζ Connectivity + η Execution）為理想架構目標，尚未完全實作。
 
 ## G
 
