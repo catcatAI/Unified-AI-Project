@@ -1,11 +1,11 @@
 # Unified AI Project — 遺漏清單 (Omissions Checklist)
 
-**版本**: 1.4.1  
+**版本**: 1.7.0  
 **最後更新**: 2026-06-25  
 **狀態**: Active  
 **目的**: 紀錄專案中所有已知的遺漏、不完整、不一致之處，確保透明化管理
 
-> **重要更新 (v1.4.0 → v1.4.1)**: 跨文件一致性修正——GLOSSARY.md 符號名（StateMatrix→StateMatrix4D）與缺失術語（ED3N/GARDEN/GVV）補全、UNIFIED_DOCUMENTATION_INDEX.md 標記 DEPRECATED（10/10 連結已壞）、ARCHITECTURE.md StateMatrix8D→StateMatrix4D 修正、INDEX.md REPAIR_ROADMAP 連結修復。
+> **重要更新 (v1.7.0)**: SERVICE_CATALOG.md 完整重寫（20 entries vs 舊版5）、docs/03-technical-architecture/README.md 修復（frontend-dashboard→web-dashboard、packages/ui 移除、6D state matrix 修正）、CODE_STATISTICS.md 加 outdated snapshot 對照表。
 
 ---
 
@@ -377,6 +377,9 @@
 | 38 | DOCUMENTATION_TRUTH_MAP F-1 (ModelProvider) 未修復 | 代碼 | ✅ 已確認修復 (alias 可匯入) |
 | 39 | GARDEN_MODEL_PLAN.md hybrid_router.py 不存在 | 文件 | ✅ 已註記 |
 | 20 | `docs/multimodal/` 和 `docs/examples/` 未讀取 | 認知 | ⬜ 極低 |
+| 40 | SERVICE_CATALOG.md 僅列 5/20 服務，6 個已刪除檔案仍列為 orphaned | 文件 | ✅ 已重寫 — 20 entries, 3 orphaned (腦橋/api_models/hotreload), 8 handlers, 7 providers, 2 empty dirs |
+| 41 | docs/03-technical-architecture/README.md frontend-dashboard（不存在）/packages/ui（不存在）/8D（實際6D） | 文件 | ✅ 已修正 — 新增實際6個apps、3 packages、6D matrix + 8D 目標註記、ED3N/GARDEN/ModelBus |
+| 42 | docs/03-technical-architecture/analysis/CODE_STATISTICS_2026-05-21.md 檔案數 515→612、行數 ~116K→~96K、測試 327→524 | 文件 | ✅ 已加 outdated header + 對照表 |
 
 ### 9.8 Phase E — 41 Skipped Tests 審計結果 (2026-06-25)
 
@@ -421,4 +424,4 @@
 
 ---
 
-*本清單將隨著修復進展持續更新。最後更新：2026-06-25 (v1.7.0 — GARDEN_MODEL_PLAN.md/PHASE_REVIEW5.md 行數修正; COMPREHENSIVE_AUDIT_REPORT 標記過時; DOCUMENTATION_TRUTH_MAP F-1~F-4 確認已修)*
+*本清單將隨著修復進展持續更新。最後更新：2026-06-25 (v1.7.0 — SERVICE_CATALOG.md 重寫、docs/03-technical-architecture/README.md 修復、CODE_STATISTICS outdated header、OMISSIONS_CHECKLIST 版本統一)*

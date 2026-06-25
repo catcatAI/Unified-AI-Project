@@ -7,13 +7,17 @@ This section provides in-depth documentation on the system's architecture, commu
 The Unified AI Project follows a monorepo architecture organized into applications and packages. The core components include:
 
 ### Applications (`apps/`)
-- **`apps/desktop-app`**: The game client for "Angela's World", built with Electron.
-- **`apps/backend`**: The core Python backend that powers the game's central AI character, Angela. It includes all AI models, APIs, and game logic.
-- **`apps/frontend-dashboard`**: A web-based dashboard for developers to manage, monitor, and debug the AI and game systems.
+- **`apps/desktop-app`**: Electron + Live2D desktop companion (7 unique + 33 shared JS files).
+- **`apps/backend`**: Core Python FastAPI backend (612 files, ~96K lines) — AI engines, LLM routing, memory, chat pipeline.
+- **`apps/web-dashboard`**: Next.js web dashboard for developers to monitor and manage systems.
+- **`apps/web-live2d-viewer`**: Web-based Live2D model viewer (10 unique JS files).
+- **`apps/pixel-angela`**: PyQt6 pixel art rendering engine.
+- **`apps/gemini-os-bridge`**: OS automation microservice (pyautogui).
 
 ### Packages (`packages/`)
-- **`packages/cli`**: Command-line interface tools for interacting with the backend services.
-- **`packages/ui`**: Shared UI components and design system for the frontend applications.
+- **`packages/cli`**: Command-line interface tools for interacting with backend services.
+- **`packages/shared-js`**: Shared JavaScript utilities (33 files) used by desktop-app and web-live2d-viewer.
+- **`packages/biology-core`**: AngelaDNA core library.
 
 ## Core Systems
 
@@ -27,41 +31,32 @@ The HSP is a high-speed synchronization protocol that enables collaboration betw
 
 ### Hierarchical Abstract Memory (HAM) System
 
-The HAM system is a sophisticated memory management solution that organizes information in a hierarchical structure, enabling efficient storage and retrieval of semantic knowledge. Components include:
+The HAM system manages memory in a hierarchical structure. Located at `src/ai/memory/ham_memory/` (10+ files, ~1,440 lines). Components include:
 
-- **DeepMapper**: Semantic mapping and data core generation
-- **HAMMemoryManager**: Hierarchical semantic memory management
-- **VectorStore**: ChromaDB-based vector database interface
+- **HAMManager**: Hierarchical semantic memory management (151 lines)
+- **HAMQueryEngine**: Memory retrieval and query processing (302 lines)
+- **VectorMemoryStore**: Dual-backend vector store (numpy + ChromaDB; auto-detects chromadb, falls back to pure numpy+JSON)
 
-### Multi-Modal AI Agent System
+### AI Core Systems
 
-The project implements specialized AI agents for different tasks:
+The project implements several AI engines and routing components:
 
-- **BaseAgent**: Foundation class for all specialized agents, handling HSP connections and task dispatch
-- **CreativeWritingAgent**: Creative writing and content generation
-- **ImageGenerationAgent**: Image generation capabilities
-- **WebSearchAgent**: Web search and information retrieval
+- **ED3N Engine**: SNN + reflex + deep learning pipeline (26 files, 5,521 lines, 114 tests) at `src/ai/ed3n/`
+- **GARDEN Engine**: Lightweight associative inference (9 files, 2,586 lines, 205 tests) at `src/ai/garden/`
+- **ModelBus**: Central registry + capability routing (34 tests) at `src/ai/core/model_bus.py`
+- **QueryClassifier**: 16 QueryTypes for intent classification at `src/ai/core/query_classifier.py`
+- **LLM Providers**: 7 providers (Anthropic, Google, OpenAI, Ollama, llama.cpp, ED3N, GARDEN) at `src/services/llm/providers/`
+- **GVV Image Generation**: Compositional image generation (14 source files, ~62 tests) at `src/ai/multimodal/primitives/`
 
-### Neuro-Generative Response (NGR) System
+### State Matrix (6D)
 
-The NGR system replaces static response templates with dynamic, 8D-state-driven fragment composition. Components include:
+The state matrix uses 6 dimensions (α β γ δ ε θ) implemented in `StateMatrix4D` at `src/core/engine/state_matrix.py` (1,244 lines). The 6D vector drives NGR fragment selection and autonomous cognition. An 8D target (adding ζ/η) exists as an architectural goal in `IDEAL_ARCHITECTURE.md`.
 
-- **NeuroFragment**: Weighted semantic fragments with 8D state vectors (alpha through eta) that determine contextual appropriateness
-- **NeuroVocabulary**: Fragment registry with config loading from `angela_core.yaml` and automatic template decomposition
-- **NeuroBlender**: Core synthesis engine using cosine similarity between state target vector and fragment vectors for selection, plus structural exploration (curiosity-driven phrase ordering) and natural assembly (connectors, punctuation flow)
-- **ResponseComposer**: High-level facade integrating FragmentComposer, NeuroVocabulary, and NeuroBlender
-- **LearningLoop**: Autonomous linguistic evolution — extracts fragments, emoji, and collocations from LLM responses for continuous vocabulary growth
+### Chat Pipeline
 
-**Pipeline**: `8D State Matrix → Target Vector → Cosine Similarity Scoring → Fragment Selection → Natural Assembly → Output`
-
-### 8D State Matrix
-
-The state matrix expanded from 6D to 8D with the addition of:
-
-- **Zeta (ζ) Axis**: Temporal-narrative dimensions — `temporal_coherence`, `memory_depth`, `narrative_flow`, `identity_continuity`
-- **Eta (η) Axis**: Execution-operation layer — module invocation, parameter adjustment, structural drift tracking (θ-η dual loop with cognitive layer)
-
-All eight axes (α β γ δ ε θ ζ η) drive the NGR system's target vector construction.
+```
+WebSocket → Emotion Analysis → Crisis Gate → Biological Stimulus → Alignment Gate → LLM → Causal Learning → Response
+```
 
 ## Communication Layer
 
@@ -131,6 +126,13 @@ The architecture is designed to scale both vertically and horizontally:
 ### Horizontal Scaling
 - Microservices architecture for independent scaling of components
 - Load balancing for distributing workload across multiple instances
+
+## Note on Analysis Documents
+
+The `analysis/` subdirectory contains ~51 documents dating from 2026-02 to 2026-06. Files from 2026-02 (test reports, fix reports, completion reports) are **historical records** — the issues they describe have been resolved. Files from 2026-05 (WIRING_MAP, MODULARITY_ANALYSIS, CODE_STATISTICS, etc.) are **partially outdated** — many self-identify as ~30% stale. For current architecture state, see:
+- `docs/COMPREHENSIVE_AUDIT_2026-06-25.md` (latest architecture audit)
+- `docs/IDEAL_ARCHITECTURE.md` (target architecture)
+- `AGENTS.md` (current code statistics and structure)
 
 ## Monitoring and Observability
 

@@ -1,16 +1,19 @@
-# Angela AI 代碼統計分析
+# Angela AI 代碼統計分析 (2026-05-21 快照)
 
-## 總覽
+> ⚠️ **OUTDATED (as of 2026-06-25)**: This snapshot is from 2026-05-21. Dead code removal (Phases 0-5: `search/`, `creation/`, `optimization/`, `tools/`, 18 subsystems) has significantly changed counts. See `AGENTS.md` or run `pnpm check` for current statistics.
 
-| 項目 | 數量 |
-|------|------|
-| 後端 Python 檔案 (`apps/backend/src/`) | 515 |
-| 後端 Python 行數 | ~116,265 |
-| 測試檔案 (`tests/`) | 327 |
-| 桌面端 JS 檔案 (`apps/desktop-app/`) | 63 |
-| 活代碼（有接線、有呼叫者） | ~98K (84%) |
-| 死代碼（無呼叫者、孤立模組、demo） | ~10K (9%) |
-| 半成品（類別完整但 flow 斷鏈） | ~8K (7%) |
+## 總覽 (2026-05-21 snapshot vs 2026-06-25 actuals)
+
+| 項目 | 2026-05-21 (doc) | 2026-06-25 (actual) |
+|------|:-:|:-:|
+| 後端 Python 檔案 (`apps/backend/src/`) | 515 | **612** |
+| 後端 Python 行數 | ~116,265 | **~95,684** |
+| 測試檔案 (`tests/`) | 327 | **~524** |
+| 桌面端 JS 檔案 (`apps/desktop-app/`) | 63 | **7 unique + 33 shared** |
+| 活代碼（有接線、有呼叫者） | ~98K (84%) | **~90K (~94%)** |
+| 死代碼（無呼叫者、孤立模組、demo） | ~10K (9%) | **~3K (~3%)** |
+| 半成品（類別完整但 flow 斷鏈） | ~8K (7%) | **~2K (~2%)** |
+| 總測試數 | N/A | **4,776** |
 
 ---
 
