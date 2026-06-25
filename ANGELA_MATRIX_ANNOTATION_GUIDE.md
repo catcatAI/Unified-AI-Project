@@ -119,7 +119,7 @@
  * 安全: 跨所有安全层级 (A/B/C)
  * 成熟度: L2+ 等级开始接触状态矩阵概念
  *
- * @class StateMatrix8D
+ * @class StateMatrix4D
  */
 ```
 

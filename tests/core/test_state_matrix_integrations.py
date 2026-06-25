@@ -62,7 +62,7 @@ def test_save_load_state():
 
     sm2 = StateMatrixAdapter()
     sm2.load_state(state)
-    assert sm2._sm.alpha.values.get("energy") == 0.8
+    assert sm2.alpha.values.get("energy") == 0.8
 
 
 def test_temporal_property():

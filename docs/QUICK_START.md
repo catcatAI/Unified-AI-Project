@@ -70,19 +70,19 @@ pytest tests/path/to/test_file.py -v
 
 | Directory | Purpose |
 |-----------|---------|
-| `apps/backend/src/` | Python FastAPI backend (620 files, ~127K lines) |
+| `apps/backend/src/` | Python FastAPI backend (612 files, ~96K lines) |
 | `apps/desktop-app/` | Electron + Live2D desktop companion |
 | `apps/web-live2d-viewer/` | Web-based Live2D viewer |
 | `apps/pixel-angela/` | PyQt6 pixel art engine |
 | `packages/shared-js/` | Shared JS library (33 files) |
 | `packages/cli/` | Python CLI tools |
-| `tests/` | Test suite (~4,776 tests) |
+| `tests/` | Test suite (~4,261 tests) |
 | `docs/` | Documentation (50+ MD files) |
 
 ## Key Facts
 
-- **620 Python files** in backend src (~127K lines)
-- **~4,776 tests** across 480+ test files, 0 errors
+- **612 Python files** in backend src (~96K lines)
+- **~4,261 tests** across 480+ test files, 0 errors
 - **Architecture health**: ~85-90% (2026-06-25 audit)
 - **Repair phases**: All 6 phases (0-5 + C/D/E/F) complete
 - **See**: `docs/COMPREHENSIVE_REPAIR_ROADMAP.md` for full repair status

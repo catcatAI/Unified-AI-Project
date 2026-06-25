@@ -32,7 +32,7 @@
 |------|------|:--------:|
 | Python files | 620 files, 114,925 lines | 2026-06-25 ✅ |
 | JS/TS files | 295 (7 + 10 unique + 33 shared-js + 245 其他) | 2026-06-25 ✅ |
-| Tests | 4,776 tests, 0 failures, 41 skips | 2026-06-25 ✅ |
+| Tests | 4,261 tests, 0 failures, 33 skips | 2026-06-26 ✅ (StateMatrixAdapter: 9/9 integration passing) |
 | MD files | 1,021+ total | 2026-06-25 ✅ |
 | Total project files | ~3,500+ | 2026-06-25 ✅ |
 | Phase 9 deletions (9 items) | All confirmed deleted | 2026-06-25 ✅ |

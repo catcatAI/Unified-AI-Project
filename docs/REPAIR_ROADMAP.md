@@ -8,7 +8,7 @@
 
 > ✅ **最終狀態 (2026-06-25)**: 
 > - **Phase 0-5**: **全部完成** — 40 項任務全部完成 ✅✅✅🎉
-> - **測試**: 4,776 tests collected, **0 錯誤**, 41 intentional skips
+> - **測試**: 4,261 tests collected, **0 錯誤**, 33 intentional skips (2026-06-26)
 > - **JS 共用化**: 33 共享檔案 → `packages/shared-js/js/`, 0 duplicates
 > - **Collection Errors**: 5 個固定（scripts 命名衝突 + 已刪除模組測試）
 > - **最終健康度**: **~85-90%**（累計提升 ~31%）
@@ -20,13 +20,13 @@
 > - [x] **P1 問題**: 全部解決（12/12）
 > - [x] **P2 問題**: 全部解決（9/9）✅
 > - [x] **P3 問題**: 全部解決（11/11）✅
-> - [x] **測試收集**: 4,776 tests, **0 errors**, 41 intentional skips
+> - [x] **測試收集**: 4,261 tests, **0 errors**, 33 intentional skips
 > - [x] **版本一致性**: VERSION + package.json 均為 7.5.0-dev
 > - [x] **pyrightconfig**: pythonVersion = "3.10" ✅
 > - [x] **PLAN 文件**: 已從根目錄歸檔 ✅
 > - [x] **modules/ 目錄**: 已移除 ✅
 > - [x] **context_storage/**: 不在根目錄 ✅
-> - [x] **文檔**: README.md 數據已更新至 ~4,776 tests
+> - [x] **文檔**: README.md 數據已更新至 ~4,261 tests
 > - [x] **JS 共用化**: 33 檔案在 shared-js, 0 overlap
 >
 > ---

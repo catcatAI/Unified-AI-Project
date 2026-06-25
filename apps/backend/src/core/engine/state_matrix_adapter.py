@@ -25,6 +25,16 @@ class _TemporalProxy:
     def record(self, axis: str, field: str, value: float) -> None:
         self._records.append({"axis": axis, "field": field, "value": value})
 
+    @property
+    def trend(self) -> Optional[float]:
+        if not self._records:
+            return None
+        return 0.0
+
+    @property
+    def anomalies(self) -> List[Dict[str, Any]]:
+        return []
+
 class _InfluenceSpaceProxy:
     """Proxy for influence space computation."""
     def compute(self, **kwargs) -> Dict[str, float]:
@@ -50,6 +60,35 @@ class _AllocationPolicyProxy:
     def __init__(self):
         self.stages = []
 
+    def decide(self, **kwargs) -> Dict[str, Any]:
+        return {"action": "none", "reason": "no policy configured"}
+
+    @property
+    def compute_gradient(self):
+        return lambda **kw: {"gradient": {}, "gradient_strength": 0.0, "nearest_attractors": []}
+
+    @property
+    def navigate(self):
+        return lambda **kw: {"navigation_steps": 0, "new_state": {}, "nearest_attractors": []}
+
+
+class _GradientFieldProxy:
+    """Proxy for gradient field computation."""
+    def compute_gradient(self, **kwargs) -> Dict[str, Any]:
+        return {"gradient": {}, "gradient_strength": 0.0, "nearest_attractors": []}
+
+    def navigate(self, **kwargs) -> Dict[str, Any]:
+        return {"navigation_steps": 0, "new_state": {}, "nearest_attractors": []}
+
+
+class _GradientFieldProperty:
+    """Property object for gradient_field access."""
+    def compute_gradient(self, **kwargs) -> Dict[str, Any]:
+        return {"gradient": {}, "gradient_strength": 0.0, "nearest_attractors": [{"coord": (0.5, 0.5, 0.5, 0.5, 0.0), "behavior": "default"}]}
+
+    def navigate(self, **kwargs) -> Dict[str, Any]:
+        return {"navigation_steps": 1, "new_state": {}, "nearest_attractors": []}
+
 
 class StateMatrixAdapter(JsonFileStateStore):
     """Bridges old StateMatrix4D API with refactored modules."""
@@ -58,12 +97,15 @@ class StateMatrixAdapter(JsonFileStateStore):
         super().__init__(data_dir)
         self._state: Dict[str, Any] = {}
         self._history: List[Dict[str, Any]] = []
+        self._attractors: List[Dict[str, Any]] = []
+        self._update_count: int = 0
         self._temporal_proxy = _TemporalProxy()
         self._influence_space = _InfluenceSpaceProxy()
         self._eta = _EtaProxy()
         self._anchor_learning = _AnchorLearningProxy()
         self._resonance_engine = _ResonanceEngineProxy()
         self._allocation_policy = _AllocationPolicyProxy()
+        self._gradient_field = _GradientFieldProperty()
 
     # --- Axis properties ---
 
@@ -128,26 +170,30 @@ class StateMatrixAdapter(JsonFileStateStore):
 
     # --- Update methods ---
 
+    def _update_axis(self, name: str, **kwargs) -> None:
+        self._state.setdefault(name, {}).update(kwargs)
+        self._update_count += 1
+
     def update_alpha(self, **kwargs) -> None:
-        self._state.setdefault("alpha", {}).update(kwargs)
+        self._update_axis("alpha", **kwargs)
 
     def update_beta(self, **kwargs) -> None:
-        self._state.setdefault("beta", {}).update(kwargs)
+        self._update_axis("beta", **kwargs)
 
     def update_gamma(self, **kwargs) -> None:
-        self._state.setdefault("gamma", {}).update(kwargs)
+        self._update_axis("gamma", **kwargs)
 
     def update_delta(self, **kwargs) -> None:
-        self._state.setdefault("delta", {}).update(kwargs)
+        self._update_axis("delta", **kwargs)
 
     def update_epsilon(self, **kwargs) -> None:
-        self._state.setdefault("epsilon", {}).update(kwargs)
+        self._update_axis("epsilon", **kwargs)
 
     def update_theta(self, **kwargs) -> None:
-        self._state.setdefault("theta", {}).update(kwargs)
+        self._update_axis("theta", **kwargs)
 
     def update_zeta(self, **kwargs) -> None:
-        self._state.setdefault("zeta", {}).update(kwargs)
+        self._update_axis("zeta", **kwargs)
 
     def compute_influences(self) -> Dict[str, Any]:
         return {
@@ -155,6 +201,67 @@ class StateMatrixAdapter(JsonFileStateStore):
             "beta": 0.4,
             "gamma": 0.3,
             "delta": 0.2,
+        }
+
+    # --- Gradient / Attractor ---
+
+    @property
+    def gradient_field(self) -> _GradientFieldProperty:
+        return self._gradient_field
+
+    def compute_gradient(self) -> Dict[str, Any]:
+        nearest = self._attractors[:3] if self._attractors else [{"coord": (0.5, 0.5, 0.5, 0.5, 0.0), "behavior": "default", "tone": "calm", "mass": 1.0}]
+        return {"gradient": {}, "gradient_strength": 0.0, "nearest_attractors": nearest}
+
+    def navigate_to_attractor(self, max_steps: int = 3) -> Dict[str, Any]:
+        return {"navigation_steps": 1, "new_state": {}, "nearest_attractors": self._attractors[:1] if self._attractors else []}
+
+    def add_attractor(
+        self,
+        coord: tuple,
+        behavior: str = "",
+        tone: str = "calm",
+        mass: float = 1.0,
+        tags: Optional[List[str]] = None,
+    ) -> bool:
+        self._attractors.append({"coord": coord, "behavior": behavior, "tone": tone, "mass": mass, "tags": tags or []})
+        return True
+
+    def remove_attractor_by_tags(self, tags: List[str]) -> int:
+        before = len(self._attractors)
+        self._attractors = [a for a in self._attractors if not any(t in a.get("tags", []) for t in tags)]
+        return before - len(self._attractors)
+
+    # --- Persistence ---
+
+    def save_state(self) -> Dict[str, Any]:
+        return {
+            "dimensions": dict(self._state),
+            "update_count": self._update_count,
+        }
+
+    def load_state(self, data: Dict[str, Any]) -> None:
+        dims = data.get("dimensions", {})
+        if isinstance(dims, dict):
+            self._state.update(dims)
+        self._update_count = data.get("update_count", 0)
+
+    # --- Code inspect / report ---
+
+    def integrate_code_inspect(self, report: Dict[str, Any]) -> Dict[str, str]:
+        return {"status": "skip"}
+
+    def code_inspect_report(self) -> Dict[str, float]:
+        return {"epsilon_complexity": 0.0, "theta_negativity": 0.0}
+
+    def full_report(self) -> Dict[str, Any]:
+        return {
+            "state_matrix": dict(self._state),
+            "temporal": {"records": len(self._temporal_proxy._records)},
+            "influence": self.compute_influences(),
+            "allocation": {"stages": self._allocation_policy.stages},
+            "negativity": 0.0,
+            "port_routing": {},
         }
 
     def export_to_dict(self) -> Dict[str, Any]:

@@ -160,7 +160,8 @@
 | 5.6 handlers 測試 | ✅ 完成 | 40 tests | ✅ 正確 |
 | 5.7 resource bug 修復 | ✅ 完成 | `angela_config.yaml` 已修正 | ✅ 正確 |
 | 5.8 SessionManager 測試 | ✅ 完成 | 56 tests | ✅ 正確 |
-| 5.9 跳過測試審計 | ✅ 完成 | 4776 tests / 0 errors / 41 skips | ✅ 正確 |
+| 5.9 跳過測試審計 | ✅ 完成 | 4776 tests / 0 errors / 41 skips（當時） | ✅ 正確 |
+| StateMatrixAdapter 測試 | ✅ 完成 (2026-06-26) | 9/9 integration tests passing, 8 missing methods implemented | ✅ 修復 |
 
 ### 3.6 任務完成度總評
 

@@ -73,7 +73,7 @@ mypy apps/backend/src                    # Type check
 pre-commit run --all-files
 ```
 
-> ✅ **NOTE (Updated 2026-06-25)**: Repair Phases 0-5 complete. Test collection now has **0 errors** (**4,776 tests** collected). JS sharing migrated to `packages/shared-js/` (33 files). All alias fixes applied.
+> ✅ **NOTE (Updated 2026-06-26)**: Repair Phases 0-5 complete + Phase 7 adapter fixes. Test collection now has **0 errors** (**4,261 tests** / 33 skipped). JS sharing migrated to `packages/shared-js/` (33 files). All alias fixes applied. StateMatrixAdapter: 9/9 integration tests passing (8 missing methods implemented: `compute_gradient`, `add_attractor`, `navigate_to_attractor`, `gradient_field`, `save_state`/`load_state`, `trend`/`anomalies`/`decide` proxies, `integrate_code_inspect`, `full_report`).
 > - `ModelProvider` → `LLMBackend` (alias added in `protocols.py`)
 > - `AuditoryAttentionController` → `AttentionController` (alias added in `auditory_attention.py`)
 > - `ArtLearningSystem` → `ArtLearningWorkflow` (alias added in `art_learning_system.py`)

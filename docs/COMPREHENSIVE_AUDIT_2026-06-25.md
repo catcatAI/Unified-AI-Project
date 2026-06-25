@@ -495,7 +495,7 @@ ED3N `ContinuousLearningPipeline` 在 `_handle_chat_request` 中被 fire-and-for
 | LLM 整合 | 95% | 95% | — 無變化 |
 | API 路由 | 70% | 75% | 路由功能完整，deprecation 有 warning |
 | 文檔 | 50-60% | **65-75%** | Phase F 已更新 ARCHITECTURE.md + OMISSIONS_CHECKLIST.md + ROADMAP |
-| 測試 | 75% | **80%** | 4,776 tests / 41 skips（僅 7 pending），新增 ED3N/GARDEN 覆蓋 |
+| 測試 | 75% | **80%** | 4,261 tests / 33 skips，新增 ED3N/GARDEN 覆蓋 |
 | 配置 | 65% | 70% | pyrightconfig 仍待修，其餘已清理 |
 | **總體** | **55-60%** | **~82-88%** | ★ 大幅修正 — Phase C+D+E 清理 + ED3N/GARDEN 實為高品質 |
 
@@ -714,7 +714,7 @@ bio_state = self.digital_life.biological_integrator.get_biological_state()
 | Desktop App | 80% | ⬆️ +10% | JS sharing 完成，7 unique + 33 shared files |
 | web-live2d-viewer | 75% | ⬆️ +15% | JS 重複已移除，10 unique files |
 | 文檔 | 75% | ⬆️ +25-35% | ARCHITECTURE.md/INDEX.md/OMISSIONS_CHECKLIST.md/README.md 已同步 |
-| 測試 | 85% | ⬆️ +10% | 4,776 tests, 0 errors, Phase 5 新增 140+ tests |
+| 測試 | 85% | ⬆️ +10% | 4,261 tests, 0 errors, Phase 5 新增 140+ tests |
 | 配置 | 80% | ⬆️ +20% | .gitignore 補強、pyrightconfig 修復、version 一致 |
 | **總體** | **~85-90%** | ⬆️ **+30%** | 所有 Phase 0-5 + Phase C-F 修復完成 |
 
