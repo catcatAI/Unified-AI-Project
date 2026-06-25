@@ -384,6 +384,37 @@ class Launcher:
             return False
         return True
     
+    def install_dependencies(self, missing: List[str]) -> bool:
+        """自动安装缺失的依赖"""
+        self.progress.update(8, f"自动安装缺失依赖 ({len(missing)} 个)...")
+        req_file = self.project_root / "requirements.txt"
+        if not req_file.exists():
+            self.progress.error(f"找不到 requirements.txt")
+            return False
+
+        try:
+            result = subprocess.run(
+                [sys.executable, "-m", "pip", "install", "-r", str(req_file), "--quiet"],
+                capture_output=True, text=True, timeout=300,
+            )
+            if result.returncode != 0:
+                self.progress.error(f"自动安装失败: {result.stderr.strip()[:200]}")
+                return False
+
+            # Refresh sys.path to pick up newly installed packages
+            import importlib
+            importlib.invalidate_caches()
+
+            self.progress.update(10, "依赖安装完成", "success")
+            return True
+
+        except subprocess.TimeoutExpired:
+            self.progress.error("依赖安装超时 (超过 5 分钟)")
+            return False
+        except Exception as e:
+            self.progress.error(f"依赖安装异常: {e}")
+            return False
+
     def check_node_installed(self) -> bool:
         """检查 Node.js 是否安装"""
         try:
@@ -624,6 +655,10 @@ def main():
         "--mode", type=str, choices=["user", "dev"], default="user",
         help="运行模式: user (简洁/普通用户), dev (详细/开发者)"
     )
+    parser.add_argument(
+        "--auto-repair", action="store_true",
+        help="自动修复缺失依赖，不询问"
+    )
 
     args = parser.parse_args()
 
@@ -648,8 +683,23 @@ def main():
     deps_ok, missing = launcher.check_dependencies()
     if not deps_ok:
         print(f"\n⚠️  缺失依赖: {', '.join(missing)}")
-        print("请运行: pip install -r requirements.txt")
-        return 1
+        if args.auto_repair:
+            print("🔧 自动修复模式，正在安装...")
+            if not launcher.install_dependencies(missing):
+                return 1
+            print("✅ 依赖安装完成")
+        else:
+            try:
+                response = input("是否自动安装缺失依赖? (Y/n): ").strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                response = "y"
+            if response == "" or response == "y":
+                if not launcher.install_dependencies(missing):
+                    return 1
+                print("✅ 依赖安装完成")
+            else:
+                print("请运行: pip install -r requirements.txt")
+                return 1
 
     # 安全检查: 验证密钥
     print("\n🔒 安全检查: 验证系统密钥...")

@@ -283,7 +283,7 @@ npx pnpm dev:desktop
 - **Agent auto-routing** — Agents registered but pipeline doesn't auto-call them ❌
 - **VisualDecoder training** — Decoder weights random, CLP doesn't train decoder yet ❌
 - **P4 refactoring** — 28 long files (>100 lines), load/stress/E2E tests, desktop tray — never started ❌
-- **Auto-repair pathway** — `run_angela.py` lacks auto-install logic (documented gap since Jun 13) ❌
+- **Auto-repair pathway** — `run_angela.py` now has auto-install on missing deps (--auto-repair flag, or interactive prompt) ✅
 
 ### Deleted (Phase 9-12 Cleanup) — Do Not Re-implement
 - **Mobile app** — Was skeleton (3 files), deleted in Phase 11 🗑️
@@ -317,7 +317,7 @@ npx pnpm dev:desktop
 | **Phase 0-6** | Foundation, Core, Intelligence, Safety, Embodiment, Infrastructure, Polish | ✅ **DONE** | 🔴 CRITICAL |
 | **i18n Internationalization** | I18nManager, PromptManager, Handler/Prompt replacement, Locale files | ✅ **DONE** | 🟡 MEDIUM |
 | **YOLO Object Detection** | New feature | ⬜ | 🔴 HIGH |
-| **Auto-Repair Pathway** | run_angela.py should have auto-install | ⬜ | 🔴 HIGH |
+| **Auto-Repair Pathway** | run_angela.py auto-install on missing deps | ✅ **DONE** | 🔴 HIGH |
 | **Agent Auto-Routing** | QueryClassifier/ModelBus auto-call specialized agents | ⬜ | 🔴 HIGH |
 | **Frontend Multimodal** | Image/audio upload in Desktop/Web | ⬜ | 🔴 HIGH |
 | **Whisper ChatService Wiring** | faster-whisper into chat pipeline | ⬜ | 🟡 MEDIUM |
@@ -334,6 +334,7 @@ See dedicated docs for full diagrams:
 
 | Document | Contents |
 |----------|----------|
+| [FRAMEWORK_OVERVIEW](docs/FRAMEWORK_OVERVIEW.md) | **Framework positioning, component catalog, extension guide** (bilingual) — how to use Angela AI as a framework |
 | [ANGELA_FULL_ARCHITECTURE](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | **Full system architecture** — perception, cognition, emotion, execution, memory, alignment, pipeline (1183 lines) |
 | [PROJECT_CHARTER](docs/00-overview/PROJECT_CHARTER.md) | Project mission, scope, principles |
 | [GLOSSARY](docs/00-overview/GLOSSARY.md) | Full project terminology reference |
@@ -562,7 +563,7 @@ npx pnpm dev:desktop
 - **代理自動路由** — 代理已註冊但管線不會自動呼叫 ❌
 - **VisualDecoder 訓練** — 權重隨機，未訓練 ❌
 - **P4 重構** — 28 個長檔案、負載測試、E2E 測試、桌面 tray — 從未開始 ❌
-- **自動修復路徑** — `run_angela.py` 缺少自動安裝邏輯 ❌
+- **自動修復路徑** — `run_angela.py` 現在有自動安裝功能（--auto-repair 或互動提示）✅
 
 ### 已刪除 (Phase 9-12 清理) — 不要重新實作
 - **手機端** — scaffold 已刪除（Phase 11）🗑️
@@ -594,7 +595,7 @@ npx pnpm dev:desktop
 | **Phase 0-6** | Foundation, Core, Intelligence, Safety, Embodiment, Infrastructure, Polish | ✅ **已完成** | 🔴 CRITICAL |
 | **i18n 國際化** | I18nManager, PromptManager, Handler/Prompt 替換, Locale 檔案 | ✅ **已完成** | 🟡 MEDIUM |
 | **YOLO 物件檢測** | 新功能 | ⬜ | 🔴 HIGH |
-| **自動修復路徑** | run_angela.py 應加入自動安裝邏輯 | ⬜ | 🔴 HIGH |
+| **自動修復路徑** | run_angela.py 缺失依賴時自動安裝 | ✅ **已完成** | 🔴 HIGH |
 | **代理自動路由** | QueryClassifier/ModelBus 自動呼叫專業代理 | ⬜ | 🔴 HIGH |
 | **前端多模態** | Desktop/Web 圖片/音訊上傳 | ⬜ | 🔴 HIGH |
 | **Whisper 接線** | faster-whisper 接入聊天管線 | ⬜ | 🟡 MEDIUM |
@@ -609,6 +610,7 @@ npx pnpm dev:desktop
 
 | 文件 | 內容 |
 |------|------|
+| [框架總覽](docs/FRAMEWORK_OVERVIEW.md) | **框架定位、元件目錄、擴展指南**（中英雙語） |
 | [專案憲章](docs/00-overview/PROJECT_CHARTER.md) | 專案使命、範圍、原則 |
 | [詞彙表](docs/00-overview/GLOSSARY.md) | 完整名詞解釋 |
 | [統一文件索引](docs/00-overview/UNIFIED_DOCUMENTATION_INDEX.md) | 所有文件導覽 |
