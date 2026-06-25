@@ -77,7 +77,7 @@ open http://localhost:3000
 
 ### Backend Configuration
 
-Edit `configs/backend_config.yaml`:
+Edit `configs/angela_config.yaml`:
 
 ```yaml
 server:
@@ -115,19 +115,14 @@ upstream backend {
 
 ## Production Deployment
 
-### Using Docker Compose Override
+### Using Docker Compose
 
 ```bash
-# Create docker-compose.prod.yml
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Start with docker-compose (standard docker-compose.yml)
+docker-compose up -d
 ```
 
-### Using Kubernetes
-
-```bash
-# Apply Kubernetes manifests
-kubectl apply -f k8s/
-```
+> Note: Kubernetes manifests (`k8s/`) and production override (`docker-compose.prod.yml`) are not yet implemented. See `.github/workflows/deploy.yml` for the current CI/CD pipeline (Docker build → ghcr.io → SSH staging/production).
 
 ## Monitoring
 

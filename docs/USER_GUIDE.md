@@ -16,16 +16,20 @@ Angela AI is an advanced AI assistant with memory, learning, and emotional intel
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/unified-ai-project.git
-cd unified-ai-project
+git clone https://github.com/catcatAI/Unified-AI-Project.git
+cd Unified-AI-Project
 
-# Install Python dependencies
-pip install -r requirements.txt
+# Setup Python virtual environment
+python -m venv .venv
+.venv\Scripts\Activate.ps1   # Windows PowerShell
+source .venv/bin/activate     # macOS/Linux
 
-# Install Node.js dependencies (for web dashboard)
-cd apps/web-dashboard
-npm install
-cd ../..
+# Install Python dependencies (backend)
+pip install -r apps/backend/requirements.txt
+
+# Install JS workspace dependencies using pnpm
+npx pnpm install --no-frozen-lockfile
+npx pnpm approve-builds --all
 ```
 
 ## Starting Angela
@@ -33,9 +37,12 @@ cd ../..
 ### Backend Server
 
 ```bash
-# Start the backend server
+# Start the backend server (from project root)
+python apps/backend/start_server.py
+
+# Or with hot-reload (development)
 cd apps/backend
-uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn src.services.main_api_server:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ### Web Dashboard
@@ -147,7 +154,7 @@ API_SECRET_KEY=your-secret-key
 
 ### Configuration Files
 
-- `configs/backend_config.yaml` - Backend settings
+- `configs/angela_config.yaml` - Backend settings
 - `configs/prometheus.yml` - Monitoring configuration
 - `configs/nginx.conf` - Reverse proxy settings
 
@@ -198,4 +205,4 @@ docker-compose logs -f
 
 ## Contributing
 
-See `docs/DEVELOPER_GUIDE.md` for contribution guidelines.
+See `AGENTS.md` for developer/agent guidelines.
