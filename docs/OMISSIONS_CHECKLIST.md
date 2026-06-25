@@ -356,7 +356,7 @@
 | 16 | `scripts/train_learned_repr*.py` 未提交 | Git | ⬜ 低 |
 | 17 | 6 項未來功能未實作 | 功能 | ⬜ 已知 |
 | 18 | 41 skips 合理性確認 | 測試 | ✅ **已完成 — 7 個 pending skips** |
-| 19 | `packages/shared-js/README.md` 不存在 | 文件 | ⬜ 低 |
+| 19 | `packages/shared-js/README.md` 不存在 | 文件 | ✅ 已建立 (33-file index, usage example, platform detection) |
 | 21 | QUICK_START.md 引用的 .bat 檔案全部不存在 | 文件 | ✅ 已重寫為實際 Python 命令 |
 | 22 | ED3N_MATURITY_PLAN.md 測試數 45→114 | 文件 | ✅ 已更新 |
 | 23 | search/ stub (16 行, 無引用) | 代碼 | ✅ 已移除 |
@@ -380,6 +380,8 @@
 | 40 | SERVICE_CATALOG.md 僅列 5/20 服務，6 個已刪除檔案仍列為 orphaned | 文件 | ✅ 已重寫 — 20 entries, 3 orphaned (腦橋/api_models/hotreload), 8 handlers, 7 providers, 2 empty dirs |
 | 41 | docs/03-technical-architecture/README.md frontend-dashboard（不存在）/packages/ui（不存在）/8D（實際6D） | 文件 | ✅ 已修正 — 新增實際6個apps、3 packages、6D matrix + 8D 目標註記、ED3N/GARDEN/ModelBus |
 | 42 | docs/03-technical-architecture/analysis/CODE_STATISTICS_2026-05-21.md 檔案數 515→612、行數 ~116K→~96K、測試 327→524 | 文件 | ✅ 已加 outdated header + 對照表 |
+| 43 | DEPLOYMENT.md 引用不存在的 docker-compose.prod.yml、k8s/、configs/backend_config.yaml | 文件 | ✅ 已修正 — 移除不存在引用、config路徑改為 angela_config.yaml、新增 CI/CD 指引 |
+| 44 | USER_GUIDE.md 引用不存在的 src.main:app、configs/backend_config.yaml、DEVELOPER_GUIDE.md | 文件 | ✅ 已修正 — 啟動命令改為 start_server.py、config 路徑修正、npm→pnpm、git URL 更新 |
 
 ### 9.8 Phase E — 41 Skipped Tests 審計結果 (2026-06-25)
 
@@ -424,4 +426,4 @@
 
 ---
 
-*本清單將隨著修復進展持續更新。最後更新：2026-06-25 (v1.7.0 — SERVICE_CATALOG.md 重寫、docs/03-technical-architecture/README.md 修復、CODE_STATISTICS outdated header、OMISSIONS_CHECKLIST 版本統一)*
+*本清單將隨著修復進展持續更新。最後更新：2026-06-25 (v1.7.0 — shared-js README 建立、DEPLOYMENT/USER_GUIDE 路徑修正、OMISSIONS_CHECKLIST items #40-#44)*
