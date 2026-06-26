@@ -474,12 +474,14 @@ class NeuroAutoSelector:
         Phase 6: LearnRecorder → record decision
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None,
+                 meta_controller: Optional[Any] = None):
         self.config = config or {}
         self.hardware = HardwareAnalyzer()
         self.budget_scheduler = BudgetScheduler(self.config.get("auto_mode", {}))
         self.state_interpreter = StateInterpreter()
         self.recorder = LearnRecorder()
+        self._meta_controller = meta_controller
 
         # Cached hardware info (refreshed periodically)
         self._hw_score: float = 0.0
@@ -764,6 +766,14 @@ class NeuroAutoSelector:
     def record_result(self, decision: AutoDecision, actual_ms: float, success: bool) -> None:
         """Record result for learning."""
         self.recorder.record(decision, actual_ms, success)
+        if self._meta_controller is not None:
+            budget_ratio = min(decision.time_budget_ms / max(actual_ms, 1), 2.0)
+            confidence = min(decision.hw_score / 100.0 * decision.task_demand * budget_ratio, 1.0)
+            self._meta_controller.record_confidence(
+                source=f"neuro_auto_selector/{decision.backend.value}",
+                confidence=round(confidence, 3),
+                correct=success,
+            )
 
     def flush_records(self) -> None:
         """Flush pending learn records."""

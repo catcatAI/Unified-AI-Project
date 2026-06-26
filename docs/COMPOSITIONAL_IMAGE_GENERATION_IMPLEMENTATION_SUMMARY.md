@@ -2,10 +2,12 @@
 
 > **⚠️ STATUS: Phase 1 only (2026-06-25)**  
 > This document describes **Phase 1** (5 core primitives files). Phase 2 added **9 GVV pipeline files** (concept_mapper, concept_space, geometric_vocabulary, instance_optimizer, vocabulary_expander, differentiable_renderer, learnable_decomposer, decomposer, pixel_refiner) — totaling **14 source files** with ~62 tests. See [ARCHITECTURE.md §6](../ARCHITECTURE.md) for the current GVV pipeline description.
+>
+> **⚠️ Honest assessment (2026-06-28)**: The pipeline architecture is complete but **all neural weights are random** (SequenceGenerator RNN, VisualDecoder CNN). Output = gray canvas or random shapes. Training is needed before any meaningful image generation occurs. See `docs/06-project-management/IMPROVEMENT_ROADMAP.md` §2.5 (Training) for the training plan.
 
 ## Overview
 
-Successfully implemented Phase 1 of the compositional image generation system for Angela AI. The system provides a foundation for learning to decompose images into visual primitives and compose them to generate new images.
+Architecture implemented for Phase 1 of the compositional image generation system for Angela AI. The system provides a foundation for learning to decompose images into visual primitives and compose them to generate new images. **Note: training is required before the system produces meaningful output.**
 
 ## What Was Implemented
 

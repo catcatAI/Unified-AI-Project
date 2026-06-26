@@ -99,7 +99,7 @@
 | F2 | 修正 ModelBus 路由中的 >100L 長函數 | `model_bus.py` | P4 | 中 |
 | F3 | 修正所有文件中的錯誤分數（已完成） | 多個 MD | P0 | 低 |
 | F4 | 修正 LLM 路由中缺少 timeouts/retries | `router.py` | P2 | 低 |
-| F5 | 修正 NeuroAutoSelector LearnRecorder 未連接至 MetaController | `neuro_auto_selector.py` → `meta_controller.py` | P2 | 低 |
+| F5 | NeuroAutoSelector LearnRecorder 連接至 MetaController | ✅ **DONE** (commit `44fec2abb~`, Jun 28) | `neuro_auto_selector.py:764-773` + `router.py:464-470` |
 
 ### 2.2 修復 (Repairs)
 

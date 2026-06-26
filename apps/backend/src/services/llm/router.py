@@ -461,12 +461,20 @@ class AngelaLLMService:
         # 初始化記憶增強系統
         self._init_memory_enhancement()
 
+        # Initialize MetaController (shared across auto/standard modes)
+        try:
+            from ai.meta.meta_controller import MetaController
+            self.meta_controller = MetaController()
+        except Exception as e:
+            logger.warning(f"MetaController not available: {e}")
+            self.meta_controller = None
+
         # [auto] mode: use NeuroAutoSelector for initial backend selection
         if self.llm_mode == "auto":
             try:
                 from ai.response.neuro_auto_selector import NeuroAutoSelector
 
-                self.auto_selector = NeuroAutoSelector(config=self.config)
+                self.auto_selector = NeuroAutoSelector(config=self.config, meta_controller=self.meta_controller)
                 result = await self.auto_selector.decide(context={})
 
                 if result.backend.value != "neuroblender":
@@ -517,13 +525,6 @@ class AngelaLLMService:
                     self.active_backend = self.backends[backend_type]
                     self.active_backend_type = backend_type
                     break
-
-            # Initialize MetaController
-            try:
-                from ai.meta.meta_controller import MetaController
-                self.meta_controller = MetaController()
-            except Exception as e:
-                logger.warning(f"MetaController not available: {e}")
 
             # Initialize Model Bus
             try:
