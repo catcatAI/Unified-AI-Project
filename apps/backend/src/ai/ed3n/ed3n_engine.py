@@ -442,7 +442,7 @@ class ED3NEngine:
             return output
 
         # Stage 6: Cycling — iterative refinement if confidence is low
-        MAX_CYCLES = 3
+        MAX_CYCLES = getattr(self, "max_cycles", 3)
         CONFIDENCE_THRESHOLD = 0.7
         current_output = response
         current_confidence = enriched_conf

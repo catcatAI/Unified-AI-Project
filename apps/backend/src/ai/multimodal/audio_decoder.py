@@ -4,6 +4,7 @@ P24: Wavetable synthesis + LPC-style spectral shaping for natural timbre.
 """
 
 import logging
+from pathlib import Path
 from typing import Optional
 
 import numpy as np
@@ -139,6 +140,33 @@ class AudioWaveformDecoder:
     def get_projection(self) -> np.ndarray:
         return self._W.copy()
 
-    def set_projection(self, W: np.ndarray) -> None:
+    def set_projection(self, W: np.ndarray, b: Optional[np.ndarray] = None) -> None:
         if W.shape == self._W.shape:
             self._W = W.astype(np.float32)
+        if b is not None and b.shape == self._b.shape:
+            self._b = b.astype(np.float32)
+
+
+def load_default_audio_decoder_weights(decoder: AudioWaveformDecoder, weights_path: Optional[str] = None) -> bool:
+    """Load pre-trained audio decoder weights from p29_trained.npz.
+
+    Returns True if weights were loaded, False otherwise.
+    """
+    if weights_path is None:
+        # audio_decoder.py → multimodal → ai → src → backend → apps → root
+        weights_path = str(Path(__file__).resolve().parent.parent.parent.parent.parent.parent /
+                          "data" / "multimodal" / "weights" / "p29_trained.npz")
+    wpath = Path(weights_path)
+    if not wpath.exists():
+        logger.debug("No pre-trained audio decoder weights at %s", wpath)
+        return False
+    try:
+        data = np.load(wpath)
+        if "audio_decoder_W" in data:
+            decoder._W = data["audio_decoder_W"]
+            decoder._b = data.get("audio_decoder_b", decoder._b)
+            logger.info("Loaded pre-trained audio decoder weights from %s", wpath)
+            return True
+    except Exception as e:
+        logger.warning("Failed to load audio decoder weights: %s", e)
+    return False

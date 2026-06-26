@@ -85,14 +85,16 @@ class MultimodalService:
 
     def _get_visual_decoder(self):
         if "vdecoder" not in self._decoders:
-            from ai.multimodal.visual_decoder import VisualDecoder
+            from ai.multimodal.visual_decoder import VisualDecoder, load_default_visual_decoder_weights
             self._decoders["vdecoder"] = VisualDecoder()
+            load_default_visual_decoder_weights(self._decoders["vdecoder"])
         return self._decoders["vdecoder"]
 
     def _get_audio_decoder(self):
         if "adecoder" not in self._decoders:
-            from ai.multimodal.audio_decoder import AudioWaveformDecoder
+            from ai.multimodal.audio_decoder import AudioWaveformDecoder, load_default_audio_decoder_weights
             self._decoders["adecoder"] = AudioWaveformDecoder()
+            load_default_audio_decoder_weights(self._decoders["adecoder"])
         return self._decoders["adecoder"]
 
     def _get_latent_space(self):

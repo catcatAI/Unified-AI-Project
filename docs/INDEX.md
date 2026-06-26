@@ -19,7 +19,7 @@
 - **`INDEX.md`** — This file
 - **`FRAMEWORK_OVERVIEW.md`** — 框架概述 (雙語，含誠實成熟度審計)
 - **[`IMPROVEMENT_ROADMAP.md`](06-project-management/IMPROVEMENT_ROADMAP.md)** — **改善路線圖 (新 2026-06-28)** — 修正/修復/更新/迭代/訓練/學習/整理完整計畫，含數據驗證矩陣
-- **[`MASTER_TASK_MAP.md`](06-project-management/MASTER_TASK_MAP.md)** — **主任務地圖** — 23份文檔144條索賠的完整來源追蹤，§X 29項 (12 DONE, 17 PENDING)
+- **[`MASTER_TASK_MAP.md`](06-project-management/MASTER_TASK_MAP.md)** — **主任務地圖** — 23份文檔144條索賠的完整來源追蹤，§X 30項 (13 DONE, 17 PENDING)
 - **`COMPREHENSIVE_REPAIR_ROADMAP.md`** — **全面修復路線圖** — 6 階段修復計畫
 - **`COMPREHENSIVE_AUDIT_2026-06-25.md`** — **最新全面審計報告**
 
@@ -29,7 +29,7 @@
 | 文件 | 說明 |
 |------|------|
 | **[IMPROVEMENT_ROADMAP.md](06-project-management/IMPROVEMENT_ROADMAP.md)** | **改善路線圖 (2026-06-28)** — 修正/修復/更新/迭代/訓練/學習/整理完整計畫，含數據驗證矩陣與業界比較 |
-| **[MASTER_TASK_MAP.md](06-project-management/MASTER_TASK_MAP.md)** | **主任務地圖** — 29項追蹤，含完整成熟度審計，190+ AI類別業界比較 |
+| **[MASTER_TASK_MAP.md](06-project-management/MASTER_TASK_MAP.md)** | **主任務地圖** — 30項追蹤，含完整成熟度審計，190+ AI類別業界比較 |
 | **[FRAMEWORK_OVERVIEW.md](../FRAMEWORK_OVERVIEW.md)** | **框架概述** — 雙語架構導覽，誠實 AI 能力評估 (6.0 with LLM / <0.5 native) |
 | **[COMPREHENSIVE_AUDIT_2026-06-25.md](../COMPREHENSIVE_AUDIT_2026-06-25.md)** | **全面審計報告 (2026-06-25)** — 最新全專案審計, 26+發現 |
 | **[IDEAL_ARCHITECTURE.md](../IDEAL_ARCHITECTURE.md)** | **理想架構規範** — 16章節定義目標狀態, 目錄結構/路由標準/AI子系統/測試/CI-CD |

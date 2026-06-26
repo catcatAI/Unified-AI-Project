@@ -4,6 +4,8 @@ P24: CNN texture detail via transposed convolution from hidden features.
 """
 
 import logging
+from pathlib import Path
+from typing import Optional
 from typing import Optional
 
 import numpy as np
@@ -138,6 +140,33 @@ class VisualDecoder:
     def get_projection(self) -> np.ndarray:
         return self._W.copy()
 
-    def set_projection(self, W: np.ndarray) -> None:
+    def set_projection(self, W: np.ndarray, b: Optional[np.ndarray] = None) -> None:
         if W.shape == self._W.shape:
             self._W = W.astype(np.float32)
+        if b is not None and b.shape == self._b.shape:
+            self._b = b.astype(np.float32)
+
+
+def load_default_visual_decoder_weights(decoder: VisualDecoder, weights_path: Optional[str] = None) -> bool:
+    """Load pre-trained visual decoder weights from p29_trained.npz.
+
+    Returns True if weights were loaded, False otherwise.
+    """
+    if weights_path is None:
+        # visual_decoder.py → multimodal → ai → src → backend → apps → root
+        weights_path = str(Path(__file__).resolve().parent.parent.parent.parent.parent.parent /
+                          "data" / "multimodal" / "weights" / "p29_trained.npz")
+    wpath = Path(weights_path)
+    if not wpath.exists():
+        logger.debug("No pre-trained visual decoder weights at %s", wpath)
+        return False
+    try:
+        data = np.load(wpath)
+        if "visual_decoder_W" in data:
+            decoder._W = data["visual_decoder_W"]
+            decoder._b = data.get("visual_decoder_b", decoder._b)
+            logger.info("Loaded pre-trained visual decoder weights from %s", wpath)
+            return True
+    except Exception as e:
+        logger.warning("Failed to load visual decoder weights: %s", e)
+    return False

@@ -66,8 +66,9 @@ class VisionPipeline:
 
     def _get_decoder(self):
         if self._decoder is None:
-            from ai.multimodal.visual_decoder import VisualDecoder
+            from ai.multimodal.visual_decoder import VisualDecoder, load_default_visual_decoder_weights
             self._decoder = VisualDecoder()
+            load_default_visual_decoder_weights(self._decoder)
         return self._decoder
 
     # --- Core process ---

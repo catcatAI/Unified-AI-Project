@@ -304,7 +304,7 @@ class GARDENEngine:
             return self._fallback_str(text)
 
         # Stage 6: Cycling — iterative refinement if response is weak
-        MAX_CYCLES = 3
+        MAX_CYCLES = getattr(self, "max_cycles", 3)
         MIN_RESPONSE_LEN = 5
         current_output = response
         cycles_used = 0

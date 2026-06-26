@@ -34,8 +34,12 @@ class MultimodalBridge:
     def __init__(self):
         self._visual_encoder = VisualEncoder(feature_dim=self.VISION_DIM)
         self._audio_encoder = AudioSpectralEncoder(feature_dim=self.AUDIO_DIM)
+        from ai.multimodal.visual_decoder import VisualDecoder, load_default_visual_decoder_weights
+        from ai.multimodal.audio_decoder import AudioWaveformDecoder, load_default_audio_decoder_weights
         self._visual_decoder = VisualDecoder()
+        load_default_visual_decoder_weights(self._visual_decoder)
         self._audio_decoder = AudioWaveformDecoder()
+        load_default_audio_decoder_weights(self._audio_decoder)
         self._latent_space = SharedLatentSpace(latent_dim=self.LATENT_DIM)
         self._latent_space.register_modality("vision", self.VISION_DIM)
         self._latent_space.register_modality("audio", self.AUDIO_DIM)
