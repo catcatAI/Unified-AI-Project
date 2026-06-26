@@ -90,16 +90,52 @@ class CIFAR10Loader:
     def size(self) -> int:
         return len(self._samples)
 
-    def encode_all(self) -> int:
-        """Encode all images via VisualEncoder.
+    def encode_all(self, max_images: int = 0, checkpoint_interval: int = 5000) -> int:
+        """Encode all images via VisualEncoder with checkpoint persistence.
+
+        Args:
+            max_images: Maximum images to encode (0 = all available).
+            checkpoint_interval: Save checkpoint every N images.
+
+        Saves incremental checkpoints every `checkpoint_interval` images,
+        and resumes from checkpoint if available.
 
         Returns count of successfully encoded images.
         """
-        count = 0
-        for i, (label, path) in enumerate(self._samples):
+        checkpoint_path = self._data_dir / "_encoded_checkpoint.npz"
+
+        # Resume from checkpoint if it exists
+        if checkpoint_path.exists():
             try:
+                ckpt = np.load(checkpoint_path, allow_pickle=True)
+                saved_indices = ckpt.get("indices", [])
+                saved_features = ckpt.get("features", [])
+                if len(saved_indices) > 0:
+                    self._encoded = dict(zip(saved_indices, saved_features))
+                    logger.info(
+                        "CIFAR-10: resumed from checkpoint (%d images already encoded)",
+                        len(self._encoded),
+                    )
+            except Exception as e:
+                logger.warning("CIFAR-10: checkpoint load failed: %s", e)
+                self._encoded = {}
+        else:
+            self._encoded = {}
+
+        count = len(self._encoded)
+        total = min(len(self._samples), max_images) if max_images > 0 else len(self._samples)
+        if count >= total:
+            logger.info("CIFAR-10: all %d images already encoded", count)
+            return count
+
+        for i in range(count, len(self._samples)):
+            if len(self._encoded) >= total:
+                break
+            if i in self._encoded:
+                continue
+            try:
+                label, path = self._samples[i]
                 img_data = np.load(path).astype(np.uint8)
-                # Use encode_from_pil directly — avoids PNG round-trip
                 from PIL import Image
                 features = self._encoder.encode_from_pil(Image.fromarray(img_data))
                 if features.sum() != 0:
@@ -107,9 +143,27 @@ class CIFAR10Loader:
                     count += 1
             except Exception as e:
                 logger.debug("CIFAR-10 encode failed at index %d: %s", i, e)
-            if (i + 1) % 10000 == 0:
-                logger.info("  Encoded %d/%d CIFAR-10 images", i + 1, len(self._samples))
-        logger.info("CIFAR-10: encoded %d/%d images", count, len(self._samples))
+            if (i + 1) % checkpoint_interval == 0 or (i + 1) == len(self._samples) or count >= total:
+                try:
+                    indices = np.array(list(self._encoded.keys()), dtype=object)
+                    feats = np.array(list(self._encoded.values()), dtype=object)
+                    np.savez(checkpoint_path, indices=indices, features=feats)
+                except Exception as e:
+                    logger.warning("CIFAR-10: checkpoint save failed at %d: %s", i + 1, e)
+                if (i + 1) % checkpoint_interval == 0:
+                    logger.info(
+                        "  Encoded %d/%d CIFAR-10 images (checkpoint saved)",
+                        i + 1, len(self._samples),
+                    )
+
+        if count == len(self._samples):
+            try:
+                checkpoint_path.unlink(missing_ok=True)
+            except Exception:
+                pass
+            logger.info("CIFAR-10: encoded all %d images", count)
+        else:
+            logger.info("CIFAR-10: encoded %d/%d images", count, len(self._samples))
         return count
 
     def get_features(self, index: int) -> Optional[np.ndarray]:
@@ -237,14 +291,19 @@ class ESC50Loader:
     def size(self) -> int:
         return len(self._samples)
 
-    def encode_all(self) -> int:
+    def encode_all(self, max_images: int = 0) -> int:
         """Encode all audio clips via AudioSpectralEncoder.
 
         Reads each WAV file, encodes spectrally.
+        Args:
+            max_images: Max clips to encode (0 = all).
         Returns count of successfully encoded clips.
         """
+        limit = max_images if max_images > 0 else len(self._samples)
         count = 0
         for i, (class_id, category, ref_path_str) in enumerate(self._samples):
+            if count >= limit:
+                break
             try:
                 ref_path = Path(ref_path_str)
                 if not ref_path.exists():
@@ -329,16 +388,19 @@ class RealDataProvider:
         return (len(self.cifar10._encoded) > 0 or
                 len(self.esc50._encoded) > 0)
 
-    def encode_all(self) -> Dict[str, int]:
+    def encode_all(self, max_images: int = 0) -> Dict[str, int]:
         """Encode all data from available datasets.
+
+        Args:
+            max_images: Max images to encode per dataset (0 = all).
 
         Returns dict with counts per dataset.
         """
         results = {}
         if self.cifar10.available:
-            results["cifar10"] = self.cifar10.encode_all()
+            results["cifar10"] = self.cifar10.encode_all(max_images=max_images)
         if self.esc50.available:
-            results["esc50"] = self.esc50.encode_all()
+            results["esc50"] = self.esc50.encode_all(max_images=max_images)
         return results
 
     def contrastive_pairs(self, n_per_modality: int = 50,

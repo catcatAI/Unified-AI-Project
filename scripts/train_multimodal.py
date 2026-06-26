@@ -56,6 +56,8 @@ def main():
                         help="Load trained weights before training (path or 'auto' for default)")
     parser.add_argument("--eval-before", action="store_true",
                         help="Evaluate quality before training (for before/after comparison)")
+    parser.add_argument("--max-images", type=int, default=0,
+                        help="Max images to encode per dataset (0 = all)")
     args = parser.parse_args()
 
     print("=" * 60)
@@ -85,7 +87,7 @@ def main():
             data_provider = RealDataProvider()
             if args.encode:
                 print("\nEncoding real datasets...")
-                counts = data_provider.encode_all()
+                counts = data_provider.encode_all(max_images=args.max_images)
                 for name, cnt in counts.items():
                     print(f"  {name}: {cnt} samples encoded")
             elif data_provider.has_data() or data_provider.cifar10.available or data_provider.esc50.available:
@@ -94,7 +96,7 @@ def main():
                     print(f"  Using pre-encoded data (CIFAR10: {len(data_provider.cifar10._encoded)}, ESC50: {len(data_provider.esc50._encoded)})")
                 else:
                     print("\nEncoding real datasets (first use)...")
-                    counts = data_provider.encode_all()
+                    counts = data_provider.encode_all(max_images=args.max_images)
                     for name, cnt in counts.items():
                         print(f"  {name}: {cnt} samples encoded")
         except ImportError as e:
