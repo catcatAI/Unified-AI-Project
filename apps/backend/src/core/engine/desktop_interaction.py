@@ -1022,46 +1022,46 @@ class DesktopInteraction:
         rollback_func: Optional[Callable] = None,
         max_retries: int = 1,
     ) -> Dict[str, Any]:
-        """
-        安全执行文件操作 / Safely execute file operation with error handling
+        results = self._init_execution_results(operation)
+        last_error = None
 
-        关键安全功能：
-        - 自动错误检测和处理
-        - 操作回滚支持
-        - 重试机制
-        - 详细结果报告
+        for attempt in range(1, max_retries + 2):
+            results["attempts"] = attempt
+            operation.status = "in_progress"
+            operation.timestamp = datetime.now()
 
-        Critical safety features:
-        - Automatic error detection and handling
-        - Operation rollback support
-        - Retry mechanism
-        - Detailed result reporting
+            try:
+                await operation_func()
+                return await self._finalize_execution_success(operation, results)
+            except Exception as e:
+                last_error = e
+                logger.error(f"Error in {__name__}: {e}", exc_info=True)
+                operation.status = "failed"
+                operation.error_message = str(e)
 
-        Args:
-            operation: FileOperation to execute
-            operation_func: Async function to perform the actual operation
-            rollback_func: Optional function to rollback on failure
-            max_retries: Maximum number of retry attempts (default 1)
+                error_results = await self._handle_execution_error(operation, e, attempt)
+                results["error_handling"] = error_results
 
-        Returns:
-            Dict containing execution results:
-            - success: Whether operation succeeded
-            - operation: The operation object (updated status)
-            - attempts: Number of attempts made
-            - error_handling: Error handling results if any
-            - rolled_back: Whether rollback was performed
+                if error_results.get("can_retry") and attempt <= max_retries:
+                    await asyncio.sleep(loop_sleep("short_pause", 0.5))
+                    continue
 
-        Example:
-            >>> async def move_file_op():
-            ...     shutil.move(str(src), str(dst))
-            >>> result = await desktop._safe_execute(
-            ...     operation=file_op,
-            ...     operation_func=move_file_op,
-            ...     rollback_func=restore_backup,
-            ...     max_retries=2
-            ... )
-        """
-        results = {
+                if not error_results.get("handled"):
+                    if rollback_func:
+                        await self._attempt_rollback(rollback_func, results)
+                else:
+                    if error_results.get("recovery_action") in ("mark_as_completed", "cleaned_temp_files"):
+                        operation.status = "completed_with_warnings"
+                        results["success"] = True
+                    break
+
+        if not results["success"] and last_error:
+            results["final_error"] = str(last_error)
+            results["final_error_type"] = type(last_error).__name__
+        return results
+
+    def _init_execution_results(self, operation: FileOperation) -> Dict[str, Any]:
+        return {
             "success": False,
             "operation": operation,
             "attempts": 0,
@@ -1070,87 +1070,30 @@ class DesktopInteraction:
             "timestamp": datetime.now().isoformat(),
         }
 
-        attempt = 0
-        last_error = None
-
-        while attempt < max_retries + 1:
-            attempt += 1
-            results["attempts"] = attempt
-
-            try:
-                # Mark operation as in progress
-                operation.status = "in_progress"
-                operation.timestamp = datetime.now()
-
-                # Execute the operation
-                await operation_func()
-
-                # Mark as completed
-                operation.status = "completed"
-                operation.error_message = None
-                results["success"] = True
-
-                # Add to history
-                self.operation_history.append(operation)
-                if len(self.operation_history) > _MAX_OPERATION_HISTORY:
-                    self.operation_history = self.operation_history[-_MAX_OPERATION_HISTORY:]
-
-                # Notify success
-                self._notify_operation_callbacks(operation)
-
-                return results
-
-            except Exception as e:  # broad exception acceptable: safe execute loop errors should be logged
-                logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                last_error = e
-
-                operation.status = "failed"
-                operation.error_message = str(e)
-
-                # Handle the error
-                context = {
-                    "backup_path": operation.source_path.parent
-                    / f".backup_{operation.operation_id}",
-                    "original_path": operation.source_path,
-                    "attempt": attempt,
-                }
-
-                error_results = await self._handle_file_error(e, operation, context)
-                results["error_handling"] = error_results
-
-                # Check if we can retry
-                if error_results.get("can_retry") and attempt < max_retries + 1:
-                    # Wait a bit before retry
-                    await asyncio.sleep(loop_sleep("short_pause", 0.5))
-                    continue
-
-                # If error was handled, mark as completed with warning
-                if error_results.get("handled"):
-                    if error_results.get("recovery_action") in [
-                        "mark_as_completed",
-                        "cleaned_temp_files",
-                    ]:
-                        operation.status = "completed_with_warnings"
-                        results["success"] = True
-
-                # Perform rollback if available and needed
-                if rollback_func and not results["success"]:
-                    try:
-                        await rollback_func()
-                        results["rolled_back"] = True
-                    except Exception as rollback_error:  # broad exception acceptable: rollback errors should be logged
-                        results["rollback_error"] = str(rollback_error)
-
-                # Don't retry if error was handled
-                if error_results.get("handled"):
-                    break
-
-        # If we get here, operation failed
-        if not results["success"] and last_error:
-            results["final_error"] = str(last_error)
-            results["final_error_type"] = type(last_error).__name__
-
+    async def _finalize_execution_success(self, operation: FileOperation, results: Dict) -> Dict:
+        operation.status = "completed"
+        operation.error_message = None
+        results["success"] = True
+        self.operation_history.append(operation)
+        if len(self.operation_history) > _MAX_OPERATION_HISTORY:
+            self.operation_history = self.operation_history[-_MAX_OPERATION_HISTORY:]
+        self._notify_operation_callbacks(operation)
         return results
+
+    async def _handle_execution_error(self, operation: FileOperation, error: Exception, attempt: int) -> Dict:
+        context = {
+            "backup_path": operation.source_path.parent / f".backup_{operation.operation_id}",
+            "original_path": operation.source_path,
+            "attempt": attempt,
+        }
+        return await self._handle_file_error(error, operation, context)
+
+    async def _attempt_rollback(self, rollback_func: Callable, results: Dict) -> None:
+        try:
+            await rollback_func()
+            results["rolled_back"] = True
+        except Exception as e:
+            results["rollback_error"] = str(e)
 
 
 # Example usage
