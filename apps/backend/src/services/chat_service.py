@@ -142,17 +142,31 @@ class ChatService:
         merged_context = context or {}
         merged_context.setdefault("user_name", user_name)
 
-        # Cultural context injection: detect user culture and add awareness notes
-        if self._cultural_context is not None:
-            try:
-                lang = merged_context.get("language", "")
-                merged_context = self._cultural_context.enrich_context(
-                    merged_context, user_message, language_code=lang
-                )
-            except Exception as e:
-                logger.debug("Cultural context enrichment skipped: %s", e)
+        merged_context = self._inject_cultural_context(merged_context, user_message)
+        merged_context = await self._inject_memory_context(merged_context, user_message)
+        merged_context, mm_adapter = await self._inject_multimodal_context(merged_context, user_message)
 
-        # Memory context injection: retrieve relevant past knowledge and conversations
+        response = await self._llm_service.generate_response(user_message, merged_context)
+        response = self._post_process_response(response, merged_context)
+
+        await self._process_multimodal_output(response, merged_context, mm_adapter)
+        await self._process_continuous_learning(user_message, response, merged_context)
+        await self._process_garden_learning(user_message, response)
+        await self._store_interaction_memories(user_message, response)
+
+        return response
+
+    def _inject_cultural_context(self, merged_context: dict, user_message: str) -> dict:
+        if self._cultural_context is None:
+            return merged_context
+        try:
+            lang = merged_context.get("language", "")
+            return self._cultural_context.enrich_context(merged_context, user_message, language_code=lang)
+        except Exception as e:
+            logger.debug("Cultural context enrichment skipped: %s", e)
+        return merged_context
+
+    async def _inject_memory_context(self, merged_context: dict, user_message: str) -> dict:
         if self._vector_store is not None:
             try:
                 vs_results = await self._vector_store.semantic_search(user_message, 3)
@@ -180,8 +194,9 @@ class ChatService:
             logger.debug("Memory context injected: dict=%d, conv=%d",
                          len(merged_context.get("dictionary_context", [])),
                          len(merged_context.get("conversation_memory", [])))
+        return merged_context
 
-        # Multimodal context injection: retrieve related entries from image/audio query
+    async def _inject_multimodal_context(self, merged_context: dict, user_message: str):
         image_analysis = merged_context.get("image_analysis")
         mm_adapter = None
         if image_analysis and isinstance(image_analysis, dict):
@@ -190,66 +205,64 @@ class ChatService:
                 try:
                     from ai.multimodal.multimodal_ed3n_adapter import MultimodalED3NAdapter
                     mm_adapter = MultimodalED3NAdapter()
-                    # Index this image for future cross-modal retrieval
                     mm_adapter.index_image_for_retrieval(
                         image_data,
                         key=f"chat_{abs(hash(image_data[:100])) & 0xFFFFFFFF:08x}",
                         label=merged_context.get("user_name", "user"),
                         metadata={"source": "chat_service", "message": user_message[:100]},
                     )
-                    # Inject multimodal retrieval results into context
                     merged_context = mm_adapter.inject_into_context(
                         merged_context, image_data=image_data, top_k=3
                     )
                 except Exception as e:
                     logger.debug("Multimodal retrieval failed (non-critical): %s", e)
+        return merged_context, mm_adapter
 
-        response = await self._llm_service.generate_response(user_message, merged_context)
+    async def _process_multimodal_output(self, response, merged_context: dict, mm_adapter) -> None:
+        if mm_adapter is None or not merged_context.get("multimodal_entries"):
+            return
+        try:
+            top_entry = merged_context["multimodal_entries"][0]
+            latent = top_entry.get("vector")
+            if latent and len(latent) >= 64:
+                from ai.multimodal.multimodal_bridge import MultimodalBridge
+                bridge = MultimodalBridge()
+                decoded_img = bridge.decode_latent_to_image(latent[:64])
+                if decoded_img is not None:
+                    buf = io.BytesIO()
+                    decoded_img.save(buf, format="PNG")
+                    response.metadata["generated_image"] = buf.getvalue().hex()
+                decoded_wav = bridge.decode_latent_to_waveform(latent[:64])
+                if decoded_wav is not None:
+                    response.metadata["generated_audio"] = decoded_wav[:16000]
+        except Exception as e:
+            logger.debug("Multimodal decode output failed (non-critical): %s", e)
 
-        response = self._post_process_response(response, merged_context)
+    async def _process_continuous_learning(self, user_message: str, response, merged_context: dict) -> None:
+        if not self._continuous_learning:
+            return
+        try:
+            await self._continuous_learning.process_interaction_async(
+                user_message, response.text, merged_context
+            )
+        except Exception as e:
+            logger.warning("Continuous learning interaction failed: %s", e)
 
-        # Multimodal output decoding: generate image/audio from retrieved entries
-        if mm_adapter is not None and merged_context.get("multimodal_entries"):
-            try:
-                top_entry = merged_context["multimodal_entries"][0]
-                latent = top_entry.get("vector")
-                if latent and len(latent) >= 64:
-                    from ai.multimodal.multimodal_bridge import MultimodalBridge
-                    bridge = MultimodalBridge()
-                    decoded_img = bridge.decode_latent_to_image(latent[:64])
-                    if decoded_img is not None:
-                        buf = io.BytesIO()
-                        decoded_img.save(buf, format="PNG")
-                        response.metadata["generated_image"] = buf.getvalue().hex()
-                    decoded_wav = bridge.decode_latent_to_waveform(latent[:64])
-                    if decoded_wav is not None:
-                        response.metadata["generated_audio"] = decoded_wav[:16000]
-            except Exception as e:
-                logger.debug("Multimodal decode output failed (non-critical): %s", e)
+    async def _process_garden_learning(self, user_message: str, response) -> None:
+        if not self._garden_engine:
+            return
+        try:
+            self._garden_engine.learn_from_interaction(user_message, response.text)
+            self._garden_learn_count += 1
+            if self._garden_learn_count % 100 == 0:
+                garden_state_dir = os.path.join(self._cl_state_dir, "garden_state")
+                await asyncio.to_thread(os.makedirs, garden_state_dir, exist_ok=True)
+                await asyncio.to_thread(self._garden_engine.save, garden_state_dir)
+                logger.info("GARDEN engine saved after %d interactions", self._garden_learn_count)
+        except Exception as e:
+            logger.debug("GARDEN learning failed: %s", e)
 
-        if self._continuous_learning:
-            try:
-                await self._continuous_learning.process_interaction_async(
-                    user_message, response.text, merged_context
-                )
-            except Exception as e:
-                logger.warning("Continuous learning interaction failed: %s", e)
-
-        # GARDEN continuous learning (Phase 4.5)
-        if self._garden_engine:
-            try:
-                self._garden_engine.learn_from_interaction(user_message, response.text)
-                self._garden_learn_count += 1
-                # Auto-save every 100 interactions
-                if self._garden_learn_count % 100 == 0:
-                    garden_state_dir = os.path.join(self._cl_state_dir, "garden_state")
-                    await asyncio.to_thread(os.makedirs, garden_state_dir, exist_ok=True)
-                    await asyncio.to_thread(self._garden_engine.save, garden_state_dir)
-                    logger.info("GARDEN engine saved after %d interactions", self._garden_learn_count)
-            except Exception as e:
-                logger.debug("GARDEN learning failed: %s", e)
-
-        # Store interaction in VectorStore for semantic memory retrieval
+    async def _store_interaction_memories(self, user_message: str, response) -> None:
         if self._vector_store is not None:
             try:
                 import uuid as _uuid
@@ -258,7 +271,6 @@ class ChatService:
                 await self._vector_store.add_memory(memory_id, content, {"type": "conversation"})
             except Exception as e:
                 logger.debug("VectorStore memory store failed: %s", e)
-
         if getattr(self._llm_service, 'enable_memory_enhancement', False):
             try:
                 mm = getattr(self._llm_service, 'memory_manager', None)
@@ -269,8 +281,6 @@ class ChatService:
                     )
             except Exception as e:
                 logger.debug("Memory store failed: %s", e)
-
-        return response
 
     def _post_process_response(self, response, context: dict):
         """Enrich response with biological/emotional state context.
