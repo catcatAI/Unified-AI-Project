@@ -383,32 +383,71 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | 23 | **CerebellumEngine stub** | 27-line stub explicitly marked "最小 stub，等待完整實作" (minimal stub, waiting for full implementation). Returns dummy posture data. Only bio-inspired engine that's not real. | `core/bio/cerebellum_engine.py:9` — `__init__` sets `_posture`, 4 methods return dummies | Full design + implementation |
 | 24 | **FullTrainingPipeline + ContinuousMultimodalLearning (CML) wiring** | Both exist and are complete: `training_pipeline.py:166` FullTrainingPipeline (383L, contrastive pretrain + reconstruction finetune), `continuous_multimodal_learning.py:42` CML (329L, autonomous micro-training with buffer/trigger/persistence). But neither is wired to any API route, CRON trigger, or startup hook — they are dead code unless manually invoked. | `training_pipeline.py` — contrastive + reconstruction via `run()`/`train()`; `continuous_multimodal_learning.py` — auto-trains when buffer ≥ threshold; zero callers in production code | Wiring to API/timer/startup |
 | 25 | **Semantic encoder external dependencies (CLIP/Whisper)** | `SemanticVisualEncoder` (semantic_visual.py:56) requires `torch` + `transformers` (CLIP). `SemanticAudioEncoder` (semantic_audio.py:59) requires `torch` + `whisper` (openai-whisper). Both have graceful numpy fallbacks (`_encode_fallback`) but degrade to random/simple features without the external models. | `semantic_visual.py:56` — falls back to np.random.randn; `semantic_audio.py:59` — falls back to mfcc-like stats | Install `torch`, `transformers`, `openai-whisper` |
+| 26 | **PerceptionEngine + AttentionController stubs** | `PerceptionEngine` (100L) is a SKELETON — hardcodes confidence=0.85/saliency=0.75 for all visual input. `AttentionController` (33L) is a STUB — stores position, no saliency/IOR/scan path. `AuditoryAttention` (20L) is an EMPTY alias. Three-class "perception pipeline" with zero actual perception. | `perception_engine.py:18` — hardcoded values; `attention_controller.py:14` — `update_target()` sets mode+pos; `auditory_attention.py:9` — empty class | Full redesign of perception subsystem |
+| 27 | **CausalReasoningEngine skeleton** | 99L, ~80 executable. Only does Pearson correlation + variable grouping. No temporal reasoning, no confounding variables, no do-calculus, no structural causal models. `predict()` and `explain()` are trivial list filters. Only 2 smoke tests. | `causal_reasoning_engine.py:11` — `_pearson()` is only real math; `_infer_relationships()` pairs variables with fixed threshold | Research + implementation of proper causal inference |
+| 28 | **AdversarialGenerationSystem + TaskGenerator stubs** | `AdversarialGenerationSystem` (adversarial_generation_system.py:18) — simply appends "[adversarial variant]" to prompt. `TaskGenerator` (task_generator.py:22) — `generate_tasks()` returns single hardcoded dict, `predict_next_query()` returns None. Both are placeholders. | Both files exist but output is trivial/garbage | Design + implement proper adversarial training + task prediction |
 
-### §X Summary — Full Codebase Scan Findings
+### §X Summary — Full Codebase Maturity Audit
 
-Comprehensive scan of `apps/backend/src/` found **~190+ AI-related classes** across 20+ subsystems. Categorization:
+Comprehensive scan found **~190+ AI-related classes** across 20+ subsystems. Below is the *real* maturity assessment — just because a class exists ≠ it works.
 
-| Category | Count | Examples |
-|:---------|:-----:|:---------|
-| Neural networks (weight-bearing) | ~8 | CoreNetwork, SNNCore, TensorSNNCore, ThreeLayerVisual.Decoder, LIFNeuron |
-| Inference engines | ~15 | ED3NEngine, GARDENEngine, CausalReasoningEngine, PlanningEngine, MathRippleEngine |
-| Training systems | ~10 | ED3NTrainer, FullTrainingPipeline, CLP, CML, SequenceTrainer, JointTrainer |
-| Encoders/Decoders | ~15 | VisualEncoder, AudioSpectralEncoder, VisualDecoder, AudioWaveformDecoder |
-| Rule-based systems | ~25 | QueryClassifier, MetaController, NeuroAutoSelector, EmotionSystem, OntologySystem |
-| Memory systems | ~12 | HAMMemoryManager, VectorMemoryStore, MultimodalMemoryStore, TemplateLibrary |
-| Agents | ~15 | BaseAgent + 10 specialized agents + AgentManager + AgentOrchestrator |
-| Bio-inspired systems | ~12 | AutonomicNervousSystem, EndocrineSystem, NeuroplasticitySystem, TraumaMemorySystem |
-| LLM backends | ~8 | AngelaLLMService + 7 providers (OpenAI/Anthropic/Google/Ollama/llama.cpp/ED3N/GARDEN) |
-| Support/routing | ~40 | ModelBus, ExecutionGate, CrossModalRouter, ThetaRouter, StateMatrix4D |
-| Multimodal primitives | ~10 | PrimitiveLibrary, ConceptLibrary, SharedLatentSpace, GeometricVocabulary |
-| Generators | ~6 | ImageGenerator, SequenceGenerator, VisionResponseGenerator, Live2DAvatarGenerator |
+#### Modalities Supported (Input → Output)
 
-**Key finding**: All 30+ "core AI engines" are fully implemented — zero stubs except CerebellumEngine (#23). The bio-inspired layer (ANS, Endocrine, Neuroplasticity, etc.) is complete and working. The main gaps are:
-- CerebellumEngine stub (#23)
-- FullTrainingPipeline/CML not wired (#24)
-- Semantic encoders need torch/whisper (#25)
-- VisualDecoder not auto-trained (#18)
-- Cross-domain benchmarks don't exist (#17)
+| Modality | Input | Output | Maturity | How It Works |
+|----------|-------|--------|----------|-------------|
+| **Text** | String | Concept keys, responses, translations | **REAL** | ED3N CoreNetwork native pipeline; CLIP `encode_text()` via SemanticVisualEncoder |
+| **Image** | PNG/JPEG bytes | 256D features, 64D latent, 128×128 RGB, captions, OCR text, scene analysis | **REAL** | numpy VisualEncoder → SharedLatentSpace → VisualDecoder; CLIP wrapper for semantics; PIL for rendering |
+| **Audio** | WAV/PCM bytes | 128D features, 64D latent, 16kHz waveform, STT text, TTS bytes | **REAL** | numpy MFCC/spectral → SharedLatentSpace → wavetable synthesis; Whisper/SpeechRecognition wrappers |
+| **Tactile** | Visual features dict | Property dict: roughness, hardness, temperature, friction, elasticity | **SIMULATED** | No hardware. TactileSampler.infer_properties_from_visuals() maps material types to properties (117L, real logic) |
+| **Video** | Frame bytes | Frame analysis + motion_detected bool | **PARTIAL** | process_video_frame() re-calls analyze_image() per frame + adds random `motion_detected` |
+| **Proprioception** | Theta matrix (joint angles) | Posture dict | **STUB** | CerebellumEngine (27L) — `interpolate()` is no-op, marked "等待完整實作" |
+| **Smell/Taste/Vestibular** | — | — | **NOT IMPLEMENTED** | Zero code found anywhere |
+
+#### Generation Capabilities (What It Actually Produces)
+
+| Generator | Input → Output | Maturity | Quality |
+|-----------|---------------|----------|---------|
+| **PrimitiveRenderer** | DrawingInstructions → PIL Image (geometric shapes) | **REAL** | Correct anti-aliased rendering; PIL.ImageDraw |
+| **DifferentiableRenderer** | 263D vector → numpy RGB array (soft rasterizer) | **REAL** | Vectorized alpha compositing; gradients flow through |
+| **ThreeLayerVisual** | Class index → 32×32 reconstructed image (PCA + nonlinear decoder) | **REAL** | **BEST in system**: MSE=0.009, <1ms, perceptual loss, unsharp mask. Needs trained PCA file. |
+| **VisionResponseGenerator** | CLIP classifications → zh/en/ja text ("我看到一隻小雞。") | **REAL** | Template-based; 3 languages; no LLM needed |
+| **FragmentComposer** | Template text + context → assembled response | **REAL** | Sentence splitting, fragment typing, natural connectors; <2ms |
+| **NeuroBlender** | 8D state vector → assembled response | **PARTIAL** | Real algorithm; quality depends on NeuroVocabulary population |
+| **AudioWaveformDecoder** | 64D latent → 1s 16kHz PCM wave (wavetable synth) | **PARTIAL** | Multi-band wavetable, harmonic stacking. **All weights random.** Output = noise/tone. |
+| **ImageGenerator** (GVV) | Text → CLIP → SequenceGenerator → PrimitiveEncoder → PrimitiveRenderer → 128×128 image | **PARTIAL** | **Full pipeline exists but untrained.** SequenceGenerator has random RNN weights. CLIP falls back to hash(text) seed. Output = random shapes on gray canvas. |
+| **SequenceGenerator** | 512D CLIP embedding → list of 128D primitive embeddings | **PARTIAL** | Real RNN with BPTT, L2-normalized output, stop token. **Weights random at init.** |
+| **VisualDecoder** | 64D latent → 128×128 RGB via transposed conv | **PARTIAL** | Real CNN texture pipeline. **Weights random.** Output = colored noise + grid artifacts. |
+| **Live2DAvatarGenerator** | Text attributes → model3.json + layers + parameters | **STUB/PARTIAL** | model3.json is valid Live2D config. **Image layers = random colored rectangles** (comment: "待分層微服務上線後可開啟此段"). |
+| **CrossModalSynthesizer** | Blended latent → image OR audio via decoder | **PARTIAL** | Real blending math. Quality depends on trained decoders. |
+| **TrainingDataGenerator** | CIFAR-10 → (CLIP embed, primitive sequence) pairs | **REAL** | 3 generation modes (real/synthetic/random). All numpy. |
+| **ContrastiveBatchTrainer** | Synthetic pairs → trained SharedLatentSpace | **REAL** | Generates pos/neg pairs from shared seed + noise; contrastive loss |
+| **ReconstructionTrainer** | Random features → trained decoder weights | **REAL** | Autoencoder cycle with analytical gradients |
+| **FullTrainingPipeline** | None → trained .npz weight file | **BASIC** | End-to-end: contrastive pretrain + reconstruction finetune. **Default = synthetic data only.** |
+| **KGImport.generate_synthetic** | None → 10,000 KG entities with relations | **REAL** | 6 categories, zh/en forms, cross-category relations |
+| **StepDecoder** (ED3N) | Input text → text response via CoreNetwork | **PARTIAL** | Real dictionary encode→network→decode. Quality depends on network training. |
+| **VectorDecoder** (GARDEN) | Input text → text response via TensorSNNCore | **PARTIAL** | Real SNN inference. Quality depends on SNN training. |
+
+#### Engine Maturity Ratings
+
+| Rating | Count | Systems |
+|--------|:-----:|---------|
+| **SOPHISTICATED** | 2 | MathRippleEngine (971L, original cognitive-arithmetic model), EmotionalBlending (1131L, full PAD+4D state matrix) |
+| **REAL** | 14 | ED3NTrainer, TrainingCoordinator, ED3NEngine, GARDENEngine, AutonomicNervousSystem, EndocrineSystem, NeuroplasticityCore, TactileSystem, TraumaMemory, MultidimensionalTrigger, FragmentComposer, PrimitiveRenderer, DifferentiableRenderer, VisionResponseGenerator |
+| **BASIC** | 6 | FullTrainingPipeline, ContinuousMultimodalLearning, PlanningEngine, PerceptualMemory, ThreeLayerVisual, CrossModalSynthesizer |
+| **PARTIAL** | 6 | VisualDecoder, AudioWaveformDecoder, SequenceGenerator, ImageGenerator, StepDecoder, VectorDecoder |
+| **SKELETON** | 2 | PerceptionEngine (hardcoded confidence), CausalReasoningEngine (Pearson only) |
+| **STUB** | 5 | CerebellumEngine (27L), AttentionController (33L), AuditoryAttention (20L), TaskGenerator (placeholder), AdversarialGenerationSystem (trivial string append) |
+
+#### Real Gaps (What's Actually Missing)
+
+1. **Stub engines** (listed above): 5 systems are truly non-functional.
+2. **Untrained generators**: VisualDecoder, AudioWaveformDecoder, SequenceGenerator all have random weights. ImageGenerator pipeline is complete but untrained.
+3. **Unwired training**: FullTrainingPipeline + CML exist but never triggered from API/timer.
+4. **Perception pipeline broken**: PerceptionEngine + AttentionController = SKELETON/STUB. No real perception despite having real encoders.
+5. **Causal reasoning is Pearson only**: 99L skeleton with no genuine causal inference.
+6. **Video = image analysis per frame**: No temporal encoding, no motion understanding.
+7. **Missing modalities**: Smell, taste, vestibular = zero implementation.
+8. **Semantic encoders dependent on external models**: CLIP/Whisper degrade to random features without torch.
 
 ---
 
