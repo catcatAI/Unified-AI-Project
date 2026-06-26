@@ -349,109 +349,142 @@ def construct_angela_prompt(
 
     messages = [{"role": "system", "content": system_prompt.strip()}]
 
+    _append_user_profile(messages, context)
+    _append_drive_files(messages, context)
+    _append_image_analysis(messages, context)
+    _append_history(messages, context)
+    _append_retrieved_context(messages, context)
+    _append_multimodal_entries(messages, context)
+    _append_dialogue_context(messages, context)
+    _append_recent_memories(messages, context)
+    _append_draft_response(messages, context)
+
+    messages.append({"role": "user", "content": f"<user_message>{user_message}</user_message>"})
+
+    return messages
+
+
+def _append_user_profile(messages: List[Dict], context: Dict) -> None:
     user_profile = context.get("user_profile", {})
-    if user_profile:
-        profile_lines = [f"\n\n{prompt('angela.user_info')}"]
-        for k, v in user_profile.items():
-            if isinstance(v, list):
-                profile_lines.append(f"- {k}: {', '.join(v)}")
-            else:
-                profile_lines.append(f"- {k}: {v}")
-        messages[0]["content"] += "\n".join(profile_lines)
-
-    drive_files = context.get("drive_files", [])
-    if drive_files:
-        drive_block = f"\n\n{prompt('angela.google_drive')}\n"
-        for f in drive_files[:3]:
-            name = f.get("name", "unknown")
-            content = f.get("content", f.get("snippet", ""))[:1500]
-            drive_block += f"📄 {name}:\n{content}\n---\n"
-        messages[0]["content"] += drive_block
-
-    image_analysis = context.get("image_analysis")
-    if image_analysis:
-        filename = image_analysis.get("filename", "unknown")
-        analysis = image_analysis.get("analysis", "")
-        if isinstance(analysis, dict):
-            analysis = json.dumps(analysis, ensure_ascii=False, indent=2)[:2000]
+    if not user_profile:
+        return
+    lines = [f"\n\n{prompt('angela.user_info')}"]
+    for k, v in user_profile.items():
+        if isinstance(v, list):
+            lines.append(f"- {k}: {', '.join(v)}")
         else:
-            analysis = str(analysis)[:2000]
-        image_block = f"""
+            lines.append(f"- {k}: {v}")
+    messages[0]["content"] += "\n".join(lines)
+
+
+def _append_drive_files(messages: List[Dict], context: Dict) -> None:
+    drive_files = context.get("drive_files", [])
+    if not drive_files:
+        return
+    block = f"\n\n{prompt('angela.google_drive')}\n"
+    for f in drive_files[:3]:
+        name = f.get("name", "unknown")
+        content = f.get("content", f.get("snippet", ""))[:1500]
+        block += f"📄 {name}:\n{content}\n---\n"
+    messages[0]["content"] += block
+
+
+def _append_image_analysis(messages: List[Dict], context: Dict) -> None:
+    image_analysis = context.get("image_analysis")
+    if not image_analysis:
+        return
+    filename = image_analysis.get("filename", "unknown")
+    analysis = image_analysis.get("analysis", "")
+    if isinstance(analysis, dict):
+        analysis = json.dumps(analysis, ensure_ascii=False, indent=2)[:2000]
+    else:
+        analysis = str(analysis)[:2000]
+    messages[0]["content"] += f"""
 
 {prompt('angela.image_analysis')}
 {prompt('angela.filename', filename=filename)}
 {prompt('angela.analysis_content')}
 {analysis}"""
-        messages[0]["content"] += image_block
 
+
+def _append_history(messages: List[Dict], context: Dict) -> None:
     history = context.get("history", [])
     for h in history[-10:]:
         messages.append({"role": h.get("role", "assistant"), "content": h.get("content", "")})
 
+
+def _append_retrieved_context(messages: List[Dict], context: Dict) -> None:
     retrieved = context.get("retrieved_context")
-    if retrieved:
-        retrieved_block = f"\n{prompt('angela.related_context')}\n"
-        for item in retrieved:
-            role = item.get("role", "assistant")
-            content = item.get("content", "")[:200]
-            score = item.get("relevance", 0)
-            retrieved_block += f"- [{role}] {content} {prompt('angela.relevance', score=score)}\n"
-            messages.append({"role": "user", "content": retrieved_block})
+    if not retrieved:
+        return
+    for item in retrieved:
+        role = item.get("role", "assistant")
+        content = item.get("content", "")[:200]
+        score = item.get("relevance", 0)
+        messages.append({
+            "role": "user",
+            "content": f"\n{prompt('angela.related_context')}\n- [{role}] {content} {prompt('angela.relevance', score=score)}\n"
+        })
 
+
+def _append_multimodal_entries(messages: List[Dict], context: Dict) -> None:
     multimodal_entries = context.get("multimodal_entries")
-    if multimodal_entries:
-        multimodal_block = f"\n{prompt('angela.related_context')}\n"
-        for entry in multimodal_entries:
-            label = entry.get("surface_forms", {}).get("en", entry["key"])
-            score = entry.get("confidence", 0.0)
-            mod = "unknown"
-            ctx_list = entry.get("contexts", [])
-            if ctx_list:
-                mod = ctx_list[0].get("modality", "unknown")
-            multimodal_block += f"- [{mod}] {label} (relevant: {score:.2f})\n"
-        messages.append({"role": "user", "content": multimodal_block})
+    if not multimodal_entries:
+        return
+    block = f"\n{prompt('angela.related_context')}\n"
+    for entry in multimodal_entries:
+        label = entry.get("surface_forms", {}).get("en", entry["key"])
+        score = entry.get("confidence", 0.0)
+        mod = "unknown"
+        ctx_list = entry.get("contexts", [])
+        if ctx_list:
+            mod = ctx_list[0].get("modality", "unknown")
+        block += f"- [{mod}] {label} (relevant: {score:.2f})\n"
+    messages.append({"role": "user", "content": block})
 
-    # ========== Dialogue Context (Cross-turn) ==========
+
+def _append_dialogue_context(messages: List[Dict], context: Dict) -> None:
     dialogue_ctx = context.get("dialogue_context")
-    if dialogue_ctx:
-        summary = dialogue_ctx.get("summary", {})
-        key_points = summary.get("key_points", [])
-        if key_points:
-            points_str = "\n".join(f"- {p}" for p in key_points[:5])
-            messages.append({"role": "system", "content": f"{prompt('angela.dialogue_summary')}\n{points_str}"})
-        recent_msgs = dialogue_ctx.get("messages", [])
-        if recent_msgs:
-            ctx_block = f"\n{prompt('angela.recent_dialogue')}\n"
-            for m in recent_msgs[-5:]:
-                role = m.get("role", "user")
-                content = m.get("content", "")[:150]
-                ctx_block += f"- [{role}] {content}\n"
-            messages.append({"role": "user", "content": ctx_block})
+    if not dialogue_ctx:
+        return
+    summary = dialogue_ctx.get("summary", {})
+    key_points = summary.get("key_points", [])
+    if key_points:
+        messages.append({
+            "role": "system",
+            "content": f"{prompt('angela.dialogue_summary')}\n" + "\n".join(f"- {p}" for p in key_points[:5])
+        })
+    recent_msgs = dialogue_ctx.get("messages", [])
+    if not recent_msgs:
+        return
+    ctx_block = f"\n{prompt('angela.recent_dialogue')}\n"
+    for m in recent_msgs[-5:]:
+        role = m.get("role", "user")
+        content = m.get("content", "")[:150]
+        ctx_block += f"- [{role}] {content}\n"
+    messages.append({"role": "user", "content": ctx_block})
 
-    # ========== Recent Memories ==========
+
+def _append_recent_memories(messages: List[Dict], context: Dict) -> None:
     recent_memories = context.get("recent_memories")
-    if recent_memories:
-        mem_block = f"\n{prompt('angela.related_memories')}\n"
-        for mem in recent_memories[:3]:
-            content = mem.get("content", "")[:150]
-            mem_type = mem.get("memory_type", "unknown")
-            mem_block += f"- [{mem_type}] {content}\n"
-        messages.append({"role": "user", "content": mem_block})
+    if not recent_memories:
+        return
+    block = f"\n{prompt('angela.related_memories')}\n"
+    for mem in recent_memories[:3]:
+        content = mem.get("content", "")[:150]
+        mem_type = mem.get("memory_type", "unknown")
+        block += f"- [{mem_type}] {content}\n"
+    messages.append({"role": "user", "content": block})
 
-    # ========== ED3N/GARDEN Draft Response (Refinement) ==========
+
+def _append_draft_response(messages: List[Dict], context: Dict) -> None:
     draft_response = context.get("draft_response")
-    if draft_response:
-        refinement_block = f"""
-{prompt('angela.draft_response')}
-{draft_response}
-
-{prompt('angela.refinement_instruction')}
-"""
-        messages.append({"role": "system", "content": refinement_block})
-
-    messages.append({"role": "user", "content": f"<user_message>{user_message}</user_message>"})
-
-    return messages
+    if not draft_response:
+        return
+    messages.append({
+        "role": "system",
+        "content": f"\n{prompt('angela.draft_response')}\n{draft_response}\n\n{prompt('angela.refinement_instruction')}\n"
+    })
 
 
 __all__ = [

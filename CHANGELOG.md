@@ -104,6 +104,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
+## [7.5.0-dev] - 2026-06-26 — Long Function Refactoring + Doc Sync
+
+### Refactored
+- 🔧 **QueryClassifier.__init__** (187L→7L): Extracted 180 lines of pattern data into `_build_patterns()`/`_build_reflex_words()` static methods. 16 unit tests pass.
+- 🔧 **HAMDataProcessor._abstract_text** (133L→72L): Extracted `_extract_gist`, `_extract_keywords`, `_extract_entities`, `_extract_key_sentences` static methods.
+- 🔧 **HAMQueryEngine._fallback_keyword_search** (107L→65L): Extracted `_try_decrypt`/`_try_b64_fallback` eliminating duplicated logic. 8 HAM tests pass.
+
+### Fixed
+- 🐛 **MASTER_TASK_MAP §X**: 3 stale claims corrected — shared code dedup (resolved by Phase 9-12), Whisper STT (actually wired), formula tests (67 exist, all pass).
+- 🐛 **MASTER_TASK_MAP §II P4-1**: Formula system tests correct from "blocked" to ✅.
+- 🐛 **MASTER_TASK_MAP §I-C**: P4 long function refactor from "NOT STARTED" to "3/28 done".
+- 🐛 **MASTER_TASK_MAP §VII**: Whisper STT description from "not wired" to "pipeline wired end-to-end".
+
+### Synced
+- 🔄 **docs/INDEX.md**: Added FRAMEWORK_OVERVIEW.md + MASTER_TASK_MAP.md entries.
+- 🔄 **docs/00-overview/PROJECT_CHARTER.md**: SUPERSEDED marker (10 months stale).
+- 🔄 **docs/00-overview/UNIFIED_DOCUMENTATION_INDEX.md**: Added FRAMEWORK_OVERVIEW + MASTER_TASK_MAP refs.
+- 🔄 **docs/COMPREHENSIVE_REPAIR_ROADMAP.md**: Added FRAMEWORK_OVERVIEW + MASTER_TASK_MAP refs.
+- 🔄 **docs/06-project-management/plans/REPAIR_PLAN.md**: P3-9~11 dedup marked RESOLVED.
+
+### §X Pending Progress
+- 6/16 DONE (was 4/16): auto-repair, WS route, shared code dedup, agent routing, Whisper wiring, formula tests
+- 10 remain: YOLO, C901, long functions (25/28), load tests, tray, E2E, VisualDecoder, Level5ASI, annotations
+
 ## [7.5.0-dev] - 2026-06-16 — Phase 7 i18n Internationalization
 
 ### Added
