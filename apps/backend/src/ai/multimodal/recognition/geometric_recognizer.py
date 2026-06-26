@@ -163,11 +163,12 @@ class GeometricRecognizer:
         nearest_indices = np.argsort(dists)[:K]
 
         # Vote by class
-        scores = {name: 0.0 for name in self._vocabulary._concept_distributions}
+        class_names = list(self._vocabulary._concept_distributions.keys()) if hasattr(self._vocabulary, '_concept_distributions') else self._vocabulary.CLASSES
+        scores = {name: 0.0 for name in class_names}
         for idx in nearest_indices:
             label = int(all_labels[idx])
-            if 0 <= label < len(self._vocabulary.CLASSES):
-                class_name = self._vocabulary.CLASSES[label]
+            if 0 <= label < len(class_names):
+                class_name = class_names[label]
                 # Weight by inverse distance
                 weight = 1.0 / (1.0 + dists[idx])
                 scores[class_name] += weight

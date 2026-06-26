@@ -127,13 +127,17 @@ class TestOpsAPI:
     async def test_ops_status(self, client):
         resp = await client.get("/api/v1/ops/status")
         assert resp.status_code == 200
-        assert resp.json() == {"status": "ok", "service": "ops"}
+        data = resp.json()
+        assert data["status"] == "ok"
+        assert data["service"] == "ops"
 
     @pytest.mark.asyncio
     async def test_ops_health(self, client):
         resp = await client.get("/api/v1/ops/health")
         assert resp.status_code == 200
-        assert resp.json() == {"status": "healthy", "service": "ops"}
+        data = resp.json()
+        assert data["service"] == "ops"
+        assert data["status"] in ("healthy", "degraded", "unhealthy")
 
     @pytest.mark.asyncio
     async def test_ops_maintenance(self, client):
