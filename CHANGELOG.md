@@ -110,6 +110,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🔧 **QueryClassifier.__init__** (187L→7L): Extracted 180 lines of pattern data into `_build_patterns()`/`_build_reflex_words()` static methods. 16 unit tests pass.
 - 🔧 **HAMDataProcessor._abstract_text** (133L→72L): Extracted `_extract_gist`, `_extract_keywords`, `_extract_entities`, `_extract_key_sentences` static methods.
 - 🔧 **HAMQueryEngine._fallback_keyword_search** (107L→65L): Extracted `_try_decrypt`/`_try_b64_fallback` eliminating duplicated logic. 8 HAM tests pass.
+- 🔧 **prompt_builder.construct_angela_prompt** (F48→D27): Extracted 9 `_append_*` helper functions, reducing main function from 232L to ~142L. 10 prompt_builder tests pass.
+- 🔧 **model_bus.ModelBus.route** (E39→B8): Replaced 8-branch if/elif chain with dispatch dict + 6 strategy handler methods. Cyclomatic complexity reduced from 39 to 8. All 34 model bus tests pass.
 
 ### Fixed
 - 🐛 **MASTER_TASK_MAP §X**: 3 stale claims corrected — shared code dedup (resolved by Phase 9-12), Whisper STT (actually wired), formula tests (67 exist, all pass).
@@ -126,7 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### §X Pending Progress
 - 6/16 DONE (was 4/16): auto-repair, WS route, shared code dedup, agent routing, Whisper wiring, formula tests
-- 10 remain: YOLO, C901, long functions (25/28), load tests, tray, E2E, VisualDecoder, Level5ASI, annotations
+- 10 remain: YOLO, C901 (5 E-grade remain), long functions (24/28), load tests, tray, E2E, VisualDecoder, Level5ASI, annotations
 
 ## [7.5.0-dev] - 2026-06-16 — Phase 7 i18n Internationalization
 

@@ -213,127 +213,40 @@ class ModelBus:
     # Routing
     # ------------------------------------------------------------------
 
+    _ROUTE_HANDLERS: Dict[str, str] = {
+        "reflex": "_handle_reflex",
+        "greeting": "_handle_reflex",
+        "math": "_handle_math",
+        "knowledge": "_handle_knowledge",
+        "creative": "_handle_creative",
+        "file": "_handle_handler_based",
+        "search": "_handle_handler_based",
+        "code": "_handle_handler_based",
+        "execute": "_handle_handler_based",
+        "task": "_handle_handler_based",
+        "system": "_handle_handler_based",
+        "vision": "_handle_handler_based",
+        "audio": "_handle_fanout",
+    }
+
     async def route(
         self,
         query: str,
         query_type: str,
         context: Optional[Dict[str, Any]] = None,
     ) -> RouteDecision:
-        """Route query through best model(s) for the given type.
-
-        If *query_type* is ``"auto"`` the internal ``QueryClassifier`` is
-        loaded lazily and used to determine the type before routing.
-        """
+        """Route query through best model(s) for the given type."""
         if query_type == "auto":
             classifier = self._get_classifier()
             classify_result = classifier.classify(query)
             query_type = classify_result.primary_type.value
 
-        candidates = self._resolve_candidates(query_type)
-        results: Dict[str, ModelRouteResult] = {}
+        handler_name = self._ROUTE_HANDLERS.get(query_type, "_handle_fanout")
+        handler = getattr(self, handler_name)
         start = time.perf_counter()
-
-        if query_type in ("reflex", "greeting"):
-            # ED3N first — fastest path
-            r = await self._try_model("ed3n", query, context, "reflex")
-            results[r.model_id] = r
-            # If ED3N can't handle it, fall back to cloud LLM
-            reflex_threshold = 0.5
-            if self._meta_controller is not None:
-                adj = self._meta_controller.get_threshold_adjustment("model_bus:ed3n")
-                reflex_threshold = max(0.3, min(0.9, reflex_threshold + adj))
-            if r.confidence < reflex_threshold and "cloud" in self._registry:
-                r2 = await self._try_model("cloud", query, context, query_type)
-                results[r2.model_id] = r2
-
-        elif query_type == "math":
-            # ED3N first (trained 77.7%), GARDEN fallback
-            r1 = await self._try_model("ed3n", query, context, "math")
-            results[r1.model_id] = r1
-            math_threshold = confidence_value("ai.model_bus.route.math_threshold", 0.70)
-            if self._meta_controller is not None:
-                adj = self._meta_controller.get_threshold_adjustment("model_bus:ed3n")
-                math_threshold = max(0.3, min(0.95, math_threshold + adj))
-            if r1.confidence < math_threshold and "garden" in self._registry:
-                r2 = await self._try_model("garden", query, context, "math")
-                results[r2.model_id] = r2
-
-        elif query_type == "knowledge":
-            # GARDEN first, cloud fallback
-            r1 = await self._try_model("garden", query, context, "knowledge")
-            results[r1.model_id] = r1
-            knowledge_threshold = confidence_value("ai.model_bus.route.knowledge_threshold", 0.60)
-            if self._meta_controller is not None:
-                adj = self._meta_controller.get_threshold_adjustment("model_bus:garden")
-                knowledge_threshold = max(0.3, min(0.95, knowledge_threshold + adj))
-            if r1.confidence < knowledge_threshold and "cloud" in self._registry:
-                r2 = await self._try_model("cloud", query, context, "knowledge")
-                results[r2.model_id] = r2
-
-        elif query_type == "creative":
-            # Cloud LLM only
-            r = await self._try_model("cloud", query, context, "creative")
-            results[r.model_id] = r
-
-        elif query_type in ("file", "search", "code", "execute", "task", "system", "vision"):
-            # Handler-based routing — check registered handlers first
-            handler_id = self._handler_map.get(query_type)
-            if handler_id and handler_id in self._handlers:
-                handler = self._handlers[handler_id]
-                try:
-                    t0 = time.perf_counter()
-                    if asyncio.iscoroutinefunction(handler.process):
-                        raw = await asyncio.wait_for(
-                            handler.process(query, context or {"query_type": query_type}),
-                            timeout=self.default_timeout,
-                        )
-                    else:
-                        raw = await asyncio.wait_for(
-                            asyncio.to_thread(handler.process, query, context or {"query_type": query_type}),
-                            timeout=self.default_timeout,
-                        )
-                    elapsed = (time.perf_counter() - t0) * 1000
-                    if raw and isinstance(raw, str) and len(raw) > 0:
-                        results[handler_id] = ModelRouteResult(
-                            model_id=handler_id,
-                            text=raw,
-                            confidence=0.9,
-                            latency_ms=round(elapsed, 3),
-                            domain=query_type,
-                        )
-                except Exception as e:
-                    logger.warning("Handler '%s' failed: %s", handler_id, e)
-            # Fallback to model candidates if no handler result
-            if not results:
-                tasks = [
-                    self._try_model(mid, query, context, query_type)
-                    for mid in candidates
-                ]
-                for coro in asyncio.as_completed(tasks):
-                    r = await coro
-                    results[r.model_id] = r
-
-        elif query_type in ("vision", "audio"):
-            # Perception — try all eligible candidates
-            tasks = [
-                self._try_model(mid, query, context, query_type)
-                for mid in candidates
-            ]
-            for coro in asyncio.as_completed(tasks):
-                r = await coro
-                results[r.model_id] = r
-
-        else:
-            # general / unknown / opinion / command — try all eligible, pick best
-            tasks = [
-                self._try_model(mid, query, context, query_type)
-                for mid in candidates
-            ]
-            for coro in asyncio.as_completed(tasks):
-                r = await coro
-                results[r.model_id] = r
-
+        results = await handler(query, context, query_type)
         elapsed = (time.perf_counter() - start) * 1000
+
         best = self._pick_best(results)
         selected_model = best["model_id"]
         confidence = best["confidence"]
@@ -344,16 +257,11 @@ class ModelBus:
             threshold_adj = self._meta_controller.get_threshold_adjustment(f"model_bus:{selected_model}")
             if threshold_adj != 0.0:
                 logger.debug("MetaController adjusted %s threshold by %.3f", selected_model, threshold_adj)
-        
-        # ========== Hybrid Routing (Draft for Refinement) ==========
-        # If a local model (ED3N/GARDEN) has decent but not perfect confidence,
-        # and cloud LLM is available, we mark it for refinement.
+
         if selected_model in ("ed3n", "garden") and 0.4 <= confidence < 0.8:
             if "cloud" in self._registry:
                 logger.info(f"ModelBus: {selected_model} confidence ({confidence:.2f}) in refinement zone. Routing to cloud for polish.")
-                # We keep the local model as selected, but the service layer will see the confidence
-                # and decide whether to use it as a draft for the cloud model.
-        
+
         return RouteDecision(
             query=query,
             query_type=query_type,
@@ -363,6 +271,106 @@ class ModelBus:
             confidence=confidence,
             reason=best["reason"],
         )
+
+    async def _handle_reflex(
+        self, query: str, context: Optional[Dict[str, Any]], query_type: str
+    ) -> Dict[str, ModelRouteResult]:
+        results: Dict[str, ModelRouteResult] = {}
+        r = await self._try_model("ed3n", query, context, "reflex")
+        results[r.model_id] = r
+        reflex_threshold = 0.5
+        if self._meta_controller is not None:
+            adj = self._meta_controller.get_threshold_adjustment("model_bus:ed3n")
+            reflex_threshold = max(0.3, min(0.9, reflex_threshold + adj))
+        if r.confidence < reflex_threshold and "cloud" in self._registry:
+            r2 = await self._try_model("cloud", query, context, query_type)
+            results[r2.model_id] = r2
+        return results
+
+    async def _handle_math(
+        self, query: str, context: Optional[Dict[str, Any]], query_type: str
+    ) -> Dict[str, ModelRouteResult]:
+        results: Dict[str, ModelRouteResult] = {}
+        r1 = await self._try_model("ed3n", query, context, "math")
+        results[r1.model_id] = r1
+        math_threshold = confidence_value("ai.model_bus.route.math_threshold", 0.70)
+        if self._meta_controller is not None:
+            adj = self._meta_controller.get_threshold_adjustment("model_bus:ed3n")
+            math_threshold = max(0.3, min(0.95, math_threshold + adj))
+        if r1.confidence < math_threshold and "garden" in self._registry:
+            r2 = await self._try_model("garden", query, context, "math")
+            results[r2.model_id] = r2
+        return results
+
+    async def _handle_knowledge(
+        self, query: str, context: Optional[Dict[str, Any]], query_type: str
+    ) -> Dict[str, ModelRouteResult]:
+        results: Dict[str, ModelRouteResult] = {}
+        r1 = await self._try_model("garden", query, context, "knowledge")
+        results[r1.model_id] = r1
+        knowledge_threshold = confidence_value("ai.model_bus.route.knowledge_threshold", 0.60)
+        if self._meta_controller is not None:
+            adj = self._meta_controller.get_threshold_adjustment("model_bus:garden")
+            knowledge_threshold = max(0.3, min(0.95, knowledge_threshold + adj))
+        if r1.confidence < knowledge_threshold and "cloud" in self._registry:
+            r2 = await self._try_model("cloud", query, context, "knowledge")
+            results[r2.model_id] = r2
+        return results
+
+    async def _handle_creative(
+        self, query: str, context: Optional[Dict[str, Any]], query_type: str
+    ) -> Dict[str, ModelRouteResult]:
+        results: Dict[str, ModelRouteResult] = {}
+        r = await self._try_model("cloud", query, context, "creative")
+        results[r.model_id] = r
+        return results
+
+    async def _handle_handler_based(
+        self, query: str, context: Optional[Dict[str, Any]], query_type: str
+    ) -> Dict[str, ModelRouteResult]:
+        results: Dict[str, ModelRouteResult] = {}
+        handler_id = self._handler_map.get(query_type)
+        if handler_id and handler_id in self._handlers:
+            handler = self._handlers[handler_id]
+            try:
+                t0 = time.perf_counter()
+                if asyncio.iscoroutinefunction(handler.process):
+                    raw = await asyncio.wait_for(
+                        handler.process(query, context or {"query_type": query_type}),
+                        timeout=self.default_timeout,
+                    )
+                else:
+                    raw = await asyncio.wait_for(
+                        asyncio.to_thread(handler.process, query, context or {"query_type": query_type}),
+                        timeout=self.default_timeout,
+                    )
+                elapsed = (time.perf_counter() - t0) * 1000
+                if raw and isinstance(raw, str) and len(raw) > 0:
+                    results[handler_id] = ModelRouteResult(
+                        model_id=handler_id,
+                        text=raw,
+                        confidence=0.9,
+                        latency_ms=round(elapsed, 3),
+                        domain=query_type,
+                    )
+            except Exception as e:
+                logger.warning("Handler '%s' failed: %s", handler_id, e)
+        if not results:
+            tasks = [self._try_model(mid, query, context, query_type) for mid in self._resolve_candidates(query_type)]
+            for coro in asyncio.as_completed(tasks):
+                r = await coro
+                results[r.model_id] = r
+        return results
+
+    async def _handle_fanout(
+        self, query: str, context: Optional[Dict[str, Any]], query_type: str
+    ) -> Dict[str, ModelRouteResult]:
+        results: Dict[str, ModelRouteResult] = {}
+        tasks = [self._try_model(mid, query, context, query_type) for mid in self._resolve_candidates(query_type)]
+        for coro in asyncio.as_completed(tasks):
+            r = await coro
+            results[r.model_id] = r
+        return results
 
     # ------------------------------------------------------------------
     # Domain queries
