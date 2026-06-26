@@ -103,112 +103,93 @@ class VisionService:
         """
         分析圖像並提取指定特徵 (2030 Standard: Support Auto-Capture).
         """
-        # 2030 Detail: Auto-capture if no data provided
-        if image_data is None:
-            try:
-                import pyautogui
-                from io import BytesIO
-                screenshot = pyautogui.screenshot()
-                img_byte_arr = BytesIO()
-                screenshot.save(img_byte_arr, format='PNG')
-                image_data = img_byte_arr.getvalue()
-                logger.info("📸 [Vision] Environment captured: Automated screen snapshot.")
-            except Exception as e:  # broad exception acceptable: auto-capture is optional, should not block
-                logger.error(f"Failed to auto-capture screen: {e}", exc_info=True)
-                return {"error": "Vision capture failed"}
+        image_data, err = await self._auto_capture(image_data)
+        if err:
+            return err
 
-        processing_id = self._generate_processing_id(image_data)
-        requested_features = features or [
-            "captioning",
-            "object_detection",
-            "scene_analysis",
-        ]
-        context = context or {}
-
-        logger.info(
-            f"Vision Service: Analyzing image (ID: {processing_id}) for features: {requested_features}"
-        )
-
+        analysis_results, requested_features = self._setup_analysis(image_data, features, context)
         if not image_data:
-            return {"error": "No image data provided", "processing_id": processing_id}
+            return {"error": "No image data provided", "processing_id": analysis_results.get("processing_id")}
 
         try:
-
-            analysis_results: Dict[str, Any] = {
-                "processing_id": processing_id,
-                "image_size": len(image_data),
-                "timestamp": datetime.now().isoformat(),
-                "requested_features": requested_features,
-                "context": context,
-            }
-
-            # 進進版圖像分析功能
-            if "captioning" in requested_features:
-                analysis_results["caption"] = await self._generate_image_caption(
-                    image_data, context
-                )
-
-            if "object_detection" in requested_features:
-                analysis_results["objects"] = await self._detect_objects(image_data)
-
-            if "ocr" in requested_features:
-                analysis_results["ocr_text"] = await self._extract_text_ocr(image_data)
-
-            if "face_recognition" in requested_features and self.model_config.get(
-                "enable_face_recognition"
-            ):
-                analysis_results["faces"] = await self._detect_faces(image_data)
-
-            if "scene_analysis" in requested_features:
-                analysis_results["scene"] = await self._analyze_scene(image_data)
-
-            if "emotion_detection" in requested_features:
-                analysis_results["emotions"] = await self._detect_emotions(image_data)
-
-            if "color_analysis" in requested_features:
-                analysis_results["colors"] = await self._analyze_colors(image_data)
-
-            # 多模態融合：結合文本和音頻上下文
-            if context.get("text_context") or context.get("audio_context"):
-                analysis_results["multimodal_insights"] = await self._perform_multimodal_analysis(
-                    analysis_results, context
-                )
-
-            # 記錄處理歷史
-            self.processing_history.append(
-                {
-                    "processing_id": processing_id,
-                    "timestamp": analysis_results["timestamp"],
-                    "features": requested_features,
-                    "success": True,
-                }
-            )
-            if len(self.processing_history) > _MAX_PROCESSING_HISTORY:
-                self.processing_history = self.processing_history[-_MAX_PROCESSING_HISTORY:]
-
+            await self._extract_features(image_data, requested_features, analysis_results.get("context", {}), analysis_results)
+            self._record_processing(analysis_results.get("processing_id"), requested_features, True)
             return analysis_results
-
-        except Exception as e:  # broad exception acceptable: image analysis should be resilient to errors
-            logger.error(f"Error analyzing image {processing_id}: {e}", exc_info=True)
-            error_result: Dict[str, Any] = {
-                "error": str(e),
-                "processing_id": processing_id,
-                "timestamp": datetime.now().isoformat(),
-            }
-
-            self.processing_history.append(
-                {
-                    "processing_id": processing_id,
-                    "timestamp": error_result["timestamp"],
-                    "features": requested_features,
-                    "success": False,
-                    "error": str(e),
-                }
-            )
-            if len(self.processing_history) > _MAX_PROCESSING_HISTORY:
-                self.processing_history = self.processing_history[-_MAX_PROCESSING_HISTORY:]
-
+        except Exception as e:
+            logger.error(f"Error analyzing image {analysis_results.get('processing_id')}: {e}", exc_info=True)
+            error_result = self._build_error_result(e, analysis_results.get("processing_id"))
+            self._record_processing(analysis_results.get("processing_id"), requested_features, False, str(e))
             return error_result
+
+    async def _auto_capture(self, image_data: Optional[bytes]) -> Tuple[Optional[bytes], Optional[Dict]]:
+        """Auto-capture screen if no image data provided."""
+        if image_data is not None:
+            return image_data, None
+        try:
+            import pyautogui
+            from io import BytesIO
+            screenshot = pyautogui.screenshot()
+            img_byte_arr = BytesIO()
+            screenshot.save(img_byte_arr, format='PNG')
+            logger.info("📸 [Vision] Environment captured: Automated screen snapshot.")
+            return img_byte_arr.getvalue(), None
+        except Exception as e:
+            logger.error(f"Failed to auto-capture screen: {e}", exc_info=True)
+            return None, {"error": "Vision capture failed"}
+
+    def _setup_analysis(self, image_data: bytes, features: Optional[List[str]], context: Optional[Dict]) -> tuple:
+        """Initialize analysis results dict and feature list."""
+        processing_id = self._generate_processing_id(image_data)
+        requested_features = features or ["captioning", "object_detection", "scene_analysis"]
+        analysis_results: Dict[str, Any] = {
+            "processing_id": processing_id,
+            "image_size": len(image_data),
+            "timestamp": datetime.now().isoformat(),
+            "requested_features": requested_features,
+            "context": context or {},
+        }
+        logger.info(f"Vision Service: Analyzing image (ID: {processing_id}) for features: {requested_features}")
+        return analysis_results, requested_features
+
+    async def _extract_features(self, image_data: bytes, requested_features: List[str], context: Dict, results: Dict) -> None:
+        """Run requested feature extractors against the image."""
+        if "captioning" in requested_features:
+            results["caption"] = await self._generate_image_caption(image_data, context)
+        if "object_detection" in requested_features:
+            results["objects"] = await self._detect_objects(image_data)
+        if "ocr" in requested_features:
+            results["ocr_text"] = await self._extract_text_ocr(image_data)
+        if "face_recognition" in requested_features and self.model_config.get("enable_face_recognition"):
+            results["faces"] = await self._detect_faces(image_data)
+        if "scene_analysis" in requested_features:
+            results["scene"] = await self._analyze_scene(image_data)
+        if "emotion_detection" in requested_features:
+            results["emotions"] = await self._detect_emotions(image_data)
+        if "color_analysis" in requested_features:
+            results["colors"] = await self._analyze_colors(image_data)
+        if context.get("text_context") or context.get("audio_context"):
+            results["multimodal_insights"] = await self._perform_multimodal_analysis(results, context)
+
+    def _record_processing(self, processing_id: str, features: List[str], success: bool, error_msg: str = "") -> None:
+        """Record analysis to processing history, trimming if needed."""
+        entry = {
+            "processing_id": processing_id,
+            "timestamp": datetime.now().isoformat(),
+            "features": features,
+            "success": success,
+        }
+        if error_msg:
+            entry["error"] = error_msg
+        self.processing_history.append(entry)
+        if len(self.processing_history) > _MAX_PROCESSING_HISTORY:
+            self.processing_history = self.processing_history[-_MAX_PROCESSING_HISTORY:]
+
+    def _build_error_result(self, error: Exception, processing_id: str) -> Dict[str, Any]:
+        return {
+            "error": str(error),
+            "processing_id": processing_id,
+            "timestamp": datetime.now().isoformat(),
+        }
 
     async def compare_images(
         self,
