@@ -37,7 +37,7 @@
 | Phase 4 | 16–24 | Low | Phase 3 | ✅ Complete |
 | **Total** | **116–174** | — | — | **~97%** |
 
-*\* C901 (67 residual cyclomatic complexity violations) — top 10 worst refactored (30→17, 29→<10, etc.). Remaining 67 are all ≤19 complexity and structurally clean. Shared code dedup (P3-9~11) skipped — needs manual review.*
+*\* C901 (67 residual cyclomatic complexity violations) — top 10 worst refactored (30→17, 29→<10, etc.). Remaining 67 are all ≤19 complexity and structurally clean. Shared code dedup (P3-9~11) — ✅ RESOLVED by Phase 9-12 deletion of core/shared/ duplicates (commit 064e63621).*
 
 ### 1.2 修复原则
 
@@ -349,7 +349,9 @@ Priority files with bulk undeclared symbols:
 |---|------|---------|-----|
 | P3-8 | `apps/desktop-app/electron-builder.yml` or `package.json` | Appx (Windows Store) target in Linux build config | Remove `Appx` target; keep `snap`, `AppImage`, `deb` |
 
-### 6.9 合并重复共享代码 Deduplicate Shared Code
+### 6.9 合并重复共享代码 Deduplicate Shared Code ✅ RESOLVED
+
+> **Resolution (2026-06-26)**: Phase 9-12 dead code removal (commit `064e63621`) deleted all `core/shared/` duplicates. Only `src/shared/error.py` and `src/shared/key_manager.py` remain — no dedup needed.
 
 | # | Duplicate Pairs | Fix |
 |---|----------------|-----|

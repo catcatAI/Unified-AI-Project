@@ -39,16 +39,6 @@ class HAMDataProcessor:
         return data
 
     def _abstract_text(self, text: str) -> Dict[str, Any]:
-        """
-        Enhanced text abstraction that extracts key information for memory storage.
-
-        Extracts:
-        - Gist (shortened version for quick scanning)
-        - Keywords (important terms)
-        - Entities (named entities like people, locations)
-        - Key sentences (most important sentences)
-        - Full text hash for verification
-        """
         if not text or len(text) < 10:
             return {
                 "gist": text,
@@ -58,111 +48,10 @@ class HAMDataProcessor:
                 "full_text_hash": hashlib.sha256(text.encode("utf-8")).hexdigest(),
             }
 
-        # Extract gist (first 200 chars with smart truncation)
-        if len(text) <= 200:
-            gist = text
-        else:
-            # Try to truncate at sentence boundary
-            last_period = text[:200].rfind(".")
-            last_exclamation = text[:200].rfind("!")
-            last_question = text[:200].rfind("?")
-            truncation_point = max(last_period, last_exclamation, last_question)
-
-            if truncation_point > 50:  # Ensure we don't truncate too early
-                gist = text[: truncation_point + 1]
-            else:
-                gist = text[:200] + "..."
-
-        # Extract keywords (simple frequency-based approach)
-        words = re.findall(r"\b[a-zA-Z\u4e00-\u9fff]{3,}\b", text.lower())
-        word_freq = {}
-        for word in words:
-            if word not in word_freq:
-                word_freq[word] = 0
-            word_freq[word] += 1
-
-        # Get top 5 most frequent words (excluding common stop words)
-        stop_words = {
-            "the",
-            "and",
-            "for",
-            "are",
-            "but",
-            "not",
-            "you",
-            "all",
-            "can",
-            "had",
-            "her",
-            "was",
-            "one",
-            "our",
-            "out",
-            "has",
-            "have",
-            "been",
-            "this",
-            "that",
-            "的",
-            "了",
-            "是",
-            "在",
-            "和",
-            "有",
-            "就",
-            "不",
-            "人",
-            "都",
-            "一",
-            "一个",
-            "上",
-            "也",
-        }
-
-        keywords = []
-        for word, freq in sorted(word_freq.items(), key=lambda x: x[1], reverse=True):
-            if word not in stop_words and len(keywords) < 5:
-                keywords.append(word)
-
-        # Extract entities (simple pattern matching)
-        entities = []
-
-        # URLs
-        urls = re.findall(r"https?://\S+", text)
-        entities.extend([{"type": "url", "value": url} for url in urls[:3]])
-
-        # Email addresses
-        emails = re.findall(r"\b[\w.-]+@[\w.-]+\.\w+\b", text)
-        entities.extend([{"type": "email", "value": email} for email in emails[:3]])
-
-        # Numbers that might be IDs, quantities, etc.
-        numbers = re.findall(r"\b\d{4,}\b|\b\d+\.\d+\b", text)
-        entities.extend([{"type": "number", "value": num} for num in numbers[:5]])
-
-        # Extract key sentences (sentences with high information content)
-        sentences = re.split(r"[.!?。！？]", text)
-        key_sentences = []
-
-        # Score sentences by length and keyword presence
-        for sentence in sentences:
-            sentence = sentence.strip()
-            if len(sentence) < 10 or len(sentence) > 300:
-                continue
-
-            # Calculate score
-            score = 0
-            if any(keyword in sentence.lower() for keyword in keywords):
-                score += 2
-            if len(sentence.split()) > 5:  # Reasonable length
-                score += 1
-            if any(char in sentence for char in [":", "-", "•", "→"]):  # Structural markers
-                score += 0.5
-
-            key_sentences.append((sentence, score))
-
-        # Get top 3 sentences
-        key_sentences.sort(key=lambda x: x[1], reverse=True)
-        key_sentences = [s[0] for s in key_sentences[:3]]
+        gist = self._extract_gist(text)
+        keywords = self._extract_keywords(text)
+        entities = self._extract_entities(text)
+        key_sentences = self._extract_key_sentences(text, keywords)
 
         return {
             "gist": gist,
@@ -171,6 +60,66 @@ class HAMDataProcessor:
             "key_sentences": key_sentences,
             "full_text_hash": hashlib.sha256(text.encode("utf-8")).hexdigest(),
         }
+
+    @staticmethod
+    def _extract_gist(text: str, max_chars: int = 200) -> str:
+        if len(text) <= max_chars:
+            return text
+        for boundary in (".", "!", "?"):
+            idx = text[:max_chars].rfind(boundary)
+            if idx > 50:
+                return text[: idx + 1]
+        return text[:max_chars] + "..."
+
+    _STOP_WORDS = {
+        "the", "and", "for", "are", "but", "not", "you", "all",
+        "can", "had", "her", "was", "one", "our", "out",
+        "has", "have", "been", "this", "that",
+        "的", "了", "是", "在", "和", "有",
+        "就", "不", "人", "都", "一", "一个", "上", "也",
+    }
+
+    @staticmethod
+    def _extract_keywords(text: str, top_n: int = 5) -> list:
+        words = re.findall(r"\b[a-zA-Z\u4e00-\u9fff]{3,}\b", text.lower())
+        word_freq = {}
+        for word in words:
+            word_freq[word] = word_freq.get(word, 0) + 1
+        keywords = []
+        for word, freq in sorted(word_freq.items(), key=lambda x: x[1], reverse=True):
+            if word not in HAMDataProcessor._STOP_WORDS and len(keywords) < top_n:
+                keywords.append(word)
+        return keywords
+
+    @staticmethod
+    def _extract_entities(text: str) -> list:
+        entities = []
+        urls = re.findall(r"https?://\S+", text)
+        entities.extend([{"type": "url", "value": url} for url in urls[:3]])
+        emails = re.findall(r"\b[\w.-]+@[\w.-]+\.\w+\b", text)
+        entities.extend([{"type": "email", "value": email} for email in emails[:3]])
+        numbers = re.findall(r"\b\d{4,}\b|\b\d+\.\d+\b", text)
+        entities.extend([{"type": "number", "value": num} for num in numbers[:5]])
+        return entities
+
+    @staticmethod
+    def _extract_key_sentences(text: str, keywords: list, top_n: int = 3) -> list:
+        sentences = re.split(r"[.!?。！？]", text)
+        scored = []
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if len(sentence) < 10 or len(sentence) > 300:
+                continue
+            score = 0
+            if any(keyword in sentence.lower() for keyword in keywords):
+                score += 2
+            if len(sentence.split()) > 5:
+                score += 1
+            if any(char in sentence for char in [":", "-", "•", "→"]):
+                score += 0.5
+            scored.append((sentence, score))
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return [s[0] for s in scored[:top_n]]
 
     def _rehydrate_text_gist(self, gist: Dict[str, Any]) -> str:
         """

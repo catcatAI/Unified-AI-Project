@@ -136,7 +136,7 @@ Each entry has:
 
 | ID | Claim | Git Proof | Code Proof | Verdict |
 |:--:|:------|:----------|:-----------|:-------:|
-| P4-1 | Formula system tests | **No commit** | Tests not found | ⏳ LOW (blocked) |
+| P4-1 | Formula system tests | 6 files found (test_hsm_formula_system x2, test_life_intensity_formula x2, test_active_cognition_formula x2) | `tests/core/` + `tests/unit/` — 67 tests, all pass | ✅ |
 | P4-2 | ModelBus routing tests (34) | — | `tests/ai/core/test_model_bus.py` | ✅ **But path is `tests/ai/core/` not `tests/core/`** |
 | P4-3 | C6 edge case tests (9) | — | 9 new tests | ✅ |
 | P4-4 | 10 orphan engine tests | — | Architecturally resolved | ✅ CLOSED |
@@ -180,7 +180,7 @@ Each entry has:
 
 19+17+10 tasks all verified with varying degrees. Key remaining:
 - **C901 cyclomatic complexity**: 67 residual (claimed to have refactored top 10 worst)
-- **Shared code deduplication P3-9 to P3-11**: Skipped, needs manual review
+- **Shared code deduplication P3-9 to P3-11**: ✅ RESOLVED — `core/shared/` duplicates deleted in Phase 9-12 (commit `064e63621`)
 
 ---
 
@@ -360,16 +360,16 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | 2 | YOLO object detection | Never started | Zero code exists | Need design |
 | 3 | `/multimodal/stream` WS route | ✅ **DONE** — dedicated handler + route registered | `services/multimodal_ws_handler.py` + `main_api_server.py` line 295 | — |
 | 4 | C901 cyclomatic complexity (67 residual) | Skipped, needs manual review | 67 complex functions | Manual code review |
-| 5 | Shared code deduplication (P3-9 to P3-11) | Skipped, needs manual review | 3 pairs of duplicate code | Manual code review |
-| 6 | P4 long function refactor (28 files >100 lines) | 1/28 done (QueryClassifier.__init__: 187L→7L, Jun 26) | 27 files still >100 lines | Effort (large) |
+| 5 | Shared code deduplication (P3-9 to P3-11) | ✅ **RESOLVED** — `core/shared/` duplicates deleted in Phase 9-12 (commit `064e63621`) | Only `src/shared/error.py` and `src/shared/key_manager.py` remain | Automatically fixed by dead code removal |
+| 6 | P4 long function refactor (28 files >100 lines) | 2/28 done (QueryClassifier.__init__: 187L→7L; HAMDataProcessor._abstract_text: 133L→72L, Jun 26) | 26 files still >100 lines | Effort (large) |
 | 7 | P4 load/stress test framework | Never started | No framework exists | Design |
 | 8 | P4 desktop tray implementation | Never started | No tray code | Effort |
 | 9 | P4 E2E test framework | Never started | No E2E framework | Design |
-| 10 | Whisper ChatService integration | STT pipeline not wired | `/chat/with-audio` endpoint exists, faster-whisper installed but not connected | Wiring |
+| 10 | Whisper ChatService integration | ✅ **WIRED** — endpoint → AudioService.speech_to_text() → _handle_chat_request() IS connected. faster-whisper not installed but graceful sr fallback works | `chat_routes.py:925` + `audio_service.py:78-105` | Install `faster-whisper` for offline high-quality STT (optional) |
 | 11 | VisualDecoder training | Weights random, CLP doesn't train decoder | `VisualDecoder` exists, `quality_metrics.py` exists | Training pipeline extension |
 | 12 | Agent auto-routing | ✅ **DONE** (wired as Step 8 in chat pipeline) | `chat_routes.py:_try_agent_routing()` routes creative/knowledge/opinion/vision/audio agents | — |
 | 13 | Level5ASI stub classes | Need real alignment modules (P1.1) | `level5_asi_system.py` has logged stubs | External module dependency |
-| 14 | Formula system tests (P4-1) | Blocked by source/test API mismatch | Tests don't exist | API mismatch |
+| 14 | Formula system tests (P4-1) | ✅ **DONE** — 67 tests exist, all pass | 6 files: test_hsm_formula_system x2, test_life_intensity_formula x2, test_active_cognition_formula x2 | Claim was stale — tests existed all along |
 | 15 | Matrix annotations (157 files missing) | ~59/216 have headers | 157 need header | Effort (cosmetic) |
 | 16 | PHASE_REVIEW5 SUPERSEDED mark | ✅ **DONE** (from earlier session) | `SUPERSEDED — 2026-06-26` header present | — |
 
