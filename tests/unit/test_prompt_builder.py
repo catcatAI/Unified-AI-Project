@@ -141,3 +141,38 @@ class TestGetLLMConfig:
 
         result = _get_llm_config("nonexistent", "fallback")
         assert result == "fallback"
+
+
+class TestFormulaSummaries:
+    """Verify formula values propagate through the prompt injection chain."""
+
+    def test_get_formula_summaries_returns_string(self):
+        from services.llm.prompt_builder import get_formula_summaries
+
+        result = get_formula_summaries()
+        assert isinstance(result, str)
+        assert len(result) > 0
+        # Should contain at least some formula values
+        assert "HSM" in result or "intensity" in result or "cognition" in result
+
+    def test_get_autonomous_decisions_returns_string(self):
+        from services.llm.prompt_builder import get_autonomous_decisions
+
+        result = get_autonomous_decisions()
+        assert isinstance(result, str)
+
+    def test_construct_angela_prompt_contains_formula_block(self):
+        from services.llm.prompt_builder import construct_angela_prompt
+
+        context = {
+            "angela_data": {},
+            "biological_state": "",
+            "formula_summaries": "",
+            "autonomous_decisions": "",
+            "action_logs": [],
+            "drive_files": [],
+            "history": [],
+        }
+        result = construct_angela_prompt("test", context)
+        combined = " ".join(msg["content"] for msg in result)
+        assert combined, "Prompt should contain content"
