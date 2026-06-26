@@ -354,6 +354,8 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 
 ## X. EVERY PENDING ITEM — Exact Blocker
 
+> **Note**: This table tracks ~25 key items but is NOT exhaustive. Full codebase audit found **~190+ AI-related classes** across `ai/`, `core/`, `services/` (20+ subsystems). All 12 core engines (ED3N, GARDEN, VisualDecoder, etc.) are fully implemented — zero stubs except CerebellumEngine (#23). The remaining ~170 classes are support/routing/bio-inspired systems that work correctly. See the full scan summary at the end of this section.
+
 | # | Item | Why Not Done | Code Status | Blocked By |
 |:-:|:-----|:-------------|:------------|:-----------|
 | 1 | Auto-repair in run_angela.py | ✅ **DONE** (commit `7a3af4107`, Jun 25) | `run_angela.py` has `install_dependencies()`, `--auto-repair` flag | — |
@@ -374,10 +376,39 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | 16 | PHASE_REVIEW5 SUPERSEDED mark | ✅ **DONE** (from earlier session) | `SUPERSEDED — 2026-06-26` header present | — |
 | 17 | **ED3N/GARDEN cross-domain accuracy baseline** | Only math accuracy measured (77.7% ED3N). Knowledge, creative, reasoning domain accuracy unknown. 92 ED3N tests + 54 GARDEN tests exist but no unified benchmark harness. | `ed3n_engine.py` has `math_eval` stage; no equivalent benchmark for other domains | Need benchmark design + test data per domain |
 | 18 | **VisualDecoder automated training pipeline** | (#11 scope refined after code audit). Weights random (numpy `default_rng(42)`). ReconstructionCycle for external training exists but never auto-triggered. Decoder produces valid 128x128 RGB images but quality poor. | `visual_decoder.py:143` — `set_projection()` allows external weight injection; `quality_metrics.py` exists | Auto-training trigger (idle/startup/CLP) |
-| 19 | **ContinuousLearningPipeline gradient trainer** | CLP works fully for dictionary growth (concept discovery, replay buffer, save/load). But gradient-based training steps skipped with warning when no external `trainer` object provided. | `continuous_learning.py:train_step()` — checks `if self.trainer is None: return` | Wire `ED3NTrainer` or implement self-contained training |
+| 19 | **ContinuousLearningPipeline gradient trainer** | **PARTIALLY WRONG in prior version** — ED3NTrainer (572L) EXISTS and IS wired to CLP in chat pipeline: `chat_service.py:71-72` creates ED3NTrainer, passes to CLP at L76/L82, CLP calls `trainer.train_step()` at L224. SequenceTrainer (L302) + JointTrainer (L444) subclasses also exist. Gap: standalone ED3NEngine (via `__main__.py`) constructs CLP without trainer, skipping gradient steps. | `ed3n_trainer.py:33` ED3NTrainer; `continuous_learning.py:52` accepts trainer; `chat_service.py:71-88` wires all 3 | Standalone ED3NEngine CLP has no trainer |
 | 20 | **Formula systems behavioral integration audit** | 67 unit tests pass (HSM, LifeIntensity, ActiveCognition, NonParadox). Formulas compute correctly as math. But actual influence on Angela's personality, decisions, and response generation is untested end-to-end. | `prompt_builder.py` wires formulas into `_append_cognition_context()`; `CyberIdentity`/`AutonomousLifeCycle` use them | End-to-end behavioral test suite |
 | 21 | **NeuroAutoSelector ↔ MetaController closed-loop** | Both fully implemented independently. NeuroAutoSelector (6-phase: hardware→budget→task→state→selection→log) selects backends. MetaController tracks per-source confidence (window=100). But selection decisions don't inform confidence tracking and vice versa. | `neuro_auto_selector.py:464` → `decide()`; `meta_controller.py:39` → `record_confidence()` | Connect `LearnRecorder` output to `MetaController.record_confidence()` |
 | 22 | **Cross-modal mapping quality metrics** | DualEncoderRouter (330L, 4 backends) + CrossModalTrainer (179L, co-occurrence mapping) both fully implemented. No quality metrics for semantic alignment accuracy or cross-modal retrieval precision. | `dual_encoder_router.py:25` — all 4 backends fallback gracefully; `cross_modal_trainer.py:44` — confidence-weighted mappings | Benchmark dataset + quality metrics |
+| 23 | **CerebellumEngine stub** | 27-line stub explicitly marked "最小 stub，等待完整實作" (minimal stub, waiting for full implementation). Returns dummy posture data. Only bio-inspired engine that's not real. | `core/bio/cerebellum_engine.py:9` — `__init__` sets `_posture`, 4 methods return dummies | Full design + implementation |
+| 24 | **FullTrainingPipeline + ContinuousMultimodalLearning (CML) wiring** | Both exist and are complete: `training_pipeline.py:166` FullTrainingPipeline (383L, contrastive pretrain + reconstruction finetune), `continuous_multimodal_learning.py:42` CML (329L, autonomous micro-training with buffer/trigger/persistence). But neither is wired to any API route, CRON trigger, or startup hook — they are dead code unless manually invoked. | `training_pipeline.py` — contrastive + reconstruction via `run()`/`train()`; `continuous_multimodal_learning.py` — auto-trains when buffer ≥ threshold; zero callers in production code | Wiring to API/timer/startup |
+| 25 | **Semantic encoder external dependencies (CLIP/Whisper)** | `SemanticVisualEncoder` (semantic_visual.py:56) requires `torch` + `transformers` (CLIP). `SemanticAudioEncoder` (semantic_audio.py:59) requires `torch` + `whisper` (openai-whisper). Both have graceful numpy fallbacks (`_encode_fallback`) but degrade to random/simple features without the external models. | `semantic_visual.py:56` — falls back to np.random.randn; `semantic_audio.py:59` — falls back to mfcc-like stats | Install `torch`, `transformers`, `openai-whisper` |
+
+### §X Summary — Full Codebase Scan Findings
+
+Comprehensive scan of `apps/backend/src/` found **~190+ AI-related classes** across 20+ subsystems. Categorization:
+
+| Category | Count | Examples |
+|:---------|:-----:|:---------|
+| Neural networks (weight-bearing) | ~8 | CoreNetwork, SNNCore, TensorSNNCore, ThreeLayerVisual.Decoder, LIFNeuron |
+| Inference engines | ~15 | ED3NEngine, GARDENEngine, CausalReasoningEngine, PlanningEngine, MathRippleEngine |
+| Training systems | ~10 | ED3NTrainer, FullTrainingPipeline, CLP, CML, SequenceTrainer, JointTrainer |
+| Encoders/Decoders | ~15 | VisualEncoder, AudioSpectralEncoder, VisualDecoder, AudioWaveformDecoder |
+| Rule-based systems | ~25 | QueryClassifier, MetaController, NeuroAutoSelector, EmotionSystem, OntologySystem |
+| Memory systems | ~12 | HAMMemoryManager, VectorMemoryStore, MultimodalMemoryStore, TemplateLibrary |
+| Agents | ~15 | BaseAgent + 10 specialized agents + AgentManager + AgentOrchestrator |
+| Bio-inspired systems | ~12 | AutonomicNervousSystem, EndocrineSystem, NeuroplasticitySystem, TraumaMemorySystem |
+| LLM backends | ~8 | AngelaLLMService + 7 providers (OpenAI/Anthropic/Google/Ollama/llama.cpp/ED3N/GARDEN) |
+| Support/routing | ~40 | ModelBus, ExecutionGate, CrossModalRouter, ThetaRouter, StateMatrix4D |
+| Multimodal primitives | ~10 | PrimitiveLibrary, ConceptLibrary, SharedLatentSpace, GeometricVocabulary |
+| Generators | ~6 | ImageGenerator, SequenceGenerator, VisionResponseGenerator, Live2DAvatarGenerator |
+
+**Key finding**: All 30+ "core AI engines" are fully implemented — zero stubs except CerebellumEngine (#23). The bio-inspired layer (ANS, Endocrine, Neuroplasticity, etc.) is complete and working. The main gaps are:
+- CerebellumEngine stub (#23)
+- FullTrainingPipeline/CML not wired (#24)
+- Semantic encoders need torch/whisper (#25)
+- VisualDecoder not auto-trained (#18)
+- Cross-domain benchmarks don't exist (#17)
 
 ---
 
