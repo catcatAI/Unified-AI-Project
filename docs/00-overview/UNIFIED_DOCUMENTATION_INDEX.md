@@ -19,6 +19,8 @@
 - [docs/IDEAL_ARCHITECTURE.md](../IDEAL_ARCHITECTURE.md) — 目标架构蓝图（16 章节）
 
 ### 审计与修复
+- [docs/FRAMEWORK_OVERVIEW.md](../FRAMEWORK_OVERVIEW.md) — 框架概述（双语架构导览 + 竞争分析）
+- [docs/06-project-management/MASTER_TASK_MAP.md](../06-project-management/MASTER_TASK_MAP.md) — 主任务地图（144条索赔的来源追踪）
 - [docs/COMPREHENSIVE_AUDIT_2026-06-25.md](../COMPREHENSIVE_AUDIT_2026-06-25.md) — 全面审计报告 v2.0，健康度 ~85-90%
 - [docs/OMISSIONS_CHECKLIST.md](../OMISSIONS_CHECKLIST.md) — 遗漏清单 v1.4.0
 - [docs/COMPREHENSIVE_REPAIR_ROADMAP.md](../COMPREHENSIVE_REPAIR_ROADMAP.md) — 修复路线图 v1.3.0

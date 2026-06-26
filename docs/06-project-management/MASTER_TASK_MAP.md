@@ -60,7 +60,7 @@ Each entry has:
 | P0 (all 4 items) | `3f209b605` | All verified | ✅ |
 | P1 (thread safety) | `3f209b605` | 4 files | ✅ |
 | P2 (context/utils, precision, agents) | `3f209b605` | ~6 files | ✅ |
-| **P4 (28 long function refactor)** | **No dedicated commit** | 28 files still >100 lines | ⏳ **NOT STARTED** |
+| **P4 (28 long function refactor)** | QueryClassifier.__init__ 187→7, HAMDataProcessor._abstract_text 133→72 (Jun 26) | 26 files still >100 lines | 🟡 **2/28 done** |
 | **P4 (load/stress tests)** | **No commit** | No framework exists | ⏳ **NOT STARTED** |
 | **P4 (desktop tray)** | **No commit** | No tray impl | ⏳ **NOT STARTED** |
 | **P4 (E2E tests)** | **No commit** | No E2E framework | ⏳ **NOT STARTED** |
@@ -295,7 +295,7 @@ This document was written BEFORE Phase 11 (Jun 23) deletions. Many items it mark
 |:----------|:-------------------:|:-----------------------:|:------------------:|
 | Text understanding | 7 | 7 | Still 7 ✅ |
 | Image understanding | 7 | 7 | Still 7 ✅ |
-| Speech understanding | 5 | **3** | 🟡 Whisper installed, `/chat/with-audio` endpoint exists, but faster-whisper not wired |
+| Speech understanding | 5 | **3** | 🟡 Pipeline wired end-to-end (`/chat/with-audio` → AudioService → `_handle_chat_request`). `faster-whisper` not installed (graceful sr fallback active). Quality limited to sr capabilities. |
 | Text generation | 7 | **6** | Still 6 — depends on external LLM |
 | Image generation | 1 | **6** (GVV fixes) | Still 6 — GVV + ThreeLayerVisual work |
 | Speech generation | 5 | **4** | edge-tts works |
