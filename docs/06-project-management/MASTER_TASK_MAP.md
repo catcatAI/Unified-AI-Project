@@ -60,7 +60,7 @@ Each entry has:
 | P0 (all 4 items) | `3f209b605` | All verified | ✅ |
 | P1 (thread safety) | `3f209b605` | 4 files | ✅ |
 | P2 (context/utils, precision, agents) | `3f209b605` | ~6 files | ✅ |
-| **P4 (28 long function refactor)** | QueryClassifier.__init__ 187→7, HAMDataProcessor._abstract_text 133→72 (Jun 26) | 26 files still >100 lines | 🟡 **2/28 done** |
+| **P4 (28 long function refactor)** | QueryClassifier.__init__ 187→7, HAMDataProcessor._abstract_text 133→72, HAMQueryEngine._fallback_keyword_search 107→65 (Jun 26) | 25 files still >100 lines | 🟡 **3/28 done** |
 | **P4 (load/stress tests)** | **No commit** | No framework exists | ⏳ **NOT STARTED** |
 | **P4 (desktop tray)** | **No commit** | No tray impl | ⏳ **NOT STARTED** |
 | **P4 (E2E tests)** | **No commit** | No E2E framework | ⏳ **NOT STARTED** |
@@ -361,7 +361,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | 3 | `/multimodal/stream` WS route | ✅ **DONE** — dedicated handler + route registered | `services/multimodal_ws_handler.py` + `main_api_server.py` line 295 | — |
 | 4 | C901 cyclomatic complexity (67 residual) | Skipped, needs manual review | 67 complex functions | Manual code review |
 | 5 | Shared code deduplication (P3-9 to P3-11) | ✅ **RESOLVED** — `core/shared/` duplicates deleted in Phase 9-12 (commit `064e63621`) | Only `src/shared/error.py` and `src/shared/key_manager.py` remain | Automatically fixed by dead code removal |
-| 6 | P4 long function refactor (28 files >100 lines) | 2/28 done (QueryClassifier.__init__: 187L→7L; HAMDataProcessor._abstract_text: 133L→72L, Jun 26) | 26 files still >100 lines | Effort (large) |
+| 6 | P4 long function refactor (28 files >100 lines) | 3/28 done (+HAMQueryEngine._fallback_keyword_search: 107L→65L, extracted 3 helpers, Jun 26) | 25 files still >100 lines | Effort (large) |
 | 7 | P4 load/stress test framework | Never started | No framework exists | Design |
 | 8 | P4 desktop tray implementation | Never started | No tray code | Effort |
 | 9 | P4 E2E test framework | Never started | No E2E framework | Design |

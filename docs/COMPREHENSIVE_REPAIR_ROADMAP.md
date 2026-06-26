@@ -412,6 +412,8 @@ Phase A ──── 文檔認知補全 (🔴 3-5 天)
 | `docs/06-project-management/plans/COMPOSITIONAL_IMAGE_GENERATION_PLAN.md` | 交叉引用 | 圖像生成架構演化 |
 | `AGENTS.md` | 受影響 | 需同步統計數字 |
 | `README.md` | 受影響 | 需同步健康度 |
+| `docs/FRAMEWORK_OVERVIEW.md` | 補充 | 框架總覽、競爭分析、文檔地圖 |
+| `docs/06-project-management/MASTER_TASK_MAP.md` | 補充 | 主任務地圖 — 144條索賠來源追蹤 |
 
 ---
 
@@ -492,4 +494,4 @@ Phase A ──── 文檔認知補全 (🔴 3-5 天)
 
 ---
 
-*本路線圖隨修復進展持續更新。最後更新：2026-06-25 (v1.4.0)*
+*本路線圖隨修復進展持續更新。最後更新：2026-06-26 (v1.4.1)*
