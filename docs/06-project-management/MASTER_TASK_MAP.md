@@ -354,7 +354,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 
 ## X. EVERY PENDING ITEM — Exact Blocker
 
-> **Note**: This table tracks ~25 key items but is NOT exhaustive. Full codebase audit found **~190+ AI-related classes** across `ai/`, `core/`, `services/` (20+ subsystems). All 12 core engines (ED3N, GARDEN, VisualDecoder, etc.) are fully implemented — zero stubs except CerebellumEngine (#23). The remaining ~170 classes are support/routing/bio-inspired systems that work correctly. See the full scan summary at the end of this section.
+> **Note**: This table tracks ~28 key items but is NOT exhaustive. Full codebase audit found **~190+ AI-related classes** across `ai/`, `core/`, `services/` (20+ subsystems). **⚠️ "存在" ≠ "正常運作"** — see industry comparison below. Most engines are architectural skeletons: weights are random (VisualDecoder, AudioWaveformDecoder, SequenceGenerator, ImageGenerator), logic is 1990s-level (VisualEncoder = histogram+edges, CausalReasoning = Pearson correlation), or output is placeholder/stub (CerebellumEngine, AttentionController, TaskGenerator). Only ~14 systems have REAL computation quality. The LLM API wrappers provide the only production intelligence.
 
 | # | Item | Why Not Done | Code Status | Blocked By |
 |:-:|:-----|:-------------|:------------|:-----------|
@@ -450,6 +450,8 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 **The 190+ classes form a beautiful architectural skeleton, but the "brain" is the LLM API calls.** The native engines (ED3N, GARDEN, VisualDecoder, etc.) are academic prototypes — interesting architecture, no production value without extensive training.
 
 **True intelligence score**: 6.0/10 with LLM (API), **0.5/10 without** (native engines alone). Architecture is ~85% complete, training is ~5% complete.
+
+**▶ See separate improvement roadmap**: [`IMPROVEMENT_ROADMAP.md`](IMPROVEMENT_ROADMAP.md) — detailed plan covering 修正/修復/更新/迭代/訓練/學習/整理 with priority, dependencies, and verification standards.
 
 ---
 

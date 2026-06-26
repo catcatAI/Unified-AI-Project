@@ -1,4 +1,4 @@
-> **SUPERSEDED — 2026-06-26**: This charter reflects outdated AGI Level 3-4 targets from Sep 2025. Current intelligence assessment: 6.0/10 upper (with LLM), 4.5/10 lower (ED3N+GARDEN). See [`docs/FRAMEWORK_OVERVIEW.md`](../FRAMEWORK_OVERVIEW.md) for current framework overview. Retained as historical reference.
+> **SUPERSEDED — 2026-06-26**: This charter reflects outdated AGI Level 3-4 targets from Sep 2025. Current intelligence assessment: 6.0/10 upper (with LLM), **<0.5/10 lower (native engines alone — ED3N/GARDEN have random weights, output = noise/gray canvas. Real intelligence comes from LLM API wrappers only.)** See [`docs/FRAMEWORK_OVERVIEW.md`](../FRAMEWORK_OVERVIEW.md) for current framework overview. Retained as historical reference.
 
 # Project Charter
 

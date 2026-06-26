@@ -11,8 +11,8 @@
 
 > **Framework positioning**: A modular, extensible framework for building digital life systems with hybrid AI (LLM + SNN + biological simulation).
 > **Codebase**: 612 Python files (~96K lines) in `apps/backend/src/` + 50 JS files across 3 apps + 4,774 tests.
-> **Intelligence**: Upper bound 6.0/10 (with LLM API), lower bound 4.5/10 (ED3N+GARDEN only).
-> **Architecture health**: ~85-90% (2026-06-25 audit).
+> **Intelligence**: Upper bound 6.0/10 (with LLM API), **lower bound <0.5/10** (native engines alone — ED3N/GARDEN produce random/low-quality output without training).
+> **Architecture completeness**: ~85-90% (framework structure exists, but ML model weights are 5% trained).
 > **Version**: 7.5.0-dev | **License**: MIT
 
 [English](#english) | [繁體中文](#繁體中文-版本)
@@ -27,7 +27,7 @@ Angela AI is not a single application — it is a **framework** for building AI-
 
 - **A pipelined chat architecture** — WebSocket → emotion → crisis → alignment → execution gate → **agent routing** → LLM → causal learning → response — every stage is a replaceable component
 - **7 LLM backends** — Anthropic, Google, OpenAI, Ollama, llama.cpp, ED3N (SNN), GARDEN (lightweight) — pluggable via strategy pattern
-- **2 local inference engines** — ED3N (460K dictionary, SNN reflex) and GARDEN (VectorDictionary + TensorSNN) — zero-cost fallback without external APIs
+- **2 local inference engines** — ED3N (460K dictionary, SNN reflex) and GARDEN (VectorDictionary + TensorSNN) — zero-cost fallback without external APIs. ⚠️ **Caution**: Both engines have random/uninitialized weights. ED3N math accuracy measured at 77.7% (basic arithmetic only). All other domains (knowledge, creative, reasoning) unmeasured. VisualDecoder/AudioWaveformDecoder/SequenceGenerator output = noise. Architecture exists; training is ~5% complete.
 - **A 6-dimensional state matrix** (αβγδεθ) — shared context for cognitive, emotional, and environmental state
 - **Biological simulation** — 8 modules modeling energy, metabolism, endocrine, neuroplasticity, etc.
 - **11 specialized agents** — Creative, Code, Data, Search, Vision, Audio, etc. — registered via `AgentAdapter`
@@ -266,21 +266,21 @@ Each stage in the chat pipeline (`chat_routes.py`) is a function or callable cla
 
 ### 5. Intelligence Assessment
 
-| Capability | Upper (with LLM) | Lower (ED3N+GARDEN) | Implementation |
+| Capability | Upper (with LLM) | Lower (native only) | Implementation & Caveat |
 |:-----------|:-----:|:-----:|:---------------|
-| Text understanding | 7/10 | 5/10 | 460K dictionary + GARDEN SNN |
-| Image understanding | 7/10 | 5/10 | CLIP 512-dim, VisionService |
-| Speech understanding | 5/10 | 3/10 | Whisper installed, not wired |
-| Text generation | 7/10 | 4/10 | 7 LLM backends, ED3N reflex |
-| Image generation | 6/10 | 6/10 | GVV + ThreeLayerVisual, MSE 0.0042 |
-| Speech generation | 4/10 | 2/10 | edge-tts reading only |
-| Memory | 7/10 | 7/10 | VectorStore 460K + HAM |
-| Reasoning | 4/10 | 3/10 | Framework exists, depth limited |
-| Autonomy | 3/10 | 3/10 | AutonomousLifeCycle wired, unstable |
-| Meta-cognition | 5/10 | 4/10 | MetaController, confidence calibration |
-| **Composite** | **6.0/10** | **4.5/10** | Architecture ~85-90% |
+| Text understanding | 7/10 | 0.5/10 | 460K dictionary exists but ED3N concept mapping is 1990s NLP. Real understanding comes from LLM API. |
+| Image understanding | 7/10 | 0.5/10 | numpy color histogram + Sobel edges (1990s CV). CLIP wrapper needs torch. |
+| Speech understanding | 5/10 | 0/10 | Whisper feature encoder exists (numpy fallback). Native audio encoder = basic MFCC stats. |
+| Text generation | 7/10 | 0.5/10 | 7 LLM backends provide real generation. ED3N/GARDEN decoders = dictionary key lookup + random weights. |
+| Image generation | 6/10 | 0/10 | GVV pipeline architecture exists. **All weights random → output = gray canvas or noise.** ThreeLayerVisual MSE=0.009 (blurry 32×32 = 1995 quality). |
+| Speech generation | 4/10 | 0/10 | edge-tts calls external API. Native AudioWaveformDecoder = wavetable noise (random weights). |
+| Memory | 7/10 | 7/10 | VectorStore + HAM = genuinely useful. Works regardless of LLM. |
+| Reasoning | 4/10 | 0.5/10 | CausalReasoningEngine = Pearson correlation only. PlanningEngine = template matching. MathRippleEngine is genuinely sophisticated (original cognitive model). |
+| Autonomy | 3/10 | 0.5/10 | AutonomousLifeCycle wired but unstable without LLM guidance. |
+| Meta-cognition | 5/10 | 4/10 | MetaController confidence tracking works. NeuroAutoSelector heuristic-based. |
+| **Composite** | **6.0/10** | **<0.5/10** | Framework architecture ~85-90% complete. **ML training is ~5% complete.** Native engine output = low-quality/uninitialized. All real intelligence comes from LLM API wrappers. |
 
-**Key insight**: Architecture is mature (~85-90%) but model weights are untrained (random VisualDecoder, unwired Whisper, untrained SNN). The framework structure is production-quality; the ML content needs training.
+**Key insight**: This is an **architectural framework** with production-quality structure and academic-prototype ML content. The 190+ AI classes form a complete skeleton; the muscle (trained weights) is missing. The LLM API wrappers provide the only production-quality intelligence today.
 
 ### 6. Competitive Analysis — Strengths & Weaknesses
 
@@ -289,7 +289,7 @@ Each stage in the chat pipeline (`chat_routes.py`) is a function or callable cla
 | Strength | What It Means | vs LangChain | vs AutoGPT | vs Character.ai |
 |:---------|:--------------|:-------------|:-----------|:----------------|
 | **ED3N decoupled dictionaries** | Add knowledge without retraining (460K entries, 3 languages) | RAG requires vector DB + chunking | No equivalent | No equivalent |
-| **Three-layer speed fallback** | LLM → ED3N SNN → GARDEN numpy. Never fully offline. | Single LLM path, no fallback | Single LLM path | Cloud-only |
+| **Three-layer fallback (architecture)** | LLM → ED3N SNN → GARDEN numpy. ⚠️ ED3N/GARDEN output is low-quality without training — fallback degrades to garbage, not graceful degradation. | Single LLM path, no fallback | Single LLM path | Cloud-only |
 | **Live2D desktop body** | Real-time emotion expression on a desktop avatar | No body | No body | Web chat only, no desktop app |
 | **Biological simulation** | 8 modules: energy, metabolism, endocrine, circadian | No bio sim | No bio sim | Limited personality, no body |
 | **Pure CPU inference (GARDEN)** | numpy backend, no GPU required | Most models require GPU | OpenAI API only | Cloud-only |
@@ -317,7 +317,7 @@ Each stage in the chat pipeline (`chat_routes.py`) is a function or callable cla
 | **Bilingual i18n** | Chinese + English developers | Most frameworks are English-first |
 | **GPU-free SNN** | Low-resource environments, edge computing | TensorFlow/PyTorch require GPU for speed |
 
-**The strongest single pitch**: *"An AI that gets tired, gets hungry, lives on your desktop with a Live2D body, and runs completely offline."* — No existing project delivers all four simultaneously. The current blocker is ML model quality (4.5/10) preventing this from feeling polished.
+**The strongest single pitch**: *"An AI that gets tired, gets hungry, lives on your desktop with a Live2D body, and runs completely offline."* — No existing project delivers all four simultaneously. **⚠️ But offline experience is currently unusable: ML model quality <0.5/10, weights random, output = noise/gray. The architecture exists; the training doesn't.**
 
 ### 7. Known Gaps
 
@@ -412,19 +412,19 @@ pytest tests/                         # 運行測試
 
 ### 5. 智能評分
 
-| 能力 | 有 LLM | 純本地 | 實現 |
-|:-----|:------:|:------:|:-----|
-| 文字理解 | 7/10 | 5/10 | ED3N 46 萬詞典 + GARDEN SNN |
-| 圖像理解 | 7/10 | 5/10 | CLIP 512-dim |
-| 語音理解 | 5/10 | 3/10 | Whisper 未接線 |
-| 文字生成 | 7/10 | 4/10 | 7 個 LLM 後端 |
-| 圖像生成 | 6/10 | 6/10 | GVV MSE 0.0042 |
-| 語音輸出 | 4/10 | 2/10 | edge-tts 朗讀 |
-| 記憶 | 7/10 | 7/10 | 46 萬向量 + HAM |
-| 推理 | 4/10 | 3/10 | 框架存在，深度不足 |
-| 自主性 | 3/10 | 3/10 | 已接線但不穩定 |
-| 後設認知 | 5/10 | 4/10 | MetaController |
-| **綜合** | **6.0/10** | **4.5/10** | 架構 ~85-90% |
+| 能力 | 有 LLM | 純本地 | 實現與備註 |
+|:-----|:------:|:------:|:---------|
+| 文字理解 | 7/10 | 0.5/10 | ED3N 46 萬詞典存在但僅為概念映射（1990 年代 NLP）。真正理解來自 LLM API。 |
+| 圖像理解 | 7/10 | 0.5/10 | numpy 色彩直方圖 + Sobel 邊緣（1990 年代 CV）。CLIP 需要 torch。 |
+| 語音理解 | 5/10 | 0/10 | Whisper encoder 存在但 numpy 降級為基本 MFCC 統計。 |
+| 文字生成 | 7/10 | 0.5/10 | 7 個 LLM 後端提供真實生成。ED3N/GARDEN decoder = 字典映射 + 隨機權重。 |
+| 圖像生成 | 6/10 | 0/10 | GVV 管線架構完整。**所有權重隨機 → 輸出為灰色畫布或雜訊。** ThreeLayerVisual MSE=0.009（32×32 模糊 = 1995 品質）。 |
+| 語音輸出 | 4/10 | 0/10 | edge-tts 呼叫外部 API。原生 AudioWaveformDecoder = 波表雜訊（隨機權重）。 |
+| 記憶 | 7/10 | 7/10 | VectorStore + HAM 真正有用，不依賴 LLM。 |
+| 推理 | 4/10 | 0.5/10 | CausalReasoningEngine 僅 Pearson 相關。PlanningEngine 模板匹配。MathRippleEngine 為真正原創認知模型。 |
+| 自主性 | 3/10 | 0.5/10 | AutonomousLifeCycle 已接線但無 LLM 不穩定。 |
+| 後設認知 | 5/10 | 4/10 | MetaController 信心追蹤有效。NeuroAutoSelector 啟發式。 |
+| **綜合** | **6.0/10** | **<0.5/10** | 框架架構 ~85-90% 完整。**ML 訓練 ~5%。** 原生引擎輸出為低品質/未初始化。所有真實智慧來自 LLM API。 |
 
 ### 6. 競爭分析 — 優點與缺點
 
@@ -433,7 +433,7 @@ pytest tests/                         # 運行測試
 | 優勢 | 說明 | vs LangChain | vs AutoGPT | vs Character.ai |
 |:-----|:-----|:-------------|:-----------|:----------------|
 | **ED3N 字典解耦** | 加入知識不需要重新訓練（46 萬條、3 語種） | RAG 需向量資料庫 | 無對應 | 無對應 |
-| **三層速度降級** | LLM → ED3N SNN → GARDEN numpy。永不斷線。 | 單一 LLM 無降級 | 單一 LLM | 僅雲端 |
+| **三層降級（架構）** | LLM → ED3N SNN → GARDEN numpy。⚠️ ED3N/GARDEN 輸出品質低（未訓練），降級後變垃圾而非平順降級。 | 單一 LLM 無降級 | 單一 LLM | 僅雲端 |
 | **Live2D 桌面身體** | 即時情緒表情的桌面角色 | 沒有身體 | 沒有身體 | Web 聊天無桌面端 |
 | **生物模擬 8 模組** | 能量、代謝、內分泌、晝夜節律 | 無生物模擬 | 無生物模擬 | 有限個性無身體 |
 | **純 CPU 推理** | GARDEN numpy 後端，不需 GPU | 多數需 GPU | OpenAI API | 僅雲端 |
@@ -461,7 +461,7 @@ pytest tests/                         # 運行測試
 | **中英雙語 i18n** | 中英文開發者 | 多數框架以英文優先 |
 | **免 GPU SNN** | 低資源環境、邊緣計算 | TensorFlow/PyTorch 需要 GPU |
 
-**最強單一賣點**：*「一個會累、會餓、活在桌面上、有 Live2D 身體、可以完全離線運作的 AI」* — 沒有專案同時做到這四點。目前障礙是 ML 模型品質（4.5/10）。
+**最強單一賣點**：*「一個會累、會餓、活在桌面上、有 Live2D 身體、可以完全離線運作的 AI」* — 沒有專案同時做到這四點。**⚠️ 目前離線體驗極差**：ML 模型品質 <0.5/10，權重隨機，輸出為雜訊/灰色畫布。離線架構存在但實際運作需要大量訓練。
 
 ### 7. 已知差距
 
@@ -487,4 +487,4 @@ pytest tests/                         # 運行測試
 
 ---
 
-**Version**: 7.5.0-dev | **Code**: 612 Python files, ~96K lines | **Tests**: 4,774 / 4,261 (41 skipped) | **Intelligence**: 6.0/4.5 | **Architecture**: ~85-90%
+**Version**: 7.5.0-dev | **Code**: 612 Python files, ~96K lines | **Tests**: 4,774 / 4,261 (41 skipped) | **Intelligence**: 6.0/0.5 (with LLM / native only) | **Architecture**: ~85-90% | **Training**: ~5%
