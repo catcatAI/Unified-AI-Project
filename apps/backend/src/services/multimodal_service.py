@@ -157,6 +157,7 @@ class MultimodalService:
                 buffer_max=64,
                 auto_train_threshold=32,
                 min_interval_sec=60.0,
+                pipeline=self._get_pipeline(),
             )
         return self._cml
 
@@ -378,6 +379,20 @@ class MultimodalService:
                 "dim": len(vec) if hasattr(vec, '__len__') else 0,
                 "time_ms": round((time.time() - t0) * 1000, 1),
             })
+            # Feed into continuous multimodal learning
+            try:
+                cml = self._get_cml()
+                quality = 0.0
+                if modality == "vision":
+                    quality = self._get_quality_monitor().last_score() if hasattr(self._get_quality_monitor(), 'last_score') else 0.0
+                elif modality == "audio":
+                    quality = self._get_audio_quality_monitor().last_score() if hasattr(self._get_audio_quality_monitor(), 'last_score') else 0.0
+                cml.record_encode(modality, vec.tolist() if hasattr(vec, 'tolist') else vec,
+                                  latent.tolist() if hasattr(latent, 'tolist') else latent, quality)
+                if cml.should_train():
+                    cml.micro_train()
+            except Exception as cml_e:
+                logger.debug("CML feed failed (non-fatal): %s", cml_e)
         except Exception as e:
             logger.error("Encode failed: %s", e, exc_info=True)
             result["error"] = str(e)

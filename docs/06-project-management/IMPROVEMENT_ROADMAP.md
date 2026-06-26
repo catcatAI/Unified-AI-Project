@@ -47,7 +47,8 @@
 | **FragmentComposer** | 模板拼接 + 自然連接詞 | 整合測試 | ✅ <2ms 組裝 |
 | **Agent 路由（管線第 8 步）** | 11 個 agent 自動路由 | 整合測試 | ✅ 已接線 |
 | **Chat 管線 9 階段** | WS → 情緒 → 危機 → 對齊 → 閘門 → 路由 → LLM → 學習 → 回應 | 整合測試 | ✅ 完整接線 |
-| **CLP（持續學習）** | ED3NTrainer 已接線至聊天管線 | 整合測試 | ✅ 已接線，字典成長有效 |
+| **CLP（持續學習）** | ED3NTrainer 已接線至聊天管線 + 獨立模式 | 整合測試 | ✅ 已接線，字典成長有效 |
+| **CML（持續多模態學習）** | 自主微訓練已接線至 encode 路徑，共用生產管線 | 20 CML 測試通過 + 21 多模態服務測試通過 | ✅ 每次編碼後自動微訓練 |
 | **測試數量** | pytest 收集 | 4,774 測試 | ✅ 41 skipped，0 errors |
 
 ### 1.2 無法驗證的優勢（數據不足）
@@ -79,8 +80,8 @@
 | **TaskGenerator 佔位符** | MEDIUM | generate_tasks() 回傳單一寫死 dict | 22L 無用 |
 | **AdversarialGenerationSystem 佔位符** | MEDIUM | 附加 "[adversarial variant]" 字串 | 18L 字串操作 |
 | **CausalReasoningEngine 僅 Pearson** | MEDIUM | 99L，無時間因果、無混淆變數、無 do-calculus | 99L 骨架 |
-| **FullTrainingPipeline 從未觸發** | MEDIUM | 383L 訓練管線存在但零個呼叫者 | 383L 無作用程式碼 |
-| **ContinuousMultimodalLearning 從未觸發** | MEDIUM | 329L 自訓練存在但零個呼叫者 | 329L 無作用程式碼 |
+| **CML pipeline 已接線至生產元件** | LOW | CML 現在與 MultimodalService 共享訓練管線：micro-training 直接改善生產編碼/解碼。孤立管線問題已修復。 | `multimodal_service.py:160` 將生產管線傳遞給 CML |
+| **CML 已接線至生產 encode 路徑** | FIXED | CML 現在透過 `_encode_impl()` 在每次成功編碼後自動記錄並作微訓練，且與 MultimodalService 共用訓練管線（非孤立）。 | `multimodal_service.py:387-398` 嵌入 encode |
 | **Live2D 頭像圖片層為隨機矩形** | LOW | model3.json 有效，但圖片為隨機彩色矩形 | 206L＋樁模組 |
 | **SemanticVisualEncoder 降級至隨機** | LOW | 無 torch/CLIP 時回退至 np.random.randn | ~60L 回退路徑 |
 | **SemanticAudioEncoder 降級至 MFCC 統計** | LOW | 無 torch/whisper 時回退至基本統計 | ~60L 回退路徑 |
@@ -142,8 +143,8 @@
 | T3 | 訓練 SequenceGenerator（RNN + BPTT，CLIP→原始序列） | P1 | 高 | 權重隨機 → 隨機向量 | 合理的原始序列輸出 |
 | T4 | 訓練完整 GVV 文生圖管線（ImageGenerator） | P1 | 高 | 灰色畫布/隨機形狀 | 文字→幾何影像 |
 | T5 | 訓練 ThreeLayerVisual（PCA + 非線性解碼器）於真實資料 | P2 | 中 | 選擇性載入 PCA 檔案 | 自動訓練 PCA |
-| T6 | 觸發 FullTrainingPipeline（對比預訓練 + 重建微調） | P2 | 低 | 383L 有 0 呼叫者 | 接線至啟動/計時器/API |
-| T7 | 觸發 ContinuousMultimodalLearning（自主微訓練） | P2 | 低 | 329L 有 0 呼叫者 | 接線至多模態服務 |
+| T6 | 觸發 FullTrainingPipeline（對比預訓練 + 重建微調） | P2 | 低 | 383L 有 0 呼叫者（接線至啟動/計時器/API pending） | 接線至啟動/計時器/API |
+| T7 | 觸發 ContinuousMultimodalLearning（自主微訓練） | ✅ **DONE** (commit `HEAD~`, Jun 28) | P2 | 低 | CML 現在透過 `_encode_impl()` 自動觸發，且共用生產管線 | 每次編碼後自動微訓練 |
 
 **訓練驗證標準**：
 

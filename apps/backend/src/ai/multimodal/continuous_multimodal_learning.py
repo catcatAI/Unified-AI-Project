@@ -57,6 +57,7 @@ class ContinuousMultimodalLearning:
         min_interval_sec: float = 60.0,
         quality_window: int = 10,
         save_dir: Optional[str] = None,
+        pipeline: Optional[Any] = None,
     ):
         self.buffer_max = buffer_max
         self.auto_train_threshold = auto_train_threshold
@@ -69,10 +70,10 @@ class ContinuousMultimodalLearning:
         self._total_encodes: int = 0
         self._training_runs: int = 0
         self._quality_history: List[Dict[str, Any]] = []
-        self._pipeline = None
+        self._pipeline = pipeline
 
     def _get_pipeline(self):
-        """Get or create the FullTrainingPipeline (lazy import)."""
+        """Get or create the FullTrainingPipeline (lazy import if not provided)."""
         if self._pipeline is None:
             try:
                 from ai.multimodal.training_pipeline import FullTrainingPipeline
