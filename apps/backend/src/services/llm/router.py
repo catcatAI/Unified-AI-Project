@@ -94,6 +94,43 @@ class GenerationParams(NamedTuple):
     max_tokens: int = 512
 
 
+# Retry configuration for LLM API calls
+LLM_MAX_RETRIES: int = 2  # up to 3 total attempts
+LLM_RETRY_BASE_DELAY: float = 1.0  # seconds
+LLM_RETRY_MAX_DELAY: float = 8.0
+LLM_RETRY_JITTER: float = 0.5
+
+
+async def _call_with_retry(
+    coro_factory, max_retries: int = LLM_MAX_RETRIES,
+    base_delay: float = LLM_RETRY_BASE_DELAY,
+    label: str = "llm"
+):
+    """Call an LLM backend with exponential backoff + jitter retry."""
+    last_error: Optional[str] = None
+    for attempt in range(max_retries + 1):
+        try:
+            response = await coro_factory()
+            if response is not None and not response.error:
+                if attempt > 0:
+                    logger.info(f"[retry] {label} succeeded on attempt {attempt + 1}")
+                return response
+            # Response has error set; retry unless exhausted
+            last_error = response.error if response else "empty response"
+            if response is None:
+                raise asyncio.TimeoutError("empty response")
+        except (asyncio.TimeoutError, Exception) as e:
+            last_error = str(e)
+            if attempt < max_retries:
+                delay = min(base_delay * (2 ** attempt) + random.random() * LLM_RETRY_JITTER, LLM_RETRY_MAX_DELAY)
+                logger.warning(f"[retry] {label} attempt {attempt + 1} failed: {e}, retrying in {delay:.1f}s")
+                await asyncio.sleep(delay)
+                continue
+            raise
+    # All retries exhausted
+    raise asyncio.TimeoutError(f"{label} failed after {max_retries + 1} attempts: {last_error}")
+
+
 # Lazy import for memory enhancement system - deferred until first use
 _memory_modules_loaded = False
 _MEMORY_ENHANCED = None
@@ -1141,39 +1178,43 @@ class AngelaLLMService:
     async def _call_llm_backend(self, user_message: str, context: Dict[str, Any], params: GenerationParams) -> LLMResponse:
         messages = self._construct_angela_prompt(user_message, context)
 
-        try:
-            from core.waiting_scheduler import get_waiting_scheduler
-            scheduler = get_waiting_scheduler()
+        async def _do_call():
+            try:
+                from core.waiting_scheduler import get_waiting_scheduler
+                scheduler = get_waiting_scheduler()
 
-            coro = self.active_backend.generate(
-                prompt=messages[-1]["content"],
-                messages=messages,
-                temperature=params.temperature,
-                max_tokens=params.max_tokens,
-            )
-
-            response = await scheduler.submit(
-                coro,
-                timeout=params.timeout,
-                label=f"llm:{self.active_backend_type.value if self.active_backend_type else 'gen'}"
-            )
-
-            if response is None:
-                raise asyncio.TimeoutError("WaitingScheduler returned empty response (timeout/error)")
-
-        except (ImportError, AttributeError) as e:
-            logger.warning(f"WaitingScheduler 調度失敗，回退至直接調用: {e}", exc_info=True)
-            response = await asyncio.wait_for(
-                self.active_backend.generate(
+                coro = self.active_backend.generate(
                     prompt=messages[-1]["content"],
                     messages=messages,
                     temperature=params.temperature,
                     max_tokens=params.max_tokens,
-                ),
-                timeout=params.timeout,
-            )
+                )
 
-        return response
+                response = await scheduler.submit(
+                    coro,
+                    timeout=params.timeout,
+                    label=f"llm:{self.active_backend_type.value if self.active_backend_type else 'gen'}"
+                )
+
+                if response is None:
+                    raise asyncio.TimeoutError("WaitingScheduler returned empty response (timeout/error)")
+
+            except (ImportError, AttributeError) as e:
+                logger.warning(f"WaitingScheduler 調度失敗，回退至直接調用: {e}", exc_info=True)
+                response = await asyncio.wait_for(
+                    self.active_backend.generate(
+                        prompt=messages[-1]["content"],
+                        messages=messages,
+                        temperature=params.temperature,
+                        max_tokens=params.max_tokens,
+                    ),
+                    timeout=params.timeout,
+                )
+
+            return response
+
+        label = f"{self.active_backend_type.value if self.active_backend_type else 'gen'}"
+        return await _call_with_retry(_do_call, label=label)
 
     async def _post_process_response(
         self, response: LLMResponse, user_message: str, context: Dict[str, Any], start_time: float
@@ -1411,8 +1452,8 @@ class AngelaLLMService:
             ed3n_text = self._ed3n_fallback_text(prompt)
             return ed3n_text
 
-        try:
-            response = await asyncio.wait_for(
+        async def _do_call():
+            return await asyncio.wait_for(
                 self.active_backend.generate(
                     prompt=messages[-1]["content"],
                     messages=messages,
@@ -1421,12 +1462,12 @@ class AngelaLLMService:
                 ),
                 timeout=60.0,
             )
+
+        try:
+            response = await _call_with_retry(_do_call, label="generate_text")
             return response.text if not response.error else self._ed3n_fallback_text(prompt)
-        except asyncio.TimeoutError:
-            logger.warning("generate_text timeout", exc_info=True)
-            return self._ed3n_fallback_text(prompt)
-        except Exception as e:
-            logger.error(f"generate_text error: {e}", exc_info=True)
+        except (asyncio.TimeoutError, Exception):
+            logger.warning("generate_text failed after retries", exc_info=True)
             return self._ed3n_fallback_text(prompt)
 
     async def chat_completion(
@@ -1466,15 +1507,18 @@ class AngelaLLMService:
             max_tokens = kwargs.get("max_tokens", 256)
             temperature = kwargs.get("temperature", 0.7)
 
-            text = await asyncio.wait_for(
-                self.active_backend.generate(
-                    prompt=converted_messages[-1]["content"],
-                    messages=converted_messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                ),
-                timeout=60.0,
-            )
+            async def _do_chat():
+                return await asyncio.wait_for(
+                    self.active_backend.generate(
+                        prompt=converted_messages[-1]["content"],
+                        messages=converted_messages,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                    ),
+                    timeout=60.0,
+                )
+
+            text = await _call_with_retry(_do_chat, label="chat_completion")
 
             # P7: fire on_response pipeline for plugin system
             try:

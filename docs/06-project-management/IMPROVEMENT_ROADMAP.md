@@ -98,7 +98,7 @@
 | F1 | 修正 ED3N 數學評估中 >100L 的長函數 | `ed3n_engine.py` | P4 | 中 |
 | F2 | 修正 ModelBus 路由中的 >100L 長函數 | `model_bus.py` | P4 | 中 |
 | F3 | 修正所有文件中的錯誤分數（已完成） | 多個 MD | P0 | 低 |
-| F4 | 修正 LLM 路由中缺少 timeouts/retries | `router.py` | P2 | 低 |
+| F4 | 修正 LLM 路由中缺少 timeouts/retries | ✅ **DONE** (commit `dcd7044e1~`, Jun 28) | `router.py` | P2 | 低 |
 | F5 | NeuroAutoSelector LearnRecorder 連接至 MetaController | ✅ **DONE** (commit `44fec2abb~`, Jun 28) | `neuro_auto_selector.py:764-773` + `router.py:464-470` |
 
 ### 2.2 修復 (Repairs)
@@ -129,7 +129,7 @@
 | I1 | 改善 NeuroAutoSelector 後端選擇（連接至 MetaController） | P2 | 低 | 啟發式 | 適應性、數據驅動 |
 | I2 | 改善 ED3N 字典編碼快取（LRU 取代基本逐出） | P3 | 低 | 基本逐出 | LRU |
 | I3 | 改善 GARDEN SNN 前向傳傳傳傳傳播效率 | P3 | 中 | 稠密矩陣 | 稀疏計算 |
-| I4 | 改善 Agent 路由以包含更多查詢類型（目前僅 5 種路由） | P2 | 中 | 5/11 路由 | 11/11 路由 |
+| I4 | 改善 Agent 路由以包含更多查詢類型（目前僅 5 種路由） | ✅ **DONE** (commit `dcd7044e1~`, Jun 28) | P2 | 中 | 5/11 路由 | 11/11 路由 |
 | I5 | 改善 ED3N 循環限制（由寫死 3 改為可設定） | P4 | 低 | 寫死 3 | 可設定 + 收斂偵測 |
 | I6 | 改善 MetaController 信心校準（windowing→EWMA） | P3 | 低 | 視窗=100 | EWMA |
 

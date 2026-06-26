@@ -458,9 +458,10 @@ async def _try_agent_routing(
         if classify_result.primary_type in actionable:
             return None
 
-        # Map QueryType to agent suitability threshold
-        agent_types = {QueryType.CREATIVE, QueryType.KNOWLEDGE, QueryType.OPINION, QueryType.VISION, QueryType.AUDIO}
-        if classify_result.primary_type not in agent_types:
+        # Map QueryType to agent suitability threshold — route all non-actionable intents
+        agent_types = {QueryType.CREATIVE, QueryType.KNOWLEDGE, QueryType.OPINION,
+                       QueryType.VISION, QueryType.AUDIO, QueryType.LOGIC, QueryType.COMMAND}
+        if classify_result.primary_type not in agent_types and classify_result.confidence < 0.3:
             return None
 
         # Lazy-init agent manager + orchestrator
