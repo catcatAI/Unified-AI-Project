@@ -143,7 +143,7 @@
 | T3 | 訓練 SequenceGenerator（RNN + BPTT，CLIP→原始序列） | P1 | 高 | 權重隨機 → 隨機向量 | 合理的原始序列輸出 |
 | T4 | 訓練完整 GVV 文生圖管線（ImageGenerator） | P1 | 高 | 灰色畫布/隨機形狀 | 文字→幾何影像 |
 | T5 | 訓練 ThreeLayerVisual（PCA + 非線性解碼器）於真實資料 | P2 | 中 | 選擇性載入 PCA 檔案 | 自動訓練 PCA |
-| T6 | 觸發 FullTrainingPipeline（對比預訓練 + 重建微調） | P2 | 低 | 383L 有 0 呼叫者（接線至啟動/計時器/API pending） | 接線至啟動/計時器/API |
+| T6 | 觸發 FullTrainingPipeline（對比預訓練 + 重建微調） | ✅ **DONE** (commit `HEAD~`, Jun 28) | P2 | 低 | 383L 有 0 呼叫者 → 在 `_get_pipeline()` 中自動背景訓練 | 接線至啟動（背景執行緒 + 權重檢查） |
 | T7 | 觸發 ContinuousMultimodalLearning（自主微訓練） | ✅ **DONE** (commit `HEAD~`, Jun 28) | P2 | 低 | CML 現在透過 `_encode_impl()` 自動觸發，且共用生產管線 | 每次編碼後自動微訓練 |
 
 **訓練驗證標準**：

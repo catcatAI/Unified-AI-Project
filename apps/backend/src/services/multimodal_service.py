@@ -17,7 +17,9 @@ P30: First service layer for multimodal pipeline.
 import asyncio
 import io
 import logging
+import os
 import time
+import threading
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -68,6 +70,8 @@ class MultimodalService:
         self._mm_quality_monitor = None
         # P42: Dual encoder router (structural + semantic)
         self._dual_encoder = None
+        self._initial_training_started = False
+        self._training_lock = threading.Lock()
 
     # --- Lazy initialization ---
 
@@ -300,7 +304,29 @@ class MultimodalService:
                 visual_decoder=self._get_visual_decoder(),
                 audio_decoder=self._get_audio_decoder(),
             )
+            self._ensure_initial_training()
         return self._pipeline
+
+    def _ensure_initial_training(self):
+        """Start background training if no trained weights exist (safe for first deployment)."""
+        if self._initial_training_started:
+            return
+        with self._training_lock:
+            if self._initial_training_started:
+                return
+            try:
+                weights_path = self._pipeline.DEFAULT_WEIGHTS_PATH
+                if not os.path.exists(weights_path):
+                    self._initial_training_started = True
+                    t = threading.Thread(target=self._pipeline.run, kwargs={
+                        "contrastive_epochs": 10, "recon_epochs": 10, "lr": 0.01,
+                    }, daemon=True)
+                    t.start()
+                    logger.info("[Multimodal] No trained weights found at %s — background training started", weights_path)
+                else:
+                    self._initial_training_started = True
+            except Exception as e:
+                logger.warning("[Multimodal] Initial training check failed (non-fatal): %s", e)
 
     # --- Encoding ---
 
