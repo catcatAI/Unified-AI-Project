@@ -14,9 +14,9 @@ try:
     from opentelemetry.sdk.trace.export import ConsoleSpanExporter, BatchSpanProcessor
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-    OPEN TELEMETRY_AVAILABLE = True
+    OPENTELEMETRY_AVAILABLE = True
 except ImportError:
-    OPEN TELEMETRY_AVAILABLE = False
+    OPENTELEMETRY_AVAILABLE = False
     logger.warning("OpenTelemetry not available. Tracing disabled.")
 
 
@@ -25,7 +25,7 @@ def init_tracing(
     endpoint: Optional[str] = None,
 ) -> None:
     """Initialize OpenTelemetry tracing."""
-    if not OPEN TELEMETRY_AVAILABLE:
+    if not OPENTELEMETRY_AVAILABLE:
         logger.info("OpenTelemetry not installed. Skipping tracing setup.")
         return
 
@@ -47,7 +47,7 @@ def init_tracing(
 
 def instrument_app(app) -> None:
     """Instrument a FastAPI app with OpenTelemetry."""
-    if not OPEN TELEMETRY_AVAILABLE:
+    if not OPENTELEMETRY_AVAILABLE:
         return
 
     try:
@@ -59,6 +59,6 @@ def instrument_app(app) -> None:
 
 def get_tracer(name: str = "angela"):
     """Get a tracer instance."""
-    if not OPEN TELEMETRY_AVAILABLE:
+    if not OPENTELEMETRY_AVAILABLE:
         return None
     return trace.get_tracer(name)

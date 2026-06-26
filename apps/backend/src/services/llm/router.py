@@ -76,6 +76,16 @@ _KNOWN_FALLBACK_RESPONSES = frozenset({
     "Sorry, I couldn't understand what you meant.",
 })
 
+_BACKEND_FACTORIES: Dict[str, str] = {
+    "llama_cpp": "_init_llamacpp",
+    "ollama": "_init_ollama",
+    "openai": "_init_openai",
+    "anthropic": "_init_anthropic",
+    "google": "_init_google",
+    "ed3n": "_init_ed3n",
+    "garden": "_init_garden",
+}
+
 
 class GenerationParams(NamedTuple):
     """Immutable per-request generation parameters — avoids self._gen_* race condition."""
@@ -350,6 +360,14 @@ class AngelaLLMService:
         state_store.update_state("hardware", {"active_llm": getattr(self.active_backend, "model", "unknown")})
         logger.info("✅ [LLMService] Configuration hot-reloaded.")
 
+    def _resolve_backend_provider(self, backend_id: str, config: dict) -> Optional[str]:
+        provider = config.get("provider", "").lower()
+        if provider in ("llama_cpp", "llamacpp") or backend_id == "llamacpp-local":
+            return "llama_cpp"
+        if provider == "ollama" or backend_id.startswith("ollama"):
+            return "ollama"
+        return provider if provider in _BACKEND_FACTORIES else None
+
     def _init_backends(self) -> None:
         """初始化可用的後端（支援所有 provider 類型）"""
         for backend_id, backend_config in self.config.items():
@@ -358,70 +376,81 @@ class AngelaLLMService:
             if not backend_config.get("enabled", False):
                 continue
 
-            provider = backend_config.get("provider", "").lower()
+            provider = self._resolve_backend_provider(backend_id, backend_config)
+            if provider is None:
+                continue
+
             base_url = backend_config.get("base_url", "")
             model_name = backend_config.get("model_name", "")
             api_key = backend_config.get("api_key", "") or os.environ.get(backend_config.get("api_key_env", ""), "")
+            factory_name = _BACKEND_FACTORIES[provider]
+            getattr(self, factory_name)(backend_id, base_url, model_name, api_key, backend_config)
 
-            if provider in ("llama_cpp", "llamacpp") or backend_id == "llamacpp-local":
-                self.backends[LLMBackend.LLAMA_CPP] = LlamaCppBackend(
-                    base_url=base_url or LLAMACPP_HOST,
-                    model=model_name,
-                    timeout=backend_config.get("timeout", LLM_REQUEST_TIMEOUT),
-                )
-                logger.info(f"已注冊 llama.cpp 後端: {model_name}")
+    def _init_llamacpp(self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict) -> None:
+        self.backends[LLMBackend.LLAMA_CPP] = LlamaCppBackend(
+            base_url=base_url or LLAMACPP_HOST,
+            model=model_name,
+            timeout=config.get("timeout", LLM_REQUEST_TIMEOUT),
+        )
+        logger.info(f"已注冊 llama.cpp 後端: {model_name}")
 
-            elif provider == "ollama" or backend_id.startswith("ollama"):
-                if LLMBackend.OLLAMA not in self.backends:
-                    self.backends[LLMBackend.OLLAMA] = OllamaBackend(
-                        base_url=base_url or OLLAMA_HOST,
-                        model=model_name or DEFAULT_OLLAMA_MODEL,
-                        api_key=api_key,
-                        timeout=backend_config.get("timeout", LLM_REQUEST_TIMEOUT),
-                    )
-                    logger.info(f"已注冊 Ollama 後端: {model_name}")
+    def _init_ollama(self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict) -> None:
+        if LLMBackend.OLLAMA not in self.backends:
+            self.backends[LLMBackend.OLLAMA] = OllamaBackend(
+                base_url=base_url or OLLAMA_HOST,
+                model=model_name or DEFAULT_OLLAMA_MODEL,
+                api_key=api_key,
+                timeout=config.get("timeout", LLM_REQUEST_TIMEOUT),
+            )
+            logger.info(f"已注冊 Ollama 後端: {model_name}")
 
-            elif provider == "openai" and api_key:
-                self.backends[LLMBackend.OPENAI] = OpenAIAPIBackend(
-                    api_key=api_key,
-                    base_url=base_url or OPENAI_API_BASE,
-                    model=model_name or DEFAULT_OPENAI_MODEL,
-                    timeout=backend_config.get("timeout", LLM_REQUEST_TIMEOUT),
-                )
-                logger.info(f"已注冊 OpenAI 後端: {model_name}")
+    def _init_openai(self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict) -> None:
+        if not api_key:
+            return
+        self.backends[LLMBackend.OPENAI] = OpenAIAPIBackend(
+            api_key=api_key,
+            base_url=base_url or OPENAI_API_BASE,
+            model=model_name or DEFAULT_OPENAI_MODEL,
+            timeout=config.get("timeout", LLM_REQUEST_TIMEOUT),
+        )
+        logger.info(f"已注冊 OpenAI 後端: {model_name}")
 
-            elif provider == "anthropic" and api_key:
-                self.backends[LLMBackend.ANTHROPIC] = AnthropicAPIBackend(
-                    api_key=api_key,
-                    base_url=base_url or ANTHROPIC_API_BASE,
-                    model=model_name or DEFAULT_ANTHROPIC_MODEL,
-                    timeout=backend_config.get("timeout", LLM_REQUEST_TIMEOUT),
-                )
-                logger.info(f"已注冊 Anthropic 後端: {model_name}")
+    def _init_anthropic(self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict) -> None:
+        if not api_key:
+            return
+        self.backends[LLMBackend.ANTHROPIC] = AnthropicAPIBackend(
+            api_key=api_key,
+            base_url=base_url or ANTHROPIC_API_BASE,
+            model=model_name or DEFAULT_ANTHROPIC_MODEL,
+            timeout=config.get("timeout", LLM_REQUEST_TIMEOUT),
+        )
+        logger.info(f"已注冊 Anthropic 後端: {model_name}")
 
-            elif provider == "google" and api_key:
-                self.backends[LLMBackend.GOOGLE] = GoogleAPIBackend(
-                    api_key=api_key,
-                    model=model_name or DEFAULT_GOOGLE_MODEL,
-                    timeout=backend_config.get("timeout", LLM_REQUEST_TIMEOUT),
-                )
-                logger.info(f"已注冊 Google Gemini 後端: {model_name}")
+    def _init_google(self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict) -> None:
+        if not api_key:
+            return
+        self.backends[LLMBackend.GOOGLE] = GoogleAPIBackend(
+            api_key=api_key,
+            model=model_name or DEFAULT_GOOGLE_MODEL,
+            timeout=config.get("timeout", LLM_REQUEST_TIMEOUT),
+        )
+        logger.info(f"已注冊 Google Gemini 後端: {model_name}")
 
-            elif provider == "ed3n":
-                self.backends[LLMBackend.ED3N] = ED3NBackend(
-                    base_url=base_url or "",
-                    model=model_name or "ed3n-v1",
-                    timeout=backend_config.get("timeout", 30.0),
-                )
-                logger.info(f"已注冊 ED3N 後端: {model_name or 'ed3n-v1'}")
+    def _init_ed3n(self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict) -> None:
+        self.backends[LLMBackend.ED3N] = ED3NBackend(
+            base_url=base_url or "",
+            model=model_name or "ed3n-v1",
+            timeout=config.get("timeout", 30.0),
+        )
+        logger.info(f"已注冊 ED3N 後端: {model_name or 'ed3n-v1'}")
 
-            elif provider == "garden":
-                self.backends[LLMBackend.GARDEN] = GARDENBackend(
-                    model=model_name or "garden-1g",
-                    checkpoint=backend_config.get("checkpoint", ""),
-                    timeout=backend_config.get("timeout", 30.0),
-                )
-                logger.info(f"已注冊 GARDEN 後端: {model_name or 'garden-1g'}")
+    def _init_garden(self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict) -> None:
+        self.backends[LLMBackend.GARDEN] = GARDENBackend(
+            model=model_name or "garden-1g",
+            checkpoint=config.get("checkpoint", ""),
+            timeout=config.get("timeout", 30.0),
+        )
+        logger.info(f"已注冊 GARDEN 後端: {model_name or 'garden-1g'}")
 
     async def initialize(self) -> bool:
         """初始化服務，檢測可用的後端
