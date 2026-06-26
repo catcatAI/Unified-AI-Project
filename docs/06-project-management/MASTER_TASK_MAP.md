@@ -354,7 +354,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 
 ## X. EVERY PENDING ITEM — Exact Blocker
 
-> **Note**: This table tracks 30 key items (14 DONE, 16 PENDING) but is NOT exhaustive. Full codebase audit found **~190+ AI-related classes** across `ai/`, `core/`, `services/` (20+ subsystems). **⚠️ "存在" ≠ "正常運作"** — see industry comparison below. Most engines are architectural skeletons: VisualDecoder projection weights are now trained on CIFAR-10 (42× loss reduction) and auto-loaded at startup. AudioWaveformDecoder projection weights also trained (309× loss reduction) and auto-loaded. CNN texture branches remain random. SequenceGenerator and ImageGenerator weights are fully random.
+> **Note**: This table tracks 30 key items (15 DONE, 15 PENDING) but is NOT exhaustive. Full codebase audit found **~190+ AI-related classes** across `ai/`, `core/`, `services/` (20+ subsystems). **⚠️ "存在" ≠ "正常運作"** — see industry comparison below. Most engines are architectural skeletons: VisualDecoder projection weights are now trained on CIFAR-10 (42× loss reduction) and auto-loaded at startup. AudioWaveformDecoder projection weights also trained (309× loss reduction) and auto-loaded. CNN texture branches remain random. SequenceGenerator and ImageGenerator weights are fully random. CML is now wired into production encode path with shared pipeline (Jun 28).
 
 | # | Item | Why Not Done | Code Status | Blocked By |
 |:-:|:-----|:-------------|:------------|:-----------|
