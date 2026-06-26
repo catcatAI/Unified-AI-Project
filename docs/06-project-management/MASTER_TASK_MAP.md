@@ -179,7 +179,7 @@ Each entry has:
 ### Phase 2-4: All claimed completed
 
 19+17+10 tasks all verified with varying degrees. Key remaining:
-- **C901 cyclomatic complexity**: 67 residual (claimed to have refactored top 10 worst). Actual: 6 refactored (construct_angela_prompt F48→D27, ModelBus.route E39→B8, VisionService._analyze_colors E36→B7, _handle_drive_command E32→B7, AngelaLLMService._init_backends E31→B6, ChatService.generate_response E39→A3). 1 E-grade remain.
+- **C901 cyclomatic complexity**: 67 residual (claimed to have refactored top 10 worst). Actual: 7 refactored — **all E/F-grade functions eliminated**. construct_angela_prompt F48→D27, ModelBus.route E39→B8, VisionService._analyze_colors E36→B7, _handle_drive_command E32→B7, AngelaLLMService._init_backends E31→B6, ChatService.generate_response E39→A3, ED3NEngine.process_multimodal E35→B6.
 - **Shared code deduplication P3-9 to P3-11**: ✅ RESOLVED — `core/shared/` duplicates deleted in Phase 9-12 (commit `064e63621`)
 
 ---
@@ -359,7 +359,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | 1 | Auto-repair in run_angela.py | ✅ **DONE** (commit `7a3af4107`, Jun 25) | `run_angela.py` has `install_dependencies()`, `--auto-repair` flag | — |
 | 2 | YOLO object detection | Never started | Zero code exists | Need design |
 | 3 | `/multimodal/stream` WS route | ✅ **DONE** — dedicated handler + route registered | `services/multimodal_ws_handler.py` + `main_api_server.py` line 295 | — |
-| 4 | C901 cyclomatic complexity (67 residual) | 6 refactored (+ChatService.generate_response E39→A3), 61 remain | 1 Grade E remain (ED3NEngine.process_multimodal E35) | Manual code review |
+| 4 | C901 cyclomatic complexity (67 residual) | 7 refactored (+ED3NEngine.process_multimodal E35→B6), 60 remain | 0 Grade E remain | **ALL E/F GRADE FUNCTIONS ELIMINATED** |
 | 5 | Shared code deduplication (P3-9 to P3-11) | ✅ **RESOLVED** — `core/shared/` duplicates deleted in Phase 9-12 (commit `064e63621`) | Only `src/shared/error.py` and `src/shared/key_manager.py` remain | Automatically fixed by dead code removal |
 | 6 | P4 long function refactor (28 files >100 lines) | 4/28 done (+construct_angela_prompt: F48→D27, extracted 9 append helpers, Jun 26) | 24 files still >100 lines | Effort (large) |
 | 7 | P4 load/stress test framework | Never started | No framework exists | Design |

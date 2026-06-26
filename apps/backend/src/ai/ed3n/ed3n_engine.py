@@ -672,64 +672,85 @@ class ED3NEngine:
         context: Optional[Dict] = None,
         depth: str = "auto",
     ) -> str:
-        text_keys: List[str] = []
-        image_keys: List[str] = []
-        audio_keys: List[str] = []
-
-        if text:
-            text_keys = self.dictionary.encode(text)
-
-        if image_data:
-            image_keys = self._process_image_input(image_data)
-
-        if audio_data:
-            audio_keys = self._process_audio_input(audio_data)
+        text_keys = self._encode_text_keys(text)
+        image_keys = self._encode_image_keys(image_data)
+        audio_keys = self._encode_audio_keys(audio_data)
 
         combined_keys = list(set(text_keys + image_keys + audio_keys))
-
-        # Multimodal RAG: retrieve related entries via MultimodalED3NAdapter
-        if self.multimodal_adapter is not None:
-            try:
-                rag_entries = []
-                if image_data:
-                    rag_entries = self.multimodal_adapter.retrieve_multimodal(
-                        image_data=image_data, top_k=3
-                    )
-                elif audio_data:
-                    rag_entries = self.multimodal_adapter.retrieve_multimodal(
-                        audio_data=audio_data, top_k=3
-                    )
-                for entry in rag_entries:
-                    key = entry.get("key", "")
-                    if key and key not in combined_keys:
-                        combined_keys.insert(0, key)
-            except Exception as e:
-                logger.debug("Multimodal RAG retrieval failed (non-critical): %s", e)
-
-        # P44: Semantic Key Mapping — use DualEncoderRouter's semantic latents
-        # to find closest concept keys, bypassing the old text-only path.
-        if self._dual_encoder_router is not None:
-            try:
-                semantic_keys = self._process_semantic_keys(
-                    image_data=image_data,
-                    audio_data=audio_data,
-                )
-                for key in semantic_keys:
-                    if key and key not in combined_keys:
-                        combined_keys.insert(0, key)
-            except Exception as e:
-                logger.debug("Semantic key retrieval failed (non-critical): %s", e)
+        combined_keys = self._enrich_with_multimodal_rag(combined_keys, image_data, audio_data)
+        combined_keys = self._enrich_with_semantic_keys(combined_keys, image_data, audio_data)
 
         if not combined_keys:
             return self._fallback_str(text or "")
 
-        if self.cross_modal_trainer:
-            for tk in text_keys or [""]:
-                ik = image_keys[0] if image_keys else None
-                ak = audio_keys[0] if audio_keys else None
-                if tk:
-                    self.cross_modal_trainer.record_co_occurrence(tk, ik, ak)
+        self._record_cross_modal_cooccurrence(text_keys, image_keys, audio_keys)
+        return self._process_with_network(combined_keys, text, depth, context)
 
+    def _encode_text_keys(self, text: Optional[str]) -> List[str]:
+        if not text:
+            return []
+        return self.dictionary.encode(text)
+
+    def _encode_image_keys(self, image_data: Optional[Any]) -> List[str]:
+        if not image_data:
+            return []
+        return self._process_image_input(image_data)
+
+    def _encode_audio_keys(self, audio_data: Optional[Any]) -> List[str]:
+        if not audio_data:
+            return []
+        return self._process_audio_input(audio_data)
+
+    def _enrich_with_multimodal_rag(
+        self, combined_keys: List[str], image_data: Optional[Any], audio_data: Optional[Any]
+    ) -> List[str]:
+        if self.multimodal_adapter is None:
+            return combined_keys
+        try:
+            rag_entries = []
+            if image_data:
+                rag_entries = self.multimodal_adapter.retrieve_multimodal(image_data=image_data, top_k=3)
+            elif audio_data:
+                rag_entries = self.multimodal_adapter.retrieve_multimodal(audio_data=audio_data, top_k=3)
+            for entry in rag_entries:
+                key = entry.get("key", "")
+                if key and key not in combined_keys:
+                    combined_keys.insert(0, key)
+        except Exception as e:
+            logger.debug("Multimodal RAG retrieval failed (non-critical): %s", e)
+        return combined_keys
+
+    def _enrich_with_semantic_keys(
+        self, combined_keys: List[str], image_data: Optional[Any], audio_data: Optional[Any]
+    ) -> List[str]:
+        if self._dual_encoder_router is None:
+            return combined_keys
+        try:
+            semantic_keys = self._process_semantic_keys(
+                image_data=image_data,
+                audio_data=audio_data,
+            )
+            for key in semantic_keys:
+                if key and key not in combined_keys:
+                    combined_keys.insert(0, key)
+        except Exception as e:
+            logger.debug("Semantic key retrieval failed (non-critical): %s", e)
+        return combined_keys
+
+    def _record_cross_modal_cooccurrence(
+        self, text_keys: List[str], image_keys: List[str], audio_keys: List[str]
+    ) -> None:
+        if not self.cross_modal_trainer:
+            return
+        for tk in text_keys or [""]:
+            ik = image_keys[0] if image_keys else None
+            ak = audio_keys[0] if audio_keys else None
+            if tk:
+                self.cross_modal_trainer.record_co_occurrence(tk, ik, ak)
+
+    def _process_with_network(
+        self, combined_keys: List[str], text: Optional[str], depth: str, context: Optional[Dict]
+    ) -> str:
         if depth == "shallow" or (depth == "auto" and not context and not text):
             decoded = self.dictionary.decode(combined_keys, context)
             return decoded or self._fallback_str(text or "")
