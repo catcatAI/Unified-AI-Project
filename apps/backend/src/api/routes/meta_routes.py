@@ -69,6 +69,7 @@ async def get_source_calibration(source: str):
         "calibration": {
             "sample_count": report.sample_count,
             "avg_confidence": report.avg_confidence,
+            "ewma_confidence": report.ewma_confidence,
             "calibration_error": report.calibration_error,
             "overconfidence_ratio": report.overconfidence_ratio,
             "underconfidence_ratio": report.underconfidence_ratio,

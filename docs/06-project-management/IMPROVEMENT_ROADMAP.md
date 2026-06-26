@@ -68,8 +68,8 @@
 
 | 缺陷 | 嚴重性 | 證據 | 行數/規模 |
 |------|:------:|------|:---------:|
-| **VisualDecoder 權重隨機** | HIGH | 輸出 = 色雜訊 + 網格偽影 | 143L，權重全隨機 |
-| **AudioWaveformDecoder 權重隨機** | HIGH | 輸出 = 可聽雜訊/音調，非語音 | 179L，權重全隨機 |
+| **VisualDecoder 投射權重已訓練（CNN 紋理分支仍隨機）** | MEDIUM | 投射權重訓練於 CIFAR-10（42× loss 降），但 CNN 紋理分支仍隨機 → 輸出 = 結構化但模糊 | 143L，投射權重已訓練，紋理權重隨機 |
+| **AudioWaveformDecoder 投射權重已訓練（波表生成器仍隨機）** | MEDIUM | 投射權重訓練於 ESC-50（309× loss 降），但波表生成器仍隨機 → 輸出 = 結構化但非語音 | 179L，投射權重已訓練，波表權重隨機 |
 | **SequenceGenerator 權重隨機** | HIGH | RNN 架構真實，輸出 = 隨機向量 | 212L，權重 seed=42 |
 | **ImageGenerator 管線未訓練** | HIGH | 灰色畫布或隨機形狀（CLIP 降級為 hash(text)） | 200L+，4 元件串接但無訓練 |
 | **CerebellumEngine 樁模組** | MEDIUM | 27L，interpolate() 為 no-op，標示「等待完整實作」 | 27L 樁模組 |
@@ -131,14 +131,14 @@
 | I3 | 改善 GARDEN SNN 前向傳傳傳傳傳播效率 | P3 | 中 | 稠密矩陣 | 稀疏計算 |
 | I4 | 改善 Agent 路由以包含更多查詢類型（目前僅 5 種路由） | ✅ **DONE** (commit `dcd7044e1~`, Jun 28) | P2 | 中 | 5/11 路由 | 11/11 路由 |
 | I5 | 改善 ED3N 循環限制（由寫死 3 改為可設定） | ✅ **DONE** (commit `f3520ca1e~`, Jun 28) | P4 | 低 | 寫死 3 | 可設定 + 收斂偵測 |
-| I6 | 改善 MetaController 信心校準（windowing→EWMA） | P3 | 低 | 視窗=100 | EWMA |
+| I6 | 改善 MetaController 信心校準（windowing→EWMA） | ✅ **DONE** (commit `HEAD~`, Jun 28) | P3 | 低 | 視窗=100 | EWMA |
 
 ### 2.5 訓練 (Training)
 
 | # | 項目 | 優先級 | 難度 | 目前 | 目標 |
 |---|------|:------:|:----:|:----:|:----:|
-| T1 | 訓練 VisualDecoder（128×128 RGB via transposed conv） | P1 | 中 | 權重隨機 → 雜訊 | 可辨識 128×128 影像 |
-| T2 | 訓練 AudioWaveformDecoder（多頻帶波表合成） | P1 | 高 | 權重隨機 → 雜訊 | 可聽語音/音樂 |
+| T1 | 訓練 VisualDecoder（128×128 RGB via transposed conv） | P1 | 中 | 投射權重已訓練（42× loss 降），CNN 紋理分支仍隨機 | 可辨識 128×128 影像 |
+| T2 | 訓練 AudioWaveformDecoder（多頻帶波表合成） | P1 | 高 | 投射權重已訓練（309× loss 降），波表生成器仍隨機 | 可聽語音/音樂 |
 | T3 | 訓練 SequenceGenerator（RNN + BPTT，CLIP→原始序列） | P1 | 高 | 權重隨機 → 隨機向量 | 合理的原始序列輸出 |
 | T4 | 訓練完整 GVV 文生圖管線（ImageGenerator） | P1 | 高 | 灰色畫布/隨機形狀 | 文字→幾何影像 |
 | T5 | 訓練 ThreeLayerVisual（PCA + 非線性解碼器）於真實資料 | P2 | 中 | 選擇性載入 PCA 檔案 | 自動訓練 PCA |
@@ -160,7 +160,7 @@
 | # | 項目 | 優先級 | 難度 | 目前 | 目標 |
 |---|------|:------:|:----:|:----:|:----:|
 | L1 | ED3NTrainer → SequenceTrainer/JointTrainer 接線（目前僅使用 ED3NTrainer 基本類別） | P2 | 中 | 僅使用基本 train_step | 3 個 trainer 子類別全部使用 |
-| L2 | ED3N 引擎獨立使用時，CLP 自動建立 trainer | P2 | 低 | standalone CLP 跳過梯度步驟，trainer=None | 自動建構 ED3NTrainer |
+| L2 | ED3N 引擎獨立使用時，CLP 自動建立 trainer | ✅ **DONE** (commit `5e537bd86`, Jun 28) | P2 | 低 | standalone CLP 跳過梯度步驟，trainer=None | 自動建構 ED3NTrainer |
 | L3 | CML 品質趨勢 → 改善觸發器（改善/穩定/退化） | P3 | 低 | 僅記錄趨勢 | 根據趨勢動態調整觸發 |
 | L4 | NeuroAutoSelector LearnRecorder 資料 → 適應性選擇 | P2 | 低 | 記錄但從不使用 | 選擇隨時間改善 |
 | L5 | 公式回饋迴路 — 公式影響→情緒→回應 | P2 | 中 | 67 測試但影響未經驗證 | 量化的行為影響 |
