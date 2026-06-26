@@ -108,6 +108,19 @@ def cmd_train(args) -> None:
 
 def cmd_serve(args):
     e = get_engine(args.checkpoint)
+    # Wire continuous learning for interactive sessions
+    try:
+        from .continuous_learning import ContinuousLearningPipeline
+        from .ed3n_trainer import ED3NTrainer
+        trainer = ED3NTrainer(e, dictionary_lr=0.05, network_lr=0.05)
+        clp = ContinuousLearningPipeline(engine=e, trainer=trainer,
+                                         growth_interval=15, train_interval=50,
+                                         min_examples_for_train=30, auto_grow=True)
+        e._continuous_learning = clp
+        print("  Continuous learning enabled")
+    except Exception as exc:
+        print(f"  Continuous learning unavailable: {exc}")
+
     print("\nED3N Interactive Mode (type 'quit' to exit)\n")
     while True:
         try:
