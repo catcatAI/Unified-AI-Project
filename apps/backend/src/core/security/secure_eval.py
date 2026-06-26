@@ -82,13 +82,146 @@ class UnsafeExpressionError(ValueError):
     pass
 
 
+class _SafeEvalChecker(ast.NodeVisitor):
+    """AST node checker using NodeVisitor pattern for safe expression validation."""
+
+    def __init__(self, safe_ops: Dict[type, Any], safe_nms: Dict[str, Any],
+                 context: Optional[Dict[str, Any]], max_nodes: int):
+        self.safe_ops = safe_ops
+        self.safe_nms = safe_nms
+        self.context = context
+        self.max_nodes = max_nodes
+        self._node_count = 0
+
+    def _check_node_limit(self):
+        self._node_count += 1
+        if self._node_count > self.max_nodes:
+            raise UnsafeExpressionError(f"表達式過於複雜 (超過 {self.max_nodes} 個節點)")
+
+    def visit_Expression(self, node: ast.Expression):
+        self._check_node_limit()
+        self.visit(node.body)
+
+    def visit_BinOp(self, node: ast.BinOp):
+        self._check_node_limit()
+        if type(node.op) not in self.safe_ops:
+            raise UnsafeExpressionError(f"不允許的二進制操作符: {type(node.op).__name__}")
+        self.visit(node.left)
+        self.visit(node.right)
+
+    def visit_UnaryOp(self, node: ast.UnaryOp):
+        self._check_node_limit()
+        if type(node.op) not in self.safe_ops:
+            raise UnsafeExpressionError(f"不允許的一元操作符: {type(node.op).__name__}")
+        self.visit(node.operand)
+
+    def visit_BoolOp(self, node: ast.BoolOp):
+        self._check_node_limit()
+        if type(node.op) not in self.safe_ops:
+            raise UnsafeExpressionError(f"不允許的邏輯操作符: {type(node.op).__name__}")
+        for v in node.values:
+            self.visit(v)
+
+    def visit_Compare(self, node: ast.Compare):
+        self._check_node_limit()
+        for op in node.ops:
+            if type(op) not in self.safe_ops:
+                raise UnsafeExpressionError(f"不允許的比較操作符: {type(op).__name__}")
+        self.visit(node.left)
+        for c in node.comparators:
+            self.visit(c)
+
+    def visit_Name(self, node: ast.Name):
+        self._check_node_limit()
+        if node.id not in self.safe_nms and (self.context is None or node.id not in self.context):
+            raise UnsafeExpressionError(f"不允許的名稱訪問: '{node.id}'")
+
+    def visit_Constant(self, node: ast.Constant):
+        self._check_node_limit()
+        if not isinstance(node.value, (int, float, bool, str, bytes, type(None))):
+            raise UnsafeExpressionError(f"不允許的常量類型: {type(node.value).__name__}")
+
+    def visit_List(self, node: ast.List):
+        self._check_node_limit()
+        for elt in node.elts:
+            self.visit(elt)
+
+    def visit_Tuple(self, node: ast.Tuple):
+        self._check_node_limit()
+        for elt in node.elts:
+            self.visit(elt)
+
+    def visit_Dict(self, node: ast.Dict):
+        self._check_node_limit()
+        for k in node.keys:
+            if k is not None:
+                self.visit(k)
+        for v in node.values:
+            self.visit(v)
+
+    def visit_Set(self, node: ast.Set):
+        self._check_node_limit()
+        for elt in node.elts:
+            self.visit(elt)
+
+    def visit_Call(self, node: ast.Call):
+        self._check_node_limit()
+        if not isinstance(node.func, ast.Name):
+            raise UnsafeExpressionError("僅支援簡單函數調用 (不支援方法調用)")
+        if node.func.id not in self.safe_nms:
+            raise UnsafeExpressionError(f"不允許的函數調用: '{node.func.id}'")
+        for arg in node.args:
+            self.visit(arg)
+        for kw in node.keywords:
+            self.visit(kw.value)
+
+    def visit_ListComp(self, node: ast.ListComp):
+        self._check_node_limit()
+        self.visit(node.elt)
+        for gen in node.generators:
+            self.visit(gen)
+
+    def visit_comprehension(self, node: ast.comprehension):
+        self._check_node_limit()
+        self.visit(node.target)
+        self.visit(node.iter)
+        for if_clause in node.ifs:
+            self.visit(if_clause)
+
+    def visit_Subscript(self, node: ast.Subscript):
+        self._check_node_limit()
+        self.visit(node.value)
+        self.visit(node.slice)
+
+    def visit_Slice(self, node: ast.Slice):
+        self._check_node_limit()
+        if node.lower:
+            self.visit(node.lower)
+        if node.upper:
+            self.visit(node.upper)
+        if node.step:
+            self.visit(node.step)
+
+    def visit_Attribute(self, node: ast.Attribute):
+        raise UnsafeExpressionError("不允許的屬性訪問")
+
+    def visit_IfExp(self, node: ast.IfExp):
+        raise UnsafeExpressionError("不允許的條件表達式或 lambda")
+
+    def visit_Lambda(self, node: ast.Lambda):
+        raise UnsafeExpressionError("不允許的條件表達式或 lambda")
+
+    def generic_visit(self, node: ast.AST):
+        raise UnsafeExpressionError(f"不允許的 AST 節點: {type(node).__name__}")
+
+
 def safe_eval(
     expression: str,
     context: Optional[Dict[str, Any]] = None,
     max_nodes: int = 500,
     _safe_operators: Optional[Dict[type, Any]] = None,
     _safe_names: Optional[Dict[str, Any]] = None,
-) -> EvalResult:
+) -> "EvalResult":
     """
     安全地求值表達式 / Safely evaluate an expression
 
@@ -107,106 +240,20 @@ def safe_eval(
         >>> r.success, r.result
         (True, 7)
     """
-    safe_ops = SAFE_OPERATORS if _safe_operators is None else _safe_operators
-    safe_nms = SAFE_NAMES if _safe_names is None else _safe_names
-
     if not isinstance(expression, str):
         return EvalResult(success=False, error=f"表達式必須是字串，得到 {type(expression).__name__}", expression=str(expression))
+
+    safe_ops = SAFE_OPERATORS if _safe_operators is None else _safe_operators
+    safe_nms = SAFE_NAMES if _safe_names is None else _safe_names
 
     try:
         tree = ast.parse(expression.strip(), mode="eval")
     except SyntaxError as e:
         return EvalResult(success=False, error=str(e), expression=expression)
 
-    node_count = 0
-
-    def _check(node: ast.AST) -> None:
-        nonlocal node_count
-        node_count += 1
-        if node_count > max_nodes:
-            raise UnsafeExpressionError(f"表達式過於複雜 (超過 {max_nodes} 個節點)")
-
-        if isinstance(node, ast.Expression):
-            _check(node.body)
-        elif isinstance(node, ast.BinOp):
-            if type(node.op) not in safe_ops:
-                raise UnsafeExpressionError(f"不允許的二進制操作符: {type(node.op).__name__}")
-            _check(node.left)
-            _check(node.right)
-        elif isinstance(node, ast.UnaryOp):
-            if type(node.op) not in safe_ops:
-                raise UnsafeExpressionError(f"不允許的一元操作符: {type(node.op).__name__}")
-            _check(node.operand)
-        elif isinstance(node, ast.BoolOp):
-            if type(node.op) not in safe_ops:
-                raise UnsafeExpressionError(f"不允許的邏輯操作符: {type(node.op).__name__}")
-            for v in node.values:
-                _check(v)
-        elif isinstance(node, ast.Compare):
-            for op in node.ops:
-                if type(op) not in safe_ops:
-                    raise UnsafeExpressionError(f"不允許的比較操作符: {type(op).__name__}")
-            _check(node.left)
-            for c in node.comparators:
-                _check(c)
-        elif isinstance(node, ast.Name):
-            if node.id not in safe_nms and (context is None or node.id not in context):
-                raise UnsafeExpressionError(f"不允許的名稱訪問: '{node.id}'")
-        elif isinstance(node, ast.Constant):
-            if not isinstance(node.value, (int, float, bool, str, bytes, type(None))):
-                raise UnsafeExpressionError(f"不允許的常量類型: {type(node.value).__name__}")
-        elif isinstance(node, ast.List):
-            for elt in node.elts:
-                _check(elt)
-        elif isinstance(node, ast.Tuple):
-            for elt in node.elts:
-                _check(elt)
-        elif isinstance(node, ast.Dict):
-            for k in node.keys:
-                if k is not None:
-                    _check(k)
-            for v in node.values:
-                _check(v)
-        elif isinstance(node, ast.Set):
-            for elt in node.elts:
-                _check(elt)
-        elif isinstance(node, ast.Call):
-            if not isinstance(node.func, ast.Name):
-                raise UnsafeExpressionError("僅支援簡單函數調用 (不支援方法調用)")
-            if node.func.id not in safe_nms:
-                raise UnsafeExpressionError(f"不允許的函數調用: '{node.func.id}'")
-            for arg in node.args:
-                _check(arg)
-            for kw in node.keywords:
-                _check(kw.value)
-        elif isinstance(node, ast.ListComp):
-            _check(node.elt)
-            for gen in node.generators:
-                _check(gen)
-        elif isinstance(node, ast.comprehension):
-            _check(node.target)
-            _check(node.iter)
-            for if_clause in node.ifs:
-                _check(if_clause)
-        elif isinstance(node, ast.Subscript):
-            _check(node.value)
-            _check(node.slice)
-        elif isinstance(node, ast.Slice):
-            if node.lower:
-                _check(node.lower)
-            if node.upper:
-                _check(node.upper)
-            if node.step:
-                _check(node.step)
-        elif isinstance(node, ast.Attribute):
-            raise UnsafeExpressionError("不允許的屬性訪問")
-        elif isinstance(node, (ast.IfExp, ast.Lambda)):
-            raise UnsafeExpressionError("不允許的條件表達式或 lambda")
-        else:
-            raise UnsafeExpressionError(f"不允許的 AST 節點: {type(node).__name__}")
-
     try:
-        _check(tree)
+        checker = _SafeEvalChecker(safe_ops, safe_nms, context, max_nodes)
+        checker.visit(tree)
     except UnsafeExpressionError as e:
         return EvalResult(success=False, error=str(e), expression=expression)
 
