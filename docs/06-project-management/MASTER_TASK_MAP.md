@@ -387,67 +387,69 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | 27 | **CausalReasoningEngine skeleton** | 99L, ~80 executable. Only does Pearson correlation + variable grouping. No temporal reasoning, no confounding variables, no do-calculus, no structural causal models. `predict()` and `explain()` are trivial list filters. Only 2 smoke tests. | `causal_reasoning_engine.py:11` — `_pearson()` is only real math; `_infer_relationships()` pairs variables with fixed threshold | Research + implementation of proper causal inference |
 | 28 | **AdversarialGenerationSystem + TaskGenerator stubs** | `AdversarialGenerationSystem` (adversarial_generation_system.py:18) — simply appends "[adversarial variant]" to prompt. `TaskGenerator` (task_generator.py:22) — `generate_tasks()` returns single hardcoded dict, `predict_next_query()` returns None. Both are placeholders. | Both files exist but output is trivial/garbage | Design + implement proper adversarial training + task prediction |
 
-### §X Summary — Full Codebase Maturity Audit
+### §X Summary — Industry-Comparable Maturity Assessment
 
-Comprehensive scan found **~190+ AI-related classes** across 20+ subsystems. Below is the *real* maturity assessment — just because a class exists ≠ it works.
+> **Methodology**: Each system is compared against what mature 2026 AI can *actually do*, not whether code exists. "Real code" ≠ "real capability."
 
-#### Modalities Supported (Input → Output)
+#### Modality Processing — vs Industry
 
-| Modality | Input | Output | Maturity | How It Works |
-|----------|-------|--------|----------|-------------|
-| **Text** | String | Concept keys, responses, translations | **REAL** | ED3N CoreNetwork native pipeline; CLIP `encode_text()` via SemanticVisualEncoder |
-| **Image** | PNG/JPEG bytes | 256D features, 64D latent, 128×128 RGB, captions, OCR text, scene analysis | **REAL** | numpy VisualEncoder → SharedLatentSpace → VisualDecoder; CLIP wrapper for semantics; PIL for rendering |
-| **Audio** | WAV/PCM bytes | 128D features, 64D latent, 16kHz waveform, STT text, TTS bytes | **REAL** | numpy MFCC/spectral → SharedLatentSpace → wavetable synthesis; Whisper/SpeechRecognition wrappers |
-| **Tactile** | Visual features dict | Property dict: roughness, hardness, temperature, friction, elasticity | **SIMULATED** | No hardware. TactileSampler.infer_properties_from_visuals() maps material types to properties (117L, real logic) |
-| **Video** | Frame bytes | Frame analysis + motion_detected bool | **PARTIAL** | process_video_frame() re-calls analyze_image() per frame + adds random `motion_detected` |
-| **Proprioception** | Theta matrix (joint angles) | Posture dict | **STUB** | CerebellumEngine (27L) — `interpolate()` is no-op, marked "等待完整實作" |
-| **Smell/Taste/Vestibular** | — | — | **NOT IMPLEMENTED** | Zero code found anywhere |
+| Modality | Project Capability | Industry Benchmark (2026) | Maturity Gap |
+|----------|-------------------|--------------------------|:------------:|
+| **Text** | ED3N dict mapping + LLM wrappers. Native text = simple concept-key lookup. | GPT-4o, Claude 4, Gemini 2.5 — full semantic understanding, reasoning, code gen. Project ONLY matches industry when LLM wrapper is active. | Native text: **30年差距**. Wrappers: ✅ same as API |
+| **Image in** | numpy: color histogram (256 bins), edge detection (Sobel), brightness/contrast stats. CLIP wrapper optional. | DINOv2, GPT-4V, Gemini Vision — dense scene understanding, spatial reasoning, OCR. Project's numpy encoder is 1990s computer vision. | Native: **30年差距**. CLIP wrapper: ✅ if torch installed |
+| **Image out** | 128×128 with random weights → noise. ThreeLayerVisual → 32×32 PCA reconstruction (MSE 0.009 = blurry 1995 autoencoder). | SD3.5, DALL-E 4, Midjourney v7 — 1024×1024 photorealistic, compositional, any style. | **無法比擬** — 128×32 noise/blob vs 1024×1024 photorealistic |
+| **Audio in** | MFCC (13 coeffs) + spectral centroid/bandwidth. 2000s speech recognition features. Whisper wrapper optional. | Whisper v3, ElevenLabs Scribe — multilingual STT, speaker diarization, emotion detection. Project's native = pre-deep-learning features. | Native: **20年差距**. Whisper: ✅ if installed |
+| **Audio out** | Wavetable synthesis (3-band oscillator) with random weights → noise/tone. No speech. | ElevenLabs, Bark, Voicebox — natural speech, music, sound effects, voice cloning. | **無法比擬** — noise vs natural speech |
+| **Video** | Per-frame `analyze_image()` + random `motion_detected`. No temporal model. | GPT-4V, Gemini 1.5 Pro — 1M+ token context, temporal reasoning, event detection. | **無法比擬** — frame loop vs temporal understanding |
+| **Tactile** | Simulated from visual features (117L inference: roughness, hardness, temp). No hardware. | Proprioception + tactile = robotics research. No mainstream AI offers this. | **N/A** — unique approach, no benchmark |
+| **Proprioception** | 27L stub, `interpolate()` is no-op. | Humanoid robotics (Tesla Optimus, Boston Dynamics) — real kinematics. | **無法比擬** — stub vs real robotics |
+| **Smell/Taste** | Zero code. | Emerging: electronic nose/tongue research. Not mainstream AI. | **N/A** — no mainstream competitor |
 
-#### Generation Capabilities (What It Actually Produces)
+#### Generation — vs Industry (2026)
 
-| Generator | Input → Output | Maturity | Quality |
-|-----------|---------------|----------|---------|
-| **PrimitiveRenderer** | DrawingInstructions → PIL Image (geometric shapes) | **REAL** | Correct anti-aliased rendering; PIL.ImageDraw |
-| **DifferentiableRenderer** | 263D vector → numpy RGB array (soft rasterizer) | **REAL** | Vectorized alpha compositing; gradients flow through |
-| **ThreeLayerVisual** | Class index → 32×32 reconstructed image (PCA + nonlinear decoder) | **REAL** | **BEST in system**: MSE=0.009, <1ms, perceptual loss, unsharp mask. Needs trained PCA file. |
-| **VisionResponseGenerator** | CLIP classifications → zh/en/ja text ("我看到一隻小雞。") | **REAL** | Template-based; 3 languages; no LLM needed |
-| **FragmentComposer** | Template text + context → assembled response | **REAL** | Sentence splitting, fragment typing, natural connectors; <2ms |
-| **NeuroBlender** | 8D state vector → assembled response | **PARTIAL** | Real algorithm; quality depends on NeuroVocabulary population |
-| **AudioWaveformDecoder** | 64D latent → 1s 16kHz PCM wave (wavetable synth) | **PARTIAL** | Multi-band wavetable, harmonic stacking. **All weights random.** Output = noise/tone. |
-| **ImageGenerator** (GVV) | Text → CLIP → SequenceGenerator → PrimitiveEncoder → PrimitiveRenderer → 128×128 image | **PARTIAL** | **Full pipeline exists but untrained.** SequenceGenerator has random RNN weights. CLIP falls back to hash(text) seed. Output = random shapes on gray canvas. |
-| **SequenceGenerator** | 512D CLIP embedding → list of 128D primitive embeddings | **PARTIAL** | Real RNN with BPTT, L2-normalized output, stop token. **Weights random at init.** |
-| **VisualDecoder** | 64D latent → 128×128 RGB via transposed conv | **PARTIAL** | Real CNN texture pipeline. **Weights random.** Output = colored noise + grid artifacts. |
-| **Live2DAvatarGenerator** | Text attributes → model3.json + layers + parameters | **STUB/PARTIAL** | model3.json is valid Live2D config. **Image layers = random colored rectangles** (comment: "待分層微服務上線後可開啟此段"). |
-| **CrossModalSynthesizer** | Blended latent → image OR audio via decoder | **PARTIAL** | Real blending math. Quality depends on trained decoders. |
-| **TrainingDataGenerator** | CIFAR-10 → (CLIP embed, primitive sequence) pairs | **REAL** | 3 generation modes (real/synthetic/random). All numpy. |
-| **ContrastiveBatchTrainer** | Synthetic pairs → trained SharedLatentSpace | **REAL** | Generates pos/neg pairs from shared seed + noise; contrastive loss |
-| **ReconstructionTrainer** | Random features → trained decoder weights | **REAL** | Autoencoder cycle with analytical gradients |
-| **FullTrainingPipeline** | None → trained .npz weight file | **BASIC** | End-to-end: contrastive pretrain + reconstruction finetune. **Default = synthetic data only.** |
-| **KGImport.generate_synthetic** | None → 10,000 KG entities with relations | **REAL** | 6 categories, zh/en forms, cross-category relations |
-| **StepDecoder** (ED3N) | Input text → text response via CoreNetwork | **PARTIAL** | Real dictionary encode→network→decode. Quality depends on network training. |
-| **VectorDecoder** (GARDEN) | Input text → text response via TensorSNNCore | **PARTIAL** | Real SNN inference. Quality depends on SNN training. |
+| Generator | Project Output | Industry Output | Verdict |
+|-----------|---------------|-----------------|---------|
+| VisualDecoder | 128×128 noise (random weights) | SD3.5: photorealistic 1024×1024 | **無意義** — noise vs art |
+| AudioWaveformDecoder | 1s tone/noise (random weights) | ElevenLabs: speech, singing, sound FX | **無意義** — noise vs speech |
+| ImageGenerator (GVV) | Gray canvas / random shapes | DALL-E 4: "a cat in a spacesuit" → photo | **無意義** — gray vs photorealistic |
+| ThreeLayerVisual | 32×32 blurry (PCA, MSE=0.009) | 1995 autoencoder quality | **Worse than MNIST demo (28×28)** |
+| Live2D Avatar | Random colored rectangles | VRoid, Ready Player Me: full 3D avatars | **玩具級別** — rectangles vs 3D models |
+| PrimitiveRenderer | Geometric shapes via PIL | Matplotlib, Cairo | **工具函數**，非 AI |
+| VisionResponseGenerator | Template: "我看到小雞。" | GPT-4V: "A small yellow chick standing on grass" | **模板 vs 理解** |
+| FragmentComposer | Sentence assembly + dedup | GPT-4o: fluent multi-paragraph | **模板拼接 vs 生成** |
+| AudioWaveformDecoder | Noise (random weights) | Bark: "Hello, how are you?" with emotion | **雜訊 vs 語音** |
+| StepDecoder (ED3N) | Best-guess concept key | GPT-4o: fluent text with reasoning | **單詞映射 vs 語言模型** |
+| AdversarialGeneration | Just appends "[adversarial variant]" | RLHF, PPO, Constitutional AI | **佔位符** |
+| TaskGenerator | Single hardcoded dict | AutoGPT: dynamic sub-task decomposition | **佔位符** |
 
-#### Engine Maturity Ratings
+#### Engine Maturity — Absolute Assessment
 
-| Rating | Count | Systems |
-|--------|:-----:|---------|
-| **SOPHISTICATED** | 2 | MathRippleEngine (971L, original cognitive-arithmetic model), EmotionalBlending (1131L, full PAD+4D state matrix) |
-| **REAL** | 14 | ED3NTrainer, TrainingCoordinator, ED3NEngine, GARDENEngine, AutonomicNervousSystem, EndocrineSystem, NeuroplasticityCore, TactileSystem, TraumaMemory, MultidimensionalTrigger, FragmentComposer, PrimitiveRenderer, DifferentiableRenderer, VisionResponseGenerator |
-| **BASIC** | 6 | FullTrainingPipeline, ContinuousMultimodalLearning, PlanningEngine, PerceptualMemory, ThreeLayerVisual, CrossModalSynthesizer |
-| **PARTIAL** | 6 | VisualDecoder, AudioWaveformDecoder, SequenceGenerator, ImageGenerator, StepDecoder, VectorDecoder |
-| **SKELETON** | 2 | PerceptionEngine (hardcoded confidence), CausalReasoningEngine (Pearson only) |
-| **STUB** | 5 | CerebellumEngine (27L), AttentionController (33L), AuditoryAttention (20L), TaskGenerator (placeholder), AdversarialGenerationSystem (trivial string append) |
+| Rating | Count | What It Means | Which Systems |
+|--------|:-----:|---------------|-------------|
+| **Industry-parity** | 0 | Matches or approaches commercial AI quality | *(none)* |
+| **Unique/Research** | 3 | Novel approach, but unproven at scale | MathRippleEngine, EmotionalBlending, Bio-simulation stack |
+| **Wrapper (API proxy)** | 7 | Just calls real AI APIs (OpenAI/Anthropic etc.) | LLM backends (7 providers), Whisper STT, edge-tts TTS |
+| **Academic toy** | 6 | Real algorithm but 20-30 years behind industry | VisualEncoder, AudioSpectralEncoder, ThreeLayerVisual, PrimitiveRenderer, CoreNetwork, ED3NEngine |
+| **Random weights** | 4 | Architecture is real, output = garbage | VisualDecoder, AudioWaveformDecoder, SequenceGenerator, ImageGenerator |
+| **Stub** | 7 | Non-functional placeholder | CerebellumEngine, AttentionController, AuditoryAttention, TaskGenerator, AdversarialGenerationSystem, PerceptionEngine, CausalReasoningEngine |
 
-#### Real Gaps (What's Actually Missing)
+#### Honest Summary
 
-1. **Stub engines** (listed above): 5 systems are truly non-functional.
-2. **Untrained generators**: VisualDecoder, AudioWaveformDecoder, SequenceGenerator all have random weights. ImageGenerator pipeline is complete but untrained.
-3. **Unwired training**: FullTrainingPipeline + CML exist but never triggered from API/timer.
-4. **Perception pipeline broken**: PerceptionEngine + AttentionController = SKELETON/STUB. No real perception despite having real encoders.
-5. **Causal reasoning is Pearson only**: 99L skeleton with no genuine causal inference.
-6. **Video = image analysis per frame**: No temporal encoding, no motion understanding.
-7. **Missing modalities**: Smell, taste, vestibular = zero implementation.
-8. **Semantic encoders dependent on external models**: CLIP/Whisper degrade to random features without torch.
+**The project's intelligence does NOT come from its own AI engines. It comes from API wrappers (OpenAI/Anthropic/Google/Ollama).** Without those wrappers:
+
+- **Text**: ED3N/GARDEN = basic word-concept mapping (1990s AI)
+- **Vision**: numpy histogram + edge detection (1990s CV)
+- **Audio**: MFCC + wavetable noise (2000s DSP)
+- **Image gen**: random weights → noise (未訓練)
+- **Audio gen**: random weights → noise (未訓練)
+- **Video**: frame loop + random flag (未實作)
+- **Planning**: template matching (1970s AI)
+- **Causal reasoning**: Pearson correlation (1890s statistics)
+- **Perception**: hardcoded confidence values (未實作)
+
+**The 190+ classes form a beautiful architectural skeleton, but the "brain" is the LLM API calls.** The native engines (ED3N, GARDEN, VisualDecoder, etc.) are academic prototypes — interesting architecture, no production value without extensive training.
+
+**True intelligence score**: 6.0/10 with LLM (API), **0.5/10 without** (native engines alone). Architecture is ~85% complete, training is ~5% complete.
 
 ---
 
