@@ -227,13 +227,32 @@ def construct_angela_prompt(
 ) -> List[Dict[str, str]]:
     """建構 Angela 的提示詞"""
     bio_status = get_biological_state(context=context)
-
     state_for_llm = context.get("state_for_llm")
-    axis_lines = []
-    theta_lines = []
-    eta_lines = []
-    guidance_lines = []
+    system_prompt = _build_core_prompt(state_for_llm, neuro_vocabulary, bio_status)
+    system_prompt = _attach_cognition_blocks(system_prompt)
+    system_prompt = _attach_action_result(system_prompt, context)
+    system_prompt = _attach_continuation_guard(system_prompt, context)
 
+    messages = [{"role": "system", "content": system_prompt.strip()}]
+
+    _append_user_profile(messages, context)
+    _append_drive_files(messages, context)
+    _append_image_analysis(messages, context)
+    _append_history(messages, context)
+    _append_retrieved_context(messages, context)
+    _append_multimodal_entries(messages, context)
+    _append_dialogue_context(messages, context)
+    _append_recent_memories(messages, context)
+    _append_draft_response(messages, context)
+
+    messages.append({"role": "user", "content": f"<user_message>{user_message}</user_message>"})
+
+    return messages
+
+
+def _build_core_prompt(state_for_llm: Optional[Dict], neuro_vocabulary: Optional[Any], bio_status: str) -> str:
+    """Build the core system prompt from state, bio, and axis data."""
+    axis_lines, theta_lines, eta_lines, guidance_lines = [], [], [], []
     if state_for_llm:
         axes = state_for_llm.get("axes", {})
         for axis_name in ("alpha", "beta", "gamma", "delta", "epsilon", "zeta"):
@@ -243,24 +262,18 @@ def construct_angela_prompt(
                 parts = []
                 for k, v in list(vals.items())[:4]:
                     desc = neuro_vocabulary.get_description(f"{axis_name}.{k}", v) if neuro_vocabulary else None
-                    if desc:
-                        parts.append(f"{k}={v:.4f}（{desc}）")
-                    else:
-                        parts.append(f"{k}={v:.4f}")
-                short = ", ".join(parts)
-                axis_lines.append(f"{axis_name.upper()}: {short}")
+                    parts.append(f"{k}={v:.4f}（{desc}）" if desc else f"{k}={v:.4f}")
+                axis_lines.append(f"{axis_name.upper()}: {', '.join(parts)}")
 
         th = state_for_llm.get("theta", {})
-        novelty = th.get("novelty", 0)
-        negativity = th.get("theta_negativity", 0)
-        creation = th.get("creation_urge", 0)
-        correction = th.get("correction_urge", 0)
-        novelty_desc = "話題新穎，需要更多認知資源" if novelty > 0.5 else "正常"
-        negativity_desc = "少量點位需要校正" if negativity > 0.2 else "無需校正"
-        theta_lines.append(prompt("angela.theta.novelty", value=f"{novelty:.2f} ({novelty_desc})"))
-        theta_lines.append(prompt("angela.theta.mismatch_doubt", value=f"{negativity:.2f} ({negativity_desc})"))
-        theta_lines.append(prompt("angela.theta.creation_urge", value=f"{creation:.2f}"))
-        theta_lines.append(prompt("angela.theta.correction", value=f"{correction:.2f}"))
+        nv = th.get("novelty", 0)
+        ng = th.get("theta_negativity", 0)
+        cr = th.get("creation_urge", 0)
+        co = th.get("correction_urge", 0)
+        theta_lines.append(prompt("angela.theta.novelty", value=f"{nv:.2f} ({'話題新穎，需要更多認知資源' if nv > 0.5 else '正常'})"))
+        theta_lines.append(prompt("angela.theta.mismatch_doubt", value=f"{ng:.2f} ({'少量點位需要校正' if ng > 0.2 else '無需校正'})"))
+        theta_lines.append(prompt("angela.theta.creation_urge", value=f"{cr:.2f}"))
+        theta_lines.append(prompt("angela.theta.correction", value=f"{co:.2f}"))
 
         eta = state_for_llm.get("eta", {})
         if eta:
@@ -278,11 +291,11 @@ def construct_angela_prompt(
     eta_block = "\n  ".join(eta_lines) if eta_lines else prompt("angela.eta.default")
     guidance_block = "\n".join(guidance_lines) if guidance_lines else ""
 
-    system_prompt = f"""{prompt('angela.identity')}
+    result = f"""{prompt('angela.identity')}
 {bio_line}"""
 
     if axes_block or theta_lines:
-        system_prompt += f"""
+        result += f"""
 
 {prompt('angela.state_header')}
 {axes_block}
@@ -295,73 +308,45 @@ def construct_angela_prompt(
 
 {prompt('angela.atmosphere')}
 {guidance_block if guidance_block else prompt('angela.no_guidance')}"""
+    return result
 
+
+def _attach_cognition_blocks(prompt_text: str) -> str:
+    """Append formula summaries, autonomous decisions, and theta state."""
     formula_block = get_formula_summaries()
     if formula_block:
-        system_prompt += f"""
-
-{prompt('angela.theory_formulas')}
-{formula_block}"""
-
-    # Autonomous cognition decisions
+        prompt_text += f"\n\n{prompt('angela.theory_formulas')}\n{formula_block}"
     autonomous_block = get_autonomous_decisions()
     if autonomous_block:
-        system_prompt += f"""
-
-{prompt('angela.autonomous_decisions')}
-{autonomous_block}"""
-
-    # Theta router state (only when significant)
+        prompt_text += f"\n\n{prompt('angela.autonomous_decisions')}\n{autonomous_block}"
     theta_state = get_theta_state()
     if theta_state:
-        system_prompt += f"""
+        prompt_text += f"\n\n{prompt('angela.theta_routing')}\n{theta_state}"
+    return prompt_text
 
-{prompt('angela.theta_routing')}
-{theta_state}"""
 
-    # Execution results from tool calls (injected into system prompt)
+def _attach_action_result(prompt_text: str, context: Dict[str, Any]) -> str:
+    """Append execution result if present."""
     action_result = context.get("last_action_result")
     if action_result:
-        result_type = action_result.get("type", "unknown")
-        success = action_result.get("success", False)
-        result_text = action_result.get("result", "") or ""
-        error_text = action_result.get("error", "") or ""
-        exec_block = f"""
+        prompt_text += f"""
 
 {prompt('angela.execution_result')}
-{prompt('angela.result_type', type=result_type)}
-{prompt('angela.result_success', success='是' if success else '否')}
-{prompt('angela.result_content', result=result_text[:500])}
-{prompt('angela.result_error', error=error_text)}
+{prompt('angela.result_type', type=action_result.get('type', 'unknown'))}
+{prompt('angela.result_success', success='是' if action_result.get('success', False) else '否')}
+{prompt('angela.result_content', result=(action_result.get('result', '') or '')[:500])}
+{prompt('angela.result_error', error=(action_result.get('error', '') or ''))}
 
 {prompt('angela.result_instruction')}"""
-        system_prompt += exec_block
+    prompt_text += f"\n\n{prompt('angela.execution_rules')}"
+    return prompt_text
 
-    # Execution rules for continuation safety
-    system_prompt += f"""
 
-{prompt('angela.execution_rules')}"""
-
-    # Continuation loop protection
-    continuation = context.get("continuation_count", 0)
-    if continuation >= 3:
-        system_prompt += f"\n\n{prompt('angela.max_continuation')}"
-
-    messages = [{"role": "system", "content": system_prompt.strip()}]
-
-    _append_user_profile(messages, context)
-    _append_drive_files(messages, context)
-    _append_image_analysis(messages, context)
-    _append_history(messages, context)
-    _append_retrieved_context(messages, context)
-    _append_multimodal_entries(messages, context)
-    _append_dialogue_context(messages, context)
-    _append_recent_memories(messages, context)
-    _append_draft_response(messages, context)
-
-    messages.append({"role": "user", "content": f"<user_message>{user_message}</user_message>"})
-
-    return messages
+def _attach_continuation_guard(prompt_text: str, context: Dict[str, Any]) -> str:
+    """Append continuation loop protection if needed."""
+    if context.get("continuation_count", 0) >= 3:
+        prompt_text += f"\n\n{prompt('angela.max_continuation')}"
+    return prompt_text
 
 
 def _append_user_profile(messages: List[Dict], context: Dict) -> None:

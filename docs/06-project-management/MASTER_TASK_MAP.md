@@ -363,7 +363,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | 3 | `/multimodal/stream` WS route | ✅ **DONE** — dedicated handler + route registered | `services/multimodal_ws_handler.py` + `main_api_server.py` line 295 | — |
 | 4 | C901 cyclomatic complexity (67 residual) | 7 refactored (+ED3NEngine.process_multimodal E35→B6), 60 remain | 0 Grade E remain | **ALL E/F GRADE FUNCTIONS ELIMINATED** |
 | 5 | Shared code deduplication (P3-9 to P3-11) | ✅ **RESOLVED** — `core/shared/` duplicates deleted in Phase 9-12 (commit `064e63621`) | Only `src/shared/error.py` and `src/shared/key_manager.py` remain | Automatically fixed by dead code removal |
-| 6 | P4 long function refactor (28 files >100 lines) | 4/28 done (+construct_angela_prompt: F48→D27, extracted 9 append helpers, Jun 26). Jun 27 empirical scan: 27 functions >100 lines remain in apps/backend/src | 27 functions >100 lines; 4 refactored | Effort (large) |
+| 6 | P4 long function refactor (28 files >100 lines) | 5/28 done (+construct_angela_prompt: 144→24L, extracted 4 helpers: _build_core_prompt, _attach_cognition_blocks, _attach_action_result, _attach_continuation_guard, Jun 28). 26 functions >100 lines remain in apps/backend/src | 26 functions >100 lines; 5 refactored | Effort (large) |
 | 7 | P4 load/stress test framework | Never started | No framework exists | Design |
 | 8 | P4 desktop tray implementation | Never started | No tray code | Effort |
 | 9 | P4 E2E test framework | Never started | No E2E framework | Design |
