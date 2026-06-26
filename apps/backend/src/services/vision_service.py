@@ -622,36 +622,7 @@ class VisionService:
             g_total = sum(p[1] for p in pixels) / total
             b_total = sum(p[2] for p in pixels) / total
             brightness = (r_total + g_total + b_total) / 765.0
-
-            colors = img.getcolors(4096)
-            dominant = []
-            if colors:
-                colors.sort(reverse=True)
-                named = []
-                for count, (r, g, b) in colors[:5]:
-                    if r > 200 and g < 100 and b < 100:
-                        name = "red"
-                    elif g > 200 and r < 100 and b < 100:
-                        name = "green"
-                    elif b > 200 and r < 100 and g < 100:
-                        name = "blue"
-                    elif r > 200 and g > 200 and b < 100:
-                        name = "yellow"
-                    elif r > 200 and g > 150 and b > 150:
-                        name = "pink"
-                    elif r < 80 and g < 80 and b < 80:
-                        name = "black"
-                    elif r > 200 and g > 200 and b > 200:
-                        name = "white"
-                    elif r > 150 and g > 100 and b < 100:
-                        name = "orange"
-                    elif r > 100 and g < 50 and b > 100:
-                        name = "purple"
-                    else:
-                        name = f"rgb({r},{g},{b})"
-                    named.append((name, round(count / total, 3)))
-                    dominant.append({"name": name, "rgb": [r, g, b], "ratio": round(count / total, 3)})
-
+            dominant = self._extract_dominant_colors(img, total)
             return {
                 "dominant_colors": [c["name"] for c in dominant[:4]],
                 "color_distribution": {c["name"]: c["ratio"] for c in dominant},
@@ -660,6 +631,37 @@ class VisionService:
             }
         except Exception:
             return {"dominant_colors": ["unknown"], "color_distribution": {}, "brightness": 0.5}
+
+    def _extract_dominant_colors(self, img: Any, total: int) -> List[Dict[str, Any]]:
+        colors = img.getcolors(4096)
+        dominant: List[Dict[str, Any]] = []
+        if colors:
+            colors.sort(reverse=True)
+            for count, (r, g, b) in colors[:5]:
+                name = self._name_color(r, g, b)
+                dominant.append({"name": name, "rgb": [r, g, b], "ratio": round(count / total, 3)})
+        return dominant
+
+    def _name_color(self, r: int, g: int, b: int) -> str:
+        if r > 200 and g < 100 and b < 100:
+            return "red"
+        if g > 200 and r < 100 and b < 100:
+            return "green"
+        if b > 200 and r < 100 and g < 100:
+            return "blue"
+        if r > 200 and g > 200 and b < 100:
+            return "yellow"
+        if r > 200 and g > 150 and b > 150:
+            return "pink"
+        if r < 80 and g < 80 and b < 80:
+            return "black"
+        if r > 200 and g > 200 and b > 200:
+            return "white"
+        if r > 150 and g > 100 and b < 100:
+            return "orange"
+        if r > 100 and g < 50 and b > 100:
+            return "purple"
+        return f"rgb({r},{g},{b})"
 
     async def _perform_multimodal_analysis(
         self, visual_analysis: Dict[str, Any], context: Dict[str, Any]
