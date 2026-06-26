@@ -305,6 +305,131 @@ def _handle_model_command(args: str, service: Any) -> str:
         return f"Model command error: {e}"
 
 
+_DRIVE_HANDLERS: dict[str, Any] = {}
+
+
+def _resolve_drive_op(cmd: str, ops: dict) -> Optional[str]:
+    for op_name, op_cfg in ops.items():
+        if cmd in op_cfg.get("aliases", []):
+            return op_name
+    return None
+
+
+def _drive_status(subarg: str, base: str) -> str:
+    import httpx
+    resp = httpx.get(f"{base}/status", timeout=10)
+    d = resp.json()
+    auth = d.get("authenticated", False)
+    quota = d.get("quota", {})
+    lines = [
+        f"Google Drive: {'\u2705 \u5df2\u8a8d\u8b49' if auth else '\u274c \u672a\u8a8d\u8b49'}",
+        f"  \u7528\u6236: {quota.get('user', 'N/A')}",
+        f"  \u5df2\u7528: {quota.get('used', 'N/A')} / {quota.get('total', 'N/A')}",
+        f"  \u72c0\u614b: {d.get('status', 'unknown')}",
+    ]
+    return "\n".join(lines)
+
+
+def _drive_auth(subarg: str, base: str) -> str:
+    import httpx
+    if not subarg or subarg == "url":
+        resp = httpx.get(f"{base}/auth/url", timeout=10)
+        url = resp.json().get("url", "")
+        return f"\u6388\u6b0a URL\uff1a\n{url}\n\n\u8acb\u7528\u700f\u89bd\u5668\u6253\u958b\u9019\u500b\u93c8\u7d50\uff0c\u6388\u6b0a\u5f8c\u628a\u56de\u50b3\u7684 code \u8cbc\u7d66\u6211\u3002"
+    resp = httpx.post(f"{base}/auth/callback", json={"code": subarg}, timeout=15)
+    if resp.status_code == 200:
+        return "\u2705 Google Drive \u8a8d\u8b49\u6210\u529f\uff01"
+    return f"\u274c \u8a8d\u8b49\u5931\u6557\uff1a{resp.text}"
+
+
+def _drive_logout(subarg: str, base: str) -> str:
+    import httpx
+    httpx.post(f"{base}/auth/logout", timeout=5)
+    return "\u2705 \u5df2\u767b\u51fa Google Drive\u3002"
+
+
+def _drive_list(subarg: str, base: str) -> str:
+    import httpx
+    n = int(subarg) if subarg.isdigit() else 10
+    resp = httpx.get(f"{base}/files?page_size={n}", timeout=15)
+    files = resp.json().get("files", [])
+    if not files:
+        return "\U0001f4c2 \u96f2\u7aef\u786c\u789f\u662f\u7a7a\u7684\u3002"
+    lines = [f"\U0001f4c4 {f.get('name')} ({f.get('mimeType', '').split('.')[-1]})" for f in files]
+    return "\U0001f4c2 Google Drive \u6a94\u6848\u5217\u8868\uff1a\n" + "\n".join(lines)
+
+
+def _drive_search(subarg: str, base: str) -> str:
+    import httpx
+    resp = httpx.post(f"{base}/files/search", json={"query": subarg, "page_size": 10}, timeout=15)
+    files = resp.json().get("files", [])
+    if not files:
+        return f"\U0001f50d \u627e\u4e0d\u5230\u5305\u542b\u300c{subarg}\u300d\u7684\u6a94\u6848\u3002"
+    lines = [f"\U0001f4c4 {f.get('name')} ({f.get('mimeType', '').split('.')[-1]})" for f in files]
+    return f"\U0001f50d \u641c\u5c0b\u300c{subarg}\u300d\u7d50\u679c\uff1a\n" + "\n".join(lines)
+
+
+def _drive_sync(subarg: str, base: str) -> str:
+    import httpx
+    resp = httpx.get(f"{base}/files?page_size=10", timeout=15)
+    files = resp.json().get("files", [])
+    if not files:
+        return "\u6c92\u6709\u627e\u5230\u53ef\u4ee5\u540c\u6b65\u7684\u6a94\u6848\u3002"
+    resp = httpx.post(f"{base}/files/sync", json={"file_ids": [f["id"] for f in files[:5]]}, timeout=60)
+    r = resp.json()
+    return (f"\u2705 \u540c\u6b65\u5b8c\u6210\uff01\u4e0b\u8f09\u4e86 {r.get('synced', 0)} \u500b\u6a94\u6848\uff0c"
+            f"\u8df3\u904e {r.get('skipped', 0)} \u500b\uff08\u5df2\u5b58\u5728\uff09\uff0c"
+            f"\u5132\u5165\u8a18\u61b6 {r.get('memorized_count', 0)} \u500b\u3002")
+
+
+def _drive_analyze(subarg: str, base: str) -> str:
+    import httpx
+    from core.config_loader import get_angela_config
+    resp = httpx.post(f"{base}/analyze", json={"limit": 3}, timeout=60)
+    r = resp.json()
+    trunc = 1500
+    try:
+        cfg = get_angela_config()
+        trunc = cfg.get_authority("angela_core", {}).get("state_constants", {}).get("file_content_truncation", 1500)
+    except Exception as e:
+        logger.warning("Failed to get config for truncation: %s", e, exc_info=True)
+    return f"\U0001f4ca \u5206\u6790\u7d50\u679c\uff1a\n{r.get('analysis', '\u7121\u6cd5\u5206\u6790')[:trunc]}"
+
+
+_DRIVE_HANDLERS.update({
+    "status": _drive_status,
+    "s": _drive_status,
+    "auth": _drive_auth,
+    "a": _drive_auth,
+    "callback": _drive_auth,
+    "cb": _drive_auth,
+    "logout": _drive_logout,
+    "out": _drive_logout,
+    "list": _drive_list,
+    "ls": _drive_list,
+    "l": _drive_list,
+    "search": _drive_search,
+    "q": _drive_search,
+    "sync": _drive_sync,
+    "download": _drive_sync,
+    "dl": _drive_sync,
+    "analyze": _drive_analyze,
+    "ana": _drive_analyze,
+})
+
+_DRIVE_HELP = (
+    "Google Drive \u547d\u4ee4\u7528\u6cd5\uff1a\n"
+    "  /drive status     \u2014 \u9023\u63a5\u72c0\u614b\n"
+    "  /drive auth       \u2014 \u53d6\u5f97\u6388\u6b0a URL\n"
+    "  /drive callback <code>  \u2014 \u7528\u6388\u6b0a\u78bc\u5b8c\u6210\u8a8d\u8b49\n"
+    "  /drive list [n]   \u2014 \u5217\u51fa\u6a94\u6848\uff08\u9810\u8a2d10\u500b\uff09\n"
+    "  /drive search <q>  \u2014 \u641c\u5c0b\u6a94\u6848\n"
+    "  /drive sync        \u2014 \u4e0b\u8f09\u4e26\u5132\u5165\u8a18\u61b6\n"
+    "  /drive analyze     \u2014 \u5206\u6790\u6a94\u6848\u5167\u5bb9\n"
+    "  /drive logout      \u2014 \u767b\u51fa"
+)
+
+
 def _handle_drive_command(args: str) -> str:
     """Handle drive command request."""
     import httpx
@@ -314,100 +439,17 @@ def _handle_drive_command(args: str) -> str:
     subcmd = parts[0].lower() if parts else "status"
     subarg = parts[1] if len(parts) > 1 else ""
 
-    cfg = get_angela_config()
-    ops = cfg.get_drive_all_operations()
+    ops = get_angela_config().get_drive_all_operations()
+    op = _resolve_drive_op(subcmd, ops)
 
-    def resolve_op(cmd: str) -> Optional[str]:
-        """Execute the resolve op operation."""
-        for op_name, op_cfg in ops.items():
-            if cmd in op_cfg.get("aliases", []):
-                return op_name
-        return None
+    key = op or subcmd
+    handler = _DRIVE_HANDLERS.get(key)
+    if handler is None:
+        return _DRIVE_HELP
 
-    op = resolve_op(subcmd)
     base = os.getenv("ANGELA_DRIVE_API_URL", "http://127.0.0.1:8000/api/v1/drive")
-
     try:
-        if op == "status" or subcmd in ("status", "s"):
-            resp = httpx.get(f"{base}/status", timeout=10)
-            d = resp.json()
-            auth = d.get("authenticated", False)
-            quota = d.get("quota", {})
-            lines = [
-                f"Google Drive: {'\u2705 \u5df2\u8a8d\u8b49' if auth else '\u274c \u672a\u8a8d\u8b49'}",
-                f"  \u7528\u6236: {quota.get('user', 'N/A')}",
-                f"  \u5df2\u7528: {quota.get('used', 'N/A')} / {quota.get('total', 'N/A')}",
-                f"  \u72c0\u614b: {d.get('status', 'unknown')}",
-            ]
-            return "\n".join(lines)
-
-        if op == "auth" or (subcmd in ("auth", "a") and subarg in ("", "url")):
-            resp = httpx.get(f"{base}/auth/url", timeout=10)
-            url = resp.json().get("url", "")
-            return f"\u6388\u6b0a URL\uff1a\n{url}\n\n\u8acb\u7528\u700f\u89bd\u5668\u6253\u958b\u9019\u500b\u93c8\u7d50\uff0c\u6388\u6b0a\u5f8c\u628a\u56de\u50b3\u7684 code \u8cbc\u7d66\u6211\u3002"
-
-        if op == "auth" or subcmd in ("callback", "cb"):
-            resp = httpx.post(f"{base}/auth/callback", json={"code": subarg}, timeout=15)
-            if resp.status_code == 200:
-                return "\u2705 Google Drive \u8a8d\u8b49\u6210\u529f\uff01"
-            return f"\u274c \u8a8d\u8b49\u5931\u6557\uff1a{resp.text}"
-
-        if op == "logout" or subcmd in ("logout", "out"):
-            httpx.post(f"{base}/auth/logout", timeout=5)
-            return "\u2705 \u5df2\u767b\u51fa Google Drive\u3002"
-
-        if op == "list" or subcmd in ("list", "ls", "l"):
-            n = int(subarg) if subarg.isdigit() else 10
-            resp = httpx.get(f"{base}/files?page_size={n}", timeout=15)
-            files = resp.json().get("files", [])
-            if not files:
-                return "\U0001f4c2 \u96f2\u7aef\u786c\u789f\u662f\u7a7a\u7684\u3002"
-            lines = [f"\U0001f4c4 {f.get('name')} ({f.get('mimeType', '').split('.')[-1]})" for f in files]
-            return "\U0001f4c2 Google Drive \u6a94\u6848\u5217\u8868\uff1a\n" + "\n".join(lines)
-
-        if op == "list" or subcmd in ("search", "q"):
-            resp = httpx.post(f"{base}/files/search", json={"query": subarg, "page_size": 10}, timeout=15)
-            files = resp.json().get("files", [])
-            if not files:
-                return f"\U0001f50d \u627e\u4e0d\u5230\u5305\u542b\u300c{subarg}\u300d\u7684\u6a94\u6848\u3002"
-            lines = [f"\U0001f4c4 {f.get('name')} ({f.get('mimeType', '').split('.')[-1]})" for f in files]
-            return f"\U0001f50d \u641c\u5c0b\u300c{subarg}\u300d\u7d50\u679c\uff1a\n" + "\n".join(lines)
-
-        if op == "sync" or subcmd in ("sync", "download", "dl"):
-            resp = httpx.get(f"{base}/files?page_size=10", timeout=15)
-            files = resp.json().get("files", [])
-            if not files:
-                return "\u6c92\u6709\u627e\u5230\u53ef\u4ee5\u540c\u6b65\u7684\u6a94\u6848\u3002"
-            resp = httpx.post(f"{base}/files/sync", json={"file_ids": [f["id"] for f in files[:5]]}, timeout=60)
-            r = resp.json()
-            return (f"\u2705 \u540c\u6b65\u5b8c\u6210\uff01\u4e0b\u8f09\u4e86 {r.get('synced', 0)} \u500b\u6a94\u6848\uff0c"
-                    f"\u8df3\u904e {r.get('skipped', 0)} \u500b\uff08\u5df2\u5b58\u5728\uff09\uff0c"
-                    f"\u5132\u5165\u8a18\u61b6 {r.get('memorized_count', 0)} \u500b\u3002")
-
-        if op == "analyze" or subcmd in ("analyze", "ana"):
-            resp = httpx.post(f"{base}/analyze", json={"limit": 3}, timeout=60)
-            r = resp.json()
-            _trunc = 1500
-            try:
-                from core.config_loader import get_angela_config
-                _cfg = get_angela_config()
-                _trunc = _cfg.get_authority("angela_core", {}).get("state_constants", {}).get("file_content_truncation", 1500)
-            except Exception as e:
-                logger.warning(f"Failed to get config for truncation: {e}", exc_info=True)
-            return f"\U0001f4ca \u5206\u6790\u7d50\u679c\uff1a\n{r.get('analysis', '\u7121\u6cd5\u5206\u6790')[:_trunc]}"
-
-        return (
-            "Google Drive \u547d\u4ee4\u7528\u6cd5\uff1a\n"
-            "  /drive status     \u2014 \u9023\u63a5\u72c0\u614b\n"
-            "  /drive auth       \u2014 \u53d6\u5f97\u6388\u6b0a URL\n"
-            "  /drive callback <code>  \u2014 \u7528\u6388\u6b0a\u78bc\u5b8c\u6210\u8a8d\u8b49\n"
-            "  /drive list [n]   \u2014 \u5217\u51fa\u6a94\u6848\uff08\u9810\u8a2d10\u500b\uff09\n"
-            "  /drive search <q>  \u2014 \u641c\u5c0b\u6a94\u6848\n"
-            "  /drive sync        \u2014 \u4e0b\u8f09\u4e26\u5132\u5165\u8a18\u61b6\n"
-            "  /drive analyze     \u2014 \u5206\u6790\u6a94\u6848\u5167\u5bb9\n"
-            "  /drive logout      \u2014 \u767b\u51fa"
-        )
-
+        return handler(subarg, base)
     except httpx.ConnectError:
         return "\u274c \u7121\u6cd5\u9023\u63a5\u5f8c\u7aef\uff0c\u8acb\u5148\u555f\u52d5\u4f3a\u670d\u5668\uff08launch_angela.bat --repl\uff09"
     except Exception as e:

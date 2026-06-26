@@ -113,6 +113,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🔧 **prompt_builder.construct_angela_prompt** (F48→D27): Extracted 9 `_append_*` helper functions, reducing main function from 232L to ~142L. 10 prompt_builder tests pass.
 - 🔧 **model_bus.ModelBus.route** (E39→B8): Replaced 8-branch if/elif chain with dispatch dict + 6 strategy handler methods. Cyclomatic complexity reduced from 39 to 8. All 34 model bus tests pass.
 - 🔧 **vision_service.VisionService._analyze_colors** (E36→B7): Extracted `_extract_dominant_colors` + `_name_color` helper methods. 17 vision service tests pass.
+- 🔧 **repl._handle_drive_command** (E32→B7): Replaced 8-branch if-chain with dispatch dict + 8 handler functions. Extracted `_resolve_drive_op`, `_drive_status`, `_drive_auth`, `_drive_logout`, `_drive_list`, `_drive_search`, `_drive_sync`, `_drive_analyze` top-level functions. Config-based alias resolution preserved.
 
 ### Fixed
 - 🐛 **MASTER_TASK_MAP §X**: 3 stale claims corrected — shared code dedup (resolved by Phase 9-12), Whisper STT (actually wired), formula tests (67 exist, all pass).
@@ -129,7 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### §X Pending Progress
 - 6/16 DONE (was 4/16): auto-repair, WS route, shared code dedup, agent routing, Whisper wiring, formula tests
-- 10 remain: YOLO, C901 (4 E-grade remain), long functions (24/28), load tests, tray, E2E, VisualDecoder, Level5ASI, annotations
+- 10 remain: YOLO, C901 (3 E-grade remain), long functions (24/28), load tests, tray, E2E, VisualDecoder, Level5ASI, annotations
 
 ## [7.5.0-dev] - 2026-06-16 — Phase 7 i18n Internationalization
 
