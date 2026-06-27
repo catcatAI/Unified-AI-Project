@@ -19,7 +19,7 @@
 - **`INDEX.md`** — This file
 - **`FRAMEWORK_OVERVIEW.md`** — 框架概述 (雙語，含誠實成熟度審計)
 - **[`IMPROVEMENT_ROADMAP.md`](06-project-management/IMPROVEMENT_ROADMAP.md)** — **改善路線圖 (新 2026-06-28)** — 修正/修復/更新/迭代/訓練/學習/整理完整計畫，含數據驗證矩陣
-- **[`MASTER_TASK_MAP.md`](06-project-management/MASTER_TASK_MAP.md)** — **主任務地圖** — 23份文檔144條索賠的完整來源追蹤，§X 30項 (17 DONE, 12 PENDING, 1 PARTIAL)
+- **[`MASTER_TASK_MAP.md`](06-project-management/MASTER_TASK_MAP.md)** — **主任務地圖** — 23份文檔144條索賠的完整來源追蹤，§X 31項 (18 DONE, 12 PENDING, 1 PARTIAL)
 - **`COMPREHENSIVE_REPAIR_ROADMAP.md`** — **全面修復路線圖** — 6 階段修復計畫
 - **`COMPREHENSIVE_AUDIT_2026-06-25.md`** — **最新全面審計報告**
 

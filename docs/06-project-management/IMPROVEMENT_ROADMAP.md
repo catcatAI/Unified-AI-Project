@@ -166,7 +166,7 @@
 | L2 | ED3N 引擎獨立使用時，CLP 自動建立 trainer | ✅ **DONE** (commit `5e537bd86`, Jun 28) | P2 | 低 | standalone CLP 跳過梯度步驟，trainer=None | 自動建構 ED3NTrainer |
 | L3 | CML 品質趨勢 → 改善觸發器（改善/穩定/退化） | ✅ **DONE** (commit `~HEAD`, Jun 28) | P3 | 低 | 僅記錄趨勢 | 根據趨勢動態調整觸發 |
 | L4 | NeuroAutoSelector LearnRecorder 資料 → 適應性選擇 | ✅ **DONE** (commit `~HEAD`, Jun 28) | P2 | 低 | 記錄但從不使用 | 選擇隨時間改善 |
-| L5 | 公式回饋迴路 — 公式影響→情緒→回應 | P2 | 中 | 67 測試但影響未經驗證 | 量化的行為影響 |
+| L5 | 公式回饋迴路 — 公式影響→情緒→回應 | ✅ **DONE** (commit `dd19635fe`, Jun 28) | P2 | 中 | 67 測試但影響未經驗證 | 12 新測試量化鏈條：認知壓力→PAD→dominant_emotion→響應模板 |
 | L6 | 跨語言學習 — 從一個語言的互動改善其他語言 | P3 | 高 | 所有語言獨立 | 知識跨語言共享 |
 
 ### 2.7 整理 (Organization)
