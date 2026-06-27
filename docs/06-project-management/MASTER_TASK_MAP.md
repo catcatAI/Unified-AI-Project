@@ -416,7 +416,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | 25 | **Semantic encoder external dependencies (CLIP/Whisper)** | `SemanticVisualEncoder` (semantic_visual.py:56) requires `torch` + `transformers` (CLIP). `SemanticAudioEncoder` (semantic_audio.py:59) requires `torch` + `whisper` (openai-whisper). Both have graceful numpy fallbacks (`_encode_fallback`) but degrade to random/simple features without the external models. | `semantic_visual.py:56` — falls back to np.random.randn; `semantic_audio.py:59` — falls back to mfcc-like stats | Install `torch`, `transformers`, `openai-whisper` |
 | 26 | **PerceptionEngine + AttentionController stubs** | `PerceptionEngine` (100L) is a SKELETON — hardcodes confidence=0.85/saliency=0.75 for all visual input. `AttentionController` (33L) is a STUB — stores position, no saliency/IOR/scan path. `AuditoryAttention` (20L) is an EMPTY alias. Three-class "perception pipeline" with zero actual perception. | `perception_engine.py:18` — hardcoded values; `attention_controller.py:14` — `update_target()` sets mode+pos; `auditory_attention.py:9` — empty class | Full redesign of perception subsystem |
 | 27 | **CausalReasoningEngine skeleton** | 99L, ~80 executable. Only does Pearson correlation + variable grouping. No temporal reasoning, no confounding variables, no do-calculus, no structural causal models. `predict()` and `explain()` are trivial list filters. Only 2 smoke tests. | `causal_reasoning_engine.py:11` — `_pearson()` is only real math; `_infer_relationships()` pairs variables with fixed threshold | Research + implementation of proper causal inference |
-| 28 | **AdversarialGenerationSystem + TaskGenerator stubs** | **PARTIALLY DONE** (Jun 28). TaskGenerator: `analyze_patterns` now tracks topic transitions; `generate_tasks` returns prioritized tasks based on detected patterns; `predict_next_query` returns most likely next topic. AdversarialGenerationSystem: Added 10 adversarial patterns library, `evaluate_robustness` now checks refusal keywords + evasion. 18 tests total (9 each), all pass. Remaining: personalization from user history, adaptive threshold tuning. | `task_generator.py:46L` — real analyze/generate/predict; `adversarial_generation_system.py:65L` — pattern library + robustness scoring; 18 new tests | Effort (medium) — core done, polish remains |
+| 28 | **AdversarialGenerationSystem + TaskGenerator stubs** | **TaskGenerator DONE** (commit `fba3fb14b`, Jun 28). Wired into production: `_schedule_precompute_tasks()` in `AngelaLLMService` calls `analyze_patterns()` + `generate_tasks()` on every successful response, enqueues `PrecomputeTask` items into `PrecomputeService`. `_history` now capped at 1000 with per-user isolation (`_user_histories`). **AdversarialGenerationSystem**: PARTIALLY DONE — 10 patterns + robustness scoring, but `generate_adversarial()` still appends fake suffix instead of real perturbation. | `task_generator.py:91L` — real analyze/generate/predict + precompute wiring; `adversarial_generation_system.py:70L` — pattern library + robustness scoring | TaskGenerator DONE. Adversarial: needs real perturbation + production caller. |
 | 29 | **LLM routing timeouts/retries** | ✅ **DONE** (commit HEAD, Jun 28). Added `_call_with_retry()` — exponential backoff + jitter (base 1s, max 8s, 3 total attempts) wrapping all LLM calls: `_call_llm_backend()`, `generate_text()`, `chat_completion()`. Retries on timeout + error responses before falling to fallback chain/ED3N. | `router.py` — `_call_with_retry()` at module level; applied in `_call_llm_backend`, `generate_text`, `chat_completion` | — |
 
 ### §X Summary — Industry-Comparable Maturity Assessment
@@ -452,7 +452,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | AudioWaveformDecoder | Noise (random weights) | Bark: "Hello, how are you?" with emotion | **雜訊 vs 語音** |
 | StepDecoder (ED3N) | Best-guess concept key | GPT-4o: fluent text with reasoning | **單詞映射 vs 語言模型** |
 | AdversarialGeneration | Just appends "[adversarial variant]" | RLHF, PPO, Constitutional AI | **佔位符** |
-| TaskGenerator | Single hardcoded dict | AutoGPT: dynamic sub-task decomposition | **佔位符** |
+| TaskGenerator | Topic-transition chain + PrecomputeService wire | AutoGPT: dynamic sub-task decomposition | **基本但已接線** |
 
 #### Engine Maturity — Absolute Assessment
 
@@ -463,7 +463,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | **Wrapper (API proxy)** | 7 | Just calls real AI APIs (OpenAI/Anthropic etc.) | LLM backends (7 providers), Whisper STT, edge-tts TTS |
 | **Academic toy** | 6 | Real algorithm but 20-30 years behind industry | VisualEncoder, AudioSpectralEncoder, ThreeLayerVisual, PrimitiveRenderer, CoreNetwork, ED3NEngine |
 | **Random weights** | 4 | Architecture is real, output = garbage | VisualDecoder, AudioWaveformDecoder, SequenceGenerator, ImageGenerator |
-| **Stub** | 7 | Non-functional placeholder | CerebellumEngine, AttentionController, AuditoryAttention, TaskGenerator, AdversarialGenerationSystem, PerceptionEngine, CausalReasoningEngine |
+| **Stub** | 6 | Non-functional placeholder | CerebellumEngine, AttentionController, AuditoryAttention, AdversarialGenerationSystem, PerceptionEngine, CausalReasoningEngine |
 
 #### Honest Summary
 
