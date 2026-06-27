@@ -1023,109 +1023,77 @@ class MultidimensionalStateMatrix:
 # Example usage
 if __name__ == "__main__":
 
-    async def demo() -> None:
-        """Run a demonstration."""
-        eb_system = EmotionalBlendingSystem()
-        await eb_system.initialize()
-
-        logger.info("=" * 60)
-        logger.info("Angela AI v6.0 - 情绪混合系统演示")
-        logger.info("Emotional Blending System Demo")
-        logger.info("=" * 60)
-
-        # Set emotion
+    async def _demo_set_emotion(eb_system):
         logger.info("\n设置情绪状态 / Setting emotional state:")
         eb_system.set_emotion_from_basic(BasicEmotion.JOY, intensity=0.8)
         await asyncio.sleep(loop_sleep("emotion_tick", 1.0))
-
         summary = eb_system.get_emotion_summary()
         logger.info(f"  主要情绪: {summary['dominant_emotion_cn']}")
         logger.info(f"  置信度: {summary['confidence']:.2f}")
-        logger.info(
-            "  PAD: P=%.2f, A=%.2f, D=%.2f",
-            summary['pad_state']['pleasure'],
-            summary['pad_state']['arousal'],
-            summary['pad_state']['dominance'],
-        )
+        logger.info("  PAD: P=%.2f, A=%.2f, D=%.2f",
+            summary['pad_state']['pleasure'], summary['pad_state']['arousal'], summary['pad_state']['dominance'])
 
-        # Get expression
+    def _demo_get_expression(eb_system):
         logger.info("\n情绪表达 / Emotional expression:")
         expression = eb_system.get_emotional_expression()
-        logger.info(
-            "  面部表情: 微笑=%.2f, 挑眉=%.2f",
-            expression.facial.smile,
-            expression.facial.eyebrow_raise,
-        )
-        logger.info(
-            "  语调: 音高=%.2f, 温暖度=%.2f",
-            expression.vocal.pitch,
-            expression.vocal.warmth,
-        )
-        logger.info(
-            "  行为: 姿势=%s, 手势强度=%.2f",
-            expression.behavioral.posture,
-            expression.behavioral.gesture_intensity,
-        )
+        logger.info("  面部表情: 微笑=%.2f, 挑眉=%.2f", expression.facial.smile, expression.facial.eyebrow_raise)
+        logger.info("  语调: 音高=%.2f, 温暖度=%.2f", expression.vocal.pitch, expression.vocal.warmth)
+        logger.info("  行为: 姿势=%s, 手势强度=%.2f", expression.behavioral.posture, expression.behavioral.gesture_intensity)
 
-        # Apply influences
+    async def _demo_apply_influences(eb_system):
         logger.info("\n应用影响因素 / Applying influences:")
         eb_system.apply_influence("physiological", "heart_rate", 0.6, 0.5)
         eb_system.apply_influence("hormonal", "dopamine", 0.7, 0.6)
         await asyncio.sleep(loop_sleep("emotion_tick", 1.0))
-
         summary = eb_system.get_emotion_summary()
-        logger.info(
-            "  更新后PAD: P=%.2f, A=%.2f",
-            summary['pad_state']['pleasure'],
-            summary['pad_state']['arousal'],
-        )
+        logger.info("  更新后PAD: P=%.2f, A=%.2f", summary['pad_state']['pleasure'], summary['pad_state']['arousal'])
 
-        # Blend emotions
+    def _demo_blend_emotions(eb_system):
         logger.info("\n情绪混合 / Emotion blending:")
         joy = PADEmotion.from_basic_emotion(BasicEmotion.JOY, 0.7)
         surprise = PADEmotion.from_basic_emotion(BasicEmotion.SURPRISE, 0.6)
         blended = eb_system.blend_emotions(joy, surprise, ratio=0.4)
-        logger.info(
-            "  喜悦 + 惊讶 (40%%): P=%.2f, A=%.2f, D=%.2f",
-            blended.pleasure,
-            blended.arousal,
-            blended.dominance,
-        )
+        logger.info("  喜悦 + 惊讶 (40%%): P=%.2f, A=%.2f, D=%.2f", blended.pleasure, blended.arousal, blended.dominance)
 
-        await eb_system.shutdown()
-        logger.info("\n系统已关闭 / System shutdown complete")
-
-        # Multidimensional State Matrix Demo
+    def _demo_state_matrix():
         logger.info("\n" + "=" * 60)
         logger.info("4D状态矩阵演示 / 4D State Matrix Demo")
         logger.info("=" * 60)
-
         matrix = MultidimensionalStateMatrix()
-
         logger.info("\n9. 设置4维度状态 / Setting 4D state:")
         matrix.set_alpha_dimension(energy=0.8, comfort=0.7, arousal=0.6, rest_need=0.2)
         matrix.set_beta_dimension(curiosity=0.9, focus=0.8, confusion=0.1, learning=0.7)
         matrix.set_gamma_dimension(happiness=0.85, sadness=0.1, trust=0.8, anger=0.05)
         matrix.set_delta_dimension(attention=0.9, bond=0.7, trust=0.8, presence=0.6)
-
         logger.info("   α生理维度 / Physiological: %s", matrix.get_dimension_state("alpha"))
         logger.info("   β认知维度 / Cognitive: %s", matrix.get_dimension_state("beta"))
         logger.info("   γ情感维度 / Emotional: %s", matrix.get_dimension_state("gamma"))
         logger.info("   δ社交维度 / Social: %s", matrix.get_dimension_state("delta"))
-
         logger.info("\n10. 计算维度间影响 / Computing inter-dimensional influences:")
-        influences = matrix.compute_inter_influences()
-        for source, targets in influences.items():
+        for source, targets in matrix.compute_inter_influences().items():
             logger.info(f"   {source} -> {targets}")
-
-        logger.info("\n11. 更新后的维度平均值 / Updated dimension averages:")
         summary = matrix.get_state_summary()
+        logger.info("\n11. 更新后的维度平均值 / Updated dimension averages:")
         for dim, avg in summary["averages"].items():
             logger.info(f"   {dim}维度 / dimension: {avg:.2f}")
-
         logger.info("\n12. 计算指标 / Computed metrics:")
         logger.info(f"   幸福感 / Wellbeing: {summary['computed']['wellbeing']:.2f}")
         logger.info(f"   唤醒度 / Arousal: {summary['computed']['arousal']:.2f}")
         logger.info(f"   情感效价 / Valence: {summary['computed']['valence']:.2f}")
+
+    async def demo() -> None:
+        eb_system = EmotionalBlendingSystem()
+        await eb_system.initialize()
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - 情绪混合系统演示")
+        logger.info("Emotional Blending System Demo")
+        logger.info("=" * 60)
+        await _demo_set_emotion(eb_system)
+        _demo_get_expression(eb_system)
+        await _demo_apply_influences(eb_system)
+        _demo_blend_emotions(eb_system)
+        await eb_system.shutdown()
+        logger.info("\n系统已关闭 / System shutdown complete")
+        _demo_state_matrix()
 
     asyncio.run(demo())

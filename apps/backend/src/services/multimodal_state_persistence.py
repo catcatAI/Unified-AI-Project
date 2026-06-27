@@ -23,6 +23,20 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 
+def _json_default(obj):
+    """JSON serializer for numpy/mock types in checkpoint serialization."""
+    if isinstance(obj, dict):
+        return obj
+    if hasattr(obj, 'tolist'):
+        try:
+            result = obj.tolist()
+            if isinstance(result, (list, tuple)):
+                return result
+        except Exception:
+            pass
+    return str(obj)
+
+
 class MultimodalStatePersistence:
     """Persistent checkpoint management for multimodal pipeline state.
 
@@ -51,105 +65,16 @@ class MultimodalStatePersistence:
     # --- Save ---
 
     async def save_checkpoint(self, label: Optional[str] = None) -> Dict[str, Any]:
-        """Save a checkpoint of the current multimodal state.
-
-        Args:
-            label: Optional human-readable label for the checkpoint
-
-        Returns:
-            dict with {label, path, timestamp, components_saved, status}
-        """
         label = label or f"cp_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         cp_dir = os.path.join(self._checkpoint_dir, label)
         os.makedirs(cp_dir, exist_ok=True)
 
         components_saved: List[str] = []
-
-        # 1. Save weights
-        try:
-            if hasattr(self._service, "save_weights"):
-                w_result = await self._service.save_weights(
-                    os.path.join(cp_dir, "weights.npz")
-                )
-                if w_result.get("status") == "saved":
-                    components_saved.append("weights")
-                else:
-                    logger.warning("Weight save returned: %s", w_result)
-        except Exception as e:
-            logger.warning("Failed to save weights: %s", e)
-
-        # 2. Save CML state
-        try:
-            if hasattr(self._service, "_get_cml"):
-                cml = self._service._get_cml()
-                if hasattr(cml, "state_dict"):
-                    cml_state = cml.state_dict()
-                    # Guard: only serialize if state_dict returns a real dict
-                    if isinstance(cml_state, dict):
-                        cml_path = os.path.join(cp_dir, "cml_state.json")
-                        # Convert numpy arrays to lists for JSON serialization
-                        def _json_default(obj):
-                            if isinstance(obj, dict):
-                                return obj
-                            if hasattr(obj, 'tolist'):
-                                try:
-                                    result = obj.tolist()
-                                    # Guard against mock-to-list returning non-list
-                                    if isinstance(result, (list, tuple)):
-                                        return result
-                                except Exception:
-                                    pass
-                            return str(obj)
-                        cml_serializable = json.loads(
-                            json.dumps(cml_state, default=_json_default)
-                        )
-                        with open(cml_path, "w", encoding="utf-8") as f:
-                            json.dump(cml_serializable, f, indent=2)
-                        components_saved.append("cml")
-        except Exception as e:
-            logger.warning("Failed to save CML state: %s", e)
-
-        # 3. Save memory store index
-        try:
-            if hasattr(self._service, "_get_memory_store"):
-                mem = self._service._get_memory_store()
-                if hasattr(mem, "save_index"):
-                    mem_path = os.path.join(cp_dir, "memory_index.json")
-                    saved = await mem.save_index(mem_path)
-                    if saved:
-                        components_saved.append("memory_index")
-        except Exception as e:
-            logger.warning("Failed to save memory index: %s", e)
-
-        # 4. Save registry summary
-        try:
-            if hasattr(self._service, "list_items"):
-                items = await self._service.list_items()
-                registry_path = os.path.join(cp_dir, "registry_summary.json")
-                with open(registry_path, "w", encoding="utf-8") as f:
-                    json.dump({
-                        "count": items.get("count", 0),
-                        "items": {
-                            k: v for k, v in items.get("items", {}).items()
-                        },
-                    }, f, indent=2)
-                components_saved.append("registry_summary")
-        except Exception as e:
-            logger.warning("Failed to save registry summary: %s", e)
-
-        # 5. Write metadata
-        metadata = {
-            "label": label,
-            "timestamp": time.time(),
-            "datetime": datetime.now().isoformat(),
-            "components_saved": components_saved,
-            "checkpoint_dir": cp_dir,
-        }
-        meta_path = os.path.join(cp_dir, "metadata.json")
-        with open(meta_path, "w", encoding="utf-8") as f:
-            json.dump(metadata, f, indent=2)
-
-        # Prune old checkpoints
+        await self._save_weight_component(cp_dir, components_saved)
+        await self._save_cml_component(cp_dir, components_saved)
+        await self._save_memory_component(cp_dir, components_saved)
+        await self._save_registry_component(cp_dir, components_saved)
+        metadata = self._write_checkpoint_metadata(cp_dir, label, components_saved)
         await self.prune_checkpoints()
 
         logger.info("Checkpoint '%s' saved with %d components: %s",
@@ -161,6 +86,73 @@ class MultimodalStatePersistence:
             "components_saved": components_saved,
             "status": "saved",
         }
+
+    async def _save_weight_component(self, cp_dir, components_saved):
+        try:
+            if hasattr(self._service, "save_weights"):
+                w_result = await self._service.save_weights(os.path.join(cp_dir, "weights.npz"))
+                if w_result.get("status") == "saved":
+                    components_saved.append("weights")
+                else:
+                    logger.warning("Weight save returned: %s", w_result)
+        except Exception as e:
+            logger.warning("Failed to save weights: %s", e)
+
+    async def _save_cml_component(self, cp_dir, components_saved):
+        try:
+            if not hasattr(self._service, "_get_cml"):
+                return
+            cml = self._service._get_cml()
+            if not hasattr(cml, "state_dict"):
+                return
+            cml_state = cml.state_dict()
+            if not isinstance(cml_state, dict):
+                return
+            cml_serializable = json.loads(json.dumps(cml_state, default=_json_default))
+            cml_path = os.path.join(cp_dir, "cml_state.json")
+            with open(cml_path, "w", encoding="utf-8") as f:
+                json.dump(cml_serializable, f, indent=2)
+            components_saved.append("cml")
+        except Exception as e:
+            logger.warning("Failed to save CML state: %s", e)
+
+    async def _save_memory_component(self, cp_dir, components_saved):
+        try:
+            if not hasattr(self._service, "_get_memory_store"):
+                return
+            mem = self._service._get_memory_store()
+            if not hasattr(mem, "save_index"):
+                return
+            mem_path = os.path.join(cp_dir, "memory_index.json")
+            if await mem.save_index(mem_path):
+                components_saved.append("memory_index")
+        except Exception as e:
+            logger.warning("Failed to save memory index: %s", e)
+
+    async def _save_registry_component(self, cp_dir, components_saved):
+        try:
+            if not hasattr(self._service, "list_items"):
+                return
+            items = await self._service.list_items()
+            registry_path = os.path.join(cp_dir, "registry_summary.json")
+            with open(registry_path, "w", encoding="utf-8") as f:
+                json.dump({"count": items.get("count", 0), "items": {k: v for k, v in items.get("items", {}).items()}}, f, indent=2)
+            components_saved.append("registry_summary")
+        except Exception as e:
+            logger.warning("Failed to save registry summary: %s", e)
+
+    def _write_checkpoint_metadata(self, cp_dir, label, components_saved):
+        metadata = {
+            "label": label,
+            "timestamp": time.time(),
+            "datetime": datetime.now().isoformat(),
+            "components_saved": components_saved,
+            "checkpoint_dir": cp_dir,
+        }
+        meta_path = os.path.join(cp_dir, "metadata.json")
+        with open(meta_path, "w", encoding="utf-8") as f:
+            json.dump(metadata, f, indent=2)
+        return metadata
 
     # --- Load ---
 

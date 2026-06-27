@@ -104,6 +104,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
+## [7.5.0-dev] - 2026-06-28 — emotional_blending demo + save_checkpoint refactored
+
+### Refactored
+- 🔧 **emotional_blending.py demo** (102L→orchestrator + 5 helpers): Extracted `_demo_set_emotion`, `_demo_get_expression`, `_demo_apply_influences`, `_demo_blend_emotions`, `_demo_state_matrix`.
+- 🔧 **save_checkpoint** (102L→orchestrator + 5 helpers): Extracted `_save_weight_component`, `_save_cml_component`, `_save_memory_component`, `_save_registry_component`, `_write_checkpoint_metadata`. Nested `_json_default` moved to module level.
+
+### Synced
+- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 23/31→25/31, remaining 6→4 (all pure-data, skipped).
+
 ## [7.5.0-dev] - 2026-06-28 — tactile demo refactored
 
 ### Refactored
