@@ -104,6 +104,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
+## [7.5.0-dev] - 2026-06-28 — AgentManager Refactoring
+
+### Refactored
+- 🔧 **AgentManager._start_router** (132L→22L): Extracted embedded FastAPI router script to module-level `_ROUTER_SCRIPT` constant. Health check retry loop extracted to `_wait_router_health()` helper. All 101 agent tests pass.
+
+### Synced
+- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 14/31→15/31, remaining 17→16 functions >100L.
+
 ## [7.5.0-dev] - 2026-06-28 — DifferentiableRenderer Refactoring
 
 ### Refactored

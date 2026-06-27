@@ -184,6 +184,87 @@ class ProcessAgentInfo:
     entry_point: Optional[Callable] = None  # 代理入口函數，用於重啟
 
 
+_ROUTER_SCRIPT = """
+import asyncio
+import json
+import logging
+from fastapi import FastAPI
+import uvicorn
+import httpx
+from datetime import datetime
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("HSPRouter")
+
+app = FastAPI()
+
+registry = {}
+message_history = []
+
+@app.post("/register")
+async def register_agent(data: dict):
+    agent_id = data.get("agent_id")
+    port = data.get("port")
+    if agent_id:
+        registry[agent_id] = {"port": port, "capabilities": data.get("capabilities", [])}
+        logger.info(f"Agent registered: {agent_id} at port {port}")
+        return {"status": "registered", "agent_id": agent_id}
+    return {"error": "Missing agent_id"}, 400
+
+@app.post("/unregister")
+async def unregister_agent(data: dict):
+    agent_id = data.get("agent_id")
+    if agent_id and agent_id in registry:
+        del registry[agent_id]
+        logger.info(f"Agent unregistered: {agent_id}")
+        return {"status": "unregistered"}
+    return {"error": "Agent not found"}, 404
+
+@app.get("/registry")
+async def get_registry():
+    return {"agents": registry}
+
+@app.post("/send")
+async def send_message(data: dict):
+    target_id = data.get("target_id")
+    message = data.get("message", {})
+    if target_id in registry:
+        target = registry[target_id]
+        try:
+            async with httpx.AsyncClient() as client:
+                    await client.post(f"http://{DEFAULT_HOST}:{target['port']}/message", json=message, timeout=timeout_value("agent_message", 5.0))
+            return {"status": "delivered", "target": target_id}
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            return {"status": "failed", "error": str(e)}
+
+    return {"status": "failed", "error": "Target not found"}
+
+@app.post("/broadcast")
+async def broadcast_message(data: dict):
+    message = data.get("message", {})
+    results = []
+    for agent_id, info in registry.items():
+        try:
+            async with httpx.AsyncClient() as client:
+                    await client.post(f"http://{DEFAULT_HOST}:{info['port']}/message", json=message, timeout=timeout_value("agent_message", 5.0))
+            results.append({"agent": agent_id, "status": "delivered"})
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            results.append({"agent": agent_id, "status": "failed", "error": str(e)})
+
+    return {"status": "broadcast", "results": results}
+
+@app.get("/health")
+async def health():
+    return {"status": "healthy", "agents": len(registry)}
+
+if __name__ == "__main__":
+    uvicorn.run(app, host=DEFAULT_HOST, port=11435, log_level="error")
+"""
+
+
 class AgentManager:
     """
     Manages the lifecycle of specialized sub - agents.
@@ -247,135 +328,51 @@ class AgentManager:
     def _start_router(self) -> None:
         """Start the HSP Message Router as a background process."""
         try:
-            # Create a simple router script
-            router_script = """
-import asyncio
-import json
-import logging
-from fastapi import FastAPI
-import uvicorn
-import httpx
-from datetime import datetime
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("HSPRouter")
-
-app = FastAPI()
-
-registry = {}
-message_history = []
-
-@app.post("/register")
-async def register_agent(data: dict):
-    agent_id = data.get("agent_id")
-    port = data.get("port")
-    if agent_id:
-        registry[agent_id] = {"port": port, "capabilities": data.get("capabilities", [])}
-        logger.info(f"Agent registered: {agent_id} at port {port}")
-        return {"status": "registered", "agent_id": agent_id}
-    return {"error": "Missing agent_id"}, 400
-
-@app.post("/unregister")
-async def unregister_agent(data: dict):
-    agent_id = data.get("agent_id")
-    if agent_id and agent_id in registry:
-        del registry[agent_id]
-        logger.info(f"Agent unregistered: {agent_id}")
-        return {"status": "unregistered"}
-    return {"error": "Agent not found"}, 404
-
-@app.get("/registry")
-async def get_registry():
-    return {"agents": registry}
-
-@app.post("/send")
-async def send_message(data: dict):
-    target_id = data.get("target_id")
-    message = data.get("message", {})
-    if target_id in registry:
-        target = registry[target_id]
-        try:
-            async with httpx.AsyncClient() as client:
-                    await client.post(f"http://{DEFAULT_HOST}:{target['port']}/message", json=message, timeout=timeout_value("agent_message", 5.0))
-            return {"status": "delivered", "target": target_id}
-        except Exception as e:  # broad exception acceptable: router script httpx failures wrap all network errors
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
-            return {"status": "failed", "error": str(e)}
-
-    return {"status": "failed", "error": "Target not found"}
-
-@app.post("/broadcast")
-async def broadcast_message(data: dict):
-    message = data.get("message", {})
-    results = []
-    for agent_id, info in registry.items():
-        try:
-            async with httpx.AsyncClient() as client:
-                    await client.post(f"http://{DEFAULT_HOST}:{info['port']}/message", json=message, timeout=timeout_value("agent_message", 5.0))
-            results.append({"agent": agent_id, "status": "delivered"})
-        except Exception as e:  # broad exception acceptable: router script httpx failures wrap all network errors
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
-            results.append({"agent": agent_id, "status": "failed", "error": str(e)})
-
-    return {"status": "broadcast", "results": results}
-
-@app.get("/health")
-async def health():
-    return {"status": "healthy", "agents": len(registry)}
-
-if __name__ == "__main__":
-    uvicorn.run(app, host=DEFAULT_HOST, port=11435, log_level="error")
-"""
-
-            # Write router script to temp file
             with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-                f.write(router_script)
+                f.write(_ROUTER_SCRIPT)
                 self._router_path = f.name
 
-            # Start router process
             self.router_process = subprocess.Popen(
                 [sys.executable, self._router_path],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
 
-            # Wait for router to start with retry mechanism
-            import time
-            import httpx
-
-            # Check if router is running
             if self.router_process.poll() is None:
                 logger.info(f"HSP Router started on port {self.router_port}")
-
-                # Verify router is responding with retries
-                max_retries = retry_value("router_health_retries", 5)
-                retry_delay = loop_sleep("router_health_delay", 1.0)
-
-                for attempt in range(max_retries):
-                    try:
-                        response = httpx.get(f"{self.router_url}/health", timeout=timeout_value("router_health", 2.0))
-                        if response.status_code == 200:
-                            logger.info("HSP Router health check passed")
-                            break
-                    except Exception as e:  # broad exception acceptable: router script httpx failures wrap all network errors
-                        if attempt < max_retries - 1:
-                            logger.warning(
-                                f"HSP Router health check attempt {attempt + 1} failed: {e}, retrying in {retry_delay}s..."
-                                , exc_info=True
-                            )
-                            time.sleep(retry_delay)
-                        else:
-                            logger.warning(
-                                f"HSP Router health check failed after {max_retries} attempts"
-                                , exc_info=True
-                            )
+                self._wait_router_health()
             else:
                 logger.error("Failed to start HSP Router", exc_info=True)
 
-        except Exception as e:  # broad exception acceptable: router startup wraps subprocess and port errors
+        except Exception as e:
             logger.error(f"Error starting router: {e}", exc_info=True)
             self.enable_router = False
+
+    def _wait_router_health(self) -> None:
+        import time
+        import httpx
+
+        max_retries = retry_value("router_health_retries", 5)
+        retry_delay = loop_sleep("router_health_delay", 1.0)
+
+        for attempt in range(max_retries):
+            try:
+                response = httpx.get(f"{self.router_url}/health", timeout=timeout_value("router_health", 2.0))
+                if response.status_code == 200:
+                    logger.info("HSP Router health check passed")
+                    break
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    logger.warning(
+                        f"HSP Router health check attempt {attempt + 1} failed: {e}, retrying in {retry_delay}s...",
+                        exc_info=True,
+                    )
+                    time.sleep(retry_delay)
+                else:
+                    logger.warning(
+                        f"HSP Router health check failed after {max_retries} attempts",
+                        exc_info=True,
+                    )
 
     def register_agent_factory(self, agent_type: str, factory: Any) -> None:
         """注册代理工厂"""
