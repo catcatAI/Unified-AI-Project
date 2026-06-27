@@ -104,6 +104,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
+## [7.5.0-dev] - 2026-06-28 — TaskGenerator + AdversarialGenerationSystem Improvements
+
+### Improved
+- 🧠 **TaskGenerator** (16→46L): `predict_next_query()` now returns most likely topic from transition chains. `generate_tasks()` creates prioritized tasks based on detected patterns (precompute + prefetch_knowledge). `analyze_patterns()` tracks topic transitions. 8 new tests (9 total, all pass).
+- 🧠 **AdversarialGenerationSystem** (18→65L): Added 10 adversarial pattern library (trolley problem, prompt injection, alignment skepticism, etc.). `evaluate_robustness()` now checks refusal keywords + short-response evasion. 7 new tests (8 total, all pass).
+
+### Synced
+- 🔄 **MASTER_TASK_MAP.md §X #28**: Status from "placeholder stubs" to "PARTIALLY DONE — core logic implemented, 18 tests pass".
+
 ## [7.5.0-dev] - 2026-06-28 — Refactor ED3NEngine._process_unlocked + Doc Sync
 
 ### Refactored
