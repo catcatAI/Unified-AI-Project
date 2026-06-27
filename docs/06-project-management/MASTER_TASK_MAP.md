@@ -281,8 +281,10 @@ The plan claimed to create:
 - 🐛 `active_backend_type` AttributeError → `getattr` guard (fixes test_refinement_pipeline)
 - 🐛 Hormone config: added `biological` formula config with real ADRENALINE parameters (base=10, half-life=6min) (fixes test_hormone_scientific_decay)
 - 🐛 10 stale test expectations in test_query_classifier_v2.py (72/72)
-- 🔧 **L1**: JointTrainer wired into ED3NEngine.train(), __main__.py cmd_train/cmd_serve (was only ED3NTrainer)
-- 🔧 **L4**: NeuroAutoSelector._select_model now queries MetaController history to prefer backends with good recent performance
+### Completed Items (this session)
+- 🔧 **L1**: JointTrainer wired into ED3NEngine.train(), __main__.py cmd_train/cmd_serve
+- 🔧 **L3**: CML quality trend → dynamic threshold adjustment (degrading=halve, improving=double)
+- 🔧 **L4**: NeuroAutoSelector._select_model queries MetaController history to prefer high-performing backends
 
 ### Test Count
 - **4,785** collected (was 4,774 — +11 from restored passes + new tests)
@@ -369,6 +371,13 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | CARD_INTEGRATION_PLAN_REVIEW.md | 2026-05-30 | Review of v1 plan, superseded | ✅ Marked SUPERSEDED (2026-06-25) |
 | CARD_IMPORT_PIPELINE_PLAN.md | 2026-05-27 | Phase 0-6 all done | ✅ Already had ✅ completed marker |
 | PHASE6_NEXT_PLAN.md | 2026-05-30 | P6-1/2/4, P7-1/2 done; P6-3 partial | ✅ Marked MOSTLY COMPLETE (2026-06-25) |
+| `PROJECT_ROADMAP.md` | 2025-10-01 | Pre-Phase-9 architecture, deleted subsystems, expired timelines | ✅ **ARCHIVED** (2026-06-28) to `docs/09-archive/` |
+| `RECOMMENDATIONS.md` | mid-2025 | All items completed | ✅ **ARCHIVED** (2026-06-28) |
+| `TODO_ANALYSIS.md` | mid-2025 | Abandoned draft (only 1/3 sections written) | ✅ **ARCHIVED** (2026-06-28) |
+| `UNIFIED_AI_IMPROVEMENT_PLAN.md` | 2025-08-25 | All dates elapsed, generic content | ✅ **ARCHIVED** (2026-06-28) |
+| `ACTION_PLAN.md` | mid-2025 | All 10 actions completed | ✅ **ARCHIVED** (2026-06-28) |
+| `DOCUMENTATION_TRUTH_MAP_2026-06-07.md` | 2026-06-07 | Superseded by MASTER_TASK_MAP.md | ✅ **ARCHIVED** (2026-06-28) |
+| `port_routing_plan.md` | 2026-05-14 | Design doc, status unclear (likely abandoned) | ✅ **ARCHIVED** (2026-06-28) |
 
 ---
 

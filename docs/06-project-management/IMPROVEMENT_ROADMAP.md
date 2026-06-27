@@ -176,7 +176,7 @@
 | O1 | 檔案頭部移除 Matrix 註解（157 檔案需處理，僅裝飾性） | P5 |
 | O2 | 清理測試中 dead/commented 程式碼 | P4 |
 | O3 | 標準化 imports（isort 跨所有 Python 檔案） | P4 |
-| O4 | 清理 docs/ 中過時/重複文件（移入 09-archive/） | P3 |
+| O4 | 清理 docs/ 中過時/重複文件（移入 09-archive/） | ✅ **DONE** (2026-06-28): 7 files archived: PROJECT_ROADMAP, RECOMMENDATIONS, TODO_ANALYSIS, UNIFIED_AI_IMPROVEMENT_PLAN, ACTION_PLAN, DOCUMENTATION_TRUTH_MAP, port_routing_plan. 3 kept: VERSION_CONTROL_STRATEGY, PROJECTS_COLLABORATION_GUIDE, GIT_AND_PROJECT_MANAGEMENT. | P3 |
 | O5 | 更新 INDEX.md 和 UNIFIED_DOCUMENTATION_INDEX.md 以反映文件變動 | P3 |
 | O6 | 為每個主要子系統建立統一的 `__init__.py`（公開 API） | P4 |
 
