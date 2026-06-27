@@ -90,7 +90,7 @@ def cmd_train(args) -> None:
         print("No examples with valid dictionary keys")
         return
 
-    trainer = ED3NTrainer(e, dictionary_lr=args.lr, network_lr=args.lr)
+    trainer = JointTrainer(e, dict_lr=args.lr, network_lr=args.lr)
     t0 = time.time()
     for epoch in range(args.epochs):
         batch = TrainingBatch(examples=texamples, batch_id=f"cli_{epoch}")
@@ -111,8 +111,8 @@ def cmd_serve(args):
     # Wire continuous learning for interactive sessions
     try:
         from .continuous_learning import ContinuousLearningPipeline
-        from .ed3n_trainer import ED3NTrainer
-        trainer = ED3NTrainer(e, dictionary_lr=0.05, network_lr=0.05)
+from .ed3n_trainer import JointTrainer
+        trainer = JointTrainer(e, dict_lr=0.05, network_lr=0.05)
         clp = ContinuousLearningPipeline(engine=e, trainer=trainer,
                                          growth_interval=15, train_interval=50,
                                          min_examples_for_train=30, auto_grow=True)

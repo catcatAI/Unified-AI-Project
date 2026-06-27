@@ -162,7 +162,7 @@
 
 | # | 項目 | 優先級 | 難度 | 目前 | 目標 |
 |---|------|:------:|:----:|:----:|:----:|
-| L1 | ED3NTrainer → SequenceTrainer/JointTrainer 接線（目前僅使用 ED3NTrainer 基本類別） | P2 | 中 | 僅使用基本 train_step | 3 個 trainer 子類別全部使用 |
+| L1 | ED3NTrainer → SequenceTrainer/JointTrainer 接線 | ✅ **DONE** (commit `~HEAD`, Jun 28) | P2 | 中 | 僅使用基本 train_step | 3 個 trainer 全部使用 |
 | L2 | ED3N 引擎獨立使用時，CLP 自動建立 trainer | ✅ **DONE** (commit `5e537bd86`, Jun 28) | P2 | 低 | standalone CLP 跳過梯度步驟，trainer=None | 自動建構 ED3NTrainer |
 | L3 | CML 品質趨勢 → 改善觸發器（改善/穩定/退化） | P3 | 低 | 僅記錄趨勢 | 根據趨勢動態調整觸發 |
 | L4 | NeuroAutoSelector LearnRecorder 資料 → 適應性選擇 | P2 | 低 | 記錄但從不使用 | 選擇隨時間改善 |

@@ -817,13 +817,13 @@ class ED3NEngine:
         network_epochs: int = batch_value("ai.ed3n_engine.network_epochs", 3),
     ) -> Any:
         """High-level training API. Accepts list of dicts with 'input', 'output', 'context'."""
-        from .ed3n_trainer import ED3NTrainer
+        from .ed3n_trainer import JointTrainer
         from .training_types import (
             TrainingBatch,
             TrainingExample,
         )
 
-        trainer = ED3NTrainer(self)
+        trainer = JointTrainer(self)
         training_examples = []
         for ex in examples:
             if isinstance(ex, dict):

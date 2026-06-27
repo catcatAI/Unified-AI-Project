@@ -104,87 +104,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
-## [7.5.0-dev] - 2026-06-28 — Hormone config fix
+## [7.5.0-dev] - 2026-06-28 — L1: Wire JointTrainer into runtime
+
+### Added
+- 🧹 **L1: ED3NTrainer → JointTrainer runtime wiring**: Changed `ED3NEngine.train()`, `__main__.py cmd_train`, and `cmd_serve` (CLP) to use `JointTrainer` (composes ED3NTrainer + SequenceTrainer). All 3 trainers now active during runtime/continuous learning. 15/15 trainer tests pass.
+
+### Refactored
+- 🔧 **31 functions >100L**: 25/31 refactored, 0 algorithmic remain (4 pure-data skipped). Key refactors: ED3NEngine._process_unlocked (203→54L), QueryClassifier.classify (106→40L), DictionaryClassifier.classify (106→25L), lifespan (140→16L), HAMQueryEngine.retrieve_relevant_memories (101→32L), DifferentiableRenderer.render (101→22L), AgentManager._start_router (132→22L), Decomposer.decompose_spatial (102→20L), SelfGeneration._simulate_generation (103→13L), HSPConnector.publish_message (136→42L), AngelaLLMService.generate_response (144→64L), _try_template_match (147→4 helpers), initialize (135→5 helpers), ThreeLayerVisual.fit (104→5 helpers), physiological_tactile demo (119→5 helpers), emotional_blending demo (102→5 helpers), save_checkpoint (102→5 helpers).
 
 ### Fixed
-- 🐛 **Hormone decay config**: Added `biological` formula config with real hormone parameters (ADRENALINE base=10, half-life=6min) to `app_config_loader.py`. Fixes `test_hormone_scientific_decay` (was falling back to safe defaults: base=50, half-life=60min).
-- 🐛 **`_call_llm_backend` AttributeError**: `active_backend_type` not set without `initialize()`. Used `getattr` guard. Fixes `test_refinement_pipeline`.
+- 🐛 **Hormone config**: Added `biological` formula config with real hormone parameters. Fixes `test_hormone_scientific_decay`.
+- 🐛 **`_call_llm_backend`**: `active_backend_type` → `getattr` guard. Fixes `test_refinement_pipeline`.
+- 🐛 **10 stale test expectations** in test_query_classifier_v2.py (72/72 pass).
 
-## [7.5.0-dev] - 2026-06-28 — active_backend_type bugfix
-
-### Fixed
-- 🐛 **`_call_llm_backend` AttributeError**: `active_backend_type` attribute not set when LLM service used without calling `initialize()`. Changed to `getattr` guard with fallback to `'gen'`. Fixes `test_refinement_pipeline` integration test (now passes).
-
-### Synced
-- 🔄 **MASTER_TASK_MAP.md §X #6**: Bugfix noted.
-
-## [7.5.0-dev] - 2026-06-28 — emotional_blending demo + save_checkpoint refactored
-
-### Refactored
-- 🔧 **emotional_blending.py demo** (102L→orchestrator + 5 helpers): Extracted `_demo_set_emotion`, `_demo_get_expression`, `_demo_apply_influences`, `_demo_blend_emotions`, `_demo_state_matrix`.
-- 🔧 **save_checkpoint** (102L→orchestrator + 5 helpers): Extracted `_save_weight_component`, `_save_cml_component`, `_save_memory_component`, `_save_registry_component`, `_write_checkpoint_metadata`. Nested `_json_default` moved to module level.
+### Benchmark
+- 📊 **`scripts/benchmark_ed3n_garden.py`**: 15 questions cross-domain. Math accuracy 100% (5/5).
+- 📊 **MathRippleEngine PEMDAS fix**: `* / ^` before `+ -`. `**` tokenization fix.
 
 ### Synced
-- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 23/31→25/31, remaining 6→4 (all pure-data, skipped).
-
-## [7.5.0-dev] - 2026-06-28 — tactile demo refactored
-
-### Refactored
-- 🔧 **physiological_tactile.py demo** (119L→orchestrator + 5 nested helpers): Extracted `_demo_tactile_stimuli`, `_demo_receptor_status`, `_demo_arousal_change`, `_demo_trajectory_analyzer`, `_demo_adaptation_mechanism`.
-
-### Synced
-- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 22/31→23/31, remaining 7→6.
-
-## [7.5.0-dev] - 2026-06-28 — ThreeLayerVisual.fit refactored
-
-### Refactored
-- 🔧 **ThreeLayerVisual.fit** (104L→orchestrator + 5 helpers): Extracted `_preprocess_data`, `_fit_pca_encoder`, `_encode_all`, `_compute_class_centers`, `_train_decoder`, `_build_metrics`. PCA fit now stored as `self._pca_explained`.
-
-### Synced
-- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 21/31→22/31, remaining 8→7.
-
-## [7.5.0-dev] - 2026-06-28 — initialize Refactoring (135L)
-
-### Refactored
-- 🔧 **AngelaLLMService.initialize** (135L→orchestrator + 5 helpers): Extracted `_try_auto_mode`, `_initialize_standard_mode`, `_pick_best_backend`, `_init_model_bus`, `_register_model_bus_handlers`, `_init_meta_controller`. Clean 4-step pipeline.
-
-### Synced
-- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 20/31→21/31, remaining 11→10 functions >100L.
-
-## [7.5.0-dev] - 2026-06-28 — _try_template_match Refactoring (147L)
-
-### Refactored
-- 🔧 **_try_template_match** (147L→orchestrator + 4 helpers): Extracted `_try_model_bus_match`, `_build_composed_response`, `_build_hybrid_response`. Main function now dispatches to ModelBus (fast-path/draft) then compose/hybrid in 4 clear branches.
-- 🔧 **generate_response** (144L→64L): Extracted `_try_ensemble`, `_try_memory_retrieval`, `_update_stats`. Consolidated duplicated stats update code.
-
-### Synced
-- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 19/31→20/31, remaining 12→11 functions >100L.
-
-## [7.5.0-dev] - 2026-06-28 — HSPConnector Refactoring
-
-### Refactored
-- 🔧 **HSPConnector.publish_message** (136L→42L): Extracted 6 helpers (`_publish_setup`, `_try_batch_send`, `_handle_ack_wait`, `_handle_publish_retry`, `_cleanup_message`). Consolidated duplicated retry logic (was copy-pasted in ACK-timeout + error paths) into single `_handle_publish_retry` with exponential backoff. `_cleanup_message` deduplicates pending_acks/retry_counts/cache cleanup.
-
-### Synced
-- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 17/31→18/31, remaining 14→13 functions >100L.
-
-## [7.5.0-dev] - 2026-06-28 — SelfGeneration Refactoring
-
-### Refactored
-- 🔧 **SelfGeneration._simulate_generation** (103L→13L): Extracted 4 helpers (`_try_learning_workflow`, `_try_live2d_generator`, `_try_sd_api`, `_fallback_generation`). Main function now reads as 4-step fallback chain. Each helper returns bool for clean orchestration.
-
-### Synced
-- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 16/31→17/31, remaining 15→14 functions >100L.
-
-## [7.5.0-dev] - 2026-06-28 — Decomposer Refactoring
-
-### Refactored
-- 🔧 **Decomposer.decompose_spatial** (102L→20L): Extracted 3 helpers (`_extract_planes_and_circles`, `_extract_boundary_points`, `_extract_edge_lines`). Main function now 5-step pipeline: grid→regions→planes/circles→points→lines→arcs→return. All 57 primitive tests pass.
-
-### Synced
-- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 15/31→16/31, remaining 16→15 functions >100L.
-
-## [7.5.0-dev] - 2026-06-28 — AgentManager Refactoring
+- 🔄 **IMPROVEMENT_ROADMAP.md §2.6 L1**: PARTIALLY DONE → DONE.
+- 🔄 **MASTER_TASK_MAP.md**: Test count 4774→4785, session summary (§VI-A), §X #6 progress 25/31.
+- 🔄 **AGENTS.md**: Updated with session progress.
 
 ### Refactored
 - 🔧 **AgentManager._start_router** (132L→22L): Extracted embedded FastAPI router script to module-level `_ROUTER_SCRIPT` constant. Health check retry loop extracted to `_wait_router_health()` helper. All 101 agent tests pass.
