@@ -104,6 +104,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
+## [7.5.0-dev] - 2026-06-28 — HAM QueryEngine Refactoring
+
+### Refactored
+- 🔧 **HAMQueryEngine.retrieve_relevant_memories** (101L→32L): Extracted 2 helpers (`_process_vector_result`, `_decode_memory_content`). Consolidated duplicate primary+fallback decode logic into single 2-attempt loop with base64 fallback. Eliminated 40L of duplicated try/except blocks. All 13/15 HAM tests pass (2 pre-existing ImportanceScorer failures).
+
+### Synced
+- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 12/31→13/31, remaining 19→18 functions >100L.
+
 ## [7.5.0-dev] - 2026-06-28 — Lifespan Refactoring + Test Fixes + Doc Sync
 
 ### Refactored

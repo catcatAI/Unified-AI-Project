@@ -60,7 +60,7 @@ Each entry has:
 | P0 (all 4 items) | `3f209b605` | All verified | ✅ |
 | P1 (thread safety) | `3f209b605` | 4 files | ✅ |
 | P2 (context/utils, precision, agents) | `3f209b605` | ~6 files | ✅ |
-| **P4 (31 long function refactor)** | QueryClassifier.__init__ 187→7, HAMDataProcessor._abstract_text 133→72, HAMQueryEngine._fallback_keyword_search 107→65, construct_angela_prompt F48→D27, QueryClassifier.classify 106→40, DictionaryClassifier.classify 106→25, lifespan 140→16 (Jun 28) | 19 functions >100 lines remain (Jun 28 empirical scan, unique count) | 🟡 **12/31 done** |
+| **P4 (31 long function refactor)** | QueryClassifier.__init__ 187→7, HAMDataProcessor._abstract_text 133→72, HAMQueryEngine._fallback_keyword_search 107→65, construct_angela_prompt F48→D27, QueryClassifier.classify 106→40, DictionaryClassifier.classify 106→25, lifespan 140→16, HAMQueryEngine.retrieve_relevant_memories 101→32 (Jun 28) | 18 functions >100 lines remain (Jun 28 empirical scan, unique count) | 🟡 **13/31 done** |
 | **P4 (load/stress tests)** | **No commit** | No framework exists | ⏳ **NOT STARTED** |
 | **P4 (desktop tray)** | **No commit** | No tray impl | ⏳ **NOT STARTED** |
 | **P4 (E2E tests)** | **No commit** | No E2E framework | ⏳ **NOT STARTED** |
@@ -363,7 +363,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | 3 | `/multimodal/stream` WS route | ✅ **DONE** — dedicated handler + route registered | `services/multimodal_ws_handler.py` + `main_api_server.py` line 295 | — |
 | 4 | C901 cyclomatic complexity (67 residual) | 7 refactored (+ED3NEngine.process_multimodal E35→B6), 60 remain | 0 Grade E remain | **ALL E/F GRADE FUNCTIONS ELIMINATED** |
 | 5 | Shared code deduplication (P3-9 to P3-11) | ✅ **RESOLVED** — `core/shared/` duplicates deleted in Phase 9-12 (commit `064e63621`) | Only `src/shared/error.py` and `src/shared/key_manager.py` remain | Automatically fixed by dead code removal |
-| 6 | P4 long function refactor (31 total >100L found) | 12/31 done (+lifespan: 140→16L, extracted 10 helpers: _init_plugins, _try_start_bio, _try_start_agents, _try_init_crisis, _try_init_causal_reasoning, _try_init_session_manager, _try_start_broadcast, _try_warm_ed3n, _shutdown_services, Jun 28). 19 functions >100 lines remain. | 19 functions >100 lines; 12 refactored | Effort (large) |
+| 6 | P4 long function refactor (31 total >100L found) | 13/31 done (+HAMQueryEngine.retrieve_relevant_memories: 101→32L, extracted 2 helpers: _process_vector_result, _decode_memory_content with deduplicated decode logic, Jun 28). 18 functions >100 lines remain. | 18 functions >100 lines; 13 refactored | Effort (large) |
 | 7 | P4 load/stress test framework | Never started | No framework exists | Design |
 | 8 | P4 desktop tray implementation | Never started | No tray code | Effort |
 | 9 | P4 E2E test framework | Never started | No E2E framework | Design |

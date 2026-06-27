@@ -143,32 +143,17 @@ class HAMQueryEngine:
         return results[:limit]
 
     async def retrieve_relevant_memories(self, query: str, limit: int = 10) -> List[HAMMemory]:
-        """
-        Retrieves memories semantically relevant to the query using the vector store.
-
-        Args:
-            query: The search query string
-            limit: Maximum number of results to return
-
-        Returns:
-            List of semantically relevant memories with relevance scores
-        """
         if not self.vector_store_manager.vector_store:
             logger.warning("Vector store not initialized. Cannot perform semantic search.", exc_info=True)
-            # Fallback to keyword-based search in core memory
             return await self._fallback_keyword_search(query, limit)
 
         try:
-            logger.info(f"Performing semantic search for query: '{query}'")
-
-            # Embed the query using the vector store
             query_embedding = await self.vector_store_manager.embed_text(query)
 
             if query_embedding is None:
                 logger.error("Failed to embed query for semantic search", exc_info=True)
                 return await self._fallback_keyword_search(query, limit)
 
-            # Query the vector store for similar memories
             results = await self.vector_store_manager.query_similar(
                 query_embedding=query_embedding, n_results=limit
             )
@@ -177,72 +162,60 @@ class HAMQueryEngine:
                 logger.info("No semantic matches found, falling back to keyword search")
                 return await self._fallback_keyword_search(query, limit)
 
-            # Convert vector store results to HAMMemory format
             memories = []
             for result in results:
-                memory_id = result.get("id")
-
-                # Retrieve full memory from core storage if available
-                if memory_id and memory_id in self.core_memory_store:
-                    data_package = self.core_memory_store[memory_id]
-
-                    try:
-                        decrypted_data = self.data_processor._decrypt(
-                            data_package["encrypted_package"]
-                        )
-                        decompressed_data_bytes = self.data_processor._decompress(decrypted_data)
-                        decompressed_data_str = decompressed_data_bytes.decode("utf-8")
-
-                        # Parse the data based on type
-                        if "dialogue_text" in data_package["data_type"]:
-                            abstracted = json.loads(decompressed_data_str)
-                            content = self.data_processor._rehydrate_text_gist(abstracted)
-                        else:
-                            content = decompressed_data_str
-
-                        memories.append(
-                            HAMMemory(
-                                memory_id=memory_id,
-                                content=content,
-                                metadata=data_package.get("metadata", {}),
-                                relevance=result.get("distance", 0.0),  # Distance-based relevance
-                            )
-                        )
-
-                    except Exception as e:  # broad exception acceptable: semantic search should skip unprocessable memories
-                        # Fallback for double-base64
-                        try:
-                            import base64
-                            decoded_payload = base64.b64decode(data_package["encrypted_package"])
-                            decrypted_data = self.data_processor._decrypt(decoded_payload)
-                            decompressed_data_bytes = self.data_processor._decompress(decrypted_data)
-                            decompressed_data_str = decompressed_data_bytes.decode("utf-8")
-
-                            # Parse the data based on type
-                            if "dialogue_text" in data_package["data_type"]:
-                                abstracted = json.loads(decompressed_data_str)
-                                content = self.data_processor._rehydrate_text_gist(abstracted)
-                            else:
-                                content = decompressed_data_str
-
-                            memories.append(
-                                HAMMemory(
-                                    memory_id=memory_id,
-                                    content=content,
-                                    metadata=data_package.get("metadata", {}),
-                                    relevance=result.get("distance", 0.0),
-                                )
-                            )
-                        except Exception as e2:  # broad exception acceptable: semantic search should skip unprocessable memories
-                            logger.error(f"Error processing memory {memory_id}: {e} (Fallback failed: {e2})", exc_info=True)
-                            continue
+                memory = await self._process_vector_result(result)
+                if memory is not None:
+                    memories.append(memory)
 
             logger.info(f"Semantic search returned {len(memories)} results")
             return memories[:limit]
 
-        except Exception as e:  # broad exception acceptable: semantic search should fallback gracefully
+        except Exception as e:
             logger.error(f"Error during semantic search: {e}", exc_info=True)
             return await self._fallback_keyword_search(query, limit)
+
+    async def _process_vector_result(self, result: dict) -> Optional[HAMMemory]:
+        memory_id = result.get("id")
+        if not memory_id or memory_id not in self.core_memory_store:
+            return None
+
+        data_package = self.core_memory_store[memory_id]
+        content = await self._decode_memory_content(data_package)
+        if content is None:
+            return None
+
+        return HAMMemory(
+            memory_id=memory_id,
+            content=content,
+            metadata=data_package.get("metadata", {}),
+            relevance=result.get("distance", 0.0),
+        )
+
+    async def _decode_memory_content(self, data_package: dict) -> Optional[str]:
+        for attempt in range(2):
+            try:
+                payload = data_package["encrypted_package"]
+                if attempt == 1:
+                    import base64
+                    payload = base64.b64decode(payload)
+                decrypted = self.data_processor._decrypt(payload)
+                decompressed = self.data_processor._decompress(decrypted)
+                data_str = decompressed.decode("utf-8")
+
+                if "dialogue_text" in data_package["data_type"]:
+                    abstracted = json.loads(data_str)
+                    return self.data_processor._rehydrate_text_gist(abstracted)
+                return data_str
+            except Exception:
+                if attempt == 1:
+                    logger.error(
+                        f"Error processing memory: primary+fallback failed",
+                        exc_info=True,
+                    )
+                    return None
+                continue
+        return None
 
     async def _fallback_keyword_search(self, query: str, limit: int = 10) -> List[HAMMemory]:
         logger.info(f"Performing fallback keyword search for query: '{query}'")
