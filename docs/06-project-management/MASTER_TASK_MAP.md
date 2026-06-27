@@ -363,7 +363,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | 3 | `/multimodal/stream` WS route | ✅ **DONE** — dedicated handler + route registered | `services/multimodal_ws_handler.py` + `main_api_server.py` line 295 | — |
 | 4 | C901 cyclomatic complexity (67 residual) | 7 refactored (+ED3NEngine.process_multimodal E35→B6), 60 remain | 0 Grade E remain | **ALL E/F GRADE FUNCTIONS ELIMINATED** |
 | 5 | Shared code deduplication (P3-9 to P3-11) | ✅ **RESOLVED** — `core/shared/` duplicates deleted in Phase 9-12 (commit `064e63621`) | Only `src/shared/error.py` and `src/shared/key_manager.py` remain | Automatically fixed by dead code removal |
-| 6 | P4 long function refactor (31 total >100L found) | 19/31 done (+AngelaLLMService.generate_response: 144→64L, extracted 4 helpers: _try_ensemble, _try_memory_retrieval, _update_stats; consolidated duplicated stats update in memory+LLM paths, Jun 28). 12 functions >100 lines remain. | 12 functions >100 lines; 19 refactored | Effort (large) |
+| 6 | P4 long function refactor (31 total >100L found) | 20/31 done (+_try_template_match: 147L→5 helpers: _try_template_match (orchestrator, ~20L), _try_model_bus_match, _build_composed_response, _build_hybrid_response, Jun 28). 11 functions >100 lines remain. | 11 functions >100 lines; 20 refactored | Effort (large) |
 | 7 | P4 load/stress test framework | Never started | No framework exists | Design |
 | 8 | P4 desktop tray implementation | Never started | No tray code | Effort |
 | 9 | P4 E2E test framework | Never started | No E2E framework | Design |

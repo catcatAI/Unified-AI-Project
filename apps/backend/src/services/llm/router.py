@@ -772,46 +772,11 @@ class AngelaLLMService:
         )
 
     async def _try_template_match(self, user_message: str, context: Dict[str, Any], start_time: float) -> Optional[LLMResponse]:
-        """Try template match or ModelBus fast-path/drafting."""
-        
-        # ========== P0: ModelBus Fast-Path & Drafting ==========
-        # Check ModelBus for reflex/knowledge hits or drafts for refinement
         if hasattr(self, "model_bus") and self.model_bus:
-            try:
-                query_type = context.get("intent", "auto")
-                decision = await self.model_bus.route(user_message, query_type, context)
-                
-                if decision.selected_model != "none":
-                    result = decision.results.get(decision.selected_model)
-                    if result and result.text and result.text not in _KNOWN_FALLBACK_RESPONSES:
-                        # Case A: High confidence -> Direct return (Reflex)
-                        direct_threshold = 0.8
-                        draft_low = 0.4
-                        if self.meta_controller is not None:
-                            adj = self.meta_controller.get_threshold_adjustment(f"model_bus:{decision.selected_model}")
-                            direct_threshold = max(0.5, min(0.95, direct_threshold + adj))
-                            draft_low = max(0.2, min(0.6, draft_low + adj * 0.5))
-                        if decision.confidence >= direct_threshold:
-                            logger.info(f"ModelBus direct hit: {decision.selected_model} (conf={decision.confidence:.2f})")
-                            if self.meta_controller is not None:
-                                self.meta_controller.record_confidence(f"model_bus:{decision.selected_model}", decision.confidence)
-                            return LLMResponse(
-                                text=result.text,
-                                confidence=decision.confidence,
-                                model=decision.selected_model,
-                                backend="model_bus",
-                                response_time_ms=decision.total_latency_ms
-                            )
-                        
-                        # Case B: Medium confidence -> Draft for LLM refinement
-                        elif draft_low <= decision.confidence < direct_threshold:
-                            logger.info(f"ModelBus draft provided: {decision.selected_model} (conf={decision.confidence:.2f}) for LLM refinement")
-                            context["draft_response"] = result.text
-                            context["draft_model"] = decision.selected_model
-            except Exception as e:
-                logger.warning(f"ModelBus pre-match failed: {e}", exc_info=True)
+            model_bus_result = await self._try_model_bus_match(user_message, context)
+            if model_bus_result is not None:
+                return model_bus_result
 
-        # ========== P1: Traditional Template Matching ==========
         if not hasattr(self, "template_matcher") or not self.template_matcher:
             return None
         try:
@@ -821,103 +786,143 @@ class AngelaLLMService:
             tmpl_cfg = _get_llm_config("template_match", {})
             composed_thresh = tmpl_cfg.get("composed", 0.8)
             hybrid_thresh = tmpl_cfg.get("hybrid", 0.5)
+
             if match_score > composed_thresh:
-                composed_response = self.response_composer.compose_response(
-                    match_result.template_content, match_score, context
-                )
+                return await self._build_composed_response(user_message, context, match_result, match_score, start_time)
 
-                response_time = (time.time() - start_time) * 1000
-                self.stats["composed_responses"] += 1
-
-                if hasattr(self, "deviation_tracker"):
-                    self.deviation_tracker.record(
-                        user_input=user_message,
-                        match_score=match_score,
-                        route=self.ResponseRoute.COMPOSED,
-                        response_text=composed_response.text,
-                        tokens_used=50,
-                        response_time_ms=response_time,
-                        composition_time_ms=composed_response.composition_time_ms,
-                        match_time_ms=match_result.match_time_ms,
-                        quality_score=composed_response.confidence,
-                    )
-
-                self.template_matcher.record_template_usage(match_result.template_id, True)
-
-                logger.info(
-                    f"COMPOSED route: {response_time:.0f}ms, match_score={match_score:.2f}"
-                )
-
-                return ChatResponse(
-                    text=composed_response.text,
-                    backend="composed-template",
-                    model="template-based",
-                    tokens_used=50,
-                    response_time_ms=response_time,
-                    confidence=composed_response.confidence,
-                    hit_score=match_score,
-                    hit_source="template",
-                    route="COMPOSED",
-                    metadata={
-                        "route": "COMPOSED",
-                        "match_score": match_score,
-                        "template_id": match_result.template_id,
-                    },
-                )
-
-            elif match_score > hybrid_thresh:
-                composed_response = self.response_composer.compose_response(
-                    match_result.template_content, match_score, context
-                )
-
-                llm_response = await self._generate_with_llm(user_message, context)
-
-                if not llm_response.error:
-                    _comp = composed_response.text.rstrip()
-                    _llm = llm_response.text.lstrip()
-                    _sep = "\n" if len(_comp) > 20 else " "
-                    hybrid_text = f"{_comp}{_sep}{_llm}"
-                else:
-                    hybrid_text = composed_response.text
-
-                response_time = (time.time() - start_time) * 1000
-                self.stats["hybrid_responses"] += 1
-
-                if hasattr(self, "deviation_tracker"):
-                    self.deviation_tracker.record(
-                        user_input=user_message,
-                        match_score=match_score,
-                        route=self.ResponseRoute.HYBRID,
-                        response_text=hybrid_text,
-                        tokens_used=200,
-                        response_time_ms=response_time,
-                        composition_time_ms=composed_response.composition_time_ms,
-                        match_time_ms=match_result.match_time_ms,
-                    )
-
-                logger.info(
-                    f"HYBRID route: {response_time:.0f}ms, match_score={match_score:.2f}"
-                )
-
-                return ChatResponse(
-                    text=hybrid_text,
-                    backend="hybrid",
-                    model="template+llm",
-                    tokens_used=200,
-                    response_time_ms=response_time,
-                    confidence=0.85,
-                    hit_score=match_score,
-                    hit_source="template",
-                    route="HYBRID",
-                    metadata={
-                        "route": "HYBRID",
-                        "match_score": match_score,
-                    },
-                )
+            if match_score > hybrid_thresh:
+                return await self._build_hybrid_response(user_message, context, match_result, match_score, start_time)
 
         except (ValueError, KeyError, AttributeError, TypeError) as e:
             logger.warning(f"P0-2 template matching failed: {e}", exc_info=True)
         return None
+
+    async def _try_model_bus_match(self, user_message: str, context: Dict[str, Any]) -> Optional[LLMResponse]:
+        try:
+            query_type = context.get("intent", "auto")
+            decision = await self.model_bus.route(user_message, query_type, context)
+
+            if decision.selected_model == "none":
+                return None
+
+            result = decision.results.get(decision.selected_model)
+            if not result or not result.text or result.text in _KNOWN_FALLBACK_RESPONSES:
+                return None
+
+            direct_threshold = 0.8
+            draft_low = 0.4
+            if self.meta_controller is not None:
+                adj = self.meta_controller.get_threshold_adjustment(f"model_bus:{decision.selected_model}")
+                direct_threshold = max(0.5, min(0.95, direct_threshold + adj))
+                draft_low = max(0.2, min(0.6, draft_low + adj * 0.5))
+
+            if decision.confidence >= direct_threshold:
+                logger.info(f"ModelBus direct hit: {decision.selected_model} (conf={decision.confidence:.2f})")
+                if self.meta_controller is not None:
+                    self.meta_controller.record_confidence(f"model_bus:{decision.selected_model}", decision.confidence)
+                return LLMResponse(
+                    text=result.text,
+                    confidence=decision.confidence,
+                    model=decision.selected_model,
+                    backend="model_bus",
+                    response_time_ms=decision.total_latency_ms
+                )
+
+            if draft_low <= decision.confidence < direct_threshold:
+                logger.info(f"ModelBus draft provided: {decision.selected_model} (conf={decision.confidence:.2f}) for LLM refinement")
+                context["draft_response"] = result.text
+                context["draft_model"] = decision.selected_model
+
+        except Exception as e:
+            logger.warning(f"ModelBus pre-match failed: {e}", exc_info=True)
+        return None
+
+    async def _build_composed_response(self, user_message, context, match_result, match_score, start_time):
+        composed_response = self.response_composer.compose_response(
+            match_result.template_content, match_score, context
+        )
+        response_time = (time.time() - start_time) * 1000
+        self.stats["composed_responses"] += 1
+
+        if hasattr(self, "deviation_tracker"):
+            self.deviation_tracker.record(
+                user_input=user_message,
+                match_score=match_score,
+                route=self.ResponseRoute.COMPOSED,
+                response_text=composed_response.text,
+                tokens_used=50,
+                response_time_ms=response_time,
+                composition_time_ms=composed_response.composition_time_ms,
+                match_time_ms=match_result.match_time_ms,
+                quality_score=composed_response.confidence,
+            )
+
+        self.template_matcher.record_template_usage(match_result.template_id, True)
+        logger.info(f"COMPOSED route: {response_time:.0f}ms, match_score={match_score:.2f}")
+
+        return ChatResponse(
+            text=composed_response.text,
+            backend="composed-template",
+            model="template-based",
+            tokens_used=50,
+            response_time_ms=response_time,
+            confidence=composed_response.confidence,
+            hit_score=match_score,
+            hit_source="template",
+            route="COMPOSED",
+            metadata={
+                "route": "COMPOSED",
+                "match_score": match_score,
+                "template_id": match_result.template_id,
+            },
+        )
+
+    async def _build_hybrid_response(self, user_message, context, match_result, match_score, start_time):
+        composed_response = self.response_composer.compose_response(
+            match_result.template_content, match_score, context
+        )
+        llm_response = await self._generate_with_llm(user_message, context)
+
+        if not llm_response.error:
+            _comp = composed_response.text.rstrip()
+            _llm = llm_response.text.lstrip()
+            _sep = "\n" if len(_comp) > 20 else " "
+            hybrid_text = f"{_comp}{_sep}{_llm}"
+        else:
+            hybrid_text = composed_response.text
+
+        response_time = (time.time() - start_time) * 1000
+        self.stats["hybrid_responses"] += 1
+
+        if hasattr(self, "deviation_tracker"):
+            self.deviation_tracker.record(
+                user_input=user_message,
+                match_score=match_score,
+                route=self.ResponseRoute.HYBRID,
+                response_text=hybrid_text,
+                tokens_used=200,
+                response_time_ms=response_time,
+                composition_time_ms=composed_response.composition_time_ms,
+                match_time_ms=match_result.match_time_ms,
+            )
+
+        logger.info(f"HYBRID route: {response_time:.0f}ms, match_score={match_score:.2f}")
+
+        return ChatResponse(
+            text=hybrid_text,
+            backend="hybrid",
+            model="template+llm",
+            tokens_used=200,
+            response_time_ms=response_time,
+            confidence=0.85,
+            hit_score=match_score,
+            hit_source="template",
+            route="HYBRID",
+            metadata={
+                "route": "HYBRID",
+                "match_score": match_score,
+            },
+        )
 
     async def _try_model_bus(self, user_message: str, context: Dict[str, Any]) -> Optional[LLMResponse]:
         """Try Model Bus for capability-based routing, returns None if unavailable or fails"""
