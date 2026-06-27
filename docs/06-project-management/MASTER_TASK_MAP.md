@@ -363,7 +363,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | 3 | `/multimodal/stream` WS route | ✅ **DONE** — dedicated handler + route registered | `services/multimodal_ws_handler.py` + `main_api_server.py` line 295 | — |
 | 4 | C901 cyclomatic complexity (67 residual) | 7 refactored (+ED3NEngine.process_multimodal E35→B6), 60 remain | 0 Grade E remain | **ALL E/F GRADE FUNCTIONS ELIMINATED** |
 | 5 | Shared code deduplication (P3-9 to P3-11) | ✅ **RESOLVED** — `core/shared/` duplicates deleted in Phase 9-12 (commit `064e63621`) | Only `src/shared/error.py` and `src/shared/key_manager.py` remain | Automatically fixed by dead code removal |
-| 6 | P4 long function refactor (31 total >100L found) | 21/31 done (+initialize: 135L→orchestrator + 5 helpers: _try_auto_mode, _initialize_standard_mode, _pick_best_backend, _init_model_bus, _register_model_bus_handlers, _init_meta_controller, Jun 28). 10 functions >100 lines remain. | 10 functions >100 lines; 21 refactored | Effort (large) |
+| 6 | P4 long function refactor (31 total >100L found) | 22/31 done (+fit in three_layer_visual.py: 104L→orchestrator + 5 helpers: _preprocess_data, _fit_pca_encoder, _encode_all, _compute_class_centers, _train_decoder, _build_metrics, Jun 28). 7 functions >100 lines remain (4 pure-data skipped as low-value). | 7 functions >100 lines; 22 refactored | Effort (large) |
 | 7 | P4 load/stress test framework | Never started | No framework exists | Design |
 | 8 | P4 desktop tray implementation | Never started | No tray code | Effort |
 | 9 | P4 E2E test framework | Never started | No E2E framework | Design |

@@ -96,62 +96,52 @@ class ThreeLayerVisual:
     def fit(self, images: np.ndarray, labels: np.ndarray,
             class_names: Optional[List[str]] = None,
             n_epochs: int = 100, verbose: bool = True) -> Dict:
-        """Train the three-layer architecture on image data.
-        
-        Args:
-            images: Array of shape (N, 3072) or (N, 32, 32, 3), values in [0, 1]
-            labels: Array of shape (N,) with class indices
-            class_names: Optional list of class names
-            n_epochs: Number of training epochs for decoder
-            verbose: Whether to print progress
-            
-        Returns:
-            Dictionary with training metrics
-        """
         if self._torch is None:
             raise RuntimeError("torch not available")
-        
         t0 = time.time()
-        
-        # Flatten images if needed
+        images, labels, class_names = self._preprocess_data(images, labels, class_names)
+        self._fit_pca_encoder(images, verbose)
+        latent = self._encode_all(images)
+        self._compute_class_centers(latent, labels)
+        self._train_decoder(latent, images, n_epochs, verbose)
+        return self._build_metrics(images, latent, t0, verbose)
+
+    def _preprocess_data(self, images, labels, class_names):
         if images.ndim == 4:
             images = images.reshape(len(images), -1)
-        
-        # Normalize labels
         labels = np.asarray(labels, dtype=np.int64)
-        self._class_names = class_names or [f"class_{i}" for i in range(labels.max() + 1)]
-        
-        # PCA encoder
+        class_names = class_names or [f"class_{i}" for i in range(labels.max() + 1)]
+        self._class_names = class_names
+        return images, labels, class_names
+
+    def _fit_pca_encoder(self, images, verbose):
         if verbose:
             print("Fitting PCA encoder...")
         self._mean = images.mean(axis=0)
         centered = images - self._mean
-        
         U, S, Vt = np.linalg.svd(centered, full_matrices=False)
         self._encoder = Vt[:self.LATENT_DIM]
-        
         explained = (S[:self.LATENT_DIM] ** 2).sum() / (S ** 2).sum()
+        self._pca_explained = float(explained)
         if verbose:
             print(f"  PCA: {self.LATENT_DIM} dims, {explained:.1%} variance")
-        
-        # Encode all images
-        latent = centered @ self._encoder.T
-        
-        # Class centers
+
+    def _encode_all(self, images):
+        centered = images - self._mean
+        return centered @ self._encoder.T
+
+    def _compute_class_centers(self, latent, labels):
         self._class_centers = np.zeros((len(self._class_names), self.LATENT_DIM), dtype=np.float32)
         for c in range(len(self._class_names)):
             mask = labels == c
             if mask.any():
                 self._class_centers[c] = latent[mask].mean(axis=0)
-        
-        # Train decoder
-        if verbose:
-            print("Training decoder...")
-        
+
+    def _train_decoder(self, latent, images, n_epochs, verbose):
         torch = self._torch
         nn = self._nn
         F = self._F
-        
+
         class Decoder(nn.Module):
             def __init__(self):
                 super().__init__()
@@ -165,19 +155,18 @@ class ThreeLayerVisual:
                 )
             def forward(self, x):
                 return self.net(x)
-        
+
         self._decoder = Decoder()
         optimizer = torch.optim.Adam(self._decoder.parameters(), lr=0.001)
         criterion = nn.MSELoss()
-        
+
         X = torch.tensor(latent, dtype=torch.float32)
         Y = torch.tensor(images, dtype=torch.float32)
-        
+
         for epoch in range(n_epochs):
             perm = torch.randperm(len(X))
             total_loss = 0.0
             n_batches = 0
-            
             for i in range(0, len(X), 64):
                 idx = perm[i:i+64]
                 x, y = X[idx], Y[idx]
@@ -188,29 +177,24 @@ class ThreeLayerVisual:
                 optimizer.step()
                 total_loss += loss.item()
                 n_batches += 1
-            
             if verbose and (epoch + 1) % 25 == 0:
                 print(f"  Epoch {epoch+1}: MSE={total_loss/n_batches:.4f}")
-        
-        # Test reconstruction
+
+    def _build_metrics(self, images, latent, t0, verbose):
         self._decoder.eval()
-        with torch.no_grad():
-            test_recon = self._decoder(X[:10]).numpy()
-        test_mse = np.mean((test_recon - images[:10]) ** 2)
-        
+        with self._torch.no_grad():
+            test_recon = self._decoder(self._torch.tensor(latent[:10], dtype=self._torch.float32)).numpy()
+        test_mse = float(np.mean((test_recon - images[:10]) ** 2))
         elapsed = time.time() - t0
-        
         metrics = {
-            'pca_variance': float(explained),
-            'test_mse': float(test_mse),
+            'pca_variance': self._pca_explained,
+            'test_mse': test_mse,
             'training_time': elapsed,
             'n_classes': len(self._class_names),
             'n_images': len(images),
         }
-        
         if verbose:
             print(f"Training complete: MSE={test_mse:.4f} ({elapsed:.0f}s)")
-        
         return metrics
 
     def encode(self, images: np.ndarray) -> np.ndarray:

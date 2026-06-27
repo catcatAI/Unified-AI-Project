@@ -104,6 +104,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
+## [7.5.0-dev] - 2026-06-28 — ThreeLayerVisual.fit refactored
+
+### Refactored
+- 🔧 **ThreeLayerVisual.fit** (104L→orchestrator + 5 helpers): Extracted `_preprocess_data`, `_fit_pca_encoder`, `_encode_all`, `_compute_class_centers`, `_train_decoder`, `_build_metrics`. PCA fit now stored as `self._pca_explained`.
+
+### Synced
+- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 21/31→22/31, remaining 8→7.
+
 ## [7.5.0-dev] - 2026-06-28 — initialize Refactoring (135L)
 
 ### Refactored
