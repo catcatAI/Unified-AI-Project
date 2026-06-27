@@ -104,6 +104,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
+## [7.5.0-dev] - 2026-06-28 — Decomposer Refactoring
+
+### Refactored
+- 🔧 **Decomposer.decompose_spatial** (102L→20L): Extracted 3 helpers (`_extract_planes_and_circles`, `_extract_boundary_points`, `_extract_edge_lines`). Main function now 5-step pipeline: grid→regions→planes/circles→points→lines→arcs→return. All 57 primitive tests pass.
+
+### Synced
+- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 15/31→16/31, remaining 16→15 functions >100L.
+
 ## [7.5.0-dev] - 2026-06-28 — AgentManager Refactoring
 
 ### Refactored

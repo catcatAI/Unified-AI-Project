@@ -128,24 +128,29 @@ def extract_arcs_from_edges(arr: np.ndarray, grid_size: int = 4,
 
 def decompose_spatial(img_arr: np.ndarray, grid_size: int = 6,
                       color_threshold: int = 50) -> DrawingInstructions:
-    """Decompose image into primitives: points, lines, planes, circles, arcs.
-
-    Strategy:
-    1. Grid-based color analysis → planes (color regions)
-    2. Region boundary detection → points
-    3. Edge detection → lines
-    4. Circle fitting to color regions → circles
-    5. Curvature analysis of edges → arcs
-    """
     arr = img_arr.astype(np.float32)
     h, w = arr.shape[:2]
 
-    # 1. Grid colors + regions → planes
     g_colors = grid_colors(arr, grid_size, grid_size)
     regions = find_regions(g_colors, threshold=color_threshold)
+
+    planes, circles = _extract_planes_and_circles(arr, g_colors, regions, h, w, grid_size, color_threshold)
+    points = _extract_boundary_points(arr, regions, h, w, grid_size)
+    lines = _extract_edge_lines(arr, h, w)
+    arcs = extract_arcs_from_edges(arr, grid_size, max_arcs=3)
+
+    bg_color = regions[0]["color"] if regions else (128, 128, 128)
+
+    return DrawingInstructions(
+        points=points[:15], lines=lines[:10], planes=planes[:5],
+        circles=circles[:4], arcs=arcs[:3],
+        background_color=bg_color
+    )
+
+
+def _extract_planes_and_circles(arr, g_colors, regions, h, w, grid_size, color_threshold):
     cell_h = h / grid_size
     cell_w = w / grid_size
-
     planes = []
     circles = []
     for region in regions[:6]:
@@ -153,12 +158,10 @@ def decompose_spatial(img_arr: np.ndarray, grid_size: int = 6,
         color = region["color"]
         if len(cells) < 2:
             continue
-        # Bounding box
         min_y = min(cy for cy, cx in cells)
         max_y = max(cy for cy, cx in cells)
         min_x = min(cx for cy, cx in cells)
         max_x = max(cx for cy, cx in cells)
-        # Normalized coords
         nx0 = min_x * cell_w / w
         ny0 = min_y * cell_h / h
         nx1 = (max_x + 1) * cell_w / w
@@ -168,14 +171,16 @@ def decompose_spatial(img_arr: np.ndarray, grid_size: int = 6,
              Point(nx1, ny1, (0, 0, 0), 0), Point(nx0, ny1, (0, 0, 0), 0)],
             color, (0, 0, 0), 0.01
         ))
-
-        # Try circle fit if region is somewhat round
         pts = [((cx + 0.5) * cell_w / w, (cy + 0.5) * cell_h / h) for cy, cx in cells]
         ccx, ccy, cr = fit_circle(pts)
         if cr > 0.02:
             circles.append(Circle(ccx, ccy, cr, color, (0, 0, 0), 0.0))
+    return planes, circles
 
-    # 2. Boundary points
+
+def _extract_boundary_points(arr, regions, h, w, grid_size):
+    cell_h = h / grid_size
+    cell_w = w / grid_size
     points = []
     for region in regions[:5]:
         cells = region["cells"]
@@ -188,8 +193,11 @@ def decompose_spatial(img_arr: np.ndarray, grid_size: int = 6,
                     py = (cy + 0.5) * cell_h / h
                     points.append(Point(px, py, color, 0.04))
                     break
+    return points
 
-    # 3. Edge lines
+
+def _extract_edge_lines(arr, h, w):
+    from PIL import ImageFilter
     gray = np.mean(arr, axis=2).astype(np.uint8)
     edge_img = Image.fromarray(gray).filter(ImageFilter.FIND_EDGES)
     edge_arr = np.array(edge_img)
@@ -217,17 +225,7 @@ def decompose_spatial(img_arr: np.ndarray, grid_size: int = 6,
                     Point(prev[0], prev[1], color, 0.03),
                     Point(cx, cy, color, 0.03), 0.015, color))
             prev = (cx, cy, color)
-
-    # 4. Arcs from edge curvature
-    arcs = extract_arcs_from_edges(arr, grid_size, max_arcs=3)
-
-    bg_color = regions[0]["color"] if regions else (128, 128, 128)
-
-    return DrawingInstructions(
-        points=points[:15], lines=lines[:10], planes=planes[:5],
-        circles=circles[:4], arcs=arcs[:3],
-        background_color=bg_color
-    )
+    return lines
 
 
 if __name__ == "__main__":
