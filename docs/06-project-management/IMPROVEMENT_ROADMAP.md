@@ -129,7 +129,7 @@
 
 | # | 項目 | 優先級 | 難度 | 目前 | 目標 |
 |---|------|:------:|:----:|:----:|:----:|
-| I1 | 改善 NeuroAutoSelector 後端選擇（連接至 MetaController） | P2 | 低 | 啟發式 | 適應性、數據驅動 |
+| I1 | 改善 NeuroAutoSelector 後端選擇（連接至 MetaController） | ✅ **DONE** (L4: NeuroAutoSelector ↔ MetaController closed-loop — MetaController history filters backends by recent performance, record_result forwards hw_score+success) | P2 | 低 | 啟發式 | 適應性、數據驅動 |
 | I2 | 改善 ED3N 字典編碼快取（LRU 取代基本逐出） | ✅ **DONE** (commit `b233361b1~`, Jun 28) | P3 | 低 | 基本逐出 | LRU |
 | I3 | 改善 GARDEN SNN 前向傳播效率 | ✅ **DONE** (commit `15d3f3d70`, Jun 28) | P3 | 中 | 稠密矩陣 (`a @ W`) | 稀疏計算 (僅活躍神經元) |
 | I4 | 改善 Agent 路由以包含更多查詢類型（目前僅 5 種路由） | ✅ **DONE** (commit `dcd7044e1~`, Jun 28) | P2 | 中 | 5/11 路由 | 11/11 路由 |
@@ -177,7 +177,7 @@
 | O2 | 清理測試中 dead/commented 程式碼 | P4 |
 | O3 | 標準化 imports（isort 跨所有 Python 檔案） | P4 |
 | O4 | 清理 docs/ 中過時/重複文件（移入 09-archive/） | ✅ **DONE** (2026-06-28): 7 files archived: PROJECT_ROADMAP, RECOMMENDATIONS, TODO_ANALYSIS, UNIFIED_AI_IMPROVEMENT_PLAN, ACTION_PLAN, DOCUMENTATION_TRUTH_MAP, port_routing_plan. 3 kept: VERSION_CONTROL_STRATEGY, PROJECTS_COLLABORATION_GUIDE, GIT_AND_PROJECT_MANAGEMENT. | P3 |
-| O5 | 更新 INDEX.md 和 UNIFIED_DOCUMENTATION_INDEX.md 以反映文件變動 | P3 |
+| O5 | 更新 INDEX.md 和 UNIFIED_DOCUMENTATION_INDEX.md 以反映文件變動 | ✅ **DONE** (INDEX.md already correct; UNIFIED_DOCUMENTATION_INDEX.md was itself archived to 09-archive/; README.md links updated to point to archive) | P3 |
 | O6 | 為每個主要子系統建立統一的 `__init__.py`（公開 API） | P4 |
 
 ---
