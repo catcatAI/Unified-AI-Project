@@ -104,6 +104,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
+## [7.5.0-dev] - 2026-06-28 — SelfGeneration Refactoring
+
+### Refactored
+- 🔧 **SelfGeneration._simulate_generation** (103L→13L): Extracted 4 helpers (`_try_learning_workflow`, `_try_live2d_generator`, `_try_sd_api`, `_fallback_generation`). Main function now reads as 4-step fallback chain. Each helper returns bool for clean orchestration.
+
+### Synced
+- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 16/31→17/31, remaining 15→14 functions >100L.
+
 ## [7.5.0-dev] - 2026-06-28 — Decomposer Refactoring
 
 ### Refactored

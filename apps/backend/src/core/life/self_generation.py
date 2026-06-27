@@ -318,73 +318,66 @@ class SelfGeneration:
         return avatar
 
     async def _simulate_generation(self, avatar: GeneratedAvatar) -> None:
-        """
-        Generate avatar using art learning and Live2D generator
-
-        This enhanced implementation uses:
-        1. Art learning system for style knowledge
-        2. Live2D avatar generator for actual model creation
-        3. Physiological-tactile mapping for body interactions
-        """
-        # Use learning workflow if available for complete pipeline
         if self.learning_workflow and self._use_art_learning:
-            try:
-                from core.engine.art_learning_workflow import LearningObjective
-
-                result = await self.learning_workflow.run_complete_workflow(
-                    learning_objectives=[
-                        LearningObjective.ANIME_BASICS,
-                        LearningObjective.LIVE2D_TECHNIQUES,
-                    ],
-                    target_mastery=0.7,
-                    cyber_identity_attrs=self._attributes_to_dict(avatar.attributes),
-                )
-
-                # Update avatar with generated model info
-                if result:
-                    avatar.file_path = Path(result.model_path)
-                    avatar.thumbnail_path = self.output_path / f"{avatar.avatar_id}_thumb.png"
-
+            if await self._try_learning_workflow(avatar):
                 return
-            except Exception as e:  # broad exception acceptable: workflow is optional, graceful degradation
-                logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
-                # Fallback to simple generation if workflow fails
-
-        # Use Live2D generator directly if available
         if self.live2d_generator and self._use_live2d_generator:
-            try:
-                from core.engine.live2d_avatar_generator import ViewAngle
-
-                # Generate actual Live2D avatar
-                generated = await self.live2d_generator.generate_avatar(
-                    model_name=avatar.avatar_id,
-                    attributes=self._attributes_to_dict(avatar.attributes),
-                    view_angle=ViewAngle.FRONT,
-                )
-
-                # Update avatar paths
-                if generated.model_json_path:
-                    avatar.file_path = Path(generated.model_json_path)
-
-                if generated.texture_paths:
-                    avatar.thumbnail_path = Path(generated.texture_paths[0])
-
+            if await self._try_live2d_generator(avatar):
                 return
-            except Exception as e:  # broad exception acceptable: generator is optional, graceful degradation
-                logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
-                # Fallback to placeholder
+        if await self._try_sd_api(avatar):
+            return
 
-        # [Phase 18.3] 實作真實的圖像生成 API 通訊介面
-        # 取代原有的 await asyncio.sleep(0.5) 佔位符
+        self._fallback_generation(avatar)
+
+    async def _try_learning_workflow(self, avatar: GeneratedAvatar) -> bool:
+        try:
+            from core.engine.art_learning_workflow import LearningObjective
+
+            result = await self.learning_workflow.run_complete_workflow(
+                learning_objectives=[
+                    LearningObjective.ANIME_BASICS,
+                    LearningObjective.LIVE2D_TECHNIQUES,
+                ],
+                target_mastery=0.7,
+                cyber_identity_attrs=self._attributes_to_dict(avatar.attributes),
+            )
+
+            if result:
+                avatar.file_path = Path(result.model_path)
+                avatar.thumbnail_path = self.output_path / f"{avatar.avatar_id}_thumb.png"
+            return True
+        except Exception as e:
+            logger.error(f"Learning workflow failed: {e}", exc_info=True)
+            return False
+
+    async def _try_live2d_generator(self, avatar: GeneratedAvatar) -> bool:
+        try:
+            from core.engine.live2d_avatar_generator import ViewAngle
+
+            generated = await self.live2d_generator.generate_avatar(
+                model_name=avatar.avatar_id,
+                attributes=self._attributes_to_dict(avatar.attributes),
+                view_angle=ViewAngle.FRONT,
+            )
+
+            if generated.model_json_path:
+                avatar.file_path = Path(generated.model_json_path)
+            if generated.texture_paths:
+                avatar.thumbnail_path = Path(generated.texture_paths[0])
+            return True
+        except Exception as e:
+            logger.error(f"Live2D generator failed: {e}", exc_info=True)
+            return False
+
+    async def _try_sd_api(self, avatar: GeneratedAvatar) -> bool:
         try:
             import aiohttp
             import base64
             from io import BytesIO
             from PIL import Image
 
-            # 準備 AUTOMATIC1111 Stable Diffusion API 格式 Payload
             prompt = avatar.attributes.to_prompt()
             payload = {
                 "prompt": f"masterpiece, best quality, ultra-detailed, {prompt}",
@@ -392,32 +385,31 @@ class SelfGeneration:
                 "steps": 20,
                 "width": 512,
                 "height": 512,
-                "cfg_scale": 7
+                "cfg_scale": 7,
             }
-            
-            # 使用本地或遠端 SD API (預設 127.0.0.1:7860)
+
             sd_api_url = self.config.get("sd_api_url", "http://127.0.0.1:7860/sdapi/v1/txt2img")
-            
+
             async with aiohttp.ClientSession() as session:
                 async with session.post(sd_api_url, json=payload, timeout=timeout_value("sd_api", 5.0)) as response:
                     if response.status == 200:
                         data = await response.json()
                         if "images" in data and data["images"]:
-                            # 解碼 Base64 圖片
                             image_data = base64.b64decode(data["images"][0])
                             image = Image.open(BytesIO(image_data))
-                            
-                            # 儲存真實圖片
+
                             img_path = self.output_path / f"{avatar.avatar_id}.png"
                             image.save(img_path)
 
                             avatar.file_path = img_path
                             avatar.thumbnail_path = img_path
-                            return
-        except Exception as e:  # broad exception acceptable: SD API is optional, graceful degradation
-            logger.warning(f"Failed to connect to external SD API, using fallback: {e}", exc_info=True)
+                            return True
+            return False
+        except Exception as e:
+            logger.warning(f"SD API failed: {e}", exc_info=True)
+            return False
 
-        # Fallback if SD API is unavailable
+    def _fallback_generation(self, avatar: GeneratedAvatar) -> None:
         avatar.file_path = self.output_path / f"{avatar.avatar_id}.png"
         avatar.thumbnail_path = self.output_path / f"{avatar.avatar_id}_thumb.png"
 
