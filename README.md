@@ -338,7 +338,7 @@ See dedicated docs for full diagrams:
 | [ANGELA_FULL_ARCHITECTURE](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | **Full system architecture** — perception, cognition, emotion, execution, memory, alignment, pipeline (1183 lines) |
 | [PROJECT_CHARTER](docs/00-overview/PROJECT_CHARTER.md) | Project mission, scope, principles |
 | [GLOSSARY](docs/00-overview/GLOSSARY.md) | Full project terminology reference |
-| [UNIFIED_DOC_INDEX](docs/00-overview/UNIFIED_DOCUMENTATION_INDEX.md) | Comprehensive doc inventory |
+| [UNIFIED_DOC_INDEX](docs/09-archive/UNIFIED_DOCUMENTATION_INDEX.md) | Comprehensive doc inventory (archived) |
 | [WIRING_MAP](docs/03-technical-architecture/analysis/WIRING_MAP_2026-05-21.md) | Server lifecycle, factory chains, subtle wiring, dead code registry |
 | [CODE_STATISTICS](docs/03-technical-architecture/analysis/CODE_STATISTICS_2026-05-21.md) | Live vs dead vs semi-finished code by directory |
 | [MODULARITY_ANALYSIS](docs/03-technical-architecture/analysis/MODULARITY_ANALYSIS_2026-05-21.md) | God modules, central hub coupling, 20+ singletons |
@@ -613,7 +613,7 @@ npx pnpm dev:desktop
 | [框架總覽](docs/FRAMEWORK_OVERVIEW.md) | **框架定位、元件目錄、擴展指南**（中英雙語） |
 | [專案憲章](docs/00-overview/PROJECT_CHARTER.md) | 專案使命、範圍、原則 |
 | [詞彙表](docs/00-overview/GLOSSARY.md) | 完整名詞解釋 |
-| [統一文件索引](docs/00-overview/UNIFIED_DOCUMENTATION_INDEX.md) | 所有文件導覽 |
+| [統一文件索引](docs/09-archive/UNIFIED_DOCUMENTATION_INDEX.md) | 所有文件導覽（已封存） |
 | [完整架構圖](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | **Angela 感知・認知・執行完整架構** — 如何視、聽、觸、說、畫、移、思考、感受、自主 |
 | [技術架構概覽](docs/03-technical-architecture/README.md) | HSP、HAM、NGR、8D Matrix、多模態代理、通訊層、安全性 |
 | [ARCHITECTURE_MAP](docs/03-technical-architecture/analysis/ARCHITECTURE_MAP_2026-05-20.md) | 伺服器拓撲、port 衝突、路由對照 |

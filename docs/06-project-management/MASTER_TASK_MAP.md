@@ -388,14 +388,14 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 
 ## X. EVERY PENDING ITEM — Exact Blocker
 
-> **Note**: This table tracks 31 key items (19 DONE, 11 PENDING, 1 PARTIAL) but is NOT exhaustive. Full codebase audit found **~190+ AI-related classes** across `ai/`, `core/`, `services/` (20+ subsystems). **⚠️ "存在" ≠ "正常運作"** — see industry comparison below. Most engines are architectural skeletons: VisualDecoder projection weights are now trained on CIFAR-10 (42× loss reduction) and auto-loaded at startup. AudioWaveformDecoder projection weights also trained (309× loss reduction) and auto-loaded. CNN texture branches remain random. SequenceGenerator and ImageGenerator weights are fully random. CML+FullTrainingPipeline fully wired into production (Jun 28).
+> **Note**: This table tracks 31 key items (20 DONE, 11 PENDING) but is NOT exhaustive. Full codebase audit found **~190+ AI-related classes** across `ai/`, `core/`, `services/` (20+ subsystems). **⚠️ "存在" ≠ "正常運作"** — see industry comparison below. Most engines are architectural skeletons: VisualDecoder projection weights are now trained on CIFAR-10 (42× loss reduction) and auto-loaded at startup. AudioWaveformDecoder projection weights also trained (309× loss reduction) and auto-loaded. CNN texture branches remain random. SequenceGenerator and ImageGenerator weights are fully random. CML+FullTrainingPipeline fully wired into production (Jun 28).
 
 | # | Item | Why Not Done | Code Status | Blocked By |
 |:-:|:-----|:-------------|:------------|:-----------|
 | 1 | Auto-repair in run_angela.py | ✅ **DONE** (commit `7a3af4107`, Jun 25) | `run_angela.py` has `install_dependencies()`, `--auto-repair` flag | — |
 | 2 | YOLO object detection | Never started | Zero code exists | Need design |
 | 3 | `/multimodal/stream` WS route | ✅ **DONE** — dedicated handler + route registered | `services/multimodal_ws_handler.py` + `main_api_server.py` line 295 | — |
-| 4 | C901 cyclomatic complexity (67 residual) | 7 refactored (+ED3NEngine.process_multimodal E35→B6), 60 remain | 0 Grade E remain | **ALL E/F GRADE FUNCTIONS ELIMINATED** |
+| 4 | C901 cyclomatic complexity | ✅ **DONE** (Jun 28). All functions ≤ 10 complexity. flake8 --select=C901 on apps/backend/src/ + tests/ returns 0 warnings at default threshold. | 0 C901 warnings | **ALL E/F GRADES + ALL C901 WARNINGS ELIMINATED** |
 | 5 | Shared code deduplication (P3-9 to P3-11) | ✅ **RESOLVED** — `core/shared/` duplicates deleted in Phase 9-12 (commit `064e63621`) | Only `src/shared/error.py` and `src/shared/key_manager.py` remain | Automatically fixed by dead code removal |
 | 6 | P4 long function refactor (31 total >100L found) | 25/31 done (Jun 28). 4 pure-data remain (skipped). Fixed `active_backend_type` AttributeError + hormone config (ADRENALINE base_level=50→10, half_life=60→6). | 4 pure-data remain; 25 refactored; 1 bugfix | Effort (large) |
 | 7 | P4 load/stress test framework | Never started | No framework exists | Design |

@@ -10,7 +10,7 @@
 # Angela AI Framework Overview
 
 > **Framework positioning**: A modular, extensible framework for building digital life systems with hybrid AI (LLM + SNN + biological simulation).
-> **Codebase**: 612 Python files (~96K lines) in `apps/backend/src/` + 50 JS files across 3 apps + 4,774 tests.
+> **Codebase**: 612 Python files (~96K lines) in `apps/backend/src/` + 50 JS files across 3 apps + 4,785 tests.
 > **Intelligence**: Upper bound 6.0/10 (with LLM API), **lower bound <0.5/10** (native engines alone — ED3N/GARDEN produce random/low-quality output without training).
 > **Architecture completeness**: ~85-90% (framework structure exists, but ML model weights are 5% trained).
 > **Version**: 7.5.0-dev | **License**: MIT
@@ -487,4 +487,4 @@ pytest tests/                         # 運行測試
 
 ---
 
-**Version**: 7.5.0-dev | **Code**: 612 Python files, ~96K lines | **Tests**: 4,774 / 4,261 (41 skipped) | **Intelligence**: 6.0/0.5 (with LLM / native only) | **Architecture**: ~85-90% | **Training**: ~5%
+**Version**: 7.5.0-dev | **Code**: 612 Python files, ~96K lines | **Tests**: 4,785 / 4,261 (41 skipped) | **Intelligence**: 6.0/0.5 (with LLM / native only) | **Architecture**: ~85-90% | **Training**: ~5%
