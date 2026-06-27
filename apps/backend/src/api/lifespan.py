@@ -202,10 +202,11 @@ def setup_middleware(app: FastAPI) -> None:
     pass
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Application lifespan: initialize plugins on startup, log metrics on shutdown."""
-    # --- Startup ---
+_metrics_handler = None
+
+
+def _init_plugins():
+    """Initialize plugin system with built-in handlers."""
     from core.plugin.plugin_manager import plugin_manager
     from core.plugin.handlers.message_logger import MessageLoggerHandler
     from core.plugin.handlers.metrics_collector import MetricsCollectorHandler
@@ -214,15 +215,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     plugin_manager.register_plugin("core", "1.0.0", "Core built-in plugin handlers")
 
     msg_handler = MessageLoggerHandler()
-    metrics_handler = MetricsCollectorHandler()
+    global _metrics_handler
+    _metrics_handler = MetricsCollectorHandler()
     audit_handler = AuditLoggerHandler()
 
-    # Register message_logger for on_message hook only
     plugin_manager.add_handler("core", "on_message", msg_handler)
-
-    # Register metrics and audit for all standard hooks
     for hook in _STANDARD_HOOKS:
-        plugin_manager.add_handler("core", hook, metrics_handler.handler_for(hook))
+        plugin_manager.add_handler("core", hook, _metrics_handler.handler_for(hook))
         plugin_manager.add_handler("core", hook, audit_handler.handler_for(hook))
 
     stats = plugin_manager.get_stats()
@@ -233,10 +232,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         stats["plugin_count"],
     )
 
-    # Module manager removed (wiring.py deleted — was dead code)
-    _module_manager = None
 
-    # Initialize BiologicalIntegrator subsystems
+async def _try_start_bio():
+    """Initialize BiologicalIntegrator if available."""
     global _bio_integrator_instance
     try:
         from core.bio.biological_integrator import BiologicalIntegrator
@@ -246,7 +244,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception as e:
         logger.warning(f"[Bio] BiologicalIntegrator initialization failed: {e}")
 
-    # Initialize AgentManager and register specialized agents
+
+async def _try_start_agents():
+    """Initialize AgentManager and register specialized agents."""
     global _agent_manager_instance
     try:
         from ai.agents.agent_manager import AgentManager
@@ -257,7 +257,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception as e:
         logger.warning(f"[AgentManager] Initialization failed: {e}")
 
-    # Initialize CrisisSystem for user safety
+
+def _try_init_crisis():
+    """Initialize CrisisSystem for user safety monitoring."""
     global _crisis_system_instance
     try:
         from ai.crisis.crisis_system import CrisisSystem
@@ -266,7 +268,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception as e:
         logger.warning(f"[CrisisSystem] Initialization failed: {e}")
 
-    # Initialize CausalReasoningEngine for learning from interactions
+
+def _try_init_causal_reasoning():
+    """Initialize CausalReasoningEngine for interaction learning."""
     global _causal_reasoning_instance
     try:
         from ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
@@ -275,24 +279,31 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception as e:
         logger.warning(f"[CausalReasoning] Initialization failed: {e}")
 
-    # Initialize SessionManager for WebSocket connection management
+
+def _try_init_session_manager():
+    """Initialize SessionManager singleton for WebSocket connections."""
     try:
         from services.connection_session import get_session_manager
-        get_session_manager()  # Initialize singleton
+        get_session_manager()
         logger.info("[SessionManager] Initialized — ready for WebSocket connections")
     except Exception as e:
         logger.warning(f"[SessionManager] Initialization failed: {e}")
 
-    # Start WebSocket state broadcast background task
-    _broadcast_task = None
+
+def _try_start_broadcast():
+    """Start WebSocket state broadcast background task."""
     try:
         from services.websocket_manager import broadcast_state_updates
-        _broadcast_task = asyncio.create_task(broadcast_state_updates())
+        task = asyncio.create_task(broadcast_state_updates())
         logger.info("[Broadcast] State update broadcast task started")
+        return task
     except Exception as e:
         logger.warning(f"[Broadcast] Failed to start state broadcast: {e}")
+        return None
 
-    # Pre-warm ED3N external dictionaries to avoid cold-start latency on first query
+
+def _try_warm_ed3n():
+    """Pre-warm ED3N external dictionaries to avoid cold-start latency."""
     try:
         from ai.ed3n.ed3n_engine import ED3NEngine
         count = ED3NEngine.get_shared().warm_up()
@@ -301,9 +312,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception as e:
         logger.debug(f"[ED3N] Warm-up skipped (non-critical): {e}")
 
-    yield
 
-    # --- Shutdown ---
+async def _shutdown_services(broadcast_task, module_manager):
+    """Gracefully shut down all services on application exit."""
     try:
         from services.llm.router import _llm_service as _llm
         if _llm is not None:
@@ -323,10 +334,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             logger.info("[Bio] BiologicalIntegrator shut down")
         except Exception as e:
             logger.warning(f"[Bio] BiologicalIntegrator shutdown error: {e}")
-    if _broadcast_task is not None:
-        _broadcast_task.cancel()
+    if broadcast_task is not None:
+        broadcast_task.cancel()
         try:
-            await _broadcast_task
+            await broadcast_task
         except asyncio.CancelledError:
             pass
         logger.info("[Broadcast] State broadcast task stopped")
@@ -335,12 +346,32 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await shutdown_session_manager()
     except Exception as e:
         logger.warning(f"[SessionManager] Shutdown error: {e}")
-    if _module_manager is not None:
+    if module_manager is not None:
         try:
-            await _module_manager.stop()
+            await module_manager.stop()
             logger.info("[ModuleManager] Module system shut down cleanly")
         except Exception as e:
             logger.error(f"[ModuleManager] Shutdown error: {e}", exc_info=True)
-    metric_data = metrics_handler.get_metrics()
-    logger.info("[Plugin] Shutdown — hook invocation counts: %s", metric_data["counts"])
+    if _metrics_handler is not None:
+        metric_data = _metrics_handler.get_metrics()
+        logger.info("[Plugin] Shutdown — hook invocation counts: %s", metric_data["counts"])
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Application lifespan: initialize services on startup, shutdown on exit."""
+    _module_manager = None
+
+    _init_plugins()
+    _bio = await _try_start_bio()
+    _agents = await _try_start_agents()
+    _crisis = _try_init_crisis()
+    _causal = _try_init_causal_reasoning()
+    _try_init_session_manager()
+    _broadcast_task = _try_start_broadcast()
+    _try_warm_ed3n()
+
+    yield
+
+    _shutdown_services(_broadcast_task, _module_manager)
 
