@@ -104,6 +104,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
+## [7.5.0-dev] - 2026-06-28 — Refactor ED3NEngine._process_unlocked + Doc Sync
+
+### Refactored
+- 🔧 **ED3NEngine._process_unlocked** (203L→54L): Extracted 9 stage helper methods (`_stage_reflex`, `_stage_math`, `_stage_encode`, `_stage_enrich`, `_stage_shallow_decode`, `_stage_network_forward`, `_stage_anchored_decode`, `_stage_validate`, `_stage_cycling`) plus `_telemetry_return` for DRY telemetry recording. Main function now reads as a clean 9-stage pipeline. All 3 ED3N engine tests pass. **9/28 long functions refactored.**
+
+### Synced
+- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 8/28→9/28, remaining functions 23→22.
+
 ## [7.5.0-dev] - 2026-06-28 — Benchmark + MathRippleEngine PEMDAS Fix
 
 ### Added

@@ -287,176 +287,129 @@ class ED3NEngine:
 
         query_id = f"{id(input_text)}_{time.time_ns()}"
         stages: Dict[str, float] = {}
+        FALLBACK_STR = self._fallback_str(input_text)
 
         # Stage 1: Reflex
-        t0 = time.perf_counter()
-        reflex_result = self._reflex_match(input_text)
-        stages["reflex"] = (time.perf_counter() - t0) * 1000
-
+        reflex_result = self._stage_reflex(input_text, query_id, stages)
         if reflex_result is not None:
-            self.telemetry.record_query(
-                query_id=query_id,
-                input_text=input_text,
-                stages=stages,
-                reflex_match=reflex_result,
-                cache_hit=False,
-                matched_keys=[],
-                output_text=reflex_result,
-                confidence=1.0,
-                is_fallback=False,
-            )
-            self._last_confidence = 1.0
             return reflex_result
 
         if depth == "reflex":
-            self.telemetry.record_query(
-                query_id=query_id,
-                input_text=input_text,
-                stages=stages,
-                reflex_match=None,
-                cache_hit=False,
-                matched_keys=[],
-                output_text="",
-                confidence=0.0,
-                is_fallback=False,
-            )
-            self._last_confidence = 0.0
-            return ""
+            return self._telemetry_return(query_id, input_text, stages, reflex_match=None, cache_hit=False, matched_keys=[], output_text="", confidence=0.0, is_fallback=False)
 
         # Stage 1.5: Math evaluation
-        t_math = time.perf_counter()
-        math_result = self._try_math_eval(input_text)
-        stages["math"] = (time.perf_counter() - t_math) * 1000
+        math_result = self._stage_math(input_text, query_id, stages)
         if math_result is not None:
-            self.telemetry.record_query(
-                query_id=query_id,
-                input_text=input_text,
-                stages=stages,
-                reflex_match=None,
-                cache_hit=False,
-                matched_keys=[],
-                output_text=math_result,
-                confidence=1.0,
-                is_fallback=False,
-            )
-            self._last_confidence = 1.0
             return math_result
 
         # Stage 2: Encode
-        FALLBACK_STR = self._fallback_str(input_text)
-        t1 = time.perf_counter()
-        keys, cache_hit = self._perform_encode(input_text)
-        stages["encode"] = (time.perf_counter() - t1) * 1000
-
+        keys, cache_hit = self._stage_encode(input_text, query_id, stages)
         if not keys:
-            self.telemetry.record_query(
-                query_id=query_id,
-                input_text=input_text,
-                stages=stages,
-                reflex_match=None,
-                cache_hit=cache_hit,
-                matched_keys=[],
-                output_text=FALLBACK_STR,
-                confidence=0.0,
-                is_fallback=True,
-            )
-            self._last_confidence = 0.0
-            return FALLBACK_STR
+            return self._telemetry_return(query_id, input_text, stages, reflex_match=None, cache_hit=cache_hit, matched_keys=[], output_text=FALLBACK_STR, confidence=0.0, is_fallback=True)
 
-        # Stage 2.5: Enrichment — algorithmic scoring of matched keys
-        t_enr = time.perf_counter()
-        enriched = self.input_enricher.enrich(input_text, keys, self.dictionary)
-        stages["enrichment"] = (time.perf_counter() - t_enr) * 1000
-
-        confidence = self._compute_confidence(keys)
+        # Stage 2.5: Enrichment
+        enriched, confidence = self._stage_enrich(input_text, keys, query_id, stages)
 
         if depth == "shallow" or (depth == "auto" and not context):
-            # Stage 3: Decode (shallow)
-            t3 = time.perf_counter()
-            decoded = self.dictionary.decode(keys, context)
-            stages["decode"] = (time.perf_counter() - t3) * 1000
-            output = decoded if decoded else FALLBACK_STR
-            self.telemetry.record_query(
-                query_id=query_id,
-                input_text=input_text,
-                stages=stages,
-                reflex_match=None,
-                cache_hit=cache_hit,
-                matched_keys=keys,
-                output_text=output,
-                confidence=confidence,
-                is_fallback=(not decoded),
-            )
-            self._last_confidence = confidence
-            return output
+            output = self._stage_shallow_decode(keys, context, query_id, stages, cache_hit, FALLBACK_STR)
+            return self._telemetry_return(query_id, input_text, stages, reflex_match=None, cache_hit=cache_hit, matched_keys=keys, output_text=output, confidence=confidence, is_fallback=(not output or output == FALLBACK_STR))
 
         # Stage 3: Network forward
-        t3 = time.perf_counter()
-        network_output = self._snn_process(keys, context, depth)
-        stages["network_forward"] = (time.perf_counter() - t3) * 1000
-
-        # Override confidence with enriched score for deep path decisions
+        network_output = self._stage_network_forward(keys, context, depth, query_id, stages)
         enriched_conf = enriched.confidence
 
         # Stage 4: Decode (anchored)
-        t4 = time.perf_counter()
-        response = self._output_anchor_decode(network_output, keys, enriched=enriched)
-        stages["decode"] = (time.perf_counter() - t4) * 1000
-
+        response = self._stage_anchored_decode(network_output, keys, enriched, query_id, stages)
         if not response:
             fallback = self.dictionary.decode(keys, context) or FALLBACK_STR
-            self.telemetry.record_query(
-                query_id=query_id,
-                input_text=input_text,
-                stages=stages,
-                reflex_match=None,
-                cache_hit=cache_hit,
-                matched_keys=keys,
-                output_text=fallback,
-                confidence=enriched_conf,
-                is_fallback=True,
-            )
-            self._last_confidence = enriched_conf
-            return fallback
+            return self._telemetry_return(query_id, input_text, stages, reflex_match=None, cache_hit=cache_hit, matched_keys=keys, output_text=fallback, confidence=enriched_conf, is_fallback=True)
 
         # Stage 5: Validate
-        t5 = time.perf_counter()
-        valid = self.validator.validate(response, anchored_keys=keys)
-        stages["validate"] = (time.perf_counter() - t5) * 1000
-
-        if not valid:
-            fallback = self.dictionary.decode(keys, context)
-            output = fallback or response
-            self.telemetry.record_query(
-                query_id=query_id,
-                input_text=input_text,
-                stages=stages,
-                reflex_match=None,
-                cache_hit=cache_hit,
-                matched_keys=keys,
-                output_text=output,
-                confidence=enriched_conf,
-                is_fallback=True,
-            )
-            self._last_confidence = enriched_conf
-            return output
+        valid_output = self._stage_validate(response, keys, query_id, stages)
+        if valid_output is not None:
+            return self._telemetry_return(query_id, input_text, stages, reflex_match=None, cache_hit=cache_hit, matched_keys=keys, output_text=valid_output, confidence=enriched_conf, is_fallback=True)
 
         # Stage 6: Cycling — iterative refinement if confidence is low
+        current_output = self._stage_cycling(keys, context, depth, enriched, response, enriched_conf, input_text)
+        return self._telemetry_return(query_id, input_text, stages, reflex_match=None, cache_hit=cache_hit, matched_keys=keys, output_text=current_output, confidence=enriched_conf, is_fallback=False)
+
+    def _telemetry_return(self, query_id, input_text, stages, reflex_match, cache_hit, matched_keys, output_text, confidence, is_fallback):
+        self.telemetry.record_query(
+            query_id=query_id, input_text=input_text, stages=stages,
+            reflex_match=reflex_match, cache_hit=cache_hit,
+            matched_keys=matched_keys, output_text=output_text,
+            confidence=confidence, is_fallback=is_fallback,
+        )
+        self._last_confidence = confidence
+        return output_text
+
+    def _stage_reflex(self, input_text, query_id, stages):
+        t0 = time.perf_counter()
+        result = self._reflex_match(input_text)
+        stages["reflex"] = (time.perf_counter() - t0) * 1000
+        if result is not None:
+            return self._telemetry_return(query_id, input_text, stages, reflex_match=result, cache_hit=False, matched_keys=[], output_text=result, confidence=1.0, is_fallback=False)
+        return None
+
+    def _stage_math(self, input_text, query_id, stages):
+        t0 = time.perf_counter()
+        result = self._try_math_eval(input_text)
+        stages["math"] = (time.perf_counter() - t0) * 1000
+        if result is not None:
+            return self._telemetry_return(query_id, input_text, stages, reflex_match=None, cache_hit=False, matched_keys=[], output_text=result, confidence=1.0, is_fallback=False)
+        return None
+
+    def _stage_encode(self, input_text, query_id, stages):
+        t0 = time.perf_counter()
+        keys, cache_hit = self._perform_encode(input_text)
+        stages["encode"] = (time.perf_counter() - t0) * 1000
+        return keys, cache_hit
+
+    def _stage_enrich(self, input_text, keys, query_id, stages):
+        t0 = time.perf_counter()
+        enriched = self.input_enricher.enrich(input_text, keys, self.dictionary)
+        stages["enrichment"] = (time.perf_counter() - t0) * 1000
+        confidence = self._compute_confidence(keys)
+        return enriched, confidence
+
+    def _stage_shallow_decode(self, keys, context, query_id, stages, cache_hit, FALLBACK_STR):
+        t0 = time.perf_counter()
+        decoded = self.dictionary.decode(keys, context)
+        stages["decode"] = (time.perf_counter() - t0) * 1000
+        return decoded if decoded else FALLBACK_STR
+
+    def _stage_network_forward(self, keys, context, depth, query_id, stages):
+        t0 = time.perf_counter()
+        result = self._snn_process(keys, context, depth)
+        stages["network_forward"] = (time.perf_counter() - t0) * 1000
+        return result
+
+    def _stage_anchored_decode(self, network_output, keys, enriched, query_id, stages):
+        t0 = time.perf_counter()
+        result = self._output_anchor_decode(network_output, keys, enriched=enriched)
+        stages["decode"] = (time.perf_counter() - t0) * 1000
+        return result
+
+    def _stage_validate(self, response, keys, query_id, stages):
+        t0 = time.perf_counter()
+        valid = self.validator.validate(response, anchored_keys=keys)
+        stages["validate"] = (time.perf_counter() - t0) * 1000
+        if not valid:
+            return self.dictionary.decode(keys, None) or response
+        return None
+
+    def _stage_cycling(self, keys, context, depth, enriched, initial_response, initial_confidence, input_text):
         MAX_CYCLES = getattr(self, "max_cycles", 3)
         CONFIDENCE_THRESHOLD = 0.7
-        current_output = response
-        current_confidence = enriched_conf
+        current_output = initial_response
+        current_confidence = initial_confidence
 
         for cycle in range(MAX_CYCLES):
             if current_confidence >= CONFIDENCE_THRESHOLD:
                 break
-
-            # Re-encode with previous output as additional context
             cycle_context = dict(context) if context else {}
             cycle_context["previous_output"] = current_output
             cycle_context["cycle"] = cycle + 1
-
-            # Re-run network forward with enriched context
             cycle_network = self._snn_process(keys, cycle_context, depth)
             cycle_response = self._output_anchor_decode(cycle_network, keys, enriched=enriched)
 
@@ -468,19 +421,6 @@ class ED3NEngine:
                     if cycle_conf > current_confidence:
                         current_output = cycle_response
                         current_confidence = cycle_conf
-
-        self.telemetry.record_query(
-            query_id=query_id,
-            input_text=input_text,
-            stages=stages,
-            reflex_match=None,
-            cache_hit=cache_hit,
-            matched_keys=keys,
-            output_text=current_output,
-            confidence=current_confidence,
-            is_fallback=False,
-        )
-        self._last_confidence = current_confidence
         return current_output
 
     @staticmethod

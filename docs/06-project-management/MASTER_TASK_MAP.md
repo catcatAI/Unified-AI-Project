@@ -363,7 +363,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | 3 | `/multimodal/stream` WS route | ✅ **DONE** — dedicated handler + route registered | `services/multimodal_ws_handler.py` + `main_api_server.py` line 295 | — |
 | 4 | C901 cyclomatic complexity (67 residual) | 7 refactored (+ED3NEngine.process_multimodal E35→B6), 60 remain | 0 Grade E remain | **ALL E/F GRADE FUNCTIONS ELIMINATED** |
 | 5 | Shared code deduplication (P3-9 to P3-11) | ✅ **RESOLVED** — `core/shared/` duplicates deleted in Phase 9-12 (commit `064e63621`) | Only `src/shared/error.py` and `src/shared/key_manager.py` remain | Automatically fixed by dead code removal |
-| 6 | P4 long function refactor (28 files >100 lines) | 8/28 done (+_safe_execute: 141→50L, extracted 4 helpers: _init_execution_results, _finalize_execution_success, _handle_execution_error, _attempt_rollback, Jun 28). 23 functions >100 lines remain in apps/backend/src | 23 functions >100 lines; 8 refactored | Effort (large) |
+| 6 | P4 long function refactor (28 files >100 lines) | 9/28 done (+_process_unlocked: 203→54L, extracted 9 stage helpers: _stage_reflex, _stage_math, _stage_encode, _stage_enrich, _stage_shallow_decode, _stage_network_forward, _stage_anchored_decode, _stage_validate, _stage_cycling, Jun 28). 22 functions >100 lines remain in apps/backend/src (actual count: 21 found in scan, 9 refactored to date). | 20 functions >100 lines; 9 refactored | Effort (large) |
 | 7 | P4 load/stress test framework | Never started | No framework exists | Design |
 | 8 | P4 desktop tray implementation | Never started | No tray code | Effort |
 | 9 | P4 E2E test framework | Never started | No E2E framework | Design |
