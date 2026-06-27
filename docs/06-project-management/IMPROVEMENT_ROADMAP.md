@@ -131,7 +131,7 @@
 |---|------|:------:|:----:|:----:|:----:|
 | I1 | 改善 NeuroAutoSelector 後端選擇（連接至 MetaController） | P2 | 低 | 啟發式 | 適應性、數據驅動 |
 | I2 | 改善 ED3N 字典編碼快取（LRU 取代基本逐出） | ✅ **DONE** (commit `b233361b1~`, Jun 28) | P3 | 低 | 基本逐出 | LRU |
-| I3 | 改善 GARDEN SNN 前向傳傳傳傳傳播效率 | P3 | 中 | 稠密矩陣 | 稀疏計算 |
+| I3 | 改善 GARDEN SNN 前向傳播效率 | ✅ **DONE** (commit `15d3f3d70`, Jun 28) | P3 | 中 | 稠密矩陣 (`a @ W`) | 稀疏計算 (僅活躍神經元) |
 | I4 | 改善 Agent 路由以包含更多查詢類型（目前僅 5 種路由） | ✅ **DONE** (commit `dcd7044e1~`, Jun 28) | P2 | 中 | 5/11 路由 | 11/11 路由 |
 | I5 | 改善 ED3N 循環限制（由寫死 3 改為可設定） | ✅ **DONE** (commit `f3520ca1e~`, Jun 28) | P4 | 低 | 寫死 3 | 可設定 + 收斂偵測 |
 | I6 | 改善 MetaController 信心校準（windowing→EWMA） | ✅ **DONE** (commit `HEAD~`, Jun 28) | P3 | 低 | 視窗=100 | EWMA |
