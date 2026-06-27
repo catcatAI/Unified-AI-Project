@@ -118,15 +118,25 @@ class ContinuousMultimodalLearning:
     # --- Auto-training ---
 
     def should_train(self) -> bool:
-        """Check if conditions for auto-training are met.
-
-        Returns True when buffer size >= threshold and enough time has passed.
-        """
-        if len(self._buffer) < self.auto_train_threshold:
-            return False
         if time.time() - self._last_train_time < self.min_interval_sec:
             return False
-        return True
+        effective_threshold = self._quality_adjusted_threshold()
+        return len(self._buffer) >= effective_threshold
+
+    def _quality_adjusted_threshold(self) -> int:
+        """Adjust auto_train_threshold based on quality trend.
+
+        - Degrading: train more aggressively (lower threshold)
+        - Improving: train less often (higher threshold, let consolidation happen)
+        - Stable/unknown: use default
+        """
+        trend = self.quality_trend()
+        assessment = trend.get("delta_assessment", "stable")
+        if assessment == "degrading":
+            return max(self.auto_train_threshold // 2, 4)
+        if assessment == "improving":
+            return self.auto_train_threshold * 2
+        return self.auto_train_threshold
 
     def micro_train(self, epochs: int = 3, lr: float = 0.005) -> Dict[str, Any]:
         """Run a micro-training cycle using buffered examples.
