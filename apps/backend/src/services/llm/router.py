@@ -656,9 +656,6 @@ class AngelaLLMService:
 
         self.stats["total_requests"] += 1
 
-        if hasattr(self, "precompute_service") and self.precompute_service._running:
-            pass
-
         template_result = await self._try_template_match(user_message, context, start_time)
         if template_result is not None:
             return template_result
@@ -697,6 +694,7 @@ class AngelaLLMService:
 
             if self.enable_memory_enhancement and not response.error:
                 await self._store_response_as_template(user_message, response, context)
+                self._schedule_precompute_tasks(user_message, context)
 
             logger.info(f"Angela 回應生成完成 (LLM_FULL) ({response_time:.0f}ms)")
             self._record_route_learning(context, "success", response_time)
@@ -1372,6 +1370,27 @@ class AngelaLLMService:
         except (IOError, KeyError, AttributeError, ValueError) as e:
             # template storage is best-effort, non-critical
             logger.warning(f"Failed to store response as template: {e}", exc_info=True)
+
+    def _schedule_precompute_tasks(
+        self, user_message: str, context: Dict[str, Any], user_id: str = ""
+    ) -> None:
+        if not self.enable_memory_enhancement:
+            return
+        if not hasattr(self, "task_generator") or not hasattr(self, "precompute_service"):
+            return
+        try:
+            topic = context.get("topic", "general")
+            interaction = {"topic": topic, "message": user_message}
+            self.task_generator.analyze_patterns([interaction], user_id=user_id)
+            tasks = self.task_generator.generate_tasks(context)
+            for task in tasks:
+                task_id = f"{task['task_type']}_{int(time.time())}_{task.get('topic', 'general')}"
+                from ai.memory.precompute_service import PrecomputeTask
+                self.precompute_service.enqueue(
+                    PrecomputeTask(task_id=task_id, priority=task.get("priority", 5))
+                )
+        except Exception as e:
+            logger.debug(f"Precompute scheduling skipped: {e}")
 
     def _extract_keywords(self, text: str) -> List[str]:
         """提取关键词"""

@@ -24,14 +24,27 @@ class TaskGenerator:
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
+        self._max_history: int = self.config.get("max_history", 1000)
         self._history: List[Dict[str, Any]] = []
+        self._user_histories: Dict[str, List[Dict[str, Any]]] = {}
         self._topic_chain: Dict[str, Dict[str, int]] = {}
 
-    def analyze_patterns(self, recent_interactions: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def analyze_patterns(
+        self, recent_interactions: List[Dict[str, Any]], user_id: str = ""
+    ) -> Dict[str, Any]:
         if not recent_interactions:
             return {"topics": {}, "total_analyzed": 0, "transitions": {}}
 
         self._history.extend(recent_interactions)
+        if len(self._history) > self._max_history:
+            self._history = self._history[-self._max_history:]
+
+        if user_id:
+            user_hist = self._user_histories.setdefault(user_id, [])
+            user_hist.extend(recent_interactions)
+            if len(user_hist) > self._max_history:
+                self._user_histories[user_id] = user_hist[-self._max_history:]
+
         topics = {}
         prev_topic = None
 
@@ -68,9 +81,14 @@ class TaskGenerator:
         return tasks
 
     def predict_next_query(self, user_id: str) -> Optional[str]:
-        if not self._history or len(self._history) < 2:
-            return None
-        last = self._history[-1].get("topic", "general")
+        history = self._user_histories.get(user_id) if user_id else self._history
+        if not history or len(history) < 2:
+            if not user_id and (not self._history or len(self._history) < 2):
+                return None
+            history = history or self._history
+            if len(history) < 2:
+                return None
+        last = history[-1].get("topic", "general")
         transitions = self._topic_chain.get(last, {})
         if not transitions:
             return None
