@@ -278,9 +278,11 @@ The plan claimed to create:
 - Key refactors: ED3NEngine._process_unlocked (203→54L), QueryClassifier.classify (106→40L), DictionaryClassifier.classify (106→25L), lifespan (140→16L), HAMQueryEngine.retrieve_relevant_memories (101→32L), DifferentiableRenderer.render (101→22L), AgentManager._start_router (132→22L), Decomposer.decompose_spatial (102→20L), SelfGeneration._simulate_generation (103→13L), HSPConnector.publish_message (136→42L), AngelaLLMService.generate_response (144→64L), _try_template_match (147→4 helpers), initialize (135→5 helpers), ThreeLayerVisual.fit (104→5 helpers), physiological_tactile demo (119→5 helpers), emotional_blending demo (102→5 helpers), save_checkpoint (102→5 helpers)
 
 ### Bugfixes
-- `active_backend_type` AttributeError → `getattr` guard (fixes test_refinement_pipeline)
-- Hormone config: added `biological` formula config with real ADRENALINE parameters (base=10, half-life=6min) (fixes test_hormone_scientific_decay)
-- 10 stale test expectations in test_query_classifier_v2.py (72/72)
+- 🐛 `active_backend_type` AttributeError → `getattr` guard (fixes test_refinement_pipeline)
+- 🐛 Hormone config: added `biological` formula config with real ADRENALINE parameters (base=10, half-life=6min) (fixes test_hormone_scientific_decay)
+- 🐛 10 stale test expectations in test_query_classifier_v2.py (72/72)
+- 🔧 **L1**: JointTrainer wired into ED3NEngine.train(), __main__.py cmd_train/cmd_serve (was only ED3NTrainer)
+- 🔧 **L4**: NeuroAutoSelector._select_model now queries MetaController history to prefer backends with good recent performance
 
 ### Test Count
 - **4,785** collected (was 4,774 — +11 from restored passes + new tests)

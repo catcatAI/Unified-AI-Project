@@ -629,6 +629,9 @@ class NeuroAutoSelector:
         novelty = state.get("theta_novelty", 0.3)
         use_cloud = novelty > threshold_value("ai.neuro_auto_selector.novelty_high", 0.7)
 
+        # Priority 3b: MetaController history — prefer backends with good recent performance
+        available = self._apply_meta_history(available)
+
         # Priority 4: Check local capability
         local_capable = self._is_local_capable(hw_details)
 
@@ -648,6 +651,18 @@ class NeuroAutoSelector:
         else:
             decision.backend = AutoBackendChoice.NEUROBLENDER
             decision.reason = "no_compatible_backend"
+
+    def _apply_meta_history(self, available: list) -> list:
+        """Filter available backends by MetaController history — prefer backends with positive recent performance."""
+        if self._meta_controller is None or not available:
+            return available
+        scored = []
+        for backend in available:
+            adj = self._meta_controller.get_threshold_adjustment(f"neuro_auto_selector/{backend}")
+            scored.append((adj, backend))
+        scored.sort(key=lambda x: -x[0])
+        logger.debug(f"[NeuroAutoSelector] MetaController history: {[(b, f'{a:.2f}') for a, b in scored]}")
+        return [b for _, b in scored]
 
     def _apply_force_backend(self, decision: AutoDecision, force: str) -> None:
         """Handle force_backend override."""
