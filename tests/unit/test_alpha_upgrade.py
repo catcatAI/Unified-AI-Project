@@ -7,7 +7,9 @@ class TestAlphaDeepModel:
 
     def test_import(self):
         from ai.compression.alpha_deep_model import (
-            AlphaDeepModel, CompressionAlgorithm, DNADataChain
+            AlphaDeepModel,
+            CompressionAlgorithm,
+            DNADataChain,
         )
         assert AlphaDeepModel is not None
         assert CompressionAlgorithm is not None

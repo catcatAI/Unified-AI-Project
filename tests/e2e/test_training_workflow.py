@@ -5,7 +5,6 @@ Requires a live test server. All tests are skipped by default.
 
 import pytest
 
-
 BASE_URL = "http://localhost:8000/api/v1"
 TRAINING_ENDPOINT = f"{BASE_URL}/train"
 

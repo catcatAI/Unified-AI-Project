@@ -9,8 +9,8 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from utils.text_utils import char_bigrams as _char_bigrams_util
 from utils.text_utils import bigram_jaccard as _bigram_jaccard_util
+from utils.text_utils import char_bigrams as _char_bigrams_util
 
 logger = logging.getLogger(__name__)
 
@@ -153,6 +153,7 @@ class HAMMemoryManager:
         # For Chinese text: split on whitespace and punctuation boundaries,
         # keep tokens >= 2 chars that aren't stopwords.
         import re
+
         # Match Chinese char sequences (1+ chars) and English word sequences
         tokens = re.findall(r"[\u4e00-\u9fff]{2,}|[a-zA-Z]{2,}", text)
         filtered = [t for t in tokens if t.lower() not in _STOPWORDS]

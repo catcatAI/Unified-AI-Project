@@ -2,11 +2,12 @@
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
 # =============================================================================
 
-import logging
-import zlib
 import hashlib
+import logging
 import re
+import zlib
 from typing import Any, Dict, Optional
+
 from cryptography.fernet import Fernet, InvalidToken
 
 logger = logging.getLogger(__name__)

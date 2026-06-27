@@ -12,12 +12,12 @@ Version: 6.0.0
 Date: 2026-02-02
 """
 
-from .physiological_tactile_types import *  # noqa: F401, F403
-from .physiological_tactile_system import *  # noqa: F401, F403
-from .physiological_tactile_analysis import *  # noqa: F401, F403
-
 import asyncio
 import logging
+
+from .physiological_tactile_analysis import *  # noqa: F401, F403
+from .physiological_tactile_system import *  # noqa: F401, F403
+from .physiological_tactile_types import *  # noqa: F401, F403
 
 logger = logging.getLogger(__name__)
 

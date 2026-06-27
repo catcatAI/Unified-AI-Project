@@ -2,10 +2,11 @@
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
 # =============================================================================
 
-import numpy as np
 import logging
 import time
-from typing import Dict, Any
+from typing import Any, Dict
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 

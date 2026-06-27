@@ -4,10 +4,10 @@
 运行测试脚本(兼容性版本)
 """
 
-import os
-import sys
-import subprocess
 import logging
+import os
+import subprocess
+import sys
 
 logger = logging.getLogger(__name__)
 

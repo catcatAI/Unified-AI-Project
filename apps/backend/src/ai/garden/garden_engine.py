@@ -25,7 +25,6 @@ import re
 from typing import Any, Dict, List, Optional
 
 from ai.core.unicode_utils import is_english_dominant
-
 from core.system.config.magic_numbers import (
     cache_value,
     confidence_value,

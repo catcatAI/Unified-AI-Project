@@ -1,7 +1,7 @@
 """Integration: shared.security_middleware."""
 
-import hmac
 import hashlib
+import hmac
 from unittest.mock import MagicMock
 
 from fastapi import FastAPI

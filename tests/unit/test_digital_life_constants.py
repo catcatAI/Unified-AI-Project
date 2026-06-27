@@ -6,10 +6,10 @@ class TestDigitalLifeConstants:
     def test_import_all(self):
         try:
             from core.life.digital_life_constants import (
+                ActionGeometricMapping,
+                GovernanceConstants,
                 MetabolicConstants,
                 SensoryConstants,
-                GovernanceConstants,
-                ActionGeometricMapping,
             )
             assert MetabolicConstants is not None
             assert SensoryConstants is not None

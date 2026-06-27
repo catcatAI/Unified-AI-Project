@@ -18,17 +18,25 @@ Date: 2026-02-02
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Optional, Callable, Any, TYPE_CHECKING
-from datetime import datetime
+
 import asyncio
-import uuid
-from pathlib import Path
 import logging
+import uuid
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Callable, Optional
+
 from core.bio.kinetic_validator import KineticValidator
 from core.system.config.async_io import async_json_dump, async_json_load
-from core.system.config.magic_numbers import loop_sleep, behavior_executor, retry_value, cache_value, timeout_value
+from core.system.config.magic_numbers import (
+    behavior_executor,
+    cache_value,
+    loop_sleep,
+    retry_value,
+    timeout_value,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -793,7 +801,7 @@ class ActionExecutor:
         self, action_type: str, parameters: dict[str, Any]
     ) -> "ExecutionResult":
         """Fallback execution when bridge is not available"""
-        from ..action_execution_bridge import ExecutionResult, ExecutionResultStatus, ActionType
+        from ..action_execution_bridge import ActionType, ExecutionResult, ExecutionResultStatus
 
         action_id = str(uuid.uuid4())
         start_time = asyncio.get_running_loop().time()

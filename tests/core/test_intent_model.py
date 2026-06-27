@@ -1,7 +1,7 @@
 """C4 — IntentModel unit tests"""
 
 try:
-    from core.life.intent_model import IntentCategory, SelfIntent, IntentManager
+    from core.life.intent_model import IntentCategory, IntentManager, SelfIntent
 except ImportError:
     import pytest; pytest.skip("IntentModel is empty", allow_module_level=True)
 

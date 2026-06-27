@@ -5,7 +5,12 @@ import tempfile
 
 import pytest
 
-from apps.backend.src.core.prompt_manager import PromptManager, PromptTemplate, get_prompt_manager, prompt
+from apps.backend.src.core.prompt_manager import (
+    PromptManager,
+    PromptTemplate,
+    get_prompt_manager,
+    prompt,
+)
 
 
 class TestPromptManager:

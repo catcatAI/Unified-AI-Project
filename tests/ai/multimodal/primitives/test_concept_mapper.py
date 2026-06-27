@@ -1,10 +1,10 @@
 """Tests for ConceptMapper."""
 
+import os
+import tempfile
+
 import numpy as np
 import pytest
-import tempfile
-import os
-
 from ai.multimodal.primitives.concept_mapper import ConceptMapper
 from ai.multimodal.primitives.geometric_vocabulary import GeometricVocabulary
 from ai.multimodal.primitives.primitive_types import TOTAL_DIM

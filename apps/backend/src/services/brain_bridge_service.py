@@ -7,11 +7,11 @@ import asyncio
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from core.life.digital_life_integrator import DigitalLifeIntegrator
-from shared.utils.hardware_detector import SystemHardwareProbe
 from core.system.config.async_io import async_json_dump
+from shared.utils.hardware_detector import SystemHardwareProbe
 
 logger = logging.getLogger(__name__)
 

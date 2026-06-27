@@ -6,16 +6,17 @@ Author: Angela AI v6.2
 """
 
 
-from core.state.axis_field import AxisFieldRegistry
 from core.state.axis import Axis
-from core.state.temporal import TemporalState
+from core.state.axis_field import AxisFieldRegistry
 from core.state.config_loader import StateConfig
+from core.state.temporal import TemporalState
+
 try:
     from core.allocation.resonance import ResonanceEngine
 except ImportError:
     import pytest; pytest.skip("ResonanceEngine is a stub", allow_module_level=True)
 try:
-    from core.allocation.policy import AllocationPolicy, AllocationContext
+    from core.allocation.policy import AllocationContext, AllocationPolicy
 except ImportError:
     import pytest; pytest.skip("AllocationPolicy is a stub", allow_module_level=True)
 try:
@@ -23,11 +24,18 @@ try:
 except ImportError:
     import pytest; pytest.skip("NegativityDetector is a stub", allow_module_level=True)
 try:
-    from core.ripple.node import RippleNode, RippleDepth, MathOp, LinearCascade, RippleApplicatorRegistry, RippleAccumulator
+    from core.ripple.node import (
+        LinearCascade,
+        MathOp,
+        RippleAccumulator,
+        RippleApplicatorRegistry,
+        RippleDepth,
+        RippleNode,
+    )
 except ImportError:
     import pytest; pytest.skip("RippleNode is a stub", allow_module_level=True)
 try:
-    from core.influence.space import InfluenceSpace, GravityRule, EntropyRule, MemoryRule
+    from core.influence.space import EntropyRule, GravityRule, InfluenceSpace, MemoryRule
 except ImportError:
     import pytest; pytest.skip("InfluenceSpace is a stub", allow_module_level=True)
 

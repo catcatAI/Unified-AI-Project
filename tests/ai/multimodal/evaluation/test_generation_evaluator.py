@@ -1,9 +1,10 @@
 """Tests for GenerationEvaluator."""
 
+import os
+import sys
+
 import numpy as np
 import pytest
-import sys
-import os
 from PIL import Image
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "src"))

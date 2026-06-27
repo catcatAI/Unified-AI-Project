@@ -1,6 +1,7 @@
 """Smoke tests for apps.backend.src.ai.context.storage.disk"""
 import pytest
 
+
 class TestDiskStorage:
     def test_import(self):
         try:

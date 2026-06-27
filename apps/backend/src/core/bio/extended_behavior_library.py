@@ -17,14 +17,15 @@ Date: 2026-02-02
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
 
-from core.system.config.magic_numbers import behavior_threshold as _bt
-from enum import Enum
-from typing import Dict, List, Optional, Callable, Any
-from datetime import datetime
 import asyncio
 import logging
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
+
+from core.system.config.magic_numbers import behavior_threshold as _bt
 
 logger = logging.getLogger(__name__)
 

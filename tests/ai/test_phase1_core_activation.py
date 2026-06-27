@@ -3,8 +3,9 @@ Phase 1 Core Activation Tests — Context, Cycling, UnifiedLearning
 Tests for DialogueContext, ModelContext, ToolContext, ED3N cycling, GARDEN cycling, UnifiedLearningOrchestrator
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Lazy imports for optional modules
 try:

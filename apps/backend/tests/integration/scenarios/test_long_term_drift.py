@@ -3,9 +3,9 @@ Long-term drift test for Endocrine System.
 Ensures that hormone levels correctly return to steady state (base_level) 
 over a large number of cycles (10,000 ticks).
 """
-import sys
 import asyncio
 import math
+import sys
 from pathlib import Path
 
 # Add project root (apps/backend) to sys.path
@@ -13,6 +13,7 @@ project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from core.autonomous.endocrine_system import EndocrineSystem, HormoneType
+
 
 async def test_long_term_drift():
     print("🚀 [Behavioral Test] Starting Long-term Drift Analysis...")

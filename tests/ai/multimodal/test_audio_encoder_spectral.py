@@ -1,8 +1,9 @@
-import numpy as np
-import pytest
+import io
 import struct
 import wave
-import io
+
+import numpy as np
+import pytest
 
 
 @pytest.fixture

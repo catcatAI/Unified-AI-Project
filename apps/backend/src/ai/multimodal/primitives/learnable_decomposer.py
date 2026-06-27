@@ -7,13 +7,14 @@ The renderer (PIL) is non-differentiable, so we use a straight-through estimator
 - Backward: approximate gradient via param-space perturbation, backprop through decomposer
 """
 
-import numpy as np
 import json
-import os
 import logging
+import os
 from typing import Optional
 
-from .primitive_types import DrawingInstructions, TOTAL_DIM
+import numpy as np
+
+from .primitive_types import TOTAL_DIM, DrawingInstructions
 
 logger = logging.getLogger(__name__)
 

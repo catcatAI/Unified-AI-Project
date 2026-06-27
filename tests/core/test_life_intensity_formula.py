@@ -1,8 +1,14 @@
-import pytest
 from datetime import datetime
+
+import pytest
+
 from apps.backend.src.core.life_intensity_formula import (
-    LifeIntensityFormula, KnowledgeDomain, KnowledgeState,
-    ConstraintState, ObserverPresence, LifeIntensitySnapshot,
+    ConstraintState,
+    KnowledgeDomain,
+    KnowledgeState,
+    LifeIntensityFormula,
+    LifeIntensitySnapshot,
+    ObserverPresence,
 )
 
 

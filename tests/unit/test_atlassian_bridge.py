@@ -1,5 +1,6 @@
 """Tests for integrations/atlassian_bridge.py"""
 from unittest.mock import MagicMock
+
 import pytest
 
 
@@ -32,8 +33,10 @@ class TestAtlassianBridge:
         assert "confluence" in instance.endpoints or len(instance.endpoints) >= 0
 
     def test_cachedir_created(self):
+        import os
+        import tempfile
+
         from integrations.atlassian_bridge import AtlassianBridge
-        import tempfile, os
         with tempfile.TemporaryDirectory() as tmp:
             mock_connector = MagicMock()
             mock_connector.config = {"atlassian": {}}

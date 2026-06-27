@@ -1,6 +1,7 @@
 """Smoke tests for core.life.tickle_reflex_system"""
 import pytest
 
+
 class TestTickleReflexSystem:
     def test_import(self):
         try:

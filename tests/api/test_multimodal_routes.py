@@ -66,9 +66,10 @@ class TestMultimodalServiceIntegration:
         """T23: Encode then decode returns base64 image."""
         from services.multimodal_service import MultimodalService
         svc = MultimodalService()
+        import io
+
         import numpy as np
         from PIL import Image
-        import io
         img = Image.fromarray(np.random.randint(0, 255, (32, 32, 3), dtype=np.uint8))
         buf = io.BytesIO()
         img.save(buf, format="PNG")
@@ -93,9 +94,10 @@ class TestMultimodalServiceIntegration:
         """T25: Cross-modal vision→audio→vision roundtrip."""
         from services.multimodal_service import MultimodalService
         svc = MultimodalService()
+        import io
+
         import numpy as np
         from PIL import Image
-        import io
         img = Image.fromarray(np.random.randint(0, 255, (32, 32, 3), dtype=np.uint8))
         buf = io.BytesIO()
         img.save(buf, format="PNG")

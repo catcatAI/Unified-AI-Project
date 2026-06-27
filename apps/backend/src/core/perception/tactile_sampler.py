@@ -1,7 +1,7 @@
-from typing import Dict, List, Any, Optional, Tuple
+import logging
 from dataclasses import dataclass, field
 from enum import Enum, auto
-import logging
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 

@@ -16,11 +16,9 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
-
 from ai.multimodal.dual_encoder_router import DualEncoderRouter
 from ai.multimodal.semantic_audio import SemanticAudioEncoder
 from ai.multimodal.semantic_visual import SemanticVisualEncoder
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

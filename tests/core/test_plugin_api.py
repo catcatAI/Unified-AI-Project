@@ -1,6 +1,10 @@
 """C4+C3 — Plugin API endpoint integration tests"""
 
-import os, json, asyncio, shutil, tempfile
+import asyncio
+import json
+import os
+import shutil
+import tempfile
 
 from fastapi.testclient import TestClient
 
@@ -8,10 +12,10 @@ from fastapi.testclient import TestClient
 class TestPluginAPI:
 
     def setup_method(self):
-        from fastapi import FastAPI
         from api.v1.endpoints.plugins import router
         from core.plugin.hook_registry import HookRegistry
         from core.plugin.plugin_manager import PluginManager
+        from fastapi import FastAPI
 
         self.r = HookRegistry()
         self.pm = PluginManager(self.r)

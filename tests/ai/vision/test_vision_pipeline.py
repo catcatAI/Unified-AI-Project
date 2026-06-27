@@ -28,8 +28,8 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "apps/backend/src"))
 
-from ai.vision.vision_pipeline import VisionPipeline
 from ai.vision.quality_monitor import VisionQualityMonitor
+from ai.vision.vision_pipeline import VisionPipeline
 
 
 def _sample_image_bytes(size: int = 32) -> bytes:

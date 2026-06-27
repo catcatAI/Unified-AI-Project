@@ -18,22 +18,20 @@ Angela Matrix Annotation:
 
 import argparse
 import asyncio
-import threading
 import logging
 import os
 import signal
 import subprocess
+import threading
 import time
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from loguru import logger
-
-from core.system.config.magic_numbers import loop_sleep, timeout_value
-
 import psutil
+from core.system.config.magic_numbers import loop_sleep, timeout_value
+from loguru import logger
 
 
 class ExecutionStatus(Enum):

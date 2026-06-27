@@ -10,12 +10,11 @@ import sys
 import tempfile
 
 import pytest
-
-from ai.garden.dictionary import VectorDictionary
-from ai.garden.snn_core import TensorSNNCore
-from ai.garden.garden_engine import GARDENEngine
 from ai.garden.binary_store import BinaryStore
+from ai.garden.dictionary import VectorDictionary
+from ai.garden.garden_engine import GARDENEngine
 from ai.garden.kg_import import KGImporter
+from ai.garden.snn_core import TensorSNNCore
 
 
 @pytest.fixture(scope="function")

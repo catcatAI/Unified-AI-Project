@@ -1,10 +1,14 @@
 """Tests for core.engine.influence_applicator"""
 import pytest
 
+
 class TestInfluenceApplicator:
     def test_import(self):
         from apps.backend.src.core.engine.influence_applicator import (
-            InfluenceApplicator, INFLUENCE_RULES, apply_influence_to_axis, get_applicator,
+            INFLUENCE_RULES,
+            InfluenceApplicator,
+            apply_influence_to_axis,
+            get_applicator,
         )
         assert hasattr(InfluenceApplicator, 'apply')
         assert isinstance(INFLUENCE_RULES, dict)

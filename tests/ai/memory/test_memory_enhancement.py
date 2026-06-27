@@ -13,25 +13,26 @@
 """
 
 import asyncio
-import time
 import logging
+import time
 from datetime import datetime
 
 import pytest
 
 from apps.backend.src.ai.memory.memory_template import (
+    AngelaState,
     MemoryTemplate,
     ResponseCategory,
-    AngelaState,
     UserImpression,
-    generate_template_id,
     create_template,
+    generate_template_id,
 )
 from apps.backend.src.ai.memory.template_library import (
-    TemplateLibrary,
     PredefinedTemplate,
+    TemplateLibrary,
     get_template_library,
 )
+
 try:
     from apps.backend.src.ai.memory.precompute_service import PrecomputeService, PrecomputeTask
 except ImportError:
@@ -273,8 +274,9 @@ class TestMemoryEnhancement:
         """测试 7: 端到端对话模拟"""
         try:
             # 导入必要的模块
-            from apps.backend.src.ai.memory.precompute_service import PrecomputeTask
             from core.interfaces.protocols import LLMResponse
+
+            from apps.backend.src.ai.memory.precompute_service import PrecomputeTask
 
             # 创建模拟的 LLM 服务
             class MockLLMService:

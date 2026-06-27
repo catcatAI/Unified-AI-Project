@@ -319,7 +319,12 @@ class TestHandlerTaskManager:
 
     @pytest.fixture(autouse=True)
     def setup(self):
-        from services.handlers.task_manager_handler import TaskManagerHandler, _TASKS_FILE, _load_tasks, _save_tasks
+        from services.handlers.task_manager_handler import (
+            _TASKS_FILE,
+            TaskManagerHandler,
+            _load_tasks,
+            _save_tasks,
+        )
         self.handler = TaskManagerHandler()
         self._original_tasks = _load_tasks()
         _save_tasks([])
@@ -357,8 +362,8 @@ class TestFullPipelineIntegration:
 
     @pytest.fixture(autouse=True)
     def setup(self):
-        from ai.core.query_classifier import QueryClassifier
         from ai.core.execution_gate import ExecutionGate
+        from ai.core.query_classifier import QueryClassifier
         from ai.ed3n.ed3n_engine import ED3NEngine
         self.clf = QueryClassifier()
         self.gate = ExecutionGate()

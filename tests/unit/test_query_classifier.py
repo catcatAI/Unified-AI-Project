@@ -4,7 +4,7 @@ import pytest
 
 class TestQueryClassifier:
     def test_import(self):
-        from ai.core.query_classifier import QueryClassifier, QueryType, QueryResult
+        from ai.core.query_classifier import QueryClassifier, QueryResult, QueryType
 
         assert QueryClassifier is not None
         assert QueryType is not None

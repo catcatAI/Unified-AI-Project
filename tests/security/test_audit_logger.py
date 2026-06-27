@@ -7,13 +7,14 @@
 import json
 import os
 import tempfile
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 import pytest
+
 from apps.backend.src.security.audit_logger import (
-    AuditEventType,
     AuditEvent,
+    AuditEventType,
     AuditLogger,
 )
 

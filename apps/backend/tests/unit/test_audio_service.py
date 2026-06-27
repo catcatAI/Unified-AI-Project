@@ -1,8 +1,8 @@
 import random
-import numpy as np
 
-from services.audio_service import AudioService
+import numpy as np
 from core.perception.auditory_attention import AuditoryAttentionController
+from services.audio_service import AudioService
 
 
 def setup_module(module):

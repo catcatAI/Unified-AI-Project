@@ -5,7 +5,7 @@ import tempfile
 
 import pytest
 
-from apps.backend.src.core.i18n.i18n_manager import I18nManager, Language, I18nConfig
+from apps.backend.src.core.i18n.i18n_manager import I18nConfig, I18nManager, Language
 
 
 class TestI18nManagerEnhanced:

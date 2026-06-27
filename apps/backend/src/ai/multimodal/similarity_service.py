@@ -6,14 +6,13 @@ import wave
 from typing import Any, Dict, List, Optional
 
 import numpy as np
-from PIL import Image
-
-from ai.multimodal.visual_encoder import VisualEncoder
+from ai.multimodal.audio_decoder import AudioWaveformDecoder
 from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
+from ai.multimodal.quality_metrics import quality_report, snr, ssim
 from ai.multimodal.shared_latent_space import SharedLatentSpace
 from ai.multimodal.visual_decoder import VisualDecoder
-from ai.multimodal.audio_decoder import AudioWaveformDecoder
-from ai.multimodal.quality_metrics import quality_report, ssim, snr
+from ai.multimodal.visual_encoder import VisualEncoder
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 
@@ -153,8 +152,9 @@ class MultimodalSimilarityService:
         Useful for snapshotting before/after training comparisons.
         """
         try:
-            import numpy as np
             from pathlib import Path
+
+            import numpy as np
             vis = self._latent_space._projections.get("vision", {})
             aud = self._latent_space._projections.get("audio", {})
             save_data = {

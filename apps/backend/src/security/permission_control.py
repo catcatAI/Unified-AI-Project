@@ -3,14 +3,14 @@ Permission Control System for AI Editor.
 Implements multi-level permission control for AI operations.
 """
 
-import logging
-import json
-import os  # For os.path.exists
 import fnmatch
-from pathlib import Path
-from enum import Enum
+import json
+import logging
+import os  # For os.path.exists
 from dataclasses import dataclass, field
-from typing import Dict, List, Any, Optional
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

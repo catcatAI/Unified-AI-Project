@@ -8,8 +8,12 @@ class TestLifeIntensityFormula:
     def test_import(self):
         """Verify module exposes expected classes and enums"""
         from core.life_intensity_formula import (
-            LifeIntensityFormula, KnowledgeDomain, KnowledgeState,
-            ConstraintState, ObserverPresence, LifeIntensitySnapshot,
+            ConstraintState,
+            KnowledgeDomain,
+            KnowledgeState,
+            LifeIntensityFormula,
+            LifeIntensitySnapshot,
+            ObserverPresence,
         )
         assert LifeIntensityFormula is not None
         assert hasattr(LifeIntensityFormula, 'calculate_life_intensity')
@@ -51,7 +55,8 @@ class TestLifeIntensityFormula:
     def test_calculate_life_intensity_method(self):
         """Verify life intensity calculation produces valid 0-1 result with all components"""
         from core.life_intensity_formula import (
-            LifeIntensityFormula, KnowledgeDomain,
+            KnowledgeDomain,
+            LifeIntensityFormula,
         )
         instance = LifeIntensityFormula()
         l_s = instance.calculate_life_intensity()

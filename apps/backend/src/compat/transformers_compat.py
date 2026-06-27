@@ -3,11 +3,10 @@ Transformers库兼容性模块
 解决Transformers与Keras 3的兼容性问题
 """
 
-import os
 import logging
+import os
 
 from loguru import logger
-
 
 KERAS_AVAILABLE = False
 

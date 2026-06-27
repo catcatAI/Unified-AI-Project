@@ -1,7 +1,8 @@
 """Tests for MemoryStorage"""
 import pytest
-from apps.backend.src.ai.context.storage.memory import MemoryStorage
+
 from apps.backend.src.ai.context.storage.base import Context, ContextType
+from apps.backend.src.ai.context.storage.memory import MemoryStorage
 
 
 class TestMemoryStorage:

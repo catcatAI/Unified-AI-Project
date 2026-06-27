@@ -1,10 +1,10 @@
 """Comprehensive HTTP-level tests for all API endpoints."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from httpx import AsyncClient, ASGITransport
-from services.main_api_server import app
 
+import pytest
+from httpx import ASGITransport, AsyncClient
+from services.main_api_server import app
 
 # =============================================================================
 # ANGELA-MATRIX: L4 [βδ] [A] [L3]
@@ -155,7 +155,7 @@ class TestOpsAPI:
 class TestDesktopAPI:
     @pytest.fixture(autouse=True)
     def setup_mocks(self):
-        from api.lifespan import get_desktop_interaction, get_action_executor
+        from api.lifespan import get_action_executor, get_desktop_interaction
 
         self.mock_interaction = MagicMock()
         self.mock_interaction.get_desktop_state.return_value = MagicMock(
@@ -356,8 +356,8 @@ class TestMetaControllerEndpoints:
     """Tests for MetaController confidence API endpoints."""
 
     async def test_confidence_summary(self, client):
-        from api.routes.meta_routes import set_meta_controller
         from ai.meta.meta_controller import MetaController
+        from api.routes.meta_routes import set_meta_controller
         mc = MetaController()
         mc.record_confidence("test:ed3n", 0.85)
         mc.record_confidence("test:garden", 0.72)
@@ -373,8 +373,8 @@ class TestMetaControllerEndpoints:
             set_meta_controller(None)
 
     async def test_confidence_calibration_known_source(self, client):
-        from api.routes.meta_routes import set_meta_controller
         from ai.meta.meta_controller import MetaController
+        from api.routes.meta_routes import set_meta_controller
         mc = MetaController()
         for i in range(5):
             mc.record_confidence("test:ed3n", 0.85)
@@ -388,8 +388,8 @@ class TestMetaControllerEndpoints:
             set_meta_controller(None)
 
     async def test_confidence_calibration_unknown_source(self, client):
-        from api.routes.meta_routes import set_meta_controller
         from ai.meta.meta_controller import MetaController
+        from api.routes.meta_routes import set_meta_controller
         mc = MetaController()
         set_meta_controller(mc)
         try:

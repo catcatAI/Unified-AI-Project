@@ -11,7 +11,10 @@ class TestEnhancedRovoDevConnector:
 
     def test_import_components(self):
         from integrations.enhanced_rovo_dev_connector import (
-            EnhancedRovoDevConnector, RetryConfig, EndpointConfig, CircuitBreaker
+            CircuitBreaker,
+            EndpointConfig,
+            EnhancedRovoDevConnector,
+            RetryConfig,
         )
         assert RetryConfig is not None
         assert EndpointConfig is not None

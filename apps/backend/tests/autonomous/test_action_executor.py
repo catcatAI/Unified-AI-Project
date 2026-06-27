@@ -16,29 +16,30 @@ Date: 2026-02-02
 
 from __future__ import annotations
 
-import pytest
-import pytest_asyncio
 import asyncio
-import uuid
-from datetime import datetime
-from typing import Dict, List, Optional, Any, Callable
-from pathlib import Path
 
 # Import the modules under test
 import sys
+import uuid
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
+
+import pytest
+import pytest_asyncio
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'src'))
 
 from core.autonomous.action_executor import (
-    ActionPriority,
-    ActionStatus,
-    ActionCategory,
-    ActionResult,
-    SafetyCheck,
     Action,
-    ActionQueue,
+    ActionCategory,
     ActionExecutor,
+    ActionPriority,
+    ActionQueue,
+    ActionResult,
+    ActionStatus,
+    SafetyCheck,
 )
-
 
 # =============================================================================
 # Fixtures

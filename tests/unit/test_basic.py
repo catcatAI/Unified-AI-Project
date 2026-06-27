@@ -2,10 +2,11 @@
 简单的测试示例,用于验证测试环境是否正常工作
 """
 
-import pytest
-import sys
-import os
 import logging
+import os
+import sys
+
+import pytest
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +18,8 @@ def test_python_version():
 
 def test_basic_imports():
     """测试基础导入"""
-    import json
     import asyncio
+    import json
 
     assert json.dumps({"a": 1}) == '{"a": 1}'
     assert asyncio is not None

@@ -1,8 +1,9 @@
 """Tests for apps.backend.src.ai.dialogue.project_coordinator"""
-import pytest
-import json
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch, call
+import json
+from unittest.mock import AsyncMock, MagicMock, call, patch
+
+import pytest
 
 # Module was removed in architecture cleanup (Phase 1)
 try:

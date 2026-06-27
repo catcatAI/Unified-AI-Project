@@ -37,20 +37,20 @@ Also serves as the central message router for HSP communication.
 
 import asyncio
 import logging
+import multiprocessing as mp
 import os
 import subprocess
 import sys
 import tempfile
 import threading
 import time
-import multiprocessing as mp
-from typing import Dict, Optional, List, Any, Callable
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from abc import ABC, abstractmethod
+from typing import Any, Callable, Dict, List, Optional
 
-from core.system.config.network_defaults import DEFAULT_HOST
 from core.system.config.magic_numbers import loop_sleep, retry_value, timeout_value
+from core.system.config.network_defaults import DEFAULT_HOST
 
 logger = logging.getLogger(__name__)
 
@@ -350,6 +350,7 @@ class AgentManager:
 
     def _wait_router_health(self) -> None:
         import time
+
         import httpx
 
         max_retries = retry_value("router_health_retries", 5)

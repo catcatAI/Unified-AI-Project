@@ -3,10 +3,10 @@
 Script to maintain and update the test suite
 """
 
+import logging
 import os
 from pathlib import Path
-from typing import List, Dict
-import logging
+from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 

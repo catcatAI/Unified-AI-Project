@@ -6,7 +6,6 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 import aiohttp
-
 from core.interfaces.protocols import LLMResponse
 
 logger = logging.getLogger(__name__)

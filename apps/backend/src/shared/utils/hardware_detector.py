@@ -10,13 +10,13 @@ Provides a single source of truth for hardware capabilities, performance tiers,
 and model recommendations (Ollama).
 """
 
+import logging
 import os
 import platform
-import logging
 import subprocess
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any, Tuple
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
 # Attempt to import psutil, provide fallback if not available
 try:

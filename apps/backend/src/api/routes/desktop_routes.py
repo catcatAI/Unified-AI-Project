@@ -5,19 +5,18 @@ Extracted from main_api_server.py (A3 god module split).
 """
 
 import logging
-from typing import Dict, Any
-
-from fastapi import APIRouter, Depends, Body, HTTPException
+from typing import Any, Dict
 
 from api.lifespan import (
-    get_desktop_interaction,
     get_action_executor,
-    get_tactile_service,
+    get_desktop_interaction,
     get_digital_life,
+    get_tactile_service,
 )
-from core.engine.desktop_interaction import DesktopInteraction
 from core.engine.action_executor import ActionExecutor
+from core.engine.desktop_interaction import DesktopInteraction
 from core.life.digital_life_integrator import DigitalLifeIntegrator
+from fastapi import APIRouter, Body, Depends, HTTPException
 
 logger = logging.getLogger(__name__)
 

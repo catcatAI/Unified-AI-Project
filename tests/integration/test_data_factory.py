@@ -2,8 +2,9 @@
 测试模块 - test_data_factory
 """
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 
 class TestDataFactory:

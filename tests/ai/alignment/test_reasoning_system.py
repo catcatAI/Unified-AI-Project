@@ -1,11 +1,13 @@
 """Tests for apps.backend.src.ai.alignment.reasoning_system"""
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
+
 try:
     from ai.alignment.reasoning_system import (
+        EthicalEvaluation,
         EthicalPrinciple,
         LogicalConstraint,
-        EthicalEvaluation,
         ReasoningSystem,
     )
 except ImportError:

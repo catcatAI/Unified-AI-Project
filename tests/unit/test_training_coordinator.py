@@ -4,7 +4,7 @@ import pytest
 
 class TestTrainingCoordinator:
     def test_import(self):
-        from ai.core.training_coordinator import TrainingCoordinator, DomainTrainingRecord
+        from ai.core.training_coordinator import DomainTrainingRecord, TrainingCoordinator
 
         assert TrainingCoordinator is not None
         assert DomainTrainingRecord is not None

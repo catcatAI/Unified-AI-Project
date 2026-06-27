@@ -7,30 +7,38 @@ Version: 6.0.0
 Date: 2026-02-02
 """
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-import pytest
 import asyncio
 from datetime import datetime
 from pathlib import Path
 
+import pytest
+from core.bio.physiological_tactile import (
+    BodyPart,
+    PhysiologicalTactileSystem,
+    TactileStimulus,
+    TactileType,
+)
+
 # Import the systems
 from core.engine.art_learning_system import (
-    ArtLearningSystem, ArtKnowledge, ArtDomain,
-    LearningType, BodyPartMapping
-)
-from core.engine.live2d_avatar_generator import (
-    Live2DAvatarGenerator, ViewAngle, GenerationStage
+    ArtDomain,
+    ArtKnowledge,
+    ArtLearningSystem,
+    BodyPartMapping,
+    LearningType,
 )
 from core.engine.art_learning_workflow import (
-    ArtLearningWorkflow, WorkflowStage, LearningObjective,
-    WorkflowConfig
+    ArtLearningWorkflow,
+    LearningObjective,
+    WorkflowConfig,
+    WorkflowStage,
 )
-from core.bio.physiological_tactile import (
-    PhysiologicalTactileSystem, TactileStimulus, TactileType, BodyPart
-)
+from core.engine.live2d_avatar_generator import GenerationStage, Live2DAvatarGenerator, ViewAngle
 from core.engine.live2d_integration import Live2DIntegration
 
 
@@ -451,7 +459,10 @@ class TestIntegration:
             
             # 5. Test touch to Live2D
             try:
-                from apps.backend.src.core.autonomous.physiological_tactile import TactileStimulus, TactileType
+                from apps.backend.src.core.autonomous.physiological_tactile import (
+                    TactileStimulus,
+                    TactileType,
+                )
             except ImportError:
                 from core.autonomous.physiological_tactile import TactileStimulus, TactileType
             

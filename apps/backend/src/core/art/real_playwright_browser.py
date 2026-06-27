@@ -8,9 +8,9 @@ Angela Real Browser - Playwright Integration
 """
 
 import asyncio
-from typing import Optional, List, Dict, Any
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

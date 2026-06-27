@@ -10,12 +10,16 @@ Test suite for Attractor Field
 5. 混合行为生成
 """
 
-import pytest
 import math
+
+import pytest
 
 try:
     from ai.memory.attractor_field import (
-        MemoryAttractor, GradientField, BehaviorTone, GradientResult
+        BehaviorTone,
+        GradientField,
+        GradientResult,
+        MemoryAttractor,
     )
 except ImportError:
     pytest.skip("MemoryAttractor not available (stub module)", allow_module_level=True)
@@ -126,7 +130,9 @@ class TestGradientField:
         assert 0.0 < decay_2 < decay_1
 
     def test_load_and_save_attractors(self, field):
-        import tempfile, json, os
+        import json
+        import os
+        import tempfile
 
         attractor = MemoryAttractor(
             coord=[0.6, 0.6, 0.6, 0.6, 0.6],

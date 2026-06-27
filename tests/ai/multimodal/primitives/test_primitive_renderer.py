@@ -2,12 +2,9 @@
 
 import numpy as np
 import pytest
-from PIL import Image
-
-from ai.multimodal.primitives.primitive_types import (
-    Point, Line, Plane, DrawingInstructions
-)
 from ai.multimodal.primitives.primitive_renderer import PrimitiveRenderer
+from ai.multimodal.primitives.primitive_types import DrawingInstructions, Line, Plane, Point
+from PIL import Image
 
 
 @pytest.fixture

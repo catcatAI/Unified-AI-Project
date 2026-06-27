@@ -3,8 +3,9 @@
 Audio API endpoints
 """
 
-from fastapi import APIRouter
 import logging
+
+from fastapi import APIRouter
 
 logger = logging.getLogger(__name__)
 

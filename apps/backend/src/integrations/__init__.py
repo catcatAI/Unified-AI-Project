@@ -8,12 +8,14 @@ try:
 except ImportError:
     RovoDevConnector = None
 from .rovo_dev_agent import RovoDevAgent
+
 try:
     from .atlassian_bridge import AtlassianBridge
 except ImportError:
     AtlassianBridge = None
 from .google_drive_service import GoogleDriveService
 from .os_bridge_adapter import OSBridgeAdapter
+
 try:
     from . import atlassian_bridge
 except ImportError:

@@ -21,9 +21,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-import re
 import ast
 import operator
+import re
 from typing import Optional, Tuple
 
 

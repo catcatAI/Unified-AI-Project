@@ -1,9 +1,10 @@
 """PixelRefiner: lightweight FC network to refine compositional image output."""
-import numpy as np
-from typing import Dict, List, Optional
 import json
-import os
 import logging
+import os
+from typing import Dict, List, Optional
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 

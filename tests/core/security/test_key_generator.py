@@ -1,6 +1,8 @@
 import os
-import pytest
 import tempfile
+
+import pytest
+
 try:
     from apps.backend.src.core.security.key_generator import KeyGenerator
 except ImportError:

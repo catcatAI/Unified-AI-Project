@@ -10,11 +10,7 @@ import time
 from collections import OrderedDict
 from typing import Any, Dict, List, Optional, Tuple
 
-from ai.core.unicode_utils import normalize_text, is_english_dominant
-
-from .input_enricher import InputEnricher
-from .telemetry import TelemetryCollector
-
+from ai.core.unicode_utils import is_english_dominant, normalize_text
 from core.system.config.magic_numbers import (
     batch_value,
     learning_rate,
@@ -23,14 +19,16 @@ from core.system.config.magic_numbers import (
 
 from .core_network import CoreNetwork
 from .dictionary_layer import DictionaryLayer
+from .input_enricher import InputEnricher
 from .multimodal.audio_encoder import AudioEncoder
 from .multimodal.cross_modal_trainer import CrossModalTrainer
 from .multimodal.image_encoder import ImageEncoder
-from .output_anchor import anchored_decode, ResponseAnchorValidator
+from .output_anchor import ResponseAnchorValidator, anchored_decode
 from .relation_classifier import RelationClassifier
-from .snn.snn_core import SNNCore
 from .snn.hormonal_modulator import HormonalModulator
+from .snn.snn_core import SNNCore
 from .step_decoder import StepDecoder
+from .telemetry import TelemetryCollector
 
 logger = logging.getLogger(__name__)
 
@@ -856,7 +854,8 @@ class ED3NEngine:
 
     def load_presets_from_config(self, config_dir: Optional[str] = None) -> None:
         """Load all presets from JSON config files instead of hardcoded Python."""
-        import json, os
+        import json
+        import os
         if config_dir is None:
             config_dir = os.path.join(os.path.dirname(__file__), "config")
 

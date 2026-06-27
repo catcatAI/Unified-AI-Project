@@ -2,7 +2,7 @@ import asyncio
 import logging
 import sys
 
-from services.audio_service import AudioService, FASTER_WHISPER_AVAILABLE, EDGE_TTS_AVAILABLE
+from services.audio_service import EDGE_TTS_AVAILABLE, FASTER_WHISPER_AVAILABLE, AudioService
 
 
 async def test() -> None:

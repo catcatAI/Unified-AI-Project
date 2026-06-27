@@ -1,6 +1,7 @@
 """Smoke tests for apps.backend.src.core.engine.audio_system"""
 import pytest
 
+
 class TestAudioSystem:
     def test_import(self):
         try:

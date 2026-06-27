@@ -17,14 +17,18 @@ Response Composer - 响应片段组合系统
 
 import logging
 import time
-from datetime import datetime
-from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
-
-from core.system.config.magic_numbers import confidence_value, learning_rate, limit_value, threshold_value
+from typing import Any, Dict, List, Optional, Tuple
 
 from ai.ed3n.ed3n_engine import ED3NEngine as _ED3NEngine_cls
+from core.system.config.magic_numbers import (
+    confidence_value,
+    learning_rate,
+    limit_value,
+    threshold_value,
+)
 
 # Module-level ED3N cache (avoids creating new instances on every fallback)
 _ed3n_engine = None

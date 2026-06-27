@@ -9,12 +9,13 @@ This is where CLIP semantic similarity belongs:
 Now integrated with concept space mapping for shared representation.
 """
 
-import numpy as np
 import json
 import os
 from typing import Dict, List, Optional, Tuple
 
-from .geometric_vocabulary import GeometricVocabulary, ConceptDistribution
+import numpy as np
+
+from .geometric_vocabulary import ConceptDistribution, GeometricVocabulary
 from .primitive_types import TOTAL_DIM
 
 

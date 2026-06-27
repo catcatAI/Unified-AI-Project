@@ -16,14 +16,14 @@ Template Matcher - 基于哈希的模板匹配系统
 # =============================================================================
 
 import hashlib
-import time
 import logging
-from typing import Dict, List, Tuple, Optional, Any
+import time
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
-from utils.text_utils import char_bigrams as _char_bigrams_util
 from utils.text_utils import bigram_jaccard as _bigram_jaccard_util
+from utils.text_utils import char_bigrams as _char_bigrams_util
 from utils.text_utils import normalize_text as _normalize_text_util
 
 logger = logging.getLogger(__name__)

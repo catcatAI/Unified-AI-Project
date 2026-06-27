@@ -12,15 +12,16 @@
 # =============================================================================
 
 
-import logging
 import asyncio
+import logging
 from datetime import datetime
-from core.system.config.magic_numbers import loop_sleep
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 from core.bio.biological_integrator import BiologicalIntegrator
-from .state_matrix import StateMatrix4D
 from core.bio.cerebellum_engine import CerebellumEngine
+from core.system.config.magic_numbers import loop_sleep
+
+from .state_matrix import StateMatrix4D
 
 logger = logging.getLogger(__name__)
 

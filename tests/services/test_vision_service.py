@@ -3,8 +3,11 @@
 # =============================================================================
 
 import sys
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
+
+
 def _async_mock():
     m = MagicMock()
     async def async_fn(*args, **kwargs):

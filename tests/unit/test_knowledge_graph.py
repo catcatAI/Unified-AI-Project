@@ -1,6 +1,7 @@
 """Smoke tests for apps.backend.src.ai.code_inspection.knowledge_graph"""
 import pytest
 
+
 class TestKnowledgeGraph:
     def test_import(self):
         try:

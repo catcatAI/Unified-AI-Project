@@ -7,7 +7,7 @@ class TestAngelaError:
 
     def test_import_angela_error(self):
         """Verify AngelaError is a proper Exception subclass with expected hierarchy"""
-        from core.angela_error import AngelaError, ErrorSeverity, ErrorCategory, ErrorHandler
+        from core.angela_error import AngelaError, ErrorCategory, ErrorHandler, ErrorSeverity
         assert issubclass(AngelaError, Exception)
         assert AngelaError.DEFAULT_CODE == "ANGELA_ERROR"
         assert AngelaError.DEFAULT_MESSAGE == "An error occurred in Angela AI"
@@ -18,7 +18,7 @@ class TestAngelaError:
 
     def test_angela_error_instantiation(self):
         """Verify AngelaError default instantiation sets correct defaults"""
-        from core.angela_error import AngelaError, ErrorSeverity, ErrorCategory
+        from core.angela_error import AngelaError, ErrorCategory, ErrorSeverity
         err = AngelaError()
         assert isinstance(err, Exception)
         assert err.message == "An error occurred in Angela AI"
@@ -115,12 +115,24 @@ class TestAngelaError:
         """Verify all common error subclasses are importable"""
         try:
             from core.angela_error import (
-                AngelaError, CoreError, ConfigurationError,
-                NetworkError, WebSocketError, DatabaseError,
-                MemoryError, AIModelError, LLMError,
-                AudioError, SecurityError, AuthenticationError,
-                AuthorizationError, ResourceError, ValidationError,
-                NotFoundError, BusinessLogicError, RateLimitError,
+                AIModelError,
+                AngelaError,
+                AudioError,
+                AuthenticationError,
+                AuthorizationError,
+                BusinessLogicError,
+                ConfigurationError,
+                CoreError,
+                DatabaseError,
+                LLMError,
+                MemoryError,
+                NetworkError,
+                NotFoundError,
+                RateLimitError,
+                ResourceError,
+                SecurityError,
+                ValidationError,
+                WebSocketError,
             )
             assert AngelaError is not None
         except ImportError as e:

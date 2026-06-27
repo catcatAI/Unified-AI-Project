@@ -1,7 +1,7 @@
 # 測試配置
 # 禁用 TensorFlow 以避免 CPU 指令集不兼容問題
-import os
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 os.environ["DISABLE_TENSORFLOW"] = "true"

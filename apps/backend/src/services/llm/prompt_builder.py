@@ -8,7 +8,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from core.prompt_manager import prompt, get_prompt_manager
+from core.prompt_manager import get_prompt_manager, prompt
 
 logger = logging.getLogger(__name__)
 
@@ -149,7 +149,7 @@ def get_formula_summaries() -> str:
     except (ImportError, AttributeError) as e:
         logger.debug(f"ActiveCognition formula unavailable: {e}")
     try:
-        from core.cdm_dividend_model import CognitiveInvestment, CognitiveActivity
+        from core.cdm_dividend_model import CognitiveActivity, CognitiveInvestment
         cdm = _get_cdm()
         inv = CognitiveInvestment(activity_type=CognitiveActivity.INTERACTING, duration_seconds=1.0, intensity=0.5)
         output = cdm.calculate_life_sense_output(inv)

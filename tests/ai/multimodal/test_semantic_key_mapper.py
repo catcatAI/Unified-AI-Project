@@ -10,9 +10,7 @@ Tests cover:
 
 import numpy as np
 import pytest
-
 from ai.multimodal.semantic_key_mapper import SemanticKeyMapper
-
 
 # =========================================================================
 # Fixtures

@@ -11,7 +11,7 @@ import asyncio
 import logging
 import multiprocessing as mp
 import time
-from typing import Dict, Any, Optional, Callable
+from typing import Any, Callable, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -170,8 +170,8 @@ def example_agent_entry_point(agent_id: str) -> None:
     Args:
         agent_id: 代理 ID
     """
-    import time
     import logging
+    import time
 
     if __name__ == "__main__":
         logging.basicConfig(level=logging.INFO)

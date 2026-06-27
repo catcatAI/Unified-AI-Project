@@ -1,6 +1,7 @@
 """Smoke tests for ai.context.tool_context"""
 import pytest
 
+
 class TestToolCategory:
     def test_import(self):
         try:

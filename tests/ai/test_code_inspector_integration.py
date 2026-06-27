@@ -9,10 +9,11 @@ Author: Angela AI v6.2
 import pytest
 
 try:
-    from core.engine.state_matrix_adapter import StateMatrixAdapter
     from ai.code_inspection.code_inspector_integration import (
-        CodeInspectorBridge, create_bridge,
+        CodeInspectorBridge,
+        create_bridge,
     )
+    from core.engine.state_matrix_adapter import StateMatrixAdapter
 except ImportError:
     pytest.skip("Required modules not available (stub modules)", allow_module_level=True)
 

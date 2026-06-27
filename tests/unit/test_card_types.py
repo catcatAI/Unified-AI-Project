@@ -1,22 +1,23 @@
 """Smoke tests for core.card.card_types"""
-import pytest
 from datetime import datetime
+
+import pytest
 
 
 class TestCardTypes:
     def test_import_all(self):
         try:
             from core.card.card_types import (
+                Card,
                 CardType,
+                Conflict,
                 ConflictType,
+                Event,
                 IntentFlag,
+                Relation,
                 SourceFile,
                 Token,
-                Relation,
-                Event,
                 Visual,
-                Conflict,
-                Card,
             )
             assert all([CardType, ConflictType, IntentFlag, SourceFile,
                         Token, Relation, Event, Visual, Conflict, Card])

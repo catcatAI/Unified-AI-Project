@@ -2,7 +2,7 @@ import logging
 from collections.abc import Callable
 from typing import Optional
 
-from .models import ModuleStatus, HealthStatus
+from .models import HealthStatus, ModuleStatus
 
 logger = logging.getLogger(__name__)
 

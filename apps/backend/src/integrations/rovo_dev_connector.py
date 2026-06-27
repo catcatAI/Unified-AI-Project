@@ -2,8 +2,9 @@
 Rovo Dev Connector - 從增強版導入
 """
 
-from .enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 import logging
+
+from .enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 
 logger = logging.getLogger(__name__)
 

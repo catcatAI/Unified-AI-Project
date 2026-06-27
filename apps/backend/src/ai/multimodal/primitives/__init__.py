@@ -13,16 +13,17 @@ GVV architecture (correct):
 - vocabulary_expander: residual analysis → new primitive types
 """
 
-# Shared infrastructure
-from .primitive_types import Point, Line, Plane, Circle, Arc, DrawingInstructions
-from .primitive_renderer import PrimitiveRenderer
-from .primitive_encoder import PrimitiveEncoder
+from .concept_mapper import ConceptMapper
 from .differentiable_renderer import DifferentiableRenderer
 
 # GVV architecture
 from .geometric_vocabulary import GeometricVocabulary
-from .concept_mapper import ConceptMapper
 from .instance_optimizer import InstanceOptimizer
+from .primitive_encoder import PrimitiveEncoder
+from .primitive_renderer import PrimitiveRenderer
+
+# Shared infrastructure
+from .primitive_types import Arc, Circle, DrawingInstructions, Line, Plane, Point
 from .vocabulary_expander import VocabularyExpander
 
 __all__ = [

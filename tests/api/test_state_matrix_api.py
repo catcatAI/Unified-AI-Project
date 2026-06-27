@@ -1,14 +1,15 @@
 """Smoke test for StateMatrix FastAPI Router (no server startup)"""
 
 import pytest
+
 try:
     from services.api.state_matrix_api import (
-        state_matrix_router,
-        get_state_matrix,
+        AllocationRequest,
         AxisUpdateRequest,
         NavigateRequest,
         PortRegisterRequest,
-        AllocationRequest,
+        get_state_matrix,
+        state_matrix_router,
     )
 except ImportError:
     pytest.skip("state_matrix_router not available (stub module)", allow_module_level=True)

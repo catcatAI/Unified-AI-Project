@@ -1,5 +1,6 @@
 """Tests for core.bio.input_sensor"""
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 

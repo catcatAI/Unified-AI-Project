@@ -6,7 +6,6 @@ from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from ai.lifecycle.user_monitor import UserMonitor
 
 _MODULE_MOCKS = {}
@@ -303,7 +302,12 @@ class TestDecisionExecution:
         await decision_loop._execute_decision(decision)
         assert decision_loop.stats['executed_decisions'] == 1
     async def test_execute_greet_via_broadcast_callback(self, mock_llm_service, mock_state_manager, mock_memory_manager, user_monitor):
-        from ai.lifecycle.llm_decision_loop import LLMDecisionLoop, Decision, DecisionAction, DecisionPriority
+        from ai.lifecycle.llm_decision_loop import (
+            Decision,
+            DecisionAction,
+            DecisionPriority,
+            LLMDecisionLoop,
+        )
         callback = AsyncMock()
         loop = LLMDecisionLoop(
             llm_service=mock_llm_service,

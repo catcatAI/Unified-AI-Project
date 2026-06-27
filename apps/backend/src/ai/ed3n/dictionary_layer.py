@@ -11,7 +11,7 @@ import threading
 from collections import OrderedDict
 from typing import Any, Dict, List, Optional
 
-from ai.core.unicode_utils import normalize_text, to_romaji, is_cjk
+from ai.core.unicode_utils import is_cjk, normalize_text, to_romaji
 from core.system.config.magic_numbers import (
     behavior_threshold,
     cache_value,
@@ -374,7 +374,8 @@ class DictionaryLayer:
 
     def load_preset_responses_from_dir(self, config_dir: Optional[str] = None) -> int:
         """Load dictionary entries + reflex from config JSON files."""
-        import json, os
+        import json
+        import os
         if config_dir is None:
             config_dir = os.path.join(os.path.dirname(__file__), "config")
         loaded = 0

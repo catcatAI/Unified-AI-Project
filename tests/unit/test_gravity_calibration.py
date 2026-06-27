@@ -23,9 +23,9 @@ class TestGravityCalibrator:
     def test_constants(self):
         try:
             from core.card.quality.gravity_calibration import (
+                G_CANDIDATES,
                 IDEAL_LOWER,
                 IDEAL_UPPER,
-                G_CANDIDATES,
             )
             assert IDEAL_LOWER == 0.6
             assert IDEAL_UPPER == 0.85

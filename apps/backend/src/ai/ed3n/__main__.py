@@ -15,14 +15,19 @@ Usage:
     python -m ed3n load path.json
 """
 
-import argparse, json, logging, os, sys, time
+import argparse
+import json
+import logging
+import os
+import sys
+import time
 
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(message)s")
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", ".."))
 
 from .ed3n_engine import ED3NEngine
 from .ed3n_trainer import ED3NTrainer
-from .training_types import TrainingExample, TrainingBatch
+from .training_types import TrainingBatch, TrainingExample
 
 
 def get_engine(path: str = "") -> ED3NEngine:
@@ -111,7 +116,9 @@ def cmd_serve(args):
     # Wire continuous learning for interactive sessions
     try:
         from .continuous_learning import ContinuousLearningPipeline
+
 from .ed3n_trainer import JointTrainer
+
         trainer = JointTrainer(e, dict_lr=0.05, network_lr=0.05)
         clp = ContinuousLearningPipeline(engine=e, trainer=trainer,
                                          growth_interval=15, train_interval=50,

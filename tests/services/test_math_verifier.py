@@ -1,4 +1,5 @@
 import json
+
 import pytest
 
 # Phase 3.4 replaced the stub with a different API (MathVerifyResult-based).
@@ -11,8 +12,8 @@ except ImportError:
 
 from apps.backend.src.services.math_verifier import (
     MathExtractor,
-    SpatialEngine,
     MathVerifier,
+    SpatialEngine,
 )
 
 

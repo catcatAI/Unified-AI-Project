@@ -9,7 +9,7 @@ Covers:
 
 import sys
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -71,6 +71,7 @@ class TestOpsHelpers:
         with patch.dict("sys.modules", {"psutil": mock_psutil}):
             # Re-import to use mocked module
             import importlib
+
             from api.routes import ops_routes
             importlib.reload(ops_routes)
             result = ops_routes._get_cpu_percent()
@@ -81,6 +82,7 @@ class TestOpsHelpers:
         from api.routes.ops_routes import _get_cpu_percent
         with patch.dict("sys.modules", {"psutil": None}):
             import importlib
+
             from api.routes import ops_routes
             importlib.reload(ops_routes)
             result = ops_routes._get_cpu_percent()
@@ -95,6 +97,7 @@ class TestOpsHelpers:
         mock_psutil.virtual_memory.return_value = mock_vmem
         with patch.dict("sys.modules", {"psutil": mock_psutil}):
             import importlib
+
             from api.routes import ops_routes
             importlib.reload(ops_routes)
             result = ops_routes._get_memory_percent()
@@ -105,6 +108,7 @@ class TestOpsHelpers:
         from api.routes.ops_routes import _get_memory_percent
         with patch.dict("sys.modules", {"psutil": None}):
             import importlib
+
             from api.routes import ops_routes
             importlib.reload(ops_routes)
             result = ops_routes._get_memory_percent()
@@ -119,6 +123,7 @@ class TestOpsHelpers:
         mock_psutil.disk_usage.return_value = mock_du
         with patch.dict("sys.modules", {"psutil": mock_psutil}):
             import importlib
+
             from api.routes import ops_routes
             importlib.reload(ops_routes)
             result = ops_routes._get_disk_percent()
@@ -126,10 +131,11 @@ class TestOpsHelpers:
 
     async def test_get_all_metrics_structure(self):
         """_get_all_metrics returns dict with expected keys."""
-        from api.routes.ops_routes import _get_all_metrics
         # Even without psutil, it should return a dict with zeros
         import importlib
+
         from api.routes import ops_routes
+        from api.routes.ops_routes import _get_all_metrics
         importlib.reload(ops_routes)
         result = _get_all_metrics()
         expected_keys = {"cpu_percent", "memory_percent", "disk_percent"}
@@ -180,6 +186,7 @@ class TestOpsHealth:
     async def test_health_healthy_when_low_load(self):
         """Health check returns 'healthy' when CPU <= 80 and mem <= 90."""
         from api.routes.ops_routes import health_check
+
         # Mock helpers to return low values
         with patch("api.routes.ops_routes._get_cpu_percent", return_value=30.0), \
              patch("api.routes.ops_routes._get_memory_percent", return_value=50.0), \

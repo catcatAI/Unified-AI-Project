@@ -4,24 +4,24 @@ Re-exports from core.autonomous shim
 """
 from __future__ import annotations
 
+from core.bio.physiological_tactile_analysis import (
+    AdaptationMechanism,
+    ReceptorAdaptationState,
+    TrajectoryAnalysis,
+    TrajectoryAnalyzer,
+    TrajectoryPoint,
+)
 from core.bio.physiological_tactile_system import (
     PhysiologicalTactileSystem,
 )
 from core.bio.physiological_tactile_types import (
-    ReceptorType,
-    TactileType,
-    BodyRegion,
     BodyPart,
-    Receptor,
-    TactileStimulus,
+    BodyRegion,
     EmotionalTactileMapping,
-    TactileResponse,
     Live2DTouchResponse,
-)
-from core.bio.physiological_tactile_analysis import (
-    TrajectoryPoint,
-    TrajectoryAnalysis,
-    TrajectoryAnalyzer,
-    ReceptorAdaptationState,
-    AdaptationMechanism,
+    Receptor,
+    ReceptorType,
+    TactileResponse,
+    TactileStimulus,
+    TactileType,
 )

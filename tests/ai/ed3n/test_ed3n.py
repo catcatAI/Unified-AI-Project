@@ -7,12 +7,12 @@ import pytest
 
 from apps.backend.src.ai.ed3n.continuous_learning import (
     ContinuousLearningPipeline,
-    TrainingExample as CLTrainingExample,
 )
+from apps.backend.src.ai.ed3n.continuous_learning import TrainingExample as CLTrainingExample
 from apps.backend.src.ai.ed3n.core_network import CoreNetwork
 from apps.backend.src.ai.ed3n.dictionary_layer import DictionaryEntry, DictionaryLayer
 from apps.backend.src.ai.ed3n.ed3n_engine import ED3NEngine, ReflexLayer
-from apps.backend.src.ai.ed3n.ed3n_trainer import ED3NTrainer, SequenceTrainer, JointTrainer
+from apps.backend.src.ai.ed3n.ed3n_trainer import ED3NTrainer, JointTrainer, SequenceTrainer
 from apps.backend.src.ai.ed3n.output_anchor import (
     ResponseAnchorValidator,
     anchored_decode,
@@ -20,10 +20,10 @@ from apps.backend.src.ai.ed3n.output_anchor import (
 )
 from apps.backend.src.ai.ed3n.relation_classifier import RelationClassifier, RelationType
 from apps.backend.src.ai.ed3n.training_types import (
-    TrainingBatch,
-    TrainingExample,
     SeqBatch,
     SequenceExample,
+    TrainingBatch,
+    TrainingExample,
     make_synthetic_seq_batch,
     seq_batch_from_examples,
     training_example_to_sequence,
@@ -644,7 +644,8 @@ class TestSequenceTrainer:
         assert metrics.loss >= 0.0
 
     def test_sequence_trainer_save_load(self, engine: ED3NEngine):
-        import tempfile, os
+        import os
+        import tempfile
         trainer = SequenceTrainer(engine, seq_lr=0.2)
         batch = make_synthetic_seq_batch([
             (["start", "middle"], ["end"]),
@@ -776,7 +777,8 @@ class TestJointTrainer:
         assert summary["steps"] == 1
 
     def test_joint_trainer_save_load(self, engine: ED3NEngine):
-        import tempfile, os
+        import os
+        import tempfile
         trainer = JointTrainer(engine, dict_lr=0.05, network_lr=0.05, seq_lr=0.1, anchor_weight=0.2)
         batch = TrainingBatch(
             examples=[TrainingExample("hi", "hello", ["g1"], ["g5"], [], 0.8)],

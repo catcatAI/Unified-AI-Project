@@ -37,10 +37,11 @@ Version: 6.0.0
 # =============================================================================
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from enum import Enum
-from datetime import datetime
+
 import math
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
 
 
 class HormoneType(Enum):

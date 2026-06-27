@@ -1,7 +1,16 @@
-import pytest
 from pathlib import Path
-from apps.backend.src.core.system.module_manager.models import ModuleDescriptor, ModuleKind, DependencySpec, LifecycleHooks, ModuleStatus
+
+import pytest
+
 from apps.backend.src.core.system.module_manager.events import EventBus
+from apps.backend.src.core.system.module_manager.models import (
+    DependencySpec,
+    LifecycleHooks,
+    ModuleDescriptor,
+    ModuleKind,
+    ModuleStatus,
+)
+
 try:
     from apps.backend.src.core.system.module_manager.lifecycle import ModuleLifecycle
 except ImportError:

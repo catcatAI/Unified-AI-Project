@@ -3,8 +3,9 @@ AI代理系统集成测试
 测试AI代理系统与其他核心组件的集成
 """
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
 
 
 class TestAIAgentIntegration:

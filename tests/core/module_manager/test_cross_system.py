@@ -1,14 +1,21 @@
 """Phase 3: Cross-system module dependency tests."""
 
-import pytest
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import pytest
+
 from apps.backend.src.core.system.module_manager import ModuleManager
-from apps.backend.src.core.system.module_manager.models import (
-    ModuleDescriptor, ModuleKind, DependencySpec, LifecycleHooks, ModuleInstance, ModuleStatus
-)
 from apps.backend.src.core.system.module_manager.events import EventBus
+from apps.backend.src.core.system.module_manager.models import (
+    DependencySpec,
+    LifecycleHooks,
+    ModuleDescriptor,
+    ModuleInstance,
+    ModuleKind,
+    ModuleStatus,
+)
+
 try:
     from apps.backend.src.core.system.module_manager.lifecycle import ModuleLifecycle
 except ImportError:
@@ -98,7 +105,12 @@ class TestDependencyGraph:
     async def test_get_dependency_graph_populated(self):
         from apps.backend.src.core.system.module_manager import ModuleManager
         from apps.backend.src.core.system.module_manager.models import (
-            ModuleDescriptor, ModuleKind, DependencySpec, LifecycleHooks, ModuleInstance, ModuleStatus
+            DependencySpec,
+            LifecycleHooks,
+            ModuleDescriptor,
+            ModuleInstance,
+            ModuleKind,
+            ModuleStatus,
         )
         mod_path = Path(__file__).resolve().parent.parent.parent.parent / "apps/backend/src/modules"
         m = ModuleManager(scan_paths=[mod_path])

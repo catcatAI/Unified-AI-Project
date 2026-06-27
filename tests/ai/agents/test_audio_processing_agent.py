@@ -2,14 +2,15 @@
 Tests for the AudioProcessingAgent.
 """
 
-import pytest
 import asyncio
 import uuid
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
 # Correct the import path based on the file's actual location
 from ai.agents.specialized.audio_processing_agent import AudioProcessingAgent
-from core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
+from core.hsp.types import HSPMessageEnvelope, HSPTaskRequestPayload
 
 
 @pytest.fixture

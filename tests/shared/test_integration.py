@@ -1,9 +1,10 @@
-import time
-import hmac
 import hashlib
+import hmac
 import json
-import requests
 import logging
+import time
+
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,7 @@ def test_full_integration():
     print("\n🔍 測試桌面端 (Key C) 同步端點...")
     try:
         from fastapi.testclient import TestClient
+
         from apps.backend.main import create_app
 
         app = create_app()

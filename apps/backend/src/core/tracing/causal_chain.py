@@ -10,11 +10,12 @@ Date: 2026-02-19
 """
 
 from __future__ import annotations
+
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Any
-import uuid
+from typing import Any, Dict, List, Optional
 
 
 class LayerType(Enum):

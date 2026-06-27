@@ -10,12 +10,10 @@ Test suite for MathRippleEngine
 5. 認知語義分析
 """
 
-import pytest
 import math
 
-from ai.memory.math_ripple_engine import (
-    MathRippleEngine, MathOp, RippleEffect, RippleAccumulator
-)
+import pytest
+from ai.memory.math_ripple_engine import MathOp, MathRippleEngine, RippleAccumulator, RippleEffect
 
 
 class TestMathRippleEngine:
@@ -170,9 +168,15 @@ class TestRippleAccumulator:
 # =============================================================================
 
 from ai.memory.math_ripple_engine import (
-    AlgorithmDepth, RippleDepth, RippleDepthConfig,
-    RippleCascade, RippleEffect, MathOp,
-    _detect_algorithm_depth, _detect_ripple_depth, _estimate_result_magnitude,
+    AlgorithmDepth,
+    MathOp,
+    RippleCascade,
+    RippleDepth,
+    RippleDepthConfig,
+    RippleEffect,
+    _detect_algorithm_depth,
+    _detect_ripple_depth,
+    _estimate_result_magnitude,
 )
 
 

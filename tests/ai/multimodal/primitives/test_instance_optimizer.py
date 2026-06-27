@@ -2,10 +2,9 @@
 
 import numpy as np
 import pytest
-
-from ai.multimodal.primitives.instance_optimizer import InstanceOptimizer
-from ai.multimodal.primitives.geometric_vocabulary import GeometricVocabulary
 from ai.multimodal.primitives.concept_mapper import ConceptMapper
+from ai.multimodal.primitives.geometric_vocabulary import GeometricVocabulary
+from ai.multimodal.primitives.instance_optimizer import InstanceOptimizer
 from ai.multimodal.primitives.primitive_types import TOTAL_DIM
 
 

@@ -9,11 +9,11 @@ ANGELA-MATRIX: L3 [β] [A] [L0-L11]
 
 import asyncio
 import logging
-from typing import Dict, Any, Optional, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
-    from services.llm.router import AngelaLLMService, LLMResponse
     from core.interfaces.protocols import ChatResponse
+    from services.llm.router import AngelaLLMService, LLMResponse
 
 logger = logging.getLogger("angela_llm.memory")
 
@@ -36,10 +36,8 @@ def _load_memory_modules() -> str:
     _memory_modules_loaded = True
 
     try:
-        from ai.memory.memory_template import (
-            AngelaState as _AS,
-            UserImpression as _UI,
-        )
+        from ai.memory.memory_template import AngelaState as _AS
+        from ai.memory.memory_template import UserImpression as _UI
         from ai.memory.precompute_service import PrecomputeTask as _PT
 
         AngelaState = _AS

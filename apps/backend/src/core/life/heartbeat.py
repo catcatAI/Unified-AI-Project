@@ -9,9 +9,11 @@ import asyncio
 import logging
 from datetime import datetime
 from typing import Optional
+
 from core.bio.biological_integrator import BiologicalIntegrator
 from core.bio.endocrine_system import HormoneType
-from core.system.config.magic_numbers import loop_sleep, heartbeat_value as _hb
+from core.system.config.magic_numbers import heartbeat_value as _hb
+from core.system.config.magic_numbers import loop_sleep
 from integrations.os_bridge_adapter import OSBridgeAdapter
 
 logger = logging.getLogger(__name__)

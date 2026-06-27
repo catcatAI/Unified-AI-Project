@@ -9,13 +9,13 @@
 #
 # =============================================================================
 
-import logging
 import hashlib
+import logging
 import struct
-from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from datetime import datetime
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

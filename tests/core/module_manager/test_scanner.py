@@ -8,8 +8,8 @@ try:
     from apps.backend.src.core.system.module_manager.scanner import ModuleScanner, ValidationError
 except ImportError:
     import pytest; pytest.skip("ModuleScanner is a stub", allow_module_level=True)
-from apps.backend.src.core.system.module_manager.models import ModuleKind
 
+from apps.backend.src.core.system.module_manager.models import ModuleKind
 
 VALID_YAML = {
     "name": "test_module",

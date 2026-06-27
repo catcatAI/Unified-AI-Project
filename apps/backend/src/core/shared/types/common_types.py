@@ -1,9 +1,10 @@
 # src / shared / types / common_types.py
+import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import TypedDict, Optional, Dict, Any, List, Literal
+from typing import Any, Dict, List, Literal, Optional, TypedDict
+
 from typing_extensions import Required
-import logging
 
 logger = logging.getLogger(__name__)
 

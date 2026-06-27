@@ -1,9 +1,10 @@
+from unittest.mock import AsyncMock, MagicMock, Mock
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock, Mock
 
 # Correct import path for CreativeWritingAgent
 from ai.agents.specialized.creative_writing_agent import CreativeWritingAgent
-from core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
+from core.hsp.types import HSPMessageEnvelope, HSPTaskRequestPayload
 
 
 @pytest.fixture

@@ -3,15 +3,15 @@
 负责监控系统资源使用情况, 包括CPU、内存、GPU和网络使用情况
 """
 
-import logging
 import asyncio
 import json
+import logging
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Dict, Any, List, Optional
-from dataclasses import dataclass, asdict
+from typing import Any, Dict, List, Optional
+from unittest.mock import Mock
 
 from core.system.config.magic_numbers import threshold_value
-from unittest.mock import Mock
 
 # Mock dependencies for syntax validation
 try:

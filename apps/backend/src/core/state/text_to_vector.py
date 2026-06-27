@@ -10,8 +10,9 @@ Version: 6.2.1
 """
 
 from __future__ import annotations
-from typing import List
+
 import math
+from typing import List
 
 
 def text_to_vector(text: str, size: int = 32) -> List[float]:

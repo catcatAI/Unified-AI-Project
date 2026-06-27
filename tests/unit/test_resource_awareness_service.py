@@ -1,5 +1,6 @@
 """Tests for services/resource_awareness_service.py"""
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 

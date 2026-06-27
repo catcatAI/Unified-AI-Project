@@ -2,9 +2,10 @@
 测试模块 - test_learning_and_trust
 """
 
-import pytest
 import uuid
 from unittest.mock import MagicMock
+
+import pytest
 
 
 class TestLearningAndTrustIntegration:

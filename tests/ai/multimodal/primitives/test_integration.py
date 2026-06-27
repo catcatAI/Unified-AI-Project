@@ -1,16 +1,14 @@
 """Integration tests for primitives package."""
 
-import numpy as np
-import pytest
 import tempfile
 from pathlib import Path
 
-from ai.multimodal.primitives.primitive_types import (
-    Point, Line, Plane, DrawingInstructions
-)
-from ai.multimodal.primitives.primitive_renderer import PrimitiveRenderer
-from ai.multimodal.primitives.primitive_library import PrimitiveLibrary
+import numpy as np
+import pytest
 from ai.multimodal.primitives.primitive_encoder import PrimitiveEncoder
+from ai.multimodal.primitives.primitive_library import PrimitiveLibrary
+from ai.multimodal.primitives.primitive_renderer import PrimitiveRenderer
+from ai.multimodal.primitives.primitive_types import DrawingInstructions, Line, Plane, Point
 
 
 class TestPrimitivesIntegration:

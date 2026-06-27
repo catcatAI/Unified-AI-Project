@@ -2,11 +2,11 @@
 Configuration for pytest: Add project source directories to the Python path.
 """
 
-import sys
-import os
 import logging
+import os
+import sys
 import time
-from typing import Callable, Any, Dict
+from typing import Any, Callable, Dict
 
 logger = logging.getLogger(__name__)
 

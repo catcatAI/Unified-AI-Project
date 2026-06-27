@@ -5,17 +5,18 @@
 # 維度: 認知 (β) 維度的資訊獲取 + 精神 (δ) 維度的資源感知
 # =============================================================================
 
-import logging
 import json
+import logging
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
+
+from core.interfaces.service_registry import get_registry
+from core.system.config.magic_numbers import batch_value
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
-from core.interfaces.service_registry import get_registry
-from core.system.config.magic_numbers import batch_value
+from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 
 logger = logging.getLogger(__name__)
 

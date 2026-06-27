@@ -6,7 +6,7 @@ State persistence protocol for save/load operations.
 import logging
 from abc import abstractmethod
 from pathlib import Path
-from typing import Dict, Any, Optional, Protocol, runtime_checkable
+from typing import Any, Dict, Optional, Protocol, runtime_checkable
 
 from core.system.config.async_io import async_json_dump, async_json_load
 

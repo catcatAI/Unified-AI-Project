@@ -1,5 +1,7 @@
-import pytest
 from datetime import datetime
+
+import pytest
+
 from apps.backend.src.core.tracing.causal_chain import CausalChain, CausalNode, LayerType
 from apps.backend.src.core.tracing.chain_validator import ChainValidator, ValidationResult
 

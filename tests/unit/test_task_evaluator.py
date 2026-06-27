@@ -1,6 +1,7 @@
 """Smoke tests for apps.backend.src.ai.evaluation.task_evaluator"""
 import pytest
 
+
 class TestTaskExecutionEvaluator:
     def test_import(self):
         try:

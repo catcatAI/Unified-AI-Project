@@ -1,10 +1,10 @@
 import random
-import numpy as np
-from fastapi.testclient import TestClient
 
-from services.main_api_server import app
+import numpy as np
 from api.v1.endpoints import audio as audio_mod
+from fastapi.testclient import TestClient
 from services.audio_service import AudioService
+from services.main_api_server import app
 
 
 def setup_module(module):

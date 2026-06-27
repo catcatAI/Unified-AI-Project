@@ -14,11 +14,11 @@
 #
 # =============================================================================
 
+import logging
 import os
 import re
-import logging
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 

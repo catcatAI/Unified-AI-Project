@@ -1,6 +1,7 @@
 """Smoke tests for ai.context.exceptions"""
 import pytest
 
+
 class TestContextError:
     def test_import(self):
         try:

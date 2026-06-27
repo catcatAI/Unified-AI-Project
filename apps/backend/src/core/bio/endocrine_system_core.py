@@ -36,15 +36,17 @@ Version: 6.0.0
 # =============================================================================
 
 from __future__ import annotations
-from typing import Dict, Optional, Callable, Any
-from datetime import datetime
+
 import asyncio
-import math
 import logging
+import math
+from datetime import datetime
+from typing import Any, Callable, Dict, Optional
+
 from core.system.config.magic_numbers import loop_sleep
 from core.tracing import get_tracer
 
-from .endocrine_types import HormoneType, Hormone
+from .endocrine_types import Hormone, HormoneType
 
 logger = logging.getLogger(__name__)
 

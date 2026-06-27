@@ -7,10 +7,11 @@ Tracks habit automaticity based on repetition in stable contexts.
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple, Any
-from datetime import datetime
+
 import logging
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 

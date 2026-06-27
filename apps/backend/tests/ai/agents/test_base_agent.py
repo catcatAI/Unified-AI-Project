@@ -1,8 +1,10 @@
 import asyncio
-import pytest
 from unittest.mock import AsyncMock
 
+import pytest
 from ai.agents.base.base_agent import BaseAgent
+
+
 class MockAgent(BaseAgent):
     """
     A concrete implementation of BaseAgent for testing,

@@ -6,16 +6,17 @@ Run with: python -m apps.backend.src.core.autonomous.test_browser_controller
 
 import asyncio
 import logging
+
 try:
     from core.engine.browser_controller import (
-        BrowserController,
-        BrowserConfig,
-        BrowserType,
         AutomationFramework,
+        BrowserConfig,
+        BrowserController,
+        BrowserType,
         SafetyControls,
         create_browser_controller,
-        quick_search,
         quick_extract,
+        quick_search,
     )
 except ImportError:
     import pytest; pytest.skip("BrowserConfig not defined", allow_module_level=True)

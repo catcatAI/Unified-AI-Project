@@ -1,11 +1,17 @@
-import pytest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+
+import pytest
 import yaml
 
 from apps.backend.src.core.system.module_manager import ModuleManager
 from apps.backend.src.core.system.module_manager.models import (
-    ModuleStatus, ModuleDescriptor, ModuleInstance, ModuleKind, DependencySpec, LifecycleHooks,
+    DependencySpec,
+    LifecycleHooks,
+    ModuleDescriptor,
+    ModuleInstance,
+    ModuleKind,
+    ModuleStatus,
 )
 
 

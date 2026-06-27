@@ -19,16 +19,22 @@ Author: Angela AI v6.2
 Version: 6.2.1
 """
 
-from core.state.axis_field import AxisField, AxisFieldRegistry
 from core.state.axis import Axis
+from core.state.axis_field import AxisField, AxisFieldRegistry
 
 try:
-    from core.state.temporal import TemporalState, SnapshotQuery, TrendResult, AnomalyResult, CorrelationResult
+    from core.state.temporal import (
+        AnomalyResult,
+        CorrelationResult,
+        SnapshotQuery,
+        TemporalState,
+        TrendResult,
+    )
 except ImportError:
     TemporalState = SnapshotQuery = TrendResult = AnomalyResult = CorrelationResult = None
 
 try:
-    from core.state.config_loader import StateConfig, StateMatrixConfig, AxisConfig, AxisFieldConfig
+    from core.state.config_loader import AxisConfig, AxisFieldConfig, StateConfig, StateMatrixConfig
 except ImportError:
     StateConfig = StateMatrixConfig = AxisConfig = AxisFieldConfig = None
 

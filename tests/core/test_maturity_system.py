@@ -1,6 +1,6 @@
 """C4 — MaturitySystem unit tests"""
 
-from core.maturity.maturity_system import MaturityLevel, ExperienceTracker, MaturityManager
+from core.maturity.maturity_system import ExperienceTracker, MaturityLevel, MaturityManager
 
 
 class TestMaturityLevel:

@@ -15,29 +15,32 @@ Date: 2026-02-02
 """
 
 import asyncio
-import pytest
 import time
-from datetime import datetime, timedelta
-from typing import Dict, Any, List
 from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import Any, Dict, List
+
+import pytest
 import pytest_asyncio
 
 try:
     from feedback_loop_engine import (
+        FeedbackLayer,
         FeedbackLoopEngine,
+        FeedbackLoopEngineFactory,
+        FeedbackSignal,
+        FeedbackType,
         PerceptionEvent,
         PerceptionType,
-        FeedbackSignal,
-        FeedbackLayer,
-        FeedbackType,
-        FeedbackLoopEngineFactory,
     )
 except ImportError:
     import pytest; pytest.skip("feedback_loop_engine does not exist", allow_module_level=True)
-from real_time_monitor import RealTimeMonitor, MouseData, FileSystemEvent, TimeEvent
-from feedback_processor import FeedbackProcessor, LearningSignal, StrategyAdjustment
-from event_loop_system import EventLoopSystem, Event, EventPriority
+
 import logging
+
+from event_loop_system import Event, EventLoopSystem, EventPriority
+from feedback_processor import FeedbackProcessor, LearningSignal, StrategyAdjustment
+from real_time_monitor import FileSystemEvent, MouseData, RealTimeMonitor, TimeEvent
 
 logger = logging.getLogger(__name__)
 
@@ -518,7 +521,7 @@ class TestClosedLoopLearning:
         processor = feedback_processor
 
         # Create feedback signals
-        from feedback_loop_engine import FeedbackSignal, FeedbackLayer, FeedbackType
+        from feedback_loop_engine import FeedbackLayer, FeedbackSignal, FeedbackType
 
         success_signal = FeedbackSignal(
             signal_id="test_1",
@@ -542,7 +545,7 @@ class TestClosedLoopLearning:
         """Test generation of HSM updates from feedback"""
         processor = feedback_processor
 
-        from feedback_loop_engine import FeedbackSignal, FeedbackLayer, FeedbackType
+        from feedback_loop_engine import FeedbackLayer, FeedbackSignal, FeedbackType
 
         # Create feedback with context
         signal = FeedbackSignal(
@@ -571,7 +574,7 @@ class TestClosedLoopLearning:
         """Test generation of CDM updates from feedback"""
         processor = feedback_processor
 
-        from feedback_loop_engine import FeedbackSignal, FeedbackLayer, FeedbackType
+        from feedback_loop_engine import FeedbackLayer, FeedbackSignal, FeedbackType
 
         signal = FeedbackSignal(
             signal_id="test_1",
@@ -597,7 +600,7 @@ class TestClosedLoopLearning:
         """Test generation of behavior strategy adjustments"""
         processor = feedback_processor
 
-        from feedback_loop_engine import FeedbackSignal, FeedbackLayer, FeedbackType
+        from feedback_loop_engine import FeedbackLayer, FeedbackSignal, FeedbackType
 
         # Create multiple failure signals to trigger adjustment
         for i in range(5):
@@ -633,7 +636,7 @@ class TestClosedLoopLearning:
 
         processor.register_learning_callback(learning_callback)
 
-        from feedback_loop_engine import FeedbackSignal, FeedbackLayer, FeedbackType
+        from feedback_loop_engine import FeedbackLayer, FeedbackSignal, FeedbackType
 
         signal = FeedbackSignal(
             signal_id="test_1",
@@ -656,7 +659,7 @@ class TestClosedLoopLearning:
         processor = feedback_processor
 
         # Add some feedback
-        from feedback_loop_engine import FeedbackSignal, FeedbackLayer, FeedbackType
+        from feedback_loop_engine import FeedbackLayer, FeedbackSignal, FeedbackType
 
         for i in range(5):
             signal = FeedbackSignal(

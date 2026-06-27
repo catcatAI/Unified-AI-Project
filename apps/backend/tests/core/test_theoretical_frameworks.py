@@ -14,31 +14,49 @@ Version: 6.0.0
 Date: 2026-02-02
 """
 
-import pytest
 import asyncio
 from datetime import datetime, timedelta
-from typing import Dict, Any
+from typing import Any, Dict
+
+import pytest
+from core.active_cognition_formula import (
+    ActiveCognitionFormula,
+    ActiveConstruction,
+    OrderBaseline,
+    OrderType,
+    StressSource,
+    StressVector,
+)
+from core.cdm_dividend_model import (
+    CDMCognitiveDividendModel,
+    CognitiveActivity,
+    CognitiveInvestment,
+    DividendDistribution,
+    LifeSenseOutput,
+)
 
 # Import all formula systems
 from core.hsm_formula_system import (
-    HSMFormulaSystem, CognitiveGap, ExplorationEvent, 
-    ExplorationResult, GovernanceBlueprint
-)
-from core.cdm_dividend_model import (
-    CDMCognitiveDividendModel, CognitiveInvestment, LifeSenseOutput,
-    CognitiveActivity, DividendDistribution
+    CognitiveGap,
+    ExplorationEvent,
+    ExplorationResult,
+    GovernanceBlueprint,
+    HSMFormulaSystem,
 )
 from core.life_intensity_formula import (
-    LifeIntensityFormula, KnowledgeState, ConstraintState,
-    ObserverPresence, KnowledgeDomain, LifeIntensitySnapshot
-)
-from core.active_cognition_formula import (
-    ActiveCognitionFormula, StressVector, OrderBaseline,
-    ActiveConstruction, StressSource, OrderType
+    ConstraintState,
+    KnowledgeDomain,
+    KnowledgeState,
+    LifeIntensityFormula,
+    LifeIntensitySnapshot,
+    ObserverPresence,
 )
 from core.non_paradox_existence import (
-    NonParadoxExistence, GrayZoneVariable, PossibilityState,
-    CoexistenceField, GrayZoneVariableType
+    CoexistenceField,
+    GrayZoneVariable,
+    GrayZoneVariableType,
+    NonParadoxExistence,
+    PossibilityState,
 )
 
 

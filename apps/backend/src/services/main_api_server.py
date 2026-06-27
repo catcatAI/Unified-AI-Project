@@ -38,11 +38,11 @@ Usage:
 #
 # =============================================================================
 
+import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List
-import logging
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -263,14 +263,13 @@ class MessageManager:
 # 创建全局消息管理器实例
 message_manager = MessageManager()
 
+from api.router import router as api_v1_router  # noqa: E402
 from fastapi import (  # noqa: E402
-    FastAPI,
-    Depends,
     Body,
+    Depends,
+    FastAPI,
 )
 from services.angela_llm_service import get_llm_service  # noqa: E402
-
-from api.router import router as api_v1_router  # noqa: E402
 
 app = FastAPI(
     title="Angela AI API",
@@ -283,20 +282,22 @@ from api.lifespan import (  # noqa: E402
     setup_middleware,
 )
 
-
 setup_middleware(app)
 app.router.lifespan_context = lifespan
 
 
-from services.websocket_manager import websocket_handler, broadcast_state_updates, manager as ws_manager  # noqa: E402
+from services.websocket_manager import broadcast_state_updates
+from services.websocket_manager import manager as ws_manager  # noqa: E402
+from services.websocket_manager import websocket_handler
 
 app.websocket("/ws")(websocket_handler)
 
 from services.multimodal_ws_handler import multimodal_stream_handler  # noqa: E402
+
 app.websocket("/multimodal/stream")(multimodal_stream_handler)
 
-from services.atlassian_api import atlassian_router  # noqa: E402
 from services.api.state_matrix_api import state_matrix_router  # noqa: E402
+from services.atlassian_api import atlassian_router  # noqa: E402
 
 # Include existing routers
 app.include_router(api_v1_router)

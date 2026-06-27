@@ -10,7 +10,6 @@ import os
 import tempfile
 
 import pytest
-
 from ai.garden.dictionary import VectorDictionary
 
 

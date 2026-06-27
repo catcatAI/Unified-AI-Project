@@ -2,13 +2,22 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from .models import ModuleDescriptor, ModuleInstance, ModuleStatus, InitResult, StartResult, HotplugResult
+from .models import (
+    HotplugResult,
+    InitResult,
+    ModuleDescriptor,
+    ModuleInstance,
+    ModuleStatus,
+    StartResult,
+)
+
 try:
     from .scanner import ModuleScanner
 except ImportError:
     ModuleScanner = None
-from .resolver import DependencyResolver, CycleError
 from .events import EventBus, HealthMonitor
+from .resolver import CycleError, DependencyResolver
+
 try:
     from .lifecycle import ModuleLifecycle
 except ImportError:

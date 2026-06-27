@@ -1,18 +1,18 @@
 # This module will handle image understanding, object detection, OCR, etc.
+import asyncio
+import hashlib
 import io
 import logging
 import random
-import hashlib
-import asyncio
 from datetime import datetime
-from typing import Any, Dict, Optional, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
-from core.system.config.magic_numbers import timing_value
-from core.perception.visual_sampler import VisualSampler, SamplingDistribution
-from core.perception.perceptual_memory import PerceptualMemory
 from core.perception.attention_controller import AttentionController
-from core.sync.realtime_sync import sync_manager, SyncEvent
+from core.perception.perceptual_memory import PerceptualMemory
+from core.perception.visual_sampler import SamplingDistribution, VisualSampler
+from core.sync.realtime_sync import SyncEvent, sync_manager
 from core.system.cluster_manager import cluster_manager
+from core.system.config.magic_numbers import timing_value
 from integrations.os_bridge_adapter import OSBridgeAdapter
 
 logger = logging.getLogger(__name__)
@@ -126,8 +126,9 @@ class VisionService:
         if image_data is not None:
             return image_data, None
         try:
-            import pyautogui
             from io import BytesIO
+
+            import pyautogui
             screenshot = pyautogui.screenshot()
             img_byte_arr = BytesIO()
             screenshot.save(img_byte_arr, format='PNG')
@@ -219,6 +220,7 @@ class VisionService:
             if comparison_type == "similarity":
                 try:
                     from io import BytesIO
+
                     from PIL import Image
                     img1 = Image.open(BytesIO(image_data1)).convert("RGB").resize((32, 32))
                     img2 = Image.open(BytesIO(image_data2)).convert("RGB").resize((32, 32))
@@ -239,8 +241,9 @@ class VisionService:
             elif comparison_type == "difference":
                 try:
                     from io import BytesIO
-                    from PIL import Image
+
                     import numpy as np
+                    from PIL import Image
                     img1 = np.array(Image.open(BytesIO(image_data1)).convert("RGB").resize((64, 64)))
                     img2 = np.array(Image.open(BytesIO(image_data2)).convert("RGB").resize((64, 64)))
                     diff = np.abs(img1.astype(int) - img2.astype(int))
@@ -438,6 +441,7 @@ class VisionService:
 
         try:
             from io import BytesIO
+
             from PIL import Image
             img = Image.open(BytesIO(image_data))
             fmt = img.format or "unknown"
@@ -459,6 +463,7 @@ class VisionService:
 
         try:
             from io import BytesIO
+
             from PIL import Image
             img = Image.open(BytesIO(image_data))
             fmt = img.format or "unknown"
@@ -523,6 +528,7 @@ class VisionService:
         # Without one, report availability info instead of random data
         try:
             from io import BytesIO
+
             from PIL import Image
             img = Image.open(BytesIO(image_data))
             w, h = img.size
@@ -537,9 +543,10 @@ class VisionService:
         await asyncio.sleep(timing_value("vision.processing_caption", 0.04))
 
         try:
-            from io import BytesIO
-            from PIL import Image
             import math
+            from io import BytesIO
+
+            from PIL import Image
             img = Image.open(BytesIO(image_data)).convert("RGB").resize((64, 64))
             pixels = list(img.getdata())
             total = len(pixels)
@@ -595,6 +602,7 @@ class VisionService:
 
         try:
             from io import BytesIO
+
             from PIL import Image
             img = Image.open(BytesIO(image_data)).convert("RGB").resize((64, 64))
             pixels = list(img.getdata())
@@ -672,8 +680,9 @@ class VisionService:
 
         try:
             from io import BytesIO
-            from PIL import Image
+
             import numpy as np
+            from PIL import Image
             img1 = np.array(Image.open(BytesIO(image_data1)).convert("RGB").resize((32, 32)))
             img2 = np.array(Image.open(BytesIO(image_data2)).convert("RGB").resize((32, 32)))
             diff = np.abs(img1.astype(int) - img2.astype(int))
@@ -708,9 +717,10 @@ class VisionService:
         await asyncio.sleep(timing_value("vision.processing_ocr", 0.06))
 
         try:
-            from io import BytesIO
-            from PIL import Image
             import hashlib
+            from io import BytesIO
+
+            from PIL import Image
             img1 = Image.open(BytesIO(image_data1)).convert("RGB").resize((16, 16))
             img2 = Image.open(BytesIO(image_data2)).convert("RGB").resize((16, 16))
             h1 = hashlib.md5(img1.tobytes()).hexdigest()

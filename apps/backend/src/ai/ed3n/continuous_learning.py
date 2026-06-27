@@ -13,8 +13,8 @@ from typing import Any, Dict, List, Optional
 
 from .training_types import (
     TrainingBatch,
-    TrainingExample as TTTrainingExample,
 )
+from .training_types import TrainingExample as TTTrainingExample
 
 logger = logging.getLogger(__name__)
 
@@ -304,7 +304,8 @@ class ContinuousLearningPipeline:
 
     def save(self, save_dir: str) -> str:
         with self._lock:
-            import json, os
+            import json
+            import os
             os.makedirs(save_dir, exist_ok=True)
             state = {
                 "interaction_count": self._interaction_count,
@@ -330,7 +331,8 @@ class ContinuousLearningPipeline:
 
     @classmethod
     def load(cls, save_dir: str, engine=None, trainer=None) -> "ContinuousLearningPipeline":
-        import json, os
+        import json
+        import os
         path = os.path.join(save_dir, "cl_state.json")
         with open(path, "r", encoding="utf-8") as f:
             state = json.load(f)

@@ -2,15 +2,15 @@
 Audit Logging System for AI Operations.
 """
 
-import logging
 import json
+import logging
 import os
 import threading
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from dataclasses import dataclass, asdict
 from enum import Enum
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

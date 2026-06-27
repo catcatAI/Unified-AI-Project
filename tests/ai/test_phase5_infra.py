@@ -3,9 +3,10 @@ Phase 5 Integration Tests — Infrastructure
 Tests for Dockerfile, docker-compose, Prometheus config, Nginx config
 """
 
-import pytest
 import os
 from pathlib import Path
+
+import pytest
 
 
 class TestDockerfile:

@@ -4,10 +4,11 @@ Expanded types: Point, Line, Plane, Circle, Arc
 Vector layout expanded to ~200 dims for richer representation.
 """
 
+import math
 from dataclasses import dataclass, field
 from typing import List, Tuple
+
 import numpy as np
-import math
 
 
 @dataclass

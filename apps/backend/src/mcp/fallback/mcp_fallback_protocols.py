@@ -4,8 +4,8 @@
 
 import asyncio
 import logging
-from typing import Dict, Any, Optional, Callable, Awaitable
 from enum import Enum
+from typing import Any, Awaitable, Callable, Dict, Optional
 
 logger = logging.getLogger(__name__)
 

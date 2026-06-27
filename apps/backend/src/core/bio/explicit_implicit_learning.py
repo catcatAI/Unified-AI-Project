@@ -8,10 +8,11 @@ consolidation patterns.
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Dict, Optional, Any
-from datetime import datetime
+
 import logging
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 

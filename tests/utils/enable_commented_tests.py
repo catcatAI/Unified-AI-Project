@@ -7,11 +7,12 @@ This script will,
 3. Generate a report of changes made
 """
 
+import logging
 import os
 import re
 from pathlib import Path
-from typing import List, Tuple, Dict
-import logging
+from typing import Dict, List, Tuple
+
 logger = logging.getLogger(__name__)
 
 

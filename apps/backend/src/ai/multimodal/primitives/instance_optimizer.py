@@ -5,16 +5,17 @@ Phase 8: For a specific image, optimize primitive parameters at pixel level.
 Loss = MSE(rendered, original) at pixel level (NOT CLIP similarity).
 """
 
-import numpy as np
 import time
 from typing import Optional, Tuple
+
+import numpy as np
 from PIL import Image
 
-from .primitive_types import DrawingInstructions, TOTAL_DIM
-from .differentiable_renderer import DifferentiableRenderer
-from .primitive_renderer import PrimitiveRenderer
-from .geometric_vocabulary import GeometricVocabulary
 from .concept_mapper import ConceptMapper
+from .differentiable_renderer import DifferentiableRenderer
+from .geometric_vocabulary import GeometricVocabulary
+from .primitive_renderer import PrimitiveRenderer
+from .primitive_types import TOTAL_DIM, DrawingInstructions
 
 
 class InstanceOptimizer:

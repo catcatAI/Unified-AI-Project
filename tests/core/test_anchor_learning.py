@@ -11,10 +11,12 @@ Author: Angela AI v6.2
 import sys
 
 from core.engine.anchor_learning import AnchorLearningEngine
+
 try:
     from core.allocation.resonance import ResonanceEngine
 except ImportError:
     import pytest; pytest.skip("ResonanceEngine is a stub", allow_module_level=True)
+
 from core.state.temporal import TemporalState
 
 

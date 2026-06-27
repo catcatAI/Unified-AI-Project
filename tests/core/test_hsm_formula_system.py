@@ -1,7 +1,11 @@
 import pytest
+
 from apps.backend.src.core.hsm_formula_system import (
-    HSMFormulaSystem, CognitiveGap, ExplorationEvent,
-    GovernanceBlueprint, ExplorationResult,
+    CognitiveGap,
+    ExplorationEvent,
+    ExplorationResult,
+    GovernanceBlueprint,
+    HSMFormulaSystem,
 )
 
 

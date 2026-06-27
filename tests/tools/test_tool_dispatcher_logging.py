@@ -1,7 +1,8 @@
-import json
 import asyncio
+import json
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock
 
 
 # Mock the ToolDispatcherResponse type

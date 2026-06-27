@@ -10,9 +10,10 @@ S6 端到端測試：v6.3 配置驅動系統測試套件
 5. 降級鏈整合
 """
 
-import pytest
 import time
 from pathlib import Path
+
+import pytest
 
 
 class TestIntentRegistryConfig:
@@ -344,6 +345,7 @@ class TestTickleReflexSystem:
     def test_trigger_returns_phase_structure(self):
         """trigger_tickles 返回 Phase1 + Phase2 結構"""
         import asyncio
+
         from core.life.tickle_reflex_system import get_reflex_system
 
         reflex = get_reflex_system()
@@ -369,6 +371,7 @@ class TestTickleReflexSystem:
     def test_sensitive_part_returns_comfort_seek(self):
         """敏感部位觸發時返回 comfort_seek"""
         import asyncio
+
         from core.life.tickle_reflex_system import get_reflex_system
 
         reflex = get_reflex_system()
@@ -389,6 +392,7 @@ class TestTickleReflexSystem:
     def test_sustained_stimulus_falls_back(self):
         """持續刺激（>5s）自動回退到 comfort_seek"""
         import asyncio
+
         from core.life.tickle_reflex_system import get_reflex_system
 
         reflex = get_reflex_system()
@@ -409,6 +413,7 @@ class TestTickleReflexSystem:
     def test_intense_mode_output_mode(self):
         """intense 模式（>=0.8）輸出模式為 scream"""
         import asyncio
+
         from core.life.tickle_reflex_system import get_reflex_system
 
         reflex = get_reflex_system()
@@ -429,8 +434,9 @@ class TestTickleReflexSystem:
     def test_gamma_invasion_on_sustained(self):
         """持續刺激時 γ軸 被入侵（恐懼+）"""
         import asyncio
-        from core.life.tickle_reflex_system import get_reflex_system
+
         from core.autonomous.state_matrix import StateMatrix4D
+        from core.life.tickle_reflex_system import get_reflex_system
 
         reflex = get_reflex_system()
         sm = StateMatrix4D()
@@ -451,8 +457,9 @@ class TestTickleReflexSystem:
     def test_gamma_invasion_on_sensitive(self):
         """敏感部位觸發時 γ軸 被入侵"""
         import asyncio
-        from core.life.tickle_reflex_system import get_reflex_system
+
         from core.autonomous.state_matrix import StateMatrix4D
+        from core.life.tickle_reflex_system import get_reflex_system
 
         reflex = get_reflex_system()
         sm = StateMatrix4D()
@@ -621,8 +628,9 @@ class TestGoogleDriveIntegration:
 
     def test_drive_service_get_auth_url_returns_url(self):
         """credentials.json 存在時返回 OAuth URL"""
-        from integrations.google_drive_service import GoogleDriveService
         from pathlib import Path
+
+        from integrations.google_drive_service import GoogleDriveService
         cred_path = Path(__file__).parent.parent / "config" / "credentials.json"
         if not cred_path.exists():
             import pytest
@@ -655,8 +663,9 @@ class TestGoogleDriveIntegration:
 
     def test_drive_detect_intent_in_chat_service(self):
         """ChatService._detect_drive_intent 方法存在且可檢測意圖"""
-        from services.chat_service import AngelaChatService
         import asyncio
+
+        from services.chat_service import AngelaChatService
         svc = AngelaChatService()
         assert hasattr(svc, "_detect_drive_intent")
         assert callable(svc._detect_drive_intent)

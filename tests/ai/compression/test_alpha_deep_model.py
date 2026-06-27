@@ -8,12 +8,12 @@ import pytest
 try:
     from ai.compression.alpha_deep_model import (
         AlphaDeepModel,
+        CompressionAlgorithm,
         DeepParameter,
         HAMGist,
-        RelationalContext,
         Modalities,
-        CompressionAlgorithm,
-   )
+        RelationalContext,
+    )
 except ImportError:
     pytest.skip("ai.compression module was removed (Phase 1 architecture cleanup)", allow_module_level=True)
 

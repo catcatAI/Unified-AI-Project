@@ -5,10 +5,11 @@ C5: Now with async persistence via JsonFileStateStore.
 """
 
 import asyncio
-import threading
 import logging
-from typing import Dict, Any, List, Callable, Optional
+import threading
 from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional
+
 from core.interfaces.service_registry import get_registry
 from utils.async_utils import safe_create_task_sync
 

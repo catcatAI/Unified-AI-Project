@@ -11,43 +11,32 @@ Angela LLM Service - Angela 的智能對話引擎
 """
 
 import asyncio
+import logging
 import os
-from core.system.config.network_defaults import (
-    OLLAMA_HOST,
-    LLAMACPP_HOST,
-    OPENAI_API_BASE,
-    ANTHROPIC_API_BASE,
-    DEFAULT_OPENAI_MODEL,
-    DEFAULT_ANTHROPIC_MODEL,
-    DEFAULT_OLLAMA_MODEL,
-    DEFAULT_GOOGLE_MODEL,
-    LLM_REQUEST_TIMEOUT,
-)
-import time
 import random
 import re
-import logging
-from typing import Dict, Any, Optional, List, NamedTuple
+import time
+from typing import Any, Dict, List, NamedTuple, Optional
 
+from core.interfaces.protocols import ChatMessage, ChatResponse, LLMResponse
 from core.interfaces.service_registry import get_registry
-from core.interfaces.protocols import ChatMessage, LLMResponse, ChatResponse
+from core.system.config.network_defaults import (
+    ANTHROPIC_API_BASE,
+    DEFAULT_ANTHROPIC_MODEL,
+    DEFAULT_GOOGLE_MODEL,
+    DEFAULT_OLLAMA_MODEL,
+    DEFAULT_OPENAI_MODEL,
+    LLAMACPP_HOST,
+    LLM_REQUEST_TIMEOUT,
+    OLLAMA_HOST,
+    OPENAI_API_BASE,
+)
 
 try:
-    from ai.response.neuro_auto_selector import AutoDecision, AutoBackendChoice
+    from ai.response.neuro_auto_selector import AutoBackendChoice, AutoDecision
 except ImportError:
     AutoDecision = None
     AutoBackendChoice = None
-
-# LLM provider backends
-from services.llm.providers.base import BaseLLMBackend
-from services.llm.providers.registry import LLMBackend
-from services.llm.providers.llamacpp import LlamaCppBackend
-from services.llm.providers.ollama import OllamaBackend
-from services.llm.providers.openai import OpenAIAPIBackend
-from services.llm.providers.anthropic import AnthropicAPIBackend
-from services.llm.providers.google import GoogleAPIBackend
-from services.llm.providers.ed3n import ED3NBackend
-from services.llm.providers.garden import GARDENBackend
 
 # Model Bus pipeline
 from ai.core.model_bus import ModelBus
@@ -55,10 +44,21 @@ from ai.core.query_classifier import QueryClassifier
 
 # Prompt builder utilities
 from services.llm.prompt_builder import (
+    construct_angela_prompt,
     get_biological_state,
     get_formula_summaries,
-    construct_angela_prompt,
 )
+from services.llm.providers.anthropic import AnthropicAPIBackend
+
+# LLM provider backends
+from services.llm.providers.base import BaseLLMBackend
+from services.llm.providers.ed3n import ED3NBackend
+from services.llm.providers.garden import GARDENBackend
+from services.llm.providers.google import GoogleAPIBackend
+from services.llm.providers.llamacpp import LlamaCppBackend
+from services.llm.providers.ollama import OllamaBackend
+from services.llm.providers.openai import OpenAIAPIBackend
+from services.llm.providers.registry import LLMBackend
 
 # 簡單日誌設置
 if __name__ == "__main__":
@@ -147,6 +147,7 @@ TaskGenerator = None
 from services.llm.emotion_analyzer import EmotionAnalyzer
 from services.llm.memory_integration import MemoryIntegration
 
+
 def _load_memory_modules() -> str:
     """Lazy load memory enhancement modules on first access"""
     global _memory_modules_loaded, _MEMORY_ENHANCED
@@ -160,17 +161,13 @@ def _load_memory_modules() -> str:
 
     try:
         from ai.memory.ham_memory.ham_manager import HAMMemoryManager as _HAM
-        from ai.memory.memory_template import (
-            AngelaState as _AS,
-            UserImpression as _UI,
-            MemoryTemplate as _MT,
-        )
-        from ai.memory.precompute_service import (
-            PrecomputeService as _PS,
-            PrecomputeTask as _PT,
-        )
-        from ai.memory.template_library import get_template_library as _GTL
+        from ai.memory.memory_template import AngelaState as _AS
+        from ai.memory.memory_template import MemoryTemplate as _MT
+        from ai.memory.memory_template import UserImpression as _UI
+        from ai.memory.precompute_service import PrecomputeService as _PS
+        from ai.memory.precompute_service import PrecomputeTask as _PT
         from ai.memory.task_generator import TaskGenerator as _TG
+        from ai.memory.template_library import get_template_library as _GTL
 
         HAMMemoryManager = _HAM
         AngelaState = _AS
@@ -274,9 +271,9 @@ class AngelaLLMService:
     def _init_response_system(self) -> None:
         """初始化 P0-2 响应组合与匹配系统"""
         try:
-            from ai.response.template_matcher import TemplateMatcher
             from ai.response.composer import ResponseComposer
             from ai.response.deviation_tracker import DeviationTracker, ResponseRoute
+            from ai.response.template_matcher import TemplateMatcher
 
             self.template_matcher = TemplateMatcher()
             self.response_composer = ResponseComposer()
@@ -597,12 +594,12 @@ class AngelaLLMService:
 
     def _register_model_bus_handlers(self):
         try:
-            from services.handlers.file_operation_handler import FileOperationHandler
-            from services.handlers.web_search_handler import WebSearchHandler
             from services.handlers.code_execution_handler import CodeExecutionHandler
+            from services.handlers.file_operation_handler import FileOperationHandler
             from services.handlers.system_command_handler import SystemCommandHandler
             from services.handlers.task_manager_handler import TaskManagerHandler
             from services.handlers.vision_handler import VisionHandler
+            from services.handlers.web_search_handler import WebSearchHandler
             self.model_bus.register_handler("file_ops", FileOperationHandler(), ["file"])
             self.model_bus.register_handler("web_search", WebSearchHandler(), ["search"])
             self.model_bus.register_handler("code_exec", CodeExecutionHandler(), ["code", "execute"])
@@ -974,8 +971,8 @@ class AngelaLLMService:
 
         # Tier 3: pure template
         try:
-            from ai.memory.template_library import get_template_library
             from ai.memory.memory_template import ResponseCategory
+            from ai.memory.template_library import get_template_library
             library = get_template_library()
 
             emotion = context.get("bio_state", {}).get("dominant_emotion", "neutral").lower()
@@ -1027,8 +1024,8 @@ class AngelaLLMService:
         """尝试使用 NeuroBlender 合成回复"""
         # Lazy initialize NeuroVocabulary from TemplateLibrary
         if self.__class__._neuro_vocab_instance is None:
-            from ai.response.composer import NeuroVocabulary, NeuroBlender
             from ai.memory.template_library import get_template_library
+            from ai.response.composer import NeuroBlender, NeuroVocabulary
 
             vocab = NeuroVocabulary()
             library = get_template_library()
@@ -1110,7 +1107,7 @@ class AngelaLLMService:
 
         if self.llm_mode == "auto" and self.auto_selector is not None:
             try:
-                from ai.response.neuro_auto_selector import AutoDecision, AutoBackendChoice
+                from ai.response.neuro_auto_selector import AutoBackendChoice, AutoDecision
 
                 ctx = {
                     "intent": context.get("intent", "general"),

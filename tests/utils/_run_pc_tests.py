@@ -4,21 +4,23 @@ Uses importlib.util to bypass ai.dialogue package import chain
 (which has a 11s+ import time due to slow dependencies.
 Direct file load takes ~2s.
 """
-import time, importlib.util
+import importlib.util
+import time
 
 print("Pre-loading slow dependencies...")
 t0 = time.time()
+import core.hsp.types
 import core.shared.types.common_types
 import networkx as nx
-import core.hsp.types
+
 print(f"  loaded in {time.time()-t0:.1f}s")
 
 print()
 print("Running isolation tests...")
 print()
 
-from unittest.mock import MagicMock, AsyncMock
 import asyncio
+from unittest.mock import AsyncMock, MagicMock
 
 # Direct file load (bypasses ai.dialogue package init)
 pc_spec = importlib.util.spec_from_file_location(

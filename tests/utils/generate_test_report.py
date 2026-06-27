@@ -4,13 +4,12 @@
 用于生成集成测试的详细报告
 """
 
-import sys
 import json
-import xml.etree.ElementTree as ET
-from pathlib import Path
-from datetime import datetime
 import logging
-
+import sys
+import xml.etree.ElementTree as ET
+from datetime import datetime
+from pathlib import Path
 
 # 配置日志
 logging.basicConfig(

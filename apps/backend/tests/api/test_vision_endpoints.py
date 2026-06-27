@@ -1,8 +1,7 @@
 import numpy as np
-from fastapi.testclient import TestClient
-
-from services.main_api_server import app
 from api.v1.endpoints import vision as vision_mod
+from fastapi.testclient import TestClient
+from services.main_api_server import app
 from services.vision_service import VisionService
 
 

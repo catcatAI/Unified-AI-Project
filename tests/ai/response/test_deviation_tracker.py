@@ -4,12 +4,14 @@ Test Deviation Tracker
 Unit tests for P0-2 deviation tracking system
 """
 
-import pytest
 import time
+
+import pytest
+
 from apps.backend.src.ai.response.deviation_tracker import (
     DeviationTracker,
-    ResponseRoute,
     ResponseMetrics,
+    ResponseRoute,
 )
 
 

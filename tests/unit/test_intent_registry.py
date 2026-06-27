@@ -7,7 +7,7 @@ class TestIntentRegistry:
 
     def test_import(self):
         """Verify module can be imported"""
-        from core.intent_registry import IntentRegistry, IntentPattern
+        from core.intent_registry import IntentPattern, IntentRegistry
         assert hasattr(IntentRegistry, 'detect')
         assert hasattr(IntentRegistry, 'register')
         assert hasattr(IntentRegistry, 'detect_task_intent')
@@ -48,7 +48,7 @@ class TestIntentRegistry:
 
     def test_register_pattern(self):
         """Verify register() method works"""
-        from core.intent_registry import IntentRegistry, IntentPattern
+        from core.intent_registry import IntentPattern, IntentRegistry
         instance = IntentRegistry()
         pattern = IntentPattern(
             name="sports_query",

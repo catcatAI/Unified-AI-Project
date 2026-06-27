@@ -13,8 +13,8 @@ class TestFormulaToEmotion:
     @pytest.mark.asyncio
     async def test_cognitive_stress_lowers_pleasure(self):
         from apps.backend.src.core.bio.emotional_blending import (
-            EmotionalBlendingSystem,
             BasicEmotion,
+            EmotionalBlendingSystem,
         )
 
         ebs = EmotionalBlendingSystem()
@@ -27,8 +27,8 @@ class TestFormulaToEmotion:
     @pytest.mark.asyncio
     async def test_hormonal_dopamine_boosts_pleasure(self):
         from apps.backend.src.core.bio.emotional_blending import (
-            EmotionalBlendingSystem,
             BasicEmotion,
+            EmotionalBlendingSystem,
         )
 
         ebs = EmotionalBlendingSystem()
@@ -53,8 +53,8 @@ class TestFormulaToEmotion:
     @pytest.mark.asyncio
     async def test_multiple_influences_blend_correctly(self):
         from apps.backend.src.core.bio.emotional_blending import (
-            EmotionalBlendingSystem,
             BasicEmotion,
+            EmotionalBlendingSystem,
         )
 
         ebs = EmotionalBlendingSystem()

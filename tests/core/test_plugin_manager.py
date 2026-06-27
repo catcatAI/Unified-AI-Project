@@ -5,8 +5,8 @@
 class TestPluginManager:
 
     def setup_method(self):
-        from core.plugin.plugin_manager import PluginManager
         from core.plugin.hook_registry import HookRegistry
+        from core.plugin.plugin_manager import PluginManager
         self.r = HookRegistry()
         self.pm = PluginManager(self.r)
 

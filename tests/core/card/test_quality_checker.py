@@ -1,6 +1,7 @@
 """E6 — ImportQualityChecker unit tests"""
 
-from core.card.card_types import Card, Token, Conflict, ConflictType, IntentFlag
+from core.card.card_types import Card, Conflict, ConflictType, IntentFlag, Token
+
 try:
     from core.card.quality.import_quality_checker import ImportQualityChecker, QualityScore
 except ImportError:

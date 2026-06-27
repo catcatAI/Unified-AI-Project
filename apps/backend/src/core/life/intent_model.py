@@ -1,6 +1,7 @@
 from __future__ import annotations
+
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class IntentCategory(Enum):

@@ -3,8 +3,9 @@ Phase 6 Integration Tests — Polish & Launch
 Tests for OpenAPI export, profiler, benchmark baseline, documentation
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 class TestOpenAPIExport:

@@ -16,29 +16,30 @@ Date: 2026-02-02
 
 from __future__ import annotations
 
-import pytest
-import pytest_asyncio
 import asyncio
-import tempfile
 import shutil
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Generator
-from unittest.mock import Mock, patch, MagicMock
 
 # Import the modules under test
 import sys
+import tempfile
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, Generator, List, Optional
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
+import pytest_asyncio
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'src'))
 
 from core.autonomous.desktop_interaction import (
-    FileOperationType,
+    DesktopInteraction,
+    DesktopState,
     FileCategory,
     FileOperation,
-    DesktopState,
+    FileOperationType,
     FileWatcherConfig,
-    DesktopInteraction,
 )
-
 
 # =============================================================================
 # Fixtures

@@ -1,6 +1,7 @@
-import sys
-import pytest
 import os
+import sys
+
+import pytest
 
 _MODULE_MOCKS = {}
 for mod_name, mock in _MODULE_MOCKS.items():

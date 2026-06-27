@@ -1,14 +1,15 @@
 """Integration test for full compositional image generation pipeline."""
 
+import os
+import sys
+
 import numpy as np
 import pytest
-import sys
-import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "src"))
 
-from ai.multimodal.generator.sequence_generator import SequenceGenerator
 from ai.multimodal.generator.image_generator import ImageGenerator
+from ai.multimodal.generator.sequence_generator import SequenceGenerator
 from ai.multimodal.primitives.primitive_encoder import PrimitiveEncoder
 from ai.multimodal.primitives.primitive_renderer import PrimitiveRenderer
 

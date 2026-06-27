@@ -5,6 +5,7 @@ Provides version negotiation and deprecation headers
 
 import logging
 from typing import Optional
+
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 

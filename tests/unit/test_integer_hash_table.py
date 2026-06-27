@@ -1,6 +1,7 @@
 """Smoke tests for core.state.integer_hash_table"""
 import pytest
 
+
 class TestIntegerHashTable:
     def test_import(self):
         try:

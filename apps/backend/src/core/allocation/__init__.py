@@ -14,18 +14,18 @@ Version: 6.2.1
 try:
     from core.allocation.resonance import (
         ResonanceEngine,
-        ResonanceResult,
         ResonanceProfile,
+        ResonanceResult,
     )
 except ImportError:
     ResonanceEngine = ResonanceResult = ResonanceProfile = None
 
 try:
     from core.allocation.policy import (
-        AllocationPolicy,
         AllocationAction,
         AllocationContext,
         AllocationDecision,
+        AllocationPolicy,
         AllocationStage,
         AssignStage,
         CompositeStage,
@@ -38,9 +38,9 @@ except ImportError:
 
 try:
     from core.allocation.negativity import (
-        NegativityDetector,
-        DetectionResult,
         CorrectionResult,
+        DetectionResult,
+        NegativityDetector,
     )
 except ImportError:
     NegativityDetector = DetectionResult = CorrectionResult = None

@@ -1,6 +1,7 @@
 """Smoke tests for core.engine.angela_model_core"""
 import pytest
 
+
 class TestAngelaModelCore:
     def test_import(self):
         try:

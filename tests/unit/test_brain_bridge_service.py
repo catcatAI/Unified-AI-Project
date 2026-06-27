@@ -1,5 +1,6 @@
 """Tests for services/brain_bridge_service.py"""
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 

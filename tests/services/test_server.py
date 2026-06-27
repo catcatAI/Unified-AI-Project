@@ -9,9 +9,9 @@
 简单的测试服务器脚本
 """
 
+import logging
 import os
 from pathlib import Path
-import logging
 
 logger = logging.getLogger(__name__)
 

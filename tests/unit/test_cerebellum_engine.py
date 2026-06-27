@@ -1,6 +1,7 @@
 """Smoke tests for core.bio.cerebellum_engine"""
 import pytest
 
+
 class TestCerebellumEngine:
     def test_import(self):
         try:

@@ -5,9 +5,13 @@ import logging
 import time
 
 import aiohttp
-
 from core.interfaces.protocols import LLMResponse
-from core.system.config.network_defaults import ANTHROPIC_API_BASE, DEFAULT_ANTHROPIC_MODEL, ANTHROPIC_TIMEOUT
+from core.system.config.network_defaults import (
+    ANTHROPIC_API_BASE,
+    ANTHROPIC_TIMEOUT,
+    DEFAULT_ANTHROPIC_MODEL,
+)
+
 from .base import BaseLLMBackend
 
 logger = logging.getLogger(__name__)

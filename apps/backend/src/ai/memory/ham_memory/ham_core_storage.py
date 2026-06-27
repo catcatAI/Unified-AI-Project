@@ -2,10 +2,11 @@
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
 # =============================================================================
 
+import json
 import logging
 import os
-import json
 from typing import Any, Dict, Optional, Tuple
+
 from cryptography.fernet import Fernet, InvalidToken
 
 from .ham_types import HAMDataPackageInternal

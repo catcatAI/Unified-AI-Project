@@ -4,9 +4,9 @@ Defines formal communication contracts and shared types for the system.
 """
 
 import logging
-from typing import Dict, Any, Optional, List
-from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

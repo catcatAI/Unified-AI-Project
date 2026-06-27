@@ -2,6 +2,7 @@
 
 import logging
 from typing import Dict, List, Optional, Tuple
+
 import numpy as np
 
 from .primitive_types import DrawingInstructions
@@ -204,7 +205,7 @@ class PrimitiveLibrary:
             embedding = np.array(prim_data["embedding"], dtype=np.float32)
             
             # Reconstruct DrawingInstructions
-            from .primitive_types import Point, Line, Plane
+            from .primitive_types import Line, Plane, Point
             
             points = [Point(x, y, color, size) 
                      for x, y, color, size in params_dict["points"]]

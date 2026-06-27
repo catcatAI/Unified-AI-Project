@@ -3,15 +3,15 @@
 集成测试运行脚本
 """
 
-import os
-import sys
 import argparse
-import subprocess
 import json
+import logging
+import os
+import subprocess
+import sys
 import time
 from datetime import datetime
 from pathlib import Path
-import logging
 
 logger = logging.getLogger(__name__)
 

@@ -10,14 +10,13 @@ LLM 決策循環
 # =============================================================================
 
 import asyncio
-import logging
-from datetime import datetime
-from typing import Optional, Dict, Any, List
-from dataclasses import dataclass
 import json
+import logging
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from .user_monitor import UserMonitor, UserState
-
+from core.prompt_manager import prompt
 from core.system.config.magic_numbers import (
     batch_value,
     limit_value,
@@ -27,7 +26,7 @@ from core.system.config.magic_numbers import (
     timing_value,
 )
 
-from core.prompt_manager import prompt
+from .user_monitor import UserMonitor, UserState
 
 logger = logging.getLogger(__name__)
 

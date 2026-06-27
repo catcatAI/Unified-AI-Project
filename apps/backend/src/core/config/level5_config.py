@@ -17,9 +17,10 @@ try:
     import numpy as np
 except ImportError:
     np = None
-from datetime import datetime
-from typing import Dict, Any, Optional
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, Optional
+
 from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)

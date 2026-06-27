@@ -10,19 +10,21 @@ Level 5 ASI 系统
 import asyncio
 import logging
 import uuid
-from typing import Any, Optional
 from datetime import datetime
+from typing import Any, Optional
 
 from core.system.config.magic_numbers import batch_value, loop_sleep
 
-# Assuming these are the correct import paths based on project structure
-from .alignment.reasoning_system import ReasoningSystem
+from .alignment.adversarial_generation_system import AdversarialGenerationSystem
+from .alignment.alignment_manager import AlignmentManager
+from .alignment.asi_autonomous_alignment import ASIAutonomousAlignment
+from .alignment.decision_theory_system import DecisionTheorySystem
 from .alignment.emotion_system import EmotionSystem
 from .alignment.ontology_system import OntologySystem
-from .alignment.alignment_manager import AlignmentManager
-from .alignment.decision_theory_system import DecisionTheorySystem
-from .alignment.adversarial_generation_system import AdversarialGenerationSystem
-from .alignment.asi_autonomous_alignment import ASIAutonomousAlignment
+
+# Assuming these are the correct import paths based on project structure
+from .alignment.reasoning_system import ReasoningSystem
+
 
 # Placeholder classes for missing imports to ensure syntactic validity
 class DistributedCoordinator:

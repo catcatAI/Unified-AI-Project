@@ -2,12 +2,13 @@
 Verification test for Potential Field Spatial Gravity
 """
 import math
+from typing import Any, Dict, Tuple
+
 import pytest
-from typing import Dict, Any, Tuple
 
 try:
-    from core.engine.state_matrix import StateMatrix4D
     from core.engine.cognitive_operations import PotentialFieldEngine
+    from core.engine.state_matrix import StateMatrix4D
 except ImportError:
     pytest.skip("numpy not available", allow_module_level=True)
 

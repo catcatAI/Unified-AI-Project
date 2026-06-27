@@ -8,8 +8,12 @@ class TestActiveCognitionFormula:
     def test_import(self):
         """Verify module exposes expected classes and methods"""
         from core.active_cognition_formula import (
-            ActiveCognitionFormula, StressVector, OrderBaseline,
-            ActiveConstruction, StressSource, OrderType,
+            ActiveCognitionFormula,
+            ActiveConstruction,
+            OrderBaseline,
+            OrderType,
+            StressSource,
+            StressVector,
         )
         assert ActiveCognitionFormula is not None
         assert hasattr(ActiveCognitionFormula, 'add_stress_vector')
@@ -46,7 +50,7 @@ class TestActiveCognitionFormula:
 
     def test_stress_vector_import(self):
         """Verify StressVector dataclass and its calculate_stress_contribution"""
-        from core.active_cognition_formula import StressVector, StressSource
+        from core.active_cognition_formula import StressSource, StressVector
         sv = StressVector(
             source=StressSource.NOVELTY_DEMAND,
             intensity=0.7,

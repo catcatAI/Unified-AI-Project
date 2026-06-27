@@ -5,9 +5,9 @@ import logging
 import time
 
 import aiohttp
-
 from core.interfaces.protocols import LLMResponse
 from core.system.config.network_defaults import LLAMACPP_HOST, LLM_REQUEST_TIMEOUT
+
 from .base import BaseLLMBackend
 
 logger = logging.getLogger(__name__)

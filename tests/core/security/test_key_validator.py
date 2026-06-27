@@ -1,4 +1,5 @@
 import pytest
+
 from apps.backend.src.core.security.key_validator import KeyValidator
 
 

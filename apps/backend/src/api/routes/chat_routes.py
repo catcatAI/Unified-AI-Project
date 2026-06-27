@@ -8,20 +8,19 @@ import logging
 import threading
 import uuid
 from datetime import datetime
-from typing import Dict, Any, List, Optional, Tuple
-
-from fastapi import APIRouter, HTTPException, Body, Request, UploadFile, File, Form
-from fastapi.responses import JSONResponse
+from typing import Any, Dict, List, Optional, Tuple
 
 from api.lifespan import (
     _angela_cfg,
     _get_chat_service,
-    get_digital_life,
     get_abc_key_manager,
-    get_crisis_system,
     get_causal_reasoning,
+    get_crisis_system,
+    get_digital_life,
     get_level5_asi,
 )
+from fastapi import APIRouter, Body, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import JSONResponse
 
 logger = logging.getLogger(__name__)
 
@@ -355,8 +354,8 @@ async def _handle_execution_gate(
     """Run execution gate: intent classification → decide auto/confirm/reject.
     Returns a response dict if gate short-circuits (confirm or reject), else None."""
     try:
-        from ai.core.query_classifier import QueryClassifier
         from ai.core.execution_gate import ExecutionGate
+        from ai.core.query_classifier import QueryClassifier
 
         # Handle pending action from previous turn
         pending = context.pop("pending_action", None)
@@ -445,10 +444,10 @@ async def _try_agent_routing(
     """Try agent auto-routing for non-execution intents (creative/knowledge/opinion/search).
     Returns a response dict if an agent handled the query, else None (falls through to LLM)."""
     try:
-        from ai.core.query_classifier import QueryClassifier, QueryType
-        from ai.agents.agent_orchestrator import AgentOrchestrator
-        from ai.agents.agent_manager import AgentManager
         from ai.agents.agent_adapter import register_specialized_agents
+        from ai.agents.agent_manager import AgentManager
+        from ai.agents.agent_orchestrator import AgentOrchestrator
+        from ai.core.query_classifier import QueryClassifier, QueryType
 
         classifier = QueryClassifier(ed3n_engine=_get_ed3n_engine())
         classify_result = classifier.classify(user_message)
@@ -846,10 +845,10 @@ async def chat_with_image(
         try:
             image_data = await file.read()
 
-            from ai.multimodal.semantic_visual import SemanticVisualEncoder
-            from ai.multimodal.concept_library import ConceptLibrary
-            from ai.multimodal.vision_response_generator import VisionResponseGenerator
             from ai.ed3n.ed3n_engine import ED3NEngine
+            from ai.multimodal.concept_library import ConceptLibrary
+            from ai.multimodal.semantic_visual import SemanticVisualEncoder
+            from ai.multimodal.vision_response_generator import VisionResponseGenerator
 
             encoder = SemanticVisualEncoder()
             if encoder.is_available:

@@ -9,11 +9,12 @@
 #
 # =============================================================================
 
-from enum import Enum
-from typing import TypedDict, Dict, List, Optional, Any, Required
-from typing_extensions import Literal
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Dict, List, Optional, Required, TypedDict
+
+from typing_extensions import Literal
 
 logger = logging.getLogger(__name__)
 

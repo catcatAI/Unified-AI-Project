@@ -2,9 +2,9 @@
 Stress test for Endocrine and StateMatrix systems under extreme sensory input.
 Ensures numerical stability and prevents value explosion.
 """
-import sys
 import asyncio
 import random
+import sys
 from pathlib import Path
 
 # Add project root (apps/backend) to sys.path
@@ -13,6 +13,7 @@ sys.path.insert(0, str(project_root))
 
 from core.autonomous.endocrine_system import EndocrineSystem, HormoneType
 from core.autonomous.state_matrix import StateMatrix4D
+
 
 async def test_sensory_overload():
     print("🚀 [Stress Test] Starting Sensory Overload Scenario...")

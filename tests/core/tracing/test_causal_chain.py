@@ -1,6 +1,8 @@
-import pytest
 from datetime import datetime, timedelta
-from apps.backend.src.core.tracing.causal_chain import CausalNode, CausalChain, LayerType
+
+import pytest
+
+from apps.backend.src.core.tracing.causal_chain import CausalChain, CausalNode, LayerType
 
 
 class TestLayerType:

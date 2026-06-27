@@ -1,6 +1,7 @@
 """Tests for apps.backend.src.ai.code_inspection.code_inspector"""
 import pytest
 
+
 class TestCodeInspector:
     def test_import(self):
         from ai.code_inspection.code_inspector import CodeInspector
@@ -14,7 +15,7 @@ class TestCodeInspector:
         assert hasattr(instance, "root_path")
 
     def test_pattern_matcher_rules(self):
-        from ai.code_inspection.code_inspector import PatternMatcher, IssueCategory, Severity
+        from ai.code_inspection.code_inspector import IssueCategory, PatternMatcher, Severity
         PatternMatcher.init_rules()
         assert len(PatternMatcher.RULES) > 0
         rule = PatternMatcher.RULES[0]

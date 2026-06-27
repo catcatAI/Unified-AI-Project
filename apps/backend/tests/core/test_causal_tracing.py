@@ -2,17 +2,17 @@
 Unit tests for Causal Tracing System
 """
 
-import pytest
-from datetime import datetime
 import asyncio
+from datetime import datetime
 
+import pytest
 from core.tracing import (
-    CausalNode,
     CausalChain,
-    LayerType,
+    CausalNode,
     CausalTracer,
-    get_tracer,
     ChainValidator,
+    LayerType,
+    get_tracer,
 )
 
 

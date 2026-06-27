@@ -6,9 +6,9 @@ import logging
 import time
 
 import aiohttp
-
 from core.interfaces.protocols import LLMResponse
-from core.system.config.network_defaults import OLLAMA_HOST, DEFAULT_OLLAMA_MODEL, OLLAMA_TIMEOUT
+from core.system.config.network_defaults import DEFAULT_OLLAMA_MODEL, OLLAMA_HOST, OLLAMA_TIMEOUT
+
 from .base import BaseLLMBackend
 
 logger = logging.getLogger(__name__)

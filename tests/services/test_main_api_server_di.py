@@ -62,6 +62,7 @@ class TestMainApiServerDependencies:
         """The router endpoints that use Depends() reference the factory functions."""
         try:
             import inspect
+
             from services import main_api_server as mod
 
             for name, obj in inspect.getmembers(mod, inspect.iscoroutinefunction):

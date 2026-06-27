@@ -7,10 +7,11 @@
 # Angela Matrix: [L2:MEM] [L4:CTX] Context system demonstration
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
+from ai.context.manager_fixed import ContextManager, get_context_manager
 from ai.context.storage.base import Context, ContextType
 from ai.context.storage.memory import MemoryStorage
-from ai.context.manager_fixed import ContextManager, get_context_manager
 
 logger = logging.getLogger(__name__)
 

@@ -4,14 +4,15 @@
 自动生成的测试模块,用于验证系统功能。
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock
 import json
+from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+from core.hsp.bridge.data_aligner import DataAligner
 from core.hsp.bridge.message_bridge import MessageBridge
 from core.hsp.external.external_connector import ExternalConnector
 from core.hsp.internal.internal_bus import InternalBus
-from core.hsp.bridge.data_aligner import DataAligner
+
 
 @pytest.fixture()
 def mock_external_connector():

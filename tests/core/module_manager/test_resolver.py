@@ -1,12 +1,12 @@
 import pytest
 
-from apps.backend.src.core.system.module_manager.resolver import (
-    CycleError,
-    DependencyResolver,
-)
 from apps.backend.src.core.system.module_manager.models import (
     DependencySpec,
     ModuleDescriptor,
+)
+from apps.backend.src.core.system.module_manager.resolver import (
+    CycleError,
+    DependencyResolver,
 )
 
 

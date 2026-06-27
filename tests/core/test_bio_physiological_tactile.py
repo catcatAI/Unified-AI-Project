@@ -4,8 +4,11 @@ def test_import():
 
 def test_classes_exist():
     from core.bio.physiological_tactile import (
-        PhysiologicalTactileSystem, TactileType, BodyPart,
-        TactileStimulus, TactileResponse,
+        BodyPart,
+        PhysiologicalTactileSystem,
+        TactileResponse,
+        TactileStimulus,
+        TactileType,
     )
     assert TactileType.LIGHT_TOUCH is not None
     assert TactileType.PRESSURE is not None

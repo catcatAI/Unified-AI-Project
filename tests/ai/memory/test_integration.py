@@ -16,8 +16,11 @@ try:
 except ImportError:
     pytest.skip("StateMatrix4D not available", allow_module_level=True)
 from ai.memory.math_ripple_engine import (
-    MathRippleEngine, AlgorithmDepth, RippleDepth, RippleCascade,
-    RippleAccumulator
+    AlgorithmDepth,
+    MathRippleEngine,
+    RippleAccumulator,
+    RippleCascade,
+    RippleDepth,
 )
 
 
@@ -269,7 +272,7 @@ class TestRippleCascade:
     """Test the ripple cascade system"""
 
     def test_cascade_d3_produces_ripples(self):
-        from ai.memory.math_ripple_engine import RippleEffect, MathOp
+        from ai.memory.math_ripple_engine import MathOp, RippleEffect
         ripple = RippleEffect(
             operator=MathOp.MUL,
             operand_a=10.0,
@@ -287,7 +290,7 @@ class TestRippleCascade:
         assert len(cascaded) >= 2
 
     def test_cascade_d5_produces_more(self):
-        from ai.memory.math_ripple_engine import RippleEffect, MathOp
+        from ai.memory.math_ripple_engine import MathOp, RippleEffect
         ripple = RippleEffect(
             operator=MathOp.MUL,
             operand_a=10.0,
@@ -304,7 +307,7 @@ class TestRippleCascade:
         assert len(cascaded) > 3
 
     def test_feedback_for_overload(self):
-        from ai.memory.math_ripple_engine import RippleEffect, MathOp
+        from ai.memory.math_ripple_engine import MathOp, RippleEffect
         ripple = RippleEffect(
             operator=MathOp.MUL,
             operand_a=100.0,
@@ -395,32 +398,32 @@ class TestDepthDetection:
     """Test automatic depth detection"""
 
     def test_detect_light(self):
-        from ai.memory.math_ripple_engine import _detect_algorithm_depth, AlgorithmDepth
+        from ai.memory.math_ripple_engine import AlgorithmDepth, _detect_algorithm_depth
         depth = _detect_algorithm_depth("5 + 3")
         assert depth == AlgorithmDepth.LIGHT
 
     def test_detect_medium_power(self):
-        from ai.memory.math_ripple_engine import _detect_algorithm_depth, AlgorithmDepth
+        from ai.memory.math_ripple_engine import AlgorithmDepth, _detect_algorithm_depth
         depth = _detect_algorithm_depth("2^10")
         assert depth == AlgorithmDepth.MEDIUM
 
     def test_detect_heavy_trig(self):
-        from ai.memory.math_ripple_engine import _detect_algorithm_depth, AlgorithmDepth
+        from ai.memory.math_ripple_engine import AlgorithmDepth, _detect_algorithm_depth
         depth = _detect_algorithm_depth("sin(90)")
         assert depth == AlgorithmDepth.HEAVY
 
     def test_detect_ultra_calculus(self):
-        from ai.memory.math_ripple_engine import _detect_algorithm_depth, AlgorithmDepth
+        from ai.memory.math_ripple_engine import AlgorithmDepth, _detect_algorithm_depth
         depth = _detect_algorithm_depth("∫x²dx")
         assert depth == AlgorithmDepth.ULTRA
 
     def test_detect_ripple_depth_d3(self):
-        from ai.memory.math_ripple_engine import _detect_ripple_depth, AlgorithmDepth, RippleDepth
+        from ai.memory.math_ripple_engine import AlgorithmDepth, RippleDepth, _detect_ripple_depth
         depth = _detect_ripple_depth("5 + 3", AlgorithmDepth.LIGHT)
         assert depth == RippleDepth.D3
 
     def test_detect_ripple_depth_d5_overload(self):
-        from ai.memory.math_ripple_engine import _detect_ripple_depth, AlgorithmDepth, RippleDepth
+        from ai.memory.math_ripple_engine import AlgorithmDepth, RippleDepth, _detect_ripple_depth
         depth = _detect_ripple_depth("100 * 100 * 100", AlgorithmDepth.MEDIUM)
         assert depth == RippleDepth.D5
 
@@ -430,7 +433,7 @@ class TestRippleAccumulator:
 
     def test_tracks_max_depth(self):
         acc = RippleAccumulator()
-        from ai.memory.math_ripple_engine import RippleEffect, MathOp
+        from ai.memory.math_ripple_engine import MathOp, RippleEffect
 
         r1 = RippleEffect(
             operator=MathOp.ADD, operand_a=1.0, operand_b=2.0,
@@ -461,13 +464,13 @@ class TestRippleDepthConfig:
     """Test RippleDepthConfig auto-detection"""
 
     def test_from_expr_light(self):
-        from ai.memory.math_ripple_engine import RippleDepthConfig, AlgorithmDepth, RippleDepth
+        from ai.memory.math_ripple_engine import AlgorithmDepth, RippleDepth, RippleDepthConfig
         config = RippleDepthConfig.from_expr("5 + 3")
         assert config.algorithm_depth == AlgorithmDepth.LIGHT
         assert config.depth == RippleDepth.D3
 
     def test_from_expr_heavy(self):
-        from ai.memory.math_ripple_engine import RippleDepthConfig, AlgorithmDepth
+        from ai.memory.math_ripple_engine import AlgorithmDepth, RippleDepthConfig
         config = RippleDepthConfig.from_expr("sin(90) + log(10)")
         assert config.algorithm_depth == AlgorithmDepth.HEAVY
 

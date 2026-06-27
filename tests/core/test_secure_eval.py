@@ -5,13 +5,14 @@
 """
 
 import pytest
+
 try:
     from apps.backend.src.core.security.secure_eval import (
         EvalResult,
         SafeEvaluator,
+        get_safe_evaluator,
         safe_eval,
         safe_eval_arithmetic,
-        get_safe_evaluator,
     )
 except ImportError:
     import pytest; pytest.skip("SecureEval is a stub", allow_module_level=True)

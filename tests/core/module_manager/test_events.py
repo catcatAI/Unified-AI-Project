@@ -1,5 +1,5 @@
 from apps.backend.src.core.system.module_manager.events import EventBus, HealthMonitor
-from apps.backend.src.core.system.module_manager.models import ModuleStatus, HealthStatus
+from apps.backend.src.core.system.module_manager.models import HealthStatus, ModuleStatus
 
 
 def test_event_bus_subscribe_and_emit():

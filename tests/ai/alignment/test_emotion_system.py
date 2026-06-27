@@ -1,13 +1,14 @@
 """Tests for apps.backend.src.ai.alignment.emotion_system"""
+from unittest.mock import MagicMock, PropertyMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, PropertyMock
 from ai.alignment.emotion_system import (
-    EmotionType,
-    ValueDimension,
     EmotionalState,
-    ValueAssessment,
-    EmpathyAnalysis,
     EmotionSystem,
+    EmotionType,
+    EmpathyAnalysis,
+    ValueAssessment,
+    ValueDimension,
 )
 
 

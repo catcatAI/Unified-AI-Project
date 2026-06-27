@@ -7,8 +7,10 @@ Author: Angela AI v6.2
 
 
 from core.engine.influence_applicator import (
-    InfluenceApplicator, get_applicator,
-    INFLUENCE_RULES, apply_influence_to_axis,
+    INFLUENCE_RULES,
+    InfluenceApplicator,
+    apply_influence_to_axis,
+    get_applicator,
 )
 
 

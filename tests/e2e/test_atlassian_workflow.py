@@ -4,9 +4,9 @@ Requires a live test server with Atlassian integration enabled.
 All tests are skipped by default.
 """
 
-import pytest
 from typing import Any, Dict
 
+import pytest
 
 BASE_URL = "http://localhost:8000/api/v1"
 ATLASSIAN_ENDPOINT = f"{BASE_URL}/atlassian"

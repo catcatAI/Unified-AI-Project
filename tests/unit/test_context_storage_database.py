@@ -1,6 +1,7 @@
 """Smoke tests for ai.context.storage.database"""
 import pytest
 
+
 class TestDatabaseStorage:
     def test_import(self):
         try:

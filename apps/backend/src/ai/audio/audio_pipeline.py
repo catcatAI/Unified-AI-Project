@@ -66,7 +66,10 @@ class AudioPipeline:
 
     def _get_decoder(self):
         if self._decoder is None:
-            from ai.multimodal.audio_decoder import AudioWaveformDecoder, load_default_audio_decoder_weights
+            from ai.multimodal.audio_decoder import (
+                AudioWaveformDecoder,
+                load_default_audio_decoder_weights,
+            )
             self._decoder = AudioWaveformDecoder()
             load_default_audio_decoder_weights(self._decoder)
         return self._decoder

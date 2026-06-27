@@ -1,7 +1,7 @@
+import logging
+import os
 import subprocess
 import sys
-import os
-import logging
 
 logger = logging.getLogger(__name__)
 

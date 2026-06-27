@@ -9,9 +9,9 @@ from typing import List, Optional
 import numpy as np
 from PIL import Image
 
+from ..evaluation.generation_evaluator import GenerationEvaluator
 from ..primitives.primitive_encoder import PrimitiveEncoder
 from ..primitives.primitive_renderer import PrimitiveRenderer
-from ..evaluation.generation_evaluator import GenerationEvaluator
 from .sequence_generator import SequenceGenerator
 
 logger = logging.getLogger(__name__)

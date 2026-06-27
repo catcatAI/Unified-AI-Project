@@ -6,6 +6,7 @@ Centralizes logging configuration to prevent 'log-jacking' by submodules.
 import logging
 from pathlib import Path
 
+
 def setup_logging(level=logging.INFO, log_file="backend.log") -> str:
     """
     Initializes the global logging system.

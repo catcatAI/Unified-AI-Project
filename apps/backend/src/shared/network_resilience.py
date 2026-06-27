@@ -1,7 +1,7 @@
-import time
 import logging
-from typing import Any, Callable, Optional, Dict
+import time
 from dataclasses import dataclass
+from typing import Any, Callable, Dict, Optional
 
 logger = logging.getLogger(__name__)
 

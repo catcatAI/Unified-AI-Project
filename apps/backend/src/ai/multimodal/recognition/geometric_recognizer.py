@@ -8,16 +8,17 @@ Pipeline:
 This is the recognition path — same vocabulary as generation, but bottom-up.
 """
 
-import numpy as np
 import time
 from typing import Dict, List, Optional, Tuple
+
+import numpy as np
 from PIL import Image
 
-from ..primitives.primitive_types import DrawingInstructions, TOTAL_DIM
 from ..primitives.differentiable_renderer import DifferentiableRenderer
-from ..primitives.primitive_renderer import PrimitiveRenderer
-from ..primitives.primitive_encoder import PrimitiveEncoder
 from ..primitives.geometric_vocabulary import GeometricVocabulary
+from ..primitives.primitive_encoder import PrimitiveEncoder
+from ..primitives.primitive_renderer import PrimitiveRenderer
+from ..primitives.primitive_types import TOTAL_DIM, DrawingInstructions
 
 
 class GeometricRecognizer:

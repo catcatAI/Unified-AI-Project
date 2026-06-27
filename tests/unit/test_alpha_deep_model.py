@@ -1,6 +1,7 @@
 """Smoke tests for apps.backend.src.ai.compression.alpha_deep_model"""
 import pytest
 
+
 class TestAlphaDeepModel:
     def test_import(self):
         try:

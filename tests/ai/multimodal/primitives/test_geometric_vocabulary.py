@@ -1,12 +1,14 @@
 """Tests for GeometricVocabulary."""
 
+import os
+import tempfile
+
 import numpy as np
 import pytest
-import tempfile
-import os
-
 from ai.multimodal.primitives.geometric_vocabulary import (
-    GeometricVocabulary, VisualWord, ConceptDistribution
+    ConceptDistribution,
+    GeometricVocabulary,
+    VisualWord,
 )
 from ai.multimodal.primitives.primitive_types import TOTAL_DIM
 

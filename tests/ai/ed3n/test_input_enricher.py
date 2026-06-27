@@ -15,7 +15,6 @@ Covers:
 from ai.ed3n.dictionary_layer import DictionaryEntry, DictionaryLayer
 from ai.ed3n.input_enricher import EnrichedInput, InputEnricher
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

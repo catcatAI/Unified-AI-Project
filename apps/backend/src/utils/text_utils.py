@@ -6,7 +6,7 @@
 """
 
 import re
-from typing import List, Set, Optional
+from typing import List, Optional, Set
 
 
 def char_bigrams(text: str) -> set:

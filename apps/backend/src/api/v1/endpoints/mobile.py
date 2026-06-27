@@ -3,11 +3,12 @@ Angela AI v7.5.0-dev - Mobile Endpoints
 行動端專用接口 (受 Key B 加密保護)
 """
 
-from fastapi import APIRouter, Body
-from typing import Dict, Any
-from datetime import datetime
 import asyncio
 import logging
+from datetime import datetime
+from typing import Any, Dict
+
+from fastapi import APIRouter, Body
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +97,7 @@ async def mobile_module_control(data: Dict[str, Any] = Body(...)) -> dict:
     enabled = data.get("enabled")
 
     try:
-        from core.sync.realtime_sync import sync_manager, SyncEvent
+        from core.sync.realtime_sync import SyncEvent, sync_manager
 
         await sync_manager.broadcast_event(
             SyncEvent(

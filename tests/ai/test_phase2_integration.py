@@ -3,17 +3,18 @@ Phase 2 Intelligence Layer Integration Tests — AgentOrchestrator, PlanningEngi
 Tests for end-to-end orchestration, planning, and reasoning
 """
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 # Lazy imports for optional modules
 try:
     from ai.agents.agent_orchestrator import AgentOrchestrator
     from ai.reasoning.planning_engine import PlanningEngine
     from ai.reasoning.reasoning_engines import (
-        ChainOfThoughtReasoner,
-        AnalogicalReasoner,
         AbductiveReasoner,
+        AnalogicalReasoner,
+        ChainOfThoughtReasoner,
     )
     IMPORTS_AVAILABLE = True
 except ImportError as e:

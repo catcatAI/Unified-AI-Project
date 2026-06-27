@@ -3,6 +3,7 @@
 import asyncio
 import functools
 import inspect
+import logging
 import signal
 import threading
 import time
@@ -10,8 +11,6 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
-
-import logging
 
 logger = logging.getLogger(__name__)
 

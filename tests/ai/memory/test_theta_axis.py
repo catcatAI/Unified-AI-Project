@@ -12,12 +12,16 @@ Test suite for Theta Meta-Cognitive Axis
 7. θ 分析报告
 """
 
-import pytest
 import math
+
+import pytest
 
 try:
     from core.engine.state_matrix import (
-        StateMatrix4D, AllocateDecision, AxisSemanticAnchor, DimensionState
+        AllocateDecision,
+        AxisSemanticAnchor,
+        DimensionState,
+        StateMatrix4D,
     )
 except ImportError:
     pytest.skip("StateMatrix4D not available", allow_module_level=True)

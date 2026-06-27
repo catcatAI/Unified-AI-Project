@@ -10,7 +10,6 @@ import time
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # 5.6.1  ContinuousLearningPipeline saves state after interactions
 # ---------------------------------------------------------------------------
@@ -145,8 +144,8 @@ class TestLearningLoopFeedback:
 
 class TestLearningLoopGardenIntegration:
     def test_process_user_feedback_calls_garden(self, tmp_path):
-        from ai.response.learning_loop import LearningLoop
         from ai.garden.garden_engine import GARDENEngine
+        from ai.response.learning_loop import LearningLoop
         garden = GARDENEngine(compatibility_mode=True)
         garden.load_presets()
         loop = LearningLoop()

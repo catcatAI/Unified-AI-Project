@@ -6,9 +6,9 @@
 # =============================================================================
 
 import asyncio
-import logging
 import functools
-from typing import Coroutine, Any, Optional, Set, Callable
+import logging
+from typing import Any, Callable, Coroutine, Optional, Set
 
 logger = logging.getLogger(__name__)
 

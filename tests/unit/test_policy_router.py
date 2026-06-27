@@ -1,6 +1,8 @@
 """Smoke tests for apps.backend.src.ai.language_models.router"""
 from unittest.mock import MagicMock
+
 import pytest
+
 
 class TestPolicyRouter:
     def test_import(self):

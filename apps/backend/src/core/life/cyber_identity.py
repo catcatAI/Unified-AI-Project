@@ -18,16 +18,18 @@ Date: 2026-02-02
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Dict, List, Optional, Callable, Any
-from datetime import datetime, timedelta
+
 import asyncio
 import logging
-from core.tracing import get_tracer
-from core.life_intensity_formula import LifeIntensityFormula, KnowledgeDomain
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
+
 from core.active_cognition_formula import ActiveCognitionFormula, OrderType
+from core.life_intensity_formula import KnowledgeDomain, LifeIntensityFormula
 from core.system.config.magic_numbers import loop_sleep
+from core.tracing import get_tracer
 
 logger = logging.getLogger(__name__)
 

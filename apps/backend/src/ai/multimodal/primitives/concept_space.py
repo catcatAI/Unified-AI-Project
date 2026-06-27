@@ -16,10 +16,11 @@ This is the missing piece that enables dual-use vocabulary:
 - Recognition: image → CLIP → concept space → classify
 """
 
-import numpy as np
 import json
 import os
 from typing import Dict, List, Optional, Tuple
+
+import numpy as np
 
 
 class ConceptSpaceMapper:

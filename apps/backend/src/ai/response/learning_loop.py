@@ -13,7 +13,7 @@ Reinforces fragment weights based on user engagement signals.
 
 import logging
 import re
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

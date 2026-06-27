@@ -17,15 +17,17 @@ Date: 2026-02-02
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Dict, List, Optional, Callable, Any
-from datetime import datetime
-from pathlib import Path
+
 import asyncio
 import logging
-from core.tracing import get_tracer
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
+
 from core.system.config.magic_numbers import timeout_value
+from core.tracing import get_tracer
 
 logger = logging.getLogger(__name__)
 tracer = get_tracer()
@@ -373,9 +375,10 @@ class SelfGeneration:
 
     async def _try_sd_api(self, avatar: GeneratedAvatar) -> bool:
         try:
-            import aiohttp
             import base64
             from io import BytesIO
+
+            import aiohttp
             from PIL import Image
 
             prompt = avatar.attributes.to_prompt()

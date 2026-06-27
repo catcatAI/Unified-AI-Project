@@ -1,6 +1,7 @@
 """Smoke tests for apps.backend.src.ai.multimodal.multimodal_processor"""
 import pytest
 
+
 class TestMultimodalProcessor:
     def test_import(self):
         try:

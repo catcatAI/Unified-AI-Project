@@ -45,9 +45,9 @@ class TestModuleRegistration:
 
     def test_register_adds_to_registry_and_active(self, eta):
         from core.engine.eta_axis import (
-            ModuleConfig,
             AtomicModuleType,
             LogicGateType,
+            ModuleConfig,
         )
 
         config = ModuleConfig(
@@ -62,9 +62,9 @@ class TestModuleRegistration:
 
     def test_unregister_removes_from_both(self, eta):
         from core.engine.eta_axis import (
-            ModuleConfig,
             AtomicModuleType,
             LogicGateType,
+            ModuleConfig,
         )
 
         config = ModuleConfig(
@@ -80,9 +80,9 @@ class TestModuleRegistration:
 
     def test_activate_and_deactivate(self, eta):
         from core.engine.eta_axis import (
-            ModuleConfig,
             AtomicModuleType,
             LogicGateType,
+            ModuleConfig,
         )
 
         config = ModuleConfig(
@@ -103,9 +103,9 @@ class TestModuleExecution:
 
     def test_logic_gate_and(self, eta):
         from core.engine.eta_axis import (
-            ModuleConfig,
             AtomicModuleType,
             LogicGateType,
+            ModuleConfig,
         )
 
         eta.register_module(ModuleConfig(
@@ -119,9 +119,9 @@ class TestModuleExecution:
 
     def test_arithmetic_add(self, eta):
         from core.engine.eta_axis import (
-            ModuleConfig,
-            AtomicModuleType,
             ArithmeticOpType,
+            AtomicModuleType,
+            ModuleConfig,
         )
 
         eta.register_module(ModuleConfig(
@@ -134,9 +134,9 @@ class TestModuleExecution:
 
     def test_aggregator_mean(self, eta):
         from core.engine.eta_axis import (
-            ModuleConfig,
-            AtomicModuleType,
             AggregatorType,
+            AtomicModuleType,
+            ModuleConfig,
         )
 
         eta.register_module(ModuleConfig(
@@ -149,8 +149,8 @@ class TestModuleExecution:
 
     def test_router_direct(self, eta):
         from core.engine.eta_axis import (
-            ModuleConfig,
             AtomicModuleType,
+            ModuleConfig,
             RouterType,
         )
 
@@ -167,7 +167,7 @@ class TestDefaultModules:
     """Factory function creates the standard module set."""
 
     def test_create_default_modules_returns_all_types(self):
-        from core.engine.eta_axis import create_default_modules, AtomicModuleType
+        from core.engine.eta_axis import AtomicModuleType, create_default_modules
 
         modules = create_default_modules()
         assert len(modules) > 0
@@ -220,7 +220,7 @@ class TestSerialization:
     """to_dict / from_dict round-trip."""
 
     def test_roundtrip_preserves_state(self, eta):
-        from core.engine.eta_axis import create_default_modules, EtaAxisState
+        from core.engine.eta_axis import EtaAxisState, create_default_modules
 
         for name, config in create_default_modules().items():
             eta.register_module(config)

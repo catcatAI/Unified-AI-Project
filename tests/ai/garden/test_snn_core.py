@@ -9,7 +9,6 @@ import os
 import tempfile
 
 import pytest
-
 from ai.garden.snn_core import (
     DEFAULT_DECAY,
     DEFAULT_LEAK,

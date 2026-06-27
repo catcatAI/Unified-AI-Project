@@ -10,7 +10,7 @@ class TestActionExecutor:
         assert ActionExecutor is not None
 
     def test_import_enums(self):
-        from core.engine.action_executor import ActionPriority, ActionStatus, ActionCategory
+        from core.engine.action_executor import ActionCategory, ActionPriority, ActionStatus
         assert ActionPriority is not None
         assert ActionStatus is not None
         assert ActionCategory is not None

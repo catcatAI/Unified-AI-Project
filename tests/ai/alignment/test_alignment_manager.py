@@ -1,6 +1,8 @@
 """Tests for apps.backend.src.ai.alignment.alignment_manager"""
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
+
 try:
     from ai.alignment.alignment_manager import (
         AlignmentManager,

@@ -8,9 +8,15 @@ Author: Angela AI v6.2
 
 try:
     from core.allocation.policy import (
-        AllocationPolicy, AllocationContext, AllocationDecision,
-        AllocationStage, AssignStage, CompositeStage, CreateStage, DeferStage,
         AllocationAction,
+        AllocationContext,
+        AllocationDecision,
+        AllocationPolicy,
+        AllocationStage,
+        AssignStage,
+        CompositeStage,
+        CreateStage,
+        DeferStage,
     )
 except ImportError:
     import pytest; pytest.skip("AllocationPolicy is a stub", allow_module_level=True)
@@ -146,8 +152,8 @@ def test_policy_falls_through_to_defer():
 
 
 def test_policy_decide_from_profile():
-    from core.allocation.resonance import ResonanceProfile
     from core.allocation.policy import AllocationPolicy
+    from core.allocation.resonance import ResonanceProfile
 
     profile = ResonanceProfile(
         similarities={'alpha': 0.8, 'beta': 0.3},

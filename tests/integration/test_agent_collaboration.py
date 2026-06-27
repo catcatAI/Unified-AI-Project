@@ -1,6 +1,7 @@
 """Smoke test for apps.backend.src.integration.agent_collaboration."""
 import pytest
 
+
 def test_agent_collaboration_imports():
     """Smoke test: apps.backend.src.integration.agent_collaboration imports successfully."""
     from integration import agent_collaboration as agent_collaboration

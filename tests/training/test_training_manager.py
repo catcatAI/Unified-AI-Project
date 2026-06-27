@@ -1,6 +1,7 @@
 """Smoke test for apps.backend.src.training_manager."""
 import pytest
 
+
 def test_training_manager_imports():
     """Smoke test: apps.backend.src.training_manager imports successfully."""
     import training_manager as training_manager

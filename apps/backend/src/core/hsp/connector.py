@@ -1,52 +1,53 @@
-import logging
 import asyncio
 import json
-import threading
-import uuid
-import time
+import logging
 import os
+import threading
+import time
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, cast
-from typing_extensions import Literal
 
-from .types import (
-    HSPMessageEnvelope,
-    HSPTaskResultPayload,
-    HSPCapabilityAdvertisementPayload,
-    HSPAcknowledgementPayload,
-    HSPQoSParameters,
-    HSPOpinionPayload,
-)
-from .versioning import HSPVersionManager, HSPVersionConverter
-from .extensibility import HSPExtensionManager, HSPMessageRegistry
-from .advanced_performance_optimizer import (
-    HSPAdvancedPerformanceOptimizer,
-    HSPAdvancedPerformanceEnhancer,
-)
-from .security import HSPSecurityManager, HSPSecurityContext
-from .performance_optimizer import HSPPerformanceOptimizer, HSPPerformanceEnhancer
 from core.system.config.magic_numbers import cache_value, threshold_value, timeout_value
 
 # from .retry_policy import RetryPolicy
 # from .circuit_breaker import CircuitBreaker
 from shared.network_resilience import (
-    RetryPolicy,
     CircuitBreaker,
+    RetryPolicy,
 )
-from .internal.internal_bus import InternalBus
-from .bridge.message_bridge import MessageBridge
+from typing_extensions import Literal
+
+from .advanced_performance_optimizer import (
+    HSPAdvancedPerformanceEnhancer,
+    HSPAdvancedPerformanceOptimizer,
+)
 from .bridge.data_aligner import DataAligner
+from .bridge.message_bridge import MessageBridge
+from .extensibility import HSPExtensionManager, HSPMessageRegistry
 from .external.external_connector import ExternalConnector
 from .fallback.fallback_protocols import (
-    InMemoryProtocol,
     FileBasedProtocol,
     HTTPProtocol,
+    InMemoryProtocol,
 )
-from datetime import datetime, timezone
+from .internal.internal_bus import InternalBus
+from .performance_optimizer import HSPPerformanceEnhancer, HSPPerformanceOptimizer
+from .security import HSPSecurityContext, HSPSecurityManager
+from .types import (
+    HSPAcknowledgementPayload,
+    HSPCapabilityAdvertisementPayload,
+    HSPMessageEnvelope,
+    HSPOpinionPayload,
+    HSPQoSParameters,
+    HSPTaskResultPayload,
+)
+from .versioning import HSPVersionConverter, HSPVersionManager
 
 # 條件導入 unittest.mock，只在測試模式下導入
 if os.environ.get("TEST_MODE") or os.environ.get("TESTING"):
-    from unittest.mock import MagicMock, AsyncMock
+    from unittest.mock import AsyncMock, MagicMock
 else:
     # 在非測試模式下定義佔位符類
     class MagicMock:

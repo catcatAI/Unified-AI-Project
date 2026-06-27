@@ -1,6 +1,6 @@
 """Tests for services.llm.prompt_builder"""
-from unittest.mock import patch, mock_open
 import json
+from unittest.mock import mock_open, patch
 
 import pytest
 

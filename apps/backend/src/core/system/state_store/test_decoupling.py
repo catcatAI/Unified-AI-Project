@@ -3,8 +3,9 @@ Test script for GlobalStateStore and Decoupling
 """
 import asyncio
 
-from core.system.state_store import state_store
 from core.engine.state_matrix import StateMatrix4D
+from core.system.state_store import state_store
+
 
 async def test_state_decoupling() -> None:
     """Test state decoupling behavior."""

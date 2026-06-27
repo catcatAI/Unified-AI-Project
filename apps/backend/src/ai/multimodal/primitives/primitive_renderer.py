@@ -2,9 +2,10 @@
 
 import math
 from typing import Tuple
+
 from PIL import Image, ImageDraw
 
-from .primitive_types import DrawingInstructions, Point, Line, Plane, Circle, Arc
+from .primitive_types import Arc, Circle, DrawingInstructions, Line, Plane, Point
 
 
 class PrimitiveRenderer:

@@ -2,8 +2,9 @@
 测试模块 - test_training_system_integration
 """
 
+from unittest.mock import AsyncMock, Mock
+
 import pytest
-from unittest.mock import Mock, AsyncMock
 
 
 class TestTrainingSystemIntegration:

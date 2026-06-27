@@ -8,7 +8,9 @@ class TestCapacityPlanner:
     def test_import(self):
         """Verify module exposes expected classes"""
         from ai.ops.capacity_planner import (
-            CapacityPlanner, ResourceUsage, CapacityPrediction,
+            CapacityPlanner,
+            CapacityPrediction,
+            ResourceUsage,
             ScalingPlan,
         )
         assert CapacityPlanner is not None

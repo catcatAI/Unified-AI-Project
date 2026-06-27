@@ -18,7 +18,6 @@ from apps.backend.src.ai.garden.garden_engine import GARDENEngine
 from apps.backend.src.ai.meta.meta_controller import MetaController
 from apps.backend.src.ai.response.composer import NeuroVocabulary, ValueRangeMapping
 
-
 # ===========================================================================
 # TestModelBusRealEngines — ModelBus with real ED3NEngine + GARDENEngine
 # ===========================================================================

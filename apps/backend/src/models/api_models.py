@@ -3,8 +3,9 @@ ANGELA-MATRIX: [L2] [α] [A] [L2]
 Canonical Pydantic models for API I/O.
 """
 
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel
-from typing import Optional, Dict, Any, List
 
 
 class UserInput(BaseModel):

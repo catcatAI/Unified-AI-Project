@@ -13,11 +13,11 @@ Hierarchy:
   [Ultra-Heavy]       ECOSYSTEM-1T (~1TB, cluster)
 """
 
-from .dictionary import VectorDictionary
-from .snn_core import TensorSNNCore
-from .garden_engine import GARDENEngine
 from .binary_store import BinaryStore
+from .dictionary import VectorDictionary
+from .garden_engine import GARDENEngine
 from .kg_import import KGImporter
+from .snn_core import TensorSNNCore
 from .vector_decoder import VectorDecoder
 
 __all__ = [

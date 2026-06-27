@@ -17,37 +17,38 @@ Date: 2026-02-02
 
 from __future__ import annotations
 
-import pytest
 import asyncio
 import math
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Set
-from pathlib import Path
 
 # Import the modules under test
 import sys
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'src'))
 
 from core.autonomous.neuroplasticity import (
-    SynapticState,
     ConsolidationPhase,
-    SynapticWeight,
-    MemoryTrace,
-    HebbianRule,
-    LTPParameters,
-    LTDParameters,
     EbbinghausForgettingCurve,
-    NeuroplasticitySystem,
-    SkillTrace,
-    HabitTrace,
-    TraumaMemory,
-    LearningEvent,
-    SkillAcquisition,
-    HabitFormation,
-    TraumaMemorySystem,
     ExplicitImplicitLearning,
+    HabitFormation,
+    HabitTrace,
+    HebbianRule,
+    LearningEvent,
+    LTDParameters,
+    LTPParameters,
+    MemoryTrace,
+    NeuroplasticitySystem,
+    SkillAcquisition,
+    SkillTrace,
+    SynapticState,
+    SynapticWeight,
+    TraumaMemory,
+    TraumaMemorySystem,
 )
-
 
 # =============================================================================
 # Fixtures

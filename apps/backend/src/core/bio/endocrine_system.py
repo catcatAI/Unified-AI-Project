@@ -20,11 +20,10 @@ Date: 2026-06-06
 # ANGELA-MATRIX: L1[生物层] α [A] L2+
 # =============================================================================
 
-from .endocrine_types import *  # noqa: F401, F403
 from .endocrine_system_core import *  # noqa: F401, F403
-from .hormone_kinetics import *  # noqa: F401, F403
+from .endocrine_types import *  # noqa: F401, F403
 from .feedback_loop import *  # noqa: F401, F403
-
+from .hormone_kinetics import *  # noqa: F401, F403
 
 # Example usage
 if __name__ == "__main__":

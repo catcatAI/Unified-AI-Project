@@ -5,10 +5,11 @@ WebSocket 連接測試腳本
 """
 
 import asyncio
-import websockets
 import json
-from datetime import datetime
 import logging
+from datetime import datetime
+
+import websockets
 
 logger = logging.getLogger(__name__)
 

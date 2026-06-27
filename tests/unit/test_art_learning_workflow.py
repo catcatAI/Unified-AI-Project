@@ -6,13 +6,13 @@ class TestArtLearningWorkflow:
     def test_import_all(self):
         """Verify all classes are importable with expected interfaces"""
         from core.engine.art_learning_workflow import (
-            WorkflowStage,
-            LearningObjective,
-            WorkflowProgress,
-            SkillAssessment,
-            GenerationResult,
-            WorkflowConfig,
             ArtLearningWorkflow,
+            GenerationResult,
+            LearningObjective,
+            SkillAssessment,
+            WorkflowConfig,
+            WorkflowProgress,
+            WorkflowStage,
         )
         assert hasattr(LearningObjective, 'update_progress')
         assert hasattr(WorkflowProgress, 'overall_progress')

@@ -3,11 +3,11 @@ Cluster management for compute node distribution.
 Consolidated from system.cluster_manager.
 """
 
-import logging
-from enum import Enum
-import uuid
 import asyncio
-from typing import Dict, Any
+import logging
+import uuid
+from enum import Enum
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 

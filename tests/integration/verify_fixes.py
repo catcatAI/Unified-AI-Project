@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Verify fixes applied to Angela AI system"""
 
-import sys
-import os
 import asyncio
 import logging
+import os
+import sys
 
 logger = logging.getLogger(__name__)
 

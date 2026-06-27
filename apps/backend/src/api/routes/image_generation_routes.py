@@ -1,14 +1,15 @@
 """API routes for compositional image generation (GVV pipeline + ThreeLayerVisual)."""
 
-import logging
-import io
 import base64
+import io
+import logging
 import os
 import warnings
+from typing import Optional
+
 import numpy as np
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -76,10 +77,10 @@ def _get_gvv():
         return _gvv_state
 
     try:
-        from ai.multimodal.primitives.geometric_vocabulary import GeometricVocabulary
         from ai.multimodal.primitives.concept_mapper import ConceptMapper
-        from ai.multimodal.primitives.instance_optimizer import InstanceOptimizer
         from ai.multimodal.primitives.concept_space import ConceptSpaceMapper
+        from ai.multimodal.primitives.geometric_vocabulary import GeometricVocabulary
+        from ai.multimodal.primitives.instance_optimizer import InstanceOptimizer
 
         models_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "models")
         vocab_path = os.path.join(models_dir, "geometric_vocabulary.json")
@@ -359,10 +360,10 @@ async def interpolate_classes(request: InterpolateRequest):
         raise HTTPException(status_code=503, detail="ThreeLayerVisual model not available")
 
     try:
-        from PIL import Image as PILImage
-
         # Interpolate
         import time
+
+        from PIL import Image as PILImage
         t0 = time.time()
         interp = model.interpolate(request.class_a, request.class_b, n_steps=request.n_steps,
                                    enhance=request.enhance)

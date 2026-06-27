@@ -1,10 +1,10 @@
 """Tests for BaseAgent."""
 
-import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import AsyncMock, Mock
 
-from ai.agents.base.base_agent import BaseAgent, TaskPriority, QueuedTask
+import pytest
+from ai.agents.base.base_agent import BaseAgent, QueuedTask, TaskPriority
 
 
 @pytest.fixture

@@ -3,22 +3,22 @@
 Tests the full flow: image → CLIP classify → dict lookup → Chinese response.
 Uses real CLIP (not mocked).
 """
-import sys
-import os
 import io
+import os
+import sys
+
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'apps', 'backend', 'src'))
 os.environ['HF_HUB_DISABLE_TELEMETRY'] = '1'
 
-from PIL import Image, ImageDraw
 import numpy as np
-
-from ai.multimodal.semantic_visual import SemanticVisualEncoder
-from ai.multimodal.concept_library import ConceptLibrary
-from ai.multimodal.vision_response_generator import VisionResponseGenerator
-from ai.multimodal.semantic_key_mapper import SemanticKeyMapper
 from ai.ed3n.ed3n_engine import ED3NEngine
+from ai.multimodal.concept_library import ConceptLibrary
+from ai.multimodal.semantic_key_mapper import SemanticKeyMapper
+from ai.multimodal.semantic_visual import SemanticVisualEncoder
+from ai.multimodal.vision_response_generator import VisionResponseGenerator
+from PIL import Image, ImageDraw
 
 
 @pytest.fixture(scope="module")

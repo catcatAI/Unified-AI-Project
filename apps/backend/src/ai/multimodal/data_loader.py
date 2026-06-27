@@ -18,9 +18,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
-
-from ai.multimodal.visual_encoder import VisualEncoder
 from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
+from ai.multimodal.visual_encoder import VisualEncoder
 
 logger = logging.getLogger(__name__)
 

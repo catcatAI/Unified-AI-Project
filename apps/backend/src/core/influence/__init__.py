@@ -4,15 +4,15 @@ Core Influence Module — Phase 6
 
 try:
     from core.influence.space import (
-        InfluenceSpace,
+        ConflictStrategy,
+        EntropyRule,
+        GravityRule,
+        InfluenceResult,
         InfluenceRule,
         InfluenceRuleSet,
-        InfluenceResult,
-        GravityRule,
-        EntropyRule,
+        InfluenceSpace,
         MemoryRule,
         WeightRule,
-        ConflictStrategy,
     )
 except ImportError:
     InfluenceSpace = InfluenceRule = InfluenceRuleSet = InfluenceResult = None

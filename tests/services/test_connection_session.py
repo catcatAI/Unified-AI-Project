@@ -15,9 +15,9 @@ Covers:
 
 import asyncio
 import sys
+from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, PropertyMock
-from datetime import datetime, timedelta
 
 import pytest
 
@@ -509,6 +509,7 @@ class TestSessionManagerQueries:
     def test_get_existing(self):
         """get returns session for existing client_id."""
         import asyncio
+
         from services.connection_session import SessionManager
         sm = SessionManager()
         ws = _mock_ws()
@@ -526,6 +527,7 @@ class TestSessionManagerQueries:
     def test_get_by_session_id(self):
         """get_by_session_id returns list of sessions sharing session_id."""
         import asyncio
+
         from services.connection_session import SessionManager
         sm = SessionManager()
         ws1 = _mock_ws()
@@ -544,6 +546,7 @@ class TestSessionManagerQueries:
     def test_get_active_session_ids(self):
         """get_active_session_ids returns all registered session_ids."""
         import asyncio
+
         from services.connection_session import SessionManager
         sm = SessionManager()
         ws1 = _mock_ws()
@@ -557,6 +560,7 @@ class TestSessionManagerQueries:
     def test_get_all_connections_info(self):
         """get_all_connections_info returns detailed info."""
         import asyncio
+
         from services.connection_session import SessionManager
         sm = SessionManager()
         ws = _mock_ws()
@@ -646,9 +650,9 @@ class TestSessionManagerSingleton:
 
     def test_get_session_manager_returns_singleton(self):
         """get_session_manager returns the same instance on repeated calls."""
-        from services.connection_session import get_session_manager, _session_manager
         # Reset first
         import services.connection_session as cs
+        from services.connection_session import _session_manager, get_session_manager
         cs._session_manager = None
         sm1 = get_session_manager()
         sm2 = get_session_manager()
@@ -656,8 +660,8 @@ class TestSessionManagerSingleton:
 
     def test_get_session_manager_creates_new_instance(self):
         """get_session_manager creates a new SessionManager if none exists."""
-        from services.connection_session import get_session_manager
         import services.connection_session as cs
+        from services.connection_session import get_session_manager
         cs._session_manager = None
         sm = get_session_manager()
         from services.connection_session import SessionManager
@@ -666,8 +670,8 @@ class TestSessionManagerSingleton:
     @pytest.mark.asyncio
     async def test_shutdown_clears_singleton(self):
         """shutdown_session_manager sets global to None."""
-        from services.connection_session import get_session_manager, shutdown_session_manager
         import services.connection_session as cs
+        from services.connection_session import get_session_manager, shutdown_session_manager
         cs._session_manager = None
         sm = get_session_manager()
         assert cs._session_manager is sm
@@ -682,8 +686,8 @@ class TestSessionManagerSingleton:
     @pytest.mark.asyncio
     async def test_shutdown_cancels_heartbeat_tasks(self):
         """shutdown_session_manager cancels all heartbeat tasks."""
-        from services.connection_session import get_session_manager, shutdown_session_manager
         import services.connection_session as cs
+        from services.connection_session import get_session_manager, shutdown_session_manager
         cs._session_manager = None
         sm = get_session_manager()
 
@@ -702,8 +706,8 @@ class TestSessionManagerSingleton:
     @pytest.mark.asyncio
     async def test_shutdown_idempotent(self):
         """shutdown_session_manager can be called multiple times safely."""
-        from services.connection_session import shutdown_session_manager
         import services.connection_session as cs
+        from services.connection_session import shutdown_session_manager
         cs._session_manager = None
         # First call does nothing (already None)
         await shutdown_session_manager()

@@ -88,8 +88,9 @@ class TestImageGenerationDeprecation:
 
     async def test_generate_image_deprecation(self):
         """POST /generate-image issues DeprecationWarning."""
-        from api.routes.image_generation_routes import generate_image, GenerateImageRequest
         import warnings
+
+        from api.routes.image_generation_routes import GenerateImageRequest, generate_image
         with pytest.warns(DeprecationWarning, match="/image/generate"):
             req = GenerateImageRequest(text="test", canvas_size=128, num_iterations=30, learning_rate=0.008)
             with pytest.raises(Exception):  # Will likely fail because no models available
@@ -97,8 +98,9 @@ class TestImageGenerationDeprecation:
 
     async def test_recognize_image_deprecation(self):
         """POST /recognize-image issues DeprecationWarning."""
-        from api.routes.image_generation_routes import recognize_image, RecognizeImageRequest
         import warnings
+
+        from api.routes.image_generation_routes import RecognizeImageRequest, recognize_image
         with pytest.warns(DeprecationWarning, match="/image/recognize"):
             req = RecognizeImageRequest(image_base64="AAAA")
             with pytest.raises(Exception):
@@ -106,8 +108,9 @@ class TestImageGenerationDeprecation:
 
     async def test_reconstruct_image_deprecation(self):
         """POST /reconstruct-image issues DeprecationWarning."""
-        from api.routes.image_generation_routes import reconstruct_image, ReconstructImageRequest
         import warnings
+
+        from api.routes.image_generation_routes import ReconstructImageRequest, reconstruct_image
         with pytest.warns(DeprecationWarning, match="/image/reconstruct"):
             req = ReconstructImageRequest(image_base64="AAAA")
             with pytest.raises(Exception):
@@ -115,8 +118,9 @@ class TestImageGenerationDeprecation:
 
     async def test_interpolate_classes_deprecation(self):
         """POST /interpolate-classes issues DeprecationWarning."""
-        from api.routes.image_generation_routes import interpolate_classes, InterpolateRequest
         import warnings
+
+        from api.routes.image_generation_routes import InterpolateRequest, interpolate_classes
         with pytest.warns(DeprecationWarning, match="/image/interpolate"):
             req = InterpolateRequest(class_a=0, class_b=1, n_steps=5)
             with pytest.raises(Exception):
@@ -124,8 +128,9 @@ class TestImageGenerationDeprecation:
 
     async def test_generate_image_status_deprecation(self):
         """GET /generate-image/status issues DeprecationWarning."""
-        from api.routes.image_generation_routes import generate_image_status
         import warnings
+
+        from api.routes.image_generation_routes import generate_image_status
         with pytest.warns(DeprecationWarning, match="/image/status"):
             result = await generate_image_status()
             # Should still return a result via delegation to image_status()
@@ -140,7 +145,7 @@ class TestImageGenerationModels:
 
     async def test_generate_image_fails_without_gvv(self):
         """POST /image/generate returns 503 when GVV pipeline not available."""
-        from api.routes.image_generation_routes import image_generate, GenerateImageRequest
+        from api.routes.image_generation_routes import GenerateImageRequest, image_generate
         req = GenerateImageRequest(text="test", canvas_size=128)
         try:
             await image_generate(req)
@@ -152,7 +157,7 @@ class TestImageGenerationModels:
 
     async def test_recognize_image_fails_without_gvv(self):
         """POST /image/recognize returns 503 when GVV pipeline not available."""
-        from api.routes.image_generation_routes import image_recognize, RecognizeImageRequest
+        from api.routes.image_generation_routes import RecognizeImageRequest, image_recognize
         req = RecognizeImageRequest(image_base64="AAAA")
         try:
             await image_recognize(req)
@@ -163,7 +168,7 @@ class TestImageGenerationModels:
 
     async def test_reconstruct_image_fails_without_model(self):
         """POST /image/reconstruct returns 503 when ThreeLayerVisual not available."""
-        from api.routes.image_generation_routes import image_reconstruct, ReconstructImageRequest
+        from api.routes.image_generation_routes import ReconstructImageRequest, image_reconstruct
         req = ReconstructImageRequest(image_base64="AAAA")
         try:
             await image_reconstruct(req)
@@ -174,7 +179,7 @@ class TestImageGenerationModels:
 
     async def test_interpolate_image_fails_without_model(self):
         """POST /image/interpolate returns 503 when ThreeLayerVisual not available."""
-        from api.routes.image_generation_routes import image_interpolate, InterpolateRequest
+        from api.routes.image_generation_routes import InterpolateRequest, image_interpolate
         req = InterpolateRequest(class_a=0, class_b=1)
         try:
             await image_interpolate(req)
@@ -202,7 +207,11 @@ class TestImageGenerationDelegation:
 
     async def test_both_endpoints_fail_same_way(self):
         """POST /image/generate and /generate-image both fail with 503 when no models."""
-        from api.routes.image_generation_routes import image_generate, generate_image, GenerateImageRequest
+        from api.routes.image_generation_routes import (
+            GenerateImageRequest,
+            generate_image,
+            image_generate,
+        )
         req = GenerateImageRequest(text="test", canvas_size=128)
         for handler in (image_generate, generate_image):
             try:

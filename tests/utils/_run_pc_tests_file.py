@@ -1,5 +1,6 @@
 """Isolation tests - writes output to file."""
-import time, importlib.util
+import importlib.util
+import time
 
 log = []
 
@@ -24,8 +25,8 @@ except Exception as e:
 log_print("Running tests...")
 log_print("")
 
-from unittest.mock import MagicMock, AsyncMock
 import asyncio
+from unittest.mock import AsyncMock, MagicMock
 
 pc_spec = importlib.util.spec_from_file_location(
     "project_coordinator",

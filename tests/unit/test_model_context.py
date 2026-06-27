@@ -1,6 +1,7 @@
 """Smoke tests for ai.context.model_context"""
 import pytest
 
+
 class TestModelCallRecord:
     def test_import(self):
         try:

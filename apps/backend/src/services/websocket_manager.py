@@ -10,10 +10,9 @@ import logging
 import sys
 import uuid
 from datetime import datetime
-from typing import Dict, Any, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from fastapi import WebSocket, WebSocketDisconnect
-
 from services.connection_session import get_session_manager
 
 logger = logging.getLogger(__name__)

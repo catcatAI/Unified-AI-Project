@@ -2,8 +2,9 @@
 
 import os
 import sys
+from unittest.mock import MagicMock, PropertyMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, PropertyMock
 
 sys.modules['cryptography'] = MagicMock()
 sys.modules['cryptography.fernet'] = MagicMock()

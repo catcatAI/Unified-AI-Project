@@ -10,11 +10,12 @@ Version: 6.2.1
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any, TYPE_CHECKING
+
+import logging
 import math
 import time
-import logging
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

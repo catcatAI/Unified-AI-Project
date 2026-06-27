@@ -4,13 +4,15 @@ Test Template Matcher
 Unit tests for P0-2 template matching system
 """
 
-import pytest
 import time
+
+import pytest
+
 from apps.backend.src.ai.response.template_matcher import (
-    TemplateMatcher,
-    MatchResult,
     MatchLevel,
+    MatchResult,
     Template,
+    TemplateMatcher,
 )
 
 

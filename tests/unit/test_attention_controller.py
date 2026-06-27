@@ -1,6 +1,7 @@
 """Tests for AttentionController and AttentionMode"""
-import pytest
 import time
+
+import pytest
 
 
 class TestAttentionController:

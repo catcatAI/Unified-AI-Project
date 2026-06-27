@@ -2,8 +2,9 @@
 测试模块 - test_hsp_protocol_integration
 """
 
+from unittest.mock import AsyncMock, Mock
+
 import pytest
-from unittest.mock import Mock, AsyncMock
 
 
 class TestHSPProtocolIntegration:

@@ -15,8 +15,8 @@
 
 import logging
 import threading
-from typing import Dict, List, Optional
 from enum import Enum
+from typing import Dict, List, Optional
 
 from .memory_template import MemoryTemplate, ResponseCategory
 

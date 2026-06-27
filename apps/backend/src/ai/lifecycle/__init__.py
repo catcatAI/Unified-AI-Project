@@ -13,12 +13,12 @@ Angela AI 生命循環系統
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
 # =============================================================================
 
-from .llm_decision_loop import LLMDecisionLoop
-from .proactive_interaction_system import ProactiveInteractionSystem
-from .user_monitor import UserMonitor, UserState
 from .behavior_feedback_loop import BehaviorFeedbackLoop
+from .llm_decision_loop import LLMDecisionLoop
 from .memory_integration_loop import MemoryIntegrationLoop
+from .proactive_interaction_system import ProactiveInteractionSystem
 from .unified_memory_coordinator import UnifiedMemoryCoordinator
+from .user_monitor import UserMonitor, UserState
 
 __all__ = [
     "LLMDecisionLoop",

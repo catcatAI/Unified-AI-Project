@@ -3,13 +3,15 @@ Tests for Precision Projection Matrix
 """
 
 import pytest
+
 try:
     from apps.backend.src.core.state.precision_projection_matrix import (
-        PrecisionProjectionMatrix,
         PrecisionMode,
+        PrecisionProjectionMatrix,
     )
 except ImportError:
     import pytest; pytest.skip("PrecisionProjectionMatrix is a stub", allow_module_level=True)
+
 from decimal import Decimal
 
 

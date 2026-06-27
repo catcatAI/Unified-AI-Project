@@ -121,6 +121,7 @@ class ImageEncoder:
         keys: List[str] = []
         try:
             from io import BytesIO
+
             from PIL import Image
             img = Image.open(BytesIO(image_data))
             fmt = img.format or "unknown"

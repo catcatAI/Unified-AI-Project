@@ -1,6 +1,7 @@
 """Smoke tests for ai.learning.experience_replay"""
 import pytest
 
+
 class TestExperienceReplayBuffer:
     def test_import(self):
         try:

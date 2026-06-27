@@ -9,11 +9,10 @@ import os
 import tempfile
 
 import pytest
-
 from ai.garden.garden_engine import (
     GARDENEngine,
-    _ReflexTable,
     _anchored_decode,
+    _ReflexTable,
 )
 
 

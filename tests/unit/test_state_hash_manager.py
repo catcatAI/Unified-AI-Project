@@ -1,6 +1,7 @@
 """Smoke tests for core.state.state_hash_manager"""
 import pytest
 
+
 class TestStateHashManager:
     def test_import(self):
         try:

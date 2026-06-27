@@ -5,8 +5,7 @@ import pytest
 @pytest.fixture
 def test_app():
     """Create test FastAPI app - uses minimal app for fast tests"""
-    from fastapi import FastAPI
-    from fastapi import APIRouter
+    from fastapi import APIRouter, FastAPI
 
     router = APIRouter(prefix="/api/v1")
 

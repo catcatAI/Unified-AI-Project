@@ -1,6 +1,7 @@
 """Smoke test for apps.backend.src.services.node_services."""
 import pytest
 
+
 def test_node_services_imports():
     """Smoke test: apps.backend.src.services.node_services imports successfully."""
     from services import node_services as node_services

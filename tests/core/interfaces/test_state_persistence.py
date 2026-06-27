@@ -7,7 +7,6 @@ the @runtime_checkable protocol, and basic round-trip persistence.
 
 import pytest
 
-
 # ── Structural subtyping conformance ──────────────────────────────────────
 
 

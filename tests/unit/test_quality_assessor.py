@@ -13,15 +13,15 @@
 
 import json
 import logging
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import Any  # Import Any
 
 # 设置日志
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger: Any = logging.getLogger(__name__)
 
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 
 class TestQualityAssessor:

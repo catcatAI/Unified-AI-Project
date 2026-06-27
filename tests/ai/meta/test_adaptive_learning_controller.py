@@ -1,6 +1,7 @@
 import sys
-import pytest
 from unittest.mock import MagicMock, PropertyMock
+
+import pytest
 
 _MODULE_MOCKS = {}
 for mod_name, mock in _MODULE_MOCKS.items():

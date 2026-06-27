@@ -1,6 +1,7 @@
 """Smoke tests for apps.backend.src.ai.reasoning.causal_reasoning_engine"""
 import pytest
 
+
 class TestCausalReasoningEngine:
     def test_import(self):
         try:

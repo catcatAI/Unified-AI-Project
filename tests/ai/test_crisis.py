@@ -3,7 +3,6 @@ import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from ai.crisis.crisis_system import CrisisSystem
 
 

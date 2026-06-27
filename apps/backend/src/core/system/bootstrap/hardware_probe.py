@@ -3,12 +3,12 @@ Hardware Probing & AI Tiering System
 Formalized from install_angela.py
 """
 
-import os
-import sys
-import platform
 import logging
-from typing import Dict, Any, Optional
+import os
+import platform
+import sys
 from dataclasses import dataclass
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 

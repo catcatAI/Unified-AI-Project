@@ -6,8 +6,8 @@ Angela AI - Environment Configuration Validator
 验证所有必需的环境变量是否正确配置，提供清晰的错误提示。
 """
 
-import os
 import logging
+import os
 from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)

@@ -1,7 +1,9 @@
 """Smoke test for apps.backend.src.cli.client."""
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
+
 
 def test_client_imports():
     """Smoke test: apps.backend.src.cli.client imports successfully."""

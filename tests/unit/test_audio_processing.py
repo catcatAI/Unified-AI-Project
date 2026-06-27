@@ -1,6 +1,7 @@
 """Smoke tests for apps.backend.src.ai.audio.audio_processing"""
 import pytest
 
+
 class TestAudioProcessing:
     def test_import(self):
         try:

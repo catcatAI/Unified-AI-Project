@@ -7,7 +7,7 @@ from __future__ import annotations
 from core.life.cyber_identity import (
     CyberIdentity,
     IdentityAspect,
-    SelfModel,
     IdentityGrowth,
     RelationshipModel,
+    SelfModel,
 )

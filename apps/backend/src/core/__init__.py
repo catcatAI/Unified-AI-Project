@@ -13,8 +13,8 @@ NOTE: All submodule imports are lazy (via __getattr__) to avoid slow
 startup. Import directly from submodules: from core.X import Y
 """
 
-import logging
 import importlib
+import logging
 
 logger = logging.getLogger(__name__)
 

@@ -5,13 +5,13 @@ import logging
 import time
 
 import aiohttp
-
 from core.interfaces.protocols import LLMResponse
 from core.system.config.network_defaults import (
-    GOOGLE_API_BASE,
     DEFAULT_GOOGLE_MODEL,
+    GOOGLE_API_BASE,
     GOOGLE_TIMEOUT,
 )
+
 from .base import BaseLLMBackend
 
 logger = logging.getLogger(__name__)

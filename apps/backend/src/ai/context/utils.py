@@ -6,9 +6,9 @@
 
 # Angela Matrix: [L2:MEM] [L4:CTX] Context system utilities
 
+import hashlib
 import json
 import logging
-import hashlib
 import zlib
 
 try:
@@ -18,8 +18,8 @@ try:
 except ImportError:
     FERNET_AVAILABLE = False
     logging.warning("cryptography module not available, context encryption disabled", exc_info=True)
-from typing import Dict, Any, Optional, List
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ def deserialize_context(data: bytes) -> Optional['Context']:
         Context: 反序列化后的上下文对象
     """
     try:
-        from .storage.base import Context, ContextType, ContextStatus
+        from .storage.base import Context, ContextStatus, ContextType
 
         json_str = data.decode("utf-8")
         context_dict = json.loads(json_str)

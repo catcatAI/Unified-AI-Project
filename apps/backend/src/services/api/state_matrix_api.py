@@ -29,14 +29,15 @@ Author: Angela AI v7.5
 """
 
 from __future__ import annotations
+
 import asyncio
-from typing import Dict, Any, Optional, List
+import logging
+from typing import Any, Dict, List, Optional
+
+from core.engine.state_matrix import CognitiveOp, StateMatrix4D
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from core.engine.state_matrix import StateMatrix4D, CognitiveOp
-
-import logging
 logger = logging.getLogger(__name__)
 
 # Global state matrix instance (singleton pattern for API access)

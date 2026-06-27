@@ -1,8 +1,8 @@
 """Tests for DynamicAgentRegistry."""
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
+import pytest
 from ai.agents.dynamic_agent_registry import DynamicAgentRegistry, RegisteredAgent
 
 

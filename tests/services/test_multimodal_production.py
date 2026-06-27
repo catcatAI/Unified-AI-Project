@@ -16,11 +16,9 @@ import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from services.multimodal_error_recovery import MultimodalErrorRecovery, _write_crisis_log
-from services.multimodal_state_persistence import MultimodalStatePersistence
 from services.multimodal_quality_monitor import MultimodalQualityMonitor
-
+from services.multimodal_state_persistence import MultimodalStatePersistence
 
 # =============================================================================
 # Fixtures

@@ -14,14 +14,14 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 try:
     from core.bio.physiological_tactile import (
+        AdaptationMechanism,
+        BodyPart,
         PhysiologicalTactileSystem,
         Receptor,
-        BodyPart,
+        ReceptorAdaptationState,
+        TrajectoryAnalysis,
         TrajectoryAnalyzer,
         TrajectoryPoint,
-        TrajectoryAnalysis,
-        AdaptationMechanism,
-        ReceptorAdaptationState,
     )
 except ImportError as e:
     logger.warning(f"Failed to import physiological_tactile: {e}", exc_info=True)
@@ -37,12 +37,12 @@ except ImportError as e:
 try:
     from core.bio.endocrine_system import (
         EndocrineSystem,
-        Hormone,
-        HormoneType,
-        HormoneKinetics,
-        ReceptorStatus,
         FeedbackLoop,
         FeedbackNode,
+        Hormone,
+        HormoneKinetics,
+        HormoneType,
+        ReceptorStatus,
     )
 except ImportError as e:
     logger.warning(f"Failed to import endocrine_system: {e}", exc_info=True)
@@ -55,7 +55,7 @@ except ImportError as e:
     FeedbackNode = None
 
 try:
-    from core.bio.autonomic_nervous_system import AutonomicNervousSystem, ANSState, NerveType
+    from core.bio.autonomic_nervous_system import ANSState, AutonomicNervousSystem, NerveType
 except ImportError as e:
     logger.warning(f"Failed to import autonomic_nervous_system: {e}", exc_info=True)
     AutonomicNervousSystem = None
@@ -64,17 +64,17 @@ except ImportError as e:
 
 try:
     from core.bio.neuroplasticity import (
-        NeuroplasticitySystem,
-        MemoryTrace,
-        HebbianRule,
-        SkillAcquisition,
-        SkillTrace,
+        ExplicitImplicitLearning,
         HabitFormation,
         HabitTrace,
-        TraumaMemorySystem,
-        TraumaMemory,
-        ExplicitImplicitLearning,
+        HebbianRule,
         LearningEvent,
+        MemoryTrace,
+        NeuroplasticitySystem,
+        SkillAcquisition,
+        SkillTrace,
+        TraumaMemory,
+        TraumaMemorySystem,
     )
 except ImportError as e:
     logger.warning(f"Failed to import neuroplasticity: {e}", exc_info=True)
@@ -93,9 +93,9 @@ except ImportError as e:
 try:
     from core.bio.emotional_blending import (
         EmotionalBlendingSystem,
-        PADEmotion,
         EmotionalExpression,
         MultidimensionalStateMatrix,
+        PADEmotion,
         StateDimension,
     )
 except ImportError as e:
@@ -114,14 +114,17 @@ except ImportError as e:
     SystemInteraction = None
 
 try:
-    from core.bio.memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge, MemoryConsolidation
+    from core.bio.memory_neuroplasticity_bridge import (
+        MemoryConsolidation,
+        MemoryNeuroplasticityBridge,
+    )
 except ImportError as e:
     logger.warning(f"Failed to import memory_neuroplasticity_bridge: {e}", exc_info=True)
     MemoryNeuroplasticityBridge = None
     MemoryConsolidation = None
 
 try:
-    from core.bio.extended_behavior_library import ExtendedBehaviorLibrary, BehaviorDefinition
+    from core.bio.extended_behavior_library import BehaviorDefinition, ExtendedBehaviorLibrary
 except ImportError as e:
     logger.warning(f"Failed to import extended_behavior_library: {e}", exc_info=True)
     ExtendedBehaviorLibrary = None
@@ -138,7 +141,7 @@ except ImportError as e:
 # Execution Systems → core/engine/
 # =============================================================================
 try:
-    from core.engine.state_matrix import StateMatrix4D, DimensionState
+    from core.engine.state_matrix import DimensionState, StateMatrix4D
 except ImportError as e:
     logger.warning(f"Failed to import state_matrix: {e}", exc_info=True)
     StateMatrix4D = None
@@ -146,13 +149,13 @@ except ImportError as e:
 
 try:
     from core.engine.action_executor import (
-        ActionExecutor,
-        ActionQueue,
-        ActionPriority,
         Action,
+        ActionCategory,
+        ActionExecutor,
+        ActionPriority,
+        ActionQueue,
         ActionResult,
         ActionStatus,
-        ActionCategory,
     )
 except ImportError as e:
     logger.warning(f"Failed to import action_executor: {e}", exc_info=True)
@@ -165,7 +168,7 @@ except ImportError as e:
     ActionCategory = None
 
 try:
-    from core.engine.desktop_interaction import DesktopInteraction, FileOperation, DesktopState
+    from core.engine.desktop_interaction import DesktopInteraction, DesktopState, FileOperation
 except ImportError as e:
     logger.warning(f"Failed to import desktop_interaction: {e}", exc_info=True)
     DesktopInteraction = None
@@ -173,7 +176,7 @@ except ImportError as e:
     DesktopState = None
 
 try:
-    from core.engine.browser_controller import BrowserController, SearchResult, BrowserState
+    from core.engine.browser_controller import BrowserController, BrowserState, SearchResult
 except ImportError as e:
     logger.warning(f"Failed to import browser_controller: {e}", exc_info=True)
     BrowserController = None
@@ -181,7 +184,7 @@ except ImportError as e:
     BrowserState = None
 
 try:
-    from core.engine.audio_system import AudioSystem, TTSConfig, LyricsSync
+    from core.engine.audio_system import AudioSystem, LyricsSync, TTSConfig
 except ImportError as e:
     logger.warning(f"Failed to import audio_system: {e}", exc_info=True)
     AudioSystem = None
@@ -213,7 +216,7 @@ except ImportError as e:
     LifeCycleState = None
 
 try:
-    from core.life.cyber_identity import CyberIdentity, SelfModel, IdentityGrowth
+    from core.life.cyber_identity import CyberIdentity, IdentityGrowth, SelfModel
 except ImportError as e:
     logger.warning(f"Failed to import cyber_identity: {e}", exc_info=True)
     CyberIdentity = None
@@ -221,7 +224,7 @@ except ImportError as e:
     IdentityGrowth = None
 
 try:
-    from core.life.self_generation import SelfGeneration, AvatarBuilder
+    from core.life.self_generation import AvatarBuilder, SelfGeneration
 except ImportError as e:
     logger.warning(f"Failed to import self_generation: {e}", exc_info=True)
     SelfGeneration = None
@@ -232,15 +235,15 @@ except ImportError as e:
 # =============================================================================
 try:
     from core.engine.art_learning_system import (
-        ArtLearningSystem,
-        ArtKnowledge,
         ArtDomain,
-        TutorialContent,
+        ArtKnowledge,
+        ArtLearningSystem,
+        BodyPartMapping,
         ImageAnalysis,
         LearningSession,
-        BodyPartMapping,
-        Live2DParameter,
         LearningType,
+        Live2DParameter,
+        TutorialContent,
     )
 except ImportError as e:
     logger.warning(f"Failed to import art_learning_system: {e}", exc_info=True)
@@ -256,12 +259,12 @@ except ImportError as e:
 
 try:
     from core.engine.live2d_avatar_generator import (
-        Live2DAvatarGenerator,
-        GeneratedAvatar,
-        Live2DModelConfig,
-        GenerationStage,
-        ViewAngle,
         BodyLayer,
+        GeneratedAvatar,
+        GenerationStage,
+        Live2DAvatarGenerator,
+        Live2DModelConfig,
+        ViewAngle,
     )
 except ImportError as e:
     logger.warning(f"Failed to import live2d_avatar_generator: {e}", exc_info=True)
@@ -275,12 +278,12 @@ except ImportError as e:
 try:
     from core.engine.art_learning_workflow import (
         ArtLearningWorkflow,
-        WorkflowStage,
-        LearningObjective,
-        WorkflowProgress,
-        SkillAssessment,
         GenerationResult,
+        LearningObjective,
+        SkillAssessment,
         WorkflowConfig,
+        WorkflowProgress,
+        WorkflowStage,
     )
 except ImportError as e:
     logger.warning(f"Failed to import art_learning_workflow: {e}", exc_info=True)
@@ -293,7 +296,12 @@ except ImportError as e:
     WorkflowConfig = None
 
 try:
-    from core.life.autonomous_life_cycle import AutonomousLifeCycle, LifePhase, LifeDecision, FormulaMetrics
+    from core.life.autonomous_life_cycle import (
+        AutonomousLifeCycle,
+        FormulaMetrics,
+        LifeDecision,
+        LifePhase,
+    )
 except ImportError as e:
     logger.warning(f"Failed to import autonomous_life_cycle: {e}", exc_info=True)
     AutonomousLifeCycle = None
@@ -385,28 +393,28 @@ def get_system_info() -> dict:
 
 async def initialize_all_systems() -> dict:
     """Initialize all autonomous systems for Angela AI."""
-    from core.bio.physiological_tactile import PhysiologicalTactileSystem
-    from core.bio.endocrine_system import EndocrineSystem
     from core.bio.autonomic_nervous_system import AutonomicNervousSystem
-    from core.bio.neuroplasticity import NeuroplasticitySystem
-    from core.bio.emotional_blending import EmotionalBlendingSystem
-    from core.engine.action_executor import ActionExecutor
-    from core.engine.desktop_interaction import DesktopInteraction
-    from core.engine.browser_controller import BrowserController
-    from core.engine.audio_system import AudioSystem
-    from core.engine.desktop_interaction import DesktopInteraction as DesktopPresence
-    from core.engine.live2d_integration import Live2DIntegration
     from core.bio.biological_integrator import BiologicalIntegrator
-    from core.life.digital_life_integrator import DigitalLifeIntegrator
-    from core.bio.memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge
+    from core.bio.emotional_blending import EmotionalBlendingSystem
+    from core.bio.endocrine_system import EndocrineSystem
     from core.bio.extended_behavior_library import ExtendedBehaviorLibrary
+    from core.bio.memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge
     from core.bio.multidimensional_trigger import MultidimensionalTriggerSystem
-    from core.life.cyber_identity import CyberIdentity
-    from core.life.self_generation import SelfGeneration
-    from core.life.autonomous_life_cycle import AutonomousLifeCycle
+    from core.bio.neuroplasticity import NeuroplasticitySystem
+    from core.bio.physiological_tactile import PhysiologicalTactileSystem
+    from core.engine.action_executor import ActionExecutor
     from core.engine.art_learning_system import ArtLearningSystem
-    from core.engine.live2d_avatar_generator import Live2DAvatarGenerator
     from core.engine.art_learning_workflow import ArtLearningWorkflow
+    from core.engine.audio_system import AudioSystem
+    from core.engine.browser_controller import BrowserController
+    from core.engine.desktop_interaction import DesktopInteraction
+    from core.engine.desktop_interaction import DesktopInteraction as DesktopPresence
+    from core.engine.live2d_avatar_generator import Live2DAvatarGenerator
+    from core.engine.live2d_integration import Live2DIntegration
+    from core.life.autonomous_life_cycle import AutonomousLifeCycle
+    from core.life.cyber_identity import CyberIdentity
+    from core.life.digital_life_integrator import DigitalLifeIntegrator
+    from core.life.self_generation import SelfGeneration
 
     systems = {
         "physiological_tactile": PhysiologicalTactileSystem(),

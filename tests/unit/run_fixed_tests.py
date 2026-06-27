@@ -3,9 +3,9 @@
 测试运行脚本,用于验证修复后的测试文件
 """
 
-import sys
-import os
 import logging
+import os
+import sys
 
 logger = logging.getLogger(__name__)
 

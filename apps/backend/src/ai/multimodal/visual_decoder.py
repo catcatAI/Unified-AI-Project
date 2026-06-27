@@ -6,7 +6,6 @@ P24: CNN texture detail via transposed convolution from hidden features.
 import logging
 from pathlib import Path
 from typing import Optional
-from typing import Optional
 
 import numpy as np
 from PIL import Image

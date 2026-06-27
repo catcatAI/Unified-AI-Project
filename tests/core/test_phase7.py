@@ -60,6 +60,7 @@ print(f"Alpha.focus trend: {trend2.direction}")
 print()
 print("=== Adapter vs Old SM ===")
 from core.autonomous.state_matrix import StateMatrix4D
+
 old = StateMatrix4D()
 old.update_alpha(focus=0.7)
 print(f"Old SM: alpha.focus={old.alpha.values.get('focus', 'N/A')}")

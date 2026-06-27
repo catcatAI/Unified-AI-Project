@@ -18,23 +18,25 @@ Date: 2026-02-02
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from enum import Enum, auto
-from typing import Optional, Callable, Any
-from datetime import datetime, timedelta
+
 import asyncio
 import logging
-from core.system.config.magic_numbers import loop_sleep
-from typing import TYPE_CHECKING
-from core.engine.state_matrix import StateMatrix4D
-from .self_introspector import SelfIntrospector
-from core.bio.biological_integrator import BiologicalIntegrator
-from core.engine.action_executor import ActionExecutor
-from core.bio.memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge
-from .autonomous_life_cycle import AutonomousLifeCycle
-from .dynamic_parameters import DynamicThresholdManager
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum, auto
+from typing import TYPE_CHECKING, Any, Callable, Optional
+
 from ai.lifecycle.llm_decision_loop import LLMDecisionLoop
 from ai.lifecycle.user_monitor import UserMonitor
+from core.bio.biological_integrator import BiologicalIntegrator
+from core.bio.memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge
+from core.engine.action_executor import ActionExecutor
+from core.engine.state_matrix import StateMatrix4D
+from core.system.config.magic_numbers import loop_sleep
+
+from .autonomous_life_cycle import AutonomousLifeCycle
+from .dynamic_parameters import DynamicThresholdManager
+from .self_introspector import SelfIntrospector
 
 logger = logging.getLogger(__name__)
 
@@ -313,8 +315,8 @@ class DigitalLifeIntegrator:
 
         # 3. High-Level Cognition (Optional/Graceful)
         try:
-            from services.angela_llm_service import get_llm_service
             from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+            from services.angela_llm_service import get_llm_service
 
             llm_service = await get_llm_service()
             memory_manager = HAMMemoryManager(core_storage_filename="angela_conversations.json")

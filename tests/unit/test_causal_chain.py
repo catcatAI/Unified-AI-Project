@@ -107,8 +107,9 @@ class TestCausalChain:
 
     def test_get_execution_time(self):
         """Verify execution time calculation with multiple nodes"""
-        from core.tracing.causal_chain import CausalChain, CausalNode, LayerType
         from datetime import datetime, timedelta
+
+        from core.tracing.causal_chain import CausalChain, CausalNode, LayerType
         chain = CausalChain(root_id="root")
         n1 = CausalNode(layer=LayerType.L1, module="a", action="start",
                         timestamp=datetime(2026, 1, 1, 0, 0, 0))

@@ -153,7 +153,7 @@ def test_import_error_handler_context():
 
 
 def test_import_waiting_scheduler():
-    from core.waiting_scheduler import WaitingScheduler, ScheduledTask
+    from core.waiting_scheduler import ScheduledTask, WaitingScheduler
     assert ScheduledTask is not None
     task = ScheduledTask(
         deadline=1.0,
@@ -165,6 +165,6 @@ def test_import_waiting_scheduler():
 
 
 def test_import_event_loop_enums():
-    from core.event_loop_system import EventPriority, EventCategory
+    from core.event_loop_system import EventCategory, EventPriority
     assert EventPriority.NORMAL is not None
     assert EventCategory.USER_INTERACTION is not None

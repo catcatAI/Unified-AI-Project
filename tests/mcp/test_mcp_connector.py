@@ -2,8 +2,9 @@
 测试模块 - test_mcp_connector
 """
 
+from unittest.mock import AsyncMock, Mock
+
 import pytest
-from unittest.mock import Mock, AsyncMock
 
 
 class TestMCPConnector:

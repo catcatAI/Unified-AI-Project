@@ -22,15 +22,16 @@ Author: Angela AI v6.2.1
 """
 
 from __future__ import annotations
+
 import json
 import logging
 import time
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from core.system.config.async_io import async_write_text, async_read_text
+from core.system.config.async_io import async_read_text, async_write_text
 from core.system.config.magic_numbers import timeout_value
 
 logger = logging.getLogger("angela_persistence")

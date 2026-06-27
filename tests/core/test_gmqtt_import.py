@@ -4,11 +4,12 @@
 自动生成的测试模块,用于验证系统功能。
 """
 
-import sys
-import os
 import logging
+import os
+import sys
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 logger = logging.getLogger(__name__)
 

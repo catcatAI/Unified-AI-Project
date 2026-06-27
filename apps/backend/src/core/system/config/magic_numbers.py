@@ -16,8 +16,9 @@ def _load_config() -> Optional[Dict[str, Any]]:
     if _MAGIC_CACHE:
         return _MAGIC_CACHE
     try:
-        from core.system.config.tiered_loader import get_config as _tiered_get
         from pathlib import Path as _Path
+
+        from core.system.config.tiered_loader import get_config as _tiered_get
 
         configs: Dict[str, Any] = {}
         # Discover all tiered config files under the configs root

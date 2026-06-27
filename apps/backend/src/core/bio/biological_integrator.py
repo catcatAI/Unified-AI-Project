@@ -17,20 +17,22 @@ Date: 2026-02-02
 """
 
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Callable, Any
-from datetime import datetime
+
 import asyncio
 import logging
+from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
+
 from core.system.config.magic_numbers import loop_sleep
-from utils.async_utils import safe_create_task_sync
-from .physiological_tactile import PhysiologicalTactileSystem, TactileType, BodyPart
-from .endocrine_system import EndocrineSystem, HormoneType
+from utils.async_utils import safe_create_task, safe_create_task_sync
+
 from .autonomic_nervous_system import AutonomicNervousSystem, NerveType
+from .emotional_blending import BasicEmotion, EmotionalBlendingSystem
+from .endocrine_system import EndocrineSystem, HormoneType
 from .neuroplasticity import NeuroplasticitySystem
-from .emotional_blending import EmotionalBlendingSystem, BasicEmotion
-from utils.async_utils import safe_create_task
+from .physiological_tactile import BodyPart, PhysiologicalTactileSystem, TactileType
 
 logger = logging.getLogger(__name__)
 

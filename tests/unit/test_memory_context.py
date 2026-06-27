@@ -1,6 +1,7 @@
 """Smoke tests for ai.context.memory_context"""
 import pytest
 
+
 class TestMemory:
     def test_import(self):
         try:

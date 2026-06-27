@@ -17,17 +17,23 @@ Date: 2026-02-02
 """
 
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Callable, Any, TYPE_CHECKING
-from datetime import datetime
+
 import asyncio
-from enum import Enum
 import logging
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
+
+from core.active_cognition_formula import ActiveCognitionFormula, OrderType, StressSource
+from core.cdm_dividend_model import (
+    CDMCognitiveDividendModel,
+    CognitiveActivity,
+    CognitiveInvestment,
+)
 from core.hsm_formula_system import HSMFormulaSystem
-from core.cdm_dividend_model import CDMCognitiveDividendModel, CognitiveActivity, CognitiveInvestment
-from core.life_intensity_formula import LifeIntensityFormula, KnowledgeDomain
-from core.active_cognition_formula import ActiveCognitionFormula, StressSource, OrderType
-from core.non_paradox_existence import NonParadoxExistence, GrayZoneVariableType
+from core.life_intensity_formula import KnowledgeDomain, LifeIntensityFormula
+from core.non_paradox_existence import GrayZoneVariableType, NonParadoxExistence
 
 logger = logging.getLogger(__name__)
 

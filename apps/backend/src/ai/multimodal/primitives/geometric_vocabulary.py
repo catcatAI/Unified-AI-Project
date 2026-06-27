@@ -8,12 +8,13 @@ The vocabulary stores:
 This is the foundation for both generation (top-down) and recognition (bottom-up).
 """
 
-import numpy as np
 import json
-import os
-from typing import List, Dict, Tuple, Optional
-from dataclasses import dataclass, field
 import math
+import os
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
 
 
 @dataclass
@@ -184,7 +185,7 @@ class GeometricVocabulary:
 
     def _analyze_primitive_signature(self, center: np.ndarray) -> dict:
         """Analyze which primitive types contribute most to a visual word."""
-        from .primitive_types import N_POINTS, N_LINES, N_PLANES, N_CIRCLES, N_ARCS
+        from .primitive_types import N_ARCS, N_CIRCLES, N_LINES, N_PLANES, N_POINTS
 
         sig = {}
         off = 5  # skip header

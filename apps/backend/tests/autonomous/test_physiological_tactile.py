@@ -16,34 +16,35 @@ Date: 2026-02-02
 
 from __future__ import annotations
 
-import pytest
 import asyncio
 import math
-from datetime import datetime
-from typing import List, Tuple, Any, Dict
-from pathlib import Path
 
 # Import the modules under test
 import sys
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Tuple
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'src'))
 
 from core.autonomous.physiological_tactile import (
-    ReceptorType,
-    TactileType,
+    AdaptationMechanism,
     BodyPart,
     BodyRegion,
-    Receptor,
-    TactileStimulus,
-    TactileResponse,
     EmotionalTactileMapping,
     PhysiologicalTactileSystem,
-    TrajectoryPoint,
+    Receptor,
+    ReceptorAdaptationState,
+    ReceptorType,
+    TactileResponse,
+    TactileStimulus,
+    TactileType,
     TrajectoryAnalysis,
     TrajectoryAnalyzer,
-    ReceptorAdaptationState,
-    AdaptationMechanism,
+    TrajectoryPoint,
 )
-
 
 # =============================================================================
 # Fixtures

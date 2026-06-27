@@ -13,12 +13,12 @@ Version: 6.4.0
 """
 
 from __future__ import annotations
-from typing import Dict, Tuple, List, Any, Callable, Optional
-from enum import Enum, auto
-import re
-import math
-import logging
 
+import logging
+import math
+import re
+from enum import Enum, auto
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 

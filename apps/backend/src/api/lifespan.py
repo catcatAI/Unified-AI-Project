@@ -207,10 +207,10 @@ _metrics_handler = None
 
 def _init_plugins():
     """Initialize plugin system with built-in handlers."""
-    from core.plugin.plugin_manager import plugin_manager
+    from core.plugin.handlers.audit_logger import AuditLoggerHandler
     from core.plugin.handlers.message_logger import MessageLoggerHandler
     from core.plugin.handlers.metrics_collector import MetricsCollectorHandler
-    from core.plugin.handlers.audit_logger import AuditLoggerHandler
+    from core.plugin.plugin_manager import plugin_manager
 
     plugin_manager.register_plugin("core", "1.0.0", "Core built-in plugin handlers")
 
@@ -249,8 +249,8 @@ async def _try_start_agents():
     """Initialize AgentManager and register specialized agents."""
     global _agent_manager_instance
     try:
-        from ai.agents.agent_manager import AgentManager
         from ai.agents.agent_adapter import register_specialized_agents
+        from ai.agents.agent_manager import AgentManager
         _agent_manager_instance = AgentManager(enable_router=False)
         count = register_specialized_agents(_agent_manager_instance)
         logger.info(f"[AgentManager] Initialized with {count} specialized agents")

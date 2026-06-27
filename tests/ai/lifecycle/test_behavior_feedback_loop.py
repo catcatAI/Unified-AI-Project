@@ -338,7 +338,7 @@ class TestAnalyzePatterns:
         await feedback_loop._analyze_patterns()
         assert 'comfort_default' not in feedback_loop.behavior_patterns
     async def test_analyze_patterns_updates_existing(self, feedback_loop):
-        from ai.lifecycle.behavior_feedback_loop import BehaviorRecord, BehaviorPattern
+        from ai.lifecycle.behavior_feedback_loop import BehaviorPattern, BehaviorRecord
         now = datetime.now()
         feedback_loop.behavior_patterns['greet_default'] = BehaviorPattern(
             action='greet', context='default',

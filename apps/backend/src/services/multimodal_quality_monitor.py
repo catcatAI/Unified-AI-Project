@@ -19,7 +19,8 @@ import time
 from collections import deque
 from typing import Any, Dict, List, Optional, Tuple
 
-from core.crisis_log import write_crisis_log as _write_crisis_log, append_quality_log as _append_quality_log
+from core.crisis_log import append_quality_log as _append_quality_log
+from core.crisis_log import write_crisis_log as _write_crisis_log
 
 logger = logging.getLogger(__name__)
 

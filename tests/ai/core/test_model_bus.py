@@ -150,7 +150,7 @@ class TestModelBusResolveCandidates:
 class TestModelBusPickBest:
 
     def test_pick_best_highest_confidence(self):
-        from ai.core.model_bus import ModelRouteResult, ModelBus
+        from ai.core.model_bus import ModelBus, ModelRouteResult
         r1 = ModelRouteResult("a", "text", 0.5, 10.0, "x")
         r2 = ModelRouteResult("b", "text", 0.9, 10.0, "x")
         best = ModelBus._pick_best({"a": r1, "b": r2})
@@ -163,7 +163,7 @@ class TestModelBusPickBest:
         assert best["model_id"] == "none"
 
     def test_pick_best_single(self):
-        from ai.core.model_bus import ModelRouteResult, ModelBus
+        from ai.core.model_bus import ModelBus, ModelRouteResult
         r = ModelRouteResult("a", "text", 0.7, 10.0, "x")
         best = ModelBus._pick_best({"a": r})
         assert best["model_id"] == "a"

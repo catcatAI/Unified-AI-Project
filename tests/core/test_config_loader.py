@@ -1,17 +1,31 @@
 """Tests for config_loader - Config dataclasses, loading, validation, and helpers."""
 
-import os
 import json
+import os
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 import pytest
+
 try:
     from apps.backend.src.core.config_loader import (
-        Environment, PerformanceMode, BackendConfig, SecurityConfig,
-        DatabaseConfig, Live2DConfig, PerformanceConfig, LoggingConfig,
-        FeatureFlags, Config, _get_str, _get_int, _get_bool, _load_env_file,
-        get_config, reload_config, init_config,
+        BackendConfig,
+        Config,
+        DatabaseConfig,
+        Environment,
+        FeatureFlags,
+        Live2DConfig,
+        LoggingConfig,
+        PerformanceConfig,
+        PerformanceMode,
+        SecurityConfig,
+        _get_bool,
+        _get_int,
+        _get_str,
+        _load_env_file,
+        get_config,
+        init_config,
+        reload_config,
     )
 except ImportError:
     import pytest; pytest.skip("Environment not defined", allow_module_level=True)

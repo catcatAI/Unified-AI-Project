@@ -2,27 +2,26 @@
 # ANGELA-MATRIX: [L3] [γ] [C] [L2]
 # =============================================================================
 
-from .dictionary_layer import DictionaryEntry, DictionaryLayer
-from .relation_classifier import RelationClassifier, RelationType
+from .continuous_learning import ContinuousLearningPipeline
 from .core_network import CoreNetwork, Neuron, RelationGroup
-from .output_anchor import ResponseAnchorValidator, anchored_decode, compute_anchor_drift
+from .dictionary_layer import DictionaryEntry, DictionaryLayer
 from .ed3n_engine import ED3NEngine, ReflexLayer
+from .ed3n_trainer import ED3NTrainer, JointTrainer, SequenceTrainer
 from .io_analyzer import IOAnalyzer
+from .output_anchor import ResponseAnchorValidator, anchored_decode, compute_anchor_drift
+from .relation_classifier import RelationClassifier, RelationType
+from .step_decoder import StepDecoder
 from .telemetry import TelemetryCollector
 from .training_types import (
-    TrainMetrics,
+    SeqBatch,
+    SequenceExample,
     TrainingBatch,
     TrainingExample,
-    SequenceExample,
-    SeqBatch,
-    training_example_to_sequence,
-    seq_batch_from_examples,
+    TrainMetrics,
     make_synthetic_seq_batch,
+    seq_batch_from_examples,
+    training_example_to_sequence,
 )
-from .ed3n_trainer import ED3NTrainer, SequenceTrainer, JointTrainer
-from .continuous_learning import ContinuousLearningPipeline
-
-from .step_decoder import StepDecoder
 
 __all__ = [
     "DictionaryEntry",

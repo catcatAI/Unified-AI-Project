@@ -16,28 +16,29 @@ Date: 2026-02-02
 
 from __future__ import annotations
 
-import pytest
 import asyncio
 import math
-from datetime import datetime
-from typing import Dict, List, Optional, Any
-from pathlib import Path
 
 # Import the modules under test
 import sys
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'src'))
 
 from core.autonomous.endocrine_system import (
-    HormoneType,
-    Hormone,
-    HormonalEffect,
     EndocrineSystem,
-    ReceptorStatus,
-    HormoneKinetics,
-    FeedbackNode,
     FeedbackLoop,
+    FeedbackNode,
+    HormonalEffect,
+    Hormone,
+    HormoneKinetics,
+    HormoneType,
+    ReceptorStatus,
 )
-
 
 # =============================================================================
 # Fixtures

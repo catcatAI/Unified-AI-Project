@@ -1,9 +1,15 @@
 import pytest
+
 try:
     from apps.backend.src.core.allocation.policy import (
-        AllocationPolicy, AllocationContext, AllocationDecision,
-        AllocationAction, AssignStage, CompositeStage,
-        CreateStage, DeferStage,
+        AllocationAction,
+        AllocationContext,
+        AllocationDecision,
+        AllocationPolicy,
+        AssignStage,
+        CompositeStage,
+        CreateStage,
+        DeferStage,
     )
 except ImportError:
     import pytest; pytest.skip("AllocationPolicy stub not available", allow_module_level=True)

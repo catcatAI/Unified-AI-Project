@@ -27,11 +27,9 @@ import zlib
 
 import numpy as np
 import pytest
-
 from ai.multimodal.semantic_key_mapper import SemanticKeyMapper
 from ai.multimodal.shared_latent_space import SharedLatentSpace
 from ai.multimodal.visual_encoder import VisualEncoder
-
 
 # =========================================================================
 # Image Generation

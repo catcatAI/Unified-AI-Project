@@ -1,7 +1,7 @@
 # gmqtt type stub file for Pyright type checking
 # This is a minimal stub to satisfy import checks for optional dependency
 
-from typing import Any, Optional, Callable, Awaitable
+from typing import Any, Awaitable, Callable, Optional
 
 class Client:
     def __init__(

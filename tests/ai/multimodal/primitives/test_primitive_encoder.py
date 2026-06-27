@@ -1,14 +1,12 @@
 """Tests for primitive encoder."""
 
-import numpy as np
-import pytest
 import tempfile
 from pathlib import Path
 
-from ai.multimodal.primitives.primitive_types import (
-    Point, Line, Plane, DrawingInstructions
-)
+import numpy as np
+import pytest
 from ai.multimodal.primitives.primitive_encoder import PrimitiveEncoder
+from ai.multimodal.primitives.primitive_types import DrawingInstructions, Line, Plane, Point
 
 
 @pytest.fixture

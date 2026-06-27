@@ -17,10 +17,8 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
-
 from ai.multimodal.dual_encoder_router import DualEncoderRouter
 from ai.multimodal.shared_latent_space import SharedLatentSpace
-
 
 # =========================================================================
 # Fixtures
@@ -309,7 +307,8 @@ class TestCrossModalSemantic:
 
 def _make_sample_png() -> bytes:
     """Generate a minimal valid PNG (1×1 white pixel)."""
-    import struct, zlib
+    import struct
+    import zlib
     width, height = 1, 1
     raw = b'\x00' + b'\xff\xff\xff' * width * height
 

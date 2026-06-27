@@ -1,9 +1,8 @@
 """Tests for CodeLearningEngine"""
 import pytest
+
 try:
-    from apps.backend.src.ai.code_inspection.code_learning import (
-        CodeLearningEngine, LearnedPattern
-    )
+    from apps.backend.src.ai.code_inspection.code_learning import CodeLearningEngine, LearnedPattern
 except ImportError:
     pytest.skip("CodeLearningEngine not available (stub module)", allow_module_level=True)
 
@@ -11,7 +10,9 @@ except ImportError:
 class TestCodeLearningEngine:
     def test_import(self):
         from apps.backend.src.ai.code_inspection.code_learning import (
-            CodeLearningEngine, LearnedPattern, LearningFeedback
+            CodeLearningEngine,
+            LearnedPattern,
+            LearningFeedback,
         )
         assert hasattr(CodeLearningEngine, 'learn_from_feedback')
         assert hasattr(CodeLearningEngine, 'get_pattern_by_id')

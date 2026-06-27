@@ -71,8 +71,7 @@ class TestVersionInfo:
     def test_str_representation(self):
         """Verify string representation"""
         try:
-            from core.version import VersionInfo
-            from core.version import ReleasePhase
+            from core.version import ReleasePhase, VersionInfo
             v = VersionInfo(major=7, minor=5, patch=0, phase=ReleasePhase.STABLE)
             assert str(v) == "7.5.0"
         except ImportError as e:

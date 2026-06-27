@@ -9,12 +9,12 @@ Angela AI 架構修復測試腳本
 4. P0-4: 記憶系統與情感系統整合
 """
 
-from pathlib import Path
 import asyncio
 import json
-from datetime import datetime
-from typing import Dict, Any, List
 import logging
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -35,9 +35,9 @@ try:
 
     # 導入生物整合器
     from core.bio.biological_integrator import (
-        BiologicalIntegrator,
         BiologicalEvent,
         BiologicalEventPublisher,
+        BiologicalIntegrator,
     )
 
     print("✅ 成功導入 BiologicalIntegrator")
@@ -46,8 +46,8 @@ try:
     from ai.agents.agent_manager import (
         AgentManager,
         AgentResult,
-        StateImpact,
         DefaultAgentResultEvaluator,
+        StateImpact,
     )
 
     print("✅ 成功導入 AgentManager")

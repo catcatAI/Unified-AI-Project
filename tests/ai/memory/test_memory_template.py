@@ -1,10 +1,11 @@
-import pytest
 from datetime import datetime
 
+import pytest
+
 from apps.backend.src.ai.memory.memory_template import (
+    AngelaState,
     MemoryTemplate,
     ResponseCategory,
-    AngelaState,
     UserImpression,
     create_template,
     generate_template_id,

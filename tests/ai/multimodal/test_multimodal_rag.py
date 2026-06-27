@@ -1,11 +1,11 @@
 import io
 import os
 import tempfile
+import wave
 
 import numpy as np
 import pytest
 from PIL import Image
-import wave
 
 
 @pytest.fixture

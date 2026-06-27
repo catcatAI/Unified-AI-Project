@@ -3,11 +3,13 @@
 完整的统一AI项目集成测试
 测试所有组件：Backend API、Frontend Dashboard、Desktop App、CLI、Atlassian CLI
 """
-import requests
+import json
 import subprocess
 import sys
-import json
 import time
+
+import requests
+
 
 def test_backend_apis():
     """测试所有后端API"""

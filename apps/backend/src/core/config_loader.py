@@ -7,11 +7,12 @@ Angela AI - Configuration Loader
 支持 YAML 多文件读取、热重载、Authority + Learned 双层配置合并。
 """
 
-import os
-import yaml
 import logging
+import os
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
+import yaml
 
 logger = logging.getLogger(__name__)
 

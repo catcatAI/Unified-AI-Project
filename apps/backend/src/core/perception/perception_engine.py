@@ -3,14 +3,14 @@ PerceptionEngine — unified perception entry point.
 Wraps existing visual/auditory/tactile samplers + attention controller.
 """
 
-import time
 import logging
+import time
 from typing import Any, Dict, Optional
 
 from core.perception.attention_controller import AttentionController, AttentionMode
-from core.perception.visual_sampler import VisualSampler
 from core.perception.auditory_sampler import AuditorySampler
 from core.perception.tactile_sampler import TactileSampler
+from core.perception.visual_sampler import VisualSampler
 
 logger = logging.getLogger(__name__)
 

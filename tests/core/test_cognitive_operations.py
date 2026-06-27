@@ -4,15 +4,15 @@ Tests for cognitive_operations.py — StateMatrix4D spatial reasoning functions
 
 from core.engine.cognitive_operations import (
     CognitiveOp,
+    apply_intent_gravity,
+    apply_inter_dimensional_drag,
     compute_spatial_influence_factor,
-    perform_spatial_reasoning,
+    evaluate_math_spatially,
+    execute_thought_chain,
     get_dimension_value,
     get_position,
-    execute_thought_chain,
-    evaluate_math_spatially,
-    apply_intent_gravity,
+    perform_spatial_reasoning,
     set_intent_target,
-    apply_inter_dimensional_drag,
 )
 
 

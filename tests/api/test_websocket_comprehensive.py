@@ -3,13 +3,14 @@
 Angela AI WebSocket 全面測試腳本
 """
 
-from pathlib import Path
 import asyncio
-import websockets
 import json
-import time
-from typing import Dict, List
 import logging
+import time
+from pathlib import Path
+from typing import Dict, List
+
+import websockets
 
 logger = logging.getLogger(__name__)
 

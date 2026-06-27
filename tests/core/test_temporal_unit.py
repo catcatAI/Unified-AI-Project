@@ -6,7 +6,13 @@ Author: Angela AI v6.2
 """
 
 
-from core.state.temporal import TemporalState, SnapshotQuery, TrendResult, AnomalyResult, CorrelationResult
+from core.state.temporal import (
+    AnomalyResult,
+    CorrelationResult,
+    SnapshotQuery,
+    TemporalState,
+    TrendResult,
+)
 
 
 def test_record_and_get():

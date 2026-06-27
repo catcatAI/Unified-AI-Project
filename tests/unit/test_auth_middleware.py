@@ -1,5 +1,6 @@
 """Tests for core/security/auth_middleware.py"""
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 

@@ -9,12 +9,11 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
-
-from ai.multimodal.shared_latent_space import SharedLatentSpace
-from ai.multimodal.reconstruction_cycle import ReconstructionCycle
-from ai.multimodal.visual_encoder import VisualEncoder
 from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
 from ai.multimodal.quality_metrics import snr
+from ai.multimodal.reconstruction_cycle import ReconstructionCycle
+from ai.multimodal.shared_latent_space import SharedLatentSpace
+from ai.multimodal.visual_encoder import VisualEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -180,8 +179,11 @@ class FullTrainingPipeline:
         self._ls = latent_space or SharedLatentSpace(latent_dim=64)
         self._visual_encoder = visual_encoder or VisualEncoder()
         self._audio_encoder = audio_encoder or AudioSpectralEncoder()
+        from ai.multimodal.audio_decoder import (
+            AudioWaveformDecoder,
+            load_default_audio_decoder_weights,
+        )
         from ai.multimodal.visual_decoder import VisualDecoder, load_default_visual_decoder_weights
-        from ai.multimodal.audio_decoder import AudioWaveformDecoder, load_default_audio_decoder_weights
         self._visual_decoder = visual_decoder or VisualDecoder()
         load_default_visual_decoder_weights(self._visual_decoder)
         self._audio_decoder = audio_decoder or AudioWaveformDecoder()

@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from core.card.card_types import Card, Token, SourceFile
+from core.card.card_types import Card, SourceFile, Token
 from core.card.parser.conflict_detector import ConflictDetector
 
 

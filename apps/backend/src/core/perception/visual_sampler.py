@@ -6,11 +6,12 @@ Angela AI v6.0 - Visual Sampler
 Supports foveated sampling, particle cloud transformations, and attention-based precision.
 """
 
-import numpy as np
 import logging
-from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass, field
 from enum import Enum, auto
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 

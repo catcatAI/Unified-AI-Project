@@ -2,10 +2,11 @@
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
 # =============================================================================
 
-from typing import TypedDict, Dict, Any, List, Optional
-from typing_extensions import Required
-from enum import Enum
 import logging
+from enum import Enum
+from typing import Any, Dict, List, Optional, TypedDict
+
+from typing_extensions import Required
 
 logger = logging.getLogger(__name__)
 

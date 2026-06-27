@@ -1,14 +1,30 @@
 """Tests for Angela AI Unified Error Handling System."""
 
 import json
+
 import pytest
+
 try:
     from apps.backend.src.core.angela_error import (
-        AngelaError, ErrorSeverity, ErrorCategory, ErrorContext,
-        CoreError, ConfigurationError, NetworkError, WebSocketError,
-        DatabaseError, MemoryError, AIModelError, LLMError,
-        AudioError, SecurityError, ValidationError, NotFoundError,
-        ErrorHandler, get_error_handler, safe_execute,
+        AIModelError,
+        AngelaError,
+        AudioError,
+        ConfigurationError,
+        CoreError,
+        DatabaseError,
+        ErrorCategory,
+        ErrorContext,
+        ErrorHandler,
+        ErrorSeverity,
+        LLMError,
+        MemoryError,
+        NetworkError,
+        NotFoundError,
+        SecurityError,
+        ValidationError,
+        WebSocketError,
+        get_error_handler,
+        safe_execute,
     )
 except ImportError:
     import pytest; pytest.skip("AngelaError is a stub", allow_module_level=True)

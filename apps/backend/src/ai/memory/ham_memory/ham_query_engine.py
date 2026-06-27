@@ -2,11 +2,11 @@ import json
 import logging
 import re
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Union, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
+from .ham_data_processor import HAMDataProcessor
 from .ham_types import HAMDataPackageInternal, HAMMemory, HAMRecallResult
 from .ham_vector_store_manager import HAMVectorStoreManager
-from .ham_data_processor import HAMDataProcessor
 
 logger = logging.getLogger(__name__)
 

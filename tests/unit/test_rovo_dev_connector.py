@@ -10,8 +10,8 @@ class TestRovoDevConnector:
         assert RovoDevConnector is not None
 
     def test_alias_to_enhanced(self):
-        from integrations.rovo_dev_connector import RovoDevConnector
         from integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
+        from integrations.rovo_dev_connector import RovoDevConnector
         assert RovoDevConnector is EnhancedRovoDevConnector
 
     def test_instantiation(self):

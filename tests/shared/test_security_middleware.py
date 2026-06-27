@@ -15,12 +15,13 @@ class TestSignedCommunicationMiddleware:
         assert SignedCommunicationMiddleware.__name__ == "SignedCommunicationMiddleware"
 
     def test_middleware_inherits_base_http_middleware(self):
-        from starlette.middleware.base import BaseHTTPMiddleware
         from shared.security_middleware import SignedCommunicationMiddleware
+        from starlette.middleware.base import BaseHTTPMiddleware
         assert issubclass(SignedCommunicationMiddleware, BaseHTTPMiddleware)
 
     def test_constructor_accepts_app_and_key_b(self):
         from unittest.mock import MagicMock
+
         from shared.security_middleware import SignedCommunicationMiddleware
         app = MagicMock()
         instance = SignedCommunicationMiddleware(app, key_b="test-key-b")

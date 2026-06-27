@@ -2,10 +2,11 @@
 HSP Fallback协议配置加载器
 """
 
-import os
-import yaml  # Assuming yaml is installed and intended to be used
 import logging
-from typing import Dict, Any, Optional
+import os
+from typing import Any, Dict, Optional
+
+import yaml  # Assuming yaml is installed and intended to be used
 
 logger: Any = logging.getLogger(__name__)
 

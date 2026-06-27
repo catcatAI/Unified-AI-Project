@@ -5,9 +5,9 @@ Defines named hooks, registers handlers, executes them asynchronously.
 
 import inspect
 import logging
-from typing import Any, Callable, Dict, List, Optional
-from datetime import datetime
 from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

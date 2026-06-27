@@ -1,6 +1,7 @@
 """Tests for services.llm.providers.ed3n"""
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 class TestED3NBackend:

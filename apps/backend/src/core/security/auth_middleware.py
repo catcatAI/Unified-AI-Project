@@ -16,7 +16,7 @@
 import logging
 import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Any
+from typing import Any, Optional
 
 try:
     import jwt

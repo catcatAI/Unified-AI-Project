@@ -5,14 +5,15 @@ Phase 2, 提升测试覆盖率 (>90%后端, >80%前端, >70%桌面)
 """
 
 import asyncio
+import json
+import logging
 import sys
 import time
-import json
 import traceback
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any, Optional
-import logging
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 logger = logging.getLogger(__name__)
 
 # 添加项目路径
@@ -80,6 +81,7 @@ class EnterpriseTestSuite:
             
             # 测试基本端点
             from fastapi.testclient import TestClient
+
             from apps.backend.main import create_app
             
             app = create_app()
@@ -109,7 +111,7 @@ class EnterpriseTestSuite:
             from ai.agents.base_agent import BaseAgent
             from ai.agents.creative_writing_agent import CreativeWritingAgent
             from ai.agents.web_search_agent import WebSearchAgent
-            
+
             # 测试基础代理
             base_agent = BaseAgent("test_agent", "test")
             assert base_agent.agent_id == "test_agent"
@@ -132,7 +134,7 @@ class EnterpriseTestSuite:
         """测试数据网络"""
         try:
             from core.data.data_network_manager import DataNetworkManager
-            
+
             # 测试数据网络管理器
             manager = DataNetworkManager()
             assert manager is not None
@@ -152,7 +154,7 @@ class EnterpriseTestSuite:
         """测试知识图谱"""
         try:
             from core.knowledge.unified_knowledge_graph_impl import UnifiedKnowledgeGraph
-            
+
             # 测试知识图谱
             kg = UnifiedKnowledgeGraph({})
             await kg.initialize()
@@ -170,7 +172,7 @@ class EnterpriseTestSuite:
         """测试HSP协议"""
         try:
             from core.hsp.hsp_protocol import HSProtocol
-            
+
             # 测试HSP协议
             hsp = HSProtocol()
             assert hsp is not None
@@ -185,7 +187,7 @@ class EnterpriseTestSuite:
         """测试系统管理器"""
         try:
             from core.managers.system_manager import SystemManager
-            
+
             # 测试系统管理器
             manager = SystemManager()
             await manager.initialize()
@@ -200,7 +202,7 @@ class EnterpriseTestSuite:
         """测试记忆管理器"""
         try:
             from ai.memory.ham_memory_manager import HAMMemoryManager
-            
+
             # 测试HAM记忆管理器
             memory_manager = HAMMemoryManager()
             await memory_manager.initialize()
@@ -220,7 +222,7 @@ class EnterpriseTestSuite:
         """测试多模态处理器"""
         try:
             from ai.multimodal.multimodal_processor import MultimodalProcessor
-            
+
             # 测试多模态处理器
             processor = MultimodalProcessor()
             await processor.initialize()
@@ -239,7 +241,7 @@ class EnterpriseTestSuite:
         """测试Atlassian集成"""
         try:
             from integrations.atlassian_bridge import AtlassianBridge
-            
+
             # 测试Atlassian桥接器
             bridge = AtlassianBridge()
             status = await bridge.get_status()
@@ -255,10 +257,10 @@ class EnterpriseTestSuite:
         try:
             # 测试认证中间件
             from core.security.auth_middleware import AuthMiddleware
-            
+
             # 测试加密工具
             from core.security.encryption import EncryptionUtils
-            
+
             # 测试加密解密
             utils = EncryptionUtils()
             encrypted = utils.encrypt("test_data")

@@ -3,12 +3,12 @@ Environment Resolver & OS Detection
 Formalized from auto_install.py
 """
 
-import sys
+import logging
 import platform
 import subprocess
-import logging
-from typing import Any, Dict, List, Optional, Tuple
+import sys
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 

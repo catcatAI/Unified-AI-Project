@@ -1,9 +1,9 @@
 """Tests for multimodal data loader — CIFAR10Loader, ESC50Loader, RealDataProvider."""
 
-import numpy as np
-import pytest
 from pathlib import Path
 
+import numpy as np
+import pytest
 
 # ---------------------------------------------------------------------------
 # CIFAR10Loader — tests with synthetic data

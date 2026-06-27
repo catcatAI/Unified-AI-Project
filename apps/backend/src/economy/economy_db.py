@@ -1,6 +1,6 @@
+import logging
 import sqlite3
 from typing import Dict, Optional
-import logging
 
 logger = logging.getLogger(__name__)
 

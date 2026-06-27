@@ -2,7 +2,8 @@
 
 from datetime import datetime
 
-from core.card.card_types import Card, Token, SourceFile
+from core.card.card_types import Card, SourceFile, Token
+
 try:
     from core.card.parser.merge_engine import MergeEngine
 except ImportError:

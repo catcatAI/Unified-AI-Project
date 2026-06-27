@@ -8,7 +8,6 @@ import logging
 from typing import Any, Dict, Optional
 
 from fastapi import WebSocket, WebSocketDisconnect
-
 from services.multimodal_service import MultimodalService
 
 logger = logging.getLogger(__name__)

@@ -1,5 +1,6 @@
 """Tests for core/security/key_generator.py"""
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import MagicMock, mock_open, patch
+
 import pytest
 
 
@@ -44,16 +45,18 @@ class TestKeyGenerator:
 
     @patch('builtins.open', new_callable=mock_open, read_data='')
     def test_update_env_file_new(self, mock_file):
-        from core.security.key_generator import KeyGenerator
         import os
+
+        from core.security.key_generator import KeyGenerator
         instance = KeyGenerator()
         instance.update_env_file({"TEST_KEY": "testvalue"}, "/tmp/nonexistent/.env")
         mock_file.assert_called_once()
 
     @patch('builtins.open', new_callable=mock_open, read_data='EXISTING=old\n')
     def test_update_env_file_existing(self, mock_file):
-        from core.security.key_generator import KeyGenerator
         import os
+
+        from core.security.key_generator import KeyGenerator
         instance = KeyGenerator()
         instance.update_env_file({"EXISTING": "newvalue"}, "/tmp/.env")
         handle = mock_file()

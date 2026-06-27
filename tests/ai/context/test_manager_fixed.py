@@ -172,8 +172,8 @@ class TestGetContextManager:
         self._old = _context_manager
 
     def teardown_method(self):
-        from apps.backend.src.ai.context.manager_fixed import _context_manager
         import apps.backend.src.ai.context.manager_fixed as m
+        from apps.backend.src.ai.context.manager_fixed import _context_manager
         m._context_manager = self._old
 
     def test_get_context_manager(self):

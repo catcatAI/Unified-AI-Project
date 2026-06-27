@@ -2,10 +2,12 @@
 Tests for Integer and Decimal Hash Tables
 """
 
-import pytest
-from apps.backend.src.core.state.integer_hash_table import IntegerHashTable
-from apps.backend.src.core.state.decimal_hash_table import DecimalHashTable
 from decimal import Decimal
+
+import pytest
+
+from apps.backend.src.core.state.decimal_hash_table import DecimalHashTable
+from apps.backend.src.core.state.integer_hash_table import IntegerHashTable
 
 
 class TestIntegerHashTable:

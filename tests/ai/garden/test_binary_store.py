@@ -9,7 +9,6 @@ import os
 import tempfile
 
 import pytest
-
 from ai.garden.binary_store import (
     HEADER_SIZE,
     MAGIC,

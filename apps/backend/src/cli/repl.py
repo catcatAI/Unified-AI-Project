@@ -25,8 +25,8 @@ def run_repl_mode() -> None:
 
 def _run_uvicorn_in_thread() -> None:
     """Run uvicorn in thread."""
-    from services.main_api_server import app
     import uvicorn
+    from services.main_api_server import app
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning")
 
 
@@ -235,6 +235,7 @@ def _handle_tickle_command(args: str) -> str:
     intensity = float(parts[1]) if len(parts) > 1 else 0.5
 
     import asyncio
+
     from core.life.tickle_reflex_system import get_reflex_system
 
     reflex = get_reflex_system()

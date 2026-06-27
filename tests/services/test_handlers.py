@@ -407,14 +407,14 @@ class TestHandlersInit:
     def test_all_handlers_exported(self):
         """__init__.py exports all 8 handler classes."""
         from services.handlers import (
+            CodeExecutionHandler,
             FileOperationHandler,
             GoogleDriveHandler,
-            WebSearchHandler,
-            CodeExecutionHandler,
+            LearningHandler,
             SystemCommandHandler,
             TaskManagerHandler,
             VisionHandler,
-            LearningHandler,
+            WebSearchHandler,
         )
         assert FileOperationHandler is not None
         assert GoogleDriveHandler is not None

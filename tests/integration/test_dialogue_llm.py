@@ -3,12 +3,13 @@
 Angela AI 對話功能和 LLM 集成測試腳本
 """
 
-import requests
-from pathlib import Path
 import json
-import time
-from typing import Dict, List
 import logging
+import time
+from pathlib import Path
+from typing import Dict, List
+
+import requests
 
 logger = logging.getLogger(__name__)
 

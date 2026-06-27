@@ -1,6 +1,7 @@
 """Smoke tests for ai.context.storage.base"""
 import pytest
 
+
 class TestContext:
     def test_import(self):
         try:

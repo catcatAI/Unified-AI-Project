@@ -10,8 +10,16 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from core.card.card_types import (
-    Card, CardType, Conflict, ConflictType, Event, IntentFlag,
-    Relation, SourceFile, Token, Visual,
+    Card,
+    CardType,
+    Conflict,
+    ConflictType,
+    Event,
+    IntentFlag,
+    Relation,
+    SourceFile,
+    Token,
+    Visual,
 )
 
 logger = logging.getLogger(__name__)

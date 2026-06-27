@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from ai.lifecycle.user_monitor import UserMonitor
 
 _MODULE_MOCKS = {}

@@ -6,16 +6,27 @@
 import asyncio
 import logging
 from datetime import datetime
+
 try:
-    from .environment_simulator import EnvironmentSimulator, State, Action
+    from .environment_simulator import Action, EnvironmentSimulator, State
 except ImportError:
     import pytest; pytest.skip("environment_simulator module not available", allow_module_level=True)
 try:
-    from .adaptive_learning_controller import AdaptiveLearningController, TaskContext, PerformanceRecord
+    from .adaptive_learning_controller import (
+        AdaptiveLearningController,
+        PerformanceRecord,
+        TaskContext,
+    )
 except ImportError:
     import pytest; pytest.skip("adaptive_learning_controller module not available", allow_module_level=True)
 try:
-    from .alpha_deep_model import AlphaDeepModel, DeepParameter, HAMGist, RelationalContext, Modalities
+    from .alpha_deep_model import (
+        AlphaDeepModel,
+        DeepParameter,
+        HAMGist,
+        Modalities,
+        RelationalContext,
+    )
 except ImportError:
     import pytest; pytest.skip("alpha_deep_model module not available", allow_module_level=True)
 logger, Any = logging.getLogger(__name__)

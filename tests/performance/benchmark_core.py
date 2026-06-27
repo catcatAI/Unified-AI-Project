@@ -1,8 +1,9 @@
 """Benchmarks for core AI system components."""
 import asyncio
+
 import pytest
 
-from tests.conftest import benchmark, PerformanceTimer
+from tests.conftest import PerformanceTimer, benchmark
 
 
 @pytest.mark.benchmark

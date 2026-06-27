@@ -12,13 +12,14 @@ import time
 import pytest
 
 try:
-    from ai.integration.local_cluster_manager import LocalClusterManager, ClusterTask
+    from ai.integration.local_cluster_manager import ClusterTask, LocalClusterManager
 except ImportError:
     pytest.skip("LocalClusterManager not available (stub module)", allow_module_level=True)
+import multiprocessing as mp
+
 from ai.agents.agent_manager import AgentManager
 from ai.agents.agent_manager_extensions import AgentManagerExtensions, example_agent_entry_point
 from core.hsp.transport import HSPTransportFactory, HSPTransportMode, LocalIPCTransport
-import multiprocessing as mp
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"

@@ -8,9 +8,9 @@ Manages monitoring and health checking for AI agents.
 # =============================================================================
 
 import logging
-from typing import Dict, Optional, Any
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 

@@ -1,15 +1,15 @@
 # ANGELA-MATRIX: L3 [γ] [B] [L0]
 """LLM backend provider implementations"""
 
+from .anthropic import AnthropicAPIBackend
 from .base import BaseLLMBackend
-from .registry import LLMBackend
+from .ed3n import ED3NBackend
+from .garden import GARDENBackend
+from .google import GoogleAPIBackend
 from .llamacpp import LlamaCppBackend
 from .ollama import OllamaBackend
 from .openai import OpenAIAPIBackend
-from .anthropic import AnthropicAPIBackend
-from .google import GoogleAPIBackend
-from .ed3n import ED3NBackend
-from .garden import GARDENBackend
+from .registry import LLMBackend
 
 __all__ = [
     "BaseLLMBackend",

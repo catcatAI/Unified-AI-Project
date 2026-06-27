@@ -36,7 +36,7 @@ def _lazy_init_whisper():
     try:
         import torch
         import transformers
-        from transformers import WhisperModel, WhisperProcessor, WhisperFeatureExtractor
+        from transformers import WhisperFeatureExtractor, WhisperModel, WhisperProcessor
 
         model_name = "openai/whisper-tiny"  # Smallest Whisper for speed
         _WHISPER_MODEL = WhisperModel.from_pretrained(model_name)

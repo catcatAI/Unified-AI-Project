@@ -172,6 +172,7 @@ class TestMultimodalIntegration:
     async def test_save_load_checkpoint(self, svc, tmp_path):
         """P37: Save and load checkpoint works."""
         import os
+
         # Temporarily override checkpoint dir
         cp_dir = str(tmp_path / "cp_test")
         sp = svc._get_state_persistence()

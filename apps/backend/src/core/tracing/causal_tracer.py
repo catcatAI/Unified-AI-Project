@@ -10,14 +10,16 @@ Date: 2026-02-19
 """
 
 from __future__ import annotations
-from typing import Dict, Optional, Any, List
-from datetime import datetime
+
 import asyncio
 import logging
 from contextvars import ContextVar
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from .causal_chain import CausalNode, CausalChain, LayerType
 from core.interfaces.service_registry import get_registry
+
+from .causal_chain import CausalChain, CausalNode, LayerType
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,9 @@
 """Tests for core/security/security_audit.py"""
-from unittest.mock import patch, mock_open, MagicMock
-from pathlib import Path
-import pytest
 import tempfile
+from pathlib import Path
+from unittest.mock import MagicMock, mock_open, patch
+
+import pytest
 
 
 class TestSecurityAudit:

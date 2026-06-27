@@ -8,12 +8,12 @@ import os
 from pathlib import Path
 
 from path_config import (  # noqa: E402
-    PROJECT_ROOT,
-    DATA_DIR,
-    TRAINING_DIR,
-    MODELS_DIR,
     CHECKPOINTS_DIR,
     CONFIGS_DIR,
+    DATA_DIR,
+    MODELS_DIR,
+    PROJECT_ROOT,
+    TRAINING_DIR,
     get_data_path,
     get_training_config_path,
     resolve_path,

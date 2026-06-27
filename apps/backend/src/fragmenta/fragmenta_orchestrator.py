@@ -1,5 +1,6 @@
-from typing import Any, Dict, List, Optional, Callable
 import logging
+from typing import Any, Callable, Dict, List, Optional
+
 from ai.memory.ham_memory.ham_manager import HAMMemoryManager
 
 logger = logging.getLogger(__name__)

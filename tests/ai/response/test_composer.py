@@ -5,12 +5,13 @@ Unit tests for P0-2 response composition system
 """
 
 import pytest
+
 from apps.backend.src.ai.response.composer import (
-    ResponseComposer,
-    FragmentComposer,
-    Fragment,
-    FragmentType,
     ComposedResponse,
+    Fragment,
+    FragmentComposer,
+    FragmentType,
+    ResponseComposer,
 )
 
 

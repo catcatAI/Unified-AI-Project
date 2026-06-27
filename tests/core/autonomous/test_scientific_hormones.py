@@ -6,6 +6,7 @@ import math
 
 from core.bio.endocrine_system import EndocrineSystem, HormoneType
 
+
 async def test_hormone_scientific_decay():
     print("Testing Scientific Hormone Decay (Phase 3)...")
     system = EndocrineSystem()

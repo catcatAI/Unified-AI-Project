@@ -7,8 +7,8 @@ Version: 7.5.0-dev
 Date: 2026-02-04
 """
 
-import sys
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -153,21 +153,21 @@ def run_tests():
     logger.info("📋 TestCoreExports")
     try:
         from core import (
+            BodyAdapter,
+            DecimalMemoryBank,
+            HierarchicalPrecisionRouter,
+            IdentityCore,
+            MaturityLevel,
+            MaturityManager,
+            MemoryEssence,
+            PrecisionManager,
             SoulCore,
             SoulSignature,
-            IdentityCore,
-            MemoryEssence,
-            BodyAdapter,
             StateSnapshot,
             TransferRecord,
             TransitionAnimator,
-            TransitionManager,
             TransitionConfig,
-            PrecisionManager,
-            DecimalMemoryBank,
-            HierarchicalPrecisionRouter,
-            MaturityLevel,
-            MaturityManager,
+            TransitionManager,
         )
 
         assert SoulCore is not None

@@ -4,7 +4,7 @@ Async utilities for unified async operations management
 
 import asyncio
 import logging
-from typing import Any, Coroutine, Optional, Set, Callable
+from typing import Any, Callable, Coroutine, Optional, Set
 
 logger = logging.getLogger(__name__)
 

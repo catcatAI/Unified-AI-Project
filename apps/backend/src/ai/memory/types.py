@@ -3,7 +3,7 @@
 # =============================================================================
 
 from enum import Enum
-from typing import TypedDict, Dict, Any
+from typing import Any, Dict, TypedDict
 
 
 class MemoryType(Enum):

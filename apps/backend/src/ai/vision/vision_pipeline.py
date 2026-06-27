@@ -19,8 +19,8 @@ P31: First single-modality pipeline after P30 MultimodalService layer.
 import io
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple
 from collections import OrderedDict
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from PIL import Image
@@ -66,7 +66,10 @@ class VisionPipeline:
 
     def _get_decoder(self):
         if self._decoder is None:
-            from ai.multimodal.visual_decoder import VisualDecoder, load_default_visual_decoder_weights
+            from ai.multimodal.visual_decoder import (
+                VisualDecoder,
+                load_default_visual_decoder_weights,
+            )
             self._decoder = VisualDecoder()
             load_default_visual_decoder_weights(self._decoder)
         return self._decoder

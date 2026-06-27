@@ -1,8 +1,9 @@
+import io
+import wave
+
 import numpy as np
 import pytest
 from PIL import Image
-import io
-import wave
 
 
 @pytest.fixture

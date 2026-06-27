@@ -19,7 +19,8 @@ class TestHealthCheck:
         assert any("health" in p for p in paths) or any("status" in p for p in paths)
 
     def test_main_router_includes_ops_paths(self):
-        from api.router import router as main_router, ops_router
+        from api.router import ops_router
+        from api.router import router as main_router
         ops_paths = {r.path for r in ops_router.routes}
         main_paths = {r.path for r in main_router.routes}
         # ops routes should be included in main router under /api/v1

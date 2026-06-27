@@ -14,27 +14,27 @@ class TestShellDefault:
     """Verify shell=False is the default and signature is correct."""
 
     def test_execute_command_has_shell_param_default_false(self):
-        from core.managers.execution_monitor import ExecutionMonitor
-
         import inspect
+
+        from core.managers.execution_monitor import ExecutionMonitor
 
         sig = inspect.signature(ExecutionMonitor.execute_command)
         assert "shell" in sig.parameters
         assert sig.parameters["shell"].default is False
 
     def test_execute_async_command_has_shell_param_default_false(self):
-        from core.managers.execution_monitor import ExecutionMonitor
-
         import inspect
+
+        from core.managers.execution_monitor import ExecutionMonitor
 
         sig = inspect.signature(ExecutionMonitor.execute_async_command)
         assert "shell" in sig.parameters
         assert sig.parameters["shell"].default is False
 
     def test_execute_command_accepts_string_or_list(self):
-        from core.managers.execution_monitor import ExecutionMonitor
-
         import inspect
+
+        from core.managers.execution_monitor import ExecutionMonitor
 
         sig = inspect.signature(ExecutionMonitor.execute_command)
         param = sig.parameters["command"]
@@ -46,7 +46,7 @@ class TestMonitorInstantiation:
     """Basic instantiation and config defaults."""
 
     def test_default_config_applied(self):
-        from core.managers.execution_monitor import ExecutionMonitor, ExecutionConfig
+        from core.managers.execution_monitor import ExecutionConfig, ExecutionMonitor
 
         monitor = ExecutionMonitor()
         assert isinstance(monitor.config, ExecutionConfig)
@@ -54,7 +54,7 @@ class TestMonitorInstantiation:
         assert monitor.config.adaptive_timeout is True
 
     def test_custom_config(self):
-        from core.managers.execution_monitor import ExecutionMonitor, ExecutionConfig
+        from core.managers.execution_monitor import ExecutionConfig, ExecutionMonitor
 
         config = ExecutionConfig(default_timeout=120.0, adaptive_timeout=False)
         monitor = ExecutionMonitor(config)
@@ -86,8 +86,8 @@ class TestFactoryFunctions:
         assert callable(execute_with_monitoring)
 
     def test_execute_async_with_monitoring_is_callable(self):
-        from core.managers.execution_monitor import execute_async_with_monitoring
-
         import inspect
+
+        from core.managers.execution_monitor import execute_async_with_monitoring
 
         assert inspect.iscoroutinefunction(execute_async_with_monitoring)

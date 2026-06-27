@@ -51,8 +51,8 @@ class TrainingDataGenerator:
         Returns:
             Dict with 'clip_embeddings' and 'primitive_sequences'
         """
-        import os
         import json
+        import os
         
         index_path = os.path.join(cifar10_dir, "index.json")
         if not os.path.exists(index_path):

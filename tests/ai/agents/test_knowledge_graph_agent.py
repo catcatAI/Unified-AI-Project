@@ -2,11 +2,11 @@
 Tests for the KnowledgeGraphAgent.
 """
 
-import pytest
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from ai.agents.specialized.knowledge_graph_agent import KnowledgeGraphAgent
-from core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
+from core.hsp.types import HSPMessageEnvelope, HSPTaskRequestPayload
 
 
 @pytest.fixture

@@ -1,7 +1,8 @@
-import sys
-import os
-import pytest
 import logging
+import os
+import sys
+
+import pytest
 
 logger = logging.getLogger(__name__)
 

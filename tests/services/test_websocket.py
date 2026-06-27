@@ -1,6 +1,9 @@
 """Test WebSocket Connection Manager - Standalone Tests"""
-import pytest
 import asyncio
+
+import pytest
+
+
 async def test_websocket_manager_class_exists():
     """Test WebSocket manager can be created standalone"""
     from services.websocket_manager import ConnectionManager

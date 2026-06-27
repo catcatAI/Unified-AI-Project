@@ -2,10 +2,7 @@
 
 import numpy as np
 import pytest
-
-from ai.multimodal.primitives.primitive_types import (
-    Point, Line, Plane, DrawingInstructions
-)
+from ai.multimodal.primitives.primitive_types import DrawingInstructions, Line, Plane, Point
 
 
 class TestPoint:

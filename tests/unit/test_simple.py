@@ -1,6 +1,7 @@
 """Basic test module for validating system functionality."""
-import pytest
 import sys
+
+import pytest
 
 
 def test_python_version():

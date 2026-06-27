@@ -27,6 +27,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 from ai.core.unicode_utils import normalize_text
 from core.system.config.magic_numbers import confidence_value, threshold_value
+
 from ._import_utils import subprocess_check
 
 logger = logging.getLogger(__name__)
@@ -234,6 +235,7 @@ class _ChromaEncoder:
 
     def __init__(self):
         import uuid
+
         from ._import_utils import subprocess_check
         if not subprocess_check("chromadb", timeout=15):
             raise ImportError("chromadb not available (import check failed)")

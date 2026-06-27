@@ -1,7 +1,10 @@
-import pytest
 import asyncio
+
 import numpy as np
+import pytest
 from services.audio_service import AudioService
+
+
 async def test_auditory_attention_chain():
     audio_service = AudioService()
     dummy_audio = b"\x00\x01\x02\x03"

@@ -2,8 +2,9 @@
 Plugin API endpoints — C3: query hooks, list plugins, execute hooks.
 """
 
-from fastapi import APIRouter
 import logging
+
+from fastapi import APIRouter
 
 logger = logging.getLogger(__name__)
 

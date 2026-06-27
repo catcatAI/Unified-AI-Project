@@ -14,26 +14,26 @@ Angela Response Composition & Matching System
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
 # =============================================================================
 
-from .template_matcher import TemplateMatcher, MatchResult
 from .composer import (
-    ResponseComposer,
     FragmentComposer,
+    NeuroBlender,
     NeuroFragment,
     NeuroVocabulary,
-    NeuroBlender,
+    ResponseComposer,
 )
 from .deviation_tracker import DeviationTracker, ResponseMetrics
-from .learning_loop import LearningLoop, FragmentExtractor, get_learning_loop
+from .learning_loop import FragmentExtractor, LearningLoop, get_learning_loop
 from .neuro_auto_selector import (
-    NeuroAutoSelector,
-    HardwareAnalyzer,
-    BudgetScheduler,
-    StateInterpreter,
-    LearnRecorder,
-    AutoDecision,
     AutoBackendChoice,
+    AutoDecision,
+    BudgetScheduler,
+    HardwareAnalyzer,
     HardwareTier,
+    LearnRecorder,
+    NeuroAutoSelector,
+    StateInterpreter,
 )
+from .template_matcher import MatchResult, TemplateMatcher
 
 __all__ = [
     "TemplateMatcher",

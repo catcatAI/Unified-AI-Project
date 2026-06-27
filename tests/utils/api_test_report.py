@@ -4,13 +4,14 @@ Angela AI API 端點測試腳本
 測試所有可用的 API 端點並記錄結果
 """
 
-import requests
-from pathlib import Path
 import json
+import logging
 import time
 from datetime import datetime
-from typing import Dict, List, Any
-import logging
+from pathlib import Path
+from typing import Any, Dict, List
+
+import requests
 
 logger = logging.getLogger(__name__)
 

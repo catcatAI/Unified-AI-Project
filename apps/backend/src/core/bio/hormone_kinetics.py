@@ -20,9 +20,10 @@ Version: 6.0.0
 # =============================================================================
 
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Dict, Optional, Any
+
 import math
+from dataclasses import dataclass
+from typing import Any, Dict, Optional
 
 from .endocrine_types import HormoneType
 

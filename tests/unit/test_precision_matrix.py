@@ -5,7 +5,10 @@ import pytest
 class TestPrecisionMatrix:
     def test_import(self):
         from core.hardware.precision_matrix import (
-            PrecisionMatrix, PrecisionManager, ConversionInfo, PrecisionConfig,
+            ConversionInfo,
+            PrecisionConfig,
+            PrecisionManager,
+            PrecisionMatrix,
         )
         assert PrecisionManager is not None
 
@@ -16,7 +19,7 @@ class TestPrecisionMatrix:
         assert isinstance(instance.entries, dict)
 
     def test_convert_via_manager(self):
-        from core.hardware.precision_matrix import PrecisionManager, PrecisionConfig, PrecisionLevel
+        from core.hardware.precision_matrix import PrecisionConfig, PrecisionLevel, PrecisionManager
         pm = PrecisionManager()
         config = PrecisionConfig(
             source_precision=PrecisionLevel.FP32,
@@ -52,12 +55,12 @@ class TestPrecisionMatrix:
         assert info.scale_factor == 2.0
 
     def test_convert_precision_function(self):
-        from core.hardware.precision_matrix import convert_precision, PrecisionLevel
+        from core.hardware.precision_matrix import PrecisionLevel, convert_precision
         result = convert_precision(3.14, PrecisionLevel.FP32, PrecisionLevel.FP16)
         assert result == 3.14
 
     def test_optimize_for_hardware(self):
-        from core.hardware.precision_matrix import optimize_for_hardware, PrecisionLevel
+        from core.hardware.precision_matrix import PrecisionLevel, optimize_for_hardware
         result = optimize_for_hardware(None, PrecisionLevel.FP16)
         assert result["status"] == "optimized"
         assert result["target_precision"] == "fp16"

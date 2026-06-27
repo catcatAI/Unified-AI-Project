@@ -2,8 +2,9 @@
 测试模块 - test_vision_tone_inverter
 """
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 
 class TestVisionToneInverter:

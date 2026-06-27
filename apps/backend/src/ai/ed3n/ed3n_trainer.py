@@ -8,11 +8,11 @@ import time
 from typing import Any, Dict, List, Optional, Tuple
 
 from core.system.config.magic_numbers import (
+    batch_value,
     confidence_value,
     learning_rate,
     limit_value,
     threshold_value,
-    batch_value,
 )
 
 from .core_network import CoreNetwork
@@ -22,9 +22,9 @@ from .relation_classifier import RelationClassifier, RelationType
 from .training_types import (
     SeqBatch,
     SequenceExample,
-    TrainMetrics,
     TrainingBatch,
     TrainingExample,
+    TrainMetrics,
 )
 
 logger = logging.getLogger(__name__)
@@ -194,7 +194,9 @@ class ED3NTrainer:
 
     def save(self, path: str) -> None:
         """Save trainer state (dictionary export + network params)."""
-        import json, os
+        import json
+        import os
+
         from .training_types import TrainMetrics
 
         def _serialize(m) -> dict:
@@ -219,7 +221,9 @@ class ED3NTrainer:
     @classmethod
     def load(cls, path: str, dictionary_layer=None, core_network=None) -> "ED3NTrainer":
         """Load trainer state. Requires pre-configured dictionary and network."""
-        import json, os
+        import json
+        import os
+
         from .ed3n_engine import ED3NEngine
 
         with open(path, "r", encoding="utf-8") as f:
@@ -408,7 +412,8 @@ class SequenceTrainer:
         self.scheduled_sampling_prob = self.scheduled_sampling_start
 
     def save(self, path: str) -> None:
-        import json, os
+        import json
+        import os
 
         state = {
             "history": self.history,
@@ -526,7 +531,8 @@ class JointTrainer:
         }
 
     def save(self, path: str) -> None:
-        import json, os
+        import json
+        import os
 
         state = {
             "anchor_weight": self.anchor_weight,
@@ -546,7 +552,8 @@ class JointTrainer:
 
     @classmethod
     def load(cls, path: str, engine: "ED3NEngine") -> "JointTrainer":
-        import json, os
+        import json
+        import os
 
         with open(path, "r", encoding="utf-8") as f:
             state = json.load(f)

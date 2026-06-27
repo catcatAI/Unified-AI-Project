@@ -7,13 +7,14 @@ import asyncio
 import time
 from datetime import datetime
 
+
 async def test_basic_ops_flow():
     """测试基本运维流程"""
     print("测试基本运维流程...")
     
     try:
         from ai.ops.intelligent_ops_manager import get_intelligent_ops_manager
-        
+
         # 创建运维管理器(不初始化Redis)
         ops_manager = get_intelligent_ops_manager()
         
@@ -52,10 +53,10 @@ async def test_component_interaction():
     
     try:
         from ai.ops.ai_ops_engine import AIOpsEngine
-        from ai.ops.predictive_maintenance import PredictiveMaintenanceEngine
-        from ai.ops.performance_optimizer import PerformanceOptimizer
         from ai.ops.capacity_planner import CapacityPlanner
-        
+        from ai.ops.performance_optimizer import PerformanceOptimizer
+        from ai.ops.predictive_maintenance import PredictiveMaintenanceEngine
+
         # 创建组件实例
         ai_ops = AIOpsEngine()
         maintenance = PredictiveMaintenanceEngine()

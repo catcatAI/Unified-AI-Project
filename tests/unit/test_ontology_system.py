@@ -1,6 +1,7 @@
 """Smoke tests for apps.backend.src.ai.alignment.ontology_system"""
 import pytest
 
+
 class TestOntologySystem:
     def test_import(self):
         try:

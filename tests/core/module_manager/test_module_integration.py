@@ -1,10 +1,10 @@
 """Integration tests: ModuleManager discovers and starts card_pipeline + intent_registry modules."""
 
-import pytest
 from pathlib import Path
 
-from core.system.module_manager import ModuleManager, ModuleStatus
+import pytest
 from core.interfaces.service_registry import ServiceRegistry
+from core.system.module_manager import ModuleManager, ModuleStatus
 
 MODULES_DIR = Path(__file__).resolve().parent.parent.parent.parent / "apps/backend/src/modules"
 

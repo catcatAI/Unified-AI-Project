@@ -3,8 +3,10 @@
 # =============================================================================
 
 import sys
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
+
 _MODULE_MOCKS = {
     'core.perception.auditory_sampler': MagicMock(),
     'core.perception.auditory_memory': MagicMock(),

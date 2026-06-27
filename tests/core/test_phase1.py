@@ -14,9 +14,9 @@ Version: 6.2.1
 
 import math
 
-from core.state.axis_field import AxisField, AxisFieldRegistry
 from core.state.axis import Axis
-from core.state.temporal import TemporalState, SnapshotQuery
+from core.state.axis_field import AxisField, AxisFieldRegistry
+from core.state.temporal import SnapshotQuery, TemporalState
 
 
 def test_axis_field_registry():

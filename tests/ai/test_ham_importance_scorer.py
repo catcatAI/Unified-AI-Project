@@ -11,9 +11,9 @@ Test suite for HAM Importance Scorer
 6. 时间衰减
 """
 
-import pytest
 import asyncio
 
+import pytest
 from ai.memory.ham_memory.ham_importance_scorer import ImportanceScorer
 
 

@@ -1,6 +1,7 @@
 """Smoke tests for ai.context.dialogue_context"""
 import pytest
 
+
 class TestMessage:
     def test_import(self):
         try:

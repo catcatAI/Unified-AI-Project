@@ -1,5 +1,6 @@
 """Tests for syntax correctness and basic Python patterns."""
 from unittest.mock import patch
+
 import pytest
 
 

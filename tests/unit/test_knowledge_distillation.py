@@ -1,6 +1,7 @@
 """Smoke tests for ai.learning.knowledge_distillation"""
 import pytest
 
+
 class TestDistillationLoss:
     def test_import(self):
         try:

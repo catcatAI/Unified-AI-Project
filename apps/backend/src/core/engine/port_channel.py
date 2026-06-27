@@ -19,11 +19,13 @@ Version: 6.2.1
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from collections import deque
-from typing import Dict, List, Optional, Any, TYPE_CHECKING
+
 import logging
 import time
+from collections import deque
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
 from core.system.config.magic_numbers import cache_value
 
 if TYPE_CHECKING:

@@ -6,7 +6,7 @@ Tests for ExecutionGate — execution scoring and gating logic.
 """
 
 import pytest
-from ai.core.execution_gate import ExecutionGate, GateDecision, REVERSIBILITY
+from ai.core.execution_gate import REVERSIBILITY, ExecutionGate, GateDecision
 from ai.core.query_classifier import _NEGATION_WORDS
 
 

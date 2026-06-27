@@ -15,7 +15,7 @@ import hashlib
 import hmac
 import logging
 import secrets
-from typing import Optional, Dict, Any, Union
+from typing import Any, Dict, Optional, Union
 
 try:
     from cryptography.fernet import Fernet

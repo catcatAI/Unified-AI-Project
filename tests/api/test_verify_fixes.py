@@ -3,11 +3,12 @@
 驗證修復效果的測試腳本
 """
 
-import requests
-from pathlib import Path
 import json
-from typing import Dict, Tuple
 import logging
+from pathlib import Path
+from typing import Dict, Tuple
+
+import requests
 
 logger = logging.getLogger(__name__)
 

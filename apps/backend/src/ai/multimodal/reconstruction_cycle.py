@@ -8,10 +8,9 @@ import logging
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
-
+from ai.multimodal.audio_decoder import AudioWaveformDecoder
 from ai.multimodal.shared_latent_space import SharedLatentSpace
 from ai.multimodal.visual_decoder import VisualDecoder
-from ai.multimodal.audio_decoder import AudioWaveformDecoder
 
 logger = logging.getLogger(__name__)
 

@@ -2,11 +2,10 @@
 
 import numpy as np
 import pytest
-
-from ai.multimodal.recognition.geometric_recognizer import GeometricRecognizer
 from ai.multimodal.primitives.geometric_vocabulary import GeometricVocabulary
-from ai.multimodal.primitives.primitive_types import TOTAL_DIM, DrawingInstructions
 from ai.multimodal.primitives.primitive_renderer import PrimitiveRenderer
+from ai.multimodal.primitives.primitive_types import TOTAL_DIM, DrawingInstructions
+from ai.multimodal.recognition.geometric_recognizer import GeometricRecognizer
 
 
 def make_test_vocabulary():

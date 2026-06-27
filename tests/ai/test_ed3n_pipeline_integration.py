@@ -3,6 +3,7 @@ Test: Can the system retrieve content from conversation history?
 Tests ED3N dictionary-based retrieval and context matching.
 """
 import sys
+
 sys.path.insert(0, "apps/backend/src")
 
 
@@ -79,8 +80,8 @@ def test_query_classifier_classification():
 
 def test_execution_gate_decisions():
     """Test that execution gate makes correct decisions."""
-    from ai.core.query_classifier import QueryClassifier
     from ai.core.execution_gate import ExecutionGate
+    from ai.core.query_classifier import QueryClassifier
 
     clf = QueryClassifier()
     gate = ExecutionGate()

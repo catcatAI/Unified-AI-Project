@@ -18,7 +18,6 @@ import ast
 import operator
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-
 SAFE_OPERATORS: Dict[type, Any] = {
     ast.Add: operator.add,
     ast.Sub: operator.sub,

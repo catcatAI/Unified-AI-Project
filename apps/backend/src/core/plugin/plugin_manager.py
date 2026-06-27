@@ -3,12 +3,14 @@ PluginManager — C3: backend plugin lifecycle and hook integration.
 """
 
 from __future__ import annotations
-import logging
-from typing import Any, Dict, List, Optional
-from datetime import datetime
-from dataclasses import dataclass, field
 
-from core.plugin.hook_registry import HookRegistry, HookResult, hook_registry as _default_registry
+import logging
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from core.plugin.hook_registry import HookRegistry, HookResult
+from core.plugin.hook_registry import hook_registry as _default_registry
 
 logger = logging.getLogger(__name__)
 

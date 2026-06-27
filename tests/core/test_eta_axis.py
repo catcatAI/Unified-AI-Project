@@ -6,28 +6,30 @@ Author: Angela AI v6.2.1
 Date: 2026-05-15
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
+
 try:
     from core.engine.eta_axis import (
-        sigmoid,
-        TriggerCurve,
-        AtomicModuleType,
-        LogicGateType,
-        ArithmeticOpType,
         AggregatorType,
-        RouterType,
-        ModuleConfig,
+        ArithmeticOpType,
         AtomicModule,
+        AtomicModuleType,
         ComposedModule,
-        ModuleWrapper,
+        EtaAxisState,
         HotplugDescriptor,
         HotplugResult,
-        hotplug_manager,
-        eta_axis_runner,
-        main,
-        EtaAxisState,
+        LogicGateType,
+        ModuleConfig,
+        ModuleWrapper,
+        RouterType,
+        TriggerCurve,
         create_default_modules,
+        eta_axis_runner,
+        hotplug_manager,
+        main,
+        sigmoid,
     )
 except ImportError:
     import pytest; pytest.skip("eta_axis module not available", allow_module_level=True)

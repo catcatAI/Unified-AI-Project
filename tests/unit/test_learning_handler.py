@@ -16,15 +16,17 @@ class TestLearningHandler:
         assert instance._anchor is None
 
     def test_handle_no_fact(self):
-        from services.handlers.learning_handler import LearningHandler
         import asyncio
+
+        from services.handlers.learning_handler import LearningHandler
         instance = LearningHandler()
         result = asyncio.run(instance.handle("", "learning"))
         assert "記住" in result
 
     def test_handle_with_fact(self):
-        from services.handlers.learning_handler import LearningHandler
         import asyncio
+
+        from services.handlers.learning_handler import LearningHandler
         instance = LearningHandler()
         result = asyncio.run(instance.handle("記住 2+2=4", "learning"))
         assert "記住" in result

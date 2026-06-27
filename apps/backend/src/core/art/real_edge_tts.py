@@ -8,11 +8,12 @@ Angela Real Voice Generator - Edge TTS Integration
 """
 
 import asyncio
-import edge_tts
+import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
-from datetime import datetime
-import logging
+
+import edge_tts
 
 logger = logging.getLogger(__name__)
 

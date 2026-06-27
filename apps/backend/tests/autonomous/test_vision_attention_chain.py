@@ -1,6 +1,9 @@
-import pytest
 import asyncio
+
+import pytest
 from services.vision_service import VisionService
+
+
 async def test_discover_focus_memory_chain():
     vision_service = VisionService()
     dummy_image = b"\x00\x01\x02\x03"

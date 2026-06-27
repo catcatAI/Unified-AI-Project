@@ -4,9 +4,10 @@
 自動生成的測試模組,用於驗證系統功能。
 """
 
-import uuid
-import pytest
 import logging
+import uuid
+
+import pytest
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ from unittest.mock import AsyncMock
 
 # 修复导入路径
 from ai.agents.specialized.data_analysis_agent import DataAnalysisAgent
-from core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
+from core.hsp.types import HSPMessageEnvelope, HSPTaskRequestPayload
 
 
 class TestDataAnalysisAgent:

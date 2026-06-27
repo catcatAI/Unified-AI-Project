@@ -4,11 +4,13 @@
 """
 
 import asyncio
-import time
 import statistics
-import pytest
+import time
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
+import pytest
+
 
 class EnterpriseBenchmark:
     """企业级性能基准"""

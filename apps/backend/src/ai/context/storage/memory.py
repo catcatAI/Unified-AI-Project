@@ -13,10 +13,11 @@ Angela Matrix Annotation:
 # =============================================================================
 
 import logging
-from typing import Dict, List, Optional, Any
-from datetime import datetime
 from collections import OrderedDict
-from .base import Context, Storage, ContextType
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from .base import Context, ContextType, Storage
 
 logger = logging.getLogger(__name__)
 

@@ -3,10 +3,10 @@ Angela AI v6.0 - Security & Communication Monitor
 Consolidated from system.security_monitor.
 """
 
-import os
 import logging
+import os
 import secrets
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 

@@ -7,8 +7,12 @@ Tests for QueryClassifier v2 — intent classification with actionability.
 
 import pytest
 from ai.core.query_classifier import (
-    QueryClassifier, QueryResult, QueryType,
-    _NEGATION_WORDS, VERBS_NOT_REFLEX, KNOWLEDGE_QUESTION_PATTERNS,
+    _NEGATION_WORDS,
+    KNOWLEDGE_QUESTION_PATTERNS,
+    VERBS_NOT_REFLEX,
+    QueryClassifier,
+    QueryResult,
+    QueryType,
 )
 
 

@@ -2,8 +2,9 @@
 测试模块 - test_knowledge_update
 """
 
+from unittest.mock import AsyncMock, Mock
+
 import pytest
-from unittest.mock import Mock, AsyncMock
 
 
 class TestKnowledgeUpdate:

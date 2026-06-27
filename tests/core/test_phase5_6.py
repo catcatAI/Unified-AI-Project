@@ -9,15 +9,25 @@ import math
 
 try:
     from core.ripple.node import (
-        RippleNode, RippleDepth, MathOp,
-        LinearCascade, ExponentialCascade, AdaptiveCascade,
-        RippleApplicatorRegistry, RippleAccumulator,
+        AdaptiveCascade,
+        ExponentialCascade,
+        LinearCascade,
+        MathOp,
+        RippleAccumulator,
+        RippleApplicatorRegistry,
+        RippleDepth,
+        RippleNode,
     )
 except ImportError:
     import pytest; pytest.skip("RippleNode is a stub", allow_module_level=True)
+
 from core.influence.space import (
-    InfluenceSpace, GravityRule, EntropyRule, MemoryRule,
-    InfluenceRuleSet, ConflictStrategy,
+    ConflictStrategy,
+    EntropyRule,
+    GravityRule,
+    InfluenceRuleSet,
+    InfluenceSpace,
+    MemoryRule,
 )
 from core.state.axis import Axis
 

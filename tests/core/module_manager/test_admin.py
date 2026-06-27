@@ -1,11 +1,12 @@
 """Phase 4: Module admin/metrics/monitoring tests."""
 
-import pytest
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from apps.backend.src.core.system.module_manager.models import ModuleStatus
+import pytest
+
 from apps.backend.src.core.system.module_manager import ModuleManager
+from apps.backend.src.core.system.module_manager.models import ModuleStatus
 
 
 class TestHealthReport:

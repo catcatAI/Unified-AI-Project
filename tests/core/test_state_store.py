@@ -1,6 +1,7 @@
 """C4+C5 — GlobalStateStore persistence unit tests"""
 
-import asyncio, os
+import asyncio
+import os
 
 
 class TestGlobalStateStore:

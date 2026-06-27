@@ -10,8 +10,8 @@ Version: 6.2.1
 """
 
 from __future__ import annotations
-from typing import Dict, List, Tuple, Any, Optional
 
+from typing import Any, Dict, List, Optional, Tuple
 
 InfluenceRules = Dict[str, Dict[str, List[Tuple[str, str, float]]]]
 

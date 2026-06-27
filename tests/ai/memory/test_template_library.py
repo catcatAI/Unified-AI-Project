@@ -1,15 +1,15 @@
 import pytest
 
-from apps.backend.src.ai.memory.template_library import (
-    TemplateLibrary,
-    PredefinedTemplate,
-    get_template_library,
-)
 from apps.backend.src.ai.memory.memory_template import (
+    AngelaState,
     MemoryTemplate,
     ResponseCategory,
-    AngelaState,
     UserImpression,
+)
+from apps.backend.src.ai.memory.template_library import (
+    PredefinedTemplate,
+    TemplateLibrary,
+    get_template_library,
 )
 
 

@@ -34,8 +34,9 @@ class TestWebSearchHandler:
         assert q == "" or q is None
 
     def test_handle_no_query(self):
-        from services.handlers.web_search_handler import WebSearchHandler
         import asyncio
+
+        from services.handlers.web_search_handler import WebSearchHandler
         instance = WebSearchHandler()
         result = asyncio.run(instance.handle("搜尋", "web_search"))
         assert "搜尋" in result

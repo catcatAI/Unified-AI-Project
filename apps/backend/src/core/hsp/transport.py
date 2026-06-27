@@ -4,14 +4,16 @@ HSP Transport Abstraction Layer
 支持本地 IPC (multiprocessing.Queue) 和遠程 MQTT 的統一接口
 """
 
+import asyncio
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Callable
 from enum import Enum
 from multiprocessing import Queue
-import asyncio
-from .mqtt_subscription_manager import MQTTSubscriptionManager
+from typing import Any, Callable, Optional
+
 from core.system.config.magic_numbers import loop_sleep
+
+from .mqtt_subscription_manager import MQTTSubscriptionManager
 
 logger = logging.getLogger(__name__)
 

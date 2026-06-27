@@ -1,10 +1,9 @@
 import os
 import tempfile
-import pytest
 from unittest.mock import MagicMock, patch
 
-from ai.memory.vector_store import VectorMemoryStore, _NumpyBackend, _NUMPY_EMBED_DIM
-
+import pytest
+from ai.memory.vector_store import _NUMPY_EMBED_DIM, VectorMemoryStore, _NumpyBackend
 
 # =============================================================================
 # Numpy backend unit tests

@@ -1,8 +1,9 @@
 """Vectorized differentiable renderer: fast, no Python loops over primitives."""
 
-import numpy as np
 import math
 from typing import Tuple
+
+import numpy as np
 
 
 class DifferentiableRenderer:
@@ -19,7 +20,11 @@ class DifferentiableRenderer:
     def render(self, vec: np.ndarray) -> np.ndarray:
         """Render 263-dim vector to (H, W, 3). Vectorized, no Python loops."""
         from ai.multimodal.primitives.primitive_types import (
-            N_POINTS, N_LINES, N_PLANES, N_CIRCLES, N_ARCS
+            N_ARCS,
+            N_CIRCLES,
+            N_LINES,
+            N_PLANES,
+            N_POINTS,
         )
 
         h, w = self._h, self._w
@@ -79,6 +84,7 @@ class DifferentiableRenderer:
     @staticmethod
     def _render_arcs(vec, off, canvas, weight, nx, ny):
         import math
+
         from ai.multimodal.primitives.primitive_types import N_ARCS
         arcs = vec[off:off + N_ARCS * 10].reshape(N_ARCS, 10)
         for i in range(N_ARCS):
@@ -101,6 +107,7 @@ class DifferentiableRenderer:
     @staticmethod
     def _render_lines(vec, off, canvas, weight, nx, ny):
         import math
+
         from ai.multimodal.primitives.primitive_types import N_LINES
         lines = vec[off:off + N_LINES * 8].reshape(N_LINES, 8)
         for i in range(N_LINES):

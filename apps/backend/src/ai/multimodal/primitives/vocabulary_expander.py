@@ -10,13 +10,15 @@ Algorithm:
 5. Add to vocabulary → re-learn concepts
 """
 
-import numpy as np
 import json
 import os
-from typing import List, Dict, Tuple, Optional
-from .primitive_types import TOTAL_DIM
-from .geometric_vocabulary import GeometricVocabulary, VisualWord
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
+
 from .differentiable_renderer import DifferentiableRenderer
+from .geometric_vocabulary import GeometricVocabulary, VisualWord
+from .primitive_types import TOTAL_DIM
 
 
 class VocabularyExpander:

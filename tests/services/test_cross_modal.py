@@ -12,8 +12,8 @@ import asyncio
 import io
 import sys
 import time
-from typing import Any, Dict
 from pathlib import Path
+from typing import Any, Dict
 
 import numpy as np
 import pytest
@@ -329,8 +329,9 @@ class TestCrossModalAPI:
     @pytest.mark.asyncio
     async def test_cross_infer_vision_pipeline(self):
         """T22: POST /multimodal/cross-infer with vision data."""
-        from fastapi import UploadFile
         from api.routes.multimodal_routes import cross_infer_endpoint
+        from fastapi import UploadFile
+
         # Call directly with vision data
         from services.cross_modal_router import CrossModalRouter
         router = CrossModalRouter()

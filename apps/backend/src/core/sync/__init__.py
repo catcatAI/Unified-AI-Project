@@ -12,14 +12,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 from .cloud_sync import (  # noqa: E402
-    CloudSyncManager,
     CloudSyncConfig,
-    SyncItem,
-    SyncConflict,
-    SyncProgress,
-    SyncStatus,
+    CloudSyncManager,
     ConflictResolution,
+    SyncConflict,
+    SyncItem,
+    SyncProgress,
     SyncQueue,
+    SyncStatus,
 )
 
 __version__ = "7.5.0-dev"

@@ -18,8 +18,8 @@ import asyncio
 import io
 import logging
 import os
-import time
 import threading
+import time
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -89,14 +89,20 @@ class MultimodalService:
 
     def _get_visual_decoder(self):
         if "vdecoder" not in self._decoders:
-            from ai.multimodal.visual_decoder import VisualDecoder, load_default_visual_decoder_weights
+            from ai.multimodal.visual_decoder import (
+                VisualDecoder,
+                load_default_visual_decoder_weights,
+            )
             self._decoders["vdecoder"] = VisualDecoder()
             load_default_visual_decoder_weights(self._decoders["vdecoder"])
         return self._decoders["vdecoder"]
 
     def _get_audio_decoder(self):
         if "adecoder" not in self._decoders:
-            from ai.multimodal.audio_decoder import AudioWaveformDecoder, load_default_audio_decoder_weights
+            from ai.multimodal.audio_decoder import (
+                AudioWaveformDecoder,
+                load_default_audio_decoder_weights,
+            )
             self._decoders["adecoder"] = AudioWaveformDecoder()
             load_default_audio_decoder_weights(self._decoders["adecoder"])
         return self._decoders["adecoder"]
@@ -154,9 +160,7 @@ class MultimodalService:
     def _get_cml(self):
         """Get or create the ContinuousMultimodalLearning instance."""
         if self._cml is None:
-            from ai.multimodal.continuous_multimodal_learning import (
-                ContinuousMultimodalLearning
-            )
+            from ai.multimodal.continuous_multimodal_learning import ContinuousMultimodalLearning
             self._cml = ContinuousMultimodalLearning(
                 buffer_max=64,
                 auto_train_threshold=32,
@@ -732,7 +736,9 @@ class MultimodalService:
 
             if source_modality == "vision" and target_modality == "audio":
                 audio = self._get_audio_decoder().decode(latent)
-                import base64, wave, struct
+                import base64
+                import struct
+                import wave
                 int16 = (np.clip(audio, -1.0, 1.0) * 32767).astype(np.int16)
                 buf = io.BytesIO()
                 with wave.open(buf, "wb") as wf:

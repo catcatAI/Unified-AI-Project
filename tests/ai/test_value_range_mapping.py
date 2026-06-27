@@ -39,8 +39,9 @@ class TestValueRangeMapping:
         assert mappings[0].confidence > 0.3
 
     def test_covers_method(self):
-        from ai.response.composer import ValueRangeMapping
         from datetime import datetime
+
+        from ai.response.composer import ValueRangeMapping
         m = ValueRangeMapping(
             axis_field='test.axis',
             range_lo=0.2,
@@ -55,8 +56,9 @@ class TestValueRangeMapping:
         assert m.covers(0.9) is False
 
     def test_narrow_method(self):
-        from ai.response.composer import ValueRangeMapping
         from datetime import datetime
+
+        from ai.response.composer import ValueRangeMapping
         m = ValueRangeMapping(
             axis_field='test.axis',
             range_lo=0.0,
@@ -140,6 +142,7 @@ class TestValueRangeMapping:
 
     def test_decay_confidences_reduces_stale(self):
         from datetime import datetime, timedelta
+
         from ai.response.composer import ValueRangeMapping
         m = ValueRangeMapping(
             axis_field='test.axis',
@@ -156,6 +159,7 @@ class TestValueRangeMapping:
 
     def test_decay_removes_zero_confidence(self):
         from datetime import datetime, timedelta
+
         from ai.response.composer import ValueRangeMapping
         m = ValueRangeMapping(
             axis_field='test.axis',
@@ -171,6 +175,7 @@ class TestValueRangeMapping:
 
     def test_detect_overlaps_finds_overlap(self):
         from datetime import datetime
+
         from ai.response.composer import ValueRangeMapping
         m1 = ValueRangeMapping('test.a', 0.0, 0.5, 'low', 0.5, last_used_at=datetime.now())
         m2 = ValueRangeMapping('test.a', 0.4, 1.0, 'high', 0.5, last_used_at=datetime.now())
@@ -180,6 +185,7 @@ class TestValueRangeMapping:
 
     def test_detect_overlaps_none(self):
         from datetime import datetime
+
         from ai.response.composer import ValueRangeMapping
         m1 = ValueRangeMapping('test.b', 0.0, 0.3, 'low', 0.5, last_used_at=datetime.now())
         m2 = ValueRangeMapping('test.b', 0.6, 1.0, 'high', 0.5, last_used_at=datetime.now())
@@ -190,8 +196,9 @@ class TestValueRangeMapping:
     # ── C6 Phase 5+: Edge case guards and corner cases ──────────────
 
     def test_covers_with_non_float_returns_false(self):
-        from ai.response.composer import ValueRangeMapping
         from datetime import datetime
+
+        from ai.response.composer import ValueRangeMapping
         m = ValueRangeMapping('test.axis', 0.0, 1.0, 'all', 0.5, last_used_at=datetime.now())
         assert m.covers(None) is False
         assert m.covers('string') is False
@@ -202,24 +209,27 @@ class TestValueRangeMapping:
         assert results == []
 
     def test_decay_confidences_zero_hours_no_crash(self):
-        from ai.response.composer import ValueRangeMapping
         from datetime import datetime
+
+        from ai.response.composer import ValueRangeMapping
         m = ValueRangeMapping('test.axis', 0.0, 1.0, 'any', 0.5, last_used_at=datetime.now())
         self.nv._value_range_mappings['test.axis'] = [m]
         self.nv.decay_confidences(hours=0)
         assert 'test.axis' in self.nv._value_range_mappings
 
     def test_decay_confidences_negative_hours_does_not_invert(self):
-        from ai.response.composer import ValueRangeMapping
         from datetime import datetime, timedelta
+
+        from ai.response.composer import ValueRangeMapping
         m = ValueRangeMapping('test.axis', 0.0, 1.0, 'old', 0.5, usage_count=1, last_used_at=datetime.now() - timedelta(hours=48))
         self.nv._value_range_mappings['test.axis'] = [m]
         self.nv.decay_confidences(hours=-1, decay_rate=0.5)
         assert m.confidence <= 0.5
 
     def test_decay_confidences_negative_rate_does_not_invert(self):
-        from ai.response.composer import ValueRangeMapping
         from datetime import datetime, timedelta
+
+        from ai.response.composer import ValueRangeMapping
         m = ValueRangeMapping('test.axis', 0.0, 1.0, 'old', 0.5, usage_count=1, last_used_at=datetime.now() - timedelta(hours=48))
         self.nv._value_range_mappings['test.axis'] = [m]
         self.nv.decay_confidences(hours=1, decay_rate=-0.5)
@@ -240,8 +250,9 @@ class TestValueRangeMapping:
         assert m.confidence == 1.0
 
     def test_detect_overlaps_single_mapping_no_error(self):
-        from ai.response.composer import ValueRangeMapping
         from datetime import datetime
+
+        from ai.response.composer import ValueRangeMapping
         m = ValueRangeMapping('test.axis', 0.2, 0.8, 'single', 0.5, last_used_at=datetime.now())
         self.nv._value_range_mappings['test.axis'] = [m]
         overlaps = self.nv.detect_overlaps('test.axis')

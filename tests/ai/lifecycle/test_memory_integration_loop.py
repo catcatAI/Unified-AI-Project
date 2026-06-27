@@ -220,6 +220,7 @@ class TestAnalyzePatterns:
     """Tests for pattern analysis."""
     async def test_analyze_patterns_finds_keywords(self, integration_loop):
         from ai.lifecycle.memory_integration_loop import MemoryInfo
+
         # Add enough memory info with repeated keywords
         now = datetime.now()
         for content in ['用户话题 音乐话题 喜欢', '用户话题 编程话题 喜欢', '用户话题 AI 喜欢']:
@@ -229,7 +230,7 @@ class TestAnalyzePatterns:
         await integration_loop._analyze_patterns()
         assert any('keyword_用户话题' in k or 'keyword_喜欢' in k for k in integration_loop.knowledge_patterns)
     async def test_analyze_patterns_updates_existing(self, integration_loop):
-        from ai.lifecycle.memory_integration_loop import MemoryInfo, KnowledgePattern
+        from ai.lifecycle.memory_integration_loop import KnowledgePattern, MemoryInfo
         now = datetime.now()
         # Pre-populate with a pattern
         integration_loop.knowledge_patterns['keyword_python'] = KnowledgePattern(
@@ -285,7 +286,7 @@ class TestStructureMemory:
         await integration_loop._structure_memory()
         assert integration_loop.stats['structured_memories'] == 10  # max 10 per call
     async def test_structure_memory_without_manager_method(self, mock_learning_engine):
-        from ai.lifecycle.memory_integration_loop import MemoryIntegrationLoop, MemoryInfo
+        from ai.lifecycle.memory_integration_loop import MemoryInfo, MemoryIntegrationLoop
         bare_manager = MagicMock(spec=[])
         now = datetime.now()
         loop = MemoryIntegrationLoop(
@@ -346,7 +347,7 @@ class TestUpdateKnowledgeBase:
         assert pending not in integration_loop.integration_queue  # should be removed
         assert integrated not in integration_loop.integration_queue  # removed too
     async def test_update_knowledge_base_without_manager_method(self, mock_learning_engine):
-        from ai.lifecycle.memory_integration_loop import MemoryIntegrationLoop, MemoryInfo
+        from ai.lifecycle.memory_integration_loop import MemoryInfo, MemoryIntegrationLoop
         bare_manager = MagicMock(spec=[])
         now = datetime.now()
         loop = MemoryIntegrationLoop(

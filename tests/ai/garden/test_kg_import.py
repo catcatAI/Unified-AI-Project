@@ -10,8 +10,7 @@ import os
 import tempfile
 
 import pytest
-
-from ai.garden.kg_import import KGImporter, RELATION_WEIGHTS
+from ai.garden.kg_import import RELATION_WEIGHTS, KGImporter
 
 
 class TestKGImporterInit:

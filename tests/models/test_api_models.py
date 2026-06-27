@@ -1,22 +1,23 @@
 """Tests for apps.backend.src.models.api_models"""
 import pytest
 from pydantic import ValidationError
+
 from apps.backend.src.models.api_models import (
-    UserInput,
     AIOutput,
-    SessionStartRequest,
-    SessionStartResponse,
-    HSPTaskRequestInput,
-    HSPTaskRequestOutput,
     AtlassianConfigModel,
     ConfluencePageModel,
-    JiraIssueModel,
-    RovoDevTaskModel,
-    JQLSearchModel,
-    HotStatusModel,
     HealthStatusModel,
-    ReadinessStatusModel,
+    HotStatusModel,
     HSPCapabilityModel,
+    HSPTaskRequestInput,
+    HSPTaskRequestOutput,
+    JiraIssueModel,
+    JQLSearchModel,
+    ReadinessStatusModel,
+    RovoDevTaskModel,
+    SessionStartRequest,
+    SessionStartResponse,
+    UserInput,
 )
 
 

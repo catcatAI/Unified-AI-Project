@@ -1,8 +1,8 @@
 """Tests for AgentManager."""
 
-import pytest
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import AsyncMock, Mock
 
+import pytest
 from ai.agents.agent_manager import AgentManager
 
 

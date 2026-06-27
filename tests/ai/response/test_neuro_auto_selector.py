@@ -2,22 +2,22 @@
 Tests for NeuroAutoSelector and sub-components.
 """
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
 from ai.response.neuro_auto_selector import (
-    NeuroAutoSelector,
-    HardwareAnalyzer,
-    BudgetScheduler,
-    StateInterpreter,
-    LearnRecorder,
-    AutoDecision,
-    AutoBackendChoice,
-    HardwareTier,
-    TaskBudget,
     DEFAULT_INTENT_COST,
     DEFAULT_TIME_BUDGET_TABLE,
+    AutoBackendChoice,
+    AutoDecision,
+    BudgetScheduler,
+    HardwareAnalyzer,
+    HardwareTier,
+    LearnRecorder,
+    NeuroAutoSelector,
+    StateInterpreter,
+    TaskBudget,
 )
-
 
 # =============================================================================
 # Fixtures

@@ -1,6 +1,7 @@
 """Smoke test for apps.backend.src.services.resource_awareness_service."""
 import pytest
 
+
 def test_resource_awareness_service_imports():
     """Smoke test: apps.backend.src.services.resource_awareness_service imports successfully."""
     from services import resource_awareness_service as resource_awareness_service

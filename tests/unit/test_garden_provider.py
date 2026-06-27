@@ -1,6 +1,7 @@
 """Tests for services.llm.providers.garden"""
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 class TestGARDENBackend:

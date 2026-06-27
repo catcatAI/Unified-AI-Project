@@ -1,7 +1,11 @@
 import pytest
+
 from apps.backend.src.core.active_cognition_formula import (
-    ActiveCognitionFormula, StressSource, OrderType,
-    StressVector, OrderBaseline,
+    ActiveCognitionFormula,
+    OrderBaseline,
+    OrderType,
+    StressSource,
+    StressVector,
 )
 
 

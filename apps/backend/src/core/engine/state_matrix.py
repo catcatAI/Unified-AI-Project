@@ -17,24 +17,25 @@ Date: 2026-05-13
 """
 
 from __future__ import annotations
-from typing import Dict, List, Optional, Tuple, Any, Callable
 
-from core.engine.cognitive_operations import (
-    CognitiveOp as _CognitiveOp,
-    perform_spatial_reasoning as _psr,
-    get_dimension_value as _gdv,
-    get_position as _gp,
-    evaluate_math_spatially,
-    apply_intent_gravity,
-    set_intent_target,
-    apply_inter_dimensional_drag,
-)
-
-from datetime import datetime
 import json
 import logging
 import math
+from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
+from core.engine.cognitive_operations import CognitiveOp as _CognitiveOp
+from core.engine.cognitive_operations import (
+    apply_intent_gravity,
+    apply_inter_dimensional_drag,
+    evaluate_math_spatially,
+)
+from core.engine.cognitive_operations import get_dimension_value as _gdv
+from core.engine.cognitive_operations import get_position as _gp
+from core.engine.cognitive_operations import perform_spatial_reasoning as _psr
+from core.engine.cognitive_operations import (
+    set_intent_target,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -358,9 +359,10 @@ class StateMatrix4D:
         Returns:
             AllocateDecision（與 meta_allocate 相同格式）
         """
+        from core.allocation.policy import AllocationAction as PolicyAction
         from core.allocation.policy import (
-            AllocationPolicy, AllocationContext,
-            AllocationAction as PolicyAction,
+            AllocationContext,
+            AllocationPolicy,
         )
 
         axis_similarities: Dict[str, float] = {}

@@ -17,20 +17,22 @@ Date: 2026-02-02
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Dict, List, Optional, Callable, Any, Set
-from datetime import datetime, timedelta
-from pathlib import Path
+
 import asyncio
+import logging
 import os
 import shutil
 import subprocess
 import sys
 import threading
-from core.system.config.async_io import async_write_text, async_write_file
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Set
+
+from core.system.config.async_io import async_write_file, async_write_text
 from core.system.config.magic_numbers import loop_sleep
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -265,8 +267,9 @@ class DesktopBrowserIntegration:
                         image_data = await response.read()
 
                         # 使用PIL分析风格
-                        from PIL import Image
                         import io
+
+                        from PIL import Image
 
                         img = Image.open(io.BytesIO(image_data))
 
@@ -999,8 +1002,8 @@ class DesktopInteraction:
 
     async def _cleanup_temp_files(self) -> int:
         """Helper method to cleanup temporary files and return freed space in bytes"""
-        import tempfile
         import shutil
+        import tempfile
         freed_space = 0
         try:
             temp_dir = Path(tempfile.gettempdir())

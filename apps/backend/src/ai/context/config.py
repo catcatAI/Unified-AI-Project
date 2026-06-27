@@ -6,9 +6,9 @@
 
 # Angela Matrix: [L2:MEM] [L4:CTX] Context system configuration
 
-import os
 import logging
-from typing import Dict, Any
+import os
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 # (removed incomplete import: from diagnose_base_agent import)

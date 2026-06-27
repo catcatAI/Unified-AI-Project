@@ -6,7 +6,8 @@ SelfIntrospector – simple mental health check placeholder.
 Provides perform_mental_health_check used by DigitalLifeIntegrator.
 """
 
-from typing import Dict, Any
+from typing import Any, Dict
+
 
 class SelfIntrospector:
     """A lightweight introspection utility.

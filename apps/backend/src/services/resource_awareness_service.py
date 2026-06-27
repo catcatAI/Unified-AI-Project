@@ -1,10 +1,11 @@
 "Real-time hardware resource awareness for Angela AI.\nProvides system load metrics (CPU/RAM), throttling factor for dynamic scaling,\nand available memory for LLM model selection.\n"
 
-import os
-import yaml  # type: ignore[import-untyped]
-from typing import Optional, Dict, Any
-from dataclasses import dataclass, field
 import logging
+import os
+from dataclasses import dataclass, field
+from typing import Any, Dict, Optional
+
+import yaml  # type: ignore[import-untyped]
 
 try:
     import psutil

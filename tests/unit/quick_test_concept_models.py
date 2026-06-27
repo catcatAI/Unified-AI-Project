@@ -2,9 +2,9 @@
 快速测试所有概念模型是否可以正常导入和基本运行
 """
 
-import sys
-import os
 import logging
+import os
+import sys
 
 logger = logging.getLogger(__name__)
 

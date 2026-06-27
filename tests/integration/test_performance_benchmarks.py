@@ -2,9 +2,10 @@
 测试模块 - test_performance_benchmarks
 """
 
-import pytest
-from unittest.mock import Mock
 import time
+from unittest.mock import Mock
+
+import pytest
 
 
 class TestPerformanceBenchmarks:

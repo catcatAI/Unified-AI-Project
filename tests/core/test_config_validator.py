@@ -1,8 +1,13 @@
 import os
+
 import pytest
+
 try:
     from apps.backend.src.core.config_validator import (
-        ConfigValidator, ValidationResult, EnvVarSpec, Severity,
+        ConfigValidator,
+        EnvVarSpec,
+        Severity,
+        ValidationResult,
     )
 except ImportError:
     import pytest; pytest.skip("ConfigValidator is a stub", allow_module_level=True)

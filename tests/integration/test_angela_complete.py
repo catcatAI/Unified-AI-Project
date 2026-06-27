@@ -3,10 +3,11 @@ Angela AI Core Test Suite
 完整的Angela AI核心測試套件
 """
 
-import pytest
+import logging
 import os
 from pathlib import Path
-import logging
+
+import pytest
 
 logger = logging.getLogger(__name__)
 
@@ -35,8 +36,8 @@ class TestAngelaCore:
         """測試Python模組導入"""
         try:
             import fastapi
-            import uvicorn
             import pydantic
+            import uvicorn
         except ImportError as e:
             pytest.skip(f"Required dependency not installed: {e}")
 
@@ -44,6 +45,7 @@ class TestAngelaCore:
         """測試安全中間件"""
         try:
             from src.shared.security_middleware import SignedCommunicationMiddleware
+
             # 驗證中間件可用
             assert SignedCommunicationMiddleware is not None
         except ImportError as e:

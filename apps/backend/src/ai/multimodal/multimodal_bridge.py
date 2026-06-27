@@ -10,13 +10,12 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import numpy as np
-from PIL import Image
-
-from ai.multimodal.visual_encoder import VisualEncoder
-from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
-from ai.multimodal.visual_decoder import VisualDecoder
 from ai.multimodal.audio_decoder import AudioWaveformDecoder
+from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
 from ai.multimodal.shared_latent_space import SharedLatentSpace
+from ai.multimodal.visual_decoder import VisualDecoder
+from ai.multimodal.visual_encoder import VisualEncoder
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +33,11 @@ class MultimodalBridge:
     def __init__(self):
         self._visual_encoder = VisualEncoder(feature_dim=self.VISION_DIM)
         self._audio_encoder = AudioSpectralEncoder(feature_dim=self.AUDIO_DIM)
+        from ai.multimodal.audio_decoder import (
+            AudioWaveformDecoder,
+            load_default_audio_decoder_weights,
+        )
         from ai.multimodal.visual_decoder import VisualDecoder, load_default_visual_decoder_weights
-        from ai.multimodal.audio_decoder import AudioWaveformDecoder, load_default_audio_decoder_weights
         self._visual_decoder = VisualDecoder()
         load_default_visual_decoder_weights(self._visual_decoder)
         self._audio_decoder = AudioWaveformDecoder()

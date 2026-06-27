@@ -1,12 +1,14 @@
 """Test HAM Memory System"""
 import pytest
+
+
 async def test_ham_types_import():
     """Test HAM types module can be imported"""
     from ai.memory.ham_memory.ham_types import (
         HAMDataPackageInternal,
         HAMMemory,
-        HAMRecallResult,
         HAMMemoryError,
+        HAMRecallResult,
     )
     assert HAMDataPackageInternal is not None
     assert HAMMemory is not None
@@ -15,10 +17,10 @@ async def test_ham_types_import():
 async def test_ham_errors_import():
     """Test HAM errors module can be imported"""
     from ai.memory.ham_memory.ham_errors import (
-        HAMMemoryError,
         HAMInitializationError,
-        HAMStorageError,
+        HAMMemoryError,
         HAMRetrievalError,
+        HAMStorageError,
     )
     assert HAMMemoryError is not None
     assert HAMInitializationError is not None

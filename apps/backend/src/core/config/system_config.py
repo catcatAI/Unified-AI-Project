@@ -6,9 +6,9 @@ TieredConfigLoader (core.system.config.tiered_loader) 管理，並在 core.defau
 遷移進度追蹤: docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md P3.3
 """
 
-import os
-from typing import Dict, Any
 import logging
+import os
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 

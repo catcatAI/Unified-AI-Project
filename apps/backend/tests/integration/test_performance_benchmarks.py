@@ -14,20 +14,20 @@ Version: 6.0.0
 Date: 2026-02-02
 """
 
-import pytest
 import asyncio
-import time
 import gc
-import sys
-import psutil
-import uuid
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Callable
-from unittest.mock import Mock, patch, AsyncMock
-from dataclasses import dataclass, field
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import statistics
+import sys
+import time
+import uuid
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from typing import Any, Callable, Dict, List, Optional
+from unittest.mock import AsyncMock, Mock, patch
 
+import psutil
+import pytest
 
 # Test markers
 pytestmark = [

@@ -10,25 +10,27 @@ Date: 2026-02-02
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from enum import Enum, auto
-from typing import Dict, List, Optional, Tuple, Callable, Any
-from datetime import datetime, timedelta
-import math
+
 import logging
+import math
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum, auto
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
 from core.system.config.magic_numbers import cache_value
 
 from .physiological_tactile_types import (
-    ReceptorType,
-    TactileType,
-    BodyRegion,
-    BodyPart,
-    Receptor,
-    TactileStimulus,
-    EmotionalTactileMapping,
-    TactileResponse,
-    Live2DTouchResponse,
     BODY_TO_LIVE2D_MAPPING,
+    BodyPart,
+    BodyRegion,
+    EmotionalTactileMapping,
+    Live2DTouchResponse,
+    Receptor,
+    ReceptorType,
+    TactileResponse,
+    TactileStimulus,
+    TactileType,
 )
 
 logger = logging.getLogger(__name__)

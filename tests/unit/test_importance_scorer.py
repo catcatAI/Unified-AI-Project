@@ -20,6 +20,7 @@ class TestImportanceScorer:
 
     def test_calculate_returns_float_in_range(self):
         import asyncio
+
         from ai.memory.importance_scorer import ImportanceScorer
         instance = ImportanceScorer()
         score = asyncio.run(instance.calculate("test content", {"key": "value"}))
@@ -28,6 +29,7 @@ class TestImportanceScorer:
 
     def test_calculate_accepts_various_content_types(self):
         import asyncio
+
         from ai.memory.importance_scorer import ImportanceScorer
         instance = ImportanceScorer()
         score1 = asyncio.run(instance.calculate(42, {}))
@@ -39,6 +41,7 @@ class TestImportanceScorer:
 
     def test_calculate_returns_float_with_empty_metadata(self):
         import asyncio
+
         from ai.memory.importance_scorer import ImportanceScorer
         instance = ImportanceScorer()
         score = asyncio.run(instance.calculate("data", {}))

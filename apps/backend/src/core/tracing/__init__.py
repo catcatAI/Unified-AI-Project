@@ -9,7 +9,7 @@ Version: 6.0.0
 Date: 2026-02-19
 """
 
-from .causal_chain import CausalNode, CausalChain, LayerType
+from .causal_chain import CausalChain, CausalNode, LayerType
 from .causal_tracer import CausalTracer, get_tracer
 from .chain_validator import ChainValidator
 

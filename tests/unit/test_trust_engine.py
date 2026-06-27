@@ -1,6 +1,7 @@
 """Smoke tests for apps.backend.src.ai.trust.trust_manager_module"""
 import pytest
 
+
 class TestTrustManager:
     def test_import(self):
         try:

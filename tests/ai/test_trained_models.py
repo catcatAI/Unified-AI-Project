@@ -9,9 +9,9 @@
 测试训练好的模型
 """
 
-from unittest.mock import patch, MagicMock
-from typing import Any
 import logging
+from typing import Any
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -19,9 +19,9 @@ logger = logging.getLogger(__name__)
 
 # Mock external dependencies if necessary
 try:
-    from ai.models.trained_model_manager import TrainedModelManager
-    from ai.models.model_types import ModelType
     from ai.models.model_data_types import ModelData
+    from ai.models.model_types import ModelType
+    from ai.models.trained_model_manager import TrainedModelManager
 except ImportError:
 
     class MockTrainedModelManager:

@@ -8,14 +8,14 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Set, Tuple
 if TYPE_CHECKING:
     from .dictionary_layer import DictionaryLayer
 
-from .relation_classifier import RelationClassifier, RelationType
-
 from core.system.config.magic_numbers import (
     behavior_threshold,
     learning_rate,
     limit_value,
     threshold_value,
 )
+
+from .relation_classifier import RelationClassifier, RelationType
 
 logger = logging.getLogger(__name__)
 
@@ -320,7 +320,8 @@ class CoreNetwork:
 
     def save_connections(self, path: str) -> None:
         """Save network connections to JSON."""
-        import json, os
+        import json
+        import os
 
         conns = []
         for group_name, group in self.groups.items():

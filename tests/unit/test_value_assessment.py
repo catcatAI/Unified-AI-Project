@@ -1,5 +1,6 @@
 """Tests for ValueAssessmentSystem"""
 import pytest
+
 try:
     from apps.backend.src.ai.alignment.value_assessment import ValueAssessmentSystem
 except ImportError:

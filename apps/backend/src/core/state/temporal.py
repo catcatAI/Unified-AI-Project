@@ -40,8 +40,9 @@ Version: 6.2.1
 """
 
 from __future__ import annotations
-from typing import Any, Dict, List, Optional
+
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 
 class TemporalState:

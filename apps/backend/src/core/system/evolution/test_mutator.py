@@ -4,6 +4,7 @@ Test script for ConfigMutator
 
 from core.system.evolution.config_mutator import ConfigMutator
 
+
 def test_config_mutator() -> None:
     """Test config mutator behavior."""
     print("Testing ConfigMutator (Phase 6)...")

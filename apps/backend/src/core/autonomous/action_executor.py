@@ -5,12 +5,12 @@ Re-exports from core.autonomous shim
 from __future__ import annotations
 
 from core.engine.action_executor import (
-    ActionExecutor,
-    ActionQueue,
-    ActionPriority,
     Action,
+    ActionCategory,
+    ActionExecutor,
+    ActionPriority,
+    ActionQueue,
     ActionResult,
     ActionStatus,
-    ActionCategory,
     SafetyCheck,
 )

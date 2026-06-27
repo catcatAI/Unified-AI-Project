@@ -10,15 +10,15 @@
 # =============================================================================
 
 import asyncio
-import logging
-from datetime import datetime
-from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, List, Callable
-from enum import Enum
 import json
+import logging
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
 
-from core.system.config.magic_numbers import loop_sleep
 from core.emotion_constants import EMOTION_KEYWORDS
+from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 

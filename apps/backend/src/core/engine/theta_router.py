@@ -23,15 +23,17 @@ Version: 6.2.1
 """
 
 from __future__ import annotations
+
+import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Any, Tuple, TYPE_CHECKING
-import logging
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+
 from core.system.config.magic_numbers import cache_value
 
 if TYPE_CHECKING:
-    from core.engine.state_matrix_adapter import StateMatrixAdapter
     from core.engine.axis_port_registry import PortRegistry
+    from core.engine.state_matrix_adapter import StateMatrixAdapter
 
 logger = logging.getLogger("angela_theta_router")
 

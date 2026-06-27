@@ -1,6 +1,7 @@
 """Smoke tests for apps.backend.src.ai.alignment.decision_theory_system"""
 import pytest
 
+
 class TestDecisionTheorySystem:
     def test_import(self):
         try:

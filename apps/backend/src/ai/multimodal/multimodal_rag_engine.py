@@ -7,7 +7,6 @@ import logging
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-
 from ai.multimodal.multimodal_bridge import MultimodalBridge
 from ai.multimodal.multimodal_retriever import MultimodalRetriever
 

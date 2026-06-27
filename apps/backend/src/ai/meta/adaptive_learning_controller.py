@@ -4,7 +4,7 @@
 
 import logging
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 try:
     import numpy as np

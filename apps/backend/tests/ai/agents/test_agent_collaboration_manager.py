@@ -1,11 +1,13 @@
-import pytest
 import asyncio
+from typing import Any, Dict, List  # Added for type hinting in MockRespondingAgent
 from unittest.mock import AsyncMock, MagicMock, patch
-from ai.agents.agent_collaboration_manager import AgentCollaborationManager
-from ai.agents import BaseAgent
-from core.hsp.connector import HSPConnector
-from typing import Any, Dict, List # Added for type hinting in MockRespondingAgent
+
+import pytest
 import pytest_asyncio
+from ai.agents import BaseAgent
+from ai.agents.agent_collaboration_manager import AgentCollaborationManager
+from core.hsp.connector import HSPConnector
+
 
 # Mock HSPConnector for testing purposes
 @pytest.fixture

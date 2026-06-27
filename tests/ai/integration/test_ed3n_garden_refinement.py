@@ -1,15 +1,15 @@
 import asyncio
 import logging
-import sys
 import os
-from unittest.mock import MagicMock, AsyncMock
+import sys
+from unittest.mock import AsyncMock, MagicMock
 
 # Add project root to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from services.llm.router import AngelaLLMService
 from ai.core.model_bus import ModelBus, ModelRouteResult, RouteDecision
 from core.interfaces.protocols import LLMResponse
+from services.llm.router import AngelaLLMService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

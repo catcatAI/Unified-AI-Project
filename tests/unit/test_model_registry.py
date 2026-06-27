@@ -1,6 +1,7 @@
 """Smoke tests for apps.backend.src.ai.language_models.registry"""
 import pytest
 
+
 class TestModelRegistry:
     def test_import(self):
         try:

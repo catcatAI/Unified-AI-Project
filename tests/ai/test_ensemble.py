@@ -1,8 +1,11 @@
 """Tests for Model Ensemble - Response Fusion and Model Voting."""
 
 import pytest
+
 from apps.backend.src.ai.ensemble import (
-    ModelWeight, EnsembleResult, ResponseFusionEngine,
+    EnsembleResult,
+    ModelWeight,
+    ResponseFusionEngine,
 )
 
 

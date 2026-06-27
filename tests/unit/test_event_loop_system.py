@@ -50,8 +50,9 @@ class TestEventLoopSystem:
     def test_import_event_dataclass(self):
         """Verify Event dataclass can be imported"""
         try:
-            from core.event_loop_system import Event, EventPriority, EventStatus
             from datetime import datetime
+
+            from core.event_loop_system import Event, EventPriority, EventStatus
             event = Event(
                 event_id="evt_1",
                 event_type="test",
