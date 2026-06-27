@@ -27,7 +27,7 @@ Angela AI is not a single application — it is a **framework** for building AI-
 
 - **A pipelined chat architecture** — WebSocket → emotion → crisis → alignment → execution gate → **agent routing** → LLM → causal learning → response — every stage is a replaceable component
 - **7 LLM backends** — Anthropic, Google, OpenAI, Ollama, llama.cpp, ED3N (SNN), GARDEN (lightweight) — pluggable via strategy pattern
-- **2 local inference engines** — ED3N (460K dictionary, SNN reflex) and GARDEN (VectorDictionary + TensorSNN) — zero-cost fallback without external APIs. ⚠️ **Caution**: Both engines have random/uninitialized weights. ED3N math accuracy measured at 77.7% (basic arithmetic only). All other domains (knowledge, creative, reasoning) unmeasured. VisualDecoder/AudioWaveformDecoder/SequenceGenerator output = noise. Architecture exists; training is ~5% complete.
+- **2 local inference engines** — ED3N (460K dictionary, SNN reflex) and GARDEN (VectorDictionary + TensorSNN) — zero-cost fallback without external APIs. ⚠️ **Caution**: Both engines have random/uninitialized weights. Math accuracy measured at **100% (5/5)** via `scripts/benchmark_ed3n_garden.py` after PEMDAS fix. All other domains (knowledge, creative, reasoning) remain at 0% — native engines are concept-mapping only. VisualDecoder/AudioWaveformDecoder/SequenceGenerator output = noise. Architecture exists; training is ~5% complete.
 - **A 6-dimensional state matrix** (αβγδεθ) — shared context for cognitive, emotional, and environmental state
 - **Biological simulation** — 8 modules modeling energy, metabolism, endocrine, neuroplasticity, etc.
 - **11 specialized agents** — Creative, Code, Data, Search, Vision, Audio, etc. — registered via `AgentAdapter`

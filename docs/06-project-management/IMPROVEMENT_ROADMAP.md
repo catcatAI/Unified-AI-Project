@@ -36,7 +36,9 @@
 | 優勢 | 驗證方式 | 數據量 | 結果 |
 |------|---------|--------|------|
 | **LLM API 包裝器** | 7 家供應商（OpenAI/Anthropic/Google/Ollama/llama.cpp/ED3N/GARDEN）可正常呼叫 | 整合測試通過 | ✅ 生產可用 |
-| **ED3N 數學準確率** | `math_eval` 階段測試數字運算 | 92 測試（ED3N 總測試） | ✅ 77.7%（基本算術） |
+| **Benchmark harness** | `scripts/benchmark_ed3n_garden.py` — 15 questions across math/knowledge/reasoning | 3 domains × 5 questions | ✅ 可重複執行，支援 JSON 輸出 |
+| **ED3N 數學準確率** | `scripts/benchmark_ed3n_garden.py` 跨領域基準 (15題) | 15 基準題 | ✅ 100%（5/5 數學，PEMDAS 修正後） |
+| **GARDEN 數學準確率** | 同上 | 15 基準題 | ✅ 100%（5/5 數學） |
 | **Memory（VectorStore + HAM）** | 向量搜尋、持久化、語意召回 | 25+ 測試 | ✅ 正常運作 |
 | **MathRippleEngine** | 運算 + 6 軸情緒漣漪效應 | 100+ 測試 | ✅ SOPHISTICATED — 原創演算法 |
 | **EmotionalBlending** | PAD 情緒模型 + 4D 狀態矩陣 | 整合測試通過 | ✅ SOPHISTICATED — 完整實作 |
@@ -55,7 +57,7 @@
 
 | 宣稱 | 實際狀態 | 需要什麼數據 | 門檻 |
 |------|---------|------------|------|
-| ED3N 知識理解 | 只有數學準確率（77.7%）被測量 | 建立跨領域基準：MMLU 子集、知識問答、創造性寫作 | 每領域 100+ 測試題 |
+| ED3N 知識理解 | 數學準確率已透過基準測量（100%，PEMDAS 修正後）。其他領域仍未知。 | 建立擴充基準：MMLU 子集、知識問答、創造性寫作 | 每領域 100+ 測試題 |
 | GARDEN SNN 推論品質 | 從未被基準測試 | GARDEN 專用基準（問答、分類） | 100+ 測試題 |
 | VisualEncoder 品質 | 存在但未評量 | 與真實 CV 模型（ResNet、CLIP）比較的準確率/召回率 | 1,000+ 圖片標註 |
 | ImageGenerator 品質 | 權重隨機，無輸出可言 | 訓練後用 FID/IS 評量 | 10,000+ 生成圖片 |

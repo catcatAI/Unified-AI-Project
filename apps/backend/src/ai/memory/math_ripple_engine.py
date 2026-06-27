@@ -525,27 +525,36 @@ class MathRippleEngine:
     def _process_operator_chain(
         self, tokens: List[str], i: int, current: float, ripples: List[RippleEffect]
     ) -> Tuple[int, float]:
-        """Process operator chain."""
-        processed = False
-        while i + 1 < len(tokens):
-            op = tokens[i + 1]
-            if op not in ("+", "-", "*", "/", "^", "**"):
-                break
-            if op in ("+", "-") and processed:
-                break
-            if i + 2 >= len(tokens):
-                break
-            try:
-                operand = float(tokens[i + 2])
-            except (ValueError, IndexError):
-                break
+        """Process operator chain respecting PEMDAS precedence.
 
-            result, ripple = self._compute_single(current, op, operand)
+        Repeatedly finds the highest-precedence operator in the remaining
+        token window, evaluates it, collapses the 3-token group (a op b)
+        into the result, and loops until only one value remains.
+        Returns (len(tokens) - 1, result) to signal the main compute loop
+        that all tokens have been consumed.
+        """
+        PRECEDENCE = [("*", "/", "^", "**"), ("+", "-")]
+        # Mutable chunk: [a, op, b, op, c, ...]
+        chunk = tokens[i:]
+        while len(chunk) >= 3:
+            found = None
+            for prec_ops in PRECEDENCE:
+                for idx in range(1, len(chunk), 2):
+                    if chunk[idx] in prec_ops:
+                        found = idx
+                        break
+                if found is not None:
+                    break
+            if found is None:
+                break
+            left = float(chunk[found - 1])
+            op = chunk[found]
+            right = float(chunk[found + 1])
+            result, ripple = self._compute_single(left, op, right)
             ripple.ripple_depth = self.ripple_depth
             ripple.algorithm_depth = self.algorithm_depth
             ripple.depth_level = self.ripple_depth.value
             ripples.append(ripple)
-
             if self.accumulator:
                 self.accumulator.add(ripple)
                 if ripple.overload_triggered:
@@ -554,11 +563,9 @@ class MathRippleEngine:
                     self._apply_division_fear()
                 elif ripple.confusion_triggered:
                     self._apply_order_confusion(op)
-
-            current = result
-            processed = True
-            i += 2
-        return i, current
+            chunk[found - 1 : found + 2] = [str(result)]
+        result = float(chunk[0]) if chunk else current
+        return len(tokens) - 1, result
 
     def convert_chinese_math(self, text: str) -> Optional[str]:
         """
@@ -668,14 +675,22 @@ class MathRippleEngine:
         """Tokenize."""
         tokens = []
         num_buffer = ""
-
-        for ch in expr.strip().replace("×", "*").replace("÷", "/").replace("^", "**"):
+        normalized = expr.strip().replace("×", "*").replace("÷", "/").replace("^", "**")
+        i = 0
+        while i < len(normalized):
+            ch = normalized[i]
             if ch.isdigit() or ch == ".":
                 num_buffer += ch
-            elif num_buffer:
+                i += 1
+                continue
+            if num_buffer:
                 tokens.append(num_buffer)
                 num_buffer = ""
-
+            # Handle ** as single token
+            if ch == "*" and i + 1 < len(normalized) and normalized[i + 1] == "*":
+                tokens.append("**")
+                i += 2
+                continue
             if ch in "+-*/^()":
                 if ch == "-" and (not tokens or tokens[-1] in "+-*/^("):
                     num_buffer = "-"
@@ -683,6 +698,7 @@ class MathRippleEngine:
                     num_buffer += "-"
                 else:
                     tokens.append(ch)
+            i += 1
 
         if num_buffer:
             tokens.append(num_buffer)

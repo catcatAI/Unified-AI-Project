@@ -482,7 +482,7 @@ Pipeline entry: scripts/train_pipeline.py
 | GARDEN vocab | 87 | 300+ |
 | SequenceTrainer loss | 0.009 | < 0.01 (hold) |
 | SequenceTrainer acc | 99.93% | > 99.5% (hold) |
-| ED3NTrainer acc | ~77.7% | > 85% (from logic training) |
+| ED3NTrainer acc | ~77.7% (pre-PEMDAS) → 100% (benchmark 5/5, Jun 28) | > 85% (from logic training) |
 | Arithmetic accuracy | untested | > 90% on test set |
 | Logic accuracy | untested | > 85% on test set |
 | 134 tests | pass | zero regression |

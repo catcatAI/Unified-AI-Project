@@ -104,6 +104,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
+## [7.5.0-dev] - 2026-06-28 — Benchmark + MathRippleEngine PEMDAS Fix
+
+### Added
+- 📊 **scripts/benchmark_ed3n_garden.py**: Cross-domain benchmark harness for ED3N/GARDEN (15 questions across math/knowledge/reasoning). Supports `--engine ed3n|garden|both`, `--verbose`, `--output` JSON. Baseline: math 100% (5/5), knowledge 0%, reasoning 0% for both engines. Enables tracking of improvement over time.
+
+### Fixed
+- 🐛 **MathRippleEngine._process_operator_chain**: PEMDAS operator precedence. Was evaluating `2 + 3 * 4 = 20` (left-to-right), now correctly computes `14` (multiplication before addition). Uses two-pass collapse: high-precedence (`* / ^`) before low-precedence (`+ -`). All 56 MRE tests pass.
+- 🐛 **MathRippleEngine._tokenize**: `^` replacement with `**` previously produced two separate `*` tokens (e.g., `["2", "*", "*", "10"]`), breaking power expressions. Now handles `**` as a single token.
+
+### Synced
+- 🔄 **MASTER_TASK_MAP.md §X #17**: Benchmark harness now exists → status from "no unified benchmark harness" to "harness created; math at 100%". PEMDAS fix documented in new §X #31.
+- 🔄 **IMPROVEMENT_ROADMAP.md §1.1**: ED3N math accuracy from 77.7% → 100% (benchmark 5/5). Added benchmark harness row.
+- 🔄 **FRAMEWORK_OVERVIEW.md**: Math accuracy 77.7% → 100% (ED3N) / 100% (GARDEN). Benchmark script noted.
+- 🔄 **PANORAMIC_MIXED_TRAINING_PLAN.md**: ED3N accuracy 77.7% → 100% post-PEMDAS fix.
+- 🔄 **ED3N_TRAINING_GUIDE.md**: Network accuracy 77.7% → 100% (benchmark).
+
 ## [7.5.0-dev] - 2026-06-26 — Long Function Refactoring + Doc Sync
 
 ### Refactored

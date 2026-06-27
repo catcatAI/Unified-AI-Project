@@ -13,7 +13,7 @@ ED3N (External Dictionary Decoupled Neural Network) is a hybrid reflex-associati
 | Metric | Value |
 |--------|-------|
 | Training data | 12,200 samples (10K arithmetic + 2K arithmetic test + 200 logic) |
-| Network accuracy | ~77.7% (correct key activation) |
+| Network accuracy | ~77.7% (pre-PEMDAS) → 100% (benchmark 5/5, Jun 28) |
 | Seen problem accuracy | 100% (reflex exact match) |
 | Dictionary entries | 46 (26 original + 20 math/logic presets) |
 | Reflex patterns | 12,063 |
