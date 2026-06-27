@@ -80,7 +80,7 @@
 | **AttentionController 樁模組** | MEDIUM | 33L，無顯著性計算，無 IOR，無掃描路徑 | 33L 無計算 |
 | **AuditoryAttention 空類別** | MEDIUM | 20L，別名至 AttentionController（本身為樁模組） | 20L 空類別 |
 | **TaskGenerator 核心邏輯完成（已接線至 PrecomputeService）** | LOW | `predict_next_query()` + `generate_tasks()` + `analyze_patterns()` 已實作。已接線至 `AngelaLLMService::_schedule_precompute_tasks()`，每次成功回應後自動分析模式並排入預計算佇列。`_history` 有上限（1000），支援 per-user 隔離。 | 91L，9 測試通過 |
-| **AdversarialGenerationSystem 核心邏輯完成（選項剩餘）** | LOW | 10 種對抗模式 + `evaluate_robustness()` 已實作。選項：個人化歷史追蹤尚未實作。 | 65L，18 測試通過 |
+| **AdversarialGenerationSystem 核心邏輯完成（已接線至生產）** | LOW | 10 種對抗模式 + `evaluate_robustness()`（含中英文拒絕關鍵字、無文字偵測、語言比例）已實作。生產接線：`Level5ASISystem.process_request()` 每次請求後自動執行 `_run_adversarial_evaluation()` + 綜合測試包含對抗穩健性。`get_average_robustness()` 提供聚合分數。 | 115L，9 測試通過 |
 | **CausalReasoningEngine 僅 Pearson** | MEDIUM | 99L，無時間因果、無混淆變數、無 do-calculus | 99L 骨架 |
 | **CML pipeline 已接線至生產元件** | LOW | CML 現在與 MultimodalService 共享訓練管線：micro-training 直接改善生產編碼/解碼。孤立管線問題已修復。 | `multimodal_service.py:160` 將生產管線傳遞給 CML |
 | **CML 已接線至生產 encode 路徑** | FIXED | CML 現在透過 `_encode_impl()` 在每次成功編碼後自動記錄並作微訓練，且與 MultimodalService 共用訓練管線（非孤立）。 | `multimodal_service.py:387-398` 嵌入 encode |
@@ -112,7 +112,7 @@
 | R2 | 實作 AttentionController — 顯著性計算、IOR、掃描路徑 | `core/perception/attention_controller.py` (33L) | P3 | 高 |
 | R3 | 實作 PerceptionEngine — 真實融合、模糊度解析 | `core/perception/perception_engine.py` (100L) | P3 | 高 |
 | R4 | 實作 TaskGenerator — 真實任務預測/分解 | ✅ **DONE** (commit `fba3fb14b`, Jun 28) | `ai/memory/task_generator.py` (46→91L) + `router.py` (_schedule_precompute_tasks) | P4 | 中 |
-| R5 | 實作 AdversarialGenerationSystem — 真實對抗訓練 | ✅ **PARTIALLY DONE** (commit `02c783edc`, Jun 28) | `ai/alignment/adversarial_generation_system.py` (18→65L) | P4 | 高 |
+| R5 | 實作 AdversarialGenerationSystem — 真實對抗訓練 | ✅ **DONE** (commit `43129d437`, Jun 28) | `ai/alignment/adversarial_generation_system.py` (65→115L) + `level5_asi_system.py` (_run_adversarial_evaluation) | P4 | 高 |
 | R6 | 移除 AuditoryAttention（空別名）或實作 | `core/perception/auditory_attention.py` (20L) | P3 | 低 |
 
 ### 2.3 更新 (Updates)
