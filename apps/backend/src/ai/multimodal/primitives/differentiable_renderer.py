@@ -21,24 +21,34 @@ class DifferentiableRenderer:
         from ai.multimodal.primitives.primitive_types import (
             N_POINTS, N_LINES, N_PLANES, N_CIRCLES, N_ARCS
         )
-        
+
         h, w = self._h, self._w
         nx, ny = self._nx, self._ny
         bg = vec[0:3]
-        
+
         canvas = np.zeros((h, w, 3), dtype=np.float32)
         weight = np.zeros((h, w), dtype=np.float32)
-        
-        def layer(alpha, color):
-            nonlocal canvas, weight
-            a = np.clip(alpha, 0, 1) ** 0.5
-            w_exp = a * (1 - weight)
-            canvas += w_exp[:, :, None] * color[None, None, :]
-            weight = np.clip(weight + w_exp, 0, 1)
-        
+
         off = 5
-        
-        # Planes (vectorized over N_PLANES)
+        off = self._render_planes(vec, off, canvas, weight, nx, ny)
+        off = self._render_circles(vec, off, canvas, weight, nx, ny)
+        off = self._render_arcs(vec, off, canvas, weight, nx, ny)
+        off = self._render_lines(vec, off, canvas, weight, nx, ny)
+        self._render_points(vec, off, canvas, weight, nx, ny)
+
+        canvas = canvas + bg * (1 - weight[:, :, None])
+        return np.clip(canvas, 0, 1)
+
+    @staticmethod
+    def _layer(canvas, weight, alpha, color):
+        a = np.clip(alpha, 0, 1) ** 0.5
+        w_exp = a * (1 - weight)
+        canvas += w_exp[:, :, None] * color[None, None, :]
+        weight[:] = np.clip(weight + w_exp, 0, 1)
+
+    @staticmethod
+    def _render_planes(vec, off, canvas, weight, nx, ny):
+        from ai.multimodal.primitives.primitive_types import N_PLANES
         planes = vec[off:off + N_PLANES * 9].reshape(N_PLANES, 9)
         for i in range(N_PLANES):
             cx, cy, rx, ry = planes[i, :4]
@@ -49,10 +59,12 @@ class DifferentiableRenderer:
             dy = np.abs(ny - cy) / max(ry, 0.001)
             d = np.maximum(dx, dy)
             alpha = np.clip(1.5 - d * 2, 0, 1)
-            layer(alpha, color)
-        off += N_PLANES * 9
-        
-        # Circles (vectorized)
+            DifferentiableRenderer._layer(canvas, weight, alpha, color)
+        return off + N_PLANES * 9
+
+    @staticmethod
+    def _render_circles(vec, off, canvas, weight, nx, ny):
+        from ai.multimodal.primitives.primitive_types import N_CIRCLES
         circles = vec[off:off + N_CIRCLES * 7].reshape(N_CIRCLES, 7)
         for i in range(N_CIRCLES):
             cx, cy, r = circles[i, :3]
@@ -61,10 +73,13 @@ class DifferentiableRenderer:
             color = circles[i, 3:6]
             dist = np.sqrt((nx - cx) ** 2 + (ny - cy) ** 2)
             alpha = np.clip(1.5 - dist / r * 2, 0, 1)
-            layer(alpha, color)
-        off += N_CIRCLES * 7
-        
-        # Arcs
+            DifferentiableRenderer._layer(canvas, weight, alpha, color)
+        return off + N_CIRCLES * 7
+
+    @staticmethod
+    def _render_arcs(vec, off, canvas, weight, nx, ny):
+        import math
+        from ai.multimodal.primitives.primitive_types import N_ARCS
         arcs = vec[off:off + N_ARCS * 10].reshape(N_ARCS, 10)
         for i in range(N_ARCS):
             cx, cy, r = arcs[i, :3]
@@ -80,10 +95,13 @@ class DifferentiableRenderer:
             in_arc = (angle >= sa_n) & (angle <= ea_n) if sa_n <= ea_n else (angle >= sa_n) | (angle <= ea_n)
             radial = np.clip(1.0 - np.abs(dist - r) / max(aw * 0.5, 0.005), 0, 1)
             alpha = radial * in_arc.astype(np.float32)
-            layer(alpha, color)
-        off += N_ARCS * 10
-        
-        # Lines
+            DifferentiableRenderer._layer(canvas, weight, alpha, color)
+        return off + N_ARCS * 10
+
+    @staticmethod
+    def _render_lines(vec, off, canvas, weight, nx, ny):
+        import math
+        from ai.multimodal.primitives.primitive_types import N_LINES
         lines = vec[off:off + N_LINES * 8].reshape(N_LINES, 8)
         for i in range(N_LINES):
             sx, sy, ex, ey, lw = lines[i, :5]
@@ -101,10 +119,12 @@ class DifferentiableRenderer:
             cy = sy + t * dy_n
             dist = np.sqrt((nx - cx) ** 2 + (ny - cy) ** 2)
             alpha = np.clip(1.0 - dist / max(lw, 0.008), 0, 1)
-            layer(alpha, color)
-        off += N_LINES * 8
-        
-        # Points
+            DifferentiableRenderer._layer(canvas, weight, alpha, color)
+        return off + N_LINES * 8
+
+    @staticmethod
+    def _render_points(vec, off, canvas, weight, nx, ny):
+        from ai.multimodal.primitives.primitive_types import N_POINTS
         points = vec[off:off + N_POINTS * 5].reshape(N_POINTS, 5)
         for i in range(N_POINTS):
             px, py = points[i, :2]
@@ -113,7 +133,4 @@ class DifferentiableRenderer:
             color = points[i, 2:5]
             dist = np.sqrt((nx - px) ** 2 + (ny - py) ** 2)
             alpha = np.clip(1.0 - dist / 0.025, 0, 1) ** 0.5
-            layer(alpha, color)
-        
-        canvas = canvas + bg * (1 - weight[:, :, None])
-        return np.clip(canvas, 0, 1)
+            DifferentiableRenderer._layer(canvas, weight, alpha, color)

@@ -104,6 +104,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
+## [7.5.0-dev] - 2026-06-28 — DifferentiableRenderer Refactoring
+
+### Refactored
+- 🔧 **DifferentiableRenderer.render** (101L→22L): Extracted 6 helpers (`_layer`, `_render_planes`, `_render_circles`, `_render_arcs`, `_render_lines`, `_render_points`). Nested `layer()` closure replaced with `@staticmethod _layer` that mutates canvas/weight in-place. Each primitive type now rendered by dedicated method. All 57 primitive tests pass.
+
+### Synced
+- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 13/31→14/31, remaining 18→17 functions >100L.
+
 ## [7.5.0-dev] - 2026-06-28 — HAM QueryEngine Refactoring
 
 ### Refactored
