@@ -655,118 +655,38 @@ class AngelaLLMService:
     async def generate_response(
         self, user_message: str, context: Dict[str, Any] = None
     ) -> LLMResponse:
-        """
-        生成 Angela 的回應
-        ==================
-        這是核心方法：
-        1. 建構提示詞（讓模型扮演 Angela）
-        2. 調用 LLM
-        3. 回應經過 Angela 的處理
-
-        用戶不是直接與模型對話，而是透過 Angela。
-
-        增强功能（如果启用）：
-        1. 先尝试从记忆系统检索模板
-        2. 如果命中记忆，直接返回模板回應
-        3. 否则调用 LLM 生成
-        4. 将新回應存储为模板候选
-        """
-
         context = context or {}
         start_time = time.time()
 
-        # 更新统计信息
         self.stats["total_requests"] += 1
 
-        # 记录活动（用于预计算）
         if hasattr(self, "precompute_service") and self.precompute_service._running:
-            pass  # stub 暂不支持 record_activity
+            pass
 
-        # 使用 caller 提供的 session 歷史（不覆蓋、不維護全域歷史）
-        # context["history"] 由 chat_routes / websocket_manager 設定
-
-        # ========== P0-2: Template Matching & Routing ==========
         template_result = await self._try_template_match(user_message, context, start_time)
         if template_result is not None:
             return template_result
 
-        # ========== Ensemble Mode (multi-model voting) ==========
-        if context and context.get("use_ensemble"):
-            try:
-                from ai.ensemble import ModelEnsemble, ModelWeight
-                ensemble = ModelEnsemble(self)
-                weights = context.get("ensemble_weights", [
-                    ModelWeight("gpt-4o", 0.4),
-                    ModelWeight("claude-3-opus", 0.4),
-                    ModelWeight("mixtral-local", 0.2),
-                ])
-                ensemble.configure_ensemble(weights)
-                result = await ensemble.ensemble_generate(
-                    user_message,
-                    fusion_strategy=context.get("fusion_strategy", "best_single"),
-                )
-                from core.interfaces.protocols import LLMResponse
-                if self.meta_controller is not None:
-                    self.meta_controller.record_confidence("llm:ensemble", result.confidence)
-                return LLMResponse(
-                    text=result.content,
-                    model="ensemble",
-                    response_time_ms=result.latency * 1000,
-                    tokens_used=result.token_usage.get("total_tokens", 0),
-                    metadata={"ensemble_votes": result.model_votes, "confidence": result.confidence},
-                )
-            except Exception as e:
-                logger.warning(f"Ensemble generation failed, falling back to single model: {e}")
+        ensemble_result = await self._try_ensemble(user_message, context)
+        if ensemble_result is not None:
+            return ensemble_result
 
-        # ========== 记忆检索（如果启用）==========
-        if self.enable_memory_enhancement:
-            try:
-                # 尝试从记忆检索
-                memory_response = await self.memory_integration.try_memory_retrieval(user_message, context)
+        memory_result = await self._try_memory_retrieval(user_message, context, start_time)
+        if memory_result is not None:
+            return memory_result
 
-                if memory_response:
-                    # 记忆命中
-                    self.stats["memory_hits"] += 1
-                    response_time = (time.time() - start_time) * 1000
-
-                    # 更新统计
-                    self.stats["total_response_time"] += response_time
-                    self.stats["average_response_time"] = (
-                        self.stats["total_response_time"] / self.stats["total_requests"]
-                    )
-                    self.stats["memory_hit_rate"] = (
-                        self.stats["memory_hits"] / self.stats["total_requests"]
-                    )
-
-                    logger.info(f"Memory hit: {response_time:.0f}ms")
-                    return memory_response
-            except Exception as e:
-                # broad exception acceptable: memory retrieval is best-effort, fallback to LLM
-                logger.warning(f"Memory retrieval failed: {e}", exc_info=True)
-
-        # 如果沒有可用的後端，使用備份機制 (try Model Bus first)
         if not self.is_available or self.active_backend is None:
             bus_result = await self._try_model_bus(user_message, context)
             if bus_result is not None:
                 return bus_result
             return await self._fallback_response(user_message, context)
 
-        # ========== LLM 生成 ==========
         try:
             response = await self._generate_with_llm(user_message, context)
 
-            # 歷史由 caller 維護（websocket_manager / chat_routes），router 不再追加
-
-            # 更新统计
-            self.stats["llm_calls"] += 1
             response_time = (time.time() - start_time) * 1000
-            self.stats["total_response_time"] += response_time
-            self.stats["average_response_time"] = (
-                self.stats["total_response_time"] / self.stats["total_requests"]
-            )
-            self.stats["memory_hit_rate"] = self.stats["memory_hits"] / self.stats["total_requests"]
+            self._update_stats(response_time)
 
-            # 记录 LLM_FULL 路由的偏差追踪
             if hasattr(self, "deviation_tracker"):
                 self.deviation_tracker.record(
                     user_input=user_message,
@@ -779,23 +699,77 @@ class AngelaLLMService:
                     match_time_ms=0.0,
                 )
 
-            # 将新回應存储为模板候选
             if self.enable_memory_enhancement and not response.error:
                 await self._store_response_as_template(user_message, response, context)
 
             logger.info(f"Angela 回應生成完成 (LLM_FULL) ({response_time:.0f}ms)")
             self._record_route_learning(context, "success", response_time)
             if self.meta_controller is not None:
-                self.meta_controller.record_confidence("llm:full", response.confidence if hasattr(response, 'confidence') else 0.0)
+                self.meta_controller.record_confidence(
+                    "llm:full", response.confidence if hasattr(response, 'confidence') else 0.0
+                )
             return response
 
         except Exception as e:
-            # broad exception acceptable: response generation must be resilient to any backend failure
             logger.error(f"生成回應時出錯: {e}", exc_info=True)
             bus_result = await self._try_model_bus(user_message, context)
             if bus_result is not None:
                 return bus_result
             return await self._fallback_response(user_message, context)
+
+    async def _try_ensemble(self, user_message: str, context: Dict[str, Any]) -> Optional[LLMResponse]:
+        if not (context and context.get("use_ensemble")):
+            return None
+        try:
+            from ai.ensemble import ModelEnsemble, ModelWeight
+            ensemble = ModelEnsemble(self)
+            weights = context.get("ensemble_weights", [
+                ModelWeight("gpt-4o", 0.4),
+                ModelWeight("claude-3-opus", 0.4),
+                ModelWeight("mixtral-local", 0.2),
+            ])
+            ensemble.configure_ensemble(weights)
+            result = await ensemble.ensemble_generate(
+                user_message,
+                fusion_strategy=context.get("fusion_strategy", "best_single"),
+            )
+            from core.interfaces.protocols import LLMResponse
+            if self.meta_controller is not None:
+                self.meta_controller.record_confidence("llm:ensemble", result.confidence)
+            return LLMResponse(
+                text=result.content,
+                model="ensemble",
+                response_time_ms=result.latency * 1000,
+                tokens_used=result.token_usage.get("total_tokens", 0),
+                metadata={"ensemble_votes": result.model_votes, "confidence": result.confidence},
+            )
+        except Exception as e:
+            logger.warning(f"Ensemble generation failed, falling back to single model: {e}")
+            return None
+
+    async def _try_memory_retrieval(self, user_message: str, context: Dict[str, Any], start_time: float) -> Optional[LLMResponse]:
+        if not self.enable_memory_enhancement:
+            return None
+        try:
+            memory_response = await self.memory_integration.try_memory_retrieval(user_message, context)
+            if memory_response:
+                self.stats["memory_hits"] += 1
+                response_time = (time.time() - start_time) * 1000
+                self._update_stats(response_time)
+                logger.info(f"Memory hit: {response_time:.0f}ms")
+                return memory_response
+        except Exception as e:
+            logger.warning(f"Memory retrieval failed: {e}", exc_info=True)
+        return None
+
+    def _update_stats(self, response_time: float) -> None:
+        self.stats["total_response_time"] += response_time
+        self.stats["average_response_time"] = (
+            self.stats["total_response_time"] / self.stats["total_requests"]
+        )
+        self.stats["memory_hit_rate"] = (
+            self.stats["memory_hits"] / self.stats["total_requests"]
+        )
 
     async def _try_template_match(self, user_message: str, context: Dict[str, Any], start_time: float) -> Optional[LLMResponse]:
         """Try template match or ModelBus fast-path/drafting."""

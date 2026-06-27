@@ -104,6 +104,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
+## [7.5.0-dev] - 2026-06-28 — Router generate_response Refactoring
+
+### Refactored
+- 🔧 **AngelaLLMService.generate_response** (144L→64L): Extracted 4 helpers (`_try_ensemble`, `_try_memory_retrieval`, `_update_stats`). Consolidated duplicated stats update code (was copy-pasted in memory-hit + LLM-generation paths). Main function now reads as 6-step pipeline: template→ensemble→memory→backup→LLM→error.
+
+### Synced
+- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 18/31→19/31, remaining 13→12 functions >100L.
+
 ## [7.5.0-dev] - 2026-06-28 — HSPConnector Refactoring
 
 ### Refactored
