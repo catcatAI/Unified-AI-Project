@@ -104,6 +104,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
+## [7.5.0-dev] - 2026-06-28 — active_backend_type bugfix
+
+### Fixed
+- 🐛 **`_call_llm_backend` AttributeError**: `active_backend_type` attribute not set when LLM service used without calling `initialize()`. Changed to `getattr` guard with fallback to `'gen'`. Fixes `test_refinement_pipeline` integration test (now passes).
+
+### Synced
+- 🔄 **MASTER_TASK_MAP.md §X #6**: Bugfix noted.
+
 ## [7.5.0-dev] - 2026-06-28 — emotional_blending demo + save_checkpoint refactored
 
 ### Refactored

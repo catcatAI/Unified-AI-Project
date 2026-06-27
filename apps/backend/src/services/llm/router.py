@@ -1188,7 +1188,8 @@ class AngelaLLMService:
 
             return response
 
-        label = f"{self.active_backend_type.value if self.active_backend_type else 'gen'}"
+        backend_type = getattr(self, 'active_backend_type', None)
+        label = f"{backend_type.value if backend_type else 'gen'}"
         return await _call_with_retry(_do_call, label=label)
 
     async def _post_process_response(
