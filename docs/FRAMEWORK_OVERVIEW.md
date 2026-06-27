@@ -326,7 +326,7 @@ These features have infrastructure but need implementation work:
 | Gap | Component | Blocker |
 |-----|-----------|---------|
 | YOLO object detection | Not started | Full implementation needed |
-| Whisper in chat pipeline | faster-whisper installed, not wired | Route registration needed |
+| Whisper in chat pipeline | faster-whisper 1.2.1 int8 offline STT active via AudioService._stt_faster_whisper() | ✅ **DONE** |
 | Agent auto-routing | Wired into chat pipeline (Step 8) | ✅ Done (commit pending) |
 | VisualDecoder training | Decoder weights random | Training loop needed |
 | `/multimodal/stream` WebSocket | Dedicated handler + route registered | ✅ Done (commit pending) |

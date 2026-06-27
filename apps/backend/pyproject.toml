@@ -120,6 +120,7 @@ full = [
   "github3.py",
   "scikit-image",
   "SpeechRecognition",
+  "faster-whisper>=1.0.0",
   "faiss-cpu",
   "sentence-transformers",
   "huggingface-hub",

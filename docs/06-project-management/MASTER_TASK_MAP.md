@@ -89,7 +89,7 @@ Each entry has:
 | 2,837 tests, 0 collection errors | Multiple | History verified | ✅ |
 | 24 empty excepts fixed | `3f209b605` | 24 instances | ✅ |
 | Version 14/14 consistent | Multiple | All version files | ✅ |
-| ANGELA-MATRIX 0/6 → partial | — | ~59/216 files have headers | 🟡 Partial |
+| ANGELA-MATRIX 0/6 → partial | — | 216/613 files have headers (source: `apps/backend/src/` scan, 2026-06-28) | 🟡 Partial |
 
 ---
 
@@ -322,7 +322,7 @@ This document was written BEFORE Phase 11 (Jun 23) deletions. Many items it mark
 |:----------|:-------------------:|:-----------------------:|:------------------:|
 | Text understanding | 7 | 7 | Still 7 ✅ |
 | Image understanding | 7 | 7 | Still 7 ✅ |
-| Speech understanding | 5 | **3** | 🟡 Pipeline wired end-to-end (`/chat/with-audio` → AudioService → `_handle_chat_request`). `faster-whisper` not installed (graceful sr fallback active). Quality limited to sr capabilities. |
+| Speech understanding | 5 | **3** | ✅ Pipeline wired end-to-end (`/chat/with-audio` → AudioService → `_handle_chat_request`). `faster-whisper 1.2.1` installed (ctranslate2 4.8 int8, Whisper base model auto-downloads). Offline high-quality STT active. Falls back to sr if unavailable. |
 | Text generation | 7 | **6** | Still 6 — depends on external LLM |
 | Image generation | 1 | **6** (GVV fixes) | Still 6 — GVV + ThreeLayerVisual work |
 | Speech generation | 5 | **4** | edge-tts works |
@@ -397,16 +397,16 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | 3 | `/multimodal/stream` WS route | ✅ **DONE** — dedicated handler + route registered | `services/multimodal_ws_handler.py` + `main_api_server.py` line 295 | — |
 | 4 | C901 cyclomatic complexity | ✅ **DONE** (Jun 28). All functions ≤ 10 complexity. flake8 --select=C901 on apps/backend/src/ + tests/ returns 0 warnings at default threshold. | 0 C901 warnings | **ALL E/F GRADES + ALL C901 WARNINGS ELIMINATED** |
 | 5 | Shared code deduplication (P3-9 to P3-11) | ✅ **RESOLVED** — `core/shared/` duplicates deleted in Phase 9-12 (commit `064e63621`) | Only `src/shared/error.py` and `src/shared/key_manager.py` remain | Automatically fixed by dead code removal |
-| 6 | P4 long function refactor (31 total >100L found) | 25/31 done (Jun 28). 4 pure-data remain (skipped). Fixed `active_backend_type` AttributeError + hormone config (ADRENALINE base_level=50→10, half_life=60→6). | 4 pure-data remain; 25 refactored; 1 bugfix | Effort (large) |
+| 6 | P4 long function refactor (31 total >100L found) | 25/31 done (Jun 28), 6 remain: 3 pure-data (prompt_manager._register_defaults 408L, concept_library._default_concepts 262L, dictionary_layer._build_math_presets 110L) + 3 algorithmic (query_classifier._build_patterns 181L, trauma_memory._process_trauma_reactivation 108L, training_data.generate_from_cifar10 103L). Pure-data skipped by policy. | 3 pure-data remain (skipped); 3 algorithmic remain; 25 refactored; 1 bugfix | Effort (medium) |
 | 7 | P4 load/stress test framework | Never started | No framework exists | Design |
 | 8 | P4 desktop tray implementation | Never started | No tray code | Effort |
 | 9 | P4 E2E test framework | Never started | No E2E framework | Design |
-| 10 | Whisper ChatService integration | ✅ **WIRED** — endpoint → AudioService.speech_to_text() → _handle_chat_request() IS connected. faster-whisper not installed but graceful sr fallback works | `chat_routes.py:925` + `audio_service.py:78-105` | Install `faster-whisper` for offline high-quality STT (optional) |
+| 10 | Whisper ChatService integration | ✅ **DONE** (Jun 28). `faster-whisper 1.2.1` installed (ctranslate2 4.8, int8 optimized). Code path: `_stt_faster_whisper()` loads `WhisperModel("base", device="cpu", compute_type="int8")` on first call. Cached in HF Hub (`Systran/faster-whisper-tiny` already cached). Falls back to `SpeechRecognition` (sr) if faster-whisper unavailable or fails. | `audio_service.py:78-98` — `_stt_faster_whisper()`; `chat_routes.py:925` — wired; `pyproject.toml` — added to full extras | **DONE — offline high-quality STT active** |
 | 11 | VisualDecoder training | **WEIGHTS NOW TRAINED** (Jun 28). Ran `FullTrainingPipeline.run_on_real()` with 3000 CIFAR-10 + 2000 ESC-50 samples. Vision loss: 337,919 → 8,034 (**42x improvement**). Audio loss: 35,306 → 114 (**309x improvement**). Weights saved to `p29_trained.npz`. Limitation: only projection weights (_W/_b) trained; CNN texture branch remains random. | `VisualDecoder` trained via `ReconstructionCycle`; `p29_trained.npz` loads on startup | CNN texture branch training |
 | 12 | Agent auto-routing | ✅ **DONE** (wired as Step 8 in chat pipeline). Routes all non-actionable intents (creative/knowledge/opinion/vision/audio/logic/command) to AgentOrchestrator. All 10 registered specialized agents reachable. | `chat_routes.py:_try_agent_routing()` now routes all 7 query types; AgentOrchestrator dispatches to all 10 agents | — |
 | 13 | Level5ASI stub classes | Need real alignment modules (P1.1) | `level5_asi_system.py` has logged stubs | External module dependency |
 | 14 | Formula system tests (P4-1) | ✅ **DONE** — 67 tests exist, all pass | 6 files: test_hsm_formula_system x2, test_life_intensity_formula x2, test_active_cognition_formula x2 | Claim was stale — tests existed all along |
-| 15 | Matrix annotations (157 files missing) | ~59/216 have headers | 157 need header | Effort (cosmetic) |
+| 15 | Matrix annotations (397 files missing) | 216/613 have headers (apps/backend/src/ scan, 2026-06-28). P5 cosmetic priority per roadmap. | 397 need header (216/613 done) | Effort (cosmetic, P5) |
 | 16 | PHASE_REVIEW5 SUPERSEDED mark | ✅ **DONE** (from earlier session) | `SUPERSEDED — 2026-06-26` header present | — |
 | 17 | **ED3N/GARDEN cross-domain accuracy baseline** | ✅ **DONE** (Jun 28). Benchmark harness `scripts/benchmark_ed3n_garden.py` created with 15 questions across math/knowledge/reasoning. Math accuracy: **100%** (5/5, was 77.7% pre-PEMDAS fix). Knowledge/reasoning remain at 0% — expected for native concept-mapping engines without LLM wrappers. | Ed3n math history: 77.7% pre-fix → 100% post-fix (PEMDAS in MRE §X #31). Benchmark harness: `scripts/benchmark_ed3n_garden.py:238L` | **Complete — harness exists, math resolved** |
 | 30 | **ED3N/GARDEN cycle limit configurable** | ✅ **DONE** (commit HEAD, Jun 28). Changed `MAX_CYCLES = 3` from local constant to `getattr(self, "max_cycles", 3)` in both `ed3n_engine.py` and `garden_engine.py`. Configurable by setting `max_cycles` attribute on engine instance. | `ed3n_engine.py:445` — `getattr(self, "max_cycles", 3)`; `garden_engine.py:307` — same pattern | — |

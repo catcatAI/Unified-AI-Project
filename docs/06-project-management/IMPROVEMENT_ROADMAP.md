@@ -119,7 +119,7 @@
 
 | # | 項目 | 優先級 | 說明 |
 |---|------|:------:|------|
-| U1 | 安裝 faster-whisper 以啟用高品質離線 STT | P2 | 目前用 SpeechRecognition (sr) 降級 |
+| U1 | 安裝 faster-whisper 以啟用高品質離線 STT | ✅ **DONE** (faster-whisper 1.2.1 installed, ctranslate2 4.8 int8, Whisper base model auto-downloads on first call) | P2 |
 | U2 | 安裝 torch + transformers 以啟用 CLIP 語意編碼器 | ✅ **DONE** (torch 2.11.0, transformers 5.5.4 installed, CLIP model cached, 512-dim vectors verified) | P2 |
 | U3 | 安裝 torch + openai-whisper 以啟用語意音訊編碼 | ✅ **DONE** (openai-whisper 20250625 installed, Whisper tiny model cached, 384-dim vectors verified) | P2 |
 | U4 | 更新 LLM API 用戶端至最新版本 | P3 | openai>=1.0, anthropic>=0.30, google-genai |

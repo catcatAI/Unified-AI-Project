@@ -61,7 +61,7 @@
 **Total project files**: ~3,500+ (620 Python in backend src · 295 JS/TS · 1,021+ docs · 500+ config · 480+ test).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
 
-> **STATUS (2026-06-28)**: Session of 35 commits — R4/R5/I3/L3/L4/L5/O4/L1 all DONE ✅ §X #6 long function refactoring: 25/31 >100L refactored (4 pure-data skipped). 4,785 tests collected, 0 errors. R4 TaskGenerator → PrecomputeService wired. R5 AdversarialGenerationSystem → Level5ASI production. I3 GARDEN SNN sparse forward (activation-driven). L3 CML adaptive quality thresholds. L4 NeuroAutoSelector MetaController history. L5 Formula→Emotion→Response chain quantified (12 tests). O4 7 stale docs archived. JointTrainer wired into runtime. 2 pre-existing failures fixed (active_backend_type + hormone config). 10 stale test expectations fixed (test_query_classifier_v2: 72/72). Intelligence: 6.0/10 (upper) 4.5/10 (lower). Architecture: ~85-90%.
+> **STATUS (2026-06-28)**: Session of 43 commits — R4/R5/I3/L3/L4/L5/O4/L1/R6/I1/O3/O5/U1/§X#25 all DONE ✅ §X #6 long function refactoring: 25/31 >100L refactored (3 pure-data + 3 algorithmic remain). §X #25 CLIP + Whisper real model loading validated. U1 faster-whisper 1.2.1 installed — offline high-quality STT active. R6 AuditoryAttention stub removed. O3 isort standardized 738 files. C901 verified 0. 4,785 tests (default) / 4,790 (with slow tests), 0 errors. Intelligence: 6.0/10 (upper) 4.5/10 (lower). Architecture: ~85-90%.
 > **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → execution gate → **agent routing** → LLM → causal learning → response. GVV pipeline for image generation.  
 > **See**: [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) (latest audit), [IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md) (target), [COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md) (plan).
 
@@ -114,7 +114,7 @@ Upper bound (with LLM API: OpenAI/Anthropic/Ollama) vs lower bound (ED3N+GARDEN 
 |:-----------|:-----:|:-----:|:-------|
 | **Text understanding** | 7/10 | 5/10 | ED3N 460K dictionary + GARDEN SNN, real multilingual |
 | **Image understanding** | 7/10 | 5/10 | CLIP 512-dim real, VisionService PIL-based |
-| **Speech understanding** | 5/10 | 3/10 | Whisper installed, faster-whisper not wired to chat pipeline |
+| **Speech understanding** | 5/10 | 3/10 | faster-whisper 1.2.1 int8 offline STT active via AudioService._stt_faster_whisper() |
 | **Text generation** | 7/10 | 4/10 | 7 LLM backends, ED3N reflex+shallow fallback |
 | **Image generation** | 6/10 | 6/10 | GVV + ThreeLayerVisual, MSE 0.0042, no Stable Diffusion |
 | **Speech generation** | 4/10 | 2/10 | edge-tts works (reading only, no singing) |
@@ -279,10 +279,10 @@ npx pnpm dev:desktop
 
 - **YOLO object detection** — Not started ❌
 - **`/multimodal/stream` WebSocket route** — Dedicated handler (`multimodal_ws_handler.py`) + route registered ✅
-- **Whisper faster-whisper in ChatService** — Installed but not wired into audio chat pipeline ❌
+- **Whisper faster-whisper in ChatService** — Installed and wired: offline high-quality STT via AudioService._stt_faster_whisper() ✅
 - **Agent auto-routing** — Wired into chat pipeline Step 8 (creative/knowledge/opinion/vision/audio) ✅
 - **VisualDecoder training** — Decoder weights random, CLP doesn't train decoder yet ❌
-- **P4 refactoring** — 25/31 >100L long functions refactored (4 pure-data skipped), load/stress/E2E tests, desktop tray — partial ⏳
+- **P4 refactoring** — 25/31 >100L long functions refactored (3 pure-data + 3 algorithmic remain), load/stress/E2E tests, desktop tray — partial ⏳
 - **Auto-repair pathway** — `run_angela.py` now has auto-install on missing deps (--auto-repair flag, or interactive prompt) ✅
 
 ### Deleted (Phase 9-12 Cleanup) — Do Not Re-implement
@@ -320,7 +320,7 @@ npx pnpm dev:desktop
 | **Auto-Repair Pathway** | run_angela.py auto-install on missing deps | ✅ **DONE** | 🔴 HIGH |
 | **Agent Auto-Routing** | Chat pipeline Step 8 wires agents | ✅ **DONE** | 🔴 HIGH |
 | **Frontend Multimodal** | Image/audio upload in Desktop/Web | ⬜ | 🔴 HIGH |
-| **Whisper ChatService Wiring** | faster-whisper into chat pipeline | ⬜ | 🟡 MEDIUM |
+| **Whisper ChatService Wiring** | faster-whisper into chat pipeline | ✅ **DONE** | 🟡 MEDIUM |
 | **VisualDecoder Training** | Extend CLP to train decoder | ⬜ | 🟡 MEDIUM |
 | **WebSocket Route** | `/multimodal/stream` registered | ✅ **DONE** | 🟡 MEDIUM |
 | **P4 Refactoring** | 28 long files / load tests / E2E / tray | ⬜ | 🟡 MEDIUM |
@@ -559,10 +559,10 @@ npx pnpm dev:desktop
 ### 什麼無法運作
 
 - **YOLO 物件檢測** — 未開始 ❌
-- **Whisper 接線** — faster-whisper 已安裝但未接入聊天管線 ❌
+- **Whisper 接線** — faster-whisper 已安裝並接入聊天管線 (離線高品質 STT) ✅
 - **代理自動路由** — 已接入聊天管線第 8 步（創意/知識/意見/視覺/聽覺）✅
 - **VisualDecoder 訓練** — 權重隨機，未訓練 ❌
-- **P4 重構** — 28 個長檔案、負載測試、E2E 測試、桌面 tray — 從未開始 ❌
+- **P4 重構** — 25/31 長函式已重構（3 純資料 + 3 演算法剩餘），負載/E2E/tray 尚未開始 ⏳
 - **自動修復路徑** — `run_angela.py` 現在有自動安裝功能（--auto-repair 或互動提示）✅
 
 ### 已刪除 (Phase 9-12 清理) — 不要重新實作
@@ -598,7 +598,7 @@ npx pnpm dev:desktop
 | **自動修復路徑** | run_angela.py 缺失依賴時自動安裝 | ✅ **已完成** | 🔴 HIGH |
 | **代理自動路由** | 聊天管線第 8 步接入 agent | ✅ **已完成** | 🔴 HIGH |
 | **前端多模態** | Desktop/Web 圖片/音訊上傳 | ⬜ | 🔴 HIGH |
-| **Whisper 接線** | faster-whisper 接入聊天管線 | ⬜ | 🟡 MEDIUM |
+| **Whisper 接線** | faster-whisper 接入聊天管線 | ✅ **已完成** | 🟡 MEDIUM |
 | **VisualDecoder 訓練** | CLP 擴展訓練 decoder | ⬜ | 🟡 MEDIUM |
 | **WebSocket 路由** | `/multimodal/stream` 已註冊 | ✅ **已完成** | 🟡 MEDIUM |
 | **P4 重構** | 28 長檔案 / 負載測試 / E2E / tray | ⬜ | 🟡 MEDIUM |
