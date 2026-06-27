@@ -354,7 +354,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 
 ## X. EVERY PENDING ITEM — Exact Blocker
 
-> **Note**: This table tracks 31 key items (16 DONE, 15 PENDING) but is NOT exhaustive. Full codebase audit found **~190+ AI-related classes** across `ai/`, `core/`, `services/` (20+ subsystems). **⚠️ "存在" ≠ "正常運作"** — see industry comparison below. Most engines are architectural skeletons: VisualDecoder projection weights are now trained on CIFAR-10 (42× loss reduction) and auto-loaded at startup. AudioWaveformDecoder projection weights also trained (309× loss reduction) and auto-loaded. CNN texture branches remain random. SequenceGenerator and ImageGenerator weights are fully random. CML+FullTrainingPipeline fully wired into production (Jun 28).
+> **Note**: This table tracks 31 key items (16 DONE, 14 PENDING, 1 PARTIAL) but is NOT exhaustive. Full codebase audit found **~190+ AI-related classes** across `ai/`, `core/`, `services/` (20+ subsystems). **⚠️ "存在" ≠ "正常運作"** — see industry comparison below. Most engines are architectural skeletons: VisualDecoder projection weights are now trained on CIFAR-10 (42× loss reduction) and auto-loaded at startup. AudioWaveformDecoder projection weights also trained (309× loss reduction) and auto-loaded. CNN texture branches remain random. SequenceGenerator and ImageGenerator weights are fully random. CML+FullTrainingPipeline fully wired into production (Jun 28).
 
 | # | Item | Why Not Done | Code Status | Blocked By |
 |:-:|:-----|:-------------|:------------|:-----------|
@@ -363,7 +363,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | 3 | `/multimodal/stream` WS route | ✅ **DONE** — dedicated handler + route registered | `services/multimodal_ws_handler.py` + `main_api_server.py` line 295 | — |
 | 4 | C901 cyclomatic complexity (67 residual) | 7 refactored (+ED3NEngine.process_multimodal E35→B6), 60 remain | 0 Grade E remain | **ALL E/F GRADE FUNCTIONS ELIMINATED** |
 | 5 | Shared code deduplication (P3-9 to P3-11) | ✅ **RESOLVED** — `core/shared/` duplicates deleted in Phase 9-12 (commit `064e63621`) | Only `src/shared/error.py` and `src/shared/key_manager.py` remain | Automatically fixed by dead code removal |
-| 6 | P4 long function refactor (28 files >100 lines) | 9/28 done (+_process_unlocked: 203→54L, extracted 9 stage helpers: _stage_reflex, _stage_math, _stage_encode, _stage_enrich, _stage_shallow_decode, _stage_network_forward, _stage_anchored_decode, _stage_validate, _stage_cycling, Jun 28). 22 functions >100 lines remain in apps/backend/src (actual count: 21 found in scan, 9 refactored to date). | 20 functions >100 lines; 9 refactored | Effort (large) |
+| 6 | P4 long function refactor (28 files >100 lines) | 10/28 done (+QueryClassifier.classify: 106→40L, extracted 5 helpers: _classify_by_length, _classify_by_dictionary, _classify_by_regex, _classify_reflex_override, _classify_question_override, Jun 28). 21 functions >100 lines remain in apps/backend/src. | 19 functions >100 lines; 10 refactored | Effort (large) |
 | 7 | P4 load/stress test framework | Never started | No framework exists | Design |
 | 8 | P4 desktop tray implementation | Never started | No tray code | Effort |
 | 9 | P4 E2E test framework | Never started | No E2E framework | Design |

@@ -290,103 +290,98 @@ class QueryClassifier:
         if not text:
             return QueryResult(QueryType.UNKNOWN, 0.0, 0.0, "none", reason="empty_input")
 
-        # Step 0: 否定词检测
         has_negation = any(neg in text for neg in _NEGATION_WORDS)
 
         # Step 1: 长文字启发式
-        if len(text) > limit_value("ai.query_classifier.max_direct_len", 200):
-            conf = 0.85
-            conf = self._adjust_confidence(QueryType.KNOWLEDGE, text, conf, False, has_negation)
-            action_type = self._infer_action_type(QueryType.KNOWLEDGE, text)
-            return QueryResult(
-                primary_type=QueryType.KNOWLEDGE,
-                confidence=conf,
-                actionability=self._calc_actionability(QueryType.KNOWLEDGE, text, conf),
-                action_type=action_type,
-                reason="long_text_heuristic"
-            )
+        result = self._classify_by_length(text, has_negation)
+        if result is not None:
+            return result
 
         # Step 2: ED3N Dictionary classification (primary path)
+        result = self._classify_by_dictionary(text, has_negation)
+        if result is not None:
+            return result
+
+        # Steps 3-5: Regex pattern matching (fallback)
+        result = self._classify_by_regex(text, has_negation)
+        if result is not None:
+            return result
+
+        # Step 6: REFLEX override（单字 + 低置信度）
+        result = self._classify_reflex_override(text)
+        if result is not None:
+            return result
+
+        # Step 7: `?` override（只有明确知识查询模式）
+        result = self._classify_question_override(text, has_negation)
+        if result is not None:
+            return result
+
+        # Step 8: 回传 UNKNOWN
+        return QueryResult(QueryType.UNKNOWN, 0.3, 0.0, "none", reason="no_match_fallback")
+
+    def _classify_by_length(self, text: str, has_negation: bool) -> Optional[QueryResult]:
+        if len(text) > limit_value("ai.query_classifier.max_direct_len", 200):
+            conf = self._adjust_confidence(QueryType.KNOWLEDGE, text, 0.85, False, has_negation)
+            return QueryResult(
+                primary_type=QueryType.KNOWLEDGE, confidence=conf,
+                actionability=self._calc_actionability(QueryType.KNOWLEDGE, text, conf),
+                action_type=self._infer_action_type(QueryType.KNOWLEDGE, text),
+                reason="long_text_heuristic",
+            )
+        return None
+
+    def _classify_by_dictionary(self, text: str, has_negation: bool) -> Optional[QueryResult]:
         try:
             from ai.core.dictionary_classifier import get_dictionary_classifier
             dc = get_dictionary_classifier()
             dict_type, dict_action, dict_conf = dc.classify(text)
             if dict_conf >= 0.3 and dict_type != "unknown":
-                try:
-                    qt = QueryType(dict_type)
-                except ValueError:
-                    qt = QueryType.UNKNOWN
+                qt = QueryType(dict_type)
                 conf = self._adjust_confidence(qt, text, dict_conf, False, has_negation)
-                act = self._calc_actionability(qt, text, conf)
                 return QueryResult(
-                    primary_type=qt,
-                    confidence=conf,
-                    actionability=act,
-                    action_type=dict_action,
-                    reason="dictionary_match"
+                    primary_type=qt, confidence=conf,
+                    actionability=self._calc_actionability(qt, text, conf),
+                    action_type=dict_action, reason="dictionary_match",
                 )
         except Exception as e:
             logger.debug(f"Dictionary lookup failed: {e}")
+        return None
 
-        # Step 3: Regex pattern matching (fallback)
+    def _classify_by_regex(self, text: str, has_negation: bool) -> Optional[QueryResult]:
         matches = []
         for qt, pattern, base_conf in self._patterns:
             m = pattern.search(text)
             if m:
                 anchored = m.start() == 0 or m.end() == len(text)
                 conf = self._adjust_confidence(qt, text, base_conf, anchored, has_negation)
-                act = self._calc_actionability(qt, text, conf)
-                atype = self._infer_action_type(qt, text)
-                matches.append((qt, conf, act, atype))
-
-        # Step 4: 排序（先比 confidence，再比 actionability）
+                matches.append((qt, conf, self._calc_actionability(qt, text, conf), self._infer_action_type(qt, text)))
         matches.sort(key=lambda x: (x[1], x[2]), reverse=True)
-
-        # Step 5: 选择最佳匹配
         if matches:
             primary = matches[0]
-            secondary = None
-            if len(matches) > 1 and matches[1][1] >= primary[1] - 0.1:
-                secondary = matches[1]
-
+            secondary = matches[1] if len(matches) > 1 and matches[1][1] >= primary[1] - 0.1 else None
             return QueryResult(
-                primary_type=primary[0],
-                confidence=primary[1],
-                actionability=primary[2],
-                action_type=primary[3],
+                primary_type=primary[0], confidence=primary[1],
+                actionability=primary[2], action_type=primary[3],
                 secondary_type=secondary[0] if secondary else None,
                 secondary_confidence=secondary[1] if secondary else 0.0,
-                reason="regex_pattern_match"
+                reason="regex_pattern_match",
             )
+        return None
 
-        # Step 6: REFLEX override（单字 + 低置信度）
+    def _classify_reflex_override(self, text: str) -> Optional[QueryResult]:
         if len(text) < 2:
             if text not in VERBS_NOT_REFLEX:
-                return QueryResult(
-                    QueryType.REFLEX, 0.95, 0.0, "none",
-                    reason="reflex_single_char_override"
-                )
-            # 是有意义的动词，不 override，降低置信度
-            return QueryResult(
-                QueryType.UNKNOWN, 0.4, 0.3, "read",
-                reason="meaningful_single_char"
-            )
+                return QueryResult(QueryType.REFLEX, 0.95, 0.0, "none", reason="reflex_single_char_override")
+            return QueryResult(QueryType.UNKNOWN, 0.4, 0.3, "read", reason="meaningful_single_char")
+        return None
 
-        # Step 7: `?` override（只有明确知识查询模式）
+    def _classify_question_override(self, text: str, has_negation: bool) -> Optional[QueryResult]:
         if text.endswith("?") or text.endswith("？"):
             if any(re.search(p, text, re.I) for p in KNOWLEDGE_QUESTION_PATTERNS):
-                conf = 0.65
-                conf = self._adjust_confidence(QueryType.KNOWLEDGE, text, conf, False, has_negation)
-                return QueryResult(
-                    QueryType.KNOWLEDGE, conf, 0.1, "none",
-                    reason="knowledge_question_mark_override"
-                )
-
-        # Step 8: 回传 UNKNOWN
-        return QueryResult(
-            QueryType.UNKNOWN, 0.3, 0.0, "none",
-            reason="no_match_fallback"
-        )
+                conf = self._adjust_confidence(QueryType.KNOWLEDGE, text, 0.65, False, has_negation)
+                return QueryResult(QueryType.KNOWLEDGE, conf, 0.1, "none", reason="knowledge_question_mark_override")
+        return None
 
     def _adjust_confidence(self, query_type: QueryType, text: str,
                            base_conf: float, anchored: bool, has_negation: bool) -> float:
