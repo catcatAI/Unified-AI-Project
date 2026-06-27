@@ -104,6 +104,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
+## [7.5.0-dev] - 2026-06-28 — HSPConnector Refactoring
+
+### Refactored
+- 🔧 **HSPConnector.publish_message** (136L→42L): Extracted 6 helpers (`_publish_setup`, `_try_batch_send`, `_handle_ack_wait`, `_handle_publish_retry`, `_cleanup_message`). Consolidated duplicated retry logic (was copy-pasted in ACK-timeout + error paths) into single `_handle_publish_retry` with exponential backoff. `_cleanup_message` deduplicates pending_acks/retry_counts/cache cleanup.
+
+### Synced
+- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 17/31→18/31, remaining 14→13 functions >100L.
+
 ## [7.5.0-dev] - 2026-06-28 — SelfGeneration Refactoring
 
 ### Refactored

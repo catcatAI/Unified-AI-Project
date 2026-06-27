@@ -985,138 +985,100 @@ class HSPConnector:
             return False
 
     async def publish_message(self, topic: str, envelope: HSPMessageEnvelope, qos: int = 1) -> bool:
-        """Log a diagnostic message."""
         self.logger.debug("HSPConnector: publish_message called.")
 
-        message_id = envelope.get("message_id")
-        correlation_id = (
-            envelope.get("correlation_id") or message_id
-        )  # Use message_id if correlation_id is not set
-        qos_params = envelope.get("qos_parameters") or {}
-        requires_ack = qos_params.get("requires_ack", False)
+        message_id, correlation_id, requires_ack = self._publish_setup(envelope)
 
-        # 性能优化：优化消息路由
         _optimized_message = await self.performance_optimizer.optimize_message_routing(
             cast(Dict[str, Any], envelope)
         )
 
-        # 性能优化：检查消息缓存
         if not requires_ack:
             cached_result = self._get_cached_message(message_id)
             if cached_result is not None:
                 self.logger.debug(f"使用缓存结果发送消息: {message_id}")
                 return cached_result
 
-        # 性能优化：批量发送
         if self.batch_send_enabled and not requires_ack:
-            # 将消息添加到批处理队列
-            self.message_batch.append({"topic": topic, "envelope": envelope, "qos": qos})
-            if len(self.message_batch) > _MAX_MESSAGE_BATCH:
-                self.message_batch = self.message_batch[-_MAX_MESSAGE_BATCH:]
-            # 尝试批量发送
-            await self._batch_send_messages()
-            # 缓存结果
-            self._cache_message(message_id, True)
-            return True
+            return await self._try_batch_send(topic, envelope, qos, message_id)
 
-        # Initialize retry count for this message if it's new
         if correlation_id not in self._message_retry_counts:
             self._message_retry_counts[correlation_id] = 0
 
-        # Apply Circuit Breaker and Retry Policy to the raw publish attempt
-        # This ensures that external_connector.publish attempts are resilient
         try:
-            # The decorated function will handle retries and circuit breaking for the direct publish
             raw_result = await self.circuit_breaker(self.retry_policy(self._raw_publish_message))(
                 topic, envelope, qos
             )
 
             if not raw_result:
-                self.logger.warning(
-                    f"Message {correlation_id} raw publish failed (e.g. target not found). Skipping ACK wait."
-                )
+                self.logger.warning(f"Message {correlation_id} raw publish failed.")
                 self._cache_message(message_id, False)
                 return False
 
             self.logger.debug(f"Message {correlation_id} published via HSP (decorated).")
 
             if requires_ack:
-                ack_future = asyncio.Future()
-                self._pending_acks[correlation_id] = ack_future
-                try:
-                    await asyncio.wait_for(ack_future, timeout=self.ack_timeout_sec)
-                    self.logger.info(f"ACK received for message {correlation_id}.")
-                    if correlation_id in self._pending_acks:
-                        del self._pending_acks[correlation_id]
-                    if correlation_id in self._message_retry_counts:
-                        del self._message_retry_counts[correlation_id]
-                    self._cache_message(message_id, True)
-                    return True
-                except asyncio.TimeoutError:
-                    self.logger.warning(
-                        f"ACK timeout for message {correlation_id}. Trying fallback if enabled."
-                        , exc_info=True
-                    )
-                    if self._pending_acks.get(correlation_id):
-                        del self._pending_acks[correlation_id]
-                    if self.enable_fallback and self.fallback_manager:
-                        fallback_success = await self._send_via_fallback(topic, dict(envelope), qos)
-                        if fallback_success:
-                            self.logger.info(
-                                f"Message {correlation_id} sent via fallback after ACK timeout."
-                            )
-                            if correlation_id in self._pending_acks:
-                                del self._pending_acks[correlation_id]
-                            if correlation_id in self._message_retry_counts:
-                                del self._message_retry_counts[correlation_id]
-                            self._cache_message(message_id, True)
-                            return True
-                        else:
-                            self.logger.error(
-                                f"Fallback also failed for message {correlation_id} after ACK timeout."
-                                , exc_info=True
-                            )
-                    # Implement retry logic based on max_ack_retries for HSP attempts
-                    retry_count = self._message_retry_counts.get(correlation_id, 0)
-                    if retry_count < self.max_ack_retries:
-                        self._message_retry_counts[correlation_id] = retry_count + 1
-                        self.logger.info(
-                            f"Retrying message {correlation_id} (attempt {retry_count + 1} / {self.max_ack_retries}) after ACK timeout."
-                        )
-                        # Exponential backoff before retry
-                        await asyncio.sleep(2**retry_count)
-                        return await self.publish_message(topic, envelope, qos)
-                    else:
-                        self.logger.error(
-                            f"Max retries exceeded for message {correlation_id} after ACK timeout."
-                            , exc_info=True
-                        )
-                        if correlation_id in self._pending_acks:
-                            del self._pending_acks[correlation_id]
-                        self._cache_message(message_id, False)
-                        return False
-            else:
-                # Clear retry count on success for non-ACK messages
-                if correlation_id in self._message_retry_counts:
-                    del self._message_retry_counts[correlation_id]
-                # 缓存结果
-                self._cache_message(message_id, True)
-                return True
-        except Exception as e:  # broad exception acceptable: message publishing involves multiple operations that may fail
+                return await self._handle_ack_wait(correlation_id, message_id, topic, envelope, qos)
+
+            self._cleanup_message(correlation_id, message_id, True)
+            return True
+
+        except Exception as e:
             self.logger.error(f"Error publishing message {correlation_id}: {e}", exc_info=True)
-            # Implement retry logic based on max_ack_retries for general errors
-            retry_count = self._message_retry_counts.get(correlation_id, 0)
-            if retry_count < self.max_ack_retries:
-                self._message_retry_counts[correlation_id] = retry_count + 1
-                self.logger.info(
-                    f"Retrying message {correlation_id} (attempt {retry_count + 1} / {self.max_ack_retries}) after error."
-                )
-                # Exponential backoff before retry
-                await asyncio.sleep(2**retry_count)
-                return await self.publish_message(topic, envelope, qos)
-            else:
-                logger.error(f"Max retries exceeded for message {correlation_id} after error.", exc_info=True)
-                if correlation_id in self._pending_acks:
-                    del self._pending_acks[correlation_id]
-                self._cache_message(message_id, False)
-                return False
+            return await self._handle_publish_retry(correlation_id, message_id, topic, envelope, qos)
+
+    def _publish_setup(self, envelope: HSPMessageEnvelope) -> Tuple[str, str, bool]:
+        message_id = envelope.get("message_id")
+        correlation_id = envelope.get("correlation_id") or message_id
+        qos_params = envelope.get("qos_parameters") or {}
+        requires_ack = qos_params.get("requires_ack", False)
+        return message_id, correlation_id, requires_ack
+
+    async def _try_batch_send(self, topic: str, envelope: HSPMessageEnvelope,
+                               qos: int, message_id: str) -> bool:
+        self.message_batch.append({"topic": topic, "envelope": envelope, "qos": qos})
+        if len(self.message_batch) > _MAX_MESSAGE_BATCH:
+            self.message_batch = self.message_batch[-_MAX_MESSAGE_BATCH:]
+        await self._batch_send_messages()
+        self._cache_message(message_id, True)
+        return True
+
+    async def _handle_ack_wait(self, correlation_id: str, message_id: str,
+                                topic: str, envelope: HSPMessageEnvelope,
+                                qos: int) -> bool:
+        ack_future = asyncio.Future()
+        self._pending_acks[correlation_id] = ack_future
+        try:
+            await asyncio.wait_for(ack_future, timeout=self.ack_timeout_sec)
+            self.logger.info(f"ACK received for message {correlation_id}.")
+            self._cleanup_message(correlation_id, message_id, True)
+            return True
+        except asyncio.TimeoutError:
+            self.logger.warning(f"ACK timeout for message {correlation_id}.", exc_info=True)
+            self._pending_acks.pop(correlation_id, None)
+            if self.enable_fallback and self.fallback_manager:
+                fallback_success = await self._send_via_fallback(topic, dict(envelope), qos)
+                if fallback_success:
+                    self.logger.info(f"Message {correlation_id} sent via fallback after ACK timeout.")
+                    self._cleanup_message(correlation_id, message_id, True)
+                    return True
+                self.logger.error(f"Fallback failed for message {correlation_id}.", exc_info=True)
+            return await self._handle_publish_retry(correlation_id, message_id, topic, envelope, qos)
+
+    async def _handle_publish_retry(self, correlation_id: str, message_id: str,
+                                     topic: str, envelope: HSPMessageEnvelope,
+                                     qos: int) -> bool:
+        retry_count = self._message_retry_counts.get(correlation_id, 0)
+        if retry_count < self.max_ack_retries:
+            self._message_retry_counts[correlation_id] = retry_count + 1
+            self.logger.info(f"Retrying message {correlation_id} (attempt {retry_count + 1}/{self.max_ack_retries}).")
+            await asyncio.sleep(2 ** retry_count)
+            return await self.publish_message(topic, envelope, qos)
+        self.logger.error(f"Max retries exceeded for message {correlation_id}.", exc_info=True)
+        self._cleanup_message(correlation_id, message_id, False)
+        return False
+
+    def _cleanup_message(self, correlation_id: str, message_id: str, success: bool) -> None:
+        self._pending_acks.pop(correlation_id, None)
+        self._message_retry_counts.pop(correlation_id, None)
+        self._cache_message(message_id, success)
