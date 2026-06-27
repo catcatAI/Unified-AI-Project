@@ -104,6 +104,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
+## [7.5.0-dev] - 2026-06-28 — Hormone config fix
+
+### Fixed
+- 🐛 **Hormone decay config**: Added `biological` formula config with real hormone parameters (ADRENALINE base=10, half-life=6min) to `app_config_loader.py`. Fixes `test_hormone_scientific_decay` (was falling back to safe defaults: base=50, half-life=60min).
+- 🐛 **`_call_llm_backend` AttributeError**: `active_backend_type` not set without `initialize()`. Used `getattr` guard. Fixes `test_refinement_pipeline`.
+
 ## [7.5.0-dev] - 2026-06-28 — active_backend_type bugfix
 
 ### Fixed
