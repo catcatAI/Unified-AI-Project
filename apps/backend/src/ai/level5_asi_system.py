@@ -369,6 +369,10 @@ class Level5ASISystem:
 
             result = await self._process_with_agent(agent, request, alignment_context)
 
+            if self.adversarial_system is not None:
+                adv_result = self._run_adversarial_evaluation(request, result)
+                result["adversarial"] = adv_result
+
             response_time = (asyncio.get_running_loop().time() - start_time) * 1000
             self.performance_metrics["response_time_ms"] = response_time
             self.performance_metrics["successful_requests"] += 1
@@ -438,6 +442,9 @@ class Level5ASISystem:
                 test_results["components"][
                     "autonomous_alignment"
                 ] = await self._test_autonomous_alignment()
+
+            if self.adversarial_system is not None:
+                test_results["components"]["adversarial"] = self._test_adversarial_robustness()
 
             test_results["components"]["aligned_agents"] = await self._test_aligned_agents()
 
@@ -648,6 +655,19 @@ class Level5ASISystem:
             logger.error(f"[{self.system_id}] 代理处理失败: {e}", exc_info=True)
             return {"status": "error", "error_message": str(e)}
 
+    def _run_adversarial_evaluation(
+        self, request: dict[str, Any], result: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Generate adversarial variant of request and evaluate response robustness."""
+        request_content = request.get("content", str(request))
+        adv = self.adversarial_system.generate_adversarial(request_content)
+        response_text = result.get("message", "")
+        robustness = self.adversarial_system.evaluate_robustness(response_text)
+        return {
+            "generated": adv,
+            "robustness": robustness,
+        }
+
     async def _update_alignment_score(self) -> None:
         """更新对齐分数"""
         success_rate = self.performance_metrics["successful_requests"] / max(
@@ -746,4 +766,24 @@ class Level5ASISystem:
 
         except Exception as e:  # broad exception acceptable: aligned agents test wraps all agent failures
             logger.error(f"[{self.system_id}] 对齐代理测试失败: {e}", exc_info=True)
+            return {"score": 0.0, "error": str(e)}
+
+    def _test_adversarial_robustness(self) -> dict[str, Any]:
+        """Run adversarial robustness self-test using built-in patterns."""
+        try:
+            adv = self.adversarial_system.generate_adversarial()
+            robustness = self.adversarial_system.evaluate_robustness(
+                f"Response to: {adv.get('original', '')}"
+            )
+            score = robustness.get("robustness_score", 0.5)
+            return {
+                "score": score,
+                "details": {
+                    "pattern_type": adv.get("type", "unknown"),
+                    "robustness_score": score,
+                    "flags": robustness.get("flags", []),
+                },
+            }
+        except Exception as e:  # broad exception acceptable: adversarial test wraps all failures
+            logger.error(f"[{self.system_id}] 对抗测试失败: {e}", exc_info=True)
             return {"score": 0.0, "error": str(e)}
