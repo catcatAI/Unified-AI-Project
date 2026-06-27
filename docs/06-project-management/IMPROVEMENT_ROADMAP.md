@@ -113,7 +113,7 @@
 | R3 | 實作 PerceptionEngine — 真實融合、模糊度解析 | `core/perception/perception_engine.py` (100L) | P3 | 高 |
 | R4 | 實作 TaskGenerator — 真實任務預測/分解 | ✅ **DONE** (commit `fba3fb14b`, Jun 28) | `ai/memory/task_generator.py` (46→91L) + `router.py` (_schedule_precompute_tasks) | P4 | 中 |
 | R5 | 實作 AdversarialGenerationSystem — 真實對抗訓練 | ✅ **DONE** (commit `43129d437`, Jun 28) | `ai/alignment/adversarial_generation_system.py` (65→115L) + `level5_asi_system.py` (_run_adversarial_evaluation) | P4 | 高 |
-| R6 | 移除 AuditoryAttention（空別名）或實作 | `core/perception/auditory_attention.py` (20L) | P3 | 低 |
+| R6 | 移除 AuditoryAttention（空別名）或實作 | ✅ **DONE** (`auditory_attention.py`: removed empty stub class, kept backward-compat alias to AttentionController) | `core/perception/auditory_attention.py` (20→10L) | P3 | 低 |
 
 ### 2.3 更新 (Updates)
 
