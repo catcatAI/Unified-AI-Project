@@ -490,140 +490,136 @@ class AngelaLLMService:
         logger.info(f"已注冊 GARDEN 後端: {model_name or 'garden-1g'}")
 
     async def initialize(self) -> bool:
-        """初始化服務，檢測可用的後端
-        返回: 是否至少有一個可用的後端
-        """
-        logger.info("正在初始化 Angela LLM 服務...")
-
-        # 初始化記憶增強系統
         self._init_memory_enhancement()
+        self._init_meta_controller()
+        if self.llm_mode == "auto" and await self._try_auto_mode():
+            return True
+        return await self._initialize_standard_mode()
 
-        # Initialize MetaController (shared across auto/standard modes)
+    async def _try_auto_mode(self) -> bool:
+        try:
+            from ai.response.neuro_auto_selector import NeuroAutoSelector
+            self.auto_selector = NeuroAutoSelector(config=self.config, meta_controller=self.meta_controller)
+            result = await self.auto_selector.decide(context={})
+
+            if result.backend.value != "neuroblender":
+                backend_map = {
+                    "ollama": LLMBackend.OLLAMA,
+                    "llamacpp": LLMBackend.LLAMA_CPP,
+                    "openai": LLMBackend.OPENAI,
+                    "anthropic": LLMBackend.ANTHROPIC,
+                    "google": LLMBackend.GOOGLE,
+                }
+                mapped = backend_map.get(result.backend.value)
+                if mapped and mapped in self.backends:
+                    self.active_backend = self.backends[mapped]
+                    self.active_backend_type = mapped
+                    self.is_available = True
+                    logger.info(
+                        f"[auto] 初始化完成，使用 {result.backend.value}/{result.model} "
+                        f"(hw={result.hw_score:.0f}, budget={result.time_budget_ms}ms)"
+                    )
+                    return True
+
+            logger.warning("[auto] NeuroAutoSelector 未能選擇可用後端，使用標準初始化", exc_info=True)
+        except Exception as e:
+            logger.warning(f"[auto] NeuroAutoSelector 初始化失敗: {e}，使用標準初始化", exc_info=True)
+        return False
+
+    async def _initialize_standard_mode(self) -> bool:
+        available = []
+        for backend_type, backend in self.backends.items():
+            if await backend.check_health():
+                available.append(backend_type)
+                logger.info(f"✓ {backend_type.value} 後端可用")
+
+        if not available:
+            logger.warning("沒有可用的 LLM 後端，將使用備份回應機制", exc_info=True)
+            self.enable_memory_enhancement = self.config.get("enable_memory_enhancement", True)
+            self.is_available = False
+            return False
+
+        self._pick_best_backend(available)
+        await self._init_model_bus()
+
+        self.is_available = True
+        backend_name = self.active_backend_type.value if self.active_backend_type else "none"
+        logger.info(f"Angela LLM 服務初始化完成，使用 {backend_name} 後端")
+        logger.info(f"可用後端: {[b.value for b in available]}")
+        return True
+
+    def _pick_best_backend(self, available):
+        priority = [
+            LLMBackend.LLAMA_CPP,
+            LLMBackend.OLLAMA,
+            LLMBackend.OPENAI,
+            LLMBackend.ANTHROPIC,
+            LLMBackend.GOOGLE,
+            LLMBackend.GARDEN,
+            LLMBackend.ED3N,
+        ]
+        for backend_type in priority:
+            if backend_type in available:
+                self.active_backend = self.backends[backend_type]
+                self.active_backend_type = backend_type
+                break
+
+    async def _init_model_bus(self):
+        try:
+            self.model_bus = ModelBus(meta_controller=self.meta_controller)
+            self.query_classifier = QueryClassifier()
+
+            if LLMBackend.ED3N in self.backends:
+                ed3n_backend = self.backends[LLMBackend.ED3N]
+                if hasattr(ed3n_backend, '_engine') and ed3n_backend._engine:
+                    self.model_bus.register_ed3n(ed3n_backend._engine)
+                else:
+                    from ai.ed3n.ed3n_engine import ED3NEngine
+                    self.model_bus.register_ed3n(ED3NEngine.get_shared())
+
+            if LLMBackend.GARDEN in self.backends:
+                garden_backend = self.backends[LLMBackend.GARDEN]
+                if hasattr(garden_backend, '_engine') and garden_backend._engine:
+                    self.model_bus.register_garden(garden_backend._engine)
+                else:
+                    from ai.garden.garden_engine import GARDENEngine
+                    engine = GARDENEngine(compatibility_mode=True)
+                    engine.load_presets()
+                    self.model_bus.register_garden(engine)
+
+            if self.active_backend:
+                self.model_bus.register_cloud(self.active_backend)
+
+            self._register_model_bus_handlers()
+            logger.info("Model Bus initialized with %d models", len(self.model_bus._registry))
+        except Exception as e:
+            logger.warning(f"Model Bus initialization skipped: {e}")
+
+    def _register_model_bus_handlers(self):
+        try:
+            from services.handlers.file_operation_handler import FileOperationHandler
+            from services.handlers.web_search_handler import WebSearchHandler
+            from services.handlers.code_execution_handler import CodeExecutionHandler
+            from services.handlers.system_command_handler import SystemCommandHandler
+            from services.handlers.task_manager_handler import TaskManagerHandler
+            from services.handlers.vision_handler import VisionHandler
+            self.model_bus.register_handler("file_ops", FileOperationHandler(), ["file"])
+            self.model_bus.register_handler("web_search", WebSearchHandler(), ["search"])
+            self.model_bus.register_handler("code_exec", CodeExecutionHandler(), ["code", "execute"])
+            self.model_bus.register_handler("system_cmd", SystemCommandHandler(), ["system"])
+            self.model_bus.register_handler("task_mgr", TaskManagerHandler(), ["task"])
+            self.model_bus.register_handler("vision", VisionHandler(), ["vision"])
+            logger.info("Model Bus handlers registered: file_ops, web_search, code_exec, system_cmd, task_mgr, vision")
+        except Exception as e:
+            logger.warning(f"Model Bus handler registration skipped: {e}")
+
+    def _init_meta_controller(self):
         try:
             from ai.meta.meta_controller import MetaController
             self.meta_controller = MetaController()
         except Exception as e:
             logger.warning(f"MetaController not available: {e}")
             self.meta_controller = None
-
-        # [auto] mode: use NeuroAutoSelector for initial backend selection
-        if self.llm_mode == "auto":
-            try:
-                from ai.response.neuro_auto_selector import NeuroAutoSelector
-
-                self.auto_selector = NeuroAutoSelector(config=self.config, meta_controller=self.meta_controller)
-                result = await self.auto_selector.decide(context={})
-
-                if result.backend.value != "neuroblender":
-                    # Map AutoBackendChoice to LLMBackend
-                    backend_map = {
-                        "ollama": LLMBackend.OLLAMA,
-                        "llamacpp": LLMBackend.LLAMA_CPP,
-                        "openai": LLMBackend.OPENAI,
-                        "anthropic": LLMBackend.ANTHROPIC,
-                        "google": LLMBackend.GOOGLE,
-                    }
-                    mapped = backend_map.get(result.backend.value)
-                    if mapped and mapped in self.backends:
-                        self.active_backend = self.backends[mapped]
-                        self.active_backend_type = mapped
-                        self.is_available = True
-                        logger.info(
-                            f"[auto] 初始化完成，使用 {result.backend.value}/{result.model} "
-                            f"(hw={result.hw_score:.0f}, budget={result.time_budget_ms}ms)"
-                        )
-                        return True
-
-                logger.warning("[auto] NeuroAutoSelector 未能選擇可用後端，使用標準初始化", exc_info=True)
-            except Exception as e:
-                logger.warning(f"[auto] NeuroAutoSelector 初始化失敗: {e}，使用標準初始化", exc_info=True)
-
-        # 標準初始化：檢查各後端健康狀態
-        available_backends = []
-
-        for backend_type, backend in self.backends.items():
-            if await backend.check_health():
-                available_backends.append(backend_type)
-                logger.info(f"✓ {backend_type.value} 後端可用")
-
-        if available_backends:
-            # 選擇最佳後端 (優先順序: llama.cpp > Ollama > OpenAI > Anthropic > Google)
-            priority = [
-                LLMBackend.LLAMA_CPP,
-                LLMBackend.OLLAMA,
-                LLMBackend.OPENAI,
-                LLMBackend.ANTHROPIC,
-                LLMBackend.GOOGLE,
-                LLMBackend.GARDEN,
-                LLMBackend.ED3N,
-            ]
-            for backend_type in priority:
-                if backend_type in available_backends:
-                    self.active_backend = self.backends[backend_type]
-                    self.active_backend_type = backend_type
-                    break
-
-            # Initialize Model Bus
-            try:
-                self.model_bus = ModelBus(meta_controller=self.meta_controller)
-                self.query_classifier = QueryClassifier()
-
-                # Register ED3N if available
-                if LLMBackend.ED3N in self.backends:
-                    ed3n_backend = self.backends[LLMBackend.ED3N]
-                    if hasattr(ed3n_backend, '_engine') and ed3n_backend._engine:
-                        self.model_bus.register_ed3n(ed3n_backend._engine)
-                    else:
-                        from ai.ed3n.ed3n_engine import ED3NEngine
-                        self.model_bus.register_ed3n(ED3NEngine.get_shared())
-
-                # Register GARDEN if available
-                if LLMBackend.GARDEN in self.backends:
-                    garden_backend = self.backends[LLMBackend.GARDEN]
-                    if hasattr(garden_backend, '_engine') and garden_backend._engine:
-                        self.model_bus.register_garden(garden_backend._engine)
-                    else:
-                        from ai.garden.garden_engine import GARDENEngine
-                        engine = GARDENEngine(compatibility_mode=True)
-                        engine.load_presets()
-                        self.model_bus.register_garden(engine)
-
-                # Register active backend as cloud
-                if self.active_backend:
-                    self.model_bus.register_cloud(self.active_backend)
-
-                # Register handlers for FILE/SEARCH/CODE/TASK/VISION intents
-                try:
-                    from services.handlers.file_operation_handler import FileOperationHandler
-                    from services.handlers.web_search_handler import WebSearchHandler
-                    from services.handlers.code_execution_handler import CodeExecutionHandler
-                    from services.handlers.system_command_handler import SystemCommandHandler
-                    from services.handlers.task_manager_handler import TaskManagerHandler
-                    from services.handlers.vision_handler import VisionHandler
-                    self.model_bus.register_handler("file_ops", FileOperationHandler(), ["file"])
-                    self.model_bus.register_handler("web_search", WebSearchHandler(), ["search"])
-                    self.model_bus.register_handler("code_exec", CodeExecutionHandler(), ["code", "execute"])
-                    self.model_bus.register_handler("system_cmd", SystemCommandHandler(), ["system"])
-                    self.model_bus.register_handler("task_mgr", TaskManagerHandler(), ["task"])
-                    self.model_bus.register_handler("vision", VisionHandler(), ["vision"])
-                    logger.info("Model Bus handlers registered: file_ops, web_search, code_exec, system_cmd, task_mgr, vision")
-                except Exception as e:
-                    logger.warning(f"Model Bus handler registration skipped: {e}")
-
-                logger.info("Model Bus initialized with %d models", len(self.model_bus._registry))
-            except Exception as e:
-                logger.warning(f"Model Bus initialization skipped: {e}")
-
-            self.is_available = True
-            backend_name = self.active_backend_type.value if self.active_backend_type else "none"
-            logger.info(f"Angela LLM 服務初始化完成，使用 {backend_name} 後端")
-            logger.info(f"可用後端: {[b.value for b in available_backends]}")
-            return True
-        else:
-            logger.warning("沒有可用的 LLM 後端，將使用備份回應機制", exc_info=True)
-            self.enable_memory_enhancement = self.config.get("enable_memory_enhancement", True)
-            self.is_available = False
-            return False
 
     async def shutdown(self) -> None:
         """Close all backend HTTP sessions during app shutdown."""

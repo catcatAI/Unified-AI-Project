@@ -104,6 +104,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
+## [7.5.0-dev] - 2026-06-28 — initialize Refactoring (135L)
+
+### Refactored
+- 🔧 **AngelaLLMService.initialize** (135L→orchestrator + 5 helpers): Extracted `_try_auto_mode`, `_initialize_standard_mode`, `_pick_best_backend`, `_init_model_bus`, `_register_model_bus_handlers`, `_init_meta_controller`. Clean 4-step pipeline.
+
+### Synced
+- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 20/31→21/31, remaining 11→10 functions >100L.
+
 ## [7.5.0-dev] - 2026-06-28 — _try_template_match Refactoring (147L)
 
 ### Refactored
