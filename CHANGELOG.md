@@ -104,6 +104,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
+## [7.5.0-dev] - 2026-06-28 — QueryClassifier + DictionaryClassifier Refactoring
+
+### Refactored
+- 🔧 **QueryClassifier.classify** (106L→40L): Extracted 5 helper methods (`_classify_by_length`, `_classify_by_dictionary`, `_classify_by_regex`, `_classify_reflex_override`, `_classify_question_override`). Main classify now reads as orchestration of 8 steps. Fixed `QueryType(dict_type)` lookup (was checking `__members__` names instead of values). 62 tests pass (10 pre-existing failures from dictionary_data mismatch, not regressions).
+- 🔧 **DictionaryClassifier.classify** (106L→25L): Extracted 6 helper methods (`_check_cache`, `_check_negation`, `_match_keywords`, `_resolve_entry`, `_map_file_action`, `_map_execute_action`). `_resolve_entry` consolidates entry lookup + context resolution; action maps moved to static methods.
+
+### Synced
+- 🔄 **MASTER_TASK_MAP.md §X #6**: Progress 10/31→11/31, remaining 21→20 functions >100L.
+
 ## [7.5.0-dev] - 2026-06-28 — TaskGenerator + AdversarialGenerationSystem Improvements
 
 ### Improved

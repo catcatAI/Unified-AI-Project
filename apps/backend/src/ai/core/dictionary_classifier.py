@@ -134,66 +134,72 @@ class DictionaryClassifier:
             self._training_data[key] = entry_data
 
     def classify(self, text: str) -> Tuple[str, str, float]:
-        """
-        Classify text using ED3N dictionary.
-        Returns (query_type, action_type, confidence).
-        """
         self._ensure_loaded()
-
         if not self._dictionary:
             return ("unknown", "none", 0.0)
 
-        # Check cache
-        if text in self._cache:
-            return self._cache[text]
+        cached = self._check_cache(text)
+        if cached:
+            return cached
 
-        # Check negation first
-        if any(neg in text for neg in NEGATION_KEYWORDS):
-            result = ("unknown", "none", 0.9)
-            self._cache[text] = result
-            return result
+        neg_result = self._check_negation(text)
+        if neg_result:
+            return neg_result
 
-        # Fast lookup using keyword index
         text_lower = text.lower().strip()
-        best_key = None
-        best_score = 0.0
-
-        # Try exact match first
-        if text_lower in self._keyword_index:
-            keys = self._keyword_index[text_lower]
-            if keys:
-                best_key = keys[0]
-                best_score = 1.0
-
-        # Try substring match
-        if best_score < 0.5:
-            for keyword, keys in self._keyword_index.items():
-                if keyword in text_lower:
-                    # Calculate score based on keyword position and length
-                    pos = text_lower.find(keyword)
-                    len_ratio = len(keyword) / max(len(text_lower), 1)
-                    # Boost score if keyword appears at start or is significant portion
-                    position_boost = 1.3 if pos == 0 else 1.0
-                    # Minimum score for any keyword match
-                    min_score = 0.6 if len(keyword) >= 2 else 0.4
-                    score = max(min_score, min(1.0, len_ratio * position_boost * 2.0))
-                    if score > best_score:
-                        best_score = score
-                        best_key = keys[0] if keys else None
+        best_key, best_score = self._match_keywords(text_lower)
 
         if best_score < 0.15 or not best_key:
             result = ("unknown", "none", 0.0)
             self._cache[text] = result
             return result
 
-        # Get the entry and determine query_type
-        entry = self._dictionary.entries.get(best_key)
-        if not entry or not entry.contexts:
-            result = ("unknown", "none", 0.0)
+        query_type, action_type = self._resolve_entry(best_key)
+        result = (query_type, action_type, round(best_score, 3))
+        self._cache[text] = result
+        return result
+
+    def _check_cache(self, text: str) -> Optional[Tuple[str, str, float]]:
+        if text in self._cache:
+            return self._cache[text]
+        return None
+
+    def _check_negation(self, text: str) -> Optional[Tuple[str, str, float]]:
+        if any(neg in text for neg in NEGATION_KEYWORDS):
+            result = ("unknown", "none", 0.9)
             self._cache[text] = result
             return result
+        return None
 
-        # Get primary context
+    def _match_keywords(self, text_lower: str) -> Tuple[Optional[str], float]:
+        best_key = None
+        best_score = 0.0
+
+        if text_lower in self._keyword_index:
+            keys = self._keyword_index[text_lower]
+            if keys:
+                best_key = keys[0]
+                best_score = 1.0
+
+        if best_score < 0.5:
+            for keyword, keys in self._keyword_index.items():
+                if keyword in text_lower:
+                    pos = text_lower.find(keyword)
+                    len_ratio = len(keyword) / max(len(text_lower), 1)
+                    position_boost = 1.3 if pos == 0 else 1.0
+                    min_score = 0.6 if len(keyword) >= 2 else 0.4
+                    score = max(min_score, min(1.0, len_ratio * position_boost * 2.0))
+                    if score > best_score:
+                        best_score = score
+                        best_key = keys[0] if keys else None
+
+        return best_key, best_score
+
+    def _resolve_entry(self, best_key: str) -> Tuple[str, str]:
+        entry = self._dictionary.entries.get(best_key)
+        if not entry or not entry.contexts:
+            return ("unknown", "none")
+
         primary_ctx = entry.contexts[0]
         context_id = primary_ctx.get("context_id", "")
         ctx_type = primary_ctx.get("type", "")
@@ -201,44 +207,47 @@ class DictionaryClassifier:
         query_type = CONTEXT_TO_QUERY_TYPE.get(context_id, "unknown")
         action_type = CONTEXT_TYPE_TO_ACTION.get((context_id, ctx_type), "none")
 
-        # Special handling for file operations with action verbs
         if context_id == "file" and ctx_type == "action":
-            action_map = {
-                "删除": "delete", "刪除": "delete",
-                "创建": "create", "建立": "create", "新增": "create",
-                "读取": "read", "讀取": "read",
-                "写入": "write", "寫入": "write",
-                "移动": "move", "移動": "move",
-                "复制": "copy", "複製": "copy",
-                "重命名": "rename",
-                "整理": "organize",
-                "清理": "clean",
-                "编辑": "modify", "編輯": "modify",
-                "修改": "modify",
-                "列出": "list",
-            }
-            zh = entry.surface_forms.get("zh", "")
-            action_type = action_map.get(zh, action_type)
+            action_type = self._map_file_action(entry, action_type)
+        elif context_id == "execute" and ctx_type == "action":
+            action_type = self._map_execute_action(entry, action_type)
 
-        # Special handling for execute operations
-        if context_id == "execute" and ctx_type == "action":
-            action_map = {
-                "执行": "execute", "執行": "execute",
-                "运行": "execute", "運行": "execute",
-                "开启": "open", "開啟": "open",
-                "关闭": "close", "關閉": "close",
-                "启动": "start", "啟動": "start",
-                "停止": "stop",
-                "暂停": "pause", "暫停": "pause",
-                "下载": "download", "下載": "download",
-                "上传": "upload", "上傳": "upload",
-            }
-            zh = entry.surface_forms.get("zh", "")
-            action_type = action_map.get(zh, action_type)
+        return query_type, action_type
 
-        result = (query_type, action_type, round(best_score, 3))
-        self._cache[text] = result
-        return result
+    @staticmethod
+    def _map_file_action(entry, action_type: str) -> str:
+        action_map = {
+            "删除": "delete", "刪除": "delete",
+            "创建": "create", "建立": "create", "新增": "create",
+            "读取": "read", "讀取": "read",
+            "写入": "write", "寫入": "write",
+            "移动": "move", "移動": "move",
+            "复制": "copy", "複製": "copy",
+            "重命名": "rename",
+            "整理": "organize",
+            "清理": "clean",
+            "编辑": "modify", "編輯": "modify",
+            "修改": "modify",
+            "列出": "list",
+        }
+        zh = entry.surface_forms.get("zh", "")
+        return action_map.get(zh, action_type)
+
+    @staticmethod
+    def _map_execute_action(entry, action_type: str) -> str:
+        action_map = {
+            "执行": "execute", "執行": "execute",
+            "运行": "execute", "運行": "execute",
+            "开启": "open", "開啟": "open",
+            "关闭": "close", "關閉": "close",
+            "启动": "start", "啟動": "start",
+            "停止": "stop",
+            "暂停": "pause", "暫停": "pause",
+            "下载": "download", "下載": "download",
+            "上传": "upload", "上傳": "upload",
+        }
+        zh = entry.surface_forms.get("zh", "")
+        return action_map.get(zh, action_type)
 
     def get_all_matches(self, text: str, threshold: float = 0.15) -> List[Dict]:
         """Get all matching entries above threshold."""

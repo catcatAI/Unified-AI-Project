@@ -60,7 +60,7 @@ Each entry has:
 | P0 (all 4 items) | `3f209b605` | All verified | ✅ |
 | P1 (thread safety) | `3f209b605` | 4 files | ✅ |
 | P2 (context/utils, precision, agents) | `3f209b605` | ~6 files | ✅ |
-| **P4 (28 long function refactor)** | QueryClassifier.__init__ 187→7, HAMDataProcessor._abstract_text 133→72, HAMQueryEngine._fallback_keyword_search 107→65, construct_angela_prompt F48→D27 (Jun 26) | 27 functions >100 lines remain (Jun 27 empirical scan) | 🟡 **4/28 done** |
+| **P4 (31 long function refactor)** | QueryClassifier.__init__ 187→7, HAMDataProcessor._abstract_text 133→72, HAMQueryEngine._fallback_keyword_search 107→65, construct_angela_prompt F48→D27, QueryClassifier.classify 106→40, DictionaryClassifier.classify 106→25 (Jun 28) | 20 functions >100 lines remain (Jun 28 empirical scan, unique count) | 🟡 **11/31 done** |
 | **P4 (load/stress tests)** | **No commit** | No framework exists | ⏳ **NOT STARTED** |
 | **P4 (desktop tray)** | **No commit** | No tray impl | ⏳ **NOT STARTED** |
 | **P4 (E2E tests)** | **No commit** | No E2E framework | ⏳ **NOT STARTED** |
@@ -363,7 +363,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | 3 | `/multimodal/stream` WS route | ✅ **DONE** — dedicated handler + route registered | `services/multimodal_ws_handler.py` + `main_api_server.py` line 295 | — |
 | 4 | C901 cyclomatic complexity (67 residual) | 7 refactored (+ED3NEngine.process_multimodal E35→B6), 60 remain | 0 Grade E remain | **ALL E/F GRADE FUNCTIONS ELIMINATED** |
 | 5 | Shared code deduplication (P3-9 to P3-11) | ✅ **RESOLVED** — `core/shared/` duplicates deleted in Phase 9-12 (commit `064e63621`) | Only `src/shared/error.py` and `src/shared/key_manager.py` remain | Automatically fixed by dead code removal |
-| 6 | P4 long function refactor (28 files >100 lines) | 10/28 done (+QueryClassifier.classify: 106→40L, extracted 5 helpers: _classify_by_length, _classify_by_dictionary, _classify_by_regex, _classify_reflex_override, _classify_question_override, Jun 28). 21 functions >100 lines remain in apps/backend/src. | 19 functions >100 lines; 10 refactored | Effort (large) |
+| 6 | P4 long function refactor (31 total >100L found) | 11/31 done (+DictionaryClassifier.classify: 106→25L, extracted 6 helpers: _check_cache, _check_negation, _match_keywords, _resolve_entry, _map_file_action, _map_execute_action, Jun 28). 20 functions >100 lines remain. | 20 functions >100 lines; 11 refactored | Effort (large) |
 | 7 | P4 load/stress test framework | Never started | No framework exists | Design |
 | 8 | P4 desktop tray implementation | Never started | No tray code | Effort |
 | 9 | P4 E2E test framework | Never started | No E2E framework | Design |
