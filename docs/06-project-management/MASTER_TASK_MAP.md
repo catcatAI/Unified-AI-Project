@@ -270,7 +270,7 @@ The plan claimed to create:
 
 --- 
 
-## VI-A. Session Summary — 2026-06-28 (22 commits)
+## VI-A. Session Summary — 2026-06-28 (35 commits)
 
 ### §X #6 Long Function Refactoring — **Status: EFFECTIVELY COMPLETE**
 - **25/31** functions >100L refactored; **0 algorithmic functions >100L** remain
@@ -281,10 +281,15 @@ The plan claimed to create:
 - 🐛 `active_backend_type` AttributeError → `getattr` guard (fixes test_refinement_pipeline)
 - 🐛 Hormone config: added `biological` formula config with real ADRENALINE parameters (base=10, half-life=6min) (fixes test_hormone_scientific_decay)
 - 🐛 10 stale test expectations in test_query_classifier_v2.py (72/72)
+
 ### Completed Items (this session)
 - 🔧 **L1**: JointTrainer wired into ED3NEngine.train(), __main__.py cmd_train/cmd_serve
 - 🔧 **L3**: CML quality trend → dynamic threshold adjustment (degrading=halve, improving=double)
 - 🔧 **L4**: NeuroAutoSelector._select_model queries MetaController history to prefer high-performing backends
+- 🔧 **R4**: TaskGenerator wired into PrecomputeService via `_schedule_precompute_tasks()`; capped history (1000); per-user predict
+- 🔧 **R5**: AdversarialGenerationSystem wired into Level5ASISystem `process_request()` + `run_comprehensive_test()`; multilingual robustness eval; `get_average_robustness()`
+- 🔧 **I3**: GARDEN SNN forward pass: dense `a @ W` → activation-driven sparse propagation; sparsity_ratio tracking in `get_stats()`
+- 🔧 **L5**: Formula→Emotion→Response chain quantified: 12 new behavioral impact tests across all 3 links
 
 ### Test Count
 - **4,785** collected (was 4,774 — +11 from restored passes + new tests)
@@ -383,7 +388,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 
 ## X. EVERY PENDING ITEM — Exact Blocker
 
-> **Note**: This table tracks 31 key items (16 DONE, 14 PENDING, 1 PARTIAL) but is NOT exhaustive. Full codebase audit found **~190+ AI-related classes** across `ai/`, `core/`, `services/` (20+ subsystems). **⚠️ "存在" ≠ "正常運作"** — see industry comparison below. Most engines are architectural skeletons: VisualDecoder projection weights are now trained on CIFAR-10 (42× loss reduction) and auto-loaded at startup. AudioWaveformDecoder projection weights also trained (309× loss reduction) and auto-loaded. CNN texture branches remain random. SequenceGenerator and ImageGenerator weights are fully random. CML+FullTrainingPipeline fully wired into production (Jun 28).
+> **Note**: This table tracks 31 key items (18 DONE, 12 PENDING, 1 PARTIAL) but is NOT exhaustive. Full codebase audit found **~190+ AI-related classes** across `ai/`, `core/`, `services/` (20+ subsystems). **⚠️ "存在" ≠ "正常運作"** — see industry comparison below. Most engines are architectural skeletons: VisualDecoder projection weights are now trained on CIFAR-10 (42× loss reduction) and auto-loaded at startup. AudioWaveformDecoder projection weights also trained (309× loss reduction) and auto-loaded. CNN texture branches remain random. SequenceGenerator and ImageGenerator weights are fully random. CML+FullTrainingPipeline fully wired into production (Jun 28).
 
 | # | Item | Why Not Done | Code Status | Blocked By |
 |:-:|:-----|:-------------|:------------|:-----------|
