@@ -104,6 +104,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
+## [7.5.0-dev] - 2026-06-28 — Final Doc Sync: L5/R4/R5/I3/O4/L3/L4 + Session Summary
+
+### Synced
+- 🔄 **AGENTS.md**: Session summary (22→35 commits), §X #6 25/31 refactored. Test count: 4,774→4,785, 0 collection errors.
+- 🔄 **MASTER_TASK_MAP.md**: §X count 16→18 DONE. All L3/L4/R4/R5/I3/L5/O4 marked DONE.
+- 🔄 **IMPROVEMENT_ROADMAP.md**: L5 DONE (+12 tests, 79 total), I3 DONE, R5 DONE, R4 DONE.
+- 🔄 **INDEX.md**: §X counts synced to 18 DONE.
+
+## [7.5.0-dev] - 2026-06-28 — L5: Formula→Emotion→Response Chain Quantified
+
+### Added
+- 🧪 **12 new behavioral impact tests** (`test_formula_behavioral_impact.py`): Quantified how formula changes affect crisis decisions, prompt formulation, response sentiment, and emotional blending across all 5 formulas (active_cognition, life_intensity, hsm_abs, hsm_rel, non_paradox_existence). Tests verify chain integrity: Formula score change → emotional blend shift → response classification change.
+- 🧪 **Total formula system tests**: 67→79, all pass.
+
+## [7.5.0-dev] - 2026-06-28 — I3: GARDEN SNN Sparse Forward Propagation
+
+### Changed
+- 🔄 **SNN forward propagation**: Replaced dense `a @ W` with activation-driven propagation — only active neurons participate in the matrix-vector product. Inactive neurons are skipped using boolean activation mask. Reduces FLOPs proportionally to sparsity.
+- 🔄 **get_stats()**: Now tracks `sparsity_ratio` (fraction of inactive neurons per layer) and `avg_firing_rate` for performance monitoring.
+
+## [7.5.0-dev] - 2026-06-28 — R5: AdversarialGenerationSystem → Production
+
+### Added
+- 🔧 **Wired into Level5ASISystem.process_request()**: `_run_adversarial_evaluation()` runs after every request, scoring input against 10 adversarial patterns (injection, jailbreak, role-play, etc.).
+- 🔧 **run_comprehensive_test()** now includes adversarial robustness self-test as part of system health check.
+- 🔧 **evaluate_robustness()** improved: multilingual keyword matching (Chinese + English), language ratio detection, `get_average_robustness()` aggregate score.
+
+## [7.5.0-dev] - 2026-06-28 — R4: TaskGenerator → PrecomputeService
+
+### Added
+- 🔧 **`_schedule_precompute_tasks()`**: Wired into `AngelaLLMService` — calls `analyze_patterns()` + `generate_tasks()` after every successful response, enqueues `PrecomputeTask` items into `PrecomputeService`.
+- 🔧 **History caps**: `_history` capped at `MAX_HISTORY_PER_USER` (100). Per-user isolation via `_user_histories` dict (keyed by `session_id`). `predict_next_user_tasks()` generates topic-transition chains per user.
+
+## [7.5.0-dev] - 2026-06-28 — O4: Archive Stale Docs
+
+### Changed
+- 🗑️ **7 stale docs archived** to `docs/09-archive/`: ACTION_PLAN.md, DOCUMENTATION_TRUTH_MAP.md, RECOMMENDATIONS.md, TODO_ANALYSIS.md, UNIFIED_AI_IMPROVEMENT_PLAN.md, port_routing_plan.md, CONDITIONAL_IMAGE_GENERATION_IMPLEMENTATION_SUMMARY.md.
+- 🔄 **IMPROVEMENT_ROADMAP.md**: Updated archive counts.
+
+## [7.5.0-dev] - 2026-06-28 — L3+L4: CML Adaptive Thresholds + NeuroAutoSelector Closed-Loop
+
+### Changed
+- 🔄 **L3 — CML quality-adaptive thresholds**: `ContinuousMultimodalLearning` now uses quality trend to dynamically adjust training threshold. Lower recent quality → threshold decreases (more aggressive training); higher quality → threshold increases (conservation mode). Smoothed via EWMA.
+- 🔄 **L4 — NeuroAutoSelector ↔ MetaController**: `NeuroAutoSelector.__init__` accepts `meta_controller` parameter; `record_result()` forwards `hw_score` + `success` to `MetaController.record_confidence()`. `router.py` creates shared MetaController before both auto and standard branches. Enables confidence-calibrated response selection.
+
 ## [7.5.0-dev] - 2026-06-28 — L1: Wire JointTrainer into runtime
 
 ### Added

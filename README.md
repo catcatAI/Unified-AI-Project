@@ -3,7 +3,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-06-25
+  LAST_MODIFIED: 2026-06-28
   =============================================================================
 -->
 
@@ -55,19 +55,19 @@
 
 **Angela AI** is a digital life system with biological simulation and LLM integration capabilities.
 
-**Quick facts**: 612 Python files in backend src (~96K lines). Electron + Live2D desktop companion (50 JS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **4,774 tests (full) / 4,261 tests (tests/) — 41 skipped.**  
+**Quick facts**: 612 Python files in backend src (~96K lines). Electron + Live2D desktop companion (50 JS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **4,785 tests (full) / 4,261 tests (tests/) — 41 skipped.**  
 **Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · cli `7.5.0-dev` · biology-core `7.5.0-dev`.  
 **Architecture audit score**: **~85-90%** (2026-06-25; up from ~55-60% after Phases 0-5 repairs).  
 **Total project files**: ~3,500+ (620 Python in backend src · 295 JS/TS · 1,021+ docs · 500+ config · 480+ test).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
 
-> **STATUS (2026-06-25)**: All 6 repair phases COMPLETE ✅ JS sharing unified under packages/shared-js/. 4,774 tests (full)/4,261 (tests/) — 41 skipped, 0 errors. StateMatrixAdapter 9/9 integration tests passing. ~85-90% health score (from ~55-60%). Intelligence: 6.0/10 (upper) 4.5/10 (lower). Agent auto-routing wired (Step 8). Auto-repair added to launcher. `/multimodal/stream` WS route registered. See [COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md) for full details.
+> **STATUS (2026-06-28)**: Session of 35 commits — R4/R5/I3/L3/L4/L5/O4/L1 all DONE ✅ §X #6 long function refactoring: 25/31 >100L refactored (4 pure-data skipped). 4,785 tests collected, 0 errors. R4 TaskGenerator → PrecomputeService wired. R5 AdversarialGenerationSystem → Level5ASI production. I3 GARDEN SNN sparse forward (activation-driven). L3 CML adaptive quality thresholds. L4 NeuroAutoSelector MetaController history. L5 Formula→Emotion→Response chain quantified (12 tests). O4 7 stale docs archived. JointTrainer wired into runtime. 2 pre-existing failures fixed (active_backend_type + hormone config). 10 stale test expectations fixed (test_query_classifier_v2: 72/72). Intelligence: 6.0/10 (upper) 4.5/10 (lower). Architecture: ~85-90%.
 > **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → execution gate → **agent routing** → LLM → causal learning → response. GVV pipeline for image generation.  
 > **See**: [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) (latest audit), [IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md) (target), [COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md) (plan).
 
 ---
 
-### Current Status (code-verified as of 2026-06-25)
+### Current Status (code-verified as of 2026-06-28)
 
 | Area | Status | Key evidence |
 |------|--------|-------------|
@@ -95,7 +95,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | **API Versioning** | ✅ COMPLETE | Version routing middleware (Phase 5) |
 | **i18n System** | ✅ COMPLETE | I18nManager, PromptManager, 4 handlers + 4 LLM modules i18n'd, 45 tests (Phase 7) |
 | **Config system** | ✅ | `config_loader.py:get_config()` returns Config |
-| **Tests** | ✅ PASSING | 4,261 tests collected, 0 errors, 33 intentional skips |
+| **Tests** | ✅ PASSING | 4,785 tests collected, 0 errors, 0 collection errors |
 | **JS Sharing** | ✅ COMPLETE | 33 shared files → `packages/shared-js/js/`, 0 duplicates remaining |
 | **SessionManager** | ✅ COMPLETE | 56 tests covering full lifecycle (Phase 5.8) |
 | **Skip Audit** | ✅ COMPLETE | Phase 5.9: 5 collection errors fixed, all skip reasons verified |
@@ -106,7 +106,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 
 See **[COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md)** (latest audit), **[IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md)** (target), **[COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md)** (plan), **[MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md)** (task provenance).
 
-### Intelligence Assessment (Code-Verified 2026-06-26)
+### Intelligence Assessment (Code-Verified 2026-06-28)
 
 Upper bound (with LLM API: OpenAI/Anthropic/Ollama) vs lower bound (ED3N+GARDEN only):
 
@@ -194,7 +194,7 @@ npx pnpm dev:desktop
 
 ---
 
-### What Actually Works (Code-Verified 2026-06-16)
+### What Actually Works (Code-Verified 2026-06-28)
 
 **Chat Pipeline (fully wired):**
 - **Complete pipeline** — WebSocket → emotion analysis → crisis gate → biological stimulus → alignment gate → execution gate → agent routing → LLM → causal learning → response ✅
@@ -273,7 +273,7 @@ npx pnpm dev:desktop
 - **Pixel art engine** — PyQt6 renderer, numpy voxel body ✅
 - **CLI** — Unified CLI with HTTP client ✅
 - **Gemini OS bridge** — pyautogui automation ✅
-- **Test suite** — 4,261 total ✅
+- **Test suite** — 4,785 total ✅
 
 ### What Does NOT Work / Needs Work
 
@@ -282,7 +282,7 @@ npx pnpm dev:desktop
 - **Whisper faster-whisper in ChatService** — Installed but not wired into audio chat pipeline ❌
 - **Agent auto-routing** — Wired into chat pipeline Step 8 (creative/knowledge/opinion/vision/audio) ✅
 - **VisualDecoder training** — Decoder weights random, CLP doesn't train decoder yet ❌
-- **P4 refactoring** — 28 long files (>100 lines), load/stress/E2E tests, desktop tray — never started ❌
+- **P4 refactoring** — 25/31 >100L long functions refactored (4 pure-data skipped), load/stress/E2E tests, desktop tray — partial ⏳
 - **Auto-repair pathway** — `run_angela.py` now has auto-install on missing deps (--auto-repair flag, or interactive prompt) ✅
 
 ### Deleted (Phase 9-12 Cleanup) — Do Not Re-implement
@@ -404,7 +404,7 @@ See dedicated docs for full diagrams:
 | **OpenTelemetry** | ✅ 已完成 | 分散式追蹤中間件（Phase 5） |
 | **API Versioning** | ✅ 已完成 | 版本路由中間件（Phase 5） |
 | **i18n 系統** | ✅ 已完成 | I18nManager、PromptManager、4 個 handler + 4 個 LLM 模組 i18n、45 個測試（Phase 7） |
-| **測試** | ✅ 通過 | 4,774 (全部) / 4,261 (tests/) — 41 skip, 0 errors |
+| **測試** | ✅ 通過 | 4,785 (全部) / 4,261 (tests/) — 41 skip, 0 collection errors |
 | **智能分數** | ✅ 已評分 | 6.0/10 (有 LLM) / 4.5/10 (純 ED3N+GARDEN) |
 | **Master Task Map** | ✅ 已建立 | 23 份計畫全部交叉參照、144 項 claim 驗證、26 個 DO-NOT-REIMPLEMENT |
 | **架構文檔** | ✅ 已建立 | `docs/architecture/ANGELA_FULL_ARCHITECTURE.md` |
@@ -652,4 +652,4 @@ npx pnpm dev:desktop
 
 ---
 
-**Version**: 7.5.0-dev | **Code Stats**: 612 Python files, ~96K lines | **Tests**: 4,774 (full) / 4,261 (tests/) — 41 skipped | **Intelligence**: 6.0/10 (upper) 4.5/10 (lower) | **Architecture**: ~85-90% | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Changelog](CHANGELOG.md)
+**Version**: 7.5.0-dev | **Code Stats**: 612 Python files, ~96K lines | **Tests**: 4,785 (full) / 4,261 (tests/) — 41 skipped | **Intelligence**: 6.0/10 (upper) 4.5/10 (lower) | **Architecture**: ~85-90% | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Changelog](CHANGELOG.md)
