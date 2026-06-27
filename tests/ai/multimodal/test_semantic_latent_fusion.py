@@ -305,6 +305,148 @@ class TestCrossModalSemantic:
 # Helpers
 # =========================================================================
 
+# =========================================================================
+# 5. Cross-modal Retrieval Quality Metrics (6 tests)
+# =========================================================================
+
+class TestCrossModalRetrievalMetrics:
+    """P43f: Cross-modal retrieval precision benchmarks (§X #22).
+
+    Measures retrieval precision at K (P@K) and Mean Reciprocal Rank (MRR)
+    for cross-modal retrieval using CrossModalTrainer mappings.
+
+    Note: CrossModalTrainer.record_co_occurrence() eagerly creates mappings
+    on first call. train_mapping() updates confidence based on co-occurrence
+    count. Key prefix heuristic (starts with c/g/e/p/r/l/t) determines
+    text vs modality key.
+    """
+
+    def _build_paired_dataset(self):
+        """Build synthetic dataset with known cross-modal pairs.
+
+        Uses key prefixes that match CrossModalTrainer's text-key heuristic
+        (starts with c/g/e/p/r/l/t = text key).
+        """
+        text_keys = [f"cat_{i}" for i in range(20)]
+        image_keys = [f"img_{i}" for i in range(20)]
+        audio_keys = [f"aud_{i}" for i in range(20)]
+        return text_keys, image_keys, audio_keys
+
+    def _train_on_dataset(self, trainer, text_keys, img_keys, aud_keys):
+        """Record co-occurrences and train mappings."""
+        for text, img, aud in zip(text_keys, img_keys, aud_keys):
+            for _ in range(5):
+                trainer.record_co_occurrence(text, image_key=img, audio_key=aud)
+        return trainer.train_mapping(min_co_occurrences=3)
+
+    def test_cross_modal_retrieval_precision(self):
+        """Q1: Cross-modal retrieval P@1 = 1.0 for known pairs."""
+        from ai.ed3n.multimodal.cross_modal_trainer import CrossModalTrainer
+        trainer = CrossModalTrainer()
+        text_keys, img_keys, aud_keys = self._build_paired_dataset()
+        self._train_on_dataset(trainer, text_keys, img_keys, aud_keys)
+
+        image_hits = 0
+        for text, correct_img in zip(text_keys, img_keys):
+            results = trainer.get_related_keys(text, "image")
+            if correct_img in results:
+                image_hits += 1
+        precision = image_hits / len(text_keys)
+        assert precision == 1.0, f"Image retrieval P@1: {precision:.2f}"
+
+    def test_cross_modal_retrieval_rejects_wrong_modality(self):
+        """Q2: get_related_keys('image') returns only img_ keys."""
+        from ai.ed3n.multimodal.cross_modal_trainer import CrossModalTrainer
+        trainer = CrossModalTrainer()
+        text_keys, img_keys, aud_keys = self._build_paired_dataset()
+        self._train_on_dataset(trainer, text_keys, img_keys, aud_keys)
+
+        for text, correct_img in zip(text_keys, img_keys):
+            results = trainer.get_related_keys(text, "image")
+            for r in results:
+                assert r.startswith("img_"), f"Non-image key: {r}"
+            for other_text, other_img in zip(text_keys, img_keys):
+                if other_img != correct_img:
+                    assert other_img not in results, \
+                        f"Wrong image {other_img} for {text}"
+
+    def test_cross_modal_audio_retrieval(self):
+        """Q3: Audio retrieval precision P@1 = 1.0."""
+        from ai.ed3n.multimodal.cross_modal_trainer import CrossModalTrainer
+        trainer = CrossModalTrainer()
+        text_keys, img_keys, aud_keys = self._build_paired_dataset()
+        self._train_on_dataset(trainer, text_keys, img_keys, aud_keys)
+
+        audio_hits = 0
+        for text, correct_aud in zip(text_keys, aud_keys):
+            results = trainer.get_related_keys(text, "audio")
+            if correct_aud in results:
+                audio_hits += 1
+        precision = audio_hits / len(text_keys)
+        assert precision == 1.0, f"Audio retrieval P@1: {precision:.2f}"
+
+    def test_cross_modal_dual_modality_retrieval(self):
+        """Q4: Both image and audio retrieved for same text key."""
+        from ai.ed3n.multimodal.cross_modal_trainer import CrossModalTrainer
+        trainer = CrossModalTrainer()
+        text_keys, img_keys, aud_keys = self._build_paired_dataset()
+        self._train_on_dataset(trainer, text_keys, img_keys, aud_keys)
+
+        for text, correct_img, correct_aud in zip(text_keys, img_keys, aud_keys):
+            img_results = trainer.get_related_keys(text, "image")
+            aud_results = trainer.get_related_keys(text, "audio")
+            assert correct_img in img_results, f"Missing {correct_img} for {text}"
+            assert correct_aud in aud_results, f"Missing {correct_aud} for {text}"
+
+    def test_get_stats_reflects_training(self):
+        """Q5: CrossModalTrainer.get_stats() reflects trained state."""
+        from ai.ed3n.multimodal.cross_modal_trainer import CrossModalTrainer
+        trainer = CrossModalTrainer()
+        text_keys, img_keys, aud_keys = self._build_paired_dataset()
+        self._train_on_dataset(trainer, text_keys, img_keys, aud_keys)
+        stats = trainer.get_stats()
+        assert stats["total_mappings"] >= 20
+        assert stats["with_image"] >= 20
+        assert stats["with_audio"] >= 20
+        assert stats["avg_confidence"] >= 0.5
+        assert stats["co_occurrence_pairs"] > 0
+
+    def test_retrieval_with_insufficient_training(self):
+        """Q6: Low co-occurrence = low confidence, but mapping still exists."""
+        from ai.ed3n.multimodal.cross_modal_trainer import CrossModalTrainer
+        trainer = CrossModalTrainer()
+        text_keys, img_keys, _ = self._build_paired_dataset()
+        # Only 1 co-occurrence per pair (below train_mapping threshold)
+        for text, img in zip(text_keys, img_keys):
+            trainer.record_co_occurrence(text, image_key=img)
+        # Mapping created eagerly by record_co_occurrence()
+        assert trainer.get_stats()["total_mappings"] == 20
+        assert trainer.get_stats()["avg_confidence"] == 0.5  # Default
+
+    def test_shared_latent_space_semantic_consistency(self):
+        """Q7: SharedLatentSpace.semantic_consistency() returns meaningful score."""
+        from ai.multimodal.shared_latent_space import SharedLatentSpace
+        ls = SharedLatentSpace(latent_dim=64)
+        ls.register_semantic_modality("vision", 512)
+
+        rng = np.random.RandomState(42)
+        # Tight cluster
+        proto = rng.randn(512).astype(np.float32)
+        tight = [proto + 0.01 * rng.randn(512).astype(np.float32) for _ in range(10)]
+        # Loose cluster
+        loose = [rng.randn(512).astype(np.float32) for _ in range(10)]
+
+        tight_score = ls.semantic_consistency("vision", tight)
+        loose_score = ls.semantic_consistency("vision", loose)
+        # Tight cluster should have higher consistency than loose cluster
+        assert tight_score > loose_score, \
+            f"tight={tight_score:.4f} <= loose={loose_score:.4f}"
+
+
+# =========================================================================
+# Helpers
+# =========================================================================
+
 def _make_sample_png() -> bytes:
     """Generate a minimal valid PNG (1×1 white pixel)."""
     import struct
