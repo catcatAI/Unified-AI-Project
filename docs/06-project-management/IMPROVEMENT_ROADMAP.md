@@ -79,8 +79,8 @@
 | **PerceptionEngine 寫死值** | MEDIUM | visual confidence=0.85 hardcoded | 100L，80L 可執行 |
 | **AttentionController 樁模組** | MEDIUM | 33L，無顯著性計算，無 IOR，無掃描路徑 | 33L 無計算 |
 | **AuditoryAttention 空類別** | MEDIUM | 20L，別名至 AttentionController（本身為樁模組） | 20L 空類別 |
-| **TaskGenerator 佔位符** | MEDIUM | generate_tasks() 回傳單一寫死 dict | 22L 無用 |
-| **AdversarialGenerationSystem 佔位符** | MEDIUM | 附加 "[adversarial variant]" 字串 | 18L 字串操作 |
+| **TaskGenerator 核心邏輯完成（選項剩餘）** | LOW | `predict_next_query()` + `generate_tasks()` + `analyze_patterns()` 已實作。選項：個人化 + 自適應閾值尚未實作。 | 46L，18 測試通過 |
+| **AdversarialGenerationSystem 核心邏輯完成（選項剩餘）** | LOW | 10 種對抗模式 + `evaluate_robustness()` 已實作。選項：個人化歷史追蹤尚未實作。 | 65L，18 測試通過 |
 | **CausalReasoningEngine 僅 Pearson** | MEDIUM | 99L，無時間因果、無混淆變數、無 do-calculus | 99L 骨架 |
 | **CML pipeline 已接線至生產元件** | LOW | CML 現在與 MultimodalService 共享訓練管線：micro-training 直接改善生產編碼/解碼。孤立管線問題已修復。 | `multimodal_service.py:160` 將生產管線傳遞給 CML |
 | **CML 已接線至生產 encode 路徑** | FIXED | CML 現在透過 `_encode_impl()` 在每次成功編碼後自動記錄並作微訓練，且與 MultimodalService 共用訓練管線（非孤立）。 | `multimodal_service.py:387-398` 嵌入 encode |
@@ -98,8 +98,8 @@
 
 | # | 項目 | 檔案 | 優先級 | 難度 |
 |---|------|------|:------:|:----:|
-| F1 | 修正 ED3N 數學評估中 >100L 的長函數 | `ed3n_engine.py` | P4 | 中 |
-| F2 | 修正 ModelBus 路由中的 >100L 長函數 | `model_bus.py` | P4 | 中 |
+| F1 | 修正 ED3N 數學評估中 >100L 的長函數 | ✅ **DONE** (commit `fabbb2041`, Jun 28) | `ed3n_engine.py` | P4 | 中 |
+| F2 | 修正 ModelBus 路由中的 >100L 長函數 | ✅ **DONE** (scan confirms 0 functions >100L remain in both files) | `model_bus.py` | P4 | 中 |
 | F3 | 修正所有文件中的錯誤分數（已完成） | 多個 MD | P0 | 低 |
 | F4 | 修正 LLM 路由中缺少 timeouts/retries | ✅ **DONE** (commit `dcd7044e1~`, Jun 28) | `router.py` | P2 | 低 |
 | F5 | NeuroAutoSelector LearnRecorder 連接至 MetaController | ✅ **DONE** (commit `44fec2abb~`, Jun 28) | `neuro_auto_selector.py:764-773` + `router.py:464-470` |
@@ -111,8 +111,8 @@
 | R1 | 實作 CerebellumEngine — 真實本體感覺/姿勢內插 | `core/bio/cerebellum_engine.py` (27L) | P3 | 高 |
 | R2 | 實作 AttentionController — 顯著性計算、IOR、掃描路徑 | `core/perception/attention_controller.py` (33L) | P3 | 高 |
 | R3 | 實作 PerceptionEngine — 真實融合、模糊度解析 | `core/perception/perception_engine.py` (100L) | P3 | 高 |
-| R4 | 實作 TaskGenerator — 真實任務預測/分解 | `ai/memory/task_generator.py` (22L) | P4 | 中 |
-| R5 | 實作 AdversarialGenerationSystem — 真實對抗訓練 | `ai/alignment/adversarial_generation_system.py` (18L) | P4 | 高 |
+| R4 | 實作 TaskGenerator — 真實任務預測/分解 | ✅ **PARTIALLY DONE** (commit `02c783edc`, Jun 28) | `ai/memory/task_generator.py` (16→46L) | P4 | 中 |
+| R5 | 實作 AdversarialGenerationSystem — 真實對抗訓練 | ✅ **PARTIALLY DONE** (commit `02c783edc`, Jun 28) | `ai/alignment/adversarial_generation_system.py` (18→65L) | P4 | 高 |
 | R6 | 移除 AuditoryAttention（空別名）或實作 | `core/perception/auditory_attention.py` (20L) | P3 | 低 |
 
 ### 2.3 更新 (Updates)
