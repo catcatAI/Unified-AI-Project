@@ -235,6 +235,7 @@ class TensorSNNCore:
         # Training history
         self.total_steps = 0
         self.total_hebbian_updates = 0
+        self._total_active = 0  # total active neurons across all forward() calls
 
     # ------------------------------------------------------------------
     # Key registry
@@ -311,7 +312,9 @@ class TensorSNNCore:
         context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, float]:
         """
-        Run LIF integration for self.timesteps steps.
+        Run LIF integration for self.timesteps steps using sparse propagation.
+        Only neurons with active (spiking) input participate in each timestep,
+        avoiding the full [V, V] dense matrix-vector multiply.
         Returns dict of concept_key -> cumulative activation.
         """
         if not input_keys or self._W is None or self.vocab_size == 0:
@@ -336,18 +339,30 @@ class TensorSNNCore:
 
         potential  = _zeros(V)
         cumulative = _zeros(V)
+        total_active = 0
 
         for t in range(self.timesteps):
-            # LIF: integrate
-            potential = potential * (1.0 - self.leak) + (a @ W)
+            # Sparse propagation: only follow outgoing edges from active neurons
+            active_idx = _nonzero_indices(a)
+            if len(active_idx) > 0:
+                if _is_torch:
+                    incoming = W[active_idx].sum(dim=0)
+                else:
+                    incoming = W[active_idx].sum(axis=0)
+                potential = potential * (1.0 - self.leak) + incoming
+            else:
+                potential = potential * (1.0 - self.leak)
+
             # Spike
             spikes = _float(potential >= threshold)
             # Decay for next step
             a = spikes * (self.decay ** t)
             # Accumulate
             cumulative += spikes
+            total_active += len(active_idx)
 
         self.total_steps += 1
+        self._total_active += total_active
 
         # Map back to keys
         result: Dict[str, float] = {}
@@ -432,6 +447,8 @@ class TensorSNNCore:
         density = 0.0
         if self._W is not None and _numel(self._W) > 0:
             density = float(_float(self._W > 0).mean())
+        total_possible = self.vocab_size * self.timesteps * max(1, self.total_steps)
+        sparsity_ratio = round(1.0 - (self._total_active / max(1, total_possible)), 4) if total_possible > 0 else 0.0
         return {
             "vocab_size": self.vocab_size,
             "weight_matrix_shape": list(self._W.shape) if self._W is not None else [],
@@ -443,4 +460,7 @@ class TensorSNNCore:
             "total_steps": self.total_steps,
             "total_hebbian_updates": self.total_hebbian_updates,
             "hormones": self.modulator.get_profile_summary(),
+            "sparsity_ratio": sparsity_ratio,
+            "computation_saved": self._total_active,
+            "computation_possible": total_possible,
         }
