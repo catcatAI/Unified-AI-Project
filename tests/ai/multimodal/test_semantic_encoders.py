@@ -370,3 +370,133 @@ class TestDualEncoderRouter:
         result = router.encode_audio(b'', include_semantic=False)
         assert result.get("structural") is not None
         assert isinstance(result["structural"], np.ndarray)
+
+
+# ---------------------------------------------------------------------------
+# Real Model Loading Tests (slow, requires HF cache)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.slow
+class TestSemanticEncoderRealModels:
+    """P42d: Validate real CLIP / Whisper model loading from HF Hub cache.
+
+    These tests download/load actual model weights from HuggingFace Hub cache.
+    The models (openai/clip-vit-base-patch32, openai/whisper-tiny) are cached
+    at ~/.cache/huggingface/hub/ and load in ~20-35s.
+
+    Skip with: pytest -m 'not slow'
+    """
+
+    @pytest.fixture(scope="class")
+    def clip_model(self):
+        """Load real CLIP model once per class."""
+        from ai.multimodal.semantic_visual import _lazy_init_clip
+        model, processor = _lazy_init_clip()
+        assert model is not None, "CLIP model failed to load from HF cache"
+        assert processor is not None, "CLIP processor failed to load from HF cache"
+        return model, processor
+
+    @pytest.fixture(scope="class")
+    def whisper_model(self):
+        """Load real Whisper model once per class."""
+        from ai.multimodal.semantic_audio import _lazy_init_whisper
+        model, processor, feat = _lazy_init_whisper()
+        assert model is not None, "Whisper model failed to load from HF cache"
+        assert processor is not None
+        return model, processor, feat
+
+    def test_clip_loads(self, clip_model):
+        """RL1: Real CLIP model loads and produces valid 512-dim embeddings."""
+        import io
+        import numpy as np
+        from PIL import Image
+        model, processor = clip_model
+        assert model is not None
+        # Encode a real image
+        img = Image.new("RGB", (224, 224), color=(100, 150, 200))
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        sve = SemanticVisualEncoder()
+        sve._model, sve._processor = model, processor
+        vec = sve.encode(buf.getvalue())
+        assert vec is not None
+        assert vec.shape == (512,)
+        assert vec.dtype == np.float32
+        norm = np.linalg.norm(vec)
+        assert abs(norm - 1.0) < 1e-5  # L2 normalized
+
+    def test_clip_encode_text(self, clip_model):
+        """RL2: Real CLIP model supports text encoding."""
+        import numpy as np
+        model, processor = clip_model
+        sve = SemanticVisualEncoder()
+        sve._model, sve._processor = model, processor
+        vecs = sve.encode_text(["a photo of a cat", "a photo of a dog"])
+        assert vecs is not None
+        assert vecs.shape == (2, 512)
+        assert vecs.dtype == np.float32
+        norms = np.linalg.norm(vecs, axis=1)
+        assert all(abs(n - 1.0) < 1e-5 for n in norms)
+
+    def test_clip_classify_image(self, clip_model):
+        """RL3: Real CLIP model supports zero-shot classification."""
+        import io
+        from PIL import Image
+        model, processor = clip_model
+        img = Image.new("RGB", (224, 224), color=(200, 140, 80))
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        sve = SemanticVisualEncoder()
+        sve._model, sve._processor = model, processor
+        results = sve.classify_image(buf.getvalue(), ["a cat", "a car", "a house"])
+        assert len(results) > 0
+        assert all(r["confidence"] >= 0.0 for r in results)
+        # Higher confidence for the most similar label
+        assert results[0]["rank"] == 1
+
+    def test_whisper_loads(self, whisper_model):
+        """RL4: Real Whisper model loads and produces 384-dim embeddings."""
+        import io
+        import struct
+        import numpy as np
+        model, processor, feat = whisper_model
+        assert model is not None
+        # Generate WAV silence
+        sr = 16000
+        samples = np.zeros(int(sr * 0.2), dtype=np.int16)
+        data = struct.pack("<" + "h" * len(samples), *samples)
+        hdr = struct.pack("<4sI4s", b"RIFF", 36 + len(data), b"WAVE")
+        fmt = struct.pack("<4sIHHIIHH", b"fmt ", 16, 1, 1, sr, sr * 2, 2, 16)
+        wav = hdr + fmt + struct.pack("<4sI", b"data", len(data)) + data
+        sae = SemanticAudioEncoder()
+        sae._model, sae._processor, sae._feature_extractor = model, processor, feat
+        vec = sae.encode(wav)
+        assert vec is not None
+        assert vec.shape == (384,)
+        assert vec.dtype == np.float32
+        norm = np.linalg.norm(vec)
+        assert abs(norm - 1.0) < 1e-5
+
+    def test_dual_encoder_real_clip(self, clip_model):
+        """RL5: DualEncoderRouter returns semantic when real CLIP is injected."""
+        import io
+        import numpy as np
+        from PIL import Image
+        from ai.multimodal.dual_encoder_router import DualEncoderRouter
+        router = DualEncoderRouter()
+        mock_sve = SemanticVisualEncoder()
+        mock_sve._model, mock_sve._processor = clip_model
+        mock_sve._model_cls = None
+
+        from unittest.mock import PropertyMock
+        with patch.object(type(mock_sve), 'is_available',
+                          new_callable=PropertyMock, return_value=True):
+            with patch.object(mock_sve, 'encode',
+                              return_value=np.ones(512, dtype=np.float32)):
+                with patch.object(router, '_get_semantic_visual',
+                                  return_value=mock_sve):
+                    img = Image.new("RGB", (224, 224), color=(100, 150, 200))
+                    buf = io.BytesIO()
+                    img.save(buf, format="PNG")
+                    result = router.encode_vision(buf.getvalue())
+                    assert "semantic_vision" in result.get("modalities_used", [])
