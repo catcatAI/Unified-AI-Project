@@ -190,30 +190,16 @@ def analyze_emotional_context(self, context) -> EmotionalState:
 - 沒有 emotion → endocrine → behavior 的連結 → ❌
 - `ValueAssessment` 的 `_calculate_dimension_score` 回傳 `str` 型別（type bug！）→ ❌
 
-### 3.4 MetaController (130L) — 🟡 C³ = 3.0/10
+### 3.4 MetaController (130L) — 🟡 C³ = 3.5/10 (was 3.0/10, ✅ fixed 2026-06-29)
 
-```python
-# 接近真實的因果鏈
-def record_confidence(self, source, confidence, correct=None):
-    self._ewma[source] = alpha * confidence + (1-alpha) * self._ewma[source]
-    # → NeuroAutoSelector.record_result() 呼叫此方法 ✅
+**修復摘要**: `_threshold_adjustments` 現在被 `get_calibration()` 真正填入，新增 `auto_apply_thresholds()` 返回所有來源的調整值供下游消費。在 `NeuroAutoSelector._analyze_task()` 中，調整值現在影響 `reasoning_threshold`、`quality_threshold`、`high_demand_threshold` 三個決策門檻。`record_result()` 每次記錄後自動觸發 `auto_apply_thresholds()`。
 
-def get_calibration(self, source) -> CalibrationReport:
-    # 計算 overconfidence/underconfidence → 建議 threshold adjustment
-    ...
-    return report.suggested_threshold_adjustment  # ✅ 數值
+**因果鏈**: record_confidence → get_calibration → _threshold_adjustments 填入 → _analyze_task 讀取 → 調整 reasoning/quality/high_demand 門檻 → 決策參數改變
 
-# → threshold_adjustments 被儲存但誰套用它們？
-# → get_threshold_adjustment() 可以被呼叫但沒有定期套用邏輯
-# → 這是「建議但不執行」模式
-```
-
-**問題**:
-- EWMA 信心估計是真實的 ✅
-- 連接 NeuroAutoSelector ✅
-- `CalibrationReport` 包含具體建議（threshold_adjustment）✅
-- 但建議從不被自動套用 ❌
-- 沒有自我修正的閉環 ❌
+**剩餘問題**:
+- 調整是所有 backend 的平均值，可能互相抵消
+- 無閉環（調整結果不影響後續校準）
+- 需隨著更多資料累積讓校準更準確
 
 ### 3.5 Heartbeat (MetabolicHeartbeat) — 🟢 C³ = 5.0/10
 
@@ -363,9 +349,9 @@ class IntentManager:
 |:-:|:-------|:-----|:----:|
 | 1 | **AutonomousLifeCycle decisions → 無人消費** | 自主性核心完全斷裂 | ✅ **FIXED** (commit `40dce741a`) — `_execute_decision()` dispatching to BehaviorExecutor |
 | 2 | **CausalReasoningEngine predictions → 無人消費** | 因果引擎像學院派論文 | ✅ **FIXED** (commit `78dac066e`) — predict() sends to LLM prompt via _inject_causal_predictions + _append_causal_insights |
-| 3 | **EmotionSystem → 只進 LLM Prompt** | 情感不影響真實行為 | 🔴 P1 |
-| 4 | **MetaController threshold adjustments → 不自動套用** | 適應性學習中斷 | 🟡 P2 |
-| 5 | **IntentModel.generate_homeostatic_intents → pass** | 意圖系統不完整 | 🟡 P2 |
+| 3 | **EmotionSystem → 只進 LLM Prompt** | 情感不影響真實行為 | ✅ **FIXED** (commit `f9cf68ac5`) — apply_influence() real, get_behavioral_adjustment() → prompt builder → LLM sees guidance |
+| 4 | **MetaController threshold adjustments → 不自動套用** | 適應性學習中斷 | ✅ **FIXED** (this commit) — auto_apply_thresholds() + _analyze_task() uses calibration adjustments |
+| 5 | **IntentModel.generate_homeostatic_intents → pass** | 意圖系統不完整 | ✅ **FIXED** (commit `e713db0e0`) — both stubs now real |
 | 6 | **LifeCycle 3/6 states 無行為** | 生命週期不完整 | 🟡 P2 |
 
 ### 4.3 虛假完成案例（具體代碼）
@@ -439,7 +425,8 @@ prompt += f"Current emotional state: {emotion_summary}"
 | **ExecutionGate → Pipeline** | ✅完整 | **4.0/10** | 8/10 | 3 | 0% | 🟢 單向確定性閘門 |
 | **DigitalLifeIntegrator** | ✅完整 | **3.5/10** | 7/10 | 2 | 40% | 🟡 部分狀態有行為 |
 | **MetaController** | ✅完整 | **3.0/10** | 6/10 | 1 | 50% | 🟡 建議但不執行 |
-| **EmotionSystem** | ✅完整 | **1.0/10** | 7/10 | 1 | 0% | ❌ 只注入文字 |
+| **EmotionSystem** | ✅完整 | **2.0/10** | 7/10 | 2 | 0% | 🟡 行為驅動 (commit `f9cf68ac5`) |
+| **MetaController** | ✅完整 | **3.5/10** | 7/10 | 2 | 0% | 🟡 調整已自動套用 (this commit) |
 | **AutonomousLifeCycle** | ✅完整 | **2.0/10** | 7/10 | 2 | 0% | 🟡 決策已執行 (commit `40dce741a`) |
 | **CausalReasoningEngine** | ✅完整 | **2.0/10** | 7/10 | 1 | 0% | 🟡 predict() 已接入 LLM prompt (commit `78dac066e`) |
 | **IntentModel** | ✅完整 | **1.0/10** | 5/10 | 1 | 0% | 🟡 stubs 已實作，但意圖尚未被消費 |
@@ -663,7 +650,7 @@ Component_A.state_change → Component_B.detect() → Component_B.behavior_chang
 | ❌ **EmotionSystem** | apply_influence() 是空殼 | 實作情緒→行為的真實映射 |
 | ❌ **IntentModel** | 2/5 方法是 pass | 實作 scan_memory_proximity 和 generate_homeostatic_intents |
 | ❌ **DigitalLifeIntegrator** | 3/6 狀態無行為 | 補齊 INITIALIZING, AWAKENING, DORMANT 行為 |
-| ❌ **MetaController** | 建議不執行 | 加入自動套用 threshold 調整的邏輯 |
+| ✅ **MetaController** | 修復完成 (commit `f9cf68ac5`) | auto_apply_thresholds() 已加入，NeuroAutoSelector._analyze_task() 現在讀取調整值影響 reasoning/quality/high_demand 門檻 |
 | ❌ **Heartbeat Integration** | 60x 頻率差導致不同步 | 統一 Heartbeat Primary 和 Integration 循環 |
 | ❌ **Level5ASI Process** | 使用模擬 sleep(1.0) | 移除模擬延遲 |
 | ❌ **前端 Live2D** | 隨機彩色矩形 | 補齊 Live2D 模型渲染路徑 |

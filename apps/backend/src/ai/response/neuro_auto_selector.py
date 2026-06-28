@@ -581,14 +581,40 @@ class NeuroAutoSelector:
         # Message length cost
         msg_len_cost = min(len(user_message) / limit_value("ai.neuro_auto_selector.msg_len_divisor", 2000), 1.0) * behavior_threshold("ai.neuro_auto_selector.msg_len_weight", 0.2)
 
+        # Apply MetaController calibration adjustments to thresholds
+        reasoning_threshold = threshold_value("ai.neuro_auto_selector.reasoning_threshold", 0.6)
+        quality_threshold = threshold_value("ai.neuro_auto_selector.quality_threshold", 0.4)
+        high_demand_threshold = threshold_value("ai.neuro_auto_selector.high_demand_threshold", 0.7)
+
+        if self._meta_controller is not None:
+            # Aggregate adjustments across known backend sources
+            mc_adjustments = self._meta_controller.get_summary()
+            if mc_adjustments:
+                avg_adj = sum(
+                    s.get("threshold_adjustment", 0.0)
+                    for s in mc_adjustments.values()
+                ) / max(len(mc_adjustments), 1)
+                # Apply calibration: overconfident → raise thresholds, underconfident → lower
+                reasoning_threshold = max(0.3, min(0.9, reasoning_threshold - avg_adj))
+                quality_threshold = max(0.2, min(0.8, quality_threshold - avg_adj))
+                high_demand_threshold = max(0.4, min(0.95, high_demand_threshold - avg_adj))
+                if abs(avg_adj) > 0.01:
+                    logger.debug(
+                        f"[NeuroAutoSelector] Calibration-adjusted thresholds: "
+                        f"reasoning={reasoning_threshold:.2f}, "
+                        f"quality={quality_threshold:.2f}, "
+                        f"high_demand={high_demand_threshold:.2f} "
+                        f"(avg_adj={avg_adj:+.3f})"
+                    )
+
         # Total demand score
         demand = min(intent_cost + complexity * behavior_threshold("ai.neuro_auto_selector.complexity_weight", 0.3) + msg_len_cost, 1.0)
 
         return TaskBudget(
             demand_score=demand,
-            needs_reasoning=demand > threshold_value("ai.neuro_auto_selector.reasoning_threshold", 0.6) or intent in ("math", "reasoning"),
-            min_quality=intent_cost > threshold_value("ai.neuro_auto_selector.quality_threshold", 0.4),
-            preferred_context_window=batch_value("ai.neuro_auto_selector.high_demand_context", 8192) if demand > threshold_value("ai.neuro_auto_selector.high_demand_threshold", 0.7) else batch_value("ai.neuro_auto_selector.normal_context", 4096),
+            needs_reasoning=demand > reasoning_threshold or intent in ("math", "reasoning"),
+            min_quality=intent_cost > quality_threshold,
+            preferred_context_window=batch_value("ai.neuro_auto_selector.high_demand_context", 8192) if demand > high_demand_threshold else batch_value("ai.neuro_auto_selector.normal_context", 4096),
         )
 
     # ── Phase 5: Model Selection ────────────────────────────────────────────
@@ -784,11 +810,27 @@ class NeuroAutoSelector:
         if self._meta_controller is not None:
             budget_ratio = min(decision.time_budget_ms / max(actual_ms, 1), 2.0)
             confidence = min(decision.hw_score / 100.0 * decision.task_demand * budget_ratio, 1.0)
+            backend_source = f"neuro_auto_selector/{decision.backend.value}"
             self._meta_controller.record_confidence(
-                source=f"neuro_auto_selector/{decision.backend.value}",
+                source=backend_source,
                 confidence=round(confidence, 3),
                 correct=success,
             )
+            # Auto-apply threshold adjustments after each record
+            applied = self._meta_controller.auto_apply_thresholds()
+            if applied:
+                logger.debug(
+                    f"[NeuroAutoSelector] MetaController adjustments applied: "
+                    f"{list(applied.keys())}"
+                )
+                # If this backend has an adjustment, log it for decision tuning
+                be_adjustment = applied.get(backend_source, 0.0)
+                if abs(be_adjustment) > 0.01:
+                    logger.info(
+                        f"[NeuroAutoSelector] Backend {decision.backend.value} "
+                        f"threshold adjusted by {be_adjustment:+.3f} "
+                        f"(calibration-based)"
+                    )
 
     def flush_records(self) -> None:
         """Flush pending learn records."""

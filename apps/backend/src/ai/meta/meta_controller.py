@@ -95,6 +95,9 @@ class MetaController:
 
         is_reliable = calibration_error < 0.2 and len(known_correct) > 10
 
+        # Cache the adjustment for auto-apply
+        self._threshold_adjustments[source] = round(adjustment, 3)
+
         return CalibrationReport(
             source=source,
             sample_count=len(samples),
@@ -106,6 +109,29 @@ class MetaController:
             suggested_threshold_adjustment=round(adjustment, 3),
             is_reliable=is_reliable,
         )
+
+    def auto_apply_thresholds(self) -> Dict[str, float]:
+        """Auto-apply cached threshold adjustments to all tracked sources.
+
+        Calls get_calibration() for each source to refresh adjustments,
+        then returns a dict of {source: adjustment} showing what was applied.
+        This enables downstream consumers (e.g. NeuroAutoSelector) to
+        read and apply adjustments to actual decision parameters.
+        Note: get_calibration() already populates _threshold_adjustments;
+        this method just returns the non-zero adjustments for the caller.
+        """
+        applied: Dict[str, float] = {}
+        for source in list(self._samples.keys()):
+            report = self.get_calibration(source)
+            if report and abs(report.suggested_threshold_adjustment) > 0.001:
+                applied[source] = report.suggested_threshold_adjustment
+                logger.debug(
+                    f"[MetaController] Auto-applied threshold adjustment for {source}: "
+                    f"{report.suggested_threshold_adjustment:+.3f} "
+                    f"(overconfidence={report.overconfidence_ratio:.2f}, "
+                    f"underconfidence={report.underconfidence_ratio:.2f})"
+                )
+        return applied
 
     def get_threshold_adjustment(self, source: str, default: float = 0.0) -> float:
         report = self.get_calibration(source)
