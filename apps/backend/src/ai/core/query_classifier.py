@@ -98,7 +98,7 @@ class QueryClassifier:
         }
 
     @staticmethod
-    def _build_patterns() -> List[Tuple[QueryType, Pattern, float]]:
+    def _build_greeting_patterns() -> List[Tuple[QueryType, Pattern, float]]:
         return [
             (
                 QueryType.GREETING,
@@ -112,6 +112,22 @@ class QueryClassifier:
                 0.9,
             ),
             (
+                QueryType.GREETING,
+                re.compile(
+                    r"(自我介紹|自我介绍|介紹自己|介绍自己|"
+                    r"你是誰|你是谁|你叫什麼|你叫什么|你的名字|"
+                    r"做個?自我|做一?個?自我|來一?個?自我|来一?个?自我|"
+                    r"\b(introduce\s+yourself|who\s+are\s+you|what's\s+your\s+name)\b)",
+                    re.IGNORECASE,
+                ),
+                0.85,
+            ),
+        ]
+
+    @staticmethod
+    def _build_math_patterns() -> List[Tuple[QueryType, Pattern, float]]:
+        return [
+            (
                 QueryType.MATH,
                 re.compile(
                     r"(\d+\s*[\+\-\*\/]\s*\d+|"
@@ -122,6 +138,11 @@ class QueryClassifier:
                 ),
                 0.85,
             ),
+        ]
+
+    @staticmethod
+    def _build_logic_patterns() -> List[Tuple[QueryType, Pattern, float]]:
+        return [
             (
                 QueryType.LOGIC,
                 re.compile(
@@ -132,6 +153,11 @@ class QueryClassifier:
                 ),
                 0.8,
             ),
+        ]
+
+    @staticmethod
+    def _build_knowledge_patterns() -> List[Tuple[QueryType, Pattern, float]]:
+        return [
             (
                 QueryType.KNOWLEDGE,
                 re.compile(
@@ -148,17 +174,11 @@ class QueryClassifier:
                 ),
                 0.7,
             ),
-            (
-                QueryType.GREETING,
-                re.compile(
-                    r"(自我介紹|自我介绍|介紹自己|介绍自己|"
-                    r"你是誰|你是谁|你叫什麼|你叫什么|你的名字|"
-                    r"做個?自我|做一?個?自我|來一?個?自我|来一?个?自我|"
-                    r"\b(introduce\s+yourself|who\s+are\s+you|what's\s+your\s+name)\b)",
-                    re.IGNORECASE,
-                ),
-                0.85,
-            ),
+        ]
+
+    @staticmethod
+    def _build_creative_patterns() -> List[Tuple[QueryType, Pattern, float]]:
+        return [
             (
                 QueryType.CREATIVE,
                 re.compile(
@@ -171,6 +191,11 @@ class QueryClassifier:
                 ),
                 0.75,
             ),
+        ]
+
+    @staticmethod
+    def _build_opinion_patterns() -> List[Tuple[QueryType, Pattern, float]]:
+        return [
             (
                 QueryType.OPINION,
                 re.compile(
@@ -185,6 +210,11 @@ class QueryClassifier:
                 ),
                 0.75,
             ),
+        ]
+
+    @staticmethod
+    def _build_file_patterns() -> List[Tuple[QueryType, Pattern, float]]:
+        return [
             (
                 QueryType.FILE,
                 re.compile(
@@ -200,6 +230,11 @@ class QueryClassifier:
                 ),
                 0.8,
             ),
+        ]
+
+    @staticmethod
+    def _build_search_patterns() -> List[Tuple[QueryType, Pattern, float]]:
+        return [
             (
                 QueryType.SEARCH,
                 re.compile(
@@ -211,6 +246,11 @@ class QueryClassifier:
                 ),
                 0.8,
             ),
+        ]
+
+    @staticmethod
+    def _build_code_patterns() -> List[Tuple[QueryType, Pattern, float]]:
+        return [
             (
                 QueryType.CODE,
                 re.compile(
@@ -225,6 +265,11 @@ class QueryClassifier:
                 ),
                 0.8,
             ),
+        ]
+
+    @staticmethod
+    def _build_execute_patterns() -> List[Tuple[QueryType, Pattern, float]]:
+        return [
             (
                 QueryType.EXECUTE,
                 re.compile(
@@ -236,6 +281,11 @@ class QueryClassifier:
                 ),
                 0.8,
             ),
+        ]
+
+    @staticmethod
+    def _build_task_patterns() -> List[Tuple[QueryType, Pattern, float]]:
+        return [
             (
                 QueryType.TASK,
                 re.compile(
@@ -247,6 +297,11 @@ class QueryClassifier:
                 ),
                 0.75,
             ),
+        ]
+
+    @staticmethod
+    def _build_vision_patterns() -> List[Tuple[QueryType, Pattern, float]]:
+        return [
             (
                 QueryType.VISION,
                 re.compile(
@@ -258,6 +313,11 @@ class QueryClassifier:
                 ),
                 0.8,
             ),
+        ]
+
+    @staticmethod
+    def _build_audio_patterns() -> List[Tuple[QueryType, Pattern, float]]:
+        return [
             (
                 QueryType.AUDIO,
                 re.compile(
@@ -269,6 +329,11 @@ class QueryClassifier:
                 ),
                 0.8,
             ),
+        ]
+
+    @staticmethod
+    def _build_command_patterns() -> List[Tuple[QueryType, Pattern, float]]:
+        return [
             (
                 QueryType.COMMAND,
                 re.compile(
@@ -279,6 +344,29 @@ class QueryClassifier:
                 0.8,
             ),
         ]
+
+    @staticmethod
+    def _build_patterns() -> List[Tuple[QueryType, Pattern, float]]:
+        builders = [
+            QueryClassifier._build_greeting_patterns,
+            QueryClassifier._build_math_patterns,
+            QueryClassifier._build_logic_patterns,
+            QueryClassifier._build_knowledge_patterns,
+            QueryClassifier._build_creative_patterns,
+            QueryClassifier._build_opinion_patterns,
+            QueryClassifier._build_file_patterns,
+            QueryClassifier._build_search_patterns,
+            QueryClassifier._build_code_patterns,
+            QueryClassifier._build_execute_patterns,
+            QueryClassifier._build_task_patterns,
+            QueryClassifier._build_vision_patterns,
+            QueryClassifier._build_audio_patterns,
+            QueryClassifier._build_command_patterns,
+        ]
+        result: List[Tuple[QueryType, Pattern, float]] = []
+        for b in builders:
+            result.extend(b())
+        return result
 
     def classify(self, text: str) -> QueryResult:
         """
@@ -355,11 +443,13 @@ class QueryClassifier:
             if m:
                 anchored = m.start() == 0 or m.end() == len(text)
                 conf = self._adjust_confidence(qt, text, base_conf, anchored, has_negation)
-                matches.append((qt, conf, self._calc_actionability(qt, text, conf), self._infer_action_type(qt, text)))
+                matches.append((qt, conf, self._calc_actionability(qt, text, conf),
+                                self._infer_action_type(qt, text)))
         matches.sort(key=lambda x: (x[1], x[2]), reverse=True)
         if matches:
             primary = matches[0]
-            secondary = matches[1] if len(matches) > 1 and matches[1][1] >= primary[1] - 0.1 else None
+            secondary = matches[1] if len(matches) > 1 \
+                and matches[1][1] >= primary[1] - 0.1 else None
             return QueryResult(
                 primary_type=primary[0], confidence=primary[1],
                 actionability=primary[2], action_type=primary[3],
@@ -372,7 +462,8 @@ class QueryClassifier:
     def _classify_reflex_override(self, text: str) -> Optional[QueryResult]:
         if len(text) < 2:
             if text not in VERBS_NOT_REFLEX:
-                return QueryResult(QueryType.REFLEX, 0.95, 0.0, "none", reason="reflex_single_char_override")
+                return QueryResult(QueryType.REFLEX, 0.95, 0.0, "none",
+                                   reason="reflex_single_char_override")
             return QueryResult(QueryType.UNKNOWN, 0.4, 0.3, "read", reason="meaningful_single_char")
         return None
 
@@ -380,7 +471,8 @@ class QueryClassifier:
         if text.endswith("?") or text.endswith("？"):
             if any(re.search(p, text, re.I) for p in KNOWLEDGE_QUESTION_PATTERNS):
                 conf = self._adjust_confidence(QueryType.KNOWLEDGE, text, 0.65, False, has_negation)
-                return QueryResult(QueryType.KNOWLEDGE, conf, 0.1, "none", reason="knowledge_question_mark_override")
+                return QueryResult(QueryType.KNOWLEDGE, conf, 0.1, "none",
+                                   reason="knowledge_question_mark_override")
         return None
 
     def _adjust_confidence(self, query_type: QueryType, text: str,

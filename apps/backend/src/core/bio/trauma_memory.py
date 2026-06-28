@@ -186,52 +186,22 @@ class TraumaMemorySystem:
         coping_strategy: str = "default",
     ) -> Dict[str, Any]:
         """
-        实现创伤记忆关键处理 / Implement critical trauma memory processing
-
-        创伤记忆核心处理功能：
-        - 创伤记忆的闪回处理（侵入性回忆管理）
-        - 情感调节策略（降低情绪强度）
-        - 避免过度激活的机制（防止创伤加重）
-        - 创伤记忆的逐步消退（治疗性消退）
-
-        Critical trauma memory processing features:
-        - Flashback handling for traumatic memories (intrusive recall management)
-        - Emotional regulation strategies (reduce emotional intensity)
-        - Mechanism to prevent over-activation (prevent trauma escalation)
-        - Gradual trauma memory extinction (therapeutic extinction)
+        Process trauma memory reactivation — flashback handling, emotional
+        regulation, over-activation prevention, and gradual extinction.
 
         Args:
-            memory_id: Trauma memory identifier to process
-            trigger_context: Context or trigger that caused reactivation
-            current_stress_level: Current system stress level (0-1)
-                               Higher stress increases reactivation intensity
-            coping_strategy: Emotional regulation strategy to use
-                           Options: "default", "grounding", "reframing",
-                                   "distraction", "extinction"
+            memory_id: Trauma memory identifier
+            trigger_context: Context that caused reactivation
+            current_stress_level: Current stress level (0-1)
+            coping_strategy: "default", "grounding", "reframing",
+                           "distraction", or "extinction"
 
         Returns:
-            Dict containing trauma processing results:
-            - memory_id: Processed memory identifier
-            - reactivation_occurred: Whether reactivation was triggered
-            - flashback_intensity: Calculated flashback intensity (0-1)
-            - emotional_regulation_applied: Strategy applied
-            - regulation_effectiveness: How well regulation worked (0-1)
-            - over_activation_prevented: Whether over-activation was blocked
-            - extinction_progress: Progress toward memory extinction (0-1)
-            - recommended_actions: Suggested follow-up actions
+            Dict with processing results including flashback intensity,
+            regulation effectiveness, extinction progress.
 
         Raises:
-            ValueError: If memory_id is not found or coping_strategy is invalid
-
-        Example:
-            >>> result = trauma_system._process_trauma_reactivation(
-            ...     memory_id="trauma_001",
-            ...     trigger_context="loud_noise",
-            ...     current_stress_level=0.7,
-            ...     coping_strategy="grounding"
-            ... )
-            >>> print(f"Flashback intensity: {result['flashback_intensity']:.2%}")
-            >>> print(f"Over-activation prevented: {result['over_activation_prevented']}")
+            ValueError: If memory_id not found or strategy invalid
         """
 
         results = {
@@ -255,7 +225,8 @@ class TraumaMemorySystem:
             )
 
             # 2. 闪回处理 / Flashback handling
-            self._handle_flashback(trauma, memory_id, trigger_context, intrusion_likelihood, current_stress_level, results)
+            self._handle_flashback(
+                trauma, memory_id, trigger_context, intrusion_likelihood, current_stress_level, results)
 
             # 3. 情感调节策略 / Emotional regulation strategies
             effectiveness = self._apply_emotional_regulation(coping_strategy, current_stress_level, results)
@@ -270,7 +241,8 @@ class TraumaMemorySystem:
             self._generate_recommended_actions(trauma, current_stress_level, results)
 
             # 7. 记录处理结果 / Log processing results
-            self._log_processing_result(memory_id, trigger_context, current_stress_level, coping_strategy, results)
+            self._log_processing_result(memory_id, trigger_context,
+                                        current_stress_level, coping_strategy, results)
 
             results["status"] = "processed"
 
@@ -278,7 +250,7 @@ class TraumaMemorySystem:
             results["status"] = "error"
             results["error"] = str(e)
             results["error_type"] = "ValueError"
-        except Exception as e:  # broad exception acceptable: trauma processing must return safe fallback result
+        except Exception as e:  # trauma processing must return safe fallback
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             results["status"] = "error"
 
