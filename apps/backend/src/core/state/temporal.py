@@ -168,6 +168,42 @@ class TemporalState:
                     break
         return values
 
+    def to_observations(self, window: int = 50) -> List[Dict[str, Any]]:
+        """Export recent history as causal observations.
+
+        Returns a list of observation dicts (one per axis found in history),
+        each with 'variables' (field names) and 'data' (field → time series).
+        Compatible with CausalReasoningEngine.learn().
+        """
+        if not self.history:
+            return []
+        snapshots = self.history[-window:]
+        axes = set()
+        for snap in snapshots:
+            axes.update(k for k, v in snap.items() if isinstance(v, dict))
+        observations = []
+        for axis in sorted(axes):
+            fields = set()
+            for snap in snapshots:
+                ax_data = snap.get(axis, {})
+                if isinstance(ax_data, dict):
+                    fields.update(ax_data.keys())
+            data: Dict[str, List[float]] = {}
+            for fname in sorted(fields):
+                vals = [
+                    snap[axis][fname] for snap in snapshots
+                    if isinstance(snap.get(axis), dict) and fname in snap[axis]
+                ]
+                if vals:
+                    data[fname] = vals
+            if len(fields) >= 1:
+                observations.append({
+                    "id": f"trend_{axis}",
+                    "variables": sorted(fields),
+                    "data": data,
+                })
+        return observations
+
     def trend(self, axis: str, field: str, window: int = 50) -> TrendResult:
         values = self.get_field_series(axis, field, window)
         if len(values) < 2:

@@ -87,6 +87,22 @@ class CausalReasoningEngine:
             reverse=True,
         )
 
+    def ingest_temporal_state(
+        self, temporal_state: Any, window: int = 50
+    ) -> int:
+        """Ingest data from a TemporalState into causal inference.
+
+        Calls TemporalState.to_observations() and learns each observation.
+        Returns the number of observations ingested.
+        """
+        from core.state.temporal import TemporalState
+        if not isinstance(temporal_state, TemporalState):
+            return 0
+        observations = temporal_state.to_observations(window=window)
+        for obs in observations:
+            self.learn(obs)
+        return len(observations)
+
     def get_relationships(self) -> List[Dict[str, Any]]:
         return list(self._relationships)
 
