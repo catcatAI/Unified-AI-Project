@@ -70,6 +70,8 @@
 ### 1.3 已確認的缺陷
 
 | 缺陷 | 嚴重性 | 證據 | 行數/規模 |
+| **IntentModel.scan_memory_proximity 為 stub（pass）** | ✅ **FIXED** (2026-06-28) — 現已迭代狀態維度、查詢橋接器、建立 EXPLORATION 意圖 | `intent_model.py:85-100`, `test_intent_model.py` 16/16 pass |
+| **IntentModel.generate_homeostatic_intents 為 stub（pass）** | ✅ **FIXED** (2026-06-28) — 現已檢查閾值 (0.3) 並為不足量建立 HOMEOSTASIS 意圖 | `intent_model.py:103-128`, `test_intent_model.py` 16/16 pass |
 |------|:------:|------|:---------:|
 | **VisualDecoder 投射權重已訓練（CNN 紋理分支仍隨機）** | MEDIUM | 投射權重訓練於 CIFAR-10（42× loss 降），但 CNN 紋理分支仍隨機 → 輸出 = 結構化但模糊 | 143L，投射權重已訓練，紋理權重隨機 |
 | **AudioWaveformDecoder 投射權重已訓練（波表生成器仍隨機）** | MEDIUM | 投射權重訓練於 ESC-50（309× loss 降），但波表生成器仍隨機 → 輸出 = 結構化但非語音 | 179L，投射權重已訓練，波表權重隨機 |

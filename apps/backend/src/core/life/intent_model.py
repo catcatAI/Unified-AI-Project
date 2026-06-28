@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import logging
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 
 class IntentCategory(Enum):
@@ -83,7 +86,67 @@ class IntentManager:
                 self.active_intent_vector[dim] = (0.0, 0.0, 0.0)
 
     def scan_memory_proximity(self, bridge: Any, state: Dict[str, Any]) -> None:
-        pass
+        """Scan HAM memory for experiences near current state coordinates.
+
+        Queries the memory bridge for items spatially proximate to each
+        dimension's coordinate in the state, and creates Exploration intents
+        from the results.
+        """
+        for dimension, dim_state in state.items():
+            if not isinstance(dim_state, dict):
+                continue
+            coord = dim_state.get("coordinate")
+            if not coord or len(coord) < 3:
+                continue
+            x, y, z = coord[0], coord[1], coord[2]
+            try:
+                memories = bridge.retrieve_by_spatial_proximity(x, y, z, radius=5.0)
+            except Exception as exc:
+                logger.warning(f"Bridge proximity query failed for {dimension}: {exc}")
+                memories = []
+            for mem in memories:
+                mem_id = getattr(mem, "id", None) or str(id(mem))
+                intent = SelfIntent(
+                    id=f"mem_{dimension}_{mem_id}",
+                    category=IntentCategory.EXPLORATION,
+                    target_dimension=dimension,
+                    target_coordinate=(x, y, z),
+                    urgency=0.3,
+                    strength=0.5,
+                    decay_rate=0.02,
+                )
+                self.add_intent(intent)
 
     def generate_homeostatic_intents(self, state: Dict[str, Any]) -> None:
-        pass
+        """Generate homeostatic intents to restore balance.
+
+        Checks each dimension's energy/value against a threshold (default 0.3).
+        If a value falls below the threshold, a HOMEOSTASIS intent is created
+        to drive the system toward restoring balance.
+        """
+        dim_config: Dict[str, tuple] = {
+            "alpha": (IntentCategory.HOMEOSTASIS, "energy", 0.3),
+            "gamma": (IntentCategory.EXPLORATION, "happiness", 0.3),
+            "delta": (IntentCategory.SOCIAL_BOND, "bond", 0.3),
+        }
+        for dimension, dim_state in state.items():
+            if not isinstance(dim_state, dict):
+                continue
+            config = dim_config.get(dimension)
+            if config is None:
+                continue
+            cat, threshold_key, default_threshold = config
+            value = dim_state.get(threshold_key, 1.0)
+            coordinate = dim_state.get("coordinate", (0.0, 0.0, 0.0))
+            if value < default_threshold:
+                intent_id = f"homeostasis_{dimension}_{len(self.intents)}"
+                intent = SelfIntent(
+                    id=intent_id,
+                    category=cat,
+                    target_dimension=dimension,
+                    target_coordinate=coordinate,
+                    urgency=1.0 - value,
+                    strength=0.8,
+                    decay_rate=0.05,
+                )
+                self.add_intent(intent)

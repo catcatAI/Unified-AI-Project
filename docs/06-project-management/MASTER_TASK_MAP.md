@@ -465,6 +465,25 @@ The plan claimed to create:
 
 ---
 
+## VI-G. Session Summary — 2026-06-28 (intent stub + causal chain principles)
+
+### IntentModel stub elimination — **DONE**
+- **`scan_memory_proximity()`**: Previously bare `pass` stub (L85-86). Now iterates state dimensions, queries bridge for spatially proximate memories (`retrieve_by_spatial_proximity(x, y, z, radius=5.0)`), creates EXPLORATION intents from results. Handles empty bridge returns gracefully.
+- **`generate_homeostatic_intents()`**: Previously bare `pass` stub (L88-89). Now checks each dimension's energy/happiness/bond against 0.3 threshold. Creates HOMEOSTASIS intents for dimensions below threshold with urgency proportional to deficit.
+- **Test verifications**: `test_scan_memory_proximity_empty_bridge_returns_no_intents` ✅, `test_generate_homeostatic_intents_high_energy_no_new_intent` ✅ — all 16/16 pass.
+
+### Causal Chain Completeness Analysis — **DONE**
+- New document: [`CAUSAL_CHAIN_COMPLETENESS.md`](CAUSAL_CHAIN_COMPLETENESS.md) — comprehensive analysis of state-driven causal chains vs rule-based shells.
+- **§0 Foundational Principle**: No incomplete components may participate in causal chains. All stubs must be real before causal chain participant is valid.
+- **Real causal depth scores**: Heartbeat→Bio→Spatial = 5/10 (highest), CausalReasoningEngine = 0.5/10, AutonomousLifeCycle = 0.1/10.
+- **Clock/Pulse/Heartbeat analysis (§8)**: 32 independent loops, 80+ `asyncio.sleep()` polling, only 3 `asyncio.Event()` event-driven, no global system clock.
+
+### Test Count
+- **4,840** collected (unchanged — fixed stub didn't change collection count)
+- **16 intent tests pass** (was 12 — +4 from 2 new method implementations expanding test coverage)
+
+---
+
 ## VII. PROJECT_HONEST_AUDIT.md (2026-06-22) — Claims vs Today
 
 ### Stale Claims About Phase 9-11 Deletions
