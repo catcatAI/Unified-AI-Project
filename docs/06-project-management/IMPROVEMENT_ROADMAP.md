@@ -124,7 +124,8 @@
 | U3 | 安裝 torch + openai-whisper 以啟用語意音訊編碼 | ✅ **DONE** (openai-whisper 20250625 installed, Whisper tiny model cached, 384-dim vectors verified) | P2 |
 | U4 | 更新 LLM API 用戶端至最新版本 | P3 | openai>=1.0, anthropic>=0.30, google-genai |
 | U5 | 更新相依性以修復 Dependabot 漏洞（141 個） | P2 | 3 critical, 72 high, 55 moderate, 11 low |
-
+| V1 | YOLO 物件檢測 — 前端開發輔助（Vision-Assisted Development） | P2 | 整合 YOLO 後可使專案透過螢幕截圖分析參與前端開發：① UI 元件檢測（按鈕、輸入框、卡片、導航欄、圖示）→ 輸出結構化元件樹。② 前端 diff — 比較兩張截圖的元件變化。③ 可及性檢查 — 自動檢測缺少 alt 文字或對比不足。④ E2E 測試生成 — 從檢測到的元件自動產出 Playwright/Cypress selector。依賴 `ultralytics` + YOLO11 模型（COCO 或自訂 UI Dataset）。非 ML 瓶頸—純模型整合與 wrapper 實作。 |
+ 
 ### 2.4 迭代 (Iterations)
 
 | # | 項目 | 優先級 | 難度 | 目前 | 目標 |

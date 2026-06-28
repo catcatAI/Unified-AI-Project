@@ -393,7 +393,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | # | Item | Why Not Done | Code Status | Blocked By |
 |:-:|:-----|:-------------|:------------|:-----------|
 | 1 | Auto-repair in run_angela.py | ✅ **DONE** (commit `7a3af4107`, Jun 25) | `run_angela.py` has `install_dependencies()`, `--auto-repair` flag | — |
-| 2 | YOLO object detection | Never started | Zero code exists | Need design |
+| 2 | YOLO object detection (Vision-Assisted Development) | **Not started**. 預期用途：YOLO + 螢幕截圖分析 → 檢測前端 UI 元件（按鈕、輸入框、卡片、導航欄、圖示、彈窗）→ 提供元件座標與類型給開發用 agent，使專案具備以下開發輔助能力：① UI 佈局理解 — 截圖 → 檢測按鈕/輸入框/列表 → 輸出結構化元件樹；② 前端 diff — 截圖 A vs B 比較元件變化；③ 可及性檢查 — 缺少 alt 文字、對比不足等檢測；④ 自動 E2E 測試 — 檢測頁面元素後生成 Playwright/Cypress selector。依賴：`ultralytics` + YOLO11 模型（COCO 或自訂 UI 資料集）。非 ML 瓶頸 — 純模型整合工作。 | Zero code exists | Need `ultralytics` install + model download + UI detection pipeline wrapper |
 | 3 | `/multimodal/stream` WS route | ✅ **DONE** — dedicated handler + route registered | `services/multimodal_ws_handler.py` + `main_api_server.py` line 295 | — |
 | 4 | C901 cyclomatic complexity | ✅ **DONE** (Jun 28). All functions ≤ 10 complexity. flake8 --select=C901 on apps/backend/src/ + tests/ returns 0 warnings at default threshold. | 0 C901 warnings | **ALL E/F GRADES + ALL C901 WARNINGS ELIMINATED** |
 | 5 | Shared code deduplication (P3-9 to P3-11) | ✅ **RESOLVED** — `core/shared/` duplicates deleted in Phase 9-12 (commit `064e63621`) | Only `src/shared/error.py` and `src/shared/key_manager.py` remain | Automatically fixed by dead code removal |
