@@ -35,6 +35,8 @@ from core.hsm_formula_system import HSMFormulaSystem
 from core.life_intensity_formula import KnowledgeDomain, LifeIntensityFormula
 from core.non_paradox_existence import GrayZoneVariableType, NonParadoxExistence
 
+from core.autonomous.behavior_executor import BehaviorExecutor
+
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
@@ -166,15 +168,21 @@ class AutonomousLifeCycle:
         self._lifecycle_task: Optional[asyncio.Task] = None
         self._decision_interval: float = self.config.get("decision_interval", 300.0)  # 5 minutes
 
+        # Behavior executor for dispatching decisions to real actions
+        self._behavior_executor: BehaviorExecutor = BehaviorExecutor()
+
         # Callbacks
         self._phase_callbacks: List[Callable[[LifePhase, LifePhase], None]] = []
         self._decision_callbacks: List[Callable[[LifeDecision], None]] = []
         self._metrics_callbacks: List[Callable[[FormulaMetrics], None]] = []
+        self._execution_callbacks: List[Callable[[LifeDecision, bool], None]] = []
 
         # Statistics
         self.explorations_triggered: int = 0
         self.coexistence_activated: int = 0
         self.decisions_made: int = 0
+        self.executions_succeeded: int = 0
+        self.executions_failed: int = 0
 
     async def initialize(self) -> None:
         """Initialize autonomous life cycle and all formula systems"""
@@ -266,6 +274,19 @@ class AutonomousLifeCycle:
 
             if decision:
                 self._record_decision(decision)
+                # Execute the decision: dispatch to real downstream behaviors
+                success = await self._execute_decision(decision)
+                if success:
+                    self.executions_succeeded += 1
+                else:
+                    self.executions_failed += 1
+                    logger.warning(f"Decision {decision.decision_id} execution failed")
+                # Notify execution callbacks
+                for callback in self._execution_callbacks:
+                    try:
+                        callback(decision, success)
+                    except Exception as e:
+                        logger.error(f"Error in execution callback: {e}", exc_info=True)
 
             # Check for phase transitions
             await self._check_phase_transition(metrics)
@@ -517,6 +538,114 @@ class AutonomousLifeCycle:
             except Exception as e:  # broad exception acceptable: decision callbacks should not block recording
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
+    async def _execute_decision(self, decision: LifeDecision) -> bool:
+        """Execute a life decision by dispatching to real downstream behaviors.
+
+        Maps each decision type to concrete actions:
+        - exploration: Trigger HSM exploration + record via BehaviorExecutor
+        - coexistence_activation: Activate gray zone possibilities + notify
+        - meaning_construction: Add stress vectors for active cognition
+        - resource_reallocation: Already distributed via CDM
+
+        Args:
+            decision: The LifeDecision to execute.
+
+        Returns:
+            True if execution succeeded, False otherwise.
+        """
+        try:
+            if decision.decision_type == "exploration":
+                return await self._dispatch_exploration(decision)
+            elif decision.decision_type == "coexistence_activation":
+                return await self._dispatch_coexistence(decision)
+            elif decision.decision_type == "meaning_construction":
+                return await self._dispatch_construction(decision)
+            elif decision.decision_type == "resource_reallocation":
+                return await self._dispatch_reallocation(decision)
+            else:
+                logger.warning(f"Unknown decision type: {decision.decision_type}")
+                return False
+        except Exception as exc:
+            logger.error(f"Failed to execute decision {decision.decision_id}: {exc}", exc_info=True)
+            return False
+
+    async def _dispatch_exploration(self, decision: LifeDecision) -> bool:
+        """Dispatch an exploration decision: record via BehaviorExecutor.
+
+        HSM exploration is already triggered in _create_exploration_decision.
+        This method logs the execution event for downstream awareness.
+        """
+        result = await self._behavior_executor.execute(
+            behavior_id=f"exploration_{decision.decision_id}",
+            decision_type=decision.decision_type,
+            triggered_by=decision.triggered_by,
+            rationale=decision.rationale,
+            confidence=decision.confidence,
+            phase=decision.phase.name,
+        )
+
+        if result.get("status") == "completed":
+            logger.info(f"🧭 [LifeCycle] Executed exploration: {decision.decision_id}")
+            return True
+        return False
+
+    async def _dispatch_coexistence(self, decision: LifeDecision) -> bool:
+        """Dispatch a coexistence activation decision: record via BehaviorExecutor.
+
+        Non-paradox gray zone is already activated in _create_coexistence_decision.
+        This method logs the execution event for downstream awareness.
+        """
+        result = await self._behavior_executor.execute(
+            behavior_id=f"coexistence_{decision.decision_id}",
+            decision_type=decision.decision_type,
+            triggered_by=decision.triggered_by,
+            phase=decision.phase.name,
+            gray_zone_id=decision.expected_outcome.get("gray_zone_id", "unknown"),
+        )
+
+        if result.get("status") == "completed":
+            logger.info(f"🔄 [LifeCycle] Executed coexistence: {decision.decision_id}")
+            return True
+        return False
+
+    async def _dispatch_construction(self, decision: LifeDecision) -> bool:
+        """Dispatch a meaning construction decision: record via BehaviorExecutor.
+
+        Stress vectors are already added in _create_active_construction_decision.
+        This method logs the execution event for downstream awareness.
+        """
+        result = await self._behavior_executor.execute(
+            behavior_id=f"construction_{decision.decision_id}",
+            decision_type=decision.decision_type,
+            triggered_by=decision.triggered_by,
+            confidence=decision.confidence,
+            phase=decision.phase.name,
+        )
+
+        if result.get("status") == "completed":
+            logger.info(f"🏗️ [LifeCycle] Executed construction: {decision.decision_id}")
+            return True
+        return False
+
+    async def _dispatch_reallocation(self, decision: LifeDecision) -> bool:
+        """Dispatch a resource reallocation decision: record via BehaviorExecutor.
+
+        CDM distribution already performed in _create_resource_reallocation_decision.
+        This method logs the execution event for downstream awareness.
+        """
+        result = await self._behavior_executor.execute(
+            behavior_id=f"reallocation_{decision.decision_id}",
+            decision_type=decision.decision_type,
+            triggered_by=decision.triggered_by,
+            distribution=decision.expected_outcome.get("new_distribution", {}),
+            phase=decision.phase.name,
+        )
+
+        if result.get("status") == "completed":
+            logger.info(f"📊 [LifeCycle] Executed reallocation: {decision.decision_id}")
+            return True
+        return False
+
     async def _check_phase_transition(self, metrics: FormulaMetrics) -> None:
         """Check if life phase should transition"""
         old_phase = self.current_phase
@@ -550,12 +679,22 @@ class AutonomousLifeCycle:
             return self.metrics_history[-1]
         return self._update_metrics()
 
-    def make_life_decision(self) -> Optional[LifeDecision]:
-        """Manually trigger a life decision"""
+    async def make_life_decision(self) -> Optional[LifeDecision]:
+        """Manually trigger a life decision and execute it."""
         metrics = self._update_metrics()
         decision = self._evaluate_and_decide(metrics)
         if decision:
             self._record_decision(decision)
+            success = await self._execute_decision(decision)
+            if success:
+                self.executions_succeeded += 1
+            else:
+                self.executions_failed += 1
+            for callback in self._execution_callbacks:
+                try:
+                    callback(decision, success)
+                except Exception as e:
+                    logger.error(f"Error in execution callback: {e}", exc_info=True)
         return decision
 
     def record_cognitive_investment(
@@ -620,7 +759,10 @@ class AutonomousLifeCycle:
                 "explorations_triggered": self.explorations_triggered,
                 "coexistence_activated": self.coexistence_activated,
                 "decisions_made": self.decisions_made,
+                "executions_succeeded": self.executions_succeeded,
+                "executions_failed": self.executions_failed,
                 "total_metrics_samples": len(self.metrics_history),
+                "execution_history_count": len(self._behavior_executor.get_execution_history()),
             },
             "recent_decisions": [
                 {
@@ -652,6 +794,16 @@ class AutonomousLifeCycle:
     def register_metrics_callback(self, callback: Callable[[FormulaMetrics], None]) -> None:
         """Register callback for metrics updates"""
         self._metrics_callbacks.append(callback)
+
+    def register_execution_callback(
+        self, callback: Callable[[LifeDecision, bool], None]
+    ) -> None:
+        """Register callback for decision execution results.
+
+        Args:
+            callback: Called with (decision, success) after each execution.
+        """
+        self._execution_callbacks.append(callback)
 
 
 # Example usage
@@ -697,7 +849,7 @@ if __name__ == "__main__":
         # Make manual decisions
         logger.info("\n执行生命决策 / Executing life decisions:")
         for i in range(3):
-            decision = lifecycle.make_life_decision()
+            decision = await lifecycle.make_life_decision()
             if decision:
                 logger.info(f"\n  决策 {i+1}: {decision.decision_type}")
                 logger.info(f"    触发器: {decision.triggered_by}")
