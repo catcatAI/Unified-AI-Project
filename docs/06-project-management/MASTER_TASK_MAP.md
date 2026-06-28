@@ -685,6 +685,26 @@ The plan claimed to create:
 
 ---
 
+## VI-Q. Session Summary — 2026-06-29 (HardwareProfile §8.6 #5 + time.sleep audit #6)
+
+### HardwareProfile — **DONE** (§8.6 #5)
+- New file: `apps/backend/src/core/system/config/hardware_profile.py`
+- `HardwareScenario` enum: 5 scenarios (HIGH_PERFORMANCE_DESKTOP, LAPTOP_NORMAL, LAPTOP_POWER_SAVER, LOW_POWER_DEVICE, SERVER_CLOUD)
+- `FrequencyProfile` dataclass: 22 interval fields + base_multiplier
+- `PROFILES` dict: All 5 scenarios have distinct values with verified ordering (server_cloud > desktop > laptop_normal > power_saver > low_power)
+- `HardwareProfile` class: Auto-detection (env var → CI → headless Linux → ARM → battery → default), runtime overrides (`set_override`, `clear_overrides`), `apply_multiplier(base_value * (1/multiplier))`, `get_summary()`
+- `_check_battery()` helper: macOS pmset + Windows psutil
+
+### time.sleep() audit — **DONE** (§8.6 #6)
+- Verified all remaining `time.sleep()` calls (agent_manager._wait_router_health, agent_manager_extensions subprocess example, repl.py thread, execution_monitor monitor threads) are in **sync/thread contexts** — not async functions. All are correct usage.
+- §8.6 #6 effectively complete: 0 remaining `time.sleep()` calls in async backend code.
+
+### Test Count
+- **+20 new tests** (tests/core/test_hardware_profile.py) — 20/20 pass
+- **4,860** collected (was 4,840)
+
+---
+
 ## VII. PROJECT_HONEST_AUDIT.md (2026-06-22) — Claims vs Today
 
 ### Stale Claims About Phase 9-11 Deletions

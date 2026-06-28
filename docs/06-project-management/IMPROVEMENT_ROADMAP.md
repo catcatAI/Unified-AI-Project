@@ -80,6 +80,8 @@
 | **AutonomousLifeCycle 決策間隔 300s 太慢** | ✅ **FIXED** (2026-06-29) — 預設從 300s (5min) 改為 60s (1min)，§8.6 #8 | `autonomous_life_cycle.py:169` |
 | **核心 background loop 缺少異常處理** | ✅ **EXTENDED** (2026-06-29) — 7 個檔案 10 個 create_task 已加入異常日誌 (digital_life_integrator, autonomous_life_cycle, heartbeat, event_loop_system, cyber_identity, lifespan broadcast)。heartbeat stop() 同時修復 _integration_task 未取消 bug | §8.6 #7 |
 | **Bridge _wait_for_completion busy-poll 0.05s** | ✅ **FIXED** (2026-06-29) — 改用 asyncio.Event 事件驅動，消除 bridge_fast(0.05s) 與 bridge_poll(0.1s) 其中一個重複循環。第一處事件驅動取代輪詢實作 | `action_execution_bridge.py` §8.6 #2 #3 |
+| **HardwareProfile 硬體感知設定檔** | ✅ **DONE** (2026-06-29) — 5 種硬體場景 + 22 循環欄位 + 自動偵測 + runtime overrides。`hardware_profile.py`, 20 tests | `core/system/config/hardware_profile.py` §8.6 #5 |
+| **time.sleep() 全部審計** | ✅ **DONE** (2026-06-29) — 確認所有剩餘 `time.sleep()` 皆在同步/執行緒上下文，§8.6 #6 實質完成 | 多個檔案 §8.6 #6 |
 |------|:------:|------|:---------:|
 | **VisualDecoder 投射權重已訓練（CNN 紋理分支仍隨機）** | MEDIUM | 投射權重訓練於 CIFAR-10（42× loss 降），但 CNN 紋理分支仍隨機 → 輸出 = 結構化但模糊 | 143L，投射權重已訓練，紋理權重隨機 |
 | **AudioWaveformDecoder 投射權重已訓練（波表生成器仍隨機）** | MEDIUM | 投射權重訓練於 ESC-50（309× loss 降），但波表生成器仍隨機 → 輸出 = 結構化但非語音 | 179L，投射權重已訓練，波表權重隨機 |
@@ -192,6 +194,7 @@
 | O4 | 清理 docs/ 中過時/重複文件（移入 09-archive/） | ✅ **DONE** (2026-06-28): 7 files archived: PROJECT_ROADMAP, RECOMMENDATIONS, TODO_ANALYSIS, UNIFIED_AI_IMPROVEMENT_PLAN, ACTION_PLAN, DOCUMENTATION_TRUTH_MAP, port_routing_plan. 3 kept: VERSION_CONTROL_STRATEGY, PROJECTS_COLLABORATION_GUIDE, GIT_AND_PROJECT_MANAGEMENT. | P3 |
 | O5 | 更新 INDEX.md 和 UNIFIED_DOCUMENTATION_INDEX.md 以反映文件變動 | ✅ **DONE** (INDEX.md already correct; UNIFIED_DOCUMENTATION_INDEX.md was itself archived to 09-archive/; README.md links updated to point to archive) | P3 |
 | O6 | 為每個主要子系統建立統一的 `__init__.py`（公開 API） | ✅ **DONE** (2026-06-28): 8 `__init__.py` files updated: `ai/core/` created (19 exports), `ai/ed3n/` docstring added (20 exports), `ai/meta/` docstring added (3 exports), `ai/reasoning/` docstring added (DEPRECATED), `core/bio/` `__all__` added (58 exports across 24 modules), `core/perception/` created (16 exports), `core/managers/` created (10 exports). 3 previous O6 files from earlier: `ai/memory/`, `ai/memory/ham_memory/`, `services/`, `services/api/` — total 12 files. Remaining gaps: `ai/context/` (already has both), `ai/garden/` (already has both), `ai/alignment/` (already has both), `ai/response/` (already has both), `ai/lifecycle/` (already has both), `ai/agents/` (already has both), `ai/multimodal/` (already has both), `core/` (already has both). | P4 |
+| O7 | HardwareProfile 硬體場景頻率設定檔 | ✅ **DONE** (2026-06-29): `core/system/config/hardware_profile.py` — 5 scenarios, 22 interval fields, auto-detection, runtime overrides, 20 tests | P2 |
 
 ---
 

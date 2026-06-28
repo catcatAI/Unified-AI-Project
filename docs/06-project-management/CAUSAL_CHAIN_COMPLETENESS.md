@@ -849,37 +849,27 @@ print(f'Total pass statements: {count}')
 | 2 | **循環頻率標準化**: 合併重複循環、統一語義命名 | ✅ **DONE** (2026-06-29) — Bridge `_wait_for_completion` 改用 `asyncio.Event` 取代 0.05s 輪詢，消除 bridge_fast 與 bridge_poll 其中一個重複循環 |
 | 3 | **事件驅動取代輪詢**: `asyncio.Event()` 取代 80% 的 sleep 輪詢 | 🟢 **PARTIAL** (2026-06-29) — Bridge `_wait_for_completion` 已從 0.05s 輪詢改為 `asyncio.Event` 事件驅動。第一處實作。80+ 處 sleep 輪詢尚待改進 |
 | 4 | **硬體感知動態頻率**: 根據 CPU/GPU/電池動態調整所有循環 | 🟡 中 | 高 |
-| 5 | **HardwareProfile**: 定義 5 種硬體場景的預設頻率表 | 🟡 中 | 低 |
-| 6 | **消除 time.sleep()**: 所有同步 sleep 改為 asyncio.sleep | 🔴 高 | 低 |
+| 5 | **HardwareProfile**: 定義 5 種硬體場景的預設頻率表 | ✅ **DONE** (2026-06-29) — `hardware_profile.py`: HardwareScenario enum (5 scenarios), FrequencyProfile dataclass (22 interval fields), PROFILES with distinct values for each scenario, HardwareProfile class with auto-detection (env var, CI, headless Linux, ARM, battery, default), runtime overrides, multiplier API. 20 tests pass |
+| 6 | **消除 time.sleep()**: 所有同步 sleep 改為 asyncio.sleep | ✅ **DONE** (2026-06-29) — 確認所有剩餘 `time.sleep()` 呼叫皆在同步/執行緒上下文中 (agent_manager._wait_router_health, agent_manager_extensions subprocess 範例, repl.py 執行緒, execution_monitor 監控執行緒)。非 async 函式中的 `time.sleep()` 為正確用法。§8.6 #6 實質完成 |
 | 7 | **Fire-and-forget 異常處理**: 為所有 create_task 註冊 exception handler | 🟢 **EXTENDED** (2026-06-29) — 又 3 個檔案加入 handler: cyber_identity (1), lifespan broadcast (1)。heartbeat stop 現也清理 _integration_task。總計: 10 task handlers in 7 files + 1 bug fix | 🔴 高 | 低 |
 | 8 | **自主決策頻率提升**: 300s→60s，讓自主性更即時 | ✅ **DONE** (2026-06-29) — `autonomous_life_cycle.py`: 預設 `decision_interval` 300.0→60.0 |
 
-### 8.7 硬體設定檔範例
+### 8.7 硬體設定檔 — 實作
 
-```yaml
-# configs/system/hardware_profiles.yaml
-profiles:
-  high_performance_desktop:
-    base_frequency: 1.0
-    ans_update: 0.5
-    heartbeat_min: 5.0
-    heartbeat_max: 30.0
-    decision_interval: 60.0
-    neuroplasticity_update: 60.0
-    
-  laptop_power_saver:
-    base_frequency: 0.5
-    ans_update: 2.0
-    heartbeat_min: 30.0
-    heartbeat_max: 120.0
-    decision_interval: 300.0
-    neuroplasticity_update: 300.0
-    
-  server_cloud:
-    base_frequency: 2.0
-    ans_update: 0.2
-    heartbeat_min: 1.0
-    heartbeat_max: 10.0
-    decision_interval: 30.0
-    neuroplasticity_update: 30.0
-```
+File: `apps/backend/src/core/system/config/hardware_profile.py`
+
+已實作 5 種硬體場景的頻率設定檔，包含 22 個循環欄位 + base_multiplier。
+
+| 場景 | base_multiplier | ANS | 心跳 | 決策 | 神經可塑性 |
+|:-----|:---------------:|:---:|:----:|:----:|:---------:|
+| HIGH_PERFORMANCE_DESKTOP | 1.0 | 0.5s | 5-30s | 60s | 60s |
+| LAPTOP_NORMAL | 0.7 | 1.0s | 10-60s | 120s | 120s |
+| LAPTOP_POWER_SAVER | 0.5 | 2.0s | 30-120s | 300s | 300s |
+| LOW_POWER_DEVICE | 0.3 | 5.0s | 60-300s | 600s | 600s |
+| SERVER_CLOUD | 2.0 | 0.2s | 1-10s | 30s | 30s |
+
+自動偵測優先級: env var → CI → headless Linux → ARM → battery → default
+
+API: `HardwareProfile()` → `.scenario`, `.profile`, `.get(key, default)`, `.set_override(key, value)`, `.apply_multiplier(base_value)`, `.get_summary()`
+
+詳見: `apps/backend/src/core/system/config/hardware_profile.py` (實作) + `tests/core/test_hardware_profile.py` (20 測試)
