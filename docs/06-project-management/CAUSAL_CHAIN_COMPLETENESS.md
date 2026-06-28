@@ -786,9 +786,10 @@ print(f'Total pass statements: {count}')
 |:-----|:-----------|:-------------|
 | MetabolicHeartbeat | CPU使用率, 電池電量 | CPU高→fatigue增加→stress升高→心跳加速→移動變慢 |
 | MetabolicHeartbeat | 電量 < 20% | 觸發 starvation stress event |
-| ActionExecutor | 無 | 固定 50ms 循環，不考慮硬體負載 |
-| ANS | 無 | 固定 0.5s 循環 |
-| 其餘 28+ 循環 | **無** | 全部固定頻率 |
+| **所有 loop_sleep() 使用者** | **HardwareProfile 場景偵測** | 2026-06-29: `loop_sleep()` 現自動套用 `HardwareProfile.apply_multiplier()`。桌機/伺服器頻率提高，電池/低功耗裝置頻率降低。 |
+| ActionExecutor | 無 | 固定 50ms 循環（透過 loop_sleep 取得硬體感知值） |
+| ANS | 無 | 固定 0.5s 循環（透過 loop_sleep 取得硬體感知值） |
+| 其餘 28+ 循環 | **全部** 透過 loop_sleep() | 全部固定頻率 → 現在有硬體感知基本調整 |
 
 #### 缺少的硬體適應
 
@@ -799,9 +800,9 @@ print(f'Total pass statements: {count}')
 | **GPU使用率** | 無人使用 | 視覺處理頻率、訓練頻率 |
 | **磁碟IO** | 無人使用 | 持久化頻率、HAM同步頻率 |
 | **網路延遲** | 無人使用 | 外部API呼叫頻率、同步策略 |
-| **電池模式** | 部分（只檢查<20%） | 全部循環（電池模式時減半頻率） |
+| **電池模式** | HardwareProfile (自動場景偵測) | ✅ 全部循環透過 `loop_sleep()` — 筆電(一般) 0.7x、省電模式 0.5x |
 
-#### 不同硬體的合理值
+#### 不同硬體的合理值 — 現在透過 HardwareProfile + loop_sleep() 自動套用
 
 | 硬體場景 | ANS | 心跳 | 決策 | 神經可塑性 | 敘事 |
 |:---------|:---:|:----:|:----:|:---------:|:----:|
@@ -811,7 +812,15 @@ print(f'Total pass statements: {count}')
 | **低功耗裝置(RPi)** | 5.0s | 60-300s 動態 | 600s | 600s | 7days |
 | **雲端伺服器** | 0.2s | 1-10s 動態 | 30s | 30s | 1day |
 
-**目前情況**: 所有場景使用同一組固定值。只有 Heartbeat 有動態調整（但只根據 stress/arousal，不根據硬體）。
+**目前情況**: HardwareProfile 基本整合完成：`loop_sleep()` 自動套用 multiplier。即時硬體指標 (CPU溫度、GPU負載) 的動態調整為未來工作。
+
+#### 歷史脈絡
+
+```
+2026-06-28: 所有循環使用固定值。只有 Heartbeat 有動態調整（stress/arousal-based）
+2026-06-29: HardwareProfile 建立（§8.6 #5），定義 5 種場景的頻率表
+2026-06-29: loop_sleep() 接線（§8.6 #4 BASIC），所有 32 個循環自動獲得硬體感知
+```
 
 ### 8.5 同步與非同步問題
 
@@ -848,7 +857,7 @@ print(f'Total pass statements: {count}')
 | 1 | **引入 GlobalSystemClock**: 統一時間基準，支援 tick 訂閱 | 🔴 高 | 中 |
 | 2 | **循環頻率標準化**: 合併重複循環、統一語義命名 | ✅ **DONE** (2026-06-29) — Bridge `_wait_for_completion` 改用 `asyncio.Event` 取代 0.05s 輪詢，消除 bridge_fast 與 bridge_poll 其中一個重複循環 |
 | 3 | **事件驅動取代輪詢**: `asyncio.Event()` 取代 80% 的 sleep 輪詢 | 🟢 **PARTIAL** (2026-06-29) — Bridge `_wait_for_completion` 已從 0.05s 輪詢改為 `asyncio.Event` 事件驅動。第一處實作。80+ 處 sleep 輪詢尚待改進 |
-| 4 | **硬體感知動態頻率**: 根據 CPU/GPU/電池動態調整所有循環 | 🟡 中 | 高 |
+| 4 | **硬體感知動態頻率**: 根據 CPU/GPU/電池動態調整所有循環 | 🟢 **BASIC** (2026-06-29) — `loop_sleep()` 現已自動套用 HardwareProfile multiplier。所有 32 個循環現在有硬體感知頻率調整。待改進：個別硬體指標 (CPU溫度、GPU負載) 的即時動態調整。 |
 | 5 | **HardwareProfile**: 定義 5 種硬體場景的預設頻率表 | ✅ **DONE** (2026-06-29) — `hardware_profile.py`: HardwareScenario enum (5 scenarios), FrequencyProfile dataclass (22 interval fields), PROFILES with distinct values for each scenario, HardwareProfile class with auto-detection (env var, CI, headless Linux, ARM, battery, default), runtime overrides, multiplier API. 20 tests pass |
 | 6 | **消除 time.sleep()**: 所有同步 sleep 改為 asyncio.sleep | ✅ **DONE** (2026-06-29) — 確認所有剩餘 `time.sleep()` 呼叫皆在同步/執行緒上下文中 (agent_manager._wait_router_health, agent_manager_extensions subprocess 範例, repl.py 執行緒, execution_monitor 監控執行緒)。非 async 函式中的 `time.sleep()` 為正確用法。§8.6 #6 實質完成 |
 | 7 | **Fire-and-forget 異常處理**: 為所有 create_task 註冊 exception handler | 🟢 **EXTENDED** (2026-06-29) — 又 3 個檔案加入 handler: cyber_identity (1), lifespan broadcast (1)。heartbeat stop 現也清理 _integration_task。總計: 10 task handlers in 7 files + 1 bug fix | 🔴 高 | 低 |

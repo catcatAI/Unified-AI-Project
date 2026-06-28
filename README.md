@@ -114,6 +114,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | **create_task Exception Handlers** | ✅ **EXTENDED** | 10 tasks in 7 files (added cyber_identity, lifespan broadcast). Also fixed heartbeat stop() bug — lacked _integration_task cancel (§8.6 #7) |
 | **Bridge Event-Driven Wait** | ✅ **DONE** | `_wait_for_completion` busy-poll (0.05s, 20Hz) → `asyncio.Event`. Eliminates redundant bridge_fast loop (§8.6 #2/#3) |
 | **HardwareProfile** | ✅ **DONE** | `hardware_profile.py`: 5 hardware scenarios (desktop/laptop/power-saver/low-power/server) + 22 interval fields + auto-detection + runtime overrides. 20 tests (§8.6 #5) |
+| **HardwareProfile → loop_sleep()** | ✅ **DONE** | `magic_numbers.py` now loads HardwareProfile lazily and applies multiplier to all 32+ loops. All loops now hardware-aware (§8.6 #4 BASIC) |
 | **time.sleep() Audit** | ✅ **DONE** | All remaining `time.sleep()` calls verified in sync/thread contexts only. §8.6 #6 effectively complete |
 
 See **[COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md)** (latest audit), **[IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md)** (target), **[COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md)** (plan), **[MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md)** (task provenance), **[CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md)** (causal depth).

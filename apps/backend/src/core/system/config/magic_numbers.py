@@ -8,6 +8,30 @@ import logging
 from typing import Any, Dict, Optional, Union
 
 _MAGIC_CACHE: Dict[str, Any] = {}
+_HARDWARE_PROFILE: Optional[Any] = None  # lazy-loaded HardwareProfile singleton
+
+
+def _get_hardware_profile() -> Optional[Any]:
+    """Lazy-load and cache HardwareProfile singleton.
+
+    Returns None if import fails (graceful degradation).
+    """
+    global _HARDWARE_PROFILE
+    if _HARDWARE_PROFILE is None:
+        try:
+            from core.system.config.hardware_profile import HardwareProfile
+            _HARDWARE_PROFILE = HardwareProfile()
+            logger = logging.getLogger(__name__)
+            logger.info(
+                "HardwareProfile activated: %s (multiplier=%.1f)",
+                _HARDWARE_PROFILE.scenario.value,
+                _HARDWARE_PROFILE.profile.base_multiplier,
+            )
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.debug("HardwareProfile unavailable, using defaults: %s", e)
+            _HARDWARE_PROFILE = False  # sentinel: don't retry
+    return _HARDWARE_PROFILE if _HARDWARE_PROFILE is not False else None
 
 
 def _load_config() -> Optional[Dict[str, Any]]:
@@ -78,7 +102,17 @@ def _safe_int(value: Any, default: Any = None) -> Any:
 
 
 def loop_sleep(key: str, default: float = 1.0) -> float:
-    return _safe_float(_get(key, default), default)
+    """Get loop sleep interval with hardware-aware frequency scaling.
+
+    Returns the configured interval from tiered config, scaled by the
+    HardwareProfile's base_multiplier so that loops run faster on
+    high-performance hardware and slower on power-constrained devices.
+    """
+    base = _safe_float(_get(key, default), default)
+    profile = _get_hardware_profile()
+    if profile is not None:
+        return profile.apply_multiplier(base)
+    return base
 
 
 def timeout_value(key: str, default: float = 30.0) -> float:

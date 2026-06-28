@@ -195,6 +195,7 @@
 | O5 | 更新 INDEX.md 和 UNIFIED_DOCUMENTATION_INDEX.md 以反映文件變動 | ✅ **DONE** (INDEX.md already correct; UNIFIED_DOCUMENTATION_INDEX.md was itself archived to 09-archive/; README.md links updated to point to archive) | P3 |
 | O6 | 為每個主要子系統建立統一的 `__init__.py`（公開 API） | ✅ **DONE** (2026-06-28): 8 `__init__.py` files updated: `ai/core/` created (19 exports), `ai/ed3n/` docstring added (20 exports), `ai/meta/` docstring added (3 exports), `ai/reasoning/` docstring added (DEPRECATED), `core/bio/` `__all__` added (58 exports across 24 modules), `core/perception/` created (16 exports), `core/managers/` created (10 exports). 3 previous O6 files from earlier: `ai/memory/`, `ai/memory/ham_memory/`, `services/`, `services/api/` — total 12 files. Remaining gaps: `ai/context/` (already has both), `ai/garden/` (already has both), `ai/alignment/` (already has both), `ai/response/` (already has both), `ai/lifecycle/` (already has both), `ai/agents/` (already has both), `ai/multimodal/` (already has both), `core/` (already has both). | P4 |
 | O7 | HardwareProfile 硬體場景頻率設定檔 | ✅ **DONE** (2026-06-29): `core/system/config/hardware_profile.py` — 5 scenarios, 22 interval fields, auto-detection, runtime overrides, 20 tests | P2 |
+| O8 | HardwareProfile → loop_sleep() 接線 | ✅ **DONE** (2026-06-29): `magic_numbers.py` 新增 `_get_hardware_profile()` lazy singleton + `loop_sleep()` 自動套用 multiplier。所有 32+ 循環現在有基本硬體感知。§8.6 #4 BASIC | P2 |
 
 ---
 

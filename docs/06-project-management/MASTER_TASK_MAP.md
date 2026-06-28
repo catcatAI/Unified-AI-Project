@@ -705,6 +705,29 @@ The plan claimed to create:
 
 ---
 
+## VI-R. Session Summary — 2026-06-29 (HardwareProfile → loop_sleep integration)
+
+### HardwareProfile wired into loop_sleep() — **DONE** (§8.6 #4 BASIC)
+- `magic_numbers.py`: Added `_HARDWARE_PROFILE` module-level cache + `_get_hardware_profile()` lazy loader
+- `loop_sleep()` now calls `profile.apply_multiplier(base)` when profile is available
+- All 32+ loops now hardware-aware: server/desktop → faster intervals, laptop/power-saver → slower intervals
+- Lazy-loaded singleton: first call imports HardwareProfile, subsequent calls use cached instance
+- Graceful degradation: import failure → False sentinel → all loops use original defaults
+- No circular imports: `hardware_profile.py` imports stdlib + typing only
+- Integration verified: `loop_sleep('test', 2.0)` returns `2.0` on desktop (multiplier=1.0)
+
+### §8.6 #4 status: 🟢 BASIC
+Before: All loops used fixed values regardless of hardware.
+After: All loops automatically scale by HardwareProfile multiplier.
+Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for dynamic runtime adjustment.
+
+### §8.4 status updated
+- Hardware-aware components: From 2 (Heartbeat CPU/battery) → **all loop_sleep() users** + HardwareProfile
+- Battery mode: From partial (<20% check) → **automatic scenario detection** via HardwareProfile
+- Historical context added: timeline of 2026-06-28 → 2026-06-29 progression
+
+---
+
 ## VII. PROJECT_HONEST_AUDIT.md (2026-06-22) — Claims vs Today
 
 ### Stale Claims About Phase 9-11 Deletions
