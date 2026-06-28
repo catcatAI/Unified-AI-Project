@@ -855,7 +855,7 @@ print(f'Total pass statements: {count}')
 | # | 建議 | 影響 | 難度 |
 |:-:|:-----|:----:|:----:|
 | 1 | **引入 GlobalSystemClock**: 統一時間基準，支援 tick 訂閱 | 🔴 高 | 中 |
-| 2 | **循環頻率標準化**: 合併重複循環、統一語義命名 | ✅ **DONE** (2026-06-29) — Bridge `_wait_for_completion` 改用 `asyncio.Event` 取代 0.05s 輪詢，消除 bridge_fast 與 bridge_poll 其中一個重複循環 |
+| 2 | **循環頻率標準化**: 合併重複循環、統一語義命名 | ✅ **DONE** (2026-06-29) — Bridge `_wait_for_completion` 改用 `asyncio.Event` 取代 0.05s 輪詢，消除 bridge_fast 與 bridge_poll 其中一個重複循環。`emotion_tick`(1.0s) 整併至 `emotion_update`(1.0s) — 同一檔案同名同值。`bridge_fast` 重新命名為 `bridge_error_backoff` — 語義明確化。**3/4 重複循環已處理** |
 | 3 | **事件驅動取代輪詢**: `asyncio.Event()` 取代 80% 的 sleep 輪詢 | 🟢 **PARTIAL** (2026-06-29) — Bridge `_wait_for_completion` 已從 0.05s 輪詢改為 `asyncio.Event` 事件驅動。第一處實作。80+ 處 sleep 輪詢尚待改進 |
 | 4 | **硬體感知動態頻率**: 根據 CPU/GPU/電池動態調整所有循環 | 🟢 **BASIC** (2026-06-29) — `loop_sleep()` 現已自動套用 HardwareProfile multiplier。所有 32 個循環現在有硬體感知頻率調整。待改進：個別硬體指標 (CPU溫度、GPU負載) 的即時動態調整。 |
 | 5 | **HardwareProfile**: 定義 5 種硬體場景的預設頻率表 | ✅ **DONE** (2026-06-29) — `hardware_profile.py`: HardwareScenario enum (5 scenarios), FrequencyProfile dataclass (22 interval fields), PROFILES with distinct values for each scenario, HardwareProfile class with auto-detection (env var, CI, headless Linux, ARM, battery, default), runtime overrides, multiplier API. 20 tests pass |

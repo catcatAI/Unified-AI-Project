@@ -285,7 +285,7 @@ class EmotionalBlendingSystem:
                 await asyncio.sleep(loop_sleep("emotion_update", 1.0))  # 1 second update interval
             except Exception as e:  # broad exception acceptable: emotion update loop must be resilient
                 logger.error("Emotion blending update loop error: %s", e, exc_info=True)
-                await asyncio.sleep(loop_sleep("emotion_tick", 1.0))
+                await asyncio.sleep(loop_sleep("emotion_update", 1.0))
 
     async def _update_emotion(self) -> None:
         """Update current emotion toward target or baseline"""
@@ -1032,7 +1032,7 @@ if __name__ == "__main__":
     async def _demo_set_emotion(eb_system):
         logger.info("\n设置情绪状态 / Setting emotional state:")
         eb_system.set_emotion_from_basic(BasicEmotion.JOY, intensity=0.8)
-        await asyncio.sleep(loop_sleep("emotion_tick", 1.0))
+        await asyncio.sleep(loop_sleep("emotion_update", 1.0))
         summary = eb_system.get_emotion_summary()
         logger.info(f"  主要情绪: {summary['dominant_emotion_cn']}")
         logger.info(f"  置信度: {summary['confidence']:.2f}")
@@ -1050,7 +1050,7 @@ if __name__ == "__main__":
         logger.info("\n应用影响因素 / Applying influences:")
         eb_system.apply_influence("physiological", "heart_rate", 0.6, 0.5)
         eb_system.apply_influence("hormonal", "dopamine", 0.7, 0.6)
-        await asyncio.sleep(loop_sleep("emotion_tick", 1.0))
+        await asyncio.sleep(loop_sleep("emotion_update", 1.0))
         summary = eb_system.get_emotion_summary()
         logger.info("  更新后PAD: P=%.2f, A=%.2f", summary['pad_state']['pleasure'], summary['pad_state']['arousal'])
 

@@ -79,7 +79,7 @@
 | **IntentModel 未接入生產管線** | ✅ **FIXED** (2026-06-29) — IntentManager 現已接入 DigitalLifeIntegrator._life_cycle_loop(): 每 30s 生成 homeostatic intents，讀取 get_intent_influence() 3D 向量，以 magnitude×0.1 作為 delta 回寫至 state matrix 維度 (energy/focus/happiness/bond) | `digital_life_integrator.py:_update_intent_state()` |
 | **AutonomousLifeCycle 決策間隔 300s 太慢** | ✅ **FIXED** (2026-06-29) — 預設從 300s (5min) 改為 60s (1min)，§8.6 #8 | `autonomous_life_cycle.py:169` |
 | **核心 background loop 缺少異常處理** | ✅ **DONE** (2026-06-29) — 再 6 個檔案加入 try/except 保護背景循環 (action_execution_bridge, ANS, EmotionalBlending, MultidimensionalTrigger, Neuroplasticity, Tactile)。總計 **16 task handlers in 13 files**。所有背景 loop 皆已保護，§8.6 #7 實質完成。heartbeat stop() 同時修復 _integration_task 未取消 bug。 | §8.6 #7 |
-| **Bridge _wait_for_completion busy-poll 0.05s** | ✅ **FIXED** (2026-06-29) — 改用 asyncio.Event 事件驅動，消除 bridge_fast(0.05s) 與 bridge_poll(0.1s) 其中一個重複循環。第一處事件驅動取代輪詢實作 | `action_execution_bridge.py` §8.6 #2 #3 |
+| **Bridge _wait_for_completion busy-poll 0.05s** | ✅ **FIXED** (2026-06-29) — 改用 asyncio.Event 事件驅動，消除 bridge_fast(0.05s) 與 bridge_poll(0.1s) 其中一個重複循環。第一處事件驅動取代輪詢實作。另整併 `emotion_tick`(1.0s)→`emotion_update`(1.0s)、`bridge_fast`→`bridge_error_backoff` 語義命名。§8.6 #2 進度 3/4 | `action_execution_bridge.py` §8.6 #2 #3 |
 | **HardwareProfile 硬體感知設定檔** | ✅ **DONE** (2026-06-29) — 5 種硬體場景 + 22 循環欄位 + 自動偵測 + runtime overrides。`hardware_profile.py`, 20 tests | `core/system/config/hardware_profile.py` §8.6 #5 |
 | **time.sleep() 全部審計** | ✅ **DONE** (2026-06-29) — 確認所有剩餘 `time.sleep()` 皆在同步/執行緒上下文，§8.6 #6 實質完成 | 多個檔案 §8.6 #6 |
 |------|:------:|------|:---------:|

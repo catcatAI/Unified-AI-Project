@@ -435,7 +435,7 @@ class ActionExecutionBridge:
                     await asyncio.sleep(loop_sleep("bridge_poll", 0.1))
             except Exception as e:  # broad exception acceptable: execution loop must be resilient to prevent silent crash
                 logger.error("%s Execution loop error: %s", _LOG_PREFIX, e, exc_info=True)
-                await asyncio.sleep(loop_sleep("bridge_fast", 0.5))
+                await asyncio.sleep(loop_sleep("bridge_error_backoff", 0.5))
 
     def _get_next_executable_action(self) -> Optional[tuple]:
         """Get the next action that can be executed (dependencies satisfied)"""

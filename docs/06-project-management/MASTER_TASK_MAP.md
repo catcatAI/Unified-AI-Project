@@ -691,6 +691,13 @@ The plan claimed to create:
 
 ## VI-S. Session Summary — 2026-06-29 (create_task exception handlers — all background loops protected)
 
+### §8.6 #2 — Loop frequency consolidation (3/4) — **DONE**
+
+- **emotional_blending.py**: Consolidated `emotion_tick` (1.0s) → `emotion_update` (1.0s). Both keys had the same default value (1.0s) in the same file. Eliminates a redundant sleep key pair.
+- **action_execution_bridge.py**: Renamed `bridge_fast` → `bridge_error_backoff`. `bridge_fast` was the old key for the removed `_wait_for_completion` busy-poll (0.05s), now only used as error fallback at 0.5s. Semantic naming clarifies purpose.
+- **hardware_profile.py**: Renamed `emotion_tick` → `emotion_update` in FrequencyProfile dataclass + all 5 profile instances, keeping hardware profile consistent with actual code.
+- **Effect**: 2 redundant sleep keys eliminated. §8.6 #2 progress: 1/4 → 3/4. Remaining: 1 more loop pair to consolidate.
+
 ### §8.6 #7 — 6 additional background loops protected — **DONE**
 - **action_execution_bridge.py**: `_execution_loop()` — wrapped entire while-loop body in try/except, logs with exc_info, fallback sleep 0.5s
 - **autonomic_nervous_system.py**: `_update_loop()` — try/except, logs with exc_info, fallback sleep 1s
