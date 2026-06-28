@@ -140,7 +140,7 @@ async def _lifecycle_loop(self):
 - 無閉環（執行結果不影響下一次決策）
 - 需要 `execution_callbacks` 的下游消費者接線
 
-### 3.2 CausalReasoningEngine (218L) — ❌ C³ = 0.5/10
+### 3.2 CausalReasoningEngine (218L) — 🟡 C³ = 2.0/10 (was 0.5/10, ✅ fixed 2026-06-28)
 
 ```python
 # 虛假完成範例 #2: 因果引擎不參與因果
@@ -153,15 +153,12 @@ def predict(self, cause, context=None) -> List[Dict]:
 # → Granger 因果、confounding、do-calculus 都是真實演算法，但處於「真空」中
 ```
 
-**問題**:
-- Granger 因果檢定是真實的 ✅
-- 混淆變數偵測是真實的 ✅  
-- do-calculus 干預模擬是真實的 ✅
-- 但所有這些都只是內部狀態，沒有任何外部系統消費它們
-- `predict()` 和 `explain()` 方法存在但沒有 caller
-- `ingest_temporal_state()` 是對 TemporalState 的橋樑，但橋樑終點是死胡同
+**修復摘要**: `predict()` 現已接入 LLM 管線。在 `chat_routes.py` 中新增 `_inject_causal_predictions()`，在 LLM 呼叫前將因果預測注入 context，再由 `prompt_builder.py` 的 `_append_causal_insights()` 將預測加入 LLM prompt。因果鏈: learn → predict → context injection → prompt builder → LLM sees insights。
 
-**因果鏈**: 演算法真實度 = 7/10，系統整合度 = 0/10
+**剩餘問題**:
+- 預測在 Round 1 不會出現（需先學到關係）
+- 尚未形成閉環（LLM 回應後的行為改變不回饋至因果模型）
+- `ingest_temporal_state()` 橋樑已存在但未定期觸發
 
 ### 3.3 EmotionSystem (280L) — ❌ C³ = 1.0/10
 
@@ -365,7 +362,7 @@ class IntentManager:
 | # | 斷裂點 | 影響 | 狀態 |
 |:-:|:-------|:-----|:----:|
 | 1 | **AutonomousLifeCycle decisions → 無人消費** | 自主性核心完全斷裂 | ✅ **FIXED** (commit `40dce741a`) — `_execute_decision()` dispatching to BehaviorExecutor |
-| 2 | **CausalReasoningEngine predictions → 無人消費** | 因果引擎像學院派論文 | 🔴 P0 |
+| 2 | **CausalReasoningEngine predictions → 無人消費** | 因果引擎像學院派論文 | ✅ **FIXED** (commit `78dac066e`) — predict() sends to LLM prompt via _inject_causal_predictions + _append_causal_insights |
 | 3 | **EmotionSystem → 只進 LLM Prompt** | 情感不影響真實行為 | 🔴 P1 |
 | 4 | **MetaController threshold adjustments → 不自動套用** | 適應性學習中斷 | 🟡 P2 |
 | 5 | **IntentModel.generate_homeostatic_intents → pass** | 意圖系統不完整 | 🟡 P2 |
@@ -444,8 +441,8 @@ prompt += f"Current emotional state: {emotion_summary}"
 | **MetaController** | ✅完整 | **3.0/10** | 6/10 | 1 | 50% | 🟡 建議但不執行 |
 | **EmotionSystem** | ✅完整 | **1.0/10** | 7/10 | 1 | 0% | ❌ 只注入文字 |
 | **AutonomousLifeCycle** | ✅完整 | **2.0/10** | 7/10 | 2 | 0% | 🟡 決策已執行 (commit `40dce741a`) |
-| **CausalReasoningEngine** | ✅完整 | **0.5/10** | 6/10 | 0 | 0% | ❌ 真空中的演算法 |
-| **IntentModel** | ❌未完成 | **0.1/10** | 3/10 | 0 | 0% | ❌ 一半是 pass |
+| **CausalReasoningEngine** | ✅完整 | **2.0/10** | 7/10 | 1 | 0% | 🟡 predict() 已接入 LLM prompt (commit `78dac066e`) |
+| **IntentModel** | ✅完整 | **1.0/10** | 5/10 | 1 | 0% | 🟡 stubs 已實作，但意圖尚未被消費 |
 
 ### 5.2 整體自主性分數
 
@@ -491,7 +488,7 @@ After:  decision → dispatch → BehaviorExecutor records → execution callbac
 
 **Causal depth 更新**: 0.1→2.0/10（決策現在確實被執行，但尚未形成閉環）
 
-### 6.2 P0（必須修復）— 因果引擎接入
+### 6.2 P0（必須修復）— 因果引擎接入 ✅（已修復 2026-06-28）
 
 **目標**: 讓 CausalReasoningEngine 的預測影響系統行為
 
@@ -499,6 +496,13 @@ After:  decision → dispatch → BehaviorExecutor records → execution callbac
 Before: learn → store → end
 After:  learn → predict → context injection → LLM sees insights → behavioral change
 ```
+
+**已實作** (commit `78dac066e`):
+- `_inject_causal_predictions()` 在 LLM 前呼叫 `causal.predict()`
+- `_append_causal_insights()` 將預測 formatted 加入 prompt
+- 鏈: predict() → context injection → prompt builder → LLM sees insights
+
+**Causal depth 更新**: 0.5→2.0/10（預測現在確實進入 LLM prompt，但尚未形成閉環）
 
 **驗證方式**: `test_causal_prediction_affects_routing()` — 驗證因果預測改變路由選擇
 
@@ -655,7 +659,7 @@ Component_A.state_change → Component_B.detect() → Component_B.behavior_chang
 | 組件 | 阻塞原因 | 需完成的工作 |
 |:-----|:---------|:-------------|
 | ✅ **AutonomousLifeCycle** | 修復完成 (commit `40dce741a`) | `_execute_decision()` 已加入，分派至 BehaviorExecutor |
-| ❌ **CausalReasoningEngine** | predict() 無人消費 | 接入至少一個下游消費者 |
+| ✅ **CausalReasoningEngine** | 修復完成 (commit `78dac066e`) | predict() 已接入 LLM prompt 管線 (chat_routes._inject_causal_predictions → prompt_builder._append_causal_insights) |
 | ❌ **EmotionSystem** | apply_influence() 是空殼 | 實作情緒→行為的真實映射 |
 | ❌ **IntentModel** | 2/5 方法是 pass | 實作 scan_memory_proximity 和 generate_homeostatic_intents |
 | ❌ **DigitalLifeIntegrator** | 3/6 狀態無行為 | 補齊 INITIALIZING, AWAKENING, DORMANT 行為 |

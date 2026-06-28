@@ -244,6 +244,7 @@ def construct_angela_prompt(
     _append_dialogue_context(messages, context)
     _append_recent_memories(messages, context)
     _append_causal_insights(messages, context)
+    _append_emotional_behavior(messages, context)
     _append_draft_response(messages, context)
 
     messages.append({"role": "user", "content": f"<user_message>{user_message}</user_message>"})
@@ -461,6 +462,41 @@ def _append_recent_memories(messages: List[Dict], context: Dict) -> None:
         mem_type = mem.get("memory_type", "unknown")
         block += f"- [{mem_type}] {content}\n"
     messages.append({"role": "user", "content": block})
+
+
+def _append_emotional_behavior(messages: List[Dict], context: Dict) -> None:
+    """Append emotional behavioral adjustments to the system prompt.
+
+    Reads context["emotional_behavior"] (user emotion → routing_mode/response_style)
+    and context["angela_emotion"] (Angela's internal emotional state)
+    and injects them as behavioral guidance into the LLM prompt.
+    """
+    behavior = context.get("emotional_behavior")
+    angela_emotion = context.get("angela_emotion")
+    if not behavior and not angela_emotion:
+        return
+
+    block = "\n\n---\n"
+
+    if behavior:
+        routing_mode = behavior.get("routing_mode", "neutral")
+        response_style = behavior.get("response_style", "standard")
+        block += f"[Emotional Behavior Guidance]\n"
+        block += f"- User emotion suggests routing_mode: {routing_mode}\n"
+        block += f"- Recommended response_style: {response_style}\n"
+        if routing_mode == "conservative":
+            block += "- ⚠️ User may be distressed — prioritize safety and empathy in your response.\n"
+        elif routing_mode == "exploratory":
+            block += "- User appears receptive — you can be more creative and expressive.\n"
+
+    if angela_emotion:
+        block += f"\n[Angela's Emotional State]\n"
+        block += f"- Current emotion: {angela_emotion.get('emotional_state', 'neutral')} "
+        block += f"(intensity: {angela_emotion.get('emotion_intensity', 0.5):.2f})\n"
+        block += f"- Valence: {angela_emotion.get('valence', 0.0):.2f}, "
+        block += f"Arousal: {angela_emotion.get('arousal', 0.0):.2f}\n"
+
+    messages[0]["content"] += block
 
 
 def _append_causal_insights(messages: List[Dict], context: Dict) -> None:

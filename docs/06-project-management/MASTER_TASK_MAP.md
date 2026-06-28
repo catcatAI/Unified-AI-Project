@@ -468,6 +468,34 @@ The plan claimed to create:
 ## VI-G. Session Summary — 2026-06-28 (intent stub + causal chain principles)
 
 ### IntentModel stub elimination — **DONE**
+
+---
+
+## VI-H. Session Summary — 2026-06-28 (CausalReasoningEngine wiring)
+
+---
+
+## VI-I. Session Summary — 2026-06-29 (EmotionSystem behavioral driving)
+
+### EmotionSystem → behavioral driving — **DONE**
+- **`emotion_system.py`**: `apply_influence()` was a no-op stub — now maps 12 influence types (dopamine/adrenaline/cortisol/stress/joy/fear/anger/calm/etc.) to PAD (Pleasure/Arousal/Dominance) deltas and modifies internal emotional state. Added `_cap_emotion_history()` to cap at 1000 entries. Added `get_behavioral_adjustment()` — maps current `EmotionType` to `routing_mode` (conservative/exploratory/neutral) and `response_style` (soothing/empathetic/enthusiastic/warm/etc.).
+- **`chat_routes.py`**: Added `_get_emotion_system()` singleton, `_ANGELA_EMOTION_BEHAVIOR_MAP` (8 emotion → routing/response mappings), `_inject_emotion_behavioral_context()` wired into pipeline Step 5 (after emotion analysis). Injects both `context["emotional_behavior"]` (user emotion guidance) and `context["angela_emotion"]` (Angela's internal state).
+- **`prompt_builder.py`**: Added `_append_emotional_behavior()` — reads both context keys, formats them as behavioral guidance for the LLM. Wired into `construct_angela_prompt()` callback chain.
+- **Causal chain**: User message → EmotionAnalyzer → emotion_result → _inject_emotion_behavioral_context → context[emotional_behavior + angela_emotion] → prompt builder → LLM sees guidance.
+- **Causal depth**: 1.0→2.0/10 (emotion now drives prompt-level behavioral context, not just text injection).
+
+### Test Count
+- **4,840** collected (unchanged)
+- **30 emotion system tests pass** (was 30 — no regressions)
+
+### CausalReasoningEngine predict() wired into LLM pipeline — **DONE**
+- **`chat_routes.py`**: Added `_inject_causal_predictions()` — calls `causal.predict("user_input")` before LLM call, injects `causal_insights` dict into context.
+- **`prompt_builder.py`**: Added `_append_causal_insights()` — reads `context["causal_insights"]` and appends formatted predictions to LLM system prompt.
+- **Chain**: `causal.predict()` → context injection → prompt builder reads context → LLM sees formatted insights.
+- **Note**: Predictions only appear from Round 2+ (need prior learn() calls).
+- **Causal depth**: 0.5→2.0/10.
+
+### IntentModel stub elimination — **DONE**
 - **`scan_memory_proximity()`**: Previously bare `pass` stub (L85-86). Now iterates state dimensions, queries bridge for spatially proximate memories (`retrieve_by_spatial_proximity(x, y, z, radius=5.0)`), creates EXPLORATION intents from results. Handles empty bridge returns gracefully.
 - **`generate_homeostatic_intents()`**: Previously bare `pass` stub (L88-89). Now checks each dimension's energy/happiness/bond against 0.3 threshold. Creates HOMEOSTASIS intents for dimensions below threshold with urgency proportional to deficit.
 - **Test verifications**: `test_scan_memory_proximity_empty_bridge_returns_no_intents` ✅, `test_generate_homeostatic_intents_high_energy_no_new_intent` ✅ — all 16/16 pass.

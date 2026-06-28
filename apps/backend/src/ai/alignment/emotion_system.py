@@ -278,13 +278,131 @@ class EmotionSystem:
     def _calculate_arousal(self, features: Dict[str, float]) -> float:
         return features.get("stress_level", 0.5)
 
+    def _cap_emotion_history(self, max_len: int = 1000) -> None:
+        """Cap emotion history to prevent unbounded growth."""
+        if len(self.emotion_history) > max_len:
+            self.emotion_history = self.emotion_history[-max_len:]
+
     def apply_influence(self, source: str, type: str, value: float, intensity: float) -> None:
-        """外部激素或事件對情緒的影響"""
-        logger.debug(f"[{self.system_id}] Influence from {source}: {type} = {value}")
+        """外部激素或事件對情緒的影響 — 真實影響情緒狀態 (PAD 模型)"""
+        logger.debug(f"[{self.system_id}] Influence from {source}: {type} = {value} (intensity={intensity})")
+
+        # Cap history before adding new state
+        self._cap_emotion_history()
+
+        # Ensure we have a base emotional state to influence
+        if not self.emotion_history:
+            state = EmotionalState(
+                primary_emotion=EmotionType.TRUST,
+                emotion_intensity=0.5,
+                secondary_emotions={},
+                valence=0.0,
+                arousal=0.5,
+            )
+            self.emotion_history.append(state)
+
+        last = self.emotion_history[-1]
+        effective = value * intensity
+
+        # Map influence type to (valence_delta, arousal_delta, dominance_delta)
+        influence_map = {
+            "dopamine": (0.3, 0.2, 0.1),
+            "adrenaline": (0.0, 0.4, 0.1),
+            "cortisol": (-0.2, 0.3, -0.2),
+            "serotonin": (0.2, 0.0, 0.1),
+            "oxytocin": (0.3, -0.1, 0.0),
+            "stress": (-0.3, 0.3, -0.1),
+            "joy": (0.4, 0.1, 0.1),
+            "fear": (-0.3, 0.5, -0.3),
+            "sadness": (-0.3, -0.2, -0.2),
+            "anger": (-0.2, 0.4, 0.2),
+            "calm": (0.1, -0.2, 0.0),
+            "heart_rate": (0.0, 0.2, 0.0),
+            "sensitivity": (-0.1, 0.1, -0.1),
+            "boost": (0.2, 0.1, 0.1),
+            "negative_thought": (-0.3, 0.1, -0.2),
+        }
+
+        d_valence, d_arousal, d_dominance = influence_map.get(type, (0.0, 0.0, 0.0))
+
+        new_valence = max(-1.0, min(1.0, last.valence + d_valence * effective))
+        new_arousal = max(0.0, min(1.0, last.arousal + d_arousal * effective))
+
+        # Determine primary emotion from new PAD values
+        if new_valence > 0.3 and new_arousal > 0.5:
+            new_emotion = EmotionType.JOY
+        elif new_valence > 0.3 and new_arousal <= 0.5:
+            new_emotion = EmotionType.TRUST
+        elif new_valence < -0.3 and new_arousal > 0.5:
+            new_emotion = EmotionType.ANGER if new_valence < -0.3 and d_dominance > 0 else EmotionType.FEAR
+        elif new_valence < -0.3 and new_arousal <= 0.5:
+            new_emotion = EmotionType.SADNESS
+        elif new_arousal > 0.6:
+            new_emotion = EmotionType.SURPRISE
+        else:
+            new_emotion = last.primary_emotion
+
+        new_intensity = min(1.0, last.emotion_intensity + abs(effective) * 0.2)
+
+        influenced_state = EmotionalState(
+            primary_emotion=new_emotion,
+            emotion_intensity=new_intensity,
+            secondary_emotions={},
+            valence=new_valence,
+            arousal=new_arousal,
+        )
+        self.emotion_history.append(influenced_state)
+        logger.debug(f"[{self.system_id}] Emotion influenced: {last.primary_emotion.value} -> {new_emotion.value} "
+                     f"(valence: {last.valence:.2f}->{new_valence:.2f}, arousal: {last.arousal:.2f}->{new_arousal:.2f})")
 
     def update_value_weight(self, dimension: ValueDimension, weight: float) -> None:
         """Update the value weight."""
         self.value_weights[dimension] = weight
+
+    def get_behavioral_adjustment(self) -> Dict[str, Any]:
+        """Map current emotional state to behavioral routing adjustments.
+
+        Returns routing_mode and response_style recommendations that
+        can be injected into the chat pipeline context.
+        """
+        if not self.emotion_history:
+            return {"routing_mode": "neutral", "response_style": "standard", "emotional_state": "neutral"}
+
+        last = self.emotion_history[-1]
+
+        routing_map = {
+            EmotionType.FEAR: "conservative",
+            EmotionType.ANGER: "conservative",
+            EmotionType.SADNESS: "conservative",
+            EmotionType.JOY: "exploratory",
+            EmotionType.TRUST: "exploratory",
+            EmotionType.SURPRISE: "exploratory",
+            EmotionType.DISGUST: "conservative",
+            EmotionType.ANTICIPATION: "exploratory",
+        }
+
+        style_map = {
+            EmotionType.FEAR: "soothing",
+            EmotionType.SADNESS: "empathetic",
+            EmotionType.ANGER: "calming",
+            EmotionType.JOY: "enthusiastic",
+            EmotionType.TRUST: "warm",
+            EmotionType.SURPRISE: "curious",
+            EmotionType.DISGUST: "guarded",
+            EmotionType.ANTICIPATION: "encouraging",
+        }
+
+        routing_mode = routing_map.get(last.primary_emotion, "neutral")
+        response_style = style_map.get(last.primary_emotion, "standard")
+
+        return {
+            "routing_mode": routing_mode,
+            "response_style": response_style,
+            "emotional_state": last.primary_emotion.value,
+            "emotion_intensity": last.emotion_intensity,
+            "valence": last.valence,
+            "arousal": last.arousal,
+        }
 
     def get_emotion_history(self, limit: int = 100) -> List[EmotionalState]:
         """Get the emotion history by self."""

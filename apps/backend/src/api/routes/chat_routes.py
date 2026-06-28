@@ -130,6 +130,7 @@ def _get_dialogue_ctx():
 
 
 _emotion_analyzer = None
+_emotion_system = None
 
 
 def _get_emotion_analyzer():
@@ -138,6 +139,14 @@ def _get_emotion_analyzer():
         from services.llm.emotion_analyzer import EmotionAnalyzer
         _emotion_analyzer = EmotionAnalyzer()
     return _emotion_analyzer
+
+
+def _get_emotion_system():
+    global _emotion_system
+    if _emotion_system is None:
+        from ai.alignment.emotion_system import EmotionSystem
+        _emotion_system = EmotionSystem()
+    return _emotion_system
 
 
 _state_matrix = None
@@ -149,6 +158,49 @@ def _get_state_matrix():
         from core.engine.state_matrix import StateMatrix4D
         _state_matrix = StateMatrix4D()
     return _state_matrix
+
+
+# Behavioral adjustments mapped by detected emotion
+_ANGELA_EMOTION_BEHAVIOR_MAP = {
+    "joy": {"routing_mode": "exploratory", "response_style": "enthusiastic"},
+    "trust": {"routing_mode": "exploratory", "response_style": "warm"},
+    "fear": {"routing_mode": "conservative", "response_style": "soothing"},
+    "surprise": {"routing_mode": "exploratory", "response_style": "curious"},
+    "sadness": {"routing_mode": "conservative", "response_style": "empathetic"},
+    "disgust": {"routing_mode": "conservative", "response_style": "guarded"},
+    "anger": {"routing_mode": "conservative", "response_style": "calming"},
+    "anticipation": {"routing_mode": "exploratory", "response_style": "encouraging"},
+}
+
+
+def _inject_emotion_behavioral_context(
+    emotion_result: Optional[Dict[str, Any]],
+    context: Dict[str, Any],
+) -> None:
+    """Inject emotional behavioral adjustments into context.
+
+    Maps detected user emotion to routing_mode and response_style
+    so that the LLM prompt receives behavioral guidance beyond
+    just the emotion text. Also updates Angela's internal EmotionSystem.
+    """
+    if not emotion_result:
+        return
+    emotion = emotion_result.get("emotion", "neutral")
+    behavior = _ANGELA_EMOTION_BEHAVIOR_MAP.get(emotion, {
+        "routing_mode": "neutral", "response_style": "standard"
+    })
+    context["emotional_behavior"] = behavior
+
+    # Apply influence to Angela's EmotionSystem for internal state tracking
+    try:
+        es = _get_emotion_system()
+        if es:
+            intensity = emotion_result.get("intensity", 0.5)
+            es.apply_influence("user_message", emotion, intensity * 0.3, 0.5)
+            adj = es.get_behavioral_adjustment()
+            context["angela_emotion"] = adj
+    except Exception as e:
+        logger.debug(f"EmotionSystem behavioral injection failed: {e}")
 
 
 # =============================================================================
@@ -499,11 +551,10 @@ def _inject_causal_predictions(
     try:
         causal = get_causal_reasoning()
         if causal:
-            # Predict effects of the current user input
             predictions = causal.predict("user_input")
             if predictions:
                 context["causal_insights"] = {
-                    "predictions": predictions[:3],  # Top 3 predictions
+                    "predictions": predictions[:3],
                     "has_causal_data": len(causal.get_relationships()) > 0,
                     "total_relationships": len(causal.get_relationships()),
                 }
@@ -622,6 +673,8 @@ async def _handle_chat_request(
     emotion_result, crisis_level = await _analyze_emotion_and_crisis(user_message, context, bio)
     if emotion_result:
         context["emotion"] = emotion_result
+        # Step 5b: Inject emotional behavioral context (routing_mode + response_style)
+        _inject_emotion_behavioral_context(emotion_result, context)
     if crisis_level > 0:
         context["crisis_level"] = crisis_level
         context["crisis_instruction"] = (
