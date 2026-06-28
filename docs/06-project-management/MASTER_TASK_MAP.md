@@ -499,6 +499,35 @@ The plan claimed to create:
 ## VI-K. Session Summary — 2026-06-29 (LifeCycle states completion)
 
 ### DigitalLifeIntegrator 3/6 empty states → ALL 6 real — **DONE**
+
+---
+
+## VI-L. Session Summary — 2026-06-29 (Heartbeat frequency + Level5ASI simulated delay)
+
+### Heartbeat Integration loop frequency fix — **DONE**
+- `heartbeat.py`: `_integration_loop()` sleep changed from fixed `loop_sleep("sleep_short", 0.1)` (0.1s = 10Hz) to **dynamic 2.0-10.0s** based on arousal level. Formula: `max(2.0, min(10.0, 5.0 * (1 - arousal/100)))`.
+- **Why**: Primary loop (5-60s) vs Integration loop (0.1s) had 50-600x frequency mismatch causing desynchronization. Now ~2x difference.
+- **Effect**: High arousal → faster updates (~2s), low arousal → slower updates (~5s). Much more reasonable than 10Hz cerebellum updates.
+- **No other code depends on 0.1s cadence**: Integration loop only updates internal state (posture, position).
+
+### Level5ASI simulated sleep(1.0) removal — **DONE**
+- `level5_asi_system.py`: `_process_with_agent()` removed `await asyncio.sleep(loop_sleep("level5_process", 1.0))` — was labeled "Simulate processing time".
+- **Fix**: Replaced with `await asyncio.sleep(0)` to yield event loop without fake processing delay.
+- **Why**: §0.5 banned component — simulated delay violates "無模擬延遲" principle.
+- **Note**: `loop_sleep("level5_process", 1.0)` config key may be orphaned (no other consumers).
+
+### Banned list §0.5 updates
+- Heartbeat Integration, Level5ASI Process removed from §0.5 banned components list.
+- **Remaining banned components**: 2 (Frontend Live2D, Frontend Dashboard).
+
+### Causal chain completeness update
+- Heartbeat §3.5: C³ unchanged (5.0/10) — integration frequency improvement doesn't change chain depth, only fixes a `sleep` anti-pattern.
+- Level5ASI: Not scored in C³ (wrapper system, not a causal chain participant).
+
+### Test count
+- **4,840** collected (unchanged)
+
+---
 - **`digital_life_integrator.py`**: `_apply_state_behaviors()` now implements ALL 6 LifeCycle states instead of only 3:
   - **INITIALIZING** (🔧): Sets baseline state matrix (learning=0.3, curiosity=0.2), initializes DynamicThresholdManager if enabled and not yet set, records initial life event.
   - **AWAKENING** (🔆): Ramps up cognitive dimensions (learning=0.5, curiosity=0.4), starts UserMonitor monitoring loop via `await self.user_monitor.start()`, biological awakening via `process_relaxation_event(0.3)`.

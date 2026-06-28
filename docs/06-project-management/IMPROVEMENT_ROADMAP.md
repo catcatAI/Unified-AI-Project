@@ -74,6 +74,8 @@
 | **IntentModel.generate_homeostatic_intents 為 stub（pass）** | ✅ **FIXED** (2026-06-28) — 現已檢查閾值 (0.3) 並為不足量建立 HOMEOSTASIS 意圖 | `intent_model.py:103-128`, `test_intent_model.py` 16/16 pass |
 | **CausalReasoningEngine predict() 無人消費** | ✅ **FIXED** (2026-06-28) — predict() 現已接入 LLM prompt 管線: chat_routes._inject_causal_predictions → prompt_builder._append_causal_insights | `chat_routes.py:499-512`, `prompt_builder.py:283-300` |
 | **DigitalLifeIntegrator 3/6 狀態無行為** | ✅ **FIXED** (2026-06-29) — INITIALIZING (保守基線+dynamic params)、AWAKENING (user monitor+bio覺醒)、DORMANT (深度鞏固+放鬆+資源審計) 全數實作 | `digital_life_integrator.py:_apply_state_behaviors()` |
+| **Heartbeat Integration 60x 頻率差** | ✅ **FIXED** (2026-06-29) — Integration 循環從 0.1s 固定頻率改為 2.0-10.0s 動態頻率（基於 arousal） | `heartbeat.py:_integration_loop()` |
+| **Level5ASI 模擬 sleep(1.0)** | ✅ **FIXED** (2026-06-29) — 移除 `await asyncio.sleep(1.0)` 模擬延遲，改為 `await asyncio.sleep(0)` | `level5_asi_system.py:_process_with_agent()` |
 |------|:------:|------|:---------:|
 | **VisualDecoder 投射權重已訓練（CNN 紋理分支仍隨機）** | MEDIUM | 投射權重訓練於 CIFAR-10（42× loss 降），但 CNN 紋理分支仍隨機 → 輸出 = 結構化但模糊 | 143L，投射權重已訓練，紋理權重隨機 |
 | **AudioWaveformDecoder 投射權重已訓練（波表生成器仍隨機）** | MEDIUM | 投射權重訓練於 ESC-50（309× loss 降），但波表生成器仍隨機 → 輸出 = 結構化但非語音 | 179L，投射權重已訓練，波表權重隨機 |

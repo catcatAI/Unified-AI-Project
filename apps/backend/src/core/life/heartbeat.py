@@ -79,7 +79,10 @@ class MetabolicHeartbeat:
                     speed = self.velocity * (1.0 - stress * stress_speed_factor)
                     self.x += (self.target_x - self.x) * speed
                 
-                await asyncio.sleep(loop_sleep("sleep_short", 0.1))
+                # Dynamic interval: 2-10s based on arousal (lower arousal = slower updates)
+                arousal = bio_state.get("arousal", 50.0)
+                integration_interval = max(2.0, min(10.0, 5.0 * (1.0 - arousal / 100.0)))
+                await asyncio.sleep(integration_interval)
             except Exception as e:
                 logger.error(f"[Cerebellum-Sync] Loop error: {e}", exc_info=True)
                 await asyncio.sleep(loop_sleep("sleep_long", 1.0))

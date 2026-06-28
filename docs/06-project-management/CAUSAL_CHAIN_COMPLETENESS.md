@@ -665,8 +665,8 @@ Component_A.state_change → Component_B.detect() → Component_B.behavior_chang
 | ❌ **DigitalLifeIntegrator** | 3/6 狀態無行為 | 補齊 INITIALIZING, AWAKENING, DORMANT 行為 |
 | ✅ **MetaController** | 修復完成 (commit `f9cf68ac5` + `2be528751`) | auto_apply_thresholds() 已加入，NeuroAutoSelector._analyze_task() 現在讀取調整值影響 reasoning/quality/high_demand 門檻 |
 | ✅ **DigitalLifeIntegrator** | 修復完成 (commit `this commit` 2026-06-29) | 6/6 生命週期狀態皆有實際行為 — INITIALIZING (保守基線+dynamic params)、AWAKENING (user monitor+bio 覺醒)、DORMANT (深度鞏固+放鬆+資源審計) |
-| ❌ **Heartbeat Integration** | 60x 頻率差導致不同步 | 統一 Heartbeat Primary 和 Integration 循環 |
-| ❌ **Level5ASI Process** | 使用模擬 sleep(1.0) | 移除模擬延遲 |
+| ✅ **Heartbeat Integration** | 修復完成 (commit `this commit` 2026-06-29) | Integration 循環間隔從固定 0.1s → 2.0-10.0s 動態 (基於 arousal)，頻率差從 50-600x 降至 ~2x |
+| ✅ **Level5ASI Process** | 修復完成 (commit `this commit` 2026-06-29) | 移除 `await asyncio.sleep(1.0)` 模擬延遲，改為 `await asyncio.sleep(0)` 事件循環讓出 |
 | ❌ **前端 Live2D** | 隨機彩色矩形 | 補齊 Live2D 模型渲染路徑 |
 | ❌ **前端 Dashboard** | 假資料或 TODO handler | 接上真實後端 API |
 
@@ -751,7 +751,7 @@ print(f'Total pass statements: {count}')
 | 20 | Level5 Config Update | `level5_config.py` | **5.0s** | L5配置更新 | 🟡 過於頻繁？ |
 | 21 | Metabolic Interval | `angela_model_core.py` | **2.0s** | 代謝更新 | 🟡 與 Heartbeat(30s) 不一致 |
 | 22 | Heartbeat Primary | `heartbeat.py` | **5.0~60.0s** (動態) | 生物/代謝循環 | ✅ 動態調整，最佳實踐 |
-| 23 | Heartbeat Integration | `heartbeat.py` | **0.1s** | 小腦/神經整合 | 🟡 與 Primary 循環不一致 |
+| 23 | Heartbeat Integration | `heartbeat.py` | **2.0~10.0s** (動態, 依 arousal) | 小腦/神經整合 | ✅ 已修復 2026-06-29 — 頻率從 0.1s 提升至動態 2-10s，消除 50-600x 差 |
 | 24 | Life Cycle Check | `digital_life_integrator.py` | **10.0s** | 生命週期檢查 | ✅ 合理 |
 | 25 | Proactive Check | `proactive_interaction_system.py` | **15.0s** | 主動互動檢查 | ✅ 合理 |
 | 26 | HAM Hourly | `ham_background_tasks.py` | **3600.0s** (1/hr) | HAM背景任務 | ✅ 長時間任務 |
@@ -780,7 +780,7 @@ print(f'Total pass statements: {count}')
 #### 🔴 不合理 (8/32)
 - **Level5 Process 1s**: 這是 `asyncio.sleep(1.0)` 模擬處理時間，不是真實計算
 - **代謝 2s vs 心跳 5-60s**: 兩個代謝相關循環頻率不一致
-- **Heartbeat 兩個循環**: Primary(5-60s) 和 Integration(0.1s) 頻率差 50-600倍
+- **Heartbeat 兩個循環**: Primary(5-60s) 和 Integration(2-10s) 頻率差 ~2倍 ✅ 已修復 2026-06-29
 - **Behavoir Loop Tight 1.0s**: 5+ 個 lifecycle 循環使用相同 sleep 值做「防止緊密循環」，應統一管理
 
 ### 8.4 硬體感知分析

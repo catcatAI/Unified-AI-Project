@@ -644,7 +644,8 @@ class Level5ASISystem:
             )
 
             await agent.handle_task_request(request, self.system_id, envelope)
-            await asyncio.sleep(loop_sleep("level5_process", 1.0))  # Simulate processing time
+            # Allow event loop to process other tasks — real work done by handle_task_request
+            await asyncio.sleep(0)
 
             return {
                 "status": "success",
