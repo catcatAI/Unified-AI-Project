@@ -51,7 +51,7 @@
 | **Chat 管線 9 階段** | WS → 情緒 → 危機 → 對齊 → 閘門 → 路由 → LLM → 學習 → 回應 | 整合測試 | ✅ 完整接線 |
 | **CLP（持續學習）** | ED3NTrainer 已接線至聊天管線 + 獨立模式 | 整合測試 | ✅ 已接線，字典成長有效 |
 | **CML（持續多模態學習）** | 自主微訓練已接線至 encode 路徑，共用生產管線 | 20 CML 測試通過 + 21 多模態服務測試通過 | ✅ 每次編碼後自動微訓練 |
-| **測試數量** | pytest 收集 | 4,785 測試 | ✅ 41 skipped，0 errors |
+| **測試數量** | pytest 收集 | 4,826 測試 | ✅ 0 skipped/0 errors |
 
 ### 1.2 無法驗證的優勢（數據不足）
 
@@ -75,13 +75,13 @@
 | **AudioWaveformDecoder 投射權重已訓練（波表生成器仍隨機）** | MEDIUM | 投射權重訓練於 ESC-50（309× loss 降），但波表生成器仍隨機 → 輸出 = 結構化但非語音 | 179L，投射權重已訓練，波表權重隨機 |
 | **SequenceGenerator 權重隨機** | HIGH | RNN 架構真實，輸出 = 隨機向量 | 212L，權重 seed=42 |
 | **ImageGenerator 管線未訓練** | HIGH | 灰色畫布或隨機形狀（CLIP 降級為 hash(text)） | 200L+，4 元件串接但無訓練 |
-| **CerebellumEngine 樁模組** | MEDIUM | 27L，interpolate() 為 no-op，標示「等待完整實作」 | 27L 樁模組 |
-| **PerceptionEngine 寫死值** | MEDIUM | visual confidence=0.85 hardcoded | 100L，80L 可執行 |
-| **AttentionController 樁模組** | MEDIUM | 33L，無顯著性計算，無 IOR，無掃描路徑 | 33L 無計算 |
-| **AuditoryAttention 空類別** | MEDIUM | 20L，別名至 AttentionController（本身為樁模組） | 20L 空類別 |
+| **CerebellumEngine 已實作 ✅ DONE** | LOW | 27L→172L，姿勢庫（站立/行走/坐/伸手）+ 應力調節顫抖模型 + 本體感覺誤差修正 + 內插 | `core/bio/cerebellum_engine.py` (172L) |
+| **PerceptionEngine 已實作 ✅ DONE** | LOW | 100L→158L，動態信心度（取樣粒子計數 + 時間平滑）+ 動態顯著性 + 跨模態衝突偵測 | `core/perception/perception_engine.py` (158L) |
+| **AttentionController 已實作 ✅ DONE** | LOW | 33L→164L，顯著性地圖（中心偏置 + 對比度）+ IOR + 掃描路徑 + 候選評分 | `core/perception/attention_controller.py` (164L) |
+| **AuditoryAttention 已清理 ✅ DONE** | LOW | 20L→10L，空類別已移除，保留向後相容別名至 AttentionController | `core/perception/auditory_attention.py` (10L) |
 | **TaskGenerator 核心邏輯完成（已接線至 PrecomputeService）** | LOW | `predict_next_query()` + `generate_tasks()` + `analyze_patterns()` 已實作。已接線至 `AngelaLLMService::_schedule_precompute_tasks()`，每次成功回應後自動分析模式並排入預計算佇列。`_history` 有上限（1000），支援 per-user 隔離。 | 91L，9 測試通過 |
 | **AdversarialGenerationSystem 核心邏輯完成（已接線至生產）** | LOW | 10 種對抗模式 + `evaluate_robustness()`（含中英文拒絕關鍵字、無文字偵測、語言比例）已實作。生產接線：`Level5ASISystem.process_request()` 每次請求後自動執行 `_run_adversarial_evaluation()` + 綜合測試包含對抗穩健性。`get_average_robustness()` 提供聚合分數。 | 115L，9 測試通過 |
-| **CausalReasoningEngine 僅 Pearson** | MEDIUM | 99L，無時間因果、無混淆變數、無 do-calculus | 99L 骨架 |
+| **CausalReasoningEngine 已實作 ✅ DONE** | LOW | 99L→218L，Granger 因果（F 檢定）+ 混淆變數偵測（偏相關）+ do-calculus 干預模擬 + 因果 DAG | `ai/reasoning/causal_reasoning_engine.py` (218L)，14 新測試通過 |
 | **CML pipeline 已接線至生產元件** | LOW | CML 現在與 MultimodalService 共享訓練管線：micro-training 直接改善生產編碼/解碼。孤立管線問題已修復。 | `multimodal_service.py:160` 將生產管線傳遞給 CML |
 | **CML 已接線至生產 encode 路徑** | FIXED | CML 現在透過 `_encode_impl()` 在每次成功編碼後自動記錄並作微訓練，且與 MultimodalService 共用訓練管線（非孤立）。 | `multimodal_service.py:387-398` 嵌入 encode |
 | **Live2D 頭像圖片層為隨機矩形** | LOW | model3.json 有效，但圖片為隨機彩色矩形 | 206L＋樁模組 |
@@ -143,8 +143,8 @@
 
 | # | 項目 | 優先級 | 難度 | 目前 | 目標 |
 |---|------|:------:|:----:|:----:|:----:|
-| T1 | 訓練 VisualDecoder（128×128 RGB via transposed conv） | P1 | 中 | 投射權重已訓練（42× loss 降），CNN 紋理分支仍隨機 | 可辨識 128×128 影像 |
-| T2 | 訓練 AudioWaveformDecoder（多頻帶波表合成） | P1 | 高 | 投射權重已訓練（309× loss 降），波表生成器仍隨機 | 可聽語音/音樂 |
+| T1 | 訓練 VisualDecoder（128×128 RGB via transposed conv） | P1 | 中 | 投射權重已訓練（42× loss 降），CNN 紋理分支仍隨機（random seed=42） | 可辨識 128×128 影像 |
+| T2 | 訓練 AudioWaveformDecoder（多頻帶波表合成） | P1 | 高 | 投射權重已訓練（309× loss 降），波表生成器仍隨機（random seed=42） | 可聽語音/音樂 |
 | T3 | 訓練 SequenceGenerator（RNN + BPTT，CLIP→原始序列） | P1 | 高 | 權重隨機 → 隨機向量 | 合理的原始序列輸出 |
 | T4 | 訓練完整 GVV 文生圖管線（ImageGenerator） | P1 | 高 | 灰色畫布/隨機形狀 | 文字→幾何影像 |
 | T5 | 訓練 ThreeLayerVisual（PCA + 非線性解碼器）於真實資料 | P2 | 中 | 選擇性載入 PCA 檔案 | 自動訓練 PCA |
@@ -240,7 +240,7 @@ O1, O2, O6 → 程式碼組織
 ### 4.1 測試覆蓋
 
 ```bash
-# 執行所有測試（基線：4,785）
+# 執行所有測試（基線：4,826）
 pytest tests/ apps/backend/tests/ --collect-only -q
 
 # 測量基線完成後，每次變更保持或增加計數

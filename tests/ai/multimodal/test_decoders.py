@@ -75,6 +75,30 @@ class TestVisualDecoder:
         after = visual_decoder.decode(l)
         assert not np.array_equal(before, after)
 
+    def test_set_texture_weights(self, visual_decoder):
+        W_hidden_new = np.zeros((64, 64), dtype=np.float32)
+        visual_decoder.set_texture_weights(W_hidden_new)
+        assert np.allclose(visual_decoder._W_hidden, W_hidden_new)
+
+    def test_set_texture_weights_partial(self, visual_decoder):
+        """Partial call only updates what's given."""
+        saved = visual_decoder._b_hidden.copy()
+        W_hidden_new = np.full((64, 64), 0.5, dtype=np.float32)
+        visual_decoder.set_texture_weights(W_hidden_new)
+        assert np.allclose(visual_decoder._b_hidden, saved)
+
+    def test_save_and_load_weights(self, visual_decoder, tmp_path):
+        from ai.multimodal.visual_decoder import (VisualDecoder,
+                                                   save_visual_decoder_weights,
+                                                   load_default_visual_decoder_weights)
+        save_path = str(tmp_path / "test_weights.npz")
+        assert save_visual_decoder_weights(visual_decoder, save_path)
+        decoder2 = VisualDecoder()
+        assert load_default_visual_decoder_weights(decoder2, save_path)
+        assert np.allclose(decoder2._W, visual_decoder._W)
+        assert np.allclose(decoder2._W_hidden, visual_decoder._W_hidden)
+        assert np.allclose(decoder2._tex_kernels, visual_decoder._tex_kernels)
+
 
 class TestAudioWaveformDecoder:
 

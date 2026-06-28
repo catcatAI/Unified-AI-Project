@@ -73,7 +73,7 @@ mypy apps/backend/src                    # Type check
 pre-commit run --all-files
 ```
 
-> ✅ **NOTE (Updated 2026-06-28)**: Cumulative session of 61 commits. Extended previous 59-commit session with: **§X #6 DONE** — last 3 algorithmic functions >100L refactored. **R1/R2/R3 DONE** — all 3 perception/motor stubs now real. **§X #27 DONE** — CausalReasoningEngine 99L skeleton→218L real: Granger causality, confounding detection via partial correlation, do-calculus intervention, causal graph, 14 new unit tests. **U5 DONE** — bandit + safety security scanning in `pyproject.toml` + `ci.yml`. **§X #33 DONE** — TemporalState↔CausalReasoningEngine bridge: `to_observations()` export + `ingest_temporal_state()` consumer, 14 integration tests. **All previously identified stubs now eliminated** (CausalReasoningEngine was the last one). Test count: **4,837** (default, +14 new temporal-causal tests), **0 collection errors**.
+> ✅ **NOTE (Updated 2026-06-28)**: Cumulative session of 64 commits. Extended previous 61-commit session with: §X #34 — `save_visual_decoder_weights()` function + `FullTrainingPipeline` texture save extension + 3 new tests. **All previously identified stubs continue to remain eliminated** (0 stubs). `save_visual_decoder_weights` completes the save/load symmetry for VisualDecoder texture training — all 7 weight arrays (2 projection + 5 texture) can now be saved/loaded. Test count: **4,826** (21 decoder tests), **0 collection errors**.
 > 
 
 > ✅ **NOTE (Updated 2026-06-19)**: Phases A-D complete.

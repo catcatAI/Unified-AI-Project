@@ -145,16 +145,37 @@ class VisualDecoder:
         if b is not None and b.shape == self._b.shape:
             self._b = b.astype(np.float32)
 
+    def set_texture_weights(self, W_hidden: np.ndarray, b_hidden: Optional[np.ndarray] = None,
+                            W_featmap: Optional[np.ndarray] = None,
+                            b_featmap: Optional[np.ndarray] = None,
+                            tex_kernels: Optional[np.ndarray] = None) -> None:
+        """Inject trained weights for the CNN texture branch.
 
-def load_default_visual_decoder_weights(decoder: VisualDecoder, weights_path: Optional[str] = None) -> bool:
+        Matches the pattern of set_projection() for training pipeline compatibility.
+        """
+        if W_hidden.shape == self._W_hidden.shape:
+            self._W_hidden = W_hidden.astype(np.float32)
+        if b_hidden is not None and b_hidden.shape == self._b_hidden.shape:
+            self._b_hidden = b_hidden.astype(np.float32)
+        if W_featmap is not None and W_featmap.shape == self._W_featmap.shape:
+            self._W_featmap = W_featmap.astype(np.float32)
+        if b_featmap is not None and b_featmap.shape == self._b_featmap.shape:
+            self._b_featmap = b_featmap.astype(np.float32)
+        if tex_kernels is not None and tex_kernels.shape == self._tex_kernels.shape:
+            self._tex_kernels = tex_kernels.astype(np.float32)
+
+
+def load_default_visual_decoder_weights(
+    decoder: VisualDecoder, weights_path: Optional[str] = None
+) -> bool:
     """Load pre-trained visual decoder weights from p29_trained.npz.
 
+    Supports both projection weights and texture branch weights.
     Returns True if weights were loaded, False otherwise.
     """
     if weights_path is None:
-        # visual_decoder.py → multimodal → ai → src → backend → apps → root
-        weights_path = str(Path(__file__).resolve().parent.parent.parent.parent.parent.parent /
-                          "data" / "multimodal" / "weights" / "p29_trained.npz")
+        root = Path(__file__).resolve().parent.parent.parent.parent.parent.parent
+        weights_path = str(root / "data" / "multimodal" / "weights" / "p29_trained.npz")
     wpath = Path(weights_path)
     if not wpath.exists():
         logger.debug("No pre-trained visual decoder weights at %s", wpath)
@@ -164,8 +185,43 @@ def load_default_visual_decoder_weights(decoder: VisualDecoder, weights_path: Op
         if "visual_decoder_W" in data:
             decoder._W = data["visual_decoder_W"]
             decoder._b = data.get("visual_decoder_b", decoder._b)
-            logger.info("Loaded pre-trained visual decoder weights from %s", wpath)
+            logger.info("Loaded pre-trained visual decoder projection from %s", wpath)
+        if "texture_W_hidden" in data:
+            decoder._W_hidden = data["texture_W_hidden"]
+            decoder._b_hidden = data.get("texture_b_hidden", decoder._b_hidden)
+            decoder._W_featmap = data.get("texture_W_featmap", decoder._W_featmap)
+            decoder._b_featmap = data.get("texture_b_featmap", decoder._b_featmap)
+            decoder._tex_kernels = data.get("texture_tex_kernels", decoder._tex_kernels)
+            logger.info("Loaded pre-trained texture branch weights from %s", wpath)
             return True
+        return bool("visual_decoder_W" in data)
     except Exception as e:
         logger.warning("Failed to load visual decoder weights: %s", e)
     return False
+
+
+def save_visual_decoder_weights(decoder: VisualDecoder, save_path: str) -> bool:
+    """Save all VisualDecoder weights (projection + texture) to a .npz file.
+
+    Returns True on success, False on failure.
+    """
+    try:
+        np.savez_compressed(
+            save_path,
+            visual_decoder_W=decoder._W,
+            visual_decoder_b=decoder._b,
+            texture_W_hidden=decoder._W_hidden,
+            texture_b_hidden=decoder._b_hidden,
+            texture_W_featmap=decoder._W_featmap,
+            texture_b_featmap=decoder._b_featmap,
+            texture_tex_kernels=decoder._tex_kernels,
+        )
+        logger.info("Saved visual decoder weights (%d params) to %s",
+                    decoder._W.size + decoder._b.size + decoder._W_hidden.size +
+                    decoder._b_hidden.size + decoder._W_featmap.size +
+                    decoder._b_featmap.size + decoder._tex_kernels.size,
+                    save_path)
+        return True
+    except Exception as e:
+        logger.error("Failed to save visual decoder weights: %s", e)
+        return False

@@ -304,6 +304,11 @@ class FullTrainingPipeline:
                 "audio_b": aud.get("b", np.zeros(1)).copy(),
                 "visual_decoder_W": self._visual_decoder._W.copy(),
                 "visual_decoder_b": self._visual_decoder._b.copy(),
+                "texture_W_hidden": self._visual_decoder._W_hidden.copy(),
+                "texture_b_hidden": self._visual_decoder._b_hidden.copy(),
+                "texture_W_featmap": self._visual_decoder._W_featmap.copy(),
+                "texture_b_featmap": self._visual_decoder._b_featmap.copy(),
+                "texture_tex_kernels": self._visual_decoder._tex_kernels.copy(),
                 "audio_decoder_W": self._audio_decoder._W.copy(),
                 "audio_decoder_b": self._audio_decoder._b.copy(),
             }

@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **4,823 collected / 41 skipped** (4,839~ with slow tests) on 2026-06-28 (was 4,815 Jun 28 — +8 from new causal reasoning tests).
+> **Test count baseline**: `pytest` (full testpaths) = **4,826 collected / 0 errors** on 2026-06-28 (was 4,823 Jun 28 — +3 new decoder texture tests).
 
 ---
 
@@ -371,6 +371,35 @@ The plan claimed to create:
 
 ---
 
+## VI-D. Session Summary — 2026-06-28 (continuation, +1 commit, save_visual_decoder_weights)
+
+### save_visual_decoder_weights() — **DONE**
+- Added `save_visual_decoder_weights()` module-level function — symmetric with existing `load_default_visual_decoder_weights()`.
+- Saves all 7 weight arrays (projection 2: _W, _b + texture 5: _W_hidden, _b_hidden, _W_featmap, _b_featmap, _tex_kernels).
+- Uses `np.savez_compressed()` for space efficiency.
+- Returns True on success, False on failure with logging.
+
+### FullTrainingPipeline.save_weights() texture extension — **DONE**
+- Extended `save_weights()` in `training_pipeline.py` to include 5 texture arrays alongside existing projection weights.
+- Now saves `texture_W_hidden`, `texture_b_hidden`, `texture_W_featmap`, `texture_b_featmap`, `texture_tex_kernels`.
+- Ensures future training runs preserve texture branch weights for later fine-tuning.
+
+### 3 new tests — **PASS (21/21 total)**
+- `test_set_texture_weights`: Full injection of W_hidden
+- `test_set_texture_weights_partial`: Partial injection leaves other weights unchanged
+- `test_save_and_load_weights`: Roundtrip save → new VisualDecoder → load → verify all 7 arrays match
+
+### flake8 fixes
+- Fixed line length (E501) on `load_default_visual_decoder_weights` signature
+- Fixed continuation indent (E128) on weights_path construction
+- Fixed trailing newline (W292)
+
+### Test Count
+- **4,826** (21 decoder tests all pass)
+- **0 collection errors**
+
+---
+
 ## VII. PROJECT_HONEST_AUDIT.md (2026-06-22) — Claims vs Today
 
 ### Stale Claims About Phase 9-11 Deletions
@@ -501,6 +530,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | 31 | **Formula → Emotion → Response behavioral impact (L5)** | ✅ **DONE** (commit `dd19635fe`, Jun 28). 12 new tests quantify the chain: (1) Formula-derived cognitive/hormonal/physiological influences measurably shift PAD emotional state; (2) Emotion category_map selects distinct template categories; (3) Formula summaries propagate into prompt content. All 12 pass. | `tests/unit/test_formula_behavioral_impact.py` — 12 tests across 3 classes (Formula→Emotion, Emotion→Response, Formula→Prompt) | — |
 | 32 | **CI security scanning (bandit + safety) ✅ DONE** | Added `[tool.bandit]` and `[tool.safety]` sections to `pyproject.toml`. bandit excludes test dirs, skips 5 rules allowed by project conventions (assert/broad-except/random/pickle/subprocess). safety configured with default vulnerability DB. Both tools added as CI steps in `.github/workflows/ci.yml` after flake8/mypy. | `pyproject.toml` (tool.bandit, tool.safety sections), `.github/workflows/ci.yml` (2 new steps) | Fills security scanning gap identified in the project audit |
 | 33 | **TemporalState ↔ CausalReasoningEngine bridge ✅ DONE** | Added `TemporalState.to_observations()` — exports time-series history as causal observation dicts (one per axis, field → value list). Added `CausalReasoningEngine.ingest_temporal_state()` — consumes `TemporalState` data and feeds it through Granger causality + confounding detection. 14 new integration tests cover export, ingest, and end-to-end predict/explain/graph. | `temporal.py` (to_observations), `causal_reasoning_engine.py` (ingest_temporal_state), `tests/unit/test_temporal_causal_integration.py` (14 tests) | Connects temporal trends to causal inference pipeline |
+| 34 | **save_visual_decoder_weights ✅ DONE** | Added `save_visual_decoder_weights()` standalone function — symmetric with existing `load_default_visual_decoder_weights()`. Saves all 7 weight arrays (projection 2 + texture 5) to .npz. `FullTrainingPipeline.save_weights()` also extended to include 5 texture arrays. Added 3 new tests (`test_set_texture_weights`, `test_set_texture_weights_partial`, `test_save_and_load_weights`). | `visual_decoder.py` (save_visual_decoder_weights), `training_pipeline.py` (save_weights texture arrays), `test_decoders.py` (3 new tests) | Completes save/load symmetry for texture branch training pipeline |
 
 ### §X Summary — Industry-Comparable Maturity Assessment
 
