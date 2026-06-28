@@ -109,7 +109,7 @@
 | # | 項目 | 檔案 | 優先級 | 難度 |
 |---|------|------|:------:|:----:|
 | R1 | 實作 CerebellumEngine — 真實本體感覺/姿勢內插 | `core/bio/cerebellum_engine.py` (27L) | P3 | 高 |
-| R2 | 實作 AttentionController — 顯著性計算、IOR、掃描路徑 | `core/perception/attention_controller.py` (33L) | P3 | 高 |
+| R2 | 實作 AttentionController — 顯著性計算、IOR、掃描路徑 | ✅ **DONE** (2026-06-28): 33L→164L. Added saliency map computation (center-bias + contrast via local std), Inhibition of Return (configurable radius/duration, auto-pruning), scan path + fixation history tracking, candidate scoring with IOR-aware selection, `compute_saliency_map()`, `get_scan_path()`, `get_fixation_history()`, `set_time()`, `get_saliency_at()`. Backward compatible: 3 existing tests pass, `AuditoryAttentionController` alias unchanged. | `core/perception/attention_controller.py` (164L) | P3 | 高 |
 | R3 | 實作 PerceptionEngine — 真實融合、模糊度解析 | `core/perception/perception_engine.py` (100L) | P3 | 高 |
 | R4 | 實作 TaskGenerator — 真實任務預測/分解 | ✅ **DONE** (commit `fba3fb14b`, Jun 28) | `ai/memory/task_generator.py` (46→91L) + `router.py` (_schedule_precompute_tasks) | P4 | 中 |
 | R5 | 實作 AdversarialGenerationSystem — 真實對抗訓練 | ✅ **DONE** (commit `43129d437`, Jun 28) | `ai/alignment/adversarial_generation_system.py` (65→115L) + `level5_asi_system.py` (_run_adversarial_evaluation) | P4 | 高 |
