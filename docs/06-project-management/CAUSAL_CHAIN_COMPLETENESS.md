@@ -846,8 +846,8 @@ print(f'Total pass statements: {count}')
 | # | 建議 | 影響 | 難度 |
 |:-:|:-----|:----:|:----:|
 | 1 | **引入 GlobalSystemClock**: 統一時間基準，支援 tick 訂閱 | 🔴 高 | 中 |
-| 2 | **循環頻率標準化**: 合併重複循環、統一語義命名 | 🟡 中 | 低 |
-| 3 | **事件驅動取代輪詢**: `asyncio.Event()` 取代 80% 的 sleep 輪詢 | 🟡 中 | 中 |
+| 2 | **循環頻率標準化**: 合併重複循環、統一語義命名 | ✅ **DONE** (2026-06-29) — Bridge `_wait_for_completion` 改用 `asyncio.Event` 取代 0.05s 輪詢，消除 bridge_fast 與 bridge_poll 其中一個重複循環 |
+| 3 | **事件驅動取代輪詢**: `asyncio.Event()` 取代 80% 的 sleep 輪詢 | 🟢 **PARTIAL** (2026-06-29) — Bridge `_wait_for_completion` 已從 0.05s 輪詢改為 `asyncio.Event` 事件驅動。第一處實作。80+ 處 sleep 輪詢尚待改進 |
 | 4 | **硬體感知動態頻率**: 根據 CPU/GPU/電池動態調整所有循環 | 🟡 中 | 高 |
 | 5 | **HardwareProfile**: 定義 5 種硬體場景的預設頻率表 | 🟡 中 | 低 |
 | 6 | **消除 time.sleep()**: 所有同步 sleep 改為 asyncio.sleep | 🔴 高 | 低 |

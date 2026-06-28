@@ -79,6 +79,7 @@
 | **IntentModel 未接入生產管線** | ✅ **FIXED** (2026-06-29) — IntentManager 現已接入 DigitalLifeIntegrator._life_cycle_loop(): 每 30s 生成 homeostatic intents，讀取 get_intent_influence() 3D 向量，以 magnitude×0.1 作為 delta 回寫至 state matrix 維度 (energy/focus/happiness/bond) | `digital_life_integrator.py:_update_intent_state()` |
 | **AutonomousLifeCycle 決策間隔 300s 太慢** | ✅ **FIXED** (2026-06-29) — 預設從 300s (5min) 改為 60s (1min)，§8.6 #8 | `autonomous_life_cycle.py:169` |
 | **核心 background loop 缺少異常處理** | ✅ **EXTENDED** (2026-06-29) — 7 個檔案 10 個 create_task 已加入異常日誌 (digital_life_integrator, autonomous_life_cycle, heartbeat, event_loop_system, cyber_identity, lifespan broadcast)。heartbeat stop() 同時修復 _integration_task 未取消 bug | §8.6 #7 |
+| **Bridge _wait_for_completion busy-poll 0.05s** | ✅ **FIXED** (2026-06-29) — 改用 asyncio.Event 事件驅動，消除 bridge_fast(0.05s) 與 bridge_poll(0.1s) 其中一個重複循環。第一處事件驅動取代輪詢實作 | `action_execution_bridge.py` §8.6 #2 #3 |
 |------|:------:|------|:---------:|
 | **VisualDecoder 投射權重已訓練（CNN 紋理分支仍隨機）** | MEDIUM | 投射權重訓練於 CIFAR-10（42× loss 降），但 CNN 紋理分支仍隨機 → 輸出 = 結構化但模糊 | 143L，投射權重已訓練，紋理權重隨機 |
 | **AudioWaveformDecoder 投射權重已訓練（波表生成器仍隨機）** | MEDIUM | 投射權重訓練於 ESC-50（309× loss 降），但波表生成器仍隨機 → 輸出 = 結構化但非語音 | 179L，投射權重已訓練，波表權重隨機 |

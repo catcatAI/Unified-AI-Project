@@ -629,6 +629,28 @@ The plan claimed to create:
 
 ### Test count
 - **4,840** collected (unchanged)
+
+---
+
+## VI-P. Session Summary — 2026-06-29 (Event-driven completion + loop consolidation)
+
+### Bridge _wait_for_completion: busy-poll → asyncio.Event — **DONE**
+- `action_execution_bridge.py`: `_wait_for_completion()` was a busy-poll loop sleeping `loop_sleep("bridge_fast", 0.05)` every iteration (20Hz) while waiting for an action to complete.
+- **Fix**: Replaced with `asyncio.Event` event-driven pattern:
+  1. Event created in `execute_action()` **before** queuing (prevents race condition)
+  2. Waiter does `await event.wait()` — zero CPU while waiting
+  3. Event `.set()` in `_execute_action()` `finally` block **after** result stored in `_completed_actions`
+  4. Event `.set()` also in `cancel_action()` — prevents waiter from hanging on cancellation
+  5. Event removed from dict after `wait()` returns — no memory leak
+- **Eliminates one of the two "redundant" bridge loops** (§8.6 #2) — `bridge_fast` (0.05s) sleep key becomes unused.
+- **First event-driven pattern deployment** (§8.6 #3) — replaces 20Hz polling with zero-CPU wait.
+
+### §8.6 #2 progress: 1/4 redundant loops resolved (Bridge Poll vs Bridge Fast)
+### §8.6 #3 progress: 1/80+ polling → event-driven
+
+### Test count
+- **4,840** collected (unchanged — 36 bridge tests: 29 pass, 7 pre-existing failures)
+- **7 pre-existing failures** confirmed by testing original committed code — my changes caused zero regressions
 - **`emotion_system.py`**: `apply_influence()` was a no-op stub — now maps 12 influence types (dopamine/adrenaline/cortisol/stress/joy/fear/anger/calm/etc.) to PAD (Pleasure/Arousal/Dominance) deltas and modifies internal emotional state. Added `_cap_emotion_history()` to cap at 1000 entries. Added `get_behavioral_adjustment()` — maps current `EmotionType` to `routing_mode` (conservative/exploratory/neutral) and `response_style` (soothing/empathetic/enthusiastic/warm/etc.).
 - **`chat_routes.py`**: Added `_get_emotion_system()` singleton, `_ANGELA_EMOTION_BEHAVIOR_MAP` (8 emotion → routing/response mappings), `_inject_emotion_behavioral_context()` wired into pipeline Step 5 (after emotion analysis). Injects both `context["emotional_behavior"]` (user emotion guidance) and `context["angela_emotion"]` (Angela's internal state).
 - **`prompt_builder.py`**: Added `_append_emotional_behavior()` — reads both context keys, formats them as behavioral guidance for the LLM. Wired into `construct_angela_prompt()` callback chain.

@@ -270,6 +270,9 @@ class ActionExecutionBridge:
         self._semaphore = asyncio.Semaphore(self._max_concurrent)
         self._execution_task: Optional[asyncio.Task] = None
 
+        # Completion events for event-driven wait (replaces busy-poll)
+        self._completion_events: dict[str, asyncio.Event] = {}
+
         # History persistence
         raw_path = self.config.get("history_path", None)
         self._history_file = Path(raw_path).expanduser() if raw_path else Path.home() / ".angela" / "action_history.json"
@@ -389,8 +392,13 @@ class ActionExecutionBridge:
         self._priority_queue.sort(key=lambda x: x[0])  # Sort by priority
 
         if wait_for_completion:
-            # Wait for execution completion
-            return await self._wait_for_completion(action_id)
+            # Create event before queuing (prevents race: action could complete before we await)
+            event = asyncio.Event()
+            self._completion_events[action_id] = event
+            # Wait for execution completion (event-driven, no busy-poll)
+            await event.wait()
+            self._completion_events.pop(action_id, None)
+            return self._completed_actions[action_id]
         else:
             # Return immediately with pending status
             return ExecutionResult(
@@ -528,12 +536,9 @@ class ActionExecutionBridge:
                 if self.cdm:
                     await self._send_feedback_to_cdm(result)
 
-    async def _wait_for_completion(self, action_id: str) -> ExecutionResult:
-        """Wait for an action to complete"""
-        while action_id in self._executing_actions or action_id not in self._completed_actions:
-            await asyncio.sleep(loop_sleep("bridge_fast", 0.05))
-
-        return self._completed_actions[action_id]
+                # Signal completion event (wakes up any waiter without busy-poll)
+                if action_id in self._completion_events:
+                    self._completion_events[action_id].set()
 
     async def _get_system_context(self) -> dict[str, Any]:
         """Get current system context"""
@@ -1084,6 +1089,9 @@ class ActionExecutionBridge:
                     error_message="Action cancelled by user",
                 )
                 self._completed_actions[action_id] = result
+                # Signal completion so any waiter doesn't hang forever
+                if action_id in self._completion_events:
+                    self._completion_events[action_id].set()
                 return True
 
         return False
