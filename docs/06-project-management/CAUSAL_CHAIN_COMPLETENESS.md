@@ -278,30 +278,23 @@ async def _apply_state_behaviors(self, state):
 - `_compute_maturity_score` 依賴 state_matrix，但又用 state_matrix 的 `evaluate_math_spatially` 計算 — 潛在遞迴問題
 - DORMANT 狀態無自動轉入條件（只能透過 `force_state()` 到達）
 
-### 3.7 IntentModel (80L) — ❌ C³ = 0.1/10
+### 3.7 IntentModel (80L) — 🟡 C³ = 2.0/10 (was 0.1/10, ✅ fixed 2026-06-29)
 
-```python
-class SelfIntent:
-    # 完整的意圖資料結構 ✅
-    category: IntentCategory
-    target_coordinate: Tuple[float, float, float]
-    urgency: float
-    strength: float
-    decay_rate: float
+**修復摘要**: IntentManager 現已接入 DigitalLifeIntegrator 的實際生產管線。
 
-class IntentManager:
-    def add_intent(self, intent): ...      # ✅
-    def update_intents(self, delta): ...    # ✅ 強度隨時間衰減
-    def get_intent_influence(self, dim): ... # ✅
-    
-    def scan_memory_proximity(self, ...):  # ❌ pass
-    def generate_homeostatic_intents(self): # ❌ pass
-```
+- **Stub 修復** (commit `e713db0e0` 2026-06-28): `scan_memory_proximity()` 和 `generate_homeostatic_intents()` 從 pass 改為真實實作。
+- **下游消費接線** (commit `this commit` 2026-06-29): DigitalLifeIntegrator._life_cycle_loop() 每 30s 呼叫 `_update_intent_state()`，包含：
+  1. 從 state matrix 取得當前狀態快照
+  2. 呼叫 `generate_homeostatic_intents()` 生成 homeostatic 意圖
+  3. 呼叫 `update_intents()` 衰減意圖強度
+  4. 讀取 `get_intent_influence()` 的 3D 向量，計算 magnitude
+  5. 將 magnitude×0.1 作為 delta 回寫至 state matrix 對應維度 (energy/focus/happiness/bond)
 
-**問題**:
-- 資料結構完整但 2/5 方法是空殼 ❌
-- 意圖只存在記憶體中，沒有 component 消費 `get_intent_influence()` ❌
-- 沒有 homeostatic 意圖生成（意圖不會自動產生）❌
+**因果鏈**: state matrix snapshot → generate_homeostatic_intents → update_intents → get_intent_influence → state matrix update (閉合)
+
+**剩餘問題**:
+- `scan_memory_proximity()` 未被定期呼叫（需要 memory_bridge，可能不存在）
+- 意圖影響僅 mapping 到單一維度參數（energy/focus/happiness/bond），未使用完整 3D 座標
 
 ---
 
@@ -440,7 +433,7 @@ prompt += f"Current emotional state: {emotion_summary}"
 | **EmotionSystem** | ✅完整 | **2.0/10** | 7/10 | 2 | 0% | 🟡 行為驅動 (commit `f9cf68ac5`) |
 | **AutonomousLifeCycle** | ✅完整 | **2.0/10** | 7/10 | 2 | 0% | 🟡 決策已執行 (commit `40dce741a`) |
 | **CausalReasoningEngine** | ✅完整 | **2.0/10** | 7/10 | 1 | 0% | 🟡 predict() 已接入 LLM prompt (commit `78dac066e`) |
-| **IntentModel** | ✅完整 | **1.0/10** | 5/10 | 1 | 0% | 🟡 stubs 已實作，但意圖尚未被消費 |
+| **IntentModel** | ✅完整 | **2.0/10** (was 1.0) | 6/10 | 2 | 0% | 🟡 已接線至 DigitalLifeIntegrator 管線，get_intent_influence() → state matrix (this commit) |
 
 ### 5.2 整體自主性分數
 
@@ -660,8 +653,8 @@ Component_A.state_change → Component_B.detect() → Component_B.behavior_chang
 |:-----|:---------|:-------------|
 | ✅ **AutonomousLifeCycle** | 修復完成 (commit `40dce741a`) | `_execute_decision()` 已加入，分派至 BehaviorExecutor |
 | ✅ **CausalReasoningEngine** | 修復完成 (commit `78dac066e`) | predict() 已接入 LLM prompt 管線 (chat_routes._inject_causal_predictions → prompt_builder._append_causal_insights) |
-| ❌ **EmotionSystem** | apply_influence() 是空殼 | 實作情緒→行為的真實映射 |
-| ❌ **IntentModel** | 2/5 方法是 pass | 實作 scan_memory_proximity 和 generate_homeostatic_intents |
+| ✅ **EmotionSystem** | 修復完成 (commit `f9cf68ac5`) | apply_influence() 真實 PAD 映射 + get_behavioral_adjustment() 情緒→行為接線 |
+| ✅ **IntentModel** | 修復完成 (commits `e713db0e0` + `this commit` 2026-06-29) | stubs 已實作 + 已接入 DigitalLifeIntegrator 管線，get_intent_influence() 實際驅動 state matrix 更新 |
 | ❌ **DigitalLifeIntegrator** | 3/6 狀態無行為 | 補齊 INITIALIZING, AWAKENING, DORMANT 行為 |
 | ✅ **MetaController** | 修復完成 (commit `f9cf68ac5` + `2be528751`) | auto_apply_thresholds() 已加入，NeuroAutoSelector._analyze_task() 現在讀取調整值影響 reasoning/quality/high_demand 門檻 |
 | ✅ **DigitalLifeIntegrator** | 修復完成 (commit `this commit` 2026-06-29) | 6/6 生命週期狀態皆有實際行為 — INITIALIZING (保守基線+dynamic params)、AWAKENING (user monitor+bio 覺醒)、DORMANT (深度鞏固+放鬆+資源審計) |

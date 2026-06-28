@@ -76,6 +76,7 @@
 | **DigitalLifeIntegrator 3/6 狀態無行為** | ✅ **FIXED** (2026-06-29) — INITIALIZING (保守基線+dynamic params)、AWAKENING (user monitor+bio覺醒)、DORMANT (深度鞏固+放鬆+資源審計) 全數實作 | `digital_life_integrator.py:_apply_state_behaviors()` |
 | **Heartbeat Integration 60x 頻率差** | ✅ **FIXED** (2026-06-29) — Integration 循環從 0.1s 固定頻率改為 2.0-10.0s 動態頻率（基於 arousal） | `heartbeat.py:_integration_loop()` |
 | **Level5ASI 模擬 sleep(1.0)** | ✅ **FIXED** (2026-06-29) — 移除 `await asyncio.sleep(1.0)` 模擬延遲，改為 `await asyncio.sleep(0)` | `level5_asi_system.py:_process_with_agent()` |
+| **IntentModel 未接入生產管線** | ✅ **FIXED** (2026-06-29) — IntentManager 現已接入 DigitalLifeIntegrator._life_cycle_loop(): 每 30s 生成 homeostatic intents，讀取 get_intent_influence() 3D 向量，以 magnitude×0.1 作為 delta 回寫至 state matrix 維度 (energy/focus/happiness/bond) | `digital_life_integrator.py:_update_intent_state()` |
 |------|:------:|------|:---------:|
 | **VisualDecoder 投射權重已訓練（CNN 紋理分支仍隨機）** | MEDIUM | 投射權重訓練於 CIFAR-10（42× loss 降），但 CNN 紋理分支仍隨機 → 輸出 = 結構化但模糊 | 143L，投射權重已訓練，紋理權重隨機 |
 | **AudioWaveformDecoder 投射權重已訓練（波表生成器仍隨機）** | MEDIUM | 投射權重訓練於 ESC-50（309× loss 降），但波表生成器仍隨機 → 輸出 = 結構化但非語音 | 179L，投射權重已訓練，波表權重隨機 |

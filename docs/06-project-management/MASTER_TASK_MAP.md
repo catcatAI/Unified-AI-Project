@@ -549,6 +549,44 @@ The plan claimed to create:
 
 ---
 
+## VI-M. Session Summary — 2026-06-29 (IntentModel wiring into DigitalLifeIntegrator)
+
+### IntentManager wired into production DigitalLifeIntegrator pipeline — **DONE**
+
+- **`digital_life_integrator.py`**:
+  - Added `from .intent_model import IntentManager` import (same-directory, no circular import).
+  - Added `self.intent_manager = IntentManager()` in `__init__()`.
+  - Added `self._intent_update_interval = 30.0` and `self._last_intent_update` tracking.
+  - Added `await self._update_intent_state()` call in `_life_cycle_loop()` (after `_update_dynamic_parameters()`).
+  - Added `import math` (needed for `sqrt()` in magnitude computation).
+
+- **New `_update_intent_state()` method**:
+  1. Runs every 30s (configurable via `_intent_update_interval`).
+  2. Gets state matrix snapshot via `self.state_matrix.get_state()`.
+  3. Calls `intent_manager.generate_homeostatic_intents(state_snapshot)` — generates HOMEOSTASIS intents for dimensions below 0.3 threshold.
+  4. Calls `intent_manager.update_intents(delta_time=3.0)` — decays intent strengths.
+  5. Iterates alpha/beta/gamma/delta dimensions, reads `get_intent_influence(dim)` 3D vector, computes magnitude via `math.sqrt(sum(v*v))`.
+  6. Applies `magnitude * 0.1` as delta to dimension-specific values (energy/focus/happiness/bond), clamped to [0, 1].
+  7. Catches all exceptions as non-critical (graceful degradation).
+
+- **Causal chain**: state matrix snapshot → generate_homeostatic_intents → update_intents → get_intent_influence → state matrix update (closed loop!)
+- **Causal depth**: IntentModel 1.0→2.0/10 (now drives state matrix updates in production pipeline).
+
+### Fixes applied during review
+- **Import**: All imports correct — `IntentManager` in same directory (no circular import), `math` added for `sqrt()`.
+- **Edge cases**: 30s interval with time-based gate prevents over-frequent updates. Empty state → no intents generated → no influence applied. Exceptions caught as non-critical.
+- **Note**: `scan_memory_proximity()` not called (requires memory_bridge, may not exist). Homeostatic intents are the primary driver.
+
+### Test count
+- **4,840** collected (unchanged)
+- **21 intent model tests pass** (was 16 — existing tests pass, no regressions)
+
+### §0.5 banned components update
+- IntentModel removed from §0.5 banned list (stubs eliminated + production wiring complete).
+- **Remaining §0.5 banned**: 2 (Frontend Live2D, Frontend Dashboard).
+
+---
+
 ### EmotionSystem → behavioral driving — **DONE**
 - **`emotion_system.py`**: `apply_influence()` was a no-op stub — now maps 12 influence types (dopamine/adrenaline/cortisol/stress/joy/fear/anger/calm/etc.) to PAD (Pleasure/Arousal/Dominance) deltas and modifies internal emotional state. Added `_cap_emotion_history()` to cap at 1000 entries. Added `get_behavioral_adjustment()` — maps current `EmotionType` to `routing_mode` (conservative/exploratory/neutral) and `response_style` (soothing/empathetic/enthusiastic/warm/etc.).
 - **`chat_routes.py`**: Added `_get_emotion_system()` singleton, `_ANGELA_EMOTION_BEHAVIOR_MAP` (8 emotion → routing/response mappings), `_inject_emotion_behavioral_context()` wired into pipeline Step 5 (after emotion analysis). Injects both `context["emotional_behavior"]` (user emotion guidance) and `context["angela_emotion"]` (Angela's internal state).

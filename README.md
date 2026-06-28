@@ -109,6 +109,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | **LifeCycle 6/6 States** | ✅ **DONE** | INITIALIZING, AWAKENING, GROWING, MATURE, RESTING, DORMANT — all 6 have distinct behaviors in _apply_state_behaviors() |
 | **Heartbeat Integration Freq** | ✅ **FIXED** | Integration loop 0.1s → 2.0-10.0s dynamic based on arousal (was 50-600x mismatch, now ~2x) |
 | **Level5ASI Simulated Sleep** | ✅ **FIXED** | Removed `await asyncio.sleep(1.0)` simulated processing delay |
+| **IntentModel Production Wiring** | ✅ **DONE** | IntentManager wired into DigitalLifeIntegrator._life_cycle_loop(): homeostatic intents → get_intent_influence() → state matrix update (energy/focus/happiness/bond). Closed loop! |
 
 See **[COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md)** (latest audit), **[IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md)** (target), **[COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md)** (plan), **[MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md)** (task provenance), **[CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md)** (causal depth).
 

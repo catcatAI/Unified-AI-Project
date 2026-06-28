@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum, auto
@@ -36,6 +37,7 @@ from core.system.config.magic_numbers import loop_sleep
 
 from .autonomous_life_cycle import AutonomousLifeCycle
 from .dynamic_parameters import DynamicThresholdManager
+from .intent_model import IntentManager
 from .self_introspector import SelfIntrospector
 
 logger = logging.getLogger(__name__)
@@ -255,6 +257,11 @@ class DigitalLifeIntegrator:
         )
         self._last_params_log: datetime = datetime.now()
 
+        # Intent Model (IntentManager)
+        self.intent_manager: IntentManager = IntentManager()
+        self._intent_update_interval: float = self.config.get("intent_update_interval", 30.0)
+        self._last_intent_update: datetime = datetime.now()
+
         # Health monitoring
         self.systems_health: dict[str, SystemHealth] = {}
         self._health_check_interval: float = loop_sleep("life_health_check", 60.0)  # seconds
@@ -409,6 +416,7 @@ class DigitalLifeIntegrator:
             await self._process_life_cycle_transitions()
             await self._update_statistics()
             await self._update_dynamic_parameters()
+            await self._update_intent_state()
             await asyncio.sleep(loop_sleep("life_check_interval", 10.0))  # Check every 10 seconds
 
     async def _health_check_loop(self) -> None:
@@ -713,6 +721,59 @@ class DigitalLifeIntegrator:
         except Exception as e:
             # broad except acceptable: dynamic params update is non-critical, graceful degradation
             logger.error(f"[DigitalLife] Error updating dynamic parameters: {e}", exc_info=True)
+
+    async def _update_intent_state(self) -> None:
+        """
+        Update intent state periodically.
+        Generates homeostatic intents from state matrix, scans memory proximity,
+        and applies intent influences back to the state matrix (causal chain closure).
+        """
+        time_since_last = (datetime.now() - self._last_intent_update).total_seconds()
+        if time_since_last < self._intent_update_interval:
+            return
+        self._last_intent_update = datetime.now()
+
+        try:
+            # 1. Get current state snapshot
+            state_snapshot = self.state_matrix.get_state()
+
+            # 2. Generate homeostatic intents from dimension deficits
+            self.intent_manager.generate_homeostatic_intents(state_snapshot)
+
+            # 3. Decay intents (30s = 3 ticks at 10s check interval)
+            self.intent_manager.update_intents(delta_time=3.0)
+
+            # 4. Apply intent influences to state matrix
+            intent_applied = False
+            for dim_name in ("alpha", "beta", "gamma", "delta"):
+                influence = self.intent_manager.get_intent_influence(dim_name)
+                magnitude = math.sqrt(sum(v * v for v in influence))
+                if magnitude > 0.01:
+                    # Map intent influence magnitude to dimension-specific parameter
+                    if dim_name == "alpha":
+                        # Alpha: intent → energy influence
+                        current_energy = state_snapshot.get("alpha", {}).get("energy", 0.5)
+                        delta = magnitude * 0.1
+                        self.state_matrix.update_alpha(energy=max(0.0, min(1.0, current_energy + delta)))
+                    elif dim_name == "beta":
+                        current_focus = state_snapshot.get("beta", {}).get("focus", 0.5)
+                        delta = magnitude * 0.1
+                        self.state_matrix.update_beta(focus=max(0.0, min(1.0, current_focus + delta)))
+                    elif dim_name == "gamma":
+                        current_happiness = state_snapshot.get("gamma", {}).get("happiness", 0.5)
+                        delta = magnitude * 0.1
+                        self.state_matrix.update_gamma(happiness=max(0.0, min(1.0, current_happiness + delta)))
+                    elif dim_name == "delta":
+                        current_bond = state_snapshot.get("delta", {}).get("bond", 0.5)
+                        delta = magnitude * 0.1
+                        self.state_matrix.update_delta(bond=max(0.0, min(1.0, current_bond + delta)))
+                    intent_applied = True
+
+            if intent_applied and logger.isEnabledFor(logging.DEBUG):
+                logger.debug(f"🔗 [IntentModel] Applied intent influences to state matrix.")
+
+        except Exception as e:
+            logger.warning(f"[DigitalLife] Intent update error (non-critical): {e}")
 
     def record_activity(self, activity_type: str) -> None:
         """Record user activity"""
