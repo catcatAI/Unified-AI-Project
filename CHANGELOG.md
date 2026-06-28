@@ -104,6 +104,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧪 **GVV pipeline tests**: ~24 new tests (concept_mapper, geometric_vocabulary, instance_optimizer)
 - 🧪 **Primitives total**: ~62 tests (38 Phase 1 + ~24 GVV)
 
+## [7.5.0-dev] - 2026-06-28 — Reality Audit: Test Count Corrected + Doc Sync
+
+### Reality Check
+- 🔍 **Full test count verified**: 4,840 (docs claimed 4,826 — +14 accumulated tests)
+- 🔍 **Session commit count verified**: 136 (AGENTS.md claimed 64 — 72 commits low)
+- 🔍 Compiled accuracy scores for all major doc claims (~88% overall)
+- 🔍 Identified 3 remaining truth gaps: AGENTS.md count, README.md counts, empty coverage.json
+
+### Fixed
+- 🐛 **test_phase6_e2e.py**: Fixed 2 stale assertions (handler=None when gate rejects, was expecting "file_ops" impossible after reject) — 24/24 pass
+
+### Synced
+- 🔄 **MASTER_TASK_MAP.md**: Baseline 4,826→4,840. Added §VI-E (Reality Audit) and §VI-F (Session Summary).
+- 🔄 **AGENTS.md**: Session count 64→136 commits.
+- 🔄 **README.md**: Test counts 4,826→4,840 in 6+ references.
+- 🔄 **IMPROVEMENT_ROADMAP.md**: Test counts 4,826→4,840.
+
 ## [7.5.0-dev] - 2026-06-28 — Final Doc Sync: L5/R4/R5/I3/O4/L3/L4 + Session Summary
 
 ### Synced
