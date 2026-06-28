@@ -105,6 +105,8 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | **Master Task Map** | ✅ CREATED | `docs/06-project-management/MASTER_TASK_MAP.md` — all 23 plans cross-referenced with git/code |
 | **Causal Chain Completeness** | ✅ CREATED | `docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md` — §0 no-stub principle, real depth scores, timing audit |
 | **EmotionSystem Behavioral Driving** | ✅ **DONE** | `apply_influence()` now modifies PAD state, `get_behavioral_adjustment()` maps emotion→routing_mode/response_style, wired into pipeline Step 5 → prompt builder reads it |
+| **MetaController Auto-apply** | ✅ **DONE** | `auto_apply_thresholds()` now adjusts reasoning/quality/high_demand thresholds in NeuroAutoSelector._analyze_task() |
+| **LifeCycle 6/6 States** | ✅ **DONE** | INITIALIZING, AWAKENING, GROWING, MATURE, RESTING, DORMANT — all 6 have distinct behaviors in _apply_state_behaviors() |
 
 See **[COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md)** (latest audit), **[IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md)** (target), **[COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md)** (plan), **[MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md)** (task provenance), **[CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md)** (causal depth).
 

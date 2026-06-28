@@ -477,6 +477,49 @@ The plan claimed to create:
 
 ## VI-I. Session Summary — 2026-06-29 (EmotionSystem behavioral driving)
 
+---
+
+## VI-J. Session Summary — 2026-06-29 (MetaController auto-apply threshold adjustments)
+
+### MetaController threshold adjustments auto-applied — **DONE**
+- **`meta_controller.py`**: `get_calibration()` now populates `_threshold_adjustments` (was previously computed but never stored). Added `auto_apply_thresholds()` — iterates all sources, calls `get_calibration()`, returns non-zero adjustments dict for caller consumption.
+- **`neuro_auto_selector.py`**: `_analyze_task()` now reads MetaController summary via `get_summary()`, aggregates threshold adjustments across all sources, and modifies `reasoning_threshold`, `quality_threshold`, `high_demand_threshold` accordingly. `record_result()` calls `auto_apply_thresholds()` after each recording.
+- **Causal chain**: record_confidence → get_calibration → _threshold_adjustments populated → _analyze_task reads → modifies decision thresholds.
+- **Causal depth**: 3.0→3.5/10 (adjustments now influence actual decision parameters).
+- **Fix**: Removed redundant write in `auto_apply_thresholds()` (get_calibration already stores).
+
+### Banned list §0.5 updates
+- EmotionSystem, MetaController removed from §0.5 banned components list.
+
+### Test count
+- **4,840** collected (unchanged)
+
+---
+
+## VI-K. Session Summary — 2026-06-29 (LifeCycle states completion)
+
+### DigitalLifeIntegrator 3/6 empty states → ALL 6 real — **DONE**
+- **`digital_life_integrator.py`**: `_apply_state_behaviors()` now implements ALL 6 LifeCycle states instead of only 3:
+  - **INITIALIZING** (🔧): Sets baseline state matrix (learning=0.3, curiosity=0.2), initializes DynamicThresholdManager if enabled and not yet set, records initial life event.
+  - **AWAKENING** (🔆): Ramps up cognitive dimensions (learning=0.5, curiosity=0.4), starts UserMonitor monitoring loop via `await self.user_monitor.start()`, biological awakening via `process_relaxation_event(0.3)`.
+  - **DORMANT** (💤): Suppresses state matrix activity (learning=0.05, curiosity=0.05), triggers deep memory consolidation via memory_bridge, biological deep relaxation (0.9), checks for drifted dynamic parameters.
+  - RESTING moved after MATURE in if/elif chain, added logger.info() for consistency.
+  - Added `else: logger.warning(f"Unknown state: {state}")` for invalid states.
+- **Fixes applied during review**:
+  - Removed call to non-existent `DynamicThresholdManager.start()` — class has no `start()` method, just instantiate.
+  - Changed `self.user_monitor.start_monitoring()` → `await self.user_monitor.start()` (correct method name).
+  - Distinct emoji per state: 🔧 INITIALIZING, 🔆 AWAKENING, 🌱 GROWING, ✨ MATURE, 💤 RESTING, 💤 DORMANT.
+
+### Causal chain completeness update
+- **DigitalLifeIntegrator C³**: 3.5/10 → **4.5/10** (all 6 states now have behaviors).
+- **§4.2 #6**: LifeCycle 3/6 states → **FIXED**.
+- **§0.5**: DigitalLifeIntegrator removed from banned components list.
+
+### Test count
+- **4,840** collected (unchanged — circular import pre-existing issue)
+
+---
+
 ### EmotionSystem → behavioral driving — **DONE**
 - **`emotion_system.py`**: `apply_influence()` was a no-op stub — now maps 12 influence types (dopamine/adrenaline/cortisol/stress/joy/fear/anger/calm/etc.) to PAD (Pleasure/Arousal/Dominance) deltas and modifies internal emotional state. Added `_cap_emotion_history()` to cap at 1000 entries. Added `get_behavioral_adjustment()` — maps current `EmotionType` to `routing_mode` (conservative/exploratory/neutral) and `response_style` (soothing/empathetic/enthusiastic/warm/etc.).
 - **`chat_routes.py`**: Added `_get_emotion_system()` singleton, `_ANGELA_EMOTION_BEHAVIOR_MAP` (8 emotion → routing/response mappings), `_inject_emotion_behavioral_context()` wired into pipeline Step 5 (after emotion analysis). Injects both `context["emotional_behavior"]` (user emotion guidance) and `context["angela_emotion"]` (Angela's internal state).

@@ -537,12 +537,43 @@ class DigitalLifeIntegrator:
 
     async def _apply_state_behaviors(self, state: LifeCycleState) -> None:
         """Apply behaviors specific to life cycle state"""
-        if state == LifeCycleState.RESTING:
-            # Slow down biological processes
-            await self.biological_integrator.process_relaxation_event(intensity=0.8)
-            # Consolidate memories
-            if self.memory_bridge:
-                self.memory_bridge.trigger_consolidation()
+        if state == LifeCycleState.INITIALIZING:
+            # =============================================================
+            # ANGELA-MATRIX: [L3] [αβγδ] [A] [L5+]
+            # INITIALIZING: 系統啟動初期 — 保守運作、逐步建構活動基準
+            # =============================================================
+            # 設定基礎狀態矩陣：低但活躍的初始值
+            self.state_matrix.update_beta(learning=0.3, curiosity=0.2)
+            # 初始化動態參數（若啟用）
+            if self._dynamic_params_enabled and self.dynamic_params is None:
+                try:
+                    self.dynamic_params = DynamicThresholdManager(config=self.config)
+                    logger.info("🔧 [DigitalLife] INITIALIZING: Dynamic parameters initialized.")
+                except Exception as e:
+                    logger.warning(f"[DigitalLife] INITIALIZING: Dynamic params skipped: {e}")
+            # 記錄初始生命事件
+            self.record_life_event(
+                event_type="system_initialize",
+                description="Angela digital life initializing — core systems online",
+                significance=0.5,
+            )
+            logger.info("🔧 [DigitalLife] INITIALIZING: Core systems initialized at conservative baseline.")
+
+        elif state == LifeCycleState.AWAKENING:
+            # =============================================================
+            # ANGELA-MATRIX: [L3] [αβγδ] [A] [L6+]
+            # AWAKENING: 覺醒階段 — 緩慢探索、建立基礎域感知
+            # =============================================================
+            # 逐步提升認知維度
+            self.state_matrix.update_beta(learning=0.5, curiosity=0.4)
+            # 啟動使用者監控循環
+            try:
+                await self.user_monitor.start()
+            except Exception as e:
+                logger.debug(f"[DigitalLife] AWAKENING: User monitor start skipped: {e}")
+            # 生物系統覺醒
+            await self.biological_integrator.process_relaxation_event(intensity=0.3)
+            logger.info("🔆 [DigitalLife] AWAKENING: Systems awakening — exploration beginning.")
 
         elif state == LifeCycleState.GROWING:
             # =============================================================
@@ -568,6 +599,42 @@ class DigitalLifeIntegrator:
                     clarity=min(1.0, metrics.life_intensity * 0.8)
                 )
             logger.info("✨ [DigitalLife] MATURE: Formula evaluation applied to beta clarity.")
+
+        elif state == LifeCycleState.RESTING:
+            # Slow down biological processes
+            await self.biological_integrator.process_relaxation_event(intensity=0.8)
+            # Consolidate memories
+            if self.memory_bridge:
+                self.memory_bridge.trigger_consolidation()
+            logger.info("💤 [DigitalLife] RESTING: Biological processes slowed, memory consolidated.")
+
+        elif state == LifeCycleState.DORMANT:
+            # =============================================================
+            # ANGELA-MATRIX: [L3] [αβγδ] [A] [L5+]
+            # DORMANT: 深度休眠 — 資源回收、深層記憶鞏固、低功耗模式
+            # =============================================================
+            # 抑制狀態矩陣活動（將關鍵維度降至休眠基線）
+            self.state_matrix.update_beta(learning=0.05, curiosity=0.05)
+            # 深層記憶鞏固
+            if self.memory_bridge:
+                self.memory_bridge.trigger_consolidation()
+            # 生物系統深度放鬆
+            await self.biological_integrator.process_relaxation_event(intensity=0.9)
+            # 動態參數漂移檢查（若啟用）
+            if self.dynamic_params:
+                try:
+                    params_summary = self.dynamic_params.get_all_parameters_summary()
+                    drifted_params = [
+                        k for k, v in params_summary.items()
+                        if abs(v.get("current", 0.5) - v.get("base", 0.5)) > 0.2
+                    ]
+                    if drifted_params:
+                        logger.info(f"💤 [DigitalLife] DORMANT: {len(drifted_params)} drifted params identified.")
+                except Exception as e:
+                    logger.debug(f"[DigitalLife] DORMANT: Param check skipped: {e}")
+            logger.info("💤 [DigitalLife] DORMANT: Deep sleep — resource reclamation active.")
+        else:
+            logger.warning(f"[DigitalLife] Unknown state: {state}")
 
     async def _check_system_health(self) -> None:
         """Check health of all subsystems"""

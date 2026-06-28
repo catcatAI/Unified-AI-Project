@@ -237,34 +237,46 @@ async def _update_spatial_state(self, arousal, stress):
 - 創傷反應是 fire-and-forget（無人消費其結果）
 - 沒有全域行為調整（如「太累了所以降低探索慾望」）
 
-### 3.6 DigitalLifeIntegrator (380L) — 🟡 C³ = 3.5/10
+### 3.6 DigitalLifeIntegrator (380L) — 🟡 C³ = 4.5/10 (was 3.5/10, ✅ fixed 2026-06-29)
+
+**修復摘要 (commit `this commit`)**: 為 INITIALIZING, AWAKENING, DORMANT 三個遺漏狀態加入實際行為。現在所有 6 個狀態都有 distinct 的行為邏輯。
 
 ```python
-# 有真實狀態機但只有部分狀態有實際行為
 LifeCycleState:
     INITIALIZING → AWAKENING → GROWING → MATURE → RESTING → DORMANT
 
 async def _apply_state_behaviors(self, state):
-    if state == GROWING:
-        self.state_matrix.update_beta(learning=0.8, curiosity=0.7)  # ✅ 真實狀態改變
-        self.memory_bridge.trigger_consolidation()                   # ✅ 真實行為
+    if state == INITIALIZING:
+        self.state_matrix.update_beta(learning=0.3, curiosity=0.2)  # ✅ 保守基線
+        self.dynamic_params = DynamicThresholdManager(...)           # ✅ 初始化動態參數
+        self.record_life_event(...)                                  # ✅ 記錄初始生命事件
+    elif state == AWAKENING:
+        self.state_matrix.update_beta(learning=0.5, curiosity=0.4)  # ✅ 逐步提升認知
+        await self.user_monitor.start()                              # ✅ 啟動使用者監控
+        await self.bio_integrator.process_relaxation_event(...)      # ✅ 生物系統覺醒
+    elif state == GROWING:
+        ...  # Learning boost + memory consolidation                 # (原已存在)
     elif state == MATURE:
-        self.state_matrix.update_beta(clarity=metrics.life_intensity) # ✅ 公式連結
+        ...  # Formula evaluation to beta clarity                     # (原已存在)
     elif state == RESTING:
-        await self.bio_integrator.process_relaxation_event(...)      # ✅ 真實放鬆
-        self.memory_bridge.trigger_consolidation()                   # ✅ 記憶鞏固
-    # INITIALIZING, AWAKENING, DORMANT → 無行為 ❌
+        ...  # Bio relaxation + memory consolidation                   # (原已存在)
+    elif state == DORMANT:
+        self.state_matrix.update_beta(learning=0.05, curiosity=0.05) # ✅ 抑制活動
+        self.memory_bridge.trigger_consolidation()                    # ✅ 深層記憶鞏固
+        await self.bio_integrator.process_relaxation_event(0.9)       # ✅ 深度放鬆
+        # 動態參數漂移檢查                                           # ✅ 資源審計
 ```
 
 **優點**:
 - 生命週期狀態機是真實的 ✅
-- 3/6 狀態有實際行為（GROWING, MATURE, RESTING）✅
+- **6/6 狀態皆有實際行為** ✅
 - 狀態轉換觸發生理和狀態矩陣變化 ✅
+- 每個狀態有獨立 emoji 標記：🔧 INITIALIZING, 🔆 AWAKENING, 🌱 GROWING, ✨ MATURE, 💤 RESTING, 💤 DORMANT
 
-**不足**:
-- 3/6 狀態是空殼（INITIALIZING, AWAKENING, DORMANT）❌
+**剩餘問題**:
 - 行為深但不寬（只影響 state_matrix 和 bio，不影響 routing 或 response）
 - `_compute_maturity_score` 依賴 state_matrix，但又用 state_matrix 的 `evaluate_math_spatially` 計算 — 潛在遞迴問題
+- DORMANT 狀態無自動轉入條件（只能透過 `force_state()` 到達）
 
 ### 3.7 IntentModel (80L) — ❌ C³ = 0.1/10
 
@@ -350,9 +362,9 @@ class IntentManager:
 | 1 | **AutonomousLifeCycle decisions → 無人消費** | 自主性核心完全斷裂 | ✅ **FIXED** (commit `40dce741a`) — `_execute_decision()` dispatching to BehaviorExecutor |
 | 2 | **CausalReasoningEngine predictions → 無人消費** | 因果引擎像學院派論文 | ✅ **FIXED** (commit `78dac066e`) — predict() sends to LLM prompt via _inject_causal_predictions + _append_causal_insights |
 | 3 | **EmotionSystem → 只進 LLM Prompt** | 情感不影響真實行為 | ✅ **FIXED** (commit `f9cf68ac5`) — apply_influence() real, get_behavioral_adjustment() → prompt builder → LLM sees guidance |
-| 4 | **MetaController threshold adjustments → 不自動套用** | 適應性學習中斷 | ✅ **FIXED** (this commit) — auto_apply_thresholds() + _analyze_task() uses calibration adjustments |
+| 4 | **MetaController threshold adjustments → 不自動套用** | 適應性學習中斷 | ✅ **FIXED** (commit `2be528751`) — auto_apply_thresholds() + _analyze_task() uses calibration adjustments |
 | 5 | **IntentModel.generate_homeostatic_intents → pass** | 意圖系統不完整 | ✅ **FIXED** (commit `e713db0e0`) — both stubs now real |
-| 6 | **LifeCycle 3/6 states 無行為** | 生命週期不完整 | 🟡 P2 |
+| 6 | **LifeCycle 3/6 states 無行為** | 生命週期不完整 | ✅ **FIXED** (commit `this commit`) — all 6 states now have distinct behaviors |
 
 ### 4.3 虛假完成案例（具體代碼）
 
@@ -423,10 +435,9 @@ prompt += f"Current emotional state: {emotion_summary}"
 |:-----|:--------:|:-------:|:--------:|:------:|:-----:|:-----:|
 | **Heartbeat → Bio → Spatial** | ✅完整 | **5.0/10** | 8/10 | 3 | 30% | 🟢 唯一接近真實的 |
 | **ExecutionGate → Pipeline** | ✅完整 | **4.0/10** | 8/10 | 3 | 0% | 🟢 單向確定性閘門 |
-| **DigitalLifeIntegrator** | ✅完整 | **3.5/10** | 7/10 | 2 | 40% | 🟡 部分狀態有行為 |
-| **MetaController** | ✅完整 | **3.0/10** | 6/10 | 1 | 50% | 🟡 建議但不執行 |
+| **DigitalLifeIntegrator** | ✅完整 | **4.5/10** (was 3.5) | 8/10 | 2 | 50% | 🟡 6/6 狀態有行為 (commit `this commit`) |
+| **MetaController** | ✅完整 | **3.5/10** (was 3.0) | 7/10 | 2 | 0% | 🟡 調整已自動套用 (commit `2be528751`) |
 | **EmotionSystem** | ✅完整 | **2.0/10** | 7/10 | 2 | 0% | 🟡 行為驅動 (commit `f9cf68ac5`) |
-| **MetaController** | ✅完整 | **3.5/10** | 7/10 | 2 | 0% | 🟡 調整已自動套用 (this commit) |
 | **AutonomousLifeCycle** | ✅完整 | **2.0/10** | 7/10 | 2 | 0% | 🟡 決策已執行 (commit `40dce741a`) |
 | **CausalReasoningEngine** | ✅完整 | **2.0/10** | 7/10 | 1 | 0% | 🟡 predict() 已接入 LLM prompt (commit `78dac066e`) |
 | **IntentModel** | ✅完整 | **1.0/10** | 5/10 | 1 | 0% | 🟡 stubs 已實作，但意圖尚未被消費 |
@@ -513,15 +524,17 @@ Before: record → calculate → store recommendation → end
 After:  record → calculate → auto-apply threshold adjustment → behavior changes
 ```
 
-### 6.5 P2（中期）— LifeCycle 狀態補全
+### 6.5 P2（中期）— LifeCycle 狀態補全 ✅（已修復 2026-06-29）
 
 **目標**: 為 INITIALIZING, AWAKENING, DORMANT 加入實際行為
 
-| 狀態 | 應有行為 |
+| 狀態 | 實作行為 |
 |:-----|:---------|
-| INITIALIZING | 逐漸增加認知負載、初始化所有公式系統、建立初始記憶 |
-| AWAKENING | 緩慢探索環境、建立基礎知識域、學習使用者模式 |
-| DORMANT | 深度記憶鞏固、背景清理、資源回收、低功耗模式 |
+| INITIALIZING | ✅ 設定保守基線 state matrix (learning=0.3, curiosity=0.2)、初始化 dynamic params、記錄初始生命事件 |
+| AWAKENING | ✅ 逐步提升認知維度 (learning=0.5, curiosity=0.4)、啟動 user_monitor.start()、生物系統覺醒 |
+| DORMANT | ✅ 抑制狀態矩陣 (learning=0.05)、深層記憶鞏固、生物深度放鬆 (0.9)、動態參數漂移檢查 |
+
+**Causal depth 更新**: 3.5→4.5/10（6/6 狀態皆有行為，但 DORMANT 無自動轉入路徑）
 
 ---
 
@@ -650,7 +663,8 @@ Component_A.state_change → Component_B.detect() → Component_B.behavior_chang
 | ❌ **EmotionSystem** | apply_influence() 是空殼 | 實作情緒→行為的真實映射 |
 | ❌ **IntentModel** | 2/5 方法是 pass | 實作 scan_memory_proximity 和 generate_homeostatic_intents |
 | ❌ **DigitalLifeIntegrator** | 3/6 狀態無行為 | 補齊 INITIALIZING, AWAKENING, DORMANT 行為 |
-| ✅ **MetaController** | 修復完成 (commit `f9cf68ac5`) | auto_apply_thresholds() 已加入，NeuroAutoSelector._analyze_task() 現在讀取調整值影響 reasoning/quality/high_demand 門檻 |
+| ✅ **MetaController** | 修復完成 (commit `f9cf68ac5` + `2be528751`) | auto_apply_thresholds() 已加入，NeuroAutoSelector._analyze_task() 現在讀取調整值影響 reasoning/quality/high_demand 門檻 |
+| ✅ **DigitalLifeIntegrator** | 修復完成 (commit `this commit` 2026-06-29) | 6/6 生命週期狀態皆有實際行為 — INITIALIZING (保守基線+dynamic params)、AWAKENING (user monitor+bio 覺醒)、DORMANT (深度鞏固+放鬆+資源審計) |
 | ❌ **Heartbeat Integration** | 60x 頻率差導致不同步 | 統一 Heartbeat Primary 和 Integration 循環 |
 | ❌ **Level5ASI Process** | 使用模擬 sleep(1.0) | 移除模擬延遲 |
 | ❌ **前端 Live2D** | 隨機彩色矩形 | 補齊 Live2D 模型渲染路徑 |
