@@ -358,7 +358,15 @@ class DigitalLifeIntegrator:
 
         # Start background loops
         self._life_cycle_task = asyncio.create_task(self._life_cycle_loop())
+        self._life_cycle_task.add_done_callback(
+            lambda t: logger.critical("Life cycle loop failed: %s", t.exception())
+            if not t.cancelled() and t.exception() else None
+        )
         self._health_check_task = asyncio.create_task(self._health_check_loop())
+        self._health_check_task.add_done_callback(
+            lambda t: logger.critical("Health check loop failed: %s", t.exception())
+            if not t.cancelled() and t.exception() else None
+        )
         
         logger.info(f"✨ Angela has awakened in {self.life_cycle_state.en_name} state.")
         return True

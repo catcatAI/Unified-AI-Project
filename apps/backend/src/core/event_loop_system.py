@@ -487,7 +487,15 @@ class EventLoopSystem:
 
         # Start processor
         self._processor_task = asyncio.create_task(self._event_processor())
+        self._processor_task.add_done_callback(
+            lambda t: logger.critical("Event processor loop failed: %s", t.exception())
+            if not t.cancelled() and t.exception() else None
+        )
         self._metrics_task = asyncio.create_task(self._metrics_collector())
+        self._metrics_task.add_done_callback(
+            lambda t: logger.critical("Metrics collector loop failed: %s", t.exception())
+            if not t.cancelled() and t.exception() else None
+        )
 
         logger.info("[EventLoopSystem] Initialization complete")
 

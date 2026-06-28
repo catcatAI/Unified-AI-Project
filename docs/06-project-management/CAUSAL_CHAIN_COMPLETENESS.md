@@ -749,7 +749,7 @@ print(f'Total pass statements: {count}')
 | 25 | Proactive Check | `proactive_interaction_system.py` | **15.0s** | 主動互動檢查 | ✅ 合理 |
 | 26 | HAM Hourly | `ham_background_tasks.py` | **3600.0s** (1/hr) | HAM背景任務 | ✅ 長時間任務 |
 | 27 | Narrative Update | `cyber_identity.py` | **86400.0s** (1/day) | 敘事更新 | ✅ 每日更新合理 |
-| 28 | Decision Interval | `autonomous_life_cycle.py` | **300.0s** (5min) | 生命決策 | 🟡 太慢？自主決策應更快 |
+| 28 | Decision Interval | `autonomous_life_cycle.py` | **60.0s** (1min, was 300s/5min) | 生命決策 | ✅ 已修復 2026-06-29 — §8.6 #8: 預設從 300s→60s，讓自主性更即時 |
 | 29 | Session Heartbeat | `connection_session.py` | **30.0s** | WebSocket心跳 | ✅ 網路標準 |
 | 30 | HAM Sync | `chat_service.py` | **3600.0s** (1/hr) | HAM同步 | 🟡 1小時太長，使用中可能遺失 |
 | 31 | Bio Monitor | `system_monitor.py` | **5.0s** | 系統監控 | ✅ 合理 |
@@ -763,15 +763,14 @@ print(f'Total pass statements: {count}')
 - 網路心跳 (Session 30s)
 - 背景訓練 (CML 60s)
 
-#### 🟡 有問題 (12/32)
+#### 🟡 有問題 (11/32)
 - **重複循環**: Bridge Poll(0.1s) 和 Bridge Fast(0.05s) 做類似事情
 - **不一致的同類循環**: ANS Update(0.5s) vs ANS Tick(1.0s) 在同一系統內
-- **自主決策太慢**: 300s(5min) 對「自主性」來說太長
 - **HAM同步太慢**: 3600s(1hr) 可能導致記憶遺失
 - **Sleep Short 濫用**: 8+ 個組件使用同樣的 0.1s sleep key，但代表不同語義
 
-#### 🔴 不合理 (8/32)
-- **Level5 Process 1s**: 這是 `asyncio.sleep(1.0)` 模擬處理時間，不是真實計算
+#### 🔴 不合理 (7/32)
+- **Level5 Process 1s**: 已修復 2026-06-29 ✅
 - **代謝 2s vs 心跳 5-60s**: 兩個代謝相關循環頻率不一致
 - **Heartbeat 兩個循環**: Primary(5-60s) 和 Integration(2-10s) 頻率差 ~2倍 ✅ 已修復 2026-06-29
 - **Behavoir Loop Tight 1.0s**: 5+ 個 lifecycle 循環使用相同 sleep 值做「防止緊密循環」，應統一管理
@@ -849,8 +848,8 @@ print(f'Total pass statements: {count}')
 | 4 | **硬體感知動態頻率**: 根據 CPU/GPU/電池動態調整所有循環 | 🟡 中 | 高 |
 | 5 | **HardwareProfile**: 定義 5 種硬體場景的預設頻率表 | 🟡 中 | 低 |
 | 6 | **消除 time.sleep()**: 所有同步 sleep 改為 asyncio.sleep | 🔴 高 | 低 |
-| 7 | **Fire-and-forget 異常處理**: 為所有 create_task 註冊 exception handler | 🔴 高 | 低 |
-| 8 | **自主決策頻率提升**: 300s→60s，讓自主性更即時 | 🟡 中 | 低 |
+| 7 | **Fire-and-forget 異常處理**: 為所有 create_task 註冊 exception handler | 🟡 **PARTIAL** (2026-06-29) — 4 個核心檔案已加入 handler: digital_life_integrator (2), autonomous_life_cycle (1), heartbeat (2), event_loop_system (2) | 🔴 高 | 低 |
+| 8 | **自主決策頻率提升**: 300s→60s，讓自主性更即時 | ✅ **DONE** (2026-06-29) — `autonomous_life_cycle.py`: 預設 `decision_interval` 300.0→60.0 |
 
 ### 8.7 硬體設定檔範例
 

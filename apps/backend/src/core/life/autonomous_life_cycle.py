@@ -166,7 +166,7 @@ class AutonomousLifeCycle:
         # Running state
         self._running = False
         self._lifecycle_task: Optional[asyncio.Task] = None
-        self._decision_interval: float = self.config.get("decision_interval", 300.0)  # 5 minutes
+        self._decision_interval: float = self.config.get("decision_interval", 60.0)  # 1 minute (was 300s/5min, §8.6 #8)
 
         # Behavior executor for dispatching decisions to real actions
         self._behavior_executor: BehaviorExecutor = BehaviorExecutor()
@@ -199,6 +199,10 @@ class AutonomousLifeCycle:
 
         # Start life cycle loop
         self._lifecycle_task = asyncio.create_task(self._lifecycle_loop())
+        self._lifecycle_task.add_done_callback(
+            lambda t: logger.critical("Lifecycle task failed unexpectedly: %s", t.exception())
+            if not t.cancelled() and t.exception() else None
+        )
 
         # Initial metrics calculation
         self._update_metrics()

@@ -97,7 +97,15 @@ class MetabolicHeartbeat:
         logger.info("💓 [Heartbeat] BioIntegrator initialized.")
         # 啟動雙重循環：1. 生物/代謝循環 2. 小腦/神經整合循環
         self._task = asyncio.create_task(self._run_loop())
+        self._task.add_done_callback(
+            lambda t: logger.critical("Heartbeat main loop failed: %s", t.exception())
+            if not t.cancelled() and t.exception() else None
+        )
         self._integration_task = asyncio.create_task(self._integration_loop())
+        self._integration_task.add_done_callback(
+            lambda t: logger.critical("Heartbeat integration loop failed: %s", t.exception())
+            if not t.cancelled() and t.exception() else None
+        )
         logger.info(f"💓 Angela's Heartbeat started. Birth: {self.start_time}")
 
     async def stop(self) -> None:

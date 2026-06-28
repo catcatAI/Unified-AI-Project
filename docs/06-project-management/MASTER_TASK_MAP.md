@@ -587,7 +587,26 @@ The plan claimed to create:
 
 ---
 
-### EmotionSystem → behavioral driving — **DONE**
+## VI-N. Session Summary — 2026-06-29 (Autonomy response speed + create_task exception handlers)
+
+### AutonomousLifeCycle decision interval: 300s → 60s — **DONE**
+- `autonomous_life_cycle.py`: Default `decision_interval` changed from `300.0` (5min) to `60.0` (1min).
+- **Why**: §8.3 flagged "自主決策太慢: 300s(5min) 對「自主性」來說太長". 60s is more responsive while still being a reasonable lifecycle cadence.
+- **Config override preserved**: `self.config.get("decision_interval", 60.0)` — still configurable externally.
+- **Causal impact**: AutonomousLifeCycle decisions now appear 5x more frequently, improving perceived autonomy responsiveness.
+
+### Fire-and-forget exception handlers added to 4 core files — **DONE**
+- Added `add_done_callback()` with `logger.critical()` to 7 `create_task` calls across 4 files:
+  - `digital_life_integrator.py`: `_life_cycle_task`, `_health_check_task`
+  - `autonomous_life_cycle.py`: `_lifecycle_task`
+  - `heartbeat.py`: `_task`, `_integration_task`
+  - `event_loop_system.py`: `_processor_task`, `_metrics_task`
+- **Pattern**: All use the established codebase pattern from `heartbeat.py:178`, `action_executor.py:341`: check `not t.cancelled() and t.exception()`, log at CRITICAL level.
+- **Why**: §8.6 #7 calls out "Fire-and-forget 異常處理" as 🔴 high impact. These 4 files contain the core background loops that should never fail silently.
+- **Remaining scope**: ~20+ other create_task calls in the codebase still lack exception handlers (lower priority — non-core loops).
+
+### Test count
+- **4,333** collected (tests/ only — unchanged, no regressions)
 - **`emotion_system.py`**: `apply_influence()` was a no-op stub — now maps 12 influence types (dopamine/adrenaline/cortisol/stress/joy/fear/anger/calm/etc.) to PAD (Pleasure/Arousal/Dominance) deltas and modifies internal emotional state. Added `_cap_emotion_history()` to cap at 1000 entries. Added `get_behavioral_adjustment()` — maps current `EmotionType` to `routing_mode` (conservative/exploratory/neutral) and `response_style` (soothing/empathetic/enthusiastic/warm/etc.).
 - **`chat_routes.py`**: Added `_get_emotion_system()` singleton, `_ANGELA_EMOTION_BEHAVIOR_MAP` (8 emotion → routing/response mappings), `_inject_emotion_behavioral_context()` wired into pipeline Step 5 (after emotion analysis). Injects both `context["emotional_behavior"]` (user emotion guidance) and `context["angela_emotion"]` (Angela's internal state).
 - **`prompt_builder.py`**: Added `_append_emotional_behavior()` — reads both context keys, formats them as behavioral guidance for the LLM. Wired into `construct_angela_prompt()` callback chain.
