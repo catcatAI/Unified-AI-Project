@@ -60,10 +60,10 @@ Each entry has:
 | P0 (all 4 items) | `3f209b605` | All verified | ✅ |
 | P1 (thread safety) | `3f209b605` | 4 files | ✅ |
 | P2 (context/utils, precision, agents) | `3f209b605` | ~6 files | ✅ |
-| **P4 (31 long function refactor)** | ...AngelaLLMService.generate_response 144→64 (Jun 28) | 12 functions >100 lines remain (Jun 28 empirical scan, unique count) | 🟡 **19/31 done** |
-| **P4 (load/stress tests)** | **No commit** | No framework exists | ⏳ **NOT STARTED** |
+| **P4 (31 long function refactor)** | ...AngelaLLMService.generate_response 144→64 (Jun 28) | 3 pure-data functions >100L remain (skipped by policy: _register_defaults 408L, _default_concepts 262L, _build_math_presets 110L). 0 algorithmic functions >100L. | ✅ **28/31 done, 3 pure-data skipped** |
+| **P4 (load/stress tests)** | Multiple commits | `tests/performance/test_stress.py` (4 stress tests), `tests/performance/benchmark_core.py` (5 benchmarks), `tests/benchmarks/test_multimodal_stress.py` (5 stress tests) | 🟡 **14 tests exist, some timeout** |
 | **P4 (desktop tray)** | **No commit** | No tray impl | ⏳ **NOT STARTED** |
-| **P4 (E2E tests)** | **No commit** | No E2E framework | ⏳ **NOT STARTED** |
+| **P4 (E2E tests)** | Stale claim — E2E tests DO exist | `tests/integration/test_quick_e2e.py` (4 E2E tests), `tests/ai/test_phase6_e2e.py`, `tests/core/test_llm_e2e.py`, `tests/ai/multimodal/test_chicken_pecking_rice_e2e.py`, `tests/core/test_port_routing_e2e.py` | 🟡 **E2E tests exist but no dedicated E2E framework** |
 
 ### I-D. PHASE_REVIEW4.md (2026-06-06, ~62%, H5 Sprint)
 
@@ -491,7 +491,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 
 ## X. EVERY PENDING ITEM — Exact Blocker
 
-> **Note**: This table tracks 31 key items (20 DONE, 11 PENDING) but is NOT exhaustive. Full codebase audit found **~190+ AI-related classes** across `ai/`, `core/`, `services/` (20+ subsystems). **⚠️ "存在" ≠ "正常運作"** — see industry comparison below. Most engines are architectural skeletons: VisualDecoder projection weights are now trained on CIFAR-10 (42× loss reduction) and auto-loaded at startup. AudioWaveformDecoder projection weights also trained (309× loss reduction) and auto-loaded. CNN texture branches remain random. SequenceGenerator and ImageGenerator weights are fully random. CML+FullTrainingPipeline fully wired into production (Jun 28).
+> **Note**: This table tracks 34 key items (21 DONE, 12 PARTIAL, 1 NOT STARTED). Full codebase audit found **~190+ AI-related classes** across `ai/`, `core/`, `services/` (20+ subsystems). **⚠️ "存在" ≠ "正常運作"** — see industry comparison below. Most engines are architectural skeletons: VisualDecoder projection weights are now trained on CIFAR-10 (42× loss reduction) and auto-loaded at startup. AudioWaveformDecoder projection weights also trained (309× loss reduction) and auto-loaded. CNN texture branches remain random. SequenceGenerator and ImageGenerator weights are fully random. CML+FullTrainingPipeline fully wired into production (Jun 28).
 
 | # | Item | Why Not Done | Code Status | Blocked By |
 |:-:|:-----|:-------------|:------------|:-----------|
@@ -500,10 +500,10 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | 3 | `/multimodal/stream` WS route | ✅ **DONE** — dedicated handler + route registered | `services/multimodal_ws_handler.py` + `main_api_server.py` line 295 | — |
 | 4 | C901 cyclomatic complexity | ✅ **DONE** (Jun 28). All functions ≤ 10 complexity. flake8 --select=C901 on apps/backend/src/ + tests/ returns 0 warnings at default threshold. | 0 C901 warnings | **ALL E/F GRADES + ALL C901 WARNINGS ELIMINATED** |
 | 5 | Shared code deduplication (P3-9 to P3-11) | ✅ **RESOLVED** — `core/shared/` duplicates deleted in Phase 9-12 (commit `064e63621`) | Only `src/shared/error.py` and `src/shared/key_manager.py` remain | Automatically fixed by dead code removal |
-| 6 | P4 long function refactor (31 total >100L found) | 28/31 done (Jun 28), 3 remain: 3 pure-data (prompt_manager._register_defaults 408L, concept_library._default_concepts 262L, dictionary_layer._build_math_presets 110L). Zero algorithmic functions >100L remain after refactoring the last 3 (query_classifier._build_patterns 181L→14 helpers, trauma_memory._process_trauma_reactivation 108L→concise docstring, training_data.generate_from_cifar10 103L→4 helpers). Pure-data skipped by policy. 1 borderline at exactly 100L (execution_monitor.execute_command). | 3 pure-data (skipped) |
-| 7 | P4 load/stress test framework | Never started | No framework exists | Design |
+| 6 | P4 long function refactor (31 total >100L found) | ✅ **28/31 done (Jun 28)**, 3 pure-data skipped (policy). Zero algorithmic functions >100L remain. | 3 pure-data (skipped by policy) |
+| 7 | P4 load/stress test framework | 🟡 **Tests exist** — `tests/performance/test_stress.py` (4 stress), `tests/performance/benchmark_core.py` (5 benchmarks), `tests/benchmarks/test_multimodal_stress.py` (5 stress). Some tests timeout due to psutil.sleep(1). | 14 tests exist |
 | 8 | P4 desktop tray implementation | Never started | No tray code | Effort |
-| 9 | P4 E2E test framework | Never started | No E2E framework | Design |
+| 9 | P4 E2E test framework | 🟡 **E2E tests exist** — `tests/integration/test_quick_e2e.py` (4 tests), `tests/ai/test_phase6_e2e.py`, `tests/core/test_llm_e2e.py`, `tests/ai/multimodal/test_chicken_pecking_rice_e2e.py`, `tests/core/test_port_routing_e2e.py`. But no dedicated E2E framework or CI E2E runner. | 5+ E2E test files exist |
 | 10 | Whisper ChatService integration | ✅ **DONE** (Jun 28). `faster-whisper 1.2.1` installed (ctranslate2 4.8, int8 optimized). Code path: `_stt_faster_whisper()` loads `WhisperModel("base", device="cpu", compute_type="int8")` on first call. Cached in HF Hub (`Systran/faster-whisper-tiny` already cached). Falls back to `SpeechRecognition` (sr) if faster-whisper unavailable or fails. | `audio_service.py:78-98` — `_stt_faster_whisper()`; `chat_routes.py:925` — wired; `pyproject.toml` — added to full extras | **DONE — offline high-quality STT active** |
 | 11 | VisualDecoder training | **WEIGHTS NOW TRAINED** (Jun 28). Ran `FullTrainingPipeline.run_on_real()` with 3000 CIFAR-10 + 2000 ESC-50 samples. Vision loss: 337,919 → 8,034 (**42x improvement**). Audio loss: 35,306 → 114 (**309x improvement**). Weights saved to `p29_trained.npz`. Limitation: only projection weights (_W/_b) trained; CNN texture branch remains random. | `VisualDecoder` trained via `ReconstructionCycle`; `p29_trained.npz` loads on startup | CNN texture branch training |
 | 12 | Agent auto-routing | ✅ **DONE** (wired as Step 8 in chat pipeline). Routes all non-actionable intents (creative/knowledge/opinion/vision/audio/logic/command) to AgentOrchestrator. All 10 registered specialized agents reachable. | `chat_routes.py:_try_agent_routing()` now routes all 7 query types; AgentOrchestrator dispatches to all 10 agents | — |
