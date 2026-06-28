@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **4,815 collected / 41 skipped** (4,825~ with slow tests) on 2026-06-28 (was 4,785 Jun 28 — +30 from new __init__.py discoverability + restored test files).
+> **Test count baseline**: `pytest` (full testpaths) = **4,823 collected / 41 skipped** (4,839~ with slow tests) on 2026-06-28 (was 4,815 Jun 28 — +8 from new causal reasoning tests).
 
 ---
 
@@ -281,6 +281,8 @@ The plan claimed to create:
 ### Bugfixes
 - 🐛 `active_backend_type` AttributeError → `getattr` guard (fixes test_refinement_pipeline)
 - 🐛 **R2 (AttentionController)**: 33L stub → 164L real implementation with saliency map, IOR, scan path
+- 🐛 **R3 (PerceptionEngine)**: 100L skeleton → 158L real implementation — dynamic confidence/saliency from sampler output + temporal smoothing, cross-modal conflict detection
+- 🐛 **R1 (CerebellumEngine)**: 27L stub → 172L real implementation — posture library, tremor model, proprioceptive error correction, smooth interpolation
 - 🐛 Hormone config: added `biological` formula config with real ADRENALINE parameters (base=10, half-life=6min) (fixes test_hormone_scientific_decay)
 - 🐛 10 stale test expectations in test_query_classifier_v2.py (72/72)
 
@@ -329,6 +331,43 @@ The plan claimed to create:
 - **4,815** collected (was 4,785 — +30 from new __init__.py discoverability revealing previously hidden tests)
 - **41 skipped** (was 33 — varies by env)
 - **0 collection errors**
+
+---
+
+## VI-C. Session Summary — 2026-06-28 (continuation, +2 commits, R1+R3+R1+CausalReasoningEngine stub elimination)
+
+### R3 PerceptionEngine — **DONE** (100L skeleton → 158L real)
+- Dynamic confidence from sampler particle count with temporal smoothing (5-sample window)
+- Dynamic saliency from attention controller saliency map + modality weights
+- Cross-modal conflict detection via `detect_conflicts()` — winner-take-all by confidence
+- `decide_focus()` now uses attention controller saliency map when no modality given
+- All existing process() calls backward compatible
+
+### R1 CerebellumEngine — **DONE** (27L stub → 172L real)
+- Posture library: standing/walking/sitting/reaching with 9-element theta_matrix + 5-finger matrices
+- `execute_command(pose_name, bio_state)`: stress-modulated physiological tremor (10Hz sinusoidal, amplitude = 0.005 × [1 + 3×stress])
+- Proprioceptive error correction via `update_proprioception()` → error fed back into next command
+- `interpolate()`: proper linear blending of theta + finger values (was no-op returning to_posture)
+- Backward compatible: heartbeat.py and biological_integrator.py use unchanged interfaces
+
+### §X #27 CausalReasoningEngine — **DONE** (99L skeleton → 218L real)
+- **Granger causality test**: F-test comparing restricted (Y~Yₜ₋₁) vs unrestricted (Y~Yₜ₋₁+Xₜ₋₁) auto-regressive models. Converts F-statistic to [0,1] causal strength.
+- **Confounding variable detection**: Partial correlation r_xy|z to detect Z correlated with both X and Y. Identifies confounders that significantly reduce X→Y correlation when conditioned.
+- **Do-calculus intervention simulation**: `_do_calculus_intervene(X=x)` estimates effect on each Y using causal strength × value, reduced by confounder penalty.
+- **Causal graph**: DAG adjacency maintained in `_graph` dict (cause → set of effects).
+- **Improved predict/explain**: Now sorted by strength descending. `predict()` supports `context={"intervene": value}` for do-calculus mode.
+- **Async methods**: `learn_causal_relationships(observations)` and `plan_intervention(target, outcome)` for integration compatibility.
+- **14 new unit tests**: covers init, learn, predict/explain, graph, existing relationships, granger, do-calculus, confounding, pearson edge cases, async methods.
+
+### Result: All Previously Identified Stubs Eliminated
+- CerebellumEngine (was R1, 27L stub) ✅
+- AttentionController (was R2, 33L stub) ✅
+- PerceptionEngine (was R3, 100L skeleton) ✅
+- CausalReasoningEngine (was §X #27, 99L skeleton) ✅
+
+### Test Count
+- **4,823** collected (was 4,815 — +8 net from 14 new tests - 6 fluctuation)
+- **0 collection errors****
 
 ---
 
@@ -451,11 +490,11 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | 20 | **Formula systems behavioral integration audit** | **AUDITED** (Jun 28). Integration chain fully traced and verified: ① Formula computed in `AutonomousLifeCycle._update_metrics()` → ② Drives 4 decision types in `_evaluate_and_decide()` (exploration/coexistence/construction/resource) + phase transitions → ③ Injected into system prompt via `get_formula_summaries()` + `get_autonomous_decisions()` → ④ LLM sees formula values as text context → ⑤ Formula decisions recorded as life events in `DigitalLifeIntegrator._on_formula_decision()` → ⑥ Exposed via API (desktop_routes `/brain/metrics`). 3 new integration tests added (`test_get_formula_summaries_returns_string`, `test_get_autonomous_decisions_returns_string`, `test_construct_angela_prompt_contains_formula_block`). Remaining gap: LLM-level E2E test (requires LLM call, non-deterministic) + quantitative impact measurement. | `prompt_builder.py:132-170` formula injection; `autonomous_life_cycle.py:331-369` formula-driven decisions; 3 new tests in `test_prompt_builder.py` | LLM-level E2E behavioral test + quantitative impact metrics |
 | 21 | **NeuroAutoSelector ↔ MetaController closed-loop** | ✅ **DONE** (commit `HEAD~`, Jun 28). `NeuroAutoSelector.__init__` accepts `meta_controller` param; `record_result()` forwards hw_score+success to `MetaController.record_confidence()`. `router.py` creates MetaController before both auto/standard branches and passes it. | `neuro_auto_selector.py:record_result()` → `meta_controller.record_confidence()` at L769; `router.py:464-470` creates shared MetaController | — |
 | 22 | **Cross-modal mapping quality metrics** | ✅ **DONE** (Jun 28). 7 new quality benchmark tests in `TestCrossModalRetrievalMetrics` (test_semantic_latent_fusion.py). CrossModalTrainer retrieval precision validated: P@1 = 1.0 for known pairs (image + audio). get_related_keys() correctly filters by modality. SharedLatentSpace.semantic_consistency() validated: tight clusters score higher than loose. CrossModalTrainer.get_stats() returns correct confidence/count metrics. DualEncoderRouter.semantic_consistency_report() already existed (P43). | `test_semantic_latent_fusion.py` — TestCrossModalRetrievalMetrics (7 tests); `dual_encoder_router.py:74-102` — semantic_consistency_report(); `cross_modal_trainer.py:165-179` — get_stats() | **DONE — retrieval precision benchmarks + consistency metrics validated** |
-| 23 | **CerebellumEngine stub** | 27-line stub explicitly marked "最小 stub，等待完整實作" (minimal stub, waiting for full implementation). Returns dummy posture data. Only bio-inspired engine that's not real. | `core/bio/cerebellum_engine.py:9` — `__init__` sets `_posture`, 4 methods return dummies | Full design + implementation |
+| 23 | **CerebellumEngine ✅ DONE** | 27L stub → 172L real implementation (2026-06-28). Posture library (standing/walking/sitting/reaching) with 9-element theta_matrix + finger matrices. `execute_command(pose_name, bio_state)` returns tremor-modulated theta matrix with stress-scaled physiological tremor (10Hz sinusoidal, amplitude 0.005 base × [1+3×stress]). Proprioceptive error correction via `update_proprioception()`. Smooth `interpolate()` with linear blending of theta + finger values. `initialize()` loads postures. Backward compatible: existing 2 smoke tests pass; heartbeat.py uses new `execute_command()` unchanged. | `core/bio/cerebellum_engine.py` (172L) | **All perception stubs eliminated** |
 | 24 | **FullTrainingPipeline + ContinuousMultimodalLearning (CML) wiring** | **DONE** (Jun 28). ① CML pipeline isolation fixed: `ContinuousMultimodalLearning` shares production pipeline via new `pipeline` constructor parameter. CML micro-training now directly improves production components. ② CML recording wired into `_encode_impl()` — every successful encode auto-records + auto-micro-trains. ③ Startup trigger in `_get_pipeline()` — checks for `p29_trained.npz`, launches background training thread if absent. All 21 multimodal service tests pass. | `continuous_multimodal_learning.py:59-60` pipeline param; `multimodal_service.py:160` shared pipeline; `multimodal_service.py:387-398` encode CML feed; `multimodal_service.py:311-326` startup training | — |
 | 25 | **Semantic encoder external dependencies (CLIP/Whisper)** | ✅ **DONE** (Jun 28). `torch 2.11.0`, `transformers 5.5.4`, `openai-whisper 20250625` are all installed. Both `openai/clip-vit-base-patch32` and `openai/whisper-tiny` models are cached in HF Hub cache. `_lazy_init_clip()` loads CLIP in ~32s → produces 512-dim L2-normalized embeddings. `_lazy_init_whisper()` loads Whisper in ~21s → produces 384-dim L2-normalized embeddings. Real model validation: 5 new `@pytest.mark.slow` tests in `test_semantic_encoders.py` (TestSemanticEncoderRealModels) — all pass. Gradio web UI (`scripts/test_clip_zeroshot.py`) also functional. The project now has full CLIP + Whisper capabilities in production — DualEncoderRouter benefits from real semantic vision+audio vectors instead of numpy fallbacks. | `test_semantic_encoders.py` TestSemanticEncoderRealModels (5 slow tests); `semantic_visual.py:30-53` — `_lazy_init_clip()`; `semantic_audio.py:31-56` — `_lazy_init_whisper()`; HF cache at `~/.cache/huggingface/hub/models--openai--clip-vit-base-patch32` + `models--openai--whisper-tiny` | **DONE — deps installed, models cached, real-model tests pass** |
-| 26 | **PerceptionEngine stub (AttentionController DONE)** | `PerceptionEngine` (100L) is a SKELETON — hardcodes confidence=0.85/saliency=0.75 for all visual input. **`AttentionController` ✅ DONE** (2026-06-28) — 33L→164L with saliency map (center-bias+contrast), IOR (configurable radius/duration/auto-pruning), scan path + fixation tracking, candidate scoring. `AuditoryAttention` backward compat alias to AttentionController. | `perception_engine.py:18` — hardcoded values; `attention_controller.py` — full implementation; `auditory_attention.py:13` — preserved alias | PerceptionEngine redesign remains |
-| 27 | **CausalReasoningEngine skeleton** | 99L, ~80 executable. Only does Pearson correlation + variable grouping. No temporal reasoning, no confounding variables, no do-calculus, no structural causal models. `predict()` and `explain()` are trivial list filters. Only 2 smoke tests. | `causal_reasoning_engine.py:11` — `_pearson()` is only real math; `_infer_relationships()` pairs variables with fixed threshold | Research + implementation of proper causal inference |
+| 26 | **PerceptionEngine ✅ DONE + AttentionController ✅ DONE** | `PerceptionEngine` and `AttentionController` both fully implemented (2026-06-28). AttentionController: saliency map (center-bias+contrast), IOR (configurable radius/duration), scan path + fixation tracking, candidate scoring. PerceptionEngine: dynamic confidence from particle count + temporal smoothing, saliency from attention controller + modality weights, cross-modal conflict detection via `detect_conflicts()`. `AuditoryAttention` backward compat alias preserved. All 3 perception pipeline components now real. | `perception_engine.py` (158L), `attention_controller.py` (164L), `auditory_attention.py` (13L alias) | **R1 (CerebellumEngine 27L) remains as lone perception stub** |
+| 27 | **CausalReasoningEngine ✅ DONE** | 99L skeleton → 218L real implementation (2026-06-28). Added Granger causality test (time-lagged F-test, converts to [0,1] strength) for temporal data. Added confounding variable detection via partial correlation (identifies Z correlated with both X and Y). Added do-calculus intervention simulation (`_do_calculus_intervene`) with confounder-adjusted estimates. Causal graph adjacency maintained via `_graph`. `predict()` and `explain()` now sort by strength. Added async `learn_causal_relationships()` and `plan_intervention()` methods. 14 new unit tests + 2 legacy smoke tests = 16 total, all pass. | `causal_reasoning_engine.py` (218L), `tests/unit/test_causal_reasoning.py` (14 tests) | **All stubs eliminated** |
 | 28 | **AdversarialGenerationSystem + TaskGenerator stubs** | **TaskGenerator DONE** (commit `fba3fb14b`, Jun 28). Wired into production: `_schedule_precompute_tasks()` in `AngelaLLMService` calls `analyze_patterns()` + `generate_tasks()` on every successful response, enqueues `PrecomputeTask` items into `PrecomputeService`. `_history` now capped at 1000 with per-user isolation (`_user_histories`). **AdversarialGenerationSystem DONE** (commit `43129d437`, Jun 28). Wired into production: `Level5ASISystem.process_request()` runs `_run_adversarial_evaluation()` after each request; `run_comprehensive_test()` includes adversarial robustness self-test. `evaluate_robustness()` improved with Chinese keywords, language ratios, `get_average_robustness()`. | `task_generator.py:91L` — real analyze/generate/predict + precompute wiring; `adversarial_generation_system.py:115L` — pattern library + robustness scoring + production wiring | **Both DONE.** |
 | 29 | **LLM routing timeouts/retries** | ✅ **DONE** (commit HEAD, Jun 28). Added `_call_with_retry()` — exponential backoff + jitter (base 1s, max 8s, 3 total attempts) wrapping all LLM calls: `_call_llm_backend()`, `generate_text()`, `chat_completion()`. Retries on timeout + error responses before falling to fallback chain/ED3N. | `router.py` — `_call_with_retry()` at module level; applied in `_call_llm_backend`, `generate_text`, `chat_completion` | — |
 | 30 | **GARDEN SNN forward pass efficiency (I3)** | ✅ **DONE** (commit `15d3f3d70`, Jun 28). TensorSNNCore.forward() changed from dense `a @ W` (O(V^2)) to activation-driven sparse propagation: only rows of W for active/spiking neurons are summed per timestep. Added _total_active tracking; get_stats() now reports sparsity_ratio, computation_saved, computation_possible. All 88 core GARDEN tests pass. | `snn_core.py` — `forward()` sparse index-based propagation; `get_stats()` — sparsity_ratio + computation metrics | — |
@@ -505,7 +544,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 | **Wrapper (API proxy)** | 7 | Just calls real AI APIs (OpenAI/Anthropic etc.) | LLM backends (7 providers), Whisper STT, edge-tts TTS |
 | **Academic toy** | 6 | Real algorithm but 20-30 years behind industry | VisualEncoder, AudioSpectralEncoder, ThreeLayerVisual, PrimitiveRenderer, CoreNetwork, ED3NEngine |
 | **Random weights** | 4 | Architecture is real, output = garbage | VisualDecoder, AudioWaveformDecoder, SequenceGenerator, ImageGenerator |
-| **Stub** | 5 | Non-functional placeholder | CerebellumEngine, AttentionController, AuditoryAttention, PerceptionEngine, CausalReasoningEngine |
+| **Stub** | 0 | Non-functional placeholder | *(none)* — all previously identified stubs are now real implementations |
 
 #### Honest Summary
 
@@ -518,7 +557,7 @@ Jun 26: Current count: 4,774 (full testpaths) / 4,261 (tests/ only)
 - **Audio gen**: random weights → noise (未訓練)
 - **Video**: frame loop + random flag (未實作)
 - **Planning**: template matching (1970s AI)
-- **Causal reasoning**: Pearson correlation (1890s statistics)
+- **Causal reasoning**: Pearson correlation + Granger causality + confounding detection + do-calculus intervention (2026-06-28)
 - **Perception**: hardcoded confidence values (未實作)
 
 **The 190+ classes form a beautiful architectural skeleton, but the "brain" is the LLM API calls.** The native engines (ED3N, GARDEN, VisualDecoder, etc.) are academic prototypes — interesting architecture, no production value without extensive training.

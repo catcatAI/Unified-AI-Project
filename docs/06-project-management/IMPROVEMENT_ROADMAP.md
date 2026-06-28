@@ -108,9 +108,11 @@
 
 | # | 項目 | 檔案 | 優先級 | 難度 |
 |---|------|------|:------:|:----:|
-| R1 | 實作 CerebellumEngine — 真實本體感覺/姿勢內插 | `core/bio/cerebellum_engine.py` (27L) | P3 | 高 |
+| R1 | 實作 CerebellumEngine — 真實本體感覺/姿勢內插 | ✅ **DONE** (2026-06-28): 27L→172L. Posture library (standing/walking/sitting/reaching) with 9-element theta_matrix + 5-finger matrices. `execute_command()` — stress-modulated tremor (10Hz, amplitude scaled by bio_state stress). Proprioceptive error correction via `update_proprioception()`. Smooth linear `interpolate()` with theta + finger blending. Backward compatible: heartbeat.py uses unchanged interface. | `core/bio/cerebellum_engine.py` (172L) | P3 | 中 |
 | R2 | 實作 AttentionController — 顯著性計算、IOR、掃描路徑 | ✅ **DONE** (2026-06-28): 33L→164L. Added saliency map computation (center-bias + contrast via local std), Inhibition of Return (configurable radius/duration, auto-pruning), scan path + fixation history tracking, candidate scoring with IOR-aware selection, `compute_saliency_map()`, `get_scan_path()`, `get_fixation_history()`, `set_time()`, `get_saliency_at()`. Backward compatible: 3 existing tests pass, `AuditoryAttentionController` alias unchanged. | `core/perception/attention_controller.py` (164L) | P3 | 高 |
-| R3 | 實作 PerceptionEngine — 真實融合、模糊度解析 | `core/perception/perception_engine.py` (100L) | P3 | 高 |
+| R3 | 實作 PerceptionEngine — 真實融合、模糊度解析 | ✅ **DONE** (2026-06-28): 100L→158L. Removed hardcoded confidence/saliency — now dynamic: confidence from sampler particle count with temporal smoothing (5-window); saliency from attention controller + modality weights. Added `detect_conflicts()` for cross-modal conflict detection by confidence. `decide_focus()` uses attention controller saliency map when no modality given. | `core/perception/perception_engine.py` (158L) | P3 | 中 |
+| §X #27 | 實作 CausalReasoningEngine — 因果推論 | ✅ **DONE** (2026-06-28): 99L skeleton→218L. Added Granger causality (temporal F-test), confounding detection (partial correlation), do-calculus intervention simulation, causal graph adjacency. 14 new unit tests. | `ai/reasoning/causal_reasoning_engine.py` (218L) | P3 | 高 |
+
 | R4 | 實作 TaskGenerator — 真實任務預測/分解 | ✅ **DONE** (commit `fba3fb14b`, Jun 28) | `ai/memory/task_generator.py` (46→91L) + `router.py` (_schedule_precompute_tasks) | P4 | 中 |
 | R5 | 實作 AdversarialGenerationSystem — 真實對抗訓練 | ✅ **DONE** (commit `43129d437`, Jun 28) | `ai/alignment/adversarial_generation_system.py` (65→115L) + `level5_asi_system.py` (_run_adversarial_evaluation) | P4 | 高 |
 | R6 | 移除 AuditoryAttention（空別名）或實作 | ✅ **DONE** (`auditory_attention.py`: removed empty stub class, kept backward-compat alias to AttentionController) | `core/perception/auditory_attention.py` (20→10L) | P3 | 低 |
