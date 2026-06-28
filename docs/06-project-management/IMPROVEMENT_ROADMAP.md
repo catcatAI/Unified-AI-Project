@@ -179,7 +179,7 @@
 | O3 | 標準化 imports（isort 跨所有 Python 檔案） | ✅ **DONE** (isort 8.0.1, profile=black, 738 files: 2908 insertions/2100 deletions) | P4 |
 | O4 | 清理 docs/ 中過時/重複文件（移入 09-archive/） | ✅ **DONE** (2026-06-28): 7 files archived: PROJECT_ROADMAP, RECOMMENDATIONS, TODO_ANALYSIS, UNIFIED_AI_IMPROVEMENT_PLAN, ACTION_PLAN, DOCUMENTATION_TRUTH_MAP, port_routing_plan. 3 kept: VERSION_CONTROL_STRATEGY, PROJECTS_COLLABORATION_GUIDE, GIT_AND_PROJECT_MANAGEMENT. | P3 |
 | O5 | 更新 INDEX.md 和 UNIFIED_DOCUMENTATION_INDEX.md 以反映文件變動 | ✅ **DONE** (INDEX.md already correct; UNIFIED_DOCUMENTATION_INDEX.md was itself archived to 09-archive/; README.md links updated to point to archive) | P3 |
-| O6 | 為每個主要子系統建立統一的 `__init__.py`（公開 API） | P4 |
+| O6 | 為每個主要子系統建立統一的 `__init__.py`（公開 API） | ✅ **DONE** (2026-06-28): 8 `__init__.py` files updated: `ai/core/` created (19 exports), `ai/ed3n/` docstring added (20 exports), `ai/meta/` docstring added (3 exports), `ai/reasoning/` docstring added (DEPRECATED), `core/bio/` `__all__` added (58 exports across 24 modules), `core/perception/` created (16 exports), `core/managers/` created (10 exports). 3 previous O6 files from earlier: `ai/memory/`, `ai/memory/ham_memory/`, `services/`, `services/api/` — total 12 files. Remaining gaps: `ai/context/` (already has both), `ai/garden/` (already has both), `ai/alignment/` (already has both), `ai/response/` (already has both), `ai/lifecycle/` (already has both), `ai/agents/` (already has both), `ai/multimodal/` (already has both), `core/` (already has both). | P4 |
 
 ---
 

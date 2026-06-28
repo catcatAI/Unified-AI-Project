@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **4,785 collected / 33 skipped** (4,790 with slow tests) on 2026-06-28 (was 4,774 Jun 26 — +11 from restored test passes + new tests).
+> **Test count baseline**: `pytest` (full testpaths) = **4,815 collected / 41 skipped** (4,825~ with slow tests) on 2026-06-28 (was 4,785 Jun 28 — +30 from new __init__.py discoverability + restored test files).
 
 ---
 
@@ -293,6 +293,39 @@ The plan claimed to create:
 
 ### Test Count
 - **4,785** collected (was 4,774 — +11 from restored passes + new tests)
+- **0 collection errors**
+
+---
+
+## VI-B. Session Summary — 2026-06-28 (continuation, +13 commits)
+
+### §X #6 TemporalState — **DONE** (13/14 test_unit → 14/14)
+- `temporal.py` had **13 pre-existing test failures** (test file described API that stubs didn't implement).
+- **Root cause**: `TrendResult.field` shadowed `dataclasses.field()` — caused `TypeError: 'str' object is not callable`.
+- **Fixes**: Renamed `TrendResult.field` → `field_name`; added `mean` field. `CorrelationResult.coefficient` → `correlation` + `strength` field. Removed unused `datetime` import.
+- **Implementations**: 8 missing methods (`record()`→int index, `get_at()`, `size()`, `clear()`, `is_empty()`, `on_record()`, `query()`, `get_field_series()`). All `trend()`/`anomalies()`/`correlation()`/`find_drift()` now return typed dataclasses instead of bare dicts.
+- **Result**: 14/14 unit tests pass, flake8 clean.
+
+### O6 `__init__.py` Standardization — **DONE** (12 files)
+- **Phase 1** (earlier session): `ai/memory/`, `ai/memory/ham_memory/`, `services/`, `services/api/` — 4 files with docstring + `__all__`.
+- **Phase 2** (this session): 8 files updated:
+  - `ai/core/__init__.py` — **Created** (19 exports: DictionaryClassifier, ExecutionGate, ModelBus, QueryClassifier, TrainingCoordinator, unicode_utils). This directory previously had NO `__init__.py` at all.
+  - `ai/ed3n/__init__.py` — Added docstring (20 exports).
+  - `ai/meta/__init__.py` — Added docstring (3 exports).
+  - `ai/reasoning/__init__.py` — Added docstring (DEPRECATED, no production consumers).
+  - `core/bio/__init__.py` — Added `__all__` (58 exports across 24 modules: AutonomicNervousSystem, BiologicalIntegrator, CerebellumEngine, EmotionalBlendingSystem, EndocrineSystem, NeuroplasticitySystem, PhysiologicalTactileSystem, etc.).
+  - `core/perception/__init__.py` — **Replaced empty file** with docstring + `__all__` (16 exports across 9 modules).
+  - `core/managers/__init__.py` — **Replaced empty file** with docstring + `__all__` (10 exports: SystemManager, ExecutionMonitor, DependencyManager).
+- **Audit**: 0 remaining directory has BOTH no docstring AND no `__all__`. All 17 scanned directories pass.
+
+### Bugfix: 7 Collection Errors → 0
+- **7 `ImportError: cannot import name 'MultimodalWSHandler'`** — Stale import in `services/__init__.py` referencing a class that was replaced with function-based handler. Removed import + `__all__` entry.
+- **1 `ImportError: cannot import name 'router' from 'services.api.state_matrix_api'`** — `services/api/__init__.py` had `from .state_matrix_api import router as state_matrix_router` but actual export name is `state_matrix_router`. Fixed import.
+- **Result**: 4,815 collected, 0 errors (was 4,765 with 7 errors).
+
+### Test Count
+- **4,815** collected (was 4,785 — +30 from new __init__.py discoverability revealing previously hidden tests)
+- **41 skipped** (was 33 — varies by env)
 - **0 collection errors**
 
 ---

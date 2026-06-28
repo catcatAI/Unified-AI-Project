@@ -1,6 +1,11 @@
 # =============================================================================
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
 # =============================================================================
+"""
+Reasoning module — DEPRECATED.
+
+DEPRECATED: This subpackage has no production consumers.
+"""
 
 # =============================================================================
 # DEPRECATED: This subpackage has no production consumers.

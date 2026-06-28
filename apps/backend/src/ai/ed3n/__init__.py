@@ -1,6 +1,13 @@
 # =============================================================================
 # ANGELA-MATRIX: [L3] [γ] [C] [L2]
 # =============================================================================
+"""
+ED3N module — emergent deep dynamic network engine.
+
+Core: ED3NEngine (reflex → SNN → decode → cycle), CoreNetwork, DictionaryLayer.
+Training: ED3NTrainer, SequenceTrainer, JointTrainer (gradient-based).
+Support: IOAnalyzer, TelemetryCollector, StepDecoder, RelationClassifier.
+"""
 
 from .continuous_learning import ContinuousLearningPipeline
 from .core_network import CoreNetwork, Neuron, RelationGroup
