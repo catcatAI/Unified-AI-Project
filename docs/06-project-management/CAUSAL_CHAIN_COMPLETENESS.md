@@ -662,6 +662,9 @@ Component_A.state_change → Component_B.detect() → Component_B.behavior_chang
 | ✅ **Level5ASI Process** | 修復完成 (commit `this commit` 2026-06-29) | 移除 `await asyncio.sleep(1.0)` 模擬延遲，改為 `await asyncio.sleep(0)` 事件循環讓出 |
 | ❌ **前端 Live2D** | 隨機彩色矩形 | 補齊 Live2D 模型渲染路徑 |
 | ❌ **前端 Dashboard** | 假資料或 TODO handler | 接上真實後端 API |
+| ✅ **Heartbeat stop() bug** | 修復完成 (commit `this commit` 2026-06-29) | stop() 未取消 _integration_task，現已補齊並處理 CancelledError |
+| ✅ **CyberIdentity reflection** | 修復完成 (commit `this commit` 2026-06-29) | _reflection_task 加入 exception handler |
+| ✅ **Broadcast task** | 修復完成 (commit `this commit` 2026-06-29) | 廣播 task 加入 exception handler |
 
 ### 0.6 例外條款
 
@@ -744,12 +747,12 @@ print(f'Total pass statements: {count}')
 | 20 | Level5 Config Update | `level5_config.py` | **5.0s** | L5配置更新 | 🟡 過於頻繁？ |
 | 21 | Metabolic Interval | `angela_model_core.py` | **2.0s** | 代謝更新 | 🟡 與 Heartbeat(30s) 不一致 |
 | 22 | Heartbeat Primary | `heartbeat.py` | **5.0~60.0s** (動態) | 生物/代謝循環 | ✅ 動態調整，最佳實踐 |
-| 23 | Heartbeat Integration | `heartbeat.py` | **2.0~10.0s** (動態, 依 arousal) | 小腦/神經整合 | ✅ 已修復 2026-06-29 — 頻率從 0.1s 提升至動態 2-10s，消除 50-600x 差 |
+| 23 | Heartbeat Integration | `heartbeat.py` | **2.0~10.0s** (動態, 依 arousal) | 小腦/神經整合 | ✅ 已修復 2026-06-29 — 頻率從 0.1s→動態 2-10s，消除 50-600x 差。stop() 現同時取消 Integration task (commit `this commit`) |
 | 24 | Life Cycle Check | `digital_life_integrator.py` | **10.0s** | 生命週期檢查 | ✅ 合理 |
 | 25 | Proactive Check | `proactive_interaction_system.py` | **15.0s** | 主動互動檢查 | ✅ 合理 |
 | 26 | HAM Hourly | `ham_background_tasks.py` | **3600.0s** (1/hr) | HAM背景任務 | ✅ 長時間任務 |
 | 27 | Narrative Update | `cyber_identity.py` | **86400.0s** (1/day) | 敘事更新 | ✅ 每日更新合理 |
-| 28 | Decision Interval | `autonomous_life_cycle.py` | **60.0s** (1min, was 300s/5min) | 生命決策 | ✅ 已修復 2026-06-29 — §8.6 #8: 預設從 300s→60s，讓自主性更即時 |
+| 28 | Decision Interval | `autonomous_life_cycle.py` | **60.0s** (1min, was 300s/5min) | 生命決策 | ✅ 已修復 2026-06-29 — §8.6 #8: 預設從 300s→60s |
 | 29 | Session Heartbeat | `connection_session.py` | **30.0s** | WebSocket心跳 | ✅ 網路標準 |
 | 30 | HAM Sync | `chat_service.py` | **3600.0s** (1/hr) | HAM同步 | 🟡 1小時太長，使用中可能遺失 |
 | 31 | Bio Monitor | `system_monitor.py` | **5.0s** | 系統監控 | ✅ 合理 |
@@ -848,7 +851,7 @@ print(f'Total pass statements: {count}')
 | 4 | **硬體感知動態頻率**: 根據 CPU/GPU/電池動態調整所有循環 | 🟡 中 | 高 |
 | 5 | **HardwareProfile**: 定義 5 種硬體場景的預設頻率表 | 🟡 中 | 低 |
 | 6 | **消除 time.sleep()**: 所有同步 sleep 改為 asyncio.sleep | 🔴 高 | 低 |
-| 7 | **Fire-and-forget 異常處理**: 為所有 create_task 註冊 exception handler | 🟡 **PARTIAL** (2026-06-29) — 4 個核心檔案已加入 handler: digital_life_integrator (2), autonomous_life_cycle (1), heartbeat (2), event_loop_system (2) | 🔴 高 | 低 |
+| 7 | **Fire-and-forget 異常處理**: 為所有 create_task 註冊 exception handler | 🟢 **EXTENDED** (2026-06-29) — 又 3 個檔案加入 handler: cyber_identity (1), lifespan broadcast (1)。heartbeat stop 現也清理 _integration_task。總計: 10 task handlers in 7 files + 1 bug fix | 🔴 高 | 低 |
 | 8 | **自主決策頻率提升**: 300s→60s，讓自主性更即時 | ✅ **DONE** (2026-06-29) — `autonomous_life_cycle.py`: 預設 `decision_interval` 300.0→60.0 |
 
 ### 8.7 硬體設定檔範例

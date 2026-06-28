@@ -295,6 +295,10 @@ def _try_start_broadcast():
     try:
         from services.websocket_manager import broadcast_state_updates
         task = asyncio.create_task(broadcast_state_updates())
+        task.add_done_callback(
+            lambda t: logger.critical("Broadcast state update task failed: %s", t.exception())
+            if not t.cancelled() and t.exception() else None
+        )
         logger.info("[Broadcast] State update broadcast task started")
         return task
     except Exception as e:

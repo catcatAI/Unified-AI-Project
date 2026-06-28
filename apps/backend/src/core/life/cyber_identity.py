@@ -198,6 +198,10 @@ class CyberIdentity:
 
         # Start reflection loop
         self._reflection_task = asyncio.create_task(self._reflection_loop())
+        self._reflection_task.add_done_callback(
+            lambda t: logger.critical("Reflection loop failed: %s", t.exception())
+            if not t.cancelled() and t.exception() else None
+        )
 
     def _initialize_self_knowledge_domains(self) -> None:
         """Initialize knowledge domains for self-identity"""

@@ -111,7 +111,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | **Level5ASI Simulated Sleep** | ✅ **FIXED** | Removed `await asyncio.sleep(1.0)` simulated processing delay |
 | **IntentModel Production Wiring** | ✅ **DONE** | IntentManager wired into DigitalLifeIntegrator._life_cycle_loop(): homeostatic intents → get_intent_influence() → state matrix update (energy/focus/happiness/bond). Closed loop! |
 | **Autonomy Decision Speed** | ✅ **FIXED** | AutonomousLifeCycle decision_interval 300s→60s (5x faster, §8.6 #8) |
-| **create_task Exception Handlers** | ✅ **PARTIAL** | Added add_done_callback with logger.critical() to 7 core background tasks across 4 files (§8.6 #7) |
+| **create_task Exception Handlers** | ✅ **EXTENDED** | 10 tasks in 7 files (added cyber_identity, lifespan broadcast). Also fixed heartbeat stop() bug — lacked _integration_task cancel (§8.6 #7) |
 
 See **[COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md)** (latest audit), **[IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md)** (target), **[COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md)** (plan), **[MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md)** (task provenance), **[CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md)** (causal depth).
 

@@ -607,6 +607,28 @@ The plan claimed to create:
 
 ### Test count
 - **4,333** collected (tests/ only — unchanged, no regressions)
+
+---
+
+## VI-O. Session Summary — 2026-06-29 (Heartbeat stop bugfix + create_task handlers extended)
+
+### Heartbeat stop() missing _integration_task.cancel() — **FIXED**
+- `heartbeat.py`: `stop()` was only cancelling `self._task`, not `self._integration_task`. This meant the integration loop kept running after stop() was called.
+- **Fix**: Now cancels both `self._task` and `self._integration_task` with proper `CancelledError` handling.
+- **Pre-existing bug** — latent since integration_loop was added.
+
+### CyberIdentity _reflection_task exception handler — **ADDED**
+- `cyber_identity.py`: The `_reflection_loop()` has no internal try/except — an unexpected exception would be silently swallowed.
+- **Fix**: Added `add_done_callback()` with `logger.critical()` to `_reflection_task`.
+
+### Broadcast task exception handler — **ADDED**
+- `lifespan.py`: The `broadcast_state_updates()` task was fire-and-forget with no exception handler.
+- **Fix**: Added `add_done_callback()` with `logger.critical()` to the broadcast task.
+
+### §8.6 #7 total: 10 task handlers in 7 files (was 7 in 4) + 1 bug fix
+
+### Test count
+- **4,840** collected (unchanged)
 - **`emotion_system.py`**: `apply_influence()` was a no-op stub — now maps 12 influence types (dopamine/adrenaline/cortisol/stress/joy/fear/anger/calm/etc.) to PAD (Pleasure/Arousal/Dominance) deltas and modifies internal emotional state. Added `_cap_emotion_history()` to cap at 1000 entries. Added `get_behavioral_adjustment()` — maps current `EmotionType` to `routing_mode` (conservative/exploratory/neutral) and `response_style` (soothing/empathetic/enthusiastic/warm/etc.).
 - **`chat_routes.py`**: Added `_get_emotion_system()` singleton, `_ANGELA_EMOTION_BEHAVIOR_MAP` (8 emotion → routing/response mappings), `_inject_emotion_behavioral_context()` wired into pipeline Step 5 (after emotion analysis). Injects both `context["emotional_behavior"]` (user emotion guidance) and `context["angela_emotion"]` (Angela's internal state).
 - **`prompt_builder.py`**: Added `_append_emotional_behavior()` — reads both context keys, formats them as behavioral guidance for the LLM. Wired into `construct_angela_prompt()` callback chain.

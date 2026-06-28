@@ -113,6 +113,16 @@ class MetabolicHeartbeat:
         self._running = False
         if self._task:
             self._task.cancel()
+            try:
+                await self._task
+            except asyncio.CancelledError:
+                pass
+        if self._integration_task:
+            self._integration_task.cancel()
+            try:
+                await self._integration_task
+            except asyncio.CancelledError:
+                pass
         await self.bio_integrator.shutdown()
         logger.info("🛑 Heartbeat stopped.")
 
