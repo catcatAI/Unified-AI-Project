@@ -208,9 +208,13 @@ class PhysiologicalTactileSystem:
     async def _update_loop(self) -> None:
         """Background update loop for receptor adaptation"""
         while self._running:
-            await self._adapt_receptors()
-            await self._decay_stimuli()
-            await asyncio.sleep(loop_sleep("tactile_update", 0.1))  # 100ms update interval
+            try:
+                await self._adapt_receptors()
+                await self._decay_stimuli()
+                await asyncio.sleep(loop_sleep("tactile_update", 0.1))  # 100ms update interval
+            except Exception as e:  # broad exception acceptable: tactile update loop must be resilient
+                logger.error("Physiological tactile update loop error: %s", e, exc_info=True)
+                await asyncio.sleep(loop_sleep("tactile_update", 0.1))
 
     async def _adapt_receptors(self) -> None:
         """Adapt receptor sensitivity based on continuous stimulation"""

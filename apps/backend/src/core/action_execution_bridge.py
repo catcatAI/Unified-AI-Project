@@ -412,26 +412,30 @@ class ActionExecutionBridge:
     async def _execution_loop(self) -> None:
         """Main execution loop - processes actions from the queue"""
         while self._running:
-            # Find next executable action
-            executable = self._get_next_executable_action()
+            try:
+                # Find next executable action
+                executable = self._get_next_executable_action()
 
-            if executable:
-                priority, action_id, item = executable
-                self._priority_queue.remove(executable)
+                if executable:
+                    priority, action_id, item = executable
+                    self._priority_queue.remove(executable)
 
-                # Execute with semaphore
-                task = asyncio.create_task(self._execute_with_semaphore(action_id, item))
-                self._background_tasks.add(task)
-                task.add_done_callback(
-                    lambda t: (
-                        self._background_tasks.discard(t),
-                        logger.warning("Background action task failed: %s", t.exception())
-                        if not t.cancelled() and t.exception() else None
+                    # Execute with semaphore
+                    task = asyncio.create_task(self._execute_with_semaphore(action_id, item))
+                    self._background_tasks.add(task)
+                    task.add_done_callback(
+                        lambda t: (
+                            self._background_tasks.discard(t),
+                            logger.warning("Background action task failed: %s", t.exception())
+                            if not t.cancelled() and t.exception() else None
+                        )
                     )
-                )
-            else:
-                # No executable actions, wait a bit
-                await asyncio.sleep(loop_sleep("bridge_poll", 0.1))
+                else:
+                    # No executable actions, wait a bit
+                    await asyncio.sleep(loop_sleep("bridge_poll", 0.1))
+            except Exception as e:  # broad exception acceptable: execution loop must be resilient to prevent silent crash
+                logger.error("%s Execution loop error: %s", _LOG_PREFIX, e, exc_info=True)
+                await asyncio.sleep(loop_sleep("bridge_fast", 0.5))
 
     def _get_next_executable_action(self) -> Optional[tuple]:
         """Get the next action that can be executed (dependencies satisfied)"""

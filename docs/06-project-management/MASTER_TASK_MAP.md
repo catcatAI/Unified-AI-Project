@@ -687,6 +687,30 @@ The plan claimed to create:
 
 ## VI-Q. Session Summary — 2026-06-29 (HardwareProfile §8.6 #5 + time.sleep audit #6)
 
+---
+
+## VI-S. Session Summary — 2026-06-29 (create_task exception handlers — all background loops protected)
+
+### §8.6 #7 — 6 additional background loops protected — **DONE**
+- **action_execution_bridge.py**: `_execution_loop()` — wrapped entire while-loop body in try/except, logs with exc_info, fallback sleep 0.5s
+- **autonomic_nervous_system.py**: `_update_loop()` — try/except, logs with exc_info, fallback sleep 1s
+- **emotional_blending.py**: `_update_loop()` — try/except, logs with exc_info, fallback sleep 1s
+- **multidimensional_trigger.py**: `_evaluation_loop()` — try/except, logs with exc_info, fallback sleep evaluation_interval
+- **neuroplasticity_core.py**: `_update_loop()` — try/except, logs with exc_info, fallback sleep 60s
+- **physiological_tactile_system.py**: `_update_loop()` — try/except, logs with exc_info, fallback sleep 0.1s
+
+**Total §8.6 #7**: 16 task handlers in 13 files (was 10 handlers / 7 files — +6 protected loops)
+**Effect**: Every long-running background loop in the system now has exception handling. No silent crashes.
+
+### §8.6 progress update
+- #7: 🟢 **DONE** — All background loops now have exception protection
+
+### §0.3 verification checklist updated
+- ✅ ⑥ 異常處理完整: 所有 create_task 有 exception handler — now VERIFIED complete
+
+### §0.5 banned components — unchanged
+- 2 remaining: Frontend Live2D, Frontend Dashboard
+
 ### HardwareProfile — **DONE** (§8.6 #5)
 - New file: `apps/backend/src/core/system/config/hardware_profile.py`
 - `HardwareScenario` enum: 5 scenarios (HIGH_PERFORMANCE_DESKTOP, LAPTOP_NORMAL, LAPTOP_POWER_SAVER, LOW_POWER_DEVICE, SERVER_CLOUD)

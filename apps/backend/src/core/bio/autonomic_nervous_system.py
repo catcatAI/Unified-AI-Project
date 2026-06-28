@@ -195,11 +195,15 @@ class AutonomicNervousSystem:
     async def _update_loop(self) -> None:
         """Background update loop"""
         while self._running:
-            await self._decay_stimuli()
-            await self._apply_homeostasis()
-            await self._calculate_tones()
-            await self._detect_state_change()
-            await asyncio.sleep(loop_sleep("ans_update", 0.5))  # 500ms update interval
+            try:
+                await self._decay_stimuli()
+                await self._apply_homeostasis()
+                await self._calculate_tones()
+                await self._detect_state_change()
+                await asyncio.sleep(loop_sleep("ans_update", 0.5))  # 500ms update interval
+            except Exception as e:  # broad exception acceptable: ANS update loop must be resilient
+                logger.error("ANS update loop error: %s", e, exc_info=True)
+                await asyncio.sleep(loop_sleep("ans_tick", 1.0))
 
     async def _decay_stimuli(self) -> None:
         """Decay active stimuli over time"""

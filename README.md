@@ -111,7 +111,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | **Level5ASI Simulated Sleep** | ✅ **FIXED** | Removed `await asyncio.sleep(1.0)` simulated processing delay |
 | **IntentModel Production Wiring** | ✅ **DONE** | IntentManager wired into DigitalLifeIntegrator._life_cycle_loop(): homeostatic intents → get_intent_influence() → state matrix update (energy/focus/happiness/bond). Closed loop! |
 | **Autonomy Decision Speed** | ✅ **FIXED** | AutonomousLifeCycle decision_interval 300s→60s (5x faster, §8.6 #8) |
-| **create_task Exception Handlers** | ✅ **EXTENDED** | 10 tasks in 7 files (added cyber_identity, lifespan broadcast). Also fixed heartbeat stop() bug — lacked _integration_task cancel (§8.6 #7) |
+| **create_task Exception Handlers** | ✅ **DONE** | **16 tasks in 13 files** — added 6 more protected loops: action_execution_bridge._execution_loop + 5 bio loops (ANS, EmotionalBlending, MultidimensionalTrigger, Neuroplasticity, Tactile). All background loops now have exception handling (§8.6 #7) |
 | **Bridge Event-Driven Wait** | ✅ **DONE** | `_wait_for_completion` busy-poll (0.05s, 20Hz) → `asyncio.Event`. Eliminates redundant bridge_fast loop (§8.6 #2/#3) |
 | **HardwareProfile** | ✅ **DONE** | `hardware_profile.py`: 5 hardware scenarios (desktop/laptop/power-saver/low-power/server) + 22 interval fields + auto-detection + runtime overrides. 20 tests (§8.6 #5) |
 | **HardwareProfile → loop_sleep()** | ✅ **DONE** | `magic_numbers.py` now loads HardwareProfile lazily and applies multiplier to all 32+ loops. All loops now hardware-aware (§8.6 #4 BASIC) |

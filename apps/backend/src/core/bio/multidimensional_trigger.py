@@ -257,9 +257,13 @@ class MultidimensionalTriggerSystem:
     async def _evaluation_loop(self) -> None:
         """Background evaluation loop"""
         while self._running:
-            await self._update_time_dimension()
-            await self._update_random_dimension()
-            await asyncio.sleep(self.evaluation_interval)
+            try:
+                await self._update_time_dimension()
+                await self._update_random_dimension()
+                await asyncio.sleep(self.evaluation_interval)
+            except Exception as e:  # broad exception acceptable: evaluation loop must be resilient
+                logger.error("Trigger evaluation loop error: %s", e, exc_info=True)
+                await asyncio.sleep(self.evaluation_interval)
 
     async def _update_time_dimension(self) -> None:
         """Update time-based dimension"""

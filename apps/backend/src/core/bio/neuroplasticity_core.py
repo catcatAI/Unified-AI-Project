@@ -316,9 +316,13 @@ class NeuroplasticitySystem:
     async def _update_loop(self) -> None:
         """Background update loop"""
         while self._running:
-            await self._decay_synaptic_weights()
-            await self._update_memory_consolidation()
-            await asyncio.sleep(loop_sleep("neuroplasticity_update", 60.0))  # Update every minute
+            try:
+                await self._decay_synaptic_weights()
+                await self._update_memory_consolidation()
+                await asyncio.sleep(loop_sleep("neuroplasticity_update", 60.0))  # Update every minute
+            except Exception as e:  # broad exception acceptable: neuroplasticity update loop must be resilient
+                logger.error("Neuroplasticity update loop error: %s", e, exc_info=True)
+                await asyncio.sleep(loop_sleep("neuroplasticity_update", 60.0))
 
     async def _decay_synaptic_weights(self) -> None:
         """Apply natural decay to synaptic weights"""

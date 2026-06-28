@@ -860,7 +860,7 @@ print(f'Total pass statements: {count}')
 | 4 | **硬體感知動態頻率**: 根據 CPU/GPU/電池動態調整所有循環 | 🟢 **BASIC** (2026-06-29) — `loop_sleep()` 現已自動套用 HardwareProfile multiplier。所有 32 個循環現在有硬體感知頻率調整。待改進：個別硬體指標 (CPU溫度、GPU負載) 的即時動態調整。 |
 | 5 | **HardwareProfile**: 定義 5 種硬體場景的預設頻率表 | ✅ **DONE** (2026-06-29) — `hardware_profile.py`: HardwareScenario enum (5 scenarios), FrequencyProfile dataclass (22 interval fields), PROFILES with distinct values for each scenario, HardwareProfile class with auto-detection (env var, CI, headless Linux, ARM, battery, default), runtime overrides, multiplier API. 20 tests pass |
 | 6 | **消除 time.sleep()**: 所有同步 sleep 改為 asyncio.sleep | ✅ **DONE** (2026-06-29) — 確認所有剩餘 `time.sleep()` 呼叫皆在同步/執行緒上下文中 (agent_manager._wait_router_health, agent_manager_extensions subprocess 範例, repl.py 執行緒, execution_monitor 監控執行緒)。非 async 函式中的 `time.sleep()` 為正確用法。§8.6 #6 實質完成 |
-| 7 | **Fire-and-forget 異常處理**: 為所有 create_task 註冊 exception handler | 🟢 **EXTENDED** (2026-06-29) — 又 3 個檔案加入 handler: cyber_identity (1), lifespan broadcast (1)。heartbeat stop 現也清理 _integration_task。總計: 10 task handlers in 7 files + 1 bug fix | 🔴 高 | 低 |
+| 7 | **Fire-and-forget 異常處理**: 為所有 create_task 註冊 exception handler | 🟢 **EXTENDED** (2026-06-29) — 又 6 個檔案加入 try/except 保護背景循環: action_execution_bridge._execution_loop + 5 個 bio 循環 (ANS, EmotionalBlending, MultidimensionalTrigger, Neuroplasticity, Tactile)。總計: **16 task handlers in 13 files**（原 10 handlers / 7 files + 6 new protected loops）。§8.6 #7 實質完成 — 所有背景 loop 皆已保護 | 🔴 高 | 低 |
 | 8 | **自主決策頻率提升**: 300s→60s，讓自主性更即時 | ✅ **DONE** (2026-06-29) — `autonomous_life_cycle.py`: 預設 `decision_interval` 300.0→60.0 |
 
 ### 8.7 硬體設定檔 — 實作

@@ -278,10 +278,14 @@ class EmotionalBlendingSystem:
     async def _update_loop(self) -> None:
         """Background update loop for emotion dynamics"""
         while self._running:
-            await self._update_emotion()
-            await self._decay_influences()
-            await self._update_expression()
-            await asyncio.sleep(loop_sleep("emotion_update", 1.0))  # 1 second update interval
+            try:
+                await self._update_emotion()
+                await self._decay_influences()
+                await self._update_expression()
+                await asyncio.sleep(loop_sleep("emotion_update", 1.0))  # 1 second update interval
+            except Exception as e:  # broad exception acceptable: emotion update loop must be resilient
+                logger.error("Emotion blending update loop error: %s", e, exc_info=True)
+                await asyncio.sleep(loop_sleep("emotion_tick", 1.0))
 
     async def _update_emotion(self) -> None:
         """Update current emotion toward target or baseline"""
