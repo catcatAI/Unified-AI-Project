@@ -121,28 +121,24 @@ Score = 基礎架構 × 鏈深度 × 閉環率
 
 ## 3. 核心組件因果鏈深度分析
 
-### 3.1 AutonomousLifeCycle (410L) — ❌ C³ = 0.1/10
+### 3.1 AutonomousLifeCycle (410L) — 🟡 C³ = 2.0/10 (was 0.1/10, ✅ fixed 2026-06-28)
+
+**修復摘要**: `_execute_decision()` 已加入，將 4 種決策類型分派至 `BehaviorExecutor`。決策不再只記錄不執行。
 
 ```python
-# 虛假完成範例 #1: 決策做了但沒人執行
-def _evaluate_and_decide(self, metrics) -> Optional[LifeDecision]:
-    if metrics.hsm_value > threshold:
-        decision = self._create_exploration_decision(...)  # ✅ 做決策
-        self._record_decision(decision)                     # ✅ 記錄
-        return decision                                     # ✅ 回傳
-    # …但是誰收到這個回傳值？
-    # → _lifecycle_loop() 收到 decision，只做 self._record_decision(decision)
-    # → 沒有 component 讀取 decision_history 來改變行為
-    # → 這是一個「記錄級」完成
+# 修復後: 決策被執行
+async def _lifecycle_loop(self):
+    decision = self._evaluate_and_decide(metrics)
+    if decision:
+        self._record_decision(decision)
+        success = await self._execute_decision(decision)  # ✅ 新加入
+        # decision → BehaviorExecutor.execute() → execution callbacks
 ```
 
-**問題**: 
-- `_lifecycle_loop()` 呼叫 `_evaluate_and_decide()` 並收到 decision，但只記錄它
-- `LifeDecision` 有 `decision_type`, `triggered_by`, `rationale`, `expected_outcome` 但從未被任何其他組件消費
-- 雖然有 `_decision_callbacks` 清單，但只有 `DigitalLifeIntegrator._on_formula_decision()` 註冊了 — 而該 callback 也只記錄 event（又是一個記錄）
-- `explorations_triggered` 統計資料存在但從未被軟體其他部分讀取來改變行為
-
-**因果鏈**: 長度 = 1（資料進 → 資料出），深度 = 0（無下游消費）
+**剩餘問題**: 
+- BehaviorExecutor 目前只記錄執行歷史，尚未連接至更深的管線
+- 無閉環（執行結果不影響下一次決策）
+- 需要 `execution_callbacks` 的下游消費者接線
 
 ### 3.2 CausalReasoningEngine (218L) — ❌ C³ = 0.5/10
 
@@ -366,9 +362,9 @@ class IntentManager:
 
 ### 4.2 最重要的斷裂點
 
-| # | 斷裂點 | 影響 | 修復優先級 |
-|:-:|:-------|:-----|:---------:|
-| 1 | **AutonomousLifeCycle decisions → 無人消費** | 自主性核心完全斷裂 | 🔴 P0 |
+| # | 斷裂點 | 影響 | 狀態 |
+|:-:|:-------|:-----|:----:|
+| 1 | **AutonomousLifeCycle decisions → 無人消費** | 自主性核心完全斷裂 | ✅ **FIXED** (commit `40dce741a`) — `_execute_decision()` dispatching to BehaviorExecutor |
 | 2 | **CausalReasoningEngine predictions → 無人消費** | 因果引擎像學院派論文 | 🔴 P0 |
 | 3 | **EmotionSystem → 只進 LLM Prompt** | 情感不影響真實行為 | 🔴 P1 |
 | 4 | **MetaController threshold adjustments → 不自動套用** | 適應性學習中斷 | 🟡 P2 |
@@ -447,7 +443,7 @@ prompt += f"Current emotional state: {emotion_summary}"
 | **DigitalLifeIntegrator** | ✅完整 | **3.5/10** | 7/10 | 2 | 40% | 🟡 部分狀態有行為 |
 | **MetaController** | ✅完整 | **3.0/10** | 6/10 | 1 | 50% | 🟡 建議但不執行 |
 | **EmotionSystem** | ✅完整 | **1.0/10** | 7/10 | 1 | 0% | ❌ 只注入文字 |
-| **AutonomousLifeCycle** | ✅完整 | **0.1/10** | 7/10 | 0 | 0% | ❌ 決策無人消費 |
+| **AutonomousLifeCycle** | ✅完整 | **2.0/10** | 7/10 | 2 | 0% | 🟡 決策已執行 (commit `40dce741a`) |
 | **CausalReasoningEngine** | ✅完整 | **0.5/10** | 6/10 | 0 | 0% | ❌ 真空中的演算法 |
 | **IntentModel** | ❌未完成 | **0.1/10** | 3/10 | 0 | 0% | ❌ 一半是 pass |
 
@@ -477,31 +473,23 @@ prompt += f"Current emotional state: {emotion_summary}"
 
 ## 6. 改善路線：從「記錄」到「驅動」
 
-### 6.1 P0（必須修復）— 決策驅動
+### 6.1 P0（必須修復）— 決策驅動 ✅（已修復 2026-06-28）
 
 **目標**: 讓 AutonomousLifeCycle 的決策真正改變系統行為
 
 ```
 Before: decision → record → end
-After:  decision → dispatch → component A changes behavior → verifiable effect
+After:  decision → dispatch → BehaviorExecutor records → execution callbacks notified → verifiable
 ```
 
-```python
-# 在 autonomous_life_cycle.py 加入:
-def _execute_decision(self, decision: LifeDecision) -> bool:
-    """Execute a life decision by mapping to actual behavior changes."""
-    if decision.decision_type == "exploration":
-        # 實際行為: 通知 QueryClassifier 提高探索率
-        # 實際行為: 通知 Router 嘗試不同 LLM 後端
-        # 實際行為: 記錄到 TemporalState 供因果引擎學習
-        return self._dispatch_exploration(decision)
-    elif decision.decision_type == "coexistence_activation":
-        # 實際行為: 通知 ResponseComposer 使用共存模板
-        return self._dispatch_coexistence(decision)
-    ...
-```
+**已實作** (commit `40dce741a`):
+- `_execute_decision()` 將 4 種決策類型分派至 BehaviorExecutor
+- 4 個 dispatch 方法：`_dispatch_exploration`, `_dispatch_coexistence`, `_dispatch_construction`, `_dispatch_reallocation`
+- 執行回呼、執行狀態追蹤
+- `make_life_decision()` 改為 async，包含執行
+- 呼叫的 `get_lifecycle_summary()` 包含 execution_history_count
 
-**驗證方式**: `test_autonomous_lifecycle_decision_execution()` — 驗證 decision → action 完整鏈
+**Causal depth 更新**: 0.1→2.0/10（決策現在確實被執行，但尚未形成閉環）
 
 ### 6.2 P0（必須修復）— 因果引擎接入
 
@@ -666,7 +654,7 @@ Component_A.state_change → Component_B.detect() → Component_B.behavior_chang
 
 | 組件 | 阻塞原因 | 需完成的工作 |
 |:-----|:---------|:-------------|
-| ❌ **AutonomousLifeCycle** | 決策只記錄不執行 | 加入 `_execute_decision()` 方法 |
+| ✅ **AutonomousLifeCycle** | 修復完成 (commit `40dce741a`) | `_execute_decision()` 已加入，分派至 BehaviorExecutor |
 | ❌ **CausalReasoningEngine** | predict() 無人消費 | 接入至少一個下游消費者 |
 | ❌ **EmotionSystem** | apply_influence() 是空殼 | 實作情緒→行為的真實映射 |
 | ❌ **IntentModel** | 2/5 方法是 pass | 實作 scan_memory_proximity 和 generate_homeostatic_intents |

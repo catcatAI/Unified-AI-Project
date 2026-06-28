@@ -243,6 +243,7 @@ def construct_angela_prompt(
     _append_multimodal_entries(messages, context)
     _append_dialogue_context(messages, context)
     _append_recent_memories(messages, context)
+    _append_causal_insights(messages, context)
     _append_draft_response(messages, context)
 
     messages.append({"role": "user", "content": f"<user_message>{user_message}</user_message>"})
@@ -460,6 +461,25 @@ def _append_recent_memories(messages: List[Dict], context: Dict) -> None:
         mem_type = mem.get("memory_type", "unknown")
         block += f"- [{mem_type}] {content}\n"
     messages.append({"role": "user", "content": block})
+
+
+def _append_causal_insights(messages: List[Dict], context: Dict) -> None:
+    """Append causal reasoning predictions if available."""
+    causal_insights = context.get("causal_insights")
+    if not causal_insights:
+        return
+    predictions = causal_insights.get("predictions", [])
+    if not predictions:
+        return
+    block = f"\n\n---\nCausal Insights (from {causal_insights.get('total_relationships', 0)} learned relationships):\n"
+    for pred in predictions[:3]:
+        cause = pred.get("cause", "unknown")
+        effect = pred.get("effect", "unknown")
+        strength = pred.get("strength", 0)
+        block += f"- [{cause}] may lead to [{effect}] (strength: {strength:.2f})\n"
+    if causal_insights.get("has_causal_data"):
+        block += "\nThese patterns were learned from past interactions. Use them to inform your response.\n"
+    messages[0]["content"] += block
 
 
 def _append_draft_response(messages: List[Dict], context: Dict) -> None:

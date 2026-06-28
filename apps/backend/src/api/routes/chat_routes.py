@@ -488,6 +488,32 @@ async def _try_agent_routing(
     return None
 
 
+def _inject_causal_predictions(
+    context: Dict[str, Any]
+) -> None:
+    """Inject causal reasoning predictions into LLM context before generation.
+
+    Calls causal.predict() to surface learned causal relationships,
+    which are then injected into context for the prompt builder to read.
+    """
+    try:
+        causal = get_causal_reasoning()
+        if causal:
+            # Predict effects of the current user input
+            predictions = causal.predict("user_input")
+            if predictions:
+                context["causal_insights"] = {
+                    "predictions": predictions[:3],  # Top 3 predictions
+                    "has_causal_data": len(causal.get_relationships()) > 0,
+                    "total_relationships": len(causal.get_relationships()),
+                }
+                logger.debug(
+                    f"Injected {len(predictions)} causal predictions into context"
+                )
+    except Exception as e:
+        logger.debug(f"Causal prediction injection failed: {e}")
+
+
 def _fire_causal_learning(
     response_text: str, user_message: str, session_id: str
 ) -> None:
@@ -619,7 +645,10 @@ async def _handle_chat_request(
     if agent_result:
         return agent_result
 
-    # Step 9: Generate LLM response
+    # Step 9: Inject causal predictions into context (learned from past interactions)
+    _inject_causal_predictions(context)
+
+    # Step 10: Generate LLM response
     try:
         llm_response = await asyncio.wait_for(
             chat_svc.generate_response(user_message, user_name, context=context),
