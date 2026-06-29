@@ -120,18 +120,23 @@ class ThreeLayerVisual:
         self._mean = images.mean(axis=0)
         centered = images - self._mean
         U, S, Vt = np.linalg.svd(centered, full_matrices=False)
-        self._encoder = Vt[:self.LATENT_DIM]
-        explained = (S[:self.LATENT_DIM] ** 2).sum() / (S ** 2).sum()
+        n_components = min(Vt.shape[0], self.LATENT_DIM)
+        self._encoder = np.zeros((self.LATENT_DIM, self.IMG_DIM), dtype=Vt.dtype)
+        self._encoder[:n_components] = Vt[:n_components]
+        explained = (S[:n_components] ** 2).sum() / (S ** 2).sum()
         self._pca_explained = float(explained)
+        self._latent_dim = self.LATENT_DIM
         if verbose:
-            print(f"  PCA: {self.LATENT_DIM} dims, {explained:.1%} variance")
+            print(f"  PCA: {n_components}/{self.LATENT_DIM} dims, {explained:.1%} variance")
 
     def _encode_all(self, images):
         centered = images - self._mean
         return centered @ self._encoder.T
 
     def _compute_class_centers(self, latent, labels):
-        self._class_centers = np.zeros((len(self._class_names), self.LATENT_DIM), dtype=np.float32)
+        latent_dim = latent.shape[1]
+        self._latent_dim = latent_dim
+        self._class_centers = np.zeros((len(self._class_names), latent_dim), dtype=np.float32)
         for c in range(len(self._class_names)):
             mask = labels == c
             if mask.any():
@@ -142,11 +147,13 @@ class ThreeLayerVisual:
         nn = self._nn
         F = self._F
 
+        latent_dim = latent.shape[1]
+
         class Decoder(nn.Module):
             def __init__(self):
                 super().__init__()
                 self.net = nn.Sequential(
-                    nn.Linear(128, 256),
+                    nn.Linear(latent_dim, 256),
                     nn.ReLU(),
                     nn.Linear(256, 512),
                     nn.ReLU(),
