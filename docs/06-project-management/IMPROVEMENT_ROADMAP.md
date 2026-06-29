@@ -189,7 +189,7 @@
 | # | 項目 | 優先級 |
 |---|------|:------:|
 | O1 | 檔案頭部移除 Matrix 註解（157 檔案需處理，僅裝飾性） | P5 |
-| O2 | 清理測試中 dead/commented 程式碼 | P4 |
+| O2 | 清理測試中 dead/commented 程式碼 | ✅ **DONE** (2026-06-29, §X #44) — 移除 152 行死碼：6 個 pass-only stub 測試，2 個 e2e 檔案中 102 行註解代碼 | P4 |
 | O3 | 標準化 imports（isort 跨所有 Python 檔案） | ✅ **DONE** (isort 8.0.1, profile=black, 738 files: 2908 insertions/2100 deletions) | P4 |
 | O4 | 清理 docs/ 中過時/重複文件（移入 09-archive/） | ✅ **DONE** (2026-06-28): 7 files archived: PROJECT_ROADMAP, RECOMMENDATIONS, TODO_ANALYSIS, UNIFIED_AI_IMPROVEMENT_PLAN, ACTION_PLAN, DOCUMENTATION_TRUTH_MAP, port_routing_plan. 3 kept: VERSION_CONTROL_STRATEGY, PROJECTS_COLLABORATION_GUIDE, GIT_AND_PROJECT_MANAGEMENT. | P3 |
 | O5 | 更新 INDEX.md 和 UNIFIED_DOCUMENTATION_INDEX.md 以反映文件變動 | ✅ **DONE** (INDEX.md already correct; UNIFIED_DOCUMENTATION_INDEX.md was itself archived to 09-archive/; README.md links updated to point to archive) | P3 |
@@ -246,7 +246,9 @@ R4, R5 → 真實任務產生器 + 對抗訓練
 I2, I3 → 效能最佳化
 L6 → 跨語言學習
 U4 → LLM API 更新
-O1, O2, O6 → 程式碼組織
+O1 → 程式碼組織 (P5 裝飾性)
+O6 → ✅ **DONE** (2026-06-28, 12 個 \`__init__.py\`)
+O2 → ✅ **DONE** (2026-06-29, §X #44, 152 行死碼移除)
 ```
 
 ---
