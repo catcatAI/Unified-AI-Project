@@ -56,30 +56,10 @@ def test_importance_scorer_accuracy():
 
 
 @pytest.mark.benchmark
+@pytest.mark.skip(reason="ai.ops.performance_optimizer 已在 Phase 9-12 清理中被删除")
 def test_parallel_task_execution():
     """Benchmark PerformanceOptimizer operations."""
-    try:
-        from ai.ops.performance_optimizer import PerformanceOptimizer
-    except ImportError as e:
-        pytest.skip(f"ImportError: {e}")
-
-    def _run():
-        optimizer = PerformanceOptimizer(config={"min_history_for_analysis": 3, "latency_threshold": 50})
-        for i in range(200):
-            optimizer.ingest_metrics(
-                f"component_{i % 10}",
-                {"latency_ms": 20 + (i % 5) * 30, "throughput_qps": 100 + i},
-            )
-        bottlenecks = 0
-        for i in range(10):
-            result = optimizer.analyze_bottlenecks(f"component_{i}")
-            if result is not None:
-                bottlenecks += 1
-        return bottlenecks
-
-    stats = benchmark(_run, iterations=5)
-    print(f"  PerformanceOptimizer: avg={stats['avg']:.4f}s, median={stats['median']:.4f}s")
-    assert stats["avg"] > 0
+    pass
 
 
 @pytest.mark.benchmark
