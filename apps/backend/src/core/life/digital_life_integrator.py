@@ -425,7 +425,7 @@ class DigitalLifeIntegrator:
             await self._update_statistics()
             await self._update_dynamic_parameters()
             await self._update_intent_state()
-            await asyncio.sleep(loop_sleep("life_check_interval", 10.0))  # Check every 10 seconds
+            await asyncio.sleep(loop_sleep("lifecycle_check", 10.0))  # Check every 10 seconds
 
     async def _health_check_loop(self) -> None:
         """System health monitoring loop"""

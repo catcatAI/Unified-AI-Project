@@ -423,7 +423,7 @@ class DesktopInteraction:
         while self._running:
             await self._scan_desktop()
             await self._check_auto_organize()
-            await asyncio.sleep(loop_sleep("scan_interval", 30.0))  # Scan every 30 seconds
+            await asyncio.sleep(loop_sleep("scan_desktop", 30.0))  # Scan every 30 seconds
 
     async def _scan_desktop(self) -> None:
         """Scan desktop and update state"""
