@@ -91,9 +91,9 @@ Score = 基礎架構 × 鏈深度 × 閉環率
 
 | 組件 | 輸入 | 計算 | 輸出 | 誰消費？ |
 |:-----|:-----|:------|:-----|:--------:|
-| AutonomousLifeCycle | 5 個公式 | 計算 metrics + 做決定 | LifeDecision | ❌ **無人**（只記錄到 decision_history） |
-| CausalReasoningEngine | observations | Pearson/Granger | relationships | ❌ **無人**（只存在記憶體中） |
-| EmotionSystem | context text | TextBlob 情感分析 | EmotionalState | 🟡 僅文字注入到 LLM Prompt |
+| AutonomousLifeCycle | 5 個公式 | 計算 metrics + 做決定 | LifeDecision | ✅ **BehaviorExecutor** (`_execute_decision()` dispatch → execution callbacks) |
+| CausalReasoningEngine | observations | Pearson/Granger/confounding/do-calculus | relationships | ✅ **LLM prompt** (`_inject_causal_predictions` → `_append_causal_insights`) |
+| EmotionSystem | context text | TextBlob 情感分析 + PAD 映射 | EmotionalState + behavioral_adjustment | ✅ **prompt builder** (文字注入 + routing_mode 影響 via apply_influence)
 
 ### 層級 2: 傳遞級 (Propagation Level)
 
@@ -188,7 +188,7 @@ def analyze_emotional_context(self, context) -> EmotionalState:
 - 但「影響」只透過 prompt 文字間接傳遞 → 🟡
 - `apply_influence()` 是空殼 → ❌
 - 沒有 emotion → endocrine → behavior 的連結 → ❌
-- `ValueAssessment` 的 `_calculate_dimension_score` 回傳 `str` 型別（type bug！）→ ❌
+- `ValueAssessment` 的 `_calculate_dimension_score` 回傳 `str` 型別（type bug！）→ ✅ **FIXED** (2026-06-29) — 3 個方法 `-> str` 改為 `-> float`：_calculate_dimension_score, _calculate_overall_value, _calculate_value_confidence
 
 ### 3.4 MetaController (130L) — 🟡 C³ = 3.5/10 (was 3.0/10, ✅ fixed 2026-06-29)
 
@@ -573,15 +573,15 @@ def test_causal_chain_<component>_<path>() -> None:
 |:-----|:-----|:----:|:----------:|:------:|:--------:|:------:|:----:|
 | MetabolicHeartbeat | `core/life/heartbeat.py` | 206 | ✅ | ✅ | ✅ Bio+Spatial | 3 | 🟢 |
 | ExecutionGate | `ai/core/execution_gate.py` | 170 | ❌ | ❌純計算 | ✅ Router | 2 | 🟢 |
-| DigitalLifeIntegrator | `core/life/digital_life_integrator.py` | 380 | ✅ | ✅ | 🟡部分 | 2 | 🟡 |
-| MetaController | `ai/meta/meta_controller.py` | 130 | ❌ | ✅ EWMA | 🟡記錄但不套用 | 1 | 🟡 |
-| AutonomousLifeCycle | `core/life/autonomous_life_cycle.py` | 410 | ✅ | ✅ | ❌無 | 0 | 🔴 |
-| EmotionSystem | `ai/alignment/emotion_system.py` | 280 | ❌ | ✅ | 🟡只有文字 | 0.5 | 🔴 |
-| CausalReasoningEngine | `ai/reasoning/causal_reasoning_engine.py` | 218 | ❌ | ✅ | ❌無 | 0 | 🔴 |
-| IntentModel | `core/life/intent_model.py` | 80 | ❌ | 🟡部分 | ❌無 | 0 | 🔴 |
-| ModalityGateway | `core/life/digital_life_integrator.py` | 70 | ❌ | ✅ | 🟡狀態更新但無人讀 | 0.5 | 🔴 |
+| DigitalLifeIntegrator | `core/life/digital_life_integrator.py` | 380 | ✅ | ✅ | ✅ 6/6 狀態行為 | 2 | 🟡 |
+| MetaController | `ai/meta/meta_controller.py` | 130 | ❌ | ✅ EWMA | ✅ auto_apply_thresholds | 2 | 🟡 |
+| AutonomousLifeCycle | `core/life/autonomous_life_cycle.py` | 410 | ✅ | ✅ | ✅ BehaviorExecutor | 2 | 🟡 |
+| EmotionSystem | `ai/alignment/emotion_system.py` | 280 | ❌ | ✅ | ✅ apply_influence + prompt | 2 | 🟡 |
+| CausalReasoningEngine | `ai/reasoning/causal_reasoning_engine.py` | 218 | ❌ | ✅ | ✅ LLM prompt injection | 1 | 🟡 |
+| IntentModel | `core/life/intent_model.py` | 80 | ❌ | ✅ | ✅ DigitalLifeIntegrator | 2 | 🟡 |
+| ModalityGateway | `core/life/digital_life_integrator.py` | 70 | ❌ | ✅ | 🟡 狀態更新但無人讀 | 0.5 | 🔴 |
 
-**總計**: 9 個核心自主性組件，只有 2 個有實質因果鏈傳遞，7 個處於「計算但不驅動」狀態。
+**總計**: 9 個核心自主性組件，7 個有鏈深度 ≥ 1（已接線至下游消費者），2 個傳遞良好，1 個孤立。
 
 ---
 

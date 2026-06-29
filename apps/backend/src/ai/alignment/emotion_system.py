@@ -161,20 +161,20 @@ class EmotionSystem:
             reasoning=reasoning,
         )
 
-    def _calculate_dimension_score(self, action, context, state, dimension) -> str:
+    def _calculate_dimension_score(self, action, context, state, dimension) -> float:
         """Calculate dimension score."""
         # 實施 v6.0 標準的權重投影
         base = 0.5
         impact = self.emotion_value_impact.get(state.primary_emotion, {}).get(dimension, 0.0)
         return max(0.0, min(1.0, base + impact * state.emotion_intensity))
 
-    def _calculate_overall_value(self, scores) -> str:
+    def _calculate_overall_value(self, scores) -> float:
         return sum(scores.values()) / len(scores)
 
     def _generate_value_reasoning(self, action, context, scores) -> str:
         return f"基於情感狀態與 {len(scores)} 個價值維度的權重映射，判定行動符合 Angela 的演化目標。"
 
-    def _calculate_value_confidence(self, action, context, state) -> str:
+    def _calculate_value_confidence(self, action, context, state) -> float:
         return (state.emotion_intensity + 0.8) / 2.0
 
     def analyze_empathy(self, target_entity: str, context: Dict[str, Any]) -> EmpathyAnalysis:
