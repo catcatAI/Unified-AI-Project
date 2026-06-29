@@ -51,7 +51,8 @@
 | **Chat 管線 9 階段** | WS → 情緒 → 危機 → 對齊 → 閘門 → 路由 → LLM → 學習 → 回應 | 整合測試 | ✅ 完整接線 |
 | **CLP（持續學習）** | ED3NTrainer 已接線至聊天管線 + 獨立模式 | 整合測試 | ✅ 已接線，字典成長有效 |
 | **CML（持續多模態學習）** | 自主微訓練已接線至 encode 路徑，共用生產管線 | 20 CML 測試通過 + 21 多模態服務測試通過 | ✅ 每次編碼後自動微訓練 |
-| **測試數量** | pytest 收集 | **~5,085 tests** (full testpaths, verified 2026-06-30 — §X #49-57: +245 total from 7 stub modules, ripple/node+influence/space, magic numbers, STUB→real, formula coefficients, bug fixes) | ✅ 0 failures — 0 pre-existing failures |
+| **測試數量** | pytest 收集 | **~5,085 tests** (full testpaths, verified 2026-06-30 — §X #49-58: all prior + training pipeline execution + bug fixes) | ✅ 0 failures |
+| **FullTrainingPipeline** | `pipeline_weights.npz` saved (33 arrays, 1.2MB) | 52s moderate run: texture=0.384, wavetable=0.045, sequence=0.015 | ✅ Trained weights exist on disk |
 
 ### 1.2 無法驗證的優勢（數據不足）
 
