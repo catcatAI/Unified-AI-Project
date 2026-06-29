@@ -30,12 +30,12 @@
     "health-check": "python health_check.py"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.1.0",
-    "@types/node": "^20.11.0",
+    "@eslint/eslintrc": "^3.3.5",
+    "@types/node": "^20.19.43",
     "eslint": "^8.57.1",
     "globals": "^14.0.0",
-    "prettier": "^3.2.5",
-    "typescript": "^5.3.3"
+    "prettier": "^3.9.1",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=18.0.0",
