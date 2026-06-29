@@ -1057,7 +1057,9 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 ### Remaining Gaps
 - `coverage.json` has partial coverage data (single test file). Full coverage run needed for comprehensive data.
 - Frontend Live2D random rectangles and Dashboard fake data remain as §0.5 banned components.
-- No trained `.npz` weight files exist on disk currently.
+- Trained weights saved to `data/training/pipeline_weights.npz` (1,247,840 bytes, 33 arrays) via FullTrainingPipeline.run_full() with moderate parameters.
+- FullTrainingPipeline validated end-to-end (52s for moderate run).
+- Loss achieved: texture=0.384, wavetable=0.045, sequence=0.015.
 
 ---
 
