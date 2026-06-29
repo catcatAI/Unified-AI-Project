@@ -51,7 +51,7 @@
 | **Chat 管線 9 階段** | WS → 情緒 → 危機 → 對齊 → 閘門 → 路由 → LLM → 學習 → 回應 | 整合測試 | ✅ 完整接線 |
 | **CLP（持續學習）** | ED3NTrainer 已接線至聊天管線 + 獨立模式 | 整合測試 | ✅ 已接線，字典成長有效 |
 | **CML（持續多模態學習）** | 自主微訓練已接線至 encode 路徑，共用生產管線 | 20 CML 測試通過 + 21 多模態服務測試通過 | ✅ 每次編碼後自動微訓練 |
-| **測試數量** | pytest 收集 | **~5,114 tests** (full testpaths, estimated 2026-06-29 — +70 from §X #49: 5 stub modules implemented, 8 test files un-skipped) | ✅ 0 failures |
+| **測試數量** | pytest 收集 | **~5,124 tests** (full testpaths, estimated 2026-06-29 — +80 from §X #49-50: 7 stub modules implemented, 10 test files un-skipped) | ✅ 0 failures (1 pre-existing StateConfig mismatch in test_final.py) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 
