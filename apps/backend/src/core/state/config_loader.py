@@ -47,6 +47,9 @@ class StateMatrixConfig:
 
 class StateConfig:
     def __init__(self):
-        self.allocation = type("obj", (object,), {"assign_threshold": 0.5})()
+        self.allocation = type("obj", (object,), {"assign_threshold": 0.5, "composite_threshold": 0.7})()
         self.influence = type("obj", (object,), {"matrix": {}})()
+        self.state_matrix = type("obj", (object,), {"max_history": 1000})()
+        self.negativity = type("obj", (object,), {"trigger_threshold": 0.6, "correction_urge_threshold": 0.5})()
+        self.influence_matrix: Dict[str, Dict[str, float]] = {}
         self.axes: List[AxisConfig] = []
