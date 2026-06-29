@@ -155,8 +155,8 @@
 
 | # | 項目 | 優先級 | 難度 | 目前 | 目標 |
 |---|------|:------:|:----:|:----:|:----:|
-| T1 | 訓練 VisualDecoder（128×128 RGB via transposed conv） | P1 | 中 | 投射權重已訓練（42× loss 降），CNN 紋理分支仍隨機（random seed=42） | 可辨識 128×128 影像 |
-| T2 | 訓練 AudioWaveformDecoder（多頻帶波表合成） | P1 | 高 | 投射權重已訓練（309× loss 降），波表生成器仍隨機（random seed=42） | 可聽語音/音樂 |
+| T1 | 訓練 VisualDecoder（128×128 RGB via transposed conv） | ✅ **DONE** (2026-06-29) — 22K texture params now trainable via `ReconstructionCycle.train_texture_step()` (pixel-level MSE + full analytic gradients through CNN). `TextureTrainer` supports synthetic + real data. `FullTrainingPipeline.load_weights()` now restores all 5 texture arrays. 9 new tests pass. | P1 | 中 | 投射權重已訓練（42× loss 降）+ 紋理權重可訓練（新 Phase 3） | 可辨識 128×128 影像 |
+| T2 | 訓練 AudioWaveformDecoder（多頻帶波表合成） | P1 **← NEW TOP PRIORITY** | 高 | 投射權重已訓練（309× loss 降），波表生成器仍隨機（random seed=42） | 可聽語音/音樂 |
 | T3 | 訓練 SequenceGenerator（RNN + BPTT，CLIP→原始序列） | P1 | 高 | 權重隨機 → 隨機向量 | 合理的原始序列輸出 |
 | T4 | 訓練完整 GVV 文生圖管線（ImageGenerator） | P1 | 高 | 灰色畫布/隨機形狀 | 文字→幾何影像 |
 | T5 | 訓練 ThreeLayerVisual（PCA + 非線性解碼器）於真實資料 | P2 | 中 | 選擇性載入 PCA 檔案 | 自動訓練 PCA |
@@ -202,12 +202,13 @@
 ## 3. 優先級與依賴關係
 
 ### 階段 0 — 立即（1-2 天）
-修正文件錯誤 ✅（已完成）+ 訓練 VisualDecoder/SequenceGenerator
+修正文件錯誤 ✅（已完成）+ 訓練 VisualDecoder ✅（T1 DONE）
 
 ```
 F3 → (完成) → O5 → O4
-T1, T3 → T4 (GVV 管線依賴 SequenceGenerator)
-U2, U3 → T2 (torch 用於語意編碼訓練)
+T1 → ✅ DONE (2026-06-29)
+T3 → T4 (GVV 管線依賴 SequenceGenerator)
+U2, U3 → T2 (torch 用於語意編碼訓練, NEW TOP PRIORITY)
 ```
 
 ### 階段 1 — 短期（1-2 週）

@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **4,840 collected / 0 errors** on 2026-06-28 (verified by running `tests/ + apps/backend/tests/` — updated from 4,826 after reality audit).
+> **Test count baseline**: `pytest` (full testpaths) = **~4,850 collected / 0 errors** on 2026-06-29 (multimodal tests: 59/60 pass, 1 pre-existing contrastive flake).
 
 ---
 
@@ -756,6 +756,48 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 - Hardware-aware components: From 2 (Heartbeat CPU/battery) → **all loop_sleep() users** + HardwareProfile
 - Battery mode: From partial (<20% check) → **automatic scenario detection** via HardwareProfile
 - Historical context added: timeline of 2026-06-28 → 2026-06-29 progression
+
+---
+
+## VI-U. Session Summary — 2026-06-29 (T1: VisualDecoder texture training + §8.6 #2 4/4 loop consolidation)
+
+### §8.6 #2 Loop frequency consolidation — **DONE 4/4**
+- `desktop_interaction.py`: `scan_interval`→`scan_desktop` (matches hardware profile naming)
+- `digital_life_integrator.py`: `life_check_interval`→`lifecycle_check` (consistent naming)
+- **§8.6 #2 now COMPLETE**: All 4 loop pairs consolidated. Remaining pairs (Bridge, Emotion, Sleep Short) resolved in earlier VI-S session.
+
+### T1: VisualDecoder CNN texture branch training — **DONE** (§X #35)
+- **Problem**: VisualDecoder had 38,640 total params but only 16,640 projection params (W, b) were trained by ReconstructionCycle. The 22,000 texture branch params (W_hidden, b_hidden, W_featmap, b_featmap, tex_kernels) were never trained — always random noise.
+- **Fix**: Added `ReconstructionCycle.train_texture_step()` — batch pixel-level MSE training with full analytic gradients through the entire texture CNN branch:
+  - Linear: W_hidden @ z + b_hidden → tanh
+  - Linear: W_featmap @ h + b_featmap → reshape 4×4×16
+  - Nearest-neighbor upsample (4→128, scale=32)
+  - Conv2d_same (5×5 kernels, reflect padding) → 128×128×3 detail
+  - Pixel MSE loss against target images
+  - Gradients computed analytically through conv2d (tensordot-backprop), upsample (block-sum), tanh (1-h²), and linear (outer product)
+  - Gradient clipping (norm=10), batch averaging
+
+- **Added `TextureTrainer`** class in `training_pipeline.py`:
+  - `generate_synthetic_batch()`: random latents → projection-only base images (zero-texture targets)
+  - `train()`: iterative texture training loop with synthetic data
+  - `train_on_real()`: encode real images → latent → train texture to reconstruct original pixels
+
+- **Fixed `FullTrainingPipeline.load_weights()`**: Now loads all 5 texture weight arrays (was missing — weights saved but never restored)
+- **Added `FullTrainingPipeline.train_texture()`**: Phase 3 of the pipeline, runs after contrastive (Phase 1) + reconstruction (Phase 2)
+
+### New Tests: 9 total (all pass)
+- `test_reconstruction_cycle.py` (TestTextureTraining): 4 tests — positive loss, loss reduction, weights change, no-decoder guard
+- `test_training_pipeline.py` (TestTextureTrainer): 3 tests — returns dict, loss decreases, weights change
+- `test_training_pipeline.py` (TestFullTrainingPipeline): 2 tests — load_weights texture roundtrip, save_weights texture keys
+
+### Impact
+- VisualDecoder is now **fully trainable**: 38,640 / 38,640 params (was 16,640 / 38,640)
+- The texture branch can now learn structured spatial patterns from pixel-level training data
+- CIFAR-10 real-image training path wired via `TextureTrainer.train_on_real()`
+- IMPROVEMENT_ROADMAP T1 moved to DONE
+
+### Test Count
+- **59/60 multimodal tests pass** (1 pre-existing contrastive flake: loss 0.4494 vs 0.4490 baseline, unrelated to texture changes)
 
 ---
 

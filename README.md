@@ -61,7 +61,7 @@
 **Total project files**: ~3,500+ (620 Python in backend src · 295 JS/TS · 1,021+ docs · 500+ config · 480+ test).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
 
-> **STATUS (2026-06-28)**: Reality audit completed — test count 4,840 (was 4,826). 136-commit session (Jun 25-28). All stubs eliminated. R1/R2/R3/CausalReasoningEngine fully implemented. TemporalState+CausalReasoning bridge done. save_visual_decoder_weights done. Intelligence: 6.0/10 (upper) 4.5/10 (lower). Architecture: ~85-90%.
+> **STATUS (2026-06-29)**: Extended session continues — 142+ commits total (Jun 25-29). Texture training DONE: VisualDecoder CNN branch now fully trainable (38.6K params, was 16.6K). §8.6 items: #2 loop consolidation 4/4 ⬜→🟢, #3 event-driven 1/80+ ⬜→🟡, #4 BASIC hardware-awareness ✅, #5 HardwareProfile ✅, #6 time.sleep audit ✅, #7 exception handlers COMPLETE ✅, #8 decision interval 300s→60s ✅. EmotionSystem behavioral driving ✅. MetaController auto-apply ✅. IntentModel production wiring ✅. DigitalLifeIntegrator 6/6 states ✅. HardwareProfile → loop_sleep() ✅. Bridge event-driven ✅. All background loops protected. Intelligence: 6.0/10 (upper) 4.5/10 (lower). Architecture: ~85-90%.
 > **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → execution gate → **agent routing** → LLM → causal learning → response. GVV pipeline for image generation.  
 > **See**: [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) (latest audit), [IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md) (target), [COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md) (plan).
 
@@ -294,7 +294,7 @@ npx pnpm dev:desktop
 - **`/multimodal/stream` WebSocket route** — Dedicated handler (`multimodal_ws_handler.py`) + route registered ✅
 - **Whisper faster-whisper in ChatService** — Installed and wired: offline high-quality STT via AudioService._stt_faster_whisper() ✅
 - **Agent auto-routing** — Wired into chat pipeline Step 8 (creative/knowledge/opinion/vision/audio) ✅
-- **VisualDecoder training** — Decoder weights random, CLP doesn't train decoder yet ❌
+- **VisualDecoder training** — Projection weights trained (42× CIFAR-10 loss reduction), texture branch now trainable via new Phase 3 pixel-level training 🟡
 - **P4 refactoring** — 25/31 >100L long functions refactored (3 pure-data + 3 algorithmic remain), load/stress/E2E tests, desktop tray — partial ⏳
 - **Auto-repair pathway** — `run_angela.py` now has auto-install on missing deps (--auto-repair flag, or interactive prompt) ✅
 
@@ -334,7 +334,7 @@ npx pnpm dev:desktop
 | **Agent Auto-Routing** | Chat pipeline Step 8 wires agents | ✅ **DONE** | 🔴 HIGH |
 | **Frontend Multimodal** | Image/audio upload in Desktop/Web | ⬜ | 🔴 HIGH |
 | **Whisper ChatService Wiring** | faster-whisper into chat pipeline | ✅ **DONE** | 🟡 MEDIUM |
-| **VisualDecoder Training** | Extend CLP to train decoder | ⬜ | 🟡 MEDIUM |
+| **VisualDecoder Training** | Phase 3: texture branch pixel-level training added (T1 DONE) | ✅ | 🟡 MEDIUM |
 | **WebSocket Route** | `/multimodal/stream` registered | ✅ **DONE** | 🟡 MEDIUM |
 | **P4 Refactoring** | 28 long files / load tests / E2E / tray | ⬜ | 🟡 MEDIUM |
 | **Integrate Retained Systems** | real_time_monitor, event_loop_system, etc. | ⬜ | 🟢 LOW |
