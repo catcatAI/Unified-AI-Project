@@ -412,6 +412,202 @@ class SequenceTrainer:
                 "history": history}
 
 
+class PrimitiveTrainer:
+    """Trains PrimitiveEncoder autoencoder on a library of geometric primitives.
+
+    Phase 3d: Populates a PrimitiveLibrary with basic geometric shapes (circles,
+    squares, triangles, lines, dots), then trains the PrimitiveEncoder as an
+    autoencoder on these shapes. After training, decode() produces faithful
+    geometric primitives instead of random noise.
+
+    Optionally re-trains the SequenceGenerator on the library's embeddings so
+    that generate() produces on-manifold embeddings that decode to recognizable
+    shapes.
+    """
+
+    def __init__(self, primitive_encoder, sequence_generator=None):
+        self._encoder = primitive_encoder
+        self._gen = sequence_generator
+        self._library = None
+
+    def _create_library_shapes(self):
+        """Create a library of basic geometric shapes with various colors and positions."""
+        from .primitives.primitive_types import (Arc, Circle, DrawingInstructions,
+                                                  Line, Plane, Point)
+
+        shapes = []
+        colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0),
+                   (0, 255, 255), (255, 165, 0), (128, 0, 128), (255, 0, 255)]
+
+        bg = (255, 255, 255)
+
+        # Circles: 3 radii × 3 positions × 8 colors (limited to avoid explosion)
+        for cx, cy in [(0.5, 0.5), (0.3, 0.3), (0.7, 0.7)]:
+            for r in [0.1, 0.2, 0.3]:
+                for color in colors[:4]:
+                    shapes.append(DrawingInstructions(
+                        circles=[Circle(cx, cy, r, color, (0, 0, 0), 0.02)],
+                        background_color=bg))
+
+        # Squares (rectangular planes): 2 sizes × 3 positions × 4 colors
+        for cx, cy in [(0.5, 0.5), (0.3, 0.5), (0.5, 0.3)]:
+            for rx, ry in [(0.15, 0.15), (0.25, 0.15), (0.15, 0.25)]:
+                for color in colors[4:6]:
+                    shapes.append(DrawingInstructions(
+                        planes=[Plane(
+                            [Point(cx - rx, cy - ry, (0, 0, 0), 0),
+                             Point(cx + rx, cy - ry, (0, 0, 0), 0),
+                             Point(cx + rx, cy + ry, (0, 0, 0), 0),
+                             Point(cx - rx, cy + ry, (0, 0, 0), 0)],
+                            color, (0, 0, 0), 0.02)],
+                        background_color=bg))
+
+        # Triangles: 3-point planes × 4 colors
+        tri_verts = [
+            [(0.5, 0.2), (0.3, 0.8), (0.7, 0.8)],
+            [(0.2, 0.5), (0.5, 0.2), (0.8, 0.5)],
+            [(0.3, 0.3), (0.7, 0.3), (0.5, 0.7)],
+        ]
+        for verts in tri_verts:
+            for color in colors[:4]:
+                shapes.append(DrawingInstructions(
+                    planes=[Plane(
+                        [Point(x, y, (0, 0, 0), 0) for x, y in verts],
+                        color, (0, 0, 0), 0.02)],
+                    background_color=bg))
+
+        # Lines: horizontal, vertical, diagonal × 4 colors
+        line_defs = [
+            [(0.1, 0.5), (0.9, 0.5)],
+            [(0.5, 0.1), (0.5, 0.9)],
+            [(0.1, 0.1), (0.9, 0.9)],
+            [(0.9, 0.1), (0.1, 0.9)],
+        ]
+        for (sx, sy), (ex, ey) in line_defs:
+            for color in colors[:4]:
+                shapes.append(DrawingInstructions(
+                    lines=[Line(Point(sx, sy, (0, 0, 0), 0),
+                                Point(ex, ey, (0, 0, 0), 0),
+                                0.04, color)],
+                    background_color=bg))
+
+        # Dots: single points × 4 colors × 3 positions
+        for px, py in [(0.3, 0.3), (0.5, 0.5), (0.7, 0.7)]:
+            for color in colors[:4]:
+                shapes.append(DrawingInstructions(
+                    points=[Point(px, py, color, 0.15)],
+                    background_color=bg))
+
+        # Arcs: partial circles × 4 colors
+        for start_angle, end_angle in [(0, 3.14), (3.14, 6.28), (1.57, 4.71)]:
+            for color in colors[:4]:
+                shapes.append(DrawingInstructions(
+                    arcs=[Arc(0.5, 0.5, 0.3, start_angle, end_angle, 0.04, color)],
+                    background_color=bg))
+
+        return shapes
+
+    def train(self, epochs: int = 100, lr: float = 0.001,
+              seq_epochs: int = 50, seq_lr: float = 0.001,
+              n_seq_samples: int = 500) -> dict:
+        """Train PrimitiveEncoder autoencoder and optionally re-train SequenceGenerator.
+
+        Phase 3d:
+          1. Create library of geometric shapes
+          2. PrimitiveEncoder autoencoder training
+          3. Re-encode library with trained encoder
+          4. Optionally train SequenceGenerator on library embeddings
+
+        Args:
+            epochs: PrimitiveEncoder training epochs
+            lr: PrimitiveEncoder learning rate
+            seq_epochs: SequenceGenerator re-training epochs (0 to skip)
+            seq_lr: SequenceGenerator learning rate
+            n_seq_samples: Number of synthetic training pairs for SequenceGenerator
+
+        Returns:
+            Dict with 'encoder_result', 'library_size', and optional 'sequence_result'
+        """
+        from .primitives.primitive_library import PrimitiveLibrary
+
+        # Step 1: Create shapes and encode with current (possibly untrained) encoder
+        shapes = self._create_library_shapes()
+        self._library = PrimitiveLibrary(
+            embedding_dim=self._encoder.embedding_dim,
+            max_primitives=len(shapes) + 100,
+        )
+        for i, shape in enumerate(shapes):
+            emb = self._encoder.encode(shape)
+            self._library.add_primitive(f"shape_{i:04d}", shape, emb)
+
+        logger.info("PrimitiveTrainer: library populated with %d shapes", len(shapes))
+
+        # Step 2: Train encoder autoencoder
+        encoder_result = self._encoder.train(shapes, epochs=epochs, lr=lr)
+        logger.info("PrimitiveTrainer: encoder trained — best loss: %.6f",
+                     encoder_result["best_loss"])
+
+        # Step 3: Re-encode library with trained encoder
+        for name in self._library._names:
+            shape = self._library.get_primitive(name)
+            emb = self._encoder.encode(shape)
+            self._library._primitives[name]["embedding"] = emb
+        self._library._dirty = True
+        logger.info("PrimitiveTrainer: library re-encoded with trained encoder")
+
+        result = {
+            "encoder_result": encoder_result,
+            "library_size": self._library.size,
+        }
+
+        # Step 4: Train SequenceGenerator on synthetic (clip, primitive) pairs
+        if self._gen is not None and seq_epochs > 0:
+            seq_result = self._train_sequence_generator(
+                n_samples=n_seq_samples, epochs=seq_epochs, lr=seq_lr)
+            result["sequence_result"] = seq_result
+
+        return result
+
+    def _train_sequence_generator(self, n_samples: int, epochs: int,
+                                   lr: float) -> dict:
+        """Create synthetic training data from library and train SequenceGenerator."""
+        rng = np.random.default_rng(42)
+
+        clip_embeddings = []
+        primitive_sequences = []
+
+        names = list(self._library._names)
+        for _ in range(n_samples):
+            name = rng.choice(names)
+            prim_emb = self._library.get_embedding(name)
+            if prim_emb is None:
+                continue
+            # Random CLIP-like vector
+            clip_vec = rng.normal(0, 1, 512).astype(np.float32)
+            clip_vec = clip_vec / (np.linalg.norm(clip_vec) + 1e-8)
+            clip_embeddings.append(clip_vec)
+            primitive_sequences.append([prim_emb.copy()])
+
+        if not clip_embeddings:
+            return {"final_loss": 0.0, "history": [], "epochs_trained": 0}
+
+        logger.info("PrimitiveTrainer: training SequenceGenerator on %d pairs",
+                     len(clip_embeddings))
+        result = self._gen.train(clip_embeddings, primitive_sequences,
+                                  epochs=epochs, lr=lr)
+        logger.info("PrimitiveTrainer: SequenceGenerator trained — final loss: %.6f",
+                     result["final_loss"])
+        return result
+
+    @property
+    def library(self):
+        return self._library
+
+    @property
+    def encoder(self):
+        return self._encoder
+
+
 class FullTrainingPipeline:
     """End-to-end training pipeline: contrastive pre-training + reconstruction fine-tuning.
 
@@ -442,6 +638,8 @@ class FullTrainingPipeline:
         self._contrastive = ContrastiveBatchTrainer(
             self._ls, self._visual_encoder, self._audio_encoder
         )
+        self._primitive_encoder = None  # lazy init in train_primitives
+        self._primitive_library = None  # populated by PrimitiveTrainer
         self._sequence_generator = SequenceGenerator()
 
     def run(self, contrastive_epochs: int = 10, contrastive_pairs: int = 20,
@@ -611,6 +809,106 @@ class FullTrainingPipeline:
         logger.info("Sequence training final loss: %.6f", result["final_loss"])
         return result
 
+    def run_full(self, contrastive_epochs: int = 10,
+                  contrastive_pairs: int = 20,
+                  recon_epochs: int = 10, recon_samples: int = 10,
+                  texture_steps: int = 50, texture_lr: float = 0.001,
+                  wavetable_steps: int = 50, wavetable_lr: float = 0.001,
+                  seq_steps: int = 50, seq_lr: float = 0.001,
+                  prim_epochs: int = 100, prim_lr: float = 0.001,
+                  seq_prim_epochs: int = 50, seq_prim_lr: float = 0.001,
+                  lr: float = 0.01) -> Dict:
+        """Run all pipeline phases end-to-end.
+
+        Phase 1: Contrastive pre-training (SharedLatentSpace)
+        Phase 2: Reconstruction fine-tuning (decoders)
+        Phase 3: Texture branch (VisualDecoder)
+        Phase 3b: Wavetable branch (AudioWaveformDecoder)
+        Phase 3c: Sequence generator (RNN)
+        Phase 3d: Primitive encoder + SequenceGenerator retrain
+
+        Args:
+            contrastive_epochs: Phase 1 epochs
+            contrastive_pairs: Phase 1 pairs per epoch
+            recon_epochs: Phase 2 epochs
+            recon_samples: Phase 2 samples per epoch
+            texture_steps: Phase 3 gradient steps
+            texture_lr: Phase 3 learning rate
+            wavetable_steps: Phase 3b gradient steps
+            wavetable_lr: Phase 3b learning rate
+            seq_steps: Phase 3c gradient steps
+            seq_lr: Phase 3c learning rate
+            prim_epochs: Phase 3d PrimitiveEncoder epochs
+            prim_lr: Phase 3d PrimitiveEncoder learning rate
+            seq_prim_epochs: Phase 3d SequenceGenerator retrain epochs
+            seq_prim_lr: Phase 3d SequenceGenerator retrain learning rate
+            lr: Learning rate for Phases 1-2
+
+        Returns:
+            Dict with results from all phases
+        """
+        results = {}
+        results["phase1_contrastive"] = self.run(
+            contrastive_epochs=contrastive_epochs,
+            contrastive_pairs=contrastive_pairs,
+            recon_epochs=recon_epochs,
+            recon_samples=recon_samples,
+            lr=lr,
+        )
+        results["phase3_texture"] = self.train_texture(
+            batch_size=4, steps=texture_steps, lr=texture_lr)
+        results["phase3b_wavetable"] = self.train_wavetable(
+            batch_size=4, steps=wavetable_steps, lr=wavetable_lr)
+        results["phase3c_sequence"] = self.train_sequence(
+            batch_size=4, steps=seq_steps, lr=seq_lr)
+        results["phase3d_primitives"] = self.train_primitives(
+            epochs=prim_epochs, lr=prim_lr,
+            seq_epochs=seq_prim_epochs, seq_lr=seq_prim_lr,
+        )
+        return results
+
+    def train_primitives(self, epochs: int = 100, lr: float = 0.001,
+                          seq_epochs: int = 50, seq_lr: float = 0.001,
+                          n_seq_samples: int = 500) -> Dict:
+        """Train the PrimitiveEncoder autoencoder + retrain SequenceGenerator (Phase 3d).
+
+        Phase 3d populates a PrimitiveLibrary with basic geometric shapes
+        (circles, squares, triangles, lines, arcs, dots), trains the
+        PrimitiveEncoder as an autoencoder on these shapes, then re-encodes
+        the library and optionally retrains the SequenceGenerator on
+        (CLIP-like, primitive_embedding) pairs derived from the library.
+
+        Args:
+            epochs: PrimitiveEncoder autoencoder training epochs
+            lr: PrimitiveEncoder learning rate
+            seq_epochs: SequenceGenerator retraining epochs (0 to skip)
+            seq_lr: SequenceGenerator learning rate
+            n_seq_samples: Number of synthetic clip→primitive training pairs
+
+        Returns:
+            Dict with 'encoder_result', 'library_size', and optional 'sequence_result'
+        """
+        from .primitives.primitive_encoder import PrimitiveEncoder
+
+        logger.info("=== Phase 3d: Primitive encoder training ===")
+        self._primitive_encoder = PrimitiveEncoder(embedding_dim=128)
+        trainer = PrimitiveTrainer(
+            self._primitive_encoder, self._sequence_generator)
+        result = trainer.train(
+            epochs=epochs, lr=lr,
+            seq_epochs=seq_epochs, seq_lr=seq_lr,
+            n_seq_samples=n_seq_samples,
+        )
+        self._primitive_library = trainer.library
+        logger.info("Primitive training done — library size: %d, "
+                     "encoder best loss: %.6f",
+                     result["library_size"],
+                     result["encoder_result"]["best_loss"])
+        if "sequence_result" in result:
+            logger.info("  SequenceGenerator retrained — final loss: %.6f",
+                         result["sequence_result"]["final_loss"])
+        return result
+
     def save_weights(self, path: Optional[str] = None) -> str:
         """Save trained weights to a .npz file.
 
@@ -655,6 +953,13 @@ class FullTrainingPipeline:
                 "seq_W_stop": self._sequence_generator._W_stop.copy(),
                 "seq_b_stop": self._sequence_generator._b_stop.copy(),
             }
+            # Append primitive encoder weights if available
+            if self._primitive_encoder is not None:
+                pe = self._primitive_encoder
+                save_data["prim_enc_W_encode"] = pe._W_encode.copy()
+                save_data["prim_enc_b_encode"] = pe._b_encode.copy()
+                save_data["prim_enc_W_decode"] = pe._W_decode.copy()
+                save_data["prim_enc_b_decode"] = pe._b_decode.copy()
             Path(save_path).parent.mkdir(parents=True, exist_ok=True)
             np.savez(save_path, **save_data)
             logger.info("Trained weights saved to %s", save_path)
@@ -716,6 +1021,16 @@ class FullTrainingPipeline:
                 self._sequence_generator._W_stop[:] = data["seq_W_stop"]
                 self._sequence_generator._b_stop[:] = data["seq_b_stop"]
                 self._sequence_generator._trained = True
+            if "prim_enc_W_encode" in data:
+                from .primitives.primitive_encoder import PrimitiveEncoder
+                self._primitive_encoder = PrimitiveEncoder(
+                    embedding_dim=data["prim_enc_W_encode"].shape[0])
+                self._primitive_encoder._W_encode[:] = data["prim_enc_W_encode"]
+                self._primitive_encoder._b_encode[:] = data["prim_enc_b_encode"]
+                self._primitive_encoder._W_decode[:] = data["prim_enc_W_decode"]
+                self._primitive_encoder._b_decode[:] = data["prim_enc_b_decode"]
+                self._primitive_encoder._trained = True
+                self._primitive_encoder._best_loss = 0.0
             logger.info("Weights loaded from %s", path)
             return True
         except Exception as e:

@@ -158,7 +158,7 @@
 | T1 | 訓練 VisualDecoder（128×128 RGB via transposed conv） | ✅ **DONE** (2026-06-29) — 22K texture params now trainable via `ReconstructionCycle.train_texture_step()` (pixel-level MSE + full analytic gradients through CNN). `TextureTrainer` supports synthetic + real data. `FullTrainingPipeline.load_weights()` now restores all 5 texture arrays. 9 new tests pass. | P1 | 中 | 投射權重已訓練（42× loss 降）+ 紋理權重可訓練（新 Phase 3） | 可辨識 128×128 影像 |
 | T2 | 訓練 AudioWaveformDecoder（多頻帶波表合成） | ✅ **DONE** (2026-06-29) — 55.1K wavetable params now trainable via `ReconstructionCycle.train_wavetable_step()` (waveform MSE + full analytic gradients through wavetable oscillator + noise + envelope). `WavetableTrainer` supports synthetic + real data. `FullTrainingPipeline.load_weights()` now restores all 6 audio arrays. 13 new tests pass. | P1 | 高 | 投射權重已訓練（309× loss 降）+ 波表權重可訓練（新 Phase 3b） | 可聽語音/音樂 |
 | T3 | 訓練 SequenceGenerator（RNN + BPTT，CLIP→原始序列） | ✅ **DONE** (2026-06-29) — Fixed train_step() BPTT backward pass (was updating weights during backward, missing 3 bias updates, no temporal propagation). Added get_weights/set_weights, SequenceTrainer, FullTrainingPipeline Phase 3c + persistence for all 10 RNN weight arrays. 5 new tests pass. | P1 | 高 | BPTT修正 + 所有RNN權重可訓練 | 合理的原始序列輸出 |
-| T4 | 訓練完整 GVV 文生圖管線（ImageGenerator） | P1 | 高 | 灰色畫布/隨機形狀 | 文字→幾何影像 |
+| T4 | 訓練完整 GVV 文生圖管線（ImageGenerator） | ✅ **DONE** (2026-06-29) — `PrimitiveTrainer` + `FullTrainingPipeline.train_primitives()` Phase 3d. Populates `PrimitiveLibrary` with ~120 geometric shapes (circles, squares, triangles, lines, arcs, dots) in various colors. Trains `PrimitiveEncoder` autoencoder (best loss < 0.05). Re-encodes library with trained encoder. Optionally retrains `SequenceGenerator` on library-derived (clip, primitive) pairs. Save/load includes all 4 PrimitiveEncoder weight arrays. `ImageGenerator` produces multi-color structured output after training. 16 new tests pass. | P1 | 高 | 灰色畫布/隨機形狀 | 文字→幾何影像 |
 | T5 | 訓練 ThreeLayerVisual（PCA + 非線性解碼器）於真實資料 | P2 | 中 | 選擇性載入 PCA 檔案 | 自動訓練 PCA |
 | T6 | 觸發 FullTrainingPipeline（對比預訓練 + 重建微調） | ✅ **DONE** (commit `HEAD~`, Jun 28) | P2 | 低 | 383L 有 0 呼叫者 → 在 `_get_pipeline()` 中自動背景訓練 | 接線至啟動（背景執行緒 + 權重檢查） |
 | T7 | 觸發 ContinuousMultimodalLearning（自主微訓練） | ✅ **DONE** (commit `HEAD~`, Jun 28) | P2 | 低 | CML 現在透過 `_encode_impl()` 自動觸發，且共用生產管線 | 每次編碼後自動微訓練 |
@@ -209,7 +209,7 @@ F3 → (完成) → O5 → O4
 T1 → ✅ DONE (2026-06-29)
 T2 → ✅ DONE (2026-06-29)
 T3 → ✅ DONE (2026-06-29)
-T4 → GVV 管線 **← NEW TOP PRIORITY**
+T4 → ✅ DONE (2026-06-29) — GVV 管線 Phase 3d
 U2, U3 → T2 (torch 用於語意編碼訓練, DONE)
 ```
 

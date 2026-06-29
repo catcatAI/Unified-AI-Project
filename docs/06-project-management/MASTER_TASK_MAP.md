@@ -873,10 +873,25 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 - All RNN weights are now trainable with correct BPTT gradients
 - The SequenceGenerator can now learn meaningful CLIP→primitive mappings
 - Phase 3c training pipeline completes the multimodal training stack (Phase 1: contrastive, Phase 2: reconstruction, Phase 3a: texture, Phase 3b: wavetable, Phase 3c: sequence)
-- IMPROVEMENT_ROADMAP T3 moved to DONE, T4 now NEW TOP PRIORITY
+- IMPROVEMENT_ROADMAP T3 moved to DONE, T4 now DONE (Phase 3d)
+
+### Files Changed (T4 — Phase 3d: PrimitiveEncoder training)
+- `apps/backend/src/ai/multimodal/training_pipeline.py`:
+  - New `PrimitiveTrainer` class: populates library with ~120 geometric shapes (circles, squares, triangles, lines, arcs, dots) in various colors, trains PrimitiveEncoder autoencoder, re-encodes library, optionally retrains SequenceGenerator on library-derived synthetic pairs
+  - New `FullTrainingPipeline.train_primitives()` (Phase 3d) + `run_full()` convenience method
+  - Updated `save_weights()` / `load_weights()` to persist 4 PrimitiveEncoder arrays (`prim_enc_W_encode`, `prim_enc_b_encode`, `prim_enc_W_decode`, `prim_enc_b_decode`)
+- `tests/ai/multimodal/test_training_pipeline_primitives.py`:
+  - 16 new tests: TestPrimitiveTrainer (7), TestFullPipelinePhase3d (5), TestPrimitiveEncoderPersistence (4)
+
+### Impact
+- PrimitiveEncoder can now be trained as an autoencoder on meaningful geometric shapes
+- After Phase 3d, `PrimitiveEncoder.decode()` produces faithful, recognizable shapes
+- ImageGenerator produces multi-color structured output (tested via `test_image_generator_produces_structured_output_after_training`)
+- Full end-to-end: text → CLIP-like → SequenceGenerator → PrimitiveEncoder.decode() → DrawingInstructions → PrimitiveRenderer.render() → PIL Image with structured shapes
+- IMPROVEMENT_ROADMAP T4 moved to DONE
 
 ### Test Count
-- **93/93 multimodal tests pass** (up from 72/72, +21 new: 16 seq_gen + 5 seq_trainer)
+- **139/139 multimodal tests pass** (up from 93/93, +46 new: 16 seq_gen + 5 seq_trainer + 16 prim_trainer + primitives/generator sub-tests)
 
 ---
 

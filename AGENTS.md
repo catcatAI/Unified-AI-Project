@@ -91,6 +91,8 @@ pre-commit run --all-files
 > - **Zero new external dependencies** — everything uses stdlib + existing project modules
 > - **Phase 3.3 (Vector store persistence)**: Dual-backend (chromadb/numpy+JSON) `VectorMemoryStore`. Auto-detects chromadb; falls back to pure numpy + JSON for cross-platform zero-dep persistence. `VECTOR_STORE_PATH` env var controls storage dir (default `data/vector_store/`). 25 tests pass. `ham_utils.py` stubs → real implementations (cosine similarity, embedding, uuid, timestamp).
 > - **HAM wiring fix**: `ham_vector_store_manager.py` now has `embed_text()` / `query_similar()` methods (were missing → semantic search was dead code). End-to-end numpy backend: embed → store → search → persist → reload verified.
+> 
+> ✅ **NOTE (Updated 2026-06-29)**: T4 DONE — Phase 3d (PrimitiveEncoder training) wired into `FullTrainingPipeline`. `PrimitiveTrainer` populates PrimitiveLibrary with ~120 geometric shapes (circles, squares, triangles, lines, arcs, dots), trains PrimitiveEncoder autoencoder (best loss < 0.05), re-encodes library, optionally retrains SequenceGenerator on library-derived synthetic pairs. Save/load supports 4 PrimitiveEncoder weight arrays. `ImageGenerator` produces multi-color structured output. 16 new tests pass. Multimodal total: **139 tests**.
 
 ### JavaScript/TypeScript
 
