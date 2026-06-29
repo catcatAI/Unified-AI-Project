@@ -19,8 +19,8 @@ from integrations.os_bridge_adapter import OSBridgeAdapter
 logger = logging.getLogger(__name__)
 
 class MetabolicHeartbeat:
-    def __init__(self, update_interval: float = 30.0):
-        self.update_interval = update_interval
+    def __init__(self, update_interval: Optional[float] = None):
+        self.update_interval = update_interval if update_interval is not None else _hb("update_interval", 30.0)
         self.bio_integrator = BiologicalIntegrator()
         self.os_bridge = OSBridgeAdapter()
         
@@ -80,8 +80,14 @@ class MetabolicHeartbeat:
                     self.x += (self.target_x - self.x) * speed
                 
                 # Dynamic interval: 2-10s based on arousal (lower arousal = slower updates)
-                arousal = bio_state.get("arousal", 50.0)
-                integration_interval = max(2.0, min(10.0, 5.0 * (1.0 - arousal / 100.0)))
+                arousal = bio_state.get("arousal", _hb("arousal_default", 50.0))
+                integration_interval = max(
+                    _hb("integration_interval_min", 2.0),
+                    min(
+                        _hb("integration_interval_max", 10.0),
+                        _hb("integration_interval_base", 5.0) * (1.0 - arousal / 100.0),
+                    ),
+                )
                 await asyncio.sleep(integration_interval)
             except Exception as e:
                 logger.error(f"[Cerebellum-Sync] Loop error: {e}", exc_info=True)
@@ -168,7 +174,8 @@ class MetabolicHeartbeat:
             spatial_conf = get_formula_config("spatial")
             max_x = spatial_conf.get("screen", {}).get("width", 1920)
             offset = mov_conf.get("max_x_offset", 100)
-            self.target_x = random.randint(50, max_x - offset)
+            min_x = mov_conf.get("min_x", 50)
+            self.target_x = random.randint(min_x, max_x - offset)
             logger.info(f"🚶 [Spatial] Intent Jump: Target set to x={self.target_x} (Arousal: {arousal:.2f})")
         
         from core.engine.cognitive_operations import PotentialFieldEngine
@@ -266,7 +273,11 @@ class MetabolicHeartbeat:
                 intensity=hb_cfg.get("gaming_stress_intensity", 0.2),
                 duration=hb_cfg.get("gaming_stress_duration", 10.0),
             )
-            self.bio_integrator.emotional_system.apply_influence("external", "joy", 0.3, 0.5)
+            self.bio_integrator.emotional_system.apply_influence(
+                "external", "joy",
+                _hb("gaming_joy_intensity", 0.3),
+                _hb("gaming_joy_weight", 0.5),
+            )
         elif category == "coding":
             await self.bio_integrator.process_stress_event(
                 intensity=hb_cfg.get("coding_stress_intensity", 0.1),

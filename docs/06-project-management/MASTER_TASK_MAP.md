@@ -202,7 +202,7 @@ Each entry has:
 |:------|:-----------|:-------:|
 | P9-1: 5 ModuleManager modules | `modules/` directory | ✅ |
 | P9-2: 20 stub agent locations fixed | Multiple agent files | ✅ |
-| P9-3: Magic number migration (65 values) | `configs/` YAML files | 🟡 ~43 formulae remain |
+| P9-3: Magic number migration (65 values) | `configs/` YAML files | 🟡 ~32 formulae remain (11 migrated: feedback_processor 1, heartbeat 8, action_executor 2) |
 | Persistent stub: image_generation_agent.py | **DELETED** in Phase 9 | 🗑️ Resolved |
 | Persistent stub: audio_processing_agent.py | Need STT backend | 🟡 |
 | Persistent stub: knowledge_graph_agent.py | Need KG backend | 🟡 |

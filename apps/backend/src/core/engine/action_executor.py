@@ -264,9 +264,9 @@ class ActionExecutor:
         self.config = config or {}
 
         # Queue management
-        self.queue = ActionQueue(max_size=self.config.get("max_queue_size", 1000))
+        self.queue = ActionQueue(max_size=cache_value("executor_max_queue_size", 1000))
         self.active_actions: dict[str, Action] = {}
-        self.max_concurrent = self.config.get("max_concurrent_actions", 5)
+        self.max_concurrent = cache_value("executor_max_concurrent", 5)
 
         # Safety system
         self.safety_checks: dict[str, SafetyCheck] = {}

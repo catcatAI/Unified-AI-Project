@@ -133,10 +133,10 @@
 | `live2d_integration.py` | ~4 | 4 (update loop, 3 demo sleeps) | 0 |
 | `lifespan.py` | ~4 | 4 (heartbeat interval, security audit, plugin tick, shutdown timeout) | 0 |
 | `error_handler.py` | ~2 | 2 (retry operation, backup operation sleeps) | 0 |
-| **合計** | **~105~133** | **~65~90** | **~43** (scattered formula coefficients & structural defaults) |
+| **合計** | **~105~133** | **~76+** (11 migrated 2026-06-29: feedback_processor 1, heartbeat 8, action_executor 2) | **~32** (scattered formula coefficients & structural defaults) |
 | **核心遷移** | **~57** (sleeps/intervals/timeouts) | **~57** ✅ | **0** |
 
-> **更新**: 所有 `asyncio.sleep()`, `time.sleep()`, `timeout=X` 硬編碼已全數遷移至 config-driven accessors。剩餘 ~43 個值為公式係數和結構性預設值（如 deque maxlen、建構子參數），低優先級。
+> **更新**: 所有 `asyncio.sleep()`, `time.sleep()`, `timeout=X` 硬編碼已全數遷移至 config-driven accessors。剩餘 ~32 個值為公式係數和結構性預設值（如 deque maxlen、建構子參數），低優先級。
 
 ---
 
