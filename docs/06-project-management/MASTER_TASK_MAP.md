@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~4,850 collected / 0 errors** on 2026-06-29 (multimodal tests: 72/72 pass, up from 59/60).
+> **Test count baseline**: `pytest` (full testpaths) = **~4,850 collected / 0 errors** on 2026-06-29 (multimodal tests: 93/93 pass, up from 72/72).
 
 ---
 
@@ -840,6 +840,43 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 
 ### Test Count
 - **72/72 multimodal tests pass** (up from 59/60, 1 pre-existing contrastive flake removed by import simplification)
+
+---
+
+
+## VI-W. Session Summary — 2026-06-29 (T3: SequenceGenerator BPTT fix + training)
+
+### T3: SequenceGenerator RNN BPTT fix + training — **DONE** (§X #37)
+- **Problem**: SequenceGenerator `train_step()` had 3 bugs in its backward pass:
+  1. **Premature weight updates**: Weights were updated DURING gradient computation, not after. `W_ho` was modified before `W_ih`/`W_ph`/`W_hh` gradients used it — corrupting hidden-layer gradients.
+  2. **Missing bias updates**: `b_ih`, `b_ph`, `b_hh` were never updated (always frozen at zero).
+  3. **No temporal propagation**: Backward through hidden states was truncated at 1-step — `d_h_next` was always zero, so gradients from step t+1 never reached step t.
+
+- **Fix**: Complete rewrite of `train_step()` backward pass:
+  - Accumulate all 10 gradient buffers first, then apply updates atomically
+  - Add bias gradients for `b_ih`, `b_ph`, `b_hh` (was missing)
+  - Full BPTT: `d_h_future = W_hh.T @ d_pre` propagated from t=T-1 down to t=0
+  - Norm-based gradient clipping on all 10 weight arrays (max_norm=10.0)
+  - All 16 existing tests pass unchanged
+
+- **Added `SequenceGenerator.get_weights()` / `set_weights()`**: API symmetry with decoders
+- **Added `SequenceTrainer`** class in `training_pipeline.py`:
+  - Uses `TrainingDataGenerator.generate_random_primitives()` for synthetic (CLIP, primitive_sequence) pairs
+  - `train()`: iterative RNN training loop with batch processing
+- **Added `FullTrainingPipeline.train_sequence()`**: Phase 3c of the pipeline
+- **Extended save/load_weights**: All 10 RNN weight arrays now saved/loaded from npz as `seq_W_ih`/`seq_b_ih`/etc.
+
+### New Tests: 5 total (all pass, bringing multimodal total to 93)
+- `test_training_pipeline.py` (TestSequenceTrainer): 5 tests — returns dict, loss decreases, weights change, load_weights roundtrip, save_weights keys
+
+### Impact
+- All RNN weights are now trainable with correct BPTT gradients
+- The SequenceGenerator can now learn meaningful CLIP→primitive mappings
+- Phase 3c training pipeline completes the multimodal training stack (Phase 1: contrastive, Phase 2: reconstruction, Phase 3a: texture, Phase 3b: wavetable, Phase 3c: sequence)
+- IMPROVEMENT_ROADMAP T3 moved to DONE, T4 now NEW TOP PRIORITY
+
+### Test Count
+- **93/93 multimodal tests pass** (up from 72/72, +21 new: 16 seq_gen + 5 seq_trainer)
 
 ---
 
