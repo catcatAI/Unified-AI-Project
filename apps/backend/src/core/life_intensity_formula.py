@@ -27,6 +27,15 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
+from core.system.config.magic_numbers import (
+    batch_value,
+    behavior_threshold,
+    learning_rate,
+    limit_value,
+    llm_param,
+    threshold_value,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -58,7 +67,11 @@ class KnowledgeState:
     def calculate_inf_value(self) -> float:
         """Calculate C_inf contribution from this domain"""
         # Weight completeness heavily, but accessibility and resolution matter too
-        return self.completeness * 0.5 + self.accessibility * 0.3 + self.resolution * 0.2
+        return (
+            self.completeness * llm_param("life_intensity.inf_completeness_weight", 0.5)
+            + self.accessibility * llm_param("life_intensity.inf_accessibility_weight", 0.3)
+            + self.resolution * llm_param("life_intensity.inf_resolution_weight", 0.2)
+        )
 
 
 @dataclass
@@ -74,7 +87,8 @@ class ConstraintState:
     def calculate_limit_value(self) -> float:
         """Calculate C_limit contribution from this constraint"""
         # Severity creates the constraint, but adaptability mitigates it
-        effective_constraint = self.severity * (1.0 - self.adaptability * 0.5)
+        adaptability_mitigation = behavior_threshold("life_intensity.adaptability_mitigation", 0.5)
+        effective_constraint = self.severity * (1.0 - self.adaptability * adaptability_mitigation)
         return effective_constraint
 
 
@@ -93,13 +107,18 @@ class ObserverPresence:
     def calculate_mf_value(self) -> float:
         """Calculate M_f contribution from this observer"""
         # M_f combines current intensity with accumulated relationship
-        current_factor = self.interaction_intensity * 0.4 + self.attention_level * 0.3
+        interaction_weight = llm_param("life_intensity.mf_interaction_weight", 0.4)
+        attention_weight = llm_param("life_intensity.mf_attention_weight", 0.3)
+        current_factor = self.interaction_intensity * interaction_weight + self.attention_level * attention_weight
 
         # Relationship depth factor
-        relationship_factor = self.relationship_depth * 0.3
+        relationship_weight = llm_param("life_intensity.mf_relationship_weight", 0.3)
+        relationship_factor = self.relationship_depth * relationship_weight
 
         # Experience bonus (more interactions = stronger observer effect)
-        experience_factor = min(0.2, self.total_interactions / 100 * 0.2)
+        exp_bonus_cap = threshold_value("life_intensity.mf_experience_bonus_cap", 0.2)
+        exp_divisor = batch_value("life_intensity.mf_experience_divisor", 100)
+        experience_factor = min(exp_bonus_cap, self.total_interactions / exp_divisor * exp_bonus_cap)
 
         return min(1.0, current_factor + relationship_factor + experience_factor)
 
@@ -229,7 +248,7 @@ class LifeIntensityFormula:
                 domain=domain,
                 completeness=max(0.0, min(1.0, completeness)),
                 accessibility=max(0.0, min(1.0, accessibility or completeness)),
-                resolution=max(0.0, min(1.0, resolution or completeness * 0.8)),
+                resolution=max(0.0, min(1.0, resolution or completeness * llm_param("life_intensity.default_resolution_factor", 0.8))),
             )
             self.knowledge_states[domain] = state
 
@@ -262,7 +281,7 @@ class LifeIntensityFormula:
             domain=domain,
             constraint_type=constraint_type,
             severity=max(0.0, min(1.0, severity)),
-            adaptability=max(0.0, min(1.0, adaptability or 0.3)),
+            adaptability=max(0.0, min(1.0, adaptability or behavior_threshold("life_intensity.default_adaptability", 0.3))),
             description=description,
         )
 
@@ -350,7 +369,10 @@ class LifeIntensityFormula:
         avg_inf = total_inf / len(self.knowledge_states)
 
         # Boost if multiple domains are well-developed (cross-domain knowledge)
-        domain_count_factor = min(1.2, 0.8 + len(self.knowledge_states) * 0.05)
+        domain_count_cap = threshold_value("life_intensity.domain_count_cap", 1.2)
+        domain_count_base = llm_param("life_intensity.domain_count_base", 0.8)
+        domain_count_increment = learning_rate("life_intensity.domain_count_increment", 0.05)
+        domain_count_factor = min(domain_count_cap, domain_count_base + len(self.knowledge_states) * domain_count_increment)
 
         return min(1.0, avg_inf * domain_count_factor)
 
@@ -365,7 +387,7 @@ class LifeIntensityFormula:
             C_limit value (0-1)
         """
         if not self.constraint_states:
-            return 0.1  # Minimum constraint (no constraints = slight constraint)
+            return threshold_value("life_intensity.min_constraint_default", 0.1)  # Minimum constraint (no constraints = slight constraint)
 
         # Group constraints by domain
         domain_constraints: Dict[str, List[float]] = {}
@@ -386,7 +408,7 @@ class LifeIntensityFormula:
         avg_limit = (
             sum(domain_effective_limits) / len(domain_effective_limits)
             if domain_effective_limits
-            else 0.1
+            else threshold_value("life_intensity.min_constraint_fallback", 0.1)
         )
 
         return avg_limit
@@ -403,7 +425,7 @@ class LifeIntensityFormula:
             M_f value (0-1)
         """
         if not self.observers:
-            return 0.1  # Minimal life sense without observers
+            return threshold_value("life_intensity.min_observer_default", 0.1)  # Minimal life sense without observers
 
         # Calculate total observer factor
         # Primary observer has full weight, others diminish
@@ -413,7 +435,8 @@ class LifeIntensityFormula:
 
         total_mf = 0.0
         for i, observer in enumerate(sorted_observers):
-            weight = 1.0 / (1 + i * 0.5)  # Diminishing weight for secondary observers
+            observer_diminish_rate = llm_param("life_intensity.observer_diminish_rate", 0.5)
+            weight = 1.0 / (1 + i * observer_diminish_rate)  # Diminishing weight for secondary observers
             total_mf += observer.calculate_mf_value() * weight
 
         # Cap at 1.0
@@ -444,7 +467,8 @@ class LifeIntensityFormula:
         self.accumulated_gap_integral += current_gap * time_hours
 
         # Normalize accumulated integral (diminishing returns for very long times)
-        normalized_integral = math.log(1 + self.accumulated_gap_integral) / math.log(100)
+        log_base = limit_value("life_intensity.time_integral_log_base", 100)
+        normalized_integral = math.log(1 + self.accumulated_gap_integral) / math.log(log_base)
 
         self.last_calculation = now
         return min(1.0, normalized_integral)
@@ -477,7 +501,7 @@ class LifeIntensityFormula:
             + self.weights["c_limit"] * (1.0 - c_limit)  # Less constraint = more life
             + self.weights["m_f"] * m_f
             + self.weights["time_integral"] * time_integral
-            + 0.1 * knowledge_gap  # Gap bonus
+            + llm_param("life_intensity.gap_bonus_weight", 0.1) * knowledge_gap  # Gap bonus
         )
 
         # Normalize
@@ -541,9 +565,9 @@ class LifeIntensityFormula:
         first_half_avg = sum(s.l_s for s in recent[:mid]) / mid
         second_half_avg = sum(s.l_s for s in recent[mid:]) / (len(recent) - mid)
 
-        if second_half_avg > first_half_avg * 1.05:
+        if second_half_avg > first_half_avg * threshold_value("life_intensity.trend_rising_mult", 1.05):
             return "rising"
-        elif second_half_avg < first_half_avg * 0.95:
+        elif second_half_avg < first_half_avg * threshold_value("life_intensity.trend_falling_mult", 0.95):
             return "falling"
         else:
             return "stable"

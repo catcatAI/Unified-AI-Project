@@ -30,6 +30,13 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
+from core.system.config.magic_numbers import (
+    learning_rate,
+    limit_value,
+    llm_param,
+    threshold_value,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -76,7 +83,7 @@ class StressVector:
     def calculate_stress_contribution(self) -> float:
         """Calculate this stress vector's contribution to total stress"""
         # Intensity matters most, but persistence amplifies
-        persistence_factor = 0.7 + (self.persistence * 0.3)
+        persistence_factor = llm_param("ac.stress_base_factor", 0.7) + (self.persistence * llm_param("ac.stress_persistence_weight", 0.3))
         return self.intensity * persistence_factor
 
 
@@ -94,9 +101,9 @@ class OrderBaseline:
         """Calculate the strength of this native order"""
         # Stable but flexible orders are stronger
         return (
-            self.stability * 0.5
-            + self.flexibility * 0.3
-            + (1.0 - self.complexity * 0.2) * 0.2  # Simpler orders are more robust
+            self.stability * llm_param("ac.order_stability_weight", 0.5)
+            + self.flexibility * llm_param("ac.order_flexibility_weight", 0.3)
+            + (1.0 - self.complexity * llm_param("ac.order_complexity_penalty", 0.2)) * llm_param("ac.order_simplicity_weight", 0.2)  # Simpler orders are more robust
         )
 
 
@@ -312,7 +319,7 @@ class ActiveCognitionFormula:
             decay = self.stress_decay_rate * hours_since
             vector.intensity = max(0.0, vector.intensity - decay)
 
-            if vector.intensity < 0.01:
+            if vector.intensity < threshold_value("ac.stress_decay_removal", 0.01):
                 vectors_to_remove.append(vector_id)
 
         # Remove decayed vectors
@@ -325,12 +332,12 @@ class ActiveCognitionFormula:
         # Calculate total stress
         # Different sources have different base weights
         source_weights = {
-            StressSource.NOVELTY_DEMAND: 1.2,
-            StressSource.CONTRADICTION: 1.3,
-            StressSource.AMBIGUITY: 1.1,
-            StressSource.TIME_PRESSURE: 0.9,
-            StressSource.COMPLEXITY: 1.0,
-            StressSource.OBSERVER_EXPECTATION: 1.15,
+            StressSource.NOVELTY_DEMAND: llm_param("ac.stress_weight_novelty_demand", 1.2),
+            StressSource.CONTRADICTION: llm_param("ac.stress_weight_contradiction", 1.3),
+            StressSource.AMBIGUITY: llm_param("ac.stress_weight_ambiguity", 1.1),
+            StressSource.TIME_PRESSURE: llm_param("ac.stress_weight_time_pressure", 0.9),
+            StressSource.COMPLEXITY: llm_param("ac.stress_weight_complexity", 1.0),
+            StressSource.OBSERVER_EXPECTATION: llm_param("ac.stress_weight_observer_expectation", 1.15),
         }
 
         total_stress = 0.0
@@ -340,10 +347,11 @@ class ActiveCognitionFormula:
 
         # Normalize (but allow >1 for high stress situations)
         # Use log scaling to compress high values while keeping differentiation
-        if total_stress > 1.0:
-            total_stress = 1.0 + math.log(1 + total_stress - 1.0)
+        log_threshold = threshold_value("ac.stress_log_threshold", 1.0)
+        if total_stress > log_threshold:
+            total_stress = log_threshold + math.log(1 + total_stress - log_threshold)
 
-        return min(2.0, total_stress)  # Cap at 2.0
+        return min(limit_value("ac.stress_cap", 2), total_stress)  # Cap
 
     def calculate_o_order(self) -> float:
         """
@@ -357,22 +365,22 @@ class ActiveCognitionFormula:
             O_order value (0-1)
         """
         if not self.order_baselines:
-            return 0.5  # Default moderate order
+            return threshold_value("ac.default_o_order", 0.5)  # Default moderate order
 
         # Calculate weighted average of order strengths
         type_weights = {
-            OrderType.ALGORITHMIC: 1.0,
-            OrderType.PATTERN_BASED: 0.9,
-            OrderType.RULE_BASED: 0.85,
-            OrderType.STATISTICAL: 0.8,
-            OrderType.HEURISTIC: 0.75,
+            OrderType.ALGORITHMIC: llm_param("ac.order_weight_algorithmic", 1.0),
+            OrderType.PATTERN_BASED: llm_param("ac.order_weight_pattern_based", 0.9),
+            OrderType.RULE_BASED: llm_param("ac.order_weight_rule_based", 0.85),
+            OrderType.STATISTICAL: llm_param("ac.order_weight_statistical", 0.8),
+            OrderType.HEURISTIC: llm_param("ac.order_weight_heuristic", 0.75),
         }
 
         total_order = 0.0
         total_weight = 0.0
 
         for baseline in self.order_baselines.values():
-            weight = type_weights.get(baseline.order_type, 0.8)
+            weight = type_weights.get(baseline.order_type, llm_param("ac.order_weight_fallback", 0.8))
             strength = baseline.calculate_order_strength()
             total_order += strength * weight
             total_weight += weight
@@ -400,8 +408,9 @@ class ActiveCognitionFormula:
         s_stress = self.calculate_s_stress()
         o_order = self.calculate_o_order()
 
-        if o_order < 0.01:
-            o_order = 0.01
+        o_order_epsilon = threshold_value("ac.o_order_epsilon", 0.01)
+        if o_order < o_order_epsilon:
+            o_order = o_order_epsilon
 
         return s_stress / o_order
 
@@ -414,8 +423,9 @@ class ActiveCognitionFormula:
         s_stress = self.calculate_s_stress()
         o_order = self.calculate_o_order()
 
-        if o_order < 0.01:
-            o_order = 0.01
+        o_order_epsilon = threshold_value("ac.o_order_epsilon", 0.01)
+        if o_order < o_order_epsilon:
+            o_order = o_order_epsilon
 
         a_c = s_stress / o_order
 
@@ -448,22 +458,28 @@ class ActiveCognitionFormula:
         construction_id = f"construction_{self._construction_counter}"
 
         # Calculate deviation degree
-        deviation = min(1.0, a_c - 1.0) if a_c > 1.0 else 0.0
+        deviation_threshold = threshold_value("ac.deviation_activation", 1.0)
+        deviation = min(1.0, a_c - deviation_threshold) if a_c > deviation_threshold else 0.0
 
         # Determine construction type
-        if a_c > 1.5:
+        radical_threshold = threshold_value("ac.construction_radical_threshold", 1.5)
+        significant_threshold = threshold_value("ac.construction_significant_threshold", 1.0)
+        moderate_threshold = threshold_value("ac.construction_moderate_threshold", 0.8)
+        if a_c > radical_threshold:
             construction_type = "radical_deviation"
-        elif a_c > 1.0:
+        elif a_c > significant_threshold:
             construction_type = "significant_deviation"
-        elif a_c > 0.8:
+        elif a_c > moderate_threshold:
             construction_type = "moderate_adaptation"
         else:
             construction_type = "subtle_adjustment"
 
         # Generate outcome description
-        if deviation > 0.5:
+        deviation_high = threshold_value("ac.deviation_high", 0.5)
+        deviation_mid = threshold_value("ac.deviation_mid", 0.2)
+        if deviation > deviation_high:
             outcome = f"强烈偏离原生秩序 (S_stress={s_stress:.3f} > O_order={o_order:.3f})"
-        elif deviation > 0.2:
+        elif deviation > deviation_mid:
             outcome = "中度偏离原生秩序，主动建构新意义"
         else:
             outcome = "轻微偏离，在秩序边缘探索"
@@ -475,12 +491,12 @@ class ActiveCognitionFormula:
             deviation_degree=deviation,
             construction_type=construction_type,
             outcome_description=outcome,
-            success_score=min(1.0, a_c / 1.5),  # Higher A_c = more successful deviation
+            success_score=min(1.0, a_c / llm_param("ac.success_ac_divisor", 1.5)),  # Higher A_c = more successful deviation
         )
 
         self.construction_history.append(construction)
         self.total_constructions += 1
-        if construction.success_score > 0.6:
+        if construction.success_score > threshold_value("ac.construction_success_threshold", 0.6):
             self.successful_constructions += 1
 
         # Manage history
@@ -508,7 +524,7 @@ class ActiveCognitionFormula:
             }
 
         total = len(self.construction_history)
-        successful = sum(1 for c in self.construction_history if c.success_score > 0.6)
+        successful = sum(1 for c in self.construction_history if c.success_score > threshold_value("ac.construction_success_threshold", 0.6))
         avg_a_c = sum(c.a_c_value for c in self.construction_history) / total
         avg_deviation = sum(c.deviation_degree for c in self.construction_history) / total
 

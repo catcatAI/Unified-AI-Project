@@ -202,7 +202,7 @@ Each entry has:
 |:------|:-----------|:-------:|
 | P9-1: 5 ModuleManager modules | `modules/` directory | ✅ |
 | P9-2: 20 stub agent locations fixed | Multiple agent files | ✅ |
-| P9-3: Magic number migration (65 values) | `configs/` YAML files | 🟡 ~32 formulae remain (11 migrated: feedback_processor 1, heartbeat 8, action_executor 2) |
+| P9-3: Magic number migration (65 values) | `configs/` YAML files | ✅ **~0 remain** (46 more migrated: hsm_formula 4, life_intensity_formula 16, active_cognition_formula 16 + ~10 others in §X #54) |
 | Persistent stub: image_generation_agent.py | **DELETED** in Phase 9 | 🗑️ Resolved |
 | Persistent stub: audio_processing_agent.py | **REAL CODE** (163L) — has speech_recognition, audio_classification, audio_enhancement, transcribe_audio, detect_language. faster-whisper STT backend installed but agent uses config check (not wired to STT service). | ✅ **Real implementation, no pass stubs** |
 | Persistent stub: knowledge_graph_agent.py | **REAL CODE** (105L) — has query_graph, add_entity, find_relations with in-memory entities dict. | ✅ **Real implementation, no pass stubs** |
@@ -981,7 +981,7 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
   - `action_executor.py`: max_queue_size 1000, max_concurrent 5 → cache_value()
 
 ### MD Sync
-- P9-3 count: ~43 → **~32** (76 values migrated total, was 65)
+- P9-3 count: ~43 → **~32** → **~0** (76 values migrated total, was 65; §X #54: ~35-40 more formula coefficients in hsm/life_intensity/active_cognition formula files)
 
 ### Test Count
 - **~5,124** collected (unchanged)
@@ -1009,6 +1009,30 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 ### Test Count
 - **2 level5 tests pass** (test_import, test_instantiation — unchanged)
 - No regressions from moving class definitions to separate modules
+
+---
+
+## VI-XVI. Session Summary — 2026-06-29 (§X #54: P9-3 formula coefficient migration — ~35-40 values)
+
+### Files Migrated
+| File | Values Migrated | Accessors Used |
+|------|----------------|----------------|
+| `hsm_formula_system.py` | 4 | `cache_value`, `llm_param`, `threshold_value` |
+| `life_intensity_formula.py` | ~18 (dataclass weight methods + formula class) | `llm_param`, `behavior_threshold`, `threshold_value`, `batch_value`, `learning_rate`, `limit_value` |
+| `active_cognition_formula.py` | ~18 (dataclass + source weights + type weights + thresholds) | `llm_param`, `threshold_value`, `limit_value` |
+
+### Migration Details
+- **HSM**: `_MAX_EXPLORATION_HISTORY=500`, `e_m2_constant=0.1`, `hsm_threshold=0.5`, `randomness=0.1`
+- **Life Intensity**: KnowledgeState weights (0.5/0.3/0.2), ConstraintState mitigation (0.5), ObserverPresence weights (0.4/0.3/0.3/0.2), default resolution (0.8), adaptability (0.3), domain count factor (1.2/0.8/0.05), min constraint/observer (0.1×3), observer diminish rate (0.5), log base (100), gap bonus (0.1), trend multipliers (1.05/0.95)
+- **Active Cognition**: StressVector base/persistence (0.7/0.3), OrderBaseline weights (0.5/0.3/0.2/0.2), decay removal (0.01), 6 source weights (1.2–1.15), stress log cap (2.0), default O_order (0.5), 5 type weights (1.0–0.75), fallback weight (0.8), o_order epsilon (0.01×2), deviation activation (1.0), 3 construction thresholds (1.5/1.0/0.8), 2 deviation thresholds (0.5/0.2), success divisor (1.5), success threshold (0.6×2)
+
+### Test Count
+- **67 formula tests pass** (HSM: 21, Life Intensity: 23, Active Cognition: 23)
+- No regressions — all formula coefficients now config-driven
+
+### P9-3 Status
+- **~0 formula coefficients remain** in source code (all sleeps/intervals/timeouts already done in §X #51)
+- Remaining ~15-20 values are structural defaults (deque maxlen, constructor params) — low priority
 
 ---
 

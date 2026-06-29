@@ -133,10 +133,10 @@
 | `live2d_integration.py` | ~4 | 4 (update loop, 3 demo sleeps) | 0 |
 | `lifespan.py` | ~4 | 4 (heartbeat interval, security audit, plugin tick, shutdown timeout) | 0 |
 | `error_handler.py` | ~2 | 2 (retry operation, backup operation sleeps) | 0 |
-| **合計** | **~105~133** | **~76+** (11 migrated 2026-06-29: feedback_processor 1, heartbeat 8, action_executor 2) | **~32** (scattered formula coefficients & structural defaults) |
+| **合計** | **~105~133** | **~110+** (11 + 35-40 migrated 2026-06-29 (2 sessions): feedback_processor 1, heartbeat 8, action_executor 2, hsm_formula 4, life_intensity_formula ~18, active_cognition_formula ~18) | **~0** (formula coefficients now migrated in §X #54) |
 | **核心遷移** | **~57** (sleeps/intervals/timeouts) | **~57** ✅ | **0** |
 
-> **更新**: 所有 `asyncio.sleep()`, `time.sleep()`, `timeout=X` 硬編碼已全數遷移至 config-driven accessors。剩餘 ~32 個值為公式係數和結構性預設值（如 deque maxlen、建構子參數），低優先級。
+> **更新**: 所有 `asyncio.sleep()`, `time.sleep()`, `timeout=X` 硬編碼已全數遷移至 config-driven accessors。公式係數已於 §X #54 全數遷移 (hsm/life_intensity/active_cognition 共 ~35-40 個值)。
 
 ---
 

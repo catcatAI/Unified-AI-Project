@@ -23,9 +23,11 @@ from __future__ import annotations
 import logging
 import uuid
 
+from core.system.config.magic_numbers import cache_value, llm_param, threshold_value
+
 logger = logging.getLogger(__name__)
 
-_MAX_EXPLORATION_HISTORY = 500
+_MAX_EXPLORATION_HISTORY = cache_value("hsm_max_exploration_history", 500)
 
 
 class HSMFormulaSystem:
@@ -33,8 +35,8 @@ class HSMFormulaSystem:
 
     def __init__(self, config=None):
         self.config = config or {}
-        self.e_m2_constant = 0.1
-        self.hsm_threshold = 0.5
+        self.e_m2_constant = llm_param("hsm_em2_constant", 0.1)
+        self.hsm_threshold = threshold_value("hsm_threshold", 0.5)
         self.cognitive_gaps: dict = {}
         self.exploration_history: list = []
         self.governance_blueprints: dict = {}
@@ -42,7 +44,9 @@ class HSMFormulaSystem:
         self._running = False
         logger.debug("HSMFormulaSystem initialized")
 
-    def calculate_spontaneity(self, cognitive_gap: float, randomness: float = 0.1) -> float:
+    def calculate_spontaneity(self, cognitive_gap: float, randomness: float = None) -> float:
+        if randomness is None:
+            randomness = llm_param("hsm_default_randomness", 0.1)
         return cognitive_gap * randomness
 
     def get_status(self) -> dict:
