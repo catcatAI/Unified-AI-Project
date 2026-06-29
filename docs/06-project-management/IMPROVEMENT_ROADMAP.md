@@ -256,7 +256,7 @@ O1, O2, O6 → 程式碼組織
 ### 4.1 測試覆蓋
 
 ```bash
-# 執行所有測試（基線：4,840）
+# 執行所有測試（基線：4,902）
 pytest tests/ apps/backend/tests/ --collect-only -q
 
 # 測量基線完成後，每次變更保持或增加計數

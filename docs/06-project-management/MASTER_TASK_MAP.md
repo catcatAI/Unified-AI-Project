@@ -875,7 +875,13 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 - Phase 3c training pipeline completes the multimodal training stack (Phase 1: contrastive, Phase 2: reconstruction, Phase 3a: texture, Phase 3b: wavetable, Phase 3c: sequence)
 - IMPROVEMENT_ROADMAP T3 moved to DONE, T4 now DONE (Phase 3d)
 
-### Files Changed (T4 — Phase 3d: PrimitiveEncoder training)
+---
+
+## VI-X. Session Summary — 2026-06-29 (T4: PrimitiveEncoder + GVV Phase 3d)
+
+### T4: PrimitiveEncoder autoencoder + ImageGenerator structurization — **DONE** (§X #38)
+
+### Files Changed
 - `apps/backend/src/ai/multimodal/training_pipeline.py`:
   - New `PrimitiveTrainer` class: populates library with ~120 geometric shapes (circles, squares, triangles, lines, arcs, dots) in various colors, trains PrimitiveEncoder autoencoder, re-encodes library, optionally retrains SequenceGenerator on library-derived synthetic pairs
   - New `FullTrainingPipeline.train_primitives()` (Phase 3d) + `run_full()` convenience method
@@ -895,7 +901,7 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 
 ---
 
-## VI-X. Session Summary — 2026-06-29 (T5: ThreeLayerVisual automatic PCA training)
+## VI-XI. Session Summary — 2026-06-29 (T5: ThreeLayerVisual automatic PCA training)
 
 ### T5: ThreeLayerVisual auto PCA training — **DONE** (§X #39)
 - **Problem**: ThreeLayerVisual had 3 latent-dim bugs when `n_samples < LATENT_DIM` (128):
