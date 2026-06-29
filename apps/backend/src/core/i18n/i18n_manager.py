@@ -62,8 +62,8 @@ class TranslationEntry:
 
 @dataclass
 class I18nConfig:
-    default_language: Language = Language.ENGLISH
-    default_locale: Locale = Locale.US
+    default_language: Language = Language.CHINESE
+    default_locale: Locale = Locale.CN
     fallback_language: Language = Language.ENGLISH
     enable_cache: bool = True
     cache_size: int = 1000
@@ -233,6 +233,28 @@ class I18nManager:
 
 
 _default_manager = I18nManager()
+
+# ---------------------------------------------------------------------------
+# Auto-load locale files so translations work without requiring startup code.
+# This covers both tests and production entry points.
+# ---------------------------------------------------------------------------
+def _auto_load_locales() -> None:
+    """Search for and load locale files from standard locations."""
+    import os
+
+    # 1. Relative to this module's directory
+    candidates = [
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "locales"),
+        os.path.join(os.getcwd(), "apps", "backend", "src", "core", "i18n", "locales"),
+    ]
+    for path in candidates:
+        if os.path.isdir(path):
+            count = _default_manager.load_from_locale_dir(path)
+            if count > 0:
+                return
+
+
+_auto_load_locales()
 
 
 def t(key: str, **kwargs) -> str:

@@ -234,13 +234,16 @@ class ED3NEngine:
         """Evaluate math expression using MathRippleEngine."""
         try:
             from ai.memory.math_ripple_engine import MathRippleEngine
+            import math
             engine = MathRippleEngine()
             converted = engine.convert_chinese_math(text)
             if not converted:
                 return None
             result, ripples = engine.compute(text)
-            if result is None:
+            if result is None or math.isnan(result):
                 return None
+            if math.isinf(result):
+                return f"{text.rstrip('？?！!。.')} = 除数不能为零"
             # Format result
             if result == int(result):
                 return f"{text.rstrip('？?！!。.')} = {int(result)}"

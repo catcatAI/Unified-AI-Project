@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~5,124 collected / 0 errors** on 2026-06-29 (multimodal tests: 139/139 pass after §X #49-50; previously 5,019 → 5,124 = +80 from §X #49: 5 stubs implemented + §X #50: ripple/influence stubs).
+> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Multimodal: 160/160 pass (after T5). ED3N: 114/114. GARDEN: 201/201. All stubs eliminated. §X #49-50: +80 tests from stubs. §X #53-54: formula coefficients + Level5ASI modules.
 
 ---
 
