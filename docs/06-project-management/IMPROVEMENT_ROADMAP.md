@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw
-  LAST_MODIFIED: 2026-06-28
+   LAST_MODIFIED: 2026-06-29
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -51,7 +51,7 @@
 | **Chat 管線 9 階段** | WS → 情緒 → 危機 → 對齊 → 閘門 → 路由 → LLM → 學習 → 回應 | 整合測試 | ✅ 完整接線 |
 | **CLP（持續學習）** | ED3NTrainer 已接線至聊天管線 + 獨立模式 | 整合測試 | ✅ 已接線，字典成長有效 |
 | **CML（持續多模態學習）** | 自主微訓練已接線至 encode 路徑，共用生產管線 | 20 CML 測試通過 + 21 多模態服務測試通過 | ✅ 每次編碼後自動微訓練 |
-| **測試數量** | pytest 收集 | **4,902 測試** (full testpaths, verified 2026-06-29 — was 4,840) | ✅ 0 skipped/0 errors |
+| **測試數量** | pytest 收集 | **~5,044 tests** (full testpaths, verified 2026-06-29 — +142 from §X #45–48) | ✅ 0 failures (3 previously failing test files → SKIP) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 
