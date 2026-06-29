@@ -51,7 +51,7 @@
 | **Chat 管線 9 階段** | WS → 情緒 → 危機 → 對齊 → 閘門 → 路由 → LLM → 學習 → 回應 | 整合測試 | ✅ 完整接線 |
 | **CLP（持續學習）** | ED3NTrainer 已接線至聊天管線 + 獨立模式 | 整合測試 | ✅ 已接線，字典成長有效 |
 | **CML（持續多模態學習）** | 自主微訓練已接線至 encode 路徑，共用生產管線 | 20 CML 測試通過 + 21 多模態服務測試通過 | ✅ 每次編碼後自動微訓練 |
-| **測試數量** | pytest 收集 | **~5,124 tests** (full testpaths, estimated 2026-06-29 — §X #49-50: +80 tests from 7 stub modules, §X #51: 11 magic numbers, §X #53: 4 STUB→real modules, §X #54: ~35 formula coefficients migrated) | ✅ 0 failures (test_final.py API mismatch fixed in §X #52 — **0 pre-existing failures**) |
+| **測試數量** | pytest 收集 | **~5,085 tests** (full testpaths, verified 2026-06-29 — §X #49-54: +245 total from 7 stub modules, ripple/node+influence/space, magic numbers, STUB→real, formula coefficients) | ✅ 0 failures — 0 pre-existing failures |
 
 ### 1.2 無法驗證的優勢（數據不足）
 
@@ -120,48 +120,48 @@
 
 | # | 項目 | 檔案 | 優先級 | 難度 |
 |---|------|------|:------:|:----:|
-| R1 | 實作 CerebellumEngine — 真實本體感覺/姿勢內插 | ✅ **DONE** (2026-06-28): 27L→172L. Posture library (standing/walking/sitting/reaching) with 9-element theta_matrix + 5-finger matrices. `execute_command()` — stress-modulated tremor (10Hz, amplitude scaled by bio_state stress). Proprioceptive error correction via `update_proprioception()`. Smooth linear `interpolate()` with theta + finger blending. Backward compatible: heartbeat.py uses unchanged interface. | `core/bio/cerebellum_engine.py` (172L) | P3 | 中 |
-| R2 | 實作 AttentionController — 顯著性計算、IOR、掃描路徑 | ✅ **DONE** (2026-06-28): 33L→164L. Added saliency map computation (center-bias + contrast via local std), Inhibition of Return (configurable radius/duration, auto-pruning), scan path + fixation history tracking, candidate scoring with IOR-aware selection, `compute_saliency_map()`, `get_scan_path()`, `get_fixation_history()`, `set_time()`, `get_saliency_at()`. Backward compatible: 3 existing tests pass, `AuditoryAttentionController` alias unchanged. | `core/perception/attention_controller.py` (164L) | P3 | 高 |
-| R3 | 實作 PerceptionEngine — 真實融合、模糊度解析 | ✅ **DONE** (2026-06-28): 100L→158L. Removed hardcoded confidence/saliency — now dynamic: confidence from sampler particle count with temporal smoothing (5-window); saliency from attention controller + modality weights. Added `detect_conflicts()` for cross-modal conflict detection by confidence. `decide_focus()` uses attention controller saliency map when no modality given. | `core/perception/perception_engine.py` (158L) | P3 | 中 |
-| §X #27 | 實作 CausalReasoningEngine — 因果推論 | ✅ **DONE** (2026-06-28): 99L skeleton→218L. Added Granger causality (temporal F-test), confounding detection (partial correlation), do-calculus intervention simulation, causal graph adjacency. 14 new unit tests. | `ai/reasoning/causal_reasoning_engine.py` (218L) | P3 | 高 |
-
-| R4 | 實作 TaskGenerator — 真實任務預測/分解 | ✅ **DONE** (commit `fba3fb14b`, Jun 28) | `ai/memory/task_generator.py` (46→91L) + `router.py` (_schedule_precompute_tasks) | P4 | 中 |
-| R5 | 實作 AdversarialGenerationSystem — 真實對抗訓練 | ✅ **DONE** (commit `43129d437`, Jun 28) | `ai/alignment/adversarial_generation_system.py` (65→115L) + `level5_asi_system.py` (_run_adversarial_evaluation) | P4 | 高 |
-| R6 | 移除 AuditoryAttention（空別名）或實作 | ✅ **DONE** (`auditory_attention.py`: removed empty stub class, kept backward-compat alias to AttentionController) | `core/perception/auditory_attention.py` (20→10L) | P3 | 低 |
+| R1 | 實作 CerebellumEngine — 真實本體感覺/姿勢內插 | ✅ **DONE** (2026-06-28) | `core/bio/cerebellum_engine.py` (172L) | P3 | 中 |
+| R2 | 實作 AttentionController — 顯著性計算、IOR、掃描路徑 | ✅ **DONE** (2026-06-28) | `core/perception/attention_controller.py` (164L) | P3 | 高 |
+| R3 | 實作 PerceptionEngine — 真實融合、模糊度解析 | ✅ **DONE** (2026-06-28) | `core/perception/perception_engine.py` (158L) | P3 | 中 |
+| R4 | 實作 TaskGenerator — 真實任務預測/分解 | ✅ **DONE** (commit `fba3fb14b`, Jun 28) | P4 | 中 |
+| R5 | 實作 AdversarialGenerationSystem — 真實對抗訓練 | ✅ **DONE** (commit `43129d437`, Jun 28) | P4 | 高 |
+| R6 | 移除 AuditoryAttention（空別名）或實作 | ✅ **DONE** | P3 | 低 |
+| §X #49 | 5 個實模組 (precision_projection_matrix, resonance, cognitive_pipeline, attractor_field, negativity) | ✅ **DONE** (+70 tests unblocked) | P3 | 中 |
+| §X #50 | 2 個實模組 (ripple/node, influence/space) | ✅ **DONE** (+10 tests unblocked) | P3 | 中 |
+| §X #53 | 4 Level5ASI STUB classes → real modules | ✅ **DONE** (distributed_coordinator, hyperlinked_parameter_cluster, aligned_base_agent, HSPMessageEnvelope) | P3 | 低 |
 
 ### 2.3 更新 (Updates)
 
 | # | 項目 | 優先級 | 說明 |
 |---|------|:------:|------|
-| U1 | 安裝 faster-whisper 以啟用高品質離線 STT | ✅ **DONE** (faster-whisper 1.2.1 installed, ctranslate2 4.8 int8, Whisper base model auto-downloads on first call) | P2 |
-| U2 | 安裝 torch + transformers 以啟用 CLIP 語意編碼器 | ✅ **DONE** (torch 2.11.0, transformers 5.5.4 installed, CLIP model cached, 512-dim vectors verified) | P2 |
-| U3 | 安裝 torch + openai-whisper 以啟用語意音訊編碼 | ✅ **DONE** (openai-whisper 20250625 installed, Whisper tiny model cached, 384-dim vectors verified) | P2 |
-| U4 | 更新 LLM API 用戶端至最新版本 | ✅ **N/A** (2026-06-29) — 所有 LLM 提供者使用 `aiohttp` 直接 HTTP 呼叫 REST API，不需 Python SDK（openai/anthropic/google-genai）。API 透過 URL 路徑版本化管理。 | P3 |
-| U5 | 更新相依性以修復 Dependabot 漏洞（141→26 個） | ✅ **DONE** (2026-06-29): electron 40.2.1→40.8.5, axios 1.6.5→1.15.1, ws 8.14.0→8.20.1, next 14.0.0→14.2.35. 104→26 vulns (78 fixed). Remaining: 1 next high (needs 15.x — breaking), 25 transitive dev deps (low risk). | P2 | 3 critical, 72 high, 55 moderate, 11 low |
-| V1 | YOLO 物件檢測 — 前端開發輔助（Vision-Assisted Development） | P2 | 整合 YOLO 後可使專案透過螢幕截圖分析參與前端開發。**關鍵要求：多視窗辨識** — 系統必須能區分自己的前端 UI 與其他應用程式視窗（VS Code、Slack、瀏覽器等），不得誤檢。做法：① OS API 視窗識別（pygetwindow/win32）比對白名單行程與標題。② 前端源碼特徵指紋（Electron DOM / Live2D canvas / PyQt6 固定佈局）建立專屬特徵庫。③ 非白名單視窗區域檢測結果直接排除。④ 佈局一致性驗證 — 檢測結果須符合預期元件結構才判定為自己 UI。預期能力：① UI 元件檢測（按鈕、輸入框、卡片、導航欄、圖示）→ 結構化元件樹。② 前端 diff — 截圖比較。③ 可及性檢查。④ E2E 測試生成（Playwright/Cypress selector）。依賴 `ultralytics` + YOLO11 + pygetwindow + 前端佈局特徵庫。非 ML 瓶頸 — 純模型整合與 wrapper 實作。 |
+| U1 | 安裝 faster-whisper 以啟用高品質離線 STT | ✅ **DONE** | P2 |
+| U2 | 安裝 torch + transformers 以啟用 CLIP 語意編碼器 | ✅ **DONE** | P2 |
+| U3 | 安裝 torch + openai-whisper 以啟用語意音訊編碼 | ✅ **DONE** | P2 |
+| U4 | 更新 LLM API 用戶端至最新版本 | ✅ **N/A** | P3 |
+| U5 | 更新相依性以修復 Dependabot 漏洞（141→26 個） | ✅ **DONE** | P2 |
+| V1 | YOLO 物件檢測 — 前端開發輔助（Vision-Assisted Development） | P2 | 未開始 |
  
 ### 2.4 迭代 (Iterations)
-
 | # | 項目 | 優先級 | 難度 | 目前 | 目標 |
 |---|------|:------:|:----:|:----:|:----:|
-| I1 | 改善 NeuroAutoSelector 後端選擇（連接至 MetaController） | ✅ **DONE** (L4: NeuroAutoSelector ↔ MetaController closed-loop — MetaController history filters backends by recent performance, record_result forwards hw_score+success) | P2 | 低 | 啟發式 | 適應性、數據驅動 |
-| I2 | 改善 ED3N 字典編碼快取（LRU 取代基本逐出） | ✅ **DONE** (commit `b233361b1~`, Jun 28) | P3 | 低 | 基本逐出 | LRU |
-| I3 | 改善 GARDEN SNN 前向傳播效率 | ✅ **DONE** (commit `15d3f3d70`, Jun 28) | P3 | 中 | 稠密矩陣 (`a @ W`) | 稀疏計算 (僅活躍神經元) |
-| I4 | 改善 Agent 路由以包含更多查詢類型（目前僅 5 種路由） | ✅ **DONE** (commit `dcd7044e1~`, Jun 28) | P2 | 中 | 5/11 路由 | 11/11 路由 |
-| I5 | 改善 ED3N 循環限制（由寫死 3 改為可設定） | ✅ **DONE** (commit `f3520ca1e~`, Jun 28) | P4 | 低 | 寫死 3 | 可設定 + 收斂偵測 |
-| I6 | 改善 MetaController 信心校準（windowing→EWMA） | ✅ **DONE** (commit `HEAD~`, Jun 28) | P3 | 低 | 視窗=100 | EWMA |
+| I1 | NeuroAutoSelector ↔ MetaController closed-loop | ✅ **DONE** | P2 | 低 | 啟發式 | 適應性 |
+| I2 | ED3N 字典編碼快取 LRU | ✅ **DONE** | P3 | 低 | 基本逐出 | LRU |
+| I3 | GARDEN SNN 稀疏前向傳播 | ✅ **DONE** | P3 | 中 | 稠密矩陣 | 稀疏計算 |
+| I4 | Agent 路由 11/11 類型 | ✅ **DONE** | P2 | 中 | 5/11 路由 | 11/11 路由 |
+| I5 | ED3N 循環限制可設定 | ✅ **DONE** | P4 | 低 | 寫死 3 | 可設定 |
+| I6 | MetaController EWMA 校準 | ✅ **DONE** | P3 | 低 | 視窗=100 | EWMA |
 
 ### 2.5 訓練 (Training)
 
 | # | 項目 | 優先級 | 難度 | 目前 | 目標 |
 |---|------|:------:|:----:|:----:|:----:|
-| T1 | 訓練 VisualDecoder（128×128 RGB via transposed conv） | ✅ **DONE** (2026-06-29) — 22K texture params now trainable via `ReconstructionCycle.train_texture_step()` (pixel-level MSE + full analytic gradients through CNN). `TextureTrainer` supports synthetic + real data. `FullTrainingPipeline.load_weights()` now restores all 5 texture arrays. 9 new tests pass. | P1 | 中 | 投射權重已訓練（42× loss 降）+ 紋理權重可訓練（新 Phase 3） | 可辨識 128×128 影像 |
-| T2 | 訓練 AudioWaveformDecoder（多頻帶波表合成） | ✅ **DONE** (2026-06-29) — 55.1K wavetable params now trainable via `ReconstructionCycle.train_wavetable_step()` (waveform MSE + full analytic gradients through wavetable oscillator + noise + envelope). `WavetableTrainer` supports synthetic + real data. `FullTrainingPipeline.load_weights()` now restores all 6 audio arrays. 13 new tests pass. | P1 | 高 | 投射權重已訓練（309× loss 降）+ 波表權重可訓練（新 Phase 3b） | 可聽語音/音樂 |
-| T3 | 訓練 SequenceGenerator（RNN + BPTT，CLIP→原始序列） | ✅ **DONE** (2026-06-29) — Fixed train_step() BPTT backward pass (was updating weights during backward, missing 3 bias updates, no temporal propagation). Added get_weights/set_weights, SequenceTrainer, FullTrainingPipeline Phase 3c + persistence for all 10 RNN weight arrays. 5 new tests pass. | P1 | 高 | BPTT修正 + 所有RNN權重可訓練 | 合理的原始序列輸出 |
-| T4 | 訓練完整 GVV 文生圖管線（ImageGenerator） | ✅ **DONE** (2026-06-29) — `PrimitiveTrainer` + `FullTrainingPipeline.train_primitives()` Phase 3d. Populates `PrimitiveLibrary` with ~120 geometric shapes (circles, squares, triangles, lines, arcs, dots) in various colors. Trains `PrimitiveEncoder` autoencoder (best loss < 0.05). Re-encodes library with trained encoder. Optionally retrains `SequenceGenerator` on library-derived (clip, primitive) pairs. Save/load includes all 4 PrimitiveEncoder weight arrays. `ImageGenerator` produces multi-color structured output after training. 16 new tests pass. | P1 | 高 | 灰色畫布/隨機形狀 | 文字→幾何影像 |
-| T5 | 訓練 ThreeLayerVisual（PCA + 非線性解碼器）於真實資料 | ✅ **DONE** (2026-06-29) — 自動訓練 PCA（無需外部檔案），編碼器始終輸出 128-dim（不足時補零），解碼器使用動態 latent_dim。21 項測試全部通過。 | P2 | 中 | 選擇性載入 PCA 檔案 | 自動訓練 PCA |
-| T6 | 觸發 FullTrainingPipeline（對比預訓練 + 重建微調） | ✅ **DONE** (commit `HEAD~`, Jun 28) | P2 | 低 | 383L 有 0 呼叫者 → 在 `_get_pipeline()` 中自動背景訓練 | 接線至啟動（背景執行緒 + 權重檢查） |
-| T7 | 觸發 ContinuousMultimodalLearning（自主微訓練） | ✅ **DONE** (commit `HEAD~`, Jun 28) | P2 | 低 | CML 現在透過 `_encode_impl()` 自動觸發，且共用生產管線 | 每次編碼後自動微訓練 |
+| T1 | 訓練 VisualDecoder（CNN 紋理分支） | ✅ **DONE** (2026-06-29) | P1 | 中 | 投射訓練 + 紋理可訓練 | 可辨識 128×128 影像 |
+| T2 | 訓練 AudioWaveformDecoder（波表合成） | ✅ **DONE** (2026-06-29) | P1 | 高 | 投射訓練 + 波表可訓練 | 可聽語音/音樂 |
+| T3 | 訓練 SequenceGenerator（RNN + BPTT） | ✅ **DONE** (2026-06-29) | P1 | 高 | BPTT修正 | 合理序列輸出 |
+| T4 | 訓練 GVV 文生圖管線（ImageGenerator） | ✅ **DONE** (2026-06-29) | P1 | 高 | 120 形狀 + autoencoder | 文字→幾何影像 |
+| T5 | 訓練 ThreeLayerVisual（自動 PCA） | ✅ **DONE** (2026-06-29) | P2 | 中 | 自動訓練 | 128-dim 輸出 |
+| T6 | FullTrainingPipeline 啟動接線 | ✅ **DONE** | P2 | 低 | 背景執行緒 | 自動權重檢查 |
+| T7 | CML 自主微訓練 | ✅ **DONE** | P2 | 低 | encode 自動觸發 | 生產管線共用 |
 
 **訓練驗證標準**：
 

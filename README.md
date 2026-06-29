@@ -3,7 +3,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-06-28
+  LAST_MODIFIED: 2026-06-29
   =============================================================================
 -->
 
@@ -55,19 +55,19 @@
 
 **Angela AI** is a digital life system with biological simulation and LLM integration capabilities.
 
-**Quick facts**: 612 Python files in backend src (~96K lines). Electron + Live2D desktop companion (50 JS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~5,124 tests (full) / ~4,437 tests (tests/) — 0 errors.**  
+**Quick facts**: 612 Python files in backend src (~96K lines). Electron + Live2D desktop companion (50 JS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~5,085 tests (full) / ~4,578 tests (tests/) — 0 errors.**  
 **Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · cli `7.5.0-dev` · biology-core `7.5.0-dev`.  
 **Architecture audit score**: **~85-90%** (2026-06-25; up from ~55-60% after Phases 0-5 repairs).  
 **Total project files**: ~3,500+ (620 Python in backend src · 295 JS/TS · 1,021+ docs · 500+ config · 480+ test).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
 
-> **STATUS (2026-06-29)**: Extended session continues — 152+ commits total (Jun 25-29). T1+T2+T3+T4+T5 DONE. §X #49-50: 7 real docstring-only stubs eliminated, 10 test files un-skipped (+80 tests). §X #51: 11 magic numbers migrated to config-driven accessors (P9-3: ~43→~32). Multimodal: 139/139 tests. ED3N: 114/114. GARDEN: 201/201. All perception stubs eliminated. All background loops protected. 0 docstring-only stubs remain. Architecture: ~85-90%.
+> **STATUS (2026-06-29)**: Extended session of **152+ commits** (Jun 25-29). All T1-T5 DONE. §X #49-50: 7 real docstring-only stubs eliminated (+80 tests). §X #51: 11 magic numbers migrated. §X #53: 4 Level5ASI STUB classes → real modules. §X #54: ~35-40 formula coefficients migrated (P9-3: ~0 remain). **5,085 tests (full) / 4,578 tests (tests/) — 0 errors.** Multimodal: 139/139 → 160/160 (after T5). ED3N: 114/114. GARDEN: 201/201. All perception stubs eliminated. 0 docstring-only stubs remain. §0.5 banned: 2 remaining (Frontend Live2D, Frontend Dashboard). Architecture: ~85-90%.
 > **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → execution gate → **agent routing** → LLM → causal learning → response. GVV pipeline for image generation.  
 > **See**: [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) (latest audit), [IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md) (target), [COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md) (plan).
 
 ---
 
-### Current Status (code-verified as of 2026-06-28)
+### Current Status (code-verified as of 2026-06-29)
 
 | Area | Status | Key evidence |
 |------|--------|-------------|
@@ -95,7 +95,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | **API Versioning** | ✅ COMPLETE | Version routing middleware (Phase 5) |
 | **i18n System** | ✅ COMPLETE | I18nManager, PromptManager, 4 handlers + 4 LLM modules i18n'd, 45 tests (Phase 7) |
 | **Config system** | ✅ | `config_loader.py:get_config()` returns Config |
-| **Tests** | ✅ PASSING | ~5,124 tests collected, 0 errors, 0 collection errors |
+| **Tests** | ✅ PASSING | ~5,085 tests collected (full) / ~4,578 (tests/), 0 errors, 0 collection errors |
 | **JS Sharing** | ✅ COMPLETE | 33 shared files → `packages/shared-js/js/`, 0 duplicates remaining |
 | **SessionManager** | ✅ COMPLETE | 56 tests covering full lifecycle (Phase 5.8) |
 | **Skip Audit** | ✅ COMPLETE | Phase 5.9: 5 collection errors fixed, all skip reasons verified |
@@ -117,9 +117,9 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | **HardwareProfile → loop_sleep()** | ✅ **DONE** | `magic_numbers.py` now loads HardwareProfile lazily and applies multiplier to all 32+ loops. All loops now hardware-aware (§8.6 #4 BASIC) |
 | **time.sleep() Audit** | ✅ **DONE** | All remaining `time.sleep()` calls verified in sync/thread contexts only. §8.6 #6 effectively complete |
 
-See **[COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md)** (latest audit), **[IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md)** (target), **[COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md)** (plan), **[MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md)** (task provenance), **[CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md)** (causal depth).
+See **[COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md)** (latest audit), **[IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md)** (target), **[COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md)** (plan), **[MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md)** (task provenance), **[CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md)** (causal depth), **[IMPROVEMENT_ROADMAP.md](docs/06-project-management/IMPROVEMENT_ROADMAP.md)** (improvement roadmap).
 
-### Intelligence Assessment (Code-Verified 2026-06-28)
+### Intelligence Assessment (Code-Verified 2026-06-29)
 
 Upper bound (with LLM API: OpenAI/Anthropic/Ollama) vs lower bound (ED3N+GARDEN only):
 
@@ -207,7 +207,7 @@ npx pnpm dev:desktop
 
 ---
 
-### What Actually Works (Code-Verified 2026-06-28)
+### What Actually Works (Code-Verified 2026-06-29)
 
 **Chat Pipeline (fully wired):**
 - **Complete pipeline** — WebSocket → emotion analysis → crisis gate → biological stimulus → alignment gate → execution gate → agent routing → LLM → causal learning → response ✅
@@ -294,7 +294,7 @@ npx pnpm dev:desktop
 - **`/multimodal/stream` WebSocket route** — Dedicated handler (`multimodal_ws_handler.py`) + route registered ✅
 - **Whisper faster-whisper in ChatService** — Installed and wired: offline high-quality STT via AudioService._stt_faster_whisper() ✅
 - **Agent auto-routing** — Wired into chat pipeline Step 8 (creative/knowledge/opinion/vision/audio) ✅
-- **VisualDecoder training** — Projection weights trained (42× CIFAR-10 loss reduction), texture branch now trainable via new Phase 3 pixel-level training 🟡
+- **VisualDecoder training** — T1 DONE: Full pipeline (projection + texture) trainable, projection weights trained (42× CIFAR-10 loss reduction) ✅
 - **P4 refactoring** — 25/31 >100L long functions refactored (3 pure-data + 3 algorithmic remain), load/stress/E2E tests, desktop tray — partial ⏳
 - **Auto-repair pathway** — `run_angela.py` now has auto-install on missing deps (--auto-repair flag, or interactive prompt) ✅
 
@@ -417,7 +417,7 @@ See dedicated docs for full diagrams:
 | **OpenTelemetry** | ✅ 已完成 | 分散式追蹤中間件（Phase 5） |
 | **API Versioning** | ✅ 已完成 | 版本路由中間件（Phase 5） |
 | **i18n 系統** | ✅ 已完成 | I18nManager、PromptManager、4 個 handler + 4 個 LLM 模組 i18n、45 個測試（Phase 7） |
-| **測試** | ✅ 通過 | ~5,124 (全部) / ~4,437 (tests/) — 0 collection errors |
+| **測試** | ✅ 通過 | ~5,085 (全部) / ~4,578 (tests/) — 0 collection errors |
 | **智能分數** | ✅ 已評分 | 6.0/10 (有 LLM) / 4.5/10 (純 ED3N+GARDEN) |
 | **Master Task Map** | ✅ 已建立 | 23 份計畫全部交叉參照、144 項 claim 驗證、26 個 DO-NOT-REIMPLEMENT |
 | **因果鏈完成度** | ✅ 已建立 | `docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md` — §0 無 stub 原則、真實深度分數、時脈審計 |
@@ -576,7 +576,7 @@ npx pnpm dev:desktop
 - **YOLO 物件檢測** — 未開始 ❌
 - **Whisper 接線** — faster-whisper 已安裝並接入聊天管線 (離線高品質 STT) ✅
 - **代理自動路由** — 已接入聊天管線第 8 步（創意/知識/意見/視覺/聽覺）✅
-- **VisualDecoder 訓練** — 權重隨機，未訓練 ❌
+- **VisualDecoder 訓練** — T1 DONE: 投射權重已訓練 (42× CIFAR-10 損失降低)，紋理權重已可訓練 ✅
 - **P4 重構** — 25/31 長函式已重構（3 純資料 + 3 演算法剩餘），負載/E2E/tray 尚未開始 ⏳
 - **自動修復路徑** — `run_angela.py` 現在有自動安裝功能（--auto-repair 或互動提示）✅
 
@@ -667,4 +667,4 @@ npx pnpm dev:desktop
 
 ---
 
-**Version**: 7.5.0-dev | **Code Stats**: 612 Python files, ~96K lines | **Tests**: ~5,124 (full) / ~4,437 (tests/) — 0 errors | **Intelligence**: 6.0/10 (upper) 4.5/10 (lower) | **Architecture**: ~85-90% | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Changelog](CHANGELOG.md)
+**Version**: 7.5.0-dev | **Code Stats**: 612 Python files, ~96K lines | **Tests**: ~5,085 (full) / ~4,578 (tests/) — 0 errors | **Intelligence**: 6.0/10 (upper) 4.5/10 (lower) | **Architecture**: ~85-90% | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)
