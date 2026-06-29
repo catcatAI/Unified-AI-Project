@@ -289,3 +289,66 @@ class TestWavetableTrainer:
                      "audio_W_wavetable", "audio_b_wavetable",
                      "audio_W_noise", "audio_b_noise"]:
             assert key in data, f"Missing key: {key}"
+
+
+class TestSequenceTrainer:
+
+    @pytest.fixture
+    def pipeline(self):
+        from ai.multimodal.training_pipeline import FullTrainingPipeline
+        return FullTrainingPipeline()
+
+    def test_train_sequence_returns_dict(self, pipeline):
+        result = pipeline.train_sequence(batch_size=2, steps=3, lr=0.001)
+        assert "final_loss" in result
+        assert "history" in result
+        assert len(result["history"]) == 3
+
+    def test_train_sequence_loss_decreases(self, pipeline):
+        result = pipeline.train_sequence(batch_size=2, steps=5, lr=0.005)
+        assert result["final_loss"] <= result["history"][0] * 1.1
+
+    def test_train_sequence_weights_change(self, pipeline):
+        snap_before = {
+            "W_ih": pipeline._sequence_generator._W_ih.copy(),
+            "W_hh": pipeline._sequence_generator._W_hh.copy(),
+            "W_ho": pipeline._sequence_generator._W_ho.copy(),
+        }
+        pipeline.train_sequence(batch_size=2, steps=5, lr=0.01)
+        assert not np.allclose(
+            pipeline._sequence_generator._W_ih, snap_before["W_ih"])
+        assert not np.allclose(
+            pipeline._sequence_generator._W_hh, snap_before["W_hh"])
+        assert not np.allclose(
+            pipeline._sequence_generator._W_ho, snap_before["W_ho"])
+
+    def test_load_weights_restores_sequence_weights(self, pipeline, tmp_path):
+        from ai.multimodal.training_pipeline import FullTrainingPipeline
+        save_path = str(tmp_path / "seq_roundtrip.npz")
+
+        pipeline.save_weights(save_path)
+        data_before = np.load(save_path, allow_pickle=False)
+
+        fresh = FullTrainingPipeline()
+        loaded = fresh.load_weights(save_path)
+        assert loaded
+
+        assert np.allclose(fresh._sequence_generator._W_ih,
+                           data_before["seq_W_ih"])
+        assert np.allclose(fresh._sequence_generator._b_ih,
+                           data_before["seq_b_ih"])
+        assert np.allclose(fresh._sequence_generator._W_hh,
+                           data_before["seq_W_hh"])
+        assert np.allclose(fresh._sequence_generator._W_ho,
+                           data_before["seq_W_ho"])
+        assert np.allclose(fresh._sequence_generator._W_stop,
+                           data_before["seq_W_stop"])
+
+    def test_sequence_weights_saved_in_pipeline_save(self, pipeline, tmp_path):
+        save_path = str(tmp_path / "seq_keys.npz")
+        pipeline.save_weights(save_path)
+        data = np.load(save_path, allow_pickle=False)
+        for key in ["seq_W_ih", "seq_b_ih", "seq_W_ph", "seq_b_ph",
+                     "seq_W_hh", "seq_b_hh", "seq_W_ho", "seq_b_ho",
+                     "seq_W_stop", "seq_b_stop"]:
+            assert key in data, f"Missing key: {key}"

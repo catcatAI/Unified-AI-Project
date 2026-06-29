@@ -11,6 +11,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 from ai.multimodal.audio_decoder import AudioWaveformDecoder, load_default_audio_decoder_weights
 from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
+from ai.multimodal.generator.sequence_generator import SequenceGenerator
 from ai.multimodal.quality_metrics import snr
 from ai.multimodal.reconstruction_cycle import ReconstructionCycle
 from ai.multimodal.shared_latent_space import SharedLatentSpace
@@ -363,6 +364,54 @@ class WavetableTrainer:
                 "history": history}
 
 
+class SequenceTrainer:
+    """Trains SequenceGenerator RNN via CLIP→primitive MSE with synthetic data.
+
+    Generates random (CLIP embedding, primitive_sequence) pairs using
+    TrainingDataGenerator, then trains the RNN weights via the fixed
+    train_step() with proper BPTT.
+    """
+
+    def __init__(self, sequence_generator: SequenceGenerator):
+        self._gen = sequence_generator
+
+    def generate_synthetic_batch(self, batch_size: int,
+                                  rng_seed: int = 42) -> tuple:
+        """Generate a batch of (clip_embeddings, primitive_sequences) pairs."""
+        from ai.multimodal.generator.training_data import TrainingDataGenerator
+        tdg = TrainingDataGenerator()
+        data = tdg.generate_random_primitives(
+            n_samples=batch_size,
+            primitive_dim=self._gen.primitive_dim,
+            seed=rng_seed,
+        )
+        return data["clip_embeddings"], data["primitive_sequences"]
+
+    def train(self, batch_size: int = 4, steps: int = 50,
+              lr: float = 0.001, rng_seed: int = 42) -> Dict:
+        """Train SequenceGenerator using synthetic data.
+
+        Args:
+            batch_size: Samples per step
+            steps: Number of gradient steps
+            lr: Learning rate
+
+        Returns:
+            Dict with 'final_loss' and 'history'
+        """
+        history = []
+        for step in range(steps):
+            clip_embs, sequences = self.generate_synthetic_batch(
+                batch_size, rng_seed=rng_seed + step)
+            total_loss = 0.0
+            for clip_emb, seq in zip(clip_embs, sequences):
+                total_loss += self._gen.train_step(clip_emb, seq, lr=lr)
+            avg_loss = total_loss / max(len(clip_embs), 1)
+            history.append(avg_loss)
+        return {"final_loss": history[-1] if history else 0.0,
+                "history": history}
+
+
 class FullTrainingPipeline:
     """End-to-end training pipeline: contrastive pre-training + reconstruction fine-tuning.
 
@@ -393,6 +442,7 @@ class FullTrainingPipeline:
         self._contrastive = ContrastiveBatchTrainer(
             self._ls, self._visual_encoder, self._audio_encoder
         )
+        self._sequence_generator = SequenceGenerator()
 
     def run(self, contrastive_epochs: int = 10, contrastive_pairs: int = 20,
             recon_epochs: int = 10, recon_samples: int = 10,
@@ -537,6 +587,30 @@ class FullTrainingPipeline:
         logger.info("Wavetable training final loss: %.6f", result["final_loss"])
         return result
 
+    def train_sequence(self, batch_size: int = 4, steps: int = 50,
+                       lr: float = 0.001, rng_seed: int = 42) -> Dict:
+        """Train the SequenceGenerator RNN (Phase 3c).
+
+        Uses SequenceTrainer with synthetic data to train all RNN weights
+        (W_ih, b_ih, W_ph, b_ph, W_hh, b_hh, W_ho, b_ho, W_stop, b_stop).
+
+        Args:
+            batch_size: Samples per gradient step
+            steps: Number of gradient steps
+            lr: Learning rate for RNN weights
+            rng_seed: Random seed for synthetic data generation
+
+        Returns:
+            Dict with 'final_loss' and 'history'
+        """
+        logger.info("=== Phase 3c: Sequence generator training ===")
+        trainer = SequenceTrainer(self._sequence_generator)
+        result = trainer.train(
+            batch_size=batch_size, steps=steps, lr=lr, rng_seed=rng_seed
+        )
+        logger.info("Sequence training final loss: %.6f", result["final_loss"])
+        return result
+
     def save_weights(self, path: Optional[str] = None) -> str:
         """Save trained weights to a .npz file.
 
@@ -570,6 +644,16 @@ class FullTrainingPipeline:
                 "audio_b_wavetable": self._audio_decoder._b_wavetable.copy(),
                 "audio_W_noise": self._audio_decoder._W_noise.copy(),
                 "audio_b_noise": self._audio_decoder._b_noise.copy(),
+                "seq_W_ih": self._sequence_generator._W_ih.copy(),
+                "seq_b_ih": self._sequence_generator._b_ih.copy(),
+                "seq_W_ph": self._sequence_generator._W_ph.copy(),
+                "seq_b_ph": self._sequence_generator._b_ph.copy(),
+                "seq_W_hh": self._sequence_generator._W_hh.copy(),
+                "seq_b_hh": self._sequence_generator._b_hh.copy(),
+                "seq_W_ho": self._sequence_generator._W_ho.copy(),
+                "seq_b_ho": self._sequence_generator._b_ho.copy(),
+                "seq_W_stop": self._sequence_generator._W_stop.copy(),
+                "seq_b_stop": self._sequence_generator._b_stop.copy(),
             }
             Path(save_path).parent.mkdir(parents=True, exist_ok=True)
             np.savez(save_path, **save_data)
@@ -620,6 +704,18 @@ class FullTrainingPipeline:
                 self._audio_decoder._b_wavetable[:] = data["audio_b_wavetable"]
                 self._audio_decoder._W_noise[:] = data["audio_W_noise"]
                 self._audio_decoder._b_noise[:] = data["audio_b_noise"]
+            if "seq_W_ih" in data:
+                self._sequence_generator._W_ih[:] = data["seq_W_ih"]
+                self._sequence_generator._b_ih[:] = data["seq_b_ih"]
+                self._sequence_generator._W_ph[:] = data["seq_W_ph"]
+                self._sequence_generator._b_ph[:] = data["seq_b_ph"]
+                self._sequence_generator._W_hh[:] = data["seq_W_hh"]
+                self._sequence_generator._b_hh[:] = data["seq_b_hh"]
+                self._sequence_generator._W_ho[:] = data["seq_W_ho"]
+                self._sequence_generator._b_ho[:] = data["seq_b_ho"]
+                self._sequence_generator._W_stop[:] = data["seq_W_stop"]
+                self._sequence_generator._b_stop[:] = data["seq_b_stop"]
+                self._sequence_generator._trained = True
             logger.info("Weights loaded from %s", path)
             return True
         except Exception as e:

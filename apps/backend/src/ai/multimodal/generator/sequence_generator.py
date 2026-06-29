@@ -155,96 +155,126 @@ class SequenceGenerator:
     def train_step(self, clip_embedding: np.ndarray,
                    target_primitives: List[np.ndarray],
                    lr: float = 0.001) -> float:
-        """Single training step with teacher forcing.
-        
+        """Single training step with teacher forcing + proper BPTT.
+
+        Fixes: accumulates gradients before updating (was updating during
+        backward, corrupting subsequent gradients), adds bias updates for
+        all layers (was missing b_ih, b_ph, b_hh), and propagates gradients
+        backwards through time (was truncated at 1-step).
+
         Args:
             clip_embedding: (input_dim,) CLIP embedding
             target_primitives: List of (primitive_dim,) target embeddings
             lr: Learning rate
-            
+
         Returns:
             MSE loss value
         """
         if clip_embedding.shape != (self._input_dim,):
             raise ValueError(f"Wrong clip_embedding shape: {clip_embedding.shape}")
-        
+
         if len(target_primitives) == 0:
             return 0.0
-        
+
+        T = min(len(target_primitives), self._max_steps)
+
         # Forward pass with teacher forcing
         h = np.tanh(self._W_ih @ clip_embedding + self._b_ih)
-        
         predicted = []
-        hidden_states = [h.copy()]
-        
-        for step in range(min(len(target_primitives), self._max_steps)):
+        hidden_states = [h.copy()]  # [h_0, h_1, ..., h_T]
+
+        for step in range(T):
             prim_emb = self._W_ho @ h + self._b_ho
             norm = np.linalg.norm(prim_emb)
             if norm > 0:
                 prim_emb = prim_emb / norm
-            
             predicted.append(prim_emb)
-            
-            # Teacher forcing: use target, not predicted
+
             target = target_primitives[step]
             h = np.tanh(
                 self._W_hh @ h + self._W_ph @ target + self._b_hh
             )
             hidden_states.append(h.copy())
-        
-        # Compute loss
-        n_steps = len(predicted)
-        pred_matrix = np.stack(predicted)     # (n_steps, primitive_dim)
-        targ_matrix = np.stack(target_primitives[:n_steps])  # (n_steps, primitive_dim)
-        
+
+        # Loss
+        pred_matrix = np.stack(predicted)
+        targ_matrix = np.stack(target_primitives[:T])
         loss = float(np.mean((pred_matrix - targ_matrix) ** 2))
-        
-        # Backward pass (simplified gradient descent)
-        error = pred_matrix - targ_matrix  # (n_steps, primitive_dim)
-        
-        # Gradient for W_ho and b_ho (from output error)
-        for step in range(n_steps):
-            grad_W_ho = np.outer(error[step], hidden_states[step])
-            grad_b_ho = error[step]
-            self._W_ho -= lr * grad_W_ho
-            self._b_ho -= lr * grad_b_ho
-        
-        # Gradient for W_ih, W_ph, W_hh (through hidden states - truncated BPTT)
-        for step in range(n_steps):
-            # Gradient flowing back through tanh: dtanh/dx = 1 - tanh^2(x)
-            h_state = hidden_states[step]
-            dtanh = 1.0 - h_state ** 2
-            
-            # Error signal for hidden state
-            h_error = self._W_ho.T @ error[step]
-            h_grad = h_error * dtanh
-            
-            # Update W_ih (from input — only on first step)
-            if step == 0:
-                grad_W_ih = np.outer(h_grad, clip_embedding)
-                self._W_ih -= lr * grad_W_ih
-            
-            # Update W_ph (from primitive feedback)
-            grad_W_ph = np.outer(h_grad, target_primitives[step])
-            self._W_ph -= lr * grad_W_ph
-            
-            # Update W_hh (from previous hidden state)
-            if step > 0:
-                prev_h = hidden_states[step - 1]
-                grad_W_hh = np.outer(h_grad, prev_h)
-                self._W_hh -= lr * grad_W_hh
-        
-        # Stop token gradient
-        for step in range(n_steps):
-            stop_target = 1.0 if step == n_steps - 1 else 0.0
-            stop_logit = float(np.dot(self._W_stop, hidden_states[step]) + self._b_stop[0])
+
+        # Unscaled MSE gradient: dL/dy = (y_pred - y_target)
+        d_output = pred_matrix - targ_matrix  # (T, primitive_dim)
+
+        # Gradient buffers (accumulate, then update)
+        d_W_ih = np.zeros_like(self._W_ih)
+        d_b_ih = np.zeros_like(self._b_ih)
+        d_W_ph = np.zeros_like(self._W_ph)
+        d_b_ph = np.zeros_like(self._b_ph)
+        d_W_hh = np.zeros_like(self._W_hh)
+        d_b_hh = np.zeros_like(self._b_hh)
+        d_W_ho = np.zeros_like(self._W_ho)
+        d_b_ho = np.zeros_like(self._b_ho)
+        d_W_stop = np.zeros_like(self._W_stop)
+        d_b_stop = np.zeros_like(self._b_stop)
+
+        # 1. Output layer: W_ho @ h_t + b_ho
+        for t in range(T):
+            d_W_ho += np.outer(d_output[t], hidden_states[t])
+            d_b_ho += d_output[t]
+
+        # 2. BPTT through hidden states (backwards through time)
+        d_h_future = np.zeros(self._hidden_dim, dtype=np.float32)
+
+        for t in range(T - 1, -1, -1):
+            d_h = self._W_ho.T @ d_output[t]
+            if t < T - 1:
+                d_h += d_h_future
+
+            h_t = hidden_states[t]
+            d_pre = d_h * (1.0 - h_t ** 2)
+
+            if t == 0:
+                d_W_ih += np.outer(d_pre, clip_embedding)
+                d_b_ih += d_pre
+            else:
+                d_W_hh += np.outer(d_pre, hidden_states[t - 1])
+                d_W_ph += np.outer(d_pre, target_primitives[t - 1])
+                d_b_hh += d_pre
+
+            d_h_future = self._W_hh.T @ d_pre if t > 0 else np.zeros(self._hidden_dim, dtype=np.float32)
+
+        # 3. Stop token gradient (sigmoid BCE)
+        for t in range(T):
+            stop_target = 1.0 if t == T - 1 else 0.0
+            h_t = hidden_states[t]
+            stop_logit = float(np.dot(self._W_stop, h_t) + self._b_stop[0])
             stop_pred = 1.0 / (1.0 + np.exp(-np.clip(stop_logit, -10, 10)))
             stop_error = stop_pred - stop_target
-            
-            grad_W_stop = stop_error * hidden_states[step]
-            self._W_stop -= lr * grad_W_stop
-            self._b_stop -= lr * np.array([stop_error])
-        
+            d_W_stop += stop_error * h_t
+            d_b_stop[0] += stop_error
+
+        # 4. Gradient clipping (norm-based)
+        max_norm = 10.0
+        for g in [d_W_ih, d_W_ph, d_W_hh, d_W_ho]:
+            norm = np.sqrt(np.sum(g ** 2))
+            if norm > max_norm:
+                g *= max_norm / norm
+        for g in [d_b_ih, d_b_ph, d_b_hh, d_b_ho, d_W_stop, d_b_stop]:
+            norm = np.sqrt(np.sum(g ** 2))
+            if norm > max_norm:
+                g *= max_norm / norm
+
+        # 5. Apply all updates at once
+        self._W_ih -= lr * d_W_ih
+        self._b_ih -= lr * d_b_ih
+        self._W_ph -= lr * d_W_ph
+        self._b_ph -= lr * d_b_ph
+        self._W_hh -= lr * d_W_hh
+        self._b_hh -= lr * d_b_hh
+        self._W_ho -= lr * d_W_ho
+        self._b_ho -= lr * d_b_ho
+        self._W_stop -= lr * d_W_stop
+        self._b_stop -= lr * d_b_stop
+
         self._trained = True
         return loss
     
@@ -295,6 +325,30 @@ class SequenceGenerator:
             "n_samples": n_samples,
         }
     
+    def get_weights(self) -> dict:
+        """Return all weight arrays as a dict for serialization/inspection."""
+        return {
+            "W_ih": self._W_ih.copy(),
+            "b_ih": self._b_ih.copy(),
+            "W_ph": self._W_ph.copy(),
+            "b_ph": self._b_ph.copy(),
+            "W_hh": self._W_hh.copy(),
+            "b_hh": self._b_hh.copy(),
+            "W_ho": self._W_ho.copy(),
+            "b_ho": self._b_ho.copy(),
+            "W_stop": self._W_stop.copy(),
+            "b_stop": self._b_stop.copy(),
+        }
+
+    def set_weights(self, weights: dict) -> None:
+        """Set all weight arrays from a dict."""
+        for key, arr in weights.items():
+            attr = f"_{key}"
+            if hasattr(self, attr):
+                target = getattr(self, attr)
+                if arr.shape == target.shape:
+                    setattr(self, attr, arr.astype(np.float32))
+
     @property
     def input_dim(self) -> int:
         return self._input_dim
