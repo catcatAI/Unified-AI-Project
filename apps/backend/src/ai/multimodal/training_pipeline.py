@@ -13,6 +13,7 @@ from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
 from ai.multimodal.quality_metrics import snr
 from ai.multimodal.reconstruction_cycle import ReconstructionCycle
 from ai.multimodal.shared_latent_space import SharedLatentSpace
+from ai.multimodal.visual_decoder import VisualDecoder
 from ai.multimodal.visual_encoder import VisualEncoder
 
 logger = logging.getLogger(__name__)
@@ -162,6 +163,110 @@ class ReconstructionTrainer:
         return results
 
 
+class TextureTrainer:
+    """Trains VisualDecoder texture branch via pixel-level reconstruction.
+
+    Uses the existing VisualEncoder to encode images → latents, then trains
+    the texture branch (W_hidden, W_featmap, tex_kernels) to minimize pixel MSE
+    between the full decoder output and the original image.
+
+    Can operate in two modes:
+    1. Synthetic mode: generates random latents + synthetic target images
+    2. Real mode: uses real images from RealDataProvider
+    """
+
+    def __init__(self, reconstruction_cycle: ReconstructionCycle,
+                 visual_decoder: VisualDecoder,
+                 visual_encoder: Optional[VisualEncoder] = None):
+        self._rc = reconstruction_cycle
+        self._decoder = visual_decoder
+        self._visual_encoder = visual_encoder or VisualEncoder()
+
+    def generate_synthetic_batch(self, batch_size: int,
+                                 rng_seed: int = 42) -> tuple:
+        """Generate a batch of (latent, target_image) pairs from scratch.
+
+        Creates random latents, runs the projection branch only to get base
+        images as targets. This trains texture to produce zero output initially,
+        providing a clean baseline from which texture can learn structure.
+        """
+        rng = np.random.RandomState(rng_seed)
+        z = rng.randn(batch_size, self._decoder.LATENT_DIM).astype(np.float32)
+        targets = np.zeros((batch_size, self._decoder.INPUT_SIZE,
+                           self._decoder.INPUT_SIZE, 3), dtype=np.uint8)
+        for b in range(batch_size):
+            raw = self._decoder._W @ z[b] + self._decoder._b
+            spatial = raw[:self._decoder.SPATIAL_FEATURES]
+            color = raw[self._decoder.SPATIAL_FEATURES:
+                        self._decoder.SPATIAL_FEATURES + self._decoder.COLOR_FEATURES]
+            img = self._decoder._layout_to_image(spatial)
+            img = self._decoder._apply_color_adjust(img, color)
+            targets[b] = np.clip(img, 0, 255).astype(np.uint8)
+        return z, targets
+
+    def train(self, batch_size: int = 4, steps: int = 50,
+              lr: float = 0.001, rng_seed: int = 42) -> Dict:
+        """Train texture branch using synthetic data.
+
+        Args:
+            batch_size: Samples per step
+            steps: Number of gradient steps
+            lr: Learning rate
+
+        Returns:
+            Dict with 'final_loss' and 'history'
+        """
+        history = []
+        for step in range(steps):
+            z, targets = self.generate_synthetic_batch(
+                batch_size, rng_seed=rng_seed + step)
+            loss = self._rc.train_texture_step(z, targets, lr=lr)
+            history.append(loss)
+        return {"final_loss": history[-1] if history else 0.0,
+                "history": history}
+
+    def train_on_real(self, real_images: List[np.ndarray],
+                      steps: int = 50, lr: float = 0.001) -> Dict:
+        """Train texture branch using real images.
+
+        Encodes each image → latent, then trains texture to reconstruct
+        the original pixel image.
+
+        Args:
+            real_images: List of (H, W, 3) uint8 images
+            steps: Number of gradient steps over the dataset (epochs)
+            lr: Learning rate
+
+        Returns:
+            Dict with 'final_loss' and 'history'
+        """
+        if not real_images:
+            return {"final_loss": 0.0, "history": []}
+
+        latents = []
+        for img in real_images:
+            feats = self._visual_encoder.encode(img)
+            if hasattr(self._rc._ls, 'project'):
+                z = self._rc._ls.project("vision", feats)
+            else:
+                z = np.zeros(self._decoder.LATENT_DIM, dtype=np.float32)
+            latents.append(z)
+
+        history = []
+        for step in range(steps):
+            total_loss = 0.0
+            for z, img in zip(latents, real_images):
+                z_batch = z.reshape(1, -1)
+                img_batch = img.reshape(1, *img.shape)
+                loss = self._rc.train_texture_step(z_batch, img_batch, lr=lr)
+                total_loss += loss
+            avg_loss = total_loss / max(len(real_images), 1)
+            history.append(avg_loss)
+
+        return {"final_loss": history[-1] if history else 0.0,
+                "history": history}
+
+
 class FullTrainingPipeline:
     """End-to-end training pipeline: contrastive pre-training + reconstruction fine-tuning.
 
@@ -284,6 +389,34 @@ class FullTrainingPipeline:
             "data_source": "real",
         }
 
+    def train_texture(self, batch_size: int = 4, steps: int = 50,
+                      lr: float = 0.001, rng_seed: int = 42) -> Dict:
+        """Train the VisualDecoder texture branch (Phase 3).
+
+        Uses TextureTrainer with synthetic data to train the 5 texture
+        weight arrays (W_hidden, b_hidden, W_featmap, b_featmap, tex_kernels).
+
+        The projection branch weights are frozen during this phase.
+
+        Args:
+            batch_size: Samples per gradient step
+            steps: Number of gradient steps
+            lr: Learning rate for texture weights
+            rng_seed: Random seed for synthetic data generation
+
+        Returns:
+            Dict with 'final_loss' and 'history'
+        """
+        logger.info("=== Phase 3: Texture branch training ===")
+        trainer = TextureTrainer(
+            self._reconstruction, self._visual_decoder, self._visual_encoder
+        )
+        result = trainer.train(
+            batch_size=batch_size, steps=steps, lr=lr, rng_seed=rng_seed
+        )
+        logger.info("Texture training final loss: %.6f", result["final_loss"])
+        return result
+
     def save_weights(self, path: Optional[str] = None) -> str:
         """Save trained weights to a .npz file.
 
@@ -345,6 +478,12 @@ class FullTrainingPipeline:
             if "visual_decoder_W" in data:
                 self._visual_decoder._W[:] = data["visual_decoder_W"]
                 self._visual_decoder._b[:] = data["visual_decoder_b"]
+            if "texture_W_hidden" in data:
+                self._visual_decoder._W_hidden[:] = data["texture_W_hidden"]
+                self._visual_decoder._b_hidden[:] = data["texture_b_hidden"]
+                self._visual_decoder._W_featmap[:] = data["texture_W_featmap"]
+                self._visual_decoder._b_featmap[:] = data["texture_b_featmap"]
+                self._visual_decoder._tex_kernels[:] = data["texture_tex_kernels"]
             if "audio_decoder_W" in data:
                 self._audio_decoder._W[:] = data["audio_decoder_W"]
                 self._audio_decoder._b[:] = data["audio_decoder_b"]

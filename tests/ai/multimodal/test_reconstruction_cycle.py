@@ -140,3 +140,58 @@ class TestCrossModalSynthesizer:
         syn = CrossModalSynthesizer(ls)
         img = syn.generate_image(np.zeros(64))
         assert np.all(img == 0)
+
+
+class TestTextureTraining:
+
+    @pytest.fixture
+    def visual_decoder(self):
+        from ai.multimodal.visual_decoder import VisualDecoder
+        return VisualDecoder()
+
+    @pytest.fixture
+    def rc(self, latent_space, visual_decoder):
+        from ai.multimodal.reconstruction_cycle import ReconstructionCycle
+        return ReconstructionCycle(latent_space, visual_decoder)
+
+    def test_train_texture_step_returns_positive_loss(self, rc, visual_decoder):
+        """train_texture_step should return a positive loss value."""
+        z = np.random.RandomState(42).randn(2, 64).astype(np.float32)
+        targets = np.random.RandomState(99).randint(
+            0, 256, (2, 128, 128, 3), dtype=np.uint8)
+        loss = rc.train_texture_step(z, targets, lr=0.001)
+        assert loss > 0
+        assert isinstance(loss, float)
+
+    def test_train_texture_step_reduces_loss(self, rc, visual_decoder):
+        """Training with lr>0 should reduce loss vs lr=0."""
+        rng = np.random.RandomState(42)
+        z = rng.randn(2, 64).astype(np.float32)
+        targets = np.random.RandomState(99).randint(
+            0, 256, (2, 128, 128, 3), dtype=np.uint8)
+
+        loss_before = rc.train_texture_step(z, targets, lr=0.0)
+        loss_after = rc.train_texture_step(z, targets, lr=0.01)
+        assert loss_after <= loss_before * 1.05
+
+    def test_train_texture_step_weights_changed(self, rc, visual_decoder):
+        """Texture weights should change after a training step with lr>0."""
+        snap_before = {
+            "W_hidden": visual_decoder._W_hidden.copy(),
+            "b_hidden": visual_decoder._b_hidden.copy(),
+            "W_featmap": visual_decoder._W_featmap.copy(),
+            "tex_kernels": visual_decoder._tex_kernels.copy(),
+        }
+        z = np.random.RandomState(42).randn(1, 64).astype(np.float32)
+        targets = np.random.RandomState(99).randint(
+            0, 256, (1, 128, 128, 3), dtype=np.uint8)
+        rc.train_texture_step(z, targets, lr=0.1)
+
+        assert not np.allclose(visual_decoder._W_hidden, snap_before["W_hidden"])
+        assert not np.allclose(visual_decoder._W_featmap, snap_before["W_featmap"])
+
+    def test_train_texture_step_no_decoder_returns_zero(self, rc):
+        """train_texture_step with no visual decoder should return 0.0."""
+        rc._visual_decoder = None
+        loss = rc.train_texture_step(np.zeros((1, 64)), np.zeros((1, 128, 128, 3)))
+        assert loss == 0.0

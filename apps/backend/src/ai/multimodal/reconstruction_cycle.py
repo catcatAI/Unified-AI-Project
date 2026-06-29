@@ -141,6 +141,164 @@ class ReconstructionCycle:
             return self._audio_decoder
         return None
 
+    def train_texture_step(self, latents: np.ndarray,
+                           target_images: np.ndarray,
+                           lr: float = 0.001) -> float:
+        """Train VisualDecoder texture branch weights via pixel-level MSE.
+
+        Takes a batch of (latent, target_image) pairs, runs the full decoder
+        (projection + texture), and updates only the 5 texture weight arrays
+        (W_hidden, b_hidden, W_featmap, b_featmap, tex_kernels).
+
+        The projection branch weights (W, b) are FROZEN during this step.
+
+        Args:
+            latents: (B, 64) latent vectors
+            target_images: (B, 128, 128, 3) target uint8 images, values in [0,255]
+            lr: Learning rate for texture weights
+
+        Returns:
+            Average pixel-level MSE loss before update
+        """
+        decoder = self._visual_decoder
+        if decoder is None or latents.size == 0:
+            return 0.0
+
+        B = latents.shape[0]
+        H = W = decoder.INPUT_SIZE
+        dtype = np.float32
+        z = latents.astype(dtype)
+        targets = target_images.astype(dtype)
+
+        total_loss = 0.0
+
+        # Accumulate gradient buffers
+        d_W_hidden = np.zeros_like(decoder._W_hidden)
+        d_b_hidden = np.zeros_like(decoder._b_hidden)
+        d_W_featmap = np.zeros_like(decoder._W_featmap)
+        d_b_featmap = np.zeros_like(decoder._b_featmap)
+        d_tex_kernels = np.zeros_like(decoder._tex_kernels)
+
+        for b in range(B):
+            latent = z[b]
+            target = targets[b]  # (128, 128, 3)
+
+            # 1. Forward: projection branch (frozen) → base image
+            raw = decoder._W @ latent + decoder._b
+            spatial_feats = raw[:decoder.SPATIAL_FEATURES]
+            color_feats = raw[decoder.SPATIAL_FEATURES:
+                              decoder.SPATIAL_FEATURES + decoder.COLOR_FEATURES]
+            base_img = decoder._layout_to_image(spatial_feats)
+            base_img = decoder._apply_color_adjust(base_img, color_feats)
+
+            # 2. Forward: texture branch with gradient cache
+            h = np.tanh(decoder._W_hidden @ latent + decoder._b_hidden)  # (64,)
+            fm_flat = decoder._W_featmap @ h + decoder._b_featmap  # (256,)
+            fm = fm_flat.reshape(decoder.TEXTURE_MAP_SIZE,
+                                 decoder.TEXTURE_MAP_SIZE,
+                                 decoder.TEXTURE_CHANNELS)  # (4, 4, 16)
+
+            scale = decoder.INPUT_SIZE // decoder.TEXTURE_MAP_SIZE  # 32
+            ms = decoder.TEXTURE_MAP_SIZE  # 4
+            tc = decoder.TEXTURE_CHANNELS  # 16
+            k_h, k_w = 5, 5
+            pad_h, pad_w = k_h // 2, k_w // 2  # 2, 2
+
+            detail = np.zeros((H, W, 3), dtype=dtype)
+            cached_up = np.zeros((H, W, tc), dtype=dtype)
+            cached_windows = {}  # (c_out, c_in) → windows for gradient
+            for c_in in range(tc):
+                up = np.repeat(np.repeat(fm[:, :, c_in], scale, axis=0), scale, axis=1)
+                cached_up[:, :, c_in] = up
+
+            for c_out in range(3):
+                for c_in in range(tc):
+                    kernel = decoder._tex_kernels[c_out, c_in]
+                    padded = np.pad(cached_up[:, :, c_in],
+                                    ((pad_h, pad_h), (pad_w, pad_w)), mode='reflect')
+                    windows = np.lib.stride_tricks.sliding_window_view(padded, (k_h, k_w))
+                    cached_windows[(c_out, c_in)] = windows
+                    conv = np.tensordot(windows, kernel, axes=((2, 3), (0, 1)))
+                    detail[:, :, c_out] += conv
+
+            output_img = base_img + detail  # (128, 128, 3)
+            output_img = np.clip(output_img, 0, 255)
+
+            # 3. Pixel-level MSE loss
+            diff = output_img - target
+            loss = 0.5 * float(np.mean(diff ** 2))
+            total_loss += loss
+
+            # 4. Backward: gradient of loss wrt detail
+            d_detail = diff / (H * W * 3)  # mean reduction: gradient = diff / N
+
+            # 5. Backward through transposed conv for each (c_out, c_in)
+            d_up_acc = np.zeros((H, W, tc), dtype=dtype)
+            for c_out in range(3):
+                for c_in in range(tc):
+                    kernel = decoder._tex_kernels[c_out, c_in]
+                    windows = cached_windows[(c_out, c_in)]
+                    d_conv = d_detail[:, :, c_out]  # (128, 128)
+
+                    # Gradient wrt kernel: dL/dkernel[c_out,c_in]
+                    grad_k = np.tensordot(d_conv, windows, axes=((0, 1), (0, 1)))
+                    d_tex_kernels[c_out, c_in] += grad_k
+
+                    # Gradient wrt up (through conv): accumulate over c_out
+                    dL_dpadded = np.zeros((H + 2 * pad_h, W + 2 * pad_w), dtype=dtype)
+                    for di in range(k_h):
+                        for dj in range(k_w):
+                            dL_dpadded[di:di + H, dj:dj + W] += d_conv * kernel[di, dj]
+                    d_up_acc[:, :, c_in] += dL_dpadded[pad_h:-pad_h, pad_w:-pad_w]
+
+            # 6. Backward through nearest-neighbor upsample
+            d_fm = np.zeros((ms, ms, tc), dtype=dtype)
+            for c_in in range(tc):
+                for i in range(ms):
+                    for j in range(ms):
+                        block = d_up_acc[i * scale:(i + 1) * scale,
+                                         j * scale:(j + 1) * scale, c_in]
+                        d_fm[i, j, c_in] = np.sum(block)
+            d_fm_flat = d_fm.reshape(-1)  # (256,)
+
+            # 7. Backward through linear: f = W_featmap @ h + b_featmap
+            d_W_featmap += np.outer(d_fm_flat, h)
+            d_b_featmap += d_fm_flat
+            d_h = decoder._W_featmap.T @ d_fm_flat  # (64,)
+
+            # 8. Backward through tanh: h = tanh(W_hidden @ z + b_hidden)
+            d_pre_act = d_h * (1.0 - h ** 2)  # (64,)
+            d_W_hidden += np.outer(d_pre_act, latent)
+            d_b_hidden += d_pre_act
+
+        # Average gradients over batch
+        n = max(B, 1)
+        d_W_hidden /= n
+        d_b_hidden /= n
+        d_W_featmap /= n
+        d_b_featmap /= n
+        d_tex_kernels /= n
+
+        # Gradient clipping (norm-based)
+        max_norm = 10.0
+        for g in [d_W_hidden, d_W_featmap, d_tex_kernels.reshape(-1)]:
+            norm = np.sqrt(np.sum(g ** 2))
+            if norm > max_norm:
+                g *= max_norm / norm
+        for g in [d_b_hidden, d_b_featmap]:
+            norm = np.sqrt(np.sum(g ** 2))
+            if norm > max_norm:
+                g *= max_norm / norm
+
+        # Update texture weights
+        decoder._W_hidden -= lr * d_W_hidden
+        decoder._b_hidden -= lr * d_b_hidden
+        decoder._W_featmap -= lr * d_W_featmap
+        decoder._b_featmap -= lr * d_b_featmap
+        decoder._tex_kernels -= lr * d_tex_kernels
+
+        return total_loss / n
+
 
 class CrossModalSynthesizer:
     """Cross-modal latent blending and generation.

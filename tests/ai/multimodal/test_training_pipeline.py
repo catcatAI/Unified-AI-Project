@@ -161,3 +161,67 @@ class TestFullTrainingPipeline:
         assert Path(result).exists()
         # Clean up
         Path(result).unlink(missing_ok=True)
+
+    # --- Texture weight persistence tests ---
+
+    def test_load_weights_restores_texture_weights(self, pipeline, tmp_path):
+        """load_weights should restore all 5 texture weight arrays."""
+        from ai.multimodal.training_pipeline import FullTrainingPipeline, DEFAULT_WEIGHTS_PATH
+        save_path = str(tmp_path / "texture_roundtrip.npz")
+
+        pipeline.save_weights(save_path)
+        data_before = np.load(save_path, allow_pickle=False)
+
+        fresh = FullTrainingPipeline()
+        loaded = fresh.load_weights(save_path)
+        assert loaded
+
+        assert np.allclose(fresh._visual_decoder._W_hidden,
+                           data_before["texture_W_hidden"])
+        assert np.allclose(fresh._visual_decoder._b_hidden,
+                           data_before["texture_b_hidden"])
+        assert np.allclose(fresh._visual_decoder._W_featmap,
+                           data_before["texture_W_featmap"])
+        assert np.allclose(fresh._visual_decoder._b_featmap,
+                           data_before["texture_b_featmap"])
+        assert np.allclose(fresh._visual_decoder._tex_kernels,
+                           data_before["texture_tex_kernels"])
+
+    def test_texture_weights_saved_in_pipeline_save(self, pipeline, tmp_path):
+        """save_weights should save all texture keys."""
+        save_path = str(tmp_path / "texture_keys.npz")
+        pipeline.save_weights(save_path)
+        data = np.load(save_path, allow_pickle=False)
+        for key in ["texture_W_hidden", "texture_b_hidden",
+                     "texture_W_featmap", "texture_b_featmap",
+                     "texture_tex_kernels"]:
+            assert key in data, f"Missing key: {key}"
+
+
+class TestTextureTrainer:
+
+    @pytest.fixture
+    def pipeline(self):
+        from ai.multimodal.training_pipeline import FullTrainingPipeline
+        return FullTrainingPipeline()
+
+    def test_train_texture_returns_dict(self, pipeline):
+        result = pipeline.train_texture(batch_size=2, steps=3, lr=0.001)
+        assert "final_loss" in result
+        assert "history" in result
+        assert len(result["history"]) == 3
+
+    def test_train_texture_loss_decreases(self, pipeline):
+        result = pipeline.train_texture(batch_size=2, steps=5, lr=0.005)
+        assert result["final_loss"] <= result["history"][0] * 1.1
+
+    def test_train_texture_weights_change(self, pipeline):
+        snap_before = {
+            "W_hidden": pipeline._visual_decoder._W_hidden.copy(),
+            "W_featmap": pipeline._visual_decoder._W_featmap.copy(),
+        }
+        pipeline.train_texture(batch_size=2, steps=5, lr=0.01)
+        assert not np.allclose(
+            pipeline._visual_decoder._W_hidden, snap_before["W_hidden"])
+        assert not np.allclose(
+            pipeline._visual_decoder._W_featmap, snap_before["W_featmap"])
