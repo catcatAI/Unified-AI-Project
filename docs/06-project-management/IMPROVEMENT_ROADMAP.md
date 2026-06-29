@@ -136,7 +136,7 @@
 | U1 | 安裝 faster-whisper 以啟用高品質離線 STT | ✅ **DONE** (faster-whisper 1.2.1 installed, ctranslate2 4.8 int8, Whisper base model auto-downloads on first call) | P2 |
 | U2 | 安裝 torch + transformers 以啟用 CLIP 語意編碼器 | ✅ **DONE** (torch 2.11.0, transformers 5.5.4 installed, CLIP model cached, 512-dim vectors verified) | P2 |
 | U3 | 安裝 torch + openai-whisper 以啟用語意音訊編碼 | ✅ **DONE** (openai-whisper 20250625 installed, Whisper tiny model cached, 384-dim vectors verified) | P2 |
-| U4 | 更新 LLM API 用戶端至最新版本 | P3 | openai>=1.0, anthropic>=0.30, google-genai |
+| U4 | 更新 LLM API 用戶端至最新版本 | ✅ **N/A** (2026-06-29) — 所有 LLM 提供者使用 `aiohttp` 直接 HTTP 呼叫 REST API，不需 Python SDK（openai/anthropic/google-genai）。API 透過 URL 路徑版本化管理。 | P3 |
 | U5 | 更新相依性以修復 Dependabot 漏洞（141→26 個） | ✅ **DONE** (2026-06-29): electron 40.2.1→40.8.5, axios 1.6.5→1.15.1, ws 8.14.0→8.20.1, next 14.0.0→14.2.35. 104→26 vulns (78 fixed). Remaining: 1 next high (needs 15.x — breaking), 25 transitive dev deps (low risk). | P2 | 3 critical, 72 high, 55 moderate, 11 low |
 | V1 | YOLO 物件檢測 — 前端開發輔助（Vision-Assisted Development） | P2 | 整合 YOLO 後可使專案透過螢幕截圖分析參與前端開發。**關鍵要求：多視窗辨識** — 系統必須能區分自己的前端 UI 與其他應用程式視窗（VS Code、Slack、瀏覽器等），不得誤檢。做法：① OS API 視窗識別（pygetwindow/win32）比對白名單行程與標題。② 前端源碼特徵指紋（Electron DOM / Live2D canvas / PyQt6 固定佈局）建立專屬特徵庫。③ 非白名單視窗區域檢測結果直接排除。④ 佈局一致性驗證 — 檢測結果須符合預期元件結構才判定為自己 UI。預期能力：① UI 元件檢測（按鈕、輸入框、卡片、導航欄、圖示）→ 結構化元件樹。② 前端 diff — 截圖比較。③ 可及性檢查。④ E2E 測試生成（Playwright/Cypress selector）。依賴 `ultralytics` + YOLO11 + pygetwindow + 前端佈局特徵庫。非 ML 瓶頸 — 純模型整合與 wrapper 實作。 |
  
