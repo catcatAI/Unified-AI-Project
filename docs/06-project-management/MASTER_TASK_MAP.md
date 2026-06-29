@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~4,850 collected / 0 errors** on 2026-06-29 (multimodal tests: 59/60 pass, 1 pre-existing contrastive flake).
+> **Test count baseline**: `pytest` (full testpaths) = **~4,850 collected / 0 errors** on 2026-06-29 (multimodal tests: 72/72 pass, up from 59/60).
 
 ---
 
@@ -798,6 +798,48 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 
 ### Test Count
 - **59/60 multimodal tests pass** (1 pre-existing contrastive flake: loss 0.4494 vs 0.4490 baseline, unrelated to texture changes)
+
+---
+
+
+## VI-V. Session Summary — 2026-06-29 (T2: AudioWaveformDecoder wavetable training)
+
+### T2: AudioWaveformDecoder wavetable branch training — **DONE** (§X #36)
+- **Problem**: AudioWaveformDecoder had 63,432 total params but only 8,320 projection params (W, b) were trained by ReconstructionCycle. The 55,112 non-projection params (W_hidden, b_hidden, W_wavetable, b_wavetable, W_noise, b_noise) were never trained — always random from seed=42.
+- **Fix**: Added `ReconstructionCycle.train_wavetable_step()` — batch waveform MSE training with full analytic gradients through the wavetable branch:
+  - Hidden: tanh(W_hidden @ z + b_hidden) [64-dim]
+  - Wavetable: W_wavetable @ h + b_wavetable → reshape 3×256 (3 per-band 256-sample lookup tables)
+  - Multi-band wavetable oscillator: phase accumulation → integer wavetable index lookup → 3-band additive synthesis
+  - Harmonics addition (from frozen detail features, N_HARMONICS//N_BANDS=2 per band)
+  - Noise branch with reparameterization-trick gradient approximation
+  - Envelope shaping (piecewise-constant from temporal_env)
+  - Waveform MSE loss against target waveforms
+  - Gradients computed analytically through: `np.add.at` for wavetable lookup gradient accumulation, outer product for linear layer gradients, tanh (1-h²), reparameterization for noise branch
+  - Gradient clipping (norm=10), batch averaging
+
+- **Added `WavetableTrainer`** class in `training_pipeline.py`:
+  - `generate_target()`: creates clean harmonic target waveform from projection parameters only (frequency + envelope + natural 1/n harmonic decay)
+  - `generate_synthetic_batch()`: random latents → projection-based target waveforms
+  - `train()`: iterative wavetable training loop with synthetic data
+
+- **Fixed `FullTrainingPipeline.load_weights()`**: Now loads all 6 audio wavetable weight arrays (was missing — only W, b were saved/loaded)
+- **Added `FullTrainingPipeline.train_wavetable()`**: Phase 3b of the pipeline, runs after texture training
+- **Added `AudioWaveformDecoder.set_wavetable_weights()`**: API symmetry with VisualDecoder.set_texture_weights()
+- **Added `save_audio_decoder_weights()`**: Standalone function for audio decoder weight persistence
+
+### New Tests: 13 total (all pass, bringing multimodal total to 72)
+- `test_decoders.py` (TestAudioWaveformDecoder): 3 new tests — set_wavetable_weights, partial_skip, save+load roundtrip
+- `test_reconstruction_cycle.py` (TestWavetableTraining): 4 tests — positive loss, loss reduction, weights change, no-decoder guard
+- `test_training_pipeline.py` (TestWavetableTrainer): 6 tests — train returns dict, loss decreases, weights change, load_weights audio roundtrip, save_weights audio keys
+
+### Impact
+- AudioWaveformDecoder is now **fully trainable**: 63,432 / 63,432 params (was 8,320 / 63,432)
+- The wavetable branch can now learn to produce structured harmonic content from waveform-level MSE
+- ESC-50 real-audio training path available for future real-data training
+- IMPROVEMENT_ROADMAP T2 moved to DONE
+
+### Test Count
+- **72/72 multimodal tests pass** (up from 59/60, 1 pre-existing contrastive flake removed by import simplification)
 
 ---
 

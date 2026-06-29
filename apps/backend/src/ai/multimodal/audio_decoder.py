@@ -146,6 +146,48 @@ class AudioWaveformDecoder:
         if b is not None and b.shape == self._b.shape:
             self._b = b.astype(np.float32)
 
+    def set_wavetable_weights(self, W_hidden: np.ndarray, b_hidden: np.ndarray,
+                                W_wavetable: np.ndarray, b_wavetable: np.ndarray,
+                                W_noise: np.ndarray, b_noise: np.ndarray) -> bool:
+        if W_hidden.shape == self._W_hidden.shape:
+            self._W_hidden = W_hidden.astype(np.float32)
+        if b_hidden.shape == self._b_hidden.shape:
+            self._b_hidden = b_hidden.astype(np.float32)
+        if W_wavetable.shape == self._W_wavetable.shape:
+            self._W_wavetable = W_wavetable.astype(np.float32)
+        if b_wavetable.shape == self._b_wavetable.shape:
+            self._b_wavetable = b_wavetable.astype(np.float32)
+        if W_noise.shape == self._W_noise.shape:
+            self._W_noise = W_noise.astype(np.float32)
+        if b_noise.shape == self._b_noise.shape:
+            self._b_noise = b_noise.astype(np.float32)
+        return True
+
+
+def save_audio_decoder_weights(decoder: AudioWaveformDecoder, weights_path: str) -> bool:
+    """Save all audio decoder weight arrays to a .npz file.
+    
+    Includes projection (W, b), wavetable (W_hidden, b_hidden,
+    W_wavetable, b_wavetable), and noise (W_noise, b_noise) weights.
+    
+    Returns True on success.
+    """
+    try:
+        np.savez(weights_path,
+                 audio_decoder_W=decoder._W,
+                 audio_decoder_b=decoder._b,
+                 audio_W_hidden=decoder._W_hidden,
+                 audio_b_hidden=decoder._b_hidden,
+                 audio_W_wavetable=decoder._W_wavetable,
+                 audio_b_wavetable=decoder._b_wavetable,
+                 audio_W_noise=decoder._W_noise,
+                 audio_b_noise=decoder._b_noise)
+        logger.info("Audio decoder weights saved to %s", weights_path)
+        return True
+    except Exception as e:
+        logger.warning("Failed to save audio decoder weights: %s", e)
+        return False
+
 
 def load_default_audio_decoder_weights(decoder: AudioWaveformDecoder, weights_path: Optional[str] = None) -> bool:
     """Load pre-trained audio decoder weights from p29_trained.npz.
@@ -165,6 +207,13 @@ def load_default_audio_decoder_weights(decoder: AudioWaveformDecoder, weights_pa
         if "audio_decoder_W" in data:
             decoder._W = data["audio_decoder_W"]
             decoder._b = data.get("audio_decoder_b", decoder._b)
+            if "audio_W_hidden" in data:
+                decoder._W_hidden = data["audio_W_hidden"]
+                decoder._b_hidden = data["audio_b_hidden"]
+                decoder._W_wavetable = data["audio_W_wavetable"]
+                decoder._b_wavetable = data["audio_b_wavetable"]
+                decoder._W_noise = data["audio_W_noise"]
+                decoder._b_noise = data["audio_b_noise"]
             logger.info("Loaded pre-trained audio decoder weights from %s", wpath)
             return True
     except Exception as e:

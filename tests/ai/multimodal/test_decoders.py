@@ -154,3 +154,57 @@ class TestAudioWaveformDecoder:
             band_energies.append(energy)
         active = sum(1 for e in band_energies if e > 0.01 * max(band_energies))
         assert active >= 2, f"Expected >=2 active bands, got {active}: {band_energies}"
+
+    def test_set_wavetable_weights(self, audio_decoder):
+        """set_wavetable_weights should replace all 6 weight arrays."""
+        new_h = np.zeros((64, 64), dtype=np.float32)
+        new_bh = np.ones(64, dtype=np.float32)
+        new_wt = np.zeros((768, 64), dtype=np.float32)
+        new_bwt = np.ones(768, dtype=np.float32)
+        new_wn = np.zeros((16, 64), dtype=np.float32)
+        new_bn = np.ones(16, dtype=np.float32)
+        result = audio_decoder.set_wavetable_weights(new_h, new_bh, new_wt, new_bwt, new_wn, new_bn)
+        assert result
+        assert np.allclose(audio_decoder._W_hidden, new_h)
+        assert np.allclose(audio_decoder._b_hidden, new_bh)
+        assert np.allclose(audio_decoder._W_wavetable, new_wt)
+        assert np.allclose(audio_decoder._b_wavetable, new_bwt)
+        assert np.allclose(audio_decoder._W_noise, new_wn)
+        assert np.allclose(audio_decoder._b_noise, new_bn)
+
+    def test_set_wavetable_weights_partial_skip(self, audio_decoder):
+        """set_wavetable_weights with wrong shape should skip that array."""
+        snap_w = audio_decoder._W_hidden.copy()
+        snap_bh = audio_decoder._b_hidden.copy()
+        snap_wt = audio_decoder._W_wavetable.copy()
+        snap_bwt = audio_decoder._b_wavetable.copy()
+        snap_wn = audio_decoder._W_noise.copy()
+        snap_bn = audio_decoder._b_noise.copy()
+        wrong_h = np.zeros((1, 1), dtype=np.float32)
+        audio_decoder.set_wavetable_weights(wrong_h, np.ones(64), np.zeros((768, 64)),
+                                             np.ones(768), np.zeros((16, 64)), np.ones(16))
+        assert np.allclose(audio_decoder._W_hidden, snap_w), "Wrong shape should skip"
+
+    def test_save_and_load_audio_decoder_weights(self, audio_decoder, tmp_path):
+        """save_audio_decoder_weights / load_default_audio_decoder_weights round-trip."""
+        from ai.multimodal.audio_decoder import (AudioWaveformDecoder,
+                                                  save_audio_decoder_weights,
+                                                  load_default_audio_decoder_weights)
+        save_path = str(tmp_path / "audio_test.npz")
+        audio_decoder._W_hidden[:] = 0.5
+        audio_decoder._b_hidden[:] = 0.25
+        audio_decoder._W_wavetable[:] = 0.125
+        audio_decoder._b_wavetable[:] = 0.0625
+        audio_decoder._W_noise[:] = 0.03125
+        audio_decoder._b_noise[:] = 0.015625
+        saved = save_audio_decoder_weights(audio_decoder, save_path)
+        assert saved
+        fresh = AudioWaveformDecoder()
+        loaded = load_default_audio_decoder_weights(fresh, save_path)
+        assert loaded
+        assert np.allclose(fresh._W_hidden, 0.5)
+        assert np.allclose(fresh._b_hidden, 0.25)
+        assert np.allclose(fresh._W_wavetable, 0.125)
+        assert np.allclose(fresh._b_wavetable, 0.0625)
+        assert np.allclose(fresh._W_noise, 0.03125)
+        assert np.allclose(fresh._b_noise, 0.015625)

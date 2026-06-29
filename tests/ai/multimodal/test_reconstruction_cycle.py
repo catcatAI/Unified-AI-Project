@@ -195,3 +195,52 @@ class TestTextureTraining:
         rc._visual_decoder = None
         loss = rc.train_texture_step(np.zeros((1, 64)), np.zeros((1, 128, 128, 3)))
         assert loss == 0.0
+
+
+class TestWavetableTraining:
+
+    @pytest.fixture
+    def audio_decoder(self):
+        from ai.multimodal.audio_decoder import AudioWaveformDecoder
+        return AudioWaveformDecoder()
+
+    @pytest.fixture
+    def rc(self, latent_space, audio_decoder):
+        from ai.multimodal.reconstruction_cycle import ReconstructionCycle
+        return ReconstructionCycle(latent_space, audio_decoder=audio_decoder)
+
+    def test_train_wavetable_step_returns_positive_loss(self, rc, audio_decoder):
+        z = np.random.RandomState(42).randn(2, 64).astype(np.float32)
+        targets = np.random.RandomState(99).randn(
+            2, 16000).astype(np.float32)
+        loss = rc.train_wavetable_step(z, targets, lr=0.001)
+        assert loss > 0
+        assert isinstance(loss, float)
+
+    def test_train_wavetable_step_reduces_loss(self, rc, audio_decoder):
+        rng = np.random.RandomState(42)
+        z = rng.randn(2, 64).astype(np.float32)
+        targets = np.random.RandomState(99).randn(2, 16000).astype(np.float32)
+
+        loss_before = rc.train_wavetable_step(z, targets, lr=0.0)
+        loss_after = rc.train_wavetable_step(z, targets, lr=0.01)
+        assert loss_after <= loss_before * 1.05
+
+    def test_train_wavetable_step_weights_changed(self, rc, audio_decoder):
+        snap_before = {
+            "W_hidden": audio_decoder._W_hidden.copy(),
+            "W_wavetable": audio_decoder._W_wavetable.copy(),
+            "W_noise": audio_decoder._W_noise.copy(),
+        }
+        z = np.random.RandomState(42).randn(1, 64).astype(np.float32)
+        targets = np.random.RandomState(99).randn(1, 16000).astype(np.float32)
+        rc.train_wavetable_step(z, targets, lr=0.1)
+
+        assert not np.allclose(audio_decoder._W_hidden, snap_before["W_hidden"])
+        assert not np.allclose(audio_decoder._W_wavetable, snap_before["W_wavetable"])
+        assert not np.allclose(audio_decoder._W_noise, snap_before["W_noise"])
+
+    def test_train_wavetable_step_no_decoder_returns_zero(self, rc):
+        rc._audio_decoder = None
+        loss = rc.train_wavetable_step(np.zeros((1, 64)), np.zeros((1, 16000)))
+        assert loss == 0.0

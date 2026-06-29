@@ -299,6 +299,186 @@ class ReconstructionCycle:
 
         return total_loss / n
 
+    def train_wavetable_step(self, latents: np.ndarray,
+                              target_waveforms: np.ndarray,
+                              lr: float = 0.001) -> float:
+        """Train AudioWaveformDecoder wavetable + hidden weights via waveform MSE.
+
+        Takes a batch of (latent, target_waveform) pairs, runs the full decoder
+        (projection + wavetable + noise + envelope), and updates the 6 non-projection
+        weight arrays (W_hidden, b_hidden, W_wavetable, b_wavetable, W_noise, b_noise).
+
+        The projection branch weights (W, b) are FROZEN during this step.
+
+        Args:
+            latents: (B, 64) latent vectors
+            target_waveforms: (B, N) target waveform arrays, where N = SAMPLE_RATE * DURATION
+            lr: Learning rate for wavetable + hidden weights
+
+        Returns:
+            Average waveform MSE loss before update
+        """
+        decoder = self._audio_decoder
+        if decoder is None or latents.size == 0:
+            return 0.0
+
+        B = latents.shape[0]
+        z = latents.astype(np.float32)
+        targets = target_waveforms.astype(np.float32)
+        n_samples = int(decoder.SAMPLE_RATE * decoder.DURATION)
+
+        total_loss = 0.0
+
+        d_W_hidden = np.zeros_like(decoder._W_hidden)
+        d_b_hidden = np.zeros_like(decoder._b_hidden)
+        d_W_wavetable = np.zeros_like(decoder._W_wavetable)
+        d_b_wavetable = np.zeros_like(decoder._b_wavetable)
+        d_W_noise = np.zeros_like(decoder._W_noise)
+        d_b_noise = np.zeros_like(decoder._b_noise)
+
+        for b in range(B):
+            latent = z[b]
+            target = targets[b]
+
+            raw = decoder._W @ latent + decoder._b
+            spectral_env = raw[:40]
+            temporal_env = raw[40:50]
+            detail = raw[50:]
+
+            t = np.arange(n_samples, dtype=np.float32) / decoder.SAMPLE_RATE
+            h = np.tanh(decoder._W_hidden @ latent + decoder._b_hidden)
+            wt_flat = decoder._W_wavetable @ h + decoder._b_wavetable
+            wavetables = wt_flat.reshape(decoder.N_BANDS, decoder.WAVETABLE_SIZE)
+
+            noise_mod = decoder._W_noise @ h + decoder._b_noise
+            noise_strength = float(np.clip(np.abs(np.mean(noise_mod)) * 0.01, 0, 0.15))
+
+            waveform = np.zeros(n_samples, dtype=np.float32)
+            cached_h = h.copy()
+            cached_band_info: list = []
+
+            for band_idx, (lo, hi) in enumerate(decoder.BAND_LIMITS):
+                wt = wavetables[band_idx]
+                feats = spectral_env[band_idx * (len(spectral_env) // decoder.N_BANDS):
+                                     (band_idx + 1) * (len(spectral_env) // decoder.N_BANDS)]
+                freq_hz = 200.0 + np.abs(feats[:5]).mean() * (hi - lo) / 800.0
+                freq_hz = np.clip(freq_hz, lo, hi)
+
+                phase = np.cumsum(2 * np.pi * freq_hz / decoder.SAMPLE_RATE * np.ones(n_samples))
+                phase = phase % (2 * np.pi)
+                idx = (phase / (2 * np.pi) * decoder.WAVETABLE_SIZE).astype(int) % decoder.WAVETABLE_SIZE
+                band_wave = wt[idx].copy()
+
+                d_start = band_idx * (len(detail) // decoder.N_BANDS)
+                d_end = (band_idx + 1) * (len(detail) // decoder.N_BANDS)
+                band_detail = detail[d_start:d_end] if d_end <= len(detail) else detail[d_start:]
+                sin_terms: list = []
+                for h_idx in range(min(decoder.N_HARMONICS // decoder.N_BANDS, len(band_detail) // 2)):
+                    amp = np.abs(band_detail[h_idx * 2]) / max(np.abs(band_detail).max(), 1e-8)
+                    amp = np.clip(amp, 0.0, 0.5)
+                    h_freq = freq_hz * (h_idx + 2)
+                    if h_freq < decoder.SAMPLE_RATE / 2:
+                        st = np.sin(2 * np.pi * h_freq * t).astype(np.float32)
+                        sin_terms.append(st)
+                        band_wave += amp * st
+
+                cached_band_info.append({
+                    'idx': idx.copy(),
+                    'sin_terms': sin_terms,
+                })
+                waveform += band_wave * (1.0 / decoder.N_BANDS)
+
+            noise_rng = np.random.default_rng(int(abs(float(noise_mod[0] * 1000)) % (2 ** 31)))
+            noise_signal = noise_rng.normal(0, noise_strength, n_samples).astype(np.float32) if noise_strength >= 0.001 else np.zeros(n_samples, dtype=np.float32)
+            waveform += noise_signal
+            cached_noise_signal = noise_signal.copy()
+            cached_noise_strength = noise_strength
+
+            n_env = len(temporal_env)
+            env_points = np.linspace(0, n_samples, n_env + 1).astype(int)
+            envelope = np.zeros(n_samples, dtype=np.float32)
+            for i in range(n_env):
+                start = env_points[i]
+                end = env_points[i + 1]
+                val = np.clip(np.abs(temporal_env[i]), 0.0, 1.0)
+                envelope[start:end] = val
+            cached_env = envelope.copy()
+            waveform = waveform * envelope
+
+            peak = max(np.abs(waveform).max(), 1e-8)
+            output = waveform / peak
+
+            diff = output - target
+            loss = 0.5 * float(np.mean(diff ** 2))
+            total_loss += loss
+
+            # Backward
+            d_output = diff / n_samples
+            d_pre_norm = d_output / peak
+            d_pre_env = d_pre_norm * cached_env
+
+            if cached_noise_strength >= 0.001:
+                d_noise_strength = float(np.sum(d_pre_env * cached_noise_signal / max(cached_noise_strength, 1e-8)))
+                mean_nm = float(np.mean(noise_mod))
+                clip_val = abs(mean_nm) * 0.01
+                if 0.001 < clip_val < 0.15:
+                    d_noise_mod = np.full(16, d_noise_strength * 0.01 * np.sign(mean_nm) / 16.0, dtype=np.float32)
+                else:
+                    d_noise_mod = np.zeros(16, dtype=np.float32)
+                d_W_noise += np.outer(d_noise_mod, cached_h)
+                d_b_noise += d_noise_mod
+                d_h_noise = decoder._W_noise.T @ d_noise_mod
+            else:
+                d_h_noise = np.zeros(64, dtype=np.float32)
+
+            d_per_band = d_pre_env / decoder.N_BANDS
+            d_wt_flat = np.zeros(decoder.N_BANDS * decoder.WAVETABLE_SIZE, dtype=np.float32)
+
+            for band_idx in range(decoder.N_BANDS):
+                info = cached_band_info[band_idx]
+                d_band = d_per_band
+                idx = info['idx']
+                wt_grad_band = np.zeros(decoder.WAVETABLE_SIZE, dtype=np.float32)
+                np.add.at(wt_grad_band, idx, d_band)
+                start = band_idx * decoder.WAVETABLE_SIZE
+                end = (band_idx + 1) * decoder.WAVETABLE_SIZE
+                d_wt_flat[start:end] = wt_grad_band
+
+            d_W_wavetable += np.outer(d_wt_flat, cached_h)
+            d_b_wavetable += d_wt_flat
+            d_h_wt = decoder._W_wavetable.T @ d_wt_flat
+            d_h = d_h_wt + d_h_noise
+            d_pre_hidden = d_h * (1.0 - cached_h ** 2)
+            d_W_hidden += np.outer(d_pre_hidden, latent)
+            d_b_hidden += d_pre_hidden
+
+        n = max(B, 1)
+        d_W_hidden /= n
+        d_b_hidden /= n
+        d_W_wavetable /= n
+        d_b_wavetable /= n
+        d_W_noise /= n
+        d_b_noise /= n
+
+        max_norm = 10.0
+        for g in [d_W_hidden, d_W_wavetable, d_W_noise]:
+            norm = np.sqrt(np.sum(g ** 2))
+            if norm > max_norm:
+                g *= max_norm / norm
+        for g in [d_b_hidden, d_b_wavetable, d_b_noise]:
+            norm = np.sqrt(np.sum(g ** 2))
+            if norm > max_norm:
+                g *= max_norm / norm
+
+        decoder._W_hidden -= lr * d_W_hidden
+        decoder._b_hidden -= lr * d_b_hidden
+        decoder._W_wavetable -= lr * d_W_wavetable
+        decoder._b_wavetable -= lr * d_b_wavetable
+        decoder._W_noise -= lr * d_W_noise
+        decoder._b_noise -= lr * d_b_noise
+
+        return total_loss / n
+
 
 class CrossModalSynthesizer:
     """Cross-modal latent blending and generation.

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+from ai.multimodal.audio_decoder import AudioWaveformDecoder, load_default_audio_decoder_weights
 from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
 from ai.multimodal.quality_metrics import snr
 from ai.multimodal.reconstruction_cycle import ReconstructionCycle
@@ -267,6 +268,101 @@ class TextureTrainer:
                 "history": history}
 
 
+class WavetableTrainer:
+    """Trains AudioWaveformDecoder wavetable + hidden branch via waveform MSE.
+
+    Like TextureTrainer, this trains the non-projection weight arrays
+    (W_hidden, b_hidden, W_wavetable, b_wavetable, W_noise, b_noise)
+    using synthetic targets derived from the projection branch.
+
+    The projection branch determines frequency/envelope; the wavetable
+    branch learns to produce structured harmonic content at those
+    frequencies.
+    """
+
+    def __init__(self, reconstruction_cycle: ReconstructionCycle,
+                 audio_decoder: AudioWaveformDecoder):
+        self._rc = reconstruction_cycle
+        self._decoder = audio_decoder
+
+    def generate_target(self, latent: np.ndarray) -> np.ndarray:
+        """Generate target waveform from projection parameters only.
+
+        Creates a clean harmonic waveform using the projection's frequency
+        and envelope outputs, giving the wavetable branch a structured target.
+        """
+        raw = self._decoder._W @ latent + self._decoder._b
+        spectral_env = raw[:40]
+        temporal_env = raw[40:50]
+
+        n_samples = int(self._decoder.SAMPLE_RATE * self._decoder.DURATION)
+        t = np.arange(n_samples, dtype=np.float32) / self._decoder.SAMPLE_RATE
+
+        waveform = np.zeros(n_samples, dtype=np.float32)
+
+        for band_idx, (lo, hi) in enumerate(self._decoder.BAND_LIMITS):
+            feats = spectral_env[band_idx * (len(spectral_env) // self._decoder.N_BANDS):
+                                 (band_idx + 1) * (len(spectral_env) // self._decoder.N_BANDS)]
+            freq_hz = 200.0 + np.abs(feats[:5]).mean() * (hi - lo) / 800.0
+            freq_hz = np.clip(freq_hz, lo, hi)
+
+            band_wave = np.sin(2 * np.pi * freq_hz * t)
+            for h_idx in range(3):
+                h_freq = freq_hz * (h_idx + 2)
+                if h_freq < self._decoder.SAMPLE_RATE / 2:
+                    band_wave += (1.0 / (h_idx + 2)) * np.sin(2 * np.pi * h_freq * t)
+
+            band_peak = max(np.abs(band_wave).max(), 1e-8)
+            band_wave /= band_peak
+            waveform += band_wave / self._decoder.N_BANDS
+
+        n_env = len(temporal_env)
+        env_points = np.linspace(0, n_samples, n_env + 1).astype(int)
+        envelope = np.zeros(n_samples, dtype=np.float32)
+        for i in range(n_env):
+            start = env_points[i]
+            end = env_points[i + 1]
+            val = np.clip(np.abs(temporal_env[i]), 0.0, 1.0)
+            envelope[start:end] = val
+        waveform *= envelope
+
+        peak = max(np.abs(waveform).max(), 1e-8)
+        waveform /= peak
+        return waveform.astype(np.float32)
+
+    def generate_synthetic_batch(self, batch_size: int,
+                                  rng_seed: int = 42) -> tuple:
+        """Generate a batch of (latent, target_waveform) pairs."""
+        rng = np.random.RandomState(rng_seed)
+        z = rng.randn(batch_size, self._decoder.LATENT_DIM).astype(np.float32)
+        targets = np.zeros((batch_size, int(self._decoder.SAMPLE_RATE * self._decoder.DURATION)),
+                           dtype=np.float32)
+        for b in range(batch_size):
+            targets[b] = self.generate_target(z[b])
+        return z, targets
+
+    def train(self, batch_size: int = 4, steps: int = 50,
+              lr: float = 0.001, rng_seed: int = 42) -> Dict:
+        """Train wavetable branch using synthetic data.
+
+        Args:
+            batch_size: Samples per gradient step
+            steps: Number of gradient steps
+            lr: Learning rate
+
+        Returns:
+            Dict with 'final_loss' and 'history'
+        """
+        history = []
+        for step in range(steps):
+            z, targets = self.generate_synthetic_batch(
+                batch_size, rng_seed=rng_seed + step)
+            loss = self._rc.train_wavetable_step(z, targets, lr=lr)
+            history.append(loss)
+        return {"final_loss": history[-1] if history else 0.0,
+                "history": history}
+
+
 class FullTrainingPipeline:
     """End-to-end training pipeline: contrastive pre-training + reconstruction fine-tuning.
 
@@ -284,10 +380,6 @@ class FullTrainingPipeline:
         self._ls = latent_space or SharedLatentSpace(latent_dim=64)
         self._visual_encoder = visual_encoder or VisualEncoder()
         self._audio_encoder = audio_encoder or AudioSpectralEncoder()
-        from ai.multimodal.audio_decoder import (
-            AudioWaveformDecoder,
-            load_default_audio_decoder_weights,
-        )
         from ai.multimodal.visual_decoder import VisualDecoder, load_default_visual_decoder_weights
         self._visual_decoder = visual_decoder or VisualDecoder()
         load_default_visual_decoder_weights(self._visual_decoder)
@@ -417,6 +509,34 @@ class FullTrainingPipeline:
         logger.info("Texture training final loss: %.6f", result["final_loss"])
         return result
 
+    def train_wavetable(self, batch_size: int = 4, steps: int = 50,
+                        lr: float = 0.001, rng_seed: int = 42) -> Dict:
+        """Train the AudioWaveformDecoder wavetable + hidden branch (Phase 3b).
+
+        Uses WavetableTrainer with synthetic data to train the 6 non-projection
+        weight arrays (W_hidden, b_hidden, W_wavetable, b_wavetable, W_noise, b_noise).
+
+        The projection branch weights are frozen during this phase.
+
+        Args:
+            batch_size: Samples per gradient step
+            steps: Number of gradient steps
+            lr: Learning rate for wavetable + hidden weights
+            rng_seed: Random seed for synthetic data generation
+
+        Returns:
+            Dict with 'final_loss' and 'history'
+        """
+        logger.info("=== Phase 3b: Wavetable branch training ===")
+        trainer = WavetableTrainer(
+            self._reconstruction, self._audio_decoder
+        )
+        result = trainer.train(
+            batch_size=batch_size, steps=steps, lr=lr, rng_seed=rng_seed
+        )
+        logger.info("Wavetable training final loss: %.6f", result["final_loss"])
+        return result
+
     def save_weights(self, path: Optional[str] = None) -> str:
         """Save trained weights to a .npz file.
 
@@ -444,6 +564,12 @@ class FullTrainingPipeline:
                 "texture_tex_kernels": self._visual_decoder._tex_kernels.copy(),
                 "audio_decoder_W": self._audio_decoder._W.copy(),
                 "audio_decoder_b": self._audio_decoder._b.copy(),
+                "audio_W_hidden": self._audio_decoder._W_hidden.copy(),
+                "audio_b_hidden": self._audio_decoder._b_hidden.copy(),
+                "audio_W_wavetable": self._audio_decoder._W_wavetable.copy(),
+                "audio_b_wavetable": self._audio_decoder._b_wavetable.copy(),
+                "audio_W_noise": self._audio_decoder._W_noise.copy(),
+                "audio_b_noise": self._audio_decoder._b_noise.copy(),
             }
             Path(save_path).parent.mkdir(parents=True, exist_ok=True)
             np.savez(save_path, **save_data)
@@ -487,6 +613,13 @@ class FullTrainingPipeline:
             if "audio_decoder_W" in data:
                 self._audio_decoder._W[:] = data["audio_decoder_W"]
                 self._audio_decoder._b[:] = data["audio_decoder_b"]
+            if "audio_W_hidden" in data:
+                self._audio_decoder._W_hidden[:] = data["audio_W_hidden"]
+                self._audio_decoder._b_hidden[:] = data["audio_b_hidden"]
+                self._audio_decoder._W_wavetable[:] = data["audio_W_wavetable"]
+                self._audio_decoder._b_wavetable[:] = data["audio_b_wavetable"]
+                self._audio_decoder._W_noise[:] = data["audio_W_noise"]
+                self._audio_decoder._b_noise[:] = data["audio_b_noise"]
             logger.info("Weights loaded from %s", path)
             return True
         except Exception as e:
