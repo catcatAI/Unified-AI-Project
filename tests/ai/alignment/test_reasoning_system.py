@@ -3,15 +3,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-try:
-    from ai.alignment.reasoning_system import (
-        EthicalEvaluation,
-        EthicalPrinciple,
-        LogicalConstraint,
-        ReasoningSystem,
-    )
-except ImportError:
-    pytest.skip("EthicalPrinciple not available (stub module)", allow_module_level=True)
+from ai.alignment.reasoning_system import (
+    EthicalEvaluation,
+    EthicalPrinciple,
+    LogicalConstraint,
+    ReasoningSystem,
+)
 
 
 class TestEthicalPrinciple:

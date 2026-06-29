@@ -1,9 +1,6 @@
 import pytest
 
-try:
-    from apps.backend.src.core.intent_registry import IntentPattern, IntentRegistry
-except ImportError:
-    import pytest; pytest.skip("IntentRegistry is a stub", allow_module_level=True)
+from apps.backend.src.core.intent_registry import IntentPattern, IntentRegistry
 
 
 class TestIntentRegistry:

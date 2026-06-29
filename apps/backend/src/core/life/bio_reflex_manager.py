@@ -11,4 +11,6 @@ class BiogenicReflexManager:
         self.bio_integrator = bio_integrator
 
     async def trigger_physical_trauma(self, body_part: str, damage: float) -> None:
-        pass
+        logger.warning(f"Physical trauma triggered: body_part={body_part}, damage={damage}")
+        if self.bio_integrator and hasattr(self.bio_integrator, "on_trauma"):
+            self.bio_integrator.on_trauma(body_part, damage)

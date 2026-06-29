@@ -23,5 +23,6 @@ class ExternalConnector:
         return True
 
     async def disconnect(self) -> None:
-        pass
+        self.config = {}
+        logger.debug("ExternalConnector disconnected")
 

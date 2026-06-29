@@ -31,7 +31,17 @@ class GlobalInputSensor:
         self.running = False
 
     def sniff_environment(self) -> None:
-        pass
+        title_lower = self.active_window_title.lower()
+        found = None
+        for category, keywords in self.category_map.items():
+            if any(kw in title_lower for kw in keywords):
+                found = category
+                break
+        if found:
+            self.active_category = found
+        elif self.active_category != "neutral":
+            self.active_category = "neutral"
+        self._on_activity()
 
     def _on_activity(self) -> None:
         self.activity_count += 1

@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~4,902 collected / 0 errors** on 2026-06-29 (multimodal tests: 160/160 pass; previously 93/93 → 139/139 → 160/160).
+> **Test count baseline**: `pytest` (full testpaths) = **~4,994 collected / 0 errors** on 2026-06-29 (multimodal tests: 160/160 pass; previously 4,902 → 4,994 = +92 from §X #45–46: angela_error 35 + intent_registry 20 + reasoning_system 37).
 
 ---
 

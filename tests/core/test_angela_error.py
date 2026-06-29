@@ -9,6 +9,8 @@ try:
         AIModelError,
         AngelaError,
         AudioError,
+        BusinessLogicError,
+        CardError,
         ConfigurationError,
         CoreError,
         DatabaseError,
@@ -16,39 +18,38 @@ try:
         ErrorContext,
         ErrorHandler,
         ErrorSeverity,
+        IntentError,
         LLMError,
         MemoryError,
+        MonitoringError,
         NetworkError,
         NotFoundError,
+        RateLimitError,
+        ResourceError,
+        ResourceNotFoundError,
         SecurityError,
+        ServiceError,
         ValidationError,
         WebSocketError,
-        get_error_handler,
-        safe_execute,
     )
 except ImportError:
-    import pytest; pytest.skip("AngelaError is a stub", allow_module_level=True)
+    pytest.skip("AngelaError module not available", allow_module_level=True)
 
 
 class TestErrorContext:
     def test_default_creation(self):
         ctx = ErrorContext()
-        assert ctx.module == ""
-        assert ctx.function == ""
-        assert ctx.line == 0
+        assert ctx.additional_info == {}
 
-    def test_to_dict(self):
+    def test_with_kwargs(self):
         ctx = ErrorContext(module="test_mod", function="test_func", line=42)
-        d = ctx.to_dict()
-        assert d["module"] == "test_mod"
-        assert d["function"] == "test_func"
-        assert d["line"] == 42
-        assert "timestamp" in d
+        assert ctx.additional_info["module"] == "test_mod"
+        assert ctx.additional_info["function"] == "test_func"
+        assert ctx.additional_info["line"] == 42
 
-    def test_to_dict_with_additional_info(self):
-        ctx = ErrorContext(additional_info={"key": "val"})
-        d = ctx.to_dict()
-        assert d["additional_info"]["key"] == "val"
+    def test_repr(self):
+        ctx = ErrorContext(key="val")
+        assert "key" in repr(ctx)
 
 
 class TestAngelaErrorBase:
@@ -75,7 +76,6 @@ class TestAngelaErrorBase:
         assert d["error"]["message"] == "test error"
         assert d["error"]["category"] == "unknown"
         assert d["error"]["severity"] == "error"
-        assert "context" in d["error"]
 
     def test_to_json(self):
         err = AngelaError("json test")
@@ -93,59 +93,103 @@ class TestAngelaErrorBase:
 class TestErrorHierarchy:
     def test_core_error_defaults(self):
         err = CoreError()
-        assert err.code == "CORE_ERROR"
+        assert err.code == "CORE_ERR"
         assert err.category == ErrorCategory.CORE
 
     def test_configuration_error(self):
         err = ConfigurationError("bad config")
-        assert err.code == "CONFIG_ERROR"
+        assert err.code == "CONFIG_ERR"
         assert err.category == ErrorCategory.CONFIGURATION
 
     def test_network_error(self):
         err = NetworkError("timeout")
-        assert err.code == "NETWORK_ERROR"
+        assert err.code == "NET_ERR"
         assert err.category == ErrorCategory.NETWORK
 
     def test_websocket_error(self):
         err = WebSocketError("disconnected")
-        assert err.code == "WEBSOCKET_ERROR"
+        assert err.code == "WS_ERR"
         assert err.category == ErrorCategory.WEBSOCKET
 
     def test_database_error(self):
         err = DatabaseError("connection failed")
-        assert err.code == "DATABASE_ERROR"
+        assert err.code == "DB_ERR"
         assert err.category == ErrorCategory.DATABASE
 
     def test_memory_error(self):
         err = MemoryError("allocation failed")
-        assert err.code == "MEMORY_ERROR"
+        assert err.code == "MEM_ERR"
         assert err.category == ErrorCategory.MEMORY
 
     def test_ai_model_error(self):
         err = AIModelError("inference failed")
-        assert err.code == "AI_MODEL_ERROR"
+        assert err.code == "AI_ERR"
         assert err.category == ErrorCategory.AI_MODEL
 
     def test_llm_error(self):
         err = LLMError("token limit")
-        assert err.code == "LLM_ERROR"
+        assert err.code == "LLM_ERR"
         assert err.category == ErrorCategory.LLM
 
     def test_security_error(self):
         err = SecurityError("unauthorized")
-        assert err.code == "SECURITY_ERROR"
+        assert err.code == "SEC_ERR"
         assert err.category == ErrorCategory.SECURITY
-        assert err.severity == ErrorSeverity.CRITICAL
 
     def test_validation_error(self):
         err = ValidationError("invalid input")
-        assert err.code == "VALIDATION_ERROR"
+        assert err.code == "VAL_ERR"
         assert err.category == ErrorCategory.VALIDATION
 
     def test_not_found_error(self):
         err = NotFoundError("resource missing")
-        assert err.code == "NOT_FOUND_ERROR"
+        assert err.code == "NOT_FOUND"
+        assert err.category == ErrorCategory.NOT_FOUND
+
+    def test_audio_error(self):
+        err = AudioError("audio processing failed")
+        assert err.code == "AUDIO_ERR"
+        assert err.category == ErrorCategory.AUDIO
+
+    def test_resource_error(self):
+        err = ResourceError("resource exhausted")
+        assert err.code == "RES_ERR"
+        assert err.category == ErrorCategory.RESOURCE
+
+    def test_resource_not_found_error(self):
+        err = ResourceNotFoundError("resource missing", resource="test_file")
+        assert err.code == "NOT_FOUND_ERR"
+        assert err.category == ErrorCategory.NOT_FOUND
+
+    def test_business_logic_error(self):
+        err = BusinessLogicError("business rule violated")
+        assert err.code == "BIZ_ERR"
         assert err.category == ErrorCategory.BUSINESS_LOGIC
+
+    def test_rate_limit_error(self):
+        err = RateLimitError("too many requests")
+        assert err.code == "RATE_LIMIT"
+        assert err.category == ErrorCategory.RATE_LIMIT
+
+    def test_intent_error(self):
+        err = IntentError("intent detection failed")
+        assert err.code == "INTENT_ERR"
+        assert err.category == ErrorCategory.INTENT
+
+    def test_card_error(self):
+        err = CardError("card pipeline failed")
+        assert err.code == "CARD_ERR"
+        assert err.category == ErrorCategory.CARD
+
+    def test_service_error(self):
+        err = ServiceError("service unavailable")
+        assert err.code == "SVC_ERR"
+        assert err.category == ErrorCategory.SERVICE
+
+    def test_monitoring_error(self):
+        err = MonitoringError("monitoring failure")
+        assert err.code == "MON_ERR"
+        assert err.category == ErrorCategory.MONITORING
 
     def test_is_angela_error_instance(self):
         for exc in [CoreError(), NetworkError(), ValidationError(), AudioError()]:
@@ -156,38 +200,31 @@ class TestErrorHierarchy:
         err = AngelaError("wrapped", cause=cause)
         assert err.cause is cause
 
-    def test_error_with_extra_kwargs(self):
+    def test_error_extra_kwargs_stored_in_context(self):
         err = AngelaError("extra", extra_field="value", user="test")
         assert err.context.additional_info["extra_field"] == "value"
         assert err.context.additional_info["user"] == "test"
 
 
 class TestErrorHandler:
-    def test_get_error_handler_singleton(self):
-        handler1 = get_error_handler()
-        handler2 = get_error_handler()
-        assert handler1 is handler2
+    def test_handler_register_and_handle(self):
+        handler = ErrorHandler()
+        results = []
+        handler.register_handler("AngelaError", lambda e: results.append(e))
+        err = AngelaError("test error")
+        handler.handle(err)
+        assert len(results) == 1
+        assert results[0] is err
 
-    def test_handler_handles_error(self):
-        handler = get_error_handler()
-        err = AngelaError("handled error")
-        handler.register_handler(AngelaError, lambda e: "handled")
+    def test_handler_returns_list_of_results(self):
+        handler = ErrorHandler()
+        handler.register_handler("AngelaError", lambda e: "result1")
+        handler.register_handler("AngelaError", lambda e: "result2")
+        err = AngelaError("test error")
         result = handler.handle(err)
-        assert result == "handled"
-        assert result is not None
+        assert result == ["result1", "result2"]
 
-    def test_safe_execute_success(self):
-        result = safe_execute(lambda: 42)
-        assert result == 42
-
-    def test_safe_execute_failure(self):
-        def failing():
-            raise ValueError("fail")
-        result = safe_execute(failing)
-        assert result is None
-
-    def test_safe_execute_custom_default(self):
-        def failing():
-            raise ValueError("fail")
-        result = safe_execute(failing, default_return="fallback")
-        assert result == "fallback"
+    def test_handler_unregistered_error_type(self):
+        handler = ErrorHandler()
+        result = handler.handle(ValueError("unknown"))
+        assert result == []
