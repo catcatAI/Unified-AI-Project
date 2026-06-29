@@ -3,10 +3,7 @@ import tempfile
 
 import pytest
 
-try:
-    from apps.backend.src.core.security.key_generator import KeyGenerator
-except ImportError:
-    import pytest; pytest.skip("KeyGenerator is a stub", allow_module_level=True)
+from apps.backend.src.core.security.key_generator import KeyGenerator
 
 
 class TestKeyGenerator:
