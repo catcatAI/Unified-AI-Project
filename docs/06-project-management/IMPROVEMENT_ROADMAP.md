@@ -51,7 +51,7 @@
 | **Chat 管線 9 階段** | WS → 情緒 → 危機 → 對齊 → 閘門 → 路由 → LLM → 學習 → 回應 | 整合測試 | ✅ 完整接線 |
 | **CLP（持續學習）** | ED3NTrainer 已接線至聊天管線 + 獨立模式 | 整合測試 | ✅ 已接線，字典成長有效 |
 | **CML（持續多模態學習）** | 自主微訓練已接線至 encode 路徑，共用生產管線 | 20 CML 測試通過 + 21 多模態服務測試通過 | ✅ 每次編碼後自動微訓練 |
-| **測試數量** | pytest 收集 | **4,840 測試** (full testpaths, verified 2026-06-28 — was 4,826) | ✅ 0 skipped/0 errors |
+| **測試數量** | pytest 收集 | **4,902 測試** (full testpaths, verified 2026-06-29 — was 4,840) | ✅ 0 skipped/0 errors |
 
 ### 1.2 無法驗證的優勢（數據不足）
 
@@ -99,7 +99,7 @@
 | **Live2D 頭像圖片層為隨機矩形** | LOW | model3.json 有效，但圖片為隨機彩色矩形 | 206L＋樁模組 |
 | **SemanticVisualEncoder 降級至隨機** | LOW | 無 torch/CLIP 時回退至 np.random.randn | ~60L 回退路徑 |
 | **SemanticAudioEncoder 降級至 MFCC 統計** | LOW | 無 torch/whisper 時回退至基本統計 | ~60L 回退路徑 |
-| **ThreeLayerVisual 需 PCA 檔案** | LOW | 最佳生成器但需已訓練 PCA 檔案（選擇性載入） | ~400L，需外部檔案 |
+| **ThreeLayerVisual 已自動訓練 PCA** | ✅ **FIXED** (2026-06-29) — 編碼器自動訓練（SVD + 零填充至 128-dim），解碼器動態 dim。21 項測試通過。 | ~450L，自動訓練 |
 | **視訊 = 逐幀影像分析** | LOW | process_video_frame() 重複呼叫 analyze_image() + 隨機 motion_detected | ~50L 無時間模型 |
 
 ---
@@ -137,7 +137,7 @@
 | U2 | 安裝 torch + transformers 以啟用 CLIP 語意編碼器 | ✅ **DONE** (torch 2.11.0, transformers 5.5.4 installed, CLIP model cached, 512-dim vectors verified) | P2 |
 | U3 | 安裝 torch + openai-whisper 以啟用語意音訊編碼 | ✅ **DONE** (openai-whisper 20250625 installed, Whisper tiny model cached, 384-dim vectors verified) | P2 |
 | U4 | 更新 LLM API 用戶端至最新版本 | P3 | openai>=1.0, anthropic>=0.30, google-genai |
-| U5 | 更新相依性以修復 Dependabot 漏洞（141 個） | P2 | 3 critical, 72 high, 55 moderate, 11 low |
+| U5 | 更新相依性以修復 Dependabot 漏洞（141→26 個） | ✅ **DONE** (2026-06-29): electron 40.2.1→40.8.5, axios 1.6.5→1.15.1, ws 8.14.0→8.20.1, next 14.0.0→14.2.35. 104→26 vulns (78 fixed). Remaining: 1 next high (needs 15.x — breaking), 25 transitive dev deps (low risk). | P2 | 3 critical, 72 high, 55 moderate, 11 low |
 | V1 | YOLO 物件檢測 — 前端開發輔助（Vision-Assisted Development） | P2 | 整合 YOLO 後可使專案透過螢幕截圖分析參與前端開發。**關鍵要求：多視窗辨識** — 系統必須能區分自己的前端 UI 與其他應用程式視窗（VS Code、Slack、瀏覽器等），不得誤檢。做法：① OS API 視窗識別（pygetwindow/win32）比對白名單行程與標題。② 前端源碼特徵指紋（Electron DOM / Live2D canvas / PyQt6 固定佈局）建立專屬特徵庫。③ 非白名單視窗區域檢測結果直接排除。④ 佈局一致性驗證 — 檢測結果須符合預期元件結構才判定為自己 UI。預期能力：① UI 元件檢測（按鈕、輸入框、卡片、導航欄、圖示）→ 結構化元件樹。② 前端 diff — 截圖比較。③ 可及性檢查。④ E2E 測試生成（Playwright/Cypress selector）。依賴 `ultralytics` + YOLO11 + pygetwindow + 前端佈局特徵庫。非 ML 瓶頸 — 純模型整合與 wrapper 實作。 |
  
 ### 2.4 迭代 (Iterations)

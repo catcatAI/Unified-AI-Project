@@ -19,14 +19,14 @@
     "node": ">=18.0.0"
   },
   "devDependencies": {
-    "electron": "^40.2.1",
+    "electron": "^40.8.5",
     "electron-builder": "^26.7.0"
   },
   "dependencies": {
     "@pixi/utils": "^7.3.2",
-    "axios": "^1.6.5",
+    "axios": "^1.15.1",
     "electron-log": "^5.0.0",
-    "ws": "^8.14.0"
+    "ws": "^8.20.1"
   },
   "build": {
     "appId": "com.angelaai.desktop",

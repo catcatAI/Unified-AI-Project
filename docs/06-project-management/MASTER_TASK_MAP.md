@@ -895,6 +895,35 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 
 ---
 
+## VI-X. Session Summary — 2026-06-29 (T5: ThreeLayerVisual automatic PCA training)
+
+### T5: ThreeLayerVisual auto PCA training — **DONE** (§X #39)
+- **Problem**: ThreeLayerVisual had 3 latent-dim bugs when `n_samples < LATENT_DIM` (128):
+  1. `_class_centers` used `self.LATENT_DIM` → shape (5,128) but latent was (50,50) with 50 samples
+  2. `_train_decoder` hardcoded `nn.Linear(128, 256)` — decoder expected 128-dim but actual latent < 128
+  3. `_fit_pca_encoder` sliced `Vt[:128]` — SVD with 50 samples gives at most 50 components
+- **Fix**:
+  - `_fit_pca_encoder`: zero-pad encoder to always produce `LATENT_DIM` (128) rows
+  - `_compute_class_centers`: use dynamic `latent_dim` from actual latent shape
+  - `_train_decoder`: decoder first Linear layer uses actual latent_dim (e.g. 50) instead of hardcoded 128
+  - `load()` reconstructs decoder at 128-dim (consistent since encoder always 128 rows)
+
+### New Tests: 21 total (all pass, bringing multimodal total to 160)
+- `tests/ai/multimodal/test_three_layer_visual.py`:
+  - 21 tests: init, fit, encode/decode/reconstruct, recognize, generate, interpolate, save/load roundtrip, enhance, 4d input, error cases
+
+### Impact
+- ThreeLayerVisual now fully self-contained: no external PCA files needed
+- Encoder always outputs 128-dim latent (zero-padded when n_samples < 128)
+- Decoder adapts to actual latent dimension during training
+- All 21 tests pass (was 19 failing before fix)
+- IMPROVEMENT_ROADMAP T5 moved to DONE
+
+### Test Count
+- **160/160 multimodal tests pass** (up from 139/139, +21 new ThreeLayerVisual tests)
+
+---
+
 ## VII. PROJECT_HONEST_AUDIT.md (2026-06-22) — Claims vs Today
 
 ### Stale Claims About Phase 9-11 Deletions
