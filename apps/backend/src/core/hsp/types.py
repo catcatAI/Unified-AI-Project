@@ -1,5 +1,6 @@
 import logging
 import os  # Added missing import
+from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional, Union
 
 from typing_extensions import (  # Import TypedDict from typing_extensions
@@ -306,3 +307,14 @@ class ChatMessage(TypedDict, total=False):
     content: str
     timestamp: str
     message_type: str  # e.g., "text", "image", "file"
+
+
+class HSPMessageEnvelopeClass:
+    def __init__(self, message_id, timestamp, sender_id, recipient_id, message_type):
+        self.message_id = message_id
+        self.timestamp = timestamp
+        self.sender_id = sender_id
+        self.recipient_id = recipient_id
+        self.message_type = message_type
+        self.status = "created"
+        self.created_at = datetime.now()
