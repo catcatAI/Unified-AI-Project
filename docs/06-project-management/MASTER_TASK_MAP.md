@@ -1036,6 +1036,31 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 
 ---
 
+## VI-XVII. Session Summary — 2026-06-30 (§X #55-57: MD sync, bug fixes, coverage.json)
+
+### §X #55: MD Truth Gap Sync — **DONE** (commit `4b4607f81`)
+- Synced test counts (5,085/4,578) across README.md, AGENTS.md, IMPROVEMENT_ROADMAP.md
+- Added §X #49-54 status entries
+- Updated dates to 2026-06-29
+
+### §X #56: Bug Fixes — **DONE** (commit `a227e2f40`)
+- **ed3n_engine.py `_try_math_eval`**: Added `math.isinf()`/`math.isnan()` checks. Division by zero (`float('inf')`) now returns Chinese error message `"除数不能为零"` instead of crashing on `int(inf)`. Verified: `_try_math_eval('五除以零')` returns `'五除以零 = 除数不能为零'`.
+- **i18n_manager.py**: Added `_auto_load_locales()` auto-loads locale files at module import time (no dependency on `main.py` startup). Changed default language from English → Chinese (zh-CN). All 8 file_operation handler tests now pass.
+
+### §X #57: coverage.json Population — **DONE** (commit `6bd65e208`)
+- coverage.json: Was empty file (truth gap from previous audit). Now populated with real coverage data from `test_integration_phase37.py` run.
+
+### Test Count
+- **5,085** collected (unchanged)
+- **0 collection errors**
+
+### Remaining Gaps
+- `coverage.json` has partial coverage data (single test file). Full coverage run needed for comprehensive data.
+- Frontend Live2D random rectangles and Dashboard fake data remain as §0.5 banned components.
+- No trained `.npz` weight files exist on disk currently.
+
+---
+
 ## VII. PROJECT_HONEST_AUDIT.md (2026-06-22) — Claims vs Today
 
 ### Stale Claims About Phase 9-11 Deletions
