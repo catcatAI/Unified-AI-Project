@@ -8,9 +8,6 @@ from typing import Any, Dict
 
 import pytest
 
-BASE_URL = "http://localhost:8000/api/v1"
-ATLASSIAN_ENDPOINT = f"{BASE_URL}/atlassian"
-
 
 def _valid_config() -> Dict[str, str]:
     """Return a valid Atlassian configuration dict."""
@@ -46,34 +43,6 @@ class TestAtlassianEndToEndWorkflow:
             "priority": "Medium",
         }
 
-        # Act & Assert
-        # async with httpx.AsyncClient() as client:
-        #     # 1. Configure connection
-        #     config_resp = await client.post(
-        #         f"{ATLASSIAN_ENDPOINT}/configure", json=config
-        #     )
-        #     assert config_resp.status_code == 200
-        #
-        #     # 2. Create issue
-        #     create_resp = await client.post(
-        #         f"{ATLASSIAN_ENDPOINT}/issues", json=issue_payload
-        #     )
-        #     assert create_resp.status_code == 201
-        #     issue = create_resp.json()
-        #     assert "id" in issue
-        #     assert issue["summary"] == issue_payload["summary"]
-        #     assert issue["status"] == "To Do"
-        #
-        #     # 3. Fetch issue to verify persistence
-        #     issue_id = issue["id"]
-        #     fetch_resp = await client.get(
-        #         f"{ATLASSIAN_ENDPOINT}/issues/{issue_id}"
-        #     )
-        #     assert fetch_resp.status_code == 200
-        #     fetched = fetch_resp.json()
-        #     assert fetched["id"] == issue_id
-        #     assert fetched["summary"] == issue_payload["summary"]
-
         # Verify test data is well-formed
         assert config["base_url"].startswith("https://")
         assert issue_payload["issue_type"] in ("Task", "Bug", "Story")
@@ -86,31 +55,6 @@ class TestAtlassianEndToEndWorkflow:
             "api_token": "invalid",
             "project_key": "NOPE",
         }
-
-        # Act & Assert
-        # async with httpx.AsyncClient() as client:
-        #     # 1. Configure with unreachable URL
-        #     config_resp = await client.post(
-        #         f"{ATLASSIAN_ENDPOINT}/configure", json=offline_config
-        #     )
-        #     # Should still accept config (stored locally)
-        #     assert config_resp.status_code == 200
-        #
-        #     # 2. Attempt to create issue — expect offline fallback
-        #     resp = await client.post(
-        #         f"{ATLASSIAN_ENDPOINT}/issues",
-        #         json={"summary": "offline test", "description": ""},
-        #     )
-        #     assert resp.status_code == 503
-        #     body = resp.json()
-        #     assert "detail" in body
-        #     assert "offline" in body["detail"].lower() or "unreachable" in body["detail"].lower()
-        #
-        #     # 3. Health endpoint should report Atlassian as down
-        #     health_resp = await client.get(f"{ATLASSIAN_ENDPOINT}/health")
-        #     assert health_resp.status_code == 200
-        #     health = health_resp.json()
-        #     assert health.get("atlassian_status") == "offline"
 
         # Verify offline config is correctly marked as unreachable
         assert "nonexistent" in offline_config["base_url"]
