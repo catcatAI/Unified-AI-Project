@@ -83,10 +83,10 @@
 | **HardwareProfile 硬體感知設定檔** | ✅ **DONE** (2026-06-29) — 5 種硬體場景 + 22 循環欄位 + 自動偵測 + runtime overrides。`hardware_profile.py`, 20 tests | `core/system/config/hardware_profile.py` §8.6 #5 |
 | **time.sleep() 全部審計** | ✅ **DONE** (2026-06-29) — 確認所有剩餘 `time.sleep()` 皆在同步/執行緒上下文，§8.6 #6 實質完成 | 多個檔案 §8.6 #6 |
 |------|:------:|------|:---------:|
-| **VisualDecoder 投射權重已訓練（CNN 紋理分支仍隨機）** | MEDIUM | 投射權重訓練於 CIFAR-10（42× loss 降），但 CNN 紋理分支仍隨機 → 輸出 = 結構化但模糊 | 143L，投射權重已訓練，紋理權重隨機 |
-| **AudioWaveformDecoder 投射權重已訓練（波表生成器仍隨機）** | MEDIUM | 投射權重訓練於 ESC-50（309× loss 降），但波表生成器仍隨機 → 輸出 = 結構化但非語音 | 179L，投射權重已訓練，波表權重隨機 |
-| **SequenceGenerator 權重隨機** | HIGH | RNN 架構真實，輸出 = 隨機向量 | 212L，權重 seed=42 |
-| **ImageGenerator 管線未訓練** | HIGH | 灰色畫布或隨機形狀（CLIP 降級為 hash(text)） | 200L+，4 元件串接但無訓練 |
+| **VisualDecoder 投射權重已訓練（CNN 紋理分支仍隨機）** | MEDIUM | 投射權重訓練於 CIFAR-10（42× loss 降）。**T1 DONE**: 22K texture params now trainable via `ReconstructionCycle.train_texture_step()` (pixel-level MSE + full analytic gradients). `TextureTrainer` + `FullTrainingPipeline` Phase 3a supports synthetic + real data. **剩餘**: 需實際訓練 texture 權重（非隨機）。 | 143L，投射權重已訓練，紋理權重可訓練 |
+| **AudioWaveformDecoder 投射權重已訓練（波表生成器仍隨機）** | MEDIUM | 投射權重訓練於 ESC-50（309× loss 降）。**T2 DONE**: 55.1K wavetable params now trainable via `ReconstructionCycle.train_wavetable_step()` (waveform MSE + full analytic gradients). `WavetableTrainer` + `FullTrainingPipeline` Phase 3b supports synthetic + real data. **剩餘**: 需實際訓練波表權重（非隨機）。 | 179L，投射權重已訓練，波表權重可訓練 |
+| **SequenceGenerator 權重隨機** | ✅ **FIXED** (T3+T4 DONE, 2026-06-29) — T3: BPTT backward pass rewritten (was corrupting gradients, missing bias updates, no temporal propagation). Added `get_weights/set_weights`, `SequenceTrainer`, FullTrainingPipeline Phase 3c with persistence for all 10 RNN weight arrays. T4: Phase 3d optionally retrains SequenceGenerator on library-derived synthetic pairs. All RNN weights now trainable with correct gradients. | 212L，權重 seed=42 |
+| **ImageGenerator 管線未訓練** | ✅ **FIXED** (T4 DONE, 2026-06-29) — `PrimitiveTrainer` populates ~120 geometric shapes, trains `PrimitiveEncoder` autoencoder (loss<0.05), re-encodes library, `ImageGenerator` produces multi-color structured output after Phase 3d training. | 200L+，4 元件串接已訓練 |
 | **CerebellumEngine 已實作 ✅ DONE** | LOW | 27L→172L，姿勢庫（站立/行走/坐/伸手）+ 應力調節顫抖模型 + 本體感覺誤差修正 + 內插 | `core/bio/cerebellum_engine.py` (172L) |
 | **PerceptionEngine 已實作 ✅ DONE** | LOW | 100L→158L，動態信心度（取樣粒子計數 + 時間平滑）+ 動態顯著性 + 跨模態衝突偵測 | `core/perception/perception_engine.py` (158L) |
 | **AttentionController 已實作 ✅ DONE** | LOW | 33L→164L，顯著性地圖（中心偏置 + 對比度）+ IOR + 掃描路徑 + 候選評分 | `core/perception/attention_controller.py` (164L) |

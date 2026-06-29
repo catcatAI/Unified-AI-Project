@@ -655,7 +655,6 @@ Component_A.state_change → Component_B.detect() → Component_B.behavior_chang
 | ✅ **CausalReasoningEngine** | 修復完成 (commit `78dac066e`) | predict() 已接入 LLM prompt 管線 (chat_routes._inject_causal_predictions → prompt_builder._append_causal_insights) |
 | ✅ **EmotionSystem** | 修復完成 (commit `f9cf68ac5`) | apply_influence() 真實 PAD 映射 + get_behavioral_adjustment() 情緒→行為接線 |
 | ✅ **IntentModel** | 修復完成 (commits `e713db0e0` + `this commit` 2026-06-29) | stubs 已實作 + 已接入 DigitalLifeIntegrator 管線，get_intent_influence() 實際驅動 state matrix 更新 |
-| ❌ **DigitalLifeIntegrator** | 3/6 狀態無行為 | 補齊 INITIALIZING, AWAKENING, DORMANT 行為 |
 | ✅ **MetaController** | 修復完成 (commit `f9cf68ac5` + `2be528751`) | auto_apply_thresholds() 已加入，NeuroAutoSelector._analyze_task() 現在讀取調整值影響 reasoning/quality/high_demand 門檻 |
 | ✅ **DigitalLifeIntegrator** | 修復完成 (commit `this commit` 2026-06-29) | 6/6 生命週期狀態皆有實際行為 — INITIALIZING (保守基線+dynamic params)、AWAKENING (user monitor+bio 覺醒)、DORMANT (深度鞏固+放鬆+資源審計) |
 | ✅ **Heartbeat Integration** | 修復完成 (commit `this commit` 2026-06-29) | Integration 循環間隔從固定 0.1s → 2.0-10.0s 動態 (基於 arousal)，頻率差從 50-600x 降至 ~2x |
