@@ -277,6 +277,7 @@ class DigitalLifeIntegrator:
         self._last_activity_time: datetime = datetime.now()
         self._is_active: bool = False
         self._rest_threshold_minutes: float = 30.0
+        self._dormant_threshold_minutes: float = self.config.get("dormant_threshold_minutes", 120.0)
 
         # Running state
         self._running = False
@@ -478,6 +479,10 @@ class DigitalLifeIntegrator:
             self._is_active = True
             if self.life_cycle_state == LifeCycleState.RESTING:
                 await self._transition_state(LifeCycleState.MATURE)
+        elif not self._is_active and time_since_activity > self._dormant_threshold_minutes * 60:
+            # Extended inactivity → DORMANT (deep sleep)
+            if self.life_cycle_state == LifeCycleState.RESTING:
+                await self._transition_state(LifeCycleState.DORMANT)
 
     async def _process_life_cycle_transitions(self) -> None:
         """以空間成熟度取代固定時間閾值 / Spatial maturity replaces fixed thresholds"""
@@ -490,6 +495,11 @@ class DigitalLifeIntegrator:
         elif self.life_cycle_state == LifeCycleState.GROWING:
             if maturity > 0.65:
                 await self._transition_state(LifeCycleState.MATURE)
+
+        elif self.life_cycle_state == LifeCycleState.RESTING:
+            # Low maturity during rest → DORMANT (deep sleep conservation)
+            if maturity < 0.2:
+                await self._transition_state(LifeCycleState.DORMANT)
 
     # =============================================================================
     # ANGELA-MATRIX: [L3] [αβγδ] [A] [L7+]
