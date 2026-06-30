@@ -1164,6 +1164,42 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 
 ---
 
+## VI-XXIII. Session Summary — 2026-06-30 (§X #65: KineticValidator bug fix + event-driven action_executor conversion)
+
+### §X #65: KineticValidator missing method + event-driven polling conversion — **DONE** (commit `e134c0f5f`)
+
+#### Bug Fix: KineticValidator.apply_biological_strain() — **FIXED** (7 pre-existing test failures)
+- **Problem**: `ActionExecutor._apply_biological_strain()` called `self.kinetic_validator.apply_biological_strain()` but `KineticValidator` had no such method. This caused ALL action execution to fail with `AttributeError`, resulting in 7/41 test failures.
+- **Fix**: Added `apply_biological_strain(parameters, strain_factor)` method to `KineticValidator`:
+  - Creates mutable copy of parameters
+  - Reduces speed (0.5× multiplier), velocity/force/intensity/power (0.3×), distance/amplitude/range/step (0.2×) based on strain
+  - Clamps strain_factor to [0.0, 1.0] for safety
+  - Handles strain_factor ≤ 0 as no-op
+  - Returns modified parameters dict
+
+#### Event-Driven Conversion: ActionExecutor — **DONE** (§8.6 #3: 2/80+ polls converted, was 1)
+- **ActionQueue**: Added `_notify_event` (`asyncio.Event`). Set when queue transitions empty→non-empty.
+- **`_execution_loop`**: Replaced `await asyncio.sleep(loop_sleep("sleep_short", 0.1))` polling with `asyncio.wait_for(event.wait(), timeout=loop_sleep*1000)`. Retains hardware-profile-aware `loop_sleep` as timeout safety net.
+- **`submit_and_execute`**: Creates per-action completion event BEFORE enqueueing (race prevention), waits on event instead of 0.05s polling (20Hz → zero-CPU).
+- **`retry_action`**: Same event-driven pattern as submit_and_execute.
+- **`_wait_for_action`**: Uses completion event if available, falls back to polling during shutdown.
+- **`_execute_action`** finally block: Sets completion event for any waiter.
+- **`max_concurrent`**: Now reads from `self.config.get("max_concurrent", ...)` first (was hardcoded cache_value). Fixes test config key mismatch.
+
+#### Test Fix: Config key mismatch — **FIXED**
+- `test_concurrent_action_limit` used `config={"max_concurrent_actions": 2}` but code read `cache_value("executor_max_concurrent", 5)` — completely different keys. Test only passed before due to timing coincidence (0.1s polling was slow enough to artificially limit concurrency).
+- Fixed: Test now uses `config={"max_concurrent": 2}`, and `__init__` reads `self.config.get("max_concurrent", cache_value(...))`.
+
+#### Verification
+- **41/41 action executor tests pass** (was 34+7 failures before bug fix)
+- **6/6 smoke tests pass**
+- **94 regression tests pass** (multimodal + formula + error recovery)
+
+### Test Count
+- **4,579+** collected (tests/ only — unchanged, 7 restored from skip→pass doesn't change collection count)
+
+---
+
 ## VII. PROJECT_HONEST_AUDIT.md (2026-06-22) — Claims vs Today
 
 ### Stale Claims About Phase 9-11 Deletions
