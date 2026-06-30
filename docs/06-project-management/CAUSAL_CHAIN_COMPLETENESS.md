@@ -140,7 +140,7 @@ async def _lifecycle_loop(self):
 - 無閉環（執行結果不影響下一次決策）
 - 需要 `execution_callbacks` 的下游消費者接線
 
-### 3.2 CausalReasoningEngine (218L) — 🟡 C³ = 2.0/10 (was 0.5/10, ✅ fixed 2026-06-28)
+### 3.2 CausalReasoningEngine (218L) — 🟡 C³ = 3.0/10 (was 2.0/10, ✅ fixed 2026-06-30)
 
 ```python
 # 虛假完成範例 #2: 因果引擎不參與因果
@@ -155,9 +155,17 @@ def predict(self, cause, context=None) -> List[Dict]:
 
 **修復摘要**: `predict()` 現已接入 LLM 管線。在 `chat_routes.py` 中新增 `_inject_causal_predictions()`，在 LLM 呼叫前將因果預測注入 context，再由 `prompt_builder.py` 的 `_append_causal_insights()` 將預測加入 LLM prompt。因果鏈: learn → predict → context injection → prompt builder → LLM sees insights。
 
+**§X #69 (2026-06-30): Temporal buffer + dynamic strength — DONE**
+- `_fire_causal_learning()` 現在維護 per-session 時間緩衝 (`_CAUSAL_BUFFERS`)，累積 `msg_lengths`/`resp_lengths`/`engagement_ratios`。
+- ≥ 5 次交互後傳遞累積列表給 `causal.learn()`，使 Granger 因果檢定可以觸發時間優先性檢測。
+- 動態強度 `dynamic_strength = min(0.9, max(0.1, engagement / 5.0))` 取代硬編碼 0.5，回應/查詢比例高 → 高強度。
+- 緩衝上限 100 條（溢位時修剪至最後 50 條）。
+- 8 個新單元測試驗證緩衝建立/重用/會話隔離/累積/上限/動態強度/空回應保護。
+
+**C³ 更新**: 2.0→**3.0/10** — Granger 現在可以在真實對話中偵測時間優先性（≥ 5 輪後），不再是單純的 Pearson 相關。
+
 **剩餘問題**:
-- 預測在 Round 1 不會出現（需先學到關係）
-- 尚未形成閉環（LLM 回應後的行為改變不回饋至因果模型）
+- 預測在 Round 1-4 仍不會出現 Granger（需 ≥ 5 輪累積）
 - `ingest_temporal_state()` 橋樑已存在但未定期觸發
 
 ### 3.3 EmotionSystem (280L) — ❌ C³ = 1.0/10
@@ -432,7 +440,7 @@ prompt += f"Current emotional state: {emotion_summary}"
 | **MetaController** | ✅完整 | **3.5/10** (was 3.0) | 7/10 | 2 | 0% | 🟡 調整已自動套用 (commit `2be528751`) |
 | **EmotionSystem** | ✅完整 | **2.0/10** | 7/10 | 2 | 0% | 🟡 行為驅動 (commit `f9cf68ac5`) |
 | **AutonomousLifeCycle** | ✅完整 | **2.0/10** | 7/10 | 2 | 0% | 🟡 決策已執行 (commit `40dce741a`) |
-| **CausalReasoningEngine** | ✅完整 | **2.0/10** | 7/10 | 1 | 0% | 🟡 predict() 已接入 LLM prompt (commit `78dac066e`) |
+| **CausalReasoningEngine** | ✅完整 | **3.0/10** (was 2.0, §X #69) | 7/10 | 1→3 (temporal) | 0% | 🟡 predict() 已接入 LLM prompt + temporal buffer for Granger (commit `c400f6e0d`) |
 | **IntentModel** | ✅完整 | **2.0/10** (was 1.0) | 6/10 | 2 | 0% | 🟡 已接線至 DigitalLifeIntegrator 管線，get_intent_influence() → state matrix (this commit) |
 
 ### 5.2 整體自主性分數
@@ -577,7 +585,7 @@ def test_causal_chain_<component>_<path>() -> None:
 | MetaController | `ai/meta/meta_controller.py` | 130 | ❌ | ✅ EWMA | ✅ auto_apply_thresholds | 2 | 🟡 |
 | AutonomousLifeCycle | `core/life/autonomous_life_cycle.py` | 410 | ✅ | ✅ | ✅ BehaviorExecutor | 2 | 🟡 |
 | EmotionSystem | `ai/alignment/emotion_system.py` | 280 | ❌ | ✅ | ✅ apply_influence + prompt | 2 | 🟡 |
-| CausalReasoningEngine | `ai/reasoning/causal_reasoning_engine.py` | 218 | ❌ | ✅ | ✅ LLM prompt injection | 1 | 🟡 |
+| CausalReasoningEngine | `ai/reasoning/causal_reasoning_engine.py` | 218 | ❌ | ✅ | ✅ LLM prompt injection + temporal buffer (Granger enabled after 5+ rounds) | 1→3 | 🟡 |
 | IntentModel | `core/life/intent_model.py` | 80 | ❌ | ✅ | ✅ DigitalLifeIntegrator | 2 | 🟡 |
 | ModalityGateway | `core/life/digital_life_integrator.py` | 70 | ❌ | ✅ | 🟡 狀態更新但無人讀 | 0.5 | 🔴 |
 

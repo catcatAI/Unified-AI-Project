@@ -1164,6 +1164,43 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 
 ---
 
+## VI-XXVI. Session Summary — 2026-06-30 (§X #68: Commit pending test consolidation deletions + test file cleanup)
+
+### §X #68: Test consolidation follow-up — **DONE** (commit `f33a31b75`)
+- **Problem**: 23 individual test files referencing subsystems deleted in Phase 9-12 cleanup were deleted from working tree but never git-committed (unstaged deletions).
+- **Fix**: Staged + committed all 23 deletions alongside 3 new consolidated import test files created in §X #66-67:
+  - `tests/cli/test_cli_imports.py` (4 parametrized: informative skips for deleted CLI modules)
+  - `tests/core/test_core_smoke_imports.py` (12 parametrized informative skips + 2 real import tests)
+  - `tests/tools/test_tools_imports.py` (3 real import tests + 2 informative skips)
+- **Result**: 26 files changed (198 insertions, 334 deletions). 5 passed + 18 skipped, 0 errors.
+
+### Test Count
+- **4,578** collected (tests/ only — unchanged, consolidation doesn't change collection count)
+
+---
+
+## VI-XXVII. Session Summary — 2026-06-30 (§X #69: CausalReasoningEngine temporal accumulation + dynamic strength)
+
+### §X #69: Causal learning feedback loop closure — **DONE** (commits `c400f6e0d` + `2ddb83efe`)
+
+#### Four gaps closed:
+
+| # | Gap | Location | Fix |
+|:-:|:----|:---------|:----|
+| 1 | `.learn()` called with single-element lists → Granger never fires | `chat_routes.py:568-586` | Added `_CAUSAL_BUFFERS` per-session dict accumulating `msg_lengths`/`resp_lengths`/`engagement_ratios`. After ≥ 5 interactions, the full accumulated list is passed instead of single-element. |
+| 2 | Hardcoded `strength: 0.5` — never reflects actual interaction quality | `chat_routes.py:581` | Replaced with `dynamic_strength = min(0.9, max(0.1, engagement / 5.0))` where engagement = resp_len / msg_len. |
+| 3 | Unbounded memory growth per session | `chat_routes.py` | Capped at 100 entries; on overflow, trimmed to last 50. |
+| 4 | No regression tests for the buffer accumulation | — | 8 new tests in `tests/unit/test_causal_session_buffer.py`: buffer create/reuse/isolate, single-call, accumulation, empty-response guard, cap overflow, dynamic strength scaling. |
+
+#### Impact
+- **Granger causality now enabled** for conversations ≥ 5 rounds per session
+- **Dynamic strength** reflects real response/query ratio (short query + long response = high strength)
+- **Causal depth**: C³ 2.0→**3.0/10** (temporal precedence detection now operational)
+
+### Test Count
+- **4,586** collected (tests/ only — +8 new tests)
+- **0 collection errors**
+
 ## VI-XXIII. Session Summary — 2026-06-30 (§X #65: KineticValidator bug fix + event-driven action_executor conversion)
 
 ### §X #65: KineticValidator missing method + event-driven polling conversion — **DONE** (commit `e134c0f5f`)
