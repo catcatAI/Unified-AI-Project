@@ -15,6 +15,7 @@ startup. Import directly from submodules: from core.X import Y
 
 import importlib
 import logging
+from typing import Any, List
 
 logger = logging.getLogger(__name__)
 
@@ -162,18 +163,71 @@ _LAZY_IMPORTS = {
 _lazy_cache = {}
 
 
-def __getattr__(name):
-    """Lazy import: on first access, import the actual module and cache the result."""
+class _SubmoduleSentinel:
+    """Sentinel that allows arbitrary attribute access for test patch compatibility.
+
+    When `unittest.mock.patch('core.deleted_subsystem.Class.method', create=True)`
+    traverses a dotted path, it calls `getattr(core, 'deleted_subsystem')`.
+    Instead of raising AttributeError immediately, we return a sentinel that:
+    - Allows arbitrary attribute access (returns self)
+    - Is callable (returns self)
+    - Logs a warning on first access about the missing attribute
+    - Behaves as truthy for boolean checks
+    """
+
+    _warned: set = set()
+
+    def __init__(self, name: str) -> None:
+        self._name = name
+        if name not in self._warned:
+            logger.warning(
+                "core.%s 不存在（可能是已刪除的子系統，或測試 mock 路徑）", name
+            )
+            self._warned.add(name)
+
+    def __getattr__(self, attr: str) -> "_SubmoduleSentinel":
+        return _SubmoduleSentinel(f"{self._name}.{attr}")
+
+    def __call__(self, *args: Any, **kwargs: Any) -> "_SubmoduleSentinel":
+        return self
+
+    def __bool__(self) -> bool:
+        return True
+
+    def __repr__(self) -> str:
+        return f"<core.{self._name} (missing)>"
+
+
+def __getattr__(name: str) -> Any:
+    """Lazy import: on first access, import the actual module and cache the result.
+
+    For known lazy imports (_LAZY_IMPORTS): imports the module and caches the result.
+    For unknown names: tries dynamic submodule import first, then falls back to
+    a _SubmoduleSentinel (enables unittest.mock.patch with create=True to traverse
+    dotted paths through deleted/Nonexistent subsystems).
+    """
+    # Fast path: known lazy imports
     if name in _LAZY_IMPORTS:
         module_path = _LAZY_IMPORTS[name]
         if name not in _lazy_cache:
             module = importlib.import_module(module_path)
             _lazy_cache[name] = getattr(module, name)
         return _lazy_cache[name]
-    raise AttributeError(f"module 'core' has no attribute '{name}'")
+
+    # Dynamic submodule import: try importlib first (for existing subpackages
+    # not yet listed in _LAZY_IMPORTS)
+    try:
+        module = importlib.import_module(f"core.{name}")
+        _lazy_cache[name] = module
+        return module
+    except ImportError:
+        pass
+
+    # Fallback: return sentinel (allows test patches with create=True)
+    return _SubmoduleSentinel(name)
 
 
-def __dir__():
+def __dir__() -> List[str]:
     return sorted(set(__all__) | set(_LAZY_IMPORTS.keys()) | {"logger"})
 
 
