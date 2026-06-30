@@ -53,6 +53,7 @@
 | **CML（持續多模態學習）** | 自主微訓練已接線至 encode 路徑，共用生產管線 | 20 CML 測試通過 + 21 多模態服務測試通過 | ✅ 每次編碼後自動微訓練 |
 | **測試數量** | pytest 收集 | **~5,085 tests** (full testpaths, verified 2026-06-30 — §X #49-58: all prior + training pipeline execution + bug fixes) | ✅ 0 failures |
 | **FullTrainingPipeline** | `pipeline_weights.npz` saved (33 arrays, 1.2MB) | 52s moderate run: texture=0.384, wavetable=0.045, sequence=0.015 | ✅ Trained weights exist on disk |
+| **Empty-data encode fast-fail** | `encode_with_retry()` now fast-fails on empty data without wasting 3 retries | 24/24 production tests pass, crisis_log reduced | ✅ Fixed (§X #60) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 
