@@ -565,23 +565,79 @@ def _inject_causal_predictions(
         logger.debug(f"Causal prediction injection failed: {e}")
 
 
+# ── Per-session temporal buffers for causal learning ─────────────────────
+# Accumulates time-series data across multiple interactions so Granger
+# causality can fire (requires >= 5 samples per variable).
+_CAUSAL_BUFFERS: Dict[str, Dict[str, List[float]]] = {}
+
+
+def _get_causal_buffer(session_id: str) -> Dict[str, List[float]]:
+    """Get or create a temporal buffer for the given session."""
+    if session_id not in _CAUSAL_BUFFERS:
+        _CAUSAL_BUFFERS[session_id] = {
+            "msg_lengths": [],
+            "resp_lengths": [],
+            "engagement_ratios": [],
+        }
+    return _CAUSAL_BUFFERS[session_id]
+
+
 def _fire_causal_learning(
     response_text: str, user_message: str, session_id: str
 ) -> None:
-    """Fire-and-forget: learn causal relationship from this interaction."""
+    """Accumulate temporal data and learn causal relationships per session.
+
+    Maintains per-session buffers so Granger causality (>= 5 samples) can
+    detect temporal precedence in real conversation patterns.
+    """
     try:
         causal = get_causal_reasoning()
-        if causal and response_text:
-            causal.learn({
-                "variables": ["user_input", "angela_response"],
-                "data": {"user_input": [len(user_message)], "angela_response": [len(response_text)]},
-                "relationships": [{
-                    "cause": "user_input",
-                    "effect": "angela_response",
-                    "strength": 0.5,
-                    "source": f"chat_{session_id}",
-                }],
-            })
+        if not causal or not response_text:
+            return
+
+        buf = _get_causal_buffer(session_id)
+        msg_len = float(len(user_message))
+        resp_len = float(len(response_text))
+        engagement = resp_len / max(msg_len, 1.0)
+
+        buf["msg_lengths"].append(msg_len)
+        buf["resp_lengths"].append(resp_len)
+        buf["engagement_ratios"].append(engagement)
+
+        # Dynamic strength: higher when response is substantive relative to query
+        dynamic_strength = min(0.9, max(0.1, engagement / 5.0))
+
+        # Only pass the accumulated series (not a single value) once we have
+        # enough temporal depth for Granger causality.
+        data: Dict[str, List[float]]
+        if len(buf["msg_lengths"]) >= 5:
+            data = {
+                "user_input": list(buf["msg_lengths"]),
+                "angela_response": list(buf["resp_lengths"]),
+            }
+        else:
+            data = {
+                "user_input": [msg_len],
+                "angela_response": [resp_len],
+            }
+
+        causal.learn({
+            "variables": ["user_input", "angela_response"],
+            "data": data,
+            "relationships": [{
+                "cause": "user_input",
+                "effect": "angela_response",
+                "strength": dynamic_strength,
+                "source": f"chat_{session_id}",
+            }],
+        })
+
+        # Cap buffer at 100 entries per session to prevent unbounded growth
+        if len(buf["msg_lengths"]) > 100:
+            buf["msg_lengths"] = buf["msg_lengths"][-50:]
+            buf["resp_lengths"] = buf["resp_lengths"][-50:]
+            buf["engagement_ratios"] = buf["engagement_ratios"][-50:]
+
     except Exception as e:
         logger.debug(f"Causal learning failed: {e}")
 
