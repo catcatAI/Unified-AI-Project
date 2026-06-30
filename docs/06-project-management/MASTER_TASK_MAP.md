@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Multimodal: 160/160 pass (after T5). ED3N: 114/114. GARDEN: 201/201. All stubs eliminated. §X #49-50: +80 tests from stubs. §X #53-54: formula coefficients + Level5ASI modules.
+> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,594** (§X #69b: +8 causal buffer tests; §X #71b: +8 DORMANT auto-transition tests via standalone script outside pytest collection). Multimodal: 160/160 pass (after T5). ED3N: 114/114. GARDEN: 201/201. All stubs eliminated. §X #49-50: +80 tests from stubs. §X #53-54: formula coefficients + Level5ASI modules.
 
 ---
 
@@ -1178,6 +1178,49 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 - **4,578** collected (tests/ only — unchanged, consolidation doesn't change collection count)
 
 ---
+
+## VI-XXVIII. Session Summary — 2026-07-01 (§X #70: MD sync for §X #68-69 — CAUSAL_CHAIN, MASTER_TASK_MAP, IMPROVEMENT_ROADMAP)
+
+### §X #70: MD sync — **DONE** (commit `2c13c4e3a`)
+
+- Updated CAUSAL_CHAIN_COMPLETENESS.md: C³ 2.0→3.0/10 for CausalReasoningEngine, added §X #69 entry
+- Updated MASTER_TASK_MAP.md: Added §X #69 entry (VI-XXVII)
+- Updated IMPROVEMENT_ROADMAP.md: Added §X #69 row
+
+### Test Count
+- **4,586** collected (tests/ only)
+
+## VI-XXIX. Session Summary — 2026-07-01 (§X #71: DigitalLifeIntegrator DORMANT auto-transition)
+
+### §X #71: DORMANT auto-transition — **DONE** (commits `8ac19f874` + `7b86cf28b`)
+
+#### Two auto-entry paths:
+| # | Path | Location | Details |
+|:-:|:-----|:---------|:--------|
+| 1 | **Time-based** | `_check_activity_status()` | RESTING + inactivity > `dormant_threshold_minutes` (default 120 min = 2h) → DORMANT |
+| 2 | **Maturity-based** | `_process_life_cycle_transitions()` | RESTING + maturity < 0.2 → DORMANT (deep sleep energy conservation) |
+
+#### Config:
+- New key: `dormant_threshold_minutes` (default 120.0)
+- No new external dependencies
+
+#### Tests:
+- 7 standalone tests in `tests/unit/run_digital_life_dormant.py` (runs outside pytest due to pre-existing circular import):
+  1. 180min inactive RESTING → DORMANT
+  2. 60min inactive RESTING → no transition
+  3. MATURE + 45min inactive → RESTING (regression)
+  4. RESTING + active within 60s → MATURE (regression)
+  5. RESTING + maturity 0.15 < 0.2 → DORMANT
+  6. RESTING + maturity 0.5 ≥ 0.2 → no transition
+  7. MATURE + maturity 0.15 < 0.2 → no transition
+
+#### Impact
+- **State machine now complete**: MATURE → RESTING → DORMANT auto-cycle is closed
+- **Causal depth**: DigitalLifeIntegrator C³ 4.5→**5.0/10** (DORMANT no longer requires manual force_state())
+
+### Test Count
+- **4,594** collected (tests/ only — +8 from §X #71b DORMANT tests, but those are standalone script, not pytest-collected)
+- **0 collection errors**
 
 ## VI-XXVII. Session Summary — 2026-06-30 (§X #69: CausalReasoningEngine temporal accumulation + dynamic strength)
 

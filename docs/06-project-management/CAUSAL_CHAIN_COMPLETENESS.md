@@ -245,9 +245,13 @@ async def _update_spatial_state(self, arousal, stress):
 - 創傷反應是 fire-and-forget（無人消費其結果）
 - 沒有全域行為調整（如「太累了所以降低探索慾望」）
 
-### 3.6 DigitalLifeIntegrator (380L) — 🟡 C³ = 4.5/10 (was 3.5/10, ✅ fixed 2026-06-29)
+### 3.6 DigitalLifeIntegrator (380L) — 🟡 C³ = 5.0/10 (was 4.5/10, ✅ fixed 2026-06-30)
 
-**修復摘要 (commit `this commit`)**: 為 INITIALIZING, AWAKENING, DORMANT 三個遺漏狀態加入實際行為。現在所有 6 個狀態都有 distinct 的行為邏輯。
+**修復摘要 (commit 2026-06-29)**: 為 INITIALIZING, AWAKENING, DORMANT 三個遺漏狀態加入實際行為。現在所有 6 個狀態都有 distinct 的行為邏輯。
+**§X #71 (2026-06-30)**: DORMANT auto-transition 已加入。兩個自動進入路徑：
+1. **時間基礎**: RESTING + 無活動 > `dormant_threshold_minutes`（預設 120min）→ DORMANT
+2. **成熟度基礎**: RESTING + maturity < 0.2 → DORMANT（深度休眠節能）
+7 個測試驗證轉換邏輯。C³ 更新: 4.5→5.0/10（完整的狀態機循環: MATURE→RESTING→DORMANT 現在是閉合的）。
 
 ```python
 LifeCycleState:
@@ -284,7 +288,6 @@ async def _apply_state_behaviors(self, state):
 **剩餘問題**:
 - 行為深但不寬（只影響 state_matrix 和 bio，不影響 routing 或 response）
 - `_compute_maturity_score` 依賴 state_matrix，但又用 state_matrix 的 `evaluate_math_spatially` 計算 — 潛在遞迴問題
-- DORMANT 狀態無自動轉入條件（只能透過 `force_state()` 到達）
 
 ### 3.7 IntentModel (80L) — 🟡 C³ = 2.0/10 (was 0.1/10, ✅ fixed 2026-06-29)
 

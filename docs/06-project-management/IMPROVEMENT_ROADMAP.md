@@ -57,6 +57,7 @@
 | **MainApiServer stubs eliminated** | 3 pure-pass async methods → real implementations | test_api_service_reconnection passes (22.74s) | ✅ Fixed (§X #61) |
 | **test_error_recovery 16/16 restored** | core.__getattr__ + services.__getattr__ sentinel fallback for test patch compatibility | 16 passed, 0 skipped, 0 failures (was 4+12) | ✅ Fixed (§X #62-64) |
 | **CausalReasoningEngine temporal buffer** | Per-session data accumulation enabling Granger causality (≥ 5 rounds). Dynamic strength replaces hardcoded 0.5. | 8 new tests, all pass | ✅ Fixed (§X #69) |
+| **DLI DORMANT auto-transition** | RESTING + inactivity > threshold → DORMANT; RESTING + maturity < 0.2 → DORMANT. Auto-cycle completes state machine. | 7 standalone tests all pass | ✅ Fixed (§X #71) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 
