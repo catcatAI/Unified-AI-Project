@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,594** (§X #69b: +8 causal buffer tests; §X #71b: +8 DORMANT auto-transition tests via standalone script outside pytest collection). Multimodal: 160/160 pass (after T5). ED3N: 114/114. GARDEN: 201/201. All stubs eliminated. §X #49-50: +80 tests from stubs. §X #53-54: formula coefficients + Level5ASI modules.
+> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,594** (§X #69b: +8 causal buffer tests; §X #71-73: DORMANT auto-transition + EmotionSystem routing_mode → LLM parameter modulation).
 
 ---
 
@@ -1179,7 +1179,32 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 
 ---
 
-## VI-XXVIII. Session Summary — 2026-07-01 (§X #70: MD sync for §X #68-69 — CAUSAL_CHAIN, MASTER_TASK_MAP, IMPROVEMENT_ROADMAP)
+## VI-XXX. Session Summary — 2026-07-01 (§X #71-73: DORMANT auto-transition + EmotionSystem routing_mode consumption + LLM parameter modulation)
+
+### §X #71: DORMANT auto-transition — **DONE** (commits `7b86cf28b`, `220ef020b`, `c5b143e25`)
+
+Two auto-entry paths to DORMANT (was only reachable via force_state()):
+1. **Time-based**: RESTING + inactivity > `dormant_threshold_minutes` (default 120 min) → DORMANT
+2. **Maturity-based**: RESTING + maturity < 0.2 → DORMANT
+- 7 standalone tests in `tests/unit/run_digital_life_dormant.py`
+- C³: DigitalLifeIntegrator 4.5→**5.0/10**
+
+### §X #72: EmotionSystem C³ doc sync + prompt_builder consume routing_mode — **DONE** (commit `b200a4be8`)
+
+- CAUSAL_CHAIN_COMPLETENESS.md §3.3: updated from stale "apply_influence() is empty" to reflect reality
+- `_append_emotional_behavior()`: now reads routing_mode/response_style from `angela_emotion` dict alongside the existing `emotional_behavior` dict
+- All 13 prompt builder tests pass
+
+### §X #73: routing_mode → LLM temperature/max_tokens — **DONE** (commit `8110bb7b8`)
+
+- `_prepare_generation_context()` in `router.py`: routing_mode now modulates temperature and max_tokens
+- conservative → temperature -0.3 (min 0.1), max_tokens 384
+- exploratory → temperature +0.3 (max 1.5), max_tokens 768
+- EmotionSystem C³ 2.0→**3.0/10** (chain depth 3: emotion→routing_mode→temperature modulation)
+- Closes §6.3 gap (emotion-driven routing): routing_mode now changes REAL parameters
+
+### Test Count
+- **4,594** collected (tests/ only — 0 errors)
 
 ### §X #70: MD sync — **DONE** (commit `2c13c4e3a`)
 
