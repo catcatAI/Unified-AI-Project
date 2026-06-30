@@ -1235,6 +1235,24 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 ### Test Count
 - **4,579+** collected (tests/ only — 14 files deleted, but consolidated tests cover same scenarios)
 
+
+## VI-XXV. Session Summary — 2026-06-30 (§X #67: Consolidate 3 more import-only service tests)
+
+### §X #67: Service import-only consolidation — **DONE** (commit `2bbce1169`)
+
+#### Consolidated 3 files into test_smoke_services.py
+
+| File | Lines | Action |
+|------|:-----:|:-------|
+| `tests/services/test_main_api_server.py` | 12 | ➕ Added to `_SERVICE_MODULES` parametrized test |
+| `tests/services/test_node_services.py` | 12 | ➕ Added to `_SERVICE_MODULES` parametrized test |
+| `tests/services/test_resource_awareness_service.py` | 12 | ➕ Added to `_SERVICE_MODULES` parametrized test |
+
+Total files consolidated across §X #66-67: **17 files → 5 files** (14 + 3)
+
+#### Verification
+- **6/6 tests pass** (3 class instantiation + 3 module import)
+
 ---
 
 ## VII. PROJECT_HONEST_AUDIT.md (2026-06-22) — Claims vs Today
