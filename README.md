@@ -61,9 +61,9 @@
 **Total project files**: ~3,500+ (620 Python in backend src · 295 JS/TS · 1,021+ docs · 500+ config · 480+ test).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
 
-> **STATUS (2026-06-29)**: Extended session of **152+ commits** (Jun 25-29). All T1-T5 DONE. §X #49-50: 7 real docstring-only stubs eliminated (+80 tests). §X #51: 11 magic numbers migrated. §X #53: 4 Level5ASI STUB classes → real modules. §X #54: ~35-40 formula coefficients migrated (P9-3: ~0 remain). **5,085 tests (full) / 4,578 tests (tests/) — 0 errors.** Multimodal: 139/139 → 160/160 (after T5). ED3N: 114/114. GARDEN: 201/201. All perception stubs eliminated. 0 docstring-only stubs remain. §0.5 banned: 2 remaining (Frontend Live2D, Frontend Dashboard). Architecture: ~85-90%.
+> **STATUS (2026-06-30)**: Extended session continues with §X #55-60. **FullTrainingPipeline** weights saved (33 arrays, 1.2MB, 52s). Bug fixes: division-by-zero in math eval, i18n auto-load with Chinese default, empty-data encode fast-fail (no wasted retries). Stress/benchmark tests fixed (5 skips for deleted `ai.ops.*` subsysytems). coverage.json populated with real data. **5,085 tests (full) / 4,578 tests (tests/) — 0 errors.** Multimodal: 160/160 pass. ED3N: 114/114. GARDEN: 201/201. All stubs eliminated. §0.5 banned: 2 remaining (Frontend Live2D, Frontend Dashboard). Architecture: ~85-90%.
 > **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → execution gate → **agent routing** → LLM → causal learning → response. GVV pipeline for image generation.  
-> **See**: [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) (latest audit), [IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md) (target), [COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md) (plan).
+> **See**: [MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md) (task provenance), [IMPROVEMENT_ROADMAP.md](docs/06-project-management/IMPROVEMENT_ROADMAP.md) (improvement roadmap), [CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md) (causal depth).
 
 ---
 
