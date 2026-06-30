@@ -1143,6 +1143,21 @@ class AngelaLLMService:
             except Exception as e:
                 logger.warning(f"[auto] 動態決策失敗: {e}，使用默認參數", exc_info=True)
 
+        routing_mode = None
+        behavior = context.get("emotional_behavior")
+        if behavior:
+            routing_mode = behavior.get("routing_mode")
+        if not routing_mode:
+            angela_emotion = context.get("angela_emotion")
+            if angela_emotion:
+                routing_mode = angela_emotion.get("routing_mode")
+        if routing_mode == "conservative":
+            gen_temperature = max(0.1, gen_temperature - 0.3)
+            gen_max_tokens = min(gen_max_tokens, 384)
+        elif routing_mode == "exploratory":
+            gen_temperature = min(1.5, gen_temperature + 0.3)
+            gen_max_tokens = max(gen_max_tokens, 768)
+
         return None, GenerationParams(gen_timeout, gen_temperature, gen_max_tokens)
 
     async def _call_llm_backend(self, user_message: str, context: Dict[str, Any], params: GenerationParams) -> LLMResponse:
