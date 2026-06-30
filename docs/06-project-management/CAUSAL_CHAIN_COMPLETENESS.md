@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-06-30
+  LAST_MODIFIED: 2026-07-01
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -440,7 +440,7 @@ prompt += f"Current emotional state: {emotion_summary}"
 |:-----|:--------:|:-------:|:--------:|:------:|:-----:|:-----:|
 | **Heartbeat → Bio → Spatial** | ✅完整 | **5.0/10** | 8/10 | 3 | 30% | 🟢 唯一接近真實的 |
 | **ExecutionGate → Pipeline** | ✅完整 | **4.0/10** | 8/10 | 3 | 0% | 🟢 單向確定性閘門 |
-| **DigitalLifeIntegrator** | ✅完整 | **4.5/10** (was 3.5) | 8/10 | 2 | 50% | 🟡 6/6 狀態有行為 (commit `this commit`) |
+| **DigitalLifeIntegrator** | ✅完整 | **5.0/10** (was 4.5, §X #71) | 8/10 | 2 | 60% | 🟡 6/6 狀態有行為 + DORMANT auto-transition (commit `7b86cf28b`) |
 | **MetaController** | ✅完整 | **3.5/10** (was 3.0) | 7/10 | 2 | 0% | 🟡 調整已自動套用 (commit `2be528751`) |
 | **EmotionSystem** | ✅完整 | **2.0/10** | 7/10 | 2 | 0% | 🟡 行為驅動 (commit `f9cf68ac5`) |
 | **AutonomousLifeCycle** | ✅完整 | **2.0/10** | 7/10 | 2 | 0% | 🟡 決策已執行 (commit `40dce741a`) |
