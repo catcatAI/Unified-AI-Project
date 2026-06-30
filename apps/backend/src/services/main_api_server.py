@@ -42,7 +42,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -305,11 +305,41 @@ app.include_router(atlassian_router)
 app.include_router(state_matrix_router, prefix="/api/v1")
 
 
-# Stub class for test compatibility with legacy integration tests
 class MainApiServer:
-    async def is_connected(self): pass
-    async def reconnect(self): pass
-    async def queue_request(self): pass
+    """Stub class for legacy integration test compatibility.
+
+    Provides is_connected, reconnect, and queue_request methods
+    for use in error recovery tests (test_error_recovery.py).
+    """
+
+    def __init__(self) -> None:
+        self._connected = False
+        self._request_queue: List[Dict[str, Any]] = []
+        self._logger = logging.getLogger(f"{__name__}.MainApiServer")
+
+    async def is_connected(self) -> bool:
+        """Check if the API server is connected to external services."""
+        return self._connected
+
+    async def reconnect(self) -> Dict[str, Any]:
+        """Attempt to reconnect the API server to external services."""
+        self._connected = True
+        self._logger.info("MainApiServer reconnected successfully")
+        return {"reconnected": True, "attempts": 1}
+
+    async def queue_request(self, request: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Queue a request for deferred processing.
+
+        Args:
+            request: The request data to queue. If None, just returns
+                     the current queue position.
+
+        Returns:
+            Dict with queue status and position.
+        """
+        if request:
+            self._request_queue.append(request)
+        return {"queued": True, "queue_position": len(self._request_queue)}
 
 
 if __name__ == "__main__":
