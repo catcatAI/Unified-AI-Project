@@ -1,33 +1,26 @@
+"""Agent import tests — parameterized for maintainability.
+
+Consolidated from 5 standalone test functions into 1 parameterized test.
+"""
+
 import pytest
 
-# Import all agent classes to ensure they are discoverable and syntactically correct
-from ai.agents.base.base_agent import BaseAgent
-from ai.agents.specialized.audio_processing_agent import AudioProcessingAgent
-from ai.agents.specialized.code_understanding_agent import CodeUnderstandingAgent
-from ai.agents.specialized.creative_writing_agent import CreativeWritingAgent
-from ai.agents.specialized.data_analysis_agent import DataAnalysisAgent
+# All agent classes that should be importable
+_AGENT_CLASSES = [
+    ("ai.agents.base.base_agent", "BaseAgent"),
+    ("ai.agents.specialized.audio_processing_agent", "AudioProcessingAgent"),
+    ("ai.agents.specialized.code_understanding_agent", "CodeUnderstandingAgent"),
+    ("ai.agents.specialized.creative_writing_agent", "CreativeWritingAgent"),
+    ("ai.agents.specialized.data_analysis_agent", "DataAnalysisAgent"),
+    ("ai.agents.specialized.knowledge_graph_agent", "KnowledgeGraphAgent"),
+]
 
 
-def test_import_base_agent():
-    """Verify BaseAgent can be imported."""
-    assert BaseAgent is not None
+@pytest.mark.parametrize("module_path,class_name", _AGENT_CLASSES)
+def test_agent_import(module_path: str, class_name: str) -> None:
+    """Verify each agent class can be imported."""
+    import importlib
 
-
-def test_import_audio_processing_agent():
-    """Verify AudioProcessingAgent can be imported."""
-    assert AudioProcessingAgent is not None
-
-
-def test_import_code_understanding_agent():
-    """Verify CodeUnderstandingAgent can be imported."""
-    assert CodeUnderstandingAgent is not None
-
-
-def test_import_creative_writing_agent():
-    """Verify CreativeWritingAgent can be imported."""
-    assert CreativeWritingAgent is not None
-
-
-def test_import_data_analysis_agent():
-    """Verify DataAnalysisAgent can be imported."""
-    assert DataAnalysisAgent is not None
+    module = importlib.import_module(module_path)
+    cls = getattr(module, class_name)
+    assert cls is not None, f"{module_path}.{class_name} not found"

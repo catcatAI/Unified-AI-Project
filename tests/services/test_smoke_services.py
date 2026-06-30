@@ -1,18 +1,23 @@
-"""P10-1: Smoke tests for service modules — verify importability."""
+"""P10-1: Smoke tests for service modules — parameterized.
+
+Consolidated from 3 standalone test functions into 1 parameterized test.
+"""
+
+import pytest
+
+_SERVICE_CLASSES = [
+    ("services.websocket_manager", "ConnectionManager"),
+    ("services.math_verifier", "MathVerifier"),
+    ("services.vision_service", "VisionService"),
+]
 
 
-def test_import_websocket_manager():
-    from services.websocket_manager import ConnectionManager
-    m = ConnectionManager()
-    assert m is not None
+@pytest.mark.parametrize("module_path,class_name", _SERVICE_CLASSES)
+def test_service_import_and_instantiate(module_path: str, class_name: str) -> None:
+    """Verify each service class can be imported and instantiated."""
+    import importlib
 
-
-def test_import_math_verifier():
-    from services.math_verifier import MathVerifier
-    v = MathVerifier()
-    assert v is not None
-
-
-def test_import_vision_service():
-    from services.vision_service import VisionService
-    assert VisionService is not None
+    module = importlib.import_module(module_path)
+    cls = getattr(module, class_name)
+    instance = cls()
+    assert instance is not None
