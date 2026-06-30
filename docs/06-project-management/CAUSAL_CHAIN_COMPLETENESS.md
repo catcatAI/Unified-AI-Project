@@ -168,35 +168,36 @@ def predict(self, cause, context=None) -> List[Dict]:
 - 預測在 Round 1-4 仍不會出現 Granger（需 ≥ 5 輪累積）
 - `ingest_temporal_state()` 橋樑已存在但未定期觸發
 
-### 3.3 EmotionSystem (280L) — ❌ C³ = 1.0/10
+### 3.3 EmotionSystem (417L) — 🟡 C³ = 2.0/10 (was❌1.0/10, ✅ fixed 2026-06-29 commit `f9cf68ac5`)
 
 ```python
-# 虛假完成範例 #3: 情感不影響行為
-class EmotionalState:
-    primary_emotion: EmotionType  # ✅ 真實情緒狀態
-    emotion_intensity: float      # ✅ 強度
-    valence: float                # ✅ 效價
-    arousal: float                # ✅ 喚醒度
+# 目前真實鏈: 文字注入 + routing_mode 計算 → prompt 指南
+class EmotionSystem:
+    def apply_influence(self, source, type, value, intensity):
+        # ✅ 真實 PAD 模型: 14 種影響類型映射 (dopamine/adrenaline/cortisol/...)
+        # ✅ 更新 valence/arousal/dominance → 新 emotion 狀態
+        self.emotion_history.append(influenced_state)
 
-def analyze_emotional_context(self, context) -> EmotionalState:
-    # ✅ TextBlob 真正分析文字情感
-    state = EmotionalState(...)
-    self.emotion_history.append(state)
-    return state
+    def get_behavioral_adjustment(self):
+        # ✅ 回傳 routing_mode/response_style (conservative vs exploratory)
+        # ✅ 回傳 emotional_state/intensity/valence/arousal
+        return {"routing_mode": ..., "response_style": ..., ...}
 
-# → 然後呢？誰改變了行為？
-# → get_emotion_summary() → injected into LLM prompt → LLM "sees" it
-# → 這是文字注入，不是行為驅動
-# → apply_influence() 是空方法（just logging）
+# 消費位置:
+# chat_routes.py:176-203 → context["angela_emotion"] = adj
+# chat_routes.py:192   → context["emotional_behavior"] (硬編碼映射)
+# prompt_builder.py:467-499 → 兩者注入 LLM prompt
 ```
 
-**問題**:
-- `EmotionalState` 是完整的 → ✅
-- `emotion_history` 記錄所有變化 → ✅
-- 但「影響」只透過 prompt 文字間接傳遞 → 🟡
-- `apply_influence()` 是空殼 → ❌
-- 沒有 emotion → endocrine → behavior 的連結 → ❌
-- `ValueAssessment` 的 `_calculate_dimension_score` 回傳 `str` 型別（type bug！）→ ✅ **FIXED** (2026-06-29) — 3 個方法 `-> str` 改為 `-> float`：_calculate_dimension_score, _calculate_overall_value, _calculate_value_confidence
+**現狀**:
+- `EmotionalState` 完整、PAD 模型、14 種影響類型映射 → ✅
+- `apply_influence()` 真實實現（非空殼）→ ✅
+- `emotion_history` 記錄所有變化 + 上限 1000 筆 → ✅
+- `get_behavioral_adjustment()` 回傳 routing_mode/response_style → ✅
+- 兩路注入 prompt: `emotional_behavior`（用戶情緒→路由）+ `angela_emotion`（Angela 自身情緒）→ ✅
+- 但 routing_mode 僅文字注入，不改變實際路由行為 → 🟡
+- `get_behavioral_adjustment()` 的 routing_mode 未被 prompt_builder 消費（只用 `emotional_state`/`intensity`/`valence`/`arousal`）→ ❌
+- 沒有 emotion → endocrine → behavior 的跨組件傳遞 → ❌
 
 ### 3.4 MetaController (130L) — 🟡 C³ = 3.5/10 (was 3.0/10, ✅ fixed 2026-06-29)
 
