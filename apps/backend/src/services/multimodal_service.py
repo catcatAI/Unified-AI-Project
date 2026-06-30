@@ -356,6 +356,7 @@ class MultimodalService:
         t0 = time.time()
         result: Dict[str, Any] = {"modality": modality}
         if not data:
+            logger.warning("encode: empty data provided for modality=%s", modality)
             return {"modality": modality, "error": "Empty data provided"}
         try:
             if modality == "vision":

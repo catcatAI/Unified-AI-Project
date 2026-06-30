@@ -68,6 +68,20 @@ class MultimodalErrorRecovery:
         op_key = f"encode:{modality}"
         last_error = ""
 
+        # Fast-fail on empty data — retrying won't help
+        if not data:
+            _write_crisis_log(1, {
+                "operation": op_key,
+                "error": "Empty data provided",
+                "attempts": 1,
+                "modality": modality,
+            })
+            return {
+                "modality": modality,
+                "error": "Empty data provided",
+                "recovery": {"attempts": 1, "retried": False, "failed": True},
+            }
+
         for attempt in range(1 + max_retries):
             try:
                 result = await self._service.encode(data, modality, item_id)

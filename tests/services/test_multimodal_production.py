@@ -106,6 +106,18 @@ class TestErrorRecoveryEncode:
         assert result["recovery"]["failed"] is True
         assert result["recovery"]["attempts"] == 4
 
+    @pytest.mark.asyncio
+    async def test_encode_empty_data_fast_fail(self, error_recovery, mock_service, tmp_path):
+        """Empty data returns immediately without calling service.encode()."""
+        log_path = str(tmp_path / "crisis_log.txt")
+        with patch("core.crisis_log.CRISIS_LOG_PATH", log_path):
+            result = await error_recovery.encode_with_retry(b"", "vision")
+        assert result["error"] == "Empty data provided"
+        assert result["recovery"]["attempts"] == 1
+        assert result["recovery"]["failed"] is True
+        # service.encode should NOT have been called
+        mock_service.encode.assert_not_called()
+
 
 class TestErrorRecoveryDecode:
     """Tests for decode_with_fallback."""
