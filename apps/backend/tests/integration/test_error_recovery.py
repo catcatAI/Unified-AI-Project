@@ -445,7 +445,6 @@ class TestNetworkInterruptionRecovery:
             print(f"  - Detection time: {metrics.detection_time_ms:.2f}ms")
             print(f"  - Reconnection time: {metrics.recovery_time_ms:.2f}ms")
             print(f"  - Reconnection attempts: {reconnect_result['attempts']}")
-    @pytest.mark.skip(reason="services.cloud_api 已在 Phase 9-12 清理中刪除，且 services/__init__.py 無 sentinel 機制")
     async def test_cloud_service_fallback(self):
         """
         测试云服务降级
@@ -504,7 +503,6 @@ class TestNetworkInterruptionRecovery:
             print(f"✓ Cloud service fallback:")
             print(f"  - Local mode activated: ✓")
             print(f"  - Sync queue: {sync_result['sync_id'][:8]}...")
-    @pytest.mark.skip(reason="services.external_api 已在 Phase 9-12 清理中刪除，且 services/__init__.py 無 sentinel 機制")
     async def test_external_api_timeout_recovery(self):
         """
         测试外部API超时恢复
