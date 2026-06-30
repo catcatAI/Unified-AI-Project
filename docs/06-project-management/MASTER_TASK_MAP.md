@@ -659,6 +659,20 @@ The plan claimed to create:
 
 ### Test Count
 - **4,840** collected (unchanged)
+
+---
+
+## VI-XX. Session Summary — 2026-06-30 (§X #62: 12 pre-existing test_error_recovery tests -> skip)
+
+### §X #62: Pre-existing test_error_recovery.py failures — **DONE** (commit `fa74b1efb`)
+- **Problem**: `apps/backend/tests/integration/test_error_recovery.py` had 16 tests, of which **12 failed** with `AttributeError: module 'core' has no attribute '...'`. The test patches reference subsystems deleted in Phase 9-12 cleanup: `core.cognition.*`, `core.memory.*`, `core.live2d.*`, `services.cloud_api`, `services.external_api`, `core.degraded_mode`, `core.feature_manager`, `core.fault_isolation`, `core.state_manager`.
+- **Root cause**: `core/__init__.py` has a custom `__getattr__()` (lazy import mapping) that raises `AttributeError` for any attribute not in `_LAZY_IMPORTS`. When `unittest.mock.patch('core.cognition...')` resolves `core.cognition`, Python accesses `core.cognition` which triggers `__getattr__` → `AttributeError` before `create=True` can take effect.
+- **Fix**: Added `@pytest.mark.skip` decorators to all 12 failing test functions with Chinese explanations referencing Phase 9-12 deletions.
+- **4 tests preserved** (not skipped): `test_perception_component_failure`, `test_emotional_component_failure`, `test_api_service_reconnection`, `test_configuration_corruption_recovery`
+- **Result**: 4 passed + 12 skipped = 16 total, 0 errors (was 4 passed + 12 failed = 16 total, 12 errors)
+
+### Test Count
+- **4,840** collected (unchanged — skip markers don't change collection count)
 - **30 emotion system tests pass** (was 30 — no regressions)
 
 ### CausalReasoningEngine predict() wired into LLM pipeline — **DONE**
@@ -1090,6 +1104,20 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 
 ### Test Count
 - **4,840** collected (unchanged)
+
+---
+
+## VI-XX. Session Summary — 2026-06-30 (§X #62: 12 pre-existing test_error_recovery tests -> skip)
+
+### §X #62: Pre-existing test_error_recovery.py failures — **DONE** (commit `fa74b1efb`)
+- **Problem**: `apps/backend/tests/integration/test_error_recovery.py` had 16 tests, of which **12 failed** with `AttributeError: module 'core' has no attribute '...'`. The test patches reference subsystems deleted in Phase 9-12 cleanup: `core.cognition.*`, `core.memory.*`, `core.live2d.*`, `services.cloud_api`, `services.external_api`, `core.degraded_mode`, `core.feature_manager`, `core.fault_isolation`, `core.state_manager`.
+- **Root cause**: `core/__init__.py` has a custom `__getattr__()` (lazy import mapping) that raises `AttributeError` for any attribute not in `_LAZY_IMPORTS`. When `unittest.mock.patch('core.cognition...')` resolves `core.cognition`, Python accesses `core.cognition` which triggers `__getattr__` → `AttributeError` before `create=True` can take effect.
+- **Fix**: Added `@pytest.mark.skip` decorators to all 12 failing test functions with Chinese explanations referencing Phase 9-12 deletions.
+- **4 tests preserved** (not skipped): `test_perception_component_failure`, `test_emotional_component_failure`, `test_api_service_reconnection`, `test_configuration_corruption_recovery`
+- **Result**: 4 passed + 12 skipped = 16 total, 0 errors (was 4 passed + 12 failed = 16 total, 12 errors)
+
+### Test Count
+- **4,840** collected (unchanged — skip markers don't change collection count)
 
 ### §X #60: Empty-data encode fast-fail — **DONE** (commit `f05e020d7`)
 - **Problem**: `crisis_log.txt` contained recurring `encode:vision` Level 1 events with `'error': 'Empty data provided'` and `'attempts': 4`. The `encode_with_retry()` method in `multimodal_error_recovery.py` was wasting 3 retries on empty data before writing the crisis log — each retry would also fail since the data is still empty.
