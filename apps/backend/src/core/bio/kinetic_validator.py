@@ -43,6 +43,48 @@ class KineticValidator:
         self.last_time = current_time
         return True, "Success"
 
+    def apply_biological_strain(
+        self, parameters: Dict[str, Any], strain_factor: float
+    ) -> Dict[str, Any]:
+        """Apply biological strain to action parameters based on current physical state.
+
+        When strain is high, movement speeds and intensities are reduced
+        to simulate fatigue or caution.
+
+        Args:
+            parameters: Action parameters dict
+            strain_factor: Current biological strain level (0.0-1.0+)
+
+        Returns:
+            Modified parameters with strain applied
+        """
+        if strain_factor <= 0.0:
+            return parameters
+
+        params = dict(parameters)  # mutable copy
+
+        # Reduce movement speed based on strain (strongest effect)
+        if "speed" in params and isinstance(params["speed"], (int, float)):
+            params["speed"] = params["speed"] * (1.0 - min(strain_factor, 1.0) * 0.5)
+
+        # Reduce velocity/force/intensity (moderate effect)
+        for key in ("velocity", "force", "intensity", "power"):
+            if key in params and isinstance(params[key], (int, float)):
+                params[key] = params[key] * (1.0 - min(strain_factor, 1.0) * 0.3)
+
+        # Reduce movement distances/amplitudes (mild effect)
+        for key in ("distance", "amplitude", "range", "step"):
+            if key in params and isinstance(params[key], (int, float)):
+                params[key] = params[key] * (1.0 - min(strain_factor, 1.0) * 0.2)
+
+        logger.debug(
+            "[KineticValidator] Applied strain %.2f to parameters: %s",
+            strain_factor,
+            {k: v for k, v in params.items() if parameters.get(k) != v},
+        )
+
+        return params
+
     def calculate_strain(self, velocity: float) -> float:
         """根據速度計算產生的生理負擔 (Strain)"""
         # 2030 標準：劇烈運動增加壓力

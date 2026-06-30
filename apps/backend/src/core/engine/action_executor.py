@@ -171,17 +171,24 @@ class ActionQueue:
         self._completed: list[Action] = []
         self._failed: list[Action] = []
         self._action_map: dict[str, Action] = {}
+        # Event-driven: notified when queue transitions from empty→non-empty
+        self._notify_event: asyncio.Event = asyncio.Event()
 
     def enqueue(self, action: Action) -> bool:
         """Add action to queue"""
         if len(self._queue) >= self.max_size:
             return False
 
+        was_empty = len(self._queue) == 0
         self._queue.append(action)
         self._action_map[action.action_id] = action
 
         # Sort by priority
         self._queue.sort(key=lambda a: a.priority.level)
+
+        # Notify waiters if queue transitioned from empty to non-empty
+        if was_empty:
+            self._notify_event.set()
 
         return True
 
@@ -266,7 +273,7 @@ class ActionExecutor:
         # Queue management
         self.queue = ActionQueue(max_size=cache_value("executor_max_queue_size", 1000))
         self.active_actions: dict[str, Action] = {}
-        self.max_concurrent = cache_value("executor_max_concurrent", 5)
+        self.max_concurrent = self.config.get("max_concurrent", cache_value("executor_max_concurrent", 5))
 
         # Safety system
         self.safety_checks: dict[str, SafetyCheck] = {}
@@ -277,6 +284,9 @@ class ActionExecutor:
         self._executor_task: Optional[asyncio.Task] = None
         self._semaphore = asyncio.Semaphore(self.max_concurrent)
         self._background_tasks: set = set()
+
+        # Event-driven: per-action completion events
+        self._completion_events: dict[str, asyncio.Event] = {}
 
         # Kinetic Validation
         self.kinetic_validator = KineticValidator(self.config.get("kinetic", {}))
@@ -329,13 +339,11 @@ class ActionExecutor:
                 self._executor_task = None
 
     async def _execution_loop(self) -> None:
-        """Main execution loop"""
+        """Main execution loop (event-driven)"""
         while self._running:
-            # Get next action
             action = self.queue.dequeue()
 
             if action:
-                # Execute with semaphore for concurrency control
                 task = asyncio.create_task(self._execute_with_semaphore(action))
                 self._background_tasks.add(task)
                 task.add_done_callback(
@@ -346,8 +354,17 @@ class ActionExecutor:
                     )
                 )
             else:
-                # No actions available, wait a bit
-                await asyncio.sleep(loop_sleep("sleep_short", 0.1))
+                # Event-driven wait for new actions (was: polling sleep)
+                # Timeout safety net prevents permanent hang if event is corrupted
+                try:
+                    await asyncio.wait_for(
+                        self.queue._notify_event.wait(),
+                        timeout=loop_sleep("sleep_short", 0.1) * 1000,
+                    )
+                except asyncio.TimeoutError:
+                    pass
+                finally:
+                    self.queue._notify_event.clear()
 
     async def _execute_with_semaphore(self, action: Action) -> None:
         """Execute action with concurrency control"""
@@ -493,6 +510,9 @@ class ActionExecutor:
             self._notify_status_change(action)
             if action.action_id in self.active_actions:
                 del self.active_actions[action.action_id]
+            # Signal completion to any waiter via event-driven pattern
+            if action.action_id in self._completion_events:
+                self._completion_events[action.action_id].set()
 
 
     async def _validate_action(self, action: Action) -> tuple[bool, Optional[str]]:
@@ -524,7 +544,13 @@ class ActionExecutor:
             return await loop.run_in_executor(None, lambda: action.function(**action.parameters))
 
     async def _wait_for_action(self, action: Action) -> None:
-        """Wait for an action to complete"""
+        """Wait for an action to complete (event-driven)"""
+        # Use completion event if available, fall back to status check
+        event = self._completion_events.get(action.action_id)
+        if event is not None:
+            await event.wait()
+            return
+        # Fallback: poll if no event registered
         while action.status in [
             ActionStatus.PENDING,
             ActionStatus.VALIDATING,
@@ -604,7 +630,7 @@ class ActionExecutor:
 
     async def submit_and_execute(self, action: Action) -> ActionResult:
         """
-        Submit an action and wait for execution
+        Submit an action and wait for execution (event-driven)
 
         Args:
             action: Action to execute
@@ -612,17 +638,18 @@ class ActionExecutor:
         Returns:
             ActionResult with execution outcome
         """
+        # Register completion event BEFORE enqueueing (prevents race)
+        event = asyncio.Event()
+        self._completion_events[action.action_id] = event
+
         if not self.queue.enqueue(action):
+            del self._completion_events[action.action_id]
             return ActionResult(success=False, action_id=action.action_id, error="Queue is full")
 
-        # Wait for completion
-        while action.status not in [
-            ActionStatus.COMPLETED,
-            ActionStatus.FAILED,
-            ActionStatus.CANCELLED,
-        ]:
-            await asyncio.sleep(loop_sleep("sleep_fps", 0.05))
+        # Event-driven wait (was: polling at 0.05s)
+        await event.wait()
 
+        del self._completion_events[action.action_id]
         return action.result or ActionResult(
             success=False, action_id=action.action_id, error="No result available"
         )
@@ -902,8 +929,7 @@ class ActionExecutor:
     # ========== NEW: Retry Mechanism ==========
 
     async def retry_action(self, action_id: str) -> Optional[ActionResult]:
-        """Retry a failed action"""
-        # Find in failed actions
+        """Retry a failed action (event-driven)"""
         for action in self.queue._failed:
             if action.action_id == action_id:
                 if action.retry_count < action.max_retries:
@@ -911,13 +937,16 @@ class ActionExecutor:
                     action.status = ActionStatus.PENDING
                     action.result = None
 
-                    # Re-queue
+                    # Register completion event BEFORE re-enqueue
+                    event = asyncio.Event()
+                    self._completion_events[action.action_id] = event
+
                     self.queue.enqueue(action)
 
-                    # Wait for completion
-                    while action.status not in [ActionStatus.COMPLETED, ActionStatus.FAILED]:
-                        await asyncio.sleep(loop_sleep("sleep_fps", 0.05))
+                    # Event-driven wait (was: polling at 0.05s)
+                    await event.wait()
 
+                    del self._completion_events[action.action_id]
                     return action.result
                 else:
                     return ActionResult(

@@ -750,7 +750,7 @@ class TestActionExecutorIntegration:
             await executor.shutdown()
     async def test_concurrent_action_limit(self) -> None:
         """Test concurrent action limit."""
-        executor = ActionExecutor(config={"max_concurrent_actions": 2})
+        executor = ActionExecutor(config={"max_concurrent": 2})
         await executor.initialize()
         
         try:
