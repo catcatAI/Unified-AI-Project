@@ -36,6 +36,7 @@ from core.life_intensity_formula import KnowledgeDomain, LifeIntensityFormula
 from core.non_paradox_existence import GrayZoneVariableType, NonParadoxExistence
 
 from core.autonomous.behavior_executor import BehaviorExecutor
+from core.system.config.magic_numbers import lifecycle_value
 
 logger = logging.getLogger(__name__)
 
@@ -382,12 +383,19 @@ class AutonomousLifeCycle:
 
         # Modulate thresholds based on execution success rate (feedback loop)
         # High success → more confident/risky; Low success → more conservative
-        if execution_success_rate < 0.5:
-            dynamic_confidence_threshold = min(1.0, dynamic_confidence_threshold + 0.15)
-            dynamic_risk_tolerance = max(0.1, dynamic_risk_tolerance - 0.2)
-        elif execution_success_rate > 0.9:
-            dynamic_confidence_threshold = max(0.3, dynamic_confidence_threshold - 0.1)
-            dynamic_risk_tolerance = min(1.0, dynamic_risk_tolerance + 0.15)
+        success_low = lifecycle_value("lifecycle.success_rate_low", 0.5)
+        success_high = lifecycle_value("lifecycle.success_rate_high", 0.9)
+        conf_penalty = lifecycle_value("lifecycle.confidence_penalty", 0.15)
+        conf_boost = lifecycle_value("lifecycle.confidence_boost", 0.1)
+        risk_penalty = lifecycle_value("lifecycle.risk_penalty", 0.2)
+        risk_boost = lifecycle_value("lifecycle.risk_boost", 0.15)
+
+        if execution_success_rate < success_low:
+            dynamic_confidence_threshold = min(1.0, dynamic_confidence_threshold + conf_penalty)
+            dynamic_risk_tolerance = max(0.1, dynamic_risk_tolerance - risk_penalty)
+        elif execution_success_rate > success_high:
+            dynamic_confidence_threshold = max(0.3, dynamic_confidence_threshold - conf_boost)
+            dynamic_risk_tolerance = min(1.0, dynamic_risk_tolerance + risk_boost)
 
         # Adjust exploration threshold based on risk tolerance
         adjusted_exploration_threshold = self.exploration_threshold * (1.5 - dynamic_risk_tolerance)

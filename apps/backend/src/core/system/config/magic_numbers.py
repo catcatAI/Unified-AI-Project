@@ -174,3 +174,8 @@ def latency_value(key: str, default: float = 10.0) -> float:
 def limit_value(key: str, default: int = 100) -> int:
     return _safe_int(_get(key, default), default)
 
+
+def lifecycle_value(key: str, default: float = 0.5) -> float:
+    """Lifecycle feedback threshold (e.g. success_rate_low, success_rate_high, adjustment)."""
+    return _safe_float(_get(key, default), default)
+

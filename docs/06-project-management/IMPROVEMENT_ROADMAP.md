@@ -70,6 +70,7 @@
 | **CausalReasoningEngine C³ 4.0** | ingest_temporal_state() wired into chat pipeline via TemporalState bridge (was "exists but not triggered"). TemporalState records interaction snapshots, calls ingest_temporal_state() every 5 interactions. C³: 3.0→4.0/10. | chat_routes.py _fire_causal_learning(), core/state/temporal.py | ✅ Done (§X #82) |
 | **MetaController C³ 4.0** | Closed-loop calibration history → adjustment multiplier. get_calibration() tracks over/under/stable patterns; 3 consecutive over/under → ×1.5; 2 stable → ×0.8. C³: 3.5→4.0/10. | meta_controller.py get_calibration(), _calibration_history, _adjustment_multipliers | ✅ Done (§X #83) |
 | **ExecutionGate C³ 5.0** | Execution result feedback loop via record_result(). Proven-reliable handlers get +0.05 threshold boost (trust more); failing handlers get -0.05 penalty (more caution). Wired into chat pipeline. C³: 4.0→5.0/10. | execution_gate.py record_result(), _get_feedback_adjustment(); chat_routes.py auto-execute wiring | ✅ Done (§X #84) |
+| **AutonomousLifeCycle config-driven feedback** | 6 hardcoded thresholds migrated to lifecycle_value() config calls. success_rate_low/high, confidence_penalty/boost, risk_penalty/boost all config-driven. 6 new tests. C³: 3.0→3.5/10. | magic_numbers.py lifecycle_value(); autonomous_life_cycle.py _evaluate_and_decide() | ✅ Done (§X #85) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 

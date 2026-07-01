@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,712** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop; §X #84: +11 exec gate feedback).
+> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,718** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop; §X #84: +11 exec gate feedback; §X #85: +6 lifecycle config).
 
 ---
 
@@ -1309,6 +1309,23 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 
 ### Test Count (post §X #84)
 - **4,712** collected (tests/ only — 0 errors)
+
+## VI-XXVIII. Section — 2026-07-01 (§X #85: AutonomousLifeCycle config-driven feedback thresholds — magic number migration)
+
+### §X #85: AutonomousLifeCycle feedback thresholds → config-driven — **DONE**
+
+- Added `lifecycle_value()` accessor to `magic_numbers.py` for lifecycle feedback params
+- Replaced 6 hardcoded magic numbers in `_evaluate_and_decide()` with config-driven calls:
+  - `success_rate_low` (0.5), `success_rate_high` (0.9)
+  - `confidence_penalty` (0.15), `confidence_boost` (0.1)
+  - `risk_penalty` (0.2), `risk_boost` (0.15)
+- 6 new tests: config defaults (1), init (1), evaluate_decide (2), success rate effects (2)
+- New test file: `tests/core/test_autonomous_life_cycle.py` (was 0 dedicated tests)
+- C³: 3.0→**3.5/10** (config-driven thresholds improve verifiability and maintainability)
+- CAUSAL_CHAIN_COMPLETENESS.md §3.8: updated with config-driven note
+
+### Test Count (post §X #85)
+- **4,718** collected (tests/ only — 0 errors)
 
 ## VI-XXV. Section — 2026-07-01 (§X #80: EmotionSystem C³ 4.0 — cross-component Emotion→Biological link)
 
