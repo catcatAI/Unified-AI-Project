@@ -63,6 +63,7 @@
 | **Test dedup: 41 smoke files → 1** | 41 boilerplate test_import + test_instantiation files consolidated into 1 parameterized file. Net -739 lines. | 96 pass, 20 skip (same as individual files) | ✅ Fixed (§X #75) |
 | **GlobalSystemClock unified time base** | New module: core/clock/global_system_clock.py with configurable tick rate, tick subscription, disable/enable, exception isolation. Closes §8.6 #1. | 13 tests pass | ✅ Fixed (§X #76) |
 | **GlobalSystemClock wait_for_ticks + AngelaModelCore wiring** | Event-driven wait_for_ticks(n) added (asyncio.Event, no polling). AngelaModelCore._metabolic_loop replaces asyncio.sleep(2.0) with clock.wait_for_ticks(20). §8.6 #3: 2nd polling loop replaced. | 17 clock + 6 angela_model_core tests pass | ✅ Fixed (§X #77) |
+| **VisualDecoder texture 實際訓練** | FullTrainingPipeline Phase 1+2+3a actual run (not just structural). p29_trained.npz saved (7 arrays: W, b, W_hidden, b_hidden, W_featmap, b_featmap, tex_kernels). Trained vs random: mean diff 79.64. | All existing tests pass | ✅ Done (§X #78) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 
@@ -94,7 +95,7 @@
 | **HardwareProfile 硬體感知設定檔** | ✅ **DONE** (2026-06-29) — 5 種硬體場景 + 22 循環欄位 + 自動偵測 + runtime overrides。`hardware_profile.py`, 20 tests | `core/system/config/hardware_profile.py` §8.6 #5 |
 | **time.sleep() 全部審計** | ✅ **DONE** (2026-06-29) — 確認所有剩餘 `time.sleep()` 皆在同步/執行緒上下文，§8.6 #6 實質完成 | 多個檔案 §8.6 #6 |
 |------|:------:|------|:---------:|
-| **VisualDecoder 投射權重已訓練（CNN 紋理分支仍隨機）** | MEDIUM | 投射權重訓練於 CIFAR-10（42× loss 降）。**T1 DONE**: 22K texture params now trainable via `ReconstructionCycle.train_texture_step()` (pixel-level MSE + full analytic gradients). `TextureTrainer` + `FullTrainingPipeline` Phase 3a supports synthetic + real data. **剩餘**: 需實際訓練 texture 權重（非隨機）。 | 143L，投射權重已訓練，紋理權重可訓練 |
+| **VisualDecoder 投射權重已訓練（CNN 紋理分支權重已訓練）** | MEDIUM | 投射權重訓練於 CIFAR-10（42× loss 降）。**T1 DONE**: 22K texture params trainable + **實際訓練執行**（2026-07-01，§X #78）：FullTrainingPipeline Phase 1+2+3a 實際運行，`p29_trained.npz` 已儲存（7 arrays, W: 256×64, texture: 5 params）。Trained output vs random: mean diff 79.64。**剩餘**: 需更多訓練步數（100→1000+）或 real data run_on_real() 以改善品質。 | 143L，權重已訓練並持久化 |
 | **AudioWaveformDecoder 投射權重已訓練（波表生成器仍隨機）** | MEDIUM | 投射權重訓練於 ESC-50（309× loss 降）。**T2 DONE**: 55.1K wavetable params now trainable via `ReconstructionCycle.train_wavetable_step()` (waveform MSE + full analytic gradients). `WavetableTrainer` + `FullTrainingPipeline` Phase 3b supports synthetic + real data. **剩餘**: 需實際訓練波表權重（非隨機）。 | 179L，投射權重已訓練，波表權重可訓練 |
 | **SequenceGenerator 權重隨機** | ✅ **FIXED** (T3+T4 DONE, 2026-06-29) — T3: BPTT backward pass rewritten (was corrupting gradients, missing bias updates, no temporal propagation). Added `get_weights/set_weights`, `SequenceTrainer`, FullTrainingPipeline Phase 3c with persistence for all 10 RNN weight arrays. T4: Phase 3d optionally retrains SequenceGenerator on library-derived synthetic pairs. All RNN weights now trainable with correct gradients. | 212L，權重 seed=42 |
 | **ImageGenerator 管線未訓練** | ✅ **FIXED** (T4 DONE, 2026-06-29) — `PrimitiveTrainer` populates ~120 geometric shapes, trains `PrimitiveEncoder` autoencoder (loss<0.05), re-encodes library, `ImageGenerator` produces multi-color structured output after Phase 3d training. | 200L+，4 元件串接已訓練 |

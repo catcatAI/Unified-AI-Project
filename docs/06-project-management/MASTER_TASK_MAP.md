@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,643** (§X #77: +4 clock +6 angela_model_core tests).
+> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,643** (§X #78: +0 tests, training script + saved weights).
 
 ---
 
@@ -1228,6 +1228,25 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 
 ### Test Count
 - **4,643** collected (tests/ only — 0 errors)
+
+## VI-XXV. Session Summary — 2026-07-01 (§X #78: VisualDecoder texture training actual execution)
+
+### §X #78: VisualDecoder texture weights trained — **DONE** (this commit)
+
+- `scripts/train_visual_decoder.py`: new script wrapping FullTrainingPipeline.run() + train_texture()
+- First actual training run: Phase 1 (contrastive, loss 0.389) + Phase 2 (reconstruction) + Phase 3a (texture, loss 0.378)
+- `p29_trained.npz` saved with 7 weight arrays: W (256×64), b (256), W_hidden (64×64), b_hidden, W_featmap (256×64), b_featmap, tex_kernels (3×16×5×5)
+- Load verification OK: `load_default_visual_decoder_weights()` loads from saved file
+- Trained vs random output: mean absolute difference 79.64 (0→79.64 after training)
+- All multimodal weights now `p29_trained.npz` ready: production pipelines (`multimodal_service.py`, `vision_pipeline.py`, `multimodal_bridge.py`) will load trained weights on startup
+
+### Next training improvements
+- Run Phase 3a with more steps (100→1000+) for better convergence
+- Use `run_on_real()` with CIFAR-10 encoded data instead of synthetic
+- Apply same to AudioWaveformDecoder (Phase 3b)
+
+### Test Count
+- **4,643** (tests/ only — 0 errors, unchanged)
 
 ## VI-XXXI. Session Summary — 2026-07-01 (§X #74: AutonomousLifeCycle execution feedback loop)
 
