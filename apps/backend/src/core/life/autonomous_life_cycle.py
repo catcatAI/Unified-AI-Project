@@ -397,8 +397,38 @@ class AutonomousLifeCycle:
             dynamic_confidence_threshold = max(0.3, dynamic_confidence_threshold - conf_boost)
             dynamic_risk_tolerance = min(1.0, dynamic_risk_tolerance + risk_boost)
 
-        # Adjust exploration threshold based on risk tolerance
+        # Adjust exploration threshold based on risk tolerance (before per-type feedback)
         adjusted_exploration_threshold = self.exploration_threshold * (1.5 - dynamic_risk_tolerance)
+
+        # C³ 4.0: Per-type execution feedback — modulate decision-type-specific thresholds
+        # based on historical success rate for each decision type.
+        type_stats = self._behavior_executor.get_type_stats()
+        decision_type_hint = None
+
+        # Determine which decision type we're about to make based on metric analysis
+        if metrics.hsm_value > adjusted_exploration_threshold:
+            decision_type_hint = "exploration"
+        elif metrics.cognitive_gap > self.coexistence_threshold and not metrics.coexistence_active:
+            decision_type_hint = "coexistence_activation"
+        elif metrics.a_c > dynamic_confidence_threshold:
+            decision_type_hint = "meaning_construction"
+        elif metrics.cdm_conversion_rate < 0.5:
+            decision_type_hint = "resource_reallocation"
+
+        if decision_type_hint and decision_type_hint in type_stats:
+            ts = type_stats[decision_type_hint]
+            total_samples = ts["success"] + ts["fail"]
+            if total_samples >= 3:  # Require minimum samples for type-specific feedback
+                if ts["rate"] < 0.4:
+                    # Type consistently fails → raise exploration threshold (more conservative)
+                    if decision_type_hint == "exploration":
+                        adjusted_exploration_threshold = min(1.0, adjusted_exploration_threshold + 0.1)
+                    dynamic_confidence_threshold = min(1.0, dynamic_confidence_threshold + conf_penalty * 0.5)
+                    dynamic_risk_tolerance = max(0.1, dynamic_risk_tolerance - risk_penalty * 0.5)
+                elif ts["rate"] > 0.9:
+                    # Type consistently succeeds → lower threshold (more confident)
+                    dynamic_confidence_threshold = max(0.3, dynamic_confidence_threshold - conf_boost * 0.5)
+                    dynamic_risk_tolerance = min(1.0, dynamic_risk_tolerance + risk_boost * 0.5)
 
         # Decision 1: Exploration (HSM-based) - affected by risk tolerance
         if metrics.hsm_value > adjusted_exploration_threshold:

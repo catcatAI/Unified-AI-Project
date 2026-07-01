@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-07-01 (updated for §X #95: ExecutionGate C³ 5.0→6.0, class-level _results)
+  LAST_MODIFIED: 2026-07-01 (updated for §X #96: AutonomousLifeCycle C³ 3.5→4.0, per-type execution feedback)
   AUDIENCE: developers, agents
   =============================================================================
 -->

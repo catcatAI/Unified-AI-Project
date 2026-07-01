@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw
-    LAST_MODIFIED: 2026-07-01 (updated for §X #95)
+    LAST_MODIFIED: 2026-07-01 (updated for §X #96)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -51,7 +51,7 @@
 | **Chat 管線 9 階段** | WS → 情緒 → 危機 → 對齊 → 閘門 → 路由 → LLM → 學習 → 回應 | 整合測試 | ✅ 完整接線 |
 | **CLP（持續學習）** | ED3NTrainer 已接線至聊天管線 + 獨立模式 | 整合測試 | ✅ 已接線，字典成長有效 |
 | **CML（持續多模態學習）** | 自主微訓練已接線至 encode 路徑，共用生產管線 | 20 CML 測試通過 + 21 多模態服務測試通過 | ✅ 每次編碼後自動微訓練 |
-| **測試數量** | pytest 收集 | **4,735 tests** (tests/ only, verified 2026-07-01 — §X #69-95: all pass, 0 errors) | ✅ 0 failures |
+| **測試數量** | pytest 收集 | **4,741 tests** (tests/ only, verified 2026-07-01 — §X #69-96: all pass, 0 errors) | ✅ 0 failures |
 | **FullTrainingPipeline** | `pipeline_weights.npz` saved (33 arrays, 1.2MB) | 52s moderate run: texture=0.384, wavetable=0.045, sequence=0.015 | ✅ Trained weights exist on disk |
 | **Empty-data encode fast-fail** | `encode_with_retry()` now fast-fails on empty data without wasting 3 retries | 24/24 production tests pass, crisis_log reduced | ✅ Fixed (§X #60) |
 | **MainApiServer stubs eliminated** | 3 pure-pass async methods → real implementations | test_api_service_reconnection passes (22.74s) | ✅ Fixed (§X #61) |
@@ -77,6 +77,7 @@
 | **Import-only test consolidation** | Consolidated 3 import-only unit test files into 1 parameterized file. 3 files→1 file, -39 lines, -3 redundant tests (coverage preserved). Test count: 4,726→4,723. | tests/unit/test_unit_backend_imports.py | ✅ Done (§X #89) |
 | **EmotionSystem interaction feedback loop** | `process_interaction_feedback()` closes Emotion→Behavior→Response→Feedback→Emotion loop. Maps 4 outcome categories to PAD adjustments. Wired into chat pipeline. C³: 4.0→4.5/10. Test count: 4,723→4,734. | emotion_system.py, chat_routes.py, tests/unit/test_emotion_feedback_loop.py (11 tests) | ✅ Done (§X #94) |
 | **ExecutionGate cross-instance feedback persistence** | Moved `_results` from instance-level to class-level (was per-turn instance → feedback lost). Added `reset_feedback_stats()`. C³: 5.0→6.0/10 (fully functional closed-loop). Test count: 4,734→4,735. | execution_gate.py, chat_routes.py, tests/ai/core/test_execution_gate.py | ✅ Done (§X #95) |
+| **AutonomousLifeCycle per-type execution feedback** | BehaviorExecutor enhanced with per-type tracking (get_type_stats) + _evaluate_and_decide() modulates thresholds per decision type based on historical execution success. C³: 3.5→4.0/10. Test count: 4,735→4,741. | behavior_executor.py, autonomous_life_cycle.py, tests/core/test_autonomous_life_cycle.py | ✅ Done (§X #96) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 
