@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw
-   LAST_MODIFIED: 2026-06-30
+    LAST_MODIFIED: 2026-07-01
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -51,13 +51,15 @@
 | **Chat 管線 9 階段** | WS → 情緒 → 危機 → 對齊 → 閘門 → 路由 → LLM → 學習 → 回應 | 整合測試 | ✅ 完整接線 |
 | **CLP（持續學習）** | ED3NTrainer 已接線至聊天管線 + 獨立模式 | 整合測試 | ✅ 已接線，字典成長有效 |
 | **CML（持續多模態學習）** | 自主微訓練已接線至 encode 路徑，共用生產管線 | 20 CML 測試通過 + 21 多模態服務測試通過 | ✅ 每次編碼後自動微訓練 |
-| **測試數量** | pytest 收集 | **~5,085 tests** (full testpaths, verified 2026-06-30 — §X #49-58: all prior + training pipeline execution + bug fixes) | ✅ 0 failures |
+| **測試數量** | pytest 收集 | **4,594 tests** (tests/ only, verified 2026-07-01 — §X #69-74: all pass, 0 errors) | ✅ 0 failures |
 | **FullTrainingPipeline** | `pipeline_weights.npz` saved (33 arrays, 1.2MB) | 52s moderate run: texture=0.384, wavetable=0.045, sequence=0.015 | ✅ Trained weights exist on disk |
 | **Empty-data encode fast-fail** | `encode_with_retry()` now fast-fails on empty data without wasting 3 retries | 24/24 production tests pass, crisis_log reduced | ✅ Fixed (§X #60) |
 | **MainApiServer stubs eliminated** | 3 pure-pass async methods → real implementations | test_api_service_reconnection passes (22.74s) | ✅ Fixed (§X #61) |
 | **test_error_recovery 16/16 restored** | core.__getattr__ + services.__getattr__ sentinel fallback for test patch compatibility | 16 passed, 0 skipped, 0 failures (was 4+12) | ✅ Fixed (§X #62-64) |
 | **CausalReasoningEngine temporal buffer** | Per-session data accumulation enabling Granger causality (≥ 5 rounds). Dynamic strength replaces hardcoded 0.5. | 8 new tests, all pass | ✅ Fixed (§X #69) |
 | **DLI DORMANT auto-transition** | RESTING + inactivity > threshold → DORMANT; RESTING + maturity < 0.2 → DORMANT. Auto-cycle completes state machine. | 7 standalone tests all pass | ✅ Fixed (§X #71) |
+| **EmotionSystem routing_mode → LLM params** | routing_mode (conservative/exploratory) now modulates temperature/max_tokens in router.py. | All existing tests pass | ✅ Fixed (§X #73) |
+| **AutonomousLifeCycle feedback loop** | execution_success_rate influences dynamic_confidence_threshold and dynamic_risk_tolerance in _evaluate_and_decide(). Low success = conservative, high = bold. | All existing tests pass | ✅ Fixed (§X #74) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 
