@@ -457,8 +457,18 @@ async def _handle_execution_gate(
                         )
                         context["last_action_result"] = action_result
                         context["continuation_count"] = 0
+                        # Record confirm-path success for ExecutionGate C³ feedback loop (C³ 6.0)
+                        try:
+                            ExecutionGate().record_result(handler_id, True)
+                        except Exception:
+                            pass
                     except Exception as e:
                         logger.warning(f"Execution gate handler failed: {e}")
+                        # Record confirm-path failure for ExecutionGate C³ feedback loop
+                        try:
+                            ExecutionGate().record_result(handler_id, False)
+                        except Exception:
+                            pass
             elif msg_lower in cancel_words:
                 return {
                     "response_text": "\u597d\u7684\uff0c\u4e0d\u6267\u884c\u3002\u8fd8\u6709\u4ec0\u4e48\u9700\u8981\u5e2e\u5fd9\u7684\u5417\uff1f",

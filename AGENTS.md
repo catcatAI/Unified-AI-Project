@@ -79,7 +79,11 @@ pre-commit run --all-files
 > ✅ **NOTE (Updated 2026-07-01)**: **§X #83**: MetaController C³ 4.0. **§X #84**: ExecutionGate C³ 5.0. **§X #85**: AutonomousLifeCycle config-driven feedback thresholds + 6 new tests. **§X #86**: Test consolidation — deleted 4 redundant test files (encryption, code_inspector, simple). **4,717 tests collected (tests/) — 0 errors.**
 > 
 > ✅ **NOTE (Updated 2026-07-01, §X #87-91)**: **§X #87**: MD sync — update test counts 4,643→4,717 across 5 MD files. **§X #88**: Orphan print→pytest skip tests — 3 orphan files → 9 skip tests (4,717→4,726). **§X #89**: Import-only test consolidation — 3 files→1 file, -39 lines (4,726→4,723). **§X #90-91**: IMPROVEMENT_ROADMAP.md + README.md + MASTER_TASK_MAP.md sync. **4,723 tests collected (tests/) — 0 errors.**
-> - **Phase A1-A4**: External dictionary download + convert + import pipeline
+>
+> ✅ **NOTE (Updated 2026-07-01, §X #94)**: **§X #94**: EmotionSystem interaction feedback loop — `process_interaction_feedback()` closes the Emotion→Behavior→Response→Feedback→Emotion loop. Maps 4 outcome categories (error/high/low/neutral engagement) to PAD adjustments. Wired into chat_routes.py `_fire_causal_learning()`. C³: 4.0→**4.5/10** (closed-loop rate 0%→50%). 11 new tests. **4,734 tests collected (tests/) — 0 errors.**
+>
+> ✅ **NOTE (Updated 2026-07-01, §X #95)**: **§X #95**: ExecutionGate class-level _results — cross-instance feedback persistence. Root cause: `_results` was instance-level (`self._results = {}` in `__init__`), so feedback from one turn was lost on the next (every `_handle_execution_gate()` call created a new instance). Fix: moved to class-level `_results: Dict[str, Dict[str, int]] = {}`. Added `reset_feedback_stats()` for test isolation. Added autouse fixture to prevent cross-test contamination. 60 tests (was 59, +1 cross-instance). C³: 5.0→**6.0/10** (real this time). **4,735 tests collected (tests/) — 0 errors.**
+> - **Phase A1-A4: External dictionary download + convert + import pipeline
 > - **New scripts**: `scripts/download_datasets.py` (CC-CEDICT/JMdict/WordNet), `scripts/import_dictionaries.py`
 > - **460,281 entries** imported: 125k CC-CEDICT (zh↔en) + 217k JMdict (ja↔en) + 117k WordNet 3.0 (en)
 > - **Data volume**: 132MB JSON (35.8+57.7+38.8MB) — 110MB → 242MB total growth

@@ -48,7 +48,7 @@ class ExecutionGate:
     AUTO_EXECUTE = 0.6
     CONFIRM_THRESHOLD = 0.2
 
-    # C³ 5.0: Dynamic thresholds via execution result feedback
+    # C³ 6.0: Class-level _results enables cross-instance feedback persistence
 
     # Handler 映射
     HANDLER_MAP = {
@@ -61,10 +61,15 @@ class ExecutionGate:
         "vision": "vision",
     }
 
+    # C³ 6.0: Class-level shared results dict for cross-instance feedback persistence.
+    # Was instance-level (self._results) — feedback was lost every turn because
+    # each _handle_execution_gate() call creates a new ExecutionGate instance.
+    _results: Dict[str, Dict[str, int]] = {}
+
     def __init__(self, model_bus=None):
         self._model_bus = model_bus
         self._config = self._load_config()
-        self._results = {}  # handler -> {"success": int, "fail": int}
+        # DO NOT shadow _results with instance var — use class-level shared dict
 
     def _load_config(self):
         """Load execution gate config from JSON file."""
@@ -103,7 +108,7 @@ class ExecutionGate:
         # 检查是否有 handler
         handler_id = self.HANDLER_MAP.get(query_type)
 
-        # C³ 5.0: Feedback-based threshold adjustment
+        # C³ 6.0: Feedback-based threshold adjustment (class-level _results)
         fb_adj = self._get_feedback_adjustment(handler_id)
         effective_auto = round(self.AUTO_EXECUTE - fb_adj, 3)
         effective_confirm = round(self.CONFIRM_THRESHOLD - fb_adj, 3)
@@ -224,7 +229,11 @@ class ExecutionGate:
             parts.append("此操作无法撤销")
         return "；".join(parts)
 
-    # C³ 5.0: Execution result feedback loop
+    def reset_feedback_stats(self) -> None:
+        """Clear all accumulated feedback stats. Useful for testing isolation."""
+        self._results.clear()
+
+    # C³ 6.0: Execution result feedback loop (class-level _results)
     def record_result(self, handler: str, success: bool) -> None:
         """Record execution result for feedback-based threshold adjustment."""
         if handler not in self._results:

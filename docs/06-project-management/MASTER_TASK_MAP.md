@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,734** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop; §X #84: +11 exec gate feedback; §X #85: +6 lifecycle config; §X #86: -4 deleted redundant test files; §X #87: MD sync; §X #88: +9 orphan-to-skip tests; §X #89: -3 import-only consolidation; §X #94: +11 emotion feedback loop).
+> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,735** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop; §X #84: +11 exec gate feedback; §X #85: +6 lifecycle config; §X #86: -4 deleted redundant test files; §X #87: MD sync; §X #88: +9 orphan-to-skip tests; §X #89: -3 import-only consolidation; §X #94: +11 emotion feedback loop; §X #95: +1 cross-instance exec gate test).
 
 ---
 
@@ -1396,6 +1396,22 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 ## VI-XXXVII. Section — 2026-07-01 (§X #94: EmotionSystem feedback loop — C³ 4.0→4.5)
 
 ### §X #94: EmotionSystem interaction feedback loop — **DONE**
+
+## VI-XXXVIII. Section — 2026-07-01 (§X #95: ExecutionGate class-level _results — C³ 5.0→6.0)
+
+### §X #95: ExecutionGate cross-instance feedback persistence — **DONE**
+
+- **Root cause**: `_results` was instance-level (`self._results = {}` in `__init__`). Every `_handle_execution_gate()` call created a new `ExecutionGate()` instance, so feedback from one turn was always lost on the next. The C³ 5.0 feedback loop existed in code but was effectively non-functional.
+- **Fix**: Moved `_results` to class-level (`_results: Dict[str, Dict[str, int]] = {}`). All instances now share the same feedback data. Added `reset_feedback_stats()` for testing isolation.
+- **Confirm-path wiring**: chat_routes.py confirm-path handler execution already calls `ExecutionGate().record_result(handler_id, True/False)` — now correctly shares results with the gate instance used in `decide()`.
+- **New test**: `test_cross_instance_results_shared()` — verifies g1.record_result affects g2._results.
+- **Test contamination fix**: Added autouse fixture `_reset_execution_gate_stats()` to clear class-level _results between tests.
+- **Total tests**: 60 (was 59, +1 cross-instance). All pass.
+- **ExecutionGate C³**: 5.0→**6.0/10** — feedback loop now actually functional across turns.
+- **CAUSAL_CHAIN_COMPLETENESS.md**: §3.5 updated (100% closed-loop rate).
+
+### Test Count
+- **4,735** collected (tests/ only — +1 new test, 0 errors)
 
 - Added `process_interaction_feedback(engagement_ratio, had_error, response_success)` to EmotionSystem
 - Maps 4 outcome categories to PAD adjustments: error→stress/fear, high engagement→joy/dopamine, low engagement→sadness/cortisol, neutral→calm/trust

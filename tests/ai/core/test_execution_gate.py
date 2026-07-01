@@ -276,11 +276,28 @@ class TestExecutionGateIntegration:
         assert d.action in ("confirm_then_execute", "reject")
 
 
+# Autouse fixture to reset class-level _results between tests (C³ 6.0)
+@pytest.fixture(autouse=True)
+def _reset_execution_gate_stats():
+    """Reset ExecutionGate._results before each test to prevent cross-test contamination."""
+    ExecutionGate._results.clear()
+    yield
+
+
 class TestExecutionGateFeedbackLoop:
-    """C³ 5.0: execution result feedback to routing decisions."""
+    """C³ 6.0: execution result feedback to routing decisions (class-level _results)."""
 
     def setup_method(self):
         self.gate = ExecutionGate()
+
+    def test_cross_instance_results_shared(self):
+        """Verify class-level _Results is shared across instances (C³ 6.0)."""
+        g1 = ExecutionGate()
+        g2 = ExecutionGate()
+        g1.record_result("web_search", True)
+        assert g2._results["web_search"]["success"] == 1
+        g2.record_result("file_ops", True)
+        assert g1._results["file_ops"]["success"] == 1
 
     def test_record_result_tracks_success(self):
         self.gate.record_result("web_search", True)
