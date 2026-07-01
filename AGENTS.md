@@ -7,7 +7,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: en
-  LAST_MODIFIED: 2026-07-01
+   LAST_MODIFIED: 2026-07-02
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -89,6 +89,10 @@ pre-commit run --all-files
 > ✅ **NOTE (Updated 2026-07-01, §X #97)**: **§X #97**: IntentModel C³ 3.0→4.0 — 3D multi-parameter mapping in DLI `_update_intent_state()`. Each 3D intent vector component (ix, iy, iz) now maps to a **distinct parameter** per dimension: Alpha(energy/comfort/arousal), Beta(focus/curiosity/learning), Gamma(happiness/trust/anticipation), Delta(bond/trust/attention). Directional intent info now preserved across 12 parameters (was 4). Also fixed pre-existing `zeta` dimension bug in `state_matrix.py` (missing from DEFAULT_DIMENSIONS, causing `get_state()` AttributeError). 7 new tests (all pass). **4,748 tests collected (tests/) — 0 errors.**
 > 
 > ✅ **NOTE (Updated 2026-07-01, §X #98)**: **§X #98**: DLI circular import fix — `brain_bridge_service.py` replaced module-level `from core.life.digital_life_integrator import DigitalLifeIntegrator` with `TYPE_CHECKING` guard + `from __future__ import annotations`. Chain broken: DLI→LLMDecisionLoop→proactive_interaction→WeatherService→services.__init__→brain_bridge_service→DLI. Unblocks +2 previously skipped tests (`test_get_digital_life_returns_instance` + `test_alpha_3param_mapping`). **4,748 tests collected (tests/) — 0 errors.**
+> 
+> > ✅ **NOTE (Updated 2026-07-01, §X #99)**: **§X #99**: Bare `except: pass` → proper logging across 15 production-critical instances in 10 files (multimodal_service.py, chat_routes.py, multimodal_state_persistence.py, cross_modal_router.py, cross_modal_quality.py, vision_service.py, negativity.py, tickle_reflex_system.py, data_loader.py). All now use `logger.debug()` or `logger.warning()` with `exc_info=True`. No silent error swallowing. **4,748 tests collected (tests/) — 0 errors.**
+> > 
+> > ✅ **NOTE (Updated 2026-07-01, §X #100)**: **§X #100**: DynamicThresholdManager.update_from_state_matrix() — was pass placeholder, now reads alpha/gamma/beta dimension values from StateMatrix4D to dynamically adjust emotion thresholds (happiness/sadness/anger/social_initiative). 7 new tests. **4,755 tests collected (tests/) — 0 errors.**
 > - **Phase A1-A4: External dictionary download + convert + import pipeline
 > - **New scripts**: `scripts/download_datasets.py` (CC-CEDICT/JMdict/WordNet), `scripts/import_dictionaries.py`
 > - **460,281 entries** imported: 125k CC-CEDICT (zh↔en) + 217k JMdict (ja↔en) + 117k WordNet 3.0 (en)

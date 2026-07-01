@@ -206,8 +206,8 @@ class CrossModalQualityDashboard:
         try:
             self._get_vision_monitor().clear()
         except Exception:
-            pass
+            logger.debug("Failed to clear vision monitor", exc_info=True)
         try:
             self._get_audio_monitor().clear()
         except Exception:
-            pass
+            logger.debug("Failed to clear audio monitor", exc_info=True)

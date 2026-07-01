@@ -280,17 +280,17 @@ class CrossModalRouter:
             self._get_vision_pipeline()
             status["vision"] = True
         except Exception:
-            pass
+            logger.debug("Vision pipeline not available", exc_info=True)
         try:
             self._get_audio_pipeline()
             status["audio"] = True
         except Exception:
-            pass
+            logger.debug("Audio pipeline not available", exc_info=True)
         try:
             self._get_latent_space()
             status["cross"] = True
         except Exception:
-            pass
+            logger.debug("Latent space not available", exc_info=True)
         return {
             "pipelines": status,
             "cache_size": len(self._cache),

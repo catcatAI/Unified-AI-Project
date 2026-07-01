@@ -33,7 +33,7 @@ def _json_default(obj):
             if isinstance(result, (list, tuple)):
                 return result
         except Exception:
-            pass
+            logger.debug("Failed to convert object to list, falling back to str", exc_info=True)
     return str(obj)
 
 
@@ -179,7 +179,7 @@ class MultimodalStatePersistence:
                 with open(meta_path, "r", encoding="utf-8") as f:
                     metadata = json.load(f)
             except Exception:
-                pass
+                logger.warning("Failed to load checkpoint metadata, continuing", exc_info=True)
 
         # 2. Load weights
         weights_path = os.path.join(cp_dir, "weights.npz")
@@ -254,7 +254,7 @@ class MultimodalStatePersistence:
                     with open(meta_path, "r", encoding="utf-8") as f:
                         meta = json.load(f)
                 except Exception:
-                    pass
+                    logger.debug("Failed to parse checkpoint metadata JSON", exc_info=True)
             ts = meta.get("timestamp", os.path.getmtime(cp_dir))
             age_hours = round((now - ts) / 3600, 1)
             checkpoints.append({

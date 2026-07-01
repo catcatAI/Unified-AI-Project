@@ -938,14 +938,7 @@ class MultimodalService:
             if hasattr(vp, 'get_stats'):
                 status["vision_pipeline"] = vp.get_stats()
         except Exception:
-            pass
-        try:
-            # P33: Check audio pipeline health
-            ap = self._get_audio_pipeline()
-            if hasattr(ap, 'get_stats'):
-                status["audio_pipeline"] = ap.get_stats()
-        except Exception:
-            pass
+            logger.debug("vision pipeline health check failed", exc_info=True)
         try:
             async with self._items_lock:
                 status["registered_items"] = len(self._registered_items)
@@ -956,16 +949,16 @@ class MultimodalService:
             if self._error_recovery is not None:
                 status["recovery_state"] = self._error_recovery.get_recovery_state()
         except Exception:
-            pass
+            logger.debug("error recovery health check failed", exc_info=True)
         try:
             if self._state_persistence is not None:
                 cp_list = await self._state_persistence.list_checkpoints()
                 status["checkpoints"] = cp_list
         except Exception:
-            pass
+            logger.debug("state persistence health check failed", exc_info=True)
         try:
             if self._mm_quality_monitor is not None:
                 status["quality_monitor"] = self._mm_quality_monitor.report()
         except Exception:
-            pass
+            logger.debug("quality monitor health check failed", exc_info=True)
         return status

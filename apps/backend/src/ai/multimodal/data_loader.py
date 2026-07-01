@@ -163,7 +163,7 @@ class CIFAR10Loader:
             try:
                 checkpoint_path.unlink(missing_ok=True)
             except Exception:
-                pass
+                logger.debug("Failed to remove checkpoint file", exc_info=True)
             logger.info("CIFAR-10: encoded all %d images", count)
         else:
             logger.info("CIFAR-10: encoded %d/%d images", count, len(self._samples))

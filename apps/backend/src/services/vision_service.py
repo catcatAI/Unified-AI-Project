@@ -480,7 +480,7 @@ class VisionService:
                 feature_hash = [ord(c) / 255.0 for c in hashlib.md5(image_data).hexdigest()[:64]]
                 await cluster_manager.distribute_task("Vision", feature_hash)
             except Exception:
-                pass
+                logger.debug("Cluster distribution failed", exc_info=True)
             return properties
         except Exception:
             return [{"label": "unrecognized_image", "confidence": 0.5, "property": "format"}]
