@@ -62,6 +62,7 @@
 | **AutonomousLifeCycle feedback loop** | execution_success_rate influences dynamic_confidence_threshold and dynamic_risk_tolerance in _evaluate_and_decide(). Low success = conservative, high = bold. | All existing tests pass | ✅ Fixed (§X #74) |
 | **Test dedup: 41 smoke files → 1** | 41 boilerplate test_import + test_instantiation files consolidated into 1 parameterized file. Net -739 lines. | 96 pass, 20 skip (same as individual files) | ✅ Fixed (§X #75) |
 | **GlobalSystemClock unified time base** | New module: core/clock/global_system_clock.py with configurable tick rate, tick subscription, disable/enable, exception isolation. Closes §8.6 #1. | 13 tests pass | ✅ Fixed (§X #76) |
+| **GlobalSystemClock wait_for_ticks + AngelaModelCore wiring** | Event-driven wait_for_ticks(n) added (asyncio.Event, no polling). AngelaModelCore._metabolic_loop replaces asyncio.sleep(2.0) with clock.wait_for_ticks(20). §8.6 #3: 2nd polling loop replaced. | 17 clock + 6 angela_model_core tests pass | ✅ Fixed (§X #77) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 

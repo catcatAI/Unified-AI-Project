@@ -76,7 +76,7 @@ pre-commit run --all-files
 > ✅ **NOTE (Updated 2026-06-29)**: Extended session now **158+ commits** (Jun 25–29). Includes §X #34-#54: save_visual_decoder_weights, TemporalState↔CausalReasoningEngine bridge, U5 security, all stub eliminations (R1-R3, §X #27), T1-T5 training DONE, 5 real stub modules (§X #49), ripple/node+influence/space stubs (§X #50), magic number migration (§X #51), test_final.py fix (§X #52), 4 Level5ASI STUB→real modules (§X #53), formula coefficient migration (§X #54). **All stubs eliminated** (0 stubs). **5,085 tests collected** (full testpaths), 4,578 (tests/), 0 errors.
 > 
 
-> ✅ **NOTE (Updated 2026-06-29)**: Test count now **5,085 (full) / 4,578 (tests/)** — 0 collection errors. T1-T5 ALL DONE. 0 docstring-only stubs remain. 0 STUB markers in source. P9-3: ~0 formula coefficients remain. §0.5 banned: 2 remaining (Frontend Live2D, Frontend Dashboard).
+> ✅ **NOTE (Updated 2026-07-01)**: **§X #76**: GlobalSystemClock §8.6 #1 DONE — `core/clock/global_system_clock.py`. Configurable tick rate, subscribe/unsubscribe/disable/enable, force_tick, 13 tests. **§X #77**: wait_for_ticks() event-driven + AngelaModelCore wired to clock (asyncio.sleep→clock.wait_for_ticks). 17 clock + 6 angela_model_core tests. **4,643 tests collected (tests/) — 0 errors.** §8.6 #3: 2/80+ polling loops replaced. §0.5 banned: 2 remaining (Frontend Live2D, Frontend Dashboard).
 > - **Phase A1-A4**: External dictionary download + convert + import pipeline
 > - **New scripts**: `scripts/download_datasets.py` (CC-CEDICT/JMdict/WordNet), `scripts/import_dictionaries.py`
 > - **460,281 entries** imported: 125k CC-CEDICT (zh↔en) + 217k JMdict (ja↔en) + 117k WordNet 3.0 (en)

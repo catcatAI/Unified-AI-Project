@@ -764,7 +764,7 @@ print(f'Total pass statements: {count}')
 | 18 | Scan Desktop | `desktop_interaction.py` | **30.0s** | 掃描桌面 | ✅ 合理 |
 | 19 | Endocrine Update | `endocrine_system_core.py` | **5.0s** | 內分泌系統 | ✅ 符合生理模擬需求 |
 | 20 | Level5 Config Update | `level5_config.py` | **5.0s** | L5配置更新 | 🟡 過於頻繁？ |
-| 21 | Metabolic Interval | `angela_model_core.py` | **2.0s** | 代謝更新 | 🟡 與 Heartbeat(30s) 不一致 |
+| 21 | Metabolic Interval | `angela_model_core.py` | **2.0s** → clock.wait_for_ticks(20) @10Hz (§X #76) | 代謝更新 | 🟢 現已使用 GlobalSystemClock 事件驅動時間基 (2026-07-01) — `asyncio.sleep(2.0)` 改為 `clock.wait_for_ticks(20)` |
 | 22 | Heartbeat Primary | `heartbeat.py` | **5.0~60.0s** (動態) | 生物/代謝循環 | ✅ 動態調整，最佳實踐 |
 | 23 | Heartbeat Integration | `heartbeat.py` | **2.0~10.0s** (動態, 依 arousal) | 小腦/神經整合 | ✅ 已修復 2026-06-29 — 頻率從 0.1s→動態 2-10s，消除 50-600x 差。stop() 現同時取消 Integration task (commit `this commit`) |
 | 24 | Life Cycle Check | `digital_life_integrator.py` | **10.0s** | 生命週期檢查 | ✅ 合理 |
@@ -873,9 +873,9 @@ print(f'Total pass statements: {count}')
 
 | # | 建議 | 影響 | 難度 |
 |:-:|:-----|:----:|:----:|
-| 1 | **引入 GlobalSystemClock**: 統一時間基準，支援 tick 訂閱 | 🔴 高 | 中 |
+| 1 | **引入 GlobalSystemClock**: 統一時間基準，支援 tick 訂閱 | 🔴 **DONE** (2026-07-01, §X #76) — `core/clock/global_system_clock.py`: 可設定頻率 (0.1-1000Hz)、start/stop、tick 訂閱 (任意間隔)、disable/enable 訂閱、異常隔離。13 tests pass。 | 高 | 中 |
 | 2 | **循環頻率標準化**: 合併重複循環、統一語義命名 | ✅ **DONE** (2026-06-29) — Bridge `_wait_for_completion` 改用 `asyncio.Event` 取代 0.05s 輪詢，消除 bridge_fast 與 bridge_poll 其中一個重複循環。`emotion_tick`(1.0s) 整併至 `emotion_update`(1.0s) — 同一檔案同名同值。`bridge_fast` 重新命名為 `bridge_error_backoff` — 語義明確化。**3/4 重複循環已處理** |
-| 3 | **事件驅動取代輪詢**: `asyncio.Event()` 取代 80% 的 sleep 輪詢 | 🟢 **PARTIAL** (2026-06-29) — Bridge `_wait_for_completion` 已從 0.05s 輪詢改為 `asyncio.Event` 事件驅動。第一處實作。80+ 處 sleep 輪詢尚待改進 |
+| 3 | **事件驅動取代輪詢**: `asyncio.Event()` 取代 80% 的 sleep 輪詢 | 🟢 **PARTIAL** (2026-07-01) — Bridge `_wait_for_completion` 已從 0.05s 輪詢改為 `asyncio.Event` 事件驅動。AngelaModelCore._metabolic_loop 已從 `asyncio.sleep(2.0)` 改為 `clock.wait_for_ticks(20)` 事件驅動 (§X #77)。79+ 處 sleep 輪詢尚待改進 |
 | 4 | **硬體感知動態頻率**: 根據 CPU/GPU/電池動態調整所有循環 | 🟢 **BASIC** (2026-06-29) — `loop_sleep()` 現已自動套用 HardwareProfile multiplier。所有 32 個循環現在有硬體感知頻率調整。待改進：個別硬體指標 (CPU溫度、GPU負載) 的即時動態調整。 |
 | 5 | **HardwareProfile**: 定義 5 種硬體場景的預設頻率表 | ✅ **DONE** (2026-06-29) — `hardware_profile.py`: HardwareScenario enum (5 scenarios), FrequencyProfile dataclass (22 interval fields), PROFILES with distinct values for each scenario, HardwareProfile class with auto-detection (env var, CI, headless Linux, ARM, battery, default), runtime overrides, multiplier API. 20 tests pass |
 | 6 | **消除 time.sleep()**: 所有同步 sleep 改為 asyncio.sleep | ✅ **DONE** (2026-06-29) — 確認所有剩餘 `time.sleep()` 呼叫皆在同步/執行緒上下文中 (agent_manager._wait_router_health, agent_manager_extensions subprocess 範例, repl.py 執行緒, execution_monitor 監控執行緒)。非 async 函式中的 `time.sleep()` 為正確用法。§8.6 #6 實質完成 |

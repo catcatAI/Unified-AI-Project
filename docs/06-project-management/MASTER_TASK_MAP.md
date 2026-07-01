@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,632** (§X #76: +13 clock tests).
+> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,643** (§X #77: +4 clock +6 angela_model_core tests).
 
 ---
 
@@ -1209,6 +1209,26 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 ### Test Count
 - **4,632** collected (tests/ only — 0 errors)
 
+## VI-XXIV. Session Summary — 2026-07-01 (§X #77: GlobalSystemClock wait_for_ticks + AngelaModelCore wiring)
+
+### §X #77: GlobalSystemClock enhancements — **DONE** (commit `ea821cf3a`)
+
+- Added `wait_for_ticks(n)`: event-driven wait for n ticks (no polling)
+- Uses `asyncio.Event` (`_tick_event`) set after each tick in `_tick_loop()`
+- 4 new tests: deterministic, real-time, clamped-to-one, multi-waiter
+- **17 clock tests**: all pass
+
+### §X #77b: AngelaModelCore wired to GlobalSystemClock
+
+- `AngelaModelCore._metabolic_loop`: `asyncio.sleep(2.0)` → `clock.wait_for_ticks(20)` @10Hz
+- Added `shutdown()` method for graceful stop (cancels heartbeat + stops clock)
+- 6 new tests: clock creation/start/stop, metabolic loop ticks, snapshot, prefix
+- §8.6 #3: 2nd polling loop replaced (bridge → metabolic)
+- Import is slow (~35s due to BiologicalIntegrator chain) → marked @pytest.mark.slow
+
+### Test Count
+- **4,643** collected (tests/ only — 0 errors)
+
 ## VI-XXXI. Session Summary — 2026-07-01 (§X #74: AutonomousLifeCycle execution feedback loop)
 
 ### §X #74: Execution feedback loop closure — **DONE** (commit `96077d9db`)
@@ -1220,9 +1240,7 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 ### Test Count (post §X #75)
 - **4,594** collected (tests/ only — 0 errors)
 
-## VI-XXIIII. Session Summary — 2026-07-01 (§X #76: GlobalSystemClock — unified time base)
-
-### §X #71: DORMANT auto-transition — **DONE** (commits `7b86cf28b`, `220ef020b`, `c5b143e25`)
+## VI-XXX. Session Summary — 2026-07-01 (§X #71-73: DORMANT auto-transition + EmotionSystem routing_mode consumption + LLM parameter modulation)
 
 Two auto-entry paths to DORMANT (was only reachable via force_state()):
 1. **Time-based**: RESTING + inactivity > `dormant_threshold_minutes` (default 120 min) → DORMANT
