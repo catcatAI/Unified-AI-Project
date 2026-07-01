@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw
-    LAST_MODIFIED: 2026-07-01
+    LAST_MODIFIED: 2026-07-01 (updated for §X #86)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -51,7 +51,7 @@
 | **Chat 管線 9 階段** | WS → 情緒 → 危機 → 對齊 → 閘門 → 路由 → LLM → 學習 → 回應 | 整合測試 | ✅ 完整接線 |
 | **CLP（持續學習）** | ED3NTrainer 已接線至聊天管線 + 獨立模式 | 整合測試 | ✅ 已接線，字典成長有效 |
 | **CML（持續多模態學習）** | 自主微訓練已接線至 encode 路徑，共用生產管線 | 20 CML 測試通過 + 21 多模態服務測試通過 | ✅ 每次編碼後自動微訓練 |
-| **測試數量** | pytest 收集 | **4,594 tests** (tests/ only, verified 2026-07-01 — §X #69-74: all pass, 0 errors) | ✅ 0 failures |
+| **測試數量** | pytest 收集 | **4,717 tests** (tests/ only, verified 2026-07-01 — §X #69-86: all pass, 0 errors) | ✅ 0 failures |
 | **FullTrainingPipeline** | `pipeline_weights.npz` saved (33 arrays, 1.2MB) | 52s moderate run: texture=0.384, wavetable=0.045, sequence=0.015 | ✅ Trained weights exist on disk |
 | **Empty-data encode fast-fail** | `encode_with_retry()` now fast-fails on empty data without wasting 3 retries | 24/24 production tests pass, crisis_log reduced | ✅ Fixed (§X #60) |
 | **MainApiServer stubs eliminated** | 3 pure-pass async methods → real implementations | test_api_service_reconnection passes (22.74s) | ✅ Fixed (§X #61) |
@@ -67,10 +67,11 @@
 | **多模態真實資料訓練** | Phase 1+2 with real CIFAR-10 data (contrastive loss 0.195 vs 0.389 synthetic). Phase 3a texture (loss 0.271). Phase 3b wavetable (loss 0.050). 15-weight joint p29_trained.npz (7 visual + 8 audio). data_loader.py float32 fix (was saving object arrays causing training crash). | scripts/train_multimodal_real.py | ✅ Done (§X #79) |
 | **EmotionSystem C³ 4.0** | Emotion→BiologicalIntegrator cross-component link. High-stress emotions (anger/fear/sadness) trigger process_stress_event(); positive emotions (joy/trust) trigger process_relaxation_event(). 23 new tests. C³ chain depth: 3→4/10. | chat_routes.py _apply_emotion_to_biology(), tests/unit/test_emotion_bio_chain.py | ✅ Done (§X #80) |
 | **IntentModel C³ 3.0** | scan_memory_proximity() wired into DLI lifecycle (was dead code). None bridge guard added. C³: 2.0→3.0/10. | digital_life_integrator.py, intent_model.py | ✅ Done (§X #81) |
-| **CausalReasoningEngine C³ 4.0** | ingest_temporal_state() wired into chat pipeline via TemporalState bridge (was "exists but not triggered"). TemporalState records interaction snapshots, calls ingest_temporal_state() every 5 interactions. C³: 3.0→4.0/10. | chat_routes.py _fire_causal_learning(), core/state/temporal.py | ✅ Done (§X #82) |
+| **CausalReasoningEngine C³ 4.0** | ingest_temporal_state() wired into chat pipeline via TemporalState bridge (was "exists but not triggered"). TemporalState records interaction snapshots, calls ingest_temporal_state() every 5 interactions. +5 edge case tests. C³: 3.0→4.0/10. | chat_routes.py _fire_causal_learning(), core/state/temporal.py | ✅ Done (§X #82, #82b) |
 | **MetaController C³ 4.0** | Closed-loop calibration history → adjustment multiplier. get_calibration() tracks over/under/stable patterns; 3 consecutive over/under → ×1.5; 2 stable → ×0.8. C³: 3.5→4.0/10. | meta_controller.py get_calibration(), _calibration_history, _adjustment_multipliers | ✅ Done (§X #83) |
 | **ExecutionGate C³ 5.0** | Execution result feedback loop via record_result(). Proven-reliable handlers get +0.05 threshold boost (trust more); failing handlers get -0.05 penalty (more caution). Wired into chat pipeline. C³: 4.0→5.0/10. | execution_gate.py record_result(), _get_feedback_adjustment(); chat_routes.py auto-execute wiring | ✅ Done (§X #84) |
 | **AutonomousLifeCycle config-driven feedback** | 6 hardcoded thresholds migrated to lifecycle_value() config calls. success_rate_low/high, confidence_penalty/boost, risk_penalty/boost all config-driven. 6 new tests. C³: 3.0→3.5/10. | magic_numbers.py lifecycle_value(); autonomous_life_cycle.py _evaluate_and_decide() | ✅ Done (§X #85) |
+| **Test dedup: clean up redundant test files** | Deleted 4 redundant test files (encryption, code_inspector, simple). AGENTS.md note now reflects 4,717 tests (tests/ only). | encryption, code_inspector_integration, simple test files deleted | ✅ Done (§X #86) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 

@@ -49,10 +49,12 @@
 
 | §X | 內容 | 狀態 |
 |:--:|:-----|:----:|
-| #66 | 測試改善計畫 + 文件 | ⏳ 進行中 |
-| #67 | import-only 測試整合 | ⏳ 待開始 |
-| #68 | test_smoke_core 參數化 | ⏳ 待開始 |
-| #69 | agents import 參數化 | ⏳ 待開始 |
+| #66 | 測試改善計畫 + 文件 | ✅ **DONE** (2026-06-30) |
+| #67 | import-only 測試整合 | ✅ **DONE** (2026-06-30, §X #66 — 14 files→5 files) |
+| #68 | test_smoke_core 參數化 + commit deletions | ✅ **DONE** (2026-06-30, §X #68 — 23 file deletions committed) |
+| #69 | agents import 參數化 | ✅ **DONE** (2026-06-30, §X #67 — 3 more service files consolidated) |
+| #75 | 41 smoke test files → 1 parameterized | ✅ **DONE** (2026-07-01, −739 lines, net 96 pass/20 skip) |
+| #86 | Delete 4 redundant test files | ✅ **DONE** (2026-07-01, encryption, code_inspector, simple) |
 
 ---
 
