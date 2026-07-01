@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw
-    LAST_MODIFIED: 2026-07-01 (updated for §X #86)
+    LAST_MODIFIED: 2026-07-01 (updated for §X #89)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -51,7 +51,7 @@
 | **Chat 管線 9 階段** | WS → 情緒 → 危機 → 對齊 → 閘門 → 路由 → LLM → 學習 → 回應 | 整合測試 | ✅ 完整接線 |
 | **CLP（持續學習）** | ED3NTrainer 已接線至聊天管線 + 獨立模式 | 整合測試 | ✅ 已接線，字典成長有效 |
 | **CML（持續多模態學習）** | 自主微訓練已接線至 encode 路徑，共用生產管線 | 20 CML 測試通過 + 21 多模態服務測試通過 | ✅ 每次編碼後自動微訓練 |
-| **測試數量** | pytest 收集 | **4,726 tests** (tests/ only, verified 2026-07-01 — §X #69-88: all pass, 0 errors) | ✅ 0 failures |
+| **測試數量** | pytest 收集 | **4,723 tests** (tests/ only, verified 2026-07-01 — §X #69-89: all pass, 0 errors) | ✅ 0 failures |
 | **FullTrainingPipeline** | `pipeline_weights.npz` saved (33 arrays, 1.2MB) | 52s moderate run: texture=0.384, wavetable=0.045, sequence=0.015 | ✅ Trained weights exist on disk |
 | **Empty-data encode fast-fail** | `encode_with_retry()` now fast-fails on empty data without wasting 3 retries | 24/24 production tests pass, crisis_log reduced | ✅ Fixed (§X #60) |
 | **MainApiServer stubs eliminated** | 3 pure-pass async methods → real implementations | test_api_service_reconnection passes (22.74s) | ✅ Fixed (§X #61) |
@@ -72,6 +72,9 @@
 | **ExecutionGate C³ 5.0** | Execution result feedback loop via record_result(). Proven-reliable handlers get +0.05 threshold boost (trust more); failing handlers get -0.05 penalty (more caution). Wired into chat pipeline. C³: 4.0→5.0/10. | execution_gate.py record_result(), _get_feedback_adjustment(); chat_routes.py auto-execute wiring | ✅ Done (§X #84) |
 | **AutonomousLifeCycle config-driven feedback** | 6 hardcoded thresholds migrated to lifecycle_value() config calls. success_rate_low/high, confidence_penalty/boost, risk_penalty/boost all config-driven. 6 new tests. C³: 3.0→3.5/10. | magic_numbers.py lifecycle_value(); autonomous_life_cycle.py _evaluate_and_decide() | ✅ Done (§X #85) |
 | **Test dedup: clean up redundant test files** | Deleted 4 redundant test files (encryption, code_inspector, simple). AGENTS.md note now reflects 4,717 tests (tests/ only). | encryption, code_inspector_integration, simple test files deleted | ✅ Done (§X #86) |
+| **MD sync — §X #87** | Synced test counts 4,643→4,717 across README, IMPROVEMENT_ROADMAP, TEST_IMPROVEMENT_PLAN, AGENTS.md, MASTER_TASK_MAP.md | 5 MD files updated | ✅ Done (§X #87) |
+| **Orphan print→pytest skip test conversion** | Converted 3 orphan print-based test files (0 collected) to proper pytest skip tests (9 collected, all skipped). References Phase 9-12 deleted modules. Test count: 4,717→4,726. | tests/core/test_logic_parser.py, test_logic_tool.py, test_math_model.py | ✅ Done (§X #88) |
+| **Import-only test consolidation** | Consolidated 3 import-only unit test files into 1 parameterized file. 3 files→1 file, -39 lines, -3 redundant tests (coverage preserved). Test count: 4,726→4,723. | tests/unit/test_unit_backend_imports.py | ✅ Done (§X #89) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 
