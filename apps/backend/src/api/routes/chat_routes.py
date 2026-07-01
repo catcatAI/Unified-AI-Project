@@ -648,6 +648,20 @@ def _fire_causal_learning(
         buf["resp_lengths"].append(resp_len)
         buf["engagement_ratios"].append(engagement)
 
+        # Emotion feedback loop: interaction outcome → emotional state adjustment
+        try:
+            es = _get_emotion_system()
+            if es:
+                # Determine if there was a processing error during this interaction
+                had_error = len(response_text) == 0
+                es.process_interaction_feedback(
+                    engagement_ratio=engagement,
+                    had_error=had_error,
+                    response_success=None,  # Let engagement_ratio determine
+                )
+        except Exception as e:
+            logger.debug(f"Emotion feedback loop failed: {e}")
+
         # Dynamic strength: higher when response is substantive relative to query
         dynamic_strength = min(0.9, max(0.1, engagement / 5.0))
 

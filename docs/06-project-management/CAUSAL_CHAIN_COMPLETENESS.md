@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-07-01
+  LAST_MODIFIED: 2026-07-01 (updated for §X #94: EmotionSystem C³ 4.0→4.5, interaction feedback loop)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -458,7 +458,7 @@ prompt += f"Current emotional state: {emotion_summary}"
 | **ExecutionGate → Pipeline** | ✅完整 | **5.0/10** (was 4.0, §X #84) | 8/10 | 3 | 30% | 🟢 執行結果回饋閉環：record_result() 成功/失敗 → 動態調整有效閾值 (§X #84) |
 | **DigitalLifeIntegrator** | ✅完整 | **5.0/10** (was 4.5, §X #71) | 8/10 | 2 | 60% | 🟡 6/6 狀態有行為 + DORMANT auto-transition (commit `7b86cf28b`) |
 | **MetaController** | ✅完整 | **4.0/10** (was 3.5, §X #83) | 7/10 | 2 | 30% | 🟡 閉環校準歷史 → 調整幅度動態倍率 (§X #83 closed-loop) |
-| **EmotionSystem** | ✅完整 | **4.0/10** (was 3.0, §X #80) | 9/10 | 4 | 0% | 🟢 Emotion→BiologicalIntegrator stress/relaxation |
+| **EmotionSystem** | ✅完整 | **4.5/10** (was 4.0, §X #94) | 9/10 | 4 | 50% | 🟢 Emotion→BiologicalIntegrator stress/relaxation + interaction_feedback loop (§X #94) |
 | **AutonomousLifeCycle** | ✅完整 | **3.5/10** (was 3.0, §X #85) | 8/10 | 3 | 30% | 🟡 決策執行 + 回饋閉環 + config 驅動閾值 (commit §X #74, §X #85) |
 | **CausalReasoningEngine** | ✅完整 | **4.0/10** (was 3.0, §X #82) | 9/10 | 3 | 0% | 🟢 ingest_temporal_state() wired into chat pipeline, TemporalState snapshots every 5 interactions (§X #82) |
 | **IntentModel** | ✅完整 | **3.0/10** (was 2.0, §X #81) | 7/10 | 3 | 0% | 🟡 scan_memory_proximity now wired into DLI lifecycle + None bridge guard |
@@ -604,7 +604,7 @@ def test_causal_chain_<component>_<path>() -> None:
 | DigitalLifeIntegrator | `core/life/digital_life_integrator.py` | 380 | ✅ | ✅ | ✅ 6/6 狀態行為 | 2 | 🟡 |
 | MetaController | `ai/meta/meta_controller.py` | 130 | ❌ | ✅ EWMA | ✅ auto_apply_thresholds | 2 | 🟡 |
 | AutonomousLifeCycle | `core/life/autonomous_life_cycle.py` | 410 | ✅ | ✅ | ✅ BehaviorExecutor + config-driven feedback | 3 | 🟡 |
-| EmotionSystem | `ai/alignment/emotion_system.py` | 280 | ❌ | ✅ | ✅ apply_influence + prompt | 2 | 🟡 |
+| EmotionSystem | `ai/alignment/emotion_system.py` | 280 | ❌ | ✅ | ✅ apply_influence + prompt + interaction feedback | 4 | 🟢 |
 | CausalReasoningEngine | `ai/reasoning/causal_reasoning_engine.py` | 218 | ❌ | ✅ | ✅ LLM prompt injection + temporal buffer (Granger enabled after 5+ rounds) | 1→3 | 🟡 |
 | IntentModel | `core/life/intent_model.py` | 80 | ❌ | ✅ | ✅ DigitalLifeIntegrator | 2 | 🟡 |
 | ModalityGateway | `core/life/digital_life_integrator.py` | 70 | ❌ | ✅ | 🟡 狀態更新但無人讀 | 0.5 | 🔴 |
@@ -910,3 +910,23 @@ File: `apps/backend/src/core/system/config/hardware_profile.py`
 API: `HardwareProfile()` → `.scenario`, `.profile`, `.get(key, default)`, `.set_override(key, value)`, `.apply_multiplier(base_value)`, `.get_summary()`
 
 詳見: `apps/backend/src/core/system/config/hardware_profile.py` (實作) + `tests/core/test_hardware_profile.py` (20 測試)
+
+---
+
+## 9. 維護會話追蹤
+
+### 9.1 §X #87-#93 (2026-07-01): 維護與測試整理 — 無 C³ 影響
+
+以下會話均為文件同步、測試去重、審計工作，**未變更任何因果鏈深度或分數**：
+
+| §X | 工作 | 類型 | C³ 影響 |
+|:--:|:-----|:----:|:-------:|
+| #87 | MD test count sync (4,643→4,717, 5 files) | 文件同步 | 無 |
+| #88 | Orphan print-based tests → pytest skip (3 files, +9 tests) | 測試整理 | 無 |
+| #89 | Import-only test consolidation (3→1 file, 4,726→4,723) | 測試去重 | 無 |
+| #90 | IMPROVEMENT_ROADMAP.md sync | 文件同步 | 無 |
+| #91 | README.md sync (4,726→4,723) | 文件同步 | 無 |
+| #92 | AGENTS.md NOTE sync (§X #87-91) | 文件同步 | 無 |
+| #93 | ACTIVE_SCRIPTS.md stale ref removal | 文件清理 | 無 |
+
+**總結**: 所有 C³ 分數在 §X #87-#93 期間未變動。工作目錄乾淨，**4,723 tests — 0 errors**。

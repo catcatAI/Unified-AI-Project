@@ -355,6 +355,48 @@ class EmotionSystem:
         logger.debug(f"[{self.system_id}] Emotion influenced: {last.primary_emotion.value} -> {new_emotion.value} "
                      f"(valence: {last.valence:.2f}->{new_valence:.2f}, arousal: {last.arousal:.2f}->{new_arousal:.2f})")
 
+    def process_interaction_feedback(
+        self,
+        engagement_ratio: float = 1.0,
+        had_error: bool = False,
+        response_success: Optional[bool] = None,
+    ) -> None:
+        """
+        Process interaction outcome feedback to close the emotional loop.
+
+        Maps interaction outcomes to emotional adjustments:
+        - High engagement (>2.0) + success → joy/dopamine boost
+        - Low engagement (<0.5) → sadness/stress
+        - Error → fear/stress
+        - Neutral → slight trust/calm
+
+        C³: Closes the Emotion→Behavior→Response→Feedback→Emotion loop.
+        """
+        logger.debug(
+            f"[{self.system_id}] Interaction feedback: engagement={engagement_ratio:.2f}, "
+            f"had_error={had_error}, success={response_success}"
+        )
+
+        # Determine influence type and intensity based on interaction outcome
+        if had_error or response_success is False:
+            # Error or explicit failure → stress + fear
+            self.apply_influence("interaction_feedback", "stress", 0.6, 1.0)
+            self.apply_influence("interaction_feedback", "fear", 0.3, 0.8)
+        elif engagement_ratio > 2.0 and response_success is not False:
+            # High engagement → joy + dopamine
+            self.apply_influence("interaction_feedback", "dopamine", min(1.0, engagement_ratio / 5.0), 1.0)
+            self.apply_influence("interaction_feedback", "joy", min(1.0, engagement_ratio / 4.0), 0.8)
+        elif engagement_ratio < 0.5:
+            # Low engagement → sadness + cortisol
+            self.apply_influence("interaction_feedback", "cortisol", 0.3 * (1.0 - engagement_ratio), 1.0)
+            self.apply_influence("interaction_feedback", "sadness", 0.2 * (1.0 - engagement_ratio), 0.8)
+        else:
+            # Neutral → slight calm/trust
+            self.apply_influence("interaction_feedback", "calm", 0.1, 0.5)
+            self.apply_influence("interaction_feedback", "trust", 0.05, 0.5)
+
+        self._cap_emotion_history()
+
     def update_value_weight(self, dimension: ValueDimension, weight: float) -> None:
         """Update the value weight."""
         self.value_weights[dimension] = weight
