@@ -33,8 +33,6 @@ This document lists the **currently active and recommended** scripts for the Uni
 ### Development & Testing
 - **`verify_ice_loop.py`**: Verify ICE (Ingest-Cognition-Execution) loop
 - **`verify_phase_2_loop.py`**: Verify Phase 2 quality-based reward loop
-- **`test_drive_integration.py`**: Test Drive integration end-to-end
-
 ### Project Management
 - **`unified-ai.bat`**: Main project launcher (comprehensive)
 - **`unified-ai-cli.bat`**: CLI interface for project operations
