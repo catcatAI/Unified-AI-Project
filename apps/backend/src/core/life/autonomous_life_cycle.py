@@ -364,17 +364,30 @@ class AutonomousLifeCycle:
         self._decision_counter += 1
         decision_id = f"decision_{self._decision_counter}"
 
+        total = self.executions_succeeded + self.executions_failed
+        execution_success_rate = self.executions_succeeded / total if total > 0 else 1.0
+
         # Build context for dynamic parameter evaluation
         context = {
             "energy": 1.0 - metrics.s_stress,  # Lower stress = higher energy
             "mood": metrics.life_intensity,  # Life intensity affects mood
             "stress": metrics.s_stress,
             "confidence": metrics.a_c / 1.5 if metrics.a_c <= 1.5 else 1.0,
+            "execution_success_rate": execution_success_rate,
         }
 
         # Get dynamic thresholds
         dynamic_confidence_threshold = self._get_decision_confidence_threshold(context)
         dynamic_risk_tolerance = self._get_risk_tolerance(context)
+
+        # Modulate thresholds based on execution success rate (feedback loop)
+        # High success → more confident/risky; Low success → more conservative
+        if execution_success_rate < 0.5:
+            dynamic_confidence_threshold = min(1.0, dynamic_confidence_threshold + 0.15)
+            dynamic_risk_tolerance = max(0.1, dynamic_risk_tolerance - 0.2)
+        elif execution_success_rate > 0.9:
+            dynamic_confidence_threshold = max(0.3, dynamic_confidence_threshold - 0.1)
+            dynamic_risk_tolerance = min(1.0, dynamic_risk_tolerance + 0.15)
 
         # Adjust exploration threshold based on risk tolerance
         adjusted_exploration_threshold = self.exploration_threshold * (1.5 - dynamic_risk_tolerance)

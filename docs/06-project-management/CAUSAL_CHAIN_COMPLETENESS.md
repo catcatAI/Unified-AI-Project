@@ -121,24 +121,32 @@ Score = 基礎架構 × 鏈深度 × 閉環率
 
 ## 3. 核心組件因果鏈深度分析
 
-### 3.1 AutonomousLifeCycle (410L) — 🟡 C³ = 2.0/10 (was 0.1/10, ✅ fixed 2026-06-28)
+### 3.1 AutonomousLifeCycle (410L) — 🟡 C³ = 3.0/10 (was 2.0/10, ✅ fixed 2026-07-01 §X #74)
 
-**修復摘要**: `_execute_decision()` 已加入，將 4 種決策類型分派至 `BehaviorExecutor`。決策不再只記錄不執行。
+**修復摘要**: `_execute_decision()` 已加入 (2026-06-28)，將 4 種決策類型分派至 `BehaviorExecutor`。§X #74 (2026-07-01): 加入執行回饋閉環 — `execution_success_rate` 現在影響後續決策的動態閾值。
 
 ```python
-# 修復後: 決策被執行
+# 修復後 (v2): 決策執行 + 回饋閉環
 async def _lifecycle_loop(self):
     decision = self._evaluate_and_decide(metrics)
     if decision:
         self._record_decision(decision)
-        success = await self._execute_decision(decision)  # ✅ 新加入
-        # decision → BehaviorExecutor.execute() → execution callbacks
+        success = await self._execute_decision(decision)
+        # success 記錄在 executions_succeeded/failed
+
+# _evaluate_and_decide 新加入:
+# context["execution_success_rate"] = ...
+# if success_rate < 0.5: 保守 (threshold+0.15, risk-0.2)
+# if success_rate > 0.9: 大膽 (threshold-0.1, risk+0.15)
 ```
 
+**因果鏈**: metrics → evaluate → decision → execute → success/fail → 回饋 → 下一次 evaluate
+
+**C³ 更新**: 2.0→**3.0/10**（現在有閉環：執行結果影響後續決策閾值）
+
 **剩餘問題**: 
-- BehaviorExecutor 目前只記錄執行歷史，尚未連接至更深的管線
-- 無閉環（執行結果不影響下一次決策）
-- 需要 `execution_callbacks` 的下游消費者接線
+- BehaviorExecutor 目前只記錄執行歷史，尚未連接至更深的管線（如 routing 或 response）
+- 閾值調整幅度（±0.15, -0.2）為硬編碼，尚未由 config 控制
 
 ### 3.2 CausalReasoningEngine (218L) — 🟡 C³ = 3.0/10 (was 2.0/10, ✅ fixed 2026-06-30)
 
@@ -442,7 +450,7 @@ prompt += f"Current emotional state: {emotion_summary}"
 | **DigitalLifeIntegrator** | ✅完整 | **5.0/10** (was 4.5, §X #71) | 8/10 | 2 | 60% | 🟡 6/6 狀態有行為 + DORMANT auto-transition (commit `7b86cf28b`) |
 | **MetaController** | ✅完整 | **3.5/10** (was 3.0) | 7/10 | 2 | 0% | 🟡 調整已自動套用 (commit `2be528751`) |
 | **EmotionSystem** | ✅完整 | **3.0/10** (was 2.0, §X #73) | 8/10 | 3 | 0% | 🟡 routing_mode → LLM 參數調製 (commit `b200a4be8`) |
-| **AutonomousLifeCycle** | ✅完整 | **2.0/10** | 7/10 | 2 | 0% | 🟡 決策已執行 (commit `40dce741a`) |
+| **AutonomousLifeCycle** | ✅完整 | **3.0/10** (was 2.0, §X #74) | 8/10 | 3 | 30% | 🟡 決策執行 + 回饋閉環 (commit §X #74) |
 | **CausalReasoningEngine** | ✅完整 | **3.0/10** (was 2.0, §X #69) | 7/10 | 1→3 (temporal) | 0% | 🟡 predict() 已接入 LLM prompt + temporal buffer for Granger (commit `c400f6e0d`) |
 | **IntentModel** | ✅完整 | **2.0/10** (was 1.0) | 6/10 | 2 | 0% | 🟡 已接線至 DigitalLifeIntegrator 管線，get_intent_influence() → state matrix (this commit) |
 
@@ -662,7 +670,7 @@ Component_A.state_change → Component_B.detect() → Component_B.behavior_chang
 
 | 組件 | 阻塞原因 | 需完成的工作 |
 |:-----|:---------|:-------------|
-| ✅ **AutonomousLifeCycle** | 修復完成 (commit `40dce741a`) | `_execute_decision()` 已加入，分派至 BehaviorExecutor |
+| ✅ **AutonomousLifeCycle** | 修復完成 (commits `40dce741a` + §X #74) | `_execute_decision()` 已加入，分派至 BehaviorExecutor + `execution_success_rate` 回饋閉環 |
 | ✅ **CausalReasoningEngine** | 修復完成 (commit `78dac066e`) | predict() 已接入 LLM prompt 管線 (chat_routes._inject_causal_predictions → prompt_builder._append_causal_insights) |
 | ✅ **EmotionSystem** | 修復完成 (commit `f9cf68ac5`) | apply_influence() 真實 PAD 映射 + get_behavioral_adjustment() 情緒→行為接線 |
 | ✅ **IntentModel** | 修復完成 (commits `e713db0e0` + `this commit` 2026-06-29) | stubs 已實作 + 已接入 DigitalLifeIntegrator 管線，get_intent_influence() 實際驅動 state matrix 更新 |
