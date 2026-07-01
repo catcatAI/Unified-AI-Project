@@ -124,7 +124,43 @@ class TestIntentManager:
         self.mgr.scan_memory_proximity(MockBridge(), {"alpha": {"coordinate": (1.0, 2.0, 3.0)}})
         assert len(self.mgr.intents) == 0
 
-    def test_generate_homeostatic_intents_high_energy_no_new_intent(self):
+    def test_scan_memory_proximity_none_bridge(self):
+        self.mgr.scan_memory_proximity(None, {"alpha": {"coordinate": (1.0, 2.0, 3.0)}})
+        assert len(self.mgr.intents) == 0
+
+    def test_scan_memory_proximity_creates_intents(self):
+        class MockMemory:
+            id = "mem_1"
+        class MockBridge:
+            def retrieve_by_spatial_proximity(self, x, y, z, radius=5.0):
+                return [MockMemory()]
+        self.mgr.scan_memory_proximity(
+            MockBridge(), {"alpha": {"coordinate": (5.0, 5.0, 5.0)}}
+        )
+        assert len(self.mgr.intents) == 1
+        assert self.mgr.intents[0].category == IntentCategory.EXPLORATION
+
+    def test_scan_memory_proximity_bridge_exception(self):
+        class FailingBridge:
+            def retrieve_by_spatial_proximity(self, x, y, z, radius=5.0):
+                raise RuntimeError("Bridge unavailable")
+        self.mgr.scan_memory_proximity(
+            FailingBridge(), {"alpha": {"coordinate": (1.0, 2.0, 3.0)}}
+        )
+        assert len(self.mgr.intents) == 0
+
+    def test_scan_memory_proximity_skip_non_dict_state(self):
+        class MockBridge:
+            def retrieve_by_spatial_proximity(self, x, y, z, radius=5.0):
+                return []
+        self.mgr.scan_memory_proximity(MockBridge(), {"alpha": "scalar_value"})
+        assert len(self.mgr.intents) == 0
+
+    def test_generate_homeostatic_intents_low_energy_creates_intent(self):
+        state = {"alpha": {"energy": 0.1, "coordinate": (0.0, 0.0, 0.0)}}
+        self.mgr.generate_homeostatic_intents(state)
+        assert len(self.mgr.intents) == 1
+        assert self.mgr.intents[0].category == IntentCategory.HOMEOSTASIS
         intent = SelfIntent(id="TestIntent_HOMEOSTASIS_alpha_9988776655",
                             category=IntentCategory.HOMEOSTASIS,
                             target_dimension="alpha",

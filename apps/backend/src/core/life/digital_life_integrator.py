@@ -755,13 +755,16 @@ class DigitalLifeIntegrator:
             # 1. Get current state snapshot
             state_snapshot = self.state_matrix.get_state()
 
-            # 2. Generate homeostatic intents from dimension deficits
+            # 2. Scan memory proximity for exploration intents (C³ 3.0)
+            self.intent_manager.scan_memory_proximity(self.memory_bridge, state_snapshot)
+
+            # 3. Generate homeostatic intents from dimension deficits
             self.intent_manager.generate_homeostatic_intents(state_snapshot)
 
-            # 3. Decay intents (30s = 3 ticks at 10s check interval)
+            # 4. Decay intents (30s = 3 ticks at 10s check interval)
             self.intent_manager.update_intents(delta_time=3.0)
 
-            # 4. Apply intent influences to state matrix
+            # 5. Apply intent influences to state matrix
             intent_applied = False
             for dim_name in ("alpha", "beta", "gamma", "delta"):
                 influence = self.intent_manager.get_intent_influence(dim_name)

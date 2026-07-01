@@ -92,6 +92,8 @@ class IntentManager:
         dimension's coordinate in the state, and creates Exploration intents
         from the results.
         """
+        if bridge is None:
+            return
         for dimension, dim_state in state.items():
             if not isinstance(dim_state, dict):
                 continue

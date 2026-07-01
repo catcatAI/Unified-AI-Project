@@ -300,22 +300,19 @@ async def _apply_state_behaviors(self, state):
 - 行為深但不寬（只影響 state_matrix 和 bio，不影響 routing 或 response）
 - `_compute_maturity_score` 依賴 state_matrix，但又用 state_matrix 的 `evaluate_math_spatially` 計算 — 潛在遞迴問題
 
-### 3.7 IntentModel (80L) — 🟡 C³ = 2.0/10 (was 0.1/10, ✅ fixed 2026-06-29)
+### 3.7 IntentModel (152L) — 🟡 C³ = 3.0/10 (was 0.1→2.0, ✅ §X #81)
 
-**修復摘要**: IntentManager 現已接入 DigitalLifeIntegrator 的實際生產管線。
+**修復摘要**: `scan_memory_proximity()` 現在被 DLI lifecycle 實際呼叫（之前是死碼）。None bridge 安全處理。
 
 - **Stub 修復** (commit `e713db0e0` 2026-06-28): `scan_memory_proximity()` 和 `generate_homeostatic_intents()` 從 pass 改為真實實作。
-- **下游消費接線** (commit `this commit` 2026-06-29): DigitalLifeIntegrator._life_cycle_loop() 每 30s 呼叫 `_update_intent_state()`，包含：
-  1. 從 state matrix 取得當前狀態快照
-  2. 呼叫 `generate_homeostatic_intents()` 生成 homeostatic 意圖
-  3. 呼叫 `update_intents()` 衰減意圖強度
-  4. 讀取 `get_intent_influence()` 的 3D 向量，計算 magnitude
-  5. 將 magnitude×0.1 作為 delta 回寫至 state matrix 對應維度 (energy/focus/happiness/bond)
+- **下游消費接線** (commit `this commit` 2026-06-29): DigitalLifeIntegrator._life_cycle_loop() 每 30s 呼叫 `_update_intent_state()`
+- **scan_memory_proximity 接線** (§X #81): `_update_intent_state()` 現已呼叫 `self.intent_manager.scan_memory_proximity(self.memory_bridge, state_snapshot)`。當 memory_bridge 為 None 時安全跳過。
+- **None bridge 處理**: `scan_memory_proximity()` 現已在方法入口處檢查 bridge is None，返回而不拋出異常。
 
-**因果鏈**: state matrix snapshot → generate_homeostatic_intents → update_intents → get_intent_influence → state matrix update (閉合)
+**因果鏈**: HAM memory proximity → scan_memory_proximity → create exploration intents → update_intents → get_intent_influence → state matrix update (3 層：外部記憶體 → 內部狀態)
 
 **剩餘問題**:
-- `scan_memory_proximity()` 未被定期呼叫（需要 memory_bridge，可能不存在）
+- `retrieve_by_spatial_proximity()` 不在目前 HAM API 中 — bridge 為 None 時不觸發（安全退化）
 - 意圖影響僅 mapping 到單一維度參數（energy/focus/happiness/bond），未使用完整 3D 座標
 
 ---
@@ -455,7 +452,7 @@ prompt += f"Current emotional state: {emotion_summary}"
 | **EmotionSystem** | ✅完整 | **4.0/10** (was 3.0, §X #80) | 9/10 | 4 | 0% | 🟢 Emotion→BiologicalIntegrator stress/relaxation |
 | **AutonomousLifeCycle** | ✅完整 | **3.0/10** (was 2.0, §X #74) | 8/10 | 3 | 30% | 🟡 決策執行 + 回饋閉環 (commit §X #74) |
 | **CausalReasoningEngine** | ✅完整 | **3.0/10** (was 2.0, §X #69) | 7/10 | 1→3 (temporal) | 0% | 🟡 predict() 已接入 LLM prompt + temporal buffer for Granger (commit `c400f6e0d`) |
-| **IntentModel** | ✅完整 | **2.0/10** (was 1.0) | 6/10 | 2 | 0% | 🟡 已接線至 DigitalLifeIntegrator 管線，get_intent_influence() → state matrix (this commit) |
+| **IntentModel** | ✅完整 | **3.0/10** (was 2.0, §X #81) | 7/10 | 3 | 0% | 🟡 scan_memory_proximity now wired into DLI lifecycle + None bridge guard |
 
 ### 5.2 整體自主性分數
 

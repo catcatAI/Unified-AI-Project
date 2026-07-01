@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,687** (§X #80: +23 emotion→bio chain tests, §X #80b: +21 BiologicalIntegrator tests).
+> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,692** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent model tests).
 
 ---
 
@@ -1248,7 +1248,20 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 ### Test Count
 - **4,666** (tests/ only — 0 errors, +23 tests: emotion→bio chain)
 
-## VI-XXV. Session Summary — 2026-07-01 (§X #80: EmotionSystem C³ 4.0 — cross-component Emotion→Biological link)
+## VI-XXIV. Section — 2026-07-01 (§X #81: IntentModel C³ 3.0 — scan_memory_proximity wired into DLI lifecycle)
+
+### §X #81: IntentModel C³ 2.0→3.0 — **DONE**
+
+- `scan_memory_proximity()` was dead code (never called) — now wired into DLI's `_update_intent_state()`
+- Added None bridge guard: when `self.memory_bridge` is None, scan_memory_proximity() returns safely
+- 5 new tests: None bridge (1), bridge returning results (1), bridge exception (1), non-dict state (1), low energy creates homeostatic intent (1)
+- All 20 intent model tests pass (was 15, +5)
+- IntentModel C³: 2.0→**3.0/10** (chain: memory proximity → scan_memory_proximity → exploration intents → state matrix)
+
+### Test Count (post §X #81)
+- **4,692** collected (tests/ only — 0 errors)
+
+## VI-XXV. Section — 2026-07-01 (§X #80: EmotionSystem C³ 4.0 — cross-component Emotion→Biological link)
 
 ### §X #80: Emotion→BiologicalIntegrator stress/relaxation chain — **DONE**
 
