@@ -76,7 +76,7 @@ pre-commit run --all-files
 > ✅ **NOTE (Updated 2026-06-29)**: Extended session now **158+ commits** (Jun 25–29). Includes §X #34-#54: save_visual_decoder_weights, TemporalState↔CausalReasoningEngine bridge, U5 security, all stub eliminations (R1-R3, §X #27), T1-T5 training DONE, 5 real stub modules (§X #49), ripple/node+influence/space stubs (§X #50), magic number migration (§X #51), test_final.py fix (§X #52), 4 Level5ASI STUB→real modules (§X #53), formula coefficient migration (§X #54). **All stubs eliminated** (0 stubs). **5,085 tests collected** (full testpaths), 4,578 (tests/), 0 errors.
 > 
 
-> ✅ **NOTE (Updated 2026-07-01)**: **§X #83**: MetaController C³ 4.0. **§X #84**: ExecutionGate C³ 5.0. **§X #85**: AutonomousLifeCycle config-driven feedback thresholds + 6 new tests. **4,718 tests collected (tests/) — 0 errors.**
+> ✅ **NOTE (Updated 2026-07-01)**: **§X #83**: MetaController C³ 4.0. **§X #84**: ExecutionGate C³ 5.0. **§X #85**: AutonomousLifeCycle config-driven feedback thresholds + 6 new tests. **§X #86**: Test consolidation — deleted 4 redundant test files (encryption, code_inspector, simple). **4,717 tests collected (tests/) — 0 errors.**
 > - **Phase A1-A4**: External dictionary download + convert + import pipeline
 > - **New scripts**: `scripts/download_datasets.py` (CC-CEDICT/JMdict/WordNet), `scripts/import_dictionaries.py`
 > - **460,281 entries** imported: 125k CC-CEDICT (zh↔en) + 217k JMdict (ja↔en) + 117k WordNet 3.0 (en)

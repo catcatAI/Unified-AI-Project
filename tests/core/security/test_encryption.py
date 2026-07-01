@@ -198,3 +198,22 @@ class TestCsrfToken:
         t1 = generate_csrf_token()
         t2 = generate_csrf_token()
         assert verify_csrf_token(t1, t2) is False
+
+
+class TestEncryptionSmoke:
+    """Smoke tests consolidated from tests/unit/test_encryption.py"""
+
+    def test_import(self):
+        from core.security.encryption import EncryptionUtils
+        assert EncryptionUtils is not None
+
+    @patch("core.security.encryption.FERNET_AVAILABLE", True)
+    @patch("core.security.encryption.Fernet")
+    def test_instantiation_with_fernet(self, mock_fernet):
+        from unittest.mock import MagicMock
+        from core.security.encryption import EncryptionUtils
+
+        mock_fernet_instance = MagicMock()
+        mock_fernet.return_value = mock_fernet_instance
+        instance = EncryptionUtils(config={"encryption_key": "test-key-32-chars-long!!"})
+        assert instance is not None
