@@ -176,10 +176,10 @@ def predict(self, cause, context=None) -> List[Dict]:
 - 預測在 Round 1-4 仍不會出現 Granger（需 ≥ 5 輪累積）
 - `ingest_temporal_state()` 橋樑已存在但未定期觸發
 
-### 3.3 EmotionSystem (417L) — 🟡 C³ = 3.0/10 (was❌1.0→2.0, ✅ §X #72-73)
+### 3.3 EmotionSystem (417L) — 🟢 C³ = 4.0/10 (was 3.0/10, ✅ §X #80)
 
 ```python
-# 目前真實鏈: 文字注入 + routing_mode 計算 → prompt 指南
+# 目前真實鏈: 文字注入 + routing_mode 計算 → prompt 指南 + bio stress/relaxation
 class EmotionSystem:
     def apply_influence(self, source, type, value, intensity):
         # ✅ 真實 PAD 模型: 14 種影響類型映射 (dopamine/adrenaline/cortisol/...)
@@ -195,6 +195,7 @@ class EmotionSystem:
 # chat_routes.py:176-203 → context["angela_emotion"] = adj
 # chat_routes.py:192   → context["emotional_behavior"] (硬編碼映射)
 # prompt_builder.py:467-499 → 兩者注入 LLM prompt
+# chat_routes.py:203-217 → 跨組件: _apply_emotion_to_biology() → BiologicalIntegrator stress/relaxation
 ```
 
 **現狀**:
@@ -204,7 +205,9 @@ class EmotionSystem:
 - `get_behavioral_adjustment()` 回傳 routing_mode/response_style → ✅
 - 兩路注入 prompt: `emotional_behavior`（用戶情緒→路由）+ `angela_emotion`（Angela 自身情緒）→ ✅
 - routing_mode 現在影響 LLM 參數：conservative → temperature-0.3, max_tokens→384; exploratory → temperature+0.3, max_tokens→768 (§X #73) → ✅
-- 沒有 emotion → endocrine → behavior 的跨組件傳遞 → ❌
+- 跨組件 Emotion→Bio: 高壓力情緒(anger/fear/sadness)觸發 BiologicalIntegrator.process_stress_event(); 正面情緒(joy/trust)觸發 process_relaxation_event() (§X #80) → ✅
+
+**C³ 更新**: 3.0→**4.0/10** — 新增跨組件 Emotion→BiologicalIntegrator 鏈。Angela 的情緒狀態現在直接影響生物壓力/放鬆系統，建立 emotion → endocrine → behavior 的第一個跨組件連結。額外 23 個測試驗證映射強度、方法呼叫正確性、整合情境。
 
 ### 3.4 MetaController (130L) — 🟡 C³ = 3.5/10 (was 3.0/10, ✅ fixed 2026-06-29)
 
@@ -449,7 +452,7 @@ prompt += f"Current emotional state: {emotion_summary}"
 | **ExecutionGate → Pipeline** | ✅完整 | **4.0/10** | 8/10 | 3 | 0% | 🟢 單向確定性閘門 |
 | **DigitalLifeIntegrator** | ✅完整 | **5.0/10** (was 4.5, §X #71) | 8/10 | 2 | 60% | 🟡 6/6 狀態有行為 + DORMANT auto-transition (commit `7b86cf28b`) |
 | **MetaController** | ✅完整 | **3.5/10** (was 3.0) | 7/10 | 2 | 0% | 🟡 調整已自動套用 (commit `2be528751`) |
-| **EmotionSystem** | ✅完整 | **3.0/10** (was 2.0, §X #73) | 8/10 | 3 | 0% | 🟡 routing_mode → LLM 參數調製 (commit `b200a4be8`) |
+| **EmotionSystem** | ✅完整 | **4.0/10** (was 3.0, §X #80) | 9/10 | 4 | 0% | 🟢 Emotion→BiologicalIntegrator stress/relaxation |
 | **AutonomousLifeCycle** | ✅完整 | **3.0/10** (was 2.0, §X #74) | 8/10 | 3 | 30% | 🟡 決策執行 + 回饋閉環 (commit §X #74) |
 | **CausalReasoningEngine** | ✅完整 | **3.0/10** (was 2.0, §X #69) | 7/10 | 1→3 (temporal) | 0% | 🟡 predict() 已接入 LLM prompt + temporal buffer for Granger (commit `c400f6e0d`) |
 | **IntentModel** | ✅完整 | **2.0/10** (was 1.0) | 6/10 | 2 | 0% | 🟡 已接線至 DigitalLifeIntegrator 管線，get_intent_influence() → state matrix (this commit) |

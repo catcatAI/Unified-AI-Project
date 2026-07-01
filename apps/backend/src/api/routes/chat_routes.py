@@ -173,15 +173,17 @@ _ANGELA_EMOTION_BEHAVIOR_MAP = {
 }
 
 
-def _inject_emotion_behavioral_context(
+async def _inject_emotion_behavioral_context(
     emotion_result: Optional[Dict[str, Any]],
     context: Dict[str, Any],
+    bio: Optional[Any] = None,
 ) -> None:
     """Inject emotional behavioral adjustments into context.
 
     Maps detected user emotion to routing_mode and response_style
     so that the LLM prompt receives behavioral guidance beyond
-    just the emotion text. Also updates Angela's internal EmotionSystem.
+    just the emotion text. Also updates Angela's internal EmotionSystem
+    and cross-component Emotion→Biological stress/relaxation (C³ 4.0).
     """
     if not emotion_result:
         return
@@ -199,8 +201,38 @@ def _inject_emotion_behavioral_context(
             es.apply_influence("user_message", emotion, intensity * 0.3, 0.5)
             adj = es.get_behavioral_adjustment()
             context["angela_emotion"] = adj
+
+        # Cross-component: Emotion → Biological stress/relaxation (C³ 4.0)
+        if bio is not None:
+            await _apply_emotion_to_biology(emotion, intensity, bio)
     except Exception as e:
         logger.debug(f"EmotionSystem behavioral injection failed: {e}")
+
+
+# Emotion → Biological stress/relaxation mapping for C³ 4.0 cross-component chain
+_EMOTION_TO_STRESS_MAP: Dict[str, float] = {
+    "anger": 0.3, "fear": 0.35, "sadness": 0.15,
+    "disgust": 0.12, "surprise": 0.05, "anticipation": 0.05,
+}
+
+_EMOTION_TO_RELAXATION_MAP: Dict[str, float] = {
+    "joy": 0.2, "trust": 0.1,
+}
+
+
+async def _apply_emotion_to_biology(
+    emotion: str, intensity: float, bio: Any,
+) -> None:
+    """Map detected emotion to BiologicalIntegrator stress/relaxation event."""
+    stress_intensity = _EMOTION_TO_STRESS_MAP.get(emotion, 0.0)
+    relax_intensity = _EMOTION_TO_RELAXATION_MAP.get(emotion, 0.0)
+
+    if stress_intensity > 0:
+        effective = min(1.0, stress_intensity * intensity * 2.0)
+        await bio.process_stress_event(effective, duration=15.0)
+    elif relax_intensity > 0:
+        effective = min(1.0, relax_intensity * intensity * 1.5)
+        await bio.process_relaxation_event(effective)
 
 
 # =============================================================================
@@ -730,7 +762,7 @@ async def _handle_chat_request(
     if emotion_result:
         context["emotion"] = emotion_result
         # Step 5b: Inject emotional behavioral context (routing_mode + response_style)
-        _inject_emotion_behavioral_context(emotion_result, context)
+        await _inject_emotion_behavioral_context(emotion_result, context, bio)
     if crisis_level > 0:
         context["crisis_level"] = crisis_level
         context["crisis_instruction"] = (
