@@ -77,6 +77,8 @@ pre-commit run --all-files
 > 
 
 > ✅ **NOTE (Updated 2026-07-01)**: **§X #83**: MetaController C³ 4.0. **§X #84**: ExecutionGate C³ 5.0. **§X #85**: AutonomousLifeCycle config-driven feedback thresholds + 6 new tests. **§X #86**: Test consolidation — deleted 4 redundant test files (encryption, code_inspector, simple). **4,717 tests collected (tests/) — 0 errors.**
+> 
+> ✅ **NOTE (Updated 2026-07-01, §X #87-91)**: **§X #87**: MD sync — update test counts 4,643→4,717 across 5 MD files. **§X #88**: Orphan print→pytest skip tests — 3 orphan files → 9 skip tests (4,717→4,726). **§X #89**: Import-only test consolidation — 3 files→1 file, -39 lines (4,726→4,723). **§X #90-91**: IMPROVEMENT_ROADMAP.md + README.md + MASTER_TASK_MAP.md sync. **4,723 tests collected (tests/) — 0 errors.**
 > - **Phase A1-A4**: External dictionary download + convert + import pipeline
 > - **New scripts**: `scripts/download_datasets.py` (CC-CEDICT/JMdict/WordNet), `scripts/import_dictionaries.py`
 > - **460,281 entries** imported: 125k CC-CEDICT (zh↔en) + 217k JMdict (ja↔en) + 117k WordNet 3.0 (en)
