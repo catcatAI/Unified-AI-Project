@@ -51,6 +51,7 @@ class GlobalSystemClock:
         self._task: Optional[asyncio.Task] = None
         self._subscriptions: List[TickSubscription] = []
         self._lock = asyncio.Lock()
+        self._tick_event = asyncio.Event()
 
     @property
     def tick_rate_hz(self) -> float:
@@ -148,7 +149,29 @@ class GlobalSystemClock:
         self._tick_count += 1
         current_tick = self._tick_count
         await self._fire_subscriptions(current_tick)
+        self._tick_event.set()
         return current_tick
+
+    async def wait_for_ticks(self, n: int) -> int:
+        """Wait for n ticks to elapse (event-driven, no polling).
+
+        The caller's execution is suspended until the clock has advanced
+        by at least n ticks from the current count. Returns the tick count
+        at the time of wake-up.
+
+        Args:
+            n: Number of ticks to wait (must be >= 1).
+
+        Returns:
+            The tick count when the wait completed.
+        """
+        if n < 1:
+            n = 1
+        target = self._tick_count + n
+        while self._tick_count < target:
+            self._tick_event.clear()
+            await self._tick_event.wait()
+        return self._tick_count
 
     async def _tick_loop(self) -> None:
         """Main tick loop — runs at configured frequency."""
@@ -159,6 +182,9 @@ class GlobalSystemClock:
 
             # Fire matching subscriptions
             await self._fire_subscriptions(current_tick)
+
+            # Signal waiters that a tick has elapsed
+            self._tick_event.set()
 
             # Sleep until next tick (accounting for callback execution time)
             elapsed = time.monotonic() - tick_start

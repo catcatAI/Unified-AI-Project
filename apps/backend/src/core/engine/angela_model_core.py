@@ -19,6 +19,7 @@ from typing import Any, Dict, Optional
 
 from core.bio.biological_integrator import BiologicalIntegrator
 from core.bio.cerebellum_engine import CerebellumEngine
+from core.clock.global_system_clock import GlobalSystemClock
 from core.system.config.magic_numbers import loop_sleep
 
 from .state_matrix import StateMatrix4D
@@ -34,6 +35,7 @@ class AngelaModelCore:
         self.bio = BiologicalIntegrator()
         self.spatial = StateMatrix4D()
         self.motor = CerebellumEngine()
+        self.clock = GlobalSystemClock(tick_rate_hz=10.0)
         
         # 狀態快照 / State Snapshots
         self.last_consciousness_update = datetime.now()
@@ -42,6 +44,7 @@ class AngelaModelCore:
         # 代謝計時器 / Metabolic Heartbeat
         self._heartbeat_active = False
         self._heartbeat_task = None
+        self.clock = GlobalSystemClock(tick_rate_hz=10.0)
 
     async def initialize(self) -> None:
         """啟動所有底層系統 / Start all underlying systems"""
@@ -51,12 +54,12 @@ class AngelaModelCore:
         await self.bio.initialize()
         
         # 初始化小腦引擎 (加載姿勢記憶)
-        # 這裡假定 cerebellum 已經有 initialize 邏輯
         if hasattr(self.motor, "initialize"):
             await self.motor.initialize()
             
         self._heartbeat_active = True
         self._heartbeat_task = asyncio.create_task(self._metabolic_loop())
+        await self.clock.start()
         
         logger.info("✨ [Model-Core] Angela's Embryo is now ACTIVE.")
 
@@ -81,7 +84,6 @@ class AngelaModelCore:
                 # [Task N.22.7] AI Posture Selection based on Arousal
                 # =============================================================================
                 if hasattr(self.motor, "execute_command"):
-                    # 將 arousal 映射至姿勢空間
                     arousal = self.spatial.alpha.values.get("arousal", 50.0)
                     
                     # 姿勢的喚醒度空間錨點 (Arousal Anchors)
@@ -97,10 +99,25 @@ class AngelaModelCore:
                     # 執行姿勢
                     self.motor.execute_command(best_pose, bio_state)
                 
-                await asyncio.sleep(loop_sleep("metabolic_interval", 2.0)) # 代謝頻率：2秒一次
+                # Wait for 20 clock ticks (≈2s at 10Hz) — event-driven, no polling
+                await self.clock.wait_for_ticks(20)
             except Exception as e:  # broad exception acceptable: metabolic loop should be resilient to errors
                 logger.error(f"❌ [Model-Core] Metabolic loop error: {e}", exc_info=True)
                 await asyncio.sleep(loop_sleep("model_interval", 5.0))
+
+    async def shutdown(self) -> None:
+        """優雅關閉所有後台任務 / Gracefully shut down all background tasks."""
+        self._heartbeat_active = False
+        if self._heartbeat_task and not self._heartbeat_task.done():
+            self._heartbeat_task.cancel()
+            try:
+                await self._heartbeat_task
+            except asyncio.CancelledError:
+                pass
+            self._heartbeat_task = None
+        if self.clock.is_running:
+            await self.clock.stop()
+        logger.info("🧬 [Model-Core] Shutdown complete.")
 
     def get_consciousness_snapshot(self) -> Dict[str, Any]:
         """

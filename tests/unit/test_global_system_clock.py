@@ -150,3 +150,73 @@ async def test_clock_subscribe_interval_one(clock):
     for _ in range(5):
         await clock.force_tick()
     assert results == [1, 2, 3, 4, 5]
+
+
+@pytest.mark.asyncio
+async def test_wait_for_ticks_deterministic(clock):
+    """wait_for_ticks advances correctly with force_tick."""
+    async def ticker():
+        for _ in range(10):
+            await asyncio.sleep(0.01)
+            await clock.force_tick()
+
+    task = asyncio.create_task(ticker())
+    result = await clock.wait_for_ticks(5)
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+    assert result >= 5
+
+
+@pytest.mark.asyncio
+async def test_wait_for_ticks_real_time(clock):
+    """wait_for_ticks advances with real clock ticks."""
+    await clock.start()
+    result = await clock.wait_for_ticks(5)
+    await clock.stop()
+    assert result >= 5
+
+
+@pytest.mark.asyncio
+async def test_wait_for_ticks_clamped_to_one(clock):
+    """wait_for_ticks(0) should wait at least 1 tick."""
+    async def ticker():
+        for _ in range(5):
+            await asyncio.sleep(0.01)
+            await clock.force_tick()
+
+    task = asyncio.create_task(ticker())
+    result = await clock.wait_for_ticks(0)
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+    assert result >= 1
+
+
+@pytest.mark.asyncio
+async def test_wait_for_ticks_multi_waiter(clock):
+    """Multiple waiters all receive correct tick count."""
+    async def ticker():
+        for _ in range(15):
+            await asyncio.sleep(0.01)
+            await clock.force_tick()
+
+    async def waiter(n):
+        return await clock.wait_for_ticks(n)
+
+    task = asyncio.create_task(ticker())
+    r1 = asyncio.create_task(waiter(5))
+    r2 = asyncio.create_task(waiter(10))
+    results = await asyncio.gather(r1, r2)
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+    assert results[0] >= 5
+    assert results[1] >= 10
+    assert results[0] < results[1]
