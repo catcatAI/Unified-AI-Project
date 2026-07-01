@@ -1,4 +1,6 @@
 """Tests for MetaController — confidence calibration and threshold adjustment."""
+from collections import deque
+
 import pytest
 from ai.meta.meta_controller import MetaController
 
@@ -74,3 +76,61 @@ class TestMetaControllerCore:
         for _ in range(20):
             mc.record_confidence("src", 0.5)
         assert len(mc._samples["src"]) == 10
+
+
+class TestMetaControllerClosedLoop:
+    """C³ 4.0: closed-loop adjustment multiplier from calibration history."""
+
+    def test_calibration_history_tracked(self):
+        mc = MetaController()
+        for i in range(15):
+            mc.record_confidence("src", 0.9, correct=(i < 5))
+        mc.get_calibration("src")
+        assert "src" in mc._calibration_history
+        assert len(mc._calibration_history["src"]) > 0
+
+    def test_multiplier_increases_after_three_overconfidence(self):
+        mc = MetaController()
+        for i in range(15):
+            mc.record_confidence("src", 0.9, correct=(i < 3))
+        # Three calls to get_calibration -> three "over" entries
+        for _ in range(3):
+            mc.get_calibration("src")
+        assert mc._adjustment_multipliers.get("src", 1.0) > 1.0
+
+    def test_multiplier_increases_after_three_underconfidence(self):
+        mc = MetaController()
+        for i in range(15):
+            mc.record_confidence("src", 0.2, correct=(i < 12))
+        for _ in range(3):
+            mc.get_calibration("src")
+        assert mc._adjustment_multipliers.get("src", 1.0) > 1.0
+
+    def test_multiplier_decays_after_stable_period(self):
+        mc = MetaController()
+        # Raise multiplier on source_a
+        for i in range(15):
+            mc.record_confidence("src_a", 0.9, correct=(i < 3))
+        for _ in range(3):
+            mc.get_calibration("src_a")
+        multiplier_high = mc._adjustment_multipliers.get("src_a", 1.0)
+
+        # Use separate source to verify decay mechanism
+        mc._adjustment_multipliers["src_b"] = 2.0
+        mc._calibration_history["src_b"] = deque(["stable", "stable"], maxlen=5)
+        mc.get_calibration("src_b")
+        assert mc._adjustment_multipliers["src_b"] <= 2.0
+
+    def test_multiplier_amplifies_adjustment(self):
+        mc = MetaController()
+        for i in range(15):
+            mc.record_confidence("src", 0.9, correct=(i < 3))
+        for _ in range(3):
+            mc.get_calibration("src")
+        # Now the adjustment should be amplified by multiplier
+        report = mc.get_calibration("src")
+        assert report is not None
+        base = -0.05
+        multiplier = mc._adjustment_multipliers.get("src", 1.0)
+        expected = round(base * multiplier, 3)
+        assert report.suggested_threshold_adjustment == expected

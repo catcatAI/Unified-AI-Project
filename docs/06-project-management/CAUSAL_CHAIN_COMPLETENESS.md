@@ -208,15 +208,16 @@ class EmotionSystem:
 
 **C³ 更新**: 3.0→**4.0/10** — 新增跨組件 Emotion→BiologicalIntegrator 鏈。Angela 的情緒狀態現在直接影響生物壓力/放鬆系統，建立 emotion → endocrine → behavior 的第一個跨組件連結。額外 23 個測試驗證映射強度、方法呼叫正確性、整合情境。
 
-### 3.4 MetaController (130L) — 🟡 C³ = 3.5/10 (was 3.0/10, ✅ fixed 2026-06-29)
+### 3.4 MetaController (165L) — 🟡 C³ = 4.0/10 (was 3.5/10, ✅ fixed 2026-07-01 §X #83)
 
 **修復摘要**: `_threshold_adjustments` 現在被 `get_calibration()` 真正填入，新增 `auto_apply_thresholds()` 返回所有來源的調整值供下游消費。在 `NeuroAutoSelector._analyze_task()` 中，調整值現在影響 `reasoning_threshold`、`quality_threshold`、`high_demand_threshold` 三個決策門檻。`record_result()` 每次記錄後自動觸發 `auto_apply_thresholds()`。
 
-**因果鏈**: record_confidence → get_calibration → _threshold_adjustments 填入 → _analyze_task 讀取 → 調整 reasoning/quality/high_demand 門檻 → 決策參數改變
+**§X #83 (2026-07-01) — Closed-loop feedback via calibration history**: `get_calibration()` 現在追蹤每次校準結果（over/under/stable）到 `_calibration_history`（per-source deque, maxlen=5），並維護 `_adjustment_multipliers`。連續 3 次過度自信或不足自信 → 調整幅度 x1.5（加速修正）；連續 2 次穩定 → 調整幅度 x0.8（最小 1.0，防止過度修正）。15 個測試（10 核心 + 5 閉環新增）全數通過。
+
+**因果鏈**: record_confidence → get_calibration → _threshold_adjustments 填入 → _analyze_task 讀取 → 調整 reasoning/quality/high_demand 門檻 → 決策參數改變 → 校準歷史回饋 → 下一次調整幅度放大/縮小（閉環達成）
 
 **剩餘問題**:
 - 調整是所有 backend 的平均值，可能互相抵消
-- 無閉環（調整結果不影響後續校準）
 - 需隨著更多資料累積讓校準更準確
 
 ### 3.5 Heartbeat (MetabolicHeartbeat) — 🟢 C³ = 5.0/10
@@ -447,7 +448,7 @@ prompt += f"Current emotional state: {emotion_summary}"
 | **Heartbeat → Bio → Spatial** | ✅完整 | **5.0/10** | 8/10 | 3 | 30% | 🟢 唯一接近真實的 |
 | **ExecutionGate → Pipeline** | ✅完整 | **4.0/10** | 8/10 | 3 | 0% | 🟢 單向確定性閘門 |
 | **DigitalLifeIntegrator** | ✅完整 | **5.0/10** (was 4.5, §X #71) | 8/10 | 2 | 60% | 🟡 6/6 狀態有行為 + DORMANT auto-transition (commit `7b86cf28b`) |
-| **MetaController** | ✅完整 | **3.5/10** (was 3.0) | 7/10 | 2 | 0% | 🟡 調整已自動套用 (commit `2be528751`) |
+| **MetaController** | ✅完整 | **4.0/10** (was 3.5, §X #83) | 7/10 | 2 | 30% | 🟡 閉環校準歷史 → 調整幅度動態倍率 (§X #83 closed-loop) |
 | **EmotionSystem** | ✅完整 | **4.0/10** (was 3.0, §X #80) | 9/10 | 4 | 0% | 🟢 Emotion→BiologicalIntegrator stress/relaxation |
 | **AutonomousLifeCycle** | ✅完整 | **3.0/10** (was 2.0, §X #74) | 8/10 | 3 | 30% | 🟡 決策執行 + 回饋閉環 (commit §X #74) |
 | **CausalReasoningEngine** | ✅完整 | **4.0/10** (was 3.0, §X #82) | 9/10 | 3 | 0% | 🟢 ingest_temporal_state() wired into chat pipeline, TemporalState snapshots every 5 interactions (§X #82) |

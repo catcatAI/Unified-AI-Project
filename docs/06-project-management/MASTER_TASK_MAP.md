@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,696** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal).
+> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,701** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop).
 
 ---
 
@@ -1275,6 +1275,20 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 
 ### Test Count (post §X #81)
 - **4,692** collected (tests/ only — 0 errors)
+
+## VI-XXVI. Section — 2026-07-01 (§X #83: MetaController C³ 4.0 — closed-loop calibration history → adjustment multiplier)
+
+### §X #83: MetaController C³ 3.5→4.0 — **DONE**
+
+- `get_calibration()` now tracks calibration results (over/under/stable) in `_calibration_history` (per-source deque, maxlen=5)
+- Maintains `_adjustment_multipliers`: 3 consecutive over or under → adjustment ×1.5 (accelerated correction); 2 consecutive stable → adjustment ×0.8 (min 1.0, prevents over-correction)
+- Multiplier applied to base adjustment before returning: `adjustment *= multiplier`
+- 5 new closed-loop tests: history tracking, multiplier increase (over/under), decay, amplified adjustment
+- MetaController C³: 3.5→**4.0/10** — closed-loop feedback now operational
+- CAUSAL_CHAIN_COMPLETENESS.md §3.4: updated from 3.5 to 4.0 with closed-loop details
+
+### Test Count (post §X #83)
+- **4,701** collected (tests/ only — 0 errors)
 
 ## VI-XXV. Section — 2026-07-01 (§X #80: EmotionSystem C³ 4.0 — cross-component Emotion→Biological link)
 

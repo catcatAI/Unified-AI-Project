@@ -49,6 +49,8 @@ class MetaController:
         self._ewma: Dict[str, float] = {}
         self._threshold_adjustments: Dict[str, float] = {}
         self._total_samples = 0
+        self._calibration_history: Dict[str, deque] = {}
+        self._adjustment_multipliers: Dict[str, float] = {}
 
     def record_confidence(
         self, source: str, confidence: float, correct: Optional[bool] = None
@@ -92,6 +94,28 @@ class MetaController:
             adjustment = -0.05
         elif underconfidence_ratio > 0.2:
             adjustment = 0.05
+
+        # C³ 4.0: Closed-loop — track calibration history and adjust multiplier
+        if source not in self._calibration_history:
+            self._calibration_history[source] = deque(maxlen=5)
+            self._adjustment_multipliers[source] = 1.0
+
+        if abs(adjustment) > 0.001:
+            self._calibration_history[source].append("over" if adjustment < 0 else "under")
+        else:
+            self._calibration_history[source].append("stable")
+
+        hist = list(self._calibration_history[source])
+        if len(hist) >= 3 and all(h == "over" for h in hist[-3:]):
+            self._adjustment_multipliers[source] = min(3.0, self._adjustment_multipliers[source] * 1.5)
+        elif len(hist) >= 3 and all(h == "under" for h in hist[-3:]):
+            self._adjustment_multipliers[source] = min(3.0, self._adjustment_multipliers[source] * 1.5)
+        elif len(hist) >= 2 and all(h == "stable" for h in hist[-2:]):
+            self._adjustment_multipliers[source] = max(1.0, self._adjustment_multipliers[source] * 0.8)
+
+        multiplier = self._adjustment_multipliers[source]
+        adjustment *= multiplier
+        adjustment = round(adjustment, 3)
 
         is_reliable = calibration_error < 0.2 and len(known_correct) > 10
 
