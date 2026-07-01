@@ -156,3 +156,43 @@ class TestCausalReasoningEngine:
         engine.learn(obs)
         plans = await engine.plan_intervention("x", "z")
         assert isinstance(plans, list)
+
+
+class TestIngestTemporalState:
+    """Edge cases for ingest_temporal_state bridge."""
+
+    def test_ingest_non_temporal_returns_zero(self):
+        engine = CausalReasoningEngine()
+        count = engine.ingest_temporal_state("not_a_temporal_state")
+        assert count == 0
+
+    def test_ingest_none_returns_zero(self):
+        engine = CausalReasoningEngine()
+        count = engine.ingest_temporal_state(None)
+        assert count == 0
+
+    def test_ingest_empty_temporal_returns_zero(self):
+        engine = CausalReasoningEngine()
+        from core.state.temporal import TemporalState
+        ts = TemporalState()
+        count = engine.ingest_temporal_state(ts)
+        assert count == 0
+
+    def test_ingest_with_snapshots_learns_observations(self):
+        engine = CausalReasoningEngine()
+        from core.state.temporal import TemporalState
+        ts = TemporalState()
+        ts.record({"axis_a": {"field_x": 1.0, "field_y": 2.0}})
+        ts.record({"axis_a": {"field_x": 3.0, "field_y": 4.0}})
+        count = engine.ingest_temporal_state(ts)
+        assert count > 0
+        assert len(engine.get_relationships()) >= 1
+
+    def test_ingest_window_limits_observations(self):
+        engine = CausalReasoningEngine()
+        from core.state.temporal import TemporalState
+        ts = TemporalState()
+        for i in range(20):
+            ts.record({"axis_b": {"val": float(i)}})
+        count_small_window = engine.ingest_temporal_state(ts, window=5)
+        assert count_small_window <= 5
