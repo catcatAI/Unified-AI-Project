@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,594** (§X #69b: +8 causal buffer tests; §X #71-74: DORMANT + EmotionSystem routing→params + AutonomousLifeCycle feedback).
+> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,632** (§X #76: +13 clock tests).
 
 ---
 
@@ -1191,6 +1191,24 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 ### Test Count
 - **4,594** collected (tests/ only — 0 errors, no test coverage lost)
 
+## VI-XXIIII. Session Summary — 2026-07-01 (§X #76: GlobalSystemClock — unified time base)
+
+### §X #76: GlobalSystemClock implementation — **DONE** (commit `660e200be`)
+
+- New module: `core/clock/global_system_clock.py`
+- Configurable tick rate (0.1-1000 Hz, default 10 Hz)
+- `start()`/`stop()` lifecycle with asyncio task
+- `subscribe(interval_ticks, callback)` — fires at regular tick intervals
+- `unsubscribe()` / `disable_subscription()` / `enable_subscription()`
+- `tick_count`, `elapsed_seconds`, `is_running`, `now()` properties
+- `force_tick()` for deterministic testing
+- Exception isolation: one bad callback doesn't crash the loop
+- Closes CAUSAL_CHAIN §8.6 #1
+- 13 tests: all pass
+
+### Test Count
+- **4,632** collected (tests/ only — 0 errors)
+
 ## VI-XXXI. Session Summary — 2026-07-01 (§X #74: AutonomousLifeCycle execution feedback loop)
 
 ### §X #74: Execution feedback loop closure — **DONE** (commit `96077d9db`)
@@ -1199,10 +1217,10 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 - Low success → conservative (threshold+0.15, risk-0.2), high success → bold (threshold-0.1, risk+0.15)
 - C³: AutonomousLifeCycle 2.0→**3.0/10**
 
-### Test Count
+### Test Count (post §X #75)
 - **4,594** collected (tests/ only — 0 errors)
 
-## VI-XXX. Session Summary — 2026-07-01 (§X #71-73: DORMANT auto-transition + EmotionSystem routing_mode consumption + LLM parameter modulation)
+## VI-XXIIII. Session Summary — 2026-07-01 (§X #76: GlobalSystemClock — unified time base)
 
 ### §X #71: DORMANT auto-transition — **DONE** (commits `7b86cf28b`, `220ef020b`, `c5b143e25`)
 
@@ -1226,7 +1244,7 @@ Two auto-entry paths to DORMANT (was only reachable via force_state()):
 - EmotionSystem C³ 2.0→**3.0/10** (chain depth 3: emotion→routing_mode→temperature modulation)
 - Closes §6.3 gap (emotion-driven routing): routing_mode now changes REAL parameters
 
-### Test Count
+### Test Count (post §X #71-73)
 - **4,594** collected (tests/ only — 0 errors)
 
 ### §X #70: MD sync — **DONE** (commit `2c13c4e3a`)
