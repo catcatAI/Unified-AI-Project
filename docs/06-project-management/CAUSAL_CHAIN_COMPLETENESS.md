@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-07-01 (updated for §X #96: AutonomousLifeCycle C³ 3.5→4.0, per-type execution feedback)
+  LAST_MODIFIED: 2026-07-01 (updated for §X #97: IntentModel C³ 3.0→4.0, 3D multi-parameter mapping + state_matrix zeta fix)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -318,11 +318,12 @@ async def _apply_state_behaviors(self, state):
 - **scan_memory_proximity 接線** (§X #81): `_update_intent_state()` 現已呼叫 `self.intent_manager.scan_memory_proximity(self.memory_bridge, state_snapshot)`。當 memory_bridge 為 None 時安全跳過。
 - **None bridge 處理**: `scan_memory_proximity()` 現已在方法入口處檢查 bridge is None，返回而不拋出異常。
 
-**因果鏈**: HAM memory proximity → scan_memory_proximity → create exploration intents → update_intents → get_intent_influence → state matrix update (3 層：外部記憶體 → 內部狀態)
+**因果鏈**: HAM memory proximity → scan_memory_proximity → create exploration intents → update_intents → get_intent_influence → state matrix update (3 層：外部記憶體 → 內部狀態)**§X #97 (2026-07-01) — 3D multi-parameter influence mapping**: `_update_intent_state()` now maps each 3D intent vector component (ix, iy, iz) to a **distinct parameter** per dimension instead of collapsing to a single scalar magnitude. Alpha: ix→energy, iy→comfort, iz→arousal. Beta: ix→focus, iy→curiosity, iz→learning. Gamma: ix→happiness, iy→trust, iz→anticipation. Delta: ix→bond, iy→trust, iz→attention. Directional intent information now preserved across all 4 controlled dimensions (12 parameters total vs previously 4). C³: 3.0→**4.0/10**.
 
-**剩餘問題**:
+**Bug fix — zeta dimension missing from DEFAULT_DIMENSIONS**: `state_matrix.py` referenced `self.zeta` in `get_state()` and `get_analysis()` but zeta was not included in DEFAULT_DIMENSIONS (only alpha/beta/gamma/delta/epsilon/theta). This caused `AttributeError` on every bare-minimal DLI initialization that called `get_state()`. Added zeta with consciousness-flow parameters (narrative_flow, temporal_coherence, identity, memory_access).
+
+**剩餘問題**: 
 - `retrieve_by_spatial_proximity()` 不在目前 HAM API 中 — bridge 為 None 時不觸發（安全退化）
-- 意圖影響僅 mapping 到單一維度參數（energy/focus/happiness/bond），未使用完整 3D 座標
 
 ---
 
@@ -461,7 +462,7 @@ prompt += f"Current emotional state: {emotion_summary}"
 | **EmotionSystem** | ✅完整 | **4.5/10** (was 4.0, §X #94) | 9/10 | 4 | 50% | 🟢 Emotion→BiologicalIntegrator stress/relaxation + interaction_feedback loop (§X #94) |
 | **AutonomousLifeCycle** | ✅完整 | **3.5/10** (was 3.0, §X #85) | 8/10 | 3 | 30% | 🟡 決策執行 + 回饋閉環 + config 驅動閾值 (commit §X #74, §X #85) |
 | **CausalReasoningEngine** | ✅完整 | **4.0/10** (was 3.0, §X #82) | 9/10 | 3 | 0% | 🟢 ingest_temporal_state() wired into chat pipeline, TemporalState snapshots every 5 interactions (§X #82) |
-| **IntentModel** | ✅完整 | **3.0/10** (was 2.0, §X #81) | 7/10 | 3 | 0% | 🟡 scan_memory_proximity now wired into DLI lifecycle + None bridge guard |
+| **IntentModel** | ✅完整 | **4.0/10** (was 3.0, §X #97) | 7/10 | 3 | 30% | 🟢 3D vector multi-parameter mapping preserves directional info across 12 parameters (§X #97) |
 
 ### 5.2 整體自主性分數
 
@@ -606,7 +607,7 @@ def test_causal_chain_<component>_<path>() -> None:
 | AutonomousLifeCycle | `core/life/autonomous_life_cycle.py` | 410 | ✅ | ✅ | ✅ BehaviorExecutor + config-driven feedback | 3 | 🟡 |
 | EmotionSystem | `ai/alignment/emotion_system.py` | 280 | ❌ | ✅ | ✅ apply_influence + prompt + interaction feedback | 4 | 🟢 |
 | CausalReasoningEngine | `ai/reasoning/causal_reasoning_engine.py` | 218 | ❌ | ✅ | ✅ LLM prompt injection + temporal buffer (Granger enabled after 5+ rounds) | 1→3 | 🟡 |
-| IntentModel | `core/life/intent_model.py` | 80 | ❌ | ✅ | ✅ DigitalLifeIntegrator | 2 | 🟡 |
+| IntentModel | `core/life/intent_model.py` | 80 | ❌ | ✅ | ✅ DigitalLifeIntegrator (3D multi-parameter) | 3 | 🟡 |
 | ModalityGateway | `core/life/digital_life_integrator.py` | 70 | ❌ | ✅ | 🟡 狀態更新但無人讀 | 0.5 | 🔴 |
 
 **總計**: 9 個核心自主性組件，7 個有鏈深度 ≥ 1（已接線至下游消費者），2 個傳遞良好，1 個孤立。
@@ -930,5 +931,7 @@ API: `HardwareProfile()` → `.scenario`, `.profile`, `.get(key, default)`, `.se
 | #93 | ACTIVE_SCRIPTS.md stale ref removal | 文件清理 | 無 |
 | #94 | EmotionSystem interaction_feedback loop (+11 tests, 4,723→4,734) | 功能新增 | C³ +0.5 (4.0→4.5) (CAUSAL_CHAIN §3.3) |
 | #95 | ExecutionGate _results class-level → cross-instance feedback persistence (+1 test, 4,734→4,735) | 修復 | C³ +1.0 (5.0→6.0, 真正生效 — 之前實例級別導致跨回合反饋遺失) |
+| #96 | AutonomousLifeCycle per-type execution feedback — _evaluate_and_decide() reads per-type stats for threshold modulation (+6 tests, 4,735→4,741) | 功能新增 | C³ +0.5 (3.5→4.0, 決策類型層級回饋) |
+| #97 | IntentModel 3D multi-parameter mapping — each 3D vector component maps to distinct parameter per dimension; state_matrix zeta dimension fix (+6 tests, 4,741→4,748) | 功能增強+修復 | C³ +1.0 (3.0→4.0, 全12參數方向性 preserved + zeta bug fix enables intent update) |
 
-**總結**: §X #94 新增 EmotionSystem 反饋迴路 (C³ +0.5)；§X #95 修復 ExecutionGate 反饋持久化 (C³ +1.0)。工作目錄乾淨，**4,735 tests — 0 errors**。
+**總結**: §X #94 EmotionSystem C³ +0.5; §X #95 ExecutionGate C³ +1.0; §X #96 AutonomousLifeCycle C³ +0.5; §X #97 IntentModel C³ +1.0 + zeta fix。工作目錄乾淨，**4,748 tests — 0 errors**。

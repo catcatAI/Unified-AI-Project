@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import math
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum, auto
@@ -768,26 +767,35 @@ class DigitalLifeIntegrator:
             intent_applied = False
             for dim_name in ("alpha", "beta", "gamma", "delta"):
                 influence = self.intent_manager.get_intent_influence(dim_name)
-                magnitude = math.sqrt(sum(v * v for v in influence))
-                if magnitude > 0.01:
-                    # Map intent influence magnitude to dimension-specific parameter
+                ix, iy, iz = influence  # unpack 3D intent vector components
+                if ix * ix + iy * iy + iz * iz > 0.0001:  # squared magnitude > 0.01²
+                    # C³ 4.0: Map each 3D intent component to a distinct parameter per dimension
+                    # (previously collapsed to single scalar magnitude → lost directional info)
+                    dim_state = state_snapshot.get(dim_name, {})
                     if dim_name == "alpha":
-                        # Alpha: intent → energy influence
-                        current_energy = state_snapshot.get("alpha", {}).get("energy", 0.5)
-                        delta = magnitude * 0.1
-                        self.state_matrix.update_alpha(energy=max(0.0, min(1.0, current_energy + delta)))
+                        self.state_matrix.update_alpha(
+                            energy=max(0.0, min(1.0, dim_state.get("energy", 0.5) + ix * 0.1)),
+                            comfort=max(0.0, min(1.0, dim_state.get("comfort", 0.5) + iy * 0.1)),
+                            arousal=max(0.0, min(1.0, dim_state.get("arousal", 0.5) + iz * 0.1)),
+                        )
                     elif dim_name == "beta":
-                        current_focus = state_snapshot.get("beta", {}).get("focus", 0.5)
-                        delta = magnitude * 0.1
-                        self.state_matrix.update_beta(focus=max(0.0, min(1.0, current_focus + delta)))
+                        self.state_matrix.update_beta(
+                            focus=max(0.0, min(1.0, dim_state.get("focus", 0.5) + ix * 0.1)),
+                            curiosity=max(0.0, min(1.0, dim_state.get("curiosity", 0.5) + iy * 0.1)),
+                            learning=max(0.0, min(1.0, dim_state.get("learning", 0.5) + iz * 0.1)),
+                        )
                     elif dim_name == "gamma":
-                        current_happiness = state_snapshot.get("gamma", {}).get("happiness", 0.5)
-                        delta = magnitude * 0.1
-                        self.state_matrix.update_gamma(happiness=max(0.0, min(1.0, current_happiness + delta)))
+                        self.state_matrix.update_gamma(
+                            happiness=max(0.0, min(1.0, dim_state.get("happiness", 0.5) + ix * 0.1)),
+                            trust=max(0.0, min(1.0, dim_state.get("trust", 0.5) + iy * 0.1)),
+                            anticipation=max(0.0, min(1.0, dim_state.get("anticipation", 0.5) + iz * 0.1)),
+                        )
                     elif dim_name == "delta":
-                        current_bond = state_snapshot.get("delta", {}).get("bond", 0.5)
-                        delta = magnitude * 0.1
-                        self.state_matrix.update_delta(bond=max(0.0, min(1.0, current_bond + delta)))
+                        self.state_matrix.update_delta(
+                            bond=max(0.0, min(1.0, dim_state.get("bond", 0.5) + ix * 0.1)),
+                            trust=max(0.0, min(1.0, dim_state.get("trust", 0.5) + iy * 0.1)),
+                            attention=max(0.0, min(1.0, dim_state.get("attention", 0.5) + iz * 0.1)),
+                        )
                     intent_applied = True
 
             if intent_applied and logger.isEnabledFor(logging.DEBUG):

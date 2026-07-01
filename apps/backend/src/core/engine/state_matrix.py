@@ -145,6 +145,7 @@ class StateMatrix4D:
             "delta": {"cn_name": "社交", "initial_values": {"attention": 0.5, "bond": 0.5, "trust": 0.5, "presence": 0.5}},
             "epsilon": {"cn_name": "數理", "initial_values": {"logic": 0.5, "precision": 0.5, "abstraction": 0.5, "certainty": 0.5, "complexity": 0.5, "fatigue": 0.0}},
             "theta": {"cn_name": "元認知", "initial_values": {"novelty": 0.5, "complexity": 0.5, "ambiguity": 0.5, "dimension_fit": 0.5, "creation_urge": 0.0, "theta_negativity": 0.0, "correction_urge": 0.0, "audit_intensity": 0.0}},
+            "zeta": {"cn_name": "意識流", "initial_values": {"narrative_flow": 0.5, "temporal_coherence": 0.5, "identity": 0.5, "memory_access": 0.5}},
         }
         
         # 動態初始化所有定義在配置中的維度

@@ -3,7 +3,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-07-01 (updated for §X #96)
+  LAST_MODIFIED: 2026-07-01 (updated for §X #97)
   =============================================================================
 -->
 
@@ -55,13 +55,13 @@
 
 **Angela AI** is a digital life system with biological simulation and LLM integration capabilities.
 
-**Quick facts**: 612 Python files in backend src (~96K lines). Electron + Live2D desktop companion (50 JS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~5,085 tests (full) / ~4,741 tests (tests/) — 0 errors.**  
+**Quick facts**: 612 Python files in backend src (~96K lines). Electron + Live2D desktop companion (50 JS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~5,085 tests (full) / ~4,748 tests (tests/) — 0 errors.**  
 **Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · cli `7.5.0-dev` · biology-core `7.5.0-dev`.  
 **Architecture audit score**: **~85-90%** (2026-06-25; up from ~55-60% after Phases 0-5 repairs).  
 **Total project files**: ~3,500+ (620 Python in backend src · 295 JS/TS · 1,021+ docs · 500+ config · 480+ test).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
 
-> **STATUS (2026-07-01)**: Latest §X #80-#94: EmotionSystem C³ 4.0 (§X #80), IntentModel C³ 3.0 (§X #81), CausalReasoningEngine C³ 4.0 (§X #82), MetaController C³ 4.0 closed-loop (§X #83), ExecutionGate C³ 5.0 feedback loop (§X #84), AutonomousLifeCycle config-driven thresholds (§X #85), test consolidation (§X #86 — 4 redundant files deleted), MD sync (§X #87), orphan-to-skip test conversion (§X #88 — 3 orphan files → 9 skip tests), import-only test consolidation (§X #89 — 3 files → 1 file, -39 lines), EmotionSystem interaction feedback loop (§X #94 — C³ 4.0→4.5, +11 tests), ExecutionGate cross-instance feedback persistence (§X #95 — C³ 5.0→6.0, +1 test), AutonomousLifeCycle per-type execution feedback (§X #96 — C³ 3.5→4.0, +6 tests). Real CIFAR-10 data training (§X #79). GlobalSystemClock unified time base (§X #76-77). **~5,085 tests (full) / 4,741 tests (tests/) — 0 errors.** Architecture: ~85-90%.
+> **STATUS (2026-07-01)**: Latest §X #80-#97: EmotionSystem C³ 4.0 (§X #80), IntentModel C³ 3.0 (§X #81), CausalReasoningEngine C³ 4.0 (§X #82), MetaController C³ 4.0 closed-loop (§X #83), ExecutionGate C³ 5.0 feedback loop (§X #84), AutonomousLifeCycle config-driven thresholds (§X #85), test consolidation (§X #86 — 4 redundant files deleted), MD sync (§X #87), orphan-to-skip test conversion (§X #88 — 3 orphan files → 9 skip tests), import-only test consolidation (§X #89 — 3 files → 1 file, -39 lines), EmotionSystem interaction feedback loop (§X #94 — C³ 4.0→4.5, +11 tests), ExecutionGate cross-instance feedback persistence (§X #95 — C³ 5.0→6.0, +1 test), AutonomousLifeCycle per-type execution feedback (§X #96 — C³ 3.5→4.0, +6 tests), IntentModel 3D multi-parameter mapping (§X #97 — C³ 3.0→4.0, +6 tests). Real CIFAR-10 data training (§X #79). GlobalSystemClock unified time base (§X #76-77). **~5,085 tests (full) / 4,748 tests (tests/) — 0 errors.** Architecture: ~85-90%.
 > **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → execution gate → **agent routing** → LLM → causal learning → response. GVV pipeline for image generation.  
 > **See**: [MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md) (task provenance), [IMPROVEMENT_ROADMAP.md](docs/06-project-management/IMPROVEMENT_ROADMAP.md) (improvement roadmap), [CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md) (causal depth).
 
@@ -95,7 +95,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | **API Versioning** | ✅ COMPLETE | Version routing middleware (Phase 5) |
 | **i18n System** | ✅ COMPLETE | I18nManager, PromptManager, 4 handlers + 4 LLM modules i18n'd, 45 tests (Phase 7) |
 | **Config system** | ✅ | `config_loader.py:get_config()` returns Config |
-| **Tests** | ✅ PASSING | ~5,085 tests collected (full) / ~4,741 (tests/), 0 errors, 0 collection errors |
+| **Tests** | ✅ PASSING | ~5,085 tests collected (full) / ~4,748 (tests/), 0 errors, 0 collection errors |
 | **JS Sharing** | ✅ COMPLETE | 33 shared files → `packages/shared-js/js/`, 0 duplicates remaining |
 | **SessionManager** | ✅ COMPLETE | 56 tests covering full lifecycle (Phase 5.8) |
 | **Skip Audit** | ✅ COMPLETE | Phase 5.9: 5 collection errors fixed, all skip reasons verified |
@@ -417,7 +417,7 @@ See dedicated docs for full diagrams:
 | **OpenTelemetry** | ✅ 已完成 | 分散式追蹤中間件（Phase 5） |
 | **API Versioning** | ✅ 已完成 | 版本路由中間件（Phase 5） |
 | **i18n 系統** | ✅ 已完成 | I18nManager、PromptManager、4 個 handler + 4 個 LLM 模組 i18n、45 個測試（Phase 7） |
-| **測試** | ✅ 通過 | ~5,085 (全部) / ~4,741 (tests/) — 0 collection errors |
+| **測試** | ✅ 通過 | ~5,085 (全部) / ~4,748 (tests/) — 0 collection errors |
 | **智能分數** | ✅ 已評分 | 6.0/10 (有 LLM) / 4.5/10 (純 ED3N+GARDEN) |
 | **Master Task Map** | ✅ 已建立 | 23 份計畫全部交叉參照、144 項 claim 驗證、26 個 DO-NOT-REIMPLEMENT |
 | **因果鏈完成度** | ✅ 已建立 | `docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md` — §0 無 stub 原則、真實深度分數、時脈審計 |
@@ -667,4 +667,4 @@ npx pnpm dev:desktop
 
 ---
 
-**Version**: 7.5.0-dev | **Code Stats**: 612 Python files, ~96K lines | **Tests**: ~5,085 (full) / ~4,741 (tests/) — 0 errors | **Intelligence**: 6.0/10 (upper) 4.5/10 (lower) | **Architecture**: ~85-90% | | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)
+**Version**: 7.5.0-dev | **Code Stats**: 612 Python files, ~96K lines | **Tests**: ~5,085 (full) / ~4,748 (tests/) — 0 errors | **Intelligence**: 6.0/10 (upper) 4.5/10 (lower) | **Architecture**: ~85-90% | | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)
