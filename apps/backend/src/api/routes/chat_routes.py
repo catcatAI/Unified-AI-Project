@@ -602,6 +602,16 @@ def _inject_causal_predictions(
 # causality can fire (requires >= 5 samples per variable).
 _CAUSAL_BUFFERS: Dict[str, Dict[str, List[float]]] = {}
 
+# TemporalState bridge for causal ingest_temporal_state() (C³ 4.0)
+_CAUSAL_TEMPORAL_STATE = None
+
+def _get_causal_temporal_state():
+    global _CAUSAL_TEMPORAL_STATE
+    if _CAUSAL_TEMPORAL_STATE is None:
+        from core.state.temporal import TemporalState
+        _CAUSAL_TEMPORAL_STATE = TemporalState(max_size=200)
+    return _CAUSAL_TEMPORAL_STATE
+
 
 def _get_causal_buffer(session_id: str) -> Dict[str, List[float]]:
     """Get or create a temporal buffer for the given session."""
@@ -663,6 +673,19 @@ def _fire_causal_learning(
                 "source": f"chat_{session_id}",
             }],
         })
+
+        # C³ 4.0: Record snapshot into TemporalState bridge and periodically
+        # call ingest_temporal_state() for Granger causality over chat data.
+        ts = _get_causal_temporal_state()
+        ts.record({
+            "interaction": {
+                "msg_length": msg_len,
+                "resp_length": resp_len,
+                "engagement_ratio": engagement,
+            },
+        })
+        if ts.size() >= 5 and ts.size() % 5 == 0:
+            causal.ingest_temporal_state(ts, window=20)
 
         # Cap buffer at 100 entries per session to prevent unbounded growth
         if len(buf["msg_lengths"]) > 100:

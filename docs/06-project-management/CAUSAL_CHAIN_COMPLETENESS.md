@@ -148,7 +148,7 @@ async def _lifecycle_loop(self):
 - BehaviorExecutor 目前只記錄執行歷史，尚未連接至更深的管線（如 routing 或 response）
 - 閾值調整幅度（±0.15, -0.2）為硬編碼，尚未由 config 控制
 
-### 3.2 CausalReasoningEngine (218L) — 🟡 C³ = 3.0/10 (was 2.0/10, ✅ fixed 2026-06-30)
+### 3.2 CausalReasoningEngine (218L) — 🟡 C³ = 4.0/10 (was 2.0→3.0, ✅ §X #82)
 
 ```python
 # 虛假完成範例 #2: 因果引擎不參與因果
@@ -170,11 +170,10 @@ def predict(self, cause, context=None) -> List[Dict]:
 - 緩衝上限 100 條（溢位時修剪至最後 50 條）。
 - 8 個新單元測試驗證緩衝建立/重用/會話隔離/累積/上限/動態強度/空回應保護。
 
-**C³ 更新**: 2.0→**3.0/10** — Granger 現在可以在真實對話中偵測時間優先性（≥ 5 輪後），不再是單純的 Pearson 相關。
+**C³ 更新**: 3.0→**4.0/10** (§X #82) — `ingest_temporal_state()` 現已在聊天管線中定期觸發（`_fire_causal_learning` 內部）。TemporalState 儲存每次互動的快照（msg_length/resp_length/engagement_ratio），每 5 次互動自動呼叫 `ingest_temporal_state(ts, window=20)`。解決了「橋樑存在但未觸發」的問題。
 
 **剩餘問題**:
 - 預測在 Round 1-4 仍不會出現 Granger（需 ≥ 5 輪累積）
-- `ingest_temporal_state()` 橋樑已存在但未定期觸發
 
 ### 3.3 EmotionSystem (417L) — 🟢 C³ = 4.0/10 (was 3.0/10, ✅ §X #80)
 
@@ -451,7 +450,7 @@ prompt += f"Current emotional state: {emotion_summary}"
 | **MetaController** | ✅完整 | **3.5/10** (was 3.0) | 7/10 | 2 | 0% | 🟡 調整已自動套用 (commit `2be528751`) |
 | **EmotionSystem** | ✅完整 | **4.0/10** (was 3.0, §X #80) | 9/10 | 4 | 0% | 🟢 Emotion→BiologicalIntegrator stress/relaxation |
 | **AutonomousLifeCycle** | ✅完整 | **3.0/10** (was 2.0, §X #74) | 8/10 | 3 | 30% | 🟡 決策執行 + 回饋閉環 (commit §X #74) |
-| **CausalReasoningEngine** | ✅完整 | **3.0/10** (was 2.0, §X #69) | 7/10 | 1→3 (temporal) | 0% | 🟡 predict() 已接入 LLM prompt + temporal buffer for Granger (commit `c400f6e0d`) |
+| **CausalReasoningEngine** | ✅完整 | **4.0/10** (was 3.0, §X #82) | 9/10 | 3 | 0% | 🟢 ingest_temporal_state() wired into chat pipeline, TemporalState snapshots every 5 interactions (§X #82) |
 | **IntentModel** | ✅完整 | **3.0/10** (was 2.0, §X #81) | 7/10 | 3 | 0% | 🟡 scan_memory_proximity now wired into DLI lifecycle + None bridge guard |
 
 ### 5.2 整體自主性分數

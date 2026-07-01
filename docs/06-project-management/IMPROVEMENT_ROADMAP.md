@@ -66,6 +66,8 @@
 | **VisualDecoder texture 實際訓練** | FullTrainingPipeline Phase 1+2+3a actual run (not just structural). p29_trained.npz saved (7 arrays: W, b, W_hidden, b_hidden, W_featmap, b_featmap, tex_kernels). Trained vs random: mean diff 79.64. | All existing tests pass | ✅ Done (§X #78) |
 | **多模態真實資料訓練** | Phase 1+2 with real CIFAR-10 data (contrastive loss 0.195 vs 0.389 synthetic). Phase 3a texture (loss 0.271). Phase 3b wavetable (loss 0.050). 15-weight joint p29_trained.npz (7 visual + 8 audio). data_loader.py float32 fix (was saving object arrays causing training crash). | scripts/train_multimodal_real.py | ✅ Done (§X #79) |
 | **EmotionSystem C³ 4.0** | Emotion→BiologicalIntegrator cross-component link. High-stress emotions (anger/fear/sadness) trigger process_stress_event(); positive emotions (joy/trust) trigger process_relaxation_event(). 23 new tests. C³ chain depth: 3→4/10. | chat_routes.py _apply_emotion_to_biology(), tests/unit/test_emotion_bio_chain.py | ✅ Done (§X #80) |
+| **IntentModel C³ 3.0** | scan_memory_proximity() wired into DLI lifecycle (was dead code). None bridge guard added. C³: 2.0→3.0/10. | digital_life_integrator.py, intent_model.py | ✅ Done (§X #81) |
+| **CausalReasoningEngine C³ 4.0** | ingest_temporal_state() wired into chat pipeline via TemporalState bridge (was "exists but not triggered"). TemporalState records interaction snapshots, calls ingest_temporal_state() every 5 interactions. C³: 3.0→4.0/10. | chat_routes.py _fire_causal_learning(), core/state/temporal.py | ✅ Done (§X #82) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 

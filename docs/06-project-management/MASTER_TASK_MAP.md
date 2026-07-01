@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,692** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent model tests).
+> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,696** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal).
 
 ---
 
@@ -1247,6 +1247,21 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 
 ### Test Count
 - **4,666** (tests/ only — 0 errors, +23 tests: emotion→bio chain)
+
+## VI-XXIII. Section — 2026-07-01 (§X #82: CausalReasoningEngine C³ 4.0 — ingest_temporal_state wired into chat pipeline)
+
+### §X #82: CausalReasoningEngine C³ 3.0→4.0 — **DONE**
+
+- `ingest_temporal_state()` bridge was documented as "exists but not triggered" — now wired into `_fire_causal_learning()`
+- Created module-level `TemporalState` (max_size=200) in chat_routes.py for causal snapshots
+- Each interaction records snapshot: `{interaction: {msg_length, resp_length, engagement_ratio}}`
+- Every 5 interactions, calls `causal.ingest_temporal_state(ts, window=20)` — feeding accumulated temporal data through the official bridge
+- 4 new tests: TemporalState creation (1), singleton (1), snapshot recording (1), ingest trigger at 5-interval boundary (1), window param verification (1)
+- CausalReasoningEngine C³: 3.0→**4.0/10** (chain: chat interaction → TemporalState record → ingest_temporal_state → learn → predict → prompt injection)
+- Closes CAUSAL_CHAIN §3.2 remaining issue: "ingest_temporal_state() bridge exists but not triggered"
+
+### Test Count (post §X #82)
+- **4,696** collected (tests/ only — 0 errors)
 
 ## VI-XXIV. Section — 2026-07-01 (§X #81: IntentModel C³ 3.0 — scan_memory_proximity wired into DLI lifecycle)
 
