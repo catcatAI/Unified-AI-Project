@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,717** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop; §X #84: +11 exec gate feedback; §X #85: +6 lifecycle config; §X #86: -4 deleted redundant test files; §X #87: MD sync).
+> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,726** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop; §X #84: +11 exec gate feedback; §X #85: +6 lifecycle config; §X #86: -4 deleted redundant test files; §X #87: MD sync; §X #88: +9 orphan-to-skip tests).
 
 ---
 
@@ -1358,6 +1358,23 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 
 ### Test Count
 - **4,717** collected (tests/ only — 0 errors)
+
+---
+
+## VI-XXXV. Section — 2026-07-01 (§X #88: Orphan print-based tests → proper pytest skip tests)
+
+### §X #88: Orphan test conversion — **DONE**
+
+- Converted 3 orphan print-based test files (test_logic_parser.py, test_logic_tool.py, test_math_model.py) from auto-generated scripts (0 pytest-collected) to proper pytest skip tests (9 collected, all skipped)
+- Each skip test explicitly references Phase 9-12 module deletions with traceable reason strings
+- These 3 files referenced modules deleted in Phase 9-12 cleanup:
+  - `tools.logic_model.logic_parser_eval`
+  - `tools.logic_tool`
+  - `tools.math_model.lightweight_math_model`
+- Test collection: **4,726** (tests/ only — +9 from converted tests, 0 errors)
+
+### Test Count
+- **4,726** collected (tests/ only — 0 errors)
 
 ## VI-XXV. Section — 2026-07-01 (§X #80: EmotionSystem C³ 4.0 — cross-component Emotion→Biological link)
 

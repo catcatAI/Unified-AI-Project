@@ -1,24 +1,34 @@
 """
-测试模块 - test_logic_parser
-
-自动生成的测试模块,用于验证系统功能。
+=============================================================
+ANGELA-MATRIX: [L3] [δ] [C] [L4]
+=============================================================
+Test: test_logic_parser — referenced module DELETED in Phase 9-12 cleanup
 """
 
-try:
-    from tools.logic_model.logic_parser_eval import LogicParserEval
+import pytest
 
-    print("logic_parser_eval imported successfully")
 
-    # 测试实例化
-    evaluator = LogicParserEval()
-    print("LogicParserEval instantiated successfully")
+@pytest.mark.skip(
+    reason="tools.logic_model.logic_parser_eval was deleted in Phase 9-12 cleanup. "
+    "The legacy auto-generated script (print-based, not pytest-collected) has been "
+    "converted to this explicit skip marker for traceability."
+)
+def test_logic_parser_import() -> None:
+    """Legacy: tools.logic_model.logic_parser_eval — DELETED (Phase 9-12)."""
+    pass  # Module no longer exists
 
-    # 测试简单表达式
-    result = evaluator.evaluate("true AND false")
-    print(f"Simple evaluation result: {result}")
 
-except Exception as e:
-    print(f"Error: {e}")
-    import traceback
+@pytest.mark.skip(
+    reason="tools.logic_model.logic_parser_eval was deleted in Phase 9-12 cleanup."
+)
+def test_logic_parser_instantiation() -> None:
+    """Legacy: LogicParserEval instantiation — DELETED (Phase 9-12)."""
+    pass  # Module no longer exists
 
-    traceback.print_exc()
+
+@pytest.mark.skip(
+    reason="tools.logic_model.logic_parser_eval was deleted in Phase 9-12 cleanup."
+)
+def test_logic_parser_evaluate() -> None:
+    """Legacy: LogicParserEval.evaluate('true AND false') — DELETED (Phase 9-12)."""
+    pass  # Module no longer exists

@@ -1,24 +1,34 @@
 """
-测试模块 - test_logic_tool
-
-自动生成的测试模块,用于验证系统功能。
+=============================================================
+ANGELA-MATRIX: [L3] [δ] [C] [L4]
+=============================================================
+Test: test_logic_tool — referenced module DELETED in Phase 9-12 cleanup
 """
 
-try:
-    from tools.logic_tool import LogicTool
+import pytest
 
-    print("logic_tool imported successfully")
 
-    # 测试实例化
-    tool = LogicTool()
-    print("LogicTool instantiated successfully")
+@pytest.mark.skip(
+    reason="tools.logic_tool was deleted in Phase 9-12 cleanup. "
+    "The legacy auto-generated script (print-based, not pytest-collected) has been "
+    "converted to this explicit skip marker for traceability."
+)
+def test_logic_tool_import() -> None:
+    """Legacy: tools.logic_tool — DELETED (Phase 9-12)."""
+    pass  # Module no longer exists
 
-    # 测试简单表达式
-    result = tool.evaluate_expression("true AND false")
-    print(f"LogicTool evaluation result: {result}")
 
-except Exception as e:
-    print(f"Error: {e}")
-    import traceback
+@pytest.mark.skip(
+    reason="tools.logic_tool was deleted in Phase 9-12 cleanup."
+)
+def test_logic_tool_instantiation() -> None:
+    """Legacy: LogicTool instantiation — DELETED (Phase 9-12)."""
+    pass  # Module no longer exists
 
-    traceback.print_exc()
+
+@pytest.mark.skip(
+    reason="tools.logic_tool was deleted in Phase 9-12 cleanup."
+)
+def test_logic_tool_evaluate() -> None:
+    """Legacy: LogicTool.evaluate_expression('true AND false') — DELETED (Phase 9-12)."""
+    pass  # Module no longer exists
