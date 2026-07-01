@@ -1179,6 +1179,18 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 
 ---
 
+## VI-XXXII. Session Summary — 2026-07-01 (§X #75: Consolidate 41 boilerplate smoke-test files into 1 parameterized file)
+
+### §X #75: Test dedup - massive smoke test consolidation — **DONE** (commit `4363cc7c8`)
+
+- 41 individual test_import + test_instantiation files → 1 parameterized file
+- Net reduction: -739 lines (-866 deleted, +127 added)
+- 17 files with extra test methods preserved (test_action_executor, test_economy_manager, etc.)
+- Test behavior preserved: 96 pass, 20 skip (same as before)
+
+### Test Count
+- **4,594** collected (tests/ only — 0 errors, no test coverage lost)
+
 ## VI-XXXI. Session Summary — 2026-07-01 (§X #74: AutonomousLifeCycle execution feedback loop)
 
 ### §X #74: Execution feedback loop closure — **DONE** (commit `96077d9db`)

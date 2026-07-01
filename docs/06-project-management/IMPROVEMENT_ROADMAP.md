@@ -60,6 +60,7 @@
 | **DLI DORMANT auto-transition** | RESTING + inactivity > threshold → DORMANT; RESTING + maturity < 0.2 → DORMANT. Auto-cycle completes state machine. | 7 standalone tests all pass | ✅ Fixed (§X #71) |
 | **EmotionSystem routing_mode → LLM params** | routing_mode (conservative/exploratory) now modulates temperature/max_tokens in router.py. | All existing tests pass | ✅ Fixed (§X #73) |
 | **AutonomousLifeCycle feedback loop** | execution_success_rate influences dynamic_confidence_threshold and dynamic_risk_tolerance in _evaluate_and_decide(). Low success = conservative, high = bold. | All existing tests pass | ✅ Fixed (§X #74) |
+| **Test dedup: 41 smoke files → 1** | 41 boilerplate test_import + test_instantiation files consolidated into 1 parameterized file. Net -739 lines. | 96 pass, 20 skip (same as individual files) | ✅ Fixed (§X #75) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 
