@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,643** (§X #78: +0 tests, training script + saved weights).
+> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,643** (§X #79: +0 tests, real CIFAR-10 training + joint weights saving).
 
 ---
 
@@ -1244,6 +1244,23 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 - Run Phase 3a with more steps (100→1000+) for better convergence
 - Use `run_on_real()` with CIFAR-10 encoded data instead of synthetic
 - Apply same to AudioWaveformDecoder (Phase 3b)
+
+### Test Count
+- **4,643** (tests/ only — 0 errors, unchanged)
+
+## VI-XXVI. Session Summary — 2026-07-01 (§X #79: Real CIFAR-10 multimodal training + Audio wavetable training)
+
+### §X #79: Real data training (CIFAR-10) — **DONE** (this commit)
+
+- Phase 1+2 with real CIFAR-10 data produces contrastive loss **0.195** vs 0.389 synthetic
+- Phase 3a texture training: loss **0.271** (100 steps, real foundation)
+- Phase 3b wavetable training: loss **0.050** (50 steps) — AudioWaveformDecoder now has trained weights
+- Joint `p29_trained.npz`: 15 arrays (7 visual + 8 audio) — both decoders load from single file
+- `data_loader.py` fix: checkpoint features converted to float32 (was object dtype → training crash)
+
+### New script
+- `scripts/train_multimodal_real.py`: end-to-end training with real CIFAR-10 + ESC-50
+- Usage: `python scripts/train_multimodal_real.py --texture-steps 500 --max-samples 5000`
 
 ### Test Count
 - **4,643** (tests/ only — 0 errors, unchanged)

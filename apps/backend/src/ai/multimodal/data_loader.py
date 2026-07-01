@@ -111,6 +111,10 @@ class CIFAR10Loader:
                 saved_features = ckpt.get("features", [])
                 if len(saved_indices) > 0:
                     self._encoded = dict(zip(saved_indices, saved_features))
+                    # Ensure features are float32 (checkpoint may store object arrays)
+                    for idx in self._encoded:
+                        if self._encoded[idx] is not None:
+                            self._encoded[idx] = np.asarray(self._encoded[idx], dtype=np.float32)
                     logger.info(
                         "CIFAR-10: resumed from checkpoint (%d images already encoded)",
                         len(self._encoded),
@@ -137,8 +141,8 @@ class CIFAR10Loader:
                 img_data = np.load(path).astype(np.uint8)
                 from PIL import Image
                 features = self._encoder.encode_from_pil(Image.fromarray(img_data))
-                if features.sum() != 0:
-                    self._encoded[i] = features
+                if features is not None and (isinstance(features, np.ndarray) and features.sum() != 0):
+                    self._encoded[i] = np.asarray(features, dtype=np.float32)
                     count += 1
             except Exception as e:
                 logger.debug("CIFAR-10 encode failed at index %d: %s", i, e)

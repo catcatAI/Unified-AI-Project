@@ -64,6 +64,7 @@
 | **GlobalSystemClock unified time base** | New module: core/clock/global_system_clock.py with configurable tick rate, tick subscription, disable/enable, exception isolation. Closes §8.6 #1. | 13 tests pass | ✅ Fixed (§X #76) |
 | **GlobalSystemClock wait_for_ticks + AngelaModelCore wiring** | Event-driven wait_for_ticks(n) added (asyncio.Event, no polling). AngelaModelCore._metabolic_loop replaces asyncio.sleep(2.0) with clock.wait_for_ticks(20). §8.6 #3: 2nd polling loop replaced. | 17 clock + 6 angela_model_core tests pass | ✅ Fixed (§X #77) |
 | **VisualDecoder texture 實際訓練** | FullTrainingPipeline Phase 1+2+3a actual run (not just structural). p29_trained.npz saved (7 arrays: W, b, W_hidden, b_hidden, W_featmap, b_featmap, tex_kernels). Trained vs random: mean diff 79.64. | All existing tests pass | ✅ Done (§X #78) |
+| **多模態真實資料訓練** | Phase 1+2 with real CIFAR-10 data (contrastive loss 0.195 vs 0.389 synthetic). Phase 3a texture (loss 0.271). Phase 3b wavetable (loss 0.050). 15-weight joint p29_trained.npz (7 visual + 8 audio). data_loader.py float32 fix (was saving object arrays causing training crash). | scripts/train_multimodal_real.py | ✅ Done (§X #79) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 

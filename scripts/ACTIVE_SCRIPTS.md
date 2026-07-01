@@ -27,6 +27,7 @@ This document lists the **currently active and recommended** scripts for the Uni
 - **`train_ed3n.py`**: ED3N training
 - **`train_pipeline.py`**: Training pipeline
 - **`train_visual_decoder.py`**: Train VisualDecoder texture weights via FullTrainingPipeline (Phase 1+2+3a). Saves `data/multimodal/weights/p29_trained.npz` with 7 weight arrays. Usage: `python scripts/train_visual_decoder.py --texture-steps 200`
+- **`train_multimodal_real.py`**: Full multimodal training with real CIFAR-10 + ESC-50 data. Phase 1+2 (real contrastive + reconstruction) + Phase 3a (texture) + Phase 3b (wavetable). Saves joint `p29_trained.npz` (15 arrays). Usage: `python scripts/train_multimodal_real.py --texture-steps 500`
 - **`generate_training_data.py`**: Generate training data
 
 ### Development & Testing
