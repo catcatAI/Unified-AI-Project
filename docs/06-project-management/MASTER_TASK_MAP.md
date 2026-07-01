@@ -1376,6 +1376,23 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 ### Test Count
 - **4,726** collected (tests/ only — 0 errors)
 
+---
+
+## VI-XXXVI. Section — 2026-07-01 (§X #89: Consolidate 3 import-only unit tests into 1 parameterized file)
+
+### §X #89: Import-only test consolidation — **DONE**
+
+- Created `tests/unit/test_unit_backend_imports.py` — 1 parameterized test replacing 3 individual files:
+  - `tests/unit/test_policy_router.py` (deleted)
+  - `tests/unit/test_asi_autonomous_alignment.py` (deleted)
+  - `tests/unit/test_precision_projection_matrix.py` (deleted)
+- Net reduction: 3 files → 1 file, 64 lines → 25 lines (-39 lines)
+- Test coverage preserved: 2 passed, 1 skipped (same as individual files)
+- Total test count: **4,723** (tests/ only — -3 from redundant import_only tests removal, 0 errors)
+
+### Test Count
+- **4,723** collected (tests/ only — 0 errors)
+
 ## VI-XXV. Section — 2026-07-01 (§X #80: EmotionSystem C³ 4.0 — cross-component Emotion→Biological link)
 
 ### §X #80: Emotion→BiologicalIntegrator stress/relaxation chain — **DONE**
