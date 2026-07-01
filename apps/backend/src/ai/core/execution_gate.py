@@ -11,7 +11,7 @@
 
 import re
 from dataclasses import dataclass
-from typing import Optional
+from typing import Dict, Optional
 
 from ai.core.query_classifier import _NEGATION_WORDS
 
@@ -48,6 +48,8 @@ class ExecutionGate:
     AUTO_EXECUTE = 0.6
     CONFIRM_THRESHOLD = 0.2
 
+    # C³ 5.0: Dynamic thresholds via execution result feedback
+
     # Handler 映射
     HANDLER_MAP = {
         "file": "file_ops",
@@ -62,6 +64,7 @@ class ExecutionGate:
     def __init__(self, model_bus=None):
         self._model_bus = model_bus
         self._config = self._load_config()
+        self._results = {}  # handler -> {"success": int, "fail": int}
 
     def _load_config(self):
         """Load execution gate config from JSON file."""
@@ -100,6 +103,11 @@ class ExecutionGate:
         # 检查是否有 handler
         handler_id = self.HANDLER_MAP.get(query_type)
 
+        # C³ 5.0: Feedback-based threshold adjustment
+        fb_adj = self._get_feedback_adjustment(handler_id)
+        effective_auto = round(self.AUTO_EXECUTE - fb_adj, 3)
+        effective_confirm = round(self.CONFIRM_THRESHOLD - fb_adj, 3)
+
         # For knowledge/creative/greeting queries, skip confirmation and let LLM handle
         if query_type in ("knowledge", "creative", "greeting", "opinion"):
             return GateDecision(
@@ -108,22 +116,22 @@ class ExecutionGate:
                 original_query=user_message,
             )
 
-        if score >= self.AUTO_EXECUTE and handler_id:
+        if score >= effective_auto and handler_id:
             return GateDecision(
                 action="auto_execute", score=score,
                 handler=handler_id,
                 action_type=action_type,
-                reason=f"exec_score={score} >= {self.AUTO_EXECUTE}",
+                reason=f"exec_score={score} >= auto={effective_auto} (fb_adj={fb_adj})",
                 original_query=user_message,
             )
 
-        if score >= self.CONFIRM_THRESHOLD:
+        if score >= effective_confirm:
             if handler_id:
                 return GateDecision(
                     action="confirm_then_execute", score=score,
                     handler=handler_id,
                     action_type=action_type,
-                    reason=f"exec_score={score} in [{self.CONFIRM_THRESHOLD}, {self.AUTO_EXECUTE})",
+                    reason=f"exec_score={score} in [{effective_confirm}, {effective_auto}) (fb_adj={fb_adj})",
                     confirm_message=self._build_confirm(action_type, user_message),
                     impact_info=self._describe_impact(action_type, user_message),
                     original_query=user_message,
@@ -139,7 +147,7 @@ class ExecutionGate:
 
         return GateDecision(
             action="reject", score=score,
-            reason=f"exec_score={score} < {self.CONFIRM_THRESHOLD}",
+            reason=f"exec_score={score} < confirm={effective_confirm} (fb_adj={fb_adj})",
             original_query=user_message,
         )
 
@@ -215,3 +223,33 @@ class ExecutionGate:
         if action_type == "delete":
             parts.append("此操作无法撤销")
         return "；".join(parts)
+
+    # C³ 5.0: Execution result feedback loop
+    def record_result(self, handler: str, success: bool) -> None:
+        """Record execution result for feedback-based threshold adjustment."""
+        if handler not in self._results:
+            self._results[handler] = {"success": 0, "fail": 0}
+        if success:
+            self._results[handler]["success"] += 1
+        else:
+            self._results[handler]["fail"] += 1
+
+    def get_feedback_stats(self) -> dict:
+        """Return execution feedback statistics per handler."""
+        return dict(self._results)
+
+    def _get_feedback_adjustment(self, handler: Optional[str]) -> float:
+        """Return threshold adjustment based on historical success rate.
+        High success → small positive boost (more trust), failures → no boost."""
+        if not handler or handler not in self._results:
+            return 0.0
+        r = self._results[handler]
+        total = r["success"] + r["fail"]
+        if total < 3:
+            return 0.0
+        rate = r["success"] / total
+        if rate >= 0.9 and total >= 5:
+            return 0.05  # Proven reliable → slightly lower threshold
+        if rate <= 0.3 and total >= 3:
+            return -0.05  # Often fails → slightly higher threshold
+        return 0.0

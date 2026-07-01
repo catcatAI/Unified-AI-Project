@@ -491,8 +491,10 @@ async def _handle_execution_gate(
                     )
                     context["last_action_result"] = action_result
                     context["continuation_count"] = 0
+                    gate.record_result(decision.handler, True)
                 except Exception as e:
                     logger.warning(f"Execution gate auto-execute failed: {e}")
+                    gate.record_result(decision.handler, False)
         elif decision.action == "confirm_then_execute":
             context["pending_action"] = {
                 "handler": decision.handler,

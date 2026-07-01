@@ -220,7 +220,15 @@ class EmotionSystem:
 - 調整是所有 backend 的平均值，可能互相抵消
 - 需隨著更多資料累積讓校準更準確
 
-### 3.5 Heartbeat (MetabolicHeartbeat) — 🟢 C³ = 5.0/10
+### 3.5 ExecutionGate (248L) — 🟢 C³ = 5.0/10 (was 4.0/10, ✅ §X #84)
+
+**C³ 5.0 — Execution result feedback loop**: `ExecutionGate` now tracks auto-execution outcomes (success/fail) per handler via `record_result()`. Success rate ≥ 90% with ≥ 5 results → +0.05 threshold bonus (lower effective threshold, more trust). Success rate ≤ 30% with ≥ 3 results → -0.05 penalty (raise threshold, more caution). Wired into chat pipeline: auto-execute results feed back via `gate.record_result()`. 59 tests (48 existing + 11 new) all pass.
+
+**Causal chain**: input → _calculate_exec_score → feedback-adjusted effective threshold → decide auto/confirm/reject → handler execution → record_result(success/fail) → next decide uses adjusted threshold (closed-loop achieved).
+
+**Closed-loop rate**: 30% (auto-execute results feed back; pending confirm path not yet wired).
+
+### 3.6 Heartbeat (MetabolicHeartbeat) — 🟢 C³ = 5.0/10
 
 ```python
 # 目前最完整的因果鏈
@@ -446,7 +454,7 @@ prompt += f"Current emotional state: {emotion_summary}"
 | 組件 | 之前宣稱 | 實際 C³ | 基礎架構 | 鏈深度 | 閉環率 | 真實度 |
 |:-----|:--------:|:-------:|:--------:|:------:|:-----:|:-----:|
 | **Heartbeat → Bio → Spatial** | ✅完整 | **5.0/10** | 8/10 | 3 | 30% | 🟢 唯一接近真實的 |
-| **ExecutionGate → Pipeline** | ✅完整 | **4.0/10** | 8/10 | 3 | 0% | 🟢 單向確定性閘門 |
+| **ExecutionGate → Pipeline** | ✅完整 | **5.0/10** (was 4.0, §X #84) | 8/10 | 3 | 30% | 🟢 執行結果回饋閉環：record_result() 成功/失敗 → 動態調整有效閾值 (§X #84) |
 | **DigitalLifeIntegrator** | ✅完整 | **5.0/10** (was 4.5, §X #71) | 8/10 | 2 | 60% | 🟡 6/6 狀態有行為 + DORMANT auto-transition (commit `7b86cf28b`) |
 | **MetaController** | ✅完整 | **4.0/10** (was 3.5, §X #83) | 7/10 | 2 | 30% | 🟡 閉環校準歷史 → 調整幅度動態倍率 (§X #83 closed-loop) |
 | **EmotionSystem** | ✅完整 | **4.0/10** (was 3.0, §X #80) | 9/10 | 4 | 0% | 🟢 Emotion→BiologicalIntegrator stress/relaxation |
@@ -591,7 +599,7 @@ def test_causal_chain_<component>_<path>() -> None:
 | 組件 | 檔案 | 行數 | async loop | 有狀態 | 影響下游 | 鏈深度 | 評級 |
 |:-----|:-----|:----:|:----------:|:------:|:--------:|:------:|:----:|
 | MetabolicHeartbeat | `core/life/heartbeat.py` | 206 | ✅ | ✅ | ✅ Bio+Spatial | 3 | 🟢 |
-| ExecutionGate | `ai/core/execution_gate.py` | 170 | ❌ | ❌純計算 | ✅ Router | 2 | 🟢 |
+| ExecutionGate | `ai/core/execution_gate.py` | 248 | ❌ | ✅ 執行結果回饋 | ✅ Router (+ closed-loop via record_result) | 3 | 🟢 |
 | DigitalLifeIntegrator | `core/life/digital_life_integrator.py` | 380 | ✅ | ✅ | ✅ 6/6 狀態行為 | 2 | 🟡 |
 | MetaController | `ai/meta/meta_controller.py` | 130 | ❌ | ✅ EWMA | ✅ auto_apply_thresholds | 2 | 🟡 |
 | AutonomousLifeCycle | `core/life/autonomous_life_cycle.py` | 410 | ✅ | ✅ | ✅ BehaviorExecutor | 2 | 🟡 |

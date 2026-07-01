@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,701** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop).
+> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-01: tests/ only = **4,712** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop; §X #84: +11 exec gate feedback).
 
 ---
 
@@ -1289,6 +1289,26 @@ Remaining: Real-time hardware metrics (CPU temp, GPU load, memory pressure) for 
 
 ### Test Count (post §X #83)
 - **4,701** collected (tests/ only — 0 errors)
+
+## VI-XXVII. Section — 2026-07-01 (§X #84: ExecutionGate C³ 5.0 — execution result feedback loop)
+
+### §X #84: ExecutionGate C³ 4.0→5.0 — **DONE**
+
+- New `_results` dict tracks execution outcomes (success/fail) per handler
+- `record_result(handler, success)` records execution results
+- `_get_feedback_adjustment(handler)` computes threshold boost (±0.05) based on success rate
+  - ≥90% success + ≥5 total → +0.05 (lower threshold, more trust)
+  - ≤30% success + ≥3 total → -0.05 (raise threshold, more caution)
+  - <3 samples or mixed → 0.0
+- `decide()` applies `effective_auto = AUTO_EXECUTE - fb_adj` and `effective_confirm = CONFIRM_THRESHOLD - fb_adj`
+- Wired into chat pipeline: auto-execute results call `gate.record_result(handler, success/fail)`
+- 11 new tests: result tracking (3), feedback adjustment (6), threshold integration (2)
+- 59 total ExecutionGate tests — all pass
+- ExecutionGate C³: 4.0→**5.0/10** — execution result feedback loop closed (auto-execute path)
+- CAUSAL_CHAIN_COMPLETENESS.md: new §3.5 ExecutionGate section + §5.1 table updated + appendix updated
+
+### Test Count (post §X #84)
+- **4,712** collected (tests/ only — 0 errors)
 
 ## VI-XXV. Section — 2026-07-01 (§X #80: EmotionSystem C³ 4.0 — cross-component Emotion→Biological link)
 

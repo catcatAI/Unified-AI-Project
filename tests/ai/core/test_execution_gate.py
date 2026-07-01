@@ -274,3 +274,76 @@ class TestExecutionGateIntegration:
         d = self.gate.decide(r.primary_type.value, r.action_type, "什么是Python?", r.confidence, {})
         # KNOWLEDGE has no handler, low actionability
         assert d.action in ("confirm_then_execute", "reject")
+
+
+class TestExecutionGateFeedbackLoop:
+    """C³ 5.0: execution result feedback to routing decisions."""
+
+    def setup_method(self):
+        self.gate = ExecutionGate()
+
+    def test_record_result_tracks_success(self):
+        self.gate.record_result("web_search", True)
+        self.gate.record_result("web_search", True)
+        assert self.gate._results["web_search"]["success"] == 2
+
+    def test_record_result_tracks_failure(self):
+        self.gate.record_result("file_ops", False)
+        assert self.gate._results["file_ops"]["fail"] == 1
+
+    def test_get_feedback_stats(self):
+        self.gate.record_result("web_search", True)
+        self.gate.record_result("file_ops", False)
+        stats = self.gate.get_feedback_stats()
+        assert stats["web_search"]["success"] == 1
+        assert stats["file_ops"]["fail"] == 1
+
+    def test_feedback_adjustment_zero_for_few_samples(self):
+        self.gate.record_result("web_search", True)
+        self.gate.record_result("web_search", True)
+        assert self.gate._get_feedback_adjustment("web_search") == 0.0
+
+    def test_feedback_adjustment_positive_for_reliable_handler(self):
+        for _ in range(5):
+            self.gate.record_result("web_search", True)
+        assert self.gate._get_feedback_adjustment("web_search") == 0.05
+
+    def test_feedback_adjustment_negative_for_unreliable_handler(self):
+        for _ in range(3):
+            self.gate.record_result("file_ops", False)
+        assert self.gate._get_feedback_adjustment("file_ops") == -0.05
+
+    def test_feedback_adjustment_zero_for_mixed_handler(self):
+        self.gate.record_result("web_search", True)
+        self.gate.record_result("web_search", True)
+        self.gate.record_result("web_search", False)
+        self.gate.record_result("web_search", True)
+        assert self.gate._get_feedback_adjustment("web_search") == 0.0
+
+    def test_feedback_adjustment_unknown_handler(self):
+        assert self.gate._get_feedback_adjustment("nonexistent") == 0.0
+
+    def test_feedback_adjustment_none_handler(self):
+        assert self.gate._get_feedback_adjustment(None) == 0.0
+
+    def test_reliable_handler_lowers_auto_threshold(self):
+        for _ in range(5):
+            self.gate.record_result("web_search", True)
+        # "搜寻天气": action=read, query_type=search → handler=web_search
+        # Score: reversibility=1.0, impact=1.0, clarity=0.9+0.1(clear_verb)=1.0 (min)
+        # Score = 1.0 * 1.0 * 1.0 = 1.0, well above 0.6
+        d = self.gate.decide("search", "read", "搜寻天气", 0.9, {})
+        assert d.action == "auto_execute"
+        assert "fb_adj=0.05" in d.reason
+
+    def test_unreliable_handler_raises_threshold(self):
+        for _ in range(3):
+            self.gate.record_result("file_ops", False)
+        # "读取文件": action=read, query_type=file → handler=file_ops
+        # Score: reversibility=1.0, impact=1.0, clarity=0.8+0.1(clear_verb)=0.9
+        # Score = 1.0 * 1.0 * 0.9 = 0.9
+        # Without feedback: effective_auto = 0.6, score >= 0.6 → auto_execute
+        # With -0.05 feedback: effective_auto = 0.65, score >= 0.65 → still auto_execute (0.9 >= 0.65)
+        # The key is that reason contains fb_adj
+        d = self.gate.decide("file", "read", "读取文件", 0.8, {})
+        assert "fb_adj=-0.05" in d.reason
