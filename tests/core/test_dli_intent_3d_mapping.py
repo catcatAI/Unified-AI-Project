@@ -13,19 +13,11 @@ import pytest
 
 
 def _make_dli():
-    """Lazy import to work around DLI circular import.
-
-    On first import the circular dependency triggers an ImportError;
-    subsequent imports work because the module is partially cached.
-    """
-    import importlib
-    try:
-        mod = importlib.import_module("core.life.digital_life_integrator")
-        dli = mod.DigitalLifeIntegrator()
-        dli._last_intent_update = datetime(2020, 1, 1)
-        return dli
-    except ImportError:
-        pytest.skip("DLI circular import (pre-existing, not from §X #97)")
+    """Create a DigitalLifeIntegrator with backdated intent update."""
+    from core.life.digital_life_integrator import DigitalLifeIntegrator
+    dli = DigitalLifeIntegrator()
+    dli._last_intent_update = datetime(2020, 1, 1)
+    return dli
 
 
 def _force_intent_update(dli):

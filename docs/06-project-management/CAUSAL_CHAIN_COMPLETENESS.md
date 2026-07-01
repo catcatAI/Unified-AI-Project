@@ -933,5 +933,6 @@ API: `HardwareProfile()` → `.scenario`, `.profile`, `.get(key, default)`, `.se
 | #95 | ExecutionGate _results class-level → cross-instance feedback persistence (+1 test, 4,734→4,735) | 修復 | C³ +1.0 (5.0→6.0, 真正生效 — 之前實例級別導致跨回合反饋遺失) |
 | #96 | AutonomousLifeCycle per-type execution feedback — _evaluate_and_decide() reads per-type stats for threshold modulation (+6 tests, 4,735→4,741) | 功能新增 | C³ +0.5 (3.5→4.0, 決策類型層級回饋) |
 | #97 | IntentModel 3D multi-parameter mapping — each 3D vector component maps to distinct parameter per dimension; state_matrix zeta dimension fix (+6 tests, 4,741→4,748) | 功能增強+修復 | C³ +1.0 (3.0→4.0, 全12參數方向性 preserved + zeta bug fix enables intent update) |
+| #98 | DLI circular import fix — brain_bridge_service.py TYPE_CHECKING guard breaks chain (DLI→services→brain_bridge_service→DLI). Unblocks +2 tests (was 6 pass+1 skip→7 pass; test_get_digital_life now runs). | 修復 | 無 C³ 影響（結構性改善，解鎖測試覆蓋） |
 
-**總結**: §X #94 EmotionSystem C³ +0.5; §X #95 ExecutionGate C³ +1.0; §X #96 AutonomousLifeCycle C³ +0.5; §X #97 IntentModel C³ +1.0 + zeta fix。工作目錄乾淨，**4,748 tests — 0 errors**。
+**總結**: §X #94 EmotionSystem C³ +0.5; §X #95 ExecutionGate C³ +1.0; §X #96 AutonomousLifeCycle C³ +0.5; §X #97 IntentModel C³ +1.0 + zeta fix; §X #98 DLI circular import fix unblocks +2 tests。工作目錄乾淨，**4,748 tests — 0 errors**。

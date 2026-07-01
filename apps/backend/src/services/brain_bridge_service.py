@@ -3,13 +3,16 @@ Angela AI v7.5.0-dev - Brain Bridge Service
 Bridges the theoretical Brain/Body metrics to the user-facing status and documentation.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
-from core.life.digital_life_integrator import DigitalLifeIntegrator
+if TYPE_CHECKING:
+    from core.life.digital_life_integrator import DigitalLifeIntegrator
 from core.system.config.async_io import async_json_dump
 from shared.utils.hardware_detector import SystemHardwareProbe
 
