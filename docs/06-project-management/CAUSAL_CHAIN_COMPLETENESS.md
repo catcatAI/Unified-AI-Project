@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-07-02 (updated for §X #111d: SyntaxError fix — 8 collection errors resolved)
+  LAST_MODIFIED: 2026-07-02 (updated for §X #117: CausalReasoningEngine closed-loop — routing adjustments)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -152,7 +152,7 @@ async def _lifecycle_loop(self):
 
 **C³ 更新**: 3.5→**4.5/10**（生命週期決策現在直接影響 LLM 參數：phase→routing_mode→temperature/max_tokens）+ `get_lifecycle_summary()` 文字注入（已有）
 
-### 3.2 CausalReasoningEngine (218L) — 🟡 C³ = 4.0/10 (was 2.0→3.0, ✅ §X #82)
+### 3.2 CausalReasoningEngine (218L) — 🟢 C³ = 6.0/10 (was 4.5→6.0, ✅ §X #117)
 
 ```python
 # 虛假完成範例 #2: 因果引擎不參與因果
@@ -189,6 +189,8 @@ causal.predict("user_input")
 ```
 
 **C³ 更新**: 4.0→**4.5/10** (CausalReasoningEngine.retrospective_warm_start() — Granger still requires 5 rounds, but predict() works from Round 1 via synthetic baseline relationships).
+
+**§X #117 (2026-07-02) — Causal routing adjustment closes the closed-loop**: Added `_get_causal_routing_adjustment()` to chat_routes.py that reads causal predictions (`user_input`, `query_complexity`, `conversation_momentum`, `interaction_value` average strength) and computes concrete `temperature_bias` and `max_tokens_bias` values. These are injected into context as `causal_routing` when confidence ≥ 0.25. In router.py `_prepare_generation_context()`, causal routing is applied as a modifier (Priority 3.5, after routing_mode): temperature adjusted by bias (clamped 0.1-1.5) and max_tokens by bias (clamped 128-1024). 11 new tests verify routing adjustment computation, injection thresholding, and all key prediction scenarios. **The loop is now closed**: causal predictions → parameter adjustments → LLM behavior change → new observations → updated predictions.
 
 ```python
 # 目前真實鏈: 文字注入 + routing_mode 計算 → prompt 指南 + bio stress/relaxation
@@ -475,7 +477,7 @@ prompt += f"Current emotional state: {emotion_summary}"
 | **MetaController** | ✅完整 | **4.5/10** (was 4.0, §X #115) | 7/10 | 2 | 30% | 🟡 校準快取 + 加權聚合 (dirty-flag cache + reliability-weighted adjustment, §X #115) |
 | **EmotionSystem** | ✅完整 | **4.5/10** (was 4.0, §X #94) | 9/10 | 4 | 50% | 🟢 Emotion→BiologicalIntegrator stress/relaxation + interaction_feedback loop (§X #94) |
 | **AutonomousLifeCycle** | ✅完整 | **4.5/10** (was 3.5, §X #113) | 8/10 | 3 | 50% | 🟡 決策執行 + 回饋閉環 + config 驅動閾值 + get_behavioral_adjustment() → routing/response pipeline (§X #113) |
-| **CausalReasoningEngine** | ✅完整 | **4.5/10** (was 4.0, §X #112) | 9/10 | 3 | 0% | 🟢 retrospective_warm_start() seeds baseline relationships — predict() works from Round 1 (§X #112) |
+| **CausalReasoningEngine** | ✅完整 | **6.0/10** (was 4.5, §X #117) | 9/10 | 4 | 50% | 🟢 Causal routing adjustment closes the loop — predictions now modulate LLM temperature/max_tokens via _get_causal_routing_adjustment() (§X #112+§X #117) |
 | **IntentModel** | ✅完整 | **4.0/10** (was 3.0, §X #97) | 7/10 | 3 | 30% | 🟢 3D vector multi-parameter mapping preserves directional info across 12 parameters (§X #97) |
 
 ### 5.2 整體自主性分數
@@ -620,7 +622,7 @@ def test_causal_chain_<component>_<path>() -> None:
 | MetaController | `ai/meta/meta_controller.py` | 130 | ❌ | ✅ EWMA | ✅ auto_apply_thresholds | 2 | 🟡 |
 | AutonomousLifeCycle | `core/life/autonomous_life_cycle.py` | 420+ | ✅ | ✅ | ✅ BehaviorExecutor + routing/response pipeline via get_behavioral_adjustment() | 4 | 🟡→🟢 |
 | EmotionSystem | `ai/alignment/emotion_system.py` | 280 | ❌ | ✅ | ✅ apply_influence + prompt + interaction feedback | 4 | 🟢 |
-| CausalReasoningEngine | `ai/reasoning/causal_reasoning_engine.py` | 218 | ❌ | ✅ | ✅ LLM prompt injection + warm-start baseline + temporal buffer (predict from Round 1) | 1→3 | 🟡 |
+| CausalReasoningEngine | `ai/reasoning/causal_reasoning_engine.py` | 218 | ❌ | ✅ | ✅ Causal routing adjustment closes the loop — predictions affect LLM temperature/max_tokens via _get_causal_routing_adjustment | 4 | 🟢 |
 | IntentModel | `core/life/intent_model.py` | 80 | ❌ | ✅ | ✅ DigitalLifeIntegrator (3D multi-parameter) | 3 | 🟡 |
 | ModalityGateway | `core/life/digital_life_integrator.py` | 70 | ❌ | ✅ | ✅ Prompt injection via _append_modality_state (DLI-preferred singleton) | 3 | 🟡 |
 
@@ -962,4 +964,4 @@ API: `HardwareProfile()` → `.scenario`, `.profile`, `.get(key, default)`, `.se
 | #111 | TrainingCoordinator production wiring — asyncio.Lock + eviction caps (max 100 examples / 10000 hashes per domain) + all methods async + lifespan.py factory + ChatService dedup/tracking wiring + scripts/train_pipeline.py async bridge fix (+3 eviction tests, 4,753) | 生產接線 | 無 C³ 影響 |
 | #111d | SyntaxError fix — chat_service.py orphaned except block from §X #111 caused 8 cascading collection errors. Moved orphaned `except` back before TrainingCoordinator block. Defense-in-depth: `except (ImportError, SyntaxError)` in protocols.py + test_state_matrix_api.py. +138 tests unblocked (4,618→4,756). | 修復 | 無 C³ 影響（結構性修復，解鎖測試收集） |
 
-**總結**: §X #94 EmotionSystem C³ +0.5; §X #95 ExecutionGate C³ +1.0; §X #96 AutonomousLifeCycle C³ +0.5; §X #97 IntentModel C³ +1.0 + zeta fix; §X #98 DLI circular import fix unblocks +2 tests; §X #99 15 except:pass→logging; §X #100 DynamicThresholdManager real impl +7 tests; §X #101 CAUSAL_CHAIN duplicate fix; §X #102 3 orphan fixes; §X #103 test consolidation & quality (+11 net, 4,755→4,766); §X #104 _SMOKE_MODULES audit (-18, 4,766→4,748); §X #105 4 mock-fallback fixes (-6, 4,748→4,742); §X #106 test_quick_e2e proper skip + learning_orchestrator mock cleanup + MD sync; §X #109 13 stale import comments cleaned; §X #110 +11 training quality benchmarks (4,742→4,753); §X #111 TrainingCoordinator production wiring — async + eviction + ChatService dedup; §X #111d SyntaxError fix — orphaned except in chat_service.py, unblocks 8 collection errors (+138, 4,618→4,756); §X #112 CausalReasoningEngine retrospective_warm_start() — predict() works from Round 1 (+7 tests, 4,756→4,763); §X #113 AutonomousLifeCycle behavioral_adjustment → routing/response pipeline (+10 tests, 4,763→4,774); §X #114 Lifecycle singleton unification (+0 tests, 4,774); §X #115 MetaController calibration cache + weighted adjustment — C³ 4.0→4.5 (+9 tests, 4,774→4,783); §X #116 ModalityGateway state → prompt injection — C³ 0.5→3.0 (+3 tests, 4,783→**4,786 tests — 0 errors**)。
+**總結**: §X #94 EmotionSystem C³ +0.5; §X #95 ExecutionGate C³ +1.0; §X #96 AutonomousLifeCycle C³ +0.5; §X #97 IntentModel C³ +1.0 + zeta fix; §X #98 DLI circular import fix unblocks +2 tests; §X #99 15 except:pass→logging; §X #100 DynamicThresholdManager real impl +7 tests; §X #101 CAUSAL_CHAIN duplicate fix; §X #102 3 orphan fixes; §X #103 test consolidation & quality (+11 net, 4,755→4,766); §X #104 _SMOKE_MODULES audit (-18, 4,766→4,748); §X #105 4 mock-fallback fixes (-6, 4,748→4,742); §X #106 test_quick_e2e proper skip + learning_orchestrator mock cleanup + MD sync; §X #109 13 stale import comments cleaned; §X #110 +11 training quality benchmarks (4,742→4,753); §X #111 TrainingCoordinator production wiring — async + eviction + ChatService dedup; §X #111d SyntaxError fix — orphaned except in chat_service.py, unblocks 8 collection errors (+138, 4,618→4,756); §X #112 CausalReasoningEngine retrospective_warm_start() — predict() works from Round 1 (+7 tests, 4,756→4,763); §X #113 AutonomousLifeCycle behavioral_adjustment → routing/response pipeline (+10 tests, 4,763→4,774); §X #114 Lifecycle singleton unification (+0 tests, 4,774); §X #115 MetaController calibration cache + weighted adjustment — C³ 4.0→4.5 (+9 tests, 4,774→4,783); §X #116 ModalityGateway state → prompt injection — C³ 0.5→3.0 (+3 tests, 4,783→4,786); §X #117 CausalReasoningEngine closed-loop — _get_causal_routing_adjustment() → temperature/max_tokens modulation (+8 tests, 4,786→**4,794 tests — 0 errors**, C³ 4.5→6.0)。

@@ -1165,6 +1165,21 @@ class AngelaLLMService:
             gen_temperature = min(1.5, gen_temperature + 0.3)
             gen_max_tokens = max(gen_max_tokens, 768)
 
+        # Priority 3.5: Causal routing adjustment (C³ closed-loop — predictions affect params)
+        causal_routing = context.get("causal_routing")
+        if causal_routing:
+            temp_bias = causal_routing.get("temperature_bias", 0.0)
+            tokens_bias = causal_routing.get("max_tokens_bias", 0)
+            if causal_routing.get("causal_confidence", 0) > 0.3:
+                gen_temperature = max(0.1, min(1.5, gen_temperature + temp_bias))
+                gen_max_tokens = max(128, min(1024, gen_max_tokens + tokens_bias))
+                logger.debug(
+                    f"[causal_routing] Applied temp_bias={temp_bias:+.3f}, "
+                    f"tokens_bias={tokens_bias:+d} → "
+                    f"temperature={gen_temperature:.2f}, max_tokens={gen_max_tokens} — "
+                    f"{causal_routing.get('effective_guidance', '')}"
+                )
+
         return None, GenerationParams(gen_timeout, gen_temperature, gen_max_tokens)
 
     async def _call_llm_backend(self, user_message: str, context: Dict[str, Any], params: GenerationParams) -> LLMResponse:

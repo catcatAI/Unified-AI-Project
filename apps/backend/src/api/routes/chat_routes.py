@@ -621,6 +621,92 @@ async def _try_agent_routing(
     return None
 
 
+def _get_causal_routing_adjustment() -> Dict[str, Any]:
+    """Compute concrete routing adjustments from learned causal relationships.
+
+    Reads the CausalReasoningEngine's predictions and translates them into
+    actionable LLM generation parameter biases. This closes the C³ loop:
+    causal predictions → actual routing parameter changes (not just prompt text).
+
+    Returns:
+        Dict with:
+        - temperature_bias: float (-0.3 to +0.3) modifier for LLM temperature
+        - max_tokens_bias: int (-256 to +256) modifier for max_tokens
+        - causal_confidence: float (0-1) confidence in the routing adjustment
+        - effective_guidance: str human-readable description of the adjustment
+    """
+    try:
+        causal = get_causal_reasoning()
+        if not causal:
+            return {"temperature_bias": 0.0, "max_tokens_bias": 0, "causal_confidence": 0.0, "effective_guidance": ""}
+
+        rels = causal.get_relationships()
+        if not rels:
+            return {"temperature_bias": 0.0, "max_tokens_bias": 0, "causal_confidence": 0.0, "effective_guidance": ""}
+
+        temp_bias = 0.0
+        tokens_bias = 0
+        confidence = 0.0
+        guidance_parts = []
+
+        # Shortcut: get average prediction strength for a cause
+        def _avg_strength(cause: str) -> float:
+            preds = causal.predict(cause)
+            if not preds:
+                return 0.0
+            return sum(p["strength"] for p in preds) / len(preds)
+
+        # user_input → angela_response: high strength = predictable pattern
+        # → reduce temperature for more consistent, reliable output
+        ui_strength = _avg_strength("user_input")
+        if ui_strength > 0.5:
+            adj = -(0.15 * min(1.0, ui_strength))
+            temp_bias += adj
+            confidence += 0.3
+            guidance_parts.append(f"user_input→response (strength={ui_strength:.2f}, temp{adj:+.3f})")
+
+        # query_complexity → angela_response: complex queries need precise responses
+        # → reduce temperature + increase max_tokens
+        qc_strength = _avg_strength("query_complexity")
+        if qc_strength > 0.3:
+            temp_adj = -(0.1 * min(1.0, qc_strength))
+            temp_bias += temp_adj
+            token_adj = int(128 * min(1.0, qc_strength))
+            tokens_bias += token_adj
+            confidence += 0.3
+            guidance_parts.append(f"complexity→response (strength={qc_strength:.2f}, temp{temp_adj:+.3f}, +{token_adj}tok)")
+
+        # conversation_momentum → user_input: high momentum = engaging conversation
+        # → increase temperature for more creative, exploratory responses
+        cm_strength = _avg_strength("conversation_momentum")
+        if cm_strength > 0.4:
+            temp_adj = 0.1 * min(1.0, cm_strength)
+            temp_bias += temp_adj
+            token_adj = int(64 * min(1.0, cm_strength))
+            tokens_bias += token_adj
+            confidence += 0.2
+            guidance_parts.append(f"momentum→input (strength={cm_strength:.2f}, temp{temp_adj:+.3f}, +{token_adj}tok)")
+
+        # interaction_value → user_input: high value interaction → boost response depth
+        iv_strength = _avg_strength("interaction_value")
+        if iv_strength > 0.3:
+            token_adj = int(128 * min(1.0, iv_strength))
+            tokens_bias += token_adj
+            confidence += 0.2
+            guidance_parts.append(f"interaction_value→input (strength={iv_strength:.2f}, +{token_adj}tok)")
+
+        effective_guidance = "; ".join(guidance_parts) if guidance_parts else ""
+        return {
+            "temperature_bias": round(max(-0.3, min(0.3, temp_bias)), 3),
+            "max_tokens_bias": max(-256, min(256, tokens_bias)),
+            "causal_confidence": round(min(1.0, confidence), 3),
+            "effective_guidance": effective_guidance,
+        }
+    except Exception as e:
+        logger.debug(f"Causal routing adjustment failed: {e}")
+        return {"temperature_bias": 0.0, "max_tokens_bias": 0, "causal_confidence": 0.0, "effective_guidance": ""}
+
+
 def _inject_causal_predictions(
     context: Dict[str, Any]
 ) -> None:
@@ -628,6 +714,8 @@ def _inject_causal_predictions(
 
     Calls causal.predict() to surface learned causal relationships,
     which are then injected into context for the prompt builder to read.
+    Also computes concrete routing adjustments (temperature_bias, max_tokens_bias)
+    to close the causal closed-loop — predictions affect actual LLM parameters.
     """
     try:
         causal = get_causal_reasoning()
@@ -641,6 +729,16 @@ def _inject_causal_predictions(
                 }
                 logger.debug(
                     f"Injected {len(predictions)} causal predictions into context"
+                )
+            # C³ closed-loop: inject concrete routing adjustments
+            routing_adj = _get_causal_routing_adjustment()
+            if routing_adj["causal_confidence"] >= 0.25:
+                context["causal_routing"] = routing_adj
+                logger.debug(
+                    f"Causal routing adjustment: temp={routing_adj['temperature_bias']:+.3f}, "
+                    f"tokens={routing_adj['max_tokens_bias']:+d}, "
+                    f"confidence={routing_adj['causal_confidence']:.2f} — "
+                    f"{routing_adj['effective_guidance']}"
                 )
     except Exception as e:
         logger.debug(f"Causal prediction injection failed: {e}")
