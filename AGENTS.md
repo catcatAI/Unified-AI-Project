@@ -107,6 +107,8 @@ pre-commit run --all-files
 > > ✅ **NOTE (Updated 2026-07-02, §X #110)**: **§X #110**: Training quality benchmarks — added TestQualityMetrics (8 tests: ssim/psnr/snr unit tests for quality_metrics.py) + TestTextureBenchmark (2 tests: real CIFAR-10 texture training loss reduction + SSIM preservation). Net +11 tests (4,742→4,753). **4,753 tests collected (tests/) — 0 errors.**
 > > 
 > > ✅ **NOTE (Updated 2026-07-02, §X #111)**: **§X #111**: TrainingCoordinator wired into production pipeline — added asyncio.Lock + memory cap eviction (max_examples_per_domain, max_hashes_per_domain) to prevent unbounded growth; all methods made async; singleton + factory in lifespan.py; wired into ChatService.initialize() for dedup (should_skip) and tracking (record_training) in both _process_continuous_learning and _process_garden_learning. Updated scripts/train_pipeline.py to use asyncio.run() for sync→async bridge. +3 new tests (eviction caps). **4,753 tests collected (tests/) — 0 errors.**
+> > 
+> > ✅ **NOTE (Updated 2026-07-02, §X #111d)**: **§X #111d**: SyntaxError fix — §X #111 introduced orphaned `except` block in chat_service.py causing 8 cascading collection errors. Moved orphaned except back before TrainingCoordinator block. Defense-in-depth: `except (ImportError, SyntaxError)` in protocols.py + test_state_matrix_api.py. Unblocked +138 tests (4,618→**4,756**). **4,756 tests collected (tests/) — 0 errors.**
 > - **Phase A1-A4: External dictionary download + convert + import pipeline
 > - **New scripts**: `scripts/download_datasets.py` (CC-CEDICT/JMdict/WordNet), `scripts/import_dictionaries.py`
 > - **460,281 entries** imported: 125k CC-CEDICT (zh↔en) + 217k JMdict (ja↔en) + 117k WordNet 3.0 (en)
