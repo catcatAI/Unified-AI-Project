@@ -33,6 +33,7 @@ _crisis_system_instance = None
 _causal_reasoning_instance = None
 _level5_asi_instance = None
 _training_coordinator_instance = None
+_lifecycle_instance = None
 
 # --- Config (lazy proxy) ---
 class _LazyAngelaConfig:
@@ -270,6 +271,26 @@ def _try_init_crisis():
         logger.warning(f"[CrisisSystem] Initialization failed: {e}")
 
 
+def get_lifecycle():
+    """Get or create the shared AutonomousLifeCycle singleton.
+
+    This is the single source of truth for lifecycle state, used by both
+    chat_routes.py (behavioral adjustment injection) and prompt_builder.py
+    (autonomous decisions text injection). Having a single shared instance
+    ensures the prompt text reflects the actual running lifecycle state.
+    """
+    global _lifecycle_instance
+    if _lifecycle_instance is None:
+        try:
+            from core.life.autonomous_life_cycle import AutonomousLifeCycle
+            _lifecycle_instance = AutonomousLifeCycle()
+            logger.info("[LifeCycle] Shared singleton initialized")
+        except Exception as e:
+            logger.warning(f"[LifeCycle] Initialization failed: {e}")
+            raise
+    return _lifecycle_instance
+
+
 def get_training_coordinator():
     """Get or create the TrainingCoordinator singleton."""
     global _training_coordinator_instance
@@ -395,6 +416,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     _try_init_session_manager()
     _broadcast_task = _try_start_broadcast()
     _try_warm_ed3n()
+    # Pre-initialize lifecycle singleton during startup (lazy creates it on first use)
+    try:
+        _ = get_lifecycle()
+    except Exception:
+        logger.debug("[LifeCycle] Pre-init skipped — will lazily initialize on first use")
 
     yield
 

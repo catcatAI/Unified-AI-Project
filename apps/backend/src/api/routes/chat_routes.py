@@ -131,15 +131,22 @@ def _get_dialogue_ctx():
 
 _emotion_analyzer = None
 _emotion_system = None
-_lifecycle = None
+_lifecycle_fallback = None
 
 
 def _get_lifecycle():
-    global _lifecycle
-    if _lifecycle is None:
+    """Get the shared AutonomousLifeCycle singleton from lifespan."""
+    try:
+        from api.lifespan import get_lifecycle as _lifespan_get_lifecycle
+        return _lifespan_get_lifecycle()
+    except Exception:
+        pass
+    # Fallback: create own singleton if lifespan not available
+    global _lifecycle_fallback
+    if _lifecycle_fallback is None:
         from core.life.autonomous_life_cycle import AutonomousLifeCycle
-        _lifecycle = AutonomousLifeCycle()
-    return _lifecycle
+        _lifecycle_fallback = AutonomousLifeCycle()
+    return _lifecycle_fallback
 
 
 def _get_emotion_analyzer():

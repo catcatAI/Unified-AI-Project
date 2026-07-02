@@ -17,7 +17,18 @@ _theta_router = None
 
 
 def _get_autonomous_lifecycle():
-    """Return a cached AutonomousLifeCycle singleton."""
+    """Return the shared AutonomousLifeCycle singleton from lifespan.
+
+    Uses the lifespan-managed singleton as the single source of truth,
+    so the prompt text reflects the actual lifecycle state that is also
+    used by chat_routes.py for behavioral adjustment injection.
+    """
+    try:
+        from api.lifespan import get_lifecycle
+        return get_lifecycle()
+    except Exception:
+        pass
+    # Fallback: create own singleton if lifespan not available
     global _autonomous_lifecycle
     if _autonomous_lifecycle is None:
         from core.life.autonomous_life_cycle import AutonomousLifeCycle
