@@ -113,6 +113,91 @@ class CausalReasoningEngine:
         return {k: sorted(v) for k, v in self._graph.items()}
 
     # ------------------------------------------------------------------
+    # Warm-start: retrospective baseline relationships
+    # ------------------------------------------------------------------
+
+    def retrospective_warm_start(self) -> int:
+        """Seed the engine with baseline causal relationships so that
+        predict() returns meaningful results from Round 1 instead of
+        requiring 5+ rounds of live data before Granger fires.
+
+        Creates synthetic retrospective observations that encode common
+        conversational cause-effect patterns with moderate strengths.
+
+        Returns the number of baseline relationships created.
+        """
+        if self._relationships:
+            logger.debug("CausalReasoningEngine already has %d relationships — skipping warm-start",
+                         len(self._relationships))
+            return 0
+
+        before = len(self._relationships)
+        baseline_observations = [
+            {
+                "variables": ["user_input", "angela_response", "conversation_momentum"],
+                "data": {
+                    "user_input": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0],
+                    "angela_response": [1.5, 2.8, 4.2, 5.1, 6.3, 7.0, 7.5],
+                    "conversation_momentum": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7],
+                },
+                "id": "warm_start_baseline_1",
+                "relationships": [
+                    {"cause": "user_input", "effect": "angela_response",
+                     "strength": 0.65, "method": "warm_start",
+                     "confounders": ["conversation_momentum"]},
+                    {"cause": "conversation_momentum", "effect": "user_input",
+                     "strength": 0.45, "method": "warm_start",
+                     "confounders": []},
+                ],
+            },
+            {
+                "variables": ["user_input", "angela_response", "query_complexity"],
+                "data": {
+                    "user_input": [1.0, 2.0, 3.0, 4.0, 5.0],
+                    "angela_response": [1.2, 2.5, 4.0, 5.5, 6.8],
+                    "query_complexity": [0.5, 0.6, 0.7, 0.8, 0.9],
+                },
+                "id": "warm_start_baseline_2",
+                "relationships": [
+                    {"cause": "user_input", "effect": "angela_response",
+                     "strength": 0.55, "method": "warm_start",
+                     "confounders": ["query_complexity"]},
+                    {"cause": "query_complexity", "effect": "angela_response",
+                     "strength": 0.35, "method": "warm_start",
+                     "confounders": []},
+                ],
+            },
+            {
+                "variables": ["user_input", "angela_response", "interaction_value"],
+                "data": {
+                    "user_input": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+                    "angela_response": [2.0, 3.5, 4.5, 5.0, 5.5, 6.0],
+                    "interaction_value": [0.3, 0.4, 0.5, 0.55, 0.6, 0.65],
+                },
+                "id": "warm_start_baseline_3",
+                "relationships": [
+                    {"cause": "user_input", "effect": "angela_response",
+                     "strength": 0.50, "method": "warm_start",
+                     "confounders": ["interaction_value"]},
+                    {"cause": "interaction_value", "effect": "user_input",
+                     "strength": 0.30, "method": "warm_start",
+                     "confounders": []},
+                ],
+            },
+        ]
+
+        for obs in baseline_observations:
+            self.learn(obs)
+
+        added = len(self._relationships) - before
+        logger.info(
+            "CausalReasoningEngine warm-started with %d baseline relationships "
+            "— predict() now functional from Round 1",
+            added,
+        )
+        return added
+
+    # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
 

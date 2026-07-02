@@ -196,3 +196,73 @@ class TestIngestTemporalState:
             ts.record({"axis_b": {"val": float(i)}})
         count_small_window = engine.ingest_temporal_state(ts, window=5)
         assert count_small_window <= 5
+
+
+class TestRetrospectiveWarmStart:
+    """Tests for retrospective_warm_start() — baseline relationship seeding."""
+
+    def test_warm_start_creates_baseline_relationships(self):
+        engine = CausalReasoningEngine()
+        count = engine.retrospective_warm_start()
+        assert count > 0
+        rels = engine.get_relationships()
+        assert len(rels) == count
+
+    def test_warm_start_predict_user_input_from_round_one(self):
+        """The core C³ goal: predict('user_input') works from the start."""
+        engine = CausalReasoningEngine()
+        engine.retrospective_warm_start()
+        preds = engine.predict("user_input")
+        assert len(preds) > 0
+        assert all(r["cause"] == "user_input" for r in preds)
+        assert all(r["strength"] > 0 for r in preds)
+
+    def test_warm_start_idempotent(self):
+        """Calling warm-start twice does not duplicate relationships."""
+        engine = CausalReasoningEngine()
+        count1 = engine.retrospective_warm_start()
+        count2 = engine.retrospective_warm_start()
+        assert count2 == 0  # Second call skips
+        assert len(engine.get_relationships()) == count1
+
+    def test_warm_start_graph_includes_all_variables(self):
+        engine = CausalReasoningEngine()
+        engine.retrospective_warm_start()
+        graph = engine.get_graph()
+        # Baseline variables: user_input, angela_response, conversation_momentum,
+        # query_complexity, interaction_value
+        assert "user_input" in graph
+        assert "angela_response" in graph
+        assert "conversation_momentum" in graph
+
+    def test_warm_start_does_not_overwrite_existing_relationships(self):
+        """If the engine already has relationships, warm-start skips."""
+        engine = CausalReasoningEngine({"causality_threshold": 0.1})
+        engine.learn({
+            "id": "pre_existing",
+            "variables": ["custom_a", "custom_b"],
+            "data": {"custom_a": [1], "custom_b": [2]},
+        })
+        before = len(engine.get_relationships())
+        count = engine.retrospective_warm_start()
+        assert count == 0  # Skips because relationships exist
+        assert len(engine.get_relationships()) == before
+
+    def test_warm_start_predict_before_any_live_data(self):
+        """Warm-start enables predict() BEFORE any learn() call from live data."""
+        engine = CausalReasoningEngine()
+        engine.retrospective_warm_start()
+        # No live learn() calls yet
+        preds = engine.predict("user_input")
+        assert len(preds) >= 2  # At least 2 baseline user_input→angela_response
+        # angela_response should appear in the top predictions
+        effects = [r["effect"] for r in preds]
+        assert "angela_response" in effects
+
+    def test_warm_start_explain_works(self):
+        """explain() also works after warm-start."""
+        engine = CausalReasoningEngine()
+        engine.retrospective_warm_start()
+        expl = engine.explain("angela_response")
+        assert len(expl) > 0
+        assert expl[0]["effect"] == "angela_response"

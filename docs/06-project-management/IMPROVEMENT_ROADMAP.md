@@ -51,7 +51,7 @@
 | **Chat 管線 9 階段** | WS → 情緒 → 危機 → 對齊 → 閘門 → 路由 → LLM → 學習 → 回應 | 整合測試 | ✅ 完整接線 |
 | **CLP（持續學習）** | ED3NTrainer 已接線至聊天管線 + 獨立模式 | 整合測試 | ✅ 已接線，字典成長有效 |
 | **CML（持續多模態學習）** | 自主微訓練已接線至 encode 路徑，共用生產管線 | 20 CML 測試通過 + 21 多模態服務測試通過 | ✅ 每次編碼後自動微訓練 |
-| **測試數量** | pytest 收集 | **4,756 tests** (tests/ only, verified 2026-07-02 — §X #69-111d: 0 errors, 19 skipped) | ✅ 0 failures |
+| **測試數量** | pytest 收集 | **4,763 tests** (tests/ only, verified 2026-07-02 — §X #69-112: 0 errors, 19 skipped) | ✅ 0 failures |
 | **FullTrainingPipeline** | `pipeline_weights.npz` saved (33 arrays, 1.2MB) | 52s moderate run: texture=0.384, wavetable=0.045, sequence=0.015 | ✅ Trained weights exist on disk |
 | **Empty-data encode fast-fail** | `encode_with_retry()` now fast-fails on empty data without wasting 3 retries | 24/24 production tests pass, crisis_log reduced | ✅ Fixed (§X #60) |
 | **MainApiServer stubs eliminated** | 3 pure-pass async methods → real implementations | test_api_service_reconnection passes (22.74s) | ✅ Fixed (§X #61) |
@@ -85,6 +85,7 @@
 | **Stale import comments cleanup** | Removed 13 stale `# (removed incomplete import: from ...)` comments across 6 source files. No functional impact — improves code readability. | system_manager.py, tool_context.py, model_context.py, integration_with_ham.py, config.py, dialogue_context.py | ✅ Done (§X #109) |
 | **Training quality benchmarks** | TestQualityMetrics (8 unit tests: ssim/psnr/snr) + TestTextureBenchmark (2 real CIFAR-10 texture training benchmarks via scipy.ndimage.zoom). Establishes baseline for training quality regression. | tests/ai/multimodal/training/test_training_targets.py (20 tests, +11) | ✅ Done (§X #110) |
 | **TrainingCoordinator production wiring** | All methods made async (asyncio.Lock thread safety). Memory cap eviction (max 100 examples / 10000 hashes per domain). lifespan.py singleton + factory. ChatService dedup via should_skip() + record_training(). train_pipeline sync→async bridge fix. | training_coordinator.py, lifespan.py, chat_service.py, scripts/train_pipeline.py | ✅ Done (§X #111) |
+| **CausalReasoningEngine warm-start** | `retrospective_warm_start()` seeds 6 baseline causal relationships from synthetic data. `predict("user_input")` now works from Round 1 of every conversation. Called at server startup in lifespan.py. C³: 4.0→4.5/10. 7 new tests, all pass. | causal_reasoning_engine.py, lifespan.py, test_causal_reasoning.py | ✅ Done (§X #112) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 

@@ -293,6 +293,9 @@ def _try_init_causal_reasoning():
     try:
         from ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
         _causal_reasoning_instance = CausalReasoningEngine()
+        # Warm-start with retrospective baseline relationships so
+        # predict() returns results from Round 1 of every conversation
+        _causal_reasoning_instance.retrospective_warm_start()
         logger.info("[CausalReasoning] Initialized — learning causal relationships from interactions")
     except Exception as e:
         logger.warning(f"[CausalReasoning] Initialization failed: {e}")

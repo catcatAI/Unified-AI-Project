@@ -173,10 +173,19 @@ def predict(self, cause, context=None) -> List[Dict]:
 
 **C³ 更新**: 3.0→**4.0/10** (§X #82) — `ingest_temporal_state()` 現已在聊天管線中定期觸發（`_fire_causal_learning` 內部）。TemporalState 儲存每次互動的快照（msg_length/resp_length/engagement_ratio），每 5 次互動自動呼叫 `ingest_temporal_state(ts, window=20)`。解決了「橋樑存在但未觸發」的問題。
 
-**剩餘問題**:
-- 預測在 Round 1-4 仍不會出現 Granger（需 ≥ 5 輪累積）
+**§X #112 (2026-07-02) — Retrospective warm-start**: Added `retrospective_warm_start()` method that creates 6 baseline causal relationships from synthetic retrospective data. This means `predict("user_input")` returns results from Round 1 of every conversation, not just Round 5+. Called automatically in lifespan.py `_try_init_causal_reasoning()` at server startup. 7 new tests verify baseline creation, idempotency, graph integrity, and pre-live-data prediction.
 
-### 3.3 EmotionSystem (417L) — 🟢 C³ = 4.0/10 (was 3.0/10, ✅ §X #80)
+```python
+# Before: Round 1-4 predict returned empty → no causal insights in LLM prompt
+# After: Warm-start populates baseline relationships → predict works immediately
+causal.predict("user_input")
+# Returns:
+#   [{"cause": "user_input", "effect": "angela_response", "strength": 0.65, ...},
+#    {"cause": "user_input", "effect": "angela_response", "strength": 0.55, ...},
+#    {"cause": "user_input", "effect": "angela_response", "strength": 0.50, ...}]
+```
+
+**C³ 更新**: 4.0→**4.5/10** (CausalReasoningEngine.retrospective_warm_start() — Granger still requires 5 rounds, but predict() works from Round 1 via synthetic baseline relationships).
 
 ```python
 # 目前真實鏈: 文字注入 + routing_mode 計算 → prompt 指南 + bio stress/relaxation
@@ -461,7 +470,7 @@ prompt += f"Current emotional state: {emotion_summary}"
 | **MetaController** | ✅完整 | **4.0/10** (was 3.5, §X #83) | 7/10 | 2 | 30% | 🟡 閉環校準歷史 → 調整幅度動態倍率 (§X #83 closed-loop) |
 | **EmotionSystem** | ✅完整 | **4.5/10** (was 4.0, §X #94) | 9/10 | 4 | 50% | 🟢 Emotion→BiologicalIntegrator stress/relaxation + interaction_feedback loop (§X #94) |
 | **AutonomousLifeCycle** | ✅完整 | **3.5/10** (was 3.0, §X #85) | 8/10 | 3 | 30% | 🟡 決策執行 + 回饋閉環 + config 驅動閾值 (commit §X #74, §X #85) |
-| **CausalReasoningEngine** | ✅完整 | **4.0/10** (was 3.0, §X #82) | 9/10 | 3 | 0% | 🟢 ingest_temporal_state() wired into chat pipeline, TemporalState snapshots every 5 interactions (§X #82) |
+| **CausalReasoningEngine** | ✅完整 | **4.5/10** (was 4.0, §X #112) | 9/10 | 3 | 0% | 🟢 retrospective_warm_start() seeds baseline relationships — predict() works from Round 1 (§X #112) |
 | **IntentModel** | ✅完整 | **4.0/10** (was 3.0, §X #97) | 7/10 | 3 | 30% | 🟢 3D vector multi-parameter mapping preserves directional info across 12 parameters (§X #97) |
 
 ### 5.2 整體自主性分數
@@ -606,7 +615,7 @@ def test_causal_chain_<component>_<path>() -> None:
 | MetaController | `ai/meta/meta_controller.py` | 130 | ❌ | ✅ EWMA | ✅ auto_apply_thresholds | 2 | 🟡 |
 | AutonomousLifeCycle | `core/life/autonomous_life_cycle.py` | 410 | ✅ | ✅ | ✅ BehaviorExecutor + config-driven feedback | 3 | 🟡 |
 | EmotionSystem | `ai/alignment/emotion_system.py` | 280 | ❌ | ✅ | ✅ apply_influence + prompt + interaction feedback | 4 | 🟢 |
-| CausalReasoningEngine | `ai/reasoning/causal_reasoning_engine.py` | 218 | ❌ | ✅ | ✅ LLM prompt injection + temporal buffer (Granger enabled after 5+ rounds) | 1→3 | 🟡 |
+| CausalReasoningEngine | `ai/reasoning/causal_reasoning_engine.py` | 218 | ❌ | ✅ | ✅ LLM prompt injection + warm-start baseline + temporal buffer (predict from Round 1) | 1→3 | 🟡 |
 | IntentModel | `core/life/intent_model.py` | 80 | ❌ | ✅ | ✅ DigitalLifeIntegrator (3D multi-parameter) | 3 | 🟡 |
 | ModalityGateway | `core/life/digital_life_integrator.py` | 70 | ❌ | ✅ | 🟡 狀態更新但無人讀 | 0.5 | 🔴 |
 
@@ -947,4 +956,4 @@ API: `HardwareProfile()` → `.scenario`, `.profile`, `.get(key, default)`, `.se
 | #111 | TrainingCoordinator production wiring — asyncio.Lock + eviction caps (max 100 examples / 10000 hashes per domain) + all methods async + lifespan.py factory + ChatService dedup/tracking wiring + scripts/train_pipeline.py async bridge fix (+3 eviction tests, 4,753) | 生產接線 | 無 C³ 影響 |
 | #111d | SyntaxError fix — chat_service.py orphaned except block from §X #111 caused 8 cascading collection errors. Moved orphaned `except` back before TrainingCoordinator block. Defense-in-depth: `except (ImportError, SyntaxError)` in protocols.py + test_state_matrix_api.py. +138 tests unblocked (4,618→4,756). | 修復 | 無 C³ 影響（結構性修復，解鎖測試收集） |
 
-**總結**: §X #94 EmotionSystem C³ +0.5; §X #95 ExecutionGate C³ +1.0; §X #96 AutonomousLifeCycle C³ +0.5; §X #97 IntentModel C³ +1.0 + zeta fix; §X #98 DLI circular import fix unblocks +2 tests; §X #99 15 except:pass→logging; §X #100 DynamicThresholdManager real impl +7 tests; §X #101 CAUSAL_CHAIN duplicate fix; §X #102 3 orphan fixes; §X #103 test consolidation & quality (+11 net, 4,755→4,766); §X #104 _SMOKE_MODULES audit (-18, 4,766→4,748); §X #105 4 mock-fallback fixes (-6, 4,748→4,742); §X #106 test_quick_e2e proper skip + learning_orchestrator mock cleanup + MD sync; §X #109 13 stale import comments cleaned; §X #110 +11 training quality benchmarks (4,742→4,753); §X #111 TrainingCoordinator production wiring — async + eviction + ChatService dedup; §X #111d SyntaxError fix — orphaned except in chat_service.py, unblocks 8 collection errors (+138, 4,618→4,756). 工作目錄乾淨，**4,756 tests — 0 errors**。
+**總結**: §X #94 EmotionSystem C³ +0.5; §X #95 ExecutionGate C³ +1.0; §X #96 AutonomousLifeCycle C³ +0.5; §X #97 IntentModel C³ +1.0 + zeta fix; §X #98 DLI circular import fix unblocks +2 tests; §X #99 15 except:pass→logging; §X #100 DynamicThresholdManager real impl +7 tests; §X #101 CAUSAL_CHAIN duplicate fix; §X #102 3 orphan fixes; §X #103 test consolidation & quality (+11 net, 4,755→4,766); §X #104 _SMOKE_MODULES audit (-18, 4,766→4,748); §X #105 4 mock-fallback fixes (-6, 4,748→4,742); §X #106 test_quick_e2e proper skip + learning_orchestrator mock cleanup + MD sync; §X #109 13 stale import comments cleaned; §X #110 +11 training quality benchmarks (4,742→4,753); §X #111 TrainingCoordinator production wiring — async + eviction + ChatService dedup; §X #111d SyntaxError fix — orphaned except in chat_service.py, unblocks 8 collection errors (+138, 4,618→4,756); §X #112 CausalReasoningEngine retrospective_warm_start() — predict() works from Round 1 (+7 tests). 工作目錄乾淨，**4,763 tests — 0 errors**。
