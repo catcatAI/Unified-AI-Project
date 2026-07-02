@@ -717,13 +717,13 @@ def _step4_train_ed3n(coordinator, batches):
             m = trainer.train_step(batch)
             print(f"    Epoch {epoch+1}/{limit_value('train.ed3n.epochs', 2)}: loss={m.loss:.4f} acc={m.accuracy:.4f} ({time.time()-t0:.1f}s)")
             # Record with coordinator
-            coordinator.record_training(
+            asyncio.run(coordinator.record_training(
                 domain="math" if any(e.metadata.get("domain") == "math" for e in batch.examples) else "logic",
                 model_id="ed3n",
                 count=len(examples),
                 accuracy=m.accuracy,
                 examples=[{"input": e.input_text, "output": e.expected_output} for e in examples[:limit_value("train.ed3n.max_examples_per_epoch", 50)]],
-            )
+            ))
             # Save mid-training checkpoint
             ed3n_engine.save(os.path.join(CKPT_DIR, f"ed3n_epoch{epoch+1}.json"))
 
@@ -798,13 +798,13 @@ def _step5_train_garden(coordinator, batches):
         print(f"  learn_from_interaction calls: {learn_count}")
 
         # Record with coordinator
-        coordinator.record_training(
+        asyncio.run(coordinator.record_training(
             domain="knowledge",
             model_id="garden",
             count=learn_count,
             accuracy=confidence_value("train.garden.record_accuracy", 0.7),
             examples=[{"input": s["input"], "output": s["output"]} for s in garden_samples[:50]],
-        )
+        ))
 
     except Exception as e:
         logger.warning("GARDEN training failed (non-fatal): %s", e)
@@ -831,11 +831,11 @@ def _step6_sync_knowledge(ed3n_engine, garden_engine, model_bus, coordinator, al
                 ed3n_patterns.append((trigger, response))
                 seen_triggers.add(trigger)
 
-        synced = coordinator.sync_reflex_patterns(
+        synced = asyncio.run(coordinator.sync_reflex_patterns(
             source_engine=ed3n_engine,
             target_engine=garden_engine,
             top_n=min(limit_value("train.sync.pattern_limit", 200), len(ed3n_patterns)),
-        )
+        ))
         print(f"  Synced {synced} reflex patterns via coordinator")
 
         # Also use ModelBus.sync_knowledge
@@ -942,7 +942,7 @@ def main() -> None:
     # Step 3: Deconflict samples by domain
     # -----------------------------------------------------------------------
     print("\n[3/8] Deconflicting samples by domain...")
-    batches = coordinator.deconflict_samples(all_samples)
+    batches = asyncio.run(coordinator.deconflict_samples(all_samples))
     for model_id, batch in sorted(batches.items()):
         print(f"  {model_id:15s} -> {len(batch):5d} samples")
     total_deconflicted = sum(len(v) for v in batches.values())
@@ -956,7 +956,7 @@ def main() -> None:
         elapsed = time.time() - t_start
         print(f"  Elapsed: {elapsed:.1f}s")
         # Show domain report
-        print(coordinator.get_domain_report())
+        print(asyncio.run(coordinator.get_domain_report()))
         return
 
     # -----------------------------------------------------------------------
@@ -977,7 +977,7 @@ def main() -> None:
     print("\n" + "=" * 60)
     elapsed = time.time() - t_start
     print(f"  PIPELINE COMPLETE in {elapsed:.1f}s")
-    print(coordinator.get_domain_report())
+    print(asyncio.run(coordinator.get_domain_report()))
     print("=" * 60)
 
 
