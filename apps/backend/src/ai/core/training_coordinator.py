@@ -2,6 +2,7 @@
 # ANGELA-MATRIX: [L3] [βγδ] [C] [L2]
 # =============================================================================
 
+import asyncio
 import hashlib
 import logging
 from dataclasses import dataclass, field
@@ -45,12 +46,17 @@ class TrainingCoordinator:
     - Cloud LLM: creative, opinion, general (heavy computation)
     """
 
-    def __init__(self, bus: Optional[Any] = None):
+    def __init__(self, bus: Optional[Any] = None,
+                 max_examples_per_domain: int = 100,
+                 max_hashes_per_domain: int = 10000):
         self.bus = bus
         self._domain_map: Dict[str, DomainTrainingRecord] = {}
         self._seen_hashes: Dict[str, set] = {}
+        self._max_examples = max_examples_per_domain
+        self._max_hashes = max_hashes_per_domain
+        self._lock = asyncio.Lock()
 
-    def assign_domain(self, domain: str) -> Optional[str]:
+    async def assign_domain(self, domain: str) -> Optional[str]:
         if self.bus is not None:
             try:
                 result = self.bus.get_training_assignment(domain)
@@ -60,7 +66,7 @@ class TrainingCoordinator:
                 logger.warning("ModelBus.get_training_assignment failed for %s, falling back", domain)
         return DOMAIN_OWNERSHIP.get(domain)
 
-    def record_training(
+    async def record_training(
         self,
         domain: str,
         model_id: str,
@@ -69,26 +75,33 @@ class TrainingCoordinator:
         examples: List[Dict],
     ) -> None:
         now = datetime.now(timezone.utc).isoformat()
-        if domain in self._domain_map:
-            record = self._domain_map[domain]
-            record.trained_count += count
-            record.last_trained = now
-            record.accuracy = accuracy
-            record.examples.extend(examples)
-        else:
-            self._domain_map[domain] = DomainTrainingRecord(
-                domain=domain,
-                model_id=model_id,
-                trained_count=count,
-                last_trained=now,
-                accuracy=accuracy,
-                examples=list(examples),
-            )
-        for ex in examples:
-            inp = ex.get("input", "")
-            if inp:
-                h = hashlib.sha256(inp.encode("utf-8")).hexdigest()
-                self._seen_hashes.setdefault(domain, set()).add(h)
+        async with self._lock:
+            if domain in self._domain_map:
+                record = self._domain_map[domain]
+                record.trained_count += count
+                record.last_trained = now
+                record.accuracy = accuracy
+                examples_to_add = examples[:self._max_examples]
+                record.examples.extend(examples_to_add)
+                if len(record.examples) > self._max_examples:
+                    record.examples = record.examples[-self._max_examples:]
+            else:
+                self._domain_map[domain] = DomainTrainingRecord(
+                    domain=domain,
+                    model_id=model_id,
+                    trained_count=count,
+                    last_trained=now,
+                    accuracy=accuracy,
+                    examples=list(examples[:self._max_examples]),
+                )
+            for ex in examples:
+                inp = ex.get("input", "")
+                if inp:
+                    h = hashlib.sha256(inp.encode("utf-8")).hexdigest()
+                    domain_hashes = self._seen_hashes.setdefault(domain, set())
+                    domain_hashes.add(h)
+                    if len(domain_hashes) > self._max_hashes:
+                        self._seen_hashes[domain] = set(list(domain_hashes)[-self._max_hashes:])
         logger.info(
             "Recorded training: domain=%s model=%s count=%d accuracy=%.4f",
             domain,
@@ -97,12 +110,13 @@ class TrainingCoordinator:
             accuracy,
         )
 
-    def should_skip(self, domain: str, sample_input: str) -> bool:
+    async def should_skip(self, domain: str, sample_input: str) -> bool:
         h = hashlib.sha256(sample_input.encode("utf-8")).hexdigest()
-        domain_hashes = self._seen_hashes.get(domain, set())
-        return h in domain_hashes
+        async with self._lock:
+            domain_hashes = self._seen_hashes.get(domain, set())
+            return h in domain_hashes
 
-    def sync_reflex_patterns(
+    async def sync_reflex_patterns(
         self,
         source_engine: Any,
         target_engine: Any,
@@ -135,7 +149,7 @@ class TrainingCoordinator:
             logger.error("Failed to sync reflex patterns: %s", e)
         return copied
 
-    def get_domain_report(self) -> str:
+    async def get_domain_report(self) -> str:
         lines: List[str] = []
         lines.append("=" * 60)
         lines.append("TRAINING COORDINATOR DOMAIN REPORT")
@@ -154,11 +168,11 @@ class TrainingCoordinator:
         lines.append(f"Total domains tracked: {len(self._domain_map)}")
         return "\n".join(lines)
 
-    def deconflict_samples(self, samples: List[Dict]) -> Dict[str, List[Dict]]:
+    async def deconflict_samples(self, samples: List[Dict]) -> Dict[str, List[Dict]]:
         batches: Dict[str, List[Dict]] = {}
         for sample in samples:
             domain = sample.get("domain", "unknown")
-            model_id = self.assign_domain(domain)
+            model_id = await self.assign_domain(domain)
             if model_id is None:
                 model_id = "unassigned"
             batches.setdefault(model_id, []).append(sample)

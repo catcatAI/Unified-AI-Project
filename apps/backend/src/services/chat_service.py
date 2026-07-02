@@ -28,6 +28,7 @@ class ChatService:
         self._ham_sync_interval: int = 3600
         self._vector_store = None
         self._ham_memory = None
+        self._training_coordinator = None
         self._cl_state_dir = os.path.join(
             os.path.dirname(__file__), "..", "..", "..", "..", "data", "cl_state"
         )
@@ -84,9 +85,15 @@ class ChatService:
                     train_interval=50,
                     min_examples_for_train=30,
                 )
-            # Wire CLP back into ED3NEngine so _maybe_learn() works for direct engine calls
-            engine._continuous_learning = self._continuous_learning
+                engine._continuous_learning = self._continuous_learning
             logger.info("CLP wired into ED3NEngine for _maybe_learn()")
+        # Initialize TrainingCoordinator for domain training orchestration
+        try:
+            from api.lifespan import get_training_coordinator
+            self._training_coordinator = get_training_coordinator()
+            logger.info("TrainingCoordinator wired into ChatService")
+        except Exception as e:
+            logger.debug("TrainingCoordinator not available: %s", e)
         except Exception as e:
             logger.warning("Continuous learning init skipped: %s", e)
         # Initialize GARDEN engine for continuous learning (Phase 4.5)
@@ -242,9 +249,18 @@ class ChatService:
         if not self._continuous_learning:
             return
         try:
+            if self._training_coordinator:
+                if await self._training_coordinator.should_skip("general", user_message):
+                    logger.debug("Skipping continuous learning — duplicate input")
+                    return
             await self._continuous_learning.process_interaction_async(
                 user_message, response.text, merged_context
             )
+            if self._training_coordinator:
+                await self._training_coordinator.record_training(
+                    "general", "ed3n", 1, 0.5,
+                    [{"input": user_message, "output": response.text}],
+                )
         except Exception as e:
             logger.warning("Continuous learning interaction failed: %s", e)
 
@@ -252,8 +268,17 @@ class ChatService:
         if not self._garden_engine:
             return
         try:
+            if self._training_coordinator:
+                if await self._training_coordinator.should_skip("knowledge", user_message):
+                    logger.debug("Skipping GARDEN learning — duplicate input")
+                    return
             self._garden_engine.learn_from_interaction(user_message, response.text)
             self._garden_learn_count += 1
+            if self._training_coordinator:
+                await self._training_coordinator.record_training(
+                    "knowledge", "garden", 1, 0.5,
+                    [{"input": user_message, "output": response.text}],
+                )
             if self._garden_learn_count % 100 == 0:
                 garden_state_dir = os.path.join(self._cl_state_dir, "garden_state")
                 await asyncio.to_thread(os.makedirs, garden_state_dir, exist_ok=True)

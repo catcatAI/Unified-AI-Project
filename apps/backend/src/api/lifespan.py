@@ -32,6 +32,7 @@ _agent_manager_instance = None
 _crisis_system_instance = None
 _causal_reasoning_instance = None
 _level5_asi_instance = None
+_training_coordinator_instance = None
 
 # --- Config (lazy proxy) ---
 class _LazyAngelaConfig:
@@ -267,6 +268,23 @@ def _try_init_crisis():
         logger.info("[CrisisSystem] Initialized — monitoring for crisis indicators")
     except Exception as e:
         logger.warning(f"[CrisisSystem] Initialization failed: {e}")
+
+
+def get_training_coordinator():
+    """Get or create the TrainingCoordinator singleton."""
+    global _training_coordinator_instance
+    if _training_coordinator_instance is None:
+        try:
+            from ai.core.training_coordinator import TrainingCoordinator
+            _training_coordinator_instance = TrainingCoordinator(
+                max_examples_per_domain=100,
+                max_hashes_per_domain=10000,
+            )
+            logger.info("[TrainingCoordinator] Initialized — domain training orchestration ready")
+        except Exception as e:
+            logger.warning(f"[TrainingCoordinator] Initialization failed: {e}")
+            raise
+    return _training_coordinator_instance
 
 
 def _try_init_causal_reasoning():
