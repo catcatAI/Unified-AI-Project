@@ -111,6 +111,8 @@ pre-commit run --all-files
 > > ✅ **NOTE (Updated 2026-07-02, §X #111d)**: **§X #111d**: SyntaxError fix — §X #111 introduced orphaned `except` block in chat_service.py causing 8 cascading collection errors. Moved orphaned except back before TrainingCoordinator block. Defense-in-depth: `except (ImportError, SyntaxError)` in protocols.py + test_state_matrix_api.py. Unblocked +138 tests (4,618→**4,756**). **4,756 tests collected (tests/) — 0 errors.**
 > >
 > > ✅ **NOTE (Updated 2026-07-02, §X #112)**: **§X #112**: CausalReasoningEngine retrospective_warm_start() — seeds 6 baseline causal relationships from synthetic retrospective data so predict("user_input") returns results from Round 1 instead of Round 5+. Called automatically in lifespan.py _try_init_causal_reasoning() at server startup. C³: 4.0→**4.5/10**. 7 new tests (TestRetrospectiveWarmStart). **4,763 tests collected (tests/) — 0 errors.**
+>
+> ✅ **NOTE (Updated 2026-07-02, §X #113)**: **§X #113**: AutonomousLifeCycle C³ 3.5→**4.5/10** — added `get_behavioral_adjustment()` mapping lifecycle phase/decision_type to routing_mode/response_style, wired into chat_routes.py step 5c, read by router.py `_prepare_generation_context()` as Priority 1 routing_mode before emotional_behavior and angela_emotion. 10 new tests (TestLifecycleBehavioralAdjustment). **4,774 tests collected (tests/) — 0 errors.**
 > - **Phase A1-A4: External dictionary download + convert + import pipeline
 > - **New scripts**: `scripts/download_datasets.py` (CC-CEDICT/JMdict/WordNet), `scripts/import_dictionaries.py`
 > - **460,281 entries** imported: 125k CC-CEDICT (zh↔en) + 217k JMdict (ja↔en) + 117k WordNet 3.0 (en)

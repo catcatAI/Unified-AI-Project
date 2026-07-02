@@ -128,3 +128,144 @@ class TestLifecyclePerTypeFeedback:
         type_stats = alc._behavior_executor.get_type_stats()
         assert "exploration" in type_stats
         assert type_stats["exploration"]["rate"] == 0.25
+
+
+class TestLifecycleBehavioralAdjustment:
+    """Tests for get_behavioral_adjustment() — lifecycle decisions → routing_mode cascade."""
+
+    def test_default_emergence_phase(self):
+        """Default EMERGENCE phase → conservative routing, cautious style."""
+        alc = AutonomousLifeCycle()
+        adj = alc.get_behavioral_adjustment()
+        assert adj["routing_mode"] == "conservative"
+        assert adj["response_style"] == "cautious"
+        assert adj["phase"] == "EMERGENCE"
+        assert adj["decision_type"] is None
+        assert 0 <= adj["confidence"] <= 1.0
+
+    def test_exploration_phase_exploratory_routing(self):
+        """EXPLORATION phase → exploratory routing, curious style."""
+        alc = AutonomousLifeCycle()
+        alc.current_phase = LifePhase.EXPLORATION
+        adj = alc.get_behavioral_adjustment()
+        assert adj["routing_mode"] == "exploratory"
+        assert adj["response_style"] == "curious"
+        assert adj["phase"] == "EXPLORATION"
+
+    def test_consolidation_phase_neutral_routing(self):
+        """CONSOLIDATION phase → neutral routing, thoughtful style."""
+        alc = AutonomousLifeCycle()
+        alc.current_phase = LifePhase.CONSOLIDATION
+        adj = alc.get_behavioral_adjustment()
+        assert adj["routing_mode"] == "neutral"
+        assert adj["response_style"] == "thoughtful"
+
+    def test_transcendence_phase_exploratory_routing(self):
+        """TRANSCENDENCE phase → exploratory routing, philosophical style."""
+        alc = AutonomousLifeCycle()
+        alc.current_phase = LifePhase.TRANSCENDENCE
+        adj = alc.get_behavioral_adjustment()
+        assert adj["routing_mode"] == "exploratory"
+        assert adj["response_style"] == "philosophical"
+
+    def test_coexistence_phase_neutral_inclusive(self):
+        """COEXISTENCE phase → neutral routing, inclusive style."""
+        alc = AutonomousLifeCycle()
+        alc.current_phase = LifePhase.COEXISTENCE
+        adj = alc.get_behavioral_adjustment()
+        assert adj["routing_mode"] == "neutral"
+        assert adj["response_style"] == "inclusive"
+
+    def test_decision_type_style_override_exploration(self):
+        """Recent exploration decision → adventurous style."""
+        alc = AutonomousLifeCycle()
+        # Simulate a recent exploration decision
+        from datetime import datetime
+        from core.life.autonomous_life_cycle import LifeDecision
+        alc.decision_history.append(LifeDecision(
+            decision_id="test_1", timestamp=datetime.now(),
+            phase=LifePhase.EXPLORATION, triggered_by="HSM",
+            decision_type="exploration", rationale="test",
+            expected_outcome={}, confidence=0.8,
+        ))
+        adj = alc.get_behavioral_adjustment()
+        assert adj["response_style"] == "adventurous"
+        assert adj["decision_type"] == "exploration"
+
+    def test_decision_type_style_override_coexistence(self):
+        """Recent coexistence decision → empathetic style."""
+        alc = AutonomousLifeCycle()
+        from datetime import datetime
+        from core.life.autonomous_life_cycle import LifeDecision
+        alc.decision_history.append(LifeDecision(
+            decision_id="test_2", timestamp=datetime.now(),
+            phase=LifePhase.COEXISTENCE, triggered_by="NonParadox",
+            decision_type="coexistence_activation", rationale="test",
+            expected_outcome={}, confidence=0.7,
+        ))
+        adj = alc.get_behavioral_adjustment()
+        assert adj["response_style"] == "empathetic"
+
+    def test_decision_type_style_override_construction(self):
+        """Recent meaning_construction decision → contemplative style."""
+        alc = AutonomousLifeCycle()
+        from datetime import datetime
+        from core.life.autonomous_life_cycle import LifeDecision
+        alc.decision_history.append(LifeDecision(
+            decision_id="test_3", timestamp=datetime.now(),
+            phase=LifePhase.CONSOLIDATION, triggered_by="ActiveCognition",
+            decision_type="meaning_construction", rationale="test",
+            expected_outcome={}, confidence=0.9,
+        ))
+        adj = alc.get_behavioral_adjustment()
+        assert adj["response_style"] == "contemplative"
+
+    def test_decision_type_style_override_reallocation(self):
+        """Recent resource_reallocation decision → focused style."""
+        alc = AutonomousLifeCycle()
+        from datetime import datetime
+        from core.life.autonomous_life_cycle import LifeDecision
+        alc.decision_history.append(LifeDecision(
+            decision_id="test_4", timestamp=datetime.now(),
+            phase=LifePhase.TRANSCENDENCE, triggered_by="CDM",
+            decision_type="resource_reallocation", rationale="test",
+            expected_outcome={}, confidence=0.6,
+        ))
+        adj = alc.get_behavioral_adjustment()
+        assert adj["response_style"] == "focused"
+
+    def test_confidence_from_metrics(self):
+        """Confidence reflects life_intensity and a_c from recent metrics."""
+        alc = AutonomousLifeCycle()
+        from datetime import datetime
+        from core.life.autonomous_life_cycle import FormulaMetrics
+        alc.metrics_history.append(FormulaMetrics(
+            timestamp=datetime.now(),
+            hsm_value=0.8, c_gap=0.5, cdm_conversion_rate=0.9,
+            life_intensity=0.9, c_inf=0.9, c_limit=1.0, m_f=0.7,
+            a_c=1.2, s_stress=0.2, o_order=0.6, cognitive_gap=0.3,
+            coexistence_active=False, resonance_total=0.8,
+        ))
+        alc.current_phase = LifePhase.TRANSCENDENCE
+        adj = alc.get_behavioral_adjustment()
+        # life_intensity=0.9, a_c=1.2/1.5=0.8, avg=0.85
+        assert adj["confidence"] == 0.85
+
+    def test_cascade_phase_style_decision_type(self):
+        """Verify the full cascade: phase → routing, decision_type → style refinement."""
+        alc = AutonomousLifeCycle()
+        alc.current_phase = LifePhase.EXPLORATION
+        from datetime import datetime
+        from core.life.autonomous_life_cycle import LifeDecision
+        alc.decision_history.append(LifeDecision(
+            decision_id="test_5", timestamp=datetime.now(),
+            phase=LifePhase.EXPLORATION, triggered_by="HSM",
+            decision_type="exploration", rationale="test",
+            expected_outcome={}, confidence=0.9,
+        ))
+        adj = alc.get_behavioral_adjustment()
+        # EXPLORATION + exploration decision = exploratory + adventurous
+        assert adj["routing_mode"] == "exploratory"
+        assert adj["response_style"] == "adventurous"
+        assert adj["decision_type"] == "exploration"
+        assert adj["phase"] == "EXPLORATION"

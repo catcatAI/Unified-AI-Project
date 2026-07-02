@@ -146,8 +146,11 @@ async def _lifecycle_loop(self):
 
 **§X #85 (2026-07-01) — Config-driven feedback thresholds**: 6 個硬編碼閾值 (success_rate_low, success_rate_high, confidence_penalty, confidence_boost, risk_penalty, risk_boost) 已遷移至 `lifecycle_value()` config 驅動。新測試文件 `tests/core/test_autonomous_life_cycle.py` 驗證 config 驅動行為。C³: 3.0→**3.5/10**（可維護性 + 可驗證性提升）。
 
-**剩餘問題**: 
-- BehaviorExecutor 目前只記錄執行歷史，尚未連接至更深的管線（如 routing 或 response）
+**§X #113 (2026-07-02) — Lifecycle behavioral adjustment → routing/response pipeline**: Added `get_behavioral_adjustment()` to AutonomousLifeCycle that maps life phase (EMERGENCE→conservative, EXPLORATION→exploratory, etc.) and recent decision type (exploration→adventurous, coexistence→empathetic, etc.) to a routing_mode/response_style dict. Wired into chat_routes.py pipeline step 5c via `_get_lifecycle()` singleton and injected as `context["lifecycle_behavior"]`. Read in router.py `_prepare_generation_context()` as Priority 1 before emotional_behavior (Priority 2) and angela_emotion (Priority 3). 10 new tests verify all 5 phases, all 4 decision type overrides, confidence computation, and the full cascade.
+
+**Causal chain**: lifecycle metrics → evaluate → decision → get_behavioral_adjustment() → context inject → router._prepare_generation_context() reads lifecycle_behavior.routing_mode → temperature/max_tokens modulation.
+
+**C³ 更新**: 3.5→**4.5/10**（生命週期決策現在直接影響 LLM 參數：phase→routing_mode→temperature/max_tokens）+ `get_lifecycle_summary()` 文字注入（已有）
 
 ### 3.2 CausalReasoningEngine (218L) — 🟡 C³ = 4.0/10 (was 2.0→3.0, ✅ §X #82)
 
@@ -469,7 +472,7 @@ prompt += f"Current emotional state: {emotion_summary}"
 | **DigitalLifeIntegrator** | ✅完整 | **5.0/10** (was 4.5, §X #71) | 8/10 | 2 | 60% | 🟡 6/6 狀態有行為 + DORMANT auto-transition (commit `7b86cf28b`) |
 | **MetaController** | ✅完整 | **4.0/10** (was 3.5, §X #83) | 7/10 | 2 | 30% | 🟡 閉環校準歷史 → 調整幅度動態倍率 (§X #83 closed-loop) |
 | **EmotionSystem** | ✅完整 | **4.5/10** (was 4.0, §X #94) | 9/10 | 4 | 50% | 🟢 Emotion→BiologicalIntegrator stress/relaxation + interaction_feedback loop (§X #94) |
-| **AutonomousLifeCycle** | ✅完整 | **3.5/10** (was 3.0, §X #85) | 8/10 | 3 | 30% | 🟡 決策執行 + 回饋閉環 + config 驅動閾值 (commit §X #74, §X #85) |
+| **AutonomousLifeCycle** | ✅完整 | **4.5/10** (was 3.5, §X #113) | 8/10 | 3 | 50% | 🟡 決策執行 + 回饋閉環 + config 驅動閾值 + get_behavioral_adjustment() → routing/response pipeline (§X #113) |
 | **CausalReasoningEngine** | ✅完整 | **4.5/10** (was 4.0, §X #112) | 9/10 | 3 | 0% | 🟢 retrospective_warm_start() seeds baseline relationships — predict() works from Round 1 (§X #112) |
 | **IntentModel** | ✅完整 | **4.0/10** (was 3.0, §X #97) | 7/10 | 3 | 30% | 🟢 3D vector multi-parameter mapping preserves directional info across 12 parameters (§X #97) |
 
@@ -613,7 +616,7 @@ def test_causal_chain_<component>_<path>() -> None:
 | ExecutionGate | `ai/core/execution_gate.py` | 248 | ❌ | ✅ 執行結果回饋 (full) | ✅ Router (+ closed-loop via record_result, auto+confirm) | 4 | 🟢 |
 | DigitalLifeIntegrator | `core/life/digital_life_integrator.py` | 380 | ✅ | ✅ | ✅ 6/6 狀態行為 | 2 | 🟡 |
 | MetaController | `ai/meta/meta_controller.py` | 130 | ❌ | ✅ EWMA | ✅ auto_apply_thresholds | 2 | 🟡 |
-| AutonomousLifeCycle | `core/life/autonomous_life_cycle.py` | 410 | ✅ | ✅ | ✅ BehaviorExecutor + config-driven feedback | 3 | 🟡 |
+| AutonomousLifeCycle | `core/life/autonomous_life_cycle.py` | 420+ | ✅ | ✅ | ✅ BehaviorExecutor + routing/response pipeline via get_behavioral_adjustment() | 4 | 🟡→🟢 |
 | EmotionSystem | `ai/alignment/emotion_system.py` | 280 | ❌ | ✅ | ✅ apply_influence + prompt + interaction feedback | 4 | 🟢 |
 | CausalReasoningEngine | `ai/reasoning/causal_reasoning_engine.py` | 218 | ❌ | ✅ | ✅ LLM prompt injection + warm-start baseline + temporal buffer (predict from Round 1) | 1→3 | 🟡 |
 | IntentModel | `core/life/intent_model.py` | 80 | ❌ | ✅ | ✅ DigitalLifeIntegrator (3D multi-parameter) | 3 | 🟡 |

@@ -86,6 +86,7 @@
 | **Training quality benchmarks** | TestQualityMetrics (8 unit tests: ssim/psnr/snr) + TestTextureBenchmark (2 real CIFAR-10 texture training benchmarks via scipy.ndimage.zoom). Establishes baseline for training quality regression. | tests/ai/multimodal/training/test_training_targets.py (20 tests, +11) | ✅ Done (§X #110) |
 | **TrainingCoordinator production wiring** | All methods made async (asyncio.Lock thread safety). Memory cap eviction (max 100 examples / 10000 hashes per domain). lifespan.py singleton + factory. ChatService dedup via should_skip() + record_training(). train_pipeline sync→async bridge fix. | training_coordinator.py, lifespan.py, chat_service.py, scripts/train_pipeline.py | ✅ Done (§X #111) |
 | **CausalReasoningEngine warm-start** | `retrospective_warm_start()` seeds 6 baseline causal relationships from synthetic data. `predict("user_input")` now works from Round 1 of every conversation. Called at server startup in lifespan.py. C³: 4.0→4.5/10. 7 new tests, all pass. | causal_reasoning_engine.py, lifespan.py, test_causal_reasoning.py | ✅ Done (§X #112) |
+| **AutonomousLifeCycle behavioral adjustment → routing/response** | `get_behavioral_adjustment()` maps life phase/decision_type to routing_mode/response_style. Wired into chat_routes.py step 5c, consumed by router.py `_prepare_generation_context()` as Priority 1 routing_mode (before emotional_behavior). 10 new tests. C³: 3.5→4.5/10. | autonomous_life_cycle.py, chat_routes.py, router.py, test_autonomous_life_cycle.py | ✅ Done (§X #113) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 

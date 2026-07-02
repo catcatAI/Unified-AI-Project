@@ -850,6 +850,61 @@ class AutonomousLifeCycle:
         """Register callback for metrics updates"""
         self._metrics_callbacks.append(callback)
 
+    def get_behavioral_adjustment(self) -> Dict[str, Any]:
+        """Get behavioral adjustment based on current lifecycle phase and recent decisions.
+
+        Maps the current life phase and most recent decision type to a
+        routing_mode and response_style, similar to EmotionSystem's
+        get_behavioral_adjustment(). This allows lifecycle decisions to
+        influence LLM generation parameters (temperature, max_tokens).
+
+        Returns:
+            Dict with keys:
+              - routing_mode: "conservative" | "exploratory" | "neutral"
+              - response_style: str description of recommended style
+              - phase: current LifePhase name
+              - decision_type: most recent decision type or None
+              - confidence: overall confidence from recent metrics
+        """
+        # Map life phase → routing_mode/response_style
+        phase_map = {
+            LifePhase.EMERGENCE: ("conservative", "cautious"),
+            LifePhase.EXPLORATION: ("exploratory", "curious"),
+            LifePhase.CONSOLIDATION: ("neutral", "thoughtful"),
+            LifePhase.TRANSCENDENCE: ("exploratory", "philosophical"),
+            LifePhase.COEXISTENCE: ("neutral", "inclusive"),
+        }
+        base_routing, base_style = phase_map.get(self.current_phase, ("neutral", "standard"))
+
+        # Refine based on most recent decision type
+        decision_type = None
+        if self.decision_history:
+            decision_type = self.decision_history[-1].decision_type
+
+        style_overrides = {
+            "exploration": "adventurous",
+            "coexistence_activation": "empathetic",
+            "meaning_construction": "contemplative",
+            "resource_reallocation": "focused",
+        }
+        if decision_type in style_overrides:
+            base_style = style_overrides[decision_type]
+
+        # Compute overall confidence from recent metrics
+        if self.metrics_history:
+            latest = self.metrics_history[-1]
+            confidence = min(1.0, (latest.life_intensity + latest.a_c / 1.5) / 2.0)
+        else:
+            confidence = 0.5
+
+        return {
+            "routing_mode": base_routing,
+            "response_style": base_style,
+            "phase": self.current_phase.name,
+            "decision_type": decision_type,
+            "confidence": round(confidence, 3),
+        }
+
     def register_execution_callback(
         self, callback: Callable[[LifeDecision, bool], None]
     ) -> None:

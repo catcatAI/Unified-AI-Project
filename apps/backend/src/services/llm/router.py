@@ -1144,13 +1144,20 @@ class AngelaLLMService:
                 logger.warning(f"[auto] 動態決策失敗: {e}，使用默認參數", exc_info=True)
 
         routing_mode = None
+        # Priority 1: Lifecycle behavioral adjustment (base/default routing from life phase)
+        lifecycle_behavior = context.get("lifecycle_behavior")
+        if lifecycle_behavior:
+            routing_mode = lifecycle_behavior.get("routing_mode")
+        # Priority 2: Emotional behavior (user emotion → overrides lifecycle base)
         behavior = context.get("emotional_behavior")
         if behavior:
             routing_mode = behavior.get("routing_mode")
-        if not routing_mode:
-            angela_emotion = context.get("angela_emotion")
-            if angela_emotion:
-                routing_mode = angela_emotion.get("routing_mode")
+        # Priority 3: Angela's internal emotion (overrides both above)
+        angela_emotion = context.get("angela_emotion")
+        if angela_emotion:
+            angela_routing = angela_emotion.get("routing_mode")
+            if angela_routing:
+                routing_mode = angela_routing
         if routing_mode == "conservative":
             gen_temperature = max(0.1, gen_temperature - 0.3)
             gen_max_tokens = min(gen_max_tokens, 384)

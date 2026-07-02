@@ -131,6 +131,15 @@ def _get_dialogue_ctx():
 
 _emotion_analyzer = None
 _emotion_system = None
+_lifecycle = None
+
+
+def _get_lifecycle():
+    global _lifecycle
+    if _lifecycle is None:
+        from core.life.autonomous_life_cycle import AutonomousLifeCycle
+        _lifecycle = AutonomousLifeCycle()
+    return _lifecycle
 
 
 def _get_emotion_analyzer():
@@ -812,6 +821,18 @@ async def _handle_chat_request(
         context["emotion"] = emotion_result
         # Step 5b: Inject emotional behavioral context (routing_mode + response_style)
         await _inject_emotion_behavioral_context(emotion_result, context, bio)
+        # Step 5c: Inject autonomous lifecycle behavioral adjustment
+        try:
+            lc = _get_lifecycle()
+            if lc:
+                lc_adj = lc.get_behavioral_adjustment()
+                context["lifecycle_behavior"] = lc_adj
+                logger.debug(
+                    f"Lifecycle behavioral adjustment: {lc_adj.get('routing_mode')} / {lc_adj.get('response_style')} "
+                    f"(phase={lc_adj.get('phase')}, decision={lc_adj.get('decision_type')})"
+                )
+        except Exception as e:
+            logger.debug(f"Lifecycle behavioral adjustment unavailable: {e}")
     if crisis_level > 0:
         context["crisis_level"] = crisis_level
         context["crisis_instruction"] = (
