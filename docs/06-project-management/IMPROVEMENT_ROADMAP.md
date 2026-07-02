@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw
-    LAST_MODIFIED: 2026-07-02 (updated for §X #111d: SyntaxError fix)
+    LAST_MODIFIED: 2026-07-03 (updated for §X #123: MD sync)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -51,7 +51,7 @@
 | **Chat 管線 9 階段** | WS → 情緒 → 危機 → 對齊 → 閘門 → 路由 → LLM → 學習 → 回應 | 整合測試 | ✅ 完整接線 |
 | **CLP（持續學習）** | ED3NTrainer 已接線至聊天管線 + 獨立模式 | 整合測試 | ✅ 已接線，字典成長有效 |
 | **CML（持續多模態學習）** | 自主微訓練已接線至 encode 路徑，共用生產管線 | 20 CML 測試通過 + 21 多模態服務測試通過 | ✅ 每次編碼後自動微訓練 |
-| **測試數量** | pytest 收集 | **4,763 tests** (tests/ only, verified 2026-07-02 — §X #69-112: 0 errors, 19 skipped) | ✅ 0 failures |
+| **測試數量** | pytest 收集 | **4,804 tests** (tests/ only, verified 2026-07-03 — §X #69-123: 0 errors, 19 skipped) | ✅ 0 failures |
 | **FullTrainingPipeline** | `pipeline_weights.npz` saved (33 arrays, 1.2MB) | 52s moderate run: texture=0.384, wavetable=0.045, sequence=0.015 | ✅ Trained weights exist on disk |
 | **Empty-data encode fast-fail** | `encode_with_retry()` now fast-fails on empty data without wasting 3 retries | 24/24 production tests pass, crisis_log reduced | ✅ Fixed (§X #60) |
 | **MainApiServer stubs eliminated** | 3 pure-pass async methods → real implementations | test_api_service_reconnection passes (22.74s) | ✅ Fixed (§X #61) |
@@ -90,6 +90,12 @@
 | **MetaController cache + weighted adjustment** | Calibration cache with dirty flag avoids redundant recomputation; `get_weighted_adjustment()` reliability-weighted aggregation (sample_count × [2 if reliable else 1]) prevents opposing adjustments from cancelling. `_update_closed_loop()` extracted — runs on cache hits too, preserving multiplier updates. NeuroAutoSelector uses weighted adjustment. C³: 4.0→4.5/10. 9 new tests. | meta_controller.py, neuro_auto_selector.py, test_meta_controller.py | ✅ Done (§X #115) |
 | **ModalityGateway closed loop** | `get_modality_summary()` returns structured active/inactive modality dict. Wired into chat_routes.py step 5d via DLI-preferred singleton. Prompt_builder `_append_modality_state()` injects [Modality State] block with human-readable reasons. Closes "state updated but nobody reads" gap. C³: 0.5→3.0/10. 3 new tests. | digital_life_integrator.py, chat_routes.py, prompt_builder.py, test_prompt_builder.py | ✅ Done (§X #116) |
 | **CausalReasoningEngine closed-loop** | `_get_causal_routing_adjustment()` reads causal predictions (user_input, query_complexity, conversation_momentum, interaction_value avg strength) → computes temperature_bias/max_tokens_bias. Injected into context when confidence ≥ 0.25. Applied in router.py `_prepare_generation_context()` (Priority 3.5): temp adjusted by bias (clamped 0.1-1.5), max_tokens by bias (clamped 128-1024). The loop: predictions → parameter adjustments → LLM behavior → new observations → updated predictions. C³: 4.5→6.0/10. 8 new tests. | chat_routes.py, router.py, test_causal_session_buffer.py | ✅ Done (§X #117) |
+| **Test helper extraction** | Extracted `_patch_routing_causal()` helper in test_causal_session_buffer.py, eliminating duplicated mock setup across 8 routing adjustment tests. Net -13 lines, 21 tests pass. | test_causal_session_buffer.py | ✅ Done (§X #118) |
+| **Import test consolidation (test_imports)** | Merged 6 agent import tests from tests/ai/agents/test_imports.py into test_smoke_imports.py; deleted test_imports.py. Net -1 file, -19 lines. | test_smoke_imports.py | ✅ Done (§X #119) |
+| **Import test consolidation (test_tools_imports)** | Merged test_tools_imports.py into smoke_imports + cli_imports. CodeUnderstandingTool + FragmentaOrchestrator in smoke; training_manager + agent_collaboration in deleted list. Deleted test_tools_imports.py. | test_smoke_imports.py, test_cli_imports.py | ✅ Done (§X #120) |
+| **Fix BaseAgent smoke kwargs** | Added agent_id=test-agent to BaseAgent entry in _SMOKE_MODULES (required constructor param). Reduced skipped smoke tests from 2 to 1. 115 tests pass. | test_smoke_imports.py | ✅ Done (§X #121) |
+| **Import test consolidation (test_core_smoke_imports)** | Merged test_core_smoke_imports.py into smoke_imports (+6 optional module attr tests) + cli_imports (+12 deleted module checks). Deleted test_core_smoke_imports.py. Net -1 file, -41 lines. | test_smoke_imports.py, test_cli_imports.py | ✅ Done (§X #122) |
+| **Import test consolidation (test_unit_backend_imports)** | Merged test_unit_backend_imports.py into smoke (+ASIAutonomousAlignment + PrecisionProjectionMatrix) + cli (+PolicyRouter deleted check). Fixed apps.backend.src. prefix issue. Deleted test_unit_backend_imports.py. 4,804 tests — 0 errors. | test_smoke_imports.py, test_cli_imports.py | ✅ Done (§X #123) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 
