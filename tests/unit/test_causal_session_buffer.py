@@ -229,6 +229,24 @@ def test_ingest_temporal_state_includes_window_param(mock_get_causal):
 # =============================================================================
 
 
+def _patch_routing_causal(predict_data=None, return_none=False):
+    """Patch get_causal_reasoning with a mock causal engine.
+
+    When return_none=True, patches with None (no engine available).
+    When predict_data is empty/None, returns engine with no relationships → default biases.
+    When provided, sets up predict.side_effect from the dict of cause→prediction lists.
+    """
+    if return_none:
+        return patch("api.routes.chat_routes.get_causal_reasoning", return_value=None)
+    mock_causal = MagicMock()
+    if predict_data:
+        mock_causal.get_relationships.return_value = [{"dummy": "rel"}]
+        mock_causal.predict.side_effect = lambda cause: predict_data.get(cause, [])
+    else:
+        mock_causal.get_relationships.return_value = []
+    return patch("api.routes.chat_routes.get_causal_reasoning", return_value=mock_causal)
+
+
 class TestCausalRoutingAdjustment:
     """Tests for _get_causal_routing_adjustment() — C³ closed-loop.
 
@@ -238,28 +256,24 @@ class TestCausalRoutingAdjustment:
 
     def test_returns_defaults_when_no_causal_engine(self):
         """When causal engine unavailable, returns zero biases."""
-        with patch("api.routes.chat_routes.get_causal_reasoning", return_value=None):
+        with _patch_routing_causal(return_none=True):
             from api.routes.chat_routes import _get_causal_routing_adjustment
             result = _get_causal_routing_adjustment()
-            assert result["temperature_bias"] == 0.0
-            assert result["max_tokens_bias"] == 0
-            assert result["causal_confidence"] == 0.0
+        assert result["temperature_bias"] == 0.0
+        assert result["max_tokens_bias"] == 0
+        assert result["causal_confidence"] == 0.0
 
     def test_returns_defaults_when_no_relationships(self):
         """When engine has no relationships, returns zero biases."""
-        mock_causal = MagicMock()
-        mock_causal.get_relationships.return_value = []
-        with patch("api.routes.chat_routes.get_causal_reasoning", return_value=mock_causal):
+        with _patch_routing_causal({}):
             from api.routes.chat_routes import _get_causal_routing_adjustment
             result = _get_causal_routing_adjustment()
-            assert result["temperature_bias"] == 0.0
-            assert result["causal_confidence"] == 0.0
+        assert result["temperature_bias"] == 0.0
+        assert result["causal_confidence"] == 0.0
 
     def test_strong_user_input_effect_reduces_temperature(self):
         """Strong user_input→response correlation should reduce temperature for consistency."""
-        mock_causal = MagicMock()
-        mock_causal.get_relationships.return_value = [{"dummy": "rel"}]
-        mock_causal.predict.side_effect = lambda cause: {
+        with _patch_routing_causal({
             "user_input": [
                 {"cause": "user_input", "effect": "angela_response", "strength": 0.85},
                 {"cause": "user_input", "effect": "user_satisfaction", "strength": 0.6},
@@ -267,118 +281,91 @@ class TestCausalRoutingAdjustment:
             "query_complexity": [],
             "conversation_momentum": [],
             "interaction_value": [],
-        }.get(cause, [])
-
-        with patch("api.routes.chat_routes.get_causal_reasoning", return_value=mock_causal):
+        }):
             from api.routes.chat_routes import _get_causal_routing_adjustment
             result = _get_causal_routing_adjustment()
-            # avg strength = (0.85 + 0.6) / 2 = 0.725 > 0.5 → -0.15 * 0.725 = -0.109
-            assert result["temperature_bias"] < 0  # should be negative
-            assert result["causal_confidence"] > 0.0
-            assert "user_input" in result["effective_guidance"]
+        # avg strength = (0.85 + 0.6) / 2 = 0.725 > 0.5 → -0.15 * 0.725 = -0.109
+        assert result["temperature_bias"] < 0  # should be negative
+        assert result["causal_confidence"] > 0.0
+        assert "user_input" in result["effective_guidance"]
 
     def test_strong_query_complexity_reduces_temperature_and_boosts_tokens(self):
         """Strong query_complexity→response should reduce temp and increase max_tokens."""
-        mock_causal = MagicMock()
-        mock_causal.get_relationships.return_value = [{"dummy": "rel"}]
-        mock_causal.predict.side_effect = lambda cause: {
+        with _patch_routing_causal({
             "user_input": [],
             "query_complexity": [
                 {"cause": "query_complexity", "effect": "angela_response", "strength": 0.75},
             ],
             "conversation_momentum": [],
             "interaction_value": [],
-        }.get(cause, [])
-
-        with patch("api.routes.chat_routes.get_causal_reasoning", return_value=mock_causal):
+        }):
             from api.routes.chat_routes import _get_causal_routing_adjustment
             result = _get_causal_routing_adjustment()
-            assert result["temperature_bias"] < 0  # negative temp bias
-            assert result["max_tokens_bias"] > 0  # positive tokens bias
-            assert "complexity" in result["effective_guidance"]
-            assert result["causal_confidence"] >= 0.25
+        assert result["temperature_bias"] < 0  # negative temp bias
+        assert result["max_tokens_bias"] > 0  # positive tokens bias
+        assert "complexity" in result["effective_guidance"]
+        assert result["causal_confidence"] >= 0.25
 
     def test_high_momentum_increases_temperature(self):
         """High conversation_momentum should increase temperature for creativity."""
-        mock_causal = MagicMock()
-        mock_causal.get_relationships.return_value = [{"dummy": "rel"}]
-        mock_causal.predict.side_effect = lambda cause: {
+        with _patch_routing_causal({
             "user_input": [],
             "query_complexity": [],
             "conversation_momentum": [
                 {"cause": "conversation_momentum", "effect": "user_input", "strength": 0.6},
             ],
             "interaction_value": [],
-        }.get(cause, [])
-
-        with patch("api.routes.chat_routes.get_causal_reasoning", return_value=mock_causal):
+        }):
             from api.routes.chat_routes import _get_causal_routing_adjustment
             result = _get_causal_routing_adjustment()
-            assert result["temperature_bias"] > 0  # positive temp bias
-            assert result["max_tokens_bias"] > 0  # positive tokens bias
-            assert "momentum" in result["effective_guidance"]
+        assert result["temperature_bias"] > 0  # positive temp bias
+        assert result["max_tokens_bias"] > 0  # positive tokens bias
+        assert "momentum" in result["effective_guidance"]
 
     def test_max_tokens_bias_is_clamped(self):
         """Ensure max_tokens_bias stays within [-256, +256] bounds."""
-        mock_causal = MagicMock()
-        mock_causal.get_relationships.return_value = [{"dummy": "rel"}]
-        mock_causal.predict.side_effect = lambda cause: {
+        with _patch_routing_causal({
             "user_input": [],
             "query_complexity": [],
             "conversation_momentum": [],
             "interaction_value": [
                 {"cause": "interaction_value", "effect": "user_input", "strength": 0.8},
             ],
-        }.get(cause, [])
-
-        with patch("api.routes.chat_routes.get_causal_reasoning", return_value=mock_causal):
+        }):
             from api.routes.chat_routes import _get_causal_routing_adjustment
             result = _get_causal_routing_adjustment()
-            # interaction_value strength 0.8 → 128 * 0.8 = 102 (within bounds)
-            assert -256 <= result["max_tokens_bias"] <= 256
-            assert "interaction_value" in result["effective_guidance"]
+        # interaction_value strength 0.8 → 128 * 0.8 = 102 (within bounds)
+        assert -256 <= result["max_tokens_bias"] <= 256
+        assert "interaction_value" in result["effective_guidance"]
 
 
 class TestCausalRoutingInjection:
     """Tests for _inject_causal_predictions() with causal_routing context."""
 
-    @patch("api.routes.chat_routes.get_causal_reasoning")
-    def test_causal_routing_injected_when_high_confidence(self, mock_get_causal):
-        """causal_routing should be injected into context when confidence > 0.3."""
-        mock_causal = MagicMock()
-        mock_causal.get_relationships.return_value = [{"dummy": "rel"}]
-        mock_causal.predict.side_effect = lambda cause: {
+    def test_causal_routing_injected_when_high_confidence(self):
+        """causal_routing should be injected into context when confidence >= 0.25."""
+        with _patch_routing_causal({
             "user_input": [
                 {"cause": "user_input", "effect": "angela_response", "strength": 0.85},
             ],
             "query_complexity": [],
             "conversation_momentum": [],
             "interaction_value": [],
-        }.get(cause, [])
-        mock_get_causal.return_value = mock_causal
-
-        from api.routes.chat_routes import _inject_causal_predictions
-
-        context: dict = {}
-        _inject_causal_predictions(context)
+        }):
+            from api.routes.chat_routes import _inject_causal_predictions
+            context: dict = {}
+            _inject_causal_predictions(context)
 
         assert "causal_routing" in context
         assert context["causal_routing"]["causal_confidence"] >= 0.25
         assert "causal_insights" in context
 
-    @patch("api.routes.chat_routes.get_causal_reasoning")
-    def test_causal_routing_not_injected_when_low_confidence(self, mock_get_causal):
-        """causal_routing should NOT be injected when confidence <= 0.3."""
-        mock_causal = MagicMock()
-        mock_causal.get_relationships.return_value = [{"dummy": "rel"}]
-        # No strong predictions → confidence stays low
-        mock_causal.predict.return_value = []
-        mock_get_causal.return_value = mock_causal
-
-        from api.routes.chat_routes import _inject_causal_predictions
-
-        context: dict = {}
-        _inject_causal_predictions(context)
+    def test_causal_routing_not_injected_when_low_confidence(self):
+        """causal_routing should NOT be injected when confidence too low."""
+        with _patch_routing_causal({}):
+            from api.routes.chat_routes import _inject_causal_predictions
+            context: dict = {}
+            _inject_causal_predictions(context)
 
         # causal_insights still injected (predictions exist but empty)
         # causal_routing should NOT be injected (low confidence)
