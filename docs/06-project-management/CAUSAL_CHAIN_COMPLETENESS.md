@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-07-02 (updated for §X #105: 4 mock-fallback fixes)
+  LAST_MODIFIED: 2026-07-02 (updated for §X #111: TrainingCoordinator production wiring)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -942,5 +942,8 @@ API: `HardwareProfile()` → `.scenario`, `.profile`, `.get(key, default)`, `.se
 | #104 | _SMOKE_MODULES audit: removed 9 dead entries (Phase 9-12 deleted modules), fixed 8 path prefixes (apps.backend.src.→relative) — 0 imports silently skipped for the first time | 測試整理 | 無 C³ 影響 |
 | #105 | 4 mock-fallback fixes: test_trained_models.py: 11 mock tests against nonexistent ai.models → 3 proper import skips; test_type_fixes.py: removed unnecessary MockVectorMemoryStore fallback (real module exists); test_benchmark.py: except Exception: return [] → proper pytest.skip() for deleted ai.ops; deadlock_detector.py: except ImportError: pass → logger.debug() | 測試品質 | 無 C³ 影響 |
 | #106 | test_quick_e2e.py: 4 false-pass async tests → proper @pytest.mark.skip; test_learning_orchestrator.py: removed unnecessary sys.modules mock injection (real LearningOrchestrator doesn't import from ai.evaluation); MD sync across 5 files | 測試品質+文件同步 | 無 C³ 影響 |
+| #109 | Removed 13 stale `# (removed incomplete import: from …)` comments across 6 files (system_manager.py, tool_context.py, model_context.py, integration_with_ham.py, config.py, dialogue_context.py) | 代碼清理 | 無 C³ 影響 |
+| #110 | Training quality benchmarks — TestQualityMetrics (8: ssim/psnr/snr) + TestTextureBenchmark (2: CIFAR-10 texture training) — +11 tests (4,742→4,753) | 測試品質 | 無 C³ 影響 |
+| #111 | TrainingCoordinator production wiring — asyncio.Lock + eviction caps (max 100 examples / 10000 hashes per domain) + all methods async + lifespan.py factory + ChatService dedup/tracking wiring + scripts/train_pipeline.py async bridge fix (+3 eviction tests, 4,753) | 生產接線 | 無 C³ 影響 |
 
-**總結**: §X #94 EmotionSystem C³ +0.5; §X #95 ExecutionGate C³ +1.0; §X #96 AutonomousLifeCycle C³ +0.5; §X #97 IntentModel C³ +1.0 + zeta fix; §X #98 DLI circular import fix unblocks +2 tests; §X #99 15 except:pass→logging; §X #100 DynamicThresholdManager real impl +7 tests; §X #101 CAUSAL_CHAIN duplicate fix; §X #102 3 orphan fixes; §X #103 test consolidation & quality (+11 net, 4,755→4,766); §X #104 _SMOKE_MODULES audit (-18, 4,766→4,748); §X #105 4 mock-fallback fixes (-6, 4,748→4,742); §X #106 test_quick_e2e proper skip + learning_orchestrator mock cleanup + MD sync. 工作目錄乾淨，**4,742 tests — 0 errors**。
+**總結**: §X #94 EmotionSystem C³ +0.5; §X #95 ExecutionGate C³ +1.0; §X #96 AutonomousLifeCycle C³ +0.5; §X #97 IntentModel C³ +1.0 + zeta fix; §X #98 DLI circular import fix unblocks +2 tests; §X #99 15 except:pass→logging; §X #100 DynamicThresholdManager real impl +7 tests; §X #101 CAUSAL_CHAIN duplicate fix; §X #102 3 orphan fixes; §X #103 test consolidation & quality (+11 net, 4,755→4,766); §X #104 _SMOKE_MODULES audit (-18, 4,766→4,748); §X #105 4 mock-fallback fixes (-6, 4,748→4,742); §X #106 test_quick_e2e proper skip + learning_orchestrator mock cleanup + MD sync; §X #109 13 stale import comments cleaned; §X #110 +11 training quality benchmarks (4,742→4,753); §X #111 TrainingCoordinator production wiring — async + eviction + ChatService dedup. 工作目錄乾淨，**4,753 tests — 8 pre-existing SyntaxError collection errors (intermittent, unrelated)**。

@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw
-    LAST_MODIFIED: 2026-07-02 (updated for §X #105)
+    LAST_MODIFIED: 2026-07-02 (updated for §X #111)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -51,7 +51,7 @@
 | **Chat 管線 9 階段** | WS → 情緒 → 危機 → 對齊 → 閘門 → 路由 → LLM → 學習 → 回應 | 整合測試 | ✅ 完整接線 |
 | **CLP（持續學習）** | ED3NTrainer 已接線至聊天管線 + 獨立模式 | 整合測試 | ✅ 已接線，字典成長有效 |
 | **CML（持續多模態學習）** | 自主微訓練已接線至 encode 路徑，共用生產管線 | 20 CML 測試通過 + 21 多模態服務測試通過 | ✅ 每次編碼後自動微訓練 |
-| **測試數量** | pytest 收集 | **4,753 tests** (tests/ only, verified 2026-07-02 — §X #69-110: all pass, 0 errors) | ✅ 0 failures |
+| **測試數量** | pytest 收集 | **4,753 tests** (tests/ only, verified 2026-07-02 — §X #69-111: all pass, 8 pre-existing SyntaxError collection errors) | ✅ 0 failures |
 | **FullTrainingPipeline** | `pipeline_weights.npz` saved (33 arrays, 1.2MB) | 52s moderate run: texture=0.384, wavetable=0.045, sequence=0.015 | ✅ Trained weights exist on disk |
 | **Empty-data encode fast-fail** | `encode_with_retry()` now fast-fails on empty data without wasting 3 retries | 24/24 production tests pass, crisis_log reduced | ✅ Fixed (§X #60) |
 | **MainApiServer stubs eliminated** | 3 pure-pass async methods → real implementations | test_api_service_reconnection passes (22.74s) | ✅ Fixed (§X #61) |
@@ -82,6 +82,9 @@
 | **DLI circular import fix** | brain_bridge_service.py: module-level `from core.life.digital_life_integrator import DigitalLifeIntegrator` → `TYPE_CHECKING` guard + `from __future__ import annotations`. Breaks chain: DLI→LLMDecisionLoop→services→brain_bridge_service→DLI. Unblocks +2 previously skipped DLI tests (7/7 pass now). | brain_bridge_service.py, tests/core/test_dli_intent_3d_mapping.py | ✅ Done (§X #98) |
 | **Bare except:pass → proper logging** | 15 production-critical `except Exception: pass` instances fixed across 10 files. Now use `logger.debug()` or `logger.warning()` with `exc_info=True`. No silent error swallowing. | 10 files (multimodal_service.py, chat_routes.py, etc.) | ✅ Done (§X #99) |
 | **DynamicThresholdManager real implementation** | `update_from_state_matrix()` was pass placeholder → now reads alpha/gamma/beta dimension values from StateMatrix4D to dynamically adjust emotion thresholds. 7 new tests. | dynamic_parameters.py, tests/core/test_dynamic_parameters.py (7 tests) | ✅ Done (§X #100) |
+| **Stale import comments cleanup** | Removed 13 stale `# (removed incomplete import: from ...)` comments across 6 source files. No functional impact — improves code readability. | system_manager.py, tool_context.py, model_context.py, integration_with_ham.py, config.py, dialogue_context.py | ✅ Done (§X #109) |
+| **Training quality benchmarks** | TestQualityMetrics (8 unit tests: ssim/psnr/snr) + TestTextureBenchmark (2 real CIFAR-10 texture training benchmarks via scipy.ndimage.zoom). Establishes baseline for training quality regression. | tests/ai/multimodal/training/test_training_targets.py (20 tests, +11) | ✅ Done (§X #110) |
+| **TrainingCoordinator production wiring** | All methods made async (asyncio.Lock thread safety). Memory cap eviction (max 100 examples / 10000 hashes per domain). lifespan.py singleton + factory. ChatService dedup via should_skip() + record_training(). train_pipeline sync→async bridge fix. | training_coordinator.py, lifespan.py, chat_service.py, scripts/train_pipeline.py | ✅ Done (§X #111) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 
