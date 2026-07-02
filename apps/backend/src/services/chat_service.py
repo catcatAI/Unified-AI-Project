@@ -87,6 +87,8 @@ class ChatService:
                 )
                 engine._continuous_learning = self._continuous_learning
             logger.info("CLP wired into ED3NEngine for _maybe_learn()")
+        except Exception as e:
+            logger.warning("Continuous learning init skipped: %s", e)
         # Initialize TrainingCoordinator for domain training orchestration
         try:
             from api.lifespan import get_training_coordinator
@@ -94,8 +96,6 @@ class ChatService:
             logger.info("TrainingCoordinator wired into ChatService")
         except Exception as e:
             logger.debug("TrainingCoordinator not available: %s", e)
-        except Exception as e:
-            logger.warning("Continuous learning init skipped: %s", e)
         # Initialize GARDEN engine for continuous learning (Phase 4.5)
         try:
             from ai.garden.garden_engine import GARDENEngine
