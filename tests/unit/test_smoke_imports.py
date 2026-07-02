@@ -57,6 +57,13 @@ _SMOKE_MODULES = [
     ("ai.context.tool_context", "ToolCategory", {"category_id": "cat1", "name": "Test"}),
     ("core.waiting_scheduler", "WaitingScheduler", {"max_wait_seconds": 5.0}),
     ("core.tools.web_search_tool", "WebSearchTool", {}),
+    # Merged from tests/ai/agents/test_imports.py (§X #119)
+    ("ai.agents.base.base_agent", "BaseAgent", {}),
+    ("ai.agents.specialized.audio_processing_agent", "AudioProcessingAgent", {}),
+    ("ai.agents.specialized.code_understanding_agent", "CodeUnderstandingAgent", {}),
+    ("ai.agents.specialized.creative_writing_agent", "CreativeWritingAgent", {}),
+    ("ai.agents.specialized.data_analysis_agent", "DataAnalysisAgent", {}),
+    ("ai.agents.specialized.knowledge_graph_agent", "KnowledgeGraphAgent", {}),
 ]
 
 
