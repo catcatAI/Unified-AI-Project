@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-02: tests/ only = **4,755** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop; §X #84: +11 exec gate feedback; §X #85: +6 lifecycle config; §X #86: -4 deleted redundant test files; §X #87: MD sync; §X #88: +9 orphan-to-skip tests; §X #89: -3 import-only consolidation; §X #94: +11 emotion feedback loop; §X #95: +1 cross-instance exec gate test; §X #96: +6 per-type lifecycle feedback tests; §X #97: +6 intent 3D mapping tests + state_matrix zeta fix; §X #98: DLI circular import fix — brain_bridge_service TYPE_CHECKING guard unblocks +2 DLI tests; §X #99: bare except→logging 15 instances; §X #100: +7 DynamicThresholdManager tests).
+> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-02: tests/ only = **4,755** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop; §X #84: +11 exec gate feedback; §X #85: +6 lifecycle config; §X #86: -4 deleted redundant test files; §X #87: MD sync; §X #88: +9 orphan-to-skip tests; §X #89: -3 import-only consolidation; §X #94: +11 emotion feedback loop; §X #95: +1 cross-instance exec gate test; §X #96: +6 per-type lifecycle feedback tests; §X #97: +6 intent 3D mapping tests + state_matrix zeta fix; §X #98: DLI circular import fix — brain_bridge_service TYPE_CHECKING guard unblocks +2 DLI tests; §X #99: bare except→logging 15 instances; §X #100: +7 DynamicThresholdManager tests; §X #101: CAUSAL_CHAIN duplicate fix; §X #102: 3 orphan fixes).
 
 ---
 
@@ -1685,6 +1685,54 @@ Total files consolidated across §X #66-67: **17 files → 5 files** (14 + 3)
 
 ### Test Count
 - **4,755** collected (tests/ only — +7 new tests, 0 errors)
+
+---
+
+## VI-XLI. Session Summary — 2026-07-02 (§X #101: CAUSAL_CHAIN duplicate fix)
+
+### §X #101: CAUSAL_CHAIN_COMPLETENESS.md — **DONE**
+
+- Removed duplicate lines 940-941 (repeated §X #99-100 table rows under §9.1)
+- Updated LAST_MODIFIED to 2026-07-02
+
+---
+
+## VI-XLII. Session Summary — 2026-07-02 (§X #102: 3 orphan fixes)
+
+### §X #102a: code_understanding_tool.py — stub → real AST analysis — **DONE**
+
+- **Before**: 11L file, `analyze()` always returned `{"status": "stub"}`, zero consumers
+- **After**: Full AST-based Python file analysis:
+  - Extracts classes (name, bases, methods, docstrings, decorators)
+  - Extracts module-level functions and imports
+  - Returns line count, file size, syntax validation
+  - Graceful error handling for missing files, syntax errors, read failures
+- No consumers exist (dead from Phase 12 `ai/code_understanding/` deletion), but provides a real foundation if needed
+
+### §X #102b: evolution_engine.py — 18L docstring → real implementation — **DONE**
+
+- **Before**: 18L docstring-only file since creation (B17 fix to suppress RuntimeError)
+- **After**: EvolutionEngine now evolves 5 personality traits based on emotional/safety feedback:
+  - `openness`: increased by happiness/valence; `extraversion`: increased by happiness/arousal
+  - `neuroticism`: increased by fear/anger (negative affect)
+  - `agreeableness`: decreased by anger, increased by safety
+  - `conscientiousness`: increased by safety
+  - Natural decay toward defaults over time
+  - Propagates extraversion/neuroticism to DynamicThresholdManager's `social_initiative_threshold`
+  - `sync_to_life_stats()` method for DigitalLifeIntegrator.LifeStats integration
+- PersonalityManager was removed in Phase 12 — EvolutionEngine now works directly with DynamicThresholdManager
+
+### §X #102c: PersonalityAdapter+RoleplayEngine — graceful degradation — **DONE**
+
+- **Before**: `PersonalityAdapter.pm` property raised `RuntimeError("PersonalityManager not set")` when accessed without a PM. `RoleplayEngine` creates `PersonalityAdapter()` with no PM → crash on `load_card()`.
+- **After**: `PersonalityAdapter.pm` returns `None` with a warning log when no PM set. `load_card()` returns `False` instead of crashing. PersonalityAdapter+RoleplayEngine preserved for future PersonalityManager reimplementation.
+
+### §X #102d: Smoke test update — **DONE**
+
+- Changed `test_smoke_imports.py` evolution_engine kwargs from `{"personality_manager": None}` to `{}` (new constructor doesn't accept personality_manager param)
+
+### Test Count
+- **4,755** collected (tests/ only — 0 change, no new tests needed for self-contained implementations)
 
 ---
 

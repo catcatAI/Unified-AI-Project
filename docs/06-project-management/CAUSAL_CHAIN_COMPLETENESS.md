@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-07-02 (updated for §X #100: DynamicThresholdManager real implementation)
+  LAST_MODIFIED: 2026-07-02 (updated for §X #102: 3 orphan fixes)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -936,8 +936,7 @@ API: `HardwareProfile()` → `.scenario`, `.profile`, `.get(key, default)`, `.se
 | #98 | DLI circular import fix — brain_bridge_service.py TYPE_CHECKING guard breaks chain (DLI→services→brain_bridge_service→DLI). Unblocks +2 tests (was 6 pass+1 skip→7 pass; test_get_digital_life now runs). | 修復 | 無 C³ 影響（結構性改善，解鎖測試覆蓋） |
 | #99 | Bare except:pass → proper logging across 15 instances in 10 files | 品質改善 | 無 C³ 影響 |
 | #100 | DynamicThresholdManager.update_from_state_matrix() real implementation (+7 tests) | 功能新增 | 無 C³ 影響（非因果鏈參與者） |
+| #101 | CAUSAL_CHAIN_COMPLETENESS.md duplicate lines fix | 文件整理 | 無 C³ 影響 |
+| #102 | 3 orphan fixes: code_understanding_tool stub→real AST; evolution_engine docstring→real impl; PersonalityAdapter graceful degradation (PersonalityManager removed Phase 12) | 孤兒修復 | 無 C³ 影響 |
 
-| #99 | Bare except:pass → proper logging across 15 instances in 10 files | 品質改善 | 無 C³ 影響 |
-| #100 | DynamicThresholdManager.update_from_state_matrix() real implementation (+7 tests) | 功能新增 | 無 C³ 影響（非因果鏈參與者） |
-
-**總結**: §X #94 EmotionSystem C³ +0.5; §X #95 ExecutionGate C³ +1.0; §X #96 AutonomousLifeCycle C³ +0.5; §X #97 IntentModel C³ +1.0 + zeta fix; §X #98 DLI circular import fix unblocks +2 tests; §X #99 15 except:pass→logging; §X #100 DynamicThresholdManager real impl +7 tests. 工作目錄乾淨，**4,755 tests — 0 errors**。
+**總結**: §X #94 EmotionSystem C³ +0.5; §X #95 ExecutionGate C³ +1.0; §X #96 AutonomousLifeCycle C³ +0.5; §X #97 IntentModel C³ +1.0 + zeta fix; §X #98 DLI circular import fix unblocks +2 tests; §X #99 15 except:pass→logging; §X #100 DynamicThresholdManager real impl +7 tests; §X #101 CAUSAL_CHAIN duplicate fix; §X #102 3 orphan fixes. 工作目錄乾淨，**4,755 tests — 0 errors**。

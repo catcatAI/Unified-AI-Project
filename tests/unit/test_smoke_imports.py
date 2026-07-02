@@ -28,7 +28,7 @@ _SMOKE_MODULES = [
     ("ai.context.dialogue_context", "Message", {"sender": "user", "content": "hello"}),
     ("economy.economy_manager", "EconomyManager", {"config": {}}),
     ("core.life.env_dynamics", "EnvironmentDynamics", {}),
-    ("core.life.evolution_engine", "EvolutionEngine", {"personality_manager": None}),
+    ("core.life.evolution_engine", "EvolutionEngine", {}),
     ("ai.learning.experience_replay", "ExperienceReplayBuffer", {}),
     ("services.handlers.file_operation_handler", "FileOperationHandler", {}),
     ("services.handlers.google_drive_handler", "GoogleDriveHandler", {}),

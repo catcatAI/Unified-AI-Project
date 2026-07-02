@@ -93,6 +93,8 @@ pre-commit run --all-files
 > > ✅ **NOTE (Updated 2026-07-01, §X #99)**: **§X #99**: Bare `except: pass` → proper logging across 15 production-critical instances in 10 files (multimodal_service.py, chat_routes.py, multimodal_state_persistence.py, cross_modal_router.py, cross_modal_quality.py, vision_service.py, negativity.py, tickle_reflex_system.py, data_loader.py). All now use `logger.debug()` or `logger.warning()` with `exc_info=True`. No silent error swallowing. **4,748 tests collected (tests/) — 0 errors.**
 > > 
 > > ✅ **NOTE (Updated 2026-07-01, §X #100)**: **§X #100**: DynamicThresholdManager.update_from_state_matrix() — was pass placeholder, now reads alpha/gamma/beta dimension values from StateMatrix4D to dynamically adjust emotion thresholds (happiness/sadness/anger/social_initiative). 7 new tests. **4,755 tests collected (tests/) — 0 errors.**
+> 
+> > ✅ **NOTE (Updated 2026-07-02, §X #101-#102)**: **§X #101**: CAUSAL_CHAIN_COMPLETENESS.md duplicate lines fix. **§X #102**: 3 orphan fixes — (a) code_understanding_tool.py: stub→real AST-based analysis (imports/classes/functions extraction); (b) evolution_engine.py: 18L docstring→real emotion/feedback-driven personality evolution engine, wired to DynamicThresholdManager; (c) PersonalityAdapter+RoleplayEngine: graceful degradation since PersonalityManager was removed in Phase 12. Updated smoke test import params. **4,755 tests collected (tests/) — 0 errors.**
 > - **Phase A1-A4: External dictionary download + convert + import pipeline
 > - **New scripts**: `scripts/download_datasets.py` (CC-CEDICT/JMdict/WordNet), `scripts/import_dictionaries.py`
 > - **460,281 entries** imported: 125k CC-CEDICT (zh↔en) + 217k JMdict (ja↔en) + 117k WordNet 3.0 (en)

@@ -23,7 +23,8 @@ class PersonalityAdapter:
     @property
     def pm(self):
         if self._pm is None:
-            raise RuntimeError("PersonalityManager not set")
+            logger.warning("PersonalityManager not set — personality_adapter is disabled")
+            return None
         return self._pm
 
     @pm.setter
@@ -32,8 +33,11 @@ class PersonalityAdapter:
 
     def load_card(self, card: Card, persist: bool = True) -> bool:
         """Load state from storage."""
+        if self._pm is None:
+            logger.warning("PersonalityManager not set, cannot load card %s", card.qualified_id)
+            return False
         if not card.core_trait and not card.tokens:
-            logger.warning(f"No traits to load for {card.qualified_id}", exc_info=True)
+            logger.warning("No traits to load for %s", card.qualified_id)
             return False
 
         adjustment: Dict[str, Any] = {}
@@ -50,10 +54,10 @@ class PersonalityAdapter:
 
         try:
             self.pm.apply_personality_adjustment(adjustment, persist=persist)
-            logger.info(f"Loaded card {card.qualified_id} into PersonalityManager")
+            logger.info("Loaded card %s into PersonalityManager", card.qualified_id)
             return True
         except Exception as e:
-            logger.error(f"Failed to load card {card.qualified_id}: {e}", exc_info=True)
+            logger.error("Failed to load card %s: %s", card.qualified_id, e, exc_info=True)
             return False
 
 
