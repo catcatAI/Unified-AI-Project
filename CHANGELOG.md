@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Register/unregister/send/broadcast/buffering/heartbeat/singleton mode
 - 🧹 **Phase 5.9 — Skip Test Audit**: Fixed 5 collection errors, verified all skip reasons
   - Renamed `scripts/test_drive_integration.py` → `test_drive_integration_script.py`
-  - All collection errors resolved: 4,776 tests / 0 errors / 41 intentional skips
+  - All collection errors resolved: 4,742 tests / 0 errors / 41 intentional skips
 
 ### Fixed
 - 🐛 **pyrightconfig.json**: pythonVersion fixed from "3.8" → "3.10"

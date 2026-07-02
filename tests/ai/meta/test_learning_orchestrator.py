@@ -1,15 +1,6 @@
-import sys
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
-_MODULE_MOCKS = {
-    'ai.evaluation.task_evaluator': MagicMock(),
-    'ai.symbolic_space.unified_symbolic_space': MagicMock(),
-}
-for mod_name, mock in _MODULE_MOCKS.items():
-    if mod_name not in sys.modules:
-        sys.modules[mod_name] = mock
 
 
 @pytest.fixture

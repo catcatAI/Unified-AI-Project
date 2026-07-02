@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-02: tests/ only = **4,755** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop; §X #84: +11 exec gate feedback; §X #85: +6 lifecycle config; §X #86: -4 deleted redundant test files; §X #87: MD sync; §X #88: +9 orphan-to-skip tests; §X #89: -3 import-only consolidation; §X #94: +11 emotion feedback loop; §X #95: +1 cross-instance exec gate test; §X #96: +6 per-type lifecycle feedback tests; §X #97: +6 intent 3D mapping tests + state_matrix zeta fix; §X #98: DLI circular import fix — brain_bridge_service TYPE_CHECKING guard unblocks +2 DLI tests; §X #99: bare except→logging 15 instances; §X #100: +7 DynamicThresholdManager tests; §X #101: CAUSAL_CHAIN duplicate fix; §X #102: 3 orphan fixes; §X #103: test consolidation — deleted rovo file (-3), +9 training validation, +4 import isolation, +1 alias test; §X #104: _SMOKE_MODULES audit — removed 9 dead entries, fixed 8 path prefixes; §X #105: 4 mock-fallback fixes — test_trained_models 11→3 import tests, test_type_fixes mock removed, test_benchmark proper skip, deadlock_detector logging).
+> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-02: tests/ only = **4,742** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop; §X #84: +11 exec gate feedback; §X #85: +6 lifecycle config; §X #86: -4 deleted redundant test files; §X #87: MD sync; §X #88: +9 orphan-to-skip tests; §X #89: -3 import-only consolidation; §X #94: +11 emotion feedback loop; §X #95: +1 cross-instance exec gate test; §X #96: +6 per-type lifecycle feedback tests; §X #97: +6 intent 3D mapping tests + state_matrix zeta fix; §X #98: DLI circular import fix — brain_bridge_service TYPE_CHECKING guard unblocks +2 DLI tests; §X #99: bare except→logging 15 instances; §X #100: +7 DynamicThresholdManager tests; §X #101: CAUSAL_CHAIN duplicate fix; §X #102: 3 orphan fixes; §X #103: test consolidation — deleted rovo file (-3), +9 training validation, +4 import isolation, +1 alias test; §X #104: _SMOKE_MODULES audit — removed 9 dead entries, fixed 8 path prefixes; §X #105: 4 mock-fallback fixes — test_trained_models 11→3 import tests, test_type_fixes mock removed, test_benchmark proper skip, deadlock_detector logging; §X #106: test_quick_e2e.py proper skip + test_learning_orchestrator mock cleanup).
 
 ---
 
@@ -1819,6 +1819,35 @@ Total files consolidated across §X #66-67: **17 files → 5 files** (14 + 3)
 
 ### Test Count
 - **4,742** collected (tests/ only — -6 from mock tests, 0 errors)
+
+---
+
+## VI-XLVI. Session Summary — 2026-07-02 (§X #106: test_quick_e2e fix + learning_orchestrator cleanup + MD sync)
+
+### §X #106a: test_quick_e2e.py — 4 false-pass async tests — **DONE**
+
+- **Before**: 4 async test functions imported deleted `ai.ops.*` modules inside bare `try/except Exception: print()` with `return False`. Pytest considers `return` from async tests as "pass" — **100% false positive confidence**.
+- **After**: `@pytest.mark.skip(reason="ai.ops deleted in Phase 11 — placeholder test")` on all 4 tests. Legacy `main()` entry preserved for standalone execution.
+- Net: 0 test count change (4 tests, now properly skipped instead of silent pass)
+
+### §X #106b: test_learning_orchestrator.py — removed unnecessary mock injection — **DONE**
+
+- **Before**: Module-level `sys.modules['ai.evaluation.task_evaluator'] = MagicMock()` and `sys.modules['ai.symbolic_space.unified_symbolic_space'] = MagicMock()` injected before any test code ran. These modules were deleted in Phase 9-12 cleanup.
+- **After**: Removed the entire mock injection block — confirmed that the real `LearningOrchestrator` class does NOT import from `ai.evaluation` or `ai.symbolic_space`. This confirms the §X #104 _SMOKE_MODULES audit was thorough.
+- Net: -2 lines, same 11 tests, same behavior.
+
+### §X #106c: MD test count sync — **DONE**
+
+- README.md: 5 references (L58: 4,755→4,742; L64: 4,755→4,742; L98: 4,748→4,742; L420: 4,748→4,742; L670: 4,748→4,742)
+- MASTER_TASK_MAP.md: L6 header (4,755→4,742)
+- CHANGELOG.md: L35 (4,776→4,742)
+- IMPROVEMENT_ROADMAP.md: L54 (4,742 verified, §X range 69-105→69-106)
+- CAUSAL_CHAIN_COMPLETENESS.md: added §X #106 row + summary updated
+- AGENTS.md: added §X #106 NOTE block
+- All stale counts cleaned across the project.
+
+### Test Count
+- **4,742** collected (tests/ only — unchanged from §X #105, all fixes are quality-only)
 
 ---
 
