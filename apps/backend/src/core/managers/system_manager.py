@@ -8,7 +8,6 @@ Angela Matrix Annotation:
 - M (Memory): L0 - Minimal state tracking
 """
 
-# (removed incomplete import: from tests.tools.test_tool_dispatcher_logging import)
 import logging
 from typing import Any, Dict
 
