@@ -22,6 +22,19 @@ _DELETED_MODULES = [
     # Merged from tests/tools/test_tools_imports.py (§X #120)
     "training_manager",
     "integration.agent_collaboration",
+    # Merged from tests/core/test_core_smoke_imports.py (§X #122)
+    "cluster_hardware",
+    "comprehensive_analysis",
+    "content_analyzer_fix",
+    "core_system",
+    "hsp_fixture_fix",
+    "intelligent_test_generator",
+    "lifecycle_loops",
+    "lifecycle_loops_simple",
+    "performance_benchmark",
+    "result_analyzer",
+    "security_improvements",
+    "system_integration",
 ]
 
 

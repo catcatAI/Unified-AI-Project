@@ -135,9 +135,36 @@ class TestParameterExtractor:
         """Verify core.tools.parameter_extractor package is importable.
         Merged from tests/tools/test_tools_imports.py (§X #120).
         """
-        import importlib
         try:
             mod = importlib.import_module("core.tools.parameter_extractor")
             assert mod is not None
         except ImportError as e:
             pytest.skip(f"Not available: {e}")
+
+
+# ── Optional module attribute imports ───────────────────────────────────
+# Merged from tests/core/test_core_smoke_imports.py (§X #122)
+
+_MODULE_ATTR_IMPORTS = [
+    ("economy.economy_db", "EconomyDB"),
+    ("shared.types.mappable_data_object", "MappableDataObject"),
+    ("core.utils", "now_timestamp"),
+    ("core.hsp.connector", "HSPConnector"),
+    ("core.hsp.bridge", "message_bridge"),
+    ("core.angela_error", "AngelaError"),
+]
+
+
+class TestOptionalModuleImports:
+    """Parametrized import tests for optional module attributes."""
+
+    @pytest.mark.parametrize("module_path,attr_name", _MODULE_ATTR_IMPORTS,
+                             ids=lambda x: f"{x[0].split('.')[-1]}.{x[1]}" if isinstance(x, tuple) else str(x))
+    def test_optional_module_import(self, module_path: str, attr_name: str) -> None:
+        """Verify optional module attribute is importable."""
+        try:
+            mod = importlib.import_module(module_path)
+            obj = getattr(mod, attr_name)
+            assert obj is not None
+        except (ImportError, ModuleNotFoundError):
+            pytest.skip(f"Optional module {module_path} not available")
