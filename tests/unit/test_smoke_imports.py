@@ -64,6 +64,9 @@ _SMOKE_MODULES = [
     ("ai.agents.specialized.creative_writing_agent", "CreativeWritingAgent", {}),
     ("ai.agents.specialized.data_analysis_agent", "DataAnalysisAgent", {}),
     ("ai.agents.specialized.knowledge_graph_agent", "KnowledgeGraphAgent", {}),
+    # Merged from tests/tools/test_tools_imports.py (§X #120)
+    ("core.tools.code_understanding_tool", "CodeUnderstandingTool", {}),
+    ("fragmenta.fragmenta_orchestrator", "FragmentaOrchestrator", {}),
 ]
 
 
@@ -123,3 +126,18 @@ class TestLevel5ASISystem:
             assert instance.system_id == "level5_asi_system"
         except Exception as e:
             pytest.skip(f"Level5ASISystem init failed: {e}")
+
+
+class TestParameterExtractor:
+    """Import test for parameter_extractor (no public class, just package)."""
+
+    def test_parameter_extractor_package_import(self):
+        """Verify core.tools.parameter_extractor package is importable.
+        Merged from tests/tools/test_tools_imports.py (§X #120).
+        """
+        import importlib
+        try:
+            mod = importlib.import_module("core.tools.parameter_extractor")
+            assert mod is not None
+        except ImportError as e:
+            pytest.skip(f"Not available: {e}")

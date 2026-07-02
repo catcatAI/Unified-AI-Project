@@ -14,17 +14,20 @@ import importlib
 import pytest
 
 
-_DELETED_CLI_MODULES = [
+_DELETED_MODULES = [
     "cli.cli",
     "cli.cli_publish_fact",
     "cli.client",
     "cli.error_handler",
+    # Merged from tests/tools/test_tools_imports.py (§X #120)
+    "training_manager",
+    "integration.agent_collaboration",
 ]
 
 
-@pytest.mark.parametrize("module_path", _DELETED_CLI_MODULES)
-def test_deleted_cli_module(module_path: str) -> None:
-    """Verify that a Phase 9-12 deleted CLI module is (still) gone."""
+@pytest.mark.parametrize("module_path", _DELETED_MODULES)
+def test_deleted_module(module_path: str) -> None:
+    """Verify that a Phase 9-12 deleted module is (still) gone."""
     try:
         importlib.import_module(module_path)
         pytest.fail(f"{module_path} was re-introduced but should remain deleted")
