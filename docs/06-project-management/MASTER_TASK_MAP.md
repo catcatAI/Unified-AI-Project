@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-02: tests/ only = **4,755** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop; §X #84: +11 exec gate feedback; §X #85: +6 lifecycle config; §X #86: -4 deleted redundant test files; §X #87: MD sync; §X #88: +9 orphan-to-skip tests; §X #89: -3 import-only consolidation; §X #94: +11 emotion feedback loop; §X #95: +1 cross-instance exec gate test; §X #96: +6 per-type lifecycle feedback tests; §X #97: +6 intent 3D mapping tests + state_matrix zeta fix; §X #98: DLI circular import fix — brain_bridge_service TYPE_CHECKING guard unblocks +2 DLI tests; §X #99: bare except→logging 15 instances; §X #100: +7 DynamicThresholdManager tests; §X #101: CAUSAL_CHAIN duplicate fix; §X #102: 3 orphan fixes; §X #103: test consolidation — deleted rovo file (-3), +9 training validation, +4 import isolation, +1 alias test).
+> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-02: tests/ only = **4,755** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop; §X #84: +11 exec gate feedback; §X #85: +6 lifecycle config; §X #86: -4 deleted redundant test files; §X #87: MD sync; §X #88: +9 orphan-to-skip tests; §X #89: -3 import-only consolidation; §X #94: +11 emotion feedback loop; §X #95: +1 cross-instance exec gate test; §X #96: +6 per-type lifecycle feedback tests; §X #97: +6 intent 3D mapping tests + state_matrix zeta fix; §X #98: DLI circular import fix — brain_bridge_service TYPE_CHECKING guard unblocks +2 DLI tests; §X #99: bare except→logging 15 instances; §X #100: +7 DynamicThresholdManager tests; §X #101: CAUSAL_CHAIN duplicate fix; §X #102: 3 orphan fixes; §X #103: test consolidation — deleted rovo file (-3), +9 training validation, +4 import isolation, +1 alias test; §X #104: _SMOKE_MODULES audit — removed 9 dead entries, fixed 8 path prefixes).
 
 ---
 
@@ -1764,6 +1764,31 @@ Total files consolidated across §X #66-67: **17 files → 5 files** (14 + 3)
 
 ### Test Count
 - **4,766** collected (tests/ only — +9 training +4 import isolation -2 rovo +1 alias = +11 net, 0 errors)
+
+---
+
+## VI-XLIV. Session Summary — 2026-07-02 (§X #104: _SMOKE_MODULES audit)
+
+### §X #104: _SMOKE_MODULES stale entry cleanup — **DONE**
+
+- Audited all 60 entries in `tests/unit/test_smoke_imports.py:_SMOKE_MODULES` against actual source code
+- **Removed 9 entries** referencing permanently deleted Phase 9-12 modules:
+  - `apps.backend.src.ai.compression.alpha_deep_model` (Phase 11)
+  - `ai.learning.experience_replay` (Phase 11)
+  - `ai.learning.knowledge_distillation` (Phase 11)
+  - `apps.backend.src.ai.code_inspection.knowledge_graph` (Phase 11)
+  - `apps.backend.src.ai.language_models.registry` (Phase 11)
+  - `ai.ops.performance_optimizer` (Phase 11)
+  - `ai.ops.predictive_maintenance` (Phase 11)
+  - `apps.backend.src.ai.evaluation.task_evaluator` (Phase 11)
+  - `apps.backend.src.ai.trust.trust_manager_module` (Phase 12b)
+- **Fixed 8 entries** with broken `apps.backend.src.` path prefix (e.g., `apps.backend.src.core.engine.angela_model_core` → `core.engine.angela_model_core`). These were silently skipped for every test run — now they actually import and instantiate.
+- 60 entries → **49 entries** (net -18 tests)
+- **0 skipped tests** in smoke imports for the first time (previously ~11 always skipped)
+- Remaining `_SMOKE_MODULES` count: 49 entries × 2 tests (import + instantiate) + 2 class tests = 100 total in file
+
+### Test Count
+- **4,748** collected (tests/ only — -18 from dead entries, 0 errors)
 
 ---
 

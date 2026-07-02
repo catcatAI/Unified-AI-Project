@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-07-02 (updated for §X #103: test consolidation & quality)
+  LAST_MODIFIED: 2026-07-02 (updated for §X #104: _SMOKE_MODULES audit)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -939,5 +939,6 @@ API: `HardwareProfile()` → `.scenario`, `.profile`, `.get(key, default)`, `.se
 | #101 | CAUSAL_CHAIN_COMPLETENESS.md duplicate lines fix | 文件整理 | 無 C³ 影響 |
 | #102 | 3 orphan fixes: code_understanding_tool stub→real AST; evolution_engine docstring→real impl; PersonalityAdapter graceful degradation (PersonalityManager removed Phase 12) | 孤兒修復 | 無 C³ 影響 |
 | #103 | Test consolidation & quality: rovo dedup (-3 tests, import already covered); training target validation (+9, baseline for VisualDecoder/AudioWaveformDecoder); 2 weak test files fixed (try/except/pytest.fail removed, silent-pass import tests split into 6 parametrized tests + bug fix get_timestamp→now_timestamp) | 測試整理 | 無 C³ 影響 |
+| #104 | _SMOKE_MODULES audit: removed 9 dead entries (Phase 9-12 deleted modules), fixed 8 path prefixes (apps.backend.src.→relative) — 0 imports silently skipped for the first time | 測試整理 | 無 C³ 影響 |
 
-**總結**: §X #94 EmotionSystem C³ +0.5; §X #95 ExecutionGate C³ +1.0; §X #96 AutonomousLifeCycle C³ +0.5; §X #97 IntentModel C³ +1.0 + zeta fix; §X #98 DLI circular import fix unblocks +2 tests; §X #99 15 except:pass→logging; §X #100 DynamicThresholdManager real impl +7 tests; §X #101 CAUSAL_CHAIN duplicate fix; §X #102 3 orphan fixes; §X #103 test consolidation & quality (+11 net, 4,755→4,766). 工作目錄乾淨，**4,766 tests — 0 errors**。
+**總結**: §X #94 EmotionSystem C³ +0.5; §X #95 ExecutionGate C³ +1.0; §X #96 AutonomousLifeCycle C³ +0.5; §X #97 IntentModel C³ +1.0 + zeta fix; §X #98 DLI circular import fix unblocks +2 tests; §X #99 15 except:pass→logging; §X #100 DynamicThresholdManager real impl +7 tests; §X #101 CAUSAL_CHAIN duplicate fix; §X #102 3 orphan fixes; §X #103 test consolidation & quality (+11 net, 4,755→4,766); §X #104 _SMOKE_MODULES audit (-18 dead entries, 4,766→4,748). 工作目錄乾淨，**4,748 tests — 0 errors**。
