@@ -132,6 +132,27 @@ def _get_dialogue_ctx():
 _emotion_analyzer = None
 _emotion_system = None
 _lifecycle_fallback = None
+_modality_gateway = None
+
+
+def _get_modality_gateway():
+    """Get the shared ModalityGateway, preferring the DLI's live instance.
+
+    When DigitalLifeIntegrator is running, its modality_gateway is updated
+    by _health_check_loop() with live arousal + introspection data.
+    Falls back to a standalone singleton when DLI is unavailable.
+    """
+    try:
+        dli = get_digital_life()
+        if dli and hasattr(dli, 'modality_gateway'):
+            return dli.modality_gateway
+    except Exception:
+        pass
+    global _modality_gateway
+    if _modality_gateway is None:
+        from core.life.digital_life_integrator import ModalityGateway
+        _modality_gateway = ModalityGateway()
+    return _modality_gateway
 
 
 def _get_lifecycle():
@@ -840,6 +861,17 @@ async def _handle_chat_request(
                 )
         except Exception as e:
             logger.debug(f"Lifecycle behavioral adjustment unavailable: {e}")
+        # Step 5d: Inject modality gateway state (C³ 3.0 — was never consumed)
+        try:
+            mg = _get_modality_gateway()
+            if mg:
+                context["modality_state"] = mg.get_modality_summary()
+                logger.debug(
+                    f"Modality state: {len(context['modality_state'].get('active', []))} active / "
+                    f"{len(context['modality_state'].get('inactive', []))} inactive"
+                )
+        except Exception as e:
+            logger.debug(f"Modality state unavailable: {e}")
     if crisis_level > 0:
         context["crisis_level"] = crisis_level
         context["crisis_instruction"] = (

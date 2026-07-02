@@ -135,6 +135,52 @@ class TestConstructAngelaPrompt:
         assert "保持友好" in result[0]["content"]
 
 
+class TestModalityState:
+    """Test modality gateway state injection into prompt (C³ 3.0 — closed loop)."""
+
+    def test_append_modality_state_active_exists(self):
+        from services.llm.prompt_builder import _append_modality_state
+        from core.life.digital_life_integrator import ModalityGateway
+
+        mg = ModalityGateway()
+        summary = mg.get_modality_summary()
+        assert "active" in summary
+        assert "inactive" in summary
+        assert "all" in summary
+
+    def test_append_modality_state_with_context(self):
+        from services.llm.prompt_builder import _append_modality_state
+
+        context = {
+            "modality_state": {
+                "active": ["TEXT", "AUDIO"],
+                "inactive": ["VISUAL_3D", "CODE"],
+                "all": {
+                    "TEXT": {"active": True, "priority": 10},
+                    "AUDIO": {"active": True, "priority": 5},
+                    "VISUAL_3D": {"active": False, "priority": 8},
+                    "CODE": {"active": False, "priority": 2},
+                },
+            }
+        }
+        messages = [{"role": "system", "content": "Base prompt"}]
+        _append_modality_state(messages, context)
+        content = messages[0]["content"]
+        assert "[Modality State]" in content
+        assert "TEXT" in content
+        assert "AUDIO" in content
+        assert "VISUAL_3D" in content
+        assert "currently unavailable" in content or "disabled" in content
+
+    def test_append_modality_state_no_context(self):
+        from services.llm.prompt_builder import _append_modality_state
+
+        messages = [{"role": "system", "content": "Base prompt"}]
+        original = messages[0]["content"]
+        _append_modality_state(messages, {})
+        assert messages[0]["content"] == original
+
+
 class TestGetLLMConfig:
     def test_returns_default_on_failure(self):
         from services.llm.prompt_builder import _get_llm_config

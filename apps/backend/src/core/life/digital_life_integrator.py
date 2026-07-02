@@ -124,6 +124,35 @@ class ModalityGateway:
         """Check if a given modality is currently active."""
         return self.modalities.get(modality, ModalityState(modality)).is_active
 
+    def get_modality_summary(self) -> Dict[str, Any]:
+        """
+        Return a structured summary of all modality states for downstream consumption.
+
+        Returns a dict with:
+        - active: list of active modality names
+        - inactive: list of inactive modality names (with reason hints)
+        - all: dict of {modality_name: {active, priority, reason}}
+        """
+        active_list = []
+        inactive_list = []
+        all_modalities = {}
+        for mod_type, state in self.modalities.items():
+            name = mod_type.name
+            entry = {
+                "active": state.is_active,
+                "priority": state.priority,
+            }
+            if state.is_active:
+                active_list.append(name)
+            else:
+                inactive_list.append(name)
+            all_modalities[name] = entry
+        return {
+            "active": active_list,
+            "inactive": inactive_list,
+            "all": all_modalities,
+        }
+
 
 
 class LifeCycleState(Enum):

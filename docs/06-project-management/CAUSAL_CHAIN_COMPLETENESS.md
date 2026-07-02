@@ -622,7 +622,7 @@ def test_causal_chain_<component>_<path>() -> None:
 | EmotionSystem | `ai/alignment/emotion_system.py` | 280 | ❌ | ✅ | ✅ apply_influence + prompt + interaction feedback | 4 | 🟢 |
 | CausalReasoningEngine | `ai/reasoning/causal_reasoning_engine.py` | 218 | ❌ | ✅ | ✅ LLM prompt injection + warm-start baseline + temporal buffer (predict from Round 1) | 1→3 | 🟡 |
 | IntentModel | `core/life/intent_model.py` | 80 | ❌ | ✅ | ✅ DigitalLifeIntegrator (3D multi-parameter) | 3 | 🟡 |
-| ModalityGateway | `core/life/digital_life_integrator.py` | 70 | ❌ | ✅ | 🟡 狀態更新但無人讀 | 0.5 | 🔴 |
+| ModalityGateway | `core/life/digital_life_integrator.py` | 70 | ❌ | ✅ | ✅ Prompt injection via _append_modality_state (DLI-preferred singleton) | 3 | 🟡 |
 
 **總計**: 9 個核心自主性組件，7 個有鏈深度 ≥ 1（已接線至下游消費者），2 個傳遞良好，1 個孤立。
 
@@ -815,11 +815,12 @@ print(f'Total pass statements: {count}')
 - **HAM同步太慢**: 3600s(1hr) 可能導致記憶遺失
 - **Sleep Short 濫用**: 8+ 個組件使用同樣的 0.1s sleep key，但代表不同語義
 
-#### 🔴 不合理 (7/32)
-- **Level5 Process 1s**: 已修復 2026-06-29 ✅
-- **代謝 2s vs 心跳 5-60s**: 兩個代謝相關循環頻率不一致
-- **Heartbeat 兩個循環**: Primary(5-60s) 和 Integration(2-10s) 頻率差 ~2倍 ✅ 已修復 2026-06-29
-- **Behavoir Loop Tight 1.0s**: 5+ 個 lifecycle 循環使用相同 sleep 值做「防止緊密循環」，應統一管理
+#### 🔴 不合理 (6/32) — 全部已修復 ✅
+- ~~**Level5 Process 1s**: 已修復 2026-06-29 ✅~~
+- ~~**代謝 2s vs 心跳 5-60s**: 兩個代謝相關循環頻率不一致~~
+- ~~**Heartbeat 兩個循環**: Primary(5-60s) 和 Integration(2-10s) 頻率差 ~2倍 ✅ 已修復 2026-06-29~~
+- ~~**Behavoir Loop Tight 1.0s**: 5+ 個 lifecycle 循環使用相同 sleep 值做「防止緊密循環」，應統一管理~~
+- ~~**ModalityGateway**: 狀態更新但無人讀 — §X #116 (2026-07-02) 已閉合因果鏈 ✅~~
 
 ### 8.4 硬體感知分析
 
@@ -961,4 +962,4 @@ API: `HardwareProfile()` → `.scenario`, `.profile`, `.get(key, default)`, `.se
 | #111 | TrainingCoordinator production wiring — asyncio.Lock + eviction caps (max 100 examples / 10000 hashes per domain) + all methods async + lifespan.py factory + ChatService dedup/tracking wiring + scripts/train_pipeline.py async bridge fix (+3 eviction tests, 4,753) | 生產接線 | 無 C³ 影響 |
 | #111d | SyntaxError fix — chat_service.py orphaned except block from §X #111 caused 8 cascading collection errors. Moved orphaned `except` back before TrainingCoordinator block. Defense-in-depth: `except (ImportError, SyntaxError)` in protocols.py + test_state_matrix_api.py. +138 tests unblocked (4,618→4,756). | 修復 | 無 C³ 影響（結構性修復，解鎖測試收集） |
 
-**總結**: §X #94 EmotionSystem C³ +0.5; §X #95 ExecutionGate C³ +1.0; §X #96 AutonomousLifeCycle C³ +0.5; §X #97 IntentModel C³ +1.0 + zeta fix; §X #98 DLI circular import fix unblocks +2 tests; §X #99 15 except:pass→logging; §X #100 DynamicThresholdManager real impl +7 tests; §X #101 CAUSAL_CHAIN duplicate fix; §X #102 3 orphan fixes; §X #103 test consolidation & quality (+11 net, 4,755→4,766); §X #104 _SMOKE_MODULES audit (-18, 4,766→4,748); §X #105 4 mock-fallback fixes (-6, 4,748→4,742); §X #106 test_quick_e2e proper skip + learning_orchestrator mock cleanup + MD sync; §X #109 13 stale import comments cleaned; §X #110 +11 training quality benchmarks (4,742→4,753); §X #111 TrainingCoordinator production wiring — async + eviction + ChatService dedup; §X #111d SyntaxError fix — orphaned except in chat_service.py, unblocks 8 collection errors (+138, 4,618→4,756); §X #112 CausalReasoningEngine retrospective_warm_start() — predict() works from Round 1 (+7 tests, 4,756→4,763); §X #113 AutonomousLifeCycle behavioral_adjustment → routing/response pipeline (+10 tests, 4,763→4,774); §X #114 Lifecycle singleton unification (+0 tests, 4,774→4,774); §X #115 MetaController calibration cache + weighted adjustment — C³ 4.0→4.5 (+9 tests, 4,774→**4,783 tests — 0 errors**)。
+**總結**: §X #94 EmotionSystem C³ +0.5; §X #95 ExecutionGate C³ +1.0; §X #96 AutonomousLifeCycle C³ +0.5; §X #97 IntentModel C³ +1.0 + zeta fix; §X #98 DLI circular import fix unblocks +2 tests; §X #99 15 except:pass→logging; §X #100 DynamicThresholdManager real impl +7 tests; §X #101 CAUSAL_CHAIN duplicate fix; §X #102 3 orphan fixes; §X #103 test consolidation & quality (+11 net, 4,755→4,766); §X #104 _SMOKE_MODULES audit (-18, 4,766→4,748); §X #105 4 mock-fallback fixes (-6, 4,748→4,742); §X #106 test_quick_e2e proper skip + learning_orchestrator mock cleanup + MD sync; §X #109 13 stale import comments cleaned; §X #110 +11 training quality benchmarks (4,742→4,753); §X #111 TrainingCoordinator production wiring — async + eviction + ChatService dedup; §X #111d SyntaxError fix — orphaned except in chat_service.py, unblocks 8 collection errors (+138, 4,618→4,756); §X #112 CausalReasoningEngine retrospective_warm_start() — predict() works from Round 1 (+7 tests, 4,756→4,763); §X #113 AutonomousLifeCycle behavioral_adjustment → routing/response pipeline (+10 tests, 4,763→4,774); §X #114 Lifecycle singleton unification (+0 tests, 4,774); §X #115 MetaController calibration cache + weighted adjustment — C³ 4.0→4.5 (+9 tests, 4,774→4,783); §X #116 ModalityGateway state → prompt injection — C³ 0.5→3.0 (+3 tests, 4,783→**4,786 tests — 0 errors**)。

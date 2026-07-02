@@ -117,6 +117,8 @@ pre-commit run --all-files
 > ✅ **NOTE (Updated 2026-07-02, §X #114)**: **§X #114**: Lifecycle singleton unification — added shared `get_lifecycle()` factory in lifespan.py, both chat_routes.py (_get_lifecycle) and prompt_builder.py (_get_autonomous_lifecycle) now delegate to the shared lifespan singleton with fallback. Eliminates isolated lifecycle instances — prompt text now reflects actual lifecycle state. **4,774 tests collected (tests/) — 0 errors.**
 >
 > ✅ **NOTE (Updated 2026-07-02, §X #115)**: **§X #115**: MetaController C³ 4.0→**4.5/10** — calibration cache with dirty flag avoids redundant recomputation; `get_weighted_adjustment()` reliability-weighted aggregation replaces simple averaging (prevents cancellation of opposing adjustments); `_update_closed_loop()` extracted & runs on cache hits too (multiplier updates correctly). NeuroAutoSelector._analyze_task() uses weighted adjustment. 9 new tests. **4,783 tests collected (tests/) — 0 errors.**
+>
+> ✅ **NOTE (Updated 2026-07-02, §X #116)**: **§X #116**: ModalityGateway C³ 0.5→**3.0/10** — added `get_modality_summary()` returning structured active/inactive modality dict; wired into chat_routes.py step 5d via `_get_modality_gateway()` (DLI-preferred singleton); consumed by prompt_builder.py `_append_modality_state()` injecting [Modality State] block with human-readable reasons. Closes "state updated but nobody reads" gap. 3 new tests. **4,786 tests collected (tests/) — 0 errors.**
 > - **Phase A1-A4: External dictionary download + convert + import pipeline
 > - **New scripts**: `scripts/download_datasets.py` (CC-CEDICT/JMdict/WordNet), `scripts/import_dictionaries.py`
 > - **460,281 entries** imported: 125k CC-CEDICT (zh↔en) + 217k JMdict (ja↔en) + 117k WordNet 3.0 (en)

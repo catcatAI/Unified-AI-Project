@@ -256,6 +256,7 @@ def construct_angela_prompt(
     _append_recent_memories(messages, context)
     _append_causal_insights(messages, context)
     _append_emotional_behavior(messages, context)
+    _append_modality_state(messages, context)
     _append_draft_response(messages, context)
 
     messages.append({"role": "user", "content": f"<user_message>{user_message}</user_message>"})
@@ -533,6 +534,35 @@ def _append_causal_insights(messages: List[Dict], context: Dict) -> None:
         block += f"- [{cause}] may lead to [{effect}] (strength: {strength:.2f})\n"
     if causal_insights.get("has_causal_data"):
         block += "\nThese patterns were learned from past interactions. Use them to inform your response.\n"
+    messages[0]["content"] += block
+
+
+def _append_modality_state(messages: List[Dict], context: Dict) -> None:
+    """Append modality gateway state to the system prompt.
+
+    Reads context["modality_state"] (active/inactive modalities from
+    ModalityGateway) and injects them as capability awareness into
+    the LLM prompt — closes the C³ chain for ModalityGateway.
+    """
+    modality_state = context.get("modality_state")
+    if not modality_state:
+        return
+    active = modality_state.get("active", [])
+    inactive = modality_state.get("inactive", [])
+    if not active and not inactive:
+        return
+    block = "\n\n[Modality State]"
+    if active:
+        block += "\n- Available modalities: " + ", ".join(active)
+    if inactive:
+        block += "\n- Currently unavailable: " + ", ".join(inactive)
+        if "VISUAL_3D" in inactive:
+            block += "\n  → Visual 3D rendering is disabled (low energy or cognitive load)"
+        if "AUDIO" in inactive:
+            block += "\n  → Audio processing is disabled (energy saving or high dissonance)"
+        if "CODE" in inactive:
+            block += "\n  → Code analysis is disabled (no current coding task)"
+    block += "\n"
     messages[0]["content"] += block
 
 
