@@ -147,7 +147,7 @@ def _get_modality_gateway():
         if dli and hasattr(dli, 'modality_gateway'):
             return dli.modality_gateway
     except Exception:
-        pass
+        logger.warning("_get_modality_gateway: DLI unavailable, using standalone", exc_info=True)
     global _modality_gateway
     if _modality_gateway is None:
         from core.life.digital_life_integrator import ModalityGateway
@@ -161,7 +161,7 @@ def _get_lifecycle():
         from api.lifespan import get_lifecycle as _lifespan_get_lifecycle
         return _lifespan_get_lifecycle()
     except Exception:
-        pass
+        logger.warning("_get_lifecycle: lifespan unavailable, using fallback", exc_info=True)
     # Fallback: create own singleton if lifespan not available
     global _lifecycle_fallback
     if _lifecycle_fallback is None:

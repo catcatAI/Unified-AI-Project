@@ -68,7 +68,7 @@ class ChainValidator:
                         if child_layer.value < parent_layer.value:
                             warnings.append(f"backward layer transition: {parent_layer} -> {child_layer}")
                     except TypeError:
-                        pass
+                        logger.debug("Layer comparison: incompatible types %s vs %s", type(child_layer).__name__, type(parent_layer).__name__, exc_info=True)
 
         return ValidationResult(valid=len(errors) == 0, errors=errors, warnings=warnings, stats=self._compute_stats(chain))
 

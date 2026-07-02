@@ -51,7 +51,7 @@
 | **Chat 管線 9 階段** | WS → 情緒 → 危機 → 對齊 → 閘門 → 路由 → LLM → 學習 → 回應 | 整合測試 | ✅ 完整接線 |
 | **CLP（持續學習）** | ED3NTrainer 已接線至聊天管線 + 獨立模式 | 整合測試 | ✅ 已接線，字典成長有效 |
 | **CML（持續多模態學習）** | 自主微訓練已接線至 encode 路徑，共用生產管線 | 20 CML 測試通過 + 21 多模態服務測試通過 | ✅ 每次編碼後自動微訓練 |
-| **測試數量** | pytest 收集 | **4,805 tests** (tests/ only, verified 2026-07-03 — §X #69-125: 0 errors, 19 skipped) | ✅ 0 failures |
+| **測試數量** | pytest 收集 | **4,793 tests** (tests/ only, verified 2026-07-03 — §X #69-126: 0 errors, 19 skipped) | ✅ 0 failures |
 | **FullTrainingPipeline** | `pipeline_weights.npz` saved (33 arrays, 1.2MB) | 52s moderate run: texture=0.384, wavetable=0.045, sequence=0.015 | ✅ Trained weights exist on disk |
 | **Empty-data encode fast-fail** | `encode_with_retry()` now fast-fails on empty data without wasting 3 retries | 24/24 production tests pass, crisis_log reduced | ✅ Fixed (§X #60) |
 | **MainApiServer stubs eliminated** | 3 pure-pass async methods → real implementations | test_api_service_reconnection passes (22.74s) | ✅ Fixed (§X #61) |
@@ -97,6 +97,7 @@
 | **Import test consolidation (test_core_smoke_imports)** | Merged test_core_smoke_imports.py into smoke_imports (+6 optional module attr tests) + cli_imports (+12 deleted module checks). Deleted test_core_smoke_imports.py. Net -1 file, -41 lines. | test_smoke_imports.py, test_cli_imports.py | ✅ Done (§X #122) |
 | **Import test consolidation (test_unit_backend_imports)** | Merged test_unit_backend_imports.py into smoke (+ASIAutonomousAlignment + PrecisionProjectionMatrix) + cli (+PolicyRouter deleted check). Fixed apps.backend.src. prefix issue. Deleted test_unit_backend_imports.py. 4,804 tests — 0 errors. | test_smoke_imports.py, test_cli_imports.py | ✅ Done (§X #123) |
 | **Test consolidation R5 + orphan source commit** | Deleted 5 redundant test files (test_content_analyzer, test_math_model, test_logic_tool, test_logic_parser, test_bio_physiological_tactile). Consolidated 4 skip-only files into test_cli_imports.py _DELETED_MODULES. Deleted empty tests_all.txt. Committed 3 uncommitted source files (io_analyzer.py, emotion_analyzer.py, test_emotion_analyzer.py +10 tests). Fixed flake8 issues (F541 f-string, F401 unused import). Net: +1 test (4,804→4,805). | test_cli_imports.py, io_analyzer.py, emotion_analyzer.py | ✅ Done (§X #125) |
+| **Code audit & cleanup (§X #126)** | Fixed 6 silent except:pass→logging, -4 duplicate tests in test_formula_behavioral_impact, real setup_middleware impl, consolidated test_quick_e2e + test_stress (8 skip tests deleted), +6 _DELETED_MODULES entries, __test__ = False guard. Net: -12 tests (4,805→4,793). | chat_routes.py, prompt_builder.py, vision_service.py, dictionary_layer.py, chain_validator.py, lifespan.py | ✅ Done (§X #126) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 

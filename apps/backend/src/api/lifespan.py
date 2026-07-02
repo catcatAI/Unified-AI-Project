@@ -10,6 +10,7 @@ from contextlib import asynccontextmanager
 from typing import AsyncIterator, Optional
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 # Plugin imports are lazy inside lifespan() to avoid slow core package import
 
@@ -201,7 +202,13 @@ def get_economy_manager():
 
 def setup_middleware(app: FastAPI) -> None:
     """Configure application middleware."""
-    pass
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 
 _metrics_handler = None

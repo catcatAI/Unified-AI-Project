@@ -21,6 +21,7 @@ class DevelopmentTask:
 
 
 class TestResultFeedbackSystem:
+    __test__ = False
     """测试结果反馈系统"""
 
     def __init__(
@@ -275,7 +276,7 @@ class TestResultFeedbackSystem:
 
 
 # 添加pytest标记,防止被误认为测试类
-# TestResultFeedbackSystem.__test_False() # This line is incorrect, should be @pytest.mark.skip or similar if using pytest
+# Fixed via __test__ = False on the class itself (line added above)
 def main() -> None:
     """主函数"""
     feedback_system = TestResultFeedbackSystem()

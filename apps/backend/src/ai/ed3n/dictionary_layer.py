@@ -437,7 +437,7 @@ class DictionaryLayer:
                             keys_to_delete.append(key)
                             continue
                     except ValueError:
-                        pass
+                        logger.debug("Prune: invalid timestamp format for key %s", key, exc_info=True)
         for key in keys_to_delete:
             del self.entries[key]
             pruned += 1

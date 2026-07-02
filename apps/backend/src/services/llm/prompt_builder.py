@@ -27,7 +27,7 @@ def _get_autonomous_lifecycle():
         from api.lifespan import get_lifecycle
         return get_lifecycle()
     except Exception:
-        pass
+        logger.warning("_get_autonomous_lifecycle: lifespan unavailable, using fallback", exc_info=True)
     # Fallback: create own singleton if lifespan not available
     global _autonomous_lifecycle
     if _autonomous_lifecycle is None:

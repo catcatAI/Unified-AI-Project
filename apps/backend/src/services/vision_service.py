@@ -535,7 +535,7 @@ class VisionService:
             if w < 32 or h < 32:
                 return []
         except Exception:
-            pass
+            logger.debug("_extract_visual_features: image decode failed", exc_info=True)
         return []
 
     async def _analyze_scene(self, image_data: bytes) -> Dict[str, Any]:

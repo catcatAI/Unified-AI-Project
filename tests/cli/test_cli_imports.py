@@ -42,6 +42,13 @@ _DELETED_MODULES = [
     "tools.math_model.lightweight_math_model",
     "tools.logic_tool",
     "tools.logic_model.logic_parser_eval",
+    # Deleted ai.ops modules (§X #126)
+    "ai.ops",
+    "ai.ops.intelligent_ops_manager",
+    "ai.ops.ai_ops_engine",
+    "ai.ops.capacity_planner",
+    "ai.ops.performance_optimizer",
+    "ai.ops.predictive_maintenance",
 ]
 
 
