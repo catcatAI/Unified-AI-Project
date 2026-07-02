@@ -587,25 +587,22 @@ class NeuroAutoSelector:
         high_demand_threshold = threshold_value("ai.neuro_auto_selector.high_demand_threshold", 0.7)
 
         if self._meta_controller is not None:
-            # Aggregate adjustments across known backend sources
-            mc_adjustments = self._meta_controller.get_summary()
-            if mc_adjustments:
-                avg_adj = sum(
-                    s.get("threshold_adjustment", 0.0)
-                    for s in mc_adjustments.values()
-                ) / max(len(mc_adjustments), 1)
+            # Use reliability-weighted aggregate adjustment across all backends
+            # This prevents opposing adjustments from different sources cancelling
+            # each other out (C³ 4.5: weighted aggregation replaces simple average).
+            weighted_adj = self._meta_controller.get_weighted_adjustment()
+            if abs(weighted_adj) > 0.001:
                 # Apply calibration: overconfident → raise thresholds, underconfident → lower
-                reasoning_threshold = max(0.3, min(0.9, reasoning_threshold - avg_adj))
-                quality_threshold = max(0.2, min(0.8, quality_threshold - avg_adj))
-                high_demand_threshold = max(0.4, min(0.95, high_demand_threshold - avg_adj))
-                if abs(avg_adj) > 0.01:
-                    logger.debug(
-                        f"[NeuroAutoSelector] Calibration-adjusted thresholds: "
-                        f"reasoning={reasoning_threshold:.2f}, "
-                        f"quality={quality_threshold:.2f}, "
-                        f"high_demand={high_demand_threshold:.2f} "
-                        f"(avg_adj={avg_adj:+.3f})"
-                    )
+                reasoning_threshold = max(0.3, min(0.9, reasoning_threshold - weighted_adj))
+                quality_threshold = max(0.2, min(0.8, quality_threshold - weighted_adj))
+                high_demand_threshold = max(0.4, min(0.95, high_demand_threshold - weighted_adj))
+                logger.debug(
+                    f"[NeuroAutoSelector] Calibration-adjusted thresholds: "
+                    f"reasoning={reasoning_threshold:.2f}, "
+                    f"quality={quality_threshold:.2f}, "
+                    f"high_demand={high_demand_threshold:.2f} "
+                    f"(weighted_adj={weighted_adj:+.3f})"
+                )
 
         # Total demand score
         demand = min(intent_cost + complexity * behavior_threshold("ai.neuro_auto_selector.complexity_weight", 0.3) + msg_len_cost, 1.0)

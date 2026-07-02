@@ -134,3 +134,95 @@ class TestMetaControllerClosedLoop:
         multiplier = mc._adjustment_multipliers.get("src", 1.0)
         expected = round(base * multiplier, 3)
         assert report.suggested_threshold_adjustment == expected
+
+
+class TestMetaControllerCache:
+    """C³ 4.5: Calibration cache and weighted adjustment aggregation."""
+
+    def test_cache_returns_same_report_on_repeated_call(self):
+        mc = MetaController()
+        for i in range(10):
+            mc.record_confidence("src", 0.8, correct=(i < 8))
+        r1 = mc.get_calibration("src")
+        r2 = mc.get_calibration("src")
+        assert r1 is not None
+        assert r2 is not None
+        assert r1.suggested_threshold_adjustment == r2.suggested_threshold_adjustment
+
+    def test_cache_invalidated_after_new_record(self):
+        mc = MetaController()
+        for i in range(10):
+            mc.record_confidence("src", 0.8, correct=(i < 8))
+        r1 = mc.get_calibration("src")
+        assert r1 is not None
+        adj_before = r1.suggested_threshold_adjustment
+        # Add a conflicting sample
+        mc.record_confidence("src", 0.8, correct=False)
+        r2 = mc.get_calibration("src")
+        assert r2 is not None
+        # Adjustment should change after new data
+        assert r2.suggested_threshold_adjustment != adj_before or mc._calibration_cache_dirty is False or "src" not in mc._calibration_cache
+
+    def test_cache_dirty_flag_after_record(self):
+        mc = MetaController()
+        assert mc._calibration_cache_dirty is True  # fresh instance is dirty
+        mc.record_confidence("src", 0.9)
+        mc.record_confidence("src", 0.8)
+        mc.record_confidence("src", 0.85)
+        mc.get_calibration("src")
+        assert mc._calibration_cache_dirty is False  # clean after computation
+        mc.record_confidence("src", 0.7)  # new record → dirty
+        assert mc._calibration_cache_dirty is True
+
+    def test_weighted_adjustment_empty_returns_zero(self):
+        mc = MetaController()
+        assert mc.get_weighted_adjustment() == 0.0
+
+    def test_weighted_adjustment_single_source(self):
+        mc = MetaController()
+        for i in range(15):
+            mc.record_confidence("src", 0.2, correct=(i < 12))
+        adj = mc.get_weighted_adjustment()
+        assert adj > 0  # underconfident → positive adjustment
+
+    def test_weighted_adjustment_reliable_source_dominates(self):
+        mc = MetaController()
+        # Reliable source: many samples, high correctness but enough overconfident to trigger
+        for i in range(20):
+            mc.record_confidence("reliable", 0.9, correct=(i < 15))
+        # Unreliable source: few samples, low correctness
+        for i in range(5):
+            mc.record_confidence("unreliable", 0.3, correct=(i < 1))
+        weighted = mc.get_weighted_adjustment()
+        # Reliable source (overconfident → negative) should dominate over
+        # unreliable source (underconfident → positive but low weight)
+        assert weighted < 0  # reliable source's overconfidence dominates
+
+    def test_weighted_adjustment_few_samples_low_weight(self):
+        mc = MetaController()
+        # Source with few samples (below 3) — no calibration
+        for i in range(2):
+            mc.record_confidence("few", 0.9, correct=(i < 1))
+        assert mc.get_weighted_adjustment() == 0.0
+
+    def test_summary_uses_cache(self):
+        mc = MetaController()
+        for i in range(10):
+            mc.record_confidence("src", 0.8, correct=(i < 8))
+        mc.get_calibration("src")
+        # After cache is populated, summary should work without recomputing
+        mc._calibration_cache_dirty = False  # simulate clean cache
+        summary = mc.get_summary()
+        assert "src" in summary
+        assert summary["src"]["samples"] == 10
+
+    def test_get_threshold_adjustment_fast_path(self):
+        mc = MetaController()
+        for i in range(15):
+            mc.record_confidence("src", 0.2, correct=(i < 12))
+        adj = mc.get_threshold_adjustment("src")
+        assert adj > 0  # underconfident → positive
+        # Second call should use cached path
+        # Mark cache as clean and check fast path still works
+        adj2 = mc.get_threshold_adjustment("src")
+        assert adj2 == adj

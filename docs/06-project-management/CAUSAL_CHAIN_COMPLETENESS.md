@@ -221,17 +221,19 @@ class EmotionSystem:
 
 **C³ 更新**: 3.0→**4.0/10** — 新增跨組件 Emotion→BiologicalIntegrator 鏈。Angela 的情緒狀態現在直接影響生物壓力/放鬆系統，建立 emotion → endocrine → behavior 的第一個跨組件連結。額外 23 個測試驗證映射強度、方法呼叫正確性、整合情境。
 
-### 3.4 MetaController (165L) — 🟡 C³ = 4.0/10 (was 3.5/10, ✅ fixed 2026-07-01 §X #83)
+### 3.4 MetaController (165L) — 🟡 C³ = 4.5/10 (was 3.5→4.0, ✅ fixed 2026-07-02 §X #115)
 
 **修復摘要**: `_threshold_adjustments` 現在被 `get_calibration()` 真正填入，新增 `auto_apply_thresholds()` 返回所有來源的調整值供下游消費。在 `NeuroAutoSelector._analyze_task()` 中，調整值現在影響 `reasoning_threshold`、`quality_threshold`、`high_demand_threshold` 三個決策門檻。`record_result()` 每次記錄後自動觸發 `auto_apply_thresholds()`。
 
 **§X #83 (2026-07-01) — Closed-loop feedback via calibration history**: `get_calibration()` 現在追蹤每次校準結果（over/under/stable）到 `_calibration_history`（per-source deque, maxlen=5），並維護 `_adjustment_multipliers`。連續 3 次過度自信或不足自信 → 調整幅度 x1.5（加速修正）；連續 2 次穩定 → 調整幅度 x0.8（最小 1.0，防止過度修正）。15 個測試（10 核心 + 5 閉環新增）全數通過。
 
-**因果鏈**: record_confidence → get_calibration → _threshold_adjustments 填入 → _analyze_task 讀取 → 調整 reasoning/quality/high_demand 門檻 → 決策參數改變 → 校準歷史回饋 → 下一次調整幅度放大/縮小（閉環達成）
+**§X #115 (2026-07-02) — Calibration cache + weighted aggregate**: 新增 `_calibration_cache`（dirty flag 機制）避免校準重複計算；新增 `_raw_adjustments` 分離乘數前後的調整值；新增 `get_weighted_adjustment()` 基於可靠性和樣本數的加權聚合（代替簡單平均，防止對立調整互相抵消）。`_update_closed_loop()` 被提取為獨立方法，在快取命中時也會調用（閉環乘數正確更新）。`NeuroAutoSelector._analyze_task()` 改為使用 `get_weighted_adjustment()`。9 個新測試驗證快取、加權聚合、閉環相容性。
 
-**剩餘問題**:
-- 調整是所有 backend 的平均值，可能互相抵消
-- 需隨著更多資料累積讓校準更準確
+**因果鏈**: record_confidence → get_calibration (cache-aware) → _threshold_adjustments 填入 → _analyze_task 用 weighted adjustment → 調整 reasoning/quality/high_demand 門檻 → 決策參數改變 → 校準歷史回饋（快取命中時仍更新）→ 下一次調整幅度放大/縮小（閉環持續）
+
+**已解決**: 調整是所有 backend 的平均值可能互相抵消 → 改用加權聚合（weighted adjustment）解決
+
+**剩餘**: 需隨著更多資料累積讓校準更準確
 
 ### 3.5 ExecutionGate (248L) — 🟢 C³ = 6.0/10 (was 5.0/10, ✅ §X #95)
 
@@ -470,7 +472,7 @@ prompt += f"Current emotional state: {emotion_summary}"
 | **Heartbeat → Bio → Spatial** | ✅完整 | **5.0/10** | 8/10 | 3 | 30% | 🟢 唯一接近真實的 |
 | **ExecutionGate → Pipeline** | ✅完整 | **6.0/10** (was 5.0, §X #95) | 8/10 | 3 | 100% | 🟢 執行結果回饋閉環 (auto-execute + confirm-path): record_result() 成功/失敗 → 動態調整有效閾值 (§X #84+§X #95) |
 | **DigitalLifeIntegrator** | ✅完整 | **5.0/10** (was 4.5, §X #71) | 8/10 | 2 | 60% | 🟡 6/6 狀態有行為 + DORMANT auto-transition (commit `7b86cf28b`) |
-| **MetaController** | ✅完整 | **4.0/10** (was 3.5, §X #83) | 7/10 | 2 | 30% | 🟡 閉環校準歷史 → 調整幅度動態倍率 (§X #83 closed-loop) |
+| **MetaController** | ✅完整 | **4.5/10** (was 4.0, §X #115) | 7/10 | 2 | 30% | 🟡 校準快取 + 加權聚合 (dirty-flag cache + reliability-weighted adjustment, §X #115) |
 | **EmotionSystem** | ✅完整 | **4.5/10** (was 4.0, §X #94) | 9/10 | 4 | 50% | 🟢 Emotion→BiologicalIntegrator stress/relaxation + interaction_feedback loop (§X #94) |
 | **AutonomousLifeCycle** | ✅完整 | **4.5/10** (was 3.5, §X #113) | 8/10 | 3 | 50% | 🟡 決策執行 + 回饋閉環 + config 驅動閾值 + get_behavioral_adjustment() → routing/response pipeline (§X #113) |
 | **CausalReasoningEngine** | ✅完整 | **4.5/10** (was 4.0, §X #112) | 9/10 | 3 | 0% | 🟢 retrospective_warm_start() seeds baseline relationships — predict() works from Round 1 (§X #112) |
@@ -959,4 +961,4 @@ API: `HardwareProfile()` → `.scenario`, `.profile`, `.get(key, default)`, `.se
 | #111 | TrainingCoordinator production wiring — asyncio.Lock + eviction caps (max 100 examples / 10000 hashes per domain) + all methods async + lifespan.py factory + ChatService dedup/tracking wiring + scripts/train_pipeline.py async bridge fix (+3 eviction tests, 4,753) | 生產接線 | 無 C³ 影響 |
 | #111d | SyntaxError fix — chat_service.py orphaned except block from §X #111 caused 8 cascading collection errors. Moved orphaned `except` back before TrainingCoordinator block. Defense-in-depth: `except (ImportError, SyntaxError)` in protocols.py + test_state_matrix_api.py. +138 tests unblocked (4,618→4,756). | 修復 | 無 C³ 影響（結構性修復，解鎖測試收集） |
 
-**總結**: §X #94 EmotionSystem C³ +0.5; §X #95 ExecutionGate C³ +1.0; §X #96 AutonomousLifeCycle C³ +0.5; §X #97 IntentModel C³ +1.0 + zeta fix; §X #98 DLI circular import fix unblocks +2 tests; §X #99 15 except:pass→logging; §X #100 DynamicThresholdManager real impl +7 tests; §X #101 CAUSAL_CHAIN duplicate fix; §X #102 3 orphan fixes; §X #103 test consolidation & quality (+11 net, 4,755→4,766); §X #104 _SMOKE_MODULES audit (-18, 4,766→4,748); §X #105 4 mock-fallback fixes (-6, 4,748→4,742); §X #106 test_quick_e2e proper skip + learning_orchestrator mock cleanup + MD sync; §X #109 13 stale import comments cleaned; §X #110 +11 training quality benchmarks (4,742→4,753); §X #111 TrainingCoordinator production wiring — async + eviction + ChatService dedup; §X #111d SyntaxError fix — orphaned except in chat_service.py, unblocks 8 collection errors (+138, 4,618→4,756); §X #112 CausalReasoningEngine retrospective_warm_start() — predict() works from Round 1 (+7 tests). 工作目錄乾淨，**4,763 tests — 0 errors**。
+**總結**: §X #94 EmotionSystem C³ +0.5; §X #95 ExecutionGate C³ +1.0; §X #96 AutonomousLifeCycle C³ +0.5; §X #97 IntentModel C³ +1.0 + zeta fix; §X #98 DLI circular import fix unblocks +2 tests; §X #99 15 except:pass→logging; §X #100 DynamicThresholdManager real impl +7 tests; §X #101 CAUSAL_CHAIN duplicate fix; §X #102 3 orphan fixes; §X #103 test consolidation & quality (+11 net, 4,755→4,766); §X #104 _SMOKE_MODULES audit (-18, 4,766→4,748); §X #105 4 mock-fallback fixes (-6, 4,748→4,742); §X #106 test_quick_e2e proper skip + learning_orchestrator mock cleanup + MD sync; §X #109 13 stale import comments cleaned; §X #110 +11 training quality benchmarks (4,742→4,753); §X #111 TrainingCoordinator production wiring — async + eviction + ChatService dedup; §X #111d SyntaxError fix — orphaned except in chat_service.py, unblocks 8 collection errors (+138, 4,618→4,756); §X #112 CausalReasoningEngine retrospective_warm_start() — predict() works from Round 1 (+7 tests, 4,756→4,763); §X #113 AutonomousLifeCycle behavioral_adjustment → routing/response pipeline (+10 tests, 4,763→4,774); §X #114 Lifecycle singleton unification (+0 tests, 4,774→4,774); §X #115 MetaController calibration cache + weighted adjustment — C³ 4.0→4.5 (+9 tests, 4,774→**4,783 tests — 0 errors**)。
