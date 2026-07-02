@@ -67,6 +67,9 @@ _SMOKE_MODULES = [
     # Merged from tests/tools/test_tools_imports.py (§X #120)
     ("core.tools.code_understanding_tool", "CodeUnderstandingTool", {}),
     ("fragmenta.fragmenta_orchestrator", "FragmentaOrchestrator", {}),
+    # Merged from tests/unit/test_unit_backend_imports.py (§X #123)
+    ("ai.alignment.asi_autonomous_alignment", "ASIAutonomousAlignment", {}),
+    ("core.state.precision_projection_matrix", "PrecisionProjectionMatrix", {}),
 ]
 
 

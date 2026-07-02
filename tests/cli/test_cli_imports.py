@@ -35,6 +35,8 @@ _DELETED_MODULES = [
     "result_analyzer",
     "security_improvements",
     "system_integration",
+    # Merged from tests/unit/test_unit_backend_imports.py (§X #123)
+    "apps.backend.src.ai.language_models.router",
 ]
 
 
