@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-02: tests/ only = **4,742** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop; §X #84: +11 exec gate feedback; §X #85: +6 lifecycle config; §X #86: -4 deleted redundant test files; §X #87: MD sync; §X #88: +9 orphan-to-skip tests; §X #89: -3 import-only consolidation; §X #94: +11 emotion feedback loop; §X #95: +1 cross-instance exec gate test; §X #96: +6 per-type lifecycle feedback tests; §X #97: +6 intent 3D mapping tests + state_matrix zeta fix; §X #98: DLI circular import fix — brain_bridge_service TYPE_CHECKING guard unblocks +2 DLI tests; §X #99: bare except→logging 15 instances; §X #100: +7 DynamicThresholdManager tests; §X #101: CAUSAL_CHAIN duplicate fix; §X #102: 3 orphan fixes; §X #103: test consolidation — deleted rovo file (-3), +9 training validation, +4 import isolation, +1 alias test; §X #104: _SMOKE_MODULES audit — removed 9 dead entries, fixed 8 path prefixes; §X #105: 4 mock-fallback fixes — test_trained_models 11→3 import tests, test_type_fixes mock removed, test_benchmark proper skip, deadlock_detector logging; §X #106: test_quick_e2e.py proper skip + test_learning_orchestrator mock cleanup).
+> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-02: tests/ only = **4,753** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop; §X #84: +11 exec gate feedback; §X #85: +6 lifecycle config; §X #86: -4 deleted redundant test files; §X #87: MD sync; §X #88: +9 orphan-to-skip tests; §X #89: -3 import-only consolidation; §X #94: +11 emotion feedback loop; §X #95: +1 cross-instance exec gate test; §X #96: +6 per-type lifecycle feedback tests; §X #97: +6 intent 3D mapping tests + state_matrix zeta fix; §X #98: DLI circular import fix — brain_bridge_service TYPE_CHECKING guard unblocks +2 DLI tests; §X #99: bare except→logging 15 instances; §X #100: +7 DynamicThresholdManager tests; §X #101: CAUSAL_CHAIN duplicate fix; §X #102: 3 orphan fixes; §X #103: test consolidation — deleted rovo file (-3), +9 training validation, +4 import isolation, +1 alias test; §X #104: _SMOKE_MODULES audit — removed 9 dead entries, fixed 8 path prefixes; §X #105: 4 mock-fallback fixes — test_trained_models 11→3 import tests, test_type_fixes mock removed, test_benchmark proper skip, deadlock_detector logging; §X #106: test_quick_e2e.py proper skip + test_learning_orchestrator mock cleanup; §X #109: removed 13 stale import comments across 6 files; §X #110: +11 training quality benchmark tests).
 
 ---
 
@@ -1822,7 +1822,41 @@ Total files consolidated across §X #66-67: **17 files → 5 files** (14 + 3)
 
 ---
 
-## VI-XLVI. Session Summary — 2026-07-02 (§X #106: test_quick_e2e fix + learning_orchestrator cleanup + MD sync)
+## VI-XLVI. Session Summary — 2026-07-02 (§X #106: test_quick_e2e fix + learning_orchestrator cleanup + MD sync; §X #109: stale comment cleanup)
+### Test Count
+- **4,742** collected (tests/ only — -6 from mock tests, 0 errors)
+
+---
+
+## VI-XLVII. Session Summary — 2026-07-02 (§X #110: +11 training quality benchmark tests)
+
+### §X #110: Training quality benchmarks — **DONE**
+
+- **Added TestQualityMetrics**: 8 unit tests for `ai.multimodal.quality_metrics` (ssim, psnr, snr)
+  - `test_ssim_identical_images`: SSIM of identical image = 1.0
+  - `test_ssim_different_images`: SSIM of opposite images < 0.5
+  - `test_psnr_identical_images`: PSNR > 50dB
+  - `test_psnr_different_images`: PSNR < 20dB
+  - `test_snr_identical_signals`: SNR > 50dB
+  - `test_snr_zero_reconstruction`: SNR(signal, zeros) ≈ 0dB
+  - `test_snr_noisy_reconstruction`: 0 < dB < 20 for noisy signal
+  - `test_ssim_shape_mismatch`: Shape mismatch returns 0.0
+  - `test_quality_report_keys`: quality_report() returns expected keys
+
+- **Added TestTextureBenchmark**: 2 real-data benchmark tests (CIFAR-10, skips if unavailable)
+  - `test_texture_training_reduces_loss_on_real_data`: 3 gradient steps on 5 real images reduces MSE
+  - `test_ssim_improves_after_real_texture_training`: SSIM after training on 2 images doesn't degrade
+
+- Net: 20 tests (was 9) = +11 tests (4,742→4,753)
+
+### Test Count
+- **4,753** collected (tests/ only — +11 from training benchmarks, 0 errors)
+
+---
+
+## VI-XLVIII. Session Summary — 2026-07-02 (§X #106 + #109 + #110 merged)
+
+### §X #106: test_quick_e2e.py fix + learning_orchestrator cleanup
 
 ### §X #106a: test_quick_e2e.py — 4 false-pass async tests — **DONE**
 
