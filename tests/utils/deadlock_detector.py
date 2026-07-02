@@ -164,7 +164,7 @@ class ResourceLeakDetector:
                     resource_info={'current_fds': current_fds, 'initial_fds': self.initial_file_descriptors}
                 ))
         except ImportError:
-            pass
+            logger.debug("psutil not available — skipping file descriptor leak detection")
         return results
 
 

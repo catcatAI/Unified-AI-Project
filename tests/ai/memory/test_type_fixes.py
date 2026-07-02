@@ -15,16 +15,7 @@ import pytest
 
 logger = logging.getLogger(__name__)
 
-# Mocking necessary imports for tests that might not have all dependencies
-try:
-    from ai.memory.vector_store import VectorMemoryStore
-except ImportError:
-
-    class MockVectorMemoryStore:
-        def __init__(self):
-            self.client = "mock_client"
-
-    VectorMemoryStore = MockVectorMemoryStore
+from ai.memory.vector_store import VectorMemoryStore
 
 def full_health_check():
     return {"status": "mock_ok"}

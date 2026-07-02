@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-02: tests/ only = **4,755** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop; §X #84: +11 exec gate feedback; §X #85: +6 lifecycle config; §X #86: -4 deleted redundant test files; §X #87: MD sync; §X #88: +9 orphan-to-skip tests; §X #89: -3 import-only consolidation; §X #94: +11 emotion feedback loop; §X #95: +1 cross-instance exec gate test; §X #96: +6 per-type lifecycle feedback tests; §X #97: +6 intent 3D mapping tests + state_matrix zeta fix; §X #98: DLI circular import fix — brain_bridge_service TYPE_CHECKING guard unblocks +2 DLI tests; §X #99: bare except→logging 15 instances; §X #100: +7 DynamicThresholdManager tests; §X #101: CAUSAL_CHAIN duplicate fix; §X #102: 3 orphan fixes; §X #103: test consolidation — deleted rovo file (-3), +9 training validation, +4 import isolation, +1 alias test; §X #104: _SMOKE_MODULES audit — removed 9 dead entries, fixed 8 path prefixes).
+> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-02: tests/ only = **4,755** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop; §X #84: +11 exec gate feedback; §X #85: +6 lifecycle config; §X #86: -4 deleted redundant test files; §X #87: MD sync; §X #88: +9 orphan-to-skip tests; §X #89: -3 import-only consolidation; §X #94: +11 emotion feedback loop; §X #95: +1 cross-instance exec gate test; §X #96: +6 per-type lifecycle feedback tests; §X #97: +6 intent 3D mapping tests + state_matrix zeta fix; §X #98: DLI circular import fix — brain_bridge_service TYPE_CHECKING guard unblocks +2 DLI tests; §X #99: bare except→logging 15 instances; §X #100: +7 DynamicThresholdManager tests; §X #101: CAUSAL_CHAIN duplicate fix; §X #102: 3 orphan fixes; §X #103: test consolidation — deleted rovo file (-3), +9 training validation, +4 import isolation, +1 alias test; §X #104: _SMOKE_MODULES audit — removed 9 dead entries, fixed 8 path prefixes; §X #105: 4 mock-fallback fixes — test_trained_models 11→3 import tests, test_type_fixes mock removed, test_benchmark proper skip, deadlock_detector logging).
 
 ---
 
@@ -1789,6 +1789,36 @@ Total files consolidated across §X #66-67: **17 files → 5 files** (14 + 3)
 
 ### Test Count
 - **4,748** collected (tests/ only — -18 from dead entries, 0 errors)
+
+---
+
+## VI-XLV. Session Summary — 2026-07-02 (§X #105: 4 mock-fallback fixes)
+
+### §X #105a: test_trained_models.py — mock fallback → proper import skips — **DONE**
+
+- **Before**: 11 tests against `ai.models.trained_model_manager`, `ai.models.model_types`, `ai.models.model_data_types` — none of which exist (deleted in Phase 9-12). When `ImportError` occurred, the file silently created `MockTrainedModelManager`, `MockModelType`, `MockModelData` and ran all 11 tests against mocks. **100% false confidence.**
+- **After**: 3 parametrized import tests that properly skip when modules don't exist.
+- Net: 9 tests → 3 tests (-6, 4,748→4,742)
+
+### §X #105b: test_type_fixes.py — removed unnecessary mock fallback — **DONE**
+
+- **Before**: `try: from ai.memory.vector_store import VectorMemoryStore` with `except ImportError:` creating `MockVectorMemoryStore`
+- **After**: Direct `from ai.memory.vector_store import VectorMemoryStore` — the real module exists and imports successfully. Previously fixed test body (§X #103c) — now the import is also clean.
+- Net: 0 test count change (2 tests, same file size)
+
+### §X #105c: test_benchmark.py — proper skip for deleted modules — **DONE**
+
+- **Before**: `_run_benchmark_ai_ops_engine()` and `_run_benchmark_predictive_maintenance()` wrapped imports in `try/except Exception: return []`. When `ai.ops` was deleted (Phase 11), these returned empty results → `assert len(result) > 0` failed with bare `AssertionError`.
+- **After**: `pytest.skip("ai.ops deleted in Phase 9-12 cleanup")` in each test function body before calling benchmark helper.
+- Net: 0 test count change (2 slow/benchmark tests)
+
+### §X #105d: deadlock_detector.py — pass → logger.debug — **DONE**
+
+- **Before**: `except ImportError: pass` silently swallowed psutil import failure in `ResourceLeakDetector.check_leaks()`
+- **After**: `logger.debug("psutil not available — skipping file descriptor leak detection")`
+
+### Test Count
+- **4,742** collected (tests/ only — -6 from mock tests, 0 errors)
 
 ---
 

@@ -345,6 +345,10 @@ async def main():
 @pytest.mark.slow
 @pytest.mark.benchmark
 def test_benchmark_ai_ops_engine(benchmark):
+    try:
+        import ai.ops.ai_ops_engine  # type: ignore[import-untyped]  # noqa: F401
+    except (ImportError, ModuleNotFoundError):
+        pytest.skip("ai.ops deleted in Phase 9-12 cleanup")
     result = benchmark(_run_benchmark_ai_ops_engine)
     assert len(result) > 0
     for _, metrics in result:
@@ -355,6 +359,10 @@ def test_benchmark_ai_ops_engine(benchmark):
 @pytest.mark.slow
 @pytest.mark.benchmark
 def test_benchmark_predictive_maintenance(benchmark):
+    try:
+        import ai.ops.predictive_maintenance  # type: ignore[import-untyped]  # noqa: F401
+    except (ImportError, ModuleNotFoundError):
+        pytest.skip("ai.ops deleted in Phase 9-12 cleanup")
     result = benchmark(_run_benchmark_predictive_maintenance)
     assert len(result) > 0
     for _, metrics in result:
