@@ -48,57 +48,23 @@ def test_deleted_core_module(module_name: str) -> None:
 
 # ── Optional dependency import tests ─────────────────────────────────────
 
-def test_data_manager_imports() -> None:
-    """Verify EconomyDB, MappableDataObject, and get_timestamp imports."""
-    results: list[str] = []
+_MODULE_IMPORTS = [
+    ("economy.economy_db", "EconomyDB"),
+    ("shared.types.mappable_data_object", "MappableDataObject"),
+    ("core.utils", "now_timestamp"),
+    ("core.hsp.connector", "HSPConnector"),
+    ("core.hsp.bridge", "message_bridge"),
+    ("core.angela_error", "AngelaError"),
+]
+
+
+@pytest.mark.parametrize("module_path,attr_name", _MODULE_IMPORTS,
+                         ids=lambda x: x.split(".")[-1] if isinstance(x, str) else "")
+def test_optional_module_import(module_path: str, attr_name: str) -> None:
+    """Verify optional module import."""
     try:
-        from economy.economy_db import EconomyDB  # type: ignore[import-untyped]
-        assert EconomyDB is not None
-        results.append("EconomyDB")
-    except ImportError:
-        pass
-
-    try:
-        from shared.types.mappable_data_object import MappableDataObject  # type: ignore[import-untyped]
-        assert MappableDataObject is not None
-        results.append("MappableDataObject")
-    except ImportError:
-        pass
-
-    try:
-        from core.utils import get_timestamp  # type: ignore[import-untyped]
-        assert get_timestamp is not None
-        results.append("get_timestamp")
-    except ImportError:
-        pass
-
-    if not results:
-        pytest.skip("No optional data-manager modules available")
-
-
-def test_dependency_manager_imports() -> None:
-    """Verify HSPConnector, message_bridge, and AngelaError imports."""
-    results: list[str] = []
-    try:
-        from core.hsp.connector import HSPConnector  # type: ignore[import-untyped]
-        assert HSPConnector is not None
-        results.append("HSPConnector")
-    except ImportError:
-        pass
-
-    try:
-        from core.hsp.bridge import message_bridge  # type: ignore[import-untyped]
-        assert message_bridge is not None
-        results.append("message_bridge")
-    except ImportError:
-        pass
-
-    try:
-        from core.angela_error import AngelaError  # type: ignore[import-untyped]
-        assert AngelaError is not None
-        results.append("AngelaError")
-    except ImportError:
-        pass
-
-    if not results:
-        pytest.skip("No dependency-manager modules available")
+        mod = importlib.import_module(module_path)
+        obj = getattr(mod, attr_name)
+        assert obj is not None
+    except (ImportError, ModuleNotFoundError):
+        pytest.skip(f"Optional module {module_path} not available")

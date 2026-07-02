@@ -31,33 +31,13 @@ def full_health_check():
 
 
 def test_vector_store_client_type():
-    try:
-        vector_store = VectorMemoryStore()
-
-        client = vector_store.client
-        print(f"✓ VectorMemoryStore.client type: {type(client)}")
-        print(f"✓ VectorMemoryStore.client value: {client}")
-
-        assert client is not None
-    except Exception as e:
-        print(f"✗ Error testing VectorMemoryStore client: {e}")
-        import traceback
-
-        traceback.print_exc()
-        pytest.fail(f"VectorMemoryStore client type test failed: {e}")
+    vector_store = VectorMemoryStore()
+    client = vector_store.client
+    assert client is not None
 
 
 def test_health_check_service():
-    try:
-        result = full_health_check()
-        print(f"✓ Health check result: {result}")
-
-        assert result is not None
-        assert "status" in result
-        assert result["status"] == "mock_ok"
-    except Exception as e:
-        print(f"✗ Error testing health check service: {e}")
-        import traceback
-
-        traceback.print_exc()
-        pytest.fail(f"Health check service test failed: {e}")
+    result = full_health_check()
+    assert result is not None
+    assert "status" in result
+    assert result["status"] == "mock_ok"

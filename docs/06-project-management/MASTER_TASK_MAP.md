@@ -3,7 +3,7 @@
 > **Purpose**: Every plan/task/todo claim from every document, cross-referenced with git commit hash and actual code. Prevents re-implementation and incorrect conclusions.
 > **Created**: 2026-06-26
 > **Verification method**: For every claim, we checked (a) git commit that introduced it, (b) file exists on disk today, (c) file content matches claim. If any of these fail, the claim is flagged.
-> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-02: tests/ only = **4,755** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop; §X #84: +11 exec gate feedback; §X #85: +6 lifecycle config; §X #86: -4 deleted redundant test files; §X #87: MD sync; §X #88: +9 orphan-to-skip tests; §X #89: -3 import-only consolidation; §X #94: +11 emotion feedback loop; §X #95: +1 cross-instance exec gate test; §X #96: +6 per-type lifecycle feedback tests; §X #97: +6 intent 3D mapping tests + state_matrix zeta fix; §X #98: DLI circular import fix — brain_bridge_service TYPE_CHECKING guard unblocks +2 DLI tests; §X #99: bare except→logging 15 instances; §X #100: +7 DynamicThresholdManager tests; §X #101: CAUSAL_CHAIN duplicate fix; §X #102: 3 orphan fixes).
+> **Test count baseline**: `pytest` (full testpaths) = **~5,085 collected / 0 errors** on 2026-06-29 (verified after all §X #34-54 work; tests/ only: 4,578). Updated 2026-07-02: tests/ only = **4,755** (§X #80: +23 emotion→bio +21 BioIntegrator; §X #81: +5 intent; §X #82: +4 causal temporal; §X #83: +5 meta closed-loop; §X #84: +11 exec gate feedback; §X #85: +6 lifecycle config; §X #86: -4 deleted redundant test files; §X #87: MD sync; §X #88: +9 orphan-to-skip tests; §X #89: -3 import-only consolidation; §X #94: +11 emotion feedback loop; §X #95: +1 cross-instance exec gate test; §X #96: +6 per-type lifecycle feedback tests; §X #97: +6 intent 3D mapping tests + state_matrix zeta fix; §X #98: DLI circular import fix — brain_bridge_service TYPE_CHECKING guard unblocks +2 DLI tests; §X #99: bare except→logging 15 instances; §X #100: +7 DynamicThresholdManager tests; §X #101: CAUSAL_CHAIN duplicate fix; §X #102: 3 orphan fixes; §X #103: test consolidation — deleted rovo file (-3), +9 training validation, +4 import isolation, +1 alias test).
 
 ---
 
@@ -1733,6 +1733,37 @@ Total files consolidated across §X #66-67: **17 files → 5 files** (14 + 3)
 
 ### Test Count
 - **4,755** collected (tests/ only — 0 change, no new tests needed for self-contained implementations)
+
+---
+
+## VI-XLIII. Session Summary — 2026-07-02 (§X #103: Test consolidation & quality)
+
+### §X #103a: Deleted redundant test_rovo_dev_connector.py — **DONE**
+
+- **Before**: 20-line file with 3 pure smoke tests (import/alias/instantiation) — all 3 already covered by `test_smoke_imports.py` (`_SMOKE_MODULES` has `RovoDevConnector` entry at line 60)
+- **After**: Deleted file. Moved `test_alias_to_enhanced` to `test_enhanced_rovo_connector.py` (The alias check that RovoDevConnector is EnhancedRovoDevConnector is a valid verification)
+- Net test change: 4,755 → 4,753 (-2)
+
+### §X #103b: Training target validation tests — **DONE**
+
+- Created `tests/ai/multimodal/training/test_training_targets.py` with 9 tests across VisualDecoder and AudioWaveformDecoder:
+  - **Weight existence**: p29_trained.npz must exist
+  - **Weight loading**: load_default_visual_decoder_weights/load_default_audio_decoder_weights must succeed
+  - **Trained vs random**: trained weights must produce significantly different output from random init (mean pixel diff > 5.0 for visual, > 0.01 for audio)
+  - **Output shape and range**: decode() returns correct shape/dtype/range
+  - **Weight key integrity**: all 7 expected keys present in npz
+  - **Audio not silent**: RMS > 0.001 for trained waveform
+- Baselines established for future training quality tracking
+- Net test change: 4,753 → 4,762 (+9)
+
+### §X #103c: Fixed 2 weak test files — **DONE**
+
+- **`tests/ai/memory/test_type_fixes.py`**: Removed `try/except Exception: pytest.fail()` anti-pattern in both tests. Now let exceptions propagate naturally for proper pytest failure reporting. Removed noisy `print()` statements. (2 tests, same count)
+- **`tests/core/test_core_smoke_imports.py`**: Replaced 2 tests (`test_data_manager_imports`, `test_dependency_manager_imports`) that used `except ImportError: pass` to silently swallow failures with 6 individual parametrized `test_optional_module_import` tests. Each import is now independently verified. **Found bug**: `core.utils` has `now_timestamp`, not `get_timestamp` — silently swallowed by old code.
+- Net test change: 4,762 → 4,766 (+4)
+
+### Test Count
+- **4,766** collected (tests/ only — +9 training +4 import isolation -2 rovo +1 alias = +11 net, 0 errors)
 
 ---
 

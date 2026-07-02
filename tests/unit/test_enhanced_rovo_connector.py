@@ -65,3 +65,8 @@ class TestEnhancedRovoDevConnector:
         assert cb.state == "closed"
         assert cb.failure_count == 0
         assert cb.last_failure_time is None
+
+    def test_rovo_alias_to_enhanced(self):
+        from integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
+        from integrations.rovo_dev_connector import RovoDevConnector
+        assert RovoDevConnector is EnhancedRovoDevConnector
