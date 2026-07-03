@@ -22,6 +22,7 @@ import asyncio
 import json
 import logging
 import os
+from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -189,6 +190,10 @@ class AutonomousLifeCycle:
         self.decisions_made: int = 0
         self.executions_succeeded: int = 0
         self.executions_failed: int = 0
+
+        # Interaction quality tracking (C³ 6.0: interaction outcome feedback)
+        self._interaction_quality: deque = deque(maxlen=20)
+        self._interaction_count: int = 0
 
         # Auto-load persisted state
         if self._persist_path and os.path.exists(self._persist_path):
@@ -943,15 +948,58 @@ class AutonomousLifeCycle:
         else:
             confidence = 0.5
 
+        # Incorporate interaction quality feedback (C³ 6.0)
+        avg_interaction_quality = 1.0
+        if self._interaction_quality:
+            avg_interaction_quality = sum(
+                q["engagement"] * (1.5 if q["success"] else 0.5)
+                for q in self._interaction_quality
+            ) / len(self._interaction_quality)
+            avg_interaction_quality = min(2.0, max(0.0, avg_interaction_quality))
+
+        if avg_interaction_quality < 0.4 and base_routing == "exploratory":
+            adjusted_style = f"{base_style} (careful)"
+            adjusted_routing = "neutral"
+        elif avg_interaction_quality > 1.2 and base_routing == "conservative":
+            adjusted_style = f"{base_style} (confident)"
+            adjusted_routing = "exploratory"
+        else:
+            adjusted_routing = base_routing
+            adjusted_style = base_style
+
         result = {
-            "routing_mode": base_routing,
-            "response_style": base_style,
+            "routing_mode": adjusted_routing,
+            "response_style": adjusted_style,
             "phase": self.current_phase.name,
             "decision_type": decision_type,
             "confidence": round(confidence, 3),
+            "avg_interaction_quality": round(avg_interaction_quality, 3),
         }
         state_store.emit_event("lifecycle.behavioral_adjustment", result)
         return result
+
+    def feed_interaction_outcome(self, engagement_ratio: float, success: bool) -> None:
+        """Feed interaction outcome feedback into lifecycle decision process.
+
+        Tracks a rolling window of interaction quality so that the lifecycle
+        can adjust its routing recommendations based on actual interaction
+        outcomes (not just internal formula metrics).
+
+        C³ 6.0: Closes the lifecycle→routing→interaction→feedback loop.
+        """
+        self._interaction_quality.append({"engagement": engagement_ratio, "success": success})
+        self._interaction_count += 1
+        avg = sum(q["engagement"] for q in self._interaction_quality) / len(self._interaction_quality)
+        logger.debug(
+            f"[AutonomousLifeCycle] Interaction outcome: engagement={engagement_ratio:.2f}, "
+            f"success={success}, avg_engagement={avg:.2f} ({len(self._interaction_quality)} samples)"
+        )
+        state_store.emit_event("lifecycle.interaction_recorded", {
+            "engagement_ratio": engagement_ratio,
+            "success": success,
+            "avg_engagement": round(avg, 3),
+            "sample_count": len(self._interaction_quality),
+        })
 
     def register_execution_callback(
         self, callback: Callable[[LifeDecision, bool], None]

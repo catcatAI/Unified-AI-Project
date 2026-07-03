@@ -391,3 +391,50 @@ class TestLifecyclePersistence:
             assert round(type_stats["exploration"]["rate"], 3) == round(1.0 / 6.0, 3)
         finally:
             os.unlink(path)
+
+    def test_interaction_quality_initially_empty(self):
+        lc = AutonomousLifeCycle(config={}, persist_path=None)
+        assert lc._interaction_count == 0
+        assert len(lc._interaction_quality) == 0
+
+    def test_feed_interaction_outcome_tracks_count(self):
+        lc = AutonomousLifeCycle(config={}, persist_path=None)
+        lc.feed_interaction_outcome(0.8, True)
+        assert lc._interaction_count == 1
+        assert len(lc._interaction_quality) == 1
+
+    def test_feed_interaction_outcome_respects_maxlen(self):
+        lc = AutonomousLifeCycle(config={}, persist_path=None)
+        for i in range(25):
+            lc.feed_interaction_outcome(0.5, i % 2 == 0)
+        assert lc._interaction_count == 25
+        assert len(lc._interaction_quality) == 20
+
+    def test_get_behavioral_adjustment_includes_quality_key(self):
+        lc = AutonomousLifeCycle(config={}, persist_path=None)
+        lc.feed_interaction_outcome(0.9, True)
+        adj = lc.get_behavioral_adjustment()
+        assert "avg_interaction_quality" in adj
+
+    def test_high_interaction_quality_overrides_conservative_to_exploratory(self):
+        lc = AutonomousLifeCycle(config={}, persist_path=None)
+        lc.feed_interaction_outcome(3.0, True)
+        lc.feed_interaction_outcome(2.5, True)
+        adj = lc.get_behavioral_adjustment()
+        # avg = (3.0*1.5 + 2.5*1.5)/2 = 4.125 capped to 2.0 > 1.2 → override
+        assert adj["routing_mode"] == "exploratory"
+        assert "confident" in adj["response_style"]
+
+    def test_low_interaction_quality_leaves_conservative_unchanged(self):
+        lc = AutonomousLifeCycle(config={}, persist_path=None)
+        lc.feed_interaction_outcome(0.1, False)
+        lc.feed_interaction_outcome(0.2, False)
+        adj = lc.get_behavioral_adjustment()
+        # avg = (0.1*0.5 + 0.2*0.5)/2 = 0.075 < 0.4, but base is conservative → no override
+        assert adj["routing_mode"] == "conservative"
+
+    def test_get_behavioral_adjustment_when_no_interactions_no_error(self):
+        lc = AutonomousLifeCycle(config={}, persist_path=None)
+        adj = lc.get_behavioral_adjustment()
+        assert "routing_mode" in adj
+        assert adj["avg_interaction_quality"] == 1.0  # default when empty

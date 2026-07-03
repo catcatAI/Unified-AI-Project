@@ -105,6 +105,10 @@
 | **Zero-coverage test batch (§X #130)** | +75 unit tests for 10 previously zero-coverage files: text_utils, registry, env_dynamics, bio_reflex_manager, tactile_memory, auditory_memory, data_aligner, advanced_performance_optimizer, unified_knowledge_graph_impl, metrics_collector. | 10 source files | ✅ Done (§X #130) |
 | **CNS: GlobalStateStore → 统一事件总线** | ✅ **DONE (8/8)** — 全部 8 閉環已接入（Emotion、LifeCycle、Causal、Meta、Intent、ExecutionGate、Heartbeat、Router）。18 CNS event types。 | 10 個 source files | ✅ **DONE** (8/8 loops wired) |
 | **PriorityNegotiator: 取代 router.py 硬編碼優先級鏈** | ✅ **DONE** — PriorityNegotiator 類 + 5 default voters + weighted plurality fusion。router.py 已改用 negotiator.resolve()。25 tests。 | `priority_negotiator.py` (new), `router.py` (wired) | ✅ **DONE** |
+| **IntentModel C³ 5.0→6.0 (§X #135)** | Closed intent feedback loop: record_intent_outcome() tracks success/failure per routing mode, success_rate adjusts intent_strength in get_intent_routing_adjustment(). Wired into chat_routes.py Step 10b. +11 tests (4,981→4,992). | intent_model.py, chat_routes.py, router.py | ✅ Done (§X #135) |
+| **MetaController C³ 5.0→6.0 (§X #136)** | Registered as PriorityNegotiator voter: meta_calibration_voter() translates get_weighted_adjustment() into temperature/tokens bias. +7 tests (4,992→4,999). | meta_controller.py, priority_negotiator.py, router.py | ✅ Done (§X #136) |
+| **EmotionSystem C³ 5.0→6.0 (§X #137)** | Sustained negative feedback accumulation: _sustained_negative_counter + cumulative fatigue when ≥3 consecutive negative interactions. +10 tests (4,999→5,009). | emotion_system.py | ✅ Done (§X #137) |
+| **AutonomousLifeCycle C³ 4.5→6.0 (§X #138)** | Interaction outcome feedback loop: feed_interaction_outcome() tracks 20-sample rolling window, avg_interaction_quality dynamically overrides routing_mode. +7 tests (5,009→5,014). | autonomous_life_cycle.py | ✅ Done (§X #138) |
 ### 1.2 無法驗證的優勢（數據不足）
 
 | 宣稱 | 實際狀態 | 需要什麼數據 | 門檻 |
@@ -310,7 +314,7 @@ O2 → ✅ **DONE** (2026-06-29, §X #44, 152 行死碼移除)
 ### 4.1 測試覆蓋
 
 ```bash
-# 執行所有測試（基線：5,009）
+# 執行所有測試（基線：5,014）
 pytest tests/ apps/backend/tests/ --collect-only -q
 
 # 測量基線完成後，每次變更保持或增加計數
