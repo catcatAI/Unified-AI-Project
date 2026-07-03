@@ -9,6 +9,7 @@ Level 5 ASI 的三大支柱之一, 负责情感理解、价值评估和共情能
 
 import logging
 import time
+from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
@@ -85,6 +86,7 @@ class EmotionSystem:
         }
         self.empathy_models: Dict[str, Any] = {}
         self.is_active = True
+        self._feedback_history: deque = deque(maxlen=10)
         self._initialize_emotion_value_mapping()
 
     def _initialize_emotion_value_mapping(self) -> None:
@@ -364,11 +366,14 @@ class EmotionSystem:
         """
         Process interaction outcome feedback to close the emotional loop.
 
-        Maps interaction outcomes to emotional adjustments:
+        Maps interaction outcomes to emotional adjustments with
+        temporal awareness via feedback history:
         - High engagement (>2.0) + success → joy/dopamine boost
         - Low engagement (<0.5) → sadness/stress
         - Error → fear/stress
         - Neutral → slight trust/calm
+        - Rising engagement trend amplifies positive adjustments
+        - Declining engagement trend amplifies negative adjustments
 
         C³: Closes the Emotion→Behavior→Response→Feedback→Emotion loop.
         """
@@ -377,23 +382,38 @@ class EmotionSystem:
             f"had_error={had_error}, success={response_success}"
         )
 
+        # Record feedback for temporal trend analysis
+        self._feedback_history.append({
+            "engagement_ratio": engagement_ratio,
+            "had_error": had_error,
+            "response_success": response_success,
+            "timestamp": time.time(),
+        })
+
+        # Compute temporal trend: is engagement improving?
+        trend_multiplier = 1.0
+        if len(self._feedback_history) >= 3:
+            recent = [e["engagement_ratio"] for e in list(self._feedback_history)[-3:]]
+            if recent[-1] > recent[0]:
+                trend_multiplier = 1.2  # Rising engagement → amplify positive
+            elif recent[-1] < recent[0]:
+                trend_multiplier = 0.8  # Declining engagement → dampen positive
+
         # Determine influence type and intensity based on interaction outcome
         if had_error or response_success is False:
-            # Error or explicit failure → stress + fear
-            self.apply_influence("interaction_feedback", "stress", 0.6, 1.0)
-            self.apply_influence("interaction_feedback", "fear", 0.3, 0.8)
+            self.apply_influence("interaction_feedback", "stress", 0.6 * trend_multiplier, 1.0)
+            self.apply_influence("interaction_feedback", "fear", 0.3 * trend_multiplier, 0.8)
         elif engagement_ratio > 2.0 and response_success is not False:
-            # High engagement → joy + dopamine
-            self.apply_influence("interaction_feedback", "dopamine", min(1.0, engagement_ratio / 5.0), 1.0)
-            self.apply_influence("interaction_feedback", "joy", min(1.0, engagement_ratio / 4.0), 0.8)
+            intensity = min(1.0, engagement_ratio / 5.0) * min(1.0, trend_multiplier)
+            self.apply_influence("interaction_feedback", "dopamine", intensity, 1.0)
+            self.apply_influence("interaction_feedback", "joy", min(1.0, engagement_ratio / 4.0) * min(1.0, trend_multiplier), 0.8)
         elif engagement_ratio < 0.5:
-            # Low engagement → sadness + cortisol
-            self.apply_influence("interaction_feedback", "cortisol", 0.3 * (1.0 - engagement_ratio), 1.0)
-            self.apply_influence("interaction_feedback", "sadness", 0.2 * (1.0 - engagement_ratio), 0.8)
+            intensity = 0.3 * (1.0 - engagement_ratio) * (2.0 - trend_multiplier)
+            self.apply_influence("interaction_feedback", "cortisol", intensity, 1.0)
+            self.apply_influence("interaction_feedback", "sadness", 0.2 * (1.0 - engagement_ratio) * (2.0 - trend_multiplier), 0.8)
         else:
-            # Neutral → slight calm/trust
-            self.apply_influence("interaction_feedback", "calm", 0.1, 0.5)
-            self.apply_influence("interaction_feedback", "trust", 0.05, 0.5)
+            self.apply_influence("interaction_feedback", "calm", 0.1 * trend_multiplier, 0.5)
+            self.apply_influence("interaction_feedback", "trust", 0.05 * trend_multiplier, 0.5)
 
         self._cap_emotion_history()
 

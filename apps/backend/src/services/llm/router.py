@@ -1152,6 +1152,10 @@ class AngelaLLMService:
         behavior = context.get("emotional_behavior")
         if behavior:
             routing_mode = behavior.get("routing_mode")
+        # Priority 2.5: Intent routing adjustment (C³ 4.0→5.0)
+        intent_routing = context.get("intent_routing")
+        if intent_routing:
+            routing_mode = intent_routing.get("routing_mode")
         # Priority 3: Angela's internal emotion (overrides both above)
         angela_emotion = context.get("angela_emotion")
         if angela_emotion:

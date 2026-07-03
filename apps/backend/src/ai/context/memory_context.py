@@ -318,7 +318,7 @@ class MemoryContextManager:
                     memory.created_at = datetime.fromisoformat(mem_dict["created_at"])
                     memory.last_accessed = datetime.fromisoformat(mem_dict["last_accessed"])
                 except (KeyError, ValueError):
-                    pass
+                    logger.debug("Failed to parse datetime fields for memory %s", mem_id)
                 memory.access_count = mem_dict.get("access_count", 0)
                 memory.embedding = mem_dict.get("embedding")
                 memory.metadata = mem_dict.get("metadata", {})

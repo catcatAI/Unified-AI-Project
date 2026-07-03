@@ -85,6 +85,50 @@ class IntentManager:
             else:
                 self.active_intent_vector[dim] = (0.0, 0.0, 0.0)
 
+    def get_intent_routing_adjustment(self) -> Dict[str, Any]:
+        """Map active intent vectors to routing_mode/response_style.
+
+        Analyzes the balance of active intent dimensions to determine
+        an appropriate routing mode. High exploration → exploratory,
+        high homeostasis → conservative, high social_bond → empathetic.
+        """
+        alpha = self.active_intent_vector.get("alpha", (0.0, 0.0, 0.0))
+        gamma = self.active_intent_vector.get("gamma", (0.0, 0.0, 0.0))
+        delta = self.active_intent_vector.get("delta", (0.0, 0.0, 0.0))
+        avg_mag = (
+            sum(abs(v) for v in alpha) +
+            sum(abs(v) for v in gamma) +
+            sum(abs(v) for v in delta)
+        ) / 9.0
+
+        if avg_mag < 0.1:
+            return {"routing_mode": None, "response_style": None, "intent_mode": "neutral", "intent_strength": 0.0}
+
+        exploration = sum(abs(v) for v in gamma) / 3.0
+        bonding = sum(abs(v) for v in delta) / 3.0
+        energy = sum(abs(v) for v in alpha) / 3.0
+
+        # Highest-scoring dimension drives routing
+        if exploration > bonding and exploration > energy:
+            routing_mode = "exploratory"
+            response_style = "curious"
+        elif bonding > exploration and bonding > energy:
+            routing_mode = "empathetic"
+            response_style = "warm"
+        elif energy > 0.5:
+            routing_mode = "conservative"
+            response_style = "cautious"
+        else:
+            routing_mode = "balanced"
+            response_style = "neutral"
+
+        return {
+            "routing_mode": routing_mode,
+            "response_style": response_style,
+            "intent_mode": "active",
+            "intent_strength": round(min(1.0, avg_mag * 2.0), 2),
+        }
+
     def scan_memory_proximity(self, bridge: Any, state: Dict[str, Any]) -> None:
         """Scan HAM memory for experiences near current state coordinates.
 
@@ -118,6 +162,7 @@ class IntentManager:
                     decay_rate=0.02,
                 )
                 self.add_intent(intent)
+    
 
     def generate_homeostatic_intents(self, state: Dict[str, Any]) -> None:
         """Generate homeostatic intents to restore balance.

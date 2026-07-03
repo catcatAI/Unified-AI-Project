@@ -149,30 +149,15 @@ class TestProcessInteractionFeedback:
         # After 3 bad interactions, valence should be lower than initial
         assert last.valence < 0.5, f"Expected lower valence after bad feedback, got {last.valence}"
 
-    def test_feedback_does_not_raise_exceptions(self, emotion_system):
-        """process_interaction_feedback should never raise exceptions."""
+    @pytest.mark.parametrize("engagement", [0.0, 0.01, 10.0, 100.0])
+    def test_feedback_edge_case_engagement(self, emotion_system, engagement):
         es = emotion_system
+        es.process_interaction_feedback(engagement_ratio=engagement, had_error=False)
 
-        # Various edge case inputs should not crash
-        for engagement in (0.0, 0.01, 10.0, 100.0):
-            try:
-                es.process_interaction_feedback(
-                    engagement_ratio=engagement, had_error=False
-                )
-            except Exception as e:
-                pytest.fail(
-                    f"process_interaction_feedback raised {e} for engagement={engagement}"
-                )
-
-        for error_val in (True, False):
-            try:
-                es.process_interaction_feedback(
-                    engagement_ratio=1.0, had_error=error_val
-                )
-            except Exception as e:
-                pytest.fail(
-                    f"process_interaction_feedback raised {e} for had_error={error_val}"
-                )
+    @pytest.mark.parametrize("error_val", [True, False])
+    def test_feedback_edge_case_error_val(self, emotion_system, error_val):
+        es = emotion_system
+        es.process_interaction_feedback(engagement_ratio=1.0, had_error=error_val)
 
     def test_feedback_preserves_valid_emotional_state(self, emotion_system):
         """After feedback, the emotional state should always have valid ranges."""

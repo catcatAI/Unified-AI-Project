@@ -140,7 +140,7 @@ class MathVerifier:
                             explanation=f"計算結果: {result}",
                         )
                     except (ZeroDivisionError, Exception):
-                        pass
+                        logger.debug("Math evaluation failed for expression: %s", expr_str)
             return MathVerifyResult(
                 response_text=None,
                 is_correct=False,

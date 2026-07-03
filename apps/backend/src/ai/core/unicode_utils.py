@@ -14,7 +14,10 @@ Zero external dependencies. Uses only Python's built-in ``unicodedata``.
 # ANGELA-MATRIX: [L1-L2] [αβγδ] [A] [L1]
 # =============================================================================
 
+import logging
 import unicodedata
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "normalize_text",
@@ -253,7 +256,7 @@ def cjk_radical(char: str) -> str:
             name = name.removeprefix("CJK UNIFIED IDEOGRAPH-")
             name = name.removeprefix("CJK COMPATIBILITY IDEOGRAPH-")
     except (ValueError, TypeError):
-        pass
+        logger.debug("Failed to look up radical for character %s", char)
     return _RADICAL_TABLE.get(char, "")
 
 

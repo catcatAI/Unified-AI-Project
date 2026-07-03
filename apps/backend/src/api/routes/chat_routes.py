@@ -170,6 +170,19 @@ def _get_lifecycle():
     return _lifecycle_fallback
 
 
+def _get_intent_manager():
+    """Get the IntentManager from the DLI singleton."""
+    try:
+        from api.lifespan import get_digital_life
+        dli = get_digital_life()
+        if dli and hasattr(dli, "intent_manager"):
+            return dli.intent_manager
+        return None
+    except Exception:
+        logger.debug("_get_intent_manager: DLI unavailable")
+        return None
+
+
 def _get_emotion_analyzer():
     global _emotion_analyzer
     if _emotion_analyzer is None:
@@ -959,7 +972,21 @@ async def _handle_chat_request(
                 )
         except Exception as e:
             logger.debug(f"Lifecycle behavioral adjustment unavailable: {e}")
-        # Step 5d: Inject modality gateway state (C³ 3.0 — was never consumed)
+        # Step 5d: Inject intent routing adjustment (C³ 4.0→5.0)
+        try:
+            im = _get_intent_manager()
+            if im:
+                intent_adj = im.get_intent_routing_adjustment()
+                if intent_adj.get("routing_mode"):
+                    context["intent_routing"] = intent_adj
+                    logger.debug(
+                        f"Intent routing adjustment: mode={intent_adj['routing_mode']}, "
+                        f"style={intent_adj['response_style']}, "
+                        f"strength={intent_adj['intent_strength']}"
+                    )
+        except Exception as e:
+            logger.debug(f"Intent routing adjustment unavailable: {e}")
+        # Step 5e: Inject modality gateway state (C³ 3.0 — was never consumed)
         try:
             mg = _get_modality_gateway()
             if mg:

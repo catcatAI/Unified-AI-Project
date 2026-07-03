@@ -131,8 +131,8 @@ class SystemHardwareProbe:
                     for line in f:
                         if "flags" in line:
                             return line.split(":")[-1].strip().split()
-            except Exception:  # broad exception acceptable: /proc/cpuinfo parsing may fail on non-standard systems
-                pass
+            except Exception:
+                logger.debug("Failed to parse /proc/cpuinfo")
         elif self.platform_name == "windows":
             # Windows flags are harder; usually inferred or via specialized tools
             # We can use 'coreinfo' if available, but for now we fallback
@@ -143,8 +143,8 @@ class SystemHardwareProbe:
                 for line in result.stdout.splitlines():
                     if "hw.optional." in line and ": 1" in line:
                         flags.append(line.split(".")[2].split(":")[0])
-            except Exception:  # broad exception acceptable: macOS sysctl output parsing may vary by version
-                pass
+            except Exception:
+                logger.debug("Failed to parse sysctl output on macOS")
         return flags
 
     def _detect_ram(self) -> Tuple[float, float]:
@@ -169,8 +169,8 @@ class SystemHardwareProbe:
                 if lines and lines[0]:
                     parts = lines[0].split(",")
                     return AcceleratorType.NVIDIA, parts[0].strip(), int(parts[1].strip())
-        except Exception:  # broad exception acceptable: nvidia-smi may not be available or fail on some systems
-            pass
+        except Exception:
+            logger.debug("nvidia-smi not available or failed")
 
         # 2. Apple Metal
         if self.platform_name == "darwin":
@@ -183,8 +183,8 @@ class SystemHardwareProbe:
             )
             if result.returncode == 0:
                 return AcceleratorType.AMD, "AMD GPU", 0
-        except Exception:  # broad exception acceptable: rocm-smi may not be available on all AMD systems
-            pass
+        except Exception:
+            logger.debug("rocm-smi not available or failed")
 
         # 4. Windows WMIC Fallback
         if self.platform_name == "windows":
@@ -213,8 +213,8 @@ class SystemHardwareProbe:
                     elif "INTEL" in name.upper():
                         atype = AcceleratorType.INTEL
                     return atype, name, ram
-            except Exception:  # broad exception acceptable: wmic command parsing may vary across Windows versions
-                pass
+            except Exception:
+                logger.debug("WMIC command failed on Windows")
 
         return AcceleratorType.NONE, "None", 0
 

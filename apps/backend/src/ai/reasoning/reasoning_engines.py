@@ -233,6 +233,7 @@ class AbductiveReasoner:
 
     def __init__(self) -> None:
         """Initialize AbductiveReasoner."""
+        self.hypotheses: list[dict[str, Any]] = []
 
     def explain(self, observation: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """

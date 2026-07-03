@@ -156,6 +156,57 @@ class TestIntentManager:
         self.mgr.scan_memory_proximity(MockBridge(), {"alpha": "scalar_value"})
         assert len(self.mgr.intents) == 0
 
+    def test_get_intent_routing_adjustment_returns_default_when_empty(self):
+        adj = self.mgr.get_intent_routing_adjustment()
+        assert adj["routing_mode"] is None
+
+    def test_get_intent_routing_adjustment_exploratory_from_gamma(self):
+        intent = SelfIntent(id="r1", category=IntentCategory.EXPLORATION,
+                            target_dimension="gamma", target_coordinate=(5.0, 5.0, 5.0),
+                            strength=1.0, urgency=1.0)
+        self.mgr.add_intent(intent)
+        self.mgr._calculate_active_vectors()
+        adj = self.mgr.get_intent_routing_adjustment()
+        assert adj["routing_mode"] == "exploratory"
+        assert adj["response_style"] == "curious"
+        assert adj["intent_mode"] == "active"
+        assert adj["intent_strength"] > 0
+
+    def test_get_intent_routing_adjustment_empathetic_from_delta(self):
+        intent = SelfIntent(id="r2", category=IntentCategory.SOCIAL_BOND,
+                            target_dimension="delta", target_coordinate=(4.0, 4.0, 4.0),
+                            strength=1.0, urgency=1.0)
+        self.mgr.add_intent(intent)
+        self.mgr._calculate_active_vectors()
+        adj = self.mgr.get_intent_routing_adjustment()
+        assert adj["routing_mode"] == "empathetic"
+        assert adj["response_style"] == "warm"
+
+    def test_get_intent_routing_adjustment_conservative_from_high_alpha(self):
+        intent = SelfIntent(id="r3", category=IntentCategory.HOMEOSTASIS,
+                            target_dimension="alpha", target_coordinate=(6.0, 6.0, 6.0),
+                            strength=1.0, urgency=1.0)
+        self.mgr.add_intent(intent)
+        self.mgr._calculate_active_vectors()
+        adj = self.mgr.get_intent_routing_adjustment()
+        assert adj["routing_mode"] == "conservative"
+        assert adj["response_style"] == "cautious"
+
+    def test_get_intent_routing_adjustment_balanced_mixed_signals(self):
+        mgr = IntentManager()
+        mgr.add_intent(SelfIntent(id="ba", category=IntentCategory.HOMEOSTASIS,
+                                   target_dimension="alpha", target_coordinate=(0.5, 0.5, 0.5),
+                                   strength=0.3, urgency=0.3))
+        mgr.add_intent(SelfIntent(id="bg", category=IntentCategory.EXPLORATION,
+                                   target_dimension="gamma", target_coordinate=(0.5, 0.5, 0.5),
+                                   strength=0.3, urgency=0.3))
+        mgr.add_intent(SelfIntent(id="bd", category=IntentCategory.SOCIAL_BOND,
+                                   target_dimension="delta", target_coordinate=(0.5, 0.5, 0.5),
+                                   strength=0.3, urgency=0.3))
+        mgr._calculate_active_vectors()
+        adj = mgr.get_intent_routing_adjustment()
+        assert adj["routing_mode"] == "balanced" or adj["routing_mode"] == "exploratory"
+
     def test_generate_homeostatic_intents_low_energy_creates_intent(self):
         state = {"alpha": {"energy": 0.1, "coordinate": (0.0, 0.0, 0.0)}}
         self.mgr.generate_homeostatic_intents(state)
