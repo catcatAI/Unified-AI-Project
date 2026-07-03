@@ -102,6 +102,7 @@
 | **Test coverage expansion (§X #128)** | Added 59 unit tests for 5 previously zero-coverage source files: content_filter.py (12), permission_control.py (11), async_utils.py (6), env_utils.py (21), network_resilience.py (9). Fixed get_float_env NaN-parsing bug (float("nan") doesn't raise ValueError). Net: +59 tests (4,803→4,862). | env_utils.py, content_filter.py, permission_control.py, async_utils.py, network_resilience.py | ✅ Done (§X #128) |
 | **MetaController persistence (§X #129a)** | Calibration state persistence: save/load EWMA, adjustment multipliers, calibration history, threshold adjustments. Auto-load on init. C³ 4.5→5.0. +5 tests. | meta_controller.py | ✅ Done (§X #129) |
 | **AutonomousLifeCycle persistence (§X #129b)** | Lifecycle state persistence: save/load decision history, execution stats, per-type behavior executor stats. Auto-load on init. C³ 4.5→5.0. +6 tests. | autonomous_life_cycle.py | ✅ Done (§X #129) |
+| **Zero-coverage test batch (§X #130)** | +75 unit tests for 10 previously zero-coverage files: text_utils, registry, env_dynamics, bio_reflex_manager, tactile_memory, auditory_memory, data_aligner, advanced_performance_optimizer, unified_knowledge_graph_impl, metrics_collector. | 10 source files | ✅ Done (§X #130) |
 ### 1.2 無法驗證的優勢（數據不足）
 
 | 宣稱 | 實際狀態 | 需要什麼數據 | 門檻 |
