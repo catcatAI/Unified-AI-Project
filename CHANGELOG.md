@@ -730,6 +730,15 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - **test_gmqtt_mock.py**: Added missing `@pytest.mark.asyncio` decorator + fixed missing blank line
 - **Net**: -2 tests (5,036→5,034)
 
+### §X #146 (2026-07-03) — Test quality: proper skip guards for 5 more false-positive test files
+
+- **test_data_analysis_debug.py**: Added `pytest.skip(allow_module_level=True)` — print-based diagnostic, 0 asserts
+- **test_rovodev_integration.py**: Added `pytest.skip(allow_module_level=True)` — print-based integration test, requires server
+- **verify_fixes.py**: Added `pytest.skip(allow_module_level=True)` — print-based verification, 0 asserts
+- **verify_phase14_concurrency.py**: Added `pytest.skip(allow_module_level=True)` — print-based concurrency test, 0 asserts
+- **test_integration.py (shared)**: Added `pytest.skip(allow_module_level=True)` — print-based integration, 0 asserts
+- **Net**: -6 tests (5,034→5,028)
+
 ### §X #137 (2026-07-03) — EmotionSystem C³ 5.0→6.0 — sustained negative feedback accumulation
 
 - **EmotionSystem**: Added `_sustained_negative_counter` tracking consecutive negative interactions (engagement < 0.5, errors, or failures)

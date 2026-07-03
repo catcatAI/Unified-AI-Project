@@ -4,6 +4,10 @@ import json
 import logging
 import time
 
+import pytest
+
+pytest.skip("Print-based integration test — uses print() instead of assert", allow_module_level=True)
+
 import requests
 
 logger = logging.getLogger(__name__)

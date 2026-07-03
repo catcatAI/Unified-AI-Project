@@ -8,6 +8,10 @@ import subprocess
 import sys
 import time
 
+import pytest
+
+pytest.skip("Print-based integration diagnostic — requires running server; not a real test", allow_module_level=True)
+
 import requests
 
 

@@ -2,6 +2,10 @@ import asyncio
 import logging
 import time
 
+import pytest
+
+pytest.skip("Print-based verification script — not a real test", allow_module_level=True)
+
 from ai.integration.unified_control_center import UnifiedControlCenter
 
 # Configure logging

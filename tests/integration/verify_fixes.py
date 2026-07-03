@@ -6,6 +6,10 @@ import logging
 import os
 import sys
 
+import pytest
+
+pytest.skip("Print-based verification script — not a real test", allow_module_level=True)
+
 logger = logging.getLogger(__name__)
 
 

@@ -149,6 +149,8 @@ pre-commit run --all-files
 > ✅ **NOTE (Updated 2026-07-03, §X #144)**: **§X #144**: Test quality cleanup — (a) test_audit_comprehensive.py: removed unconditional pytest.skip(), wrapped all ~250 lines of diagnostic print-based code (sections 1-14) inside `if __name__ == "__main__":` guard, fixed broken `try:from` import line; (b) test_cli_imports.py: added 3 orphan `ai.code_inspection.*` module paths to `_DELETED_MODULES`. Net: +3 tests (5,033→**5,036 tests collected (tests/) — 0 errors**).
 >
 > ✅ **NOTE (Updated 2026-07-03, §X #145)**: **§X #145**: Test quality — added proper skip guards to 7 false-positive test files (0 asserts, print-based diagnostic, or require running server). Files: test_base_agent_simple.py, verify_all_agents.py, run_fixed_tests.py, quick_test_concept_models.py, test_websocket.py, test_websocket_comprehensive.py. Fixed test_gmqtt_mock.py — added missing `@pytest.mark.asyncio` decorator + fixed class/def spacing. Net: -2 tests (5,036→**5,034 tests collected (tests/) — 0 errors**).
+>
+> ✅ **NOTE (Updated 2026-07-03, §X #146)**: **§X #146**: Test quality — added proper skip guards to 5 more false-positive test files (print-based, 0 asserts). Files: test_data_analysis_debug.py, test_rovodev_integration.py, verify_fixes.py, verify_phase14_concurrency.py, test_integration.py (shared). Net: -6 tests (5,034→**5,028 tests collected (tests/) — 0 errors**).
 
 >
 > - **Phase A1-A4: External dictionary download + convert + import pipeline

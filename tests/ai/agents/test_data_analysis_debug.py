@@ -9,6 +9,8 @@ import uuid
 
 import pytest
 
+pytest.skip("Print-based diagnostic script — not a real test", allow_module_level=True)
+
 logger = logging.getLogger(__name__)
 
 from unittest.mock import AsyncMock
