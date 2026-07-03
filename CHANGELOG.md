@@ -713,6 +713,14 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - 🗑️ Removed: Removed features
 - 🔒 Security: Security improvements
 
+### §X #134 (2026-07-03) — Test consolidation R6
+
+- **Test consolidation R6**: 7 modules added to `_SMOKE_MODULES` (card_types, digital_life_constants, event_loop_system, hook_registry, hsm_formula_system, maturity_system, multimodal_service)
+- **6 extra test classes** preserve behavioral assertions (37 tests): TestCardTypes, TestDigitalLifeConstants, TestEventLoopSystem, TestHookRegistry, TestHSMFormulaSystem, TestMaturitySystem
+- **Deleted 9 redundant files**: 6 import-only test files + test_simple.py (trivial env validation) + test_result_feedback.py (dead utility, `__test__ = False`) + test_trained_models.py (orphan, moved 3 modules to _DELETED_MODULES)
+- **Fixed** `assert True` no-op in test_multimodal_integration.py:226
+- **Net**: -2 tests (4,983→4,981)
+
 ---
 
 **Note**: Dates marked with XX are approximate or to be determined. This changelog will be updated as more historical information becomes available.

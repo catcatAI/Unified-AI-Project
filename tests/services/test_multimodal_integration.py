@@ -223,7 +223,6 @@ class TestMultimodalIntegration:
         assert eval_result.get("error") is None
 
         # All steps completed
-        assert True
 
     @pytest.mark.asyncio
     async def test_recovery_state_accessible(self, svc):

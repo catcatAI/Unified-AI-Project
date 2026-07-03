@@ -49,6 +49,10 @@ _DELETED_MODULES = [
     "ai.ops.capacity_planner",
     "ai.ops.performance_optimizer",
     "ai.ops.predictive_maintenance",
+    # Merged from tests/ai/test_trained_models.py (§X #134)
+    "ai.models.model_data_types",
+    "ai.models.model_types",
+    "ai.models.trained_model_manager",
 ]
 
 
