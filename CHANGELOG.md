@@ -713,6 +713,12 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - 🗑️ Removed: Removed features
 - 🔒 Security: Security improvements
 
+### §X #144 (2026-07-03) — Test quality: fix test_audit_comprehensive print-based diagnostic script + orphan module tracking
+
+- **test_audit_comprehensive.py**: Restructured as proper diagnostic script — added module-level `pytest.skip()` (was unconditional), wrapped ALL ~250 lines of diagnostic code (sections 1-14) inside `if __name__ == "__main__":` guard, fixed broken `try:from` import line with missing newline, removed redundant `test_print_based_script()` function
+- **test_cli_imports.py**: Added 3 orphan `ai.code_inspection.*` module paths to `_DELETED_MODULES` (`code_inspector`, `code_learning`, `apps.backend.src.ai.code_inspection.code_learning`)
+- **Net**: +3 tests (5,033→5,036)
+
 ### §X #137 (2026-07-03) — EmotionSystem C³ 5.0→6.0 — sustained negative feedback accumulation
 
 - **EmotionSystem**: Added `_sustained_negative_counter` tracking consecutive negative interactions (engagement < 0.5, errors, or failures)

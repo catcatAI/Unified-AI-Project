@@ -53,6 +53,10 @@ _DELETED_MODULES = [
     "ai.models.model_data_types",
     "ai.models.model_types",
     "ai.models.trained_model_manager",
+    # Merged from orphan test files referencing deleted modules (§X #144)
+    "ai.code_inspection.code_inspector",
+    "ai.code_inspection.code_learning",
+    "apps.backend.src.ai.code_inspection.code_learning",
 ]
 
 

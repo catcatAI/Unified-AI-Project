@@ -146,6 +146,8 @@ pre-commit run --all-files
 >
 > ✅ **NOTE (Updated 2026-07-03, §X #143)**: **§X #143**: Hardcoded sleep migration — 6 production files migrated from `asyncio.sleep(HARDCODED)` to `loop_sleep(CONFIG_KEY, DEFAULT)` from `magic_numbers.py`: base_agent.py (agent_restart_delay), hsp/versioning.py (hsp_process_message), cloud_sync.py (cloud_sync_upload), cluster_manager.py (cluster_task_distribute), websocket_manager.py (ws_broadcast_retry, ws_broadcast_interval). New config keys added. **5,033 tests collected — 0 errors.**
 >
+> ✅ **NOTE (Updated 2026-07-03, §X #144)**: **§X #144**: Test quality cleanup — (a) test_audit_comprehensive.py: removed unconditional pytest.skip(), wrapped all ~250 lines of diagnostic print-based code (sections 1-14) inside `if __name__ == "__main__":` guard, fixed broken `try:from` import line; (b) test_cli_imports.py: added 3 orphan `ai.code_inspection.*` module paths to `_DELETED_MODULES`. Net: +3 tests (5,033→**5,036 tests collected (tests/) — 0 errors**).
+>
 > - **Phase A1-A4: External dictionary download + convert + import pipeline
 > - **New scripts**: `scripts/download_datasets.py` (CC-CEDICT/JMdict/WordNet), `scripts/import_dictionaries.py`
 > - **460,281 entries** imported: 125k CC-CEDICT (zh↔en) + 217k JMdict (ja↔en) + 117k WordNet 3.0 (en)
