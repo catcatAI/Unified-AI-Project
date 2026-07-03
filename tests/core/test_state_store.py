@@ -94,7 +94,8 @@ class TestGlobalStateStore:
             raise ValueError('subscriber error')
         self.store.subscribe('alpha', bad_cb)
         self.store.update_state('alpha', {'x': 1})
-        # No crash = pass
+        state = self.store.get_state('alpha')
+        assert state.get('x') == 1
 
     def test_concurrent_updates(self):
         import asyncio
@@ -196,6 +197,7 @@ class TestGlobalStateStore:
 
     def test_subscribe_event_no_subscribers_no_error(self):
         self.store.emit_event('unsubscribed.event', {'x': 1})
+        assert self.store.get_state() is not None
 
     def test_unsubscribe_event(self):
         def cb(event_type, data):

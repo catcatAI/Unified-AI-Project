@@ -22,13 +22,18 @@ class TestWaitingScheduler:
         from core.waiting_scheduler import WaitingScheduler
         instance = WaitingScheduler(max_wait_seconds=5.0)
         instance.shutdown()
+        assert not instance.is_alive()
         instance.shutdown()
+        assert not instance.is_alive()
 
     def test_clear(self):
         from core.waiting_scheduler import WaitingScheduler
         instance = WaitingScheduler(max_wait_seconds=5.0)
+        assert instance.is_alive()
         instance.clear()
+        assert instance.is_alive()
         instance.shutdown()
+        assert not instance.is_alive()
 
     def test_is_alive_initial_state(self):
         from core.waiting_scheduler import WaitingScheduler

@@ -326,11 +326,14 @@ class TestSessionManagerUnregister:
         assert sm.get_buffered_messages(session.client_id) == []
 
     async def test_unregister_unknown_client(self):
-        """unregister with unknown client_id does not raise."""
+        """unregister with unknown client_id does not raise and state is unchanged."""
         from services.connection_session import SessionManager
         sm = SessionManager()
-        # Should not raise
+        stats_before = sm.get_stats()
         await sm.unregister("nonexistent-client")
+        stats_after = sm.get_stats()
+        assert stats_before.active_sessions == stats_after.active_sessions
+        assert stats_before.total_sessions == stats_after.total_sessions
 
     async def test_unregister_updates_stats(self):
         """unregister decrements active_sessions."""
@@ -599,11 +602,12 @@ class TestSessionManagerHeartbeat:
         assert session.last_heartbeat > old_ts
 
     async def test_update_heartbeat_unknown(self):
-        """update_heartbeat for unknown client does not raise."""
+        """update_heartbeat for unknown client does not raise and manager is unchanged."""
         from services.connection_session import SessionManager
         sm = SessionManager()
-        # Should not raise
+        sessions_before = len(sm._sessions)
         await sm.update_heartbeat("nonexistent")
+        assert len(sm._sessions) == sessions_before
 
     async def test_heartbeat_timeout_closes_session(self):
         """heartbeat monitor closes session on timeout."""
@@ -709,7 +713,7 @@ class TestSessionManagerSingleton:
         import services.connection_session as cs
         from services.connection_session import shutdown_session_manager
         cs._session_manager = None
-        # First call does nothing (already None)
         await shutdown_session_manager()
-        # Second call also does nothing
+        assert cs._session_manager is None
         await shutdown_session_manager()
+        assert cs._session_manager is None
