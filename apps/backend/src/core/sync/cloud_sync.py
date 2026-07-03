@@ -27,6 +27,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+from core.system.config.magic_numbers import loop_sleep
+
 logger = logging.getLogger(__name__)
 
 # =============================================================================
@@ -329,7 +331,7 @@ class CloudSyncManager:
                 if self.config.use_encryption:
                     payload["encrypted"] = True
 
-                await asyncio.sleep(0.01)
+                await asyncio.sleep(loop_sleep("cloud_sync_upload", 0.01))
                 item.remote_version = item.local_version
                 return True
 

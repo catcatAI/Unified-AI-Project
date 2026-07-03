@@ -15,6 +15,8 @@ from typing import Any, Dict, Optional, Tuple
 from fastapi import WebSocket, WebSocketDisconnect
 from services.connection_session import get_session_manager
 
+from core.system.config.magic_numbers import loop_sleep
+
 logger = logging.getLogger(__name__)
 
 # Per-session conversation history (max 30 messages per session)
@@ -130,7 +132,7 @@ async def broadcast_state_updates() -> None:
                     _bio_integrator = BiologicalIntegrator()
                 except Exception as e:
                     logger.debug("BiologicalIntegrator broadcast failed: %s", e)
-                    await asyncio.sleep(5.0)
+                    await asyncio.sleep(loop_sleep("ws_broadcast_retry", 5.0))
                     continue
 
             bio_state = _bio_integrator.get_biological_state()
@@ -201,7 +203,7 @@ async def broadcast_state_updates() -> None:
         except Exception as e:
             logger.error(f"Error broadcasting state update: {e}", exc_info=True)
 
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(loop_sleep("ws_broadcast_interval", 0.2))
 
 
 async def _handle_handshake(websocket: WebSocket) -> Optional[tuple]:

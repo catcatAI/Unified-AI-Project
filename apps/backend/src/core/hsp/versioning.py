@@ -7,6 +7,8 @@ from typing import Any, Callable, Dict, List, Optional
 
 import semver  # Assuming 'semver' is intended to be used and is installed
 
+from core.system.config.magic_numbers import loop_sleep
+
 logger = logging.getLogger(__name__)
 
 
@@ -369,7 +371,7 @@ class HSPVersionedMessageHandler:
         # 这里应该是实际的消息处理逻辑
         # 简化实现, 只是记录日志并返回原消息
         logger.info(f"处理版本化消息: {message.get('message_id', 'unknown')}")
-        await asyncio.sleep(0.01)  # 模拟处理时间
+        await asyncio.sleep(loop_sleep("hsp_process_message", 0.01))  # 模拟处理时间
         return message
 
 

@@ -9,6 +9,8 @@ import uuid
 from enum import Enum
 from typing import Any, Dict
 
+from core.system.config.magic_numbers import loop_sleep
+
 logger = logging.getLogger(__name__)
 
 
@@ -66,7 +68,7 @@ class ClusterManager:
                 target_node = next(iter(self.nodes))
             self.nodes[target_node]["status"] = "busy"
             logger.debug(f"Distributing task {task_id} ({task_type}) -> node '{target_node}'")
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(loop_sleep("cluster_task_distribute", 0.01))
             self.nodes[target_node]["status"] = "idle"
         return task_id
 

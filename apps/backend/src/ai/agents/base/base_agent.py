@@ -448,7 +448,7 @@ class BaseAgent:
         try:
             await self.stop()
             # Wait a moment before attempting restart
-            await asyncio.sleep(5)
+            await asyncio.sleep(loop_sleep("agent_restart_delay", 5.0))
             await self.start()
             logger.info(f"[{self.agent_id}] System restarted from degraded state")
         except Exception as restart_error:
