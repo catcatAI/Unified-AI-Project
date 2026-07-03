@@ -5,10 +5,11 @@ C5: Now with async persistence via JsonFileStateStore.
 """
 
 import asyncio
+import inspect
 import logging
 import threading
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from core.interfaces.service_registry import get_registry
 from utils.async_utils import safe_create_task_sync
@@ -45,6 +46,8 @@ class GlobalStateStore:
         self._last_update: Dict[str, datetime] = {k: datetime.now() for k in self._states.keys()}
         self._dirty: Dict[str, bool] = {k: False for k in self._states.keys()}
         self._persistence: Optional[Any] = None
+        # CNS event bus — transient events, not persisted
+        self._event_subscribers: Dict[str, List[Tuple[int, Callable]]] = {}
 
     def set_persistence(self, backend: Any) -> None:
         """Attach a persistence backend (must implement StatePersistence protocol)."""
@@ -167,6 +170,57 @@ class GlobalStateStore:
                 callback(domain, data)
             except Exception as e:
                 logger.error(f"[StateStore] Error in global subscriber callback: {e}", exc_info=True)
+
+
+    # ── CNS Event Bus ────────────────────────────────────────────────
+
+    def subscribe_event(self, event_type: str, callback: Callable, priority: int = 0) -> None:
+        """Subscribe to a transient event type.
+
+        Args:
+            event_type: Event type string (e.g. "emotion.updated", "lifecycle.decision")
+            callback: Sync or async callable(event_type, data)
+            priority: Lower values are notified first (default 0)
+        """
+        if event_type not in self._event_subscribers:
+            self._event_subscribers[event_type] = []
+        if any(cb is callback for _, cb in self._event_subscribers[event_type]):
+            return
+        self._event_subscribers[event_type].append((priority, callback))
+        self._event_subscribers[event_type].sort(key=lambda x: x[0])
+
+    def unsubscribe_event(self, event_type: str, callback: Callable) -> bool:
+        """Remove a previously registered event subscriber.
+
+        Returns True if the callback was removed.
+        """
+        if event_type not in self._event_subscribers:
+            return False
+        before = len(self._event_subscribers[event_type])
+        self._event_subscribers[event_type] = [
+            (p, cb) for p, cb in self._event_subscribers[event_type] if cb is not callback
+        ]
+        return len(self._event_subscribers[event_type]) < before
+
+    def emit_event(self, event_type: str, data: Dict[str, Any]) -> None:
+        """Emit a transient event to all subscribers.
+
+        Events are NOT persisted — they are real-time signals only.
+        Supports both sync and async callbacks.
+        """
+        subscribers = self._event_subscribers.get(event_type, [])
+        if not subscribers:
+            return
+        for _, callback in subscribers:
+            try:
+                if inspect.iscoroutinefunction(callback):
+                    safe_create_task_sync(
+                        callback(event_type, data), name=f"cns-event-{event_type}"
+                    )
+                else:
+                    callback(event_type, data)
+            except Exception as e:
+                logger.error(f"[CNS] Event subscriber error for {event_type}: {e}", exc_info=True)
 
 
 # Singleton Access

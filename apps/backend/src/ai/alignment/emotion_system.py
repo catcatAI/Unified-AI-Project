@@ -14,6 +14,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
+from core.system.state_store.global_store import state_store
+
 logger = logging.getLogger(__name__)
 
 
@@ -354,6 +356,17 @@ class EmotionSystem:
             arousal=new_arousal,
         )
         self.emotion_history.append(influenced_state)
+        state_store.emit_event("emotion.updated", {
+            "source": source,
+            "type": type,
+            "previous_emotion": last.primary_emotion.value,
+            "new_emotion": new_emotion.value,
+            "previous_valence": last.valence,
+            "new_valence": new_valence,
+            "previous_arousal": last.arousal,
+            "new_arousal": new_arousal,
+            "intensity": new_intensity,
+        })
         logger.debug(f"[{self.system_id}] Emotion influenced: {last.primary_emotion.value} -> {new_emotion.value} "
                      f"(valence: {last.valence:.2f}->{new_valence:.2f}, arousal: {last.arousal:.2f}->{new_arousal:.2f})")
 
@@ -457,6 +470,14 @@ class EmotionSystem:
         routing_mode = routing_map.get(last.primary_emotion, "neutral")
         response_style = style_map.get(last.primary_emotion, "standard")
 
+        state_store.emit_event("emotion.behavioral_adjustment", {
+            "routing_mode": routing_mode,
+            "response_style": response_style,
+            "emotional_state": last.primary_emotion.value,
+            "emotion_intensity": last.emotion_intensity,
+            "valence": last.valence,
+            "arousal": last.arousal,
+        })
         return {
             "routing_mode": routing_mode,
             "response_style": response_style,

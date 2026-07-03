@@ -103,6 +103,8 @@
 | **MetaController persistence (§X #129a)** | Calibration state persistence: save/load EWMA, adjustment multipliers, calibration history, threshold adjustments. Auto-load on init. C³ 4.5→5.0. +5 tests. | meta_controller.py | ✅ Done (§X #129) |
 | **AutonomousLifeCycle persistence (§X #129b)** | Lifecycle state persistence: save/load decision history, execution stats, per-type behavior executor stats. Auto-load on init. C³ 4.5→5.0. +6 tests. | autonomous_life_cycle.py | ✅ Done (§X #129) |
 | **Zero-coverage test batch (§X #130)** | +75 unit tests for 10 previously zero-coverage files: text_utils, registry, env_dynamics, bio_reflex_manager, tactile_memory, auditory_memory, data_aligner, advanced_performance_optimizer, unified_knowledge_graph_impl, metrics_collector. | 10 source files | ✅ Done (§X #130) |
+| **CNS: GlobalStateStore → 统一事件总线** | ✅ **DONE** — emit_event/subscribe_event/unsubscribe_event 實作。10 新 test。4/8 閉環已接入（Emotion、LifeCycle、Causal、Meta）。12 CNS event types defined。 | `global_store.py`, `emotion_system.py`, `autonomous_life_cycle.py`, `causal_reasoning_engine.py`, `meta_controller.py` | ✅ **DONE** (4/8 loops wired) |
+| **PriorityNegotiator: 取代 router.py 硬編碼優先級鏈** | 將 MetaController reliability-weighted aggregation 提取為通用 PriorityNegotiator，lifecycle/emotion/intent/causal 註冊為投票者，weighted fusion 產出最終 routing_mode，取代目前 Priority 1→3.5 硬壓。 | `meta_controller.py`, `router.py` | ⏳ PENDING |
 ### 1.2 無法驗證的優勢（數據不足）
 
 | 宣稱 | 實際狀態 | 需要什麼數據 | 門檻 |

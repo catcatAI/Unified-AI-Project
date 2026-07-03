@@ -16,6 +16,8 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
+from core.system.state_store.global_store import state_store
+
 logger = logging.getLogger(__name__)
 
 _DEFAULT_ALPHA = 0.15
@@ -81,6 +83,13 @@ class MetaController:
         # Invalidate cached entry for this source
         if source in self._calibration_cache:
             del self._calibration_cache[source]
+        state_store.emit_event("meta.confidence_recorded", {
+            "source": source,
+            "confidence": confidence,
+            "correct": correct,
+            "ewma": self._ewma.get(source),
+            "total_samples": self._total_samples,
+        })
 
     def get_ewma_confidence(self, source: str, default: float = 0.5) -> float:
         return self._ewma.get(source, default)
@@ -102,12 +111,22 @@ class MetaController:
             self._calibration_history[source].append("stable")
 
         hist = list(self._calibration_history[source])
+        old_mult = self._adjustment_multipliers.get(source, 1.0)
         if len(hist) >= 3 and all(h == "over" for h in hist[-3:]):
-            self._adjustment_multipliers[source] = min(3.0, self._adjustment_multipliers[source] * 1.5)
+            self._adjustment_multipliers[source] = min(3.0, old_mult * 1.5)
         elif len(hist) >= 3 and all(h == "under" for h in hist[-3:]):
-            self._adjustment_multipliers[source] = min(3.0, self._adjustment_multipliers[source] * 1.5)
+            self._adjustment_multipliers[source] = min(3.0, old_mult * 1.5)
         elif len(hist) >= 2 and all(h == "stable" for h in hist[-2:]):
-            self._adjustment_multipliers[source] = max(1.0, self._adjustment_multipliers[source] * 0.8)
+            self._adjustment_multipliers[source] = max(1.0, old_mult * 0.8)
+        new_mult = self._adjustment_multipliers.get(source, 1.0)
+        if abs(new_mult - old_mult) > 0.01:
+            state_store.emit_event("meta.closed_loop_adjusted", {
+                "source": source,
+                "adjustment": adjustment,
+                "classification": hist[-1],
+                "prev_multiplier": round(old_mult, 3),
+                "new_multiplier": round(new_mult, 3),
+            })
 
     def get_calibration(self, source: str) -> Optional[CalibrationReport]:
         # Cache hit: return cached metrics with recomputed adjustment
@@ -205,9 +224,18 @@ class MetaController:
             total_weight += weight
 
         if total_weight == 0:
+            state_store.emit_event("meta.weighted_adjustment", {
+                "weighted_adjustment": 0.0,
+                "sources_count": 0,
+            })
             return 0.0
 
-        return round(weighted_sum / total_weight, 3)
+        result = round(weighted_sum / total_weight, 3)
+        state_store.emit_event("meta.weighted_adjustment", {
+            "weighted_adjustment": result,
+            "sources_count": len(self._samples),
+        })
+        return result
 
     def auto_apply_thresholds(self) -> Dict[str, float]:
         """Auto-apply cached threshold adjustments to all tracked sources.

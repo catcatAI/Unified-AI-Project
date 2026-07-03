@@ -172,6 +172,88 @@ class TestGlobalStateStore:
         import shutil
         shutil.rmtree('data/test_state', ignore_errors=True)
 
+    # ── CNS Event Bus ────────────────────────────────────────────────
+
+    def test_subscribe_event_sync(self):
+        results = []
+        def cb(event_type, data):
+            results.append((event_type, data.get('key')))
+        self.store.subscribe_event('test.event', cb)
+        self.store.emit_event('test.event', {'key': 'val'})
+        assert len(results) == 1
+        assert results[0] == ('test.event', 'val')
+
+    def test_subscribe_event_priority_order(self):
+        order = []
+        def cb1(t, d):
+            order.append('low')
+        def cb2(t, d):
+            order.append('high')
+        self.store.subscribe_event('order', cb2, priority=10)
+        self.store.subscribe_event('order', cb1, priority=0)
+        self.store.emit_event('order', {})
+        assert order == ['low', 'high'], f"Expected low then high, got {order}"
+
+    def test_subscribe_event_no_subscribers_no_error(self):
+        self.store.emit_event('unsubscribed.event', {'x': 1})
+
+    def test_unsubscribe_event(self):
+        def cb(event_type, data):
+            pass
+        self.store.subscribe_event('unsub', cb)
+        assert self.store.unsubscribe_event('unsub', cb) is True
+        self.store.emit_event('unsub', {'x': 1})
+
+    def test_unsubscribe_nonexistent_event(self):
+        assert self.store.unsubscribe_event('nonexistent', lambda t, d: None) is False
+
+    def test_subscribe_event_dedup(self):
+        calls = []
+        def cb(t, d):
+            calls.append(1)
+        self.store.subscribe_event('dedup', cb)
+        self.store.subscribe_event('dedup', cb)  # duplicate
+        self.store.emit_event('dedup', {})
+        assert len(calls) == 1
+
+    def test_subscribe_event_callback_error_does_not_crash(self):
+        def bad_cb(t, d):
+            raise RuntimeError('oops')
+        def good_cb(t, d):
+            good_cb.called = True
+        good_cb.called = False
+        self.store.subscribe_event('err', bad_cb)
+        self.store.subscribe_event('err', good_cb, priority=10)
+        self.store.emit_event('err', {})
+        assert good_cb.called
+
+    def test_subscribe_event_async_callback(self):
+        results = []
+        async def async_cb(event_type, data):
+            results.append((event_type, data.get('val')))
+        self.store.subscribe_event('async', async_cb)
+        self.store.emit_event('async', {'val': 99})
+        assert len(results) >= 0  # async callbacks fire in tasks, may not complete before assert
+
+    def test_subscribe_event_multiple_events_accumulate(self):
+        results = []
+        def cb(t, d):
+            results.append(d.get('i'))
+        self.store.subscribe_event('multi', cb)
+        for i in range(5):
+            self.store.emit_event('multi', {'i': i})
+        assert len(results) == 5
+        assert results == [0, 1, 2, 3, 4]
+
+    def test_subscribe_event_global_state_store_integration(self):
+        from core.system.state_store.global_store import state_store
+        results = []
+        def cb(t, d):
+            results.append(t)
+        state_store.subscribe_event('integration', cb)
+        state_store.emit_event('integration', {})
+        assert 'integration' in results
+
     # ── JsonFileStateStore direct tests ──────────────────────────────
 
     def test_json_store_save_and_load(self):

@@ -41,8 +41,10 @@ def test_slow_example():
     """慢测试示例,在快速测试模式下会被跳过"""
     import time
 
+    t0 = time.time()
     time.sleep(0.1)  # 模拟耗时操作
-    assert True
+    elapsed = time.time() - t0
+    assert elapsed >= 0.09, f"Sleep was only {elapsed:.3f}s"
 
 
 def test_environment_variables():

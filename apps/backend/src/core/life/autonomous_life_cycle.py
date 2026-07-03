@@ -39,6 +39,7 @@ from core.non_paradox_existence import GrayZoneVariableType, NonParadoxExistence
 
 from core.autonomous.behavior_executor import BehaviorExecutor
 from core.system.config.magic_numbers import lifecycle_value
+from core.system.state_store.global_store import state_store
 
 logger = logging.getLogger(__name__)
 
@@ -627,9 +628,22 @@ class AutonomousLifeCycle:
                 return await self._dispatch_reallocation(decision)
             else:
                 logger.warning(f"Unknown decision type: {decision.decision_type}")
+                state_store.emit_event("lifecycle.decision_executed", {
+                    "decision_id": decision.decision_id,
+                    "decision_type": decision.decision_type,
+                    "success": False,
+                    "phase": self._phase.value if hasattr(self, "_phase") else "unknown",
+                })
                 return False
         except Exception as exc:
             logger.error(f"Failed to execute decision {decision.decision_id}: {exc}", exc_info=True)
+            state_store.emit_event("lifecycle.decision_executed", {
+                "decision_id": decision.decision_id,
+                "decision_type": decision.decision_type if hasattr(decision, "decision_type") else "unknown",
+                "success": False,
+                "error": str(exc),
+                "phase": self._phase.value if hasattr(self, "_phase") else "unknown",
+            })
             return False
 
     async def _dispatch_exploration(self, decision: LifeDecision) -> bool:
@@ -647,10 +661,16 @@ class AutonomousLifeCycle:
             phase=decision.phase.name,
         )
 
-        if result.get("status") == "completed":
+        success = result.get("status") == "completed"
+        if success:
             logger.info(f"🧭 [LifeCycle] Executed exploration: {decision.decision_id}")
-            return True
-        return False
+        state_store.emit_event("lifecycle.decision_executed", {
+            "decision_id": decision.decision_id,
+            "decision_type": decision.decision_type,
+            "success": success,
+            "phase": decision.phase.name if hasattr(decision, "phase") else "unknown",
+        })
+        return success
 
     async def _dispatch_coexistence(self, decision: LifeDecision) -> bool:
         """Dispatch a coexistence activation decision: record via BehaviorExecutor.
@@ -666,10 +686,16 @@ class AutonomousLifeCycle:
             gray_zone_id=decision.expected_outcome.get("gray_zone_id", "unknown"),
         )
 
-        if result.get("status") == "completed":
+        success = result.get("status") == "completed"
+        if success:
             logger.info(f"🔄 [LifeCycle] Executed coexistence: {decision.decision_id}")
-            return True
-        return False
+        state_store.emit_event("lifecycle.decision_executed", {
+            "decision_id": decision.decision_id,
+            "decision_type": decision.decision_type,
+            "success": success,
+            "phase": decision.phase.name if hasattr(decision, "phase") else "unknown",
+        })
+        return success
 
     async def _dispatch_construction(self, decision: LifeDecision) -> bool:
         """Dispatch a meaning construction decision: record via BehaviorExecutor.
@@ -685,10 +711,16 @@ class AutonomousLifeCycle:
             phase=decision.phase.name,
         )
 
-        if result.get("status") == "completed":
+        success = result.get("status") == "completed"
+        if success:
             logger.info(f"🏗️ [LifeCycle] Executed construction: {decision.decision_id}")
-            return True
-        return False
+        state_store.emit_event("lifecycle.decision_executed", {
+            "decision_id": decision.decision_id,
+            "decision_type": decision.decision_type,
+            "success": success,
+            "phase": decision.phase.name if hasattr(decision, "phase") else "unknown",
+        })
+        return success
 
     async def _dispatch_reallocation(self, decision: LifeDecision) -> bool:
         """Dispatch a resource reallocation decision: record via BehaviorExecutor.
@@ -704,10 +736,16 @@ class AutonomousLifeCycle:
             phase=decision.phase.name,
         )
 
-        if result.get("status") == "completed":
+        success = result.get("status") == "completed"
+        if success:
             logger.info(f"📊 [LifeCycle] Executed reallocation: {decision.decision_id}")
-            return True
-        return False
+        state_store.emit_event("lifecycle.decision_executed", {
+            "decision_id": decision.decision_id,
+            "decision_type": decision.decision_type,
+            "success": success,
+            "phase": decision.phase.name if hasattr(decision, "phase") else "unknown",
+        })
+        return success
 
     async def _check_phase_transition(self, metrics: FormulaMetrics) -> None:
         """Check if life phase should transition"""
@@ -905,13 +943,15 @@ class AutonomousLifeCycle:
         else:
             confidence = 0.5
 
-        return {
+        result = {
             "routing_mode": base_routing,
             "response_style": base_style,
             "phase": self.current_phase.name,
             "decision_type": decision_type,
             "confidence": round(confidence, 3),
         }
+        state_store.emit_event("lifecycle.behavioral_adjustment", result)
+        return result
 
     def register_execution_callback(
         self, callback: Callable[[LifeDecision, bool], None]

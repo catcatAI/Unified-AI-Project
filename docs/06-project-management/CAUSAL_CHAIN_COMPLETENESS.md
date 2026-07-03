@@ -30,6 +30,8 @@
 4. [關鍵發現：斷裂的因果鏈](#4-關鍵發現斷裂的因果鏈)
 5. [分數修正：誠實的自主性評分](#5-分數修正誠實的自主性評分)
 6. [改善路線：從「記錄」到「驅動」](#6-改善路線從記錄到驅動)
+   - [6.6 統一狀態匯流排（CNS）](#66-p2中期-統一狀態匯流排cns)
+   - [6.7 衝突協商器（PriorityNegotiator）](#67-p2中期-衝突協商器prioritynegotiator)
 7. [驗證標準](#7-驗證標準)
 
 ---
@@ -419,6 +421,8 @@ async def _apply_state_behaviors(self, state):
 | 4 | **MetaController threshold adjustments → 不自動套用** | 適應性學習中斷 | ✅ **FIXED** (commit `2be528751`) — auto_apply_thresholds() + _analyze_task() uses calibration adjustments |
 | 5 | **IntentModel.generate_homeostatic_intents → pass** | 意圖系統不完整 | ✅ **FIXED** (commit `e713db0e0`) — both stubs now real |
 | 6 | **LifeCycle 3/6 states 無行為** | 生命週期不完整 | ✅ **FIXED** (commit `this commit`) — all 6 states now have distinct behaviors |
+| 7 | **8 條獨立閉環無統一狀態匯流排** | Emotion、LifeCycle、Causal、MetaController、Intent、ExecutionGate、Heartbeat、Router 各自為政，彼此不交換狀態 | ✅ **FIXED** (§X #131) — GlobalStateStore 已升級事件總線，4/8 閉環已接入（Emotion/emotion.updated, LifeCycle/lifecycle.decision_executed, Causal/causal.learned, Meta/meta.confidence_recorded） |
+| 8 | **router.py 硬編碼 Priority 鏈無衝突協商** | 當 Emotion 說「探索」、LifeCycle 說「保守」時，Priority 硬壓（P1 lifecycle、P2 emotion），沒有真正的加權融合 | ⏳ **PENDING** — 需 PriorityNegotiator: MetaController weighted aggregation → 通用投票器 |
 
 ### 4.3 虛假完成案例（具體代碼）
 
@@ -589,6 +593,63 @@ After:  record → calculate → auto-apply threshold adjustment → behavior ch
 | DORMANT | ✅ 抑制狀態矩陣 (learning=0.05)、深層記憶鞏固、生物深度放鬆 (0.9)、動態參數漂移檢查 |
 
 **Causal depth 更新**: 3.5→4.5/10（6/6 狀態皆有行為，但 DORMANT 無自動轉入路徑）
+
+### 6.6 P2（中期）— 統一狀態匯流排（CNS）✅（已修復 2026-07-03, §X #131）
+
+**目標**: 讓 8 條獨立閉環共享狀態，不再各自為政
+
+**現有資源**: `GlobalStateStore`（`core/system/state_store/global_store.py`）已有 domain-based pub/sub、singleton、10 維 state 分區、persistence backend。
+
+**實作**: ✅ **DONE**
+1. ✅ `GlobalStateStore.emit_event(event_type, data)` — transient event emission
+2. ✅ `subscribe_event(event_type, callback, priority)` — 優先級訂閱（lower = earlier）
+3. ✅ `unsubscribe_event(event_type, callback)` — 取消訂閱
+4. ✅ 支援 sync + async callback
+5. ✅ Error isolation（單一 callback 失敗不影響其他 subscribers）
+6. ✅ 10 新 tests（priority order、dedup、async、error isolation、integration）
+
+**已接入閉環 (4/8)**:
+
+| 閉環 | Event Types | Event Data |
+|------|------------|------------|
+| **EmotionSystem** | `emotion.updated` | source, type, previous→new emotion, valence, arousal, intensity |
+| EmotionSystem | `emotion.behavioral_adjustment` | routing_mode, response_style, emotional_state, intensity |
+| **AutonomousLifeCycle** | `lifecycle.decision_executed` | decision_id, decision_type, success, phase |
+| LifeCycle | `lifecycle.behavioral_adjustment` | routing_mode, response_style, phase, confidence |
+| **CausalReasoningEngine** | `causal.learned` | observation_keys, new/total relationships, observations count |
+| CausalReasoningEngine | `causal.prediction` | cause, results_count, top_strength, intervened |
+| **MetaController** | `meta.confidence_recorded` | source, confidence, correct, ewma, total_samples |
+| MetaController | `meta.closed_loop_adjusted` | source, adjustment, classification, prev→new multiplier |
+| MetaController | `meta.weighted_adjustment` | weighted_adjustment, sources_count |
+
+**剩餘 4 閉環待接入**: IntentModel, ExecutionGate, Heartbeat, Router
+
+**Causal depth 更新**: 4.5→**5.0/10**（4/8 閉環現在透過 CNS 事件總線交換狀態）
+
+### 6.7 P2（中期）— 衝突協商器（PriorityNegotiator）
+
+**目標**: 取代 router.py `_prepare_generation_context()` 的硬編碼 Priority 1→3.5 鏈
+
+```
+Before:  Priority 1: LifeCycle → 完全覆蓋
+         Priority 2: Emotion → 完全覆蓋
+         Priority 2.5: Intent → 完全覆蓋
+         Priority 3: Angela Emotion → 完全覆蓋
+         Priority 3.5: Causal → 完全覆蓋
+         → 最後一個寫入者勝利，沒有融合
+
+After:   Voter 1: LifeCycle → routing_mode="conservative", weight=0.8
+         Voter 2: Emotion → routing_mode="exploratory", weight=0.6
+         Voter 3: Intent → routing_mode="neutral", weight=0.3
+         Voter 4: Causal → bias=+0.1, weight=0.5
+         → PriorityNegotiator.weighted_fusion() → routing_mode="neutral" (weighted average)
+```
+
+**實作步驟**:
+1. 從 `MetaController.get_weighted_adjustment()` 提取 reliability-weighted aggregation 為通用 `PriorityNegotiator`
+2. `register_voter(name, get_adjustment, weight_fn)` API
+3. router.py `_prepare_generation_context()` 改為查詢 PriorityNegotiator
+4. 每個來源（lifecycle/emotion/intent/causal）作為 voter 註冊自己的 `routing_mode` + `confidence`
 
 ---
 

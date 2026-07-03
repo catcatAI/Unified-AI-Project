@@ -6,6 +6,8 @@ import logging
 import math
 from typing import Any, Dict, List, Optional, Set
 
+from core.system.state_store.global_store import state_store
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,6 +35,12 @@ class CausalReasoningEngine:
         rels = self._infer_relationships(observation)
         self._add_relationships(rels)
         self._evict_old()
+        state_store.emit_event("causal.learned", {
+            "observation_keys": list(observation.keys()),
+            "new_relationships": len(rels),
+            "total_relationships": len(self._relationships),
+            "total_observations": len(self._observations),
+        })
 
     async def learn_causal_relationships(
         self, observations: List[Dict[str, Any]]
@@ -73,12 +81,20 @@ class CausalReasoningEngine:
     ) -> List[Dict[str, Any]]:
         """Predict effects of a cause, optionally via do-calculus intervention."""
         if context and "intervene" in context:
-            return self._do_calculus_intervene(cause, context["intervene"], context)
-        return sorted(
-            [r for r in self._relationships if r.get("cause") == cause],
-            key=lambda r: r.get("strength", 0),
-            reverse=True,
-        )
+            results = self._do_calculus_intervene(cause, context["intervene"], context)
+        else:
+            results = sorted(
+                [r for r in self._relationships if r.get("cause") == cause],
+                key=lambda r: r.get("strength", 0),
+                reverse=True,
+            )
+        state_store.emit_event("causal.prediction", {
+            "cause": cause,
+            "results_count": len(results),
+            "top_strength": round(results[0].get("strength", 0), 3) if results else 0.0,
+            "intervened": bool(context and "intervene" in context),
+        })
+        return results
 
     def explain(self, effect: str) -> List[Dict[str, Any]]:
         return sorted(

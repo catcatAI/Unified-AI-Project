@@ -185,9 +185,12 @@ class TestMultimodalStress:
         print(f"  50 encode+decode cycles: completed in {elapsed:.2f}s")
         print(f"  Registered items: {len(svc._registered_items)}")
 
+        # Verify items were registered before cleanup
+        assert len(svc._registered_items) > 0, "No items were registered during stress test"
+
         # Clean up
         await svc.clear_items()
-        assert True
+        assert len(svc._registered_items) == 0
 
     @pytest.mark.asyncio
     async def test_stress_recovery_after_failure(self, svc, sample_image_bytes):
@@ -209,8 +212,8 @@ class TestMultimodalStress:
         # If it fails, it should return error info.
         ok = result.get("error") is None or result.get("recovery", {}).get("failed")
         if not ok and result.get("error"):
-            # Error means recovery flagged it
-            assert True
+            # Error means recovery flagged it — test still passes
+            assert result.get("recovery") is not None, "Error without recovery info"
 
         # Decode non-existent item should return fallback
         fallback = await svc.decode_with_fallback("nonexistent_id", "vision")
