@@ -43,28 +43,35 @@ class TestAxisAccess:
 
 
 class TestUpdateMethods:
-    """All 7 update methods can be called without error."""
+    """All 7 update methods can be called and verify state changed."""
 
     def test_update_alpha_succeeds(self, adapter):
         adapter.update_alpha(focus=0.8)
+        assert adapter.alpha.values.get("focus") == 0.8
 
     def test_update_beta_succeeds(self, adapter):
         adapter.update_beta(curiosity=0.6)
+        assert adapter.beta.values.get("curiosity") == 0.6
 
     def test_update_gamma_succeeds(self, adapter):
         adapter.update_gamma(excitement=0.7)
+        assert adapter.gamma.values.get("excitement") == 0.7
 
     def test_update_delta_succeeds(self, adapter):
         adapter.update_delta(engagement=0.5)
+        assert adapter.delta.values.get("engagement") == 0.5
 
     def test_update_epsilon_succeeds(self, adapter):
         adapter.update_epsilon(awareness=0.9)
+        assert adapter.epsilon.values.get("awareness") == 0.9
 
     def test_update_theta_succeeds(self, adapter):
         adapter.update_theta(doubt=0.3)
+        assert adapter.theta.values.get("doubt") == 0.3
 
     def test_update_zeta_succeeds(self, adapter):
         adapter.update_zeta(surprise=0.4)
+        assert adapter.zeta.values.get("surprise") == 0.4
 
 
 class TestInfluenceComputation:

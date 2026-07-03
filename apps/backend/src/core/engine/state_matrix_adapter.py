@@ -126,6 +126,10 @@ class StateMatrixAdapter(JsonFileStateStore):
         return _AxisProxy(self._state.get("delta", {}))
 
     @property
+    def epsilon(self) -> _AxisProxy:
+        return _AxisProxy(self._state.get("epsilon", {}))
+
+    @property
     def theta(self) -> _AxisProxy:
         return _AxisProxy(self._state.get("theta", {}))
 

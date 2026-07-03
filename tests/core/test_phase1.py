@@ -81,16 +81,16 @@ def test_axis_typed_access():
 
 
 def test_axis_from_config():
-    print("=== Axis Factory ===")
     alpha = Axis.create_alpha(weight=0.8)
     beta = Axis.create_beta(weight=1.2)
     theta = Axis.create_theta()
 
-    print(f"Alpha: {alpha}, weight={alpha.weight}")
-    print(f"Beta: {beta}, weight={beta.weight}")
-    print(f"Theta: {theta}, weight={theta.weight}")
-
-    print("Factory: PASS\n")
+    assert alpha.weight == 0.8
+    assert beta.weight == 1.2
+    assert theta.weight == 1.0
+    assert alpha.field_count() > 0
+    assert beta.field_count() > 0
+    assert theta.field_count() > 0
 
 
 def test_temporal_state():
@@ -156,7 +156,6 @@ def test_find_drift():
 
 
 def test_integration():
-    print("=== Integration: Axis + TemporalState ===")
     alpha = Axis.create_alpha()
     beta = Axis.create_beta()
     timeline = TemporalState(max_size=50)
@@ -176,13 +175,14 @@ def test_integration():
 
     trend_a = timeline.trend('alpha', 'energy', window=10)
     trend_b = timeline.trend('beta', 'focus', window=10)
-    print(f"Alpha.energy trend: {trend_a.direction}")
-    print(f"Beta.focus trend: {trend_b.direction}")
+    assert trend_a.direction is not None
+    assert trend_b.direction is not None
+    assert trend_a.slope is not None
 
     corr = timeline.correlation('alpha', 'energy', 'beta', 'focus', window=10)
-    print(f"Correlation: {corr.correlation:.3f} ({corr.strength})")
-
-    print("Integration: PASS\n")
+    assert -1.0 <= corr.correlation <= 1.0
+    assert corr.strength is not None
+    assert timeline.size() == 15
 
 
 if __name__ == '__main__':

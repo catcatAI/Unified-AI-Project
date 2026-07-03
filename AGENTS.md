@@ -154,7 +154,7 @@ pre-commit run --all-files
 >
 > ✅ **NOTE (Updated 2026-07-04, §X #147)**: **§X #147**: Test quality — added proper skip guards to 4 more false-positive test files (print-based diagnostic scripts with 0 asserts, require running server). Files: test_api.py (bare HTTP request script), test_architecture_fix.py (print-based diagnostic + fixed pre-existing missing os/sys imports), test_dialogue_llm.py (requires running server), test_server.py (bare server check script). All four had no pytest test functions — skip guards prevent future false-positive collection. **5,028 tests collected (tests/) — 0 errors.**
 
->
+> ✅ **NOTE (Updated 2026-07-04, §X #149)**: **§X #149**: Test quality — strengthened 9 weak test functions with proper assertions: (a) test_state_matrix_adapter.py: 7 TestUpdateMethods tests now verify actual values after each update call (e.g., `assert adapter.alpha.values.get('focus') == 0.8`); (b) test_phase1.py: 2 print-only tests (test_axis_from_config, test_integration) now assert weight values, field_count, trend direction, correlation range, timeline size. Also fixed missing `epsilon` property in StateMatrixAdapter (had `update_epsilon()` but no property). **5,028 tests collected (tests/) — 0 errors.**
 > - **Phase A1-A4: External dictionary download + convert + import pipeline
 > - **New scripts**: `scripts/download_datasets.py` (CC-CEDICT/JMdict/WordNet), `scripts/import_dictionaries.py`
 > - **460,281 entries** imported: 125k CC-CEDICT (zh↔en) + 217k JMdict (ja↔en) + 117k WordNet 3.0 (en)
