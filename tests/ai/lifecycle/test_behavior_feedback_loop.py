@@ -413,10 +413,14 @@ class TestStoreLearningResults:
         mock_memory_manager.store_experience.assert_called_once()
     async def test_store_learning_results_without_memory_method(self, feedback_loop, mock_memory_manager):
         del mock_memory_manager.store_experience
-        await feedback_loop._store_learning_results()  # should not raise
+        initial_stats = feedback_loop.get_stats()
+        await feedback_loop._store_learning_results()
+        assert feedback_loop.get_stats()['total_behaviors'] == initial_stats['total_behaviors']
     async def test_store_learning_results_handles_exception(self, feedback_loop, mock_memory_manager):
         mock_memory_manager.store_experience.side_effect = Exception('Storage error')
-        await feedback_loop._store_learning_results()  # should not raise
+        initial_behaviors = feedback_loop.behavior_records.copy()
+        await feedback_loop._store_learning_results()
+        assert len(feedback_loop.behavior_records) == len(initial_behaviors)
 
 
 class TestCalculateInterval:

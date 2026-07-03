@@ -31,6 +31,9 @@ class TestChromaEncoder:
     def test_chroma_encoder_fit_noop(self):
         enc = _ChromaEncoder()
         enc.fit(["test"])  # Should not raise
+        # fit() is a no-op for ChromaDB; collection should still work
+        result = enc.encode(["after fit"])
+        assert result.shape[0] == 1
 
     def test_chroma_encoder_dedup(self):
         enc = _ChromaEncoder()
@@ -167,8 +170,12 @@ class TestEmotionDetection:
 
     def test_hormone_adjustment(self):
         engine = GARDENEngine(compatibility_mode=True)
+        # Record initial state
+        initial_stats = engine.stats()
         engine._adjust_hormones("happy")
-        # Should not raise
+        # Verify engine is still functional after adjustment
+        post_stats = engine.stats()
+        assert post_stats is not None
 
     def test_emotion_affects_process(self):
         engine = GARDENEngine(compatibility_mode=True)

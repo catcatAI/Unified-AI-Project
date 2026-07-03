@@ -153,11 +153,17 @@ class TestProcessInteractionFeedback:
     def test_feedback_edge_case_engagement(self, emotion_system, engagement):
         es = emotion_system
         es.process_interaction_feedback(engagement_ratio=engagement, had_error=False)
+        last = es.emotion_history[-1]
+        assert -1.0 <= last.valence <= 1.0, f"Valence {last.valence} out of range"
+        assert 0.0 <= last.arousal <= 1.0, f"Arousal {last.arousal} out of range"
 
     @pytest.mark.parametrize("error_val", [True, False])
     def test_feedback_edge_case_error_val(self, emotion_system, error_val):
         es = emotion_system
         es.process_interaction_feedback(engagement_ratio=1.0, had_error=error_val)
+        last = es.emotion_history[-1]
+        assert -1.0 <= last.valence <= 1.0, f"Valence {last.valence} out of range"
+        assert 0.0 <= last.arousal <= 1.0, f"Arousal {last.arousal} out of range"
 
     def test_feedback_preserves_valid_emotional_state(self, emotion_system):
         """After feedback, the emotional state should always have valid ranges."""

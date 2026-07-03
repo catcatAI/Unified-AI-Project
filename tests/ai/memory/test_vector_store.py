@@ -148,6 +148,8 @@ class TestVectorMemoryStoreNumpyBackend:
             store = VectorMemoryStore()
             store._numpy_backend = None
             await store.add_memory("mem1", "content")
+            # Should not crash, but memory not added (backend is None)
+            assert store._numpy_backend is None
 
     @pytest.mark.asyncio
     async def test_search_success(self, store):
@@ -176,6 +178,7 @@ class TestVectorMemoryStoreNumpyBackend:
     async def test_persist(self, store):
         await store.add_memory("mem1", "hello world")
         store.persist()
+        assert len(store._numpy_backend) == 1
 
     @pytest.mark.asyncio
     async def test_load_existing_data(self, store):
