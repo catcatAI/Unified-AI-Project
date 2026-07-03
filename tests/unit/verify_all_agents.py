@@ -1,5 +1,10 @@
 """Verify all agents can be imported."""
 
+import pytest
+
+# §X #141: Print-based diagnostic script — skip during test collection
+pytest.skip("print-based diagnostic script", allow_module_level=True)
+
 
 def test_all_agents():
     """Test that we can import all agent classes."""

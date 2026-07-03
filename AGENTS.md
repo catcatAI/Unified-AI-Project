@@ -148,6 +148,9 @@ pre-commit run --all-files
 >
 > ✅ **NOTE (Updated 2026-07-03, §X #144)**: **§X #144**: Test quality cleanup — (a) test_audit_comprehensive.py: removed unconditional pytest.skip(), wrapped all ~250 lines of diagnostic print-based code (sections 1-14) inside `if __name__ == "__main__":` guard, fixed broken `try:from` import line; (b) test_cli_imports.py: added 3 orphan `ai.code_inspection.*` module paths to `_DELETED_MODULES`. Net: +3 tests (5,033→**5,036 tests collected (tests/) — 0 errors**).
 >
+> ✅ **NOTE (Updated 2026-07-03, §X #145)**: **§X #145**: Test quality — added proper skip guards to 7 false-positive test files (0 asserts, print-based diagnostic, or require running server). Files: test_base_agent_simple.py, verify_all_agents.py, run_fixed_tests.py, quick_test_concept_models.py, test_websocket.py, test_websocket_comprehensive.py. Fixed test_gmqtt_mock.py — added missing `@pytest.mark.asyncio` decorator + fixed class/def spacing. Net: -2 tests (5,036→**5,034 tests collected (tests/) — 0 errors**).
+
+>
 > - **Phase A1-A4: External dictionary download + convert + import pipeline
 > - **New scripts**: `scripts/download_datasets.py` (CC-CEDICT/JMdict/WordNet), `scripts/import_dictionaries.py`
 > - **460,281 entries** imported: 125k CC-CEDICT (zh↔en) + 217k JMdict (ja↔en) + 117k WordNet 3.0 (en)

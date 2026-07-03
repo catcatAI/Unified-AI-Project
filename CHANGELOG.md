@@ -719,6 +719,17 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - **test_cli_imports.py**: Added 3 orphan `ai.code_inspection.*` module paths to `_DELETED_MODULES` (`code_inspector`, `code_learning`, `apps.backend.src.ai.code_inspection.code_learning`)
 - **Net**: +3 tests (5,033→5,036)
 
+### §X #145 (2026-07-03) — Test quality: proper skip guards for 7 false-positive test files
+
+- **test_base_agent_simple.py**: Added `pytest.skip(allow_module_level=True)` — print-based diagnostic, 0 asserts
+- **verify_all_agents.py**: Added `pytest.skip(allow_module_level=True)` — print-based verification, 0 asserts
+- **run_fixed_tests.py**: Added `pytest.skip(allow_module_level=True)` — print-based runner, 0 asserts
+- **quick_test_concept_models.py**: Added `pytest.skip(allow_module_level=True)` — print-based script, 0 asserts
+- **test_websocket.py**: Added `pytest.skip(allow_module_level=True)` — requires running server
+- **test_websocket_comprehensive.py**: Added `pytest.skip(allow_module_level=True)` — requires running server
+- **test_gmqtt_mock.py**: Added missing `@pytest.mark.asyncio` decorator + fixed missing blank line
+- **Net**: -2 tests (5,036→5,034)
+
 ### §X #137 (2026-07-03) — EmotionSystem C³ 5.0→6.0 — sustained negative feedback accumulation
 
 - **EmotionSystem**: Added `_sustained_negative_counter` tracking consecutive negative interactions (engagement < 0.5, errors, or failures)

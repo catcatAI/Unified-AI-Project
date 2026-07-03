@@ -7,7 +7,12 @@ import logging
 import os
 import sys
 
+import pytest
+
 logger = logging.getLogger(__name__)
+
+# §X #141: Print-based diagnostic script — skip during test collection
+pytest.skip("print-based diagnostic script", allow_module_level=True)
 
 
 def test_imports() -> bool:

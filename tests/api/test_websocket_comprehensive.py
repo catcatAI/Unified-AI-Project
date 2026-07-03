@@ -10,9 +10,13 @@ import time
 from pathlib import Path
 from typing import Dict, List
 
+import pytest
 import websockets
 
 logger = logging.getLogger(__name__)
+
+# §X #141: Print-based diagnostic script — skip during test collection
+pytest.skip("print-based diagnostic script (requires running server)", allow_module_level=True)
 
 
 class WebSocketTester:
