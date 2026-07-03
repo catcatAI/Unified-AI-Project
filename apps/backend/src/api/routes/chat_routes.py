@@ -1042,6 +1042,22 @@ async def _handle_chat_request(
     context["continuation_count"] = context.get("continuation_count", 0) + 1
     _fire_causal_learning(response_text, user_message, session_id)
 
+    # Step 10b: Record intent outcome feedback loop (C³ 5.0→6.0)
+    try:
+        im = _get_intent_manager()
+        if im:
+            actual_mode = context.get("_actual_routing_mode")
+            intent_routing = context.get("intent_routing", {})
+            recommended_mode = intent_routing.get("routing_mode") if intent_routing else None
+            success = bool(response_text and len(response_text) > 10)
+            im.record_intent_outcome(recommended_mode, success)
+            logger.debug(
+                f"Intent outcome: recommended={recommended_mode}, "
+                f"actual={actual_mode}, success={success}"
+            )
+    except Exception as e:
+        logger.debug(f"Intent outcome recording unavailable: {e}")
+
     return _format_chat_response(response_text, llm_response, emotion_result, schema_ver, trunc_msg, user_message, max_len, session_id, source=flow_source)
 
 

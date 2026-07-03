@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import logging
+from collections import defaultdict
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
 from core.system.state_store.global_store import state_store
 
 logger = logging.getLogger(__name__)
+
+_OUTCOME_HISTORY_MAX = 20
 
 
 class IntentCategory(Enum):
@@ -47,6 +50,39 @@ class IntentManager:
             "gamma": (0.0, 0.0, 0.0),
             "delta": (0.0, 0.0, 0.0),
         }
+        self._outcome_history: Dict[str, List[bool]] = defaultdict(list)
+
+    def record_intent_outcome(self, intent_mode: Optional[str], success: bool) -> None:
+        """Record the outcome of an intent-driven routing decision.
+
+        Stores whether the routing outcome was successful per intent_mode,
+        enabling the model to down-weight poorly-performing modes.
+        """
+        key = intent_mode or "neutral"
+        self._outcome_history[key].append(success)
+        if len(self._outcome_history[key]) > _OUTCOME_HISTORY_MAX:
+            self._outcome_history[key] = self._outcome_history[key][-_OUTCOME_HISTORY_MAX:]
+        rate = self.get_intent_success_rate(key)
+        logger.debug(
+            f"Intent outcome recorded: mode={key}, success={success}, "
+            f"rate={rate:.2f} ({len(self._outcome_history[key])} samples)"
+        )
+        state_store.emit_event("intent.outcome_recorded", {
+            "intent_mode": key,
+            "success": success,
+            "success_rate": round(rate, 3),
+            "sample_count": len(self._outcome_history[key]),
+        })
+
+    def get_intent_success_rate(self, intent_mode: str) -> float:
+        """Return the success rate for a given intent mode.
+
+        Returns 0.5 (neutral) if no history is available for this mode.
+        """
+        hist = self._outcome_history.get(intent_mode, [])
+        if not hist:
+            return 0.5
+        return sum(1 for s in hist if s) / len(hist)
 
     def add_intent(self, intent: SelfIntent) -> None:
         self.intents.append(intent)
@@ -130,20 +166,27 @@ class IntentManager:
             routing_mode = "balanced"
             response_style = "neutral"
 
+        raw_strength = round(min(1.0, avg_mag * 2.0), 2)
+        success_rate = self.get_intent_success_rate(routing_mode)
+        adjusted_strength = round(raw_strength * (0.5 + 0.5 * success_rate), 2)
+
         result = {
             "routing_mode": routing_mode,
             "response_style": response_style,
             "intent_mode": "active",
-            "intent_strength": round(min(1.0, avg_mag * 2.0), 2),
+            "intent_strength": adjusted_strength,
+            "raw_strength": raw_strength,
+            "success_rate": round(success_rate, 3),
         }
         state_store.emit_event("intent.adjustment_computed", {
             "routing_mode": routing_mode,
             "intent_mode": "active",
-            "intent_strength": result["intent_strength"],
+            "intent_strength": adjusted_strength,
             "avg_magnitude": round(avg_mag, 4),
             "exploration": round(exploration, 4),
             "bonding": round(bonding, 4),
             "energy": round(energy, 4),
+            "success_rate": round(success_rate, 3),
         })
         return result
 

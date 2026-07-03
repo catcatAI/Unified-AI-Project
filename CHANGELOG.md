@@ -713,6 +713,17 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - 🗑️ Removed: Removed features
 - 🔒 Security: Security improvements
 
+### §X #135 (2026-07-03) — IntentModel C³ 5.0→6.0 — closed intent feedback loop
+
+- **IntentModel**: Added `record_intent_outcome()` method storing success/failure per routing mode in `_outcome_history` (bounded to 20 per mode)
+- **IntentModel**: Added `get_intent_success_rate()` returning default 0.5 for unseen modes
+- **IntentModel**: Modified `get_intent_routing_adjustment()` to adjust `intent_strength` by `0.5 + 0.5 * success_rate` — poor-performing modes get less influence
+- **Router**: Stored actual routing_mode from PriorityNegotiator in `context["_actual_routing_mode"]`
+- **Chat routes**: Added Step 10b recording intent outcome post-LLM-response (recommended mode + success boolean)
+- **Tests**: 11 new tests covering outcome history, success rate, history bounding, confidence adjustment
+- **C³**: IntentModel 5.0→**6.0/10** (closed-loop rate 30%→60%+)
+- **Net**: +11 tests (4,981→4,992)
+
 ### §X #134 (2026-07-03) — Test consolidation R6
 
 - **Test consolidation R6**: 7 modules added to `_SMOKE_MODULES` (card_types, digital_life_constants, event_loop_system, hook_registry, hsm_formula_system, maturity_system, multimodal_service)

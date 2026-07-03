@@ -207,6 +207,80 @@ class TestIntentManager:
         adj = mgr.get_intent_routing_adjustment()
         assert adj["routing_mode"] == "balanced" or adj["routing_mode"] == "exploratory"
 
+    def test_record_intent_outcome_stores_history(self):
+        self.mgr.record_intent_outcome("exploratory", True)
+        self.mgr.record_intent_outcome("exploratory", False)
+        self.mgr.record_intent_outcome("exploratory", True)
+        assert len(self.mgr._outcome_history["exploratory"]) == 3
+        assert self.mgr.get_intent_success_rate("exploratory") == 2.0 / 3.0
+
+    def test_record_intent_outcome_none_maps_to_neutral(self):
+        self.mgr.record_intent_outcome(None, True)
+        assert "neutral" in self.mgr._outcome_history
+        assert self.mgr._outcome_history["neutral"] == [True]
+
+    def test_get_intent_success_rate_no_history_returns_05(self):
+        assert self.mgr.get_intent_success_rate("unknown_mode") == 0.5
+
+    def test_get_intent_success_rate_all_success(self):
+        for _ in range(5):
+            self.mgr.record_intent_outcome("empathetic", True)
+        assert self.mgr.get_intent_success_rate("empathetic") == 1.0
+
+    def test_get_intent_success_rate_all_failure(self):
+        for _ in range(5):
+            self.mgr.record_intent_outcome("curious", False)
+        assert self.mgr.get_intent_success_rate("curious") == 0.0
+
+    def test_outcome_history_bounded(self):
+        for i in range(25):
+            self.mgr.record_intent_outcome("exploratory", i % 2 == 0)
+        assert len(self.mgr._outcome_history["exploratory"]) == 20
+
+    def test_intent_strength_adjusted_by_success_rate(self):
+        intent = SelfIntent(id="s1", category=IntentCategory.EXPLORATION,
+                            target_dimension="gamma", target_coordinate=(5.0, 5.0, 5.0),
+                            strength=1.0, urgency=1.0)
+        self.mgr.add_intent(intent)
+        self.mgr._calculate_active_vectors()
+        # Default success rate is 0.5, so strength should be raw * (0.5 + 0.5 * 0.5) = raw * 0.75
+        adj = self.mgr.get_intent_routing_adjustment()
+        assert adj["routing_mode"] == "exploratory"
+        assert adj["raw_strength"] > 0
+        assert adj["intent_strength"] < adj["raw_strength"]
+        assert adj["success_rate"] == 0.5  # default
+
+    def test_intent_strength_higher_with_good_success(self):
+        for _ in range(5):
+            self.mgr.record_intent_outcome("exploratory", True)
+        intent = SelfIntent(id="s2", category=IntentCategory.EXPLORATION,
+                            target_dimension="gamma", target_coordinate=(5.0, 5.0, 5.0),
+                            strength=1.0, urgency=1.0)
+        self.mgr.add_intent(intent)
+        self.mgr._calculate_active_vectors()
+        adj = self.mgr.get_intent_routing_adjustment()
+        assert adj["success_rate"] == 1.0
+        assert adj["intent_strength"] == adj["raw_strength"]  # 1.0 * (0.5 + 0.5*1.0) = 1.0
+
+    def test_intent_strength_lower_with_poor_success(self):
+        for _ in range(5):
+            self.mgr.record_intent_outcome("exploratory", False)
+        intent = SelfIntent(id="s3", category=IntentCategory.EXPLORATION,
+                            target_dimension="gamma", target_coordinate=(5.0, 5.0, 5.0),
+                            strength=1.0, urgency=1.0)
+        self.mgr.add_intent(intent)
+        self.mgr._calculate_active_vectors()
+        adj = self.mgr.get_intent_routing_adjustment()
+        assert adj["success_rate"] == 0.0
+        assert adj["intent_strength"] == adj["raw_strength"] * 0.5  # 1.0 * (0.5 + 0.5*0.0) = 0.5
+
+    def test_record_intent_outcome_different_modes_independent(self):
+        self.mgr.record_intent_outcome("exploratory", True)
+        self.mgr.record_intent_outcome("exploratory", True)
+        self.mgr.record_intent_outcome("empathetic", False)
+        assert self.mgr.get_intent_success_rate("exploratory") == 1.0
+        assert self.mgr.get_intent_success_rate("empathetic") == 0.0
+
     def test_generate_homeostatic_intents_low_energy_creates_intent(self):
         state = {"alpha": {"energy": 0.1, "coordinate": (0.0, 0.0, 0.0)}}
         self.mgr.generate_homeostatic_intents(state)

@@ -1199,6 +1199,8 @@ class AngelaLLMService:
             "resolved_by": decision.get("resolved_by"),
             "voter_contributions": decision.get("voter_contributions"),
         })
+        # Store actual routing_mode for post-generation feedback loop
+        context["_actual_routing_mode"] = routing_mode
         return None, GenerationParams(gen_timeout, gen_temperature, gen_max_tokens)
 
     async def _call_llm_backend(self, user_message: str, context: Dict[str, Any], params: GenerationParams) -> LLMResponse:
