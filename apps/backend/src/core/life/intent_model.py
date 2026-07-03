@@ -4,6 +4,8 @@ import logging
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
+from core.system.state_store.global_store import state_store
+
 logger = logging.getLogger(__name__)
 
 
@@ -102,6 +104,12 @@ class IntentManager:
         ) / 9.0
 
         if avg_mag < 0.1:
+            state_store.emit_event("intent.adjustment_computed", {
+                "routing_mode": None,
+                "intent_mode": "neutral",
+                "intent_strength": 0.0,
+                "avg_magnitude": round(avg_mag, 4),
+            })
             return {"routing_mode": None, "response_style": None, "intent_mode": "neutral", "intent_strength": 0.0}
 
         exploration = sum(abs(v) for v in gamma) / 3.0
@@ -122,12 +130,22 @@ class IntentManager:
             routing_mode = "balanced"
             response_style = "neutral"
 
-        return {
+        result = {
             "routing_mode": routing_mode,
             "response_style": response_style,
             "intent_mode": "active",
             "intent_strength": round(min(1.0, avg_mag * 2.0), 2),
         }
+        state_store.emit_event("intent.adjustment_computed", {
+            "routing_mode": routing_mode,
+            "intent_mode": "active",
+            "intent_strength": result["intent_strength"],
+            "avg_magnitude": round(avg_mag, 4),
+            "exploration": round(exploration, 4),
+            "bonding": round(bonding, 4),
+            "energy": round(energy, 4),
+        })
+        return result
 
     def scan_memory_proximity(self, bridge: Any, state: Dict[str, Any]) -> None:
         """Scan HAM memory for experiences near current state coordinates.
@@ -162,7 +180,14 @@ class IntentManager:
                     decay_rate=0.02,
                 )
                 self.add_intent(intent)
-    
+                state_store.emit_event("intent.homeostatic_generated", {
+                    "dimension": dimension,
+                    "category": cat.value,
+                    "urgency": intent.urgency,
+                    "strength": intent.strength,
+                })
+
+
 
     def generate_homeostatic_intents(self, state: Dict[str, Any]) -> None:
         """Generate homeostatic intents to restore balance.

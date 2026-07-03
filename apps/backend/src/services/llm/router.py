@@ -60,6 +60,8 @@ from services.llm.providers.ollama import OllamaBackend
 from services.llm.providers.openai import OpenAIAPIBackend
 from services.llm.providers.registry import LLMBackend
 
+from core.system.state_store.global_store import state_store
+
 # 簡單日誌設置
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
@@ -699,6 +701,12 @@ class AngelaLLMService:
                 self.meta_controller.record_confidence(
                     "llm:full", response.confidence if hasattr(response, 'confidence') else 0.0
                 )
+            state_store.emit_event("routing.response_generated", {
+                "method": "llm_full",
+                "response_time_ms": response_time,
+                "confidence": response.confidence if hasattr(response, 'confidence') else 0.0,
+                "response_text_length": len(response.text) if hasattr(response, 'text') else 0,
+            })
             return response
 
         except Exception as e:
@@ -1184,6 +1192,15 @@ class AngelaLLMService:
                     f"{causal_routing.get('effective_guidance', '')}"
                 )
 
+        state_store.emit_event("routing.context_prepared", {
+            "routing_mode": routing_mode,
+            "temperature": round(gen_temperature, 2),
+            "max_tokens": gen_max_tokens,
+            "lifecycle": lifecycle_behavior.get("routing_mode") if lifecycle_behavior else None,
+            "emotional": behavior.get("routing_mode") if behavior else None,
+            "intent": intent_routing.get("routing_mode") if intent_routing else None,
+            "angela_emotion": angela_emotion.get("routing_mode") if angela_emotion else None,
+        })
         return None, GenerationParams(gen_timeout, gen_temperature, gen_max_tokens)
 
     async def _call_llm_backend(self, user_message: str, context: Dict[str, Any], params: GenerationParams) -> LLMResponse:

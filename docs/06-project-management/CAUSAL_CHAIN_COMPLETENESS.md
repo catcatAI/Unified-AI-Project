@@ -421,7 +421,7 @@ async def _apply_state_behaviors(self, state):
 | 4 | **MetaController threshold adjustments → 不自動套用** | 適應性學習中斷 | ✅ **FIXED** (commit `2be528751`) — auto_apply_thresholds() + _analyze_task() uses calibration adjustments |
 | 5 | **IntentModel.generate_homeostatic_intents → pass** | 意圖系統不完整 | ✅ **FIXED** (commit `e713db0e0`) — both stubs now real |
 | 6 | **LifeCycle 3/6 states 無行為** | 生命週期不完整 | ✅ **FIXED** (commit `this commit`) — all 6 states now have distinct behaviors |
-| 7 | **8 條獨立閉環無統一狀態匯流排** | Emotion、LifeCycle、Causal、MetaController、Intent、ExecutionGate、Heartbeat、Router 各自為政，彼此不交換狀態 | ✅ **FIXED** (§X #131) — GlobalStateStore 已升級事件總線，4/8 閉環已接入（Emotion/emotion.updated, LifeCycle/lifecycle.decision_executed, Causal/causal.learned, Meta/meta.confidence_recorded） |
+| 7 | **8 條獨立閉環無統一狀態匯流排** | Emotion、LifeCycle、Causal、MetaController、Intent、ExecutionGate、Heartbeat、Router 各自為政，彼此不交換狀態 | ✅ **FIXED** (§X #131) — GlobalStateStore 已升級事件總線。8/8 閉環已接入，18 CNS event types: Emotion(2), LifeCycle(2), Causal(2), Meta(3), Intent(2), ExecutionGate(2), Heartbeat(2), Router(2) |
 | 8 | **router.py 硬編碼 Priority 鏈無衝突協商** | 當 Emotion 說「探索」、LifeCycle 說「保守」時，Priority 硬壓（P1 lifecycle、P2 emotion），沒有真正的加權融合 | ⏳ **PENDING** — 需 PriorityNegotiator: MetaController weighted aggregation → 通用投票器 |
 
 ### 4.3 虛假完成案例（具體代碼）
@@ -608,7 +608,7 @@ After:  record → calculate → auto-apply threshold adjustment → behavior ch
 5. ✅ Error isolation（單一 callback 失敗不影響其他 subscribers）
 6. ✅ 10 新 tests（priority order、dedup、async、error isolation、integration）
 
-**已接入閉環 (4/8)**:
+**已接入閉環 (8/8)**:
 
 | 閉環 | Event Types | Event Data |
 |------|------------|------------|
@@ -621,10 +621,16 @@ After:  record → calculate → auto-apply threshold adjustment → behavior ch
 | **MetaController** | `meta.confidence_recorded` | source, confidence, correct, ewma, total_samples |
 | MetaController | `meta.closed_loop_adjusted` | source, adjustment, classification, prev→new multiplier |
 | MetaController | `meta.weighted_adjustment` | weighted_adjustment, sources_count |
+| **IntentManager** | `intent.adjustment_computed` | routing_mode, intent_mode, intent_strength, avg_magnitude |
+| IntentManager | `intent.homeostatic_generated` | dimension, category, urgency, strength |
+| **ExecutionGate** | `execution.gate_decided` | action, score, query_type, action_type, handler, reason |
+| ExecutionGate | `execution.result_recorded` | handler, success, total_success/fail, success_rate |
+| **Heartbeat** | `heartbeat.pulse` | stress, arousal, dynamic_interval |
+| Heartbeat | `heartbeat.integration` | pose, position_x, target_x, arousal, tremor_active |
+| **Router** | `routing.context_prepared` | routing_mode, temperature, max_tokens, 4 source modes |
+| Router | `routing.response_generated` | method, response_time_ms, confidence, text_length |
 
-**剩餘 4 閉環待接入**: IntentModel, ExecutionGate, Heartbeat, Router
-
-**Causal depth 更新**: 4.5→**5.0/10**（4/8 閉環現在透過 CNS 事件總線交換狀態）
+**Causal depth 更新**: 5.0→**6.0/10**（8/8 閉環全部透過 CNS 事件總線交換狀態）
 
 ### 6.7 P2（中期）— 衝突協商器（PriorityNegotiator）
 

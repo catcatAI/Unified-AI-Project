@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from typing import Dict, Optional
 
 from ai.core.query_classifier import _NEGATION_WORDS
+from core.system.state_store.global_store import state_store
 
 # 可逆性分数表
 REVERSIBILITY = {
@@ -99,6 +100,11 @@ class ExecutionGate:
 
         # 否定词强制 reject
         if any(neg in user_message for neg in _NEGATION_WORDS):
+            state_store.emit_event("execution.gate_decided", {
+                "action": "reject", "score": round(score, 3),
+                "query_type": query_type, "action_type": action_type,
+                "reason": "negation_detected",
+            })
             return GateDecision(
                 action="reject", score=score,
                 reason="negation_detected",
@@ -115,6 +121,11 @@ class ExecutionGate:
 
         # For knowledge/creative/greeting queries, skip confirmation and let LLM handle
         if query_type in ("knowledge", "creative", "greeting", "opinion"):
+            state_store.emit_event("execution.gate_decided", {
+                "action": "reject", "score": round(score, 3),
+                "query_type": query_type, "action_type": action_type,
+                "reason": f"non_actionable_{query_type}",
+            })
             return GateDecision(
                 action="reject", score=score,
                 reason=f"non_actionable_query_type_{query_type}",
@@ -122,6 +133,12 @@ class ExecutionGate:
             )
 
         if score >= effective_auto and handler_id:
+            state_store.emit_event("execution.gate_decided", {
+                "action": "auto_execute", "score": round(score, 3),
+                "handler": handler_id,
+                "query_type": query_type, "action_type": action_type,
+                "feedback_adjustment": round(fb_adj, 3),
+            })
             return GateDecision(
                 action="auto_execute", score=score,
                 handler=handler_id,
@@ -132,6 +149,12 @@ class ExecutionGate:
 
         if score >= effective_confirm:
             if handler_id:
+                state_store.emit_event("execution.gate_decided", {
+                    "action": "confirm_then_execute", "score": round(score, 3),
+                    "handler": handler_id,
+                    "query_type": query_type, "action_type": action_type,
+                    "feedback_adjustment": round(fb_adj, 3),
+                })
                 return GateDecision(
                     action="confirm_then_execute", score=score,
                     handler=handler_id,
@@ -141,7 +164,11 @@ class ExecutionGate:
                     impact_info=self._describe_impact(action_type, user_message),
                     original_query=user_message,
                 )
-            # 有分数但没 handler → 问用户要做什么
+            state_store.emit_event("execution.gate_decided", {
+                "action": "confirm_then_execute", "score": round(score, 3),
+                "handler": None, "query_type": query_type, "action_type": action_type,
+                "reason": "no_handler",
+            })
             return GateDecision(
                 action="confirm_then_execute", score=score,
                 action_type=action_type,
@@ -150,6 +177,11 @@ class ExecutionGate:
                 original_query=user_message,
             )
 
+        state_store.emit_event("execution.gate_decided", {
+            "action": "reject", "score": round(score, 3),
+            "query_type": query_type, "action_type": action_type,
+            "reason": f"score_below_confirm_{effective_confirm}",
+        })
         return GateDecision(
             action="reject", score=score,
             reason=f"exec_score={score} < confirm={effective_confirm} (fb_adj={fb_adj})",
@@ -242,6 +274,14 @@ class ExecutionGate:
             self._results[handler]["success"] += 1
         else:
             self._results[handler]["fail"] += 1
+        r = self._results[handler]
+        state_store.emit_event("execution.result_recorded", {
+            "handler": handler,
+            "success": success,
+            "total_success": r["success"],
+            "total_fail": r["fail"],
+            "success_rate": round(r["success"] / max(r["success"] + r["fail"], 1), 3),
+        })
 
     def get_feedback_stats(self) -> dict:
         """Return execution feedback statistics per handler."""

@@ -14,6 +14,7 @@ from core.bio.biological_integrator import BiologicalIntegrator
 from core.bio.endocrine_system import HormoneType
 from core.system.config.magic_numbers import heartbeat_value as _hb
 from core.system.config.magic_numbers import loop_sleep
+from core.system.state_store.global_store import state_store
 from integrations.os_bridge_adapter import OSBridgeAdapter
 
 logger = logging.getLogger(__name__)
@@ -88,6 +89,14 @@ class MetabolicHeartbeat:
                         _hb("integration_interval_base", 5.0) * (1.0 - arousal / 100.0),
                     ),
                 )
+                state_store.emit_event("heartbeat.integration", {
+                    "pose": intent_pose,
+                    "position_x": round(self.x, 2),
+                    "target_x": round(self.target_x, 2),
+                    "arousal": round(arousal, 2),
+                    "integration_interval": round(integration_interval, 2),
+                    "tremor_active": cerebellum_res.get("tremor_active", False),
+                })
                 await asyncio.sleep(integration_interval)
             except Exception as e:
                 logger.error(f"[Cerebellum-Sync] Loop error: {e}", exc_info=True)
@@ -148,6 +157,11 @@ class MetabolicHeartbeat:
                 div = _hb("heartbeat.stress_divisor", 50.0)
                 mul = _hb("heartbeat.stress_multiplier", 2)
                 dynamic_interval = max(min_int, min(max_int, base_rate / (stress * mul + (arousal / div))))
+                state_store.emit_event("heartbeat.pulse", {
+                    "stress": round(stress, 3),
+                    "arousal": round(arousal, 3),
+                    "dynamic_interval": round(dynamic_interval, 3),
+                })
                 
                 # --- NEW: Spatial Decision Making ---
                 await self._update_spatial_state(arousal, stress)
