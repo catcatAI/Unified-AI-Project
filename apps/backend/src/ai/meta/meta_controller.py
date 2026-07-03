@@ -8,7 +8,9 @@ Calibration uses EWMA (Exponentially Weighted Moving Average) for the
 confidence estimate, which weights recent samples more heavily than old ones.
 """
 
+import json
 import logging
+import os
 import time
 from collections import deque
 from dataclasses import dataclass, field
@@ -18,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 _DEFAULT_ALPHA = 0.15
 _WINDOW_SIZE = 100
+_DEFAULT_PERSIST_PATH = "data/meta_controller_state.json"
 
 
 @dataclass
@@ -42,10 +45,12 @@ class CalibrationReport:
 
 
 class MetaController:
-    def __init__(self, window_size: int = _WINDOW_SIZE, alpha: float = _DEFAULT_ALPHA):
+    def __init__(self, window_size: int = _WINDOW_SIZE, alpha: float = _DEFAULT_ALPHA,
+                 persist_path: Optional[str] = _DEFAULT_PERSIST_PATH):
         self._samples: Dict[str, deque] = {}
         self._window_size = window_size
         self._alpha = alpha
+        self._persist_path = persist_path
         self._ewma: Dict[str, float] = {}
         self._threshold_adjustments: Dict[str, float] = {}
         self._total_samples = 0
@@ -56,6 +61,9 @@ class MetaController:
         self._calibration_cache_dirty: bool = True
         # Raw (pre-multiplier) adjustments for cache-hit recomputation
         self._raw_adjustments: Dict[str, float] = {}
+        # Auto-load from disk if available
+        if self._persist_path and os.path.exists(self._persist_path):
+            self.load_calibration_state(self._persist_path)
 
     def record_confidence(
         self, source: str, confidence: float, correct: Optional[bool] = None
@@ -264,4 +272,44 @@ class MetaController:
             "tracked_sources": list(self._samples.keys()),
             "window_size": self._window_size,
             "ewma_alpha": self._alpha,
+            "has_persisted_state": self._persist_path is not None and os.path.exists(self._persist_path) if self._persist_path else False,
         }
+
+    # ── C³ 5.0: Calibration state persistence ──────────────────────────
+
+    def save_calibration_state(self, path: str) -> None:
+        state = {
+            "ewma": self._ewma.copy(),
+            "threshold_adjustments": self._threshold_adjustments.copy(),
+            "adjustment_multipliers": self._adjustment_multipliers.copy(),
+            "raw_adjustments": self._raw_adjustments.copy(),
+            "total_samples": self._total_samples,
+            "calibration_history": {
+                src: list(hist) for src, hist in self._calibration_history.items()
+            },
+        }
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(state, f, indent=2)
+        logger.debug(f"[MetaController] Saved calibration state to {path}")
+
+    def load_calibration_state(self, path: str) -> None:
+        if not os.path.exists(path):
+            logger.debug(f"[MetaController] No state file at {path}, starting fresh")
+            return
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                state = json.load(f)
+            self._ewma.update(state.get("ewma", {}))
+            self._threshold_adjustments.update(state.get("threshold_adjustments", {}))
+            self._adjustment_multipliers.update(state.get("adjustment_multipliers", {}))
+            self._raw_adjustments.update(state.get("raw_adjustments", {}))
+            self._total_samples = state.get("total_samples", 0)
+            for src, hist in state.get("calibration_history", {}).items():
+                self._calibration_history[src] = deque(hist, maxlen=5)
+            logger.info(
+                f"[MetaController] Loaded calibration state from {path}: "
+                f"{len(self._ewma)} sources, {self._total_samples} total samples"
+            )
+        except Exception as e:
+            logger.warning(f"[MetaController] Failed to load calibration state: {e}")

@@ -1,4 +1,7 @@
 """Tests for AutonomousLifeCycle — formula-driven life decisions with config-driven feedback."""
+import json
+import os
+import tempfile
 from datetime import datetime
 
 import pytest
@@ -269,3 +272,122 @@ class TestLifecycleBehavioralAdjustment:
         assert adj["response_style"] == "adventurous"
         assert adj["decision_type"] == "exploration"
         assert adj["phase"] == "EXPLORATION"
+
+
+class TestLifecyclePersistence:
+    """C³ 5.0: AutonomousLifeCycle state persistence across restarts."""
+
+    def test_save_and_load_roundtrip(self):
+        alc = AutonomousLifeCycle(persist_path=None)
+        alc.explorations_triggered = 5
+        alc.coexistence_activated = 3
+        alc.decisions_made = 8
+        alc.executions_succeeded = 6
+        alc.executions_failed = 2
+        # Seed behavior executor type stats
+        alc._behavior_executor._type_success = {"exploration": 4, "coexistence_activation": 2}
+        alc._behavior_executor._type_fail = {"exploration": 1, "coexistence_activation": 0}
+        # Seed decision history
+        from datetime import datetime
+        from core.life.autonomous_life_cycle import LifeDecision
+        alc.decision_history.append(LifeDecision(
+            decision_id="d1", timestamp=datetime.now(),
+            phase=LifePhase.EXPLORATION, triggered_by="HSM",
+            decision_type="exploration", rationale="gap detected",
+            expected_outcome={}, confidence=0.8,
+        ))
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            path = f.name
+        try:
+            alc.save_state(path)
+            alc2 = AutonomousLifeCycle(persist_path=None)
+            alc2.load_state(path)
+            assert alc2.explorations_triggered == 5
+            assert alc2.coexistence_activated == 3
+            assert alc2.decisions_made == 8
+            assert alc2.executions_succeeded == 6
+            assert alc2.executions_failed == 2
+            assert len(alc2.decision_history) == 1
+            assert alc2.decision_history[0].decision_type == "exploration"
+            # Type stats restored
+            assert alc2._behavior_executor._type_success.get("exploration") == 4
+            assert alc2._behavior_executor._type_fail.get("exploration") == 1
+        finally:
+            os.unlink(path)
+
+    def test_load_nonexistent_starts_fresh(self):
+        alc = AutonomousLifeCycle(persist_path=None)
+        alc.load_state("/nonexistent/lifecycle.json")
+        assert alc.decisions_made == 0
+        assert alc.executions_succeeded == 0
+
+    def test_auto_load_on_init(self):
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            path = f.name
+            json.dump({
+                "explorations_triggered": 3,
+                "coexistence_activated": 1,
+                "decisions_made": 4,
+                "executions_succeeded": 3,
+                "executions_failed": 1,
+                "behavior_executor_type_stats": {"exploration": {"success": 3, "fail": 1}},
+                "recent_decisions": [],
+            }, f)
+        try:
+            alc = AutonomousLifeCycle(persist_path=path)
+            assert alc.decisions_made == 4
+            assert alc.executions_succeeded == 3
+            assert alc.executions_failed == 1
+        finally:
+            os.unlink(path)
+
+    def test_save_creates_directory(self):
+        alc = AutonomousLifeCycle(persist_path=None)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            nested = os.path.join(tmpdir, "deep", "state.json")
+            alc.save_state(nested)
+            assert os.path.exists(nested)
+            os.unlink(nested)
+
+    def test_decision_history_limited_to_100(self):
+        alc = AutonomousLifeCycle(persist_path=None)
+        from datetime import datetime
+        from core.life.autonomous_life_cycle import LifeDecision
+        for i in range(110):
+            alc.decision_history.append(LifeDecision(
+                decision_id=f"d{i}", timestamp=datetime.now(),
+                phase=LifePhase.EMERGENCE, triggered_by="test",
+                decision_type="exploration", rationale=str(i),
+                expected_outcome={}, confidence=0.5,
+            ))
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            path = f.name
+        try:
+            alc.save_state(path)
+            with open(path, "r", encoding="utf-8") as f:
+                state = json.load(f)
+            assert len(state["recent_decisions"]) == 100
+        finally:
+            os.unlink(path)
+
+    def test_load_with_type_stats_affects_feedback(self):
+        """Verify that loaded type stats affect per-type feedback in _evaluate_and_decide."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            path = f.name
+            json.dump({
+                "explorations_triggered": 0,
+                "coexistence_activated": 0,
+                "decisions_made": 0,
+                "executions_succeeded": 1,
+                "executions_failed": 5,
+                "behavior_executor_type_stats": {"exploration": {"success": 1, "fail": 5}},
+                "recent_decisions": [],
+            }, f)
+        try:
+            alc = AutonomousLifeCycle(persist_path=path)
+            # Verify type stats are loaded
+            type_stats = alc._behavior_executor.get_type_stats()
+            assert "exploration" in type_stats
+            assert round(type_stats["exploration"]["rate"], 3) == round(1.0 / 6.0, 3)
+        finally:
+            os.unlink(path)

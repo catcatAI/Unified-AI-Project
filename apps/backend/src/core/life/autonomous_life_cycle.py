@@ -19,7 +19,9 @@ Date: 2026-02-02
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
+import os
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -131,8 +133,10 @@ class AutonomousLifeCycle:
         >>> print(f"Recommended: {decision.decision_type}")
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None,
+                 persist_path: Optional[str] = "data/autonomous_lifecycle_state.json"):
         self.config = config or {}
+        self._persist_path = persist_path
 
         # Formula systems
         self.hsm: HSMFormulaSystem = HSMFormulaSystem(config=self.config.get("hsm_config"))
@@ -184,6 +188,10 @@ class AutonomousLifeCycle:
         self.decisions_made: int = 0
         self.executions_succeeded: int = 0
         self.executions_failed: int = 0
+
+        # Auto-load persisted state
+        if self._persist_path and os.path.exists(self._persist_path):
+            self.load_state(self._persist_path)
 
     async def initialize(self) -> None:
         """Initialize autonomous life cycle and all formula systems"""
@@ -914,6 +922,97 @@ class AutonomousLifeCycle:
             callback: Called with (decision, success) after each execution.
         """
         self._execution_callbacks.append(callback)
+
+
+    # ── C³ 5.0: State persistence ──────────────────────────────────────
+
+    def save_state(self, path: str) -> None:
+        """Persist lifecycle state (decision history, stats, behavior executor type stats)
+        to a JSON file so the lifecycle resumes with accumulated context across restarts.
+
+        Args:
+            path: File path to save state to.
+        """
+        state = {
+            "explorations_triggered": self.explorations_triggered,
+            "coexistence_activated": self.coexistence_activated,
+            "decisions_made": self.decisions_made,
+            "executions_succeeded": self.executions_succeeded,
+            "executions_failed": self.executions_failed,
+            "behavior_executor_type_stats": self._behavior_executor.get_type_stats(),
+            "recent_decisions": [
+                {
+                    "decision_id": d.decision_id,
+                    "timestamp": d.timestamp.isoformat(),
+                    "phase": d.phase.name,
+                    "triggered_by": d.triggered_by,
+                    "decision_type": d.decision_type,
+                    "rationale": d.rationale,
+                    "confidence": d.confidence,
+                }
+                for d in self.decision_history[-100:]
+            ],
+        }
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(state, f, indent=2)
+        logger.debug(f"[AutonomousLifeCycle] Saved state to {path}")
+
+    def load_state(self, path: str) -> None:
+        """Load persisted lifecycle state from a JSON file.
+
+        Restores statistics and decision history. Behavior executor type stats
+        are re-injected by replaying execution patterns so the per-type
+        feedback loop has historical data from the start.
+
+        Args:
+            path: File path to load state from.
+        """
+        if not os.path.exists(path):
+            logger.debug(f"[AutonomousLifeCycle] No state file at {path}, starting fresh")
+            return
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                state = json.load(f)
+            self.explorations_triggered = state.get("explorations_triggered", 0)
+            self.coexistence_activated = state.get("coexistence_activated", 0)
+            self.decisions_made = state.get("decisions_made", 0)
+            self.executions_succeeded = state.get("executions_succeeded", 0)
+            self.executions_failed = state.get("executions_failed", 0)
+
+            # Restore decision history (limited to last 100)
+            for d in state.get("recent_decisions", []):
+                try:
+                    phase = LifePhase[d["phase"]]
+                except (KeyError, ValueError):
+                    phase = LifePhase.EMERGENCE
+                self.decision_history.append(LifeDecision(
+                    decision_id=d["decision_id"],
+                    timestamp=datetime.fromisoformat(d["timestamp"]),
+                    phase=phase,
+                    triggered_by=d["triggered_by"],
+                    decision_type=d["decision_type"],
+                    rationale=d["rationale"],
+                    expected_outcome={},
+                    confidence=d["confidence"],
+                ))
+
+            # Re-inject behavior executor type stats by replaying synthetic executions
+            for dt, stats in state.get("behavior_executor_type_stats", {}).items():
+                s = int(stats.get("success", 0))
+                f = int(stats.get("fail", 0))
+                if hasattr(self._behavior_executor, "_type_success"):
+                    self._behavior_executor._type_success[dt] = s
+                if hasattr(self._behavior_executor, "_type_fail"):
+                    self._behavior_executor._type_fail[dt] = f
+
+            logger.info(
+                f"[AutonomousLifeCycle] Loaded state from {path}: "
+                f"{self.decisions_made} decisions, "
+                f"{self.executions_succeeded + self.executions_failed} executions"
+            )
+        except Exception as e:
+            logger.warning(f"[AutonomousLifeCycle] Failed to load state: {e}")
 
 
 # Example usage

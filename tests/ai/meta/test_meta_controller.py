@@ -1,4 +1,7 @@
 """Tests for MetaController — confidence calibration and threshold adjustment."""
+import json
+import os
+import tempfile
 from collections import deque
 
 import pytest
@@ -226,3 +229,91 @@ class TestMetaControllerCache:
         # Mark cache as clean and check fast path still works
         adj2 = mc.get_threshold_adjustment("src")
         assert adj2 == adj
+
+
+class TestMetaControllerPersistence:
+    """C³ 5.0: Calibration state persistence across restarts."""
+
+    def test_save_and_load_roundtrip(self):
+        mc = MetaController(persist_path=None)
+        # Build up state
+        for i in range(15):
+            mc.record_confidence("src_a", 0.9, correct=(i < 3))
+        for i in range(10):
+            mc.record_confidence("src_b", 0.2, correct=(i < 8))
+        # Trigger closed-loop multiplier (3 consecutive "over" calls)
+        for _ in range(3):
+            mc.get_calibration("src_a")
+        mc.get_calibration("src_b")
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            path = f.name
+        try:
+            mc.save_calibration_state(path)
+            # Load into fresh instance
+            mc2 = MetaController(persist_path=None)
+            mc2.load_calibration_state(path)
+            assert mc2._total_samples == 25
+            assert "src_a" in mc2._ewma
+            assert "src_b" in mc2._ewma
+            assert mc2._adjustment_multipliers.get("src_a", 1.0) > 1.0
+            assert "src_a" in mc2._threshold_adjustments
+        finally:
+            os.unlink(path)
+
+    def test_load_from_nonexistent_file_logs_and_starts_fresh(self, caplog):
+        mc = MetaController(persist_path=None)
+        mc.load_calibration_state("/nonexistent/path.json")
+        mc.record_confidence("src", 0.8)
+        assert mc._total_samples == 1
+
+    def test_auto_load_on_init(self):
+        mc = MetaController(persist_path=None)
+        for i in range(15):
+            mc.record_confidence("src", 0.9, correct=(i < 5))
+        mc.get_calibration("src")
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            path = f.name
+            json.dump({
+                "ewma": {"src": 0.85},
+                "threshold_adjustments": {"src": -0.05},
+                "adjustment_multipliers": {"src": 1.5},
+                "raw_adjustments": {"src": -0.05},
+                "total_samples": 15,
+                "calibration_history": {"src": ["over", "over", "over"]},
+            }, f)
+        try:
+            mc2 = MetaController(persist_path=path)
+            assert mc2._total_samples == 15
+            assert mc2._ewma.get("src") == 0.85
+            assert mc2._adjustment_multipliers.get("src") == 1.5
+            assert "src" in mc2._calibration_history
+        finally:
+            os.unlink(path)
+
+    def test_get_stats_reflects_persistence(self):
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            path = f.name
+        try:
+            mc = MetaController(persist_path=path)
+            stats = mc.get_stats()
+            assert "has_persisted_state" in stats
+            mc.record_confidence("src", 0.9)
+            mc.record_confidence("src", 0.8)
+            mc.record_confidence("src", 0.85)
+            mc.get_calibration("src")
+            mc.save_calibration_state(path)
+            stats2 = mc.get_stats()
+            assert stats2["has_persisted_state"] is True
+        finally:
+            os.unlink(path)
+
+    def test_save_creates_directory(self):
+        mc = MetaController(persist_path=None)
+        for i in range(15):
+            mc.record_confidence("src", 0.9, correct=(i < 5))
+        mc.get_calibration("src")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            nested_path = os.path.join(tmpdir, "nested", "state.json")
+            mc.save_calibration_state(nested_path)
+            assert os.path.exists(nested_path)
+            os.unlink(nested_path)
