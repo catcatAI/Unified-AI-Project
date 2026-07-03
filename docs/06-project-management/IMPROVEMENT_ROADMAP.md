@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw
-    LAST_MODIFIED: 2026-07-03 (updated for §X #123: MD sync)
+    LAST_MODIFIED: 2026-07-04 (updated for §X #147-148: MD sync + test quality)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -51,7 +51,7 @@
 | **Chat 管線 9 階段** | WS → 情緒 → 危機 → 對齊 → 閘門 → 路由 → LLM → 學習 → 回應 | 整合測試 | ✅ 完整接線 |
 | **CLP（持續學習）** | ED3NTrainer 已接線至聊天管線 + 獨立模式 | 整合測試 | ✅ 已接線，字典成長有效 |
 | **CML（持續多模態學習）** | 自主微訓練已接線至 encode 路徑，共用生產管線 | 20 CML 測試通過 + 21 多模態服務測試通過 | ✅ 每次編碼後自動微訓練 |
-| **測試數量** | pytest 收集 | **4,862 tests** (tests/ only, verified 2026-07-03 — §X #69-128: 0 errors, 19 skipped) | ✅ 0 failures |
+| **測試數量** | pytest 收集 | **5,028 tests** (tests/ only, verified 2026-07-04 — §X #69-147: 0 errors, 19 skipped) | ✅ 0 failures |
 | **FullTrainingPipeline** | `pipeline_weights.npz` saved (33 arrays, 1.2MB) | 52s moderate run: texture=0.384, wavetable=0.045, sequence=0.015 | ✅ Trained weights exist on disk |
 | **Empty-data encode fast-fail** | `encode_with_retry()` now fast-fails on empty data without wasting 3 retries | 24/24 production tests pass, crisis_log reduced | ✅ Fixed (§X #60) |
 | **MainApiServer stubs eliminated** | 3 pure-pass async methods → real implementations | test_api_service_reconnection passes (22.74s) | ✅ Fixed (§X #61) |
@@ -114,6 +114,8 @@
 | **Test quality: skip 5 print-based files (§X #141)** | Added pytest.skip() to 16 test functions across 5 files that had 0 asserts and 165+ print statements — they silently passed as false positives. Now properly skipped. | test_phase5_6.py, test_phase7.py, test_audit_comprehensive.py, test_final.py, test_verify_fixes.py | ✅ Done (§X #141) |
 | **Test anti-pattern: fix except Exception: pytest.skip() (§X #142)** | Replaced 4 bare except Exception: pytest.skip() blocks with proper pytest.importorskip() and narrow except clauses. Revealed a real hidden bug: ExternalConnector.__init__() didn't accept ai_id/broker_address/broker_port params. Fixed the connector class. 5 files, net -0 tests (5,033). | test_core_module_imports.py, test_tool_dispatcher_logging.py, test_health_check.py, test_integration_ai_pipeline.py, external_connector.py | ✅ Done (§X #142) |
 | **Test quality: add proper skip guards to 7 false-positive test files (§X #145)** | 7 false-positive test files now properly skipped (0 asserts, print-based, or require server). test_gmqtt_mock.py fixed (missing @pytest.mark.asyncio). Net: -2 tests (5,036→5,034). | test_base_agent_simple, verify_all_agents, run_fixed_tests, quick_test_concept_models, test_websocket, test_websocket_comprehensive, test_gmqtt_mock | ✅ Done (§X #145) |
+| **Test quality: skip 4 more false-positive test files (§X #147)** | Added proper skip guards to 4 remaining false-positive test files (print-based diagnostic scripts with 0 asserts, require running server). Files: test_api.py (bare HTTP script), test_architecture_fix.py (print-based diagnostic + fixed pre-existing missing os/sys imports), test_dialogue_llm.py (requires running server), test_server.py (bare server check script). Net: 0 tests (5,028→5,028). | test_api, test_architecture_fix, test_dialogue_llm, test_server | ✅ Done (§X #147) |
+| **MD sync — §X #148** | Synced test counts 4,862→5,028 across IMPROVEMENT_ROADMAP.md. Verified README.md and AGENTS.md already current at 5,028. | IMPROVEMENT_ROADMAP.md | ✅ Done (§X #148) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 | 宣稱 | 實際狀態 | 需要什麼數據 | 門檻 |
@@ -319,7 +321,7 @@ O2 → ✅ **DONE** (2026-06-29, §X #44, 152 行死碼移除)
 ### 4.1 測試覆蓋
 
 ```bash
-# 執行所有測試（基線：5,014）
+# 執行所有測試（基線：5,028）
 pytest tests/ apps/backend/tests/ --collect-only -q
 
 # 測量基線完成後，每次變更保持或增加計數
