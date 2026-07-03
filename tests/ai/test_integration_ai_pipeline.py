@@ -696,11 +696,14 @@ class TestNeuroVocabularyEdgeCases:
 
     def test_sync_restore_state_store_roundtrip(self, vocab):
         """sync_to_state_store / restore_from_state_store roundtrip."""
+        mod = pytest.importorskip("core.system.state_store.global_store")
+        state_store = mod.state_store
+        if not hasattr(state_store, "get_state"):
+            pytest.skip("state_store missing get_state method")
         try:
-            from core.system.state_store.global_store import state_store
             _ = state_store.get_state("test_dummy")
-        except Exception:
-            pytest.skip("state_store not available in this environment")
+        except (KeyError, ValueError, RuntimeError):
+            pytest.skip("state_store.get_state not functional in this environment")
         vocab.learn_mapping("rt.field", 0.3, "roundtrip value")
         vocab.sync_to_state_store()
         vocab2 = NeuroVocabulary()

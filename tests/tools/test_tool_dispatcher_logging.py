@@ -82,7 +82,7 @@ async def test_tool_dispatcher_action_policy_logged_smoke() -> None:
             continue
         try:
             rec = json.loads(raw) if isinstance(raw, str) else raw
-        except Exception:
+        except (json.JSONDecodeError, TypeError, ValueError):
             rec = None
         if rec and "tool_name" in rec and "timestamp" in rec:
             found_valid_record = True

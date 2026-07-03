@@ -88,11 +88,8 @@ async def test_cluster_status_endpoint(test_app):
     from fastapi.testclient import TestClient
 
     client = TestClient(test_app)
-    try:
-        response = client.get("/api/v1/system/cluster/status")
-        assert response.status_code == 200
-    except Exception:
-        pytest.skip("Cluster manager endpoint not available in mock")
+    response = client.get("/api/v1/system/cluster/status")
+    assert response.status_code == 200
 
 
 if __name__ == "__main__":

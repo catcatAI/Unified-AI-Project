@@ -87,17 +87,13 @@ def test_gmqtt_library_available() -> None:
 
 def test_external_connector_creation() -> None:
     """Verify ExternalConnector can be imported and created with required params."""
-    try:
-        from core.hsp.external.external_connector import ExternalConnector
+    pytest.importorskip("core.hsp.external.external_connector")
+    from core.hsp.external.external_connector import ExternalConnector
 
-        connector = ExternalConnector(
-            ai_id="test_ai",
-            broker_address="localhost",
-            broker_port=1883,
-        )
-        assert connector is not None
-        assert connector.ai_id == "test_ai"
-    except ImportError:
-        pytest.skip("ExternalConnector not available")
-    except Exception:
-        pytest.skip("Cannot create ExternalConnector")
+    connector = ExternalConnector(
+        ai_id="test_ai",
+        broker_address="localhost",
+        broker_port=1883,
+    )
+    assert connector is not None
+    assert connector.ai_id == "test_ai"
