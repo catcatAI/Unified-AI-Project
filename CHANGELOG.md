@@ -713,6 +713,16 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - 🗑️ Removed: Removed features
 - 🔒 Security: Security improvements
 
+### §X #137 (2026-07-03) — EmotionSystem C³ 5.0→6.0 — sustained negative feedback accumulation
+
+- **EmotionSystem**: Added `_sustained_negative_counter` tracking consecutive negative interactions (engagement < 0.5, errors, or failures)
+- When counter ≥ 3, cumulative fatigue influence (stress/sadness) amplifies, ensuring routing_mode actually flips to "conservative"
+- Counter resets to 0 on positive interaction (engagement ≥ 0.5, no error, no failure)
+- Added `sustained_negative_counter` to `emotion.behavioral_adjustment` event
+- **Tests**: 10 new — parametrized routing flip verification, counter tracking, recovery, threshold test
+- **C³**: EmotionSystem 5.0→**6.0/10**
+- **Net**: +10 tests (4,999→5,009)
+
 ### §X #136 (2026-07-03) — MetaController C³ 5.0→6.0 — registered as PriorityNegotiator voter
 
 - **PriorityNegotiator**: Added `meta_calibration_voter()` — translates MetaController's `get_weighted_adjustment()` into temperature/tokens bias

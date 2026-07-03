@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-07-03 (updated for §X #136: MetaController C³ 5.0→6.0, IntentModel C³ 5.0→6.0)
+  LAST_MODIFIED: 2026-07-03 (updated for §X #137: EmotionSystem C³ 5.0→6.0)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -495,7 +495,7 @@ prompt += f"Current emotional state: {emotion_summary}"
 | **ExecutionGate → Pipeline** | ✅完整 | **6.0/10** (was 5.0, §X #95) | 8/10 | 3 | 100% | 🟢 執行結果回饋閉環 (auto-execute + confirm-path): record_result() 成功/失敗 → 動態調整有效閾值 (§X #84+§X #95) |
 | **DigitalLifeIntegrator** | ✅完整 | **5.0/10** (was 4.5, §X #71) | 8/10 | 2 | 60% | 🟡 6/6 狀態有行為 + DORMANT auto-transition (commit `7b86cf28b`) |
 | **MetaController** | ✅完整 | **6.0/10** (was 5.0, §X #136) | 8/10 | 3 | 60% | 🟢 已登錄為 PriorityNegotiator 投票者 — calibration adjustment → temperature/tokens bias → 影響所有路由決策 (§X #136) |
-| **EmotionSystem** | ✅完整 | **5.0/10** (was 4.5, §X #127) | 9/10 | 4 | 60% | 🟢 Emotion→BiologicalIntegrator stress/relaxation + interaction_feedback loop with temporal trend awareness (§X #94+§X #127) |
+| **EmotionSystem** | ✅完整 | **6.0/10** (was 5.0, §X #137) | 9/10 | 4 | 60% | 🟢 持續消極互動累積 — _sustained_negative_counter ≥ 3 時累積疲勞(stress/sadness)放大效果，確保 routing_mode 真正翻轉為 conservative；正常互動後歸零 (§X #137) |
 | **AutonomousLifeCycle** | ✅完整 | **5.0/10** (was 4.5, §X #129) | 9/10 | 3 | 60% | 🟡 生命週期狀態持久化 — save/load 跨重啟保留決策歷史、執行統計、per-type 回饋資料 (§X #129) |
 | **CausalReasoningEngine** | ✅完整 | **6.0/10** (was 4.5, §X #117) | 9/10 | 4 | 50% | 🟢 Causal routing adjustment closes the loop — predictions now modulate LLM temperature/max_tokens via _get_causal_routing_adjustment() (§X #112+§X #117) |
 | **IntentModel** | ✅完整 | **6.0/10** (was 5.0, §X #135) | 9/10 | 4 | 60% | 🟢 已閉環 — record_intent_outcome() 記錄路由結果 → success_rate 調整 intent_strength 影響後續路由 (§X #135) |

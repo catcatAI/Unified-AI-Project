@@ -89,6 +89,7 @@ class EmotionSystem:
         self.empathy_models: Dict[str, Any] = {}
         self.is_active = True
         self._feedback_history: deque = deque(maxlen=10)
+        self._sustained_negative_counter: int = 0
         self._initialize_emotion_value_mapping()
 
     def _initialize_emotion_value_mapping(self) -> None:
@@ -428,6 +429,18 @@ class EmotionSystem:
             self.apply_influence("interaction_feedback", "calm", 0.1 * trend_multiplier, 0.5)
             self.apply_influence("interaction_feedback", "trust", 0.05 * trend_multiplier, 0.5)
 
+        # Track sustained negative interactions (C³ 6.0: cumulative feedback)
+        is_negative = had_error or response_success is False or engagement_ratio < 0.5
+        if is_negative:
+            self._sustained_negative_counter += 1
+        else:
+            self._sustained_negative_counter = 0
+
+        if self._sustained_negative_counter >= 3:
+            fatigue = 0.1 * self._sustained_negative_counter
+            self.apply_influence("cumulative_fatigue", "stress", fatigue, 1.0)
+            self.apply_influence("cumulative_fatigue", "sadness", fatigue * 0.5, 0.8)
+
         self._cap_emotion_history()
 
     def update_value_weight(self, dimension: ValueDimension, weight: float) -> None:
@@ -477,6 +490,7 @@ class EmotionSystem:
             "emotion_intensity": last.emotion_intensity,
             "valence": last.valence,
             "arousal": last.arousal,
+            "sustained_negative_counter": self._sustained_negative_counter,
         })
         return {
             "routing_mode": routing_mode,

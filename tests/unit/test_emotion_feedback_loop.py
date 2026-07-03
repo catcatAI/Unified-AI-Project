@@ -173,3 +173,81 @@ class TestProcessInteractionFeedback:
             f"Intensity {last.emotion_intensity} out of range"
         assert isinstance(last.primary_emotion, EmotionType), \
             f"Invalid emotion type: {last.primary_emotion}"
+
+    def test_sustained_low_engagement_resets_counter_on_recovery(self, emotion_system):
+        """After 2 low-engagement interactions, one good interaction resets the counter."""
+        es = emotion_system
+        for _ in range(2):
+            es.process_interaction_feedback(engagement_ratio=0.1, had_error=False)
+        es.process_interaction_feedback(engagement_ratio=3.0, had_error=False)
+        assert es._sustained_negative_counter == 0, \
+            "Counter should reset after positive interaction"
+
+
+class TestSustainedNegativeRouting:
+    """C³ 6.0: Verify that sustained low engagement actually flips routing_mode."""
+
+    def setup_method(self):
+        self.es = EmotionSystem()
+        self.es.apply_influence("setup", "calm", 0.5, 0.5)
+
+    def _get_routing_mode(self):
+        adj = self.es.get_behavioral_adjustment()
+        return adj.get("routing_mode", "neutral")
+
+    def test_single_low_engagement_does_not_flip_to_conservative(self):
+        """A single low-engagement event should not change routing_mode."""
+        for _ in range(3):
+            self.es.process_interaction_feedback(engagement_ratio=3.0, had_error=False)
+        # After 3 good, should be exploratory
+        assert self._get_routing_mode() == "exploratory", \
+            f"Expected exploratory after good feedback, got {self._get_routing_mode()}"
+
+        self.es.process_interaction_feedback(engagement_ratio=0.1, had_error=False)
+        # After 1 bad, should still be the same (no flip yet)
+        mode_after = self._get_routing_mode()
+
+    def test_three_low_engagement_in_row_flips_routing(self):
+        """Three consecutive low-engagement interactions should flip routing_mode."""
+        for _ in range(5):
+            self.es.process_interaction_feedback(engagement_ratio=0.1, had_error=False)
+        # After 5 low, counter >= 3 means cumulative fatigue should have flipped
+        mode = self._get_routing_mode()
+        assert mode == "conservative", \
+            f"Expected conservative after 5 low engagements, got {mode}"
+
+    def test_three_errors_in_row_flips_routing(self):
+        """Three consecutive errors should flip routing_mode."""
+        for _ in range(5):
+            self.es.process_interaction_feedback(engagement_ratio=1.0, had_error=True)
+        mode = self._get_routing_mode()
+        assert mode == "conservative", \
+            f"Expected conservative after 5 errors, got {mode}"
+
+    def test_sustained_negative_counter_tracks_accurately(self):
+        """The counter should track sustained negative interactions."""
+        assert self.es._sustained_negative_counter == 0
+        for _ in range(4):
+            self.es.process_interaction_feedback(engagement_ratio=0.1, had_error=False)
+        assert self.es._sustained_negative_counter == 4, \
+            f"Expected counter=4, got {self.es._sustained_negative_counter}"
+
+    def test_recovery_after_sustained_negative(self):
+        """After sustained negative, recovery should reset counter and restore routing."""
+        for _ in range(5):
+            self.es.process_interaction_feedback(engagement_ratio=0.1, had_error=False)
+        assert self._get_routing_mode() == "conservative"
+        # Recover with good feedback
+        for _ in range(4):
+            self.es.process_interaction_feedback(engagement_ratio=3.0, had_error=False)
+        assert self.es._sustained_negative_counter == 0
+        assert self._get_routing_mode() == "exploratory"
+
+    @pytest.mark.parametrize("count", [3, 5, 8])
+    def test_routing_flips_at_threshold_and_remains(self, emotion_system, count):
+        """Routing should flip and stay flipped as long as counter remains >= threshold."""
+        for _ in range(count):
+            emotion_system.process_interaction_feedback(engagement_ratio=0.1, had_error=False)
+        mode = emotion_system.get_behavioral_adjustment().get("routing_mode", "neutral")
+        assert mode == "conservative", \
+            f"Expected conservative after {count} low, got {mode}"
