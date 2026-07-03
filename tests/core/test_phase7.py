@@ -1,8 +1,13 @@
+import pytest
 
 try:
     from core.engine.state_matrix_adapter import StateMatrixAdapter, StateMatrixFacade
 except ImportError:
     import pytest; pytest.skip("StateMatrixAdapter is a stub", allow_module_level=True)
+
+def test_print_based_script():
+    pytest.skip("print-based diagnostics script")
+
 
 print("=== StateMatrixAdapter Smoke Test ===")
 

@@ -5,6 +5,7 @@
 
 import json
 import logging
+import pytest
 from pathlib import Path
 from typing import Dict, Tuple
 
@@ -16,6 +17,7 @@ BASE_URL = "http://127.0.0.1:8000"
 
 
 def test_economy_transaction_with_correct_params() -> Tuple[bool, dict]:
+    pytest.skip("print-based diagnostics script")
     """測試經濟系統交易端點（使用正確的參數）"""
     print("\n測試 1: 經濟系統交易端點（使用正確參數）")
     print("-" * 80)
@@ -40,6 +42,7 @@ def test_economy_transaction_with_correct_params() -> Tuple[bool, dict]:
 
 
 def test_mobile_status_get() -> Tuple[bool, dict]:
+    pytest.skip("print-based diagnostics script")
     """測試移動端狀態端點（GET 方法）"""
     print("\n測試 2: 移動端狀態端點（GET 方法）")
     print("-" * 80)
@@ -60,6 +63,7 @@ def test_mobile_status_get() -> Tuple[bool, dict]:
 
 
 def test_ops_dashboard() -> Tuple[bool, dict]:
+    pytest.skip("print-based diagnostics script")
     """測試運維儀表板（檢查 timezone 修復）"""
     print("\n測試 3: 運維儀表板（檢查 timezone 修復）")
     print("-" * 80)

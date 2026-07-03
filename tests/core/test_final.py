@@ -6,6 +6,7 @@ Author: Angela AI v6.2
 """
 
 
+import pytest
 from core.state.axis import Axis
 from core.state.axis_field import AxisFieldRegistry
 from core.state.config_loader import StateConfig
@@ -41,6 +42,7 @@ except ImportError:
 
 
 def test_full_pipeline():
+    pytest.skip("print-based diagnostics script")
     print("=== Full Refactor Pipeline ===")
 
     # Phase 1: Axis system

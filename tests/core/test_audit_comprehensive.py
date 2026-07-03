@@ -2,6 +2,7 @@
 Full system audit: comprehensive test of ALL Angela state system capabilities.
 """
 
+import pytest
 from core.state.axis_field import AxisFieldRegistry
 from core.state.temporal import SnapshotQuery, TemporalState
 
@@ -32,6 +33,10 @@ try:
     from ai.code_inspection.code_inspector_integration import CodeInspectorBridge, create_bridge
 except ImportError:
     import pytest; pytest.skip("CodeInspectorBridge does not exist", allow_module_level=True)
+
+def test_print_based_script():
+    pytest.skip("print-based diagnostics script")
+
 
 print("=" * 70)
 print("ANGELA STATE SYSTEM — COMPREHENSIVE AUDIT")

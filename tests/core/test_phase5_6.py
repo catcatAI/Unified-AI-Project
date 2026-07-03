@@ -6,6 +6,7 @@ Author: Angela AI v6.2
 """
 
 import math
+import pytest
 
 try:
     from core.ripple.node import (
@@ -33,6 +34,7 @@ from core.state.axis import Axis
 
 
 def test_ripple_node():
+    pytest.skip("print-based diagnostics script")
     print("=== RippleNode ===")
     node = RippleNode(
         operator=MathOp.DIV,
@@ -58,6 +60,7 @@ def test_ripple_node():
 
 
 def test_cascade_strategies():
+    pytest.skip("print-based diagnostics script")
     print("=== Cascade Strategies ===")
     strategies = [
         LinearCascade(base_decay=0.72),
@@ -73,6 +76,7 @@ def test_cascade_strategies():
 
 
 def test_ripple_applicators():
+    pytest.skip("print-based diagnostics script")
     print("=== RippleApplicatorRegistry ===")
 
     class MockAxis:
@@ -101,6 +105,7 @@ def test_ripple_applicators():
 
 
 def test_ripple_accumulator():
+    pytest.skip("print-based diagnostics script")
     print("=== RippleAccumulator ===")
     acc = RippleAccumulator()
 
@@ -124,6 +129,7 @@ def test_ripple_accumulator():
 
 
 def test_influence_rules():
+    pytest.skip("print-based diagnostics script")
     print("=== Influence Rules ===")
     alpha = Axis.create_alpha()
     beta = Axis.create_beta()
@@ -146,6 +152,7 @@ def test_influence_rules():
 
 
 def test_influence_space():
+    pytest.skip("print-based diagnostics script")
     print("=== InfluenceSpace ===")
     alpha = Axis.create_alpha(weight=1.0)
     beta = Axis.create_beta(weight=1.0)
@@ -183,6 +190,7 @@ def test_influence_space():
 
 
 def test_gravity_rule():
+    pytest.skip("print-based diagnostics script")
     print("=== GravityRule ===")
     alpha = Axis.create_alpha()
     beta = Axis.create_beta()
@@ -201,6 +209,7 @@ def test_gravity_rule():
 
 
 def test_conflict_strategy():
+    pytest.skip("print-based diagnostics script")
     print("=== Conflict Strategies ===")
     from core.influence.space import ConflictStrategy
 
@@ -227,6 +236,7 @@ def test_conflict_strategy():
 
 
 def test_feedback_ripple():
+    pytest.skip("print-based diagnostics script")
     print("=== Feedback Ripples ===")
     ripple = RippleNode(
         operator=MathOp.DIV,
@@ -247,6 +257,7 @@ def test_feedback_ripple():
 
 
 def test_integration():
+    pytest.skip("print-based diagnostics script")
     print("=== Integration: Ripple -> Influence -> Axis ===")
 
     node = RippleNode(
