@@ -121,3 +121,62 @@ class TestIntent3DMultiParameterMapping:
         beta_state = dli.state_matrix.get_state("beta")
         assert beta_state["focus"] > 0.5, "beta ix should increase focus"
         assert gamma_state["happiness"] == 0.5, "gamma not affected by beta intent"
+
+
+class TestDliC3Feedback:
+    """§X #140 — C³ 6.0: DLI feedback loop tests."""
+
+    @pytest.fixture
+    def dli(self):
+        return _make_dli()
+
+    def test_process_interaction_feedback_tracks_count(self, dli):
+        dli.process_interaction_feedback(0.8, True)
+        assert dli._interaction_feedback_count == 1
+        assert len(dli._engagement_window) == 1
+
+    def test_feedback_disables_visual_3d_on_low_engagement(self, dli):
+        from core.life.digital_life_integrator import ModalityType
+        dli.process_interaction_feedback(0.1, False)
+        dli.process_interaction_feedback(0.2, False)
+        assert not dli.modality_gateway.modalities[ModalityType.VISUAL_3D].is_active
+
+    def test_feedback_enables_visual_3d_on_high_engagement(self, dli):
+        from core.life.digital_life_integrator import ModalityType
+        # First disable it
+        dli.modality_gateway.disable_modality("visual_3d")
+        assert not dli.modality_gateway.modalities[ModalityType.VISUAL_3D].is_active
+        dli.process_interaction_feedback(1.5, True)
+        assert dli.modality_gateway.modalities[ModalityType.VISUAL_3D].is_active
+
+    def test_cns_subscription_attrs_exist(self, dli):
+        assert hasattr(dli, '_routing_outcomes')
+        assert hasattr(dli, '_engagement_window')
+
+    def test_dli_state_voter_no_context(self):
+        from ai.meta.priority_negotiator import dli_state_voter
+        assert dli_state_voter({}) is None
+
+    def test_dli_state_voter_dormant(self):
+        from ai.meta.priority_negotiator import dli_state_voter
+        r = dli_state_voter({"dli_state": {"life_cycle_state": "DORMANT"}})
+        assert r is not None
+        assert r.routing_mode == "conservative"
+        assert r.response_style == "minimal"
+
+    def test_dli_state_voter_mature_exploratory(self):
+        from ai.meta.priority_negotiator import dli_state_voter
+        r = dli_state_voter({"dli_state": {"life_cycle_state": "MATURE"}})
+        assert r is not None
+        assert r.routing_mode == "exploratory"
+
+    def test_dli_state_voter_initializing_neutral(self):
+        from ai.meta.priority_negotiator import dli_state_voter
+        r = dli_state_voter({"dli_state": {"life_cycle_state": "INITIALIZING"}})
+        assert r is not None
+        assert r.routing_mode == "neutral"
+
+    def test_dli_state_voter_growing_returns_none(self):
+        from ai.meta.priority_negotiator import dli_state_voter
+        r = dli_state_voter({"dli_state": {"life_cycle_state": "GROWING"}})
+        assert r is None

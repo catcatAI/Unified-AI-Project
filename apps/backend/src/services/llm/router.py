@@ -65,6 +65,7 @@ from ai.meta.priority_negotiator import (
     PriorityNegotiator,
     angela_emotion_voter,
     causal_voter,
+    dli_state_voter,
     emotional_voter,
     heartbeat_voter,
     intent_voter,
@@ -81,6 +82,7 @@ _negotiator.register_voter("angela_emotion", angela_emotion_voter, weight_fn=lam
 _negotiator.register_voter("causal", causal_voter, weight_fn=lambda ctx: 0.5)
 _negotiator.register_voter("meta_calibration", meta_calibration_voter, weight_fn=lambda ctx: 0.4)
 _negotiator.register_voter("heartbeat", heartbeat_voter, weight_fn=lambda ctx: 0.3)
+_negotiator.register_voter("dli_state", dli_state_voter, weight_fn=lambda ctx: 0.4)
 
 # 簡單日誌設置
 if __name__ == "__main__":
@@ -1148,6 +1150,16 @@ class AngelaLLMService:
             context["heartbeat_health"] = hb.get_system_health()
         except Exception:
             logger.debug("Heartbeat health unavailable")
+
+        # Inject DLI lifecycle state into context for PriorityNegotiator
+        try:
+            from api.lifespan import get_digital_life
+            dli = get_digital_life()
+            context["dli_state"] = {
+                "life_cycle_state": dli.life_cycle_state.name if hasattr(dli, "life_cycle_state") else "UNKNOWN",
+            }
+        except Exception:
+            logger.debug("DLI state unavailable")
 
         if self.llm_mode == "auto" and self.auto_selector is not None:
             try:

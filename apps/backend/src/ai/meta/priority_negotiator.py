@@ -274,3 +274,40 @@ def heartbeat_voter(context: Dict[str, Any]) -> Optional[VoterVote]:
         tokens_bias=int(health_bias * 50),
         confidence=abs(health_bias) + 0.3,
     )
+
+
+def dli_state_voter(context: Dict[str, Any]) -> Optional[VoterVote]:
+    """Extract DigitalLifeIntegrator lifecycle state as routing preference.
+
+    The DLI lifecycle state reflects Angela's long-term developmental phase.
+    Earlier states (INITIALIZING, AWAKENING) favor conservative/neutral
+    routing. Later states (MATURE, RESTING) allow exploratory routing.
+    DORMANT forces conservative.
+    """
+    dli = context.get("dli_state")
+    if not dli:
+        return None
+    state = dli.get("life_cycle_state", "").upper()
+    if state == "DORMANT":
+        return VoterVote(
+            routing_mode="conservative",
+            response_style="minimal",
+            temperature_bias=-0.3,
+            tokens_bias=-100,
+            confidence=0.8,
+        )
+    if state in ("INITIALIZING", "AWAKENING"):
+        return VoterVote(
+            routing_mode="neutral",
+            response_style="cautious",
+            confidence=0.5,
+        )
+    if state == "MATURE":
+        return VoterVote(
+            routing_mode="exploratory",
+            response_style="confident",
+            temperature_bias=0.1,
+            tokens_bias=50,
+            confidence=0.6,
+        )
+    return None

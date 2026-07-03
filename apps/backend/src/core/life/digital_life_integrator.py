@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum, auto
@@ -33,6 +34,7 @@ from core.bio.memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge
 from core.engine.action_executor import ActionExecutor
 from core.engine.state_matrix import StateMatrix4D
 from core.system.config.magic_numbers import loop_sleep
+from core.system.state_store.global_store import state_store
 
 from .autonomous_life_cycle import AutonomousLifeCycle
 from .dynamic_parameters import DynamicThresholdManager
@@ -153,6 +155,33 @@ class ModalityGateway:
             "all": all_modalities,
         }
 
+    def enable_modality(self, name: str) -> None:
+        for mod_type, state in self.modalities.items():
+            if mod_type.name.lower() == name.lower():
+                state.is_active = True
+                state.last_toggle = datetime.now()
+                logger.info(f"[Modality] {mod_type.name} enabled via feedback")
+                state_store.emit_event("modality.gate_updated", {
+                    "modality": mod_type.name, "active": True, "source": "dli_feedback",
+                })
+                return
+
+    def disable_modality(self, name: str) -> None:
+        for mod_type, state in self.modalities.items():
+            if mod_type.name.lower() == name.lower():
+                state.is_active = False
+                state.last_toggle = datetime.now()
+                logger.info(f"[Modality] {mod_type.name} disabled via feedback")
+                state_store.emit_event("modality.gate_updated", {
+                    "modality": mod_type.name, "active": False, "source": "dli_feedback",
+                })
+                return
+
+    def _update_gates_on_emotion(self, valence: float) -> None:
+        if valence < 0.3:
+            self.disable_modality("visual_3d")
+        elif valence > 0.7:
+            self.enable_modality("visual_3d")
 
 
 class LifeCycleState(Enum):
@@ -324,6 +353,12 @@ class DigitalLifeIntegrator:
         # [Task N.20.2] 模態閘控初始化
         self.modality_gateway = ModalityGateway()
 
+        # C³ 6.0: CNS event subscription → closed-loop feedback
+        self._routing_outcomes: deque = deque(maxlen=20)
+        self._engagement_window: deque = deque(maxlen=20)
+        self._interaction_feedback_count: int = 0
+        self._subscribe_cns_events()
+
     async def initialize(self) -> bool:
         """
         Initialize digital life with 2030-standard robust error handling.
@@ -414,6 +449,42 @@ class DigitalLifeIntegrator:
                     "expected_outcome": decision.expected_outcome,
                 },
             )
+
+    # ── C³ 6.0: CNS Event Subscription & Feedback ───────────────────────
+
+    def _subscribe_cns_events(self) -> None:
+        state_store.subscribe_event("routing.response_generated", self._handle_cns_event, priority=6)
+        state_store.subscribe_event("emotion.updated", self._handle_cns_event, priority=6)
+        state_store.subscribe_event("lifecycle.decision_executed", self._handle_cns_event, priority=6)
+
+    def _handle_cns_event(self, event_type: str, payload: dict) -> None:
+        if event_type == "routing.response_generated":
+            self._routing_outcomes.append(1.0)
+        elif event_type == "emotion.updated":
+            valence = payload.get("valence", 0.5)
+            self._engagement_window.append(valence)
+            self.modality_gateway._update_gates_on_emotion(valence)
+        elif event_type == "lifecycle.decision_executed":
+            self._routing_outcomes.append(1.0 if payload.get("success", False) else 0.0)
+
+    def process_interaction_feedback(self, engagement_ratio: float, success: bool) -> None:
+        """Receive interaction outcome feedback to adjust DLI internal state.
+
+        C³ 6.0: Closes the DLI→routing→interaction→DLI feedback loop.
+        """
+        self._engagement_window.append(engagement_ratio)
+        self._interaction_feedback_count += 1
+        avg_engagement = sum(self._engagement_window) / len(self._engagement_window)
+        if avg_engagement < 0.4:
+            self.modality_gateway.disable_modality("visual_3d")
+        elif avg_engagement > 1.2:
+            self.modality_gateway.enable_modality("visual_3d")
+        state_store.emit_event("dli.feedback_processed", {
+            "engagement_ratio": engagement_ratio,
+            "success": success,
+            "avg_engagement": round(avg_engagement, 3),
+            "feedback_count": self._interaction_feedback_count,
+        })
 
     async def shutdown(self) -> None:
         """Shutdown digital life and all subsystems"""
@@ -588,6 +659,13 @@ class DigitalLifeIntegrator:
             except Exception as e:
                 # broad except acceptable: callback errors must not break state transitions
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
+
+        # C³ 6.0: Emit CNS event for state change
+        state_store.emit_event("dli.state_changed", {
+            "old_state": old_state.name,
+            "new_state": new_state.name,
+            "description": f"Transitioned from {old_state.en_name} to {new_state.en_name}",
+        })
 
     async def _apply_state_behaviors(self, state: LifeCycleState) -> None:
         """Apply behaviors specific to life cycle state"""

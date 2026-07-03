@@ -109,6 +109,8 @@
 | **MetaController C³ 5.0→6.0 (§X #136)** | Registered as PriorityNegotiator voter: meta_calibration_voter() translates get_weighted_adjustment() into temperature/tokens bias. +7 tests (4,992→4,999). | meta_controller.py, priority_negotiator.py, router.py | ✅ Done (§X #136) |
 | **EmotionSystem C³ 5.0→6.0 (§X #137)** | Sustained negative feedback accumulation: _sustained_negative_counter + cumulative fatigue when ≥3 consecutive negative interactions. +10 tests (4,999→5,009). | emotion_system.py | ✅ Done (§X #137) |
 | **AutonomousLifeCycle C³ 4.5→6.0 (§X #138)** | Interaction outcome feedback loop: feed_interaction_outcome() tracks 20-sample rolling window, avg_interaction_quality dynamically overrides routing_mode. +7 tests (5,009→5,014). | autonomous_life_cycle.py | ✅ Done (§X #138) |
+| **MetabolicHeartbeat C³ 5.0→6.0 (§X #139)** | CNS event subscription feedback loop: subscribe to emotion.updated/routing/lifecycle → _recompute_system_health() → heartbeat_voter (7th PriorityNegotiator voter). +10 tests (5,014→5,024). | heartbeat.py, lifespan.py, priority_negotiator.py, router.py | ✅ Done (§X #139) |
+| **DigitalLifeIntegrator C³ 5.0→6.0 (§X #140)** | CNS event subscription + process_interaction_feedback() → ModalityGateway gating + dli_state_voter (8th voter) mapping life_cycle_state→routing_mode + awareness injection wired into prompt_builder. +9 tests (5,024→5,033). | digital_life_integrator.py, priority_negotiator.py, router.py, prompt_builder.py, chat_routes.py | ✅ Done (§X #140) |
 ### 1.2 無法驗證的優勢（數據不足）
 
 | 宣稱 | 實際狀態 | 需要什麼數據 | 門檻 |

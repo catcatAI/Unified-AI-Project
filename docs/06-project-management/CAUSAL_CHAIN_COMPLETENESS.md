@@ -293,13 +293,17 @@ async def _update_spatial_state(self, arousal, stress):
 - 鏈雖長但不夠寬（只影響移動和心跳，不影響其他系統）
 - 創傷反應是 fire-and-forget（無人消費其結果）
 
-### 3.6 DigitalLifeIntegrator (380L) — 🟡 C³ = 5.0/10 (was 4.5/10, ✅ fixed 2026-06-30)
+### 3.6 DigitalLifeIntegrator (380L) — 🟢 C³ = 6.0/10 (was 5.0/10, §X #140)
 
-**修復摘要 (commit 2026-06-29)**: 為 INITIALIZING, AWAKENING, DORMANT 三個遺漏狀態加入實際行為。現在所有 6 個狀態都有 distinct 的行為邏輯。
-**§X #71 (2026-06-30)**: DORMANT auto-transition 已加入。兩個自動進入路徑：
-1. **時間基礎**: RESTING + 無活動 > `dormant_threshold_minutes`（預設 120min）→ DORMANT
-2. **成熟度基礎**: RESTING + maturity < 0.2 → DORMANT（深度休眠節能）
-7 個測試驗證轉換邏輯。C³ 更新: 4.5→5.0/10（完整的狀態機循環: MATURE→RESTING→DORMANT 現在是閉合的）。
+**§X #71 (2026-06-30)**: DORMANT auto-transition 已加入。所有 6 個狀態都有 distinct 行為邏輯。
+
+**§X #140 (2026-07-03)**: C³ 6.0 閉環提升:
+1. **CNS 事件訂閱**: 訂閱 routing.response_generated / emotion.updated / lifecycle.decision_executed
+2. **互動回饋閉環**: `process_interaction_feedback(engagement_ratio, success)` → 根據平均參與度動態調整 ModalityGateway (低參與→關閉 VISUAL_3D，高參與→開啟)
+3. **PriorityNegotiator voter**: `dli_state_voter` 讀取 life_cycle_state (DORMANT→conservative, MATURE→exploratory)
+4. **Self-awareness prompt 注入**: `get_awareness_injection()` 已接線至 prompt_builder (C³ 6.0 之前是死代碼)
+5. **CNS 事件發射**: `dli.state_changed` (狀態轉換時), `dli.feedback_processed` (回饋處理時)
+6. **CNS 事件發射**: `modality.gate_updated` (ModalityGateway enable/disable 時)
 
 ```python
 LifeCycleState:
@@ -493,7 +497,7 @@ prompt += f"Current emotional state: {emotion_summary}"
 |:-----|:--------:|:-------:|:--------:|:------:|:-----:|:-----:|
 | **Heartbeat → Bio → Spatial** | ✅完整 | **6.0/10** (was 5.0, §X #139) | 8/10 | 3 | 30% | 🟢 CNS 事件訂閱 + 系統健康分數閉環反饋 (§X #139) |
 | **ExecutionGate → Pipeline** | ✅完整 | **6.0/10** (was 5.0, §X #95) | 8/10 | 3 | 100% | 🟢 執行結果回饋閉環 (auto-execute + confirm-path): record_result() 成功/失敗 → 動態調整有效閾值 (§X #84+§X #95) |
-| **DigitalLifeIntegrator** | ✅完整 | **5.0/10** (was 4.5, §X #71) | 8/10 | 2 | 60% | 🟡 6/6 狀態有行為 + DORMANT auto-transition (commit `7b86cf28b`) |
+| **DigitalLifeIntegrator** | ✅完整 | **6.0/10** (was 5.0, §X #140) | 8/10 | 3 | 60% | 🟢 CNS 事件訂閱 + 互動回饋閉環 + dli_state_voter + awareness 注入 (§X #140) |
 | **MetaController** | ✅完整 | **6.0/10** (was 5.0, §X #136) | 8/10 | 3 | 60% | 🟢 已登錄為 PriorityNegotiator 投票者 — calibration adjustment → temperature/tokens bias → 影響所有路由決策 (§X #136) |
 | **EmotionSystem** | ✅完整 | **6.0/10** (was 5.0, §X #137) | 9/10 | 4 | 60% | 🟢 持續消極互動累積 — _sustained_negative_counter ≥ 3 時累積疲勞(stress/sadness)放大效果，確保 routing_mode 真正翻轉為 conservative；正常互動後歸零 (§X #137) |
 | **AutonomousLifeCycle** | ✅完整 | **6.0/10** (was 5.0, §X #138) | 9/10 | 3 | 60% | 🟢 互動結果回饋閉環 — feed_interaction_outcome() 追蹤 20 次滑動視窗的 engagement/success，根據 avg_interaction_quality 動態覆寫 routing_mode (高品質→保守翻轉為探索，低品質→探索降為中立)；保存跨重啟 (§X #138) |

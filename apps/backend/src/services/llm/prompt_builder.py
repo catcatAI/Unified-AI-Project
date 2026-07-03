@@ -257,6 +257,7 @@ def construct_angela_prompt(
     _append_causal_insights(messages, context)
     _append_emotional_behavior(messages, context)
     _append_modality_state(messages, context)
+    _append_awareness_injection(messages, context)
     _append_draft_response(messages, context)
 
     messages.append({"role": "user", "content": f"<user_message>{user_message}</user_message>"})
@@ -564,6 +565,19 @@ def _append_modality_state(messages: List[Dict], context: Dict) -> None:
             block += "\n  → Code analysis is disabled (no current coding task)"
     block += "\n"
     messages[0]["content"] += block
+
+
+def _append_awareness_injection(messages: List[Dict], context: Dict) -> None:
+    """Append DLI self-awareness injection to the system prompt.
+
+    Reads context["awareness_injection"] — a structured self-awareness
+    string from DigitalLifeIntegrator combining StateMatrix, Bio, and
+    Lifecycle metrics. Closes the DLI→prompt C³ chain.
+    """
+    injection = context.get("awareness_injection")
+    if not injection:
+        return
+    messages[0]["content"] += f"\n\n[Self-Awareness]\n{injection}\n"
 
 
 def _append_draft_response(messages: List[Dict], context: Dict) -> None:

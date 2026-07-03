@@ -997,6 +997,13 @@ async def _handle_chat_request(
                 )
         except Exception as e:
             logger.debug(f"Modality state unavailable: {e}")
+        # Step 5f: Inject DLI awareness injection into context (C³ 6.0)
+        try:
+            dli = get_digital_life()
+            if dli:
+                context["awareness_injection"] = dli.get_awareness_injection()
+        except Exception as e:
+            logger.debug(f"Awareness injection unavailable: {e}")
     if crisis_level > 0:
         context["crisis_level"] = crisis_level
         context["crisis_instruction"] = (
