@@ -35,6 +35,7 @@ _causal_reasoning_instance = None
 _level5_asi_instance = None
 _training_coordinator_instance = None
 _lifecycle_instance = None
+_heartbeat_instance = None
 
 # --- Config (lazy proxy) ---
 class _LazyAngelaConfig:
@@ -298,6 +299,20 @@ def get_lifecycle():
     return _lifecycle_instance
 
 
+def get_metabolic_heartbeat():
+    """Get or create the MetabolicHeartbeat singleton."""
+    global _heartbeat_instance
+    if _heartbeat_instance is None:
+        try:
+            from core.life.heartbeat import MetabolicHeartbeat
+            _heartbeat_instance = MetabolicHeartbeat()
+            logger.info("[Heartbeat] Shared singleton initialized")
+        except Exception as e:
+            logger.warning(f"[Heartbeat] Initialization failed: {e}")
+            raise
+    return _heartbeat_instance
+
+
 def get_training_coordinator():
     """Get or create the TrainingCoordinator singleton."""
     global _training_coordinator_instance
@@ -429,7 +444,21 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception:
         logger.debug("[LifeCycle] Pre-init skipped — will lazily initialize on first use")
 
+    # Initialize heartbeat singleton (C³ 6.0: start during lifespan)
+    try:
+        hb = get_metabolic_heartbeat()
+        await hb.start()
+        logger.info("[Heartbeat] MetabolicHeartbeat started during lifespan")
+    except Exception:
+        logger.debug("[Heartbeat] Pre-init skipped — will lazily initialize on first use")
+
     yield
 
     _shutdown_services(_broadcast_task, _module_manager)
+    # Stop heartbeat on shutdown
+    try:
+        hb_inst = get_metabolic_heartbeat()
+        await hb_inst.stop()
+    except Exception:
+        pass
 

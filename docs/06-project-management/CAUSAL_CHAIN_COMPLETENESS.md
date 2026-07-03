@@ -257,7 +257,7 @@ class EmotionSystem:
 
 **Closed-loop rate**: 100% (both auto-execute and confirm-path now wired).
 
-### 3.6 Heartbeat (MetabolicHeartbeat) — 🟢 C³ = 5.0/10
+### 3.6 Heartbeat (MetabolicHeartbeat) — 🟢 C³ = 6.0/10
 
 ```python
 # 目前最完整的因果鏈
@@ -287,11 +287,11 @@ async def _update_spatial_state(self, arousal, stress):
 - stress → arousal → 行為改變（移動速度、目標位置）✅
 - 碰撞偵測 → 創傷反應 ✅
 - 環境偵測 → 激素調整 ✅
+- **CNS 事件訂閱閉環 (§X #139)**: 訂閱 emotion.updated / routing.response_generated / lifecycle.decision_executed → 計算 system_health_score → 注入 heartbeat.pulse → PriorityNegotiator heartbeat_voter 根據健康分數影響路由 ✅
 
 **不足**:
 - 鏈雖長但不夠寬（只影響移動和心跳，不影響其他系統）
 - 創傷反應是 fire-and-forget（無人消費其結果）
-- 沒有全域行為調整（如「太累了所以降低探索慾望」）
 
 ### 3.6 DigitalLifeIntegrator (380L) — 🟡 C³ = 5.0/10 (was 4.5/10, ✅ fixed 2026-06-30)
 
@@ -491,7 +491,7 @@ prompt += f"Current emotional state: {emotion_summary}"
 
 | 組件 | 之前宣稱 | 實際 C³ | 基礎架構 | 鏈深度 | 閉環率 | 真實度 |
 |:-----|:--------:|:-------:|:--------:|:------:|:-----:|:-----:|
-| **Heartbeat → Bio → Spatial** | ✅完整 | **5.0/10** | 8/10 | 3 | 30% | 🟢 唯一接近真實的 |
+| **Heartbeat → Bio → Spatial** | ✅完整 | **6.0/10** (was 5.0, §X #139) | 8/10 | 3 | 30% | 🟢 CNS 事件訂閱 + 系統健康分數閉環反饋 (§X #139) |
 | **ExecutionGate → Pipeline** | ✅完整 | **6.0/10** (was 5.0, §X #95) | 8/10 | 3 | 100% | 🟢 執行結果回饋閉環 (auto-execute + confirm-path): record_result() 成功/失敗 → 動態調整有效閾值 (§X #84+§X #95) |
 | **DigitalLifeIntegrator** | ✅完整 | **5.0/10** (was 4.5, §X #71) | 8/10 | 2 | 60% | 🟡 6/6 狀態有行為 + DORMANT auto-transition (commit `7b86cf28b`) |
 | **MetaController** | ✅完整 | **6.0/10** (was 5.0, §X #136) | 8/10 | 3 | 60% | 🟢 已登錄為 PriorityNegotiator 投票者 — calibration adjustment → temperature/tokens bias → 影響所有路由決策 (§X #136) |

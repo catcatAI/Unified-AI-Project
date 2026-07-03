@@ -253,3 +253,24 @@ def meta_calibration_voter(context: Dict[str, Any]) -> Optional[VoterVote]:
         tokens_bias=tokens_bias,
         confidence=round(confidence, 3),
     )
+
+
+def heartbeat_voter(context: Dict[str, Any]) -> Optional[VoterVote]:
+    """Extract Heartbeat system health as a confidence multiplier.
+
+    When system health is low (<0.3), biases toward conservative routing
+    (the system is stressed/unstable). When health is high (>0.7), allows
+    more exploratory routing. The effect scales proportionally.
+    """
+    hb = context.get("heartbeat_health")
+    if not hb:
+        return None
+    health = hb.get("system_health", 0.5)
+    health_bias = round((health - 0.5) * 2.0, 3)
+    return VoterVote(
+        routing_mode="conservative" if health < 0.3 else None,
+        response_style=None,
+        temperature_bias=health_bias * 0.5,
+        tokens_bias=int(health_bias * 50),
+        confidence=abs(health_bias) + 0.3,
+    )

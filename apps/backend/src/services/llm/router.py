@@ -66,6 +66,7 @@ from ai.meta.priority_negotiator import (
     angela_emotion_voter,
     causal_voter,
     emotional_voter,
+    heartbeat_voter,
     intent_voter,
     lifecycle_voter,
     meta_calibration_voter,
@@ -79,6 +80,7 @@ _negotiator.register_voter("intent", intent_voter, weight_fn=lambda ctx: 0.6)
 _negotiator.register_voter("angela_emotion", angela_emotion_voter, weight_fn=lambda ctx: 0.9)
 _negotiator.register_voter("causal", causal_voter, weight_fn=lambda ctx: 0.5)
 _negotiator.register_voter("meta_calibration", meta_calibration_voter, weight_fn=lambda ctx: 0.4)
+_negotiator.register_voter("heartbeat", heartbeat_voter, weight_fn=lambda ctx: 0.3)
 
 # 簡單日誌設置
 if __name__ == "__main__":
@@ -1138,6 +1140,14 @@ class AngelaLLMService:
                 context["meta_calibration"] = {"weighted_adjustment": adj}
             except Exception:
                 logger.debug("MetaController calibration unavailable")
+
+        # Inject Heartbeat system health into context for PriorityNegotiator
+        try:
+            from api.lifespan import get_metabolic_heartbeat
+            hb = get_metabolic_heartbeat()
+            context["heartbeat_health"] = hb.get_system_health()
+        except Exception:
+            logger.debug("Heartbeat health unavailable")
 
         if self.llm_mode == "auto" and self.auto_selector is not None:
             try:

@@ -7,8 +7,9 @@
 
 import asyncio
 import logging
+from collections import deque
 from datetime import datetime
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from core.bio.biological_integrator import BiologicalIntegrator
 from core.bio.endocrine_system import HormoneType
@@ -45,6 +46,14 @@ class MetabolicHeartbeat:
         self._beh_cfg = _gc("standard/behavior/behavior")
         self.velocity = self._beh_cfg.get("movement", {}).get("base_velocity", 0.05)
         self.posture = {"spine_bend": 0.0, "theta_matrix": [0.0]*9}
+
+        # C³ 6.0: CNS event subscriptions → closed-loop feedback
+        self._system_health_score: float = 0.5
+        self._response_quality: deque = deque(maxlen=10)
+        self._emotion_stability: deque = deque(maxlen=10)
+        self._lifecycle_success: deque = deque(maxlen=10)
+        self._health_update_count: int = 0
+        self._subscribe_cns_events()
 
     async def _integration_loop(self) -> None:
         """Integration loop."""
@@ -101,6 +110,45 @@ class MetabolicHeartbeat:
             except Exception as e:
                 logger.error(f"[Cerebellum-Sync] Loop error: {e}", exc_info=True)
                 await asyncio.sleep(loop_sleep("sleep_long", 1.0))
+
+    def _subscribe_cns_events(self) -> None:
+        state_store.subscribe_event("emotion.updated", self._handle_cns_event, priority=5)
+        state_store.subscribe_event("routing.response_generated", self._handle_cns_event, priority=5)
+        state_store.subscribe_event("lifecycle.decision_executed", self._handle_cns_event, priority=5)
+
+    def _handle_cns_event(self, event_type: str, payload: Dict[str, Any]) -> None:
+        if event_type == "emotion.updated":
+            arousal = payload.get("arousal", 0.5)
+            valence = payload.get("valence", 0.5)
+            stability = 1.0 - min(1.0, abs(valence - 0.5) * 2 + abs(arousal - 0.5))
+            self._emotion_stability.append(stability)
+        elif event_type == "routing.response_generated":
+            self._response_quality.append(1.0)
+        elif event_type == "lifecycle.decision_executed":
+            success = payload.get("success", False)
+            self._lifecycle_success.append(1.0 if success else 0.0)
+        self._recompute_system_health()
+
+    def _recompute_system_health(self) -> None:
+        scores = []
+        if self._emotion_stability:
+            scores.append(sum(self._emotion_stability) / len(self._emotion_stability))
+        if self._response_quality:
+            scores.append(sum(self._response_quality) / len(self._response_quality))
+        if self._lifecycle_success:
+            scores.append(sum(self._lifecycle_success) / len(self._lifecycle_success))
+        if scores:
+            self._system_health_score = sum(scores) / len(scores)
+        self._health_update_count += 1
+
+    def get_system_health(self) -> Dict[str, Any]:
+        return {
+            "system_health": round(self._system_health_score, 3),
+            "health_update_count": self._health_update_count,
+            "emotion_stability_samples": len(self._emotion_stability),
+            "response_quality_samples": len(self._response_quality),
+            "lifecycle_success_samples": len(self._lifecycle_success),
+        }
 
     async def start(self) -> None:
         """Start the metabolic heartbeat loop."""
@@ -161,6 +209,7 @@ class MetabolicHeartbeat:
                     "stress": round(stress, 3),
                     "arousal": round(arousal, 3),
                     "dynamic_interval": round(dynamic_interval, 3),
+                    "system_health": round(self._system_health_score, 3),
                 })
                 
                 # --- NEW: Spatial Decision Making ---
