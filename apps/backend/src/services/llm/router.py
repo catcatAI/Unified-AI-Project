@@ -61,6 +61,22 @@ from services.llm.providers.openai import OpenAIAPIBackend
 from services.llm.providers.registry import LLMBackend
 
 from core.system.state_store.global_store import state_store
+from ai.meta.priority_negotiator import (
+    PriorityNegotiator,
+    angela_emotion_voter,
+    causal_voter,
+    emotional_voter,
+    intent_voter,
+    lifecycle_voter,
+)
+
+# PriorityNegotiator singleton — registered once at import time
+_negotiator = PriorityNegotiator()
+_negotiator.register_voter("lifecycle", lifecycle_voter, weight_fn=lambda ctx: 0.8)
+_negotiator.register_voter("emotional", emotional_voter, weight_fn=lambda ctx: 0.7)
+_negotiator.register_voter("intent", intent_voter, weight_fn=lambda ctx: 0.6)
+_negotiator.register_voter("angela_emotion", angela_emotion_voter, weight_fn=lambda ctx: 0.9)
+_negotiator.register_voter("causal", causal_voter, weight_fn=lambda ctx: 0.5)
 
 # 簡單日誌設置
 if __name__ == "__main__":
@@ -1151,25 +1167,13 @@ class AngelaLLMService:
             except Exception as e:
                 logger.warning(f"[auto] 動態決策失敗: {e}，使用默認參數", exc_info=True)
 
-        routing_mode = None
-        # Priority 1: Lifecycle behavioral adjustment (base/default routing from life phase)
-        lifecycle_behavior = context.get("lifecycle_behavior")
-        if lifecycle_behavior:
-            routing_mode = lifecycle_behavior.get("routing_mode")
-        # Priority 2: Emotional behavior (user emotion → overrides lifecycle base)
-        behavior = context.get("emotional_behavior")
-        if behavior:
-            routing_mode = behavior.get("routing_mode")
-        # Priority 2.5: Intent routing adjustment (C³ 4.0→5.0)
-        intent_routing = context.get("intent_routing")
-        if intent_routing:
-            routing_mode = intent_routing.get("routing_mode")
-        # Priority 3: Angela's internal emotion (overrides both above)
-        angela_emotion = context.get("angela_emotion")
-        if angela_emotion:
-            angela_routing = angela_emotion.get("routing_mode")
-            if angela_routing:
-                routing_mode = angela_routing
+        # PriorityNegotiator: weighted fusion replaces hardcoded priority chain
+        # Each voter (lifecycle, emotional, intent, angela_emotion, causal)
+        # votes for routing_mode/response_style with confidence weight.
+        # Categorical fields use weighted plurality; numeric fields use weighted averaging.
+        decision = _negotiator.resolve(context)
+
+        routing_mode = decision.get("routing_mode")
         if routing_mode == "conservative":
             gen_temperature = max(0.1, gen_temperature - 0.3)
             gen_max_tokens = min(gen_max_tokens, 384)
@@ -1177,29 +1181,23 @@ class AngelaLLMService:
             gen_temperature = min(1.5, gen_temperature + 0.3)
             gen_max_tokens = max(gen_max_tokens, 768)
 
-        # Priority 3.5: Causal routing adjustment (C³ closed-loop — predictions affect params)
-        causal_routing = context.get("causal_routing")
-        if causal_routing:
-            temp_bias = causal_routing.get("temperature_bias", 0.0)
-            tokens_bias = causal_routing.get("max_tokens_bias", 0)
-            if causal_routing.get("causal_confidence", 0) > 0.3:
-                gen_temperature = max(0.1, min(1.5, gen_temperature + temp_bias))
-                gen_max_tokens = max(128, min(1024, gen_max_tokens + tokens_bias))
-                logger.debug(
-                    f"[causal_routing] Applied temp_bias={temp_bias:+.3f}, "
-                    f"tokens_bias={tokens_bias:+d} → "
-                    f"temperature={gen_temperature:.2f}, max_tokens={gen_max_tokens} — "
-                    f"{causal_routing.get('effective_guidance', '')}"
-                )
+        temp_bias = decision.get("temperature_bias", 0.0)
+        tokens_bias = decision.get("tokens_bias", 0)
+        if abs(temp_bias) > 0.001 or tokens_bias != 0:
+            gen_temperature = max(0.1, min(1.5, gen_temperature + temp_bias))
+            gen_max_tokens = max(128, min(1024, gen_max_tokens + tokens_bias))
+            logger.debug(
+                f"[causal_routing] Applied temp_bias={temp_bias:+.3f}, "
+                f"tokens_bias={tokens_bias:+d} → "
+                f"temperature={gen_temperature:.2f}, max_tokens={gen_max_tokens}"
+            )
 
         state_store.emit_event("routing.context_prepared", {
             "routing_mode": routing_mode,
             "temperature": round(gen_temperature, 2),
             "max_tokens": gen_max_tokens,
-            "lifecycle": lifecycle_behavior.get("routing_mode") if lifecycle_behavior else None,
-            "emotional": behavior.get("routing_mode") if behavior else None,
-            "intent": intent_routing.get("routing_mode") if intent_routing else None,
-            "angela_emotion": angela_emotion.get("routing_mode") if angela_emotion else None,
+            "resolved_by": decision.get("resolved_by"),
+            "voter_contributions": decision.get("voter_contributions"),
         })
         return None, GenerationParams(gen_timeout, gen_temperature, gen_max_tokens)
 

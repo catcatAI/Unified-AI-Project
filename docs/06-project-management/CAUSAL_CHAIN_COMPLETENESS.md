@@ -422,7 +422,7 @@ async def _apply_state_behaviors(self, state):
 | 5 | **IntentModel.generate_homeostatic_intents → pass** | 意圖系統不完整 | ✅ **FIXED** (commit `e713db0e0`) — both stubs now real |
 | 6 | **LifeCycle 3/6 states 無行為** | 生命週期不完整 | ✅ **FIXED** (commit `this commit`) — all 6 states now have distinct behaviors |
 | 7 | **8 條獨立閉環無統一狀態匯流排** | Emotion、LifeCycle、Causal、MetaController、Intent、ExecutionGate、Heartbeat、Router 各自為政，彼此不交換狀態 | ✅ **FIXED** (§X #131) — GlobalStateStore 已升級事件總線。8/8 閉環已接入，18 CNS event types: Emotion(2), LifeCycle(2), Causal(2), Meta(3), Intent(2), ExecutionGate(2), Heartbeat(2), Router(2) |
-| 8 | **router.py 硬編碼 Priority 鏈無衝突協商** | 當 Emotion 說「探索」、LifeCycle 說「保守」時，Priority 硬壓（P1 lifecycle、P2 emotion），沒有真正的加權融合 | ⏳ **PENDING** — 需 PriorityNegotiator: MetaController weighted aggregation → 通用投票器 |
+| 8 | **router.py 硬編碼 Priority 鏈無衝突協商** | 當 Emotion 說「探索」、LifeCycle 說「保守」時，Priority 硬壓（P1 lifecycle、P2 emotion），沒有真正的加權融合 | ✅ **FIXED** (§X #133) — PriorityNegotiator 取代硬編碼鏈：weighted plurality 分類投票 + weighted average 數值融合，5 default voters 已註冊 |
 
 ### 4.3 虛假完成案例（具體代碼）
 
@@ -632,7 +632,7 @@ After:  record → calculate → auto-apply threshold adjustment → behavior ch
 
 **Causal depth 更新**: 5.0→**6.0/10**（8/8 閉環全部透過 CNS 事件總線交換狀態）
 
-### 6.7 P2（中期）— 衝突協商器（PriorityNegotiator）
+### 6.7 P2（中期）— 衝突協商器（PriorityNegotiator）✅（已修復 2026-07-03, §X #133）
 
 **目標**: 取代 router.py `_prepare_generation_context()` 的硬編碼 Priority 1→3.5 鏈
 
@@ -651,11 +651,14 @@ After:   Voter 1: LifeCycle → routing_mode="conservative", weight=0.8
          → PriorityNegotiator.weighted_fusion() → routing_mode="neutral" (weighted average)
 ```
 
-**實作步驟**:
-1. 從 `MetaController.get_weighted_adjustment()` 提取 reliability-weighted aggregation 為通用 `PriorityNegotiator`
-2. `register_voter(name, get_adjustment, weight_fn)` API
-3. router.py `_prepare_generation_context()` 改為查詢 PriorityNegotiator
-4. 每個來源（lifecycle/emotion/intent/causal）作為 voter 註冊自己的 `routing_mode` + `confidence`
+**實作**: ✅ **DONE**
+1. ✅ `PriorityNegotiator` 類 — weighted plurality 分類投票 + weighted average 數值融合
+2. ✅ `register_voter(name, vote_fn, weight_fn)` / `unregister_voter(name)` API
+3. ✅ 5 default voters: lifecycle_voter, emotional_voter, intent_voter, angela_emotion_voter, causal_voter（each 從 context dict 提取）
+4. ✅ VoterVote dataclass — routing_mode, response_style, temperature_bias, tokens_bias, confidence
+5. ✅ router.py `_prepare_generation_context()` 改用 `_negotiator.resolve(context)` 取代硬編碼 Priority 1→3.5
+6. ✅ Error isolation — 單一 voter 失敗不影響其他
+7. ✅ 25 tests（VoterVote ×2, PriorityNegotiator ×13, DefaultVoterFunctions ×10）
 
 ---
 
