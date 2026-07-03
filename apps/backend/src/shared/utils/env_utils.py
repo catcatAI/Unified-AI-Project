@@ -32,7 +32,11 @@ def get_float_env(key: str, default: float = 0.0) -> float:
     if val is None:
         return default
     try:
-        return float(val)
+        result = float(val)
+        if result != result:  # NaN check (NaN != NaN)
+            logger.warning(f"[EnvUtils] Invalid float env '{key}': {val}")
+            return default
+        return result
     except (ValueError, TypeError):
         logger.warning(f"[EnvUtils] Invalid float env '{key}': {val}")
         return default
