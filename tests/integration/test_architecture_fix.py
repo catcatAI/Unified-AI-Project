@@ -9,9 +9,16 @@ Angela AI 架構修復測試腳本
 4. P0-4: 記憶系統與情感系統整合
 """
 
+import pytest
+
+# §X #147: Print-based diagnostic script with no pytest assertions
+pytest.skip("print-based diagnostic script", allow_module_level=True)
+
 import asyncio
 import json
 import logging
+import os
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List

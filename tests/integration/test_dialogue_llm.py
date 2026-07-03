@@ -3,6 +3,11 @@
 Angela AI 對話功能和 LLM 集成測試腳本
 """
 
+import pytest
+
+# §X #147: Print-based diagnostic script, requires running server
+pytest.skip("print-based diagnostic script, requires running server", allow_module_level=True)
+
 import json
 import logging
 import time

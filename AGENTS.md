@@ -7,7 +7,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: en
-   LAST_MODIFIED: 2026-07-02
+   LAST_MODIFIED: 2026-07-04
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -151,6 +151,8 @@ pre-commit run --all-files
 > ✅ **NOTE (Updated 2026-07-03, §X #145)**: **§X #145**: Test quality — added proper skip guards to 7 false-positive test files (0 asserts, print-based diagnostic, or require running server). Files: test_base_agent_simple.py, verify_all_agents.py, run_fixed_tests.py, quick_test_concept_models.py, test_websocket.py, test_websocket_comprehensive.py. Fixed test_gmqtt_mock.py — added missing `@pytest.mark.asyncio` decorator + fixed class/def spacing. Net: -2 tests (5,036→**5,034 tests collected (tests/) — 0 errors**).
 >
 > ✅ **NOTE (Updated 2026-07-03, §X #146)**: **§X #146**: Test quality — added proper skip guards to 5 more false-positive test files (print-based, 0 asserts). Files: test_data_analysis_debug.py, test_rovodev_integration.py, verify_fixes.py, verify_phase14_concurrency.py, test_integration.py (shared). Net: -6 tests (5,034→**5,028 tests collected (tests/) — 0 errors**).
+>
+> ✅ **NOTE (Updated 2026-07-04, §X #147)**: **§X #147**: Test quality — added proper skip guards to 4 more false-positive test files (print-based diagnostic scripts with 0 asserts, require running server). Files: test_api.py (bare HTTP request script), test_architecture_fix.py (print-based diagnostic + fixed pre-existing missing os/sys imports), test_dialogue_llm.py (requires running server), test_server.py (bare server check script). All four had no pytest test functions — skip guards prevent future false-positive collection. **5,028 tests collected (tests/) — 0 errors.**
 
 >
 > - **Phase A1-A4: External dictionary download + convert + import pipeline

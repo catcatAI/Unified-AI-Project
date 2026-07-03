@@ -4,10 +4,10 @@
 自动生成的测试模块,用于验证系统功能。
 """
 
-#!/usr/bin/env python3
-"""
-简单的测试服务器脚本
-"""
+import pytest
+
+# §X #147: Bare diagnostic script with no assertions, requires running server
+pytest.skip("print-based diagnostic script, requires running server", allow_module_level=True)
 
 import logging
 import os
