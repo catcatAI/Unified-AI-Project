@@ -111,8 +111,10 @@
 | **AutonomousLifeCycle C³ 4.5→6.0 (§X #138)** | Interaction outcome feedback loop: feed_interaction_outcome() tracks 20-sample rolling window, avg_interaction_quality dynamically overrides routing_mode. +7 tests (5,009→5,014). | autonomous_life_cycle.py | ✅ Done (§X #138) |
 | **MetabolicHeartbeat C³ 5.0→6.0 (§X #139)** | CNS event subscription feedback loop: subscribe to emotion.updated/routing/lifecycle → _recompute_system_health() → heartbeat_voter (7th PriorityNegotiator voter). +10 tests (5,014→5,024). | heartbeat.py, lifespan.py, priority_negotiator.py, router.py | ✅ Done (§X #139) |
 | **DigitalLifeIntegrator C³ 5.0→6.0 (§X #140)** | CNS event subscription + process_interaction_feedback() → ModalityGateway gating + dli_state_voter (8th voter) mapping life_cycle_state→routing_mode + awareness injection wired into prompt_builder. +9 tests (5,024→5,033). | digital_life_integrator.py, priority_negotiator.py, router.py, prompt_builder.py, chat_routes.py | ✅ Done (§X #140) |
-### 1.2 無法驗證的優勢（數據不足）
+| **Test quality: skip 5 print-based files (§X #141)** | Added pytest.skip() to 16 test functions across 5 files that had 0 asserts and 165+ print statements — they silently passed as false positives. Now properly skipped. | test_phase5_6.py, test_phase7.py, test_audit_comprehensive.py, test_final.py, test_verify_fixes.py | ✅ Done (§X #141) |
+| **Test anti-pattern: fix except Exception: pytest.skip() (§X #142)** | Replaced 4 bare except Exception: pytest.skip() blocks with proper pytest.importorskip() and narrow except clauses. Revealed a real hidden bug: ExternalConnector.__init__() didn't accept ai_id/broker_address/broker_port params. Fixed the connector class. 5 files, net -0 tests (5,033). | test_core_module_imports.py, test_tool_dispatcher_logging.py, test_health_check.py, test_integration_ai_pipeline.py, external_connector.py | ✅ Done (§X #142) |
 
+### 1.2 無法驗證的優勢（數據不足）
 | 宣稱 | 實際狀態 | 需要什麼數據 | 門檻 |
 |------|---------|------------|------|
 | ED3N 知識理解 | 數學準確率已透過基準測量（100%，PEMDAS 修正後）。其他領域仍未知。 | 建立擴充基準：MMLU 子集、知識問答、創造性寫作 | 每領域 100+ 測試題 |

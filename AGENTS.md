@@ -139,6 +139,11 @@ pre-commit run --all-files
 > ✅ **NOTE (Updated 2026-07-03, §X #139)**: **§X #139**: MetabolicHeartbeat C³ 5.0→**6.0/10** — CNS event subscription feedback loop. Subscribes to emotion.updated, routing.response_generated, lifecycle.decision_executed → recomputes _system_health_score. Added `get_system_health()` for PriorityNegotiator `heartbeat_voter` (7th voter, low health <0.3 forces conservative routing). Enriched heartbeat.pulse with health data. Wired into lifespan.py (start/stop during server lifecycle). 10 new tests. **5,024 tests collected — 0 errors.**
 >
 > ✅ **NOTE (Updated 2026-07-03, §X #140)**: **§X #140**: DigitalLifeIntegrator C³ 5.0→**6.0/10** — CNS event subscription + interaction feedback loop. Subscribes to 3 CNS events (emotion/routing/lifecycle). Added `process_interaction_feedback()` adjusting ModalityGateway gates by engagement level. Added `dli_state_voter` (8th PriorityNegotiator voter) mapping life_cycle_state→routing_mode. Wired dead `get_awareness_injection()` into prompt_builder. 9 new tests. **5,033 tests collected — 0 errors.**
+>
+> ✅ **NOTE (Updated 2026-07-03, §X #141)**: **§X #141**: Test quality — skip 5 print-based diagnostic files with 0 asserts (test_phase5_6, test_phase7, test_audit_comprehensive, test_final, test_verify_fixes). 27 lines of pytest.skip() markers added. No code deleted. Test count: 5,033 collected — 0 errors.
+>
+> ✅ **NOTE (Updated 2026-07-03, §X #142)**: **§X #142**: Test anti-pattern fix — 4 except Exception: pytest.skip() blocks replaced with proper skip/importorskip. Revealed ExternalConnector.__init__() bug (missing ai_id/broker_address/broker_port params). Fixed. Test count: 5,033 collected — 0 errors.
+>
 > - **Phase A1-A4: External dictionary download + convert + import pipeline
 > - **New scripts**: `scripts/download_datasets.py` (CC-CEDICT/JMdict/WordNet), `scripts/import_dictionaries.py`
 > - **460,281 entries** imported: 125k CC-CEDICT (zh↔en) + 217k JMdict (ja↔en) + 117k WordNet 3.0 (en)
