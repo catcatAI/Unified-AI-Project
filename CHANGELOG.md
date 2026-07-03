@@ -713,6 +713,17 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - 🗑️ Removed: Removed features
 - 🔒 Security: Security improvements
 
+### §X #136 (2026-07-03) — MetaController C³ 5.0→6.0 — registered as PriorityNegotiator voter
+
+- **PriorityNegotiator**: Added `meta_calibration_voter()` — translates MetaController's `get_weighted_adjustment()` into temperature/tokens bias
+  - Negative adjustment (overconfident) → reduce temperature (more conservative)
+  - Positive adjustment (underconfident) → increase temperature (more exploratory)
+  - Confidence proportional to |adjustment|, capped at 1.0
+- **Router**: `_prepare_generation_context()` injects `meta_calibration` into context before negotiator resolve
+- **C³**: MetaController 5.0→**6.0/10** (closed-loop rate 30%→60%+)
+- **Tests**: 7 new tests covering abstention, positive/negative bias, threshold, confidence cap, integration in resolve()
+- **Net**: +7 tests (4,992→4,999)
+
 ### §X #135 (2026-07-03) — IntentModel C³ 5.0→6.0 — closed intent feedback loop
 
 - **IntentModel**: Added `record_intent_outcome()` method storing success/failure per routing mode in `_outcome_history` (bounded to 20 per mode)

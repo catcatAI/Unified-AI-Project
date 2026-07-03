@@ -10,6 +10,7 @@ from ai.meta.priority_negotiator import (
     emotional_voter,
     intent_voter,
     lifecycle_voter,
+    meta_calibration_voter,
 )
 
 
@@ -237,3 +238,51 @@ class TestDefaultVoterFunctions:
         assert result["temperature_bias"] != 0.0
         assert result["tokens_bias"] != 0
         assert result["resolved_by"] == "angela_emotion"
+
+
+class TestMetaCalibrationVoter:
+    """Tests for meta_calibration_voter."""
+
+    def test_no_meta_calibration_returns_none(self):
+        result = meta_calibration_voter({})
+        assert result is None
+
+    def test_zero_adjustment_returns_none(self):
+        result = meta_calibration_voter({"meta_calibration": {"weighted_adjustment": 0.0}})
+        assert result is None
+
+    def test_positive_adjustment_increases_temperature(self):
+        result = meta_calibration_voter({"meta_calibration": {"weighted_adjustment": 0.05}})
+        assert result is not None
+        assert result.routing_mode is None  # abstain on mode
+        assert result.temperature_bias > 0  # 0.05 * 3.0 = 0.15
+        assert result.tokens_bias > 0
+        assert result.confidence > 0
+
+    def test_negative_adjustment_decreases_temperature(self):
+        result = meta_calibration_voter({"meta_calibration": {"weighted_adjustment": -0.05}})
+        assert result is not None
+        assert result.routing_mode is None
+        assert result.temperature_bias < 0
+        assert result.tokens_bias < 0
+
+    def test_small_adjustment_below_threshold_returns_none(self):
+        result = meta_calibration_voter({"meta_calibration": {"weighted_adjustment": 0.0005}})
+        assert result is None
+
+    def test_large_adjustment_capped_confidence(self):
+        result = meta_calibration_voter({"meta_calibration": {"weighted_adjustment": 2.0}})
+        assert result is not None
+        assert result.confidence == 1.0  # capped at 1.0
+
+    def test_adjustment_integrated_in_negotiator_resolve(self):
+        negotiator = PriorityNegotiator()
+        negotiator.register_voter("meta_calibration", meta_calibration_voter,
+                                  weight_fn=lambda ctx: 0.4)
+
+        ctx = {"meta_calibration": {"weighted_adjustment": 0.05}}
+        result = negotiator.resolve(ctx)
+
+        assert result["temperature_bias"] > 0
+        assert result["tokens_bias"] > 0
+        assert result["resolved_by"] == "meta_calibration"

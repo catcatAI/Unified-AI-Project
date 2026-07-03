@@ -68,6 +68,7 @@ from ai.meta.priority_negotiator import (
     emotional_voter,
     intent_voter,
     lifecycle_voter,
+    meta_calibration_voter,
 )
 
 # PriorityNegotiator singleton — registered once at import time
@@ -77,6 +78,7 @@ _negotiator.register_voter("emotional", emotional_voter, weight_fn=lambda ctx: 0
 _negotiator.register_voter("intent", intent_voter, weight_fn=lambda ctx: 0.6)
 _negotiator.register_voter("angela_emotion", angela_emotion_voter, weight_fn=lambda ctx: 0.9)
 _negotiator.register_voter("causal", causal_voter, weight_fn=lambda ctx: 0.5)
+_negotiator.register_voter("meta_calibration", meta_calibration_voter, weight_fn=lambda ctx: 0.4)
 
 # 簡單日誌設置
 if __name__ == "__main__":
@@ -1128,6 +1130,14 @@ class AngelaLLMService:
         gen_timeout = getattr(self.active_backend, "timeout", defaults.get("timeout_default", 30.0))
         gen_temperature = defaults.get("temperature", 0.7)
         gen_max_tokens = defaults.get("max_tokens", 512)
+
+        # Inject MetaController calibration into context for PriorityNegotiator
+        if self.meta_controller is not None:
+            try:
+                adj = self.meta_controller.get_weighted_adjustment()
+                context["meta_calibration"] = {"weighted_adjustment": adj}
+            except Exception:
+                logger.debug("MetaController calibration unavailable")
 
         if self.llm_mode == "auto" and self.auto_selector is not None:
             try:

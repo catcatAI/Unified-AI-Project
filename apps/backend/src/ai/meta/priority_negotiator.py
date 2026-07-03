@@ -227,3 +227,29 @@ def causal_voter(context: Dict[str, Any]) -> Optional[VoterVote]:
         tokens_bias=cr.get("max_tokens_bias", 0),
         confidence=conf,
     )
+
+
+def meta_calibration_voter(context: Dict[str, Any]) -> Optional[VoterVote]:
+    """Extract MetaController calibration adjustment as temperature/tokens bias.
+
+    MetaController's weighted adjustment reflects the system's historical
+    calibration accuracy. A negative adjustment (overconfident) biases toward
+    lower temperature (more conservative). A positive adjustment (underconfident)
+    biases toward higher temperature (more exploratory).
+    """
+    mc = context.get("meta_calibration")
+    if not mc:
+        return None
+    adj = mc.get("weighted_adjustment", 0.0)
+    if abs(adj) < 0.001:
+        return None
+    temp_bias = round(adj * 3.0, 3)
+    tokens_bias = int(adj * 200)
+    confidence = min(1.0, abs(adj) * 10.0)
+    return VoterVote(
+        routing_mode=None,
+        response_style=None,
+        temperature_bias=temp_bias,
+        tokens_bias=tokens_bias,
+        confidence=round(confidence, 3),
+    )
