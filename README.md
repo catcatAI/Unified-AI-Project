@@ -3,7 +3,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: zh-tw/en
-    LAST_MODIFIED: 2026-07-04 (updated for §X #165-168: 3 critical bug fixes + 7 new tests)
+    LAST_MODIFIED: 2026-07-04 (updated for §X #171-172: weak test cleanup)
   =============================================================================
 -->
 

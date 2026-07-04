@@ -2106,6 +2106,24 @@ Deleted 17 test files (0 collectible functions, all skip-only diagnostic scripts
 
 ---
 
+### §X #171: Deleted test_syntax_fix.py (tests Python, not project)
+- **2026-07-04**
+- Commit: pending
+- File tested Python language features (lambda, list comprehension, exception handling) — zero project coverage
+- Net: -1 test file, -1 test (5,023→5,022)
+
+### §X #172: Strengthened 3 weak tests
+- **2026-07-04**
+- Commit: pending
+- **test_basic.py:50** — `test_environment_variables` tautological bool assertion → verifies default value is False
+- **test_angela_model_core.py:49** — key-existence-only → type checks (dict/str) for snapshot values
+- Net: 0 tests (strengthening existing tests)
+
+### Test Count
+- **5,022** collected (tests/ only — 0 errors, -1 from deleted test_syntax_fix.py)
+
+---
+
 ## VII. PROJECT_HONEST_AUDIT.md (2026-06-22) — Claims vs Today
 
 ### Stale Claims About Phase 9-11 Deletions
