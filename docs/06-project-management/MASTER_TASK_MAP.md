@@ -2257,6 +2257,36 @@ Deleted 17 test files (0 collectible functions, all skip-only diagnostic scripts
 
 ---
 
+### §X #189: Deleted 12 mock-only/stdlib test files
+- **2026-07-04**
+- Commit: pending
+- 12 files that tested Python Mock/AsyncMock behavior, not project code:
+  - test_core_services_integration.py, test_example_integration.py, test_memory_system_integration.py
+  - test_performance_benchmark.py, test_performance_benchmarks.py, test_utils.py
+  - test_data_factory.py, test_hsp_simple.py, test_core_services.py
+  - test_api_routes_import.py, test_chain_validator.py, test_capacity_planner.py
+- Net: -12 files, -356 lines
+
+### §X #190: Deleted 6 duplicate unit test files
+- **2026-07-04**
+- Commit: pending
+- Unit versions were weaker (3-8 tests) vs core versions (9-22 tests):
+  - test_service_registry.py (3 vs 9), test_intent_registry.py (4 vs 20)
+  - test_causal_chain.py (14 vs 22), test_system_manager.py (7 vs 10)
+  - test_life_intensity_formula.py (4 vs 19), test_key_validator.py (8 vs 15)
+- Net: -6 files, -516 lines
+
+### §X #191: Deleted dead performance benchmark
+- **2026-07-04**
+- Commit: pending
+- test_benchmark.py (374 lines) — always skipped due to deleted ai.ops modules
+- Net: -1 file, -374 lines
+
+### Test Count
+- **5,019** collected (tests/ only — 0 errors, unchanged — deleted files were never collected)
+
+---
+
 ## VII. PROJECT_HONEST_AUDIT.md (2026-06-22) — Claims vs Today
 
 ### Stale Claims About Phase 9-11 Deletions

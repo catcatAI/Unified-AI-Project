@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw
-    LAST_MODIFIED: 2026-07-04 (updated for §X #186-188: remaining silent exception logging)
+    LAST_MODIFIED: 2026-07-04 (updated for §X #189-191: test dedup + consolidation)
   AUDIENCE: developers, agents
   =============================================================================
 -->
