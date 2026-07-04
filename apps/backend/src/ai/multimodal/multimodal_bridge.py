@@ -13,6 +13,7 @@ import numpy as np
 from ai.multimodal.audio_decoder import AudioWaveformDecoder
 from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
 from ai.multimodal.shared_latent_space import SharedLatentSpace
+from ai.multimodal.text_encoder import TextEncoder
 from ai.multimodal.visual_decoder import VisualDecoder
 from ai.multimodal.visual_encoder import VisualEncoder
 from PIL import Image
@@ -28,11 +29,13 @@ class MultimodalBridge:
 
     VISION_DIM: int = 256
     AUDIO_DIM: int = 128
+    TEXT_DIM: int = 512
     LATENT_DIM: int = 64
 
     def __init__(self):
         self._visual_encoder = VisualEncoder(feature_dim=self.VISION_DIM)
         self._audio_encoder = AudioSpectralEncoder(feature_dim=self.AUDIO_DIM)
+        self._text_encoder = TextEncoder(feature_dim=self.TEXT_DIM)
         from ai.multimodal.audio_decoder import (
             AudioWaveformDecoder,
             load_default_audio_decoder_weights,
@@ -45,6 +48,7 @@ class MultimodalBridge:
         self._latent_space = SharedLatentSpace(latent_dim=self.LATENT_DIM)
         self._latent_space.register_modality("vision", self.VISION_DIM)
         self._latent_space.register_modality("audio", self.AUDIO_DIM)
+        self._latent_space.register_modality("text", self.TEXT_DIM)
 
     # --- Encoding (modality → latent) ---
 
@@ -77,6 +81,28 @@ class MultimodalBridge:
             return None
         latent = self._latent_space.project("audio", vec)
         return latent.tolist()
+
+    def encode_text_to_latent(self, text: str) -> Optional[List[float]]:
+        """Encode text all the way to 64-dim latent vector.
+
+        Uses CLIP text encoder → 512-dim → SharedLatentSpace → 64-dim.
+        This completes the tri-modal architecture:
+          Text → TextEncoder(512) → SharedLatentSpace → 64-dim
+          Image → VisualEncoder(256) → SharedLatentSpace → 64-dim
+          Audio → AudioSpectralEncoder(128) → SharedLatentSpace → 64-dim
+        """
+        vec = self._text_encoder.encode(text)
+        if np.all(vec == 0):
+            return None
+        latent = self._latent_space.project("text", vec)
+        return latent.tolist()
+
+    def encode_text_to_features(self, text: str) -> Optional[List[float]]:
+        """Encode text to 512-dim CLIP feature vector (before projection)."""
+        vec = self._text_encoder.encode(text)
+        if np.all(vec == 0):
+            return None
+        return vec.tolist()
 
     # --- Decoding (latent → modality) ---
 

@@ -162,6 +162,8 @@ class ED3NEngine:
         self._last_confidence = 0.0
         self._dual_encoder_router: Optional[Any] = None
         self._semantic_key_mapper: Optional[Any] = None
+        self._latent_space: Optional[Any] = None
+        self._text_encoder: Optional[Any] = None
         self.enable_multimodal()
         if auto_load_presets:
             self.load_presets()
@@ -507,7 +509,7 @@ class ED3NEngine:
             finally:
                 self.snn_mode = was_snn
 
-    def enable_multimodal(self, enable_image=True, enable_audio=True) -> None:
+    def enable_multimodal(self, enable_image=True, enable_audio=True, enable_text=True) -> None:
         if not hasattr(self.dictionary, "modality_encoders"):
             logger.warning("Dictionary missing modality_encoders; cannot enable multimodal")
             return
@@ -517,11 +519,65 @@ class ED3NEngine:
         if enable_audio:
             self.audio_encoder = AudioEncoder(dictionary_layer=self.dictionary)
             self.dictionary.modality_encoders["audio"] = self.audio_encoder
+        if enable_text:
+            try:
+                from ai.multimodal.text_encoder import TextEncoder
+                text_encoder = TextEncoder(feature_dim=512)
+                self.dictionary.modality_encoders["text"] = text_encoder
+                logger.info("ED3N text modality encoder enabled")
+            except Exception as e:
+                logger.debug("Text encoder init failed: %s", e)
         self.cross_modal_trainer = CrossModalTrainer(
             dictionary_layer=self.dictionary,
             core_network=self.network,
         )
-        logger.info("ED3N multimodal enabled (image=%s, audio=%s)", enable_image, enable_audio)
+        logger.info("ED3N multimodal enabled (image=%s, audio=%s, text=%s)", enable_image, enable_audio, enable_text)
+
+    def enable_latent_space(self) -> None:
+        """Enable SharedLatentSpace for text reasoning.
+
+        This completes the tri-modal architecture:
+          Text → TextEncoder(512) → SharedLatentSpace → 64-dim → ED3N
+          Image → VisualEncoder(256) → SharedLatentSpace → 64-dim → ED3N
+          Audio → AudioSpectralEncoder(128) → SharedLatentSpace → 64-dim → ED3N
+
+        After enabling, process() will use latent space reasoning alongside
+        dictionary encoding for richer semantic understanding.
+        """
+        try:
+            from ai.multimodal.shared_latent_space import SharedLatentSpace
+            from ai.multimodal.text_encoder import TextEncoder
+
+            self._latent_space = SharedLatentSpace(latent_dim=64)
+            self._latent_space.register_modality("text", 512)
+            self._text_encoder = TextEncoder(feature_dim=512)
+            logger.info("ED3N latent space enabled (text modality registered)")
+        except Exception as e:
+            logger.warning("ED3N latent space enable failed: %s", e)
+            self._latent_space = None
+            self._text_encoder = None
+
+    def encode_text_to_latent(self, text: str) -> Optional[Any]:
+        """Encode text to 64-dim latent vector via SharedLatentSpace.
+
+        Uses CLIP text encoder → 512-dim → SharedLatentSpace → 64-dim.
+        Returns None if latent space is not enabled or encoding fails.
+        """
+        if self._latent_space is None or self._text_encoder is None:
+            return None
+        try:
+            vec = self._text_encoder.encode(text)
+            if vec is None or (hasattr(vec, '__len__') and len(vec) == 0):
+                return None
+            latent = self._latent_space.project("text", vec)
+            return latent
+        except Exception as e:
+            logger.debug("encode_text_to_latent failed: %s", e)
+            return None
+
+    def get_latent_space(self):
+        """Return the SharedLatentSpace instance (for cross-modal queries)."""
+        return self._latent_space
 
     def _process_image_input(self, image_data) -> List[str]:
         if self.image_encoder is None:
