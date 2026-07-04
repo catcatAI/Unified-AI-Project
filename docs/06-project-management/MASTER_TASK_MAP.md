@@ -2124,6 +2124,49 @@ Deleted 17 test files (0 collectible functions, all skip-only diagnostic scripts
 
 ---
 
+### §X #173: CRITICAL fix — this.live2D typo in hardware-detection.js
+- **2026-07-04**
+- Commit: pending
+- **hardware-detection.js:891,903** — `this.live2D.setEffects()` → `this.live2dManager.setEffects()` (2 lines)
+- Prevented runtime crash in `_downgradePerformance()` and `_upgradePerformance()`
+- Net: 0 tests (frontend bug fix)
+
+### §X #174: Fix __import__("datetime") inline hack
+- **2026-07-04**
+- Commit: pending
+- **state_matrix_api.py:131,152** — Replaced `__import__("datetime").datetime.now()` → proper `import datetime` + `datetime.datetime.now()`
+- Net: 0 tests (code quality fix)
+
+### §X #175: Rewrote test_basic.py
+- **2026-07-04**
+- Commit: pending
+- Removed 3 Python-stdlib tests (version, imports, json.dumps) — tested Python itself, not project
+- Kept meaningful tests: project_structure, slow_example, environment_variables
+- Net: -1 test (5,022→5,021)
+
+### §X #176: Deleted test_end_to_end.py
+- **2026-07-04**
+- Commit: pending
+- File had zero assertions — only `assert X is not None` on imports
+- Net: -1 test (5,021→5,020)
+
+### §X #177: Duplicate security-manager.js — skipped
+- **2026-07-04**
+- Files differ only in comment language (Chinese vs English), code logic identical
+- Consolidation would require choosing language + restructuring imports — low benefit, high risk
+
+### §X #178: Rewrote test_angela_complete.py
+- **2026-07-04**
+- Commit: pending
+- Removed weak file-existence/import checks (os.path.exists, `is not None`)
+- Kept meaningful file-content smoke tests (checking for function names in source)
+- Net: 0 tests (same count, stronger assertions)
+
+### Test Count
+- **5,020** collected (tests/ only — 0 errors, -2 from deleted test_end_to_end.py + test_basic.py rewrite)
+
+---
+
 ## VII. PROJECT_HONEST_AUDIT.md (2026-06-22) — Claims vs Today
 
 ### Stale Claims About Phase 9-11 Deletions

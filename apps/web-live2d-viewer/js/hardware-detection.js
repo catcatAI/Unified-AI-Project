@@ -888,7 +888,7 @@ class DynamicPerformanceManager {
         // 降低特效
         const currentEffects = this.live2dManager.getEffects();
         const reducedEffects = currentEffects.filter(e => e !== 'depth-of-field' && e !== 'screen-space-reflections');
-        this.live2D.setEffects(reducedEffects);
+        this.live2dManager.setEffects(reducedEffects);
     }
     
     _upgradePerformance() {
@@ -900,7 +900,7 @@ class DynamicPerformanceManager {
         
         // 啟用更多特效
         const maxEffects = this.hardwareDetector.capabilities.effects;
-        this.live2D.setEffects(maxEffects);
+        this.live2dManager.setEffects(maxEffects);
     }
 }
 

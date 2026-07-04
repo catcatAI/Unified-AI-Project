@@ -31,6 +31,7 @@ Author: Angela AI v7.5
 from __future__ import annotations
 
 import asyncio
+import datetime
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -128,7 +129,7 @@ async def get_state_summary():
         "delta": matrix.delta,
         "epsilon": matrix.epsilon,
         "theta": matrix.theta,
-        "timestamp": __import__("datetime").datetime.now().isoformat(),
+        "timestamp": datetime.datetime.now().isoformat(),
     }
 
 
@@ -149,7 +150,7 @@ async def get_axis(name: str):
     return {
         "name": name,
         "values": axis_map[name],
-        "timestamp": __import__("datetime").datetime.now().isoformat(),
+        "timestamp": datetime.datetime.now().isoformat(),
     }
 
 
