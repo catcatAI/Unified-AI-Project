@@ -18,7 +18,8 @@ class MultimodalAPIClient {
                 signal: AbortSignal.timeout(5000)
             });
             return res.ok;
-        } catch {
+        } catch (err) {
+            console.warn('[MultimodalClient] Health check failed:', err.message);
             return false;
         }
     }

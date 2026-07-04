@@ -67,7 +67,8 @@ class LaptopOptimizer {
         // 检查硬件特征
         try {
             return navigator.deviceMemory <= 16 && navigator.hardwareConcurrency <= 8;
-        } catch {
+        } catch (err) {
+            console.warn('[LaptopOptimizer] Hardware detection failed:', err.message);
             return false;
         }
     }
@@ -336,7 +337,8 @@ class LaptopOptimizer {
         try {
             // 这里可以集成更精确的性能监控
             return Math.random() * 100; // 临时随机值
-        } catch {
+        } catch (err) {
+            console.warn('[LaptopOptimizer] CPU estimation failed:', err.message);
             return 50; // 默认值
         }
     }
@@ -344,7 +346,8 @@ class LaptopOptimizer {
     _getMemoryUsage() {
         try {
             return (performance.memory?.usedJSHeapSize || 0) / (1024 * 1024); // MB
-        } catch {
+        } catch (err) {
+            console.warn('[LaptopOptimizer] Memory usage detection failed:', err.message);
             return 100; // 默认值
         }
     }

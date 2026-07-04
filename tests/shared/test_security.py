@@ -11,12 +11,11 @@ def test_keys():
     key_b = km.get_key("KeyB")
     key_c = km.get_key("KeyC")
 
-    print(f"Key A: {key_a[:10]}...")
-    print(f"Key B: {key_b[:10]}...")
-    print(f"Key C: {key_c[:10]}...")
-
-    assert key_a and key_b and key_c
-    print("✅ Key Manager Test Passed")
+    assert isinstance(key_a, str) and len(key_a) > 0, "KeyA must be non-empty string"
+    assert isinstance(key_b, str) and len(key_b) > 0, "KeyB must be non-empty string"
+    assert isinstance(key_c, str) and len(key_c) > 0, "KeyC must be non-empty string"
+    assert key_a != key_b, "KeyA and KeyB must be distinct"
+    assert key_b != key_c, "KeyB and KeyC must be distinct"
 
 
 if __name__ == "__main__":

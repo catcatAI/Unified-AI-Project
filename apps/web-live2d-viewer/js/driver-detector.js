@@ -161,7 +161,8 @@ class DriverDetector {
         try {
             const version = this._runCommand('cat /proc/asound/version 2>/dev/null');
             return version?.match(/Version (\S+)/)?.[1] || 'unknown';
-        } catch {
+        } catch (err) {
+            console.warn('[DriverDetector] ALSA version detection failed:', err.message);
             return 'unknown';
         }
     }
@@ -235,7 +236,8 @@ class DriverDetector {
                 return result.stdout || result;
             }
             return null;
-        } catch {
+        } catch (err) {
+            console.warn('[DriverDetector] Command execution failed:', err.message);
             return null;
         }
     }

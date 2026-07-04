@@ -4,6 +4,8 @@ Tests ED3N dictionary-based retrieval and context matching.
 """
 import sys
 
+import pytest
+
 sys.path.insert(0, "apps/backend/src")
 
 
@@ -135,6 +137,9 @@ def test_prompt_builder_injection():
 
 def test_retrieval_from_txt_file():
     """Test retrieving content from a text file."""
+    import os
+    if not os.path.exists("test_retrieval.txt"):
+        pytest.skip("test_retrieval.txt not found")
     with open("test_retrieval.txt", "r", encoding="utf-8") as f:
         content = f.read()
 

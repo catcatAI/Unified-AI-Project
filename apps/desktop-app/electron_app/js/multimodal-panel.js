@@ -402,7 +402,8 @@ class MultimodalPanel {
                 return result.items;
             }
             return {};
-        } catch {
+        } catch (err) {
+            console.warn('[MultimodalPanel] Failed to get items:', err.message);
             return {};
         }
     }
@@ -426,7 +427,8 @@ class MultimodalPanel {
             const result = await this.client.clearItems();
             this._showResult('vision-result', result, result.success);
             await this._refreshItems();
-        } catch {
+        } catch (err) {
+            console.warn('[MultimodalPanel] Failed to clear items:', err.message);
             this._refreshItems();
         }
     }
