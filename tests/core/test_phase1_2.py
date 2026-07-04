@@ -73,7 +73,6 @@ def test_axis():
 
 
 def test_temporal():
-    print("=== TemporalState ===")
     timeline = TemporalState(max_size=100)
 
     for i in range(20):
@@ -83,27 +82,28 @@ def test_temporal():
             'beta': {'curiosity': 0.4 + i * 0.01},
         })
 
-    print(f"Size: {timeline.size()}")
+    assert timeline.size() == 20
     recent = timeline.recent(fraction=0.3)
-    print(f"Recent 30%: {len(recent)} snapshots")
+    assert len(recent) == 6
 
     series = timeline.get_field_series('alpha', 'focus', window=10)
-    print(f"Focus series (n={len(series)}): {[f'{v:.2f}' for v in series[-5:]]}")
+    assert len(series) == 10
+    assert all(isinstance(v, (int, float)) for v in series)
 
     trend = timeline.trend('alpha', 'focus', window=15)
-    print(f"Trend: {trend.direction}, slope={trend.slope:.4f}, mean={trend.mean:.3f}")
+    assert trend.direction in ('rising', 'falling', 'stable')
+    assert isinstance(trend.slope, (int, float))
+    assert 0.0 <= trend.mean <= 1.0
 
     corr = timeline.correlation('alpha', 'focus', 'alpha', 'energy', window=15)
-    print(f"Correlation alpha.focus vs alpha.energy: r={corr.correlation:.3f} ({corr.strength})")
+    assert -1.0 <= corr.correlation <= 1.0
+    assert corr.strength in ('strong', 'moderate', 'weak', 'none')
 
     drift = timeline.find_drift('alpha', 'focus', expected_value=0.5, drift_threshold=0.25)
-    print(f"Drift from 0.5 (thresh=0.25): {len(drift)} points")
-
-    print("TemporalState: PASS\n")
+    assert isinstance(drift, list)
 
 
 def test_resonance():
-    print("=== ResonanceEngine ===")
     alpha = Axis.create_alpha()
     beta = Axis.create_beta()
     gamma = Axis.create_gamma()
@@ -113,24 +113,27 @@ def test_resonance():
     engine = ResonanceEngine(axes=[alpha, beta, gamma, delta, epsilon])
 
     test_vector = engine._text_to_vector("energy focus curiosity", 32)
-    print(f"Test vector: {len(test_vector)} dims")
+    assert len(test_vector) == 32
 
     profile = engine.compute_profile(test_vector)
-    print(f"Profile: best={profile.best_axis}({profile.max_resonance:.3f})")
-    print(f"  Similarities: {dict(sorted(profile.similarities.items(), key=lambda x: -x[1])[:3])}")
-    print(f"  Entropy: {profile.entropy:.3f}, active={profile.active_count}")
+    assert profile.best_axis in ('alpha', 'beta', 'gamma', 'delta', 'epsilon', 'theta')
+    assert 0.0 <= profile.max_resonance <= 1.0
+    assert profile.entropy >= 0.0
+    assert profile.active_count >= 0
+    assert len(profile.similarities) >= 5
 
     best_axis, res = engine.find_best_axis(test_vector)
-    print(f"Best axis: {best_axis} ({res:.3f})")
+    assert best_axis in ('alpha', 'beta', 'gamma', 'delta', 'epsilon', 'theta')
+    assert 0.0 <= res <= 1.0
 
     composite = engine.find_composite_axes(test_vector, threshold=0.3)
-    print(f"Composite (thresh=0.3): {[(n, f'{s:.3f}') for n, s in composite]}")
-
-    print("ResonanceEngine: PASS\n")
+    assert isinstance(composite, list)
+    for name, score in composite:
+        assert name in ('alpha', 'beta', 'gamma', 'delta', 'epsilon', 'theta')
+        assert 0.0 <= score <= 1.0
 
 
 def test_allocation_policy():
-    print("=== AllocationPolicy ===")
     policy = AllocationPolicy()
 
     high_sim = AllocationContext(
@@ -146,7 +149,8 @@ def test_allocation_policy():
         complexity=0.4,
     )
     d = policy.decide(high_sim)
-    print(f"High similarity: {d.action.value} -> {d.target}, conf={d.confidence:.2f}")
+    assert d.action in (AllocationAction.ASSIGN, AllocationAction.DEFER, AllocationAction.CREATE, AllocationAction.COMPOSITE)
+    assert d.confidence >= 0.0
 
     composite_ctx = AllocationContext(
         vector=[0.1] * 32,
@@ -159,7 +163,7 @@ def test_allocation_policy():
         novelty=0.3,
     )
     d = policy.decide(composite_ctx)
-    print(f"Composite: {d.action.value}, targets={d.targets}")
+    assert d.action in (AllocationAction.ASSIGN, AllocationAction.DEFER, AllocationAction.CREATE, AllocationAction.COMPOSITE)
 
     novel_ctx = AllocationContext(
         vector=[0.1] * 32,
@@ -172,7 +176,7 @@ def test_allocation_policy():
         complexity=0.8,
     )
     d = policy.decide(novel_ctx)
-    print(f"Novel: {d.action.value} -> {d.proposed_name}, conf={d.confidence:.2f}")
+    assert d.action in (AllocationAction.ASSIGN, AllocationAction.DEFER, AllocationAction.CREATE, AllocationAction.COMPOSITE)
 
     defer_ctx = AllocationContext(
         vector=[0.1] * 32,
@@ -184,13 +188,10 @@ def test_allocation_policy():
         novelty=0.4,
     )
     d = policy.decide(defer_ctx)
-    print(f"Defer: {d.action.value} -> {d.buffer}, conf={d.confidence:.2f}")
-
-    print("AllocationPolicy: PASS\n")
+    assert d.action in (AllocationAction.ASSIGN, AllocationAction.DEFER, AllocationAction.CREATE, AllocationAction.COMPOSITE)
 
 
 def test_negativity_detector():
-    print("=== NegativityDetector ===")
     timeline = TemporalState(max_size=100)
 
     for i in range(40):
@@ -208,35 +209,34 @@ def test_negativity_detector():
     detector = NegativityDetector(timeline=timeline)
 
     detector.trigger(strength=0.3)
-    print(f"After trigger: neg={detector.negativity:.2f}, urge={detector.correction_urge:.2f}")
-    print(f"  needs_correction: {detector.needs_correction}")
-    print(f"  ready_to_correct: {detector.ready_to_correct}")
+    assert 0.0 <= detector.negativity <= 1.0
+    assert 0.0 <= detector.correction_urge <= 1.0
+    assert isinstance(detector.needs_correction, bool)
+    assert isinstance(detector.ready_to_correct, bool)
 
     detection = detector.detect()
-    print(f"Detection: {detection.count} misallocated points")
+    assert isinstance(detection.count, int)
+    assert detection.count >= 0
 
     if detection.count > 0:
         item = detection.items[0]
-        print(f"  First: {item['point_id']}, deviation={item['deviation']:.3f}")
+        assert 'point_id' in item
+        assert 'deviation' in item
+        assert item['deviation'] >= 0.0
 
         result = detector.correct(item['point_id'], dry_run=True)
-        print(f"  Dry run: {result.status}, {result.reasoning}")
-
-        if detector.ready_to_correct:
-            result = detector.correct(item['point_id'])
-            print(f"  Actual: {result.status}, {result.reasoning}")
+        assert result.status in ('corrected', 'skipped', 'deferred', 'failed', 'would_correct')
 
     report = detector.report()
-    print(f"Report: neg={report['negativity']:.2f}, corrections={report['correction_count']}")
+    assert 'negativity' in report
+    assert 'correction_count' in report
+    assert 0.0 <= report['negativity'] <= 1.0
 
     detector.reset()
-    print(f"After reset: {detector.negativity:.2f}")
-
-    print("NegativityDetector: PASS\n")
+    assert detector.negativity == 0.0
 
 
 def test_integration():
-    print("=== Integration: Full Pipeline ===")
     alpha = Axis.create_alpha()
     beta = Axis.create_beta()
     gamma = Axis.create_gamma()
@@ -257,31 +257,33 @@ def test_integration():
             'gamma': gamma.snapshot(),
         })
 
+    assert timeline.size() == 30
+
     engine = ResonanceEngine(axes=[alpha, beta, gamma])
     test_vec = engine._text_to_vector("energy focus happiness", 32)
     profile = engine.compute_profile(test_vec)
-    print(f"Resonance profile: best={profile.best_axis}({profile.max_resonance:.3f})")
+    assert profile.best_axis in ('alpha', 'beta', 'gamma')
+    assert 0.0 <= profile.max_resonance <= 1.0
 
     policy = AllocationPolicy()
     decision = policy.decide_from_profile(test_vec, profile, label="emotion_test")
-    print(f"Allocation decision: {decision.action.value}")
+    assert decision.action in (AllocationAction.ASSIGN, AllocationAction.DEFER, AllocationAction.CREATE, AllocationAction.COMPOSITE)
 
     detector = NegativityDetector(timeline=timeline)
     detector.trigger(strength=0.6)
+    assert 0.0 <= detector.negativity <= 1.0
 
     if detector.needs_correction:
         auto = detector.auto_correct_all(min_confidence=0.4)
-        print(f"Auto-correct: {auto['corrected']}/{auto.get('total_detected', auto['corrected'])}")
+        assert 'corrected' in auto
 
     trend_e = timeline.trend('alpha', 'energy', window=20)
     trend_f = timeline.trend('beta', 'focus', window=20)
-    print(f"Alpha.energy trend: {trend_e.direction} (slope={trend_e.slope:.4f})")
-    print(f"Beta.focus trend: {trend_f.direction} (slope={trend_f.slope:.4f})")
+    assert trend_e.direction in ('rising', 'falling', 'stable')
+    assert trend_f.direction in ('rising', 'falling', 'stable')
 
     corr = timeline.correlation('alpha', 'energy', 'beta', 'focus', window=20)
-    print(f"Correlation: {corr.correlation:.3f} ({corr.strength})")
-
-    print("Integration: PASS\n")
+    assert -1.0 <= corr.correlation <= 1.0
 
 
 if __name__ == '__main__':

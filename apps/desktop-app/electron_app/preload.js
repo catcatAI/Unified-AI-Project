@@ -22,8 +22,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     setPosition: (x, y) => ipcRenderer.invoke('window-set-position', { x, y }),
     getBounds: () => ipcRenderer.invoke('window-get-bounds'),
     setAlwaysOnTop: (flag) => ipcRenderer.invoke('window-set-always-on-top', flag),
-    setIgnoreMouseEvents: (ignore, options) => ipcRenderer.send('set-ignore-mouse-events', { ignore, options }),
-    setClickThroughRegions: (regions) => ipcRenderer.send('set-click-through-regions', { regions }),
+    setIgnoreMouseEvents: (ignore, options) => ipcRenderer.invoke('window-set-ignore-mouse-events', ignore, options),
+    setClickThroughRegions: (regions) => ipcRenderer.invoke('set-click-through-regions', regions),
     setBounds: (bounds) => ipcRenderer.send('window-set-bounds', bounds)
   },
 
@@ -130,6 +130,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'click-through-regions-updated',
       'websocket-connected',
       'websocket-message',
+      'websocket-disconnected',
+      'websocket-error',
+      'websocket-send-result',
+      'backend-ip-changed',
+      'render-mode',
       'performance-mode-changed',
       'performance-auto-adjust',
       'wallpaper-mode-changed',

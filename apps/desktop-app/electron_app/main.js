@@ -861,7 +861,8 @@ function restoreWindowPosition() {
   try {
     const data = fs.readFileSync(configPath, 'utf8')
     return JSON.parse(data)
-  } catch {
+  } catch (err) {
+    log.debug('No saved window position found:', err.message)
     return null
   }
 }
@@ -958,6 +959,14 @@ ipcMain.handle('window-maximize', () => {
 
 ipcMain.handle('window-close', () => {
   mainWindow.close()
+})
+
+ipcMain.handle('window-restore', () => {
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore()
+  } else if (!mainWindow.isVisible()) {
+    mainWindow.show()
+  }
 })
 
 ipcMain.handle('window-set-size', (event, { width, height }) => {
@@ -1597,7 +1606,10 @@ ipcMain.handle('plugins-list', () => {
       const name = f.replace(/\.js$/, '')
       return { name, path: p }
     })
-  } catch { return [] }
+  } catch (err) {
+    log.warn('Failed to list plugins:', err.message)
+    return []
+  }
 })
 
 ipcMain.handle('plugins-load', (event, { name, code }) => {

@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-07-04 (updated for §X #147-148: test quality + MD sync)
+  LAST_MODIFIED: 2026-07-04 (updated for §X #154: frontend IPC fixes + test quality)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -794,7 +794,7 @@ Component_A.state_change → Component_B.detect() → Component_B.behavior_chang
 | ✅ **DigitalLifeIntegrator** | 修復完成 (commit `this commit` 2026-06-29) | 6/6 生命週期狀態皆有實際行為 — INITIALIZING (保守基線+dynamic params)、AWAKENING (user monitor+bio 覺醒)、DORMANT (深度鞏固+放鬆+資源審計) |
 | ✅ **Heartbeat Integration** | 修復完成 (commit `this commit` 2026-06-29) | Integration 循環間隔從固定 0.1s → 2.0-10.0s 動態 (基於 arousal)，頻率差從 50-600x 降至 ~2x |
 | ✅ **Level5ASI Process** | 修復完成 (commit `this commit` 2026-06-29) | 移除 `await asyncio.sleep(1.0)` 模擬延遲，改為 `await asyncio.sleep(0)` 事件循環讓出 |
-| ❌ **前端 Live2D** | 隨機彩色矩形 | 補齊 Live2D 模型渲染路徑 |
+| ❌ **前端 Live2D** | 隨機彩色矩形 + §X #154 IPC 修復 (preload.js channel mismatch 已修) | 補齊 Live2D 模型渲染路徑 |
 | ❌ **前端 Dashboard** | 假資料或 TODO handler | 接上真實後端 API |
 | ✅ **encode_with_retry empty data** | 修復完成 (commit `f05e020d7`, §X #60) | Fast-fail on empty data: 不浪費 3 次 retry 在無效資料上，直接寫入 crisis_log 並返回 |
 | ✅ **Heartbeat stop() bug** | 修復完成 (commit `this commit` 2026-06-29) | stop() 未取消 _integration_task，現已補齊並處理 CancelledError |

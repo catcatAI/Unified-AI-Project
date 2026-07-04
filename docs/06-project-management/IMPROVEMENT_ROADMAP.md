@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw
-    LAST_MODIFIED: 2026-07-04 (updated for §X #147-148: MD sync + test quality)
+    LAST_MODIFIED: 2026-07-04 (updated for §X #154: frontend IPC fixes + test quality)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -51,7 +51,7 @@
 | **Chat 管線 9 階段** | WS → 情緒 → 危機 → 對齊 → 閘門 → 路由 → LLM → 學習 → 回應 | 整合測試 | ✅ 完整接線 |
 | **CLP（持續學習）** | ED3NTrainer 已接線至聊天管線 + 獨立模式 | 整合測試 | ✅ 已接線，字典成長有效 |
 | **CML（持續多模態學習）** | 自主微訓練已接線至 encode 路徑，共用生產管線 | 20 CML 測試通過 + 21 多模態服務測試通過 | ✅ 每次編碼後自動微訓練 |
-| **測試數量** | pytest 收集 | **5,028 tests** (tests/ only, verified 2026-07-04 — §X #69-147: 0 errors, 19 skipped) | ✅ 0 failures |
+| **測試數量** | pytest 收集 | **5,028 tests** (tests/ only, verified 2026-07-04 — §X #69-154: 0 errors, 19 skipped) | ✅ 0 failures |
 | **FullTrainingPipeline** | `pipeline_weights.npz` saved (33 arrays, 1.2MB) | 52s moderate run: texture=0.384, wavetable=0.045, sequence=0.015 | ✅ Trained weights exist on disk |
 | **Empty-data encode fast-fail** | `encode_with_retry()` now fast-fails on empty data without wasting 3 retries | 24/24 production tests pass, crisis_log reduced | ✅ Fixed (§X #60) |
 | **MainApiServer stubs eliminated** | 3 pure-pass async methods → real implementations | test_api_service_reconnection passes (22.74s) | ✅ Fixed (§X #61) |
@@ -116,6 +116,7 @@
 | **Test quality: add proper skip guards to 7 false-positive test files (§X #145)** | 7 false-positive test files now properly skipped (0 asserts, print-based, or require server). test_gmqtt_mock.py fixed (missing @pytest.mark.asyncio). Net: -2 tests (5,036→5,034). | test_base_agent_simple, verify_all_agents, run_fixed_tests, quick_test_concept_models, test_websocket, test_websocket_comprehensive, test_gmqtt_mock | ✅ Done (§X #145) |
 | **Test quality: skip 4 more false-positive test files (§X #147)** | Added proper skip guards to 4 remaining false-positive test files (print-based diagnostic scripts with 0 asserts, require running server). Files: test_api.py (bare HTTP script), test_architecture_fix.py (print-based diagnostic + fixed pre-existing missing os/sys imports), test_dialogue_llm.py (requires running server), test_server.py (bare server check script). Net: 0 tests (5,028→5,028). | test_api, test_architecture_fix, test_dialogue_llm, test_server | ✅ Done (§X #147) |
 | **MD sync — §X #148** | Synced test counts 4,862→5,028 across IMPROVEMENT_ROADMAP.md. Verified README.md and AGENTS.md already current at 5,028. | IMPROVEMENT_ROADMAP.md | ✅ Done (§X #148) |
+| **Frontend IPC critical fixes + test quality (§X #154)** | Fixed 3 critical IPC bugs in preload.js: (1) setIgnoreMouseEvents send→invoke + channel name mismatch, (2) setClickThroughRegions send→invoke, (3) added 5 missing validChannels (websocket-disconnected/error/send-result, backend-ip-changed, render-mode). Added missing window-restore handler in main.js. Fixed 2 bare catch blocks → proper logging. Strengthened 7 weak tests in test_phase1_2.py + test_anchor_vectors.py (print-only → real assertions). Net: 0 tests (5,028→5,028). | preload.js, main.js, test_phase1_2.py, test_anchor_vectors.py | ✅ Done (§X #154) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 | 宣稱 | 實際狀態 | 需要什麼數據 | 門檻 |

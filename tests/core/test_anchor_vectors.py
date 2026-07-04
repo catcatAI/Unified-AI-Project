@@ -27,20 +27,19 @@ def test_nonzero_dims():
 def test_word_similarity():
     eng = ResonanceEngine()
 
-    print("\n=== Word Similarity Tests ===")
     test_cases = [
-        ("happiness", "gamma", True),
-        ("focus", "beta", True),
-        ("energy", "alpha", True),
-        ("bond", "delta", True),
-        ("logic", "epsilon", True),
+        ("happiness", "gamma"),
+        ("focus", "beta"),
+        ("energy", "alpha"),
+        ("bond", "delta"),
+        ("logic", "epsilon"),
     ]
 
-    for text, expected, should_be_high in test_cases:
+    for text, expected in test_cases:
         vec = text_to_vector(text, 32)
         sim = eng.compute_resonance(vec, expected)
-        marker = "✓" if sim > 0.1 else "○"
-        print(f"  {marker} \"{text}\" → {expected}: {sim:.3f}")
+        assert isinstance(sim, (int, float)), f"similarity for '{text}' should be numeric"
+        assert sim >= 0.0, f"similarity for '{text}' should be >= 0, got {sim}"
 
 
 def test_uniform_vector():
@@ -62,7 +61,6 @@ def test_uniform_vector():
 def test_axis_discrimination():
     eng = ResonanceEngine()
 
-    print("\n=== Axis Discrimination ===")
     test_words = ["happiness", "focus", "comfort", "bond", "logic"]
     results = {}
 
@@ -73,7 +71,8 @@ def test_axis_discrimination():
         results[word] = (best, max(sims.values()))
 
     for word, (best, sim) in sorted(results.items()):
-        print(f"  \"{word}\" → {best} ({sim:.3f})")
+        assert best in eng._semantic_vectors, f"best axis '{best}' should be a valid axis"
+        assert sim >= 0.0, f"similarity for '{word}' should be >= 0"
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: zh-tw/en
-    LAST_MODIFIED: 2026-07-02 (updated for §X #105)
+    LAST_MODIFIED: 2026-07-04 (updated for §X #154: frontend IPC fixes + test quality)
   =============================================================================
 -->
 
@@ -55,13 +55,13 @@
 
 **Angela AI** is a digital life system with biological simulation and LLM integration capabilities.
 
-**Quick facts**: 612 Python files in backend src (~96K lines). Electron + Live2D desktop companion (50 JS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~5,492 tests (full) / ~5,009 tests (tests/) — 0 errors.**  
+**Quick facts**: 612 Python files in backend src (~96K lines). Electron + Live2D desktop companion (50 JS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~5,028 tests (tests/) — 0 errors.**  
 **Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · cli `7.5.0-dev` · biology-core `7.5.0-dev`.  
 **Architecture audit score**: **~85-90%** (2026-06-25; up from ~55-60% after Phases 0-5 repairs).  
 **Total project files**: ~3,500+ (620 Python in backend src · 295 JS/TS · 1,021+ docs · 500+ config · 480+ test).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
 
-> **STATUS (2026-07-03)**: Latest §X #80-#125: EmotionSystem C³ 4.0 (§X #80), IntentModel C³ 3.0 (§X #81), CausalReasoningEngine C³ 4.0 (§X #82), MetaController C³ 4.0 closed-loop (§X #83), ExecutionGate C³ 5.0 feedback loop (§X #84), AutonomousLifeCycle config-driven thresholds (§X #85), test consolidation (§X #86 — 4 redundant files deleted), MD sync (§X #87), orphan-to-skip test conversion (§X #88 — 3 orphan files → 9 skip tests), import-only test consolidation (§X #89 — 3 files → 1 file, -39 lines), EmotionSystem interaction feedback loop (§X #94 — C³ 4.0→4.5, +11 tests), ExecutionGate cross-instance feedback persistence (§X #95 — C³ 5.0→6.0, +1 test), AutonomousLifeCycle per-type execution feedback (§X #96 — C³ 3.5→4.0, +6 tests), IntentModel 3D multi-parameter mapping (§X #97 — C³ 3.0→4.0, +6 tests), DLI circular import fix (§X #98 — brain_bridge_service TYPE_CHECKING guard, unblocks +2 DLI tests), bare except→logging (§X #99 — 15 instances in 10 files), DynamicThresholdManager real impl (§X #100 — +7 tests), CAUSAL_CHAIN duplicate fix (§X #101), 3 orphan fixes (§X #102), test consolidation & quality (§X #103), _SMOKE_MODULES audit (§X #104), 4 mock-fallback fixes (§X #105), test_quick_e2e proper skip + learning_orchestrator mock cleanup (§X #106), stale import comment cleanup (§X #109), training quality benchmarks (§X #110), TrainingCoordinator production wiring (§X #111), SyntaxError fix (§X #111d — orphaned except in chat_service.py, +138 tests unblocked), CausalReasoningEngine warm-start (§X #112 — retrospective_warm_start() seeds baseline relationships, C³ 4.0→4.5/10, +7 tests). **§X #113**: AutonomousLifeCycle C³ 3.5→4.5/10 — get_behavioral_adjustment() maps lifecycle phase/decision_type to routing_mode/response_style, wired into chat_routes.py and router.py, +10 tests. Real CIFAR-10 data training (§X #79). GlobalSystemClock unified time base (§X #76-77). **§X #125**: Test consolidation R5 — deleted 5 redundant files, consolidated 4 skip-only files into _DELETED_MODULES, committed 3 orphan source files (+10 tests, net +1, 4,804→4,805). **§X #126**: Code audit & cleanup — 6 except:pass→logging, -4 dup tests, real setup_middleware, -8 skip tests, +6 _DELETED_MODULES. Net: -12 tests (4,805→4,793). **§X #127**: IntentModel C³ 4.0→5.0 (routing adjustment → router P2.5), EmotionSystem C³ 4.5→5.0 (temporal trend feedback), 9 except→logging fixes, 2 stubs filled. Net: +10 tests (4,793→4,803). **§X #128**: +59 unit tests for 5 zero-coverage files (content_filter, permission_control, async_utils, env_utils, network_resilience), NaN-parsing bug fix in get_float_env. Net: +59 tests (4,803→4,862). **§X #129**: MetaController C³ 4.5→5.0 (calibration persistence +5 tests) + AutonomousLifeCycle C³ 4.5→5.0 (state persistence +6 tests). Net: +11 tests (4,862→4,873). **§X #130**: +75 unit tests for 10 previously zero-coverage files (text_utils, registry, env_dynamics, bio_reflex_manager, tactile_memory, auditory_memory, data_aligner, advanced_performance_optimizer, unified_knowledge_graph_impl, metrics_collector). Net: +75 tests (4,873→4,948). **~5,468 tests (full) / 4,948 tests (tests/) — 0 errors.** Architecture: ~87% (test coverage +75). **§X #134**: Test consolidation R6 — 7 modules into _SMOKE_MODULES, 6 extra test classes preserve behavioral assertions (37 tests), deleted 9 redundant files. Net: -2 (4,983→4,981). **§X #135**: IntentModel C³ 5.0→6.0 — closed intent feedback loop (record_intent_outcome + success_rate-adjusted intent_strength), wired into chat_routes.py post-LLM-response. +11 tests (4,981→4,992). **§X #136**: MetaController C³ 5.0→6.0 — registered as PriorityNegotiator voter (meta_calibration_voter translates calibration adjustment to temperature/tokens bias). +7 tests (4,992→4,999). **§X #137**: EmotionSystem C³ 5.0→6.0 — sustained negative feedback accumulation (_sustained_negative_counter + cumulative fatigue). +10 tests (4,999→5,009). **§X #138**: AutonomousLifeCycle C³ 4.5→6.0 — interaction outcome feedback loop (feed_interaction_outcome + avg_interaction_quality overrides routing_mode). +7 tests (5,009→5,014). **§X #139**: MetabolicHeartbeat C³ 5.0→6.0 — CNS event subscription + system_health_score + heartbeat_voter (7th PriorityNegotiator voter). +10 tests (5,014→5,024). **§X #140**: DigitalLifeIntegrator C³ 5.0→6.0 — CNS event subscription + process_interaction_feedback + dli_state_voter (8th voter) + awareness injection wired. +9 tests (5,024→5,033). **§X #141**: Skip 5 print-based diagnostic files (27 pytest.skip markers). **§X #142**: Fix 4 except:skip anti-patterns + ExternalConnector bugfix. **§X #144**: Test quality — test_audit_comprehensive diagnostic script restructured (if-main guard), test_cli_imports +3 orphan module refs. **§X #145**: Test quality — proper skip guards for 7 false-positive test files, fix test_gmqtt_mock. **§X #146**: Test quality — proper skip guards for 5 more false-positive test files (test_data_analysis_debug, test_rovodev_integration, verify_fixes, verify_phase14_concurrency, test_integration_shared). Net: -10 tests (5,036→5,028). **5,028 tests collected (tests/) — 0 errors.**
+> **STATUS (2026-07-04)**: §X #154 — Frontend critical IPC fixes (preload.js channel mismatch, missing handlers, validChannels whitelist) + test quality (7 weak tests strengthened in test_phase1_2 + test_anchor_vectors) + bare catch→logging in main.js. **5,028 tests — 0 errors.**
 > **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → execution gate → **agent routing** → LLM → causal learning → response. GVV pipeline for image generation.  
 > **See**: [MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md) (task provenance), [IMPROVEMENT_ROADMAP.md](docs/06-project-management/IMPROVEMENT_ROADMAP.md) (improvement roadmap), [CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md) (causal depth).
 
@@ -95,7 +95,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | **API Versioning** | ✅ COMPLETE | Version routing middleware (Phase 5) |
 | **i18n System** | ✅ COMPLETE | I18nManager, PromptManager, 4 handlers + 4 LLM modules i18n'd, 45 tests (Phase 7) |
 | **Config system** | ✅ | `config_loader.py:get_config()` returns Config |
-| **Tests** | ✅ PASSING | ~5,092 tests collected (full) / ~4,774 (tests/), 0 errors, 0 collection errors |
+| **Tests** | ✅ PASSING | ~5,028 tests collected (tests/), 0 errors, 0 collection errors |
 | **JS Sharing** | ✅ COMPLETE | 33 shared files → `packages/shared-js/js/`, 0 duplicates remaining |
 | **SessionManager** | ✅ COMPLETE | 56 tests covering full lifecycle (Phase 5.8) |
 | **Skip Audit** | ✅ COMPLETE | Phase 5.9: 5 collection errors fixed, all skip reasons verified |
@@ -286,7 +286,7 @@ npx pnpm dev:desktop
 - **Pixel art engine** — PyQt6 renderer, numpy voxel body ✅
 - **CLI** — Unified CLI with HTTP client ✅
 - **Gemini OS bridge** — pyautogui automation ✅
-- **Test suite** — 4,902 total ✅
+- **Test suite** — 5,028 total ✅
 
 ### What Does NOT Work / Needs Work
 
@@ -417,7 +417,7 @@ See dedicated docs for full diagrams:
 | **OpenTelemetry** | ✅ 已完成 | 分散式追蹤中間件（Phase 5） |
 | **API Versioning** | ✅ 已完成 | 版本路由中間件（Phase 5） |
 | **i18n 系統** | ✅ 已完成 | I18nManager、PromptManager、4 個 handler + 4 個 LLM 模組 i18n、45 個測試（Phase 7） |
-| **測試** | ✅ 通過 | ~5,085 (全部) / ~4,756 (tests/) — 0 collection errors |
+| **測試** | ✅ 通過 | ~5,028 (tests/) — 0 collection errors |
 | **智能分數** | ✅ 已評分 | 6.0/10 (有 LLM) / 4.5/10 (純 ED3N+GARDEN) |
 | **Master Task Map** | ✅ 已建立 | 23 份計畫全部交叉參照、144 項 claim 驗證、26 個 DO-NOT-REIMPLEMENT |
 | **因果鏈完成度** | ✅ 已建立 | `docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md` — §0 無 stub 原則、真實深度分數、時脈審計 |
@@ -667,4 +667,4 @@ npx pnpm dev:desktop
 
 ---
 
-**Version**: 7.5.0-dev | **Code Stats**: 612 Python files, ~96K lines | **Tests**: ~5,092 (full) / ~4,774 (tests/) — 0 errors | **Intelligence**: 6.0/10 (upper) 4.5/10 (lower) | **Architecture**: ~85-90% | | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)
+**Version**: 7.5.0-dev | **Code Stats**: 612 Python files, ~96K lines | **Tests**: ~5,028 (tests/) — 0 errors | **Intelligence**: 6.0/10 (upper) 4.5/10 (lower) | **Architecture**: ~85-90% | | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)
