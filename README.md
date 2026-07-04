@@ -3,7 +3,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: zh-tw/en
-    LAST_MODIFIED: 2026-07-04 (updated for §X #155-157: frontend IPC gaps + dead file cleanup)
+    LAST_MODIFIED: 2026-07-04 (updated for §X #159-160: test quality + frontend _archive cleanup)
   =============================================================================
 -->
 
