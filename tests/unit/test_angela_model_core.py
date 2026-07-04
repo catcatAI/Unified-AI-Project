@@ -47,11 +47,14 @@ async def test_model_core_metabolic_loop_uses_clock(model):
 
 @pytest.mark.asyncio
 async def test_model_core_consciousness_snapshot(model):
-    """get_consciousness_snapshot returns expected structure."""
+    """get_consciousness_snapshot returns expected structure with real values."""
     snapshot = model.get_consciousness_snapshot()
     assert "internal_state" in snapshot
     assert "spatial_awareness" in snapshot
     assert "system_integrity" in snapshot
+    assert isinstance(snapshot["internal_state"], dict)
+    assert isinstance(snapshot["spatial_awareness"], dict)
+    assert isinstance(snapshot["system_integrity"], str)
 
 
 @pytest.mark.asyncio

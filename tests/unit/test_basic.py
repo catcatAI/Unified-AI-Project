@@ -48,9 +48,10 @@ def test_slow_example():
 
 
 def test_environment_variables():
-    """测试环境变量"""
+    """测试环境变量 — verify env var parsing produces correct boolean."""
     testing_env = os.getenv("TESTING", "false").lower() == "true"
     assert isinstance(testing_env, bool)
+    assert testing_env is False, "TESTING env var should default to false when not set"
 
 
 if __name__ == "__main__":
