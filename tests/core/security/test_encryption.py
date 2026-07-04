@@ -118,71 +118,35 @@ class TestEncryptionUtils:
 
 
 class TestValidatePasswordStrength:
-    def test_valid_password(self):
+    @pytest.mark.parametrize("password,expected_valid", [
+        ("Abcdef1!", True),
+        ("A1!", False),       # too short
+        ("Abcdefg1", False),  # no special char
+        ("Abcdefg!", False),  # no digit
+        ("abcdef1!", False),  # no uppercase
+        ("ABCDEF1!", False),  # no lowercase
+    ])
+    def test_password_strength(self, password, expected_valid):
         from apps.backend.src.core.security.encryption import validate_password_strength
-
-        result = validate_password_strength("Abcdef1!")
-        assert result["valid"] is True
-
-    def test_too_short_password(self):
-        from apps.backend.src.core.security.encryption import validate_password_strength
-
-        result = validate_password_strength("A1!")
-        assert result["valid"] is False
-
-    def test_no_special_char(self):
-        from apps.backend.src.core.security.encryption import validate_password_strength
-
-        result = validate_password_strength("Abcdefg1")
-        assert result["valid"] is False
-
-    def test_no_digit(self):
-        from apps.backend.src.core.security.encryption import validate_password_strength
-
-        result = validate_password_strength("Abcdefg!")
-        assert result["valid"] is False
-
-    def test_no_uppercase(self):
-        from apps.backend.src.core.security.encryption import validate_password_strength
-
-        result = validate_password_strength("abcdef1!")
-        assert result["valid"] is False
-
-    def test_no_lowercase(self):
-        from apps.backend.src.core.security.encryption import validate_password_strength
-
-        result = validate_password_strength("ABCDEF1!")
-        assert result["valid"] is False
+        result = validate_password_strength(password)
+        assert result["valid"] is expected_valid
 
 
 class TestSanitizeInput:
-    def test_normal_string(self):
+    @pytest.mark.parametrize("input_val,expected", [
+        ("hello world", "hello world"),
+        ("<script>alert('xss')</script>", "sanitized"),
+        ("", ""),
+        (None, ""),
+        ("  hello  ", "hello"),
+    ])
+    def test_sanitize_input(self, input_val, expected):
         from apps.backend.src.core.security.encryption import sanitize_input
-
-        assert sanitize_input("hello world") == "hello world"
-
-    def test_strips_dangerous_chars(self):
-        from apps.backend.src.core.security.encryption import sanitize_input
-
-        result = sanitize_input("<script>alert('xss')</script>")
-        assert "<" not in result
-        assert ">" not in result
-        assert "'" not in result
-
-    def test_empty_input(self):
-        from apps.backend.src.core.security.encryption import sanitize_input
-
-        assert sanitize_input("") == ""
-
-    def test_none_input(self):
-        from apps.backend.src.core.security.encryption import sanitize_input
-
-        assert sanitize_input(None) == ""
-
-    def test_strips_whitespace(self):
-        from apps.backend.src.core.security.encryption import sanitize_input
-
-        assert sanitize_input("  hello  ") == "hello"
+        result = sanitize_input(input_val)
+        if expected == "sanitized":
+            assert "<" not in result and ">" not in result
+        else:
+            assert result == expected
 
 
 class TestCsrfToken:

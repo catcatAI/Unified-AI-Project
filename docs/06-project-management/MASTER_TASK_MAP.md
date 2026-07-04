@@ -2167,6 +2167,31 @@ Deleted 17 test files (0 collectible functions, all skip-only diagnostic scripts
 
 ---
 
+### §X #179: Deleted duplicate test_key_generator.py
+- **2026-07-04**
+- Commit: pending
+- `tests/unit/test_key_generator.py` deleted — weaker version using mocks (core/security version uses real tempfile)
+- Net: -8 tests (5,020→5,012)
+
+### §X #180: Parametrized encryption tests
+- **2026-07-04**
+- Commit: pending
+- `test_encryption.py` — 6 password validation tests → 1 parametrized test
+- `test_encryption.py` — 5 sanitize input tests → 1 parametrized test
+- Net: -9 test functions (5,012→5,003)
+
+### §X #181: Parametrized adapter tests
+- **2026-07-04**
+- Commit: pending
+- `test_state_matrix_adapter.py` — 6 axis access tests → 1 parametrized test
+- `test_state_matrix_adapter.py` — 7 update tests → 1 parametrized test
+- Net: -11 test functions (5,003→4,992)
+
+### Test Count
+- **5,019** collected (tests/ only — 0 errors, -13 from parametrization + dedup)
+
+---
+
 ## VII. PROJECT_HONEST_AUDIT.md (2026-06-22) — Claims vs Today
 
 ### Stale Claims About Phase 9-11 Deletions

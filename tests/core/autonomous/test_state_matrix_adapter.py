@@ -18,55 +18,34 @@ def adapter():
 
 
 class TestAxisAccess:
-    """6 axes accessible as properties through the adapter."""
+    """All axes accessible as properties through the adapter."""
 
-    def test_alpha_returns_values_dict(self, adapter):
-        assert isinstance(getattr(adapter.alpha, "values", None), dict)
-
-    def test_beta_returns_values_dict(self, adapter):
-        assert isinstance(getattr(adapter.beta, "values", None), dict)
-
-    def test_gamma_returns_values_dict(self, adapter):
-        assert isinstance(getattr(adapter.gamma, "values", None), dict)
-
-    def test_delta_returns_values_dict(self, adapter):
-        assert isinstance(getattr(adapter.delta, "values", None), dict)
-
-    def test_theta_returns_values_dict(self, adapter):
-        assert isinstance(getattr(adapter.theta, "values", None), dict)
-
-    def test_zeta_returns_values_dict(self, adapter):
-        assert isinstance(getattr(adapter.zeta, "values", None), dict)
+    @pytest.mark.parametrize("axis_name", ["alpha", "beta", "gamma", "delta", "theta", "zeta"])
+    def test_axis_returns_values_dict(self, adapter, axis_name):
+        axis = getattr(adapter, axis_name)
+        assert isinstance(getattr(axis, "values", None), dict)
 
     def test_history_is_list_like(self, adapter):
         assert hasattr(adapter.history, "__len__")
 
 
 class TestUpdateMethods:
-    """All 7 update methods can be called and verify state changed."""
+    """All update methods can be called and verify state changed."""
 
-    def test_update_alpha_succeeds(self, adapter):
-        adapter.update_alpha(focus=0.8)
-        assert adapter.alpha.values.get("focus") == 0.8
-
-    def test_update_beta_succeeds(self, adapter):
-        adapter.update_beta(curiosity=0.6)
-        assert adapter.beta.values.get("curiosity") == 0.6
-
-    def test_update_gamma_succeeds(self, adapter):
-        adapter.update_gamma(excitement=0.7)
-        assert adapter.gamma.values.get("excitement") == 0.7
-
-    def test_update_delta_succeeds(self, adapter):
-        adapter.update_delta(engagement=0.5)
-        assert adapter.delta.values.get("engagement") == 0.5
-
-    def test_update_epsilon_succeeds(self, adapter):
-        adapter.update_epsilon(awareness=0.9)
-        assert adapter.epsilon.values.get("awareness") == 0.9
-
-    def test_update_theta_succeeds(self, adapter):
-        adapter.update_theta(doubt=0.3)
+    @pytest.mark.parametrize("axis_name,field,value", [
+        ("alpha", "focus", 0.8),
+        ("beta", "curiosity", 0.6),
+        ("gamma", "excitement", 0.7),
+        ("delta", "engagement", 0.5),
+        ("epsilon", "awareness", 0.9),
+        ("theta", "doubt", 0.3),
+        ("zeta", "surprise", 0.4),
+    ])
+    def test_update_axis_succeeds(self, adapter, axis_name, field, value):
+        update_fn = getattr(adapter, f"update_{axis_name}")
+        update_fn(**{field: value})
+        axis = getattr(adapter, axis_name)
+        assert axis.values.get(field) == value
         assert adapter.theta.values.get("doubt") == 0.3
 
     def test_update_zeta_succeeds(self, adapter):
