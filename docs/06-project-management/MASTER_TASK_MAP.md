@@ -2054,6 +2054,25 @@ Deleted 17 test files (0 collectible functions, all skip-only diagnostic scripts
 
 ---
 
+### §X #163: Code quality — fix 2 remaining silent `except Exception: pass` blocks
+- **2026-07-04**
+- Commit: pending
+- **base_agent.py:518** — `except Exception: pass` in destructor → `logger.debug()`
+- **lifespan.py:462** — `except Exception: pass` in heartbeat shutdown → `logger.debug()`
+- Net: 0 tests (code quality fix)
+
+### §X #164: Delete 45 skip-only test files
+- **2026-07-04**
+- Commit: pending
+- Deleted 45 test files that only contained `pytest.skip(allow_module_level=True)` — never collected, pure noise
+- Verified no cross-references before deletion
+- Net: -45 files, 0 tests (files were never collected)
+
+### Test Count
+- **5,016** collected (tests/ only — 0 errors, unchanged — deleted files were never collected)
+
+---
+
 ## VII. PROJECT_HONEST_AUDIT.md (2026-06-22) — Claims vs Today
 
 ### Stale Claims About Phase 9-11 Deletions

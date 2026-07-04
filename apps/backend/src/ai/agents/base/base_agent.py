@@ -515,5 +515,5 @@ class BaseAgent:
             else:
                 # Log that cleanup wasn't possible
                 logger.warning(f"[{self.agent_id}] Agent destroyed without proper cleanup (event loop not running)")
-        except Exception:
-            pass  # Ignore cleanup errors in destructor
+        except Exception as err:
+            logger.debug(f"[{self.agent_id}] Destructor cleanup skipped: {err}")

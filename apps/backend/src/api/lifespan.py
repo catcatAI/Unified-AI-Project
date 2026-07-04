@@ -459,6 +459,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     try:
         hb_inst = get_metabolic_heartbeat()
         await hb_inst.stop()
-    except Exception:
-        pass
+    except Exception as err:
+        logger.debug(f"Heartbeat stop on shutdown skipped: {err}")
 
