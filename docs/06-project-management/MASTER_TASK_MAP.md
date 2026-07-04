@@ -2288,8 +2288,18 @@ Deleted 17 test files (0 collectible functions, all skip-only diagnostic scripts
 - `core/allocation/resonance.py`: `_sparsity_shift()` was pass placeholder, now tracks per-axis sparsity delta log (bounded to 100 entries). Added `get_sparsity_log()` accessor. Called by `AnchorLearningEngine.on_anchor_update()` when axis sparsity changes.
 - Also fixed 2 E501 line-length issues (pre-existing beta keywords + new docstring).
 
+### §X #194: Created INTELLIGENCE_ASSESSMENT.md
+- **2026-07-04**
+- Commit: pending
+- New document: `docs/06-project-management/INTELLIGENCE_ASSESSMENT.md` — honest capability assessment.
+- Key findings: Native engines <0.5/10 (Eliza-level), with LLM 6.0/10 (GPT-3 level).
+- Learning: framework exists but no real gradient updates. Reproduction: outputs=noise. Generalization: 0% on knowledge/reasoning.
+- Datasets: CIFAR-10/ESC-50 referenced but never trained. Models: all random weights.
+- Benchmark: 15 test cases (5 math, 5 knowledge, 5 reasoning) — no LLM contamination.
+- Updated FRAMEWORK_OVERVIEW.md to reference new assessment.
+
 ### Test Count
-- **5,019** collected (tests/ only — 0 errors, unchanged — resonance change is additive data tracking)
+- **5,019** collected (tests/ only — 0 errors, unchanged)
 
 ---
 

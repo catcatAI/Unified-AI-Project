@@ -11,7 +11,7 @@
 
 > **Framework positioning**: A modular, extensible framework for building digital life systems with hybrid AI (LLM + SNN + biological simulation).
 > **Codebase**: 612 Python files (~96K lines) in `apps/backend/src/` + 50 JS files across 3 apps + 4,785 tests.
-> **Intelligence**: Upper bound 6.0/10 (with LLM API), **lower bound <0.5/10** (native engines alone — ED3N/GARDEN produce random/low-quality output without training).
+> **Intelligence**: Upper bound 6.0/10 (with LLM API), **lower bound <0.5/10** (native engines alone — ED3N/GARDEN produce random/low-quality output without training). See [INTELLIGENCE_ASSESSMENT.md](06-project-management/INTELLIGENCE_ASSESSMENT.md) for detailed scoring.
 > **Architecture completeness**: ~85-90% (framework structure exists, but ML model weights are 5% trained).
 > **Version**: 7.5.0-dev | **License**: MIT
 
