@@ -761,6 +761,7 @@ def _inject_causal_predictions(
 # Accumulates time-series data across multiple interactions so Granger
 # causality can fire (requires >= 5 samples per variable).
 _CAUSAL_BUFFERS: Dict[str, Dict[str, List[float]]] = {}
+_CAUSAL_BUFFER_MAX_SESSIONS = 200  # Evict oldest when exceeded
 
 # TemporalState bridge for causal ingest_temporal_state() (C³ 4.0)
 _CAUSAL_TEMPORAL_STATE = None
@@ -776,6 +777,9 @@ def _get_causal_temporal_state():
 def _get_causal_buffer(session_id: str) -> Dict[str, List[float]]:
     """Get or create a temporal buffer for the given session."""
     if session_id not in _CAUSAL_BUFFERS:
+        if len(_CAUSAL_BUFFERS) >= _CAUSAL_BUFFER_MAX_SESSIONS:
+            oldest = next(iter(_CAUSAL_BUFFERS))
+            del _CAUSAL_BUFFERS[oldest]
         _CAUSAL_BUFFERS[session_id] = {
             "msg_lengths": [],
             "resp_lengths": [],

@@ -29,11 +29,26 @@ class _TemporalProxy:
     def trend(self) -> Optional[float]:
         if not self._records:
             return None
-        return 0.0
+        recent = self._records[-10:]
+        values = [r["value"] for r in recent]
+        if len(values) < 2:
+            return 0.0
+        return sum(values[-1] - values[0] for _ in [0]) / (len(values) - 1)
 
     @property
     def anomalies(self) -> List[Dict[str, Any]]:
-        return []
+        if len(self._records) < 5:
+            return []
+        recent_vals = [r["value"] for r in self._records[-20:]]
+        mean = sum(recent_vals) / len(recent_vals)
+        std = (sum((v - mean) ** 2 for v in recent_vals) / len(recent_vals)) ** 0.5
+        if std < 1e-6:
+            return []
+        return [
+            {"axis": r["axis"], "field": r["field"], "value": r["value"], "deviation": abs(r["value"] - mean) / std}
+            for r in self._records[-20:]
+            if abs(r["value"] - mean) / std > 2.0
+        ]
 
 class _InfluenceSpaceProxy:
     """Proxy for influence space computation."""
@@ -148,7 +163,15 @@ class StateMatrixAdapter(JsonFileStateStore):
         return self._temporal_proxy
 
     def temporal_trend(self, axis: str, field: str, window: int = 5) -> Optional[float]:
-        return 0.0
+        """Compute rolling trend for a specific axis/field from temporal records."""
+        matching = [r for r in self._temporal_proxy._records if r["axis"] == axis and r["field"] == field]
+        if len(matching) < 2:
+            return 0.0
+        recent = matching[-window:]
+        values = [r["value"] for r in recent]
+        if len(values) < 2:
+            return 0.0
+        return round((values[-1] - values[0]) / (len(values) - 1), 4)
 
     # --- New API properties ---
 
@@ -200,12 +223,26 @@ class StateMatrixAdapter(JsonFileStateStore):
         self._update_axis("zeta", **kwargs)
 
     def compute_influences(self) -> Dict[str, Any]:
-        return {
-            "alpha": 0.5,
-            "beta": 0.4,
-            "gamma": 0.3,
-            "delta": 0.2,
-        }
+        """Compute inter-axis influence based on actual state values."""
+        axes = ["alpha", "beta", "gamma", "delta"]
+        influences: Dict[str, float] = {}
+        for src in axes:
+            src_vals = self._state.get(src, {})
+            if not src_vals:
+                influences[src] = 0.0
+                continue
+            src_avg = sum(v for v in src_vals.values() if isinstance(v, (int, float))) / max(len(src_vals), 1)
+            influence = 0.0
+            for tgt in axes:
+                if tgt == src:
+                    continue
+                tgt_vals = self._state.get(tgt, {})
+                if not tgt_vals:
+                    continue
+                tgt_avg = sum(v for v in tgt_vals.values() if isinstance(v, (int, float))) / max(len(tgt_vals), 1)
+                influence += src_avg * tgt_avg
+            influences[src] = round(influence / max(len(axes) - 1, 1), 4)
+        return influences
 
     # --- Gradient / Attractor ---
 

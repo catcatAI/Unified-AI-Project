@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw/en
-  LAST_MODIFIED: 2026-07-04 (updated for §X #163-164: code quality + skip-only cleanup)
+  LAST_MODIFIED: 2026-07-04 (updated for §X #165-168: 3 critical bug fixes + 7 new tests)
   AUDIENCE: developers, agents
   =============================================================================
 -->

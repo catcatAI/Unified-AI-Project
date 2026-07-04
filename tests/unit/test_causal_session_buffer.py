@@ -370,3 +370,17 @@ class TestCausalRoutingInjection:
         # causal_insights still injected (predictions exist but empty)
         # causal_routing should NOT be injected (low confidence)
         assert "causal_routing" not in context
+
+
+# ── Session-level eviction tests (§X #165) ───────────────────────────────
+
+
+def test_session_eviction_when_max_exceeded():
+    """When >200 sessions exist, oldest session is evicted."""
+    _reset_buffers()
+    from api.routes.chat_routes import _CAUSAL_BUFFER_MAX_SESSIONS
+    for i in range(_CAUSAL_BUFFER_MAX_SESSIONS + 5):
+        _get_causal_buffer(f"session_{i}")
+    assert len(_CAUSAL_BUFFERS) == _CAUSAL_BUFFER_MAX_SESSIONS
+    assert "session_0" not in _CAUSAL_BUFFERS, "oldest session should be evicted"
+    assert f"session_{_CAUSAL_BUFFER_MAX_SESSIONS + 4}" in _CAUSAL_BUFFERS

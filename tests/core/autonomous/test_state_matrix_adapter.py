@@ -87,6 +87,21 @@ class TestInfluenceComputation:
         for axis in ("alpha", "beta", "gamma", "delta"):
             assert axis in result
 
+    def test_compute_influences_reflects_actual_state(self):
+        from core.engine.state_matrix_adapter import StateMatrixAdapter
+        sm = StateMatrixAdapter()
+        sm.update_alpha(energy=0.8, comfort=0.6)
+        sm.update_beta(focus=0.9, curiosity=0.7)
+        result = sm.compute_influences()
+        assert result["alpha"] > 0, "alpha influence should be > 0 when both alpha and beta have values"
+        assert result["beta"] > 0, "beta influence should be > 0 when both alpha and beta have values"
+
+    def test_compute_influences_empty_when_no_state(self):
+        from core.engine.state_matrix_adapter import StateMatrixAdapter
+        sm = StateMatrixAdapter()
+        result = sm.compute_influences()
+        assert all(v == 0.0 for v in result.values()), "all influences should be 0 with empty state"
+
 
 class TestTemporalQueries:
     """New API: temporal trend / anomalies."""
@@ -94,6 +109,29 @@ class TestTemporalQueries:
     def test_temporal_trend_returns_value(self, adapter):
         result = adapter.temporal_trend("alpha", "focus", window=5)
         assert result is not None
+
+    def test_temporal_trend_computes_real_trend(self):
+        from core.engine.state_matrix_adapter import StateMatrixAdapter
+        sm = StateMatrixAdapter()
+        for v in [0.1, 0.2, 0.3, 0.4, 0.5]:
+            sm.temporal.record("alpha", "energy", v)
+        trend = sm.temporal_trend("alpha", "energy", window=5)
+        assert trend is not None
+        assert trend > 0, f"trend should be positive (increasing values), got {trend}"
+
+    def test_temporal_trend_zero_for_empty(self):
+        from core.engine.state_matrix_adapter import StateMatrixAdapter
+        sm = StateMatrixAdapter()
+        trend = sm.temporal_trend("alpha", "energy")
+        assert trend == 0.0
+
+    def test_temporal_anomalies_detects_outliers(self):
+        from core.engine.state_matrix_adapter import StateMatrixAdapter
+        sm = StateMatrixAdapter()
+        for v in [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 5.0]:
+            sm.temporal.record("alpha", "energy", v)
+        anomalies = sm.temporal.anomalies
+        assert len(anomalies) > 0, "should detect 5.0 as anomaly in [0.5, ..., 0.5, 5.0]"
 
 
 class TestStateExportImport:
