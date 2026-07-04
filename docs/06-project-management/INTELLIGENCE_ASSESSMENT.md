@@ -14,7 +14,7 @@
 | 維度 | 分數 | 業界對等 | 說明 |
 |------|------|---------|------|
 | **有 LLM API** | 6.0/10 | GPT-3 等級 | 自然對話靠外部 API，本地無推理能力 |
-| **無 LLM (原生引擎)** | 1.0/10 | Eliza+ 等級 | ED3N/GARDEN 有字典映射 + 共享潛空間 |
+| **無 LLM (原生引擎)** | 1.5/10 | Eliza++ 等級 | ED3N 有字典 + 共享潛空間 + 真正的神經網路推理 |
 | **架構完整度** | 90% | — | 框架就位，三模態架構已接通 |
 | **多模態管線** | 框架 9/10，實際 5/10 | — | 管線完整，三模態共享潛空間已接通 |
 
@@ -129,15 +129,21 @@
 | **CLIP** | 外部 (512-dim) | 語義理解 | ✅ 已接線 |
 | **Whisper** | 外部 (384-dim) | 語音理解 | ✅ 已接線 |
 
-### 5.3 三模態架構 (§X #195)
+### 5.3 三模態架構 (§X #195-196)
 
 ```
-Text → TextEncoder(CLIP 512) → SharedLatentSpace → 64-dim → ED3N
-Image → VisualEncoder(256) → SharedLatentSpace → 64-dim → ED3N
-Audio → AudioSpectralEncoder(128) → SharedLatentSpace → 64-dim → ED3N
+Text → TextEncoder(CLIP 512) → SharedLatentSpace → 64-dim
+                                                  ↓
+                                          LatentReasoningNetwork (MLP)
+                                                  ↓
+                                          Generated tokens → dictionary keys
+                                                  ↓
+                                          CoreNetwork (圖譜傳播) → 輸出
 ```
 
-**已驗證**：三模態可投影到共享 64-dim 空間，可計算跨模態相似度。
+**已驗證**：三模態可投影到共享 64-dim 空間，LRN 可從 latent 生成文本。
+
+**§X #196 新增**：LatentReasoningNetwork — 真正的神經網路（2層MLP + ReLU），從 64-dim latent 做推理生成文本。可訓練（cross-entropy loss + manual backprop）。
 
 ---
 
@@ -218,6 +224,7 @@ Audio → AudioSpectralEncoder(128) → SharedLatentSpace → 64-dim → ED3N
 | 2026-07-04 | 1.0 | 初版建立 |
 | 2026-07-04 | 1.1 | §X #195: 三模態架構接通 — TextEncoder(CLIP) → SharedLatentSpace → ED3N。更新架構圖、模型表、比較表。原生引擎分數 <0.5→1.0/10。 |
 | 2026-07-04 | 1.2 | §X #195b: Latent reasoning 接入 ED3N process flow。Benchmark: math 5/5, knowledge 0/5, reasoning 0/5 (38%)。字典無英文知識映射是根本限制。 |
+| 2026-07-04 | 1.3 | §X #196: LatentReasoningNetwork — 真正的神經網路（2層MLP + ReLU），從 64-dim latent 做推理。架構：latent→MLP→vocab logits→text。可訓練。 |
 
 ---
 
