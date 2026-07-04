@@ -2192,6 +2192,44 @@ Deleted 17 test files (0 collectible functions, all skip-only diagnostic scripts
 
 ---
 
+### §X #182: Added logging to 6 silent exception blocks in vision_service.py
+- **2026-07-04**
+- Commit: pending
+- 6 `except Exception:` blocks now log with `logger.debug()`:
+  - Image comparison fallback (line 232)
+  - Difference score fallback (line 252)
+  - Caption generation fallback (line 454)
+  - Object detection fallback (line 485)
+  - Color analysis fallback (line 621)
+  - Feature matching fallback (line 737)
+- Net: 0 tests (observability fix)
+
+### §X #183: Fixed hardcoded cache hit rate in performance_optimizer.py
+- **2026-07-04**
+- Commit: pending
+- **performance_optimizer.py:224** — Was returning `0.85` always; now tracks real `_cache_hits`/`_cache_misses` counters
+- Added `_cache_hits` and `_cache_misses` to `__init__`
+- Updated `get_cached_message()` to increment counters on hit/miss
+- `_calculate_cache_hit_rate()` now computes real ratio
+- Net: 0 tests (correctness fix)
+
+### §X #184: Added logging to silent eval failure in eta_axis.py
+- **2026-07-04**
+- Commit: pending
+- **eta_axis.py:175** — `except Exception: return 0.0` → `logger.debug()` with expression and error
+- Net: 0 tests (observability fix)
+
+### §X #185: Added logging to silent training fallback in multimodal_service.py
+- **2026-07-04**
+- Commit: pending
+- **multimodal_service.py:629** — `except Exception: use_real = False` → `logger.warning()` with error details
+- Net: 0 tests (observability fix)
+
+### Test Count
+- **5,019** collected (tests/ only — 0 errors, unchanged)
+
+---
+
 ## VII. PROJECT_HONEST_AUDIT.md (2026-06-22) — Claims vs Today
 
 ### Stale Claims About Phase 9-11 Deletions

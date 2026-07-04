@@ -229,7 +229,8 @@ class VisionService:
                     diffs = sum(abs(p1[i][j] - p2[i][j]) for i in range(len(p1)) for j in range(3))
                     max_diff = len(p1) * 3 * 255
                     similarity_score = 1.0 - (diffs / max_diff)
-                except Exception:
+                except Exception as err:
+                    logger.debug("Image similarity comparison fallback (PIL failed): %s", err)
                     size_factor = 1 - abs(len(image_data1) - len(image_data2)) / max(
                         len(image_data1), len(image_data2), 1
                     )
@@ -249,7 +250,8 @@ class VisionService:
                     diff = np.abs(img1.astype(int) - img2.astype(int))
                     diff_score = float(np.mean(diff) / 255.0)
                     comparison_result["difference_score"] = round(diff_score, 3)
-                except Exception:
+                except Exception as err:
+                    logger.debug("Image difference fallback (numpy failed): %s", err)
                     comparison_result["difference_score"] = round(
                         1 - len(image_data1) / max(len(image_data2), 1), 3
                     )
@@ -451,7 +453,8 @@ class VisionService:
             if context.get("text_context"):
                 base_caption += f", related to: {context['text_context'][:50]}"
             return base_caption
-        except Exception:
+        except Exception as err:
+            logger.debug("Caption generation fallback: %s", err)
             base_caption = "An image (format could not be determined)"
             if context.get("text_context"):
                 base_caption += f" related to {context['text_context'][:50]}"
@@ -482,7 +485,8 @@ class VisionService:
             except Exception:
                 logger.debug("Cluster distribution failed", exc_info=True)
             return properties
-        except Exception:
+        except Exception as err:
+            logger.debug("Object detection fallback: %s", err)
             return [{"label": "unrecognized_image", "confidence": 0.5, "property": "format"}]
 
     async def initialize(self) -> bool:
@@ -618,7 +622,8 @@ class VisionService:
                 "brightness": round(brightness, 3),
                 "avg_rgb": [round(r_total), round(g_total), round(b_total)],
             }
-        except Exception:
+        except Exception as err:
+            logger.debug("Color analysis fallback: %s", err)
             return {"dominant_colors": ["unknown"], "color_distribution": {}, "brightness": 0.5}
 
     def _extract_dominant_colors(self, img: Any, total: int) -> List[Dict[str, Any]]:
@@ -734,7 +739,8 @@ class VisionService:
                 "match_quality": round(similarity, 3),
                 "geometric_consistency": round(similarity * 0.9, 3),
             }
-        except Exception:
+        except Exception as err:
+            logger.debug("Feature matching fallback: %s", err)
             return {"keypoints_matched": 0, "total_keypoints_1": 0, "total_keypoints_2": 0,
                     "match_quality": 0.0, "geometric_consistency": 0.0}
 

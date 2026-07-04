@@ -172,7 +172,8 @@ class AtomicModule:
             local_vars = dict(kwargs)
             try:
                 return float(eval(expr, {"__builtins__": {}}, local_vars))
-            except Exception:
+            except Exception as err:
+                logger.debug("Custom expression eval failed (%s): %s", expr, err)
                 return 0.0
         return 0.0
 

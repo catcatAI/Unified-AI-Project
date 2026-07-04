@@ -56,6 +56,8 @@ class HSPPerformanceOptimizer:
             "bytes_received": 0,
             "compression_savings": 0,
         }
+        self._cache_hits = 0
+        self._cache_misses = 0
 
         logger.info("HSP协议性能优化器初始化完成")
 
@@ -75,12 +77,16 @@ class HSPPerformanceOptimizer:
             cached = self.message_cache[message_id]
             # 检查缓存是否过期
             if time.time() < cached["expires_at"]:
+                self._cache_hits += 1
                 logger.debug(f"从缓存获取消息: {message_id}")
                 return cached["message"]
             else:
                 # 移除过期缓存
                 del self.message_cache[message_id]
+                self._cache_misses += 1
                 logger.debug(f"缓存消息已过期并移除: {message_id}")
+        else:
+            self._cache_misses += 1
         return None
 
     def clean_expired_cache(self) -> None:
@@ -219,9 +225,10 @@ class HSPPerformanceOptimizer:
 
     def _calculate_cache_hit_rate(self) -> float:
         """计算缓存命中率"""
-        # 这里需要实现实际的缓存命中率计算逻辑
-        # 为了示例, 我们返回一个模拟值
-        return 0.85
+        total = self._cache_hits + self._cache_misses
+        if total == 0:
+            return 0.0
+        return round(self._cache_hits / total, 4)
 
     async def optimize_message_routing(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """优化消息路由"""

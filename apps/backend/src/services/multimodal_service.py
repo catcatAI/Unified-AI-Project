@@ -626,7 +626,8 @@ class MultimodalService:
                         result["data_source"] = "real"
                     else:
                         use_real = False
-                except Exception:
+                except Exception as err:
+                    logger.warning("Real training failed, falling back to synthetic: %s", err)
                     use_real = False
 
             if not use_real:
