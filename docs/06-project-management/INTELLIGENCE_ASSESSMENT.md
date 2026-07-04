@@ -83,8 +83,11 @@
 | 領域 | ED3N | GARDEN | 測試數 | 說明 |
 |------|------|--------|--------|------|
 | **數學** | 100% (5/5) | 100% (5/5) | 5 | PEMDAS 修正後 |
-| **知識** | 0% (0/5) | 0% (0/5) | 5 | 字典映射失敗 |
-| **推理** | 0% (0/5) | 0% (0/5) | 5 | 無邏輯推理能力 |
+| **知識** | 0% (0/5) | 0% (0/5) | 5 | 字典無英文知識映射 |
+| **推理** | 0% (0/5) | 0% (0/5) | 5 | 字典無邏輯推理映射 |
+| **總計** | **38% (5/13)** | — | 13 | §X #195b 測試 |
+
+> **§X #195b 分析**：數學 100% 是因為 PEMDAS 硬編碼。知識/推理 0% 是因為 ED3N 的字典以中文為主，不包含英文知識映射（如 sky→blue, Monday→Tuesday）。即使有 SharedLatentSpace + SemanticKeyMapper，CoreNetwork 仍然是字典驅動的。
 
 ### 4.2 泛化限制
 
@@ -149,6 +152,7 @@ Audio → AudioSpectralEncoder(128) → SharedLatentSpace → 64-dim → ED3N
 | `tests/ai/multimodal/training/test_training_targets.py` | 11 | 訓練驗證 | 訓練權重 vs 隨機權重比較 |
 | `tests/ai/multimodal/test_quality_metrics.py` | 8 | 品質指標 | SSIM/PSNR/SNR 單元測試 |
 | `scripts/benchmark_ed3n_garden.py` | 15 | 能力基準 | 數學/知識/推理 3 領域 |
+| `scripts/benchmark_latent.py` | 13 | 能力基準 | 同上，含 SharedLatentSpace |
 | **§X #195 三模態驗證** | **3** | **架構驗證** | **SharedLatentSpace 文字投影 + 跨模態相似度** |
 
 ### 6.2 ⚠️ 防止 LLM 汙染測試分數
@@ -213,6 +217,7 @@ Audio → AudioSpectralEncoder(128) → SharedLatentSpace → 64-dim → ED3N
 |------|------|------|
 | 2026-07-04 | 1.0 | 初版建立 |
 | 2026-07-04 | 1.1 | §X #195: 三模態架構接通 — TextEncoder(CLIP) → SharedLatentSpace → ED3N。更新架構圖、模型表、比較表。原生引擎分數 <0.5→1.0/10。 |
+| 2026-07-04 | 1.2 | §X #195b: Latent reasoning 接入 ED3N process flow。Benchmark: math 5/5, knowledge 0/5, reasoning 0/5 (38%)。字典無英文知識映射是根本限制。 |
 
 ---
 
