@@ -164,6 +164,7 @@ class ED3NEngine:
         self._semantic_key_mapper: Optional[Any] = None
         self._latent_space: Optional[Any] = None
         self._text_encoder: Optional[Any] = None
+        self._latent_reasoning: Optional[Any] = None
         self.enable_multimodal()
         if auto_load_presets:
             self.load_presets()
@@ -375,19 +376,21 @@ class ED3NEngine:
 
     def _stage_latent_reasoning(self, input_text: str, existing_keys: List[str],
                                  query_id: str, stages: Dict[str, float]) -> List[str]:
-        """Use SharedLatentSpace to find additional concepts via semantic similarity.
+        """Use LatentReasoningNetwork for neural reasoning from latent space.
 
-        Encodes text → 512-dim CLIP → 64-dim latent → SemanticKeyMapper → similar concepts.
-        This enables cross-modal reasoning: text input can find concepts that
-        share semantic similarity in the latent space, not just keyword matches.
+        Architecture:
+          Text → TextEncoder(512) → SharedLatentSpace → 64-dim
+          → LatentReasoningNetwork → generated text tokens
+          → Additional concept keys for CoreNetwork
+
+        This is the REAL neural reasoning path, not just dictionary lookup.
+        The LRN does matrix computation with non-linear activations to
+        produce meaningful output from the latent representation.
         """
         t0 = time.perf_counter()
         additional_keys: List[str] = []
         try:
             if self._latent_space is None or self._text_encoder is None:
-                stages["latent"] = 0.0
-                return additional_keys
-            if self._semantic_key_mapper is None:
                 stages["latent"] = 0.0
                 return additional_keys
 
@@ -402,15 +405,27 @@ class ED3NEngine:
                 stages["latent"] = (time.perf_counter() - t0) * 1000
                 return additional_keys
 
-            # Find similar concepts via SemanticKeyMapper
-            results = self._semantic_key_mapper.map_latent_to_keys(
-                latent, top_k=5, mode="auto"
-            )
-            for result in results:
-                key = result.get("key", "")
-                score = result.get("score", 0.0)
-                if key and key not in existing_keys and score > 0.3:
-                    additional_keys.append(key)
+            # Use LatentReasoningNetwork for neural reasoning
+            if self._latent_reasoning is not None:
+                # Generate text from latent via neural network
+                generated = self._latent_reasoning.generate(latent, max_tokens=3)
+                if generated:
+                    # Encode generated text back to keys
+                    gen_keys = self.dictionary.encode(generated)
+                    for k in gen_keys:
+                        if k not in existing_keys:
+                            additional_keys.append(k)
+
+                # Also find similar concepts via SemanticKeyMapper (if available)
+                if self._semantic_key_mapper is not None:
+                    results = self._semantic_key_mapper.map_latent_to_keys(
+                        latent, top_k=3, mode="auto"
+                    )
+                    for result in results:
+                        key = result.get("key", "")
+                        score = result.get("score", 0.0)
+                        if key and key not in existing_keys and score > 0.3:
+                            additional_keys.append(key)
 
             stages["latent"] = (time.perf_counter() - t0) * 1000
         except Exception as e:
@@ -597,15 +612,20 @@ class ED3NEngine:
         try:
             from ai.multimodal.shared_latent_space import SharedLatentSpace
             from ai.multimodal.text_encoder import TextEncoder
+            from ai.multimodal.latent_reasoning_network import LatentReasoningNetwork
 
             self._latent_space = SharedLatentSpace(latent_dim=64)
             self._latent_space.register_modality("text", 512)
             self._text_encoder = TextEncoder(feature_dim=512)
-            logger.info("ED3N latent space enabled (text modality registered)")
+            self._latent_reasoning = LatentReasoningNetwork(
+                latent_dim=64, hidden_dim=128, vocab_size=500
+            )
+            logger.info("ED3N latent space + reasoning network enabled")
         except Exception as e:
             logger.warning("ED3N latent space enable failed: %s", e)
             self._latent_space = None
             self._text_encoder = None
+            self._latent_reasoning = None
 
     def encode_text_to_latent(self, text: str) -> Optional[Any]:
         """Encode text to 64-dim latent vector via SharedLatentSpace.
