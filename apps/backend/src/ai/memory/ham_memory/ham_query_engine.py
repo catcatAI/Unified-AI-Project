@@ -273,7 +273,8 @@ class HAMQueryEngine:
                 metadata=data_package.get("metadata", {}),
                 relevance=final_score,
             )
-        except Exception:
+        except Exception as err:
+            logger.debug("Memory reconstruction failed for %s: %s", mem_id, err)
             return None
 
     def _try_b64_fallback(self, mem_id: str, data_package: dict, encrypted: Any, query_words: set) -> Optional[HAMMemory]:

@@ -302,7 +302,8 @@ class VectorMemoryStore:
         if self.collection is not None:
             try:
                 return self.collection.count()
-            except Exception:
+            except Exception as err:
+                logger.debug("ChromaDB count failed: %s", err)
                 return 0
         return 0
 

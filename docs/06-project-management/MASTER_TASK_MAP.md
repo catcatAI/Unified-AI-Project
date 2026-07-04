@@ -2230,6 +2230,33 @@ Deleted 17 test files (0 collectible functions, all skip-only diagnostic scripts
 
 ---
 
+### §X #186: Added logging to 3 silent metric failures in ops_routes.py
+- **2026-07-04**
+- Commit: pending
+- 3 `except Exception: return 0.0` blocks now log with `logger.debug()`:
+  - `_get_cpu_percent()` (line 29)
+  - `_get_memory_percent()` (line 37)
+  - `_get_disk_percent()` (line 45)
+- Net: 0 tests (observability fix)
+
+### §X #187: Added logging to silent ChromaDB count failure
+- **2026-07-04**
+- Commit: pending
+- **vector_store.py:305** — `except Exception: return 0` → `logger.debug()` with error
+- Net: 0 tests (observability fix)
+
+### §X #188: Added logging to silent memory reconstruction failure
+- **2026-07-04**
+- Commit: pending
+- **ham_query_engine.py:276** — `except Exception: return None` → `logger.debug()` with mem_id and error
+- Also fixed 3 silent health check exceptions in multimodal_service.py (vision/audio/latent_space encoders + registered_items)
+- Net: 0 tests (observability fix)
+
+### Test Count
+- **5,019** collected (tests/ only — 0 errors, unchanged)
+
+---
+
 ## VII. PROJECT_HONEST_AUDIT.md (2026-06-22) — Claims vs Today
 
 ### Stale Claims About Phase 9-11 Deletions

@@ -26,7 +26,8 @@ def _get_cpu_percent() -> float:
     try:
         import psutil
         return psutil.cpu_percent(interval=0.1)
-    except Exception:
+    except Exception as err:
+        logger.debug("CPU metric unavailable: %s", err)
         return 0.0
 
 
@@ -34,7 +35,8 @@ def _get_memory_percent() -> float:
     try:
         import psutil
         return psutil.virtual_memory().percent
-    except Exception:
+    except Exception as err:
+        logger.debug("Memory metric unavailable: %s", err)
         return 0.0
 
 
@@ -42,7 +44,8 @@ def _get_disk_percent() -> float:
     try:
         import psutil
         return psutil.disk_usage("/").percent
-    except Exception:
+    except Exception as err:
+        logger.debug("Disk metric unavailable: %s", err)
         return 0.0
 
 

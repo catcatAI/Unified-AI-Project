@@ -921,17 +921,20 @@ class MultimodalService:
         try:
             _ = self._get_visual_encoder()
             status["encoders"] = {"vision": True}
-        except Exception:
+        except Exception as err:
+            logger.debug("Vision encoder health check failed: %s", err)
             status["encoders"] = {"vision": False}
         try:
             _ = self._get_audio_encoder()
             status["encoders"]["audio"] = True
-        except Exception:
+        except Exception as err:
+            logger.debug("Audio encoder health check failed: %s", err)
             status["encoders"]["audio"] = False
         try:
             _ = self._get_latent_space()
             status["latent_space"] = True
-        except Exception:
+        except Exception as err:
+            logger.debug("Latent space health check failed: %s", err)
             status["latent_space"] = False
         try:
             # P33: Check vision pipeline health
@@ -943,7 +946,8 @@ class MultimodalService:
         try:
             async with self._items_lock:
                 status["registered_items"] = len(self._registered_items)
-        except Exception:
+        except Exception as err:
+            logger.debug("Registered items count failed: %s", err)
             status["registered_items"] = 0
         # P37: Add production hardening health info
         try:
