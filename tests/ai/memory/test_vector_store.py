@@ -224,6 +224,7 @@ class TestVectorMemoryStoreChromadbBackend:
                 collection.query.return_value = {"ids": [["id1"]]}
                 results = await store.semantic_search("test", limit=5)
                 collection.query.assert_called_once_with(query_texts=["test"], n_results=5)
+                assert results is not None
 
 
 # Re-run original tests for backward compatibility

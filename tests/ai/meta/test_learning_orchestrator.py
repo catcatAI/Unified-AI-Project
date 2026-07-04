@@ -86,8 +86,9 @@ class TestLearningOrchestratorProcessCycle:
     async def test_process_learning_cycle_calls_evaluator(self, orchestrator, mock_evaluator):
         task = {"id": "t1", "type": "reasoning"}
         result = {"output": "done", "success": False}
-        await orchestrator.process_learning_cycle(task, result)
+        cycle_result = await orchestrator.process_learning_cycle(task, result)
         mock_evaluator.evaluate_task_execution.assert_called_once_with(task, result)
+        assert cycle_result is not None
     async def test_process_learning_cycle_evaluation_in_result(self, orchestrator):
         result = await orchestrator.process_learning_cycle(
             {"id": "t1"},

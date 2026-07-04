@@ -30,8 +30,9 @@ class TestDynamicAgentRegistry:
 
     async def test_init_registers_capability_callback(self, mock_hsp_connector):
         """Test that init registers the capability advertisement callback."""
-        DynamicAgentRegistry(hsp_connector=mock_hsp_connector)
+        reg = DynamicAgentRegistry(hsp_connector=mock_hsp_connector)
         mock_hsp_connector.register_on_capability_advertisement_callback.assert_called_once()
+        assert reg.registered_agents == {}
 
     async def test_register_agent_manually(self, registry):
         """Test manually registering an agent with capabilities."""

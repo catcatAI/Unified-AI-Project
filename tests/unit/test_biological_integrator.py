@@ -103,6 +103,7 @@ class TestBiologicalEventPublisher:
         pub.subscribe(BioEvent.ENERGY_CHANGED.value, callback)
         await pub.publish(BioEvent.ENERGY_CHANGED, {"energy": 0.5})
         callback.assert_called_once()
+        assert callback.call_args is not None
 
     @pytest.mark.asyncio
     async def test_publish_sync_and_async_callbacks(self, publisher):
@@ -114,6 +115,7 @@ class TestBiologicalEventPublisher:
         await pub.publish(BioEvent.HORMONE_CHANGED, {"hormone": "test"})
         sync_cb.assert_called_once()
         async_cb.assert_awaited_once()
+        assert sync_cb.call_args is not None
 
     def test_subscribe_count_all(self, publisher):
         pub, BioEvent = publisher
@@ -202,6 +204,7 @@ class TestProcessRelaxationEvent:
     async def test_calls_emotional_system(self, integrator):
         await integrator.process_relaxation_event(0.5)
         integrator.emotional_system.set_emotion_from_basic.assert_called_once()
+        assert integrator.emotional_system.set_emotion_from_basic.call_args is not None
 
     @pytest.mark.asyncio
     async def test_intensity_float_guard(self, integrator):

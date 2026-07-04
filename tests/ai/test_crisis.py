@@ -43,6 +43,7 @@ class TestCrisisSystemInit:
     def test_empty_config_loads_from_file(self, mock_load):
         system = CrisisSystem()
         mock_load.assert_called_once()
+        assert system.config is not None
 
 
 class TestCrisisSystemAssessInput:
@@ -170,6 +171,7 @@ class TestCrisisSystemProtocol:
         system = CrisisSystem(config=config)
         system._trigger_protocol(1, {'input_text': 'help', 'context': {}})
         mock_logging.critical.assert_called_once()
+        assert 'CRISIS' in str(mock_logging.critical.call_args) or 'help' in str(mock_logging.critical.call_args)
 
     @patch('ai.crisis.crisis_system.logging')
     def test_trigger_protocol_unknown_still_logs(self, mock_logging):
@@ -182,6 +184,7 @@ class TestCrisisSystemProtocol:
         system = CrisisSystem(config=config)
         system._trigger_protocol(1, {'input_text': 'help', 'context': {}})
         mock_logging.info.assert_called()
+        assert mock_logging.info.call_count >= 1
 
 
 class TestCrisisSystemLoadConfig:

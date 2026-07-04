@@ -51,6 +51,8 @@ class TestKeyGenerator:
         instance = KeyGenerator()
         instance.update_env_file({"TEST_KEY": "testvalue"}, "/tmp/nonexistent/.env")
         mock_file.assert_called_once()
+        handle = mock_file()
+        assert handle.write.called or handle.__enter__.called
 
     @patch('builtins.open', new_callable=mock_open, read_data='EXISTING=old\n')
     def test_update_env_file_existing(self, mock_file):
