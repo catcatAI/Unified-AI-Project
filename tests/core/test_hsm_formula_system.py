@@ -97,6 +97,8 @@ class TestHSMFormulaSystem:
             "confidence": 0.8,
             "description": "test rule",
         })
+        result = hsm.activate_governance_rule(gap.gap_id)
+        assert isinstance(result, bool)
 
     def test_activate_governance_rule_nonexistent(self):
         hsm = HSMFormulaSystem()

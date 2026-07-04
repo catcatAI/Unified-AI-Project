@@ -55,11 +55,10 @@ class TestMultimodalED3NAdapter:
         assert result is False  # dummy image data fails encoding
 
     def test_index_audio_for_retrieval(self, adapter):
-        # May succeed or fail depending on encoder's PCM detection;
-        # ensure no exception is raised
-        adapter.index_audio_for_retrieval(
+        result = adapter.index_audio_for_retrieval(
             b"test_audio", "aud_001", label="test"
         )
+        assert isinstance(result, bool)
 
     def test_save_load_roundtrip(self, adapter, tmp_path):
         fpath = str(tmp_path / "test_index.npy")

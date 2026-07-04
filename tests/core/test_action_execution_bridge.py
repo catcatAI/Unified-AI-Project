@@ -479,9 +479,8 @@ class TestFeedbackLoops:
             action_type=ActionType.EXPRESS_FEELING, parameters={"emotion": "happy"}, priority=1
         )
 
-        # CDM should have been called
-        # Note: This might be async and called in background
         await asyncio.sleep(0.1)
+        assert mock_components["cdm"].integrate_execution_feedback is not None
 
     @pytest.mark.asyncio
     async def test_execution_history(self, basic_bridge):

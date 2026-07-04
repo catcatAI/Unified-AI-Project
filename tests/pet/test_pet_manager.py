@@ -63,6 +63,8 @@ def test_set_economy_manager(pet_manager) -> None:
 def test_update_position(pet_manager) -> None:
     """测试更新位置"""
     pet_manager.update_position(100, 200)
+    state = pet_manager.get_current_state()
+    assert state is not None
 
 
 def test_add_action(pet_manager) -> None:

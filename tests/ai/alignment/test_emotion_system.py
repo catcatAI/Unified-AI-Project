@@ -320,7 +320,8 @@ class TestInfluenceAndWeights:
     def test_apply_influence(self):
         es = EmotionSystem()
         es.apply_influence('external_event', 'boost', 0.5, 0.3)
-        # Should not raise
+        history = es.get_emotion_history()
+        assert len(history) > 0
 
     def test_update_value_weight(self):
         es = EmotionSystem()

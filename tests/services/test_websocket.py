@@ -24,6 +24,8 @@ async def test_message_buffer():
     from services.websocket_manager import ConnectionManager
 
     cm = ConnectionManager()
+    assert hasattr(cm, 'active_connections')
+    assert isinstance(cm.active_connections, list)
 async def test_manager_singleton_exists():
     """Test global manager instance exists"""
     from services.websocket_manager import manager

@@ -40,6 +40,7 @@ class TestAngelaCore:
             import uvicorn
         except ImportError as e:
             pytest.skip(f"Required dependency not installed: {e}")
+        assert fastapi.__version__ is not None
 
     def test_security_middleware(self):
         """測試安全中間件"""

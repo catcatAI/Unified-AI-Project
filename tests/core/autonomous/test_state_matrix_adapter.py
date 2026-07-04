@@ -107,6 +107,8 @@ class TestStateExportImport:
     def test_import_from_dict_succeeds(self, adapter):
         data = adapter.export_to_dict()
         adapter.import_from_dict(data)
+        re_exported = adapter.export_to_dict()
+        assert isinstance(re_exported, dict)
 
 
 class TestNewApiAccess:
