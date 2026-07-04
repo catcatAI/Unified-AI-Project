@@ -70,7 +70,10 @@ def _entropy(similarities: Dict[str, float]) -> float:
 
 _AXIS_KEYWORDS: Dict[str, List[str]] = {
     "alpha": ["energy", "arousal", "comfort", "tension", "rest", "vitality", "strength"],
-    "beta": ["focus", "curiosity", "clarity", "confusion", "learning", "creativity", "understanding"],
+    "beta": [
+        "focus", "curiosity", "clarity", "confusion",
+        "learning", "creativity", "understanding"
+    ],
     "gamma": ["happiness", "calm", "fear", "sadness", "emotion", "feeling", "mood"],
     "delta": ["attention", "bond", "presence", "engagement", "social", "connection", "trust"],
     "epsilon": ["logic", "precision", "complexity", "certainty", "math", "reason", "analysis"],
@@ -118,6 +121,7 @@ class ResonanceEngine:
     def __init__(self, axes: Optional[List[Any]] = None):
         self._semantic_vectors: Dict[str, List[float]] = _build_initial_vectors()
         self._dims = _DEFAULT_DIMS
+        self._sparsity_log: Dict[str, List[int]] = {}
         if axes:
             axis_names = [getattr(a, "name", f"axis_{i}") for i, a in enumerate(axes)]
             for name in axis_names:
@@ -155,8 +159,26 @@ class ResonanceEngine:
         return profile.best_axis, profile.max_resonance
 
     def _sparsity_shift(self, axis_name: str, delta: int) -> None:
-        """Adjust anchor sparsity tracking (called by AnchorLearningEngine)."""
-        pass
+        """Track sparsity changes per axis (called by AnchorLearningEngine).
+
+        Records the delta (change in nonzero component count) for diagnostics
+        and potential sparsity-aware resonance adjustments.
+
+        Args:
+            axis_name: Name of the axis whose sparsity changed.
+            delta: Change in nonzero component count (positive = denser, negative = sparser).
+        """
+        if axis_name not in self._sparsity_log:
+            self._sparsity_log[axis_name] = []
+        self._sparsity_log[axis_name].append(delta)
+        if len(self._sparsity_log[axis_name]) > 100:
+            self._sparsity_log[axis_name] = self._sparsity_log[axis_name][-100:]
+
+    def get_sparsity_log(self, axis_name: Optional[str] = None) -> Dict[str, List[int]]:
+        """Return sparsity shift log, optionally filtered by axis name."""
+        if axis_name:
+            return {axis_name: self._sparsity_log.get(axis_name, [])}
+        return dict(self._sparsity_log)
 
     def find_composite_axes(
         self, vector: List[float], threshold: float = 0.3

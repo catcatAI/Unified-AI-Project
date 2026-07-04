@@ -7,7 +7,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: en
-   LAST_MODIFIED: 2026-07-04 (updated for §X #155-157)
+   LAST_MODIFIED: 2026-07-04 (updated for §X #193: resonance _sparsity_shift)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -183,6 +183,8 @@ pre-commit run --all-files
 > - **Zero new external dependencies** — everything uses stdlib + existing project modules
 > - **Phase 3.3 (Vector store persistence)**: Dual-backend (chromadb/numpy+JSON) `VectorMemoryStore`. Auto-detects chromadb; falls back to pure numpy + JSON for cross-platform zero-dep persistence. `VECTOR_STORE_PATH` env var controls storage dir (default `data/vector_store/`). 25 tests pass. `ham_utils.py` stubs → real implementations (cosine similarity, embedding, uuid, timestamp).
 > - **HAM wiring fix**: `ham_vector_store_manager.py` now has `embed_text()` / `query_similar()` methods (were missing → semantic search was dead code). End-to-end numpy backend: embed → store → search → persist → reload verified.
+> 
+> ✅ **NOTE (Updated 2026-07-04, §X #193)**: **§X #193**: Implemented `_sparsity_shift()` in `resonance.py` — was pass placeholder, now tracks per-axis sparsity delta log (bounded 100 entries). Added `get_sparsity_log()` accessor. Called by `AnchorLearningEngine.on_anchor_update()` when axis sparsity changes. Also fixed 2 E501 line-length issues. **5,019 tests collected (tests/) — 0 errors.**
 > 
 > ✅ **NOTE (Updated 2026-06-29)**: Extended session continues — 158+ commits (Jun 25-29). §X #49-54 all DONE:
 > - **§X #49**: 5 real stub modules (precision_projection_matrix, resonance, cognitive_pipeline, attractor_field, negativity) — +70 tests

@@ -3,7 +3,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: zh-tw/en
-    LAST_MODIFIED: 2026-07-04 (updated for §X #189-191: test dedup + consolidation)
+    LAST_MODIFIED: 2026-07-04 (updated for §X #193: resonance _sparsity_shift)
   =============================================================================
 -->
 

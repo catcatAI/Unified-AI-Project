@@ -2282,8 +2282,14 @@ Deleted 17 test files (0 collectible functions, all skip-only diagnostic scripts
 - test_benchmark.py (374 lines) — always skipped due to deleted ai.ops modules
 - Net: -1 file, -374 lines
 
+### §X #193: Implemented _sparsity_shift() in resonance.py
+- **2026-07-04**
+- Commit: pending
+- `core/allocation/resonance.py`: `_sparsity_shift()` was pass placeholder, now tracks per-axis sparsity delta log (bounded to 100 entries). Added `get_sparsity_log()` accessor. Called by `AnchorLearningEngine.on_anchor_update()` when axis sparsity changes.
+- Also fixed 2 E501 line-length issues (pre-existing beta keywords + new docstring).
+
 ### Test Count
-- **5,019** collected (tests/ only — 0 errors, unchanged — deleted files were never collected)
+- **5,019** collected (tests/ only — 0 errors, unchanged — resonance change is additive data tracking)
 
 ---
 
