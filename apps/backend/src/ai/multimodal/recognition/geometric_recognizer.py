@@ -1,6 +1,6 @@
 """Geometric Recognizer — image classification using geometric vocabulary.
 
-Phase 9: Uses the same geometric vocabulary for recognition.
+Uses the same geometric vocabulary for recognition.
 
 Pipeline:
     Image → Extract geometric features → Match vocabulary → Classify

@@ -1,6 +1,6 @@
 """Vocabulary Expander — organic vocabulary growth via residual analysis.
 
-Phase 10: When existing primitives are insufficient, discover new types.
+When existing primitives are insufficient, discover new types.
 
 Algorithm:
 1. Monitor generation quality (pixel error)

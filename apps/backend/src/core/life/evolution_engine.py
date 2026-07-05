@@ -8,7 +8,7 @@ EvolutionEngine — 性格演化引擎
 
 根據情感/安全性反饋調整人格參數與動態閾值。
 
-PersonalityManager 已於 Phase 9-12 移除，EvolutionEngine 改為直接與
+EvolutionEngine 改為直接與
 DigitalLifeIntegrator 的 life_stats.personality_traits 及 DynamicThresholdManager 協作。
 """
 
