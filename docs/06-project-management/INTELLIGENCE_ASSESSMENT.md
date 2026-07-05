@@ -146,6 +146,34 @@ Text → TextEncoder(CLIP 512) → SharedLatentSpace → 64-dim
 
 **§X #196 新增**：LatentReasoningNetwork — 真正的神經網路（2層MLP + ReLU），從 64-dim latent 做推理生成文本。可訓練（cross-entropy loss + manual backprop）。
 
+### 5.4 完整訓練管線 (§X #199)
+
+```
+Phase 0: Encoder projection training (VisualEncoder + AudioEncoder)
+         → MSE loss, gradient descent on projection matrices
+
+Phase 1: Contrastive pre-training (SharedLatentSpace)
+         → Positive/negative pairs, cosine distance loss
+
+Phase 2: Reconstruction fine-tuning (decoders)
+         → Feature-level MSE autoencoding
+
+Phase 3: Texture branch (VisualDecoder)
+         → Pixel-level MSE, CNN texture branch
+
+Phase 3b: Wavetable branch (AudioWaveformDecoder)
+         → Waveform MSE, wavetable synthesis
+
+Phase 3c: Sequence generator (RNN)
+         → Teacher-forced BPTT, stop token BCE
+
+Phase 3d: Primitive encoder + SequenceGenerator retrain
+         → Autoencoder + concept space
+
+Phase 4: LatentReasoningNetwork (latent → text)
+         → Cross-entropy loss, MLP training
+```
+
 ---
 
 ## 6. 測試用例 (Test Cases)
@@ -233,6 +261,7 @@ Text → TextEncoder(CLIP 512) → SharedLatentSpace → 64-dim
 | 2026-07-04 | 1.4 | §X #197: SharedLatentSpace 單例統一 — 9個實例→1個共享實例。所有5個模態統一註冊。115個核心多模態測試通過。 |
 | 2026-07-05 | 1.5 | 測試驗證：115+84+12=211個多模態測試通過。代碼審計：0個直接實例化，0個外部register_modality調用，4個過時Phase引用已修復。 |
 | 2026-07-05 | 2.0 | **重要發現**：1.5/10 分數不是因為移除了 LLM，而是因為本地模型從未訓練過。訓練數據存在（數學30K、邏輯10K、知識93），訓練管線存在（train_pipeline.py），但從未真正運行。分數反映的是「未訓練的模型」而非「移除 LLM 後的能力」。 |
+| 2026-07-05 | 3.0 | **完整訓練架構修復**：(1) GARDEN分詞品質修復（標點清理）；(2) LatentReasoningNetwork接入管線（Phase 4）；(3) VisualEncoder/AudioEncoder可訓練投影（Phase 0）；(4) 訓練管線升級為8個階段。 |
 
 ---
 

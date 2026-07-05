@@ -2338,6 +2338,31 @@ Deleted 17 test files (0 collectible functions, all skip-only diagnostic scripts
 - Test verification: 211 multimodal tests pass (115+84+12)
 - Updated INTELLIGENCE_ASSESSMENT.md v1.5
 
+### §X #199: Complete training architecture fixes
+- **2026-07-05**
+- Commit: `b986939c3`
+- GARDEN tokenization quality fix: added punctuation cleaning in learn_from_interaction()
+  - Before: "company?" → "company?" (separate concept)
+  - After: "company?" → "company" (clean token)
+- LatentReasoningNetwork wired into training pipeline:
+  - Added LatentReasoningTrainer class (Phase 4)
+  - Added train_lrn() method to FullTrainingPipeline
+  - LRN now trains: latent(64) → MLP → text tokens
+- VisualEncoder/AudioEncoder trainable projections:
+  - Added train_step() to VisualEncoder (MSE loss + gradient descent)
+  - Added train_step() to AudioSpectralEncoder (MSE loss + gradient descent)
+  - Added train_encoders() to FullTrainingPipeline (Phase 0)
+- Complete training pipeline now has 8 phases:
+  - Phase 0: Encoder projection training
+  - Phase 1: Contrastive pre-training
+  - Phase 2: Reconstruction fine-tuning
+  - Phase 3: Texture branch
+  - Phase 3b: Wavetable branch
+  - Phase 3c: Sequence generator
+  - Phase 3d: Primitive encoder
+  - Phase 4: LatentReasoningNetwork
+- Updated INTELLIGENCE_ASSESSMENT.md v3.0
+
 ### Test Count
 - **5,019** collected (tests/ only — 0 errors, unchanged)
 
