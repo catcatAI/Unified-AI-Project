@@ -426,6 +426,23 @@ class VectorDictionary:
         logger.info("GARDEN: grew new concept key=%s surface=%s", key, surface_form)
         return key
 
+    def grow_batch(self, texts: List[str], confidence: Optional[float] = None) -> List[str]:
+        """Add multiple new entries learned from conversation without rebuilding index.
+        Call rebuild_index() once after all grows to finalize."""
+        confidence = confidence if confidence is not None else confidence_value("ai.garden.dictionary.grow_confidence", 0.6)
+        new_keys: List[str] = []
+        for text in texts:
+            existing = self._find_similar_key(text, threshold=threshold_value("ai.garden.dictionary.grow_dedup_threshold", 0.85))
+            if existing:
+                continue
+            idx = len(self.entries) + 1
+            key = f"l{idx}"
+            self.add_entry(key, {"en": text, "zh": text}, confidence=confidence)
+            new_keys.append(key)
+        if new_keys:
+            logger.info("GARDEN: grew %d new concepts (batch)", len(new_keys))
+        return new_keys
+
     def _find_similar_key(self, text: str, threshold: Optional[float] = None) -> Optional[str]:
         """Return existing key if text is very similar to an existing surface form."""
         threshold = threshold if threshold is not None else threshold_value("ai.garden.dictionary.find_similar_threshold", 0.85)

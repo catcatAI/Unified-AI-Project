@@ -782,20 +782,21 @@ def _step5_train_garden(coordinator, batches):
         # 5b: Add knowledge entries to vector dictionary
         garden_samples = batches.get("garden", [])
         print(f"  Processing {len(garden_samples)} knowledge samples...")
-        learn_count = 0
-        for s in garden_samples:
-            try:
-                garden_engine.learn_from_interaction(
-                    user_text=s["input"],
-                    response_text=s["output"],
-                    confidence=confidence_value("train.garden.learn_confidence", 0.7),
-                )
-                learn_count += 1
-                if learn_count % 100 == 0:
-                    print(f"    Processed {learn_count}/{len(garden_samples)}...")
-            except Exception as e:
-                logger.debug("Skipped GARDEN learn for '%s': %s", s["input"][:30], e)
-        print(f"  learn_from_interaction calls: {learn_count}")
+        
+        # Use batch learning for speed (rebuilds index ONCE, not per sample)
+        BATCH_SIZE = 500
+        total_learned = 0
+        for i in range(0, len(garden_samples), BATCH_SIZE):
+            batch = garden_samples[i:i+BATCH_SIZE]
+            result = garden_engine.learn_batch(
+                samples=[{"input": s["input"], "output": s["output"]} for s in batch],
+                confidence=confidence_value("train.garden.learn_confidence", 0.7),
+            )
+            total_learned += result["samples_processed"]
+            if total_learned % 1000 == 0 or i + BATCH_SIZE >= len(garden_samples):
+                print(f"    Processed {total_learned}/{len(garden_samples)}...")
+        
+        print(f"  learn_batch calls: {total_learned}")
 
         # Record with coordinator
         asyncio.run(coordinator.record_training(
@@ -911,8 +912,38 @@ def main() -> None:
     print("=" * 60)
     t_start = time.time()
 
+    # Check for resume state
+    STATE_FILE = os.path.join(CKPT_DIR, "training_state.json")
+    resume_state = {}
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "r", encoding="utf-8") as f:
+                resume_state = json.load(f)
+            completed_steps = resume_state.get("completed_steps", [])
+            print(f"  Found existing state: {len(completed_steps)} steps completed")
+            print(f"  Resuming from step {len(completed_steps) + 1}/8...")
+        except Exception as e:
+            print(f"  Warning: Could not load state file: {e}")
+            resume_state = {}
+    else:
+        completed_steps = []
+
+    def save_state(step: int, data: Optional[Dict] = None) -> None:
+        """Save training state for resume."""
+        nonlocal resume_state
+        if "completed_steps" not in resume_state:
+            resume_state["completed_steps"] = []
+        if step not in resume_state["completed_steps"]:
+            resume_state["completed_steps"].append(step)
+        if data:
+            resume_state.update(data)
+        resume_state["last_update"] = time.strftime("%Y-%m-%d %H:%M:%S")
+        os.makedirs(CKPT_DIR, exist_ok=True)
+        with open(STATE_FILE, "w", encoding="utf-8") as f:
+            json.dump(resume_state, f, ensure_ascii=False, indent=2)
+
     # -----------------------------------------------------------------------
-    # Step 1: Load + generate data
+    # Step 1: Load + generate data (always required)
     # -----------------------------------------------------------------------
     print("\n[1/8] Loading and generating data...")
     dataset_samples, alpaca_samples, template_samples, kb_samples, presets_samples, trpg_samples, secondary_samples = _step2_load_datasets()
@@ -962,17 +993,34 @@ def main() -> None:
     # -----------------------------------------------------------------------
     # Step 4: Train ED3N on reflex/math/logic domain
     # -----------------------------------------------------------------------
-    ed3n_engine, examples = _step4_train_ed3n(coordinator, batches)
+    if 4 in completed_steps:
+        print("\n[4/8] Training ED3N... (SKIPPED - already completed)")
+        # Load saved engines
+        ed3n_engine = ED3NEngine()
+        ed3n_engine.load(os.path.join(CKPT_DIR, "ed3n_full.json"))
+        examples = []
+    else:
+        ed3n_engine, examples = _step4_train_ed3n(coordinator, batches)
+        save_state(4, {"ed3n_samples": len(examples)})
 
     # -----------------------------------------------------------------------
     # Step 5: Train GARDEN on knowledge/general domain
     # -----------------------------------------------------------------------
-    garden_engine = _step5_train_garden(coordinator, batches)
+    if 5 in completed_steps:
+        print("\n[5/8] Training GARDEN... (SKIPPED - already completed)")
+        # Load saved engine
+        garden_engine = GARDENEngine(compatibility_mode=True)
+        garden_engine.load(os.path.join(CKPT_DIR, "garden_checkpoint"))
+    else:
+        garden_engine = _step5_train_garden(coordinator, batches)
+        save_state(5, {"garden_samples": len(batches.get("garden", []))})
 
     # -----------------------------------------------------------------------
     # Steps 6-8: Sync knowledge — Save checkpoints — Evaluation
     # -----------------------------------------------------------------------
-    _step6_sync_knowledge(ed3n_engine, garden_engine, model_bus, coordinator, all_samples, batches, examples)
+    if 6 not in completed_steps:
+        _step6_sync_knowledge(ed3n_engine, garden_engine, model_bus, coordinator, all_samples, batches, examples)
+        save_state(6)
 
     print("\n" + "=" * 60)
     elapsed = time.time() - t_start

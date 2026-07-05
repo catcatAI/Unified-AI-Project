@@ -541,6 +541,77 @@ class GARDENEngine:
             "hebbian_delta": round(delta, 6),
         }
 
+    def learn_batch(
+        self,
+        samples: List[Dict[str, str]],
+        confidence: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """
+        Batch learning from multiple interactions.
+        Grows all new concepts first, rebuilds index ONCE, then runs Hebbian updates.
+        Much faster than calling learn_from_interaction() in a loop.
+        """
+        if not self._learning_enabled or not samples:
+            return {"interaction": self._learn_count, "new_concepts": 0, "samples_processed": 0}
+
+        confidence = confidence if confidence is not None else confidence_value("ai.garden.engine.learn_confidence", 0.7)
+        if not self._presets_loaded:
+            self.load_presets()
+
+        all_new_keys: List[str] = []
+        all_tokens: List[str] = []
+
+        # Stage 1: Collect all tokens from all samples
+        import string
+        for s in samples:
+            user_text = s.get("input", "")
+            response_text = s.get("output", "")
+            for text in [user_text, response_text]:
+                tokens = [t for t in text.lower().split() if len(t) >= limit_value("ai.garden.engine.min_token_length", 3)]
+                all_tokens.extend(tokens)
+
+        # Clean punctuation from tokens
+        cleaned_tokens = []
+        for token in all_tokens:
+            cleaned = token.strip(string.punctuation)
+            if cleaned and len(cleaned) >= limit_value("ai.garden.engine.min_token_length", 3):
+                cleaned_tokens.append(cleaned)
+
+        # Stage 2: Batch grow - don't rebuild index until all tokens processed
+        for token in cleaned_tokens:
+            existing = self.dictionary._find_similar_key(token, threshold=threshold_value("ai.garden.engine.dedup_similarity", 0.90))
+            if not existing and confidence >= self.dictionary.growth_threshold:
+                new_key = self.dictionary.grow(token, token, confidence=confidence)
+                if new_key:
+                    self.snn._register_key(new_key)
+                    all_new_keys.append(new_key)
+
+        # Stage 3: Rebuild index ONCE after all grows
+        if all_new_keys and self.dictionary._dirty:
+            self.dictionary._rebuild_index()
+
+        # Stage 4: Hebbian updates for each sample
+        hebbian_delta = 0.0
+        for s in samples:
+            user_text = s.get("input", "")
+            response_text = s.get("output", "")
+            input_keys = self.dictionary.encode(user_text)
+            output_keys = self.dictionary.encode(response_text)
+            if input_keys and output_keys:
+                delta = self.snn.hebbian_update(
+                    input_keys, output_keys, lr=learning_rate("ai.garden.engine.hebbian_lr", 0.05), target_strength=confidence_value("ai.garden.engine.hebbian_target_strength", 0.7)
+                )
+                hebbian_delta += delta
+
+        self._learn_count += len(samples)
+
+        return {
+            "interaction": self._learn_count,
+            "new_concepts": len(all_new_keys),
+            "samples_processed": len(samples),
+            "hebbian_delta": round(hebbian_delta, 6),
+        }
+
     # ------------------------------------------------------------------
     # Hormonal modulation passthrough
     # ------------------------------------------------------------------
