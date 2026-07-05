@@ -203,6 +203,45 @@ class VisualEncoder:
             ).astype(np.float32)
         return self._projection @ raw
 
+    def train_step(self, image_data: bytes, target_latent: np.ndarray,
+                   lr: float = 0.001) -> float:
+        """Train the projection matrix to map image features to target latent.
+
+        Uses MSE loss between projected features and target latent vector.
+        Updates self._projection via gradient descent.
+
+        Args:
+            image_data: Raw image bytes
+            target_latent: Target latent vector (64-dim)
+            lr: Learning rate
+
+        Returns:
+            Training loss (MSE)
+        """
+        # Encode image to get raw features
+        features = self._extract_features(image_data)
+        if features is None or np.all(features == 0):
+            return 0.0
+
+        # Project to feature space
+        projected = self._project(features)
+
+        # Compute loss: MSE between projected and target
+        diff = projected - target_latent[:self._feature_dim]
+        loss = float(np.mean(diff ** 2))
+
+        # Gradient: d(loss)/d(projection) = 2 * diff @ features.T
+        # Update projection: W -= lr * grad
+        grad = 2.0 * np.outer(diff, features) / self._feature_dim
+        self._projection -= lr * grad
+
+        # Gradient clipping
+        norm = np.linalg.norm(self._projection)
+        if norm > 10.0:
+            self._projection = self._projection / (norm / 10.0)
+
+        return loss
+
     def reset_projection(self) -> None:
         self._projection = None
         self._cnn_filters = None

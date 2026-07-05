@@ -501,8 +501,16 @@ class GARDENEngine:
             tokens = [t for t in text.lower().split() if len(t) >= limit_value("ai.garden.engine.min_token_length", 3)]
             all_tokens.extend(tokens)
 
-        # Batch grow - don't rebuild index until all tokens processed
+        # Clean punctuation from tokens
+        import string
+        cleaned_tokens = []
         for token in all_tokens:
+            cleaned = token.strip(string.punctuation)
+            if cleaned and len(cleaned) >= limit_value("ai.garden.engine.min_token_length", 3):
+                cleaned_tokens.append(cleaned)
+
+        # Batch grow - don't rebuild index until all tokens processed
+        for token in cleaned_tokens:
             existing = self.dictionary._find_similar_key(token, threshold=threshold_value("ai.garden.engine.dedup_similarity", 0.90))
             if not existing and confidence >= self.dictionary.growth_threshold:
                 new_key = self.dictionary.grow(token, token, confidence=confidence)

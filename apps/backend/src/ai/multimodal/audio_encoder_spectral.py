@@ -268,3 +268,42 @@ class AudioSpectralEncoder:
                 (self._feature_dim, len(raw))
             ).astype(np.float32)
         return self._projection @ raw
+
+    def train_step(self, audio_data: bytes, target_latent: np.ndarray,
+                   lr: float = 0.001) -> float:
+        """Train the projection matrix to map audio features to target latent.
+
+        Uses MSE loss between projected features and target latent vector.
+        Updates self._projection via gradient descent.
+
+        Args:
+            audio_data: Raw audio bytes (PCM/WAV)
+            target_latent: Target latent vector (64-dim)
+            lr: Learning rate
+
+        Returns:
+            Training loss (MSE)
+        """
+        # Extract spectral features
+        features = self._extract_features(audio_data)
+        if features is None or np.all(features == 0):
+            return 0.0
+
+        # Project to feature space
+        projected = self._project(features)
+
+        # Compute loss: MSE between projected and target
+        diff = projected - target_latent[:self._feature_dim]
+        loss = float(np.mean(diff ** 2))
+
+        # Gradient: d(loss)/d(projection) = 2 * diff @ features.T
+        # Update projection: W -= lr * grad
+        grad = 2.0 * np.outer(diff, features) / self._feature_dim
+        self._projection -= lr * grad
+
+        # Gradient clipping
+        norm = np.linalg.norm(self._projection)
+        if norm > 10.0:
+            self._projection = self._projection / (norm / 10.0)
+
+        return loss

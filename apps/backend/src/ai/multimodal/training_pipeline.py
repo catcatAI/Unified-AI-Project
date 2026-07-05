@@ -412,6 +412,76 @@ class SequenceTrainer:
                 "history": history}
 
 
+class LatentReasoningTrainer:
+    """Trains LatentReasoningNetwork: latent(64) → MLP → text tokens.
+
+    Phase 4: Uses (latent_vector, target_text) pairs from chat interactions
+    or synthetic data to train the LRN to generate meaningful text from latent
+    representations. This bridges the latent space to natural language.
+    """
+
+    def __init__(self, latent_reasoning_network):
+        self._lrn = latent_reasoning_network
+
+    def train_from_chat_data(self, latent_space, chat_history: list,
+                             epochs: int = 5, lr: float = 0.01) -> dict:
+        """Train LRN using chat interactions projected through SharedLatentSpace.
+
+        Args:
+            latent_space: SharedLatentSpace instance
+            chat_history: List of (user_text, response_text) tuples
+            epochs: Number of training epochs
+            lr: Learning rate
+
+        Returns:
+            Dict with 'final_loss' and 'history'
+        """
+        if not chat_history:
+            return {"final_loss": 0.0, "history": []}
+
+        history = []
+        for epoch in range(epochs):
+            total_loss = 0.0
+            count = 0
+            for user_text, response_text in chat_history:
+                # Encode response text to latent via SharedLatentSpace
+                from ai.multimodal.text_encoder import TextEncoder
+                text_encoder = TextEncoder(feature_dim=512)
+                features = text_encoder.encode(response_text)
+                if features is None or features.sum() == 0:
+                    continue
+                latent = latent_space.project("text", features)
+                if latent is None:
+                    continue
+
+                # Train LRN: given this latent, predict the response text
+                loss = self._lrn.train_step(latent, response_text, lr=lr)
+                total_loss += loss
+                count += 1
+
+            avg_loss = total_loss / max(count, 1)
+            history.append(avg_loss)
+
+        return {"final_loss": history[-1] if history else 0.0,
+                "history": history}
+
+    def train_from_interaction(self, latent_space, user_text: str,
+                                response_text: str, lr: float = 0.01) -> float:
+        """Train LRN on a single interaction pair.
+
+        Returns the training loss.
+        """
+        from ai.multimodal.text_encoder import TextEncoder
+        text_encoder = TextEncoder(feature_dim=512)
+        features = text_encoder.encode(response_text)
+        if features is None or features.sum() == 0:
+            return 0.0
+        latent = latent_space.project("text", features)
+        if latent is None:
+            return 0.0
+        return self._lrn.train_step(latent, response_text, lr=lr)
+
+
 class PrimitiveTrainer:
     """Trains PrimitiveEncoder autoencoder on a library of geometric primitives.
 
@@ -811,6 +881,95 @@ class FullTrainingPipeline:
         logger.info("Sequence training final loss: %.6f", result["final_loss"])
         return result
 
+    def train_lrn(self, steps: int = 50, lr: float = 0.01,
+                  chat_history: Optional[list] = None) -> Dict:
+        """Train the LatentReasoningNetwork (Phase 4).
+
+        Trains the MLP that maps 64-dim latent vectors to text tokens.
+        Uses synthetic (latent, text) pairs if no chat history provided.
+
+        Args:
+            steps: Number of training steps
+            lr: Learning rate
+            chat_history: Optional list of (user_text, response_text) tuples
+
+        Returns:
+            Dict with 'final_loss' and 'history'
+        """
+        logger.info("=== Phase 4: LatentReasoningNetwork training ===")
+        from ai.multimodal.latent_reasoning_network import LatentReasoningNetwork
+        lrn = LatentReasoningNetwork(latent_dim=64, vocab_size=500)
+        trainer = LatentReasoningTrainer(lrn)
+
+        if chat_history:
+            result = trainer.train_from_chat_data(
+                self._ls, chat_history, epochs=steps, lr=lr)
+        else:
+            # Synthetic training: random latents → random text targets
+            import numpy as np
+            history = []
+            for step in range(steps):
+                latent = np.random.randn(64).astype(np.float32)
+                # Use synthetic target text
+                targets = ["hello", "thank you", "goodbye", "yes", "no"]
+                target = targets[step % len(targets)]
+                loss = lrn.train_step(latent, target, lr=lr)
+                history.append(loss)
+            result = {"final_loss": history[-1] if history else 0.0,
+                      "history": history}
+
+        logger.info("LRN training final loss: %.6f", result["final_loss"])
+        return result
+
+    def train_encoders(self, steps: int = 50, lr: float = 0.001) -> Dict:
+        """Train VisualEncoder and AudioEncoder projection matrices (Phase 0).
+
+        Uses random image/audio data with random target latents to train
+        the projection matrices in both encoders. This is a warm-up phase
+        to ensure the encoders produce features that map to the latent space.
+
+        Args:
+            steps: Number of training steps
+            lr: Learning rate
+
+        Returns:
+            Dict with 'visual_loss' and 'audio_loss'
+        """
+        logger.info("=== Phase 0: Encoder projection training ===")
+        import numpy as np
+
+        visual_losses = []
+        audio_losses = []
+
+        for step in range(steps):
+            # Generate random target latent
+            target_latent = np.random.randn(64).astype(np.float32)
+
+            # Train visual encoder with random image
+            dummy_image = np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8)
+            import io
+            from PIL import Image
+            img = Image.fromarray(dummy_image)
+            buf = io.BytesIO()
+            img.save(buf, format='PNG')
+            img_bytes = buf.getvalue()
+
+            v_loss = self._visual_encoder.train_step(img_bytes, target_latent, lr=lr)
+            visual_losses.append(v_loss)
+
+            # Train audio encoder with random audio
+            dummy_audio = np.random.randn(16000).astype(np.float32)
+            a_loss = self._audio_encoder.train_step(dummy_audio.tobytes(), target_latent, lr=lr)
+            audio_losses.append(a_loss)
+
+        result = {
+            "visual_loss": visual_losses[-1] if visual_losses else 0.0,
+            "audio_loss": audio_losses[-1] if audio_losses else 0.0,
+        }
+        logger.info("Encoder training - visual: %.6f, audio: %.6f",
+                    result["visual_loss"], result["audio_loss"])
+        return result
+
     def run_full(self, contrastive_epochs: int = 10,
                   contrastive_pairs: int = 20,
                   recon_epochs: int = 10, recon_samples: int = 10,
@@ -819,15 +978,19 @@ class FullTrainingPipeline:
                   seq_steps: int = 50, seq_lr: float = 0.001,
                   prim_epochs: int = 100, prim_lr: float = 0.001,
                   seq_prim_epochs: int = 50, seq_prim_lr: float = 0.001,
+                  lrn_steps: int = 50, lrn_lr: float = 0.01,
+                  encoder_steps: int = 50, encoder_lr: float = 0.001,
                   lr: float = 0.01) -> Dict:
         """Run all pipeline phases end-to-end.
 
+        Phase 0: Encoder projection training (VisualEncoder + AudioEncoder)
         Phase 1: Contrastive pre-training (SharedLatentSpace)
         Phase 2: Reconstruction fine-tuning (decoders)
         Phase 3: Texture branch (VisualDecoder)
         Phase 3b: Wavetable branch (AudioWaveformDecoder)
         Phase 3c: Sequence generator (RNN)
         Phase 3d: Primitive encoder + SequenceGenerator retrain
+        Phase 4: LatentReasoningNetwork (latent → text)
 
         Args:
             contrastive_epochs: Phase 1 epochs
@@ -844,12 +1007,18 @@ class FullTrainingPipeline:
             prim_lr: Phase 3d PrimitiveEncoder learning rate
             seq_prim_epochs: Phase 3d SequenceGenerator retrain epochs
             seq_prim_lr: Phase 3d SequenceGenerator retrain learning rate
+            lrn_steps: Phase 4 LatentReasoningNetwork steps
+            lrn_lr: Phase 4 LatentReasoningNetwork learning rate
+            encoder_steps: Phase 0 encoder projection steps
+            encoder_lr: Phase 0 encoder projection learning rate
             lr: Learning rate for Phases 1-2
 
         Returns:
             Dict with results from all phases
         """
         results = {}
+        results["phase0_encoder"] = self.train_encoders(
+            steps=encoder_steps, lr=encoder_lr)
         results["phase1_contrastive"] = self.run(
             contrastive_epochs=contrastive_epochs,
             contrastive_pairs=contrastive_pairs,
@@ -867,6 +1036,8 @@ class FullTrainingPipeline:
             epochs=prim_epochs, lr=prim_lr,
             seq_epochs=seq_prim_epochs, seq_lr=seq_prim_lr,
         )
+        results["phase4_lrn"] = self.train_lrn(
+            steps=lrn_steps, lr=lrn_lr)
         return results
 
     def train_primitives(self, epochs: int = 100, lr: float = 0.001,
