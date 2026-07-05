@@ -258,24 +258,6 @@ class SharedLatentSpace:
 
         return loss, grad_a.astype(np.float32), grad_b.astype(np.float32)
 
-        diff = latent_a - latent_b
-        dist_sq = float(np.dot(diff, diff))
-
-        if is_positive:
-            loss = dist_sq
-            grad_a = 2.0 * diff
-            grad_b = -2.0 * diff
-        else:
-            loss = max(0.0, margin ** 2 - dist_sq)
-            if loss > 0:
-                grad_a = -2.0 * diff
-                grad_b = 2.0 * diff
-            else:
-                grad_a = np.zeros(self._latent_dim)
-                grad_b = np.zeros(self._latent_dim)
-
-        return loss, grad_a, grad_b
-
     def _apply_gradients(self, modality: str, features: np.ndarray,
                          grad_latent: np.ndarray, lr: float) -> None:
         """Update W and b using gradient w.r.t. latent embedding, with clipping."""
@@ -320,3 +302,41 @@ class SharedLatentSpace:
             scores_arr = scores_arr / total
 
         return dict(zip(scores.keys(), scores_arr.tolist()))
+
+
+# =============================================================================
+# Singleton factory — ONE shared instance for all components
+# =============================================================================
+
+_shared_latent_space: Optional[SharedLatentSpace] = None
+
+
+def get_shared_latent_space(latent_dim: int = 64) -> SharedLatentSpace:
+    """Get or create the process-wide shared latent space singleton.
+
+    All components (ED3N, MultimodalBridge, SimilarityService, etc.)
+    should use this factory instead of creating their own instances.
+
+    Registers all modalities on first creation:
+      - vision: 256-dim (VisualEncoder output)
+      - audio: 128-dim (AudioSpectralEncoder output)
+      - text: 512-dim (CLIP text encoder output)
+      - vision_semantic: 512-dim (CLIP image encoder output)
+      - audio_semantic: 384-dim (Whisper encoder output)
+    """
+    global _shared_latent_space
+    if _shared_latent_space is None:
+        _shared_latent_space = SharedLatentSpace(latent_dim=latent_dim)
+        _shared_latent_space.register_modality("vision", 256)
+        _shared_latent_space.register_modality("audio", 128)
+        _shared_latent_space.register_modality("text", 512)
+        _shared_latent_space.register_modality("vision_semantic", 512)
+        _shared_latent_space.register_modality("audio_semantic", 384)
+        logger.info("SharedLatentSpace singleton created (dim=%d, modalities=5)", latent_dim)
+    return _shared_latent_space
+
+
+def reset_shared_latent_space() -> None:
+    """Reset the singleton (for testing)."""
+    global _shared_latent_space
+    _shared_latent_space = None

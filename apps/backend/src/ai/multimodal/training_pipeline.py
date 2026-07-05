@@ -622,7 +622,11 @@ class FullTrainingPipeline:
                  visual_encoder: Optional[VisualEncoder] = None,
                  audio_encoder: Optional[AudioSpectralEncoder] = None,
                  visual_decoder=None, audio_decoder=None):
-        self._ls = latent_space or SharedLatentSpace(latent_dim=64)
+        if latent_space is not None:
+            self._ls = latent_space
+        else:
+            from ai.multimodal.shared_latent_space import get_shared_latent_space
+            self._ls = get_shared_latent_space(latent_dim=64)
         self._visual_encoder = visual_encoder or VisualEncoder()
         self._audio_encoder = audio_encoder or AudioSpectralEncoder()
         from ai.multimodal.visual_decoder import VisualDecoder, load_default_visual_decoder_weights
@@ -630,8 +634,6 @@ class FullTrainingPipeline:
         load_default_visual_decoder_weights(self._visual_decoder)
         self._audio_decoder = audio_decoder or AudioWaveformDecoder()
         load_default_audio_decoder_weights(self._audio_decoder)
-        self._ls.register_modality("vision", 256)
-        self._ls.register_modality("audio", 128)
         self._reconstruction = ReconstructionCycle(
             self._ls, self._visual_decoder, self._audio_decoder
         )

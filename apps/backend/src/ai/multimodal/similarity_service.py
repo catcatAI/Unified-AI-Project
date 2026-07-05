@@ -9,7 +9,7 @@ import numpy as np
 from ai.multimodal.audio_decoder import AudioWaveformDecoder
 from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
 from ai.multimodal.quality_metrics import quality_report, snr, ssim
-from ai.multimodal.shared_latent_space import SharedLatentSpace
+from ai.multimodal.shared_latent_space import SharedLatentSpace, get_shared_latent_space
 from ai.multimodal.visual_decoder import VisualDecoder
 from ai.multimodal.visual_encoder import VisualEncoder
 from PIL import Image
@@ -42,11 +42,8 @@ class MultimodalSimilarityService:
         self._audio_encoder = AudioSpectralEncoder(feature_dim=self.AUDIO_DIM)
         self._visual_decoder = VisualDecoder()
         self._audio_decoder = AudioWaveformDecoder()
-        self._latent_space = SharedLatentSpace(latent_dim=self.LATENT_DIM)
+        self._latent_space = get_shared_latent_space(latent_dim=self.LATENT_DIM)
         self._items: Dict[str, str] = {}
-
-        self._latent_space.register_modality("vision", self.VISION_DIM)
-        self._latent_space.register_modality("audio", self.AUDIO_DIM)
 
     async def encode_vision(self, image_data: bytes, item_id: str) -> Optional[List[float]]:
         """Encode image and register in latent space."""

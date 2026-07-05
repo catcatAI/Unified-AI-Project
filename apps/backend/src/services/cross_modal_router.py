@@ -71,10 +71,8 @@ class CrossModalRouter:
 
     def _get_latent_space(self):
         if self._latent_space is None:
-            from ai.multimodal.shared_latent_space import SharedLatentSpace
-            self._latent_space = SharedLatentSpace(latent_dim=self.LATENT_DIM)
-            self._latent_space.register_modality("vision", self.VISION_DIM)
-            self._latent_space.register_modality("audio", self.AUDIO_DIM)
+            from ai.multimodal.shared_latent_space import get_shared_latent_space
+            self._latent_space = get_shared_latent_space(latent_dim=self.LATENT_DIM)
         return self._latent_space
 
     # --- Rate limiting ---

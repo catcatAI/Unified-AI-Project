@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 from ai.multimodal.audio_decoder import AudioWaveformDecoder
 from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
-from ai.multimodal.shared_latent_space import SharedLatentSpace
+from ai.multimodal.shared_latent_space import SharedLatentSpace, get_shared_latent_space
 from ai.multimodal.text_encoder import TextEncoder
 from ai.multimodal.visual_decoder import VisualDecoder
 from ai.multimodal.visual_encoder import VisualEncoder
@@ -45,10 +45,7 @@ class MultimodalBridge:
         load_default_visual_decoder_weights(self._visual_decoder)
         self._audio_decoder = AudioWaveformDecoder()
         load_default_audio_decoder_weights(self._audio_decoder)
-        self._latent_space = SharedLatentSpace(latent_dim=self.LATENT_DIM)
-        self._latent_space.register_modality("vision", self.VISION_DIM)
-        self._latent_space.register_modality("audio", self.AUDIO_DIM)
-        self._latent_space.register_modality("text", self.TEXT_DIM)
+        self._latent_space = get_shared_latent_space(latent_dim=self.LATENT_DIM)
 
     # --- Encoding (modality → latent) ---
 

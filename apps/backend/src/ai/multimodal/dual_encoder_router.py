@@ -60,15 +60,8 @@ class DualEncoderRouter:
         and contrastive training on semantic pairs.
         """
         if self._latent_space is None:
-            from ai.multimodal.shared_latent_space import SharedLatentSpace
-            ls = SharedLatentSpace(latent_dim=64)
-            # Structural modalities (P15)
-            ls.register_modality("vision", 256)
-            ls.register_modality("audio", 128)
-            # Semantic modalities (P43)
-            ls.register_semantic_modality("vision", 512)
-            ls.register_semantic_modality("audio", 384)
-            self._latent_space = ls
+            from ai.multimodal.shared_latent_space import get_shared_latent_space
+            self._latent_space = get_shared_latent_space(latent_dim=64)
         return self._latent_space
 
     def semantic_consistency_report(self, vision_features: Optional[List[np.ndarray]] = None,

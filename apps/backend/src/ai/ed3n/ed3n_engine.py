@@ -610,12 +610,11 @@ class ED3NEngine:
         dictionary encoding for richer semantic understanding.
         """
         try:
-            from ai.multimodal.shared_latent_space import SharedLatentSpace
+            from ai.multimodal.shared_latent_space import SharedLatentSpace, get_shared_latent_space
             from ai.multimodal.text_encoder import TextEncoder
             from ai.multimodal.latent_reasoning_network import LatentReasoningNetwork
 
-            self._latent_space = SharedLatentSpace(latent_dim=64)
-            self._latent_space.register_modality("text", 512)
+            self._latent_space = get_shared_latent_space(latent_dim=64)
             self._text_encoder = TextEncoder(feature_dim=512)
             self._latent_reasoning = LatentReasoningNetwork(
                 latent_dim=64, hidden_dim=128, vocab_size=500
