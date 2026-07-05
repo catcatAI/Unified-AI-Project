@@ -501,6 +501,7 @@ class GARDENEngine:
             tokens = [t for t in text.lower().split() if len(t) >= limit_value("ai.garden.engine.min_token_length", 3)]
             all_tokens.extend(tokens)
 
+        # Batch grow - don't rebuild index until all tokens processed
         for token in all_tokens:
             existing = self.dictionary._find_similar_key(token, threshold=threshold_value("ai.garden.engine.dedup_similarity", 0.90))
             if not existing and confidence >= self.dictionary.growth_threshold:
@@ -508,6 +509,10 @@ class GARDENEngine:
                 if new_key:
                     self.snn._register_key(new_key)
                     new_keys.append(new_key)
+
+        # Only rebuild index ONCE after all grows, not per token
+        if new_keys and self.dictionary._dirty:
+            self.dictionary._rebuild_index()
 
         # Compute input/output keys
         input_keys  = self.dictionary.encode(user_text)

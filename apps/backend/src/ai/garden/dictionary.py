@@ -359,6 +359,7 @@ class VectorDictionary:
         self.compatibility_mode = compatibility_mode
 
         self.entries: Dict[str, ConceptEntry] = {}
+        self._surface_set: Dict[str, str] = {}  # {lower_surface: key} for O(1) dedup
         self._encoder = self._build_encoder(model_name)
         self._matrix: Optional[torch.Tensor] = None   # shape [N, D]
         self._key_order: List[str] = []               # maps row index -> key
@@ -407,6 +408,9 @@ class VectorDictionary:
             confidence=confidence,
         )
         self.entries[key] = entry
+        # Maintain O(1) surface form lookup for dedup
+        for sf in surface_forms.values():
+            self._surface_set[sf.lower().strip()] = key
         self._dirty = True
         return entry
 
@@ -426,10 +430,9 @@ class VectorDictionary:
         """Return existing key if text is very similar to an existing surface form."""
         threshold = threshold if threshold is not None else threshold_value("ai.garden.dictionary.find_similar_threshold", 0.85)
         lower = text.lower().strip()
-        for key, entry in self.entries.items():
-            for sf in entry.surface_forms.values():
-                if sf.lower().strip() == lower:
-                    return key
+        # Fast path: exact match via set lookup
+        if lower in self._surface_set:
+            return self._surface_set[lower]
         return None
 
     # ------------------------------------------------------------------
