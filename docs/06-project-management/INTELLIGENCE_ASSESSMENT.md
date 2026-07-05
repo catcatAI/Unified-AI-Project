@@ -232,6 +232,7 @@ Text → TextEncoder(CLIP 512) → SharedLatentSpace → 64-dim
 | 2026-07-04 | 1.3 | §X #196: LatentReasoningNetwork — 真正的神經網路（2層MLP + ReLU），從 64-dim latent 做推理。架構：latent→MLP→vocab logits→text。可訓練。 |
 | 2026-07-04 | 1.4 | §X #197: SharedLatentSpace 單例統一 — 9個實例→1個共享實例。所有5個模態統一註冊。115個核心多模態測試通過。 |
 | 2026-07-05 | 1.5 | 測試驗證：115+84+12=211個多模態測試通過。代碼審計：0個直接實例化，0個外部register_modality調用，4個過時Phase引用已修復。 |
+| 2026-07-05 | 2.0 | **重要發現**：1.5/10 分數不是因為移除了 LLM，而是因為本地模型從未訓練過。訓練數據存在（數學30K、邏輯10K、知識93），訓練管線存在（train_pipeline.py），但從未真正運行。分數反映的是「未訓練的模型」而非「移除 LLM 後的能力」。 |
 
 ---
 
