@@ -366,6 +366,7 @@ class VectorDictionary:
         self._dirty = True                             # re-index flag
         self._presets_loaded = False
         self.growth_threshold = threshold_value("ai.garden.dictionary.growth_threshold", 0.6)
+        self.max_entries = 10000  # Max entries before stopping growth
 
     # ------------------------------------------------------------------
     # Encoder setup
@@ -416,6 +417,8 @@ class VectorDictionary:
 
     def grow(self, text: str, surface_form: str, confidence: Optional[float] = None) -> str:
         """Add a new entry learned from conversation."""
+        if len(self.entries) >= self.max_entries:
+            return ""  # Max entries reached
         confidence = confidence if confidence is not None else confidence_value("ai.garden.dictionary.grow_confidence", 0.6)
         existing = self._find_similar_key(text, threshold=threshold_value("ai.garden.dictionary.grow_dedup_threshold", 0.85))
         if existing:
@@ -432,6 +435,9 @@ class VectorDictionary:
         confidence = confidence if confidence is not None else confidence_value("ai.garden.dictionary.grow_confidence", 0.6)
         new_keys: List[str] = []
         for text in texts:
+            if len(self.entries) >= self.max_entries:
+                logger.info("GARDEN: max entries reached (%d), stopping growth", self.max_entries)
+                break
             existing = self._find_similar_key(text, threshold=threshold_value("ai.garden.dictionary.grow_dedup_threshold", 0.85))
             if existing:
                 continue

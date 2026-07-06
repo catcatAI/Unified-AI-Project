@@ -602,7 +602,9 @@ def evaluate(
     classifier = QueryClassifier()
     for query, expected_domain, expected_contains in test_cases:
         # 1) Classify
-        qtype, qconf = classifier.classify(query)
+        result = classifier.classify(query)
+        qtype = result.primary_type
+        qconf = result.confidence
         # 2) Route via bus
         try:
             decision = asyncio.run(model_bus.route(query, qtype.value))
