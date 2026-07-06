@@ -244,10 +244,9 @@ class HSPConnector:
             Callable[[], List[HSPCapabilityAdvertisementPayload]]
         ] = None
 
-        enhanced_handler = self.advanced_performance_enhancer.enhance_receive(
+        callback = self.performance_enhancer.enhance_receive(
             self.message_bridge.handle_external_message
         )
-        callback = self.performance_enhancer.enhance_receive(enhanced_handler)
         if callable(callback):
             self.external_connector.on_message_callback = cast(Callable, callback)
 

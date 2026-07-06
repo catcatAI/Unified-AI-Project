@@ -3,8 +3,14 @@ Test ProjectCoordinator + DocumentBuilder isolation
 Covers B7/B8/B9/B10/B11 from ANGELA_SYSTEM_AUDIT_v6.2.5.md
 
 Uses importlib.util to bypass the slow ai.dialogue package import chain.
+
+NOTE: Source modules (ai.dialogue.project_coordinator, ai.dialogue.document_builder)
+were deleted during Phase 9-12 cleanup. Keeping this file with skip guard in case
+modules are restored.
 """
 import pytest
+
+pytest.skip("Source modules removed (ai.dialogue.*)", allow_module_level=True)
 
 
 @pytest.fixture(scope="module")
