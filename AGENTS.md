@@ -7,7 +7,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: en
-   LAST_MODIFIED: 2026-07-05 (updated for §X #198: code audit + stale Phase cleanup)
+   LAST_MODIFIED: 2026-07-06 (updated for §X #200: score inflation root cause analysis)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -191,6 +191,8 @@ pre-commit run --all-files
 > ✅ **NOTE (Updated 2026-07-05, §X #198)**: **§X #198**: Code audit + stale Phase reference cleanup. Audit: 0 direct SharedLatentSpace instantiation, 0 external register_modality calls, 0 TODO/FIXME/HACK, 0 STUB markers, 0 deleted module references, 0 bare except blocks. Fixed 4 stale Phase references in code comments. 211 multimodal tests pass. **5,019 tests collected (tests/) — 0 errors.**
 > 
 > ✅ **NOTE (Updated 2026-07-06, §X #199)**: **§X #199**: Complete training architecture fixes + training execution. (1) GARDEN tokenization quality fix — punctuation cleaning; (2) LatentReasoningNetwork wired into pipeline — Phase 4 training; (3) VisualEncoder/AudioEncoder trainable projections — Phase 0 training; (4) FullTrainingPipeline upgraded to 8 phases. (5) Training executed: ED3N acc=0.914 (84,726 math + 11,180 knowledge), GARDEN acc=0.700 (10,000 entries), JointTrainer acc=0.939. (6) Evaluation: 9/10 (90%) passed. (7) SNN audit: genuine LIF SNN but marginal benefit. (8) INTELLIGENCE_ASSESSMENT.md updated with honest score progression analysis (1.5→3.0/10, with caveats). **Honest analysis**: ED3N acc=0.914 is training-set accuracy (may be overestimated), GARDEN acc=0.700 is Hebbian convergence (not understanding), Math 100% comes from Python ast (not ED3N). **5,019 tests collected (tests/) — 0 errors.**
+> 
+> ✅ **NOTE (Updated 2026-07-06, §X #200)**: **§X #200**: Score inflation root cause analysis + honest scoring framework. (1) Root cause: PHASE_REVIEW6.md (2026-06-23) used "framework scores" as "actual scores" without distinguishing score types. Models were not trained at that time. (2) Added 6-type score classification table (architecture/framework/expected/trained/verified/actual) to INTELLIGENCE_ASSESSMENT.md. (3) PHASE_REVIEW6.md: Added inflation root cause analysis, corrected scores with evidence. (4) FRAMEWORK_OVERVIEW.md: Added "trained" column to intelligence table. (5) MASTER_TASK_MAP.md: Updated score corrections table with framework vs trained columns + evidence. **Key findings**: ED3N acc=0.914 is training-set accuracy (may be overestimated), GARDEN acc=0.700 is Hebbian convergence (not understanding), Math 100% comes from Python ast.parse (not ED3N). **4,526 tests collected (tests/) — 0 errors.**
 > 
 > ✅ **NOTE (Updated 2026-06-29)**: Extended session continues — 158+ commits (Jun 25-29). §X #49-54 all DONE:
 > - **§X #49**: 5 real stub modules (precision_projection_matrix, resonance, cognitive_pipeline, attractor_field, negativity) — +70 tests
