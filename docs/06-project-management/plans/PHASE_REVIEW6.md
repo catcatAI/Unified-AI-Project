@@ -1,12 +1,57 @@
 # Angela AI 專案全面分析與修復計畫 v33.13
 
-> **⚠️ HISTORICAL DOCUMENT (2026-06-23)**: Intelligence scores in this document are **inflated** — they were written before full maturity audit. Current assessment: 6.0/10 with LLM, **<0.5/10 native only**. See MASTER_TASK_MAP.md §X Summary for honest industry comparison. This document is retained for historical task tracking only.
+> **⚠️ HISTORICAL DOCUMENT (2026-06-23)**: Intelligence scores in this document are **inflated** — they were written before full maturity audit. Current assessment: 6.0/10 with LLM, **3.0/10 native only** (trained). See MASTER_TASK_MAP.md §X Summary for honest industry comparison. This document is retained for historical task tracking only.
 > **分析範圍**: P30-P44 (多模態管線框架 + 語意編碼器框架 + ED3N 接線, 259 多模態測試)  
 > **專案版本**: 7.5.0-dev  
 > **方向修正**: P39-P41（LLM API 橋接）已移除——違背真實多模態目標  
 > **v33.7 語意理解驗證完成**: CLIP 512-dim raw vector 相似度測試通過: chicken↔chicken=1.0, chicken↔dog=0.75, chicken↔car=0.63. SemanticKeyMapper 新增 `mode="raw"` 支援 512-dim CLIP 直接比較 (跳過隨機投影). 小雞吃米圖 Step 2: 語意理解 **已驗證可用**.
 > **v33.13 CLIP pipeline 訓練**: CLIP similarity 0.89-0.97 (20 images), encoder brightness 0.37-0.60, generator loss 65.8% reduction. b_decode init fix (was 0.01, now 0.37).
 > **下一步:** YOLO 物件檢測 + 前端多模態 UI + WebSocket 串流
+
+---
+
+## ⚠️ 分數膨脹根因分析 (Score Inflation Root Cause Analysis)
+
+### 膨脹原因
+
+1. **混淆分數類型**: 本文檔的「智能維度總表」混合了「框架分數」和「實際分數」，沒有明確標註
+2. **訓練前評分**: 分數在 2026-06-22/23 評估，但當時模型從未訓練過
+3. **僅加標註未修正**: 2026-06-26 的 `44fec2abb` 提交僅添加了免責聲明，未修正實際分數
+4. **版本號不斷更新但內容不變**: v33.5→v33.7→v33.12→v33.13 版本號不斷更新，但表單內容沒有變化
+
+### 分數修正（含證據）
+
+| 維度 | 原分數 (2026-06-23) | 修正分數 (2026-07-06) | 分數類型 | 證據 |
+|------|:-------------------:|:---------------------:|----------|------|
+| 認知 | 7/10 (框架) | **3.0/10** (訓練) | 訓練分數 | ED3N acc=0.914 (訓練集), 基準測試 38% |
+| 語言 | 7.5/10 (框架) | **6.0/10** (含LLM) | 實際分數 | 自然對話靠外部 LLM API |
+| 自主性 | 5/10 (框架) | **3.0/10** (訓練) | 訓練分數 | 框架完整，但無 LLM 不穩定 |
+| 視覺 | 5.5/10 (框架) | **5.0/10** (訓練) | 訓練分數 | CLIP 語意已接通，但解碼器仍模糊 |
+| 聽覺 | 5/10 (框架) | **5.0/10** (訓練) | 訓練分數 | Whisper STT 已接通，TTS 可用 |
+| 觸覺 | 2/10 (框架) | **0/10** (已刪除) | 實際分數 | TactileService 已刪除 |
+| 行動 | 4.5/10 (框架) | **4.5/10** (框架) | 框架分數 | 工具較強，但無真實執行 |
+| 情感 | 4/10 (框架) | **4.0/10** (框架) | 框架分數 | 結構存在，效果不明顯 |
+| 環境 | 3.5/10 (框架) | **3.5/10** (框架) | 框架分數 | 基礎可用 |
+
+### 關鍵發現
+
+1. **ED3N 的 0.914 accuracy 是在訓練集上測的**，不是 hold-out set，所以可能高估
+2. **GARDEN 的 0.700 accuracy 是 Hebbian 收斂**（權重趨近 target_strength=0.7），不是語義理解
+3. **Math 100% 是因為 Python ast.parse**，不是 ED3N 學會的
+4. **Knowledge 0% 是因為 ED3N 字典以中文為主**，不包含英文知識映射（如 sky→blue, Monday→Tuesday）
+
+### 分數類型定義
+
+| 分數類型 | 定義 | 計算方式 | 證據來源 |
+|----------|------|----------|----------|
+| **架構分數** | 代碼結構理論上能支持什麼 | 代碼行數、模組數、API 路由數 | `git log --stat` |
+| **框架分數** | 已實現的框架能做什麼（含靜態數據） | 功能模組存在 + 靜態數據已加載 | 代碼審計 |
+| **預期分數** | 訓練後應該能做什麼 | 基於架構能力推斷 | 設計文檔 |
+| **訓練分數** | 訓練後在訓練集上能做什麼 | `accuracy = correct / total` on training set | `train_pipeline.py` output |
+| **驗證分數** | 在未見過的數據上能做什麼 | `accuracy = correct / total` on hold-out set | `benchmark_ed3n_garden.py` |
+| **實際分數** | 在真實使用中能做什麼 | 端到端測試 + 用戶體驗 | 實際使用 |
+
+**⚠️ 歷史教訓**: 本文檔混淆了「框架分數」和「實際分數」，給了 7.5/10，但當時模型從未訓練過。正確做法是分別標註每種分數。
 
 ---
 

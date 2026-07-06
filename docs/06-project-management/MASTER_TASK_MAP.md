@@ -2339,29 +2339,34 @@ Deleted 17 test files (0 collectible functions, all skip-only diagnostic scripts
 - Updated INTELLIGENCE_ASSESSMENT.md v1.5
 
 ### §X #199: Complete training architecture fixes
-- **2026-07-05**
-- Commit: `b986939c3`
-- GARDEN tokenization quality fix: added punctuation cleaning in learn_from_interaction()
-  - Before: "company?" → "company?" (separate concept)
-  - After: "company?" → "company" (clean token)
-- LatentReasoningNetwork wired into training pipeline:
-  - Added LatentReasoningTrainer class (Phase 4)
-  - Added train_lrn() method to FullTrainingPipeline
-  - LRN now trains: latent(64) → MLP → text tokens
-- VisualEncoder/AudioEncoder trainable projections:
-  - Added train_step() to VisualEncoder (MSE loss + gradient descent)
-  - Added train_step() to AudioSpectralEncoder (MSE loss + gradient descent)
-  - Added train_encoders() to FullTrainingPipeline (Phase 0)
-- Complete training pipeline now has 8 phases:
-  - Phase 0: Encoder projection training
-  - Phase 1: Contrastive pre-training
-  - Phase 2: Reconstruction fine-tuning
-  - Phase 3: Texture branch
-  - Phase 3b: Wavetable branch
-  - Phase 3c: Sequence generator
-  - Phase 3d: Primitive encoder
-  - Phase 4: LatentReasoningNetwork
-- Updated INTELLIGENCE_ASSESSMENT.md v3.0
+- **2026-07-05 → 2026-07-06 (extended)**
+- Commits: `b986939c3`, `e3f173028`, `11b4b1d0f`, `23a8f67c3`, `3235b1a70`
+- **Phase 1 (2026-07-05)**: Architecture fixes
+  - GARDEN tokenization quality fix: punctuation cleaning
+  - LatentReasoningNetwork wired into training pipeline (Phase 4)
+  - VisualEncoder/AudioEncoder trainable projections (Phase 0)
+  - Complete 8-phase training pipeline
+- **Phase 2 (2026-07-06)**: Training execution + bug fixes
+  - GARDEN training speed fix: `_surface_set` O(1) dedup, batch grow, single index rebuild
+  - GARDEN memory overflow fix: `max_entries=10000`, `grow_batch()`, semantic `_find_similar_key()` (cosine similarity)
+  - ED3N `adjust_connection()` fix: now creates new connections via `add_relation()` (was silent no-op)
+  - TrainingCoordinator persistence: `save()`/`load()` methods with JSON serialization
+  - ED3N trainer epoch/accuracy tracking: `current_epoch` and `best_accuracy` now properly incremented
+  - QueryResult unpacking fix: `classifier.classify()` returns `QueryResult` object, not tuple
+  - Resume/checkpoint: `training_state.json` tracks completed steps (4, 5, 6), skips on re-run
+  - Old checkpoints cleared for fresh retrain
+- **Training results (verified)**:
+  - ED3N: 84,726 math samples, 258 neurons, 3,568 edges, 37,930 reflexes, **acc=0.914**
+  - GARDEN: 11,180 knowledge samples, 10,000 entries, **acc=0.700**
+  - JointTrainer: **acc=0.939**
+  - Evaluation: **9/10 (90%)** passed (Math ✅, Logic ✅, Greeting ✅)
+- **Honest analysis**:
+  - ED3N acc=0.914 is on training set, not hold-out — may be overestimated
+  - GARDEN acc=0.700 is Hebbian convergence to target, not understanding
+  - Math 100% in benchmark comes from Python `ast` module, not ED3N learning
+  - Knowledge 0% due to dictionary lacking English knowledge mappings
+- **SNN architecture audit**: Genuine LIF SNN but marginal benefit (16-23% overhead, ~0.001s). Good for temporal patterns but overkill for current FAQ use case.
+- Updated INTELLIGENCE_ASSESSMENT.md with honest score progression analysis (1.5→3.0/10, with caveats)
 
 ### Test Count
 - **5,019** collected (tests/ only — 0 errors, unchanged)
@@ -2389,17 +2394,19 @@ This document was written BEFORE Phase 11 (Jun 23) deletions. Many items it mark
 
 ### Score Corrections — Those That Still Apply
 
-| Dimension | PHASE_REVIEW6 Score | Honest Audit Correction | Current Assessment |
-|:----------|:-------------------:|:-----------------------:|:------------------:|
-| Text understanding | 7 | 7 | Still 7 ✅ |
-| Image understanding | 7 | 7 | Still 7 ✅ |
-| Speech understanding | 5 | **3** | ✅ Pipeline wired end-to-end (`/chat/with-audio` → AudioService → `_handle_chat_request`). `faster-whisper 1.2.1` installed (ctranslate2 4.8 int8, Whisper base model auto-downloads). Offline high-quality STT active. Falls back to sr if unavailable. |
-| Text generation | 7 | **6** | Still 6 — depends on external LLM |
-| Image generation | 1 | **6** (GVV fixes) | Still 6 — GVV + ThreeLayerVisual work |
-| Speech generation | 5 | **4** | edge-tts works |
-| Memory | 7 | 7 | Still 7 ✅ |
-| Reasoning | 6 | **4** | Still 4 — framework exists, depth limited |
-| Autonomy | 5 | **3** | Still 3 — framework exists, unstable |
+> **⚠️ 分數類型說明**: 以下分數為「框架分數」（已實現的框架能做什麼，含靜態數據）。訓練後的實際分數見 `INTELLIGENCE_ASSESSMENT.md`。
+
+| Dimension | PHASE_REVIEW6 Score | Honest Audit Correction | Current Assessment (框架) | Current Assessment (訓練後) | 證據 |
+|:----------|:-------------------:|:-----------------------:|:------------------------:|:--------------------------:|:-----|
+| Text understanding | 7 | 7 | Still 7 ✅ | **3.0/10** | ED3N acc=0.914 (訓練集), 基準測試 38% |
+| Image understanding | 7 | 7 | Still 7 ✅ | **5.0/10** | CLIP 語意已接通，但解碼器仍模糊 |
+| Speech understanding | 5 | **3** | ✅ Pipeline wired end-to-end | **5.0/10** | Whisper STT 已接通，TTS 可用 |
+| Text generation | 7 | **6** | Still 6 — depends on external LLM | **0.5/10** | ED3N/GARDEN decoder = 字典拼接 |
+| Image generation | 1 | **6** (GVV fixes) | Still 6 — GVV + ThreeLayerVisual work | **5.0/10** | 訓練後有結構但仍然模糊 |
+| Speech generation | 5 | **4** | edge-tts works | **4.0/10** | 訓練後 309x loss reduction，有結構但非語音品質 |
+| Memory | 7 | 7 | Still 7 ✅ | **7/10** | VectorStore + HAM 真正有用 |
+| Reasoning | 6 | **4** | Still 4 — framework exists, depth limited | **0.5/10** | 基準測試 0/5 |
+| Autonomy | 5 | **3** | Still 3 — framework exists, unstable | **3.0/10** | 框架完整但效果不明顯 |
 
 ---
 
