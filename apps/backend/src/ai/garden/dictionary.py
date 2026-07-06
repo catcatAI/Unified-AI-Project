@@ -450,12 +450,26 @@ class VectorDictionary:
         return new_keys
 
     def _find_similar_key(self, text: str, threshold: Optional[float] = None) -> Optional[str]:
-        """Return existing key if text is very similar to an existing surface form."""
+        """Return existing key if text is very similar to an existing surface form.
+        Uses exact match first (O(1)), then semantic similarity if index is built."""
         threshold = threshold if threshold is not None else threshold_value("ai.garden.dictionary.find_similar_threshold", 0.85)
         lower = text.lower().strip()
         # Fast path: exact match via set lookup
         if lower in self._surface_set:
             return self._surface_set[lower]
+        # Semantic dedup: check cosine similarity with existing entries
+        if self._dirty or self._matrix is None or len(self._key_order) == 0:
+            return None  # Skip dedup if index not built
+        try:
+            query_vec = self._encoder.encode([text])
+            query_vec = self._normalize(query_vec, dim=-1)
+            scores = self._matrix @ query_vec.T
+            max_score = float(scores.max()) if hasattr(scores, 'max') else 0.0
+            if max_score >= threshold:
+                idx = int(scores.argmax()) if hasattr(scores, 'argmax') else 0
+                return self._key_order[idx]
+        except Exception:
+            pass  # Fall through to return None
         return None
 
     # ------------------------------------------------------------------

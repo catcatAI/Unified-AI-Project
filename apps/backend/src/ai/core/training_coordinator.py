@@ -4,7 +4,9 @@
 
 import asyncio
 import hashlib
+import json
 import logging
+import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -177,3 +179,49 @@ class TrainingCoordinator:
                 model_id = "unassigned"
             batches.setdefault(model_id, []).append(sample)
         return batches
+
+    def save(self, path: str) -> None:
+        """Persist coordinator state to disk."""
+        state = {
+            "domain_map": {
+                d: {
+                    "domain": r.domain,
+                    "model_id": r.model_id,
+                    "trained_count": r.trained_count,
+                    "last_trained": r.last_trained,
+                    "accuracy": r.accuracy,
+                    "examples": r.examples[:self._max_examples],
+                }
+                for d, r in self._domain_map.items()
+            },
+            "seen_hashes": {
+                d: list(hashes)[-self._max_hashes:]
+                for d, hashes in self._seen_hashes.items()
+            },
+        }
+        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(state, f, ensure_ascii=False, indent=2)
+        logger.info("TrainingCoordinator: saved to %s", path)
+
+    def load(self, path: str) -> None:
+        """Load coordinator state from disk."""
+        if not os.path.exists(path):
+            return
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                state = json.load(f)
+            for d, r in state.get("domain_map", {}).items():
+                self._domain_map[d] = DomainTrainingRecord(
+                    domain=r["domain"],
+                    model_id=r["model_id"],
+                    trained_count=r.get("trained_count", 0),
+                    last_trained=r.get("last_trained", ""),
+                    accuracy=r.get("accuracy", 0.0),
+                    examples=r.get("examples", []),
+                )
+            for d, hashes in state.get("seen_hashes", {}).items():
+                self._seen_hashes[d] = set(hashes)
+            logger.info("TrainingCoordinator: loaded from %s (%d domains)", path, len(self._domain_map))
+        except Exception as e:
+            logger.warning("TrainingCoordinator: failed to load %s: %s", path, e)

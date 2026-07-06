@@ -593,11 +593,10 @@ def evaluate(
     model_bus: ModelBus,
     test_cases: List[Tuple[str, str, Optional[str]]],
     label: str = "",
-) -> None:
+) -> Dict[str, Any]:
     """Run test cases through Model Bus and individual engines.
-
-    test_cases: list of (query, expected_domain, expected_contains)
-    """
+    Returns structured results with pass/fail per test case."""
+    results = {"label": label, "total": len(test_cases), "passed": 0, "failed": 0, "details": []}
     print(f"\n  --- {label} ---")
     classifier = QueryClassifier()
     for query, expected_domain, expected_contains in test_cases:
@@ -621,11 +620,30 @@ def evaluate(
                 direct = garden_engine.process(query)
         except Exception as e:
             direct = f"<error: {e}>"
-        domain_ok = "OK" if qtype.value == expected_domain else f"({qtype.value})"
-        contains_ok = ""
+        # Check pass/fail
+        domain_ok = qtype.value == expected_domain
+        contains_ok = True
         if expected_contains:
-            contains_ok = " OK" if (expected_contains in direct or expected_contains in str(bus_text)) else " ?"
-        print(f"  [{domain_ok}]{contains_ok} {query:40s} -> bus={str(bus_text)[:50]}")
+            contains_ok = expected_contains in direct or expected_contains in str(bus_text)
+        passed = domain_ok and contains_ok
+        results["passed" if passed else "failed"] += 1
+        results["details"].append({
+            "query": query,
+            "expected_domain": expected_domain,
+            "got_domain": qtype.value,
+            "domain_ok": domain_ok,
+            "expected_contains": expected_contains,
+            "contains_ok": contains_ok,
+            "passed": passed,
+            "bus_response": str(bus_text)[:100],
+        })
+        domain_str = "OK" if domain_ok else f"({qtype.value})"
+        contains_str = " OK" if contains_ok else " ?"
+        print(f"  [{domain_str}]{contains_str} {query:40s} -> bus={str(bus_text)[:50]}")
+    # Summary
+    pass_rate = results["passed"] / max(results["total"], 1) * 100
+    print(f"\n  Results: {results['passed']}/{results['total']} passed ({pass_rate:.0f}%)")
+    return results
 
 
 # ---------------------------------------------------------------------------
@@ -804,7 +822,7 @@ def _step5_train_garden(coordinator, batches):
         asyncio.run(coordinator.record_training(
             domain="knowledge",
             model_id="garden",
-            count=learn_count,
+            count=total_learned,
             accuracy=confidence_value("train.garden.record_accuracy", 0.7),
             examples=[{"input": s["input"], "output": s["output"]} for s in garden_samples[:50]],
         ))
@@ -969,6 +987,10 @@ def main() -> None:
     # -----------------------------------------------------------------------
     print("\n[2/8] Initializing ModelBus, QueryClassifier, TrainingCoordinator...")
     model_bus, query_classifier, coordinator = _step1_setup()
+    # Load coordinator state if resuming
+    COORD_STATE = os.path.join(CKPT_DIR, "coordinator_state.json")
+    if os.path.exists(COORD_STATE):
+        coordinator.load(COORD_STATE)
     print(f"  ModelBus: ready | QueryClassifier: ready | Coordinator: ready")
 
     # -----------------------------------------------------------------------
@@ -1000,10 +1022,13 @@ def main() -> None:
         # Load saved engines
         ed3n_engine = ED3NEngine()
         ed3n_engine.load(os.path.join(CKPT_DIR, "ed3n_full.json"))
+        # Get sample count from resume state
+        examples_count = resume_state.get("ed3n_samples", 0)
         examples = []
     else:
         ed3n_engine, examples = _step4_train_ed3n(coordinator, batches)
         save_state(4, {"ed3n_samples": len(examples)})
+        coordinator.save(COORD_STATE)
 
     # -----------------------------------------------------------------------
     # Step 5: Train GARDEN on knowledge/general domain
@@ -1016,6 +1041,7 @@ def main() -> None:
     else:
         garden_engine = _step5_train_garden(coordinator, batches)
         save_state(5, {"garden_samples": len(batches.get("garden", []))})
+        coordinator.save(COORD_STATE)
 
     # -----------------------------------------------------------------------
     # Steps 6-8: Sync knowledge — Save checkpoints — Evaluation

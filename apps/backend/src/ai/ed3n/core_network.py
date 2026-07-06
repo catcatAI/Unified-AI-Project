@@ -288,10 +288,14 @@ class CoreNetwork:
         }
 
     def adjust_connection(self, key1: str, key2: str, delta: float) -> None:
-        if not any(
+        # Check if connection already exists
+        exists = any(
             key1 in group.neurons and key2 in group.neurons[key1].connections
             for group in self.groups.values()
-        ):
+        )
+        if not exists:
+            # Create new connection via add_relation if neither exists
+            self.add_relation(key1, RelationType.MAPPING, key2, weight=max(0.0, min(delta, 1.0)))
             return
         for group in self.groups.values():
             n1 = group.neurons.get(key1)
