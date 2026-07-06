@@ -6,7 +6,7 @@
 > **Principle**: No LLM API calls in benchmarks — scores reflect native engine only.
 > **Test command**: `python scripts/benchmark_ed3n_garden.py --engine ed3n`
 > **Test command**: `python scripts/benchmark_ed3n_garden.py --engine garden`
-> **Test count**: 5,019 collected (tests/), 0 errors
+> **Test count**: 4,464 collected (tests/), 0 errors
 
 ---
 
