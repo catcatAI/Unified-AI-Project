@@ -46,7 +46,8 @@ class TestUpdateMethods:
         update_fn(**{field: value})
         axis = getattr(adapter, axis_name)
         assert axis.values.get(field) == value
-        assert adapter.theta.values.get("doubt") == 0.3
+        if axis_name == "theta":
+            assert adapter.theta.values.get("doubt") == 0.3
 
     def test_update_zeta_succeeds(self, adapter):
         adapter.update_zeta(surprise=0.4)

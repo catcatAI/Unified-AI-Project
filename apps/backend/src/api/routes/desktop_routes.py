@@ -4,8 +4,10 @@ Desktop interaction, action, tactile & brain API routes.
 Extracted from main_api_server.py (A3 god module split).
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 
 from api.lifespan import (
     get_action_executor,
@@ -15,8 +17,10 @@ from api.lifespan import (
 )
 from core.engine.action_executor import ActionExecutor
 from core.engine.desktop_interaction import DesktopInteraction
-from core.life.digital_life_integrator import DigitalLifeIntegrator
 from fastapi import APIRouter, Body, Depends, HTTPException
+
+if TYPE_CHECKING:
+    from core.life.digital_life_integrator import DigitalLifeIntegrator
 
 logger = logging.getLogger(__name__)
 

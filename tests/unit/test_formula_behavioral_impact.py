@@ -102,9 +102,9 @@ class TestEmotionToResponse:
     def test_category_map_keys_match_normalized_emotions(self):
         from apps.backend.src.core.bio.emotional_blending import BasicEmotion
 
-        category_keys = {"happy", "sad", "angry", "calm", "fear"}
-        en_names_5 = {e.en_name[:5].lower() for e in BasicEmotion}
-        missing = category_keys - en_names_5
+        category_keys = {"joy", "sadness", "anger", "calm", "fear", "surprise"}
+        en_names = {e.en_name.lower() for e in BasicEmotion}
+        missing = category_keys - en_names
         assert not missing, f"Category map keys not in BasicEmotion: {missing}"
 
     @pytest.mark.asyncio

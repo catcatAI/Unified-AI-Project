@@ -234,7 +234,7 @@ class HSPConnector:
         self.ack_timeout_sec = kwargs.get("ack_timeout_sec", 3)
         self.max_ack_retries = kwargs.get("max_ack_retries", 2)
         self.retry_policy = RetryPolicy(
-            max_attempts=self.max_ack_retries, backoff_factor=2
+            max_retries=self.max_ack_retries, backoff_factor=2
         )
         self.circuit_breaker = CircuitBreaker(
             failure_threshold=int(threshold_value("hsp_failure_threshold", 5)), recovery_timeout=timeout_value("hsp_recovery_timeout", 300.0)

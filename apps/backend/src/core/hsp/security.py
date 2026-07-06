@@ -94,6 +94,10 @@ class HSPSecurityManager:
             message_copy = message.copy()
             # 移除签名字段以验证原始消息
             message_copy.pop("signature", None)
+            if "security_parameters" in message_copy:
+                sec_params = message_copy["security_parameters"].copy()
+                sec_params.pop("signature", None)
+                message_copy["security_parameters"] = sec_params
             message_copy["sender_id"] = sender_id
 
             message_str = json.dumps(message_copy, sort_keys=True, ensure_ascii=False)
@@ -257,18 +261,18 @@ class HSPSecurityContext:
                 auth_token = self.security_manager.generate_auth_token(sender_id)
                 message["security_parameters"]["auth_token"] = auth_token
 
-            # 3. 生成签名
-            if self.security_manager.signature_enabled:
-                signature = self.security_manager.sign_message(message, sender_id)
-                message["security_parameters"]["signature"] = signature
-
-            # 4. 加密消息载荷
+            # 3. 加密消息载荷 (before signing so signature covers encrypted payload)
             if self.security_manager.encryption_enabled:
                 payload = message.get("payload", {})
                 encrypted_payload = self.security_manager.encrypt_message(payload)
                 message["payload"] = "encrypted," + base64.b64encode(encrypted_payload).decode(
                     "utf-8"
                 )
+
+            # 4. 生成签名 (covers encrypted payload + security_parameters without signature field)
+            if self.security_manager.signature_enabled:
+                signature = self.security_manager.sign_message(message, sender_id)
+                message["security_parameters"]["signature"] = signature
 
             logger.debug(f"消息安全处理完成: {message.get('message_id', 'unknown')}")
             return message
