@@ -2706,10 +2706,31 @@ python -m pytest tests/ --collect-only -q
 
 5. **Repaired `test_phase1_core_activation.py`**: Removed deleted `from ai.learning.unified_learning_orchestrator import UnifiedLearningOrchestrator` — was causing whole-file import failure. Removed TestUnifiedLearningOrchestrator class. **5 tests unblocked** (was 0/101 lines).
 
-6. **Non-test scripts moved**: 2 utility scripts moved from `tests/utils/` to `scripts/utils/`:
+6. **Non-test scripts moved (batch 1)**: 2 utility scripts moved from `tests/utils/` to `scripts/utils/`:
    - `api_test_report.py` (API endpoint diagnostic, 270 lines, no pytest functions)
    - `enable_commented_tests.py` (comment-uncomment utility, 137 lines, no pytest functions)
 
 7. **Zero-assertion test file deleted**: `tests/api/test_verify_fixes.py` (155 lines, all 3 tests already `pytest.skip()`, print-based diagnostic requiring running server)
 
-**Test count**: ~4,439 collected (tests/ only — 0 errors, removed 6 dead files, 5 unblocked). Consistent across all MD files.
+8. **Non-test scripts moved (batch 2)**: 21 additional utility scripts moved from `tests/utils/` to `scripts/utils/`. All confirmed standalone — zero importers across `tests/`, `apps/backend/src/`, `scripts/`. None have pytest test functions.
+   - `automated_integration_test_pipeline.py`, `check_test_collection.py`, `check_test_results.py`, `continuous_test_improvement.py`, `deadlock_detector.py`, `enterprise_test_suite.py`, `extract_latest_failures.py`, `find_skipped_tests.py`, `generate_test_report.py`, `intelligent_test_generator.py`, `maintain_test_suite.py`, `optimize_test_suite.py`, `process_test_results.py`, `project_function_test_mapping.py`, `run_integration_tests.py`, `run_test_direct.py`, `run_test_subprocess.py`, `run_tests_with_compat.py`, `smart_test_runner.py`, `_run_pc_tests.py`, `_run_pc_tests_file.py`
+   - **Batch file fix**: `tests/run_enterprise_tests.bat` path updated from `tests\enterprise_test_suite.py` → `scripts\utils\enterprise_test_suite.py` (was pointing to wrong directory, pre-existing bug)
+
+9. **`test_base.py` fixed** (integration test base class, dead code — no consumers):
+   - Added `__test__ = False` to prevent pytest collection
+   - Fixed `logger: Any = ...` bug: `Any` was never imported (`from typing import Any, Dict`)
+   - Changed `logger: Any = logging.getLogger(...)` → `logger = logging.getLogger(...)` (no runtime annotation evaluation needed)
+
+10. **Usage documentation created**:
+    - `docs/usage/QUICK_START.md`: Step-by-step direct-start guide with prerequisites, installation, expected behavior, troubleshooting
+    - `docs/usage/SCENARIOS.md`: 5 scenarios (direct start / train-first / configure-first / no-LLM / Docker) with toggles and comparison table
+    - README.md updated: English + Chinese indexes link to usage docs, Quick Start sections cross-reference QUICK_START.md + SCENARIOS.md
+
+11. **Supporting MD updates**:
+    - `ACTIVE_SCRIPTS.md`: Added 21 new `scripts/utils/` entries, updated counts (5→28 scripts in utils/)
+    - `CAUSAL_CHAIN_COMPLETENESS.md`: Added §X #201b table row + updated summary
+    - `CHANGELOG.md`: Expanded §X #201b entry with all details
+
+**Remaining in `tests/utils/`**: `test_text_utils.py`, `text_utils.py`, `__init__.py` — legitimate test files with pytest test functions.
+
+**Test count**: 4,439 collected in 35.93s — 0 errors (same as batch 1 — the 21 moved scripts had 0 pytest test functions). Consistent across all MD files.

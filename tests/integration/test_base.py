@@ -1,15 +1,17 @@
 """
-集成测试基类
-提供通用的测试功能和工具方法
+Base classes for integration tests (currently unused — kept for reference).
 """
 
 import asyncio
 import logging
+from typing import Any, Dict
 from unittest.mock import Mock
 
 import pytest
 
-logger: Any = logging.getLogger(__name__)
+__test__ = False
+
+logger = logging.getLogger(__name__)
 
 
 class BaseIntegrationTest:

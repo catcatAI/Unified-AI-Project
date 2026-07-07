@@ -10,7 +10,7 @@ if exist "venv\Scripts\activate.bat" (
 
 REM 运行测试套件
 echo 🧪 执行企业级测试...
-python tests\enterprise_test_suite.py
+python scripts\utils\enterprise_test_suite.py
 
 REM 检查结果
 if %ERRORLEVEL% EQU 0 (

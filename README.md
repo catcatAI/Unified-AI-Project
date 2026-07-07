@@ -20,26 +20,26 @@
 
 - [English Version](#english-version)
   - [Current Status](#current-status-code-verified-as-of-2026-06-15)
-  - [Quick Start](#quick-start)
-  - [Scripts Reference](#scripts-reference)
-  - [What Actually Works](#what-actually-works-code-verified-2026-06-15)
-  - [What's Broken / Never Finished](#what-does-not-work--is-stub)
-  - [Orphaned Systems](#orphaned-systems-status)
-  - [Roadmap](#roadmap--future-phases)
-  - [Documentation Index](#documentation-index)
+- [Quick Start](#quick-start) ([Detailed](docs/usage/QUICK_START.md), [Scenarios](docs/usage/SCENARIOS.md))
+- [Scripts Reference](#scripts-reference)
+- [What Actually Works](#what-actually-works-code-verified-2026-06-15)
+- [What's Broken / Never Finished](#what-does-not-work--is-stub)
+- [Orphaned Systems](#orphaned-systems-status)
+- [Roadmap](#roadmap--future-phases)
+- [Documentation Index](#documentation-index)
 </details>
 
 <details>
 <summary><b>繁體中文</b></summary>
 
 - [繁體中文版](#繁體中文版)
-  - [當前進度](#當前進度2026-06-15-代碼驗證)
-  - [快速啟動](#快速啟動-1)
-  - [腳本參考](#腳本參考)
-  - [什麼能跑](#什麼能跑2026-06-15-驗證)
-  - [什麼不能用](#什麼無法運作-1)
-  - [未來路線圖](#修正後路線圖)
-  - [文件索引](#架構文件)
+- [當前進度](#當前進度2026-06-15-代碼驗證)
+- [快速啟動](#快速啟動-1) ([詳細](docs/usage/QUICK_START.md), [場景](docs/usage/SCENARIOS.md))
+- [腳本參考](#腳本參考)
+- [什麼能跑](#什麼能跑2026-06-15-驗證)
+- [什麼不能用](#什麼無法運作-1)
+- [未來路線圖](#修正後路線圖)
+- [文件索引](#架構文件)
 </details>
 
 ---
@@ -141,6 +141,8 @@ Upper bound (with LLM API: OpenAI/Anthropic/Ollama) vs lower bound (ED3N+GARDEN 
 
 ### Quick Start
 
+Detailed guides: [Direct Start](docs/usage/QUICK_START.md) · [Train First / Configure First](docs/usage/SCENARIOS.md)
+
 ```bash
 # Clone
 git clone https://github.com/catcatAI/Unified-AI-Project.git
@@ -173,6 +175,8 @@ npx pnpm dev:desktop
 ```
 
 **Prerequisites**: Python 3.10+, Node.js 16+, Ollama (LLM backend).
+
+> **New to the project?** See [QUICK_START.md](docs/usage/QUICK_START.md) for a step-by-step walkthrough, troubleshooting tips, and expected behavior. For training or custom configuration, see [SCENARIOS.md](docs/usage/SCENARIOS.md).
 
 ---
 
@@ -428,6 +432,8 @@ See dedicated docs for full diagrams:
 
 ### 快速啟動
 
+詳細指南：[直接開始](docs/usage/QUICK_START.md) · [先訓練 / 先配置](docs/usage/SCENARIOS.md)
+
 ```bash
 # 克隆專案
 git clone https://github.com/catcatAI/Unified-AI-Project.git
@@ -460,6 +466,8 @@ npx pnpm dev:desktop
 ```
 
 **環境需求**：Python 3.10+、Node.js 16+、Ollama（LLM 後端）
+
+> **新用戶？** 查看 [QUICK_START.md](docs/usage/QUICK_START.md) 獲取逐步引導、故障排除與預期行為。如需訓練或自定義配置，請參考 [SCENARIOS.md](docs/usage/SCENARIOS.md)。
 
 ---
 

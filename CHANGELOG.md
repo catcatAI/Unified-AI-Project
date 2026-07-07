@@ -831,7 +831,14 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - **Orphan directories deleted**: `tests/ai/compression/`, `tests/ai/dialogue/` (stale __init__.py + .pyc)
 - **Dead test files deleted**: `test_code_inspector.py`, `test_performance_optimizer.py`, `test_predictive_maintenance.py`, `test_alpha_upgrade.py` (all imported deleted Phase 11 modules)
 - **test_phase1_core_activation.py**: Repaired — removed deleted `ai.learning` import + TestUnifiedLearningOrchestrator class (5 tests unblocked)
-- **4,439 test baseline** — 0 errors
+- **21 utility scripts moved**: `tests/utils/`→`scripts/utils/` (all standalone scripts, zero importers)
+- **test_base.py fixed**: `__test__ = False` + `Any` import bug fixed (dead base class, no consumers)
+- **batch file fixed**: `tests/run_enterprise_tests.bat` → `python scripts\utils\enterprise_test_suite.py`
+- **Usage docs created**: `docs/usage/QUICK_START.md` (direct start guide) + `docs/usage/SCENARIOS.md` (train-first/configure-first/deployment scenarios)
+- **README.md**: Updated English + Chinese index + Quick Start sections with cross-refs to new usage docs
+- **ACTIVE_SCRIPTS.md**: Updated with 21 new `scripts/utils/` entries + counts
+- **CAUSAL_CHAIN_COMPLETENESS.md**: Added §X #201b row
+- **4,439 test baseline** — 0 errors (35.93s collection)
 
 ---
 

@@ -56,6 +56,29 @@ This document lists the **currently active and recommended** scripts for the Uni
 - **`check_resources.py`**: System resource monitor
 - **`verify_p0_systems.py`**: P0 systems verification
 - **`improve_live2d_loading.py`**: Live2D loading optimization
+- **`api_test_report.py`**: Generate API test reports
+- **`enable_commented_tests.py`**: Enable commented-out tests
+- **`automated_integration_test_pipeline.py`**: Automated integration test pipeline
+- **`check_test_collection.py`**: Verify test collection
+- **`check_test_results.py`**: Check test results from runs
+- **`continuous_test_improvement.py`**: Continuous improvement of test suite
+- **`deadlock_detector.py`**: Detect deadlocks in async tests
+- **`enterprise_test_suite.py`**: Enterprise-scale test suite runner
+- **`extract_latest_failures.py`**: Extract latest test failures
+- **`find_skipped_tests.py`**: Find all skipped tests
+- **`generate_test_report.py`**: Generate test reports
+- **`intelligent_test_generator.py`**: AI-driven test generation
+- **`maintain_test_suite.py`**: Test suite maintenance tools
+- **`optimize_test_suite.py`**: Test suite optimization
+- **`process_test_results.py`**: Process and analyze test results
+- **`project_function_test_mapping.py`**: Map tests to project functions
+- **`run_integration_tests.py`**: Run integration tests
+- **`run_test_direct.py`**: Run tests directly
+- **`run_test_subprocess.py`**: Run tests in subprocess
+- **`run_tests_with_compat.py`**: Run tests with compatibility mode
+- **`smart_test_runner.py`**: Smart test runner with analytics
+- **`_run_pc_tests.py`**: Private PC test runner
+- **`_run_pc_tests_file.py`**: Private PC test file runner
 
 ## tools/
 
@@ -97,8 +120,8 @@ python scripts/verify_drive_analyzer.py
 
 ## Maintenance Notes
 
-- **Active Scripts**: 30 scripts in `scripts/` directory
-- **Utilities**: 5 scripts in `scripts/utils/`
+- **Active Scripts**: ~30 scripts in `scripts/` directory
+- **Utilities**: 28 scripts in `scripts/utils/` (was 5 — expanded with test utility scripts from `tests/utils/`)
 - **Tools**: 2 scripts in `tools/`
-- **Last Cleanup**: 2026-06-13
-- **Recommendation**: Use `unified-ai.bat` for most operations
+- **Tests/utils remaining**: `test_text_utils.py`, `text_utils.py` (legitimate test files with pytest test functions)
+- **Last Cleanup**: 2026-07-07
