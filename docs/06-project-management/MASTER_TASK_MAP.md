@@ -2713,20 +2713,30 @@ python -m pytest tests/ --collect-only -q
 7. **Zero-assertion test file deleted**: `tests/api/test_verify_fixes.py` (155 lines, all 3 tests already `pytest.skip()`, print-based diagnostic requiring running server)
 
 8. **Non-test scripts moved (batch 2)**: 21 additional utility scripts moved from `tests/utils/` to `scripts/utils/`. All confirmed standalone — zero importers across `tests/`, `apps/backend/src/`, `scripts/`. None have pytest test functions.
+
+9. **Integration test rewrite (6 files)**: Replaced mock-only tests that tested Python's `AsyncMock` mechanics (`assert AsyncMock(return_value=True) is True` — always passed regardless of project state) with real import + instantiation tests using actual production classes:
+    - `test_knowledge_update.py` → `KnowledgeGraphAgent` (add_entity + query_graph, both passed)
+    - `test_self_improvement.py` → `EvolutionEngine` (instantiation + get_trait, both passed)
+    - `test_system_level_integration.py` → `SystemManager` (instantiation + get_status, both passed)
+    - `test_training_system_integration.py` → `DictionaryLayer` (instantiation + encode_soft, both passed)
+    - `test_hsp_debug.py` → `HSPConnector` (import smoke + construct-with-skip, 1 passed + 1 skipped)
+    - `test_hsp_protocol_integration.py` → `HSPConnector` (import smoke + construct-with-skip, 1 passed + 1 skipped)
+    - **Result**: 10 passed, 2 skipped (pre-existing `MessageBridge.handle_external_message` bug in HSPConnector — not introduced by this change)
+    - **Discovered**: `MessageBridge` in `core/hsp/bridge/message_bridge.py` lacks `handle_external_message` attribute that `HSPConnector._register_default_hooks()` expects. Falls through to AttributeError at instantiation. Previously masked by mock-only tests.
    - `automated_integration_test_pipeline.py`, `check_test_collection.py`, `check_test_results.py`, `continuous_test_improvement.py`, `deadlock_detector.py`, `enterprise_test_suite.py`, `extract_latest_failures.py`, `find_skipped_tests.py`, `generate_test_report.py`, `intelligent_test_generator.py`, `maintain_test_suite.py`, `optimize_test_suite.py`, `process_test_results.py`, `project_function_test_mapping.py`, `run_integration_tests.py`, `run_test_direct.py`, `run_test_subprocess.py`, `run_tests_with_compat.py`, `smart_test_runner.py`, `_run_pc_tests.py`, `_run_pc_tests_file.py`
    - **Batch file fix**: `tests/run_enterprise_tests.bat` path updated from `tests\enterprise_test_suite.py` → `scripts\utils\enterprise_test_suite.py` (was pointing to wrong directory, pre-existing bug)
 
-9. **`test_base.py` fixed** (integration test base class, dead code — no consumers):
-   - Added `__test__ = False` to prevent pytest collection
-   - Fixed `logger: Any = ...` bug: `Any` was never imported (`from typing import Any, Dict`)
-   - Changed `logger: Any = logging.getLogger(...)` → `logger = logging.getLogger(...)` (no runtime annotation evaluation needed)
+10. **`test_base.py` fixed** (integration test base class, dead code — no consumers):
+    - Added `__test__ = False` to prevent pytest collection
+    - Fixed `logger: Any = ...` bug: `Any` was never imported (`from typing import Any, Dict`)
+    - Changed `logger: Any = logging.getLogger(...)` → `logger = logging.getLogger(...)` (no runtime annotation evaluation needed)
 
-10. **Usage documentation created**:
-    - `docs/usage/QUICK_START.md`: Step-by-step direct-start guide with prerequisites, installation, expected behavior, troubleshooting
-    - `docs/usage/SCENARIOS.md`: 5 scenarios (direct start / train-first / configure-first / no-LLM / Docker) with toggles and comparison table
-    - README.md updated: English + Chinese indexes link to usage docs, Quick Start sections cross-reference QUICK_START.md + SCENARIOS.md
+11. **Usage documentation created**:
+     - `docs/usage/QUICK_START.md`: Step-by-step direct-start guide with prerequisites, installation, expected behavior, troubleshooting
+     - `docs/usage/SCENARIOS.md`: 5 scenarios (direct start / train-first / configure-first / no-LLM / Docker) with toggles and comparison table
+     - README.md updated: English + Chinese indexes link to usage docs, Quick Start sections cross-reference QUICK_START.md + SCENARIOS.md
 
-11. **Supporting MD updates**:
+12. **Supporting MD updates**:
     - `ACTIVE_SCRIPTS.md`: Added 21 new `scripts/utils/` entries, updated counts (5→28 scripts in utils/)
     - `CAUSAL_CHAIN_COMPLETENESS.md`: Added §X #201b table row + updated summary
     - `CHANGELOG.md`: Expanded §X #201b entry with all details

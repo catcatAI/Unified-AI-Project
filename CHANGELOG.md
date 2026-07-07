@@ -832,6 +832,7 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - **Dead test files deleted**: `test_code_inspector.py`, `test_performance_optimizer.py`, `test_predictive_maintenance.py`, `test_alpha_upgrade.py` (all imported deleted Phase 11 modules)
 - **test_phase1_core_activation.py**: Repaired — removed deleted `ai.learning` import + TestUnifiedLearningOrchestrator class (5 tests unblocked)
 - **21 utility scripts moved**: `tests/utils/`→`scripts/utils/` (all standalone scripts, zero importers)
+- **6 mock-only integration tests rewritten**: replaced `assert AsyncMock(return_value=True) is True` (tested Python mock mechanics, not project code) with real import + instantiation tests using actual production classes (KnowledgeGraphAgent, EvolutionEngine, SystemManager, DictionaryLayer, HSPConnector). 10 passed, 2 skipped (pre-existing MessageBridge bug revealed).
 - **test_base.py fixed**: `__test__ = False` + `Any` import bug fixed (dead base class, no consumers)
 - **batch file fixed**: `tests/run_enterprise_tests.bat` → `python scripts\utils\enterprise_test_suite.py`
 - **Usage docs created**: `docs/usage/QUICK_START.md` (direct start guide) + `docs/usage/SCENARIOS.md` (train-first/configure-first/deployment scenarios)

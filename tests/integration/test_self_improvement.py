@@ -1,26 +1,21 @@
-"""
-测试模块 - test_self_improvement
-"""
-
-from unittest.mock import AsyncMock, Mock
-
 import pytest
+
+pytest.importorskip("core.life.evolution_engine")
+from core.life.evolution_engine import EvolutionEngine
 
 
 class TestSelfImprovement:
-    @pytest.fixture(autouse=True)
-    def setup_test(self):
-        yield
-    async def test_self_improvement_basic(self):
-        mock_improver = Mock()
-        mock_improver.improve = AsyncMock(return_value=True)
-        result = await mock_improver.improve({"target": "performance"})
-        assert result is True
-    async def test_self_learning(self):
-        mock_learner = Mock()
-        mock_learner.learn = AsyncMock(return_value={"learned": True})
-        result = await mock_learner.learn({"data": "test"})
-        assert result["learned"] is True
+    async def test_evolution_engine_instantiation(self):
+        engine = EvolutionEngine()
+        assert engine is not None
+        assert len(engine._traits) == 5
+
+    async def test_evolution_engine_get_trait_default(self):
+        engine = EvolutionEngine()
+        trait = engine.get_trait("openness")
+        assert trait == 0.5
+        trait = engine.get_trait("nonexistent")
+        assert trait == 0.5
 
 
 if __name__ == "__main__":

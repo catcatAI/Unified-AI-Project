@@ -7,7 +7,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: en
-   LAST_MODIFIED: 2026-07-06 (updated for §X #201: lazy imports fix test collection hang)
+    LAST_MODIFIED: 2026-07-07 (updated for §X #201b: MD sync + integration test rewrite + usage docs)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -195,8 +195,10 @@ pre-commit run --all-files
 > ✅ **NOTE (Updated 2026-07-06, §X #200)**: **§X #200**: Score inflation root cause analysis + honest scoring framework. (1) Root cause: PHASE_REVIEW6.md (2026-06-23) used "framework scores" as "actual scores" without distinguishing score types. Models were not trained at that time. (2) Added 6-type score classification table (architecture/framework/expected/trained/verified/actual) to INTELLIGENCE_ASSESSMENT.md. (3) PHASE_REVIEW6.md: Added inflation root cause analysis, corrected scores with evidence. (4) FRAMEWORK_OVERVIEW.md: Added "trained" column to intelligence table. (5) MASTER_TASK_MAP.md: Updated score corrections table with framework vs trained columns + evidence. **Key findings**: ED3N acc=0.914 is training-set accuracy (may be overestimated), GARDEN acc=0.700 is Hebbian convergence (not understanding), Math 100% comes from Python ast.parse (not ED3N). **4,526 tests collected (tests/) — 0 errors.**
 > 
 > ✅ **NOTE (Updated 2026-07-06, §X #201)**: **§X #201**: Fixed test collection hang (120s timeout). Root cause: `services/__init__.py` eager-imported 22 service modules → `services/llm/__init__.py` → `services/llm/providers/__init__.py` → all 9 LLM backends → `anthropic` → `aiohttp` → `ctranslate2` → `torch` (35-45s load on Windows). Also fixed circular import in `core/autonomous/__init__.py` → `DigitalLifeIntegrator`. **Fixes**: (1) Converted 3 `__init__.py` files to lazy `__getattr__` imports (services, services/llm, services/llm/providers); (2) `core/autonomous/__init__.py` → lazy `__getattr__` for 24+ types; (3) `desktop_routes.py` → `DigitalLifeIntegrator` under `TYPE_CHECKING`; (4) Fixed 3 pre-existing test bugs (category_map keys mismatch in `test_formula_behavioral_impact.py`, unconditional theta assertion in `test_state_matrix_adapter.py`, crypto sign/encrypt order + missing `security_parameters.signature` cleanup in `security.py` + `max_attempts`→`max_retries` in `connector.py`). **4,526 tests collected in 23.26s** (was hanging >120s). **0 errors.**
+>
+> ✅ **NOTE (Updated 2026-07-07, §X #201b)**: **§X #201b**: MD sync + orphan cleanup + integration test rewrite + usage docs. (1) MD test count sync (5,016→4,439 across 5 files). (2) Deleted orphan dirs + 4 dead test files. (3) Repaired test_phase1_core_activation.py (+5 tests). (4) Moved 23 utility scripts tests/utils/→scripts/utils/ (2+21, all zero-importers). (5) Fixed test_base.py (__test__=False + Any import bug). (6) Rewrote 6 mock-only integration tests (test_hsp_debug, test_hsp_protocol, test_knowledge_update, test_self_improvement, test_system_level, test_training_system) — replaced `assert AsyncMock(return_value=True) is True` (tested Python mock mechanics, not project code) with real import + instantiation tests using production classes (KnowledgeGraphAgent, EvolutionEngine, SystemManager, DictionaryLayer, HSPConnector). 10 passed, 2 skipped (pre-existing MessageBridge bug). (7) Created docs/usage/ (QUICK_START.md + SCENARIOS.md). (8) Updated README.md + ACTIVE_SCRIPTS.md + CAUSAL_CHAIN + CHANGELOG + MASTER_TASK_MAP + IMPROVEMENT_ROADMAP. **4,439 tests collected — 0 errors.**
 > 
-> ✅ **NOTE (Updated 2026-06-29)**: Extended session continues — 158+ commits (Jun 25-29). §X #49-54 all DONE:
+> > ✅ **NOTE (Updated 2026-06-29)**: Extended session continues — 158+ commits (Jun 25-29). §X #49-54 all DONE:
 > - **§X #49**: 5 real stub modules (precision_projection_matrix, resonance, cognitive_pipeline, attractor_field, negativity) — +70 tests
 > - **§X #50**: 2 more stubs (ripple/node, influence/space) — +10 tests
 > - **§X #51**: 11 magic numbers migrated to config-driven accessors

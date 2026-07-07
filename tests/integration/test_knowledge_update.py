@@ -1,26 +1,21 @@
-"""
-测试模块 - test_knowledge_update
-"""
-
-from unittest.mock import AsyncMock, Mock
-
 import pytest
+
+pytest.importorskip("ai.agents.specialized.knowledge_graph_agent")
+from ai.agents.specialized.knowledge_graph_agent import KnowledgeGraphAgent
 
 
 class TestKnowledgeUpdate:
-    @pytest.fixture(autouse=True)
-    def setup_test(self):
-        yield
-    async def test_knowledge_update_basic(self):
-        mock_knowledge_base = Mock()
-        mock_knowledge_base.update = AsyncMock(return_value=True)
-        result = await mock_knowledge_base.update({"key": "value"})
-        assert result is True
-    async def test_knowledge_retrieval(self):
-        mock_knowledge_base = Mock()
-        mock_knowledge_base.get = AsyncMock(return_value={"key": "value"})
-        result = await mock_knowledge_base.get("key")
-        assert result["key"] == "value"
+    async def test_knowledge_graph_agent_instantiation(self):
+        agent = KnowledgeGraphAgent()
+        assert agent is not None
+        assert len(agent._entities) == 0
+
+    async def test_knowledge_graph_add_query(self):
+        agent = KnowledgeGraphAgent()
+        entity_id = agent.add_entity("test_entity", {"key": "value"})
+        assert entity_id is not None
+        result = agent.query_graph(query="test_entity")
+        assert len(result) > 0
 
 
 if __name__ == "__main__":

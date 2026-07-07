@@ -1,26 +1,18 @@
-"""
-测试模块 - test_training_system_integration
-"""
-
-from unittest.mock import AsyncMock, Mock
-
 import pytest
+
+pytest.importorskip("ai.ed3n.dictionary_layer")
+from ai.ed3n.dictionary_layer import DictionaryLayer
 
 
 class TestTrainingSystemIntegration:
-    @pytest.fixture(autouse=True)
-    def setup_test(self):
-        yield
-    async def test_training_basic(self):
-        mock_trainer = Mock()
-        mock_trainer.train = AsyncMock(return_value=True)
-        result = await mock_trainer.train({"epochs": 10})
-        assert result is True
-    async def test_model_evaluation(self):
-        mock_evaluator = Mock()
-        mock_evaluator.evaluate = AsyncMock(return_value={"accuracy": 0.95})
-        result = await mock_evaluator.evaluate()
-        assert result["accuracy"] > 0.9
+    async def test_dictionary_layer_instantiation(self):
+        d = DictionaryLayer()
+        assert d is not None
+
+    async def test_dictionary_layer_encode(self):
+        d = DictionaryLayer()
+        result = d.encode_soft("test")
+        assert isinstance(result, dict)
 
 
 if __name__ == "__main__":
