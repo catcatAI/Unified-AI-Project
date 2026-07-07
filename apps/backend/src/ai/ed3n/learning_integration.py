@@ -39,37 +39,16 @@ class ED3NLearningIntegration:
         logger.info("Connected to MemoryLearningEngine.")
 
     def _get_learning_manager(self):
-        if self._learning_manager is None:
-            try:
-                from ai.learning.learning_manager import LearningManager
-
-                self._learning_manager = LearningManager(ai_id="ed3n")
-                self._connected_systems["learning_manager"] = True
-            except ImportError:
-                logger.warning("LearningManager not available.")
-        return self._learning_manager
+        # ai.learning package was removed in Phase 9-12 cleanup
+        return None
 
     def _get_replay_buffer(self):
-        if self._replay_buffer is None:
-            try:
-                from ai.learning.experience_replay import ExperienceReplayBuffer
-
-                self._replay_buffer = ExperienceReplayBuffer()
-                self._connected_systems["replay_buffer"] = True
-            except ImportError:
-                logger.warning("ExperienceReplayBuffer not available.")
-        return self._replay_buffer
+        # ai.learning package was removed in Phase 9-12 cleanup
+        return None
 
     def _get_memory_learning(self):
-        if self._memory_learning is None:
-            try:
-                from ai.learning.memory_learning_engine import MemoryLearningEngine
-
-                self._memory_learning = MemoryLearningEngine()
-                self._connected_systems["memory_learning"] = True
-            except ImportError:
-                logger.warning("MemoryLearningEngine not available.")
-        return self._memory_learning
+        # ai.learning package was removed in Phase 9-12 cleanup
+        return None
 
     def extract_concepts_from_interaction(self, text: str) -> List[Dict]:
         lm = self._get_learning_manager()

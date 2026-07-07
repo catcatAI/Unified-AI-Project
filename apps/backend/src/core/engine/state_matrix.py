@@ -47,15 +47,6 @@ CognitiveOp = _CognitiveOp
 
 from .state_matrix_types import AllocateDecision, AxisSemanticAnchor, DimensionState
 
-# =============================================================================
-# ANGELA-MATRIX: [L4] [γ] [A] [L8+]
-# [Task N.20.5] 認知操作類型 / Cognitive Spatial Operations
-# Extracted to cognitive_operations.py
-# =============================================================================
-CognitiveOp = None
-
-
-
 class StateMatrix4D:
     """
     6D状态矩阵系统（αβγδεθ）/ 6D State Matrix System

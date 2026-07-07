@@ -35,7 +35,7 @@ import datetime
 import logging
 from typing import Any, Dict, List, Optional
 
-from core.engine.state_matrix import CognitiveOp, StateMatrix4D
+from core.engine.state_matrix import StateMatrix4D
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
