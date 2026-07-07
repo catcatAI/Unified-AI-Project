@@ -7,6 +7,8 @@ Handles memory retrieval, precompute service management, and memory integration.
 ANGELA-MATRIX: L3 [β] [A] [L0-L11]
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 from typing import TYPE_CHECKING, Any, Dict, List, Optional

@@ -57,6 +57,8 @@ _DELETED_MODULES = [
     "ai.code_inspection.code_inspector",
     "ai.code_inspection.code_learning",
     "apps.backend.src.ai.code_inspection.code_learning",
+    # Deleted empty stub mcp.context7_connector (§X #204-5)
+    "mcp.context7_connector",
 ]
 
 

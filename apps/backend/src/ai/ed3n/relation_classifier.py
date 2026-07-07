@@ -2,6 +2,8 @@
 # ANGELA-MATRIX: [L3] [βδ] [B] [L1]
 # =============================================================================
 
+from __future__ import annotations
+
 import copy
 import logging
 from enum import Enum

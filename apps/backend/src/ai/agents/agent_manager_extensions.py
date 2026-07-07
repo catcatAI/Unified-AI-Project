@@ -13,6 +13,8 @@ import multiprocessing as mp
 import time
 from typing import Any, Callable, Dict, Optional
 
+from core.system.config.magic_numbers import loop_sleep
+
 logger = logging.getLogger(__name__)
 
 
@@ -183,7 +185,7 @@ def example_agent_entry_point(agent_id: str) -> None:
     try:
         while True:
             logger.info(f"[Agent-{agent_id}] Working...")
-            time.sleep(5)
+            time.sleep(loop_sleep("agent_entry_worker_interval", 5.0))
     except KeyboardInterrupt:
         logger.info(f"[Agent-{agent_id}] Shutting down")
 

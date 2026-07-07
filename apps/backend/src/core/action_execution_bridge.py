@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 from core.system.config.magic_numbers import batch_value, cache_value, loop_sleep
 
@@ -39,11 +39,6 @@ _DEFAULT_SEARCH_RESULTS = 5
 _DEFAULT_MEDIUM_LIMIT = 10
 _DEFAULT_DEEP_LIMIT = 20
 _MAX_FEEDBACK_HISTORY = 500
-
-# Type imports to avoid circular dependencies
-if TYPE_CHECKING:
-    pass
-
 
 class ActionType(Enum):
     """动作类型 / Action types supported by the system"""

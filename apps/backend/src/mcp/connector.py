@@ -19,7 +19,8 @@ from shared.error import ProjectError
 
 
 def project_error_handler(error) -> None:
-    logger.warning("project_error_handler is a stub - error: %s", error)
+    """Fallback error handler for MCP connector. Logs and returns gracefully."""
+    logger.warning("MCP project error: %s", error)
 
 
 class MCPEnvelope:

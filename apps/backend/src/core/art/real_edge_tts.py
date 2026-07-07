@@ -264,6 +264,4 @@ async def test_voice() -> None:
 
 
 if __name__ == "__main__":
-    pass
-
     asyncio.run(test_voice())

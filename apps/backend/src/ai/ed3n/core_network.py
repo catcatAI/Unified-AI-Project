@@ -2,6 +2,8 @@
 # ANGELA-MATRIX: [L3] [βγ] [B] [L2]
 # =============================================================================
 
+from __future__ import annotations
+
 import logging
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Set, Tuple
 

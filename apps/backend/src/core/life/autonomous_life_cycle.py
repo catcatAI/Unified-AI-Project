@@ -26,7 +26,7 @@ from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from core.active_cognition_formula import ActiveCognitionFormula, OrderType, StressSource
 from core.cdm_dividend_model import (
@@ -43,10 +43,6 @@ from core.system.config.magic_numbers import lifecycle_value
 from core.system.state_store.global_store import state_store
 
 logger = logging.getLogger(__name__)
-
-if TYPE_CHECKING:
-    pass
-
 
 class LifePhase(Enum):
     """生命阶段 / Life phases based on theoretical metrics"""

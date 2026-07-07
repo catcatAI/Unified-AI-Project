@@ -11,6 +11,12 @@ import threading
 import time
 from typing import Any, Optional
 
+# Config-driven sleep intervals
+try:
+    from core.system.config.magic_numbers import _get as _cfg_get
+except ImportError:
+    _cfg_get = lambda key, default=None: default
+
 logger = logging.getLogger(__name__)
 
 
@@ -19,7 +25,7 @@ def run_repl_mode() -> None:
     server_thread = threading.Thread(target=_run_uvicorn_in_thread, daemon=True)
     server_thread.start()
     print("[REPL] Backend starting on http://127.0.0.1:8000 ...")
-    time.sleep(3)
+    time.sleep(_cfg_get("cli.repl.startup_delay", 3.0))
     asyncio.run(_run_repl())
 
 
