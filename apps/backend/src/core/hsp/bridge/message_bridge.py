@@ -13,3 +13,6 @@ class MessageBridge:
 
     def bridge_message(self, message: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         return message
+
+    def handle_external_message(self, message: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        return self.bridge_message(message)

@@ -1,23 +1,21 @@
-"""
-测试模块 - test_vision_tone_inverter
-"""
-
-from unittest.mock import Mock
-
 import pytest
+
+pytest.importorskip("fragmenta.vision_tone_inverter")
+from fragmenta.vision_tone_inverter import VisionToneInverter
 
 
 class TestVisionToneInverter:
-    @pytest.fixture(autouse=True)
-    def setup_test(self):
-        yield
+    async def test_vision_tone_instantiation(self):
+        inverter = VisionToneInverter()
+        assert inverter is not None
 
-    @pytest.mark.timeout(5)
-    def test_vision_tone_basic(self):
-        mock_inverter = Mock()
-        mock_inverter.invert.return_value = {"inverted": True}
-        result = mock_inverter.invert()
-        assert result["inverted"] is True
+    async def test_vision_tone_brighter(self):
+        inverter = VisionToneInverter()
+        result = inverter.invert_visual_tone(
+            {"color_palette": ["#333333"]}, "brighter"
+        )
+        assert result is not None
+        assert "tone_adjustment_note" in result
 
 
 if __name__ == "__main__":

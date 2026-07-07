@@ -1,21 +1,19 @@
-"""
-测试模块 - test_mcp_connector
-"""
-
-from unittest.mock import AsyncMock, Mock
-
 import pytest
+
+pytest.importorskip("paho.mqtt")
+pytest.importorskip("mcp.connector")
+from mcp.connector import MCPConnector
 
 
 class TestMCPConnector:
-    @pytest.fixture(autouse=True)
-    def setup_test(self):
-        yield
-    async def test_mcp_connection(self):
-        mock_connector = Mock()
-        mock_connector.connect = AsyncMock(return_value=True)
-        result = await mock_connector.connect()
-        assert result is True
+    async def test_mcp_connector_instantiation(self):
+        connector = MCPConnector(ai_id="test_mcp")
+        assert connector is not None
+        assert connector.ai_id == "test_mcp"
+
+    async def test_mcp_connector_health(self):
+        connector = MCPConnector(ai_id="test_mcp")
+        assert not connector.is_connected
 
 
 if __name__ == "__main__":

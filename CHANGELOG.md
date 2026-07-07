@@ -833,9 +833,12 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - **test_phase1_core_activation.py**: Repaired — removed deleted `ai.learning` import + TestUnifiedLearningOrchestrator class (5 tests unblocked)
 - **21 utility scripts moved**: `tests/utils/`→`scripts/utils/` (all standalone scripts, zero importers)
 - **6 mock-only integration tests rewritten**: replaced `assert AsyncMock(return_value=True) is True` (tested Python mock mechanics, not project code) with real import + instantiation tests using actual production classes (KnowledgeGraphAgent, EvolutionEngine, SystemManager, DictionaryLayer, HSPConnector). 10 passed, 2 skipped (pre-existing MessageBridge bug revealed).
+- **MessageBridge bug fixed**: Added `handle_external_message()` method — was missing, causing AttributeError in HSPConnector._register_default_hooks(). Previously masked by mock-only tests.
+- **8 more weak tests handled**: Rewrote 5 with real production classes (MCPConnector, ElementLayer, VisionToneInverter, AgentManager, AtlassianBridge). Skipped 3 orphan files (context7_connector stub, learning_and_trust deleted module, tool_dispatcher_logging no Python class). 10 passed, 3 skipped.
 - **test_base.py fixed**: `__test__ = False` + `Any` import bug fixed (dead base class, no consumers)
 - **batch file fixed**: `tests/run_enterprise_tests.bat` → `python scripts\utils\enterprise_test_suite.py`
 - **Usage docs created**: `docs/usage/QUICK_START.md` (direct start guide) + `docs/usage/SCENARIOS.md` (train-first/configure-first/deployment scenarios)
+- **New baseline**: 4,438 tests — 0 errors
 - **README.md**: Updated English + Chinese index + Quick Start sections with cross-refs to new usage docs
 - **ACTIVE_SCRIPTS.md**: Updated with 21 new `scripts/utils/` entries + counts
 - **CAUSAL_CHAIN_COMPLETENESS.md**: Added §X #201b row

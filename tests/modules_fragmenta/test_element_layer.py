@@ -1,23 +1,20 @@
-"""
-测试模块 - test_element_layer
-"""
-
-from unittest.mock import Mock
-
 import pytest
+
+pytest.importorskip("fragmenta.element_layer")
+from fragmenta.element_layer import ElementLayer
 
 
 class TestElementLayer:
-    @pytest.fixture(autouse=True)
-    def setup_test(self):
-        yield
+    async def test_element_layer_instantiation(self):
+        layer = ElementLayer()
+        assert layer is not None
+        assert layer.transformation_count == 0
 
-    @pytest.mark.timeout(5)
-    def test_element_layer_basic(self):
-        mock_layer = Mock()
-        mock_layer.render.return_value = True
-        result = mock_layer.render()
-        assert result is True
+    async def test_element_layer_process(self):
+        layer = ElementLayer()
+        result = layer.process_elements([{"type": "text", "content": " hello "}])
+        assert len(result) == 1
+        assert result[0]["content"] == "hello"
 
 
 if __name__ == "__main__":

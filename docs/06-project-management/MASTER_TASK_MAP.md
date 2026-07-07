@@ -2721,26 +2721,46 @@ python -m pytest tests/ --collect-only -q
     - `test_training_system_integration.py` → `DictionaryLayer` (instantiation + encode_soft, both passed)
     - `test_hsp_debug.py` → `HSPConnector` (import smoke + construct-with-skip, 1 passed + 1 skipped)
     - `test_hsp_protocol_integration.py` → `HSPConnector` (import smoke + construct-with-skip, 1 passed + 1 skipped)
-    - **Result**: 10 passed, 2 skipped (pre-existing `MessageBridge.handle_external_message` bug in HSPConnector — not introduced by this change)
-    - **Discovered**: `MessageBridge` in `core/hsp/bridge/message_bridge.py` lacks `handle_external_message` attribute that `HSPConnector._register_default_hooks()` expects. Falls through to AttributeError at instantiation. Previously masked by mock-only tests.
-   - `automated_integration_test_pipeline.py`, `check_test_collection.py`, `check_test_results.py`, `continuous_test_improvement.py`, `deadlock_detector.py`, `enterprise_test_suite.py`, `extract_latest_failures.py`, `find_skipped_tests.py`, `generate_test_report.py`, `intelligent_test_generator.py`, `maintain_test_suite.py`, `optimize_test_suite.py`, `process_test_results.py`, `project_function_test_mapping.py`, `run_integration_tests.py`, `run_test_direct.py`, `run_test_subprocess.py`, `run_tests_with_compat.py`, `smart_test_runner.py`, `_run_pc_tests.py`, `_run_pc_tests_file.py`
-   - **Batch file fix**: `tests/run_enterprise_tests.bat` path updated from `tests\enterprise_test_suite.py` → `scripts\utils\enterprise_test_suite.py` (was pointing to wrong directory, pre-existing bug)
+    - **Result**: 10 passed, 2 skipped
+    - **Bug discovered + fixed**: `MessageBridge` in `core/hsp/bridge/message_bridge.py` lacked `handle_external_message` attribute that `HSPConnector._register_default_hooks()` expects. Added the method. Previously masked by mock-only tests. All 4 HSP tests now pass (was 2+2).
 
-10. **`test_base.py` fixed** (integration test base class, dead code — no consumers):
-    - Added `__test__ = False` to prevent pytest collection
-    - Fixed `logger: Any = ...` bug: `Any` was never imported (`from typing import Any, Dict`)
-    - Changed `logger: Any = logging.getLogger(...)` → `logger = logging.getLogger(...)` (no runtime annotation evaluation needed)
+10. **Broad weak test audit (14 mock-only files)**: Systematic search for `Mock()` + `AsyncMock(return_value=True)` pattern across all `tests/`. Found:
+    - `tests/mcp/test_mcp_connector.py` — mock-only, real `MCPConnector` exists
+    - `tests/mcp/test_context7_connector.py` — mock-only, source is 6-line stub
+    - `tests/modules_fragmenta/test_element_layer.py` — mock-only, module moved to `fragmenta/`
+    - `tests/modules_fragmenta/test_vision_tone_inverter.py` — mock-only, module moved to `fragmenta/`
+    - `tests/integration/test_ai_agent_integration.py` — mock-only, real `AgentManager` exists
+    - `tests/integration/test_learning_and_trust.py` — mock-only, `ai.learning`/`ai.trust` deleted
+    - `tests/tools/test_tool_dispatcher_logging.py` — mock-only, no Python `ToolDispatcher`
+    - `tests/integration/test_atlassian_integration.py` — dict indexing only, real `AtlassianBridge` exists
 
-11. **Usage documentation created**:
-     - `docs/usage/QUICK_START.md`: Step-by-step direct-start guide with prerequisites, installation, expected behavior, troubleshooting
-     - `docs/usage/SCENARIOS.md`: 5 scenarios (direct start / train-first / configure-first / no-LLM / Docker) with toggles and comparison table
-     - README.md updated: English + Chinese indexes link to usage docs, Quick Start sections cross-reference QUICK_START.md + SCENARIOS.md
+11. **Batch 2 rewrite (5 files)**: Replaced with real production class tests:
+    - `test_mcp_connector.py` → `MCPConnector` (instantiation + health)
+    - `test_element_layer.py` → `fragmenta.element_layer.ElementLayer` (instantiation + process_elements)
+    - `test_vision_tone_inverter.py` → `fragmenta.vision_tone_inverter.VisionToneInverter` (instantiation + brighter tone)
+    - `test_ai_agent_integration.py` → `AgentManager` (instantiation + agents count)
+    - `test_atlassian_integration.py` → `AtlassianBridge` (import + construct with RovoDevConnector)
 
-12. **Supporting MD updates**:
-    - `ACTIVE_SCRIPTS.md`: Added 21 new `scripts/utils/` entries, updated counts (5→28 scripts in utils/)
-    - `CAUSAL_CHAIN_COMPLETENESS.md`: Added §X #201b table row + updated summary
-    - `CHANGELOG.md`: Expanded §X #201b entry with all details
+12. **Batch 2 skip (3 files)**: Added module-level `pytest.skip()` with documentation:
+    - `test_context7_connector.py` — `context7_connector.py` is a 6-line docstring-only stub
+    - `test_learning_and_trust.py` — `ai.learning`/`ai.trust` were deleted in Phase 9-12 cleanup
+    - `test_tool_dispatcher_logging.py` — no Python `ToolDispatcher` class exists (only JSToolDispatcher, JS module)
+
+14. **`test_base.py` fixed** (integration test base class, dead code — no consumers):
+     - Added `__test__ = False` to prevent pytest collection
+     - Fixed `logger: Any = ...` bug: `Any` was never imported (`from typing import Any, Dict`)
+     - Changed `logger: Any = logging.getLogger(...)` → `logger = logging.getLogger(...)` (no runtime annotation evaluation needed)
+
+15. **Usage documentation created**:
+      - `docs/usage/QUICK_START.md`: Step-by-step direct-start guide with prerequisites, installation, expected behavior, troubleshooting
+      - `docs/usage/SCENARIOS.md`: 5 scenarios (direct start / train-first / configure-first / no-LLM / Docker) with toggles and comparison table
+      - README.md updated: English + Chinese indexes link to usage docs, Quick Start sections cross-reference QUICK_START.md + SCENARIOS.md
+
+16. **Supporting MD updates**:
+     - `ACTIVE_SCRIPTS.md`: Added 21 new `scripts/utils/` entries, updated counts (5→28 scripts in utils/)
+     - `CAUSAL_CHAIN_COMPLETENESS.md`: Added §X #201b table row + updated summary
+     - `CHANGELOG.md`: Expanded §X #201b entry with all details
 
 **Remaining in `tests/utils/`**: `test_text_utils.py`, `text_utils.py`, `__init__.py` — legitimate test files with pytest test functions.
 
-**Test count**: 4,439 collected in 35.93s — 0 errors (same as batch 1 — the 21 moved scripts had 0 pytest test functions). Consistent across all MD files.
+**Test count**: 4,438 collected — 0 errors. Consistent across all MD files.

@@ -1,22 +1,3 @@
-"""
-测试模块 - test_context7_connector
-"""
-
-from unittest.mock import AsyncMock, Mock
-
 import pytest
 
-
-class TestContext7Connector:
-    @pytest.fixture(autouse=True)
-    def setup_test(self):
-        yield
-    async def test_context7_connection(self):
-        mock_connector = Mock()
-        mock_connector.connect = AsyncMock(return_value=True)
-        result = await mock_connector.connect()
-        assert result is True
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+pytest.skip("context7_connector.py is a 6-line docstring-only stub — no real module to test", allow_module_level=True)
