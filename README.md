@@ -55,13 +55,13 @@
 
 **Angela AI** is a digital life system with biological simulation and LLM integration capabilities.
 
-**Quick facts**: 612 Python files in backend src (~96K lines). Electron + Live2D desktop companion (50 JS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~4,439 tests (tests/) — 0 errors.**  
+**Quick facts**: 612 Python files in backend src (~96K lines). Electron + Live2D desktop companion (50 JS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~4,438 tests (tests/) — 0 errors.**  
 **Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · cli `7.5.0-dev` · biology-core `7.5.0-dev`.  
 **Architecture audit score**: **~85-90%** (2026-06-25; up from ~55-60% after Phases 0-5 repairs).  
 **Total project files**: ~3,500+ (620 Python in backend src · 295 JS/TS · 1,021+ docs · 500+ config · 480+ test).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
 
-> **STATUS (2026-07-07)**: §X #201-201b — Test collection hang fixed via lazy imports (4 `__init__.py`), 3 production bugs fixed, 72 pre-existing test failures resolved, orphan test directories/files cleaned, 2 utility scripts moved from tests/→scripts/, MD sync across all files. **4,439 tests collected in 39.79s — 0 errors.**
+> **STATUS (2026-07-07)**: §X #201-201b — Lazy imports fix collection hang, 3 production bugs fixed, 72 pre-existing failures resolved, 23 utility scripts moved tests/→scripts/, 11 mock-only integration tests rewritten with real production classes, MessageBridge bug fixed, orphan directories/files cleaned, usage docs created, MD sync across all files. **4,438 tests collected — 0 errors.**
 > **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → execution gate → **agent routing** → LLM → causal learning → response. GVV pipeline for image generation.  
 > **See**: [MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md) (task provenance), [IMPROVEMENT_ROADMAP.md](docs/06-project-management/IMPROVEMENT_ROADMAP.md) (improvement roadmap), [CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md) (causal depth).
 
@@ -95,7 +95,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | **API Versioning** | ✅ COMPLETE | Version routing middleware (Phase 5) |
 | **i18n System** | ✅ COMPLETE | I18nManager, PromptManager, 4 handlers + 4 LLM modules i18n'd, 45 tests (Phase 7) |
 | **Config system** | ✅ | `config_loader.py:get_config()` returns Config |
-| **Tests** | ✅ PASSING | ~4,439 tests collected (tests/), 0 collection errors, 1,589+ verified passing |
+| **Tests** | ✅ PASSING | ~4,438 tests collected (tests/), 0 collection errors, 1,589+ verified passing |
 | **JS Sharing** | ✅ COMPLETE | 33 shared files → `packages/shared-js/js/`, 0 duplicates remaining |
 | **SessionManager** | ✅ COMPLETE | 56 tests covering full lifecycle (Phase 5.8) |
 | **Skip Audit** | ✅ COMPLETE | Phase 5.9: 5 collection errors fixed, all skip reasons verified |
@@ -290,7 +290,7 @@ npx pnpm dev:desktop
 - **Pixel art engine** — PyQt6 renderer, numpy voxel body ✅
 - **CLI** — Unified CLI with HTTP client ✅
 - **Gemini OS bridge** — pyautogui automation ✅
-- **Test suite** — 4,439 total ✅
+- **Test suite** — 4,438 total ✅
 
 ### What Does NOT Work / Needs Work
 
@@ -421,7 +421,7 @@ See dedicated docs for full diagrams:
 | **OpenTelemetry** | ✅ 已完成 | 分散式追蹤中間件（Phase 5） |
 | **API Versioning** | ✅ 已完成 | 版本路由中間件（Phase 5） |
 | **i18n 系統** | ✅ 已完成 | I18nManager、PromptManager、4 個 handler + 4 個 LLM 模組 i18n、45 個測試（Phase 7） |
-| **測試** | ✅ 通過 | ~4,439 (tests/) — 0 collection errors |
+| **測試** | ✅ 通過 | ~4,438 (tests/) — 0 collection errors |
 | **智能分數** | ✅ 已評分 | 6.0/10 (有 LLM) / 4.5/10 (純 ED3N+GARDEN) |
 | **Master Task Map** | ✅ 已建立 | 23 份計畫全部交叉參照、144 項 claim 驗證、26 個 DO-NOT-REIMPLEMENT |
 | **因果鏈完成度** | ✅ 已建立 | `docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md` — §0 無 stub 原則、真實深度分數、時脈審計 |
@@ -675,4 +675,4 @@ npx pnpm dev:desktop
 
 ---
 
-**Version**: 7.5.0-dev | **Code Stats**: 612 Python files, ~96K lines | **Tests**: ~4,439 (tests/) — 0 errors | **Intelligence**: 6.0/10 (upper) 4.5/10 (lower) | **Architecture**: ~85-90% | | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)
+**Version**: 7.5.0-dev | **Code Stats**: 612 Python files, ~96K lines | **Tests**: ~4,438 (tests/) — 0 errors | **Intelligence**: 6.0/10 (upper) 4.5/10 (lower) | **Architecture**: ~85-90% | | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)
