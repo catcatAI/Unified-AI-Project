@@ -3,7 +3,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: zh-tw/en
-    LAST_MODIFIED: 2026-07-04 (updated for §X #193: resonance _sparsity_shift)
+    LAST_MODIFIED: 2026-07-07 (updated for §X #201b: usage docs zh-tw + MD sync)
   =============================================================================
 -->
 
@@ -34,7 +34,7 @@
 
 - [繁體中文版](#繁體中文版)
 - [當前進度](#當前進度2026-06-15-代碼驗證)
-- [快速啟動](#快速啟動-1) ([詳細](docs/usage/QUICK_START.md), [場景](docs/usage/SCENARIOS.md))
+- [快速啟動](#快速啟動-1) ([詳細](docs/usage/QUICK_START.zh.md), [場景](docs/usage/SCENARIOS.zh.md))
 - [腳本參考](#腳本參考)
 - [什麼能跑](#什麼能跑2026-06-15-驗證)
 - [什麼不能用](#什麼無法運作-1)
@@ -432,7 +432,7 @@ See dedicated docs for full diagrams:
 
 ### 快速啟動
 
-詳細指南：[直接開始](docs/usage/QUICK_START.md) · [先訓練 / 先配置](docs/usage/SCENARIOS.md)
+詳細指南：[直接開始](docs/usage/QUICK_START.zh.md) · [先訓練 / 先配置](docs/usage/SCENARIOS.zh.md)
 
 ```bash
 # 克隆專案
@@ -467,7 +467,7 @@ npx pnpm dev:desktop
 
 **環境需求**：Python 3.10+、Node.js 16+、Ollama（LLM 後端）
 
-> **新用戶？** 查看 [QUICK_START.md](docs/usage/QUICK_START.md) 獲取逐步引導、故障排除與預期行為。如需訓練或自定義配置，請參考 [SCENARIOS.md](docs/usage/SCENARIOS.md)。
+> **新用戶？** 查看 [QUICK_START.zh.md](docs/usage/QUICK_START.zh.md) 獲取逐步引導、故障排除與預期行為。如需訓練或自定義配置，請參考 [SCENARIOS.zh.md](docs/usage/SCENARIOS.zh.md)。
 
 ---
 

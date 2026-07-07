@@ -842,7 +842,7 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - **README.md**: Updated English + Chinese index + Quick Start sections with cross-refs to new usage docs
 - **ACTIVE_SCRIPTS.md**: Updated with 21 new `scripts/utils/` entries + counts
 - **CAUSAL_CHAIN_COMPLETENESS.md**: Added §X #201b row
-- **4,439 test baseline** — 0 errors (35.93s collection)
+- **4,438 test baseline** — 0 errors (35.93s collection)
 
 ---
 
