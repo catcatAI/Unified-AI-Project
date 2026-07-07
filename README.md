@@ -61,7 +61,7 @@
 **Total project files**: ~3,500+ (620 Python in backend src · 295 JS/TS · 1,021+ docs · 500+ config · 480+ test).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
 
-> **STATUS (2026-07-07)**: §X #201-201b — Lazy imports fix collection hang, 3 production bugs fixed, 72 pre-existing failures resolved, 23 utility scripts moved tests/→scripts/, 11 mock-only integration tests rewritten with real production classes, MessageBridge bug fixed, orphan directories/files cleaned, usage docs created, MD sync across all files. **4,438 tests collected — 0 errors.**
+> **STATUS (2026-07-07)**: §X #201-#202 — Lazy imports fix collection hang, 3 production bugs fixed, 72 pre-existing failures resolved, 23 utility scripts moved tests/→scripts/, 11 mock-only integration tests rewritten with real production classes, MessageBridge bug fixed, orphan directories/files cleaned, usage docs created, test parametrization (atlassian bridge 300→106 lines, vision 4→1), last bare except:pass eliminated, 3 more production bugs fixed (endpoint config, list response crash, dictionary silent error). **4,438 tests collected — 0 errors.**
 > **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → execution gate → **agent routing** → LLM → causal learning → response. GVV pipeline for image generation.  
 > **See**: [MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md) (task provenance), [IMPROVEMENT_ROADMAP.md](docs/06-project-management/IMPROVEMENT_ROADMAP.md) (improvement roadmap), [CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md) (causal depth).
 

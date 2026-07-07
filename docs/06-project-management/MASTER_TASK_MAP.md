@@ -2761,6 +2761,15 @@ python -m pytest tests/ --collect-only -q
      - `CAUSAL_CHAIN_COMPLETENESS.md`: Added §X #201b table row + updated summary
      - `CHANGELOG.md`: Expanded §X #201b entry with all details
 
+17. **§X #202: Test parametrization + 3 production bug fixes** (2026-07-07):
+     - **(a) Parametrized `test_atlassian_bridge_methods.py`**: 300→106 lines (-194), 18 tests preserved. Removed broad `except Exception: pytest.skip()` that was masking real failures — tests now properly validate bridge behavior. Added proper endpoint config to test setup so bridge can load configs.
+     - **(b) Parametrized `test_vision_service.py` compare_images**: 4 separate test methods → 1 parametrized test with 4 parameter sets (-8 lines).
+     - **(c) Fixed `_load_endpoint_configs()` bug**: Method computed endpoint configs in a local variable `cfgs` and returned it, but called from `__init__` and `start()` without capturing the return value → `self.endpoints` was always empty. All methods always returned `{"error": "No endpoint config for service '...'"}`. This bug was hidden by the broad `except Exception: pytest.skip()` in the test.
+     - **(d) Fixed `get_jira_projects()` crash**: When API returns a list directly (e.g., `[{"key": "TEST"}]`), `result["data"].get("values", result["data"])` raises `AttributeError` because lists don't have `.get()`. Fix: check `isinstance(data, list)` first.
+     - **(e) Fixed last bare `except:pass`**: `ai/garden/dictionary.py` line 471-472 changed to `logger.debug(...)` with `exc_info=True`.
+     - **(f) No broad `except Exception: pytest.skip()` remains** anywhere in `tests/`.
+     - **Test count**: 4,438 — 0 errors (unchanged).
+
 **Remaining in `tests/utils/`**: `test_text_utils.py`, `text_utils.py`, `__init__.py` — legitimate test files with pytest test functions.
 
 **Test count**: 4,438 collected — 0 errors. Consistent across all MD files.
