@@ -840,6 +840,7 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - **Usage docs created**: `docs/usage/QUICK_START.md` (direct start guide) + `docs/usage/SCENARIOS.md` (train-first/configure-first/deployment scenarios)
 - **New baseline**: 4,438 tests — 0 errors
 - **§X #202**: Test parametrization + 3 production bug fixes. (a) Parametrized `test_atlassian_bridge_methods.py`: 300→106 lines (-194), 18 tests preserved after fixing broad `except Exception: pytest.skip()` that was masking real failures. (b) Parametrized `test_vision_service.py` compare_images: 4→1 parametrized test. (c) Fixed `atlassian_bridge._load_endpoint_configs()` not assigning to `self.endpoints` (endpoints always empty). (d) Fixed `get_jira_projects()` `AttributeError` when API returns a list. (e) Fixed last bare `except:pass` in `dictionary.py`. (f) No broad `except Exception: pytest.skip()` remains in tests/. **4,438 tests — 0 errors**.
+- **§X #203**: Test coverage expansion — 62 new tests for 2 previously uncovered modules: `core/utils.py` (38 tests: hash, text, JSON, extraction, time, dict, list, Timer) + `ai/core/unicode_utils.py` (24 tests: normalization, romaji, CJK detection, radical lookup). **4,500 tests — 0 errors** (+62).
 - **README.md**: Updated English + Chinese index + Quick Start sections with cross-refs to new usage docs
 - **ACTIVE_SCRIPTS.md**: Updated with 21 new `scripts/utils/` entries + counts
 - **CAUSAL_CHAIN_COMPLETENESS.md**: Added §X #201b row

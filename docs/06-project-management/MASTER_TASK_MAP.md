@@ -2772,4 +2772,13 @@ python -m pytest tests/ --collect-only -q
 
 **Remaining in `tests/utils/`**: `test_text_utils.py`, `text_utils.py`, `__init__.py` — legitimate test files with pytest test functions.
 
-**Test count**: 4,438 collected — 0 errors. Consistent across all MD files.
+**Test count**: 4,500 collected — 0 errors. Consistent across all MD files.
+
+### §X #203: Test coverage expansion — 62 tests for 2 modules (2026-07-07)
+
+- **`tests/unit/test_core_utils.py`** (38 tests): All 10 functions + Timer class in `core/utils.py`:
+  - `sha256_hash`, `md5_hash`, `truncate_text`, `safe_json_parse`, `extract_urls`, `extract_emails`, `now_timestamp`, `format_duration`, `deep_merge`, `chunk_list`, `Timer`
+- **`tests/unit/test_unicode_utils.py`** (24 tests): All 6 functions in `ai/core/unicode_utils.py`:
+  - `normalize_text`, `to_romaji`, `is_cjk`, `is_japanese`, `is_english_dominant`, `cjk_radical`
+- **Impact**: 54.0% → ~54.4% static import coverage. Both modules had zero external dependencies.
+- **Test count**: 4,500 — 0 errors (+62).
