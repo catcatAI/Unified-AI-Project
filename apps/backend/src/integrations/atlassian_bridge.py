@@ -92,8 +92,8 @@ class AtlassianBridge:
         """Execute the   aexit   operation."""
         await self.close()
 
-    def _load_endpoint_configs(self) -> Dict[str, EndpointConfig]:
-        """Load endpoint configs."""
+    def _load_endpoint_configs(self) -> None:
+        """Load endpoint configs into self.endpoints."""
         cfgs: Dict[str, EndpointConfig] = {}
         for service_name, svc_cfg in self.config.items():
             if not isinstance(svc_cfg, dict):
@@ -114,7 +114,7 @@ class AtlassianBridge:
                 retry_delay=float(retry_delay),
                 health_check_interval=int(health_interval),
             )
-        return cfgs
+        self.endpoints = cfgs
 
     async def _make_request_with_fallback(
         self, service: str, method: str, endpoint: str, **kwargs
@@ -284,5 +284,8 @@ class AtlassianBridge:
         """Get the jira projects by self."""
         result = await self._make_request_with_fallback("jira", "GET", "rest/api/3/project")
         if result.get("success"):
-            return result["data"].get("values", result["data"])
+            data = result["data"]
+            if isinstance(data, list):
+                return data
+            return data.get("values", [])
         return []

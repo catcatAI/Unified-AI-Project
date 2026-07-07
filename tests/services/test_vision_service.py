@@ -117,26 +117,28 @@ class TestVisionServiceAnalyzeImage:
 
 class TestVisionServiceCompareImages:
 
-    async def test_compare_images_similarity(self, vision_service):
-        result = await vision_service.compare_images(b'img1', b'img2', 'similarity')
-        assert isinstance(result['similarity_score'], float)
-        assert 0 <= result['similarity_score'] <= 1
-        assert 0.7 <= result['confidence'] <= 1.0
-
-    async def test_compare_images_difference(self, vision_service):
-        result = await vision_service.compare_images(b'img1', b'img2', 'difference')
-        assert isinstance(result['difference_score'], float)
-        assert isinstance(result.get('difference_areas', []), list)
-
-    async def test_compare_images_feature_match(self, vision_service):
-        result = await vision_service.compare_images(b'img1', b'img2', 'feature_match')
-        matched = result.get('matched_features')
-        assert matched is None or isinstance(matched, dict)
-        assert 0.3 <= result.get('feature_similarity', 0) <= 1.0
-
-    async def test_compare_images_missing_data(self, vision_service):
-        result = await vision_service.compare_images(None, b'img2')
-        assert result['similarity_score'] is None
+    @pytest.mark.parametrize("img1,img2,mode,checks", [
+        (b'img1', b'img2', 'similarity', [
+            lambda r: isinstance(r['similarity_score'], float),
+            lambda r: 0 <= r['similarity_score'] <= 1,
+            lambda r: 0.7 <= r['confidence'] <= 1.0,
+        ]),
+        (b'img1', b'img2', 'difference', [
+            lambda r: isinstance(r['difference_score'], float),
+            lambda r: isinstance(r.get('difference_areas', []), list),
+        ]),
+        (b'img1', b'img2', 'feature_match', [
+            lambda r: r.get('matched_features') is None or isinstance(r['matched_features'], dict),
+            lambda r: 0.3 <= r.get('feature_similarity', 0) <= 1.0,
+        ]),
+        (None, b'img2', 'similarity', [
+            lambda r: r['similarity_score'] is None,
+        ]),
+    ])
+    async def test_compare_images(self, vision_service, img1, img2, mode, checks):
+        result = await vision_service.compare_images(img1, img2, mode)
+        for check in checks:
+            assert check(result)
 
 
 class TestVisionServiceProcess:

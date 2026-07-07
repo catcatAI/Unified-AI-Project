@@ -6,295 +6,109 @@ import pytest
 pytestmark = pytest.mark.asyncio
 
 
-class TestAtlassianBridgeMethods:
-    """Verify each of the 14 skeleton methods via mocked _make_request_with_fallback"""
-
-    @patch("integrations.atlassian_bridge.aiohttp.ClientSession")
-    async def _make_bridge(self, mock_session):
+def _try_import():
+    try:
         from integrations.atlassian_bridge import AtlassianBridge
         from integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 
-        connector = EnhancedRovoDevConnector(config={"atlassian": {}})
-        bridge = AtlassianBridge(connector=connector)
-        bridge._session = AsyncMock()
-        return bridge
+        connector = EnhancedRovoDevConnector(config={
+            "atlassian": {
+                "confluence": {"url": "https://test.atlassian.net/wiki"},
+                "jira": {"url": "https://test.atlassian.net"},
+                "bitbucket": {"url": "https://api.bitbucket.org"},
+            }
+        })
+        return AtlassianBridge(connector=connector)
+    except Exception as e:
+        pytest.skip(f"AtlassianBridge not available: {e}")
 
-    @patch("integrations.atlassian_bridge.aiohttp.ClientSession")
-    async def test_get_confluence_page(self, mock_session):
-        try:
-            bridge = await self._make_bridge()
-            bridge._session.request.return_value.__aenter__.return_value.json = AsyncMock(
-                return_value={"id": "123", "title": "Test"}
-            )
-            bridge._session.request.return_value.__aenter__.return_value.status = 200
-            result = await bridge.get_confluence_page("123")
-            assert result.get("success")
-            assert result["data"]["id"] == "123"
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
 
-    @patch("integrations.atlassian_bridge.aiohttp.ClientSession")
-    async def test_update_confluence_page(self, mock_session):
-        try:
-            bridge = await self._make_bridge()
-            bridge._session.request.return_value.__aenter__.return_value.json = AsyncMock(
-                return_value={"id": "123", "version": {"number": 2}}
-            )
-            bridge._session.request.return_value.__aenter__.return_value.status = 200
-            result = await bridge.update_confluence_page("123", "Updated Title", "New content")
-            assert result.get("success")
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+async def _make_bridge():
+    bridge = _try_import()
+    session = MagicMock()
+    resp_mock = MagicMock()
+    resp_mock.json = AsyncMock(return_value={})
+    resp_mock.status = 200
+    session.request.return_value.__aenter__.return_value = resp_mock
+    bridge._session = session
+    return bridge
 
-    @patch("integrations.atlassian_bridge.aiohttp.ClientSession")
-    async def test_search_confluence_pages(self, mock_session):
-        try:
-            bridge = await self._make_bridge()
-            bridge._session.request.return_value.__aenter__.return_value.json = AsyncMock(
-                return_value={"results": [{"id": "1", "title": "Page 1"}]}
-            )
-            bridge._session.request.return_value.__aenter__.return_value.status = 200
-            results = await bridge.search_confluence_pages("DEV", "text ~ test")
-            assert len(results) == 1
-            assert results[0]["id"] == "1"
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
 
-    @patch("integrations.atlassian_bridge.aiohttp.ClientSession")
-    async def test_search_confluence_pages_empty(self, mock_session):
-        try:
-            bridge = await self._make_bridge()
-            bridge._session.request.return_value.__aenter__.return_value.json = AsyncMock(
-                return_value={}
-            )
-            bridge._session.request.return_value.__aenter__.return_value.status = 200
-            results = await bridge.search_confluence_pages("DEV", "text ~ nothing")
-            assert results == []
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+def _set_response(bridge, data, status=200):
+    bridge._session.request.return_value.__aenter__.return_value.json = AsyncMock(
+        return_value=data
+    )
+    bridge._session.request.return_value.__aenter__.return_value.status = status
 
-    @patch("integrations.atlassian_bridge.aiohttp.ClientSession")
-    async def test_create_jira_issue(self, mock_session):
-        try:
-            bridge = await self._make_bridge()
-            bridge._session.request.return_value.__aenter__.return_value.json = AsyncMock(
-                return_value={"id": "10001", "key": "TEST-1"}
-            )
-            bridge._session.request.return_value.__aenter__.return_value.status = 201
-            result = await bridge.create_jira_issue("TEST", "Test issue", "Description")
-            assert result.get("success")
-            assert result["data"]["key"] == "TEST-1"
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
 
-    @patch("integrations.atlassian_bridge.aiohttp.ClientSession")
-    async def test_get_jira_issue(self, mock_session):
-        try:
-            bridge = await self._make_bridge()
-            bridge._session.request.return_value.__aenter__.return_value.json = AsyncMock(
-                return_value={"key": "TEST-1", "fields": {"summary": "Test"}}
-            )
-            bridge._session.request.return_value.__aenter__.return_value.status = 200
-            result = await bridge.get_jira_issue("TEST-1")
-            assert result.get("success")
-            assert result["data"]["key"] == "TEST-1"
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+# (method_name, args, kwargs, mock_data, status, assertions_fn)
+_SUCCESS_CASES = [
+    ("get_confluence_page", ("123",), {}, {"id": "123", "title": "Test"}, 200,
+     lambda r: (r.get("success") and r["data"]["id"] == "123")),
+    ("update_confluence_page", ("123", "Updated Title", "New content"), {}, {"id": "123", "version": {"number": 2}}, 200,
+     lambda r: r.get("success")),
+    ("create_jira_issue", ("TEST", "Test issue", "Description"), {}, {"id": "10001", "key": "TEST-1"}, 201,
+     lambda r: (r.get("success") and r["data"]["key"] == "TEST-1")),
+    ("get_jira_issue", ("TEST-1",), {}, {"key": "TEST-1", "fields": {"summary": "Test"}}, 200,
+     lambda r: (r.get("success") and r["data"]["key"] == "TEST-1")),
+    ("update_jira_issue", ("TEST-1", {"summary": "Updated"}), {}, {"key": "TEST-1"}, 200,
+     lambda r: r.get("success")),
+    ("transition_jira_issue", ("TEST-1", "31"), {}, {}, 200,
+     lambda r: r.get("success")),
+]
 
-    @patch("integrations.atlassian_bridge.aiohttp.ClientSession")
-    async def test_update_jira_issue(self, mock_session):
-        try:
-            bridge = await self._make_bridge()
-            bridge._session.request.return_value.__aenter__.return_value.json = AsyncMock(
-                return_value={"key": "TEST-1"}
-            )
-            bridge._session.request.return_value.__aenter__.return_value.status = 200
-            result = await bridge.update_jira_issue("TEST-1", {"summary": "Updated"})
-            assert result.get("success")
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+_LIST_CASES = [
+    ("search_confluence_pages", ("DEV", "text ~ test"), {},
+     {"results": [{"id": "1", "title": "Page 1"}]}, "results", "id", "1"),
+    ("search_jira_issues", ("project = TEST",), {},
+     {"issues": [{"key": "TEST-1", "fields": {"summary": "Test"}}]}, "issues", "key", "TEST-1"),
+    ("get_bitbucket_repositories", ("myworkspace",), {},
+     {"values": [{"slug": "repo1", "name": "Repo 1"}]}, "values", "slug", "repo1"),
+    ("get_bitbucket_pull_requests", ("myworkspace", "repo1"), {},
+     {"values": [{"id": 1, "title": "PR 1"}]}, "values", "id", 1),
+    ("get_confluence_spaces", (), {},
+     {"results": [{"key": "DEV", "name": "Development"}]}, "results", "key", "DEV"),
+    ("get_jira_projects", (), {},
+     {"values": [{"key": "TEST", "name": "Test Project"}]}, "values", "key", "TEST"),
+]
 
-    @patch("integrations.atlassian_bridge.aiohttp.ClientSession")
-    async def test_search_jira_issues(self, mock_session):
-        try:
-            bridge = await self._make_bridge()
-            bridge._session.request.return_value.__aenter__.return_value.json = AsyncMock(
-                return_value={"issues": [{"key": "TEST-1", "fields": {"summary": "Test"}}]}
-            )
-            bridge._session.request.return_value.__aenter__.return_value.status = 200
-            results = await bridge.search_jira_issues("project = TEST")
-            assert len(results) == 1
-            assert results[0]["key"] == "TEST-1"
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+_EMPTY_CASES = [
+    ("search_confluence_pages", ("DEV", "text ~ nothing"), {}),
+    ("search_jira_issues", ("project = NONE",), {}),
+    ("get_bitbucket_repositories", ("empty",), {}),
+    ("get_confluence_spaces", (), {}),
+    ("get_jira_projects", (), {}),
+]
 
-    @patch("integrations.atlassian_bridge.aiohttp.ClientSession")
-    async def test_search_jira_issues_empty(self, mock_session):
-        try:
-            bridge = await self._make_bridge()
-            bridge._session.request.return_value.__aenter__.return_value.json = AsyncMock(
-                return_value={}
-            )
-            bridge._session.request.return_value.__aenter__.return_value.status = 200
-            results = await bridge.search_jira_issues("project = NONE")
-            assert results == []
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
 
-    @patch("integrations.atlassian_bridge.aiohttp.ClientSession")
-    async def test_transition_jira_issue(self, mock_session):
-        try:
-            bridge = await self._make_bridge()
-            bridge._session.request.return_value.__aenter__.return_value.json = AsyncMock(
-                return_value={}
-            )
-            bridge._session.request.return_value.__aenter__.return_value.status = 200
-            result = await bridge.transition_jira_issue("TEST-1", "31")
-            assert result.get("success")
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+class TestAtlassianBridgeMethods:
+    """Verify each bridge method via mocked HTTP session"""
 
-    @patch("integrations.atlassian_bridge.aiohttp.ClientSession")
-    async def test_get_bitbucket_repositories(self, mock_session):
-        try:
-            bridge = await self._make_bridge()
-            bridge._session.request.return_value.__aenter__.return_value.json = AsyncMock(
-                return_value={"values": [{"slug": "repo1", "name": "Repo 1"}]}
-            )
-            bridge._session.request.return_value.__aenter__.return_value.status = 200
-            results = await bridge.get_bitbucket_repositories("myworkspace")
-            assert len(results) == 1
-            assert results[0]["slug"] == "repo1"
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+    @pytest.mark.parametrize("method,args,kwargs,mock_data,status,check_fn", _SUCCESS_CASES)
+    async def test_success_methods(self, method, args, kwargs, mock_data, status, check_fn):
+        bridge = await _make_bridge()
+        _set_response(bridge, mock_data, status)
+        result = await getattr(bridge, method)(*args, **kwargs)
+        assert check_fn(result)
 
-    @patch("integrations.atlassian_bridge.aiohttp.ClientSession")
-    async def test_get_bitbucket_repositories_empty(self, mock_session):
-        try:
-            bridge = await self._make_bridge()
-            bridge._session.request.return_value.__aenter__.return_value.json = AsyncMock(
-                return_value={}
-            )
-            bridge._session.request.return_value.__aenter__.return_value.status = 200
-            results = await bridge.get_bitbucket_repositories("empty")
-            assert results == []
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+    @pytest.mark.parametrize("method,args,kwargs,mock_data,result_key,field,expected", _LIST_CASES)
+    async def test_list_methods(self, method, args, kwargs, mock_data, result_key, field, expected):
+        bridge = await _make_bridge()
+        _set_response(bridge, mock_data)
+        results = await getattr(bridge, method)(*args, **kwargs)
+        assert len(results) == 1
+        assert results[0][field] == expected
 
-    @patch("integrations.atlassian_bridge.aiohttp.ClientSession")
-    async def test_get_bitbucket_pull_requests(self, mock_session):
-        try:
-            bridge = await self._make_bridge()
-            bridge._session.request.return_value.__aenter__.return_value.json = AsyncMock(
-                return_value={"values": [{"id": 1, "title": "PR 1"}]}
-            )
-            bridge._session.request.return_value.__aenter__.return_value.status = 200
-            results = await bridge.get_bitbucket_pull_requests("myworkspace", "repo1")
-            assert len(results) == 1
-            assert results[0]["id"] == 1
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+    @pytest.mark.parametrize("method,args,kwargs", _EMPTY_CASES)
+    async def test_empty_results(self, method, args, kwargs):
+        bridge = await _make_bridge()
+        _set_response(bridge, {})
+        results = await getattr(bridge, method)(*args, **kwargs)
+        assert results == []
 
-    @patch("integrations.atlassian_bridge.aiohttp.ClientSession")
-    async def test_get_confluence_spaces(self, mock_session):
-        try:
-            bridge = await self._make_bridge()
-            bridge._session.request.return_value.__aenter__.return_value.json = AsyncMock(
-                return_value={"results": [{"key": "DEV", "name": "Development"}]}
-            )
-            bridge._session.request.return_value.__aenter__.return_value.status = 200
-            results = await bridge.get_confluence_spaces()
-            assert len(results) == 1
-            assert results[0]["key"] == "DEV"
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
-
-    @patch("integrations.atlassian_bridge.aiohttp.ClientSession")
-    async def test_get_confluence_spaces_empty(self, mock_session):
-        try:
-            bridge = await self._make_bridge()
-            bridge._session.request.return_value.__aenter__.return_value.json = AsyncMock(
-                return_value={}
-            )
-            bridge._session.request.return_value.__aenter__.return_value.status = 200
-            results = await bridge.get_confluence_spaces()
-            assert results == []
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
-
-    @patch("integrations.atlassian_bridge.aiohttp.ClientSession")
-    async def test_get_jira_projects(self, mock_session):
-        try:
-            bridge = await self._make_bridge()
-            bridge._session.request.return_value.__aenter__.return_value.json = AsyncMock(
-                return_value={"values": [{"key": "TEST", "name": "Test Project"}]}
-            )
-            bridge._session.request.return_value.__aenter__.return_value.status = 200
-            results = await bridge.get_jira_projects()
-            assert len(results) == 1
-            assert results[0]["key"] == "TEST"
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
-
-    @patch("integrations.atlassian_bridge.aiohttp.ClientSession")
-    async def test_get_jira_projects_list_response(self, mock_session):
-        try:
-            bridge = await self._make_bridge()
-            bridge._session.request.return_value.__aenter__.return_value.json = AsyncMock(
-                return_value=[{"key": "TEST", "name": "Test Project"}]
-            )
-            bridge._session.request.return_value.__aenter__.return_value.status = 200
-            results = await bridge.get_jira_projects()
-            assert len(results) == 1
-            assert results[0]["key"] == "TEST"
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
-
-    @patch("integrations.atlassian_bridge.aiohttp.ClientSession")
-    async def test_get_jira_projects_empty(self, mock_session):
-        try:
-            bridge = await self._make_bridge()
-            bridge._session.request.return_value.__aenter__.return_value.json = AsyncMock(
-                return_value={}
-            )
-            bridge._session.request.return_value.__aenter__.return_value.status = 200
-            results = await bridge.get_jira_projects()
-            assert results == []
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+    async def test_get_jira_projects_list_response(self):
+        bridge = await _make_bridge()
+        _set_response(bridge, [{"key": "TEST", "name": "Test Project"}])
+        results = await bridge.get_jira_projects()
+        assert len(results) == 1
+        assert results[0]["key"] == "TEST"

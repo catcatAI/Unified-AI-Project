@@ -469,7 +469,7 @@ class VectorDictionary:
                 idx = int(scores.argmax()) if hasattr(scores, 'argmax') else 0
                 return self._key_order[idx]
         except Exception:
-            pass  # Fall through to return None
+            logger.debug("Semantic dedup encoding failed", exc_info=True)
         return None
 
     # ------------------------------------------------------------------
