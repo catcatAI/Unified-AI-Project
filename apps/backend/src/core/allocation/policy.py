@@ -26,6 +26,7 @@ Version: 6.2.1
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
@@ -77,16 +78,18 @@ class AllocationDecision:
         return " ".join(parts)
 
 
-class BaseStage:
+class BaseStage(ABC):
     """基本評估階段 / Base evaluation stage"""
 
     name: str = "BaseStage"
 
+    @abstractmethod
     def matches(self, context: AllocationContext) -> bool:
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def decide(self, context: AllocationContext) -> AllocationDecision:
-        raise NotImplementedError
+        pass
 
 
 class AssignStage(BaseStage):

@@ -534,6 +534,9 @@ async def _handle_execution_gate(
         # Intent classification + Execution gate decision
         classifier = QueryClassifier(ed3n_engine=_get_ed3n_engine())
         classify_result = classifier.classify(user_message)
+        context["_classify_result_type"] = classify_result.primary_type.value
+        context["_classify_result_confidence"] = classify_result.confidence
+        context["_classify_result_action"] = classify_result.action_type
         gate = ExecutionGate(model_bus=chat_svc.model_bus if chat_svc else None)
         decision = gate.decide(
             query_type=classify_result.primary_type.value,
@@ -875,6 +878,93 @@ def _fire_causal_learning(
         logger.debug(f"Causal learning failed: {e}")
 
 
+def _learn_from_classification_feedback(
+    user_message: str, response_text: str, context: Dict[str, Any]
+) -> None:
+    """Online self-learning: teach dictionary classifier from LLM responses.
+
+    Triggered after every LLM response. If the QueryClassifier was uncertain
+    (UNKNOWN or low confidence) but the LLM produced a good response, we:
+    1. Extract distinguishing keywords from the user input
+    2. Infer the correct query type from the LLM response text
+    3. Add these keywords as training entries to DictionaryClassifier
+    4. The next time a similar input arrives, it's classified correctly.
+    """
+    orig_type = context.get("_classify_result_type", "unknown")
+    orig_confidence = context.get("_classify_result_confidence", 0.0)
+    orig_action = context.get("_classify_result_action", "none")
+
+    # Only learn from uncertain classifications
+    if orig_type != "unknown" and orig_confidence >= 0.5:
+        return
+
+    if not response_text or len(response_text.strip()) < 5:
+        return
+
+    from ai.core.dictionary_classifier import get_dictionary_classifier
+    from ai.core.query_classifier import QueryClassifier
+
+    dc = get_dictionary_classifier()
+
+    # Step 1: Classify the LLM response to infer the user's true intent
+    # (response usually contains content matching the intended type)
+    qc = QueryClassifier()
+    response_type = qc.classify(response_text)
+
+    # Also check routing context for ground truth
+    routing_mode = context.get("_actual_routing_mode", "")
+    lifecycle_adj = context.get("lifecycle_behavior", {})
+    lc_mode = lifecycle_adj.get("routing_mode", "")
+    intent_routing = context.get("intent_routing", {})
+    intent_mode = intent_routing.get("routing_mode", "")
+
+    # Determine best target type (priority: routing intent > response class > lifecycle)
+    target_type = response_type.primary_type.value
+    if intent_mode:
+        target_type = intent_mode
+    elif lc_mode and lc_mode != "neutral":
+        target_type = lc_mode
+
+    # Skip learning if still unknown
+    if target_type == "unknown":
+        return
+
+    # Step 2: Extract good keywords from the user's input (2-5 char tokens)
+    import re
+    tokens = re.findall(r'[\w\u4e00-\u9fff]+', user_message)
+    keywords = [t for t in tokens if 2 <= len(t) <= 12 and t not in (
+        "你好", "請問", "可以", "幫我", "想要", "這個", "那個", "什麼",
+        "什麼", "怎麼", "為什麼", "如何", "我們", "你們", "他們",
+        "hello", "help", "please", "can", "you", "the",
+    )]
+    keywords = keywords[:3]  # Max 3 keywords per learning cycle
+
+    if not keywords:
+        return
+
+    # Step 3: Infer best action_type from the original classify
+    target_action = orig_action if orig_action != "none" else "read"
+
+    # Step 4: Learn each keyword
+    learned_count = 0
+    for kw in keywords:
+        kw_lower = kw.lower().strip()
+        if len(kw_lower) < 2:
+            continue
+        key = dc.learn(kw_lower, target_type, target_action, confidence=0.5, persist=False)
+        if key:
+            learned_count += 1
+
+    # Step 5: Batch persist once
+    if learned_count > 0:
+        dc._persist_training_data()
+        logger.info(
+            f"Online learned {learned_count} keyword(s) from UNKNOWN input: "
+            f"'{user_message[:40]}' → {target_type}/{target_action} "
+            f"(response_type={response_type.primary_type.value})"
+        )
+
+
 def _handle_timeout(session_id: str, schema_ver: str) -> Dict[str, Any]:
     """Handle LLM timeout with fallback response."""
     logger.warning(f"LLM response timeout for session: {session_id}")
@@ -1052,6 +1142,12 @@ async def _handle_chat_request(
     response_text = llm_response.text if hasattr(llm_response, 'text') else str(llm_response)
     context["continuation_count"] = context.get("continuation_count", 0) + 1
     _fire_causal_learning(response_text, user_message, session_id)
+
+    # Step 10c: Online self-learning — teach dictionary classifier from LLM response
+    try:
+        _learn_from_classification_feedback(user_message, response_text, context)
+    except Exception as e:
+        logger.debug(f"Online learning step skipped: {e}")
 
     # Step 10b: Record intent outcome feedback loop (C³ 5.0→6.0)
     try:

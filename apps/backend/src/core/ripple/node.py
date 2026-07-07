@@ -26,6 +26,7 @@ import enum
 import math
 import logging
 from dataclasses import dataclass, field
+from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -104,9 +105,10 @@ class RippleNode:
         return nodes
 
 
-class CascadeStrategy:
+class CascadeStrategy(ABC):
+    @abstractmethod
     def compute_decay(self, step: int, base_value: float) -> float:
-        raise NotImplementedError
+        pass
 
 
 class LinearCascade(CascadeStrategy):

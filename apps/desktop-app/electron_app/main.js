@@ -550,10 +550,10 @@ function createMainWindow() {
     log.error('[Window] Page load failed:', errorCode, errorDescription)
   })
 
-  // Log console messages from renderer
+  // Log console messages from renderer (skip already-forwarded to avoid electron-log IPC loop)
   mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
-    // Skip if window is destroyed to avoid EPIPE error
     if (mainWindow.isDestroyed()) return
+    if (message.includes('[Renderer]')) return
     log.info(`[Renderer] ${message}`)
   })
 

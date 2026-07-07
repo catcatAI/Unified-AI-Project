@@ -114,8 +114,8 @@ class TestExecutionGateDecide:
 
     def test_no_handler_confirm(self):
         d = self.gate.decide("unknown", "none", "帮我查字典", 0.3, {})
-        assert d.action == "confirm_then_execute"
-        assert d.handler is None
+        assert d.action == "reject"
+        assert d.reason == "non_actionable_query_type_unknown"
 
     def test_low_score_reject(self):
         d = self.gate.decide("unknown", "none", "哈", 0.1, {})

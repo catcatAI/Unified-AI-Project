@@ -1,192 +1,2830 @@
 {
-  "version": "1.0",
-  "description": "Training data extracted from query_classifier.py hardcoded regex patterns. Maps keywords to QueryType via context_id.",
+  "version": "1.1",
+  "description": "Auto-generated from online learning. Merged with pattern-extracted data.",
   "dictionary_entries": [
-    {"key": "cls_file1", "surface_forms": {"zh": "整理"}, "contexts": [{"context_id": "file", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_file2", "surface_forms": {"zh": "清理"}, "contexts": [{"context_id": "file", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_file3", "surface_forms": {"zh": "删除"}, "contexts": [{"context_id": "file", "type": "action"}], "relations": {"synonym": ["cls_file3t"]}, "confidence": 1.0},
-    {"key": "cls_file3t", "surface_forms": {"zh": "刪除"}, "contexts": [{"context_id": "file", "type": "action"}], "relations": {"synonym": ["cls_file3"]}, "confidence": 1.0},
-    {"key": "cls_file4", "surface_forms": {"zh": "移动"}, "contexts": [{"context_id": "file", "type": "action"}], "relations": {"synonym": ["cls_file4t"]}, "confidence": 1.0},
-    {"key": "cls_file4t", "surface_forms": {"zh": "移動"}, "contexts": [{"context_id": "file", "type": "action"}], "relations": {"synonym": ["cls_file4"]}, "confidence": 1.0},
-    {"key": "cls_file5", "surface_forms": {"zh": "复制"}, "contexts": [{"context_id": "file", "type": "action"}], "relations": {"synonym": ["cls_file5t"]}, "confidence": 1.0},
-    {"key": "cls_file5t", "surface_forms": {"zh": "複製"}, "contexts": [{"context_id": "file", "type": "action"}], "relations": {"synonym": ["cls_file5"]}, "confidence": 1.0},
-    {"key": "cls_file6", "surface_forms": {"zh": "重命名"}, "contexts": [{"context_id": "file", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_file7", "surface_forms": {"zh": "读取"}, "contexts": [{"context_id": "file", "type": "action"}], "relations": {"synonym": ["cls_file7t"]}, "confidence": 1.0},
-    {"key": "cls_file7t", "surface_forms": {"zh": "讀取"}, "contexts": [{"context_id": "file", "type": "action"}], "relations": {"synonym": ["cls_file7"]}, "confidence": 1.0},
-    {"key": "cls_file8", "surface_forms": {"zh": "写入"}, "contexts": [{"context_id": "file", "type": "action"}], "relations": {"synonym": ["cls_file8t"]}, "confidence": 1.0},
-    {"key": "cls_file8t", "surface_forms": {"zh": "寫入"}, "contexts": [{"context_id": "file", "type": "action"}], "relations": {"synonym": ["cls_file8"]}, "confidence": 1.0},
-    {"key": "cls_file9", "surface_forms": {"zh": "列出"}, "contexts": [{"context_id": "file", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_file10", "surface_forms": {"zh": "建立"}, "contexts": [{"context_id": "file", "type": "action"}], "relations": {"synonym": ["cls_file10a", "cls_file10b"]}, "confidence": 1.0},
-    {"key": "cls_file10a", "surface_forms": {"zh": "新增"}, "contexts": [{"context_id": "file", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_file10b", "surface_forms": {"zh": "创建"}, "contexts": [{"context_id": "file", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_file11", "surface_forms": {"zh": "修改"}, "contexts": [{"context_id": "file", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_file12", "surface_forms": {"zh": "编辑"}, "contexts": [{"context_id": "file", "type": "action"}], "relations": {"synonym": ["cls_file12t"]}, "confidence": 1.0},
-    {"key": "cls_file12t", "surface_forms": {"zh": "編輯"}, "contexts": [{"context_id": "file", "type": "action"}], "relations": {"synonym": ["cls_file12"]}, "confidence": 1.0},
-    {"key": "cls_file13", "surface_forms": {"zh": "文件"}, "contexts": [{"context_id": "file", "type": "object"}], "relations": {"synonym": ["cls_file13t"]}, "confidence": 1.0},
-    {"key": "cls_file13t", "surface_forms": {"zh": "檔案"}, "contexts": [{"context_id": "file", "type": "object"}], "relations": {"synonym": ["cls_file13"]}, "confidence": 1.0},
-    {"key": "cls_file14", "surface_forms": {"zh": "文件夹"}, "contexts": [{"context_id": "file", "type": "object"}], "relations": {"synonym": ["cls_file14t"]}, "confidence": 1.0},
-    {"key": "cls_file14t", "surface_forms": {"zh": "資料夾"}, "contexts": [{"context_id": "file", "type": "object"}], "relations": {"synonym": ["cls_file14"]}, "confidence": 1.0},
-    {"key": "cls_file15", "surface_forms": {"zh": "目录"}, "contexts": [{"context_id": "file", "type": "object"}], "relations": {"synonym": ["cls_file15t"]}, "confidence": 1.0},
-    {"key": "cls_file15t", "surface_forms": {"zh": "目錄"}, "contexts": [{"context_id": "file", "type": "object"}], "relations": {"synonym": ["cls_file15"]}, "confidence": 1.0},
-    {"key": "cls_file16", "surface_forms": {"zh": "路径"}, "contexts": [{"context_id": "file", "type": "object"}], "relations": {"synonym": ["cls_file16t"]}, "confidence": 1.0},
-    {"key": "cls_file16t", "surface_forms": {"zh": "路徑"}, "contexts": [{"context_id": "file", "type": "object"}], "relations": {"synonym": ["cls_file16"]}, "confidence": 1.0},
-
-    {"key": "cls_search1", "surface_forms": {"zh": "搜寻"}, "contexts": [{"context_id": "search", "type": "action"}], "relations": {"synonym": ["cls_search1t"]}, "confidence": 1.0},
-    {"key": "cls_search1t", "surface_forms": {"zh": "搜尋"}, "contexts": [{"context_id": "search", "type": "action"}], "relations": {"synonym": ["cls_search1"]}, "confidence": 1.0},
-    {"key": "cls_search2", "surface_forms": {"zh": "搜索"}, "contexts": [{"context_id": "search", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_search3", "surface_forms": {"zh": "查找"}, "contexts": [{"context_id": "search", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_search4", "surface_forms": {"zh": "找"}, "contexts": [{"context_id": "search", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_search5", "surface_forms": {"zh": "查询"}, "contexts": [{"context_id": "search", "type": "action"}], "relations": {"synonym": ["cls_search5t"]}, "confidence": 1.0},
-    {"key": "cls_search5t", "surface_forms": {"zh": "查詢"}, "contexts": [{"context_id": "search", "type": "action"}], "relations": {"synonym": ["cls_search5"]}, "confidence": 1.0},
-    {"key": "cls_search6", "surface_forms": {"zh": "搜"}, "contexts": [{"context_id": "search", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_search7", "surface_forms": {"zh": "查看"}, "contexts": [{"context_id": "search", "type": "action"}], "relations": {}, "confidence": 1.0},
-
-    {"key": "cls_code1", "surface_forms": {"zh": "程序"}, "contexts": [{"context_id": "code", "type": "object"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_code2", "surface_forms": {"zh": "代码"}, "contexts": [{"context_id": "code", "type": "object"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_code3", "surface_forms": {"zh": "函数"}, "contexts": [{"context_id": "code", "type": "object"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_code4", "surface_forms": {"zh": "变量"}, "contexts": [{"context_id": "code", "type": "object"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_code5", "surface_forms": {"zh": "循环"}, "contexts": [{"context_id": "code", "type": "object"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_code6", "surface_forms": {"zh": "数组"}, "contexts": [{"context_id": "code", "type": "object"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_code7", "surface_forms": {"zh": "对象"}, "contexts": [{"context_id": "code", "type": "object"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_code8", "surface_forms": {"zh": "调试"}, "contexts": [{"context_id": "code", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_code9", "surface_forms": {"zh": "重构"}, "contexts": [{"context_id": "code", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_code10", "surface_forms": {"zh": "优化"}, "contexts": [{"context_id": "code", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_code11", "surface_forms": {"zh": "实现"}, "contexts": [{"context_id": "code", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_code12", "surface_forms": {"zh": "编程"}, "contexts": [{"context_id": "code", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_code13", "surface_forms": {"zh": "写代码"}, "contexts": [{"context_id": "code", "type": "action"}], "relations": {}, "confidence": 1.0},
-
-    {"key": "cls_execute1", "surface_forms": {"zh": "执行"}, "contexts": [{"context_id": "execute", "type": "action"}], "relations": {"synonym": ["cls_execute1t"]}, "confidence": 1.0},
-    {"key": "cls_execute1t", "surface_forms": {"zh": "執行"}, "contexts": [{"context_id": "execute", "type": "action"}], "relations": {"synonym": ["cls_execute1"]}, "confidence": 1.0},
-    {"key": "cls_execute2", "surface_forms": {"zh": "运行"}, "contexts": [{"context_id": "execute", "type": "action"}], "relations": {"synonym": ["cls_execute2t"]}, "confidence": 1.0},
-    {"key": "cls_execute2t", "surface_forms": {"zh": "運行"}, "contexts": [{"context_id": "execute", "type": "action"}], "relations": {"synonym": ["cls_execute2"]}, "confidence": 1.0},
-    {"key": "cls_execute3", "surface_forms": {"zh": "开启"}, "contexts": [{"context_id": "execute", "type": "action"}], "relations": {"synonym": ["cls_execute3t"]}, "confidence": 1.0},
-    {"key": "cls_execute3t", "surface_forms": {"zh": "開啟"}, "contexts": [{"context_id": "execute", "type": "action"}], "relations": {"synonym": ["cls_execute3"]}, "confidence": 1.0},
-    {"key": "cls_execute4", "surface_forms": {"zh": "关闭"}, "contexts": [{"context_id": "execute", "type": "action"}], "relations": {"synonym": ["cls_execute4t"]}, "confidence": 1.0},
-    {"key": "cls_execute4t", "surface_forms": {"zh": "關閉"}, "contexts": [{"context_id": "execute", "type": "action"}], "relations": {"synonym": ["cls_execute4"]}, "confidence": 1.0},
-    {"key": "cls_execute5", "surface_forms": {"zh": "启动"}, "contexts": [{"context_id": "execute", "type": "action"}], "relations": {"synonym": ["cls_execute5t"]}, "confidence": 1.0},
-    {"key": "cls_execute5t", "surface_forms": {"zh": "啟動"}, "contexts": [{"context_id": "execute", "type": "action"}], "relations": {"synonym": ["cls_execute5"]}, "confidence": 1.0},
-    {"key": "cls_execute6", "surface_forms": {"zh": "停止"}, "contexts": [{"context_id": "execute", "type": "action"}], "relations": {"synonym": ["cls_execute6t"]}, "confidence": 1.0},
-    {"key": "cls_execute6t", "surface_forms": {"zh": "停止"}, "contexts": [{"context_id": "execute", "type": "action"}], "relations": {"synonym": ["cls_execute6"]}, "confidence": 1.0},
-    {"key": "cls_execute7", "surface_forms": {"zh": "暂停"}, "contexts": [{"context_id": "execute", "type": "action"}], "relations": {"synonym": ["cls_execute7t"]}, "confidence": 1.0},
-    {"key": "cls_execute7t", "surface_forms": {"zh": "暫停"}, "contexts": [{"context_id": "execute", "type": "action"}], "relations": {"synonym": ["cls_execute7"]}, "confidence": 1.0},
-    {"key": "cls_execute8", "surface_forms": {"zh": "下载"}, "contexts": [{"context_id": "execute", "type": "action"}], "relations": {"synonym": ["cls_execute8t"]}, "confidence": 1.0},
-    {"key": "cls_execute8t", "surface_forms": {"zh": "下載"}, "contexts": [{"context_id": "execute", "type": "action"}], "relations": {"synonym": ["cls_execute8"]}, "confidence": 1.0},
-    {"key": "cls_execute9", "surface_forms": {"zh": "上传"}, "contexts": [{"context_id": "execute", "type": "action"}], "relations": {"synonym": ["cls_execute9t"]}, "confidence": 1.0},
-    {"key": "cls_execute9t", "surface_forms": {"zh": "上傳"}, "contexts": [{"context_id": "execute", "type": "action"}], "relations": {"synonym": ["cls_execute9"]}, "confidence": 1.0},
-
-    {"key": "cls_task1", "surface_forms": {"zh": "任务"}, "contexts": [{"context_id": "task", "type": "object"}], "relations": {"synonym": ["cls_task1t"]}, "confidence": 1.0},
-    {"key": "cls_task1t", "surface_forms": {"zh": "任務"}, "contexts": [{"context_id": "task", "type": "object"}], "relations": {"synonym": ["cls_task1"]}, "confidence": 1.0},
-    {"key": "cls_task2", "surface_forms": {"zh": "工作"}, "contexts": [{"context_id": "task", "type": "object"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_task3", "surface_forms": {"zh": "待办"}, "contexts": [{"context_id": "task", "type": "object"}], "relations": {"synonym": ["cls_task3t"]}, "confidence": 1.0},
-    {"key": "cls_task3t", "surface_forms": {"zh": "待辦"}, "contexts": [{"context_id": "task", "type": "object"}], "relations": {"synonym": ["cls_task3"]}, "confidence": 1.0},
-    {"key": "cls_task4", "surface_forms": {"zh": "行程"}, "contexts": [{"context_id": "task", "type": "object"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_task5", "surface_forms": {"zh": "排程"}, "contexts": [{"context_id": "task", "type": "object"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_task6", "surface_forms": {"zh": "提醒"}, "contexts": [{"context_id": "task", "type": "action"}], "relations": {}, "confidence": 1.0},
-
-    {"key": "cls_vision1", "surface_forms": {"zh": "图片"}, "contexts": [{"context_id": "vision", "type": "object"}], "relations": {"synonym": ["cls_vision1t"]}, "confidence": 1.0},
-    {"key": "cls_vision1t", "surface_forms": {"zh": "圖片"}, "contexts": [{"context_id": "vision", "type": "object"}], "relations": {"synonym": ["cls_vision1"]}, "confidence": 1.0},
-    {"key": "cls_vision2", "surface_forms": {"zh": "照片"}, "contexts": [{"context_id": "vision", "type": "object"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_vision3", "surface_forms": {"zh": "影像"}, "contexts": [{"context_id": "vision", "type": "object"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_vision4", "surface_forms": {"zh": "截图"}, "contexts": [{"context_id": "vision", "type": "object"}], "relations": {"synonym": ["cls_vision4t"]}, "confidence": 1.0},
-    {"key": "cls_vision4t", "surface_forms": {"zh": "截圖"}, "contexts": [{"context_id": "vision", "type": "object"}], "relations": {"synonym": ["cls_vision4"]}, "confidence": 1.0},
-    {"key": "cls_vision5", "surface_forms": {"zh": "识别"}, "contexts": [{"context_id": "vision", "type": "action"}], "relations": {"synonym": ["cls_vision5t"]}, "confidence": 1.0},
-    {"key": "cls_vision5t", "surface_forms": {"zh": "辨識"}, "contexts": [{"context_id": "vision", "type": "action"}], "relations": {"synonym": ["cls_vision5"]}, "confidence": 1.0},
-    {"key": "cls_vision6", "surface_forms": {"zh": "看"}, "contexts": [{"context_id": "vision", "type": "action"}], "relations": {}, "confidence": 1.0},
-
-    {"key": "cls_audio1", "surface_forms": {"zh": "语音"}, "contexts": [{"context_id": "audio", "type": "object"}], "relations": {"synonym": ["cls_audio1t"]}, "confidence": 1.0},
-    {"key": "cls_audio1t", "surface_forms": {"zh": "語音"}, "contexts": [{"context_id": "audio", "type": "object"}], "relations": {"synonym": ["cls_audio1"]}, "confidence": 1.0},
-    {"key": "cls_audio2", "surface_forms": {"zh": "音频"}, "contexts": [{"context_id": "audio", "type": "object"}], "relations": {"synonym": ["cls_audio2t"]}, "confidence": 1.0},
-    {"key": "cls_audio2t", "surface_forms": {"zh": "音訊"}, "contexts": [{"context_id": "audio", "type": "object"}], "relations": {"synonym": ["cls_audio2"]}, "confidence": 1.0},
-    {"key": "cls_audio3", "surface_forms": {"zh": "录音"}, "contexts": [{"context_id": "audio", "type": "object"}], "relations": {"synonym": ["cls_audio3t"]}, "confidence": 1.0},
-    {"key": "cls_audio3t", "surface_forms": {"zh": "錄音"}, "contexts": [{"context_id": "audio", "type": "object"}], "relations": {"synonym": ["cls_audio3"]}, "confidence": 1.0},
-    {"key": "cls_audio4", "surface_forms": {"zh": "音乐"}, "contexts": [{"context_id": "audio", "type": "object"}], "relations": {"synonym": ["cls_audio4t"]}, "confidence": 1.0},
-    {"key": "cls_audio4t", "surface_forms": {"zh": "音樂"}, "contexts": [{"context_id": "audio", "type": "object"}], "relations": {"synonym": ["cls_audio4"]}, "confidence": 1.0},
-    {"key": "cls_audio5", "surface_forms": {"zh": "播放"}, "contexts": [{"context_id": "audio", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_audio6", "surface_forms": {"zh": "听"}, "contexts": [{"context_id": "audio", "type": "action"}], "relations": {}, "confidence": 1.0},
-
-    {"key": "cls_math1", "surface_forms": {"zh": "计算"}, "contexts": [{"context_id": "math", "type": "action"}], "relations": {"synonym": ["cls_math1t"]}, "confidence": 1.0},
-    {"key": "cls_math1t", "surface_forms": {"zh": "計算"}, "contexts": [{"context_id": "math", "type": "action"}], "relations": {"synonym": ["cls_math1"]}, "confidence": 1.0},
-    {"key": "cls_math2", "surface_forms": {"zh": "加法"}, "contexts": [{"context_id": "math", "type": "operator"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_math3", "surface_forms": {"zh": "减法"}, "contexts": [{"context_id": "math", "type": "operator"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_math4", "surface_forms": {"zh": "乘法"}, "contexts": [{"context_id": "math", "type": "operator"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_math5", "surface_forms": {"zh": "除法"}, "contexts": [{"context_id": "math", "type": "operator"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_math6", "surface_forms": {"zh": "等于"}, "contexts": [{"context_id": "math", "type": "operator"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_math7", "surface_forms": {"zh": "等于多少"}, "contexts": [{"context_id": "math", "type": "query"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_math8", "surface_forms": {"zh": "加上"}, "contexts": [{"context_id": "math", "type": "operator"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_math9", "surface_forms": {"zh": "减去"}, "contexts": [{"context_id": "math", "type": "operator"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_math10", "surface_forms": {"zh": "乘以"}, "contexts": [{"context_id": "math", "type": "operator"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_math11", "surface_forms": {"zh": "乘上"}, "contexts": [{"context_id": "math", "type": "operator"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_math12", "surface_forms": {"zh": "除以"}, "contexts": [{"context_id": "math", "type": "operator"}], "relations": {}, "confidence": 1.0},
-
-    {"key": "cls_system1", "surface_forms": {"zh": "发送"}, "contexts": [{"context_id": "system", "type": "action"}], "relations": {"synonym": ["cls_system1t"]}, "confidence": 1.0},
-    {"key": "cls_system1t", "surface_forms": {"zh": "發送"}, "contexts": [{"context_id": "system", "type": "action"}], "relations": {"synonym": ["cls_system1"]}, "confidence": 1.0},
-    {"key": "cls_system2", "surface_forms": {"zh": "传送"}, "contexts": [{"context_id": "system", "type": "action"}], "relations": {"synonym": ["cls_system2t"]}, "confidence": 1.0},
-    {"key": "cls_system2t", "surface_forms": {"zh": "傳送"}, "contexts": [{"context_id": "system", "type": "action"}], "relations": {"synonym": ["cls_system2"]}, "confidence": 1.0},
-    {"key": "cls_system3", "surface_forms": {"zh": "提交"}, "contexts": [{"context_id": "system", "type": "action"}], "relations": {"synonym": ["cls_system3t"]}, "confidence": 1.0},
-    {"key": "cls_system3t", "surface_forms": {"zh": "提交"}, "contexts": [{"context_id": "system", "type": "action"}], "relations": {"synonym": ["cls_system3"]}, "confidence": 1.0},
-
-    {"key": "cls_negation1", "surface_forms": {"zh": "不要"}, "contexts": [{"context_id": "negation", "type": "modifier"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_negation2", "surface_forms": {"zh": "取消"}, "contexts": [{"context_id": "negation", "type": "modifier"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_negation3", "surface_forms": {"zh": "停止"}, "contexts": [{"context_id": "negation", "type": "modifier"}], "relations": {}, "confidence": 1.0},
-
-    {"key": "cls_greeting1", "surface_forms": {"zh": "你好"}, "contexts": [{"context_id": "greeting", "type": "greeting"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_greeting2", "surface_forms": {"zh": "早上好"}, "contexts": [{"context_id": "greeting", "type": "greeting"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_greeting3", "surface_forms": {"zh": "晚上好"}, "contexts": [{"context_id": "greeting", "type": "greeting"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_greeting4", "surface_forms": {"zh": "再见"}, "contexts": [{"context_id": "greeting", "type": "farewell"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_greeting5", "surface_forms": {"zh": "欢迎"}, "contexts": [{"context_id": "greeting", "type": "greeting"}], "relations": {}, "confidence": 1.0},
-
-    {"key": "cls_knowledge1", "surface_forms": {"zh": "什么是"}, "contexts": [{"context_id": "knowledge", "type": "query"}], "relations": {"synonym": ["cls_knowledge1t"]}, "confidence": 1.0},
-    {"key": "cls_knowledge1t", "surface_forms": {"zh": "是什麼"}, "contexts": [{"context_id": "knowledge", "type": "query"}], "relations": {"synonym": ["cls_knowledge1"]}, "confidence": 1.0},
-    {"key": "cls_knowledge2", "surface_forms": {"zh": "是什么"}, "contexts": [{"context_id": "knowledge", "type": "query"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_knowledge3", "surface_forms": {"zh": "怎么"}, "contexts": [{"context_id": "knowledge", "type": "query"}], "relations": {"synonym": ["cls_knowledge3t"]}, "confidence": 1.0},
-    {"key": "cls_knowledge3t", "surface_forms": {"zh": "怎麼"}, "contexts": [{"context_id": "knowledge", "type": "query"}], "relations": {"synonym": ["cls_knowledge3"]}, "confidence": 1.0},
-    {"key": "cls_knowledge4", "surface_forms": {"zh": "为什么"}, "contexts": [{"context_id": "knowledge", "type": "query"}], "relations": {"synonym": ["cls_knowledge4t", "cls_knowledge4a"]}, "confidence": 1.0},
-    {"key": "cls_knowledge4t", "surface_forms": {"zh": "為什麼"}, "contexts": [{"context_id": "knowledge", "type": "query"}], "relations": {"synonym": ["cls_knowledge4"]}, "confidence": 1.0},
-    {"key": "cls_knowledge4a", "surface_forms": {"zh": "為什么"}, "contexts": [{"context_id": "knowledge", "type": "query"}], "relations": {"synonym": ["cls_knowledge4"]}, "confidence": 1.0},
-    {"key": "cls_knowledge5", "surface_forms": {"zh": "多少"}, "contexts": [{"context_id": "knowledge", "type": "query"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_knowledge6", "surface_forms": {"zh": "几个"}, "contexts": [{"context_id": "knowledge", "type": "query"}], "relations": {"synonym": ["cls_knowledge6t"]}, "confidence": 1.0},
-    {"key": "cls_knowledge6t", "surface_forms": {"zh": "幾個"}, "contexts": [{"context_id": "knowledge", "type": "query"}], "relations": {"synonym": ["cls_knowledge6"]}, "confidence": 1.0},
-    {"key": "cls_knowledge7", "surface_forms": {"zh": "谁"}, "contexts": [{"context_id": "knowledge", "type": "query"}], "relations": {"synonym": ["cls_knowledge7t"]}, "confidence": 1.0},
-    {"key": "cls_knowledge7t", "surface_forms": {"zh": "誰"}, "contexts": [{"context_id": "knowledge", "type": "query"}], "relations": {"synonym": ["cls_knowledge7"]}, "confidence": 1.0},
-    {"key": "cls_knowledge8", "surface_forms": {"zh": "今天"}, "contexts": [{"context_id": "knowledge", "type": "query"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_knowledge9", "surface_forms": {"zh": "明天"}, "contexts": [{"context_id": "knowledge", "type": "query"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_knowledge10", "surface_forms": {"zh": "昨天"}, "contexts": [{"context_id": "knowledge", "type": "query"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_knowledge11", "surface_forms": {"zh": "能做"}, "contexts": [{"context_id": "knowledge", "type": "capability"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_knowledge12", "surface_forms": {"zh": "可以做"}, "contexts": [{"context_id": "knowledge", "type": "capability"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_knowledge13", "surface_forms": {"zh": "你的能力"}, "contexts": [{"context_id": "knowledge", "type": "capability"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_knowledge14", "surface_forms": {"zh": "你会什么"}, "contexts": [{"context_id": "knowledge", "type": "capability"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_knowledge15", "surface_forms": {"zh": "能做啥"}, "contexts": [{"context_id": "knowledge", "type": "capability"}], "relations": {}, "confidence": 1.0},
-
-    {"key": "cls_creative1", "surface_forms": {"zh": "写"}, "contexts": [{"context_id": "creative", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_creative2", "surface_forms": {"zh": "作"}, "contexts": [{"context_id": "creative", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_creative3", "surface_forms": {"zh": "创作"}, "contexts": [{"context_id": "creative", "type": "action"}], "relations": {"synonym": ["cls_creative3t"]}, "confidence": 1.0},
-    {"key": "cls_creative3t", "surface_forms": {"zh": "創作"}, "contexts": [{"context_id": "creative", "type": "action"}], "relations": {"synonym": ["cls_creative3"]}, "confidence": 1.0},
-    {"key": "cls_creative4", "surface_forms": {"zh": "编"}, "contexts": [{"context_id": "creative", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_creative5", "surface_forms": {"zh": "画"}, "contexts": [{"context_id": "creative", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_creative6", "surface_forms": {"zh": "虚构"}, "contexts": [{"context_id": "creative", "type": "action"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_creative7", "surface_forms": {"zh": "诗歌"}, "contexts": [{"context_id": "creative", "type": "object"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_creative8", "surface_forms": {"zh": "故事"}, "contexts": [{"context_id": "creative", "type": "object"}], "relations": {}, "confidence": 1.0},
-
-    {"key": "cls_opinion1", "surface_forms": {"zh": "觉得"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_opinion2", "surface_forms": {"zh": "认为"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_opinion3", "surface_forms": {"zh": "看法"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {}, "confidence": 1.0},
-    {"key": "cls_opinion4", "surface_forms": {"zh": "意见"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {"synonym": ["cls_opinion4t"]}, "confidence": 1.0},
-    {"key": "cls_opinion4t", "surface_forms": {"zh": "意見"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {"synonym": ["cls_opinion4"]}, "confidence": 1.0},
-    {"key": "cls_opinion5", "surface_forms": {"zh": "评价"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {"synonym": ["cls_opinion5t"]}, "confidence": 1.0},
-    {"key": "cls_opinion5t", "surface_forms": {"zh": "評價"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {"synonym": ["cls_opinion5"]}, "confidence": 1.0},
-    {"key": "cls_opinion6", "surface_forms": {"zh": "建议"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {"synonym": ["cls_opinion6t"]}, "confidence": 1.0},
-    {"key": "cls_opinion6t", "surface_forms": {"zh": "建議"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {"synonym": ["cls_opinion6"]}, "confidence": 1.0},
-    {"key": "cls_opinion7", "surface_forms": {"zh": "推荐"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {"synonym": ["cls_opinion7t"]}, "confidence": 1.0},
-    {"key": "cls_opinion7t", "surface_forms": {"zh": "推薦"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {"synonym": ["cls_opinion7"]}, "confidence": 1.0},
-    {"key": "cls_opinion8", "surface_forms": {"zh": "喜欢"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {"synonym": ["cls_opinion8t"]}, "confidence": 1.0},
-    {"key": "cls_opinion8t", "surface_forms": {"zh": "喜歡"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {"synonym": ["cls_opinion8"]}, "confidence": 1.0},
-    {"key": "cls_opinion9", "surface_forms": {"zh": "不喜欢"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {"synonym": ["cls_opinion9t"]}, "confidence": 1.0},
-    {"key": "cls_opinion9t", "surface_forms": {"zh": "不喜歡"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {"synonym": ["cls_opinion9"]}, "confidence": 1.0},
-    {"key": "cls_opinion10", "surface_forms": {"zh": "优点"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {"synonym": ["cls_opinion10t"]}, "confidence": 1.0},
-    {"key": "cls_opinion10t", "surface_forms": {"zh": "優點"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {"synonym": ["cls_opinion10"]}, "confidence": 1.0},
-    {"key": "cls_opinion11", "surface_forms": {"zh": "缺点"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {"synonym": ["cls_opinion11t"]}, "confidence": 1.0},
-    {"key": "cls_opinion11t", "surface_forms": {"zh": "缺點"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {"synonym": ["cls_opinion11"]}, "confidence": 1.0},
-    {"key": "cls_opinion12", "surface_forms": {"zh": "比较"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {"synonym": ["cls_opinion12t"]}, "confidence": 1.0},
-    {"key": "cls_opinion12t", "surface_forms": {"zh": "比較"}, "contexts": [{"context_id": "opinion", "type": "query"}], "relations": {"synonym": ["cls_opinion12"]}, "confidence": 1.0}
+    {
+      "key": "cls_file1",
+      "surface_forms": {
+        "zh": "整理"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file2",
+      "surface_forms": {
+        "zh": "清理"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file3",
+      "surface_forms": {
+        "zh": "删除"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file3t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file3t",
+      "surface_forms": {
+        "zh": "刪除"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file3"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file4",
+      "surface_forms": {
+        "zh": "移动"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file4t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file4t",
+      "surface_forms": {
+        "zh": "移動"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file4"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file5",
+      "surface_forms": {
+        "zh": "复制"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file5t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file5t",
+      "surface_forms": {
+        "zh": "複製"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file5"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file6",
+      "surface_forms": {
+        "zh": "重命名"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file7",
+      "surface_forms": {
+        "zh": "读取"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file7t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file7t",
+      "surface_forms": {
+        "zh": "讀取"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file7"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file8",
+      "surface_forms": {
+        "zh": "写入"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file8t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file8t",
+      "surface_forms": {
+        "zh": "寫入"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file8"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file9",
+      "surface_forms": {
+        "zh": "列出"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file10",
+      "surface_forms": {
+        "zh": "建立"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file10a",
+          "cls_file10b"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file10a",
+      "surface_forms": {
+        "zh": "新增"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file10b",
+      "surface_forms": {
+        "zh": "创建"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file11",
+      "surface_forms": {
+        "zh": "修改"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file12",
+      "surface_forms": {
+        "zh": "编辑"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file12t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file12t",
+      "surface_forms": {
+        "zh": "編輯"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file12"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file13",
+      "surface_forms": {
+        "zh": "文件"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file13t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file13t",
+      "surface_forms": {
+        "zh": "檔案"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file13"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file14",
+      "surface_forms": {
+        "zh": "文件夹"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file14t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file14t",
+      "surface_forms": {
+        "zh": "資料夾"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file14"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file15",
+      "surface_forms": {
+        "zh": "目录"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file15t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file15t",
+      "surface_forms": {
+        "zh": "目錄"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file15"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file16",
+      "surface_forms": {
+        "zh": "路径"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file16t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_file16t",
+      "surface_forms": {
+        "zh": "路徑"
+      },
+      "contexts": [
+        {
+          "context_id": "file",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_file16"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_search1",
+      "surface_forms": {
+        "zh": "搜寻"
+      },
+      "contexts": [
+        {
+          "context_id": "search",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_search1t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_search1t",
+      "surface_forms": {
+        "zh": "搜尋"
+      },
+      "contexts": [
+        {
+          "context_id": "search",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_search1"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_search2",
+      "surface_forms": {
+        "zh": "搜索"
+      },
+      "contexts": [
+        {
+          "context_id": "search",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_search3",
+      "surface_forms": {
+        "zh": "查找"
+      },
+      "contexts": [
+        {
+          "context_id": "search",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_search4",
+      "surface_forms": {
+        "zh": "找"
+      },
+      "contexts": [
+        {
+          "context_id": "search",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_search5",
+      "surface_forms": {
+        "zh": "查询"
+      },
+      "contexts": [
+        {
+          "context_id": "search",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_search5t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_search5t",
+      "surface_forms": {
+        "zh": "查詢"
+      },
+      "contexts": [
+        {
+          "context_id": "search",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_search5"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_search6",
+      "surface_forms": {
+        "zh": "搜"
+      },
+      "contexts": [
+        {
+          "context_id": "search",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_search7",
+      "surface_forms": {
+        "zh": "查看"
+      },
+      "contexts": [
+        {
+          "context_id": "search",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_code1",
+      "surface_forms": {
+        "zh": "程序"
+      },
+      "contexts": [
+        {
+          "context_id": "code",
+          "type": "object"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_code2",
+      "surface_forms": {
+        "zh": "代码"
+      },
+      "contexts": [
+        {
+          "context_id": "code",
+          "type": "object"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_code3",
+      "surface_forms": {
+        "zh": "函数"
+      },
+      "contexts": [
+        {
+          "context_id": "code",
+          "type": "object"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_code4",
+      "surface_forms": {
+        "zh": "变量"
+      },
+      "contexts": [
+        {
+          "context_id": "code",
+          "type": "object"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_code5",
+      "surface_forms": {
+        "zh": "循环"
+      },
+      "contexts": [
+        {
+          "context_id": "code",
+          "type": "object"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_code6",
+      "surface_forms": {
+        "zh": "数组"
+      },
+      "contexts": [
+        {
+          "context_id": "code",
+          "type": "object"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_code7",
+      "surface_forms": {
+        "zh": "对象"
+      },
+      "contexts": [
+        {
+          "context_id": "code",
+          "type": "object"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_code8",
+      "surface_forms": {
+        "zh": "调试"
+      },
+      "contexts": [
+        {
+          "context_id": "code",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_code9",
+      "surface_forms": {
+        "zh": "重构"
+      },
+      "contexts": [
+        {
+          "context_id": "code",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_code10",
+      "surface_forms": {
+        "zh": "优化"
+      },
+      "contexts": [
+        {
+          "context_id": "code",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_code11",
+      "surface_forms": {
+        "zh": "实现"
+      },
+      "contexts": [
+        {
+          "context_id": "code",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_code12",
+      "surface_forms": {
+        "zh": "编程"
+      },
+      "contexts": [
+        {
+          "context_id": "code",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_code13",
+      "surface_forms": {
+        "zh": "写代码"
+      },
+      "contexts": [
+        {
+          "context_id": "code",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_execute1",
+      "surface_forms": {
+        "zh": "执行"
+      },
+      "contexts": [
+        {
+          "context_id": "execute",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_execute1t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_execute1t",
+      "surface_forms": {
+        "zh": "執行"
+      },
+      "contexts": [
+        {
+          "context_id": "execute",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_execute1"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_execute2",
+      "surface_forms": {
+        "zh": "运行"
+      },
+      "contexts": [
+        {
+          "context_id": "execute",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_execute2t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_execute2t",
+      "surface_forms": {
+        "zh": "運行"
+      },
+      "contexts": [
+        {
+          "context_id": "execute",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_execute2"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_execute3",
+      "surface_forms": {
+        "zh": "开启"
+      },
+      "contexts": [
+        {
+          "context_id": "execute",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_execute3t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_execute3t",
+      "surface_forms": {
+        "zh": "開啟"
+      },
+      "contexts": [
+        {
+          "context_id": "execute",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_execute3"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_execute4",
+      "surface_forms": {
+        "zh": "关闭"
+      },
+      "contexts": [
+        {
+          "context_id": "execute",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_execute4t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_execute4t",
+      "surface_forms": {
+        "zh": "關閉"
+      },
+      "contexts": [
+        {
+          "context_id": "execute",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_execute4"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_execute5",
+      "surface_forms": {
+        "zh": "启动"
+      },
+      "contexts": [
+        {
+          "context_id": "execute",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_execute5t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_execute5t",
+      "surface_forms": {
+        "zh": "啟動"
+      },
+      "contexts": [
+        {
+          "context_id": "execute",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_execute5"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_execute6",
+      "surface_forms": {
+        "zh": "停止"
+      },
+      "contexts": [
+        {
+          "context_id": "execute",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_execute6t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_execute6t",
+      "surface_forms": {
+        "zh": "停止"
+      },
+      "contexts": [
+        {
+          "context_id": "execute",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_execute6"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_execute7",
+      "surface_forms": {
+        "zh": "暂停"
+      },
+      "contexts": [
+        {
+          "context_id": "execute",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_execute7t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_execute7t",
+      "surface_forms": {
+        "zh": "暫停"
+      },
+      "contexts": [
+        {
+          "context_id": "execute",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_execute7"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_execute8",
+      "surface_forms": {
+        "zh": "下载"
+      },
+      "contexts": [
+        {
+          "context_id": "execute",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_execute8t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_execute8t",
+      "surface_forms": {
+        "zh": "下載"
+      },
+      "contexts": [
+        {
+          "context_id": "execute",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_execute8"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_execute9",
+      "surface_forms": {
+        "zh": "上传"
+      },
+      "contexts": [
+        {
+          "context_id": "execute",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_execute9t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_execute9t",
+      "surface_forms": {
+        "zh": "上傳"
+      },
+      "contexts": [
+        {
+          "context_id": "execute",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_execute9"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_task1",
+      "surface_forms": {
+        "zh": "任务"
+      },
+      "contexts": [
+        {
+          "context_id": "task",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_task1t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_task1t",
+      "surface_forms": {
+        "zh": "任務"
+      },
+      "contexts": [
+        {
+          "context_id": "task",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_task1"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_task2",
+      "surface_forms": {
+        "zh": "工作"
+      },
+      "contexts": [
+        {
+          "context_id": "task",
+          "type": "object"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_task3",
+      "surface_forms": {
+        "zh": "待办"
+      },
+      "contexts": [
+        {
+          "context_id": "task",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_task3t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_task3t",
+      "surface_forms": {
+        "zh": "待辦"
+      },
+      "contexts": [
+        {
+          "context_id": "task",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_task3"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_task4",
+      "surface_forms": {
+        "zh": "行程"
+      },
+      "contexts": [
+        {
+          "context_id": "task",
+          "type": "object"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_task5",
+      "surface_forms": {
+        "zh": "排程"
+      },
+      "contexts": [
+        {
+          "context_id": "task",
+          "type": "object"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_task6",
+      "surface_forms": {
+        "zh": "提醒"
+      },
+      "contexts": [
+        {
+          "context_id": "task",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_vision1",
+      "surface_forms": {
+        "zh": "图片"
+      },
+      "contexts": [
+        {
+          "context_id": "vision",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_vision1t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_vision1t",
+      "surface_forms": {
+        "zh": "圖片"
+      },
+      "contexts": [
+        {
+          "context_id": "vision",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_vision1"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_vision2",
+      "surface_forms": {
+        "zh": "照片"
+      },
+      "contexts": [
+        {
+          "context_id": "vision",
+          "type": "object"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_vision3",
+      "surface_forms": {
+        "zh": "影像"
+      },
+      "contexts": [
+        {
+          "context_id": "vision",
+          "type": "object"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_vision4",
+      "surface_forms": {
+        "zh": "截图"
+      },
+      "contexts": [
+        {
+          "context_id": "vision",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_vision4t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_vision4t",
+      "surface_forms": {
+        "zh": "截圖"
+      },
+      "contexts": [
+        {
+          "context_id": "vision",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_vision4"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_vision5",
+      "surface_forms": {
+        "zh": "识别"
+      },
+      "contexts": [
+        {
+          "context_id": "vision",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_vision5t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_vision5t",
+      "surface_forms": {
+        "zh": "辨識"
+      },
+      "contexts": [
+        {
+          "context_id": "vision",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_vision5"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_vision6",
+      "surface_forms": {
+        "zh": "看"
+      },
+      "contexts": [
+        {
+          "context_id": "vision",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_audio1",
+      "surface_forms": {
+        "zh": "语音"
+      },
+      "contexts": [
+        {
+          "context_id": "audio",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_audio1t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_audio1t",
+      "surface_forms": {
+        "zh": "語音"
+      },
+      "contexts": [
+        {
+          "context_id": "audio",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_audio1"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_audio2",
+      "surface_forms": {
+        "zh": "音频"
+      },
+      "contexts": [
+        {
+          "context_id": "audio",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_audio2t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_audio2t",
+      "surface_forms": {
+        "zh": "音訊"
+      },
+      "contexts": [
+        {
+          "context_id": "audio",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_audio2"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_audio3",
+      "surface_forms": {
+        "zh": "录音"
+      },
+      "contexts": [
+        {
+          "context_id": "audio",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_audio3t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_audio3t",
+      "surface_forms": {
+        "zh": "錄音"
+      },
+      "contexts": [
+        {
+          "context_id": "audio",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_audio3"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_audio4",
+      "surface_forms": {
+        "zh": "音乐"
+      },
+      "contexts": [
+        {
+          "context_id": "audio",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_audio4t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_audio4t",
+      "surface_forms": {
+        "zh": "音樂"
+      },
+      "contexts": [
+        {
+          "context_id": "audio",
+          "type": "object"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_audio4"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_audio5",
+      "surface_forms": {
+        "zh": "播放"
+      },
+      "contexts": [
+        {
+          "context_id": "audio",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_audio6",
+      "surface_forms": {
+        "zh": "听"
+      },
+      "contexts": [
+        {
+          "context_id": "audio",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_math1",
+      "surface_forms": {
+        "zh": "计算"
+      },
+      "contexts": [
+        {
+          "context_id": "math",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_math1t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_math1t",
+      "surface_forms": {
+        "zh": "計算"
+      },
+      "contexts": [
+        {
+          "context_id": "math",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_math1"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_math2",
+      "surface_forms": {
+        "zh": "加法"
+      },
+      "contexts": [
+        {
+          "context_id": "math",
+          "type": "operator"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_math3",
+      "surface_forms": {
+        "zh": "减法"
+      },
+      "contexts": [
+        {
+          "context_id": "math",
+          "type": "operator"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_math4",
+      "surface_forms": {
+        "zh": "乘法"
+      },
+      "contexts": [
+        {
+          "context_id": "math",
+          "type": "operator"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_math5",
+      "surface_forms": {
+        "zh": "除法"
+      },
+      "contexts": [
+        {
+          "context_id": "math",
+          "type": "operator"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_math6",
+      "surface_forms": {
+        "zh": "等于"
+      },
+      "contexts": [
+        {
+          "context_id": "math",
+          "type": "operator"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_math7",
+      "surface_forms": {
+        "zh": "等于多少"
+      },
+      "contexts": [
+        {
+          "context_id": "math",
+          "type": "query"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_math8",
+      "surface_forms": {
+        "zh": "加上"
+      },
+      "contexts": [
+        {
+          "context_id": "math",
+          "type": "operator"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_math9",
+      "surface_forms": {
+        "zh": "减去"
+      },
+      "contexts": [
+        {
+          "context_id": "math",
+          "type": "operator"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_math10",
+      "surface_forms": {
+        "zh": "乘以"
+      },
+      "contexts": [
+        {
+          "context_id": "math",
+          "type": "operator"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_math11",
+      "surface_forms": {
+        "zh": "乘上"
+      },
+      "contexts": [
+        {
+          "context_id": "math",
+          "type": "operator"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_math12",
+      "surface_forms": {
+        "zh": "除以"
+      },
+      "contexts": [
+        {
+          "context_id": "math",
+          "type": "operator"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_system1",
+      "surface_forms": {
+        "zh": "发送"
+      },
+      "contexts": [
+        {
+          "context_id": "system",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_system1t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_system1t",
+      "surface_forms": {
+        "zh": "發送"
+      },
+      "contexts": [
+        {
+          "context_id": "system",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_system1"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_system2",
+      "surface_forms": {
+        "zh": "传送"
+      },
+      "contexts": [
+        {
+          "context_id": "system",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_system2t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_system2t",
+      "surface_forms": {
+        "zh": "傳送"
+      },
+      "contexts": [
+        {
+          "context_id": "system",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_system2"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_system3",
+      "surface_forms": {
+        "zh": "提交"
+      },
+      "contexts": [
+        {
+          "context_id": "system",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_system3t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_system3t",
+      "surface_forms": {
+        "zh": "提交"
+      },
+      "contexts": [
+        {
+          "context_id": "system",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_system3"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_negation1",
+      "surface_forms": {
+        "zh": "不要"
+      },
+      "contexts": [
+        {
+          "context_id": "negation",
+          "type": "modifier"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_negation2",
+      "surface_forms": {
+        "zh": "取消"
+      },
+      "contexts": [
+        {
+          "context_id": "negation",
+          "type": "modifier"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_negation3",
+      "surface_forms": {
+        "zh": "停止"
+      },
+      "contexts": [
+        {
+          "context_id": "negation",
+          "type": "modifier"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_greeting1",
+      "surface_forms": {
+        "zh": "你好"
+      },
+      "contexts": [
+        {
+          "context_id": "greeting",
+          "type": "greeting"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_greeting2",
+      "surface_forms": {
+        "zh": "早上好"
+      },
+      "contexts": [
+        {
+          "context_id": "greeting",
+          "type": "greeting"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_greeting3",
+      "surface_forms": {
+        "zh": "晚上好"
+      },
+      "contexts": [
+        {
+          "context_id": "greeting",
+          "type": "greeting"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_greeting4",
+      "surface_forms": {
+        "zh": "再见"
+      },
+      "contexts": [
+        {
+          "context_id": "greeting",
+          "type": "farewell"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_greeting5",
+      "surface_forms": {
+        "zh": "欢迎"
+      },
+      "contexts": [
+        {
+          "context_id": "greeting",
+          "type": "greeting"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge1",
+      "surface_forms": {
+        "zh": "什么是"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_knowledge1t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge1t",
+      "surface_forms": {
+        "zh": "是什麼"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_knowledge1"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge2",
+      "surface_forms": {
+        "zh": "是什么"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "query"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge3",
+      "surface_forms": {
+        "zh": "怎么"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_knowledge3t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge3t",
+      "surface_forms": {
+        "zh": "怎麼"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_knowledge3"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge4",
+      "surface_forms": {
+        "zh": "为什么"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_knowledge4t",
+          "cls_knowledge4a"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge4t",
+      "surface_forms": {
+        "zh": "為什麼"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_knowledge4"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge4a",
+      "surface_forms": {
+        "zh": "為什么"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_knowledge4"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge5",
+      "surface_forms": {
+        "zh": "多少"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "query"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge6",
+      "surface_forms": {
+        "zh": "几个"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_knowledge6t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge6t",
+      "surface_forms": {
+        "zh": "幾個"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_knowledge6"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge7",
+      "surface_forms": {
+        "zh": "谁"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_knowledge7t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge7t",
+      "surface_forms": {
+        "zh": "誰"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_knowledge7"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge8",
+      "surface_forms": {
+        "zh": "今天"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "query"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge9",
+      "surface_forms": {
+        "zh": "明天"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "query"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge10",
+      "surface_forms": {
+        "zh": "昨天"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "query"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge11",
+      "surface_forms": {
+        "zh": "能做"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "capability"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge12",
+      "surface_forms": {
+        "zh": "可以做"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "capability"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge13",
+      "surface_forms": {
+        "zh": "你的能力"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "capability"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge14",
+      "surface_forms": {
+        "zh": "你会什么"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "capability"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_knowledge15",
+      "surface_forms": {
+        "zh": "能做啥"
+      },
+      "contexts": [
+        {
+          "context_id": "knowledge",
+          "type": "capability"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_creative1",
+      "surface_forms": {
+        "zh": "写"
+      },
+      "contexts": [
+        {
+          "context_id": "creative",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_creative2",
+      "surface_forms": {
+        "zh": "作"
+      },
+      "contexts": [
+        {
+          "context_id": "creative",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_creative3",
+      "surface_forms": {
+        "zh": "创作"
+      },
+      "contexts": [
+        {
+          "context_id": "creative",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_creative3t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_creative3t",
+      "surface_forms": {
+        "zh": "創作"
+      },
+      "contexts": [
+        {
+          "context_id": "creative",
+          "type": "action"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_creative3"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_creative4",
+      "surface_forms": {
+        "zh": "编"
+      },
+      "contexts": [
+        {
+          "context_id": "creative",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_creative5",
+      "surface_forms": {
+        "zh": "画"
+      },
+      "contexts": [
+        {
+          "context_id": "creative",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_creative6",
+      "surface_forms": {
+        "zh": "虚构"
+      },
+      "contexts": [
+        {
+          "context_id": "creative",
+          "type": "action"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_creative7",
+      "surface_forms": {
+        "zh": "诗歌"
+      },
+      "contexts": [
+        {
+          "context_id": "creative",
+          "type": "object"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_creative8",
+      "surface_forms": {
+        "zh": "故事"
+      },
+      "contexts": [
+        {
+          "context_id": "creative",
+          "type": "object"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion1",
+      "surface_forms": {
+        "zh": "觉得"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion2",
+      "surface_forms": {
+        "zh": "认为"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion3",
+      "surface_forms": {
+        "zh": "看法"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {},
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion4",
+      "surface_forms": {
+        "zh": "意见"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_opinion4t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion4t",
+      "surface_forms": {
+        "zh": "意見"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_opinion4"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion5",
+      "surface_forms": {
+        "zh": "评价"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_opinion5t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion5t",
+      "surface_forms": {
+        "zh": "評價"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_opinion5"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion6",
+      "surface_forms": {
+        "zh": "建议"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_opinion6t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion6t",
+      "surface_forms": {
+        "zh": "建議"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_opinion6"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion7",
+      "surface_forms": {
+        "zh": "推荐"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_opinion7t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion7t",
+      "surface_forms": {
+        "zh": "推薦"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_opinion7"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion8",
+      "surface_forms": {
+        "zh": "喜欢"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_opinion8t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion8t",
+      "surface_forms": {
+        "zh": "喜歡"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_opinion8"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion9",
+      "surface_forms": {
+        "zh": "不喜欢"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_opinion9t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion9t",
+      "surface_forms": {
+        "zh": "不喜歡"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_opinion9"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion10",
+      "surface_forms": {
+        "zh": "优点"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_opinion10t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion10t",
+      "surface_forms": {
+        "zh": "優點"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_opinion10"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion11",
+      "surface_forms": {
+        "zh": "缺点"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_opinion11t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion11t",
+      "surface_forms": {
+        "zh": "缺點"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_opinion11"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion12",
+      "surface_forms": {
+        "zh": "比较"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_opinion12t"
+        ]
+      },
+      "confidence": 1.0
+    },
+    {
+      "key": "cls_opinion12t",
+      "surface_forms": {
+        "zh": "比較"
+      },
+      "contexts": [
+        {
+          "context_id": "opinion",
+          "type": "query"
+        }
+      ],
+      "relations": {
+        "synonym": [
+          "cls_opinion12"
+        ]
+      },
+      "confidence": 1.0
+    }
   ]
 }

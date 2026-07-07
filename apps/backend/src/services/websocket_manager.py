@@ -308,7 +308,6 @@ async def _handle_tactile_event(websocket: WebSocket, data: dict) -> None:
     tactile_data = data.get("data", {})
     tactile_service = get_tactile_service()
     if not tactile_service:
-        logger.warning("TactileService unavailable for tactile_event")
         return
     res = await tactile_service.simulate_touch("user_hand", tactile_data, origin="Human")
     await manager.send_personal_message({

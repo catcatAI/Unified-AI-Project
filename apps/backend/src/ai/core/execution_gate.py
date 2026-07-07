@@ -90,7 +90,7 @@ class ExecutionGate:
                 "confirm_messages": {"read": "读取", "create": "建立", "modify": "修改", "delete": "删除", "send": "传送", "system": "执行系统操作", "default": "执行操作"},
                 "warnings": {"delete": "\n⚠️ 删除后无法复原。", "send": "\n⚠️ 传送后无法撤回。", "system": "\n⚠️ 系统操作可能影响其他程序。", "modify": "\n 修改会覆盖原始内容。"},
                 "confirm_suffix": "\n确认后我会执行。",
-                "no_handler_message": "你想要我做什么？可以更具體說明嗎？",
+                "no_handler_message": "抱歉，我無法理解您的意圖。請換句話說，或具體描述您想讓我執行的操作（如：讀取檔案、搜尋資料、回答問題等）。",
             }
 
     def decide(self, query_type: str, action_type: str, user_message: str,
@@ -119,8 +119,8 @@ class ExecutionGate:
         effective_auto = round(self.AUTO_EXECUTE - fb_adj, 3)
         effective_confirm = round(self.CONFIRM_THRESHOLD - fb_adj, 3)
 
-        # For knowledge/creative/greeting queries, skip confirmation and let LLM handle
-        if query_type in ("knowledge", "creative", "greeting", "opinion"):
+        # For non-actionable queries, skip confirmation and let LLM handle
+        if query_type in ("knowledge", "creative", "greeting", "opinion", "unknown", "logic"):
             state_store.emit_event("execution.gate_decided", {
                 "action": "reject", "score": round(score, 3),
                 "query_type": query_type, "action_type": action_type,
@@ -173,7 +173,7 @@ class ExecutionGate:
                 action="confirm_then_execute", score=score,
                 action_type=action_type,
                 reason="has_score_but_no_handler",
-                confirm_message=self._config.get("no_handler_message", "你想要我做什么？"),
+                confirm_message=self._config.get("no_handler_message", "抱歉，我無法理解您的意圖。請換句話說，或具體描述您想讓我執行的操作（如：讀取檔案、搜尋資料、回答問題等）。"),
                 original_query=user_message,
             )
 

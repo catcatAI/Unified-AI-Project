@@ -27,6 +27,7 @@ from __future__ import annotations
 import enum
 import math
 import logging
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -42,7 +43,8 @@ class ConflictStrategy(enum.Enum):
     ENTROPY_WEIGHTED = "entropy_weighted"
 
 
-class InfluenceRule:
+class InfluenceRule(ABC):
+    @abstractmethod
     def compute(
         self,
         source: Any,
@@ -50,7 +52,7 @@ class InfluenceRule:
         base_strength: float,
         context: Optional[Dict[str, Any]] = None,
     ) -> float:
-        raise NotImplementedError
+        pass
 
 
 @dataclass

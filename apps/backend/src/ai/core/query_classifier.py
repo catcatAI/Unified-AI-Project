@@ -54,12 +54,13 @@ class QueryResult:
 
 
 # 操作类型推断用的关键字
-_CREATE_VERBS = {"建立", "新增", "创建", "新增", "建立", "create", "new", "add"}
+_CREATE_VERBS = {"建立", "新增", "创建", "新增", "建立", "創建", "create", "new", "add"}
 _MODIFY_VERBS = {"修改", "编辑", "重新命名", "修改", "編輯", "重新命名", "edit", "rename", "modify", "update"}
 _DELETE_VERBS = {"删除", "移除", "清空", "刪除", "移除", "清除", "delete", "remove", "clear"}
 _WRITE_VERBS = {"写入", "储存", "寫入", "儲存", "write", "save"}
 _READ_PREFIXES = {"搜寻", "搜索", "查询", "查看", "读取", "找", "搜尋", "搜索", "查詢", "查看", "讀取", "找", "search", "find", "lookup"}
 _SEND_VERBS = {"发送", "传送", "提交", "發送", "傳送", "提交", "send", "submit", "post"}
+_MOVE_VERBS = {"移动", "移至", "移到", "移動", "移至", "移到", "搬", "move", "迁移", "遷移"}
 
 # REFLEX 不覆盖的动词（这些是有意义的单字动词）
 VERBS_NOT_REFLEX = {
@@ -71,7 +72,9 @@ VERBS_NOT_REFLEX = {
 KNOWLEDGE_QUESTION_PATTERNS = [
     r"^什么是", r"^是什么", r"^是什麼", r"^怎麼", r"^怎么", r"^为什么", r"^為什麼", r"^為什么",
     r"^how\b", r"^what\b", r"^why\b", r"^when\b", r"^where\b", r"^who\b",
-    r"^多少", r"^幾個", r"^几个", r"^谁", r"^誰", r"^今天", r"^明天", r"^昨天",
+    r"^多少", r"^幾個", r"^几个", r"^谁", r"^誰", r"^今天", r"^明天", r"^明日", r"^昨天",
+    r"天氣", r"天気", r"weather", r"温度", r"temperature", r"氣溫",
+    r"記得", r"記憶", r"remember", r"recall", r"記住",
 ]
 
 # 否定词
@@ -95,6 +98,7 @@ class QueryClassifier:
         return {
             "hi", "ok", "okay", "hey", "yo", "oh", "ah",
             "嗯", "好", "是", "不", "啊", "哦", "喂", "嗨", "噢",
+            "喵", "咪", "咕", "呜",
         }
 
     @staticmethod
@@ -104,7 +108,7 @@ class QueryClassifier:
                 QueryType.GREETING,
                 re.compile(
                     r"(?:^|[\s，。！？,.\s])"
-                    r"(你好|早上好|上午好|中午好|下午好|晚上好|晚安|"
+                    r"(你好|早安|早上好|上午好|中午好|下午好|午安|晚上好|晚安|"
                     r"再见|拜拜|谢谢|感谢|"
                     r"\b(hello|hi|hey|good\s*morning|good\s*afternoon|good\s*evening|good\s*bye|thanks?|bye)\b)",
                     re.IGNORECASE,
@@ -183,13 +187,22 @@ class QueryClassifier:
                 QueryType.CREATIVE,
                 re.compile(
                     r"(?:^|[\s，。！？,.\s])"
-                    r"(写|作|创作|编|画|虚构|"
+                    r"(写|寫|作|创作|創作|编|編|画|畫|虚构|虛構|"
                     r"\b(write|poem|story|song|joke|"
                     r"imagine|pretend|creat|make\s+up|compose)\b|"
-                    r"想象|如果|假设|绘)",
+                    r"想象|想像|如果|假设|假設|绘|繪)",
                     re.IGNORECASE,
                 ),
                 0.75,
+            ),
+            (
+                QueryType.CREATIVE,
+                re.compile(
+                    r"(主角|配角|角色|故事|小说|小說|剧情|劇情|"
+                    r"詩|诗|散文|歌词|劇本|剧本|創作|创作|虚构|虛構)",
+                    re.IGNORECASE,
+                ),
+                0.7,
             ),
         ]
 
@@ -218,9 +231,10 @@ class QueryClassifier:
             (
                 QueryType.FILE,
                 re.compile(
-                    r"(整理|清理|删除|移动|复制|重命名|读取|写入|列出|建立|新建|修改|编辑|"
+                    r"(?:^|[\s，。！？,.\s/])"
+                    r"(整理|清理|删除|移动|移至|移到|复制|重命名|读取|写入|列出|建立|新建|修改|编辑|"
                     r"文件|文件夹|目录|路径|"
-                    r"整理|清理|刪除|移動|複製|重命名|讀取|寫入|列出|建立|新建|修改|編輯|"
+                    r"整理|清理|刪除|移動|移至|移到|複製|重命名|讀取|寫入|列出|建立|新建|修改|編輯|"
                     r"檔案|文件|資料夾|目錄|路徑|"
                     r"幫我删除|幫我刪除|幫我建立|幫我新建|幫我讀取|幫我寫入|"
                     r"帮我删除|帮我删除|帮我建立|帮我新建|帮我读取|帮我写入|"
@@ -229,6 +243,17 @@ class QueryClassifier:
                     re.IGNORECASE,
                 ),
                 0.8,
+            ),
+            # Supplementary: file op words without boundary (dense Chinese text, paths)
+            (
+                QueryType.FILE,
+                re.compile(
+                    r"(移至|移到|移動|移动|搬移|遷移|迁移|"
+                    r"複製|复制|重新命名|重命名|刪除|删除|"
+                    r"document|file|folder|directory)",
+                    re.IGNORECASE,
+                ),
+                0.65,
             ),
         ]
 
@@ -465,6 +490,10 @@ class QueryClassifier:
                 return QueryResult(QueryType.REFLEX, 0.95, 0.0, "none",
                                    reason="reflex_single_char_override")
             return QueryResult(QueryType.UNKNOWN, 0.4, 0.3, "read", reason="meaningful_single_char")
+        # Multi-char reflex: all chars are reflex words (cat sounds, nods, etc.)
+        if len(text) <= 10 and all(c in self._reflex_words for c in text):
+            return QueryResult(QueryType.REFLEX, 0.9, 0.0, "none",
+                               reason="reflex_all_chars_override")
         return None
 
     def _classify_question_override(self, text: str, has_negation: bool) -> Optional[QueryResult]:
@@ -473,6 +502,10 @@ class QueryClassifier:
                 conf = self._adjust_confidence(QueryType.KNOWLEDGE, text, 0.65, False, has_negation)
                 return QueryResult(QueryType.KNOWLEDGE, conf, 0.1, "none",
                                    reason="knowledge_question_mark_override")
+            # Broad fallback: any remaining ?-ending text→KNOWLEDGE at lower confidence
+            conf = self._adjust_confidence(QueryType.KNOWLEDGE, text, 0.45, False, has_negation)
+            return QueryResult(QueryType.KNOWLEDGE, conf, 0.1, "none",
+                               reason="knowledge_question_mark_fallback")
         return None
 
     def _adjust_confidence(self, query_type: QueryType, text: str,
@@ -556,6 +589,8 @@ class QueryClassifier:
                 return "delete"
             if any(w in text for w in _CREATE_VERBS):
                 return "create"
+            if any(w in text for w in _MOVE_VERBS):
+                return "modify"
             if any(w in text for w in _MODIFY_VERBS):
                 return "modify"
             return "read"

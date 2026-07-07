@@ -249,6 +249,122 @@ class DictionaryClassifier:
         zh = entry.surface_forms.get("zh", "")
         return action_map.get(zh, action_type)
 
+    def learn(self, text: str, query_type: str, action_type: str = "none",
+              confidence: float = 0.6, persist: bool = True) -> str:
+        """Online incremental learning: add a new surface form→query_type mapping.
+
+        Creates a new dictionary entry and rebuilds the keyword index so subsequent
+        classify() calls will match the new keyword. Persists to JSON if persist=True.
+
+        Args:
+            text: The surface form (keyword) to learn.
+            query_type: One of CONTEXT_TO_QUERY_TYPE values (e.g. "file", "search").
+            action_type: Action type suffix (e.g. "action", "object", "query").
+            confidence: Initial confidence 0.0-1.0.
+            persist: Whether to persist to classifier_training.json immediately.
+
+        Returns:
+            The key of the newly created entry (e.g. "cls_learn_N").
+        """
+        self._ensure_loaded()
+        text_stripped = text.strip().lower()
+        if not text_stripped:
+            return ""
+        if not self._dictionary:
+            return ""
+
+        # Check if already in index
+        if text_stripped in self._keyword_index:
+            existing_key = self._keyword_index[text_stripped][0]
+            existing = self._training_data.get(existing_key, {})
+            existing_ctx = (existing.get("contexts") or [{}])[0]
+            if existing_ctx.get("context_id") == query_type:
+                return existing_key  # Already learned
+            # Same keyword, different type → overwrite existing entry
+            self._training_data.pop(existing_key, None)
+            if self._dictionary and existing_key in self._dictionary.entries:
+                del self._dictionary.entries[existing_key]
+            key = existing_key
+
+        if 'key' not in locals():
+            # Auto-increment key
+            key_num = len(self._training_data) + 1
+            key = f"cls_learn_{key_num}"
+
+        from ai.ed3n.dictionary_layer import DictionaryEntry
+        entry = DictionaryEntry(
+            key=key,
+            surface_forms={"zh": text_stripped},
+            contexts=[{"context_id": query_type, "type": action_type}],
+            relations={},
+            confidence=confidence,
+        )
+        self._dictionary.entries[key] = entry
+
+        entry_data = {
+            "key": key,
+            "surface_forms": {"zh": text_stripped},
+            "contexts": [{"context_id": query_type, "type": action_type}],
+            "relations": {},
+            "confidence": confidence,
+        }
+        self._training_data[key] = entry_data
+
+        # Rebuild index incrementally
+        if text_stripped not in self._keyword_index:
+            self._keyword_index[text_stripped] = []
+        self._keyword_index[text_stripped].append(key)
+
+        # Clear affected cache entries
+        keys_to_clear = [k for k in self._cache if text_stripped in k]
+        for k in keys_to_clear:
+            del self._cache[k]
+
+        if persist:
+            self._persist_training_data()
+
+        logger.info(f"Learned: '{text_stripped}' → {query_type}/{action_type} (key={key})")
+        return key
+
+    def _persist_training_data(self):
+        """Persist current training data to classifier_training.json."""
+        training_path = os.path.join(
+            os.path.dirname(__file__), "..", "ed3n", "config", "classifier_training.json"
+        )
+        try:
+            data = {
+                "version": "1.1",
+                "description": "Auto-generated from online learning. Merged with pattern-extracted data.",
+                "dictionary_entries": list(self._training_data.values()),
+            }
+            with open(training_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            logger.debug(f"Persisted {len(self._training_data)} entries to {training_path}")
+        except Exception as e:
+            logger.warning(f"Failed to persist training data: {e}")
+
+    def forget(self, key: str) -> bool:
+        """Remove a learned entry by key. Used for calibration (e.g. low accuracy)."""
+        if key not in self._training_data:
+            return False
+        entry_data = self._training_data.pop(key)
+        if self._dictionary and key in self._dictionary.entries:
+            del self._dictionary.entries[key]
+
+        sf = entry_data.get("surface_forms", {}).get("zh", "")
+        if sf and sf in self._keyword_index:
+            self._keyword_index[sf] = [k for k in self._keyword_index[sf] if k != key]
+            if not self._keyword_index[sf]:
+                del self._keyword_index[sf]
+
+        keys_to_clear = [k for k in self._cache if sf in k]
+        for k in keys_to_clear:
+            del self._cache[k]
+
+        self._persist_training_data()
+        logger.info(f"Forgot key={key} ('{sf}')")
+        return True
+
     def get_all_matches(self, text: str, threshold: float = 0.15) -> List[Dict]:
         """Get all matching entries above threshold."""
         self._ensure_loaded()

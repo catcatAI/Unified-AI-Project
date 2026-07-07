@@ -59,7 +59,7 @@ class MathExtractor:
         """Safely evaluate a math expression using AST."""
         try:
             tree = ast.parse(expr.strip(), mode='eval')
-            if not isinstance(tree.body, (ast.BinOp, ast.UnaryOp, ast.Constant, ast.Num)):
+            if not isinstance(tree.body, (ast.BinOp, ast.UnaryOp, ast.Constant)):
                 return None
             result = self._eval_node(tree.body)
             return float(result) if result is not None else None
@@ -69,8 +69,6 @@ class MathExtractor:
     def _eval_node(self, node) -> Optional[float]:
         if isinstance(node, ast.Constant):
             return float(node.value) if isinstance(node.value, (int, float)) else None
-        if isinstance(node, ast.Num):
-            return float(node.n)
         if isinstance(node, ast.UnaryOp):
             op = self.SAFE_OPS.get(type(node.op))
             if op is None:
