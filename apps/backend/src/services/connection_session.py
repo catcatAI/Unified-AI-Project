@@ -360,9 +360,10 @@ class SessionManager:
                     sent_count += 1
                     self._stats.total_messages += 1
                 except Exception as e:
-                    logger.debug(f"[SessionManager] Broadcast to {session.client_id} failed: {e}")
+                    err_msg = str(e) or type(e).__name__
+                    logger.warning(f"[SessionManager] Broadcast to {session.client_id} failed: {err_msg}")
                     self._stats.failed_messages += 1
-                    await self.unregister(session.client_id, f"Broadcast failed: {e}")
+                    await self.unregister(session.client_id, f"Broadcast failed: {err_msg}")
         
         return sent_count
     

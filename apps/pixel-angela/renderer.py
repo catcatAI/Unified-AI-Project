@@ -6,6 +6,7 @@ import json
 import asyncio
 import time
 import math
+import random
 from datetime import datetime
 from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QVBoxLayout, QMenu, QSystemTrayIcon
 from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal, QRect, QPoint, QPointF
@@ -30,16 +31,22 @@ class AngelaClient(QThread):
         super().__init__()
         self.event_loop = None
         self._running = True
+        self._reconnect_attempt = 0
+        self._heartbeat_task = None
 
     def run(self):
         self.event_loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.event_loop)
         while self._running:
             try:
+                self._reconnect_attempt = 0
                 self.event_loop.run_until_complete(self._listen())
             except Exception as e:
-                print(f"🔄 [Network] Reconnecting: {e}")
-                time.sleep(UIConfig.WS_RECONNECT_DELAY)
+                self._reconnect_attempt += 1
+                delay = min(UIConfig.WS_RECONNECT_DELAY * (2 ** (self._reconnect_attempt - 1)), 60)
+                delay += random.random() * 2
+                print(f"🔄 [Network] Reconnecting: {e} (attempt {self._reconnect_attempt}, retry in {delay:.0f}s)")
+                time.sleep(delay)
 
     async def _listen(self):
         ws_url = os.environ.get("ANGELA_WS_URL", "ws://127.0.0.1:8000/ws")
@@ -57,7 +64,9 @@ class AngelaClient(QThread):
                 return
             print(f"🟢 [Network] Connected (session: {resp.get('session_id', '?')})")
             self.ws = ws
-            asyncio.create_task(self._send_heartbeat())
+            if self._heartbeat_task and not self._heartbeat_task.done():
+                self._heartbeat_task.cancel()
+            self._heartbeat_task = asyncio.create_task(self._send_heartbeat())
             while self._running:
                 msg = await ws.recv()
                 self.state_updated.emit(json.loads(msg))
@@ -67,7 +76,9 @@ class AngelaClient(QThread):
             try:
                 await self.ws.send(json.dumps({"type": "heartbeat"}))
                 await asyncio.sleep(30)
-            except: break
+            except Exception:
+                print("[Heartbeat] Connection lost, stopping heartbeat")
+                break
 
     async def send_msg(self, text):
         if hasattr(self, 'ws'):

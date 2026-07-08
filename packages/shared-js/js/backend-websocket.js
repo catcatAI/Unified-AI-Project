@@ -153,6 +153,22 @@ class BackendWebSocketClient {
           console.log('[BackendWebSocket] Received via IPC:', message)
           this._handleMessage({ data: JSON.stringify(message) })
         })
+
+        // Handle main process WebSocket disconnect - reset state and trigger reconnect
+        window.electronAPI.on('websocket-disconnected', ({ code, reason }) => {
+          console.warn(`[BackendWebSocket] Main WS disconnected: code=${code} reason=${reason}`)
+          this.connected = false
+          this._stopHeartbeat()
+          this._handleReconnect()
+        })
+
+        // Handle main process WebSocket error
+        window.electronAPI.on('websocket-error', ({ error }) => {
+          console.error('[BackendWebSocket] Main WS error:', error)
+          this.connected = false
+          this._stopHeartbeat()
+          this._handleReconnect()
+        })
         
         // Trigger connection with session info
         window.electronAPI.websocket.connect(url, {
