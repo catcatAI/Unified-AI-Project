@@ -4,7 +4,14 @@
  * 提供系统托盘图标和右键菜单功能
  */
 
-const fs = require('fs')
+let fs = null
+try {
+    if (typeof require !== 'undefined') {
+        fs = require('fs')
+    }
+} catch (_e) {
+    // Not in a Node.js context (e.g., browser/renderer)
+}
 
 class TrayManager {
     constructor() {
@@ -25,7 +32,7 @@ class TrayManager {
         try {
             const { Tray } = require('electron');
 
-            if (!iconPath || !fs.existsSync(iconPath)) {
+            if (!iconPath || (fs && !fs.existsSync(iconPath))) {
                 console.warn('[TrayManager] Tray icon not found, skipping tray initialization');
                 return false;
             }

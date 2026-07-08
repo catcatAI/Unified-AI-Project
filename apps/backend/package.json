@@ -11,13 +11,6 @@
     "test:watch": "python scripts/workflow_controller.py --tb=short -v --timeout=30 -f",
     "clean": "rmdir /s /q venv 2>nul || rm -rf venv",
     "health": "python -c \"import sys; sys.path.insert(0, 'apps/backend/src'); import apps.backend.src.core_services; print('Backend imports OK')\"",
-    "fix": "python scripts/simple_auto_fix.py",
-    "fix:complete": "python scripts/auto_fix_complete.py",
-    "fix:advanced": "python scripts/advanced_auto_fix.py",
-    "fix:test": "python scripts/simple_auto_fix.py --fix --test",
-    "fix:advanced:test": "python scripts/advanced_auto_fix.py --test",
-    "validate": "python scripts/final_validation.py",
-    "validate:fix": "python scripts/advanced_auto_fix.py --test; python scripts/final_validation.py",
-    "demo:fix": "python scripts/test_fix_demo.py"
+    "validate": "python scripts/final_validation.py"
   }
 }
