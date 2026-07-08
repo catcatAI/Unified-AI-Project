@@ -31,7 +31,8 @@ from typing import Any, Dict, List, Optional, Union
 
 import psutil
 from core.system.config.magic_numbers import loop_sleep, timeout_value
-from loguru import logger
+
+logger = logging.getLogger(__name__)
 
 
 class ExecutionStatus(Enum):

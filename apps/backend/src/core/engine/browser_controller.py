@@ -27,8 +27,12 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 import aiohttp
-from bs4 import BeautifulSoup
 from core.system.config.async_io import async_read_text, async_write_text
+
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    BeautifulSoup = None
 from core.system.config.magic_numbers import timeout_value
 
 logger = logging.getLogger(__name__)
@@ -287,6 +291,9 @@ class BrowserController:
                 async with session.post(url, data=data, timeout=timeout_value("http_post", 10.0)) as response:
                     if response.status == 200:
                         html = await response.text()
+                        if BeautifulSoup is None:
+                            logger.warning("BeautifulSoup not installed; cannot parse search results")
+                            return {"results": [], "error": "BeautifulSoup not available"}
                         soup = BeautifulSoup(html, "html.parser")
                         
                         # 解析 DuckDuckGo 結果
@@ -351,6 +358,9 @@ class BrowserController:
                 async with session.get(url, timeout=timeout_value("http_get", 15.0)) as response:
                     if response.status == 200:
                         html = await response.text()
+                        if BeautifulSoup is None:
+                            logger.warning("BeautifulSoup not installed; cannot extract page content")
+                            return {"text": "", "error": "BeautifulSoup not available", "url": url}
                         soup = BeautifulSoup(html, "html.parser")
                         
                         # 移除 script 與 style
