@@ -62,3 +62,9 @@ class TestServiceRegistry:
 
     def test_empty_registry(self):
         assert self.r.service_names == []
+
+    def test_register_and_get_with_object_identity(self):
+        obj = {"key": "value"}
+        self.r.register("test_obj", obj)
+        assert self.r.get("test_obj") is obj
+        self.r.unregister("test_obj")

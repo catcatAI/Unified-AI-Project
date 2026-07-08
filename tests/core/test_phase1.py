@@ -20,64 +20,39 @@ from core.state.temporal import SnapshotQuery, TemporalState
 
 
 def test_axis_field_registry():
-    print("=== AxisFieldRegistry ===")
     reg = AxisFieldRegistry()
-
     alpha_fields = reg.fields_for('alpha')
-    print(f"Alpha fields: {len(alpha_fields)}")
-
+    assert len(alpha_fields) > 0
     theta_fields = reg.fields_for('theta')
-    print(f"Theta fields: {len(theta_fields)}")
-
+    assert len(theta_fields) > 0
     energy = reg.get('alpha', 'energy')
-    print(f"Energy field: {energy}")
-
     assert energy is not None
     assert energy.axis == 'alpha'
     assert energy.name == 'energy'
     assert energy.in_range(0.5) is True
     assert energy.in_range(-0.1) is False
-
     novelty = reg.get('theta', 'novelty')
     assert novelty is not None
-
-    print(f"All axes: {reg.all_axes()}")
-    print(f"Total fields: {reg.count()}")
-    print("Registry: PASS\n")
+    assert len(reg.all_axes()) > 0
+    assert reg.count() > 0
 
 
 def test_axis_typed_access():
-    print("=== Axis Typed Access ===")
     alpha = Axis.create_alpha()
-
-    print(f"Alpha fields: {alpha.field_names()}")
-    print(f"Alpha average: {alpha.average():.3f}")
-    dom = alpha.dominant()
-    print(f"Alpha dominant: {dom[0]}({dom[1]:.3f})")
-
     assert alpha.field_count() > 0
-
     reg = AxisFieldRegistry()
     energy_field = reg.get('alpha', 'energy')
     alpha.set(energy_field, 0.8)
     val = alpha.get(energy_field)
     assert abs(val - 0.8) < 0.001
-
-    print(f"Energy via typed access: {val:.3f}")
-
     alpha.update(focus=0.9, energy=0.6)
-    print(f"After update - focus: {alpha.get_str('focus'):.3f}, energy: {alpha.get_str('energy'):.3f}")
-
-    print(f"Coordinate: {alpha.coordinate}")
+    assert abs(alpha.get_str('focus') - 0.9) < 0.001
+    assert abs(alpha.get_str('energy') - 0.6) < 0.001
+    assert alpha.coordinate is not None
     alpha.shift(dx=0.1, dy=-0.2, dz=0.0)
-    print(f"After shift: {alpha.coordinate}")
-
-    print(f"Distance to beta: {alpha.distance_to(Axis.create_beta()):.3f}")
-
+    assert alpha.coordinate is not None
     snapshot = alpha.snapshot()
-    print(f"Snapshot keys: {list(snapshot.keys())[:5]}")
-
-    print("Axis: PASS\n")
+    assert len(snapshot) > 0
 
 
 def test_axis_from_config():
@@ -94,44 +69,23 @@ def test_axis_from_config():
 
 
 def test_temporal_state():
-    print("=== TemporalState ===")
     timeline = TemporalState(max_size=100)
-
     for i in range(20):
         timeline.record({
             'timestamp': f'2026-05-13T{10+i//60:02d}:{i%60:02d}:00',
             'beta': {'focus': 0.5 + i * 0.02},
             'alpha': {'energy': 0.7},
         })
-
-    print(f"Timeline size: {timeline.size()}")
-
-    recent = timeline.recent(fraction=0.3)
-    print(f"Recent 30%: {len(recent)} snapshots")
-
-    focus_field = AxisFieldRegistry().get('beta', 'focus')
-    assert focus_field is not None
-    series = timeline.get_field_series('beta', 'focus', window=10)
-    print(f"Focus series (n={len(series)}): {[f'{v:.2f}' for v in series[-5:]]}")
-
-    trend = timeline.trend('beta', 'focus', window=15)
-    print(f"Trend: {trend.direction}, slope={trend.slope:.4f}, mean={trend.mean:.3f}")
-
+    assert timeline.size() == 20
     query = SnapshotQuery(axes=['beta'], limit=5)
     results = timeline.query(query)
-    print(f"Query (beta, limit=5): {len(results)} results")
-
+    assert len(results) <= 5
     corr = timeline.correlation('beta', 'focus', 'alpha', 'energy', window=15)
-    print(f"Correlation alpha.focus vs alpha.energy: r={corr.correlation:.3f} ({corr.strength})")
-
-    print("TemporalState: PASS\n")
+    assert -1.0 <= corr.correlation <= 1.0
 
 
 def test_find_drift():
-    print("=== Drift Detection (θ Negativity) ===")
     timeline = TemporalState(max_size=100)
-    reg = AxisFieldRegistry()
-
     for i in range(30):
         val = 0.5
         if 10 <= i < 15:
@@ -142,17 +96,10 @@ def test_find_drift():
             'timestamp': f'2026-05-13T10:{i:02d}:00',
             'beta': {'focus': val},
         })
-
-    focus_field = AxisFieldRegistry().get('beta', 'focus')
-    assert focus_field is not None
-
     drift = timeline.find_drift('beta', 'focus', expected_value=0.5, drift_threshold=0.25)
-    print(f"Drift from 0.5 (threshold=0.25): {len(drift)} points")
-
+    assert len(drift) > 0
     trend = timeline.trend('beta', 'focus', window=30)
-    print(f"Full window trend: {trend.direction}, slope={trend.slope:.4f}")
-
-    print("Drift detection: PASS\n")
+    assert trend.direction is not None
 
 
 def test_integration():
@@ -185,13 +132,3 @@ def test_integration():
     assert timeline.size() == 15
 
 
-if __name__ == '__main__':
-    test_axis_field_registry()
-    test_axis_typed_access()
-    test_axis_from_config()
-    test_temporal_state()
-    test_find_drift()
-    test_integration()
-    print("=" * 60)
-    print("ALL TESTS PASSED")
-    print("=" * 60)

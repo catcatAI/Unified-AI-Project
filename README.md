@@ -61,7 +61,7 @@
 **Total project files**: ~3,500+ (620 Python in backend src · 295 JS/TS · 1,021+ docs · 500+ config · 480+ test).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
 
-> **STATUS (2026-07-08)**: §X #204 — Deep audit (10 rounds) + bug fixes (3 HIGH, 4 MEDIUM) + test consolidation (-17 tests) + 30 new tests for 2 uncovered modules. **4,411 tests collected — 0 errors.**
+> **STATUS (2026-07-08)**: §X #204 — Deep audit (10 rounds) + bug fixes (3 HIGH, 4 MEDIUM) + test consolidation (-17 tests) + 30 new tests for 2 uncovered modules. **4,398 tests collected — 0 errors.**
 > **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → execution gate → **agent routing** → LLM → causal learning → response. GVV pipeline for image generation.  
 > **See**: [MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md) (task provenance), [IMPROVEMENT_ROADMAP.md](docs/06-project-management/IMPROVEMENT_ROADMAP.md) (improvement roadmap), [CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md) (causal depth).
 
@@ -95,7 +95,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | **API Versioning** | ✅ COMPLETE | Version routing middleware (Phase 5) |
 | **i18n System** | ✅ COMPLETE | I18nManager, PromptManager, 4 handlers + 4 LLM modules i18n'd, 45 tests (Phase 7) |
 | **Config system** | ✅ | `config_loader.py:get_config()` returns Config |
-| **Tests** | ✅ PASSING | ~4,411 tests collected (tests/), 0 collection errors, 1,589+ verified passing |
+| **Tests** | ✅ PASSING | ~4,398 tests collected (tests/), 0 collection errors, 1,589+ verified passing |
 | **JS Sharing** | ✅ COMPLETE | 33 shared files → `packages/shared-js/js/`, 0 duplicates remaining |
 | **SessionManager** | ✅ COMPLETE | 56 tests covering full lifecycle (Phase 5.8) |
 | **Skip Audit** | ✅ COMPLETE | Phase 5.9: 5 collection errors fixed, all skip reasons verified |

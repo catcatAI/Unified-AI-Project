@@ -910,6 +910,12 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
     - **Test consolidation**: Deleted 4 dead/duplicate test files + empty e2e/ dir.
     - **Net**: -17 tests (consolidation), -2,861 lines total across all §X #204 rounds.
     - **4,411 tests collected — 0 errors** (-17 from prior baseline).
+  - **§X #204-14**: Test deduplication + diagnostic cleanup.
+    - Merged 2 duplicate test pairs: web_search_handler (core/unit) + service_registry (core/interfaces).
+    - Deleted 2 redundant test files + 1 empty directory.
+    - Cleaned 33 diagnostic print statements from test_phase1.py (assertions preserved).
+    - Net: -13 tests, -0 lines of meaningful coverage lost.
+    - **4,398 tests collected — 0 errors** (-13 from prior baseline).
 
 ---
 

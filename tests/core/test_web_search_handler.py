@@ -1,5 +1,7 @@
 """P8-1b — WebSearchHandler unit tests"""
 
+import asyncio
+
 
 class TestWebSearchHandler:
 
@@ -34,3 +36,7 @@ class TestWebSearchHandler:
     def test_extract_query_about_prefix(self):
         q = self.handler._extract_query("關於 Python 的歷史")
         assert q == "Python 的歷史"
+
+    def test_handle_no_query(self):
+        result = asyncio.run(self.handler.handle("搜尋", "web_search"))
+        assert "搜尋" in result
