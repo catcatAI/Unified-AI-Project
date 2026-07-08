@@ -299,7 +299,6 @@ __all__ = [
     "ExperienceTracker",
     "create_maturity_system",
     # Creative Systems
-    "generate_and_save_to_desktop",
     "AngelaRealVoice",
     "AngelaRealBrowser",
     # Metamorphosis Systems

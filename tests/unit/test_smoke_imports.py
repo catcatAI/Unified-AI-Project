@@ -25,7 +25,6 @@ _SMOKE_MODULES = [
     ("core.state.decimal_hash_table", "DecimalHashTable", {}),
     ("ai.alignment.decision_theory_system", "DecisionTheorySystem", {}),
     ("ai.context.dialogue_context", "Message", {"sender": "user", "content": "hello"}),
-    ("economy.economy_manager", "EconomyManager", {"config": {}}),
     ("core.life.env_dynamics", "EnvironmentDynamics", {}),
     ("core.life.evolution_engine", "EvolutionEngine", {}),
     ("services.handlers.file_operation_handler", "FileOperationHandler", {}),
@@ -50,7 +49,6 @@ _SMOKE_MODULES = [
     ("integrations.os_bridge_adapter", "OSBridgeAdapter", {}),
     ("core.perception.perceptual_memory", "PerceptualMemory", {"capacity": 100}),
     ("ai.reasoning.causal_reasoning_engine", "CausalReasoningEngine", {}),
-    ("integrations.rovo_dev_connector", "RovoDevConnector", {"config": {}}),
     ("core.life.self_introspector", "SelfIntrospector", {}),
     ("core.state.state_hash_manager", "StateHashManager", {}),
     ("core.life.tickle_reflex_system", "TickleReflexSystem", {}),
@@ -163,7 +161,6 @@ class TestParameterExtractor:
 # Merged from tests/core/test_core_smoke_imports.py (§X #122)
 
 _MODULE_ATTR_IMPORTS = [
-    ("economy.economy_db", "EconomyDB"),
     ("shared.types.mappable_data_object", "MappableDataObject"),
     ("core.utils", "now_timestamp"),
     ("core.hsp.connector", "HSPConnector"),

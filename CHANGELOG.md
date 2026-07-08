@@ -845,6 +845,44 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 - **ACTIVE_SCRIPTS.md**: Updated with 21 new `scripts/utils/` entries + counts
 - **CAUSAL_CHAIN_COMPLETENESS.md**: Added §X #201b row
 - **4,438 test baseline** — 0 errors (35.93s collection)
+- **§X #204 — Deep audit rounds 1-9**: Comprehensive technical debt elimination.
+  - **#204-1**: Deleted orphan `mcp/context7_connector.py`, fixed `mcp/connector.py` stub log fallback,
+    fixed `cli/repl.py` hardcoded time.sleep(3), removed stale `if TYPE_CHECKING: pass` blocks,
+    migrated 2 hardcoded sleeps to config-driven `loop_sleep`, added beam_search decode params to config.
+  - **#204-2**: Fixed `state_matrix.py` `CognitiveOp=None` overwrite bug (imported object was None at runtime),
+    deleted `web-live2d-viewer/js/security-manager.js` (Node.js code in browser context, never loaded),
+    replaced 3 dead lazy-init methods in `learning_integration.py` with `return None`.
+  - **#204-3**: Deleted dangerous `ai/context/requirements.txt` (stdlib listed as pip deps),
+    fixed `tray-manager.js` top-level `require('fs')` without guard (crashes in Electron renderer),
+    removed 4 dead script refs from `apps/backend/package.json`, deleted 6 dead source files,
+    fixed 3 `try/except` test anti-patterns, deleted 3 skip-only test files.
+  - **#204-4**: Fixed 3 broken scripts in root `package.json`, fixed root `Dockerfile` entry point,
+    removed dead `generate_and_save_to_desktop` lazy import, deleted `pixel-angela/visualizer.py`,
+    deleted unused `code_understanding_tool.py`, fixed 9 broken script paths in Electron HTML test pages,
+    fixed `setup.py` `python_requires` (3.8→3.10), cleaned root `.gitignore`.
+  - **#204-5 through #204-8**: Converted `loguru` imports to stdlib logging (loguru not in any dep group),
+    guarded `BeautifulSoup` import (only in optional `full` deps), moved `src/docs/`→`docs/src-docs/`,
+    deleted stale `.pyc` files from deleted modules, deleted empty `services/node_services/`.
+  - **Net**: 20+ dead files deleted, 2 import-time crash bugs fixed, 3 test anti-patterns fixed,
+    config/docs/housekeeping cleanup across 15+ files. **4,500 tests — 0 errors**.
+  - **§X #204-9 (this commit)**: Deep audit rounds 10-11 — dead subsystem deletion + dep audit.
+    - **Deleted 4 dead integration modules** (584 lines): `atlassian_bridge.py`, `rovo_dev_connector.py`,
+      `rovo_dev_agent.py`, `enhanced_rovo_dev_connector.py` — zero production importers.
+    - **Deleted economy/ subsystem** (340 lines + API route): `economy_db.py`, `economy_manager.py`,
+      `economy.py` route — half-built shell, never wired into production.
+    - **Deleted orphan shared/ files**: `cleanup_utils.py` (never imported by any file),
+      `test_cleanup_utils.py` (tested generic dicts, not actual code).
+    - **Deleted orphan test file**: `test_async_utils.py` (referenced deleted `shared.utils.async_utils`).
+    - **Deleted 7 test files** for deleted modules (6 integration + 1 atlassian).
+    - **Fixed pyproject.toml deps**: Added 5 missing deps (redis, PyJWT, pynvml, textblob, scipy);
+      removed 12 unused deps (networkx, faiss-cpu, gmqtt, rich, click, tqdm, firebase-admin,
+      openai-whisper, pynput, pygetwindow, websockets, py-cpuinfo).
+    - **Cleaned up references**: `core/__init__.py` __all__, `integrations/__init__.py`,
+      `pet/pet_manager.py`, `_deps.py`, `lifespan.py`, `pet.py` endpoint, test files,
+      router test expectations, smoke imports.
+    - **Fixed test bug**: `test_security_middleware.py` compared str vs bytes.
+    - **Net**: -1,658 lines, -17 files, -12 unused deps, +5 missing deps.
+    - **4,441 tests collected — 0 errors** (-105 測試 vs baseline 4,546, all from deleted dead module tests).
 
 ---
 

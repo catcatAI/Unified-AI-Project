@@ -25,5 +25,5 @@ class TestSignedCommunicationMiddleware:
         from shared.security_middleware import SignedCommunicationMiddleware
         app = MagicMock()
         instance = SignedCommunicationMiddleware(app, key_b="test-key-b")
-        assert instance.key_b == b"test-key-b"
+        assert instance.key_b == "test-key-b"
         assert hasattr(instance, "dispatch")

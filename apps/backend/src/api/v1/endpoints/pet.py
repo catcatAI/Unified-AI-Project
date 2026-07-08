@@ -31,12 +31,6 @@ def set_biological_integrator(bi):
         _pet_manager.biological_integrator = bi
 
 
-def set_economy_manager(em):
-    """Wire the economy manager into the pet manager."""
-    if _pet_manager is not None:
-        _pet_manager.set_economy_manager(em)
-
-
 @router.get("/status")
 async def get_pet_status() -> dict:
     return {"status": "ok", "service": "pet"}

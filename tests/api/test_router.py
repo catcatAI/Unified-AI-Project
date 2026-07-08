@@ -65,7 +65,7 @@ class TestIncludeEndpointRouters:
         include_endpoint_routers(test_router)
         paths = {r.path for r in test_router.routes}
         prefixes = ["/drive", "/pet", "/vision", "/audio",
-                     "/tactile", "/mobile", "/economy", "/trace"]
+                     "/tactile", "/mobile", "/trace"]
         for prefix in prefixes:
             assert any(p.startswith(prefix) for p in paths), f"No routes with {prefix}"
 
@@ -73,6 +73,6 @@ class TestIncludeEndpointRouters:
         paths = {r.path for r in router.routes}
         prefixes = ["/api/v1/drive", "/api/v1/pet", "/api/v1/vision",
                      "/api/v1/audio", "/api/v1/tactile", "/api/v1/mobile",
-                     "/api/v1/economy", "/api/v1/trace"]
+                     "/api/v1/trace"]
         for prefix in prefixes:
             assert any(p.startswith(prefix) for p in paths), f"No routes with {prefix}"

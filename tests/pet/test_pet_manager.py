@@ -53,13 +53,6 @@ def test_get_pending_actions(pet_manager) -> None:
     assert isinstance(actions, list)
 
 
-def test_set_economy_manager(pet_manager) -> None:
-    """测试设置经济管理器"""
-    mock_economy = {"coins": 100}
-    pet_manager.set_economy_manager(mock_economy)
-    assert pet_manager.economy_manager == mock_economy
-
-
 def test_update_position(pet_manager) -> None:
     """测试更新位置"""
     pet_manager.update_position(100, 200)

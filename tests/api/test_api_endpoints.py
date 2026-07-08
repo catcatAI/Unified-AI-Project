@@ -232,7 +232,6 @@ STATUS_STUBS = [
     ("vision", "vision"),
     ("audio", "audio"),
     ("tactile", "tactile"),
-    ("economy", "economy"),
     ("trace", "trace"),
     ("plugins", "plugins"),
 ]

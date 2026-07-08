@@ -10,7 +10,6 @@ ENDPOINT_MODULES = [
     "audio",
     "tactile",
     "mobile",
-    "economy",
     "trace",
 ]
 

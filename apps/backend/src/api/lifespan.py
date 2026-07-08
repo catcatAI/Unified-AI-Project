@@ -192,15 +192,6 @@ async def get_level5_asi():
     return _level5_asi_instance
 
 
-def get_economy_manager():
-    try:
-        from core.economy.economy_manager import EconomyManager
-        return EconomyManager()
-    except Exception as e:
-        logger.warning(f"EconomyManager not available: {e}")
-        return None
-
-
 def setup_middleware(app: FastAPI) -> None:
     """Configure application middleware."""
     app.add_middleware(
