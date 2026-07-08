@@ -109,7 +109,7 @@ setup(
     packages=find_packages(),
     install_requires=core_requirements,
     extras_require=optional_requirements,
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     author="Unified AI Project Team",
     description="A unified AI project with modular dependencies",
     long_description=open("README.md").read(),

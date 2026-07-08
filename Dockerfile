@@ -55,4 +55,4 @@ ENV PYTHONUNBUFFERED=1 \
     APP_ENV=production
 
 # Run the application
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+CMD ["uvicorn", "src.services.main_api_server:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

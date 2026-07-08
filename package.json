@@ -9,7 +9,7 @@
     "apps/*/electron_app"
   ],
   "scripts": {
-    "dev": "pnpm --filter backend dev && pnpm --filter frontend-dashboard dev",
+    "dev": "pnpm --filter backend dev && pnpm --filter angela-web-dashboard dev",
     "dev:backend": "cd apps/backend && python -m uvicorn src.services.main_api_server:app --host 127.0.0.1 --port 8000 --reload",
     "dev:desktop": "pnpm --filter angela-desktop-electron start",
     "dev:all": "pnpm dev:backend & pnpm dev:desktop",
@@ -23,11 +23,11 @@
     "format:python": "black apps/backend/src tests/ && isort apps/backend/src tests/",
     "format:js": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "check": "pre-commit run --all-files",
-    "bootstrap": "cd apps/backend && python -c \"import sys; sys.path.insert(0, 'src'); from src.core.system.bootstrap import get_bootstrap_manager; get_bootstrap_manager().run_full_bootstrap()\"",
+    "bootstrap": "cd apps/backend && python -c \"import sys; sys.path.insert(0, 'src'); from core.system.bootstrap.bootstrap_manager import get_bootstrap_manager; get_bootstrap_manager().run_full_bootstrap()\"",
     "setup": "pnpm bootstrap && pip install -r apps/backend/requirements.txt && pnpm install",
     "build": "pnpm build:desktop",
     "build:desktop": "pnpm --filter angela-desktop-electron build",
-    "health-check": "python health_check.py"
+    "health-check": "python scripts/utils/health_check.py"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",

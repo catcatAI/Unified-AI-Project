@@ -81,7 +81,6 @@ _LAZY_IMPORTS = {
     "ExperienceTracker": "core.maturity.maturity_system",
     "create_maturity_system": "core.maturity.maturity_system",
     # Creative Systems
-    "generate_and_save_to_desktop": "core.art.desktop_demo",
     "AngelaRealVoice": "core.art.real_edge_tts",
     "AngelaRealBrowser": "core.art.real_playwright_browser",
     # Metamorphosis
