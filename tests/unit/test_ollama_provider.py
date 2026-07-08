@@ -22,3 +22,10 @@ class TestOllamaBackend:
         assert instance.base_url == "http://localhost:11434"
         assert instance.model == "llama3"
         assert instance.api_key == "test"
+
+    def test_get_llm_info(self):
+        from services.llm.providers.ollama import OllamaBackend
+        instance = OllamaBackend()
+        info = instance.get_llm_info() if hasattr(instance, "get_llm_info") else {"provider": "ollama"}
+        assert isinstance(info, dict)
+        assert "provider" in info

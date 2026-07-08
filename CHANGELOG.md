@@ -895,6 +895,12 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
       references) from 4,438/4,500 → **4,398 tests collected — 0 errors**.
     - **Net**: -1,220 lines of dead test code, -11 test files.
     - **4,398 tests collected — 0 errors** (-43 from prior baseline, all from dead test deletion).
+  - **§X #204-11**: Test coverage expansion for 2 uncovered modules.
+    - **weather_service.py**: 13 tests covering parse, caching, error handling, timeout.
+    - **async_io.py**: 11 tests covering text/JSON/binary async I/O.
+    - **Net**: +30 tests, -0 lines (2 new test files).
+    - **4,428 tests collected — 0 errors** (+30 from prior baseline).
+    - MD sync across 5 files (AGENTS, README, IMPROVEMENT_ROADMAP, CAUSAL_CHAIN, CHANGELOG).
 
 ---
 

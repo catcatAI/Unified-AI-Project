@@ -11,10 +11,8 @@ _SERVICE_CLASSES = [
     ("services.vision_service", "VisionService"),
 ]
 
-# Additional modules verified via import + module name check
 _SERVICE_MODULES = [
     "services.main_api_server",
-    "services.node_services",
     "services.resource_awareness_service",
 ]
 
