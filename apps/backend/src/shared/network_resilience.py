@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import time
 from dataclasses import dataclass
@@ -23,7 +24,7 @@ class RetryPolicy:
                 last_exception = e
                 if attempt < self.max_retries - 1:
                     logger.warning(f"Retry {attempt + 1}/{self.max_retries} failed: {e}")
-                    await __import__("asyncio").sleep(delay)
+                    await asyncio.sleep(delay)
                     delay = min(delay * self.backoff_factor, self.max_delay)
         raise last_exception
 
@@ -52,4 +53,5 @@ class CircuitBreaker:
             self._last_failure_time = time.time()
             if self._failure_count >= self.failure_threshold:
                 self._state = "open"
+                logger.warning("Circuit breaker opened after %d failures: %s", self._failure_count, e)
             raise

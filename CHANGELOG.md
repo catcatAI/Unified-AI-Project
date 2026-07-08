@@ -901,6 +901,15 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
     - **Net**: +30 tests, -0 lines (2 new test files).
     - **4,428 tests collected — 0 errors** (+30 from prior baseline).
     - MD sync across 5 files (AGENTS, README, IMPROVEMENT_ROADMAP, CAUSAL_CHAIN, CHANGELOG).
+  - **§X #204-12**: Bug fixes + test consolidation.
+    - **3 HIGH bug fixes**: `__import__("asyncio")` in RetryPolicy → proper `import asyncio`;
+      `math_verifier._safe_eval` silent `except Exception` → added logging with `exc_info=True`;
+      deprecated `asyncio.get_event_loop()` → `get_running_loop()` in waiting_scheduler.
+    - **4 MEDIUM fixes**: vision_service scene/compare logging with `exc_info=True`;
+      `services/__init__.py` lazy import debug logging; circuit breaker logging.
+    - **Test consolidation**: Deleted 4 dead/duplicate test files + empty e2e/ dir.
+    - **Net**: -17 tests (consolidation), -2,861 lines total across all §X #204 rounds.
+    - **4,411 tests collected — 0 errors** (-17 from prior baseline).
 
 ---
 

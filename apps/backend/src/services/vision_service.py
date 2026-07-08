@@ -586,6 +586,7 @@ class VisionService:
                 "confidence": 0.85,
             }
         except Exception:
+            logger.warning("Scene detection failed", exc_info=True)
             return {"scene_type": "unknown", "confidence": 0.3}
 
     async def _detect_emotions(self, image_data: bytes) -> Dict[str, Any]:
@@ -712,7 +713,7 @@ class VisionService:
                         break
             return differences
         except Exception:
-            # Fallback: compare file sizes
+            logger.warning("Image comparison failed, falling back to size check", exc_info=True)
             if len(image_data1) != len(image_data2):
                 return [{"difference_id": "diff_1", "type": "size_change", "confidence": 0.6}]
             return []

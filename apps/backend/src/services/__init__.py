@@ -89,6 +89,7 @@ def __getattr__(name: str) -> Any:
         module = importlib.import_module(f"services.{name}")
         return module
     except ImportError:
+        logger.debug("Lazy import failed for services.%s, using sentinel", name, exc_info=True)
         pass
 
     return _ServicesSentinel(name)

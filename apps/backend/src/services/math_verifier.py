@@ -64,6 +64,7 @@ class MathExtractor:
             result = self._eval_node(tree.body)
             return float(result) if result is not None else None
         except Exception:
+            logger.debug("Failed to evaluate expression '%s'", expr, exc_info=True)
             return None
 
     def _eval_node(self, node) -> Optional[float]:

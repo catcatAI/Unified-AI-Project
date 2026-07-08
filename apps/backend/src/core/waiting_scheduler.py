@@ -69,7 +69,7 @@ class WaitingScheduler:
         if not self._tasks or self.max_wait_seconds <= 0:
             return
         try:
-            now = asyncio.get_event_loop().time()
+            now = asyncio.get_running_loop().time()
         except RuntimeError:
             now = time.time()
         n_tasks = len(self._tasks)
