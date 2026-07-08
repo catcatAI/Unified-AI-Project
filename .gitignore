@@ -121,8 +121,8 @@ apps/training/
 apps/logs/
 # Binary model artifacts (training outputs)
 *.npy
-# User notes
-Windows PowerShell.txt
+# User notes / runtime logs
+*Windows PowerShell*.txt
 # Old phase completion markers
 PHASE1_IMPLEMENTATION_COMPLETE.txt
 # Windows temp files

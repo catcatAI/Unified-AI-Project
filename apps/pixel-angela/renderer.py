@@ -214,12 +214,17 @@ class AngelaRenderer(QWidget):
         
         # [Task N.12.9/10] 驅動精細解剖動態 (脊椎與五指)
         if self.dna is not None:
-            self.dna.apply_dynamics(
-                self.breath_phase,
-                theta_matrix=self.state.get("theta_matrix"),
-                finger_matrix=self.state.get("finger_matrix"),
-                ear_twitch=math.sin(self.breath_phase * 2.0) * 2.0
-            )
+            try:
+                self.dna.apply_dynamics(
+                    self.breath_phase,
+                    theta_matrix=self.state.get("theta_matrix"),
+                    finger_matrix=self.state.get("finger_matrix"),
+                    ear_twitch=math.sin(self.breath_phase * 2.0) * 2.0
+                )
+            except KeyboardInterrupt:
+                raise
+            except Exception:
+                pass
         
         for bubble in self.bubble_stack:
             target_bubble_x = self.angela_pos.x() + (UIConfig.ANGELA_WIDTH // 2)

@@ -456,6 +456,12 @@ async def websocket_handler(websocket: WebSocket) -> str:
         except WebSocketDisconnect:
             logger.info(f"[WebSocket] Disconnected: {client_id}")
             break
+        except RuntimeError as e:
+            if "not connected" in str(e).lower():
+                logger.warning(f"[WebSocket] Connection lost for {client_id}: {e}")
+                break
+            logger.error(f"[WebSocket] Runtime error for {client_id}: {e}", exc_info=True)
+            continue
         except Exception as e:
             logger.error(f"[WebSocket] Error for {client_id}: {e}", exc_info=True)
             continue
