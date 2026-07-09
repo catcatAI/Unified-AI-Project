@@ -550,11 +550,20 @@ function createMainWindow() {
     log.error('[Window] Page load failed:', errorCode, errorDescription)
   })
 
-  // Log console messages from renderer (skip already-forwarded to avoid electron-log IPC loop)
+  // Log console messages from renderer (rate-limited to prevent log floods)
+  let _consoleCount = 0
+  let _consoleLastLog = 0
   mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
     if (mainWindow.isDestroyed()) return
     if (message.includes('[Renderer]')) return
-    log.info(`[Renderer] ${message}`)
+    const now = Date.now()
+    if (now - _consoleLastLog > 5000) {
+      if (_consoleCount > 10) log.warn(`[Renderer] ... ${_consoleCount} suppressed console messages`)
+      _consoleCount = 0
+      _consoleLastLog = now
+    }
+    _consoleCount++
+    if (_consoleCount <= 10) log.info(`[Renderer] ${message}`)
   })
 
   // Wait for ready-to-show before showing

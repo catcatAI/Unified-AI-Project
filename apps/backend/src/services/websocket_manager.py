@@ -16,6 +16,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 from services.connection_session import get_session_manager
 
 from core.system.config.magic_numbers import loop_sleep
+from core.system.live_logger import status_interval as live_status, err as live_err, info as live_info
 
 logger = logging.getLogger(__name__)
 
@@ -127,6 +128,7 @@ manager = ConnectionManager()
 async def broadcast_state_updates() -> None:
     """Periodically broadcast state updates (bio + Live2D) to all connected clients."""
     _bio_integrator = None
+    _interval = loop_sleep("ws_broadcast_interval", 1.0)
     while True:
         try:
             if _bio_integrator is None:
@@ -134,7 +136,7 @@ async def broadcast_state_updates() -> None:
                     from core.bio.biological_integrator import BiologicalIntegrator
                     _bio_integrator = BiologicalIntegrator()
                 except Exception as e:
-                    logger.debug("BiologicalIntegrator broadcast failed: %s", e)
+                    live_err(f"BioIntegrator init: {e}", "bio_init")
                     await asyncio.sleep(loop_sleep("ws_broadcast_retry", 5.0))
                     continue
 
@@ -204,9 +206,9 @@ async def broadcast_state_updates() -> None:
                 }
             )
         except Exception as e:
-            logger.error(f"Error broadcasting state update: {e}", exc_info=True)
-
-        await asyncio.sleep(loop_sleep("ws_broadcast_interval", 1.0))
+            live_err(f"Broadcast: {e}", "broadcast")
+        await asyncio.sleep(_interval)
+        live_status(f"WS broadcast ({len(manager.active_connections)} clients, {_interval:.1f}s)")
 
 
 async def _handle_handshake(websocket: WebSocket) -> Optional[tuple]:

@@ -347,17 +347,15 @@ def _try_init_session_manager():
 
 def _try_start_broadcast():
     """Start WebSocket state broadcast background task."""
+    from core.system.live_logger import info as _li, warn as _lw
     try:
         from services.websocket_manager import broadcast_state_updates
         task = asyncio.create_task(broadcast_state_updates())
-        task.add_done_callback(
-            lambda t: logger.critical("Broadcast state update task failed: %s", t.exception())
-            if not t.cancelled() and t.exception() else None
-        )
-        logger.info("[Broadcast] State update broadcast task started")
+        task.add_done_callback(lambda t: None)
+        _li("Broadcast state update task started")
         return task
     except Exception as e:
-        logger.warning(f"[Broadcast] Failed to start state broadcast: {e}")
+        _lw(f"Broadcast start failed: {e}")
         return None
 
 

@@ -10,6 +10,7 @@ from enum import Enum
 from typing import Any, Dict
 
 from core.system.config.magic_numbers import loop_sleep
+from core.system.live_logger import status as live_status
 
 logger = logging.getLogger(__name__)
 
