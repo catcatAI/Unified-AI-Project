@@ -51,7 +51,7 @@
 | **Chat 管線 9 階段** | WS → 情緒 → 危機 → 對齊 → 閘門 → 路由 → LLM → 學習 → 回應 | 整合測試 | ✅ 完整接線 |
 | **CLP（持續學習）** | ED3NTrainer 已接線至聊天管線 + 獨立模式 | 整合測試 | ✅ 已接線，字典成長有效 |
 | **CML（持續多模態學習）** | 自主微訓練已接線至 encode 路徑，共用生產管線 | 20 CML 測試通過 + 21 多模態服務測試通過 | ✅ 每次編碼後自動微訓練 |
-| **測試數量** | pytest 收集 | **4,398 tests** (tests/ only, verified 2026-07-08 — §X #204: 0 errors, ~100 skipped) | ✅ 0 failures |
+| **測試數量** | pytest 收集 | **4,396 tests** (tests/ only, verified 2026-07-09 — §X #206-207: 0 errors, ~100 skipped) | ✅ 0 failures |
 | **FullTrainingPipeline** | `pipeline_weights.npz` saved (33 arrays, 1.2MB) | 52s moderate run: texture=0.384, wavetable=0.045, sequence=0.015 | ✅ Trained weights exist on disk |
 | **Empty-data encode fast-fail** | `encode_with_retry()` now fast-fails on empty data without wasting 3 retries | 24/24 production tests pass, crisis_log reduced | ✅ Fixed (§X #60) |
 | **MainApiServer stubs eliminated** | 3 pure-pass async methods → real implementations | test_api_service_reconnection passes (22.74s) | ✅ Fixed (§X #61) |
@@ -123,6 +123,8 @@
 | **§X #202: Test parametrization + 3 production bug fixes** | (a) Parametrized test_atlassian_bridge_methods.py: 300→106 lines, 18 tests preserved (removed broad except Exception: pytest.skip() masking real failures). (b) Parametrized test_vision_service.py compare_images: 4→1 parametrized test. (c) Fixed atlassian_bridge._load_endpoint_configs() not assigning to self.endpoints — methods always returned error. (d) Fixed get_jira_projects() AttributeError when API returns a list. (e) Fixed last bare except:pass in dictionary.py (→logger.debug). (f) No broad except Exception: pytest.skip() remains in tests/. 4,438 tests — 0 errors. | 4 source files + 2 test files | ✅ Done (§X #202) |
 | **§X #203: Test coverage expansion** | Added 62 tests for 2 previously uncovered modules: core/utils.py (38 tests: hash, text, JSON, extraction, time, dict, list, Timer) + ai/core/unicode_utils.py (24 tests: normalization, romaji, CJK detection, radical lookup). 4,500 tests — 0 errors (+62). | 2 new test files | ✅ Done (§X #203) |
 | **§X #204: Deep audit R1-R10 + bug fixes + test consolidation** | (R1-R2) Critical bug fixes: loguru crash, BeautifulSoup bare import, CognitiveOp=None, tray crash. (R3-R4) Config repairs: Dockerfile, package.json, .gitignore + 20+ dead files. (R5-R8) Housekeeping. (R9) Dead subsystem deletion (economy/ + 4 integrations, 1,658 lines) + pyproject.toml dep audit (+5 missing, -12 unused). (R10-11) Test quality: deleted 11 dead test files (1,220 lines) + 30 new tests for weather_service + async_io. (R12) 3 HIGH bug fixes (__import__ asyncio, math_verifier silent, deprecated get_event_loop), 4 MEDIUM logging fixes. (R13) Test consolidation: deleted 4 dead/duplicate test files + empty e2e dir + cleaned diagnostic prints. 4,398→4,411→4,398 tests — 0 errors. Net: -2,861 lines. | 10+ source + 2 new test files | ✅ Done (§X #204) |
+| **§X #206: Bug fixes Round 3 — 16 unbounded array/listener/memory leak fixes** | **JS (7 fixes)**: unified-display-matrix (off() methods), wallpaper-handler (electronAPI leak), simple-live2d-loader (PIXI hit leak), state-matrix (dedup guard), cubism-wrapper (GPU cache). **Python (9 fixes)**: lif_neuron, self_generation, adversarial_generation, vector_store, text_gravity, negativity, ed3n_trainer, digital_life_integrator, state_matrix — all capped/leak-free. 26 files, 0 coverage lost. | 26 files | ✅ Done (§X #206) |
+| **§X #207: Test dedup + deep audit** | Merged 2 duplicate test pairs (unit→core). Fixed comprehensive_test_framework helper. Deep audit confirmed eta_axis_state self-contained, config_loader distinct from app_config_loader. Fixed CHANGELOG inaccuracy. Net: -2 files, -141 lines. | 4 files | ✅ Done (§X #207) |
 
 ### 1.2 無法驗證的優勢（數據不足）
 | 宣稱 | 實際狀態 | 需要什麼數據 | 門檻 |
@@ -328,7 +330,7 @@ O2 → ✅ **DONE** (2026-06-29, §X #44, 152 行死碼移除)
 ### 4.1 測試覆蓋
 
 ```bash
-# 執行所有測試（基線：4,398）
+# 執行所有測試（基線：4,396）
 pytest tests/ apps/backend/tests/ --collect-only -q
 
 # 測量基線完成後，每次變更保持或增加計數

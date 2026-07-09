@@ -882,14 +882,14 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
       router test expectations, smoke imports.
     - **Fixed test bug**: `test_security_middleware.py` compared str vs bytes.
     - **Net**: -1,658 lines, -17 files, -12 unused deps, +5 missing deps.
-    - **4,441 tests collected — 0 errors** (-105 測試 vs baseline 4,546, all from deleted dead module tests).
+    - **4,441 tests collected — 0 errors** (-105 vs baseline 4,546, all from deleted dead module tests).
   - **§X #204-10 (this commit)**: Test quality cleanup + MD sync.
     - **Deleted 8 dead test files** (1,220 lines): 6 fully-skipped (`allow_module_level=True`),
-      2 zero-assertion/no-op files (`test_base.py` `__test__=False`, `test_google_drive_handler.py`
-      5/6 tests skipped).
+      2 zero-assertion/no-op files.
     - **Files deleted**: `test_llm_e2e.py`, `test_persistence.py`, `test_maturity_system.py`,
       `test_project_coordinator_isolation.py`, `test_message_bridge.py`, `test_module_integration.py`,
-      `test_base.py`, `test_google_drive_handler.py`, `test_apple_inc.py`, `test_agi_integration.py`,
+      `test_base.py`, `test_google_drive_handler.py` (partially skipped; reduced 5/6 tests to skip
+      markers, kept import test), `test_apple_inc.py`, `test_agi_integration.py`,
       `test_cli_imports.py`.
     - **MD sync**: Updated 4 files (MASTER_TASK_MAP, IMPROVEMENT_ROADMAP, README — 9 baseline
       references) from 4,438/4,500 → **4,398 tests collected — 0 errors**.
@@ -916,6 +916,19 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
     - Cleaned 33 diagnostic print statements from test_phase1.py (assertions preserved).
     - Net: -13 tests, -0 lines of meaningful coverage lost.
     - **4,398 tests collected — 0 errors** (-13 from prior baseline).
+  - **§X #206 (2026-07-09)**: Bug fixes Round 3 — 16 unbounded array/listener/memory leak fixes across 26 files.
+    - **JS fixes**: unified-display-matrix.js (4 listener arrays + off() methods); wallpaper-handler.js (electronAPI.on listener leak); simple-live2d-loader.js (PIXI .on('hit') listener leak); state-matrix.js (changeCallbacks dedup + unregister); live2d-cubism-wrapper.js (60-120×/frame GPU query cache)
+    - **Python fixes**: lif_neuron.py (_spike_history→deque(1000)), self_generation.py (avatar_history→200), adversarial_generation_system.py (examples→500, eval→1000), vector_store.py (ids→10000), text_gravity.py (_history→1000), negativity.py (_history→5000), ed3n_trainer.py (training_history→500), digital_life_integrator.py (life_events→1000, sig_events→200), state_matrix.py (unclassified_buffer→1000)
+    - **Net**: 26 files modified, 0 lines of coverage lost.
+    - All syntax-checked (16 Python py_compile, 10 JS node -c).
+    - **4,398 tests collected — 0 errors** (no test count change; these were behavioral fixes).
+  - **§X #207 (2026-07-09)**: Test dedup + deep audit.
+    - Merged duplicate test_active_cognition_formula.py + test_influence_applicator.py (unit→core).
+    - Preserved unique `test_instantiation_with_config`. Added `__test__ = False` to comprehensive_test_framework.py.
+    - Deep audit confirmed eta_axis_state is self-contained, config_loader.py + app_config_loader.py are distinct.
+    - CHANGELOG §X #204-10 corrected: test_google_drive_handler.py partially skipped but not deleted.
+    - Net: -2 files, -141 lines.
+    - **4,396 tests collected — 0 errors** (-2 from dedup).
 
 ---
 
