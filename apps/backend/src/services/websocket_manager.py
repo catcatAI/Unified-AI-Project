@@ -16,6 +16,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 from services.connection_session import get_session_manager
 
 from core.system.config.magic_numbers import loop_sleep
+from core.utils import safe_error
 from core.system.live_logger import status as live_status, err as live_err, info as live_info
 
 logger = logging.getLogger(__name__)
@@ -302,7 +303,7 @@ async def _handle_chat_message(websocket: WebSocket, data: dict, session_id: str
                 "message_id": message_id,
                 "content": "（我的大腦似乎遇到了一點點小干擾，能再說一次嗎？）",
                 "sender": "angela",
-                "error": str(chat_err)
+                "error": safe_error(chat_err)
             },
             "timestamp": datetime.now().isoformat(),
         }, websocket)
@@ -363,7 +364,7 @@ async def _handle_multimodal_encode(websocket: WebSocket, data: dict) -> None:
         logger.error("Multimodal encode WS error: %s", e, exc_info=True)
         await manager.send_personal_message({
             "type": "multimodal_encode_result",
-            "data": {"error": str(e)},
+            "data": {"error": safe_error(e)},
             "timestamp": datetime.now().isoformat(),
         }, websocket)
 
@@ -399,7 +400,7 @@ async def _handle_multimodal_decode(websocket: WebSocket, data: dict) -> None:
         logger.error("Multimodal decode WS error: %s", e, exc_info=True)
         await manager.send_personal_message({
             "type": "multimodal_decode_result",
-            "data": {"error": str(e)},
+            "data": {"error": safe_error(e)},
             "timestamp": datetime.now().isoformat(),
         }, websocket)
 

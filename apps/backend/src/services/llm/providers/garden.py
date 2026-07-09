@@ -7,6 +7,7 @@ import time
 from typing import Any, Optional
 
 from core.interfaces.protocols import LLMResponse
+from core.utils import safe_error
 
 from .base import BaseLLMBackend
 
@@ -62,7 +63,7 @@ class GARDENBackend(BaseLLMBackend):
             )
         except Exception as e:
             logger.error("GARDEN backend error: %s", e, exc_info=True)
-            return LLMResponse(text="", backend="garden", model=self.model, error=str(e))
+            return LLMResponse(text="", backend="garden", model=self.model, error=safe_error(e))
 
     async def check_health(self) -> bool:
         try:

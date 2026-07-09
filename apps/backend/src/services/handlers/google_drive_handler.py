@@ -53,7 +53,7 @@ class GoogleDriveHandler:
                     files.append({"name": f, "is_dir": os.path.isdir(fp), "size": os.path.getsize(fp) if os.path.isfile(fp) else 0})
                 return {"status": "ok", "action": action, "files": files, "mode": "local_fs"}
             except Exception as e:
-                return {"status": "error", "action": action, "error": str(e)}
+                return {"status": "error", "action": action, "error": safe_error(e)}
         elif action == "info":
             if os.path.exists(path):
                 return {"status": "ok", "action": action, "exists": True, "is_file": os.path.isfile(path), "size": os.path.getsize(path) if os.path.isfile(path) else 0}

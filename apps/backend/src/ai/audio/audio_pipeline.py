@@ -23,6 +23,7 @@ from collections import OrderedDict
 from typing import Any, Dict, List, Optional
 
 import numpy as np
+from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +144,7 @@ class AudioPipeline:
 
         except Exception as e:
             logger.error("AudioPipeline.process failed: %s", e, exc_info=True)
-            result["error"] = str(e)
+            result["error"] = safe_error(e)
 
         return result
 

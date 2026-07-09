@@ -8,6 +8,7 @@ import logging
 from typing import Any, Dict, Optional
 
 from fastapi import WebSocket, WebSocketDisconnect
+from core.utils import safe_error
 from services.multimodal_service import MultimodalService
 
 logger = logging.getLogger(__name__)
@@ -43,7 +44,7 @@ async def multimodal_stream_handler(websocket: WebSocket) -> None:
                 await websocket.send_json({"action": action, "status": "ok", "result": result})
             except Exception as e:
                 logger.warning(f"Multimodal WS action '{action}' failed: {e}")
-                await websocket.send_json({"action": action, "status": "error", "error": str(e)})
+                await websocket.send_json({"action": action, "status": "error", "error": safe_error(e)})
 
     except WebSocketDisconnect:
         logger.info("Multimodal WS client disconnected")

@@ -10,6 +10,8 @@ import urllib.parse
 import urllib.request
 from typing import Any, Dict, List, Optional
 
+from core.utils import safe_error
+
 logger = logging.getLogger(__name__)
 
 DEFAULT_USER_AGENT = "AngelaAI/7.5.0"
@@ -52,7 +54,7 @@ class WebSearchTool:
             return results
         except Exception as e:
             logger.debug(f"DDG search failed: {e}")
-            return [{"error": str(e)}]
+            return [{"error": safe_error(e)}]
 
     def _wiki_search(self, query: str, num_results: int = 5) -> List[Dict[str, Any]]:
         try:
@@ -76,7 +78,7 @@ class WebSearchTool:
             return results
         except Exception as e:
             logger.debug(f"Wikipedia search failed: {e}")
-            return [{"error": str(e)}]
+            return [{"error": safe_error(e)}]
 
 
 __all__ = ["WebSearchTool"]

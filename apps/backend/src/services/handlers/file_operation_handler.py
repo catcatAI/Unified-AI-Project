@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from core.i18n.i18n_manager import t
+from core.utils import safe_error as _safe_error
 
 logger = logging.getLogger(__name__)
 
@@ -26,20 +27,6 @@ _ALLOWED_ROOTS = [
     Path(tempfile.gettempdir()),
     Path(os.environ.get("ANGELA_WORKSPACE", os.getcwd())),
 ]
-
-def _safe_error(e: Exception) -> str:
-    """Sanitize exception message for user-facing output — strip system paths, truncate."""
-    msg = str(e)
-    import re
-    # Strip Windows drive-letter paths
-    msg = re.sub(r'[A-Za-z]:\\[^\s,"\')]*', '<path>', msg)
-    # Strip Unix absolute paths
-    msg = re.sub(r'/[/A-Za-z0-9._-]+', '<path>', msg)
-    # Truncate long messages
-    if len(msg) > 200:
-        msg = msg[:200] + '...'
-    return msg
-
 
 def _is_safe_path(target: Path) -> bool:
     try:

@@ -1491,7 +1491,7 @@ async def chat_with_audio(
                 "response": "語音處理失敗，請重試。",
                 "session_id": session_id,
                 "source": "stt_error",
-                "error": str(e),
+                "error": safe_error(e),
             }
 
     user_text = transcribed_text or message

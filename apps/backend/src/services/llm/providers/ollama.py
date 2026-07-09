@@ -7,6 +7,7 @@ import time
 
 import aiohttp
 from core.interfaces.protocols import LLMResponse
+from core.utils import safe_error
 from core.system.config.network_defaults import DEFAULT_OLLAMA_MODEL, OLLAMA_HOST, OLLAMA_TIMEOUT
 
 from .base import BaseLLMBackend
@@ -90,4 +91,4 @@ class OllamaBackend(BaseLLMBackend):
                     )
         except Exception as e:
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            return LLMResponse(text="", backend="ollama", model=self.model, error=str(e))
+            return LLMResponse(text="", backend="ollama", model=self.model, error=safe_error(e))

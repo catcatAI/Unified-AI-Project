@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from core.crisis_log import append_quality_log as _append_quality_log
 from core.crisis_log import write_crisis_log as _write_crisis_log
+from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +126,7 @@ class MultimodalQualityMonitor:
                     "source": "synthetic_evaluation",
                 }
         except Exception as e:
-            sample["vision"] = {"quality": 0.0, "error": str(e)}
+            sample["vision"] = {"quality": 0.0, "error": safe_error(e)}
 
         # Sample audio quality
         audio_quality = 0.0
@@ -142,7 +143,7 @@ class MultimodalQualityMonitor:
                     "source": "synthetic_evaluation",
                 }
         except Exception as e:
-            sample["audio"] = {"quality": 0.0, "error": str(e)}
+            sample["audio"] = {"quality": 0.0, "error": safe_error(e)}
 
         sample["sampling_time_ms"] = round((time.time() - t0) * 1000, 1)
 

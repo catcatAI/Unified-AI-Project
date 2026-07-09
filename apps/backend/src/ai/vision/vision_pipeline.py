@@ -23,6 +23,7 @@ from collections import OrderedDict
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
+from core.utils import safe_error
 from PIL import Image
 
 logger = logging.getLogger(__name__)
@@ -149,7 +150,7 @@ class VisionPipeline:
 
         except Exception as e:
             logger.error("VisionPipeline.process failed: %s", e, exc_info=True)
-            result["error"] = str(e)
+            result["error"] = safe_error(e)
 
         return result
 

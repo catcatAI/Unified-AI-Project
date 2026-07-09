@@ -36,6 +36,7 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from core.engine.state_matrix import StateMatrix4D
+from core.utils import safe_error
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
@@ -301,7 +302,7 @@ async def save_state(request: SaveStateRequest) -> dict:
             await asyncio.to_thread(_write_state_sync, filepath, state)
         return {"status": "saved", "filepath": filepath}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error(e))
 
 
 @state_matrix_router.post("/load")
@@ -323,4 +324,4 @@ async def load_state(request: LoadStateRequest) -> dict:
             matrix.theta.update(state.get("theta", {}))
         return {"status": "loaded", "filepath": filepath}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error(e))

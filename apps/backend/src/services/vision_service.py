@@ -13,6 +13,7 @@ from core.perception.visual_sampler import SamplingDistribution, VisualSampler
 from core.sync.realtime_sync import SyncEvent, sync_manager
 from core.system.cluster_manager import cluster_manager
 from core.system.config.magic_numbers import timing_value
+from core.utils import safe_error
 from integrations.os_bridge_adapter import OSBridgeAdapter
 
 logger = logging.getLogger(__name__)
@@ -118,7 +119,7 @@ class VisionService:
         except Exception as e:
             logger.error(f"Error analyzing image {analysis_results.get('processing_id')}: {e}", exc_info=True)
             error_result = self._build_error_result(e, analysis_results.get("processing_id"))
-            self._record_processing(analysis_results.get("processing_id"), requested_features, False, str(e))
+            self._record_processing(analysis_results.get("processing_id"), requested_features, False, safe_error(e))
             return error_result
 
     async def _auto_capture(self, image_data: Optional[bytes]) -> Tuple[Optional[bytes], Optional[Dict]]:
@@ -271,7 +272,7 @@ class VisionService:
 
         except Exception as e:
             logger.error(f"Error comparing images: {e}", exc_info=True)
-            return {"error": str(e), "similarity_score": None}
+            return {"error": safe_error(e), "similarity_score": None}
 
     async def process_video_frame(
         self,
@@ -790,7 +791,7 @@ class VisionService:
             return await asyncio.to_thread(self._vision_pipeline.process, image_data)
         except Exception as e:
             logger.warning("VisionPipeline failed: %s", e)
-            return {"error": str(e)}
+            return {"error": safe_error(e)}
 
     async def batch_encode(self, images: list) -> list:
         """Batch encode multiple images using VisionPipeline.

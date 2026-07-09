@@ -19,6 +19,7 @@ import time
 from collections import OrderedDict
 from typing import Any, Dict, List, Optional, Tuple
 
+from core.utils import safe_error
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -181,7 +182,7 @@ class CrossModalRouter:
                 "result": None, "pipeline": "error",
                 "confidence": 0.0,
                 "time_ms": round((time.time() - t0) * 1000, 1),
-                "error": str(e),
+                "error": safe_error(e),
             }
 
     # --- Unimodal routing ---

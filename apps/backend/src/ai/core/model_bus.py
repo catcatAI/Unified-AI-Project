@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
 from core.system.config.magic_numbers import confidence_value, latency_value, timeout_value
+from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
 
@@ -207,7 +208,7 @@ class ModelBus:
         except asyncio.TimeoutError:
             return {"type": handler_id, "success": False, "result": None, "error": "timeout"}
         except Exception as e:
-            return {"type": handler_id, "success": False, "result": None, "error": str(e)}
+            return {"type": handler_id, "success": False, "result": None, "error": safe_error(e)}
 
     # ------------------------------------------------------------------
     # Routing
@@ -524,7 +525,7 @@ class ModelBus:
             logger.error("Model '%s' timed out after %.1fs", model_id, self.default_timeout)
         except Exception as exc:
             raw = ""
-            error = str(exc)
+            error = safe_error(exc)
             logger.exception("Model '%s' raised during process(): %s", model_id, exc)
 
         elapsed = (time.perf_counter() - t0) * 1000

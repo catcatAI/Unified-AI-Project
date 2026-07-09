@@ -23,6 +23,7 @@ import time
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
+from core.utils import safe_error
 from PIL import Image
 
 logger = logging.getLogger(__name__)
@@ -206,7 +207,7 @@ class MultimodalService:
                 return {"error": f"Unknown modality: {modality}"}
         except Exception as e:
             logger.error("encode_semantic failed: %s", e)
-            return {"error": str(e)}
+            return {"error": safe_error(e)}
 
     async def semantic_availability(self) -> Dict[str, bool]:
         """Check availability of semantic encoder backends."""
@@ -424,7 +425,7 @@ class MultimodalService:
                 logger.debug("CML feed failed (non-fatal): %s", cml_e)
         except Exception as e:
             logger.error("Encode failed: %s", e, exc_info=True)
-            result["error"] = str(e)
+            result["error"] = safe_error(e)
         return result
 
     # --- Decoding ---
@@ -508,7 +509,7 @@ class MultimodalService:
             result["time_ms"] = round((time.time() - t0) * 1000, 1)
         except Exception as e:
             logger.error("Decode failed: %s", e, exc_info=True)
-            result["error"] = str(e)
+            result["error"] = safe_error(e)
         return result
 
     # --- Comparison ---
@@ -544,7 +545,7 @@ class MultimodalService:
             result["cross_modal_attention"] = attn
         except Exception as e:
             logger.error("Compare failed: %s", e, exc_info=True)
-            result["error"] = str(e)
+            result["error"] = safe_error(e)
         return result
 
     # --- Retrieval ---
@@ -641,7 +642,7 @@ class MultimodalService:
         except Exception as e:
             logger.error("Training failed: %s", e, exc_info=True)
             result["status"] = "error"
-            result["error"] = str(e)
+            result["error"] = safe_error(e)
         return result
 
     # --- Evaluation ---
@@ -697,7 +698,7 @@ class MultimodalService:
                 result["metrics"] = eval_result
         except Exception as e:
             logger.error("Evaluate failed: %s", e, exc_info=True)
-            result["error"] = str(e)
+            result["error"] = safe_error(e)
         return result
 
     # --- Generation ---
@@ -763,7 +764,7 @@ class MultimodalService:
                 result["error"] = f"Unknown cross-modal path: {source_modality} → {target_modality}"
         except Exception as e:
             logger.error("Generate failed: %s", e, exc_info=True)
-            result["error"] = str(e)
+            result["error"] = safe_error(e)
         return result
 
     # --- Registry management ---
@@ -799,7 +800,7 @@ class MultimodalService:
             return {"status": "saved" if sp else "failed", "path": sp or ""}
         except Exception as e:
             logger.error("Save weights failed: %s", e)
-            return {"status": "failed", "error": str(e)}
+            return {"status": "failed", "error": safe_error(e)}
 
     async def load_weights(self, path: str) -> Dict[str, Any]:
         """Load trained weights from .npz file and apply to all components."""
@@ -808,7 +809,7 @@ class MultimodalService:
             return {"status": "loaded" if ok else "failed"}
         except Exception as e:
             logger.error("Load weights failed: %s", e)
-            return {"status": "failed", "error": str(e)}
+            return {"status": "failed", "error": safe_error(e)}
 
     # --- P37: Error recovery ---
 

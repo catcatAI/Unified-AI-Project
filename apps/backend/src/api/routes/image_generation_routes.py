@@ -8,6 +8,7 @@ import warnings
 from typing import Optional
 
 import numpy as np
+from core.utils import safe_error
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -224,7 +225,7 @@ async def generate_image(request: GenerateImageRequest):
         )
     except Exception as e:
         logger.error("Image generation failed: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error(e))
 
 
 @router.post("/recognize-image", response_model=RecognizeImageResponse)
@@ -283,7 +284,7 @@ async def recognize_image(request: RecognizeImageRequest):
         raise
     except Exception as e:
         logger.error("Image recognition failed: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error(e))
 
 
 @router.post("/reconstruct-image", response_model=ReconstructImageResponse)
@@ -342,7 +343,7 @@ async def reconstruct_image(request: ReconstructImageRequest):
         raise
     except Exception as e:
         logger.error("Image reconstruction failed: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error(e))
 
 
 @router.post("/interpolate-classes", response_model=InterpolateResponse)
@@ -391,7 +392,7 @@ async def interpolate_classes(request: InterpolateRequest):
         )
     except Exception as e:
         logger.error("Interpolation failed: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error(e))
 
 @router.get("/generate-image/status")
 async def generate_image_status():

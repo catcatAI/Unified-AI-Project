@@ -18,6 +18,7 @@ import logging
 from typing import Any, Dict, Optional
 
 import numpy as np
+from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
 
@@ -210,7 +211,7 @@ class DualEncoderRouter:
             result["latent"] = combined
         except Exception as e:
             logger.error("DualEncoderRouter.encode_vision failed: %s", e)
-            result["error"] = str(e)
+            result["error"] = safe_error(e)
         return result
 
     def encode_audio(self, audio_data: bytes,

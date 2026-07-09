@@ -9,11 +9,38 @@ Angela AI - Common Utilities
 import hashlib
 import json
 import logging
+import os
 import re
 import time
 from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
+
+
+def safe_error(e: Exception, max_length: int = 200) -> str:
+    """Sanitize exception message for user-facing output.
+
+    Strips system file paths, truncates long messages, and removes
+    potentially sensitive information from exception text.
+
+    Args:
+        e: The exception to sanitize.
+        max_length: Maximum length of the returned message.
+
+    Returns:
+        A sanitized, user-safe error string.
+    """
+    msg = str(e)
+    # Strip Windows drive-letter paths (C:\...)
+    msg = re.sub(r'[A-Za-z]:\\[^\s,"\')]*', '<path>', msg)
+    # Strip Unix absolute paths
+    msg = re.sub(r'/[/A-Za-z0-9._-]+', '<path>', msg)
+    # Strip potential API keys and tokens (hex strings > 20 chars)
+    msg = re.sub(r'[A-Za-z0-9_-]{20,}', '<token>', msg)
+    # Truncate long messages
+    if len(msg) > max_length:
+        msg = msg[:max_length] + '...'
+    return msg
 
 
 def sha256_hash(data: Union[str, bytes]) -> str:
@@ -101,6 +128,7 @@ class Timer:
 
 
 __all__ = [
+    "safe_error",
     "sha256_hash",
     "md5_hash",
     "truncate_text",

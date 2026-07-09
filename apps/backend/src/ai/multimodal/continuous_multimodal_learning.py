@@ -25,6 +25,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from core.utils import safe_error
+
 logger = logging.getLogger(__name__)
 
 
@@ -209,7 +211,7 @@ class ContinuousMultimodalLearning:
 
         except Exception as e:
             logger.error("Micro-train failed: %s", e, exc_info=True)
-            result = {"status": "error", "error": str(e)}
+            result = {"status": "error", "error": safe_error(e)}
 
         # Auto-save if configured
         if self.save_dir and result.get("status") == "completed":

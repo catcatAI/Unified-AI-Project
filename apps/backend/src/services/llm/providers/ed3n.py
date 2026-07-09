@@ -6,6 +6,7 @@ import logging
 import time
 
 from core.interfaces.protocols import LLMResponse
+from core.utils import safe_error
 
 from .base import BaseLLMBackend
 
@@ -59,7 +60,7 @@ class ED3NBackend(BaseLLMBackend):
             )
         except Exception as e:
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            return LLMResponse(text="", backend="ed3n", model=self.model, error=str(e))
+            return LLMResponse(text="", backend="ed3n", model=self.model, error=safe_error(e))
 
     async def check_health(self) -> bool:
         try:

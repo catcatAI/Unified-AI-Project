@@ -6,6 +6,7 @@ import time
 
 import aiohttp
 from core.interfaces.protocols import LLMResponse
+from core.utils import safe_error
 from core.system.config.network_defaults import (
     DEFAULT_GOOGLE_MODEL,
     GOOGLE_API_BASE,
@@ -76,4 +77,4 @@ class GoogleAPIBackend(BaseLLMBackend):
                     )
         except Exception as e:
             logger.error(f"Google Gemini API error: {e}", exc_info=True)
-            return LLMResponse(text="", backend="google", model=self.model, error=str(e))
+            return LLMResponse(text="", backend="google", model=self.model, error=safe_error(e))

@@ -79,7 +79,7 @@ class AtlassianCLIBridge:
             logger.warning("Atlassian CLI operation timed out", exc_info=True)
             return {"success": False, "error": "Atlassian CLI operation timed out."}
         except Exception as e:  # broad exception acceptable: CLI execution should be resilient
-            return {"success": False, "error": str(e)}
+            return {"success": False, "error": safe_error(e)}
 
     def get_status(self) -> dict:
         """Get status."""

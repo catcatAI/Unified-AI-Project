@@ -9,6 +9,8 @@ import struct
 import uuid
 from typing import Any, Optional
 
+from core.utils import safe_error
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -16,6 +18,7 @@ try:
     SR_AVAILABLE = True
 except ImportError:
     SR_AVAILABLE = False
+
 
 try:
     import edge_tts
@@ -123,7 +126,7 @@ class AudioService:
             return {"processing_id": str(self._processing_id), "text": "", "error": f"Recognition request failed: {e}"}
         except Exception as e:
             logger.warning("Speech recognition failed: %s", e)
-            return {"processing_id": str(self._processing_id), "text": "", "error": str(e)}
+            return {"processing_id": str(self._processing_id), "text": "", "error": safe_error(e)}
 
     async def text_to_speech(self, text: str, voice: Optional[str] = None) -> Optional[bytes]:
         if not text:
@@ -182,7 +185,7 @@ class AudioService:
             return result
         except Exception as e:
             logger.warning("AudioPipeline failed: %s", e)
-            return {"error": str(e)}
+            return {"error": safe_error(e)}
 
     async def batch_encode(self, audio_list: list) -> list:
         """Run AudioPipeline on multiple audio clips in batch.

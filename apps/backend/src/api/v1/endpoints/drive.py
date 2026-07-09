@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Body, Depends, File, Form, HTTPException, Query, UploadFile
+from core.utils import safe_error
 
 from ._deps import get_drive_service
 
@@ -185,7 +186,7 @@ async def get_drive_status(svc=Depends(get_drive_service)) -> dict:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Drive status error: {e}", exc_info=True)
-        return {"status": "error", "authenticated": False, "detail": str(e)}
+        return {"status": "error", "authenticated": False, "detail": safe_error(e)}
 
 
 @router.get("/auth/status")
@@ -197,7 +198,7 @@ async def get_auth_status(svc=Depends(get_drive_service)) -> dict:
         raise HTTPException(status_code=503, detail="credentials.json not found")
     except Exception as e:
         logger.error(f"Auth status error: {e}", exc_info=True)
-        return {"authenticated": False, "detail": str(e)}
+        return {"authenticated": False, "detail": safe_error(e)}
 
 
 @router.get("/auth/url")
@@ -294,7 +295,7 @@ async def sync_files(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_
             metadata = svc.get_file_metadata(fid)
         except Exception as e:
             logger.warning(f"Could not get metadata for {fid}: {e}", exc_info=True)
-            synced_files.append({"id": fid, "name": f"file_{fid}", "memorized": False, "error": str(e)})
+            synced_files.append({"id": fid, "name": f"file_{fid}", "memorized": False, "error": safe_error(e)})
             continue
 
         dest_path = _safe_drive_dest(folder_path, metadata.get("name", f"file_{fid}"))

@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 # Crisis log — use shared utility
 from core.crisis_log import write_crisis_log as _write_crisis_log
+from core.utils import safe_error
 
 
 class MultimodalErrorRecovery:
@@ -97,7 +98,7 @@ class MultimodalErrorRecovery:
                 }
                 return result
             except Exception as e:
-                last_error = str(e)
+                last_error = safe_error(e)
                 logger.warning("Encode attempt %d/%d failed for %s: %s",
                                attempt + 1, max_retries + 1, modality, last_error)
                 if attempt < max_retries:
@@ -149,7 +150,7 @@ class MultimodalErrorRecovery:
             fallback_result: Dict[str, Any] = {
                 "item_id": item_id,
                 "modality": modality,
-                "error": str(e),
+                "error": safe_error(e),
                 "recovery": {
                     "fallback_used": True,
                     "fallback_type": "text_description",
@@ -182,7 +183,7 @@ class MultimodalErrorRecovery:
             if self._retry_count.get(op_key, 0) >= 3:
                 _write_crisis_log(3, {
                     "operation": op_key,
-                    "error": str(e),
+                    "error": safe_error(e),
                     "item_id": item_id,
                     "consecutive_failures": self._retry_count[op_key],
                 })
@@ -229,14 +230,13 @@ class MultimodalErrorRecovery:
             self._retry_count[op_key] = self._retry_count.get(op_key, 0) + 1
             _write_crisis_log(4, {
                 "operation": op_key,
-                "error": str(e),
+                "error": safe_error(e),
                 "checkpoint": cp_label,
                 "checkpoint_path": cp_path or "",
             })
             return {
-                "status": "error",
-                "error": str(e),
-                "checkpoint": {
+                "status": "error",            "error": safe_error(e),
+            "checkpoint": {
                     "label": cp_label,
                     "path": cp_path or "",
                     "saved_before_training": cp_path is not None,

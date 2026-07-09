@@ -11,6 +11,7 @@ import shutil
 from typing import Optional
 
 from core.i18n.i18n_manager import t
+from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +82,7 @@ class SystemCommandHandler:
             return t("sys_cmd.timeout", seconds=_TIMEOUT)
         except Exception as e:
             logger.error(f"SystemCommandHandler error: {e}", exc_info=True)
-            return t("sys_cmd.failed", error=str(e))
+            return t("sys_cmd.failed", error=safe_error(e))
 
 
 __all__ = ["SystemCommandHandler"]

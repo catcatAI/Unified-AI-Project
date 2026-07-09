@@ -6,6 +6,7 @@ import time
 
 import aiohttp
 from core.interfaces.protocols import LLMResponse
+from core.utils import safe_error
 from core.system.config.network_defaults import (
     ANTHROPIC_API_BASE,
     ANTHROPIC_TIMEOUT,
@@ -72,4 +73,4 @@ class AnthropicAPIBackend(BaseLLMBackend):
                     )
         except Exception as e:
             logger.error(f"Anthropic API error: {e}", exc_info=True)
-            return LLMResponse(text="", backend="anthropic", model=self.model, error=str(e))
+            return LLMResponse(text="", backend="anthropic", model=self.model, error=safe_error(e))
