@@ -131,6 +131,7 @@
     <script src="../../../packages/shared-js/js/simple-live2d-loader.js"></script>
     <script src="../../../packages/shared-js/js/api-client.js"></script>
     <script src="../../../packages/shared-js/js/dialogue-ui.js"></script>
+    <script src="../../../packages/shared-js/js/terminal-ui.js"></script>
 
     <script>
         // Initialize app
@@ -172,6 +173,18 @@
 
         // Initialize dialogue UI
         const dialogueUI = new DialogueUI(apiClient);
+
+        // Initialize terminal
+        const terminal = new TerminalUI({
+            onSend: (text) => {
+                apiClient.sendMessage(text).then(r => {
+                    if (r && r.response) terminal.writeResponse(r.response);
+                });
+            }
+        });
+        terminal.registerGlobalShortcut();
+        window._terminal = terminal;
+        terminal.writeSystem('Terminal ready. Press Ctrl+` to toggle.');
 
         // Test backend connection
         async function init() {

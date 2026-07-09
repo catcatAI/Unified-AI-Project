@@ -655,6 +655,107 @@
             }
         }
     </style>
+
+    <!-- Terminal Overlay Styles -->
+    <style>
+        #terminal-overlay {
+            position: fixed;
+            right: 10px;
+            bottom: 70px;
+            width: 520px;
+            height: 360px;
+            background: rgba(10, 10, 14, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            z-index: 180;
+            font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            color: #c0c0c0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        #terminal-overlay.terminal-hidden {
+            opacity: 0;
+            transform: translateY(8px) scale(0.97);
+            pointer-events: none;
+        }
+        #terminal-overlay.terminal-visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px 8px 0 0;
+            flex-shrink: 0;
+        }
+        .terminal-title {
+            color: #888;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .terminal-header-actions { display: flex; gap: 6px; }
+        .terminal-header-actions button {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 13px;
+            padding: 2px 4px;
+            line-height: 1;
+            border-radius: 3px;
+        }
+        .terminal-header-actions button:hover {
+            color: #ccc;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .terminal-output {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .terminal-output::-webkit-scrollbar { width: 5px; }
+        .terminal-output::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+        .terminal-line { white-space: pre-wrap; word-break: break-word; line-height: 1.5; padding: 1px 0; }
+        .terminal-input { color: #4ec9b0; }
+        .terminal-response { color: #e0e0e0; }
+        .terminal-system { color: #888; font-style: italic; }
+        .terminal-error { color: #f44747; }
+        .terminal-input-line {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            flex-shrink: 0;
+        }
+        .terminal-prompt {
+            color: #4ec9b0;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .terminal-input-line input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #e0e0e0;
+            font-family: inherit;
+            font-size: 13px;
+            outline: none;
+        }
+        .terminal-input-line input::placeholder { color: #555; }
+    </style>
 </head>
 
 <body>
@@ -692,6 +793,7 @@
             <div class="toolbar-content">
                 <button class="toolbar-btn" id="btn-toggle-dialogue" title="Toggle Chat">💬</button>
                 <button class="toolbar-btn" id="btn-settings" title="Settings">⚙️</button>
+                <button class="toolbar-btn" id="btn-terminal" title="Terminal (Ctrl+`)">>_</button>
                 <input type="text" id="dialogue-input" placeholder="與 Angela 對話..." />
                 <button class="toolbar-btn" id="btn-send" title="Send">📤</button>
             </div>
@@ -783,6 +885,9 @@
     <script src="../../../packages/shared-js/js/plugin-manager.js"></script>
     <script src="../../../packages/shared-js/js/user-manager.js"></script>
 
+    <!-- Terminal UI -->
+    <script src="../../../packages/shared-js/js/terminal-ui.js"></script>
+
     <!-- Detection & Availability -->
     <script src="../../../packages/shared-js/js/availability-manager.js"></script>
 
@@ -794,7 +899,38 @@
         document.addEventListener('DOMContentLoaded', function () {
             console.log('[App] Starting Angela App initialization...');
             window.angelaApp = new AngelaApp();
+            _initTerminal();
         });
+
+        function _initTerminal() {
+            const app = window.angelaApp;
+            if (!app) return;
+
+            const terminal = new TerminalUI({
+                onSend: (text) => {
+                    if (app.backendWebSocket && app.backendWebSocket.connected) {
+                        app.backendWebSocket.sendMessage(text);
+                    } else if (app.apiClient) {
+                        app.apiClient.sendMessage(text).then(r => {
+                            if (r && r.response) terminal.writeResponse(r.response);
+                        });
+                    }
+                }
+            });
+            terminal.registerGlobalShortcut();
+            window._terminal = terminal;
+
+            if (app.backendWebSocket) {
+                app.backendWebSocket.on('angela_response', (data) => {
+                    if (data && data.response) terminal.writeResponse(data.response);
+                });
+            }
+
+            const btn = document.getElementById('btn-terminal');
+            if (btn) btn.addEventListener('click', () => terminal.toggle());
+
+            terminal.writeSystem('Terminal ready. Press Ctrl+` to toggle.');
+        }
     </script>
 </body>
 

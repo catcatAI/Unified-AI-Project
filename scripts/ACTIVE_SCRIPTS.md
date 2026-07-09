@@ -42,7 +42,13 @@ This document lists the **currently active and recommended** scripts for the Uni
 - **`update-docs.ps1`**: Update documentation (PowerShell)
 
 ### Utilities
-- **`run_angela.py`**: Primary launcher
+- **`run_angela.py`**: Unified launcher (v6.3.0). Starts backend API + optional desktop app.
+  - `python scripts/run_angela.py` — default (Ctrl+C to quit)
+  - `python scripts/run_angela.py --api-only` — backend only
+  - `python scripts/run_angela.py --desktop-only` — desktop only
+  - `python scripts/run_angela.py --timeout 120` — test mode: auto-shutdown after 120s
+  - `python scripts/run_angela.py --health-check` — verify system readiness
+  - Uses live_logger for single-line status updates during idle
 - **`_run_phase1.bat`**: Phase 1 launcher
 - **`ai-runner.bat`**: AI runner
 - **`analyze_roadmap_from_logs.py`**: Extract roadmap from logs

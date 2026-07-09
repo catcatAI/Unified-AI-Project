@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-Angela AI Unified Launcher v6.2.0
+Angela AI Unified Launcher v6.3.0
 一键启动：自动启动后端 API + 桌面应用
 
 Usage:
-    python run_angela.py                    # 启动全部
+    python run_angela.py                    # 启动全部（Ctrl+C 退出）
     python run_angela.py --api-only        # 只启动后端
     python run_angela.py --desktop-only    # 只启动桌面
+    python run_angela.py --timeout 300     # 测试用：N秒后自动关闭
     python run_angela.py --install-shortcut # 创建桌面快捷方式
     python run_angela.py --health-check    # 健康检查
 """
@@ -36,50 +37,32 @@ class SecurityError(Exception):
 # ============================================
 
 class ProgressDisplay:
-    """进度显示器"""
-    
+    """进度显示器 - 使用 live_logger 实现单行动态更新"""
+
     def __init__(self, total_steps: int = 100):
         self.total_steps = total_steps
         self.current_step = 0
-        self.spinner_chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
-        self.spinner_index = 0
-    
-    def update(self, step: int, message: str, status: str = "info") -> None:
-        """更新进度"""
+        self._last_pct = -1
+
+    def update(self, step: int, message: str, stat: str = "info") -> None:
+        from core.system.live_logger import status, status_done
         self.current_step = step
-        spinner = self.spinner_chars[self.spinner_index % len(self.spinner_chars)]
-        self.spinner_index += 1
-        
-        # 计算进度百分比
         percent = min(100, int((step / self.total_steps) * 100))
-        
-        # 选择状态图标
-        icons = {
-            "info": "ℹ️",
-            "success": "✅",
-            "warning": "⚠️",
-            "error": "❌",
-            "loading": spinner,
-            "pending": "⏳",
-        }
-        icon = icons.get(status, "ℹ️")
-        
-        # 清除当前行并显示进度
-        progress_bar = "█" * (percent // 2) + "░" * (50 - percent // 2)
-        print(f"\r[{progress_bar}] {percent:3d}%  {icon} {message}", end="", flush=True)
-        
-        if status in ["success", "error"]:
-            print()  # 完成或错误时换行
-    
+        if percent == self._last_pct and stat not in ("error",):
+            return
+        self._last_pct = percent
+        bar = "█" * (percent // 2) + "░" * (50 - percent // 2)
+        status(f"[{bar}] {percent:3d}% {message}")
+        if stat in ("success", "error"):
+            status_done(f"[{bar}] {percent:3d}% {'✅' if stat == 'success' else '❌'} {message}")
+
     def finish(self, message: str) -> None:
-        """完成进度显示"""
-        print(f"\r[█████████████████████████████████████████████████] 100%  ✅ {message}")
-        print()
-    
+        from core.system.live_logger import status_done
+        status_done(f"[{'█' * 50}] 100% ✅ {message}")
+
     def error(self, message: str) -> None:
-        """显示错误"""
-        print(f"\r[█████████████████████████████████████████████████] ERROR  ❌ {message}")
-        print()
+        from core.system.live_logger import err
+        err(f"{message}")
 
 
 # ============================================
@@ -485,15 +468,19 @@ class Launcher:
             
             if wait_for_server(8000, progress=self.progress, proc=proc):
                 self.progress.update(50, "后端已就绪", "success")
-                # Write PID file for stale process tracking
                 try:
                     self.pid_file.write_text(str(proc.pid), encoding='utf-8')
                 except Exception:
                     pass
                 return proc
             else:
-                self.progress.error("后端启动超时")
-                self.recovery.log_error("backend", Exception("Backend startup timeout"))
+                crashed = proc.poll() is not None
+                if crashed:
+                    self.progress.error(f"后端进程崩溃（退出码 {proc.returncode}）")
+                    self.recovery.log_error("backend", Exception(f"Backend process crashed with exit code {proc.returncode}"))
+                else:
+                    self.progress.error("后端启动超时")
+                    self.recovery.log_error("backend", Exception("Backend startup timeout"))
                 return None
             
         except Exception as e:
@@ -652,6 +639,10 @@ def main():
     parser.add_argument("--install-shortcut", action="store_true", help="创建桌面快捷方式")
     parser.add_argument("--health-check", action="store_true", help="运行健康检查")
     parser.add_argument(
+        "--timeout", type=int, default=0, metavar="SEC",
+        help="测试用：N秒后自动关闭（默认0=无限运行，等待 Ctrl+C）"
+    )
+    parser.add_argument(
         "--mode", type=str, choices=["user", "dev"], default="user",
         help="运行模式: user (简洁/普通用户), dev (详细/开发者)"
     )
@@ -663,7 +654,7 @@ def main():
     args = parser.parse_args()
 
     print("=" * 60)
-    print("🌟 Angela AI 一键启动器 v6.2.0")
+    print("🌟 Angela AI 一键启动器 v6.3.0")
     print("=" * 60)
 
     launcher = Launcher()
@@ -765,15 +756,32 @@ def main():
 
     if backend_proc or desktop_proc:
         launcher.progress.finish("Angela AI 启动完成！")
+        from core.system.live_logger import status
+        timeout = args.timeout
         print("\n" + "=" * 60)
-        print("💡 按 Ctrl+C 退出")
+        if timeout > 0:
+            deadline = time.time() + timeout
+            print(f"💡 按 Ctrl+C 退出（测试超时 {timeout}秒后自动关闭）")
+        else:
+            print("💡 按 Ctrl+C 退出")
         print("=" * 60)
 
         try:
-            while True:
-                time.sleep(1)
+            if timeout > 0:
+                while time.time() < deadline:
+                    remaining = int(deadline - time.time())
+                    m, s = divmod(remaining, 60)
+                    status(f"运行中... 剩余 {m:02d}:{s:02d}")
+                    time.sleep(1)
+            else:
+                while True:
+                    time.sleep(1)
         except KeyboardInterrupt:
-            pass
+            from core.system.live_logger import info as _li
+            _li("收到 Ctrl+C，正在关闭...")
+        else:
+            from core.system.live_logger import info as _li
+            _li(f"测试超时（{timeout}秒），正在关闭...")
 
         launcher.shutdown(backend_proc, desktop_proc)
 
