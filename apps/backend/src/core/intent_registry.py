@@ -28,7 +28,7 @@ _DEFAULT_PATTERNS: List[Dict[str, Any]] = [
     {"name": "web_search", "keywords": ["搜尋", "搜索", "查找", "查詢", "google", "上網查", "搜一下", "search", "find", "look up"], "priority": 4, "handler": "WebSearchHandler", "category": "search"},
     {"name": "learning", "keywords": ["記住", "學習", "偏好", "設定", "记住", "学会", "教會", "learn", "remember", "preference"], "priority": 4, "handler": "LearningHandler", "category": "learning"},
     {"name": "character_card", "keywords": ["角色", "角色卡", "生成角色", "人物", "人物卡", "創建角色", "character", "card", "角色創建"], "priority": 5, "handler": "CardPipeline", "category": "card"},
-    {"name": "document", "keywords": ["報告", "文件", "整理", "彙整", "整理成", "生成報告", "document", "report", "doc"], "priority": 5, "handler": "DocumentBuilder", "category": "document"},
+    {"name": "document", "keywords": ["報告", "文件", "整理", "卡片堆", "卡片", "開發文件", "彙整", "整理成", "生成報告", "輸出到", "document", "report", "doc"], "priority": 5, "handler": "DocumentBuilder", "category": "document"},
     {"name": "google_drive", "keywords": ["谷歌硬碟", "google硬碟", "Google硬碟", "google drive", "Google Drive", "雲端硬碟", "雲端磁碟", "同步drive", "列出雲端", "搜索雲端"], "priority": 5, "handler": "GoogleDriveHandler", "category": "integration"},
     {"name": "general", "keywords": [], "priority": 9, "handler": "GeneralHandler", "category": "general"},
 ]
