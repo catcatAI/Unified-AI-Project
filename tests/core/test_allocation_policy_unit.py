@@ -180,6 +180,8 @@ def test_add_remove_stage():
             self.name = "CustomStage"
         def matches(self, ctx):
             return ctx.max_resonance > 0.95
+        def decide(self, ctx):
+            return AllocationDecision(action=AllocationAction.ASSIGN, target='custom', confidence=1.0)
 
     policy.add_stage(CustomStage())
     assert len(policy.stages) == initial_count + 1

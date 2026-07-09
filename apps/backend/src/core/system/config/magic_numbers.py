@@ -152,6 +152,8 @@ def behavior_executor(key: str, default: float = 0.5) -> float:
 
 
 def _apply_hw_multiplier(value: float) -> float:
+    if not isinstance(value, (int, float)):
+        return value
     profile = _get_hardware_profile()
     if profile is not None:
         return profile.apply_multiplier(value)
