@@ -1,4 +1,5 @@
 """
+
 Connection Session Management
 =============================
 
@@ -13,7 +14,9 @@ Author: Angela AI v6.2.1
 Version: 6.2.1
 """
 
+
 from __future__ import annotations
+from core.utils import safe_error
 
 import asyncio
 import logging
@@ -360,7 +363,7 @@ class SessionManager:
                     sent_count += 1
                     self._stats.total_messages += 1
                 except Exception as e:
-                    err_msg = str(e) or type(e).__name__
+                    err_msg = safe_error(e) or type(e).__name__
                     logger.warning(f"[SessionManager] Broadcast to {session.client_id} failed: {err_msg}")
                     self._stats.failed_messages += 1
                     await self.unregister(session.client_id, f"Broadcast failed: {err_msg}")

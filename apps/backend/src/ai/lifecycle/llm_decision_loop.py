@@ -1,9 +1,12 @@
 """
+
 LLM 決策循環
 
 持續的 LLM 決策機制，讓 Angela 基於 LLM 持續做出決策。
 這是 Angela 的"大腦"核心循環。
 """
+
+from core.utils import safe_error
 
 # =============================================================================
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
@@ -479,7 +482,7 @@ class LLMDecisionLoop:
 
         except Exception as e:  # broad exception acceptable: execution should not crash decision loop
             logger.error(f"Error executing decision: {e}", exc_info=True)
-            return {"success": False, "error": str(e)}
+            return {"success": False, "error": safe_error(e)}
 
     async def _execute_greet(self, decision: Decision) -> Dict[str, Any]:
         """執行問候"""

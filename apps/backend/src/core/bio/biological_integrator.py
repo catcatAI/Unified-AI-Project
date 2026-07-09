@@ -1,4 +1,5 @@
 """
+
 Angela AI v6.0 - Biological Integrator
 生物系统整合器
 
@@ -16,7 +17,9 @@ Version: 6.0.0
 Date: 2026-02-02
 """
 
+
 from __future__ import annotations
+from core.utils import safe_error
 
 import asyncio
 import logging
@@ -693,7 +696,7 @@ class BiologicalIntegrator:
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             results["status"] = "error"
 
-            results["error"] = str(e)
+            results["error"] = safe_error(e)
             results["error_type"] = type(e).__name__
 
         return results

@@ -1,4 +1,5 @@
 """
+
 Dependency Manager for Unified AI Project.
 
 This module provides a centralized system for managing optional dependencies
@@ -9,6 +10,8 @@ Angela Matrix: αβγδ - Dependency Resolution Layer
 Context: Optional Dependency Management
 Purpose: Provide fallback mechanisms for optional dependencies
 """
+
+from core.utils import safe_error
 
 import importlib
 import logging
@@ -105,7 +108,7 @@ class DependencyManager:
             logger.info(f"Successfully loaded dependency: {name}")
         except ImportError as e:
             dep_status.is_available = False
-            dep_status.error = str(e)
+            dep_status.error = safe_error(e)
             logger.warning(f"Failed to load dependency {name}: {e}", exc_info=True)
 
             config = self._config.get("dependencies", {}).get(name, {})

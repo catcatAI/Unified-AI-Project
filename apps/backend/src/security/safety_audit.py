@@ -1,4 +1,5 @@
 """
+
 Safety Audit — 安全決策審計系統
 
 記錄所有安全相關決策,提供審計追蹤和合規檢查。
@@ -9,6 +10,8 @@ Safety Audit — 安全決策審計系統
 - 安全報告生成
 - 異常檢測
 """
+
+from core.utils import safe_error
 
 # =============================================================================
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
@@ -224,7 +227,7 @@ class SafetyAudit:
                 passed = rule["check"]()
                 results.append({"rule": rule["name"], "passed": passed})
             except Exception as e:
-                results.append({"rule": rule["name"], "passed": False, "error": str(e)})
+                results.append({"rule": rule["name"], "passed": False, "error": safe_error(e)})
 
         passed_count = sum(1 for r in results if r["passed"])
         return {

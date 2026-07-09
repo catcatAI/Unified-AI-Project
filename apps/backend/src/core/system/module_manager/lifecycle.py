@@ -1,3 +1,5 @@
+from core.utils import safe_error
+
 import asyncio
 import importlib
 import logging
@@ -60,7 +62,7 @@ class ModuleLifecycle:
                     InitResult(
                         name=desc.name,
                         success=False,
-                        error=str(e),
+                        error=safe_error(e),
                         elapsed_ms=(time.monotonic() - t0) * 1000,
                     )
                 )
@@ -87,7 +89,7 @@ class ModuleLifecycle:
                     StartResult(
                         name=inst.name,
                         success=False,
-                        error=str(e),
+                        error=safe_error(e),
                         elapsed_ms=(time.monotonic() - t0) * 1000,
                     )
                 )
@@ -113,7 +115,7 @@ class ModuleLifecycle:
                     StartResult(
                         name=inst.name,
                         success=False,
-                        error=str(e),
+                        error=safe_error(e),
                         elapsed_ms=(time.monotonic() - t0) * 1000,
                     )
                 )

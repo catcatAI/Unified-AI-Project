@@ -1,4 +1,5 @@
 """
+
 State Persistence Layer — Redis/JSON Hybrid Storage
 ====================================================
 
@@ -21,7 +22,9 @@ State Persistence Layer — Redis/JSON Hybrid Storage
 Author: Angela AI v6.2.1
 """
 
+
 from __future__ import annotations
+from core.utils import safe_error
 
 import json
 import logging
@@ -256,7 +259,7 @@ class StatePersistence:
             }
         except Exception as e:
             logger.error(f"[Persistence] JSON save failed: {e}", exc_info=True)
-            return {"status": "error", "reason": str(e)}
+            return {"status": "error", "reason": safe_error(e)}
 
     async def _save_to_json_fallback(self, snapshot: Dict[str, Any]) -> Dict[str, Any]:
         """Redis 失敗時的 JSON 回退"""
@@ -317,7 +320,7 @@ class StatePersistence:
             }
         except Exception as e:
             logger.error(f"[Persistence] Load failed: {e}", exc_info=True)
-            return {"status": "error", "reason": str(e)}
+            return {"status": "error", "reason": safe_error(e)}
 
     async def _load_from_redis(self, checkpoint_id: str) -> Optional[Dict[str, Any]]:
         """從 Redis 加载快照"""

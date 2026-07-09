@@ -1,4 +1,5 @@
 """
+
 Angela AI v6.0 - Trauma Memory System
 创伤记忆系统
 
@@ -6,7 +7,9 @@ Manages traumatic memories with 70% slower forgetting rate.
 Handles memory reactivation and intrusive recall.
 """
 
+
 from __future__ import annotations
+from core.utils import safe_error
 
 import logging
 import math
@@ -248,13 +251,13 @@ class TraumaMemorySystem:
 
         except ValueError as e:
             results["status"] = "error"
-            results["error"] = str(e)
+            results["error"] = safe_error(e)
             results["error_type"] = "ValueError"
         except Exception as e:  # trauma processing must return safe fallback
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             results["status"] = "error"
 
-            results["error"] = str(e)
+            results["error"] = safe_error(e)
             results["error_type"] = type(e).__name__
 
         return results

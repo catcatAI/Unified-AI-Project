@@ -1,4 +1,5 @@
 """
+
 Angela Real Browser - Playwright Integration
 真实浏览器控制模块 - 使用 Playwright
 
@@ -6,6 +7,8 @@ Angela Real Browser - Playwright Integration
 1. pip install playwright
 2. playwright install chromium
 """
+
+from core.utils import safe_error
 
 import asyncio
 import logging
@@ -225,7 +228,7 @@ class AngelaRealBrowser:
 
         except Exception as e:  # broad exception acceptable: style analysis should be resilient to page errors
             logger.error(f"❌ 风格分析失败: {e}", exc_info=True)
-            return {"error": str(e)}
+            return {"error": safe_error(e)}
 
     async def search_art_tutorials(self, query: str) -> List[Dict]:
         """

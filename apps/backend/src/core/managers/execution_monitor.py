@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 """
+
 Execution Monitor - 執行監控器
 智能執行判斷機制, 監控終端機和進程狀態, 動態調控超時機制
 
@@ -15,6 +16,8 @@ Angela Matrix Annotation:
 - P (Processing): L3-L4 - Command execution and monitoring loops
 - M (Memory): L2 - Execution history and adaptive cache
 """
+
+from core.utils import safe_error
 
 import argparse
 import asyncio
@@ -382,7 +385,7 @@ class ExecutionMonitor:
         except Exception as e:  # broad exception acceptable: command execution resilience
             self.logger.error(f"Command execution error: {e}", exc_info=True)
             result.status = ExecutionStatus.ERROR
-            result.error_message = str(e)
+            result.error_message = safe_error(e)
 
         finally:
             # 計算執行時間
@@ -523,7 +526,7 @@ class ExecutionMonitor:
         except Exception as e:  # broad exception acceptable: async command execution resilience
             self.logger.error(f"Async command execution error: {e}", exc_info=True)
             result.status = ExecutionStatus.ERROR
-            result.error_message = str(e)
+            result.error_message = safe_error(e)
 
         finally:
             result.execution_time = time.time() - start_time
@@ -594,7 +597,7 @@ class ExecutionMonitor:
             }
         except Exception as e:  # broad exception acceptable: system health fallback
             self.logger.error(f"Failed to get system health: {e}", exc_info=True)
-            return {"error": str(e)}
+            return {"error": safe_error(e)}
 
 
 # 全局執行監控器實例

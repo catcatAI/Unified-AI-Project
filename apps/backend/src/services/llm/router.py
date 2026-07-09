@@ -1,4 +1,5 @@
 """
+
 Angela LLM Service - Angela 的智能對話引擎
 ============================================
 這是 Angela 的核心大腦服務，負責：
@@ -9,6 +10,8 @@ Angela LLM Service - Angela 的智能對話引擎
 這個服務不是讓模型直接與用戶對話，
 而是讓 Angela 作為中介，調用模型來產生回應。
 """
+
+from core.utils import safe_error
 
 import asyncio
 import logging
@@ -144,7 +147,7 @@ async def _call_with_retry(
             if response is None:
                 raise asyncio.TimeoutError("empty response")
         except (asyncio.TimeoutError, Exception) as e:
-            last_error = str(e)
+            last_error = safe_error(e)
             if attempt < max_retries:
                 delay = min(base_delay * (2 ** attempt) + random.random() * LLM_RETRY_JITTER, LLM_RETRY_MAX_DELAY)
                 logger.warning(f"[retry] {label} attempt {attempt + 1} failed: {e}, retrying in {delay:.1f}s")
@@ -1043,7 +1046,7 @@ class AngelaLLMService:
                 backend="error",
                 model="error",
                 confidence=0.0,
-                error=str(e),
+                error=safe_error(e),
             )
 
     # ── NeuroBlender fallback helper ──────────────────────────────────────

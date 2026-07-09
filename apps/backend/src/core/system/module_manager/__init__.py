@@ -1,3 +1,5 @@
+from core.utils import safe_error
+
 import logging
 from pathlib import Path
 from typing import Optional
@@ -116,7 +118,7 @@ class ModuleManager:
             return HotplugResult(name=descriptor.name, success=True)
         except Exception as e:
             logger.warning(f"hotplug failed for {path.name}: {e}", exc_info=True)
-            return HotplugResult(name=path.name, success=False, error=str(e))
+            return HotplugResult(name=path.name, success=False, error=safe_error(e))
 
     async def unplug(self, name: str) -> HotplugResult:
         """Log a diagnostic message."""

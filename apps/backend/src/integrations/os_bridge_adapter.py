@@ -1,3 +1,5 @@
+from core.utils import safe_error
+
 import asyncio
 import json
 import logging
@@ -42,7 +44,7 @@ class OSBridgeAdapter:
             return {"status": "error", "message": stderr.decode('utf-8')}
         except Exception as e:
             logger.warning(f"_execute_async failed for {command}: {e}", exc_info=True)
-            return {"status": "error", "message": str(e)}
+            return {"status": "error", "message": safe_error(e)}
 
     def _execute(self, command, *args) -> dict:
         """Legacy synchronous execute - use _execute_async whenever possible"""
@@ -54,7 +56,7 @@ class OSBridgeAdapter:
             return {"status": "error", "message": result.stderr}
         except Exception as e:
             logger.warning(f"_execute failed for {command}: {e}", exc_info=True)
-            return {"status": "error", "message": str(e)}
+            return {"status": "error", "message": safe_error(e)}
 
     async def get_summary(self) -> str:
         """Get the summary by self."""

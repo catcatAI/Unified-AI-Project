@@ -1,4 +1,5 @@
 """
+
 Angela AI v6.0 - Live2D Avatar Generator
 Live2D头像生成器
 
@@ -17,7 +18,9 @@ Version: 6.0.0
 Date: 2026-02-02
 """
 
+
 from __future__ import annotations
+from core.utils import safe_error
 
 import asyncio
 import json
@@ -637,7 +640,7 @@ class Live2DAvatarGenerator:
 
         except Exception as e:  # broad exception acceptable: generation must be resilient to errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            self._notify_progress(GenerationStage.FINALIZING, 0, f"Generation failed: {str(e)}")
+            self._notify_progress(GenerationStage.FINALIZING, 0, f"Generation failed: {safe_error(e)}")
 
             raise
 

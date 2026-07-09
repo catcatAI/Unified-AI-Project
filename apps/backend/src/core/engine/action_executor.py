@@ -1,4 +1,5 @@
 """
+
 Angela AI v6.0 - Action Executor
 动作执行器
 
@@ -17,7 +18,9 @@ Version: 6.0.0
 Date: 2026-02-02
 """
 
+
 from __future__ import annotations
+from core.utils import safe_error
 
 import asyncio
 import logging
@@ -499,7 +502,7 @@ class ActionExecutor:
             action.status = ActionStatus.FAILED
 
             action.result = ActionResult(
-                success=False, action_id=action.action_id, error=str(e), execution_time=0.0
+                success=False, action_id=action.action_id, error=safe_error(e), execution_time=0.0
             )
             self.queue._failed.append(action)
 
@@ -883,7 +886,7 @@ class ActionExecutor:
                 action_type=ActionType.SYSTEM_QUERY,
                 status=ExecutionResultStatus.FAILURE,
                 success=False,
-                error_message=str(e),
+                error_message=safe_error(e),
                 execution_time_ms=execution_time,
             )
 
@@ -999,7 +1002,7 @@ class ActionExecutor:
                     return False, f"Result validation failed: {validator.__name__}"
             except Exception as e:  # broad exception acceptable: validator errors should not break validation
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                return False, f"Validation error: {str(e)}"
+                return False, f"Validation error: {safe_error(e)}"
 
         return True, None
 

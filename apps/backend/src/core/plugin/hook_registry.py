@@ -1,7 +1,10 @@
 """
+
 HookRegistry — C3: backend hook system for plugins.
 Defines named hooks, registers handlers, executes them asynchronously.
 """
+
+from core.utils import safe_error
 
 import inspect
 import logging
@@ -113,7 +116,7 @@ class HookRegistry:
                     hook_name=hook_name,
                     handler_name=handler_name,
                     success=False,
-                    error=str(e),
+                    error=safe_error(e),
                 ))
         return results
 

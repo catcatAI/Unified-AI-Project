@@ -1,10 +1,13 @@
 """
+
 Agent Manager
 
 Manages the lifecycle of specialized sub-agents, including launching,
 terminating, and monitoring them.
 Also serves as the central message router for HSP communication.
 """
+
+from core.utils import safe_error
 
 # =============================================================================
 # ANGELA-MATRIX: L6[执行层] 全层级 [A] L2+
@@ -237,7 +240,7 @@ async def send_message(data: dict):
             return {"status": "delivered", "target": target_id}
         except Exception as e:
             logger.error(f'Error in {__name__}: {e}', exc_info=True)
-            return {"status": "failed", "error": str(e)}
+            return {"status": "failed", "error": safe_error(e)}
 
     return {"status": "failed", "error": "Target not found"}
 
@@ -252,7 +255,7 @@ async def broadcast_message(data: dict):
             results.append({"agent": agent_id, "status": "delivered"})
         except Exception as e:
             logger.error(f'Error in {__name__}: {e}', exc_info=True)
-            results.append({"agent": agent_id, "status": "failed", "error": str(e)})
+            results.append({"agent": agent_id, "status": "failed", "error": safe_error(e)})
 
     return {"status": "broadcast", "results": results}
 
@@ -466,7 +469,7 @@ class AgentManager:
                 success=False,
                 result_data=None,
                 execution_time=execution_time,
-                error=str(e),
+                error=safe_error(e),
             )
 
             # P0-3: 评估失败影响并更新状态

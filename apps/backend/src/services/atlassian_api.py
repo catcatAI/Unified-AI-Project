@@ -1,7 +1,10 @@
 """
+
 Atlassian API - Real Implementation for Atlassian CLI Integration
 Handles Jira and Confluence operations via acli.exe.
 """
+
+from core.utils import safe_error
 
 import asyncio
 import json
@@ -123,7 +126,7 @@ async def configure_atlassian(config: AtlassianConfig) -> dict:
         atlassian_bridge.set_config(config.domain, config.user_email, config.api_token)
         return {"status": "configured", "domain": config.domain}
     except Exception as e:  # broad exception acceptable: configuration endpoint should be resilient
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error(e))
 
 @atlassian_router.get("/status")
 async def get_atlassian_status() -> dict:

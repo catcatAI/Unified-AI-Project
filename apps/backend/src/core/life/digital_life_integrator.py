@@ -1,4 +1,5 @@
 """
+
 Angela AI v6.0 - Digital Life Integrator
 数字生命总控
 
@@ -17,7 +18,9 @@ Version: 6.0.0
 Date: 2026-02-02
 """
 
+
 from __future__ import annotations
+from core.utils import safe_error
 
 import asyncio
 import logging
@@ -802,7 +805,7 @@ class DigitalLifeIntegrator:
                     is_healthy=False,
                     error_count=self.systems_health.get(name, SystemHealth(name, True)).error_count
                     + 1,
-                    status_message=str(e),
+                    status_message=safe_error(e),
                 )
 
     def _update_active_time(self) -> None:

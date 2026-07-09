@@ -1,10 +1,13 @@
 """
+
 Agent Adapter — bridges specialized agents to AgentManager's execute() interface.
 
 Specialized agents expose domain-specific methods (analyze_code, search, etc.)
 but AgentManager.execute_agent() expects agent.execute(task). This adapter
 wraps any specialized agent and routes task dicts to the correct method.
 """
+
+from core.utils import safe_error
 
 # =============================================================================
 # ANGELA-MATRIX: [L6] [βδ] [A] [L4]
@@ -147,7 +150,7 @@ class AgentAdapter:
             return {"status": "error", "error": f"Method signature mismatch: {e}"}
         except Exception as e:
             logger.error(f"[AgentAdapter] Failed to execute {method_name}: {e}", exc_info=True)
-            return {"status": "error", "error": str(e)}
+            return {"status": "error", "error": safe_error(e)}
 
     def get_status(self) -> Dict[str, Any]:
         """Get adapter and underlying agent status."""

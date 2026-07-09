@@ -1,4 +1,5 @@
 """
+
 Angela AI v6.0 - Desktop Interaction System
 桌面交互系统
 
@@ -16,7 +17,9 @@ Version: 6.0.0
 Date: 2026-02-02
 """
 
+
 from __future__ import annotations
+from core.utils import safe_error
 
 import asyncio
 import logging
@@ -581,7 +584,7 @@ class DesktopInteraction:
                         operation_type=FileOperationType.MOVE,
                         source_path=file_path,
                         status="failed",
-                        error_message=str(e),
+                        error_message=safe_error(e),
                     )
                     operations.append(operation)
 
@@ -1076,7 +1079,7 @@ class DesktopInteraction:
                 last_error = e
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 operation.status = "failed"
-                operation.error_message = str(e)
+                operation.error_message = safe_error(e)
 
                 error_results = await self._handle_execution_error(operation, e, attempt)
                 results["error_handling"] = error_results
@@ -1132,7 +1135,7 @@ class DesktopInteraction:
             await rollback_func()
             results["rolled_back"] = True
         except Exception as e:
-            results["rollback_error"] = str(e)
+            results["rollback_error"] = safe_error(e)
 
 
 # Example usage

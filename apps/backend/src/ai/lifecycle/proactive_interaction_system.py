@@ -1,9 +1,12 @@
 """
+
 主動交互系統
 
 讓 Angela 具備主動觸發用戶交互的能力，
 而不僅僅是被動回應。
 """
+
+from core.utils import safe_error
 
 # =============================================================================
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
@@ -525,7 +528,7 @@ class ProactiveInteractionSystem:
 
         except Exception as e:  # broad exception acceptable: action execution should be resilient
             logger.error(f"Error executing proactive action: {e}", exc_info=True)
-            return {"success": False, "error": str(e)}
+            return {"success": False, "error": safe_error(e)}
 
     def _cleanup_queue(self) -> None:
         """清理隊列"""

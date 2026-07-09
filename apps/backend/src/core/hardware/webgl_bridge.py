@@ -1,4 +1,5 @@
 """
+
 Angela AI - WebGL Bridge
 WebGL GPU 信息橋接模組
 
@@ -7,6 +8,8 @@ WebGL GPU 信息橋接模組
 - 轉換為 UHRC 格式
 - 同步 GPU 加速服務配置
 """
+
+from core.utils import safe_error
 
 import logging
 from dataclasses import dataclass
@@ -159,7 +162,7 @@ class WebGLBridge:
 
         except Exception as e:  # broad exception acceptable: GPU info processing involves multiple conversions that may fail
             logger.error(f"Failed to process GPU info: {e}", exc_info=True)
-            return {"success": False, "error": str(e)}
+            return {"success": False, "error": safe_error(e)}
 
     def get_gpu_info(self) -> Optional[WebGLGPUInfo]:
         """獲取當前 GPU 信息"""

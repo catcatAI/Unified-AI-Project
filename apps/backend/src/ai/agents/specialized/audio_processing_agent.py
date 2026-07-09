@@ -15,6 +15,8 @@
 #
 # =============================================================================
 
+from core.utils import safe_error
+
 import logging
 import os
 from typing import Any, Dict, List, Optional
@@ -75,7 +77,7 @@ class AudioProcessingAgent:
                 result_payload["error_details"] = {"error_code": "CAPABILITY_NOT_SUPPORTED"}
         except ValueError as e:
             result_payload["status"] = "failure"
-            result_payload["error_details"] = {"error_code": "INVALID_PARAMETERS", "error_message": str(e)}
+            result_payload["error_details"] = {"error_code": "INVALID_PARAMETERS", "error_message": safe_error(e)}
         await self.hsp_connector.send_task_result(result_payload)
 
     def _perform_speech_recognition(self, params: dict) -> dict:

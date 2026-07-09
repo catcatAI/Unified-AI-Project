@@ -1,9 +1,12 @@
 """
+
 Base class for all specialized agents in the Unified AI Project.
 
 Provides common functionality for HSP connectivity, task handling, and
 lifecycle management.
 """
+
+from core.utils import safe_error
 
 # =============================================================================
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
@@ -340,7 +343,7 @@ class BaseAgent:
                 )
                 if task.payload.get("callback_address") and self.hsp_connector:
                     await self._send_task_failure(
-                        task, f"Task failed after {self.max_retries} retries: {str(e)}"
+                        task, f"Task failed after {self.max_retries} retries: {safe_error(e)}"
                     )
 
     async def _default_task_handler(

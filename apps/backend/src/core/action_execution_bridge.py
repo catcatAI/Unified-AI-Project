@@ -1,4 +1,5 @@
 """
+
 Angela AI v6.0 - Action Execution Bridge
 动作执行桥接器
 
@@ -14,7 +15,9 @@ Version: 6.0.0
 Date: 2026-02-02
 """
 
+
 from __future__ import annotations
+from core.utils import safe_error
 
 import asyncio
 import json
@@ -512,7 +515,7 @@ class ActionExecutionBridge:
                 action_type=context.action_type,
                 status=ExecutionResultStatus.FAILURE,
                 success=False,
-                error_message=str(e),
+                error_message=safe_error(e),
                 execution_time_ms=execution_time,
             )
 
@@ -666,7 +669,7 @@ class ActionExecutionBridge:
                     result["orchestrator_response"] = response
             except Exception as e:  # broad exception acceptable: optional orchestrator call, handle gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                result["orchestrator_error"] = str(e)
+                result["orchestrator_error"] = safe_error(e)
 
         # Show in desktop pet if available
         if self.desktop_pet:
@@ -678,7 +681,7 @@ class ActionExecutionBridge:
                 result["displayed"] = True
             except Exception as e:  # broad exception acceptable: optional desktop pet display, handle gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                result["display_error"] = str(e)
+                result["display_error"] = safe_error(e)
 
         return result
 
@@ -702,7 +705,7 @@ class ActionExecutionBridge:
                 result["exploration_data"]["search_results"] = search_results
             except Exception as e:  # broad exception acceptable: optional search, handle gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                result["search_error"] = str(e)
+                result["search_error"] = safe_error(e)
 
         # Search local files
         if source in ["local", "mixed"] and self.file_manager:
@@ -713,7 +716,7 @@ class ActionExecutionBridge:
                     result["exploration_data"]["local_files"] = local_results
             except Exception as e:  # broad exception acceptable: optional local search, handle gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                result["local_search_error"] = str(e)
+                result["local_search_error"] = safe_error(e)
 
         # Integrate into CDM
         if self.cdm and result["exploration_data"]:
@@ -728,7 +731,7 @@ class ActionExecutionBridge:
                 result["integrated_to_cdm"] = True
             except Exception as e:  # broad exception acceptable: optional CDM integration, handle gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                result["cdm_integration_error"] = str(e)
+                result["cdm_integration_error"] = safe_error(e)
 
         return result
 
@@ -814,7 +817,7 @@ class ActionExecutionBridge:
                 result["displayed"] = True
             except Exception as e:  # broad exception acceptable: optional display, handle gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                result["display_error"] = str(e)
+                result["display_error"] = safe_error(e)
 
         # Update Live2D if available
         if self.live2d_integration:
@@ -824,7 +827,7 @@ class ActionExecutionBridge:
                     result["live2d_updated"] = True
             except Exception as e:  # broad exception acceptable: optional Live2D, handle gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                result["live2d_error"] = str(e)
+                result["live2d_error"] = safe_error(e)
 
         return result
 
@@ -874,7 +877,7 @@ class ActionExecutionBridge:
 
         except Exception as e:  # broad exception acceptable: download operation error handling
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            result["error"] = str(e)
+            result["error"] = safe_error(e)
 
         return result
 
@@ -910,7 +913,7 @@ class ActionExecutionBridge:
 
         except Exception as e:  # broad exception acceptable: Live2D operation error handling
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            result["error"] = str(e)
+            result["error"] = safe_error(e)
 
         return result
 
@@ -960,7 +963,7 @@ class ActionExecutionBridge:
 
         except Exception as e:  # broad exception acceptable: file operation error handling
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            result["error"] = str(e)
+            result["error"] = safe_error(e)
 
         return result
 
@@ -995,7 +998,7 @@ class ActionExecutionBridge:
 
         except Exception as e:  # broad exception acceptable: web search error handling
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            result["error"] = str(e)
+            result["error"] = safe_error(e)
 
         return result
 

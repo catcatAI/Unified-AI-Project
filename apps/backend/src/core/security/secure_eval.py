@@ -1,4 +1,5 @@
 """
+
 安全表達式求值器 / Secure Expression Evaluator
 ===============================================
 
@@ -12,7 +13,9 @@
 - 防止代碼注入攻擊
 """
 
+
 from __future__ import annotations
+from core.utils import safe_error
 
 import ast
 import operator
@@ -248,13 +251,13 @@ def safe_eval(
     try:
         tree = ast.parse(expression.strip(), mode="eval")
     except SyntaxError as e:
-        return EvalResult(success=False, error=str(e), expression=expression)
+        return EvalResult(success=False, error=safe_error(e), expression=expression)
 
     try:
         checker = _SafeEvalChecker(safe_ops, safe_nms, context, max_nodes)
         checker.visit(tree)
     except UnsafeExpressionError as e:
-        return EvalResult(success=False, error=str(e), expression=expression)
+        return EvalResult(success=False, error=safe_error(e), expression=expression)
 
     names = dict(safe_nms)
     if context:
@@ -265,7 +268,7 @@ def safe_eval(
         result = eval(code, {"__builtins__": {}}, names)
         return EvalResult(success=True, result=result, expression=expression)
     except (ValueError, TypeError, ZeroDivisionError) as e:
-        return EvalResult(success=False, error=str(e), expression=expression)
+        return EvalResult(success=False, error=safe_error(e), expression=expression)
 
 
 from dataclasses import dataclass, field
@@ -313,7 +316,7 @@ class SafeEvaluator:
             self._check_length(expression)
             return safe_eval(expression, context, max_nodes=self.max_nodes if self.max_complexity <= 0 else self.max_complexity)
         except (SyntaxError, UnsafeExpressionError) as e:
-            return EvalResult(success=False, error=str(e), expression=expression)
+            return EvalResult(success=False, error=safe_error(e), expression=expression)
 
     def evaluate_arithmetic(self, expression: str, context: Optional[Dict[str, Any]] = None) -> EvalResult:
         """
@@ -335,7 +338,7 @@ class SafeEvaluator:
                 max_nodes=self.max_nodes if self.max_complexity <= 0 else self.max_complexity,
             )
         except (SyntaxError, UnsafeExpressionError) as e:
-            return EvalResult(success=False, error=str(e), expression=expression)
+            return EvalResult(success=False, error=safe_error(e), expression=expression)
 
 
 # 僅允許算術操作的 SAFE_OPERATORS 子集

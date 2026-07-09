@@ -1,7 +1,10 @@
 """
+
 Level 5 ASI 系统
 整合所有Level 5 ASI组件的完整系统实现
 """
+
+from core.utils import safe_error
 
 # =============================================================================
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
@@ -195,7 +198,7 @@ class Level5ASISystem:
 
         except Exception as e:  # broad exception acceptable: ASI request processing wraps all failures
             logger.error(f"[{self.system_id}] 请求处理失败: {e}", exc_info=True)
-            return {"error": str(e)}
+            return {"error": safe_error(e)}
 
     async def get_system_status(self) -> dict[str, Any]:
         """获取系统状态"""
@@ -275,7 +278,7 @@ class Level5ASISystem:
 
         except Exception as e:  # broad exception acceptable: comprehensive test wraps all component failures
             logger.error(f"[{self.system_id}] 综合测试失败: {e}", exc_info=True)
-            return {"error": str(e)}
+            return {"error": safe_error(e)}
 
     async def _initialize_alignment_systems(self) -> None:
         """初始化对齐系统"""
@@ -423,7 +426,7 @@ class Level5ASISystem:
             logger.error(f"[{self.system_id}] 对齐检查失败: {e}", exc_info=True)
             return {
                 "is_aligned": False,
-                "reason": f"对齐检查系统错误: {str(e)}",
+                "reason": f"对齐检查系统错误: {safe_error(e)}",
                 "safety_score": 0.0,
             }
 
@@ -466,7 +469,7 @@ class Level5ASISystem:
 
         except Exception as e:  # broad exception acceptable: agent processing wraps all task failures
             logger.error(f"[{self.system_id}] 代理处理失败: {e}", exc_info=True)
-            return {"status": "error", "error_message": str(e)}
+            return {"status": "error", "error_message": safe_error(e)}
 
     def _run_adversarial_evaluation(
         self, request: dict[str, Any], result: dict[str, Any]
@@ -505,7 +508,7 @@ class Level5ASISystem:
 
         except Exception as e:  # broad exception acceptable: alignment system test wraps all failures
             logger.error(f"[{self.system_id}] 对齐系统测试失败: {e}", exc_info=True)
-            return {"score": 0.0, "error": str(e)}
+            return {"score": 0.0, "error": safe_error(e)}
 
     async def _test_distributed_system(self) -> dict[str, Any]:
         """测试分布式系统"""
@@ -519,7 +522,7 @@ class Level5ASISystem:
 
         except Exception as e:  # broad exception acceptable: distributed system test wraps all failures
             logger.error(f"[{self.system_id}] 分布式系统测试失败: {e}", exc_info=True)
-            return {"score": 0.0, "error": str(e)}
+            return {"score": 0.0, "error": safe_error(e)}
 
     async def _test_parameter_cluster(self) -> dict[str, Any]:
         """测试参数集群"""
@@ -533,7 +536,7 @@ class Level5ASISystem:
 
         except Exception as e:  # broad exception acceptable: parameter cluster test wraps all failures
             logger.error(f"[{self.system_id}] 参数集群测试失败: {e}", exc_info=True)
-            return {"score": 0.0, "error": str(e)}
+            return {"score": 0.0, "error": safe_error(e)}
 
     async def _test_autonomous_alignment(self) -> dict[str, Any]:
         """测试自主对齐"""
@@ -547,7 +550,7 @@ class Level5ASISystem:
 
         except Exception as e:  # broad exception acceptable: autonomous alignment test wraps all failures
             logger.error(f"[{self.system_id}] 自主对齐测试失败: {e}", exc_info=True)
-            return {"score": 0.0, "error": str(e)}
+            return {"score": 0.0, "error": safe_error(e)}
 
     async def _test_aligned_agents(self) -> dict[str, Any]:
         """测试对齐代理"""
@@ -579,7 +582,7 @@ class Level5ASISystem:
 
         except Exception as e:  # broad exception acceptable: aligned agents test wraps all agent failures
             logger.error(f"[{self.system_id}] 对齐代理测试失败: {e}", exc_info=True)
-            return {"score": 0.0, "error": str(e)}
+            return {"score": 0.0, "error": safe_error(e)}
 
     def _test_adversarial_robustness(self) -> dict[str, Any]:
         """Run adversarial robustness self-test using built-in patterns."""
@@ -599,4 +602,4 @@ class Level5ASISystem:
             }
         except Exception as e:  # broad exception acceptable: adversarial test wraps all failures
             logger.error(f"[{self.system_id}] 对抗测试失败: {e}", exc_info=True)
-            return {"score": 0.0, "error": str(e)}
+            return {"score": 0.0, "error": safe_error(e)}

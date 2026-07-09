@@ -1,4 +1,5 @@
 """
+
 Angela AI v6.0 - Body Adapter System
 肉身适配器系统
 
@@ -16,7 +17,9 @@ Version: 6.0.0
 Date: 2026-02-04
 """
 
+
 from __future__ import annotations
+from core.utils import safe_error
 
 import json
 import logging
@@ -218,7 +221,7 @@ class BodyAdapter:
 
         except Exception as e:  # broad exception acceptable: state transfer resilience
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            record.mark_failed(str(e))
+            record.mark_failed(safe_error(e))
 
             if record.rollback_point:
                 return False, record.rollback_point
