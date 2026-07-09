@@ -229,6 +229,19 @@ async def handle_document_intent(
                     batch_card_info[cid].append(line[:200])
     
     # Try LLM consolidation with retry; fall back to programmatic generation
+    final_prompt = (
+        f"你是一個卡片遊戲開發文件生成助手。以下是從 {len(files)} 個卡片檔案中提取的批次分析結果。\n\n"
+        f"{combined_analysis}\n\n"
+        f"此外，以下是透過程式預先掃描到的 {len(baseline)} 張卡片基準清單（包含ID和名稱）：\n"
+        f"```\n{baseline_text}\n```\n\n"
+        f"請根據以上資訊，生成一份完整的卡片遊戲開發文件，要求如下：\n"
+        f"1. **完整卡片索引**：按類型分組列出所有卡片（ID、名稱、類型、關鍵屬性）\n"
+        f"2. **確保不遺漏**：基準清單中有 {len(baseline)} 張卡片，請確認你的索引包含全部\n"
+        f"3. **衝突檢測**：找出卡片之間的矛盾或重疊\n"
+        f"4. **缺失欄位補充**：建議需要補齊的資料欄位\n"
+        f"5. **卡片關聯**：列出卡片之間的關聯關係\n\n"
+        f"請用繁體中文輸出，格式為結構化的 Markdown 文檔。"
+    )
     async def _try_llm_consolidation() -> Optional[str]:
         for attempt in range(3):
             try:
