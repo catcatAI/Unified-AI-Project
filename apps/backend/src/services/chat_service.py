@@ -336,6 +336,36 @@ class ChatService:
 
         return response
 
+    async def generate_text(
+        self,
+        prompt: str,
+        max_tokens: int = 1024,
+        temperature: float = 0.7,
+        system_prompt: Optional[str] = None,
+    ) -> Optional[str]:
+        """Generate text via the underlying LLM service.
+
+        Proxies to AngelaLLMService.generate_text() for use by
+        document_router and other subsystems that need raw text
+        generation without full chat context injection.
+        """
+        if not self._llm_service:
+            logger.warning("ChatService.generate_text: LLM service not available")
+            return None
+        try:
+            if not hasattr(self._llm_service, 'generate_text'):
+                logger.warning("ChatService.generate_text: LLM service has no generate_text method")
+                return None
+            return await self._llm_service.generate_text(
+                prompt=prompt,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                system_prompt=system_prompt,
+            )
+        except Exception as e:
+            logger.warning("ChatService.generate_text failed: %s", e)
+            return None
+
     async def shutdown(self) -> None:
         self._initialized = False
         # Stop HAM sync background task (Phase 5.2)
