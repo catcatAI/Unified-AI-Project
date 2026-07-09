@@ -282,6 +282,82 @@ Each stage in the chat pipeline (`chat_routes.py`) is a function or callable cla
 
 **Key insight**: This is an **architectural framework** with production-quality structure and academic-prototype ML content. The 190+ AI classes form a complete skeleton; the muscle (trained weights) is missing. The LLM API wrappers provide the only production-quality intelligence today.
 
+### 5.5 Learning Capabilities Assessment
+
+Angela AI has **4 levels of learning**, each building on the previous. This is unusually deep compared to standard AI agent frameworks (see §6.1 for comparison).
+
+#### 5.5.1 Scoring Methodology
+
+The percentages are **qualitative assessments** based on:
+- **Mechanism coverage**: How many of the ideal mechanisms for each level exist
+- **Testing verification**: Whether mechanisms actually work (verified via code inspection + passing tests)
+- **Feature completeness**: How close each mechanism is to its ideal implementation
+- **Integration**: How well mechanisms compose with each other
+
+#### 5.5.2 Level 1 — Learn New Vocabulary and Use It → **80%**
+
+| Mechanism | Status | Description |
+|-----------|:------:|-------------|
+| `ContinuousLearningPipeline._detect_and_grow()` | ✅ | Auto-discovers new tokens from user text every N interactions (configurable via `growth_interval`) |
+| `DictionaryLayer.learn_from_conversation()` | ✅ | Processes utterances, detects candidates, grows dictionary entries with confidence scoring |
+| `GARDENEngine.learn_from_interaction()` | ✅ | Grows vector dictionary with novel tokens, handles CJK and English |
+| Encoding/decoding learned terms | ✅ | New terms appear in future responses via dictionary encode→decode pipeline |
+| Multi-language support | ✅ | CJK character detection + English word boundary; separate confidence heuristics per language |
+| **E2E verified** | ✅ | Tested: "量子計算機" → dictionary grows from 47→48 entries, correctly encoded as `['l1','l2']`, decoded back to original text |
+
+**Missing (20%)**: Cross-modal concept learning (text↔image↔audio) not wired; no automatic low-confidence entry pruning during learning growth.
+
+#### 5.5.3 Level 2 — Learn Vocabulary and Take Action → **70%**
+
+| Mechanism | Status | Description |
+|-----------|:------:|-------------|
+| `ED3NTrainer` / `JointTrainer` | ✅ | Adjusts dictionary entry confidences + network connection weights between input/output keys |
+| `DictionaryClassifier.learn()` | ✅ | Learns `text→query_type→action_type` mappings |
+| `GARDENEngine` Hebbian SNN update | ✅ | `hebbian_update()` strengthens SNN weight connections between co-occurring concepts |
+| `CausalReasoningEngine.learn()` | ✅ | Learns causal relationships from observations (Pearson correlation basis) |
+| Reflex pattern learning | ✅ | `learn_reflex()` adds pattern→response pairs; `ED3NLearningIntegration` handles external sync |
+| `GARDENEngine.learn_batch()` | ✅ | Batch variant: collects all tokens first, rebuilds index once, runs all Hebbian updates |
+
+**Missing (30%)**: `ED3NLearningIntegration` → `LearningManager`/`ReplayBuffer`/`MemoryLearning` connections broken (Phase 9-12 cleanup removed the `ai.learning` package). These components gracefully return `None` instead of crashing.
+
+#### 5.5.4 Level 3 — Strongest Learning Without Code Changes → **70% (target ≥60%)**
+
+| Mechanism | Status | Description |
+|-----------|:------:|-------------|
+| All Level 1+2 mechanisms | ✅ | Fully configurable via `magic_numbers.py` — buffer sizes, intervals, learning rates, thresholds |
+| `ContinuousLearningPipeline` auto-train | ✅ | Auto-triggers training every `train_interval` (default 50) when buffer ≥ `min_examples_for_train` (default 20) |
+| `TrainingCoordinator` | ✅ | Tracks per-domain training: ED3N (reflex,math,logic), GARDEN (knowledge,command,general), Cloud LLM (creative,opinion). Deduplication via SHA-256 hash. |
+| State persistence (`save()`/`load()`) | ✅ | Full engine state persists across restarts (dictionary + SNN weights + CL state) |
+| Config-driven tuning | ✅ | All parameters via `magic_numbers.py` — no source code changes needed to tune learning behavior |
+| Multi-model coordination | ✅ | `ModelBus.get_training_assignment()` + `DOMAIN_OWNERSHIP` table routes training to the correct engine |
+
+**Missing (30%)**: No meta-learning (learning how to learn); no curriculum learning; no self-supervised exploration loop; no automatic evaluation of learned concepts.
+
+#### 5.5.5 Level 4 — Requires Code Changes
+
+| Feature | What Would Be Needed |
+|---------|---------------------|
+| New network architectures | Code changes to `CoreNetwork`, `SNNCore`, or `TensorSNNCore` |
+| Reinforcement learning | New training loop, reward function, policy network |
+| Few-shot / meta-learning | MAML-style outer loop, task distribution sampling |
+| Integration with external ML | HuggingFace, PyTorch Lightning, or ONNX runtime connectors |
+| Self-supervised learning | Pretext task generator, contrastive loss implementation |
+
+#### 5.5.6 Unique Differentiator
+
+Unlike other AI agent frameworks (see §6.1), Angela has **actual weight-based learning**, not just context management:
+
+| Aspect | Angela AI | Other Frameworks (AutoGPT, MemGPT, LangChain) |
+|--------|-----------|-----------------------------------------------|
+| **Learning type** | 🧠 Synaptic weight updates + dictionary growth | 📋 Context management + RAG retrieval |
+| **Vocabulary growth** | ✅ New entries added to dictionary on-the-fly | ❌ No new vocabulary; relies on LLM's static knowledge |
+| **Weight changes** | ✅ Hebbian + gradient-like adjustments persist | ❌ Model weights never change (static LLM) |
+| **Knowledge internalization** | ✅ New concepts become part of the network's internal representations | ❌ Knowledge is external (retrieved from DB, injected into context window) |
+| **Persistence** | ✅ Learned knowledge survives restarts via save/load | ✅ Facts survive (in DB), but no "learning" happens |
+| **Offline operation** | ✅ All learning mechanisms run locally, no API needed | ❌ RAG + LLM require external services |
+
+**Bottom line**: Most AI "agents" today are expert context managers — they don't learn, they retrieve. Angela AI has genuine (if basic) on-the-fly learning through dictionary growth and weight updates. This puts it in a different category: **continual learning agent** rather than RAG-based chatbot.
+
 ### 6. Competitive Analysis — Strengths & Weaknesses
 
 #### 6.1 Differentiating Strengths
@@ -427,6 +503,82 @@ pytest tests/                         # 運行測試
 | 自主性 | 3/10 | 0.5/10 | **3.0/10** | AutonomousLifeCycle 已接線但無 LLM 不穩定。訓練後框架完整但效果不明顯。 |
 | 後設認知 | 5/10 | 4/10 | **4/10** | MetaController 信心追蹤有效。NeuroAutoSelector 啟發式。 |
 | **綜合** | **6.0/10** | **<0.5/10** | **3.0/10** | 框架架構 ~85-90% 完整。**ML 訓練 ~5%。** 原生引擎輸出為低品質/未初始化。所有真實智慧來自 LLM API。訓練後基準測試 38%。 |
+
+### 5.5 學習能力評估
+
+Angela AI 有 **4 個學習層級**，每個建立在前者之上。這比標準 AI 框架深得多（詳見 §6.1 對比）。
+
+#### 5.5.1 評分方式
+
+百分比是**定性評估**，基於：
+- **機制覆蓋率**：每層級的理想機制有多少存在
+- **測試驗證**：機制是否實際運作（代碼審查 + 測試結果）
+- **功能完整度**：每個機制離理想實現多近
+- **整合度**：機制之間如何協作
+
+#### 5.5.2 Level 1 — 學習新詞彙並使用 → **80%**
+
+| 機制 | 狀態 | 說明 |
+|------|:----:|:-----|
+| `ContinuousLearningPipeline._detect_and_grow()` | ✅ | 每次互動後自動發現新 token 並增長字典 |
+| `DictionaryLayer.learn_from_conversation()` | ✅ | 從對話中檢測新概念，用信心分數增長字典條目 |
+| `GARDENEngine.learn_from_interaction()` | ✅ | 增長向量字典，同時支援中英文 |
+| 編碼/解碼已學習詞彙 | ✅ | 新詞彙在未來回應中可被自動編碼和解碼 |
+| 多語言支援 | ✅ | CJK 字符檢測 + 英文詞邊界；不同語言有不同信心啟發式 |
+| **端到端驗證** | ✅ | 測試通過：「量子計算機」→ 字典從 47→48 條，正確編碼為 `['l1','l2']`，解碼回原文 |
+
+**缺失 (20%)**：跨模態概念學習（文字↔圖像↔音訊）未接線；學習增長期間無自動低信心條目清理。
+
+#### 5.5.3 Level 2 — 學習詞彙並行動 → **70%**
+
+| 機制 | 狀態 | 說明 |
+|------|:----:|:-----|
+| `ED3NTrainer` / `JointTrainer` | ✅ | 調整字典條目信心 + input/output 鍵之間的網路連接權重 |
+| `DictionaryClassifier.learn()` | ✅ | 學習 `文字→查詢類型→動作類型` 映射 |
+| `GARDENEngine` Hebbian SNN 更新 | ✅ | `hebbian_update()` 強化共現概念間的 SNN 權重連接 |
+| `CausalReasoningEngine.learn()` | ✅ | 從觀測中學習因果關係（Pearson 相關基礎） |
+| 反射模式學習 | ✅ | `learn_reflex()` 新增 pattern→response；`ED3NLearningIntegration` 處理外部同步 |
+| `GARDENEngine.learn_batch()` | ✅ | 批次版本：先收集所有 token，一次性重建索引，再執行所有 Hebbian 更新 |
+
+**缺失 (30%)**：`ED3NLearningIntegration` → `LearningManager`/`ReplayBuffer`/`MemoryLearning` 連接已斷開（Phase 9-12 清理）。這些元件優雅回傳 `None`。
+
+#### 5.5.4 Level 3 — 不改代碼的最強學習 → **70% (目標 ≥60%)**
+
+| 機制 | 狀態 | 說明 |
+|------|:----:|:-----|
+| 所有 Level 1+2 機制 | ✅ | 可透過 `magic_numbers.py` 配置 — buffer 大小、間隔、學習率、閾值 |
+| `ContinuousLearningPipeline` 自動訓練 | ✅ | 每 `train_interval`（預設 50）當 buffer ≥ `min_examples_for_train`（預設 20）時自動觸發訓練 |
+| `TrainingCoordinator` | ✅ | 追蹤跨領域訓練：ED3N（反射、數學、邏輯）、GARDEN（知識、指令、一般）、Cloud LLM（創意、意見）。SHA-256 去重。 |
+| 狀態持久化 (`save()`/`load()`) | ✅ | 完整引擎狀態跨重啟持久化（字典 + SNN 權重 + CL 狀態） |
+| 配置驅動調參 | ✅ | 所有參數透過 `magic_numbers.py` — 不需源碼修改即可調整學習行為 |
+| 多模型協調 | ✅ | `ModelBus.get_training_assignment()` + `DOMAIN_OWNERSHIP` 表將訓練路由到正確引擎 |
+
+**缺失 (30%)**：無後設學習（學習如何學習）；無課程學習；無自我監督探索迴圈；無自動評估計畫。
+
+#### 5.5.5 Level 4 — 需改代碼
+
+| 功能 | 所需工作 |
+|------|---------|
+| 新網路架構 | `CoreNetwork`、`SNNCore` 或 `TensorSNNCore` 代碼修改 |
+| 強化學習 | 新訓練迴圈、獎勵函數、策略網路 |
+| 少樣本 / 後設學習 | MAML 式外迴圈、任務分佈取樣 |
+| 外部 ML 整合 | HuggingFace、PyTorch Lightning 或 ONNX runtime 連接器 |
+| 自我監督學習 | Pretext 任務生成器、對比損失實現 |
+
+#### 5.5.6 獨特差異化優勢
+
+與其他 AI 框架不同（見 §6.1），Angela 有**真正的權重學習**，而不只是上下文管理：
+
+| 面向 | Angela AI | 其他框架 (AutoGPT, MemGPT, LangChain) |
+|------|-----------|----------------------------------------|
+| **學習類型** | 🧠 突觸權重更新 + 字典增長 | 📋 上下文管理 + RAG 檢索 |
+| **詞彙增長** | ✅ 即時新增詞典條目 | ❌ 無新詞彙；依賴 LLM 靜態知識 |
+| **權重改變** | ✅ Hebbian + 梯度式調整持久化 | ❌ 模型權重永不改變（靜態 LLM） |
+| **知識內化** | ✅ 新概念成為網路內部表示的一部分 | ❌ 知識在外部（從 DB 檢索，注入上下文窗口） |
+| **持久化** | ✅ 學習的知識透過 save/load 跨重啟存活 | ✅ 事實存活（在 DB），但沒有「學習」發生 |
+| **離線運作** | ✅ 所有學習機制在本地執行，不需 API | ❌ RAG + LLM 需要外部服務 |
+
+**結論**：多數 AI「代理」是專家級上下文管理器——它們不學習，只檢索。Angela AI 透過字典增長和權重更新實現真正的即時學習。這將它放在不同類別：**持續學習代理**，而非基於 RAG 的聊天機器人。
 
 ### 6. 競爭分析 — 優點與缺點
 
