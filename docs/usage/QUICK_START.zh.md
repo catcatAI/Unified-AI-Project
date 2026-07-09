@@ -127,6 +127,14 @@ npx pnpm dev:web
 ### Ghostscript/GPL Ghostscript 警告
 這些是無害的，可以忽略。來自 PDF/圖片處理管線。
 
+### 長時間運行記憶體持續增長（記憶體洩漏預防）
+若發現長時間運行後記憶體持續增加，系統現在會自動限制內部歷史緩衝區。所有無限制陣列已在第3輪審計中修復：
+- **聊天會話**：TTL 快取每60秒清理一次，最多1000個會話
+- **向量存儲**：上限10,000條（FIFO 淘汰）
+- **情緒歷史**：上限1,000個狀態
+- **所有 JS 監聽器陣列**：已去重，`destroy()`時清理
+- **Live2D 管理器**：`_stopAnimation` → `stop()`（原拋出 TypeError，導致 rAF/定時器永久洩漏）
+
 ### 「No module named 'ai.*'」
 確保你在專案根目錄（`Unified-AI-Project/`）執行，而非 `apps/backend/` 內。
 

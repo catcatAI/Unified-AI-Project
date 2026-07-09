@@ -127,6 +127,14 @@ Then open `http://localhost:5173` in your browser.
 ### Ghostscript/GPL Ghostscript warnings
 These are harmless and can be ignored. They come from the PDF/image processing pipeline.
 
+### Memory usage grows over time (leak prevention)
+If you notice the system consuming more memory during long sessions, the system now automatically caps internal history buffers. All unbounded arrays have been fixed (Round 3 audit). Expected behavior:
+- **Chat sessions**: TTL cache purges every 60s, max 1000 sessions
+- **Vector store**: capped at 10,000 entries (FIFO eviction)
+- **Emotion history**: capped at 1,000 states
+- **All JS listener arrays**: deduplicated with `off()` cleanup on destroy
+- **Live2D manager**: `_stopAnimation` → `stop()` (was throwing TypeError, leaking rAF/timers forever)
+
 ### "No module named 'ai.*' "
 Ensure you're running from the project root (`Unified-AI-Project/`), not from inside `apps/backend/`.
 
