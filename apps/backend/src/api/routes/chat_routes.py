@@ -1011,7 +1011,8 @@ def _format_chat_response(
         "emotion_intensity": emotion_result.get("intensity", 0.5) if emotion_result else 0.5,
         "hit_score": getattr(llm_response, 'hit_score', 0.0),
         "hit_source": getattr(llm_response, 'hit_source', 'none'),
-        "route": getattr(llm_response, 'route', 'llm'),
+        "route": getattr(llm_response, 'route', None) or
+                 ('fallback' if getattr(llm_response, 'metadata', {}).get('fallback') else 'llm'),
         "session_id": session_id,
     }
 

@@ -930,6 +930,12 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
     - Net: -2 files, -141 lines.
     - **4,396 tests collected — 0 errors** (-2 from dedup).
 
+> **§X #208 (2026-07-09)**: DesktopInteraction path validation + response route transparency + test README update.
+> - Added `_is_safe_path()` with `_ALLOWED_ROOTS` whitelist to DesktopInteraction (guards `create_file`, `delete_file`, `move_file`, `initialize`)
+> - Fixed response `route` field — now reports `'fallback'` when LLM fallback chain produced the response (was always `'llm'`)
+> - Updated `tests/README.md` with current directory structure
+> - **4,387 tests collected — 0 errors** (-9 from prior baseline)
+
 ---
 
 **Note**: Dates marked with XX are approximate or to be determined. This changelog will be updated as more historical information becomes available.

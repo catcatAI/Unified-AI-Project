@@ -42,6 +42,29 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 _MAX_OPERATION_HISTORY = 1000
 
+_ALLOWED_ROOTS = [
+    Path.home() / "Desktop",
+    Path.home() / "Documents",
+    Path.home() / "Downloads",
+    Path.home() / "Projects",
+    Path(os.environ.get("ANGELA_WORKSPACE", os.getcwd())),
+]
+
+
+def _is_safe_path(target: Path) -> bool:
+    try:
+        resolved = target.resolve()
+    except Exception as e:
+        logger.debug("Path resolution failed: %s", e)
+        return False
+    for root in _ALLOWED_ROOTS:
+        try:
+            resolved.relative_to(root.resolve())
+            return True
+        except ValueError:
+            continue
+    return False
+
 
 class FileOperationType(Enum):
     """文件操作类型 / File operation types"""
@@ -393,6 +416,9 @@ class DesktopInteraction:
 
     async def initialize(self) -> None:
         """Initialize the desktop interaction system"""
+        if not _is_safe_path(self.desktop_path) or not _is_safe_path(self.organized_path):
+            logger.error("Desktop or organized path is outside allowed roots, refusing to initialize")
+            return
         self._running = True
 
         # Ensure organized directory exists
@@ -625,6 +651,10 @@ class DesktopInteraction:
             else:
                 file_path = self.desktop_path / filename
 
+            if not _is_safe_path(file_path):
+                logger.error("Refusing to create file outside allowed roots: %s", file_path)
+                return None
+
             await async_write_text(file_path, content)
 
             operation = FileOperation(
@@ -646,6 +676,9 @@ class DesktopInteraction:
     async def delete_file(self, file_path: Path) -> bool:
         """Delete a file"""
         try:
+            if not _is_safe_path(file_path):
+                logger.error("Refusing to delete file outside allowed roots: %s", file_path)
+                return False
             if file_path.exists() and file_path.is_file():
                 file_path.unlink()
 
@@ -668,6 +701,9 @@ class DesktopInteraction:
     async def move_file(self, source: Path, target: Path) -> bool:
         """Move a file"""
         try:
+            if not _is_safe_path(source) or not _is_safe_path(target):
+                logger.error("Refusing to move file outside allowed roots: %s -> %s", source, target)
+                return False
             if source.exists():
                 shutil.move(str(source), str(target))
                 return True

@@ -1,91 +1,97 @@
-# 测试系统说明
+# Test System
 
-## 概述
+## Overview
 
-本目录包含Unified AI Project的测试套件，用于验证系统的功能、性能和稳定性。
+This directory contains the Unified AI Project test suite. Tests are organized by domain.
+**4,387 tests collected** (as of 2026-07-09).
 
-## 目录结构
+## Directory Structure
 
 ```
 tests/
-├── core_ai/              # 核心AI功能测试
-├── e2e/                  # 端到端测试
-├── game/                 # 游戏相关测试
-├── hsp/                  # HSP协议测试
-├── integration/          # 集成测试
-├── integrations/         # 集成测试（备用）
-├── services/             # 服务测试
-├── test_output_data/     # 测试输出数据
-├── tools/                # 工具测试
-└── __init__.py           # Python包初始化文件
+├── ai/               # AI engine tests (ED3N, GARDEN, meta, lifecycle, multimodal)
+├── api/              # API route tests
+├── benchmarks/       # Performance benchmarks
+├── cli/              # CLI tool tests
+├── core/             # Core system tests (state matrix, formulas, etc.)
+├── desktop/          # Desktop interaction tests
+├── desktop-app/      # Electron desktop app tests
+├── fragmenta/        # Fragmenta module tests
+├── integration/      # Integration tests
+├── logs/             # Test log output
+├── mcp/              # MCP connector tests
+├── models/           # Model tests
+├── modules_fragmenta/# Fragmenta submodule tests
+├── performance/      # Performance tests
+├── pet/              # Pet system tests
+├── security/         # Security tests
+├── services/         # Service layer tests
+├── shared/           # Shared module tests
+├── test_data/        # Test fixtures and data
+├── test_output_data/ # Test output artifacts
+├── test_results/     # Test result files
+├── tools/            # Tool tests
+├── training/         # Training pipeline tests
+├── unit/             # Unit tests
+└── utils/            # Utility tests
 ```
 
-## 当前测试状态
-
-### 已实现的测试组件
-
-1. **HSP协议测试** - 包含基础连接和消息传递测试
-2. **综合测试框架** - 提供系统级测试能力
-3. **性能测试** - 包含基础性能评估功能
-
-### 测试覆盖率
-
-根据最新的覆盖率报告，当前测试覆盖率有待提升，特别是在以下模块：
-- HAMMemoryManager
-- AgentManager
-- 训练系统组件
-
-## 改进计划
-
-根据EXECUTION_PLAN_TESTING_SYSTEM.md中的规划，测试系统将按以下步骤进行改进：
-
-### 短期目标（1-2个月）
-
-1. 建立完整的单元测试覆盖体系
-2. 完善集成测试和端到端测试框架
-3. 建立自动化测试流程和持续集成机制
-4. 增强调试工具和日志记录能力
-
-### 中期目标（3-6个月）
-
-1. 完善测试基础设施
-2. 增强测试自动化能力
-3. 建立完整的性能测试体系
-4. 集成安全测试能力
-
-### 长期目标（6个月以上）
-
-1. 实现智能测试系统
-2. 建立全链路测试能力
-3. 构建测试平台化能力
-4. 实现测试即服务（TaaS）
-
-## 运行测试
-
-### 运行所有测试
+## Running Tests
 
 ```bash
-pytest
+# All tests
+pytest tests/
+
+# Single file
+pytest tests/path/to/test_file.py
+
+# Single test function
+pytest tests/path/to/test_file.py::test_function_name -v
+
+# With coverage
+pytest tests/ --cov=apps/backend/src --cov-report=html
+
+# Fast (skip slow markers)
+pytest tests/ -m "not slow"
 ```
 
-### 运行特定测试
+## Manual / Terminal Testing
+
+All 3 frontends (web-live2d-viewer, Electron, Electron MVP) feature a **floating terminal overlay** (toggle with Ctrl+`) that:
+
+- Pipes user input via WebSocket or HTTP POST to `/api/v1/chat/unified`
+- Displays full JSON responses (emotion, route, hit_source, source)
+- Monospace output with colorized JSON
+
+To manually test the chat pipeline:
+
+1. Start backend: `python run_angela.py` or `pnpm dev:backend`
+2. Open any frontend in browser/Electron
+3. Press Ctrl+` to open terminal
+4. Type a message and press Enter — observe `route` and `hit_source` fields
+5. Test patterns: greeting → math (`2+2`) → file intent ("create a note") → emotional ("I'm sad")
+
+## Current Test State
+
+| Domain | Test Count |
+|--------|-----------|
+| AI core | ~400 |
+| GARDEN | ~125 |
+| Multimodal | ~211 |
+| Security | ~100+ |
+| Services | ~200+ |
+| Integration | ~150+ |
+| Training | ~100+ |
+| Other | ~3,000+ |
+| **Total** | **4,387** |
+
+## CI / Pre-Commit
+
+Before committing, run:
 
 ```bash
-# 运行HSP测试
-pytest tests/hsp/
-
-# 运行集成测试
-pytest tests/integration/
+black apps/backend/src tests/
+flake8 apps/backend/src tests/
 ```
 
-## 贡献指南
-
-1. 为新功能添加相应的单元测试
-2. 确保测试覆盖率符合要求（目标85%以上）
-3. 遵循现有的测试代码风格和结构
-4. 在提交前运行所有测试确保通过
-
-## 相关文档
-
-- [测试系统改进执行计划](../EXECUTION_PLAN_TESTING_SYSTEM.md)
-- [统一AI改进计划](../UNIFIED_AI_IMPROVEMENT_PLAN.md)
+Test counts are tracked in: AGENTS.md, CHANGELOG.md, MASTER_TASK_MAP.md, IMPROVEMENT_ROADMAP.md, CAUSAL_CHAIN_COMPLETENESS.md
