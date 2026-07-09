@@ -20,6 +20,7 @@ from api.lifespan import (
     get_digital_life,
     get_level5_asi,
 )
+from services.document_router import try_intent_routing as _try_intent_routing
 from fastapi import APIRouter, Body, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 
@@ -1109,6 +1110,28 @@ async def _handle_chat_request(
             "and prioritize user safety in your response."
         )
     await _try_alignment_check(user_message, crisis_level, context)
+
+    # Step 5g: IntentRegistry routing (document/card/googledrive intents — may short-circuit)
+    # This wires IntentRegistry into the chat pipeline for the first time.
+    chat_svc = await _get_chat_service()
+    intent_result = await _try_intent_routing(user_message, chat_svc, user_name, context)
+    if intent_result:
+        return intent_result
+
+    # Step 5h: Wire DesktopInteraction into context so Angela can read/write files
+    try:
+        from core.engine.desktop_interaction import DesktopInteraction
+        _desktop = DesktopInteraction()
+        context["desktop_interaction"] = _desktop
+        # Also inject the card pile directory path
+        import os
+        context["card_pile_dir"] = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "data", "card_pile_downloaded")
+        )
+        context["card_dev_dir"] = r"G:\我的雲端硬碟\卡片開發"
+        logger.info("DesktopInteraction wired into chat context")
+    except Exception as e:
+        logger.debug(f"DesktopInteraction wiring failed: {e}")
 
     # Step 6: Build full LLM context (bio state, state matrix, ED3N retrieval, dialogue, memory)
     chat_svc = await _get_chat_service()

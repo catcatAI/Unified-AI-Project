@@ -259,6 +259,7 @@ def construct_angela_prompt(
     _append_modality_state(messages, context)
     _append_awareness_injection(messages, context)
     _append_draft_response(messages, context)
+    _append_document_context(messages, context)
 
     messages.append({"role": "user", "content": f"<user_message>{user_message}</user_message>"})
 
@@ -578,6 +579,31 @@ def _append_awareness_injection(messages: List[Dict], context: Dict) -> None:
     if not injection:
         return
     messages[0]["content"] += f"\n\n[Self-Awareness]\n{injection}\n"
+
+
+def _append_document_context(messages: List[Dict], context: Dict) -> None:
+    """Append document processing context (card pile, output dirs) to system prompt.
+
+    Reads context["card_pile_dir"] and context["card_dev_dir"] injected by
+    chat_routes.py step 5h, and tells the LLM about available file paths
+    and DesktopInteraction capability so it can process documents.
+    """
+    card_pile = context.get("card_pile_dir")
+    card_dev = context.get("card_dev_dir")
+    desktop = context.get("desktop_interaction")
+    if not card_pile and not card_dev:
+        return
+    block = "\n\n---\n[Document Processing Context]"
+    if card_pile:
+        block += f"\n- Your card pile directory: {card_pile}"
+        block += f"\n  Contains .md card documents ready for processing."
+    if card_dev:
+        block += f"\n- Output directory for development documents: {card_dev}"
+        block += f"\n  You can write processed card game development docs here."
+    if desktop:
+        block += f"\n- DesktopInteraction is available for read/write file operations."
+    block += "\n"
+    messages[0]["content"] += block
 
 
 def _append_draft_response(messages: List[Dict], context: Dict) -> None:
