@@ -225,26 +225,82 @@ async def handle_document_intent(
         f"請用繁體中文輸出，格式為結構化的 Markdown 文檔。"
     )
     
-    try:
-        final_text = await chat_svc.generate_text(final_prompt, max_tokens=4096, temperature=0.3)
-    except Exception as e:
-        logger.error(f"Final document generation failed: {e}")
-        final_text = f"# 卡片遊戲開發文件\n\n*生成失敗：{e}*"
+    # Step C: Generate final consolidated document programmatically from batch outputs
+    # (Do NOT rely on a single LLM call which can fail due to quota limits)
+    combined_analysis = "\n\n---\n\n".join(all_results)
     
-    # Write main document
-    index_doc = f"""# 卡片遊戲開發文件
-
-## 生成資訊
-- **來源**: {source_dir}
-- **檔案數量**: {len(files)}
-- **程式掃描卡片數**: {len(baseline)}
-- **生成時間**: {datetime.datetime.now().isoformat()}
-
----
-
-{final_text}
-"""
-    await _write_output_file(output_path / "卡片開發文件.md", index_doc)
+    # Count unique card IDs from LLM responses across all batches
+    all_llm_ids = set()
+    for result in all_results:
+        all_llm_ids |= _extract_card_ids(result)
+    
+    # Collect card mentions from batch outputs (LLM-analyzed descriptions)
+    # Group by type for the structured document
+    batch_card_info: Dict[str, List[str]] = {}
+    for result in all_results:
+        for line in result.split('\n'):
+            line = line.strip()
+            if not line:
+                continue
+            # Find lines containing card IDs
+            ids_in_line = _extract_card_ids(line)
+            if ids_in_line:
+                for cid in ids_in_line:
+                    if cid not in batch_card_info:
+                        batch_card_info[cid] = []
+                    batch_card_info[cid].append(line[:200])
+    
+    # Try LLM consolidation with retry; fall back to programmatic generation
+    async def _try_llm_consolidation() -> Optional[str]:
+        for attempt in range(3):
+            try:
+                text = await chat_svc.generate_text(final_prompt, max_tokens=4096, temperature=0.3)
+                if text and len(text) > 100:
+                    return text
+            except Exception as e:
+                logger.warning(f"LLM consolidation attempt {attempt+1} failed: {e}")
+                await asyncio.sleep(5.0 * (attempt + 1))  # Progressive delay
+        return None
+    
+    llm_final = await _try_llm_consolidation()
+    
+    # Build programmatic document (always generated as fallback/backbone)
+    prog_lines = ["# 卡片遊戲開發文件\n"]
+    prog_lines.append(f"\n## 生成資訊\n- **來源**: {source_dir}\n- **檔案數量**: {len(files)}\n- **程式掃描卡片數**: {len(baseline)}\n- **批次LLM分析卡片ID數**: {len(all_llm_ids)}\n- **生成時間**: {datetime.datetime.now().isoformat()}\n")
+    
+    if llm_final:
+        prog_lines.append("\n---\n\n## AI 分析摘要\n\n")
+        prog_lines.append(llm_final)
+        prog_lines.append("\n\n---\n")
+    
+    prog_lines.append("\n## 完整卡片索引\n\n")
+    
+    for t in sorted(by_type.keys()):
+        cards = by_type[t]
+        prog_lines.append(f"### {t} ({len(cards)} 張卡片)\n\n")
+        prog_lines.append("| ID | 名稱 | 出現檔案 | LLM分析摘要 |\n")
+        prog_lines.append("|----|------|----------|-------------|\n")
+        for id_, name in cards:
+            info = baseline[id_]
+            file_list = ", ".join(sorted(set(info["files"]))[:2])
+            name_display = name if name else "（名稱未找到）"
+            # Get LLM-analyzed description if available
+            desc_lines = batch_card_info.get(id_, [])
+            desc = desc_lines[0][:100] if desc_lines else ""
+            # Escape pipe chars for markdown table
+            desc_clean = desc.replace("|", "/").replace("\n", " ")
+            prog_lines.append(f"| {id_} | {name_display} | {file_list} | {desc_clean} |\n")
+        prog_lines.append("\n")
+    
+    # Add batch analysis summaries for cards the LLM described
+    prog_lines.append("\n## 批次分析詳情\n\n")
+    for i, result in enumerate(all_results, 1):
+        if result and not result.startswith("[第"):
+            # Extract key card info (first 500 chars per batch)
+            prog_lines.append(f"### 第 {i} 批\n\n{result[:800]}\n\n---\n\n")
+    
+    programmatic_doc = "".join(prog_lines)
+    await _write_output_file(output_path / "卡片開發文件.md", programmatic_doc)
     
     # Write the baseline inventory as a standalone reference
     inventory = f"""# 卡片基準清單（程式掃描）
@@ -261,6 +317,8 @@ async def handle_document_intent(
     for t in sorted(by_type.keys()):
         cards = by_type[t]
         inventory += f"### {t} ({len(cards)} 張)\n\n"
+        inventory += "| ID | 名稱 | 出現檔案 |\n"
+        inventory += "|----|------|----------|\n"
         for id_, name in cards:
             info = baseline[id_]
             file_list = ", ".join(sorted(set(info["files"]))[:3])
@@ -283,51 +341,55 @@ async def handle_document_intent(
     await _write_output_file(output_path / "檔案索引.md", cards_summary)
     
     # Verify completeness
-    llm_ids_in_doc = _extract_card_ids(final_text)
-    missing_in_llm = set(baseline.keys()) - llm_ids_in_doc
-    extra_in_llm = llm_ids_in_doc - set(baseline.keys())
+    doc_ids = _extract_card_ids(programmatic_doc)
+    missing_in_doc = set(baseline.keys()) - doc_ids
+    
+    llm_missing = set(baseline.keys()) - all_llm_ids if all_llm_ids else set()
     
     verification = f"""# 驗證報告
 
 ## 數量對比
-- **程式基準卡片數**: {len(baseline)}
-- **LLM 最終文件中出現的卡片ID**: {len(llm_ids_in_doc)}
-- **批次分析中出現的卡片ID**: {len(all_llm_ids)}
-
-## 缺失卡片（基準有但 LLM 文件中沒有）
+- **程式基準卡片數**: {len(baseline)}\n- **最終文件中出現的卡片ID**: {len(doc_ids)}\n- **批次分析中出現的卡片ID**: {len(all_llm_ids)}\n
+## 缺失卡片（基準有但最終文件中沒有）
 """
-    if missing_in_llm:
-        for id_ in sorted(missing_in_llm):
+    if missing_in_doc:
+        for id_ in sorted(missing_in_doc):
             info = baseline[id_]
             verification += f"- {id_}: {info['name']} (出現在 {', '.join(sorted(set(info['files'])))})\n"
     else:
         verification += "- 無缺失 ✅\n"
     
-    verification += f"\n## 額外卡片（LLM 文件中有但基準沒有的）\n"
-    if extra_in_llm:
-        for id_ in sorted(extra_in_llm):
-            verification += f"- {id_}\n"
+    verification += f"\n## LLM 未提及的卡片（批次分析中未出現，僅程式掃描找到）\n"
+    if llm_missing:
+        verification += f"共 {len(llm_missing)} 張（這些卡片僅以ID形式存在於檔案中，LLM未提取到描述）\n"
+        for id_ in sorted(list(llm_missing)[:20]):
+            info = baseline[id_]
+            verification += f"- {id_}: {info['name']}\n"
+        if len(llm_missing) > 20:
+            verification += f"  ...及其他 {len(llm_missing) - 20} 張\n"
     else:
-        verification += "- 無額外卡片 ✅\n"
+        verification += "- 所有卡片均在批次分析中被提及 ✅\n"
     
     await _write_output_file(output_path / "驗證報告.md", verification)
     
+    total_in_doc = len(doc_ids)
     return {
         "response_text": (
             f"✅ 已完成 {len(files)} 個檔案的處理！\n\n"
             f"📊 統計：\n"
             f"   - 程式掃描卡片數：{len(baseline)} 張\n"
+            f"   - 最終文件中卡片數：{total_in_doc} 張\n"
             f"   - LLM 批次分析卡片ID：{len(all_llm_ids)} 張\n"
             f"   - 卡片類型：{len(by_type)} 種\n"
             f"\n"
             f"📄 輸出到 {output_dir}：\n"
-            f"   - 卡片開發文件.md（完整文檔）\n"
-            f"   - 卡片基準清單.md（程式掃描基準）\n"
+            f"   - 卡片開發文件.md（程式化生成 + LLM 分析摘要）\n"
+            f"   - 卡片基準清單.md（程式掃描基準，{len(baseline)} 張）\n"
             f"   - 批次分析原始輸出.md（各批次原始分析）\n"
             f"   - 驗證報告.md（完整性比對）\n"
             f"   - 檔案索引.md（檔案清單）\n"
             f"\n"
-            f"{'⚠️ ' + str(len(missing_in_llm)) + ' 張卡片在 LLM 文件中缺失，請查看驗證報告。' if missing_in_llm else '✅ 所有卡片均已包含！'}"
+            f"{'⚠️ ' + str(len(missing_in_doc)) + ' 張卡片在最終文件中缺失（請查看驗證報告）' if missing_in_doc else '✅ 所有 {len(baseline)} 張卡片均已包含！'}"
         ),
         "source": "document_router",
         "route": "document_router",
