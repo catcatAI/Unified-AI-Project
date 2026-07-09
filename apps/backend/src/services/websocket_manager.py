@@ -33,6 +33,7 @@ class ConnectionManager:
 
     def __init__(self):
         self._sm = get_session_manager()
+        self._sessions_by_ws: Dict[int, str] = {}  # id(websocket) -> client_id
 
     @property
     def active_connections(self):
@@ -68,24 +69,26 @@ class ConnectionManager:
         """Establish connection."""
         await websocket.accept()
         session = await self._sm.register(websocket, session_id, metadata, single_device_mode=True)
+        self._sessions_by_ws[id(websocket)] = session.client_id if hasattr(session, 'client_id') else session
         return session
 
     def disconnect(self, websocket: WebSocket) -> None:
         """Close connection."""
-        for client_id, session in list(self._sm._sessions.items()):
-            if session.websocket == websocket:
-                task = asyncio.create_task(self._sm.unregister(client_id, "Normal close"))
-                task.add_done_callback(lambda t: logger.debug(f"Unregister failed: {t.exception()}") if not t.cancelled() and t.exception() else None)
-                break
+        ws_key = id(websocket)
+        client_id = self._sessions_by_ws.pop(ws_key, None)
+        if client_id:
+            task = asyncio.create_task(self._sm.unregister(client_id, "Normal close"))
+            task.add_done_callback(lambda t: logger.debug(f"Unregister failed: {t.exception()}") if not t.cancelled() and t.exception() else None)
 
     async def broadcast(self, message: dict) -> str:
         return await self._sm.broadcast(message)
 
     async def send_personal_message(self, message: dict, websocket: WebSocket) -> bool:
         """Send personal message."""
-        for client_id, session in self._sm._sessions.items():
-            if session.websocket == websocket:
-                return await self._sm.send_to_client(client_id, message)
+        ws_key = id(websocket)
+        client_id = self._sessions_by_ws.get(ws_key)
+        if client_id:
+            return await self._sm.send_to_client(client_id, message)
         return False
 
     async def send_to_session(self, session_id: str, message: dict) -> str:
@@ -203,7 +206,7 @@ async def broadcast_state_updates() -> None:
         except Exception as e:
             logger.error(f"Error broadcasting state update: {e}", exc_info=True)
 
-        await asyncio.sleep(loop_sleep("ws_broadcast_interval", 0.2))
+        await asyncio.sleep(loop_sleep("ws_broadcast_interval", 1.0))
 
 
 async def _handle_handshake(websocket: WebSocket) -> Optional[tuple]:

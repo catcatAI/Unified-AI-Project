@@ -992,6 +992,7 @@ class Live2DManager {
     
     // Expression control
     setExpression(expression) {
+        if (expression === this.currentExpression) return;
         try {
             if (this.expressions[expression]) {
                 this.currentExpression = expression;
@@ -1184,8 +1185,7 @@ class Live2DManager {
     destroy() {
         this.isRunning = false;
         
-        // 停止动画循环
-        this._stopAnimation();
+        this.stop();
         
         // 清理事件监听器
         if (this._wrapperElement) {

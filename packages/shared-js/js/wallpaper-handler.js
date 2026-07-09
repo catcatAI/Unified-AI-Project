@@ -66,15 +66,17 @@ class WallpaperHandler {
         this._updateCanvasSize();
         
         // Listen for window resize
-        window.addEventListener('resize', this._onResize.bind(this));
+        this._boundResize = this._onResize.bind(this);
+        window.addEventListener('resize', this._boundResize);
         
         // Listen for hardware changes
         if (window.electronAPI) {
-            window.electronAPI.on('hardware-update', (data) => {
+            this._hwUpdateHandler = (data) => {
                 if (this.autoAdjustEnabled) {
                     this._adjustToHardware(data.tier);
                 }
-            });
+            };
+            window.electronAPI.on('hardware-update', this._hwUpdateHandler);
         }
         
         console.log('Wallpaper Handler initialized');
@@ -549,9 +551,16 @@ class WallpaperHandler {
     cleanup() {
         // Clear cache
         this.wallpaperCache.clear();
-        
+
         // Remove event listeners
-        window.removeEventListener('resize', this._onResize.bind(this));
+        if (this._boundResize) {
+            window.removeEventListener('resize', this._boundResize);
+            this._boundResize = null;
+        }
+        if (this._hwUpdateHandler && window.electronAPI) {
+            window.electronAPI.off?.('hardware-update', this._hwUpdateHandler);
+            this._hwUpdateHandler = null;
+        }
     }
 }
 

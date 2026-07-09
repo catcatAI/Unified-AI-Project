@@ -329,6 +329,8 @@ class DigitalLifeIntegrator:
         # Life events
         self.life_events: list[LifeEvent] = []
         self._significant_events: list[LifeEvent] = []
+        self._MAX_LIFE_EVENTS = 1000
+        self._MAX_SIG_EVENTS = 200
 
         # Activity tracking
         self._last_activity_time: datetime = datetime.now()
@@ -952,6 +954,8 @@ class DigitalLifeIntegrator:
         # Store significant events separately
         if significance >= 0.7:
             self._significant_events.append(event)
+        if len(self._significant_events) > self._MAX_SIG_EVENTS:
+            self._significant_events.pop(0)
             if len(self._significant_events) > _MAX_SIGNIFICANT_EVENTS:
                 self._significant_events = self._significant_events[-_MAX_SIGNIFICANT_EVENTS:]
 
@@ -979,6 +983,8 @@ class DigitalLifeIntegrator:
     def _record_event(self, event: LifeEvent) -> None:
         """Internal method to record an event"""
         self.life_events.append(event)
+        if len(self.life_events) > self._MAX_LIFE_EVENTS:
+            self.life_events.pop(0)
         if len(self.life_events) > _MAX_LIFE_EVENTS:
             self.life_events = self.life_events[-_MAX_LIFE_EVENTS:]
 

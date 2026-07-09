@@ -331,7 +331,7 @@ class CloudSyncManager:
                 if self.config.use_encryption:
                     payload["encrypted"] = True
 
-                await asyncio.sleep(loop_sleep("cloud_sync_upload", 0.01))
+                await asyncio.sleep(loop_sleep("cloud_sync_upload", 0.1))
                 item.remote_version = item.local_version
                 return True
 

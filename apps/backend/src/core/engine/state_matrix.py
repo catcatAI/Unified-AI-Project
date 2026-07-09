@@ -556,6 +556,8 @@ Returns:
                 "confidence": decision.confidence,
             }
             self.unclassified_buffer.append(buf_entry)
+            if len(self.unclassified_buffer) > 1000:
+                self.unclassified_buffer.pop(0)
             results["applied_to"].append("unclassified_buffer")
 
         return results

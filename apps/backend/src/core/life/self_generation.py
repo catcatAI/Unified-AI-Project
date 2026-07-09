@@ -307,6 +307,8 @@ class SelfGeneration:
 
         # Store avatar
         self.avatar_history.append(avatar)
+        if len(self.avatar_history) > 200:
+            self.avatar_history.pop(0)
         self.avatars_by_id[avatar_id] = avatar
         self.current_avatar = avatar
 

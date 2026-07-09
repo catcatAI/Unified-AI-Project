@@ -6,8 +6,9 @@ Leaky Integrate-and-Fire neuron model.
 """
 
 import time
+from collections import deque
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Deque, Dict, List
 
 
 @dataclass
@@ -39,7 +40,7 @@ class LIFNeuron:
         self.state = LIFState(**{k: v for k, v in kwargs.items() if hasattr(LIFState, k)})
         self.input_synapses: Dict[str, float] = {}
         self.output_synapses: Dict[str, float] = {}
-        self._spike_history: List[float] = []
+        self._spike_history: Deque[float] = deque(maxlen=1000)
 
     def step(self, input_current: float, dt: float = 1.0, threshold_modulator: float = 1.0) -> bool:
         """

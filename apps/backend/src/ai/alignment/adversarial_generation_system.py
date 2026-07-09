@@ -43,6 +43,8 @@ class AdversarialGenerationSystem:
         self.config = config or {}
         self.examples: List[Dict[str, Any]] = []
         self._evaluation_history: List[Dict[str, Any]] = []
+        self._MAX_EXAMPLES = 500
+        self._MAX_EVAL_HISTORY = 1000
         logger.debug("AdversarialGenerationSystem initialized")
 
     def generate_adversarial(self, prompt: str = "") -> Dict[str, str]:
@@ -53,6 +55,8 @@ class AdversarialGenerationSystem:
             pattern = {"prompt": prompt, "type": "custom"}
         adversarial = f"{prompt} [adversarial variant]"
         self.examples.append({"prompt": prompt, "adversarial": adversarial, "type": pattern["type"]})
+        if len(self.examples) > self._MAX_EXAMPLES:
+            self.examples.pop(0)
         return {"original": prompt, "adversarial": adversarial, "type": pattern["type"]}
 
     def evaluate_robustness(self, response: str) -> Dict[str, Any]:
@@ -82,6 +86,8 @@ class AdversarialGenerationSystem:
             "response_length": len(response),
         }
         self._evaluation_history.append(result)
+        if len(self._evaluation_history) > self._MAX_EVAL_HISTORY:
+            self._evaluation_history.pop(0)
         return result
 
     def get_adversarial_examples(self) -> List[Dict[str, Any]]:

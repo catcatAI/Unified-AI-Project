@@ -69,12 +69,13 @@ class SimpleLive2DLoader {
             this.app.stage.addChild(this.model);
 
             // Enable interaction
-            this.model.on('hit', (hitAreas) => {
+            this._hitHandler = (hitAreas) => {
                 console.log('[Live2D] Hit:', hitAreas);
                 if (hitAreas.includes('Body')) {
                     this.model.motion('Tap');
                 }
-            });
+            };
+            this.model.on('hit', this._hitHandler);
 
             console.log('[Live2D] Model loaded successfully');
             return true;

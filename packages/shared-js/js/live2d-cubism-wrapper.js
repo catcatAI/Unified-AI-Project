@@ -1000,17 +1000,23 @@ class Live2DCubismWrapper {
                                 if (!self.vertexBufferUv) self.vertexBufferUv = gl.createBuffer();
                                 if (!self.indexBuffer) self.indexBuffer = gl.createBuffer();
 
+                                // Cache attribute/uniform locations (don't query GPU per frame)
+                                if (!self._posLoc) self._posLoc = gl.getAttribLocation(self.shaderProgram, 'a_position');
+                                if (!self._uvLoc) self._uvLoc = gl.getAttribLocation(self.shaderProgram, 'a_texCoord');
+                                if (!self._texLoc) self._texLoc = gl.getUniformLocation(self.shaderProgram, 'u_texture');
+                                if (!self._opLoc) self._opLoc = gl.getUniformLocation(self.shaderProgram, 'u_opacity');
+
                                 // Position Buffer
                                 gl.bindBuffer(gl.ARRAY_BUFFER, self.vertexBufferPos);
                                 gl.bufferData(gl.ARRAY_BUFFER, posArray, gl.DYNAMIC_DRAW);
-                                const posLoc = gl.getAttribLocation(self.shaderProgram, 'a_position');
+                                const posLoc = self._posLoc;
                                 gl.enableVertexAttribArray(posLoc);
                                 gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
 
                                 // UV Buffer
                                 gl.bindBuffer(gl.ARRAY_BUFFER, self.vertexBufferUv);
                                 gl.bufferData(gl.ARRAY_BUFFER, uvArray, gl.DYNAMIC_DRAW);
-                                const uvLoc = gl.getAttribLocation(self.shaderProgram, 'a_texCoord');
+                                const uvLoc = self._uvLoc;
                                 gl.enableVertexAttribArray(uvLoc);
                                 gl.vertexAttribPointer(uvLoc, 2, gl.FLOAT, false, 0, 0);
 
@@ -1021,8 +1027,8 @@ class Live2DCubismWrapper {
                                 // Texture Setup
                                 gl.activeTexture(gl.TEXTURE0);
                                 gl.bindTexture(gl.TEXTURE_2D, textures[textureIndex]);
-                                gl.uniform1i(gl.getUniformLocation(self.shaderProgram, 'u_texture'), 0);
-                                gl.uniform1f(gl.getUniformLocation(self.shaderProgram, 'u_opacity'), opacity);
+                                gl.uniform1i(self._texLoc, 0);
+                                gl.uniform1f(self._opLoc, opacity);
 
                                 // Draw
                                 const indexType = (indexArray instanceof Uint32Array) ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;

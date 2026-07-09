@@ -982,19 +982,47 @@ class UnifiedDisplayMatrix {
     // ================================================================
 
     onScaleChange(callback) {
-        this.listeners.scaleChange.push(callback);
+        if (!this.listeners.scaleChange.includes(callback)) {
+            this.listeners.scaleChange.push(callback);
+        }
     }
 
     onPrecisionChange(callback) {
-        this.listeners.precisionChange.push(callback);
+        if (!this.listeners.precisionChange.includes(callback)) {
+            this.listeners.precisionChange.push(callback);
+        }
     }
 
     onResize(callback) {
-        this.listeners.resize.push(callback);
+        if (!this.listeners.resize.includes(callback)) {
+            this.listeners.resize.push(callback);
+        }
     }
 
     onTouch(callback) {
-        this.listeners.touch.push(callback);
+        if (!this.listeners.touch.includes(callback)) {
+            this.listeners.touch.push(callback);
+        }
+    }
+
+    offScaleChange(callback) {
+        const idx = this.listeners.scaleChange.indexOf(callback);
+        if (idx >= 0) this.listeners.scaleChange.splice(idx, 1);
+    }
+
+    offPrecisionChange(callback) {
+        const idx = this.listeners.precisionChange.indexOf(callback);
+        if (idx >= 0) this.listeners.precisionChange.splice(idx, 1);
+    }
+
+    offResize(callback) {
+        const idx = this.listeners.resize.indexOf(callback);
+        if (idx >= 0) this.listeners.resize.splice(idx, 1);
+    }
+
+    offTouch(callback) {
+        const idx = this.listeners.touch.indexOf(callback);
+        if (idx >= 0) this.listeners.touch.splice(idx, 1);
     }
 
     _notifyListeners(event, data) {

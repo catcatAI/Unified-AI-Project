@@ -41,6 +41,8 @@ class TextGravityField:
             "candidates": candidates,
             "results": results,
         })
+        if len(self._history) > 1000:
+            self._history.pop(0)
         return results
 
     def _compute_single(self, core_trait: str, text: str) -> float:

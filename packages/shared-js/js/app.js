@@ -1087,14 +1087,6 @@ class AngelaApp {
             this.inputHandler?.updateRegions();
         });
 
-        // Listen for WebSocket messages from Main process
-        window.electronAPI.on('websocket-message', (message) => {
-            if (this.backendWebSocket) {
-                // Ensure the message is routed correctly
-                this.backendWebSocket._routeMessage(message);
-            }
-        });
-
         window.electronAPI.on('websocket-connected', () => {
             if (this.backendWebSocket) {
                 this.backendWebSocket.connected = true;
@@ -1132,7 +1124,7 @@ class AngelaApp {
      * 設置鍵盤快捷鍵
      */
     _setupKeyboardShortcuts() {
-        document.addEventListener('keydown', (e) => {
+        this._keydownHandler = (e) => {
             // 如果在輸入框中，不處理快捷鍵
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
                 return;
@@ -1150,7 +1142,8 @@ class AngelaApp {
                     }
                     break;
             }
-        });
+        };
+        document.addEventListener('keydown', this._keydownHandler);
 
         console.log('[App] Keyboard shortcuts configured');
         console.log('[App] 0: 切換 Live2D/立繪 模式');
@@ -1252,8 +1245,8 @@ class AngelaApp {
 
             // 清理 AudioHandler
             if (this.audioHandler) {
-                if (typeof this.audioHandler.destroy === 'function') {
-                    this.audioHandler.destroy();
+                if (typeof this.audioHandler.shutdown === 'function') {
+                    this.audioHandler.shutdown();
                 }
                 this.audioHandler = null;
                 console.log('[AngelaApp] AudioHandler cleaned up');
@@ -1261,8 +1254,8 @@ class AngelaApp {
 
             // 清理 HapticHandler
             if (this.hapticHandler) {
-                if (typeof this.hapticHandler.destroy === 'function') {
-                    this.hapticHandler.destroy();
+                if (typeof this.hapticHandler.shutdown === 'function') {
+                    this.hapticHandler.shutdown();
                 }
                 this.hapticHandler = null;
                 console.log('[AngelaApp] HapticHandler cleaned up');
@@ -1284,6 +1277,21 @@ class AngelaApp {
                 }
                 this.performanceManager = null;
                 console.log('[AngelaApp] PerformanceManager cleaned up');
+            }
+
+            // 清理 Electron IPC 事件監聽器
+            if (window.electronAPI) {
+                const events = ['window-ready', 'screen-changed', 'websocket-connected', 'websocket-disconnected', 'render-mode'];
+                for (const evt of events) {
+                    try { window.electronAPI.off?.(evt); } catch (_) {}
+                }
+                console.log('[AngelaApp] Electron IPC listeners cleaned up');
+            }
+
+            // 清理鍵盤監聽器
+            if (this._keydownHandler) {
+                document.removeEventListener('keydown', this._keydownHandler);
+                this._keydownHandler = null;
             }
 
             // 清理定時器

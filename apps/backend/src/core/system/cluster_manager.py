@@ -68,7 +68,7 @@ class ClusterManager:
                 target_node = next(iter(self.nodes))
             self.nodes[target_node]["status"] = "busy"
             logger.debug(f"Distributing task {task_id} ({task_type}) -> node '{target_node}'")
-            await asyncio.sleep(loop_sleep("cluster_task_distribute", 0.01))
+            await asyncio.sleep(loop_sleep("cluster_task_distribute", 0.1))
             self.nodes[target_node]["status"] = "idle"
         return task_id
 

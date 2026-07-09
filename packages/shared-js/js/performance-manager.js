@@ -491,7 +491,8 @@ class PerformanceManager {
         this._adjustModeForCapabilityState();
         this.startPerformanceMonitoring();
 
-        window.addEventListener('resize', () => this.handleResize());
+        this._boundResize = () => this.handleResize();
+        window.addEventListener('resize', this._boundResize);
 
         if (this.websocket && this.websocket.isConnected()) {
             this.websocket.send({
@@ -1150,6 +1151,12 @@ class PerformanceManager {
         if (this._visibilityChangeHandler) {
             document.removeEventListener('visibilitychange', this._visibilityChangeHandler);
             this._visibilityChangeHandler = null;
+        }
+
+        // 清理resize事件监听器
+        if (this._boundResize) {
+            window.removeEventListener('resize', this._boundResize);
+            this._boundResize = null;
         }
 
         // 清理性能变更确认机制

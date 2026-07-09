@@ -72,6 +72,8 @@ class ED3NTrainer:
             duration_ms=(time.perf_counter() - start) * 1000.0,
         )
         self.training_history.append(combined)
+        if len(self.training_history) > 500:
+            self.training_history.pop(0)
         # Track epoch and best accuracy
         self.current_epoch += 1
         if combined_acc > self.best_accuracy:

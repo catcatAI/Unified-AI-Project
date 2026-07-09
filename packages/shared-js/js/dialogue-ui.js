@@ -313,6 +313,16 @@ class DialogueUI {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
         this.messages.push({ sender, text, time, source, neuroBlend });
+
+        // Evict oldest messages beyond max limit
+        const MAX_MESSAGES = 200;
+        if (this.messages.length > MAX_MESSAGES) {
+            const excess = this.messages.length - MAX_MESSAGES;
+            this.messages.splice(0, excess);
+            while (messagesContainer.children.length > MAX_MESSAGES) {
+                messagesContainer.removeChild(messagesContainer.firstChild);
+            }
+        }
     }
 
     addSystemMessage(text) {

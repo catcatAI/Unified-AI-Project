@@ -131,7 +131,7 @@ class DictionaryLayer:
             if bigram in text_lower:
                 candidates.update(keys)
         if not candidates:
-            candidates = set(self.entries.keys())
+            return {}
 
         for key in candidates:
             entry = self.entries.get(key)

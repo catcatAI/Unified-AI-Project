@@ -101,6 +101,11 @@ class _NumpyBackend:
         self.ids.append(memory_id)
         self.documents.append(content)
         self.metadatas.append(metadata or {})
+        if len(self.ids) > 10000:
+            self.ids.pop(0)
+            self.documents.pop(0)
+            self.metadatas.pop(0)
+            self.vectors = self.vectors[1:]
         self._dirty = True
         if self._dirty:
             self._save()

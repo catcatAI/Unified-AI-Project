@@ -234,7 +234,7 @@ _routeMessage(message) {
     const type = message.type
     const data = message.data
 
-    console.log('[BackendWebSocket] _routeMessage called, type:', type, 'data:', JSON.stringify(data || {}).substring(0, 200))
+    console.log('[BackendWebSocket] _routeMessage called, type:', type)
 
     switch (type) {
       case 'connected':
@@ -370,7 +370,7 @@ _routeMessage(message) {
   }
 
   _handleStateUpdate(data) {
-    console.log('State update received:', data)
+    console.debug('State update received')
 
     // P0-1: 消息顺序保证
     if (data.sequence !== undefined) {
@@ -1213,6 +1213,14 @@ _routeMessage(message) {
    */
   destroy() {
     console.log('[BackendWebSocket] Destroying...')
+
+    // Remove electronAPI listeners if connected via IPC
+    if (window.electronAPI) {
+      const events = ['websocket-connected', 'websocket-message', 'websocket-disconnected', 'websocket-error']
+      for (const evt of events) {
+        try { window.electronAPI.off?.(evt) } catch (_) {}
+      }
+    }
 
     // Disconnect first
     this.disconnect()

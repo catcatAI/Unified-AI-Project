@@ -100,6 +100,8 @@ class NegativityDetector:
             )
         self._correction_count += 1
         self._history.append({"point_id": point_id, "action": "corrected"})
+        if len(self._history) > 5000:
+            self._history.pop(0)
         return CorrectionResult(
             status="corrected",
             reasoning=f"Point {point_id}: corrected with confidence 0.8",

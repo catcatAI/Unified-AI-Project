@@ -151,12 +151,19 @@ def behavior_executor(key: str, default: float = 0.5) -> float:
     return _safe_float(_get(key, default), default)
 
 
+def _apply_hw_multiplier(value: float) -> float:
+    profile = _get_hardware_profile()
+    if profile is not None:
+        return profile.apply_multiplier(value)
+    return value
+
+
 def heartbeat_value(key: str, default: float = 1.0) -> float:
-    return _safe_float(_get(key, default), default)
+    return _apply_hw_multiplier(_safe_float(_get(key, default), default))
 
 
 def timing_value(key: str, default: float = 0.1) -> float:
-    return _safe_float(_get(key, default), default)
+    return _apply_hw_multiplier(_safe_float(_get(key, default), default))
 
 
 def confidence_value(key: str, default: float = 0.7) -> float:

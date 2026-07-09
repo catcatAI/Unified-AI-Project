@@ -53,12 +53,17 @@ class TTLSessionManager:
         self._config = _angela_cfg.get_authority("angela_core", {}).get("session_manager", {}) if _angela_cfg else {}
         self._ttl = self._config.get("ttl_seconds", 3600)
         self._max_sessions = self._config.get("max_sessions", 1000)
+        self._last_purge = time.time()
 
-    def _purge_expired(self) -> None:
-        """Purge expired."""
-        now = datetime.now()
+    def _try_purge(self) -> None:
+        """Lazy purge — runs O(n) scan at most once per 60s."""
+        now = time.time()
+        if now - self._last_purge < 60.0:
+            return
+        self._last_purge = now
+        cutoff = datetime.now() - timedelta(seconds=self._ttl)
         expired = [sid for sid, s in self._sessions.items()
-                    if (now - datetime.fromisoformat(s.get("created_at", now.isoformat()))).total_seconds() > self._ttl]
+                    if s.get("created_at") and datetime.fromisoformat(s["created_at"]) < cutoff]
         for sid in expired:
             del self._sessions[sid]
         if len(self._sessions) > self._max_sessions:
@@ -67,30 +72,26 @@ class TTLSessionManager:
                 del self._sessions[sid]
 
     def get(self, session_id: str) -> Optional[Dict[str, Any]]:
-        """Execute the get operation."""
         with self._lock:
-            self._purge_expired()
+            self._try_purge()
             return self._sessions.get(session_id)
 
     def set(self, session_id: str, data: Dict[str, Any]) -> None:
-        """Execute the set operation."""
         with self._lock:
-            self._purge_expired()
+            self._try_purge()
             if len(self._sessions) >= self._max_sessions:
                 oldest = min(self._sessions.keys(), key=lambda k: self._sessions[k].get("created_at", ""))
                 del self._sessions[oldest]
             self._sessions[session_id] = data
 
     def __contains__(self, session_id: str) -> bool:
-        """Execute the   contains   operation."""
         with self._lock:
-            self._purge_expired()
+            self._try_purge()
             return session_id in self._sessions
 
     def items(self) -> list:
-        """Execute the items operation."""
         with self._lock:
-            self._purge_expired()
+            self._try_purge()
             return list(self._sessions.items())
 
 

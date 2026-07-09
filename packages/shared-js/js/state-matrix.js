@@ -181,6 +181,7 @@ class StateMatrix4D {
         this.thresholdCallbacks = {};
         this.live2DManager = null;
         this.websocket = null;
+        this._lastExpression = null;
 
         // 啟動歷史清理定時器（每5分鐘清理一次）
         this._startHistoryCleanupTimer();
@@ -475,9 +476,10 @@ class StateMatrix4D {
             }
         }
         
-        // 2. 表情同步
+        // 2. 表情同步 (only when emotion changes)
         const dominantEmotion = this.getDominantEmotion();
-        if (dominantEmotion) {
+        if (dominantEmotion && dominantEmotion !== this._lastExpression) {
+            this._lastExpression = dominantEmotion;
             this.live2DManager.setExpression(dominantEmotion);
         }
         
@@ -1102,14 +1104,23 @@ class StateMatrix4D {
     }
     
     registerChangeCallback(callback) {
-        this.changeCallbacks.push(callback);
+        if (!this.changeCallbacks.includes(callback)) {
+            this.changeCallbacks.push(callback);
+        }
+    }
+    
+    unregisterChangeCallback(callback) {
+        const idx = this.changeCallbacks.indexOf(callback);
+        if (idx >= 0) this.changeCallbacks.splice(idx, 1);
     }
     
     registerThresholdCallback(dimension, threshold, callback) {
         if (!this.thresholdCallbacks[dimension]) {
             this.thresholdCallbacks[dimension] = [];
         }
-        this.thresholdCallbacks[dimension].push([threshold, callback]);
+        if (!this.thresholdCallbacks[dimension].some(p => p[1] === callback)) {
+            this.thresholdCallbacks[dimension].push([threshold, callback]);
+        }
     }
     
     reset() {
