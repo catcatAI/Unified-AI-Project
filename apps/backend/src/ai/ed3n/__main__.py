@@ -116,8 +116,7 @@ def cmd_serve(args):
     # Wire continuous learning for interactive sessions
     try:
         from .continuous_learning import ContinuousLearningPipeline
-
-from .ed3n_trainer import JointTrainer
+        from .ed3n_trainer import JointTrainer
 
         trainer = JointTrainer(e, dict_lr=0.05, network_lr=0.05)
         clp = ContinuousLearningPipeline(engine=e, trainer=trainer,
