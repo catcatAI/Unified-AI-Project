@@ -27,6 +27,20 @@ _ALLOWED_ROOTS = [
     Path(os.environ.get("ANGELA_WORKSPACE", os.getcwd())),
 ]
 
+def _safe_error(e: Exception) -> str:
+    """Sanitize exception message for user-facing output — strip system paths, truncate."""
+    msg = str(e)
+    import re
+    # Strip Windows drive-letter paths
+    msg = re.sub(r'[A-Za-z]:\\[^\s,"\')]*', '<path>', msg)
+    # Strip Unix absolute paths
+    msg = re.sub(r'/[/A-Za-z0-9._-]+', '<path>', msg)
+    # Truncate long messages
+    if len(msg) > 200:
+        msg = msg[:200] + '...'
+    return msg
+
+
 def _is_safe_path(target: Path) -> bool:
     try:
         resolved = target.resolve()
@@ -87,7 +101,7 @@ class FileOperationHandler:
             return t("file_ops.permission_denied", path=path_str)
         except Exception as e:
             logger.error(f"FileOperationHandler error: {e}", exc_info=True)
-            return t("file_ops.operation_failed", error=str(e))
+            return t("file_ops.operation_failed", error=_safe_error(e))
 
     def _create(self, target: Path, **kw) -> str:
         if target.exists():
@@ -108,7 +122,7 @@ class FileOperationHandler:
                 text = text[:4000] + "\n... (已截斷)"
             return t("file_ops.file_contents", path=str(target)) + "\n" + text
         except Exception as e:
-            return t("file_ops.read_failed", error=str(e))
+            return t("file_ops.read_failed", error=_safe_error(e))
 
     def _write(self, target: Path, content: str = "", **kw) -> str:
         if target.is_dir():

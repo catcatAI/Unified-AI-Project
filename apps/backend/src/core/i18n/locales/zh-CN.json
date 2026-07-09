@@ -114,6 +114,9 @@
   },
   "file_ops": {
     "specify_path": "（檔案操作）請指定檔案路徑。",
+    "specify_target_dir": "（檔案操作）請指定目標目錄。",
+    "cannot_move_dir": "（檔案操作）無法移動目錄：{path}",
+    "moved": "（檔案操作）已移動：{src} → {dst}",
     "unsafe_path": "（檔案操作）路徑不安全或不在允許的目錄內：{path}",
     "unsupported_action": "（檔案操作）不支援的操作：{action}。可用操作：{actions}",
     "permission_denied": "（檔案操作）權限不足：{path}",

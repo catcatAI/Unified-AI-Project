@@ -114,6 +114,9 @@
   },
   "file_ops": {
     "specify_path": "Please specify a file path.",
+    "specify_target_dir": "Please specify a target directory.",
+    "cannot_move_dir": "Cannot move a directory: {path}",
+    "moved": "Moved: {src} → {dst}",
     "unsafe_path": "Path is unsafe or not in allowed directory: {path}",
     "unsupported_action": "Unsupported operation: {action}. Available operations: {actions}",
     "permission_denied": "Insufficient permissions: {path}",

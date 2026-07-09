@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
 
 _MAX_OUTPUT = 4000
 _TIMEOUT = 10
+_MAX_TRACEBACK_LINES = 10
+
 _BUILTINS_WHITELIST = {
     "abs", "all", "any", "bool", "chr", "dict", "dir", "enumerate",
     "filter", "float", "format", "frozenset", "getattr", "hasattr",
@@ -97,8 +99,12 @@ class CodeExecutionHandler:
             return t("code_exec.timeout", seconds=_TIMEOUT)
         except Exception as e:
             tb = traceback.format_exc()
+            lines = tb.splitlines()
+            if len(lines) > _MAX_TRACEBACK_LINES:
+                tb = "\n".join(lines[:_MAX_TRACEBACK_LINES]) + f"\n... (後續 {len(lines) - _MAX_TRACEBACK_LINES} 行已省略)"
             if len(tb) > _MAX_OUTPUT:
                 tb = tb[:_MAX_OUTPUT] + "\n... (已截斷)"
+            logger.warning(f"Code execution error: {e}")
             return t("code_exec.execution_error", traceback=tb)
         finally:
             timer.cancel()
