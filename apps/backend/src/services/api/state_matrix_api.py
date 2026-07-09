@@ -123,12 +123,12 @@ async def get_state_summary():
     """Get complete state matrix summary."""
     matrix = get_state_matrix()
     return {
-        "alpha": matrix.alpha,
-        "beta": matrix.beta,
-        "gamma": matrix.gamma,
-        "delta": matrix.delta,
-        "epsilon": matrix.epsilon,
-        "theta": matrix.theta,
+        "alpha": dict(matrix.alpha.values or {}),
+        "beta": dict(matrix.beta.values or {}),
+        "gamma": dict(matrix.gamma.values or {}),
+        "delta": dict(matrix.delta.values or {}),
+        "epsilon": dict(matrix.epsilon.values or {}),
+        "theta": dict(matrix.theta.values or {}),
         "timestamp": datetime.datetime.now().isoformat(),
     }
 

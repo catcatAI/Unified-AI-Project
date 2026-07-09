@@ -16,7 +16,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 from services.connection_session import get_session_manager
 
 from core.system.config.magic_numbers import loop_sleep
-from core.system.live_logger import status_interval as live_status, err as live_err, info as live_info
+from core.system.live_logger import status as live_status, err as live_err, info as live_info
 
 logger = logging.getLogger(__name__)
 

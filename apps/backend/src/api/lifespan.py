@@ -443,7 +443,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     yield
 
-    _shutdown_services(_broadcast_task, _module_manager)
+    await _shutdown_services(_broadcast_task, _module_manager)
     # Stop heartbeat on shutdown
     try:
         hb_inst = get_metabolic_heartbeat()
