@@ -1,7 +1,9 @@
 """
 ANGELA-MATRIX: [L3-L4] [β] [B] [L2]
 FileOperationHandler — processes file_op intents from ChatService dispatch.
-Supports: create, read, write, delete, list, rename, copy, exists, size, append.
+Supports: create, read, write, delete, list, rename, move, copy, exists, size, append.
+
+Note: "move" moves a file INTO a target directory. "rename" renames within the same directory.
 """
 
 import asyncio
@@ -69,7 +71,7 @@ class FileOperationHandler:
             "list": self._list_dir,
             "ls": self._list_dir,
             "rename": self._rename,
-            "move": self._rename,
+            "move": self._move,
             "copy": self._copy,
             "exists": self._exists,
             "size": self._size,
@@ -146,6 +148,38 @@ class FileOperationHandler:
                 size = f" ({s} bytes)" if s < 1024 else f" ({s // 1024}KB)"
             items.append(f"  {prefix} {p.name}{size}")
         return t("file_ops.dir_contents", path=str(target)) + "\n" + "\n".join(items)
+
+    def _move(self, target: Path, new_name: str = "", **kw) -> str:
+        """Move a file INTO a target directory.
+
+        Args:
+            target: Source file path.
+            new_name: Target directory path (the directory to move into).
+
+        Returns:
+            Status message string.
+        """
+        if not target.exists():
+            return t("file_ops.file_not_found", path=str(target))
+        if target.is_dir():
+            return t("file_ops.cannot_move_dir", path=str(target))
+        if not new_name:
+            return t("file_ops.specify_target_dir")
+        dest_dir = Path(new_name)
+        if not dest_dir.is_dir():
+            # Maybe the user gave a destination filename, not a directory
+            # Try creating parent directories and treat as full destination path
+            dest_dir.parent.mkdir(parents=True, exist_ok=True)
+            dest = dest_dir
+        else:
+            dest = dest_dir / target.name
+        if dest.exists():
+            return t("file_ops.target_name_exists", path=str(dest))
+        # Validate both source and destination are safe
+        if not _is_safe_path(dest):
+            return t("file_ops.unsafe_path", path=str(dest))
+        shutil.move(str(target), str(dest))
+        return t("file_ops.moved", src=str(target), dst=str(dest))
 
     def _rename(self, target: Path, new_name: str = "", **kw) -> str:
         if not target.exists():

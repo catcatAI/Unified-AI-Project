@@ -59,6 +59,60 @@ class TestFileOperationHandler:
         assert isinstance(result, str)
         assert len(result) > 0
 
+    async def test_move_file_to_directory(self):
+        """move moves a file INTO a target directory, not just rename."""
+        from services.handlers.file_operation_handler import FileOperationHandler
+        handler = FileOperationHandler()
+
+        # Create source file
+        src_file = self.temp_dir / "source_test.txt"
+        src_file.write_text("move test content", encoding="utf-8")
+        assert src_file.exists()
+
+        # Create target directory
+        target_dir = self.temp_dir / "target_subdir"
+        target_dir.mkdir(parents=True, exist_ok=True)
+
+        result = await handler.handle("file_op_move", {
+            "action": "move",
+            "path": str(src_file),
+            "new_name": str(target_dir),
+        })
+        assert isinstance(result, str)
+        assert len(result) > 0
+        # File should no longer exist at source
+        assert not src_file.exists()
+        # File should exist at destination
+        expected_dest = target_dir / "source_test.txt"
+        assert expected_dest.exists()
+        assert expected_dest.read_text(encoding="utf-8") == "move test content"
+
+    async def test_move_nonexistent_source(self):
+        """move returns error when source doesn't exist."""
+        from services.handlers.file_operation_handler import FileOperationHandler
+        handler = FileOperationHandler()
+        nonexistent = self.temp_dir / "does_not_exist.txt"
+        result = await handler.handle("file_op_move", {
+            "action": "move",
+            "path": str(nonexistent),
+            "new_name": str(self.temp_dir),
+        })
+        assert isinstance(result, str)
+        assert len(result) > 0
+
+    async def test_move_missing_target_dir(self):
+        """move returns prompt when no target directory specified."""
+        from services.handlers.file_operation_handler import FileOperationHandler
+        handler = FileOperationHandler()
+        src_file = self.temp_dir / "source_no_target.txt"
+        src_file.write_text("test", encoding="utf-8")
+        result = await handler.handle("file_op_move", {
+            "action": "move",
+            "path": str(src_file),
+        })
+        assert isinstance(result, str)
+        assert len(result) > 0
+
 
 # =============================================================================
 # GoogleDriveHandler tests
