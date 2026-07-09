@@ -203,28 +203,6 @@ async def handle_document_intent(
     raw_content = "\n\n---\n\n".join(all_results)
     await _write_output_file(output_path / "批次分析原始輸出.md", f"# 批次分析原始輸出\n\n共 {len(all_results)} 批次\n\n{raw_content}")
     
-    # Step C: Generate final consolidated document
-    combined_analysis = "\n\n---\n\n".join(all_results)
-    
-    # Count unique card IDs from LLM responses
-    all_llm_ids = set()
-    for result in all_results:
-        all_llm_ids |= _extract_card_ids(result)
-    
-    final_prompt = (
-        f"你是一個卡片遊戲開發文件生成助手。以下是從 {len(files)} 個卡片檔案中提取的批次分析結果。\n\n"
-        f"{combined_analysis}\n\n"
-        f"此外，以下是透過程式預先掃描到的 {len(baseline)} 張卡片基準清單（包含ID和名稱）：\n"
-        f"```\n{baseline_text}\n```\n\n"
-        f"請根據以上資訊，生成一份完整的卡片遊戲開發文件，要求如下：\n"
-        f"1. **完整卡片索引**：按類型分組列出所有卡片（ID、名稱、類型、關鍵屬性）\n"
-        f"2. **確保不遺漏**：基準清單中有 {len(baseline)} 張卡片，請確認你的索引包含全部\n"
-        f"3. **衝突檢測**：找出卡片之間的矛盾或重疊\n"
-        f"4. **缺失欄位補充**：建議需要補齊的資料欄位\n"
-        f"5. **卡片關聯**：列出卡片之間的關聯關係\n\n"
-        f"請用繁體中文輸出，格式為結構化的 Markdown 文檔。"
-    )
-    
     # Step C: Generate final consolidated document programmatically from batch outputs
     # (Do NOT rely on a single LLM call which can fail due to quota limits)
     combined_analysis = "\n\n---\n\n".join(all_results)
@@ -389,7 +367,7 @@ async def handle_document_intent(
             f"   - 驗證報告.md（完整性比對）\n"
             f"   - 檔案索引.md（檔案清單）\n"
             f"\n"
-            f"{'⚠️ ' + str(len(missing_in_doc)) + ' 張卡片在最終文件中缺失（請查看驗證報告）' if missing_in_doc else '✅ 所有 {len(baseline)} 張卡片均已包含！'}"
+            f"{'⚠️ ' + str(len(missing_in_doc)) + ' 張卡片在最終文件中缺失（請查看驗證報告）' if missing_in_doc else '✅ 所有 ' + str(len(baseline)) + ' 張卡片均已包含！'}"
         ),
         "source": "document_router",
         "route": "document_router",
