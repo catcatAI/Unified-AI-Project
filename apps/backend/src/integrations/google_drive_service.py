@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 
 from core.interfaces.service_registry import get_registry
 from core.system.config.magic_numbers import batch_value
+from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
@@ -66,7 +67,7 @@ class GoogleDriveService:
             return False
         if not self._creds.valid:
             try:
-                self._creds.refresh()
+                self._creds.refresh(request=Request())
             except Exception:
                 logger.warning("Failed to refresh Google Drive credentials", exc_info=True)
                 return False
