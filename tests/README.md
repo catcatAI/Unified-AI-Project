@@ -42,11 +42,17 @@ tests/
 # All tests
 pytest tests/
 
+# All tests with timeout (recommended for CI)
+pytest tests/ --timeout=30 --timeout_method=thread -q
+
 # Single file
-pytest tests/path/to/test_file.py
+pytest tests/path/to/test_file.py --timeout=10 -v
 
 # Single test function
 pytest tests/path/to/test_file.py::test_function_name -v
+
+# Quick collect-only (verify test count)
+pytest tests/ --collect-only -q 2>&1 | tail -5
 
 # With coverage
 pytest tests/ --cov=apps/backend/src --cov-report=html
@@ -63,13 +69,48 @@ All 3 frontends (web-live2d-viewer, Electron, Electron MVP) feature a **floating
 - Displays full JSON responses (emotion, route, hit_source, source)
 - Monospace output with colorized JSON
 
-To manually test the chat pipeline:
+### Quick Verification
+
+```bash
+# Verify backend is running
+curl http://localhost:8000/health
+
+# Test chat endpoint
+curl -X POST http://localhost:8000/api/v1/chat/unified \
+  -H "Content-Type: application/json" \
+  -d '{"message": "hello", "session_id": "test-001"}'
+```
+
+### Manual Test Patterns
 
 1. Start backend: `python run_angela.py` or `pnpm dev:backend`
 2. Open any frontend in browser/Electron
 3. Press Ctrl+` to open terminal
 4. Type a message and press Enter — observe `route` and `hit_source` fields
-5. Test patterns: greeting → math (`2+2`) → file intent ("create a note") → emotional ("I'm sad")
+5. Test patterns:
+
+| Input | Expected Route | What to Verify |
+|-------|---------------|----------------|
+| "你好" / "hello" | `llm` | Natural response with emotion |
+| "2+2=?" | `dual_rail` | Correct math answer |
+| "幫我建立一個筆記" | `gate_confirm` | Confirmation dialog before execution |
+| "我今天很難過" | `llm` | Empathetic response with emotion context |
+| "/help" | `system` | REPL command help text |
+
+### Test Coverage by Intelligence Layer
+
+- **L1 (Hardcoded/ED3N Reflex)**: Basic greetings, math, simple Q&A
+- **L2 (Local Trained Models)**: ED3N classification, GARDEN knowledge, pattern matching
+- **L3 (LLM)**: Complex dialogue, creative responses, emotional support
+
+## Security & Autonomy Testing
+
+Key aspects to verify during testing:
+
+- **File operations** are restricted to `_ALLOWED_ROOTS` (Desktop/Documents/Downloads/Projects)
+- **Autonomous decisions** are logged through `BehaviorExecutor` with success/failure tracking
+- **Execution gate** requires confirmation for destructive operations
+- **Safe eval** uses AST whitelist — no arbitrary code execution
 
 ## Current Test State
 
@@ -92,6 +133,7 @@ Before committing, run:
 ```bash
 black apps/backend/src tests/
 flake8 apps/backend/src tests/
+pytest tests/ --timeout=30 --timeout_method=thread -q
 ```
 
 Test counts are tracked in: AGENTS.md, CHANGELOG.md, MASTER_TASK_MAP.md, IMPROVEMENT_ROADMAP.md, CAUSAL_CHAIN_COMPLETENESS.md
