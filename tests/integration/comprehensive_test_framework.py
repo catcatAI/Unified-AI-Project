@@ -1,4 +1,6 @@
-"""Comprehensive test framework."""
+"""Comprehensive test framework — helper classes, not pytest tests."""
+
+__test__ = False
 
 import pytest
 

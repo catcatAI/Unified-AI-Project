@@ -51,6 +51,16 @@ class TestActiveCognitionFormula:
         ac = ActiveCognitionFormula()
         assert ac.calculate_s_stress() == 0.0
 
+    def test_instantiation_with_config(self):
+        ac = ActiveCognitionFormula(config={
+            "stress_decay_rate": 0.1,
+            "min_a_c_threshold": 0.7,
+            "max_history_size": 1000,
+        })
+        assert ac.stress_decay_rate == 0.1
+        assert ac.min_a_c_threshold == 0.7
+        assert ac.max_history_size == 1000
+
     def test_empty_o_order(self):
         ac = ActiveCognitionFormula()
         assert ac.calculate_o_order() == pytest.approx(0.5)
