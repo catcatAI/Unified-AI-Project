@@ -269,7 +269,7 @@ class DualEncoderRouter:
             result["latent"] = combined
         except Exception as e:
             logger.error("DualEncoderRouter.encode_audio failed: %s", e)
-            result["error"] = str(e)
+            result["error"] = safe_error(e)
         return result
 
     # --- Latent combination ---

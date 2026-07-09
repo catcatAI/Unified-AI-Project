@@ -183,7 +183,7 @@ async def get_drive_status(svc=Depends(get_drive_service)) -> dict:
                 logger.warning(f"Failed to parse drive storage info: {e}", exc_info=True)
         return info
     except FileNotFoundError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=safe_error(e))
     except Exception as e:
         logger.error(f"Drive status error: {e}", exc_info=True)
         return {"status": "error", "authenticated": False, "detail": safe_error(e)}
@@ -208,10 +208,10 @@ async def get_oauth_url(svc=Depends(get_drive_service)) -> dict:
         url = svc.get_auth_url()
         return {"url": url}
     except FileNotFoundError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=safe_error(e))
     except Exception as e:
         logger.error(f"Auth URL error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error(e))
 
 
 @router.post("/auth/callback")
@@ -223,10 +223,10 @@ async def oauth_callback(code: str = Body(..., embed=True), svc=Depends(get_driv
             return {"message": "Authentication successful", "authenticated": True}
         raise HTTPException(status_code=400, detail="Token exchange failed")
     except FileNotFoundError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=safe_error(e))
     except Exception as e:
         logger.error(f"OAuth callback error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error(e))
 
 
 @router.post("/auth/logout")
@@ -237,7 +237,7 @@ async def logout(svc=Depends(get_drive_service)) -> dict:
         return {"message": "Logged out successfully"}
     except Exception as e:
         logger.error(f"Logout error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error(e))
 
 
 @router.get("/files")
@@ -253,10 +253,10 @@ async def list_files(
     except PermissionError:
         raise HTTPException(status_code=401, detail="Not authenticated. Run /drive/auth/url first.")
     except FileNotFoundError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=safe_error(e))
     except Exception as e:
         logger.error(f"List files error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error(e))
 
 
 @router.get("/files/{file_id}/metadata")
@@ -269,7 +269,7 @@ async def get_file_metadata(file_id: str, svc=Depends(get_drive_service)) -> dic
         raise HTTPException(status_code=401, detail="Not authenticated")
     except Exception as e:
         logger.error(f"Metadata error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error(e))
 
 
 @router.post("/files/sync")
@@ -341,7 +341,7 @@ async def sync_files(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_
                     synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": False})
                 except Exception as me:
                     logger.warning(f"Memory store failed: {me}", exc_info=True)
-                    synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": False, "memory_error": str(me)})
+                    synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": False, "memory_error": safe_error(me)})
             else:
                 synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": False})
         else:
@@ -375,7 +375,7 @@ async def search_and_list(
         raise HTTPException(status_code=401, detail="Not authenticated")
     except Exception as e:
         logger.error(f"Search error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error(e))
 
 
 @router.post("/analyze")
@@ -413,10 +413,10 @@ async def analyze_drive(request: Dict[str, Any] = Body(...), svc=Depends(get_dri
     except PermissionError:
         raise HTTPException(status_code=401, detail="Not authenticated")
     except FileNotFoundError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=safe_error(e))
     except Exception as e:
         logger.error(f"Analyze error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error(e))
 
 
 @router.post("/files/upload")
