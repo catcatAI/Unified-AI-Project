@@ -206,6 +206,13 @@ _state_matrix = None
 
 
 def _get_state_matrix():
+    """Get live state matrix from DLI when available, fallback to standalone."""
+    try:
+        dli = get_digital_life()
+        if dli and hasattr(dli, 'state_matrix'):
+            return dli.state_matrix
+    except Exception:
+        pass
     global _state_matrix
     if _state_matrix is None:
         from core.engine.state_matrix import StateMatrix4D
@@ -532,6 +539,7 @@ async def _handle_execution_gate(
             elif msg_lower in cancel_words:
                 return {
                     "response_text": "\u597d\u7684\uff0c\u4e0d\u6267\u884c\u3002\u8fd8\u6709\u4ec0\u4e48\u9700\u8981\u5e2e\u5fd9\u7684\u5417\uff1f",
+                    "response": "\u597d\u7684\uff0c\u4e0d\u6267\u884c\u3002\u8fd8\u6709\u4ec0\u4e48\u9700\u8981\u5e2e\u5fd9\u7684\u5417\uff1f",
                     "source": "gate_cancel",
                     "schema_version": schema_ver,
                     "truncation_message": "",
@@ -594,6 +602,7 @@ async def _handle_execution_gate(
             }
             return {
                 "response_text": decision.confirm_message,
+                "response": decision.confirm_message,
                 "source": "gate_confirm",
                 "schema_version": schema_ver,
                 "truncation_message": "",
@@ -1000,6 +1009,7 @@ def _handle_timeout(session_id: str, schema_ver: str) -> Dict[str, Any]:
         timeout_text = "\u62b1\u6b49\uff0c\u6211\u76ee\u524d\u65e0\u6cd5\u56de\u5e94\uff0c\u8bf7\u7a0d\u540e\u518d\u8bd5\u3002"
     return {
         "response_text": timeout_text,
+        "response": timeout_text,
         "source": "fallback-timeout",
         "schema_version": schema_ver,
         "truncation_message": "",
@@ -1024,6 +1034,7 @@ def _format_chat_response(
     """Build the final standardized chat response dict."""
     return {
         "response_text": response_text,
+        "response": response_text,
         "source": source,
         "schema_version": schema_ver,
         "truncation_message": trunc_msg if len(user_message) > max_len else "",
@@ -1243,6 +1254,7 @@ def _build_math_response(verification, matrix, user_message: str, session_id: st
 
     return {
         "response_text": verification.response_text,
+        "response": verification.response_text,
         "source": "dual_rail",
         "schema_version": schema_version,
         "truncation_message": truncation_message,

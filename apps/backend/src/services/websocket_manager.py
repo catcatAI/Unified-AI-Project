@@ -127,9 +127,10 @@ manager = ConnectionManager()
 
 
 async def broadcast_state_updates() -> None:
-    """Periodically broadcast state updates (bio + Live2D) to all connected clients."""
+    """Periodically broadcast state updates (bio + state matrix + Live2D) to all connected clients."""
     _bio_integrator = None
     _interval = loop_sleep("ws_broadcast_interval", 1.0)
+    _prev_bio_signature = ""
     while True:
         try:
             if _bio_integrator is None:
@@ -165,22 +166,52 @@ async def broadcast_state_updates() -> None:
             except Exception as e:
                 logger.debug(f"Cerebellum posture read failed: {e}")
 
+            # Read StateMatrix4D data from DLI (live instance)
+            _sm_data = {}
+            try:
+                from api.lifespan import get_digital_life
+                dli = get_digital_life()
+                if dli and hasattr(dli, 'state_matrix'):
+                    sm = dli.state_matrix
+                    _sm_data = sm.get_state() if hasattr(sm, 'get_state') else {}
+            except Exception as e:
+                logger.debug(f"StateMatrix4D read failed for broadcast: {e}")
+
+            _current_stress = bio_state.get("stress_level", 0.0)
+            _current_mood = bio_state.get("mood", 0.5)
             state_data = {
                 "alpha": {
-                    "energy": (100.0 - bio_state.get("stress_level", 0.0)) / 100.0,
-                    "stress": bio_state.get("stress_level", 0.0),
+                    "energy": (100.0 - _current_stress) / 100.0,
+                    "stress": _current_stress,
                     "hormones": bio_state.get("hormonal_effects", {}),
+                    # StateMatrix4D alpha values overlay
+                    **({k: v for k, v in _sm_data.get("alpha", {}).items() if k != "coordinate"} if _sm_data else {}),
                 },
                 "beta": {
                     "learning_rate": _lr,
                     "cognitive_load": _cl,
+                    # StateMatrix4D beta values overlay
+                    **({k: v for k, v in _sm_data.get("beta", {}).items() if k != "coordinate"} if _sm_data else {}),
                 },
                 "gamma": {
-                    "happiness": bio_state.get("mood", 0.5),
+                    "happiness": _current_mood,
                     "emotion": bio_state.get("dominant_emotion", "calm"),
+                    # StateMatrix4D gamma values overlay (includes sadness/anger/fear etc.)
+                    **({k: v for k, v in _sm_data.get("gamma", {}).items() if k != "coordinate"} if _sm_data else {}),
                 },
                 "delta": {
                     "intensity": bio_state.get("arousal", 50.0) / 100.0,
+                    # StateMatrix4D delta values overlay
+                    **({k: v for k, v in _sm_data.get("delta", {}).items() if k != "coordinate"} if _sm_data else {}),
+                },
+                "epsilon": {
+                    **(_sm_data.get("epsilon", {}) if _sm_data else {}),
+                },
+                "theta": {
+                    **({k: v for k, v in _sm_data.get("theta", {}).items() if k != "coordinate"} if _sm_data else {}),
+                },
+                "zeta": {
+                    **({k: v for k, v in _sm_data.get("zeta", {}).items() if k != "coordinate"} if _sm_data else {}),
                 },
                 "spatial": {
                     "x": 200.0,
@@ -189,6 +220,24 @@ async def broadcast_state_updates() -> None:
                 },
                 "timestamp": datetime.now().isoformat(),
             }
+
+            # Emit biological_event on significant state changes
+            bio_signature = f"{_current_stress:.2f}|{_current_mood:.2f}|{bio_state.get('arousal', 50.0):.1f}"
+            if bio_signature != _prev_bio_signature:
+                _prev_bio_signature = bio_signature
+                await manager.broadcast({
+                    "type": "biological_event",
+                    "data": {
+                        "event": "state_changed",
+                        "data": {
+                            "stress_level": _current_stress,
+                            "mood": _current_mood,
+                            "arousal": bio_state.get("arousal", 50.0),
+                            "dominant_emotion": bio_state.get("dominant_emotion", "calm"),
+                        },
+                    },
+                    "timestamp": datetime.now().isoformat(),
+                })
 
             # C2: include Live2D state (from service registry singleton) in broadcast
             try:

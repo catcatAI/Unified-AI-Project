@@ -7,6 +7,7 @@ Extracted from main_api_server.py (A3 god module split).
 import asyncio
 import logging
 from contextlib import asynccontextmanager
+from datetime import datetime
 from typing import AsyncIterator, Optional
 
 from fastapi import FastAPI
@@ -359,6 +360,35 @@ def _try_start_broadcast():
         return None
 
 
+def _try_wire_dli_broadcast():
+    """Wire DLI and LLMDecisionLoop broadcast_callback to WebSocket broadcast.
+
+    Without this wiring, proactive actions (greet/comfort/remind/share/question)
+    from LLMDecisionLoop and ProactiveInteractionSystem never reach frontend clients.
+    """
+    from core.system.live_logger import info as _li, warn as _lw
+    try:
+        dli = get_digital_life()
+        if not dli:
+            _lw("DLI not available for broadcast wiring")
+            return
+
+        async def _dli_broadcast(data: dict) -> None:
+            from services.websocket_manager import manager
+            await manager.broadcast({
+                "type": "angela_action",
+                "data": data,
+                "timestamp": datetime.now().isoformat(),
+            })
+
+        dli.broadcast_callback = _dli_broadcast
+        if dli.llm_decision_loop:
+            dli.llm_decision_loop.broadcast_callback = _dli_broadcast
+        _li("DLI broadcast_callback wired to WebSocket")
+    except Exception as e:
+        _lw(f"DLI broadcast wiring failed: {e}")
+
+
 def _try_warm_ed3n():
     """Pre-warm ED3N external dictionaries to avoid cold-start latency."""
     try:
@@ -432,6 +462,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         _ = get_lifecycle()
     except Exception:
         logger.debug("[LifeCycle] Pre-init skipped — will lazily initialize on first use")
+
+    # Wire DLI broadcast_callback so LLMDecisionLoop proactive actions reach frontend
+    _try_wire_dli_broadcast()
 
     # Initialize heartbeat singleton (C³ 6.0: start during lifespan)
     try:

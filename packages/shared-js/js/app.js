@@ -746,7 +746,7 @@ class AngelaApp {
     _handleBackendMessage(message) {
         // 处理后端消息
         if (message.type === 'state_update') {
-            this.stateMatrix?.updateFromBackend(message);
+            this.stateMatrix?.updateFromBackend(message.data);
         }
 
         // P0-2: 处理生物事件
