@@ -212,7 +212,7 @@ def _get_state_matrix():
         if dli and hasattr(dli, 'state_matrix'):
             return dli.state_matrix
     except Exception:
-        pass
+        logger.debug("_get_state_matrix: DLI unavailable, using standalone")
     global _state_matrix
     if _state_matrix is None:
         from core.engine.state_matrix import StateMatrix4D

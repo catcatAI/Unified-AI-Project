@@ -37,25 +37,19 @@ async def test_ham_utils_import():
     assert hasattr(ham_utils, "stopwords")
 async def test_ham_manager_import():
     """Test HAM manager can be imported"""
-    try:
-        from ai.memory.ham_memory.ham_manager import HAMMemoryManager
-        assert HAMMemoryManager is not None
-    except ImportError:
-        pytest.skip("HAMMemoryManager not fully available")
+    pytest.importorskip("ai.memory.ham_memory.ham_manager")
+    from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+    assert HAMMemoryManager is not None
 async def test_ham_vector_store_import():
     """Test HAM vector store manager can be imported"""
-    try:
-        from ai.memory.ham_memory.ham_vector_store_manager import HAMVectorStoreManager
-        assert HAMVectorStoreManager is not None
-    except ImportError:
-        pytest.skip("HAMVectorStoreManager not available")
+    pytest.importorskip("ai.memory.ham_memory.ham_vector_store_manager")
+    from ai.memory.ham_memory.ham_vector_store_manager import HAMVectorStoreManager
+    assert HAMVectorStoreManager is not None
 async def test_ham_query_engine_import():
     """Test HAM query engine can be imported"""
-    try:
-        from ai.memory.ham_memory.ham_query_engine import HAMQueryEngine
-        assert HAMQueryEngine is not None
-    except ImportError:
-        pytest.skip("HAMQueryEngine not available")
+    pytest.importorskip("ai.memory.ham_memory.ham_query_engine")
+    from ai.memory.ham_memory.ham_query_engine import HAMQueryEngine
+    assert HAMQueryEngine is not None
 async def test_ham_memory_types():
     """Test HAMMemory TypedDict structure"""
     from ai.memory.ham_memory.ham_types import HAMMemory

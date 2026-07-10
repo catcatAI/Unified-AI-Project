@@ -78,11 +78,9 @@ def test_tactile_system_has_required_methods() -> None:
 
 def test_gmqtt_library_available() -> None:
     """Verify gmqtt library is importable (explicit library check)."""
-    try:
-        import gmqtt  # noqa: F401
-        assert gmqtt is not None
-    except ImportError:
-        pytest.skip("gmqtt not available")
+    pytest.importorskip("gmqtt")
+    import gmqtt  # noqa: F401
+    assert gmqtt is not None
 
 
 def test_external_connector_creation() -> None:

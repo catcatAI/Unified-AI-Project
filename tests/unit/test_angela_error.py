@@ -58,82 +58,54 @@ class TestAngelaError:
 
     def test_configuration_error(self):
         """Verify ConfigurationError can be imported and raised"""
-        try:
-            from core.angela_error import ConfigurationError
-            err = ConfigurationError()
-            assert isinstance(err, Exception)
-        except ImportError as e:
-            pytest.skip(f"ConfigurationError not available: {e}")
-        except Exception as e:
-            pytest.skip(f"ConfigurationError init failed (expected in CI): {e}")
+        from core.angela_error import ConfigurationError
+        err = ConfigurationError()
+        assert isinstance(err, Exception)
 
     def test_core_error(self):
         """Verify CoreError can be imported and raised"""
-        try:
-            from core.angela_error import CoreError
-            err = CoreError()
-            assert isinstance(err, Exception)
-        except ImportError as e:
-            pytest.skip(f"CoreError not available: {e}")
-        except Exception as e:
-            pytest.skip(f"CoreError init failed (expected in CI): {e}")
+        from core.angela_error import CoreError
+        err = CoreError()
+        assert isinstance(err, Exception)
 
     def test_network_error(self):
         """Verify NetworkError can be imported and raised"""
-        try:
-            from core.angela_error import NetworkError
-            err = NetworkError()
-            assert isinstance(err, Exception)
-        except ImportError as e:
-            pytest.skip(f"NetworkError not available: {e}")
-        except Exception as e:
-            pytest.skip(f"NetworkError init failed (expected in CI): {e}")
+        from core.angela_error import NetworkError
+        err = NetworkError()
+        assert isinstance(err, Exception)
 
     def test_resource_error(self):
         """Verify ResourceError can be imported and raised"""
-        try:
-            from core.angela_error import ResourceError
-            err = ResourceError()
-            assert isinstance(err, Exception)
-        except ImportError as e:
-            pytest.skip(f"ResourceError not available: {e}")
-        except Exception as e:
-            pytest.skip(f"ResourceError init failed (expected in CI): {e}")
+        from core.angela_error import ResourceError
+        err = ResourceError()
+        assert isinstance(err, Exception)
 
     def test_validation_error(self):
         """Verify ValidationError can be imported and raised"""
-        try:
-            from core.angela_error import ValidationError
-            err = ValidationError()
-            assert isinstance(err, Exception)
-        except ImportError as e:
-            pytest.skip(f"ValidationError not available: {e}")
-        except Exception as e:
-            pytest.skip(f"ValidationError init failed (expected in CI): {e}")
+        from core.angela_error import ValidationError
+        err = ValidationError()
+        assert isinstance(err, Exception)
 
     def test_all_subclasses_importable(self):
         """Verify all common error subclasses are importable"""
-        try:
-            from core.angela_error import (
-                AIModelError,
-                AngelaError,
-                AudioError,
-                AuthenticationError,
-                AuthorizationError,
-                BusinessLogicError,
-                ConfigurationError,
-                CoreError,
-                DatabaseError,
-                LLMError,
-                MemoryError,
-                NetworkError,
-                NotFoundError,
-                RateLimitError,
-                ResourceError,
-                SecurityError,
-                ValidationError,
-                WebSocketError,
-            )
-            assert AngelaError is not None
-        except ImportError as e:
-            pytest.skip(f"Error hierarchy not fully importable: {e}")
+        from core.angela_error import (
+            AIModelError,
+            AngelaError,
+            AudioError,
+            AuthenticationError,
+            AuthorizationError,
+            BusinessLogicError,
+            ConfigurationError,
+            CoreError,
+            DatabaseError,
+            LLMError,
+            MemoryError,
+            NetworkError,
+            NotFoundError,
+            RateLimitError,
+            ResourceError,
+            SecurityError,
+            ValidationError,
+            WebSocketError,
+        )
+        assert AngelaError is not None

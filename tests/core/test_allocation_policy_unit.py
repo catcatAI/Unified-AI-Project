@@ -151,12 +151,9 @@ def test_policy_falls_through_to_defer():
 
 
 def test_policy_decide_from_profile():
-    try:
-        from core.allocation.policy import AllocationPolicy
-        from core.allocation.resonance import ResonanceProfile
-    except ImportError:
-        pytest.skip("ResonanceProfile not available (stub module)", allow_module_level=False)
-        return
+    pytest.importorskip("core.allocation.resonance")
+    from core.allocation.policy import AllocationPolicy
+    from core.allocation.resonance import ResonanceProfile
 
     profile = ResonanceProfile(
         similarities={'alpha': 0.8, 'beta': 0.3},

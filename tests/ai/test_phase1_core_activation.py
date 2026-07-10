@@ -15,9 +15,8 @@ try:
     from ai.ed3n.ed3n_engine import ED3NEngine
     from ai.garden.garden_engine import GARDENEngine
     IMPORTS_AVAILABLE = True
-except ImportError as e:
+except ImportError:
     IMPORTS_AVAILABLE = False
-    print(f"Warning: Some imports not available: {e}")
 
 
 pytestmark = pytest.mark.skipif(

@@ -103,6 +103,14 @@ class AgentOrchestrator:
         if re.search(r"(知識|knowledge|graph|圖譜|關係)", lower):
             return "knowledge_query"
 
+        # File operations (checked before creative to catch "寫入" vs creative "寫")
+        if re.search(r"(讀取|打開|查看|read|open|show|寫入|保存|write|save|刪除|delete|remove)", lower):
+            if re.search(r"(刪除|delete|remove|移除)", lower):
+                return "file_delete"
+            if re.search(r"(寫入|保存|write|save|建立|create|新增|add)", lower):
+                return "file_write"
+            return "file_read"
+
         # Creative
         if re.search(r"(寫|創作|生成文本|write|create|story|poem|creative|文章)", lower):
             return "creative_write"
@@ -130,15 +138,6 @@ class AgentOrchestrator:
         # Image generation
         if re.search(r"(畫|繪圖|生成圖|generate.*image|draw|paint|art|藝術)", lower):
             return "image_generate"
-
-        # File operations (gated by IntentRegistry — only if it didn't match file_op)
-        # Keep as last resort before general
-        if re.search(r"(讀取|打開|查看|read|open|show|寫入|保存|write|save|刪除|delete|remove)", lower):
-            if re.search(r"(刪除|delete|remove|移除)", lower):
-                return "file_delete"
-            if re.search(r"(寫入|保存|write|save|建立|create|新增|add)", lower):
-                return "file_write"
-            return "file_read"
 
         return "general"
 

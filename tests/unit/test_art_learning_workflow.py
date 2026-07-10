@@ -1,19 +1,20 @@
 """Tests for core.engine.art_learning_workflow"""
 import pytest
 
+from core.engine.art_learning_workflow import (
+    ArtLearningWorkflow,
+    GenerationResult,
+    LearningObjective,
+    SkillAssessment,
+    WorkflowConfig,
+    WorkflowProgress,
+    WorkflowStage,
+)
+
 
 class TestArtLearningWorkflow:
     def test_import_all(self):
         """Verify all classes are importable with expected interfaces"""
-        from core.engine.art_learning_workflow import (
-            ArtLearningWorkflow,
-            GenerationResult,
-            LearningObjective,
-            SkillAssessment,
-            WorkflowConfig,
-            WorkflowProgress,
-            WorkflowStage,
-        )
         assert hasattr(LearningObjective, 'update_progress')
         assert hasattr(WorkflowProgress, 'overall_progress')
         assert hasattr(WorkflowProgress, 'record_quality')
@@ -29,7 +30,6 @@ class TestArtLearningWorkflow:
 
     def test_workflow_stage_enum(self):
         """Verify WorkflowStage enum has all 5 stages with proper tuple values"""
-        from core.engine.art_learning_workflow import WorkflowStage
         assert len(WorkflowStage) == 5
         assert WorkflowStage.RESEARCH.value[0] == "研究"
         assert WorkflowStage.RESEARCH.value[1] == "Search for tutorials and references"
@@ -44,20 +44,13 @@ class TestArtLearningWorkflow:
             _ = WorkflowStage.INVALID_STAGE
 
     def test_learning_objective(self):
-        try:
-            from core.engine.art_learning_workflow import LearningObjective
-            obj = LearningObjective("test_skill", priority=0.8)
-            assert obj.name == "test_skill"
-            assert obj.priority == 0.8
-            assert obj.progress == 0.0
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+        obj = LearningObjective("test_skill", priority=0.8)
+        assert obj.name == "test_skill"
+        assert obj.priority == 0.8
+        assert obj.progress == 0.0
 
     def test_workflow_progress(self):
         """Verify WorkflowProgress tracks completions, quality scores, and bottlenecks"""
-        from core.engine.art_learning_workflow import WorkflowProgress, WorkflowStage
         wp = WorkflowProgress()
         assert wp.stage == WorkflowStage.RESEARCH
         assert wp.overall_progress() == 0.0
@@ -72,42 +65,19 @@ class TestArtLearningWorkflow:
         assert wp.get_bottleneck_stage() == "PRACTICE"
 
     def test_skill_assessment(self):
-        try:
-            from core.engine.art_learning_workflow import SkillAssessment
-            sa = SkillAssessment(skill_name="drawing")
-            assert sa.skill_name == "drawing"
-            assert sa.mastery_level() == 0.0
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+        sa = SkillAssessment(skill_name="drawing")
+        assert sa.skill_name == "drawing"
+        assert sa.mastery_level() == 0.0
 
     def test_generation_result(self):
-        try:
-            from core.engine.art_learning_workflow import GenerationResult
-            gr = GenerationResult(input_emotion_state={"mood": "happy"})
-            assert "mood" in gr.input_emotion_state
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+        gr = GenerationResult(input_emotion_state={"mood": "happy"}, generated_params={"color": "red"})
+        assert "mood" in gr.input_emotion_state
+        assert gr.generated_params["color"] == "red"
 
     def test_workflow_config(self):
-        try:
-            from core.engine.art_learning_workflow import WorkflowConfig
-            config = WorkflowConfig()
-            assert config.max_research_tutorials == 5
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+        config = WorkflowConfig()
+        assert config.max_research_tutorials == 5
 
     def test_art_learning_workflow_init(self):
-        try:
-            from core.engine.art_learning_workflow import ArtLearningWorkflow
-            instance = ArtLearningWorkflow(bio_integrator=None)
-            assert instance is not None
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+        instance = ArtLearningWorkflow(bio_integrator=None)
+        assert instance is not None
