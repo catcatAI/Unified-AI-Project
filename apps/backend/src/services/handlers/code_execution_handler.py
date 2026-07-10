@@ -12,6 +12,7 @@ import traceback
 from typing import Any, Dict, Optional
 
 from core.i18n.i18n_manager import t
+from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +105,8 @@ class CodeExecutionHandler:
             if len(tb) > _MAX_OUTPUT:
                 tb = tb[:_MAX_OUTPUT] + "\n... (已截斷)"
             logger.warning(f"Code execution error: {e}")
-            return t("code_exec.execution_error", traceback=tb)
+            safe_msg = safe_error(e) if isinstance(e, Exception) else str(e)
+            return t("code_exec.execution_error", traceback=safe_msg)
         finally:
             timer.cancel()
             sys.stdout = old_stdout

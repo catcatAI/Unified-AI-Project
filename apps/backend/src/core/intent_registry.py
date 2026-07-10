@@ -31,7 +31,7 @@ class IntentPattern:
 
 # Default patterns loaded when no config available
 _DEFAULT_PATTERNS: List[Dict[str, Any]] = [
-    {"name": "math", "keywords": ["計算", "加", "減", "乘", "除", "積分", "微分", "導數", "數學", "函數", "方程式"], "priority": 3, "handler": "MathVerifier", "category": "computation"},
+    {"name": "math", "keywords": ["計算", "加", "減", "乘", "除", "積分", "微分", "導數", "數學", "函數", "方程式", "math", "calculate", "solve", "equation", "plus", "minus", "times", "divided by", "=", "+", "-", "*", "/", "%"], "anti_keywords": ["思路", "想法", "概念", "meaning", "concept"], "priority": 3, "handler": "MathVerifier", "category": "computation"},
     {"name": "code", "keywords": ["代碼", "程式", "python", "javascript", "function", "class", "import", "debug", "bug", "refactor", "重構", "算法", "測試", "api"], "priority": 3, "handler": "CodeInspectorBridge", "category": "development"},
     {"name": "task", "keywords": ["幫我", "做一個", "規劃", "項目", "多步驟", "複雜", "分解", "子任務", "工作流", "project", "plan"], "priority": 4, "handler": "ProjectCoordinator", "category": "task"},
     {"name": "file_op", "keywords": ["整理", "桌面", "移動", "刪除", "創建文件", "刪除文件", "移動文件", "複製", "重新命名", "建立資料夾", "organize", "桌面整理"], "anti_keywords": ["思路", "想法", "概念", "邏輯"], "priority": 5, "handler": "FileOperationHandler", "category": "operation"},

@@ -146,8 +146,12 @@ class DictionaryLayer:
                     best = 1.0
                     break
                 if sf_lower in text_lower:
-                    ratio = len(sf_lower) / max_len
-                    best = max(best, ratio * behavior_threshold("ai.dictionary_layer.encode_exact_weight", 0.85))
+                    # Penalize single CJK character false positives from CC-CEDICT
+                    if len(sf_lower) == 1 and not sf_lower.isascii() and len(text_lower) > 1:
+                        best = max(best, 0.05)
+                    else:
+                        ratio = len(sf_lower) / max_len
+                        best = max(best, ratio * behavior_threshold("ai.dictionary_layer.encode_exact_weight", 0.85))
                 if text_lower in sf_lower:
                     ratio = len(text_lower) / max(len(sf_lower), 1)
                     best = max(best, ratio * behavior_threshold("ai.dictionary_layer.encode_substr_weight", 0.6))

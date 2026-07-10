@@ -241,7 +241,14 @@ async def _inject_emotion_behavioral_context(
     if not emotion_result:
         return
     emotion = emotion_result.get("emotion", "neutral")
-    behavior = _ANGELA_EMOTION_BEHAVIOR_MAP.get(emotion, {
+    # Map EmotionAnalyzer output keys to behavior map keys
+    _EMOTION_TO_BEHAVIOR_KEY = {
+        "happy": "joy", "sad": "sadness", "angry": "anger",
+        "fear": "fear", "surprise": "surprise", "curious": "anticipation",
+        "calm": "trust",
+    }
+    mapped = _EMOTION_TO_BEHAVIOR_KEY.get(emotion, emotion)
+    behavior = _ANGELA_EMOTION_BEHAVIOR_MAP.get(mapped, {
         "routing_mode": "neutral", "response_style": "standard"
     })
     context["emotional_behavior"] = behavior
@@ -251,7 +258,7 @@ async def _inject_emotion_behavioral_context(
         es = _get_emotion_system()
         if es:
             intensity = emotion_result.get("intensity", 0.5)
-            es.apply_influence("user_message", emotion, intensity * 0.3, 0.5)
+            es.apply_influence("user_message", mapped, intensity * 0.3, 0.5)
             adj = es.get_behavioral_adjustment()
             context["angela_emotion"] = adj
 
@@ -598,8 +605,9 @@ async def _handle_execution_gate(
                 "route": classify_result.primary_type.value,
                 "session_id": session_id,
             }
-        # reject: clear action result, continue to LLM
-        context["last_action_result"] = None
+        else:
+            # reject: clear action result, continue to LLM
+            context["last_action_result"] = None
     except Exception as e:
         logger.debug(f"Execution gate unavailable: {e}")
     return None

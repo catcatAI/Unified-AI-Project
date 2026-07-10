@@ -448,9 +448,14 @@ async def image_interpolate(request: InterpolateRequest):
 
 @router.get("/image/status")
 async def image_status():
-    """Check if image generation is available (standardized endpoint)."""
-    gvv = _get_gvv()
-    three_layer = _get_three_layer()
+    """Check if image generation is available (standardized endpoint).
+
+    Uses cached state only — does NOT trigger lazy initialization of
+    GVV or ThreeLayerVisual. First request may show unavailable if
+    models have not been initialized by a prior /generate call.
+    """
+    gvv = _get_gvv() if _gvv_state is not None else None
+    three_layer = _get_three_layer() if _three_layer_state is not None else None
     has_concept_space = False
     if gvv:
         concept_mapper = gvv["concept_mapper"]

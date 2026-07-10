@@ -48,6 +48,10 @@ class EmotionAnalyzer:
                 "好开心", "好喜欢", "太开心", "太喜欢", "真开心", "真喜欢",
                 "好開心", "好喜歡", "太開心", "太喜歡", "真開心", "真喜歡",
                 "😊", "😄", "🎉",
+                "happy", "joy", "joyful", "glad", "delighted", "wonderful",
+                "fantastic", "amazing", "great", "love", "awesome", "excellent",
+                "beautiful", "fun", "exciting", "grateful", "thankful",
+                "excited", "thrilled", "elated", "cheerful", "merry",
             ],
             "weight": 1.0,
         }
@@ -63,6 +67,11 @@ class EmotionAnalyzer:
                 "好难过", "好伤心", "好悲伤",
                 "好難過", "好傷心", "好悲傷",
                 "😢", "😭",
+                "sad", "sadness", "unhappy", "depressed", "miserable",
+                "heartbroken", "grief", "grieving", "lonely", "alone",
+                "crying", "tears", "hurt", "painful", "sorrow",
+                "melancholy", "mourn", "mourning", "devastated",
+                "disappointed", "disappointment", "regret", "sorry",
             ],
             "weight": 1.0,
         }
@@ -75,6 +84,10 @@ class EmotionAnalyzer:
                 "生氣", "憤怒", "討厭", "恨", "煩", "氣死", "火大",
                 "好生气", "好愤怒", "好生氣", "好憤怒",
                 "😡", "😠",
+                "angry", "anger", "mad", "furious", "outraged",
+                "annoyed", "irritated", "frustrated", "rage",
+                "hate", "hatred", "hostile", "aggressive",
+                "fuming", "livid", "enraged", "infuriated",
             ],
             "weight": 1.2,
         }
@@ -86,6 +99,11 @@ class EmotionAnalyzer:
                 "害怕", "恐惧", "担心", "焦虑", "紧张",
                 "害怕", "恐懼", "擔心", "焦慮", "緊張",
                 "😨", "😱",
+                "afraid", "scared", "frightened", "terrified", "horrified",
+                "anxious", "nervous", "worried", "panic", "panicking",
+                "fear", "fearful", "dread", "dreading", "alarmed",
+                "shaken", "timid", "uneasy", "apprehensive",
+                "terrifying", "frightening", "scary", "creepy",
             ],
             "weight": 1.1,
         }
@@ -97,6 +115,10 @@ class EmotionAnalyzer:
                 "惊讶", "意外", "哇", "天哪",
                 "驚訝", "意外", "哇", "天哪",
                 "😲", "😮",
+                "surprised", "surprise", "amazed", "astonished", "shocked",
+                "stunned", "speechless", "incredible", "unexpected",
+                "wow", "whoa", "unbelievable", "astounding",
+                "startled", "dumbfounded", "floored",
             ],
             "weight": 0.9,
         }
@@ -109,6 +131,10 @@ class EmotionAnalyzer:
                 "想了解", "好奇宝宝", "很好奇",
                 "好奇", "想知道", "問", "什麼", "怎麼", "為什麼",
                 "想了解", "好奇寶寶", "很好奇",
+                "curious", "curiosity", "wonder", "wondering", "interested",
+                "intrigued", "fascinated", "fascinating", "tell me more",
+                "how does", "why is", "what is", "explain", "understand",
+                "learn", "discover", "explore", "question",
             ],
             "weight": 1.0,
         }
@@ -119,6 +145,10 @@ class EmotionAnalyzer:
             "neutral": [
                 "平静", "安静", "放松", "休息",
                 "平靜", "安靜", "放鬆", "休息",
+                "calm", "peaceful", "relaxed", "serene", "tranquil",
+                "quiet", "still", "content", "contentment", "easygoing",
+                "gentle", "mellow", "soothing", "composed", "balanced",
+                "meditative", "mindful", "zen", "harmony", "harmonious",
             ],
             "weight": 0.7,
         }

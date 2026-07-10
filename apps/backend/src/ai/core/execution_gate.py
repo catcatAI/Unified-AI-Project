@@ -125,7 +125,7 @@ class ExecutionGate:
         effective_confirm = round(self.CONFIRM_THRESHOLD - fb_adj, 3)
 
         # For non-actionable queries, skip confirmation and let LLM handle
-        if query_type in ("knowledge", "creative", "greeting", "opinion", "unknown", "logic"):
+        if query_type in ("knowledge", "creative", "greeting", "opinion", "unknown", "logic", "math"):
             state_store.emit_event("execution.gate_decided", {
                 "action": "reject", "score": round(score, 3),
                 "query_type": query_type, "action_type": action_type,
