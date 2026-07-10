@@ -1041,13 +1041,24 @@ async def _handle_chat_request(
             "created_at": datetime.now().isoformat(), "origin": origin, "user_name": user_name,
         })
 
-    # Step 3: Math dual-rail verification (fast path — returns early if math detected)
+    # Step 3: Math dual-rail verification — gate through IntentRegistry first
     math_result = await _try_math_verification(user_message, user_name, session_id, schema_ver, trunc_msg)
     if math_result:
-        return math_result
+        try:
+            from core.intent_registry import IntentRegistry
+            ir = IntentRegistry()
+            ir_name, ir_conf = ir.detect(user_message)
+            if ir_name == "math" and ir_conf >= 0.1:
+                return math_result  # IntentRegistry confirms → fast path
+        except Exception:
+            pass
+        # IntentRegistry didn't confirm → enrich context instead
+        math_result_context = math_result
 
     # Step 4: Initialize base context + bio integrator
     context: Dict[str, Any] = {"user_name": user_name}
+    if math_result:
+        context["_math_result"] = math_result
     if extra_context:
         context.update(extra_context)
 

@@ -67,16 +67,28 @@ class AgentOrchestrator:
         self._agent_cache: Dict[str, Any] = {}
 
     def classify_intent(self, user_message: str) -> str:
-        """Classify user message into an intent category."""
+        """Classify user message into an intent category.
+
+        Gate: IntentRegistry density+anti+format check must pass first.
+        Only then do sub-classification regex patterns run.
+        """
         lower = user_message.lower()
 
-        # File operations
-        if re.search(r"(讀取|打開|查看|read|open|show|寫入|保存|write|save|刪除|delete|remove)", lower):
-            if re.search(r"(刪除|delete|remove|移除)", lower):
-                return "file_delete"
-            if re.search(r"(寫入|保存|write|save|建立|create|新增|add)", lower):
-                return "file_write"
-            return "file_read"
+        # IntentRegistry gate — use density+anti+format scoring
+        try:
+            from core.intent_registry import IntentRegistry
+            ir = IntentRegistry()
+            ir_name, ir_conf = ir.detect(user_message)
+            if ir_name and ir_conf >= 0.1:
+                # If IntentRegistry identified a specific intent, bail to general
+                # (the registered handlers will route it separately)
+                if ir_name in ("task", "math", "document", "learning", "character_card"):
+                    return "general"
+        except Exception:
+            pass
+
+        # Sub-classification only runs after the gate passes
+        # (IntentRegistry didn't match → treat as general creative/conversational)
 
         # Code operations
         if re.search(r"(執行|運行|跑|execute|run|code|代碼|程式)", lower):
@@ -119,6 +131,15 @@ class AgentOrchestrator:
         # Image generation
         if re.search(r"(畫|繪圖|生成圖|generate.*image|draw|paint|art|藝術)", lower):
             return "image_generate"
+
+        # File operations (gated by IntentRegistry — only if it didn't match file_op)
+        # Keep as last resort before general
+        if re.search(r"(讀取|打開|查看|read|open|show|寫入|保存|write|save|刪除|delete|remove)", lower):
+            if re.search(r"(刪除|delete|remove|移除)", lower):
+                return "file_delete"
+            if re.search(r"(寫入|保存|write|save|建立|create|新增|add)", lower):
+                return "file_write"
+            return "file_read"
 
         return "general"
 

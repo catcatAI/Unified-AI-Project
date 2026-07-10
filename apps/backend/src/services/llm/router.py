@@ -841,7 +841,24 @@ class AngelaLLMService:
                 draft_low = max(0.2, min(0.6, draft_low + adj * 0.5))
 
             if decision.confidence >= direct_threshold:
-                logger.info(f"ModelBus direct hit: {decision.selected_model} (conf={decision.confidence:.2f})")
+                # Gate through PriorityNegotiator routing mode before returning
+                routing_mode = "neutral"
+                try:
+                    from ai.meta.priority_negotiator import PriorityNegotiator
+                    pn = PriorityNegotiator()
+                    pn_vote = pn.resolve(user_message, context)
+                    routing_mode = pn_vote.get("routing_mode", "neutral")
+                except Exception:
+                    pass
+                effective_threshold = direct_threshold
+                if routing_mode == "conservative":
+                    effective_threshold = max(0.9, direct_threshold)
+                if decision.confidence < effective_threshold:
+                    logger.info(f"ModelBus draft (conservative mode threshold): {decision.selected_model} (conf={decision.confidence:.2f})")
+                    context["draft_response"] = result.text
+                    context["draft_model"] = decision.selected_model
+                    return None
+                logger.info(f"ModelBus direct hit: {decision.selected_model} (conf={decision.confidence:.2f}, mode={routing_mode})")
                 if self.meta_controller is not None:
                     self.meta_controller.record_confidence(f"model_bus:{decision.selected_model}", decision.confidence)
                 return LLMResponse(
