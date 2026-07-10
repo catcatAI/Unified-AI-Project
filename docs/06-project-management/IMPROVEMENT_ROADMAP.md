@@ -125,6 +125,8 @@
 | **§X #204: Deep audit R1-R10 + bug fixes + test consolidation** | (R1-R2) Critical bug fixes: loguru crash, BeautifulSoup bare import, CognitiveOp=None, tray crash. (R3-R4) Config repairs: Dockerfile, package.json, .gitignore + 20+ dead files. (R5-R8) Housekeeping. (R9) Dead subsystem deletion (economy/ + 4 integrations, 1,658 lines) + pyproject.toml dep audit (+5 missing, -12 unused). (R10-11) Test quality: deleted 11 dead test files (1,220 lines) + 30 new tests for weather_service + async_io. (R12) 3 HIGH bug fixes (__import__ asyncio, math_verifier silent, deprecated get_event_loop), 4 MEDIUM logging fixes. (R13) Test consolidation: deleted 4 dead/duplicate test files + empty e2e dir + cleaned diagnostic prints. 4,398→4,411→4,398 tests — 0 errors. Net: -2,861 lines. | 10+ source + 2 new test files | ✅ Done (§X #204) |
 | **§X #206: Bug fixes Round 3 — 16 unbounded array/listener/memory leak fixes** | **JS (7 fixes)**: unified-display-matrix (off() methods), wallpaper-handler (electronAPI leak), simple-live2d-loader (PIXI hit leak), state-matrix (dedup guard), cubism-wrapper (GPU cache). **Python (9 fixes)**: lif_neuron, self_generation, adversarial_generation, vector_store, text_gravity, negativity, ed3n_trainer, digital_life_integrator, state_matrix — all capped/leak-free. 26 files, 0 coverage lost. | 26 files | ✅ Done (§X #206) |
 | **§X #207: Test dedup + deep audit** | Merged 2 duplicate test pairs (unit→core). Fixed comprehensive_test_framework helper. Deep audit confirmed eta_axis_state self-contained, config_loader distinct from app_config_loader. Fixed CHANGELOG inaccuracy. Net: -2 files, -141 lines. | 4 files | ✅ Done (§X #207) |
+| **§X #209-212: 路由品質大翻修** (2026-07-10) | 全面審計 10 條 bypass path 並全部修復。**關鍵變更**：(1) 13 個檔案從 bare `any(k in text)` 改為 `any_keyword()` 詞邊界匹配；(2) IntentRegistry 重寫：密度評分（字元位置覆蓋率）、anti-keyword 懲罰（-50%/hit）、format_keys 折扣（0.3×）；(3) MathVerifier 從 early return 改為 context enrichment；(4) `_try_agent_routing()` 從直接回傳改為 context injection；(5) ExecutionGate auto_execute → IntentRegistry 驗證後才執行；(6) `/session/{session_id}/send` → 完整管線；(7) `classify_intent()` IntentRegistry gate 擴展至全部 intent。**新增 vision/audio IntentRegistry patterns**。**20 項意圖識別測試全過**。 | chat_routes.py, router.py, agent_orchestrator.py, intent_registry.py, execution_gate.py, query_classifier.py + 13 routing files | ✅ Done (§X #209-212) |
+| **全面的剩餘問題審計** (2026-07-10) | 完整代碼審計找出 ~85 項問題，涵蓋 20 個類別。關鍵發現：(1) 6 個 `except:pass` 仍存在 (agent_orchestrator.py:86, chat_routes.py:565/1065, router.py:851, document_router.py:340/349) — 需加 `exc_info=True` 日誌；(2) 5 個靜默降級在執行期回傳預設值但無記錄；(3) `asyncio.get_event_loop()` 3 處仍在使用（Python 3.14 不建議使用）；(4) 9 個檔案使用 `__import__()` 動態匯入 hack；(5) 8 處 hardcoded `sleep()` 未遷移至 `loop_sleep()`；(6) 309/504 原始碼檔案缺少對應測試（38.7% 覆蓋率）；(7) 22 個 docstring-only 檔案需實作或刪除；(8) 7 個零匯入的孤立檔案；(9) 10 個已標記為 deprecated 但仍在使用的 API endpoint。 | 全專案 | ✅ 已審計 |
 
 ### 1.2 無法驗證的優勢（數據不足）
 | 宣稱 | 實際狀態 | 需要什麼數據 | 門檻 |
@@ -187,6 +189,10 @@
 | F3 | 修正所有文件中的錯誤分數（已完成） | 多個 MD | P0 | 低 |
 | F4 | 修正 LLM 路由中缺少 timeouts/retries | ✅ **DONE** (commit `dcd7044e1~`, Jun 28) | `router.py` | P2 | 低 |
 | F5 | NeuroAutoSelector LearnRecorder 連接至 MetaController | ✅ **DONE** (commit `44fec2abb~`, Jun 28) | `neuro_auto_selector.py:764-773` + `router.py:464-470` |
+| F6 | 路由品質 — 全部 bypass path 消除 | ✅ **DONE** (2026-07-10) | 13 個 routing 檔案改為 any_keyword()、IntentRegistry 密度評分+anti+format 三關卡、6 bypass paths 修復 |
+| F7 | `asyncio.get_event_loop()` → `get_running_loop()` | ⏳ 未開始 | 3 個 production 檔案 (base_agent.py:514, code_execution_handler.py:83, learning_integration.py:60) |
+| F8 | `__import__()` → 標準 import | ⏳ 未開始 | 9 檔案 (13 instances) — cluster_manager.py, transformers_compat.py, ed3n_engine.py, continuous_learning.py, art_learning_system.py (+3), concept_space.py (+3), system_self_maintenance.py, enterprise_monitor.py (+2) |
+| F9 | Hardcoded `sleep()` → `loop_sleep()` | ⏳ 未開始 | 8 處 (action_executor.py ×3, llm_decision_loop.py, agent_manager_extensions.py, heartbeat.py, audio_system.py ×2) |
 
 ### 2.2 修復 (Repairs)
 
@@ -330,7 +336,7 @@ O2 → ✅ **DONE** (2026-06-29, §X #44, 152 行死碼移除)
 ### 4.1 測試覆蓋
 
 ```bash
-# 執行所有測試（基線：4,396）
+# 執行所有測試（基線：4,387）
 pytest tests/ apps/backend/tests/ --collect-only -q
 
 # 測量基線完成後，每次變更保持或增加計數

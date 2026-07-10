@@ -61,25 +61,28 @@
 **Total project files**: ~3,500+ (620 Python in backend src · 295 JS/TS · 1,021+ docs · 500+ config · 480+ test).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
 
-> **STATUS (2026-07-09)**: §X #206-207 — Bug fixes Round 3 (16 medical-level fixes: memory leaks, unbounded arrays, CPU spikes) + Test dedup (merged 2 duplicate pairs, fixed CHANGELOG inaccuracy, deep audit). **~4,396 tests collected — 0 errors.**  
-> **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → execution gate → **agent routing** → LLM → causal learning → response. GVV pipeline for image generation.  
+> **STATUS (2026-07-10)**: §X #209-212 — **Routing quality overhaul** complete. All bypass paths eliminated: every query now flows through IntentRegistry (density+anti+format) → PriorityNegotiator → handler or LLM. No bare keyword matching, no handler short-circuits. **~4,387 tests collected — 0 errors.**  
+> **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → execution gate (IntentRegistry-gated) → agent routing (context enrichment) → **PriorityNegotiator** → LLM → causal learning → response.  
 > **See**: [MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md) (task provenance), [IMPROVEMENT_ROADMAP.md](docs/06-project-management/IMPROVEMENT_ROADMAP.md) (improvement roadmap), [CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md) (causal depth).
 
 ---
 
-### Current Status (code-verified as of 2026-07-01)
+### Current Status (code-verified as of 2026-07-10)
 
 | Area | Status | Key evidence |
 |------|--------|-------------|
 | **Server starts** | ✅ IMPORTS OK | `main_api_server.py` imports successfully |
-| **Chat pipeline** | ✅ FULLY WIRED | Complete: WebSocket → emotion → crisis → alignment → execution gate → agent routing → LLM → causal learning → response |
+| **Chat pipeline** | ✅ FULLY WIRED + QUALITY | Complete: WS → emotion → crisis → alignment → execution gate (IntentRegistry-gated) → agent routing (no short-circuit) → PriorityNegotiator → LLM → causal learning → response |
+| **Routing quality** | ✅ ALL BYPASSES ELIMINATED | 10 bypass paths found and fixed. IntentRegistry density+anti+format scoring → PriorityNegotiator → handler. No bare keyword matching. |
+| **IntentRegistry** | ✅ CANONICAL CLASSIFIER | Density scoring, anti-keyword penalty, format gate, 12 intent patterns. All routing paths gate through it. |
+| **PriorityNegotiator** | ✅ 8 VOTERS ACTIVE | lifecycle/emotional/intent/angela_emotion/causal/MetaController/heartbeat/DLI voters. Weighted fusion routing_mode. |
 | **CrisisSystem** | ✅ INTEGRATED | Safety gate in `chat_routes.py:142-151`, auto-reset timeout, config loaded |
 | **CausalReasoning** | ✅ INTEGRATED | Fire-and-forget learning after every response, FIFO cap (500/1000) |
 | **Level5ASI** | ✅ INTEGRATED | Alignment gate triggered at crisis_level ≥ 2, lazy-initialized |
 | **ModelEnsemble** | ✅ INTEGRATED | Multi-model voting via `context["use_ensemble"] = True` |
 | **11 Agents** | ✅ REGISTERED | AgentAdapter wraps all agents with `execute()` interface |
-| **QueryClassifier** | ✅ EXTENDED | 16 QueryTypes (FILE, SEARCH, CODE, EXECUTE, TASK, VISION, AUDIO, OPINION) |
-| **ModelBus** | ✅ EXTENDED | Handler registration + handler-first routing for FILE/SEARCH/CODE/EXECUTE/TASK |
+| **QueryClassifier** | ✅ EXTENDED + WORD-BOUNDARY | 16 QueryTypes, all keywords switched from `any(k in text)` to `any_keyword()` with word-boundary regex |
+| **ModelBus** | ✅ EXTENDED + GATED | Handler registration + handler-first routing, gated through PriorityNegotiator |
 | **Autonomous Cognition** | ✅ INTEGRATED | AutonomousLifeCycle + θ Router + 5 formula metrics injected into prompts |
 | **Vision Endpoints** | ✅ IMPLEMENTED | `/vision/analyze` + `/chat/with-image` endpoints |
 | **Image Generation** | ✅ IMPLEMENTED | GVV + ThreeLayerVisual, 10 endpoints (5 deprecated + 5 standardized `/image/`), 14 source files, ~62 tests |

@@ -935,6 +935,41 @@ Backend registers session → returns {type:'connected', client_id:'uuid', sessi
 > - Fixed response `route` field — now reports `'fallback'` when LLM fallback chain produced the response (was always `'llm'`)
 > - Updated `tests/README.md` with current directory structure
 > - **4,387 tests collected — 0 errors** (-9 from prior baseline)
+> 
+> > **§X #209 (2026-07-10)**: Routing quality — word-boundary-aware keyword matching across 13 files.
+> > - **core/utils.py**: Added `any_keyword()` — English KWs use `\b` word boundaries; CJK keeps substring (density+anti+format triple-gate prevents false positives). Added `all_keywords()` for multi-keyword AND conditions.
+> > - **IntentRegistry**: `detect()` rewritten — density scoring (keyword-char positions / query length), anti_keyword penalty (-50% each), format_keys discount (0.3×). Priority raised to 3 (beats file_op on ties).
+> > - **document_router.py**: `_parse_task_type()` triple gate (density+anti+format), returns None on rejection. English KWs use any_keyword().
+> > - **13 routing files** switched from bare `any(k in text)` to `any_keyword()`: query_classifier (13), dictionary_classifier (2), execution_gate (6), task_manager_handler (5), planning_engine (4), reasoning_engines (2), composer (8), template_matcher (1), garden_engine (2), router.py fallback (2), input_sensor (1), intent_registry (1 inline), document_router (1).
+> > - **Bug found & fixed**: `execution_gate.py` false positive — `'no' in '建立 notes.md'` matched substring "no" inside "notes.md". Fixed by word-boundary check.
+> > - **4,387 tests collected — 0 errors** (no test count change; behavioral fixes only).
+> 
+> > **§X #210 (2026-07-10)**: Routing quality — density scoring, anti-keywords, format gate.
+> > - **IntentRegistry `_DEFAULT_PATTERNS`**: Added 9 missing operation keywords (分析/優化/摘要/總結/分類/精簡/濃縮/歸納/歸檔). Priority raised to 3.
+> > - **Format gate**: `format_keys` field added to IntentPattern. At least one format key must match the query, otherwise score is discounted 0.3×. Rejects "分類器" (format gate) but allows "分類文件" (keyword match + format key "文件").
+> > - **Anti-keyword gate**: Each anti-keyword hit reduces score by 50% (capped at 90%). "整理思路" → anti "思路" hits → score × 0.5.
+> > - **document_router anti-patterns**: 整理→思路/想法/概念/邏輯; 優化→算法/模型/參數/訓練; 總結→心得/感想/體會/討論/會議. Each causes _parse_task_type() to return None.
+> > - All 16 document routing test cases pass: 0 document false positives.
+> > - **4,387 tests collected — 0 errors**.
+> 
+> > **§X #211 (2026-07-10)**: Routing bypass path elimination — TaskManagerHandler, AgentOrchestrator, ModelBus, MathVerifier.
+> > - **TaskManagerHandler**: `_parse()` default changed from `return "create", {"title": text}` to `if any_keyword(text, ("任務","task","待辦","todo")): return "list", {}`. Fixes "之前給了啥任務來著?" creating nonsense tasks instead of listing them.
+> > - **AgentOrchestrator**: `classify_intent()` gated by IntentRegistry detect() first. If IR identifies task/math/document/learning/character_card intent, returns "general" immediately. Sub-classification only runs after the gate passes.
+> > - **ModelBus direct hit** (router.py): Before returning `_try_template_match` result, gates through PriorityNegotiator routing_mode. Conservative mode requires effective_threshold ≥ max(0.9, direct_threshold).
+> > - **MathVerifier short-circuit** (chat_routes.py): Change from early return to context enrichment. IntentRegistry gate: only fast-path if IR confirms "math" at ≥ 0.1 confidence.
+> > - **4,387 tests collected — 0 errors**.
+> 
+> > **§X #212 (2026-07-10)**: Comprehensive pipeline integrity overhaul + remaining issues audit.
+> > - Complete audit of all 10 routing bypass paths in the project. Found and fixed 4 remaining:
+> >   1. `_try_agent_routing()` → injection into context instead of direct response return
+> >   2. `_handle_execution_gate()` auto_execute → gated through IntentRegistry validation
+> >   3. `/session/{session_id}/send` → redirected to `_handle_chat_request()` full pipeline
+> >   4. `agent_orchestrator.py classify_intent()` → expanded IntentRegistry gate to ALL intents at conf ≥ 0.3
+> > - Added vision/audio patterns to IntentRegistry for multimodal routing.
+> > - PromptBuilder: added `_agent_result` injection so LLM sees agent processing results.
+> > - Fixed 3 pre-existing IntentPattern test bugs (wrong positional args, density scoring expectations).
+> > - Comprehensive codebase audit found ~85 issues across 20 categories.
+> > - **4,387 tests collected — 0 errors** (20 intent registry tests pass).
 
 ---
 

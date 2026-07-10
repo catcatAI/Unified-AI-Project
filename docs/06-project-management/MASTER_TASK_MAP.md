@@ -2812,4 +2812,49 @@ python -m pytest tests/ --collect-only -q
 - **Net**: -2 test files, -141 lines.
 - **Test count**: **4,396 — 0 errors**.
 
+### §X #208: DesktopInteraction path validation + route transparency (2026-07-09)
+
+- `_is_safe_path()` with `_ALLOWED_ROOTS` whitelist guards `create_file`, `delete_file`, `move_file`, `initialize`.
+- Response `route` field now reports `'fallback'` correctly when LLM fallback chain produced response.
+- Updated `tests/README.md`.
+- **Test count**: **4,387 — 0 errors**.
+
+### §X #209: Word-boundary-aware keyword matching across 13 files (2026-07-10)
+
+- `core/utils.py`: Added `any_keyword()` — English KWs use `\b` word boundaries, CJK keeps substring (density+anti+format triple-gate prevents false positives). Added `all_keywords()` for AND conditions.
+- 13 routing files switched from bare `any(k in text)` to `any_keyword()`: query_classifier (13), dictionary_classifier (2), execution_gate (6), task_manager_handler (5), planning_engine (4), reasoning_engines (2), composer (8), template_matcher (1), garden_engine (2), router.py fallback (2), input_sensor (1), intent_registry (1 inline), document_router (1).
+- **Bug fixed**: `execution_gate.py` false positive — `'no' in '建立 notes.md'` matched substring "no" inside "notes.md". Fixed by word-boundary check.
+- **Test count**: **4,387 — 0 errors** (behavioral, no count change).
+
+### §X #210: IntentRegistry density scoring + anti-keywords + format gate (2026-07-10)
+
+- `IntentRegistry.detect()` rewritten: density scoring (keyword-char positions / query length), anti-keyword penalty (-50% each, -90% cap), format_keys discount (0.3× on mismatch).
+- Priority raised to 3 (beats file_op on ties).
+- Added 9 missing operation keywords (分析/優化/摘要/總結/分類/精簡/濃縮/歸納/歸檔).
+- `document_router._parse_task_type()` triple gate: density+anti+format. Returns None on anti-pattern hit (整理→思路/想法/概念/邏輯; 優化→算法/模型/參數/訓練; 總結→心得/感想/體會/討論/會議).
+- All 16 document routing test cases pass: 0 document false positives.
+- **Test count**: **4,387 — 0 errors**.
+
+### §X #211: Routing bypass path elimination — TaskManager/AgentOrchestrator/ModelBus/Math (2026-07-10)
+
+- **TaskManagerHandler** `_parse()`: default changed from `return "create", {"title": text}` to `if any_keyword(text, ("任務","task","待辦","todo")): return "list", {}`. Fixes "之前給了啥任務來著?" creating nonsense tasks.
+- **AgentOrchestrator** `classify_intent()`: gated by IntentRegistry detect() first. If IntentRegistry identifies specific intent, returns "general" immediately (those handlers route separately).
+- **ModelBus** direct hit in router.py: gated through PriorityNegotiator routing_mode before returning. Conservative mode requires effective_threshold ≥ max(0.9, direct_threshold).
+- **MathVerifier** short-circuit in chat_routes.py: gated through IntentRegistry confirmation. Only fast-path if IR confirms "math" at ≥ 0.1 confidence.
+- **Test count**: **4,387 — 0 errors**.
+
+### §X #212: Pipeline integrity overhaul + comprehensive audit (2026-07-10)
+
+- **Bypass audit**: Found 10 bypass paths total. All fixed.
+- **4 remaining fixes**:
+  1. `_try_agent_routing()`: Was returning agent result directly. Now injects as context enrichment (`_agent_result` / `_agent_result_source`), continues to PriorityNegotiator + LLM.
+  2. `_handle_execution_gate()` auto_execute: Now gated through IntentRegistry. If IR disagrees (e.g., QueryClassifier says "file" but IR says "document"), handler is skipped.
+  3. `/session/{session_id}/send`: Was calling ED3N directly. Now delegates to `_handle_chat_request()` (full pipeline).
+  4. `classify_intent()`: Expanded IntentRegistry gate from 5 intents to ALL intents at conf ≥ 0.3.
+- Added vision/audio patterns to IntentRegistry for multimodal routing.
+- PromptBuilder: `_agent_result` injection into system prompt.
+- Fixed 3 pre-existing IntentPattern test bugs (wrong positional args, density scoring).
+- **Comprehensive audit**: ~85 issues across 20 categories (see IMPROVEMENT_ROADMAP.md §1.1).
+- **Test count**: **4,387 — 0 errors** (20 intent registry tests pass).
+
 [//]: # (End of MASTER_TASK_MAP)
