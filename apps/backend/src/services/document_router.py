@@ -4,7 +4,14 @@ DocumentRouter — generic tiered document processor.
 Tier 1: Local models (ED3N/GARDEN) — fast, autonomous.
 Tier 2: LLM fallback — only when local confidence is low.
 Tier 3: Learn from LLM → local handles similar tasks next time.
-Handles organizing, summarizing, categorizing, and listing documents.
+
+Operation types with distinct information retention rates:
+  - organize  (整理):   retain 80-100% — restructure formatting, keep all content
+  - summarize (總結):   retain 10-20%  — extract key points, link to original
+  - optimize  (優化):   retain 60-80%  — trim excess, keep core content intact
+  - analyze   (分析):   retain 100%   — extract structure/patterns, add insight
+  - categorize(分類):   retain 100%   — sort into categories
+  - list      (列出):   retain 100%   — enumerate files
 """
 
 import asyncio
@@ -21,7 +28,14 @@ from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
 
-_TASK_TYPES = ("organize", "summarize", "categorize", "list", "analyze")
+_OPERATIONS = {
+    "organize":    {"label": "整理", "retention": (0.80, 1.00), "desc": "重構格式，保留所有內容"},
+    "summarize":   {"label": "總結", "retention": (0.10, 0.20), "desc": "提取關鍵要點，附原始連結"},
+    "optimize":    {"label": "優化", "retention": (0.60, 0.80), "desc": "裁剪多餘內容，保留核心"},
+    "analyze":     {"label": "分析", "retention": (1.00, 1.00), "desc": "提取結構/模式，增加洞察"},
+    "categorize":  {"label": "分類", "retention": (1.00, 1.00), "desc": "按類別分類歸檔"},
+    "list":        {"label": "列出", "retention": (1.00, 1.00), "desc": "枚舉檔案清單"},
+}
 
 _EXAMPLES_DIR = Path(__file__).parent.parent.parent.parent / "data"
 _EXAMPLES_PATH = _EXAMPLES_DIR / "document_examples.json"
@@ -62,9 +76,11 @@ async def _write_output_file(file_path: Path, content: str) -> bool:
 
 def _parse_task_type(user_message: str) -> Tuple[str, str]:
     msg_lower = user_message.lower()
-    if any(k in msg_lower for k in ("整理", "organize", "分類", "歸檔", "sort", "classify")):
+    if any(k in msg_lower for k in ("優化", "optimize", "精簡", "潤飾", "refine")):
+        return "optimize", "優化文件"
+    if any(k in msg_lower for k in ("整理", "organize", "分類", "歸檔", "sort", "classify", "歸納")):
         return "organize", "整理文件"
-    if any(k in msg_lower for k in ("摘要", "總結", "summarize", "summary", "歸納")):
+    if any(k in msg_lower for k in ("摘要", "總結", "summarize", "summary", "濃縮")):
         return "summarize", "摘要文件"
     if any(k in msg_lower for k in ("分析", "analyze", "解析", "提取", "extract")):
         return "analyze", "分析文件"
@@ -135,10 +151,15 @@ def _find_local_match(task_type: str, source_dir: str, files: List[Path]) -> Opt
 async def _try_local_processing(
     user_message: str, task_type: str, source_dir: str, files: List[Path]
 ) -> Optional[Dict]:
+    op = _OPERATIONS.get(task_type, _OPERATIONS["summarize"])
+    retention_min, retention_max = op["retention"]
+    retention_pct = f"{int(retention_min*100)}%～{int(retention_max*100)}%"
+    retention_note = f"（保留率：{retention_pct}，{op['desc']}）"
+
     matched = _find_local_match(task_type, source_dir, files)
     if matched:
         return {
-            "response_text": matched.get("response", f"已從先前經驗完成 {task_type} 任務。"),
+            "response_text": matched.get("response", f"已從先前經驗完成{op['label']}任務{retention_note}。"),
             "output_files": matched.get("output_files", []),
             "source": "document_router_local",
             "route": "document_router",
@@ -156,7 +177,7 @@ async def _try_local_processing(
         if file_summaries:
             summary = "\n".join(file_summaries)
             return {
-                "response_text": f"【本地分析】目錄 {source_dir} 中有 {len(files)} 個文件：\n\n{summary}",
+                "response_text": f"【{op['label']}】目錄 {source_dir} 中有 {len(files)} 個文件 {retention_note}：\n\n{summary}",
                 "source": "document_router_local",
                 "route": "document_router",
             }
@@ -175,7 +196,7 @@ async def _try_local_processing(
         if file_summaries:
             summary = "\n".join(file_summaries)
             return {
-                "response_text": f"【本地分析】目錄 {source_dir} 中有 {len(files)} 個文件：\n\n{summary}",
+                "response_text": f"【{op['label']}】目錄 {source_dir} 中有 {len(files)} 個文件 {retention_note}：\n\n{summary}",
                 "source": "document_router_local",
                 "route": "document_router",
             }
@@ -195,13 +216,19 @@ async def _try_llm_processing(
     if not files:
         return None
 
-    task_label = {"organize": "整理", "summarize": "摘要", "categorize": "分類", "list": "列出", "analyze": "分析"}.get(task_type, "處理")
+    op = _OPERATIONS.get(task_type, _OPERATIONS["summarize"])
+    task_label = op["label"]
+    retention_min, retention_max = op["retention"]
+    retention_pct = f"{int(retention_min*100)}%～{int(retention_max*100)}%"
     file_list_text = "\n".join(f"{i+1}. {f.name} ({f.stat().st_size}B)" for i, f in enumerate(files))
 
     try:
         prompt = (
             f"請{task_label}以下目錄中的文件。目錄：{source_dir}\n\n"
             f"文件清單（共 {len(files)} 個）：\n{file_list_text}\n\n"
+            f"操作類型：{task_label}（{op['desc']}）\n"
+            f"資訊保留率要求：原始內容的 {retention_pct} 必須保留。\n"
+            f"⚠ 請嚴格遵循保留率，不要和其他操作類型（整理/總結/優化）混用。\n\n"
             f"請根據文件內容進行{task_label}，輸出結構化的 Markdown 報告。"
         )
         file_contents = []
@@ -211,8 +238,12 @@ async def _try_llm_processing(
         content_block = "".join(file_contents)
 
         full_prompt = (
-            f"請{task_label}以下文件。\n\n文件內容：\n{content_block}\n\n"
-            f"請輸出結構化的 Markdown 報告，包含每個文件的摘要和整體{task_label}結果。"
+            f"請{task_label}以下文件。\n\n"
+            f"操作類型：{task_label}（{op['desc']}）\n"
+            f"資訊保留率要求：原始內容的 {retention_pct} 必須保留。\n"
+            f"⚠ 嚴禁將此操作與其他類型混淆。\n\n"
+            f"文件內容：\n{content_block}\n\n"
+            f"請輸出結構化的 Markdown 報告，包含每個文件的{task_label}結果。"
         )
         text = await chat_svc.generate_text(full_prompt, max_tokens=2048, temperature=0.3)
         if not text:
@@ -235,10 +266,16 @@ async def _try_llm_processing(
 async def _learn_from_llm_output(
     task_type: str, source_dir: str, files: List[Path], llm_output: str
 ) -> None:
+    op = _OPERATIONS.get(task_type, _OPERATIONS["summarize"])
     examples = _load_examples()
     if task_type not in examples:
         examples[task_type] = []
     examples[task_type].append({
+        "operation": task_type,
+        "label": op["label"],
+        "retention_min": op["retention"][0],
+        "retention_max": op["retention"][1],
+        "description": op["desc"],
         "source_dir": source_dir,
         "file_names": [f.name for f in files],
         "file_count": len(files),
@@ -252,7 +289,7 @@ async def _learn_from_llm_output(
     try:
         from ai.ed3n.ed3n_engine import ED3NEngine
         engine = ED3NEngine.get_instance()
-        engine.learn_reflex(task_type, llm_output[:200])
+        engine.learn_reflex(f"doc_{task_type}", llm_output[:200])
     except Exception:
         pass
 
@@ -308,10 +345,11 @@ async def handle_document_intent(
         tier_result = await _try_llm_processing(user_message, task_type, source_dir, files, chat_svc)
 
     if not tier_result:
+        op = _OPERATIONS.get(task_type, _OPERATIONS["summarize"])
         simple_list = "\n".join(f"- {f.name}" for f in files[:20])
         extra = f"\n...及其他 {len(files)-20} 個" if len(files) > 20 else ""
         tier_result = {
-            "response_text": f"目錄 {source_dir} 中有 {len(files)} 個文件：\n{simple_list}{extra}",
+            "response_text": f"【{op['label']}】目錄 {source_dir} 中有 {len(files)} 個文件：\n{simple_list}{extra}",
             "source": "document_router",
             "route": "document_router",
         }
@@ -332,6 +370,8 @@ async def handle_document_intent(
         "response_text": tier_result.get("response_text", "處理完成。"),
         "source": tier_result.get("source", "document_router"),
         "route": tier_result.get("route", "document_router"),
+        "operation": task_type,
+        "operation_label": _OPERATIONS.get(task_type, _OPERATIONS["summarize"])["label"],
     }
 
 
