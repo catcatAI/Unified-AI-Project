@@ -74,16 +74,15 @@ class AgentOrchestrator:
         """
         lower = user_message.lower()
 
-        # IntentRegistry gate — use density+anti+format scoring
+        # IntentRegistry gate — density+anti+format scoring is canonical
         try:
             from core.intent_registry import IntentRegistry
             ir = IntentRegistry()
             ir_name, ir_conf = ir.detect(user_message)
-            if ir_name and ir_conf >= 0.1:
-                # If IntentRegistry identified a specific intent, bail to general
-                # (the registered handlers will route it separately)
-                if ir_name in ("task", "math", "document", "learning", "character_card"):
-                    return "general"
+            # Only gate if IntentRegistry is confident enough (>= 0.3).
+            # Low-confidence hits (e.g. "分析這張圖片" → document at 0.12) fall through to regex.
+            if ir_name and ir_conf >= 0.3:
+                return "general"
         except Exception:
             pass
 

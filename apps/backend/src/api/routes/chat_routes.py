@@ -550,7 +550,21 @@ async def _handle_execution_gate(
         )
 
         if decision.action == "auto_execute":
-            if decision.handler and chat_svc and chat_svc.model_bus:
+            # Gate through IntentRegistry: only auto-execute if IntentRegistry agrees
+            _ir_confirms = True
+            try:
+                from core.intent_registry import IntentRegistry
+                ir = IntentRegistry()
+                ir_name, ir_conf = ir.detect(user_message)
+                if ir_name and ir_conf >= 0.1:
+                    handler_to_ir = {"file_ops": "file_op", "web_search": "web_search", "code_exec": "code",
+                                     "task_mgr": "task", "vision": "vision"}
+                    expected_ir = handler_to_ir.get(decision.handler)
+                    if expected_ir and ir_name != expected_ir:
+                        _ir_confirms = False
+            except Exception:
+                pass
+            if _ir_confirms and decision.handler and chat_svc and chat_svc.model_bus:
                 try:
                     action_result = await chat_svc.model_bus.execute_handler(
                         decision.handler, user_message, context
@@ -561,6 +575,10 @@ async def _handle_execution_gate(
                 except Exception as e:
                     logger.warning(f"Execution gate auto-execute failed: {e}")
                     gate.record_result(decision.handler, False)
+            else:
+                # IntentRegistry didn't confirm — inject as context enrichment, skip execution
+                context["last_action_result"] = None
+                context["_gate_ir_mismatch"] = True
         elif decision.action == "confirm_then_execute":
             context["pending_action"] = {
                 "handler": decision.handler,
@@ -625,16 +643,10 @@ async def _try_agent_routing(
         agent_result = primary.get("result")
         if agent_result and isinstance(agent_result, dict) and agent_result.get("result"):
             response_text = str(agent_result["result"])
-            return {
-                "response_text": response_text,
-                "source": f"agent_{primary.get('agent', 'unknown')}",
-                "schema_version": schema_ver,
-                "truncation_message": "",
-                "emotion": context.get("emotion", {}).get("emotion", "neutral"),
-                "emotion_confidence": classify_result.confidence,
-                "emotion_intensity": 0.5,
-                "session_id": session_id,
-            }
+            # Inject into context — PriorityNegotiator decides routing_mode,
+            # LLM wraps/enhances the agent result. No direct short-circuit.
+            context["_agent_result"] = response_text
+            context["_agent_result_source"] = primary.get('agent', 'unknown')
     except Exception as e:
         logger.debug(f"Agent routing unavailable: {e}")
     return None
@@ -1261,16 +1273,13 @@ async def start_session(request: Dict[str, Any] = Body(default={})) -> dict:
 
 @router.post("/session/{session_id}/send")
 async def send_message(session_id: str, request: Dict[str, Any] = Body(...)) -> dict:
-    """Execute the send message operation."""
+    """Execute the send message operation via the unified chat pipeline."""
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
     user_message = request.get("text", request.get("message", ""))
     session = sessions.get(session_id)
-    messages = session.get("messages", [])
-    messages.append({"role": "user", "content": user_message, "timestamp": datetime.now().isoformat()})
-    ai_response = _get_ed3n_engine().process("session_response", context={"user_message": user_message}, depth="reflex")
-    messages.append({"role": "assistant", "content": ai_response, "timestamp": datetime.now().isoformat()})
-    return {"session_id": session_id, "response_text": ai_response}
+    user_name = session.get("user_name", "User")
+    return await _handle_chat_request(user_message, user_name, session.get("messages", []), session_id)
 
 
 @router.post("/angela/chat")

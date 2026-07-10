@@ -354,6 +354,15 @@ def _attach_action_result(prompt_text: str, context: Dict[str, Any]) -> str:
 {prompt('angela.result_error', error=(action_result.get('error', '') or ''))}
 
 {prompt('angela.result_instruction')}"""
+    agent_result = context.get("_agent_result")
+    if agent_result:
+        prompt_text += f"""
+
+[Agent Processing Result]
+Source: {context.get('_agent_result_source', 'unknown')}
+Result: {agent_result[:500]}
+
+The above was produced by a specialized agent. You may use it directly or enhance it."""
     prompt_text += f"\n\n{prompt('angela.execution_rules')}"
     return prompt_text
 

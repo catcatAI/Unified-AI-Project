@@ -40,6 +40,8 @@ _DEFAULT_PATTERNS: List[Dict[str, Any]] = [
     {"name": "character_card", "keywords": ["角色", "角色卡", "生成角色", "人物", "人物卡", "創建角色", "character", "card", "角色創建"], "priority": 5, "handler": "CardPipeline", "category": "card"},
     {"name": "document", "keywords": ["報告", "文件", "整理", "卡片堆", "卡片", "開發文件", "彙整", "整理成", "生成報告", "輸出到", "document", "report", "doc", "分析", "優化", "摘要", "總結", "分類", "精簡", "濃縮", "歸納", "歸檔"], "anti_keywords": ["思路", "想法", "概念"], "format_keys": ["/", "\\", "data", "docs"], "priority": 3, "handler": "DocumentBuilder", "category": "document"},
     {"name": "google_drive", "keywords": ["谷歌硬碟", "google硬碟", "Google硬碟", "google drive", "Google Drive", "雲端硬碟", "雲端磁碟", "同步drive", "列出雲端", "搜索雲端"], "priority": 5, "handler": "GoogleDriveHandler", "category": "integration"},
+    {"name": "vision", "keywords": ["圖片", "影像", "照片", "圖像", "視覺", "看這張", "分析圖片", "image", "photo", "picture", "vision", "analyze image", "what.*image", "detect"], "anti_keywords": ["想像", "幻想", " dream", "imagin"], "priority": 4, "handler": "VisionHandler", "category": "multimodal"},
+    {"name": "audio", "keywords": ["音訊", "語音", "音頻", "聲音", "音樂", "歌曲", "錄音", "轉錄", "audio", "voice", "speech", "transcribe", "song", "music", "what.*sound", "listen"], "anti_keywords": ["想像", " dream", "imagin"], "priority": 4, "handler": "AudioHandler", "category": "multimodal"},
     {"name": "general", "keywords": [], "priority": 9, "handler": "GeneralHandler", "category": "general"},
 ]
 
