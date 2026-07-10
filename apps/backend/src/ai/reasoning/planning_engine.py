@@ -15,6 +15,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+from core.utils import any_keyword
+
 logger = logging.getLogger(__name__)
 
 
@@ -91,13 +93,13 @@ class PlanningEngine:
         lower = goal.lower()
 
         # Detect goal type and generate appropriate steps
-        if any(w in lower for w in ["文件", "file", "讀取", "read"]):
+        if any_keyword(lower, ("文件", "file", "讀取", "read")):
             steps = self._plan_file_operation(goal)
-        elif any(w in lower for w in ["代碼", "code", "程式", "program"]):
+        elif any_keyword(lower, ("代碼", "code", "程式", "program")):
             steps = self._plan_code_task(goal)
-        elif any(w in lower for w in ["搜索", "search", "查找", "find"]):
+        elif any_keyword(lower, ("搜索", "search", "查找", "find")):
             steps = self._plan_research_task(goal)
-        elif any(w in lower for w in ["分析", "analyze", "數據", "data"]):
+        elif any_keyword(lower, ("分析", "analyze", "數據", "data")):
             steps = self._plan_analysis_task(goal)
         else:
             steps = self._plan_generic_task(goal)

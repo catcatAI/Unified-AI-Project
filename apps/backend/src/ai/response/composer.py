@@ -29,6 +29,7 @@ from core.system.config.magic_numbers import (
     limit_value,
     threshold_value,
 )
+from core.utils import any_keyword
 
 # Module-level ED3N cache (avoids creating new instances on every fallback)
 _ed3n_engine = None
@@ -303,17 +304,17 @@ class FragmentComposer:
     def _infer_fragment_type(self, sentence: str, index: int, total: int) -> FragmentType:
         """推断片段类型"""
         if index == 0:
-            if any(word in sentence for word in ["你好", "嗨", "hi", "hello"]):
+            if any_keyword(sentence, ("你好", "嗨", "hi", "hello")):
                 return FragmentType.GREETING
 
         if index == total - 1:
-            if any(word in sentence for word in ["吗", "呢", "帮", "需要"]):
+            if any_keyword(sentence, ("吗", "呢", "帮", "需要")):
                 return FragmentType.CLOSING
 
-        if any(word in sentence for word in ["开心", "高兴", "难过", "抱歉"]):
+        if any_keyword(sentence, ("开心", "高兴", "难过", "抱歉")):
             return FragmentType.EMOTION_EXPRESSION
 
-        if any(word in sentence for word in ["让我", "想想", "关于", "对于"]):
+        if any_keyword(sentence, ("让我", "想想", "关于", "对于")):
             return FragmentType.TRANSITION
 
         return FragmentType.QUESTION_RESPONSE
@@ -789,13 +790,13 @@ class NeuroVocabulary:
             for i, sentence in enumerate(sentences):
                 fid = f"{tmpl_id}_s{i}"
                 # 推断 structural_type
-                if i == 0 and any(w in sentence for w in ["早安", "晚安", "你好", "嗨", "hi"]):
+                if i == 0 and any_keyword(sentence, ("早安", "晚安", "你好", "嗨", "hi")):
                     stype = "greeting"
-                elif i == len(sentences) - 1 and any(w in sentence for w in ["吗", "呢", "?","？"]):
+                elif i == len(sentences) - 1 and any_keyword(sentence, ("吗", "呢", "?", "？")):
                     stype = "closing_question"
-                elif any(w in sentence for w in ["!", "！"]):
+                elif any_keyword(sentence, ("!", "！")):
                     stype = "exclamation"
-                elif any(w in sentence for w in ["让我", "想想", "关于"]):
+                elif any_keyword(sentence, ("让我", "想想", "关于")):
                     stype = "transition"
                 else:
                     stype = "statement"

@@ -127,6 +127,52 @@ class Timer:
         return self.elapsed * 1000
 
 
+# ═══════════════════════════════════════════════
+# Keyword matching (word-boundary-aware for English, density-gated)
+# ═══════════════════════════════════════════════
+
+_ENG_WORD_BOUNDARY = re.compile(r'(?<![a-zA-Z])|(?![a-zA-Z])')
+
+
+def _match_english_kw(text: str, keyword: str) -> bool:
+    """English keyword with word-boundary check: 'cat' won't match 'category'."""
+    pattern = re.compile(rf'(?<![a-zA-Z]){re.escape(keyword)}(?![a-zA-Z])', re.IGNORECASE)
+    return bool(pattern.search(text))
+
+
+def _match_cjk_kw(text: str, keyword: str) -> bool:
+    """CJK keyword: substring match (word boundaries don't apply)."""
+    return keyword in text
+
+
+def any_keyword(text: str, keywords: tuple) -> bool:
+    """Match any keyword — English gets word boundaries, CJK uses substring."""
+    for kw in keywords:
+        if not kw:
+            continue
+        if kw.isascii() and kw.isalpha():
+            if _match_english_kw(text, kw):
+                return True
+        else:
+            if _match_cjk_kw(text, kw):
+                return True
+    return False
+
+
+def all_keywords(text: str, keywords: tuple) -> bool:
+    """All keywords must match — English gets word boundaries, CJK uses substring."""
+    for kw in keywords:
+        if not kw:
+            continue
+        if kw.isascii() and kw.isalpha():
+            if not _match_english_kw(text, kw):
+                return False
+        else:
+            if not _match_cjk_kw(text, kw):
+                return False
+    return True
+
+
 __all__ = [
     "safe_error",
     "sha256_hash",
@@ -140,4 +186,6 @@ __all__ = [
     "deep_merge",
     "chunk_list",
     "Timer",
+    "any_keyword",
+    "all_keywords",
 ]

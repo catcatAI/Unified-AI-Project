@@ -4,6 +4,8 @@ import logging
 import time
 from typing import Any, Dict
 
+from core.utils import any_keyword
+
 logger = logging.getLogger(__name__)
 
 
@@ -34,7 +36,7 @@ class GlobalInputSensor:
         title_lower = self.active_window_title.lower()
         found = None
         for category, keywords in self.category_map.items():
-            if any(kw in title_lower for kw in keywords):
+            if any_keyword(title_lower, tuple(keywords)):
                 found = category
                 break
         if found:

@@ -17,6 +17,7 @@ from enum import Enum
 from typing import List, Optional, Pattern, Tuple
 
 from core.system.config.magic_numbers import limit_value
+from core.utils import any_keyword
 
 logger = logging.getLogger(__name__)
 
@@ -403,7 +404,7 @@ class QueryClassifier:
         if not text:
             return QueryResult(QueryType.UNKNOWN, 0.0, 0.0, "none", reason="empty_input")
 
-        has_negation = any(neg in text for neg in _NEGATION_WORDS)
+        has_negation = any_keyword(text, _NEGATION_WORDS)
 
         # Step 1: 长文字启发式
         result = self._classify_by_length(text, has_negation)
@@ -555,16 +556,16 @@ class QueryClassifier:
             list(_CREATE_VERBS) + list(_MODIFY_VERBS) + list(_DELETE_VERBS) +
             list(_SEND_VERBS) + list(_READ_PREFIXES) + list(_WRITE_VERBS)
         )
-        if any(v in text for v in all_action_verbs):
+        if any_keyword(text, tuple(all_action_verbs)):
             type_base = min(1.0, type_base + 0.1)
 
         # 模糊词 → 降低
         vague_words = ["一下", "看看", "处理", "弄", "搞", "整", "试试"]
-        if any(w in text for w in vague_words):
+        if any_keyword(text, tuple(vague_words)):
             type_base = max(0.0, type_base - 0.2)
 
         # 否定词 → 大幅降低
-        if any(neg in text for neg in _NEGATION_WORDS):
+        if any_keyword(text, _NEGATION_WORDS):
             type_base = max(0.0, type_base - 0.5)
 
         return type_base
@@ -579,19 +580,19 @@ class QueryClassifier:
 
         # 读取类
         if query_type in (QueryType.SEARCH, QueryType.VISION, QueryType.AUDIO):
-            if any(w in text for w in _WRITE_VERBS):
+            if any_keyword(text, tuple(_WRITE_VERBS)):
                 return "modify"
             return "read"
 
         # FILE 类：根据动词判断
         if query_type == QueryType.FILE:
-            if any(w in text for w in _DELETE_VERBS):
+            if any_keyword(text, tuple(_DELETE_VERBS)):
                 return "delete"
-            if any(w in text for w in _CREATE_VERBS):
+            if any_keyword(text, tuple(_CREATE_VERBS)):
                 return "create"
-            if any(w in text for w in _MOVE_VERBS):
+            if any_keyword(text, tuple(_MOVE_VERBS)):
                 return "modify"
-            if any(w in text for w in _MODIFY_VERBS):
+            if any_keyword(text, tuple(_MODIFY_VERBS)):
                 return "modify"
             return "read"
 
@@ -601,17 +602,17 @@ class QueryClassifier:
 
         # TASK → create or delete
         if query_type == QueryType.TASK:
-            if any(w in text for w in _DELETE_VERBS):
+            if any_keyword(text, tuple(_DELETE_VERBS)):
                 return "delete"
             return "create"
 
         # COMMAND → 根据内容判断
         if query_type == QueryType.COMMAND:
-            if any(w in text for w in _DELETE_VERBS):
+            if any_keyword(text, tuple(_DELETE_VERBS)):
                 return "delete"
-            if any(w in text for w in _CREATE_VERBS):
+            if any_keyword(text, tuple(_CREATE_VERBS)):
                 return "create"
-            if any(w in text for w in _MODIFY_VERBS):
+            if any_keyword(text, tuple(_MODIFY_VERBS)):
                 return "modify"
             return "read"
 

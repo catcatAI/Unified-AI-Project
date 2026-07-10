@@ -15,6 +15,7 @@ from typing import Dict, Optional
 
 from ai.core.query_classifier import _NEGATION_WORDS
 from core.system.state_store.global_store import state_store
+from core.utils import any_keyword
 
 # 可逆性分数表
 REVERSIBILITY = {
@@ -99,7 +100,7 @@ class ExecutionGate:
         score = self._calculate_exec_score(action_type, user_message, query_type, confidence)
 
         # 否定词强制 reject
-        if any(neg in user_message for neg in _NEGATION_WORDS):
+        if any_keyword(user_message, _NEGATION_WORDS):
             state_store.emit_event("execution.gate_decided", {
                 "action": "reject", "score": round(score, 3),
                 "query_type": query_type, "action_type": action_type,
@@ -205,10 +206,10 @@ class ExecutionGate:
 
         scope = self._config.get("scope_words", {})
         # 全部/所有 → 影响更大
-        if any(w in user_message for w in scope.get("max_impact", [])):
+        if any_keyword(user_message, tuple(scope.get("max_impact", []))):
             base = max(0.1, base - 0.3)
         # 单一/一个 → 影响较小
-        if any(w in user_message for w in scope.get("min_impact", [])):
+        if any_keyword(user_message, tuple(scope.get("min_impact", []))):
             base = min(1.0, base + 0.1)
 
         return base
@@ -220,7 +221,7 @@ class ExecutionGate:
         clarity_cfg = self._config.get("clarity", {})
         # 包含明确动作动词 → 更清晰
         clear_verbs = clarity_cfg.get("clear_verbs", [])
-        if any(v in text for v in clear_verbs):
+        if any_keyword(text, tuple(clear_verbs)):
             clarity = min(1.0, clarity + 0.1)
 
         # 包含明确对象（文件路径、URL）→ 更清晰
@@ -231,7 +232,7 @@ class ExecutionGate:
 
         # 模糊词 → 不清晰
         vague_words = clarity_cfg.get("vague_words", [])
-        if any(w in text for w in vague_words):
+        if any_keyword(text, tuple(vague_words)):
             clarity = max(0.1, clarity - 0.2)
 
         # 太短 → 不清晰
@@ -255,7 +256,7 @@ class ExecutionGate:
         """描述影响范围"""
         parts = []
         scope = self._config.get("scope_words", {})
-        if any(w in user_message for w in scope.get("max_impact", [])):
+        if any_keyword(user_message, tuple(scope.get("max_impact", []))):
             parts.append("⚠️ 这会影响所有项目")
         if action_type == "delete":
             parts.append("此操作无法撤销")

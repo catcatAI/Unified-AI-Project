@@ -24,6 +24,8 @@ import os
 import re
 from typing import Any, Dict, List, Optional
 
+from core.utils import any_keyword
+
 from ai.core.unicode_utils import is_english_dominant
 from core.system.config.magic_numbers import (
     cache_value,
@@ -341,7 +343,7 @@ class GARDENEngine:
     def _is_multi_step(self, text: str) -> bool:
         """Detect if the input contains multiple sequential steps."""
         lower = text.lower()
-        return any(m in lower for m in self._MULTI_STEP_MARKERS)
+        return any_keyword(lower, tuple(self._MULTI_STEP_MARKERS))
 
     def _process_multi_step(self, text: str, context: Optional[Dict[str, Any]] = None) -> str:
         """Split multi-step input and process each step sequentially."""
@@ -409,7 +411,7 @@ class GARDENEngine:
         """Detect the dominant emotion in user input."""
         lower = text.lower()
         for emotion, keywords in self._EMOTION_KEYWORDS.items():
-            if any(k in lower for k in keywords):
+            if any_keyword(lower, tuple(keywords)):
                 return emotion
         return "neutral"
 

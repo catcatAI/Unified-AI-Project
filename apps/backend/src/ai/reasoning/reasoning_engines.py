@@ -14,6 +14,8 @@ Supports multiple reasoning strategies:
 import logging
 from typing import Any, Dict, List, Optional
 
+from core.utils import any_keyword
+
 logger = logging.getLogger(__name__)
 
 
@@ -251,7 +253,7 @@ class AbductiveReasoner:
         # Generate hypotheses based on observation keywords
         lower = observation.lower()
 
-        if any(w in lower for w in ["錯誤", "error", "失敗", "fail"]):
+        if any_keyword(lower, ("錯誤", "error", "失敗", "fail")):
             hypotheses.append({
                 "explanation": "System configuration issue",
                 "plausibility": 0.6,
@@ -263,7 +265,7 @@ class AbductiveReasoner:
                 "evidence": ["Input processing failed"],
             })
 
-        if any(w in lower for w in ["慢", "slow", "延遲", "delay"]):
+        if any_keyword(lower, ("慢", "slow", "延遲", "delay")):
             hypotheses.append({
                 "explanation": "High system load",
                 "plausibility": 0.5,

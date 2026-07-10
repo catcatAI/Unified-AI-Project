@@ -24,6 +24,8 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import datetime
 
+from core.utils import any_keyword
+
 from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
@@ -109,7 +111,7 @@ def _parse_task_type(user_message: str) -> Optional[Tuple[str, str]]:
     op_key = None
     matched_kws = None
     for key, kws in _TASK_KWS:
-        if any(k in msg_lower for k in kws):
+        if any_keyword(msg_lower, kws):
             op_key = key
             matched_kws = kws
             break

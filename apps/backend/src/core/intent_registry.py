@@ -8,8 +8,11 @@ Scoring:
 """
 
 import logging
+import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
+
+from core.utils import _match_english_kw
 
 logger = logging.getLogger(__name__)
 
@@ -129,14 +132,23 @@ class IntentRegistry:
             # Positive keyword coverage
             matched_positions: set = set()
             for kw in p.keywords:
-                idx = 0
-                while True:
-                    idx = query.find(kw, idx)
-                    if idx == -1:
-                        break
-                    for i in range(idx, idx + len(kw)):
-                        matched_positions.add(i)
-                    idx += 1
+                if not kw:
+                    continue
+                if kw.isascii() and kw.isalpha():
+                    # English: word-boundary aware
+                    for m in re.finditer(rf'(?<![a-zA-Z]){re.escape(kw)}(?![a-zA-Z])', query, re.IGNORECASE):
+                        for i in range(m.start(), m.end()):
+                            matched_positions.add(i)
+                else:
+                    # CJK: substring match (density check later prevents false positives)
+                    idx = 0
+                    while True:
+                        idx = query.find(kw, idx)
+                        if idx == -1:
+                            break
+                        for i in range(idx, idx + len(kw)):
+                            matched_positions.add(i)
+                        idx += 1
 
             if not matched_positions:
                 continue

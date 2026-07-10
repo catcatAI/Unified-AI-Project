@@ -12,6 +12,8 @@ import logging
 import os
 from typing import Dict, List, Optional, Tuple
 
+from core.utils import any_keyword
+
 logger = logging.getLogger(__name__)
 
 # Map ED3N context_id to QueryType
@@ -165,7 +167,7 @@ class DictionaryClassifier:
         return None
 
     def _check_negation(self, text: str) -> Optional[Tuple[str, str, float]]:
-        if any(neg in text for neg in NEGATION_KEYWORDS):
+        if any_keyword(text, NEGATION_KEYWORDS):
             result = ("unknown", "none", 0.9)
             self._cache[text] = result
             return result
@@ -183,7 +185,7 @@ class DictionaryClassifier:
 
         if best_score < 0.5:
             for keyword, keys in self._keyword_index.items():
-                if keyword in text_lower:
+                if any_keyword(text_lower, (keyword,)):
                     pos = text_lower.find(keyword)
                     len_ratio = len(keyword) / max(len(text_lower), 1)
                     position_boost = 1.3 if pos == 0 else 1.0

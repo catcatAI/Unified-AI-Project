@@ -26,6 +26,8 @@ from utils.text_utils import bigram_jaccard as _bigram_jaccard_util
 from utils.text_utils import char_bigrams as _char_bigrams_util
 from utils.text_utils import normalize_text as _normalize_text_util
 
+from core.utils import any_keyword
+
 logger = logging.getLogger(__name__)
 
 
@@ -336,7 +338,7 @@ class TemplateMatcher:
         if hasattr(template, 'keywords') and template.keywords:
             for keyword in template.keywords:
                 kw_lower = self._normalize_text(keyword)
-                if kw_lower in user_lower or user_lower in kw_lower:
+                if any_keyword(user_lower, (kw_lower,)) or any_keyword(kw_lower, (user_lower,)):
                     return 0.95
                 # Partial keyword overlap (bigram-based)
                 kw_bigrams = self._char_bigrams(kw_lower)

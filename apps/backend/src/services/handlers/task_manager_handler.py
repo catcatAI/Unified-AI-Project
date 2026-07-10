@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from core.i18n.i18n_manager import t
+from core.utils import any_keyword
 
 logger = logging.getLogger(__name__)
 
@@ -68,19 +69,19 @@ class TaskManagerHandler:
     def _parse(self, text: str) -> tuple:
         import re
         text = text.strip()
-        if any(k in text for k in ["建立任務", "新增任務", "添加任務", "add task", "create task"]):
+        if any_keyword(text, ("建立任務", "新增任務", "添加任務", "add task", "create task")):
             m = re.search(r"[：:]\s*(.+)", text)
             title = m.group(1).strip() if m else re.sub(r"建立任務|新增任務|添加任務|add task|create task", "", text, flags=re.IGNORECASE).strip()
             return "create", {"title": title}
-        if any(k in text for k in ["任務列表", "待辦事項", "todo list", "task list", "list tasks"]):
+        if any_keyword(text, ("任務列表", "待辦事項", "todo list", "task list", "list tasks")):
             return "list", {}
-        if any(k in text for k in ["完成任務", "完成待辦", "complete task"]):
+        if any_keyword(text, ("完成任務", "完成待辦", "complete task")):
             m = re.search(r"[#＃]?\s*(\d+)", text)
             return "complete", {"id": int(m.group(1))} if m else ("complete", {"title": text})
-        if any(k in text for k in ["刪除任務", "移除任務", "delete task", "remove task"]):
+        if any_keyword(text, ("刪除任務", "移除任務", "delete task", "remove task")):
             m = re.search(r"[#＃]?\s*(\d+)", text)
             return "delete", {"id": int(m.group(1))} if m else ("delete", {"title": text})
-        if any(k in text for k in ["更新任務", "修改任務", "update task"]):
+        if any_keyword(text, ("更新任務", "修改任務", "update task")):
             m = re.search(r"[#＃]?\s*(\d+)\s*[：:]\s*(.+)", text)
             if m:
                 return "update", {"id": int(m.group(1)), "title": m.group(2).strip()}

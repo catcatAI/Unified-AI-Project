@@ -11,7 +11,7 @@ Angela LLM Service - Angela 的智能對話引擎
 而是讓 Angela 作為中介，調用模型來產生回應。
 """
 
-from core.utils import safe_error
+from core.utils import any_keyword, safe_error
 
 import asyncio
 import logging
@@ -1098,16 +1098,12 @@ class AngelaLLMService:
             intent_vec["support"] = 0.7
         if emotion in ("happy", "surprise"):
             intent_vec["excited"] = 0.6
-        math_kws = ["計算", "數學", "積分", "微分", "math", "calculate"]
-        code_kws = ["代碼", "程式", "python", "function", "code", "program"]
-        for kw in math_kws:
-            if kw in user_message:
-                intent_vec["math"] = 0.8
-                break
-        for kw in code_kws:
-            if kw in user_message:
-                intent_vec["code"] = 0.8
-                break
+        math_kws = ("計算", "數學", "積分", "微分", "math", "calculate")
+        code_kws = ("代碼", "程式", "python", "function", "code", "program")
+        if any_keyword(user_message, math_kws):
+            intent_vec["math"] = 0.8
+        if any_keyword(user_message, code_kws):
+            intent_vec["code"] = 0.8
 
         empathy_valence = bio.get("valence", 0.0)
         user_name = context.get("user_name", "朋友")

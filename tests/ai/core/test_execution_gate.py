@@ -94,9 +94,8 @@ class TestExecutionGateDecide:
 
     def test_confirm_file_create(self):
         d = self.gate.decide("file", "create", "建立 notes.md", 0.85, {})
-        assert d.action in ("confirm_then_execute", "reject")
-        if d.action == "confirm_then_execute":
-            assert d.handler == "file_ops"
+        assert d.action == "auto_execute"
+        assert d.handler == "file_ops"
 
     def test_reject_system_operation(self):
         d = self.gate.decide("execute", "system", "执行这个命令", 0.9, {})
