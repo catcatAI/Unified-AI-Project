@@ -86,6 +86,9 @@ class TaskManagerHandler:
             if m:
                 return "update", {"id": int(m.group(1)), "title": m.group(2).strip()}
             return "update", {"title": text}
+        # If query mentions tasks but no specific action → show task list
+        if any_keyword(text, ("任務", "task", "待辦", "todo")):
+            return "list", {}
         return "create", {"title": text}
 
     def _create(self, payload: Dict[str, Any]) -> str:
