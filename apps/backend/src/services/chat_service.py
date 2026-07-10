@@ -122,7 +122,7 @@ class ChatService:
         # Initialize HAM memory for template-based retrieval (Phase 5.3)
         try:
             from ai.memory.ham_memory.ham_manager import HAMMemoryManager
-            self._ham_memory = HAMMemoryManager("angela_memory.json")
+            self._ham_memory = HAMMemoryManager()
             stats = self._ham_memory.get_stats()
             logger.info("HAM memory initialized: %d templates, %d conversations",
                         stats.get("template_count", 0), stats.get("conversation_count", 0))

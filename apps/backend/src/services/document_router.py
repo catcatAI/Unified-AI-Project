@@ -1,7 +1,10 @@
 """
 ANGELA-MATRIX: [L3] [β] [B] [L2]
-DocumentRouter — handles document/card intents.
-Reads files from a directory, processes them with LLM, and writes structured output.
+DocumentRouter — generic tiered document processor.
+Tier 1: Local models (ED3N/GARDEN) — fast, autonomous.
+Tier 2: LLM fallback — only when local confidence is low.
+Tier 3: Learn from LLM → local handles similar tasks next time.
+Handles organizing, summarizing, categorizing, and listing documents.
 """
 
 import asyncio
@@ -18,9 +21,17 @@ from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
 
+_TASK_TYPES = ("organize", "summarize", "categorize", "list", "analyze")
+
+_EXAMPLES_DIR = Path(__file__).parent.parent.parent.parent / "data"
+_EXAMPLES_PATH = _EXAMPLES_DIR / "document_examples.json"
+
+
+# ═══════════════════════════════════════════════
+# File utilities
+# ═══════════════════════════════════════════════
 
 async def _list_text_files(directory: str) -> List[Path]:
-    """List all text/markdown files in a directory (non-recursive)."""
     path = Path(directory)
     if not path.exists() or not path.is_dir():
         return []
@@ -31,7 +42,6 @@ async def _list_text_files(directory: str) -> List[Path]:
 
 
 async def _read_file_content(file_path: Path) -> str:
-    """Read file content with error handling."""
     try:
         return file_path.read_text(encoding="utf-8")
     except Exception as e:
@@ -40,7 +50,6 @@ async def _read_file_content(file_path: Path) -> str:
 
 
 async def _write_output_file(file_path: Path, content: str) -> bool:
-    """Write content to a file, creating parent directories as needed."""
     try:
         file_path.parent.mkdir(parents=True, exist_ok=True)
         file_path.write_text(content, encoding="utf-8")
@@ -51,339 +60,278 @@ async def _write_output_file(file_path: Path, content: str) -> bool:
         return False
 
 
-def _extract_card_ids(content: str) -> Set[str]:
-    """Extract all unique card IDs like CC-01, RC-06, NAT-01 from text."""
-    ids = re.findall(r'\b([A-Z]+-\d+(?:-[A-Z])?)\b', content)
-    return set(ids)
+def _parse_task_type(user_message: str) -> Tuple[str, str]:
+    msg_lower = user_message.lower()
+    if any(k in msg_lower for k in ("整理", "organize", "分類", "歸檔", "sort", "classify")):
+        return "organize", "整理文件"
+    if any(k in msg_lower for k in ("摘要", "總結", "summarize", "summary", "歸納")):
+        return "summarize", "摘要文件"
+    if any(k in msg_lower for k in ("分析", "analyze", "解析", "提取", "extract")):
+        return "analyze", "分析文件"
+    if any(k in msg_lower for k in ("列出", "list", "索引", "index", "目錄")):
+        return "list", "列出文件"
+    return "summarize", "摘要文件"
 
 
-def _extract_card_ids_from_files(files: List[Path]) -> Dict[str, Dict[str, Any]]:
-    """Pre-scan all files for card IDs and names to build a baseline inventory."""
-    card_data: Dict[str, Dict[str, Any]] = {}
-    for fpath in files:
-        try:
-            content = fpath.read_text(encoding="utf-8")
-        except Exception:
-            continue
-        ids = _extract_card_ids(content)
-        for id_ in ids:
-            if id_ not in card_data:
-                card_data[id_] = {"files": [], "name": "", "type": id_.split("-")[0]}
-            card_data[id_]["files"].append(fpath.name)
-        # Try to extract name following ID
-        name_matches = re.findall(r'([A-Z]+-\d+(?:-[A-Z])?)\s+([^\n]+)', content)
-        for id_, name in name_matches:
-            if id_ in card_data:
-                clean = name.strip()[:80]
-                if clean and len(card_data[id_]["name"]) < len(clean):
-                    card_data[id_]["name"] = clean
-    return card_data
+def _extract_source_dir(user_message: str) -> str:
+    path_match = re.search(r'[A-Za-z]:\\[^\s"\']+|data/[^\s]+|[A-Za-z]:/[^\s]+', user_message)
+    return path_match.group(0) if path_match else ""
 
+
+# ═══════════════════════════════════════════════
+# Example store (learned from LLM, reused by local)
+# ═══════════════════════════════════════════════
+
+_examples_cache: Optional[Dict[str, List[Dict]]] = None
+
+
+def _load_examples() -> Dict[str, List[Dict]]:
+    global _examples_cache
+    if _examples_cache is not None:
+        return _examples_cache
+    try:
+        _EXAMPLES_DIR.mkdir(parents=True, exist_ok=True)
+        if _EXAMPLES_PATH.exists():
+            with open(_EXAMPLES_PATH, "r", encoding="utf-8") as f:
+                _examples_cache = json.load(f)
+        else:
+            _examples_cache = {}
+    except Exception as e:
+        logger.debug(f"Failed to load document examples: {e}")
+        _examples_cache = {}
+    return _examples_cache
+
+
+def _save_examples(examples: Dict[str, List[Dict]]) -> None:
+    try:
+        _EXAMPLES_DIR.mkdir(parents=True, exist_ok=True)
+        with open(_EXAMPLES_PATH, "w", encoding="utf-8") as f:
+            json.dump(examples, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        logger.warning(f"Failed to save document examples: {e}")
+
+
+def _find_local_match(task_type: str, source_dir: str, files: List[Path]) -> Optional[Dict]:
+    examples = _load_examples()
+    task_examples = examples.get(task_type, [])
+    if not task_examples:
+        return None
+
+    file_count = len(files)
+    file_names = {f.name for f in files}
+    for ex in task_examples:
+        ex_files = set(ex.get("file_names", []))
+        overlap = file_names & ex_files
+        if len(overlap) >= min(file_count, ex.get("file_count", 0)) * 0.5:
+            logger.info(f"Local match found for task '{task_type}' ({len(overlap)}/{file_count} files overlap)")
+            return ex
+    return None
+
+
+# ═══════════════════════════════════════════════
+# Tier 1: Local processing (ED3N / GARDEN)
+# ═══════════════════════════════════════════════
+
+async def _try_local_processing(
+    user_message: str, task_type: str, source_dir: str, files: List[Path]
+) -> Optional[Dict]:
+    matched = _find_local_match(task_type, source_dir, files)
+    if matched:
+        return {
+            "response_text": matched.get("response", f"已從先前經驗完成 {task_type} 任務。"),
+            "output_files": matched.get("output_files", []),
+            "source": "document_router_local",
+            "route": "document_router",
+        }
+
+    try:
+        from ai.ed3n.ed3n_engine import ED3NEngine
+        engine = ED3NEngine.get_instance()
+        file_summaries = []
+        for f in files[:5]:
+            content = await _read_file_content(f)
+            result = await engine.process(content[:2000], depth="shallow")
+            if result and result.get("output"):
+                file_summaries.append(f"{f.name}: {result['output'][:200]}")
+        if file_summaries:
+            summary = "\n".join(file_summaries)
+            return {
+                "response_text": f"【本地分析】目錄 {source_dir} 中有 {len(files)} 個文件：\n\n{summary}",
+                "source": "document_router_local",
+                "route": "document_router",
+            }
+    except Exception as e:
+        logger.debug(f"ED3N local processing unavailable: {e}")
+
+    try:
+        from ai.garden.garden_engine import GARDENEngine
+        engine = GARDENEngine()
+        file_summaries = []
+        for f in files[:5]:
+            content = await _read_file_content(f)
+            result = await engine.process(content[:2000])
+            if result and result.get("output"):
+                file_summaries.append(f"{f.name}: {result['output'][:200]}")
+        if file_summaries:
+            summary = "\n".join(file_summaries)
+            return {
+                "response_text": f"【本地分析】目錄 {source_dir} 中有 {len(files)} 個文件：\n\n{summary}",
+                "source": "document_router_local",
+                "route": "document_router",
+            }
+    except Exception as e:
+        logger.debug(f"GARDEN local processing unavailable: {e}")
+
+    return None
+
+
+# ═══════════════════════════════════════════════
+# Tier 2: LLM fallback
+# ═══════════════════════════════════════════════
+
+async def _try_llm_processing(
+    user_message: str, task_type: str, source_dir: str, files: List[Path], chat_svc: Any
+) -> Optional[Dict]:
+    if not files:
+        return None
+
+    task_label = {"organize": "整理", "summarize": "摘要", "categorize": "分類", "list": "列出", "analyze": "分析"}.get(task_type, "處理")
+    file_list_text = "\n".join(f"{i+1}. {f.name} ({f.stat().st_size}B)" for i, f in enumerate(files))
+
+    try:
+        prompt = (
+            f"請{task_label}以下目錄中的文件。目錄：{source_dir}\n\n"
+            f"文件清單（共 {len(files)} 個）：\n{file_list_text}\n\n"
+            f"請根據文件內容進行{task_label}，輸出結構化的 Markdown 報告。"
+        )
+        file_contents = []
+        for f in files:
+            content = await _read_file_content(f)
+            file_contents.append(f"\n--- {f.name} ---\n{content[:3000]}")
+        content_block = "".join(file_contents)
+
+        full_prompt = (
+            f"請{task_label}以下文件。\n\n文件內容：\n{content_block}\n\n"
+            f"請輸出結構化的 Markdown 報告，包含每個文件的摘要和整體{task_label}結果。"
+        )
+        text = await chat_svc.generate_text(full_prompt, max_tokens=2048, temperature=0.3)
+        if not text:
+            return None
+
+        return {
+            "response_text": text,
+            "source": "document_router_llm",
+            "route": "document_router",
+        }
+    except Exception as e:
+        logger.warning(f"LLM document processing failed: {e}")
+        return None
+
+
+# ═══════════════════════════════════════════════
+# Tier 3: Learn from LLM output → local models
+# ═══════════════════════════════════════════════
+
+async def _learn_from_llm_output(
+    task_type: str, source_dir: str, files: List[Path], llm_output: str
+) -> None:
+    examples = _load_examples()
+    if task_type not in examples:
+        examples[task_type] = []
+    examples[task_type].append({
+        "source_dir": source_dir,
+        "file_names": [f.name for f in files],
+        "file_count": len(files),
+        "response": llm_output[:500],
+        "timestamp": datetime.datetime.now().isoformat(),
+    })
+    if len(examples[task_type]) > 20:
+        examples[task_type] = examples[task_type][-20:]
+    _save_examples(examples)
+
+    try:
+        from ai.ed3n.ed3n_engine import ED3NEngine
+        engine = ED3NEngine.get_instance()
+        engine.learn_reflex(task_type, llm_output[:200])
+    except Exception:
+        pass
+
+    try:
+        from ai.garden.garden_engine import GARDENEngine
+        engine = GARDENEngine()
+        for f in files[:3]:
+            content = await _read_file_content(f)
+            engine.learn_from_interaction(content[:1000], llm_output[:1000], confidence=0.5)
+    except Exception:
+        pass
+
+
+# ═══════════════════════════════════════════════
+# Main entry point
+# ═══════════════════════════════════════════════
 
 async def handle_document_intent(
     user_message: str,
     chat_svc: Any,
     user_name: str = "User",
 ) -> Dict[str, Any]:
-    """
-    Handle document/card processing intents.
-    
-    Improved version:
-    1. Pre-scans all files for card IDs programmatically (baseline)
-    2. Batches files and sends to LLM for analysis (Chinese prompts, more content)
-    3. Generates structured summary document
-    4. Writes output with verification against baseline
-    """
-    # Determine source directory
-    path_match = re.search(r'[A-Za-z]:\\[^\s"\']+|data/[^\s]+|[A-Za-z]:/[^\s]+', user_message)
-    source_dir = path_match.group(0) if path_match else ""
-    
-    CARD_DIR = os.path.join(
-        os.path.dirname(__file__), "..", "..", "..", "..", "data", "card_pile_downloaded"
-    )
-    CARD_DIR = os.path.abspath(CARD_DIR)
-    
-    if not source_dir:
-        source_dir = CARD_DIR
-    
+    task_type, task_label = _parse_task_type(user_message)
+    source_dir = _extract_source_dir(user_message)
+    logger.info(f"DocumentRouter: task={task_type}, source={source_dir}")
+
+    output_dir = ""
     output_match = re.search(r'輸出到[：:]\s*([^\s]+)', user_message)
     if output_match:
         output_dir = output_match.group(1)
-    else:
-        output_dir = r"G:\我的雲端硬碟\卡片開發"
-    
-    logger.info(f"DocumentRouter: source={source_dir}, output={output_dir}")
-    
-    # Read files
-    files = await _list_text_files(source_dir)
-    if not files:
+
+    files = await _list_text_files(source_dir) if source_dir else []
+    if not files and source_dir:
         return {
             "response_text": f"在 {source_dir} 中找不到任何可讀取的文檔。",
             "source": "document_router",
             "route": "document_router",
         }
-    
-    # Step A: Pre-scan all files for card IDs (baseline inventory)
-    logger.info(f"Pre-scanning {len(files)} files for card IDs...")
-    baseline = _extract_card_ids_from_files(files)
-    logger.info(f"Found {len(baseline)} unique card IDs in baseline scan")
-    
-    # Group baseline by type
-    by_type: Dict[str, List[Tuple[str, str]]] = {}
-    for id_, info in sorted(baseline.items(), key=lambda x: (x[1]["type"], x[0])):
-        t = info["type"]
-        if t not in by_type:
-            by_type[t] = []
-        by_type[t].append((id_, info["name"]))
-    
-    # Build a baseline reference text to include in final prompt
-    baseline_lines = []
-    for t in sorted(by_type.keys()):
-        baseline_lines.append(f"\n=== {t} ({len(by_type[t])} cards) ===")
-        for id_, name in by_type[t]:
-            baseline_lines.append(f"  {id_}: {name}")
-    baseline_text = "\n".join(baseline_lines)
-    
-    # Step B: Process files in batches with LLM
-    all_results = []
-    batch_size = 3  # Smaller batches = more content per file
-    max_chars_per_file = 4000  # Increased from 2000
-    
-    total_batches = (len(files) + batch_size - 1) // batch_size
-    
-    for i in range(0, len(files), batch_size):
-        batch = files[i:i + batch_size]
-        batch_num = i // batch_size + 1
-        batch_text_parts = []
-        
-        for f in batch:
-            content = await _read_file_content(f)
-            # Get first 4000 chars plus any card IDs in the rest
-            head = content[:max_chars_per_file]
-            tail_ids = set()
-            if len(content) > max_chars_per_file:
-                tail_ids = _extract_card_ids(content[max_chars_per_file:])
-            
-            fname = f.stem[:60]
-            part = f"\n--- 檔案: {fname} ---\n{head}\n"
-            if tail_ids:
-                part += f"[後段出現的卡片ID: {', '.join(sorted(tail_ids))}]\n"
-            batch_text_parts.append(part)
-        
-        batch_text = "".join(batch_text_parts)
-        
-        # Use Chinese prompts for better extraction of Chinese card content
-        try:
-            prompt = (
-                f"請分析以下卡片檔案（第 {batch_num}/{total_batches} 批）：\n"
-                f"{batch_text}\n\n"
-                f"請從這些檔案中提取所有卡片資料，輸出格式為：\n"
-                f"1. 卡片ID（如 CC-01, RC-06 等）\n"
-                f"2. 卡片名稱\n"
-                f"3. 卡片類型（角色卡/規則卡/組織卡/國家卡/場景卡/技能卡等）\n"
-                f"4. 關鍵屬性（種族、性別、能力值等）\n"
-                f"5. 與其他卡片的關聯\n\n"
-                f"請確保列出該批次中出現的 **所有** 卡片ID，不要遺漏任何一張。"
-            )
-            text = await chat_svc.generate_text(prompt, max_tokens=1536, temperature=0.3)
-            if text:
-                all_results.append(text)
-                # Also parse IDs from LLM response to cross-check
-                llm_ids = _extract_card_ids(text)
-                logger.info(f"Batch {batch_num}: LLM found {len(llm_ids)} card IDs")
-        except Exception as e:
-            logger.warning(f"Batch {batch_num} LLM analysis failed: {e}")
-            all_results.append(f"[第 {batch_num} 批分析失敗]")
-        
-        await asyncio.sleep(0.5)
-    
-    # Write raw batch results as reference
-    output_path = Path(output_dir)
-    output_path.mkdir(parents=True, exist_ok=True)
-    raw_content = "\n\n---\n\n".join(all_results)
-    await _write_output_file(output_path / "批次分析原始輸出.md", f"# 批次分析原始輸出\n\n共 {len(all_results)} 批次\n\n{raw_content}")
-    
-    # Step C: Generate final consolidated document programmatically from batch outputs
-    # (Do NOT rely on a single LLM call which can fail due to quota limits)
-    combined_analysis = "\n\n---\n\n".join(all_results)
-    
-    # Count unique card IDs from LLM responses across all batches
-    all_llm_ids = set()
-    for result in all_results:
-        all_llm_ids |= _extract_card_ids(result)
-    
-    # Collect card mentions from batch outputs (LLM-analyzed descriptions)
-    # Group by type for the structured document
-    batch_card_info: Dict[str, List[str]] = {}
-    for result in all_results:
-        for line in result.split('\n'):
-            line = line.strip()
-            if not line:
-                continue
-            # Find lines containing card IDs
-            ids_in_line = _extract_card_ids(line)
-            if ids_in_line:
-                for cid in ids_in_line:
-                    if cid not in batch_card_info:
-                        batch_card_info[cid] = []
-                    batch_card_info[cid].append(line[:200])
-    
-    # Try LLM consolidation with retry; fall back to programmatic generation
-    final_prompt = (
-        f"你是一個卡片遊戲開發文件生成助手。以下是從 {len(files)} 個卡片檔案中提取的批次分析結果。\n\n"
-        f"{combined_analysis}\n\n"
-        f"此外，以下是透過程式預先掃描到的 {len(baseline)} 張卡片基準清單（包含ID和名稱）：\n"
-        f"```\n{baseline_text}\n```\n\n"
-        f"請根據以上資訊，生成一份完整的卡片遊戲開發文件，要求如下：\n"
-        f"1. **完整卡片索引**：按類型分組列出所有卡片（ID、名稱、類型、關鍵屬性）\n"
-        f"2. **確保不遺漏**：基準清單中有 {len(baseline)} 張卡片，請確認你的索引包含全部\n"
-        f"3. **衝突檢測**：找出卡片之間的矛盾或重疊\n"
-        f"4. **缺失欄位補充**：建議需要補齊的資料欄位\n"
-        f"5. **卡片關聯**：列出卡片之間的關聯關係\n\n"
-        f"請用繁體中文輸出，格式為結構化的 Markdown 文檔。"
-    )
-    async def _try_llm_consolidation() -> Optional[str]:
-        for attempt in range(3):
-            try:
-                text = await chat_svc.generate_text(final_prompt, max_tokens=4096, temperature=0.3)
-                if text and len(text) > 100:
-                    return text
-            except Exception as e:
-                logger.warning(f"LLM consolidation attempt {attempt+1} failed: {e}")
-                await asyncio.sleep(5.0 * (attempt + 1))  # Progressive delay
-        return None
-    
-    llm_final = await _try_llm_consolidation()
-    
-    # Build programmatic document (always generated as fallback/backbone)
-    prog_lines = ["# 卡片遊戲開發文件\n"]
-    prog_lines.append(f"\n## 生成資訊\n- **來源**: {source_dir}\n- **檔案數量**: {len(files)}\n- **程式掃描卡片數**: {len(baseline)}\n- **批次LLM分析卡片ID數**: {len(all_llm_ids)}\n- **生成時間**: {datetime.datetime.now().isoformat()}\n")
-    
-    if llm_final:
-        prog_lines.append("\n---\n\n## AI 分析摘要\n\n")
-        prog_lines.append(llm_final)
-        prog_lines.append("\n\n---\n")
-    
-    prog_lines.append("\n## 完整卡片索引\n\n")
-    
-    for t in sorted(by_type.keys()):
-        cards = by_type[t]
-        prog_lines.append(f"### {t} ({len(cards)} 張卡片)\n\n")
-        prog_lines.append("| ID | 名稱 | 出現檔案 | LLM分析摘要 |\n")
-        prog_lines.append("|----|------|----------|-------------|\n")
-        for id_, name in cards:
-            info = baseline[id_]
-            file_list = ", ".join(sorted(set(info["files"]))[:2])
-            name_display = name if name else "（名稱未找到）"
-            # Get LLM-analyzed description if available
-            desc_lines = batch_card_info.get(id_, [])
-            desc = desc_lines[0][:100] if desc_lines else ""
-            # Escape pipe chars for markdown table
-            desc_clean = desc.replace("|", "/").replace("\n", " ")
-            prog_lines.append(f"| {id_} | {name_display} | {file_list} | {desc_clean} |\n")
-        prog_lines.append("\n")
-    
-    # Add batch analysis summaries for cards the LLM described
-    prog_lines.append("\n## 批次分析詳情\n\n")
-    for i, result in enumerate(all_results, 1):
-        if result and not result.startswith("[第"):
-            # Extract key card info (first 500 chars per batch)
-            prog_lines.append(f"### 第 {i} 批\n\n{result[:800]}\n\n---\n\n")
-    
-    programmatic_doc = "".join(prog_lines)
-    await _write_output_file(output_path / "卡片開發文件.md", programmatic_doc)
-    
-    # Write the baseline inventory as a standalone reference
-    inventory = f"""# 卡片基準清單（程式掃描）
+    if not files:
+        return {
+            "response_text": "請指定要處理的目錄路徑。例如：「整理 data/docs/ 裡的文件」",
+            "source": "document_router",
+            "route": "document_router",
+        }
 
-## 統計
-- **總卡片數**: {len(baseline)}
-- **卡片類型數**: {len(by_type)}
-- **檔案數**: {len(files)}
-- **掃描時間**: {datetime.datetime.now().isoformat()}
+    tier_result = None
 
-## 按類型分類
+    # Tier 1: Local
+    tier_result = await _try_local_processing(user_message, task_type, source_dir, files)
 
-"""
-    for t in sorted(by_type.keys()):
-        cards = by_type[t]
-        inventory += f"### {t} ({len(cards)} 張)\n\n"
-        inventory += "| ID | 名稱 | 出現檔案 |\n"
-        inventory += "|----|------|----------|\n"
-        for id_, name in cards:
-            info = baseline[id_]
-            file_list = ", ".join(sorted(set(info["files"]))[:3])
-            name_display = name if name else "（名稱未找到）"
-            inventory += f"| {id_} | {name_display} | {file_list} |\n"
-        inventory += "\n"
-    
-    await _write_output_file(output_path / "卡片基準清單.md", inventory)
-    
-    # Write a simple file index
-    cards_summary = f"""# 檔案索引
+    # Tier 2: LLM fallback (only if local returned low-quality or no result)
+    if not tier_result:
+        tier_result = await _try_llm_processing(user_message, task_type, source_dir, files, chat_svc)
 
-## 檔案清單 ({len(files)} 個檔案)
+    if not tier_result:
+        simple_list = "\n".join(f"- {f.name}" for f in files[:20])
+        extra = f"\n...及其他 {len(files)-20} 個" if len(files) > 20 else ""
+        tier_result = {
+            "response_text": f"目錄 {source_dir} 中有 {len(files)} 個文件：\n{simple_list}{extra}",
+            "source": "document_router",
+            "route": "document_router",
+        }
 
-"""
-    for i, f in enumerate(files, 1):
-        first_line = (await _read_file_content(f)).split('\n')[0][:80]
-        cards_summary += f"{i:3d}. **{f.stem}** — {first_line}\n"
-    
-    await _write_output_file(output_path / "檔案索引.md", cards_summary)
-    
-    # Verify completeness
-    doc_ids = _extract_card_ids(programmatic_doc)
-    missing_in_doc = set(baseline.keys()) - doc_ids
-    
-    llm_missing = set(baseline.keys()) - all_llm_ids if all_llm_ids else set()
-    
-    verification = f"""# 驗證報告
+    # Tier 3: Learn from LLM output (if LLM was used)
+    if tier_result.get("source") == "document_router_llm":
+        await _learn_from_llm_output(task_type, source_dir, files, tier_result.get("response_text", ""))
 
-## 數量對比
-- **程式基準卡片數**: {len(baseline)}\n- **最終文件中出現的卡片ID**: {len(doc_ids)}\n- **批次分析中出現的卡片ID**: {len(all_llm_ids)}\n
-## 缺失卡片（基準有但最終文件中沒有）
-"""
-    if missing_in_doc:
-        for id_ in sorted(missing_in_doc):
-            info = baseline[id_]
-            verification += f"- {id_}: {info['name']} (出現在 {', '.join(sorted(set(info['files'])))})\n"
-    else:
-        verification += "- 無缺失 ✅\n"
-    
-    verification += f"\n## LLM 未提及的卡片（批次分析中未出現，僅程式掃描找到）\n"
-    if llm_missing:
-        verification += f"共 {len(llm_missing)} 張（這些卡片僅以ID形式存在於檔案中，LLM未提取到描述）\n"
-        for id_ in sorted(list(llm_missing)[:20]):
-            info = baseline[id_]
-            verification += f"- {id_}: {info['name']}\n"
-        if len(llm_missing) > 20:
-            verification += f"  ...及其他 {len(llm_missing) - 20} 張\n"
-    else:
-        verification += "- 所有卡片均在批次分析中被提及 ✅\n"
-    
-    await _write_output_file(output_path / "驗證報告.md", verification)
-    
-    total_in_doc = len(doc_ids)
+    if output_dir:
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+        await _write_output_file(
+            output_path / f"{task_label}-{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}.md",
+            tier_result.get("response_text", "")
+        )
+
     return {
-        "response_text": (
-            f"✅ 已完成 {len(files)} 個檔案的處理！\n\n"
-            f"📊 統計：\n"
-            f"   - 程式掃描卡片數：{len(baseline)} 張\n"
-            f"   - 最終文件中卡片數：{total_in_doc} 張\n"
-            f"   - LLM 批次分析卡片ID：{len(all_llm_ids)} 張\n"
-            f"   - 卡片類型：{len(by_type)} 種\n"
-            f"\n"
-            f"📄 輸出到 {output_dir}：\n"
-            f"   - 卡片開發文件.md（程式化生成 + LLM 分析摘要）\n"
-            f"   - 卡片基準清單.md（程式掃描基準，{len(baseline)} 張）\n"
-            f"   - 批次分析原始輸出.md（各批次原始分析）\n"
-            f"   - 驗證報告.md（完整性比對）\n"
-            f"   - 檔案索引.md（檔案清單）\n"
-            f"\n"
-            f"{'⚠️ ' + str(len(missing_in_doc)) + ' 張卡片在最終文件中缺失（請查看驗證報告）' if missing_in_doc else '✅ 所有 ' + str(len(baseline)) + ' 張卡片均已包含！'}"
-        ),
-        "source": "document_router",
-        "route": "document_router",
+        "response_text": tier_result.get("response_text", "處理完成。"),
+        "source": tier_result.get("source", "document_router"),
+        "route": tier_result.get("route", "document_router"),
     }
 
 
@@ -393,37 +341,30 @@ async def try_intent_routing(
     user_name: str = "User",
     context: Optional[Dict[str, Any]] = None,
 ) -> Optional[Dict[str, Any]]:
-    """
-    Try to route a message based on IntentRegistry detection.
-    Returns a response dict if handled, None if should fall through to normal pipeline.
-    """
     try:
         from core.intent_registry import IntentRegistry
-        
+
         registry = IntentRegistry()
         intent_name, confidence = registry.detect(user_message)
-        
+
         if intent_name is None or confidence < 0.3:
             return None
-        
+
         logger.info(f"IntentRegistry detected: {intent_name} (confidence={confidence:.2f})")
-        
-        # Route based on intent
+
         if intent_name in ("document", "character_card", "google_drive"):
             if context:
                 context["_detected_intent"] = intent_name
                 context["_intent_confidence"] = confidence
-            
             return await handle_document_intent(user_message, chat_svc, user_name)
-        
-        # Fall through for other intents (math, code, etc. — handled by existing pipeline)
+
         if context:
             context["_detected_intent"] = intent_name
             context["_intent_confidence"] = confidence
-        
+
     except Exception as e:
         logger.debug(f"Intent routing unavailable: {e}")
-    
+
     return None
 
 

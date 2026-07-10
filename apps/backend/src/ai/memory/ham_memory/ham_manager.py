@@ -20,7 +20,7 @@ class HAMMemoryManager:
 
     def __init__(
         self,
-        memory_file: str = "angela_memory.json",
+        memory_file: str = "",
         auto_save: bool = True,
         core_storage_filename: Optional[str] = None,
     ):
@@ -30,7 +30,7 @@ class HAMMemoryManager:
         self._load()
 
     def _load(self) -> None:
-        if self.memory_file.exists():
+        if self.memory_file and self.memory_file.exists():
             try:
                 with open(self.memory_file, "r", encoding="utf-8") as f:
                     self._data = json.load(f)
@@ -38,7 +38,7 @@ class HAMMemoryManager:
                 self._data = {"templates": [], "conversations": [], "metadata": {}}
 
     def _save(self) -> None:
-        if not self.auto_save:
+        if not self.auto_save or not self.memory_file:
             return
         try:
             self.memory_file.parent.mkdir(parents=True, exist_ok=True)

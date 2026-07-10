@@ -582,26 +582,23 @@ def _append_awareness_injection(messages: List[Dict], context: Dict) -> None:
 
 
 def _append_document_context(messages: List[Dict], context: Dict) -> None:
-    """Append document processing context (card pile, output dirs) to system prompt.
+    """Append generic document processing context to system prompt.
 
-    Reads context["card_pile_dir"] and context["card_dev_dir"] injected by
-    chat_routes.py step 5h, and tells the LLM about available file paths
-    and DesktopInteraction capability so it can process documents.
+    Tells the LLM about DesktopInteraction availability for file operations.
+    Document task results from the tiered processor are injected as context.
     """
-    card_pile = context.get("card_pile_dir")
-    card_dev = context.get("card_dev_dir")
     desktop = context.get("desktop_interaction")
-    if not card_pile and not card_dev:
+    intent_result = context.get("_intent_result")
+    if not desktop and not intent_result:
         return
-    block = "\n\n---\n[Document Processing Context]"
-    if card_pile:
-        block += f"\n- Your card pile directory: {card_pile}"
-        block += f"\n  Contains .md card documents ready for processing."
-    if card_dev:
-        block += f"\n- Output directory for development documents: {card_dev}"
-        block += f"\n  You can write processed card game development docs here."
+    block = "\n\n---\n[File System & Document Processing]"
     if desktop:
-        block += f"\n- DesktopInteraction is available for read/write file operations."
+        block += "\n- DesktopInteraction is available for read/write file operations."
+    if intent_result:
+        text = intent_result.get("response_text", "")
+        if len(text) > 500:
+            text = text[:500] + "..."
+        block += f"\n- Pre-processing result: {text}"
     block += "\n"
     messages[0]["content"] += block
 

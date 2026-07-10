@@ -188,7 +188,7 @@ class VisionService:
 
     def _build_error_result(self, error: Exception, processing_id: str) -> Dict[str, Any]:
         return {
-            "error": str(error),
+            "error": safe_error(error),
             "processing_id": processing_id,
             "timestamp": datetime.now().isoformat(),
         }
