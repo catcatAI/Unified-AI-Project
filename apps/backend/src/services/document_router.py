@@ -29,13 +29,27 @@ from core.utils import safe_error
 logger = logging.getLogger(__name__)
 
 _OPERATIONS = {
-    "organize":    {"label": "整理", "retention": (0.80, 1.00), "desc": "重構格式，保留所有內容"},
-    "summarize":   {"label": "總結", "retention": (0.10, 0.20), "desc": "提取關鍵要點，附原始連結"},
-    "optimize":    {"label": "優化", "retention": (0.60, 0.80), "desc": "裁剪多餘內容，保留核心"},
-    "analyze":     {"label": "分析", "retention": (1.00, 1.00), "desc": "提取結構/模式，增加洞察"},
-    "categorize":  {"label": "分類", "retention": (1.00, 1.00), "desc": "按類別分類歸檔"},
-    "list":        {"label": "列出", "retention": (1.00, 1.00), "desc": "枚舉檔案清單"},
+    "organize":    {"label": "整理", "retention": (0.80, 1.00), "desc": "重構格式，保留所有內容", "anti": ["思路", "想法", "概念", "邏輯"]},
+    "summarize":   {"label": "總結", "retention": (0.10, 0.20), "desc": "提取關鍵要點，附原始連結", "anti": ["心得", "感想", "體會", "討論", "會議"]},
+    "optimize":    {"label": "優化", "retention": (0.60, 0.80), "desc": "裁剪多餘內容，保留核心", "anti": ["算法", "模型", "參數", "訓練", "最優化"]},
+    "analyze":     {"label": "分析", "retention": (1.00, 1.00), "desc": "提取結構/模式，增加洞察", "anti": []},
+    "categorize":  {"label": "分類", "retention": (1.00, 1.00), "desc": "按類別分類歸檔", "anti": ["分類器", "分類問題", "分類模型"]},
+    "list":        {"label": "列出", "retention": (1.00, 1.00), "desc": "枚舉檔案清單", "anti": []},
 }
+
+# Path-like patterns that indicate a document task (not a conceptual question)
+_PATH_PATTERNS = (
+    r'/',
+    r'\\',
+    r'\.',
+    r'data',
+    r'docs',
+    r'档案',
+    r'文件',
+    r'目錄',
+    r'folder',
+    r'directory',
+)
 
 _EXAMPLES_DIR = Path(__file__).parent.parent.parent.parent / "data"
 _EXAMPLES_PATH = _EXAMPLES_DIR / "document_examples.json"
@@ -74,19 +88,50 @@ async def _write_output_file(file_path: Path, content: str) -> bool:
         return False
 
 
-def _parse_task_type(user_message: str) -> Tuple[str, str]:
+def _has_path_reference(msg: str) -> bool:
+    return any(re.search(p, msg) for p in _PATH_PATTERNS)
+
+
+_TASK_KWS = (
+    ("optimize",  ("優化", "optimize", "精簡", "潤飾", "refine")),
+    ("organize",  ("整理", "organize", "歸檔", "sort", "classify", "歸納")),
+    ("summarize", ("摘要", "總結", "summarize", "summary", "濃縮")),
+    ("analyze",   ("分析", "analyze", "解析", "提取", "extract")),
+    ("list",      ("列出", "list", "索引", "index", "目錄")),
+    ("categorize",("分類", "categorize", "歸類")),
+)
+
+
+def _parse_task_type(user_message: str) -> Optional[Tuple[str, str]]:
+    """Returns (task_type, label) or None if not a document task."""
     msg_lower = user_message.lower()
-    if any(k in msg_lower for k in ("優化", "optimize", "精簡", "潤飾", "refine")):
-        return "optimize", "優化文件"
-    if any(k in msg_lower for k in ("整理", "organize", "分類", "歸檔", "sort", "classify", "歸納")):
-        return "organize", "整理文件"
-    if any(k in msg_lower for k in ("摘要", "總結", "summarize", "summary", "濃縮")):
-        return "summarize", "摘要文件"
-    if any(k in msg_lower for k in ("分析", "analyze", "解析", "提取", "extract")):
-        return "analyze", "分析文件"
-    if any(k in msg_lower for k in ("列出", "list", "索引", "index", "目錄")):
-        return "list", "列出文件"
-    return "summarize", "摘要文件"
+
+    op_key = None
+    matched_kws = None
+    for key, kws in _TASK_KWS:
+        if any(k in msg_lower for k in kws):
+            op_key = key
+            matched_kws = kws
+            break
+
+    if op_key is None:
+        return None
+
+    op = _OPERATIONS[op_key]
+
+    # Anti-pattern: if an anti-keyword matches, not a document task
+    if any(ak in msg_lower for ak in op.get("anti", [])):
+        logger.debug(f"Task type '{op_key}' rejected by anti-pattern")
+        return None
+
+    # Format gate: must reference files/dirs — no exceptions
+    has_format = _has_path_reference(msg_lower) or any(k in msg_lower for k in ("檔案", "文件", "目錄"))
+
+    if not has_format:
+        logger.debug(f"Task type '{op_key}' rejected: no path or file reference")
+        return None
+
+    return op_key, f"{op['label']}文件"
 
 
 def _extract_source_dir(user_message: str) -> str:
@@ -311,8 +356,11 @@ async def handle_document_intent(
     user_message: str,
     chat_svc: Any,
     user_name: str = "User",
-) -> Dict[str, Any]:
-    task_type, task_label = _parse_task_type(user_message)
+) -> Optional[Dict[str, Any]]:
+    parsed = _parse_task_type(user_message)
+    if parsed is None:
+        return None
+    task_type, task_label = parsed
     source_dir = _extract_source_dir(user_message)
     logger.info(f"DocumentRouter: task={task_type}, source={source_dir}")
 
@@ -387,7 +435,7 @@ async def try_intent_routing(
         registry = IntentRegistry()
         intent_name, confidence = registry.detect(user_message)
 
-        if intent_name is None or confidence < 0.3:
+        if intent_name is None or confidence < 0.1:
             return None
 
         logger.info(f"IntentRegistry detected: {intent_name} (confidence={confidence:.2f})")
@@ -396,7 +444,14 @@ async def try_intent_routing(
             if context:
                 context["_detected_intent"] = intent_name
                 context["_intent_confidence"] = confidence
-            return await handle_document_intent(user_message, chat_svc, user_name)
+            result = await handle_document_intent(user_message, chat_svc, user_name)
+            if result is not None:
+                return result
+            # _parse_task_type rejected it (anti-pattern / no format gate)
+            logger.debug(f"Document routing rejected by secondary gate ({intent_name})")
+            context.pop("_detected_intent", None)
+            context.pop("_intent_confidence", None)
+            return None
 
         if context:
             context["_detected_intent"] = intent_name
