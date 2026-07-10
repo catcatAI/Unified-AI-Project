@@ -83,8 +83,8 @@ class AgentOrchestrator:
             # Low-confidence hits (e.g. "分析這張圖片" → document at 0.12) fall through to regex.
             if ir_name and ir_conf >= 0.3:
                 return "general"
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("IntentRegistry detection failed in classify_intent(): %s", e)
 
         # Sub-classification only runs after the gate passes
         # (IntentRegistry didn't match → treat as general creative/conversational)

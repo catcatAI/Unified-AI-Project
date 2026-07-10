@@ -4,6 +4,7 @@ Consolidated from system.cluster_manager.
 """
 
 import asyncio
+import datetime
 import logging
 import uuid
 from enum import Enum
@@ -41,7 +42,7 @@ class ClusterManager:
         node_info.setdefault("type", NodeType.LOCAL.value)
         node_info.setdefault("precision", PrecisionLevel.FP32.value)
         node_info.setdefault("status", "idle")
-        node_info.setdefault("registered_at", __import__("datetime").datetime.now().isoformat())
+        node_info.setdefault("registered_at", datetime.datetime.now().isoformat())
         self.nodes[node_id] = node_info
         logger.info(f"Node '{node_id}' registered: {node_info}")
         return True

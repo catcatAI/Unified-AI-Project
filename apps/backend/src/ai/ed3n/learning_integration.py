@@ -57,14 +57,13 @@ class ED3NLearningIntegration:
             return []
 
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                future = asyncio.run_coroutine_threadsafe(
-                    lm.fact_extractor.extract_facts(text), loop
-                )
-                return future.result()
-            else:
-                return asyncio.run(lm.fact_extractor.extract_facts(text))
+            loop = asyncio.get_running_loop()
+            future = asyncio.run_coroutine_threadsafe(
+                lm.fact_extractor.extract_facts(text), loop
+            )
+            return future.result()
+        except RuntimeError:
+            return asyncio.run(lm.fact_extractor.extract_facts(text))
         except Exception as e:
             logger.exception("Failed to extract concepts: %s", e)
             return []

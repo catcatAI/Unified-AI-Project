@@ -5,6 +5,7 @@ Enterprise monitoring system - comprehensive system monitoring and alerting
 """
 
 import logging
+import time
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -37,7 +38,7 @@ class EnterpriseMonitor:
         return self._running
 
     def record_metric(self, name: str, value: Any, tags: Optional[Dict[str, str]] = None) -> None:
-        self._metrics[name] = {"value": value, "tags": tags or {}, "timestamp": __import__("time").time()}
+        self._metrics[name] = {"value": value, "tags": tags or {}, "timestamp": time.time()}
 
     def get_metric(self, name: str) -> Optional[Any]:
         entry = self._metrics.get(name)
@@ -47,7 +48,7 @@ class EnterpriseMonitor:
         return dict(self._metrics)
 
     def raise_alert(self, severity: str, message: str, source: str = "") -> None:
-        alert = {"severity": severity, "message": message, "source": source, "timestamp": __import__("time").time()}
+        alert = {"severity": severity, "message": message, "source": source, "timestamp": time.time()}
         self._alerts.append(alert)
         if len(self._alerts) > _MAX_ALERTS:
             self._alerts = self._alerts[-_MAX_ALERTS:]

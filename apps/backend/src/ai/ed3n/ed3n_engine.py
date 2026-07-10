@@ -251,7 +251,8 @@ class ED3NEngine:
             if result == int(result):
                 return f"{text.rstrip('？?！!。.')} = {int(result)}"
             return f"{text.rstrip('？?！!。.')} = {result:.2f}"
-        except Exception:
+        except Exception as e:
+            logger.debug("Math ripple computation failed: %s", e)
             return None
 
     def _perform_encode(self, input_text: str) -> Tuple[List[str], bool]:
@@ -993,7 +994,7 @@ class ED3NEngine:
 
         batch = TrainingBatch(
             examples=training_examples,
-            batch_id=f"train_{int(__import__('time').time())}",
+            batch_id=f"train_{int(time.time())}",
         )
         metrics = trainer.train_step(batch)
         return metrics

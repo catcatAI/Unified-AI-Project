@@ -562,8 +562,8 @@ async def _handle_execution_gate(
                     expected_ir = handler_to_ir.get(decision.handler)
                     if expected_ir and ir_name != expected_ir:
                         _ir_confirms = False
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("IntentRegistry gate failed in execution gate: %s", e)
             if _ir_confirms and decision.handler and chat_svc and chat_svc.model_bus:
                 try:
                     action_result = await chat_svc.model_bus.execute_handler(
@@ -1062,8 +1062,8 @@ async def _handle_chat_request(
             ir_name, ir_conf = ir.detect(user_message)
             if ir_name == "math" and ir_conf >= 0.1:
                 return math_result  # IntentRegistry confirms → fast path
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("IntentRegistry math gate failed: %s", e)
         # IntentRegistry didn't confirm → enrich context instead
         math_result_context = math_result
 

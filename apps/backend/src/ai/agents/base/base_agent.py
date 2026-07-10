@@ -510,13 +510,12 @@ class BaseAgent:
     def __del__(self):
         """Ensure proper cleanup when agent is destroyed."""
         try:
-            # Schedule async cleanup in event loop if possible
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             if loop.is_running():
-                # Schedule cleanup task
                 asyncio.create_task(self.cleanup_resources())
             else:
-                # Log that cleanup wasn't possible
                 logger.warning(f"[{self.agent_id}] Agent destroyed without proper cleanup (event loop not running)")
+        except RuntimeError:
+            logger.debug(f"[{self.agent_id}] No running event loop in destructor")
         except Exception as err:
             logger.debug(f"[{self.agent_id}] Destructor cleanup skipped: {err}")

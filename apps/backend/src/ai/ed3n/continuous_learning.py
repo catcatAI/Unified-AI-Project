@@ -320,7 +320,7 @@ class ContinuousLearningPipeline:
                 }
                 for ex in self._training_buffer
             ],
-            "saved_at": __import__('datetime').datetime.now().isoformat(),
+            "saved_at": datetime.now().isoformat(),
         }
         path = os.path.join(save_dir, "cl_state.json")
         with open(path, "w", encoding="utf-8") as f:

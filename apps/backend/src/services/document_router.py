@@ -337,8 +337,8 @@ async def _learn_from_llm_output(
         from ai.ed3n.ed3n_engine import ED3NEngine
         engine = ED3NEngine.get_instance()
         engine.learn_reflex(f"doc_{task_type}", llm_output[:200])
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("ED3N learn_reflex failed in document_router: %s", e)
 
     try:
         from ai.garden.garden_engine import GARDENEngine
@@ -346,8 +346,8 @@ async def _learn_from_llm_output(
         for f in files[:3]:
             content = await _read_file_content(f)
             engine.learn_from_interaction(content[:1000], llm_output[:1000], confidence=0.5)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("GARDEN learn_from_interaction failed in document_router: %s", e)
 
 
 # ═══════════════════════════════════════════════

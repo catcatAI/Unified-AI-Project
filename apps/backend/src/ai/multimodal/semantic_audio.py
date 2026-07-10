@@ -151,7 +151,8 @@ class SemanticAudioEncoder:
                 dtype=np.int16
             ).astype(np.float32) / 32768.0
             return samples
-        except Exception:
+        except Exception as e:
+            logger.debug("Failed to decode raw PCM audio: %s", e)
             return np.array([], dtype=np.float32)
 
     def _decode_wav(self, data: bytes) -> np.ndarray:
@@ -177,5 +178,6 @@ class SemanticAudioEncoder:
             if nchannels > 1:
                 samples = samples.reshape(-1, nchannels).mean(axis=1)
             return samples
-        except Exception:
+        except Exception as e:
+            logger.debug("Failed to decode WAV audio: %s", e)
             return np.array([], dtype=np.float32)

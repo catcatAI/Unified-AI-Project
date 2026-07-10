@@ -848,8 +848,8 @@ class AngelaLLMService:
                     pn = PriorityNegotiator()
                     pn_vote = pn.resolve(user_message, context)
                     routing_mode = pn_vote.get("routing_mode", "neutral")
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("PriorityNegotiator resolve failed: %s", e)
                 effective_threshold = direct_threshold
                 if routing_mode == "conservative":
                     effective_threshold = max(0.9, direct_threshold)

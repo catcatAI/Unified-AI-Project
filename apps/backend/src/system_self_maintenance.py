@@ -5,6 +5,7 @@ ANGELA-MATRIX: L6[执行层] αβ [A] L2+
 """
 
 import logging
+import time
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ class SystemSelfMaintenance:
         self._health_status = {
             "status": "healthy",
             "modules_checked": [],
-            "timestamp": __import__("time").time(),
+            "timestamp": time.time(),
         }
         return self._health_status
 

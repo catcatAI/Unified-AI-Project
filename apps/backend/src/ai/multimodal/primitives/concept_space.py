@@ -18,6 +18,7 @@ This is the missing piece that enables dual-use vocabulary:
 
 import json
 import os
+import time
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -114,7 +115,7 @@ class ConceptSpaceMapper:
             print(f"Training concept space: {n_samples} images, {n_classes} classes")
             print(f"  Architecture: {self._clip_dim} → {self._hidden_dim} → {self._hidden_dim} → {self._concept_dim}")
 
-        t_start = __import__('time').time()
+        t_start = time.time()
 
         for epoch in range(n_epochs):
             # Shuffle data
@@ -155,7 +156,7 @@ class ConceptSpaceMapper:
 
             if verbose and (epoch + 1) % 50 == 0:
                 avg_loss = total_loss / max(n_batches, 1)
-                elapsed = __import__('time').time() - t_start
+                elapsed = time.time() - t_start
                 print(f"  Epoch {epoch+1}/{n_epochs}: loss={avg_loss:.4f} ({elapsed:.1f}s)")
 
         # Compute class centers
@@ -172,7 +173,7 @@ class ConceptSpaceMapper:
 
         self._is_trained = True
         if verbose:
-            elapsed = __import__('time').time() - t_start
+            elapsed = time.time() - t_start
             print(f"Training complete ({elapsed:.1f}s)")
 
     def _contrastive_loss(self, concept_vecs: np.ndarray,

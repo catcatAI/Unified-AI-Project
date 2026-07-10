@@ -9,6 +9,7 @@
 #
 # =============================================================================
 
+import logging
 import re
 from dataclasses import dataclass
 from typing import Dict, Optional
@@ -16,6 +17,8 @@ from typing import Dict, Optional
 from ai.core.query_classifier import _NEGATION_WORDS
 from core.system.state_store.global_store import state_store
 from core.utils import any_keyword
+
+logger = logging.getLogger(__name__)
 
 # 可逆性分数表
 REVERSIBILITY = {
@@ -81,8 +84,9 @@ class ExecutionGate:
         try:
             with open(config_path, encoding="utf-8") as f:
                 return json.load(f)
-        except Exception:
-            return {
+        except Exception as e:
+            logger.warning("Failed to load execution_gate_config.json, using hardcoded defaults: %s", e)
+        return {
                 "scope_words": {"max_impact": ["全部", "所有", "整个", "all"], "min_impact": ["一个", "单一", "this"]},
                 "clarity": {
                     "clear_verbs": ["search", "delete", "open", "run", "read", "write", "create", "edit"],

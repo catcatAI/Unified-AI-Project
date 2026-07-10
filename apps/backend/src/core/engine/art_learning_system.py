@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -52,7 +53,7 @@ class ArtKnowledge:
     content: Dict[str, Any]
     confidence: float = 0.5
     source: str = ""
-    timestamp: str = field(default_factory=lambda: __import__("datetime").datetime.now().isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
 
 @dataclass
@@ -84,7 +85,7 @@ class LearningSession:
     tutorial: Optional[TutorialContent] = None
     analysis: Optional[ImageAnalysis] = None
     knowledge_gained: List[ArtKnowledge] = field(default_factory=list)
-    start_time: str = field(default_factory=lambda: __import__("datetime").datetime.now().isoformat())
+    start_time: str = field(default_factory=lambda: datetime.now().isoformat())
     end_time: Optional[str] = None
 
 

@@ -80,7 +80,6 @@ class CodeExecutionHandler:
         try:
             sys.stdout = captured_out
             sys.stderr = captured_err
-            loop = asyncio.get_event_loop()
             await asyncio.wait_for(
                 asyncio.to_thread(_run_exec),
                 timeout=_TIMEOUT,
