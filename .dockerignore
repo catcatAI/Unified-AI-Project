@@ -39,6 +39,13 @@ pytest.ini
 .git
 .gitignore
 
+# Node
+node_modules/
+
+# Test artifacts
+test_models/
+tests_backup/
+
 # IDE
 .vscode/
 .idea/

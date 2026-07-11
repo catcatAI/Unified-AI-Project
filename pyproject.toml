@@ -118,7 +118,7 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 # pytest - Python 测试框架配置
-testpaths = ['tests', 'apps/backend/tests', 'apps/backend/src', 'scripts', 'tools']
+testpaths = ['tests', 'apps/backend/tests', 'apps/backend/src', 'scripts']
 python_files = ['test_*.py', '*_test.py']
 python_classes = ['Test*']
 python_functions = ['test_*']
@@ -132,8 +132,6 @@ addopts = [
     '--strict-config',
     '--tb=short',
     '--disable-warnings',
-    '--ignore=tests_backup',
-    '--ignore=../../tests_backup',
 ]
 norecursedirs = [
     '.git',
@@ -144,9 +142,6 @@ norecursedirs = [
     '__pycache__',
     '.pytest_cache',
     'node_modules',
-    'backup',
-    'backup_*',
-    'backup_archive',
     'auto_fix_*',
 ]
 markers = [
