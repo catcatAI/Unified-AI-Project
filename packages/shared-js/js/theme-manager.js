@@ -6,37 +6,37 @@ class ThemeManager {
             storageKey: config.storageKey || 'angela_theme',
             transitionDuration: config.transitionDuration || '300ms'
         };
-        
+
         this.themes = {};
         this.currentTheme = this.config.defaultTheme;
         this.transitionEnabled = true;
         this.changeCallbacks = [];
-        
+
         this._init();
     }
-    
+
     _init() {
         this._loadDefaultThemes();
-        
+
         if (this.config.autoDetect) {
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             this.setTheme(prefersDark ? 'dark' : 'light', false);
         }
-        
+
         const savedTheme = localStorage.getItem(this.config.storageKey);
         if (savedTheme && this.themes[savedTheme]) {
             this.setTheme(savedTheme, false);
         }
-        
+
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
             if (this.config.autoDetect) {
                 this.setTheme(e.matches ? 'dark' : 'light', false);
             }
         });
-        
+
         this._applyThemeVariables();
     }
-    
+
     _loadDefaultThemes() {
         this.registerTheme('light', {
             name: 'Light',
@@ -89,7 +89,7 @@ class ThemeManager {
                 xl: '0 20px 25px rgba(0, 0, 0, 0.15)'
             }
         });
-        
+
         this.registerTheme('dark', {
             name: 'Dark',
             colors: {
@@ -141,7 +141,7 @@ class ThemeManager {
                 xl: '0 20px 25px rgba(0, 0, 0, 0.6)'
             }
         });
-        
+
         this.registerTheme('angela', {
             name: 'Angela',
             colors: {
@@ -194,51 +194,51 @@ class ThemeManager {
             }
         });
     }
-    
+
     registerTheme(id, theme) {
         this.themes[id] = theme;
     }
-    
+
     getTheme() {
         return this.currentTheme;
     }
-    
+
     setTheme(themeId, save = true) {
         if (!this.themes[themeId]) {
             console.warn(`Theme ${themeId} not found`);
             return false;
         }
-        
+
         const oldTheme = this.currentTheme;
         this.currentTheme = themeId;
-        
+
         this._applyThemeVariables();
         this._notifyChange(themeId, oldTheme);
-        
+
         if (save) {
             localStorage.setItem(this.config.storageKey, themeId);
         }
-        
+
         return true;
     }
-    
+
     toggleTheme() {
         const newTheme = this.currentTheme === 'light' ? 'dark' : 'light';
         return this.setTheme(newTheme);
     }
-    
+
     getAvailableThemes() {
         return Object.keys(this.themes).map(id => ({
             id,
             name: this.themes[id].name
         }));
     }
-    
+
     getThemeValue(path) {
         const theme = this.themes[this.currentTheme];
         const keys = path.split('.');
         let value = theme;
-        
+
         for (const key of keys) {
             if (value && typeof value === 'object' && key in value) {
                 value = value[key];
@@ -246,106 +246,106 @@ class ThemeManager {
                 return null;
             }
         }
-        
+
         return value;
     }
-    
+
     getColor(colorName) {
         return this.getThemeValue(`colors.${colorName}`);
     }
-    
+
     getTypography(path = '') {
         const typography = this.getThemeValue('typography');
         if (!path) return typography;
         return this.getThemeValue(`typography.${path}`);
     }
-    
+
     getSpacing(size = 'md') {
         return this.getThemeValue(`spacing.${size}`);
     }
-    
+
     getBorderRadius(size = 'md') {
         return this.getThemeValue(`borderRadius.${size}`);
     }
-    
+
     getShadow(size = 'md') {
         return this.getThemeValue(`shadows.${size}`);
     }
-    
+
     _applyThemeVariables() {
         const theme = this.themes[this.currentTheme];
         const root = document.documentElement;
-        
+
         if (this.transitionEnabled) {
             root.style.setProperty('--transition-duration', this.config.transitionDuration);
         }
-        
+
         this._applyColorVariables(theme.colors, root);
         this._applyTypographyVariables(theme.typography, root);
         this._applySpacingVariables(theme.spacing, root);
         this._applyBorderRadiusVariables(theme.borderRadius, root);
         this._applyShadowVariables(theme.shadows, root);
     }
-    
+
     _applyColorVariables(colors, root) {
         Object.entries(colors).forEach(([key, value]) => {
             root.style.setProperty(`--color-${key}`, value);
         });
     }
-    
+
     _applyTypographyVariables(typography, root) {
         if (typography.fontFamily) {
             root.style.setProperty('--font-family', typography.fontFamily);
         }
-        
+
         Object.entries(typography.fontSize || {}).forEach(([key, value]) => {
             root.style.setProperty(`--font-size-${key}`, value);
         });
-        
+
         Object.entries(typography.fontWeight || {}).forEach(([key, value]) => {
             root.style.setProperty(`--font-weight-${key}`, value);
         });
     }
-    
+
     _applySpacingVariables(spacing, root) {
         Object.entries(spacing).forEach(([key, value]) => {
             root.style.setProperty(`--spacing-${key}`, value);
         });
     }
-    
+
     _applyBorderRadiusVariables(borderRadius, root) {
         Object.entries(borderRadius).forEach(([key, value]) => {
             root.style.setProperty(`--border-radius-${key}`, value);
         });
     }
-    
+
     _applyShadowVariables(shadows, root) {
         Object.entries(shadows).forEach(([key, value]) => {
             root.style.setProperty(`--shadow-${key}`, value);
         });
     }
-    
+
     enableTransition() {
         this.transitionEnabled = true;
         document.documentElement.style.setProperty('--transition-duration', this.config.transitionDuration);
     }
-    
+
     disableTransition() {
         this.transitionEnabled = false;
         document.documentElement.style.setProperty('--transition-duration', '0ms');
     }
-    
+
     onChange(callback) {
         this.changeCallbacks.push(callback);
     }
-    
+
     offChange(callback) {
         const index = this.changeCallbacks.indexOf(callback);
         if (index > -1) {
             this.changeCallbacks.splice(index, 1);
         }
     }
-    
+
     _notifyChange(newTheme, oldTheme) {
         this.changeCallbacks.forEach(callback => {
             try {
@@ -355,18 +355,18 @@ class ThemeManager {
             }
         });
     }
-    
+
     getCurrentTheme() {
         return this.themes[this.currentTheme];
     }
-    
+
     exportTheme(themeId = null) {
         if (themeId) {
             return this.themes[themeId] || null;
         }
         return { ...this.themes };
     }
-    
+
     importTheme(themeId, theme) {
         this.registerTheme(themeId, theme);
         return true;

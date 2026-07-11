@@ -1,6 +1,6 @@
 /**
  * Angela AI - Settings Manager (Renderer Side)
- * 
+ *
  * Handles settings retrieval and persistence via Electron IPC.
  * Replaces legacy localStorage-based storage.
  */
@@ -79,7 +79,7 @@ class SettingsManager {
 
         // Persist
         await this.sync();
-        
+
         // Notify listeners
         this._notify(key, value);
     }

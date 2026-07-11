@@ -8,7 +8,7 @@ import numpy as np
 
 class DifferentiableRenderer:
     """Fast vectorized soft rasterizer."""
-    
+
     def __init__(self, canvas_size: Tuple[int, int] = (128, 128)):
         self._w, self._h = canvas_size
         ys = np.arange(self._h, dtype=np.float32)
@@ -16,7 +16,7 @@ class DifferentiableRenderer:
         xx, yy = np.meshgrid(xs, ys)
         self._nx = xx / self._w  # (H, W) normalized [0, 1]
         self._ny = yy / self._h
-    
+
     def render(self, vec: np.ndarray) -> np.ndarray:
         """Render 263-dim vector to (H, W, 3). Vectorized, no Python loops."""
         from ai.multimodal.primitives.primitive_types import (

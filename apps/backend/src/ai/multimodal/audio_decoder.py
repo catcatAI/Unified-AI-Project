@@ -166,10 +166,10 @@ class AudioWaveformDecoder:
 
 def save_audio_decoder_weights(decoder: AudioWaveformDecoder, weights_path: str) -> bool:
     """Save all audio decoder weight arrays to a .npz file.
-    
+
     Includes projection (W, b), wavetable (W_hidden, b_hidden,
     W_wavetable, b_wavetable), and noise (W_noise, b_noise) weights.
-    
+
     Returns True on success.
     """
     try:

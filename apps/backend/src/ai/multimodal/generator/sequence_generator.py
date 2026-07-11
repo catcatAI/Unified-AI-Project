@@ -16,18 +16,18 @@ logger = logging.getLogger(__name__)
 
 class SequenceGenerator:
     """Generates sequences of primitive embeddings from CLIP embeddings.
-    
+
     Uses a simple RNN architecture that can run on CPU.
-    
+
     Pipeline:
         CLIP 512-dim → [RNN] → sequence of 64-dim primitive embeddings
         → PrimitiveEncoder.decode() → DrawingInstructions → PIL Image
     """
-    
+
     def __init__(self, input_dim: int = 512, hidden_dim: int = 128,
                  primitive_dim: int = 128, max_steps: int = 20):
         """Initialize sequence generator.
-        
+
         Args:
             input_dim: CLIP embedding dimension (512)
             hidden_dim: RNN hidden state dimension
@@ -38,45 +38,45 @@ class SequenceGenerator:
         self._hidden_dim = hidden_dim
         self._primitive_dim = primitive_dim
         self._max_steps = max_steps
-        
+
         rng = np.random.default_rng(42)
         scale_ih = 1.0 / np.sqrt(input_dim)
         scale_hh = 1.0 / np.sqrt(hidden_dim)
         scale_ph = 1.0 / np.sqrt(primitive_dim)
-        
+
         # Input → Hidden
         self._W_ih = (rng.normal(0, scale_ih, (hidden_dim, input_dim))).astype(np.float32)
         self._b_ih = np.zeros(hidden_dim, dtype=np.float32)
-        
+
         # Primitive feedback → Hidden (for autoregressive step)
         self._W_ph = (rng.normal(0, scale_ph, (hidden_dim, primitive_dim))).astype(np.float32)
         self._b_ph = np.zeros(hidden_dim, dtype=np.float32)
-        
+
         # Hidden → Hidden (recurrent)
         self._W_hh = (rng.normal(0, scale_hh, (hidden_dim, hidden_dim))).astype(np.float32)
         self._b_hh = np.zeros(hidden_dim, dtype=np.float32)
-        
+
         # Hidden → Primitive output
         self._W_ho = (rng.normal(0, 1.0 / np.sqrt(hidden_dim),
                                  (primitive_dim, hidden_dim))).astype(np.float32)
         self._b_ho = np.zeros(primitive_dim, dtype=np.float32)
-        
+
         # Stop token predictor (hidden → scalar logit)
         self._W_stop = (rng.normal(0, 1.0 / np.sqrt(hidden_dim),
                                    (hidden_dim,))).astype(np.float32)
         self._b_stop = np.zeros(1, dtype=np.float32)
-        
+
         # Training state
         self._trained = False
-    
+
     def generate(self, clip_embedding: np.ndarray,
                  temperature: float = 0.8) -> List[np.ndarray]:
         """Generate sequence of primitive embeddings from CLIP embedding.
-        
+
         Args:
             clip_embedding: (input_dim,) CLIP embedding vector
             temperature: Sampling temperature (higher = more random)
-            
+
         Returns:
             List of (primitive_dim,) primitive embedding vectors
         """
@@ -85,44 +85,44 @@ class SequenceGenerator:
                 f"Expected clip_embedding shape ({self._input_dim},), "
                 f"got {clip_embedding.shape}"
             )
-        
+
         # Initialize hidden state from CLIP embedding
         h = np.tanh(self._W_ih @ clip_embedding + self._b_ih)
-        
+
         primitives: List[np.ndarray] = []
-        
+
         for _step in range(self._max_steps):
             # Generate primitive embedding
             prim_emb = self._W_ho @ h + self._b_ho
-            
+
             # L2 normalize
             norm = np.linalg.norm(prim_emb)
             if norm > 0:
                 prim_emb = prim_emb / norm
-            
+
             # Check stop condition
             stop_logit = float(np.dot(self._W_stop, h) + self._b_stop[0])
             stop_prob = 1.0 / (1.0 + np.exp(-np.clip(stop_logit, -10, 10)))
-            
+
             # Sample stop (at temperature)
             adjusted_logit = stop_logit / max(temperature, 0.01)
             stop_sample_prob = 1.0 / (1.0 + np.exp(-np.clip(adjusted_logit, -10, 10)))
-            
+
             if np.random.random() < stop_sample_prob and _step > 0:
                 break
-            
+
             primitives.append(prim_emb)
-            
+
             # Update hidden state: tanh(W_hh @ h + W_ph @ prim + b_hh)
             h = np.tanh(
                 self._W_hh @ h + self._W_ph @ prim_emb + self._b_hh
             )
-        
+
         return primitives
-    
+
     def generate_deterministic(self, clip_embedding: np.ndarray) -> List[np.ndarray]:
         """Generate primitives greedily (no sampling).
-        
+
         Useful for evaluation and testing.
         """
         if clip_embedding.shape != (self._input_dim,):
@@ -130,28 +130,28 @@ class SequenceGenerator:
                 f"Expected clip_embedding shape ({self._input_dim},), "
                 f"got {clip_embedding.shape}"
             )
-        
+
         h = np.tanh(self._W_ih @ clip_embedding + self._b_ih)
         primitives: List[np.ndarray] = []
-        
+
         for _step in range(self._max_steps):
             prim_emb = self._W_ho @ h + self._b_ho
             norm = np.linalg.norm(prim_emb)
             if norm > 0:
                 prim_emb = prim_emb / norm
-            
+
             stop_logit = float(np.dot(self._W_stop, h) + self._b_stop[0])
-            
+
             if stop_logit > 0.0 and _step > 0:
                 break
-            
+
             primitives.append(prim_emb)
             h = np.tanh(
                 self._W_hh @ h + self._W_ph @ prim_emb + self._b_hh
             )
-        
+
         return primitives
-    
+
     def train_step(self, clip_embedding: np.ndarray,
                    target_primitives: List[np.ndarray],
                    lr: float = 0.001) -> float:
@@ -277,33 +277,33 @@ class SequenceGenerator:
 
         self._trained = True
         return loss
-    
+
     def train(self, clip_embeddings: List[np.ndarray],
               primitive_sequences: List[List[np.ndarray]],
               epochs: int = 50, lr: float = 0.001) -> dict:
         """Train on a dataset of (clip_embedding, primitive_sequence) pairs.
-        
+
         Args:
             clip_embeddings: List of (input_dim,) CLIP embeddings
             primitive_sequences: List of primitive embedding sequences
             epochs: Number of training epochs
             lr: Learning rate
-            
+
         Returns:
             Training history dict
         """
         if len(clip_embeddings) != len(primitive_sequences):
             raise ValueError("clip_embeddings and primitive_sequences must have same length")
-        
+
         n_samples = len(clip_embeddings)
         losses = []
-        
+
         for epoch in range(epochs):
             epoch_loss = 0.0
-            
+
             # Shuffle indices
             indices = np.random.permutation(n_samples)
-            
+
             for idx in indices:
                 loss = self.train_step(
                     clip_embeddings[idx],
@@ -311,20 +311,20 @@ class SequenceGenerator:
                     lr=lr
                 )
                 epoch_loss += loss
-            
+
             avg_loss = epoch_loss / max(n_samples, 1)
             losses.append(avg_loss)
-            
+
             if epoch % 10 == 0:
                 logger.info("Epoch %d/%d - loss: %.6f", epoch, epochs, avg_loss)
-        
+
         return {
             "final_loss": losses[-1] if losses else 0.0,
             "history": losses,
             "epochs": epochs,
             "n_samples": n_samples,
         }
-    
+
     def get_weights(self) -> dict:
         """Return all weight arrays as a dict for serialization/inspection."""
         return {
@@ -352,23 +352,23 @@ class SequenceGenerator:
     @property
     def input_dim(self) -> int:
         return self._input_dim
-    
+
     @property
     def hidden_dim(self) -> int:
         return self._hidden_dim
-    
+
     @property
     def primitive_dim(self) -> int:
         return self._primitive_dim
-    
+
     @property
     def max_steps(self) -> int:
         return self._max_steps
-    
+
     @property
     def is_trained(self) -> bool:
         return self._trained
-    
+
     def save(self, path: str):
         """Save generator weights to JSON file."""
         data = {
@@ -390,13 +390,13 @@ class SequenceGenerator:
         with open(path, 'w') as f:
             json.dump(data, f)
         logger.info("Saved SequenceGenerator to %s", path)
-    
+
     @classmethod
     def load(cls, path: str) -> 'SequenceGenerator':
         """Load generator weights from JSON file."""
         with open(path, 'r') as f:
             data = json.load(f)
-        
+
         gen = cls(
             input_dim=data["input_dim"],
             hidden_dim=data["hidden_dim"],
@@ -414,6 +414,6 @@ class SequenceGenerator:
         gen._W_stop = np.array(data["W_stop"], dtype=np.float32)
         gen._b_stop = np.array(data["b_stop"], dtype=np.float32)
         gen._trained = True
-        
+
         logger.info("Loaded SequenceGenerator from %s", path)
         return gen

@@ -1,7 +1,7 @@
 /**
  * Angela AI - System Profile & Hardware Management
- * 
- * Consolidated module for hardware detection, performance profiling, 
+ *
+ * Consolidated module for hardware detection, performance profiling,
  * and system resource monitoring.
  */
 
@@ -22,18 +22,18 @@ class SystemProfileManager {
      */
     async initialize() {
         if (this.isInitialized) return;
-        
+
         console.log('[SystemProfile] Initializing system profile...');
-        
+
         // 1. Detect hardware (Core profile)
         this.profile = await this._detectHardware();
-        
+
         // 2. Assess capabilities
         this.capabilities = this._assessCapabilities(this.profile);
-        
+
         this.isInitialized = true;
         console.log('[SystemProfile] Profile initialized:', this.profile);
-        
+
         return this.profile;
     }
 
@@ -56,7 +56,7 @@ class SystemProfileManager {
      */
     async _detectHardware() {
         const gpuInfo = await this._detectGPU();
-        
+
         return {
             cpu_cores: navigator.hardwareConcurrency || 4,
             memory_gb: navigator.deviceMemory || 8,
@@ -97,11 +97,11 @@ class SystemProfileManager {
     _assessCapabilities(profile) {
         const cpu = profile.cpu_cores;
         const mem = profile.memory_gb;
-        
+
         let tier = 'standard';
         if (cpu >= 8 && mem >= 16) tier = 'high';
         else if (cpu <= 2 || mem <= 4) tier = 'lite';
-        
+
         return {
             tier: tier,
             maxFPS: tier === 'high' ? 120 : (tier === 'standard' ? 60 : 30),
