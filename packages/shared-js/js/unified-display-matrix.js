@@ -962,7 +962,7 @@ class UnifiedDisplayMatrix {
     }
 
     _bindWindowResize() {
-        window.addEventListener('resize', () => {
+        this._resizeHandler = () => {
             const oldWidth = this.currentState.windowWidth;
             const oldHeight = this.currentState.windowHeight;
 
@@ -974,7 +974,15 @@ class UnifiedDisplayMatrix {
                 newHeight: this.currentState.windowHeight,
                 devicePixelRatio: this.currentState.devicePixelRatio
             });
-        });
+        };
+        window.addEventListener('resize', this._resizeHandler);
+    }
+
+    _unbindWindowResize() {
+        if (this._resizeHandler) {
+            window.removeEventListener('resize', this._resizeHandler);
+            this._resizeHandler = null;
+        }
     }
 
     // ================================================================
@@ -1362,6 +1370,9 @@ class UnifiedDisplayMatrix {
     destroy() {
         // 停止触摸队列刷新
         this._stopTouchQueueFlush();
+
+        // 移除 window resize 监听器
+        this._unbindWindowResize();
         
         // 清理去抖定时器
         if (this.debounceConfig.debounceTimer) {

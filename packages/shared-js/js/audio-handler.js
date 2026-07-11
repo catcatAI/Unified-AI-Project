@@ -380,7 +380,7 @@ class AudioHandler {
                     this.isListening = false;
                 } else if (event.error === 'network') {
                     console.warn('[AudioHandler] 网络错误，将在5秒后重试');
-                    setTimeout(() => {
+                    this._retryTimeout = setTimeout(() => {
                         if (this.isListening) {
                             this.startSpeechRecognition();
                         }
@@ -688,6 +688,11 @@ class AudioHandler {
     }
 
     shutdown() {
+        if (this._retryTimeout) {
+            clearTimeout(this._retryTimeout);
+            this._retryTimeout = null;
+        }
+
         this.stopMicrophone();
         this.stopSystemAudio();
         this.stopSpeechRecognition();

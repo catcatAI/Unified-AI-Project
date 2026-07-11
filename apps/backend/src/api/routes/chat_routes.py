@@ -1280,13 +1280,13 @@ async def sync_key_c(request: Request) -> dict:
 
 
 @router.post("/session/start")
-async def start_session(request: Dict[str, Any] = Body(default={})) -> dict:
+async def start_session(request: Optional[Dict[str, Any]] = Body(default=None)) -> dict:
     """Execute the start session operation."""
     session_id = f"sess-{uuid.uuid4().hex[:8]}"
     sessions.set(session_id, {
         "created_at": datetime.now().isoformat(),
         "messages": [],
-        "user_name": request.get("user_name", "User"),
+        "user_name": (request or {}).get("user_name", "User"),
     })
     return {"session_id": session_id, "message": _get_ed3n_engine().process("welcome", context={"session_id": session_id}, depth="reflex")}
 
