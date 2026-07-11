@@ -8,8 +8,11 @@ Pipeline:
 This is the recognition path — same vocabulary as generation, but bottom-up.
 """
 
+import logging
 import time
 from typing import Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 import numpy as np
 from PIL import Image
@@ -217,5 +220,5 @@ class GeometricRecognizer:
             result = self.recognize(img, n_iterations=n_iterations)
             results.append(result)
             if (i + 1) % 10 == 0:
-                print(f"  Recognized {i+1}/{len(images)} images")
+                logger.info("  Recognized %d/%d images", i + 1, len(images))
         return results

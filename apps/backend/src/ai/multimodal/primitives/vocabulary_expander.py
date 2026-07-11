@@ -11,8 +11,11 @@ Algorithm:
 """
 
 import json
+import logging
 import os
 from typing import Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 import numpy as np
 
@@ -167,7 +170,7 @@ class VocabularyExpander:
             )
             self._vocabulary._visual_words.append(new_word)
 
-        print(f"  Vocabulary expanded: +{len(new_types)} new visual words")
+        logger.info("  Vocabulary expanded: +%d new visual words", len(new_types))
 
     def clear_residuals(self):
         """Clear accumulated residuals."""

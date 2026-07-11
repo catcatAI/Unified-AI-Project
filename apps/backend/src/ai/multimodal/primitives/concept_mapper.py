@@ -10,10 +10,13 @@ Now integrated with concept space mapping for shared representation.
 """
 
 import json
+import logging
 import os
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 from .geometric_vocabulary import ConceptDistribution, GeometricVocabulary
 from .primitive_types import TOTAL_DIM
@@ -64,9 +67,9 @@ class ConceptMapper:
         if text_vecs is not None:
             for i, name in enumerate(class_names):
                 self._concept_clip_embeddings[name] = text_vecs[i]
-            print(f"Registered {len(class_names)} concept embeddings from CLIP")
+            logger.info("Registered %d concept embeddings from CLIP", len(class_names))
         else:
-            print("WARNING: CLIP text encoding unavailable, using random embeddings")
+            logger.warning("CLIP text encoding unavailable, using random embeddings")
             rng = np.random.default_rng(42)
             for name in class_names:
                 self._concept_clip_embeddings[name] = rng.random(512).astype(np.float32)

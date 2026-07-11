@@ -232,7 +232,6 @@ class LearnableDecomposer:
             
             if epoch % 5 == 0:
                 logger.info("Epoch %d/%d - loss: %.6f", epoch, epochs, avg_loss)
-                print("  Epoch %d/%d - loss: %.6f" % (epoch, epochs, avg_loss), flush=True)
         
         return {
             "final_loss": losses[-1] if losses else 0.0,

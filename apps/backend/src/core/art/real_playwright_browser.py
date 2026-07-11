@@ -326,10 +326,7 @@ async def test_browser() -> None:
         logger.info("\n✅ 测试完成!")
 
     except Exception as e:  # broad exception acceptable: browser test should handle initialization failures gracefully
-        logger.info(f"❌ 测试失败: {e}")
-        import traceback
-
-        traceback.print_exc()
+        logger.exception("❌ 测试失败: %s", e)
 
 
 if __name__ == "__main__":

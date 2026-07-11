@@ -841,9 +841,9 @@ class DigitalLifeIntegrator:
                     base = param_data["base"]
                     current = param_data["current"]
                     if abs(current - base) > 0.15:  # Significant change threshold
-                        print(
-                            f"[DynamicParams] {param_name}: {current:.2f} "
-                            f"(base: {base:.2f}, trend: {param_data['trend']:+.3f})"
+                        logger.info(
+                            "[DynamicParams] %s: %.2f (base: %.2f, trend: %+.3f)",
+                            param_name, current, base, param_data["trend"]
                         )
 
                 self._last_params_log = datetime.now()

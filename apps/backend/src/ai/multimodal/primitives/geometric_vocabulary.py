@@ -9,12 +9,15 @@ This is the foundation for both generation (top-down) and recognition (bottom-up
 """
 
 import json
+import logging
 import math
 import os
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -117,14 +120,14 @@ class GeometricVocabulary:
         self._all_params = params.astype(np.float32)
         self._all_labels = labels.astype(int)
 
-        print(f"Building vocabulary from {len(params)} images...")
+        logger.info("Building vocabulary from %d images...", len(params))
 
         # Step 1: K-means to find visual words
-        print("  Step 1: Clustering → visual words...")
+        logger.info("  Step 1: Clustering → visual words...")
         self._cluster_to_visual_words(params)
 
         # Step 2: Build concept distributions
-        print("  Step 2: Building concept distributions...")
+        logger.info("  Step 2: Building concept distributions...")
         for label_int in range(len(class_names)):
             name = class_names[label_int]
             mask = labels == label_int
@@ -133,8 +136,8 @@ class GeometricVocabulary:
             concept_params = params[mask]
             self._build_concept_distribution(name, label_int, concept_params)
 
-        print(f"  Vocabulary built: {len(self._visual_words)} visual words, "
-              f"{len(self._concept_distributions)} concepts")
+        logger.info("  Vocabulary built: %d visual words, %d concepts",
+                    len(self._visual_words), len(self._concept_distributions))
 
     def _cluster_to_visual_words(self, params: np.ndarray):
         """K-means clustering to find visual words."""
@@ -380,7 +383,7 @@ class GeometricVocabulary:
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
         with open(path, "w") as f:
             json.dump(data, f)
-        print(f"Vocabulary saved to {path}")
+        logger.info("Vocabulary saved to %s", path)
 
     @classmethod
     def load(cls, path: str) -> "GeometricVocabulary":
@@ -400,6 +403,6 @@ class GeometricVocabulary:
             vocab._all_params = np.array(data["all_params"], dtype=np.float32)
         if "all_labels" in data:
             vocab._all_labels = np.array(data["all_labels"], dtype=int)
-        print(f"Vocabulary loaded: {len(vocab._visual_words)} words, "
-              f"{len(vocab._concept_distributions)} concepts")
+        logger.info("Vocabulary loaded: %d words, %d concepts",
+                    len(vocab._visual_words), len(vocab._concept_distributions))
         return vocab
