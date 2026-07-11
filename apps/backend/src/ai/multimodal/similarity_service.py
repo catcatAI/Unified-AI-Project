@@ -216,6 +216,7 @@ class MultimodalSimilarityService:
                 raw = wf.readframes(wf.getnframes())
                 arr = np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768.0
         except Exception:
+            logger.warning("Wave decode failed, using raw float32 fallback for audio quality check", exc_info=True)
             arr = np.frombuffer(audio_data, dtype=np.float32).flatten()
         if len(arr) == 0:
             return None

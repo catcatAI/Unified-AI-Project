@@ -29,6 +29,7 @@ class PerformanceManager {
 
         // 性能变更消息确认机制
         this._pendingPerformanceChanges = new Map(); // 存储待确认的性能变更
+        this._pendingChangeTimers = {}; // 存储定时器ID（changeId -> timerId）
         this._changeConfirmationTimeout = 5000; // 5秒确认超时
         this._changeRetryCount = 3; // 最大重试次数
 
@@ -1052,6 +1053,17 @@ class PerformanceManager {
         }
     }
 
+    _setChangeTimer(changeId, type, fn, delay) {
+        const key = changeId + ':' + type;
+        if (this._pendingChangeTimers[key]) {
+            clearTimeout(this._pendingChangeTimers[key]);
+        }
+        this._pendingChangeTimers[key] = setTimeout(() => {
+            delete this._pendingChangeTimers[key];
+            fn();
+        }, delay);
+    }
+
     /**
      * 发送带确认的性能变更消息
      * @param {Object} message 消息内容
@@ -1073,12 +1085,12 @@ class PerformanceManager {
             if (!sent) {
                 // 发送失败，重试
                 console.warn('[PerformanceManager] 性能变更消息发送失败，重试中...');
-                setTimeout(() => this._retryPerformanceChange(changeId), 1000);
+                this._setChangeTimer(changeId, 'retry', () => this._retryPerformanceChange(changeId), 1000);
                 return;
             }
 
             // 设置确认超时
-            setTimeout(() => {
+            this._setChangeTimer(changeId, 'confirm', () => {
                 if (this._pendingPerformanceChanges.has(changeId)) {
                     console.warn('[PerformanceManager] 性能变更确认超时，重试:', changeId);
                     this._retryPerformanceChange(changeId);
@@ -1115,17 +1127,17 @@ class PerformanceManager {
                 console.log('[PerformanceManager] 性能变更消息重试成功:', changeId);
 
                 // 重置超时
-                setTimeout(() => {
+                this._setChangeTimer(changeId, 'confirm', () => {
                     if (this._pendingPerformanceChanges.has(changeId)) {
                         this._retryPerformanceChange(changeId);
                     }
                 }, this._changeConfirmationTimeout);
             } else {
-                setTimeout(() => this._retryPerformanceChange(changeId), 1000);
+                this._setChangeTimer(changeId, 'retry', () => this._retryPerformanceChange(changeId), 1000);
             }
         } catch (error) {
             console.error('[PerformanceManager] 重试性能变更消息失败:', error);
-            setTimeout(() => this._retryPerformanceChange(changeId), 1000);
+            this._setChangeTimer(changeId, 'retry', () => this._retryPerformanceChange(changeId), 1000);
         }
     }
 
@@ -1160,6 +1172,10 @@ class PerformanceManager {
         }
 
         // 清理性能变更确认机制
+        for (const key in this._pendingChangeTimers) {
+            clearTimeout(this._pendingChangeTimers[key]);
+        }
+        this._pendingChangeTimers = {};
         this._pendingPerformanceChanges.clear();
     }
 }

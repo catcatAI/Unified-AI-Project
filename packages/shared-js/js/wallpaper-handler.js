@@ -557,6 +557,10 @@ class WallpaperHandler {
             window.removeEventListener('resize', this._boundResize);
             this._boundResize = null;
         }
+        if (this._parallaxHandler) {
+            window.removeEventListener('mousemove', this._parallaxHandler);
+            this._parallaxHandler = null;
+        }
         if (this._hwUpdateHandler && window.electronAPI) {
             window.electronAPI.off?.('hardware-update', this._hwUpdateHandler);
             this._hwUpdateHandler = null;

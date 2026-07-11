@@ -523,7 +523,7 @@ class AudioHandler {
         }
         
         // Fallback: try to load voices again after a delay (some browsers need this)
-        setTimeout(() => {
+        this._voiceFallbackTimer = setTimeout(() => {
             if (this.availableVoices.length === 0) {
                 loadVoices();
             }
@@ -691,6 +691,10 @@ class AudioHandler {
         if (this._retryTimeout) {
             clearTimeout(this._retryTimeout);
             this._retryTimeout = null;
+        }
+        if (this._voiceFallbackTimer) {
+            clearTimeout(this._voiceFallbackTimer);
+            this._voiceFallbackTimer = null;
         }
 
         this.stopMicrophone();

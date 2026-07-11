@@ -1201,9 +1201,15 @@ class AngelaApp {
 
     showStatus(message, duration = 3000) {
         if (this.statusBar) {
+            if (this._statusTimer) {
+                clearTimeout(this._statusTimer);
+            }
             this.statusBar.textContent = message;
             this.statusBar.classList.add('visible');
-            setTimeout(() => this.statusBar.classList.remove('visible'), duration);
+            this._statusTimer = setTimeout(() => {
+                this.statusBar.classList.remove('visible');
+                this._statusTimer = null;
+            }, duration);
         }
     }
 
@@ -1298,6 +1304,10 @@ class AngelaApp {
             if (this.idleTimer) {
                 clearTimeout(this.idleTimer);
                 this.idleTimer = null;
+            }
+            if (this._statusTimer) {
+                clearTimeout(this._statusTimer);
+                this._statusTimer = null;
             }
 
             // 清理 UI 引用
