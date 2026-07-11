@@ -17,7 +17,10 @@ This is the missing piece that enables dual-use vocabulary:
 """
 
 import json
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 import time
 from typing import Dict, List, Optional, Tuple
 
@@ -291,7 +294,7 @@ class ConceptSpaceMapper:
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
         with open(path, "w") as f:
             json.dump(data, f)
-        print(f"Concept space saved to {path}")
+        logger.info("Concept space saved to %s", path)
 
     @classmethod
     def load(cls, path: str) -> "ConceptSpaceMapper":
@@ -315,5 +318,5 @@ class ConceptSpaceMapper:
         if "class_centers" in data:
             mapper._class_centers = np.array(data["class_centers"], dtype=np.float32)
 
-        print(f"Concept space loaded: {mapper._clip_dim} → {mapper._hidden_dim} → {mapper._concept_dim}")
+        logger.info("Concept space loaded: %s → %s → %s", mapper._clip_dim, mapper._hidden_dim, mapper._concept_dim)
         return mapper

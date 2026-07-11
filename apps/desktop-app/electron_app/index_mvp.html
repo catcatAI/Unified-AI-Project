@@ -6,11 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Angela AI - Desktop Pet</title>
     <style>
+        :root {
+            --success-color: #4CAF50;
+            --danger-color: #f44336;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
+        .status-connected { color: var(--success-color); }
+        .status-offline { color: var(--danger-color); }
 
         body {
             width: 100vw;
@@ -193,7 +201,7 @@
 
             if (connected) {
                 statusEl.textContent = 'Connected ✅';
-                statusEl.style.color = '#4CAF50';
+                statusEl.className = 'status-connected';
 
                 // Load initial status
                 const status = await apiClient.getStatus();
@@ -209,7 +217,7 @@
                 }
             } else {
                 statusEl.textContent = 'Offline ❌';
-                statusEl.style.color = '#f44336';
+                statusEl.className = 'status-offline';
             }
         }
 

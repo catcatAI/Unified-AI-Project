@@ -5,11 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>檢測系統測試</title>
     <style>
+        :root {
+            --success-color: #4ade80;
+            --danger-color: #f87171;
+            --info-color: #60a5fa;
+        }
+
         body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a2e; color: #eee; }
         .test-section { margin: 20px 0; padding: 15px; background: #16213e; border-radius: 8px; }
-        .pass { color: #4ade80; }
-        .fail { color: #f87171; }
-        .info { color: #60a5fa; }
+        .pass { color: var(--success-color); }
+        .fail { color: var(--danger-color); }
+        .info { color: var(--info-color); }
         button { padding: 10px 20px; margin: 5px; cursor: pointer; border: none; border-radius: 5px; font-size: 14px; }
         .btn-test { background: #3b82f6; color: white; }
         .btn-test:hover { background: #2563eb; }

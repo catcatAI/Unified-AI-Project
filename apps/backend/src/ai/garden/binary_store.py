@@ -125,7 +125,7 @@ class BinaryStore:
         store = cls(path, mode="r+")
         # Fill with desired value
         if fill_value != 0.0:
-            store._mmap[:] = fill_value  # type: ignore
+            store._mmap[:] = fill_value  # type: ignore[index]
             store.flush()
         logger.info(
             "BinaryStore: created %s with V=%d (%.2f GB)",
@@ -204,7 +204,7 @@ class BinaryStore:
     def close(self) -> None:
         if self._mmap is not None:
             self.flush()
-            self._mmap._mmap.close()  # type: ignore
+            self._mmap._mmap.close()  # type: ignore[union-attr]
             self._mmap = None
             logger.debug("BinaryStore: closed %s", self.path)
 
