@@ -9,10 +9,10 @@
     "apps/*/electron_app"
   ],
   "scripts": {
-    "dev": "pnpm --filter backend dev && pnpm --filter angela-web-dashboard dev",
+    "dev": "concurrently --kill-others \"pnpm --filter backend dev\" \"pnpm --filter angela-web-dashboard dev\"",
     "dev:backend": "cd apps/backend && python -m uvicorn src.services.main_api_server:app --host 127.0.0.1 --port 8000 --reload",
     "dev:desktop": "pnpm --filter angela-desktop-electron start",
-    "dev:all": "pnpm dev:backend & pnpm dev:desktop",
+    "dev:all": "concurrently --kill-others \"pnpm dev:backend\" \"pnpm dev:desktop\"",
     "test": "pytest tests/",
     "test:backend": "cd apps/backend && pytest tests/",
     "test:coverage": "pytest --cov=apps/backend/src --cov-report=html",
@@ -32,6 +32,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
     "@types/node": "^20.19.43",
+    "concurrently": "^10.0.3",
     "eslint": "^8.57.1",
     "globals": "^14.0.0",
     "prettier": "^3.9.1",
