@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Angela AI - Settings</title>
     <style>
+        :root {
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -204,12 +209,12 @@
         }
 
         .status-badge.connected {
-            background: #2ecc71;
+            background: var(--success-color);
             color: white;
         }
 
         .status-badge.disconnected {
-            background: #e74c3c;
+            background: var(--danger-color);
             color: white;
         }
 
@@ -299,22 +304,22 @@
                 <h1>Angela AI Settings</h1>
                 <p>v1.0.0</p>
             </div>
-            <div class="nav-item active" data-section="general">
+            <div class="nav-item active" data-section="general" role="button" tabindex="0">
                 <i>⚙️</i> General
             </div>
-            <div class="nav-item" data-section="appearance">
+            <div class="nav-item" data-section="appearance" role="button" tabindex="0">
                 <i>🎨</i> Appearance
             </div>
-            <div class="nav-item" data-section="audio">
+            <div class="nav-item" data-section="audio" role="button" tabindex="0">
                 <i>🔊</i> Audio
             </div>
-            <div class="nav-item" data-section="haptics">
+            <div class="nav-item" data-section="haptics" role="button" tabindex="0">
                 <i>📳</i> Haptics
             </div>
-            <div class="nav-item" data-section="network">
+            <div class="nav-item" data-section="network" role="button" tabindex="0">
                 <i>🌐</i> Network & Cluster
             </div>
-            <div class="nav-item" data-section="advanced">
+            <div class="nav-item" data-section="advanced" role="button" tabindex="0">
                 <i>🔧</i> Advanced
             </div>
         </div>

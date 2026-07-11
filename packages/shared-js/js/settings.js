@@ -252,6 +252,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const sectionId = item.dataset.section;
                 switchSection(sectionId);
             });
+            item.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    const sectionId = item.dataset.section;
+                    switchSection(sectionId);
+                }
+            });
         });
         
         // Sliders - update value displays
