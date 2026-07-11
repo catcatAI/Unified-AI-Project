@@ -705,7 +705,7 @@ class TestNeuroVocabularyEdgeCases:
         vocab2 = NeuroVocabulary()
         vocab2.restore_from_state_store()
         restored = vocab2.get_value_range_mappings("rt.field")
-        assert len(restored) >= 0
+        assert len(restored) >= 1
 
 
 # ===========================================================================

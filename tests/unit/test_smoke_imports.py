@@ -101,7 +101,6 @@ def test_smoke_import(module_path, class_name, kwargs):
     cls = _try_import_class(module_path, class_name)
     if cls is None:
         pytest.skip(f"Not available: {module_path}.{class_name}")
-    assert cls is not None
 
 
 @pytest.mark.parametrize("module_path,class_name,kwargs", _SMOKE_MODULES,
@@ -112,7 +111,6 @@ def test_smoke_instantiate(module_path, class_name, kwargs):
     if cls is None:
         pytest.skip(f"Not available: {module_path}.{class_name}")
     instance = cls(**kwargs)
-    assert instance is not None
 
 
 class TestGravityCalibrator:

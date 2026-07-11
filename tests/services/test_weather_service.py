@@ -174,4 +174,4 @@ class TestWeatherService:
         # Cache TTL is 0, so is_cache_expired is checked each time
         # get_weather calls _offline_result since HAS_AIOHTTP is True
         # but cache expires instantly — we just verify cache isn't returned
-        assert not svc._cache or True
+        assert svc._cache

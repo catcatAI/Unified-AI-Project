@@ -235,7 +235,7 @@ class TestGlobalStateStore:
             results.append((event_type, data.get('val')))
         self.store.subscribe_event('async', async_cb)
         self.store.emit_event('async', {'val': 99})
-        assert len(results) >= 0  # async callbacks fire in tasks, may not complete before assert
+        # async callbacks fire in tasks, may not complete before assert
 
     def test_subscribe_event_multiple_events_accumulate(self):
         results = []

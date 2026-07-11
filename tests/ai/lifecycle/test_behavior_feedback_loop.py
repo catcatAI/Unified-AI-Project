@@ -411,7 +411,6 @@ class TestStoreLearningResults:
     async def test_store_learning_results_calls_memory_manager(self, feedback_loop, mock_memory_manager):
         await feedback_loop._store_learning_results()
         mock_memory_manager.store_experience.assert_called_once()
-        assert len(feedback_loop.behavior_records) >= 0
     async def test_store_learning_results_without_memory_method(self, feedback_loop, mock_memory_manager):
         del mock_memory_manager.store_experience
         initial_stats = feedback_loop.get_stats()

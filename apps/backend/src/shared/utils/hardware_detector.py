@@ -132,7 +132,7 @@ class SystemHardwareProbe:
                         if "flags" in line:
                             return line.split(":")[-1].strip().split()
             except Exception:
-                logger.debug("Failed to parse /proc/cpuinfo")
+                logger.debug("Failed to parse /proc/cpuinfo", exc_info=True)
         elif self.platform_name == "windows":
             # Windows flags are harder; usually inferred or via specialized tools
             # We can use 'coreinfo' if available, but for now we fallback
@@ -144,7 +144,7 @@ class SystemHardwareProbe:
                     if "hw.optional." in line and ": 1" in line:
                         flags.append(line.split(".")[2].split(":")[0])
             except Exception:
-                logger.debug("Failed to parse sysctl output on macOS")
+                logger.debug("Failed to parse sysctl output on macOS", exc_info=True)
         return flags
 
     def _detect_ram(self) -> Tuple[float, float]:

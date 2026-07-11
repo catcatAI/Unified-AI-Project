@@ -1052,7 +1052,7 @@ Returns:
                 amount
             )
         except Exception:
-            logger.warning("Failed to apply influence from %s to %s", source, target)
+            logger.warning("Failed to apply influence from %s to %s", source, target, exc_info=True)
 
     def _apply_influence_fallback(self, source: str, target: str, amount: float) -> None:
         """Deprecated: influence applicator handles all cases now"""
