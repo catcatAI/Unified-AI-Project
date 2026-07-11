@@ -10,6 +10,8 @@ import math
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
+from core.security.secure_eval import safe_eval
+
 logger = logging.getLogger(__name__)
 
 
@@ -170,11 +172,11 @@ class AtomicModule:
         if st == ArithmeticOpType.CUSTOM_EXPR:
             expr = params.get("expr", "0")
             local_vars = dict(kwargs)
-            try:
-                return float(eval(expr, {"__builtins__": {}}, local_vars))
-            except Exception as err:
-                logger.debug("Custom expression eval failed (%s): %s", expr, err)
-                return 0.0
+            result = safe_eval(expr, context=local_vars)
+            if result.success:
+                return float(result.result)
+            logger.debug("Custom expression eval failed (%s): %s", expr, result.error)
+            return 0.0
         return 0.0
 
     def _exec_aggregator(self, st: AggregatorType, kwargs: Dict, params: Dict) -> float:

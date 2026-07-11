@@ -47,6 +47,7 @@ def test_event_bus_unsubscribe():
 def test_event_bus_no_handlers():
     bus = EventBus()
     bus.emit("nonexistent.event")
+    assert "nonexistent.event" not in bus._subscribers
 
 
 def test_event_bus_clear():

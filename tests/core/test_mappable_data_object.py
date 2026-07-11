@@ -54,7 +54,8 @@ class TestMappableDataObject:
 
     def test_remove_layer_nonexistent_does_nothing(self):
         obj = MappableDataObject("base")
-        obj.remove_layer("nothing")  # no crash
+        obj.remove_layer("nothing")
+        assert obj.get_layer("nothing") is None
 
     def test_to_dict_contains_all_fields(self):
         obj = MappableDataObject("data", {"version": 1})

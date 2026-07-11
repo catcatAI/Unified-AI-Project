@@ -260,7 +260,8 @@ class TestLearnRecorder:
 
     def test_flush_empty(self):
         recorder = LearnRecorder()
-        recorder.flush_sync()  # should not raise
+        recorder.flush_sync()
+        assert len(recorder._pending) == 0
 
 
 # =============================================================================

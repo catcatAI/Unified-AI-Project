@@ -29,7 +29,8 @@ class TestServiceRegistry:
         assert self.r.get('svc') is None
 
     def test_unregister_nonexistent(self):
-        self.r.unregister('no_such')  # no crash
+        self.r.unregister('no_such')
+        assert self.r.get('no_such') is None
 
     def test_clear(self):
         self.r.register('a', 1)

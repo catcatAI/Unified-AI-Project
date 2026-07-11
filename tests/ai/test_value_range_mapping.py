@@ -93,7 +93,7 @@ class TestValueRangeMapping:
 
     def test_load_mappings_from_config_empty(self):
         self.nv.load_mappings_from_config([])
-        # No crash
+        assert len(self.nv.get_value_range_mappings("theta.other")) == 0
 
     def test_confidence_increases_with_usage(self):
         self.nv.learn_mapping('theta.meta', 0.3, '初始')
