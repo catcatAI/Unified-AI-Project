@@ -7,6 +7,13 @@
  */
 
 class MultimodalPanel {
+    static escapeHtml(str) {
+        if (typeof str !== 'string') return str;
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
     constructor() {
         this.client = new MultimodalAPIClient(localStorage.getItem('backend_ip') || 'http://localhost:8000');
         this.visionData = null;
@@ -104,7 +111,7 @@ class MultimodalPanel {
         reader.onload = (e) => {
             this.visionData = e.target.result;
             const preview = document.getElementById('vision-preview');
-            preview.innerHTML = `<img class="preview-img" src="${e.target.result}" alt="Preview">`;
+            preview.innerHTML = `<img class="preview-img" src="${MultimodalPanel.escapeHtml(e.target.result)}" alt="Preview">`;
             this.visionPreview = e.target.result;
         };
         reader.readAsDataURL(file);
@@ -224,7 +231,7 @@ class MultimodalPanel {
         // Show decoded image
         if (result.decoded) {
             const preview = document.getElementById('vision-preview');
-            preview.innerHTML = `<img class="preview-img" src="${result.decoded}" alt="Decoded">`;
+            preview.innerHTML = `<img class="preview-img" src="${MultimodalPanel.escapeHtml(result.decoded)}" alt="Decoded">`;
         }
     }
 
@@ -377,8 +384,8 @@ class MultimodalPanel {
             } else {
                 list.innerHTML = entries.map(([id, item]) =>
                     `<div style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
-                        <span style="color:var(--accent)">${id}</span>
-                        <span style="color:var(--text-dim);margin-left:8px">[${item.modality}]</span>
+                        <span style="color:var(--accent)">${MultimodalPanel.escapeHtml(id)}</span>
+                        <span style="color:var(--text-dim);margin-left:8px">[${MultimodalPanel.escapeHtml(item.modality)}]</span>
                         <span style="color:var(--text-dim);float:right;font-size:12px">${new Date(item.timestamp * 1000).toLocaleTimeString()}</span>
                     </div>`
                 ).join('');
@@ -441,7 +448,7 @@ class MultimodalPanel {
         el.style.display = 'block';
 
         if (!isSuccess || data.error) {
-            el.innerHTML = `<div style="color:var(--danger)">❌ ${data.error || 'Operation failed'}</div>`;
+            el.innerHTML = `<div style="color:var(--danger)">❌ ${MultimodalPanel.escapeHtml(data.error) || 'Operation failed'}</div>`;
             return;
         }
 
@@ -450,7 +457,7 @@ class MultimodalPanel {
             .map(([k, v]) => {
                 let val = typeof v === 'object' ? JSON.stringify(v, null, 2) : v;
                 if (typeof val === 'string' && val.length > 100) val = val.substring(0, 100) + '...';
-                return `<div><span class="key">${k}:</span> <span class="value">${val}</span></div>`;
+                return `<div><span class="key">${MultimodalPanel.escapeHtml(k)}:</span> <span class="value">${MultimodalPanel.escapeHtml(val)}</span></div>`;
             })
             .join('');
 

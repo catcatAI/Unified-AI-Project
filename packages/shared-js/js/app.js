@@ -1283,7 +1283,7 @@ class AngelaApp {
             if (window.electronAPI) {
                 const events = ['window-ready', 'screen-changed', 'websocket-connected', 'websocket-disconnected', 'render-mode'];
                 for (const evt of events) {
-                    try { window.electronAPI.off?.(evt); } catch (_) {}
+                    try { window.electronAPI.off?.(evt); } catch (_) { console.warn('[AngelaApp] Failed to remove IPC listener:', evt); }
                 }
                 console.log('[AngelaApp] Electron IPC listeners cleaned up');
             }

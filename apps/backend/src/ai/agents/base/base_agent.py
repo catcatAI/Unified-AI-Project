@@ -262,7 +262,11 @@ class BaseAgent:
             except Exception as e:
                 logger.error(f"[{self.agent_id}] Queue worker task failed: {e}", exc_info=True)
                 # Trigger system error handling
-                asyncio.create_task(self._handle_critical_error(e))
+                error_task = asyncio.create_task(self._handle_critical_error(e))
+                error_task.add_done_callback(lambda t: logger.error(
+                    f"[{self.agent_id}] Critical error handler failed: {t.exception()}",
+                    exc_info=True
+                ) if not t.cancelled() and t.exception() else None)
             finally:
                 # Clear reference to prevent memory leaks
                 if self._queue_worker_task == completed_task:
@@ -512,7 +516,11 @@ class BaseAgent:
         try:
             loop = asyncio.get_running_loop()
             if loop.is_running():
-                asyncio.create_task(self.cleanup_resources())
+                cleanup_task = asyncio.create_task(self.cleanup_resources())
+                cleanup_task.add_done_callback(lambda t: logger.error(
+                    f"[{self.agent_id}] Destructor cleanup failed: {t.exception()}",
+                    exc_info=True
+                ) if not t.cancelled() and t.exception() else None)
             else:
                 logger.warning(f"[{self.agent_id}] Agent destroyed without proper cleanup (event loop not running)")
         except RuntimeError:

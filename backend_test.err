@@ -1,157 +1,0 @@
-[K[2026-07-09 17:57:22] [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]   5% 检查环境依赖...[K[2026-07-09 17:57:39] [█████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  10% 环境依赖检查完成[K[█████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  10% ✅ 环境依赖检查完成
-[K[2026-07-09 17:57:39] [██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  20% 启动后端 API...[K[2026-07-09 17:57:40] [███████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  30% 后端启动中...[K[2026-07-09 17:57:41] [░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]   0% 等待后端启动 (1.0s/360s)17:57:45 - INFO - 🛡️ [Logging] Unified system initialized. Root Level: INFO
-17:57:45 - INFO - Environment variables loaded from: D:\Projects\Unified-AI-Project\.env
-[K[2026-07-09 17:57:53] [░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]   1% 等待后端启动 (13.1s/360s)17:57:54 - INFO - Config loaded for path 'mods/active_mods' (2 keys)
-17:57:54 - INFO - Config loaded for path 'standard/behavior/anchor_rules' (9 keys)
-17:57:55 - INFO - Config loaded for path 'standard/behavior/angela_core' (16 keys)
-17:57:55 - INFO - Config loaded for path 'standard/behavior/behavior' (5 keys)
-17:57:55 - INFO - Config loaded for path 'standard/behavior/dynamic' (1 keys)
-17:57:55 - INFO - Config loaded for path 'standard/behavior/file_ops' (5 keys)
-17:57:55 - INFO - Config loaded for path 'standard/behavior/thresholds' (5 keys)
-17:57:55 - INFO - Config loaded for path 'standard/behavior/tickle_config' (7 keys)
-17:57:55 - INFO - Config loaded for path 'standard/matrix/matrix' (2 keys)
-17:57:55 - INFO - Config loaded for path 'standard/narrative/prompts' (3 keys)
-17:57:55 - INFO - Config loaded for path 'standard/science/biological' (2 keys)
-17:57:55 - INFO - Config loaded for path 'standard/science/spatial' (7 keys)
-17:57:55 - INFO - Config loaded for path 'standard/state/allocation' (3 keys)
-17:57:56 - INFO - Config loaded for path 'standard/state/influence' (3 keys)
-17:57:56 - INFO - Config loaded for path 'system/bootstrap' (3 keys)
-17:57:56 - INFO - Config loaded for path 'system/core' (9 keys)
-17:57:56 - INFO - Config loaded for path 'system/ed3n' (1 keys)
-17:57:56 - INFO - Config loaded for path 'system/keys' (9 keys)
-17:57:56 - INFO - Config loaded for path 'system/llm' (9 keys)
-17:57:56 - INFO - Config loaded for path 'system/llm_providers' (5 keys)
-17:57:56 - INFO - Config loaded for path 'system/timing' (1 keys)
-17:58:05 - INFO - Loaded 145 translations from D:\Projects\Unified-AI-Project\apps\backend\src\core\i18n\locales\en-US.json for en
-17:58:05 - INFO - Loaded 145 translations from D:\Projects\Unified-AI-Project\apps\backend\src\core\i18n\locales\zh-CN.json for zh
-17:58:05 - INFO - Loaded 290 total translations from D:\Projects\Unified-AI-Project\apps\backend\src\core\i18n\locales
-[K[2026-07-09 17:58:05] [█░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]   2% 等待后端启动 (25.2s/360s)17:58:06 - INFO - [StateStore] Persistence backend attached: JsonFileStateStore
-17:58:06 - INFO - [SessionManager] Initialized with heartbeat_interval=30s, timeout=120s
-17:58:08 - INFO - [PluginManager] Plugin registered: core v1.0.0
-17:58:08 - INFO - [Plugin] Initialized: 5 hooks, 11 handlers, 1 plugins
-17:58:08 - INFO - 🧬 [Bio] Initializing BiologicalIntegrator Singleton...
-17:58:08 - INFO - 🧬 [Bio] Starting systems initialization...
-17:58:08 - INFO - EndocrineSystem initialized
-17:58:08 - INFO - 🎨 [Bio] ArtLearningWorkflow activated and linked.
-17:58:08 - INFO - [Bio] BiologicalIntegrator initialized and integration loop started
-17:58:08 - INFO - [AgentManager] Discovered 10 agent scripts in: D:\Projects\Unified-AI-Project\apps\backend\src\ai\agents\specialized
-17:58:08 - INFO - [AgentManager] Agents: ['audio_processing_agent', 'code_understanding_agent', 'creative_writing_agent', 'data_analysis_agent', 'fantasy_dm_agent', 'knowledge_graph_agent', 'nlp_processing_agent', 'planning_agent', 'vision_processing_agent', 'web_search_agent']
-17:58:08 - INFO - HardwareProfile: default → HIGH_PERFORMANCE_DESKTOP
-17:58:08 - INFO - HardwareProfile activated: high_performance_desktop (multiplier=1.0)
-17:58:08 - INFO - AgentManager initialized. Found agent scripts: ['audio_processing_agent', 'code_understanding_agent', 'creative_writing_agent', 'data_analysis_agent', 'fantasy_dm_agent', 'knowledge_graph_agent', 'nlp_processing_agent', 'planning_agent', 'vision_processing_agent', 'web_search_agent']
-17:58:08 - INFO - Process agents enabled: True
-17:58:08 - INFO - Router enabled: False (port 11435)
-17:58:08 - INFO - State manager: False
-17:58:08 - INFO - CreativeWritingAgent initialized with config: {}
-17:58:08 - INFO - [AgentAdapter] Registered: creative_writing_agent (CreativeWritingAgent)
-17:58:08 - INFO - WebSearchAgent initialized. HTTP available: True
-17:58:08 - INFO - [AgentAdapter] Registered: web_search_agent (WebSearchAgent)
-17:58:08 - INFO - CodeUnderstandingAgent initialized with config: {}
-17:58:08 - INFO - [AgentAdapter] Registered: code_understanding_agent (CodeUnderstandingAgent)
-17:58:08 - INFO - DataAnalysisAgent initialized with config: {}
-17:58:08 - INFO - [AgentAdapter] Registered: data_analysis_agent (DataAnalysisAgent)
-17:58:14 - INFO - VisionProcessingAgent initialized. OCR available: True
-17:58:14 - INFO - [AgentAdapter] Registered: vision_processing_agent (VisionProcessingAgent)
-17:58:14 - INFO - AudioProcessingAgent initialized with config: {}
-17:58:14 - INFO - [AgentAdapter] Registered: audio_processing_agent (AudioProcessingAgent)
-17:58:14 - INFO - KnowledgeGraphAgent initialized with config: {}
-17:58:14 - INFO - [AgentAdapter] Registered: knowledge_graph_agent (KnowledgeGraphAgent)
-17:58:14 - INFO - NLPProcessingAgent initialized with config: {}
-17:58:14 - INFO - [AgentAdapter] Registered: nlp_processing_agent (NLPProcessingAgent)
-17:58:14 - INFO - PlanningAgent initialized with config: {}
-17:58:14 - INFO - [AgentAdapter] Registered: planning_agent (PlanningAgent)
-17:58:14 - INFO - FantasyDMAgent initialized with config: {}
-17:58:14 - INFO - [AgentAdapter] Registered: fantasy_dm_agent (FantasyDMAgent)
-17:58:14 - INFO - [AgentAdapter] Registered 10/10 specialized agents
-17:58:14 - INFO - [AgentManager] Initialized with 10 specialized agents
-17:58:14 - INFO - CrisisSystem initialized. Keywords: ['emergency', 'danger', 'unsafe', 'help me please', "i'm in trouble"]
-17:58:14 - INFO - [CrisisSystem] Initialized — monitoring for crisis indicators
-17:58:14 - INFO - CausalReasoningEngine warm-started with 6 baseline relationships — predict() now functional from Round 1
-17:58:14 - INFO - [CausalReasoning] Initialized — learning causal relationships from interactions
-17:58:14 - INFO - [SessionManager] Initialized — ready for WebSocket connections
-[K[2026-07-09 17:58:14] Broadcast state update task started
-17:58:14 - INFO - ED3N text modality encoder enabled
-17:58:14 - INFO - ED3N multimodal enabled (image=True, audio=True, text=True)
-17:58:14 - INFO - Loaded 30 reflex patterns.
-17:58:14 - INFO - Loaded 46 preset entries (46 new, 0 skipped).
-17:58:14 - INFO - Synced 61 relations from dictionary to network
-17:58:14 - INFO - ED3NEngine loaded all presets.
-[K[2026-07-09 17:58:17] [█░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]   3% 等待后端启动 (37.2s/360s)17:58:17 - INFO - Loaded 125034 entries from D:\Projects\Unified-AI-Project\data\dictionaries\cedict.json
-17:58:24 - INFO - Loaded 217543 entries from D:\Projects\Unified-AI-Project\data\dictionaries\jmdict.json
-17:58:28 - INFO - Loaded 117658 entries from D:\Projects\Unified-AI-Project\data\dictionaries\wordnet.json
-[K[2026-07-09 17:58:29] [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]   4% 等待后端启动 (49.3s/360s)[K[2026-07-09 17:58:41] [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]   5% 等待后端启动 (61.4s/360s)17:58:51 - INFO - Synced 22640 relations from dictionary to network
-17:58:51 - INFO - ED3NEngine loaded 460235 external dictionary entries total.
-17:58:51 - INFO - Warm-up: loaded 460235 external dictionary entries
-17:58:51 - INFO - [ED3N] Pre-warmed 460235 external dictionary entries
-17:58:52 - INFO - [LifeCycle] Shared singleton initialized
-17:58:52 - INFO - [Heartbeat] Shared singleton initialized
-17:58:52 - INFO - 💓 [Heartbeat] Starting MetabolicHeartbeat...
-17:58:52 - INFO - 🧬 [Bio] Already running, skipping initialize.
-17:58:52 - INFO - 💓 [Heartbeat] BioIntegrator initialized.
-17:58:52 - INFO - 💓 Angela's Heartbeat started. Birth: 2026-07-09 17:58:52.047762
-17:58:52 - INFO - [Heartbeat] MetabolicHeartbeat started during lifespan
-17:58:53 - INFO - CausalTracer initialized
-17:58:53 - INFO - 🎨 [L4-Workflow] Aesthetic shift based on 'neutral'.
-[K[2026-07-09 17:58:53] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:58:53] [█████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░]  50% 后端已就绪[K[█████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░]  50% ✅ 后端已就绪
-[K[2026-07-09 17:58:53] [██████████████████████████████░░░░░░░░░░░░░░░░░░░░]  60% 启动桌面应用...[K[2026-07-09 17:58:54] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:58:54] [████████████████████████████████████████░░░░░░░░░░]  80% 桌面应用已启动[K[████████████████████████████████████████░░░░░░░░░░]  80% ✅ 桌面应用已启动
-[K[██████████████████████████████████████████████████] 100% ✅ Angela AI 启动完成！
-[K[2026-07-09 17:58:54] 运行中... 剩余 02:59[K[2026-07-09 17:58:55] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:58:55] 运行中... 剩余 02:58[K[2026-07-09 17:58:56] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:58:56] 运行中... 剩余 02:57[K[2026-07-09 17:58:57] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:58:57] 运行中... 剩余 02:56[K[2026-07-09 17:58:58] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:58:58] 运行中... 剩余 02:55[K[2026-07-09 17:58:59] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:58:59] 运行中... 剩余 02:54[K[2026-07-09 17:59:00] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:01] 运行中... 剩余 02:53[K[2026-07-09 17:59:02] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:02] 运行中... 剩余 02:52[K[2026-07-09 17:59:03] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:03] 运行中... 剩余 02:51[K[2026-07-09 17:59:04] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:04] 运行中... 剩余 02:50[K[2026-07-09 17:59:05] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:05] 运行中... 剩余 02:49[K[2026-07-09 17:59:06] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:06] 运行中... 剩余 02:48[K[2026-07-09 17:59:07] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:07] 运行中... 剩余 02:46[K[2026-07-09 17:59:08] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:09] 运行中... 剩余 02:45[K[2026-07-09 17:59:09] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:10] 运行中... 剩余 02:44[K[2026-07-09 17:59:10] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:11] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:11] 运行中... 剩余 02:43[K[2026-07-09 17:59:12] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:12] 运行中... 剩余 02:41[K[2026-07-09 17:59:13] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:13] 运行中... 剩余 02:40[K[2026-07-09 17:59:14] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:15] 运行中... 剩余 02:39[K[2026-07-09 17:59:15] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:16] 运行中... 剩余 02:38[K[2026-07-09 17:59:17] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:17] 运行中... 剩余 02:37[K[2026-07-09 17:59:18] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:18] 运行中... 剩余 02:36[K[2026-07-09 17:59:19] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:19] 运行中... 剩余 02:35[K[2026-07-09 17:59:20] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:20] 运行中... 剩余 02:33[K[2026-07-09 17:59:21] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:21] 运行中... 剩余 02:32[K[2026-07-09 17:59:22] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:22] 运行中... 剩余 02:31[K[2026-07-09 17:59:24] 运行中... 剩余 02:30[K[2026-07-09 17:59:25] 运行中... 剩余 02:29[K[2026-07-09 17:59:25] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:26] 运行中... 剩余 02:28[K[2026-07-09 17:59:26] WS broadcast (0 clients, 1.0s)[K[2026-07-09 17:59:27] 运行中... 剩余 02:27[K[2026-07-09 17:59:27] WS broadcast (0 clients, 1.0s)17:59:28 - INFO - [SessionManager] Registered session: client_id=6369c19c-f54e-409e-a4a7-46e0d3c67866, session_id=session_1778247779923_rdm4b4nlu
-17:59:28 - INFO - [WebSocket] Connected - client_id: 6369c19c-f54e-409e-a4a7-46e0d3c67866, session_id: session_1778247779923_rdm4b4nlu
-[K[K[2026-07-09 17:59:28] WS broadcast (1 clients, 1.0s)[2026-07-09 17:59:28] 运行中... 剩余 02:26[K[2026-07-09 17:59:29] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:29] 运行中... 剩余 02:25[K[2026-07-09 17:59:30] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:30] 运行中... 剩余 02:23[K[2026-07-09 17:59:31] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:31] 运行中... 剩余 02:22[K[2026-07-09 17:59:32] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:33] 运行中... 剩余 02:21[K[2026-07-09 17:59:33] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:34] 运行中... 剩余 02:20[K[2026-07-09 17:59:34] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:35] 运行中... 剩余 02:19[K[2026-07-09 17:59:35] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:37] 运行中... 剩余 02:17[K[2026-07-09 17:59:37] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:38] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:38] 运行中... 剩余 02:16[K[2026-07-09 17:59:39] 运行中... 剩余 02:15[K[2026-07-09 17:59:39] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:40] 运行中... 剩余 02:14[K[2026-07-09 17:59:41] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:42] 运行中... 剩余 02:12[K[2026-07-09 17:59:42] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:43] 运行中... 剩余 02:11[K[2026-07-09 17:59:43] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:44] 运行中... 剩余 02:10[K[2026-07-09 17:59:44] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:46] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:46] 运行中... 剩余 02:08[K[2026-07-09 17:59:47] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:47] 运行中... 剩余 02:06[K[2026-07-09 17:59:48] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:48] 运行中... 剩余 02:05[K[2026-07-09 17:59:49] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:49] 运行中... 剩余 02:04[K[2026-07-09 17:59:50] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:51] 运行中... 剩余 02:03[K[2026-07-09 17:59:51] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:52] 运行中... 剩余 02:02[K[2026-07-09 17:59:52] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:53] 运行中... 剩余 02:01[K[2026-07-09 17:59:53] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:54] 运行中... 剩余 02:00[K[2026-07-09 17:59:54] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:55] 运行中... 剩余 01:59[K[2026-07-09 17:59:55] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:56] 运行中... 剩余 01:58[K[2026-07-09 17:59:57] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:57] 运行中... 剩余 01:56[K[2026-07-09 17:59:58] WS broadcast (1 clients, 1.0s)[K[2026-07-09 17:59:59] 运行中... 剩余 01:55[K[2026-07-09 17:59:59] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:00] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:00] 运行中... 剩余 01:54[K[2026-07-09 18:00:01] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:01] 运行中... 剩余 01:53[K[2026-07-09 18:00:02] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:02] 运行中... 剩余 01:52[K[2026-07-09 18:00:03] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:04] 运行中... 剩余 01:50[K[2026-07-09 18:00:04] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:05] 运行中... 剩余 01:49[K[2026-07-09 18:00:05] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:06] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:06] 运行中... 剩余 01:47[K[2026-07-09 18:00:07] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:08] 运行中... 剩余 01:46[K[2026-07-09 18:00:08] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:09] 运行中... 剩余 01:45[K[2026-07-09 18:00:09] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:10] 运行中... 剩余 01:44[K[2026-07-09 18:00:10] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:11] 运行中... 剩余 01:43[K[2026-07-09 18:00:12] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:12] 运行中... 剩余 01:42[K[2026-07-09 18:00:13] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:13] 运行中... 剩余 01:41[K[2026-07-09 18:00:14] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:14] 运行中... 剩余 01:39[K[2026-07-09 18:00:15] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:15] 运行中... 剩余 01:38[K[2026-07-09 18:00:16] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:16] 运行中... 剩余 01:37[K[2026-07-09 18:00:18] 运行中... 剩余 01:36[K[2026-07-09 18:00:18] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:19] 运行中... 剩余 01:35[K[2026-07-09 18:00:19] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:20] 运行中... 剩余 01:34[K[2026-07-09 18:00:20] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:21] 运行中... 剩余 01:33[K[2026-07-09 18:00:21] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:22] 运行中... 剩余 01:32[K[2026-07-09 18:00:22] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:23] 运行中... 剩余 01:31[K[2026-07-09 18:00:23] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:24] 运行中... 剩余 01:30[K[2026-07-09 18:00:24] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:25] 运行中... 剩余 01:29[K[2026-07-09 18:00:26] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:26] 运行中... 剩余 01:27[K[2026-07-09 18:00:27] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:27] 运行中... 剩余 01:26[K[2026-07-09 18:00:28] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:28] 运行中... 剩余 01:25[K[2026-07-09 18:00:29] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:30] 运行中... 剩余 01:24[K[2026-07-09 18:00:30] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:31] 运行中... 剩余 01:23[K[2026-07-09 18:00:31] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:32] 运行中... 剩余 01:22[K[2026-07-09 18:00:32] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:33] 运行中... 剩余 01:21[K[2026-07-09 18:00:33] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:34] 运行中... 剩余 01:20[K[2026-07-09 18:00:35] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:35] 运行中... 剩余 01:19[K[2026-07-09 18:00:36] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:36] 运行中... 剩余 01:18[K[2026-07-09 18:00:37] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:37] 运行中... 剩余 01:16[K[2026-07-09 18:00:38] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:38] 运行中... 剩余 01:15[K[2026-07-09 18:00:39] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:39] 运行中... 剩余 01:14[K[2026-07-09 18:00:40] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:41] 运行中... 剩余 01:13[K[2026-07-09 18:00:41] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:42] 运行中... 剩余 01:12[K[2026-07-09 18:00:42] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:43] 运行中... 剩余 01:11[K[2026-07-09 18:00:44] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:44] 运行中... 剩余 01:10[K[2026-07-09 18:00:45] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:45] 运行中... 剩余 01:08[K[2026-07-09 18:00:46] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:46] 运行中... 剩余 01:07[K[2026-07-09 18:00:47] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:47] 运行中... 剩余 01:06[K[2026-07-09 18:00:48] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:49] 运行中... 剩余 01:05[K[2026-07-09 18:00:49] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:50] 运行中... 剩余 01:04[K[2026-07-09 18:00:50] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:51] 运行中... 剩余 01:03[K[2026-07-09 18:00:51] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:52] 运行中... 剩余 01:02[K[2026-07-09 18:00:52] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:53] 运行中... 剩余 01:01[K[2026-07-09 18:00:54] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:54] 运行中... 剩余 00:59[K[2026-07-09 18:00:55] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:55] 运行中... 剩余 00:58[K[2026-07-09 18:00:56] WS broadcast (1 clients, 1.0s)[K[K[2026-07-09 18:00:57] 运行中... 剩余 00:57[2026-07-09 18:00:57] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:58] 运行中... 剩余 00:56[K[2026-07-09 18:00:58] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:00:59] 运行中... 剩余 00:55[K[2026-07-09 18:00:59] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:00] 运行中... 剩余 00:54[K[2026-07-09 18:01:00] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:01] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:01] 运行中... 剩余 00:52[K[2026-07-09 18:01:02] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:03] 运行中... 剩余 00:51[K[2026-07-09 18:01:03] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:04] 运行中... 剩余 00:50[K[2026-07-09 18:01:04] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:05] 运行中... 剩余 00:49[K[2026-07-09 18:01:05] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:06] 运行中... 剩余 00:48[K[2026-07-09 18:01:06] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:07] 运行中... 剩余 00:47[K[2026-07-09 18:01:08] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:08] 运行中... 剩余 00:46[K[2026-07-09 18:01:09] 运行中... 剩余 00:44[K[2026-07-09 18:01:10] 运行中... 剩余 00:43[K[2026-07-09 18:01:10] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:11] 运行中... 剩余 00:42[K[2026-07-09 18:01:12] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:13] 运行中... 剩余 00:41[K[2026-07-09 18:01:13] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:14] 运行中... 剩余 00:40[K[2026-07-09 18:01:14] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:15] 运行中... 剩余 00:39[K[2026-07-09 18:01:15] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:16] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:16] 运行中... 剩余 00:37[K[2026-07-09 18:01:17] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:18] 运行中... 剩余 00:36[K[2026-07-09 18:01:18] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:19] 运行中... 剩余 00:34[K[2026-07-09 18:01:19] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:21] 运行中... 剩余 00:33[K[2026-07-09 18:01:21] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:22] 运行中... 剩余 00:32[K[2026-07-09 18:01:22] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:23] 运行中... 剩余 00:31[K[2026-07-09 18:01:23] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:24] 运行中... 剩余 00:30[K[2026-07-09 18:01:24] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:25] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:25] 运行中... 剩余 00:28[K[2026-07-09 18:01:26] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:27] 运行中... 剩余 00:27[K[2026-07-09 18:01:27] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:28] 运行中... 剩余 00:26[K[2026-07-09 18:01:29] 运行中... 剩余 00:2518:01:28 - WARNING - [WebSocket] Heartbeat timeout: 6369c19c-f54e-409e-a4a7-46e0d3c67866
-Traceback (most recent call last):
-  File "C:\Users\zofug\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\tasks.py", line 488, in wait_for
-    return await fut
-           ^^^^^^^^^
-  File "C:\Users\zofug\AppData\Roaming\Python\Python314\site-packages\starlette\websockets.py", line 135, in receive_json
-    message = await self.receive()
-              ^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\zofug\AppData\Roaming\Python\Python314\site-packages\starlette\websockets.py", line 47, in receive
-    message = await self._receive()
-              ^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\zofug\AppData\Roaming\Python\Python314\site-packages\uvicorn\protocols\websockets\websockets_impl.py", line 363, in asgi_receive
-    data = await self.recv()
-           ^^^^^^^^^^^^^^^^^
-  File "C:\Users\zofug\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\websockets\legacy\protocol.py", line 538, in recv
-    await asyncio.wait(
-    ...<2 lines>...
-    )
-  File "C:\Users\zofug\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\tasks.py", line 432, in wait
-    return await _wait(fs, timeout, return_when, loop)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\zofug\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\tasks.py", line 521, in _wait
-    await waiter
-asyncio.exceptions.CancelledError
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "D:\Projects\Unified-AI-Project\apps\backend\src\services\websocket_manager.py", line 421, in websocket_handler
-    data = await asyncio.wait_for(
-           ^^^^^^^^^^^^^^^^^^^^^^^
-        websocket.receive_json(), timeout=manager.heartbeat_timeout
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\zofug\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\tasks.py", line 487, in wait_for
-    async with timeouts.timeout(timeout):
-               ~~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\zofug\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\timeouts.py", line 114, in __aexit__
-    raise TimeoutError from exc_val
-TimeoutError
-18:01:29 - INFO - [SessionManager] Unregistered: client_id=6369c19c-f54e-409e-a4a7-46e0d3c67866, reason=Normal close
-[K[2026-07-09 18:01:29] WS broadcast (0 clients, 1.0s)[K[2026-07-09 18:01:30] 运行中... 剩余 00:24[K[2026-07-09 18:01:30] WS broadcast (0 clients, 1.0s)18:01:31 - INFO - [SessionManager] Registered session: client_id=36e5529e-c517-43be-9f60-a3857fcd3727, session_id=session_1778247779923_rdm4b4nlu
-18:01:31 - INFO - [WebSocket] Connected - client_id: 36e5529e-c517-43be-9f60-a3857fcd3727, session_id: session_1778247779923_rdm4b4nlu
-[K[2026-07-09 18:01:31] 运行中... 剩余 00:22[K[2026-07-09 18:01:31] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:33] 运行中... 剩余 00:21[K[2026-07-09 18:01:33] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:34] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:34] 运行中... 剩余 00:20[K[2026-07-09 18:01:35] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:35] 运行中... 剩余 00:18[K[2026-07-09 18:01:36] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:37] 运行中... 剩余 00:17[K[2026-07-09 18:01:37] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:38] 运行中... 剩余 00:16[K[2026-07-09 18:01:38] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:39] 运行中... 剩余 00:15[K[2026-07-09 18:01:40] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:40] 运行中... 剩余 00:14[K[2026-07-09 18:01:41] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:41] 运行中... 剩余 00:13[K[2026-07-09 18:01:42] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:42] 运行中... 剩余 00:12[K[2026-07-09 18:01:43] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:44] 运行中... 剩余 00:10[K[2026-07-09 18:01:44] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:45] 运行中... 剩余 00:09[K[2026-07-09 18:01:45] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:46] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:46] 运行中... 剩余 00:08[K[2026-07-09 18:01:47] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:47] 运行中... 剩余 00:07[K[2026-07-09 18:01:48] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:48] 运行中... 剩余 00:06[K[2026-07-09 18:01:49] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:50] 运行中... 剩余 00:03[K[2026-07-09 18:01:51] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:51] 运行中... 剩余 00:02[K[2026-07-09 18:01:52] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:52] 运行中... 剩余 00:01[K[2026-07-09 18:01:54] WS broadcast (1 clients, 1.0s)[K[2026-07-09 18:01:54] 运行中... 剩余 00:00[K[2026-07-09 18:01:55] WS broadcast (1 clients, 1.0s)
-[K[2026-07-09 18:01:55] 测试超时（180秒），正在关闭...
-[K[2026-07-09 18:01:54] 运行中... 剩余 00:00[K[2026-07-09 18:01:55] [███████████████████████████████████████████████░░░]  95% 正在关闭...Error in __main__: Command '['C:\\Users\\zofug\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe', '-m', 'uvicorn', 'services.main_api_server:app', '--host', '0.0.0.0', '--port', '8000', '--log-level', 'warning']' timed out after 5 seconds
-Traceback (most recent call last):
-  File "D:\Projects\Unified-AI-Project\scripts\run_angela.py", line 574, in shutdown
-    proc.wait(timeout=5)
-    ~~~~~~~~~^^^^^^^^^^^
-  File "C:\Users\zofug\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1279, in wait
-    return self._wait(timeout=timeout)
-           ~~~~~~~~~~^^^^^^^^^^^^^^^^^
-  File "C:\Users\zofug\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1608, in _wait
-    raise TimeoutExpired(self.args, timeout)
-subprocess.TimeoutExpired: Command '['C:\\Users\\zofug\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe', '-m', 'uvicorn', 'services.main_api_server:app', '--host', '0.0.0.0', '--port', '8000', '--log-level', 'warning']' timed out after 5 seconds
-[K[██████████████████████████████████████████████████] 100% ✅ 已关闭

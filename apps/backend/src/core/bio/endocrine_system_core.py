@@ -89,6 +89,7 @@ class EndocrineSystem:
         self.stress_level: float = 0.0
         self._running: bool = False
         self._callbacks: list[Callable] = []
+        self._update_task: Optional[asyncio.Task] = None
         self.feedback_loops: dict[tuple, float] = {}
         self.emotional_state: dict[str, float] = {}
         self.activity_level: float = 0.0
@@ -491,12 +492,18 @@ class EndocrineSystem:
     async def initialize(self) -> None:
         """Initialize the endocrine system and start background tasks"""
         self._running = True
-        asyncio.ensure_future(self._update_loop())
+        self._update_task = asyncio.ensure_future(self._update_loop())
         logger.info("EndocrineSystem initialized")
 
     async def shutdown(self) -> None:
         """Shutdown the endocrine system and stop background tasks"""
         self._running = False
+        if self._update_task:
+            self._update_task.cancel()
+            try:
+                await self._update_task
+            except asyncio.CancelledError:
+                pass
         logger.info("EndocrineSystem shut down")
 
     def get_hormonal_profile(self) -> Dict[str, Any]:

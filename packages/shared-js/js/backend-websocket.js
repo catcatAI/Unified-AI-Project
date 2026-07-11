@@ -1218,7 +1218,7 @@ _routeMessage(message) {
     if (window.electronAPI) {
       const events = ['websocket-connected', 'websocket-message', 'websocket-disconnected', 'websocket-error']
       for (const evt of events) {
-        try { window.electronAPI.off?.(evt) } catch (_) {}
+        try { window.electronAPI.off?.(evt) } catch (_) { console.warn('[BackendWebSocket] Failed to remove IPC listener:', evt) }
       }
     }
 
