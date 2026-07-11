@@ -125,22 +125,13 @@ class TestHSPSecurity:
         }
         sender_id = message["sender_ai_id"]
         
-        # 安全处理消息
         secured_message = security_context.secure_message(message, sender_id)
         assert secured_message is not None
         assert "security_parameters" in secured_message
-        
-        # 添加调试信息
-        print(f"Secured message, {secured_message}")
-        
-        # 验证并处理消息
+
         is_valid, processed_message = security_context.authenticate_and_process_message(secured_message)
-        print(f"Is valid, {is_valid}")
-        print(f"Processed message, {processed_message}")
-        
-        # 检查测试环境变量
+
         testing_mode = os.environ.get('TESTING_MODE') == 'true'
-        print(f"Testing mode, {testing_mode}")
         
         # 在测试环境中,我们期望消息能被正确处理
         assert processed_message is not None

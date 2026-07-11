@@ -64,7 +64,7 @@ _SMOKE_MODULES = [
     ("ai.agents.specialized.knowledge_graph_agent", "KnowledgeGraphAgent", {}),
     # Merged from tests/tools/test_tools_imports.py (§X #120)
     ("core.tools.code_understanding_tool", "CodeUnderstandingTool", {}),
-    ("fragmenta.fragmenta_orchestrator", "FragmentaOrchestrator", {}),
+    ("fragmenta.fragmenta_orchestrator", "FragmentaOrchestrator", {"ham_manager": None}),
     # Merged from tests/unit/test_unit_backend_imports.py (§X #123)
     ("ai.alignment.asi_autonomous_alignment", "ASIAutonomousAlignment", {}),
     ("core.state.precision_projection_matrix", "PrecisionProjectionMatrix", {}),
@@ -81,7 +81,7 @@ _SMOKE_MODULES = [
     # Merged from tests/unit/test_maturity_system.py (§X #134)
     ("core.maturity.maturity_system", "MaturityManager", {}),
     # Merged from tests/services/test_multimodal_integration.py (§X #134)
-    ("services.multimodal_service", "MultimodalService", {"config": {}}),
+    ("services.multimodal_service", "MultimodalService", {}),
 ]
 
 
@@ -111,36 +111,29 @@ def test_smoke_instantiate(module_path, class_name, kwargs):
     cls = _try_import_class(module_path, class_name)
     if cls is None:
         pytest.skip(f"Not available: {module_path}.{class_name}")
-    try:
-        instance = cls(**kwargs)
-        assert instance is not None
-    except Exception as e:
-        pytest.skip(f"Init failed: {e}")
+    instance = cls(**kwargs)
+    assert instance is not None
 
 
 class TestGravityCalibrator:
     """Extra tests for GravityCalibrator (was in dedicated file)."""
 
     def test_constants(self):
-        try:
-            from core.card.quality.gravity_calibration import G_CANDIDATES, IDEAL_LOWER, IDEAL_UPPER
-            assert IDEAL_LOWER == 0.6
-            assert IDEAL_UPPER == 0.85
-            assert len(G_CANDIDATES) == 4
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
+        pytest.importorskip("core.card.quality.gravity_calibration")
+        from core.card.quality.gravity_calibration import G_CANDIDATES, IDEAL_LOWER, IDEAL_UPPER
+        assert IDEAL_LOWER == 0.6
+        assert IDEAL_UPPER == 0.85
+        assert len(G_CANDIDATES) == 4
 
 
 class TestLevel5ASISystem:
     """Extra tests for Level5ASISystem (was dedicated file)."""
 
     def test_instantiation_system_id(self):
-        try:
-            from ai.level5_asi_system import Level5ASISystem
-            instance = Level5ASISystem()
-            assert instance.system_id == "level5_asi_system"
-        except Exception as e:
-            pytest.skip(f"Level5ASISystem init failed: {e}")
+        pytest.importorskip("ai.level5_asi_system")
+        from ai.level5_asi_system import Level5ASISystem
+        instance = Level5ASISystem()
+        assert instance.system_id == "level5_asi_system"
 
 
 class TestParameterExtractor:
@@ -150,11 +143,9 @@ class TestParameterExtractor:
         """Verify core.tools.parameter_extractor package is importable.
         Merged from tests/tools/test_tools_imports.py (§X #120).
         """
-        try:
-            mod = importlib.import_module("core.tools.parameter_extractor")
-            assert mod is not None
-        except ImportError as e:
-            pytest.skip(f"Not available: {e}")
+        pytest.importorskip("core.tools.parameter_extractor")
+        mod = importlib.import_module("core.tools.parameter_extractor")
+        assert mod is not None
 
 
 # ── Optional module attribute imports ───────────────────────────────────
@@ -176,12 +167,10 @@ class TestOptionalModuleImports:
                              ids=lambda x: f"{x[0].split('.')[-1]}.{x[1]}" if isinstance(x, tuple) else str(x))
     def test_optional_module_import(self, module_path: str, attr_name: str) -> None:
         """Verify optional module attribute is importable."""
-        try:
-            mod = importlib.import_module(module_path)
-            obj = getattr(mod, attr_name)
-            assert obj is not None
-        except (ImportError, ModuleNotFoundError):
-            pytest.skip(f"Optional module {module_path} not available")
+        pytest.importorskip(module_path)
+        mod = importlib.import_module(module_path)
+        obj = getattr(mod, attr_name)
+        assert obj is not None
 
 
 class TestCardTypes:
@@ -190,11 +179,8 @@ class TestCardTypes:
     _module = "core.card.card_types"
 
     def _import(self, name):
-        try:
-            from importlib import import_module
-            return getattr(import_module(self._module), name)
-        except (ImportError, AttributeError) as e:
-            pytest.skip(f"{self._module}.{name}: {e}")
+        from importlib import import_module
+        return getattr(import_module(self._module), name)
 
     def test_source_file(self):
         sf = self._import("SourceFile")
@@ -234,11 +220,8 @@ class TestDigitalLifeConstants:
     _module = "core.life.digital_life_constants"
 
     def _import(self, name):
-        try:
-            from importlib import import_module
-            return getattr(import_module(self._module), name)
-        except (ImportError, AttributeError) as e:
-            pytest.skip(f"{self._module}.{name}: {e}")
+        from importlib import import_module
+        return getattr(import_module(self._module), name)
 
     def test_metabolic_constants(self):
         MC = self._import("MetabolicConstants")
@@ -261,128 +244,93 @@ class TestDigitalLifeConstants:
 class TestEventLoopSystem:
     """Extra tests for EventLoopSystem (was dedicated file)."""
 
-    def _import(self):
-        try:
-            from core.event_loop_system import EventLoopSystem
-            return EventLoopSystem
-        except ImportError as e:
-            pytest.skip(f"EventLoopSystem: {e}")
+    @staticmethod
+    def _import():
+        pytest.importorskip("core.event_loop_system")
+        from core.event_loop_system import EventLoopSystem
+        return EventLoopSystem
 
     def test_instantiation_with_latency_target(self):
         EventLoopSystem = self._import()
-        try:
-            instance = EventLoopSystem(latency_target_ms=32.0)
-            assert instance.latency_target_ms == 32.0
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+        instance = EventLoopSystem(latency_target_ms=32.0)
+        assert instance.latency_target_ms == 32.0
 
     def test_register_handler_method(self):
         EventLoopSystem = self._import()
-        try:
-            instance = EventLoopSystem()
-            assert hasattr(instance, "register_handler")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+        instance = EventLoopSystem()
+        assert hasattr(instance, "register_handler")
 
     def test_event_dataclass(self):
-        try:
-            from core.event_loop_system import Event, EventPriority, EventStatus
-            from datetime import datetime
-            event = Event(event_id="evt_1", event_type="test", priority=EventPriority.NORMAL,
-                          data={"key": "value"}, timestamp=datetime.now(), source="test")
-            assert event.event_id == "evt_1"
-        except ImportError as e:
-            pytest.skip(f"Event dataclass: {e}")
+        pytest.importorskip("core.event_loop_system")
+        from core.event_loop_system import Event, EventPriority, EventStatus
+        from datetime import datetime
+        event = Event(event_id="evt_1", event_type="test", priority=EventPriority.NORMAL,
+                      data={"key": "value"}, timestamp=datetime.now(), source="test")
+        assert event.event_id == "evt_1"
 
 
 class TestHookRegistry:
     """Extra tests for HookRegistry (was dedicated file)."""
 
-    def _import(self):
-        try:
-            from core.plugin.hook_registry import HookRegistry
-            return HookRegistry
-        except ImportError as e:
-            pytest.skip(f"HookRegistry: {e}")
+    @staticmethod
+    def _import():
+        pytest.importorskip("core.plugin.hook_registry")
+        from core.plugin.hook_registry import HookRegistry
+        return HookRegistry
 
     def test_define_and_list_hooks(self):
         HookRegistry = self._import()
-        try:
-            registry = HookRegistry()
-            registry.define_hook("test_hook", "A test hook")
-            hooks = registry.list_hooks()
-            assert len(hooks) == 1
-            assert hooks[0]["name"] == "test_hook"
-            assert hooks[0]["handler_count"] == 0
-        except Exception as e:
-            pytest.skip(f"HookRegistry ops failed: {e}")
+        registry = HookRegistry()
+        registry.define_hook("test_hook", "A test hook")
+        hooks = registry.list_hooks()
+        assert len(hooks) == 1
+        assert hooks[0]["name"] == "test_hook"
+        assert hooks[0]["handler_count"] == 0
 
     def test_empty_hooks_on_init(self):
         HookRegistry = self._import()
-        try:
-            instance = HookRegistry()
-            assert len(instance._hooks) == 0
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+        instance = HookRegistry()
+        assert len(instance._hooks) == 0
 
 
 class TestHSMFormulaSystem:
     """Extra tests for HSMFormulaSystem (was dedicated file)."""
 
-    def _import(self):
-        try:
-            from core.hsm_formula_system import HSMFormulaSystem
-            return HSMFormulaSystem
-        except ImportError as e:
-            pytest.skip(f"HSMFormulaSystem: {e}")
+    @staticmethod
+    def _import():
+        pytest.importorskip("core.hsm_formula_system")
+        from core.hsm_formula_system import HSMFormulaSystem
+        return HSMFormulaSystem
 
     def test_config_constant(self):
         HSMFormulaSystem = self._import()
-        try:
-            instance = HSMFormulaSystem(config={"hsm_threshold": 0.7})
-            assert instance.e_m2_constant == 0.1
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+        instance = HSMFormulaSystem(config={"hsm_threshold": 0.7})
+        assert instance.e_m2_constant == 0.1
 
     def test_detect_cognitive_gap_method(self):
         HSMFormulaSystem = self._import()
-        try:
-            instance = HSMFormulaSystem()
-            assert hasattr(instance, "detect_cognitive_gap")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+        instance = HSMFormulaSystem()
+        assert hasattr(instance, "detect_cognitive_gap")
 
 
 class TestMaturitySystem:
     """Extra tests for maturity_system (was dedicated file)."""
 
     def test_maturity_level(self):
-        try:
-            from core.maturity.maturity_system import MaturityLevel
-            assert len(MaturityLevel) == 12
-            result = MaturityLevel.from_memory(500)
-            assert result["level"] == 1
-        except ImportError as e:
-            pytest.skip(f"MaturityLevel: {e}")
-        except Exception as e:
-            pytest.skip(f"MaturityLevel method failed: {e}")
+        pytest.importorskip("core.maturity.maturity_system")
+        from core.maturity.maturity_system import MaturityLevel
+        assert len(MaturityLevel) == 12
+        assert MaturityLevel.L0.value == "L0"
+        assert MaturityLevel.L11.value == "L11"
 
     def test_maturity_manager(self):
-        try:
-            from core.maturity.maturity_system import MaturityManager
-            instance = MaturityManager()
-            assert instance.current_level == 0
-        except ImportError as e:
-            pytest.skip(f"MaturityManager: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+        pytest.importorskip("core.maturity.maturity_system")
+        from core.maturity.maturity_system import MaturityLevel, MaturityManager
+        instance = MaturityManager()
+        assert instance.current_level == MaturityLevel.L0
 
     def test_experience_tracker(self):
-        try:
-            from core.maturity.maturity_system import ExperienceTracker
-            instance = ExperienceTracker()
-            assert instance.memory_count == 0
-        except ImportError as e:
-            pytest.skip(f"ExperienceTracker: {e}")
-        except Exception as e:
-            pytest.skip(f"Init failed: {e}")
+        pytest.importorskip("core.maturity.maturity_system")
+        from core.maturity.maturity_system import ExperienceTracker
+        instance = ExperienceTracker()
+        assert instance.total_experience == 0

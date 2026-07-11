@@ -101,10 +101,6 @@ class TestMultimodalStress:
         errors = sum(1 for r in results if isinstance(r, dict) and r.get("error"))
         exceptions = sum(1 for r in results if isinstance(r, Exception))
 
-        print(f"  100 concurrent encodes: {successes} success, "
-              f"{errors} errors, {exceptions} exceptions "
-              f"in {elapsed:.2f}s")
-
         # At least 80% should succeed
         assert successes >= 80, f"Only {successes}/100 encodes succeeded"
 
@@ -133,10 +129,6 @@ class TestMultimodalStress:
         errors = sum(1 for r in results if isinstance(r, dict) and r.get("error"))
         exceptions = sum(1 for r in results if isinstance(r, Exception))
 
-        print(f"  100 concurrent decodes: {successes} success, "
-              f"{errors} errors, {exceptions} exceptions "
-              f"in {elapsed:.2f}s")
-
         assert successes >= 80, f"Only {successes}/100 decodes succeeded"
 
     @pytest.mark.asyncio
@@ -161,8 +153,6 @@ class TestMultimodalStress:
         elapsed = time.time() - t0
 
         successes = sum(1 for r in results if isinstance(r, dict) and r.get("error") is None)
-        print(f"  50 concurrent compares: {successes}/50 success in {elapsed:.2f}s")
-
         assert successes >= 40, f"Only {successes}/50 compares succeeded"
 
     @pytest.mark.asyncio
@@ -182,8 +172,6 @@ class TestMultimodalStress:
             # Don't assert on decode — may fail if item removed
 
         elapsed = time.time() - t0
-        print(f"  50 encode+decode cycles: completed in {elapsed:.2f}s")
-        print(f"  Registered items: {len(svc._registered_items)}")
 
         # Verify items were registered before cleanup
         assert len(svc._registered_items) > 0, "No items were registered during stress test"

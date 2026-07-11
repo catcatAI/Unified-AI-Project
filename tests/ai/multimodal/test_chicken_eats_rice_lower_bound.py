@@ -261,8 +261,6 @@ class TestChickenEatsRice:
         avg_cross = float(np.mean(cross_class_sims))
 
         # After training, same-class should be closer than cross-class
-        print(f"\n  📊 Avg same-class similarity: {avg_same:.4f}")
-        print(f"  📊 Avg cross-class similarity: {avg_cross:.4f}")
         assert avg_same > avg_cross, \
             f"Training failed to cluster: same={avg_same:.4f} <= cross={avg_cross:.4f}"
 
@@ -346,7 +344,6 @@ class TestChickenEatsRice:
                     correct += 1
 
         accuracy = correct / max(total, 1)
-        print(f"\n  📊 Cross-concept accuracy: {correct}/{total} = {accuracy:.1%}")
         assert accuracy >= 2/3, \
             f"Cross-concept accuracy too low: {correct}/{total}"
 
@@ -380,7 +377,6 @@ class TestChickenEatsRice:
         trained_W = trained_ls._projections["vision"]["W"]
 
         diff = np.abs(trained_W - original_W).mean()
-        print(f"\n  📊 Mean weight change: {diff:.6f}")
 
         # The weights should have changed measurably
         assert diff > 1e-6, \

@@ -170,23 +170,3 @@ def test_apply_inter_dimensional_drag():
     assert dims["a"].coordinate == (10.0, 0.0, 0.0), "trigger dim shouldn't move"
     assert dims["b"].coordinate[0] == 1.0, f"b should be dragged: {dims['b'].coordinate}"
     assert dims["c"].coordinate[0] == 1.0, f"c should be dragged: {dims['c'].coordinate}"
-    print(f"  PASS: inter-dim drag moves other dims toward trigger")
-
-
-if __name__ == "__main__":
-    print("=== cognitive_operations.py Tests ===\n")
-
-    test_cognitive_op_enum()
-    test_compute_spatial_influence_factor()
-    test_perform_spatial_reasoning()
-    test_get_dimension_value()
-    test_get_position()
-    test_execute_thought_chain()
-    test_evaluate_math_spatially()
-    test_apply_intent_gravity()
-    test_set_intent_target()
-    test_apply_inter_dimensional_drag()
-
-    print(f"\n============================================================")
-    print(f"COGNITIVE OPERATIONS TESTS: 10 passed, 0 failed")
-    print(f"============================================================")

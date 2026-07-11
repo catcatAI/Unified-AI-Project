@@ -9,10 +9,8 @@ from tests.conftest import PerformanceTimer, benchmark
 @pytest.mark.benchmark
 def test_importance_scorer_speed():
     """Benchmark ImportanceScorer.calculate() with 100 documents."""
-    try:
-        from ai.memory.importance_scorer import ImportanceScorer
-    except ImportError as e:
-        pytest.skip(f"ImportError: {e}")
+    pytest.importorskip("ai.memory.importance_scorer")
+    from ai.memory.importance_scorer import ImportanceScorer
 
     async def _run():
         scorer = ImportanceScorer()
@@ -26,17 +24,14 @@ def test_importance_scorer_speed():
             await scorer.calculate(doc["content"], doc["metadata"])
 
     stats = benchmark(lambda: asyncio.run(_run()), iterations=5)
-    print(f"  ImportanceScorer 100 docs: avg={stats['avg']:.4f}s")
     assert stats["avg"] > 0
 
 
 @pytest.mark.benchmark
 def test_importance_scorer_accuracy():
     """Verify longer docs with keyword matches get higher scores."""
-    try:
-        from ai.memory.importance_scorer import ImportanceScorer
-    except ImportError as e:
-        pytest.skip(f"ImportError: {e}")
+    pytest.importorskip("ai.memory.importance_scorer")
+    from ai.memory.importance_scorer import ImportanceScorer
 
     async def _run():
         scorer = ImportanceScorer()
@@ -65,10 +60,8 @@ def test_parallel_task_execution():
 @pytest.mark.benchmark
 def test_system_monitor_metrics():
     """Benchmark SystemMonitor.collect_metrics()."""
-    try:
-        from monitoring.system_monitor import SystemMonitor
-    except ImportError as e:
-        pytest.skip(f"ImportError: {e}")
+    pytest.importorskip("monitoring.system_monitor")
+    from monitoring.system_monitor import SystemMonitor
 
     def _run():
         monitor = SystemMonitor()
@@ -76,17 +69,14 @@ def test_system_monitor_metrics():
             monitor.collect_metrics()
 
     stats = benchmark(_run, iterations=5)
-    print(f"  SystemMonitor collect 10x: avg={stats['avg']:.4f}s")
     assert stats["avg"] > 0
 
 
 @pytest.mark.benchmark
 def test_services_initialize_speed():
     """Benchmark core_services.initialize_services()."""
-    try:
-        from core_services import initialize_services
-    except ImportError as e:
-        pytest.skip(f"ImportError: {e}")
+    pytest.importorskip("core_services")
+    from core_services import initialize_services
 
     async def _run():
         await initialize_services(config={"test": True}, use_mock_ham=True)

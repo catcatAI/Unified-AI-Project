@@ -27,8 +27,6 @@ def test_ed3n_retrieval():
 
     query = "Angela 有什麼能力？"
     query_keys = set(engine.dictionary.encode(query))
-    print(f"Query: '{query}'")
-    print(f"Query keys: {query_keys}")
 
     retrieved = []
     for entry in history:
@@ -42,13 +40,8 @@ def test_ed3n_retrieval():
 
     retrieved.sort(key=lambda x: x["relevance"], reverse=True)
 
-    print(f"\nRetrieved {len(retrieved)} relevant entries:")
-    for r in retrieved:
-        print(f"  [{r['role']}] {r['content'][:50]}... (relevance: {r['relevance']})")
-
     assert len(retrieved) > 0, "Should retrieve at least 1 relevant entry"
     assert retrieved[0]["relevance"] > 0, "Top entry should have positive relevance"
-    print("\nED3N retrieval test PASSED")
 
 
 def test_query_classifier_classification():
@@ -67,17 +60,9 @@ def test_query_classifier_classification():
         ("1+2", QueryType.MATH),
     ]
 
-    print("\nQuery Classification Tests:")
-    all_pass = True
     for text, expected in test_cases:
         r = clf.classify(text)
-        status = "PASS" if r.primary_type == expected else "FAIL"
-        if r.primary_type != expected:
-            all_pass = False
-        print(f"  {status} '{text}' -> {r.primary_type.value} (expected {expected.value})")
-
-    assert all_pass, "Some classification tests failed"
-    print("\nClassification test PASSED")
+        assert r.primary_type == expected, f"'{text}' -> {r.primary_type.value} (expected {expected.value})"
 
 
 def test_execution_gate_decisions():
@@ -96,18 +81,10 @@ def test_execution_gate_decisions():
         ("執行這個命令", "reject"),
     ]
 
-    print("\nExecution Gate Tests:")
-    all_pass = True
     for text, expected in test_cases:
         r = clf.classify(text)
         d = gate.decide(r.primary_type.value, r.action_type, text, r.confidence, {})
-        status = "PASS" if d.action == expected else "FAIL"
-        if d.action != expected:
-            all_pass = False
-        print(f"  {status} '{text}' -> {d.action} (expected {expected}) score={d.score:.3f}")
-
-    assert all_pass, "Some execution gate tests failed"
-    print("\nExecution gate test PASSED")
+        assert d.action == expected, f"'{text}' -> {d.action} (expected {expected}) score={d.score:.3f}"
 
 
 def test_prompt_builder_injection():
@@ -132,8 +109,6 @@ def test_prompt_builder_injection():
     assert "是" in system_content, "Should contain success status"
     assert "Search result" in system_content, "Should contain result text"
 
-    print("\nPrompt builder injection test PASSED")
-
 
 def test_retrieval_from_txt_file():
     """Test retrieving content from a text file."""
@@ -143,31 +118,24 @@ def test_retrieval_from_txt_file():
     with open("test_retrieval.txt", "r", encoding="utf-8") as f:
         content = f.read()
 
-    print(f"\nFile content ({len(content)} chars):")
-    print(content[:200] + "...")
-
     key_terms = ["Angela", "數據之海", "二進位", "符號", "沙灘"]
     found = []
     for term in key_terms:
         if term in content:
             found.append(term)
 
-    print(f"\nFound {len(found)}/{len(key_terms)} key terms: {found}")
     assert len(found) == len(key_terms), f"Missing terms: {set(key_terms) - set(found)}"
-    print("File content retrieval test PASSED")
 
 
 def test_ed3n_classifier_integration():
     """Test that ED3N engine can be passed to QueryClassifier."""
     from ai.core.query_classifier import QueryClassifier
 
-    # Test with no ed3n (backward compatible)
     clf_no_ed3n = QueryClassifier()
     assert clf_no_ed3n._ed3n is None
     r = clf_no_ed3n.classify("搜尋天氣")
     assert r.primary_type.value == "search"
 
-    # Test with ed3n engine
     from ai.ed3n.ed3n_engine import ED3NEngine
     engine = ED3NEngine()
     engine.load_presets()
@@ -176,22 +144,3 @@ def test_ed3n_classifier_integration():
     assert clf_with_ed3n._ed3n is engine
     r = clf_with_ed3n.classify("搜尋天氣")
     assert r.primary_type.value == "search"
-
-    print("\nED3N classifier integration test PASSED")
-
-
-if __name__ == "__main__":
-    print("=" * 60)
-    print("Angela v2 Integration Tests")
-    print("=" * 60)
-
-    test_retrieval_from_txt_file()
-    test_ed3n_retrieval()
-    test_query_classifier_classification()
-    test_execution_gate_decisions()
-    test_prompt_builder_injection()
-    test_ed3n_classifier_integration()
-
-    print("\n" + "=" * 60)
-    print("ALL TESTS PASSED")
-    print("=" * 60)

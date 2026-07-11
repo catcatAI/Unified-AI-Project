@@ -2825,6 +2825,90 @@
         ]
       },
       "confidence": 1.0
+    },
+    {
+      "key": "cls_learn_174",
+      "surface_forms": {
+        "zh": "actually"
+      },
+      "contexts": [
+        {
+          "context_id": "conservative",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
+    },
+    {
+      "key": "cls_learn_175",
+      "surface_forms": {
+        "zh": "something"
+      },
+      "contexts": [
+        {
+          "context_id": "conservative",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
+    },
+    {
+      "key": "e2",
+      "surface_forms": {
+        "zh": "sad"
+      },
+      "contexts": [
+        {
+          "context_id": "conservative",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
+    },
+    {
+      "key": "cls_learn_177",
+      "surface_forms": {
+        "zh": "my"
+      },
+      "contexts": [
+        {
+          "context_id": "conservative",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
+    },
+    {
+      "key": "c4",
+      "surface_forms": {
+        "zh": "name"
+      },
+      "contexts": [
+        {
+          "context_id": "conservative",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
+    },
+    {
+      "key": "cls_learn_179",
+      "surface_forms": {
+        "zh": "is"
+      },
+      "contexts": [
+        {
+          "context_id": "conservative",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
     }
   ]
 }

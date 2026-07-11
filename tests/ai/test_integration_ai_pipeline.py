@@ -700,10 +700,6 @@ class TestNeuroVocabularyEdgeCases:
         state_store = mod.state_store
         if not hasattr(state_store, "get_state"):
             pytest.skip("state_store missing get_state method")
-        try:
-            _ = state_store.get_state("test_dummy")
-        except (KeyError, ValueError, RuntimeError):
-            pytest.skip("state_store.get_state not functional in this environment")
         vocab.learn_mapping("rt.field", 0.3, "roundtrip value")
         vocab.sync_to_state_store()
         vocab2 = NeuroVocabulary()

@@ -7,10 +7,8 @@ from tests.conftest import benchmark
 @pytest.mark.benchmark
 def test_emotion_system_speed():
     """Benchmark EmotionSystem operations."""
-    try:
-        from ai.alignment.emotion_system import EmotionSystem
-    except ImportError as e:
-        pytest.skip(f"ImportError: {e}")
+    pytest.importorskip("ai.alignment.emotion_system")
+    from ai.alignment.emotion_system import EmotionSystem
 
     def _run():
         system = EmotionSystem()
@@ -23,34 +21,29 @@ def test_emotion_system_speed():
         assert "dominant_emotion" in summary
 
     stats = benchmark(_run, iterations=5)
-    print(f"  EmotionSystem 50 context analyses: avg={stats['avg']:.4f}s")
     assert stats["avg"] > 0
 
 
 @pytest.mark.benchmark
 def test_alignment_manager_speed():
-    """Benchmark AlignmentManager checks (skip if module is stub-only)."""
-    try:
-        from ai.alignment.alignment_manager import AlignmentManager
-        manager = AlignmentManager()
-    except (ImportError, AttributeError, TypeError) as e:
-        pytest.skip(f"AlignmentManager not available: {e}")
+    """Benchmark AlignmentManager checks."""
+    pytest.importorskip("ai.alignment.alignment_manager")
+    from ai.alignment.alignment_manager import AlignmentManager
+
+    manager = AlignmentManager()
 
     def _run():
         _ = manager.check_alignment({"input": "test"})
 
     stats = benchmark(_run, iterations=10)
-    print(f"  AlignmentManager: avg={stats['avg']:.4f}s")
     assert stats["avg"] > 0
 
 
 @pytest.mark.benchmark
 def test_knowledge_graph_speed():
     """Benchmark KnowledgeGraphAgent operations."""
-    try:
-        from ai.agents.specialized.knowledge_graph_agent import KnowledgeGraphAgent
-    except ImportError as e:
-        pytest.skip(f"ImportError: {e}")
+    pytest.importorskip("ai.agents.specialized.knowledge_graph_agent")
+    from ai.agents.specialized.knowledge_graph_agent import KnowledgeGraphAgent
 
     def _run():
         agent = KnowledgeGraphAgent()
@@ -61,5 +54,4 @@ def test_knowledge_graph_speed():
             agent.find_relations(f"entity_{i}", f"entity_{i + 1}")
 
     stats = benchmark(_run, iterations=5)
-    print(f"  KnowledgeGraphAgent: avg={stats['avg']:.4f}s")
     assert stats["avg"] > 0

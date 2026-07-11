@@ -183,24 +183,23 @@ class TestTextureBenchmark:
 
     @pytest.fixture(scope="class")
     def cifar_images(self):
-        try:
-            from scipy.ndimage import zoom
-            from ai.multimodal.data_loader import CIFAR10Loader
-            loader = CIFAR10Loader()
-            if not loader.available:
-                pytest.skip("CIFAR-10 data not available")
-            images = []
-            for label, path in loader._samples[:5]:
-                img = np.load(path).astype(np.uint8)
-                if img.ndim == 2:
-                    img = np.stack([img] * 3, axis=-1)
-                if img.shape[:2] != (128, 128):
-                    factors = (128.0 / img.shape[0], 128.0 / img.shape[1], 1.0)
-                    img = zoom(img, factors, order=1).astype(np.uint8)
-                images.append(img)
-            return images
-        except (ImportError, Exception) as e:
-            pytest.skip(f"CIFAR-10 benchmark not available: {e}")
+        pytest.importorskip("scipy.ndimage")
+        pytest.importorskip("ai.multimodal.data_loader")
+        from scipy.ndimage import zoom
+        from ai.multimodal.data_loader import CIFAR10Loader
+        loader = CIFAR10Loader()
+        if not loader.available:
+            pytest.skip("CIFAR-10 data not available")
+        images = []
+        for label, path in loader._samples[:5]:
+            img = np.load(path).astype(np.uint8)
+            if img.ndim == 2:
+                img = np.stack([img] * 3, axis=-1)
+            if img.shape[:2] != (128, 128):
+                factors = (128.0 / img.shape[0], 128.0 / img.shape[1], 1.0)
+                img = zoom(img, factors, order=1).astype(np.uint8)
+            images.append(img)
+        return images
 
     def test_texture_training_reduces_loss_on_real_data(self, cifar_images):
         from ai.multimodal.training_pipeline import (
