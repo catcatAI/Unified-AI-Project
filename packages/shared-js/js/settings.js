@@ -487,6 +487,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('[Settings] Save failed:', error);
             showNotification('Failed to save settings', 'error');
         }
+    }
 
     function collectSettings() {
         const s = {};

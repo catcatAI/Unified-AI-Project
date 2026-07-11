@@ -6,10 +6,9 @@ WORKDIR /app
 
 # Install dependencies from pyproject (standard extras)
 COPY pyproject.toml ./
-COPY src ./src
 RUN pip install --no-cache-dir .[standard]
 
-# Copy the rest of the backend application code into the container at /app
+# Copy the application code
 COPY . .
 
 # Expose port 8000 to the outside world
