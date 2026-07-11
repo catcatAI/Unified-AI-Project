@@ -217,7 +217,7 @@ class WebSocketConnection extends events.EventEmitter {
 
     // Debug: log first few bytes
     const hexDump = frame.slice(0, Math.min(16, frame.length)).toString('hex')
-    console.log('[NativeWS] Sending frame: opcode=0x' + opcode.toString(16) + ', payloadLen=' + payloadLen + ', firstBytes=' + hexDump)
+    console.debug('[NativeWS] Sending frame: opcode=0x' + opcode.toString(16) + ', payloadLen=' + payloadLen + ', firstBytes=' + hexDump)
 
     this._socket.write(frame)
   }
