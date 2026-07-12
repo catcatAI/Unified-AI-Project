@@ -68,13 +68,6 @@ _LAZY_IMPORTS = {
     "PossibilityState": "core.non_paradox_existence",
     "CoexistenceField": "core.non_paradox_existence",
     "GrayZoneVariableType": "core.non_paradox_existence",
-    # Precision System
-    "PrecisionManager": "core.precision.precision_manager",
-    "DecimalMemoryBank": "core.precision.precision_manager",
-    "HierarchicalPrecisionRouter": "core.precision.precision_manager",
-    "PrecisionMemorySystem": "core.precision.precision_manager",
-    "PrecisionMode": "core.precision.precision_manager",
-    "create_precision_system": "core.precision.precision_manager",
     # Maturity System
     "MaturityLevel": "core.maturity.maturity_system",
     "MaturityManager": "core.maturity.maturity_system",
@@ -286,13 +279,6 @@ __all__ = [
     "PossibilityState",
     "CoexistenceField",
     "GrayZoneVariableType",
-    # Precision System
-    "PrecisionManager",
-    "DecimalMemoryBank",
-    "HierarchicalPrecisionRouter",
-    "PrecisionMemorySystem",
-    "PrecisionMode",
-    "create_precision_system",
     # Maturity System
     "MaturityLevel",
     "MaturityManager",
