@@ -1,4 +1,4 @@
-﻿"""Tests for text_utils — char_bigrams, bigram_jaccard, normalize_text."""
+"""Tests for text_utils — char_bigrams, bigram_jaccard, normalize_text."""
 import pytest
 from utils.text_utils import char_bigrams, bigram_jaccard, normalize_text
 
