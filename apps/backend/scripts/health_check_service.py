@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# =============================================================================
+# ANGELA-MATRIX: [L2] [δ] [B] [L4]
+# =============================================================================
 """
 健康检查服务 - 提供快速检查和完整检查两种模式
 """
@@ -14,7 +17,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # 项目根目录
-PROJECT_ROOT = Path(__file__).parent.parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 SRC_DIR = PROJECT_ROOT / "apps" / "backend" / "src"
 
 # 定义ChromaClientType类型,与vector_store.py保持一致
@@ -55,7 +58,7 @@ def quick_health_check():
         # 检查核心模块导入
         # 仅检查模块是否能导入成功,不需要创建实例
         # 使用 __import__ 函数来检查模块可导入性而不产生未使用导入警告
-        __import__('apps.backend.src.core.services.multi_llm_service')
+        __import__('apps.backend.src.services.angela_llm_service')
         print("✅ 多LLM服务模块导入成功")
         
         # 检查基础依赖 - 使用 __import__ 函数避免未使用导入警告
@@ -76,15 +79,15 @@ def full_health_check():
     print("🩺 完整健康检查")
     try:
         # 初始化HAM内存管理
-        from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
+        from apps.backend.src.ai.memory.ham_memory import HAMMemoryManager
         # 使用下划线表示我们有意忽略返回值,避免未使用变量警告
         _ = HAMMemoryManager()
         print("✅ HAM内存管理初始化完成")
         
-        # 初始化多LLM服务
-        from apps.backend.src.core.services.multi_llm_service import MultiLLMService
-        _ = MultiLLMService()  # 使用下划线忽略未使用变量警告
-        print("✅ 多LLM服务初始化完成")
+        # 初始化LLM服务
+        from apps.backend.src.services.angela_llm_service import AngelaLLMService
+        _ = AngelaLLMService()  # 使用下划线忽略未使用变量警告
+        print("✅ LLM服务初始化完成")
         
         # 检查向量存儲連接（自動檢測後端）
         try:
@@ -118,13 +121,13 @@ def prelaunch_services():
     print("🚀 预启动核心服务")
     try:
         # 初始化核心服务
-        from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
+        from apps.backend.src.ai.memory.ham_memory import HAMMemoryManager
         # 使用下划线表示我们有意忽略返回值,避免未使用变量警告
         _ = HAMMemoryManager()
         print("✅ HAM内存管理初始化完成")
         
-        from apps.backend.src.core.services.multi_llm_service import MultiLLMService
-        _ = MultiLLMService()  # 使用下划线忽略未使用变量警告
+        from apps.backend.src.services.angela_llm_service import AngelaLLMService
+        _ = AngelaLLMService()  # 使用下划线忽略未使用变量警告
         print("✅ 多LLM服务初始化完成")
         
         from apps.backend.src.core.hsp.connector import HSPConnector

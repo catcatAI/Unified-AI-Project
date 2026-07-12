@@ -1,5 +1,12 @@
+# =============================================================================
+# ANGELA-MATRIX: [L1] [γ] [C] [L0]
+# =============================================================================
 """Quick capability test for Angela AI - no LLM contamination."""
 import sys
+if __name__ != "__main__":
+    import pytest
+    pytest.skip("Not a test file", allow_module_level=True)
+
 import time
 
 # Only mock torch, not numpy

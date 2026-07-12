@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# =============================================================================
+# ANGELA-MATRIX: [L2] [δ] [B] [L4]
+# =============================================================================
 """
 最终验证脚本 - 验证所有已知问题是否已解决
 """
@@ -9,8 +12,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 # 项目根目录
-PROJECT_ROOT = Path(__file__).parent.parent
-SRC_DIR = PROJECT_ROOT / "src"
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+SRC_DIR = PROJECT_ROOT / "apps" / "backend" / "src"
 
 def setup_environment():
     """设置环境"""
@@ -43,7 +46,7 @@ def test_original_problem_imports() -> None:
     # 测试问题2 core_ai模块导入问题
     print("\n2. 测试core_ai模块导入,")
     core_ai_modules = [
-        "ai.memory.ham_memory_manager",
+        "ai.memory.ham_memory",
         "core.hsp.connector",
         "ai.ed3n.ed3n_engine",
     ]
@@ -83,7 +86,7 @@ def test_main_api_server() -> None:
     print("\n=测试主API服务器导入 ===")
 
     try:
-        from apps.backend.src.services.main_api_server import main_api_server
+        from apps.backend.src.services.main_api_server import MainApiServer
         print("✓ 主API服务器导入成功")
         return True
     except ImportError as e:
@@ -120,13 +123,13 @@ def run_comprehensive_import_test():
         "core.hsp.types",
 
         # AI 模块
-        "ai.memory.ham_memory_manager",
+        "ai.memory.ham_memory",
         "ai.ed3n.ed3n_engine",
         "ai.garden.garden_engine",
 
         # Services 模块
         "apps.backend.src.services.main_api_server",
-        "apps.backend.src.core.services.multi_llm_service",
+        "apps.backend.src.services.angela_llm_service",
     ]
 
     success_count = 0

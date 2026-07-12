@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# =============================================================================
+# ANGELA-MATRIX: [L3] [δ] [B] [L4]
+# =============================================================================
 """
 流程控制模块
 协调测试执行器、错误分析器和修复执行器,管理完整的测试-修复流程
@@ -13,7 +16,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # 添加项目根目录到Python路径
-project_root = Path(__file__).parent.parent.parent.parent
+project_root = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(project_root))
 
 from apps.backend.scripts.error_analyzer import ErrorAnalyzer
@@ -68,7 +71,12 @@ class WorkflowController:
         print("[WORKFLOW] 步骤 1, 运行测试")
         # 将字符串参数转换为列表
         test_paths: List[str] = [pytest_args] if pytest_args else []
-        test_results = self.test_runner.run_tests(test_paths if test_paths else [])
+        if self.test_runner is not None:
+            test_results = self.test_runner.run_tests(test_paths if test_paths else [])
+        else:
+            import subprocess
+            result = subprocess.run([sys.executable, "-m", "pytest"] + test_paths, capture_output=True, text=True, timeout=120)
+            test_results = {"exit_code": result.returncode}
         # 如果测试通过,直接返回,
         if test_results.get("exit_code", -1) == 0:
             print("[WORKFLOW] ✓ 测试通过,无需进一步处理")

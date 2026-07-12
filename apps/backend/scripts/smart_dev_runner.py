@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# =============================================================================
+# ANGELA-MATRIX: [L3] [δ] [B] [L4]
+# =============================================================================
 """
 智能开发服务器运行器 - 在启动开发服务器时自动检测和修复错误
 """
@@ -14,13 +17,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 # 项目根目录
-PROJECT_ROOT = Path(__file__).parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = PROJECT_ROOT / "src"
+REPO_ROOT = PROJECT_ROOT.parent.parent
 
 # 添加项目路径到sys.path()
+sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(SRC_DIR))
-sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 def setup_environment():
     """设置环境"""
@@ -32,7 +36,7 @@ def setup_environment():
         sys.path.insert(0, str(SRC_DIR))
         
     # 激活虚拟环境
-        venv_path = PROJECT_ROOT / "venv"
+    venv_path = PROJECT_ROOT / "venv"
     if venv_path.exists():
         # 设置环境变量
         if sys.platform == "win32":
@@ -50,8 +54,8 @@ def check_environment():
         import fastapi
         import uvicorn
         # 使用导入的模块以避免未使用导入的警告
-        fastapi.__version__()
-        uvicorn.__version__()
+        _ = fastapi.__version__
+        _ = uvicorn.__version__
         print("✅ Python环境检查通过")
         
         # 验证必要的环境变量
@@ -86,17 +90,18 @@ def initialize_core_services():
     print("🔧 第1层, 核心服务初始化")
     try:
         # 初始化HAM内存管理
-        from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
+        from apps.backend.src.ai.memory.ham_memory import HAMMemoryManager
         ham_manager = HAMMemoryManager()
         # 使用ham_manager执行一些基本操作以避免未使用变量警告
-        print(f"✅ HAM内存管理初始化完成,内存ID起始值, {ham_manager.next_memory_id}")
+        _stats = ham_manager.get_stats()
+        print(f"✅ HAM内存管理初始化完成,模板数, {_stats['template_count']}")
         
-        # 初始化多LLM服务接口
-        from apps.backend.src.core.services.multi_llm_service import MultiLLMService
-        llm_service = MultiLLMService()
+        # 初始化LLM服务接口
+        from apps.backend.src.services.angela_llm_service import AngelaLLMService
+        llm_service = AngelaLLMService()
         # 使用llm_service执行一些基本操作以避免未使用变量警告
-        available_models = llm_service.get_available_models()
-        print(f"✅ 多LLM服务初始化完成,可用模型, {available_models}")
+        available_backends = [b.value for b in llm_service.backends.keys()]
+        print(f"✅ LLM服务初始化完成,可用后端, {available_backends}")
         
         return True
     except Exception as e:

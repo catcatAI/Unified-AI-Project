@@ -1,21 +1,16 @@
+# =============================================================================
+# ANGELA-MATRIX: [L1] [γ] [C] [L0]
+# =============================================================================
 import sys, os
+if __name__ != "__main__":
+    import pytest
+    pytest.skip("Not a test file", allow_module_level=True)
 sys.path.insert(0, os.path.join('apps', 'backend', 'src'))
 
-class MockModule:
-    def __getattr__(self, name):
-        return MockModule()
-    def __call__(self, *args, **kwargs):
-        return MockModule()
-    def __iter__(self):
-        return iter([])
-
-for mod in ['torch', 'torch.nn', 'torch.nn.functional', 'torch.cuda', 'torch.optim']:
-    sys.modules[mod] = MockModule()
-
 import time
-from ai.garden.garden_engine import GardenEngine
+from ai.garden.garden_engine import GARDENEngine
 
-garden = GardenEngine()
+garden = GARDENEngine()
 
 test_pairs = [
     ("What is the capital of France?", "The capital of France is Paris."),

@@ -1,6 +1,12 @@
+# =============================================================================
+# ANGELA-MATRIX: [L1] [γ] [C] [L0]
+# =============================================================================
 """Quick training test - ED3N + GARDEN with real data."""
 import sys
 import os
+if __name__ != "__main__":
+    import pytest
+    pytest.skip("Not a test file", allow_module_level=True)
 
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
@@ -78,8 +84,8 @@ except Exception as e:
 # 3. Test GARDEN (before training)
 print("\n--- 3. GARDEN Before Training ---")
 try:
-    from ai.garden.garden_engine import GardenEngine
-    garden = GardenEngine()
+    from ai.garden.garden_engine import GARDENEngine
+    garden = GARDENEngine()
     
     # Test knowledge retrieval
     test_queries = [
