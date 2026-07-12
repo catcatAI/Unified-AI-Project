@@ -36,8 +36,8 @@ def run_command(command, cwd=None, capture_output=True):
 def setup_test_environment() -> bool:
     """设置测试环境"""
     print("Setting up test environment...")
-    project_root = Path(__file__).parent.parent.parent()
-    os.chdir(project_root)
+    project_root = Path(__file__).resolve().parent.parent.parent
+    os.chdir(str(project_root))
     return True
 
 

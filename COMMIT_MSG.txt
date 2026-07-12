@@ -1,0 +1,12 @@
+fix: §X #226 — Delete 3 dead code locations + fix 4 script bugs
+
+Deletions:
+- apps/backend/debug/ (20 files): All had syntax errors, referenced deleted core_ai module
+- apps/backend/scripts/final_import_fix.py: Historical fix script with no-op replacements
+- scripts/utils/enterprise_test_suite.py: Multiple bugs (Path call, ensure_ascii==, stale import), unreferenced
+
+Bug fixes:
+- scripts/utils/smart_test_runner.py: Fix Path(__file__).parent.parent() -> resolve().parent.parent (TypeError), add missing import sys
+- scripts/utils/run_integration_tests.py: Fix Path(__file__).parent.parent.parent() -> resolve().parent.parent.parent, fix os.chdir(str())
+- scripts/utils/check_resources.py: Format bare except Exception: pass to multiline
+- packages/cli/cli/ai_models_cli.py: Fix stale multi_llm_service -> angela_llm_service imports, fix constructor (config_path removed), fix close() -> shutdown()

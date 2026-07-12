@@ -26,12 +26,11 @@ class AIModelsCLI:
         if _backend not in sys.path:
             sys.path.insert(0, _backend)
 
-        from apps.backend.src.services.multi_llm_service import MultiLLMService
+        from apps.backend.src.services.angela_llm_service import AngelaLLMService
 
-        config_path = os.path.join(
-            _root, "configs", "multi_llm_config.json"
-        )
-        self.service = MultiLLMService(config_path)
+        # AngelaLLMService uses tiered config system (no config_path needed)
+        self.service = AngelaLLMService()
+        await self.service.initialize()
         logger.info("AI model service initialized")
 
     async def list_models(self) -> None:
@@ -90,7 +89,7 @@ class AIModelsCLI:
         if not self.service:
             await self.initialize()
         model_id = model or self.service.default_model()
-        from apps.backend.src.services.multi_llm_service import ChatMessage
+        from apps.backend.src.services.angela_llm_service import ChatMessage
 
         messages: List[Any] = []
         if system:
@@ -121,7 +120,7 @@ class AIModelsCLI:
         if not self.service:
             await self.initialize()
         model_id = model or self.service.default_model()
-        from apps.backend.src.services.multi_llm_service import ChatMessage
+        from apps.backend.src.services.angela_llm_service import ChatMessage
 
         messages: List[Any] = []
         if system:
@@ -169,7 +168,7 @@ class AIModelsCLI:
         if not self.service:
             await self.initialize()
         model_ids = models or self.service.get_available_models()[:3]
-        from apps.backend.src.services.multi_llm_service import ChatMessage
+        from apps.backend.src.services.angela_llm_service import ChatMessage
 
         print(f"Comparing: {query}")
         results = []
@@ -265,7 +264,7 @@ async def main() -> None:
             parser.print_help()
     finally:
         if cli.service:
-            await cli.service.close()
+            await cli.service.shutdown()
 
 
 if __name__ == "__main__":

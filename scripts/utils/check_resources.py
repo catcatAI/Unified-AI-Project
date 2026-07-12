@@ -40,7 +40,8 @@ def check_resources():
         for p in found_processes:
              try:
                 p.cpu_percent()
-             except Exception: pass
+             except Exception:
+                pass
         
         time.sleep(2)
         
