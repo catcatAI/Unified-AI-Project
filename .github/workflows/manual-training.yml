@@ -35,12 +35,10 @@ jobs:
           if [ -f apps/backend/requirements.txt ]; then pip install -r apps/backend/requirements.txt; fi
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Run training
+      - name: Run training (orchestrator removed — no-op)
         shell: bash
         run: |
-          RESUME_FLAG=""
-          if [ "${{ inputs.resume }}" = "true" ]; then RESUME_FLAG="--resume"; fi
-          python scripts/project_ai_orchestrator.py --run-training --preset "${{ inputs.preset }}" $RESUME_FLAG -v
+          echo "scripts/project_ai_orchestrator.py removed — step disabled"
 
       - name: Upload artifacts
         if: always()

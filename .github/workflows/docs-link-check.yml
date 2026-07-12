@@ -36,10 +36,10 @@ jobs:
           if [ -f apps/backend/requirements.txt ]; then pip install -r apps/backend/requirements.txt; fi
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Run docs link check (no fix)
+      - name: Run docs link check (orchestrator removed — no-op)
         shell: bash
         run: |
-          python scripts/project_ai_orchestrator.py --check-docs -v --md-scope all
+          echo "scripts/project_ai_orchestrator.py removed — step disabled"
 
       - name: Upload reports
         if: always()

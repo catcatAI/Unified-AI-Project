@@ -27,14 +27,11 @@ jobs:
           mkdir -p backup_out
           # Candidate files/directories to backup (metadata only)
           cat > backup_list.txt << 'EOF'
-          dependency_config.yaml
           requirements.txt
           setup.py
           pnpm-workspace.yaml
           package.json
           pnpm-lock.yaml
-          PROJECT_OVERVIEW.md
-          PROJECT_STATUS_SUMMARY_2025_09_06.md
           apps
           scripts
           .github/workflows
