@@ -437,6 +437,9 @@ class EventLoopSystem:
         max_queue_size: int = 10000,
         config: Optional[Dict[str, Any]] = None,
     ):
+        logger.warning(
+            "[EventLoopSystem] DEPRECATED: No production callers — retained for back-compat only"
+        )
         self.config = config or {}
         self.latency_target_ms = latency_target_ms
         self.max_queue_size = max_queue_size

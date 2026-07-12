@@ -73,6 +73,10 @@ class BiologicalEventPublisher:
     负责发布生物系统事件给订阅者
     """
 
+    _CNS_EVENT_MAP: Dict[str, str] = {
+        "emotion_changed": "emotion.updated",
+    }
+
     def __init__(self):
         self.subscribers: Dict[str, List[Callable]] = {}
 
@@ -114,11 +118,17 @@ class BiologicalEventPublisher:
             for callback in self.subscribers[event_type]:
                 try:
                     result = callback(event, data)
-                    # 如果回调返回协程，则等待它
                     if asyncio.iscoroutine(result):
                         await result
-                except Exception as e:  # broad exception acceptable: event callback errors should not block publishing
+                except Exception as e:
                     logger.error(f"Error in biological event callback: {e}", exc_info=True)
+        cns_type = self._CNS_EVENT_MAP.get(event_type)
+        if cns_type:
+            try:
+                from core.system.state_store.global_store import state_store
+                state_store.emit_event(cns_type, data)
+            except Exception as e:
+                logger.debug(f"Failed to forward bio event to CNS bus: {e}")
 
     def get_subscribers_count(self, event_type: Optional[str] = None) -> Dict[str, int]:
         """
