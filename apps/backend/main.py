@@ -283,8 +283,9 @@ def create_app() -> FastAPI:
             return {
                 "status": "online",
                 "stats": {
-                    "cpu": f"{profile.cpu.usage_percent}%",
-                    "mem": f"{profile.memory.usage_percent}%",
+                    "cpu_cores": profile.cpu_cores,
+                    "memory_gb": profile.memory_gb,
+                    "gpu": profile.gpu,
                     "nodes": 1,  # 簡化處理
                     "tier": profile.performance_tier,
                     "ai_score": profile.ai_capability_score,
@@ -371,8 +372,9 @@ def create_app() -> FastAPI:
             return {
                 "status": "online",
                 "stats": {
-                    "cpu": f"{profile.cpu.usage_percent}%",
-                    "mem": f"{profile.memory.usage_percent}%",
+                    "cpu_cores": profile.cpu_cores,
+                    "memory_gb": profile.memory_gb,
+                    "gpu": profile.gpu,
                     "nodes": 1,  # 簡化處理
                     "tier": profile.performance_tier,
                     "ai_score": profile.ai_capability_score,
