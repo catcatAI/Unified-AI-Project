@@ -1,10 +1,15 @@
+import logging
+import math
 import numpy as np
 from datetime import datetime
 from typing import List, Dict, Any, Optional
+
+logger = logging.getLogger(__name__)
+
 try:
     from scipy.ndimage import binary_dilation
 except ImportError:
-    # 基礎回退：如果沒有 scipy，則不執行描邊擴展
+    logger.warning("scipy not available — binary_dilation disabled (rendering quality reduced)")
     def binary_dilation(mask, **kwargs): return mask
 
 class AngelaDNA:
@@ -44,7 +49,6 @@ class AngelaDNA:
         return offsets
 
     def _build_volumetric_body(self, hair_offset=0.0, breath_phase=0.0, theta_matrix: List[float] = None, ear_twitch: float = 0, **kwargs):
-        import math
         self.voxels.fill(0)
         
         if theta_matrix is None:
@@ -215,7 +219,6 @@ class AngelaDNA:
         self._build_part(5, (40, 55), (hx-2, hx+2), C_HAIR, 0.05, 23)
 
     def apply_dynamics(self, phase, theta_matrix=None, finger_matrix=None, ear_twitch=0):
-        import math
         current_swing = math.sin(phase) * 2.0
         self._build_volumetric_body(
             hair_offset=current_swing,
