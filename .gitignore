@@ -140,6 +140,7 @@ data/google_tokens.json
 data/credentials.json
 # Project Analysis Tools (生成的文档)
 archive/
+node_modules_old/
 *_analyzer.py
 !apps/backend/src/**/*_analyzer.py
 !tests/**/*_analyzer.py
