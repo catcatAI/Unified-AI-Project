@@ -1,10 +1,8 @@
-fix: §X #228 — Delete 6 dead files from apps/backend/ root (-412 lines)
+fix: §X #229 — Delete 3 versioned fix scripts from scripts/ (-434 lines)
 
 Deletions:
-- test_ai_modules.py, test_import.py, test_import_ucc.py:
-  Loose import test files, not in pytest testpaths, unreferenced
-- analyze_imports.py: One-off abandoned analysis tool
-- verify_behavioral_impact.py: Dead debug script, only self-referenced
-- setup.py: Legacy duplicates pyproject.toml (confirmed source of truth)
+- scripts/fix_str_e_v3.py: Superseded by v4, already-applied one-time fix
+- scripts/fix_str_e_v4.py: One-time str(e)->safe_error(e) migration script
+- scripts/fix_imports_v2.py: Versioned fix script, superseded
 
-All files confirmed unreferenced by production code.
+All 3 confirmed unreferenced by any production code.
