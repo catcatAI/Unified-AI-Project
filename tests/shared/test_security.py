@@ -2,7 +2,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from system.security_monitor import ABCKeyManager
+from apps.backend.src.core.system.security_monitor import ABCKeyManager
 
 
 def test_keys():
