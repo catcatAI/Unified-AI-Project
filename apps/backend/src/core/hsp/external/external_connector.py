@@ -21,10 +21,32 @@ class ExternalConnector:
         logger.debug(f"ExternalConnector initialized (ai_id={self.ai_id})")
 
     async def connect(self) -> bool:
-        return True
+        """Connect to broker via HTTP health-check."""
+        import aiohttp
+        url = f"http://{self.broker_address}:{self.broker_port}/health"
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as resp:
+                    ok = resp.status == 200
+                    logger.debug(f"ExternalConnector connect -> {resp.status} ({ok})")
+                    return ok
+        except Exception as e:
+            logger.debug(f"ExternalConnector connect failed (broker may be down): {e}")
+            return False
 
     async def send(self, message: Dict[str, Any]) -> bool:
-        return True
+        """Send a message via HTTP POST to the broker."""
+        import aiohttp
+        url = f"http://{self.broker_address}:{self.broker_port}/message"
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, json=message, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                    ok = resp.status == 200
+                    logger.debug(f"ExternalConnector send -> {resp.status} ({ok})")
+                    return ok
+        except Exception as e:
+            logger.debug(f"ExternalConnector send failed: {e}")
+            return False
 
     async def disconnect(self) -> None:
         self.config = {}

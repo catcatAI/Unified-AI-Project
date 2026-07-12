@@ -555,7 +555,7 @@ class Live2DAvatarGenerator:
 
     async def initialize(self) -> None:
         """Initialize the generator"""
-        pass  # No async initialization needed
+        logger.info("Live2D avatar generator initialized")
 
     async def shutdown(self) -> None:
         """Shutdown the generator"""
@@ -1181,80 +1181,3 @@ class Live2DAvatarGenerator:
                 logger.error(f"Error in state callback: {e}", exc_info=True)
 
 
-# Example usage
-if __name__ == "__main__":
-
-    async def demo() -> str:
-        """Run a demonstration."""
-        logger.info("=" * 60)
-        logger.info("Angela AI v6.0 - Live2D Avatar Generator Demo")
-        logger.info("=" * 60)
-
-        # Mock image generator
-        class MockImageGenerator:
-            async def generate_image(self, prompt, width=2048, height=2048, style="anime") -> str:
-                """Log a diagnostic message."""
-                logger.info(f"   Generating: {prompt[:50]}...")
-                return type("Image", (), {"save": lambda path: print(f"   Saved to {path}")})()
-
-        # Initialize generator
-        generator = Live2DAvatarGenerator(
-            image_generator=MockImageGenerator(), config={"output_path": "./demo_models"}
-        )
-
-        # Progress callback
-        def on_progress(progress) -> None:
-            """Handle the progress event."""
-            logger.info(f"[{progress.progress_percent:3.0f}%] {progress.message}")
-
-        generator.register_progress_callback(on_progress)
-
-        # Generate avatar
-        logger.info("\n1. Generating Live2D avatar...")
-        avatar = await generator.generate_avatar(
-            model_name="angela_demo",
-            attributes={
-                "hair_color": "pink",
-                "hair_style": "long",
-                "eye_color": "blue",
-                "outfit": "white dress",
-                "expression": "smile",
-            },
-        )
-
-        logger.info(f"\n2. Generated avatar: {avatar.avatar_id}")
-        logger.info(f"   Layers: {len(avatar.layers)}")
-        logger.info(f"   Parameters: {len(avatar.parameters)}")
-        logger.info(f"   Quality: {avatar.generation_quality:.2%}")
-
-        # Show body mappings
-        logger.info("\n3. Body mappings (18 parts):")
-        for i, (body_part, mapping) in enumerate(avatar.body_mappings.items(), 1):
-            params = mapping.get("parameters", [])
-            logger.info(f"   {i:2d}. {body_part}: {len(params)} parameters")
-
-        # Show touch response
-        logger.info("\n4. Touch response example (pat on head):")
-        response = generator.get_touch_response("top_of_head", "pat", 0.7)
-        for param, value in response.items():
-            logger.info(f"   {param}: {value:.2f}")
-
-        # Multi-angle generation
-        logger.info("\n5. Multi-angle avatar generation...")
-        multi_avatar = await generator.generate_multi_angle_avatar(
-            model_name="angela_multi",
-            angles=[ViewAngle.FRONT, ViewAngle.THREE_QUARTER],
-            attributes={"hair_color": "blue"},
-        )
-        logger.info(f"   Generated {len(multi_avatar.view_angles)} angles")
-
-        # Export for Desktop Pet
-        logger.info("\n6. Exporting for Desktop Pet...")
-        export_path = await generator.export_for_desktop_pet(
-            avatar, "./demo_models/desktop_pet_export"
-        )
-        logger.info(f"   Exported to: {export_path}")
-
-        logger.info("\nDemo complete!")
-
-    asyncio.run(demo())

@@ -22,9 +22,11 @@ class HAMQueryEngine:
         return []
 
     def retrieve_similar(self, embedding: List[float], top_k: int = 5) -> List[Dict[str, Any]]:
+        logger.debug("HAMQueryEngine.retrieve_similar called but no vector store backend")
         return []
 
     def get_recent(self, limit: int = 10) -> List[Dict[str, Any]]:
+        logger.debug("HAMQueryEngine.get_recent called but no backing memory")
         return []
 
     def get_by_id(self, memory_id: str) -> Optional[Dict[str, Any]]:

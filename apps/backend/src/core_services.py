@@ -60,13 +60,7 @@ async def initialize_services(config=None, ai_id=None, use_mock_ham=False, opera
         _services.register("ai_id", ai_id)
 
     if use_mock_ham:
-        class MockHAM:
-            async def store(self, *args, **kwargs):
-                return {"status": "mock_stored"}
-            async def recall(self, *args, **kwargs):
-                return []
-        _services.register("ham", MockHAM())
-        logger.info("Mock HAM service registered")
+        logger.info("Mock HAM service requested but not available — use_mock_ham=True has no effect")
 
 
 def get_services() -> _Services:
