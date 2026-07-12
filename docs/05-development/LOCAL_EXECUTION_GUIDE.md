@@ -147,11 +147,11 @@ sys.path.insert(0, backend_src)
 def test_imports():
     """測試所有組件導入"""
     components = [
-        ("AI運維引擎", "ai.ops.ai_ops_engine", "AIOpsEngine"),
-        ("預測性維護", "ai.ops.predictive_maintenance", "PredictiveMaintenanceEngine"),
-        ("性能優化器", "ai.ops.performance_optimizer", "PerformanceOptimizer"),
-        ("容量規劃器", "ai.ops.capacity_planner", "CapacityPlanner"),
-        ("智能運維管理器", "ai.ops.intelligent_ops_manager", "IntelligentOpsManager"),
+        ("元控制器", "ai.meta.meta_controller", "MetaController"),
+        ("執⾏閘", "ai.core.execution_gate", "ExecutionGate"),
+        ("因果推理", "ai.reasoning.causal_reasoning_engine", "CausalReasoningEngine"),
+        ("意圖模型", "ai.alignment.intent_model", "IntentModel"),
+        ("向量存儲", "ai.memory.vector_store", "VectorMemoryStore"),
     ]
     
     results = []

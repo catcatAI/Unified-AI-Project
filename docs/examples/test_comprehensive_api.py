@@ -167,29 +167,16 @@ class APITester:
         success, response, status = self.test_endpoint("GET", "/api/v1/tactile/model")
         print(f"GET /api/v1/tactile/model: {status}")
 
-        # 5. 經濟系統
-        print("\n【5/8】經濟系統測試")
+        # 5. 經濟系統（已移除 — 保留為空區塊以保持編號一致）
+        print("\n【5/8】經濟系統測試（已移除，跳過）")
         print("-" * 80)
-        success, response, status = self.test_endpoint("GET", "/api/v1/economy/status")
-        print(f"GET /api/v1/economy/status: {status}")
+        print("  ⏭ 經濟系統端點已從項目中移除")
 
-        success, response, status = self.test_endpoint(
-            "POST",
-            "/api/v1/economy/transaction",
-            {"buyer": "user1", "seller": "user2", "item_id": "item_1", "price": 10.0},
-        )
-        print(f"POST /api/v1/economy/transaction: {status}")
-
-        # 6. 移動端
+        # 6. 移動端（僅保留 /api/v1/mobile/test）
         print("\n【6/8】移動端測試")
         print("-" * 80)
-        success, response, status = self.test_endpoint("GET", "/api/v1/mobile/status")
-        print(f"GET /api/v1/mobile/status: {status}")
-
-        success, response, status = self.test_endpoint(
-            "POST", "/api/v1/mobile/sync", {"data": "test"}
-        )
-        print(f"POST /api/v1/mobile/sync: {status}")
+        success, response, status = self.test_endpoint("POST", "/api/v1/mobile/test", {"data": "test"})
+        print(f"POST /api/v1/mobile/test: {status}")
 
         # 7. AI 代理
         print("\n【7/8】AI 代理系統測試")

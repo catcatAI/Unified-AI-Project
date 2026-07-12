@@ -114,7 +114,7 @@ class SystemAnalyzer:
                 ("/api/v1/pet/interaction", "POST", {"interaction_type": "touch"}),
                 ("/api/v1/system/metrics/detailed", "GET"),
                 ("/api/v1/system/cluster/status", "GET"),
-                ("/api/v1/economy/status", "GET"),
+                # ("/api/v1/economy/status", "GET"),  # 經濟系統已從項目中移除
                 ("/api/v1/vision/control", "GET"),
                 ("/api/v1/tactile/model", "GET"),
                 ("/api/v1/audio/control", "GET"),
@@ -122,7 +122,7 @@ class SystemAnalyzer:
                 ("/api/v1/actions/status", "GET"),
                 ("/api/v1/ops/dashboard", "GET"),
                 ("/api/v1/desktop/state", "GET"),
-                ("/api/v1/mobile/status", "GET"),  # 這個預期會失敗
+                # ("/api/v1/mobile/status", "GET"),  # 移動端已重構，僅保留 /api/v1/mobile/test
             ]
 
             for endpoint_info in endpoints:
