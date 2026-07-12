@@ -7,8 +7,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from system.security_monitor import ABCKeyManager
-from system.hardware_probe import HardwareProbe
+from apps.backend.src.core.system.security_monitor import ABCKeyManager
+from apps.backend.src.core.system.bootstrap.hardware_probe import HardwareProbe
 
 
 def verify_system():

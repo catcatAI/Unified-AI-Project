@@ -74,6 +74,71 @@ class HardwareProbe:
                 ai_capability_score=50
             )
 
+    @staticmethod
+    def _get_memory_gb() -> int:
+        """Detect total physical RAM in GB."""
+        import subprocess
+        try:
+            if sys.platform == "win32":
+                result = subprocess.run(
+                    ["wmic", "ComputerSystem", "get", "TotalPhysicalMemory"],
+                    capture_output=True, text=True, timeout=5
+                )
+                for line in result.stdout.split('\n'):
+                    line = line.strip()
+                    if line.isdigit():
+                        return int(int(line) // (1024 ** 3))
+            elif sys.platform == "darwin":
+                result = subprocess.run(
+                    ["sysctl", "-n", "hw.memsize"],
+                    capture_output=True, text=True, timeout=5
+                )
+                if result.stdout.strip().isdigit():
+                    return int(int(result.stdout.strip()) // (1024 ** 3))
+            else:
+                result = subprocess.run(
+                    ["grep", "MemTotal", "/proc/meminfo"],
+                    capture_output=True, text=True, timeout=5
+                )
+                for part in result.stdout.split():
+                    if part.isdigit():
+                        return int(int(part) // 1024)
+        except Exception:
+            pass
+        return 8  # Default fallback
+
+    @staticmethod
+    def _detect_gpu() -> str:
+        """Detect GPU name."""
+        import subprocess
+        try:
+            if sys.platform == "win32":
+                result = subprocess.run(
+                    ["wmic", "path", "win32_VideoController", "get", "name"],
+                    capture_output=True, text=True, timeout=5
+                )
+                lines = [l.strip() for l in result.stdout.split('\n') if l.strip()]
+                if len(lines) > 1:
+                    return lines[1]  # Skip header
+            elif sys.platform == "darwin":
+                result = subprocess.run(
+                    ["system_profiler", "SPHardwareDataType"],
+                    capture_output=True, text=True, timeout=10
+                )
+                if "Apple" in result.stdout:
+                    return "Apple Silicon"
+                return "Unknown GPU"
+            else:
+                result = subprocess.run(
+                    ["lspci"], capture_output=True, text=True, timeout=5
+                )
+                for line in result.stdout.split('\n'):
+                    if "VGA" in line or "3D" in line or "Display" in line:
+                        return line.strip()
+        except Exception:
+            pass
+        return "Software"
+
     def _assign_tier(self, score: float) -> str:
         """Assign tier."""
         tiers = self.bootstrap_config.get("hardware_tiers", {})

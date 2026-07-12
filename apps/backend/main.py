@@ -51,7 +51,7 @@ except Exception as e:
     logger.warning(f"i18n 載入失敗（非致命）: {e}")
 
 # 初始化密鑰管理器與中間件
-from src.system.security_monitor import ABCKeyManager
+from core.system.security_monitor import ABCKeyManager
 from src.shared.security_middleware import SignedCommunicationMiddleware
 
 def validate_security_configuration():
@@ -115,7 +115,7 @@ async def lifespan(app: FastAPI):
     # 初始化硬體感知部署與集群管理器
     try:
         from src.core.system.bootstrap import get_bootstrap_manager
-        from src.system.cluster_manager import ClusterManager, NodeType
+        from core.system.cluster_manager import ClusterManager, NodeType
 
         # 1. 正規化引導與硬體偵測 (替代已棄用的 DeploymentManager)
         bootstrap = get_bootstrap_manager()
@@ -275,11 +275,11 @@ def create_app() -> FastAPI:
     @app.post("/api/v1/system/status")
     async def get_system_status_detailed(data: Dict[str, Any] = Body(...)):
         """獲取系統詳細狀態 (受 Key B 保護)"""
-        from src.system.hardware_probe import HardwareProbe
+        from core.system.bootstrap.hardware_probe import HardwareProbe
 
         probe = HardwareProbe()
         try:
-            profile = probe.get_hardware_profile()
+            profile = probe.probe()
             return {
                 "status": "online",
                 "stats": {
@@ -363,11 +363,11 @@ def create_app() -> FastAPI:
     @app.get("/api/v1/system/status/detailed")
     async def system_status_detailed():
         """获取详细系统状态 (需要簽名驗證)"""
-        from src.system.hardware_probe import HardwareProbe
+        from core.system.bootstrap.hardware_probe import HardwareProbe
 
         probe = HardwareProbe()
         try:
-            profile = probe.get_hardware_profile()
+            profile = probe.probe()
             return {
                 "status": "online",
                 "stats": {
