@@ -125,7 +125,7 @@ class CLIErrorHandler:
         try:
             error_details = response.json()
             error_message += f": {error_details}"
-        except Exception:
+        except (ValueError, KeyError, TypeError):
             error_message += f": {response.text}"
 
         self.log_error(error_message)

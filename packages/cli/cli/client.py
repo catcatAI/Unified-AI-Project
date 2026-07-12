@@ -49,7 +49,7 @@ class UnifiedAIClient:
             body = None
             try:
                 body = resp.json()
-            except Exception:
+            except (ValueError, KeyError, TypeError):
                 body = resp.text if 'resp' in locals() else None
             return {
                 "error": str(e),
