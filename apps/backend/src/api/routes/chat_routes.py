@@ -660,10 +660,13 @@ async def _try_agent_routing(
         agent_result = primary.get("result")
         if agent_result and isinstance(agent_result, dict) and agent_result.get("result"):
             response_text = str(agent_result["result"])
-            # Inject into context — PriorityNegotiator decides routing_mode,
-            # LLM wraps/enhances the agent result. No direct short-circuit.
             context["_agent_result"] = response_text
             context["_agent_result_source"] = primary.get('agent', 'unknown')
+            return {
+                "response": response_text,
+                "source": primary.get('agent', 'unknown'),
+                "confidence": primary.get("confidence", 0.8),
+            }
     except Exception as e:
         logger.debug(f"Agent routing unavailable: {e}")
     return None
@@ -849,15 +852,36 @@ def _fire_causal_learning(
         try:
             es = _get_emotion_system()
             if es:
-                # Determine if there was a processing error during this interaction
                 had_error = len(response_text) == 0
                 es.process_interaction_feedback(
                     engagement_ratio=engagement,
                     had_error=had_error,
-                    response_success=None,  # Let engagement_ratio determine
+                    response_success=None,
                 )
         except Exception as e:
             logger.debug(f"Emotion feedback loop failed: {e}")
+
+        # DLI feedback loop: interaction outcome → modality gateway adjustment
+        try:
+            dli = get_digital_life()
+            if dli:
+                dli.process_interaction_feedback(
+                    engagement_ratio=engagement,
+                    success=len(response_text) > 0,
+                )
+        except Exception as e:
+            logger.debug(f"DLI feedback loop failed: {e}")
+
+        # Lifecycle feedback loop: interaction outcome → phase-aware routing
+        try:
+            alc = _get_lifecycle()
+            if alc:
+                alc.feed_interaction_outcome(
+                    engagement_ratio=engagement,
+                    success=len(response_text) > 0,
+                )
+        except Exception as e:
+            logger.debug(f"Lifecycle feedback loop failed: {e}")
 
         # Dynamic strength: higher when response is substantive relative to query
         dynamic_strength = min(0.9, max(0.1, engagement / 5.0))
@@ -1181,7 +1205,17 @@ async def _handle_chat_request(
     # Step 8: Agent auto-routing (creative/knowledge/opinion/vision/audio — may short-circuit)
     agent_result = await _try_agent_routing(user_message, context, schema_ver, session_id)
     if agent_result:
-        return agent_result
+        return {
+            "response_text": agent_result["response"],
+            "response": agent_result["response"],
+            "source": agent_result.get("source", "agent"),
+            "schema_version": schema_ver,
+            "truncation_message": trunc_msg,
+            "emotion": "calm",
+            "emotion_confidence": 0.6,
+            "emotion_intensity": 0.4,
+            "session_id": session_id,
+        }
 
     # Step 9: Inject causal predictions into context (learned from past interactions)
     _inject_causal_predictions(context)
