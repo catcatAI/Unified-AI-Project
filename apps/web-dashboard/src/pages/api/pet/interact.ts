@@ -17,7 +17,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse<Data>)
     })
   }
 
-  const { action } = req.body
+  const { action } = req.body || {}
   
   const newState = {
     happiness: Math.min(1, 0.5 + (action === 'pet' ? 0.1 : 0)),

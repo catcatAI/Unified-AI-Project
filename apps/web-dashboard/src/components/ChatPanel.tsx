@@ -12,27 +12,51 @@ export default function ChatPanel() {
   const [input, setInput] = useState('')
   const [connected, setConnected] = useState(false)
   const wsRef = useRef<WebSocket | null>(null)
+  const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => {
-    const ws = new WebSocket(`ws://${window.location.hostname}:8000/ws`)
-    
-    ws.onopen = () => setConnected(true)
-    ws.onclose = () => setConnected(false)
-    
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data)
-      if (data.type === 'chat_response') {
-        setMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          role: 'assistant',
-          content: data.content,
-          timestamp: Date.now()
-        }])
+  const connect = () => {
+    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const ws = new WebSocket(`${proto}//${window.location.hostname}:8000/ws`)
+
+    ws.onopen = () => {
+      setConnected(true)
+      if (reconnectRef.current) {
+        clearTimeout(reconnectRef.current)
+        reconnectRef.current = null
       }
     }
-    
+
+    ws.onclose = () => {
+      setConnected(false)
+      wsRef.current = null
+      reconnectRef.current = setTimeout(connect, 3000)
+    }
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.type === 'chat_response') {
+          setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: data.content,
+            timestamp: Date.now()
+          }])
+        }
+      } catch {
+        console.error('Failed to parse WebSocket message:', event.data)
+      }
+    }
+
     wsRef.current = ws
-    return () => ws.close()
+  }
+
+  useEffect(() => {
+    connect()
+    return () => {
+      if (reconnectRef.current) clearTimeout(reconnectRef.current)
+      if (wsRef.current) wsRef.current.close()
+    }
   }, [])
 
   const sendMessage = () => {
