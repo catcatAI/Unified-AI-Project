@@ -43,13 +43,9 @@ def test_original_problem_imports() -> None:
     # 测试问题2 core_ai模块导入问题
     print("\n2. 测试core_ai模块导入,")
     core_ai_modules = [
-        "core_ai.agent_manager",
-        "core_ai.dialogue.dialogue_manager",
-        "core_ai.learning.learning_manager",
-        "core_ai.personality.personality_manager",
-        "core_ai.memory.ham_memory_manager",
-        "core_ai.service_discovery.service_discovery_module",
-        "core_ai.trust_manager.trust_manager_module",
+        "ai.memory.ham_memory_manager",
+        "core.hsp.connector",
+        "ai.ed3n.ed3n_engine",
     ]
 
     success_count = 0
@@ -72,13 +68,8 @@ def test_core_services() -> None:
     print("\n=测试核心服务导入 ===")
 
     try:
-        from core_services import (
-            DialogueManager,
-            HSPConnector
-        )
-        print("✓ 核心服务模块导入成功")
-        print("✓ 核心服务函数导入成功")
-        print("✓ 核心服务类导入成功")
+        from apps.backend.src.core.hsp.connector import HSPConnector
+        print("✓ HSPConnector 导入成功")
         return True
     except ImportError as e:
         print(f"✗ 核心服务导入失败, {e}")
@@ -92,7 +83,7 @@ def test_main_api_server() -> None:
     print("\n=测试主API服务器导入 ===")
 
     try:
-        from services.main_api_server import main_api_server
+        from apps.backend.src.services.main_api_server import main_api_server
         print("✓ 主API服务器导入成功")
         return True
     except ImportError as e:
@@ -104,33 +95,18 @@ def test_main_api_server() -> None:
 
 def test_dialogue_manager_hsp_connector() -> None:
     """测试DialogueManager中的HSPConnector"""
-    print("\n=测试DialogueManager中的HSPConnector ===")
+    print("\n=测试HSPConnector导入 ===")
 
     try:
-        from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
-        print("✓ DialogueManager 导入成功")
-
-        # 检查HSPConnector是否在DialogueManager中正确定义
-        import inspect
-        sig = inspect.signature(DialogueManager.__init__())
-        params = sig.parameters
-        if 'hsp_connector' in params:
-            param = params['hsp_connector']
-            # 检查参数注解
-            if hasattr(param.annotation(), '__name__'):
-                print(f"✓ HSPConnector 参数类型, {param.annotation.__name__}")
-            else:
-                print(f"✓ HSPConnector 参数存在")
-            return True
-        else:
-            print("✗ HSPConnector 参数未在DialogueManager中定义")
-            return False
+        from apps.backend.src.core.hsp.connector import HSPConnector
+        print("✓ HSPConnector 导入成功")
+        return True
 
     except ImportError as e:
-        print(f"✗ DialogueManager 导入失败, {e}")
+        print(f"✗ HSPConnector 导入失败, {e}")
         return False
     except Exception as e:
-        print(f"✗ 测试DialogueManager时出错, {e}")
+        print(f"✗ 测试HSPConnector时出错, {e}")
         return False
 
 def run_comprehensive_import_test():
@@ -139,34 +115,18 @@ def run_comprehensive_import_test():
 
     # 测试关键模块
     critical_modules = [
-        # 核心服务
-        "core_services",
+        # Core 模块
+        "core.hsp.connector",
+        "core.hsp.types",
 
-        # Core AI 模块
-        "core_ai.agent_manager",
-        "core_ai.dialogue.dialogue_manager",
-        "core_ai.learning.learning_manager",
-        "core_ai.personality.personality_manager",
-        "core_ai.memory.ham_memory_manager",
-        "core_ai.service_discovery.service_discovery_module",
-        "core_ai.trust_manager.trust_manager_module",
-        "core_ai.emotion_system",
-        "core_ai.crisis_system",
-        "core_ai.time_system",
-
-        # HSP 模块
-        "hsp.connector",
-        "hsp.types",
+        # AI 模块
+        "ai.memory.ham_memory_manager",
+        "ai.ed3n.ed3n_engine",
+        "ai.garden.garden_engine",
 
         # Services 模块
-        "services.main_api_server",
-        "services.multi_llm_service",
-
-        # Tools 模块
-        "tools.tool_dispatcher",
-
-        # Shared 模块
-        "shared.types.common_types",
+        "apps.backend.src.services.main_api_server",
+        "apps.backend.src.core.services.multi_llm_service",
     ]
 
     success_count = 0

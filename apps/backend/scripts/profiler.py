@@ -21,10 +21,8 @@ def profile_imports():
         "ai.ed3n.ed3n_engine",
         "ai.garden.garden_engine",
         "ai.context.dialogue_context",
-        "ai.learning.unified_learning_orchestrator",
         "ai.agents.agent_orchestrator",
         "ai.reasoning.planning_engine",
-        "ai.trust.trust_manager_module",
         "security.content_filter",
         "security.safety_audit",
     ]

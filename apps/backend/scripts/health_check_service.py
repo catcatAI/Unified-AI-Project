@@ -127,11 +127,9 @@ def prelaunch_services():
         _ = MultiLLMService()  # 使用下划线忽略未使用变量警告
         print("✅ 多LLM服务初始化完成")
         
-        from apps.backend.src.ai.discovery.service_discovery_module import ServiceDiscoveryModule
-        from apps.backend.src.ai.trust.trust_manager_module import TrustManager
-        trust_manager = TrustManager()
-        _ = ServiceDiscoveryModule(trust_manager=trust_manager)  # 使用下划线忽略未使用变量警告
-        print("✅ 服务发现机制初始化完成")
+        from apps.backend.src.core.hsp.connector import HSPConnector
+        _ = HSPConnector(ai_id="prelaunch", broker_address="localhost", broker_port=1883)
+        print("✅ HSP连接器初始化完成")
         
         return True
     except Exception as e:

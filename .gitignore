@@ -63,6 +63,9 @@ crisis_log.txt
 *.temp
 # Credentials
 credentials.json
+*credential*
+*secret*
+*token*
 *.key
 *.pem
 .env

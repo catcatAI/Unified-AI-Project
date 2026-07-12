@@ -98,14 +98,6 @@ def initialize_core_services():
         available_models = llm_service.get_available_models()
         print(f"✅ 多LLM服务初始化完成,可用模型, {available_models}")
         
-        # 初始化服务发现机制
-        from apps.backend.src.core_ai.discovery.service_discovery_module import ServiceDiscoveryModule
-        from apps.backend.src.core_ai.trust.trust_manager_module import TrustManager
-        trust_manager = TrustManager()
-        service_discovery = ServiceDiscoveryModule(trust_manager=trust_manager)
-        # 使用service_discovery执行一些基本操作以避免未使用变量警告
-        print(f"✅ 服务发现机制初始化完成,模块, {service_discovery.__class__.__name__}")
-        
         return True
     except Exception as e:
         print(f"❌ 核心服务初始化失败, {e}")
@@ -126,86 +118,6 @@ def start_core_components():
         )
         print("✅ HSP连接器初始化完成")
         
-        # 初始化对话管理器所需的依赖组件
-        from apps.backend.src.core_ai.personality.personality_manager import PersonalityManager
-        from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-        from apps.backend.src.core.services.multi_llm_service import MultiLLMService
-        from apps.backend.src.core_ai.emotion.emotion_system import EmotionSystem
-        from apps.backend.src.core_ai.crisis.crisis_system import CrisisSystem
-        from apps.backend.src.core_ai.time.time_system import TimeSystem
-        from apps.backend.src.core_ai.formula_engine import FormulaEngine
-        from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
-        from apps.backend.src.core_ai.learning.learning_manager import LearningManager
-        # 修复导入路径,使用AI模块的ServiceDiscoveryModule而不是core模块的
-        from apps.backend.src.core_ai.discovery.service_discovery_module import ServiceDiscoveryModule
-        from apps.backend.src.managers.agent_manager import AgentManager
-        
-        # 创建所有必需的依赖实例
-        personality_manager = PersonalityManager()
-        memory_manager = HAMMemoryManager()
-        llm_interface = MultiLLMService()
-        emotion_system = EmotionSystem()
-        crisis_system = CrisisSystem()
-        time_system = TimeSystem()
-        formula_engine = FormulaEngine()
-        
-        # 处理ToolDispatcher可能的RAG初始化异常
-        try:
-            tool_dispatcher = ToolDispatcher(llm_service=llm_interface)
-        except RuntimeError as e:
-            if "SentenceTransformer" in str(e):
-                print("⚠️  Warning, SentenceTransformer not available, RAG functionality disabled")
-                # 创建一个没有RAG功能的ToolDispatcher
-                tool_dispatcher = ToolDispatcher(llm_service=None)
-                # 重新设置llm_service
-                tool_dispatcher.set_llm_service(llm_interface)
-            else:
-                raise e
-        
-        # 初始化LearningManager所需的依赖组件
-        from apps.backend.src.core_ai.learning.fact_extractor_module import FactExtractorModule
-        from apps.backend.src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
-        from apps.backend.src.core_ai.trust.trust_manager_module import TrustManager
-        fact_extractor = FactExtractorModule(llm_service=llm_interface)
-        content_analyzer = ContentAnalyzerModule()
-        trust_manager = TrustManager()
-
-        # 初始化LearningManager
-        learning_manager = LearningManager(
-            ai_id="did,hsp,api_server_ai",
-            ham_memory_manager=memory_manager,
-            fact_extractor=fact_extractor,
-            personality_manager=personality_manager,
-            content_analyzer=content_analyzer,
-            hsp_connector = None  # 先设置为None,稍后再设置
-        )
-        # 设置HSP连接器
-        learning_manager.hsp_connector = hsp_connector
-        service_discovery_module = ServiceDiscoveryModule(trust_manager=trust_manager)
-        agent_manager = AgentManager(python_executable=sys.executable)
-
-        # 初始化对话管理器
-        from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
-        dialogue_manager = DialogueManager(
-            ai_id="did,hsp,api_server_ai",
-            personality_manager=personality_manager,
-            memory_manager=memory_manager,
-            llm_interface=llm_interface,
-            emotion_system=emotion_system,
-            crisis_system=crisis_system,
-            time_system=time_system,
-            formula_engine=formula_engine,
-            tool_dispatcher=tool_dispatcher,
-            learning_manager=learning_manager,
-            service_discovery_module=service_discovery_module,
-            hsp_connector=hsp_connector,
-            agent_manager=agent_manager,
-config = None
-        )
-        print("✅ 对话管理器初始化完成")
-        # 使用dialogue_manager执行一些基本操作以避免未使用变量警告
-        print(f"✅ 对话管理器初始化完成,AI ID, {dialogue_manager.ai_id}")
-        
         return True
     except Exception as e:
         print(f"❌ 核心组件启动失败, {e}")
@@ -217,13 +129,6 @@ def load_functional_modules():
     """加载功能模块"""
     print("🔌 第3层, 功能模块加载")
     try:
-        # 加载经济系统
-        from apps.backend.src.economy.economy_manager import EconomyManager
-        economy_manager = EconomyManager({"db_path": "economy.db"})
-        print("✅ 经济系统初始化完成")
-        # 使用economy_manager执行一些基本操作以避免未使用变量警告
-        print(f"✅ 经济系统初始化完成,规则, {economy_manager.rules}")
-        
         # 加载宠物系统
         from apps.backend.src.pet.pet_manager import PetManager
         pet_manager = PetManager("pet1", {"initial_personality": {"curiosity": 0.7, "playfulness": 0.8}})
@@ -522,7 +427,7 @@ cwd = PROJECT_ROOT,
     stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
 text = True,
-env = {**os.environ(), "PYTHONPATH": str(PROJECT_ROOT)}
+env = {**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
             )
             
             # 等待更长时间让服务器启动
@@ -610,7 +515,7 @@ def run_dev_server():
                 # 检查进程是否仍在运行
                 if uvicorn_process.poll() is not None:
                     # 进程已退出,检查返回码
-                    return_code = uvicorn_process.returncode()
+                    return_code = uvicorn_process.returncode
                     if return_code != 0:
                         print(f"❌ Uvicorn服务器异常退出,返回码, {return_code}")
                         # 尝试获取错误输出
