@@ -1,12 +1,16 @@
+import logging
 import sys
 import json
 import time
+import os
 import httpx
 import asyncio
 from src.capabilities import OSCapabilities
 
-# Backend configuration
-BACKEND_URL = "http://127.0.0.1:8000"
+logging.basicConfig(level=logging.INFO, format="[Bridge] %(levelname)s %(message)s")
+logger = logging.getLogger(__name__)
+
+BACKEND_URL = os.environ.get("ANGELA_BACKEND_URL", "http://127.0.0.1:8000")
 
 async def call_angela_api(method, endpoint, data=None):
     async with httpx.AsyncClient() as client:
@@ -16,7 +20,11 @@ async def call_angela_api(method, endpoint, data=None):
             else:
                 res = await client.post(f"{BACKEND_URL}{endpoint}", json=data)
             return res.json()
+        except httpx.HTTPError as e:
+            logger.warning("Angela API call failed: %s", e)
+            return {"status": "error", "message": str(e)}
         except Exception as e:
+            logger.error("Unexpected API error: %s", e)
             return {"status": "error", "message": str(e)}
 
 async def main():
@@ -91,7 +99,11 @@ async def main():
                         results.append({"action": name, "result": res})
                         time.sleep(1)
             print(json.dumps({"status": "success", "results": results}))
+        except (json.JSONDecodeError, IndexError, KeyError) as e:
+            logger.warning("Task command failed: %s", e)
+            print(json.dumps({"status": "error", "message": str(e)}))
         except Exception as e:
+            logger.error("Unexpected task error: %s", e)
             print(json.dumps({"status": "error", "message": str(e)}))
 
     elif command == "ocr":

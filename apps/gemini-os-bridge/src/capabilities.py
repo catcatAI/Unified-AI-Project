@@ -1,11 +1,16 @@
+import logging
+import os
 import pyautogui
 import pyperclip
 import psutil
 import pygetwindow as gw
-from PIL import Image
-import os
+import re
 import time
 from datetime import datetime
+from PIL import Image
+
+logging.basicConfig(level=logging.INFO, format="[OSBridge] %(levelname)s %(message)s")
+logger = logging.getLogger(__name__)
 
 class OSCapabilities:
     def __init__(self, workspace_dir="context_storage"):
@@ -21,8 +26,8 @@ class OSCapabilities:
             if f.endswith(".png") or f.endswith(".jpg"):
                 try:
                     os.remove(os.path.join(self.workspace, f))
-                except Exception:
-                    pass
+                except OSError:
+                    logger.debug("Could not remove %s (in use or missing)", f)
         print("    [System] Workspace scrubbed.")
 
     def __enter__(self):
@@ -59,8 +64,8 @@ class OSCapabilities:
                     win.restore()
                 win.activate()
                 return True
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("focus_window(%s) failed: %s", title_substring, e)
         return False
 
     def wait_for_window(self, title_substring, timeout=20):
@@ -87,7 +92,6 @@ class OSCapabilities:
 
     def clean_text(self, text):
         """Removes noise, excessive whitespace, and non-informative lines."""
-        import re
         if not text:
             return ""
         
@@ -118,13 +122,12 @@ class OSCapabilities:
                     win = gw.getWindowsWithTitle(title)[0]
                     win.close()
                     print(f"    [Cleanup] Closed lingering dialog: {title}")
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("cleanup save dialog: %s", e)
         return True
 
     def handle_save_as_dialog(self, target_path, timeout=15):
         """Waits for Save As dialog with expanded title support."""
-        import time
         start = time.time()
         # Common titles for "Save As" across languages/browsers
         save_titles = ["Save As", "另存新檔", "儲存圖片", "另存影像", "儲存檔案"]
@@ -272,9 +275,9 @@ class OSCapabilities:
 
     def click_text(self, target_text, occurrence=1):
         """Finds text on screen and clicks its center coordinate."""
-        import pytesseract
-        from pytesseract import Output
         try:
+            import pytesseract
+            from pytesseract import Output
             screenshot = pyautogui.screenshot()
             # Get detailed OCR data including bounding boxes
             data = pytesseract.image_to_data(screenshot, lang=OCR_LANG, output_type=Output.DICT)
@@ -297,10 +300,8 @@ class OSCapabilities:
 
     def ocr_screenshot(self, region=None):
         """Extracts text from a screenshot or specific region (requires Tesseract)."""
-        import pytesseract
-        # Note: In Windows, you might need to specify the tesseract_cmd path
-        # pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
         try:
+            import pytesseract
             screenshot = pyautogui.screenshot(region=region)
             text = pytesseract.image_to_string(screenshot, lang='chi_tra+eng')
             return text

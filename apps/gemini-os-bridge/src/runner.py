@@ -1,8 +1,11 @@
+import logging
 import time
 import pyperclip
 import pyautogui
-from src.config import *
+from src.config import GLOBAL_DELAY, WINDOW_WAIT_TIMEOUT, BROWSER_LOAD_WAIT, MAX_CAPTURE_CHARS
 from src.capabilities import OSCapabilities
+
+logger = logging.getLogger(__name__)
 
 class RobustTaskRunner:
     def __init__(self):
@@ -45,7 +48,6 @@ class RobustTaskRunner:
                 pyautogui.press('enter')
 
             # 3. Layered Verification
- (Dynamic wait)
             print(f"[Runner] Waiting {BROWSER_LOAD_WAIT}s for stability...")
             time.sleep(BROWSER_LOAD_WAIT)
             

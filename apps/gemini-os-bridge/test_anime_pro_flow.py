@@ -1,10 +1,13 @@
+import pytest
 import time
 import os
 import pyperclip
 import pyautogui
-from src.config import *
+from src.config import CONTEXT_STORAGE, BROWSER_LOAD_WAIT
 from src.capabilities import OSCapabilities
 from src.runner import RobustTaskRunner
+
+pytest.skip("Runtime desktop automation script, not a pytest test", allow_module_level=True)
 
 def anime_pro_mission():
     os_cap = OSCapabilities()
