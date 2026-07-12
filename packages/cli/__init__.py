@@ -1,7 +1,5 @@
-# Unified AI Project CLI Package
-__version__ = '1.1.0'
-__author__ = 'Unified AI Project'
+from .cli.main import main_cli_logic
+from .cli.unified_cli import main as cli_entry
+from .cli.client import UnifiedAIClient
 
-from packages.cli.cli.main import main_cli_logic
-
-__all__ = ['main_cli_logic']
+__all__ = ["main_cli_logic", "cli_entry", "UnifiedAIClient"]
