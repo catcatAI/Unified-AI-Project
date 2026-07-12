@@ -1,11 +1,10 @@
-fix: §X #227 — Delete 3 more dead code locations (21 files, -1,268 lines)
+fix: §X #228 — Delete 6 dead files from apps/backend/ root (-412 lines)
 
 Deletions:
-- apps/backend/tools/ (14 files): All abandoned debug/fix tools with
-  hardcoded paths, stale core_ai references, most with syntax errors
-- apps/backend/simple_verify.py: Dead debug file with __name"__main__" bug
-  and multiple syntax errors
-- apps/backend/scripts/fix_import_paths.py: Dead historical fix script,
-  only printed warnings about already-deleted core_ai module
+- test_ai_modules.py, test_import.py, test_import_ucc.py:
+  Loose import test files, not in pytest testpaths, unreferenced
+- analyze_imports.py: One-off abandoned analysis tool
+- verify_behavioral_impact.py: Dead debug script, only self-referenced
+- setup.py: Legacy duplicates pyproject.toml (confirmed source of truth)
 
-All confirmed unreferenced by production code.
+All files confirmed unreferenced by production code.
