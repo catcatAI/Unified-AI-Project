@@ -76,8 +76,8 @@ class AngelaClient(QThread):
             try:
                 await self.ws.send(json.dumps({"type": "heartbeat"}))
                 await asyncio.sleep(30)
-            except Exception:
-                print("[Heartbeat] Connection lost, stopping heartbeat")
+            except Exception as e:
+                print(f"[Heartbeat] Connection lost: {e}, stopping heartbeat")
                 break
 
     async def send_msg(self, text):
@@ -234,8 +234,8 @@ class AngelaRenderer(QWidget):
                 )
             except KeyboardInterrupt:
                 raise
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"⚠️ [Physics] apply_dynamics error: {e}")
         
         for bubble in self.bubble_stack:
             target_bubble_x = self.angela_pos.x() + (UIConfig.ANGELA_WIDTH // 2)
