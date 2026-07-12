@@ -16,16 +16,13 @@ logger = logging.getLogger(__name__)
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-# 使用相对导入
-# 修复导入路径,这些模块在不同的目录下
-from tests.test_runner import TestRunner
 from apps.backend.scripts.error_analyzer import ErrorAnalyzer
 from apps.backend.scripts.fix_executor import FixExecutor
 
 
 class WorkflowController:
-    def __init__(self) -> None:
-        self.test_runner = TestRunner()
+    def __init__(self, test_runner=None) -> None:
+        self.test_runner = test_runner
         self.error_analyzer = ErrorAnalyzer("test_results/latest_test_results.json")
         self.fix_executor = FixExecutor()
         self.max_iterations = 3  # 最大迭代次数,防止无限循环

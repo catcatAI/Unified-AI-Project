@@ -99,7 +99,7 @@ class ErrorAnalyzer:
 
         if not combined_output.strip():
              if test_results.get("exit_code", 0) != 0:
-                errors.append(ErrorInfo(ErrorType.UNKNOWN, None, None, "Test run failed with no output.", {{}}))
+                errors.append(ErrorInfo(ErrorType.UNKNOWN, None, None, "Test run failed with no output.", {}))
              return errors
 
         for error_type, pattern in self.error_patterns.items():

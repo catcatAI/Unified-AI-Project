@@ -87,7 +87,7 @@ class SmartFixExecutor:
     def run_tests(self) -> Dict[str, Any]:
         """运行测试并返回结果"""
         logger.info("开始运行测试...")
-        test_results, Dict[str, Any] = {
+        test_results: Dict[str, Any] = {
             "success": False,
             "passed": 0,
             "failed": 0,
@@ -96,7 +96,7 @@ class SmartFixExecutor:
         }
 
         # 明确指定 errors 列表的类型
-        errors_list, List[str] = test_results["errors"]
+        errors_list: List[str] = test_results["errors"]
 
         try:
             # 运行后端测试
@@ -106,7 +106,7 @@ class SmartFixExecutor:
             ], cwd=self.project_root / "apps" / "backend",
 capture_output = True, text=True, timeout=1200)
 
-            test_results["output"] = result.stdout()
+            test_results["output"] = result.stdout
             if result.returncode == 0:
                 logger.info("✓ 测试执行完成")
                 test_results["success"] = True
@@ -192,7 +192,7 @@ capture_output = True, text=True, timeout=1200)
         print(f"失败测试, {test_results['failed']}")
         if test_results['passed'] + test_results['failed'] > 0:
             success_rate = test_results['passed'] / (test_results['passed'] + test_results['failed']) * 100
-            print(f"成功率, {"success_rate"::2f}%")
+            print(f"成功率, {success_rate:.2f}%")
         print(f"执行报告, {report_file}")
 
         if test_results["success"]:

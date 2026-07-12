@@ -251,7 +251,7 @@ class PerformanceBenchmarkFramework:
             cursor.execute("""
                 INSERT INTO benchmark_history 
                 (name, timestamp, iterations, min_time, max_time, mean_time, median_time, 
-                 std_dev, total_time, ops_per_second, cpu_usage, memory_usage,, disk_io_read, disk_io_write, tags)
+                 std_dev, total_time, ops_per_second, cpu_usage, memory_usage, disk_io_read, disk_io_write, tags)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 result["name"],
@@ -322,7 +322,7 @@ class PerformanceBenchmarkFramework:
             logger.error(f"Error retrieving benchmark history, {e}")
             return []
 
-    def compare_benchmarks(self, name, str, baseline_commit, str, current_commit, str) -> Dict[str, Any]:
+    def compare_benchmarks(self, name: str, baseline_commit: str, current_commit: str) -> Dict[str, Any]:
         """
         比较两个版本的基准测试结果
 

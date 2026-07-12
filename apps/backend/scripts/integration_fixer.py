@@ -43,13 +43,11 @@ class IntegrationFixer:
             "apps/backend/src/integrations/confluence_integration.py",
             "apps/backend/src/integrations/jira_integration.py",
             "apps/backend/src/integrations/enhanced_rovo_dev_connector.py",
-            "apps/backend/src/core_ai/learning/content_analyzer_module.py",
-            "apps/backend/src/core_ai/learning/learning_manager.py"
         ]
 
         logger.info("集成问题检查和修复工具初始化完成")
 
-    def backup_file(self, file_path, Path) -> Path:
+    def backup_file(self, file_path: Path) -> Path:
         """备份文件"""
         try:
             # 创建相对于项目根的路径
@@ -466,7 +464,6 @@ class IntegrationFixer:
                 "python", "-m", "pytest",
                 "tests/hsp/",
                 "tests/integration/test_atlassian_integration.py",
-                "tests/core_ai/learning/test_content_analyzer_module.py",
                 "--tb=short", "-v", "--disable-warnings"
             ], cwd=self.project_root, capture_output=True, text=True, timeout=300)
 

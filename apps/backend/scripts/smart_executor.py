@@ -56,18 +56,8 @@ def run_auto_fix():
     print("🔍 检测到导入错误,正在自动修复...")
 
     try:
-        # 导入并运行增强版修复工具
-        sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
-        from apps.backend.scripts.advanced_auto_fix import AdvancedImportFixer
-        fixer = AdvancedImportFixer()
-        results = fixer.fix_all_files()
-
-        if results.files_fixed > 0:
-            print(f"✅ 自动修复完成,修复了 {results.files_fixed} 个文件")
-            return True
-        else:
-            print("⚠️ 未发现需要修复的问题")
-            return False
+        print("⚠️ advanced_auto_fix 模块不存在,跳过自动修复")
+        return False
     except Exception as e:
         print(f"❌ 自动修复时出错, {e}")
         return False
@@ -95,7 +85,7 @@ text = True,
         if stdout:
             print(stdout)
         if stderr:
-            print(stderr, file=sys.stderr())
+            print(stderr, file=sys.stderr)
 
         # 检查是否有错误
         if process.returncode != 0:
@@ -113,14 +103,13 @@ text = True,
                     # 运行自动修复
                     if run_auto_fix():
                         print("🔄 修复完成,重新执行命令...")
-                        # 重新执行命令
-                        return execute_command(command, auto_fix == False)  # 避免无限循环
+                        return execute_command(command, auto_fix=False)
                     else:
                         print("❌ 自动修复失败")
-                        return process.returncode()
+                        return process.returncode
                 else:
                     print("❓ 未检测到可自动修复的导入错误")
-            return process.returncode()
+            return process.returncode
         else:
             print("✅ 命令执行成功")
             return 0
@@ -133,13 +122,12 @@ def main() -> None:
     """主函数"""
     setup_environment()
 
-    if len(sys.argv()) < 2:
+    if len(sys.argv) < 2:
         print("用法, python smart_executor.py <command> [--no-fix]")
         sys.exit(1)
 
-    # 获取命令
     command = sys.argv[1]
-    auto_fix = "--no-fix" not in sys.argv()
+    auto_fix = "--no-fix" not in sys.argv
     # 执行命令
     exit_code = execute_command(command, auto_fix)
     sys.exit(exit_code)

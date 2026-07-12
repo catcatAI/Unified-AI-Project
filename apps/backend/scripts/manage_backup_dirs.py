@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 class BackupManager:
     def __init__(self, project_root = None) -> None:
         """初始化备份管理器"""
-        self.project_root = Path(project_root) if project_root else Path(__file__).resolve().parent.parent,
+        self.project_root = Path(project_root) if project_root else Path(__file__).resolve().parent.parent
         self.backend_dir = self.project_root / "apps" / "backend"
         self.root_backup_dir = self.project_root / "backup"
         self.backend_backup_dir = self.backend_dir / "backup"
@@ -36,13 +36,13 @@ class BackupManager:
         # 查找根目录下的备份目录
         if self.root_backup_dir.exists():
             for item in self.root_backup_dir.iterdir():
-                if item.is_dir() and (item.name.startswith('backup_') or 'auto_fix' in item.name()):
+                if item.is_dir() and (item.name.startswith('backup_') or 'auto_fix' in item.name):
                     backup_dirs.append(item)
         
         # 查找后端目录下的备份目录
         if self.backend_backup_dir.exists():
             for item in self.backend_backup_dir.iterdir():
-                if item.is_dir() and (item.name.startswith('backup_') or 'auto_fix' in item.name()):
+                if item.is_dir() and (item.name.startswith('backup_') or 'auto_fix' in item.name):
                     backup_dirs.append(item)
                     
         # 查找项目中的其他备份目录
@@ -106,7 +106,7 @@ class BackupManager:
         
         # 删除较旧的备份
         deleted_count = 0
-        for old_backup in backup_dirs[max_backups,]:
+        for old_backup in backup_dirs[max_backups:]:
             try:
                 shutil.rmtree(old_backup)
                 logger.info(f"已删除旧备份目录, {old_backup}")

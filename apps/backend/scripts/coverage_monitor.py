@@ -267,9 +267,9 @@ class CoverageMonitor:
             # 检查阈值
             violations = []
             if line_rate < line_rate_threshold:
-                violations.append(f"Line rate {"line_rate"::2%} below threshold {"line_rate_threshold"::2%}")
+                violations.append(f"Line rate {line_rate:.2%} below threshold {line_rate_threshold:.2%}")
             if branch_rate < branch_rate_threshold:
-                violations.append(f"Branch rate {"branch_rate":2%} below threshold {"branch_rate_threshold"::2%}")
+                violations.append(f"Branch rate {branch_rate:.2%} below threshold {branch_rate_threshold:.2%}")
 
             if violations:
                 return {
