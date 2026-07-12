@@ -88,13 +88,90 @@
 - **Moved 1 file**: `verify_impls.py` → `scripts/`
 - Test collection: 4,393 tests in 23.61s
 
-## Summary Metrics (18 rounds)
-- **Files deleted**: 30+
-- **Lines removed**: ~3,200+
-- **Lines added/modified**: ~1,800+
-- **Bug fixes**: 25+
+## Round 19 (§X #204) — Deep Audit R1-R10
+- Critical bug fixes: `loguru` crash, `BeautifulSoup` bare import, `CognitiveOp=None`
+- Broken configs fixed: Dockerfile, package.json, .gitignore
+- 20+ dead files deleted, subsystem pruning (economy/ + 4 integrations, 1,658 lines)
+- pyproject.toml dep audit (+5 missing, -12 unused)
+- Test quality cleanup: 11 dead test files, 1,220 lines, assertion bug fix
+- Coverage expansion: weather_service.py (13 tests), async_io.py (11 tests)
+- Fixed 3 HIGH bugs: `__import__("asyncio")` slowdown, `math_verifier._safe_eval` silent swallowing, deprecated `asyncio.get_event_loop()`
+- Fixed 4 MEDIUM: vision_service scene/compare logging, lazy import logging, circuit breaker logging
+- Deleted 4 dead/duplicate test files + empty e2e dir
+- Net: -2,878 lines, 4,398 tests — 0 errors
+
+## Round 20 (§X #208) — DesktopInteraction Path Validation
+- Added `_is_safe_path()` with `_ALLOWED_ROOTS` whitelist to DesktopInteraction
+- Response route transparency fix: `route` now reports `'fallback'` when LLM fallback produces response
+- 4,387 tests — 0 errors
+
+## Round 21 (§X #206) — gemini-os-bridge Code Quality Fixes
+- Fixed 3 bare `except:pass` → logging with `exc_info=True`
+- Fixed 2 broad `except Exception` → specific exception types
+- Fixed 4 inline imports → module-level imports
+- Removed orphaned `(Dynamic wait)` expression in `runner.py`
+- Fixed 2 star imports → explicit named imports
+- Replaced hardcoded URL with `ANGELA_BACKEND_URL` env var
+- Added `.gitignore` for bridge project
+- Added pytest skip guard to manual diagnostic script
+
+## Round 22 (§X #207) — pixel-angela Code Quality Fixes
+- Fixed 4 broken `dna_body` imports (missing `sys.path.insert` for biology-core/src)
+- Fixed silent `except:pass` in `renderer.py` `apply_dynamics`
+- Fixed bare `except` in heartbeat sender
+- Added `.gitignore`
+- Added pytest skip guards to 4 manual diagnostic scripts
+
+## Round 23 (§X #208) — packages/cli Quality Fixes
+- Rewrote `ai_models_cli.py` (~40+ syntax errors: broken indentation, spurious commas, trailing colons, broken string literals)
+- Narrowed 2 broad `except Exception` to `(ValueError, KeyError, TypeError)`
+- Added `.gitignore`
+
+## Round 24 (§X #209) — CLI Duplicate Removal + web-dashboard Fixes
+- Deleted `LegacyClientShim` class (67 lines, duplicate of `UnifiedAIClient`)
+- Populated empty `cli/__init__.py` with 3 explicit exports
+- Fixed `ChatPanel.tsx`: try/catch on JSON.parse, auto-reconnect, protocol detection
+- Added `req.body` null guard in `interact.ts`
+- Fixed uptime calculation in `metrics.ts`
+
+## Round 25 (§X #210) — CLI Packaging Fixes
+- Fixed broken import in `packages/cli/__init__.py` (was `from packages.cli.cli.main` → ModuleNotFoundError)
+- Rewrote `cli_runner.py` fallback mock (stale 2025 "Level 5 AGI" → current 7.5.0-dev + live timestamp)
+- Rewrote `setup.py` from 4L stub to proper package with dependencies + entry point
+
+## Round 26 (§X #211) — biology-core Fixes
+- Added missing `src/__init__.py` (module was unimportable via standard Python)
+- Added `.gitignore`
+- Added logging to silent `except ImportError` for scipy fallback
+- Moved inline `import math` to module level (removed 2 redundant inline imports)
+
+## Round 27 (§X #212) — Delete 7 Dead pixel-angela Prototype Files
+- Deleted: `body_schema.py`, `object_interface.py`, `overlay_engine.py`, `pixel_matrix.py`, `pixel_world.py`, `skin_engine.py`, `sprite_processor.py`
+- All superseded by `renderer.py` + `AngelaDNA` from biology-core
+- Git history preserves these if ever needed
+
+## Round 28 (§X #213) — Strip UTF-8 BOM from Test File
+- `tests/utils/test_text_utils.py` started with invisible `EF BB BF` (UTF-8 BOM)
+- Caused `SyntaxError: invalid non-printable character U+FEFF` on Python 3 — blocked test collection
+- Stripped via binary write (bytes 3..end)
+- Verified zero other BOM files exist in `tests/`, `apps/backend/src/`, `scripts/`, or `packages/`
+
+## Round 29 (§X #214) — JS Runtime Bug Fixes
+- **security-utils.js**: `sanitizeHTML()` defined `sanitizeNode` as regular `function(){}` — `this.allowedTags` / `this.allowedAttributes` crashed at runtime with `TypeError` (class methods are strict mode, `this = undefined`). Changed to arrow function `const sanitizeNode = (node) => { }` to capture outer `this`.
+- **main.js**: `saveWindowPosition()` called `fs.writeFileSync()` without try/catch — unhandled exception would crash the Electron app on write failure. Added `try/catch` with `log.error()`.
+- Comprehensive scan of all 33 shared JS files + 8 desktop app JS files for: `this` context bugs, unprotected `JSON.parse`, unprotected `fs.*Sync`, orphan event listeners. Confirmed all other `JSON.parse` and `fs` calls have proper error handling.
+- 4,393 tests collected — 0 errors
+
+## Summary Metrics (29 rounds)
+- **Files deleted**: 60+
+- **Lines removed**: ~6,000+
+- **Lines added/modified**: ~3,500+
+- **Bug fixes**: 40+ (crashes, silent failures, syntax errors, runtime errors)
 - **Test quality fixes**: 30+ (silent passes, zero-assertion, anti-patterns)
-- **Security fixes**: 8+ (eval→safe_eval, XSS innerHTML, empty catch blocks)
-- **Config fixes**: 10+ (Docker, MANIFEST.in, npm scripts, gitignore)
-- **Dead code eliminated**: 15+ files
+- **Security fixes**: 10+ (eval→safe_eval, XSS innerHTML, empty catch, path traversal, mutation)
+- **Config fixes**: 15+ (Docker, MANIFEST.in, npm scripts, gitignore, pyproject.toml, setup.py)
+- **Dead code eliminated**: 30+ files
 - **Feedback loops closed**: 6 (DLI, ALC, IntentModel, EmotionSystem, MetaController, Bio→CNS bridge)
+- **Zero bare `except: pass`**: all eradicated across 29 rounds (0 remaining in production Python code)
+- **Zero `except Exception: pytest.skip()`**: all replaced with proper skip/importorskip
+- **Zero BOM-affected files**: 1 found, fixed; 0 remain
