@@ -162,16 +162,40 @@
 - Comprehensive scan of all 33 shared JS files + 8 desktop app JS files for: `this` context bugs, unprotected `JSON.parse`, unprotected `fs.*Sync`, orphan event listeners. Confirmed all other `JSON.parse` and `fs` calls have proper error handling.
 - 4,393 tests collected — 0 errors
 
-## Summary Metrics (29 rounds)
-- **Files deleted**: 60+
-- **Lines removed**: ~6,000+
-- **Lines added/modified**: ~3,500+
-- **Bug fixes**: 40+ (crashes, silent failures, syntax errors, runtime errors)
+## Round 30 (§X #216) — Strip Trailing NUL Bytes from HTML Files
+- `apps/web-live2d-viewer/index.html` and `apps/desktop-app/electron_app/index.html`: both had trailing NUL bytes (0x00)
+- Fixed mixed indentation (8→4 spaces) on script tag in web index.html
+- Verified zero other HTML files in the project have trailing NUL
+
+## Round 31 (§X #217) — Delete Orphaned src/system/ Directory
+- `apps/backend/src/system/` (3 files: `__init__.py`, `security_monitor.py`, `integrated_graphics_optimizer.py`, 121 lines)
+- All modules had been migrated to `core/system/` — nothing imported from the old location
+- Fixed `tests/shared/test_security.py` to import `ABCKeyManager` from active `core.system.security_monitor` path
+
+## Round 32 (§X #218) — Fix 12 Syntax Errors in 2 Backend Scripts
+- **analyze_failures.py** (7 errors): `encoding ==` (should be `=`), trailing comma in `with`, triple `::` in 3 loops, `__name"__main__"`, missing try/except for file I/O
+- **clean_old_backups.py** (5 errors): `days_to_keep ==` (should be `=`), `try,` (should be `try:`), `except ::`, `__name"__main__"`, hardcoded `D,/absolute/path` (comma instead of colon)
+- Both now use logging + relative paths
+
+## Round 33 (§X #219) — Delete 6 Orphaned src/ Modules + 4 Untracked Data Files
+- **compat/** (2 files, 100 lines): transformers/keras compatibility layer, never imported by any code
+- **evaluation/** (1 file): Evaluator class with no `__init__.py`, never imported
+- **test_audio.py**, **test_config.py**: manual test scripts sitting in src/ root
+- **app_config_loader.py** (67 lines): hardcoded config dict superseded by YAML-based config system
+- **economy.db**, **alpha_deep_model_symbolic_space.db**, **reasoning_symbolic.db**, **angela_memory.json**: orphaned data files referenced by zero production code (all were untracked)
+- All 745 Python files in `apps/backend/src/`, `apps/backend/scripts/`, `apps/pixel-angela/`, `apps/gemini-os-bridge/`, `packages/`, `scripts/` now parse with zero syntax errors
+
+## Summary Metrics (33 rounds)
+- **Files deleted**: 70+
+- **Lines removed**: ~7,000+
+- **Lines added/modified**: ~4,000+
+- **Bug fixes**: 55+ (crashes, silent failures, syntax errors, runtime errors)
 - **Test quality fixes**: 30+ (silent passes, zero-assertion, anti-patterns)
 - **Security fixes**: 10+ (eval→safe_eval, XSS innerHTML, empty catch, path traversal, mutation)
 - **Config fixes**: 15+ (Docker, MANIFEST.in, npm scripts, gitignore, pyproject.toml, setup.py)
-- **Dead code eliminated**: 30+ files
+- **Dead code eliminated**: 40+ files
 - **Feedback loops closed**: 6 (DLI, ALC, IntentModel, EmotionSystem, MetaController, Bio→CNS bridge)
-- **Zero bare `except: pass`**: all eradicated across 29 rounds (0 remaining in production Python code)
+- **Zero bare `except: pass`**: all eradicated across 33 rounds (0 remaining in production Python code)
 - **Zero `except Exception: pytest.skip()`**: all replaced with proper skip/importorskip
 - **Zero BOM-affected files**: 1 found, fixed; 0 remain
+- **Zero syntax errors in all 745 .py files**: verified via AST parse of entire project
