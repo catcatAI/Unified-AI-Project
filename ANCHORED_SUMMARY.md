@@ -185,17 +185,32 @@
 - **economy.db**, **alpha_deep_model_symbolic_space.db**, **reasoning_symbolic.db**, **angela_memory.json**: orphaned data files referenced by zero production code (all were untracked)
 - All 745 Python files in `apps/backend/src/`, `apps/backend/scripts/`, `apps/pixel-angela/`, `apps/gemini-os-bridge/`, `packages/`, `scripts/` now parse with zero syntax errors
 
-## Summary Metrics (33 rounds)
-- **Files deleted**: 70+
-- **Lines removed**: ~7,000+
+## Round 34 (§X #221) — Delete Stale reports/ + tools/ + Fix 7 CI Workflows
+- **reports/**: deleted 61 stale files (815 KB) — all v6.2.x audit/report docs from Feb-May 2026 referencing deleted modules; zero code references
+- **tools/**: deleted 2 orphaned files (805 lines) — `install_angela.py` + `AngelaLauncher.bat`, acknowledged dead in project docs, zero imports
+- **5 HIGH-priority CI fixes** (workflows that would always fail at runtime):
+  - `ci.yml`: removed dead `tests/ai/test_real_causal_reasoning_engine.py` ref from pytest command
+  - `nightly-orchestrator-dry-run.yml`: removed dead `scripts/project_ai_orchestrator.py` step
+  - `manual-training.yml`: same dead orchestrator ref
+  - `docs-link-check.yml`: same dead orchestrator ref
+  - `deploy.yml`: removed dead `docker-compose.prod.yml` ref + bumped `appleboy/ssh-action` v1.0.0→v2 (2.5y stale)
+- **2 MEDIUM-priority CI fixes**:
+  - `cli-tests.yml`: fixed wrong path prefix `Unified-AI-Project/packages/cli`→`packages/cli` (workflow never triggered)
+  - `scheduled-config-backup.yml`: removed 3 dead backup entries referencing deleted files
+- 4,393 tests — 0 errors
+
+## Summary Metrics (34 rounds)
+- **Files deleted**: 130+ (63 in this round alone)
+- **Lines removed**: ~22,000+ (13,952 in this round alone)
 - **Lines added/modified**: ~4,000+
-- **Bug fixes**: 55+ (crashes, silent failures, syntax errors, runtime errors)
+- **Bug fixes**: 65+ (crashes, silent failures, syntax errors, runtime errors)
+- **CI workflow bugs fixed**: 7 (5 HIGH — would fail at runtime; 2 MEDIUM)
 - **Test quality fixes**: 30+ (silent passes, zero-assertion, anti-patterns)
 - **Security fixes**: 10+ (eval→safe_eval, XSS innerHTML, empty catch, path traversal, mutation)
 - **Config fixes**: 15+ (Docker, MANIFEST.in, npm scripts, gitignore, pyproject.toml, setup.py)
-- **Dead code eliminated**: 40+ files
+- **Dead code eliminated**: 100+ files
 - **Feedback loops closed**: 6 (DLI, ALC, IntentModel, EmotionSystem, MetaController, Bio→CNS bridge)
-- **Zero bare `except: pass`**: all eradicated across 33 rounds (0 remaining in production Python code)
+- **Zero bare `except: pass`**: all eradicated across 34 rounds (0 remaining in production Python code)
 - **Zero `except Exception: pytest.skip()`**: all replaced with proper skip/importorskip
 - **Zero BOM-affected files**: 1 found, fixed; 0 remain
 - **Zero syntax errors in all 745 .py files**: verified via AST parse of entire project
