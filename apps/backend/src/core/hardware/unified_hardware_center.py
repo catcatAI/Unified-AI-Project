@@ -30,12 +30,7 @@ class AcceleratorType(Enum):
     FPGA = "fpga"
 
 
-class PrecisionLevel(Enum):
-    FP32 = "fp32"
-    FP16 = "fp16"
-    INT8 = "int8"
-    INT4 = "int4"
-    BF16 = "bf16"
+from core.hardware.precision_matrix import PrecisionLevel  # noqa: F401
 
 
 class PerformanceMode(Enum):

@@ -16,7 +16,8 @@ from core.system.live_logger import status as live_status
 logger = logging.getLogger(__name__)
 
 
-class PrecisionLevel(Enum):
+class ClusterPrecision(Enum):
+    """Precision levels for cluster compute nodes (different from hardware precision)."""
     FP32 = "FP32"
     FP16 = "FP16"
     FP8 = "FP8"
@@ -40,7 +41,7 @@ class ClusterManager:
             logger.warning(f"Node '{node_id}' already registered.")
             return False
         node_info.setdefault("type", NodeType.LOCAL.value)
-        node_info.setdefault("precision", PrecisionLevel.FP32.value)
+        node_info.setdefault("precision", ClusterPrecision.FP32.value)
         node_info.setdefault("status", "idle")
         node_info.setdefault("registered_at", datetime.datetime.now().isoformat())
         self.nodes[node_id] = node_info

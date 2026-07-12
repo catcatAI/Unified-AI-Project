@@ -126,7 +126,7 @@ _LAZY_IMPORTS = {
     "InstructionSet": "core.hardware.hal",
     "HardwareVendor": "core.hardware.hal",
     "ComputeUnit": "core.hardware.hal",
-    "PrecisionLevel": "core.hardware.hal",
+    "PrecisionLevel": "core.hardware.precision_matrix",
     "OperatingSystem": "core.hardware.hal",
     "HardwareCapabilities": "core.hardware.hal",
     "HardwareMetrics": "core.hardware.hal",

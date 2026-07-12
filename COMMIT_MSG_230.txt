@@ -1,8 +1,0 @@
-§X #230: Fix 5 critical bugs caused by prior cleanup commits
-
-BUGS FIXED:
-1. main.py: module-level import `src.system.security_monitor` → `core.system.security_monitor` (CRITICAL: server crash on startup, from §X #217)
-2. start_monitor.py: SecurityTrayMonitor was deleted in earlier refactor; ABCKeyManager path also broken (CRITICAL: script crash on startup)
-3. app_config_loader.py: RESTORED — mistakenly deleted in §X #219, but 6 production files depend on it (get_bootstrap_config, get_formula_config)
-4. hardware_probe.py: Added missing `_get_memory_gb()` and `_detect_gpu()` methods (cross-platform: wmic/sysctl/meminfo)
-5. docs/examples/verify_full_system.py: Fixed broken import paths
