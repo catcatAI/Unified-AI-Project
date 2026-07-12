@@ -178,7 +178,7 @@ class SecurityUtils {
         const domParser = new DOMParser();
         const doc = domParser.parseFromString(html, 'text/html');
 
-        function sanitizeNode(node) {
+        const sanitizeNode = (node) => {
             // 文本节点直接返回
             if (node.nodeType === Node.TEXT_NODE) {
                 return;

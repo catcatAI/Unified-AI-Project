@@ -861,8 +861,12 @@ function getAutoStartupStatus() {
  * Save/restore window position
  */
 function saveWindowPosition(bounds) {
-  const configPath = path.join(app.getPath('userData'), 'window-position.json')
-  fs.writeFileSync(configPath, JSON.stringify(bounds))
+  try {
+    const configPath = path.join(app.getPath('userData'), 'window-position.json')
+    fs.writeFileSync(configPath, JSON.stringify(bounds))
+  } catch (err) {
+    log.error('[Main] Failed to save window position:', err)
+  }
 }
 
 function restoreWindowPosition() {
