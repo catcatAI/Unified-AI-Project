@@ -24,6 +24,10 @@ class ABCKeyManager:
                 self._keys[k] = env_val
         logger.info("ABCKeyManager initialized (keys generated)")
 
+    def has_key(self, key_name: str) -> bool:
+        """Check if a key exists."""
+        return key_name in self._keys
+
     def get_key(self, key_name: str) -> Optional[str]:
         return self._keys.get(key_name)
 
