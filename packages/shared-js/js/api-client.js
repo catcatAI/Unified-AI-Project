@@ -293,12 +293,6 @@ class AngelaAPIClient {
     }
 
     /**
-     * Get economy/resource status
-     * @returns {Promise<Object>} Economy data
-     */
-
-
-    /**
      * Get or create session ID
      * @private
      */
