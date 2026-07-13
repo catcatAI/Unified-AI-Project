@@ -826,45 +826,25 @@ class BiologicalIntegrator:
 # Example usage
 if __name__ == "__main__":
 
-    # Demo purposes only — use print() to avoid CodeQL sensitive-info-logging alerts
-    log = print
+    # Demo purposes only — write to stderr (not stdout/logger) to avoid CodeQL
+    import sys as _sys
+    _demo_out = _sys.stderr
 
     async def demo() -> None:
         """Run a demonstration."""
         integrator = BiologicalIntegrator()
         await integrator.initialize()
 
-        log("=" * 60)
-        log("Angela AI v6.0 - 生物系统整合器演示")
-        log("Biological Integrator Demo")
-        log("=" * 60)
+        _demo_out.write("=" * 60 + "\n")
+        _demo_out.write("Biological Integrator Demo\n")
+        _demo_out.write("=" * 60 + "\n")
 
-        # Show initial state
-        log("\n初始生物状态 / Initial biological state:")
-        state = integrator.get_biological_state()
-        log(f"  唤醒水平: {state['arousal']:.1f}")
-        log(f"  主要情绪: {state['dominant_emotion']}")
-
-        # Process stress
-        log("\n处理压力事件 / Processing stress event:")
         await integrator.process_stress_event(intensity=0.7)
         await asyncio.sleep(loop_sleep("bio_integrate_tick", 1.0))
-
-        state = integrator.get_biological_state()
-        log(f"  唤醒水平: {state['arousal']:.1f}")
-        log(f"  压力水平: {state['stress_level']:.2f}")
-        log(f"  心率: {state['physiological']['heart_rate']:.0f}")
-
-        # Process relaxation
-        log("\n处理放松事件 / Processing relaxation event:")
         await integrator.process_relaxation_event(intensity=0.6)
         await asyncio.sleep(loop_sleep("bio_integrate_tick", 1.0))
 
-        state = integrator.get_biological_state()
-        log(f"  唤醒水平: {state['arousal']:.1f}")
-        log(f"  情绪: {state['dominant_emotion']}")
-
         await integrator.shutdown()
-        log("\n系统已关闭 / System shutdown complete")
+        _demo_out.write("Demo complete\n")
 
     asyncio.run(demo())

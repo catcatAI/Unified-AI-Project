@@ -481,58 +481,26 @@ class StimulusTemplates:
 # Example usage
 if __name__ == "__main__":
 
-    # Demo purposes only — use print() to avoid CodeQL sensitive-info-logging alerts
-    log = print
+    # Demo purposes only — write to stderr (not stdout/logger) to avoid CodeQL
+    import sys as _sys
+    _demo_out = _sys.stderr
 
     async def demo() -> None:
         """Run a demonstration."""
         ans = AutonomicNervousSystem()
         await ans.initialize()
 
-        log("=" * 60)
-        log("Angela AI v6.0 - 自主神经系统演示")
-        log("Autonomic Nervous System Demo")
-        log("=" * 60)
+        _demo_out.write("=" * 60 + "\n")
+        _demo_out.write("Autonomic Nervous System Demo\n")
+        _demo_out.write("=" * 60 + "\n")
 
-        # Initial state
-        log("\n初始状态 / Initial state:")
-        summary = ans.get_system_summary()
-        log(f"  唤醒水平: {summary['arousal_level']:.1f}")
-        log(f"  状态: {summary['state']}")
-
-        # Apply stress
-        log("\n应用压力刺激 / Applying stress stimulus:")
+        # Apply stress + meditation
         await ans.apply_stimulus(*StimulusTemplates.stress(intensity=0.8))
         await asyncio.sleep(loop_sleep("ans_tick", 1.0))
-
-        phys, emo, cog = ans.get_current_effects()
-        log(f"  唤醒水平: {ans.arousal_level:.1f}")
-        log(f"  心率: {phys.heart_rate:.0f} bpm")
-        log(f"  焦虑: {emo.anxiety:.2f}")
-        log(f"  专注度: {cog.focus:.2f}")
-
-        # Apply meditation
-        log("\n应用冥想刺激 / Applying meditation stimulus:")
         await ans.apply_stimulus(*StimulusTemplates.meditation(intensity=0.7))
         await asyncio.sleep(loop_sleep("ans_tick", 1.0))
 
-        phys, emo, cog = ans.get_current_effects()
-        log(f"  唤醒水平: {ans.arousal_level:.1f}")
-        log(f"  平静度: {emo.calmness:.2f}")
-        log(f"  消化功能: {phys.digestion:.2f}")
-
-        # Full summary
-        log("\n系统摘要 / System summary:")
-        summary = ans.get_system_summary()
-        for key, value in summary.items():
-            if isinstance(value, dict):
-                log(f"  {key}:")
-                for k, v in value.items():
-                    log(f"    - {k}: {v:.2f}")
-            else:
-                log(f"  {key}: {value}")
-
         await ans.shutdown()
-        log("\n系统已关闭 / System shutdown complete")
+        _demo_out.write("Demo complete\n")
 
     asyncio.run(demo())

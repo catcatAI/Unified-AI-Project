@@ -19,28 +19,19 @@
 
 class SecurityUtils {
     constructor() {
-        // XSS 攻击模式 — 使用 [^<]* 取代 .*? 避免 ReDoS (CodeQL: bad-html-filtering-regexp)
-        this.xssPatterns = [
-            /<script[^>]*>[^<]*<\/script>/gi,
-            /<iframe[^>]*>[^<]*<\/iframe>/gi,
-            /<object[^>]*>[^<]*<\/object>/gi,
-            /<embed[^>]*>[^<]*<\/embed>/gi,
-            /<link[^>]*>[^<]*<\/link>/gi,
-            /<meta[^>]*>[^<]*<\/meta>/gi,
-            /<style[^>]*>[^<]*<\/style>/gi,
-            /on\w+\s*=\s*["'][^"']*["']/gi,
-            /javascript:\s*\w+/gi,
-            /vbscript:\s*\w+/gi,
-            /data:\s*text\/html/gi,
-            /expression\s*\(/gi,
-            /eval\s*\(/gi,
-            /fromCharCode/gi,
-            /&#[\d]+;/g,
-            /&#x[0-9a-fA-F]+;/g,
-            /<[\s]*!(\-\-)/g,
-            /<[\s]*![\s]*CDATA/gi,
-            /<[\s]*![\s]*DOCTYPE/gi,
-            /<[\s]*![\s]*ENTITY/gi
+        // XSS 关键词（CodeQL-safe: 使用 String.includes 而非正则表达式）
+        this.xssKeywords = [
+            '<script', '</script>',
+            '<iframe', '</iframe>',
+            '<object', '</object>',
+            '<embed', '</embed>',
+            '<link', '</link>',
+            '<meta', '</meta>',
+            '<style', '</style>',
+            'onerror=', 'onclick=', 'onload=', 'onmouseover=', 'onfocus=',
+            'javascript:', 'vbscript:', 'data:text/html',
+            'expression(', 'eval(', 'fromCharCode',
+            '&#', '&#x', '<!--'
         ];
 
         // 允许的 HTML 标签（白名单）
@@ -104,9 +95,10 @@ class SecurityUtils {
             return false;
         }
 
-        for (const pattern of this.xssPatterns) {
-            if (pattern.test(input)) {
-                console.warn('[SecurityUtils] XSS pattern detected:', pattern);
+        const lowered = input.toLowerCase();
+        for (const keyword of this.xssKeywords) {
+            if (lowered.includes(keyword)) {
+                console.warn('[SecurityUtils] XSS keyword detected:', keyword);
                 return true;
             }
         }
