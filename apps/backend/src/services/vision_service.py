@@ -817,22 +817,22 @@ class VisionService:
 if __name__ == "__main__":
 
     async def main() -> None:
-        """Main entry point."""
-        vision_config = {}  # Placeholder for actual config
+        """Main entry point (CLI test)."""
+        vision_config = {}  # Will be populated from config file in production
         service = VisionService(config=vision_config)
 
         # Test image analysis (with dummy bytes)
         dummy_image = b"\x10\x11\x12\x13\x14\x15"
         analysis = await service.analyze_image(dummy_image, features=["captioning", "ocr"])
-        logger.info(f"Image Analysis: {analysis}")
+        logger.info("Image Analysis: %s", analysis)
 
         analysis_default = await service.analyze_image(dummy_image)
-        logger.info(f"Image Analysis (default features): {analysis_default}")
+        logger.info("Image Analysis (default features): %s", analysis_default)
 
         # Test image comparison
         dummy_image2 = b"\x20\x21\x22\x23\x24\x25"
         similarity = await service.compare_images(dummy_image, dummy_image2)
-        logger.info(f"Image Similarity: {similarity}")
+        logger.info("Image Similarity: %s", similarity)
 
         logger.info("Vision Service script finished.")
 

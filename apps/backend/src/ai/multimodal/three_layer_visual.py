@@ -116,7 +116,7 @@ class ThreeLayerVisual:
 
     def _fit_pca_encoder(self, images, verbose):
         if verbose:
-            print("Fitting PCA encoder...")
+            logger.info("Fitting PCA encoder...")
         self._mean = images.mean(axis=0)
         centered = images - self._mean
         U, S, Vt = np.linalg.svd(centered, full_matrices=False)
@@ -127,7 +127,7 @@ class ThreeLayerVisual:
         self._pca_explained = float(explained)
         self._latent_dim = self.LATENT_DIM
         if verbose:
-            print(f"  PCA: {n_components}/{self.LATENT_DIM} dims, {explained:.1%} variance")
+            logger.info("PCA: %d/%d dims, %.1f%% variance", n_components, self.LATENT_DIM, explained * 100)
 
     def _encode_all(self, images):
         centered = images - self._mean
@@ -185,7 +185,7 @@ class ThreeLayerVisual:
                 total_loss += loss.item()
                 n_batches += 1
             if verbose and (epoch + 1) % 25 == 0:
-                print(f"  Epoch {epoch+1}: MSE={total_loss/n_batches:.4f}")
+                logger.info("  Epoch %d: MSE=%.4f", epoch + 1, total_loss / max(n_batches, 1))
 
     def _build_metrics(self, images, latent, t0, verbose):
         self._decoder.eval()
@@ -201,7 +201,7 @@ class ThreeLayerVisual:
             'n_images': len(images),
         }
         if verbose:
-            print(f"Training complete: MSE={test_mse:.4f} ({elapsed:.0f}s)")
+            logger.info("Training complete: MSE=%.4f (%.0fs)", test_mse, elapsed)
         return metrics
 
     def encode(self, images: np.ndarray) -> np.ndarray:

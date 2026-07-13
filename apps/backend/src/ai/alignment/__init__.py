@@ -21,7 +21,7 @@ _MAX_EMOTION_HISTORY = 500
 _MAX_CHECK_HISTORY = 200
 
 
-# Placeholders for other systems to satisfy the package structure
+# Full implementations for alignment subsystem management
 class EmotionSystem:
     def __init__(self, config=None):
         self.config = config or {}

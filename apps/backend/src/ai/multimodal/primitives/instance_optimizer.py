@@ -5,6 +5,7 @@ Phase 8: For a specific image, optimize primitive parameters at pixel level.
 Loss = MSE(rendered, original) at pixel level (NOT CLIP similarity).
 """
 
+import logging
 import time
 from typing import Optional, Tuple
 
@@ -12,6 +13,8 @@ import numpy as np
 from PIL import Image
 
 from .concept_mapper import ConceptMapper
+
+logger = logging.getLogger(__name__)
 from .differentiable_renderer import DifferentiableRenderer
 from .geometric_vocabulary import GeometricVocabulary
 from .primitive_renderer import PrimitiveRenderer
@@ -67,7 +70,7 @@ class InstanceOptimizer:
         concept_name = mapping["concept"]
 
         if verbose:
-            print(f"  Concept: {concept_name} (sim={mapping['similarity']:.3f})")
+            logger.info("Concept: %s (sim=%.3f)", concept_name, mapping['similarity'])
 
         # Step 2: Initialize from concept distribution
         init_vec = mapping["initialization"]

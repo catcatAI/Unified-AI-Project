@@ -115,8 +115,8 @@ class ConceptSpaceMapper:
         n_samples = len(clip_features)
 
         if verbose:
-            print(f"Training concept space: {n_samples} images, {n_classes} classes")
-            print(f"  Architecture: {self._clip_dim} → {self._hidden_dim} → {self._hidden_dim} → {self._concept_dim}")
+            logger.info("Training concept space: %d images, %d classes", n_samples, n_classes)
+            logger.info("  Architecture: %d → %d → %d → %d", self._clip_dim, self._hidden_dim, self._hidden_dim, self._concept_dim)
 
         t_start = time.time()
 
@@ -160,7 +160,7 @@ class ConceptSpaceMapper:
             if verbose and (epoch + 1) % 50 == 0:
                 avg_loss = total_loss / max(n_batches, 1)
                 elapsed = time.time() - t_start
-                print(f"  Epoch {epoch+1}/{n_epochs}: loss={avg_loss:.4f} ({elapsed:.1f}s)")
+                logger.info("  Epoch %d/%d: loss=%.4f (%.1fs)", epoch + 1, n_epochs, avg_loss, elapsed)
 
         # Compute class centers
         concept_vecs = self._forward(clip_features)
@@ -177,7 +177,7 @@ class ConceptSpaceMapper:
         self._is_trained = True
         if verbose:
             elapsed = time.time() - t_start
-            print(f"Training complete ({elapsed:.1f}s)")
+            logger.info("Training complete (%.1fs)", elapsed)
 
     def _contrastive_loss(self, concept_vecs: np.ndarray,
                           labels: np.ndarray) -> float:
