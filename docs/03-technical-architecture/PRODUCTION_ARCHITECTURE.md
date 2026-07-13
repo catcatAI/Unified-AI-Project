@@ -135,7 +135,7 @@ FROM python:3.12-slim
 WORKDIR /app
 COPY . .
 
-RUN pip install -e "apps/backend[standard,testing]"
+RUN pip install -e "apps/backend[standard]"
 
 EXPOSE 8000 3000
 

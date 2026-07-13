@@ -202,8 +202,10 @@ python -m venv .venv
 # On macOS/Linux:
 source .venv/bin/activate
 
-# Install Python backend dependencies (path-based editable install from repo root)
-pip install -e "apps/backend[standard,testing]"
+# Install Python backend dependencies (run from repo root). Pick ONE tier:
+pip install -e "apps/backend"            # Quick start: lightweight (numpy backend, no torch/vector DB)
+# pip install -e "apps/backend[standard]"  # Full features: torch embeddings + ChromaDB + media + GPU + cache
+# pip install -e "apps/backend[dev]"       # Developer: standard + pytest/black/mypy/pre-commit toolchain
 
 # Install JS workspace dependencies using pnpm (use npx if pnpm is not installed globally)
 npx pnpm install --no-frozen-lockfile
@@ -493,8 +495,10 @@ python -m venv .venv
 # macOS/Linux:
 source .venv/bin/activate
 
-# 安裝後端 Python 依賴（路徑式 editable 安裝，於 repo 根目錄執行）
-pip install -e "apps/backend[standard,testing]"
+# 安裝後端 Python 依賴（於 repo 根目錄執行）。三選一：
+pip install -e "apps/backend"            # 快速體驗：輕量（numpy 後端，無 torch/向量庫）
+# pip install -e "apps/backend[standard]"  # 完整功能：torch 嵌入 + ChromaDB + 媒體 + GPU + 快取
+# pip install -e "apps/backend[dev]"       # 開發者：standard + pytest/black/mypy/pre-commit 工具鏈
 
 # 使用 pnpm 安裝工作區 JS 依賴
 npx pnpm install --no-frozen-lockfile

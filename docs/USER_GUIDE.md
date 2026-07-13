@@ -24,8 +24,10 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1   # Windows PowerShell
 source .venv/bin/activate     # macOS/Linux
 
-# Install Python dependencies (backend, path-based editable install from repo root)
-pip install -e "apps/backend[standard,testing]"
+# Install Python dependencies (backend, run from repo root). Pick ONE tier:
+pip install -e "apps/backend"            # Quick start: lightweight (numpy backend, no torch/vector DB)
+# pip install -e "apps/backend[standard]"  # Full features: torch embeddings + ChromaDB + media + GPU + cache
+# pip install -e "apps/backend[dev]"       # Developer: standard + pytest/black/mypy/pre-commit toolchain
 
 # Install JS workspace dependencies using pnpm
 npx pnpm install --no-frozen-lockfile

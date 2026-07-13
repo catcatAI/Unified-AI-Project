@@ -26,6 +26,19 @@
 | pnpm | 最新 | JS 工作區管理器（可用 `npx pnpm`） |
 | Ollama | 最新 | 本地 LLM 後端（可選但推薦） |
 
+## 我該裝哪個層級？
+
+後端依賴已依需求拆分成數個層級，只裝你需要的即可。
+
+| 我是…​ | 指令 | 得到什麼 | 大致體積 |
+| --- | --- | --- | --- |
+| **只想快速試用** | `pip install -e "apps/backend"` | 伺服器 + 核心 AI（GARDEN/ED3N，純 numpy 後端）。不含 torch、不含向量庫。 | 最小 / 最快 |
+| **有需求、要完整功能** | `pip install -e "apps/backend[standard]"` | 以上全部 **＋ 真實神經嵌入（torch）、ChromaDB 向量庫、媒體（TTS/OCR/螢幕）、GPU 遙測、Redis 快取**。 | 大（含 torch 約 120MB） |
+| **開發者 / 貢獻者** | `pip install -e "apps/backend[dev]"` | *standard* 全部 **＋ 測試與品質工具鏈**（pytest、black、isort、flake8、mypy、pre-commit、MQTT 測試 broker）。 | 最大 |
+
+也可自由組合更細的群組，例如 `pip install -e "apps/backend[ml,vector]"`。
+可用群組：`ml`、`vector`、`data`、`media`、`gpu`、`cache`、`nlp`、`installer`、`game`。`full` 會裝上全部。
+
 ## 第一步：複製並設定
 
 ```powershell
@@ -36,8 +49,17 @@ cd Unified-AI-Project
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 
-# 安裝後端依賴（路徑式 editable 安裝，於 repo 根目錄執行）
-pip install -e "apps/backend[standard,testing]"
+# 安裝後端依賴（於 repo 根目錄執行）。三選一：
+#
+#   快速體驗  — 輕量，只啟動伺服器 + 核心 AI（numpy 後端，無 torch/向量庫），
+#              安裝最快：
+pip install -e "apps/backend"
+#
+#   完整功能  — 有需求的用戶：真實嵌入（torch）、向量資料庫、媒體、GPU、快取：
+# pip install -e "apps/backend[standard]"
+#
+#   開發者    — 完整功能 + 測試/檢查/型別工具鏈（pytest、black、mypy…）：
+# pip install -e "apps/backend[dev]"
 
 # 安裝 JS 依賴
 npx pnpm install --no-frozen-lockfile
@@ -106,7 +128,8 @@ python scripts/run_angela.py --health-check
 
 ### 「Module not found」錯誤
 ```powershell
-pip install -e "apps/backend[standard,testing]" --force-reinstall
+# 重裝你原本使用的層級（範例：standard）
+pip install -e "apps/backend[standard]" --force-reinstall
 ```
 
 ### 連接埠 8000 已被佔用

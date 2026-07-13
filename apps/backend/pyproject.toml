@@ -16,30 +16,30 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
 ]
+# ---------------------------------------------------------------------------
+# BASE dependencies = the "Quick Start" tier.
+# Lightweight runtime: boots the FastAPI server + core AI (GARDEN/ED3N run on
+# the pure-numpy backend). NO torch / chromadb / spacy / pandas here — those
+# are lazy-imported in code with graceful fallbacks and live in extras below.
+# ---------------------------------------------------------------------------
 dependencies = [
   "numpy>=1.21.0",
+  "scipy>=1.7.0",
+  "networkx>=2.6",
   "requests>=2.25.0",
+  "httpx>=0.23.0",
+  "aiohttp>=3.8.0",
   "python-dotenv>=0.19.0",
   "PyYAML>=6.0",
   "typing-extensions>=4.0.0",
   "paho-mqtt>=2.1.0",
   "psutil>=5.8.0",
-  "sentence-transformers>=2.2.0",
-  "httpx>=0.23.0",
   "Pillow>=9.0.0",
-  "aiohttp>=3.8.0",
-  "edge-tts>=6.1.9",
-  "pyautogui>=0.9.54",
-  "pytesseract>=0.3.10",
   "cryptography>=41.0.0",
+  "PyJWT>=2.0.0",
   "fastapi>=0.128.0",
   "uvicorn[standard]",
   "pydantic",
-  "redis>=5.0.0",
-  "PyJWT>=2.0.0",
-  "pynvml>=11.0.0",
-  "textblob>=0.17.0",
-  "scipy>=1.7.0",
 ]
 
 [[project.authors]]
@@ -49,138 +49,97 @@ name = "Unified AI Project Team"
 text = "MIT"
 
 [project.optional-dependencies]
-minimal = [
-  "numpy",
-  "cryptography",
-  "requests",
-  "python-dotenv",
-  "PyYAML",
-  "typing-extensions",
-  "paho-mqtt>=2.1.0",
-  "networkx",
-  "psutil",
-  "pandas",
-  "scikit-learn>=1.8.0",
+# ===========================================================================
+# FEATURE GROUPS — granular, opt-in building blocks. Compose these directly
+# (e.g. pip install -e "apps/backend[ml,vector]") or use the user tiers below.
+# ===========================================================================
+
+# Neural embeddings + SNN torch backend. Pulls torch (~120MB) + HF stack.
+# Optional: GARDEN/ED3N fall back to a pure-numpy backend without it.
+ml = [
+  "torch>=1.11.0",
+  "sentence-transformers>=2.2.0",
+  "transformers>=4.41.0",
+  "huggingface-hub>=0.23.0",
 ]
-standard = [
-  "numpy",
-  "cryptography",
-  "requests",
-  "python-dotenv",
-  "PyYAML",
-  "typing-extensions",
-  "paho-mqtt>=2.1.0",
-  "networkx",
-  "psutil",
-  "pandas",
-  "scikit-learn>=1.8.0",
-  "fastapi>=0.128.0",
-  "uvicorn",
-  "pydantic",
-  "httpx",
+# Persistent vector database. Optional: a numpy+JSON vector store is the
+# built-in fallback when chromadb is absent.
+vector = [
   "chromadb",
 ]
-full = [
-  "numpy",
-  "cryptography",
-  "requests",
-  "python-dotenv",
-  "PyYAML",
-  "typing-extensions",
-  "paho-mqtt>=2.1.0",
-  "networkx",
-  "psutil",
+# Tabular data analytics + lightweight sentiment.
+data = [
   "pandas",
   "scikit-learn>=1.8.0",
-  "tensorflow",
-  "ml-dtypes~=0.3.1",
-  "tensorboard<2.17,>=2.16",
+  "textblob>=0.17.0",
+]
+# Audio (TTS) + desktop/vision perception (screen control, OCR).
+media = [
+  "edge-tts>=6.1.9",
+  "pyautogui>=0.9.54",
+  "pytesseract>=0.3.10",
+]
+# NVIDIA GPU telemetry.
+gpu = [
+  "pynvml>=11.0.0",
+]
+# Redis cache/session backend.
+cache = [
+  "redis>=5.0.0",
+]
+# Advanced NLP pipeline (spaCy). Not required by the core; opt-in only.
+nlp = [
   "spacy>=3.8.11",
-  "fastapi>=0.128.0",
-  "uvicorn",
-  "pydantic",
-  "httpx",
-  "pytest",
-  "pytest-asyncio",
-  "pytest-cov",
-  "aiounittest",
-  "pygame",
-  "PyQt5",
-  "pyshortcuts",
-  "secret-sharing",
-  "qrcode",
-  "beautifulsoup4",
-  "github3.py",
-  "scikit-image",
-  "SpeechRecognition",
-  "faster-whisper>=1.0.0",
-  "faiss-cpu",
-  "sentence-transformers",
-  "huggingface-hub",
-  "transformers",
 ]
-ai_focused = [
-  "numpy",
-  "cryptography",
-  "requests",
-  "python-dotenv",
-  "PyYAML",
-  "typing-extensions",
-  "paho-mqtt>=2.1.0",
-  "networkx",
-  "psutil",
-  "pandas",
-  "scikit-learn>=1.8.0",
-  "tensorflow",
-  "spacy>=3.8.11",
-  "sentence-transformers",
-  "huggingface-hub",
-  "transformers",
-]
-game = [
-  "numpy",
-  "cryptography",
-  "requests",
-  "python-dotenv",
-  "PyYAML",
-  "typing-extensions",
-  "paho-mqtt>=2.1.0",
-  "networkx",
-  "psutil",
-  "pygame",
-  "pandas",
-  "scikit-learn>=1.8.0",
-]
+# Native desktop installer helpers (shortcuts, QR, secret sharing).
 installer = [
   "PyQt5",
   "pyshortcuts",
   "secret-sharing",
   "qrcode",
 ]
-testing = [
+# Pygame-based mini-games / rendering.
+game = [
+  "pygame",
+]
+
+# ===========================================================================
+# USER TIERS — pick ONE based on who you are.
+# ===========================================================================
+
+# 有需求的用戶 / Feature user: full-feature runtime (real embeddings, vector
+# DB, media, GPU, cache). Everything to actually use the product, no dev tools.
+standard = [
+  "unified-ai-project[ml,vector,data,media,gpu,cache]",
+]
+
+# 專業工程師 / Contributor: standard features + the full dev/test toolchain
+# (pytest, linting, type checking, MQTT test brokers).
+dev = [
+  "unified-ai-project[standard]",
   "pytest",
   "pytest-asyncio",
   "pytest-cov",
   "pytest-timeout",
   "aiounittest",
   "astunparse",
-  "cryptography",
-  "aiohttp",
-  "python-dotenv",
-  "paho-mqtt>=2.1.0",
-  "pandas",
-  "scikit-learn>=1.8.0",
-  "spacy>=3.8.11",
   "gmqtt",
   "amqtt",
-  "fastapi>=0.128.0",
-  "httpx",
-  "uvicorn",
   "black",
   "isort",
   "flake8",
   "mypy",
   "pre-commit",
+]
+
+# Backward-compat alias (CI, Dockerfiles, package.json use this name).
+testing = [
+  "unified-ai-project[dev]",
+]
+
+# Everything, including optional spaCy NLP, installer and game extras.
+full = [
+  "unified-ai-project[dev,nlp,installer,game]",
 ]
 
 [project.urls]

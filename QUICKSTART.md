@@ -14,8 +14,10 @@ python -m venv .venv
 # On macOS/Linux:
 source .venv/bin/activate
 
-# Install Python backend dependencies (path-based editable install from repo root)
-pip install -e "apps/backend[standard,testing]"
+# Install Python backend dependencies (run from repo root). Pick ONE tier:
+pip install -e "apps/backend"            # Quick start: lightweight (numpy backend, no torch/vector DB)
+# pip install -e "apps/backend[standard]"  # Full features: torch embeddings + ChromaDB + media + GPU + cache
+# pip install -e "apps/backend[dev]"       # Developer: standard + pytest/black/mypy/pre-commit toolchain
 
 # Install JS workspace dependencies (use npx if pnpm is not installed globally)
 npx pnpm install --no-frozen-lockfile

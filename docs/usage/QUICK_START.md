@@ -26,6 +26,19 @@
 | pnpm | latest | JS workspace manager (`npx pnpm` works) |
 | Ollama | latest | Local LLM backend (optional but recommended) |
 
+## Which install tier should I pick?
+
+The backend dependencies are split into tiers so you only install what you need.
+
+| I am a…​ | Command | What you get | Rough size |
+| --- | --- | --- | --- |
+| **Just trying it out** | `pip install -e "apps/backend"` | Server + core AI on the pure-numpy backend (GARDEN/ED3N). No torch, no vector DB. | smallest / fastest |
+| **A user who wants full features** | `pip install -e "apps/backend[standard]"` | Everything above **+ real neural embeddings (torch), ChromaDB vector store, media (TTS/OCR/screen), GPU telemetry, Redis cache**. | large (pulls torch ~120MB) |
+| **A developer / contributor** | `pip install -e "apps/backend[dev]"` | Everything in *standard* **+ the test & quality toolchain** (pytest, black, isort, flake8, mypy, pre-commit, MQTT test brokers). | largest |
+
+Optional finer-grained groups can be mixed too, e.g. `pip install -e "apps/backend[ml,vector]"`.
+Available groups: `ml`, `vector`, `data`, `media`, `gpu`, `cache`, `nlp`, `installer`, `game`. `full` installs absolutely everything.
+
 ## Step 1: Clone & Setup
 
 ```powershell
@@ -36,8 +49,18 @@ cd Unified-AI-Project
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 
-# Install backend dependencies (path-based editable install, run from repo root)
-pip install -e "apps/backend[standard,testing]"
+# Install backend dependencies (run from repo root). Pick ONE tier:
+#
+#   Quick start  — lightweight, boots server + core AI on the numpy backend
+#                  (no torch/vector DB); fastest to install:
+pip install -e "apps/backend"
+#
+#   Standard     — full features: real embeddings (torch), vector DB, media,
+#                  GPU telemetry, cache. For users who want everything working:
+# pip install -e "apps/backend[standard]"
+#
+#   Developer    — Standard + test/lint/type toolchain (pytest, black, mypy…):
+# pip install -e "apps/backend[dev]"
 
 # Install JS dependencies
 npx pnpm install --no-frozen-lockfile
@@ -106,7 +129,8 @@ If you skip Ollama setup, these fall back to ED3N/GARDEN (reduced quality):
 
 ### "Module not found" errors
 ```powershell
-pip install -e "apps/backend[standard,testing]" --force-reinstall
+# Reinstall the tier you originally used (example: standard)
+pip install -e "apps/backend[standard]" --force-reinstall
 ```
 
 ### Port 8000 already in use

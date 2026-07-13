@@ -12,6 +12,7 @@ overrides:
 allowBuilds:
   electron: true
   electron-winstaller: true
+  sharp: true
 
 onlyBuiltDependencies:
   - '@prisma/client'

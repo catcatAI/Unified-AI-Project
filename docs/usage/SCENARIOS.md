@@ -23,7 +23,7 @@ For users who want to see the system running immediately.
 # 1. Install (see QUICK_START.md for details)
 python -m venv .venv
 .venv\Scripts\Activate.ps1
-pip install -e "apps/backend[standard,testing]"
+pip install -e "apps/backend"          # Quickest path: lightweight tier (see QUICK_START.md for [standard]/[dev])
 npx pnpm install --no-frozen-lockfile
 
 # 2. Start
