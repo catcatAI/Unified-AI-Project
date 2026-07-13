@@ -76,13 +76,13 @@ pytest tests/path/to/test_file.py -v
 | `apps/pixel-angela/` | PyQt6 pixel art engine |
 | `packages/shared-js/` | Shared JS library (33 files) |
 | `packages/cli/` | Python CLI tools |
-| `tests/` | Test suite (~4,261 tests) |
+| `tests/` | Test suite (~4,387 tests) |
 | `docs/` | Documentation (50+ MD files) |
 
 ## Key Facts
 
 - **612 Python files** in backend src (~96K lines)
-- **~4,261 tests** across 480+ test files, 0 errors
+- **~4,387 tests** across 480+ test files, 0 errors
 - **Architecture health**: ~85-90% (2026-06-25 audit)
 - **Repair phases**: All 6 phases (0-5 + C/D/E/F) complete
 - **See**: `docs/COMPREHENSIVE_REPAIR_ROADMAP.md` for full repair status

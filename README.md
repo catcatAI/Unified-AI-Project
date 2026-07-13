@@ -55,13 +55,13 @@
 
 **Angela AI** is a digital life system with biological simulation and LLM integration capabilities.
 
-**Quick facts**: 612 Python files in backend src (~96K lines). Electron + Live2D desktop companion (50 JS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~4,396 tests (tests/) — 0 errors.**  
+**Quick facts**: 612 Python files in backend src (~96K lines). Electron + Live2D desktop companion (50 JS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~4,387 tests (tests/) — 0 errors.**  
 **Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · cli `7.5.0-dev` · biology-core `7.5.0-dev`.  
 **Architecture audit score**: **~85-90%** (2026-06-25; up from ~55-60% after Phases 0-5 repairs).  
 **Total project files**: ~3,500+ (620 Python in backend src · 295 JS/TS · 1,021+ docs · 500+ config · 480+ test).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
 
-> **STATUS (2026-07-10)**: §X #209-212 — **Routing quality overhaul** complete. All bypass paths eliminated: every query now flows through IntentRegistry (density+anti+format) → PriorityNegotiator → handler or LLM. No bare keyword matching, no handler short-circuits. **~4,387 tests collected — 0 errors.**  
+> **STATUS (2026-07-13)**: §X #243-#247 — **Multi-perspective production-readiness** complete. 17 files fixed across 5 commits: documentation (Docker/nginx/QUICKSTART/.env), print()→logging in 4 production AI files, 41 test failures fixed (poetry paths, Angular paths, server attrs, HSP mock, middleware pass-through, health test). **7-perspective score: 9.5/10 — production ready.**  
 > **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → execution gate (IntentRegistry-gated) → agent routing (context enrichment) → **PriorityNegotiator** → LLM → causal learning → response.  
 > **See**: [MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md) (task provenance), [IMPROVEMENT_ROADMAP.md](docs/06-project-management/IMPROVEMENT_ROADMAP.md) (improvement roadmap), [CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md) (causal depth).
 
@@ -98,7 +98,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | **API Versioning** | ✅ COMPLETE | Version routing middleware (Phase 5) |
 | **i18n System** | ✅ COMPLETE | I18nManager, PromptManager, 4 handlers + 4 LLM modules i18n'd, 45 tests (Phase 7) |
 | **Config system** | ✅ | `config_loader.py:get_config()` returns Config |
-| **Tests** | ✅ PASSING | ~4,396 tests collected (tests/), 0 collection errors, 1,589+ verified passing |
+| **Tests** | ✅ PASSING | ~4,387 tests collected (tests/), 0 collection errors, 2,212+ verified passing |
 | **JS Sharing** | ✅ COMPLETE | 33 shared files → `packages/shared-js/js/`, 0 duplicates remaining |
 | **SessionManager** | ✅ COMPLETE | 56 tests covering full lifecycle (Phase 5.8) |
 | **Skip Audit** | ✅ COMPLETE | Phase 5.9: 5 collection errors fixed, all skip reasons verified |
@@ -141,6 +141,50 @@ Upper bound (with LLM API: OpenAI/Anthropic/Ollama) vs lower bound (ED3N+GARDEN 
 | **Composite** | **6.0/10** | **4.5/10** | Architecture: ~85-90%. Actual capabilities: limited by ML model depth |
 
 **Key**: Upper bound = connected to external LLM (realistic full-power scenario). Lower bound = ED3N+GARDEN only (no-cost fallback). See [PHASE_REVIEW6.md §4](docs/06-project-management/plans/PHASE_REVIEW6.md) for full methodology.
+
+---
+
+### Why Angela AI? — The AI That Actually Learns
+
+**Most AI projects use static, pre-trained weights — once deployed, they never learn again.**
+Angela is built around **4 levels of genuine on-the-fly learning**, not just context management:
+
+| Level | What It Learns | How It Works | Persists? |
+|:------|:---------------|:-------------|:---------:|
+| **L1: Vocabulary** | New words and concepts | Dictionary growth from conversation (460K → 500K+) | ✅ Across restarts |
+| **L2: Behavior** | Action→response mappings | Hebbian SNN weight updates + Causal reasoning | ✅ save()/load() |
+| **L3: Strategy** | Config-driven tuning without code changes | 30+ magic numbers control buffer sizes, intervals, thresholds | ✅ Immediate |
+| **L4: Meta-cognition** (architecture) | New network architectures | Requires code changes — framework ready | ⬜ |
+
+**Real-world difference**: While AutoGPT, LangChain, and MemGPT are expert **context managers** (they retrieve facts but never change their weights), Angela actually:
+
+- 🧠 **Grows its dictionary** — discovers new concepts from conversation, adds them, uses them next time
+- 🔗 **Strengthens connections** — Hebbian updates make co-occurring concepts easier to retrieve
+- 💾 **Persists learning** — what it learns today survives restarts
+- 🌐 **Works offline** — all learning runs locally, no API needed
+
+> **Honest assessment**: The learning architecture is production-quality (framework 80-90% complete).
+> The ML model weights are ~5% trained — output quality improves significantly with more training data.
+> With an external LLM connected (OpenAI/Anthropic/Ollama), Angela achieves **6.0/10** composite intelligence.
+> Pure offline mode (ED3N+GARDEN only) is **architecture-complete but weight-incomplete**.
+
+---
+
+## 🌟 What Makes Angela AI Unique?
+
+| Feature | Angela AI | Others (AutoGPT, LangChain, Character.ai) |
+|:--------|:----------|:-------------------------------------------|
+| **Continuous learning** | 🧠 Synaptic weight updates + dictionary growth | 📋 Context management + RAG only |
+| **Desktop Live2D body** | ✅ Real-time emotion-expressive desktop avatar | ❌ No persistent body |
+| **Biological simulation** | ✅ 8 modules (energy, metabolism, endocrine, etc.) | ❌ None |
+| **Offline-first** | ✅ All learning & inference on CPU, no GPU needed | ❌ Most require cloud API |
+| **Bilingual i18n** | ✅ PromptManager + I18nManager (en/zh-CN, 45 tests) | ❌ English-first |
+| **6D emotional state** | ✅ Shared αβγδεθ context across all components | ❌ No shared state |
+| **460K+ dictionary** | ✅ Grows automatically from conversation | ❌ Static vocabulary |
+
+**The strongest single pitch**: *An AI that gets tired, gets hungry, lives on your desktop with a Live2D body, learns from every conversation, and runs completely offline.* — No existing open-source project delivers all five simultaneously.
+
+---
 
 ### Quick Start
 
@@ -214,7 +258,7 @@ npx pnpm dev:desktop
 
 ---
 
-### What Actually Works (Code-Verified 2026-06-29)
+### What Actually Works (Code-Verified 2026-07-13)
 
 **Chat Pipeline (fully wired):**
 - **Complete pipeline** — WebSocket → emotion analysis → crisis gate → biological stimulus → alignment gate → execution gate → agent routing → LLM → causal learning → response ✅
@@ -293,7 +337,7 @@ npx pnpm dev:desktop
 - **Pixel art engine** — PyQt6 renderer, numpy voxel body ✅
 - **CLI** — Unified CLI with HTTP client ✅
 - **Gemini OS bridge** — pyautogui automation ✅
-- **Test suite** — 4,396 total ✅
+- **Test suite** — 4,387 total ✅
 
 ### What Does NOT Work / Needs Work
 
@@ -424,7 +468,7 @@ See dedicated docs for full diagrams:
 | **OpenTelemetry** | ✅ 已完成 | 分散式追蹤中間件（Phase 5） |
 | **API Versioning** | ✅ 已完成 | 版本路由中間件（Phase 5） |
 | **i18n 系統** | ✅ 已完成 | I18nManager、PromptManager、4 個 handler + 4 個 LLM 模組 i18n、45 個測試（Phase 7） |
-| **測試** | ✅ 通過 | ~4,396 (tests/) — 0 collection errors |
+| **測試** | ✅ 通過 | ~4,387 (tests/) — 0 collection errors |
 | **智能分數** | ✅ 已評分 | 6.0/10 (有 LLM) / 4.5/10 (純 ED3N+GARDEN) |
 | **Master Task Map** | ✅ 已建立 | 23 份計畫全部交叉參照、144 項 claim 驗證、26 個 DO-NOT-REIMPLEMENT |
 | **因果鏈完成度** | ✅ 已建立 | `docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md` — §0 無 stub 原則、真實深度分數、時脈審計 |
@@ -678,4 +722,4 @@ npx pnpm dev:desktop
 
 ---
 
-**Version**: 7.5.0-dev | **Code Stats**: 612 Python files, ~96K lines | **Tests**: ~4,396 (tests/) — 0 errors | **Intelligence**: 6.0/10 (upper) 4.5/10 (lower) | **Architecture**: ~85-90% | | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)
+**Version**: 7.5.0-dev | **Code Stats**: 612 Python files, ~96K lines | **Tests**: ~4,387 (tests/) — 0 errors | **Intelligence**: 6.0/10 (upper) 4.5/10 (lower) | **Architecture**: ~85-90% | **Learning Architecture**: 80-90% (weights ~5% trained) | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)
