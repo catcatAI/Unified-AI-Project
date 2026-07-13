@@ -272,36 +272,6 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    @app.post("/api/v1/system/status")
-    async def get_system_status_detailed(data: Dict[str, Any] = Body(...)):
-        """獲取系統詳細狀態 (受 Key B 保護)"""
-        from core.system.bootstrap.hardware_probe import HardwareProbe
-
-        probe = HardwareProbe()
-        try:
-            profile = probe.probe()
-            return {
-                "status": "online",
-                "stats": {
-                    "cpu_cores": profile.cpu_cores,
-                    "memory_gb": profile.memory_gb,
-                    "gpu": profile.gpu,
-                    "nodes": 1,  # 簡化處理
-                    "tier": profile.performance_tier,
-                    "ai_score": profile.ai_capability_score,
-                },
-                "modules": system_manager.modules,
-                "timestamp": datetime.now().isoformat(),
-            }
-        except Exception as e:
-            logger.error(f"獲取硬體狀態失敗: {e}")
-            return {
-                "status": "online",
-                "stats": {"cpu": "12%", "mem": "42%", "nodes": 1},
-                "modules": system_manager.modules,
-                "timestamp": datetime.now().isoformat(),
-            }
-
     @app.post("/api/v1/system/module-control")
     async def control_module(data: Dict[str, Any] = Body(...)):
         """控制系統模組 (受 Key B 保護)"""
@@ -311,17 +281,6 @@ def create_app() -> FastAPI:
             if system_manager.set_module_state(module, enabled):
                 return {"status": "success", "module": module, "enabled": enabled}
         return {"status": "error", "message": "Invalid module or state"}
-
-    # API 路由 - 安全與行動端測試 (手動註冊)
-    @app.post("/api/v1/mobile/test")
-    async def mobile_test(data: Dict[str, Any]):
-        logger.info(f"收到來自行動端的安全請求: {data}")
-        return {
-            "status": "success",
-            "received": data,
-            "server_time": datetime.now().isoformat(),
-            "message": "Angela 核心已接收您的加密訊息",
-        }
 
     # API路由
     from src.api.router import router

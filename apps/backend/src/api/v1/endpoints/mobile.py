@@ -7,6 +7,7 @@ import asyncio
 import logging
 from datetime import datetime
 from typing import Any, Dict
+from core.sync.realtime_sync import SyncEventType
 
 from fastapi import APIRouter, Body
 
@@ -58,36 +59,6 @@ async def get_mobile_status_get() -> dict:
         }
 
 
-@router.post("/status")
-async def get_mobile_status(data: Dict[str, Any] = Body(...)) -> dict:
-    """獲取實時系統狀態 (CPU, Memory, Cluster)"""
-    try:
-        import psutil
-        from core.system.cluster_manager import cluster_manager
-
-        cpu_usage = await asyncio.to_thread(psutil.cpu_percent)
-        memory = await asyncio.to_thread(psutil.virtual_memory)
-        cluster_status = cluster_manager.get_cluster_status()
-
-        return {
-            "status": "SECURE LINK ACTIVE",
-            "metrics": {
-                "cpu": f"{cpu_usage}%",
-                "mem": f"{memory.percent}%",
-                "nodes": cluster_status.get("node_count", 0),
-            },
-            "backend_version": "7.5.0-dev",
-            "server_time": datetime.now().isoformat(),
-        }
-    except ImportError as e:
-        logger.error(f"Mobile status import error: {e}", exc_info=True)
-        return {
-            "status": "partial",
-            "metrics": {"cpu": "N/A", "mem": "N/A", "nodes": 0},
-            "backend_version": "7.5.0-dev",
-            "server_time": datetime.now().isoformat(),
-            "error": "Some modules not available",
-        }
 
 
 @router.post("/module-control")
@@ -98,10 +69,12 @@ async def mobile_module_control(data: Dict[str, Any] = Body(...)) -> dict:
 
     try:
         from core.sync.realtime_sync import SyncEvent, sync_manager
+        import uuid
 
         await sync_manager.broadcast_event(
             SyncEvent(
-                event_type="module_control",
+                id=str(uuid.uuid4()),
+                event_type=SyncEventType.STATUS_CHANGE,
                 data={"module": module, "enabled": enabled},
                 source="mobile_app",
             )

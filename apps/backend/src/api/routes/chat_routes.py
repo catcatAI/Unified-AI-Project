@@ -22,7 +22,6 @@ from api.lifespan import (
 )
 from services.document_router import try_intent_routing as _try_intent_routing
 from fastapi import APIRouter, Body, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import JSONResponse
 
 logger = logging.getLogger(__name__)
 
@@ -1336,38 +1335,10 @@ async def send_message(session_id: str, request: Dict[str, Any] = Body(...)) -> 
     return await _handle_chat_request(user_message, user_name, session.get("messages", []), session_id)
 
 
-@router.post("/angela/chat")
-async def angela_chat(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
-    """Execute the angela chat operation.
-
-    ⚠️ DEPRECATED: Use POST /api/v1/chat/unified instead.
-    This endpoint is kept for backward compatibility and will be removed in a future release.
-    """
-    import warnings
-    warnings.warn("POST /angela/chat is deprecated, use POST /chat/unified", DeprecationWarning, stacklevel=2)
-    user_message = request.get("message", request.get("text", ""))
-    session_id = request.get("session_id", f"angela-{uuid.uuid4().hex[:8]}")
-    user_name = request.get("user_name", "\u670b\u53cb")
-    history = request.get("history", [])
-    origin = request.get("origin", "Human")
-    return await _handle_chat_request(user_message, user_name, history, session_id, origin=origin)
 
 
-@router.post("/dialogue")
-async def dialogue(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
-    """Execute the dialogue operation.
 
-    ⚠️ DEPRECATED: Use POST /api/v1/chat/unified instead.
-    This endpoint is kept for backward compatibility and will be removed in a future release.
-    """
-    import warnings
-    warnings.warn("POST /dialogue is deprecated, use POST /chat/unified", DeprecationWarning, stacklevel=2)
-    user_message = request.get("message", request.get("text", ""))
-    session_id = request.get("session_id", f"angela-{uuid.uuid4().hex[:8]}")
-    user_name = request.get("user_name", "\u670b\u53cb")
-    history = request.get("history", [])
-    origin = request.get("origin", "Human")
-    return await _handle_chat_request(user_message, user_name, history, session_id, origin=origin)
+
 
 
 @router.post("/chat/unified")
@@ -1402,47 +1373,7 @@ async def unified_chat(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     return response
 
 
-@router.post("/vision/analyze")
-async def analyze_image(
-    file: UploadFile = File(...),
-    question: str = Form(default="這張圖片裡有什麼？"),
-    session_id: str = Form(default=""),
-) -> Dict[str, Any]:
-    """Analyze an uploaded image using VisionService.
 
-    ⚠️ DEPRECATED: Use POST /chat/with-image instead.
-    This endpoint is kept for backward compatibility and will be removed in a future release.
-
-    Accepts image file upload + optional question, returns analysis result.
-    """
-    import warnings
-    warnings.warn("POST /vision/analyze is deprecated, use POST /chat/with-image", DeprecationWarning, stacklevel=2)
-    if not file.content_type or not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Only image files are accepted")
-
-    try:
-        image_data = await file.read()
-        if len(image_data) > 10 * 1024 * 1024:  # 10MB limit
-            raise HTTPException(status_code=400, detail="Image too large (max 10MB)")
-
-        from services.vision_service import VisionService
-        vision = VisionService()
-        result = await vision.process({
-            "image_data": image_data,
-            "filename": file.filename,
-            "question": question,
-        })
-
-        return {
-            "analysis": result,
-            "filename": file.filename,
-            "session_id": session_id,
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Vision analysis failed: {e}", exc_info=True)
-        raise RuntimeError(f"Vision analysis failed: {e}")
 
 
 @router.post("/chat/with-image")

@@ -4,7 +4,6 @@ import base64
 import io
 import logging
 import os
-import warnings
 from typing import Optional
 
 import numpy as np
@@ -98,7 +97,6 @@ def _get_gvv():
         else:
             mapper = ConceptMapper(vocabulary)
 
-        # Load concept space if available
         if os.path.exists(concept_space_path):
             concept_space = ConceptSpaceMapper.load(concept_space_path)
             mapper.set_concept_space(concept_space)
@@ -106,7 +104,6 @@ def _get_gvv():
         else:
             logger.warning("Concept space not found at %s", concept_space_path)
 
-        # Fix: InstanceOptimizer requires (vocabulary, concept_mapper, canvas_size)
         optimizer = InstanceOptimizer(vocabulary, mapper, (128, 128))
 
         _gvv_state = {
@@ -165,16 +162,12 @@ def _encode_text_with_clip(text: str) -> np.ndarray:
         return np.zeros(512, dtype=np.float32)
 
 
-@router.post("/generate-image", response_model=GenerateImageResponse)
-async def generate_image(request: GenerateImageRequest):
+@router.post("/image/generate", response_model=GenerateImageResponse)
+async def image_generate(request: GenerateImageRequest):
     """Generate an image from text using the GVV pipeline.
-
-    ⚠️ DEPRECATED: Use POST /image/generate instead.
-    This endpoint is kept for backward compatibility and will be removed in a future release.
 
     Pipeline: text → CLIP → concept space → ConceptMapper → vocabulary init → optimize → render
     """
-    warnings.warn("POST /generate-image is deprecated, use POST /image/generate", DeprecationWarning, stacklevel=2)
     gvv = _get_gvv()
     if gvv is None:
         raise HTTPException(status_code=503, detail="GVV pipeline not available")
@@ -186,26 +179,20 @@ async def generate_image(request: GenerateImageRequest):
         concept_mapper = gvv["concept_mapper"]
         optimizer = gvv["optimizer"]
 
-        # Step 1: Encode text with CLIP
         clip_vec = _encode_text_with_clip(request.text)
 
-        # Step 2: Map text → concept → initial vector
         mapping = concept_mapper.map_text_to_primitives(clip_vec)
         concept_name = mapping["concept"]
 
-        # Step 3: Optimize for pixel similarity
-        # Fix: Use optimize_from_text instead of optimize
         result = optimizer.optimize_from_text(
             clip_vec,
             n_iterations=request.num_iterations,
             lr=request.learning_rate,
         )
 
-        # Step 4: Render final image
         size = (request.canvas_size, request.canvas_size)
         img = render_primitives_from_vector(result["optimized_vector"], size=size)
 
-        # Step 5: Compute metrics
         metrics = {
             "concept": concept_name,
             "similarity": mapping["similarity"],
@@ -228,16 +215,12 @@ async def generate_image(request: GenerateImageRequest):
         raise HTTPException(status_code=500, detail=safe_error(e))
 
 
-@router.post("/recognize-image", response_model=RecognizeImageResponse)
-async def recognize_image(request: RecognizeImageRequest):
+@router.post("/image/recognize", response_model=RecognizeImageResponse)
+async def image_recognize(request: RecognizeImageRequest):
     """Recognize an image using concept space mapping.
-
-    ⚠️ DEPRECATED: Use POST /image/recognize instead.
-    This endpoint is kept for backward compatibility and will be removed in a future release.
 
     Pipeline: image → CLIP → concept space → classify
     """
-    warnings.warn("POST /recognize-image is deprecated, use POST /image/recognize", DeprecationWarning, stacklevel=2)
     gvv = _get_gvv()
     if gvv is None:
         raise HTTPException(status_code=503, detail="GVV pipeline not available")
@@ -251,22 +234,17 @@ async def recognize_image(request: RecognizeImageRequest):
 
         encoder = SemanticVisualEncoder()
 
-        # Decode image
         img_bytes = base64.b64decode(request.image_base64)
 
-        # Encode with CLIP
         clip_vec = encoder.encode(img_bytes)
         if clip_vec is None:
             raise HTTPException(status_code=400, detail="Failed to encode image with CLIP")
 
-        # Map to concept space
         concept_space = concept_mapper._concept_space
         concept_vec = concept_space.encode(clip_vec.reshape(1, -1))
 
-        # Classify
         pred_idx, confidence = concept_space.predict(clip_vec.reshape(1, -1))
 
-        # Get class scores
         sims = concept_vec @ concept_space._class_centers.T
         class_scores = {
             concept_space._class_names[i]: float(sims[0, i])
@@ -287,41 +265,33 @@ async def recognize_image(request: RecognizeImageRequest):
         raise HTTPException(status_code=500, detail=safe_error(e))
 
 
-@router.post("/reconstruct-image", response_model=ReconstructImageResponse)
-async def reconstruct_image(request: ReconstructImageRequest):
+@router.post("/image/reconstruct", response_model=ReconstructImageResponse)
+async def image_reconstruct(request: ReconstructImageRequest):
     """Reconstruct an image using ThreeLayerVisual.
-
-    ⚠️ DEPRECATED: Use POST /image/reconstruct instead.
-    This endpoint is kept for backward compatibility and will be removed in a future release.
 
     Pipeline: image → PCA encode → decode → enhance
     """
-    warnings.warn("POST /reconstruct-image is deprecated, use POST /image/reconstruct", DeprecationWarning, stacklevel=2)
     model = _get_three_layer()
     if model is None:
         raise HTTPException(status_code=503, detail="ThreeLayerVisual model not available")
 
     try:
+        import time
         from PIL import Image as PILImage
 
-        # Decode image
         img_bytes = base64.b64decode(request.image_base64)
         pil_img = PILImage.open(io.BytesIO(img_bytes)).convert("RGB")
         pil_img = pil_img.resize((32, 32))
         img_arr = np.array(pil_img).astype(np.float32) / 255.0
         img_flat = img_arr.reshape(1, -1)
 
-        # Reconstruct
-        import time
         t0 = time.time()
         recon = model.reconstruct(img_flat, enhance=request.enhance)
         recon_time = time.time() - t0
 
-        # Convert back to PIL
         recon_img = (recon[0].reshape(32, 32, 3) * 255).astype(np.uint8)
         pil_recon = PILImage.fromarray(recon_img).resize(pil_img.size)
 
-        # Compute MSE
         orig_resized = np.array(pil_img.resize((32, 32))).astype(np.float32) / 255.0
         mse = float(np.mean((recon[0].reshape(32, 32, 3) - orig_resized) ** 2))
 
@@ -346,31 +316,25 @@ async def reconstruct_image(request: ReconstructImageRequest):
         raise HTTPException(status_code=500, detail=safe_error(e))
 
 
-@router.post("/interpolate-classes", response_model=InterpolateResponse)
-async def interpolate_classes(request: InterpolateRequest):
+@router.post("/image/interpolate", response_model=InterpolateResponse)
+async def image_interpolate(request: InterpolateRequest):
     """Interpolate between two class centers using ThreeLayerVisual.
-
-    ⚠️ DEPRECATED: Use POST /image/interpolate instead.
-    This endpoint is kept for backward compatibility and will be removed in a future release.
 
     Pipeline: class A center → class B center → n_steps interpolation
     """
-    warnings.warn("POST /interpolate-classes is deprecated, use POST /image/interpolate", DeprecationWarning, stacklevel=2)
     model = _get_three_layer()
     if model is None:
         raise HTTPException(status_code=503, detail="ThreeLayerVisual model not available")
 
     try:
-        # Interpolate
         import time
-
         from PIL import Image as PILImage
+
         t0 = time.time()
         interp = model.interpolate(request.class_a, request.class_b, n_steps=request.n_steps,
                                    enhance=request.enhance)
         interp_time = time.time() - t0
 
-        # Convert to base64
         images = []
         for i in range(len(interp)):
             img_arr = (interp[i].reshape(32, 32, 3) * 255).astype(np.uint8)
@@ -394,61 +358,10 @@ async def interpolate_classes(request: InterpolateRequest):
         logger.error("Interpolation failed: %s", e)
         raise HTTPException(status_code=500, detail=safe_error(e))
 
-@router.get("/generate-image/status")
-async def generate_image_status():
-    """Check if image generation is available.
-
-    ⚠️ DEPRECATED: Use GET /image/status instead.
-    This endpoint is kept for backward compatibility and will be removed in a future release.
-    """
-    warnings.warn("GET /generate-image/status is deprecated, use GET /image/status", DeprecationWarning, stacklevel=2)
-    return await image_status()
-
-
-# =============================================================================
-# New standardized image routes (replacing deprecated /generate-image etc.)
-# =============================================================================
-
-
-@router.post("/image/generate", response_model=GenerateImageResponse)
-async def image_generate(request: GenerateImageRequest):
-    """Generate an image from text using the GVV pipeline.
-
-    Pipeline: text → CLIP → concept space → ConceptMapper → vocabulary init → optimize → render
-    """
-    return await generate_image(request)
-
-
-@router.post("/image/recognize", response_model=RecognizeImageResponse)
-async def image_recognize(request: RecognizeImageRequest):
-    """Recognize an image using concept space mapping.
-
-    Pipeline: image → CLIP → concept space → classify
-    """
-    return await recognize_image(request)
-
-
-@router.post("/image/reconstruct", response_model=ReconstructImageResponse)
-async def image_reconstruct(request: ReconstructImageRequest):
-    """Reconstruct an image using ThreeLayerVisual.
-
-    Pipeline: image → PCA encode → decode → enhance
-    """
-    return await reconstruct_image(request)
-
-
-@router.post("/image/interpolate", response_model=InterpolateResponse)
-async def image_interpolate(request: InterpolateRequest):
-    """Interpolate between two class centers using ThreeLayerVisual.
-
-    Pipeline: class A center → class B center → n_steps interpolation
-    """
-    return await interpolate_classes(request)
-
 
 @router.get("/image/status")
 async def image_status():
-    """Check if image generation is available (standardized endpoint).
+    """Check if image generation is available.
 
     Uses cached state only — does NOT trigger lazy initialization of
     GVV or ThreeLayerVisual. First request may show unavailable if
