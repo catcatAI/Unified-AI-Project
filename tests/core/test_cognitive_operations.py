@@ -154,8 +154,14 @@ def test_set_intent_target():
     set_intent_target(dims, "missing", (1.0, 1.0, 1.0))
 
 
-@pytest.mark.skip("apply_inter_dimensional_drag stub always returns 0; test expects non-zero")
 def test_apply_inter_dimensional_drag():
+    """
+    Verify inter-dimensional drag using real PotentialFieldEngine.
+
+    With dist=10, huber_delta=0.5, drag_factor=0.1:
+      force_mag = 0.1 * 0.5 = 0.05
+      dx = 10, dist = 10, nx = (10/10) * 0.05 = 0.05
+    """
     dims = {
         "a": DimState(),
         "b": DimState(),
@@ -168,5 +174,7 @@ def test_apply_inter_dimensional_drag():
     apply_inter_dimensional_drag(dims, "a", drag_factor=0.1)
 
     assert dims["a"].coordinate == (10.0, 0.0, 0.0), "trigger dim shouldn't move"
-    assert dims["b"].coordinate[0] == 1.0, f"b should be dragged: {dims['b'].coordinate}"
-    assert dims["c"].coordinate[0] == 1.0, f"c should be dragged: {dims['c'].coordinate}"
+    # Real implementation uses Huber-like potential: force = drag_factor * huber_delta = 0.1 * 0.5 = 0.05
+    expected_displacement = 0.05
+    assert abs(dims["b"].coordinate[0] - expected_displacement) < 1e-6, f"b should be dragged: {dims['b'].coordinate}"
+    assert abs(dims["c"].coordinate[0] - expected_displacement) < 1e-6, f"c should be dragged: {dims['c'].coordinate}"

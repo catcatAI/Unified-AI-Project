@@ -50,11 +50,7 @@ def test_importance_scorer_accuracy():
     benchmark(lambda: asyncio.run(_run()), iterations=5)
 
 
-@pytest.mark.benchmark
-@pytest.mark.skip(reason="ai.ops.performance_optimizer 已在 Phase 9-12 清理中被删除")
-def test_parallel_task_execution():
-    """Benchmark PerformanceOptimizer operations."""
-    pass
+
 
 
 @pytest.mark.benchmark
