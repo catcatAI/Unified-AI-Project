@@ -474,13 +474,13 @@ class MathRippleEngine:
         "肆": 4, "伍": 5, "陆": 6, "柒": 7, "捌": 8, "玖": 9,
     }
 
-    # Chinese operator mapping
+    # Chinese operator mapping (includes both simplified and traditional)
     ZH_OPS = {
         "加": "+", "加上": "+", "减": "-", "减去": "-",
         "乘": "*", "乘以": "*", "乘上": "*", "times": "*",
         "除": "/", "除以": "/", "divided": "/",
         "的和": "+", "的差": "-", "的积": "*", "的商": "/",
-        "等于": "=", "是多少": "=", "等于几": "=", "结果": "=",
+        "等于": "=", "等於": "=", "是多少": "=", "等于几": "=", "结果": "=",
         "plus": "+", "minus": "-",
     }
 
@@ -575,14 +575,16 @@ class MathRippleEngine:
         Returns None if not a math expression.
         """
         import re
-        cleaned = text.strip().rstrip("？?！!。.")
+        cleaned = text.strip().rstrip("??!!。.")
 
-        # Replace Chinese operators with Arabic (longest first)
+        # FIRST: Convert Chinese numbers to Arabic
+        # (do this BEFORE operator replacement to avoid spaces breaking up
+        # positional number sequences like "一百" into "1 100" instead of "100")
+        cleaned = self._convert_chinese_numbers(cleaned)
+
+        # THEN: Replace Chinese operators with Arabic (longest first)
         for zh_op, en_op in sorted(self.ZH_OPS.items(), key=lambda x: -len(x[0])):
             cleaned = cleaned.replace(zh_op, f" {en_op} ")
-
-        # Convert Chinese numbers to Arabic (handle positional multipliers)
-        cleaned = self._convert_chinese_numbers(cleaned)
 
         # Check if we have a valid math expression
         if re.search(r'\d+\s*[+\-*/]\s*\d+', cleaned):
