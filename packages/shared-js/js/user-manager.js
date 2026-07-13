@@ -280,7 +280,9 @@ class UserManager {
     }
 
     _generateUserId() {
-        return `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const arr = new Uint32Array(1);
+        crypto.getRandomValues(arr);
+        return `user_${Date.now()}_${arr[0].toString(36)}`;
     }
 
     onChange(callback) {

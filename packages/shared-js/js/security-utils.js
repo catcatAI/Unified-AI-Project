@@ -19,16 +19,16 @@
 
 class SecurityUtils {
     constructor() {
-        // XSS 攻击模式
+        // XSS 攻击模式 — 使用 [^<]* 取代 .*? 避免 ReDoS (CodeQL: bad-html-filtering-regexp)
         this.xssPatterns = [
-            /<script[^>]*>.*?<\/script>/gi,
-            /<iframe[^>]*>.*?<\/iframe>/gi,
-            /<object[^>]*>.*?<\/object>/gi,
-            /<embed[^>]*>.*?<\/embed>/gi,
-            /<link[^>]*>.*?<\/link>/gi,
-            /<meta[^>]*>.*?<\/meta>/gi,
-            /<style[^>]*>.*?<\/style>/gi,
-            /on\w+\s*=\s*["'].*?["']/gi,
+            /<script[^>]*>[^<]*<\/script>/gi,
+            /<iframe[^>]*>[^<]*<\/iframe>/gi,
+            /<object[^>]*>[^<]*<\/object>/gi,
+            /<embed[^>]*>[^<]*<\/embed>/gi,
+            /<link[^>]*>[^<]*<\/link>/gi,
+            /<meta[^>]*>[^<]*<\/meta>/gi,
+            /<style[^>]*>[^<]*<\/style>/gi,
+            /on\w+\s*=\s*["'][^"']*["']/gi,
             /javascript:\s*\w+/gi,
             /vbscript:\s*\w+/gi,
             /data:\s*text\/html/gi,
@@ -137,7 +137,19 @@ class SecurityUtils {
     }
 
     /**
-     * HTML 反转义
+     * Check if a URL uses an unsafe scheme (javascript:, data:, vbscript:, etc.)
+     * @param {string} url URL to check
+     * @returns {boolean} true if the scheme is unsafe
+     */
+    _isUnsafeUrl(url) {
+        if (typeof url !== 'string') return false;
+        const scheme = url.trim().toLowerCase().split(/[:?#]/)[0];
+        const unsafeSchemes = ['javascript', 'data', 'vbscript', 'jar', 'file'];
+        return unsafeSchemes.includes(scheme);
+    }
+
+    /**
+     * HTML 反转义 — 使用 DOM 解析處理所有 HTML 實體
      * @param {string} str 要反转义的字符串
      * @returns {string} 反转义后的字符串
      */
@@ -145,17 +157,9 @@ class SecurityUtils {
         if (typeof str !== 'string') {
             return str;
         }
-
-        const unescapeMap = {
-            '&amp;': '&',
-            '&lt;': '<',
-            '&gt;': '>',
-            '&quot;': '"',
-            '&#x27;': "'",
-            '&#x2F;': '/'
-        };
-
-        return str.replace(/&(amp|lt|gt|quot|#x27|#x2F);/g, match => unescapeMap[match]);
+        const el = document.createElement('span');
+        el.innerHTML = str;
+        return el.textContent || '';
     }
 
     /**
@@ -205,9 +209,9 @@ class SecurityUtils {
             for (const attr of node.attributes) {
                 if (!allowedAttrs.includes(attr.name.toLowerCase())) {
                     attrsToRemove.push(attr.name);
-                } else if (attr.name.toLowerCase() === 'href' && attr.value) {
-                    // 清理 href 属性中的 javascript: 伪协议
-                    if (attr.value.toLowerCase().startsWith('javascript:')) {
+                } else if ((attr.name.toLowerCase() === 'href' || attr.name.toLowerCase() === 'src') && attr.value) {
+                    // 清理 href/src 属性中的 unsafe 伪协议
+                    if (this._isUnsafeUrl(attr.value)) {
                         attrsToRemove.push(attr.name);
                     }
                 }
@@ -381,10 +385,10 @@ class SecurityUtils {
         const allowedAttrs = this.allowedAttributes[tagName.toLowerCase()] || [];
         for (const [attrName, attrValue] of Object.entries(attributes)) {
             if (allowedAttrs.includes(attrName.toLowerCase())) {
-                // 特殊处理 href 属性
-                if (attrName.toLowerCase() === 'href' && typeof attrValue === 'string') {
-                    if (attrValue.toLowerCase().startsWith('javascript:')) {
-                        console.warn('[SecurityUtils] Blocked javascript: in href attribute');
+                // 特殊处理 href/src 属性
+                if ((attrName.toLowerCase() === 'href' || attrName.toLowerCase() === 'src') && typeof attrValue === 'string') {
+                    if (this._isUnsafeUrl(attrValue)) {
+                        console.warn(`[SecurityUtils] Blocked unsafe scheme in ${attrName} attribute`);
                         continue;
                     }
                 }

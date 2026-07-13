@@ -64,7 +64,9 @@ class BackendWebSocketClient {
   _loadOrCreateSessionId() {
     let sid = localStorage.getItem('angela_session_id')
     if (!sid) {
-      sid = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9)
+      const arr = new Uint32Array(1)
+      crypto.getRandomValues(arr)
+      sid = 'sess_' + Date.now().toString(36) + '_' + arr[0].toString(36)
       localStorage.setItem('angela_session_id', sid)
     }
     return sid
@@ -1154,7 +1156,9 @@ _routeMessage(message) {
    * 生成队列ID
    */
   _generateQueueId() {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const arr = new Uint32Array(1)
+    crypto.getRandomValues(arr)
+    return `${Date.now()}-${arr[0].toString(36)}`
   }
 
   disconnect() {

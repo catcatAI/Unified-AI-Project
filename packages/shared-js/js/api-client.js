@@ -297,7 +297,9 @@ class AngelaAPIClient {
     getSessionId() {
         let sessionId = localStorage.getItem('angela_session_id');
         if (!sessionId) {
-            sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const arr = new Uint32Array(1);
+            crypto.getRandomValues(arr);
+            sessionId = `session_${Date.now()}_${arr[0].toString(36)}`;
             localStorage.setItem('angela_session_id', sessionId);
         }
         return sessionId;

@@ -21,6 +21,19 @@ router = APIRouter(prefix="/drive", tags=["Google Drive"])
 _DRIVE_DATA_ROOT = Path(__file__).parent.parent.parent.parent.parent / "data" / "drive_downloads"
 
 
+def _validate_drive_folder(folder_path: str) -> Path:
+    """Validate that a user-provided folder_path is under the allowed drive downloads root.
+
+    Raises HTTPException(400) if the path escapes the root.
+    """
+    base = Path(folder_path).resolve()
+    root = _DRIVE_DATA_ROOT.resolve()
+    if not (base == root or base.is_relative_to(root)):
+        raise HTTPException(status_code=400, detail="Invalid folder path: must be under drive_downloads")
+    return base
+
+
+
 def _safe_drive_dest(folder_path: str, file_name: str) -> Path:
     """Resolve a safe destination path under the drive downloads root.
 
@@ -30,7 +43,7 @@ def _safe_drive_dest(folder_path: str, file_name: str) -> Path:
     base = Path(folder_path).resolve()
     root = _DRIVE_DATA_ROOT.resolve()
     if not (base == root or base.is_relative_to(root)):
-        base = root
+        raise HTTPException(status_code=400, detail="Invalid folder path")
     safe_name = Path(file_name).name or "unnamed_file"
     dest = (base / safe_name).resolve()
     if not (dest == base or dest.is_relative_to(base)):
@@ -280,6 +293,9 @@ async def sync_files(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_
     folder_path = request.get("folder_path", default_folder)
     store_memory = request.get("store_memory", True)
 
+    # Early path validation — reject traversal attempts before any I/O
+    _validate_drive_folder(folder_path)
+
     logger.info(f"Syncing files: {file_ids} to {folder_path}")
 
     deduplicator = DriveDeduplication()
@@ -384,6 +400,8 @@ async def analyze_drive(request: Dict[str, Any] = Body(...), svc=Depends(get_dri
     limit = request.get("limit", 5)
     default_folder = str(Path(__file__).parent.parent.parent.parent.parent / "data" / "drive_downloads")
     folder_path = request.get("folder_path", default_folder)
+    # Early path validation — reject traversal attempts before any I/O
+    _validate_drive_folder(folder_path)
 
     try:
         files = svc.list_files(page_size=limit)
