@@ -21,6 +21,11 @@ classifiers = [
 # Lightweight runtime: boots the FastAPI server + core AI (GARDEN/ED3N run on
 # the pure-numpy backend). NO torch / chromadb / spacy / pandas here — those
 # are lazy-imported in code with graceful fallbacks and live in extras below.
+#
+# NOTE: a few packages MUST stay in base because they are imported eagerly at
+# server boot (not lazy): paho-mqtt (mcp.connector), edge-tts (core/art/
+# real_edge_tts.py), semver (core/hsp/versioning.py), starlette (pulled in via
+# fastapi but imported directly in core/, so declared explicitly).
 # ---------------------------------------------------------------------------
 dependencies = [
   "numpy>=1.21.0",
@@ -37,6 +42,9 @@ dependencies = [
   "Pillow>=9.0.0",
   "cryptography>=41.0.0",
   "PyJWT>=2.0.0",
+  "semver>=2.13.0",
+  "starlette",
+  "edge-tts>=6.1.9",
   "fastapi>=0.128.0",
   "uvicorn[standard]",
   "pydantic",
@@ -74,10 +82,18 @@ data = [
   "textblob>=0.17.0",
 ]
 # Audio (TTS) + desktop/vision perception (screen control, OCR).
+# (edge-tts lives in BASE — it is imported eagerly by core/art/real_edge_tts.py)
 media = [
-  "edge-tts>=6.1.9",
   "pyautogui>=0.9.54",
   "pytesseract>=0.3.10",
+]
+
+# Google integrations (Drive / Gmail). Imported eagerly by the server's
+# integrations package at boot, so required for the server to start.
+google = [
+  "google-api-python-client",
+  "google-auth",
+  "google-auth-oauthlib",
 ]
 # NVIDIA GPU telemetry.
 gpu = [
@@ -90,6 +106,14 @@ cache = [
 # Advanced NLP pipeline (spaCy). Not required by the core; opt-in only.
 nlp = [
   "spacy>=3.8.11",
+]
+
+# Document / spreadsheet processing (Docx export, XLSX, HTML parsing via bs4).
+# bs4 is used by the Google Gmail parsing chain, so standard pulls it in.
+docs = [
+  "beautifulsoup4",
+  "python-docx",
+  "openpyxl",
 ]
 # Native desktop installer helpers (shortcuts, QR, secret sharing).
 installer = [
@@ -110,7 +134,7 @@ game = [
 # 有需求的用戶 / Feature user: full-feature runtime (real embeddings, vector
 # DB, media, GPU, cache). Everything to actually use the product, no dev tools.
 standard = [
-  "unified-ai-project[ml,vector,data,media,gpu,cache]",
+  "unified-ai-project[ml,vector,data,media,gpu,cache,google,docs]",
 ]
 
 # 專業工程師 / Contributor: standard features + the full dev/test toolchain

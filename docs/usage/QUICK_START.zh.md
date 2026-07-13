@@ -37,7 +37,7 @@
 | **開發者 / 貢獻者** | `pip install -e "apps/backend[dev]"` | *standard* 全部 **＋ 測試與品質工具鏈**（pytest、black、isort、flake8、mypy、pre-commit、MQTT 測試 broker）。 | 最大 |
 
 也可自由組合更細的群組，例如 `pip install -e "apps/backend[ml,vector]"`。
-可用群組：`ml`、`vector`、`data`、`media`、`gpu`、`cache`、`nlp`、`installer`、`game`。`full` 會裝上全部。
+可用群組：`ml`、`vector`、`data`、`media`、`gpu`、`cache`、`google`、`docs`、`nlp`、`installer`、`game`。`full` 會裝上全部。
 
 ## 第一步：複製並設定
 

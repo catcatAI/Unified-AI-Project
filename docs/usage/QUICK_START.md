@@ -37,7 +37,7 @@ The backend dependencies are split into tiers so you only install what you need.
 | **A developer / contributor** | `pip install -e "apps/backend[dev]"` | Everything in *standard* **+ the test & quality toolchain** (pytest, black, isort, flake8, mypy, pre-commit, MQTT test brokers). | largest |
 
 Optional finer-grained groups can be mixed too, e.g. `pip install -e "apps/backend[ml,vector]"`.
-Available groups: `ml`, `vector`, `data`, `media`, `gpu`, `cache`, `nlp`, `installer`, `game`. `full` installs absolutely everything.
+Available groups: `ml`, `vector`, `data`, `media`, `gpu`, `cache`, `google`, `docs`, `nlp`, `installer`, `game`. `full` installs absolutely everything.
 
 ## Step 1: Clone & Setup
 
