@@ -10,9 +10,8 @@
  *
  * API endpoints:
  * - GET /health - 健康检查
- * - POST /api/v1/chat/unified - 统一对话接口（推荐）
- * - POST /dialogue - 旧对话接口（迁移期）
- * - POST /angela/chat - 旧 Angela 聊天接口（迁移期）
+ * - POST /api/v1/chat/unified - 统一对话接口
+ * - GET /api/v1/system/status - 系统状态
  * - WebSocket /ws - 实时双向通信
  *
  * @class AngelaAPIClient
