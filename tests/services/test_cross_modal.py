@@ -302,13 +302,16 @@ class TestMultimodalServicePipelineWiring:
 
     @pytest.mark.asyncio
     async def test_health_includes_pipelines(self):
-        """T20: Health check includes vision and audio pipeline stats."""
+        """T20: Health check includes vision pipeline and encoders."""
         from services.multimodal_service import MultimodalService
         svc = MultimodalService()
         health = await svc.health()
-        assert "vision_pipeline" in health
-        assert "audio_pipeline" in health
         assert health["status"] == "healthy"
+        assert "encoders" in health
+        assert "vision_pipeline" in health
+        assert "latent_space" in health
+        assert health["encoders"]["vision"] is True
+        assert health["encoders"]["audio"] is True
 
     @pytest.mark.asyncio
     async def test_encode_empty_data(self):

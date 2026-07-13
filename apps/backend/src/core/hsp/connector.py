@@ -184,7 +184,7 @@ class HSPConnector:
         if self.mock_mode:
             self.logger.info("HSPConnector: Initializing in mock mode.")
             self.logger.debug(f"HSPConnector.__init__ - ai_id: {ai_id}, mock_mode: {self.mock_mode}")
-            self.external_connector = MagicMock(spec=ExternalConnector)
+            self.external_connector = MagicMock()
             self.external_connector.ai_id = ai_id
             self.external_connector.connect.return_value = True
             self.external_connector.disconnect.return_value = True
