@@ -289,7 +289,7 @@ Prompt Assembly → LLM → Response
 
 **Immediate Actions:**
 1. Go to https://aistudio.google.com/apikey
-2. Delete key: `~~AIzaSyCu2F1o48fLD3w5o_G13-WXQW6i7HzM3X0~~` (REVOKED)
+2. Delete key: `AIza[...]`
 3. Create new key
 4. Update local `.env` file
 5. Never commit `.env` to git

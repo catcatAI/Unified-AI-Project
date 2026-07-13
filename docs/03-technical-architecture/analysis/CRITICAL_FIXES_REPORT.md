@@ -101,7 +101,7 @@
 # 1. Go to Google Cloud Console
 # https://console.cloud.google.com/apis/credentials
 
-# 2. Delete the exposed key: ~~AIzaSyD9HVC1XuJsKql2rNi4fRdqwmQemVoQTGY~~ (REVOKED)
+# 2. Delete the exposed key: AIza[...]
 
 # 3. Create a new key
 

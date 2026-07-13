@@ -160,7 +160,7 @@ with self._lock:
 
 **问题:**
 ```
-GOOGLE_API_KEY=~~AIzaSyCu2F1o48fLD3w5o_G13-WXQW6i7HzM3X0~~ (REVOKED)
+GOOGLE_API_KEY=AIza[...]
 ```
 已提交到git历史
 
