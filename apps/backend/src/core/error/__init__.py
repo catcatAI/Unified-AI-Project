@@ -1,0 +1,1 @@
+# Core error handling package
