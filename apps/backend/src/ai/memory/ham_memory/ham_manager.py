@@ -6,6 +6,7 @@ HAM (Hierarchical Associative Memory) Manager — minimal JSON-backed implementa
 import asyncio
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -20,14 +21,35 @@ class HAMMemoryManager:
 
     def __init__(
         self,
-        memory_file: str = "",
+        memory_file: Optional[str] = None,
         auto_save: bool = True,
         core_storage_filename: Optional[str] = None,
     ):
+        if memory_file is None:
+            # Default to data/memory/ham_memory.json relative to project root
+            project_root = self._find_project_root()
+            memory_file = os.path.join(project_root, "data", "memory", "ham_memory.json")
         self.memory_file = Path(memory_file)
         self.auto_save = auto_save
         self._data: Dict[str, Any] = {"templates": [], "conversations": [], "metadata": {}}
         self._load()
+
+    @staticmethod
+    def _find_project_root() -> str:
+        """Find project root by walking up until a unique marker file is found.
+
+        Note: Duplicated from ED3NEngine._find_project_root to avoid circular
+        imports (memory module should not depend on ed3n module).
+        """
+        current = os.path.dirname(os.path.abspath(__file__))
+        for _ in range(10):
+            if os.path.exists(os.path.join(current, ".gitignore")):
+                return current
+            parent = os.path.dirname(current)
+            if parent == current:
+                break
+            current = parent
+        return os.getcwd()
 
     def _load(self) -> None:
         if self.memory_file and self.memory_file.exists():
