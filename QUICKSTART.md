@@ -53,9 +53,15 @@ ANTHROPIC_API_KEY=sk-ant-your-key-here
 
 #### 方式一：统一启动脚本（推荐）
 ```bash
-# Windows: python scripts/run_angela.py
+# Windows:
+python scripts/run_angela.py              # 启动全部
+python scripts/run_angela.py --api-only   # 只启动后端
+python scripts/run_angela.py --health-check  # 健康检查
+
 # Linux/Mac:
-./start_angela_complete.sh
+python scripts/run_angela.py              # 启动全部
+python scripts/run_angela.py --api-only   # 只启动后端
+python scripts/run_angela.py --health-check  # 健康检查
 ```
 
 #### 方式二：手动启动后端
@@ -71,45 +77,13 @@ python scripts/run_angela.py --api-only   # 只启动后端
 python scripts/run_angela.py --health-check  # 健康检查
 ```
 
-## 📊 Choose Your Mode
+## 🤖 LLM Configuration
 
-Angela automatically selects the best mode based on your hardware:
+Angela AI uses a pluggable LLM architecture. Configure providers in:
+- **Environment variables**: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`
+- **Config file**: `apps/backend/configs/multi_llm_config.json`
 
-### 🟢 Lite Mode (64 dimensions)
-**For**: Raspberry Pi, old laptops, mobile devices
-- **Hardware**: 4GB RAM, no GPU
-- **LLM**: Local only (Ollama/llama.cpp with TinyLlama 1.1B)
-- **Features**: Basic conversation, simple emotions
-- **Memory**: 100 memories, daily consolidation
-- **Quality**: Basic AI companion
-
-```bash
-python -m apps.backend.src.main --mode=lite
-```
-
-### 🔵 Standard Mode (384 dimensions)
-**For**: Modern laptops and desktops
-- **Hardware**: 8GB RAM, GPU optional
-- **LLM**: OpenAI GPT-3.5/Claude 3 Haiku + local fallback
-- **Features**: Learning, 5-second prediction, coherent personality
-- **Memory**: 10K memories, hourly consolidation
-- **Quality**: Good AI companion with personality
-
-```bash
-python -m apps.backend.src.main --mode=standard
-```
-
-### 🟣 Extended Mode (4096 dimensions)
-**For**: Gaming PCs, workstations
-- **Hardware**: 16GB+ RAM, GPU with 8GB+ VRAM
-- **LLM**: GPT-4/Claude 3 Opus + multi-model ensemble voting
-- **Features**: Full learning, 60-second multi-world prediction, dreaming, self-modification
-- **Memory**: 1M memories, continuous consolidation
-- **Quality**: Advanced AI companion with creativity and reflection
-
-```bash
-python -m apps.backend.src.main --mode=extended
-```
+Available backends: OpenAI, Anthropic, Google Gemini, Ollama (local), llama.cpp (local), ED3N, GARDEN.
 
 ## 🖥️ System Tray Features
 
@@ -255,10 +229,10 @@ make llama-server
 ## 📊 Project Stats
 
 - **Version**: 7.5.0-dev
-- **Python Files**: 477
-- **JavaScript Modules**: 52
-- **Test Coverage**: 100% (9/9 tests passing)
-- **Status**: Production Ready ✅
+- **Python Files**: 612 (backend src ~96K lines)
+- **JavaScript Modules**: 50+ shared across 3 apps
+- **Tests**: ~4,400 tests collected (tests/), 0 collection errors
+- **Status**: Active Development 🚧 — see [README.md](README.md) for details
 
 ---
 

@@ -217,7 +217,7 @@ ConceptMapper → GeometricVocabulary → InstanceOptimizer → Render
 | POST | `/api/v1/image/interpolate` | Class interpolation |
 | GET | `/api/v1/image/status` | Pipeline health check |
 
-> **Deprecated endpoints** (kept for backward-compat with deprecation warnings): `/generate-image`, `/recognize-image`, `/reconstruct-image`, `/interpolate-classes`, `/generate-image/status` → use `/api/v1/image/*` equivalents
+> **Deprecated endpoints removed in v7.5.0**: `/generate-image`, `/recognize-image`, `/reconstruct-image`, `/interpolate-classes`, `/generate-image/status` — use `/api/v1/image/*` equivalents only.
 
 ### Key Metrics
 
