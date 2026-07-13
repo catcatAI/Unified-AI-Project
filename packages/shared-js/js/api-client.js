@@ -40,7 +40,7 @@ class AngelaAPIClient {
      */
     async testConnection() {
         try {
-            const response = await fetch(`${this.baseURL}/api/v1/health`, {
+            const response = await fetch(`${this.baseURL}/health`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -59,13 +59,9 @@ class AngelaAPIClient {
      */
     async validateEndpoints() {
         const endpoints = [
-            { path: '/api/v1/health', method: 'GET', required: true },
-            { path: '/api/v1/status', method: 'GET', required: true },
+            { path: '/health', method: 'GET', required: true },
+            { path: '/api/v1/system/status', method: 'GET', required: true },
             { path: this.unifiedChatPath, method: 'POST', required: true },
-            { path: '/api/v1/dialogue', method: 'POST', required: false },
-            { path: '/api/v1/angela/chat', method: 'POST', required: false },
-            { path: '/api/v1/economy/balance/default', method: 'GET', required: false },
-            { path: '/api/v1/pet/action/trigger', method: 'POST', required: false }
         ];
 
         const results = {
@@ -193,22 +189,7 @@ class AngelaAPIClient {
                 signal: AbortSignal.timeout(this.timeouts.dialogue)
             });
 
-            // Backward compatibility fallback during migration window
-            if (!response.ok && response.status === 404) {
-                response = await fetch(`${this.baseURL}/api/v1/dialogue`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: message,
-                        user_id: 'desktop_user',
-                        session_id: this.getSessionId(),
-                        tenant_id: 'default_tenant',
-                        persona_id: 'angela_desktop',
-                        client_id: 'desktop_electron'
-                    }),
-                    signal: AbortSignal.timeout(this.timeouts.dialogue)
-                });
-            }
+            // No backward compatibility fallback — legacy /dialogue removed in v7.5.0
 
             console.log(`[APIClient] Response Status: ${response.status} ${response.statusText}`);
             if (!response.ok) {
@@ -293,23 +274,21 @@ class AngelaAPIClient {
      */
     async getStatus() {
         try {
-            const response = await fetch(`${this.baseURL}/api/v1/status`);
+            const response = await fetch(`${this.baseURL}/api/v1/system/status`);
             const data = await response.json();
             return {
                 success: true,
-                health: data.health || 100,
-                energy: data.energy || 100,
-                mood: data.mood || 'happy',
-                status: data.status || 'idle'
+                status: data.status || 'idle',
+                components: data.components || {},
+                timestamp: data.timestamp || new Date().toISOString()
             };
         } catch (error) {
             console.error('Failed to get status:', error);
             return {
                 success: false,
-                health: 0,
-                energy: 0,
-                mood: 'unknown',
-                status: 'offline'
+                status: 'offline',
+                components: {},
+                timestamp: new Date().toISOString()
             };
         }
     }
@@ -318,53 +297,7 @@ class AngelaAPIClient {
      * Get economy/resource status
      * @returns {Promise<Object>} Economy data
      */
-    async getEconomy() {
-        try {
-            const response = await fetch(`${this.baseURL}/api/v1/economy/balance/default`);
-            const data = await response.json();
-            return {
-                success: true,
-                coins: data.balance || 0,
-                food: 0,
-                energy: 0
-            };
-        } catch (error) {
-            console.error('Failed to get economy:', error);
-            return {
-                success: false,
-                coins: 0,
-                food: 0,
-                energy: 0
-            };
-        }
-    }
 
-    /**
-     * Trigger pet action
-     * @param {string} action - Action name (e.g., 'feed', 'play', 'rest')
-     * @returns {Promise<Object>} Action result
-     */
-    async triggerAction(action) {
-        try {
-            const response = await fetch(`${this.baseURL}/api/v1/pet/action/trigger`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: action, data: {} })
-            });
-            const data = await response.json();
-            return {
-                success: true,
-                result: data.message || 'Action completed',
-                newStatus: data.status || {}
-            };
-        } catch (error) {
-            console.error('Failed to trigger action:', error);
-            return {
-                success: false,
-                result: `Error: ${error.message}`
-            };
-        }
-    }
 
     /**
      * Get or create session ID
@@ -386,8 +319,6 @@ class AngelaAPIClient {
     async checkLLMAvailability() {
         const llmEndpoints = [
             { path: this.unifiedChatPath, name: 'Unified Chat', backend: 'unified' },
-            { path: '/api/v1/angela/chat', name: 'Angela Chat (legacy)', backend: 'angela' },
-            { path: '/api/v1/dialogue', name: 'Dialogue (legacy)', backend: 'general' }
         ];
 
         const results = {

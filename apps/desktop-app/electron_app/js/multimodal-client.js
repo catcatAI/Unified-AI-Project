@@ -14,7 +14,7 @@ class MultimodalAPIClient {
     /** Test backend connection. */
     async checkHealth() {
         try {
-            const res = await fetch(`${this.baseURL}/api/v1/health`, {
+            const res = await fetch(`${this.baseURL}/health`, {
                 signal: AbortSignal.timeout(5000)
             });
             return res.ok;

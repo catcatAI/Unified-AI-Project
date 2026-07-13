@@ -30,19 +30,14 @@ class TestMultimodalRoutes:
         """T21: Router has the expected multimodal endpoints."""
         from api.routes.multimodal_routes import router
         paths = [r.path for r in router.routes]
-        expected = [
-            "/multimodal/encode",
-            "/multimodal/decode",
-            "/multimodal/compare",
-            "/multimodal/retrieve",
-            "/multimodal/train",
-            "/multimodal/evaluate",
-            "/multimodal/generate",
-            "/multimodal/visualize",
-            "/multimodal/health",
-        ]
-        for ep in expected:
+        # Core multimodal endpoints that must exist
+        core = ["/multimodal/encode", "/multimodal/decode", "/multimodal/compare",
+                "/multimodal/retrieve", "/multimodal/train", "/multimodal/evaluate",
+                "/multimodal/generate", "/multimodal/visualize", "/multimodal/health",
+                "/multimodal/items", "/multimodal/clear", "/multimodal/cross-infer"]
+        for ep in core:
             assert ep in paths, f"Missing endpoint: {ep}"
+        # Thin wrappers (encode-with-retry, decode-with-fallback, train-with-checkpoint) removed in §X #238
 
     async def test_multimodal_router_registration(self):
         """T22: Router.py includes multimodal_routes with /api/v1 prefix."""

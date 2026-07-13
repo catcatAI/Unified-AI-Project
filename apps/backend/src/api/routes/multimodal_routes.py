@@ -457,55 +457,6 @@ async def recovery_reset_endpoint():
     return {"success": True, "status": "reset"}
 
 
-@router.post("/multimodal/encode-with-retry")
-async def encode_with_retry_endpoint(
-    file: UploadFile = File(...),
-    modality: str = Form("vision"),
-    item_id: Optional[str] = Form(None),
-):
-    """Encode with automatic retry on failure (P37)."""
-    svc = _get_service()
-    if svc is None:
-        raise HTTPException(status_code=503, detail="MultimodalService not available")
-    data = await file.read()
-    if not data:
-        raise HTTPException(status_code=400, detail="Empty file data")
-    result = await svc.encode_with_retry(data, modality, item_id)
-    if result.get("error"):
-        raise HTTPException(status_code=400, detail=result["error"])
-    return {"success": True, **result}
-
-
-@router.post("/multimodal/decode-with-fallback")
-async def decode_with_fallback_endpoint(
-    item_id: str = Form(...),
-    modality: str = Form("vision"),
-    output_format: str = Form("base64"),
-):
-    """Decode with text fallback on failure (P37)."""
-    svc = _get_service()
-    if svc is None:
-        raise HTTPException(status_code=503, detail="MultimodalService not available")
-    result = await svc.decode_with_fallback(item_id, modality, output_format)
-    return {"success": True, **result}
-
-
-@router.post("/multimodal/train-with-checkpoint")
-async def train_with_checkpoint_endpoint(
-    mode: str = Form("full"),
-    epochs: int = Form(5),
-    lr: float = Form(0.01),
-    use_real: bool = Form(False),
-    checkpoint_label: Optional[str] = Form(None),
-):
-    """Train with automatic pre-training checkpoint (P37)."""
-    svc = _get_service()
-    if svc is None:
-        raise HTTPException(status_code=503, detail="MultimodalService not available")
-    result = await svc.train_with_checkpoint(mode, epochs, lr, use_real, checkpoint_label)
-    return {"success": result.get("status") == "completed", **result}
-
-
 # --- P37: State persistence ---
 
 @router.post("/multimodal/checkpoint/save")

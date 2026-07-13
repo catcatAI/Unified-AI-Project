@@ -2909,6 +2909,146 @@
       ],
       "relations": {},
       "confidence": 0.5
+    },
+    {
+      "key": "cls_learn_180",
+      "surface_forms": {
+        "zh": "測試"
+      },
+      "contexts": [
+        {
+          "context_id": "conservative",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
+    },
+    {
+      "key": "cls_learn_181",
+      "surface_forms": {
+        "zh": "再見"
+      },
+      "contexts": [
+        {
+          "context_id": "conservative",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
+    },
+    {
+      "key": "cls_learn_182",
+      "surface_forms": {
+        "zh": "下次聊"
+      },
+      "contexts": [
+        {
+          "context_id": "conservative",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
+    },
+    {
+      "key": "cls_learn_183",
+      "surface_forms": {
+        "zh": "我叫小明"
+      },
+      "contexts": [
+        {
+          "context_id": "conservative",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
+    },
+    {
+      "key": "cls_learn_184",
+      "surface_forms": {
+        "zh": "我來自台灣"
+      },
+      "contexts": [
+        {
+          "context_id": "conservative",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
+    },
+    {
+      "key": "cls_learn_185",
+      "surface_forms": {
+        "zh": "我養了一隻橘色的貓"
+      },
+      "contexts": [
+        {
+          "context_id": "conservative",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
+    },
+    {
+      "key": "cls_learn_186",
+      "surface_forms": {
+        "zh": "謝謝你陪我聊天"
+      },
+      "contexts": [
+        {
+          "context_id": "conservative",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
+    },
+    {
+      "key": "cls_learn_187",
+      "surface_forms": {
+        "zh": "這是session"
+      },
+      "contexts": [
+        {
+          "context_id": "conservative",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
+    },
+    {
+      "key": "cls_learn_188",
+      "surface_forms": {
+        "zh": "a的第一條訊息"
+      },
+      "contexts": [
+        {
+          "context_id": "conservative",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
+    },
+    {
+      "key": "cls_learn_189",
+      "surface_forms": {
+        "zh": "b的第一條訊息"
+      },
+      "contexts": [
+        {
+          "context_id": "conservative",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
     }
   ]
 }
