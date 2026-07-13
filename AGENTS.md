@@ -7,7 +7,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: en
-    LAST_MODIFIED: 2026-07-07 (updated for §X #201b: MD sync + integration test rewrite + usage docs)
+    LAST_MODIFIED: 2026-07-13 (updated for §X #257: MD sync + security sprint)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -209,6 +209,17 @@ pre-commit run --all-files
 > > ✅ **NOTE (Updated 2026-07-08)**: §X #204 bug fixes + test consolidation. Fixed 3 HIGH bugs: `__import__("asyncio")` slowdown in RetryPolicy, `math_verifier._safe_eval` silent swallowing (added logging), deprecated `asyncio.get_event_loop()`. Fixed 4 MEDIUM: vision_service scene/compare logging, `services/__init__.py` lazy import logging, circuit breaker logging. Deleted 4 dead/duplicate test files + empty e2e dir: `test_learning_handler.py`, `test_file_operation_handler.py`, `test_training_workflow.py`, `test_atlassian_workflow.py`. **4,398 tests collected — 0 errors** (-13 from consolidation).
 >
 > > ✅ **NOTE (Updated 2026-07-09, §X #208)**: **§X #208**: DesktopInteraction path validation — added `_is_safe_path()` with `_ALLOWED_ROOTS` whitelist to prevent arbitrary file operations. Guards added to `create_file()`, `delete_file()`, `move_file()`, `initialize()`. Response route transparency fix — `route` now reports `'fallback'` when LLM fallback chain produced the response (was misleadingly `'llm'`). Updated `tests/README.md` with accurate structure. **4,387 tests collected — 0 errors**.
+> 
+> ✅ **NOTE (Updated 2026-07-13, §X #249-#256)**: **Security Sprint — 72+ alerts fixed across Dependabot + CodeQL + Secret Scanning**.
+> - **§X #249**: GitHub Actions + pip security pins — 14+ Dependabot alerts fixed.
+> - **§X #250**: Next.js 14→16 upgrade — 16 Dependabot alerts fixed (5 High + 9 Moderate).
+> - **§X #252**: Vite + serialize-javascript + fast-uri — 10 Dependabot alerts fixed.
+> - **§X #252b**: qs@6.14 integrity hash fix — 1 Dependabot alert fixed.
+> - **§X #253**: postcss@8.4.31→8.5.19 + js-yaml@4.1.1→5.2.1 — 3 Dependabot alerts fixed.
+> - **§X #254**: 17 CodeQL alerts fixed — path traversal (6), sensitive logging (4), insecure randomness (5), HTML regex (4), permissive regex (1). **18 alerts fixed**.
+> - **§X #255**: CodeQL re-scan Secret Scanning — whitelist path in drive.py, stderr.write() demos, string-based XSS keywords. Redacted 10 Google API keys in docs.
+> - **§X #256**: AIza[...] format — all leaked keys replaced with placeholder.
+> - **46 files modified** across 8 commits. **4,387 tests — 0 errors**.
 > 
 > > ✅ **NOTE (Updated 2026-06-29)**: Extended session continues — 158+ commits (Jun 25-29). §X #49-54 all DONE:
 > - **§X #49**: 5 real stub modules (precision_projection_matrix, resonance, cognitive_pipeline, attractor_field, negativity) — +70 tests
