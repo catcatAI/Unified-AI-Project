@@ -21,6 +21,7 @@ from api.lifespan import (
     get_level5_asi,
 )
 from services.document_router import try_intent_routing as _try_intent_routing
+from core.utils import safe_error
 from fastapi import APIRouter, Body, File, Form, HTTPException, Request, UploadFile
 
 logger = logging.getLogger(__name__)
@@ -1368,12 +1369,9 @@ async def unified_chat(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     response["context"] = context
     response["migration_note"] = (
         "Use /api/v1/chat/unified for multi-persona isolation; "
-        "legacy /dialogue and /angela/chat remain temporarily supported."
+        "legacy /dialogue and /angela/chat removed in v7.5.0."
     )
     return response
-
-
-
 
 
 @router.post("/chat/with-image")
