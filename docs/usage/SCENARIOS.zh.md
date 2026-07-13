@@ -23,7 +23,7 @@
 # 1. 安裝（詳見 QUICK_START.zh.md）
 python -m venv .venv
 .venv\Scripts\Activate.ps1
-pip install -r apps/backend/requirements.txt
+pip install -e "apps/backend[standard,testing]"
 npx pnpm install --no-frozen-lockfile
 
 # 2. 啟動

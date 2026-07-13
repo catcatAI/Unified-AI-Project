@@ -24,8 +24,8 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1   # Windows PowerShell
 source .venv/bin/activate     # macOS/Linux
 
-# Install Python dependencies (backend)
-pip install -r apps/backend/requirements.txt
+# Install Python dependencies (backend, path-based editable install from repo root)
+pip install -e "apps/backend[standard,testing]"
 
 # Install JS workspace dependencies using pnpm
 npx pnpm install --no-frozen-lockfile

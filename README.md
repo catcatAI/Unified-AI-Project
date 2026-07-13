@@ -202,8 +202,8 @@ python -m venv .venv
 # On macOS/Linux:
 source .venv/bin/activate
 
-# Install Python backend dependencies
-pip install -r apps/backend/requirements.txt
+# Install Python backend dependencies (path-based editable install from repo root)
+pip install -e "apps/backend[standard,testing]"
 
 # Install JS workspace dependencies using pnpm (use npx if pnpm is not installed globally)
 npx pnpm install --no-frozen-lockfile
@@ -493,8 +493,8 @@ python -m venv .venv
 # macOS/Linux:
 source .venv/bin/activate
 
-# 安裝後端 Python 依賴
-pip install -r apps/backend/requirements.txt
+# 安裝後端 Python 依賴（路徑式 editable 安裝，於 repo 根目錄執行）
+pip install -e "apps/backend[standard,testing]"
 
 # 使用 pnpm 安裝工作區 JS 依賴
 npx pnpm install --no-frozen-lockfile

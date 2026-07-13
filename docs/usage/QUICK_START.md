@@ -36,8 +36,8 @@ cd Unified-AI-Project
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 
-# Install backend dependencies
-pip install -r apps/backend/requirements.txt
+# Install backend dependencies (path-based editable install, run from repo root)
+pip install -e "apps/backend[standard,testing]"
 
 # Install JS dependencies
 npx pnpm install --no-frozen-lockfile
@@ -106,7 +106,7 @@ If you skip Ollama setup, these fall back to ED3N/GARDEN (reduced quality):
 
 ### "Module not found" errors
 ```powershell
-pip install -r apps/backend/requirements.txt --force-reinstall
+pip install -e "apps/backend[standard,testing]" --force-reinstall
 ```
 
 ### Port 8000 already in use

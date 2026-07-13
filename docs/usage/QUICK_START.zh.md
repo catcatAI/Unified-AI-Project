@@ -36,8 +36,8 @@ cd Unified-AI-Project
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 
-# 安裝後端依賴
-pip install -r apps/backend/requirements.txt
+# 安裝後端依賴（路徑式 editable 安裝，於 repo 根目錄執行）
+pip install -e "apps/backend[standard,testing]"
 
 # 安裝 JS 依賴
 npx pnpm install --no-frozen-lockfile
@@ -106,7 +106,7 @@ python scripts/run_angela.py --health-check
 
 ### 「Module not found」錯誤
 ```powershell
-pip install -r apps/backend/requirements.txt --force-reinstall
+pip install -e "apps/backend[standard,testing]" --force-reinstall
 ```
 
 ### 連接埠 8000 已被佔用

@@ -22,8 +22,8 @@ python -m venv .venv
 # macOS/Linux:
 source .venv/bin/activate
 
-# 3. Install Python backend dependencies
-pip install -r apps/backend/requirements.txt
+# 3. Install Python backend dependencies (path-based editable install from repo root)
+pip install -e "apps/backend[standard,testing]"
 
 # 4. Install JS workspace dependencies
 npx pnpm install --no-frozen-lockfile

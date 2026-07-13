@@ -204,7 +204,7 @@ All 8 stages wired and tested. Each stage can be replaced or extended independen
 ```bash
 # Setup
 python -m venv .venv
-pip install -r apps/backend/requirements.txt
+pip install -e "apps/backend[standard,testing]"
 npx pnpm install --no-frozen-lockfile
 
 # Run
@@ -471,7 +471,7 @@ Angela AI 不是單一應用程式——它是一個**數位生命系統框架**
 
 **開發流程**：
 ```bash
-python -m venv .venv; pip install -r apps/backend/requirements.txt
+python -m venv .venv; pip install -e "apps/backend[standard,testing]"
 python scripts/run_angela.py          # 啟動全部
 pytest tests/                         # 運行測試
 ```

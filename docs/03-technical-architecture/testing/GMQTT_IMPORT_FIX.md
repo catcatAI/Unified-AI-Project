@@ -26,7 +26,7 @@ pip install gmqtt
 
 或者在项目根目录下：
 ```bash
-pip install -r apps/backend/requirements.txt
+pip install -e "apps/backend[standard,testing]"
 ```
 
 ### 2. 改进代码的错误处理机制
