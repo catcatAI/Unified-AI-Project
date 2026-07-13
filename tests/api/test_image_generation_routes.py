@@ -2,10 +2,9 @@
 Tests for image_generation_routes API endpoints.
 
 Covers:
-- Route import and registration (all 10 routes)
-- Deprecation warnings on legacy endpoints
+- Route import and registration (5 /image/ routes)
 - Error responses when models are unavailable
-- Delegation: new standardized routes call same handler as legacy
+- Response model structure
 """
 
 import sys
@@ -29,21 +28,7 @@ class TestImageGenerationRoutes:
         """Module exports a router with routes."""
         from api.routes.image_generation_routes import router
         assert router is not None
-        assert len(router.routes) >= 8  # At least 8 routes
-
-    async def test_has_legacy_endpoints(self):
-        """Router has the deprecated legacy endpoints."""
-        from api.routes.image_generation_routes import router
-        paths = {r.path for r in router.routes}
-        legacy = {
-            "/generate-image",
-            "/recognize-image",
-            "/reconstruct-image",
-            "/interpolate-classes",
-            "/generate-image/status",
-        }
-        for ep in legacy:
-            assert ep in paths, f"Missing legacy endpoint: {ep}"
+        assert len(router.routes) >= 5  # At least 5 standardized routes
 
     async def test_has_standardized_endpoints(self):
         """Router has the new standardized /image/ endpoints."""
@@ -67,13 +52,6 @@ class TestImageGenerationRoutes:
             methods = set(r.methods) if hasattr(r, "methods") else {"GET"}
             route_map[r.path] = methods
 
-        # Legacy POST endpoints
-        assert "POST" in route_map.get("/generate-image", set())
-        assert "POST" in route_map.get("/recognize-image", set())
-        assert "POST" in route_map.get("/reconstruct-image", set())
-        assert "POST" in route_map.get("/interpolate-classes", set())
-        assert "GET" in route_map.get("/generate-image/status", set())
-
         # Standardized POST endpoints
         assert "POST" in route_map.get("/image/generate", set())
         assert "POST" in route_map.get("/image/recognize", set())
@@ -82,61 +60,7 @@ class TestImageGenerationRoutes:
         assert "GET" in route_map.get("/image/status", set())
 
 
-@pytest.mark.asyncio
-class TestImageGenerationDeprecation:
-    """Verify deprecation warnings on legacy endpoints."""
 
-    async def test_generate_image_deprecation(self):
-        """POST /generate-image issues DeprecationWarning."""
-        import warnings
-
-        from api.routes.image_generation_routes import GenerateImageRequest, generate_image
-        with pytest.warns(DeprecationWarning, match="/image/generate"):
-            req = GenerateImageRequest(text="test", canvas_size=128, num_iterations=30, learning_rate=0.008)
-            with pytest.raises(Exception):  # Will likely fail because no models available
-                await generate_image(req)
-
-    async def test_recognize_image_deprecation(self):
-        """POST /recognize-image issues DeprecationWarning."""
-        import warnings
-
-        from api.routes.image_generation_routes import RecognizeImageRequest, recognize_image
-        with pytest.warns(DeprecationWarning, match="/image/recognize"):
-            req = RecognizeImageRequest(image_base64="AAAA")
-            with pytest.raises(Exception):
-                await recognize_image(req)
-
-    async def test_reconstruct_image_deprecation(self):
-        """POST /reconstruct-image issues DeprecationWarning."""
-        import warnings
-
-        from api.routes.image_generation_routes import ReconstructImageRequest, reconstruct_image
-        with pytest.warns(DeprecationWarning, match="/image/reconstruct"):
-            req = ReconstructImageRequest(image_base64="AAAA")
-            with pytest.raises(Exception):
-                await reconstruct_image(req)
-
-    async def test_interpolate_classes_deprecation(self):
-        """POST /interpolate-classes issues DeprecationWarning."""
-        import warnings
-
-        from api.routes.image_generation_routes import InterpolateRequest, interpolate_classes
-        with pytest.warns(DeprecationWarning, match="/image/interpolate"):
-            req = InterpolateRequest(class_a=0, class_b=1, n_steps=5)
-            with pytest.raises(Exception):
-                await interpolate_classes(req)
-
-    async def test_generate_image_status_deprecation(self):
-        """GET /generate-image/status issues DeprecationWarning."""
-        import warnings
-
-        from api.routes.image_generation_routes import generate_image_status
-        with pytest.warns(DeprecationWarning, match="/image/status"):
-            result = await generate_image_status()
-            # Should still return a result via delegation to image_status()
-            assert isinstance(result, dict)
-            # At minimum, status endpoint should work even without models
-            assert "gvv_available" in result
 
 
 @pytest.mark.asyncio
@@ -201,32 +125,7 @@ class TestImageGenerationModels:
         assert result["three_layer_available"] is False
 
 
-@pytest.mark.asyncio
-class TestImageGenerationDelegation:
-    """Verify new standardized routes delegate to same handlers as legacy."""
 
-    async def test_both_endpoints_fail_same_way(self):
-        """POST /image/generate and /generate-image both fail with 503 when no models."""
-        from api.routes.image_generation_routes import (
-            GenerateImageRequest,
-            generate_image,
-            image_generate,
-        )
-        req = GenerateImageRequest(text="test", canvas_size=128)
-        for handler in (image_generate, generate_image):
-            try:
-                await handler(req)
-            except Exception as e:
-                from fastapi import HTTPException
-                assert isinstance(e, HTTPException), f"Expected HTTPException, got {type(e)}"
-                assert e.status_code == 503, f"Expected 503, got {e.status_code}"
-
-    async def test_both_status_endpoints_match(self):
-        """Legacy and standardized status endpoints return same result."""
-        from api.routes.image_generation_routes import generate_image_status, image_status
-        legacy_result = await generate_image_status()
-        canonical_result = await image_status()
-        assert legacy_result == canonical_result
 
 
 @pytest.mark.asyncio

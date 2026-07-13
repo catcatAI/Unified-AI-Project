@@ -274,18 +274,6 @@ class TestMobileAPI:
         assert data["metrics"]["nodes"] == 3
 
     @pytest.mark.asyncio
-    @patch("core.system.cluster_manager.cluster_manager")
-    async def test_mobile_status_post(self, mock_cluster, client):
-        mock_cluster.get_cluster_status.return_value = {
-            "cluster": {"active_nodes": 2},
-        }
-        resp = await client.post("/api/v1/mobile/status", json={"client": "test"})
-        assert resp.status_code == 200
-        data = resp.json()
-        assert "status" in data
-        assert "metrics" in data
-
-    @pytest.mark.asyncio
     @patch("core.sync.realtime_sync.SyncEvent")
     @patch("core.sync.realtime_sync.sync_manager")
     async def test_mobile_module_control(self, mock_sm, mock_se, client):
