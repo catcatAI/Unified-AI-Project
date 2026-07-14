@@ -153,6 +153,7 @@ class ChatService:
         merged_context = await self._inject_memory_context(merged_context, user_message)
         merged_context, mm_adapter = await self._inject_multimodal_context(merged_context, user_message)
         merged_context = self._inject_grounded_context(merged_context, user_message)
+        merged_context = await self._maybe_search_and_ground(user_message, merged_context)
 
         response = await self._llm_service.generate_response(user_message, merged_context)
         response = self._post_process_response(response, merged_context)
@@ -237,6 +238,60 @@ class ChatService:
                 logger.debug("Grounded context injected (%d chars)", len(block))
         except Exception as e:
             logger.debug("Grounded context injection skipped: %s", e)
+        return merged_context
+
+    async def _maybe_search_and_ground(
+        self, user_message: str, merged_context: dict
+    ) -> dict:
+        """Proactively web-search to ground an uncertain factual query.
+
+        Only triggers when: (1) the query looks like a factual question, (2) we have
+        NO verified knowledge for it yet (grounded_context empty), and (3) it is not an
+        explicit search intent (WebSearchHandler owns those). The search result is
+        injected as ``web_search_context`` for THIS answer and stored as VERIFIED knowledge
+        so future identical queries skip the live search.
+
+        Runs with a tight timeout so the answer path stays within seconds. Any failure
+        is swallowed - the LLM still answers unaugmented.
+        """
+        try:
+            from ai.memory.claim_extractor import is_searchable_query
+
+            if not is_searchable_query(user_message):
+                return merged_context
+            # already have verified knowledge -> no need to search again
+            if merged_context.get("grounded_context"):
+                return merged_context
+
+            from core.tools.web_search_tool import WebSearchTool
+            from ai.memory.grounded_learning_manager import get_grounded_learning_manager
+
+            tool = WebSearchTool()
+            results = await asyncio.wait_for(
+                asyncio.to_thread(tool.search, user_message, 3), timeout=2.5
+            )
+            usable = [r for r in results if isinstance(r, dict) and "error" not in r]
+            if not usable:
+                return merged_context
+
+            lines = []
+            for r in usable[:3]:
+                title = r.get("title", "")
+                snippet = (r.get("snippet") or "").strip()
+                url = r.get("url", "")
+                line = f"- {title}"
+                if snippet:
+                    line += f": {snippet}"
+                if url:
+                    line += f" ({url})"
+                lines.append(line)
+            merged_context["web_search_context"] = "\n".join(lines)
+
+            # remember as verified knowledge (sources = the search hits)
+            get_grounded_learning_manager().learn_verified_from_search(user_message, usable)
+            logger.debug("Proactive web grounding applied (%d results)", len(usable))
+        except Exception as e:
+            logger.debug("Proactive web grounding skipped: %s", e)
         return merged_context
 
     async def _process_multimodal_output(self, response, merged_context: dict, mm_adapter) -> None:

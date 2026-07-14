@@ -9,6 +9,7 @@ import logging
 import hashlib
 import os
 import re
+import threading
 from dataclasses import dataclass, field, asdict
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -105,24 +106,28 @@ class GroundedKnowledgeStore:
 
     def __init__(self):
         self._claims: Dict[str, GroundedClaim] = {}
+        # Guards concurrent mutation/iteration: background verification tasks
+        # (record_verification) can run while the answer path reads (find_related).
+        self._lock = threading.RLock()
 
     # ---- write path -------------------------------------------------------
     def add_or_update(self, claim_text: str, domain: Optional[str] = None) -> GroundedClaim:
         """Insert a new claim (UNVERIFIED) or return the existing one."""
-        key = claim_key(claim_text)
-        existing = self._claims.get(key)
-        if existing is not None:
-            if domain and not existing.domain:
-                existing.domain = domain
-            return existing
-        claim = GroundedClaim(
-            claim_key=key,
-            claim_text=claim_text.strip(),
-            status=VerificationStatus.UNVERIFIED,
-            domain=domain,
-        )
-        self._claims[key] = claim
-        return claim
+        with self._lock:
+            key = claim_key(claim_text)
+            existing = self._claims.get(key)
+            if existing is not None:
+                if domain and not existing.domain:
+                    existing.domain = domain
+                return existing
+            claim = GroundedClaim(
+                claim_key=key,
+                claim_text=claim_text.strip(),
+                status=VerificationStatus.UNVERIFIED,
+                domain=domain,
+            )
+            self._claims[key] = claim
+            return claim
 
     def record_verification(
         self,
@@ -132,24 +137,25 @@ class GroundedKnowledgeStore:
         confidence: float = 0.0,
     ) -> Optional[GroundedClaim]:
         """Apply a verification outcome to a claim."""
-        claim = self._claims.get(claim_key)
-        if claim is None:
-            return None
-        claim.status = status
-        claim.confidence = max(0.0, min(1.0, float(confidence)))
-        new_sources = sources or []
-        seen = {(s.url, s.title) for s in claim.sources}
-        for s in new_sources:
-            if (s.url, s.title) not in seen:
-                claim.sources.append(s)
-                seen.add((s.url, s.title))
-        if status == VerificationStatus.VERIFIED:
-            claim.verify_count += 1
-            claim.last_verified = _now_iso()
-        elif status == VerificationStatus.CONTRADICTED:
-            claim.contradict_count += 1
-            claim.last_verified = _now_iso()
-        return claim
+        with self._lock:
+            claim = self._claims.get(claim_key)
+            if claim is None:
+                return None
+            claim.status = status
+            claim.confidence = max(0.0, min(1.0, float(confidence)))
+            new_sources = sources or []
+            seen = {(s.url, s.title) for s in claim.sources}
+            for s in new_sources:
+                if (s.url, s.title) not in seen:
+                    claim.sources.append(s)
+                    seen.add((s.url, s.title))
+            if status == VerificationStatus.VERIFIED:
+                claim.verify_count += 1
+                claim.last_verified = _now_iso()
+            elif status == VerificationStatus.CONTRADICTED:
+                claim.contradict_count += 1
+                claim.last_verified = _now_iso()
+            return claim
 
     # ---- read path (cheap, local) ----------------------------------------
     def find_related(self, query: str, limit: int = 5) -> List[GroundedClaim]:
@@ -157,8 +163,10 @@ class GroundedKnowledgeStore:
         q_tokens = tokens_of(query)
         if not q_tokens:
             return []
+        with self._lock:
+            claims = list(self._claims.values())
         scored = []
-        for claim in self._claims.values():
+        for claim in claims:
             c_tokens = tokens_of(claim.claim_text)
             overlap = len(q_tokens & c_tokens)
             if overlap > 0:
@@ -174,25 +182,30 @@ class GroundedKnowledgeStore:
         return verified[:limit]
 
     def get(self, key: str) -> Optional[GroundedClaim]:
-        return self._claims.get(key)
+        with self._lock:
+            return self._claims.get(key)
 
     def all(self) -> List[GroundedClaim]:
-        return list(self._claims.values())
+        with self._lock:
+            return list(self._claims.values())
 
     def count(self) -> int:
-        return len(self._claims)
+        with self._lock:
+            return len(self._claims)
 
     def stats(self) -> Dict[str, int]:
         s = {"total": 0, "verified": 0, "contradicted": 0, "unverified": 0, "disputed": 0}
-        for c in self._claims.values():
-            s["total"] += 1
-            s[c.status.value] += 1
+        with self._lock:
+            for c in self._claims.values():
+                s["total"] += 1
+                s[c.status.value] += 1
         return s
 
     # ---- persistence ------------------------------------------------------
     def save(self, path: str) -> None:
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-        state = [c.to_dict() for c in self._claims.values()]
+        with self._lock:
+            state = [c.to_dict() for c in self._claims.values()]
         with open(path, "w", encoding="utf-8") as f:
             json.dump(state, f, ensure_ascii=False, indent=2)
         logger.info("GroundedKnowledgeStore: saved %d claims to %s", len(state), path)
@@ -203,9 +216,10 @@ class GroundedKnowledgeStore:
         try:
             with open(path, "r", encoding="utf-8") as f:
                 state = json.load(f)
-            for d in state:
-                claim = GroundedClaim.from_dict(d)
-                self._claims[claim.claim_key] = claim
+            with self._lock:
+                for d in state:
+                    claim = GroundedClaim.from_dict(d)
+                    self._claims[claim.claim_key] = claim
             logger.info("GroundedKnowledgeStore: loaded %d claims from %s", len(state), path)
             return len(state)
         except Exception as e:

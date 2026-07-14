@@ -260,6 +260,8 @@ def construct_angela_prompt(
     _append_awareness_injection(messages, context)
     _append_draft_response(messages, context)
     _append_document_context(messages, context)
+    _append_knowledge_context(messages, context)
+    _append_web_search_context(messages, context)
 
     messages.append({"role": "user", "content": f"<user_message>{user_message}</user_message>"})
 
@@ -609,6 +611,36 @@ def _append_document_context(messages: List[Dict], context: Dict) -> None:
             text = text[:500] + "..."
         block += f"\n- Pre-processing result: {text}"
     block += "\n"
+    messages[0]["content"] += block
+
+
+def _append_knowledge_context(messages: List[Dict], context: Dict) -> None:
+    """Append verified/dictionary/conversation-grounding context to the system prompt.
+
+    Consumes the keys chat_service already computes (grounded_context,
+    dictionary_context, conversation_memory) so they actually reach the LLM
+    instead of being silently dropped.
+    """
+    block = ""
+    grounded = context.get("grounded_context")
+    if grounded:
+        block += f"\n\n[Verified Knowledge]\n{grounded}"
+    dictionary = context.get("dictionary_context")
+    if dictionary:
+        block += f"\n\n[Dictionary]\n{dictionary}"
+    memory = context.get("conversation_memory")
+    if memory:
+        block += f"\n\n[Conversation Memory]\n{memory}"
+    if block:
+        messages[0]["content"] += block
+
+
+def _append_web_search_context(messages: List[Dict], context: Dict) -> None:
+    """Append proactive web-search grounding results to the system prompt."""
+    web = context.get("web_search_context")
+    if not web:
+        return
+    block = f"\n\n[Web Search Results]\n{web}"
     messages[0]["content"] += block
 
 

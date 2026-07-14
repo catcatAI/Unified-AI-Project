@@ -95,4 +95,57 @@ def extract_claims(text: str, max_claims: int = 8) -> List[str]:
     return claims
 
 
-__all__ = ["extract_claims"]
+# Question cues that signal the user is asking for a fact we may need to look up.
+_SEARCH_QUESTION_RE = re.compile(
+    r"\b(what|who|when|where|why|how|which|whom)\b|"
+    r"(什麼|誰|何時|哪|如何|怎麼|為什麼|多少|幾|哪裡)",
+    re.IGNORECASE | re.UNICODE,
+)
+# Explicit search intents are handled separately (WebSearchHandler) - don't double-search.
+_SEARCH_INTENT_RE = re.compile(
+    r"(搜尋|搜索|幫我搜|幫我查|google|search|lookup|查一下|查詢|找一下)",
+    re.IGNORECASE | re.UNICODE,
+)
+# A run of >=2 CJK chars counts as a topical anchor (a Chinese proper noun / concept).
+_CJK_RUN_RE = re.compile(r"[一-鿿㐀-䶿]{2,}", re.UNICODE)
+# Question words are not topical anchors on their own.
+_QUESTION_WORDS = {
+    "what", "who", "when", "where", "why", "how", "which", "whom",
+    "什麼", "誰", "何時", "哪", "如何", "怎麼", "為什麼", "多少", "幾", "哪裡",
+}
+_WORD_RE = re.compile(r"[A-Za-z][A-Za-z0-9]*", re.UNICODE)
+
+
+def _has_topical_anchor(text: str) -> bool:
+    """True if text has a topical anchor beyond mere question words.
+
+    An anchor is: a CJK run of >=2 chars, or a capitalized/digit token that is not
+    itself a question word (e.g. "Taiwan" in "What is the capital of Taiwan?").
+    """
+    if _CJK_RUN_RE.search(text):
+        return True
+    for tok in _WORD_RE.findall(text):
+        if tok.lower() in _QUESTION_WORDS:
+            continue
+        if tok[0].isupper() or any(ch.isdigit() for ch in tok):
+            return True
+    return False
+
+
+def is_searchable_query(text: str) -> bool:
+    """Heuristic: should we proactively web-search to ground this query?
+
+    True when the text is a factual question (question cue + a topical anchor such as
+    a capitalized token, digit, CJK concept, or quoted term) and is NOT already an
+    explicit search intent (which WebSearchHandler handles on its own).
+    """
+    if not text:
+        return False
+    if _SEARCH_INTENT_RE.search(text):
+        return False
+    if not _SEARCH_QUESTION_RE.search(text):
+        return False
+    return _has_topical_anchor(text)
+
+
+__all__ = ["extract_claims", "is_searchable_query"]

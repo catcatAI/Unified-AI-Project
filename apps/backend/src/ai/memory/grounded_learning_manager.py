@@ -8,11 +8,12 @@ ANGELA-MATRIX: [L3-L4] [βγδ] [B] [L2]
 import asyncio
 import logging
 import os
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from ai.memory.grounded_knowledge import (
     GroundedClaim,
     GroundedKnowledgeStore,
+    SourceRef,
     VerificationStatus,
 )
 from ai.memory.claim_extractor import extract_claims
@@ -80,6 +81,8 @@ class GroundedLearningManager:
                 done += 1
             except Exception as e:  # pragma: no cover - defensive
                 logger.debug("verify_claim failed for '%s': %s", claim.claim_text[:40], e)
+        if done:
+            self.save()
         return done
 
     async def queue_claims(self, user_message: str, response_text: str) -> List[GroundedClaim]:
@@ -124,6 +127,30 @@ class GroundedLearningManager:
             lines.append(line)
         return "\n".join(lines)
 
+    def learn_verified_from_search(
+        self, query: str, results: List[Dict[str, Any]]
+    ) -> Optional[GroundedClaim]:
+        """Record a web-search result as VERIFIED knowledge (proactive grounding).
+
+        Called when the system searches the web to answer an uncertain query, so the
+        fact is remembered (verified, with sources) and can ground future answers
+        without re-searching.
+        """
+        sources = [
+            SourceRef(url=r.get("url", ""), title=r.get("title", ""), snippet=r.get("snippet", ""))
+            for r in results
+            if isinstance(r, dict) and "error" not in r and r.get("url")
+        ]
+        if not sources:
+            # no usable sources -> do not record anything
+            return None
+        claim = self.store.add_or_update(query)
+        self.store.record_verification(
+            claim.claim_key, VerificationStatus.VERIFIED, sources, confidence=0.7
+        )
+        self.save()
+        return claim
+
     # ---- stats / persistence --------------------------------------------
     def get_stats(self) -> Dict[str, object]:
         return {
@@ -147,13 +174,21 @@ class GroundedLearningManager:
 
 
 _manager: Optional[GroundedLearningManager] = None
+_loaded_at_startup: bool = False
 
 
 def get_grounded_learning_manager() -> GroundedLearningManager:
     """Shared singleton (mirrors the apply_domain_cognition single-entry pattern)."""
-    global _manager
+    global _manager, _loaded_at_startup
     if _manager is None:
         _manager = GroundedLearningManager()
+        # best-effort load of previously verified knowledge (once per process)
+        if not _loaded_at_startup:
+            _loaded_at_startup = True
+            try:
+                _manager.load()
+            except Exception as e:  # pragma: no cover - defensive
+                logger.debug("GroundedLearningManager startup load skipped: %s", e)
     return _manager
 
 

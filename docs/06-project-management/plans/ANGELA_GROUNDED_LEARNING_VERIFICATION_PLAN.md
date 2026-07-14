@@ -210,3 +210,52 @@ store.record_verification(claim_key, status, sources, confidence)
 - 已加 §7 全部測試（無網路，用 FakeSearchTool）。共計測試全過。
 - 已更新 `docs/architecture/ANGELA_FULL_ARCHITECTURE.md` §5.9（有查證學習子系統）。
 - 提交：`§X #264`。
+
+---
+
+## 9. 審計與補強（§X #265）
+本迭代順著 §X #264 之後做「遺漏代碼 / 未考慮細節」審計，發現並修復以下問題：
+
+### 9.1 審計發現：接地上下文死注入（與舊 attractor stub 同類 bug）
+- `chat_service` 在 `generate_response` 中設定了 `merged_context["grounded_context"]`
+  （`_inject_grounded_context`）、`["dictionary_context"]`（line 185）、
+  `["conversation_memory"]`（line 199）。
+- 但 `prompt_builder.construct_angela_prompt` **從未消費這三個鍵** → 有查證知識、
+  字典、對話記憶都沒真正送進 LLM，接地等於失效。
+- 修復：`prompt_builder` 新增 `_append_knowledge_context`（消費
+  grounded_context / dictionary_context / conversation_memory）與
+  `_append_web_search_context`（消費 web_search_context），並於
+  `construct_angela_prompt` 中（在 `_append_document_context` 之後、用戶訊息之前）
+  呼叫兩者，皆附加到 system 訊息。
+- 驗證：`tests/unit/test_prompt_builder.py` 新增 3 個測試，確認這三類上下文
+  （含 grounded_context / web_search_context）確實出現在 system prompt。
+
+### 9.2 主動「不確定就搜尋」接地
+- 新增 `claim_extractor.is_searchable_query(text)`：事實性疑問（含疑問詞 + 主題錨，
+  如大寫專名/數字/CJK 概念）且非顯式搜尋意圖（WebSearchHandler 已處理）才為 True。
+- `chat_service._maybe_search_and_ground`：在組 LLM 上下文前，若查詢可搜尋且
+  尚無已查證知識，則以 `asyncio.wait_for(..., timeout=2.5)` 緊湊逾時做 web 搜尋，
+  結果作為 `web_search_context` 注入本輪回答，並經
+  `manager.learn_verified_from_search` 記為 VERIFIED（含來源）以供未來跳過搜尋。
+- 任何失敗皆吞掉，仍由 LLM 原樣回答；不佔用戶感知延遲。
+
+### 9.3 持久化（未考慮細節）
+- §X #264 的 `save()` 從未被呼叫 → 查證知識與主動接地結果重啟即消失。
+- 修復：`run_pending_verifications` 完成後呼叫 `self.save()`；
+  `learn_verified_from_search` 記錄後呼叫 `self.save()`；
+  單例工廠 `get_grounded_learning_manager()` 首次建立時 `load()` 既有知識
+  （每 process 一次，防禦式 try/except）。`data/` 已被 .gitignore 忽略。
+
+### 9.4 並發保護
+- `GroundedKnowledgeStore` 新增 `threading.RLock`，包住讀寫方法
+  （add_or_update / record_verification / find_related / verified_for / get / all /
+  count / stats / save / load），防背景查證任務與回答路徑讀取相互干擾。
+
+### 9.5 測試與驗收
+- 新增/更新：`test_prompt_builder.py`（3 接地注入測試）、
+  `test_claim_extractor.py`（3 is_searchable_query 測試）、
+  `test_grounded_learning_manager.py`（learn_verified_from_search ×2 + 持久化 roundtrip）。
+- 驗證：聚焦 60 測試全過（grounded_knowledge / claim_extractor /
+  grounded_learning_manager / knowledge_verifier / prompt_builder / chat_service）；
+  memory+meta+chat_service 廣泛回歸 321 測試全過；black+flake8 通過。
+- 提交：§X #265。

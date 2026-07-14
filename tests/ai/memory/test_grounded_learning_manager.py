@@ -75,6 +75,44 @@ def test_get_grounded_context_only_verified():
     assert "https://en.wikipedia.org/wiki/Speed_of_light" in block
 
 
+def test_learn_verified_from_search_records_verified():
+    mgr = _manager_with_support()
+    results = [
+        {"title": "Taipei", "url": "https://en.wikipedia.org/wiki/Taipei",
+         "snippet": "Capital of Taiwan."},
+        {"title": "Other", "url": "https://example.com", "snippet": "x"},
+    ]
+    claim = mgr.learn_verified_from_search("What is the capital of Taiwan?", results)
+    assert claim is not None
+    stored = mgr.store.get(claim.claim_key)
+    assert stored is not None
+    assert stored.status == VerificationStatus.VERIFIED
+    assert stored.confidence > 0.5
+    block = mgr.get_grounded_context("What is the capital of Taiwan?")
+    assert "Taipei" in block
+
+
+def test_learn_verified_from_search_skips_errors():
+    mgr = GroundedLearningManager()
+    result = mgr.learn_verified_from_search("nonsense query?", [{"error": "no results"}])
+    assert result is None
+    assert mgr.store.count() == 0
+
+
+def test_persistence_roundtrip(tmp_path):
+    path = str(tmp_path / "gk.json")
+    mgr = GroundedLearningManager(data_path=path)
+    results = [{"title": "Taipei", "url": "https://en.wikipedia.org/wiki/Taipei",
+                "snippet": "Capital of Taiwan."}]
+    mgr.learn_verified_from_search("What is the capital of Taiwan?", results)
+    # reload from a fresh manager on the same path
+    mgr2 = GroundedLearningManager(data_path=path)
+    loaded = mgr2.load()
+    assert loaded == 1
+    block = mgr2.get_grounded_context("capital of Taiwan")
+    assert "Taipei" in block
+
+
 async def test_queue_claims_runs_background_verification():
     mgr = _manager_with_support()
     # queue_claims schedules asyncio tasks; run them to completion

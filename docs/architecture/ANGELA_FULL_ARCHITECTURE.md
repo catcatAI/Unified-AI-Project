@@ -1407,6 +1407,19 @@ AngelaLLMService (核心 LLM 路由)
 在 LLM 前以本地查詢注入已查證知識（sub-ms~數 ms，維持秒級）。兩者皆 `try/except` 守衛，管理器
 不可用時靜默 no-op。全部守衛確保主回答不受影響。
 
+**審計補強（§X #265）**：
+- 修復「接地上下文死注入」：`chat_service` 設定的 `grounded_context` / `dictionary_context` /
+  `conversation_memory` 原本從未被 `prompt_builder` 消費，等於失效。現由
+  `prompt_builder._append_knowledge_context` 與 `_append_web_search_context` 在
+  `construct_angela_prompt` 中注入 system 訊息（與舊 attractor stub 同類 bug 的同類修復）。
+- 主動接地：`claim_extractor.is_searchable_query` 判斷事實性疑問（非顯式搜尋意圖）；
+  `chat_service._maybe_search_and_ground` 在 LLM 前以 `asyncio.wait_for(timeout=2.5)` 緊湊逾時
+  web 搜尋，結果作為 `web_search_context` 注入並經 `learn_verified_from_search` 記為 VERIFIED，
+  未來同問跳過搜尋。失敗靜默 no-op。
+- 持久化：`run_pending_verifications` 與 `learn_verified_from_search` 後呼叫 `save()`；
+  單例工廠首次建立時 `load()` 既有知識（每 process 一次）。`GroundedKnowledgeStore` 加 `threading.RLock`
+  防背景查證與回答路徑並發衝突。
+
 **速度預算**：回答路徑仍 = LLM 秒級；查證背景並行（cache + 去重 + 並發上限約束），不計入感知延遲；
 接地注入本地化。⇒ 用戶感知延遲維持秒級，且學習具備「查證 + 根據查證自我修正」能力。
 

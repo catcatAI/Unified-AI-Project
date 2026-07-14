@@ -135,6 +135,58 @@ class TestConstructAngelaPrompt:
         assert "保持友好" in result[0]["content"]
 
 
+class TestGroundingContextInjection:
+    """Grounded / web-search context must actually reach the LLM prompt (no dead injection)."""
+
+    @patch("services.llm.prompt_builder.get_biological_state", return_value="")
+    @patch("services.llm.prompt_builder.get_formula_summaries", return_value="")
+    def test_grounded_context_reaches_prompt(self, mock_formula, mock_bio):
+        from services.llm.prompt_builder import construct_angela_prompt
+
+        context = {
+            "state_for_llm": None,
+            "user_profile": {},
+            "drive_files": [],
+            "history": [],
+            "grounded_context": "VERIFIED: Taipei is the capital of Taiwan.",
+        }
+        result = construct_angela_prompt("test", context)
+        assert "VERIFIED: Taipei is the capital of Taiwan." in result[0]["content"]
+
+    @patch("services.llm.prompt_builder.get_biological_state", return_value="")
+    @patch("services.llm.prompt_builder.get_formula_summaries", return_value="")
+    def test_web_search_context_reaches_prompt(self, mock_formula, mock_bio):
+        from services.llm.prompt_builder import construct_angela_prompt
+
+        context = {
+            "state_for_llm": None,
+            "user_profile": {},
+            "drive_files": [],
+            "history": [],
+            "web_search_context": "- Wikipedia: Taipei (https://en.wikipedia.org/wiki/Taipei)",
+        }
+        result = construct_angela_prompt("test", context)
+        assert "Wikipedia: Taipei" in result[0]["content"]
+
+    @patch("services.llm.prompt_builder.get_biological_state", return_value="")
+    @patch("services.llm.prompt_builder.get_formula_summaries", return_value="")
+    def test_dictionary_and_memory_context_reach_prompt(self, mock_formula, mock_bio):
+        from services.llm.prompt_builder import construct_angela_prompt
+
+        context = {
+            "state_for_llm": None,
+            "user_profile": {},
+            "drive_files": [],
+            "history": [],
+            "dictionary_context": "WORD: 貓 = cat (noun)",
+            "conversation_memory": "PREVIOUS: You asked about cats.",
+        }
+        result = construct_angela_prompt("test", context)
+        content = result[0]["content"]
+        assert "WORD: 貓 = cat (noun)" in content
+        assert "PREVIOUS: You asked about cats." in content
+
+
 class TestModalityState:
     """Test modality gateway state injection into prompt (C³ 3.0 — closed loop)."""
 

@@ -1,6 +1,6 @@
 """Tests for the factual-claim extractor (no network)."""
 
-from ai.memory.claim_extractor import extract_claims
+from ai.memory.claim_extractor import extract_claims, is_searchable_query
 
 
 def test_extracts_factual_sentence_with_copula_and_anchor():
@@ -42,3 +42,18 @@ def test_caps_number_of_claims():
 
 def test_empty_text():
     assert extract_claims("") == []
+
+
+def test_is_searchable_query_factual_question():
+    assert is_searchable_query("What is the capital of Taiwan?") is True
+    assert is_searchable_query("東京的首都是哪裡？") is True
+
+
+def test_is_searchable_query_excludes_chitchat():
+    assert is_searchable_query("How are you today?") is False
+    assert is_searchable_query("我覺得蠻好的。") is False
+
+
+def test_is_searchable_query_excludes_explicit_search_intent():
+    assert is_searchable_query("幫我搜尋最新新聞") is False
+    assert is_searchable_query("Please search the web for this.") is False
