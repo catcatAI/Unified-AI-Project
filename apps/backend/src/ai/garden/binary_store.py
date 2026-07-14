@@ -49,7 +49,7 @@ def _lazy_torch():
     global _torch
     if _torch is None:
         from ._import_utils import subprocess_check
-        if subprocess_check("torch", timeout=15):
+        if subprocess_check("torch"):
             try:
                 import torch
                 _torch = torch

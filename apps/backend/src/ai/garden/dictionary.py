@@ -42,7 +42,7 @@ _torch = None
 def _lazy_torch():
     global _torch
     if _torch is None:
-        if subprocess_check("torch", timeout=15):
+        if subprocess_check("torch"):
             try:
                 import torch
                 import torch.nn.functional as F
@@ -212,7 +212,7 @@ class _STEncoder:
 
     def __init__(self, model_name: str):
         from ._import_utils import subprocess_check
-        if not subprocess_check("sentence_transformers", timeout=15):
+        if not subprocess_check("sentence_transformers"):
             raise ImportError("sentence_transformers not available (import check failed)")
         try:
             from sentence_transformers import SentenceTransformer
@@ -237,7 +237,7 @@ class _ChromaEncoder:
         import uuid
 
         from ._import_utils import subprocess_check
-        if not subprocess_check("chromadb", timeout=15):
+        if not subprocess_check("chromadb"):
             raise ImportError("chromadb not available (import check failed)")
         try:
             import chromadb
@@ -285,8 +285,9 @@ class _ChromaEncoder:
                         ids=[doc_id],
                         include=["embeddings"],
                     )
-                    if result and result.get("embeddings") and len(result["embeddings"]) > 0:
-                        emb = result["embeddings"][0]
+                    embs = result.get("embeddings") if result else None
+                    if embs is not None and len(embs) > 0:
+                        emb = embs[0]
                         if emb is not None and len(emb) > 0:
                             embeddings.append(emb)
                         else:
@@ -315,10 +316,9 @@ class _ChromaEncoder:
                 n_results=1,
                 include=["embeddings"],
             )
-            if result and result.get("embeddings"):
-                embs = result["embeddings"]
-                if len(embs) > 0 and len(embs[0]) > 0:
-                    return embs[0][0].tolist() if hasattr(embs[0][0], 'tolist') else list(embs[0][0])
+            embs = result.get("embeddings") if result else None
+            if embs is not None and len(embs) > 0 and len(embs[0]) > 0:
+                return embs[0][0].tolist() if hasattr(embs[0][0], 'tolist') else list(embs[0][0])
         except Exception as e:
             logger.debug("GARDEN: ChromaDB query_embedding failed: %s", e)
         return None
