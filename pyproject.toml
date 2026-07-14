@@ -158,6 +158,7 @@ markers = [
     'system_integration: marks tests for system integration',
     'performance: marks tests for performance benchmarking',
     'benchmark: marks tests as benchmark tests',
+    'e2e: marks end-to-end scenario tests',
 ]
 asyncio_mode = 'auto'
 asyncio_default_test_loop_scope = 'function'
