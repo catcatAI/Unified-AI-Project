@@ -14,6 +14,7 @@ from path_config import (  # noqa: E402
     MODELS_DIR,
     PROJECT_ROOT,
     TRAINING_DIR,
+    ensure_directories,
     get_data_path,
     get_training_config_path,
     resolve_path,
@@ -87,7 +88,14 @@ def test_resolve_path_relative() -> None:
 
 
 def test_directories_exist() -> None:
-    """Test that necessary directories exist."""
+    """Test that necessary directories exist after startup provisioning.
+
+    ``path_config`` intentionally does not create directories on import
+    (``ensure_directories`` is meant to be called explicitly at startup), so the
+    test invokes it first and then verifies the directories are present. The
+    training directories live under the git-ignored ``apps/training/`` tree.
+    """
+    ensure_directories()
     directories = [DATA_DIR, TRAINING_DIR, MODELS_DIR, CHECKPOINTS_DIR, CONFIGS_DIR]
     for directory in directories:
         assert directory.exists(), f"Directory {directory} does not exist"
