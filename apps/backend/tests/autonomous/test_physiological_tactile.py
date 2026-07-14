@@ -21,7 +21,7 @@ import math
 
 # Import the modules under test
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -321,18 +321,30 @@ class TestPhysiologicalTactileSystem:
         assert response.activated_receptors > 0
         assert response.timestamp is not None
     async def test_process_stimulus_with_emotion(self, initialized_tactile_system: PhysiologicalTactileSystem) -> None:
-        """Test processing stimulus with emotional context."""
-        # Anxiety increases intensity perception
+        """Test processing stimulus with emotional context.
+
+        Perceived intensity is scaled by the body part's base sensitivity (CHEST
+        is deliberately low, 0.5), so it does not necessarily exceed the raw
+        input intensity. What the anxiety mapping (intensity_modifier=1.5) must
+        do is *amplify* the perception relative to the identical stimulus with no
+        emotional tag.
+        """
+        neutral_stimulus = TactileStimulus(
+            tactile_type=TactileType.TEMPERATURE,
+            intensity=5.0,
+            location=BodyPart.CHEST,
+        )
         anxious_stimulus = TactileStimulus(
             tactile_type=TactileType.TEMPERATURE,
             intensity=5.0,
             location=BodyPart.CHEST,
             emotional_tag="anxiety"
         )
-        
-        response = await initialized_tactile_system.process_stimulus(anxious_stimulus)
-        # Anxiety has intensity_modifier of 1.5
-        assert response.perceived_intensity > 5.0
+
+        neutral_response = await initialized_tactile_system.process_stimulus(neutral_stimulus)
+        anxious_response = await initialized_tactile_system.process_stimulus(anxious_stimulus)
+        # Anxiety has intensity_modifier of 1.5 -> perception is amplified.
+        assert anxious_response.perceived_intensity > neutral_response.perceived_intensity
 
     def test_set_arousal_level(self, tactile_system: PhysiologicalTactileSystem) -> None:
         """Test setting arousal level affects sensitivities."""
@@ -411,12 +423,18 @@ class TestTrajectoryAnalyzer:
 
     def test_analyze_straight_line(self, trajectory_analyzer: TrajectoryAnalyzer) -> None:
         """Test analysis of straight line trajectory."""
-        # Create a straight horizontal line
+        # Create a straight horizontal line sampled at a realistic touch cadence
+        # (10px every 50ms -> 200 px/s). Explicit timestamps are required so the
+        # velocity reflects the real stroke instead of the near-zero interval
+        # between successive add_point() calls in this loop.
+        base = datetime.now()
         for i in range(10):
-            trajectory_analyzer.add_point(float(i * 10), 100.0, pressure=0.8)
-        
+            trajectory_analyzer.add_point(
+                float(i * 10), 100.0, pressure=0.8, timestamp=base + timedelta(seconds=i * 0.05)
+            )
+
         result = trajectory_analyzer.analyze()
-        
+
         # Straight line should have low curvature
         assert result.curvature < 0.1
         # Should detect as line or slide

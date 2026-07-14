@@ -113,7 +113,9 @@ class TrajectoryAnalyzer:
         self._last_analysis: Optional[TrajectoryAnalysis] = None
         self._analysis_timestamp: Optional[datetime] = None
 
-    def add_point(self, x: float, y: float, pressure: float = 0.0) -> None:
+    def add_point(
+        self, x: float, y: float, pressure: float = 0.0, timestamp: Optional[datetime] = None
+    ) -> None:
         """
         Add a trajectory point
 
@@ -121,8 +123,15 @@ class TrajectoryAnalyzer:
             x: X coordinate
             y: Y coordinate
             pressure: Pressure value (0-1)
+            timestamp: Event time of the sample. Defaults to ``datetime.now()``.
+                Pass the real event time when replaying buffered touch data so
+                velocity/acceleration reflect the actual cadence rather than the
+                (near-zero) interval between successive ``add_point`` calls.
         """
-        point = TrajectoryPoint(x=x, y=y, pressure=pressure)
+        if timestamp is None:
+            point = TrajectoryPoint(x=x, y=y, pressure=pressure)
+        else:
+            point = TrajectoryPoint(x=x, y=y, timestamp=timestamp, pressure=pressure)
         self.points.append(point)
 
         # Maintain maximum size
@@ -307,9 +316,14 @@ class TrajectoryAnalyzer:
             return "insufficient_data", 0.0
 
         avg_velocity = sum(velocities) / len(velocities)
-        max(velocities)
-        min(velocities)
         velocity_variance = self._calculate_variance(velocities)
+        # Stability is measured as a scale-invariant coefficient of variation
+        # (std / mean), matching the normalized thresholds documented in
+        # MOVEMENT_PATTERNS (e.g. line velocity_var=0.1, slide velocity_stable=0.15).
+        # Using the raw variance (px^2/s^2) here made those gates unreachable for
+        # any real-speed stroke, so shape patterns were never detected.
+        velocity_std = math.sqrt(velocity_variance) if velocity_variance > 0 else 0.0
+        velocity_cv = velocity_std / avg_velocity if avg_velocity > 0 else 0.0
 
         sum(accelerations) / len(accelerations) if accelerations else 0.0
         accel_variance = self._calculate_variance(accelerations) if accelerations else 0.0
@@ -339,11 +353,11 @@ class TrajectoryAnalyzer:
             scores["jitter"] = jitter_score
 
         # Slide pattern
-        if velocity_variance < 0.15 and duration > 0.5 and avg_velocity > 20.0:
-            scores["slide"] = 1.0 - velocity_variance / 0.15
+        if velocity_cv < 0.15 and duration > 0.5 and avg_velocity > 20.0:
+            scores["slide"] = 1.0 - velocity_cv / 0.15
 
         # Line pattern
-        if curvature < 0.05 and velocity_variance < 0.2:
+        if curvature < 0.05 and velocity_cv < 0.2:
             scores["line"] = 1.0 - curvature / 0.05
 
         # Curve pattern

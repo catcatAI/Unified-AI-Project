@@ -204,6 +204,7 @@ class PhysiologicalTactileSystem:
                 await self._update_task
             except asyncio.CancelledError:
                 logger.debug("Update task cancelled during shutdown")
+            self._update_task = None
 
     async def _update_loop(self) -> None:
         """Background update loop for receptor adaptation"""
