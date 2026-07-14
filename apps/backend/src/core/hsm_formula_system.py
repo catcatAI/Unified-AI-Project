@@ -21,6 +21,7 @@ Date: 2026-02-02
 from __future__ import annotations
 
 import logging
+import random
 import uuid
 
 from core.system.config.magic_numbers import cache_value, llm_param, threshold_value
@@ -71,7 +72,15 @@ class HSMFormulaSystem:
 
     def trigger_exploration(self, gap_id: str = None) -> ExplorationEvent:
         triggered_by = gap_id or "general"
-        event = ExplorationEvent(event_type="cognitive_exploration", data={"gap_id": gap_id, "source": "hsm"}, triggered_by=triggered_by)
+        # E_M2 injection: exploration carries the E_M2 randomness constant plus a
+        # stochastic component, so the seed is always strictly positive.
+        random_seed = self.get_e_m2() * (1.0 + random.random())
+        event = ExplorationEvent(
+            event_type="cognitive_exploration",
+            data={"gap_id": gap_id, "source": "hsm"},
+            triggered_by=triggered_by,
+            random_seed=random_seed,
+        )
         if gap_id and gap_id in self.cognitive_gaps:
             self.cognitive_gaps[gap_id].exploration_attempts += 1
         self.exploration_history.append(event)
@@ -88,8 +97,32 @@ class HSMFormulaSystem:
                 setattr(gap, key, value)
         return gap
 
+    async def _simulate_discovery(self, exploration: ExplorationEvent) -> None:
+        """M6: solidify RULE_CANDIDATE discoveries from an exploration into
+        governance blueprints. Only discoveries whose confidence clears the HSM
+        threshold are solidified.
+        """
+        for discovery in getattr(exploration, "discoveries", []):
+            if discovery.get("type") != ExplorationResult.RULE_CANDIDATE:
+                continue
+            confidence = float(discovery.get("confidence", 0.0))
+            if confidence < self.hsm_threshold:
+                continue
+            rule_id = str(uuid.uuid4())
+            self.governance_blueprints[rule_id] = GovernanceBlueprint(
+                rules=[discovery.get("description", "")],
+                rule_id=rule_id,
+                status="pending",
+                confidence=confidence,
+            )
+            self.rules_solidified += 1
+
     def activate_governance_rule(self, rule_id: str) -> bool:
-        return rule_id in self.governance_blueprints
+        blueprint = self.governance_blueprints.get(rule_id)
+        if blueprint is None:
+            return False
+        blueprint.status = "active"
+        return True
 
     def get_governance_summary(self) -> dict:
         return {"total_rules": len(self.governance_blueprints), "rules_solidified": self.rules_solidified}
@@ -101,7 +134,10 @@ class HSMFormulaSystem:
             "e_m2": self.get_e_m2(),
             "explorations": len(self.exploration_history),
             "governance": self.get_governance_summary(),
-            "cognitive_gaps": list(self.cognitive_gaps.keys()),
+            "cognitive_gaps": {
+                "total": len(self.cognitive_gaps),
+                "ids": list(self.cognitive_gaps.keys()),
+            },
             "is_running": self._running,
         }
 
@@ -143,8 +179,11 @@ class ExplorationEvent:
 
 
 class GovernanceBlueprint:
-    def __init__(self, rules: list = None):
+    def __init__(self, rules: list = None, rule_id: str = "", status: str = "pending", confidence: float = 0.0):
         self.rules = rules or []
+        self.rule_id = rule_id
+        self.status = status
+        self.confidence = confidence
 
     def add_rule(self, rule: str):
         self.rules.append(rule)

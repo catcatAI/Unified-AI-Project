@@ -51,7 +51,7 @@ class ChainValidator:
 
         for node in node_list:
             if node.parent_id and node.parent_id not in node_map:
-                errors.append(f"broken link: {node.id} -> {node.parent_id}")
+                errors.append(f"Broken link: {node.id} -> {node.parent_id}")
             if node.id == chain.root_id and node.parent_id:
                 errors.append(f"root node {node.id} has parent")
             if node.id != chain.root_id and not node.parent_id:

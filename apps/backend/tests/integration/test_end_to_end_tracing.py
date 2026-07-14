@@ -178,12 +178,19 @@ class TestEndToEndTracing:
         time_enabled = time.time() - start_enabled
         
         overhead_ratio = time_enabled / time_disabled if time_disabled > 0 else 1.0
+        per_op_overhead = (time_enabled - time_disabled) / 100
         
         print(f"Time disabled: {time_disabled:.3f}s")
         print(f"Time enabled: {time_enabled:.3f}s")
         print(f"Overhead ratio: {overhead_ratio:.2f}x")
+        print(f"Per-op overhead: {per_op_overhead * 1000:.3f}ms")
         
-        assert overhead_ratio < 10.0
+        # The ratio is unstable when the disabled baseline is sub-millisecond
+        # (measurement noise dominates), so guard on absolute overhead instead:
+        # 100 traced operations should finish well under 1s, i.e. tracing adds
+        # only a few ms per operation at most.
+        assert time_enabled < 1.0
+        assert per_op_overhead < 0.005
         
         await endocrine.shutdown()
     

@@ -103,14 +103,17 @@ class CausalTracer:
 
             self._active_traces[node.id] = node
 
-            if parent_id is None:
+            root_id = self._find_root_id(parent_id) if parent_id is not None else None
+            if root_id and root_id in self._chains:
+                self._chains[root_id].add_node(node)
+            else:
+                # No parent, or a dangling parent whose chain no longer exists
+                # (e.g. a leaked context var after clear_chains). Promote this
+                # node to a new root chain instead of silently dropping it.
+                node.parent_id = None
                 chain = CausalChain(root_id=node.id)
                 chain.add_node(node)
                 self._chains[node.id] = chain
-            else:
-                root_id = self._find_root_id(parent_id)
-                if root_id and root_id in self._chains:
-                    self._chains[root_id].add_node(node)
 
             self._cleanup_old_chains()
 
@@ -202,6 +205,10 @@ class CausalTracer:
         """Clear all stored chains (for testing)"""
         self._chains.clear()
         self._active_traces.clear()
+        # Reset the context var so a leaked (unfinished) trace id from a prior
+        # flow does not cause subsequent root traces to be treated as children
+        # of a now-nonexistent parent.
+        current_trace_id.set(None)
         logger.info("All causal chains cleared")
 
     def _find_root_id(self, trace_id: str) -> Optional[str]:

@@ -569,7 +569,9 @@ class TestActiveCognitionFormula:
             flexibility=0.5
         )
         
-        a_c = ac_formula.calculate_active_cognition()
+        # process_active_cognition() applies side effects (recording);
+        # calculate_active_cognition() is read-only by design.
+        a_c = ac_formula.process_active_cognition()
         
         # Should have recorded construction if A_c > threshold
         if a_c > ac_formula.min_a_c_threshold:
@@ -726,7 +728,7 @@ class TestNonParadoxExistence:
         npe_system.update_cognitive_gap(0.75)
         
         gz1 = npe_system.create_gray_zone(GrayZoneVariableType.EMOTIONAL, "Test1")
-        gz2 = npe_system.create_gray_zone(GrayZoneVariableType.IDENTITY, "Test2")
+        gz2 = npe_system.create_gray_zone(GrayZoneVariableType.COGNITIVE, "Test2")
         
         npe_system.add_possibility(gz1.variable_id, "state_1")
         npe_system.add_possibility(gz1.variable_id, "state_2")
