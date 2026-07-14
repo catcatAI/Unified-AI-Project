@@ -152,6 +152,7 @@ class ChatService:
         merged_context = self._inject_cultural_context(merged_context, user_message)
         merged_context = await self._inject_memory_context(merged_context, user_message)
         merged_context, mm_adapter = await self._inject_multimodal_context(merged_context, user_message)
+        merged_context = self._inject_grounded_context(merged_context, user_message)
 
         response = await self._llm_service.generate_response(user_message, merged_context)
         response = self._post_process_response(response, merged_context)
@@ -159,6 +160,7 @@ class ChatService:
         await self._process_multimodal_output(response, merged_context, mm_adapter)
         await self._process_continuous_learning(user_message, response, merged_context)
         await self._process_garden_learning(user_message, response)
+        self._schedule_grounded_learning(user_message, response)
         await self._store_interaction_memories(user_message, response)
 
         return response
@@ -225,6 +227,18 @@ class ChatService:
                     logger.debug("Multimodal retrieval failed (non-critical): %s", e)
         return merged_context, mm_adapter
 
+    def _inject_grounded_context(self, merged_context: dict, user_message: str) -> dict:
+        """Inject VERIFIED grounded-knowledge snippets (cheap local lookup)."""
+        try:
+            from ai.memory.grounded_learning_manager import get_grounded_learning_manager
+            block = get_grounded_learning_manager().get_grounded_context(user_message)
+            if block:
+                merged_context["grounded_context"] = block
+                logger.debug("Grounded context injected (%d chars)", len(block))
+        except Exception as e:
+            logger.debug("Grounded context injection skipped: %s", e)
+        return merged_context
+
     async def _process_multimodal_output(self, response, merged_context: dict, mm_adapter) -> None:
         if mm_adapter is None or not merged_context.get("multimodal_entries"):
             return
@@ -286,6 +300,20 @@ class ChatService:
                 logger.info("GARDEN engine saved after %d interactions", self._garden_learn_count)
         except Exception as e:
             logger.debug("GARDEN learning failed: %s", e)
+
+    def _schedule_grounded_learning(self, user_message: str, response) -> None:
+        """Fire-and-forget: extract claims and verify them in the background.
+
+        Must NOT be awaited — verification runs web searches off the answer
+        path so the user-perceived latency stays within seconds.
+        """
+        try:
+            from ai.memory.grounded_learning_manager import get_grounded_learning_manager
+            mgr = get_grounded_learning_manager()
+            resp_text = getattr(response, "text", str(response))
+            asyncio.create_task(mgr.queue_claims(user_message, resp_text))
+        except Exception as e:
+            logger.debug("Grounded learning schedule skipped: %s", e)
 
     async def _store_interaction_memories(self, user_message: str, response) -> None:
         if self._vector_store is not None:

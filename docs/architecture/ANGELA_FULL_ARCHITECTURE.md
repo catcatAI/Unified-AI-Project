@@ -1382,6 +1382,36 @@ AngelaLLMService (核心 LLM 路由)
 
 ---
 
+## 5.9 有查證的學習子系統 (Grounded Learning + Verification)
+
+> 設計與實作詳見 `docs/06-project-management/plans/ANGELA_GROUNDED_LEARNING_VERIFICATION_PLAN.md`（§X #264）。
+
+現有學習（§5.x 的 LearningLoop / ContinuousLearning / GARDEN）只長「語言模式/詞典」，
+**沒有查證**。本子系統補上「學習有查證渠道」：
+
+- `ai/memory/grounded_knowledge.py`：有查證知識庫。`GroundedClaim`（主張 + `VerificationStatus`
+  `UNVERIFIED/VERIFIED/CONTRADICTED/DISPUTED` + 來源 `SourceRef` + 可信度）+ `GroundedKnowledgeStore`
+  （去重、相關查詢、VERIFIED 檢索、JSON 持久化 `data/grounded_knowledge.json`）。
+- `ai/memory/claim_extractor.py`：從回答/對話萃取「像事實」的句子（含繫詞/關係動詞 + 錨點），
+  排除疑問/祈使/閒聊。純函數、無網路。
+- `ai/meta/knowledge_verifier.py`：`KnowledgeVerifier` 用專案自帶 `WebSearchTool`
+  （DuckDuckGo Lite + Wikipedia，純 `urllib`，永遠可用）查證主張；`heuristic_assess` 以
+  「關鍵詞重疊 + 否定偵測」給出透明、可解釋的 `VERIFIED/CONTRADICTED/UNVERIFIED`，評估器可插拔
+  （未來可換 LLM assessor 提升準確率）。
+- `ai/memory/grounded_learning_manager.py`：`GroundedLearningManager` 單例協調
+  「萃取 → 背景查證 → 記錄 → 接地注入」；`get_grounded_context(query)` 回傳已查證知識區塊
+  （本地 O(n)，供 prompt 接地）。
+
+**接線**（`services/chat_service.py`）：回答後 `_schedule_grounded_learning` 以
+`asyncio.create_task` **fire-and-forget** 派發背景查證（不佔回答延遲）；`_inject_grounded_context`
+在 LLM 前以本地查詢注入已查證知識（sub-ms~數 ms，維持秒級）。兩者皆 `try/except` 守衛，管理器
+不可用時靜默 no-op。全部守衛確保主回答不受影響。
+
+**速度預算**：回答路徑仍 = LLM 秒級；查證背景並行（cache + 去重 + 並發上限約束），不計入感知延遲；
+接地注入本地化。⇒ 用戶感知延遲維持秒級，且學習具備「查證 + 根據查證自我修正」能力。
+
+---
+
 ## 相關文件
 
 | 文件 | 內容 |
