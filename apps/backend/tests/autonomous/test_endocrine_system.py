@@ -79,7 +79,7 @@ def sample_hormone() -> Hormone:
         base_level=20.0,
         current_level=25.0,
         production_rate=2.0,
-        decay_rate=1.5,
+        half_life_minutes=30.0,
         min_level=0.0,
         max_level=100.0
     )
@@ -137,7 +137,7 @@ class TestHormone:
         assert sample_hormone.base_level == 20.0
         assert sample_hormone.current_level == 25.0
         assert sample_hormone.production_rate == 2.0
-        assert sample_hormone.decay_rate == 1.5
+        assert sample_hormone.half_life_minutes == 30.0
 
     def test_hormone_bounds_enforcement(self) -> None:
         """Test that hormone levels are bounded."""
@@ -147,7 +147,7 @@ class TestHormone:
             base_level=50.0,
             current_level=150.0,  # Above max
             production_rate=3.0,
-            decay_rate=2.0,
+            half_life_minutes=20.0,
             max_level=100.0
         )
         assert high_hormone.current_level <= high_hormone.max_level
@@ -158,7 +158,7 @@ class TestHormone:
             base_level=50.0,
             current_level=-10.0,  # Below min
             production_rate=3.0,
-            decay_rate=2.0,
+            half_life_minutes=20.0,
             min_level=0.0
         )
         assert low_hormone.current_level >= low_hormone.min_level
@@ -178,11 +178,11 @@ class TestHormone:
             base_level=10.0,
             current_level=50.0,  # Above base
             production_rate=5.0,
-            decay_rate=3.0
+            half_life_minutes=15.0
         )
         
         initial_level = hormone.current_level
-        hormone.update(minutes=1.0)
+        hormone.update(dt_minutes=1.0)
         
         # Should decay toward base level
         assert hormone.current_level < initial_level
@@ -195,11 +195,11 @@ class TestHormone:
             base_level=50.0,
             current_level=20.0,  # Below base
             production_rate=2.5,
-            decay_rate=1.0
+            half_life_minutes=45.0
         )
         
         initial_level = hormone.current_level
-        hormone.update(minutes=1.0)
+        hormone.update(dt_minutes=1.0)
         
         # Should recover toward base level
         assert hormone.current_level > initial_level
@@ -425,8 +425,9 @@ class TestHormoneKinetics:
 
     def test_calculate_occupancy_bounds(self, hormone_kinetics: HormoneKinetics) -> None:
         """Test occupancy is always between 0 and 1."""
-        # Very high level should approach 1
-        high_occupancy = hormone_kinetics.calculate_occupancy(1000.0, 20.0, 1.0)
+        # Very high level should approach 1 (Hill: level/(kd+level), so
+        # level must be >> kd; at 1000/20 occupancy is only ~0.98)
+        high_occupancy = hormone_kinetics.calculate_occupancy(100000.0, 20.0, 1.0)
         assert high_occupancy > 0.99
         
         # Very low level should approach 0

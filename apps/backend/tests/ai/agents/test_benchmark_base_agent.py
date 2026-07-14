@@ -4,6 +4,15 @@ from typing import Any, Dict
 import pytest
 from ai.agents.base.base_agent import BaseAgent
 
+# STALE: Benchmarks a BaseAgent(name=...).handle_task() with a
+# perceive/decide/act/feedback lifecycle that never existed (see test_base_agent.py).
+# Also requires the pytest-benchmark `benchmark` fixture. Skipped as it targets a
+# non-existent API, not a regression.
+pytestmark = pytest.mark.skip(
+    reason="Targets never-implemented perceive/decide/act/feedback lifecycle + "
+    "handle_task; real BaseAgent uses handle_task_request queue/handler model"
+)
+
 
 # A concrete implementation of BaseAgent for benchmarking
 class BenchmarkAgent(BaseAgent):

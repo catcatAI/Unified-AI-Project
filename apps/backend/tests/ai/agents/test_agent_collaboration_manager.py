@@ -8,6 +8,18 @@ from ai.agents import BaseAgent
 from ai.agents.agent_collaboration_manager import AgentCollaborationManager
 from core.hsp.connector import HSPConnector
 
+# STALE: Tests an HSP-orchestration manager API (name, agent_id, handle_task,
+# orchestrate, registered_agents, agent_response_queues, _response_handler) plus
+# a BaseAgent perceive/decide/act/feedback lifecycle. The real
+# AgentCollaborationManager is a simple in-memory task tracker
+# (register_agent / assign_task / get_agent_tasks / update_task_status) and the
+# real BaseAgent uses a queue/handler model. Skipped as it targets a removed/
+# never-implemented API rather than a regression.
+pytestmark = pytest.mark.skip(
+    reason="Targets removed HSP-orchestration manager API (handle_task/orchestrate); "
+    "real AgentCollaborationManager uses register_agent/assign_task tracker API"
+)
+
 
 # Mock HSPConnector for testing purposes
 @pytest.fixture

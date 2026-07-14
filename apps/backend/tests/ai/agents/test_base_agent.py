@@ -4,6 +4,17 @@ from unittest.mock import AsyncMock
 import pytest
 from ai.agents.base.base_agent import BaseAgent
 
+# STALE: This module targets a perceive->decide->act->feedback lifecycle with
+# BaseAgent(name=..., task_timeout=...) and handle_task(). That API never existed
+# in this codebase (git log -S "async def perceive" on base_agent.py is empty);
+# the real BaseAgent uses a queue/handler model (agent_id, handle_task_request,
+# task_handlers). Skipped rather than rewritten to avoid fabricating coverage
+# for a design that was never implemented.
+pytestmark = pytest.mark.skip(
+    reason="Targets never-implemented perceive/decide/act/feedback lifecycle; "
+    "real BaseAgent uses agent_id + handle_task_request queue/handler model"
+)
+
 
 class MockAgent(BaseAgent):
     """
