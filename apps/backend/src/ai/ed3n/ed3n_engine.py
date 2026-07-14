@@ -234,25 +234,17 @@ class ED3NEngine:
         return self.process_reflex(input_text)
 
     def _try_math_eval(self, text: str) -> Optional[str]:
-        """Evaluate math expression using MathRippleEngine."""
+        """Evaluate math via the dictionary-layer compute-routing hook.
+
+        Math is delegated to MathVerifier (single source of truth) through
+        DictionaryLayer.route_math — ED3N no longer computes arithmetic itself.
+        """
         try:
-            from ai.memory.math_ripple_engine import MathRippleEngine
-            import math
-            engine = MathRippleEngine()
-            converted = engine.convert_chinese_math(text)
-            if not converted:
-                return None
-            result, ripples = engine.compute(text)
-            if result is None or math.isnan(result):
-                return None
-            if math.isinf(result):
-                return f"{text.rstrip('？?！!。.')} = 除数不能为零"
-            # Format result
-            if result == int(result):
-                return f"{text.rstrip('？?！!。.')} = {int(result)}"
-            return f"{text.rstrip('？?！!。.')} = {result:.2f}"
+            from ai.ed3n.dictionary_layer import DictionaryLayer
+
+            return DictionaryLayer.route_math(text)
         except Exception as e:
-            logger.debug("Math ripple computation failed: %s", e)
+            logger.debug("Math routing via dictionary layer failed: %s", e)
             return None
 
     def _perform_encode(self, input_text: str) -> Tuple[List[str], bool]:

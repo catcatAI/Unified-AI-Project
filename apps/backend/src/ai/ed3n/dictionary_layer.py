@@ -348,6 +348,18 @@ class DictionaryLayer:
                 merged.append(k)
         return merged
 
+    @staticmethod
+    def route_math(text: str) -> Optional[str]:
+        """Compute-routing hook: delegate math to the single source of truth.
+
+        The dictionary layer is the canonical entry point for the "compute"
+        symbol — it routes arithmetic to MathVerifier instead of evaluating
+        locally. This keeps ED3N/GARDEN from re-implementing a math engine.
+        """
+        from services.math_verifier import evaluate_math
+
+        return evaluate_math(text)
+
     def get_related(
         self, key: str, relation_type: Optional[str] = None
     ) -> List[str]:

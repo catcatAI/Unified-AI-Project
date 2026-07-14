@@ -620,8 +620,8 @@ ED3NEngine
     │     ├─ forward(): 前向傳播
     │     └─ adjust_connection(): Hebbian 學習
     │
-    ├─→ MathEvaluation: 中文數學運算
-    │     └─ _try_math_eval(): 支持多位數 + 中文數字 (三加五)
+    ├─→ MathEvaluation: 中文數學運算（路由至唯一計算源 MathVerifier）
+    │     └─ _try_math_eval() → 字典層 route_math() → MathVerifier.evaluate_math()（支持多位數 + 中文數字 三加五；ED3N/GARDEN 不自己算）
     │
     ├─→ ContinuousLearningPipeline: 持續學習 (Phase 5.1)
     │     ├─ process_interaction(): 記錄互動
@@ -1225,7 +1225,7 @@ AngelaLLMService (核心 LLM 路由)
 | CodeInspector | `ai/code_inspection/code_inspector.py` | 807 | ✅ 真實 | 高 |
 | DigitalLifeIntegrator | `core/life/digital_life_integrator.py` | 869 | ✅ 真實 | 高 |
 | BiologicalIntegrator | `core/bio/biological_integrator.py` | 852 | ✅ 真實 | 高 |
-| MathRippleEngine | `ai/memory/math_ripple_engine.py` | 892 | ✅ 真實 | 高 |
+| MathRippleEngine | `ai/memory/math_ripple_engine.py` | 892 | ✅ 真實 | 高 | 漣漪/狀態傳遞層（數值結果委託 MathVerifier 單一計算源） |
 | NeuroAutoSelector | `ai/response/neuro_auto_selector.py` | 638 | ✅ 真實 | 中 |
 | NeuroplasticityCore | `core/bio/neuroplasticity_core.py` | 506 | ✅ 真實 | 高 |
 | AgentManager | `ai/agents/agent_manager.py` | 720 | ✅ 真實 | 中 |

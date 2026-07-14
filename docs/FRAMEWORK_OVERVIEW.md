@@ -27,7 +27,7 @@ Angela AI is not a single application — it is a **framework** for building AI-
 
 - **A pipelined chat architecture** — WebSocket → emotion → crisis → alignment → execution gate → **agent routing** → LLM → causal learning → response — every stage is a replaceable component
 - **7 LLM backends** — Anthropic, Google, OpenAI, Ollama, llama.cpp, ED3N (SNN), GARDEN (lightweight) — pluggable via strategy pattern
-- **2 local inference engines** — ED3N (460K dictionary, SNN reflex) and GARDEN (VectorDictionary + TensorSNN) — zero-cost fallback without external APIs. ⚠️ **Caution**: Both engines have random/uninitialized weights. Math accuracy measured at **100% (5/5)** via `scripts/benchmark_ed3n_garden.py` after PEMDAS fix. All other domains (knowledge, creative, reasoning) remain at 0% — native engines are concept-mapping only. VisualDecoder/AudioWaveformDecoder/SequenceGenerator output = noise. Architecture exists; training is ~5% complete.
+- **2 local inference engines** — ED3N (460K dictionary, SNN reflex) and GARDEN (VectorDictionary + TensorSNN) — zero-cost fallback without external APIs. ⚠️ **Caution**: Both engines have random/uninitialized weights. **Math is NOT computed by these engines** — the `math` intent is short-circuited to **MathVerifier** (single source of truth); ED3N/GARDEN route it through their dictionary layer (`route_math`) and MathRippleEngine is now only a ripple/state-propagation layer. Math accuracy measured at **100% (5/5)** via `scripts/benchmark_ed3n_garden.py` after PEMDAS fix. All other domains (knowledge, creative, reasoning) remain at 0% — native engines are concept-mapping only. VisualDecoder/AudioWaveformDecoder/SequenceGenerator output = noise. Architecture exists; training is ~5% complete.
 - **A 6-dimensional state matrix** (αβγδεθ) — shared context for cognitive, emotional, and environmental state
 - **Biological simulation** — 8 modules modeling energy, metabolism, endocrine, neuroplasticity, etc.
 - **11 specialized agents** — Creative, Code, Data, Search, Vision, Audio, etc. — registered via `AgentAdapter`
@@ -275,7 +275,7 @@ Each stage in the chat pipeline (`chat_routes.py`) is a function or callable cla
 | Image generation | 6/10 | 0/10 | GVV pipeline architecture exists. **All weights random → output = gray canvas or noise.** ThreeLayerVisual MSE=0.009 (blurry 32×32 = 1995 quality). |
 | Speech generation | 4/10 | 0/10 | edge-tts calls external API. Native AudioWaveformDecoder = wavetable noise (random weights). |
 | Memory | 7/10 | 7/10 | VectorStore + HAM = genuinely useful. Works regardless of LLM. |
-| Reasoning | 4/10 | 0.5/10 | CausalReasoningEngine = Pearson correlation only. PlanningEngine = template matching. MathRippleEngine is genuinely sophisticated (original cognitive model). |
+| Reasoning | 4/10 | 0.5/10 | CausalReasoningEngine = Pearson correlation only. PlanningEngine = template matching. MathRippleEngine = ripple/state-propagation layer (numeric result delegated to MathVerifier, the single math source of truth). |
 | Autonomy | 3/10 | 0.5/10 | AutonomousLifeCycle wired but unstable without LLM guidance. |
 | Meta-cognition | 5/10 | 4/10 | MetaController confidence tracking works. NeuroAutoSelector heuristic-based. |
 | **Composite** | **6.0/10** | **<0.5/10** | Framework architecture ~85-90% complete. **ML training is ~5% complete.** Native engine output = low-quality/uninitialized. All real intelligence comes from LLM API wrappers. |

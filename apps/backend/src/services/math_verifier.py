@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 import ast
+import math
 import operator
 import re
 from typing import Optional, Tuple
@@ -75,7 +76,7 @@ class MathExtractor:
             if op is None:
                 return None
             operand = self._eval_node(node.operand)
-            return op(0, operand) if operand is not None else None
+            return op(operand) if operand is not None else None
         if isinstance(node, ast.BinOp):
             op = self.SAFE_OPS.get(type(node.op))
             if op is None:
@@ -139,7 +140,7 @@ class MathVerifier:
                             explanation=f"計算結果: {result}",
                         )
                     except (ZeroDivisionError, Exception):
-                        logger.debug("Math evaluation failed for expression: %s", expr_str)
+                        logger.debug("Math evaluation failed for expression: %s", message)
             return MathVerifyResult(
                 response_text=None,
                 is_correct=False,
@@ -168,3 +169,124 @@ class MathVerifyResult:
         if response_text:
             self.extraction = {"confidence": 0.9}
             self.final_answer = response_text
+
+
+# =============================================================================
+# ANGELA-MATRIX: [L3] [αδ] [B] [L2]
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Single compute source for math.
+#
+# MathVerifier is the ONLY arithmetic engine. Chinese-numeral support was
+# ported here from MathRippleEngine so that ED3N / GARDEN / cognitive_pipeline
+# all route computation through one place instead of each re-implementing an
+# evaluator. MathRippleEngine is kept ONLY for ripple/state propagation and now
+# delegates its numeric result to compute_arithmetic() below.
+# ---------------------------------------------------------------------------
+
+_ZH_NUM = {
+    "零": 0, "一": 1, "二": 2, "三": 3, "四": 4,
+    "五": 5, "六": 6, "七": 7, "八": 8, "九": 9,
+    "十": 10, "百": 100, "千": 1000, "万": 10000,
+    "两": 2, "〇": 0, "壹": 1, "贰": 2, "叁": 3,
+    "肆": 4, "伍": 5, "陆": 6, "柒": 7, "捌": 8, "玖": 9,
+}
+
+_ZH_OPS = {
+    "加": "+", "加上": "+", "减": "-", "减去": "-",
+    "乘": "*", "乘以": "*", "乘上": "*", "times": "*",
+    "除": "/", "除以": "/", "divided": "/",
+    "的和": "+", "的差": "-", "的积": "*", "的商": "/",
+    "等于": "=", "等於": "=", "是多少": "=", "等于几": "=", "结果": "=",
+    "plus": "+", "minus": "-",
+}
+
+_ZH_NUM_RE = re.compile(r"[零一二两三四五六七八九十百千万〇壹贰叁肆伍陆柒捌玖]+")
+
+
+def _convert_chinese_numbers(text: str) -> str:
+    """Convert runs of Chinese numerals to Arabic (positional multipliers)."""
+
+    def convert_number(s: str) -> str:
+        result = 0
+        current = 0
+        for ch in s:
+            if ch in _ZH_NUM:
+                val = _ZH_NUM[ch]
+                if val >= 10:
+                    if current == 0:
+                        current = 1
+                    result += current * val
+                    current = 0
+                else:
+                    current = current * 10 + val
+            else:
+                return s
+        return str(result + current)
+
+    return _ZH_NUM_RE.sub(lambda m: convert_number(m.group(0)), text)
+
+
+def convert_chinese_math(text: str) -> Optional[str]:
+    """Convert a Chinese math expression to Arabic. Returns None if not math."""
+    cleaned = text.strip().rstrip("？?！!。.")
+    cleaned = _convert_chinese_numbers(cleaned)
+    for zh_op, en_op in sorted(_ZH_OPS.items(), key=lambda x: -len(x[0])):
+        cleaned = cleaned.replace(zh_op, f" {en_op} ")
+    if re.search(r"\d+\s*[+\-*/]\s*\d+", cleaned):
+        return cleaned
+    return None
+
+
+def _normalize_expr(text: str) -> str:
+    """Strip leading/trailing non-arithmetic decoration (e.g. 等于/？/=)."""
+    expr = text.strip().replace("×", "*").replace("÷", "/").replace("^", "**")
+    converted = convert_chinese_math(expr)
+    expr = converted if converted is not None else expr
+    expr = re.sub(r"^[=等于是\s]+", "", expr).strip()
+    expr = re.sub(r"[=？?！!。.\s]+$", "", expr).strip()
+    return expr
+
+
+def compute_arithmetic(text: str) -> Optional[float]:
+    """Safe arithmetic evaluation (Arabic OR Chinese). Single source of truth.
+
+    Returns the numeric result, or None when the input is not a math expression
+    (division by zero and other unsafe forms also return None).
+    """
+    if not text:
+        return None
+    expr = _normalize_expr(text)
+    extracted = MathExtractor().extract(expr)
+    if extracted is None:
+        return None
+    _, result = extracted
+    return result
+
+
+def evaluate_math(text: str) -> Optional[str]:
+    """Single-source math answer for ED3N/GARDEN dictionary-layer routing.
+
+    Returns a formatted "expr = result" string, or None when not a math expression.
+    """
+    if not text:
+        return None
+    display = text.strip().rstrip("？?！!。.")
+    expr = _normalize_expr(text)
+    if not re.search(r"\d+\s*(\*\*|//|[+\-*/%])\s*\d+", expr):
+        return None
+    # Division by zero -> dedicated message (preserves prior behaviour)
+    if re.search(r"/\s*0(?![.\d])", expr):
+        return f"{display} = 除数不能为零"
+    extracted = MathExtractor().extract(expr)
+    if extracted is None:
+        return None
+    _, result = extracted
+    if isinstance(result, float) and result.is_integer():
+        result = int(result)
+    if isinstance(result, int):
+        return f"{display} = {result}"
+    if isinstance(result, float) and math.isinf(result):
+        return f"{display} = 除数不能为零"
+    return f"{display} = {result:.2f}"

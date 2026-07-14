@@ -315,8 +315,8 @@ Phase 4: LatentReasoningNetwork (latent → text)
 
 #### 錯誤 1：數學 100% 的真相
 - **表面**：Benchmark 數學 5/5 = 100%
-- **實際**：`_try_math_eval()` → `MathRippleEngine._eval_simple_safe()` → `safe_eval()` → Python `ast.parse` + 安全求值
-- **結論**：數學能力來自 Python `ast` 模組，不是 ED3N 學會的。ED3N 的字典映射根本沒被用到。
+- **實際**：`_try_math_eval()` → 字典層 `route_math()` → `MathVerifier.evaluate_math()` → Python `ast.parse` + 安全求值（含中文數字/運算符轉換）。`MathRippleEngine` 現僅做**漣漪/狀態傳遞**（認知過載、除法恐懼、順序混淆），其數值結果已委託給 `MathVerifier`（唯一計算源）。
+- **結論**：數學能力來自 Python `ast` 模組 + `MathVerifier`，不是 ED3N 學會的。ED3N/GARDEN 的字典映射在數學路徑上根本沒被用到——它們只負責「計算符路由」，不負責算。
 
 #### 錯誤 2：三模態架構接通 ≠ 能力提升
 - **表面**：§X #195 接通 TextEncoder→SharedLatentSpace→ED3N，分數 <0.5→1.0
@@ -340,7 +340,7 @@ Phase 4: LatentReasoningNetwork (latent → text)
 
 #### 錯誤 6：JointTrainer accuracy 0.939 的局限
 - **表面**：JointTrainer accuracy 0.939
-- **實際**：JointTrainer 只是把 ED3N 和 GARDEN 的輸出結合，accuracy 高是因為大部分問題都走 math_eval（Python ast），不是真正的跨域推理。
+- **實際**：JointTrainer 只是把 ED3N 和 GARDEN 的輸出結合，accuracy 高是因為大部分問題都走 `MathVerifier`（單一計算源，Python `ast` 安全求值），不是真正的跨域推理。
 - **教訓**：組合 accuracy ≠ 單獨能力。
 
 #### 歷史上的分數膨脹問題
@@ -354,7 +354,7 @@ Phase 4: LatentReasoningNetwork (latent → text)
 
 | 能力 | 實際情況 | 分數依據 |
 |------|---------|---------|
-| 數學 | Python `ast` 模組求值，ED3N 沒有真正學會 | Benchmark 5/5 但不反映 ED3N 能力 |
+| 數學 | `MathVerifier` 為唯一計算源（Python `ast` 安全求值 + 中文轉換）；ED3N/GARDEN 經字典層 `route_math` 路由，不自己算。漣漪/狀態由 `MathRippleEngine` 負責 | Benchmark 5/5 但不反映 ED3N 學會數學 |
 | 知識 | 字典映射（460K 條目），但英文知識缺失 | Benchmark 0/5 |
 | 推理 | 無真正推理能力 | Benchmark 0/5 |
 | 訓練 | ED3N 0.914（訓練集），GARDEN 0.700（Hebbian 收斂） | 可能高估 |
@@ -375,6 +375,7 @@ Phase 4: LatentReasoningNetwork (latent → text)
 | 2026-07-05 | 2.0 | `ebc23f306` | **重要發現**：1.5/10 是因為模型從未訓練過，不是因為移除 LLM。這是對之前所有分數的根本性修正。 |
 | 2026-07-05 | 3.0 | `e3f173028` | §X #199: 完整訓練架構修復。分數不變，管線修復 ≠ 訓練完成。 |
 | 2026-07-06 | — | (this session) | 訓練完成：ED3N 0.914, GARDEN 0.700, JointTrainer 0.939。**但 accuracy 可能高估**（訓練集 vs hold-out）。原生 1.5→3.0/10。 |
+| 2026-07-14 | — | (unreleased) | **數學單一計算源重構**：`MathVerifier`（`services/math_verifier.py`）成為唯一算術引擎（含中文數字/運算符轉換、修正 `%`/`//` bug）；ED3N `DictionaryLayer.route_math` 與 GARDEN `VectorDictionary.route_math` 改走 `MathVerifier`；`MathRippleEngine` 退為純漣漪/狀態傳遞層，數值委託 `MathVerifier`。重複算式引擎消除。 |
 
 ---
 

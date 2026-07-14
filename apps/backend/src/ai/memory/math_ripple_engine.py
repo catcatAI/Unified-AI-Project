@@ -672,6 +672,18 @@ class MathRippleEngine:
         else:
             final_result = self._eval_simple_safe(expr)
 
+        # Single source of truth: the numeric result is computed by MathVerifier
+        # (handles Chinese + correct % / // / unary that this hand-rolled core
+        # misses). Ripples/state propagation above remain this engine's job.
+        try:
+            from services.math_verifier import compute_arithmetic
+
+            verified = compute_arithmetic(expr)
+            if verified is not None:
+                final_result = verified
+        except Exception as e:  # pragma: no cover - defensive
+            logger.debug("MathRipple: verified result unavailable: %s", e)
+
         return final_result, ripples
 
     def _tokenize(self, expr: str) -> List[str]:

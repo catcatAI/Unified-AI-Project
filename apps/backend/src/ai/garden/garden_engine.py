@@ -422,22 +422,17 @@ class GARDENEngine:
             self.set_hormone(hormone, level)
 
     def _try_math_eval(self, text: str) -> Optional[str]:
-        """Evaluate math expression using MathRippleEngine."""
+        """Evaluate math via the dictionary-layer compute-routing hook.
+
+        Math is delegated to MathVerifier (single source of truth) through
+        VectorDictionary.route_math — GARDEN no longer computes arithmetic itself.
+        """
         try:
-            from ai.memory.math_ripple_engine import MathRippleEngine
-            engine = MathRippleEngine()
-            converted = engine.convert_chinese_math(text)
-            if not converted:
-                return None
-            result, ripples = engine.compute(text)
-            if result is None:
-                return None
-            # Format result
-            if result == int(result):
-                return f"{text.rstrip('？?！!。.')} = {int(result)}"
-            return f"{text.rstrip('？?！!。.')} = {result:.2f}"
+            from ai.garden.dictionary import VectorDictionary
+
+            return VectorDictionary.route_math(text)
         except Exception as e:
-            logger.debug("GARDEN: math eval failed for %r: %s", text, e)
+            logger.debug("GARDEN: math routing failed for %r: %s", text, e)
             return None
 
     # ------------------------------------------------------------------

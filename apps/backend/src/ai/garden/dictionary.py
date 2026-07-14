@@ -554,6 +554,17 @@ class VectorDictionary:
             parts.append(surface)
         return " ".join(parts)
 
+    @staticmethod
+    def route_math(text: str) -> Optional[str]:
+        """Compute-routing hook: delegate math to the single source of truth.
+
+        Mirrors ED3N's DictionaryLayer.route_math so both engines route the
+        "compute" symbol through MathVerifier instead of evaluating locally.
+        """
+        from services.math_verifier import evaluate_math
+
+        return evaluate_math(text)
+
     def get_synonyms(self, key: str) -> List[str]:
         entry = self.entries.get(key)
         if not entry:
