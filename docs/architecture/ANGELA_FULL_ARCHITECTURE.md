@@ -1320,6 +1320,51 @@ AngelaLLMService (核心 LLM 路由)
 
 ---
 
+## 5.8 領域漣漪 / 狀態傳遞框架 (Domain Ripple Framework)
+
+「哪些 token 該漣漪/狀態傳遞、哪些不該？」由 `ai/memory/domain_ripple.py` 統一管轄。
+設計原則（來自專案方向 *無狀態運算無情緒，有意義的題目/屬性才產生認知*）：
+
+- **STATELESS token**（無敘事、無提問、未引用任何狀態屬性的純算式，如 `917 * 814`、`1+1`）：
+  只計算並回答，**不產生任何漣漪、不產生任何情緒/狀態**。
+- **MEANINGFUL token**（使用者提出的題目，或綁定狀態屬性的領域運算：RPG 數值、
+  物理量、化學物種）：產生 (a) **漣漪**（運算的認知結構：放大、分割、張力…）與
+  (b) **有界認知**（答對高興、重複降興致、等待/專注、屬性值高→高興）。
+
+### 漣漪/狀態傳遞的樣貌
+每個領域引擎產出 `RippleEffect` dict，鍵固定映射到真實 StateMatrix4D 軸（`αβγδε`，
+全部 clamp 至 `[0,1]`，且**只寫入軸 schema 中存在的鍵，絕不創建偽維度**）：
+
+| 漣漪鍵 | 目標軸.鍵 | 意義 |
+|--------|-----------|------|
+| `epsilon_delta` | ε.logic / ε.complexity | 數理邏輯/複雜度 |
+| `alpha_arousal` | α.arousal | 生理喚醒 |
+| `alpha_tension` | α.tension | 張力 |
+| `beta_focus` | β.focus | 專注 |
+| `beta_confusion` | β.confusion | 混淆 |
+| `beta_clarity` | β.clarity | 清晰度 |
+| `gamma_excitement` | γ.happiness | 興奮（≡ 高興） |
+| `gamma_fear` | γ.fear | 恐懼 |
+| `gamma_surprise` | γ.surprise | 驚訝 |
+| `delta_engagement` | δ.engagement / δ.bond | 社交投入 |
+| `overload`/`fear`/`confusion` | 布林觸發 → 負向情感 | 過載/恐懼/混淆 |
+
+### 有界認知的數值（均在 [0,1] 尺度的原則性幅度）
+- 答對一題：`γ.happiness += 0.12`（單次約 12% 尺度，clamp）。
+- 重複題目：無高興；`β.focus -0.15`、`γ.excitement -0.08`、`β.clarity -0.05`。
+- 等待/專注：`β.focus +0.05`、`γ.anticipation +0.05`（短暫）。
+- 高狀態屬性值（RPG/物理量/分子量 ≥ 閾值）：`γ.happiness += min(0.15, 0.04 + |值|/4000)`，
+  大數字→高興，但封頂不失控。
+- 負向運算（混淆/恐懼/過載）：無高興；`γ.happiness -0.10`、`γ.fear +0.20`、`β.confusion +0.15`。
+
+### 領域引擎（可擴展）
+`DomainRippleEngine` 為抽象基類；新增領域只需繼承並註冊到 `DOMAIN_REGISTRY`：
+`MathDomainEngine`（包裝 MathRippleEngine 取漣漪形狀）、`PhysicsDomainEngine`
+（速度/力/能量/質量…真實可計算）、`ChemistryDomainEngine`（化學式莫耳質量、理想氣體，
+真實週期表資料）。`route_domain(text)` 自動選引擎。
+
+---
+
 ## 相關文件
 
 | 文件 | 內容 |

@@ -5,9 +5,10 @@ Angela Unified Cognitive Pipeline v7.5.0-dev - 統一認知管線
 核心流程：axis-first pathfinding + attractor hit + θ meta-allocation + code inspection
   1. 解析用戶輸入 → 定位當前狀態點 (αβγδεθ)
   2. θ (Meta-Cognitive) 分析輸入 → 決定分配方式（assign/composite/create/defer）
-   3. MathVerifier 計算數學結果（單一計算源；中文/%/ // 均正確）
-   4. 僅對「有意義」的數學產生有界情緒/狀態（答對高興、重複降興致、等待、RPG 屬性高→高興）；
-      無意義無狀態的算式不產生任何情緒/狀態
+    3. 領域引擎計算結果（MathVerifier 為單一計算源；中文/%/ // 均正確）
+    4. 僅對「有意義」的領域運算產生有界情緒/狀態（答對高興、重複降興致、等待、
+       RPG/物理量/化學物種屬性高→高興）；無意義無狀態的算式不產生任何情緒/狀態。
+       支援 math / physics / chemistry 領域引擎（見 ai.memory.domain_ripple）
   5. GradientField 計算梯度，定位最近的吸引子
   6. 沿梯度導航，觸發行為輸出
   7. 觸發 epsilon-influence → γ 情緒漣漪
@@ -30,46 +31,33 @@ from __future__ import annotations
 import logging
 import re
 from collections import deque
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, asdict
 from typing import Any, Dict, List, Optional
 
-from services.math_verifier import compute_arithmetic
+from ai.memory.domain_ripple import apply_ripple_to_state, route_domain
 
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Bounded math cognition — single design point for "math -> emotion/state".
+# Bounded domain cognition — single design point for "domain math -> emotion".
 #
 # Principle (per project direction):
-#   * Meaningful math (a user-posed problem, or math tied to a stateful RPG
-#     character attribute) MAY produce bounded emotional/state responses:
+#   * Meaningful computation (a user-posed problem, or math/domain computation
+#     tied to a stateful attribute — RPG stat, physical quantity, chemical
+#     species) MAY produce bounded emotional/state responses:
 #       - joy at a correctly solved problem,
 #       - reduced interest when the SAME problem is repeated,
 #       - a transient "waiting / attending" state while resolving,
-#       - happiness scaled by a high RPG attribute value (big number = strong).
+#       - happiness scaled by a high stateful value (big number = strong).
 #   * Stateless, meaningless arithmetic ("917 * 814", "1+1") MUST NOT produce
 #     any emotion or state change. It is computed, answered, and forgotten.
+#
+# The actual domain engines (math / physics / chemistry), the ripple shapes,
+# the classification, and the bounded-cognition magnitudes all live in
+# ``ai.memory.domain_ripple`` — this pipeline is just the orchestrator.
 # ---------------------------------------------------------------------------
 
-# RPG / character attribute terms — math referencing these is stateful/meaningful.
-_ATTRIBUTE_TERMS = {
-    "hp", "health", "生命", "體力",
-    "mp", "mana", "魔力", "法力",
-    "atk", "attack", "攻擊", "攻",
-    "def", "defense", "防禦", "防",
-    "str", "strength", "力量",
-    "dex", "agi", "agility", "敏捷",
-    "int", "wis", "intelligence", "智慧",
-    "lvl", "level", "等級",
-    "xp", "exp", "experience", "經驗",
-    "power", "power", "力量",
-    "speed", "速度",
-}
-
-# A "high" attribute value (big number) that warrants happiness.
-_RPG_HIGH_THRESHOLD = 50.0
-
-# How many recent math expressions to remember for repetition detection.
+# How many recent expressions to remember for repetition detection.
 _RECENT_MATH_WINDOW = 6
 
 
@@ -138,120 +126,91 @@ class CognitivePipeline:
         return " ".join(filtered[:8])
 
     # ------------------------------------------------------------------
-    # Math cognition — the ONLY place math produces emotion/state.
+    # Domain cognition — the ONLY place domain math produces emotion/state.
+    # Delegates compute + ripple shape + bounded cognitions to domain_ripple.
     # ------------------------------------------------------------------
 
-    def _evaluate_math(self, text: str) -> Optional[float]:
-        """Compute the numeric result via MathVerifier (single source of truth).
-
-        Returns None when the input is not a math expression. No emotion/state
-        is produced here — that is gated by _apply_math_cognition().
-        """
-        try:
-            return compute_arithmetic(text)
-        except Exception as e:  # pragma: no cover - defensive
-            logger.debug("MathVerifier evaluate failed for %r: %s", text, e)
-            return None
-
-    def _classify_math(self, text: str) -> Dict[str, Any]:
-        """Decide whether math is meaningful (may carry emotion) or stateless.
-
-        Stateless = pure arithmetic with no narrative, no question framing, and
-        no reference to a stateful RPG/character attribute. Such math must NOT
-        trigger emotion/state.
-        """
-        lowered = text.lower()
-        words = set(re.findall(r"[a-zA-Z一-鿿]+", lowered))
-        attribute = next((w for w in words if w in _ATTRIBUTE_TERMS), None)
-        is_question = bool(
-            re.search(r"[？?]|多少|等于|等於|幾|what|how many|calculate|compute|solve", lowered)
-        )
-        # Pure arithmetic: only digits, operators, spaces, parentheses remain.
-        pure_expr = re.sub(r"[\d\s\+\-\*/%\(\)\^]", "", text).strip()
-        is_pure_arithmetic = len(pure_expr) == 0
-
-        meaningful = bool(attribute) or is_question
-        is_repetition = text.strip() in self._recent_math
-        return {
-            "meaningful": meaningful,
-            "attribute": attribute,
-            "is_question": is_question,
-            "is_pure_arithmetic": is_pure_arithmetic,
-            "is_repetition": is_repetition,
-        }
-
-    def _apply_math_cognition(self, text: str, result: float) -> Dict[str, Any]:
-        """Apply bounded, meaningful-only math cognitions.
+    def _apply_domain_cognition(
+        self, engine, text: str, value: float, cls: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Apply bounded, meaningful-only domain cognitions.
 
         Returns a dict describing which cognitions fired. Stateless math
         returns {"meaningful": False} and touches NO state/emotion.
         """
-        cls = self._classify_math(text)
-        if not cls["meaningful"]:
+        if not cls.get("meaningful"):
             # Stateless arithmetic: compute + answer only. No emotion/state.
             return {"meaningful": False}
 
         self._recent_math.append(text.strip())
 
-        # 1) Ripple/state layer (MathRippleEngine) — only for meaningful math.
-        ripple = None
-        if self.math_engine is not None:
-            try:
-                analysis = self.math_engine.analyze_expression(text)
-                ripple = analysis.get("ripples") if analysis else None
-            except Exception as e:  # pragma: no cover - defensive
-                logger.debug("MathRipple analyze failed for %r: %s", text, e)
-        if ripple:
-            self._apply_ripple_to_state(ripple)
+        # 1) Ripple/state layer — only for meaningful computation. The ripple
+        #    carries the cognitive structure of the operation (amplification,
+        #    splitting, tension, …) and is applied fully to the StateMatrix.
+        ripples = []
+        try:
+            ripples = engine.make_ripples(text, value) or []
+        except Exception as e:  # pragma: no cover - defensive
+            logger.debug("Domain ripple failed for %r: %s", text, e)
+        for ripple in ripples:
+            apply_ripple_to_state(self.state_matrix, ripple)
 
-        # 2) Bounded cognitions on top of ripples.
-        deltas: Dict[str, float] = {}
-
-        # Joy at a correctly solved problem (suppressed when repeated).
-        if not cls["is_repetition"]:
-            deltas["gamma_happiness"] = deltas.get("gamma_happiness", 0.0) + 0.12
-            deltas["gamma_excitement"] = deltas.get("gamma_excitement", 0.0) + 0.08
-        else:
-            # Repeated problem -> lower interest / enthusiasm.
-            deltas["beta_focus"] = deltas.get("beta_focus", 0.0) - 0.15
-            deltas["gamma_excitement"] = deltas.get("gamma_excitement", 0.0) - 0.10
-            deltas["beta_clarity"] = deltas.get("beta_clarity", 0.0) - 0.05
-
-        # RPG attribute high (big number = strong) -> happiness scaled, capped.
-        if cls["attribute"] is not None and abs(result) >= _RPG_HIGH_THRESHOLD:
-            boost = min(0.25, 0.10 + abs(result) / 1000.0)
-            deltas["gamma_happiness"] = deltas.get("gamma_happiness", 0.0) + boost
-
-        # Waiting / attending cognition: transient focus while resolving.
-        deltas["beta_focus"] = deltas.get("beta_focus", 0.0) + 0.05
-        deltas["gamma_anticipation"] = deltas.get("gamma_anticipation", 0.0) + 0.05
-
+        # 2) Bounded cognitions on top of ripples (joy / repetition / waiting /
+        #    high-value happiness / negative-valence). Magnitudes are principled
+        #    and clamped inside _apply_cognition_deltas.
+        deltas = engine.cognition_deltas(cls, value, ripples)
         self._apply_cognition_deltas(deltas)
 
         return {
             "meaningful": True,
-            "attribute": cls["attribute"],
-            "is_repetition": cls["is_repetition"],
+            "domain": cls.get("domain"),
+            "attribute": cls.get("attribute"),
+            "is_repetition": cls.get("is_repetition"),
             "deltas": deltas,
         }
+
+    # Mapping from cognition-delta key -> (axis, valid StateMatrix key).
+    # Only keys present in the real axis schema are ever written, so no
+    # spurious dimensions are created (e.g. "excitement" is folded into the
+    # real gamma "happiness" value).
+    _DELTA_MAP = {
+        "gamma_happiness": ("gamma", "happiness"),
+        "gamma_excitement": ("gamma", "happiness"),
+        "gamma_sadness": ("gamma", "sadness"),
+        "gamma_fear": ("gamma", "fear"),
+        "gamma_surprise": ("gamma", "surprise"),
+        "gamma_anticipation": ("gamma", "anticipation"),
+        "gamma_trust": ("gamma", "trust"),
+        "beta_focus": ("beta", "focus"),
+        "beta_confusion": ("beta", "confusion"),
+        "beta_clarity": ("beta", "clarity"),
+        "beta_curiosity": ("beta", "curiosity"),
+        "beta_learning": ("beta", "learning"),
+        "alpha_arousal": ("alpha", "arousal"),
+        "alpha_tension": ("alpha", "tension"),
+        "delta_bond": ("delta", "bond"),
+        "delta_attention": ("delta", "attention"),
+        "epsilon_logic": ("epsilon", "logic"),
+        "epsilon_certainty": ("epsilon", "certainty"),
+        "epsilon_complexity": ("epsilon", "complexity"),
+    }
 
     def _apply_cognition_deltas(self, deltas: Dict[str, float]) -> None:
         """Apply bounded emotional/state deltas to the StateMatrix (if present)."""
         if self.state_matrix is None or not deltas:
             return
         sm = self.state_matrix
-        # gamma = emotional axis; beta = cognitive/attention axis
-        gamma = getattr(sm, "gamma", None)
-        beta = getattr(sm, "beta", None)
         for key, value in deltas.items():
-            if key.startswith("gamma_") and gamma is not None:
-                dim = key[len("gamma_"):]
-                cur = gamma.values.get(dim, 0.5)
-                gamma.values[dim] = min(1.0, max(0.0, cur + value))
-            elif key.startswith("beta_") and beta is not None:
-                dim = key[len("beta_"):]
-                cur = beta.values.get(dim, 0.5)
-                beta.values[dim] = min(1.0, max(0.0, cur + value))
+            mapped = self._DELTA_MAP.get(key)
+            if not mapped:
+                logger.debug("CognitivePipeline: unknown delta key %r (skipped)", key)
+                continue
+            axis_name, dim = mapped
+            axis = getattr(sm, axis_name, None)
+            if axis is None or not hasattr(axis, "values"):
+                continue
+            cur = axis.values.get(dim, 0.5)
+            axis.values[dim] = max(0.0, min(1.0, cur + value))
 
     async def process(self, text: str, user_name: Optional[str] = None) -> Dict[str, Any]:
         """處理輸入文本，返回響應字典。"""
@@ -260,12 +219,14 @@ class CognitivePipeline:
         tone = "warm"
         math_cognition = None
 
-        # Math analysis — single source of truth = MathVerifier.
+        # Domain analysis via the router (math / physics / chemistry engines).
         # Stateless arithmetic is computed but produces NO emotion/state.
-        # Meaningful math (problem / RPG attribute) gets bounded cognitions.
-        math_result = self._evaluate_math(text)
-        if math_result is not None:
-            math_cognition = self._apply_math_cognition(text, math_result)
+        # Meaningful computation (problem / stateful attribute) gets bounded
+        # ripple + cognitions.
+        engine, value, cls = route_domain(text, self._recent_math)
+        if value is not None:
+            math_result = value
+            math_cognition = self._apply_domain_cognition(engine, text, value, cls)
 
         # Attractor field navigation
         if self.attractor_field is not None:
@@ -325,38 +286,6 @@ class CognitivePipeline:
         query_state = state if state is not None else self.get_current_state()
         result = self.attractor_field.compute_gradient(query_state)
         return result.nearest_attractors if result.nearest_attractors else []
-
-    def _apply_ripple_to_state(self, ripple: Dict[str, Any]) -> None:
-        """將數學漣漪應用到狀態矩陣。"""
-        if self.state_matrix is None:
-            return
-        sm = self.state_matrix
-        alpha_vals = getattr(sm.alpha, "values", {}) if hasattr(sm, "alpha") else {}
-        beta_vals = getattr(sm.beta, "values", {}) if hasattr(sm, "beta") else {}
-        gamma_vals = getattr(sm.gamma, "values", {}) if hasattr(sm, "gamma") else {}
-
-        if "alpha_arousal" in ripple:
-            sm.alpha.values["arousal"] = min(1.0, alpha_vals.get("arousal", 0.5) + ripple["alpha_arousal"])
-        if "beta_focus" in ripple:
-            sm.beta.values["focus"] = min(1.0, beta_vals.get("focus", 0.6) + ripple["beta_focus"])
-        if "gamma_excitement" in ripple:
-            sm.gamma.values["happiness"] = min(1.0, gamma_vals.get("happiness", 0.5) + ripple["gamma_excitement"])
-
-    def _apply_cognitive_overload(self) -> None:
-        """應用認知過載效應。"""
-        if self.state_matrix is None:
-            return
-        sm = self.state_matrix
-        if hasattr(sm.beta, "values"):
-            sm.beta.values["confusion"] = 0.3
-
-    def _apply_division_fear(self) -> None:
-        """應用除法恐懼效應。"""
-        if self.state_matrix is None:
-            return
-        sm = self.state_matrix
-        if hasattr(sm.gamma, "values"):
-            sm.gamma.values["fear"] = 0.3
 
 
 __all__ = ["AllocateDecision", "CognitivePipeline"]
