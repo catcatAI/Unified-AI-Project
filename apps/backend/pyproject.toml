@@ -48,6 +48,9 @@ dependencies = [
   "fastapi>=0.128.0",
   "uvicorn[standard]",
   "pydantic",
+  # Required by FastAPI `Form(...)` routes; without it the server raises at boot
+  # ("Form data requires python-multipart"). Part of the runtime BASE tier.
+  "python-multipart>=0.0.20",
 ]
 
 [[project.authors]]
