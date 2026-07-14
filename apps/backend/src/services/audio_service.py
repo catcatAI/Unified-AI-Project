@@ -2,16 +2,36 @@
 音频服务：提供语音识别、语音合成、情感分析等多模态处理能力
 """
 
+import asyncio
+import hashlib
 import io
 import logging
 import os
-import struct
-import uuid
-from typing import Any, Optional
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import numpy as np
 
 from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
+
+# 聽覺注意力子系統 (auditory attention subsystem)
+from core.perception.auditory_attention import AuditoryAttentionController
+from core.perception.auditory_memory import AuditoryMemory
+from core.perception.auditory_sampler import AudioFeatureType, AuditorySampler
+
+try:
+    from core.sync.realtime_sync import SyncEvent, sync_manager
+    _SYNC_AVAILABLE = True
+except ImportError:
+    _SYNC_AVAILABLE = False
+
+try:
+    from system.cluster_manager import cluster_manager
+    _CLUSTER_AVAILABLE = True
+except ImportError:
+    _CLUSTER_AVAILABLE = False
 
 try:
     import speech_recognition as sr
@@ -26,61 +46,152 @@ try:
 except ImportError:
     EDGE_TTS_AVAILABLE = False
 
-try:
-    from faster_whisper import WhisperModel
-    FASTER_WHISPER_AVAILABLE = True
-    _WHISPER_MODEL = None
-except ImportError:
-    FASTER_WHISPER_AVAILABLE = False
-
-
-def _estimate_duration(audio_data: bytes) -> Optional[float]:
-    """Parse WAV header to estimate duration in seconds."""
-    if len(audio_data) < 44:
-        return None
-    try:
-        if audio_data[:4] != b"RIFF":
-            return None
-        channels = struct.unpack("<H", audio_data[22:24])[0]
-        sample_rate = struct.unpack("<I", audio_data[24:28])[0]
-        bits_per_sample = struct.unpack("<H", audio_data[34:36])[0]
-        data_size = len(audio_data) - 44
-        bytes_per_sec = channels * sample_rate * bits_per_sample // 8
-        if bytes_per_sec == 0:
-            return None
-        return data_size / bytes_per_sec
-    except (struct.error, IndexError):
-        return None
+# faster-whisper is imported lazily inside _stt_faster_whisper() to avoid the
+# very slow transformers/ctranslate2 import chain running on every module import.
+_WHISPER_MODEL = None
 
 
 class AudioService:
+    """音頻服務：提供語音識別、聲紋辨識、聽覺注意力與場景分析能力"""
+
     def __init__(self, config: Optional[dict] = None):
         self.config = config or {}
+        self.enabled = True
         self.peer_services: dict = {}
-        self._processing_id = 0
+        self.processing_history: List[Dict[str, Any]] = []
 
-    async def scan_and_identify(self, audio_data: bytes, duration: Optional[float] = None) -> dict:
-        if duration is None:
-            duration = _estimate_duration(audio_data)
-        self._processing_id += 1
-        info = {"processing_id": str(self._processing_id), "status": "success", "detected_sources_count": 1}
-        if duration is not None:
-            info["duration_seconds"] = round(duration, 2)
-            info["has_audio"] = duration > 0.1
-        return info
+        # 聽覺注意力組件 (sampler → memory → attention)
+        self.sampler = AuditorySampler(self.config.get("sampler_config"))
+        self.memory = AuditoryMemory(capacity=self.config.get("memory_capacity", 500))
+        self.attention = AuditoryAttentionController()
 
-    async def register_user_voice(self, audio_data: bytes) -> dict:
-        duration = _estimate_duration(audio_data)
+        # 註冊同步事件監聽 (best-effort; skipped outside a running event loop)
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(self._init_sync_listener())
+        except RuntimeError:
+            logger.debug(
+                "No running event loop, sync listener will not be initialized automatically"
+            )
+
+    async def _init_sync_listener(self) -> None:
+        """初始化同步監聽器"""
+        if not _SYNC_AVAILABLE:
+            return
+        try:
+            await sync_manager.register_client("audio_service", self._handle_sync_event)
+            logger.info("Audio Service registered to sync manager")
+        except Exception as e:  # broad exception acceptable: sync registration should not crash
+            logger.error(f"Failed to register Audio Service to sync manager: {e}", exc_info=True)
+
+    async def _handle_sync_event(self, event: "SyncEvent") -> None:
+        """處理同步事件（模組開關控制）"""
+        if getattr(event, "type", None) == "module_control":
+            data = getattr(event, "data", {}) or {}
+            if data.get("module") == "audio":
+                self.enabled = data.get("enabled", True)
+                logger.info(f"Audio Service enabled status changed to: {self.enabled}")
+
+    def _generate_processing_id(self, audio_data: bytes) -> str:
+        """Generate a stable processing id (audio_<hash>_<time>)."""
+        hash_object = hashlib.md5(audio_data if audio_data else b"")
+        return f"audio_{hash_object.hexdigest()[:8]}_{datetime.now().strftime('%H%M%S')}"
+
+    async def scan_and_identify(self, audio_data: bytes, duration: float = 1.0) -> dict:
+        """
+        模擬「監聽-識別-聚焦」的聽覺鏈路：
+        1. 從音頻流中採樣粒子 (Auditory Particles)
+        2. 透過聲紋記憶識別每個粒子的來源 (Identify/Register)
+        3. 根據注意力控制器決定當前聚焦的聲源 (Cocktail Party Effect)
+        4. 返回分析結果 (整合集群矩陣運算)
+        """
+        if not self.enabled:
+            return {"status": "disabled", "message": "Audio system is currently disabled"}
+
+        # 1. 採樣音頻片段
+        particles = self.sampler.sample_audio_stream(audio_data, duration)
+
+        # 2. 識別來源並更新記憶
+        active_profiles = []
+        for p in particles:
+            if _CLUSTER_AVAILABLE:
+                try:
+                    feature_vector = (
+                        p.feature_vector[:16]
+                        if len(p.feature_vector) >= 16
+                        else np.pad(
+                            p.feature_vector,
+                            (0, max(0, 16 - len(p.feature_vector))),
+                            "constant",
+                        ).tolist()
+                    )
+                    await cluster_manager.distribute_task("Audio", feature_vector)
+                except Exception:  # cluster distribution is optional, must not block perception
+                    logger.debug("Audio cluster distribution failed", exc_info=True)
+
+            profile = self.memory.identify_or_register(
+                p.feature_vector,
+                metadata={
+                    "is_speech": p.source_type == AudioFeatureType.SPEECH,
+                    "intensity": p.intensity,
+                },
+            )
+            # 附加即時強度用於注意力決策
+            profile.intensity = p.intensity
+            active_profiles.append(profile)
+
+        # 3. 注意力決策：聚焦到誰身上？
+        user_profile = self.memory.get_user_profile()
+        focus_id = self.attention.decide_focus(
+            active_profiles,
+            user_profile_id=user_profile.profile_id if user_profile else None,
+        )
+
+        # 4. 獲取統計與焦點詳情
+        focus_profile = self.memory.profiles.get(focus_id) if focus_id else None
+
         return {
             "status": "success",
-            "name": "User",
-            "voice_id": str(uuid.uuid4())[:8],
-            "duration_seconds": round(duration, 2) if duration else None,
+            "processing_id": self._generate_processing_id(audio_data),
+            "timestamp": datetime.now().isoformat(),
+            "detected_sources_count": len(active_profiles),
+            "attention_mode": self.attention.mode.name,
+            "current_focus": (
+                {
+                    "profile_id": focus_id,
+                    "name": focus_profile.name if focus_profile else "background",
+                    "label": focus_profile.label if focus_profile else "noise",
+                    "intensity": focus_profile.intensity if focus_profile else 0.0,
+                }
+                if focus_id
+                else None
+            ),
+            "scene_stats": self.sampler.get_focus_stats(),
+        }
+
+    async def register_user_voice(self, audio_data: bytes) -> dict:
+        """註冊用戶聲紋"""
+        particles = self.sampler.sample_audio_stream(audio_data)
+        if not particles:
+            return {"status": "error", "message": "No audio particles detected"}
+
+        # 取平均特徵作為用戶聲紋
+        avg_embedding = np.mean([p.feature_vector for p in particles], axis=0)
+        profile = self.memory.identify_or_register(avg_embedding, metadata={"is_speech": True})
+        profile.name = "User"
+        profile.label = "user"
+
+        return {
+            "status": "success",
+            "profile_id": profile.profile_id,
+            "name": profile.name,
         }
 
     async def _stt_faster_whisper(self, audio_data: bytes, language: Optional[str] = None) -> Optional[dict]:
         """Offline STT via faster-whisper (when installed and model is loaded)."""
-        if not FASTER_WHISPER_AVAILABLE:
+        try:
+            from faster_whisper import WhisperModel
+        except ImportError:
             return None
         global _WHISPER_MODEL
         try:
@@ -101,15 +212,17 @@ class AudioService:
         return None
 
     async def speech_to_text(self, audio_data: bytes, language: Optional[str] = None) -> dict:
-        self._processing_id += 1
+        processing_id = self._generate_processing_id(audio_data)
         result = await self._stt_faster_whisper(audio_data, language)
         if result is not None:
-            result["processing_id"] = str(self._processing_id)
+            result.setdefault("confidence", 0.85)
+            result["processing_id"] = processing_id
             return result
         if not SR_AVAILABLE:
             return {
-                "processing_id": str(self._processing_id),
+                "processing_id": processing_id,
                 "text": "",
+                "confidence": 0.0,
                 "error": "speech_recognition not installed (pip install SpeechRecognition)",
             }
         try:
@@ -119,14 +232,23 @@ class AudioService:
                 audio = recognizer.record(source)
             lang = language or "zh-CN"
             text = recognizer.recognize_google(audio, language=lang)
-            return {"processing_id": str(self._processing_id), "text": text}
+            return {"processing_id": processing_id, "text": text, "confidence": 0.9}
         except sr.UnknownValueError:
-            return {"processing_id": str(self._processing_id), "text": "", "error": "Could not understand audio"}
+            return {
+                "processing_id": processing_id, "text": "", "confidence": 0.0,
+                "error": "Could not understand audio",
+            }
         except sr.RequestError as e:
-            return {"processing_id": str(self._processing_id), "text": "", "error": f"Recognition request failed: {e}"}
+            return {
+                "processing_id": processing_id, "text": "", "confidence": 0.0,
+                "error": f"Recognition request failed: {e}",
+            }
         except Exception as e:
             logger.warning("Speech recognition failed: %s", e)
-            return {"processing_id": str(self._processing_id), "text": "", "error": safe_error(e)}
+            return {
+                "processing_id": processing_id, "text": "", "confidence": 0.0,
+                "error": safe_error(e),
+            }
 
     async def text_to_speech(self, text: str, voice: Optional[str] = None) -> Optional[bytes]:
         if not text:
@@ -151,7 +273,9 @@ class AudioService:
         if input_data.get("scan_and_identify"):
             return await self.scan_and_identify(input_data.get("audio_data", b""))
         if "speech_to_text" in input_data:
-            return await self.speech_to_text(input_data.get("audio_data", b""), input_data.get("language"))
+            return await self.speech_to_text(
+                input_data.get("audio_data", b""), input_data.get("language")
+            )
         if "text_to_speech" in input_data:
             result = await self.text_to_speech(input_data.get("text", ""), input_data.get("voice"))
             return {"audio_data": result} if result else {"error": "TTS failed"}

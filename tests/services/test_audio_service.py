@@ -7,17 +7,46 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-_MODULE_MOCKS = {
-    'core.perception.auditory_sampler': MagicMock(),
-    'core.perception.auditory_memory': MagicMock(),
-    'core.perception.auditory_attention': MagicMock(),
-    'core.sync.realtime_sync': MagicMock(),
-    'system.cluster_manager': MagicMock(),
-}
+_MOCKED_MODULES = (
+    'core.perception.auditory_sampler',
+    'core.perception.auditory_memory',
+    'core.perception.auditory_attention',
+    'core.sync.realtime_sync',
+    'system.cluster_manager',
+)
 
-for mod_name, mock in _MODULE_MOCKS.items():
-    if mod_name not in sys.modules:
-        sys.modules[mod_name] = mock
+# Module names that bind the mocked dependencies at import time; they must be
+# re-imported under the mocks and dropped again on teardown so the real modules
+# are not left shadowed for other test files in the same session.
+_AUDIO_SERVICE_MODULES = (
+    'apps.backend.src.services.audio_service',
+    'services.audio_service',
+)
+
+
+@pytest.fixture(autouse=True)
+def _mock_audio_dependencies():
+    """Inject MagicMock stand-ins for heavy perception deps for the duration of
+    a single test only, restoring the real ``sys.modules`` state afterwards.
+
+    Injecting the mocks at import time (module scope) leaks MagicMocks into
+    ``sys.modules`` for the whole pytest session, causing later tests that rely
+    on the real ``core.perception.*`` modules to fail.
+    """
+    saved = {name: sys.modules.get(name) for name in _MOCKED_MODULES + _AUDIO_SERVICE_MODULES}
+    for name in _MOCKED_MODULES:
+        sys.modules[name] = MagicMock()
+    for name in _AUDIO_SERVICE_MODULES:
+        sys.modules.pop(name, None)
+    try:
+        yield
+    finally:
+        for name in _MOCKED_MODULES + _AUDIO_SERVICE_MODULES:
+            original = saved[name]
+            if original is None:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = original
 
 
 @pytest.fixture

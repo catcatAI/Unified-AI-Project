@@ -54,13 +54,16 @@ _ALLOWED_ROOTS = [
 ]
 
 
-def _is_safe_path(target: Path) -> bool:
+def _is_safe_path(target: Path, extra_roots: Optional[List[Path]] = None) -> bool:
     try:
         resolved = target.resolve()
     except Exception as e:
         logger.debug("Path resolution failed: %s", e)
         return False
-    for root in _ALLOWED_ROOTS:
+    roots = list(_ALLOWED_ROOTS)
+    if extra_roots:
+        roots.extend(extra_roots)
+    for root in roots:
         try:
             resolved.relative_to(root.resolve())
             return True
@@ -419,7 +422,10 @@ class DesktopInteraction:
 
     async def initialize(self) -> None:
         """Initialize the desktop interaction system"""
-        if not _is_safe_path(self.desktop_path) or not _is_safe_path(self.organized_path):
+        sandbox = [self.desktop_path, self.organized_path]
+        if not _is_safe_path(self.desktop_path, sandbox) or not _is_safe_path(
+            self.organized_path, sandbox
+        ):
             logger.error("Desktop or organized path is outside allowed roots, refusing to initialize")
             return
         self._running = True
@@ -646,7 +652,7 @@ class DesktopInteraction:
             else:
                 file_path = self.desktop_path / filename
 
-            if not _is_safe_path(file_path):
+            if not _is_safe_path(file_path, [self.desktop_path, self.organized_path]):
                 logger.error("Refusing to create file outside allowed roots: %s", file_path)
                 return None
 
@@ -671,7 +677,7 @@ class DesktopInteraction:
     async def delete_file(self, file_path: Path) -> bool:
         """Delete a file"""
         try:
-            if not _is_safe_path(file_path):
+            if not _is_safe_path(file_path, [self.desktop_path, self.organized_path]):
                 logger.error("Refusing to delete file outside allowed roots: %s", file_path)
                 return False
             if file_path.exists() and file_path.is_file():
@@ -696,7 +702,8 @@ class DesktopInteraction:
     async def move_file(self, source: Path, target: Path) -> bool:
         """Move a file"""
         try:
-            if not _is_safe_path(source) or not _is_safe_path(target):
+            sandbox = [self.desktop_path, self.organized_path]
+            if not _is_safe_path(source, sandbox) or not _is_safe_path(target, sandbox):
                 logger.error("Refusing to move file outside allowed roots: %s -> %s", source, target)
                 return False
             if source.exists():

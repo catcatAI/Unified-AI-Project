@@ -359,7 +359,15 @@ class VisionService:
         perceived_objs = []
         for obj in detected:
             # 轉換為座標格式 (取中心點)
-            bbox = obj["bounding_box"]  # [xmin, ymin, xmax, ymax]
+            bbox = obj.get("bounding_box")  # [xmin, ymin, xmax, ymax]
+            if bbox is None:
+                # _detect_objects returns non-spatial image properties; derive a
+                # deterministic bounding box from the label so distinct labels map
+                # to stable, distinct positions (no insecure randomness).
+                digest = int(hashlib.md5(str(obj["label"]).encode()).hexdigest(), 16)
+                x0 = digest % 100
+                y0 = (digest // 100) % 100
+                bbox = [x0, y0, x0 + 10, y0 + 10]
             pos = ((bbox[0] + bbox[2]) / 200, (bbox[1] + bbox[3]) / 200)  # 假設 100x100
 
             p_obj = self.memory.add_or_update(
@@ -388,17 +396,17 @@ class VisionService:
         # 5. 自動建模到桌布：如果置信度高且是感興趣的物體
         wallpaper_injections = []
         for obj in perceived_objs:
-            if obj.get("confidence", 0) > 0.8:  # 高置信度閾值
+            if obj.confidence > 0.8:  # 高置信度閾值
                 injection_data = {
                     "type": "wallpaper_object_injection",
                     "data": {
-                        "name": obj["label"],
+                        "name": obj.label,
                         "position": {
-                            "x": obj["position"][0],
-                            "y": obj["position"][1],
+                            "x": obj.position[0],
+                            "y": obj.position[1],
                             "z": 0,
                         },
-                        "scale": obj["confidence"],
+                        "scale": obj.confidence,
                         "metadata": {
                             "source": "vision_service",
                             "detection_time": datetime.now().isoformat(),
@@ -419,7 +427,7 @@ class VisionService:
                             source="vision_service",
                         )
                     )
-                    logger.info(f"Broadcasted wallpaper injection for: {obj['label']}")
+                    logger.info(f"Broadcasted wallpaper injection for: {obj.label}")
                 except Exception as e:  # broad exception acceptable: broadcast is optional, should not block
                     logger.error(f"Failed to broadcast wallpaper injection: {e}", exc_info=True)
 

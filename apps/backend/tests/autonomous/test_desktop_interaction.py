@@ -455,11 +455,11 @@ class TestCrossPlatformCompatibility:
         assert result is True
         mock_spi.assert_called_once()
     @patch("platform.system")
-    @patch("os.system")
-    async def test_set_wallpaper_macos(self, mock_system, mock_platform, temp_desktop_dir: Path) -> None:
+    @patch("subprocess.run")
+    async def test_set_wallpaper_macos(self, mock_run, mock_platform, temp_desktop_dir: Path) -> None:
         """Test wallpaper setting on macOS (mocked)."""
         mock_platform.return_value = "Darwin"
-        mock_system.return_value = 0
+        mock_run.return_value = MagicMock(returncode=0)
         
         desktop = DesktopInteraction(config={"desktop_path": str(temp_desktop_dir)})
         
@@ -469,24 +469,24 @@ class TestCrossPlatformCompatibility:
         result = await desktop.set_wallpaper(wallpaper)
         
         assert result is True
-        mock_system.assert_called_once()
+        mock_run.assert_called_once()
     @patch("platform.system")
-    @patch("os.environ.get")
-    @patch("os.system")
-    async def test_set_wallpaper_linux_gnome(self, mock_system, mock_env, mock_platform, temp_desktop_dir: Path) -> None:
+    @patch("subprocess.run")
+    async def test_set_wallpaper_linux_gnome(self, mock_run, mock_platform, temp_desktop_dir: Path) -> None:
         """Test wallpaper setting on Linux GNOME (mocked)."""
         mock_platform.return_value = "Linux"
-        mock_env.return_value = "gnome"
-        mock_system.return_value = 0
+        mock_run.return_value = MagicMock(returncode=0)
         
         desktop = DesktopInteraction(config={"desktop_path": str(temp_desktop_dir)})
         
         wallpaper = temp_desktop_dir / "test_wallpaper.jpg"
         wallpaper.write_bytes(b"fake image data")
         
-        result = await desktop.set_wallpaper(wallpaper)
+        with patch.dict("os.environ", {"DESKTOP_SESSION": "gnome"}):
+            result = await desktop.set_wallpaper(wallpaper)
         
         assert result is True
+        mock_run.assert_called_once()
     async def test_set_wallpaper_nonexistent_file(self, temp_desktop_dir: Path) -> None:
         """Test wallpaper setting with non-existent file."""
         desktop = DesktopInteraction(config={"desktop_path": str(temp_desktop_dir)})
