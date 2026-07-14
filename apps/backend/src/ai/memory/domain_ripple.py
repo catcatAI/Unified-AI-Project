@@ -84,6 +84,12 @@ RPG_BOOST_BASE = 0.04         # baseline happiness for a high stateful value
 RPG_BOOST_SLOPE = 1.0 / 4000.0  # per-unit scaling of the value
 RPG_BOOST_CAP = 0.15          # max extra happiness from a high value
 
+# Unified ceiling for every ripple *delta* applied to the StateMatrix. This makes
+# the three domain engines consistent: MathRippleEngine produces unclamped deltas
+# (alpha_arousal up to ~0.8); without this cap a single math ripple would be far
+# stronger than physics/chemistry ripples (which self-clamp to <=0.5). See §11.8.
+RIPPLE_DELTA_CAP = 0.5
+
 
 def _clamp(v: float) -> float:
     return max(0.0, min(1.0, v))
@@ -127,7 +133,9 @@ def apply_ripple_to_state(
             return
         if key not in _AXIS_SCHEMA.get(axis_name, set()):
             return
-        axis.values[key] = _clamp(axis.values.get(key, 0.5) + delta * scale)
+        # Clamp the delta so no engine can apply an unbounded jump (§11.8 B3).
+        capped = max(-RIPPLE_DELTA_CAP, min(RIPPLE_DELTA_CAP, delta)) * scale
+        axis.values[key] = _clamp(axis.values.get(key, 0.5) + capped)
 
     ed = ripple.get("epsilon_delta") or 0.0
     if ed:
@@ -145,6 +153,10 @@ def apply_ripple_to_state(
         _add("beta", "confusion", ripple["beta_confusion"])
     if ripple.get("beta_clarity"):
         _add("beta", "clarity", ripple["beta_clarity"])
+    # beta_learning was previously dropped (chemistry make_ripples emits it but
+    # the legacy apply path ignored it). Now applied (§11.8 B1).
+    if ripple.get("beta_learning"):
+        _add("beta", "learning", ripple["beta_learning"])
 
     if ripple.get("gamma_excitement"):
         _add("gamma", "happiness", ripple["gamma_excitement"])
@@ -171,6 +183,84 @@ def apply_ripple_to_state(
         _add("gamma", "surprise", 0.20)
         _add("beta", "focus", -0.20)
         _add("beta", "confusion", 0.30)
+
+
+# Mapping from cognition-delta key -> (axis, valid StateMatrix key). Only keys
+# present in the real axis schema are ever written, so no spurious dimensions
+# are created (e.g. "excitement" is folded into the real gamma "happiness").
+_COGNITION_DELTA_MAP = {
+    "gamma_happiness": ("gamma", "happiness"),
+    "gamma_excitement": ("gamma", "happiness"),
+    "gamma_sadness": ("gamma", "sadness"),
+    "gamma_fear": ("gamma", "fear"),
+    "gamma_surprise": ("gamma", "surprise"),
+    "gamma_anticipation": ("gamma", "anticipation"),
+    "gamma_trust": ("gamma", "trust"),
+    "beta_focus": ("beta", "focus"),
+    "beta_confusion": ("beta", "confusion"),
+    "beta_clarity": ("beta", "clarity"),
+    "beta_curiosity": ("beta", "curiosity"),
+    "beta_learning": ("beta", "learning"),
+    "alpha_arousal": ("alpha", "arousal"),
+    "alpha_tension": ("alpha", "tension"),
+    "delta_bond": ("delta", "bond"),
+    "delta_attention": ("delta", "attention"),
+    "epsilon_logic": ("epsilon", "logic"),
+    "epsilon_certainty": ("epsilon", "certainty"),
+    "epsilon_complexity": ("epsilon", "complexity"),
+}
+
+
+def _apply_cognition_deltas(state_matrix: Any, deltas: Dict[str, float]) -> None:
+    """Apply bounded emotional/state deltas to the StateMatrix (if present)."""
+    if state_matrix is None or not deltas:
+        return
+    for key, value in deltas.items():
+        mapped = _COGNITION_DELTA_MAP.get(key)
+        if not mapped:
+            logger.debug("domain_ripple: unknown delta key %r (skipped)", key)
+            continue
+        axis_name, dim = mapped
+        axis = getattr(state_matrix, axis_name, None)
+        if axis is None or not hasattr(axis, "values"):
+            continue
+        cur = axis.values.get(dim, 0.5)
+        axis.values[dim] = max(0.0, min(1.0, cur + value))
+
+
+def apply_domain_cognition(
+    state_matrix: Any, text: str, recent=None
+) -> Dict[str, Any]:
+    """Apply bounded, meaningful-only domain cognition to ``state_matrix``.
+
+    Single entry point used by BOTH the lab ``CognitivePipeline`` and the
+    production chat dual-rail (chat_routes._try_math_verification), so the two
+    paths can never diverge. Stateless arithmetic returns ``{"meaningful":
+    False}`` and touches NO state/emotion. Meaningful computation gets the full
+    ripple + bounded cognitions (joy / repetition / waiting / high-value / neg).
+
+    Design note (§11.5 / §11.9 B5): ripples are written directly to
+    ``axis.values`` (not via ``StateMatrix4D.update``), deliberately bypassing
+    ``_post_update``. This keeps per-delta cost tiny (the fast-path stays cheap)
+    and the live axis values are still read by the context builder on the next
+    turn, so the emotion IS visible downstream. Heavy gravity/drag/store-sync
+    only runs on explicit ``update()`` calls elsewhere.
+    """
+    engine, value, cls = route_domain(text, recent)
+    if value is None or not cls.get("meaningful"):
+        return cls  # stateless / non-domain -> no state change
+    ripples = []
+    try:
+        ripples = engine.make_ripples(text, value) or []
+    except Exception as e:  # pragma: no cover - defensive
+        logger.debug("domain_ripple: ripple analysis failed for %r: %s", text, e)
+    for ripple in ripples:
+        apply_ripple_to_state(state_matrix, ripple)
+    deltas = engine.cognition_deltas(cls, value, ripples)
+    _apply_cognition_deltas(state_matrix, deltas)
+    cls = dict(cls)
+    cls["applied"] = True
+    return cls
 
 
 class DomainRippleEngine(ABC):
@@ -464,6 +554,28 @@ DOMAIN_REGISTRY: List[DomainRippleEngine] = [
 ]
 
 
+def _has_domain_signal(text: str) -> bool:
+    """Cheap pre-filter: does ``text`` carry any signal a domain engine owns?
+
+    Avoids running the three ``can_handle`` scanners (chemistry formula regex,
+    physics keyword scan, math arithmetic eval) on plain chit-chat. A signal is
+    present if the text has a digit, a chemical-formula-like token, or any
+    physics/chemistry keyword. See §11.8 B4 / §11.9 P1-6.
+    """
+    if not text:
+        return False
+    lowered = text.lower()
+    if any(kw in lowered for kw in _PHYSICS_KEYWORDS):
+        return True
+    if any(w in lowered for w in _CHEM_WORDS):
+        return True
+    if re.search(r"\d", text):
+        return True
+    if re.search(r"[A-Z][a-z]?\d*", text):
+        return True
+    return False
+
+
 def route_domain(
     text: str, recent=None
 ) -> Tuple[Optional[DomainRippleEngine], Optional[float], Dict[str, Any]]:
@@ -472,6 +584,9 @@ def route_domain(
     Returns (None, None, {}) when the text is not a domain computation at all
     (e.g. plain chit-chat). ``recent`` is the repetition-tracking collection.
     """
+    # Fast pre-filter: skip the three engine scanners for non-domain input.
+    if not _has_domain_signal(text):
+        return None, None, {}
     for engine in DOMAIN_REGISTRY:
         if engine.can_handle(text):
             value = engine.compute(text)

@@ -230,7 +230,10 @@ class TemporalState:
         mean_val = sum(values) / len(values)
         std = (sum((v - mean_val) ** 2 for v in values) / len(values)) ** 0.5 or 1.0
         results = []
-        for i, snap in enumerate(reversed(self.history)):
+        # Scan only the most recent `window` snapshots (not the whole history),
+        # matching get_field_series(). The previous implementation iterated the
+        # entire history every call -> O(history) recompute per query (§11.6/§11.8 B2).
+        for snap in reversed(self.history[-window:]):
             if len(results) >= 10:
                 break
             ax_data = snap.get(axis)

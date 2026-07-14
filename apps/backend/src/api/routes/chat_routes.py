@@ -338,6 +338,18 @@ async def _try_math_verification(
         if verifier.is_math_message(user_message):
             logger.info("\U0001f9ee [DualRail] Math task detected")
             verification = await verifier.verify(user_message, user_name)
+            # Apply bounded, meaningful-only cognition to the live state matrix.
+            # Stateless arithmetic (e.g. "917 * 814") applies NOTHING; a meaningful
+            # problem (e.g. "HP is 9999") nudges joy/high-value happiness. This is
+            # the production counterpart of CognitivePipeline and reuses the exact
+            # same code path (ai.memory.domain_ripple.apply_domain_cognition), so
+            # the lab and live behaviour can never diverge (§11.5 / §11.9).
+            if matrix is not None:
+                try:
+                    from ai.memory.domain_ripple import apply_domain_cognition
+                    apply_domain_cognition(matrix, user_message)
+                except Exception as e:  # pragma: no cover - defensive
+                    logger.debug(f"Bounded math cognition failed: {e}")
             if verification.response_text:
                 return _build_math_response(verification, matrix, user_message, session_id, schema_ver, trunc_msg)
     except Exception as e:

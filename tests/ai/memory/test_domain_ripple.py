@@ -259,3 +259,64 @@ async def test_pipeline_chemistry_ripples_state():
     assert result["math_cognition"]["domain"] == "chemistry"
     # Meaningful chemistry computation -> bounded happiness bump.
     assert after > before
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for the §11.9 fixes (B1/B3/B4).
+# ---------------------------------------------------------------------------
+
+
+def test_chemistry_beta_learning_is_applied():
+    """B1: chemistry's beta_learning used to be silently dropped."""
+    from ai.memory.domain_ripple import ChemistryDomainEngine, apply_ripple_to_state
+
+    sm = _FakeStateMatrix()
+    eng = ChemistryDomainEngine()
+    value = eng.compute("molar mass of H2O")
+    ripples = eng.make_ripples("molar mass of H2O", value)
+    before = sm.beta.values["learning"]
+    for r in ripples:
+        apply_ripple_to_state(sm, r)
+    assert sm.beta.values["learning"] > before
+
+
+def test_ripple_delta_cap_unifies_magnitude():
+    """B3: a huge math ripple cannot apply an unbounded delta.
+
+    MathRippleEngine emits unclamped deltas (e.g. alpha_arousal up to ~0.8).
+    After the cap, the per-key jump must be <= RIPPLE_DELTA_CAP (0.5) so a
+    single math ripple is no stronger than a physics/chemistry ripple.
+    """
+    from ai.memory.domain_ripple import (
+        MathDomainEngine,
+        apply_ripple_to_state,
+        RIPPLE_DELTA_CAP,
+    )
+
+    sm = _FakeStateMatrix()
+    eng = MathDomainEngine()
+    # Big product -> large unclamped alpha_arousal in the ripple shape.
+    ripples = eng.make_ripples("9999 * 9999", 9999 * 9999)
+    before = sm.alpha.values["arousal"]
+    for r in ripples:
+        apply_ripple_to_state(sm, r)
+    applied = sm.alpha.values["arousal"] - before
+    assert applied <= RIPPLE_DELTA_CAP + 1e-9
+
+
+def test_route_domain_prefilter_skips_chitchat():
+    """B4: plain chit-chat must short-circuit without running engine scanners."""
+    from ai.memory.domain_ripple import route_domain
+
+    engine, value, cls = route_domain("hey how are you doing today my friend")
+    assert engine is None
+    assert value is None
+    assert cls == {}
+
+
+def test_route_domain_still_finds_domains():
+    """B4 regression guard: prefilter must NOT drop real domain input."""
+    from ai.memory.domain_ripple import route_domain
+
+    assert route_domain("917 * 814")[1] is not None
+    assert route_domain("molar mass of H2O")[0].domain == "chemistry"

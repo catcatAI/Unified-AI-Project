@@ -34,7 +34,7 @@ from collections import deque
 from dataclasses import dataclass, asdict
 from typing import Any, Dict, List, Optional
 
-from ai.memory.domain_ripple import apply_ripple_to_state, route_domain
+from ai.memory.domain_ripple import apply_domain_cognition, route_domain
 
 logger = logging.getLogger(__name__)
 
@@ -135,82 +135,29 @@ class CognitivePipeline:
     ) -> Dict[str, Any]:
         """Apply bounded, meaningful-only domain cognitions.
 
-        Returns a dict describing which cognitions fired. Stateless math
-        returns {"meaningful": False} and touches NO state/emotion.
+        Delegates to the SINGLE shared entry point ``apply_domain_cognition``
+        (ai.memory.domain_ripple) so the lab pipeline and the production chat
+        dual-rail can never diverge. Stateless math returns {"meaningful":
+        False} and touches NO state/emotion.
         """
         if not cls.get("meaningful"):
             # Stateless arithmetic: compute + answer only. No emotion/state.
             return {"meaningful": False}
 
+        # NOTE: classify for repetition must use the *previous* window, so we
+        # pass ``self._recent_math`` to apply_domain_cognition BEFORE appending
+        # this text. Appending first would make apply_domain_cognition
+        # re-classify the current input as a repetition of itself (false
+        # positive). We append only after the cognition pass has run.
+        applied = apply_domain_cognition(self.state_matrix, text, self._recent_math)
         self._recent_math.append(text.strip())
-
-        # 1) Ripple/state layer — only for meaningful computation. The ripple
-        #    carries the cognitive structure of the operation (amplification,
-        #    splitting, tension, …) and is applied fully to the StateMatrix.
-        ripples = []
-        try:
-            ripples = engine.make_ripples(text, value) or []
-        except Exception as e:  # pragma: no cover - defensive
-            logger.debug("Domain ripple failed for %r: %s", text, e)
-        for ripple in ripples:
-            apply_ripple_to_state(self.state_matrix, ripple)
-
-        # 2) Bounded cognitions on top of ripples (joy / repetition / waiting /
-        #    high-value happiness / negative-valence). Magnitudes are principled
-        #    and clamped inside _apply_cognition_deltas.
-        deltas = engine.cognition_deltas(cls, value, ripples)
-        self._apply_cognition_deltas(deltas)
-
         return {
             "meaningful": True,
             "domain": cls.get("domain"),
             "attribute": cls.get("attribute"),
             "is_repetition": cls.get("is_repetition"),
-            "deltas": deltas,
+            "applied": applied.get("applied", False),
         }
-
-    # Mapping from cognition-delta key -> (axis, valid StateMatrix key).
-    # Only keys present in the real axis schema are ever written, so no
-    # spurious dimensions are created (e.g. "excitement" is folded into the
-    # real gamma "happiness" value).
-    _DELTA_MAP = {
-        "gamma_happiness": ("gamma", "happiness"),
-        "gamma_excitement": ("gamma", "happiness"),
-        "gamma_sadness": ("gamma", "sadness"),
-        "gamma_fear": ("gamma", "fear"),
-        "gamma_surprise": ("gamma", "surprise"),
-        "gamma_anticipation": ("gamma", "anticipation"),
-        "gamma_trust": ("gamma", "trust"),
-        "beta_focus": ("beta", "focus"),
-        "beta_confusion": ("beta", "confusion"),
-        "beta_clarity": ("beta", "clarity"),
-        "beta_curiosity": ("beta", "curiosity"),
-        "beta_learning": ("beta", "learning"),
-        "alpha_arousal": ("alpha", "arousal"),
-        "alpha_tension": ("alpha", "tension"),
-        "delta_bond": ("delta", "bond"),
-        "delta_attention": ("delta", "attention"),
-        "epsilon_logic": ("epsilon", "logic"),
-        "epsilon_certainty": ("epsilon", "certainty"),
-        "epsilon_complexity": ("epsilon", "complexity"),
-    }
-
-    def _apply_cognition_deltas(self, deltas: Dict[str, float]) -> None:
-        """Apply bounded emotional/state deltas to the StateMatrix (if present)."""
-        if self.state_matrix is None or not deltas:
-            return
-        sm = self.state_matrix
-        for key, value in deltas.items():
-            mapped = self._DELTA_MAP.get(key)
-            if not mapped:
-                logger.debug("CognitivePipeline: unknown delta key %r (skipped)", key)
-                continue
-            axis_name, dim = mapped
-            axis = getattr(sm, axis_name, None)
-            if axis is None or not hasattr(axis, "values"):
-                continue
-            cur = axis.values.get(dim, 0.5)
-            axis.values[dim] = max(0.0, min(1.0, cur + value))
 
     async def process(self, text: str, user_name: Optional[str] = None) -> Dict[str, Any]:
         """處理輸入文本，返回響應字典。"""
@@ -228,8 +175,11 @@ class CognitivePipeline:
             math_result = value
             math_cognition = self._apply_domain_cognition(engine, text, value, cls)
 
-        # Attractor field navigation
-        if self.attractor_field is not None:
+        # Attractor field navigation (T3, heavy). Only run for MEANINGFUL domain
+        # input — stateless arithmetic must NOT pay the ~1ms navigation cost
+        # (§11.6 / §11.9 B5). This is the lab-level fast-path; the same gate is
+        # mirrored by the production dual-rail in chat_routes._try_math_verification.
+        if self.attractor_field is not None and math_cognition and math_cognition.get("meaningful"):
             nav_result = self.attractor_field.navigate(state, max_steps=5, dt=0.15)
             if isinstance(nav_result, tuple):
                 nav_state, behavior_result = nav_result

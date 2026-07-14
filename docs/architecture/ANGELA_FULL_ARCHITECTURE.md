@@ -1354,8 +1354,25 @@ AngelaLLMService (核心 LLM 路由)
 - 重複題目：無高興；`β.focus -0.15`、`γ.excitement -0.08`、`β.clarity -0.05`。
 - 等待/專注：`β.focus +0.05`、`γ.anticipation +0.05`（短暫）。
 - 高狀態屬性值（RPG/物理量/分子量 ≥ 閾值）：`γ.happiness += min(0.15, 0.04 + |值|/4000)`，
-  大數字→高興，但封頂不失控。
+  大數字→高興，但封頂不失控。化學物種另記 `β.learning += 0.05`（知識增長；2026-07-14 修正：
+  原 `apply_ripple_to_state` 漏映射 `beta_learning`，已補回）。
 - 負向運算（混淆/恐懼/過載）：無高興；`γ.happiness -0.10`、`γ.fear +0.20`、`β.confusion +0.15`。
+
+### 2026-07-14 更新：生產接線、統一幅度上限、修正清單
+
+- **生產接線**：`api/routes/chat_routes.py` 的數學雙軌路徑 (`_try_math_verification`)
+  在 `MathVerifier` 驗證後呼叫共用入口 `domain_ripple.apply_domain_cognition(matrix, user_message)`。
+  無狀態算式 → `apply_domain_cognition` 直接 no-op（不觸發任何情緒/狀態），符合設計；有意義題目
+  → 有界認知。這是唯一真正處理數學的生產路徑，框架現已與之單向對齊。
+- **統一幅度上限 `RIPPLE_DELTA_CAP = 0.5`**：`_add()` 對每次認知增量做 clamp，使數學漣漪幅度不再
+  超過物理/化學的既有幅度（修正：原 `gamma_excitement` 等 +0.15 雖未逾 0.5，但高興單次 0.12、
+  重複題 -0.15 等需有全局上限；化學 `beta_learning` 同理）。
+- **`route_domain` 廉價預濾 `_has_domain_signal`**：遇到純閒聊（無物理關鍵字、無化學字、無數字、
+  無 Capital 開頭 token）直接跳過三個領域引擎掃描，縮短無謂開銷。
+- **`CognitivePipeline` 無狀態跳過 attractor 導航**：無狀態輸入不再呼叫 `navigate()`（實驗室路徑，
+  生產中 attractor field 為 stub —— `StateMatrixAdapter.gradient_field` 回傳空導航）。
+- **`TemporalState.anomalies` 視窗限制**：由全歷史 O(history) 改掃 `self.history[-window:]`
+  （預設 threshold=0.5、最多回傳 10），消除長對話下的線性成長成本。
 
 ### 領域引擎（可擴展）
 `DomainRippleEngine` 為抽象基類；新增領域只需繼承並註冊到 `DOMAIN_REGISTRY`：
