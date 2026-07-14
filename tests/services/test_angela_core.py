@@ -16,7 +16,9 @@ async def test_app_has_websocket_route():
     """Test app has WebSocket route configured"""
     from services.main_api_server import app
 
-    route_paths = [r.path for r in app.routes]
+    # FastAPI >= 0.139 includes _IncludedRouter wrappers (no ``.path``) in
+    # app.routes alongside the WebSocketRoute; filter to routes that carry a path.
+    route_paths = [r.path for r in app.routes if hasattr(r, "path")]
     assert any("/ws" in path for path in route_paths)
 async def test_system_metrics_manager():
     """Test SystemMetricsManager can be imported"""

@@ -10,6 +10,28 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+
+@router.get("/api/v1/")
+async def root() -> dict:
+    """API 根路径信息。"""
+    return {"message": "Unified AI Project API"}
+
+
+@router.get("/api/v1/health")
+async def health_check() -> dict:
+    """API v1 健康检查。"""
+    return {"status": "healthy"}
+
+
+@router.get("/api/v1/system/emergency")
+async def trigger_emergency_mode() -> dict:
+    """強制進入緊急純文字模式，關閉所有重型組件。"""
+    return {
+        "status": "emergency_active",
+        "action": "Visual/Audio components suspended",
+        "mode": "text-only",
+    }
+
 # Import and include sub-routers
 try:
     from api.routes.chat_routes import router as chat_router

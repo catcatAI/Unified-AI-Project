@@ -42,12 +42,21 @@ class TestMultimodalRoutes:
     async def test_multimodal_router_registration(self):
         """T22: Router.py includes multimodal_routes with /api/v1 prefix."""
         from api.router import router as main_router
-        all_paths = []
-        for r in main_router.routes:
-            if hasattr(r, "paths"):
-                all_paths.extend(r.paths)
-            elif hasattr(r, "path"):
-                all_paths.append(r.path)
+
+        def collect(router, prefix=""):
+            # FastAPI-version robust: >= 0.139 wraps included routers in
+            # _IncludedRouter (original_router + include_context.prefix).
+            out = []
+            for r in getattr(router, "routes", []):
+                if hasattr(r, "original_router"):
+                    ctx = getattr(r, "include_context", None)
+                    sub = prefix + (getattr(ctx, "prefix", "") or "")
+                    out.extend(collect(r.original_router, sub))
+                elif hasattr(r, "path"):
+                    out.append(prefix + r.path)
+            return out
+
+        all_paths = collect(main_router)
         multimodal_paths = [p for p in all_paths if "multimodal" in p]
         # Should contain /api/v1/multimodal/encode, /api/v1/multimodal/health, etc.
         assert len(multimodal_paths) >= 2

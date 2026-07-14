@@ -305,6 +305,16 @@ app.include_router(atlassian_router)
 app.include_router(state_matrix_router, prefix="/api/v1")
 
 
+@app.get("/health", tags=["health"])
+async def health() -> Dict[str, Any]:
+    """Lightweight root liveness probe (documented module contract).
+
+    Detailed subsystem health lives under ``/api/v1/ops/health``; this root
+    endpoint exists for load balancers / uptime checks that expect ``/health``.
+    """
+    return {"status": "healthy", "service": "angela-ai", "version": app.version}
+
+
 class MainApiServer:
     """Stub class for legacy integration test compatibility.
 

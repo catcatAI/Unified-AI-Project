@@ -110,6 +110,25 @@ class TestHardwareAnalyzer:
 
 
 class TestBudgetScheduler:
+    @pytest.fixture(autouse=True)
+    def _fixed_load(self):
+        """Pin the resource-throttling factor to 1.0 so scheduler math is
+        deterministic and independent of real host load.
+
+        ``BudgetScheduler._get_resource_service`` lazily imports
+        ``ResourceAwarenessService`` from ``services.resource_awareness_service``,
+        so that is the correct patch target (it is not a module attribute of
+        ``neuro_auto_selector``).
+        """
+        with patch(
+            "services.resource_awareness_service.ResourceAwarenessService"
+        ) as MockResource:
+            mock_svc = MagicMock()
+            mock_svc.get_throttling_factor.return_value = 1.0
+            MockResource.return_value = mock_svc
+            self._mock_resource = mock_svc
+            yield mock_svc
+
     def test_schedule_default_tiers(self):
         scheduler = BudgetScheduler(config={})
         for tier in HardwareTier:
@@ -132,15 +151,15 @@ class TestBudgetScheduler:
         assert high >= normal * 1.05  # at least 1.1 * load_factor
 
     def test_schedule_clamp_min_max(self):
-        scheduler = BudgetScheduler(config={"auto_mode": {"min_time_budget_ms": 5000, "max_time_budget_ms": 60000}})
+        # BudgetScheduler receives the already-unwrapped ``auto_mode`` dict
+        # (NeuroAutoSelector passes ``config.get("auto_mode", {})``), so keys
+        # are flat here, not nested under "auto_mode".
+        scheduler = BudgetScheduler(config={"min_time_budget_ms": 5000, "max_time_budget_ms": 60000})
         budget = scheduler.schedule(hw_score=10, tier=HardwareTier.LOW, energy=0.5)
         assert 5000 <= budget <= 60000
 
-    @patch("ai.response.neuro_auto_selector.ResourceAwarenessService")
-    def test_schedule_with_load(self, MockResource):
-        mock_svc = MagicMock()
-        mock_svc.get_throttling_factor.return_value = 0.5
-        MockResource.return_value = mock_svc
+    def test_schedule_with_load(self):
+        self._mock_resource.get_throttling_factor.return_value = 0.5
 
         scheduler = BudgetScheduler(config={})
         budget = scheduler.schedule(hw_score=50, tier=HardwareTier.HIGH, energy=0.5)
@@ -397,14 +416,20 @@ class TestEdgeCases:
             "low": 10000,
             "critical": 5000,
         }
+        # Flat config: BudgetScheduler is constructed with the unwrapped
+        # ``auto_mode`` dict in production (see test_schedule_clamp_min_max).
         scheduler = BudgetScheduler(config={
-            "auto_mode": {
-                "time_budget_table": custom_table,
-                "min_time_budget_ms": 3000,
-                "max_time_budget_ms": 60000,
-            }
+            "time_budget_table": custom_table,
+            "min_time_budget_ms": 3000,
+            "max_time_budget_ms": 60000,
         })
-        for tier_str, expected in custom_table.items():
-            tier = HardwareTier(tier_str)
-            budget = scheduler.schedule(hw_score=50, tier=tier, energy=0.5)
-            assert budget >= expected * 0.6, f"{tier_str}: {budget} < {expected * 0.6}"
+        # Pin throttling factor to 1.0 for deterministic budget math (see
+        # TestBudgetScheduler._fixed_load for the rationale on the patch target).
+        with patch(
+            "services.resource_awareness_service.ResourceAwarenessService"
+        ) as MockResource:
+            MockResource.return_value.get_throttling_factor.return_value = 1.0
+            for tier_str, expected in custom_table.items():
+                tier = HardwareTier(tier_str)
+                budget = scheduler.schedule(hw_score=50, tier=tier, energy=0.5)
+                assert budget >= expected * 0.6, f"{tier_str}: {budget} < {expected * 0.6}"
