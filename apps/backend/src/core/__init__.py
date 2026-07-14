@@ -198,6 +198,12 @@ def __getattr__(name: str) -> Any:
     a _SubmoduleSentinel (enables unittest.mock.patch with create=True to traverse
     dotted paths through deleted/Nonexistent subsystems).
     """
+    # Never fabricate a sentinel for dunder/protocol attributes or pytest-reserved
+    # names: pytest probes `pytest_plugins` (and similar) on every imported module,
+    # and a truthy sentinel there is interpreted as a plugin spec -> UsageError.
+    if (name.startswith("__") and name.endswith("__")) or name == "pytest_plugins":
+        raise AttributeError(f"module 'core' has no attribute '{name}'")
+
     # Fast path: known lazy imports
     if name in _LAZY_IMPORTS:
         module_path = _LAZY_IMPORTS[name]
