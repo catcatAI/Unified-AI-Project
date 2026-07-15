@@ -37,8 +37,30 @@ class ChatService:
     @property
     def model_bus(self):
         """Return the ModelBus from the underlying LLM router, if available."""
-        if self._llm_service and hasattr(self._llm_service, 'model_bus'):
+        if self._llm_service and hasattr(self._llm_service, "model_bus"):
             return self._llm_service.model_bus
+        return None
+
+    def _detect_drive_intent(self, text: str) -> Optional[str]:
+        """Detect a Google Drive intent from user text via config keywords.
+
+        Returns ``"google_drive"`` when a configured drive keyword matches,
+        otherwise ``None``.
+        """
+        if not text:
+            return None
+        try:
+            from core.config_loader import get_angela_config
+
+            keywords = get_angela_config().get_intent_keywords("google_drive")
+        except Exception:
+            keywords = []
+        lowered = text.lower()
+        for kw in keywords:
+            if not kw:
+                continue
+            if kw.lower() in lowered:
+                return "google_drive"
         return None
 
     async def _ham_sync_loop(self) -> None:
@@ -64,12 +86,15 @@ class ChatService:
             return
         if self._llm_service is None:
             from services.llm.router import get_llm_service
+
             self._llm_service = await get_llm_service()
         try:
             from ai.ed3n.continuous_learning import ContinuousLearningPipeline
             from ai.ed3n.ed3n_engine import ED3NEngine
+
             engine = ED3NEngine.get_shared()
             from ai.ed3n.ed3n_trainer import ED3NTrainer
+
             trainer = ED3NTrainer(engine)
             state_path = os.path.join(self._cl_state_dir, "cl_state.json")
             if await asyncio.to_thread(os.path.exists, state_path):
@@ -92,6 +117,7 @@ class ChatService:
         # Initialize TrainingCoordinator for domain training orchestration
         try:
             from api.lifespan import get_training_coordinator
+
             self._training_coordinator = get_training_coordinator()
             logger.info("TrainingCoordinator wired into ChatService")
         except Exception as e:
@@ -99,6 +125,7 @@ class ChatService:
         # Initialize GARDEN engine for continuous learning (Phase 4.5)
         try:
             from ai.garden.garden_engine import GARDENEngine
+
             self._garden_engine = GARDENEngine(compatibility_mode=True)
             self._garden_engine.load_presets()
             logger.info("GARDEN engine initialized for continuous learning")
@@ -107,6 +134,7 @@ class ChatService:
         # Initialize ED3N learning integration for HAM sync (Phase 5.2)
         try:
             from ai.ed3n.learning_integration import ED3NLearningIntegration
+
             cl_engine = self._continuous_learning.engine if self._continuous_learning else None
             self._ed3n_learning_integration = ED3NLearningIntegration(engine=cl_engine)
             logger.info("ED3N learning integration initialized")
@@ -115,6 +143,7 @@ class ChatService:
         # Initialize VectorMemoryStore for semantic memory retrieval (Phase 5.3)
         try:
             from ai.memory.vector_store import VectorMemoryStore
+
             self._vector_store = VectorMemoryStore()
             logger.info("VectorStore initialized with %d vectors", self._vector_store.vector_count)
         except Exception as e:
@@ -122,15 +151,20 @@ class ChatService:
         # Initialize HAM memory for template-based retrieval (Phase 5.3)
         try:
             from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+
             self._ham_memory = HAMMemoryManager()
             stats = self._ham_memory.get_stats()
-            logger.info("HAM memory initialized: %d templates, %d conversations",
-                        stats.get("template_count", 0), stats.get("conversation_count", 0))
+            logger.info(
+                "HAM memory initialized: %d templates, %d conversations",
+                stats.get("template_count", 0),
+                stats.get("conversation_count", 0),
+            )
         except Exception as e:
             logger.warning("HAM memory init skipped: %s", e)
         # Initialize CulturalContextModule
         try:
             from ai.context.cultural_context import CulturalContextModule
+
             self._cultural_context = CulturalContextModule()
             logger.info("CulturalContextModule initialized")
         except Exception as e:
@@ -151,7 +185,9 @@ class ChatService:
 
         merged_context = self._inject_cultural_context(merged_context, user_message)
         merged_context = await self._inject_memory_context(merged_context, user_message)
-        merged_context, mm_adapter = await self._inject_multimodal_context(merged_context, user_message)
+        merged_context, mm_adapter = await self._inject_multimodal_context(
+            merged_context, user_message
+        )
         merged_context = self._inject_grounded_context(merged_context, user_message)
         merged_context = await self._maybe_search_and_ground(user_message, merged_context)
 
@@ -171,7 +207,9 @@ class ChatService:
             return merged_context
         try:
             lang = merged_context.get("language", "")
-            return self._cultural_context.enrich_context(merged_context, user_message, language_code=lang)
+            return self._cultural_context.enrich_context(
+                merged_context, user_message, language_code=lang
+            )
         except Exception as e:
             logger.debug("Cultural context enrichment skipped: %s", e)
         return merged_context
@@ -201,9 +239,11 @@ class ChatService:
             except Exception as e:
                 logger.debug("HAM memory query failed: %s", e)
         if "dictionary_context" in merged_context or "conversation_memory" in merged_context:
-            logger.debug("Memory context injected: dict=%d, conv=%d",
-                         len(merged_context.get("dictionary_context", [])),
-                         len(merged_context.get("conversation_memory", [])))
+            logger.debug(
+                "Memory context injected: dict=%d, conv=%d",
+                len(merged_context.get("dictionary_context", [])),
+                len(merged_context.get("conversation_memory", [])),
+            )
         return merged_context
 
     async def _inject_multimodal_context(self, merged_context: dict, user_message: str):
@@ -214,6 +254,7 @@ class ChatService:
             if image_data:
                 try:
                     from ai.multimodal.multimodal_ed3n_adapter import MultimodalED3NAdapter
+
                     mm_adapter = MultimodalED3NAdapter()
                     mm_adapter.index_image_for_retrieval(
                         image_data,
@@ -232,6 +273,7 @@ class ChatService:
         """Inject VERIFIED grounded-knowledge snippets (cheap local lookup)."""
         try:
             from ai.memory.grounded_learning_manager import get_grounded_learning_manager
+
             block = get_grounded_learning_manager().get_grounded_context(user_message)
             if block:
                 merged_context["grounded_context"] = block
@@ -240,9 +282,7 @@ class ChatService:
             logger.debug("Grounded context injection skipped: %s", e)
         return merged_context
 
-    async def _maybe_search_and_ground(
-        self, user_message: str, merged_context: dict
-    ) -> dict:
+    async def _maybe_search_and_ground(self, user_message: str, merged_context: dict) -> dict:
         """Proactively web-search to ground an uncertain factual query.
 
         Only triggers when: (1) the query looks like a factual question, (2) we have
@@ -263,8 +303,8 @@ class ChatService:
             if merged_context.get("grounded_context"):
                 return merged_context
 
-            from core.tools.web_search_tool import WebSearchTool
             from ai.memory.grounded_learning_manager import get_grounded_learning_manager
+            from core.tools.web_search_tool import WebSearchTool
 
             tool = WebSearchTool()
             results = await asyncio.wait_for(
@@ -302,6 +342,7 @@ class ChatService:
             latent = top_entry.get("vector")
             if latent and len(latent) >= 64:
                 from ai.multimodal.multimodal_bridge import MultimodalBridge
+
                 bridge = MultimodalBridge()
                 decoded_img = bridge.decode_latent_to_image(latent[:64])
                 if decoded_img is not None:
@@ -314,7 +355,9 @@ class ChatService:
         except Exception as e:
             logger.debug("Multimodal decode output failed (non-critical): %s", e)
 
-    async def _process_continuous_learning(self, user_message: str, response, merged_context: dict) -> None:
+    async def _process_continuous_learning(
+        self, user_message: str, response, merged_context: dict
+    ) -> None:
         if not self._continuous_learning:
             return
         try:
@@ -327,7 +370,10 @@ class ChatService:
             )
             if self._training_coordinator:
                 await self._training_coordinator.record_training(
-                    "general", "ed3n", 1, 0.5,
+                    "general",
+                    "ed3n",
+                    1,
+                    0.5,
                     [{"input": user_message, "output": response.text}],
                 )
         except Exception as e:
@@ -345,7 +391,10 @@ class ChatService:
             self._garden_learn_count += 1
             if self._training_coordinator:
                 await self._training_coordinator.record_training(
-                    "knowledge", "garden", 1, 0.5,
+                    "knowledge",
+                    "garden",
+                    1,
+                    0.5,
                     [{"input": user_message, "output": response.text}],
                 )
             if self._garden_learn_count % 100 == 0:
@@ -364,6 +413,7 @@ class ChatService:
         """
         try:
             from ai.memory.grounded_learning_manager import get_grounded_learning_manager
+
             mgr = get_grounded_learning_manager()
             resp_text = getattr(response, "text", str(response))
             asyncio.create_task(mgr.queue_claims(user_message, resp_text))
@@ -374,14 +424,15 @@ class ChatService:
         if self._vector_store is not None:
             try:
                 import uuid as _uuid
+
                 memory_id = f"chat_{_uuid.uuid4().hex[:12]}"
                 content = f"User: {user_message}\nAngela: {response.text}"
                 await self._vector_store.add_memory(memory_id, content, {"type": "conversation"})
             except Exception as e:
                 logger.debug("VectorStore memory store failed: %s", e)
-        if getattr(self._llm_service, 'enable_memory_enhancement', False):
+        if getattr(self._llm_service, "enable_memory_enhancement", False):
             try:
-                mm = getattr(self._llm_service, 'memory_manager', None)
+                mm = getattr(self._llm_service, "memory_manager", None)
                 if mm:
                     await mm.store_experience(
                         raw_data={"user": user_message, "assistant": response.text},
@@ -402,15 +453,15 @@ class ChatService:
         bio_state = context.get("bio_state")
         emotion = context.get("emotion")
 
-        if bio_state and hasattr(response, 'bio_state'):
+        if bio_state and hasattr(response, "bio_state"):
             response.bio_state = bio_state
 
         if emotion:
-            if hasattr(response, 'emotion'):
+            if hasattr(response, "emotion"):
                 response.emotion = emotion.get("emotion", "neutral")
-            if hasattr(response, 'emotion_confidence'):
+            if hasattr(response, "emotion_confidence"):
                 response.emotion_confidence = emotion.get("confidence", 0.5)
-            if hasattr(response, 'emotion_intensity'):
+            if hasattr(response, "emotion_intensity"):
                 response.emotion_intensity = emotion.get("intensity", 0.5)
 
         if response.metadata is None:
@@ -436,7 +487,7 @@ class ChatService:
             logger.warning("ChatService.generate_text: LLM service not available")
             return None
         try:
-            if not hasattr(self._llm_service, 'generate_text'):
+            if not hasattr(self._llm_service, "generate_text"):
                 logger.warning("ChatService.generate_text: LLM service has no generate_text method")
                 return None
             return await self._llm_service.generate_text(
@@ -483,3 +534,8 @@ class ChatService:
                 logger.warning("Failed to save GARDEN state: %s", e)
         logger.info("ChatService shutdown")
 
+
+# Backward-compatible alias (historical public name).
+AngelaChatService = ChatService
+
+__all__ = ["ChatService", "AngelaChatService"]

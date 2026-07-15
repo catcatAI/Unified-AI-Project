@@ -262,13 +262,13 @@ class TestREPLCommands:
 
     def test_repl_command_handler_exists(self):
         """_handle_repl_command 函數存在"""
-        import services.main_api_server as api_server
+        import cli.repl as api_server
         assert hasattr(api_server, "_handle_repl_command")
         assert callable(api_server._handle_repl_command)
 
     def test_repl_help_command(self):
         """REPL /help 命令返回幫助文字"""
-        from services.main_api_server import _handle_repl_command
+        from cli.repl import _handle_repl_command
 
         intent, response = _handle_repl_command("/help", None, [])
         assert intent == "system"
@@ -277,14 +277,14 @@ class TestREPLCommands:
 
     def test_repl_help_short(self):
         """REPL /h 命令（簡寫）"""
-        from services.main_api_server import _handle_repl_command
+        from cli.repl import _handle_repl_command
 
         intent, response = _handle_repl_command("/h", None, [])
         assert intent == "system"
 
     def test_repl_unknown_command_returns_none(self):
         """未知 REPL 命令返回 None（passthrough）"""
-        from services.main_api_server import _handle_repl_command
+        from cli.repl import _handle_repl_command
 
         intent, response = _handle_repl_command("/unknowncmd", None, [])
         assert response is None
@@ -551,13 +551,13 @@ class TestModelREPLCommand:
 
     def test_model_command_handler_exists(self):
         """_handle_model_command 函數存在"""
-        import services.main_api_server as api_server
+        import cli.repl as api_server
         assert hasattr(api_server, "_handle_model_command")
         assert callable(api_server._handle_model_command)
 
     def test_model_list_command(self):
         """REPL /model list 返回可用模型"""
-        from services.main_api_server import _handle_model_command
+        from cli.repl import _handle_model_command
 
         response = _handle_model_command("list", None)
         assert isinstance(response, str)
@@ -565,19 +565,19 @@ class TestModelREPLCommand:
 
     def test_model_stats_command(self):
         """REPL /model stats 返回統計"""
-        from services.main_api_server import _handle_model_command
+        from cli.repl import _handle_model_command
 
         response = _handle_model_command("stats", None)
         assert isinstance(response, str)
 
     def test_tickle_command_handler_exists(self):
         """_handle_tickle_command 函數存在"""
-        import services.main_api_server as api_server
+        import cli.repl as api_server
         assert hasattr(api_server, "_handle_tickle_command")
 
     def test_tickle_no_args_returns_usage(self):
         """REPL /tickle 無參數返回使用說明"""
-        from services.main_api_server import _handle_tickle_command
+        from cli.repl import _handle_tickle_command
 
         response = _handle_tickle_command("")
         assert "Usage" in response or "Parts" in response
@@ -643,13 +643,13 @@ class TestGoogleDriveIntegration:
 
     def test_drive_repl_command_handler_exists(self):
         """REPL /drive 命令存在"""
-        import services.main_api_server as api_server
+        import cli.repl as api_server
         assert hasattr(api_server, "_handle_drive_command")
         assert callable(api_server._handle_drive_command)
 
     def test_drive_repl_help_shows_drive_command(self):
         """help 文案中包含 drive 命令"""
-        from services.main_api_server import _build_help_text
+        from cli.repl import _build_help_text
         help_text = _build_help_text()
         assert "drive" in help_text.lower()
 
