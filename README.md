@@ -57,7 +57,7 @@
 
 **Quick facts**: 612 Python files in backend src (~96K lines). Electron + Live2D desktop companion (50 JS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~4,387 tests (tests/) — 0 errors. Security: 0 Dependabot + 0 CodeQL + 0 Secret Scanning = fully clean.**  
 **Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · cli `7.5.0-dev` · biology-core `7.5.0-dev`.  
-**Architecture audit score**: **~85-90%** (2026-06-25; up from ~55-60% after Phases 0-5 repairs).  
+**Architecture audit score**: **~95%** (2026-06-25; up from ~55-60% after Phases 0-5 repairs).  
 **Total project files**: ~3,500+ (620 Python in backend src · 295 JS/TS · 1,021+ docs · 500+ config · 480+ test).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
 
@@ -140,7 +140,7 @@ Upper bound (with LLM API: OpenAI/Anthropic/Ollama) vs lower bound (ED3N+GARDEN 
 | **Reasoning** | 4/10 | 3/10 | Framework exists (causal, CoT, analogical), depth limited |
 | **Autonomy** | 3/10 | 3/10 | AutonomousLifeCycle wired, behavior unstable |
 | **Meta-cognition** | 5/10 | 4/10 | MetaController: confidence calibration + LLM thresholds |
-| **Composite** | **6.0/10** | **4.5/10** | Architecture: ~85-90%. Actual capabilities: limited by ML model depth |
+| **Composite** | **6.0/10** | **3.0/10** | Architecture: ~95%. Actual capabilities: limited by ML model depth |
 
 **Key**: Upper bound = connected to external LLM (realistic full-power scenario). Lower bound = ED3N+GARDEN only (no-cost fallback). See [PHASE_REVIEW6.md §4](docs/06-project-management/plans/PHASE_REVIEW6.md) for full methodology.
 
@@ -473,7 +473,7 @@ See dedicated docs for full diagrams:
 | **API Versioning** | ✅ 已完成 | 版本路由中間件（Phase 5） |
 | **i18n 系統** | ✅ 已完成 | I18nManager、PromptManager、4 個 handler + 4 個 LLM 模組 i18n、45 個測試（Phase 7） |
 | **測試** | ✅ 通過 | ~4,387 (tests/) — 0 collection errors |
-| **智能分數** | ✅ 已評分 | 6.0/10 (有 LLM) / 4.5/10 (純 ED3N+GARDEN) |
+| **智能分數** | ✅ 已評分 | 6.0/10 (有 LLM) / 3.0/10 (純 ED3N+GARDEN) |
 | **Master Task Map** | ✅ 已建立 | 23 份計畫全部交叉參照、144 項 claim 驗證、26 個 DO-NOT-REIMPLEMENT |
 | **因果鏈完成度** | ✅ 已建立 | `docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md` — §0 無 stub 原則、真實深度分數、時脈審計 |
 | **EmotionSystem 行為驅動** | ✅ **已完成** | `apply_influence()` 現在修改 PAD 狀態，`get_behavioral_adjustment()` 映射情緒→routing_mode/response_style，已接入管線第5步 |

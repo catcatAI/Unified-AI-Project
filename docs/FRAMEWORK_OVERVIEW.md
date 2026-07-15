@@ -10,9 +10,9 @@
 # Angela AI Framework Overview
 
 > **Framework positioning**: A modular, extensible framework for building digital life systems with hybrid AI (LLM + SNN + biological simulation).
-> **Codebase**: 612 Python files (~96K lines) in `apps/backend/src/` + 50 JS files across 3 apps + 4,785 tests.
-> **Intelligence**: Upper bound 6.0/10 (with LLM API), **lower bound <0.5/10** (native engines alone — ED3N/GARDEN produce random/low-quality output without training). See [INTELLIGENCE_ASSESSMENT.md](06-project-management/INTELLIGENCE_ASSESSMENT.md) for detailed scoring.
-> **Architecture completeness**: ~85-90% (framework structure exists, but ML model weights are 5% trained).
+> **Codebase**: 612 Python files (~96K lines) in `apps/backend/src/` + 50 JS files across 3 apps + 4,387 tests.
+> **Intelligence**: Upper bound 6.0/10 (with LLM API), **native engines 3.0/10** (actual, per [INTELLIGENCE_ASSESSMENT.md](06-project-management/INTELLIGENCE_ASSESSMENT.md) — ED3N/GARDEN trained but benchmark-limited). See linked doc for detailed scoring.
+> **Architecture completeness**: ~95% (framework structure exists, but ML model weights are 5% trained).
 > **Version**: 7.5.0-dev | **License**: MIT
 
 [English](#english) | [繁體中文](#繁體中文-版本)
@@ -212,7 +212,7 @@ python scripts/run_angela.py           # Full stack
 python scripts/run_angela.py --api-only # Backend only
 
 # Test
-pytest tests/                           # 4,261 tests
+pytest tests/                           # 4,387 tests
 pytest tests/path/to/test_file.py -v    # Single file
 
 # Lint & Type-check
@@ -278,7 +278,7 @@ Each stage in the chat pipeline (`chat_routes.py`) is a function or callable cla
 | Reasoning | 4/10 | 0.5/10 | CausalReasoningEngine = Pearson correlation only. PlanningEngine = template matching. MathRippleEngine = ripple/state-propagation layer (numeric result delegated to MathVerifier, the single math source of truth). |
 | Autonomy | 3/10 | 0.5/10 | AutonomousLifeCycle wired but unstable without LLM guidance. |
 | Meta-cognition | 5/10 | 4/10 | MetaController confidence tracking works. NeuroAutoSelector heuristic-based. |
-| **Composite** | **6.0/10** | **<0.5/10** | Framework architecture ~85-90% complete. **ML training is ~5% complete.** Native engine output = low-quality/uninitialized. All real intelligence comes from LLM API wrappers. |
+| **Composite** | **6.0/10** | **3.0/10** | Framework architecture ~95% complete. **ML training is ~5% complete.** Native engine output = limited (benchmark 38%, FAQ-bot level). All real intelligence comes from LLM API wrappers. |
 
 **Key insight**: This is an **architectural framework** with production-quality structure and academic-prototype ML content. The 190+ AI classes form a complete skeleton; the muscle (trained weights) is missing. The LLM API wrappers provide the only production-quality intelligence today.
 
@@ -379,7 +379,7 @@ Unlike other AI agent frameworks (see §6.1), Angela has **actual weight-based l
 | **ML content < framework** | User experience far below architecture promise | Decoder random weights, unwired Whisper, untrained SNN |
 | **Complexity/function ratio** | 612 files but less functionality than expected | Tries to be too many things at once |
 | **Unclear user positioning** | Fails to attract any single audience clearly | Is it a developer framework? User product? Research platform? |
-| **No standard benchmarks** | MMLU, HumanEval, etc. all missing | Focus on infra tests (4,261) over quality tests |
+| **No standard benchmarks** | MMLU, HumanEval, etc. all missing | Focus on infra tests (4,387) over quality tests |
 | **Agents registered but not called** | 11 agents exist but pipeline never invokes them | Architectural decision pending |
 | **Auto-routing missing** | QueryClassifier + ModelBus exist but are bypassed by direct LLM calls | Pipeline shortcuts reduce effectiveness |
 
@@ -393,7 +393,7 @@ Unlike other AI agent frameworks (see §6.1), Angela has **actual weight-based l
 | **Bilingual i18n** | Chinese + English developers | Most frameworks are English-first |
 | **GPU-free SNN** | Low-resource environments, edge computing | TensorFlow/PyTorch require GPU for speed |
 
-**The strongest single pitch**: *"An AI that gets tired, gets hungry, lives on your desktop with a Live2D body, and runs completely offline."* — No existing project delivers all four simultaneously. **⚠️ But offline experience is currently unusable: ML model quality <0.5/10, weights random, output = noise/gray. The architecture exists; the training doesn't.**
+**The strongest single pitch**: *"An AI that gets tired, gets hungry, lives on your desktop with a Live2D body, and runs completely offline."* — No existing project delivers all four simultaneously. **⚠️ But offline (native) experience is limited: native engine scores 3.0/10 (benchmark 38%, FAQ-bot level) — functional but weak; ML weights are ~5% trained, not random. The architecture exists; training is partial.**
 
 ### 7. Known Gaps
 
@@ -615,7 +615,7 @@ Angela AI 有 **4 個學習層級**，每個建立在前者之上。這比標準
 | **中英雙語 i18n** | 中英文開發者 | 多數框架以英文優先 |
 | **免 GPU SNN** | 低資源環境、邊緣計算 | TensorFlow/PyTorch 需要 GPU |
 
-**最強單一賣點**：*「一個會累、會餓、活在桌面上、有 Live2D 身體、可以完全離線運作的 AI」* — 沒有專案同時做到這四點。**⚠️ 目前離線體驗極差**：ML 模型品質 <0.5/10，權重隨機，輸出為雜訊/灰色畫布。離線架構存在但實際運作需要大量訓練。
+**最強單一賣點**：*「一個會累、會餓、活在桌面上、有 Live2D 身體、可以完全離線運作的 AI」* — 沒有專案同時做到這四點。**⚠️ 目前離線（原生）體驗有限**：原生引擎 3.0/10（基準 38%，FAQ-bot 等級）— 可用但薄弱；ML 權重約 5% 訓練，非隨機。架構存在，訓練尚不完整。
 
 ### 7. 已知差距
 
@@ -641,4 +641,4 @@ Angela AI 有 **4 個學習層級**，每個建立在前者之上。這比標準
 
 ---
 
-**Version**: 7.5.0-dev | **Code**: 612 Python files, ~96K lines | **Tests**: 4,785 / 4,261 (41 skipped) | **Intelligence**: 6.0/0.5 (with LLM / native only) | **Architecture**: ~85-90% | **Training**: ~5%
+**Version**: 7.5.0-dev | **Code**: 612 Python files, ~96K lines | **Tests**: 4,387 (tests/; 0 errors) | **Intelligence**: 6.0/3.0 (with LLM / native) | **Architecture**: ~95% | **Training**: ~5%
