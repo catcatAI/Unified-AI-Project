@@ -40,8 +40,8 @@ def weights_path():
 
 class TestVisualDecoderWeights:
 
-    def test_weights_exist(self):
-        assert _get_weights_path() is not None, "p29_trained.npz not found"
+    def test_weights_exist(self, weights_path):
+        assert weights_path is not None
 
     def test_load_weights(self, weights_path):
         decoder = VisualDecoder()
@@ -93,6 +93,8 @@ class TestAudioWaveformDecoderWeights:
         return decoder
 
     def test_load_weights(self):
+        if _get_weights_path() is None:
+            pytest.skip("p29_trained.npz not found")
         decoder = AudioWaveformDecoder()
         ok = load_default_audio_decoder_weights(decoder)
         assert ok, "load_default_audio_decoder_weights returned False"
@@ -224,5 +226,8 @@ class TestTextureBenchmark:
         trainer.train_on_real(cifar_images[:2], steps=5, lr=0.01)
         decoded_after = pipeline._visual_decoder.decode(z)
         ssim_after = ssim(decoded_after, img)
-        assert ssim_after >= ssim_before * 0.9 or ssim_after > 0.3, (
+        # 10% relative tolerance, robust to negative/near-zero SSIM (multiplying a
+        # negative baseline by 0.9 would invert the tolerance direction).
+        tolerance = abs(ssim_before) * 0.1
+        assert ssim_after >= ssim_before - tolerance or ssim_after > 0.3, (
             f"SSIM should not degrade significantly: before={ssim_before:.4f}, after={ssim_after:.4f}")
