@@ -233,7 +233,7 @@ make llama-server
 - **Version**: 7.5.0-dev
 - **Python Files**: 612 (backend src ~96K lines)
 - **JavaScript Modules**: 50+ shared across 3 apps
-- **Tests**: ~4,387 tests collected (tests/), 0 collection errors
+- **Tests**: ~4,448 tests collected (tests/), 0 collection errors
 - **Status**: Active Development 🚧 — see [README.md](README.md) for details
 
 ---

@@ -6,7 +6,7 @@
 > **Principle**: No LLM API calls in benchmarks — scores reflect native engine only.
 > **Test command**: `python scripts/benchmark_ed3n_garden.py --engine ed3n`
 > **Test command**: `python scripts/benchmark_ed3n_garden.py --engine garden`
-> **Test count**: 4,387 collected (tests/), 0 errors
+> **Test count**: 4,448 collected (tests/), 0 errors
 
 ---
 
@@ -34,7 +34,7 @@
 | 維度 | 架構 | 框架 | 預期 | 訓練 | 驗證 | 實際 | 說明 |
 |------|:----:|:----:|:----:|:----:|:----:|:----:|------|
 | **有 LLM API** | — | — | — | — | — | **6.0/10** | 自然對話靠外部 API，本地無推理能力 |
-| **無 LLM (原生引擎)** | — | — | — | **3.0/10** | **38%** | **3.0/10** | 訓練集 accuracy 0.914，但基準測試 38% |
+| **無 LLM (原生引擎)** | — | — | — | **3.0/10** | **ED3N 33% / GARDEN 40%** | **3.0/10** | 訓練集 accuracy 0.914，但基準測試 ED3N 33.3% / GARDEN 40.0% (re-measured 2026-07-15, benchmark_ed3n_garden.py, 15 cases) |
 | **架構完整度** | **95%** | — | — | — | — | — | 框架就位，三模態架構已接通 |
 | **多模態管線** | — | **9/10** | — | **5/10** | — | **5/10** | 管線完整，三模態共享潛空間已接通 |
 
@@ -127,7 +127,7 @@
 
 | 指標 | 訓練結果 | 基準測試 | 差異原因 |
 |------|---------|---------|---------|
-| ED3N accuracy | 0.914 | 38% (5/13) | 訓練 accuracy 測試在訓練集上；基準測試在未見過的問題上 |
+| ED3N accuracy | 0.914 | 33.3% (5/15, re-measured 2026-07-15) | 訓練 accuracy 測試在訓練集上；基準測試在未見過的問題上 |
 | GARDEN accuracy | 0.700 | 0% (知識) | 訓練 accuracy 測試在訓練集上；基準測試在英文知識上 |
 | JointTrainer accuracy | 0.939 | — | JointTrainer 未在基準測試中驗證 |
 

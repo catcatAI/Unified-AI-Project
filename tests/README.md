@@ -3,7 +3,7 @@
 ## Overview
 
 This directory contains the Unified AI Project test suite. Tests are organized by domain.
-**4,387 tests collected** (tests/; authoritative count per AGENTS.md, last verified after §X #208 — DI path validation + route fix).
+**4,448 tests collected** (tests/; authoritative count per AGENTS.md, last verified after §X #208 — DI path validation + route fix).
 
 Historical executed run (pre-cleanup, ~2026-07-14): 4,544 passed, 185 failed, 39 errors, 85 skipped, 2 xfailed. The failures below explain the 185/39.
 
@@ -126,7 +126,7 @@ Key aspects to verify during testing:
 | Integration | ~150+ |
 | Training | ~100+ |
 | Other | ~3,000+ |
-| **Total** | **4,387** |
+| **Total** | **4,448** |
 
 ## Known Test Failure Categories (2026-07-14 Audit)
 
