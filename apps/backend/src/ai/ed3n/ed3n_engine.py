@@ -55,7 +55,9 @@ class ReflexLayer:
                 if len(pattern) < self.min_pattern_len:
                     continue
                 if pattern in normalized:
-                    if self.min_pattern_len >= limit_value("ai.ed3n_engine.reflex_min_match_len", 3) or len(pattern) >= limit_value("ai.ed3n_engine.reflex_min_match_len", 3):
+                    if self.min_pattern_len >= limit_value(
+                        "ai.ed3n_engine.reflex_min_match_len", 3
+                    ) or len(pattern) >= limit_value("ai.ed3n_engine.reflex_min_match_len", 3):
                         self._add_to_cache(normalized, response)
                         return response
                     if self._is_word_boundary_match(normalized, pattern):
@@ -194,7 +196,11 @@ class ED3NEngine:
         self, input_text: str, context: Optional[Dict[str, Any]] = None, depth: str = "auto"
     ) -> str:
         # Lazy-load external dictionaries on first query if not already loaded
-        if not self._external_dicts_loaded and self.dictionary is not None and len(self.dictionary.entries) < 100:
+        if (
+            not self._external_dicts_loaded
+            and self.dictionary is not None
+            and len(self.dictionary.entries) < 100
+        ):
             try:
                 count = self.load_external_dictionaries()
                 if count > 0:
@@ -253,7 +259,9 @@ class ED3NEngine:
         keys = self.dictionary.encode(input_text)
         return keys, cache_hit
 
-    def _snn_process(self, keys: List[str], context: Optional[Dict[str, Any]], depth: str) -> object:
+    def _snn_process(
+        self, keys: List[str], context: Optional[Dict[str, Any]], depth: str
+    ) -> object:
         if depth == "snn":
             was_snn = self.snn_mode
             self.snn_mode = True
@@ -292,7 +300,17 @@ class ED3NEngine:
             return reflex_result
 
         if depth == "reflex":
-            return self._telemetry_return(query_id, input_text, stages, reflex_match=None, cache_hit=False, matched_keys=[], output_text="", confidence=0.0, is_fallback=False)
+            return self._telemetry_return(
+                query_id,
+                input_text,
+                stages,
+                reflex_match=None,
+                cache_hit=False,
+                matched_keys=[],
+                output_text="",
+                confidence=0.0,
+                is_fallback=False,
+            )
 
         # Stage 1.5: Math evaluation
         math_result = self._stage_math(input_text, query_id, stages)
@@ -302,7 +320,17 @@ class ED3NEngine:
         # Stage 2: Encode
         keys, cache_hit = self._stage_encode(input_text, query_id, stages)
         if not keys:
-            return self._telemetry_return(query_id, input_text, stages, reflex_match=None, cache_hit=cache_hit, matched_keys=[], output_text=FALLBACK_STR, confidence=0.0, is_fallback=True)
+            return self._telemetry_return(
+                query_id,
+                input_text,
+                stages,
+                reflex_match=None,
+                cache_hit=cache_hit,
+                matched_keys=[],
+                output_text=FALLBACK_STR,
+                confidence=0.0,
+                is_fallback=True,
+            )
 
         # Stage 2.7: Latent space reasoning — find additional concepts via SharedLatentSpace
         latent_keys = self._stage_latent_reasoning(input_text, keys, query_id, stages)
@@ -313,8 +341,20 @@ class ED3NEngine:
         enriched, confidence = self._stage_enrich(input_text, keys, query_id, stages)
 
         if depth == "shallow" or (depth == "auto" and not context):
-            output = self._stage_shallow_decode(keys, context, query_id, stages, cache_hit, FALLBACK_STR)
-            return self._telemetry_return(query_id, input_text, stages, reflex_match=None, cache_hit=cache_hit, matched_keys=keys, output_text=output, confidence=confidence, is_fallback=(not output or output == FALLBACK_STR))
+            output = self._stage_shallow_decode(
+                keys, context, query_id, stages, cache_hit, FALLBACK_STR
+            )
+            return self._telemetry_return(
+                query_id,
+                input_text,
+                stages,
+                reflex_match=None,
+                cache_hit=cache_hit,
+                matched_keys=keys,
+                output_text=output,
+                confidence=confidence,
+                is_fallback=(not output or output == FALLBACK_STR),
+            )
 
         # Stage 3: Network forward
         network_output = self._stage_network_forward(keys, context, depth, query_id, stages)
@@ -324,23 +364,71 @@ class ED3NEngine:
         response = self._stage_anchored_decode(network_output, keys, enriched, query_id, stages)
         if not response:
             fallback = self.dictionary.decode(keys, context) or FALLBACK_STR
-            return self._telemetry_return(query_id, input_text, stages, reflex_match=None, cache_hit=cache_hit, matched_keys=keys, output_text=fallback, confidence=enriched_conf, is_fallback=True)
+            return self._telemetry_return(
+                query_id,
+                input_text,
+                stages,
+                reflex_match=None,
+                cache_hit=cache_hit,
+                matched_keys=keys,
+                output_text=fallback,
+                confidence=enriched_conf,
+                is_fallback=True,
+            )
 
         # Stage 5: Validate
         valid_output = self._stage_validate(response, keys, query_id, stages)
         if valid_output is not None:
-            return self._telemetry_return(query_id, input_text, stages, reflex_match=None, cache_hit=cache_hit, matched_keys=keys, output_text=valid_output, confidence=enriched_conf, is_fallback=True)
+            return self._telemetry_return(
+                query_id,
+                input_text,
+                stages,
+                reflex_match=None,
+                cache_hit=cache_hit,
+                matched_keys=keys,
+                output_text=valid_output,
+                confidence=enriched_conf,
+                is_fallback=True,
+            )
 
         # Stage 6: Cycling — iterative refinement if confidence is low
-        current_output = self._stage_cycling(keys, context, depth, enriched, response, enriched_conf, input_text)
-        return self._telemetry_return(query_id, input_text, stages, reflex_match=None, cache_hit=cache_hit, matched_keys=keys, output_text=current_output, confidence=enriched_conf, is_fallback=False)
+        current_output = self._stage_cycling(
+            keys, context, depth, enriched, response, enriched_conf, input_text
+        )
+        return self._telemetry_return(
+            query_id,
+            input_text,
+            stages,
+            reflex_match=None,
+            cache_hit=cache_hit,
+            matched_keys=keys,
+            output_text=current_output,
+            confidence=enriched_conf,
+            is_fallback=False,
+        )
 
-    def _telemetry_return(self, query_id, input_text, stages, reflex_match, cache_hit, matched_keys, output_text, confidence, is_fallback):
+    def _telemetry_return(
+        self,
+        query_id,
+        input_text,
+        stages,
+        reflex_match,
+        cache_hit,
+        matched_keys,
+        output_text,
+        confidence,
+        is_fallback,
+    ):
         self.telemetry.record_query(
-            query_id=query_id, input_text=input_text, stages=stages,
-            reflex_match=reflex_match, cache_hit=cache_hit,
-            matched_keys=matched_keys, output_text=output_text,
-            confidence=confidence, is_fallback=is_fallback,
+            query_id=query_id,
+            input_text=input_text,
+            stages=stages,
+            reflex_match=reflex_match,
+            cache_hit=cache_hit,
+            matched_keys=matched_keys,
+            output_text=output_text,
+            confidence=confidence,
+            is_fallback=is_fallback,
         )
         self._last_confidence = confidence
         return output_text
@@ -350,7 +438,17 @@ class ED3NEngine:
         result = self._reflex_match(input_text)
         stages["reflex"] = (time.perf_counter() - t0) * 1000
         if result is not None:
-            return self._telemetry_return(query_id, input_text, stages, reflex_match=result, cache_hit=False, matched_keys=[], output_text=result, confidence=1.0, is_fallback=False)
+            return self._telemetry_return(
+                query_id,
+                input_text,
+                stages,
+                reflex_match=result,
+                cache_hit=False,
+                matched_keys=[],
+                output_text=result,
+                confidence=1.0,
+                is_fallback=False,
+            )
         return None
 
     def _stage_math(self, input_text, query_id, stages):
@@ -358,7 +456,17 @@ class ED3NEngine:
         result = self._try_math_eval(input_text)
         stages["math"] = (time.perf_counter() - t0) * 1000
         if result is not None:
-            return self._telemetry_return(query_id, input_text, stages, reflex_match=None, cache_hit=False, matched_keys=[], output_text=result, confidence=1.0, is_fallback=False)
+            return self._telemetry_return(
+                query_id,
+                input_text,
+                stages,
+                reflex_match=None,
+                cache_hit=False,
+                matched_keys=[],
+                output_text=result,
+                confidence=1.0,
+                is_fallback=False,
+            )
         return None
 
     def _stage_encode(self, input_text, query_id, stages):
@@ -367,8 +475,9 @@ class ED3NEngine:
         stages["encode"] = (time.perf_counter() - t0) * 1000
         return keys, cache_hit
 
-    def _stage_latent_reasoning(self, input_text: str, existing_keys: List[str],
-                                 query_id: str, stages: Dict[str, float]) -> List[str]:
+    def _stage_latent_reasoning(
+        self, input_text: str, existing_keys: List[str], query_id: str, stages: Dict[str, float]
+    ) -> List[str]:
         """Use LatentReasoningNetwork for neural reasoning from latent space.
 
         Architecture:
@@ -389,7 +498,7 @@ class ED3NEngine:
 
             # Encode text to latent vector
             vec = self._text_encoder.encode(input_text)
-            if vec is None or (hasattr(vec, '__len__') and len(vec) == 0):
+            if vec is None or (hasattr(vec, "__len__") and len(vec) == 0):
                 stages["latent"] = (time.perf_counter() - t0) * 1000
                 return additional_keys
 
@@ -459,7 +568,9 @@ class ED3NEngine:
             return self.dictionary.decode(keys, None) or response
         return None
 
-    def _stage_cycling(self, keys, context, depth, enriched, initial_response, initial_confidence, input_text):
+    def _stage_cycling(
+        self, keys, context, depth, enriched, initial_response, initial_confidence, input_text
+    ):
         MAX_CYCLES = getattr(self, "max_cycles", 3)
         CONFIDENCE_THRESHOLD = 0.7
         current_output = initial_response
@@ -506,9 +617,7 @@ class ED3NEngine:
     def process_reflex(self, input_text: str) -> Optional[str]:
         return self.reflex.process(input_text)
 
-    def process_shallow(
-        self, input_text: str, context: Optional[Dict[str, Any]] = None
-    ) -> str:
+    def process_shallow(self, input_text: str, context: Optional[Dict[str, Any]] = None) -> str:
         if not input_text:
             return self._fallback_str(input_text)
         keys = self.dictionary.encode(input_text)
@@ -524,9 +633,7 @@ class ED3NEngine:
             self._snn_network.connect_modulator(self.modulator)
         return self._snn_network
 
-    def process_deep(
-        self, input_text: str, context: Optional[Dict[str, Any]] = None
-    ) -> str:
+    def process_deep(self, input_text: str, context: Optional[Dict[str, Any]] = None) -> str:
         if not input_text:
             return self._fallback_str(input_text)
         keys = self.dictionary.encode(input_text)
@@ -555,9 +662,7 @@ class ED3NEngine:
 
         return response
 
-    def process_snn(
-        self, input_text: str, context: Optional[Dict[str, Any]] = None
-    ) -> str:
+    def process_snn(self, input_text: str, context: Optional[Dict[str, Any]] = None) -> str:
         """Deep processing with SNN core (regardless of self.snn_mode)."""
         with self._process_lock:
             was_snn = self.snn_mode
@@ -580,6 +685,7 @@ class ED3NEngine:
         if enable_text:
             try:
                 from ai.multimodal.text_encoder import TextEncoder
+
                 text_encoder = TextEncoder(feature_dim=512)
                 self.dictionary.modality_encoders["text"] = text_encoder
                 logger.info("ED3N text modality encoder enabled")
@@ -589,7 +695,12 @@ class ED3NEngine:
             dictionary_layer=self.dictionary,
             core_network=self.network,
         )
-        logger.info("ED3N multimodal enabled (image=%s, audio=%s, text=%s)", enable_image, enable_audio, enable_text)
+        logger.info(
+            "ED3N multimodal enabled (image=%s, audio=%s, text=%s)",
+            enable_image,
+            enable_audio,
+            enable_text,
+        )
 
     def enable_latent_space(self) -> None:
         """Enable SharedLatentSpace for text reasoning.
@@ -603,9 +714,9 @@ class ED3NEngine:
         dictionary encoding for richer semantic understanding.
         """
         try:
+            from ai.multimodal.latent_reasoning_network import LatentReasoningNetwork
             from ai.multimodal.shared_latent_space import SharedLatentSpace, get_shared_latent_space
             from ai.multimodal.text_encoder import TextEncoder
-            from ai.multimodal.latent_reasoning_network import LatentReasoningNetwork
 
             self._latent_space = get_shared_latent_space(latent_dim=64)
             self._text_encoder = TextEncoder(feature_dim=512)
@@ -629,7 +740,7 @@ class ED3NEngine:
             return None
         try:
             vec = self._text_encoder.encode(text)
-            if vec is None or (hasattr(vec, '__len__') and len(vec) == 0):
+            if vec is None or (hasattr(vec, "__len__") and len(vec) == 0):
                 return None
             latent = self._latent_space.project("text", vec)
             return latent
@@ -669,6 +780,7 @@ class ED3NEngine:
         """Lazy-create the SemanticKeyMapper (P44)."""
         if self._semantic_key_mapper is None:
             from ai.multimodal.semantic_key_mapper import SemanticKeyMapper
+
             self._semantic_key_mapper = SemanticKeyMapper(max_entries=10000)
             self._populate_key_mapper()
         return self._semantic_key_mapper
@@ -684,11 +796,12 @@ class ED3NEngine:
             return
         try:
             import numpy as np
+
             count = 0
             for key in list(self.dictionary.entries.keys())[:5000]:
                 # Create a simple hash-based latent for each concept
                 # This is a placeholder until we have real concept embeddings
-                rng = np.random.default_rng(hash(key) % (2 ** 31))
+                rng = np.random.default_rng(hash(key) % (2**31))
                 latent = rng.normal(0, 0.1, 64).astype(np.float32)
                 self._semantic_key_mapper.index_key(key, structural_latent=latent)
                 count += 1
@@ -699,9 +812,9 @@ class ED3NEngine:
     def is_multimodal_available(self) -> bool:
         return self.image_encoder is not None or self.audio_encoder is not None
 
-    def _process_semantic_keys(self,
-                                image_data: Optional[Any] = None,
-                                audio_data: Optional[Any] = None) -> List[str]:
+    def _process_semantic_keys(
+        self, image_data: Optional[Any] = None, audio_data: Optional[Any] = None
+    ) -> List[str]:
         """Use DualEncoderRouter + SemanticKeyMapper to find concept keys
         from semantic latent vectors (P44).
 
@@ -717,7 +830,7 @@ class ED3NEngine:
 
         mapper = self._get_semantic_key_mapper()
         semantic_keys: List[str] = []
-        query_latents: List[np.ndarray] = []
+        query_latents: List[Any] = []
 
         if image_data:
             try:
@@ -792,9 +905,13 @@ class ED3NEngine:
         try:
             rag_entries = []
             if image_data:
-                rag_entries = self.multimodal_adapter.retrieve_multimodal(image_data=image_data, top_k=3)
+                rag_entries = self.multimodal_adapter.retrieve_multimodal(
+                    image_data=image_data, top_k=3
+                )
             elif audio_data:
-                rag_entries = self.multimodal_adapter.retrieve_multimodal(audio_data=audio_data, top_k=3)
+                rag_entries = self.multimodal_adapter.retrieve_multimodal(
+                    audio_data=audio_data, top_k=3
+                )
             for entry in rag_entries:
                 key = entry.get("key", "")
                 if key and key not in combined_keys:
@@ -863,9 +980,7 @@ class ED3NEngine:
     @property
     def step_decoder(self) -> StepDecoder:
         if self._step_decoder is None:
-            self._step_decoder = StepDecoder(
-                dictionary=self.dictionary, network=self.network
-            )
+            self._step_decoder = StepDecoder(dictionary=self.dictionary, network=self.network)
         return self._step_decoder
 
     def generate(
@@ -938,6 +1053,7 @@ class ED3NEngine:
             logger.info("Loaded %d reflex patterns from checkpoint.", len(state["reflex_patterns"]))
         if "network" in state:
             from ai.ed3n.core_network import CoreNetwork
+
             self.network = CoreNetwork.from_dict(state["network"], classifier=self.classifier)
             logger.info("Loaded CoreNetwork from checkpoint.")
         dict_path = path.replace(".json", "_dictionary.json")
@@ -1001,6 +1117,7 @@ class ED3NEngine:
         """Load all presets from JSON config files instead of hardcoded Python."""
         import json
         import os
+
         if config_dir is None:
             config_dir = os.path.join(os.path.dirname(__file__), "config")
 
@@ -1018,8 +1135,12 @@ class ED3NEngine:
 
         # Load dictionary entries from JSON
         loaded = self.dictionary.load_preset_responses_from_dir(config_dir)
-        logger.info("ED3NEngine loaded %d entries and %d reflex patterns from config dir: %s",
-                    loaded, len(self.reflex.patterns), config_dir)
+        logger.info(
+            "ED3NEngine loaded %d entries and %d reflex patterns from config dir: %s",
+            loaded,
+            len(self.reflex.patterns),
+            config_dir,
+        )
 
     @staticmethod
     def _find_project_root() -> str:
@@ -1064,13 +1185,17 @@ class ED3NEngine:
         # Use orjson for ~3-5x faster JSON parsing when available
         try:
             import orjson as _fast_json
+
             def _load_json(fpath):
                 with open(fpath, "rb") as f:
                     return _fast_json.loads(f.read())
+
         except ImportError:
+
             def _load_json(fpath):
                 with open(fpath, "r", encoding="utf-8") as f:
                     return json.load(f)
+
         for fname in ("cedict.json", "jmdict.json", "wordnet.json"):
             fpath = os.path.join(dict_dir, fname)
             if not os.path.exists(fpath):

@@ -9,7 +9,7 @@ import logging
 import re
 import threading
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from ai.core.unicode_utils import is_cjk, normalize_text, to_romaji
 from core.system.config.magic_numbers import (
@@ -107,8 +107,8 @@ class DictionaryLayer:
         scored.sort(key=lambda x: x[1], reverse=True)
         filtered = [k for k, s in scored if s >= self.MIN_ENCODE_SCORE]
         if not filtered:
-            return raw[:self.MAX_ENCODE_KEYS]
-        return filtered[:self.MAX_ENCODE_KEYS]
+            return raw[: self.MAX_ENCODE_KEYS]
+        return filtered[: self.MAX_ENCODE_KEYS]
 
     def encode_soft(self, text: str) -> Dict[str, float]:
         if not text or not isinstance(text, str):
@@ -151,10 +151,17 @@ class DictionaryLayer:
                         best = max(best, 0.05)
                     else:
                         ratio = len(sf_lower) / max_len
-                        best = max(best, ratio * behavior_threshold("ai.dictionary_layer.encode_exact_weight", 0.85))
+                        best = max(
+                            best,
+                            ratio
+                            * behavior_threshold("ai.dictionary_layer.encode_exact_weight", 0.85),
+                        )
                 if text_lower in sf_lower:
                     ratio = len(text_lower) / max(len(sf_lower), 1)
-                    best = max(best, ratio * behavior_threshold("ai.dictionary_layer.encode_substr_weight", 0.6))
+                    best = max(
+                        best,
+                        ratio * behavior_threshold("ai.dictionary_layer.encode_substr_weight", 0.6),
+                    )
             if best > 0:
                 scores[key] = round(best * entry.confidence, 4)
         return scores
@@ -168,8 +175,7 @@ class DictionaryLayer:
         if not keys or not context:
             return keys
         context_text = " ".join(
-            str(v) for v in context.values()
-            if isinstance(v, (str, list)) and v
+            str(v) for v in context.values() if isinstance(v, (str, list)) and v
         )
         if not context_text:
             return keys
@@ -296,9 +302,7 @@ class DictionaryLayer:
         self._dirty = True
         return count
 
-    def grow(
-        self, text: str, surface_form: str, confidence: float = 0.5
-    ) -> str:
+    def grow(self, text: str, surface_form: str, confidence: float = 0.5) -> str:
         if not text or not isinstance(text, str):
             logger.warning("Cannot grow entry from empty text")
             return ""
@@ -317,13 +321,15 @@ class DictionaryLayer:
         )
         self.entries[key] = entry
         self._dirty = True
-        self._growth_history.append({
-            "timestamp": datetime.datetime.now().isoformat(),
-            "key": key,
-            "surface_form": surface_form,
-            "source_text": text,
-            "confidence": confidence,
-        })
+        self._growth_history.append(
+            {
+                "timestamp": datetime.datetime.now().isoformat(),
+                "key": key,
+                "surface_form": surface_form,
+                "source_text": text,
+                "confidence": confidence,
+            }
+        )
         if len(self._growth_history) > limit_value("ai.dictionary_layer.growth_history_max", 5000):
             self._growth_history.pop(0)
         logger.info("Grew new entry: %s -> %s (%s)", key, surface_form, text)
@@ -337,9 +343,7 @@ class DictionaryLayer:
         transitive: List[str] = []
         for s in syns:
             if s in self.entries:
-                transitive.extend(
-                    self.entries[s].relations.get("synonym", [])
-                )
+                transitive.extend(self.entries[s].relations.get("synonym", []))
         merged: List[str] = []
         seen: set = set()
         for k in syns + transitive:
@@ -360,9 +364,7 @@ class DictionaryLayer:
 
         return evaluate_math(text)
 
-    def get_related(
-        self, key: str, relation_type: Optional[str] = None
-    ) -> List[str]:
+    def get_related(self, key: str, relation_type: Optional[str] = None) -> List[str]:
         entry = self.entries.get(key)
         if entry is None:
             return []
@@ -385,13 +387,18 @@ class DictionaryLayer:
                 self.add_entry(**preset)
                 loaded += 1
         self._rebuild_index()
-        logger.info("Loaded %d preset entries (%d new, %d skipped).",
-                     len(presets), loaded, len(presets) - loaded)
+        logger.info(
+            "Loaded %d preset entries (%d new, %d skipped).",
+            len(presets),
+            loaded,
+            len(presets) - loaded,
+        )
 
     def load_preset_responses_from_dir(self, config_dir: Optional[str] = None) -> int:
         """Load dictionary entries + reflex from config JSON files."""
         import json
         import os
+
         if config_dir is None:
             config_dir = os.path.join(os.path.dirname(__file__), "config")
         loaded = 0
@@ -414,14 +421,17 @@ class DictionaryLayer:
                     self.add_entry(**entry_data)
                     loaded += 1
         self._rebuild_index()
-        logger.info("Loaded %d entries and %d reflex patterns from %s", loaded, patterns_loaded, config_dir)
+        logger.info(
+            "Loaded %d entries and %d reflex patterns from %s", loaded, patterns_loaded, config_dir
+        )
         return loaded
 
     def get_stats(self) -> Dict[str, Any]:
         total_relations = sum(len(e.relations) for e in self.entries.values())
         avg_confidence = (
             sum(e.confidence for e in self.entries.values()) / len(self.entries)
-            if self.entries else 0.0
+            if self.entries
+            else 0.0
         )
         type_dist: Dict[str, int] = {}
         for e in self.entries.values():
@@ -435,7 +445,11 @@ class DictionaryLayer:
             "growth_history_count": len(self._growth_history),
         }
 
-    def prune(self, min_confidence: float = threshold_value("ai.dictionary_layer.prune_min_confidence", 0.1), max_age_days: int = limit_value("ai.dictionary_layer.prune_max_age_days", 365)) -> int:
+    def prune(
+        self,
+        min_confidence: float = threshold_value("ai.dictionary_layer.prune_min_confidence", 0.1),
+        max_age_days: int = limit_value("ai.dictionary_layer.prune_max_age_days", 365),
+    ) -> int:
         pruned = 0
         now = datetime.datetime.now()
         keys_to_delete = []
@@ -453,14 +467,20 @@ class DictionaryLayer:
                             keys_to_delete.append(key)
                             continue
                     except ValueError:
-                        logger.debug("Prune: invalid timestamp format for key %s", key, exc_info=True)
+                        logger.debug(
+                            "Prune: invalid timestamp format for key %s", key, exc_info=True
+                        )
         for key in keys_to_delete:
             del self.entries[key]
             pruned += 1
         if keys_to_delete:
             self._rebuild_index()
-            logger.info("Pruned %d low-confidence/stale entries (min_conf=%.2f, max_age=%dd)",
-                        pruned, min_confidence, max_age_days)
+            logger.info(
+                "Pruned %d low-confidence/stale entries (min_conf=%.2f, max_age=%dd)",
+                pruned,
+                min_confidence,
+                max_age_days,
+            )
         return pruned
 
     def detect_new_concepts(self, text: str, known_keys: List[str]) -> List[Dict[str, Any]]:
@@ -484,21 +504,31 @@ class DictionaryLayer:
             seen.add(token)
             is_chinese = bool(re.match(r"[\u4e00-\u9fff]", token))
             if is_chinese and len(token) >= 2:
-                confidence = confidence_value("ai.dictionary_layer.concept_base_conf", 0.4) + min(len(token) * learning_rate("ai.dictionary_layer.concept_len_factor", 0.05), confidence_value("ai.dictionary_layer.concept_max_bonus", 0.3))
+                confidence = confidence_value("ai.dictionary_layer.concept_base_conf", 0.4) + min(
+                    len(token) * learning_rate("ai.dictionary_layer.concept_len_factor", 0.05),
+                    confidence_value("ai.dictionary_layer.concept_max_bonus", 0.3),
+                )
             elif not is_chinese and len(token) >= 4:
-                confidence = confidence_value("ai.dictionary_layer.concept_base_conf", 0.4) + min(len(token) * learning_rate("ai.dictionary_layer.concept_len_factor_en", 0.03), confidence_value("ai.dictionary_layer.concept_max_bonus", 0.3))
+                confidence = confidence_value("ai.dictionary_layer.concept_base_conf", 0.4) + min(
+                    len(token) * learning_rate("ai.dictionary_layer.concept_len_factor_en", 0.03),
+                    confidence_value("ai.dictionary_layer.concept_max_bonus", 0.3),
+                )
             else:
                 confidence = confidence_value("ai.dictionary_layer.concept_min_conf", 0.2)
-            candidates.append({
-                "text": token,
-                "surface_form": token if is_chinese else f"en:{token}",
-                "confidence": round(confidence, 2),
-                "source_position": text_lower.find(token),
-            })
+            candidates.append(
+                {
+                    "text": token,
+                    "surface_form": token if is_chinese else f"en:{token}",
+                    "confidence": round(confidence, 2),
+                    "source_position": text_lower.find(token),
+                }
+            )
         return candidates
 
     def learn_from_conversation(
-        self, utterances: List[str], min_confidence: float = threshold_value("ai.dictionary_layer.learn_min_confidence", 0.4)
+        self,
+        utterances: List[str],
+        min_confidence: float = threshold_value("ai.dictionary_layer.learn_min_confidence", 0.4),
     ) -> List[str]:
         new_keys: List[str] = []
         all_text = " ".join(utterances)
@@ -513,7 +543,7 @@ class DictionaryLayer:
                     new_keys.append(key)
                     batch_new.append(key)
         for i, k1 in enumerate(batch_new):
-            for k2 in batch_new[i + 1:]:
+            for k2 in batch_new[i + 1 :]:
                 self.entries[k1].relations.setdefault("mapping", []).append(k2)
                 self.entries[k2].relations.setdefault("mapping", []).append(k1)
         if batch_new:
@@ -522,7 +552,9 @@ class DictionaryLayer:
 
     def merge_entries(self, source_key: str, target_key: str) -> bool:
         if source_key not in self.entries or target_key not in self.entries:
-            logger.warning("Cannot merge: one or both keys not found (%s, %s)", source_key, target_key)
+            logger.warning(
+                "Cannot merge: one or both keys not found (%s, %s)", source_key, target_key
+            )
             return False
         if source_key == target_key:
             logger.warning("Cannot merge entry with itself")
@@ -695,14 +727,18 @@ class DictionaryLayer:
             {
                 "key": "p2",
                 "surface_forms": {"zh": "对不起", "en": "sorry"},
-                "contexts": [{"context_id": "politeness", "formality": "neutral", "sentiment": "apology"}],
+                "contexts": [
+                    {"context_id": "politeness", "formality": "neutral", "sentiment": "apology"}
+                ],
                 "relations": {"synonym": ["r2"], "mapping": ["r1"]},
                 "confidence": 1.0,
             },
             {
                 "key": "p3",
                 "surface_forms": {"zh": "没关系", "en": "no problem"},
-                "contexts": [{"context_id": "politeness", "formality": "neutral", "sentiment": "forgiveness"}],
+                "contexts": [
+                    {"context_id": "politeness", "formality": "neutral", "sentiment": "forgiveness"}
+                ],
                 "relations": {"synonym": ["r3"], "mapping": ["p2"]},
                 "confidence": 1.0,
             },

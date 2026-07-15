@@ -8,16 +8,19 @@
 import asyncio
 import functools
 import logging
-from typing import Any, Callable, Coroutine, Optional, Set
+from typing import Any, Callable, Coroutine, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
 # 全域任務追蹤，防止垃圾回收導致任務中斷
 _background_tasks: Set[asyncio.Task] = set()
 
-def safe_create_task_sync(coro: Coroutine[Any, Any, Any],
-                          name: Optional[str] = None,
-                          on_error: Optional[Callable[[Exception], None]] = None) -> Optional[asyncio.Task]:
+
+def safe_create_task_sync(
+    coro: Coroutine[Any, Any, Any],
+    name: Optional[str] = None,
+    on_error: Optional[Callable[[Exception], None]] = None,
+) -> Optional[asyncio.Task]:
     """
     [Thread-Safe] 從同步上下文安全建立 async 任務。
     若無 running event loop 則靜默跳過（不崩潰）。
@@ -34,7 +37,9 @@ def safe_create_task_sync(coro: Coroutine[Any, Any, Any],
             except asyncio.CancelledError:
                 logger.debug(f"[Async-Task] Task '{name or 'unnamed'}' was cancelled")
             except Exception as e:
-                logger.error(f"❌ [Async-Task] Task '{name or 'unnamed'}' failed: {e}", exc_info=True)
+                logger.error(
+                    f"❌ [Async-Task] Task '{name or 'unnamed'}' failed: {e}", exc_info=True
+                )
                 if on_error:
                     on_error(e)
 
@@ -45,9 +50,11 @@ def safe_create_task_sync(coro: Coroutine[Any, Any, Any],
         return None
 
 
-def safe_create_task(coro: Coroutine[Any, Any, Any], 
-                     name: Optional[str] = None,
-                     on_error: Optional[Callable[[Exception], None]] = None) -> asyncio.Task:
+def safe_create_task(
+    coro: Coroutine[Any, Any, Any],
+    name: Optional[str] = None,
+    on_error: Optional[Callable[[Exception], None]] = None,
+) -> asyncio.Task:
     """
     [2030 Standard] 安全地建立背景任務。
     - 自動追蹤任務引用。
@@ -56,7 +63,7 @@ def safe_create_task(coro: Coroutine[Any, Any, Any],
     """
     task = asyncio.create_task(coro, name=name)
     _background_tasks.add(task)
-    
+
     def _handle_result(t: asyncio.Task) -> None:
         """Handle result request."""
         _background_tasks.discard(t)
@@ -64,7 +71,9 @@ def safe_create_task(coro: Coroutine[Any, Any, Any],
             t.result()
         except asyncio.CancelledError:
             logger.debug(f"[Async-Task] Safe task '{name or 'unnamed'}' was cancelled")
-        except Exception as e:  # broad exception acceptable: task result handling must not crash background workers
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: task result handling must not crash background workers
             logger.error(f"❌ [Async-Task] Task '{name or 'unnamed'}' failed: {e}", exc_info=True)
             if on_error:
                 on_error(e)
@@ -72,19 +81,25 @@ def safe_create_task(coro: Coroutine[Any, Any, Any],
     task.add_done_callback(_handle_result)
     return task
 
+
 def run_in_executor(executor=None) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
     裝飾器：將同步阻塞函數運行在執行器中。
     """
+
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         """Decorator wrapper."""
+
         @functools.wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
             """Inner wrapper function."""
             loop = asyncio.get_running_loop()
             return await loop.run_in_executor(executor, functools.partial(func, *args, **kwargs))
+
         return wrapper
+
     return decorator
+
 
 async def gather_with_concurrency(n: int, *coros: Coroutine) -> List[Any]:
     """

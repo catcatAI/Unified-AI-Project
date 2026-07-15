@@ -15,7 +15,7 @@ The DualEncoderRouter:
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from core.utils import safe_error
@@ -62,11 +62,15 @@ class DualEncoderRouter:
         """
         if self._latent_space is None:
             from ai.multimodal.shared_latent_space import get_shared_latent_space
+
             self._latent_space = get_shared_latent_space(latent_dim=64)
         return self._latent_space
 
-    def semantic_consistency_report(self, vision_features: Optional[List[np.ndarray]] = None,
-                                    audio_features: Optional[List[np.ndarray]] = None) -> Dict[str, Any]:
+    def semantic_consistency_report(
+        self,
+        vision_features: Optional[List[np.ndarray]] = None,
+        audio_features: Optional[List[np.ndarray]] = None,
+    ) -> Dict[str, Any]:
         """Evaluate semantic consistency of encoder outputs.
 
         Projects feature lists through SharedLatentSpace and measures
@@ -100,24 +104,28 @@ class DualEncoderRouter:
     def _get_visual_encoder(self):
         if self._visual_encoder is None:
             from ai.multimodal.visual_encoder import VisualEncoder
+
             self._visual_encoder = VisualEncoder(feature_dim=256)
         return self._visual_encoder
 
     def _get_audio_encoder(self):
         if self._audio_encoder is None:
             from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
+
             self._audio_encoder = AudioSpectralEncoder(feature_dim=128)
         return self._audio_encoder
 
     def _get_semantic_visual(self):
         if self._semantic_visual is None:
             from ai.multimodal.semantic_visual import SemanticVisualEncoder
+
             self._semantic_visual = SemanticVisualEncoder()
         return self._semantic_visual
 
     def _get_semantic_audio(self):
         if self._semantic_audio is None:
             from ai.multimodal.semantic_audio import SemanticAudioEncoder
+
             self._semantic_audio = SemanticAudioEncoder()
         return self._semantic_audio
 
@@ -154,9 +162,9 @@ class DualEncoderRouter:
 
     # --- Encoding ---
 
-    def encode_vision(self, image_data: bytes,
-                      include_semantic: bool = True,
-                      include_structural: bool = True) -> Dict[str, Any]:
+    def encode_vision(
+        self, image_data: bytes, include_semantic: bool = True, include_structural: bool = True
+    ) -> Dict[str, Any]:
         """Encode image using both structural and semantic encoders.
 
         Args:
@@ -214,9 +222,9 @@ class DualEncoderRouter:
             result["error"] = safe_error(e)
         return result
 
-    def encode_audio(self, audio_data: bytes,
-                     include_semantic: bool = True,
-                     include_structural: bool = True) -> Dict[str, Any]:
+    def encode_audio(
+        self, audio_data: bytes, include_semantic: bool = True, include_structural: bool = True
+    ) -> Dict[str, Any]:
         """Encode audio using both structural and semantic encoders.
 
         Args:
@@ -274,12 +282,9 @@ class DualEncoderRouter:
 
     # --- Latent combination ---
 
-    def _combine_latents(self,
-                         modality: str,
-                         structural: Optional[np.ndarray],
-                         semantic: Optional[np.ndarray]) -> Tuple[Optional[np.ndarray],
-                                                                   Optional[np.ndarray],
-                                                                   Optional[np.ndarray]]:
+    def _combine_latents(
+        self, modality: str, structural: Optional[np.ndarray], semantic: Optional[np.ndarray]
+    ) -> Tuple[Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray]]:
         """Combine structural and semantic vectors through SharedLatentSpace.
 
         Unlike P42's random projection, this method:
@@ -298,11 +303,11 @@ class DualEncoderRouter:
         ls = self._get_latent_space()
 
         structural_latent = None
-        if structural is not None and hasattr(structural, 'size') and structural.size > 0:
+        if structural is not None and hasattr(structural, "size") and structural.size > 0:
             structural_latent = ls.project(modality, structural.flatten().astype(np.float32))
 
         semantic_latent = None
-        if semantic is not None and hasattr(semantic, 'size') and semantic.size > 0:
+        if semantic is not None and hasattr(semantic, "size") and semantic.size > 0:
             semantic_name = f"{modality}_semantic"
             semantic_latent = ls.project(semantic_name, semantic.flatten().astype(np.float32))
 

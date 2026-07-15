@@ -53,15 +53,17 @@ class HAMCoreStorage:
                 )
             except InvalidToken:
                 logger.error(
-                    "Failed to decrypt core memory file. MIKO_HAM_KEY might be incorrect or file corrupted. Starting with empty memory."
-                    , exc_info=True
+                    "Failed to decrypt core memory file. MIKO_HAM_KEY might be incorrect or file corrupted. Starting with empty memory.",
+                    exc_info=True,
                 )
                 core_memory_store = {}
                 next_memory_id = 0
-            except Exception as e:  # broad exception acceptable: loading should start with empty memory on failure
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: loading should start with empty memory on failure
                 logger.error(
-                    f"Error loading core memory from file {self.core_storage_filepath}: {e}. Starting with empty memory."
-                    , exc_info=True
+                    f"Error loading core memory from file {self.core_storage_filepath}: {e}. Starting with empty memory.",
+                    exc_info=True,
                 )
                 core_memory_store = {}
                 next_memory_id = 0
@@ -84,7 +86,9 @@ class HAMCoreStorage:
             if self.resource_awareness_service:
                 available_space_gb = self.resource_awareness_service.get_available_disk_space_gb()
                 if available_space_gb < 0.1:  # Example: require at least 0.1 GB free
-                    logger.warning("Insufficient disk space to save core memory. Skipping save.", exc_info=True)
+                    logger.warning(
+                        "Insufficient disk space to save core memory. Skipping save.", exc_info=True
+                    )
                     return False
 
             data_to_save = {
@@ -105,8 +109,12 @@ class HAMCoreStorage:
                 f.write(encrypted_data)
             logger.debug(f"Core memory saved to {self.core_storage_filepath}")
             return True
-        except Exception as e:  # broad exception acceptable: save failure should return False gracefully
-            logger.error(f"Error saving core memory to file {self.core_storage_filepath}: {e}", exc_info=True)
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: save failure should return False gracefully
+            logger.error(
+                f"Error saving core memory to file {self.core_storage_filepath}: {e}", exc_info=True
+            )
             return False
 
     def _get_current_disk_usage_gb(self) -> float:
@@ -118,7 +126,9 @@ class HAMCoreStorage:
 
         try:
             import shutil
+
             usage = shutil.disk_usage(self.storage_dir)
-            return usage.used / (1024 ** 3)
-        except (ImportError, AttributeError, OSError):
+            return usage.used / (1024**3)
+        except (ImportError, AttributeError, OSError) as e:
+            logger.warning("Disk usage unavailable for %s: %s", self.storage_dir, e)
             return 0.0  # Fallback value

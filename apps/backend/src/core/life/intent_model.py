@@ -67,12 +67,15 @@ class IntentManager:
             f"Intent outcome recorded: mode={key}, success={success}, "
             f"rate={rate:.2f} ({len(self._outcome_history[key])} samples)"
         )
-        state_store.emit_event("intent.outcome_recorded", {
-            "intent_mode": key,
-            "success": success,
-            "success_rate": round(rate, 3),
-            "sample_count": len(self._outcome_history[key]),
-        })
+        state_store.emit_event(
+            "intent.outcome_recorded",
+            {
+                "intent_mode": key,
+                "success": success,
+                "success_rate": round(rate, 3),
+                "sample_count": len(self._outcome_history[key]),
+            },
+        )
 
     def get_intent_success_rate(self, intent_mode: str) -> float:
         """Return the success rate for a given intent mode.
@@ -134,19 +137,25 @@ class IntentManager:
         gamma = self.active_intent_vector.get("gamma", (0.0, 0.0, 0.0))
         delta = self.active_intent_vector.get("delta", (0.0, 0.0, 0.0))
         avg_mag = (
-            sum(abs(v) for v in alpha) +
-            sum(abs(v) for v in gamma) +
-            sum(abs(v) for v in delta)
+            sum(abs(v) for v in alpha) + sum(abs(v) for v in gamma) + sum(abs(v) for v in delta)
         ) / 9.0
 
         if avg_mag < 0.1:
-            state_store.emit_event("intent.adjustment_computed", {
+            state_store.emit_event(
+                "intent.adjustment_computed",
+                {
+                    "routing_mode": None,
+                    "intent_mode": "neutral",
+                    "intent_strength": 0.0,
+                    "avg_magnitude": round(avg_mag, 4),
+                },
+            )
+            return {
                 "routing_mode": None,
+                "response_style": None,
                 "intent_mode": "neutral",
                 "intent_strength": 0.0,
-                "avg_magnitude": round(avg_mag, 4),
-            })
-            return {"routing_mode": None, "response_style": None, "intent_mode": "neutral", "intent_strength": 0.0}
+            }
 
         exploration = sum(abs(v) for v in gamma) / 3.0
         bonding = sum(abs(v) for v in delta) / 3.0
@@ -178,16 +187,19 @@ class IntentManager:
             "raw_strength": raw_strength,
             "success_rate": round(success_rate, 3),
         }
-        state_store.emit_event("intent.adjustment_computed", {
-            "routing_mode": routing_mode,
-            "intent_mode": "active",
-            "intent_strength": adjusted_strength,
-            "avg_magnitude": round(avg_mag, 4),
-            "exploration": round(exploration, 4),
-            "bonding": round(bonding, 4),
-            "energy": round(energy, 4),
-            "success_rate": round(success_rate, 3),
-        })
+        state_store.emit_event(
+            "intent.adjustment_computed",
+            {
+                "routing_mode": routing_mode,
+                "intent_mode": "active",
+                "intent_strength": adjusted_strength,
+                "avg_magnitude": round(avg_mag, 4),
+                "exploration": round(exploration, 4),
+                "bonding": round(bonding, 4),
+                "energy": round(energy, 4),
+                "success_rate": round(success_rate, 3),
+            },
+        )
         return result
 
     def scan_memory_proximity(self, bridge: Any, state: Dict[str, Any]) -> None:
@@ -223,14 +235,15 @@ class IntentManager:
                     decay_rate=0.02,
                 )
                 self.add_intent(intent)
-                state_store.emit_event("intent.homeostatic_generated", {
-                    "dimension": dimension,
-                    "category": cat.value,
-                    "urgency": intent.urgency,
-                    "strength": intent.strength,
-                })
-
-
+                state_store.emit_event(
+                    "intent.homeostatic_generated",
+                    {
+                        "dimension": dimension,
+                        "category": IntentCategory.EXPLORATION.value,
+                        "urgency": intent.urgency,
+                        "strength": intent.strength,
+                    },
+                )
 
     def generate_homeostatic_intents(self, state: Dict[str, Any]) -> None:
         """Generate homeostatic intents to restore balance.

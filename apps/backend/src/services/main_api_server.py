@@ -24,7 +24,6 @@ Usage:
 # - POST /audio - 音频处理
 # - POST /tactile - 触觉输入处理
 # - GET /pet - 宠物信息
-# - GET /economy - 经济系统
 #
 # 集成服务:
 # - VisionService: 视觉处理
@@ -33,7 +32,6 @@ Usage:
 # - ChatService: 对话生成
 # - AngelaLLMService: LLM 服务 (Ollama/GPT/Gemini)
 # - DigitalLifeIntegrator: 数字生命集成
-# - EconomyManager: 经济系统
 # - BrainBridgeService: 大脑桥接服务
 #
 # =============================================================================
@@ -75,6 +73,7 @@ def _ensure_src_in_path() -> None:
 def _init_logging() -> None:
     """Initialize the unified logging system (called once at module init)."""
     from core.logging.setup import setup_logging
+
     setup_logging(level=logging.INFO, log_file="angela_ai.log")
 
 
@@ -93,8 +92,8 @@ try:
             logger.warning(f".env file not found at: {env_path}")
 except ImportError:
     logger.warning(
-        "python-dotenv not installed, environment variables will not be loaded from .env file"
-        , exc_info=True
+        "python-dotenv not installed, environment variables will not be loaded from .env file",
+        exc_info=True,
     )
 
 # ========== 修复：系统指标管理器 ==========
@@ -354,9 +353,12 @@ class MainApiServer:
 
 if __name__ == "__main__":
     import sys
+
     if "--repl" in sys.argv:
         from cli.repl import run_repl_mode
+
         run_repl_mode()
     else:
         import uvicorn
+
         uvicorn.run(app, host="0.0.0.0", port=8000)

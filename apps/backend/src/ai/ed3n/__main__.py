@@ -26,7 +26,7 @@ logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(message)s")
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", ".."))
 
 from .ed3n_engine import ED3NEngine
-from .ed3n_trainer import ED3NTrainer
+from .ed3n_trainer import ED3NTrainer, JointTrainer
 from .training_types import TrainingBatch, TrainingExample
 
 
