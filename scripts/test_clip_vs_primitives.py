@@ -1,6 +1,8 @@
 """Compare recognition methods: primitives vs CLIP zero-shot."""
+
 import sys, os, time
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
 
 import numpy as np
 import glob
@@ -15,7 +17,9 @@ def load_test_images(n_per_class=10, skip_first=50):
     labels = []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
-        files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[skip_first:skip_first+n_per_class]
+        files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[
+            skip_first : skip_first + n_per_class
+        ]
         for f in files:
             arr = np.load(f)
             if arr.shape == (3072,):
@@ -31,6 +35,7 @@ def load_test_images(n_per_class=10, skip_first=50):
 def run_clip_zero_shot(images, labels):
     """Test CLIP zero-shot classification on CIFAR-10."""
     from ai.multimodal.semantic_visual import SemanticVisualEncoder
+
     encoder = SemanticVisualEncoder()
 
     if encoder._model is None:
@@ -55,6 +60,7 @@ def run_clip_zero_shot(images, labels):
     for i, (img, label) in enumerate(zip(images, labels)):
         # Convert PIL to bytes
         import io
+
         buf = io.BytesIO()
         img.save(buf, format="PNG")
         img_bytes = buf.getvalue()
@@ -80,7 +86,9 @@ def run_clip_zero_shot(images, labels):
 
     acc = correct / len(images)
     elapsed = time.time() - t_start
-    print(f"\nCLIP Zero-Shot: {correct}/{len(images)} = {acc:.1%} ({elapsed:.0f}s, {elapsed/len(images):.1f}s/img)")
+    print(
+        f"\nCLIP Zero-Shot: {correct}/{len(images)} = {acc:.1%} ({elapsed:.0f}s, {elapsed/len(images):.1f}s/img)"
+    )
     for cls in CLASSES:
         c, t = per_class[cls]
         print(f"  {cls:12s}: {c}/{t} = {c/t:.1%}" if t > 0 else f"  {cls}: 0")

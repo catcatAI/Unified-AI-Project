@@ -253,7 +253,9 @@ class ImportanceScorer:
             decay = self._time_decay_factor**age_days
             return max(0.3, decay)  # Minimum score of 0.3
 
-        except Exception as e:  # broad exception acceptable: time score fallback should return default
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: time score fallback should return default
             logger.warning(f"Error calculating time score: {e}", exc_info=True)
             return 0.5
 

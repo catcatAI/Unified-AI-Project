@@ -1,4 +1,5 @@
 """Test Phase 7 P0: I18nManager enhancement."""
+
 import json
 import os
 import tempfile
@@ -87,7 +88,15 @@ class TestI18nManagerEnhanced:
     def test_load_real_locale_files(self):
         """Load the actual locale files shipped with the project."""
         locale_dir = os.path.join(
-            os.path.dirname(__file__), "..", "..", "apps", "backend", "src", "core", "i18n", "locales"
+            os.path.dirname(__file__),
+            "..",
+            "..",
+            "apps",
+            "backend",
+            "src",
+            "core",
+            "i18n",
+            "locales",
         )
         if not os.path.isdir(locale_dir):
             pytest.skip("Locale directory not found")
