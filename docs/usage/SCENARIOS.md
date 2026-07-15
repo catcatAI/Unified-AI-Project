@@ -37,7 +37,7 @@ python scripts/run_angela.py
 - Chat API at `http://localhost:8000`
 
 **Limitations without LLM**:
-- Accuracy ~3.0/10 (vs ~6.0/10 with LLM, re-measured 2026-07-15)
+- Accuracy ~1.0/10 actual (vs ~6.0/10 with LLM, re-measured 2026-07-15; capability-readiness per dimension higher — see INTELLIGENCE_ASSESSMENT.md §1)
 - No advanced reasoning or code generation
 - Responses shorter and more template-driven
 

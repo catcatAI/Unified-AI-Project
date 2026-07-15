@@ -63,7 +63,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 
 > **STATUS (2026-07-14)**: §X #243-#247 — **Multi-perspective production-readiness** complete (9.5/10 for the *engineering/infra* layer — code, tests, security, deployment wiring). **§X #249-#256 — Security Sprint**: 44+ Dependabot + 18 CodeQL + 10 Secret Scanning = **72+ security alerts fixed** across 46 files; Next.js 14→16 upgrade, Vite 6.0, path traversal hardening, insecure randomness fixed, leaked API keys redacted. **Infra is deployable + security hardened.**
 >
-> ⚠️ **Honest capability note**: Version is `7.5.0-dev` (Alpha). The system needs an **external LLM API key** (OpenAI / Gemini / Ollama) for real conversational ability — its *native* engine scores **3.0/10** (benchmark ED3N 33% / GARDEN 40%, re-measured 2026-07-15) per `docs/06-project-management/INTELLIGENCE_ASSESSMENT.md`. "Production-ready" here means the **runtime/codebase is shippable**, not that the built-in AI is a finished product. See INTELLIGENCE_ASSESSMENT.md before relying on it as a standalone AI.
+> ⚠️ **Honest capability note**: Version is `7.5.0-dev` (Alpha). The system needs an **external LLM API key** (OpenAI / Gemini / Ollama) for real conversational ability. Its *native* engine **actual generalization = 1.0/10** (unseen knowledge/reasoning = 0%; math is delegated to Python `ast`, not learned). Capability-readiness per dimension (high — infra is ready): architecture **9.5**, knowledge+reasoning **8.6**, query+learning **9.0**, multimodal **5.1**, autonomy **9.0** — see `docs/06-project-management/INTELLIGENCE_ASSESSMENT.md` §1. "Production-ready" means the **runtime/codebase is shippable**, not that the built-in AI is a finished product.
 > **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → execution gate (IntentRegistry-gated) → agent routing (context enrichment) → **PriorityNegotiator** → LLM → causal learning → response.  
 > **See**: [MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md) (task provenance), [IMPROVEMENT_ROADMAP.md](docs/06-project-management/IMPROVEMENT_ROADMAP.md) (improvement roadmap), [CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md) (causal depth).
 
@@ -140,7 +140,7 @@ Upper bound (with LLM API: OpenAI/Anthropic/Ollama) vs lower bound (ED3N+GARDEN 
 | **Reasoning** | 4/10 | 3/10 | Framework exists (causal, CoT, analogical), depth limited |
 | **Autonomy** | 3/10 | 3/10 | AutonomousLifeCycle wired, behavior unstable |
 | **Meta-cognition** | 5/10 | 4/10 | MetaController: confidence calibration + LLM thresholds |
-| **Composite** | **6.0/10** | **3.0/10** | Architecture: ~95%. Actual capabilities: limited by ML model depth |
+| **Composite** | **6.0/10** | **1.0/10** (actual) | Architecture ~95% complete; native actual generalization 1.0/10 (readiness per dimension higher — see INTELLIGENCE_ASSESSMENT.md §1) |
 
 **Key**: Upper bound = connected to external LLM (realistic full-power scenario). Lower bound = ED3N+GARDEN only (no-cost fallback). See [PHASE_REVIEW6.md §4](docs/06-project-management/plans/PHASE_REVIEW6.md) for full methodology.
 
@@ -473,7 +473,7 @@ See dedicated docs for full diagrams:
 | **API Versioning** | ✅ 已完成 | 版本路由中間件（Phase 5） |
 | **i18n 系統** | ✅ 已完成 | I18nManager、PromptManager、4 個 handler + 4 個 LLM 模組 i18n、45 個測試（Phase 7） |
 | **測試** | ✅ 通過 | ~4,448 (tests/) — 0 collection errors |
-| **智能分數** | ✅ 已評分 | 6.0/10 (有 LLM) / 3.0/10 (純 ED3N+GARDEN) |
+| **智能分數** | ✅ 已評分 (多維) | 6.0/10 (有 LLM) / 1.0/10 (純原生 實際泛化); 準備度: 架構9.5/知識推理8.6/查詢學習9.0/多模態5.1/自主9.0 |
 | **Master Task Map** | ✅ 已建立 | 23 份計畫全部交叉參照、144 項 claim 驗證、26 個 DO-NOT-REIMPLEMENT |
 | **因果鏈完成度** | ✅ 已建立 | `docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md` — §0 無 stub 原則、真實深度分數、時脈審計 |
 | **EmotionSystem 行為驅動** | ✅ **已完成** | `apply_influence()` 現在修改 PAD 狀態，`get_behavioral_adjustment()` 映射情緒→routing_mode/response_style，已接入管線第5步 |
@@ -728,4 +728,4 @@ npx pnpm dev:desktop
 
 ---
 
-**Version**: 7.5.0-dev | **Code Stats**: 612 Python files, ~96K lines | **Tests**: ~4,448 (tests/) — 0 errors | **Security**: 72+ alerts fixed → 0 remaining (Dependabot/CodeQL/Secret Scanning all clean) | **Intelligence**: 6.0/10 (upper) 3.0/10 (lower, re-measured 2026-07-15) | **Architecture**: ~95% | **Learning Architecture**: 80-90% (weights ~5% trained) | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)
+**Version**: 7.5.0-dev | **Code Stats**: 612 Python files, ~96K lines | **Tests**: ~4,448 (tests/) — 0 errors | **Security**: 72+ alerts fixed → 0 remaining (Dependabot/CodeQL/Secret Scanning all clean) | **Intelligence**: 6.0/10 (upper, with LLM) / 1.0/10 (actual, native, re-measured 2026-07-15; readiness per-dimension higher — see INTELLIGENCE_ASSESSMENT.md §1) | **Architecture**: ~95% | **Learning Architecture**: 80-90% (weights ~5% trained) | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)

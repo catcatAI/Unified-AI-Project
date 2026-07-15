@@ -37,7 +37,7 @@ python scripts/run_angela.py
 - 聊天 API 在 `http://localhost:8000`
 
 **無 LLM 限制**：
-- 準確率約 3.0/10（有 LLM 約 6.0/10，2026-07-15 重新測量）
+- 準確率約 1.0/10（實際泛化；有 LLM 約 6.0/10，2026-07-15 重新測量；多維準備度見 INTELLIGENCE_ASSESSMENT.md §1）
 - 無進階推理或程式碼生成
 - 回應較短、較模板化
 

@@ -2398,7 +2398,7 @@ This document was written BEFORE Phase 11 (Jun 23) deletions. Many items it mark
 
 | Dimension | PHASE_REVIEW6 Score | Honest Audit Correction | Current Assessment (框架) | Current Assessment (訓練後) | 證據 |
 |:----------|:-------------------:|:-----------------------:|:------------------------:|:--------------------------:|:-----|
-| Text understanding | 7 | 7 | Still 7 ✅ | **3.0/10** | ED3N acc=0.914 (訓練集), 基準測試 ED3N 33% / GARDEN 40% (re-measured 2026-07-15) |
+| Text understanding | 7 | 7 | Still 7 ✅ | **1.0/10** (actual) | ED3N acc=0.914 (訓練集, 過擬合風險), 基準 ED3N 33.3% (GARDEN 本環境 timeout 不可重現) |
 | Image understanding | 7 | 7 | Still 7 ✅ | **5.0/10** | CLIP 語意已接通，但解碼器仍模糊 |
 | Speech understanding | 5 | **3** | ✅ Pipeline wired end-to-end | **5.0/10** | Whisper STT 已接通，TTS 可用 |
 | Text generation | 7 | **6** | Still 6 — depends on external LLM | **0.5/10** | ED3N/GARDEN decoder = 字典拼接 |
@@ -2406,7 +2406,7 @@ This document was written BEFORE Phase 11 (Jun 23) deletions. Many items it mark
 | Speech generation | 5 | **4** | edge-tts works | **4.0/10** | 訓練後 309x loss reduction，有結構但非語音品質 |
 | Memory | 7 | 7 | Still 7 ✅ | **7/10** | VectorStore + HAM 真正有用 |
 | Reasoning | 6 | **4** | Still 4 — framework exists, depth limited | **0.5/10** | 基準測試 0/5 |
-| Autonomy | 5 | **3** | Still 3 — framework exists, unstable | **3.0/10** | 框架完整但效果不明顯 |
+| Autonomy | 5 | **3** | Still 3 — framework exists, unstable | **1.0/10** (actual) | 框架完整但效果不明顯 |
 
 ---
 
