@@ -11,7 +11,7 @@
 
 > **Framework positioning**: A modular, extensible framework for building digital life systems with hybrid AI (LLM + SNN + biological simulation).
 > **Codebase**: 612 Python files (~96K lines) in `apps/backend/src/` + 50 JS files across 3 apps + 4,448 tests.
-> **Intelligence**: Upper bound 6.0/10 (with LLM API), **native engines actual generalization 1.0/10** (per [INTELLIGENCE_ASSESSMENT.md](06-project-management/INTELLIGENCE_ASSESSMENT.md) — multi-dimensional readiness: arch 9.5 / knowledge+reasoning 8.6 / query+learning 9.0 / multimodal 5.1 / autonomy 9.0; actual unseen-task score 1.0). See linked doc for the scoring standard.
+> **Intelligence**: Upper bound 6.0/10 (with LLM API), **native deterministic-engine capability 9.5/10** (math/physics/chemistry engines work — real, high-certainty, scored as capability); **neural open-domain generalization ≈ 0/10** (per [INTELLIGENCE_ASSESSMENT.md](06-project-management/INTELLIGENCE_ASSESSMENT.md) §1, multi-dimensional). See linked doc for the scoring standard.
 > **Architecture completeness**: ~95% (framework structure exists, but ML model weights are 5% trained).
 > **Version**: 7.5.0-dev | **License**: MIT
 
@@ -278,7 +278,7 @@ Each stage in the chat pipeline (`chat_routes.py`) is a function or callable cla
 | Reasoning | 4/10 | 0.5/10 | CausalReasoningEngine = Pearson correlation only. PlanningEngine = template matching. MathRippleEngine = ripple/state-propagation layer (numeric result delegated to MathVerifier, the single math source of truth). |
 | Autonomy | 3/10 | 0.5/10 | AutonomousLifeCycle wired but unstable without LLM guidance. |
 | Meta-cognition | 5/10 | 4/10 | MetaController confidence tracking works. NeuroAutoSelector heuristic-based. |
-| **Composite** | **6.0/10** | **1.0/10** (actual) | Framework architecture ~95% complete. **ML training is ~5% complete.** Native engine actual generalization = 1.0/10 (ED3N benchmark 33.3% re-measured; GARDEN benchmark non-reproducible in env). Capability-readiness per dimension higher — see INTELLIGENCE_ASSESSMENT.md §1. All real intelligence comes from LLM API wrappers. |
+| **Composite** | **6.0/10** | **9.5/10** (deterministic engines) / **0/10** (neural open-domain) | Framework architecture ~95% complete. **ML training is ~5% complete.** Native deterministic engines (math/physics/chemistry) work = 9.5/10 real capability; neural open-domain generalization ≈0/10. ED3N benchmark 33.3% re-measured (GARDEN non-reproducible). See INTELLIGENCE_ASSESSMENT.md §1. |
 
 **Key insight**: This is an **architectural framework** with production-quality structure and academic-prototype ML content. The 190+ AI classes form a complete skeleton; the muscle (trained weights) is missing. The LLM API wrappers provide the only production-quality intelligence today.
 
@@ -393,7 +393,7 @@ Unlike other AI agent frameworks (see §6.1), Angela has **actual weight-based l
 | **Bilingual i18n** | Chinese + English developers | Most frameworks are English-first |
 | **GPU-free SNN** | Low-resource environments, edge computing | TensorFlow/PyTorch require GPU for speed |
 
-**The strongest single pitch**: *"An AI that gets tired, gets hungry, lives on your desktop with a Live2D body, and runs completely offline."* — No existing project delivers all four simultaneously. **⚠️ But offline (native) experience is limited: native engine actual generalization = 1.0/10 (ED3N benchmark 33.3% re-measured 2026-07-15; GARDEN benchmark non-reproducible in this env) — functional but weak; ML weights are ~5% trained, not random. The architecture exists; training is partial. Capability-readiness per dimension is higher (arch 9.5 / knowledge+reasoning 8.6 / query+learning 9.0 / multimodal 5.1 / autonomy 9.0).**
+**The strongest single pitch**: *"An AI that gets tired, gets hungry, lives on your desktop with a Live2D body, and runs completely offline."* — No existing project delivers all four simultaneously. **⚠️ Offline (native) capability is split: deterministic engines (math/physics/chemistry) work correctly = 9.5/10 real, high-certainty capability; but neural open-domain generalization ≈ 0/10 (knowledge/reasoning on unseen tasks). ED3N benchmark 33.3% re-measured 2026-07-15 (GARDEN non-reproducible in env). ML weights ~5% trained, not random. Architecture exists; training partial.**
 
 ### 7. Known Gaps
 
@@ -502,7 +502,7 @@ pytest tests/                         # 運行測試
 | 推理 | 4/10 | 0.5/10 | **0.5/10** | CausalReasoningEngine 僅 Pearson 相關。PlanningEngine 模板匹配。MathRippleEngine 為真正原創認知模型。訓練後基準測試 0/5。 |
 | 自主性 | 3/10 | 0.5/10 | **1.0/10** (actual) | AutonomousLifeCycle 已接線但無 LLM 不穩定。框架完整但效果不明顯。 |
 | 後設認知 | 5/10 | 4/10 | **4/10** | MetaController 信心追蹤有效。NeuroAutoSelector 啟發式。 |
-| **綜合** | **6.0/10** | **<0.5/10** | **1.0/10** (actual) | 框架架構 ~95% 完整。**ML 訓練 ~5%。** 原生引擎實際泛化 1.0/10（ED3N 33.3% 重新測量；GARDEN 基準本環境 timeout 不可重現）。多維準備度見 INTELLIGENCE_ASSESSMENT.md §1。所有真實智慧來自 LLM API。 |
+| **綜合** | **6.0/10** | **<0.5/10** | **9.5/10**(確定性引擎) / **0/10**(神經開放域) | 框架架構 ~95% 完整。**ML 訓練 ~5%。** 原生確定性引擎（數理化）正確運作 = 9.5/10 真實能力；神經開放域泛化 ≈0/10（ED3N 33.3% 重新測量；GARDEN 基準本環境 timeout 不可重現）。多維評分見 INTELLIGENCE_ASSESSMENT.md §1。所有真實智慧來自 LLM API。 |
 
 ### 5.5 學習能力評估
 
@@ -615,7 +615,7 @@ Angela AI 有 **4 個學習層級**，每個建立在前者之上。這比標準
 | **中英雙語 i18n** | 中英文開發者 | 多數框架以英文優先 |
 | **免 GPU SNN** | 低資源環境、邊緣計算 | TensorFlow/PyTorch 需要 GPU |
 
-**最強單一賣點**：*「一個會累、會餓、活在桌面上、有 Live2D 身體、可以完全離線運作的 AI」* — 沒有專案同時做到這四點。**⚠️ 目前離線（原生）體驗有限**：原生引擎實際泛化 1.0/10（ED3N 基準 33.3% 重新測量，GARDEN 基準本環境 timeout；數學靠 Python ast 非學會）— 可用但薄弱；ML 權重約 5% 訓練，非隨機。架構存在，訓練尚不完整。
+**最強單一賣點**：*「一個會累、會餓、活在桌面上、有 Live2D 身體、可以完全離線運作的 AI」* — 沒有專案同時做到這四點。**⚠️ 目前離線（原生）能力分流**：確定性引擎（數理化）正確運作 = 9.5/10 真實能力；但神經開放域泛化 ≈0/10（知識/推理未見任務）。ED3N 基準 33.3% 重新測量（GARDEN 本環境 timeout）；數學由 MathVerifier 正確處理，是能力非缺陷。ML 權重約 5% 訓練，非隨機。架構存在，訓練尚不完整。
 
 ### 7. 已知差距
 
