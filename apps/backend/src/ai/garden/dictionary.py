@@ -226,6 +226,25 @@ class _STEncoder:
         return embeddings.cpu()
 
 
+def _safe_chromadb_client(timeout: int = 45):
+    """Build an ephemeral chromadb client inside a worker thread.
+
+    chromadb import / ``Client()`` can hang indefinitely in-process on some
+    platforms (see ``_import_utils``). Bound it with a thread timeout so the
+    caller can fall back to the TF-IDF encoder instead of deadlocking the
+    whole process (e.g. the GARDEN benchmark).
+    """
+    import concurrent.futures as _cf
+
+    def _build():
+        import chromadb
+
+        return chromadb.Client()
+
+    with _cf.ThreadPoolExecutor(max_workers=1) as ex:
+        return ex.submit(_build).result(timeout=timeout)
+
+
 class _ChromaEncoder:
     """
     ChromaDB-based semantic encoder for GARDEN.
@@ -238,12 +257,11 @@ class _ChromaEncoder:
 
         from ._import_utils import subprocess_check
         if not subprocess_check("chromadb"):
-            raise ImportError("chromadb not available (import check failed)")
+            raise ImportError("chromadb not available (import probe failed)")
         try:
-            import chromadb
-        except ImportError as e:
+            self._client = _safe_chromadb_client()
+        except Exception as e:
             raise ImportError(f"chromadb not available: {e}")
-        self._client = chromadb.Client()
         self._collection = self._client.get_or_create_collection(
             name=f"garden_concepts_{uuid.uuid4().hex[:8]}",
             metadata={"hnsw:space": "cosine"},

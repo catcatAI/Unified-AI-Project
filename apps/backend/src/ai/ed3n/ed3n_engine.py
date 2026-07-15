@@ -253,6 +253,21 @@ class ED3NEngine:
             logger.debug("Math routing via dictionary layer failed: %s", e)
             return None
 
+    def _try_knowledge(self, text: str) -> Optional[str]:
+        """Answer simple factual questions via the curated knowledge base.
+
+        Mirrors the math-routing design: trivial, high-certainty factual recall
+        is delegated to ``ai.knowledge_base.route_knowledge`` instead of being
+        squeezed through the network pipeline (which would hallucinate).
+        """
+        try:
+            from ai.knowledge_base import route_knowledge
+
+            return route_knowledge(text)
+        except Exception as e:
+            logger.debug("Knowledge routing via knowledge base failed: %s", e)
+            return None
+
     def _perform_encode(self, input_text: str) -> Tuple[List[str], bool]:
         _cache_key = (input_text.lower().strip(), self.dictionary._index_version)
         cache_hit = _cache_key in self.dictionary._encode_cache
@@ -316,6 +331,11 @@ class ED3NEngine:
         math_result = self._stage_math(input_text, query_id, stages)
         if math_result is not None:
             return math_result
+
+        # Stage 1.6: Knowledge retrieval (deterministic KB, like math)
+        kb_result = self._stage_knowledge(input_text, query_id, stages)
+        if kb_result is not None:
+            return kb_result
 
         # Stage 2: Encode
         keys, cache_hit = self._stage_encode(input_text, query_id, stages)
@@ -468,6 +488,26 @@ class ED3NEngine:
                 is_fallback=False,
             )
         return None
+
+
+    def _stage_knowledge(self, input_text, query_id, stages):
+        t0 = time.perf_counter()
+        result = self._try_knowledge(input_text)
+        stages["knowledge"] = (time.perf_counter() - t0) * 1000
+        if result is not None:
+            return self._telemetry_return(
+                query_id,
+                input_text,
+                stages,
+                reflex_match=None,
+                cache_hit=False,
+                matched_keys=[],
+                output_text=result,
+                confidence=1.0,
+                is_fallback=False,
+            )
+        return None
+
 
     def _stage_encode(self, input_text, query_id, stages):
         t0 = time.perf_counter()

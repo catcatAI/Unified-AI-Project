@@ -275,6 +275,12 @@ class GARDENEngine:
             self._last_confidence = 0.85
             return math_result
 
+        # Stage 1.6: Knowledge retrieval (deterministic KB, like math)
+        kb_result = self._try_knowledge(text)
+        if kb_result is not None:
+            self._last_confidence = 0.80
+            return kb_result
+
         # Stage 2: Multi-step detection
         if self._is_multi_step(text):
             self._last_confidence = 0.70
@@ -433,6 +439,21 @@ class GARDENEngine:
             return VectorDictionary.route_math(text)
         except Exception as e:
             logger.debug("GARDEN: math routing failed for %r: %s", text, e)
+            return None
+
+    def _try_knowledge(self, text: str) -> Optional[str]:
+        """Answer simple factual questions via the curated knowledge base.
+
+        Mirrors the math-routing design: trivial, high-certainty factual recall
+        is delegated to ``ai.knowledge_base.route_knowledge`` instead of being
+        squeezed through the vector/SNN pipeline (which would hallucinate).
+        """
+        try:
+            from ai.knowledge_base import route_knowledge
+
+            return route_knowledge(text)
+        except Exception as e:
+            logger.debug("GARDEN: knowledge routing failed for %r: %s", text, e)
             return None
 
     # ------------------------------------------------------------------
