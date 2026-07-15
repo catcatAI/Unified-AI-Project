@@ -1,7 +1,3 @@
-# =============================================================================
-# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
-# =============================================================================
-
 import logging
 import os
 import time
@@ -9,6 +5,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+import torch
 from ai.multimodal.audio_decoder import AudioWaveformDecoder, load_default_audio_decoder_weights
 from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
 from ai.multimodal.generator.sequence_generator import SequenceGenerator
@@ -18,6 +15,11 @@ from ai.multimodal.shared_latent_space import SharedLatentSpace
 from ai.multimodal.visual_decoder import VisualDecoder
 from ai.multimodal.visual_encoder import VisualEncoder
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -26,7 +28,12 @@ ContrastivePair = Tuple[str, np.ndarray, str, np.ndarray]
 
 
 # Default weight save path
-DEFAULT_WEIGHTS_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent.parent / "data" / "multimodal" / "weights"
+DEFAULT_WEIGHTS_DIR = (
+    Path(__file__).resolve().parent.parent.parent.parent.parent.parent
+    / "data"
+    / "multimodal"
+    / "weights"
+)
 DEFAULT_WEIGHTS_PATH = str(DEFAULT_WEIGHTS_DIR / "p29_trained.npz")
 
 
@@ -37,15 +44,19 @@ class ContrastiveBatchTrainer:
     the latent space projection matrices via contrastive loss.
     """
 
-    def __init__(self, latent_space: SharedLatentSpace,
-                 visual_encoder: Optional[VisualEncoder] = None,
-                 audio_encoder: Optional[AudioSpectralEncoder] = None):
+    def __init__(
+        self,
+        latent_space: SharedLatentSpace,
+        visual_encoder: Optional[VisualEncoder] = None,
+        audio_encoder: Optional[AudioSpectralEncoder] = None,
+    ):
         self._ls = latent_space
         self._visual_encoder = visual_encoder or VisualEncoder()
         self._audio_encoder = audio_encoder or AudioSpectralEncoder()
 
-    def generate_pairs(self, n_pairs: int,
-                       img_dim: int = 256, aud_dim: int = 128) -> Tuple[List, List]:
+    def generate_pairs(
+        self, n_pairs: int, img_dim: int = 256, aud_dim: int = 128
+    ) -> Tuple[List, List]:
         """Generate synthetic positive/negative training pairs.
 
         Returns (pos_pairs, neg_pairs) where each element is
@@ -64,25 +75,30 @@ class ContrastiveBatchTrainer:
             neg_pairs.append(("vision", feat_img2, "audio", feat_aud2))
         return pos_pairs, neg_pairs
 
-    def train_epoch(self, pos_pairs: List, neg_pairs: List,
-                    lr: float = 0.01, margin: float = 0.5) -> float:
+    def train_epoch(
+        self, pos_pairs: List, neg_pairs: List, lr: float = 0.01, margin: float = 0.5
+    ) -> float:
         """Train one epoch over the given pairs.
 
         Returns average contrastive loss.
         """
         return self._ls._train_epoch(pos_pairs, neg_pairs, lr, margin)
 
-    def train(self, n_epochs: int = 10, n_pairs_per_epoch: int = 20,
-              lr: float = 0.01, margin: float = 0.5) -> Dict:
+    def train(
+        self, n_epochs: int = 10, n_pairs_per_epoch: int = 20, lr: float = 0.01, margin: float = 0.5
+    ) -> Dict:
         """Full training run. Returns dict with final_loss and loss_history."""
         pos_pairs, neg_pairs = self.generate_pairs(n_pairs_per_epoch)
-        return self._ls.train(pos_pairs, neg_pairs, epochs=n_epochs,
-                              lr=lr, margin=margin)
+        return self._ls.train(pos_pairs, neg_pairs, epochs=n_epochs, lr=lr, margin=margin)
 
-    def train_on_real_pairs(self, pos_pairs: List[ContrastivePair],
-                            neg_pairs: List[ContrastivePair],
-                            epochs: int = 5, lr: float = 0.01,
-                            margin: float = 0.5) -> Dict:
+    def train_on_real_pairs(
+        self,
+        pos_pairs: List[ContrastivePair],
+        neg_pairs: List[ContrastivePair],
+        epochs: int = 5,
+        lr: float = 0.01,
+        margin: float = 0.5,
+    ) -> Dict:
         """Train on real data pairs from data loaders.
 
         Args:
@@ -94,15 +110,13 @@ class ContrastiveBatchTrainer:
         Returns:
             dict with 'final_loss' and 'history'
         """
-        return self._ls.train(pos_pairs, neg_pairs, epochs=epochs,
-                              lr=lr, margin=margin)
+        return self._ls.train(pos_pairs, neg_pairs, epochs=epochs, lr=lr, margin=margin)
 
 
 class ReconstructionTrainer:
     """Trains decoders via feature-level reconstruction on synthetic data."""
 
-    def __init__(self, latent_space: SharedLatentSpace,
-                 reconstruction_cycle: ReconstructionCycle):
+    def __init__(self, latent_space: SharedLatentSpace, reconstruction_cycle: ReconstructionCycle):
         self._ls = latent_space
         self._rc = reconstruction_cycle
 
@@ -140,9 +154,9 @@ class ReconstructionTrainer:
             }
         return results
 
-    def train_on_real_features(self,
-                               real_features: Dict[str, List[np.ndarray]],
-                               epochs: int = 5, lr: float = 0.005) -> Dict:
+    def train_on_real_features(
+        self, real_features: Dict[str, List[np.ndarray]], epochs: int = 5, lr: float = 0.005
+    ) -> Dict:
         """Train reconstruction on real encoded features.
 
         Args:
@@ -177,15 +191,17 @@ class TextureTrainer:
     2. Real mode: uses real images from RealDataProvider
     """
 
-    def __init__(self, reconstruction_cycle: ReconstructionCycle,
-                 visual_decoder: VisualDecoder,
-                 visual_encoder: Optional[VisualEncoder] = None):
+    def __init__(
+        self,
+        reconstruction_cycle: ReconstructionCycle,
+        visual_decoder: VisualDecoder,
+        visual_encoder: Optional[VisualEncoder] = None,
+    ):
         self._rc = reconstruction_cycle
         self._decoder = visual_decoder
         self._visual_encoder = visual_encoder or VisualEncoder()
 
-    def generate_synthetic_batch(self, batch_size: int,
-                                 rng_seed: int = 42) -> tuple:
+    def generate_synthetic_batch(self, batch_size: int, rng_seed: int = 42) -> tuple:
         """Generate a batch of (latent, target_image) pairs from scratch.
 
         Creates random latents, runs the projection branch only to get base
@@ -194,20 +210,24 @@ class TextureTrainer:
         """
         rng = np.random.RandomState(rng_seed)
         z = rng.randn(batch_size, self._decoder.LATENT_DIM).astype(np.float32)
-        targets = np.zeros((batch_size, self._decoder.INPUT_SIZE,
-                           self._decoder.INPUT_SIZE, 3), dtype=np.uint8)
+        targets = np.zeros(
+            (batch_size, self._decoder.INPUT_SIZE, self._decoder.INPUT_SIZE, 3), dtype=np.uint8
+        )
         for b in range(batch_size):
             raw = self._decoder._W @ z[b] + self._decoder._b
-            spatial = raw[:self._decoder.SPATIAL_FEATURES]
-            color = raw[self._decoder.SPATIAL_FEATURES:
-                        self._decoder.SPATIAL_FEATURES + self._decoder.COLOR_FEATURES]
+            spatial = raw[: self._decoder.SPATIAL_FEATURES]
+            color = raw[
+                self._decoder.SPATIAL_FEATURES : self._decoder.SPATIAL_FEATURES
+                + self._decoder.COLOR_FEATURES
+            ]
             img = self._decoder._layout_to_image(spatial)
             img = self._decoder._apply_color_adjust(img, color)
             targets[b] = np.clip(img, 0, 255).astype(np.uint8)
         return z, targets
 
-    def train(self, batch_size: int = 4, steps: int = 50,
-              lr: float = 0.001, rng_seed: int = 42) -> Dict:
+    def train(
+        self, batch_size: int = 4, steps: int = 50, lr: float = 0.001, rng_seed: int = 42
+    ) -> Dict:
         """Train texture branch using synthetic data.
 
         Args:
@@ -220,15 +240,14 @@ class TextureTrainer:
         """
         history = []
         for step in range(steps):
-            z, targets = self.generate_synthetic_batch(
-                batch_size, rng_seed=rng_seed + step)
+            z, targets = self.generate_synthetic_batch(batch_size, rng_seed=rng_seed + step)
             loss = self._rc.train_texture_step(z, targets, lr=lr)
             history.append(loss)
-        return {"final_loss": history[-1] if history else 0.0,
-                "history": history}
+        return {"final_loss": history[-1] if history else 0.0, "history": history}
 
-    def train_on_real(self, real_images: List[np.ndarray],
-                      steps: int = 50, lr: float = 0.001) -> Dict:
+    def train_on_real(
+        self, real_images: List[np.ndarray], steps: int = 50, lr: float = 0.001
+    ) -> Dict:
         """Train texture branch using real images.
 
         Encodes each image → latent, then trains texture to reconstruct
@@ -248,7 +267,7 @@ class TextureTrainer:
         latents = []
         for img in real_images:
             feats = self._visual_encoder.encode(img)
-            if hasattr(self._rc._ls, 'project'):
+            if hasattr(self._rc._ls, "project"):
                 z = self._rc._ls.project("vision", feats)
             else:
                 z = np.zeros(self._decoder.LATENT_DIM, dtype=np.float32)
@@ -265,8 +284,7 @@ class TextureTrainer:
             avg_loss = total_loss / max(len(real_images), 1)
             history.append(avg_loss)
 
-        return {"final_loss": history[-1] if history else 0.0,
-                "history": history}
+        return {"final_loss": history[-1] if history else 0.0, "history": history}
 
 
 class WavetableTrainer:
@@ -281,8 +299,9 @@ class WavetableTrainer:
     frequencies.
     """
 
-    def __init__(self, reconstruction_cycle: ReconstructionCycle,
-                 audio_decoder: AudioWaveformDecoder):
+    def __init__(
+        self, reconstruction_cycle: ReconstructionCycle, audio_decoder: AudioWaveformDecoder
+    ):
         self._rc = reconstruction_cycle
         self._decoder = audio_decoder
 
@@ -302,8 +321,11 @@ class WavetableTrainer:
         waveform = np.zeros(n_samples, dtype=np.float32)
 
         for band_idx, (lo, hi) in enumerate(self._decoder.BAND_LIMITS):
-            feats = spectral_env[band_idx * (len(spectral_env) // self._decoder.N_BANDS):
-                                 (band_idx + 1) * (len(spectral_env) // self._decoder.N_BANDS)]
+            feats = spectral_env[
+                band_idx
+                * (len(spectral_env) // self._decoder.N_BANDS) : (band_idx + 1)
+                * (len(spectral_env) // self._decoder.N_BANDS)
+            ]
             freq_hz = 200.0 + np.abs(feats[:5]).mean() * (hi - lo) / 800.0
             freq_hz = np.clip(freq_hz, lo, hi)
 
@@ -331,19 +353,20 @@ class WavetableTrainer:
         waveform /= peak
         return waveform.astype(np.float32)
 
-    def generate_synthetic_batch(self, batch_size: int,
-                                  rng_seed: int = 42) -> tuple:
+    def generate_synthetic_batch(self, batch_size: int, rng_seed: int = 42) -> tuple:
         """Generate a batch of (latent, target_waveform) pairs."""
         rng = np.random.RandomState(rng_seed)
         z = rng.randn(batch_size, self._decoder.LATENT_DIM).astype(np.float32)
-        targets = np.zeros((batch_size, int(self._decoder.SAMPLE_RATE * self._decoder.DURATION)),
-                           dtype=np.float32)
+        targets = np.zeros(
+            (batch_size, int(self._decoder.SAMPLE_RATE * self._decoder.DURATION)), dtype=np.float32
+        )
         for b in range(batch_size):
             targets[b] = self.generate_target(z[b])
         return z, targets
 
-    def train(self, batch_size: int = 4, steps: int = 50,
-              lr: float = 0.001, rng_seed: int = 42) -> Dict:
+    def train(
+        self, batch_size: int = 4, steps: int = 50, lr: float = 0.001, rng_seed: int = 42
+    ) -> Dict:
         """Train wavetable branch using synthetic data.
 
         Args:
@@ -356,12 +379,10 @@ class WavetableTrainer:
         """
         history = []
         for step in range(steps):
-            z, targets = self.generate_synthetic_batch(
-                batch_size, rng_seed=rng_seed + step)
+            z, targets = self.generate_synthetic_batch(batch_size, rng_seed=rng_seed + step)
             loss = self._rc.train_wavetable_step(z, targets, lr=lr)
             history.append(loss)
-        return {"final_loss": history[-1] if history else 0.0,
-                "history": history}
+        return {"final_loss": history[-1] if history else 0.0, "history": history}
 
 
 class SequenceTrainer:
@@ -375,10 +396,10 @@ class SequenceTrainer:
     def __init__(self, sequence_generator: SequenceGenerator):
         self._gen = sequence_generator
 
-    def generate_synthetic_batch(self, batch_size: int,
-                                  rng_seed: int = 42) -> tuple:
+    def generate_synthetic_batch(self, batch_size: int, rng_seed: int = 42) -> tuple:
         """Generate a batch of (clip_embeddings, primitive_sequences) pairs."""
         from ai.multimodal.generator.training_data import TrainingDataGenerator
+
         tdg = TrainingDataGenerator()
         data = tdg.generate_random_primitives(
             n_samples=batch_size,
@@ -387,8 +408,9 @@ class SequenceTrainer:
         )
         return data["clip_embeddings"], data["primitive_sequences"]
 
-    def train(self, batch_size: int = 4, steps: int = 50,
-              lr: float = 0.001, rng_seed: int = 42) -> Dict:
+    def train(
+        self, batch_size: int = 4, steps: int = 50, lr: float = 0.001, rng_seed: int = 42
+    ) -> Dict:
         """Train SequenceGenerator using synthetic data.
 
         Args:
@@ -402,14 +424,14 @@ class SequenceTrainer:
         history = []
         for step in range(steps):
             clip_embs, sequences = self.generate_synthetic_batch(
-                batch_size, rng_seed=rng_seed + step)
+                batch_size, rng_seed=rng_seed + step
+            )
             total_loss = 0.0
             for clip_emb, seq in zip(clip_embs, sequences):
                 total_loss += self._gen.train_step(clip_emb, seq, lr=lr)
             avg_loss = total_loss / max(len(clip_embs), 1)
             history.append(avg_loss)
-        return {"final_loss": history[-1] if history else 0.0,
-                "history": history}
+        return {"final_loss": history[-1] if history else 0.0, "history": history}
 
 
 class LatentReasoningTrainer:
@@ -423,8 +445,9 @@ class LatentReasoningTrainer:
     def __init__(self, latent_reasoning_network):
         self._lrn = latent_reasoning_network
 
-    def train_from_chat_data(self, latent_space, chat_history: list,
-                             epochs: int = 5, lr: float = 0.01) -> dict:
+    def train_from_chat_data(
+        self, latent_space, chat_history: list, epochs: int = 5, lr: float = 0.01
+    ) -> dict:
         """Train LRN using chat interactions projected through SharedLatentSpace.
 
         Args:
@@ -446,6 +469,7 @@ class LatentReasoningTrainer:
             for user_text, response_text in chat_history:
                 # Encode response text to latent via SharedLatentSpace
                 from ai.multimodal.text_encoder import TextEncoder
+
                 text_encoder = TextEncoder(feature_dim=512)
                 features = text_encoder.encode(response_text)
                 if features is None or features.sum() == 0:
@@ -462,16 +486,17 @@ class LatentReasoningTrainer:
             avg_loss = total_loss / max(count, 1)
             history.append(avg_loss)
 
-        return {"final_loss": history[-1] if history else 0.0,
-                "history": history}
+        return {"final_loss": history[-1] if history else 0.0, "history": history}
 
-    def train_from_interaction(self, latent_space, user_text: str,
-                                response_text: str, lr: float = 0.01) -> float:
+    def train_from_interaction(
+        self, latent_space, user_text: str, response_text: str, lr: float = 0.01
+    ) -> float:
         """Train LRN on a single interaction pair.
 
         Returns the training loss.
         """
         from ai.multimodal.text_encoder import TextEncoder
+
         text_encoder = TextEncoder(feature_dim=512)
         features = text_encoder.encode(response_text)
         if features is None or features.sum() == 0:
@@ -502,12 +527,19 @@ class PrimitiveTrainer:
 
     def _create_library_shapes(self):
         """Create a library of basic geometric shapes with various colors and positions."""
-        from .primitives.primitive_types import (Arc, Circle, DrawingInstructions,
-                                                  Line, Plane, Point)
+        from .primitives.primitive_types import Arc, Circle, DrawingInstructions, Line, Plane, Point
 
         shapes = []
-        colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0),
-                   (0, 255, 255), (255, 165, 0), (128, 0, 128), (255, 0, 255)]
+        colors = [
+            (255, 0, 0),
+            (0, 255, 0),
+            (0, 0, 255),
+            (255, 255, 0),
+            (0, 255, 255),
+            (255, 165, 0),
+            (128, 0, 128),
+            (255, 0, 255),
+        ]
 
         bg = (255, 255, 255)
 
@@ -515,22 +547,34 @@ class PrimitiveTrainer:
         for cx, cy in [(0.5, 0.5), (0.3, 0.3), (0.7, 0.7)]:
             for r in [0.1, 0.2, 0.3]:
                 for color in colors[:4]:
-                    shapes.append(DrawingInstructions(
-                        circles=[Circle(cx, cy, r, color, (0, 0, 0), 0.02)],
-                        background_color=bg))
+                    shapes.append(
+                        DrawingInstructions(
+                            circles=[Circle(cx, cy, r, color, (0, 0, 0), 0.02)], background_color=bg
+                        )
+                    )
 
         # Squares (rectangular planes): 2 sizes × 3 positions × 4 colors
         for cx, cy in [(0.5, 0.5), (0.3, 0.5), (0.5, 0.3)]:
             for rx, ry in [(0.15, 0.15), (0.25, 0.15), (0.15, 0.25)]:
                 for color in colors[4:6]:
-                    shapes.append(DrawingInstructions(
-                        planes=[Plane(
-                            [Point(cx - rx, cy - ry, (0, 0, 0), 0),
-                             Point(cx + rx, cy - ry, (0, 0, 0), 0),
-                             Point(cx + rx, cy + ry, (0, 0, 0), 0),
-                             Point(cx - rx, cy + ry, (0, 0, 0), 0)],
-                            color, (0, 0, 0), 0.02)],
-                        background_color=bg))
+                    shapes.append(
+                        DrawingInstructions(
+                            planes=[
+                                Plane(
+                                    [
+                                        Point(cx - rx, cy - ry, (0, 0, 0), 0),
+                                        Point(cx + rx, cy - ry, (0, 0, 0), 0),
+                                        Point(cx + rx, cy + ry, (0, 0, 0), 0),
+                                        Point(cx - rx, cy + ry, (0, 0, 0), 0),
+                                    ],
+                                    color,
+                                    (0, 0, 0),
+                                    0.02,
+                                )
+                            ],
+                            background_color=bg,
+                        )
+                    )
 
         # Triangles: 3-point planes × 4 colors
         tri_verts = [
@@ -540,11 +584,19 @@ class PrimitiveTrainer:
         ]
         for verts in tri_verts:
             for color in colors[:4]:
-                shapes.append(DrawingInstructions(
-                    planes=[Plane(
-                        [Point(x, y, (0, 0, 0), 0) for x, y in verts],
-                        color, (0, 0, 0), 0.02)],
-                    background_color=bg))
+                shapes.append(
+                    DrawingInstructions(
+                        planes=[
+                            Plane(
+                                [Point(x, y, (0, 0, 0), 0) for x, y in verts],
+                                color,
+                                (0, 0, 0),
+                                0.02,
+                            )
+                        ],
+                        background_color=bg,
+                    )
+                )
 
         # Lines: horizontal, vertical, diagonal × 4 colors
         line_defs = [
@@ -555,31 +607,47 @@ class PrimitiveTrainer:
         ]
         for (sx, sy), (ex, ey) in line_defs:
             for color in colors[:4]:
-                shapes.append(DrawingInstructions(
-                    lines=[Line(Point(sx, sy, (0, 0, 0), 0),
+                shapes.append(
+                    DrawingInstructions(
+                        lines=[
+                            Line(
+                                Point(sx, sy, (0, 0, 0), 0),
                                 Point(ex, ey, (0, 0, 0), 0),
-                                0.04, color)],
-                    background_color=bg))
+                                0.04,
+                                color,
+                            )
+                        ],
+                        background_color=bg,
+                    )
+                )
 
         # Dots: single points × 4 colors × 3 positions
         for px, py in [(0.3, 0.3), (0.5, 0.5), (0.7, 0.7)]:
             for color in colors[:4]:
-                shapes.append(DrawingInstructions(
-                    points=[Point(px, py, color, 0.15)],
-                    background_color=bg))
+                shapes.append(
+                    DrawingInstructions(points=[Point(px, py, color, 0.15)], background_color=bg)
+                )
 
         # Arcs: partial circles × 4 colors
         for start_angle, end_angle in [(0, 3.14), (3.14, 6.28), (1.57, 4.71)]:
             for color in colors[:4]:
-                shapes.append(DrawingInstructions(
-                    arcs=[Arc(0.5, 0.5, 0.3, start_angle, end_angle, 0.04, color)],
-                    background_color=bg))
+                shapes.append(
+                    DrawingInstructions(
+                        arcs=[Arc(0.5, 0.5, 0.3, start_angle, end_angle, 0.04, color)],
+                        background_color=bg,
+                    )
+                )
 
         return shapes
 
-    def train(self, epochs: int = 100, lr: float = 0.001,
-              seq_epochs: int = 50, seq_lr: float = 0.001,
-              n_seq_samples: int = 500) -> dict:
+    def train(
+        self,
+        epochs: int = 100,
+        lr: float = 0.001,
+        seq_epochs: int = 50,
+        seq_lr: float = 0.001,
+        n_seq_samples: int = 500,
+    ) -> dict:
         """Train PrimitiveEncoder autoencoder and optionally re-train SequenceGenerator.
 
         Phase 3d:
@@ -614,8 +682,9 @@ class PrimitiveTrainer:
 
         # Step 2: Train encoder autoencoder
         encoder_result = self._encoder.train(shapes, epochs=epochs, lr=lr)
-        logger.info("PrimitiveTrainer: encoder trained — best loss: %.6f",
-                     encoder_result["best_loss"])
+        logger.info(
+            "PrimitiveTrainer: encoder trained — best loss: %.6f", encoder_result["best_loss"]
+        )
 
         # Step 3: Re-encode library with trained encoder
         for name in self._library._names:
@@ -633,13 +702,13 @@ class PrimitiveTrainer:
         # Step 4: Train SequenceGenerator on synthetic (clip, primitive) pairs
         if self._gen is not None and seq_epochs > 0:
             seq_result = self._train_sequence_generator(
-                n_samples=n_seq_samples, epochs=seq_epochs, lr=seq_lr)
+                n_samples=n_seq_samples, epochs=seq_epochs, lr=seq_lr
+            )
             result["sequence_result"] = seq_result
 
         return result
 
-    def _train_sequence_generator(self, n_samples: int, epochs: int,
-                                   lr: float) -> dict:
+    def _train_sequence_generator(self, n_samples: int, epochs: int, lr: float) -> dict:
         """Create synthetic training data from library and train SequenceGenerator."""
         rng = np.random.default_rng(42)
 
@@ -661,12 +730,13 @@ class PrimitiveTrainer:
         if not clip_embeddings:
             return {"final_loss": 0.0, "history": [], "epochs_trained": 0}
 
-        logger.info("PrimitiveTrainer: training SequenceGenerator on %d pairs",
-                     len(clip_embeddings))
-        result = self._gen.train(clip_embeddings, primitive_sequences,
-                                  epochs=epochs, lr=lr)
-        logger.info("PrimitiveTrainer: SequenceGenerator trained — final loss: %.6f",
-                     result["final_loss"])
+        logger.info(
+            "PrimitiveTrainer: training SequenceGenerator on %d pairs", len(clip_embeddings)
+        )
+        result = self._gen.train(clip_embeddings, primitive_sequences, epochs=epochs, lr=lr)
+        logger.info(
+            "PrimitiveTrainer: SequenceGenerator trained — final loss: %.6f", result["final_loss"]
+        )
         return result
 
     @property
@@ -688,18 +758,24 @@ class FullTrainingPipeline:
     uses ESC-50 audio + CIFAR-10 images instead of random noise.
     """
 
-    def __init__(self, latent_space: Optional[SharedLatentSpace] = None,
-                 visual_encoder: Optional[VisualEncoder] = None,
-                 audio_encoder: Optional[AudioSpectralEncoder] = None,
-                 visual_decoder=None, audio_decoder=None):
+    def __init__(
+        self,
+        latent_space: Optional[SharedLatentSpace] = None,
+        visual_encoder: Optional[VisualEncoder] = None,
+        audio_encoder: Optional[AudioSpectralEncoder] = None,
+        visual_decoder=None,
+        audio_decoder=None,
+    ):
         if latent_space is not None:
             self._ls = latent_space
         else:
             from ai.multimodal.shared_latent_space import get_shared_latent_space
+
             self._ls = get_shared_latent_space(latent_dim=64)
         self._visual_encoder = visual_encoder or VisualEncoder()
         self._audio_encoder = audio_encoder or AudioSpectralEncoder()
         from ai.multimodal.visual_decoder import VisualDecoder, load_default_visual_decoder_weights
+
         self._visual_decoder = visual_decoder or VisualDecoder()
         load_default_visual_decoder_weights(self._visual_decoder)
         self._audio_decoder = audio_decoder or AudioWaveformDecoder()
@@ -714,9 +790,14 @@ class FullTrainingPipeline:
         self._primitive_library = None  # populated by PrimitiveTrainer
         self._sequence_generator = SequenceGenerator()
 
-    def run(self, contrastive_epochs: int = 10, contrastive_pairs: int = 20,
-            recon_epochs: int = 10, recon_samples: int = 10,
-            lr: float = 0.01) -> Dict:
+    def run(
+        self,
+        contrastive_epochs: int = 10,
+        contrastive_pairs: int = 20,
+        recon_epochs: int = 10,
+        recon_samples: int = 10,
+        lr: float = 0.01,
+    ) -> Dict:
         """Run full training pipeline.
 
         Phase 1: Contrastive pre-training of SharedLatentSpace.
@@ -725,14 +806,17 @@ class FullTrainingPipeline:
         logger.info("=== Phase 1: Contrastive training ===")
         pos_pairs, neg_pairs = self._contrastive.generate_pairs(contrastive_pairs)
         contrastive_result = self._ls.train(
-            pos_pairs, neg_pairs, epochs=contrastive_epochs, lr=lr,
+            pos_pairs,
+            neg_pairs,
+            epochs=contrastive_epochs,
+            lr=lr,
         )
         logger.info("Contrastive final loss: %.6f", contrastive_result["final_loss"])
 
         logger.info("=== Phase 2: Reconstruction training ===")
-        recon_result = ReconstructionTrainer(
-            self._ls, self._reconstruction
-        ).train(n_epochs=recon_epochs, n_samples=recon_samples, lr=lr * 0.5)
+        recon_result = ReconstructionTrainer(self._ls, self._reconstruction).train(
+            n_epochs=recon_epochs, n_samples=recon_samples, lr=lr * 0.5
+        )
         for mod, res in recon_result.items():
             logger.info("  %s reconstruction final loss: %.6f", mod, res["final_loss"])
 
@@ -741,13 +825,15 @@ class FullTrainingPipeline:
             "reconstruction": recon_result,
         }
 
-    def run_on_real(self,
-                    data_provider: 'RealDataProvider',
-                    contrastive_epochs: int = 5,
-                    recon_epochs: int = 5,
-                    pairs_per_modality: int = 30,
-                    recon_samples_per_modality: int = 30,
-                    lr: float = 0.01) -> Dict:
+    def run_on_real(
+        self,
+        data_provider: "RealDataProvider",
+        contrastive_epochs: int = 5,
+        recon_epochs: int = 5,
+        pairs_per_modality: int = 30,
+        recon_samples_per_modality: int = 30,
+        lr: float = 0.01,
+    ) -> Dict:
         """Run full training pipeline on real data from RealDataProvider.
 
         Phase 1: Contrastive pre-training with real class-labeled pairs.
@@ -771,10 +857,14 @@ class FullTrainingPipeline:
         pos_pairs, neg_pairs = data_provider.contrastive_pairs(
             n_per_modality=pairs_per_modality, same_prob=0.5
         )
-        logger.info("  Generated %d pos + %d neg pairs from real data",
-                    len(pos_pairs), len(neg_pairs))
+        logger.info(
+            "  Generated %d pos + %d neg pairs from real data", len(pos_pairs), len(neg_pairs)
+        )
         contrastive_result = self._ls.train(
-            pos_pairs, neg_pairs, epochs=contrastive_epochs, lr=lr,
+            pos_pairs,
+            neg_pairs,
+            epochs=contrastive_epochs,
+            lr=lr,
         )
         logger.info("  Contrastive final loss: %.6f", contrastive_result["final_loss"])
 
@@ -792,8 +882,9 @@ class FullTrainingPipeline:
             )
             if mod in mod_result:
                 recon_result[mod] = mod_result[mod]
-                logger.info("  %s reconstruction final loss: %.6f",
-                            mod, mod_result[mod]["final_loss"])
+                logger.info(
+                    "  %s reconstruction final loss: %.6f", mod, mod_result[mod]["final_loss"]
+                )
 
         return {
             "contrastive": contrastive_result,
@@ -801,8 +892,9 @@ class FullTrainingPipeline:
             "data_source": "real",
         }
 
-    def train_texture(self, batch_size: int = 4, steps: int = 50,
-                      lr: float = 0.001, rng_seed: int = 42) -> Dict:
+    def train_texture(
+        self, batch_size: int = 4, steps: int = 50, lr: float = 0.001, rng_seed: int = 42
+    ) -> Dict:
         """Train the VisualDecoder texture branch (Phase 3).
 
         Uses TextureTrainer with synthetic data to train the 5 texture
@@ -820,17 +912,14 @@ class FullTrainingPipeline:
             Dict with 'final_loss' and 'history'
         """
         logger.info("=== Phase 3: Texture branch training ===")
-        trainer = TextureTrainer(
-            self._reconstruction, self._visual_decoder, self._visual_encoder
-        )
-        result = trainer.train(
-            batch_size=batch_size, steps=steps, lr=lr, rng_seed=rng_seed
-        )
+        trainer = TextureTrainer(self._reconstruction, self._visual_decoder, self._visual_encoder)
+        result = trainer.train(batch_size=batch_size, steps=steps, lr=lr, rng_seed=rng_seed)
         logger.info("Texture training final loss: %.6f", result["final_loss"])
         return result
 
-    def train_wavetable(self, batch_size: int = 4, steps: int = 50,
-                        lr: float = 0.001, rng_seed: int = 42) -> Dict:
+    def train_wavetable(
+        self, batch_size: int = 4, steps: int = 50, lr: float = 0.001, rng_seed: int = 42
+    ) -> Dict:
         """Train the AudioWaveformDecoder wavetable + hidden branch (Phase 3b).
 
         Uses WavetableTrainer with synthetic data to train the 6 non-projection
@@ -848,17 +937,14 @@ class FullTrainingPipeline:
             Dict with 'final_loss' and 'history'
         """
         logger.info("=== Phase 3b: Wavetable branch training ===")
-        trainer = WavetableTrainer(
-            self._reconstruction, self._audio_decoder
-        )
-        result = trainer.train(
-            batch_size=batch_size, steps=steps, lr=lr, rng_seed=rng_seed
-        )
+        trainer = WavetableTrainer(self._reconstruction, self._audio_decoder)
+        result = trainer.train(batch_size=batch_size, steps=steps, lr=lr, rng_seed=rng_seed)
         logger.info("Wavetable training final loss: %.6f", result["final_loss"])
         return result
 
-    def train_sequence(self, batch_size: int = 4, steps: int = 50,
-                       lr: float = 0.001, rng_seed: int = 42) -> Dict:
+    def train_sequence(
+        self, batch_size: int = 4, steps: int = 50, lr: float = 0.001, rng_seed: int = 42
+    ) -> Dict:
         """Train the SequenceGenerator RNN (Phase 3c).
 
         Uses SequenceTrainer with synthetic data to train all RNN weights
@@ -875,14 +961,13 @@ class FullTrainingPipeline:
         """
         logger.info("=== Phase 3c: Sequence generator training ===")
         trainer = SequenceTrainer(self._sequence_generator)
-        result = trainer.train(
-            batch_size=batch_size, steps=steps, lr=lr, rng_seed=rng_seed
-        )
+        result = trainer.train(batch_size=batch_size, steps=steps, lr=lr, rng_seed=rng_seed)
         logger.info("Sequence training final loss: %.6f", result["final_loss"])
         return result
 
-    def train_lrn(self, steps: int = 50, lr: float = 0.01,
-                  chat_history: Optional[list] = None) -> Dict:
+    def train_lrn(
+        self, steps: int = 50, lr: float = 0.01, chat_history: Optional[list] = None
+    ) -> Dict:
         """Train the LatentReasoningNetwork (Phase 4).
 
         Trains the MLP that maps 64-dim latent vectors to text tokens.
@@ -898,15 +983,16 @@ class FullTrainingPipeline:
         """
         logger.info("=== Phase 4: LatentReasoningNetwork training ===")
         from ai.multimodal.latent_reasoning_network import LatentReasoningNetwork
+
         lrn = LatentReasoningNetwork(latent_dim=64, vocab_size=500)
         trainer = LatentReasoningTrainer(lrn)
 
         if chat_history:
-            result = trainer.train_from_chat_data(
-                self._ls, chat_history, epochs=steps, lr=lr)
+            result = trainer.train_from_chat_data(self._ls, chat_history, epochs=steps, lr=lr)
         else:
             # Synthetic training: random latents → random text targets
             import numpy as np
+
             history = []
             for step in range(steps):
                 latent = np.random.randn(64).astype(np.float32)
@@ -915,8 +1001,7 @@ class FullTrainingPipeline:
                 target = targets[step % len(targets)]
                 loss = lrn.train_step(latent, target, lr=lr)
                 history.append(loss)
-            result = {"final_loss": history[-1] if history else 0.0,
-                      "history": history}
+            result = {"final_loss": history[-1] if history else 0.0, "history": history}
 
         logger.info("LRN training final loss: %.6f", result["final_loss"])
         return result
@@ -948,10 +1033,12 @@ class FullTrainingPipeline:
             # Train visual encoder with random image
             dummy_image = np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8)
             import io
+
             from PIL import Image
+
             img = Image.fromarray(dummy_image)
             buf = io.BytesIO()
-            img.save(buf, format='PNG')
+            img.save(buf, format="PNG")
             img_bytes = buf.getvalue()
 
             v_loss = self._visual_encoder.train_step(img_bytes, target_latent, lr=lr)
@@ -966,21 +1053,35 @@ class FullTrainingPipeline:
             "visual_loss": visual_losses[-1] if visual_losses else 0.0,
             "audio_loss": audio_losses[-1] if audio_losses else 0.0,
         }
-        logger.info("Encoder training - visual: %.6f, audio: %.6f",
-                    result["visual_loss"], result["audio_loss"])
+        logger.info(
+            "Encoder training - visual: %.6f, audio: %.6f",
+            result["visual_loss"],
+            result["audio_loss"],
+        )
         return result
 
-    def run_full(self, contrastive_epochs: int = 10,
-                  contrastive_pairs: int = 20,
-                  recon_epochs: int = 10, recon_samples: int = 10,
-                  texture_steps: int = 50, texture_lr: float = 0.001,
-                  wavetable_steps: int = 50, wavetable_lr: float = 0.001,
-                  seq_steps: int = 50, seq_lr: float = 0.001,
-                  prim_epochs: int = 100, prim_lr: float = 0.001,
-                  seq_prim_epochs: int = 50, seq_prim_lr: float = 0.001,
-                  lrn_steps: int = 50, lrn_lr: float = 0.01,
-                  encoder_steps: int = 50, encoder_lr: float = 0.001,
-                  lr: float = 0.01) -> Dict:
+    def run_full(
+        self,
+        contrastive_epochs: int = 10,
+        contrastive_pairs: int = 20,
+        recon_epochs: int = 10,
+        recon_samples: int = 10,
+        texture_steps: int = 50,
+        texture_lr: float = 0.001,
+        wavetable_steps: int = 50,
+        wavetable_lr: float = 0.001,
+        seq_steps: int = 50,
+        seq_lr: float = 0.001,
+        prim_epochs: int = 100,
+        prim_lr: float = 0.001,
+        seq_prim_epochs: int = 50,
+        seq_prim_lr: float = 0.001,
+        lrn_steps: int = 50,
+        lrn_lr: float = 0.01,
+        encoder_steps: int = 50,
+        encoder_lr: float = 0.001,
+        lr: float = 0.01,
+    ) -> Dict:
         """Run all pipeline phases end-to-end.
 
         Phase 0: Encoder projection training (VisualEncoder + AudioEncoder)
@@ -1017,8 +1118,7 @@ class FullTrainingPipeline:
             Dict with results from all phases
         """
         results = {}
-        results["phase0_encoder"] = self.train_encoders(
-            steps=encoder_steps, lr=encoder_lr)
+        results["phase0_encoder"] = self.train_encoders(steps=encoder_steps, lr=encoder_lr)
         results["phase1_contrastive"] = self.run(
             contrastive_epochs=contrastive_epochs,
             contrastive_pairs=contrastive_pairs,
@@ -1027,22 +1127,29 @@ class FullTrainingPipeline:
             lr=lr,
         )
         results["phase3_texture"] = self.train_texture(
-            batch_size=4, steps=texture_steps, lr=texture_lr)
-        results["phase3b_wavetable"] = self.train_wavetable(
-            batch_size=4, steps=wavetable_steps, lr=wavetable_lr)
-        results["phase3c_sequence"] = self.train_sequence(
-            batch_size=4, steps=seq_steps, lr=seq_lr)
-        results["phase3d_primitives"] = self.train_primitives(
-            epochs=prim_epochs, lr=prim_lr,
-            seq_epochs=seq_prim_epochs, seq_lr=seq_prim_lr,
+            batch_size=4, steps=texture_steps, lr=texture_lr
         )
-        results["phase4_lrn"] = self.train_lrn(
-            steps=lrn_steps, lr=lrn_lr)
+        results["phase3b_wavetable"] = self.train_wavetable(
+            batch_size=4, steps=wavetable_steps, lr=wavetable_lr
+        )
+        results["phase3c_sequence"] = self.train_sequence(batch_size=4, steps=seq_steps, lr=seq_lr)
+        results["phase3d_primitives"] = self.train_primitives(
+            epochs=prim_epochs,
+            lr=prim_lr,
+            seq_epochs=seq_prim_epochs,
+            seq_lr=seq_prim_lr,
+        )
+        results["phase4_lrn"] = self.train_lrn(steps=lrn_steps, lr=lrn_lr)
         return results
 
-    def train_primitives(self, epochs: int = 100, lr: float = 0.001,
-                          seq_epochs: int = 50, seq_lr: float = 0.001,
-                          n_seq_samples: int = 500) -> Dict:
+    def train_primitives(
+        self,
+        epochs: int = 100,
+        lr: float = 0.001,
+        seq_epochs: int = 50,
+        seq_lr: float = 0.001,
+        n_seq_samples: int = 500,
+    ) -> Dict:
         """Train the PrimitiveEncoder autoencoder + retrain SequenceGenerator (Phase 3d).
 
         Phase 3d populates a PrimitiveLibrary with basic geometric shapes
@@ -1065,21 +1172,25 @@ class FullTrainingPipeline:
 
         logger.info("=== Phase 3d: Primitive encoder training ===")
         self._primitive_encoder = PrimitiveEncoder(embedding_dim=128)
-        trainer = PrimitiveTrainer(
-            self._primitive_encoder, self._sequence_generator)
+        trainer = PrimitiveTrainer(self._primitive_encoder, self._sequence_generator)
         result = trainer.train(
-            epochs=epochs, lr=lr,
-            seq_epochs=seq_epochs, seq_lr=seq_lr,
+            epochs=epochs,
+            lr=lr,
+            seq_epochs=seq_epochs,
+            seq_lr=seq_lr,
             n_seq_samples=n_seq_samples,
         )
         self._primitive_library = trainer.library
-        logger.info("Primitive training done — library size: %d, "
-                     "encoder best loss: %.6f",
-                     result["library_size"],
-                     result["encoder_result"]["best_loss"])
+        logger.info(
+            "Primitive training done — library size: %d, " "encoder best loss: %.6f",
+            result["library_size"],
+            result["encoder_result"]["best_loss"],
+        )
         if "sequence_result" in result:
-            logger.info("  SequenceGenerator retrained — final loss: %.6f",
-                         result["sequence_result"]["final_loss"])
+            logger.info(
+                "  SequenceGenerator retrained — final loss: %.6f",
+                result["sequence_result"]["final_loss"],
+            )
         return result
 
     def save_weights(self, path: Optional[str] = None) -> str:
@@ -1196,8 +1307,10 @@ class FullTrainingPipeline:
                 self._sequence_generator._trained = True
             if "prim_enc_W_encode" in data:
                 from .primitives.primitive_encoder import PrimitiveEncoder
+
                 self._primitive_encoder = PrimitiveEncoder(
-                    embedding_dim=data["prim_enc_W_encode"].shape[0])
+                    embedding_dim=data["prim_enc_W_encode"].shape[0]
+                )
                 self._primitive_encoder._W_encode[:] = data["prim_enc_W_encode"]
                 self._primitive_encoder._b_encode[:] = data["prim_enc_b_encode"]
                 self._primitive_encoder._W_decode[:] = data["prim_enc_W_decode"]
@@ -1210,8 +1323,9 @@ class FullTrainingPipeline:
             logger.warning("Failed to apply weights: %s", e)
             return False
 
-    def evaluate(self, n_samples: int = 5,
-                 real_features: Optional[Dict[str, List[np.ndarray]]] = None) -> Dict:
+    def evaluate(
+        self, n_samples: int = 5, real_features: Optional[Dict[str, List[np.ndarray]]] = None
+    ) -> Dict:
         """Evaluate current model quality on synthetic or real data.
 
         Args:

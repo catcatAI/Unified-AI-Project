@@ -506,7 +506,7 @@ def _append_emotional_behavior(messages: List[Dict], context: Dict) -> None:
     if behavior:
         routing_mode = behavior.get("routing_mode", "neutral")
         response_style = behavior.get("response_style", "standard")
-        block += f"[Emotional Behavior Guidance]\n"
+        block += "[Emotional Behavior Guidance]\n"
         block += f"- User emotion suggests routing_mode: {routing_mode}\n"
         block += f"- Recommended response_style: {response_style}\n"
         if routing_mode == "conservative":
@@ -519,7 +519,7 @@ def _append_emotional_behavior(messages: List[Dict], context: Dict) -> None:
         intens = angela_emotion.get('emotion_intensity', 0.5)
         val = angela_emotion.get('valence', 0.0)
         aro = angela_emotion.get('arousal', 0.0)
-        block += f"\n[Angela's Emotional State]\n"
+        block += "\n[Angela's Emotional State]\n"
         block += f"- Current emotion: {emot} (intensity: {intens:.2f})\n"
         block += f"- Valence: {val:.2f}, Arousal: {aro:.2f}\n"
         angela_routing = angela_emotion.get("routing_mode")

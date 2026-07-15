@@ -34,12 +34,14 @@ from core.utils import any_keyword
 # Module-level ED3N cache (avoids creating new instances on every fallback)
 _ed3n_engine = None
 
+
 def _get_ed3n():
     global _ed3n_engine
     if _ed3n_engine is None:
         _ed3n_engine = _ED3NEngine_cls()
         _ed3n_engine.load_presets()
     return _ed3n_engine
+
 
 logger = logging.getLogger(__name__)
 
@@ -412,6 +414,7 @@ class NeuroFragment:
     ==============================================
     用于 NeuroBlender 的 dynamic synthesis。
     """
+
     def __init__(
         self,
         fragment_id: str,
@@ -475,11 +478,12 @@ class NeuroFragment:
 @dataclass
 class ValueRangeMapping:
     """數值→語意描述映射，用於翻譯學習層（C6）"""
-    axis_field: str        # e.g. "gamma.indolence"
+
+    axis_field: str  # e.g. "gamma.indolence"
     range_lo: float
     range_hi: float
-    description: str       # LLM 或正則萃取的語意描述
-    confidence: float      # 0-1，基於 usage_count
+    description: str  # LLM 或正則萃取的語意描述
+    confidence: float  # 0-1，基於 usage_count
     usage_count: int = 0
     created_at: datetime = field(default_factory=datetime.now)
     last_used_at: Optional[datetime] = None
@@ -523,11 +527,19 @@ class NeuroVocabulary:
 
     def get_by_category(self, category: str) -> List[NeuroFragment]:
         """Get the by category by self."""
-        return [self._fragments[fid] for fid in self._category_index.get(category, []) if fid in self._fragments]
+        return [
+            self._fragments[fid]
+            for fid in self._category_index.get(category, [])
+            if fid in self._fragments
+        ]
 
     def get_by_structural_type(self, stype: str) -> List[NeuroFragment]:
         """Get the by structural type by self."""
-        return [self._fragments[fid] for fid in self._structural_index.get(stype, []) if fid in self._fragments]
+        return [
+            self._fragments[fid]
+            for fid in self._structural_index.get(stype, [])
+            if fid in self._fragments
+        ]
 
     def all_fragments(self) -> List[NeuroFragment]:
         """Execute the all fragments operation."""
@@ -559,23 +571,29 @@ class NeuroVocabulary:
             if m.covers(value):
                 m.narrow(value)
                 m.usage_count += 1
-                m.confidence = min(confidence_value("ai.composer.learn_mapping.max_confidence", 1.0), m.confidence + learning_rate("ai.composer.learn_mapping.confidence_increment", 0.05))
+                m.confidence = min(
+                    confidence_value("ai.composer.learn_mapping.max_confidence", 1.0),
+                    m.confidence
+                    + learning_rate("ai.composer.learn_mapping.confidence_increment", 0.05),
+                )
                 m.last_used_at = now
                 if len(description) > len(m.description):
                     m.description = description
                 return
 
         mappings = self._value_range_mappings.setdefault(axis_field, [])
-        mappings.append(ValueRangeMapping(
-            axis_field=axis_field,
-            range_lo=value,
-            range_hi=value,
-            description=description,
-            confidence=confidence_value("ai.composer.learn_mapping.confidence_init", 0.3),
-            usage_count=1,
-            created_at=now,
-            last_used_at=now,
-        ))
+        mappings.append(
+            ValueRangeMapping(
+                axis_field=axis_field,
+                range_lo=value,
+                range_hi=value,
+                description=description,
+                confidence=confidence_value("ai.composer.learn_mapping.confidence_init", 0.3),
+                usage_count=1,
+                created_at=now,
+                last_used_at=now,
+            )
+        )
 
     def get_value_range_mappings(self, axis_field: str) -> List[ValueRangeMapping]:
         """回傳指定軸點位的所有 mapping"""
@@ -583,7 +601,11 @@ class NeuroVocabulary:
 
     def serialize_mappings(self, max_age_days: Optional[float] = None) -> List[Dict[str, Any]]:
         """序列化所有映射（用於持久化），可選清除過舊項目"""
-        max_age = max_age_days if max_age_days is not None else confidence_value("ai.composer.serialize.max_age_days", 90.0)
+        max_age = (
+            max_age_days
+            if max_age_days is not None
+            else confidence_value("ai.composer.serialize.max_age_days", 90.0)
+        )
         min_usage = limit_value("ai.composer.serialize.min_usage_count", 2)
         now = datetime.now()
         result = []
@@ -594,16 +616,18 @@ class NeuroVocabulary:
                 age = (now - m.created_at).days
                 if age > max_age and m.usage_count < min_usage:
                     continue
-                alive.append({
-                    "axis_field": m.axis_field,
-                    "range_lo": m.range_lo,
-                    "range_hi": m.range_hi,
-                    "description": m.description,
-                    "confidence": m.confidence,
-                    "usage_count": m.usage_count,
-                    "created_at": m.created_at.isoformat(),
-                    "last_used_at": m.last_used_at.isoformat() if m.last_used_at else None,
-                })
+                alive.append(
+                    {
+                        "axis_field": m.axis_field,
+                        "range_lo": m.range_lo,
+                        "range_hi": m.range_hi,
+                        "description": m.description,
+                        "confidence": m.confidence,
+                        "usage_count": m.usage_count,
+                        "created_at": m.created_at.isoformat(),
+                        "last_used_at": m.last_used_at.isoformat() if m.last_used_at else None,
+                    }
+                )
             if alive:
                 result.extend(alive)
             else:
@@ -622,16 +646,28 @@ class NeuroVocabulary:
                 range_lo=item["range_lo"],
                 range_hi=item["range_hi"],
                 description=item["description"],
-                confidence=item.get("confidence", confidence_value("ai.composer.load_mappings.confidence", 0.3)),
+                confidence=item.get(
+                    "confidence", confidence_value("ai.composer.load_mappings.confidence", 0.3)
+                ),
                 usage_count=item.get("usage_count", 0),
-                created_at=datetime.fromisoformat(item["created_at"]) if "created_at" in item else datetime.now(),
-                last_used_at=datetime.fromisoformat(item["last_used_at"]) if item.get("last_used_at") else None,
+                created_at=(
+                    datetime.fromisoformat(item["created_at"])
+                    if "created_at" in item
+                    else datetime.now()
+                ),
+                last_used_at=(
+                    datetime.fromisoformat(item["last_used_at"])
+                    if item.get("last_used_at")
+                    else None
+                ),
             )
             self._value_range_mappings.setdefault(m.axis_field, []).append(m)
 
     # ── C6 Phase 5+：反向映射 + 信心衰減 ────────────────────────────────
 
-    def find_axis_values(self, description: str, threshold: Optional[float] = None) -> List[Dict[str, Any]]:
+    def find_axis_values(
+        self, description: str, threshold: Optional[float] = None
+    ) -> List[Dict[str, Any]]:
         """反向映射：從語意描述找出對應的軸點位數值區間"""
         if threshold is None:
             threshold = confidence_value("ai.composer.find_axis_values.threshold", 0.3)
@@ -644,14 +680,16 @@ class NeuroVocabulary:
                 if m.confidence < threshold:
                     continue
                 if desc_lower in m.description.lower() or m.description.lower() in desc_lower:
-                    results.append({
-                        "axis_field": m.axis_field,
-                        "range_lo": m.range_lo,
-                        "range_hi": m.range_hi,
-                        "description": m.description,
-                        "confidence": m.confidence,
-                        "usage_count": m.usage_count,
-                    })
+                    results.append(
+                        {
+                            "axis_field": m.axis_field,
+                            "range_lo": m.range_lo,
+                            "range_hi": m.range_hi,
+                            "description": m.description,
+                            "confidence": m.confidence,
+                            "usage_count": m.usage_count,
+                        }
+                    )
         return results
 
     def get_uncovered_values(self, state_for_llm: Dict[str, Dict]) -> List[Dict[str, Any]]:
@@ -668,7 +706,9 @@ class NeuroVocabulary:
                     uncovered.append({"axis_field": field, "value": v})
         return uncovered
 
-    def decay_confidences(self, hours: Optional[float] = None, decay_rate: Optional[float] = None) -> None:
+    def decay_confidences(
+        self, hours: Optional[float] = None, decay_rate: Optional[float] = None
+    ) -> None:
         """降低長時間未使用的 mapping 信心度"""
         if hours is None:
             hours = confidence_value("ai.composer.decay.hours", 24.0)
@@ -707,10 +747,22 @@ class NeuroVocabulary:
             a = mappings[i]
             b = mappings[i + 1]
             if a.range_hi >= b.range_lo:
-                overlaps.append({
-                    "a": {"description": a.description, "range_lo": a.range_lo, "range_hi": a.range_hi, "confidence": a.confidence},
-                    "b": {"description": b.description, "range_lo": b.range_lo, "range_hi": b.range_hi, "confidence": b.confidence},
-                })
+                overlaps.append(
+                    {
+                        "a": {
+                            "description": a.description,
+                            "range_lo": a.range_lo,
+                            "range_hi": a.range_hi,
+                            "confidence": a.confidence,
+                        },
+                        "b": {
+                            "description": b.description,
+                            "range_lo": b.range_lo,
+                            "range_hi": b.range_hi,
+                            "confidence": b.confidence,
+                        },
+                    }
+                )
         return overlaps
 
     def sync_to_state_store(self) -> None:
@@ -719,6 +771,7 @@ class NeuroVocabulary:
         serialized = self.serialize_mappings()
         try:
             from core.system.state_store.global_store import state_store
+
             state_store.update_state("neuro_vocabulary", {"mappings": serialized})
         except Exception as e:
             # broad except acceptable: state store sync is non-critical, graceful degradation
@@ -728,6 +781,7 @@ class NeuroVocabulary:
         """從 GlobalStateStore 恢復數值映射"""
         try:
             from core.system.state_store.global_store import state_store
+
             data = state_store.get_state("neuro_vocabulary")
             mappings = data.get("mappings") if data else None
             if mappings:
@@ -747,14 +801,31 @@ class NeuroVocabulary:
                 content=item["content"],
                 category=item.get("category", "general"),
                 structural_type=item.get("structural_type", "statement"),
-                alpha_energy=weights.get("alpha_energy", confidence_value("ai.composer.fragment.alpha_energy", 0.5)),
-                beta_curiosity=weights.get("beta_curiosity", confidence_value("ai.composer.fragment.beta_curiosity", 0.5)),
-                gamma_valence=weights.get("gamma_valence", confidence_value("ai.composer.fragment.gamma_valence", 0.0)),
-                delta_intimacy=weights.get("delta_intimacy", confidence_value("ai.composer.fragment.delta_intimacy", 0.3)),
-                epsilon_precision=weights.get("epsilon_precision", confidence_value("ai.composer.fragment.epsilon_precision", 0.5)),
-                zeta_temporal=weights.get("zeta_temporal", confidence_value("ai.composer.fragment.zeta_temporal", 0.5)),
-                theta_meta=weights.get("theta_meta", confidence_value("ai.composer.fragment.theta_meta", 0.3)),
-                eta_execution=weights.get("eta_execution", confidence_value("ai.composer.fragment.eta_execution", 0.5)),
+                alpha_energy=weights.get(
+                    "alpha_energy", confidence_value("ai.composer.fragment.alpha_energy", 0.5)
+                ),
+                beta_curiosity=weights.get(
+                    "beta_curiosity", confidence_value("ai.composer.fragment.beta_curiosity", 0.5)
+                ),
+                gamma_valence=weights.get(
+                    "gamma_valence", confidence_value("ai.composer.fragment.gamma_valence", 0.0)
+                ),
+                delta_intimacy=weights.get(
+                    "delta_intimacy", confidence_value("ai.composer.fragment.delta_intimacy", 0.3)
+                ),
+                epsilon_precision=weights.get(
+                    "epsilon_precision",
+                    confidence_value("ai.composer.fragment.epsilon_precision", 0.5),
+                ),
+                zeta_temporal=weights.get(
+                    "zeta_temporal", confidence_value("ai.composer.fragment.zeta_temporal", 0.5)
+                ),
+                theta_meta=weights.get(
+                    "theta_meta", confidence_value("ai.composer.fragment.theta_meta", 0.3)
+                ),
+                eta_execution=weights.get(
+                    "eta_execution", confidence_value("ai.composer.fragment.eta_execution", 0.5)
+                ),
                 context_tags=item.get("context_tags"),
             )
             self.add_fragment(frag)
@@ -784,8 +855,11 @@ class NeuroVocabulary:
 
             # 按标点拆分为句子（只分中句号/感叹/问号，不分英文句点避免打断省略号）
             import re as _re
+
             normalized = content.replace("...", "…").replace("。。", "。")
-            sentences = [s.strip() for s in _re.split(r'(?<=[。！？！?!])\s*', normalized) if s.strip()]
+            sentences = [
+                s.strip() for s in _re.split(r"(?<=[。！？！?!])\s*", normalized) if s.strip()
+            ]
 
             for i, sentence in enumerate(sentences):
                 fid = f"{tmpl_id}_s{i}"
@@ -812,21 +886,38 @@ class NeuroVocabulary:
                 eta = 0.4
 
                 if "greeting" in category.lower():
-                    alpha = 0.7; gamma = 0.5; delta = 0.4
+                    alpha = 0.7
+                    gamma = 0.5
+                    delta = 0.4
                 elif "emotional" in category.lower() or "support" in category.lower():
-                    alpha = 0.3; gamma = -0.3; delta = 0.6; beta_val = 0.2
+                    alpha = 0.3
+                    gamma = -0.3
+                    delta = 0.6
+                    beta_val = 0.2
                 elif "affirmation" in category.lower():
-                    gamma = 0.7; alpha = 0.6; delta = 0.5
+                    gamma = 0.7
+                    alpha = 0.6
+                    delta = 0.5
                 elif "negation" in category.lower():
-                    gamma = -0.4; alpha = 0.3; delta = 0.2
+                    gamma = -0.4
+                    alpha = 0.3
+                    delta = 0.2
                 elif "curiosity" in category.lower():
-                    beta_val = 0.8; gamma = 0.4; alpha = 0.6
+                    beta_val = 0.8
+                    gamma = 0.4
+                    alpha = 0.6
                 elif "intimacy" in category.lower():
-                    delta = 0.9; gamma = 0.8; alpha = 0.4
+                    delta = 0.9
+                    gamma = 0.8
+                    alpha = 0.4
                 elif "help" in category.lower():
-                    epsilon = 0.6; beta_val = 0.5; alpha = 0.5
+                    epsilon = 0.6
+                    beta_val = 0.5
+                    alpha = 0.5
                 elif "farewell" in category.lower():
-                    zeta = 0.7; alpha = 0.4; gamma = 0.3
+                    zeta = 0.7
+                    alpha = 0.4
+                    gamma = 0.3
 
                 frag = NeuroFragment(
                     fragment_id=fid,
@@ -915,7 +1006,9 @@ class NeuroBlender:
         all_frags = self.vocabulary.all_fragments()
         if not all_frags:
             return ComposedResponse(
-                text=_get_ed3n().process("empty_vocabulary", context={"user_name": user_name}, depth="shallow"),
+                text=_get_ed3n().process(
+                    "empty_vocabulary", context={"user_name": user_name}, depth="shallow"
+                ),
                 fragments_used=[],
                 composition_time_ms=(time.time() - start_time) * 1000,
                 confidence=0.0,
@@ -963,7 +1056,9 @@ class NeuroBlender:
             },
         )
 
-    def _score_fragments(self, target: List[float], all_frags: List[NeuroFragment]) -> List[Tuple[NeuroFragment, float]]:
+    def _score_fragments(
+        self, target: List[float], all_frags: List[NeuroFragment]
+    ) -> List[Tuple[NeuroFragment, float]]:
         """Score fragments."""
         scored = []
         for frag in all_frags:
@@ -983,6 +1078,7 @@ class NeuroBlender:
     def _load_behavior_config(self) -> Dict[str, Any]:
         """Load behavior config."""
         from core.system.config.tiered_loader import get_config
+
         return get_config("standard/behavior/behavior")
 
     def _compute_top_k_count(self, alpha_energy: float, _bio_thresh: Dict[str, Any]) -> int:
@@ -993,7 +1089,9 @@ class NeuroBlender:
             return 4
         return 6
 
-    def _group_by_role(self, scored: List[Tuple[NeuroFragment, float]]) -> Dict[str, List[Tuple[NeuroFragment, float]]]:
+    def _group_by_role(
+        self, scored: List[Tuple[NeuroFragment, float]]
+    ) -> Dict[str, List[Tuple[NeuroFragment, float]]]:
         """Group by role."""
         by_role: Dict[str, List[Tuple[NeuroFragment, float]]] = {}
         for frag, sim in scored:
@@ -1011,6 +1109,7 @@ class NeuroBlender:
         """Select top fragments."""
         selected: List[NeuroFragment] = []
         seen_contents: set = set()
+
         def add_if_unique(frag: NeuroFragment) -> bool:
             """Add a if unique."""
             key = frag.content.strip()[:15]
@@ -1032,7 +1131,7 @@ class NeuroBlender:
         else:
             for role, items in by_role.items():
                 items.sort(key=lambda x: x[1], reverse=True)
-                for frag, _ in items[:top_k_per_role * 2]:
+                for frag, _ in items[: top_k_per_role * 2]:
                     add_if_unique(frag)
                     if len([f for f in selected if f.structural_type == role]) >= top_k_per_role:
                         break
@@ -1069,7 +1168,9 @@ class NeuroBlender:
         epsilon_val = self._dict_val(epsilon_dict, "precision", 0.5)
         zeta_val = self._dict_val(zeta_dict, "temporal_coherence", 0.5)
         theta_val = self._dict_val(theta_dict, "novelty", 0.3)
-        eta_val = self._dict_val(eta_dict, "execution_count", 0.5) if isinstance(eta_dict, dict) else 0.5
+        eta_val = (
+            self._dict_val(eta_dict, "execution_count", 0.5) if isinstance(eta_dict, dict) else 0.5
+        )
 
         # Intent influence
         if intent_vec:
@@ -1109,7 +1210,9 @@ class NeuroBlender:
             return 0.0
         return dot / (n1 * n2)
 
-    def _structural_exploration(self, fragments: List[NeuroFragment], curiosity: float) -> List[NeuroFragment]:
+    def _structural_exploration(
+        self, fragments: List[NeuroFragment], curiosity: float
+    ) -> List[NeuroFragment]:
         """当好奇心高时，尝试非传统片段排列"""
         if len(fragments) < 3:
             return fragments
@@ -1159,10 +1262,16 @@ class NeuroBlender:
             if i > 0 and parts:
                 prev = parts[-1]
                 # Add natural connector for statement/exclamation fragments
-                if (not _re.search(r'[。！？!?）)]$', prev)
-                        and stype in ("statement", "exclamation")
-                        and not _re.search(r'[，、，]$', prev)):
-                    content = content[0].lower() + content[1:] if content and content[0].isalpha() else content
+                if (
+                    not _re.search(r"[。！？!?）)]$", prev)
+                    and stype in ("statement", "exclamation")
+                    and not _re.search(r"[，、，]$", prev)
+                ):
+                    content = (
+                        content[0].lower() + content[1:]
+                        if content and content[0].isalpha()
+                        else content
+                    )
 
             parts.append(content)
             prev_type = stype
@@ -1173,16 +1282,16 @@ class NeuroBlender:
         response = "".join(parts)
 
         # Clean artifact patterns
-        response = _re.sub(r'[。！？，]{2,}', lambda m: m.group(0)[0], response)
-        response = _re.sub(r'~+', '～', response)  # normalize tilde to wave dash
+        response = _re.sub(r"[。！？，]{2,}", lambda m: m.group(0)[0], response)
+        response = _re.sub(r"~+", "～", response)  # normalize tilde to wave dash
         # Remove leading comma/question marks
         response = response.lstrip("，？?！!")
         # Ensure proper ending
-        if not _re.search(r'[。！？!?）)]$', response):
+        if not _re.search(r"[。！？!?）)]$", response):
             # 呢 is only a question word when it functions as interrogative
-            if _re.search(r'[吗么]$', response):
+            if _re.search(r"[吗么]$", response):
                 response += "？"
-            elif _re.search(r'[吧哦啊呀]$', response):
+            elif _re.search(r"[吧哦啊呀]$", response):
                 response += "。"
             else:
                 response += "。"
@@ -1193,19 +1302,17 @@ class NeuroBlender:
         """Update stats."""
         self.stats["total_syntheses"] += 1
         total = self.stats["total_syntheses"]
-        self.stats["avg_time_ms"] = (
-            self.stats["avg_time_ms"] * (total - 1) + elapsed_ms
-        ) / total
+        self.stats["avg_time_ms"] = (self.stats["avg_time_ms"] * (total - 1) + elapsed_ms) / total
 
 
 class ResponseComposer:
     """
-     响应组合器主类
-     ==============
+    响应组合器主类
+    ==============
 
-     整合 TemplateMatcher 和 FragmentComposer
-     提供统一的响应组合接口
-     """
+    整合 TemplateMatcher 和 FragmentComposer
+    提供统一的响应组合接口
+    """
 
     def __init__(self):
         self.fragment_composer = FragmentComposer()
@@ -1221,16 +1328,16 @@ class ResponseComposer:
         context: Optional[Dict[str, Any]] = None,
     ) -> ComposedResponse:
         """
-         组合响应
+        组合响应
 
-         Args:
-             template_content: 模板内容
-             match_score: 匹配分数
-             context: 上下文
+        Args:
+            template_content: 模板内容
+            match_score: 匹配分数
+            context: 上下文
 
-         Returns:
-             ComposedResponse: 组合后的响应
-         """
+        Returns:
+            ComposedResponse: 组合后的响应
+        """
         return self.fragment_composer.compose_from_template(template_content, match_score, context)
 
     def add_fragment(self, fragment: Fragment) -> None:

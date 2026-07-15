@@ -1,3 +1,4 @@
+from services.error_handling import safe_error
 """
 ANGELA-MATRIX: [L3-L4] [βδ] [B] [L2]
 GoogleDriveHandler — processes google_drive intents from ChatService dispatch.

@@ -38,6 +38,7 @@ _training_coordinator_instance = None
 _lifecycle_instance = None
 _heartbeat_instance = None
 
+
 # --- Config (lazy proxy) ---
 class _LazyAngelaConfig:
     """Lazy-loaded proxy for AngelaConfig that avoids heavy imports at module level."""
@@ -51,6 +52,7 @@ class _LazyAngelaConfig:
             self._loaded = True
             try:
                 from core.config_loader import get_angela_config
+
                 self._cfg = get_angela_config()
             except Exception as e:
                 logger.warning(f"AngelaConfig not available: {e}")
@@ -68,7 +70,7 @@ class _LazyAngelaConfig:
     def __getattr__(self, name):
         self._ensure()
         if self._cfg is None:
-            raise AttributeError(f"AngelaConfig not loaded")
+            raise AttributeError("AngelaConfig not loaded")
         return getattr(self._cfg, name)
 
 
@@ -77,12 +79,14 @@ _angela_cfg = _LazyAngelaConfig()
 
 # --- Service factories ---
 
+
 async def _get_chat_service():
     """Get or create the chat service singleton."""
     global _chat_service_instance
     if _chat_service_instance is None:
         try:
             from services.chat_service import ChatService
+
             _chat_service_instance = ChatService()
             await _chat_service_instance.initialize()
         except Exception as e:
@@ -97,6 +101,7 @@ def get_abc_key_manager():
     if _abc_key_manager_instance is None:
         try:
             from core.system.security_monitor import ABCKeyManager
+
             _abc_key_manager_instance = ABCKeyManager()
         except Exception as e:
             logger.warning(f"ABCKeyManager not available: {e}", exc_info=True)
@@ -110,6 +115,7 @@ def get_digital_life():
     if _digital_life_instance is None:
         try:
             from core.life.digital_life_integrator import DigitalLifeIntegrator
+
             _digital_life_instance = DigitalLifeIntegrator()
         except Exception as e:
             logger.warning(f"DigitalLifeIntegrator not available: {e}", exc_info=True)
@@ -121,6 +127,7 @@ def get_desktop_interaction():
     """Lazy import for desktop interaction."""
     try:
         from core.engine.desktop_interaction import DesktopInteraction
+
         return DesktopInteraction()
     except Exception as e:
         logger.warning(f"DesktopInteraction not available: {e}")
@@ -131,6 +138,7 @@ def get_action_executor():
     """Lazy import for action executor."""
     try:
         from core.engine.action_executor import ActionExecutor
+
         return ActionExecutor()
     except Exception as e:
         logger.warning(f"ActionExecutor not available: {e}")
@@ -140,6 +148,7 @@ def get_action_executor():
 def get_vision_service():
     try:
         from services.vision_service import VisionService
+
         return VisionService()
     except Exception as e:
         logger.warning(f"VisionService not available: {e}")
@@ -149,6 +158,7 @@ def get_vision_service():
 def get_audio_service():
     try:
         from services.audio_service import AudioService
+
         return AudioService()
     except Exception as e:
         logger.warning(f"AudioService not available: {e}")
@@ -156,6 +166,7 @@ def get_audio_service():
 
 
 _tactile_service_instance = None
+
 
 def get_tactile_service():
     """TactileService removed — all callers handle None gracefully."""
@@ -183,6 +194,7 @@ async def get_level5_asi():
     if _level5_asi_instance is None:
         try:
             from ai.level5_asi_system import Level5ASISystem
+
             _level5_asi_instance = Level5ASISystem()
             await _level5_asi_instance.initialize()
             await _level5_asi_instance.start()
@@ -240,6 +252,7 @@ async def _try_start_bio():
     global _bio_integrator_instance
     try:
         from core.bio.biological_integrator import BiologicalIntegrator
+
         _bio_integrator_instance = BiologicalIntegrator()
         await _bio_integrator_instance.initialize()
         logger.info("[Bio] BiologicalIntegrator initialized and integration loop started")
@@ -253,6 +266,7 @@ async def _try_start_agents():
     try:
         from ai.agents.agent_adapter import register_specialized_agents
         from ai.agents.agent_manager import AgentManager
+
         _agent_manager_instance = AgentManager(enable_router=False)
         count = register_specialized_agents(_agent_manager_instance)
         logger.info(f"[AgentManager] Initialized with {count} specialized agents")
@@ -265,6 +279,7 @@ def _try_init_crisis():
     global _crisis_system_instance
     try:
         from ai.crisis.crisis_system import CrisisSystem
+
         _crisis_system_instance = CrisisSystem()
         logger.info("[CrisisSystem] Initialized — monitoring for crisis indicators")
     except Exception as e:
@@ -283,6 +298,7 @@ def get_lifecycle():
     if _lifecycle_instance is None:
         try:
             from core.life.autonomous_life_cycle import AutonomousLifeCycle
+
             _lifecycle_instance = AutonomousLifeCycle()
             logger.info("[LifeCycle] Shared singleton initialized")
         except Exception as e:
@@ -297,6 +313,7 @@ def get_metabolic_heartbeat():
     if _heartbeat_instance is None:
         try:
             from core.life.heartbeat import MetabolicHeartbeat
+
             _heartbeat_instance = MetabolicHeartbeat()
             logger.info("[Heartbeat] Shared singleton initialized")
         except Exception as e:
@@ -311,6 +328,7 @@ def get_training_coordinator():
     if _training_coordinator_instance is None:
         try:
             from ai.core.training_coordinator import TrainingCoordinator
+
             _training_coordinator_instance = TrainingCoordinator(
                 max_examples_per_domain=100,
                 max_hashes_per_domain=10000,
@@ -327,11 +345,14 @@ def _try_init_causal_reasoning():
     global _causal_reasoning_instance
     try:
         from ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
+
         _causal_reasoning_instance = CausalReasoningEngine()
         # Warm-start with retrospective baseline relationships so
         # predict() returns results from Round 1 of every conversation
         _causal_reasoning_instance.retrospective_warm_start()
-        logger.info("[CausalReasoning] Initialized — learning causal relationships from interactions")
+        logger.info(
+            "[CausalReasoning] Initialized — learning causal relationships from interactions"
+        )
     except Exception as e:
         logger.warning(f"[CausalReasoning] Initialization failed: {e}")
 
@@ -340,6 +361,7 @@ def _try_init_session_manager():
     """Initialize SessionManager singleton for WebSocket connections."""
     try:
         from services.connection_session import get_session_manager
+
         get_session_manager()
         logger.info("[SessionManager] Initialized — ready for WebSocket connections")
     except Exception as e:
@@ -348,9 +370,12 @@ def _try_init_session_manager():
 
 def _try_start_broadcast():
     """Start WebSocket state broadcast background task."""
-    from core.system.live_logger import info as _li, warn as _lw
+    from core.system.live_logger import info as _li
+    from core.system.live_logger import warn as _lw
+
     try:
         from services.websocket_manager import broadcast_state_updates
+
         task = asyncio.create_task(broadcast_state_updates())
         task.add_done_callback(lambda t: None)
         _li("Broadcast state update task started")
@@ -366,7 +391,9 @@ def _try_wire_dli_broadcast():
     Without this wiring, proactive actions (greet/comfort/remind/share/question)
     from LLMDecisionLoop and ProactiveInteractionSystem never reach frontend clients.
     """
-    from core.system.live_logger import info as _li, warn as _lw
+    from core.system.live_logger import info as _li
+    from core.system.live_logger import warn as _lw
+
     try:
         dli = get_digital_life()
         if not dli:
@@ -375,11 +402,14 @@ def _try_wire_dli_broadcast():
 
         async def _dli_broadcast(data: dict) -> None:
             from services.websocket_manager import manager
-            await manager.broadcast({
-                "type": "angela_action",
-                "data": data,
-                "timestamp": datetime.now().isoformat(),
-            })
+
+            await manager.broadcast(
+                {
+                    "type": "angela_action",
+                    "data": data,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
         dli.broadcast_callback = _dli_broadcast
         if dli.llm_decision_loop:
@@ -393,6 +423,7 @@ def _try_warm_ed3n():
     """Pre-warm ED3N external dictionaries to avoid cold-start latency."""
     try:
         from ai.ed3n.ed3n_engine import ED3NEngine
+
         count = ED3NEngine.get_shared().warm_up()
         if count > 0:
             logger.info("[ED3N] Pre-warmed %d external dictionary entries", count)
@@ -404,6 +435,7 @@ async def _shutdown_services(broadcast_task, module_manager):
     """Gracefully shut down all services on application exit."""
     try:
         from services.llm.router import _llm_service as _llm
+
         if _llm is not None:
             await _llm.shutdown()
             logger.info("[LLM] Backend HTTP sessions closed")
@@ -430,6 +462,7 @@ async def _shutdown_services(broadcast_task, module_manager):
         logger.info("[Broadcast] State broadcast task stopped")
     try:
         from services.connection_session import shutdown_session_manager
+
         await shutdown_session_manager()
     except Exception as e:
         logger.warning(f"[SessionManager] Shutdown error: {e}")
@@ -483,4 +516,3 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await hb_inst.stop()
     except Exception as err:
         logger.debug(f"Heartbeat stop on shutdown skipped: {err}")
-

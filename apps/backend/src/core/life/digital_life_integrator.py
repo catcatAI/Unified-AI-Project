@@ -18,9 +18,7 @@ Version: 6.0.0
 Date: 2026-02-02
 """
 
-
 from __future__ import annotations
-from core.utils import safe_error
 
 import asyncio
 import logging
@@ -38,6 +36,7 @@ from core.engine.action_executor import ActionExecutor
 from core.engine.state_matrix import StateMatrix4D
 from core.system.config.magic_numbers import loop_sleep
 from core.system.state_store.global_store import state_store
+from core.utils import safe_error
 
 from .autonomous_life_cycle import AutonomousLifeCycle
 from .dynamic_parameters import DynamicThresholdManager
@@ -60,6 +59,7 @@ _MAX_LIFE_EVENTS = 500
 # =============================================================================
 class ModalityType(Enum):
     """模態類型 / Modality types"""
+
     TEXT = auto()
     AUDIO = auto()
     VISUAL_3D = auto()
@@ -69,6 +69,7 @@ class ModalityType(Enum):
 @dataclass
 class ModalityState:
     """模態狀態 / Modality state"""
+
     modality: ModalityType
     is_active: bool = True
     priority: int = 1
@@ -80,6 +81,7 @@ class ModalityGateway:
     模態閘控管理器 / Modality Gateway Manager
     Handles dynamic switching of output streams based on intent and arousal.
     """
+
     def __init__(self):
         self.modalities: dict[ModalityType, ModalityState] = {
             ModalityType.TEXT: ModalityState(ModalityType.TEXT, True, 10),
@@ -88,42 +90,49 @@ class ModalityGateway:
             ModalityType.CODE: ModalityState(ModalityType.CODE, False, 2),
         }
 
-    def update_gates(self, arousal: float, introspection_report: Optional[dict[str, Any]] = None) -> None:
+    def update_gates(
+        self, arousal: float, introspection_report: Optional[dict[str, Any]] = None
+    ) -> None:
         """根據喚醒度與意圖分析更新閘門狀態"""
         old_states = {m: s.is_active for m, s in self.modalities.items()}
-        
+
         # 1. 基礎生理限制 (喚醒度低於 20 關閉耗能模態)
         from core.system.config.tiered_loader import get_config
+
         _beh_conf = get_config("standard/behavior/behavior")
         _arousal_off = _beh_conf.get("biological_thresholds", {}).get("arousal_modality_off", 20)
         if arousal < _arousal_off:
-             self.modalities[ModalityType.VISUAL_3D].is_active = False
-             self.modalities[ModalityType.AUDIO].is_active = False
+            self.modalities[ModalityType.VISUAL_3D].is_active = False
+            self.modalities[ModalityType.AUDIO].is_active = False
         else:
-             self.modalities[ModalityType.VISUAL_3D].is_active = True
-             self.modalities[ModalityType.AUDIO].is_active = True
+            self.modalities[ModalityType.VISUAL_3D].is_active = True
+            self.modalities[ModalityType.AUDIO].is_active = True
 
         # 2. 意圖驅動邏輯 (Task N.21.4)
         if introspection_report:
             dissonance = introspection_report.get("dissonance_score", 0.0)
-            
+
             # 如果認知失調過高 (> 0.6)，強制關閉複雜模態，進入「省電/簡化」模式
             if dissonance > 0.6:
                 self.modalities[ModalityType.CODE].is_active = False
                 self.modalities[ModalityType.AUDIO].is_active = False
-                logger.warning(f"⚠️ [Modality] High Dissonance ({dissonance:.2f}). Throttling energy-heavy modalities.", exc_info=True)
+                logger.warning(
+                    f"⚠️ [Modality] High Dissonance ({dissonance:.2f}). Throttling energy-heavy modalities.",
+                    exc_info=True,
+                )
             else:
                 # 根據任務類型動態開啟
                 anomalies = introspection_report.get("anomalies", [])
                 is_coding_task = any("code" in str(a).lower() for a in anomalies)
                 self.modalities[ModalityType.CODE].is_active = is_coding_task
 
-
         # 記錄狀態變更
         for m, s in self.modalities.items():
             if s.is_active != old_states[m]:
                 s.last_toggle = datetime.now()
-                logger.info(f"🔮 [Modality] {m.name} is now {'ACTIVE' if s.is_active else 'INACTIVE'}")
+                logger.info(
+                    f"🔮 [Modality] {m.name} is now {'ACTIVE' if s.is_active else 'INACTIVE'}"
+                )
 
     def is_active(self, modality: ModalityType) -> bool:
         """Check if a given modality is currently active."""
@@ -164,9 +173,14 @@ class ModalityGateway:
                 state.is_active = True
                 state.last_toggle = datetime.now()
                 logger.info(f"[Modality] {mod_type.name} enabled via feedback")
-                state_store.emit_event("modality.gate_updated", {
-                    "modality": mod_type.name, "active": True, "source": "dli_feedback",
-                })
+                state_store.emit_event(
+                    "modality.gate_updated",
+                    {
+                        "modality": mod_type.name,
+                        "active": True,
+                        "source": "dli_feedback",
+                    },
+                )
                 return
 
     def disable_modality(self, name: str) -> None:
@@ -175,9 +189,14 @@ class ModalityGateway:
                 state.is_active = False
                 state.last_toggle = datetime.now()
                 logger.info(f"[Modality] {mod_type.name} disabled via feedback")
-                state_store.emit_event("modality.gate_updated", {
-                    "modality": mod_type.name, "active": False, "source": "dli_feedback",
-                })
+                state_store.emit_event(
+                    "modality.gate_updated",
+                    {
+                        "modality": mod_type.name,
+                        "active": False,
+                        "source": "dli_feedback",
+                    },
+                )
                 return
 
     def _update_gates_on_emotion(self, valence: float) -> None:
@@ -396,7 +415,7 @@ class DigitalLifeIntegrator:
 
             llm_service = await get_llm_service()
             memory_manager = HAMMemoryManager(core_storage_filename="angela_conversations.json")
-            
+
             # Decide loop
             self.llm_decision_loop = LLMDecisionLoop(
                 llm_service=llm_service,
@@ -409,7 +428,10 @@ class DigitalLifeIntegrator:
             logger.info("  [Cognition] LLM Decision Loop active.")
         except Exception as e:
             # broad except acceptable: LLM failure is optional, graceful degradation
-            logger.error(f"  [Cognition] Brain boot failure: {e}. Angela will rely on GSI-4 local logic.", exc_info=True)
+            logger.error(
+                f"  [Cognition] Brain boot failure: {e}. Angela will rely on GSI-4 local logic.",
+                exc_info=True,
+            )
 
         # 3.5 Autonomous Life Cycle (Formula-driven decision system)
         if self._formula_integration_enabled:
@@ -428,15 +450,21 @@ class DigitalLifeIntegrator:
         # Start background loops
         self._life_cycle_task = asyncio.create_task(self._life_cycle_loop())
         self._life_cycle_task.add_done_callback(
-            lambda t: logger.critical("Life cycle loop failed: %s", t.exception())
-            if not t.cancelled() and t.exception() else None
+            lambda t: (
+                logger.critical("Life cycle loop failed: %s", t.exception())
+                if not t.cancelled() and t.exception()
+                else None
+            )
         )
         self._health_check_task = asyncio.create_task(self._health_check_loop())
         self._health_check_task.add_done_callback(
-            lambda t: logger.critical("Health check loop failed: %s", t.exception())
-            if not t.cancelled() and t.exception() else None
+            lambda t: (
+                logger.critical("Health check loop failed: %s", t.exception())
+                if not t.cancelled() and t.exception()
+                else None
+            )
         )
-        
+
         logger.info(f"✨ Angela has awakened in {self.life_cycle_state.en_name} state.")
         return True
 
@@ -458,9 +486,13 @@ class DigitalLifeIntegrator:
     # ── C³ 6.0: CNS Event Subscription & Feedback ───────────────────────
 
     def _subscribe_cns_events(self) -> None:
-        state_store.subscribe_event("routing.response_generated", self._handle_cns_event, priority=6)
+        state_store.subscribe_event(
+            "routing.response_generated", self._handle_cns_event, priority=6
+        )
         state_store.subscribe_event("emotion.updated", self._handle_cns_event, priority=6)
-        state_store.subscribe_event("lifecycle.decision_executed", self._handle_cns_event, priority=6)
+        state_store.subscribe_event(
+            "lifecycle.decision_executed", self._handle_cns_event, priority=6
+        )
 
     def _handle_cns_event(self, event_type: str, payload: dict) -> None:
         if event_type == "routing.response_generated":
@@ -484,12 +516,15 @@ class DigitalLifeIntegrator:
             self.modality_gateway.disable_modality("visual_3d")
         elif avg_engagement > 1.2:
             self.modality_gateway.enable_modality("visual_3d")
-        state_store.emit_event("dli.feedback_processed", {
-            "engagement_ratio": engagement_ratio,
-            "success": success,
-            "avg_engagement": round(avg_engagement, 3),
-            "feedback_count": self._interaction_feedback_count,
-        })
+        state_store.emit_event(
+            "dli.feedback_processed",
+            {
+                "engagement_ratio": engagement_ratio,
+                "success": success,
+                "avg_engagement": round(avg_engagement, 3),
+                "feedback_count": self._interaction_feedback_count,
+            },
+        )
 
     async def shutdown(self) -> None:
         """Shutdown digital life and all subsystems"""
@@ -553,14 +588,14 @@ class DigitalLifeIntegrator:
 
                 if self.introspection_report.get("dissonance_detected"):
                     logger.warning(
-                        f"[DigitalLife] Cognitive dissonance detected: {self.introspection_report['anomalies']}"
-                        , exc_info=True
+                        f"[DigitalLife] Cognitive dissonance detected: {self.introspection_report['anomalies']}",
+                        exc_info=True,
                     )
 
                 # [Task N.20.2] 更新模態閘控
                 self.modality_gateway.update_gates(
                     arousal=bio_state.get("arousal", 50.0),
-                    introspection_report=self.introspection_report
+                    introspection_report=self.introspection_report,
                 )
 
             except Exception as e:
@@ -620,7 +655,7 @@ class DigitalLifeIntegrator:
         sm = self.state_matrix
 
         alpha_stability = 1.0 - sm.alpha.values.get("tension", 0.0)
-        beta_stability  = 1.0 - sm.beta.values.get("confusion", 0.0)
+        beta_stability = 1.0 - sm.beta.values.get("confusion", 0.0)
         gamma_stability = sm.gamma.values.get("calm", 0.5)
         delta_stability = sm.delta.values.get("trust", 0.5)
 
@@ -666,11 +701,14 @@ class DigitalLifeIntegrator:
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         # C³ 6.0: Emit CNS event for state change
-        state_store.emit_event("dli.state_changed", {
-            "old_state": old_state.name,
-            "new_state": new_state.name,
-            "description": f"Transitioned from {old_state.en_name} to {new_state.en_name}",
-        })
+        state_store.emit_event(
+            "dli.state_changed",
+            {
+                "old_state": old_state.name,
+                "new_state": new_state.name,
+                "description": f"Transitioned from {old_state.en_name} to {new_state.en_name}",
+            },
+        )
 
     async def _apply_state_behaviors(self, state: LifeCycleState) -> None:
         """Apply behaviors specific to life cycle state"""
@@ -694,7 +732,9 @@ class DigitalLifeIntegrator:
                 description="Angela digital life initializing — core systems online",
                 significance=0.5,
             )
-            logger.info("🔧 [DigitalLife] INITIALIZING: Core systems initialized at conservative baseline.")
+            logger.info(
+                "🔧 [DigitalLife] INITIALIZING: Core systems initialized at conservative baseline."
+            )
 
         elif state == LifeCycleState.AWAKENING:
             # =============================================================
@@ -722,7 +762,9 @@ class DigitalLifeIntegrator:
             # 觸發記憶鞏固：學習期間穩固記憶
             if self.memory_bridge:
                 self.memory_bridge.trigger_consolidation()
-            logger.info("🌱 [DigitalLife] GROWING: Learning boost + memory consolidation triggered.")
+            logger.info(
+                "🌱 [DigitalLife] GROWING: Learning boost + memory consolidation triggered."
+            )
 
         elif state == LifeCycleState.MATURE:
             # =============================================================
@@ -732,9 +774,7 @@ class DigitalLifeIntegrator:
             if self.autonomous_lifecycle:
                 metrics = self.autonomous_lifecycle.get_current_metrics()
                 # 將生命強度映射到 β 維度清晰度
-                self.state_matrix.update_beta(
-                    clarity=min(1.0, metrics.life_intensity * 0.8)
-                )
+                self.state_matrix.update_beta(clarity=min(1.0, metrics.life_intensity * 0.8))
             logger.info("✨ [DigitalLife] MATURE: Formula evaluation applied to beta clarity.")
 
         elif state == LifeCycleState.RESTING:
@@ -743,7 +783,9 @@ class DigitalLifeIntegrator:
             # Consolidate memories
             if self.memory_bridge:
                 self.memory_bridge.trigger_consolidation()
-            logger.info("💤 [DigitalLife] RESTING: Biological processes slowed, memory consolidated.")
+            logger.info(
+                "💤 [DigitalLife] RESTING: Biological processes slowed, memory consolidated."
+            )
 
         elif state == LifeCycleState.DORMANT:
             # =============================================================
@@ -762,11 +804,14 @@ class DigitalLifeIntegrator:
                 try:
                     params_summary = self.dynamic_params.get_all_parameters_summary()
                     drifted_params = [
-                        k for k, v in params_summary.items()
+                        k
+                        for k, v in params_summary.items()
                         if abs(v.get("current", 0.5) - v.get("base", 0.5)) > 0.2
                     ]
                     if drifted_params:
-                        logger.info(f"💤 [DigitalLife] DORMANT: {len(drifted_params)} drifted params identified.")
+                        logger.info(
+                            f"💤 [DigitalLife] DORMANT: {len(drifted_params)} drifted params identified."
+                        )
                 except Exception as e:
                     logger.debug(f"[DigitalLife] DORMANT: Param check skipped: {e}")
             logger.info("💤 [DigitalLife] DORMANT: Deep sleep — resource reclamation active.")
@@ -843,7 +888,10 @@ class DigitalLifeIntegrator:
                     if abs(current - base) > 0.15:  # Significant change threshold
                         logger.info(
                             "[DynamicParams] %s: %.2f (base: %.2f, trend: %+.3f)",
-                            param_name, current, base, param_data["trend"]
+                            param_name,
+                            current,
+                            base,
+                            param_data["trend"],
                         )
 
                 self._last_params_log = datetime.now()
@@ -893,25 +941,33 @@ class DigitalLifeIntegrator:
                     elif dim_name == "beta":
                         self.state_matrix.update_beta(
                             focus=max(0.0, min(1.0, dim_state.get("focus", 0.5) + ix * 0.1)),
-                            curiosity=max(0.0, min(1.0, dim_state.get("curiosity", 0.5) + iy * 0.1)),
+                            curiosity=max(
+                                0.0, min(1.0, dim_state.get("curiosity", 0.5) + iy * 0.1)
+                            ),
                             learning=max(0.0, min(1.0, dim_state.get("learning", 0.5) + iz * 0.1)),
                         )
                     elif dim_name == "gamma":
                         self.state_matrix.update_gamma(
-                            happiness=max(0.0, min(1.0, dim_state.get("happiness", 0.5) + ix * 0.1)),
+                            happiness=max(
+                                0.0, min(1.0, dim_state.get("happiness", 0.5) + ix * 0.1)
+                            ),
                             trust=max(0.0, min(1.0, dim_state.get("trust", 0.5) + iy * 0.1)),
-                            anticipation=max(0.0, min(1.0, dim_state.get("anticipation", 0.5) + iz * 0.1)),
+                            anticipation=max(
+                                0.0, min(1.0, dim_state.get("anticipation", 0.5) + iz * 0.1)
+                            ),
                         )
                     elif dim_name == "delta":
                         self.state_matrix.update_delta(
                             bond=max(0.0, min(1.0, dim_state.get("bond", 0.5) + ix * 0.1)),
                             trust=max(0.0, min(1.0, dim_state.get("trust", 0.5) + iy * 0.1)),
-                            attention=max(0.0, min(1.0, dim_state.get("attention", 0.5) + iz * 0.1)),
+                            attention=max(
+                                0.0, min(1.0, dim_state.get("attention", 0.5) + iz * 0.1)
+                            ),
                         )
                     intent_applied = True
 
             if intent_applied and logger.isEnabledFor(logging.DEBUG):
-                logger.debug(f"🔗 [IntentModel] Applied intent influences to state matrix.")
+                logger.debug("🔗 [IntentModel] Applied intent influences to state matrix.")
 
         except Exception as e:
             logger.warning(f"[DigitalLife] Intent update error (non-critical): {e}")

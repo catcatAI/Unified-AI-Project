@@ -49,6 +49,7 @@ def cmd_query(args) -> None:
 
 def cmd_train(args) -> None:
     import csv
+
     e = get_engine(args.checkpoint)
 
     # Load data
@@ -56,15 +57,23 @@ def cmd_train(args) -> None:
         examples = []
         with open(args.data, encoding="utf-8") as f:
             for row in csv.DictReader(f):
-                examples.append({"input": row.get("input", row.get("problem", "")),
-                                 "output": row.get("output", row.get("answer", ""))})
+                examples.append(
+                    {
+                        "input": row.get("input", row.get("problem", "")),
+                        "output": row.get("output", row.get("answer", "")),
+                    }
+                )
     elif args.data.endswith(".json"):
         with open(args.data, encoding="utf-8") as f:
             raw = json.load(f)
         if isinstance(raw, list):
-            examples = [{"input": item.get("input", item.get("problem", "")),
-                         "output": item.get("output", item.get("answer", ""))}
-                        for item in raw]
+            examples = [
+                {
+                    "input": item.get("input", item.get("problem", "")),
+                    "output": item.get("output", item.get("answer", "")),
+                }
+                for item in raw
+            ]
         else:
             examples = raw.get("examples", [])
     else:
@@ -85,11 +94,17 @@ def cmd_train(args) -> None:
         ok = e.dictionary.encode(ex["output"])
         if not ik or not ok:
             continue
-        texamples.append(TrainingExample(
-            input_text=ex["input"], expected_output=ex["output"],
-            input_keys=ik, output_keys=ok,
-            relation_pairs=[], confidence=0.8, metadata={},
-        ))
+        texamples.append(
+            TrainingExample(
+                input_text=ex["input"],
+                expected_output=ex["output"],
+                input_keys=ik,
+                output_keys=ok,
+                relation_pairs=[],
+                confidence=0.8,
+                metadata={},
+            )
+        )
 
     if not texamples:
         print("No examples with valid dictionary keys")
@@ -100,7 +115,9 @@ def cmd_train(args) -> None:
     for epoch in range(args.epochs):
         batch = TrainingBatch(examples=texamples, batch_id=f"cli_{epoch}")
         metrics = trainer.train_step(batch)
-        print(f"  Epoch {epoch+1}/{args.epochs}: loss={metrics.loss:.4f} acc={metrics.accuracy:.4f}")
+        print(
+            f"  Epoch {epoch+1}/{args.epochs}: loss={metrics.loss:.4f} acc={metrics.accuracy:.4f}"
+        )
 
     print(f"  Training completed in {time.time()-t0:.1f}s")
 
@@ -119,9 +136,14 @@ def cmd_serve(args):
         from .ed3n_trainer import JointTrainer
 
         trainer = JointTrainer(e, dict_lr=0.05, network_lr=0.05)
-        clp = ContinuousLearningPipeline(engine=e, trainer=trainer,
-                                         growth_interval=15, train_interval=50,
-                                         min_examples_for_train=30, auto_grow=True)
+        clp = ContinuousLearningPipeline(
+            engine=e,
+            trainer=trainer,
+            growth_interval=15,
+            train_interval=50,
+            min_examples_for_train=30,
+            auto_grow=True,
+        )
         e._continuous_learning = clp
         print("  Continuous learning enabled")
     except Exception as exc:
@@ -143,7 +165,7 @@ def cmd_serve(args):
 def cmd_stats(args):
     e = get_engine(args.checkpoint)
     ds = e.dictionary.get_stats()
-    print(f"\n  ED3N Engine Stats")
+    print("\n  ED3N Engine Stats")
     print(f"  {'='*40}")
     print(f"  Dictionary entries:  {ds.get('entry_count', 0)}")
     print(f"  Relations:           {ds.get('relation_count', 0)}")
@@ -151,7 +173,9 @@ def cmd_stats(args):
     print(f"  Growth history:      {ds.get('growth_history_count', 0)}")
     print(f"  Reflex patterns:     {len(e.reflex.patterns)}")
     print(f"  SNN mode:            {e.snn_mode}")
-    print(f"  Multimodal:          {'enabled' if e.image_encoder or e.audio_encoder else 'disabled'}")
+    print(
+        f"  Multimodal:          {'enabled' if e.image_encoder or e.audio_encoder else 'disabled'}"
+    )
     print()
 
 
@@ -168,7 +192,9 @@ def main() -> None:
 
     p_query = sub.add_parser("query", help="Query the engine with text")
     p_query.add_argument("text", help="Input text")
-    p_query.add_argument("--depth", default="auto", choices=["auto", "reflex", "shallow", "deep", "snn"])
+    p_query.add_argument(
+        "--depth", default="auto", choices=["auto", "reflex", "shallow", "deep", "snn"]
+    )
 
     p_train = sub.add_parser("train", help="Train on data file")
     p_train.add_argument("data", help="Path to JSON/CSV training data")

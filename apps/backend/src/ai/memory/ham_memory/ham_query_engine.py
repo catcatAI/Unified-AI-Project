@@ -35,7 +35,9 @@ class HAMQueryEngine:
                     dt = dt.replace(tzinfo=timezone.utc)
                 return dt
             except ValueError:
-                logger.warning(f"Date parse failed for {date_input}, trying fallback format", exc_info=True)
+                logger.warning(
+                    f"Date parse failed for {date_input}, trying fallback format", exc_info=True
+                )
                 # Fallback for simpler date strings, assume UTC
                 return datetime.strptime(date_input, "%Y-%m-%dT%H:%M:%S.%f").replace(
                     tzinfo=timezone.utc
@@ -47,8 +49,11 @@ class HAMQueryEngine:
         raise ValueError("Invalid date input type")
 
     def _check_basic_filters(
-        self, data_package: Dict[str, Any], data_type_filter: Optional[str],
-        min_importance: float, date_range: Optional[Tuple[datetime, datetime]]
+        self,
+        data_package: Dict[str, Any],
+        data_type_filter: Optional[str],
+        min_importance: float,
+        date_range: Optional[Tuple[datetime, datetime]],
     ) -> bool:
         """Check basic filters."""
         if data_type_filter and data_type_filter not in data_package["data_type"]:
@@ -75,9 +80,12 @@ class HAMQueryEngine:
             keyword_match = any(keyword.lower() in gist_content.lower() for keyword in keywords)
             return decompressed_data_str, keyword_match
         except Exception:
-            logger.warning("Keyword search decryption failed, trying base64 fallback", exc_info=True)
+            logger.warning(
+                "Keyword search decryption failed, trying base64 fallback", exc_info=True
+            )
             try:
                 import base64
+
                 decoded_payload = base64.b64decode(data_package["encrypted_package"])
                 decrypted_data = self.data_processor._decrypt(decoded_payload)
                 decompressed_data_bytes = self.data_processor._decompress(decrypted_data)
@@ -86,7 +94,10 @@ class HAMQueryEngine:
                 keyword_match = any(keyword.lower() in gist_content.lower() for keyword in keywords)
                 return decompressed_data_str, keyword_match
             except Exception as e:
-                logger.error(f"Error processing memory for keyword search: {e} (Fallback also failed)", exc_info=True)
+                logger.error(
+                    f"Error processing memory for keyword search: {e} (Fallback also failed)",
+                    exc_info=True,
+                )
                 return "", False
 
     def _extract_gist(self, data_package: Dict[str, Any], decompressed_data_str: str) -> str:
@@ -110,12 +121,16 @@ class HAMQueryEngine:
         results: List[HAMRecallResult] = []
 
         for mem_id, data_package in self.core_memory_store.items():
-            match = self._check_basic_filters(data_package, data_type_filter, min_importance, date_range)
+            match = self._check_basic_filters(
+                data_package, data_type_filter, min_importance, date_range
+            )
 
             decompressed_data_str = ""
 
             if keywords and match:
-                decompressed_data_str, keyword_match = self._search_keywords_in_memory(data_package, keywords)
+                decompressed_data_str, keyword_match = self._search_keywords_in_memory(
+                    data_package, keywords
+                )
                 if not keyword_match:
                     match = False
 
@@ -144,7 +159,9 @@ class HAMQueryEngine:
 
     async def retrieve_relevant_memories(self, query: str, limit: int = 10) -> List[HAMMemory]:
         if not self.vector_store_manager.vector_store:
-            logger.warning("Vector store not initialized. Cannot perform semantic search.", exc_info=True)
+            logger.warning(
+                "Vector store not initialized. Cannot perform semantic search.", exc_info=True
+            )
             return await self._fallback_keyword_search(query, limit)
 
         try:
@@ -198,6 +215,7 @@ class HAMQueryEngine:
                 payload = data_package["encrypted_package"]
                 if attempt == 1:
                     import base64
+
                     payload = base64.b64decode(payload)
                 decrypted = self.data_processor._decrypt(payload)
                 decompressed = self.data_processor._decompress(decrypted)
@@ -210,7 +228,7 @@ class HAMQueryEngine:
             except Exception:
                 if attempt == 1:
                     logger.error(
-                        f"Error processing memory: primary+fallback failed",
+                        "Error processing memory: primary+fallback failed",
                         exc_info=True,
                     )
                     return None
@@ -243,7 +261,9 @@ class HAMQueryEngine:
         return None
 
     @staticmethod
-    def _compute_match(abstracted: Optional[dict], decompressed_str: str, data_type: str, query_words: set) -> Optional[tuple]:
+    def _compute_match(
+        abstracted: Optional[dict], decompressed_str: str, data_type: str, query_words: set
+    ) -> Optional[tuple]:
         if "dialogue_text" in data_type and abstracted is not None:
             content = abstracted.get("gist", "") + " " + " ".join(abstracted.get("keywords", []))
         else:
@@ -255,13 +275,21 @@ class HAMQueryEngine:
         relevance = min(1.0, match_count / max(1, len(query_words)))
         return content, relevance
 
-    def _try_decrypt(self, mem_id: str, data_package: dict, encrypted: Any, query_words: set) -> Optional[HAMMemory]:
+    def _try_decrypt(
+        self, mem_id: str, data_package: dict, encrypted: Any, query_words: set
+    ) -> Optional[HAMMemory]:
         try:
             decrypted_data = self.data_processor._decrypt(encrypted)
             decompressed_bytes = self.data_processor._decompress(decrypted_data)
             decompressed_str = decompressed_bytes.decode("utf-8")
-            abstracted = json.loads(decompressed_str) if "dialogue_text" in data_package["data_type"] else None
-            result = self._compute_match(abstracted, decompressed_str, data_package["data_type"], query_words)
+            abstracted = (
+                json.loads(decompressed_str)
+                if "dialogue_text" in data_package["data_type"]
+                else None
+            )
+            result = self._compute_match(
+                abstracted, decompressed_str, data_package["data_type"], query_words
+            )
             if result is None:
                 return None
             content, relevance = result
@@ -269,7 +297,11 @@ class HAMQueryEngine:
             final_score = (relevance * 0.7) + (stored_relevance * 0.3)
             return HAMMemory(
                 memory_id=mem_id,
-                content=self.data_processor._rehydrate_text_gist(abstracted) if abstracted is not None else decompressed_str[:200],
+                content=(
+                    self.data_processor._rehydrate_text_gist(abstracted)
+                    if abstracted is not None
+                    else decompressed_str[:200]
+                ),
                 metadata=data_package.get("metadata", {}),
                 relevance=final_score,
             )
@@ -277,11 +309,17 @@ class HAMQueryEngine:
             logger.debug("Memory reconstruction failed for %s: %s", mem_id, err)
             return None
 
-    def _try_b64_fallback(self, mem_id: str, data_package: dict, encrypted: Any, query_words: set) -> Optional[HAMMemory]:
+    def _try_b64_fallback(
+        self, mem_id: str, data_package: dict, encrypted: Any, query_words: set
+    ) -> Optional[HAMMemory]:
         try:
             import base64
+
             decoded_payload = base64.b64decode(encrypted)
             return self._try_decrypt(mem_id, data_package, decoded_payload, query_words)
         except Exception as e:
-            logger.error(f"Error processing memory {mem_id} in keyword search: {e} (Fallback failed)", exc_info=True)
+            logger.error(
+                f"Error processing memory {mem_id} in keyword search: {e} (Fallback failed)",
+                exc_info=True,
+            )
             return None

@@ -1,3 +1,5 @@
+from services.error_handling import safe_error
+
 """
 Angela AI v7.5.0-dev - Mobile Endpoints
 行動端專用接口 (受 Key B 加密保護)
@@ -7,8 +9,8 @@ import asyncio
 import logging
 from datetime import datetime
 from typing import Any, Dict
-from core.sync.realtime_sync import SyncEventType
 
+from core.sync.realtime_sync import SyncEventType
 from fastapi import APIRouter, Body
 
 logger = logging.getLogger(__name__)
@@ -59,8 +61,6 @@ async def get_mobile_status_get() -> dict:
         }
 
 
-
-
 @router.post("/module-control")
 async def mobile_module_control(data: Dict[str, Any] = Body(...)) -> dict:
     """行動端控制後端模組"""
@@ -68,8 +68,9 @@ async def mobile_module_control(data: Dict[str, Any] = Body(...)) -> dict:
     enabled = data.get("enabled")
 
     try:
-        from core.sync.realtime_sync import SyncEvent, sync_manager
         import uuid
+
+        from core.sync.realtime_sync import SyncEvent, sync_manager
 
         await sync_manager.broadcast_event(
             SyncEvent(
@@ -80,7 +81,9 @@ async def mobile_module_control(data: Dict[str, Any] = Body(...)) -> dict:
             )
         )
         return {"status": "success", "module": module, "enabled": enabled}
-    except Exception as e:  # broad exception acceptable: module control should be resilient to errors
+    except (
+        Exception
+    ) as e:  # broad exception acceptable: module control should be resilient to errors
         logger.error(f"Error in {__name__}: {e}", exc_info=True)
         return {"status": "error", "message": safe_error(e)}
 

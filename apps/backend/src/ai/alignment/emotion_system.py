@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 class EmotionType(Enum):
     """情感类型枚举"""
+
     JOY = "joy"
     TRUST = "trust"
     FEAR = "fear"
@@ -33,6 +34,7 @@ class EmotionType(Enum):
 
 class ValueDimension(Enum):
     """价值维度枚举"""
+
     WELL_BEING = "well_being"
     FREEDOM = "freedom"
     JUSTICE = "justice"
@@ -47,6 +49,7 @@ class ValueDimension(Enum):
 @dataclass
 class EmotionalState:
     """情感状态"""
+
     primary_emotion: EmotionType
     emotion_intensity: float  # 0.0 - 1.0
     secondary_emotions: Dict[EmotionType, float]
@@ -58,6 +61,7 @@ class EmotionalState:
 @dataclass
 class ValueAssessment:
     """价值评估结果"""
+
     value_scores: Dict[ValueDimension, float]
     overall_value: float
     confidence: float
@@ -67,6 +71,7 @@ class ValueAssessment:
 @dataclass
 class EmpathyAnalysis:
     """共情 analysis 结果"""
+
     target_entity: str
     predicted_emotional_state: EmotionalState
     empathy_score: float
@@ -112,20 +117,20 @@ class EmotionSystem:
             "intensity": last.emotion_intensity,
             "arousal": last.arousal,
             "valence": last.valence,
-            "timestamp": last.timestamp
+            "timestamp": last.timestamp,
         }
 
     def analyze_emotional_context(self, context: Dict[str, Any]) -> EmotionalState:
         """分析情感上下文"""
         features = self._extract_emotion_features(context)
         primary_emotion, intensity = self._identify_primary_emotion(features)
-        
+
         state = EmotionalState(
             primary_emotion=primary_emotion,
             emotion_intensity=intensity,
             secondary_emotions={},
             valence=self._calculate_valence(features),
-            arousal=self._calculate_arousal(features)
+            arousal=self._calculate_arousal(features),
         )
         self.emotion_history.append(state)
         return state
@@ -177,7 +182,9 @@ class EmotionSystem:
         return sum(scores.values()) / len(scores)
 
     def _generate_value_reasoning(self, action, context, scores) -> str:
-        return f"基於情感狀態與 {len(scores)} 個價值維度的權重映射，判定行動符合 Angela 的演化目標。"
+        return (
+            f"基於情感狀態與 {len(scores)} 個價值維度的權重映射，判定行動符合 Angela 的演化目標。"
+        )
 
     def _calculate_value_confidence(self, action, context, state) -> float:
         return (state.emotion_intensity + 0.8) / 2.0
@@ -210,7 +217,9 @@ class EmotionSystem:
             recommended_response=recommended_response,
         )
 
-    def _predict_entity_emotion(self, target_entity: str, context: Dict[str, Any]) -> EmotionalState:
+    def _predict_entity_emotion(
+        self, target_entity: str, context: Dict[str, Any]
+    ) -> EmotionalState:
         """Predict entity emotion."""
         # 基於 context 模擬目標實體的情緒投影
         features = self._extract_emotion_features(context)
@@ -221,7 +230,7 @@ class EmotionSystem:
             emotion_intensity=intensity,
             secondary_emotions={},
             valence=self._calculate_valence(features),
-            arousal=self._calculate_arousal(features)
+            arousal=self._calculate_arousal(features),
         )
 
     def _calculate_empathy_score(self, state: EmotionalState) -> float:
@@ -242,7 +251,7 @@ class EmotionSystem:
             EmotionType.SADNESS: "表達深切同情並提供虛擬陪伴",
             EmotionType.ANGER: "認可感受並嘗試從邏輯層面緩解衝突",
             EmotionType.JOY: "共享喜悅並強化正向數據反饋",
-            EmotionType.TRUST: "回應信任並建立更深層的神經連結"
+            EmotionType.TRUST: "回應信任並建立更深層的神經連結",
         }
         base = templates.get(state.primary_emotion, "提供適當的數據支持與情感回應")
         prefix = "高度共情" if level > 0.7 else "標準回應"
@@ -251,6 +260,7 @@ class EmotionSystem:
     def _extract_emotion_features(self, context: Dict[str, Any]) -> Dict[str, float]:
         """Extract emotion features."""
         from textblob import TextBlob
+
         text = context.get("text", "")
         features = {"stress_level": context.get("stress_level", 0.0)}
         if text:
@@ -268,13 +278,19 @@ class EmotionSystem:
         """精確識別主要情感 (不再報錯版)"""
         sentiment = features.get("sentiment", 0.0)
         stress = features.get("stress_level", 0.0)
-        
-        if sentiment > 0.5: return EmotionType.JOY, sentiment
+
+        if sentiment > 0.5:
+            return EmotionType.JOY, sentiment
         from core.system.config.tiered_loader import get_config
+
         _beh_conf = get_config("standard/behavior/behavior")
-        _stress_class = _beh_conf.get("biological_thresholds", {}).get("emotion_classification_stress", 0.7)
-        if stress > _stress_class: return EmotionType.FEAR, stress
-        if sentiment < -0.5: return EmotionType.SADNESS, abs(sentiment)
+        _stress_class = _beh_conf.get("biological_thresholds", {}).get(
+            "emotion_classification_stress", 0.7
+        )
+        if stress > _stress_class:
+            return EmotionType.FEAR, stress
+        if sentiment < -0.5:
+            return EmotionType.SADNESS, abs(sentiment)
         return EmotionType.TRUST, 0.5
 
     def _calculate_valence(self, features: Dict[str, float]) -> float:
@@ -290,7 +306,9 @@ class EmotionSystem:
 
     def apply_influence(self, source: str, type: str, value: float, intensity: float) -> None:
         """外部激素或事件對情緒的影響 — 真實影響情緒狀態 (PAD 模型)"""
-        logger.debug(f"[{self.system_id}] Influence from {source}: {type} = {value} (intensity={intensity})")
+        logger.debug(
+            f"[{self.system_id}] Influence from {source}: {type} = {value} (intensity={intensity})"
+        )
 
         # Cap history before adding new state
         self._cap_emotion_history()
@@ -339,7 +357,9 @@ class EmotionSystem:
         elif new_valence > 0.3 and new_arousal <= 0.5:
             new_emotion = EmotionType.TRUST
         elif new_valence < -0.3 and new_arousal > 0.5:
-            new_emotion = EmotionType.ANGER if new_valence < -0.3 and d_dominance > 0 else EmotionType.FEAR
+            new_emotion = (
+                EmotionType.ANGER if new_valence < -0.3 and d_dominance > 0 else EmotionType.FEAR
+            )
         elif new_valence < -0.3 and new_arousal <= 0.5:
             new_emotion = EmotionType.SADNESS
         elif new_arousal > 0.6:
@@ -357,19 +377,24 @@ class EmotionSystem:
             arousal=new_arousal,
         )
         self.emotion_history.append(influenced_state)
-        state_store.emit_event("emotion.updated", {
-            "source": source,
-            "type": type,
-            "previous_emotion": last.primary_emotion.value,
-            "new_emotion": new_emotion.value,
-            "previous_valence": last.valence,
-            "new_valence": new_valence,
-            "previous_arousal": last.arousal,
-            "new_arousal": new_arousal,
-            "intensity": new_intensity,
-        })
-        logger.debug(f"[{self.system_id}] Emotion influenced: {last.primary_emotion.value} -> {new_emotion.value} "
-                     f"(valence: {last.valence:.2f}->{new_valence:.2f}, arousal: {last.arousal:.2f}->{new_arousal:.2f})")
+        state_store.emit_event(
+            "emotion.updated",
+            {
+                "source": source,
+                "type": type,
+                "previous_emotion": last.primary_emotion.value,
+                "new_emotion": new_emotion.value,
+                "previous_valence": last.valence,
+                "new_valence": new_valence,
+                "previous_arousal": last.arousal,
+                "new_arousal": new_arousal,
+                "intensity": new_intensity,
+            },
+        )
+        logger.debug(
+            f"[{self.system_id}] Emotion influenced: {last.primary_emotion.value} -> {new_emotion.value} "
+            f"(valence: {last.valence:.2f}->{new_valence:.2f}, arousal: {last.arousal:.2f}->{new_arousal:.2f})"
+        )
 
     def process_interaction_feedback(
         self,
@@ -397,12 +422,14 @@ class EmotionSystem:
         )
 
         # Record feedback for temporal trend analysis
-        self._feedback_history.append({
-            "engagement_ratio": engagement_ratio,
-            "had_error": had_error,
-            "response_success": response_success,
-            "timestamp": time.time(),
-        })
+        self._feedback_history.append(
+            {
+                "engagement_ratio": engagement_ratio,
+                "had_error": had_error,
+                "response_success": response_success,
+                "timestamp": time.time(),
+            }
+        )
 
         # Compute temporal trend: is engagement improving?
         trend_multiplier = 1.0
@@ -420,11 +447,21 @@ class EmotionSystem:
         elif engagement_ratio > 2.0 and response_success is not False:
             intensity = min(1.0, engagement_ratio / 5.0) * min(1.0, trend_multiplier)
             self.apply_influence("interaction_feedback", "dopamine", intensity, 1.0)
-            self.apply_influence("interaction_feedback", "joy", min(1.0, engagement_ratio / 4.0) * min(1.0, trend_multiplier), 0.8)
+            self.apply_influence(
+                "interaction_feedback",
+                "joy",
+                min(1.0, engagement_ratio / 4.0) * min(1.0, trend_multiplier),
+                0.8,
+            )
         elif engagement_ratio < 0.5:
             intensity = 0.3 * (1.0 - engagement_ratio) * (2.0 - trend_multiplier)
             self.apply_influence("interaction_feedback", "cortisol", intensity, 1.0)
-            self.apply_influence("interaction_feedback", "sadness", 0.2 * (1.0 - engagement_ratio) * (2.0 - trend_multiplier), 0.8)
+            self.apply_influence(
+                "interaction_feedback",
+                "sadness",
+                0.2 * (1.0 - engagement_ratio) * (2.0 - trend_multiplier),
+                0.8,
+            )
         else:
             self.apply_influence("interaction_feedback", "calm", 0.1 * trend_multiplier, 0.5)
             self.apply_influence("interaction_feedback", "trust", 0.05 * trend_multiplier, 0.5)
@@ -454,7 +491,11 @@ class EmotionSystem:
         can be injected into the chat pipeline context.
         """
         if not self.emotion_history:
-            return {"routing_mode": "neutral", "response_style": "standard", "emotional_state": "neutral"}
+            return {
+                "routing_mode": "neutral",
+                "response_style": "standard",
+                "emotional_state": "neutral",
+            }
 
         last = self.emotion_history[-1]
 
@@ -483,15 +524,18 @@ class EmotionSystem:
         routing_mode = routing_map.get(last.primary_emotion, "neutral")
         response_style = style_map.get(last.primary_emotion, "standard")
 
-        state_store.emit_event("emotion.behavioral_adjustment", {
-            "routing_mode": routing_mode,
-            "response_style": response_style,
-            "emotional_state": last.primary_emotion.value,
-            "emotion_intensity": last.emotion_intensity,
-            "valence": last.valence,
-            "arousal": last.arousal,
-            "sustained_negative_counter": self._sustained_negative_counter,
-        })
+        state_store.emit_event(
+            "emotion.behavioral_adjustment",
+            {
+                "routing_mode": routing_mode,
+                "response_style": response_style,
+                "emotional_state": last.primary_emotion.value,
+                "emotion_intensity": last.emotion_intensity,
+                "valence": last.valence,
+                "arousal": last.arousal,
+                "sustained_negative_counter": self._sustained_negative_counter,
+            },
+        )
         return {
             "routing_mode": routing_mode,
             "response_style": response_style,

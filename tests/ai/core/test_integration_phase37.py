@@ -12,7 +12,9 @@ import time
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "apps", "backend", "src"))
+sys.path.insert(
+    0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "apps", "backend", "src")
+)
 
 
 def _run_async(coro):
@@ -29,6 +31,7 @@ class TestSynonymExpansion:
     @pytest.fixture(autouse=True)
     def setup(self):
         from ai.ed3n.dictionary_layer import DictionaryLayer
+
         self.dl = DictionaryLayer()
         self.dl.load_preset_responses()
 
@@ -72,6 +75,7 @@ class TestMathEvaluation:
     @pytest.fixture(autouse=True)
     def setup(self):
         from ai.ed3n.ed3n_engine import ED3NEngine
+
         self.engine = ED3NEngine()
 
     def test_addition_english(self):
@@ -140,10 +144,19 @@ class TestReflexExpansionPresets:
     @pytest.fixture(autouse=True)
     def setup(self):
         from ai.ed3n.ed3n_engine import ED3NEngine
+
         self.engine = ED3NEngine()
         config_dir = os.path.join(
-            os.path.dirname(__file__), "..", "..", "..",
-            "apps", "backend", "src", "ai", "ed3n", "config"
+            os.path.dirname(__file__),
+            "..",
+            "..",
+            "..",
+            "apps",
+            "backend",
+            "src",
+            "ai",
+            "ed3n",
+            "config",
         )
         self.engine.load_presets_from_config(config_dir)
 
@@ -166,7 +179,7 @@ class TestReflexExpansionPresets:
 
     def test_reflex_personality_patterns(self):
         found = "你是谁" in self.engine.reflex.patterns or "你是誰" in self.engine.reflex.patterns
-        assert found, f"'你是誰' or '你是谁' not in reflex patterns"
+        assert found, "'你是誰' or '你是谁' not in reflex patterns"
 
     def test_reflex_response_for_new_pattern(self):
         result = self.engine.process_reflex("创建文件")
@@ -194,51 +207,76 @@ class TestHandlerFileOperation:
     @pytest.fixture(autouse=True)
     def setup(self):
         from services.handlers.file_operation_handler import FileOperationHandler
+
         self.handler = FileOperationHandler()
 
     def test_create_and_read(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = os.path.join(tmpdir, "test.txt")
-            result = _run_async(self.handler.handle("file_op_create", {"action": "create", "path": path}))
+            result = _run_async(
+                self.handler.handle("file_op_create", {"action": "create", "path": path})
+            )
             assert "已建立" in result
-            result = _run_async(self.handler.handle("file_op_read", {"action": "read", "path": path}))
+            result = _run_async(
+                self.handler.handle("file_op_read", {"action": "read", "path": path})
+            )
             assert "test.txt" in result
 
     def test_write_and_read(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = os.path.join(tmpdir, "test.txt")
-            result = _run_async(self.handler.handle("file_op_write", {"action": "write", "path": path, "content": "hello"}))
+            result = _run_async(
+                self.handler.handle(
+                    "file_op_write", {"action": "write", "path": path, "content": "hello"}
+                )
+            )
             assert "寫入" in result
-            result = _run_async(self.handler.handle("file_op_read", {"action": "read", "path": path}))
+            result = _run_async(
+                self.handler.handle("file_op_read", {"action": "read", "path": path})
+            )
             assert "hello" in result
 
     def test_delete(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = os.path.join(tmpdir, "test.txt")
             _run_async(self.handler.handle("file_op_create", {"action": "create", "path": path}))
-            result = _run_async(self.handler.handle("file_op_delete", {"action": "delete", "path": path}))
+            result = _run_async(
+                self.handler.handle("file_op_delete", {"action": "delete", "path": path})
+            )
             assert "刪除" in result
 
     def test_list_directory(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            result = _run_async(self.handler.handle("file_op_list", {"action": "list", "path": tmpdir}))
+            result = _run_async(
+                self.handler.handle("file_op_list", {"action": "list", "path": tmpdir})
+            )
             assert "內容" in result
 
     def test_rename(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = os.path.join(tmpdir, "old.txt")
             _run_async(self.handler.handle("file_op_create", {"action": "create", "path": path}))
-            result = _run_async(self.handler.handle("file_op_rename", {"action": "rename", "path": path, "new_name": "new.txt"}))
+            result = _run_async(
+                self.handler.handle(
+                    "file_op_rename", {"action": "rename", "path": path, "new_name": "new.txt"}
+                )
+            )
             assert "重新命名" in result
 
     def test_exists(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = os.path.join(tmpdir, "test.txt")
-            result = _run_async(self.handler.handle("file_op_exists", {"action": "exists", "path": path}))
+            result = _run_async(
+                self.handler.handle("file_op_exists", {"action": "exists", "path": path})
+            )
             assert "不存在" in result
 
     def test_not_found(self):
-        result = _run_async(self.handler.handle("file_op_read", {"action": "read", "path": "/nonexistent/path/file.txt"}))
+        result = _run_async(
+            self.handler.handle(
+                "file_op_read", {"action": "read", "path": "/nonexistent/path/file.txt"}
+            )
+        )
         assert "不存在" in result or "不安全" in result
 
     def test_no_path(self):
@@ -252,6 +290,7 @@ class TestHandlerCodeExecution:
     @pytest.fixture(autouse=True)
     def setup(self):
         from services.handlers.code_execution_handler import CodeExecutionHandler
+
         self.handler = CodeExecutionHandler()
 
     def test_simple_code(self):
@@ -293,10 +332,12 @@ class TestHandlerSystemCommand:
     @pytest.fixture(autouse=True)
     def setup(self):
         from services.handlers.system_command_handler import SystemCommandHandler
+
         self.handler = SystemCommandHandler()
 
     def test_safe_command(self):
         import platform
+
         cmd = "hostname" if platform.system() == "Windows" else "whoami"
         result = _run_async(self.handler.handle(cmd))
         assert "輸出" in result or "執行完成" in result
@@ -325,12 +366,14 @@ class TestHandlerTaskManager:
             _load_tasks,
             _save_tasks,
         )
+
         self.handler = TaskManagerHandler()
         self._original_tasks = _load_tasks()
         _save_tasks([])
 
     def teardown_method(self):
         from services.handlers.task_manager_handler import _save_tasks
+
         _save_tasks(self._original_tasks)
 
     def test_create_task(self):
@@ -365,6 +408,7 @@ class TestFullPipelineIntegration:
         from ai.core.execution_gate import ExecutionGate
         from ai.core.query_classifier import QueryClassifier
         from ai.ed3n.ed3n_engine import ED3NEngine
+
         self.clf = QueryClassifier()
         self.gate = ExecutionGate()
         self.engine = ED3NEngine()
@@ -442,8 +486,16 @@ class TestFullPipelineIntegration:
 
     def test_load_all_presets(self):
         config_dir = os.path.join(
-            os.path.dirname(__file__), "..", "..", "..",
-            "apps", "backend", "src", "ai", "ed3n", "config"
+            os.path.dirname(__file__),
+            "..",
+            "..",
+            "..",
+            "apps",
+            "backend",
+            "src",
+            "ai",
+            "ed3n",
+            "config",
         )
         self.engine.load_presets_from_config(config_dir)
         assert len(self.engine.reflex.patterns) >= 30
