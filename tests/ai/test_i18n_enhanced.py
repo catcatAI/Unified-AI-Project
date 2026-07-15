@@ -48,7 +48,9 @@ class TestI18nManagerEnhanced:
             mgr = I18nManager()
             count = mgr.load_from_locale_dir(tmpdir)
             assert count == 2
-            assert mgr.translate("greeting.hello") == "Hello"
+            # Default language is Chinese (§X #56); assert per-language loads.
+            assert mgr.translate("greeting.hello", Language.ENGLISH) == "Hello"
+            assert mgr.translate("greeting.hello", Language.CHINESE) == "你好"
 
     def test_load_from_locale_dir_missing(self):
         mgr = I18nManager()

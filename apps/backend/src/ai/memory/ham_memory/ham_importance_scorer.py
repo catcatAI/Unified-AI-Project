@@ -21,6 +21,10 @@ class ImportanceScorer:
         "asap",
         "immediately",
         "priority",
+        "important",
+        "vital",
+        "essential",
+        "significant",
         "重要",
         "紧急",
         "关键",
@@ -76,10 +80,12 @@ class ImportanceScorer:
     def __init__(self):
         self._access_history: Dict[str, List[datetime]] = {}
         self._time_decay_factor = 0.95  # Daily decay factor
-        self._access_weight = 0.15  # Weight for access frequency
-        self._keyword_weight = 0.40  # Weight for keyword analysis
-        self._content_weight = 0.25  # Weight for content characteristics
-        self._metadata_weight = 0.20  # Weight for metadata factors
+        # Dimension weights (must sum to 1.0).
+        self._keyword_weight = 0.30  # Weight for keyword analysis
+        self._content_weight = 0.05  # Weight for content characteristics
+        self._metadata_weight = 0.30  # Weight for metadata factors
+        self._access_weight = 0.05  # Weight for access frequency
+        self._time_weight = 0.30  # Weight for recency
 
     async def calculate(self, content: str, metadata: Dict[str, Any]) -> float:
         """
@@ -114,14 +120,7 @@ class ImportanceScorer:
             + content_score * self._content_weight
             + metadata_score * self._metadata_weight
             + access_score * self._access_weight
-            + time_score
-            * (
-                1.0
-                - self._keyword_weight
-                - self._content_weight
-                - self._metadata_weight
-                - self._access_weight
-            )
+            + time_score * self._time_weight
         )
 
         return min(1.0, max(0.0, total_score))
@@ -239,7 +238,9 @@ class ImportanceScorer:
             if isinstance(timestamp, str):
                 timestamp = datetime.fromisoformat(timestamp)
             elif not isinstance(timestamp, datetime):
-                return 0.5  # Default for unknown timestamps
+                # No timestamp -> memory is being scored at creation time,
+                # so treat it as maximally recent.
+                return 1.0
 
             now = datetime.now()
             age_days = (now - timestamp).days

@@ -38,13 +38,40 @@ _CONFIG: Dict[str, Any] = {
 }
 
 
+_bootstrap_merged = False
+
+
+def _merge_bootstrap_overrides() -> None:
+    """Merge the canonical tiered bootstrap config over the hardcoded defaults.
+
+    The authoritative bootstrap config (hardware_tiers, scoring_weights, paths)
+    lives in ``configs/system/bootstrap.{default,user,evolved}.yaml``.  The
+    hardcoded ``_CONFIG`` only provides safe fallbacks.
+    """
+    global _bootstrap_merged
+    if _bootstrap_merged:
+        return
+    _bootstrap_merged = True
+    try:
+        from core.system.config.tiered_loader import get_config as _tiered_get
+
+        bootstrap = _tiered_get("system/bootstrap")
+        if isinstance(bootstrap, dict) and bootstrap:
+            _CONFIG.setdefault("bootstrap", {}).update(bootstrap)
+    except Exception:
+        # Fall back to hardcoded defaults if the tiered loader is unavailable.
+        pass
+
+
 def load_config(path: Optional[str] = None) -> Dict[str, Any]:
     """Load the full application configuration."""
+    _merge_bootstrap_overrides()
     return _CONFIG
 
 
 def get_config(key: str, default: Any = None) -> Any:
     """Retrieve a specific config value by dotted key path."""
+    _merge_bootstrap_overrides()
     keys = key.split(".")
     val: Any = _CONFIG
     for k in keys:
@@ -59,6 +86,7 @@ def get_config(key: str, default: Any = None) -> Any:
 
 def get_bootstrap_config() -> Dict[str, Any]:
     """Return the bootstrap sub-configuration."""
+    _merge_bootstrap_overrides()
     return _CONFIG.get("bootstrap", {})
 
 

@@ -28,7 +28,7 @@ def load_test_images(n_per_class=10, skip_first=50):
     return images, labels
 
 
-def test_clip_zero_shot(images, labels):
+def run_clip_zero_shot(images, labels):
     """Test CLIP zero-shot classification on CIFAR-10."""
     from ai.multimodal.semantic_visual import SemanticVisualEncoder
     encoder = SemanticVisualEncoder()
@@ -93,7 +93,7 @@ def main():
     print(f"Loaded {len(images)} images\n")
 
     print("=== CLIP Zero-Shot Classification ===")
-    clip_acc = test_clip_zero_shot(images, labels)
+    clip_acc = run_clip_zero_shot(images, labels)
 
     print(f"\n=== Summary ===")
     print(f"CLIP zero-shot: {clip_acc:.1%}")
