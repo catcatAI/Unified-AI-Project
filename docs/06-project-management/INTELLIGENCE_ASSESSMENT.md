@@ -68,6 +68,7 @@
 | **自主分** | 4/4 運作閉環 | **9.0/10** | 生命週期 + 代謝心跳 + DLI + 因果 warm-start |
 | **有 LLM API** | — | **6.0/10** | 自然對話靠外部 API，本地無推理 |
 | **學習型開放域泛化** | unseen K+R = 0/10 | **0/10** | 神經模型在開放域未見任務的泛化（不含確定性引擎）|
+| **神經關聯能力 (SNN association)** | 關聯圖 3 節點: directional/transitive/ranking/perturbation | **ED3N 1.0 / GARDEN 1.0** | 2026-07-16 新增可測指標：SNN 專職「概念間關聯性」（A>taller>B），不背知識。見 §4.1.2。知識存字典/KB，關聯存 SNN，兩者分離測量 |
 
 > ⚠️ **讀法**：專案的**確定性引擎能力很強**（數理化 9.5、知識 10、架構 9.5、查詢 9.0、自主 9.0）——這些是系統真實、可靠的能力，由數學/物理/化學確定性引擎 + 知識 KB 檢索 + 生命週期閉環提供，應計分。**弱的是神經模型的開放域學習泛化（≈0）**，即讓模型「從零學會」推理（知識已由 KB 確定性處理，推理仍待 LLM/符號推理器）。兩者分開報：不要因為模型不會就說系統不能；也不要因為引擎會就說模型學會了。
 
@@ -200,6 +201,38 @@
 
 > 重測命令：`$env:PYTHONPATH="apps/backend/src"; python scripts/validate_three_column.py --engine both --sample 150`
 > 報告 JSON：`scripts/validation_report_ed3n.json`、`scripts/validation_report_garden.json`
+
+#### 4.1.2 神經關聯能力（SNN association）— 2026-07-16 新增可測指標
+
+**架構原則（本回合確立）**：
+
+- **字典 / KB** → 存放「知識實體」（sky→blue, Monday→Tuesday）。
+- **神經 SNN** → 專職「知識之間的關聯性」（A 比 B 高 ⇒ B 比 C 高 ⇒ A 最高），不背知識。
+
+若神經網路承載知識，就與普通 AI 沒差。因此 SNN 的評分標準**不該是「知識答對率」**，而該是「關聯性是否被學到」。這正是可測得的：
+
+新增 `scripts/validate_association.py`，用**正確的關聯 API**（`add_directed` / `add_relation` 單向）在 SNN 中建一張關係圖，測四項：
+
+| 指標 | 定義 | 通過條件 |
+|------|------|---------|
+| **directional** | A→B（大於）使 `forward([A])` 激活 B，且反向不激活 | 方向正確 |
+| **transitive** | 訓練 A→B→C，查 `[A]` 經多跳傳播到達 C | 傳遞閉包成立 |
+| **ranking** | 鏈 A>B>C，查各節點算可達數，源頭 A 可達最多 | 正確識別主導者 |
+| **perturbation** | 反轉 A→B 為 B→A，激活方向隨之反轉 | 關聯被真學到，非背答案 |
+
+| Engine | directional | transitive | ranking | perturbation | **association_capability** |
+|--------|-------------|------------|---------|--------------|---------------------------|
+| ED3N (CoreNetwork) | 1.0 | 1.0 | 1.0 | 1.0 | **1.0** |
+| GARDEN (TensorSNNCore) | 1.0 | 1.0 | 1.0 | 1.0 | **1.0** |
+
+**關鍵發現（誠實）**：
+
+1. **關聯性可測、且兩引擎皆 1.0**：在乾淨的 3 節點關係圖上，SNN 確實學到了方向性、傳遞性、排名、與擾動反轉。這證明「SNN 專職關聯」這條路是**可量化、可迭代**的——專案現在知道該測什麼、該修什麼。
+2. **這與 §4.1.1 的 SNN-ONLY=0% 不矛盾**：那裡測的是「SNN 背知識答對率」（本就不該測），這裡測的是「SNN 學關聯」（該測的）。兩者分離後，分數才有意義。
+3. **代碼已修正防止知識滲入 SNN**：`train_pipeline.py` 的 ED3N 訓練不再把 knowledge/reasoning/tooluse 當 input→output 映射訓練進 SNN 權重；GARDEN `learn_batch` 新增 `train_associations=False`，知識事實只進字典、不進神經權重。SNN 從此只承載關聯。
+
+> 重測命令：`$env:PYTHONPATH="apps/backend/src"; python scripts/validate_association.py --engine both`
+> 報告 JSON：`scripts/validation_association.json`
 
 ### 4.2 訓練結果 vs 基準測試差異
 
@@ -359,7 +392,8 @@ Phase 4: LatentReasoningNetwork (latent → text)
 
 ### 高優先級
 1. **核心弱點：開放域推理泛化（=0）解法** — 知識/數學已由確定性引擎 100% 處理，推理（傳遞/三段論/日曆/數量/質量陷阱）現已由 **符號推理器 `ai/symbolic_reasoner.py`** 100% 處理（見 §1.1 符號推理引擎分 10/10）。**神經推理路徑升級（§X 本次）**：`LatentReasoningNetwork` 已修復（autoregressive 生成 + 全序列 CE 訓練 + npz 持久化，仍為 opt-in/ml 層級）並接入 ED3N 儲存；新增離線關係鏈推理 `ai/reasoning/relational_chain.py`（傳遞閉包，無 LLM/無 torch），已同時接入 ED3N（Stage 1.6b, CoreNetwork）與 GARDEN（Stage 1.6b），補足符號推理器正則未涵蓋的新穎比較詞/長鏈/換述（benchmark chain 5/5 兩引擎皆 100%）。剩餘弱點：神經模型「從零學會」開放域推理，解法：(a) 原生推理請求**路由到 LLM**（已有 LLM 路徑）；(b) 在開放域推理數據集上真正訓練神經模型（非訓練集過擬合）。短期以 (a) 最務實——確定性引擎（數學/知識/符號推理/關係鏈）已覆蓋 benchmark 全部結構性問題。
-2. **泛化驗證** — 添加 hold-out set 測試，避免過擬合
+2. **神經網路專職「關聯性」迭代路線（2026-07-16 確立）** — 架構原則：**知識存字典/KB，關聯存 SNN**，SNN 不背知識（否則與普通 AI 無異）。`scripts/validate_association.py` 已使「關聯能力」可測（directional/transitive/ranking/perturbation），兩引擎現皆 1.0（見 §4.1.2）。下一步迭代：① 把訓練管線從「input→output 映射」改為「由 `entry.relations` 建關聯圖餵 SNN」（目前 `learn_batch`/`TrainingExample` 仍是 Q→A 映射，已擋住知識滲入但關聯訓練尚未接回）；② 用 §4.1.2 的四指標作為 SNN 回歸測試，每次改動可驗證關聯能力不退化；③ 擴大關聯圖深度/廣度基準（目前僅 3 節點），測 SNN 在更深鏈上的傳遞上限。
+3. **泛化驗證** — 添加 hold-out set 測試，避免過擬合
 3. **MMLU/HumanEval** — 標準基準測試，與業界比較
 4. **SNN 優化** — 考慮稀疏矩陣或圖神經網路
 

@@ -707,9 +707,26 @@ def _step4_train_ed3n(coordinator, batches):
     print(f"  Dictionary: {before} -> {len(ed3n_engine.dictionary.entries)} ({grown} new)")
 
     # 4c: Create TrainingExamples
+    # Architectural rule: the SNN must learn ASSOCIATIONS (relations between
+    # concepts), NOT memorize KNOWLEDGE FACTS. Knowledge (facts like
+    # "sky->blue"), reasoning chains, and tool-use intents are:
+    #   - grown into the dictionary (step 4b, above) so the concepts exist, and
+    #   - handled at runtime by the KB / symbolic reasoner / chain stage.
+    # They must NOT be Hebbian-mirrored as input->output "mapping" pairs into
+    # the SNN weights (that would bake facts into the neural net, making it
+    # indistinguishable from a normal memorizing AI).
+    # Only reflex/greeting/math/logic-style samples train the SNN as
+    # associations. reasoning/tooluse/knowledge are excluded from SNN training.
+    snn_training_domains = {"reflex", "greeting", "math", "logic"}
     examples: List[TrainingExample] = []
     skip = 0
+    skipped_domain = 0
     for s in ed3n_samples:
+        if s.get("domain") not in snn_training_domains:
+            # Fact/relation/intent: dictionary growth already handled it above.
+            # Keep it out of the SNN so the net only learns associations.
+            skipped_domain += 1
+            continue
         inp = preprocess(s["input"])
         out = preprocess(s["output"])
         ik = list(set(ed3n_engine.dictionary.encode(inp)))
@@ -727,7 +744,8 @@ def _step4_train_ed3n(coordinator, batches):
             confidence=confidence_value("train.ed3n.example_confidence", 0.8),
             metadata={"domain": s["domain"]},
         ))
-    print(f"  Examples created: {len(examples)} ({skip} skipped)")
+    print(f"  Examples created: {len(examples)} ({skip} skipped, "
+          f"{skipped_domain} non-association domains excluded from SNN)")
 
     # 4d: Train 2 epochs (accuracy plateaus after 1st; Hebbian ceiling ~77.69%)
     if examples:
@@ -819,10 +837,14 @@ def _step5_train_garden(coordinator, batches):
         print(f"  Presets loaded: {len(garden_engine.dictionary.entries)} dict entries, "
               f"{len(garden_engine.reflex.patterns)} reflex patterns")
 
-        # 5b: Add knowledge entries to vector dictionary
+        # 5b: Add knowledge entries to vector dictionary.
+        # Knowledge facts are ingested into the DICTIONARY ONLY — the SNN does
+        # NOT mirror input->output (train_associations=False), so facts are not
+        # baked into neural weights. The SNN stays specialized for associations.
         garden_samples = batches.get("garden", [])
-        print(f"  Processing {len(garden_samples)} knowledge samples...")
-        
+        print(f"  Processing {len(garden_samples)} knowledge samples (dict-only, "
+              f"no SNN Hebbian mirror)...")
+
         # Use batch learning for speed (rebuilds index ONCE, not per sample)
         BATCH_SIZE = 500
         total_learned = 0
@@ -831,12 +853,13 @@ def _step5_train_garden(coordinator, batches):
             result = garden_engine.learn_batch(
                 samples=[{"input": s["input"], "output": s["output"]} for s in batch],
                 confidence=confidence_value("train.garden.learn_confidence", 0.7),
+                train_associations=False,
             )
             total_learned += result["samples_processed"]
             if total_learned % 1000 == 0 or i + BATCH_SIZE >= len(garden_samples):
                 print(f"    Processed {total_learned}/{len(garden_samples)}...")
-        
-        print(f"  learn_batch calls: {total_learned}")
+
+        print(f"  learn_batch calls: {total_learned} (associations_trained=False)")
 
         # Record with coordinator
         asyncio.run(coordinator.record_training(

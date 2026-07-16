@@ -618,11 +618,18 @@ class GARDENEngine:
         self,
         samples: List[Dict[str, str]],
         confidence: Optional[float] = None,
+        train_associations: bool = True,
     ) -> Dict[str, Any]:
         """
         Batch learning from multiple interactions.
         Grows all new concepts first, rebuilds index ONCE, then runs Hebbian updates.
         Much faster than calling learn_from_interaction() in a loop.
+
+        Architectural rule: the SNN learns ASSOCIATIONS (relations between
+        concepts), not KNOWLEDGE FACTS. When ``train_associations=False`` the
+        Hebbian input->output mirror is skipped, so knowledge facts are stored
+        in the dictionary only and are NOT baked into the neural weights (which
+        would make the SNN a memorizing AI no different from a normal one).
         """
         if not self._learning_enabled or not samples:
             return {"interaction": self._learn_count, "new_concepts": 0, "samples_processed": 0}
@@ -663,18 +670,21 @@ class GARDENEngine:
         if all_new_keys and self.dictionary._dirty:
             self.dictionary._rebuild_index()
 
-        # Stage 4: Hebbian updates for each sample
+        # Stage 4: Hebbian updates for each sample.
+        # Skipped when train_associations=False (knowledge-only ingestion: the
+        # fact lives in the dictionary, the SNN only ever learns associations).
         hebbian_delta = 0.0
-        for s in samples:
-            user_text = s.get("input", "")
-            response_text = s.get("output", "")
-            input_keys = self.dictionary.encode(user_text)
-            output_keys = self.dictionary.encode(response_text)
-            if input_keys and output_keys:
-                delta = self.snn.hebbian_update(
-                    input_keys, output_keys, lr=learning_rate("ai.garden.engine.hebbian_lr", 0.05), target_strength=confidence_value("ai.garden.engine.hebbian_target_strength", 0.7)
-                )
-                hebbian_delta += delta
+        if train_associations:
+            for s in samples:
+                user_text = s.get("input", "")
+                response_text = s.get("output", "")
+                input_keys = self.dictionary.encode(user_text)
+                output_keys = self.dictionary.encode(response_text)
+                if input_keys and output_keys:
+                    delta = self.snn.hebbian_update(
+                        input_keys, output_keys, lr=learning_rate("ai.garden.engine.hebbian_lr", 0.05), target_strength=confidence_value("ai.garden.engine.hebbian_target_strength", 0.7)
+                    )
+                    hebbian_delta += delta
 
         self._learn_count += len(samples)
 
@@ -683,6 +693,7 @@ class GARDENEngine:
             "new_concepts": len(all_new_keys),
             "samples_processed": len(samples),
             "hebbian_delta": round(hebbian_delta, 6),
+            "associations_trained": train_associations,
         }
 
     # ------------------------------------------------------------------

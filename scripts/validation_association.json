@@ -1,0 +1,18 @@
+{
+  "garden": {
+    "directional": 1.0,
+    "transitive": 1.0,
+    "ranking": 1.0,
+    "perturbation": 1.0,
+    "association_capability": 1.0,
+    "elapsed_s": 279.79
+  },
+  "ed3n": {
+    "directional": 1.0,
+    "transitive": 1.0,
+    "ranking": 1.0,
+    "perturbation": 1.0,
+    "association_capability": 1.0,
+    "elapsed_s": 3.79
+  }
+}
