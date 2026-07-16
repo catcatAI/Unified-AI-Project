@@ -277,6 +277,16 @@ class GARDENEngine:
             self._last_confidence = 0.85
             return reasoning_result
 
+        # Stage 1.6b: Relational-chain reasoning (offline graph derivation).
+        # Catches relational comparison questions the symbolic reasoner's regex
+        # patterns miss (novel comparators / longer chains / paraphrases) by
+        # building a transient directed graph from the stated comparisons and
+        # resolving it via transitive closure. No LLM or torch dependency.
+        chain_result = self._try_chain_reasoning(text)
+        if chain_result is not None:
+            self._last_confidence = 0.85
+            return chain_result
+
         # Stage 2: Reflex (fast pattern match) — greetings / canned replies.
         reflex_hit = self.reflex.match(text)
         if reflex_hit is not None:
@@ -477,6 +487,28 @@ class GARDENEngine:
             return route_reasoning(text)
         except Exception as e:
             logger.debug("GARDEN: symbolic reasoning failed for %r: %s", text, e)
+            return None
+
+    def _try_chain_reasoning(self, text: str) -> Optional[str]:
+        """Offline relational-chain reasoning via transitive closure.
+
+        Delegates to the shared ``ai.reasoning.relational_chain`` resolver. It
+        parses explicit comparison statements in the query, builds directed
+        "greater-than" edges, and resolves the dominant/least entity. This
+        complements the regex-based symbolic reasoner by handling novel
+        comparators and paraphrases that the fixed patterns do not match.
+        """
+        try:
+            from ai.reasoning.relational_chain import (
+                parse_and_resolve_relational_chain,
+                resolve_relational_chain,
+            )
+
+            return parse_and_resolve_relational_chain(
+                text, resolver=resolve_relational_chain
+            )
+        except Exception as e:
+            logger.debug("GARDEN: chain reasoning failed for %r: %s", text, e)
             return None
 
     # ------------------------------------------------------------------

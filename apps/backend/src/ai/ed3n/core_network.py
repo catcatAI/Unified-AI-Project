@@ -445,6 +445,40 @@ class CoreNetwork:
 
         return self._collect_threshold_activations(groups_scope, activations)
 
+    # ------------------------------------------------------------------
+    # Relational chain resolution (offline, graph-based multi-hop reasoning)
+    # ------------------------------------------------------------------
+
+    def resolve_relational_chain(
+        self,
+        edges: List[Tuple[str, str, float]],
+        query_entities: List[str],
+        ask_max: bool = True,
+    ) -> Optional[str]:
+        """Resolve a transitive relational chain over explicitly stated edges.
+
+        Delegates to the shared ``ai.reasoning.relational_chain`` transitive
+        closure. This is a genuine multi-hop graph derivation, independent of any
+        pre-trained associations. Used as a fallback when the deterministic
+        symbolic reasoner does not match a query but the query itself states a
+        relational structure (e.g. "X warmer than Y, Y warmer than Z, warmest?").
+
+        Args:
+            edges: List of (subject, object, weight>0) directed comparisons
+                   where a larger weight means "subject is greater in the
+                   compared dimension". For a "lesser" comparator the edge is
+                   reversed by the caller.
+            query_entities: candidate entity names appearing in the question.
+            ask_max: If True resolve the entity that dominates all others
+                     (greatest); if False resolve the least (smallest).
+
+        Returns:
+            The resolved entity string, or None if no unique solution.
+        """
+        from ai.reasoning.relational_chain import resolve_relational_chain as _resolve
+
+        return _resolve(edges, query_entities, ask_max=ask_max)
+
     def sync_from_dictionary(self, dictionary: "DictionaryLayer") -> int:
         count = 0
         rel_map = {

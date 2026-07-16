@@ -361,6 +361,112 @@ class ED3NEngine:
         if kb_result is not None:
             return kb_result
 
+        # Stage 1.6b: Relational-chain reasoning (offline graph derivation).
+        # Catches relational comparison questions the symbolic reasoner's
+        # regex patterns miss (novel comparators / longer chains / paraphrases)
+        # by building a transient directed graph from the stated comparisons
+        # and resolving it via transitive closure on the CoreNetwork.
+        chain_result = self._stage_chain_reasoning(input_text, query_id, stages)
+        if chain_result is not None:
+            return chain_result
+
+        # Stage 2: Encode
+        keys, cache_hit = self._stage_encode(input_text, query_id, stages)
+        if not keys:
+            return self._telemetry_return(
+                query_id,
+                input_text,
+                stages,
+                reflex_match=None,
+                cache_hit=cache_hit,
+                matched_keys=[],
+                output_text=FALLBACK_STR,
+                confidence=0.0,
+                is_fallback=True,
+            )
+
+        # Stage 2.7: Latent space reasoning — find additional concepts via SharedLatentSpace
+        latent_keys = self._stage_latent_reasoning(input_text, keys, query_id, stages)
+        if latent_keys:
+            keys = list(dict.fromkeys(keys + latent_keys))  # merge, preserve order, dedup
+
+        # Stage 2.5: Enrichment
+        enriched, confidence = self._stage_enrich(input_text, keys, query_id, stages)
+
+        if depth == "shallow" or (depth == "auto" and not context):
+            output = self._stage_shallow_decode(
+                keys, context, query_id, stages, cache_hit, FALLBACK_STR
+            )
+            return self._telemetry_return(
+                query_id,
+                input_text,
+                stages,
+                reflex_match=None,
+                cache_hit=cache_hit,
+                matched_keys=keys,
+                output_text=output,
+                confidence=confidence,
+                is_fallback=(not output or output == FALLBACK_STR),
+            )
+
+
+    def _stage_chain_reasoning(self, input_text, query_id, stages):
+        """Offline relational-chain reasoning via CoreNetwork transitive closure.
+
+        Parses explicit comparison statements in the query, builds directed
+        "greater-than" edges, and asks the CoreNetwork to resolve the
+        dominant/least entity. This complements the regex-based symbolic
+        reasoner: it handles novel comparators and longer chains that the fixed
+        patterns do not match, without any LLM or torch dependency.
+        """
+        t0 = time.perf_counter()
+        try:
+            from ai.reasoning.relational_chain import parse_and_resolve_relational_chain
+
+            answer = parse_and_resolve_relational_chain(
+                input_text, resolver=self.network.resolve_relational_chain
+            )
+            if answer is not None:
+                stages["chain"] = (time.perf_counter() - t0) * 1000
+                return self._telemetry_return(
+                    query_id, input_text, stages,
+                    reflex_match=None, cache_hit=False, matched_keys=[],
+                    output_text=answer,
+                    confidence=0.85, is_fallback=False,
+                )
+        except Exception as e:
+            logger.debug("Chain reasoning failed (non-critical): %s", e)
+        stages["chain"] = (time.perf_counter() - t0) * 1000
+        return None
+
+
+        # Stage 1.5: Math evaluation
+        math_result = self._stage_math(input_text, query_id, stages)
+        if math_result is not None:
+            return math_result
+
+        # Stage 1.6: Symbolic reasoning (transitive / syllogism / calendar / qty).
+        # Runs BEFORE knowledge: structural reasoning is higher-precision and must
+        # win when both match (e.g. "dog is a mammal" should not be answered by the
+        # KB's animal-sound entry).
+        reasoning_result = self._stage_reasoning(input_text, query_id, stages)
+        if reasoning_result is not None:
+            return reasoning_result
+
+        # Stage 1.7: Knowledge retrieval (deterministic KB, like math)
+        kb_result = self._stage_knowledge(input_text, query_id, stages)
+        if kb_result is not None:
+            return kb_result
+
+        # Stage 1.6b: Relational-chain reasoning (offline graph derivation).
+        # Catches relational comparison questions the symbolic reasoner's
+        # regex patterns miss (novel comparators / longer chains / paraphrases)
+        # by building a transient directed graph from the stated comparisons
+        # and resolving it via transitive closure on the CoreNetwork.
+        chain_result = self._stage_chain_reasoning(input_text, query_id, stages)
+        if chain_result is not None:
+            return chain_result
+
         # Stage 2: Encode
         keys, cache_hit = self._stage_encode(input_text, query_id, stages)
         if not keys:
@@ -1112,6 +1218,13 @@ class ED3NEngine:
         if self._continuous_learning is not None:
             cl_path = path.replace(".json", "_continuous_learning.json")
             self._continuous_learning.save(cl_path)
+        # Persist LatentReasoningNetwork only if it was enabled (ml/CLIP tier).
+        if self._latent_reasoning is not None:
+            try:
+                lrn_path = path.replace(".json", "_lrn.npz")
+                self._latent_reasoning.save(lrn_path)
+            except Exception as e:
+                logger.debug("ED3N: failed to save LatentReasoningNetwork: %s", e)
         logger.info("ED3NEngine saved to %s", path)
 
     def load(self, path: str) -> None:
@@ -1148,6 +1261,13 @@ class ED3NEngine:
                 self._continuous_learning = type(self._continuous_learning).load(
                     cl_path, self, None
                 )
+        # Restore LatentReasoningNetwork only if latent space was enabled.
+        lrn_path = path.replace(".json", "_lrn.npz")
+        if os.path.exists(lrn_path) and self._latent_reasoning is not None:
+            try:
+                self._latent_reasoning = type(self._latent_reasoning).load(lrn_path)
+            except Exception as e:
+                logger.debug("ED3N: failed to load LatentReasoningNetwork: %s", e)
         logger.info("ED3NEngine loaded from %s", path)
 
     def train(

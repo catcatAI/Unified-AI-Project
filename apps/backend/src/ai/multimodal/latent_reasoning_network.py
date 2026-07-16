@@ -207,42 +207,65 @@ class LatentReasoningNetwork:
         return exp / np.sum(exp)
 
     def generate(self, latent: np.ndarray, max_tokens: int = 20,
-                 temperature: float = 0.8) -> str:
-        """Generate text from a latent vector.
+                  temperature: float = 0.8) -> str:
+        """Generate text from a latent vector (autoregressive).
 
         Args:
             latent: (latent_dim,) input vector
             max_tokens: Maximum tokens to generate
-            temperature: Sampling temperature
+            temperature: Sampling temperature (0.0 = greedy)
 
         Returns:
             Generated text string
         """
+        # Autoregressive loop: each step conditions on the running hidden state.
+        # We keep a persistent hidden state so generated tokens influence the
+        # next, instead of the previous (broken) single-token-only behaviour.
         logits = self.forward(latent)
         probs = self._softmax(logits, temperature)
 
-        # Sample tokens
         tokens = []
         for _ in range(max_tokens):
-            idx = np.random.choice(len(probs), p=probs)
+            if temperature <= 0.0:
+                idx = int(np.argmax(probs))
+            else:
+                idx = int(np.random.choice(len(probs), p=probs))
             token = self._idx_to_token.get(idx, "")
             if token in (".", "!", "?", ""):
                 break
             tokens.append(token)
-            # Re-run forward with accumulated context (simplified)
-            # In a real model, this would be autoregressive
-            break  # For now, generate single token
+            # Re-condition on the accumulated sequence by re-projecting the
+            # latent plus a small drift from the chosen token's embedding slot.
+            latent = self._condition_latent(latent, idx)
+            logits = self.forward(latent)
+            probs = self._softmax(logits, temperature)
 
         if not tokens:
             # Fallback: return most probable token
-            idx = np.argmax(probs)
+            idx = int(np.argmax(probs))
             return self._idx_to_token.get(idx, "unknown")
 
         return " ".join(tokens)
 
+    def _condition_latent(self, latent: np.ndarray, token_idx: int) -> np.ndarray:
+        """Shift the latent vector based on the chosen token so subsequent
+        generation is autoregressive rather than static.
+
+        Uses a deterministic, trainable-free perturbation (one-hot projected
+        through W3's transpose) — cheap, dependency-free, and stable.
+        """
+        drift = self._W3[token_idx] if token_idx < self._W3.shape[0] else np.zeros(self._hidden_dim, dtype=np.float32)
+        # map hidden-dim drift back to latent space via W1.T, normalised
+        proj = self._W1.T @ (drift * 0.1)
+        return (latent + proj).astype(np.float32)
+
     def train_step(self, latent: np.ndarray, target_text: str,
                    lr: float = 0.001) -> float:
-        """Train on a single (latent, target) pair.
+        """Train on a single (latent, target) pair using sequence cross-entropy.
+
+        Unlike the previous single-token implementation, this accumulates
+        gradient over ALL target tokens (teacher-forcing on the latent), so the
+        network learns to emit a full phrase, not just its first word.
 
         Args:
             latent: (latent_dim,) input vector
@@ -250,66 +273,108 @@ class LatentReasoningNetwork:
             lr: Learning rate
 
         Returns:
-            Loss value
+            Average loss value over the target tokens
         """
-        # Encode target text
+        # Encode target text into token indices (cap to protect vocab bounds)
         target_tokens = target_text.lower().split()
         target_indices = [self._token_to_idx.get(t, 0) for t in target_tokens[:5]]
 
         if not target_indices:
             return 0.0
 
-        # Forward pass
-        h1_raw = self._W1 @ latent + self._b1
-        h1 = self._relu(h1_raw)
-        h2_raw = self._W2 @ h1 + self._b2
-        h2 = self._relu(h2_raw)
-        logits = self._W3 @ h2 + self._b3
+        total_loss = 0.0
+        running_latent = np.asarray(latent, dtype=np.float32).copy()
+        for target_idx in target_indices:
+            # Forward pass
+            h1_raw = self._W1 @ running_latent + self._b1
+            h1 = self._relu(h1_raw)
+            h2_raw = self._W2 @ h1 + self._b2
+            h2 = self._relu(h2_raw)
+            logits = self._W3 @ h2 + self._b3
 
-        # Compute loss (cross-entropy for first target token)
-        target_idx = target_indices[0]
-        probs = self._softmax(logits)
-        loss = -np.log(max(probs[target_idx], 1e-10))
+            # Cross-entropy loss for this target token
+            probs = self._softmax(logits)
+            loss = -np.log(max(probs[target_idx], 1e-10))
+            total_loss += float(loss)
 
-        # Backward pass
-        d_logits = probs.copy()
-        d_logits[target_idx] -= 1.0  # Gradient of cross-entropy
+            # Backward pass
+            d_logits = probs.copy()
+            d_logits[target_idx] -= 1.0  # Gradient of cross-entropy
 
-        # Gradient for layer 3
-        d_W3 = np.outer(d_logits, h2)
-        d_b3 = d_logits
+            d_W3 = np.outer(d_logits, h2)
+            d_b3 = d_logits
 
-        # Gradient through ReLU
-        d_h2 = self._W3.T @ d_logits * self._relu_grad(h2_raw)
+            d_h2 = self._W3.T @ d_logits * self._relu_grad(h2_raw)
 
-        # Gradient for layer 2
-        d_W2 = np.outer(d_h2, h1)
-        d_b2 = d_h2
+            d_W2 = np.outer(d_h2, h1)
+            d_b2 = d_h2
 
-        # Gradient through ReLU
-        d_h1 = self._W2.T @ d_h2 * self._relu_grad(h1_raw)
+            d_h1 = self._W2.T @ d_h2 * self._relu_grad(h1_raw)
 
-        # Gradient for layer 1
-        d_W1 = np.outer(d_h1, latent)
-        d_b1 = d_h1
+            d_W1 = np.outer(d_h1, running_latent)
+            d_b1 = d_h1
 
-        # Gradient clipping
-        max_norm = 5.0
-        for grad in [d_W1, d_W2, d_W3]:
-            norm = np.linalg.norm(grad)
-            if norm > max_norm:
-                grad *= max_norm / norm
+            # Gradient clipping
+            max_norm = 5.0
+            for grad in [d_W1, d_W2, d_W3]:
+                norm = np.linalg.norm(grad)
+                if norm > max_norm:
+                    grad *= max_norm / norm
 
-        # Update weights
-        self._W1 -= lr * d_W1
-        self._b1 -= lr * d_b1
-        self._W2 -= lr * d_W2
-        self._b2 -= lr * d_b2
-        self._W3 -= lr * d_W3
-        self._b3 -= lr * d_b3
+            # Update weights
+            self._W1 -= lr * d_W1
+            self._b1 -= lr * d_b1
+            self._W2 -= lr * d_W2
+            self._b2 -= lr * d_b2
+            self._W3 -= lr * d_W3
+            self._b3 -= lr * d_b3
+
+            # Teacher-forcing: advance the latent using the same conditioning
+            # the generator uses, so the next token is trained in context.
+            running_latent = self._condition_latent(running_latent, target_idx)
 
         self._trained = True
-        return float(loss)
+        return total_loss / len(target_indices)
+
+    # ------------------------------------------------------------------
+    # Persistence (opt-in: requires the ml/CLIP tier via enable_latent_space)
+    # ------------------------------------------------------------------
+
+    def save(self, path: str) -> None:
+        """Persist weights + vocab to a .npz file."""
+        import os
+
+        os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
+        np.savez(
+            path,
+            W1=self._W1, b1=self._b1,
+            W2=self._W2, b2=self._b2,
+            W3=self._W3, b3=self._b3,
+            vocab=np.array(self._vocab, dtype=object),
+            trained=np.array([self._trained]),
+        )
+        logger.info("LatentReasoningNetwork saved to %s", path)
+
+    @classmethod
+    def load(cls, path: str) -> "LatentReasoningNetwork":
+        """Load weights + vocab from a .npz file produced by save()."""
+        data = np.load(path, allow_pickle=True)
+        vocab = list(data["vocab"])
+        net = cls(latent_dim=data["W1"].shape[1],
+                  hidden_dim=data["W1"].shape[0],
+                  vocab_size=len(vocab))
+        net._vocab = vocab
+        net._token_to_idx = {t: i for i, t in enumerate(vocab)}
+        net._idx_to_token = {i: t for t, i in net._token_to_idx.items()}
+        net._W1 = data["W1"].astype(np.float32)
+        net._b1 = data["b1"].astype(np.float32)
+        net._W2 = data["W2"].astype(np.float32)
+        net._b2 = data["b2"].astype(np.float32)
+        net._W3 = data["W3"].astype(np.float32)
+        net._b3 = data["b3"].astype(np.float32)
+        net._trained = bool(data["trained"][0]) if "trained" in data else True
+        logger.info("LatentReasoningNetwork loaded from %s", path)
+        return net
 
     def add_training_data(self, latent: np.ndarray, text: str) -> None:
         """Add a training example."""

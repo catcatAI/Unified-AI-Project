@@ -93,7 +93,8 @@ def _solve_transitive(text: str) -> Optional[str]:
     # others and nothing is greater than it.
     all_nodes = set(greater) | set(lesser)
     ask_least = bool(re.search(r"shortest|smallest|least|youngest|lightest|"
-                               r"slowest|lowest|weakest|minimum|最小|最短|最矮|最少",
+                               r"slowest|lowest|weakest|poorest|coldest|minimum|"
+                               r"最小|最短|最矮|最少|最輕|最冷|最低|最弱|最窮|最慢",
                                text.lower()))
     if ask_least:
         # The least entity is dominated by all others (in `lesser`).

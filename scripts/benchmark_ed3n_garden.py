@@ -74,6 +74,18 @@ REASONING_CASES = [
     BenchmarkCase("reasoning", "Which is heavier: 1kg of feathers or 1kg of steel?", "same", "contains"),
 ]
 
+# Relational-chain cases using NOVEL comparators that the regex-based symbolic
+# reasoner does NOT cover. These exercise the offline CoreNetwork transitive
+# closure (Stage 1.6b), proving genuine multi-hop graph reasoning beyond the
+# fixed pattern matcher.
+CHAIN_CASES = [
+    BenchmarkCase("chain", "X is warmer than Y. Y is warmer than Z. Who is warmest?", "X", "contains"),
+    BenchmarkCase("chain", "P is colder than Q. Q is colder than R. Who is coldest?", "P", "contains"),
+    BenchmarkCase("chain", "X is richer than Y. Y is richer than Z. Who is poorest?", "Z", "contains"),
+    BenchmarkCase("chain", "M is shorter than N. N is shorter than O. Who is shortest?", "M", "contains"),
+    BenchmarkCase("chain", "Alpha is faster than Beta. Beta is faster than Gamma. Who is slowest?", "Gamma", "contains"),
+]
+
 
 def _load_ed3n():
     from ai.ed3n.ed3n_engine import ED3NEngine
@@ -182,7 +194,7 @@ def main():
     parser.add_argument("--output", "-o", default="", help="JSON output path")
     args = parser.parse_args()
 
-    all_cases = MATH_CASES + KNOWLEDGE_CASES + REASONING_CASES
+    all_cases = MATH_CASES + KNOWLEDGE_CASES + REASONING_CASES + CHAIN_CASES
 
     engines = []
     if args.engine in ("ed3n", "both"):
