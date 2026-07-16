@@ -37,7 +37,7 @@ python scripts/run_angela.py
 - Chat API at `http://localhost:8000`
 
 **Limitations without LLM**:
-- Offline: deterministic engines (math/physics/chemistry) work = 9.5/10 real capability; neural-net net contribution ≈35% (DET-CARRY differential, ED3N 35.3% / GARDEN 35.6% — NOT the SNN-only score; multi-dimensional scores in INTELLIGENCE_ASSESSMENT.md §1 & §4.1.1). With LLM ≈6.0/10.
+- Offline: deterministic engines (math/physics/chemistry) work = 9.5/10 real capability; the neural SNN's job is **learning associations** (capability 1.0, ED3N & GARDEN — INTELLIGENCE_ASSESSMENT.md §4.1.2), NOT memorizing knowledge. With LLM ≈6.0/10.
 - No advanced reasoning or code generation
 - Responses shorter and more template-driven
 
