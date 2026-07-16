@@ -263,30 +263,38 @@ class GARDENEngine:
         emotion = self._detect_emotion(text)
         self._adjust_hormones(emotion)
 
-        # Stage 1: Reflex (fast pattern match)
-        reflex_hit = self.reflex.match(text)
-        if reflex_hit is not None:
-            self._last_confidence = 0.95
-            return reflex_hit
-
-        # Stage 1.5: Math evaluation (using MathRippleEngine)
+        # Stage 1: High-precision structural answers (math + symbolic reasoning).
+        # These run BEFORE the reflex stage so that structurally-answerable
+        # questions (e.g. "Which is heavier: 1kg of feathers or 1kg of steel?")
+        # are not hijacked by an over-broad reflexive greeting pattern.
         math_result = self._try_math_eval(text)
         if math_result is not None:
             self._last_confidence = 0.85
             return math_result
 
-        # Stage 1.6: Knowledge retrieval (deterministic KB, like math)
+        reasoning_result = self._try_reasoning(text)
+        if reasoning_result is not None:
+            self._last_confidence = 0.85
+            return reasoning_result
+
+        # Stage 2: Reflex (fast pattern match) — greetings / canned replies.
+        reflex_hit = self.reflex.match(text)
+        if reflex_hit is not None:
+            self._last_confidence = 0.95
+            return reflex_hit
+
+        # Stage 3: Knowledge retrieval (deterministic KB, like math)
         kb_result = self._try_knowledge(text)
         if kb_result is not None:
             self._last_confidence = 0.80
             return kb_result
 
-        # Stage 2: Multi-step detection
+        # Stage 4: Multi-step detection
         if self._is_multi_step(text):
             self._last_confidence = 0.70
             return self._process_multi_step(text, context)
 
-        # Stage 3: Vector encode
+        # Stage 5: Vector encode
         if not self._presets_loaded:
             self.load_presets()
 
@@ -296,10 +304,10 @@ class GARDENEngine:
             self._last_confidence = 0.0
             return self._fallback_str(text)
 
-        # Stage 4: SNN forward
+        # Stage 6: SNN forward
         network_output = self.snn.forward(input_keys, context=context)
 
-        # Stage 5: Anchored decode
+        # Stage 7: Anchored decode
         response = _anchored_decode(network_output, input_keys, self.dictionary)
 
         if not response:
@@ -454,6 +462,21 @@ class GARDENEngine:
             return route_knowledge(text)
         except Exception as e:
             logger.debug("GARDEN: knowledge routing failed for %r: %s", text, e)
+            return None
+
+    def _try_reasoning(self, text: str) -> Optional[str]:
+        """Apply deterministic symbolic reasoning to structured questions.
+
+        Delegates transitive / syllogism / calendar / quantity / mass-trick
+        reasoning to ``ai.symbolic_reasoner.route_reasoning`` — a real,
+        high-certainty capability (valid inference over stated premises).
+        """
+        try:
+            from ai.symbolic_reasoner import route_reasoning
+
+            return route_reasoning(text)
+        except Exception as e:
+            logger.debug("GARDEN: symbolic reasoning failed for %r: %s", text, e)
             return None
 
     # ------------------------------------------------------------------

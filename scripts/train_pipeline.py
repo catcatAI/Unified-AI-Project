@@ -123,6 +123,8 @@ def load_all_data() -> List[Dict]:
         ("logic_test.json", "proposition", "answer", "logic"),
         ("logic_train.json", "proposition", "answer", "logic"),
         ("knowledge_extra.json", "input", "output", "knowledge"),
+        ("reasoning_train.json", "input", "output", "reasoning"),
+        ("tooluse_train.json", "input", "output", "tooluse"),
     ]
 
     for fname, inp_key, out_key, domain in datasets_info:

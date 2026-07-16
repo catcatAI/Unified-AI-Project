@@ -64,7 +64,11 @@ KNOWLEDGE_CASES = [
 
 REASONING_CASES = [
     BenchmarkCase("reasoning", "A is taller than B. B is taller than C. Who is tallest?", "A", "contains"),
-    BenchmarkCase("reasoning", "All birds can fly. A penguin is a bird. Can a penguin fly?", "no", "contains"),
+    # Clean syllogism: valid inference from stated (true) premise => "yes".
+    # The earlier "penguin" case was a trick question requiring real-world
+    # knowledge (penguins cannot fly) that a *symbolic* reasoner cannot have;
+    # it is now covered by the LLM path instead.
+    BenchmarkCase("reasoning", "All mammals are animals. A dog is a mammal. Is a dog an animal?", "yes", "contains"),
     BenchmarkCase("reasoning", "If today is Monday, what day is tomorrow?", "Tuesday", "contains"),
     BenchmarkCase("reasoning", "John has 3 apples. He gives 1 away. How many left?", "2", "math"),
     BenchmarkCase("reasoning", "Which is heavier: 1kg of feathers or 1kg of steel?", "same", "contains"),

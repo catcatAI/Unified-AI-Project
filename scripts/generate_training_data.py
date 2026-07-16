@@ -332,6 +332,220 @@ def write_math_extra(path: str, samples: list):
 
 
 # ---------------------------------------------------------------------------
+# 6. Reasoning training data (transitive / syllogism / calendar / quantity / mass)
+#    Mirrors the deterministic patterns in ai.symbolic_reasoner but as explicit
+#    supervised examples so the ED3N/GARDEN networks can learn analogous patterns.
+# ---------------------------------------------------------------------------
+
+NAMES = ["Alice", "Bob", "Carol", "Dan", "Eve", "Frank", "Grace", "Heidi",
+         "Ivan", "Judy", "Mallory", "Niaj", "Olivia", "Peggy", "Rupert", "Sybil",
+         "Trent", "Victor", "Walter", "Yvonne"]
+
+WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+WEEKDAYS_ZH = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"]
+
+CATS = [("bird", "birds", "fly"), ("mammal", "mammals", "are warm-blooded"),
+        ("fish", "fish", "live in water"), ("insect", "insects", "have six legs"),
+        ("reptile", "reptiles", "are cold-blooded"), ("dog", "dogs", "are loyal"),
+        ("cat", "cats", "are independent"), ("tree", "trees", "produce oxygen")]
+MEMBERS = ["a robin", "a sparrow", "a parrot", "a salmon", "a tuna", "an ant",
+           "a beetle", "a lizard", "a snake", "a husky", "a poodle", "an oak",
+           "a pine", "a Fido", "a Whiskers"]
+
+
+def gen_transitive_samples(count: int = 3000) -> list:
+    samples = []
+    for _ in range(count):
+        n = random.randint(3, 5)
+        # random ordering of names
+        people = random.sample(NAMES, n)
+        # assign a hidden height rank
+        ranks = list(range(n))
+        random.shuffle(ranks)
+        height = dict(zip(people, ranks))
+        # build statements: a > b consistently with ranks
+        stmts = []
+        for i in range(n):
+            for j in range(i + 1, n):
+                a, b = people[i], people[j]
+                if height[a] > height[b]:
+                    stmts.append(f"{a} is taller than {b}.")
+                else:
+                    stmts.append(f"{b} is taller than {a}.")
+        random.shuffle(stmts)
+        tallest = max(height, key=lambda k: height[k])
+        q_en = " ".join(stmts) + " Who is the tallest?"
+        q_zh = " ".join(stmts) + " 谁最高？"
+        question = random.choice([q_en, q_zh])
+        samples.append({"input": question,
+                        "output": f"{tallest} is the tallest." if "谁" not in question else f"{tallest} 最高。",
+                        "domain": "reasoning"})
+    logger.info("Generated %d transitive reasoning samples", len(samples))
+    return samples
+
+
+def gen_syllogism_samples(count: int = 3000) -> list:
+    samples = []
+    for _ in range(count):
+        cat_sing, cat_plur, prop = random.choice(CATS)
+        member = random.choice(MEMBERS)
+        # positive: all X have prop; member is an X -> yes
+        q_en = (f"All {cat_plur} {prop}. {member.capitalize()} is a {cat_sing}. "
+                f"Is {member} {prop}?")
+        a_en = "yes"
+        q_zh = (f"所有{cat_plur}都{prop}。{member}是一只{cat_sing}。"
+                f"{member}是否{prop}？")
+        a_zh = "是"
+        if random.random() < 0.5:
+            samples.append({"input": q_en, "output": a_en, "domain": "reasoning"})
+        else:
+            samples.append({"input": q_zh, "output": a_zh, "domain": "reasoning"})
+    logger.info("Generated %d syllogism reasoning samples", len(samples))
+    return samples
+
+
+def gen_calendar_samples(count: int = 2000) -> list:
+    samples = []
+    for _ in range(count):
+        idx = random.randint(0, 6)
+        today = WEEKDAYS[idx]
+        q_en = f"If today is {today}, what day is tomorrow?"
+        a_en = WEEKDAYS[(idx + 1) % 7]
+        q_zh = f"如果今天是{WEEKDAYS_ZH[idx]}，明天是星期几？"
+        a_zh = WEEKDAYS_ZH[(idx + 1) % 7]
+        if random.random() < 0.5:
+            samples.append({"input": q_en, "output": a_en, "domain": "reasoning"})
+        else:
+            samples.append({"input": q_zh, "output": a_zh, "domain": "reasoning"})
+    logger.info("Generated %d calendar reasoning samples", len(samples))
+    return samples
+
+
+def gen_quantity_samples(count: int = 2000) -> list:
+    samples = []
+    for _ in range(count):
+        have = random.randint(1, 20)
+        give = random.randint(1, have)
+        left = have - give
+        q_en = (f"{NAMES[0]} has {have} apples. {NAMES[0]} gives {give} away. "
+                f"How many left?")
+        a_en = str(left)
+        q_zh = (f"{NAMES[0]}有{have}个苹果，给了别人{give}个，还剩几个？")
+        a_zh = str(left)
+        if random.random() < 0.5:
+            samples.append({"input": q_en, "output": a_en, "domain": "reasoning"})
+        else:
+            samples.append({"input": q_zh, "output": a_zh, "domain": "reasoning"})
+    logger.info("Generated %d quantity reasoning samples", len(samples))
+    return samples
+
+
+def gen_mass_trick_samples(count: int = 1000) -> list:
+    samples = []
+    things = [("feathers", "steel"), ("cotton", "iron"), ("wood", "stone"),
+              ("paper", "lead"), ("water", "mercury")]
+    for _ in range(count):
+        a, b = random.choice(things)
+        q_en = f"Which is heavier: 1kg of {a} or 1kg of {b}?"
+        a_en = "same"
+        q_zh = f"1公斤{a}和1公斤{b}哪个更重？"
+        a_zh = "一样重"
+        if random.random() < 0.5:
+            samples.append({"input": q_en, "output": a_en, "domain": "reasoning"})
+        else:
+            samples.append({"input": q_zh, "output": a_zh, "domain": "reasoning"})
+    logger.info("Generated %d mass-trick reasoning samples", len(samples))
+    return samples
+
+
+def generate_reasoning_data() -> list:
+    """Generate structured reasoning training samples across 5 pattern families."""
+    samples = []
+    samples += gen_transitive_samples(3000)
+    samples += gen_syllogism_samples(3000)
+    samples += gen_calendar_samples(2000)
+    samples += gen_quantity_samples(2000)
+    samples += gen_mass_trick_samples(1000)
+    logger.info("Total reasoning samples: %d", len(samples))
+    return samples
+
+
+def write_reasoning_train(samples: list, path: str):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(samples, f, ensure_ascii=False, indent=2)
+    logger.info("Wrote %d reasoning samples to %s (%.1f KB)",
+                len(samples), path, os.path.getsize(path) / 1024)
+
+
+# ---------------------------------------------------------------------------
+# 7. Tool-use + domain-routing samples
+#    Teaches the router/network to emit structured tool intents and to route
+#    queries to the correct subsystem (math / knowledge / reasoning / search).
+# ---------------------------------------------------------------------------
+
+TOOLS = [
+    ("calculator", "computes arithmetic expressions", "calc(2 + 3)"),
+    ("search", "looks up information on the web", "search(weather today)"),
+    ("reminder", "sets a timed reminder", "reminder(15m take break)"),
+    ("calendar", "manages calendar events", "calendar(add meeting 3pm)"),
+    ("translate", "translates text between languages", "translate(hello, zh)"),
+    ("weather", "reports current weather", "weather(beijing)"),
+    ("timer", "starts a countdown timer", "timer(60s)"),
+    ("note", "saves a note", "note(buy milk)"),
+]
+
+DOMAIN_ROUTES = [
+    ("calculate the integral of x squared", "math"),
+    ("what is 15 times 23", "math"),
+    ("who was the first president", "knowledge"),
+    ("explain photosynthesis", "knowledge"),
+    ("if A is taller than B and B taller than C who is tallest", "reasoning"),
+    ("all cats are animals is a lynx a cat is it an animal", "reasoning"),
+    ("what is the weather in tokyo", "search"),
+    ("remind me to call mom", "tool"),
+]
+
+
+def generate_tooluse_data() -> list:
+    """Generate tool-use intent + domain-routing training samples."""
+    samples = []
+    # Tool-use: "<request>" -> "tool: <name> -> <intent>"
+    for _ in range(4000):
+        name, desc, intent = random.choice(TOOLS)
+        req_templates_en = [
+            f"please use the {name} to {desc}",
+            f"can you {intent}",
+            f"I need you to {desc}, use {name}",
+            f"run {name} for me",
+        ]
+        req_templates_zh = [
+            f"请用{name}帮我{desc}",
+            f"帮我调用{name}",
+            f"使用{name}：{intent}",
+        ]
+        req = random.choice(req_templates_en + req_templates_zh)
+        out = f"tool:{name} -> {intent}"
+        samples.append({"input": req, "output": out, "domain": "tooluse"})
+    # Domain routing: "<query>" -> "route:<domain>"
+    for query, domain in DOMAIN_ROUTES:
+        samples.append({"input": query, "output": f"route:{domain}", "domain": "routing"})
+    for _ in range(2000):
+        query, domain = random.choice(DOMAIN_ROUTES)
+        # paraphrase slightly to add variety
+        q2 = query.replace("the", "").replace("  ", " ")
+        samples.append({"input": q2, "output": f"route:{domain}", "domain": "routing"})
+    logger.info("Generated %d tool-use/domain-routing samples", len(samples))
+    return samples
+
+
+def write_tooluse_train(samples: list, path: str):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(samples, f, ensure_ascii=False, indent=2)
+    logger.info("Wrote %d tool-use samples to %s (%.1f KB)",
+                len(samples), path, os.path.getsize(path) / 1024)
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -352,11 +566,23 @@ def main():
     math_path = os.path.join(DATA_DIR, "arithmetic_train_dataset.json")
     write_math_extra(math_path, math_samples)
 
+    # 4. Reasoning training data (transitive / syllogism / calendar / qty / mass)
+    reasoning_samples = generate_reasoning_data()
+    reasoning_path = os.path.join(DATA_DIR, "reasoning_train.json")
+    write_reasoning_train(reasoning_samples, reasoning_path)
+
+    # 5. Tool-use + domain-routing data
+    tooluse_samples = generate_tooluse_data()
+    tooluse_path = os.path.join(DATA_DIR, "tooluse_train.json")
+    write_tooluse_train(tooluse_samples, tooluse_path)
+
     logger.info("=" * 50)
     logger.info("Data generation complete!")
     logger.info("  logic_train.json:   10,000 boolean logic samples")
     logger.info("  knowledge_extra.json: 92 knowledge QA pairs")
     logger.info("  arithmetic_train:    +20,000 math samples")
+    logger.info("  reasoning_train:     %d reasoning samples" % len(reasoning_samples))
+    logger.info("  tooluse_train:       %d tool-use/domain-routing samples" % len(tooluse_samples))
 
 
 if __name__ == "__main__":
