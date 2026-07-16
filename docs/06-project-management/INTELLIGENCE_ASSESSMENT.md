@@ -85,7 +85,7 @@
 | `93fa7fa7` | 2026-07-15 | 多維重測 | 架構9.5/知識推理8.6/查詢學習9.0/多模態5.1/自主9.0/實際1.0 | 建立單一評分標準並重新量測（見 §1.0）|
 | 本回合 | 2026-07-15 | 修正 | 新增「數理化引擎分」9.5/10；「實際泛化」改為「學習型開放域泛化」0/10 | 修正錯誤框架：確定性引擎（數理化）正確處理任務是系統真實能力、應計分，不該強迫神經模型重學 |
 | 本回合 | 2026-07-15 | 修復+擴充 | GARDEN ChromaDB 卡死修復 + 新增「知識引擎分」10/10 | 1) `_safe_chromadb_client()` 線程超時保護修復 GARDEN benchmark 卡死（>200s→完成）；2) 新增 `ai/knowledge_base.py` 確定性知識檢索，ED3N/GARDEN knowledge 0/5→5/5（ED3N 66.7% / GARDEN 73.3%）；3) 推理（傳遞/三段論/日曆/字謎）仍 0/5 = 核心弱點（需 LLM/符號推理器） |
-| 本回合 | 2026-07-15 | 符號推理器完成 | 推理核心弱點已解決：新增「符號推理引擎分」10/10 | 1) 新增 `ai/symbolic_reasoner.py` 確定性符號推理（傳遞/三段論/日曆/數量/質量陷阱），ED3N/GARDEN reasoning 0/5→5/5；2) 接線為 Stage 1.7（先於知識/reflex，確保結構性問題不被錯誤攔截）；3) 新增 `scripts/generate_training_data.py` 推理/工具路由訓練資料（17K 樣本），接線進 `train_pipeline.py` 並完成訓練；4) ED3N/GARDEN 原生 benchmark 現 **15/15 (100%)** |
+| 本回合 | 2026-07-15 | 符號推理器完成 | 推理核心弱點已解決：新增「符號推理引擎分」10/10 | 1) 新增 `ai/symbolic_reasoner.py` 確定性符號推理（傳遞/三段論/日曆/數量/質量陷阱），ED3N/GARDEN reasoning 0/5→5/5；2) 接線為 Stage 1.7（先於知識/reflex，確保結構性問題不被錯誤攔截）；3) 新增 `scripts/generate_training_data.py` 推理/工具路由訓練資料（17K 樣本），接線進 `train_pipeline.py` 並完成訓練；4) ED3N/GARDEN 原生 benchmark 現 **20/20 (100%)**（2026-07-16 實測，含 5 關係鏈；全由確定性引擎接住） |
 | 本回合 | 2026-07-16 | 知識/關聯分離 + 終端實測 | 新增「神經關聯能力」指標 ED3N/GARDEN 1.0；KB 星期/月份接續 | 1) 審計訓練管線：知識事實不再灌入 SNN 權重（`train_pipeline.py` ED3N 剔除 knowledge/reasoning/tooluse；`garden_engine.learn_batch` 新增 `train_associations=False`），知識存字典/KB、關聯存 SNN 兩者分離；2) 新增 `scripts/validate_association.py` 四指標（directional/transitive/ranking/perturbation）測 SNN 關聯能力，兩引擎皆 1.0（見 §4.1.2）；3) 終端對話實測（`scripts/t_terminal_dialogue_test.py`）發現並修復：KB 缺星期/月份接續（"day after monday"→tuesday）、ED3N 無 LLM 時開放域吐訓練 token 亂碼→改為乾淨 fallback；4) 三欄實測（HYBRID/DET-ONLY/SNN-ONLY）證實移除確定性引擎後 SNN 近 0，知識從未進權重 |
 
 ### 1.3 分數對照表
@@ -155,17 +155,17 @@
 
 ### 4.1 Benchmark 結果（原生引擎，無 LLM）
 
-> 量測命令（ED3N）：`$env:PYTHONPATH="apps/backend/src"; python scripts/benchmark_ed3n_garden.py --engine ed3n`
-> **ED3N 於 2026-07-15 重新測量（含知識 KB + 符號推理器）**：math 5/5 (100%), knowledge 5/5 (100%, 經 `ai.knowledge_base`), reasoning 5/5 (100%, 經 `ai/symbolic_reasoner`) → **100% (15/15)**。
-> **GARDEN 於 2026-07-15 修復後可完成**：先前 >200s timeout（sentence_transformers / ChromaDB 不可用 → `chromadb.Client()` 卡死）已由 `_safe_chromadb_client()` 線程超時保護修復，乾淨回退 TF-IDF。現測得 math 5/5, knowledge 5/5, reasoning 5/5 → **100% (15/15)**。
+> 量測命令：`python scripts/benchmark_ed3n_garden.py`（自 `apps/backend/src`）
+> **重新測量 2026-07-16（實測）**：該 script 現為 **20 case**（math 5 + knowledge 5 + reasoning 5 + relational-chain 5）。ED3N **20/20 (100%)**、GARDEN **20/20 (100%)**。但全部由**確定性引擎**接住（見下表路徑），**非神經 SNN**。
 
-| 領域 | ED3N (re-measured) | 測試數 | 說明 |
-|------|-------------------|--------|------|
-| **數學** | 100% (5/5) | 5 | 經 `_try_math_eval` → **MathVerifier**（Python `ast` 安全求值）**正確處理**——專案確定性數學引擎，計入「數理化引擎分」，是高確定性能力，**非缺陷** |
-| **知識** | 100% (5/5) | 5 | 經 `_try_knowledge` → **`ai.knowledge_base.route_knowledge`** 確定性檢索正確處理——計入「知識引擎分」(§1.1 = 10/10)，高確定性能力，**非缺陷** |
-| **推理** | 100% (5/5) | 5 | 經 `_try_reasoning` → **`ai/symbolic_reasoner.route_reasoning`** 確定性符號推理正確處理（傳遞/三段論/日曆/數量/質量陷阱）——計入「符號推理引擎分」(§1.1 = 10/10)，高確定性能力，**非缺陷** |
-| **總計 (含 math + knowledge + reasoning, 確定性引擎)** | **100% (15/15)** | 15 | 數學 + 知識 + 推理皆由確定性引擎正確處理，計入數理化/知識/符號推理引擎分 |
-| **總計 (神經開放域, 不含確定性引擎)** | **0% (0/5)** | 5 | 神經模型在開放域推理的泛化 = 0（推理已移出此類，交由符號推理器） |
+| 領域 | ED3N/GARDEN | 測試數 | 說明 |
+|------|-------------|--------|------|
+| **數學** | 100% (5/5) | 5 | 經 `_try_math_eval` → **MathVerifier**（Python `ast` 安全求值）——確定性數學引擎，計入「數理化引擎分」，高確定性能力，**非缺陷** |
+| **知識** | 100% (5/5) | 5 | 經 `_try_knowledge` → **`ai.knowledge_base.route_knowledge`** 確定性檢索——計入「知識引擎分」(§1.1 = 10/10)，**非缺陷** |
+| **推理** | 100% (5/5) | 5 | 經 `_try_reasoning` → **`ai/symbolic_reasoner.route_reasoning`** 確定性符號推理（傳遞/三段論/日曆/數量/質量陷阱）——計入「符號推理引擎分」(§1.1 = 10/10)，**非缺陷** |
+| **關係鏈** | 100% (5/5) | 5 | 經 **CoreNetwork 傳遞閉包**（Stage 1.6b，novel comparator 多跳圖推理）——確定性圖推理 |
+| **總計 (確定性引擎)** | **100% (20/20)** | 20 | 全部由確定性引擎正確處理 |
+| **神經 SNN 單獨開放域** | **≈ 0%** | — | 神經模型在開放域的泛化 ≈ 0（三欄驗證見 §4.1.1：SNN-ONLY ED3N 7.8% / GARDEN 0.0%） |
 
 > **關鍵**：數學與知識 100% 由確定性引擎（MathVerifier / 知識 KB）正確處理——這是系統**真實且可靠**的能力，應計入「數理化引擎分」(§1.1 = 9.5/10) 與「知識引擎分」(§1.1 = 10/10)，**不是缺陷、也不該強迫神經模型重學**。扣除確定性引擎後，神經模型在開放域**推理** = 0/5，這才是「學習型開放域泛化」(§1.1 = 0/10) 的弱點（核心弱點，見 §8 解法）。兩者分開看，不要互相抵消。
 
@@ -237,11 +237,15 @@
 
 ### 4.2 訓練結果 vs 基準測試差異
 
-| 指標 | 訓練結果 | 基準測試 | 差異原因 |
-|------|---------|---------|---------|
-| ED3N accuracy | 0.914 | 33.3% (5/15, re-measured 2026-07-15) | 訓練 accuracy 測試在訓練集上；基準測試在未見過的問題上 |
-| GARDEN accuracy | 0.700 | 未重現 (環境 timeout >200s) | 訓練 accuracy 測試在訓練集上；GARDEN 基準在本環境無法完成 |
-| JointTrainer accuracy | 0.939 | — | JointTrainer 未在基準測試中驗證 |
+> 註：`benchmark_ed3n_garden.py` 的 100% (20/20, 2026-07-16 實測) 衡量的是**確定性引擎**能力；下表「SNN 單獨泛化」欄取自 §4.1.1 三欄驗證的 SNN-ONLY 實測（去除確定性引擎後的神經淨值）。
+
+| 指標 | 訓練集 accuracy | SNN 單獨泛化 (SNN-ONLY, §4.1.1) | 差異原因 |
+|------|---------------|------------------------------|---------|
+| ED3N | 0.914 | 7.8% (aggregate)；reasoning 1.3% | 訓練 accuracy 在訓練集上；SNN-ONLY 是去除確定性引擎後、對真實取樣資料的神經淨表現 |
+| GARDEN | 0.700 | 0.0% (aggregate) | 同上；GARDEN 的 SNN 未承載知識/規則，去除確定性引擎後幾乎無貢獻 |
+| JointTrainer | 0.939 | — | 未在 §4.1.1 三欄驗證中單獨量測 |
+
+> **確定性引擎 benchmark（含引擎）**：ED3N 20/20 (100%)、GARDEN 20/20 (100%)（2026-07-16 實測，GARDEN 現已可完成——先前 >200s timeout 已由 `_safe_chromadb_client()` 修復）。
 
 ### 4.3 泛化限制
 
@@ -377,7 +381,7 @@ Phase 4: LatentReasoningNetwork (latent → text)
 | 系統 | Angela 原生 | Angela+LLM | GPT-3 | GPT-3.5 | GPT-4 |
 |------|------------|-----------|-------|---------|-------|
 | **對話** | ⚠️ 字典+潛空間 | ✅ 自然 | ✅ 自然 | ✅ 自然 | ✅ 自然 |
-| **推理** | ⚠️ 38% | ⚠️ 依賴 LLM | ✅ | ✅ | ✅ |
+| **推理** | ⚠️ 符號推理器確定性題型佳（benchmark 5/5）；神經開放域泛化 ≈0 | ⚠️ 依賴 LLM | ✅ | ✅ | ✅ |
 | **知識** | ⚠️ 460K 字典 | ⚠️ 依賴 LLM | ✅ | ✅ | ✅ |
 | **視覺理解** | ✅ CLIP 三模態 | ✅ CLIP 三模態 | ❌ | ✅ | ✅ |
 | **音頻理解** | ✅ Whisper 三模態 | ✅ Whisper 三模態 | ❌ | ✅ | ✅ |
