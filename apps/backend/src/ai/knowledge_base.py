@@ -67,6 +67,25 @@ _KNOWLEDGE: Dict[str, Dict[str, str]] = {
     "hexagon": {"sides": "6"},
     "week": {"days": "7"},
     "year": {"days": "365", "months": "12"},
+    "january": {"month": "1", "next": "february"},
+    "february": {"month": "2", "next": "march"},
+    "march": {"month": "3", "next": "april"},
+    "april": {"month": "4", "next": "may"},
+    "may": {"month": "5", "next": "june"},
+    "june": {"month": "6", "next": "july"},
+    "july": {"month": "7", "next": "august"},
+    "august": {"month": "8", "next": "september"},
+    "september": {"month": "9", "next": "october"},
+    "october": {"month": "10", "next": "november"},
+    "november": {"month": "11", "next": "december"},
+    "december": {"month": "12", "next": "january"},
+    "monday": {"weekday": "1", "next": "tuesday"},
+    "tuesday": {"weekday": "2", "next": "wednesday"},
+    "wednesday": {"weekday": "3", "next": "thursday"},
+    "thursday": {"weekday": "4", "next": "friday"},
+    "friday": {"weekday": "5", "next": "saturday"},
+    "saturday": {"weekday": "6", "next": "sunday"},
+    "sunday": {"weekday": "7", "next": "monday"},
     "diamond": {"hardness": "hardest"},
     "iron": {"metal": "yes"},
     "gold_metal": {"metal": "yes"},
@@ -136,6 +155,17 @@ def route_knowledge(text: str) -> Optional[str]:
         return "7"
     if "year" in t and "day" in t:
         return "365"
+
+    # 4b) succession: "day after monday", "month after march", "next tuesday",
+    #     "what day comes after monday", "the day following tuesday"
+    succ = None
+    m = re.search(r"(?:after|following|next)\s+(\w+)", t)
+    if m:
+        succ = m.group(1)
+    if succ:
+        entry = _KNOWLEDGE.get(succ)
+        if entry and entry.get("next"):
+            return entry["next"]
 
     # 5) subject attribute lookup
     for subject, attrs in _KNOWLEDGE.items():

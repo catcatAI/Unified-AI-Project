@@ -5,6 +5,7 @@
 import json
 import logging
 import os
+import re
 import threading
 import time
 from collections import OrderedDict
@@ -395,7 +396,7 @@ class ED3NEngine:
 
         if depth == "shallow" or (depth == "auto" and not context):
             output = self._stage_shallow_decode(
-                keys, context, query_id, stages, cache_hit, FALLBACK_STR
+                keys, context, query_id, stages, cache_hit, FALLBACK_STR, input_text
             )
             return self._telemetry_return(
                 query_id,
@@ -492,7 +493,7 @@ class ED3NEngine:
 
         if depth == "shallow" or (depth == "auto" and not context):
             output = self._stage_shallow_decode(
-                keys, context, query_id, stages, cache_hit, FALLBACK_STR
+                keys, context, query_id, stages, cache_hit, FALLBACK_STR, input_text
             )
             return self._telemetry_return(
                 query_id,
@@ -731,11 +732,21 @@ class ED3NEngine:
         confidence = self._compute_confidence(keys)
         return enriched, confidence
 
-    def _stage_shallow_decode(self, keys, context, query_id, stages, cache_hit, FALLBACK_STR):
+    def _stage_shallow_decode(self, keys, context, query_id, stages, cache_hit, FALLBACK_STR, input_text=""):
         t0 = time.perf_counter()
         decoded = self.dictionary.decode(keys, context)
         stages["decode"] = (time.perf_counter() - t0) * 1000
-        return decoded if decoded else FALLBACK_STR
+        if not decoded:
+            return FALLBACK_STR
+        # Without an LLM the decoder may surface unrelated training tokens when
+        # the matched keys have no real connection to the question. If the
+        # decoded text shares no recognizable token with the input, prefer the
+        # clean fallback instead of emitting gibberish.
+        input_tokens = set(re.findall(r"[a-zA-Z]{2,}", input_text.lower()))
+        decoded_tokens = set(re.findall(r"[a-zA-Z]{2,}", decoded.lower()))
+        if input_tokens and not (input_tokens & decoded_tokens):
+            return FALLBACK_STR
+        return decoded
 
     def _stage_network_forward(self, keys, context, depth, query_id, stages):
         t0 = time.perf_counter()

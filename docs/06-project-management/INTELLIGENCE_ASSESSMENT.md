@@ -2,7 +2,7 @@
 
 > **Purpose**: Honest, verifiable assessment of Angela AI's actual capabilities.
 > **Created**: 2026-07-04
-> **Updated**: 2026-07-06 (training results verified, SNN audit, architecture alignment)
+> **Updated**: 2026-07-16 (association metric, KB week/month succession, clean fallback, terminal dialogue test)
 > **Principle**: No LLM API calls in benchmarks — scores reflect native engine only.
 > **Test command**: `python scripts/benchmark_ed3n_garden.py --engine ed3n`
 > **Test command**: `python scripts/benchmark_ed3n_garden.py --engine garden`
@@ -60,7 +60,7 @@
 |------|-----------|------|------|
 | **架構分** | 19/20 子系統接通 | **9.5/10** | 606 .py, 88 routes, 0 STUB marker |
 | **數理化引擎分** | math 5/5 (MathVerifier) + lookup 8/8 | **9.5/10** | 高確定性、易計分；數學由 MathVerifier 正確處理 = 專案真實能力 |
-| **知識引擎分** | knowledge 5/5 (KB `route_knowledge`) | **10/10** | 新增 `ai/knowledge_base.py` 確定性檢索；sky→blue / 反義 / 動物叫聲 / 週天數 / Red Planet 全中；計入專案真實能力 |
+| **知識引擎分** | knowledge 5/5 (KB `route_knowledge`) | **10/10** | 新增 `ai/knowledge_base.py` 確定性檢索；sky→blue / 反義 / 動物叫聲 / 週天數 / Red Planet / 星期與月份接續（"day after monday"→tuesday, "month after march"→april）全中；計入專案真實能力 |
 | **符號推理引擎分** | reasoning 5/5 (symbolic `route_reasoning`) | **10/10** | 新增 `ai/symbolic_reasoner.py` 確定性符號推理；傳遞/三段論/日曆/數量/質量陷阱全中；計入專案真實能力 |
 | **知識+推理分** | 數據集 0.92 + 重現 0.807 | **8.6/10** | 460,281 條目; ED3N 0.914 / GARDEN 0.700（訓練集, 過擬合風險）；開放域知識現已由 KB 確定性處理 |
 | **查詢+學習分** | 檢索 0.85 + 閉環 1.0 | **9.0/10** | CN→EN probe 8/8; 6 個運作閉環（emotion/exec/causal/lifecycle/intent/DLI）|
@@ -86,6 +86,7 @@
 | 本回合 | 2026-07-15 | 修正 | 新增「數理化引擎分」9.5/10；「實際泛化」改為「學習型開放域泛化」0/10 | 修正錯誤框架：確定性引擎（數理化）正確處理任務是系統真實能力、應計分，不該強迫神經模型重學 |
 | 本回合 | 2026-07-15 | 修復+擴充 | GARDEN ChromaDB 卡死修復 + 新增「知識引擎分」10/10 | 1) `_safe_chromadb_client()` 線程超時保護修復 GARDEN benchmark 卡死（>200s→完成）；2) 新增 `ai/knowledge_base.py` 確定性知識檢索，ED3N/GARDEN knowledge 0/5→5/5（ED3N 66.7% / GARDEN 73.3%）；3) 推理（傳遞/三段論/日曆/字謎）仍 0/5 = 核心弱點（需 LLM/符號推理器） |
 | 本回合 | 2026-07-15 | 符號推理器完成 | 推理核心弱點已解決：新增「符號推理引擎分」10/10 | 1) 新增 `ai/symbolic_reasoner.py` 確定性符號推理（傳遞/三段論/日曆/數量/質量陷阱），ED3N/GARDEN reasoning 0/5→5/5；2) 接線為 Stage 1.7（先於知識/reflex，確保結構性問題不被錯誤攔截）；3) 新增 `scripts/generate_training_data.py` 推理/工具路由訓練資料（17K 樣本），接線進 `train_pipeline.py` 並完成訓練；4) ED3N/GARDEN 原生 benchmark 現 **15/15 (100%)** |
+| 本回合 | 2026-07-16 | 知識/關聯分離 + 終端實測 | 新增「神經關聯能力」指標 ED3N/GARDEN 1.0；KB 星期/月份接續 | 1) 審計訓練管線：知識事實不再灌入 SNN 權重（`train_pipeline.py` ED3N 剔除 knowledge/reasoning/tooluse；`garden_engine.learn_batch` 新增 `train_associations=False`），知識存字典/KB、關聯存 SNN 兩者分離；2) 新增 `scripts/validate_association.py` 四指標（directional/transitive/ranking/perturbation）測 SNN 關聯能力，兩引擎皆 1.0（見 §4.1.2）；3) 終端對話實測（`scripts/t_terminal_dialogue_test.py`）發現並修復：KB 缺星期/月份接續（"day after monday"→tuesday）、ED3N 無 LLM 時開放域吐訓練 token 亂碼→改為乾淨 fallback；4) 三欄實測（HYBRID/DET-ONLY/SNN-ONLY）證實移除確定性引擎後 SNN 近 0，知識從未進權重 |
 
 ### 1.3 分數對照表
 
