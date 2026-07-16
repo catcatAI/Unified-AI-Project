@@ -58,3 +58,23 @@ class TestCoreNetworkEviction:
         for i in range(2000):
             core.add_relation(f"a{i}", RelationType.MAPPING, f"b{i}", weight=0.5)
         assert core._conn_count == 4000, core._conn_count
+
+    def test_counter_tracks_forward_created_connections(self):
+        """forward()/_apply_relation_activation() creates connections on unseen
+        key pairs; the running counter must reflect them so eviction triggers
+        correctly during training (regression for counter drift)."""
+        core = _fresh_core(max_connections=0)
+        before = core._conn_count
+        # Simulate forward() activating a brand-new pair in the mapping group.
+        core._apply_relation_activation("newx", "newy", RelationType.MAPPING, 0.7)
+        after = core._conn_count
+        assert after > before, "forward-created connections must increment counter"
+        assert after == core._count_connections(), (
+            after,
+            core._count_connections(),
+        )
+        # A second call on the same pair must NOT double-count.
+        core._apply_relation_activation("newx", "newy", RelationType.MAPPING, 0.7)
+        assert core._conn_count == after, "existing pair must not re-increment"
+        assert core._conn_count == core._count_connections()
+

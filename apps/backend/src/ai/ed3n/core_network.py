@@ -271,7 +271,11 @@ class CoreNetwork:
             if n_key not in group.neurons:
                 group.add_neuron(Neuron(key=n_key, group_type=group.group_type))
         w = confidence
+        if key2 not in group.neurons[key1].connections:
+            self._conn_count += 1
         group.neurons[key1].connections[key2] = w
+        if key1 not in group.neurons[key2].connections:
+            self._conn_count += 1
         group.neurons[key2].connections[key1] = w
         group.activate(key1, w)
         group.activate(key2, w)
