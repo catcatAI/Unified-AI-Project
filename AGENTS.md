@@ -73,6 +73,8 @@ mypy apps/backend/src                    # Type check
 pre-commit run --all-files
 ```
 
+> 📌 **NOTE CHAIN IS A HISTORICAL CHANGELOG**: Every test count embedded below (5,085 / 4,717 / 4,734 / …) is a dated milestone at the time of that NOTE. The current authoritative count is **4,488 collected (tests/), 0 errors** (re-verified 2026-07-16) — see the live sync in the `§X #262` NOTE and MASTER_TASK_MAP.md.
+
 > ✅ **NOTE (Updated 2026-06-29)**: Extended session now **158+ commits** (Jun 25–29). Includes §X #34-#54: save_visual_decoder_weights, TemporalState↔CausalReasoningEngine bridge, U5 security, all stub eliminations (R1-R3, §X #27), T1-T5 training DONE, 5 real stub modules (§X #49), ripple/node+influence/space stubs (§X #50), magic number migration (§X #51), test_final.py fix (§X #52), 4 Level5ASI STUB→real modules (§X #53), formula coefficient migration (§X #54). **All stubs eliminated** (0 stubs). **5,085 tests collected** (full testpaths), 4,578 (tests/), 0 errors.
 > 
 

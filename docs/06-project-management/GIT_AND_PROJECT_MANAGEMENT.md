@@ -18,7 +18,7 @@
 ├── docs/                          # 项目文档
 ├── scripts/                       # 脚本工具
 ├── tests/                         # 测试框架
-├── training/configs/              # 训练配置文件
+├── data/checkpoints/              # 训练产出检查点 (ED3N: ed3n_full.json; GARDEN: garden_checkpoint/)
 ├── package.json                   # Node.js配置
 ├── pnpm-workspace.yaml           # PNPM工作空间配置
 ├── eslint.config.mjs             # ESLint配置
@@ -64,7 +64,7 @@ data/
 ```
 data/
 ├── checkpoints/                  # 训练检查点 (ED3N: ed3n_full.json; GARDEN: garden_checkpoint/)
-└── state/                        # 运行时状态 (TrainingCoordinator 等)
+└── state/                        # 运行时状态持久化 (JsonFileStateStore — StateMatrix / global_store)
 ```
 
 ## 🛠️ Git 管理策略

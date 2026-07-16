@@ -13,7 +13,7 @@ ED3N (External Dictionary Decoupled Neural Network) is a hybrid reflex-associati
 | Metric | Value |
 |--------|-------|
 | Training data | 12,200 samples (10K arithmetic + 2K arithmetic test + 200 logic) |
-| Network accuracy | ~77.7% (pre-PEMDAS) → 100% (benchmark 5/5, Jun 28) |
+| Network accuracy | ~77.7% (pre-PEMDAS) → 100% on 5 hand-picked cases (math/knowledge/reasoning 5/5, all via deterministic engines, not the SNN). Re-measured native benchmark (`benchmark_ed3n_garden.py`, full 15-case suite) = **33.3% (5/15)** — see INTELLIGENCE_ASSESSMENT §4.2. |
 | Seen problem accuracy | 100% (reflex exact match) |
 | Dictionary entries | 46 (26 original + 20 math/logic presets) |
 | Reflex patterns | 12,063 |
@@ -142,7 +142,7 @@ for q in ['true AND false', '(false OR true) AND false', '999 + 1']:
 ## Understanding Results
 
 ### Reflex Layer (Exact Match)
-- Handles all seen problems with 100% accuracy
+- Handles all seen problems with 100% accuracy (reflex exact-match — this is NOT the neural SNN benchmark)
 - Pattern matching: `if pattern in normalized_input`
 - Includes 30 built-in conversation patterns + trained patterns
 - Reflex patterns are persisted in checkpoints

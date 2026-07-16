@@ -25,10 +25,10 @@ Status: ✅ Fixed / 🟡 Persistent / ❌ Needs Fix / 🗑️ Deprecated
 | 12 | `core/system/module_manager/scanner.py` | watch() | ✅ | `logger.warning` |
 | 13 | `core/engine/state_matrix.py` | _apply_influence_fallback() | ✅ | `logger.warning` |
 | 14 | `ai/memory/importance_scorer.py` | __init__() | ✅ | `logger.debug` |
-| 15 | `ai/ops/intelligent_ops_manager.py` | PredictiveMaintenanceEngine (3 methods) | ✅ | `logger.warning` + return |
-| 16 | `ai/level5_asi_system.py` | DistributedCoordinator (3 methods) | 🟡 | Logged stub — STUB docstrings remain; no real alignment module exists (P1.1) |
-| 17 | `ai/level5_asi_system.py` | HyperlinkedParameterCluster (2 methods) | 🟡 | Logged stub — STUB docstrings remain; no real cluster module exists (P1.1) |
-| 18 | `ai/level5_asi_system.py` | AlignedBaseAgent (5 methods) | 🟡 | Logged stub — STUB docstrings remain; no real agent module exists (P1.1) |
+| 15 | `ai/ops/intelligent_ops_manager.py` | PredictiveMaintenanceEngine (3 methods) | 🗑️ | `ai/ops` package deleted (Phase 11b); entry obsolete |
+| 16 | `ai/level5_asi_system.py` | DistributedCoordinator (3 methods) | ✅ | Real module `ai/alignment/distributed_coordinator.py` (§X #53); imported by level5_asi_system |
+| 17 | `ai/level5_asi_system.py` | HyperlinkedParameterCluster (2 methods) | ✅ | Real module `ai/alignment/hyperlinked_parameter_cluster.py` (§X #53) |
+| 18 | `ai/level5_asi_system.py` | AlignedBaseAgent (5 methods) | ✅ | Real module `ai/alignment/aligned_base_agent.py` (§X #53); imported by level5_asi_system |
 | 19 | `integrations/atlassian_bridge.py` | start() / close() | ✅ | `logger.info` |
 | 20 | `integrations/enhanced_rovo_dev_connector.py` | start() / close() / _authenticate() | ✅ | `logger.info` |
 
