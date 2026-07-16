@@ -62,10 +62,9 @@ data/
 
 #### 训练产出文件
 ```
-training/
-├── models/                       # 训练好的模型文件
-├── checkpoints/                  # 训练检查点
-└── logs/                         # 训练日志
+data/
+├── checkpoints/                  # 训练检查点 (ED3N: ed3n_full.json; GARDEN: garden_checkpoint/)
+└── state/                        # 运行时状态 (TrainingCoordinator 等)
 ```
 
 ## 🛠️ Git 管理策略
@@ -81,9 +80,8 @@ data/coco_captions/                # 1GB MS COCO captions
 data/flickr30k_sample/             # Flickr30K sample data
 
 # Training artifacts and model files
-training/models/                   # Trained model files
-training/checkpoints/              # Training checkpoints
-training/logs/                     # Training logs
+data/checkpoints/                  # Training checkpoints (ED3N ed3n_full.json, GARDEN garden_checkpoint/)
+data/state/                        # Runtime training state
 *.tar.gz                          # Compressed dataset archives
 *.zip                             # Dataset archives
 

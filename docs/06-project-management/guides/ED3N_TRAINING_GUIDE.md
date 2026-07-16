@@ -95,6 +95,16 @@ print(engine.process("你好"))            # "你好！很高兴见到你！" (p
 print(engine.process("true AND false"))  # "false" (network generalization)
 ```
 
+> **Inference auto-loads the trained checkpoint.** In production, do NOT construct
+> `ED3NEngine()` + manual `load()` — use the shared singleton so the trained
+> weights produced by `train_pipeline.py` (`data/checkpoints/ed3n_full.json`) are
+> actually loaded:
+> ```python
+> eng = ED3NEngine.get_shared(load_trained=True)   # loads data/checkpoints/ed3n_full.json if present
+> ```
+> This closes the train↔inference Save/Load gap: previously inference created
+> fresh preset-only instances and orphaned the trained network on disk.
+
 ## Evaluation
 
 ### Seen Problems (exact matches in training data)

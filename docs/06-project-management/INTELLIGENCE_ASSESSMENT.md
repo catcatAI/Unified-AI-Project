@@ -6,7 +6,7 @@
 > **Principle**: No LLM API calls in benchmarks — scores reflect native engine only.
 > **Test command**: `python scripts/benchmark_ed3n_garden.py --engine ed3n`
 > **Test command**: `python scripts/benchmark_ed3n_garden.py --engine garden`
-> **Test count**: 4,448 collected (tests/), 0 errors
+> **Test count**: 4,488 collected (tests/), 0 errors
 
 ---
 
@@ -337,11 +337,11 @@ Phase 4: LatentReasoningNetwork (latent → text)
 | 項目 | 實際情況 | 聲稱 |
 |------|---------|------|
 | **架構類型** | LIF 圖傳播模型 | Spiking Neural Network |
-| **神經元數** | 60-87 (預設) | — |
-| **權重矩陣** | [V, V] dense adjacency matrix | — |
+| **神經元數** | 預設 presets 60-87；現有 `max_vocab`（預設 20000，`limit_value` 可調）LRU 批次驅逐上界，訓練不截斷資料集、只驅逐最弱/最舊神經元，[V,V] 記憶有界 | — |
+| **權重矩陣** | [V, V] dense adjacency matrix (V ≤ max_vocab) | — |
 | **前向傳播** | 6-hop weighted BFS with threshold | LIF multi-step temporal dynamics |
 | **學習規則** | Oja's rule (fixed target=0.7) | Hebbian online learning |
-| **稀疏性** | 無 (60-87 neurons too small) | Event-driven sparse computation |
+| **稀疏性** | 無（預設 neurons 少）；驅逐後矩陣仍 dense 但 V 有界 | Event-driven sparse computation |
 | **GPU 加速** | 未實作 (device="cpu") | CUDA acceleration |
 
 ### 6.2 優缺點分析
