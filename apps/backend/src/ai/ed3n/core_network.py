@@ -159,11 +159,29 @@ class CoreNetwork:
         )
         activations.update(propagated)
 
-        for group in self.groups.values():
-            for n_key, neuron in group.neurons.items():
+        # Only neurons that could possibly carry activation above threshold are:
+        #   - the directly activated input keys,
+        #   - their direct connection targets (relation activation),
+        #   - targets reached by spike propagation (already in ``propagated``).
+        # Scanning only those keeps forward() cost proportional to the active
+        # neighbourhood instead of O(total neurons) on every call.
+        candidate_keys: Set[str] = set(input_keys)
+        candidate_keys.update(propagated.keys())
+        for key in input_keys:
+            for group in self.groups.values():
+                neuron = group.neurons.get(key)
+                if neuron is None:
+                    continue
+                candidate_keys.update(neuron.connections.keys())
+
+        for key in candidate_keys:
+            for group in self.groups.values():
+                neuron = group.neurons.get(key)
+                if neuron is None:
+                    continue
                 if neuron.activation > neuron.threshold:
-                    activations[n_key] = max(
-                        activations.get(n_key, 0.0), neuron.activation
+                    activations[key] = max(
+                        activations.get(key, 0.0), neuron.activation
                     )
 
         return activations
