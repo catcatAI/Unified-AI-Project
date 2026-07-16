@@ -37,7 +37,7 @@ python scripts/run_angela.py
 - 聊天 API 在 `http://localhost:8000`
 
 **無 LLM 限制**：
-- 離線：確定性引擎（數理化）正確運作 = 9.5/10 真實能力；神經開放域泛化 ≈0/10（有 LLM 約 6.0/10，2026-07-15 重新測量；多維評分見 INTELLIGENCE_ASSESSMENT.md §1）
+- 離線：確定性引擎（數理化）正確運作 = 9.5/10 真實能力；神經網路淨貢獻 ≈35%（DET-CARRY 差分，ED3N 35.3% / GARDEN 35.6%，非 SNN-ONLY 失真分；多維評分見 INTELLIGENCE_ASSESSMENT.md §1 & §4.1.1）。有 LLM 約 6.0/10。
 - 無進階推理或程式碼生成
 - 回應較短、較模板化
 

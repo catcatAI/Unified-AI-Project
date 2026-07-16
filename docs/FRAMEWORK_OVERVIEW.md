@@ -11,7 +11,7 @@
 
 > **Framework positioning**: A modular, extensible framework for building digital life systems with hybrid AI (LLM + SNN + biological simulation).
 > **Codebase**: 612 Python files (~96K lines) in `apps/backend/src/` + 50 JS files across 3 apps + 4,448 tests.
-> **Intelligence**: Upper bound 6.0/10 (with LLM API), **native deterministic-engine capability 9.5/10** (math/physics/chemistry engines work — real, high-certainty, scored as capability); **neural open-domain generalization ≈ 0/10** (per [INTELLIGENCE_ASSESSMENT.md](06-project-management/INTELLIGENCE_ASSESSMENT.md) §1, multi-dimensional). See linked doc for the scoring standard.
+> **Intelligence**: Upper bound 6.0/10 (with LLM API), **native deterministic-engine capability strong** (math/physics/chemistry 9.5, knowledge 10, symbolic reasoning 10 — real, high-certainty, scored as capability); **neural-net net contribution ≈ 35%** (DET-CARRY differential = HYBRID − DET-ONLY, ED3N 35.3% / GARDEN 35.6% — per [INTELLIGENCE_ASSESSMENT.md](06-project-management/INTELLIGENCE_ASSESSMENT.md) §1.1 & §4.1.1; NOT the SNN-only score). Native capability is multi-dimensional — there is no single "actual" total. See linked doc for the scoring standard.
 > **Architecture completeness**: ~95% (framework structure exists, but ML model weights are 5% trained).
 > **Version**: 7.5.0-dev | **License**: MIT
 
@@ -278,7 +278,7 @@ Each stage in the chat pipeline (`chat_routes.py`) is a function or callable cla
 | Reasoning | 4/10 | 0.5/10 | CausalReasoningEngine = Pearson correlation only. PlanningEngine = template matching. MathRippleEngine = ripple/state-propagation layer (numeric result delegated to MathVerifier, the single math source of truth). |
 | Autonomy | 3/10 | 0.5/10 | AutonomousLifeCycle wired but unstable without LLM guidance. |
 | Meta-cognition | 5/10 | 4/10 | MetaController confidence tracking works. NeuroAutoSelector heuristic-based. |
-| **Composite** | **6.0/10** | **9.5/10** (math/physics/chemistry) + **10/10** (knowledge) + **10/10** (symbolic reasoning) deterministic / **0/10** (neural open-domain reasoning) | Framework architecture ~95% complete. **ML training is ~5% complete.** Native deterministic engines (math/physics/chemistry + knowledge + symbolic reasoning) work = real, high-certainty capability; neural open-domain reasoning generalization ≈0/10. ED3N + GARDEN benchmark 20/20 (100%) re-measured 2026-07-16 (20 cases: math/knowledge/reasoning/chain, all via deterministic engines — MathVerifier/knowledge_base/symbolic_reasoner/CoreNetwork — NOT the neural SNN; SNN-only generalization ≈0). See INTELLIGENCE_ASSESSMENT.md §1, §4.1 & §4.1.1. |
+| **Composite** | **6.0/10** | multi-dimensional (see §1.1) | Framework architecture ~95% complete. **ML training is ~5% complete.** Native deterministic engines (math/physics/chemistry 9.5 + knowledge 10 + symbolic reasoning 10) work = real, high-certainty capability; **neural-net net contribution ≈35%** (DET-CARRY differential, ED3N 35.3% / GARDEN 35.6%, NOT SNN-only). No single native "actual" total — dimensions are heterogeneous. ED3N + GARDEN benchmark 20/20 (100%) re-measured 2026-07-16 (all via deterministic engines). See INTELLIGENCE_ASSESSMENT.md §1, §4.1 & §4.1.1. |
 
 **Key insight**: This is an **architectural framework** with production-quality structure and academic-prototype ML content. The 190+ AI classes form a complete skeleton; the muscle (trained weights) is missing. The LLM API wrappers provide the only production-quality intelligence today.
 
@@ -393,7 +393,7 @@ Unlike other AI agent frameworks (see §6.1), Angela has **actual weight-based l
 | **Bilingual i18n** | Chinese + English developers | Most frameworks are English-first |
 | **GPU-free SNN** | Low-resource environments, edge computing | TensorFlow/PyTorch require GPU for speed |
 
-**The strongest single pitch**: *"An AI that gets tired, gets hungry, lives on your desktop with a Live2D body, and runs completely offline."* — No existing project delivers all four simultaneously. **⚠️ Offline (native) capability is split: deterministic engines (math/physics/chemistry) work correctly = 9.5/10 real, high-certainty capability; factual knowledge is answered by a deterministic KB = 10/10; symbolic reasoning (transitive/syllogism/calendar/quantity/mass-trick) by a deterministic reasoner = 10/10; but neural open-domain *reasoning* generalization ≈ 0/10 (genuinely novel unseen tasks). ED3N + GARDEN benchmark 20/20 (100%) re-measured 2026-07-16 — but all 20 are answered by deterministic engines, NOT the neural SNN (SNN-only generalization ≈0; see INTELLIGENCE_ASSESSMENT §4.1.1). ML weights ~5% trained, not random. Architecture exists; training partial.**
+**The strongest single pitch**: *"An AI that gets tired, gets hungry, lives on your desktop with a Live2D body, and runs completely offline."* — No existing project delivers all four simultaneously. **⚠️ Offline (native) capability is multi-dimensional: deterministic engines (math/physics/chemistry) work correctly = 9.5/10 real, high-certainty capability; factual knowledge is answered by a deterministic KB = 10/10; symbolic reasoning (transitive/syllogism/calendar/quantity/mass-trick) by a deterministic reasoner = 10/10; **neural-network net contribution ≈ 35%** (DET-CARRY differential = HYBRID − DET-ONLY, ED3N 35.3% / GARDEN 35.6% — NOT the SNN-only score, which is distorted by OR-short-circuiting; see INTELLIGENCE_ASSESSMENT §4.1.1). ED3N + GARDEN benchmark 20/20 (100%) re-measured 2026-07-16 — all 20 answered by deterministic engines. ML weights ~5% trained, not random. Architecture exists; training partial.**
 
 ### 7. Known Gaps
 
@@ -492,17 +492,17 @@ pytest tests/                         # 運行測試
 
 | 能力 | 有 LLM | 純本地 (框架) | 純本地 (訓練後) | 實現與備註 |
 |:-----|:------:|:------------:|:--------------:|:---------|
-| 文字理解 | 7/10 | 0.5/10 | **1.0/10** (actual) | ED3N 46 萬詞典存在但僅為概念映射。真正理解來自 LLM API。訓練後 acc=0.914 (訓練集，過擬合風險)。 |
+| 文字理解 | 7/10 | 0.5/10 | **10/10** (KB 確定性) | 知識由 `ai/knowledge_base` 確定性檢索（460K 字典，sky→blue/星期月份接續全中）= 真實能力；神經 decode 仍弱（acc 0.914 訓練集，過擬合風險），但知識層不走神經。 |
 | 圖像理解 | 7/10 | 0.5/10 | **5.0/10** | numpy 色彩直方圖 + Sobel 邊緣（1990 年代 CV）。CLIP 需要 torch。訓練後 CLIP 語意已接通。 |
 | 語音理解 | 5/10 | 0/10 | **5.0/10** | Whisper encoder 存在但 numpy 降級為基本 MFCC 統計。訓練後 Whisper STT 已接通。 |
 | 文字生成 | 7/10 | 0.5/10 | **0.5/10** | 7 個 LLM 後端提供真實生成。ED3N/GARDEN decoder = 字典映射 + 隨機權重。訓練後仍為字典拼接。 |
 | 圖像生成 | 6/10 | 0/10 | **5.0/10** | GVV 管線架構完整。**所有權重隨機 → 輸出為灰色畫布或雜訊。** ThreeLayerVisual MSE=0.009（32×32 模糊 = 1995 品質）。訓練後有結構但仍然模糊。 |
 | 語音輸出 | 4/10 | 0/10 | **4.0/10** | edge-tts 呼叫外部 API。原生 AudioWaveformDecoder = 波表雜訊（隨機權重）。訓練後 309x loss reduction，有結構但非語音品質。 |
 | 記憶 | 7/10 | 7/10 | **7/10** | VectorStore + HAM 真正有用，不依賴 LLM。 |
-| 推理 | 4/10 | 0.5/10 | **0.5/10** | CausalReasoningEngine 僅 Pearson 相關。PlanningEngine 模板匹配。MathRippleEngine 為真正原創認知模型。訓練後基準測試 0/5。 |
-| 自主性 | 3/10 | 0.5/10 | **1.0/10** (actual) | AutonomousLifeCycle 已接線但無 LLM 不穩定。框架完整但效果不明顯。 |
+| 推理 | 4/10 | 0.5/10 | **10/10** (符號推理確定性) | `ai/symbolic_reasoner` 確定性符號推理（傳遞/三段論/日曆/數量/質量陷阱）5/5；關係鏈由 CoreNetwork 傳遞閉包。神經推理路徑弱，但結構性推理已被確定性引擎覆蓋。 |
+| 自主性 | 3/10 | 0.5/10 | **9.0/10** (閉環) | 4/4 運作閉環（生命週期+代謝心跳+DLI+因果 warm-start），無 LLM 也運作。框架完整、效果明確。 |
 | 後設認知 | 5/10 | 4/10 | **4/10** | MetaController 信心追蹤有效。NeuroAutoSelector 啟發式。 |
-| **綜合** | **6.0/10** | **<0.5/10** | **9.5/10**(數理化確定性) / **10/10**(知識確定性) / **10/10**(符號推理確定性) / **0/10**(神經開放域推理) | 框架架構 ~95% 完整。**ML 訓練 ~5%。** 原生確定性引擎（數理化 9.5/10 + 知識 KB 10/10 + 符號推理 10/10）正確運作 = 真實能力；神經開放域**推理**泛化 ≈0/10（ED3N + GARDEN 基準 20/20 (100%) 重新測量 2026-07-16，但 20 題全由確定性引擎接住、非神經 SNN；SNN 單獨泛化 ≈0，見 §4.1.1）。多維評分見 INTELLIGENCE_ASSESSMENT.md §1。所有真實智慧來自 LLM API。 |
+| **綜合** | **6.0/10** | **<0.5/10** | 多維度（見 §1.1）：數理化 9.5 / 知識 10 / 符號推理 10 / 自主 9.0；**神經網路淨貢獻 ≈35%** (DET-CARRY 差分) | 框架架構 ~95% 完整。**ML 訓練 ~5%。** 原生確定性引擎正確運作 = 真實能力；神經網路能力用差值算（總能力 − 確定性可獨立達成 = DET-CARRY ≈35%，ED3N 35.3%/GARDEN 35.6%），**不是** SNN-ONLY 單跑的失真低分。多維評分見 INTELLIGENCE_ASSESSMENT.md §1 & §4.1.1。所有開放域對話智慧來自 LLM API。 |
 
 ### 5.5 學習能力評估
 
@@ -615,7 +615,7 @@ Angela AI 有 **4 個學習層級**，每個建立在前者之上。這比標準
 | **中英雙語 i18n** | 中英文開發者 | 多數框架以英文優先 |
 | **免 GPU SNN** | 低資源環境、邊緣計算 | TensorFlow/PyTorch 需要 GPU |
 
-**最強單一賣點**：*「一個會累、會餓、活在桌面上、有 Live2D 身體、可以完全離線運作的 AI」* — 沒有專案同時做到這四點。**⚠️ 目前離線（原生）能力分流**：確定性引擎（數理化 9.5/10 + 知識 KB 10/10 + 符號推理 10/10）正確運作 = 真實能力；但神經開放域**推理**泛化 ≈0/10（傳遞/三段論/日曆/數量/質量陷阱已交由符號推理器 100% 處理，真正未見任務仍弱）。ED3N + GARDEN 基準 20/20 (100%) 重新測量 2026-07-16；數學由 MathVerifier、知識由 KB、推理由符號推理器、關係鏈由 CoreNetwork 傳遞閉包正確處理，是**確定性引擎**能力非神經 SNN（SNN 單獨泛化 ≈0）。ML 權重約 5% 訓練，非隨機。架構存在，訓練尚不完整。
+**最強單一賣點**：*「一個會累、會餓、活在桌面上、有 Live2D 身體、可以完全離線運作的 AI」* — 沒有專案同時做到這四點。**⚠️ 目前離線（原生）能力為多維度**：確定性引擎（數理化 9.5/10 + 知識 KB 10/10 + 符號推理 10/10）正確運作 = 真實能力；**神經網路淨貢獻 ≈35%**（DET-CARRY 差分 = HYBRID−DET-ONLY，ED3N 35.3% / GARDEN 35.6%，非 SNN-ONLY 失真低分）。ED3N + GARDEN 基準 20/20 (100%) 重新測量 2026-07-16；數學由 MathVerifier、知識由 KB、推理由符號推理器、關係鏈由 CoreNetwork 傳遞閉包正確處理，是**確定性引擎**能力非神經 SNN。ML 權重約 5% 訓練，非隨機。架構存在，訓練尚不完整。
 
 ### 7. 已知差距
 
