@@ -1,0 +1,40 @@
+{
+  "datasets": {
+    "reasoning": 150,
+    "math": 150,
+    "logic": 150
+  },
+  "engines": {
+    "ed3n": {
+      "domains": {
+        "reasoning": {
+          "hybrid": 33.33,
+          "deterministic": 33.33,
+          "snn_only": 1.33,
+          "det_carry": 32.0,
+          "n": 150
+        },
+        "math": {
+          "hybrid": 74.0,
+          "deterministic": 74.0,
+          "snn_only": 0.0,
+          "det_carry": 74.0,
+          "n": 150
+        },
+        "logic": {
+          "hybrid": 22.0,
+          "deterministic": 22.0,
+          "snn_only": 22.0,
+          "det_carry": 0.0,
+          "n": 150
+        }
+      },
+      "aggregate": {
+        "hybrid": 43.11,
+        "deterministic": 43.11,
+        "snn_only": 7.78,
+        "det_carry": 35.33
+      }
+    }
+  }
+}

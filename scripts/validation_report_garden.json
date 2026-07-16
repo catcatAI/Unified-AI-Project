@@ -1,0 +1,40 @@
+{
+  "datasets": {
+    "reasoning": 150,
+    "math": 150,
+    "logic": 150
+  },
+  "engines": {
+    "garden": {
+      "domains": {
+        "reasoning": {
+          "hybrid": 32.67,
+          "deterministic": 32.67,
+          "snn_only": 0.0,
+          "det_carry": 32.67,
+          "n": 150
+        },
+        "math": {
+          "hybrid": 74.0,
+          "deterministic": 74.0,
+          "snn_only": 0.0,
+          "det_carry": 74.0,
+          "n": 150
+        },
+        "logic": {
+          "hybrid": 0.0,
+          "deterministic": 0.0,
+          "snn_only": 0.0,
+          "det_carry": 0.0,
+          "n": 150
+        }
+      },
+      "aggregate": {
+        "hybrid": 35.56,
+        "deterministic": 35.56,
+        "snn_only": 0.0,
+        "det_carry": 35.56
+      }
+    }
+  }
+}

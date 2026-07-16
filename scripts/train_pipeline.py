@@ -738,9 +738,12 @@ def _step4_train_ed3n(coordinator, batches):
             batch = TrainingBatch(examples=examples, batch_id=f"ed3n_ep{epoch}")
             m = trainer.train_step(batch)
             print(f"    Epoch {epoch+1}/{limit_value('train.ed3n.epochs', 2)}: loss={m.loss:.4f} acc={m.accuracy:.4f} ({time.time()-t0:.1f}s)")
-            # Record with coordinator
+            # Record with coordinator — preserve the true per-domain label so the
+            # coverage report is accurate (previously collapsed to math/logic).
+            seen_domains = {e.metadata.get("domain", "unknown") for e in batch.examples}
+            record_domain = next(iter(seen_domains)) if len(seen_domains) == 1 else "mixed"
             asyncio.run(coordinator.record_training(
-                domain="math" if any(e.metadata.get("domain") == "math" for e in batch.examples) else "logic",
+                domain=record_domain,
                 model_id="ed3n",
                 count=len(examples),
                 accuracy=m.accuracy,
@@ -749,14 +752,29 @@ def _step4_train_ed3n(coordinator, batches):
             # Save mid-training checkpoint
             ed3n_engine.save(os.path.join(CKPT_DIR, f"ed3n_epoch{epoch+1}.json"))
 
-    # 4e: Add reflex patterns from training data
+    # 4e: Add reflex patterns from training data.
+    # Only short, canned-style inputs (greeting/reflex/command) become reflex
+    # patterns. Long structured inputs (reasoning chains, tool-use intents,
+    # arithmetic, logic propositions) are NOT added: ReflexLayer does *substring*
+    # matching, so adding 11k long strings would (a) cause false substring
+    # matches returning memorized wrong answers and (b) bloat the O(n) reflex
+    # scan. Those domains are handled at runtime by the symbolic reasoner, the
+    # relational-chain stage, and the calculator — not by reflex memorization.
     print("  Adding reflex patterns from training data...")
     reflex_count = 0
+    reflex_domain_blacklist = {"reasoning", "tooluse", "math", "logic"}
     for s in ed3n_samples:
         output_str = s["output"]
         if not output_str:
             continue
-        ed3n_engine.reflex.add_pattern(s["input"], output_str)
+        domain = s.get("domain", "")
+        inp = s["input"]
+        # Reflex patterns must be short and from a reflex-style domain.
+        if domain in reflex_domain_blacklist:
+            continue
+        if len(inp) > limit_value("train.ed3n.max_reflex_pattern_len", 40):
+            continue
+        ed3n_engine.reflex.add_pattern(inp, output_str)
         reflex_count += 1
     print(f"    Added {reflex_count} reflex patterns")
 
