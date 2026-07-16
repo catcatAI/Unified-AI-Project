@@ -103,8 +103,11 @@ class TestTensorSNNCoreKeyRegistry:
         core = snn_core
         old_v = core.vocab_size
         core._register_key("very_new_key")
-        assert core._W.shape[0] == old_v + 1
-        assert core._W.shape[1] == old_v + 1
+        # Amortized (doubling) growth: matrix capacity grows to >= old_v + 1,
+        # while the live region always matches vocab_size.
+        assert core._W.shape[0] >= old_v + 1
+        assert core._W.shape[1] >= old_v + 1
+        assert core._W.shape[0] == core._W.shape[1]
 
     def test_vocab_size_property(self, snn_core: TensorSNNCore):
         assert snn_core.vocab_size == 6

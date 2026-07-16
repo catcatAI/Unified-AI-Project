@@ -27,6 +27,25 @@ class GARDENBackend(BaseLLMBackend):
         timeout: float = 30.0,
     ):
         self.model = model
+        # When no explicit checkpoint is configured, fall back to the trained
+        # checkpoint produced by scripts/train_pipeline.py so inference uses what
+        # was actually trained (previously the engine loaded presets only,
+        # orphaning the trained garden_checkpoint on disk).
+        if not checkpoint:
+            # Resolve the real project root (dir containing apps/backend/src)
+            # and look for <root>/data/checkpoints/garden_checkpoint.
+            here = os.path.abspath(os.path.dirname(__file__))
+            root = here
+            for _ in range(10):
+                if os.path.isdir(os.path.join(root, "apps", "backend", "src")):
+                    break
+                parent = os.path.dirname(root)
+                if parent == root:
+                    break
+                root = parent
+            candidate = os.path.join(root, "data", "checkpoints", "garden_checkpoint")
+            if os.path.isdir(candidate):
+                checkpoint = candidate
         self.checkpoint = checkpoint
         self.timeout = timeout
         self._engine: Optional[Any] = None

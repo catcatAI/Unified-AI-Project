@@ -121,6 +121,14 @@ def _numel(arr):
     return arr.size
 
 
+def _as_array(lst):
+    """Convert a Python list of ints to a backend index array (torch or numpy)."""
+    xp, _ = _get_backend()
+    if _is_torch:
+        return xp.tensor(lst, dtype=xp.long)
+    return np.asarray(lst, dtype=np.int64)
+
+
 def _save_checkpoint(path: str, state: dict) -> None:
     """Save SNN checkpoint — handles both numpy and torch tensors."""
     xp, is_torch = _get_backend()
@@ -216,12 +224,24 @@ class TensorSNNCore:
         timesteps: int = DEFAULT_TIMESTEPS,
         decay: float = DEFAULT_DECAY,
         device: str = "cpu",
+        max_vocab: int = 0,
     ):
         self.leak = leak
         self.base_threshold = threshold
         self.timesteps = timesteps
         self.decay = decay
         self.device = device
+
+        from core.system.config.magic_numbers import limit_value
+
+        # Hard memory budget on the concept vocabulary. The SNN keeps a dense
+        # [V, V] weight matrix, so V**2 memory. Without a bound, ingesting a
+        # large knowledge corpus registers every token as a new neuron and the
+        # matrix grows without limit (and is reallocated on every new key).
+        # Instead of truncating the *input dataset*, we keep training ALL data
+        # and evict the least-recently-used neurons once the budget is exceeded.
+        # max_vocab <= 0 means "unbounded" (legacy behavior, not recommended).
+        self.max_vocab = max_vocab or limit_value("ai.garden.snn.max_vocab", 20000)
 
         self.modulator = HormonalModulator()
 
@@ -232,22 +252,114 @@ class TensorSNNCore:
         # Weight matrix (grows dynamically as new keys are registered)
         self._W: Optional[Any] = None   # [V, V] float32 (torch.Tensor or np.ndarray)
 
+        # LRU bookkeeping for eviction under the memory budget.
+        self._last_used: Dict[int, int] = {}
+        self._clock: int = 0
+
         # Training history
         self.total_steps = 0
         self.total_hebbian_updates = 0
         self._total_active = 0  # total active neurons across all forward() calls
+        self.total_evictions = 0
 
     # ------------------------------------------------------------------
     # Key registry
     # ------------------------------------------------------------------
 
     def _register_key(self, key: str) -> int:
-        if key not in self._key_to_idx:
-            idx = len(self._idx_to_key)
-            self._key_to_idx[key] = idx
-            self._idx_to_key.append(key)
-            self._grow_matrix(idx + 1)
-        return self._key_to_idx[key]
+        if key in self._key_to_idx:
+            self._touch(self._key_to_idx[key])
+            return self._key_to_idx[key]
+        # If at (or would exceed) the memory budget, evict a BATCH of the
+        # least-recently-used neurons in a single matrix compaction, then
+        # register the new key. Training still ingests the current sample — we
+        # never truncate the input dataset; we only shed the least-useful
+        # neurons from an already-trained matrix to keep V**2 memory bounded.
+        if self.max_vocab > 0 and len(self._idx_to_key) >= self.max_vocab:
+            self._evict_batch()
+        idx = len(self._idx_to_key)
+        self._key_to_idx[key] = idx
+        self._idx_to_key.append(key)
+        self._grow_matrix(idx + 1)
+        self._touch(idx)
+        return idx
+
+    def _touch(self, idx: int) -> None:
+        self._last_used[idx] = self._clock
+        self._clock += 1
+
+    def _evict_batch(self) -> None:
+        """Evict a batch of the least-recently-used neurons in one compaction.
+
+        Evicts down to ~90% of ``max_vocab`` so the next many registrations are
+        cheap (amortized O(V**2) total instead of O(V**3) from per-key eviction).
+        """
+        if len(self._idx_to_key) <= 1:
+            return
+        target = max(1, int(self.max_vocab * 0.9))
+        if len(self._idx_to_key) <= target:
+            return
+        # LRU indices: smallest _last_used first.
+        order = sorted(range(len(self._idx_to_key)), key=lambda i: self._last_used.get(i, 0))
+        evict_n = len(self._idx_to_key) - target
+        evicted = set(order[:evict_n])
+        keep = [i for i in range(len(self._idx_to_key)) if i not in evicted]
+        self._compact(keep)
+        self.total_evictions += evict_n
+
+    def _compact(self, keep_indices: List[int]) -> None:
+        """Rebuild the index maps and weight matrix keeping only ``keep_indices``.
+
+        This is the inverse of truncation: instead of dropping input data, we
+        drop the *least useful neurons* from an already-trained matrix so the
+        memory footprint stays under budget while still having trained on all
+        samples.
+
+        The new matrix is allocated at ``max_vocab`` capacity (when a budget is
+        set) rather than exactly ``len(keep)``, so subsequent registrations fill
+        existing rows instead of re-growing + copying the whole matrix each time.
+
+        The sub-matrix copy is done with vectorized advanced indexing (a single
+        backend op), NOT a Python double loop, so compaction stays O(V**2) in C
+        rather than O(V**2) in the interpreter.
+        """
+        if self._W is None:
+            self._reindex(keep_indices)
+            return
+        old_W = self._W
+        new_size = len(keep_indices)
+        cap = self.max_vocab if self.max_vocab > 0 else new_size
+        alloc = max(new_size, cap, int(old_W.shape[0]))
+        idx_arr = _as_array(keep_indices)
+        # Vectorized sub-matrix extraction: W[keep, keep]. Use the backend's
+        # native index_select (torch) / ix_ (numpy) — a SINGLE op — because
+        # double advanced indexing (W[idx][:, idx]) materializes a huge
+        # intermediate and hangs on the torch backend.
+        if _is_torch:
+            sub = old_W.index_select(0, idx_arr).index_select(1, idx_arr)
+        else:
+            sub = old_W[np.ix_(idx_arr, idx_arr)]
+        # Allocate at the budget capacity (when set) so subsequent registrations
+        # fill existing rows instead of re-copying the whole matrix each time.
+        # The live region is new_size x new_size; forward() slices to it.
+        new_W = _zeros((alloc, alloc))
+        new_W[:new_size, :new_size] = sub
+        self._W = new_W
+        self._reindex(keep_indices)
+
+    def _reindex(self, keep_indices: List[int]) -> None:
+        new_key_to_idx: Dict[str, int] = {}
+        new_idx_to_key: List[str] = []
+        new_last_used: Dict[int, int] = {}
+        for new_i, old_i in enumerate(keep_indices):
+            key = self._idx_to_key[old_i]
+            new_key_to_idx[key] = new_i
+            new_idx_to_key.append(key)
+            if old_i in self._last_used:
+                new_last_used[new_i] = self._last_used[old_i]
+        self._key_to_idx = new_key_to_idx
+        self._idx_to_key = new_idx_to_key
+        self._last_used = new_last_used
 
     def _pre_allocate(self, keys: List[str]) -> None:
         for key in keys:
@@ -256,7 +368,7 @@ class TensorSNNCore:
                 self._key_to_idx[key] = idx
                 self._idx_to_key.append(key)
         V = len(self._idx_to_key)
-        self._W = _zeros((V, V))
+        self._grow_matrix(V)
 
     def _grow_matrix(self, new_size: int) -> None:
         if self._W is not None and new_size <= self._W.shape[0]:
@@ -267,7 +379,11 @@ class TensorSNNCore:
         old_size = self._W.shape[0]
         if new_size <= old_size:
             return
-        new_W = _zeros((new_size, new_size))
+        # Amortized growth: over-allocate (doubling) so the total copy cost over
+        # V registrations is O(V**2) instead of O(V**3). The live region is the
+        # first ``vocab_size`` rows/cols; forward() slices to that region.
+        target = max(new_size, int(old_size * 2))
+        new_W = _zeros((target, target))
         new_W[:old_size, :old_size] = self._W
         self._W = new_W
 
@@ -286,6 +402,8 @@ class TensorSNNCore:
         i = self._register_key(key1)
         j = self._register_key(key2)
         self._W[i, j] = min(1.0, self._W[i, j] + weight)
+        self._touch(i)
+        self._touch(j)
         if bidirectional:
             self._W[j, i] = min(1.0, self._W[j, i] + weight)
 
@@ -321,7 +439,7 @@ class TensorSNNCore:
             return {}
 
         V = self.vocab_size
-        W = self._W  # [V, V]
+        W = self._W[:V, :V]  # live [V, V] region (guard against any over-allocation)
 
         # Build initial activation vector
         a = _zeros(V)
@@ -329,6 +447,7 @@ class TensorSNNCore:
             idx = self._key_to_idx.get(key)
             if idx is not None:
                 a[idx] = 1.0
+                self._touch(idx)
 
         if a.sum() == 0.0:
             return {}
@@ -400,6 +519,8 @@ class TensorSNNCore:
                 new_w = max(0.0, min(1.0, old_w + delta))
                 self._W[i, j] = new_w
                 self._W[j, i] = new_w  # symmetric
+                self._touch(i)
+                self._touch(j)
                 delta_total += abs(delta)
 
         self.total_hebbian_updates += 1
@@ -446,19 +567,29 @@ class TensorSNNCore:
     def get_stats(self) -> Dict[str, Any]:
         density = 0.0
         if self._W is not None and _numel(self._W) > 0:
-            density = float(_float(self._W > 0).mean())
+            density = float(_float(self._W[: self.vocab_size, : self.vocab_size] > 0).mean())
         total_possible = self.vocab_size * self.timesteps * max(1, self.total_steps)
         sparsity_ratio = round(1.0 - (self._total_active / max(1, total_possible)), 4) if total_possible > 0 else 0.0
+        # Report the *live* matrix region (vocab_size x vocab_size). The internal
+        # _W may be over-allocated for amortized growth, but only the live region
+        # participates in forward()/training, so that is the meaningful footprint.
+        live_W = self.vocab_size
+        if self._W is None:
+            live_shape: List[int] = []
+        else:
+            live_shape = [live_W, live_W]
         return {
             "vocab_size": self.vocab_size,
-            "weight_matrix_shape": list(self._W.shape) if self._W is not None else [],
+            "max_vocab": self.max_vocab,
+            "weight_matrix_shape": live_shape,
             "matrix_density": round(density, 4),
-            "matrix_memory_bytes": (_numel(self._W) * 4) if self._W is not None else 0,
+            "matrix_memory_bytes": (live_W * live_W * 4),
             "leak": self.leak,
             "threshold": self.base_threshold,
             "timesteps": self.timesteps,
             "total_steps": self.total_steps,
             "total_hebbian_updates": self.total_hebbian_updates,
+            "total_evictions": self.total_evictions,
             "hormones": self.modulator.get_profile_summary(),
             "sparsity_ratio": sparsity_ratio,
             "computation_saved": self._total_active,

@@ -178,13 +178,54 @@ class ED3NEngine:
     _shared_instance: Optional["ED3NEngine"] = None
     _shared_lock = threading.Lock()
 
+    @staticmethod
+    def _project_root() -> str:
+        """Resolve the real project root (the dir containing ``apps/backend/src``).
+
+        ``scripts/train_pipeline.py`` saves checkpoints to ``<root>/data/checkpoints``,
+        so inference must resolve the *same* root. We search upward for the
+        ``apps/backend/src`` marker rather than relying on a fixed number of
+        ``dirname`` calls (which broke against the differing layout in
+        ``path_config.PROJECT_ROOT``).
+        """
+        here = os.path.abspath(os.path.dirname(__file__))
+        candidate = here
+        for _ in range(8):
+            if os.path.isdir(os.path.join(candidate, "apps", "backend", "src")):
+                return candidate
+            parent = os.path.dirname(candidate)
+            if parent == candidate:
+                break
+            candidate = parent
+        return os.path.abspath(os.path.join(here, "..", "..", "..", "..", ".."))
+
+    # Canonical location of the checkpoint produced by scripts/train_pipeline.py.
+    # Inference (chat/dialogue) must load this so that what was TRAINED is what
+    # is USED — previously the pipeline saved ed3n_full.json but get_shared() and
+    # the ED3N provider created fresh preset-only instances, so the trained
+    # network/dictionary was orphaned on disk (train vs. dialogue divergence).
+    _SHARED_CKPT = os.path.join(_project_root(), "data", "checkpoints", "ed3n_full.json")
+
     @classmethod
-    def get_shared(cls) -> "ED3NEngine":
-        """Get the process-wide shared ED3NEngine instance with presets loaded."""
+    def get_shared(cls, load_trained: bool = True) -> "ED3NEngine":
+        """Get the process-wide shared ED3NEngine instance.
+
+        When ``load_trained`` is True (default) and a checkpoint from
+        ``scripts/train_pipeline.py`` exists at ``data/checkpoints/ed3n_full.json``,
+        it is loaded so inference uses the trained network + dictionary + reflex
+        patterns. Falls back to presets only when no checkpoint is present.
+        """
         if cls._shared_instance is None:
             with cls._shared_lock:
                 if cls._shared_instance is None:
-                    cls._shared_instance = cls()
+                    inst = cls()
+                    if load_trained and os.path.exists(cls._SHARED_CKPT):
+                        try:
+                            inst.load(cls._SHARED_CKPT)
+                            logger.info("ED3NEngine.get_shared: loaded trained checkpoint %s", cls._SHARED_CKPT)
+                        except Exception as e:  # never block startup on a bad ckpt
+                            logger.warning("ED3NEngine.get_shared: checkpoint load failed (%s); presets only", e)
+                    cls._shared_instance = inst
         return cls._shared_instance
 
     @property

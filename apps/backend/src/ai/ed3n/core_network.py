@@ -116,6 +116,17 @@ class CoreNetwork:
         self.groups["synonym"] = self._synonym_group
         self.groups["mapping"] = self._mapping_group
         self.groups["analogy"] = self._analogy_group
+        # Memory budget on the total number of connections across all groups.
+        # The SNN stores connections as per-neuron dicts (sparse), but without a
+        # bound the count still grows unbounded as more relations are trained.
+        # Rather than truncating the *input* dataset, we keep training on all
+        # samples and evict the weakest connections once over budget.
+        # max_connections <= 0 means "unbounded" (legacy behavior).
+        self.max_connections = limit_value("ai.core_network.max_connections", 200000)
+        # Running connection tally — kept incrementally so we don't pay an
+        # O(total_connections) recount on every adjust_connection call during
+        # large training runs.
+        self._conn_count = 0
 
     def forward(
         self,
@@ -169,7 +180,11 @@ class CoreNetwork:
         for n_key in (key1, key2):
             if n_key not in group.neurons:
                 group.add_neuron(Neuron(key=n_key, group_type=group.group_type))
+        if key2 not in group.neurons[key1].connections:
+            self._conn_count += 1
         group.neurons[key1].connections[key2] = weight
+        if key1 not in group.neurons[key2].connections:
+            self._conn_count += 1
         group.neurons[key2].connections[key1] = weight
 
     def add_directed(
@@ -186,6 +201,8 @@ class CoreNetwork:
         if target_key not in group.neurons:
             group.add_neuron(Neuron(key=target_key, group_type="mapping"))
         old = group.neurons[source_key].connections.get(target_key, 0.0)
+        if target_key not in group.neurons[source_key].connections:
+            self._conn_count += 1
         group.neurons[source_key].connections[target_key] = min(1.0, old + weight)
         if old > 0:
             group.neurons[target_key].connections[source_key] = max(0.0, old - behavior_threshold("ai.core_network.reverse_decay", 0.05))
@@ -289,6 +306,55 @@ class CoreNetwork:
             "connection_changes": changes,
         }
 
+    def _count_connections(self) -> int:
+        total = 0
+        for group in self.groups.values():
+            for neuron in group.neurons.values():
+                total += len(neuron.connections)
+        return total
+
+    def _recompute_conn_count(self) -> None:
+        self._conn_count = self._count_connections()
+
+    def _evict_weakest(self) -> None:
+        """Drop the globally weakest connections until back under budget.
+
+        We never truncate the input dataset; instead we shed the least-strong
+        learned associations so total memory stays bounded while the network
+        has still trained on every sample.
+
+        Eviction runs as a single O(total) scan that pops the bottom batch of
+        connections (down to ~90% of budget) in one pass, rather than removing
+        one connection per O(total) scan — which would be catastrophically slow
+        during large training runs.
+        """
+        if self.max_connections <= 0:
+            return
+        if self._conn_count <= self.max_connections:
+            return
+        target = int(self.max_connections * 0.9)
+        # Collect all connections with their weight into a flat list.
+        all_conn: List[Tuple[float, str, str, str]] = []
+        for gname, group in self.groups.items():
+            for src, neuron in group.neurons.items():
+                for tgt, w in neuron.connections.items():
+                    all_conn.append((w, gname, src, tgt))
+        if not all_conn:
+            self._conn_count = 0
+            return
+        # Weakest connections have the smallest weight; sort ascending.
+        all_conn.sort(key=lambda x: x[0])
+        to_remove = len(all_conn) - target
+        if to_remove <= 0:
+            self._conn_count = self._count_connections()
+            return
+        for w, gname, src, tgt in all_conn[:to_remove]:
+            grp = self.groups[gname]
+            grp.neurons[src].connections.pop(tgt, None)
+            if tgt in grp.neurons:
+                grp.neurons[tgt].connections.pop(src, None)
+        self._conn_count = target
+
     def adjust_connection(self, key1: str, key2: str, delta: float) -> None:
         # Check if connection already exists
         exists = any(
@@ -296,8 +362,11 @@ class CoreNetwork:
             for group in self.groups.values()
         )
         if not exists:
-            # Create new connection via add_relation if neither exists
+            # Create new connection via add_relation if neither exists.
+            # add_relation maintains _conn_count incrementally (two new edges).
             self.add_relation(key1, RelationType.MAPPING, key2, weight=max(0.0, min(delta, 1.0)))
+            # Only new connections grow memory, so only they can breach budget.
+            self._evict_weakest()
             return
         for group in self.groups.values():
             n1 = group.neurons.get(key1)
@@ -308,6 +377,8 @@ class CoreNetwork:
             updated = min(max(current + delta, 0.0), 1.0)
             n1.connections[key2] = updated
             n2.connections[key1] = updated
+        # Existing-connection weight changes don't change the connection count,
+        # so no eviction check is needed here.
 
     def get_trainable_parameters(self) -> Dict[str, Any]:
         params: Dict[str, Any] = {"neurons": {}, "connections": []}

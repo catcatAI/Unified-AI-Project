@@ -357,7 +357,7 @@ Phase 4: LatentReasoningNetwork (latent → text)
 |------|------|
 | **表達能力有限** | 無法學習複雜模式 |
 | **無反向傳播** | 學習規則簡化 |
-| **規模限制** | 目前 60-87 neurons |
+| **規模限制** | 預設 60-87 neurons；現已加 `max_vocab`（預設 20000）LRU 批次驅逐，訓練不截斷資料集、只驅逐最弱/最舊神經元，[V,V] 矩陣記憶有界 |
 | **無基準測試** | 無 accuracy 對比 |
 
 ### 6.3 與標準神經網路比較
@@ -491,6 +491,7 @@ Phase 4: LatentReasoningNetwork (latent → text)
 | 2026-07-05 | 3.0 | `e3f173028` | §X #199: 完整訓練架構修復。分數不變，管線修復 ≠ 訓練完成。 |
 | 2026-07-06 | — | (this session) | 訓練完成：ED3N 0.914, GARDEN 0.700, JointTrainer 0.939。**但 accuracy 可能高估**（訓練集 vs hold-out）。原生 1.5→3.0/10。 |
 | 2026-07-14 | — | (unreleased) | **數學單一計算源重構**：`MathVerifier`（`services/math_verifier.py`）成為唯一算術引擎（含中文數字/運算符轉換、修正 `%`/`//` bug）；ED3N `DictionaryLayer.route_math` 與 GARDEN `VectorDictionary.route_math` 改走 `MathVerifier`；`MathRippleEngine` 退為純漣漪/狀態傳遞層，數值委託 `MathVerifier`。重複算式引擎消除。 |
+| 2026-07-16 | — | (unreleased) | **SNN 記憶炸彈 + 訓練/推論斷裂修復**：1) `ai/garden/snn_core.py` GARDEN SNN 加 `max_vocab`（預設 20000，可經 `limit_value` 調）LRU 批次驅逐——訓練不截斷輸入資料集，只驅逐最弱/最舊神經元，`[V,V]` 矩陣記憶有界；`_compact` 改用 `index_select`/`np.ix_` 單次向量化（原雙層 advanced-indexing 在 torch 後端卡死）；`_grow_matrix` 改攤銷翻倍；`get_stats` 回報 live 區域；2) `ai/ed3n/core_network.py` ED3N `CoreNetwork` 加 `max_connections`（預設 200000）最弱連線驅逐，維護遞增連線計數避免 O(N) 重算；3) **訓練↔推論 Save/Load 斷裂修復**——`ED3NEngine.get_shared(load_trained=True)` 現載入 `train_pipeline.py` 產出的 `data/checkpoints/ed3n_full.json`（`_project_root()` 向上搜尋 `apps/backend/src` 解決路徑不一致）；`services/llm/providers/garden.py` 預設 checkpoint 指向 `data/checkpoints/garden_checkpoint`。訓練出來的權重不再被孤兒化在磁碟上。新增回歸測試 `test_snn_eviction.py` / `test_core_network_eviction.py`。 |
 
 ---
 
