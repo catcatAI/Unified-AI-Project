@@ -546,6 +546,73 @@ def write_tooluse_train(samples: list, path: str):
 
 
 # ---------------------------------------------------------------------------
+# 6. Relational ASSOCIATION data (trains the SNN, NOT the KB)
+# ---------------------------------------------------------------------------
+# Architectural rule: the SNN must learn ASSOCIATIONS (relations between
+# concepts like "A is taller than B"), while facts/reasoning chains go to the
+# KB. These pairwise relational samples are the association signal the SNN was
+# missing — they build a directional relation graph (A->B, B->C => transitive
+# A->C emerges via spike propagation) without baking knowledge facts into the
+# neural weights.
+
+ASSOC_DIMS = {
+    "taller": ("{a} is taller than {b}.", "{b} is shorter than {a}."),
+    "shorter": ("{a} is shorter than {b}.", "{b} is taller than {a}."),
+    "heavier": ("{a} is heavier than {b}.", "{b} is lighter than {a}."),
+    "lighter": ("{a} is lighter than {b}.", "{b} is heavier than {a}."),
+    "older": ("{a} is older than {b}.", "{b} is younger than {a}."),
+    "younger": ("{a} is younger than {b}.", "{b} is older than {a}."),
+    "bigger": ("{a} is bigger than {b}.", "{b} is smaller than {a}."),
+    "smaller": ("{a} is smaller than {b}.", "{b} is bigger than {a}."),
+    "faster": ("{a} is faster than {b}.", "{b} is slower than {a}."),
+    "slower": ("{a} is slower than {b}.", "{b} is faster than {a}."),
+    "smarter": ("{a} is smarter than {b}.", "{b} is duller than {a}."),
+    "richer": ("{a} is richer than {b}.", "{b} is poorer than {a}."),
+    "hotter": ("{a} is hotter than {b}.", "{b} is colder than {a}."),
+    "colder": ("{a} is colder than {b}.", "{b} is hotter than {a}."),
+}
+
+ASSOC_ENTITIES = [
+    "Alice", "Bob", "Carol", "Dave", "Eve", "Frank", "Grace", "Heidi",
+    "Ivan", "Judy", "Karl", "Laura", "Mike", "Nina", "Oscar", "Paula",
+    "Tom", "Jerry", "Spike", "Tyke", "Butch", "Tweety", "Sylvester",
+    "elephant", "mouse", "whale", "ant", "giraffe", "rabbit", "turtle",
+    "mountain", "hill", "building", "tree", "car", "bicycle", "train",
+    "cheetah", "snail", "eagle", "sloth", "professor", "student", "billionaire",
+]
+
+
+def generate_association_data(count: int = 12000) -> list:
+    """Generate pairwise relational association samples for SNN training.
+
+    Each sample is a single directional relation between two entities, so the
+    SNN builds a clean A->B association edge (and its reverse B->A). Grouping
+    many such pairs over a shared ranking (A>B, B>C, ...) yields a transitive
+    chain in the neural graph without storing the fact in the KB.
+    """
+    samples = []
+    dims = list(ASSOC_DIMS.items())
+    for _ in range(count):
+        dim, (tmpl_a, tmpl_b) = random.choice(dims)
+        a, b = random.sample(ASSOC_ENTITIES, 2)
+        samples.append({
+            "input": tmpl_a.format(a=a, b=b),
+            "output": tmpl_b.format(a=a, b=b),
+            "domain": "association",
+            "relation": dim,
+        })
+    logger.info("Total association samples: %d", len(samples))
+    return samples
+
+
+def write_association_train(samples: list, path: str):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(samples, f, ensure_ascii=False, indent=2)
+    logger.info("Wrote %d association samples to %s (%.1f KB)",
+                len(samples), path, os.path.getsize(path) / 1024)
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -576,6 +643,11 @@ def main():
     tooluse_path = os.path.join(DATA_DIR, "tooluse_train.json")
     write_tooluse_train(tooluse_samples, tooluse_path)
 
+    # 6. Relational ASSOCIATION data (SNN, not KB)
+    association_samples = generate_association_data(12000)
+    association_path = os.path.join(DATA_DIR, "association_train.json")
+    write_association_train(association_samples, association_path)
+
     logger.info("=" * 50)
     logger.info("Data generation complete!")
     logger.info("  logic_train.json:   10,000 boolean logic samples")
@@ -583,6 +655,7 @@ def main():
     logger.info("  arithmetic_train:    +20,000 math samples")
     logger.info("  reasoning_train:     %d reasoning samples" % len(reasoning_samples))
     logger.info("  tooluse_train:       %d tool-use/domain-routing samples" % len(tooluse_samples))
+    logger.info("  association_train:   %d relational association samples" % len(association_samples))
 
 
 if __name__ == "__main__":

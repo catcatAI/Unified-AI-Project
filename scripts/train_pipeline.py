@@ -125,6 +125,7 @@ def load_all_data() -> List[Dict]:
         ("knowledge_extra.json", "input", "output", "knowledge"),
         ("reasoning_train.json", "input", "output", "reasoning"),
         ("tooluse_train.json", "input", "output", "tooluse"),
+        ("association_train.json", "input", "output", "association"),
     ]
 
     for fname, inp_key, out_key, domain in datasets_info:
@@ -717,7 +718,7 @@ def _step4_train_ed3n(coordinator, batches):
     # indistinguishable from a normal memorizing AI).
     # Only reflex/greeting/math/logic-style samples train the SNN as
     # associations. reasoning/tooluse/knowledge are excluded from SNN training.
-    snn_training_domains = {"reflex", "greeting", "math", "logic"}
+    snn_training_domains = {"reflex", "greeting", "math", "logic", "association"}
     examples: List[TrainingExample] = []
     skip = 0
     skipped_domain = 0

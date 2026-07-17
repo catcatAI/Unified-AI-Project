@@ -22,6 +22,7 @@ DOMAIN_OWNERSHIP: Dict[str, str] = {
     "knowledge": "garden",
     "creative": "cloud",
     "greeting": "ed3n",
+    "association": "ed3n",
     "command": "garden",
     "routing": "garden",
     "opinion": "cloud",
