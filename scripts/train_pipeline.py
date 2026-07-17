@@ -57,6 +57,7 @@ from ai.garden.garden_engine import GARDENEngine
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DATA_DIR = os.path.join(ROOT, "apps/backend/data/raw_datasets")
 CKPT_DIR = os.path.join(ROOT, "data/checkpoints")
+STATE_FILE = os.path.join(CKPT_DIR, "training_state.json")
 
 
 # ---------------------------------------------------------------------------
@@ -677,12 +678,41 @@ def _step3_generate_knowledge():
     return generate_knowledge_data()
 
 
-def _step4_train_ed3n(coordinator, batches):
-    # Step 4: Train ED3N on reflex/math/logic domain
+def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
+    # Step 4: Train ED3N on reflex/math/logic/association domain
     # -----------------------------------------------------------------------
+    # Resumability: training is split into independently-completable sub-stages
+    # (each ED3N epoch, reflex patterns, sequence trainer, joint trainer). Each
+    # sub-stage is checkpointed to disk AND recorded in resume_state, so a run
+    # killed mid-step (e.g. epoch 2 of a long 2-epoch pass) can be re-invoked
+    # and will continue from the last finished sub-stage instead of redoing all
+    # of step 4 from scratch.
+    resume_state = resume_state or {}
+    save_state = save_state or (lambda step, data=None: None)
+    # Progress-only recorder: records resume markers but does NOT mark step 4 as
+    # "completed" (that must wait until all of 4a-4g finish, see end of step).
+    def prog_save(step, data=None):
+        if data:
+            resume_state.update(data)
+        resume_state["last_update"] = time.strftime("%Y-%m-%d %H:%M:%S")
+        with open(STATE_FILE, "w", encoding="utf-8") as f:
+            json.dump(resume_state, f, ensure_ascii=False, indent=2)
+
     print("\n[4/8] Training ED3N...")
     ed3n_engine = ED3NEngine()
-    ed3n_engine.load_presets()
+
+    # Resume from the last fully-trained epoch checkpoint if present, otherwise
+    # start from presets. This lets epoch N continue on epoch N-1's trained
+    # network + dictionary instead of retraining everything.
+    epochs_total = limit_value("train.ed3n.epochs", 2)
+    epochs_done = int(resume_state.get("ed3n_epochs_done", 0))
+    resume_ckpt = os.path.join(CKPT_DIR, f"ed3n_epoch{epochs_done}.json") if epochs_done > 0 else None
+    if resume_ckpt and os.path.exists(resume_ckpt):
+        ed3n_engine.load(resume_ckpt)
+        print(f"  Resumed ED3N from {resume_ckpt} (epochs_done={epochs_done})")
+    else:
+        ed3n_engine.load_presets()
+        epochs_done = 0
     print(f"  Presets loaded: {len(ed3n_engine.dictionary.entries)} dict entries, "
           f"{len(ed3n_engine.reflex.patterns)} reflex patterns")
 
@@ -748,15 +778,19 @@ def _step4_train_ed3n(coordinator, batches):
     print(f"  Examples created: {len(examples)} ({skip} skipped, "
           f"{skipped_domain} non-association domains excluded from SNN)")
 
-    # 4d: Train 2 epochs (accuracy plateaus after 1st; Hebbian ceiling ~77.69%)
+    # 4d: Train epochs — resumable per epoch.
+    # Each epoch is checkpointed to ed3n_epoch{N}.json AND recorded in
+    # resume_state as ed3n_epochs_done=N, so a killed run resumes at the next
+    # epoch instead of retraining from scratch.
     if examples:
-        print(f"  Training network (2 epochs, {len(examples)} examples)...")
+        print(f"  Training network ({epochs_total} epochs, {len(examples)} examples"
+              f"{', resuming from epoch ' + str(epochs_done + 1) if epochs_done else ''})...")
         trainer = ED3NTrainer(ed3n_engine, dictionary_lr=learning_rate("train.ed3n.dictionary_lr", 0.05), network_lr=learning_rate("train.ed3n.network_lr", 0.05))
-        for epoch in range(limit_value("train.ed3n.epochs", 2)):
+        for epoch in range(epochs_done, epochs_total):
             t0 = time.time()
             batch = TrainingBatch(examples=examples, batch_id=f"ed3n_ep{epoch}")
             m = trainer.train_step(batch)
-            print(f"    Epoch {epoch+1}/{limit_value('train.ed3n.epochs', 2)}: loss={m.loss:.4f} acc={m.accuracy:.4f} ({time.time()-t0:.1f}s)")
+            print(f"    Epoch {epoch+1}/{epochs_total}: loss={m.loss:.4f} acc={m.accuracy:.4f} ({time.time()-t0:.1f}s)")
             # Record with coordinator — preserve the true per-domain label so the
             # coverage report is accurate (previously collapsed to math/logic).
             seen_domains = {e.metadata.get("domain", "unknown") for e in batch.examples}
@@ -768,8 +802,11 @@ def _step4_train_ed3n(coordinator, batches):
                 accuracy=m.accuracy,
                 examples=[{"input": e.input_text, "output": e.expected_output} for e in examples[:limit_value("train.ed3n.max_examples_per_epoch", 50)]],
             ))
-            # Save mid-training checkpoint
+            # Save mid-training checkpoint + record epoch as done (resume point).
             ed3n_engine.save(os.path.join(CKPT_DIR, f"ed3n_epoch{epoch+1}.json"))
+            epochs_done = epoch + 1
+            prog_save(4, {"ed3n_epochs_done": epochs_done})
+            print(f"    [checkpoint] epoch {epochs_done}/{epochs_total} saved")
 
     # 4e: Add reflex patterns from training data.
     # Only short, canned-style inputs (greeting/reflex/command) become reflex
@@ -779,62 +816,105 @@ def _step4_train_ed3n(coordinator, batches):
     # matches returning memorized wrong answers and (b) bloat the O(n) reflex
     # scan. Those domains are handled at runtime by the symbolic reasoner, the
     # relational-chain stage, and the calculator — not by reflex memorization.
-    print("  Adding reflex patterns from training data...")
-    reflex_count = 0
-    reflex_domain_blacklist = {"reasoning", "tooluse", "math", "logic"}
-    for s in ed3n_samples:
-        output_str = s["output"]
-        if not output_str:
-            continue
-        domain = s.get("domain", "")
-        inp = s["input"]
-        # Reflex patterns must be short and from a reflex-style domain.
-        if domain in reflex_domain_blacklist:
-            continue
-        if len(inp) > limit_value("train.ed3n.max_reflex_pattern_len", 40):
-            continue
-        ed3n_engine.reflex.add_pattern(inp, output_str)
-        reflex_count += 1
-    print(f"    Added {reflex_count} reflex patterns")
+    if resume_state.get("ed3n_reflex_done"):
+        print("  [4e] Reflex patterns: SKIPPED (already done)")
+    else:
+        print("  Adding reflex patterns from training data...")
+        reflex_count = 0
+        reflex_domain_blacklist = {"reasoning", "tooluse", "math", "logic"}
+        for s in ed3n_samples:
+            output_str = s["output"]
+            if not output_str:
+                continue
+            domain = s.get("domain", "")
+            inp = s["input"]
+            # Reflex patterns must be short and from a reflex-style domain.
+            if domain in reflex_domain_blacklist:
+                continue
+            if len(inp) > limit_value("train.ed3n.max_reflex_pattern_len", 40):
+                continue
+            ed3n_engine.reflex.add_pattern(inp, output_str)
+            reflex_count += 1
+        print(f"    Added {reflex_count} reflex patterns")
+        prog_save(4, {"ed3n_reflex_done": True})
 
     # 4f: Sequence training (optional — improves next-token prediction)
-    print("  Training SequenceTrainer (next-token prediction)...")
-    if examples:
-        seq_trainer = SequenceTrainer(ed3n_engine, seq_lr=learning_rate("train.ed3n.sequence_lr", 0.1))
-        seq_batch = make_synthetic_seq_batch(
-            [(e.input_keys[:limit_value("train.ed3n.seq_input_keys", 3)], e.output_keys[:limit_value("train.ed3n.seq_output_keys", 2)]) for e in examples[:limit_value("train.ed3n.seq_max_examples", 1000)] if e.input_keys and e.output_keys],
-            "pipeline_seq",
-        )
-        if seq_batch and seq_batch.examples:
-            seq_metrics = seq_trainer.train_step(seq_batch)
-            print(f"    Sequence loss={seq_metrics.loss:.4f} acc={seq_metrics.accuracy:.4f}")
-            seq_trainer.save(os.path.join(CKPT_DIR, "sequence_trainer.json"))
+    if resume_state.get("ed3n_seq_done"):
+        print("  [4f] SequenceTrainer: SKIPPED (already done)")
+    else:
+        print("  Training SequenceTrainer (next-token prediction)...")
+        if examples:
+            seq_trainer = SequenceTrainer(ed3n_engine, seq_lr=learning_rate("train.ed3n.sequence_lr", 0.1))
+            seq_batch = make_synthetic_seq_batch(
+                [(e.input_keys[:limit_value("train.ed3n.seq_input_keys", 3)], e.output_keys[:limit_value("train.ed3n.seq_output_keys", 2)]) for e in examples[:limit_value("train.ed3n.seq_max_examples", 1000)] if e.input_keys and e.output_keys],
+                "pipeline_seq",
+            )
+            if seq_batch and seq_batch.examples:
+                seq_metrics = seq_trainer.train_step(seq_batch)
+                print(f"    Sequence loss={seq_metrics.loss:.4f} acc={seq_metrics.accuracy:.4f}")
+                seq_trainer.save(os.path.join(CKPT_DIR, "sequence_trainer.json"))
+        prog_save(4, {"ed3n_seq_done": True})
 
     # 4g: Joint training (combines ED3N + sequence)
-    print("  Training JointTrainer (combined)...")
-    if examples:
-        joint_trainer = JointTrainer(ed3n_engine, dict_lr=learning_rate("train.joint.dict_lr", 0.05), network_lr=learning_rate("train.joint.network_lr", 0.05), seq_lr=learning_rate("train.joint.seq_lr", 0.1))
-        joint_batch = TrainingBatch(examples=examples[:limit_value("train.joint.max_examples", 500)], batch_id="joint_pipeline")
-        joint_seq_batch = make_synthetic_seq_batch(
-            [(e.input_keys[:limit_value("train.joint.seq_input_keys", 3)], e.output_keys[:limit_value("train.joint.seq_output_keys", 2)]) for e in examples[:limit_value("train.joint.seq_max_examples", 500)] if e.input_keys and e.output_keys],
-            "joint_seq",
-        )
-        joint_metrics = joint_trainer.train_step(joint_batch, joint_seq_batch)
-        print(f"    Joint loss={joint_metrics.loss:.4f} acc={joint_metrics.accuracy:.4f}")
-        joint_trainer.save(os.path.join(CKPT_DIR, "joint_trainer.json"))
+
+    # 4g: Joint training (combines ED3N + sequence)
+    if resume_state.get("ed3n_joint_done"):
+        print("  [4g] JointTrainer: SKIPPED (already done)")
+    else:
+        print("  Training JointTrainer (combined)...")
+        if examples:
+            joint_trainer = JointTrainer(ed3n_engine, dict_lr=learning_rate("train.joint.dict_lr", 0.05), network_lr=learning_rate("train.joint.network_lr", 0.05), seq_lr=learning_rate("train.joint.seq_lr", 0.1))
+            joint_batch = TrainingBatch(examples=examples[:limit_value("train.joint.max_examples", 500)], batch_id="joint_pipeline")
+            joint_seq_batch = make_synthetic_seq_batch(
+                [(e.input_keys[:limit_value("train.joint.seq_input_keys", 3)], e.output_keys[:limit_value("train.joint.seq_output_keys", 2)]) for e in examples[:limit_value("train.joint.seq_max_examples", 500)] if e.input_keys and e.output_keys],
+                "joint_seq",
+            )
+            joint_metrics = joint_trainer.train_step(joint_batch, joint_seq_batch)
+            print(f"    Joint loss={joint_metrics.loss:.4f} acc={joint_metrics.accuracy:.4f}")
+            joint_trainer.save(os.path.join(CKPT_DIR, "joint_trainer.json"))
+        prog_save(4, {"ed3n_joint_done": True})
+
+    # Consolidate trained state into the canonical checkpoint so that a run
+    # killed after step 4 but before step 6 (which also saves it) can resume
+    # cleanly without re-training ED3N.
+    ed3n_engine.save(os.path.join(CKPT_DIR, "ed3n_full.json"))
+
+    # Step 4 fully done — record completion markers.
+    save_state(4, {"ed3n_epochs_done": epochs_done, "ed3n_reflex_done": True,
+                   "ed3n_seq_done": True, "ed3n_joint_done": True,
+                   "ed3n_samples": len(examples)})
 
     # -----------------------------------------------------------------------
     return ed3n_engine, examples
 
 
-def _step5_train_garden(coordinator, batches):
+def _step5_train_garden(coordinator, batches, resume_state=None, save_state=None):
     # Step 5: Train GARDEN on knowledge/general domain
     # -----------------------------------------------------------------------
+    # Resumable per batch: progress index (garden_batch_done) is recorded in
+    # resume_state and the engine checkpoint is saved after each batch, so a
+    # killed run continues from the next unprocessed batch.
+    resume_state = resume_state or {}
+    save_state = save_state or (lambda step, data=None: None)
+    # Progress-only recorder: records garden_batch_done but does NOT mark step 5
+    # as "completed" until all batches finish (see end of step).
+    def prog_save(step, data=None):
+        if data:
+            resume_state.update(data)
+        resume_state["last_update"] = time.strftime("%Y-%m-%d %H:%M:%S")
+        with open(STATE_FILE, "w", encoding="utf-8") as f:
+            json.dump(resume_state, f, ensure_ascii=False, indent=2)
+
     print("\n[5/8] Training GARDEN...")
     garden_engine: Optional[GARDENEngine] = None
     try:
         garden_engine = GARDENEngine(compatibility_mode=True)
-        garden_engine.load_presets()
+        garden_ckpt = os.path.join(CKPT_DIR, "garden_checkpoint")
+        if os.path.isdir(garden_ckpt) and resume_state.get("garden_batch_done", 0) > 0:
+            garden_engine.load(garden_ckpt)
+            print(f"  Resumed GARDEN from {garden_ckpt} (batch_done={resume_state['garden_batch_done']})")
+        else:
+            garden_engine.load_presets()
         print(f"  Presets loaded: {len(garden_engine.dictionary.entries)} dict entries, "
               f"{len(garden_engine.reflex.patterns)} reflex patterns")
 
@@ -848,8 +928,9 @@ def _step5_train_garden(coordinator, batches):
 
         # Use batch learning for speed (rebuilds index ONCE, not per sample)
         BATCH_SIZE = 500
-        total_learned = 0
-        for i in range(0, len(garden_samples), BATCH_SIZE):
+        batch_done = int(resume_state.get("garden_batch_done", 0))
+        total_learned = batch_done
+        for i in range(batch_done, len(garden_samples), BATCH_SIZE):
             batch = garden_samples[i:i+BATCH_SIZE]
             result = garden_engine.learn_batch(
                 samples=[{"input": s["input"], "output": s["output"]} for s in batch],
@@ -857,6 +938,10 @@ def _step5_train_garden(coordinator, batches):
                 train_associations=False,
             )
             total_learned += result["samples_processed"]
+            # Persist after each batch so a kill resumes from the next batch.
+            garden_engine.save(garden_ckpt)
+            batch_done = min(i + BATCH_SIZE, len(garden_samples))
+            prog_save(5, {"garden_batch_done": batch_done})
             if total_learned % 1000 == 0 or i + BATCH_SIZE >= len(garden_samples):
                 print(f"    Processed {total_learned}/{len(garden_samples)}...")
 
@@ -874,6 +959,9 @@ def _step5_train_garden(coordinator, batches):
     except Exception as e:
         logger.warning("GARDEN training failed (non-fatal): %s", e)
         print(f"  [WARNING] GARDEN training skipped: {e}")
+
+    # Step 5 fully done — record completion marker.
+    save_state(5, {"garden_batch_done": batch_done, "garden_samples": len(garden_samples)})
 
     # -----------------------------------------------------------------------
     return garden_engine
@@ -994,7 +1082,6 @@ def main() -> None:
 
     def save_state(step: int, data: Optional[Dict] = None) -> None:
         """Save training state for resume."""
-        nonlocal resume_state
         if "completed_steps" not in resume_state:
             resume_state["completed_steps"] = []
         if step not in resume_state["completed_steps"]:
@@ -1070,7 +1157,7 @@ def main() -> None:
         examples_count = resume_state.get("ed3n_samples", 0)
         examples = []
     else:
-        ed3n_engine, examples = _step4_train_ed3n(coordinator, batches)
+        ed3n_engine, examples = _step4_train_ed3n(coordinator, batches, resume_state, save_state)
         save_state(4, {"ed3n_samples": len(examples)})
         coordinator.save(COORD_STATE)
 
@@ -1083,7 +1170,7 @@ def main() -> None:
         garden_engine = GARDENEngine(compatibility_mode=True)
         garden_engine.load(os.path.join(CKPT_DIR, "garden_checkpoint"))
     else:
-        garden_engine = _step5_train_garden(coordinator, batches)
+        garden_engine = _step5_train_garden(coordinator, batches, resume_state, save_state)
         save_state(5, {"garden_samples": len(batches.get("garden", []))})
         coordinator.save(COORD_STATE)
 
