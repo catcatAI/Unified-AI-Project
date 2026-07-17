@@ -99,10 +99,22 @@ class MemoryIntegration:
             if results and len(results) > 0:
                 best_template, score = results[0]
 
+                # Conversation/interaction logs are stored in the same `templates`
+                # bucket by store_experience(data_type="conversation"), but they are
+                # NOT answer templates — returning one as the response would leak a
+                # raw interaction record (e.g. '{"user": ..., "assistant": ...}')
+                # instead of a real answer. Only genuine template types are usable.
+                tpl_type = best_template.get("data_type", "")
+                if tpl_type == "conversation":
+                    return None
+
                 template_content = best_template.get("content", "")
                 template_id = best_template.get("id", "unknown")
 
-                if not template_content:
+                # Defensive: content must be a string answer, never a dict/log.
+                if not isinstance(template_content, str):
+                    template_content = str(template_content)
+                if not template_content or template_content.strip().startswith("{"):
                     return None
 
                 return ChatResponse(
