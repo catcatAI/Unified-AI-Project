@@ -16,6 +16,7 @@ import os
 import sys
 import json
 import shutil
+import tempfile
 
 import pytest
 
@@ -27,8 +28,15 @@ from unittest.mock import patch
 from ai.core.training_coordinator import TrainingCoordinator
 
 
+# Use an isolated temp dir so the test never touches the real production
+# data/checkpoints (which holds trained models).
+_TMP = tempfile.mkdtemp(prefix="resume_test_ckpt_")
+tp.CKPT_DIR = _TMP
+tp.STATE_FILE = os.path.join(_TMP, "training_state.json")
+
+
 def _ckpt_dir():
-    return tp.CKPT_DIR
+    return _TMP
 
 
 def _make_tiny_batches():
@@ -50,13 +58,12 @@ def _state_file():
 
 @pytest.fixture(autouse=True)
 def _clean_ckpt():
-    d = _ckpt_dir()
-    if os.path.isdir(d):
-        shutil.rmtree(d)
-    os.makedirs(d, exist_ok=True)
+    if os.path.isdir(_TMP):
+        shutil.rmtree(_TMP)
+    os.makedirs(_TMP, exist_ok=True)
     yield
-    if os.path.isdir(d):
-        shutil.rmtree(d)
+    if os.path.isdir(_TMP):
+        shutil.rmtree(_TMP)
 
 
 def _save_state_factory(state):
@@ -90,7 +97,7 @@ def test_ed3n_epoch_resume_continues_from_checkpoint():
 
     assert state.get("ed3n_epochs_done") == 2
     assert os.path.exists(os.path.join(_ckpt_dir(), "ed3n_epoch2.json"))
-    # reflex/seq/joint must be skipped on resume (already done in run 1)
+    # reflex/seq/joint markers recorded at step 4 completion
     assert state.get("ed3n_reflex_done") is True
     assert state.get("ed3n_seq_done") is True
     assert state.get("ed3n_joint_done") is True

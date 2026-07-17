@@ -816,63 +816,54 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
     # matches returning memorized wrong answers and (b) bloat the O(n) reflex
     # scan. Those domains are handled at runtime by the symbolic reasoner, the
     # relational-chain stage, and the calculator — not by reflex memorization.
-    if resume_state.get("ed3n_reflex_done"):
-        print("  [4e] Reflex patterns: SKIPPED (already done)")
-    else:
-        print("  Adding reflex patterns from training data...")
-        reflex_count = 0
-        reflex_domain_blacklist = {"reasoning", "tooluse", "math", "logic"}
-        for s in ed3n_samples:
-            output_str = s["output"]
-            if not output_str:
-                continue
-            domain = s.get("domain", "")
-            inp = s["input"]
-            # Reflex patterns must be short and from a reflex-style domain.
-            if domain in reflex_domain_blacklist:
-                continue
-            if len(inp) > limit_value("train.ed3n.max_reflex_pattern_len", 40):
-                continue
-            ed3n_engine.reflex.add_pattern(inp, output_str)
-            reflex_count += 1
-        print(f"    Added {reflex_count} reflex patterns")
-        prog_save(4, {"ed3n_reflex_done": True})
+    # 4e: Add reflex patterns from training data.
+    # NOTE: intentionally ALWAYS rebuilt (not skipped on resume). Reflex
+    # patterns are deterministic from the data, and a partial run that was
+    # killed after recording the marker but before persisting ed3n_full.json
+    # would otherwise permanently lose them on the next resume.
+    print("  Adding reflex patterns from training data...")
+    reflex_count = 0
+    reflex_domain_blacklist = {"reasoning", "tooluse", "math", "logic"}
+    for s in ed3n_samples:
+        output_str = s["output"]
+        if not output_str:
+            continue
+        domain = s.get("domain", "")
+        inp = s["input"]
+        # Reflex patterns must be short and from a reflex-style domain.
+        if domain in reflex_domain_blacklist:
+            continue
+        if len(inp) > limit_value("train.ed3n.max_reflex_pattern_len", 40):
+            continue
+        ed3n_engine.reflex.add_pattern(inp, output_str)
+        reflex_count += 1
+    print(f"    Added {reflex_count} reflex patterns")
 
     # 4f: Sequence training (optional — improves next-token prediction)
-    if resume_state.get("ed3n_seq_done"):
-        print("  [4f] SequenceTrainer: SKIPPED (already done)")
-    else:
-        print("  Training SequenceTrainer (next-token prediction)...")
-        if examples:
-            seq_trainer = SequenceTrainer(ed3n_engine, seq_lr=learning_rate("train.ed3n.sequence_lr", 0.1))
-            seq_batch = make_synthetic_seq_batch(
-                [(e.input_keys[:limit_value("train.ed3n.seq_input_keys", 3)], e.output_keys[:limit_value("train.ed3n.seq_output_keys", 2)]) for e in examples[:limit_value("train.ed3n.seq_max_examples", 1000)] if e.input_keys and e.output_keys],
-                "pipeline_seq",
-            )
-            if seq_batch and seq_batch.examples:
-                seq_metrics = seq_trainer.train_step(seq_batch)
-                print(f"    Sequence loss={seq_metrics.loss:.4f} acc={seq_metrics.accuracy:.4f}")
-                seq_trainer.save(os.path.join(CKPT_DIR, "sequence_trainer.json"))
-        prog_save(4, {"ed3n_seq_done": True})
+    print("  Training SequenceTrainer (next-token prediction)...")
+    if examples:
+        seq_trainer = SequenceTrainer(ed3n_engine, seq_lr=learning_rate("train.ed3n.sequence_lr", 0.1))
+        seq_batch = make_synthetic_seq_batch(
+            [(e.input_keys[:limit_value("train.ed3n.seq_input_keys", 3)], e.output_keys[:limit_value("train.ed3n.seq_output_keys", 2)]) for e in examples[:limit_value("train.ed3n.seq_max_examples", 1000)] if e.input_keys and e.output_keys],
+            "pipeline_seq",
+        )
+        if seq_batch and seq_batch.examples:
+            seq_metrics = seq_trainer.train_step(seq_batch)
+            print(f"    Sequence loss={seq_metrics.loss:.4f} acc={seq_metrics.accuracy:.4f}")
+            seq_trainer.save(os.path.join(CKPT_DIR, "sequence_trainer.json"))
 
     # 4g: Joint training (combines ED3N + sequence)
-
-    # 4g: Joint training (combines ED3N + sequence)
-    if resume_state.get("ed3n_joint_done"):
-        print("  [4g] JointTrainer: SKIPPED (already done)")
-    else:
-        print("  Training JointTrainer (combined)...")
-        if examples:
-            joint_trainer = JointTrainer(ed3n_engine, dict_lr=learning_rate("train.joint.dict_lr", 0.05), network_lr=learning_rate("train.joint.network_lr", 0.05), seq_lr=learning_rate("train.joint.seq_lr", 0.1))
-            joint_batch = TrainingBatch(examples=examples[:limit_value("train.joint.max_examples", 500)], batch_id="joint_pipeline")
-            joint_seq_batch = make_synthetic_seq_batch(
-                [(e.input_keys[:limit_value("train.joint.seq_input_keys", 3)], e.output_keys[:limit_value("train.joint.seq_output_keys", 2)]) for e in examples[:limit_value("train.joint.seq_max_examples", 500)] if e.input_keys and e.output_keys],
-                "joint_seq",
-            )
-            joint_metrics = joint_trainer.train_step(joint_batch, joint_seq_batch)
-            print(f"    Joint loss={joint_metrics.loss:.4f} acc={joint_metrics.accuracy:.4f}")
-            joint_trainer.save(os.path.join(CKPT_DIR, "joint_trainer.json"))
-        prog_save(4, {"ed3n_joint_done": True})
+    print("  Training JointTrainer (combined)...")
+    if examples:
+        joint_trainer = JointTrainer(ed3n_engine, dict_lr=learning_rate("train.joint.dict_lr", 0.05), network_lr=learning_rate("train.joint.network_lr", 0.05), seq_lr=learning_rate("train.joint.seq_lr", 0.1))
+        joint_batch = TrainingBatch(examples=examples[:limit_value("train.joint.max_examples", 500)], batch_id="joint_pipeline")
+        joint_seq_batch = make_synthetic_seq_batch(
+            [(e.input_keys[:limit_value("train.joint.seq_input_keys", 3)], e.output_keys[:limit_value("train.joint.seq_output_keys", 2)]) for e in examples[:limit_value("train.joint.seq_max_examples", 500)] if e.input_keys and e.output_keys],
+            "joint_seq",
+        )
+        joint_metrics = joint_trainer.train_step(joint_batch, joint_seq_batch)
+        print(f"    Joint loss={joint_metrics.loss:.4f} acc={joint_metrics.accuracy:.4f}")
+        joint_trainer.save(os.path.join(CKPT_DIR, "joint_trainer.json"))
 
     # Consolidate trained state into the canonical checkpoint so that a run
     # killed after step 4 but before step 6 (which also saves it) can resume
