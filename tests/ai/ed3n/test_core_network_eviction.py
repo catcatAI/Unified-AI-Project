@@ -78,3 +78,19 @@ class TestCoreNetworkEviction:
         assert core._conn_count == after, "existing pair must not re-increment"
         assert core._conn_count == core._count_connections()
 
+    def test_from_dict_recomputes_conn_count(self):
+        """Regression: CoreNetwork.from_dict() must recompute _conn_count from the
+        restored graph. A stale 0 counter would make the memory-budget eviction
+        logic believe the loaded network is empty (never evict) and let further
+        training grow the counter from 0, defeating the cap."""
+        core = _fresh_core(max_connections=0)
+        for i in range(500):
+            core.add_relation(f"a{i}", RelationType.MAPPING, f"b{i}", weight=0.5)
+        assert core._conn_count == 1000
+        restored = CoreNetwork.from_dict(core.to_dict())
+        assert restored._conn_count == 1000, (
+            "from_dict must recompute the connection counter",
+            restored._conn_count,
+        )
+        assert restored._conn_count == restored._count_connections()
+

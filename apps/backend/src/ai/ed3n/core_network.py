@@ -602,4 +602,10 @@ class CoreNetwork:
         net = cls(classifier=classifier)
         for name, gd in data.get("groups", {}).items():
             net.groups[name] = RelationGroup.from_dict(gd)
+        # Recompute the connection counter from the restored graph. Without
+        # this, _conn_count stays at 0 after load, so the memory-budget
+        # eviction logic (which trusts the counter) would misbehave on a
+        # loaded network — e.g. further training would grow the count from 0
+        # and never evict, defeating the cap.
+        net._recompute_conn_count()
         return net
