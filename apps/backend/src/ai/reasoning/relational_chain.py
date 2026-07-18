@@ -12,6 +12,7 @@ least entity. It complements the regex-based symbolic reasoner by handling novel
 comparators and paraphrases that the fixed patterns do not match.
 """
 
+import re
 from typing import Callable, Dict, List, Optional, Set, Tuple
 
 # A resolver takes (edges, entities, ask_max) and returns the resolved entity
@@ -20,13 +21,13 @@ ChainResolver = Callable[
     [List[Tuple[str, str, float]], List[str], bool], Optional[str]
 ]
 
-_COMPARISON_RE = __import__("re").compile(
+_COMPARISON_RE = re.compile(
     r"\b([A-Za-z一-鿿]{1,20})\s+(?:is\s+)?(taller|shorter|bigger|smaller|larger|"
     r"heavier|lighter|older|younger|faster|slower|hotter|colder|warmer|"
     r"cooler|richer|poorer|stronger|weaker|higher|lower|longer|wider|"
     r"大|小|高|矮|重|輕|快|慢|熱|冷|溫|暖|富|窮|強|弱|長|寬)\s+"
     r"(?:than|then|to)?\s*([A-Za-z一-鿿]{1,20})\b",
-    __import__("re").IGNORECASE,
+    re.IGNORECASE,
 )
 
 # Comparators that express the *lesser* direction (reverse the edge).

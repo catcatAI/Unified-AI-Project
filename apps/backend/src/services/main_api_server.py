@@ -141,7 +141,7 @@ class SystemMetricsManager:
         if not PSUTIL_AVAILABLE:
             return 0.0
 
-        def compute() -> str:
+        def compute() -> float:
             return psutil.cpu_percent(interval=0.1)
 
         return self._get_cached_or_compute("cpu_percent", compute)
@@ -151,7 +151,7 @@ class SystemMetricsManager:
         if not PSUTIL_AVAILABLE:
             return 0.0
 
-        def compute() -> str:
+        def compute() -> float:
             return psutil.virtual_memory().percent
 
         return self._get_cached_or_compute("memory_percent", compute)
@@ -161,7 +161,7 @@ class SystemMetricsManager:
         if not PSUTIL_AVAILABLE:
             return 0.0
 
-        def compute() -> str:
+        def compute() -> float:
             return psutil.disk_usage("/").percent
 
         return self._get_cached_or_compute("disk_percent", compute)

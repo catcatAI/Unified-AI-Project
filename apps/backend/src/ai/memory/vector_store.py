@@ -9,6 +9,7 @@ Handles vector storage and retrieval with automatic backend selection:
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
 # =============================================================================
 
+import importlib
 import json
 import logging
 import os
@@ -42,7 +43,7 @@ def _lazy_chromadb():
             from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
             with ThreadPoolExecutor(max_workers=1) as ex:
-                _chromadb = ex.submit(__import__, "chromadb").result(timeout=60)
+                _chromadb = ex.submit(importlib.import_module, "chromadb").result(timeout=60)
         except (ImportError, TimeoutError):
             logger.warning("chromadb not available (timed out); using numpy backend")
             _chromadb = False

@@ -25,8 +25,8 @@ def check_prerequisites() -> bool:
     print("🔍 检查系统要求...")
     
     # 检查Python版本
-    if sys.version_info < (3, 9):
-        print("❌ 需要 Python 3.9+")
+    if sys.version_info < (3, 10):
+        print("❌ 需要 Python 3.10+")
         return False
     print(f"✅ Python {sys.version_info.major}.{sys.version_info.minor}")
     
