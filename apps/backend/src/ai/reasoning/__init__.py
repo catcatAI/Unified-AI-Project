@@ -2,18 +2,12 @@
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
 # =============================================================================
 """
-Reasoning module — DEPRECATED.
+Reasoning module.
 
-DEPRECATED: This subpackage has no production consumers.
+Provides relational-chain reasoning, planning engine, and symbolic reasoner
+used by ED3N and GARDEN. This package has active production consumers.
 """
 
-# =============================================================================
-# DEPRECATED: This subpackage has no production consumers.
-# Retained for reference — not wired into the running system.
-# See MASTER_CONSOLIDATED_PLAN.md § Phase 4 Priority 2.
-# =============================================================================
-
-# src/ai/reasoning/__init__.py
 import logging
 
 logger = logging.getLogger(__name__)

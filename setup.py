@@ -8,7 +8,7 @@ Direct Installation Script
 3. 安装依赖并创建快捷方式
 
 或者:
-python setup.py --install-dir "C:\Path\To\Install"
+python setup.py --install-dir "C:/Path/To/Install"
 """
 
 import os
@@ -35,7 +35,7 @@ def check_prerequisites() -> bool:
         subprocess.run([sys.executable, "-m", "pip", "--version"], 
                       check=True, capture_output=True)
         print("✅ pip 可用")
-    except:
+    except Exception:
         print("❌ pip 不可用")
         return False
     
@@ -75,7 +75,7 @@ def install_dependencies(project_dir: Path) -> bool:
                     sys.executable, "-m", "pip", "install", dep, "--user"
                 ], check=True, capture_output=True)
                 print(f"  ✅ {dep}")
-            except:
+            except Exception:
                 print(f"  ⚠️  {dep} (可选，跳过)")
         
         return True
@@ -125,7 +125,7 @@ def create_shortcuts(project_dir: Path) -> bool:
         shortcut.Description = "启动 Angela AI"
         shortcut.save()
         
-        print(f"  ✅ 开始菜单快捷方式")
+        print("  ✅ 开始菜单快捷方式")
         
         return True
         
@@ -190,7 +190,7 @@ def main():
     # 安装依赖
     if not args.skip_deps:
         if not install_dependencies(project_dir):
-            print("\n⚠️  依赖安装可能不完整，但会继续...")
+            print("\n⚠️ 依赖安装可能不完整，但会继续...")
     else:
         print("\n⏩ 跳过依赖安装")
     
@@ -206,7 +206,7 @@ def main():
     print("=" * 60)
     print(f"\n📂 项目位置: {project_dir}")
     print("\n🚀 启动方式:")
-    print(f"   1. 双击桌面快捷方式 'Angela AI'")
+    print("   1. 双击桌面快捷方式 'Angela AI'")
     print(f"   2. 或在终端运行: cd \"{project_dir}\" && python run_angela.py")
     print("\n📖 更多信息:")
     print(f"   - README: {project_dir / 'README.md'}")

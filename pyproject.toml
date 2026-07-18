@@ -44,36 +44,6 @@ skip = ['venv', '.venv', 'build', 'dist']
 known_first_party = ['angela', 'apps', 'packages']
 known_third_party = ['fastapi', 'uvicorn', 'pydantic', 'numpy', 'pandas', 'torch', 'tensorflow']
 
-[tool.flake8]
-# flake8 - Python 代码检查工具
-max-line-length = 100
-max-complexity = 10
-exclude = [
-    '.git',
-    '__pycache__',
-    'venv',
-    '.venv',
-    'build',
-    'dist',
-    'node_modules',
-    '.pytest_cache',
-    'migrations',
-    '.tox',
-    '.mypy_cache',
-    '.cache',
-]
-ignore = [
-    "E203",
-    "W503",
-    "E501",
-    "F401",
-]
-per-file-ignores = [
-    "__init__.py:F401",
-    "test_*.py:S101",
-    "conftest.py:F401",
-]
-
 [tool.bandit]
 # bandit - Python 安全静态分析
 exclude_dirs = ['tests', 'venv', '.venv', 'build', 'dist', 'node_modules', 'migrations']
