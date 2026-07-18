@@ -12,8 +12,8 @@ def get_url():
             data = response.json()
             url = data.get("url", "")
             print(f"授權 URL：\n{url}")
-            print(f"\n請用瀏覽器打開連結，授權後把回傳的 code 貼到：")
-            print(f"  python scripts/exchange_drive_code.py <code>")
+            print("\n請用瀏覽器打開連結，授權後把回傳的 code 貼到：")
+            print("  python scripts/exchange_drive_code.py <code>")
         elif response.status_code == 503:
             print(f"❌ 設定檔問題：{response.json().get('detail', '')}")
             print("請確認 config/credentials.json 存在且包含真實的 client_id / client_secret")

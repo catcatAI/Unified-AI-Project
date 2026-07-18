@@ -286,7 +286,7 @@ def main():
         img_uint8 = (img * 255).clip(0, 255).astype(np.uint8)
         pil_img = Image.fromarray(img_uint8)
         pil_img.save(os.path.join(output_dir, f"gen_random_{i}.png"))
-    print(f"Generated 5 random images")
+    print("Generated 5 random images")
 
     # Show reconstruction quality
     print("\n=== Reconstruction quality (first 5 test images) ===")

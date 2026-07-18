@@ -372,7 +372,7 @@ class Launcher:
         self.progress.update(8, f"自动安装缺失依赖 ({len(missing)} 个)...")
         req_file = self.project_root / "requirements.txt"
         if not req_file.exists():
-            self.progress.error(f"找不到 requirements.txt")
+            self.progress.error("找不到 requirements.txt")
             return False
 
         try:

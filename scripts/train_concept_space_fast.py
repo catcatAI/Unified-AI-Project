@@ -168,7 +168,7 @@ def main():
     mapper._class_names = CLASSES
     mapper._is_trained = True
     mapper.save("models/concept_space.json")
-    print(f"\nSaved concept space (PCA-based)")
+    print("\nSaved concept space (PCA-based)")
 
 
 if __name__ == "__main__":

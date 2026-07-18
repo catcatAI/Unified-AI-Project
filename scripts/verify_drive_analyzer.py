@@ -32,16 +32,16 @@ def verify_drive_analyzer():
         if response.status_code == 200:
             data = response.json()
             analysis = data.get("analysis", "No analysis")
-            print(f"\n✅ Drive Analyzer Passed!")
+            print("\n✅ Drive Analyzer Passed!")
             print(f"Files analyzed: {data.get('files_analyzed', 0)}")
             print("-" * 40)
             print(analysis[:800] + ("..." if len(analysis) > 800 else ""))
             print("-" * 40)
             return True
         elif response.status_code == 401:
-            print(f"❌ 未認證。請先執行：")
-            print(f"  python scripts/get_drive_auth_url.py")
-            print(f"  python scripts/exchange_drive_code.py <code>")
+            print("❌ 未認證。請先執行：")
+            print("  python scripts/get_drive_auth_url.py")
+            print("  python scripts/exchange_drive_code.py <code>")
             return False
         else:
             print(f"❌ Verification Failed: {response.status_code} - {response.text}")

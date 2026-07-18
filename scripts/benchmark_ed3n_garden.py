@@ -209,7 +209,7 @@ def main():
         try:
             e = _load_garden()
             engines.append(("garden", e, process_garden))
-            print(f"  GARDEN loaded")
+            print("  GARDEN loaded")
         except Exception as ex:
             print(f"  GARDEN unavailable: {ex}")
 

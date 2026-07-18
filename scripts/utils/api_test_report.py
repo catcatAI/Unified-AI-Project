@@ -240,7 +240,7 @@ def run_tests():
         avg_time = sum(response_times) / len(response_times)
         max_time = max(response_times)
         min_time = min(response_times)
-        print(f"\n響應時間統計:")
+        print("\n響應時間統計:")
         print(f"  平均: {avg_time:.3f}s")
         print(f"  最快: {min_time:.3f}s")
         print(f"  最慢: {max_time:.3f}s")

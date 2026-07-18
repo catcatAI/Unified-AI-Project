@@ -36,7 +36,7 @@ def main():
 
     # Save
     model.save()
-    print(f"\nModel saved to models/three_layer/")
+    print("\nModel saved to models/three_layer/")
 
     # Test
     os.makedirs(OUTPUT_DIR, exist_ok=True)

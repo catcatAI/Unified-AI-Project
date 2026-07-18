@@ -84,7 +84,7 @@ def main():
 
     acc = correct / len(images)
     elapsed = time.time() - t_start
-    print(f"\n=== CLIP Zero-Shot Results ===")
+    print("\n=== CLIP Zero-Shot Results ===")
     print(f"Overall: {correct}/{len(images)} = {acc:.1%} ({elapsed:.0f}s, {elapsed/len(images):.1f}s/img)")
     for cls in CLASSES:
         c, t = per_class[cls]

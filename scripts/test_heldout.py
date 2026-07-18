@@ -97,7 +97,7 @@ def main():
             print(f"  [{i+1}/{len(images)}] running_acc={correct/(i+1):.1%} ({elapsed:.1f}s/img)")
 
     acc = correct / len(images)
-    print(f"\n=== HELD-OUT TEST RESULTS ===")
+    print("\n=== HELD-OUT TEST RESULTS ===")
     print(f"Overall: {correct}/{len(images)} = {acc:.1%}")
     print(f"Total time: {time.time()-t_start:.0f}s ({(time.time()-t_start)/len(images):.1f}s/img)")
     print("\nPer-class:")

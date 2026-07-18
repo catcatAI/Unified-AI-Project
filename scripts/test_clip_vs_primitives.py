@@ -103,10 +103,10 @@ def main():
     print("=== CLIP Zero-Shot Classification ===")
     clip_acc = run_clip_zero_shot(images, labels)
 
-    print(f"\n=== Summary ===")
+    print("\n=== Summary ===")
     print(f"CLIP zero-shot: {clip_acc:.1%}")
-    print(f"Primitives (12 iters): 13.0%")
-    print(f"Random baseline: 10.0%")
+    print("Primitives (12 iters): 13.0%")
+    print("Random baseline: 10.0%")
 
 
 if __name__ == "__main__":

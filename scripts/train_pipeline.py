@@ -1028,7 +1028,7 @@ def _step6_sync_knowledge(ed3n_engine, garden_engine, model_bus, coordinator, al
     }
     with open(os.path.join(CKPT_DIR, "training_report.json"), "w", encoding="utf-8") as f:
         json.dump(training_report, f, ensure_ascii=False, indent=2)
-    print(f"  Training report saved")
+    print("  Training report saved")
 
     # -----------------------------------------------------------------------
     # Step 8: Evaluation
@@ -1113,7 +1113,7 @@ def main() -> None:
     COORD_STATE = os.path.join(CKPT_DIR, "coordinator_state.json")
     if os.path.exists(COORD_STATE):
         coordinator.load(COORD_STATE)
-    print(f"  ModelBus: ready | QueryClassifier: ready | Coordinator: ready")
+    print("  ModelBus: ready | QueryClassifier: ready | Coordinator: ready")
 
     # -----------------------------------------------------------------------
     # Step 3: Deconflict samples by domain

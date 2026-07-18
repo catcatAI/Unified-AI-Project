@@ -29,7 +29,7 @@ def sync_files():
             timeout=60,
         )
         result = sync_res.json()
-        print(f"同步完成：")
+        print("同步完成：")
         print(f"  下載: {result.get('synced', 0)} 個")
         print(f"  跳過: {result.get('skipped', 0)} 個")
         print(f"  存入記憶: {result.get('memorized_count', 0)} 個")

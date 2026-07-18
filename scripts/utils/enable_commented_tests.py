@@ -98,12 +98,12 @@ class CommentedTestEnabler:
         results = self.process_all_files()
         
         # Print summary
-        print(f"\nCommented Test Enabler Results,")
+        print("\nCommented Test Enabler Results,")
         print(f"  Total tests enabled, {results['total_enabled']}")
         print(f"  Files changed, {len(results['files_changed'])}")
         
         if results['detailed_changes']:
-            print(f"\nDetailed changes,")
+            print("\nDetailed changes,")
             for change in results['detailed_changes']:
                 print(f"  {change['file']}")
                 for c in change['changes']:
@@ -114,7 +114,7 @@ class CommentedTestEnabler:
         with open('commented_test_enabler_report.json', 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=2, default=str)
         
-        print(f"\nDetailed report saved to commented_test_enabler_report.json")
+        print("\nDetailed report saved to commented_test_enabler_report.json")
         return results
 
 def main() -> None:

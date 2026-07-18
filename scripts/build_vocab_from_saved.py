@@ -26,7 +26,7 @@ def main():
     # Save vocabulary
     os.makedirs("models", exist_ok=True)
     vocab.save("models/geometric_vocabulary.json")
-    print(f"Saved to models/geometric_vocabulary.json")
+    print("Saved to models/geometric_vocabulary.json")
 
     # Test recognition (all 500 vectors — no optimization needed, just match)
     print("\nTesting recognition (direct vector match)...")

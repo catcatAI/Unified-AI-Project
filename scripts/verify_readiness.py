@@ -401,7 +401,7 @@ except Exception as e:
 # ============================================================================
 elapsed = time.time() - TOTAL_START
 print("\n" + "=" * 70)
-print(f"  READINESS VERIFICATION SUMMARY")
+print("  READINESS VERIFICATION SUMMARY")
 print(f"  Pass: {PASS}  Fail: {FAIL}  Warn: {WARN}  Time: {elapsed:.1f}s")
 print("=" * 70)
 
@@ -409,5 +409,5 @@ if FAIL > 0:
     print(f"\n  ❌ {FAIL} checks FAILED — review issues above")
     sys.exit(1)
 else:
-    print(f"\n  ✅ All checks passed! Project is ready for deployment.")
+    print("\n  ✅ All checks passed! Project is ready for deployment.")
     sys.exit(0)

@@ -70,7 +70,7 @@ def demo_clip_to_primitives():
         # Find similar primitives in library
         similar = primitive_library.find_similar(text_embedding[:64], top_k=3)  # Truncate to 64 dim
         print(f"\nText: '{text}'")
-        print(f"  Similar primitives:")
+        print("  Similar primitives:")
         for name, sim in similar:
             print(f"    {name}: {sim:.4f}")
     

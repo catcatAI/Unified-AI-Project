@@ -161,7 +161,7 @@ def main():
         ("你好嗎", None),
     ], "Unseen problems")
 
-    print(f"\n  Final state:")
+    print("\n  Final state:")
     print(f"    Dictionary entries: {len(engine.dictionary.entries)}")
     print(f"    Reflex patterns: {len(engine.reflex.patterns)}")
     print(f"    Training accuracy: {trainer.get_training_summary().get('last_accuracy', 0):.4f}")
