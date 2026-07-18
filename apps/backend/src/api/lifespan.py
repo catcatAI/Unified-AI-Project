@@ -507,6 +507,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception:
         logger.debug("[Heartbeat] Pre-init skipped — will lazily initialize on first use")
 
+    # Pre-initialize ChatService at startup so its (potentially slow) memory
+    # backends (e.g. chromadb PersistentClient) are warmed up before the first
+    # user request, instead of blocking the first chat call for many seconds.
+    try:
+        chat = await _get_chat_service()
+        logger.info("[ChatService] Pre-initialized during lifespan")
+    except Exception:
+        logger.debug("[ChatService] Pre-init skipped — will lazily initialize on first use")
+
     yield
 
     await _shutdown_services(_broadcast_task, _module_manager)

@@ -217,11 +217,20 @@ class ChatService:
     async def _inject_memory_context(self, merged_context: dict, user_message: str) -> dict:
         if self._vector_store is not None:
             try:
-                vs_results = await self._vector_store.semantic_search(user_message, 3)
+                # Vector search is an enrichment only — never block the answer path.
+                # Some backends (e.g. chromadb PersistentClient) are pathologically
+                # slow to query in certain environments, so bound it tightly and
+                # degrade gracefully when it overruns.
+                vs_results = await asyncio.wait_for(
+                    self._vector_store.semantic_search(user_message, 3),
+                    timeout=1.0,
+                )
                 docs = vs_results.get("documents", [[]])[0]
                 knowledge = [str(d)[:200] for d in docs if d and isinstance(d, str)]
                 if knowledge:
                     merged_context["dictionary_context"] = knowledge
+            except asyncio.TimeoutError:
+                logger.debug("VectorStore query skipped (exceeded 1.0s budget)")
             except Exception as e:
                 logger.debug("VectorStore query failed: %s", e)
         if self._ham_memory is not None:
@@ -421,22 +430,30 @@ class ChatService:
             logger.debug("Grounded learning schedule skipped: %s", e)
 
     async def _store_interaction_memories(self, user_message: str, response) -> None:
+        # Vector-store writes are best-effort and must NOT block the answer path.
+        # chromadb PersistentClient.add can take several seconds in some
+        # environments, so we offload it to a background task (fire-and-forget),
+        # mirroring how grounded-learning verification is already decoupled.
         if self._vector_store is not None:
             try:
                 import uuid as _uuid
 
                 memory_id = f"chat_{_uuid.uuid4().hex[:12]}"
                 content = f"User: {user_message}\nAngela: {response.text}"
-                await self._vector_store.add_memory(memory_id, content, {"type": "conversation"})
+                asyncio.create_task(
+                    self._vector_store.add_memory(memory_id, content, {"type": "conversation"})
+                )
             except Exception as e:
                 logger.debug("VectorStore memory store failed: %s", e)
         if getattr(self._llm_service, "enable_memory_enhancement", False):
             try:
                 mm = getattr(self._llm_service, "memory_manager", None)
                 if mm:
-                    await mm.store_experience(
-                        raw_data={"user": user_message, "assistant": response.text},
-                        data_type="conversation",
+                    asyncio.create_task(
+                        mm.store_experience(
+                            raw_data={"user": user_message, "assistant": response.text},
+                            data_type="conversation",
+                        )
                     )
             except Exception as e:
                 logger.debug("Memory store failed: %s", e)

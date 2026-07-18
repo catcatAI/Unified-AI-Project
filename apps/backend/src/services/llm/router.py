@@ -692,6 +692,10 @@ class AngelaLLMService:
         if memory_result is not None:
             return memory_result
 
+        knowledge_result = await self._try_knowledge(user_message, context, start_time)
+        if knowledge_result is not None:
+            return knowledge_result
+
         if not self.is_available or self.active_backend is None:
             bus_result = await self._try_model_bus(user_message, context)
             if bus_result is not None:
@@ -740,6 +744,39 @@ class AngelaLLMService:
             if bus_result is not None:
                 return bus_result
             return await self._fallback_response(user_message, context)
+
+    async def _try_knowledge(self, user_message: str, context: Dict[str, Any], start_time: float) -> Optional[LLMResponse]:
+        """Answer factual questions from the curated deterministic knowledge store.
+
+        Architecture rule: factual knowledge lives in the deterministic knowledge
+        layer (knowledge_base.route_knowledge), NOT in the neural SNN backends
+        (ED3N/GARDEN are associations/reflex only). Routing factual queries to the
+        SNN/LLM generation path wastes seconds and returns low-quality output, so we
+        resolve them here first and short-circuit before any expensive generation.
+        """
+        try:
+            from ai.knowledge_base import route_knowledge
+
+            answer = route_knowledge(user_message)
+            if answer:
+                response_time = (time.time() - start_time) * 1000
+                self._update_stats(response_time)
+                self.stats["memory_hits"] += 1
+                logger.info(f"Knowledge hit: {response_time:.0f}ms")
+                from core.interfaces.protocols import LLMResponse
+
+                return LLMResponse(
+                    text=str(answer),
+                    backend="knowledge",
+                    model="knowledge_base",
+                    tokens_used=0,
+                    response_time_ms=response_time,
+                    confidence=0.95,
+                    metadata={"knowledge": True},
+                )
+        except Exception as e:
+            logger.warning(f"Knowledge lookup failed: {e}", exc_info=True)
+        return None
 
     async def _try_ensemble(self, user_message: str, context: Dict[str, Any]) -> Optional[LLMResponse]:
         if not (context and context.get("use_ensemble")):

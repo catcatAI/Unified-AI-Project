@@ -13,6 +13,7 @@ import json
 import logging
 import os
 import struct
+import asyncio
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -232,14 +233,23 @@ class _ChromadbBackend:
         content: str,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> None:
-        self.collection.add(
+        # chromadb's collection.add is a blocking I/O call. Run it in a worker
+        # thread so it yields the event loop (lets wait_for / timeouts work and
+        # keeps the request path responsive).
+        await asyncio.to_thread(
+            self.collection.add,
             documents=[content],
             metadatas=[metadata or {}],
             ids=[memory_id],
         )
 
     async def semantic_search(self, query: str, limit: int = 10) -> Dict[str, Any]:
-        return self.collection.query(query_texts=[query], n_results=limit)
+        # chromadb's collection.query is a blocking I/O call — offload to a
+        # worker thread so the caller's asyncio.wait_for can actually bound it.
+        result = await asyncio.to_thread(
+            self.collection.query, query_texts=[query], n_results=limit
+        )
+        return result
 
 
 # =============================================================================
