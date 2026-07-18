@@ -3,14 +3,14 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: en/zh-tw
-  LAST_MODIFIED: 2026-06-25
+  LAST_MODIFIED: 2026-07-18
   =============================================================================
 -->
 
 # Angela AI Framework Overview
 
 > **Framework positioning**: A modular, extensible framework for building digital life systems with hybrid AI (LLM + SNN + biological simulation).
-> **Codebase**: 612 Python files (~96K lines) in `apps/backend/src/` + 50 JS files across 3 apps + 4,448 tests.
+> **Codebase**: 612 Python files (~96K lines) in `apps/backend/src/` + 50 JS files across 3 apps + 4,499 tests.
 > **Intelligence**: Upper bound 6.0/10 (with LLM API), **native deterministic-engine capability strong** (math/physics/chemistry 9.5, knowledge 10, symbolic reasoning 10 — real, high-certainty, scored as capability); **neural SNN's job = learning associations** (A>taller>B), NOT memorizing knowledge — its measured **association capability = 1.0** (ED3N & GARDEN, per [INTELLIGENCE_ASSESSMENT.md](06-project-management/INTELLIGENCE_ASSESSMENT.md) §4.1.2). Native capability is multi-dimensional — there is no single "actual" total. See linked doc for the scoring standard.
 > **Architecture completeness**: ~95% (framework structure exists, but ML model weights are 5% trained).
 > **Version**: 7.5.0-dev | **License**: MIT
@@ -212,7 +212,7 @@ python scripts/run_angela.py           # Full stack
 python scripts/run_angela.py --api-only # Backend only
 
 # Test
-pytest tests/                           # 4,448 tests
+pytest tests/                           # 4,499 tests
 pytest tests/path/to/test_file.py -v    # Single file
 
 # Lint & Type-check
@@ -379,7 +379,7 @@ Unlike other AI agent frameworks (see §6.1), Angela has **actual weight-based l
 | **ML content < framework** | User experience far below architecture promise | Decoder random weights, unwired Whisper, untrained SNN |
 | **Complexity/function ratio** | 612 files but less functionality than expected | Tries to be too many things at once |
 | **Unclear user positioning** | Fails to attract any single audience clearly | Is it a developer framework? User product? Research platform? |
-| **No standard benchmarks** | MMLU, HumanEval, etc. all missing | Focus on infra tests (4,448) over quality tests |
+| **No standard benchmarks** | MMLU, HumanEval, etc. all missing | Focus on infra tests (4,499) over quality tests |
 | **Agents registered but not called** | 11 agents exist but pipeline never invokes them | Architectural decision pending |
 | **Auto-routing missing** | QueryClassifier + ModelBus exist but are bypassed by direct LLM calls | Pipeline shortcuts reduce effectiveness |
 
@@ -641,4 +641,4 @@ Angela AI 有 **4 個學習層級**，每個建立在前者之上。這比標準
 
 ---
 
-**Version**: 7.5.0-dev | **Code**: 612 Python files, ~96K lines | **Tests**: 4,448 (tests/; 0 errors) | **Intelligence**: 6.0/3.0 (with LLM / native) | **Architecture**: ~95% | **Training**: ~5%
+**Version**: 7.5.0-dev | **Code**: 612 Python files, ~96K lines | **Tests**: 4,499 (tests/; 0 errors) | **Intelligence**: 6.0/3.0 (with LLM / native) | **Architecture**: ~95% | **Training**: ~5%
