@@ -46,8 +46,10 @@ def main():
             probe_dims = np.random.choice(TOTAL_DIM, size=20, replace=False)
             d_vec = np.zeros(TOTAL_DIM, dtype=np.float32)
             for dim in probe_dims:
-                vp = vec.copy(); vp[dim] = min(1.0, vp[dim] + eps)
-                vm = vec.copy(); vm[dim] = max(0.0, vm[dim] - eps)
+                vp = vec.copy()
+                vp[dim] = min(1.0, vp[dim] + eps)
+                vm = vec.copy()
+                vm[dim] = max(0.0, vm[dim] - eps)
                 d_vec[dim] = (np.mean((diff_renderer.render(vp) - target) ** 2) -
                               np.mean((diff_renderer.render(vm) - target) ** 2)) / (2 * eps)
             vec -= 0.005 * d_vec

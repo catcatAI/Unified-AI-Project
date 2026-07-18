@@ -25,11 +25,11 @@ DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 # ---------------------------------------------------------------------------
 
 BOOL_OPS = {
-    "and":   lambda a, b: a and b,
-    "or":    lambda a, b: a or b,
-    "xor":   lambda a, b: a != b,
-    "nand":  lambda a, b: not (a and b),
-    "nor":   lambda a, b: not (a or b),
+    "and": lambda a, b: a and b,
+    "or": lambda a, b: a or b,
+    "xor": lambda a, b: a != b,
+    "nand": lambda a, b: not (a and b),
+    "nor": lambda a, b: not (a or b),
 }
 
 # Natural-language patterns for each operator

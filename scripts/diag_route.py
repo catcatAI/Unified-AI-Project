@@ -11,7 +11,10 @@ async def main():
             r = await c.post("http://127.0.0.1:8000/api/v1/chat/unified",
                              json={"message": q, "user_name": "tester", "session_id": "s1"})
             j = r.json()
-            b = j.get("backend"); m = j.get("model"); rt = j.get("route"); cf = j.get("confidence")
+            b = j.get("backend")
+            m = j.get("model")
+            rt = j.get("route")
+            cf = j.get("confidence")
             txt = str(j.get("response"))[:45]
             print(f"{q!r:52} backend={b!r:14} model={m!r:14} route={rt!r:10} conf={cf} -> {txt!r}")
 
