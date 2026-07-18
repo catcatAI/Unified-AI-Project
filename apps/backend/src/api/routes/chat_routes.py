@@ -1068,6 +1068,32 @@ def _format_chat_response(
     source: str = "angela_chat_service",
 ) -> Dict[str, Any]:
     """Build the final standardized chat response dict."""
+    # Make the actual provider/model explicit so callers can see exactly which
+    # engine answered (local neural SNN, deterministic knowledge layer, model
+    # bus, or a cloud LLM). The internal ``route`` field is unreliable for the
+    # non-LLM paths (template/memory/knowledge/model_bus never set it and fall
+    # back to the default "llm"), so derive an accurate route from ``backend``.
+    _backend = getattr(llm_response, 'backend', None) or 'unknown'
+    _route_map = {
+        'knowledge': 'knowledge',
+        'knowledge_base': 'knowledge',
+        'model_bus': 'model_bus',
+        'ed3n': 'ed3n',
+        'garden': 'garden',
+        'neuro-blender': 'fallback',
+        'local-fallback': 'fallback',
+        'google': 'llm',
+        'openai': 'llm',
+        'anthropic': 'llm',
+        'ollama': 'llm',
+        'llamacpp': 'llm',
+    }
+    _derived_route = _route_map.get(_backend)
+    if _derived_route is None:
+        _explicit_route = getattr(llm_response, 'route', None)
+        _derived_route = _explicit_route if _explicit_route else (
+            'fallback' if getattr(llm_response, 'metadata', {}).get('fallback') else 'llm'
+        )
     return {
         "response_text": response_text,
         "response": response_text,
@@ -1077,10 +1103,12 @@ def _format_chat_response(
         "emotion": emotion_result.get("emotion", "neutral") if emotion_result else "neutral",
         "emotion_confidence": emotion_result.get("confidence", 0.5) if emotion_result else 0.5,
         "emotion_intensity": emotion_result.get("intensity", 0.5) if emotion_result else 0.5,
+        "backend": _backend,
+        "model": getattr(llm_response, 'model', None) or 'unknown',
+        "confidence": getattr(llm_response, 'confidence', None),
         "hit_score": getattr(llm_response, 'hit_score', 0.0),
         "hit_source": getattr(llm_response, 'hit_source', 'none'),
-        "route": getattr(llm_response, 'route', None) or
-                 ('fallback' if getattr(llm_response, 'metadata', {}).get('fallback') else 'llm'),
+        "route": _derived_route,
         "session_id": session_id,
     }
 

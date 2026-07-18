@@ -36,6 +36,10 @@ class ResponseRoute(Enum):
     LLM_FULL = "llm_full"
     ED3N = "ed3n"
     FALLBACK = "fallback"
+    TEMPLATE = "template"
+    MEMORY = "memory"
+    KNOWLEDGE = "knowledge"
+    MODEL_BUS = "model_bus"
 
 
 @dataclass

@@ -772,6 +772,7 @@ class AngelaLLMService:
                     tokens_used=0,
                     response_time_ms=response_time,
                     confidence=0.95,
+                    route=self.ResponseRoute.KNOWLEDGE,
                     metadata={"knowledge": True},
                 )
         except Exception as e:
@@ -1018,6 +1019,7 @@ class AngelaLLMService:
                         tokens_used=0,
                         response_time_ms=result.latency_ms,
                         confidence=result.confidence,
+                        route=self.ResponseRoute.MODEL_BUS,
                         metadata={"bus_route": True, "query_type": query_type, "route_reason": decision.reason},
                     )
             except Exception as e:
@@ -1442,6 +1444,20 @@ class AngelaLLMService:
         try:
             # 只有当回應质量较高时才存储
             if response.confidence < 0.5:
+                return
+
+            # Never memorize non-answers (refusals / "I don't know" / empty).
+            # The neural SNN backends (ED3N etc.) report a high confidence even
+            # for "Sorry, I didn't understand what you meant.", so the confidence
+            # gate above is insufficient — storing such text as a template would
+            # later serve it back verbatim as a "real" answer.
+            _text = (response.text or "").strip().lower()
+            if not _text or any(p in _text for p in (
+                "sorry", "i don't understand", "i did not understand",
+                "i don't know", "i do not know", "cannot help", "can't help",
+                "no answer", "unknown",
+            )):
+                logger.debug("Skipped template storage for non-answer response")
                 return
 
             # C6: 從回應文本萃取自我描述句，學習數值→語意映射
