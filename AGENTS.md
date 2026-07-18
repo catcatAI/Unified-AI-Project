@@ -360,7 +360,7 @@ black apps/backend/src tests/ && flake8 apps/backend/src tests/
 
 ```
 apps/
-  backend/           # Python FastAPI + AI systems (612 Python files, ~96K lines)
+  backend/           # Python FastAPI + AI systems (610 Python files, ~96K lines)
     ai/core/         # QueryClassifier, ExecutionGate, ModelBus, unicode_utils
     ai/ed3n/         # ED3N engine (reflex → SNN → decode → cycle)
     ai/garden/       # GARDEN lightweight inference engine

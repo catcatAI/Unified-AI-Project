@@ -55,10 +55,10 @@
 
 **Angela AI** is a digital life system with biological simulation and LLM integration capabilities.
 
-**Quick facts**: 612 Python files in backend src (~96K lines). Electron + Live2D desktop companion (50 JS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~4,499 tests (tests/) — 0 errors. Security: 0 Dependabot + 0 CodeQL + 0 Secret Scanning = fully clean.**  
+**Quick facts**: 610 Python files in backend src (~96K lines). Electron + Live2D desktop companion (136 JS/TS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~4,499 tests (tests/) — 0 errors. Security: 0 Dependabot + 0 CodeQL + 0 Secret Scanning = fully clean.**  
 **Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · cli `7.5.0-dev` · biology-core `7.5.0-dev`.  
 **Architecture audit score**: **~95%** (2026-06-25; up from ~55-60% after Phases 0-5 repairs).  
-**Total project files**: ~3,500+ (620 Python in backend src · 295 JS/TS · 1,021+ docs · 500+ config · 480+ test).  
+**Total project files**: ~3,500+ (610 Python in backend src · 295+ JS/TS · 1,021+ docs · 500+ config · 480+ test).  
 See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
 
 > **STATUS (2026-07-14)**: §X #243-#247 — **Multi-perspective production-readiness** complete (9.5/10 for the *engineering/infra* layer — code, tests, security, deployment wiring). **§X #249-#256 — Security Sprint**: 44+ Dependabot + 18 CodeQL + 10 Secret Scanning = **72+ security alerts fixed** across 46 files; Next.js 14→16 upgrade, Vite 6.0, path traversal hardening, insecure randomness fixed, leaked API keys redacted. **Infra is deployable + security hardened.**
@@ -440,7 +440,7 @@ See dedicated docs for full diagrams:
 
 **Angela AI** 是一個數位生命系統，具備生物模擬、LLM 整合與完整聊天管線。
 
-**Quick facts**：612 個 Python 檔案 (backend src)、~96K 行。Electron + Live2D 桌面端、33 shared JS。  
+**Quick facts**：610 個 Python 檔案 (backend src)、~96K 行。Electron + Live2D 桌面端、33 shared JS。  
 **實際狀態**: Phase 0-7 全部完成。聊天管線完整接線、孤兒系統整合、Phase 9-12 刪除 26 個死代碼子系統、~5,920 行死代碼移除。AgentOrchestrator、PlanningEngine、ReasoningEngines、TrustManager、ContentFilter、SafetyAudit、Web Dashboard、Docker/CI/CD、OpenTelemetry 全部運作。Phase 11-12 已清理 learning/ops/dialogue/evaluation/execution 等 11 個未使用子系統。  
 **管線**: WebSocket → 情緒分析 → 危機閘門 → 對齊閘門 → 執行閘門 → **代理路由** → LLM → 因果學習 → 回應。
 
@@ -728,4 +728,4 @@ npx pnpm dev:desktop
 
 ---
 
-**Version**: 7.5.0-dev | **Code Stats**: 612 Python files, ~96K lines | **Tests**: ~4,499 (tests/) — 0 errors | **Security**: 72+ alerts fixed → 0 remaining (Dependabot/CodeQL/Secret Scanning all clean) | **Intelligence**: 6.0/10 (upper, with LLM) / native: 數理化引擎 9.5 · 神經開放域 0 (re-measured 2026-07-15; see INTELLIGENCE_ASSESSMENT.md §1) | **Architecture**: ~95% | **Learning Architecture**: 80-90% (weights ~5% trained) | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)
+**Version**: 7.5.0-dev | **Code Stats**: 610 Python files, ~96K lines | **Tests**: ~4,499 (tests/) — 0 errors | **Security**: 72+ alerts fixed → 0 remaining (Dependabot/CodeQL/Secret Scanning all clean) | **Intelligence**: 6.0/10 (upper, with LLM) / native: 數理化引擎 9.5 · 神經開放域 0 (re-measured 2026-07-15; see INTELLIGENCE_ASSESSMENT.md §1) | **Architecture**: ~95% | **Learning Architecture**: 80-90% (weights ~5% trained) | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)

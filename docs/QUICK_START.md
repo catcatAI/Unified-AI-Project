@@ -72,7 +72,7 @@ pytest tests/path/to/test_file.py -v
 
 | Directory | Purpose |
 |-----------|---------|
-| `apps/backend/src/` | Python FastAPI backend (612 files, ~96K lines) |
+| `apps/backend/src/` | Python FastAPI backend (610 files, ~96K lines) |
 | `apps/desktop-app/` | Electron + Live2D desktop companion |
 | `apps/web-live2d-viewer/` | Web-based Live2D viewer |
 | `apps/pixel-angela/` | PyQt6 pixel art engine |
@@ -83,7 +83,7 @@ pytest tests/path/to/test_file.py -v
 
 ## Key Facts
 
-- **612 Python files** in backend src (~96K lines)
+- **610 Python files** in backend src (~96K lines)
 - **~4,499 tests** across 480+ test files, 0 errors
 - **Architecture health**: ~95% (2026-07-18 verified) - [see audit](COMPREHENSIVE_AUDIT_2026-06-25.md)
 - **Repair phases**: All 6 phases (0-5 + C/D/E/F) complete

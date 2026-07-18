@@ -8,7 +8,7 @@ The Unified AI Project follows a monorepo architecture organized into applicatio
 
 ### Applications (`apps/`)
 - **`apps/desktop-app`**: Electron + Live2D desktop companion (7 unique + 33 shared JS files).
-- **`apps/backend`**: Core Python FastAPI backend (612 files, ~96K lines) — AI engines, LLM routing, memory, chat pipeline.
+- **`apps/backend`**: Core Python FastAPI backend (610 files, ~96K lines) — AI engines, LLM routing, memory, chat pipeline.
 - **`apps/web-dashboard`**: Next.js web dashboard for developers to monitor and manage systems.
 - **`apps/web-live2d-viewer`**: Web-based Live2D model viewer (10 unique JS files).
 - **`apps/pixel-angela`**: PyQt6 pixel art rendering engine.
