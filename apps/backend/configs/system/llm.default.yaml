@@ -1,5 +1,6 @@
 {
   "llm_mode": "standard",
+  "allow_external_llm": false,
   "llamacpp-local": {
     "provider": "llama_cpp",
     "base_url": "http://localhost:8080",

@@ -429,8 +429,21 @@ class AngelaLLMService:
             return "ollama"
         return provider if provider in _BACKEND_FACTORIES else None
 
+    # Cloud providers that perform network calls to external vendors.
+    _CLOUD_PROVIDERS = frozenset({"openai", "anthropic", "google"})
+
     def _init_backends(self) -> None:
         """初始化可用的後端（支援所有 provider 類型）"""
+        # Local-only deployments must NOT silently call an external cloud LLM
+        # even when an API key is present. Cloud providers are only registered
+        # when explicitly allowed (opt-in), so a configured key alone can never
+        # trigger a network call against the local-only intent.
+        allow_external_llm = self.config.get("allow_external_llm", True)
+        if not allow_external_llm:
+            logger.info(
+                "External LLM disabled (allow_external_llm=false): cloud backends "
+                "will not be registered — local models only."
+            )
         for backend_id, backend_config in self.config.items():
             if not isinstance(backend_config, dict):
                 continue
@@ -439,6 +452,10 @@ class AngelaLLMService:
 
             provider = self._resolve_backend_provider(backend_id, backend_config)
             if provider is None:
+                continue
+
+            if not allow_external_llm and provider in self._CLOUD_PROVIDERS:
+                logger.info(f"Skipping cloud backend {backend_id} ({provider}) — external LLM disabled")
                 continue
 
             base_url = backend_config.get("base_url", "")
