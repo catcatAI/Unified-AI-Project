@@ -14,9 +14,31 @@ import asyncio
 import io
 import time
 from typing import Any, Dict, List
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
+
+
+@pytest.fixture(autouse=True)
+def _isolate_shared_latent(monkeypatch):
+    """Isolate the process-wide SharedLatentSpace singleton.
+
+    ``get_shared_latent_space`` is a module-level singleton mutated by many
+    other test modules. Under a combined suite run, late-arriving tests can
+    observe corrupted shared state and fail intermittently. This stress test
+    only measures MultimodalService concurrency, so it uses a lightweight
+    in-memory stub for the latent projection — removing the cross-test
+    flakiness while keeping the concurrency assertions meaningful.
+    """
+    stub = MagicMock()
+    stub.project.return_value = np.zeros(64, dtype=np.float32)
+    with patch(
+        "ai.multimodal.shared_latent_space.get_shared_latent_space",
+        return_value=stub,
+    ):
+        yield
+
 
 # =============================================================================
 # Fixtures

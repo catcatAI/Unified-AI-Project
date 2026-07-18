@@ -633,7 +633,6 @@ class AngelaLLMService:
         # Priority is driven by each backend's `priority` in config
         # (backends.*.priority), falling back to network_defaults.BACKEND_PRIORITY
         # keyed by provider name. Lower number = higher priority.
-        from core.interfaces.protocols import LLMBackend
         from core.system.config.network_defaults import BACKEND_PRIORITY
 
         # provider string for each LLMBackend enum member.

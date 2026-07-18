@@ -2897,20 +2897,6 @@
       "confidence": 0.5
     },
     {
-      "key": "cls_learn_179",
-      "surface_forms": {
-        "zh": "is"
-      },
-      "contexts": [
-        {
-          "context_id": "conservative",
-          "type": "read"
-        }
-      ],
-      "relations": {},
-      "confidence": 0.5
-    },
-    {
       "key": "cls_learn_180",
       "surface_forms": {
         "zh": "測試"
@@ -3044,6 +3030,76 @@
       "contexts": [
         {
           "context_id": "conservative",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
+    },
+    {
+      "key": "cls_learn_190",
+      "surface_forms": {
+        "zh": "what"
+      },
+      "contexts": [
+        {
+          "context_id": "exploratory",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
+    },
+    {
+      "key": "cls_learn_191",
+      "surface_forms": {
+        "zh": "does"
+      },
+      "contexts": [
+        {
+          "context_id": "exploratory",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
+    },
+    {
+      "key": "cls_learn_192",
+      "surface_forms": {
+        "zh": "cat"
+      },
+      "contexts": [
+        {
+          "context_id": "exploratory",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
+    },
+    {
+      "key": "cls_learn_193",
+      "surface_forms": {
+        "zh": "color"
+      },
+      "contexts": [
+        {
+          "context_id": "exploratory",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
+    },
+    {
+      "key": "cls_learn_179",
+      "surface_forms": {
+        "zh": "is"
+      },
+      "contexts": [
+        {
+          "context_id": "exploratory",
           "type": "read"
         }
       ],

@@ -16,7 +16,16 @@ class TestGARDENBackend:
         instance = GARDENBackend()
         assert instance.model == "garden-1g"
         assert instance.timeout == 30.0
-        assert instance.checkpoint == ""
+        # When no checkpoint is passed, the backend resolves to the trained
+        # garden_checkpoint on disk (S/L-gap closure). If no trained checkpoint
+        # exists, it stays empty.
+        import os
+
+        # tests/unit/test_garden_provider.py -> repo root is 3 levels up.
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        candidate = os.path.join(root, "data", "checkpoints", "garden_checkpoint")
+        expected = candidate if os.path.isdir(candidate) else ""
+        assert instance.checkpoint == expected
 
     def test_instantiation_custom(self):
         from services.llm.providers.garden import GARDENBackend

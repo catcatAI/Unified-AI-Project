@@ -77,11 +77,17 @@ class TestSemanticVisualEncoderInit:
     """P42a: SemanticVisualEncoder initialization and backend detection."""
 
     def test_init_no_torch(self):
-        """S1: SemanticVisualEncoder initializes without torch."""
-        with patch.dict('sys.modules', {'torch': None}):
+        """S1: SemanticVisualEncoder reports unavailable when CLIP can't load."""
+        import ai.multimodal.semantic_visual as sve_mod
+        # Reset module-level cache so the probe re-runs under the mock.
+        sve_mod._CLIP_AVAILABLE = False
+        sve_mod._CLIP_MODEL = None
+        sve_mod._CLIP_PROCESSOR = None
+        with patch('ai.multimodal.semantic_visual._lazy_init_clip',
+                   return_value=(None, None)):
             sve = SemanticVisualEncoder()
             assert hasattr(sve, 'is_available')
-            assert not sve.is_available  # No torch → not available
+            assert not sve.is_available  # No CLIP backend → not available
 
     def test_init_with_torch_clip(self):
         """S2: SemanticVisualEncoder detects CLIP availability (mocked)."""
