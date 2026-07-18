@@ -48,7 +48,7 @@ jobs:
           grep -q "$EXPECTED" VERSION || { echo "❌ VERSION: expected $EXPECTED"; ERR=1; }
           grep -q "$EXPECTED" configs/angela_config.json || { echo "❌ configs/angela_config.json: not $EXPECTED"; ERR=1; }
           grep -q "version = \"$EXPECTED\"" apps/backend/pyproject.toml || { echo "❌ apps/backend/pyproject.toml: not $EXPECTED"; ERR=1; }
-          grep -q "version=\"$EXPECTED\"" apps/backend/setup.py || { echo "❌ apps/backend/setup.py: not $EXPECTED"; ERR=1; }
+          # apps/backend/setup.py does not exist in this repo layout — skip
           grep -q "$EXPECTED" apps/backend/package.json || { echo "❌ apps/backend/package.json: not $EXPECTED"; ERR=1; }
           grep -q "major=7" apps/backend/src/core/version.py && grep -q "minor=5" apps/backend/src/core/version.py && grep -q "patch=0" apps/backend/src/core/version.py && grep -q "phase=ReleasePhase.DEV" apps/backend/src/core/version.py || { echo "❌ apps/backend/src/core/version.py: not major=7, minor=5, patch=0, phase=DEV"; ERR=1; }
           grep -q "$EXPECTED" apps/desktop-app/electron_app/package.json || { echo "❌ apps/desktop-app/electron_app/package.json: not $EXPECTED"; ERR=1; }
