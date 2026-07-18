@@ -159,7 +159,7 @@ unified-ai-project/
 ├── configs/               Runtime configuration (angela_config, MCP, credentials)
 ├── docs/                  Documentation (50+ MD files)
 ├── scripts/               Utility scripts (50+ Python scripts)
-├── tests/                 Test suite (~4,261 tests)
+├── tests/                 Test suite (~4,499 tests)
 ├── models/                Trained model artifacts (concept_space, GVV)
 ├── reports/               Analysis reports
 └── Root configs: package.json, pyproject.toml, docker-compose.yml, VERSION
