@@ -133,7 +133,31 @@ class AngelaConfig:
     # LLM / complexity access
     # ------------------------------------------------------------------ #
     def get_llm_config(self) -> Dict[str, Any]:
-        """Return LLM provider config with a guaranteed ``providers`` key."""
+        """Return LLM provider config with a guaranteed ``providers`` key.
+
+        Prefers the unified ``system/llm`` config (the single source of truth);
+        falls back to the legacy ``llm_providers`` authority file.
+        """
+        merged: Dict[str, Any] = {}
+        try:
+            from core.system.config.tiered_loader import get_config
+
+            unified = get_config("system/llm")
+            backends = unified.get("backends", {})
+            if isinstance(backends, dict) and backends:
+                merged["providers"] = {
+                    bid: {"provider": bcfg.get("provider"), "model": bcfg.get("model") or bcfg.get("model_name")}
+                    for bid, bcfg in backends.items()
+                    if isinstance(bcfg, dict)
+                }
+                routing = unified.get("routing", {})
+                if isinstance(routing, dict):
+                    merged["routing_policy"] = routing.get("policy", {})
+                    merged["fallback_chain"] = routing.get("fallback_chain", {})
+                    merged["prompt_templates"] = routing.get("prompt_templates", {})
+                return merged
+        except Exception:
+            logger.warning("get_llm_config: unified system/llm read failed, falling back", exc_info=True)
         providers_cfg = self.get_authority("llm_providers", {})
         if isinstance(providers_cfg, dict) and providers_cfg.get("providers"):
             return providers_cfg
@@ -145,7 +169,23 @@ class AngelaConfig:
         return merged
 
     def get_routing_policy(self) -> Dict[str, Any]:
-        """Return LLM routing policy including the fallback chain."""
+        """Return LLM routing policy including the fallback chain.
+
+        Prefers the unified ``system/llm`` config; falls back to the legacy
+        ``llm_providers`` authority file.
+        """
+        try:
+            from core.system.config.tiered_loader import get_config
+
+            unified = get_config("system/llm")
+            routing = unified.get("routing", {})
+            if isinstance(routing, dict) and routing.get("policy"):
+                policy = dict(routing.get("policy", {}))
+                if "fallback_chain" not in policy and routing.get("fallback_chain") is not None:
+                    policy["fallback_chain"] = routing.get("fallback_chain")
+                return policy
+        except Exception:
+            logger.warning("get_routing_policy: unified system/llm read failed, falling back", exc_info=True)
         providers_cfg = self.get_authority("llm_providers", {})
         policy = (
             dict(providers_cfg.get("routing_policy", {})) if isinstance(providers_cfg, dict) else {}

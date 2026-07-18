@@ -46,12 +46,12 @@ def _get_theta_router():
 
 
 def _get_llm_config(key: str, default: Any = None) -> Any:
-    """Read a config value from the llm section of angela config."""
+    """Read a config value from the unified system/llm settings section."""
     try:
-        from core.config_loader import get_angela_config
+        from core.system.config.tiered_loader import get_config
 
-        cfg = get_angela_config()
-        return cfg.get("llm", {}).get(key, default)
+        settings = get_config("system/llm").get("settings", {})
+        return settings.get(key, default)
     except (ImportError, FileNotFoundError, KeyError):
         logger.warning(f"_get_llm_config({key}) failed, using default", exc_info=True)
         return default

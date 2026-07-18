@@ -1,75 +1,183 @@
-{
-  "llm_mode": "standard",
-  "allow_external_llm": false,
-  "llamacpp-local": {
-    "provider": "llama_cpp",
-    "base_url": "http://localhost:8080",
-    "model_name": "llama-3-8b-instruct",
-    "timeout": 120,
-    "enabled": false,
-    "note": "本地 llama.cpp 伺服器 (需手動啟動)"
-  },
-  "ollama-llama3": {
-    "provider": "ollama",
-    "base_url": "http://localhost:11434",
-    "model_name": "qwen3.5:0.8b",
-    "api_key_env": "OLLAMA_API_KEY",
-    "timeout": 120,
-    "enabled": true,
-    "note": "本地 Ollama 後端 (需 ollama serve)。若設定 OLLAMA_API_KEY，會以 Bearer token 傳送。"
-  },
-  "ollama-tinyllama": {
-    "provider": "ollama",
-    "base_url": "http://localhost:11434",
-    "model_name": "tinyllama",
-    "timeout": 120,
-    "enabled": false,
-    "note": "極輕量本地模型 (RAM < 4GB)"
-  },
-  "openai-gpt4": {
-    "provider": "openai",
-    "base_url": "https://api.openai.com/v1",
-    "model_name": "gpt-4",
-    "api_key_env": "OPENAI_API_KEY",
-    "timeout": 120,
-    "enabled": true,
-    "note": "從環境變量 OPENAI_API_KEY 讀取 API 密鑰"
-  },
-  "anthropic-claude": {
-    "provider": "anthropic",
-    "base_url": "https://api.anthropic.com/v1",
-    "model_name": "claude-3-opus-20240229",
-    "api_key_env": "ANTHROPIC_API_KEY",
-    "timeout": 120,
-    "enabled": false,
-    "note": "從環境變量 ANTHROPIC_API_KEY 讀取 API 密鑰"
-  },
-  "google-gemini": {
-    "provider": "google",
-    "model_name": "gemini-3.1-flash-lite",
-    "api_key_env": "GEMINI_API_KEY",
-    "timeout": 120,
-    "enabled": true,
-    "note": "從環境變量 GEMINI_API_KEY 讀取 API 密鑰（以 AIza 開頭，從 https://aistudio.google.com/apikey 取得）。注意：GOOGLE_API_KEY 已安全移除 — Drive 使用 credentials.json OAuth 流程，不讀 env var。切勿混淆。"
-  },
-  "ed3n-v1": {
-    "provider": "ed3n",
-    "enabled": true,
-    "model": "ed3n-v1",
-    "priority": 5,
-    "timeout": 30.0,
-    "parameters": {
-      "depth": "auto",
-      "reflex_threshold": 0.8
-    }
-  },
-  "garden-1g": {
-    "provider": "garden",
-    "enabled": false,
-    "model": "garden-1g",
-    "priority": 6,
-    "timeout": 30.0,
-    "checkpoint": "",
-    "note": "GARDEN-1G 本地輕量模型 (PyTorch SNN + VectorDict)。啟用需安裝 torch。"
-  }
-}
+# =============================================================================
+# ANGELA-MATRIX: [L2] [β] [C] [L1]
+# =============================================================================
+# Unified LLM / Provider / Deployment configuration (single source of truth).
+#
+# This file centralizes EVERYTHING related to LLM backends, providers,
+# deployment mode, backend selection, web (grounding) search, routing policy,
+# and LLM service settings. Previously these were scattered across:
+#   - this file (flat backend list + llm_mode + allow_external_llm)
+#   - llm_providers.default.yaml (providers/routing/fallback/prompt)
+#   - angela_core.llm inside core.default.yaml (settings: memory/template_match/...)
+#   - network_defaults.py (hardcoded hosts/models/timeouts)
+# All of that is now consolidated here. network_defaults.py remains only as a
+# runtime fallback for provider __init__ defaults.
+#
+# deployment.mode controls WHICH backend categories are allowed:
+#   local      -> only local neural models (ed3n/garden/ollama/llamacpp)
+#   local+llm  -> local + external cloud LLM (opt-in, explicit)
+#   llm        -> only external cloud LLM (no local neural)
+#   auto       -> local + cloud all open; engine auto-selects best backend
+#
+# selection controls HOW backends are chosen within the allowed set:
+#   available   -> only backends that pass health-check are used
+#   per-vendor  -> every enabled backend is registered; failed ones fall back
+#
+# web_search is a BASE TOOL available in ALL modes (it is NOT an LLM and is
+# never gated by deployment.mode). It provides grounded factual lookup.
+# =============================================================================
+
+deployment:
+  mode: local                 # local | local+llm | llm | auto
+  selection: available        # available | per-vendor
+
+# Web/grounding search — base tool, always available across all deployment
+# modes. No API key required (DuckDuckGo + Wikipedia). Used for factual
+# grounding and as a last-resort answer source for unknown facts.
+web_search:
+  enabled: true
+  provider: duckduckgo        # duckduckgo | wikipedia | both
+  ddg_url: "https://lite.duckduckgo.com/lite/"
+  wiki_api: "https://en.wikipedia.org/w/api.php"
+  user_agent: "AngelaAI/7.5.0"
+  max_results: 3
+  timeout: 2.5
+
+# Service-level settings (was angela_core.llm + llm_mode).
+settings:
+  llm_mode: standard          # standard | auto
+  enable_memory_enhancement: true
+  memory:
+    max_history: 10
+  template_match:
+    threshold: 0.85
+  defaults:
+    temperature: 0.7
+    max_tokens: 512
+  emotion:
+    enabled: true
+  auto_mode:
+    enabled: false
+    time_budget_table:
+      simple: 1.0
+      medium: 3.0
+      complex: 8.0
+    local_model_ram_thresholds:
+      low: 4.0
+      medium: 8.0
+      high: 16.0
+    intent_cost:
+      factual: 0.1
+      creative: 0.4
+      reasoning: 0.8
+
+# All backends. `type` is the gating category:
+#   local  -> never gated by deployment.mode (always allowed in local* modes)
+#   cloud  -> only allowed when mode is local+llm / llm / auto
+backends:
+  ed3n-v1:
+    type: local
+    provider: ed3n
+    enabled: true
+    model: ed3n-v1
+    priority: 5
+    timeout: 30.0
+    parameters:
+      depth: auto
+      reflex_threshold: 0.8
+  garden-1g:
+    type: local
+    provider: garden
+    enabled: false
+    model: garden-1g
+    priority: 6
+    timeout: 30.0
+    checkpoint: ""
+    note: "GARDEN-1G local lightweight model (PyTorch SNN + VectorDict). Needs torch."
+  llamacpp-local:
+    type: local
+    provider: llama_cpp
+    enabled: false
+    base_url: "http://localhost:8080"
+    model_name: "llama-3-8b-instruct"
+    timeout: 120
+    note: "Local llama.cpp server (start manually)."
+  ollama-llama3:
+    type: local
+    provider: ollama
+    enabled: true
+    base_url: "http://localhost:11434"
+    model_name: "qwen3.5:0.8b"
+    api_key_env: "OLLAMA_API_KEY"
+    timeout: 120
+    note: "Local Ollama backend (needs `ollama serve`). Bearer token if OLLAMA_API_KEY set."
+  ollama-tinyllama:
+    type: local
+    provider: ollama
+    enabled: false
+    base_url: "http://localhost:11434"
+    model_name: "tinyllama"
+    timeout: 120
+    note: "Ultra-lightweight local model (RAM < 4GB)."
+  openai-gpt4:
+    type: cloud
+    provider: openai
+    base_url: "https://api.openai.com/v1"
+    model_name: "gpt-4"
+    api_key_env: "OPENAI_API_KEY"
+    timeout: 120
+    enabled: true
+    note: "Reads API key from env OPENAI_API_KEY."
+  anthropic-claude:
+    type: cloud
+    provider: anthropic
+    base_url: "https://api.anthropic.com/v1"
+    model_name: "claude-3-opus-20240229"
+    api_key_env: "ANTHROPIC_API_KEY"
+    timeout: 120
+    enabled: false
+    note: "Reads API key from env ANTHROPIC_API_KEY."
+  google-gemini:
+    type: cloud
+    provider: google
+    model_name: "gemini-3.1-flash-lite"
+    api_key_env: "GEMINI_API_KEY"
+    timeout: 120
+    enabled: true
+    note: >
+      Reads API key from env GEMINI_API_KEY (starts with AIza, from
+      https://aistudio.google.com/apikey). GOOGLE_API_KEY is removed — Drive
+      uses credentials.json OAuth, not this key. Do NOT confuse them.
+      WARNING: with deployment.mode=local this backend is NEVER registered,
+      even if a key is present in .env.
+
+# Routing policy + fallback chain (migrated from llm_providers.default.yaml).
+routing:
+  policy:
+    math: "ed3n-v1"
+    code: "ollama-llama3"
+    task: "ed3n-v1"
+    general: "ed3n-v1"
+    complexity_high: "ollama-llama3"
+    complexity_medium: "ed3n-v1"
+    complexity_low: "ed3n-v1"
+    fallback: "ed3n-v1"
+  fallback_chain:
+    ed3n-v1:
+      - "garden-1g"
+      - "ollama-llama3"
+    ollama-llama3:
+      - "ed3n-v1"
+    openai-gpt4:
+      - "anthropic-claude"
+      - "google-gemini"
+  prompt_templates:
+    general: |
+      你是一個 AI 助手。請根據用戶輸入給出回應。
+    math: |
+      你是一個數學專家。請逐步解決以下問題，展現推理過程。
+    code: |
+      你是一個程式設計專家。請分析以下代碼並給出建議。
+    system_context: |
+      Angela 狀態: {state_context}
+      8D 座標: {coordinates}

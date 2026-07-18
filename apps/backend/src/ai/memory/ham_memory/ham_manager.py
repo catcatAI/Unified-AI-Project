@@ -90,6 +90,16 @@ class HAMMemoryManager:
         if not candidates:
             return []
 
+        # Generic stopwords must not trigger a template match on their own —
+        # otherwise every query containing "what"/"is"/"the" matches the first
+        # template that lists those words (e.g. "opposite of hot"), which then
+        # gets served verbatim as the answer to unrelated queries.
+        _STOPWORDS = frozenset({
+            "what", "is", "the", "a", "an", "of", "to", "do", "does", "did",
+            "you", "your", "i", "my", "me", "are", "how", "why", "who", "when",
+            "where", "which", "that", "this", "it", "in", "on", "at", "for",
+        })
+
         scored = []
         for tpl in candidates:
             keywords = tpl.get("keywords", [])
@@ -97,9 +107,11 @@ class HAMMemoryManager:
                 continue
             best_score = 0.0
             for kw in keywords:
-                kw_lower = kw.lower()
+                kw_lower = kw.lower().strip()
+                if not kw_lower or kw_lower in _STOPWORDS:
+                    continue
                 query_lower = query.lower()
-                # Exact substring match
+                # Exact substring match on a content word
                 if kw_lower in query_lower:
                     best_score = max(best_score, 0.9)
                 else:
@@ -134,14 +146,25 @@ class HAMMemoryManager:
         """
         resolved_keywords = keywords if keywords is not None else self._extract_keywords(raw_data)
         entry = {
-            "content": str(raw_data),
+            "content": raw_data if isinstance(raw_data, dict) else str(raw_data),
             "data_type": data_type,
             "metadata": metadata or {},
             "keywords": resolved_keywords,
         }
-        self._data["templates"].append(entry)
+        # Route experiences into the correct bucket. Only proper answer
+        # templates belong in `templates` (used by TemplateMatcher to compose
+        # responses). Conversation logs and other data types must NOT pollute
+        # the template bucket, or they get served verbatim as answers.
+        if data_type in ("template", "response_template"):
+            bucket = "templates"
+        elif data_type in ("conversation",):
+            bucket = "conversations"
+        else:
+            bucket = "templates" if data_type in self._data else "conversations"
+            bucket = self._data.get(bucket) is not None and bucket or "conversations"
+        self._data.setdefault(bucket, []).append(entry)
         await asyncio.to_thread(self._save)
-        return f"exp_{len(self._data['templates'])}"
+        return f"exp_{len(self._data.get(bucket, []))}"
 
     def _extract_keywords(self, raw_data: Any, max_keywords: int = 8) -> List[str]:
         """Auto-extract keywords from raw_data.

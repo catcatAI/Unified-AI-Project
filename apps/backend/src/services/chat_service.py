@@ -316,15 +316,24 @@ class ChatService:
             from core.tools.web_search_tool import WebSearchTool
 
             tool = WebSearchTool()
+            ws_cfg = {}
+            try:
+                from core.system.config.tiered_loader import get_config
+
+                ws_cfg = get_config("system/llm").get("web_search", {}) or {}
+            except Exception:
+                pass
+            ws_timeout = float(ws_cfg.get("timeout", 2.5))
+            ws_top = int(ws_cfg.get("max_results", 3))
             results = await asyncio.wait_for(
-                asyncio.to_thread(tool.search, user_message, 3), timeout=2.5
+                asyncio.to_thread(tool.search, user_message, ws_top), timeout=ws_timeout
             )
             usable = [r for r in results if isinstance(r, dict) and "error" not in r]
             if not usable:
                 return merged_context
 
             lines = []
-            for r in usable[:3]:
+            for r in usable[:ws_top]:
                 title = r.get("title", "")
                 snippet = (r.get("snippet") or "").strip()
                 url = r.get("url", "")

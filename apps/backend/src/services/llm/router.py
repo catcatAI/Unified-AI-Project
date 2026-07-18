@@ -248,11 +248,20 @@ class AngelaLLMService:
         self.backends: Dict[LLMBackend, BaseLLMBackend] = {}
         self.active_backend: Optional[BaseLLMBackend] = None
 
-        self.enable_memory_enhancement = self.config.get("enable_memory_enhancement", True)
+        self.enable_memory_enhancement = (self.config.get("settings") or {}).get(
+            "enable_memory_enhancement", True
+        )
         self.is_available = False
 
-        # [auto] LLM mode
-        self.llm_mode = self.config.get("llm_mode", "standard")
+        # [auto] LLM mode (deployment.mode / settings.llm_mode)
+        deployment = self.config.get("deployment") or {}
+        settings = self.config.get("settings") or {}
+        self.llm_mode = (
+            deployment.get("mode")
+            or settings.get("llm_mode")
+            or self.config.get("llm_mode")
+            or "standard"
+        )
         self.auto_selector = None
 
         self._initialized = True
@@ -291,9 +300,10 @@ class AngelaLLMService:
         # ========== 记忆集成系统（委派到 MemoryIntegration）==========
         self.memory_integration = MemoryIntegration(self)
 
-        self._angela_routing = self.config.get("_routing_policy", {})
-        self._angela_fallback_chain = self.config.get("_fallback_chain", [])
-        self._angela_intent_routing = self.config.get("_intent_routing", {})
+        routing = self.config.get("routing") or {}
+        self._angela_routing = routing.get("policy", {})
+        self._angela_fallback_chain = routing.get("fallback_chain", [])
+        self._angela_intent_routing = routing.get("intent_routing", {})
 
     def _init_response_system(self) -> None:
         """初始化 P0-2 响应组合与匹配系统"""
@@ -429,22 +439,40 @@ class AngelaLLMService:
             return "ollama"
         return provider if provider in _BACKEND_FACTORIES else None
 
-    # Cloud providers that perform network calls to external vendors.
+    # Backend category -> whether it performs network calls to external vendors.
+    # `type: cloud` backends are gated by deployment.mode; `type: local` are not.
     _CLOUD_PROVIDERS = frozenset({"openai", "anthropic", "google"})
 
+    # Which backend categories each deployment mode allows.
+    _MODE_ALLOWED_TYPES: Dict[str, frozenset] = {
+        "local": frozenset({"local"}),
+        "local+llm": frozenset({"local", "cloud"}),
+        "llm": frozenset({"cloud"}),
+        "auto": frozenset({"local", "cloud"}),
+    }
+
+    def _allowed_types(self) -> frozenset:
+        """Backends categories permitted by the configured deployment mode."""
+        deployment = self.config.get("deployment") or {}
+        mode = (deployment.get("mode") or self.config.get("llm_mode") or "local").lower()
+        return self._MODE_ALLOWED_TYPES.get(mode, frozenset({"local"}))
+
     def _init_backends(self) -> None:
-        """初始化可用的後端（支援所有 provider 類型）"""
-        # Local-only deployments must NOT silently call an external cloud LLM
-        # even when an API key is present. Cloud providers are only registered
-        # when explicitly allowed (opt-in), so a configured key alone can never
-        # trigger a network call against the local-only intent.
-        allow_external_llm = self.config.get("allow_external_llm", True)
-        if not allow_external_llm:
+        """初始化可用的後端（依 deployment.mode 閘控類別）"""
+        deployment = self.config.get("deployment") or {}
+        mode = (deployment.get("mode") or self.config.get("llm_mode") or "local").lower()
+        selection = (deployment.get("selection") or "available").lower()
+        allowed = self._allowed_types()
+        if mode == "local":
             logger.info(
-                "External LLM disabled (allow_external_llm=false): cloud backends "
-                "will not be registered — local models only."
+                "Deployment mode=local: cloud backends will NOT be registered "
+                "even if API keys are present — local models only."
             )
-        for backend_id, backend_config in self.config.items():
+
+        # `per-vendor` selection registers every enabled backend and lets the
+        # runtime fall back on failure; `available` only keeps health-passing
+        # backends (default). Both honour the deployment.mode category gate.
+        for backend_id, backend_config in (self.config.get("backends") or {}).items():
             if not isinstance(backend_config, dict):
                 continue
             if not backend_config.get("enabled", False):
@@ -454,12 +482,16 @@ class AngelaLLMService:
             if provider is None:
                 continue
 
-            if not allow_external_llm and provider in self._CLOUD_PROVIDERS:
-                logger.info(f"Skipping cloud backend {backend_id} ({provider}) — external LLM disabled")
+            btype = (backend_config.get("type") or ("cloud" if provider in self._CLOUD_PROVIDERS else "local")).lower()
+            if btype not in allowed:
+                logger.info(
+                    f"Skipping {btype} backend {backend_id} ({provider}) — "
+                    f"deployment.mode={mode} does not allow it"
+                )
                 continue
 
             base_url = backend_config.get("base_url", "")
-            model_name = backend_config.get("model_name", "")
+            model_name = backend_config.get("model_name") or backend_config.get("model", "")
             api_key = backend_config.get("api_key", "") or os.environ.get(backend_config.get("api_key_env", ""), "")
             factory_name = _BACKEND_FACTORIES[provider]
             getattr(self, factory_name)(backend_id, base_url, model_name, api_key, backend_config)
@@ -540,7 +572,13 @@ class AngelaLLMService:
     async def _try_auto_mode(self) -> bool:
         try:
             from ai.response.neuro_auto_selector import NeuroAutoSelector
-            self.auto_selector = NeuroAutoSelector(config=self.config, meta_controller=self.meta_controller)
+            # NeuroAutoSelector expects a flat config with `time_budget_table`
+            # at the top and sub-keys under `auto_mode`. Adapt from the nested
+            # unified settings.auto_mode section.
+            am = (self.config.get("settings") or {}).get("auto_mode", {})
+            auto_cfg = dict(am)
+            auto_cfg["time_budget_table"] = am.get("time_budget_table", {})
+            self.auto_selector = NeuroAutoSelector(config=auto_cfg, meta_controller=self.meta_controller)
             result = await self.auto_selector.decide(context={})
 
             if result.backend.value != "neuroblender":
@@ -576,7 +614,9 @@ class AngelaLLMService:
 
         if not available:
             logger.warning("沒有可用的 LLM 後端，將使用備份回應機制", exc_info=True)
-            self.enable_memory_enhancement = self.config.get("enable_memory_enhancement", True)
+            self.enable_memory_enhancement = (self.config.get("settings") or {}).get(
+                "enable_memory_enhancement", True
+            )
             self.is_available = False
             return False
 
@@ -590,20 +630,31 @@ class AngelaLLMService:
         return True
 
     def _pick_best_backend(self, available):
-        priority = [
-            LLMBackend.LLAMA_CPP,
-            LLMBackend.OLLAMA,
-            LLMBackend.OPENAI,
-            LLMBackend.ANTHROPIC,
-            LLMBackend.GOOGLE,
-            LLMBackend.GARDEN,
-            LLMBackend.ED3N,
-        ]
-        for backend_type in priority:
-            if backend_type in available:
-                self.active_backend = self.backends[backend_type]
-                self.active_backend_type = backend_type
-                break
+        # Priority is driven by each backend's `priority` in config
+        # (backends.*.priority), falling back to network_defaults.BACKEND_PRIORITY
+        # keyed by provider name. Lower number = higher priority.
+        from core.interfaces.protocols import LLMBackend
+        from core.system.config.network_defaults import BACKEND_PRIORITY
+
+        # provider string for each LLMBackend enum member.
+        provider_for = {
+            getattr(LLMBackend, k.upper()): v.split("_", 1)[1]
+            for k, v in _BACKEND_FACTORIES.items()
+            if v.startswith("_init_")
+        }
+
+        def _rank(btype: "LLMBackend") -> int:
+            provider = provider_for.get(btype)
+            for bid, bcfg in (self.config.get("backends") or {}).items():
+                if isinstance(bcfg, dict) and (bcfg.get("provider") or "") == provider:
+                    return int(bcfg.get("priority", BACKEND_PRIORITY.get(provider, 99)))
+            return BACKEND_PRIORITY.get(provider, 99)
+
+        ranked = sorted(available, key=_rank)
+        for backend_type in ranked:
+            self.active_backend = self.backends[backend_type]
+            self.active_backend_type = backend_type
+            break
 
     async def _init_model_bus(self):
         try:
@@ -1720,10 +1771,11 @@ class AngelaLLMService:
             text = self._ed3n_fallback_text(last_content)
             return LLMResponse(text=text, backend="ed3n", model="ed3n-v1", confidence=0.6)
 def _get_llm_config(key: str, default=None):
-    """Get llm config."""
+    """Get LLM service settings from the unified system/llm config (settings.*)."""
     try:
-        from core.config_loader import get_angela_config
-        return get_angela_config().get_authority("angela_core", {}).get("llm", {}).get(key, default)
+        from core.system.config.tiered_loader import get_config
+        settings = get_config("system/llm").get("settings", {})
+        return settings.get(key, default)
     except Exception:
         logger.warning(f"_get_llm_config({key}) failed, using default", exc_info=True)
         return default

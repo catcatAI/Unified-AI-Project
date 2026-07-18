@@ -156,8 +156,8 @@ class EmotionAnalyzer:
     def _init_emotion_config(self) -> None:
         """Initialize negation and intensifier words from config."""
         try:
-            from core.config_loader import get_angela_config
-            _em = get_angela_config().get("llm", {}).get("emotion", {})
+            from core.system.config.tiered_loader import get_config
+            _em = get_config("system/llm").get("settings", {}).get("emotion", {})
         except (ImportError, FileNotFoundError, KeyError, AttributeError):
             logger.warning("_init_emotion_config failed, using empty config", exc_info=True)
             _em = {}
