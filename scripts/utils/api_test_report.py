@@ -94,7 +94,6 @@ def test_endpoint(method: str, path: str, data: Dict = None, params: Dict = None
 
 def run_tests():
     """運行所有測試"""
-    global test_results
 
     print("=" * 80)
     print("Angela AI API 端點測試")

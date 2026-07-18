@@ -53,8 +53,8 @@ result = coord._fallback_decompose("生成一個角色卡")
 log_print(f"  OK: {len(result)} tasks")
 
 log_print("Test 3: detect complex task")
-assert coord._detect_complex_task("生成角色卡") == True
-assert coord._detect_complex_task("你好") == False
+assert coord._detect_complex_task("生成角色卡") is True
+assert coord._detect_complex_task("你好") is False
 log_print("  OK")
 
 log_print("Test 4: clean JSON response")
@@ -75,7 +75,8 @@ assert r == "整合結果"
 log_print("  OK")
 
 log_print("Test 6: DocumentBuilder init")
-async def ml(**k): return "out"
+async def ml(**k):
+    return "out"
 builder = DocumentBuilder(llm_generate_fn=ml, max_segments=4, tokens_per_segment=256)
 log_print(f"  OK: {builder.max_segments} segs")
 

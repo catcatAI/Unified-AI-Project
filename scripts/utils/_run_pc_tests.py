@@ -52,10 +52,10 @@ result = coord._fallback_decompose("生成一個角色卡")
 print(f"  OK: {len(result)} tasks, first capability={result[0]['capability_needed']}")
 
 print("Test 3: detect complex task")
-assert coord._detect_complex_task("生成角色卡") == True
-assert coord._detect_complex_task("整理文件") == True
-assert coord._detect_complex_task("你好") == False
-assert coord._detect_complex_task("嗨") == False
+assert coord._detect_complex_task("生成角色卡") is True
+assert coord._detect_complex_task("整理文件") is True
+assert coord._detect_complex_task("你好") is False
+assert coord._detect_complex_task("嗨") is False
 print("  OK: all assertions passed")
 
 print("Test 4: clean JSON response")
