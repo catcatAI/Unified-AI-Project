@@ -42,19 +42,22 @@ class SemanticKeyMapper:
         # Index structures: parallel lists
         self._keys: List[str] = []
         self._structural_latents: List[np.ndarray] = []  # 64-dim each
-        self._semantic_latents: List[np.ndarray] = []    # 64-dim each
-        self._combined_latents: List[np.ndarray] = []    # 64-dim each
+        self._semantic_latents: List[np.ndarray] = []  # 64-dim each
+        self._combined_latents: List[np.ndarray] = []  # 64-dim each
         self._raw_semantic_vectors: List[np.ndarray] = []  # 512/384-dim CLIP/Whisper
 
     # ------------------------------------------------------------------
     # Indexing
     # ------------------------------------------------------------------
 
-    def index_key(self, key: str,
-                  structural_latent: Optional[np.ndarray] = None,
-                  semantic_latent: Optional[np.ndarray] = None,
-                  combined_latent: Optional[np.ndarray] = None,
-                  raw_semantic: Optional[np.ndarray] = None) -> None:
+    def index_key(
+        self,
+        key: str,
+        structural_latent: Optional[np.ndarray] = None,
+        semantic_latent: Optional[np.ndarray] = None,
+        combined_latent: Optional[np.ndarray] = None,
+        raw_semantic: Optional[np.ndarray] = None,
+    ) -> None:
         """Register a concept key with its latent projections.
 
         At least one of *structural_latent*, *semantic_latent*, or
@@ -69,7 +72,9 @@ class SemanticKeyMapper:
             return
 
         if len(self._keys) >= self._max_entries:
-            logger.warning("SemanticKeyMapper at max capacity (%d), dropping oldest", self._max_entries)
+            logger.warning(
+                "SemanticKeyMapper at max capacity (%d), dropping oldest", self._max_entries
+            )
             self._keys.pop(0)
             self._structural_latents.pop(0)
             self._semantic_latents.pop(0)
@@ -77,8 +82,16 @@ class SemanticKeyMapper:
             if self._raw_semantic_vectors:
                 self._raw_semantic_vectors.pop(0)
 
-        flat_struct = structural_latent.flatten().astype(np.float32) if structural_latent is not None else np.zeros(64, dtype=np.float32)
-        flat_sem = semantic_latent.flatten().astype(np.float32) if semantic_latent is not None else np.zeros(64, dtype=np.float32)
+        flat_struct = (
+            structural_latent.flatten().astype(np.float32)
+            if structural_latent is not None
+            else np.zeros(64, dtype=np.float32)
+        )
+        flat_sem = (
+            semantic_latent.flatten().astype(np.float32)
+            if semantic_latent is not None
+            else np.zeros(64, dtype=np.float32)
+        )
         if combined_latent is None:
             combined = flat_sem if semantic_latent is not None else flat_struct
         else:
@@ -101,12 +114,12 @@ class SemanticKeyMapper:
             self._semantic_latents.append(flat_sem)
             self._combined_latents.append(combined)
             self._raw_semantic_vectors.append(
-                raw_semantic.flatten().astype(np.float32) if raw_semantic is not None
+                raw_semantic.flatten().astype(np.float32)
+                if raw_semantic is not None
                 else np.zeros(0, dtype=np.float32)
             )
 
-    def index_from_router_result(self, key: str,
-                                 router_result: Dict[str, Any]) -> None:
+    def index_from_router_result(self, key: str, router_result: Dict[str, Any]) -> None:
         """Register a key using the result dict from DualEncoderRouter.
 
         Extracts ``structural_latent``, ``semantic_latent``, ``latent``,
@@ -120,9 +133,12 @@ class SemanticKeyMapper:
             raw_semantic=router_result.get("semantic"),
         )
 
-    def index_batch(self, keys_and_latents: List[Tuple[str, Optional[np.ndarray],
-                                                         Optional[np.ndarray],
-                                                         Optional[np.ndarray]]]) -> int:
+    def index_batch(
+        self,
+        keys_and_latents: List[
+            Tuple[str, Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray]]
+        ],
+    ) -> int:
         """Bulk-index multiple entries.
 
         Each tuple is ``(key, structural_latent, semantic_latent, combined_latent)``.
@@ -138,10 +154,9 @@ class SemanticKeyMapper:
     # Query
     # ------------------------------------------------------------------
 
-    def map_latent_to_keys(self,
-                           query_latent: np.ndarray,
-                           top_k: int = 5,
-                           mode: str = "auto") -> List[Dict[str, Any]]:
+    def map_latent_to_keys(
+        self, query_latent: np.ndarray, top_k: int = 5, mode: str = "auto"
+    ) -> List[Dict[str, Any]]:
         """Find the *top_k* closest registered keys to *query_latent*.
 
         Args:
@@ -194,7 +209,10 @@ class SemanticKeyMapper:
                     pool_np = pool_np / norms
                     scores = pool_np @ query
                     top_idx = np.argsort(scores)[-top_k:][::-1]
-                    return [{"key": self._keys[indices[i]], "score": round(float(scores[i]), 4)} for i in top_idx]
+                    return [
+                        {"key": self._keys[indices[i]], "score": round(float(scores[i]), 4)}
+                        for i in top_idx
+                    ]
             else:
                 mode = "auto"  # fallback
 
@@ -225,10 +243,12 @@ class SemanticKeyMapper:
         top_indices = np.argsort(scores)[-top_k:][::-1]
         results = []
         for idx in top_indices:
-            results.append({
-                "key": self._keys[idx],
-                "score": round(float(scores[idx]), 4),
-            })
+            results.append(
+                {
+                    "key": self._keys[idx],
+                    "score": round(float(scores[idx]), 4),
+                }
+            )
         return results
 
     # ------------------------------------------------------------------

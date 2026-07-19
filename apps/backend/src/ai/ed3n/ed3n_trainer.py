@@ -37,8 +37,16 @@ class ED3NTrainer:
         dictionary_lr: Optional[float] = None,
         network_lr: Optional[float] = None,
     ):
-        dictionary_lr = dictionary_lr if dictionary_lr is not None else learning_rate("ai.ed3n.trainer.dictionary_lr", 0.1)
-        network_lr = network_lr if network_lr is not None else learning_rate("ai.ed3n.trainer.network_lr", 0.05)
+        dictionary_lr = (
+            dictionary_lr
+            if dictionary_lr is not None
+            else learning_rate("ai.ed3n.trainer.dictionary_lr", 0.1)
+        )
+        network_lr = (
+            network_lr
+            if network_lr is not None
+            else learning_rate("ai.ed3n.trainer.network_lr", 0.05)
+        )
         self.engine = engine
         self.dictionary: DictionaryLayer = engine.dictionary
         self.network: CoreNetwork = engine.network
@@ -52,7 +60,15 @@ class ED3NTrainer:
 
     def train_step(self, batch: TrainingBatch) -> TrainMetrics:
         if not batch or not batch.examples:
-            return TrainMetrics(phase="combined", loss=0.0, accuracy=0.0, learning_rate=(self.dictionary_lr+self.network_lr)/2, epoch=0, samples=0, duration_ms=0.0)
+            return TrainMetrics(
+                phase="combined",
+                loss=0.0,
+                accuracy=0.0,
+                learning_rate=(self.dictionary_lr + self.network_lr) / 2,
+                epoch=0,
+                samples=0,
+                duration_ms=0.0,
+            )
 
         start = time.perf_counter()
 
@@ -80,11 +96,17 @@ class ED3NTrainer:
             self.best_accuracy = combined_acc
         return combined
 
-    def train_dictionary_phase(
-        self, examples: List[TrainingExample]
-    ) -> TrainMetrics:
+    def train_dictionary_phase(self, examples: List[TrainingExample]) -> TrainMetrics:
         if not examples:
-            return TrainMetrics(phase="dictionary", loss=0.0, accuracy=0.0, learning_rate=self.dictionary_lr, epoch=0, samples=0, duration_ms=0.0)
+            return TrainMetrics(
+                phase="dictionary",
+                loss=0.0,
+                accuracy=0.0,
+                learning_rate=self.dictionary_lr,
+                epoch=0,
+                samples=0,
+                duration_ms=0.0,
+            )
 
         start = time.perf_counter()
         correct = 0
@@ -106,7 +128,8 @@ class ED3NTrainer:
                     new_key = self.dictionary.grow(
                         text=surface,
                         surface_form=surface,
-                        confidence=ex.confidence * confidence_value("ai.ed3n.trainer.confidence_scaling", 0.6),
+                        confidence=ex.confidence
+                        * confidence_value("ai.ed3n.trainer.confidence_scaling", 0.6),
                     )
                     if new_key:
                         logger.debug("Grew entry %s for missing key", new_key)
@@ -150,11 +173,17 @@ class ED3NTrainer:
             duration_ms=(time.perf_counter() - start) * 1000.0,
         )
 
-    def train_network_phase(
-        self, examples: List[TrainingExample]
-    ) -> TrainMetrics:
+    def train_network_phase(self, examples: List[TrainingExample]) -> TrainMetrics:
         if not examples:
-            return TrainMetrics(phase="network", loss=0.0, accuracy=0.0, learning_rate=self.network_lr, epoch=0, samples=0, duration_ms=0.0)
+            return TrainMetrics(
+                phase="network",
+                loss=0.0,
+                accuracy=0.0,
+                learning_rate=self.network_lr,
+                epoch=0,
+                samples=0,
+                duration_ms=0.0,
+            )
 
         start = time.perf_counter()
         total_loss = 0.0
@@ -171,17 +200,21 @@ class ED3NTrainer:
                 error = expected - actual
                 total_loss += abs(error)
 
-                if actual > threshold_value("ai.ed3n.trainer.activation_threshold", 0.3) and expected > confidence_value("ai.ed3n.trainer.expected_confidence", 0.5):
+                if actual > threshold_value(
+                    "ai.ed3n.trainer.activation_threshold", 0.3
+                ) and expected > confidence_value("ai.ed3n.trainer.expected_confidence", 0.5):
                     total_correct += 1
 
                 for input_key in ex.input_keys:
-                    self.network.adjust_connection(
-                        input_key, expected_key, self.network_lr * error
-                    )
+                    self.network.adjust_connection(input_key, expected_key, self.network_lr * error)
 
                 neuron = self._find_neuron(expected_key)
                 if neuron is not None:
-                    delta = self.network_lr * (actual - confidence_value("ai.ed3n.trainer.midpoint_bias", 0.5)) * learning_rate("ai.ed3n.trainer.delta_scaling", 0.1)
+                    delta = (
+                        self.network_lr
+                        * (actual - confidence_value("ai.ed3n.trainer.midpoint_bias", 0.5))
+                        * learning_rate("ai.ed3n.trainer.delta_scaling", 0.1)
+                    )
                     neuron.threshold -= delta
 
         n = len(examples)
@@ -207,9 +240,15 @@ class ED3NTrainer:
 
         def _serialize(m) -> dict:
             if isinstance(m, TrainMetrics):
-                return {"phase": m.phase, "loss": m.loss, "accuracy": m.accuracy,
-                        "learning_rate": m.learning_rate, "epoch": m.epoch,
-                        "samples": m.samples, "duration_ms": m.duration_ms}
+                return {
+                    "phase": m.phase,
+                    "loss": m.loss,
+                    "accuracy": m.accuracy,
+                    "learning_rate": m.learning_rate,
+                    "epoch": m.epoch,
+                    "samples": m.samples,
+                    "duration_ms": m.duration_ms,
+                }
             return str(m)
 
         state = {
@@ -252,7 +291,11 @@ class ED3NTrainer:
         return trainer
 
     def train_from_replay(self, batch_size: Optional[int] = None) -> Optional[TrainMetrics]:
-        batch_size = batch_size if batch_size is not None else batch_value("ai.ed3n.trainer.replay_batch_size", 32)
+        batch_size = (
+            batch_size
+            if batch_size is not None
+            else batch_value("ai.ed3n.trainer.replay_batch_size", 32)
+        )
         if self.replay_buffer is None:
             logger.warning("No replay buffer set; skipping replay training")
             return None
@@ -269,7 +312,17 @@ class ED3NTrainer:
                 input_keys=exp.get("input_keys", []),
                 output_keys=exp.get("output_keys", []),
                 relation_pairs=exp.get("relation_pairs", []),
-                confidence=min(max(float(exp.get("reward", confidence_value("ai.ed3n.trainer.default_reward", 0.5))), 0.0), 1.0),
+                confidence=min(
+                    max(
+                        float(
+                            exp.get(
+                                "reward", confidence_value("ai.ed3n.trainer.default_reward", 0.5)
+                            )
+                        ),
+                        0.0,
+                    ),
+                    1.0,
+                ),
             )
             examples.append(example)
 
@@ -293,8 +346,7 @@ class ED3NTrainer:
             "steps": len(self.training_history),
             "last_loss": last.loss,
             "last_accuracy": last.accuracy,
-            "avg_loss": sum(m.loss for m in self.training_history)
-            / len(self.training_history),
+            "avg_loss": sum(m.loss for m in self.training_history) / len(self.training_history),
             "avg_accuracy": sum(m.accuracy for m in self.training_history)
             / len(self.training_history),
             "dictionary_lr": self.dictionary_lr,
@@ -319,9 +371,21 @@ class SequenceTrainer:
         scheduled_sampling_decay: Optional[float] = None,
     ):
         seq_lr = seq_lr if seq_lr is not None else learning_rate("ai.ed3n.sequence.seq_lr", 0.1)
-        scheduled_sampling_start = scheduled_sampling_start if scheduled_sampling_start is not None else confidence_value("ai.ed3n.sequence.sampling_start", 1.0)
-        scheduled_sampling_end = scheduled_sampling_end if scheduled_sampling_end is not None else confidence_value("ai.ed3n.sequence.sampling_end", 0.0)
-        scheduled_sampling_decay = scheduled_sampling_decay if scheduled_sampling_decay is not None else learning_rate("ai.ed3n.sequence.sampling_decay", 0.02)
+        scheduled_sampling_start = (
+            scheduled_sampling_start
+            if scheduled_sampling_start is not None
+            else confidence_value("ai.ed3n.sequence.sampling_start", 1.0)
+        )
+        scheduled_sampling_end = (
+            scheduled_sampling_end
+            if scheduled_sampling_end is not None
+            else confidence_value("ai.ed3n.sequence.sampling_end", 0.0)
+        )
+        scheduled_sampling_decay = (
+            scheduled_sampling_decay
+            if scheduled_sampling_decay is not None
+            else learning_rate("ai.ed3n.sequence.sampling_decay", 0.02)
+        )
         self.engine = engine
         self.dictionary: DictionaryLayer = engine.dictionary
         self.network: CoreNetwork = engine.network
@@ -335,8 +399,13 @@ class SequenceTrainer:
     def train_step(self, batch: SeqBatch) -> TrainMetrics:
         if not batch or not batch.examples:
             return TrainMetrics(
-                phase="sequence", loss=0.0, accuracy=0.0,
-                learning_rate=self.seq_lr, epoch=0, samples=0, duration_ms=0.0,
+                phase="sequence",
+                loss=0.0,
+                accuracy=0.0,
+                learning_rate=self.seq_lr,
+                epoch=0,
+                samples=0,
+                duration_ms=0.0,
             )
 
         start = time.perf_counter()
@@ -369,11 +438,18 @@ class SequenceTrainer:
                         break
                 if rel_key is not None:
                     self.network.add_directed(
-                        rel_key, target_key,
-                        weight=self.seq_lr * (1.0 - actual) * confidence_value("ai.ed3n.sequence.connection_weight", 0.5),
+                        rel_key,
+                        target_key,
+                        weight=self.seq_lr
+                        * (1.0 - actual)
+                        * confidence_value("ai.ed3n.sequence.connection_weight", 0.5),
                     )
                     self.network.adjust_connection(
-                        rel_key, target_key, self.seq_lr * error * learning_rate("ai.ed3n.sequence.connection_adjust", 0.3),
+                        rel_key,
+                        target_key,
+                        self.seq_lr
+                        * error
+                        * learning_rate("ai.ed3n.sequence.connection_adjust", 0.3),
                     )
 
                 entry = self.dictionary.entries.get(target_key)
@@ -390,7 +466,7 @@ class SequenceTrainer:
                     context.append(predicted)
 
                 if len(context) > limit_value("ai.ed3n.sequence.context_window", 8):
-                    context = context[-limit_value("ai.ed3n.sequence.context_truncation", 8):]
+                    context = context[-limit_value("ai.ed3n.sequence.context_truncation", 8) :]
 
         self.scheduled_sampling_prob = max(
             self.scheduled_sampling_end,
@@ -448,7 +524,9 @@ class SequenceTrainer:
             scheduled_sampling_decay=state.get("scheduled_sampling_decay", 0.02),
         )
         trainer.history = state.get("history", [])
-        trainer.scheduled_sampling_prob = state.get("scheduled_sampling_prob", trainer.scheduled_sampling_start)
+        trainer.scheduled_sampling_prob = state.get(
+            "scheduled_sampling_prob", trainer.scheduled_sampling_start
+        )
         return trainer
 
 
@@ -462,9 +540,17 @@ class JointTrainer:
         anchor_weight: Optional[float] = None,
     ):
         dict_lr = dict_lr if dict_lr is not None else learning_rate("ai.ed3n.joint.dict_lr", 0.1)
-        network_lr = network_lr if network_lr is not None else learning_rate("ai.ed3n.joint.network_lr", 0.05)
+        network_lr = (
+            network_lr
+            if network_lr is not None
+            else learning_rate("ai.ed3n.joint.network_lr", 0.05)
+        )
         seq_lr = seq_lr if seq_lr is not None else learning_rate("ai.ed3n.joint.seq_lr", 0.1)
-        anchor_weight = anchor_weight if anchor_weight is not None else confidence_value("ai.ed3n.joint.anchor_weight", 0.15)
+        anchor_weight = (
+            anchor_weight
+            if anchor_weight is not None
+            else confidence_value("ai.ed3n.joint.anchor_weight", 0.15)
+        )
         self.engine = engine
         self.dictionary: DictionaryLayer = engine.dictionary
         self.ed3n_trainer = ED3NTrainer(engine, dict_lr, network_lr)
@@ -501,13 +587,15 @@ class JointTrainer:
             samples=len(batch.examples) + (len(seq_batch.examples) if seq_batch else 0),
             duration_ms=(time.perf_counter() - start) * 1000.0,
         )
-        self.history.append({
-            "phase": "joint",
-            "loss": combined.loss,
-            "accuracy": combined.accuracy,
-            "anchor_loss": anchor_loss,
-            "samples": combined.samples,
-        })
+        self.history.append(
+            {
+                "phase": "joint",
+                "loss": combined.loss,
+                "accuracy": combined.accuracy,
+                "anchor_loss": anchor_loss,
+                "samples": combined.samples,
+            }
+        )
         return combined
 
     def _compute_anchor_loss(self, batch: TrainingBatch) -> float:
@@ -518,9 +606,7 @@ class JointTrainer:
         total_drift = 0.0
         for ex in batch.examples:
             if ex.input_keys and ex.output_keys:
-                total_drift += compute_anchor_drift(
-                    ex.input_keys, ex.output_keys, self.dictionary
-                )
+                total_drift += compute_anchor_drift(ex.input_keys, ex.output_keys, self.dictionary)
         return round(total_drift / max(len(batch.examples), 1), 4)
 
     def get_summary(self) -> Dict[str, Any]:

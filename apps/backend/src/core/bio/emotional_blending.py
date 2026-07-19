@@ -283,7 +283,9 @@ class EmotionalBlendingSystem:
                 await self._decay_influences()
                 await self._update_expression()
                 await asyncio.sleep(loop_sleep("emotion_update", 1.0))  # 1 second update interval
-            except Exception as e:  # broad exception acceptable: emotion update loop must be resilient
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: emotion update loop must be resilient
                 logger.error("Emotion blending update loop error: %s", e, exc_info=True)
                 await asyncio.sleep(loop_sleep("emotion_update", 1.0))
 
@@ -326,7 +328,9 @@ class EmotionalBlendingSystem:
                 for callback in self._emotion_change_callbacks:
                     try:
                         callback(prev, curr)
-                    except Exception as e:  # broad exception acceptable: emotion change callbacks should not break updates
+                    except (
+                        Exception
+                    ) as e:  # broad exception acceptable: emotion change callbacks should not break updates
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
     async def _decay_influences(self) -> None:
@@ -346,7 +350,9 @@ class EmotionalBlendingSystem:
         for callback in self._expression_callbacks:
             try:
                 callback(self.current_expression)
-            except Exception as e:  # broad exception acceptable: expression callbacks should not break updates
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: expression callbacks should not break updates
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
     def _interpolate_emotions(
@@ -431,13 +437,16 @@ class EmotionalBlendingSystem:
 
         # High arousal + positive pleasure = excitement = mouth open slightly
         from core.system.config.tiered_loader import get_config
+
         _beh_conf = get_config("standard/behavior/behavior")
         _bio_thresh = _beh_conf.get("biological_thresholds", {})
         if emotion.arousal > _bio_thresh.get("arousal_mouth_open", 0.5) and emotion.pleasure > 0:
             facial.mouth_open = (emotion.arousal + emotion.pleasure) / 2 * emotion.intensity * 0.5
 
         # Blush for high arousal situations (embarrassment, excitement)
-        if emotion.arousal > _bio_thresh.get("arousal_blush", 0.6) and abs(emotion.pleasure) > _bio_thresh.get("pleasure_blush", 0.5):
+        if emotion.arousal > _bio_thresh.get("arousal_blush", 0.6) and abs(
+            emotion.pleasure
+        ) > _bio_thresh.get("pleasure_blush", 0.5):
             facial.blush = emotion.arousal * emotion.intensity * 0.6
 
         # Vocal expression
@@ -508,7 +517,9 @@ class EmotionalBlendingSystem:
         """Blend two emotions together"""
         return emotion1.blend_with(emotion2, ratio)
 
-    def apply_influence(self, source: str, factor_type: str, value: float, weight: float = 1.0) -> None:
+    def apply_influence(
+        self, source: str, factor_type: str, value: float, weight: float = 1.0
+    ) -> None:
         """
         Apply an emotional influence
 
@@ -540,7 +551,9 @@ class EmotionalBlendingSystem:
         cutoff = datetime.now() - duration
         return [e for e in self.emotion_history if e.timestamp > cutoff]
 
-    def register_emotion_change_callback(self, callback: Callable[[PADEmotion, PADEmotion], None]) -> None:
+    def register_emotion_change_callback(
+        self, callback: Callable[[PADEmotion, PADEmotion], None]
+    ) -> None:
         """Register callback for emotion changes"""
         self._emotion_change_callbacks.append(callback)
 
@@ -1036,15 +1049,29 @@ if __name__ == "__main__":
         summary = eb_system.get_emotion_summary()
         logger.info(f"  主要情绪: {summary['dominant_emotion_cn']}")
         logger.info(f"  置信度: {summary['confidence']:.2f}")
-        logger.info("  PAD: P=%.2f, A=%.2f, D=%.2f",
-            summary['pad_state']['pleasure'], summary['pad_state']['arousal'], summary['pad_state']['dominance'])
+        logger.info(
+            "  PAD: P=%.2f, A=%.2f, D=%.2f",
+            summary["pad_state"]["pleasure"],
+            summary["pad_state"]["arousal"],
+            summary["pad_state"]["dominance"],
+        )
 
     def _demo_get_expression(eb_system):
         logger.info("\n情绪表达 / Emotional expression:")
         expression = eb_system.get_emotional_expression()
-        logger.info("  面部表情: 微笑=%.2f, 挑眉=%.2f", expression.facial.smile, expression.facial.eyebrow_raise)
-        logger.info("  语调: 音高=%.2f, 温暖度=%.2f", expression.vocal.pitch, expression.vocal.warmth)
-        logger.info("  行为: 姿势=%s, 手势强度=%.2f", expression.behavioral.posture, expression.behavioral.gesture_intensity)
+        logger.info(
+            "  面部表情: 微笑=%.2f, 挑眉=%.2f",
+            expression.facial.smile,
+            expression.facial.eyebrow_raise,
+        )
+        logger.info(
+            "  语调: 音高=%.2f, 温暖度=%.2f", expression.vocal.pitch, expression.vocal.warmth
+        )
+        logger.info(
+            "  行为: 姿势=%s, 手势强度=%.2f",
+            expression.behavioral.posture,
+            expression.behavioral.gesture_intensity,
+        )
 
     async def _demo_apply_influences(eb_system):
         logger.info("\n应用影响因素 / Applying influences:")
@@ -1052,14 +1079,23 @@ if __name__ == "__main__":
         eb_system.apply_influence("hormonal", "dopamine", 0.7, 0.6)
         await asyncio.sleep(loop_sleep("emotion_update", 1.0))
         summary = eb_system.get_emotion_summary()
-        logger.info("  更新后PAD: P=%.2f, A=%.2f", summary['pad_state']['pleasure'], summary['pad_state']['arousal'])
+        logger.info(
+            "  更新后PAD: P=%.2f, A=%.2f",
+            summary["pad_state"]["pleasure"],
+            summary["pad_state"]["arousal"],
+        )
 
     def _demo_blend_emotions(eb_system):
         logger.info("\n情绪混合 / Emotion blending:")
         joy = PADEmotion.from_basic_emotion(BasicEmotion.JOY, 0.7)
         surprise = PADEmotion.from_basic_emotion(BasicEmotion.SURPRISE, 0.6)
         blended = eb_system.blend_emotions(joy, surprise, ratio=0.4)
-        logger.info("  喜悦 + 惊讶 (40%%): P=%.2f, A=%.2f, D=%.2f", blended.pleasure, blended.arousal, blended.dominance)
+        logger.info(
+            "  喜悦 + 惊讶 (40%%): P=%.2f, A=%.2f, D=%.2f",
+            blended.pleasure,
+            blended.arousal,
+            blended.dominance,
+        )
 
     def _demo_state_matrix():
         logger.info("\n" + "=" * 60)

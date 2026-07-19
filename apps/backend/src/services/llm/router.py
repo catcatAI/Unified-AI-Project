@@ -11,8 +11,6 @@ Angela LLM Service - Angela 的智能對話引擎
 而是讓 Angela 作為中介，調用模型來產生回應。
 """
 
-from core.utils import any_keyword, safe_error
-
 import asyncio
 import logging
 import os
@@ -34,6 +32,7 @@ from core.system.config.network_defaults import (
     OLLAMA_HOST,
     OPENAI_API_BASE,
 )
+from core.utils import any_keyword, safe_error
 
 try:
     from ai.response.neuro_auto_selector import AutoBackendChoice, AutoDecision
@@ -44,6 +43,18 @@ except ImportError:
 # Model Bus pipeline
 from ai.core.model_bus import ModelBus
 from ai.core.query_classifier import QueryClassifier
+from ai.meta.priority_negotiator import (
+    PriorityNegotiator,
+    angela_emotion_voter,
+    causal_voter,
+    dli_state_voter,
+    emotional_voter,
+    heartbeat_voter,
+    intent_voter,
+    lifecycle_voter,
+    meta_calibration_voter,
+)
+from core.system.state_store.global_store import state_store
 
 # Prompt builder utilities
 from services.llm.prompt_builder import (
@@ -63,19 +74,6 @@ from services.llm.providers.ollama import OllamaBackend
 from services.llm.providers.openai import OpenAIAPIBackend
 from services.llm.providers.registry import LLMBackend
 
-from core.system.state_store.global_store import state_store
-from ai.meta.priority_negotiator import (
-    PriorityNegotiator,
-    angela_emotion_voter,
-    causal_voter,
-    dli_state_voter,
-    emotional_voter,
-    heartbeat_voter,
-    intent_voter,
-    lifecycle_voter,
-    meta_calibration_voter,
-)
-
 # PriorityNegotiator singleton — registered once at import time
 _negotiator = PriorityNegotiator()
 _negotiator.register_voter("lifecycle", lifecycle_voter, weight_fn=lambda ctx: 0.8)
@@ -93,15 +91,17 @@ if __name__ == "__main__":
 logger = logging.getLogger("angela_llm")
 
 # Known fallback/error strings from engines — never return these as direct hits
-_KNOWN_FALLBACK_RESPONSES = frozenset({
-    "抱歉，我没理解你的意思。",
-    "抱歉，我沒理解你的意思。",
-    "抱歉，我暂时无法理解你的意思。",
-    "抱歉，我無法理解你的意思。",
-    "抱歉，我无法理解这些步骤。",
-    "Sorry, I didn't understand what you meant.",
-    "Sorry, I couldn't understand what you meant.",
-})
+_KNOWN_FALLBACK_RESPONSES = frozenset(
+    {
+        "抱歉，我没理解你的意思。",
+        "抱歉，我沒理解你的意思。",
+        "抱歉，我暂时无法理解你的意思。",
+        "抱歉，我無法理解你的意思。",
+        "抱歉，我无法理解这些步骤。",
+        "Sorry, I didn't understand what you meant.",
+        "Sorry, I couldn't understand what you meant.",
+    }
+)
 
 _BACKEND_FACTORIES: Dict[str, str] = {
     "llama_cpp": "_init_llamacpp",
@@ -116,6 +116,7 @@ _BACKEND_FACTORIES: Dict[str, str] = {
 
 class GenerationParams(NamedTuple):
     """Immutable per-request generation parameters — avoids self._gen_* race condition."""
+
     timeout: float = 30.0
     temperature: float = 0.7
     max_tokens: int = 512
@@ -129,9 +130,10 @@ LLM_RETRY_JITTER: float = 0.5
 
 
 async def _call_with_retry(
-    coro_factory, max_retries: int = LLM_MAX_RETRIES,
+    coro_factory,
+    max_retries: int = LLM_MAX_RETRIES,
     base_delay: float = LLM_RETRY_BASE_DELAY,
-    label: str = "llm"
+    label: str = "llm",
 ):
     """Call an LLM backend with exponential backoff + jitter retry."""
     last_error: Optional[str] = None
@@ -149,8 +151,13 @@ async def _call_with_retry(
         except (asyncio.TimeoutError, Exception) as e:
             last_error = safe_error(e)
             if attempt < max_retries:
-                delay = min(base_delay * (2 ** attempt) + random.random() * LLM_RETRY_JITTER, LLM_RETRY_MAX_DELAY)
-                logger.warning(f"[retry] {label} attempt {attempt + 1} failed: {e}, retrying in {delay:.1f}s")
+                delay = min(
+                    base_delay * (2**attempt) + random.random() * LLM_RETRY_JITTER,
+                    LLM_RETRY_MAX_DELAY,
+                )
+                logger.warning(
+                    f"[retry] {label} attempt {attempt + 1} failed: {e}, retrying in {delay:.1f}s"
+                )
                 await asyncio.sleep(delay)
                 continue
             raise
@@ -226,6 +233,8 @@ def is_memory_enhanced():
 def MEMORY_ENHANCED():
     """Check if memory enhancement modules are available. Must be called: MEMORY_ENHANCED(), not if MEMORY_ENHANCED."""
     return is_memory_enhanced()
+
+
 class AngelaLLMService:
     """
     Angela 的 LLM 服務 - 核心大腦
@@ -356,18 +365,23 @@ class AngelaLLMService:
 
             try:
                 from ai.lifecycle.unified_memory_coordinator import UnifiedMemoryCoordinator
+
                 logic_unit = None
                 cdm_model = None
                 try:
                     from ai.memory.lu_logic.logic_unit import LogicUnit
+
                     logic_unit = LogicUnit(max_rules=500)
                 except Exception as e:
                     logger.warning("Failed to import LogicUnit: %s", e, exc_info=True)
                 try:
                     from core.cdm_dividend_model import CDMCognitiveDividendModel
+
                     cdm_model = CDMCognitiveDividendModel()
                 except Exception as e:
-                    logger.warning("Failed to import CDMCognitiveDividendModel: %s", e, exc_info=True)
+                    logger.warning(
+                        "Failed to import CDMCognitiveDividendModel: %s", e, exc_info=True
+                    )
                 self.memory_coordinator = UnifiedMemoryCoordinator(
                     memory_manager=self.memory_manager,
                     logic_unit=logic_unit,
@@ -391,10 +405,10 @@ class AngelaLLMService:
             logger.warning(f"Failed to initialize memory enhancement: {e}", exc_info=True)
             self.enable_memory_enhancement = False
 
-
     def _get_default_config(self) -> Dict[str, Any]:
         """從分層配置系統讀取 LLM 配置 [Phase 7]"""
         from core.system.config.tiered_loader import get_config
+
         config = get_config("system/llm")
         if config:
             logger.info(f"LLM 配置已從 TieredConfig 載入 ({len(config)} items)")
@@ -428,7 +442,10 @@ class AngelaLLMService:
 
         # 更新狀態廣播
         from core.system.state_store import state_store
-        state_store.update_state("hardware", {"active_llm": getattr(self.active_backend, "model", "unknown")})
+
+        state_store.update_state(
+            "hardware", {"active_llm": getattr(self.active_backend, "model", "unknown")}
+        )
         logger.info("✅ [LLMService] Configuration hot-reloaded.")
 
     def _resolve_backend_provider(self, backend_id: str, config: dict) -> Optional[str]:
@@ -482,7 +499,10 @@ class AngelaLLMService:
             if provider is None:
                 continue
 
-            btype = (backend_config.get("type") or ("cloud" if provider in self._CLOUD_PROVIDERS else "local")).lower()
+            btype = (
+                backend_config.get("type")
+                or ("cloud" if provider in self._CLOUD_PROVIDERS else "local")
+            ).lower()
             if btype not in allowed:
                 logger.info(
                     f"Skipping {btype} backend {backend_id} ({provider}) — "
@@ -492,11 +512,15 @@ class AngelaLLMService:
 
             base_url = backend_config.get("base_url", "")
             model_name = backend_config.get("model_name") or backend_config.get("model", "")
-            api_key = backend_config.get("api_key", "") or os.environ.get(backend_config.get("api_key_env", ""), "")
+            api_key = backend_config.get("api_key", "") or os.environ.get(
+                backend_config.get("api_key_env", ""), ""
+            )
             factory_name = _BACKEND_FACTORIES[provider]
             getattr(self, factory_name)(backend_id, base_url, model_name, api_key, backend_config)
 
-    def _init_llamacpp(self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict) -> None:
+    def _init_llamacpp(
+        self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict
+    ) -> None:
         self.backends[LLMBackend.LLAMA_CPP] = LlamaCppBackend(
             base_url=base_url or LLAMACPP_HOST,
             model=model_name,
@@ -504,7 +528,9 @@ class AngelaLLMService:
         )
         logger.info(f"已注冊 llama.cpp 後端: {model_name}")
 
-    def _init_ollama(self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict) -> None:
+    def _init_ollama(
+        self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict
+    ) -> None:
         if LLMBackend.OLLAMA not in self.backends:
             self.backends[LLMBackend.OLLAMA] = OllamaBackend(
                 base_url=base_url or OLLAMA_HOST,
@@ -514,7 +540,9 @@ class AngelaLLMService:
             )
             logger.info(f"已注冊 Ollama 後端: {model_name}")
 
-    def _init_openai(self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict) -> None:
+    def _init_openai(
+        self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict
+    ) -> None:
         if not api_key:
             return
         self.backends[LLMBackend.OPENAI] = OpenAIAPIBackend(
@@ -525,7 +553,9 @@ class AngelaLLMService:
         )
         logger.info(f"已注冊 OpenAI 後端: {model_name}")
 
-    def _init_anthropic(self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict) -> None:
+    def _init_anthropic(
+        self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict
+    ) -> None:
         if not api_key:
             return
         self.backends[LLMBackend.ANTHROPIC] = AnthropicAPIBackend(
@@ -536,7 +566,9 @@ class AngelaLLMService:
         )
         logger.info(f"已注冊 Anthropic 後端: {model_name}")
 
-    def _init_google(self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict) -> None:
+    def _init_google(
+        self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict
+    ) -> None:
         if not api_key:
             return
         self.backends[LLMBackend.GOOGLE] = GoogleAPIBackend(
@@ -546,7 +578,9 @@ class AngelaLLMService:
         )
         logger.info(f"已注冊 Google Gemini 後端: {model_name}")
 
-    def _init_ed3n(self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict) -> None:
+    def _init_ed3n(
+        self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict
+    ) -> None:
         self.backends[LLMBackend.ED3N] = ED3NBackend(
             base_url=base_url or "",
             model=model_name or "ed3n-v1",
@@ -554,7 +588,9 @@ class AngelaLLMService:
         )
         logger.info(f"已注冊 ED3N 後端: {model_name or 'ed3n-v1'}")
 
-    def _init_garden(self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict) -> None:
+    def _init_garden(
+        self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict
+    ) -> None:
         self.backends[LLMBackend.GARDEN] = GARDENBackend(
             model=model_name or "garden-1g",
             checkpoint=config.get("checkpoint", ""),
@@ -572,13 +608,16 @@ class AngelaLLMService:
     async def _try_auto_mode(self) -> bool:
         try:
             from ai.response.neuro_auto_selector import NeuroAutoSelector
+
             # NeuroAutoSelector expects a flat config with `time_budget_table`
             # at the top and sub-keys under `auto_mode`. Adapt from the nested
             # unified settings.auto_mode section.
             am = (self.config.get("settings") or {}).get("auto_mode", {})
             auto_cfg = dict(am)
             auto_cfg["time_budget_table"] = am.get("time_budget_table", {})
-            self.auto_selector = NeuroAutoSelector(config=auto_cfg, meta_controller=self.meta_controller)
+            self.auto_selector = NeuroAutoSelector(
+                config=auto_cfg, meta_controller=self.meta_controller
+            )
             result = await self.auto_selector.decide(context={})
 
             if result.backend.value != "neuroblender":
@@ -600,9 +639,13 @@ class AngelaLLMService:
                     )
                     return True
 
-            logger.warning("[auto] NeuroAutoSelector 未能選擇可用後端，使用標準初始化", exc_info=True)
+            logger.warning(
+                "[auto] NeuroAutoSelector 未能選擇可用後端，使用標準初始化", exc_info=True
+            )
         except Exception as e:
-            logger.warning(f"[auto] NeuroAutoSelector 初始化失敗: {e}，使用標準初始化", exc_info=True)
+            logger.warning(
+                f"[auto] NeuroAutoSelector 初始化失敗: {e}，使用標準初始化", exc_info=True
+            )
         return False
 
     async def _initialize_standard_mode(self) -> bool:
@@ -662,18 +705,20 @@ class AngelaLLMService:
 
             if LLMBackend.ED3N in self.backends:
                 ed3n_backend = self.backends[LLMBackend.ED3N]
-                if hasattr(ed3n_backend, '_engine') and ed3n_backend._engine:
+                if hasattr(ed3n_backend, "_engine") and ed3n_backend._engine:
                     self.model_bus.register_ed3n(ed3n_backend._engine)
                 else:
                     from ai.ed3n.ed3n_engine import ED3NEngine
+
                     self.model_bus.register_ed3n(ED3NEngine.get_shared())
 
             if LLMBackend.GARDEN in self.backends:
                 garden_backend = self.backends[LLMBackend.GARDEN]
-                if hasattr(garden_backend, '_engine') and garden_backend._engine:
+                if hasattr(garden_backend, "_engine") and garden_backend._engine:
                     self.model_bus.register_garden(garden_backend._engine)
                 else:
                     from ai.garden.garden_engine import GARDENEngine
+
                     engine = GARDENEngine(compatibility_mode=True)
                     engine.load_presets()
                     self.model_bus.register_garden(engine)
@@ -694,19 +739,25 @@ class AngelaLLMService:
             from services.handlers.task_manager_handler import TaskManagerHandler
             from services.handlers.vision_handler import VisionHandler
             from services.handlers.web_search_handler import WebSearchHandler
+
             self.model_bus.register_handler("file_ops", FileOperationHandler(), ["file"])
             self.model_bus.register_handler("web_search", WebSearchHandler(), ["search"])
-            self.model_bus.register_handler("code_exec", CodeExecutionHandler(), ["code", "execute"])
+            self.model_bus.register_handler(
+                "code_exec", CodeExecutionHandler(), ["code", "execute"]
+            )
             self.model_bus.register_handler("system_cmd", SystemCommandHandler(), ["system"])
             self.model_bus.register_handler("task_mgr", TaskManagerHandler(), ["task"])
             self.model_bus.register_handler("vision", VisionHandler(), ["vision"])
-            logger.info("Model Bus handlers registered: file_ops, web_search, code_exec, system_cmd, task_mgr, vision")
+            logger.info(
+                "Model Bus handlers registered: file_ops, web_search, code_exec, system_cmd, task_mgr, vision"
+            )
         except Exception as e:
             logger.warning(f"Model Bus handler registration skipped: {e}")
 
     def _init_meta_controller(self):
         try:
             from ai.meta.meta_controller import MetaController
+
             self.meta_controller = MetaController()
         except Exception as e:
             logger.warning(f"MetaController not available: {e}")
@@ -716,7 +767,7 @@ class AngelaLLMService:
         """Close all backend HTTP sessions during app shutdown."""
         for backend_type, backend in self.backends.items():
             try:
-                if hasattr(backend, 'close'):
+                if hasattr(backend, "close"):
                     await backend.close()
             except Exception as e:
                 logger.debug(f"Backend {backend_type.value} close error: {e}")
@@ -795,14 +846,17 @@ class AngelaLLMService:
             self._record_route_learning(context, "success", response_time)
             if self.meta_controller is not None:
                 self.meta_controller.record_confidence(
-                    "llm:full", response.confidence if hasattr(response, 'confidence') else 0.0
+                    "llm:full", response.confidence if hasattr(response, "confidence") else 0.0
                 )
-            state_store.emit_event("routing.response_generated", {
-                "method": "llm_full",
-                "response_time_ms": response_time,
-                "confidence": response.confidence if hasattr(response, 'confidence') else 0.0,
-                "response_text_length": len(response.text) if hasattr(response, 'text') else 0,
-            })
+            state_store.emit_event(
+                "routing.response_generated",
+                {
+                    "method": "llm_full",
+                    "response_time_ms": response_time,
+                    "confidence": response.confidence if hasattr(response, "confidence") else 0.0,
+                    "response_text_length": len(response.text) if hasattr(response, "text") else 0,
+                },
+            )
             return response
 
         except Exception as e:
@@ -812,7 +866,9 @@ class AngelaLLMService:
                 return bus_result
             return await self._fallback_response(user_message, context)
 
-    async def _try_knowledge(self, user_message: str, context: Dict[str, Any], start_time: float) -> Optional[LLMResponse]:
+    async def _try_knowledge(
+        self, user_message: str, context: Dict[str, Any], start_time: float
+    ) -> Optional[LLMResponse]:
         """Answer factual questions from the curated deterministic knowledge store.
 
         Architecture rule: factual knowledge lives in the deterministic knowledge
@@ -846,23 +902,30 @@ class AngelaLLMService:
             logger.warning(f"Knowledge lookup failed: {e}", exc_info=True)
         return None
 
-    async def _try_ensemble(self, user_message: str, context: Dict[str, Any]) -> Optional[LLMResponse]:
+    async def _try_ensemble(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
         if not (context and context.get("use_ensemble")):
             return None
         try:
             from ai.ensemble import ModelEnsemble, ModelWeight
+
             ensemble = ModelEnsemble(self)
-            weights = context.get("ensemble_weights", [
-                ModelWeight("gpt-4o", 0.4),
-                ModelWeight("claude-3-opus", 0.4),
-                ModelWeight("mixtral-local", 0.2),
-            ])
+            weights = context.get(
+                "ensemble_weights",
+                [
+                    ModelWeight("gpt-4o", 0.4),
+                    ModelWeight("claude-3-opus", 0.4),
+                    ModelWeight("mixtral-local", 0.2),
+                ],
+            )
             ensemble.configure_ensemble(weights)
             result = await ensemble.ensemble_generate(
                 user_message,
                 fusion_strategy=context.get("fusion_strategy", "best_single"),
             )
             from core.interfaces.protocols import LLMResponse
+
             if self.meta_controller is not None:
                 self.meta_controller.record_confidence("llm:ensemble", result.confidence)
             return LLMResponse(
@@ -876,11 +939,15 @@ class AngelaLLMService:
             logger.warning(f"Ensemble generation failed, falling back to single model: {e}")
             return None
 
-    async def _try_memory_retrieval(self, user_message: str, context: Dict[str, Any], start_time: float) -> Optional[LLMResponse]:
+    async def _try_memory_retrieval(
+        self, user_message: str, context: Dict[str, Any], start_time: float
+    ) -> Optional[LLMResponse]:
         if not self.enable_memory_enhancement:
             return None
         try:
-            memory_response = await self.memory_integration.try_memory_retrieval(user_message, context)
+            memory_response = await self.memory_integration.try_memory_retrieval(
+                user_message, context
+            )
             if memory_response:
                 self.stats["memory_hits"] += 1
                 response_time = (time.time() - start_time) * 1000
@@ -896,11 +963,11 @@ class AngelaLLMService:
         self.stats["average_response_time"] = (
             self.stats["total_response_time"] / self.stats["total_requests"]
         )
-        self.stats["memory_hit_rate"] = (
-            self.stats["memory_hits"] / self.stats["total_requests"]
-        )
+        self.stats["memory_hit_rate"] = self.stats["memory_hits"] / self.stats["total_requests"]
 
-    async def _try_template_match(self, user_message: str, context: Dict[str, Any], start_time: float) -> Optional[LLMResponse]:
+    async def _try_template_match(
+        self, user_message: str, context: Dict[str, Any], start_time: float
+    ) -> Optional[LLMResponse]:
         if hasattr(self, "model_bus") and self.model_bus:
             model_bus_result = await self._try_model_bus_match(user_message, context)
             if model_bus_result is not None:
@@ -917,16 +984,22 @@ class AngelaLLMService:
             hybrid_thresh = tmpl_cfg.get("hybrid", 0.5)
 
             if match_score > composed_thresh:
-                return await self._build_composed_response(user_message, context, match_result, match_score, start_time)
+                return await self._build_composed_response(
+                    user_message, context, match_result, match_score, start_time
+                )
 
             if match_score > hybrid_thresh:
-                return await self._build_hybrid_response(user_message, context, match_result, match_score, start_time)
+                return await self._build_hybrid_response(
+                    user_message, context, match_result, match_score, start_time
+                )
 
         except (ValueError, KeyError, AttributeError, TypeError) as e:
             logger.warning(f"P0-2 template matching failed: {e}", exc_info=True)
         return None
 
-    async def _try_model_bus_match(self, user_message: str, context: Dict[str, Any]) -> Optional[LLMResponse]:
+    async def _try_model_bus_match(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
         try:
             query_type = context.get("intent", "auto")
             decision = await self.model_bus.route(user_message, query_type, context)
@@ -941,7 +1014,9 @@ class AngelaLLMService:
             direct_threshold = 0.8
             draft_low = 0.4
             if self.meta_controller is not None:
-                adj = self.meta_controller.get_threshold_adjustment(f"model_bus:{decision.selected_model}")
+                adj = self.meta_controller.get_threshold_adjustment(
+                    f"model_bus:{decision.selected_model}"
+                )
                 direct_threshold = max(0.5, min(0.95, direct_threshold + adj))
                 draft_low = max(0.2, min(0.6, draft_low + adj * 0.5))
 
@@ -950,6 +1025,7 @@ class AngelaLLMService:
                 routing_mode = "neutral"
                 try:
                     from ai.meta.priority_negotiator import PriorityNegotiator
+
                     pn = PriorityNegotiator()
                     pn_vote = pn.resolve(user_message, context)
                     routing_mode = pn_vote.get("routing_mode", "neutral")
@@ -959,23 +1035,31 @@ class AngelaLLMService:
                 if routing_mode == "conservative":
                     effective_threshold = max(0.9, direct_threshold)
                 if decision.confidence < effective_threshold:
-                    logger.info(f"ModelBus draft (conservative mode threshold): {decision.selected_model} (conf={decision.confidence:.2f})")
+                    logger.info(
+                        f"ModelBus draft (conservative mode threshold): {decision.selected_model} (conf={decision.confidence:.2f})"
+                    )
                     context["draft_response"] = result.text
                     context["draft_model"] = decision.selected_model
                     return None
-                logger.info(f"ModelBus direct hit: {decision.selected_model} (conf={decision.confidence:.2f}, mode={routing_mode})")
+                logger.info(
+                    f"ModelBus direct hit: {decision.selected_model} (conf={decision.confidence:.2f}, mode={routing_mode})"
+                )
                 if self.meta_controller is not None:
-                    self.meta_controller.record_confidence(f"model_bus:{decision.selected_model}", decision.confidence)
+                    self.meta_controller.record_confidence(
+                        f"model_bus:{decision.selected_model}", decision.confidence
+                    )
                 return LLMResponse(
                     text=result.text,
                     confidence=decision.confidence,
                     model=decision.selected_model,
                     backend="model_bus",
-                    response_time_ms=decision.total_latency_ms
+                    response_time_ms=decision.total_latency_ms,
                 )
 
             if draft_low <= decision.confidence < direct_threshold:
-                logger.info(f"ModelBus draft provided: {decision.selected_model} (conf={decision.confidence:.2f}) for LLM refinement")
+                logger.info(
+                    f"ModelBus draft provided: {decision.selected_model} (conf={decision.confidence:.2f}) for LLM refinement"
+                )
                 context["draft_response"] = result.text
                 context["draft_model"] = decision.selected_model
 
@@ -983,7 +1067,9 @@ class AngelaLLMService:
             logger.warning(f"ModelBus pre-match failed: {e}", exc_info=True)
         return None
 
-    async def _build_composed_response(self, user_message, context, match_result, match_score, start_time):
+    async def _build_composed_response(
+        self, user_message, context, match_result, match_score, start_time
+    ):
         composed_response = self.response_composer.compose_response(
             match_result.template_content, match_score, context
         )
@@ -1023,7 +1109,9 @@ class AngelaLLMService:
             },
         )
 
-    async def _build_hybrid_response(self, user_message, context, match_result, match_score, start_time):
+    async def _build_hybrid_response(
+        self, user_message, context, match_result, match_score, start_time
+    ):
         composed_response = self.response_composer.compose_response(
             match_result.template_content, match_score, context
         )
@@ -1070,7 +1158,9 @@ class AngelaLLMService:
             },
         )
 
-    async def _try_model_bus(self, user_message: str, context: Dict[str, Any]) -> Optional[LLMResponse]:
+    async def _try_model_bus(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
         """Try Model Bus for capability-based routing, returns None if unavailable or fails"""
         if self.model_bus and self.query_classifier:
             try:
@@ -1087,7 +1177,11 @@ class AngelaLLMService:
                         response_time_ms=result.latency_ms,
                         confidence=result.confidence,
                         route=self.ResponseRoute.MODEL_BUS,
-                        metadata={"bus_route": True, "query_type": query_type, "route_reason": decision.reason},
+                        metadata={
+                            "bus_route": True,
+                            "query_type": query_type,
+                            "route_reason": decision.reason,
+                        },
                     )
             except Exception as e:
                 logger.warning(f"Model Bus route failed: {e}", exc_info=True)
@@ -1129,6 +1223,7 @@ class AngelaLLMService:
         try:
             from ai.memory.memory_template import ResponseCategory
             from ai.memory.template_library import get_template_library
+
             library = get_template_library()
 
             emotion = context.get("bio_state", {}).get("dominant_emotion", "neutral").lower()
@@ -1140,7 +1235,7 @@ class AngelaLLMService:
                 "neutral": ResponseCategory.SMALL_TALK,
                 "calm": ResponseCategory.SMALL_TALK,
                 "fear": ResponseCategory.SUPPORT,
-                "surprise": ResponseCategory.CURIOSITY
+                "surprise": ResponseCategory.CURIOSITY,
             }
 
             target_category = category_map.get(emotion, ResponseCategory.SMALL_TALK)
@@ -1176,7 +1271,9 @@ class AngelaLLMService:
 
     _neuro_vocab_instance = None
 
-    async def _try_neuro_blender(self, user_message: str, context: Dict[str, Any]) -> Optional[LLMResponse]:
+    async def _try_neuro_blender(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
         """尝试使用 NeuroBlender 合成回复"""
         # Lazy initialize NeuroVocabulary from TemplateLibrary
         if self.__class__._neuro_vocab_instance is None:
@@ -1190,6 +1287,7 @@ class AngelaLLMService:
 
             # Try loading config fragments
             from core.config_loader import get_angela_config
+
             cfg = get_angela_config()
             neuro_cfg = cfg.get_authority("angela_core", {}).get("neuro_fragments", [])
             if neuro_cfg:
@@ -1204,14 +1302,30 @@ class AngelaLLMService:
         bio = context.get("bio_state", {})
         axes = context.get("state_for_llm", {}).get("axes", {})
         state_dict = {
-            "alpha": {"energy": axes.get("alpha", {}).get("values", {}).get("energy", 0.6 - 0.3 * bio.get("stress_level", 0.0))},
+            "alpha": {
+                "energy": axes.get("alpha", {})
+                .get("values", {})
+                .get("energy", 0.6 - 0.3 * bio.get("stress_level", 0.0))
+            },
             "beta": {"curiosity": axes.get("beta", {}).get("values", {}).get("curiosity", 0.5)},
-            "gamma": {"valence": axes.get("gamma", {}).get("values", {}).get("valence", bio.get("valence", 0.0))},
+            "gamma": {
+                "valence": axes.get("gamma", {})
+                .get("values", {})
+                .get("valence", bio.get("valence", 0.0))
+            },
             "delta": {"intimacy": axes.get("delta", {}).get("values", {}).get("intimacy", 0.4)},
-            "epsilon": {"precision": axes.get("epsilon", {}).get("values", {}).get("precision", 0.4)},
-            "zeta": {"temporal_coherence": axes.get("zeta", {}).get("values", {}).get("temporal_coherence", 0.5)},
+            "epsilon": {
+                "precision": axes.get("epsilon", {}).get("values", {}).get("precision", 0.4)
+            },
+            "zeta": {
+                "temporal_coherence": axes.get("zeta", {})
+                .get("values", {})
+                .get("temporal_coherence", 0.5)
+            },
             "theta": {"novelty": axes.get("theta", {}).get("values", {}).get("novelty", 0.3)},
-            "eta": {"execution_count": axes.get("eta", {}).get("values", {}).get("execution_count", 0.5)},
+            "eta": {
+                "execution_count": axes.get("eta", {}).get("values", {}).get("execution_count", 0.5)
+            },
         }
 
         # Build intent_vec dynamically from user_message keywords
@@ -1248,7 +1362,6 @@ class AngelaLLMService:
 
     # ========== 记忆增强系统 - 辅助方法 ==========
 
-
     async def _prepare_generation_context(
         self, user_message: str, context: Dict[str, Any]
     ) -> tuple:
@@ -1268,6 +1381,7 @@ class AngelaLLMService:
         # Inject Heartbeat system health into context for PriorityNegotiator
         try:
             from api.lifespan import get_metabolic_heartbeat
+
             hb = get_metabolic_heartbeat()
             context["heartbeat_health"] = hb.get_system_health()
         except Exception:
@@ -1276,9 +1390,12 @@ class AngelaLLMService:
         # Inject DLI lifecycle state into context for PriorityNegotiator
         try:
             from api.lifespan import get_digital_life
+
             dli = get_digital_life()
             context["dli_state"] = {
-                "life_cycle_state": dli.life_cycle_state.name if hasattr(dli, "life_cycle_state") else "UNKNOWN",
+                "life_cycle_state": (
+                    dli.life_cycle_state.name if hasattr(dli, "life_cycle_state") else "UNKNOWN"
+                ),
             }
         except Exception:
             logger.debug("DLI state unavailable")
@@ -1300,7 +1417,9 @@ class AngelaLLMService:
                     params = GenerationParams(gen_timeout, gen_temperature, gen_max_tokens)
                     return await self._fallback_response(user_message, context), params
 
-                if auto_result.backend.value != (self.active_backend_type.value if self.active_backend_type else ""):
+                if auto_result.backend.value != (
+                    self.active_backend_type.value if self.active_backend_type else ""
+                ):
                     backend_map = {
                         "ollama": LLMBackend.OLLAMA,
                         "llamacpp": LLMBackend.LLAMA_CPP,
@@ -1310,7 +1429,9 @@ class AngelaLLMService:
                     }
                     mapped = backend_map.get(auto_result.backend.value)
                     if mapped and mapped in self.backends:
-                        prev = self.active_backend_type.value if self.active_backend_type else "none"
+                        prev = (
+                            self.active_backend_type.value if self.active_backend_type else "none"
+                        )
                         self.active_backend = self.backends[mapped]
                         self.active_backend_type = mapped
                         logger.info(f"[auto] 切換後端: {prev} → {mapped.value}")
@@ -1346,23 +1467,29 @@ class AngelaLLMService:
                 f"temperature={gen_temperature:.2f}, max_tokens={gen_max_tokens}"
             )
 
-        state_store.emit_event("routing.context_prepared", {
-            "routing_mode": routing_mode,
-            "temperature": round(gen_temperature, 2),
-            "max_tokens": gen_max_tokens,
-            "resolved_by": decision.get("resolved_by"),
-            "voter_contributions": decision.get("voter_contributions"),
-        })
+        state_store.emit_event(
+            "routing.context_prepared",
+            {
+                "routing_mode": routing_mode,
+                "temperature": round(gen_temperature, 2),
+                "max_tokens": gen_max_tokens,
+                "resolved_by": decision.get("resolved_by"),
+                "voter_contributions": decision.get("voter_contributions"),
+            },
+        )
         # Store actual routing_mode for post-generation feedback loop
         context["_actual_routing_mode"] = routing_mode
         return None, GenerationParams(gen_timeout, gen_temperature, gen_max_tokens)
 
-    async def _call_llm_backend(self, user_message: str, context: Dict[str, Any], params: GenerationParams) -> LLMResponse:
+    async def _call_llm_backend(
+        self, user_message: str, context: Dict[str, Any], params: GenerationParams
+    ) -> LLMResponse:
         messages = self._construct_angela_prompt(user_message, context)
 
         async def _do_call():
             try:
                 from core.waiting_scheduler import get_waiting_scheduler
+
                 scheduler = get_waiting_scheduler()
 
                 coro = self.active_backend.generate(
@@ -1375,11 +1502,13 @@ class AngelaLLMService:
                 response = await scheduler.submit(
                     coro,
                     timeout=params.timeout,
-                    label=f"llm:{self.active_backend_type.value if self.active_backend_type else 'gen'}"
+                    label=f"llm:{self.active_backend_type.value if self.active_backend_type else 'gen'}",
                 )
 
                 if response is None:
-                    raise asyncio.TimeoutError("WaitingScheduler returned empty response (timeout/error)")
+                    raise asyncio.TimeoutError(
+                        "WaitingScheduler returned empty response (timeout/error)"
+                    )
 
             except (ImportError, AttributeError) as e:
                 logger.warning(f"WaitingScheduler 調度失敗，回退至直接調用: {e}", exc_info=True)
@@ -1395,7 +1524,7 @@ class AngelaLLMService:
 
             return response
 
-        backend_type = getattr(self, 'active_backend_type', None)
+        backend_type = getattr(self, "active_backend_type", None)
         label = f"{backend_type.value if backend_type else 'gen'}"
         return await _call_with_retry(_do_call, label=label)
 
@@ -1413,7 +1542,9 @@ class AngelaLLMService:
         if response.error:
             logger.warning(f"LLM 回應錯誤: {response.error}", exc_info=True)
             if self._angela_fallback_chain:
-                return await self._try_fallback_chain(user_message, context, self._angela_fallback_chain)
+                return await self._try_fallback_chain(
+                    user_message, context, self._angela_fallback_chain
+                )
             return await self._fallback_response(user_message, context)
 
         return response
@@ -1432,7 +1563,11 @@ class AngelaLLMService:
         except asyncio.TimeoutError:
             logger.warning("LLM generation timeout", exc_info=True)
             self._record_route_learning(context, "timeout", gen_params.timeout * 1000)
-            if self.llm_mode == "auto" and self.auto_selector is not None and AutoDecision is not None:
+            if (
+                self.llm_mode == "auto"
+                and self.auto_selector is not None
+                and AutoDecision is not None
+            ):
                 elapsed = (time.time() - start_time) * 1000
                 self.auto_selector.record_result(
                     AutoDecision(backend=AutoBackendChoice(self.active_backend_type.value)),
@@ -1440,13 +1575,17 @@ class AngelaLLMService:
                     success=False,
                 )
             if self._angela_fallback_chain:
-                return await self._try_fallback_chain(user_message, context, self._angela_fallback_chain)
+                return await self._try_fallback_chain(
+                    user_message, context, self._angela_fallback_chain
+                )
             return await self._fallback_response(user_message, context)
         except Exception as e:
             logger.error(f"LLM generation error: {e}", exc_info=True)
             self._record_route_learning(context, "error", 0.0)
             if self._angela_fallback_chain:
-                return await self._try_fallback_chain(user_message, context, self._angela_fallback_chain)
+                return await self._try_fallback_chain(
+                    user_message, context, self._angela_fallback_chain
+                )
             return await self._fallback_response(user_message, context)
 
     async def _try_fallback_chain(
@@ -1463,7 +1602,8 @@ class AngelaLLMService:
                             bobj.generate(
                                 prompt=full_prompt[-1]["content"],
                                 messages=full_prompt,
-                                temperature=0.7, max_tokens=512,
+                                temperature=0.7,
+                                max_tokens=512,
                             ),
                             timeout=30.0,
                         )
@@ -1479,21 +1619,25 @@ class AngelaLLMService:
                         continue
         return await self._fallback_response(user_message, context)
 
-    def _record_route_learning(self, context: Dict[str, Any], status: str, latency_ms: float) -> None:
+    def _record_route_learning(
+        self, context: Dict[str, Any], status: str, latency_ms: float
+    ) -> None:
         """學習閉環：記錄 LLM 路由結果到雙層配置"""
         try:
             from core.config_loader import get_angela_config
+
             cfg = get_angela_config()
             provider = self.active_backend.__class__.__name__ if self.active_backend else "unknown"
-            intent = context.get("intent", context.get("origin", "general")) if context else "general"
+            intent = (
+                context.get("intent", context.get("origin", "general")) if context else "general"
+            )
             if status == "success":
-                cfg.learn("route_success", {
-                    "provider": provider, "intent": intent, "latency_ms": latency_ms
-                })
+                cfg.learn(
+                    "route_success",
+                    {"provider": provider, "intent": intent, "latency_ms": latency_ms},
+                )
             else:
-                cfg.learn("route_fail", {
-                    "provider": provider, "intent": intent, "error": status
-                })
+                cfg.learn("route_fail", {"provider": provider, "intent": intent, "error": status})
         except Exception as e:
             logger.warning("Failed to learn route_fail: %s", e, exc_info=True)
 
@@ -1519,22 +1663,32 @@ class AngelaLLMService:
             # gate above is insufficient — storing such text as a template would
             # later serve it back verbatim as a "real" answer.
             _text = (response.text or "").strip().lower()
-            if not _text or any(p in _text for p in (
-                "sorry", "i don't understand", "i did not understand",
-                "i don't know", "i do not know", "cannot help", "can't help",
-                "no answer", "unknown",
-            )):
+            if not _text or any(
+                p in _text
+                for p in (
+                    "sorry",
+                    "i don't understand",
+                    "i did not understand",
+                    "i don't know",
+                    "i do not know",
+                    "cannot help",
+                    "can't help",
+                    "no answer",
+                    "unknown",
+                )
+            ):
                 logger.debug("Skipped template storage for non-answer response")
                 return
 
             # C6: 從回應文本萃取自我描述句，學習數值→語意映射
             if self.__class__._neuro_vocab_instance is not None:
                 import re as _re
+
                 nv = self.__class__._neuro_vocab_instance[0]
                 state_for_llm = context.get("state_for_llm")
                 if state_for_llm and response.text:
-                    sentences = _re.split(r'(?<=[。！？.!?\n])\s*', response.text)
-                    desc_pattern = _re.compile(r'(我感覺|像是|有點|好像|覺得|似乎|彷彿)')
+                    sentences = _re.split(r"(?<=[。！？.!?\n])\s*", response.text)
+                    desc_pattern = _re.compile(r"(我感覺|像是|有點|好像|覺得|似乎|彷彿)")
                     for sentence in sentences:
                         sentence = sentence.strip()
                         if not sentence or len(sentence) < 4:
@@ -1569,13 +1723,14 @@ class AngelaLLMService:
             )
 
             # 存储到记忆系统
-            if hasattr(self, 'memory_manager') and self.memory_manager is not None:
+            if hasattr(self, "memory_manager") and self.memory_manager is not None:
                 await self.memory_manager.store_template(template)
 
             # C1: 通过协调器记录认知投入（如果 CDM 可用）
-            if hasattr(self, 'memory_coordinator') and self.memory_coordinator is not None:
+            if hasattr(self, "memory_coordinator") and self.memory_coordinator is not None:
                 try:
                     from core.cdm_dividend_model import CognitiveActivity
+
                     await self.memory_coordinator.store_experience(
                         raw_data=response.text,
                         data_type="response_template",
@@ -1609,6 +1764,7 @@ class AngelaLLMService:
             for task in tasks:
                 task_id = f"{task['task_type']}_{int(time.time())}_{task.get('topic', 'general')}"
                 from ai.memory.precompute_service import PrecomputeTask
+
                 self.precompute_service.enqueue(
                     PrecomputeTask(task_id=task_id, priority=task.get("priority", 5))
                 )
@@ -1632,7 +1788,7 @@ class AngelaLLMService:
             "在",
             "有",
         }
-        words = re.findall(r'[\u4e00-\u9fff]{2,}|[a-zA-Z]{2,}', text)
+        words = re.findall(r"[\u4e00-\u9fff]{2,}|[a-zA-Z]{2,}", text)
         keywords = [w for w in words if w not in stopwords and len(w) > 1]
         return keywords[:5]
 
@@ -1643,6 +1799,7 @@ class AngelaLLMService:
             engine = self.model_bus._registry.get("ed3n", (None,))[0]
             if engine is None:
                 from ai.ed3n.ed3n_engine import ED3NEngine
+
                 engine = ED3NEngine.get_shared()
             result = engine.process(text, depth="shallow")
             return result if result else ""
@@ -1696,19 +1853,31 @@ class AngelaLLMService:
         用於向後相容需要 chat_completion() 的消費者。
         """
         if not self.is_available or self.active_backend is None:
-            last_content = messages[-1].content if isinstance(messages[-1], ChatMessage) else (str(messages[-1]) if messages else "")
+            last_content = (
+                messages[-1].content
+                if isinstance(messages[-1], ChatMessage)
+                else (str(messages[-1]) if messages else "")
+            )
             text = self._ed3n_fallback_text(last_content)
             return LLMResponse(text=text, backend="ed3n", model="ed3n-v1", confidence=0.6)
 
         # P6-1: fire on_message pipeline for plugin system (handlers can annotate/modify data)
         try:
             from core.plugin import plugin_manager as _pm
-            user_text = messages[-1].content if isinstance(messages[-1], ChatMessage) else str(messages[-1]) if messages else ""
+
+            user_text = (
+                messages[-1].content
+                if isinstance(messages[-1], ChatMessage)
+                else str(messages[-1]) if messages else ""
+            )
             if user_text:
-                await _pm.execute_pipeline('on_message', {
-                    'user_message': user_text,
-                    'model_id': model_id,
-                })
+                await _pm.execute_pipeline(
+                    "on_message",
+                    {
+                        "user_message": user_text,
+                        "model_id": model_id,
+                    },
+                )
         except Exception as e:
             logger.warning("Failed to execute on_message plugin pipeline: %s", e, exc_info=True)
 
@@ -1741,13 +1910,19 @@ class AngelaLLMService:
             # P7: fire on_response pipeline for plugin system
             try:
                 from core.plugin import plugin_manager as _pm
-                await _pm.execute_pipeline('on_response', {
-                    'response_text': text.text if not text.error else "",
-                    'model_id': model_id,
-                    'tokens_used': text.tokens_used,
-                })
+
+                await _pm.execute_pipeline(
+                    "on_response",
+                    {
+                        "response_text": text.text if not text.error else "",
+                        "model_id": model_id,
+                        "tokens_used": text.tokens_used,
+                    },
+                )
             except Exception as e:
-                logger.warning("Failed to execute on_response plugin pipeline: %s", e, exc_info=True)
+                logger.warning(
+                    "Failed to execute on_response plugin pipeline: %s", e, exc_info=True
+                )
 
             return LLMResponse(
                 text=text.text if not text.error else "",
@@ -1761,23 +1936,35 @@ class AngelaLLMService:
 
         except asyncio.TimeoutError:
             logger.warning("chat_completion timeout", exc_info=True)
-            last_content = messages[-1].content if isinstance(messages[-1], ChatMessage) else (str(messages[-1]) if messages else "")
+            last_content = (
+                messages[-1].content
+                if isinstance(messages[-1], ChatMessage)
+                else (str(messages[-1]) if messages else "")
+            )
             text = self._ed3n_fallback_text(last_content)
             return LLMResponse(text=text, backend="ed3n", model="ed3n-v1", confidence=0.6)
         except Exception as e:
             logger.error(f"chat_completion error: {e}", exc_info=True)
-            last_content = messages[-1].content if isinstance(messages[-1], ChatMessage) else (str(messages[-1]) if messages else "")
+            last_content = (
+                messages[-1].content
+                if isinstance(messages[-1], ChatMessage)
+                else (str(messages[-1]) if messages else "")
+            )
             text = self._ed3n_fallback_text(last_content)
             return LLMResponse(text=text, backend="ed3n", model="ed3n-v1", confidence=0.6)
+
+
 def _get_llm_config(key: str, default=None):
     """Get LLM service settings from the unified system/llm config (settings.*)."""
     try:
         from core.system.config.tiered_loader import get_config
+
         settings = get_config("system/llm").get("settings", {})
         return settings.get(key, default)
     except Exception:
         logger.warning(f"_get_llm_config({key}) failed, using default", exc_info=True)
         return default
+
 
 # 全局實例
 _llm_service: Optional[AngelaLLMService] = None
@@ -1798,8 +1985,13 @@ async def get_llm_service(force_reload: bool = False) -> AngelaLLMService:
             get_registry().register("angela_llm_service", _llm_service)
 
     return _llm_service
+
+
 async def angela_llm_response(
-    user_message: str, history: List[Dict[str, str]] = None, user_name: str = "朋友", origin: str = "Human"
+    user_message: str,
+    history: List[Dict[str, str]] = None,
+    user_name: str = "朋友",
+    origin: str = "Human",
 ) -> str:
     """
     生成 Angela 的回應（便捷接口 - 2030 Standard）

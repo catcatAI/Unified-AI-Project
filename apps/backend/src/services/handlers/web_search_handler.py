@@ -22,6 +22,7 @@ class WebSearchHandler:
         if self._tool is None:
             try:
                 from core.tools.web_search_tool import WebSearchTool
+
                 self._tool = WebSearchTool()
             except Exception as e:
                 logger.warning(f"[WebSearchHandler] WebSearchTool unavailable: {e}", exc_info=True)
@@ -46,7 +47,11 @@ class WebSearchHandler:
             if isinstance(results[0], dict) and "error" in results[0]:
                 logger.warning(f"[WebSearchHandler] search returned error: {results[0]['error']}")
                 return "（網路搜尋）搜尋時發生錯誤，請稍後再試。"
-            lines = [f"• {r.get('title', '?')} — {r.get('url', '?')}" for r in results if isinstance(r, dict)]
+            lines = [
+                f"• {r.get('title', '?')} — {r.get('url', '?')}"
+                for r in results
+                if isinstance(r, dict)
+            ]
             return f"（網路搜尋）「{query}」的搜尋結果：\n" + "\n".join(lines[:5])
         except Exception as e:
             logger.error(f"[WebSearchHandler] search failed: {e}", exc_info=True)
@@ -55,8 +60,12 @@ class WebSearchHandler:
     def _extract_query(self, text: str) -> Optional[str]:
         """Extract the search query from user text by removing intent keywords."""
         import re
-        prefixes = sorted(["搜尋", "搜索", "幫我搜", "幫我查", "google", "search", "lookup", "查", "找"],
-                          key=len, reverse=True)
+
+        prefixes = sorted(
+            ["搜尋", "搜索", "幫我搜", "幫我查", "google", "search", "lookup", "查", "找"],
+            key=len,
+            reverse=True,
+        )
         for prefix in prefixes:
             pattern = re.compile(re.escape(prefix), re.IGNORECASE)
             text = pattern.sub("", text, count=1).strip()

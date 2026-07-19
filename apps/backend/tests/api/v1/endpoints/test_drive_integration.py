@@ -79,7 +79,7 @@ def test_sync_files_new_file_success(mock_dependencies, sample_file_metadata):
     assert data["skipped"] == 0
     assert data["memorized_count"] == 1
     assert data["files"][0]["name"] == "document.txt"
-    assert data["files"][0]["memorized"] == True
+    assert data["files"][0]["memorized"] is True
 
     mock_svc.get_file_metadata.assert_called_with("file123")
     mock_dependencies["mock_deduplication_instance"].should_download.assert_called_with(sample_file_metadata)
@@ -126,7 +126,7 @@ async def test_sync_files_download_failure(mock_dependencies, sample_file_metada
     assert data["status"] == "success"
     assert data["synced"] == 0
     assert data["memorized_count"] == 0
-    assert data["files"][0]["memorized"] == False
+    assert data["files"][0]["memorized"] is False
     assert data["files"][0]["error"] == "Download failed"
 
     mock_dependencies["mock_drive_service"].download_file.assert_called()

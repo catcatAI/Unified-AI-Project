@@ -22,29 +22,30 @@ logger = logging.getLogger(__name__)
 
 # 可逆性分数表
 REVERSIBILITY = {
-    "read":     1.0,   # 读取类：完全可逆（没改变任何东西）
-    "search":   1.0,   # 搜索类：完全可逆
-    "create":   0.9,   # 建立类：可逆（可删除）
-    "modify":   0.6,   # 修改类：可逆但有成本
-    "delete":   0.2,   # 删除类：不可逆
-    "send":     0.1,   # 传送类：不可逆
-    "system":   0.0,   # 系统类：不可逆且影响大
-    "execute":  0.0,   # 执行类：不可逆
-    "none":     1.0,   # 无操作
+    "read": 1.0,  # 读取类：完全可逆（没改变任何东西）
+    "search": 1.0,  # 搜索类：完全可逆
+    "create": 0.9,  # 建立类：可逆（可删除）
+    "modify": 0.6,  # 修改类：可逆但有成本
+    "delete": 0.2,  # 删除类：不可逆
+    "send": 0.1,  # 传送类：不可逆
+    "system": 0.0,  # 系统类：不可逆且影响大
+    "execute": 0.0,  # 执行类：不可逆
+    "none": 1.0,  # 无操作
 }
 
 
 @dataclass
 class GateDecision:
     """执行闸门决策"""
-    action: str                    # "auto_execute" | "confirm_then_execute" | "reject"
-    score: float                   # 执行分数
+
+    action: str  # "auto_execute" | "confirm_then_execute" | "reject"
+    score: float  # 执行分数
     handler: Optional[str] = None  # handler ID（auto_execute/confirm 时）
     reason: str = ""
-    confirm_message: str = ""      # 确认讯息（confirm 时）
-    impact_info: str = ""          # 影响说明（confirm 时）
-    action_type: str = "none"      # 操作类型
-    original_query: str = ""       # 原始查询（等确认后执行用）
+    confirm_message: str = ""  # 确认讯息（confirm 时）
+    impact_info: str = ""  # 影响说明（confirm 时）
+    action_type: str = "none"  # 操作类型
+    original_query: str = ""  # 原始查询（等确认后执行用）
 
 
 class ExecutionGate:
@@ -80,38 +81,73 @@ class ExecutionGate:
         """Load execution gate config from JSON file."""
         import json
         import os
+
         config_path = os.path.join(os.path.dirname(__file__), "execution_gate_config.json")
         try:
             with open(config_path, encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
-            logger.warning("Failed to load execution_gate_config.json, using hardcoded defaults: %s", e)
+            logger.warning(
+                "Failed to load execution_gate_config.json, using hardcoded defaults: %s", e
+            )
         return {
-                "scope_words": {"max_impact": ["全部", "所有", "整个", "all"], "min_impact": ["一个", "单一", "this"]},
-                "clarity": {
-                    "clear_verbs": ["search", "delete", "open", "run", "read", "write", "create", "edit"],
-                    "vague_words": ["一下", "看看", "处理", "弄", "搞", "整", "试试"],
-                },
-                "confirm_messages": {"read": "读取", "create": "建立", "modify": "修改", "delete": "删除", "send": "传送", "system": "执行系统操作", "default": "执行操作"},
-                "warnings": {"delete": "\n⚠️ 删除后无法复原。", "send": "\n⚠️ 传送后无法撤回。", "system": "\n⚠️ 系统操作可能影响其他程序。", "modify": "\n 修改会覆盖原始内容。"},
-                "confirm_suffix": "\n确认后我会执行。",
-                "no_handler_message": "抱歉，我無法理解您的意圖。請換句話說，或具體描述您想讓我執行的操作（如：讀取檔案、搜尋資料、回答問題等）。",
-            }
+            "scope_words": {
+                "max_impact": ["全部", "所有", "整个", "all"],
+                "min_impact": ["一个", "单一", "this"],
+            },
+            "clarity": {
+                "clear_verbs": [
+                    "search",
+                    "delete",
+                    "open",
+                    "run",
+                    "read",
+                    "write",
+                    "create",
+                    "edit",
+                ],
+                "vague_words": ["一下", "看看", "处理", "弄", "搞", "整", "试试"],
+            },
+            "confirm_messages": {
+                "read": "读取",
+                "create": "建立",
+                "modify": "修改",
+                "delete": "删除",
+                "send": "传送",
+                "system": "执行系统操作",
+                "default": "执行操作",
+            },
+            "warnings": {
+                "delete": "\n⚠️ 删除后无法复原。",
+                "send": "\n⚠️ 传送后无法撤回。",
+                "system": "\n⚠️ 系统操作可能影响其他程序。",
+                "modify": "\n 修改会覆盖原始内容。",
+            },
+            "confirm_suffix": "\n确认后我会执行。",
+            "no_handler_message": "抱歉，我無法理解您的意圖。請換句話說，或具體描述您想讓我執行的操作（如：讀取檔案、搜尋資料、回答問題等）。",
+        }
 
-    def decide(self, query_type: str, action_type: str, user_message: str,
-               confidence: float, context: dict) -> GateDecision:
+    def decide(
+        self, query_type: str, action_type: str, user_message: str, confidence: float, context: dict
+    ) -> GateDecision:
         """决定是否执行"""
         score = self._calculate_exec_score(action_type, user_message, query_type, confidence)
 
         # 否定词强制 reject
         if any_keyword(user_message, _NEGATION_WORDS):
-            state_store.emit_event("execution.gate_decided", {
-                "action": "reject", "score": round(score, 3),
-                "query_type": query_type, "action_type": action_type,
-                "reason": "negation_detected",
-            })
+            state_store.emit_event(
+                "execution.gate_decided",
+                {
+                    "action": "reject",
+                    "score": round(score, 3),
+                    "query_type": query_type,
+                    "action_type": action_type,
+                    "reason": "negation_detected",
+                },
+            )
             return GateDecision(
-                action="reject", score=score,
+                action="reject",
+                score=score,
                 reason="negation_detected",
                 original_query=user_message,
             )
@@ -125,27 +161,47 @@ class ExecutionGate:
         effective_confirm = round(self.CONFIRM_THRESHOLD - fb_adj, 3)
 
         # For non-actionable queries, skip confirmation and let LLM handle
-        if query_type in ("knowledge", "creative", "greeting", "opinion", "unknown", "logic", "math"):
-            state_store.emit_event("execution.gate_decided", {
-                "action": "reject", "score": round(score, 3),
-                "query_type": query_type, "action_type": action_type,
-                "reason": f"non_actionable_{query_type}",
-            })
+        if query_type in (
+            "knowledge",
+            "creative",
+            "greeting",
+            "opinion",
+            "unknown",
+            "logic",
+            "math",
+        ):
+            state_store.emit_event(
+                "execution.gate_decided",
+                {
+                    "action": "reject",
+                    "score": round(score, 3),
+                    "query_type": query_type,
+                    "action_type": action_type,
+                    "reason": f"non_actionable_{query_type}",
+                },
+            )
             return GateDecision(
-                action="reject", score=score,
+                action="reject",
+                score=score,
                 reason=f"non_actionable_query_type_{query_type}",
                 original_query=user_message,
             )
 
         if score >= effective_auto and handler_id:
-            state_store.emit_event("execution.gate_decided", {
-                "action": "auto_execute", "score": round(score, 3),
-                "handler": handler_id,
-                "query_type": query_type, "action_type": action_type,
-                "feedback_adjustment": round(fb_adj, 3),
-            })
+            state_store.emit_event(
+                "execution.gate_decided",
+                {
+                    "action": "auto_execute",
+                    "score": round(score, 3),
+                    "handler": handler_id,
+                    "query_type": query_type,
+                    "action_type": action_type,
+                    "feedback_adjustment": round(fb_adj, 3),
+                },
+            )
             return GateDecision(
-                action="auto_execute", score=score,
+                action="auto_execute",
+                score=score,
                 handler=handler_id,
                 action_type=action_type,
                 reason=f"exec_score={score} >= auto={effective_auto} (fb_adj={fb_adj})",
@@ -154,14 +210,20 @@ class ExecutionGate:
 
         if score >= effective_confirm:
             if handler_id:
-                state_store.emit_event("execution.gate_decided", {
-                    "action": "confirm_then_execute", "score": round(score, 3),
-                    "handler": handler_id,
-                    "query_type": query_type, "action_type": action_type,
-                    "feedback_adjustment": round(fb_adj, 3),
-                })
+                state_store.emit_event(
+                    "execution.gate_decided",
+                    {
+                        "action": "confirm_then_execute",
+                        "score": round(score, 3),
+                        "handler": handler_id,
+                        "query_type": query_type,
+                        "action_type": action_type,
+                        "feedback_adjustment": round(fb_adj, 3),
+                    },
+                )
                 return GateDecision(
-                    action="confirm_then_execute", score=score,
+                    action="confirm_then_execute",
+                    score=score,
                     handler=handler_id,
                     action_type=action_type,
                     reason=f"exec_score={score} in [{effective_confirm}, {effective_auto}) (fb_adj={fb_adj})",
@@ -169,32 +231,49 @@ class ExecutionGate:
                     impact_info=self._describe_impact(action_type, user_message),
                     original_query=user_message,
                 )
-            state_store.emit_event("execution.gate_decided", {
-                "action": "confirm_then_execute", "score": round(score, 3),
-                "handler": None, "query_type": query_type, "action_type": action_type,
-                "reason": "no_handler",
-            })
+            state_store.emit_event(
+                "execution.gate_decided",
+                {
+                    "action": "confirm_then_execute",
+                    "score": round(score, 3),
+                    "handler": None,
+                    "query_type": query_type,
+                    "action_type": action_type,
+                    "reason": "no_handler",
+                },
+            )
             return GateDecision(
-                action="confirm_then_execute", score=score,
+                action="confirm_then_execute",
+                score=score,
                 action_type=action_type,
                 reason="has_score_but_no_handler",
-                confirm_message=self._config.get("no_handler_message", "抱歉，我無法理解您的意圖。請換句話說，或具體描述您想讓我執行的操作（如：讀取檔案、搜尋資料、回答問題等）。"),
+                confirm_message=self._config.get(
+                    "no_handler_message",
+                    "抱歉，我無法理解您的意圖。請換句話說，或具體描述您想讓我執行的操作（如：讀取檔案、搜尋資料、回答問題等）。",
+                ),
                 original_query=user_message,
             )
 
-        state_store.emit_event("execution.gate_decided", {
-            "action": "reject", "score": round(score, 3),
-            "query_type": query_type, "action_type": action_type,
-            "reason": f"score_below_confirm_{effective_confirm}",
-        })
+        state_store.emit_event(
+            "execution.gate_decided",
+            {
+                "action": "reject",
+                "score": round(score, 3),
+                "query_type": query_type,
+                "action_type": action_type,
+                "reason": f"score_below_confirm_{effective_confirm}",
+            },
+        )
         return GateDecision(
-            action="reject", score=score,
+            action="reject",
+            score=score,
             reason=f"exec_score={score} < confirm={effective_confirm} (fb_adj={fb_adj})",
             original_query=user_message,
         )
 
-    def _calculate_exec_score(self, action_type: str, user_message: str,
-                              query_type: str, confidence: float) -> float:
+    def _calculate_exec_score(
+        self, action_type: str, user_message: str, query_type: str, confidence: float
+    ) -> float:
         """执行分数 = 可逆性 × 影响度 × 明确度"""
         reversibility = REVERSIBILITY.get(action_type, 0.5)
         impact = self._estimate_impact(action_type, user_message)
@@ -204,8 +283,15 @@ class ExecutionGate:
     def _estimate_impact(self, action_type: str, user_message: str) -> float:
         """根据操作类型和范围估计影响度。范围 0.0(影响大) ~ 1.0(无影响)"""
         base = {
-            "read": 1.0, "search": 1.0, "create": 0.9, "modify": 0.7,
-            "delete": 0.4, "send": 0.3, "system": 0.2, "execute": 0.2, "none": 1.0,
+            "read": 1.0,
+            "search": 1.0,
+            "create": 0.9,
+            "modify": 0.7,
+            "delete": 0.4,
+            "send": 0.3,
+            "system": 0.2,
+            "execute": 0.2,
+            "none": 1.0,
         }.get(action_type, 0.5)
 
         scope = self._config.get("scope_words", {})
@@ -229,9 +315,9 @@ class ExecutionGate:
             clarity = min(1.0, clarity + 0.1)
 
         # 包含明确对象（文件路径、URL）→ 更清晰
-        if re.search(r'[\w/\\]+\.\w+', text):
+        if re.search(r"[\w/\\]+\.\w+", text):
             clarity = min(1.0, clarity + 0.1)
-        if re.search(r'https?://', text):
+        if re.search(r"https?://", text):
             clarity = min(1.0, clarity + 0.1)
 
         # 模糊词 → 不清晰
@@ -280,13 +366,16 @@ class ExecutionGate:
         else:
             self._results[handler]["fail"] += 1
         r = self._results[handler]
-        state_store.emit_event("execution.result_recorded", {
-            "handler": handler,
-            "success": success,
-            "total_success": r["success"],
-            "total_fail": r["fail"],
-            "success_rate": round(r["success"] / max(r["success"] + r["fail"], 1), 3),
-        })
+        state_store.emit_event(
+            "execution.result_recorded",
+            {
+                "handler": handler,
+                "success": success,
+                "total_success": r["success"],
+                "total_fail": r["fail"],
+                "success_rate": round(r["success"] / max(r["success"] + r["fail"], 1), 3),
+            },
+        )
 
     def get_feedback_stats(self) -> dict:
         """Return execution feedback statistics per handler."""

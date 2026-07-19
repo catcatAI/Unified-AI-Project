@@ -514,7 +514,9 @@ class AdaptationMechanism:
 
         # Stimulus history for pattern detection
         self.stimulus_history: Dict[str, List[Tuple[str, datetime]]] = {}
-        self.max_history: int = self.config.get("max_history", cache_value("tactile_stimulus_history", 50))
+        self.max_history: int = self.config.get(
+            "max_history", cache_value("tactile_stimulus_history", 50)
+        )
 
     def register_receptor(
         self, receptor_id: str, base_sensitivity: float = 0.5, initial_habituation: float = 0.0

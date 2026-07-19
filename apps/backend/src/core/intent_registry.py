@@ -31,18 +31,260 @@ class IntentPattern:
 
 # Default patterns loaded when no config available
 _DEFAULT_PATTERNS: List[Dict[str, Any]] = [
-    {"name": "math", "keywords": ["計算", "加", "減", "乘", "除", "積分", "微分", "導數", "數學", "函數", "方程式", "math", "calculate", "solve", "equation", "plus", "minus", "times", "divided by", "=", "+", "-", "*", "/", "%"], "anti_keywords": ["思路", "想法", "概念", "meaning", "concept"], "priority": 3, "handler": "MathVerifier", "category": "computation"},
-    {"name": "code", "keywords": ["代碼", "程式", "python", "javascript", "function", "class", "import", "debug", "bug", "refactor", "重構", "算法", "測試", "api"], "priority": 3, "handler": "CodeInspectorBridge", "category": "development"},
-    {"name": "task", "keywords": ["幫我", "做一個", "規劃", "項目", "多步驟", "複雜", "分解", "子任務", "工作流", "project", "plan"], "priority": 4, "handler": "ProjectCoordinator", "category": "task"},
-    {"name": "file_op", "keywords": ["整理", "桌面", "移動", "刪除", "創建文件", "刪除文件", "移動文件", "複製", "重新命名", "建立資料夾", "organize", "桌面整理"], "anti_keywords": ["思路", "想法", "概念", "邏輯"], "priority": 5, "handler": "FileOperationHandler", "category": "operation"},
-    {"name": "web_search", "keywords": ["搜尋", "搜索", "查找", "查詢", "google", "上網查", "搜一下", "search", "find", "look up"], "priority": 4, "handler": "WebSearchHandler", "category": "search"},
-    {"name": "learning", "keywords": ["記住", "學習", "偏好", "設定", "记住", "学会", "教會", "learn", "remember", "preference"], "priority": 4, "handler": "LearningHandler", "category": "learning"},
-    {"name": "character_card", "keywords": ["角色", "角色卡", "生成角色", "人物", "人物卡", "創建角色", "character", "card", "角色創建"], "priority": 5, "handler": "CardPipeline", "category": "card"},
-    {"name": "document", "keywords": ["報告", "文件", "整理", "卡片堆", "卡片", "開發文件", "彙整", "整理成", "生成報告", "輸出到", "document", "report", "doc", "分析", "優化", "摘要", "總結", "分類", "精簡", "濃縮", "歸納", "歸檔"], "anti_keywords": ["思路", "想法", "概念"], "format_keys": ["/", "\\", "data", "docs"], "priority": 3, "handler": "DocumentBuilder", "category": "document"},
-    {"name": "google_drive", "keywords": ["谷歌硬碟", "google硬碟", "Google硬碟", "google drive", "Google Drive", "雲端硬碟", "雲端磁碟", "同步drive", "列出雲端", "搜索雲端"], "priority": 5, "handler": "GoogleDriveHandler", "category": "integration"},
-    {"name": "vision", "keywords": ["圖片", "影像", "照片", "圖像", "視覺", "看這張", "分析圖片", "image", "photo", "picture", "vision", "analyze image", "what.*image", "detect"], "anti_keywords": ["想像", "幻想", " dream", "imagin"], "priority": 4, "handler": "VisionHandler", "category": "multimodal"},
-    {"name": "audio", "keywords": ["音訊", "語音", "音頻", "聲音", "音樂", "歌曲", "錄音", "轉錄", "audio", "voice", "speech", "transcribe", "song", "music", "what.*sound", "listen"], "anti_keywords": ["想像", " dream", "imagin"], "priority": 4, "handler": "AudioHandler", "category": "multimodal"},
-    {"name": "general", "keywords": [], "priority": 9, "handler": "GeneralHandler", "category": "general"},
+    {
+        "name": "math",
+        "keywords": [
+            "計算",
+            "加",
+            "減",
+            "乘",
+            "除",
+            "積分",
+            "微分",
+            "導數",
+            "數學",
+            "函數",
+            "方程式",
+            "math",
+            "calculate",
+            "solve",
+            "equation",
+            "plus",
+            "minus",
+            "times",
+            "divided by",
+            "=",
+            "+",
+            "-",
+            "*",
+            "/",
+            "%",
+        ],
+        "anti_keywords": ["思路", "想法", "概念", "meaning", "concept"],
+        "priority": 3,
+        "handler": "MathVerifier",
+        "category": "computation",
+    },
+    {
+        "name": "code",
+        "keywords": [
+            "代碼",
+            "程式",
+            "python",
+            "javascript",
+            "function",
+            "class",
+            "import",
+            "debug",
+            "bug",
+            "refactor",
+            "重構",
+            "算法",
+            "測試",
+            "api",
+        ],
+        "priority": 3,
+        "handler": "CodeInspectorBridge",
+        "category": "development",
+    },
+    {
+        "name": "task",
+        "keywords": [
+            "幫我",
+            "做一個",
+            "規劃",
+            "項目",
+            "多步驟",
+            "複雜",
+            "分解",
+            "子任務",
+            "工作流",
+            "project",
+            "plan",
+        ],
+        "priority": 4,
+        "handler": "ProjectCoordinator",
+        "category": "task",
+    },
+    {
+        "name": "file_op",
+        "keywords": [
+            "整理",
+            "桌面",
+            "移動",
+            "刪除",
+            "創建文件",
+            "刪除文件",
+            "移動文件",
+            "複製",
+            "重新命名",
+            "建立資料夾",
+            "organize",
+            "桌面整理",
+        ],
+        "anti_keywords": ["思路", "想法", "概念", "邏輯"],
+        "priority": 5,
+        "handler": "FileOperationHandler",
+        "category": "operation",
+    },
+    {
+        "name": "web_search",
+        "keywords": [
+            "搜尋",
+            "搜索",
+            "查找",
+            "查詢",
+            "google",
+            "上網查",
+            "搜一下",
+            "search",
+            "find",
+            "look up",
+        ],
+        "priority": 4,
+        "handler": "WebSearchHandler",
+        "category": "search",
+    },
+    {
+        "name": "learning",
+        "keywords": [
+            "記住",
+            "學習",
+            "偏好",
+            "設定",
+            "记住",
+            "学会",
+            "教會",
+            "learn",
+            "remember",
+            "preference",
+        ],
+        "priority": 4,
+        "handler": "LearningHandler",
+        "category": "learning",
+    },
+    {
+        "name": "character_card",
+        "keywords": [
+            "角色",
+            "角色卡",
+            "生成角色",
+            "人物",
+            "人物卡",
+            "創建角色",
+            "character",
+            "card",
+            "角色創建",
+        ],
+        "priority": 5,
+        "handler": "CardPipeline",
+        "category": "card",
+    },
+    {
+        "name": "document",
+        "keywords": [
+            "報告",
+            "文件",
+            "整理",
+            "卡片堆",
+            "卡片",
+            "開發文件",
+            "彙整",
+            "整理成",
+            "生成報告",
+            "輸出到",
+            "document",
+            "report",
+            "doc",
+            "分析",
+            "優化",
+            "摘要",
+            "總結",
+            "分類",
+            "精簡",
+            "濃縮",
+            "歸納",
+            "歸檔",
+        ],
+        "anti_keywords": ["思路", "想法", "概念"],
+        "format_keys": ["/", "\\", "data", "docs"],
+        "priority": 3,
+        "handler": "DocumentBuilder",
+        "category": "document",
+    },
+    {
+        "name": "google_drive",
+        "keywords": [
+            "谷歌硬碟",
+            "google硬碟",
+            "Google硬碟",
+            "google drive",
+            "Google Drive",
+            "雲端硬碟",
+            "雲端磁碟",
+            "同步drive",
+            "列出雲端",
+            "搜索雲端",
+        ],
+        "priority": 5,
+        "handler": "GoogleDriveHandler",
+        "category": "integration",
+    },
+    {
+        "name": "vision",
+        "keywords": [
+            "圖片",
+            "影像",
+            "照片",
+            "圖像",
+            "視覺",
+            "看這張",
+            "分析圖片",
+            "image",
+            "photo",
+            "picture",
+            "vision",
+            "analyze image",
+            "what.*image",
+            "detect",
+        ],
+        "anti_keywords": ["想像", "幻想", " dream", "imagin"],
+        "priority": 4,
+        "handler": "VisionHandler",
+        "category": "multimodal",
+    },
+    {
+        "name": "audio",
+        "keywords": [
+            "音訊",
+            "語音",
+            "音頻",
+            "聲音",
+            "音樂",
+            "歌曲",
+            "錄音",
+            "轉錄",
+            "audio",
+            "voice",
+            "speech",
+            "transcribe",
+            "song",
+            "music",
+            "what.*sound",
+            "listen",
+        ],
+        "anti_keywords": ["想像", " dream", "imagin"],
+        "priority": 4,
+        "handler": "AudioHandler",
+        "category": "multimodal",
+    },
+    {
+        "name": "general",
+        "keywords": [],
+        "priority": 9,
+        "handler": "GeneralHandler",
+        "category": "general",
+    },
 ]
 
 
@@ -58,16 +300,18 @@ class IntentRegistry:
     def _load_patterns(self, patterns_config: Optional[List[Dict[str, Any]]] = None) -> None:
         source = patterns_config if patterns_config else _DEFAULT_PATTERNS
         for item in source:
-            self._add_pattern(IntentPattern(
-                name=item["name"],
-                keywords=item.get("keywords", []),
-                anti_keywords=item.get("anti_keywords", []),
-                format_keys=item.get("format_keys", []),
-                priority=item.get("priority", 5),
-                handler=item.get("handler", ""),
-                category=item.get("category", "general"),
-                metadata=item.get("metadata", {}),
-            ))
+            self._add_pattern(
+                IntentPattern(
+                    name=item["name"],
+                    keywords=item.get("keywords", []),
+                    anti_keywords=item.get("anti_keywords", []),
+                    format_keys=item.get("format_keys", []),
+                    priority=item.get("priority", 5),
+                    handler=item.get("handler", ""),
+                    category=item.get("category", "general"),
+                    metadata=item.get("metadata", {}),
+                )
+            )
         self._initialized = True
 
     def _add_pattern(self, pattern: IntentPattern) -> None:
@@ -81,10 +325,16 @@ class IntentRegistry:
             for kw in p.keywords:
                 self._keyword_to_patterns.setdefault(kw, []).append(p)
 
-    def register(self, pattern_or_name: Any, keywords: Optional[List[str]] = None,
-                 priority: int = 5, handler: str = "", category: str = "general",
-                 anti_keywords: Optional[List[str]] = None,
-                 format_keys: Optional[List[str]] = None) -> None:
+    def register(
+        self,
+        pattern_or_name: Any,
+        keywords: Optional[List[str]] = None,
+        priority: int = 5,
+        handler: str = "",
+        category: str = "general",
+        anti_keywords: Optional[List[str]] = None,
+        format_keys: Optional[List[str]] = None,
+    ) -> None:
         if isinstance(pattern_or_name, IntentPattern):
             pattern = pattern_or_name
             self.patterns.append(pattern)
@@ -106,8 +356,11 @@ class IntentRegistry:
                     self._keyword_to_patterns.setdefault(kw, []).append(existing)
             else:
                 pattern = IntentPattern(
-                    name=name, keywords=keywords or [], priority=priority,
-                    handler=handler, category=category,
+                    name=name,
+                    keywords=keywords or [],
+                    priority=priority,
+                    handler=handler,
+                    category=category,
                     anti_keywords=anti_keywords or [],
                     format_keys=format_keys or [],
                 )
@@ -138,7 +391,9 @@ class IntentRegistry:
                     continue
                 if kw.isascii() and kw.isalpha():
                     # English: word-boundary aware
-                    for m in re.finditer(rf'(?<![a-zA-Z]){re.escape(kw)}(?![a-zA-Z])', query, re.IGNORECASE):
+                    for m in re.finditer(
+                        rf"(?<![a-zA-Z]){re.escape(kw)}(?![a-zA-Z])", query, re.IGNORECASE
+                    ):
                         for i in range(m.start(), m.end()):
                             matched_positions.add(i)
                 else:
@@ -170,7 +425,9 @@ class IntentRegistry:
                 if not has_format:
                     score *= 0.3  # heavy discount, not zero
 
-            if score > best_score or (score == best_score and score > 0 and p.priority < best_priority):
+            if score > best_score or (
+                score == best_score and score > 0 and p.priority < best_priority
+            ):
                 best_score = score
                 best = p
                 best_priority = p.priority

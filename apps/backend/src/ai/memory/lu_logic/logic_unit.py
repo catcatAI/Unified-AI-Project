@@ -155,7 +155,9 @@ class LogicUnit:
         try:
             # 检查规则数量限制
             if len(self.rules) >= self.max_rules:
-                logger.warning(f"Cannot add rule {rule.rule_id}: max_rules limit reached", exc_info=True)
+                logger.warning(
+                    f"Cannot add rule {rule.rule_id}: max_rules limit reached", exc_info=True
+                )
                 return False
 
             # 检查规则ID是否已存在
@@ -171,7 +173,9 @@ class LogicUnit:
             logger.info(f"Rule {rule.rule_id} added successfully")
             return True
 
-        except Exception as e:  # broad exception acceptable: rule validation failures should not crash the system
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: rule validation failures should not crash the system
             logger.error(f"Failed to add rule {rule.rule_id}: {e}", exc_info=True)
             return False
 
@@ -196,7 +200,9 @@ class LogicUnit:
             logger.info(f"Rule {rule_id} removed successfully")
             return True
 
-        except Exception as e:  # broad exception acceptable: rule removal failures should not crash the system
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: rule removal failures should not crash the system
             logger.error(f"Failed to remove rule {rule_id}: {e}", exc_info=True)
             return False
 
@@ -276,7 +282,9 @@ class LogicUnit:
             logger.debug("No rule matched the given context")
             return None
 
-        except Exception as e:  # broad exception acceptable: evaluation errors should not crash the system, return None to signal failure
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: evaluation errors should not crash the system, return None to signal failure
             logger.error(f"Failed to evaluate rules: {e}", exc_info=True)
             return None
 
@@ -308,7 +316,9 @@ class LogicUnit:
 
             return actions
 
-        except Exception as e:  # broad exception acceptable: batch evaluation errors should not crash the system
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: batch evaluation errors should not crash the system
             logger.error(f"Failed to evaluate all rules: {e}", exc_info=True)
             return actions
 
@@ -322,7 +332,9 @@ class LogicUnit:
         try:
             # 简单表达式直接存储
             self._condition_cache[rule_id] = condition
-        except Exception as e:  # broad exception acceptable: compilation failures are non-critical, warn and continue
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: compilation failures are non-critical, warn and continue
             logger.warning(f"Failed to compile condition for rule {rule_id}: {e}", exc_info=True)
 
     def _check_condition(self, rule_id: str, condition: str, context: Dict[str, Any]) -> bool:
@@ -352,13 +364,17 @@ class LogicUnit:
 
             # 执行条件表达式
             import re
+
             safe = re.sub(r"[^a-zA-Z0-9\s_()\[\].,]", "", condition)
             from core.security.secure_eval import safe_eval
+
             result = safe_eval(safe, eval_context)
 
             return bool(result.result) if result.success else False
 
-        except Exception as e:  # broad exception acceptable: condition evaluation failures return False, non-blocking
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: condition evaluation failures return False, non-blocking
             logger.warning(f"Failed to evaluate condition for rule {rule_id}: {e}", exc_info=True)
             return False
 
@@ -446,7 +462,9 @@ class LogicUnit:
             logger.info(f"Rules saved to {filepath}")
             return True
 
-        except Exception as e:  # broad exception acceptable: file I/O errors should not crash the system
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: file I/O errors should not crash the system
             logger.error(f"Failed to save rules to {filepath}: {e}", exc_info=True)
             return False
 
@@ -475,7 +493,9 @@ class LogicUnit:
             logger.info(f"Rules loaded from {filepath}, total={len(self.rules)}")
             return True
 
-        except Exception as e:  # broad exception acceptable: file I/O errors should not crash the system
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: file I/O errors should not crash the system
             logger.error(f"Failed to load rules from {filepath}: {e}", exc_info=True)
             return False
 
@@ -491,6 +511,3 @@ class LogicUnit:
             rule.last_used = None
         self.rule_history.clear()
         logger.info("All statistics reset")
-
-
-

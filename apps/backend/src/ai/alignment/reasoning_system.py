@@ -54,9 +54,7 @@ class ReasoningSystem:
         self.is_active = True
         self.reasoning_history: list = []
         self.symbolic_space = _SimpleSymbolicSpace()
-        self.ethical_principles: dict[EthicalPrinciple, float] = {
-            p: 1.0 for p in EthicalPrinciple
-        }
+        self.ethical_principles: dict[EthicalPrinciple, float] = {p: 1.0 for p in EthicalPrinciple}
         self.logical_constraints: dict[str, LogicalConstraint] = {
             "no_harm_to_humans": LogicalConstraint(
                 constraint_id="no_harm_to_humans",
@@ -113,7 +111,9 @@ class ReasoningSystem:
             reasoning=reasoning,
             confidence=confidence,
         )
-        self.reasoning_history.append({"action": action, "evaluation": evaluation, "context": context})
+        self.reasoning_history.append(
+            {"action": action, "evaluation": evaluation, "context": context}
+        )
         return evaluation
 
     def _find_risks(self, action: dict) -> list:
@@ -132,9 +132,7 @@ class ReasoningSystem:
         for cid, constraint in self.logical_constraints.items():
             if not constraint.is_active:
                 continue
-            conditions_met = all(
-                context.get(cond) for cond in constraint.conditions
-            )
+            conditions_met = all(context.get(cond) for cond in constraint.conditions)
             if not conditions_met:
                 continue
             action_type = action.get("action_type", "")

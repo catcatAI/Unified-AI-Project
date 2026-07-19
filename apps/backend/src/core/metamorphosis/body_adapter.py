@@ -17,9 +17,7 @@ Version: 6.0.0
 Date: 2026-02-04
 """
 
-
 from __future__ import annotations
-from core.utils import safe_error
 
 import json
 import logging
@@ -27,6 +25,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
+
+from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
 
@@ -246,7 +246,9 @@ class BodyAdapter:
 
         return adapted
 
-    def _apply_field_mappings(self, state: StateSnapshot, source_version: str, target_version: str) -> None:
+    def _apply_field_mappings(
+        self, state: StateSnapshot, source_version: str, target_version: str
+    ) -> None:
         """应用字段映射 / Apply field mappings"""
         version_specific_mappings = {
             ("6.0.0", "6.0.0"): {

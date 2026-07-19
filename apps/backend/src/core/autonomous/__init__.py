@@ -63,13 +63,19 @@ _LAZY_IMPORTS: dict = {
     "BiologicalIntegrator": ("core.bio.biological_integrator", "BiologicalIntegrator"),
     "SystemInteraction": ("core.bio.biological_integrator", "SystemInteraction"),
     # Memory Neuroplasticity Bridge
-    "MemoryNeuroplasticityBridge": ("core.bio.memory_neuroplasticity_bridge", "MemoryNeuroplasticityBridge"),
+    "MemoryNeuroplasticityBridge": (
+        "core.bio.memory_neuroplasticity_bridge",
+        "MemoryNeuroplasticityBridge",
+    ),
     "MemoryConsolidation": ("core.bio.memory_neuroplasticity_bridge", "MemoryConsolidation"),
     # Extended Behavior Library
     "ExtendedBehaviorLibrary": ("core.bio.extended_behavior_library", "ExtendedBehaviorLibrary"),
     "BehaviorDefinition": ("core.bio.extended_behavior_library", "BehaviorDefinition"),
     # Multidimensional Trigger
-    "MultidimensionalTriggerSystem": ("core.bio.multidimensional_trigger", "MultidimensionalTriggerSystem"),
+    "MultidimensionalTriggerSystem": (
+        "core.bio.multidimensional_trigger",
+        "MultidimensionalTriggerSystem",
+    ),
     "TriggerDimension": ("core.bio.multidimensional_trigger", "TriggerDimension"),
     # Execution Systems → core/engine/
     "StateMatrix4D": ("core.engine.state_matrix", "StateMatrix4D"),
@@ -169,19 +175,32 @@ def _lazy_import(name: str) -> Any:
 class _MissingSentinel:
     def __getattr__(self, attr):
         return self
+
     def __call__(self, *args, **kwargs):
         return self
+
     def __bool__(self):
         return True
+
     def __repr__(self):
         return "<missing>"
+
 
 _MISSING_SENTINEL = _MissingSentinel()
 
 
 def __getattr__(name: str) -> Any:
-    if name in ("__all__", "_lazy_cache", "_warned", "logger", "_LAZY_IMPORTS",
-                "_MOUSE_ALIASES", "_MISSING_SENTINEL", "_MissingSentinel", "_lazy_import"):
+    if name in (
+        "__all__",
+        "_lazy_cache",
+        "_warned",
+        "logger",
+        "_LAZY_IMPORTS",
+        "_MOUSE_ALIASES",
+        "_MISSING_SENTINEL",
+        "_MissingSentinel",
+        "_lazy_import",
+    ):
         raise AttributeError(name)
     if name in __all__:
         return _lazy_import(name)
@@ -193,39 +212,104 @@ def __dir__() -> List[str]:
 
 
 __all__ = [
-    "__version__", "__author__",
-    "PhysiologicalTactileSystem", "Receptor", "BodyPart", "TrajectoryAnalyzer",
-    "TrajectoryPoint", "TrajectoryAnalysis", "AdaptationMechanism", "ReceptorAdaptationState",
-    "EndocrineSystem", "Hormone", "HormoneType", "HormoneKinetics", "ReceptorStatus",
-    "FeedbackLoop", "FeedbackNode",
-    "AutonomicNervousSystem", "ANSState", "NerveType",
-    "NeuroplasticitySystem", "MemoryTrace", "HebbianRule", "SkillAcquisition",
-    "SkillTrace", "HabitFormation", "HabitTrace", "TraumaMemorySystem", "TraumaMemory",
-    "ExplicitImplicitLearning", "LearningEvent",
-    "EmotionalBlendingSystem", "PADEmotion", "EmotionalExpression",
-    "MultidimensionalStateMatrix", "StateDimension",
-    "StateMatrix4D", "DimensionState",
-    "ActionExecutor", "ActionQueue", "ActionPriority", "Action", "ActionResult",
-    "ActionStatus", "ActionCategory",
-    "DesktopInteraction", "FileOperation", "DesktopState",
-    "BrowserController", "SearchResult", "BrowserState",
-    "AudioSystem", "TTSConfig", "LyricsSync",
-    "DesktopPresence", "MouseTracker",
+    "__version__",
+    "__author__",
+    "PhysiologicalTactileSystem",
+    "Receptor",
+    "BodyPart",
+    "TrajectoryAnalyzer",
+    "TrajectoryPoint",
+    "TrajectoryAnalysis",
+    "AdaptationMechanism",
+    "ReceptorAdaptationState",
+    "EndocrineSystem",
+    "Hormone",
+    "HormoneType",
+    "HormoneKinetics",
+    "ReceptorStatus",
+    "FeedbackLoop",
+    "FeedbackNode",
+    "AutonomicNervousSystem",
+    "ANSState",
+    "NerveType",
+    "NeuroplasticitySystem",
+    "MemoryTrace",
+    "HebbianRule",
+    "SkillAcquisition",
+    "SkillTrace",
+    "HabitFormation",
+    "HabitTrace",
+    "TraumaMemorySystem",
+    "TraumaMemory",
+    "ExplicitImplicitLearning",
+    "LearningEvent",
+    "EmotionalBlendingSystem",
+    "PADEmotion",
+    "EmotionalExpression",
+    "MultidimensionalStateMatrix",
+    "StateDimension",
+    "StateMatrix4D",
+    "DimensionState",
+    "ActionExecutor",
+    "ActionQueue",
+    "ActionPriority",
+    "Action",
+    "ActionResult",
+    "ActionStatus",
+    "ActionCategory",
+    "DesktopInteraction",
+    "FileOperation",
+    "DesktopState",
+    "BrowserController",
+    "SearchResult",
+    "BrowserState",
+    "AudioSystem",
+    "TTSConfig",
+    "LyricsSync",
+    "DesktopPresence",
+    "MouseTracker",
     "Live2DIntegration",
-    "BiologicalIntegrator", "SystemInteraction",
-    "DigitalLifeIntegrator", "LifeCycleState",
-    "MemoryNeuroplasticityBridge", "MemoryConsolidation",
-    "ExtendedBehaviorLibrary", "BehaviorDefinition",
-    "MultidimensionalTriggerSystem", "TriggerDimension",
-    "CyberIdentity", "SelfModel", "IdentityGrowth",
-    "SelfGeneration", "AvatarBuilder",
-    "AutonomousLifeCycle", "LifePhase", "LifeDecision", "FormulaMetrics",
-    "ArtLearningSystem", "ArtKnowledge", "ArtDomain", "TutorialContent",
-    "ImageAnalysis", "LearningSession", "BodyPartMapping", "Live2DParameter", "LearningType",
-    "Live2DAvatarGenerator", "GeneratedAvatar", "Live2DModelConfig",
-    "GenerationStage", "ViewAngle", "BodyLayer",
-    "ArtLearningWorkflow", "WorkflowStage", "LearningObjective",
-    "WorkflowProgress", "SkillAssessment", "GenerationResult", "WorkflowConfig",
+    "BiologicalIntegrator",
+    "SystemInteraction",
+    "DigitalLifeIntegrator",
+    "LifeCycleState",
+    "MemoryNeuroplasticityBridge",
+    "MemoryConsolidation",
+    "ExtendedBehaviorLibrary",
+    "BehaviorDefinition",
+    "MultidimensionalTriggerSystem",
+    "TriggerDimension",
+    "CyberIdentity",
+    "SelfModel",
+    "IdentityGrowth",
+    "SelfGeneration",
+    "AvatarBuilder",
+    "AutonomousLifeCycle",
+    "LifePhase",
+    "LifeDecision",
+    "FormulaMetrics",
+    "ArtLearningSystem",
+    "ArtKnowledge",
+    "ArtDomain",
+    "TutorialContent",
+    "ImageAnalysis",
+    "LearningSession",
+    "BodyPartMapping",
+    "Live2DParameter",
+    "LearningType",
+    "Live2DAvatarGenerator",
+    "GeneratedAvatar",
+    "Live2DModelConfig",
+    "GenerationStage",
+    "ViewAngle",
+    "BodyLayer",
+    "ArtLearningWorkflow",
+    "WorkflowStage",
+    "LearningObjective",
+    "WorkflowProgress",
+    "SkillAssessment",
+    "GenerationResult",
+    "WorkflowConfig",
 ]
 
 
@@ -236,37 +320,77 @@ def get_system_info() -> dict:
         "author": __author__,
         "modules": {
             "biological": [
-                "physiological_tactile", "endocrine_system", "autonomic_nervous_system",
-                "neuroplasticity", "emotional_blending", "biological_integrator",
+                "physiological_tactile",
+                "endocrine_system",
+                "autonomic_nervous_system",
+                "neuroplasticity",
+                "emotional_blending",
+                "biological_integrator",
             ],
             "execution": [
-                "state_matrix", "action_executor", "desktop_interaction", "browser_controller",
-                "audio_system", "desktop_presence", "live2d_integration",
+                "state_matrix",
+                "action_executor",
+                "desktop_interaction",
+                "browser_controller",
+                "audio_system",
+                "desktop_presence",
+                "live2d_integration",
             ],
             "integration": [
-                "biological_integrator", "digital_life_integrator",
-                "memory_neuroplasticity_bridge", "extended_behavior_library",
-                "multidimensional_trigger", "cyber_identity", "self_generation",
+                "biological_integrator",
+                "digital_life_integrator",
+                "memory_neuroplasticity_bridge",
+                "extended_behavior_library",
+                "multidimensional_trigger",
+                "cyber_identity",
+                "self_generation",
                 "autonomous_life_cycle",
             ],
             "art_learning": [
-                "art_learning_system", "live2d_avatar_generator", "art_learning_workflow",
+                "art_learning_system",
+                "live2d_avatar_generator",
+                "art_learning_workflow",
             ],
         },
         "capabilities": [
-            "biological_simulation", "hormonal_regulation", "neural_plasticity",
-            "emotional_blending", "trajectory_analysis", "receptor_adaptation",
-            "hormone_kinetics", "feedback_regulation", "skill_acquisition",
-            "habit_formation", "trauma_memory", "explicit_implicit_learning",
-            "multidimensional_state_matrix", "action_execution", "desktop_interaction",
-            "browser_control", "audio_synthesis", "live2d_animation",
-            "memory_consolidation", "behavior_generation", "identity_formation",
-            "self_generation", "autonomous_life_cycle", "theoretical_frameworks",
-            "hsm_formula", "cdm_model", "life_intensity", "active_cognition",
-            "non_paradox_existence", "art_learning", "live2d_generation",
-            "anime_style_learning", "tutorial_search", "image_analysis",
-            "body_part_rigging", "physiological_live2d_bridge",
-            "skill_acquisition_power_law", "implicit_style_learning",
+            "biological_simulation",
+            "hormonal_regulation",
+            "neural_plasticity",
+            "emotional_blending",
+            "trajectory_analysis",
+            "receptor_adaptation",
+            "hormone_kinetics",
+            "feedback_regulation",
+            "skill_acquisition",
+            "habit_formation",
+            "trauma_memory",
+            "explicit_implicit_learning",
+            "multidimensional_state_matrix",
+            "action_execution",
+            "desktop_interaction",
+            "browser_control",
+            "audio_synthesis",
+            "live2d_animation",
+            "memory_consolidation",
+            "behavior_generation",
+            "identity_formation",
+            "self_generation",
+            "autonomous_life_cycle",
+            "theoretical_frameworks",
+            "hsm_formula",
+            "cdm_model",
+            "life_intensity",
+            "active_cognition",
+            "non_paradox_existence",
+            "art_learning",
+            "live2d_generation",
+            "anime_style_learning",
+            "tutorial_search",
+            "image_analysis",
+            "body_part_rigging",
+            "physiological_live2d_bridge",
+            "skill_acquisition_power_law",
+            "implicit_style_learning",
         ],
     }
 
@@ -329,7 +453,8 @@ async def initialize_all_systems() -> dict:
             browser_controller=browser, vision_service=None, neuroplasticity=neuroplasticity
         )
         systems["live2d_generator"] = Live2DAvatarGenerator(
-            image_generator=None, art_learning_system=systems["art_learning"],
+            image_generator=None,
+            art_learning_system=systems["art_learning"],
         )
         systems["art_learning_workflow"] = ArtLearningWorkflow(
             art_learning_system=systems["art_learning"],
@@ -348,6 +473,7 @@ async def initialize_all_systems() -> dict:
     if live2d_reg:
         try:
             from core.interfaces.service_registry import get_registry
+
             get_registry().register("live2d_integration", live2d_reg)
         except Exception as e:
             logger.warning(f"Failed to register live2d_integration service: {e}", exc_info=True)

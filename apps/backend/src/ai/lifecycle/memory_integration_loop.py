@@ -178,16 +178,22 @@ class MemoryIntegrationLoop:
                 await asyncio.sleep(interval)
             except asyncio.CancelledError:
                 break
-            except Exception as e:  # broad exception acceptable: loop must be resilient to prevent process termination
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: loop must be resilient to prevent process termination
                 logger.error(f"Error in integration loop: {e}", exc_info=True)
                 await asyncio.sleep(loop_sleep("memory_loop_tight", 1.0))  # 防止緊密循環
 
     def _calculate_interval(self) -> float:
         """動態計算循環間隔"""
         # 根據待整合記憶數量調整
-        if len(self.integration_queue) > batch_value("ai.memory_integration_loop.fast_queue_threshold", 50):
+        if len(self.integration_queue) > batch_value(
+            "ai.memory_integration_loop.fast_queue_threshold", 50
+        ):
             return self.min_loop_interval
-        elif len(self.integration_queue) > batch_value("ai.memory_integration_loop.normal_queue_threshold", 20):
+        elif len(self.integration_queue) > batch_value(
+            "ai.memory_integration_loop.normal_queue_threshold", 20
+        ):
             return self.loop_interval
         else:
             return self.max_loop_interval
@@ -221,7 +227,9 @@ class MemoryIntegrationLoop:
         try:
             # 從記憶管理器獲取最近的記憶
             if hasattr(self.memory_manager, "get_recent_memories"):
-                recent_memories = await self.memory_manager.get_recent_memories(limit=batch_value("recent_memories", 20))
+                recent_memories = await self.memory_manager.get_recent_memories(
+                    limit=batch_value("recent_memories", 20)
+                )
 
                 for mem in recent_memories:
                     # 檢查是否已經處理
@@ -240,7 +248,9 @@ class MemoryIntegrationLoop:
             if len(self.memory_infos) > self.max_infos:
                 self.memory_infos = self.memory_infos[-self.max_infos :]
 
-        except Exception as e:  # broad exception acceptable: collecting new info should not crash integration loop
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: collecting new info should not crash integration loop
             logger.warning(f"Error collecting new info: {e}", exc_info=True)
 
     async def _analyze_patterns(self) -> None:
@@ -266,14 +276,20 @@ class MemoryIntegrationLoop:
                     if pattern_key in self.knowledge_patterns:
                         self.knowledge_patterns[pattern_key].frequency += freq
                         self.knowledge_patterns[pattern_key].confidence = min(
-                            1.0, self.knowledge_patterns[pattern_key].confidence + behavior_threshold("ai.memory_integration_loop.confidence_increment", 0.1)
+                            1.0,
+                            self.knowledge_patterns[pattern_key].confidence
+                            + behavior_threshold(
+                                "ai.memory_integration_loop.confidence_increment", 0.1
+                            ),
                         )
                         self.knowledge_patterns[pattern_key].last_seen = datetime.now()
                     else:
                         self.knowledge_patterns[pattern_key] = KnowledgePattern(
                             pattern=keyword,
                             frequency=freq,
-                            confidence=threshold_value("ai.memory_integration_loop.pattern_initial_confidence", 0.3),
+                            confidence=threshold_value(
+                                "ai.memory_integration_loop.pattern_initial_confidence", 0.3
+                            ),
                             last_seen=datetime.now(),
                             examples=[content for content in content_list if keyword in content][
                                 :3
@@ -281,12 +297,16 @@ class MemoryIntegrationLoop:
                         )
                         self.stats["patterns_found"] += 1
 
-        except Exception as e:  # broad exception acceptable: pattern analysis should not crash the loop
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: pattern analysis should not crash the loop
             logger.warning(f"Error analyzing patterns: {e}", exc_info=True)
 
     async def _structure_memory(self) -> None:
         """結構化記憶 with neuroplasticity integration (Phase 5.3)."""
-        for info in self.integration_queue[:batch_value("ai.memory_integration_loop.structure_batch", 10)]:
+        for info in self.integration_queue[
+            : batch_value("ai.memory_integration_loop.structure_batch", 10)
+        ]:
             if not info.structured:
                 try:
                     # 簡單的結構化：提取關鍵信息
@@ -295,10 +315,10 @@ class MemoryIntegrationLoop:
                     # Phase 5.3: Neuroplasticity encoding
                     if self._neuroplasticity is not None:
                         try:
-                            if hasattr(self._neuroplasticity, 'encode'):
+                            if hasattr(self._neuroplasticity, "encode"):
                                 self._neuroplasticity.encode(info.content)
                                 self.stats["neuroplasticity_encodings"] += 1
-                            if hasattr(self._neuroplasticity, 'consolidate'):
+                            if hasattr(self._neuroplasticity, "consolidate"):
                                 self._neuroplasticity.consolidate()
                         except Exception as e:
                             logger.debug("Neuroplasticity encoding failed: %s", e)
@@ -306,9 +326,9 @@ class MemoryIntegrationLoop:
                     # Phase 5.3: Importance boosting based on access count
                     if info.importance < 1.0 and info.integrated:
                         boost = 0.0
-                        if hasattr(info, '_access_count') and info._access_count > 5:
+                        if hasattr(info, "_access_count") and info._access_count > 5:
                             boost = 0.2
-                        elif hasattr(self.memory_manager, 'get_access_count'):
+                        elif hasattr(self.memory_manager, "get_access_count"):
                             count = await self.memory_manager.get_access_count(info.content)
                             if count > 5:
                                 boost = 0.2
@@ -337,7 +357,7 @@ class MemoryIntegrationLoop:
         return {
             "word_count": len(words),
             "sentence_count": len(sentences),
-            "keywords": words[:limit_value("ai.memory_integration_loop.keyword_limit", 5)],
+            "keywords": words[: limit_value("ai.memory_integration_loop.keyword_limit", 5)],
             "first_sentence": sentences[0] if sentences else "",
             "timestamp": datetime.now().isoformat(),
         }
@@ -363,21 +383,30 @@ class MemoryIntegrationLoop:
                 info for info in self.integration_queue if not info.integrated
             ]
 
-        except Exception as e:  # broad exception acceptable: knowledge base updates should be fault-tolerant
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: knowledge base updates should be fault-tolerant
             logger.warning(f"Error updating knowledge base: {e}", exc_info=True)
 
     async def _generate_templates(self) -> None:
         """生成新模板"""
         try:
             # 基於模式生成模板
-            if len(self.knowledge_patterns) > batch_value("ai.memory_integration_loop.template_min_patterns", 5):
+            if len(self.knowledge_patterns) > batch_value(
+                "ai.memory_integration_loop.template_min_patterns", 5
+            ):
                 # 選擇高置信度的模式
                 high_confidence_patterns = [
-                    p for p in self.knowledge_patterns.values() if p.confidence > threshold_value("ai.memory_integration_loop.high_confidence_threshold", 0.6)
+                    p
+                    for p in self.knowledge_patterns.values()
+                    if p.confidence
+                    > threshold_value("ai.memory_integration_loop.high_confidence_threshold", 0.6)
                 ]
 
                 if high_confidence_patterns and hasattr(self.memory_manager, "generate_template"):
-                    for pattern in high_confidence_patterns[:batch_value("ai.memory_integration_loop.template_batch", 3)]:
+                    for pattern in high_confidence_patterns[
+                        : batch_value("ai.memory_integration_loop.template_batch", 3)
+                    ]:
                         template = {
                             "pattern": pattern.pattern,
                             "examples": pattern.examples,
@@ -394,16 +423,16 @@ class MemoryIntegrationLoop:
     async def _promote_memories(self) -> None:
         """Promote frequently accessed short-term memories to long-term (Phase 5.3)."""
         try:
-            if not hasattr(self.memory_manager, 'promote_to_long_term'):
+            if not hasattr(self.memory_manager, "promote_to_long_term"):
                 return
 
             for info in self.memory_infos:
                 if info.type != "short_term":
                     continue
                 access_count = 0
-                if hasattr(info, '_access_count'):
+                if hasattr(info, "_access_count"):
                     access_count = info._access_count
-                elif hasattr(self.memory_manager, 'get_access_count'):
+                elif hasattr(self.memory_manager, "get_access_count"):
                     access_count = await self.memory_manager.get_access_count(info.content)
 
                 if access_count > 10:
@@ -416,7 +445,9 @@ class MemoryIntegrationLoop:
         except Exception as e:
             logger.debug("Memory promotion failed: %s", e)
 
-    def add_memory(self, content: str, memory_type: str = "general", importance: float = 0.5) -> None:
+    def add_memory(
+        self, content: str, memory_type: str = "general", importance: float = 0.5
+    ) -> None:
         """添加記憶"""
         info = MemoryInfo(
             content=content, type=memory_type, timestamp=datetime.now(), importance=importance
@@ -458,5 +489,3 @@ class MemoryIntegrationLoop:
             "patterns_count": len(self.knowledge_patterns),
             "neuroplasticity_connected": self._neuroplasticity is not None,
         }
-
-

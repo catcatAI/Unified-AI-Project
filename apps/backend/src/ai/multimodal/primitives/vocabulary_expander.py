@@ -31,16 +31,14 @@ class VocabularyExpander:
     this module discovers new primitive types from the residuals.
     """
 
-    def __init__(self, vocabulary: GeometricVocabulary,
-                 canvas_size: Tuple[int, int] = (128, 128)):
+    def __init__(self, vocabulary: GeometricVocabulary, canvas_size: Tuple[int, int] = (128, 128)):
         self._vocabulary = vocabulary
         self._diff_renderer = DifferentiableRenderer(canvas_size)
         self._residuals: List[np.ndarray] = []
         self._residual_images: List[np.ndarray] = []
         self._error_threshold = 0.02  # MSE threshold for "needs expansion"
 
-    def analyze_generation(self, original: np.ndarray, optimized_vec: np.ndarray,
-                            error: float):
+    def analyze_generation(self, original: np.ndarray, optimized_vec: np.ndarray, error: float):
         """Analyze a generation result for potential vocabulary expansion.
 
         Args:
@@ -55,8 +53,9 @@ class VocabularyExpander:
             self._residuals.append(residual)
             self._residual_images.append(original)
 
-    def check_for_expansion(self, min_residuals: int = 10,
-                             expansion_threshold: int = 5) -> List[Dict]:
+    def check_for_expansion(
+        self, min_residuals: int = 10, expansion_threshold: int = 5
+    ) -> List[Dict]:
         """Check if vocabulary should be expanded.
 
         Args:
@@ -78,7 +77,7 @@ class VocabularyExpander:
         # Simple analysis: find dominant colors and positions in residuals
         for i, residual in enumerate(self._residuals):
             # Find high-error regions
-            error_map = np.sqrt((residual ** 2).sum(axis=2))
+            error_map = np.sqrt((residual**2).sum(axis=2))
             high_error = error_map > 0.3
 
             if high_error.sum() > 50:  # Significant error
@@ -89,12 +88,16 @@ class VocabularyExpander:
                     cx = coords[:, 1].mean() / residual.shape[1]
                     color = residual[coords[:, 0], coords[:, 1]].mean(axis=0)
 
-                    candidates.append({
-                        "position": (float(cx), float(cy)),
-                        "color": color.tolist(),
-                        "size": float(high_error.sum() / (residual.shape[0] * residual.shape[1])),
-                        "residual_mse": float(np.mean(residual ** 2)),
-                    })
+                    candidates.append(
+                        {
+                            "position": (float(cx), float(cy)),
+                            "color": color.tolist(),
+                            "size": float(
+                                high_error.sum() / (residual.shape[0] * residual.shape[1])
+                            ),
+                            "residual_mse": float(np.mean(residual**2)),
+                        }
+                    )
 
         # Cluster candidates (simple: group by position)
         if len(candidates) >= expansion_threshold:
@@ -128,13 +131,15 @@ class VocabularyExpander:
                 avg_pos = np.mean([c["position"] for c in cluster], axis=0)
                 avg_size = np.mean([c["size"] for c in cluster])
 
-                new_types.append({
-                    "type": "learned_patch",
-                    "position": avg_pos.tolist(),
-                    "color": avg_color.tolist(),
-                    "size": float(avg_size),
-                    "support": len(cluster),
-                })
+                new_types.append(
+                    {
+                        "type": "learned_patch",
+                        "position": avg_pos.tolist(),
+                        "color": avg_color.tolist(),
+                        "size": float(avg_size),
+                        "support": len(cluster),
+                    }
+                )
 
         return new_types
 

@@ -37,10 +37,10 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 # File format constants
-MAGIC = 0x47415244           # "GARD" in little-endian
+MAGIC = 0x47415244  # "GARD" in little-endian
 VERSION = 1
-HEADER_SIZE = 28             # bytes (matches HEADER_FORMAT: 4+4+4+16=28)
-HEADER_FORMAT = "<I2I16s"     # magic (4B) + version (4B) + V (4B) + pad (16B)
+HEADER_SIZE = 28  # bytes (matches HEADER_FORMAT: 4+4+4+16=28)
+HEADER_FORMAT = "<I2I16s"  # magic (4B) + version (4B) + V (4B) + pad (16B)
 
 _torch = None
 
@@ -49,9 +49,11 @@ def _lazy_torch():
     global _torch
     if _torch is None:
         from ._import_utils import subprocess_check
+
         if subprocess_check("torch"):
             try:
                 import torch
+
                 _torch = torch
             except ImportError:
                 _torch = False

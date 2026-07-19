@@ -57,9 +57,13 @@ class HormonalModulator:
             }
             profile = self._endocrine_system.get_hormonal_profile()
             for our_key, ht in hormone_map.items():
-                normalized = profile["hormones"].get(ht, {}).get(
-                    "normalized",
-                    profile["hormones"].get(ht.name, {}).get("normalized", None),
+                normalized = (
+                    profile["hormones"]
+                    .get(ht, {})
+                    .get(
+                        "normalized",
+                        profile["hormones"].get(ht.name, {}).get("normalized", None),
+                    )
                 )
                 if normalized is not None:
                     self.hormones[our_key] = min(max(normalized, 0.0), 1.0)
@@ -83,13 +87,7 @@ class HormonalModulator:
         dopamine_effect = self.hormones.get("dopamine", 0.5) * 0.1
         adrenaline_effect = self.hormones.get("adrenaline", 0.3) * 0.15
 
-        total_mod = (
-            1.0
-            - cortisol_effect
-            - dopamine_effect
-            - adrenaline_effect
-            + serotonin_effect
-        )
+        total_mod = 1.0 - cortisol_effect - dopamine_effect - adrenaline_effect + serotonin_effect
         return base_threshold * max(total_mod, 0.3)
 
     def get_modulation_factor(self) -> float:

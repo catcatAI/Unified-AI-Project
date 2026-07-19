@@ -111,8 +111,11 @@ def _get_gvv():
             "concept_mapper": mapper,
             "optimizer": optimizer,
         }
-        logger.info("Loaded GVV pipeline (vocab=%d words, %d concepts)",
-                     len(vocabulary._visual_words), len(vocabulary._concept_distributions))
+        logger.info(
+            "Loaded GVV pipeline (vocab=%d words, %d concepts)",
+            len(vocabulary._visual_words),
+            len(vocabulary._concept_distributions),
+        )
         return _gvv_state
     except Exception as e:
         logger.error("Failed to initialize GVV pipeline: %s", e)
@@ -149,6 +152,7 @@ def _encode_text_with_clip(text: str) -> np.ndarray:
     """Encode text using CLIP. Returns 512-dim vector."""
     try:
         from ai.multimodal.semantic_visual import SemanticVisualEncoder
+
         encoder = SemanticVisualEncoder()
         if not encoder.is_available:
             logger.warning("CLIP not available, using zeros")
@@ -277,6 +281,7 @@ async def image_reconstruct(request: ReconstructImageRequest):
 
     try:
         import time
+
         from PIL import Image as PILImage
 
         img_bytes = base64.b64decode(request.image_base64)
@@ -328,11 +333,13 @@ async def image_interpolate(request: InterpolateRequest):
 
     try:
         import time
+
         from PIL import Image as PILImage
 
         t0 = time.time()
-        interp = model.interpolate(request.class_a, request.class_b, n_steps=request.n_steps,
-                                   enhance=request.enhance)
+        interp = model.interpolate(
+            request.class_a, request.class_b, n_steps=request.n_steps, enhance=request.enhance
+        )
         interp_time = time.time() - t0
 
         images = []

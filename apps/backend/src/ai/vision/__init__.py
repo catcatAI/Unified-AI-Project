@@ -8,6 +8,7 @@ Exports:
   - VisionPipeline: end-to-end vision encode→latent→decode→quality pipeline
   - VisionQualityMonitor: quality tracking and reporting for vision pipeline
 """
+
 from ai.vision.quality_monitor import VisionQualityMonitor
 from ai.vision.vision_pipeline import VisionPipeline
 

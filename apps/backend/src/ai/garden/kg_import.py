@@ -112,17 +112,67 @@ class KGImporter:
     ]
 
     SYNTHETIC_SUFFIXES = {
-        "animal": [("狗", "dog"), ("猫", "cat"), ("鸟", "bird"), ("鱼", "fish"), ("马", "horse"),
-                   ("牛", "cow"), ("猪", "pig"), ("羊", "sheep"), ("鸡", "chicken"), ("鸭", "duck"),
-                   ("兔", "rabbit"), ("蛇", "snake"), ("鼠", "mouse"), ("熊", "bear"), ("狼", "wolf"),
-                   ("虎", "tiger"), ("狮", "lion"), ("象", "elephant"), ("鹿", "deer"), ("猴", "monkey")],
-        "plant": [("树", "tree"), ("花", "flower"), ("草", "grass"), ("竹", "bamboo"), ("松", "pine"),
-                  ("梅", "plum"), ("兰", "orchid"), ("菊", "chrysanthemum"), ("荷", "lotus"), ("柳", "willow"),
-                  ("枫", "maple"), ("橡", "oak"), ("棕", "palm"), ("蕨", "fern"), ("苔", "moss")],
-        "food": [("米饭", "rice"), ("面包", "bread"), ("面条", "noodle"), ("蛋糕", "cake"), ("苹果", "apple"),
-                 ("香蕉", "banana"), ("橙子", "orange"), ("葡萄", "grape"), ("西瓜", "watermelon"), ("牛奶", "milk"),
-                 ("咖啡", "coffee"), ("茶", "tea"), ("果汁", "juice"), ("巧克力", "chocolate"), ("冰淇淋", "ice cream"),
-                 ("沙拉", "salad"), ("汤", "soup"), ("披萨", "pizza"), ("汉堡", "hamburger"), ("寿司", "sushi")],
+        "animal": [
+            ("狗", "dog"),
+            ("猫", "cat"),
+            ("鸟", "bird"),
+            ("鱼", "fish"),
+            ("马", "horse"),
+            ("牛", "cow"),
+            ("猪", "pig"),
+            ("羊", "sheep"),
+            ("鸡", "chicken"),
+            ("鸭", "duck"),
+            ("兔", "rabbit"),
+            ("蛇", "snake"),
+            ("鼠", "mouse"),
+            ("熊", "bear"),
+            ("狼", "wolf"),
+            ("虎", "tiger"),
+            ("狮", "lion"),
+            ("象", "elephant"),
+            ("鹿", "deer"),
+            ("猴", "monkey"),
+        ],
+        "plant": [
+            ("树", "tree"),
+            ("花", "flower"),
+            ("草", "grass"),
+            ("竹", "bamboo"),
+            ("松", "pine"),
+            ("梅", "plum"),
+            ("兰", "orchid"),
+            ("菊", "chrysanthemum"),
+            ("荷", "lotus"),
+            ("柳", "willow"),
+            ("枫", "maple"),
+            ("橡", "oak"),
+            ("棕", "palm"),
+            ("蕨", "fern"),
+            ("苔", "moss"),
+        ],
+        "food": [
+            ("米饭", "rice"),
+            ("面包", "bread"),
+            ("面条", "noodle"),
+            ("蛋糕", "cake"),
+            ("苹果", "apple"),
+            ("香蕉", "banana"),
+            ("橙子", "orange"),
+            ("葡萄", "grape"),
+            ("西瓜", "watermelon"),
+            ("牛奶", "milk"),
+            ("咖啡", "coffee"),
+            ("茶", "tea"),
+            ("果汁", "juice"),
+            ("巧克力", "chocolate"),
+            ("冰淇淋", "ice cream"),
+            ("沙拉", "salad"),
+            ("汤", "soup"),
+            ("披萨", "pizza"),
+            ("汉堡", "hamburger"),
+            ("寿司", "sushi"),
+        ],
     }
 
     def _synthetic_key(self, cat: str, idx: int) -> str:
@@ -165,7 +215,9 @@ class KGImporter:
         for key, entity in self.entities.items():
             cat = entity["category"]
             # Connect to same-category entities (synonym-like)
-            same_cat = [k for k in self.entities if k != key and self.entities[k]["category"] == cat]
+            same_cat = [
+                k for k in self.entities if k != key and self.entities[k]["category"] == cat
+            ]
             random.shuffle(same_cat)
             for peer in same_cat[:3]:
                 self._add_triple(key, "relatedto", peer, weight=0.5)
@@ -438,19 +490,19 @@ class KGImporter:
         """Map Wikidata property IDs to GARDEN relation types."""
         # Common property mappings
         prop_map = {
-            "P31": "isa",           # instance of
-            "P279": "isa",          # subclass of
-            "P361": "partof",       # part of
-            "P527": "hasa",         # has part
-            "P1542": "causes",      # has effect
-            "P828": "causes",       # has cause
-            "P4482": "usedfor",     # has use
-            "P366": "usedfor",      # has use
-            "P1889": "distinctfrom", # different from
-            "P460": "relatedto",    # said to be the same as
-            "P461": "antonym",      # opposite of
-            "P1552": "relatedto",   # has quality
-            "P1034": "relatedto",   # main subject
+            "P31": "isa",  # instance of
+            "P279": "isa",  # subclass of
+            "P361": "partof",  # part of
+            "P527": "hasa",  # has part
+            "P1542": "causes",  # has effect
+            "P828": "causes",  # has cause
+            "P4482": "usedfor",  # has use
+            "P366": "usedfor",  # has use
+            "P1889": "distinctfrom",  # different from
+            "P460": "relatedto",  # said to be the same as
+            "P461": "antonym",  # opposite of
+            "P1552": "relatedto",  # has quality
+            "P1034": "relatedto",  # main subject
         }
         return prop_map.get(prop, "relatedto")
 
@@ -571,18 +623,22 @@ class KGImporter:
         """Export graph to human-readable JSON (dictionary entries format)."""
         entries = []
         for key, entity in self.entities.items():
-            entries.append({
-                "key": key,
-                "surface_forms": entity.get("surface", {}),
-                "relations": entity.get("relations", {}),
-                "confidence": 0.85,
-            })
+            entries.append(
+                {
+                    "key": key,
+                    "surface_forms": entity.get("surface", {}),
+                    "relations": entity.get("relations", {}),
+                    "confidence": 0.85,
+                }
+            )
         data = {
             "version": "garden-1.0",
             "source": "kg_import",
             "entries": entries,
         }
-        os.makedirs(os.path.dirname(json_path) if os.path.dirname(json_path) else ".", exist_ok=True)
+        os.makedirs(
+            os.path.dirname(json_path) if os.path.dirname(json_path) else ".", exist_ok=True
+        )
         with open(json_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
         logger.info("KGImporter: exported %d entries to %s", len(entries), json_path)

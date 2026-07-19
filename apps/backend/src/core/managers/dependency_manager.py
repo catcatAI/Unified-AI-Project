@@ -11,14 +11,14 @@ Context: Optional Dependency Management
 Purpose: Provide fallback mechanisms for optional dependencies
 """
 
-from core.utils import safe_error
-
 import importlib
 import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
+
+from core.utils import safe_error
 
 # NOTE: 依賴 yaml 庫（如未安裝則降級運行）
 try:
@@ -74,12 +74,14 @@ class DependencyManager:
                     logger.info(f"Loaded dependency configuration from {config_path}")
                 else:
                     logger.warning(
-                        f"YAML module not available, skipping config loading from {config_path}"
-                        , exc_info=True
+                        f"YAML module not available, skipping config loading from {config_path}",
+                        exc_info=True,
                     )
                     self._config = {}
             else:
-                logger.warning(f"Dependency configuration file not found: {config_path}", exc_info=True)
+                logger.warning(
+                    f"Dependency configuration file not found: {config_path}", exc_info=True
+                )
                 self._config = {}
         except Exception as e:  # broad exception acceptable: config load fallback
             logger.error(f"Error loading dependency configuration: {e}", exc_info=True)
@@ -121,8 +123,8 @@ class DependencyManager:
                     logger.info(f"Using fallback {fallback_name} for {name}")
                 except ImportError as fallback_error:
                     logger.error(
-                        f"Failed to load fallback {fallback_name} for {name}: {fallback_error}"
-                        , exc_info=True
+                        f"Failed to load fallback {fallback_name} for {name}: {fallback_error}",
+                        exc_info=True,
                     )
                     dep_status.fallback_available = False
                     dep_status.fallback_name = None

@@ -27,9 +27,30 @@ if __name__ == "__main__":
 
     async def _demo_tactile_stimuli(system):
         stimuli = [
-            TactileStimulus(tactile_type=TactileType.LIGHT_TOUCH, intensity=3.0, location=BodyPart.HANDS, duration=2.0, source="user_interaction", emotional_tag="comfort"),
-            TactileStimulus(tactile_type=TactileType.PRESSURE, intensity=5.0, location=BodyPart.SHOULDERS, duration=5.0, source="massage", emotional_tag="relaxation"),
-            TactileStimulus(tactile_type=TactileType.TEMPERATURE, intensity=7.0, location=BodyPart.FACE, duration=1.0, source="environment", emotional_tag="anxiety"),
+            TactileStimulus(
+                tactile_type=TactileType.LIGHT_TOUCH,
+                intensity=3.0,
+                location=BodyPart.HANDS,
+                duration=2.0,
+                source="user_interaction",
+                emotional_tag="comfort",
+            ),
+            TactileStimulus(
+                tactile_type=TactileType.PRESSURE,
+                intensity=5.0,
+                location=BodyPart.SHOULDERS,
+                duration=5.0,
+                source="massage",
+                emotional_tag="relaxation",
+            ),
+            TactileStimulus(
+                tactile_type=TactileType.TEMPERATURE,
+                intensity=7.0,
+                location=BodyPart.FACE,
+                duration=1.0,
+                source="environment",
+                emotional_tag="anxiety",
+            ),
         ]
         logger.info("\n处理触觉刺激 / Processing tactile stimuli:\n")
         for i, stimulus in enumerate(stimuli, 1):
@@ -54,6 +75,7 @@ if __name__ == "__main__":
 
     def _demo_trajectory_analyzer():
         import math
+
         logger.info("\n" + "=" * 60)
         logger.info("轨迹分析器演示 / Trajectory Analyzer Demo")
         logger.info("=" * 60)
@@ -61,9 +83,13 @@ if __name__ == "__main__":
         logger.info("\n1. 模拟曲线轨迹 / Simulating curved trajectory:")
         for i in range(20):
             angle = i * 0.3
-            analyzer.add_point(math.cos(angle) * 50 + 100, math.sin(angle) * 30 + 100, pressure=0.5 + i * 0.02)
+            analyzer.add_point(
+                math.cos(angle) * 50 + 100, math.sin(angle) * 30 + 100, pressure=0.5 + i * 0.02
+            )
         analysis = analyzer.analyze()
-        logger.info(f"   运动模式: {analysis.movement_pattern} ({analyzer.MOVEMENT_PATTERNS[analysis.movement_pattern]['cn']})")
+        logger.info(
+            f"   运动模式: {analysis.movement_pattern} ({analyzer.MOVEMENT_PATTERNS[analysis.movement_pattern]['cn']})"
+        )
         logger.info(f"   平均速度: {analysis.velocity:.2f} px/s")
         logger.info(f"   曲率: {analysis.curvature:.4f}")
         logger.info(f"   置信度: {analysis.pattern_confidence:.2%}")
@@ -72,7 +98,9 @@ if __name__ == "__main__":
         for i in range(20):
             analyzer.add_point(100 + i * 5, 100, pressure=0.8)
         analysis = analyzer.analyze()
-        logger.info(f"   运动模式: {analysis.movement_pattern} ({analyzer.MOVEMENT_PATTERNS[analysis.movement_pattern]['cn']})")
+        logger.info(
+            f"   运动模式: {analysis.movement_pattern} ({analyzer.MOVEMENT_PATTERNS[analysis.movement_pattern]['cn']})"
+        )
         logger.info(f"   平均速度: {analysis.velocity:.2f} px/s")
 
     def _demo_adaptation_mechanism():
@@ -85,11 +113,15 @@ if __name__ == "__main__":
         logger.info("   重复触摸刺激 / Repeated touch stimuli:")
         for i in range(5):
             state = mechanism.process_stimulus("hand_touch", "touch", intensity=0.6)
-            logger.info(f"   刺激 #{i+1}: 敏感度={state.current_sensitivity:.3f}, 习惯化={state.habituation_level:.3f}")
+            logger.info(
+                f"   刺激 #{i+1}: 敏感度={state.current_sensitivity:.3f}, 习惯化={state.habituation_level:.3f}"
+            )
         logger.info("\n4. 去习惯化演示 / Dishabituation demonstration:")
         logger.info("   新刺激类型（振动）/ New stimulus type (vibration):")
         state = mechanism.process_stimulus("hand_touch", "vibration", intensity=0.8)
-        logger.info(f"   敏感度恢复: {state.current_sensitivity:.3f}, 习惯化降低: {state.habituation_level:.3f}")
+        logger.info(
+            f"   敏感度恢复: {state.current_sensitivity:.3f}, 习惯化降低: {state.habituation_level:.3f}"
+        )
 
     async def demo() -> None:
         system = PhysiologicalTactileSystem()

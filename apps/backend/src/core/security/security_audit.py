@@ -11,13 +11,13 @@
 
 """安全审计模块 - 定期安全检查和漏洞扫描"""
 
-from core.utils import safe_error
-
 import logging
 import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from core.utils import safe_error
 
 logger = logging.getLogger("security_audit")
 
@@ -80,7 +80,9 @@ class SecurityAudit:
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
-        except Exception as e:  # broad exception acceptable: file I/O errors should not break security scans
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: file I/O errors should not break security scans
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return {"file": file_path, "error": safe_error(e), "vulnerabilities": []}
 

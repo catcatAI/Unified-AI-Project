@@ -60,7 +60,10 @@ class PrecomputeService:
         return task.status if task else None
 
     def list_tasks(self) -> List[Dict[str, Any]]:
-        return [{"task_id": t.task_id, "priority": t.priority, "status": t.status} for t in self._tasks.values()]
+        return [
+            {"task_id": t.task_id, "priority": t.priority, "status": t.status}
+            for t in self._tasks.values()
+        ]
 
 
 __all__ = ["PrecomputeService", "PrecomputeTask"]

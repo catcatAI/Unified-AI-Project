@@ -37,7 +37,7 @@ async def test_auditory_attention_chain():
     user_profile = audio_service.memory.get_user_profile()
     assert user_profile is not None
     assert user_profile.name == "User"
-    print(f"Successfully recalled user profile from auditory memory")
+    print("Successfully recalled user profile from auditory memory")
 
 if __name__ == "__main__":
     asyncio.run(test_auditory_attention_chain())

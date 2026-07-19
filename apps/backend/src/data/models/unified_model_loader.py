@@ -16,7 +16,9 @@ class UnifiedModelLoader:
         """加载指定名称的模型"""
         if model_name in cls._instances:
             return cls._instances[model_name]
-        logger.info(f"[UnifiedModelLoader] Loading model: {model_name} from {model_path or 'default'}")
+        logger.info(
+            f"[UnifiedModelLoader] Loading model: {model_name} from {model_path or 'default'}"
+        )
         instance = object()
         cls._instances[model_name] = instance
         return instance
@@ -34,4 +36,3 @@ class UnifiedModelLoader:
     def get_loaded_models(cls) -> Dict[str, Any]:
         """获取所有已加载的模型"""
         return dict(cls._instances)
-

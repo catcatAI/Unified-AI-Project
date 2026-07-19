@@ -6,7 +6,6 @@ from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
 
 import semver  # Assuming 'semver' is intended to be used and is installed
-
 from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
@@ -126,7 +125,12 @@ class HSPVersionManager:
             target = semver.VersionInfo.parse(target_version)
             return target > current
         except ValueError:
-            logger.warning("Semver parse failed, falling back to string comparison: %s vs %s", current_version, target_version, exc_info=True)
+            logger.warning(
+                "Semver parse failed, falling back to string comparison: %s vs %s",
+                current_version,
+                target_version,
+                exc_info=True,
+            )
             return target_version > current_version
 
     def register_converter(self, version_pair: str, converter: Callable) -> None:
@@ -162,7 +166,9 @@ class HSPVersionManager:
             converted_message = converter(message)
             logger.debug(f"消息版本转换成功: {from_version} -> {to_version}")
             return converted_message
-        except Exception as e:  # broad exception acceptable: version conversion may raise various errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: version conversion may raise various errors
             logger.error(f"消息版本转换失败: {e}", exc_info=True)
             raise
 
@@ -186,7 +192,10 @@ class HSPVersionManager:
                 server = semver.VersionInfo.parse(server_version)
                 return client_version if client <= server else server_version
             except ValueError:
-                logger.warning("Semver parse failed for compatibility check, using client version", exc_info=True)
+                logger.warning(
+                    "Semver parse failed for compatibility check, using client version",
+                    exc_info=True,
+                )
                 return client_version
         else:
             logger.warning(f"版本不兼容: {client_version} <-> {server_version}", exc_info=True)
@@ -285,7 +294,9 @@ class HSPVersionConverter:
             return self.version_manager.convert_message(message, message_version, current_version)
         else:
             # 消息版本比当前版本新, 可能需要降级或其他处理
-            logger.warning(f"消息版本比当前版本新: {message_version} > {current_version}", exc_info=True)
+            logger.warning(
+                f"消息版本比当前版本新: {message_version} > {current_version}", exc_info=True
+            )
             return message
 
 
@@ -314,7 +325,10 @@ class HSPVersionNegotiator:
             )
             return sorted_versions[0]
         except ValueError:
-            logger.warning("Semver parse failed for version sorting, returning first common version", exc_info=True)
+            logger.warning(
+                "Semver parse failed for version sorting, returning first common version",
+                exc_info=True,
+            )
             return list(common_versions)[0]
 
     def get_upgrade_recommendation(self, current_version: str) -> Optional[str]:
@@ -500,7 +514,9 @@ if __name__ == "__main__":
     try:
         converted_message = version_converter.convert_message_with_version_check(test_message)
         logger.info("转换后的消息: ", json.dumps(converted_message, indent=2, ensure_ascii=False))
-    except Exception as e:  # broad exception acceptable: test message conversion may fail with version compatibility errors
+    except (
+        Exception
+    ) as e:  # broad exception acceptable: test message conversion may fail with version compatibility errors
         logger.info(f"转换失败: {e}")
 
     # 生成兼容性报告

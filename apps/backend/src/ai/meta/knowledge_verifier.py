@@ -34,14 +34,51 @@ _NEG_RE = re.compile(
 )
 
 _STOPWORDS = {
-    "the", "a", "an", "is", "are", "was", "were", "be", "to", "of", "and",
-    "or", "in", "on", "at", "by", "for", "with", "that", "this", "it", "its",
-    "the", "as", "from", "into", "means", "refers", "equals",
-    "是", "為", "指", "的", "了", "之", "與", "及", "和", "一個", "這", "那",
+    "the",
+    "a",
+    "an",
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "to",
+    "of",
+    "and",
+    "or",
+    "in",
+    "on",
+    "at",
+    "by",
+    "for",
+    "with",
+    "that",
+    "this",
+    "it",
+    "its",
+    "the",
+    "as",
+    "from",
+    "into",
+    "means",
+    "refers",
+    "equals",
+    "是",
+    "為",
+    "指",
+    "的",
+    "了",
+    "之",
+    "與",
+    "及",
+    "和",
+    "一個",
+    "這",
+    "那",
 }
 
 _KEY_TOKEN_RE = re.compile(r"[A-Z][a-zA-Z0-9]+|[\d][\d.,:%]*|\b[a-z]{4,}\b", re.UNICODE)
-_QUOTE_RE = re.compile(r"[""「『]([^""」』]{2,40})[""」』]")
+_QUOTE_RE = re.compile(r"[" "「『]([^" "」』]{2,40})[" "」』]")
 
 
 def _claim_key_tokens(claim_text: str) -> List[str]:
@@ -155,6 +192,7 @@ class KnowledgeVerifier:
         if search_tool is None:
             try:
                 from core.tools.web_search_tool import WebSearchTool
+
                 search_tool = WebSearchTool()
             except Exception as e:  # pragma: no cover - defensive
                 logger.warning("KnowledgeVerifier: WebSearchTool unavailable: %s", e)

@@ -7,7 +7,15 @@ P12: DependencyManager (service dependency graph and resolution).
 """
 
 from core.managers.dependency_manager import DependencyManager, DependencyStatus
-from core.managers.execution_monitor import ExecutionMonitor, ExecutionResult, ExecutionConfig, ExecutionStatus, TerminalStatus, get_execution_monitor, execute_with_monitoring
+from core.managers.execution_monitor import (
+    ExecutionConfig,
+    ExecutionMonitor,
+    ExecutionResult,
+    ExecutionStatus,
+    TerminalStatus,
+    execute_with_monitoring,
+    get_execution_monitor,
+)
 from core.managers.system_manager import SystemManager
 
 __all__ = [

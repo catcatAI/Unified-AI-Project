@@ -58,9 +58,7 @@ class ED3NLearningIntegration:
 
         try:
             loop = asyncio.get_running_loop()
-            future = asyncio.run_coroutine_threadsafe(
-                lm.fact_extractor.extract_facts(text), loop
-            )
+            future = asyncio.run_coroutine_threadsafe(lm.fact_extractor.extract_facts(text), loop)
             return future.result()
         except RuntimeError:
             return asyncio.run(lm.fact_extractor.extract_facts(text))
@@ -68,18 +66,14 @@ class ED3NLearningIntegration:
             logger.exception("Failed to extract concepts: %s", e)
             return []
 
-    def record_training_feedback(
-        self, example_key: str, success: bool, metadata: Dict
-    ) -> None:
+    def record_training_feedback(self, example_key: str, success: bool, metadata: Dict) -> None:
         ml = self._get_memory_learning()
         if ml is None:
             logger.warning("MemoryLearningEngine not available; feedback not recorded.")
             return
         try:
             if hasattr(ml, "record_feedback"):
-                ml.record_feedback(
-                    example_key=example_key, success=success, metadata=metadata
-                )
+                ml.record_feedback(example_key=example_key, success=success, metadata=metadata)
             else:
                 logger.warning("MemoryLearningEngine has no record_feedback method.")
             logger.info(
@@ -122,7 +116,11 @@ class ED3NLearningIntegration:
                 ham.store_experience(
                     memory_entry,
                     data_type="ed3n_entry",
-                    keywords=[key] + list(entry.surface_forms.values())[:5] if entry.surface_forms else [],
+                    keywords=(
+                        [key] + list(entry.surface_forms.values())[:5]
+                        if entry.surface_forms
+                        else []
+                    ),
                 )
                 synced_count += 1
             except Exception as e:

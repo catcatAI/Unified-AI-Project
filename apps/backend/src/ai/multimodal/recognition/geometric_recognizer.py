@@ -36,17 +36,19 @@ class GeometricRecognizer:
     It captures the geometric structure of the image in a compact form.
     """
 
-    def __init__(self, vocabulary: GeometricVocabulary,
-                 encoder: Optional[PrimitiveEncoder] = None,
-                 canvas_size: Tuple[int, int] = (128, 128)):
+    def __init__(
+        self,
+        vocabulary: GeometricVocabulary,
+        encoder: Optional[PrimitiveEncoder] = None,
+        canvas_size: Tuple[int, int] = (128, 128),
+    ):
         self._vocabulary = vocabulary
         self._encoder = encoder
         self._diff_renderer = DifferentiableRenderer(canvas_size)
         self._pil_renderer = PrimitiveRenderer(canvas_size)
         self._canvas_size = canvas_size
 
-    def recognize(self, image: np.ndarray, n_iterations: int = 20,
-                   verbose: bool = False) -> Dict:
+    def recognize(self, image: np.ndarray, n_iterations: int = 20, verbose: bool = False) -> Dict:
         """Recognize an image using geometric vocabulary.
 
         Uses a two-stage approach:
@@ -109,14 +111,15 @@ class GeometricRecognizer:
             "elapsed": elapsed,
         }
 
-    def _extract_features(self, target: np.ndarray, init_vec: np.ndarray,
-                           n_iterations: int) -> np.ndarray:
+    def _extract_features(
+        self, target: np.ndarray, init_vec: np.ndarray, n_iterations: int
+    ) -> np.ndarray:
         """Extract geometric features from image via optimization."""
         vec = init_vec.copy()
         eps = 0.015
         n_probes = 10
         best_vec = vec.copy()
-        best_loss = float('inf')
+        best_loss = float("inf")
 
         for it in range(n_iterations):
             rendered = self._diff_renderer.render(vec)
@@ -167,7 +170,11 @@ class GeometricRecognizer:
         nearest_indices = np.argsort(dists)[:K]
 
         # Vote by class
-        class_names = list(self._vocabulary._concept_distributions.keys()) if hasattr(self._vocabulary, '_concept_distributions') else self._vocabulary.CLASSES
+        class_names = (
+            list(self._vocabulary._concept_distributions.keys())
+            if hasattr(self._vocabulary, "_concept_distributions")
+            else self._vocabulary.CLASSES
+        )
         scores = {name: 0.0 for name in class_names}
         for idx in nearest_indices:
             label = int(all_labels[idx])

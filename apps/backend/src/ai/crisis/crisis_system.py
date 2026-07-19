@@ -91,7 +91,9 @@ class CrisisSystem:
         if self.crisis_level > 0 and self._crisis_last_detected > 0:
             elapsed = time.time() - self._crisis_last_detected
             if elapsed > self.crisis_timeout:
-                logger.info(f"CrisisSystem: Auto-resetting crisis level {self.crisis_level} after {elapsed:.0f}s timeout")
+                logger.info(
+                    f"CrisisSystem: Auto-resetting crisis level {self.crisis_level} after {elapsed:.0f}s timeout"
+                )
                 self.crisis_level = 0
 
         text_input = input_data.get("text", "").lower()
@@ -164,14 +166,16 @@ class CrisisSystem:
                         f"[{datetime.now()}] CRISIS_LOG: Level {level} event. Details: {details}\n"
                     )
                 logging.info(f"CRISIS_LOG: Level {level} event. Details: {details}")
-            except Exception as e:  # broad exception acceptable: file I/O errors must not halt crisis response
-                    logger.error(f"Error in {__name__}: {e}", exc_info=True)
-                    logging.error(f"Failed to write to crisis log file: {e}", exc_info=True)
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: file I/O errors must not halt crisis response
+                logger.error(f"Error in {__name__}: {e}", exc_info=True)
+                logging.error(f"Failed to write to crisis log file: {e}", exc_info=True)
 
         elif action_details == "notify_human_moderator":  # Example from previous version
             logging.critical(
-                f"CRITICAL_ALERT: Human moderator notification required for crisis level {level}. Details: {details}"
-                , exc_info=True
+                f"CRITICAL_ALERT: Human moderator notification required for crisis level {level}. Details: {details}",
+                exc_info=True,
             )
         elif action_details == "log_only":
             logging.info(f"CRISIS_INFO: Level {level} event logged. Details: {details}")
@@ -184,7 +188,9 @@ class CrisisSystem:
                             f"[{datetime.now()}] CRISIS_LOG: Level {level} event. Details: {details}\n"
                         )
                     logging.info(f"CRISIS_LOG: Level {level} event. Details: {details}")
-                except Exception as e:  # broad exception acceptable: file I/O errors must not halt crisis response
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: file I/O errors must not halt crisis response
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     logging.error(f"Failed to write to crisis log file: {e}", exc_info=True)
 

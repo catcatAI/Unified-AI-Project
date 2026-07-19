@@ -76,7 +76,9 @@ class DynamicAgentRegistry:
                 await asyncio.sleep(self.cleanup_interval)
             except asyncio.CancelledError:
                 break
-            except Exception as e:  # broad exception acceptable: registry cleanup loop wraps all failures
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: registry cleanup loop wraps all failures
                 logger.error(f"Error in registry loop: {e}", exc_info=True)
 
     async def _cleanup_inactive_agents(self) -> None:
@@ -127,7 +129,9 @@ class DynamicAgentRegistry:
                 for callback in self.discovery_callbacks:
                     try:
                         callback(self.registered_agents[agent_id])
-                    except Exception as e:  # broad exception acceptable: capability advertisement callback wraps all registration failures
+                    except (
+                        Exception
+                    ) as e:  # broad exception acceptable: capability advertisement callback wraps all registration failures
                         logger.error(f"Error in discovery callback: {e}", exc_info=True)
                         logger.error(f"Error in discovery callback: {e}", exc_info=True)
             else:

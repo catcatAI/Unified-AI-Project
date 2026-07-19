@@ -32,14 +32,14 @@ def safe_error(e: Exception, max_length: int = 200) -> str:
     """
     msg = str(e)
     # Strip Windows drive-letter paths (C:\...)
-    msg = re.sub(r'[A-Za-z]:\\[^\s,"\')]*', '<path>', msg)
+    msg = re.sub(r'[A-Za-z]:\\[^\s,"\')]*', "<path>", msg)
     # Strip Unix absolute paths
-    msg = re.sub(r'/[/A-Za-z0-9._-]+', '<path>', msg)
+    msg = re.sub(r"/[/A-Za-z0-9._-]+", "<path>", msg)
     # Strip potential API keys and tokens (hex strings > 20 chars)
-    msg = re.sub(r'[A-Za-z0-9_-]{20,}', '<token>', msg)
+    msg = re.sub(r"[A-Za-z0-9_-]{20,}", "<token>", msg)
     # Truncate long messages
     if len(msg) > max_length:
-        msg = msg[:max_length] + '...'
+        msg = msg[:max_length] + "..."
     return msg
 
 
@@ -131,12 +131,12 @@ class Timer:
 # Keyword matching (word-boundary-aware for English, density-gated)
 # ═══════════════════════════════════════════════
 
-_ENG_WORD_BOUNDARY = re.compile(r'(?<![a-zA-Z])|(?![a-zA-Z])')
+_ENG_WORD_BOUNDARY = re.compile(r"(?<![a-zA-Z])|(?![a-zA-Z])")
 
 
 def _match_english_kw(text: str, keyword: str) -> bool:
     """English keyword with word-boundary check: 'cat' won't match 'category'."""
-    pattern = re.compile(rf'(?<![a-zA-Z]){re.escape(keyword)}(?![a-zA-Z])', re.IGNORECASE)
+    pattern = re.compile(rf"(?<![a-zA-Z]){re.escape(keyword)}(?![a-zA-Z])", re.IGNORECASE)
     return bool(pattern.search(text))
 
 

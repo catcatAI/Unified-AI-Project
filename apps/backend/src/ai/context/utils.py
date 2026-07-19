@@ -58,7 +58,7 @@ def serialize_context(context) -> bytes:
         raise
 
 
-def deserialize_context(data: bytes) -> Optional['Context']:
+def deserialize_context(data: bytes) -> Optional["Context"]:
     """
     反序列化上下文对象
 
@@ -76,7 +76,7 @@ def deserialize_context(data: bytes) -> Optional['Context']:
 
         context = Context(
             context_id=context_dict["context_id"],
-            context_type=ContextType(context_dict["context_type"])
+            context_type=ContextType(context_dict["context_type"]),
         )
         context.created_at = datetime.fromisoformat(context_dict["created_at"])
         context.updated_at = datetime.fromisoformat(context_dict["updated_at"])
@@ -238,7 +238,7 @@ def validate_context(context) -> bool:
         return False
 
 
-def merge_contexts(context1, context2) -> 'Context':
+def merge_contexts(context1, context2) -> "Context":
     """
     合并两个上下文对象
 

@@ -20,6 +20,7 @@ def _get_hardware_profile() -> Optional[Any]:
     if _HARDWARE_PROFILE is None:
         try:
             from core.system.config.hardware_profile import HardwareProfile
+
             _HARDWARE_PROFILE = HardwareProfile()
             logger = logging.getLogger(__name__)
             logger.info(
@@ -47,6 +48,7 @@ def _load_config() -> Optional[Dict[str, Any]]:
         configs: Dict[str, Any] = {}
         # Discover all tiered config files under the configs root
         from core.system.config.tiered_loader import _CONFIGS_ROOT
+
         if _CONFIGS_ROOT and _CONFIGS_ROOT.is_dir():
             for default_file in sorted(_CONFIGS_ROOT.rglob("*.default.yaml")):
                 rel = default_file.relative_to(_CONFIGS_ROOT)
@@ -187,4 +189,3 @@ def limit_value(key: str, default: int = 100) -> int:
 def lifecycle_value(key: str, default: float = 0.5) -> float:
     """Lifecycle feedback threshold (e.g. success_rate_low, success_rate_high, adjustment)."""
     return _safe_float(_get(key, default), default)
-

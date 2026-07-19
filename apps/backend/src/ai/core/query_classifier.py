@@ -45,10 +45,11 @@ class QueryType(Enum):
 @dataclass
 class QueryResult:
     """意图分类结果"""
+
     primary_type: QueryType
-    confidence: float                              # 0.0-1.0
-    actionability: float = 0.0                     # 0.0-1.0
-    action_type: str = "none"                      # read/create/modify/delete/send/system/none
+    confidence: float  # 0.0-1.0
+    actionability: float = 0.0  # 0.0-1.0
+    action_type: str = "none"  # read/create/modify/delete/send/system/none
     secondary_type: Optional[QueryType] = None
     secondary_confidence: float = 0.0
     reason: str = ""
@@ -56,26 +57,100 @@ class QueryResult:
 
 # 操作类型推断用的关键字
 _CREATE_VERBS = {"建立", "新增", "创建", "新增", "建立", "創建", "create", "new", "add"}
-_MODIFY_VERBS = {"修改", "编辑", "重新命名", "修改", "編輯", "重新命名", "edit", "rename", "modify", "update"}
+_MODIFY_VERBS = {
+    "修改",
+    "编辑",
+    "重新命名",
+    "修改",
+    "編輯",
+    "重新命名",
+    "edit",
+    "rename",
+    "modify",
+    "update",
+}
 _DELETE_VERBS = {"删除", "移除", "清空", "刪除", "移除", "清除", "delete", "remove", "clear"}
 _WRITE_VERBS = {"写入", "储存", "寫入", "儲存", "write", "save"}
-_READ_PREFIXES = {"搜寻", "搜索", "查询", "查看", "读取", "找", "搜尋", "搜索", "查詢", "查看", "讀取", "找", "search", "find", "lookup"}
+_READ_PREFIXES = {
+    "搜寻",
+    "搜索",
+    "查询",
+    "查看",
+    "读取",
+    "找",
+    "搜尋",
+    "搜索",
+    "查詢",
+    "查看",
+    "讀取",
+    "找",
+    "search",
+    "find",
+    "lookup",
+}
 _SEND_VERBS = {"发送", "传送", "提交", "發送", "傳送", "提交", "send", "submit", "post"}
 _MOVE_VERBS = {"移动", "移至", "移到", "移動", "移至", "移到", "搬", "move", "迁移", "遷移"}
 
 # REFLEX 不覆盖的动词（这些是有意义的单字动词）
 VERBS_NOT_REFLEX = {
-    "看", "查", "开", "关", "跑", "跳", "读", "写", "听", "说",
-    "吃", "喝", "搜", "删", "改", "传", "载", "买", "卖", "打",
+    "看",
+    "查",
+    "开",
+    "关",
+    "跑",
+    "跳",
+    "读",
+    "写",
+    "听",
+    "说",
+    "吃",
+    "喝",
+    "搜",
+    "删",
+    "改",
+    "传",
+    "载",
+    "买",
+    "卖",
+    "打",
 }
 
 # 明确知识查询模式（用于 `?` override 修正）
 KNOWLEDGE_QUESTION_PATTERNS = [
-    r"^什么是", r"^是什么", r"^是什麼", r"^怎麼", r"^怎么", r"^为什么", r"^為什麼", r"^為什么",
-    r"^how\b", r"^what\b", r"^why\b", r"^when\b", r"^where\b", r"^who\b",
-    r"^多少", r"^幾個", r"^几个", r"^谁", r"^誰", r"^今天", r"^明天", r"^明日", r"^昨天",
-    r"天氣", r"天気", r"weather", r"温度", r"temperature", r"氣溫",
-    r"記得", r"記憶", r"remember", r"recall", r"記住",
+    r"^什么是",
+    r"^是什么",
+    r"^是什麼",
+    r"^怎麼",
+    r"^怎么",
+    r"^为什么",
+    r"^為什麼",
+    r"^為什么",
+    r"^how\b",
+    r"^what\b",
+    r"^why\b",
+    r"^when\b",
+    r"^where\b",
+    r"^who\b",
+    r"^多少",
+    r"^幾個",
+    r"^几个",
+    r"^谁",
+    r"^誰",
+    r"^今天",
+    r"^明天",
+    r"^明日",
+    r"^昨天",
+    r"天氣",
+    r"天気",
+    r"weather",
+    r"温度",
+    r"temperature",
+    r"氣溫",
+    r"記得",
+    r"記憶",
+    r"remember",
+    r"recall",
+    r"記住",
 ]
 
 # 否定词
@@ -97,9 +172,26 @@ class QueryClassifier:
     @staticmethod
     def _build_reflex_words() -> set:
         return {
-            "hi", "ok", "okay", "hey", "yo", "oh", "ah",
-            "嗯", "好", "是", "不", "啊", "哦", "喂", "嗨", "噢",
-            "喵", "咪", "咕", "呜",
+            "hi",
+            "ok",
+            "okay",
+            "hey",
+            "yo",
+            "oh",
+            "ah",
+            "嗯",
+            "好",
+            "是",
+            "不",
+            "啊",
+            "哦",
+            "喂",
+            "嗨",
+            "噢",
+            "喵",
+            "咪",
+            "咕",
+            "呜",
         }
 
     @staticmethod
@@ -438,7 +530,8 @@ class QueryClassifier:
         if len(text) > limit_value("ai.query_classifier.max_direct_len", 200):
             conf = self._adjust_confidence(QueryType.KNOWLEDGE, text, 0.85, False, has_negation)
             return QueryResult(
-                primary_type=QueryType.KNOWLEDGE, confidence=conf,
+                primary_type=QueryType.KNOWLEDGE,
+                confidence=conf,
                 actionability=self._calc_actionability(QueryType.KNOWLEDGE, text, conf),
                 action_type=self._infer_action_type(QueryType.KNOWLEDGE, text),
                 reason="long_text_heuristic",
@@ -448,15 +541,18 @@ class QueryClassifier:
     def _classify_by_dictionary(self, text: str, has_negation: bool) -> Optional[QueryResult]:
         try:
             from ai.core.dictionary_classifier import get_dictionary_classifier
+
             dc = get_dictionary_classifier()
             dict_type, dict_action, dict_conf = dc.classify(text)
             if dict_conf >= 0.3 and dict_type != "unknown":
                 qt = QueryType(dict_type)
                 conf = self._adjust_confidence(qt, text, dict_conf, False, has_negation)
                 return QueryResult(
-                    primary_type=qt, confidence=conf,
+                    primary_type=qt,
+                    confidence=conf,
                     actionability=self._calc_actionability(qt, text, conf),
-                    action_type=dict_action, reason="dictionary_match",
+                    action_type=dict_action,
+                    reason="dictionary_match",
                 )
         except Exception as e:
             logger.debug(f"Dictionary lookup failed: {e}")
@@ -469,16 +565,25 @@ class QueryClassifier:
             if m:
                 anchored = m.start() == 0 or m.end() == len(text)
                 conf = self._adjust_confidence(qt, text, base_conf, anchored, has_negation)
-                matches.append((qt, conf, self._calc_actionability(qt, text, conf),
-                                self._infer_action_type(qt, text)))
+                matches.append(
+                    (
+                        qt,
+                        conf,
+                        self._calc_actionability(qt, text, conf),
+                        self._infer_action_type(qt, text),
+                    )
+                )
         matches.sort(key=lambda x: (x[1], x[2]), reverse=True)
         if matches:
             primary = matches[0]
-            secondary = matches[1] if len(matches) > 1 \
-                and matches[1][1] >= primary[1] - 0.1 else None
+            secondary = (
+                matches[1] if len(matches) > 1 and matches[1][1] >= primary[1] - 0.1 else None
+            )
             return QueryResult(
-                primary_type=primary[0], confidence=primary[1],
-                actionability=primary[2], action_type=primary[3],
+                primary_type=primary[0],
+                confidence=primary[1],
+                actionability=primary[2],
+                action_type=primary[3],
                 secondary_type=secondary[0] if secondary else None,
                 secondary_confidence=secondary[1] if secondary else 0.0,
                 reason="regex_pattern_match",
@@ -488,29 +593,38 @@ class QueryClassifier:
     def _classify_reflex_override(self, text: str) -> Optional[QueryResult]:
         if len(text) < 2:
             if text not in VERBS_NOT_REFLEX:
-                return QueryResult(QueryType.REFLEX, 0.95, 0.0, "none",
-                                   reason="reflex_single_char_override")
+                return QueryResult(
+                    QueryType.REFLEX, 0.95, 0.0, "none", reason="reflex_single_char_override"
+                )
             return QueryResult(QueryType.UNKNOWN, 0.4, 0.3, "read", reason="meaningful_single_char")
         # Multi-char reflex: all chars are reflex words (cat sounds, nods, etc.)
         if len(text) <= 10 and all(c in self._reflex_words for c in text):
-            return QueryResult(QueryType.REFLEX, 0.9, 0.0, "none",
-                               reason="reflex_all_chars_override")
+            return QueryResult(
+                QueryType.REFLEX, 0.9, 0.0, "none", reason="reflex_all_chars_override"
+            )
         return None
 
     def _classify_question_override(self, text: str, has_negation: bool) -> Optional[QueryResult]:
         if text.endswith("?") or text.endswith("？"):
             if any(re.search(p, text, re.I) for p in KNOWLEDGE_QUESTION_PATTERNS):
                 conf = self._adjust_confidence(QueryType.KNOWLEDGE, text, 0.65, False, has_negation)
-                return QueryResult(QueryType.KNOWLEDGE, conf, 0.1, "none",
-                                   reason="knowledge_question_mark_override")
+                return QueryResult(
+                    QueryType.KNOWLEDGE,
+                    conf,
+                    0.1,
+                    "none",
+                    reason="knowledge_question_mark_override",
+                )
             # Broad fallback: any remaining ?-ending text→KNOWLEDGE at lower confidence
             conf = self._adjust_confidence(QueryType.KNOWLEDGE, text, 0.45, False, has_negation)
-            return QueryResult(QueryType.KNOWLEDGE, conf, 0.1, "none",
-                               reason="knowledge_question_mark_fallback")
+            return QueryResult(
+                QueryType.KNOWLEDGE, conf, 0.1, "none", reason="knowledge_question_mark_fallback"
+            )
         return None
 
-    def _adjust_confidence(self, query_type: QueryType, text: str,
-                           base_conf: float, anchored: bool, has_negation: bool) -> float:
+    def _adjust_confidence(
+        self, query_type: QueryType, text: str, base_conf: float, anchored: bool, has_negation: bool
+    ) -> float:
         """动态调整置信度"""
         conf = base_conf
 
@@ -543,18 +657,32 @@ class QueryClassifier:
     def _calc_actionability(self, query_type: QueryType, text: str, confidence: float) -> float:
         """计算可执行性分数"""
         type_base = {
-            QueryType.EXECUTE: 0.9, QueryType.FILE: 0.85, QueryType.SEARCH: 0.8,
-            QueryType.CODE: 0.75, QueryType.TASK: 0.7, QueryType.VISION: 0.6,
-            QueryType.AUDIO: 0.6, QueryType.COMMAND: 0.5,
-            QueryType.KNOWLEDGE: 0.1, QueryType.OPINION: 0.1, QueryType.CREATIVE: 0.1,
-            QueryType.GREETING: 0.0, QueryType.REFLEX: 0.0, QueryType.UNKNOWN: 0.0,
-            QueryType.MATH: 0.1, QueryType.LOGIC: 0.1,
+            QueryType.EXECUTE: 0.9,
+            QueryType.FILE: 0.85,
+            QueryType.SEARCH: 0.8,
+            QueryType.CODE: 0.75,
+            QueryType.TASK: 0.7,
+            QueryType.VISION: 0.6,
+            QueryType.AUDIO: 0.6,
+            QueryType.COMMAND: 0.5,
+            QueryType.KNOWLEDGE: 0.1,
+            QueryType.OPINION: 0.1,
+            QueryType.CREATIVE: 0.1,
+            QueryType.GREETING: 0.0,
+            QueryType.REFLEX: 0.0,
+            QueryType.UNKNOWN: 0.0,
+            QueryType.MATH: 0.1,
+            QueryType.LOGIC: 0.1,
         }.get(query_type, 0.3)
 
         # 明确动作动词 → 提高
         all_action_verbs = (
-            list(_CREATE_VERBS) + list(_MODIFY_VERBS) + list(_DELETE_VERBS) +
-            list(_SEND_VERBS) + list(_READ_PREFIXES) + list(_WRITE_VERBS)
+            list(_CREATE_VERBS)
+            + list(_MODIFY_VERBS)
+            + list(_DELETE_VERBS)
+            + list(_SEND_VERBS)
+            + list(_READ_PREFIXES)
+            + list(_WRITE_VERBS)
         )
         if any_keyword(text, tuple(all_action_verbs)):
             type_base = min(1.0, type_base + 0.1)
@@ -573,9 +701,15 @@ class QueryClassifier:
     def _infer_action_type(self, query_type: QueryType, text: str) -> str:
         """根据意图和文字推断操作类型"""
         # 无操作类
-        if query_type in (QueryType.GREETING, QueryType.REFLEX, QueryType.OPINION,
-                          QueryType.CREATIVE, QueryType.KNOWLEDGE, QueryType.MATH,
-                          QueryType.LOGIC):
+        if query_type in (
+            QueryType.GREETING,
+            QueryType.REFLEX,
+            QueryType.OPINION,
+            QueryType.CREATIVE,
+            QueryType.KNOWLEDGE,
+            QueryType.MATH,
+            QueryType.LOGIC,
+        ):
             return "none"
 
         # 读取类

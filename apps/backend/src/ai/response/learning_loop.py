@@ -26,15 +26,13 @@ class FragmentExtractor:
 
     def extract_sentences(self, text: str) -> List[str]:
         """Split text into sentences."""
-        parts = re.split(r'(?<=[。！？.!?\n])\s*', text)
+        parts = re.split(r"(?<=[。！？.!?\n])\s*", text)
         return [s.strip() for s in parts if s.strip() and len(s.strip()) > 2]
 
     def extract_emoji(self, text: str) -> List[str]:
         """Extract emoji and kaomoji from text."""
         emoji_pattern = re.compile(
-            r'[\U00010000-\U0010ffff\u2600-\u27ff]|'
-            r'[\(（][^)）]*[\)）]|'
-            r'[≧∀≦ﾉω≧∇≦⊙▽⊙╯﹏╰]'
+            r"[\U00010000-\U0010ffff\u2600-\u27ff]|" r"[\(（][^)）]*[\)）]|" r"[≧∀≦ﾉω≧∇≦⊙▽⊙╯﹏╰]"
         )
         return list(set(emoji_pattern.findall(text)))
 
@@ -133,18 +131,20 @@ class LearningLoop:
     def _grow_ed3n_dictionary(self, text: str, novel_phrases: List[str]) -> None:
         """Grow ED3N dictionary with novel phrases (Phase 5.5)."""
         try:
-            dictionary = getattr(self._ed3n_engine, 'dictionary', None)
+            dictionary = getattr(self._ed3n_engine, "dictionary", None)
             if dictionary is None:
                 return
             for phrase in novel_phrases:
-                if hasattr(dictionary, 'grow'):
+                if hasattr(dictionary, "grow"):
                     new_key = dictionary.grow(
                         text=text,
                         surface_form=phrase,
                         confidence=0.5,
                     )
                     if new_key:
-                        logger.debug("[LearningLoop] Grew ED3N dictionary: %s -> %s", phrase, new_key)
+                        logger.debug(
+                            "[LearningLoop] Grew ED3N dictionary: %s -> %s", phrase, new_key
+                        )
         except Exception as e:
             logger.debug("[LearningLoop] ED3N dictionary growth failed: %s", e)
 
@@ -161,10 +161,8 @@ class LearningLoop:
         """
         if self._garden_engine is not None:
             try:
-                if hasattr(self._garden_engine, 'learn_from_interaction'):
-                    self._garden_engine.learn_from_interaction(
-                        user_message, response
-                    )
+                if hasattr(self._garden_engine, "learn_from_interaction"):
+                    self._garden_engine.learn_from_interaction(user_message, response)
                     logger.debug("[LearningLoop] GARDEN weights updated from feedback")
             except Exception as e:
                 logger.debug("[LearningLoop] GARDEN feedback processing failed: %s", e)

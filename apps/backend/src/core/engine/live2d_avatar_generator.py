@@ -18,9 +18,7 @@ Version: 6.0.0
 Date: 2026-02-02
 """
 
-
 from __future__ import annotations
-from core.utils import safe_error
 
 import asyncio
 import json
@@ -31,11 +29,14 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+from core.utils import safe_error
+
 logger = logging.getLogger(__name__)
 
 
 class ExpressionType(str, Enum):
     """面部表情类型 / Facial expression types"""
+
     NEUTRAL = "neutral"
     HAPPY = "happy"
     SAD = "sad"
@@ -576,7 +577,9 @@ class Live2DAvatarGenerator:
         for callback in self._progress_callbacks:
             try:
                 callback(progress_obj)
-            except Exception as e:  # Broad exception acceptable here as we want to ensure all callbacks execute
+            except (
+                Exception
+            ) as e:  # Broad exception acceptable here as we want to ensure all callbacks execute
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
     async def generate_avatar(
@@ -640,7 +643,9 @@ class Live2DAvatarGenerator:
 
         except Exception as e:  # broad exception acceptable: generation must be resilient to errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
-            self._notify_progress(GenerationStage.FINALIZING, 0, f"Generation failed: {safe_error(e)}")
+            self._notify_progress(
+                GenerationStage.FINALIZING, 0, f"Generation failed: {safe_error(e)}"
+            )
 
             raise
 
@@ -731,7 +736,9 @@ class Live2DAvatarGenerator:
                     base_image_path = image_result
 
                 avatar.texture_paths.append(str(base_image_path))
-        except Exception as e:  # broad exception acceptable: image generation failure should not crash generation
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: image generation failure should not crash generation
             logger.error(f"Image generation failed: {e}", exc_info=True)
 
     def _build_generation_prompt(
@@ -800,23 +807,23 @@ class Live2DAvatarGenerator:
 
             # API 端點 (預設使用本機 segmentation 服務)
             seg_api_url = self.config.get("segmentation_api_url", "http://127.0.0.1:8000/segment")
-            
-            
+
             # NOTE: 待分層微服務上線後可開啟此段（當前使用 Pillow fallback）
             # async with aiohttp.ClientSession() as session:
             #     async with session.post(seg_api_url, json=payload, timeout=2) as response:
             #         if response.status == 200: ...
-            
+
             # 若無外部 API，使用 Pillow 動態生成透明背景的色塊作為真實圖層 (移除死板的佔位符)
             img = Image.new("RGBA", (512, 512), (255, 255, 255, 0))
             draw = ImageDraw.Draw(img)
-            
+
             # 隨機產生一些基礎形狀來代表該圖層
             import random
+
             color = (random.randint(50, 250), random.randint(50, 250), random.randint(50, 250), 200)
             draw.rectangle([100, 100, 400, 400], fill=color, outline=(0, 0, 0, 255), width=2)
             draw.text((150, 250), layer.layer_name, fill=(0, 0, 0, 255))
-            
+
             # Derive output path from the layer's original path (set by _create_layers)
             output_path = Path(layer.image_path)
             output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -825,10 +832,12 @@ class Live2DAvatarGenerator:
 
             layer.image_path = str(output_path)
             return
-            
-        except Exception as e:  # broad exception acceptable: layer generation fallback should not crash pipeline
+
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: layer generation fallback should not crash pipeline
             logger.warning(f"Layer generation failed, using empty fallback: {e}", exc_info=True)
-            
+
         # Keep the image_path as originally set by _create_layers (actual file may be missing)
 
     async def _setup_rigging(self, avatar: GeneratedAvatar) -> None:
@@ -1179,5 +1188,3 @@ class Live2DAvatarGenerator:
                 cb(state)
             except Exception as e:
                 logger.error(f"Error in state callback: {e}", exc_info=True)
-
-

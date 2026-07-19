@@ -43,14 +43,18 @@ class FallbackManager:
     def register_command_handler(self, command_name, handler) -> None:
         self._handlers[command_name] = handler
 
-    async def send_command(self, sender_id, recipient_id, command_name, parameters, priority) -> bool:
-        self._command_log.append({
-            "sender_id": sender_id,
-            "recipient_id": recipient_id,
-            "command_name": command_name,
-            "parameters": parameters,
-            "priority": priority,
-        })
+    async def send_command(
+        self, sender_id, recipient_id, command_name, parameters, priority
+    ) -> bool:
+        self._command_log.append(
+            {
+                "sender_id": sender_id,
+                "recipient_id": recipient_id,
+                "command_name": command_name,
+                "parameters": parameters,
+                "priority": priority,
+            }
+        )
         return True
 
     def get_status(self) -> dict:
@@ -109,7 +113,9 @@ class MCPConnector:
             self.mcp_available = True
             if self.enable_fallback:
                 await self._initialize_fallback_protocols()
-        except Exception as e:  # broad exception acceptable: ensure connection attempt does not crash, fallback is available
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: ensure connection attempt does not crash, fallback is available
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             project_error_handler(ProjectError(f"MCP MQTT connection failed: {e}", code=503))
 
@@ -155,7 +161,9 @@ class MCPConnector:
             project_error_handler(
                 ProjectError("Failed to decode MCP message payload as JSON.", code=400)
             )
-        except Exception as e:  # broad exception acceptable: ensure message processing errors do not stop the listener
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: ensure message processing errors do not stop the listener
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             project_error_handler(ProjectError(f"Error processing MCP message: {e}", code=500))
 
@@ -184,7 +192,9 @@ class MCPConnector:
                     f"Sent MCP command '{command_name}' to {target_id} via MQTT with request_id {request_id}"
                 )
                 return request_id
-            except Exception as e:  # broad exception acceptable: catch all send errors and fallback to alternative protocol
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: catch all send errors and fallback to alternative protocol
                 self.logger.error(f"MCP MQTT發送失敗: {e}", exc_info=True)
                 self.mcp_available = False
 
@@ -195,7 +205,9 @@ class MCPConnector:
                     f"Sent MCP command '{command_name}' to {target_id} via fallback with request_id {request_id}"
                 )
                 return request_id
-            except Exception as e:  # broad exception acceptable: ensure fallback send failure is logged but does not crash
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: ensure fallback send failure is logged but does not crash
                 self.logger.error(f"MCP fallback發送失敗: {e}", exc_info=True)
 
         logger.error(f"無法發送MCP命令 '{command_name}' 到 {target_id}")
@@ -217,7 +229,9 @@ class MCPConnector:
             else:
                 logger.error("Failed to initialize MCP fallback protocols")
                 self.fallback_initialized = False
-        except Exception as e:  # broad exception acceptable: ensure init failure does not crash the connector
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: ensure init failure does not crash the connector
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             project_error_handler(
                 ProjectError(f"Error initializing MCP fallback protocols: {e}", code=500)
@@ -244,11 +258,15 @@ class MCPConnector:
             else:
                 logger.error(f"Failed to send MCP command via fallback: {request_id}")
             return success
-        except Exception as e:  # broad exception acceptable: ensure fallback send errors are caught and handled gracefully
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: ensure fallback send errors are caught and handled gracefully
             self.logger.error(f"Error sending MCP command via fallback: {e}", exc_info=True)
             return False
 
-    def register_command_handler(self, command_name: str, handler: Callable[..., Awaitable[Any]]) -> None:
+    def register_command_handler(
+        self, command_name: str, handler: Callable[..., Awaitable[Any]]
+    ) -> None:
         """Register command handler."""
         self.command_handlers[command_name] = handler
         if self.is_connected:
@@ -282,7 +300,9 @@ class MCPConnector:
             try:
                 info = self.client.publish("mcp/ping", "ping")
                 health["mcp_healthy"] = info.rc == 0
-            except Exception as e:  # broad exception acceptable: ensure health check errors do not crash the health report
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: ensure health check errors do not crash the health report
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 health["mcp_healthy"] = False
 
@@ -292,7 +312,9 @@ class MCPConnector:
             try:
                 fallback_status = self.fallback_manager.get_status()
                 health["fallback_healthy"] = fallback_status.get("active_protocol") is not None
-            except Exception as e:  # broad exception acceptable: ensure fallback health check errors do not crash the report
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: ensure fallback health check errors do not crash the report
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 health["fallback_healthy"] = False
 

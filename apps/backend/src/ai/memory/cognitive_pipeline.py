@@ -31,7 +31,7 @@ from __future__ import annotations
 import logging
 import re
 from collections import deque
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Optional
 
 from ai.memory.domain_ripple import apply_domain_cognition, route_domain

@@ -113,9 +113,7 @@ class RelationClassifier:
         for other_key, other_entry in candidates.items():
             if other_key == entry.key:
                 continue
-            shared_contexts = set(
-                c.get("context_id") for c in entry.contexts
-            ) & set(
+            shared_contexts = set(c.get("context_id") for c in entry.contexts) & set(
                 c.get("context_id") for c in other_entry.contexts
             )
             if len(shared_contexts) >= 1:
@@ -140,15 +138,13 @@ class RelationClassifier:
         entry2: Optional["DictionaryEntry"] = None,
     ) -> Tuple[RelationType, float]:
         if entry1 is not None and entry2 is not None:
-            common_zh = set(entry1.surface_forms.values()) & set(
-                entry2.surface_forms.values()
-            )
+            common_zh = set(entry1.surface_forms.values()) & set(entry2.surface_forms.values())
             if common_zh:
                 return RelationType.SYNONYM, 0.80
 
-            shared_contexts = set(
-                c.get("context_id") for c in entry1.contexts
-            ) & set(c.get("context_id") for c in entry2.contexts)
+            shared_contexts = set(c.get("context_id") for c in entry1.contexts) & set(
+                c.get("context_id") for c in entry2.contexts
+            )
             if shared_contexts:
                 return RelationType.MAPPING, 0.65
 
@@ -180,8 +176,6 @@ class RelationClassifier:
             curr = [i + 1]
             for j, cb in enumerate(b):
                 cost = 0 if ca == cb else 1
-                curr.append(
-                    min(curr[j] + 1, prev[j + 1] + 1, prev[j] + cost)
-                )
+                curr.append(min(curr[j] + 1, prev[j + 1] + 1, prev[j] + cost))
             prev = curr
         return prev[-1]

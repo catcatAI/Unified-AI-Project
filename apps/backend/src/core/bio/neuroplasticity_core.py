@@ -319,8 +319,12 @@ class NeuroplasticitySystem:
             try:
                 await self._decay_synaptic_weights()
                 await self._update_memory_consolidation()
-                await asyncio.sleep(loop_sleep("neuroplasticity_update", 60.0))  # Update every minute
-            except Exception as e:  # broad exception acceptable: neuroplasticity update loop must be resilient
+                await asyncio.sleep(
+                    loop_sleep("neuroplasticity_update", 60.0)
+                )  # Update every minute
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: neuroplasticity update loop must be resilient
                 logger.error("Neuroplasticity update loop error: %s", e, exc_info=True)
                 await asyncio.sleep(loop_sleep("neuroplasticity_update", 60.0))
 
@@ -503,7 +507,9 @@ class NeuroplasticitySystem:
             for callback in self._memory_callbacks[memory_id]:
                 try:
                     callback(trace)
-                except Exception as e:  # broad exception acceptable: memory access callbacks should not break access
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: memory access callbacks should not break access
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         return trace
@@ -581,7 +587,9 @@ class NeuroplasticitySystem:
                         for callback in self._consolidation_callbacks:
                             try:
                                 callback(memory_id)
-                            except Exception as e:  # broad exception acceptable: consolidation callbacks should not break memory consolidation
+                            except (
+                                Exception
+                            ) as e:  # broad exception acceptable: consolidation callbacks should not break memory consolidation
                                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
     def associate_memories(self, memory_id_1: str, memory_id_2: str) -> None:
@@ -612,7 +620,9 @@ class NeuroplasticitySystem:
                 weak.append(trace)
         return weak
 
-    def register_memory_callback(self, memory_id: str, callback: Callable[[MemoryTrace], None]) -> None:
+    def register_memory_callback(
+        self, memory_id: str, callback: Callable[[MemoryTrace], None]
+    ) -> None:
         """Register callback for memory access"""
         if memory_id not in self._memory_callbacks:
             self._memory_callbacks[memory_id] = []

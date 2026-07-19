@@ -24,8 +24,13 @@ class SequenceGenerator:
         → PrimitiveEncoder.decode() → DrawingInstructions → PIL Image
     """
 
-    def __init__(self, input_dim: int = 512, hidden_dim: int = 128,
-                 primitive_dim: int = 128, max_steps: int = 20):
+    def __init__(
+        self,
+        input_dim: int = 512,
+        hidden_dim: int = 128,
+        primitive_dim: int = 128,
+        max_steps: int = 20,
+    ):
         """Initialize sequence generator.
 
         Args:
@@ -57,20 +62,19 @@ class SequenceGenerator:
         self._b_hh = np.zeros(hidden_dim, dtype=np.float32)
 
         # Hidden → Primitive output
-        self._W_ho = (rng.normal(0, 1.0 / np.sqrt(hidden_dim),
-                                 (primitive_dim, hidden_dim))).astype(np.float32)
+        self._W_ho = (rng.normal(0, 1.0 / np.sqrt(hidden_dim), (primitive_dim, hidden_dim))).astype(
+            np.float32
+        )
         self._b_ho = np.zeros(primitive_dim, dtype=np.float32)
 
         # Stop token predictor (hidden → scalar logit)
-        self._W_stop = (rng.normal(0, 1.0 / np.sqrt(hidden_dim),
-                                   (hidden_dim,))).astype(np.float32)
+        self._W_stop = (rng.normal(0, 1.0 / np.sqrt(hidden_dim), (hidden_dim,))).astype(np.float32)
         self._b_stop = np.zeros(1, dtype=np.float32)
 
         # Training state
         self._trained = False
 
-    def generate(self, clip_embedding: np.ndarray,
-                 temperature: float = 0.8) -> List[np.ndarray]:
+    def generate(self, clip_embedding: np.ndarray, temperature: float = 0.8) -> List[np.ndarray]:
         """Generate sequence of primitive embeddings from CLIP embedding.
 
         Args:
@@ -114,9 +118,7 @@ class SequenceGenerator:
             primitives.append(prim_emb)
 
             # Update hidden state: tanh(W_hh @ h + W_ph @ prim + b_hh)
-            h = np.tanh(
-                self._W_hh @ h + self._W_ph @ prim_emb + self._b_hh
-            )
+            h = np.tanh(self._W_hh @ h + self._W_ph @ prim_emb + self._b_hh)
 
         return primitives
 
@@ -146,15 +148,13 @@ class SequenceGenerator:
                 break
 
             primitives.append(prim_emb)
-            h = np.tanh(
-                self._W_hh @ h + self._W_ph @ prim_emb + self._b_hh
-            )
+            h = np.tanh(self._W_hh @ h + self._W_ph @ prim_emb + self._b_hh)
 
         return primitives
 
-    def train_step(self, clip_embedding: np.ndarray,
-                   target_primitives: List[np.ndarray],
-                   lr: float = 0.001) -> float:
+    def train_step(
+        self, clip_embedding: np.ndarray, target_primitives: List[np.ndarray], lr: float = 0.001
+    ) -> float:
         """Single training step with teacher forcing + proper BPTT.
 
         Fixes: accumulates gradients before updating (was updating during
@@ -191,9 +191,7 @@ class SequenceGenerator:
             predicted.append(prim_emb)
 
             target = target_primitives[step]
-            h = np.tanh(
-                self._W_hh @ h + self._W_ph @ target + self._b_hh
-            )
+            h = np.tanh(self._W_hh @ h + self._W_ph @ target + self._b_hh)
             hidden_states.append(h.copy())
 
         # Loss
@@ -230,7 +228,7 @@ class SequenceGenerator:
                 d_h += d_h_future
 
             h_t = hidden_states[t]
-            d_pre = d_h * (1.0 - h_t ** 2)
+            d_pre = d_h * (1.0 - h_t**2)
 
             if t == 0:
                 d_W_ih += np.outer(d_pre, clip_embedding)
@@ -240,7 +238,9 @@ class SequenceGenerator:
                 d_W_ph += np.outer(d_pre, target_primitives[t - 1])
                 d_b_hh += d_pre
 
-            d_h_future = self._W_hh.T @ d_pre if t > 0 else np.zeros(self._hidden_dim, dtype=np.float32)
+            d_h_future = (
+                self._W_hh.T @ d_pre if t > 0 else np.zeros(self._hidden_dim, dtype=np.float32)
+            )
 
         # 3. Stop token gradient (sigmoid BCE)
         for t in range(T):
@@ -255,11 +255,11 @@ class SequenceGenerator:
         # 4. Gradient clipping (norm-based)
         max_norm = 10.0
         for g in [d_W_ih, d_W_ph, d_W_hh, d_W_ho]:
-            norm = np.sqrt(np.sum(g ** 2))
+            norm = np.sqrt(np.sum(g**2))
             if norm > max_norm:
                 g *= max_norm / norm
         for g in [d_b_ih, d_b_ph, d_b_hh, d_b_ho, d_W_stop, d_b_stop]:
-            norm = np.sqrt(np.sum(g ** 2))
+            norm = np.sqrt(np.sum(g**2))
             if norm > max_norm:
                 g *= max_norm / norm
 
@@ -278,9 +278,13 @@ class SequenceGenerator:
         self._trained = True
         return loss
 
-    def train(self, clip_embeddings: List[np.ndarray],
-              primitive_sequences: List[List[np.ndarray]],
-              epochs: int = 50, lr: float = 0.001) -> dict:
+    def train(
+        self,
+        clip_embeddings: List[np.ndarray],
+        primitive_sequences: List[List[np.ndarray]],
+        epochs: int = 50,
+        lr: float = 0.001,
+    ) -> dict:
         """Train on a dataset of (clip_embedding, primitive_sequence) pairs.
 
         Args:
@@ -305,11 +309,7 @@ class SequenceGenerator:
             indices = np.random.permutation(n_samples)
 
             for idx in indices:
-                loss = self.train_step(
-                    clip_embeddings[idx],
-                    primitive_sequences[idx],
-                    lr=lr
-                )
+                loss = self.train_step(clip_embeddings[idx], primitive_sequences[idx], lr=lr)
                 epoch_loss += loss
 
             avg_loss = epoch_loss / max(n_samples, 1)
@@ -387,14 +387,14 @@ class SequenceGenerator:
             "W_stop": self._W_stop.tolist(),
             "b_stop": self._b_stop.tolist(),
         }
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             json.dump(data, f)
         logger.info("Saved SequenceGenerator to %s", path)
 
     @classmethod
-    def load(cls, path: str) -> 'SequenceGenerator':
+    def load(cls, path: str) -> "SequenceGenerator":
         """Load generator weights from JSON file."""
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             data = json.load(f)
 
         gen = cls(

@@ -32,9 +32,13 @@ class GenerationEvaluator:
         """
         self._encoder = semantic_encoder
 
-    def evaluate(self, generated: Image.Image, text: Optional[str] = None,
-                 reference: Optional[Image.Image] = None,
-                 primitives: Optional[List[np.ndarray]] = None) -> Dict:
+    def evaluate(
+        self,
+        generated: Image.Image,
+        text: Optional[str] = None,
+        reference: Optional[Image.Image] = None,
+        primitives: Optional[List[np.ndarray]] = None,
+    ) -> Dict:
         """Evaluate a generated image.
 
         Args:
@@ -85,6 +89,7 @@ class GenerationEvaluator:
 
         try:
             import io
+
             buf = io.BytesIO()
             image.save(buf, format="PNG")
             img_bytes = buf.getvalue()
@@ -111,6 +116,7 @@ class GenerationEvaluator:
 
         try:
             import io
+
             buf1 = io.BytesIO()
             img1.save(buf1, format="PNG")
             emb1 = self._encoder.encode(buf1.getvalue())
@@ -139,7 +145,7 @@ class GenerationEvaluator:
         text_lower = text.lower()
 
         # Simple color detection
-        r_mean, g_mean, b_mean = arr[:,:,0].mean(), arr[:,:,1].mean(), arr[:,:,2].mean()
+        r_mean, g_mean, b_mean = arr[:, :, 0].mean(), arr[:, :, 1].mean(), arr[:, :, 2].mean()
 
         score = 0.5  # Base score
 
@@ -168,7 +174,7 @@ class GenerationEvaluator:
         # MSE-based similarity
         mse = float(np.mean((arr1 - arr2) ** 2))
         # Map MSE to similarity: 0 MSE → 1.0, high MSE → 0.0
-        return max(0.0, 1.0 - mse / (255.0 ** 2))
+        return max(0.0, 1.0 - mse / (255.0**2))
 
     def _primitive_diversity(self, primitives: List[np.ndarray]) -> float:
         """Measure diversity of primitive embeddings.

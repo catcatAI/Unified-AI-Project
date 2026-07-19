@@ -150,8 +150,7 @@ class PerceptionEngine:
 
     def detect_conflicts(self, perceptions: Dict[str, Dict[str, Any]]) -> Optional[str]:
         """Detect cross-modal conflicts and resolve by confidence."""
-        active = {m: p for m, p in perceptions.items()
-                  if p.get("confidence", 0) > 0.3}
+        active = {m: p for m, p in perceptions.items() if p.get("confidence", 0) > 0.3}
         if len(active) < 2:
             return None
         return max(active, key=lambda m: active[m]["confidence"])

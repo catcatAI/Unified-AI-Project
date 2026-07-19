@@ -48,7 +48,12 @@ class EnterpriseMonitor:
         return dict(self._metrics)
 
     def raise_alert(self, severity: str, message: str, source: str = "") -> None:
-        alert = {"severity": severity, "message": message, "source": source, "timestamp": time.time()}
+        alert = {
+            "severity": severity,
+            "message": message,
+            "source": source,
+            "timestamp": time.time(),
+        }
         self._alerts.append(alert)
         if len(self._alerts) > _MAX_ALERTS:
             self._alerts = self._alerts[-_MAX_ALERTS:]

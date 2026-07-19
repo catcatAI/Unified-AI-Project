@@ -93,8 +93,10 @@ class DependencyResolver:
             return True
         constraint = constraint.strip()
         ops = {
-            ">=": operator.ge, "<=": operator.le,
-            ">": operator.gt, "<": operator.lt,
+            ">=": operator.ge,
+            "<=": operator.le,
+            ">": operator.gt,
+            "<": operator.lt,
             "==": operator.eq,
         }
         op = operator.eq
@@ -102,7 +104,7 @@ class DependencyResolver:
         for prefix in (">=", "<=", ">", "<", "=="):
             if constraint.startswith(prefix):
                 op = ops[prefix]
-                ver = constraint[len(prefix):].strip()
+                ver = constraint[len(prefix) :].strip()
                 break
         try:
             actual_parts = tuple(int(x) for x in actual.split("."))
@@ -112,10 +114,14 @@ class DependencyResolver:
             ver_parts = ver_parts + (0,) * (max_len - len(ver_parts))
             return op(actual_parts, ver_parts)
         except (ValueError, TypeError):
-            logger.warning(f"Version constraint check failed for actual={actual}, ver={ver}", exc_info=True)
+            logger.warning(
+                f"Version constraint check failed for actual={actual}, ver={ver}", exc_info=True
+            )
             return actual == ver
 
-    def check_deps(self, descriptor: ModuleDescriptor, existing: list[ModuleDescriptor]) -> list[str]:
+    def check_deps(
+        self, descriptor: ModuleDescriptor, existing: list[ModuleDescriptor]
+    ) -> list[str]:
         """Execute the check deps operation."""
         existing_map = {d.name: d for d in existing}
         missing: list[str] = []
@@ -128,7 +134,9 @@ class DependencyResolver:
                     missing.append(f"{dep} (needs {constraint}, has {existing_map[dep].version})")
         return missing
 
-    def missing_optional(self, descriptor: ModuleDescriptor, existing: list[ModuleDescriptor]) -> list[str]:
+    def missing_optional(
+        self, descriptor: ModuleDescriptor, existing: list[ModuleDescriptor]
+    ) -> list[str]:
         """Execute the missing optional operation."""
         existing_names = {d.name for d in existing}
         return [dep for dep in descriptor.depends_on.optional if dep not in existing_names]

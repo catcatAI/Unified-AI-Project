@@ -15,13 +15,16 @@ class AuditLoggerHandler:
 
     def handler_for(self, hook_name: str) -> Callable[[Any], Any]:
         """Create a handler closure that logs hook invocations."""
+
         async def _handler(data: Any = None) -> Any:
             summary = {}
             if isinstance(data, dict):
                 summary = {k: v for k, v in list(data.items())[:5]}
             logger.debug(
                 "[Plugin:AuditLogger] hook=%s | data_summary=%s | ts=%s",
-                hook_name, summary, datetime.utcnow().isoformat(),
+                hook_name,
+                summary,
+                datetime.utcnow().isoformat(),
             )
             return data
 

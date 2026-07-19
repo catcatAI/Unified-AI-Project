@@ -23,8 +23,13 @@ class HAMVectorStoreManager:
                     name="ham_memories", metadata={"hnsw:space": "cosine"}
                 )
                 logger.info("ChromaDB collection initialized from external chroma_client.")
-            except Exception as e:  # broad exception acceptable: external client initialization should not crash the system
-                logger.error(f"Failed to initialize ChromaDB collection from external client: {e}", exc_info=True)
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: external client initialization should not crash the system
+                logger.error(
+                    f"Failed to initialize ChromaDB collection from external client: {e}",
+                    exc_info=True,
+                )
                 self.chroma_collection = None
         else:
             if os.environ.get("HAM_DISABLE_VECTOR_STORE", "0") == "1":
@@ -50,26 +55,32 @@ class HAMVectorStoreManager:
                             logger.info(
                                 "ChromaDB collection initialized successfully via VectorMemoryStore."
                             )
-                        except Exception as e:  # broad exception acceptable: collection initialization should not crash the manager
+                        except (
+                            Exception
+                        ) as e:  # broad exception acceptable: collection initialization should not crash the manager
                             logger.error(
-                                f"Failed to initialize ChromaDB collection via VectorMemoryStore: {e}"
-                                , exc_info=True
+                                f"Failed to initialize ChromaDB collection via VectorMemoryStore: {e}",
+                                exc_info=True,
                             )
                             self.chroma_collection = None
                     else:
                         logger.warning(
-                            "VectorMemoryStore client not available for direct ChromaDB collection access."
-                            , exc_info=True
+                            "VectorMemoryStore client not available for direct ChromaDB collection access.",
+                            exc_info=True,
                         )
-                except Exception as e:  # broad exception acceptable: initialization failure should disable vector store gracefully
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: initialization failure should disable vector store gracefully
                     logger.warning(
-                        f"VectorMemoryStore initialization failed (likely due to chromadb / numpy issue): {e}. Vector search will be disabled."
-                        , exc_info=True
+                        f"VectorMemoryStore initialization failed (likely due to chromadb / numpy issue): {e}. Vector search will be disabled.",
+                        exc_info=True,
                     )
                     self.vector_store = None
                     self.chroma_collection = None
 
-    async def add_semantic_vector(self, memory_id: str, content: str, metadata: Dict[str, Any]) -> None:
+    async def add_semantic_vector(
+        self, memory_id: str, content: str, metadata: Dict[str, Any]
+    ) -> None:
         """Add a semantic vector."""
         try:
             if self.chroma_collection is not None:
@@ -88,7 +99,9 @@ class HAMVectorStoreManager:
                 logger.debug(
                     f"HAM: Vector / Chroma store disabled, skipping semantic vector storage for {memory_id}."
                 )
-        except Exception as e:  # broad exception acceptable: storage failure should be logged gracefully
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: storage failure should be logged gracefully
             logger.error(f"Error storing semantic vector for {memory_id}: {e}", exc_info=True)
 
     async def embed_text(self, text: str) -> Optional[np.ndarray]:
@@ -99,9 +112,11 @@ class HAMVectorStoreManager:
         """
         if self.vector_store and self.vector_store._numpy_backend is not None:
             from ai.memory.vector_store import _NumpyBackend
+
             return _NumpyBackend._embed(text)
         if self.chroma_collection is not None:
             from ai.memory.ham_utils import generate_embedding
+
             return generate_embedding(text)
         return None
 
@@ -137,11 +152,13 @@ class HAMVectorStoreManager:
                 )
                 results = []
                 for i in range(len(raw.get("ids", [[]])[0])):
-                    results.append({
-                        "id": raw["ids"][0][i],
-                        "document": raw["documents"][0][i] if raw.get("documents") else "",
-                        "distance": raw["distances"][0][i] if raw.get("distances") else 0.0,
-                    })
+                    results.append(
+                        {
+                            "id": raw["ids"][0][i],
+                            "document": raw["documents"][0][i] if raw.get("documents") else "",
+                            "distance": raw["distances"][0][i] if raw.get("distances") else 0.0,
+                        }
+                    )
                 return results
             except Exception as e:
                 logger.warning("ChromaDB query_similar failed: %s", e)
@@ -154,5 +171,10 @@ class HAMVectorStoreManager:
             try:
                 self.vector_store.client = None
                 logger.info("HAMVectorStoreManager: Vector store client dereferenced successfully.")
-            except Exception as e:  # broad exception acceptable: cleanup should not crash the system
-                logger.error(f"HAMVectorStoreManager: Error dereferencing vector store client: {e}", exc_info=True)
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: cleanup should not crash the system
+                logger.error(
+                    f"HAMVectorStoreManager: Error dereferencing vector store client: {e}",
+                    exc_info=True,
+                )

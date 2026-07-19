@@ -47,6 +47,7 @@ def _lazy_init_torch():
         import torch
         import torch.nn as nn
         import torch.nn.functional as F
+
         _torch = torch
         _nn = nn
         _F = F
@@ -93,9 +94,14 @@ class ThreeLayerVisual:
 
         logger.info("ThreeLayerVisual initialized (model_dir=%s)", model_dir)
 
-    def fit(self, images: np.ndarray, labels: np.ndarray,
-            class_names: Optional[List[str]] = None,
-            n_epochs: int = 100, verbose: bool = True) -> Dict:
+    def fit(
+        self,
+        images: np.ndarray,
+        labels: np.ndarray,
+        class_names: Optional[List[str]] = None,
+        n_epochs: int = 100,
+        verbose: bool = True,
+    ) -> Dict:
         if self._torch is None:
             raise RuntimeError("torch not available")
         t0 = time.time()
@@ -123,11 +129,13 @@ class ThreeLayerVisual:
         n_components = min(Vt.shape[0], self.LATENT_DIM)
         self._encoder = np.zeros((self.LATENT_DIM, self.IMG_DIM), dtype=Vt.dtype)
         self._encoder[:n_components] = Vt[:n_components]
-        explained = (S[:n_components] ** 2).sum() / (S ** 2).sum()
+        explained = (S[:n_components] ** 2).sum() / (S**2).sum()
         self._pca_explained = float(explained)
         self._latent_dim = self.LATENT_DIM
         if verbose:
-            logger.info("PCA: %d/%d dims, %.1f%% variance", n_components, self.LATENT_DIM, explained * 100)
+            logger.info(
+                "PCA: %d/%d dims, %.1f%% variance", n_components, self.LATENT_DIM, explained * 100
+            )
 
     def _encode_all(self, images):
         centered = images - self._mean
@@ -160,6 +168,7 @@ class ThreeLayerVisual:
                     nn.Linear(512, 3072),
                     nn.Sigmoid(),
                 )
+
             def forward(self, x):
                 return self.net(x)
 
@@ -175,7 +184,7 @@ class ThreeLayerVisual:
             total_loss = 0.0
             n_batches = 0
             for i in range(0, len(X), 64):
-                idx = perm[i:i+64]
+                idx = perm[i : i + 64]
                 x, y = X[idx], Y[idx]
                 recon = self._decoder(x)
                 loss = criterion(recon, y)
@@ -190,15 +199,17 @@ class ThreeLayerVisual:
     def _build_metrics(self, images, latent, t0, verbose):
         self._decoder.eval()
         with self._torch.no_grad():
-            test_recon = self._decoder(self._torch.tensor(latent[:10], dtype=self._torch.float32)).numpy()
+            test_recon = self._decoder(
+                self._torch.tensor(latent[:10], dtype=self._torch.float32)
+            ).numpy()
         test_mse = float(np.mean((test_recon - images[:10]) ** 2))
         elapsed = time.time() - t0
         metrics = {
-            'pca_variance': self._pca_explained,
-            'test_mse': test_mse,
-            'training_time': elapsed,
-            'n_classes': len(self._class_names),
-            'n_images': len(images),
+            "pca_variance": self._pca_explained,
+            "test_mse": test_mse,
+            "training_time": elapsed,
+            "n_classes": len(self._class_names),
+            "n_images": len(images),
         }
         if verbose:
             logger.info("Training complete: MSE=%.4f (%.0fs)", test_mse, elapsed)
@@ -270,7 +281,7 @@ class ThreeLayerVisual:
         if self._class_centers is None:
             raise RuntimeError("Model not fitted")
 
-        latent = self._class_centers[class_index:class_index+1]
+        latent = self._class_centers[class_index : class_index + 1]
         gen = self.decode(latent)[0]
 
         if enhance:
@@ -278,8 +289,9 @@ class ThreeLayerVisual:
 
         return gen
 
-    def interpolate(self, class_a: int, class_b: int, n_steps: int = 10,
-                    enhance: bool = True) -> np.ndarray:
+    def interpolate(
+        self, class_a: int, class_b: int, n_steps: int = 10, enhance: bool = True
+    ) -> np.ndarray:
         """Interpolate between two class centers.
 
         Args:
@@ -295,10 +307,12 @@ class ThreeLayerVisual:
             raise RuntimeError("Model not fitted")
 
         alphas = np.linspace(0, 1, n_steps)
-        latent = np.array([
-            alpha * self._class_centers[class_b] + (1 - alpha) * self._class_centers[class_a]
-            for alpha in alphas
-        ])
+        latent = np.array(
+            [
+                alpha * self._class_centers[class_b] + (1 - alpha) * self._class_centers[class_a]
+                for alpha in alphas
+            ]
+        )
 
         gen = self.decode(latent)
 
@@ -419,6 +433,7 @@ class ThreeLayerVisual:
                             nn.Linear(512, 3072),
                             nn.Sigmoid(),
                         )
+
                     def forward(self, x):
                         return self.net(x)
 

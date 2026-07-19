@@ -7,6 +7,22 @@ terminating, and monitoring them.
 Also serves as the central message router for HSP communication.
 """
 
+import asyncio
+import logging
+import multiprocessing as mp
+import os
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
+
+from core.system.config.magic_numbers import loop_sleep, retry_value, timeout_value
+from core.system.config.network_defaults import DEFAULT_HOST
 from core.utils import safe_error
 
 # =============================================================================
@@ -38,22 +54,6 @@ from core.utils import safe_error
 #
 # =============================================================================
 
-import asyncio
-import logging
-import multiprocessing as mp
-import os
-import subprocess
-import sys
-import tempfile
-import threading
-import time
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
-
-from core.system.config.magic_numbers import loop_sleep, retry_value, timeout_value
-from core.system.config.network_defaults import DEFAULT_HOST
 
 logger = logging.getLogger(__name__)
 
@@ -165,6 +165,7 @@ class DefaultAgentResultEvaluator(AgentResultEvaluator):
             impact.alpha["focus"] = 0.05
 
         return impact
+
 
 class AgentType(Enum):
     """代理類型"""
@@ -361,7 +362,9 @@ class AgentManager:
 
         for attempt in range(max_retries):
             try:
-                response = httpx.get(f"{self.router_url}/health", timeout=timeout_value("router_health", 2.0))
+                response = httpx.get(
+                    f"{self.router_url}/health", timeout=timeout_value("router_health", 2.0)
+                )
                 if response.status_code == 200:
                     logger.info("HSP Router health check passed")
                     break
@@ -458,7 +461,9 @@ class AgentManager:
 
             return result
 
-        except Exception as e:  # broad exception acceptable: agent execution wraps all agent failures
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: agent execution wraps all agent failures
             execution_time = time.time() - start_time
             logger.error(f"Error executing agent {agent_name}: {e}", exc_info=True)
 
@@ -509,7 +514,9 @@ class AgentManager:
 
             logger.debug(f"Applied state impact: {impact}")
 
-        except Exception as e:  # broad exception acceptable: state impact wraps all state update failures
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: state impact wraps all state update failures
             logger.error(f"Error applying state impact: {e}", exc_info=True)
 
     # P0-3: 设置自定义评估器
@@ -589,7 +596,9 @@ class AgentManager:
                     agents_dir = os.path.join(os.path.dirname(__file__), "..", "agents")
 
             if not os.path.isdir(agents_dir):
-                logger.warning(f"[AgentManager] Agents directory not found: {agents_dir}", exc_info=True)
+                logger.warning(
+                    f"[AgentManager] Agents directory not found: {agents_dir}", exc_info=True
+                )
                 return agent_map
 
             for filename in os.listdir(agents_dir):
@@ -603,7 +612,9 @@ class AgentManager:
             if agent_map:
                 logger.info(f"[AgentManager] Agents: {list(agent_map.keys())}")
             return agent_map
-        except Exception as e:  # broad exception acceptable: agent discovery wraps all file enumeration failures
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: agent discovery wraps all file enumeration failures
             logger.error(f"[AgentManager] Error discovering agent scripts: {e}", exc_info=True)
             return agent_map
 
@@ -622,7 +633,9 @@ class AgentManager:
         """
         with self.launch_lock:
             if agent_name not in self.agent_script_map:
-                logger.error(f"[AgentManager] Error: Agent '{agent_name}' not found.", exc_info=True)
+                logger.error(
+                    f"[AgentManager] Error: Agent '{agent_name}' not found.", exc_info=True
+                )
                 return None
 
             if agent_name in self.active_agents and self.active_agents[agent_name].poll() is None:
@@ -654,8 +667,12 @@ class AgentManager:
                     f"[AgentManager] Successfully launched '{agent_name}' with PID {process.pid}."
                 )
                 return str(process.pid)
-            except Exception as e:  # broad exception acceptable: agent launch wraps all subprocess failures
-                logger.error(f"[AgentManager] Failed to launch agent '{agent_name}': {e}", exc_info=True)
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: agent launch wraps all subprocess failures
+                logger.error(
+                    f"[AgentManager] Failed to launch agent '{agent_name}': {e}", exc_info=True
+                )
                 return None
 
     def check_agent_health(self, agent_name: str) -> Dict[str, Any]:
@@ -667,7 +684,9 @@ class AgentManager:
 
         agent = self.agents.get(agent_name)
         is_registered = agent_name in self.agents
-        is_active = agent_name in self.active_agents and self.active_agents[agent_name].poll() is None
+        is_active = (
+            agent_name in self.active_agents and self.active_agents[agent_name].poll() is None
+        )
 
         last_heartbeat = None
         if agent_name in self.process_agents:
@@ -698,18 +717,22 @@ class AgentManager:
             logger.info(f"[AgentManager] Shutting down '{agent_name}' (PID: {process.pid})...")
             process.terminate()  # Sends SIGTERM
             try:
-                process.wait(timeout=timeout_value("agent_process_wait", 5.0))  # Wait for the process to terminate
+                process.wait(
+                    timeout=timeout_value("agent_process_wait", 5.0)
+                )  # Wait for the process to terminate
                 logger.info(f"[AgentManager] Agent '{agent_name}' terminated.")
             except subprocess.TimeoutExpired:
                 logger.warning(
-                    f"[AgentManager] Agent '{agent_name}' did not terminate gracefully, killing."
-                    , exc_info=True
+                    f"[AgentManager] Agent '{agent_name}' did not terminate gracefully, killing.",
+                    exc_info=True,
                 )
                 process.kill()  # Sends SIGKILL
             del self.active_agents[agent_name]
             return True
         else:
-            logger.warning(f"[AgentManager] Agent '{agent_name}' not found or not running.", exc_info=True)
+            logger.warning(
+                f"[AgentManager] Agent '{agent_name}' not found or not running.", exc_info=True
+            )
             return False
 
     def shutdown_all_agents(self) -> None:
@@ -755,7 +778,9 @@ class AgentManager:
                 logger.info(f"[AgentManager] Agent '{agent_name}' is already registered and ready.")
                 return
             await asyncio.sleep(loop_sleep("agent_wait_retry", 2.0))
-            logger.info(f"[AgentManager] Assuming agent '{agent_name}' is ready after initialization delay.")
+            logger.info(
+                f"[AgentManager] Assuming agent '{agent_name}' is ready after initialization delay."
+            )
             return
 
         expected_capability_id = "data_analysis_v1"  # Placeholder
@@ -778,7 +803,10 @@ class AgentManager:
             )
             await asyncio.sleep(loop_sleep("agent_poll", 0.5))
 
-        logger.warning(f"[AgentManager] Agent '{agent_name}' not ready within {timeout} seconds.", exc_info=True)
+        logger.warning(
+            f"[AgentManager] Agent '{agent_name}' not ready within {timeout} seconds.",
+            exc_info=True,
+        )
 
     def get_available_agents(self) -> List[str]:
         """
@@ -815,11 +843,15 @@ class AgentManager:
                         logger.info(f"[AgentManager] Auto-loaded agent: {agent_name}")
                     else:
                         logger.warning(
-                            f"[AgentManager] No {agent_class_name} class in {agent_name}"
-                            , exc_info=True
+                            f"[AgentManager] No {agent_class_name} class in {agent_name}",
+                            exc_info=True,
                         )
-            except Exception as e:  # broad exception acceptable: auto-load wraps all module import failures
-                logger.error(f"[AgentManager] Failed to load agent {agent_name}: {e}", exc_info=True)
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: auto-load wraps all module import failures
+                logger.error(
+                    f"[AgentManager] Failed to load agent {agent_name}: {e}", exc_info=True
+                )
 
         logger.info(
             f"[AgentManager] Auto-loaded {loaded_count}/{len(self.agent_script_map)} agents"

@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CMLExample:
     """A single multimodal encode/decode example for training."""
+
     modality: str
     feature_vector: List[float]
     latent: List[float]
@@ -79,6 +80,7 @@ class ContinuousMultimodalLearning:
         if self._pipeline is None:
             try:
                 from ai.multimodal.training_pipeline import FullTrainingPipeline
+
                 self._pipeline = FullTrainingPipeline()
             except Exception as e:
                 logger.warning("Cannot create training pipeline: %s", e)
@@ -86,8 +88,9 @@ class ContinuousMultimodalLearning:
 
     # --- Recording ---
 
-    def record_encode(self, modality: str, feature_vector: list,
-                      latent: list, quality_score: float = 0.0) -> None:
+    def record_encode(
+        self, modality: str, feature_vector: list, latent: list, quality_score: float = 0.0
+    ) -> None:
         """Record an encode operation for potential future training.
 
         Args:
@@ -110,12 +113,14 @@ class ContinuousMultimodalLearning:
 
     def record_quality(self, metrics: Dict[str, Any]) -> None:
         """Record a quality metric snapshot for trend analysis."""
-        self._quality_history.append({
-            "timestamp": time.time(),
-            **metrics,
-        })
+        self._quality_history.append(
+            {
+                "timestamp": time.time(),
+                **metrics,
+            }
+        )
         if len(self._quality_history) > self.buffer_max * 2:
-            self._quality_history = self._quality_history[-self.buffer_max:]
+            self._quality_history = self._quality_history[-self.buffer_max :]
 
     # --- Auto-training ---
 
@@ -186,13 +191,15 @@ class ContinuousMultimodalLearning:
             self._last_train_time = time.time()
 
             # Record quality delta
-            self.record_quality({
-                "loss_before": loss_before,
-                "loss_after": loss_after,
-                "delta": delta,
-                "epochs": epochs,
-                "buffer_size": len(self._buffer),
-            })
+            self.record_quality(
+                {
+                    "loss_before": loss_before,
+                    "loss_after": loss_after,
+                    "delta": delta,
+                    "epochs": epochs,
+                    "buffer_size": len(self._buffer),
+                }
+            )
 
             # Trim buffer after training (keep last 25% for next cycle)
             keep_count = max(len(self._buffer) // 4, 1)
@@ -227,14 +234,20 @@ class ContinuousMultimodalLearning:
                   avg_delta, total_training_runs
         """
         if len(self._quality_history) < 2:
-            return {"delta_assessment": "insufficient_data", "avg_delta": 0.0,
-                    "total_training_runs": self._training_runs}
+            return {
+                "delta_assessment": "insufficient_data",
+                "avg_delta": 0.0,
+                "total_training_runs": self._training_runs,
+            }
 
-        recent = self._quality_history[-self.quality_window:]
+        recent = self._quality_history[-self.quality_window :]
         deltas = [r.get("delta", 0.0) for r in recent if r.get("delta") is not None]
         if not deltas:
-            return {"delta_assessment": "no_data", "avg_delta": 0.0,
-                    "total_training_runs": self._training_runs}
+            return {
+                "delta_assessment": "no_data",
+                "avg_delta": 0.0,
+                "total_training_runs": self._training_runs,
+            }
 
         avg_delta = sum(deltas) / len(deltas)
         if avg_delta > 0.01:
@@ -323,8 +336,12 @@ class ContinuousMultimodalLearning:
             self._last_train_time = state.get("last_train_time", 0.0)
             self._quality_history = state.get("quality_history", [])
 
-            logger.info("CML state loaded from %s (%d encodes, %d training runs)",
-                        save_path, self._total_encodes, self._training_runs)
+            logger.info(
+                "CML state loaded from %s (%d encodes, %d training runs)",
+                save_path,
+                self._total_encodes,
+                self._training_runs,
+            )
             return True
         except Exception as e:
             logger.warning("CML load failed: %s", e)

@@ -191,8 +191,17 @@ class SystemHardwareProbe:
             try:
                 # 修复：移除 shell=True，直接调用 wmic 命令防止注入
                 result = subprocess.run(
-                    ["wmic", "path", "win32_VideoController", "get", "name,AdapterRAM", "/format:list"],
-                    capture_output=True, text=True, timeout=5
+                    [
+                        "wmic",
+                        "path",
+                        "win32_VideoController",
+                        "get",
+                        "name,AdapterRAM",
+                        "/format:list",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
                 )
                 output = result.stdout
                 name, ram = "", 0
@@ -249,7 +258,9 @@ class SystemHardwareProbe:
             import shutil
 
             return shutil.disk_usage(".").free / (1024**3)
-        except Exception:  # broad exception acceptable: disk usage query may fail in restricted environments
+        except (
+            Exception
+        ):  # broad exception acceptable: disk usage query may fail in restricted environments
             logger.warning("Failed to detect disk space", exc_info=True)
             return 0.0
 
@@ -333,7 +344,9 @@ class ModeRecommender:
                     mode_config,
                 )
             else:
-                logger.warning(f"Preferred mode {preferred_mode} not compatible: {reason}", exc_info=True)
+                logger.warning(
+                    f"Preferred mode {preferred_mode} not compatible: {reason}", exc_info=True
+                )
 
         # Priority 2: Auto-selection based on profile
         modes_to_check = ["extended", "standard", "lite"]

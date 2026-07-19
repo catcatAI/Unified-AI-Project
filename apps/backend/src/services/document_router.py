@@ -15,6 +15,7 @@ Operation types with distinct information retention rates:
 """
 
 import asyncio
+import datetime
 import json
 import logging
 import os
@@ -22,35 +23,56 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-import datetime
-
-from core.utils import any_keyword
-
-from core.utils import safe_error
+from core.utils import any_keyword, safe_error
 
 logger = logging.getLogger(__name__)
 
 _OPERATIONS = {
-    "organize":    {"label": "整理", "retention": (0.80, 1.00), "desc": "重構格式，保留所有內容", "anti": ["思路", "想法", "概念", "邏輯"]},
-    "summarize":   {"label": "總結", "retention": (0.10, 0.20), "desc": "提取關鍵要點，附原始連結", "anti": ["心得", "感想", "體會", "討論", "會議"]},
-    "optimize":    {"label": "優化", "retention": (0.60, 0.80), "desc": "裁剪多餘內容，保留核心", "anti": ["算法", "模型", "參數", "訓練", "最優化"]},
-    "analyze":     {"label": "分析", "retention": (1.00, 1.00), "desc": "提取結構/模式，增加洞察", "anti": []},
-    "categorize":  {"label": "分類", "retention": (1.00, 1.00), "desc": "按類別分類歸檔", "anti": ["分類器", "分類問題", "分類模型"]},
-    "list":        {"label": "列出", "retention": (1.00, 1.00), "desc": "枚舉檔案清單", "anti": []},
+    "organize": {
+        "label": "整理",
+        "retention": (0.80, 1.00),
+        "desc": "重構格式，保留所有內容",
+        "anti": ["思路", "想法", "概念", "邏輯"],
+    },
+    "summarize": {
+        "label": "總結",
+        "retention": (0.10, 0.20),
+        "desc": "提取關鍵要點，附原始連結",
+        "anti": ["心得", "感想", "體會", "討論", "會議"],
+    },
+    "optimize": {
+        "label": "優化",
+        "retention": (0.60, 0.80),
+        "desc": "裁剪多餘內容，保留核心",
+        "anti": ["算法", "模型", "參數", "訓練", "最優化"],
+    },
+    "analyze": {
+        "label": "分析",
+        "retention": (1.00, 1.00),
+        "desc": "提取結構/模式，增加洞察",
+        "anti": [],
+    },
+    "categorize": {
+        "label": "分類",
+        "retention": (1.00, 1.00),
+        "desc": "按類別分類歸檔",
+        "anti": ["分類器", "分類問題", "分類模型"],
+    },
+    "list": {"label": "列出", "retention": (1.00, 1.00), "desc": "枚舉檔案清單", "anti": []},
 }
 
 # Path-like patterns that indicate a document task (not a conceptual question)
 _PATH_PATTERNS = (
-    r'/',
-    r'\\',
-    r'\.',
-    r'data',
-    r'docs',
-    r'档案',
-    r'文件',
-    r'目錄',
-    r'folder',
-    r'directory',
+    r"/",
+    r"\\",
+    r"\.",
+    r"data",
+    r"docs",
+    r"档案",
+    r"文件",
+    r"目錄",
+    r"folder",
+    r"directory",
 )
 
 _EXAMPLES_DIR = Path(__file__).parent.parent.parent.parent / "data"
@@ -60,6 +82,7 @@ _EXAMPLES_PATH = _EXAMPLES_DIR / "document_examples.json"
 # ═══════════════════════════════════════════════
 # File utilities
 # ═══════════════════════════════════════════════
+
 
 async def _list_text_files(directory: str) -> List[Path]:
     path = Path(directory)
@@ -95,12 +118,12 @@ def _has_path_reference(msg: str) -> bool:
 
 
 _TASK_KWS = (
-    ("optimize",  ("優化", "optimize", "精簡", "潤飾", "refine")),
-    ("organize",  ("整理", "organize", "歸檔", "sort", "classify", "歸納")),
+    ("optimize", ("優化", "optimize", "精簡", "潤飾", "refine")),
+    ("organize", ("整理", "organize", "歸檔", "sort", "classify", "歸納")),
     ("summarize", ("摘要", "總結", "summarize", "summary", "濃縮")),
-    ("analyze",   ("分析", "analyze", "解析", "提取", "extract")),
-    ("list",      ("列出", "list", "索引", "index", "目錄")),
-    ("categorize",("分類", "categorize", "歸類")),
+    ("analyze", ("分析", "analyze", "解析", "提取", "extract")),
+    ("list", ("列出", "list", "索引", "index", "目錄")),
+    ("categorize", ("分類", "categorize", "歸類")),
 )
 
 
@@ -127,7 +150,9 @@ def _parse_task_type(user_message: str) -> Optional[Tuple[str, str]]:
         return None
 
     # Format gate: must reference files/dirs — no exceptions
-    has_format = _has_path_reference(msg_lower) or any(k in msg_lower for k in ("檔案", "文件", "目錄"))
+    has_format = _has_path_reference(msg_lower) or any(
+        k in msg_lower for k in ("檔案", "文件", "目錄")
+    )
 
     if not has_format:
         logger.debug(f"Task type '{op_key}' rejected: no path or file reference")
@@ -186,7 +211,9 @@ def _find_local_match(task_type: str, source_dir: str, files: List[Path]) -> Opt
         ex_files = set(ex.get("file_names", []))
         overlap = file_names & ex_files
         if len(overlap) >= min(file_count, ex.get("file_count", 0)) * 0.5:
-            logger.info(f"Local match found for task '{task_type}' ({len(overlap)}/{file_count} files overlap)")
+            logger.info(
+                f"Local match found for task '{task_type}' ({len(overlap)}/{file_count} files overlap)"
+            )
             return ex
     return None
 
@@ -194,6 +221,7 @@ def _find_local_match(task_type: str, source_dir: str, files: List[Path]) -> Opt
 # ═══════════════════════════════════════════════
 # Tier 1: Local processing (ED3N / GARDEN)
 # ═══════════════════════════════════════════════
+
 
 async def _try_local_processing(
     user_message: str, task_type: str, source_dir: str, files: List[Path]
@@ -206,7 +234,9 @@ async def _try_local_processing(
     matched = _find_local_match(task_type, source_dir, files)
     if matched:
         return {
-            "response_text": matched.get("response", f"已從先前經驗完成{op['label']}任務{retention_note}。"),
+            "response_text": matched.get(
+                "response", f"已從先前經驗完成{op['label']}任務{retention_note}。"
+            ),
             "output_files": matched.get("output_files", []),
             "source": "document_router_local",
             "route": "document_router",
@@ -214,6 +244,7 @@ async def _try_local_processing(
 
     try:
         from ai.ed3n.ed3n_engine import ED3NEngine
+
         engine = ED3NEngine.get_instance()
         file_summaries = []
         for f in files[:5]:
@@ -233,6 +264,7 @@ async def _try_local_processing(
 
     try:
         from ai.garden.garden_engine import GARDENEngine
+
         engine = GARDENEngine()
         file_summaries = []
         for f in files[:5]:
@@ -257,6 +289,7 @@ async def _try_local_processing(
 # Tier 2: LLM fallback
 # ═══════════════════════════════════════════════
 
+
 async def _try_llm_processing(
     user_message: str, task_type: str, source_dir: str, files: List[Path], chat_svc: Any
 ) -> Optional[Dict]:
@@ -267,7 +300,9 @@ async def _try_llm_processing(
     task_label = op["label"]
     retention_min, retention_max = op["retention"]
     retention_pct = f"{int(retention_min*100)}%～{int(retention_max*100)}%"
-    file_list_text = "\n".join(f"{i+1}. {f.name} ({f.stat().st_size}B)" for i, f in enumerate(files))
+    file_list_text = "\n".join(
+        f"{i+1}. {f.name} ({f.stat().st_size}B)" for i, f in enumerate(files)
+    )
 
     try:
         prompt = (
@@ -310,6 +345,7 @@ async def _try_llm_processing(
 # Tier 3: Learn from LLM output → local models
 # ═══════════════════════════════════════════════
 
+
 async def _learn_from_llm_output(
     task_type: str, source_dir: str, files: List[Path], llm_output: str
 ) -> None:
@@ -317,24 +353,27 @@ async def _learn_from_llm_output(
     examples = _load_examples()
     if task_type not in examples:
         examples[task_type] = []
-    examples[task_type].append({
-        "operation": task_type,
-        "label": op["label"],
-        "retention_min": op["retention"][0],
-        "retention_max": op["retention"][1],
-        "description": op["desc"],
-        "source_dir": source_dir,
-        "file_names": [f.name for f in files],
-        "file_count": len(files),
-        "response": llm_output[:500],
-        "timestamp": datetime.datetime.now().isoformat(),
-    })
+    examples[task_type].append(
+        {
+            "operation": task_type,
+            "label": op["label"],
+            "retention_min": op["retention"][0],
+            "retention_max": op["retention"][1],
+            "description": op["desc"],
+            "source_dir": source_dir,
+            "file_names": [f.name for f in files],
+            "file_count": len(files),
+            "response": llm_output[:500],
+            "timestamp": datetime.datetime.now().isoformat(),
+        }
+    )
     if len(examples[task_type]) > 20:
         examples[task_type] = examples[task_type][-20:]
     _save_examples(examples)
 
     try:
         from ai.ed3n.ed3n_engine import ED3NEngine
+
         engine = ED3NEngine.get_instance()
         engine.learn_reflex(f"doc_{task_type}", llm_output[:200])
     except Exception as e:
@@ -342,6 +381,7 @@ async def _learn_from_llm_output(
 
     try:
         from ai.garden.garden_engine import GARDENEngine
+
         engine = GARDENEngine()
         for f in files[:3]:
             content = await _read_file_content(f)
@@ -353,6 +393,7 @@ async def _learn_from_llm_output(
 # ═══════════════════════════════════════════════
 # Main entry point
 # ═══════════════════════════════════════════════
+
 
 async def handle_document_intent(
     user_message: str,
@@ -367,7 +408,7 @@ async def handle_document_intent(
     logger.info(f"DocumentRouter: task={task_type}, source={source_dir}")
 
     output_dir = ""
-    output_match = re.search(r'輸出到[：:]\s*([^\s]+)', user_message)
+    output_match = re.search(r"輸出到[：:]\s*([^\s]+)", user_message)
     if output_match:
         output_dir = output_match.group(1)
 
@@ -392,7 +433,9 @@ async def handle_document_intent(
 
     # Tier 2: LLM fallback (only if local returned low-quality or no result)
     if not tier_result:
-        tier_result = await _try_llm_processing(user_message, task_type, source_dir, files, chat_svc)
+        tier_result = await _try_llm_processing(
+            user_message, task_type, source_dir, files, chat_svc
+        )
 
     if not tier_result:
         op = _OPERATIONS.get(task_type, _OPERATIONS["summarize"])
@@ -406,14 +449,16 @@ async def handle_document_intent(
 
     # Tier 3: Learn from LLM output (if LLM was used)
     if tier_result.get("source") == "document_router_llm":
-        await _learn_from_llm_output(task_type, source_dir, files, tier_result.get("response_text", ""))
+        await _learn_from_llm_output(
+            task_type, source_dir, files, tier_result.get("response_text", "")
+        )
 
     if output_dir:
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
         await _write_output_file(
             output_path / f"{task_label}-{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}.md",
-            tier_result.get("response_text", "")
+            tier_result.get("response_text", ""),
         )
 
     return {

@@ -23,10 +23,10 @@ Version: 6.2.1
 from __future__ import annotations
 
 import enum
-import math
 import logging
-from dataclasses import dataclass, field
+import math
 from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -78,9 +78,7 @@ class RippleNode:
     def apply(self, **kwargs: float) -> RippleNode:
         return self
 
-    def cascade(
-        self, targets: List[str], strategy: CascadeStrategy
-    ) -> List[RippleNode]:
+    def cascade(self, targets: List[str], strategy: CascadeStrategy) -> List[RippleNode]:
         nodes: List[RippleNode] = [self]
         base = self.result_magnitude or abs(self.result or 1.0)
         for step in range(1, 100):
@@ -116,7 +114,7 @@ class LinearCascade(CascadeStrategy):
         self._base_decay = base_decay
 
     def compute_decay(self, step: int, base_value: float) -> float:
-        return base_value * (self._base_decay ** step)
+        return base_value * (self._base_decay**step)
 
 
 class ExponentialCascade(CascadeStrategy):
@@ -133,7 +131,7 @@ class AdaptiveCascade(CascadeStrategy):
 
     def compute_decay(self, step: int, base_value: float) -> float:
         adaptive = self._base_decay * (1.0 + 0.1 * math.sin(step * 0.5))
-        return base_value * (adaptive ** step)
+        return base_value * (adaptive**step)
 
 
 class RippleAccumulator:
@@ -154,8 +152,10 @@ class RippleAccumulator:
         self.fatigue = min(1.0, self.fatigue + total * 0.1)
 
     def summary(self) -> str:
-        return (f"RippleAccumulator(count={len(self.ripples)}, "
-                f"fatigue={self.fatigue:.3f}, max_depth={self.max_depth})")
+        return (
+            f"RippleAccumulator(count={len(self.ripples)}, "
+            f"fatigue={self.fatigue:.3f}, max_depth={self.max_depth})"
+        )
 
     def reset(self) -> None:
         self.ripples.clear()

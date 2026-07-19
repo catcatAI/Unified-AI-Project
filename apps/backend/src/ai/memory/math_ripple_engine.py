@@ -47,6 +47,7 @@ class AlgorithmDepth(Enum):
     HEAVY:   + 三角(sin/cos/tan)、對數(log)  — O(n³)
     ULTRA:   + 微積分(∫, d/dx)、級數(Σ)      — O(exp)
     """
+
     LIGHT = "light"
     MEDIUM = "medium"
     HEAVY = "heavy"
@@ -66,22 +67,47 @@ class AlgorithmDepth(Enum):
         elif self.value == "heavy":
             return base + ["^", "**", "sqrt", "%", "mod", "sin", "cos", "tan", "log", "ln"]
         else:
-            return base + ["^", "**", "sqrt", "%", "mod", "sin", "cos", "tan", "log", "ln", "∫", "∑", "sigma"]
+            return base + [
+                "^",
+                "**",
+                "sqrt",
+                "%",
+                "mod",
+                "sin",
+                "cos",
+                "tan",
+                "log",
+                "ln",
+                "∫",
+                "∑",
+                "sigma",
+            ]
 
 
 # 關鍵詞 → 演算法深度映射
 ALGORITHM_DEPTH_KEYWORDS: Dict[str, AlgorithmDepth] = {
-    "sin": AlgorithmDepth.HEAVY, "cos": AlgorithmDepth.HEAVY,
-    "tan": AlgorithmDepth.HEAVY, "log": AlgorithmDepth.HEAVY,
-    "ln": AlgorithmDepth.HEAVY, "lg": AlgorithmDepth.HEAVY,
-    "^": AlgorithmDepth.MEDIUM, "**": AlgorithmDepth.MEDIUM,
-    "sqrt": AlgorithmDepth.MEDIUM, "root": AlgorithmDepth.MEDIUM,
-    "%": AlgorithmDepth.MEDIUM, "mod": AlgorithmDepth.MEDIUM,
-    "∫": AlgorithmDepth.ULTRA, "積分": AlgorithmDepth.ULTRA,
-    "微": AlgorithmDepth.ULTRA, "微分": AlgorithmDepth.ULTRA,
-    "∑": AlgorithmDepth.ULTRA, "級數": AlgorithmDepth.ULTRA,
-    "sigma": AlgorithmDepth.ULTRA, "d/dx": AlgorithmDepth.ULTRA,
-    "導數": AlgorithmDepth.ULTRA, "偏導": AlgorithmDepth.ULTRA,
+    "sin": AlgorithmDepth.HEAVY,
+    "cos": AlgorithmDepth.HEAVY,
+    "tan": AlgorithmDepth.HEAVY,
+    "log": AlgorithmDepth.HEAVY,
+    "ln": AlgorithmDepth.HEAVY,
+    "lg": AlgorithmDepth.HEAVY,
+    "^": AlgorithmDepth.MEDIUM,
+    "**": AlgorithmDepth.MEDIUM,
+    "sqrt": AlgorithmDepth.MEDIUM,
+    "root": AlgorithmDepth.MEDIUM,
+    "%": AlgorithmDepth.MEDIUM,
+    "mod": AlgorithmDepth.MEDIUM,
+    "∫": AlgorithmDepth.ULTRA,
+    "積分": AlgorithmDepth.ULTRA,
+    "微": AlgorithmDepth.ULTRA,
+    "微分": AlgorithmDepth.ULTRA,
+    "∑": AlgorithmDepth.ULTRA,
+    "級數": AlgorithmDepth.ULTRA,
+    "sigma": AlgorithmDepth.ULTRA,
+    "d/dx": AlgorithmDepth.ULTRA,
+    "導數": AlgorithmDepth.ULTRA,
+    "偏導": AlgorithmDepth.ULTRA,
 }
 
 
@@ -95,6 +121,7 @@ class RippleDepth(Enum):
     D6: 全6軸 + 反饋修正   觸發過載/恐懼時
     D7: 全6軸 + θ自反饋   創造新軸時
     """
+
     D3 = 3
     D4 = 4
     D5 = 5
@@ -124,6 +151,7 @@ class RippleDepth(Enum):
 @dataclass
 class RippleDepthConfig:
     """漣漪深度配置"""
+
     depth: RippleDepth = RippleDepth.D3
     algorithm_depth: AlgorithmDepth = AlgorithmDepth.LIGHT
     cascade_decay: float = 0.72
@@ -170,6 +198,7 @@ def _detect_ripple_depth(expr: str, algo: AlgorithmDepth) -> RippleDepth:
 def _estimate_result_magnitude(expr: str) -> float:
     """粗略估計表達式結果的大小"""
     import re
+
     numbers = re.findall(r"\d+\.?\d*", expr)
     if not numbers:
         return 100.0
@@ -192,6 +221,7 @@ class MathOp(Enum):
 @dataclass
 class RippleEffect:
     """單次運算的漣漪效應"""
+
     operator: MathOp
     operand_a: float
     operand_b: Optional[float]
@@ -225,6 +255,7 @@ class RippleEffect:
 @dataclass
 class RippleAccumulator:
     """連續運算的漣漪累積器"""
+
     total_ripples: List[RippleEffect] = field(default_factory=list)
     cumulative_epsilon: float = 0.0
     cumulative_arousal: float = 0.0
@@ -280,7 +311,7 @@ class RippleCascade:
     def cascade(
         ripple: RippleEffect,
         matrix: Optional[Any] = None,
-        target_depth: Optional[RippleDepth] = None
+        target_depth: Optional[RippleDepth] = None,
     ) -> List[RippleEffect]:
         """
         根據深度配置，將漣漪級聯傳播到目標軸
@@ -304,7 +335,7 @@ class RippleCascade:
             if step == 0:
                 continue
 
-            cascade_factor = decay ** step
+            cascade_factor = decay**step
             effect = RippleEffect(
                 operator=ripple.operator,
                 operand_a=ripple.operand_a,
@@ -343,7 +374,9 @@ class RippleCascade:
                 if mat:
                     RippleCascade._apply_ripple_to_axis(mat, effect, axis)
 
-        if target_depth.feedback_enabled and (ripple.overload_triggered or ripple.fear_triggered or ripple.confusion_triggered):
+        if target_depth.feedback_enabled and (
+            ripple.overload_triggered or ripple.fear_triggered or ripple.confusion_triggered
+        ):
             feedback_ripples = RippleCascade.compute_feedback(ripple, target_depth)
             all_ripples.extend(feedback_ripples)
             ripple.feedback_ripples = feedback_ripples
@@ -351,10 +384,7 @@ class RippleCascade:
         return all_ripples
 
     @staticmethod
-    def compute_feedback(
-        ripple: RippleEffect,
-        depth: RippleDepth
-    ) -> List[RippleEffect]:
+    def compute_feedback(ripple: RippleEffect, depth: RippleDepth) -> List[RippleEffect]:
         """
         計算反饋漣漪（深度6-7時觸發）
 
@@ -467,21 +497,57 @@ class MathRippleEngine:
 
     # Chinese number mapping
     ZH_NUM = {
-        "零": 0, "一": 1, "二": 2, "三": 3, "四": 4,
-        "五": 5, "六": 6, "七": 7, "八": 8, "九": 9,
-        "十": 10, "百": 100, "千": 1000, "万": 10000,
-        "两": 2, "〇": 0, "壹": 1, "贰": 2, "叁": 3,
-        "肆": 4, "伍": 5, "陆": 6, "柒": 7, "捌": 8, "玖": 9,
+        "零": 0,
+        "一": 1,
+        "二": 2,
+        "三": 3,
+        "四": 4,
+        "五": 5,
+        "六": 6,
+        "七": 7,
+        "八": 8,
+        "九": 9,
+        "十": 10,
+        "百": 100,
+        "千": 1000,
+        "万": 10000,
+        "两": 2,
+        "〇": 0,
+        "壹": 1,
+        "贰": 2,
+        "叁": 3,
+        "肆": 4,
+        "伍": 5,
+        "陆": 6,
+        "柒": 7,
+        "捌": 8,
+        "玖": 9,
     }
 
     # Chinese operator mapping (includes both simplified and traditional)
     ZH_OPS = {
-        "加": "+", "加上": "+", "减": "-", "减去": "-",
-        "乘": "*", "乘以": "*", "乘上": "*", "times": "*",
-        "除": "/", "除以": "/", "divided": "/",
-        "的和": "+", "的差": "-", "的积": "*", "的商": "/",
-        "等于": "=", "等於": "=", "是多少": "=", "等于几": "=", "结果": "=",
-        "plus": "+", "minus": "-",
+        "加": "+",
+        "加上": "+",
+        "减": "-",
+        "减去": "-",
+        "乘": "*",
+        "乘以": "*",
+        "乘上": "*",
+        "times": "*",
+        "除": "/",
+        "除以": "/",
+        "divided": "/",
+        "的和": "+",
+        "的差": "-",
+        "的积": "*",
+        "的商": "/",
+        "等于": "=",
+        "等於": "=",
+        "是多少": "=",
+        "等于几": "=",
+        "结果": "=",
+        "plus": "+",
+        "minus": "-",
     }
 
     def __init__(
@@ -511,8 +577,11 @@ class MathRippleEngine:
         self.ripple_depth = ripple_depth
 
     def _configure_depth(
-        self, expr: str, auto_detect: bool, force_depth: Optional[RippleDepth],
-        force_algo: Optional[AlgorithmDepth]
+        self,
+        expr: str,
+        auto_detect: bool,
+        force_depth: Optional[RippleDepth],
+        force_algo: Optional[AlgorithmDepth],
     ) -> None:
         """Configure depth."""
         if auto_detect:
@@ -575,6 +644,7 @@ class MathRippleEngine:
         Returns None if not a math expression.
         """
         import re
+
         cleaned = text.strip().rstrip("??!!。.")
 
         # FIRST: Convert Chinese numbers to Arabic
@@ -587,7 +657,7 @@ class MathRippleEngine:
             cleaned = cleaned.replace(zh_op, f" {en_op} ")
 
         # Check if we have a valid math expression
-        if re.search(r'\d+\s*[+\-*/]\s*\d+', cleaned):
+        if re.search(r"\d+\s*[+\-*/]\s*\d+", cleaned):
             return cleaned
         return None
 
@@ -617,7 +687,7 @@ class MathRippleEngine:
 
         # Find Chinese number sequences and convert them
         # Pattern: sequences of Chinese number characters
-        zh_num_pattern = re.compile(r'[零一二两三四五六七八九十百千万〇壹贰叁肆伍陆柒捌玖]+')
+        zh_num_pattern = re.compile(r"[零一二两三四五六七八九十百千万〇壹贰叁肆伍陆柒捌玖]+")
 
         def replace_match(m):
             return convert_number(m.group(0))
@@ -720,9 +790,7 @@ class MathRippleEngine:
 
         return tokens
 
-    def _compute_single(
-        self, a: float, op: str, b: float
-    ) -> Tuple[float, RippleEffect]:
+    def _compute_single(self, a: float, op: str, b: float) -> Tuple[float, RippleEffect]:
         """計算單次運算並產生漣漪"""
         op_enum = MathOp.ADD
         ripple = RippleEffect(
@@ -731,7 +799,7 @@ class MathRippleEngine:
             operand_b=b,
             result=0.0,
             operand_a_magnitude=abs(a),
-            result_magnitude=0.0
+            result_magnitude=0.0,
         )
 
         if op == "+":
@@ -794,7 +862,7 @@ class MathRippleEngine:
 
         elif op in ("^", "**"):
             op_enum = MathOp.POW
-            result = a ** b
+            result = a**b
             mag = abs(result)
             ripple.epsilon_delta = math.log1p(mag) * 0.15
 
@@ -821,11 +889,13 @@ class MathRippleEngine:
     def _eval_simple_safe(self, expr: str) -> float:
         """安全的本地計算"""
         import re
+
         clean = re.sub(r"[^0-9.\+\-\*\/\(\)]", "", expr)
         if not clean:
             return 0.0
         try:
             from core.security.secure_eval import safe_eval
+
             result = safe_eval(clean)
             return float(result.result) if result.success else 0.0
         except (ValueError, TypeError, ZeroDivisionError):
@@ -997,6 +1067,7 @@ class MathRippleEngine:
                     "description": r.description,
                     "decay": r.cascade_decay_factor,
                 }
-                for r in cascade_ripples if r.cascade_step > 0
+                for r in cascade_ripples
+                if r.cascade_step > 0
             ],
         }

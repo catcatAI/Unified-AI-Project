@@ -17,16 +17,41 @@ Covered patterns (the benchmark's open-domain reasoning cases):
   * quantity comparison  — "John has 3 apples. He gives 1 away. How many left?"
   * mass trick           — "Which is heavier: 1kg of feathers or 1kg of steel?"
 """
+
 from __future__ import annotations
 
 import re
 from typing import List, Optional, Tuple
 
 # Comparators we understand (transitive). Keyed by canonical direction word.
-_GREATER = {"taller", "bigger", "larger", "heavier", "older", "faster", "higher",
-            "more", "longer", "wider", "hotter", "stronger", "richer", "taller than"}
-_LESSER = {"shorter", "smaller", "lighter", "younger", "slower", "lower", "less",
-           "colder", "weaker", "poorer"}
+_GREATER = {
+    "taller",
+    "bigger",
+    "larger",
+    "heavier",
+    "older",
+    "faster",
+    "higher",
+    "more",
+    "longer",
+    "wider",
+    "hotter",
+    "stronger",
+    "richer",
+    "taller than",
+}
+_LESSER = {
+    "shorter",
+    "smaller",
+    "lighter",
+    "younger",
+    "slower",
+    "lower",
+    "less",
+    "colder",
+    "weaker",
+    "poorer",
+}
 _COMPARATORS = _GREATER | _LESSER
 
 _DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
@@ -40,13 +65,60 @@ def _extract_entities(text: str) -> List[str]:
         return caps
     # Fall back to short lowercase proper-ish words
     words = re.findall(r"\b([a-z]{1,12})\b", text.lower())
-    return [w for w in words if w not in {
-        "is", "are", "was", "were", "the", "a", "an", "of", "than", "and",
-        "or", "but", "who", "what", "how", "why", "can", "do", "does", "if",
-        "today", "tomorrow", "yesterday", "day", "days", "week", "month", "year",
-        "which", "he", "she", "it", "they", "we", "you", "i", "my", "your",
-        "has", "have", "had", "gives", "give", "gave", "left", "many", "much",
-    }]
+    return [
+        w
+        for w in words
+        if w
+        not in {
+            "is",
+            "are",
+            "was",
+            "were",
+            "the",
+            "a",
+            "an",
+            "of",
+            "than",
+            "and",
+            "or",
+            "but",
+            "who",
+            "what",
+            "how",
+            "why",
+            "can",
+            "do",
+            "does",
+            "if",
+            "today",
+            "tomorrow",
+            "yesterday",
+            "day",
+            "days",
+            "week",
+            "month",
+            "year",
+            "which",
+            "he",
+            "she",
+            "it",
+            "they",
+            "we",
+            "you",
+            "i",
+            "my",
+            "your",
+            "has",
+            "have",
+            "had",
+            "gives",
+            "give",
+            "gave",
+            "left",
+            "many",
+            "much",
+        }
+    ]
 
 
 def _solve_transitive(text: str) -> Optional[str]:
@@ -55,13 +127,13 @@ def _solve_transitive(text: str) -> Optional[str]:
     # Chinese: "X 比 Y <comp>"
     pairs: List[Tuple[str, str, str]] = []  # (subject, object, comparator)
     # English "X is taller than Y" / "X taller than Y"
-    for m in re.finditer(
-        r"\b([A-Za-z])\b\s+(?:is\s+)?(\w+?)\s+than\s+\b([A-Za-z])\b", text
-    ):
+    for m in re.finditer(r"\b([A-Za-z])\b\s+(?:is\s+)?(\w+?)\s+than\s+\b([A-Za-z])\b", text):
         subj, comp, obj = m.group(1).upper(), m.group(2).lower(), m.group(3).upper()
         pairs.append((subj, obj, comp))
     # Chinese "X 比 Y 高"
-    for m in re.finditer(r"([\w一-鿿]{1,8})\s*比\s*([\w一-鿿]{1,8})\s*(高|大|重|快|多|長|強)", text):
+    for m in re.finditer(
+        r"([\w一-鿿]{1,8})\s*比\s*([\w一-鿿]{1,8})\s*(高|大|重|快|多|長|強)", text
+    ):
         pairs.append((m.group(1), m.group(2), "taller"))
 
     if not pairs:
@@ -77,11 +149,28 @@ def _solve_transitive(text: str) -> Optional[str]:
         lesser.setdefault(b, set()).add(a)
 
     for a, b, comp in pairs:
-        if comp in _GREATER or comp in ("taller", "bigger", "larger", "heavier",
-                                        "older", "faster", "higher", "more",
-                                        "longer", "wider", "hotter", "stronger",
-                                        "richer", "高", "大", "重", "快", "多",
-                                        "長", "強"):
+        if comp in _GREATER or comp in (
+            "taller",
+            "bigger",
+            "larger",
+            "heavier",
+            "older",
+            "faster",
+            "higher",
+            "more",
+            "longer",
+            "wider",
+            "hotter",
+            "stronger",
+            "richer",
+            "高",
+            "大",
+            "重",
+            "快",
+            "多",
+            "長",
+            "強",
+        ):
             _record(a, b)
         elif comp in _LESSER or comp in ("低", "小", "輕", "慢", "少", "弱"):
             _record(b, a)
@@ -92,10 +181,14 @@ def _solve_transitive(text: str) -> Optional[str]:
     # The "tallest / biggest / ...est" entity is one that is greater than all
     # others and nothing is greater than it.
     all_nodes = set(greater) | set(lesser)
-    ask_least = bool(re.search(r"shortest|smallest|least|youngest|lightest|"
-                               r"slowest|lowest|weakest|poorest|coldest|minimum|"
-                               r"最小|最短|最矮|最少|最輕|最冷|最低|最弱|最窮|最慢",
-                               text.lower()))
+    ask_least = bool(
+        re.search(
+            r"shortest|smallest|least|youngest|lightest|"
+            r"slowest|lowest|weakest|poorest|coldest|minimum|"
+            r"最小|最短|最矮|最少|最輕|最冷|最低|最弱|最窮|最慢",
+            text.lower(),
+        )
+    )
     if ask_least:
         # The least entity is dominated by all others (in `lesser`).
         candidates = [n for n in lesser if n not in greater]
@@ -138,22 +231,48 @@ def _solve_transitive(text: str) -> Optional[str]:
 def _superlative(comp: str, least: bool = False) -> str:
     if least:
         table = {
-            "taller": "the shortest", "bigger": "the smallest", "larger": "the smallest",
-            "heavier": "the lightest", "older": "the youngest", "faster": "the slowest",
-            "higher": "the lowest", "more": "the least", "longer": "the shortest",
-            "wider": "the narrowest", "hotter": "the coldest", "stronger": "the weakest",
-            "richer": "the poorest", "高": "the shortest", "大": "the smallest",
-            "重": "the lightest", "快": "the slowest", "多": "the least", "長": "the shortest",
+            "taller": "the shortest",
+            "bigger": "the smallest",
+            "larger": "the smallest",
+            "heavier": "the lightest",
+            "older": "the youngest",
+            "faster": "the slowest",
+            "higher": "the lowest",
+            "more": "the least",
+            "longer": "the shortest",
+            "wider": "the narrowest",
+            "hotter": "the coldest",
+            "stronger": "the weakest",
+            "richer": "the poorest",
+            "高": "the shortest",
+            "大": "the smallest",
+            "重": "the lightest",
+            "快": "the slowest",
+            "多": "the least",
+            "長": "the shortest",
             "強": "the weakest",
         }
         return table.get(comp, "the least")
     table = {
-        "taller": "the tallest", "bigger": "the biggest", "larger": "the largest",
-        "heavier": "the heaviest", "older": "the oldest", "faster": "the fastest",
-        "higher": "the highest", "more": "the most", "longer": "the longest",
-        "wider": "the widest", "hotter": "the hottest", "stronger": "the strongest",
-        "richer": "the richest", "高": "the tallest", "大": "the biggest",
-        "重": "the heaviest", "快": "the fastest", "多": "the most", "長": "the longest",
+        "taller": "the tallest",
+        "bigger": "the biggest",
+        "larger": "the largest",
+        "heavier": "the heaviest",
+        "older": "the oldest",
+        "faster": "the fastest",
+        "higher": "the highest",
+        "more": "the most",
+        "longer": "the longest",
+        "wider": "the widest",
+        "hotter": "the hottest",
+        "stronger": "the strongest",
+        "richer": "the richest",
+        "高": "the tallest",
+        "大": "the biggest",
+        "重": "the heaviest",
+        "快": "the fastest",
+        "多": "the most",
+        "長": "the longest",
         "強": "the strongest",
     }
     return table.get(comp, "the greatest")
@@ -174,9 +293,7 @@ def _solve_syllogism(text: str) -> Optional[str]:
     # Prefer an explicit universal statement; skip membership statements
     # ("Z is a X") so we don't mistake them for the rule.
     universal = None  # (category, property)
-    membership_re = re.compile(
-        r"\b([a-z一-鿿]+)\s+is\s+(?:a|an)\s+([a-z一-鿿]+)\b", re.IGNORECASE
-    )
+    membership_re = re.compile(r"\b([a-z一-鿿]+)\s+is\s+(?:a|an)\s+([a-z一-鿿]+)\b", re.IGNORECASE)
     for s in sentences:
         low = s.lower()
         m = re.search(r"(?:all\s+)?([a-z一-鿿]+)\s+(?:can|are|is)\s+([a-z一-鿿]+)", low)
@@ -231,12 +348,14 @@ def _solve_syllogism(text: str) -> Optional[str]:
 
     # Question asks about <member> and <prop>?
     q = text.lower()
-    if re.search(re.escape(member) + r".*" + re.escape(prop), q) or \
-       (member in q and prop in q):
+    if re.search(re.escape(member) + r".*" + re.escape(prop), q) or (member in q and prop in q):
         # Affirmative universal premise => yes; negative premise => no.
-        neg = bool(re.search(r"\bno\b|\bnone\b|not|never|can'?t|cannot|"
-                             r"不會|不能|不會飛|不會游|沒有|無",
-                              sentences[0].lower()))
+        neg = bool(
+            re.search(
+                r"\bno\b|\bnone\b|not|never|can'?t|cannot|" r"不會|不能|不會飛|不會游|沒有|無",
+                sentences[0].lower(),
+            )
+        )
         return "no" if neg else "yes"
     return None
 
@@ -266,8 +385,11 @@ def _solve_quantity(text: str) -> Optional[str]:
         return None
     total = int(has_m.group(1))
     # Find subtraction: "gives 1 away", "gave 2", "eats 1", "loses 3", "ate 2"
-    sub_m = re.search(r"(?:gives|gave|give|eats|ate|loses|lost|uses|used|spends|spent|"
-                      r"removes?|took|takes?)\s+(\d+)", text.lower())
+    sub_m = re.search(
+        r"(?:gives|gave|give|eats|ate|loses|lost|uses|used|spends|spent|"
+        r"removes?|took|takes?)\s+(\d+)",
+        text.lower(),
+    )
     if not sub_m:
         return None
     removed = int(sub_m.group(1))
@@ -282,8 +404,14 @@ def _solve_mass_trick(text: str) -> Optional[str]:
     """Which is heavier: 1kg of feathers or 1kg of steel? -> same."""
     low = text.lower()
     has_mass_unit = "kg" in low or "公斤" in low or "千克" in low
-    asks_weight = ("heavier" in low or "heaviest" in low or "weigh" in low
-                   or "weight" in low or "更重" in low or "重" in low)
+    asks_weight = (
+        "heavier" in low
+        or "heaviest" in low
+        or "weigh" in low
+        or "weight" in low
+        or "更重" in low
+        or "重" in low
+    )
     if has_mass_unit and asks_weight:
         # Extract mass values (kg / 公斤 / 千克)
         masses = re.findall(r"(\d+)\s*(?:kg|公斤|千克)", low)
@@ -292,9 +420,11 @@ def _solve_mass_trick(text: str) -> Optional[str]:
                 return "same"
             # Different masses are not a trick; let the network handle it.
             return None
-        if ("1kg" in low and "1kg" in low[low.index("1kg") + 3:]) or \
-           ("1公斤" in low and "1公斤" in low[low.index("1公斤") + 3:]) or \
-           ("1千克" in low and "1千克" in low[low.index("1千克") + 3:]):
+        if (
+            ("1kg" in low and "1kg" in low[low.index("1kg") + 3 :])
+            or ("1公斤" in low and "1公斤" in low[low.index("1公斤") + 3 :])
+            or ("1千克" in low and "1千克" in low[low.index("1千克") + 3 :])
+        ):
             return "same"
     return None
 

@@ -79,8 +79,11 @@ class MultimodalQualityMonitor:
             except asyncio.CancelledError:
                 pass
             self._task = None
-        logger.info("QualityMonitor stopped (samples=%d, alerts=%d)",
-                     self._total_samples, self._alerts_triggered)
+        logger.info(
+            "QualityMonitor stopped (samples=%d, alerts=%d)",
+            self._total_samples,
+            self._alerts_triggered,
+        )
 
     @property
     def is_running(self) -> bool:
@@ -154,12 +157,15 @@ class MultimodalQualityMonitor:
             self._alerts_triggered += 1
 
             # Log to crisis log
-            _write_crisis_log(2, {
-                "monitor": "multimodal_quality",
-                "degradation": degradation,
-                "vision_quality": vision_quality,
-                "audio_quality": audio_quality,
-            })
+            _write_crisis_log(
+                2,
+                {
+                    "monitor": "multimodal_quality",
+                    "degradation": degradation,
+                    "vision_quality": vision_quality,
+                    "audio_quality": audio_quality,
+                },
+            )
 
         # Store history
         self._history.append(sample)
@@ -184,8 +190,7 @@ class MultimodalQualityMonitor:
             return None  # Need at least 3 samples for baseline
 
         # Compute rolling average of vision quality
-        prev_vision = [s.get("vision", {}).get("quality", 0.0)
-                       for s in list(self._history)[:-1]]
+        prev_vision = [s.get("vision", {}).get("quality", 0.0) for s in list(self._history)[:-1]]
         prev_vision = [v for v in prev_vision if v > 0]
         vision_degraded = False
         if prev_vision and vision_q > 0:
@@ -201,8 +206,7 @@ class MultimodalQualityMonitor:
                     vision_degraded = True
 
         # Compute rolling average of audio quality
-        prev_audio = [s.get("audio", {}).get("quality", 0.0)
-                      for s in list(self._history)[:-1]]
+        prev_audio = [s.get("audio", {}).get("quality", 0.0) for s in list(self._history)[:-1]]
         prev_audio = [a for a in prev_audio if a > 0]
         audio_degraded = False
         if prev_audio and audio_q > 0:
@@ -238,14 +242,16 @@ class MultimodalQualityMonitor:
                 "last_audio_quality": 0.0,
             }
 
-        recent = list(self._history)[-min(10, len(self._history)):]
+        recent = list(self._history)[-min(10, len(self._history)) :]
         recent_vision = [
             s.get("vision", {}).get("quality", 0.0)
-            for s in recent if s.get("vision", {}).get("quality")
+            for s in recent
+            if s.get("vision", {}).get("quality")
         ]
         recent_audio = [
             s.get("audio", {}).get("quality", 0.0)
-            for s in recent if s.get("audio", {}).get("quality")
+            for s in recent
+            if s.get("audio", {}).get("quality")
         ]
 
         avg_vision = sum(recent_vision) / len(recent_vision) if recent_vision else 0.0
@@ -276,8 +282,11 @@ class MultimodalQualityMonitor:
         mid = len(samples) // 2
 
         def _avg_quality(segment, key) -> float:
-            vals = [s.get(key, {}).get("quality", 0.0) for s in segment
-                    if s.get(key, {}).get("quality", 0.0) > 0]
+            vals = [
+                s.get(key, {}).get("quality", 0.0)
+                for s in segment
+                if s.get(key, {}).get("quality", 0.0) > 0
+            ]
             return sum(vals) / len(vals) if vals else 0.0
 
         first_vis = _avg_quality(samples[:mid], "vision")

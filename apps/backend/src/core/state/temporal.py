@@ -48,6 +48,7 @@ from typing import Any, Dict, List, Optional
 @dataclass
 class SnapshotQuery:
     """Query parameters for TemporalState.query()."""
+
     axes: Optional[List[str]] = None
     fields: Optional[List[str]] = None
     limit: int = 10
@@ -61,6 +62,7 @@ class SnapshotQuery:
 @dataclass
 class TrendResult:
     """Result of a trend analysis."""
+
     axis: str = ""
     field_name: str = ""
     direction: str = "stable"
@@ -74,6 +76,7 @@ class TrendResult:
 @dataclass
 class AnomalyResult:
     """Result of an anomaly detection."""
+
     axis: str = ""
     field: str = ""
     value: float = 0.0
@@ -86,6 +89,7 @@ class AnomalyResult:
 @dataclass
 class CorrelationResult:
     """Result of a correlation analysis between two axes/fields."""
+
     axis_a: str = ""
     field_a: str = ""
     axis_b: str = ""
@@ -141,19 +145,21 @@ class TemporalState:
         if q.axes:
             result = [s for s in result if any(ax in s for ax in q.axes)]
         if q.fields:
+
             def _has_field(s: Dict[str, Any]) -> bool:
                 for f in q.fields:
                     for v in s.values():
                         if isinstance(v, dict) and f in v:
                             return True
                 return False
+
             result = [s for s in result if _has_field(s)]
         if q.start_time:
             result = [s for s in result if s.get("timestamp", "") >= q.start_time]
         if q.end_time:
             result = [s for s in result if s.get("timestamp", "") <= q.end_time]
-        result = result[q.offset:]
-        result = result[:q.limit]
+        result = result[q.offset :]
+        result = result[: q.limit]
         if q.descending:
             result = list(reversed(result))
         return result
@@ -191,17 +197,20 @@ class TemporalState:
             data: Dict[str, List[float]] = {}
             for fname in sorted(fields):
                 vals = [
-                    snap[axis][fname] for snap in snapshots
+                    snap[axis][fname]
+                    for snap in snapshots
                     if isinstance(snap.get(axis), dict) and fname in snap[axis]
                 ]
                 if vals:
                     data[fname] = vals
             if len(fields) >= 1:
-                observations.append({
-                    "id": f"trend_{axis}",
-                    "variables": sorted(fields),
-                    "data": data,
-                })
+                observations.append(
+                    {
+                        "id": f"trend_{axis}",
+                        "variables": sorted(fields),
+                        "data": data,
+                    }
+                )
         return observations
 
     def trend(self, axis: str, field: str, window: int = 50) -> TrendResult:
@@ -242,15 +251,17 @@ class TemporalState:
             v = ax_data[field]
             z = (v - mean_val) / std
             if abs(z) > threshold:
-                results.append(AnomalyResult(
-                    axis=axis,
-                    field=field,
-                    value=v,
-                    expected=mean_val,
-                    z_score=z,
-                    timestamp=snap.get("timestamp", ""),
-                    severity="high" if abs(z) > 2.0 else "medium" if abs(z) > 1.5 else "info",
-                ))
+                results.append(
+                    AnomalyResult(
+                        axis=axis,
+                        field=field,
+                        value=v,
+                        expected=mean_val,
+                        z_score=z,
+                        timestamp=snap.get("timestamp", ""),
+                        severity="high" if abs(z) > 2.0 else "medium" if abs(z) > 1.5 else "info",
+                    )
+                )
         return results
 
     def find_drift(
@@ -263,15 +274,17 @@ class TemporalState:
                 continue
             v = ax_data[field]
             if abs(v - expected_value) > drift_threshold:
-                results.append(AnomalyResult(
-                    axis=axis,
-                    field=field,
-                    value=v,
-                    expected=expected_value,
-                    z_score=(v - expected_value) / (drift_threshold or 0.001),
-                    timestamp=snap.get("timestamp", ""),
-                    severity="high",
-                ))
+                results.append(
+                    AnomalyResult(
+                        axis=axis,
+                        field=field,
+                        value=v,
+                        expected=expected_value,
+                        z_score=(v - expected_value) / (drift_threshold or 0.001),
+                        timestamp=snap.get("timestamp", ""),
+                        severity="high",
+                    )
+                )
         return results
 
     def correlation(

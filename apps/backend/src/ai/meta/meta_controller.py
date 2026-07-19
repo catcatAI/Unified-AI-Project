@@ -47,8 +47,12 @@ class CalibrationReport:
 
 
 class MetaController:
-    def __init__(self, window_size: int = _WINDOW_SIZE, alpha: float = _DEFAULT_ALPHA,
-                 persist_path: Optional[str] = _DEFAULT_PERSIST_PATH):
+    def __init__(
+        self,
+        window_size: int = _WINDOW_SIZE,
+        alpha: float = _DEFAULT_ALPHA,
+        persist_path: Optional[str] = _DEFAULT_PERSIST_PATH,
+    ):
         self._samples: Dict[str, deque] = {}
         self._window_size = window_size
         self._alpha = alpha
@@ -76,20 +80,25 @@ class MetaController:
         else:
             self._ewma[source] = self._alpha * confidence + (1 - self._alpha) * self._ewma[source]
         self._samples[source].append(
-            ConfidenceSample(timestamp=time.time(), source=source, confidence=confidence, correct=correct)
+            ConfidenceSample(
+                timestamp=time.time(), source=source, confidence=confidence, correct=correct
+            )
         )
         self._total_samples += 1
         self._calibration_cache_dirty = True
         # Invalidate cached entry for this source
         if source in self._calibration_cache:
             del self._calibration_cache[source]
-        state_store.emit_event("meta.confidence_recorded", {
-            "source": source,
-            "confidence": confidence,
-            "correct": correct,
-            "ewma": self._ewma.get(source),
-            "total_samples": self._total_samples,
-        })
+        state_store.emit_event(
+            "meta.confidence_recorded",
+            {
+                "source": source,
+                "confidence": confidence,
+                "correct": correct,
+                "ewma": self._ewma.get(source),
+                "total_samples": self._total_samples,
+            },
+        )
 
     def get_ewma_confidence(self, source: str, default: float = 0.5) -> float:
         return self._ewma.get(source, default)
@@ -120,13 +129,16 @@ class MetaController:
             self._adjustment_multipliers[source] = max(1.0, old_mult * 0.8)
         new_mult = self._adjustment_multipliers.get(source, 1.0)
         if abs(new_mult - old_mult) > 0.01:
-            state_store.emit_event("meta.closed_loop_adjusted", {
-                "source": source,
-                "adjustment": adjustment,
-                "classification": hist[-1],
-                "prev_multiplier": round(old_mult, 3),
-                "new_multiplier": round(new_mult, 3),
-            })
+            state_store.emit_event(
+                "meta.closed_loop_adjusted",
+                {
+                    "source": source,
+                    "adjustment": adjustment,
+                    "classification": hist[-1],
+                    "prev_multiplier": round(old_mult, 3),
+                    "new_multiplier": round(new_mult, 3),
+                },
+            )
 
     def get_calibration(self, source: str) -> Optional[CalibrationReport]:
         # Cache hit: return cached metrics with recomputed adjustment
@@ -140,6 +152,7 @@ class MetaController:
             adjusted = round(raw_adj * multiplier, 3)
             self._threshold_adjustments[source] = adjusted
             from dataclasses import replace as _dc_replace
+
             return _dc_replace(report, suggested_threshold_adjustment=adjusted)
 
         samples = list(self._samples.get(source, []))
@@ -160,7 +173,9 @@ class MetaController:
             overconfident = [s for s in known_correct if s.confidence > 0.7 and not s.correct]
             underconfident = [s for s in known_correct if s.confidence < 0.3 and s.correct]
             overconfidence_ratio = len(overconfident) / len(known_correct) if known_correct else 0.0
-            underconfidence_ratio = len(underconfident) / len(known_correct) if known_correct else 0.0
+            underconfidence_ratio = (
+                len(underconfident) / len(known_correct) if known_correct else 0.0
+            )
 
         raw_adjustment = 0.0
         if overconfidence_ratio > 0.2:
@@ -224,17 +239,23 @@ class MetaController:
             total_weight += weight
 
         if total_weight == 0:
-            state_store.emit_event("meta.weighted_adjustment", {
-                "weighted_adjustment": 0.0,
-                "sources_count": 0,
-            })
+            state_store.emit_event(
+                "meta.weighted_adjustment",
+                {
+                    "weighted_adjustment": 0.0,
+                    "sources_count": 0,
+                },
+            )
             return 0.0
 
         result = round(weighted_sum / total_weight, 3)
-        state_store.emit_event("meta.weighted_adjustment", {
-            "weighted_adjustment": result,
-            "sources_count": len(self._samples),
-        })
+        state_store.emit_event(
+            "meta.weighted_adjustment",
+            {
+                "weighted_adjustment": result,
+                "sources_count": len(self._samples),
+            },
+        )
         return result
 
     def auto_apply_thresholds(self) -> Dict[str, float]:
@@ -262,8 +283,7 @@ class MetaController:
 
     def get_threshold_adjustment(self, source: str, default: float = 0.0) -> float:
         # Fast path: use cached adjustment if available and not dirty
-        if (not self._calibration_cache_dirty
-                and source in self._threshold_adjustments):
+        if not self._calibration_cache_dirty and source in self._threshold_adjustments:
             adj = self._threshold_adjustments[source]
             if abs(adj) > 0.001:
                 return adj
@@ -300,7 +320,11 @@ class MetaController:
             "tracked_sources": list(self._samples.keys()),
             "window_size": self._window_size,
             "ewma_alpha": self._alpha,
-            "has_persisted_state": self._persist_path is not None and os.path.exists(self._persist_path) if self._persist_path else False,
+            "has_persisted_state": (
+                self._persist_path is not None and os.path.exists(self._persist_path)
+                if self._persist_path
+                else False
+            ),
         }
 
     # ── C³ 5.0: Calibration state persistence ──────────────────────────

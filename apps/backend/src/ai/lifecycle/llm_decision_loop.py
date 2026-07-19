@@ -32,8 +32,6 @@ from .user_monitor import UserMonitor, UserState
 # =============================================================================
 
 
-
-
 logger = logging.getLogger(__name__)
 
 

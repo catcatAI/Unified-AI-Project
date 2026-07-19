@@ -58,13 +58,15 @@ class MultimodalMemoryStore:
     def _get_lock(self):
         if self._lock is None:
             import asyncio
+
             self._lock = asyncio.Lock()
         return self._lock
 
     # --- Store ---
 
-    async def store(self, modality: str, latent: List[float],
-                    metadata: Optional[Dict[str, Any]] = None) -> str:
+    async def store(
+        self, modality: str, latent: List[float], metadata: Optional[Dict[str, Any]] = None
+    ) -> str:
         """Store a multimodal encoding result.
 
         Args:
@@ -117,8 +119,9 @@ class MultimodalMemoryStore:
 
     # --- Search ---
 
-    async def search(self, query_latent: List[float], top_k: int = 5,
-                     modality_filter: Optional[str] = None) -> List[Dict[str, Any]]:
+    async def search(
+        self, query_latent: List[float], top_k: int = 5, modality_filter: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """Search for top-k similar latents via cosine similarity.
 
         Args:
@@ -166,8 +169,9 @@ class MultimodalMemoryStore:
             for score, eid, entry in top
         ]
 
-    async def recall_by_time(self, hours: float = 24,
-                             modality_filter: Optional[str] = None) -> List[Dict[str, Any]]:
+    async def recall_by_time(
+        self, hours: float = 24, modality_filter: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """Recall entries within a time window.
 
         Args:
@@ -186,14 +190,16 @@ class MultimodalMemoryStore:
                     continue
                 if modality_filter and entry.get("modality") != modality_filter:
                     continue
-                results.append({
-                    "entry_id": eid,
-                    "modality": entry.get("modality"),
-                    "latent": entry.get("latent"),
-                    "metadata": entry.get("metadata", {}),
-                    "timestamp": entry.get("timestamp", 0),
-                    "compacted": entry.get("compacted", False),
-                })
+                results.append(
+                    {
+                        "entry_id": eid,
+                        "modality": entry.get("modality"),
+                        "latent": entry.get("latent"),
+                        "metadata": entry.get("metadata", {}),
+                        "timestamp": entry.get("timestamp", 0),
+                        "compacted": entry.get("compacted", False),
+                    }
+                )
 
         results.sort(key=lambda x: x["timestamp"], reverse=True)
         return results
@@ -241,8 +247,7 @@ class MultimodalMemoryStore:
                 # Compact: keep only latent + summary metadata
                 metadata = entry.get("metadata", {})
                 summary_metadata = {
-                    k: v for k, v in metadata.items()
-                    if isinstance(v, (str, int, float, bool))
+                    k: v for k, v in metadata.items() if isinstance(v, (str, int, float, bool))
                 }
                 entry["metadata"] = summary_metadata
                 entry["compacted"] = True
@@ -253,8 +258,7 @@ class MultimodalMemoryStore:
             deleted_count += 1
 
         if compacted_count > 0 or deleted_count > 0:
-            logger.info("Memory compacted: %d entries, %d deleted",
-                        compacted_count, deleted_count)
+            logger.info("Memory compacted: %d entries, %d deleted", compacted_count, deleted_count)
 
         return {
             "compacted": compacted_count,
@@ -271,12 +275,9 @@ class MultimodalMemoryStore:
     async def stats(self) -> Dict[str, Any]:
         """Return memory store statistics."""
         async with self._get_lock():
-            vision_count = sum(1 for e in self._entries.values()
-                               if e.get("modality") == "vision")
-            audio_count = sum(1 for e in self._entries.values()
-                              if e.get("modality") == "audio")
-            compacted_count = sum(1 for e in self._entries.values()
-                                  if e.get("compacted"))
+            vision_count = sum(1 for e in self._entries.values() if e.get("modality") == "vision")
+            audio_count = sum(1 for e in self._entries.values() if e.get("modality") == "audio")
+            compacted_count = sum(1 for e in self._entries.values() if e.get("compacted"))
 
             now = time.time()
             ages = [now - e.get("timestamp", now) for e in self._entries.values()]
@@ -308,8 +309,11 @@ class MultimodalMemoryStore:
             # Save all entries (limit safeguard at 10000 to prevent OOM)
             entries_to_save = dict(list(self._entries.items())[-10000:])
             if len(self._entries) > 10000:
-                logger.warning("Memory store saving %d/%d entries (truncated at 10000)",
-                               len(entries_to_save), len(self._entries))
+                logger.warning(
+                    "Memory store saving %d/%d entries (truncated at 10000)",
+                    len(entries_to_save),
+                    len(self._entries),
+                )
             data = {
                 "entries": {
                     eid: {

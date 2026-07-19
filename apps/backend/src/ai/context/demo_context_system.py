@@ -23,7 +23,9 @@ class DemoContextSystem:
         self.manager: ContextManager = get_context_manager()
         self.storage = storage or MemoryStorage()
 
-    async def demo_create_context(self, context_id: str, context_type: ContextType, data: Dict[str, Any]) -> Context:
+    async def demo_create_context(
+        self, context_id: str, context_type: ContextType, data: Dict[str, Any]
+    ) -> Context:
         ctx = Context(id=context_id, context_type=context_type, data=data)
         await self.storage.save(ctx)
         logger.info(f"[DemoContext] Created context: {context_id}")
@@ -36,7 +38,9 @@ class DemoContextSystem:
 
     async def run_demo(self) -> None:
         logger.info("[DemoContext] Running context system demo...")
-        ctx = await self.demo_create_context("demo-001", ContextType.DIALOGUE, {"message": "Hello, Angela!"})
+        ctx = await self.demo_create_context(
+            "demo-001", ContextType.DIALOGUE, {"message": "Hello, Angela!"}
+        )
         loaded = await self.demo_retrieve_context(ctx.id)
         if loaded:
             logger.info(f"[DemoContext] Demo passed - context loaded: {loaded.id}")

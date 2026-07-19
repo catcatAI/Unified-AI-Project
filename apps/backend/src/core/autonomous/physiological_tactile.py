@@ -2,6 +2,7 @@
 Autonomous Physiological Tactile Submodule (Backward Compat)
 Re-exports from core.autonomous shim
 """
+
 from __future__ import annotations
 
 from core.bio.physiological_tactile_analysis import (

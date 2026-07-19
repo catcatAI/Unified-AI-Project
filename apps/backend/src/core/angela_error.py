@@ -196,7 +196,13 @@ class MonitoringError(AngelaError):
 
 
 class ResourceNotFoundError(AngelaError):
-    def __init__(self, message: str = "Resource not found", resource: str = "", details: dict = None, **kwargs):
+    def __init__(
+        self,
+        message: str = "Resource not found",
+        resource: str = "",
+        details: dict = None,
+        **kwargs,
+    ):
         d = {"resource": resource}
         if details:
             d.update(details)

@@ -34,7 +34,14 @@ class CodeUnderstandingAgent:
     def analyze_code(self, code: str, language: str) -> Dict[str, Any]:
         """Analyze code and return line_count, language, has_syntax_errors, structure."""
         if not code:
-            return {"status": "error", "message": "No code provided", "line_count": 0, "language": language, "has_syntax_errors": False, "structure": {}}
+            return {
+                "status": "error",
+                "message": "No code provided",
+                "line_count": 0,
+                "language": language,
+                "has_syntax_errors": False,
+                "structure": {},
+            }
         lines = code.splitlines()
         line_count = len(lines)
         has_syntax_errors = False
@@ -48,7 +55,9 @@ class CodeUnderstandingAgent:
             "comment_lines": sum(1 for l in lines if l.strip().startswith("#")),
             "code_lines": sum(1 for l in lines if l.strip() and not l.strip().startswith("#")),
         }
-        logger.info(f"analyze_code: {line_count} lines, language={language}, syntax_errors={has_syntax_errors}")
+        logger.info(
+            f"analyze_code: {line_count} lines, language={language}, syntax_errors={has_syntax_errors}"
+        )
         return {
             "status": "success",
             "message": f"Analyzed {line_count} lines of {language} code",
@@ -61,7 +70,12 @@ class CodeUnderstandingAgent:
     def code_review(self, code: str, language: str) -> Dict[str, Any]:
         """Review code and return issues and suggestions."""
         if not code:
-            return {"status": "error", "message": "No code provided", "issues": [], "suggestions": []}
+            return {
+                "status": "error",
+                "message": "No code provided",
+                "issues": [],
+                "suggestions": [],
+            }
         lines = code.splitlines()
         issues = []
         suggestions = []
@@ -87,7 +101,12 @@ class CodeUnderstandingAgent:
     def explain_code(self, code: str) -> Dict[str, Any]:
         """Explain code purpose and complexity estimate."""
         if not code:
-            return {"status": "error", "message": "No code provided", "purpose": "", "complexity_estimate": ""}
+            return {
+                "status": "error",
+                "message": "No code provided",
+                "purpose": "",
+                "complexity_estimate": "",
+            }
         lines = code.splitlines()
         line_count = len(lines)
         try:
@@ -108,4 +127,3 @@ class CodeUnderstandingAgent:
             "purpose": f"Code block with {line_count} lines and {node_count} AST nodes",
             "complexity_estimate": complexity,
         }
-

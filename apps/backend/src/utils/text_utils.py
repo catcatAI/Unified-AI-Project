@@ -13,7 +13,7 @@ def char_bigrams(text: str) -> set:
     """字元級 bigram（含 edge-case guard）"""
     if len(text) < 2:
         return {text} if text else set()
-    return {text[i:i+2] for i in range(len(text) - 1)}
+    return {text[i : i + 2] for i in range(len(text) - 1)}
 
 
 def bigram_jaccard(text_a: str, text_b: str) -> float:

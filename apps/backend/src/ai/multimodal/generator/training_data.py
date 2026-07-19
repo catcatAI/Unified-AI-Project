@@ -20,8 +20,7 @@ class TrainingDataGenerator:
     training pairs.
     """
 
-    def __init__(self, semantic_encoder=None, primitive_encoder=None,
-                 primitive_library=None):
+    def __init__(self, semantic_encoder=None, primitive_encoder=None, primitive_library=None):
         """Initialize training data generator.
 
         Args:
@@ -33,9 +32,9 @@ class TrainingDataGenerator:
         self._prim_encoder = primitive_encoder
         self._library = primitive_library
 
-    def generate_from_cifar10(self, cifar10_dir: str = "data/multimodal/cifar10",
-                              n_samples: int = 500,
-                              seed: int = 42) -> Dict[str, List]:
+    def generate_from_cifar10(
+        self, cifar10_dir: str = "data/multimodal/cifar10", n_samples: int = 500, seed: int = 42
+    ) -> Dict[str, List]:
         """Generate training pairs from CIFAR-10 images."""
         import json
         import os
@@ -45,7 +44,7 @@ class TrainingDataGenerator:
             logger.warning("CIFAR-10 index not found at %s", index_path)
             return {"clip_embeddings": [], "primitive_sequences": []}
 
-        with open(index_path, 'r') as f:
+        with open(index_path, "r") as f:
             index = json.load(f)
 
         all_images = self._collect_cifar10_images(cifar10_dir, index)
@@ -76,6 +75,7 @@ class TrainingDataGenerator:
 
     def _collect_cifar10_images(self, cifar10_dir: str, index: dict) -> List[dict]:
         import os
+
         all_images = []
         for class_name, class_info in index.get("classes", {}).items():
             for img_entry in class_info.get("images", []):
@@ -88,6 +88,7 @@ class TrainingDataGenerator:
         """Process a single CIFAR-10 image into a (clip_embedding, primitive_sequence) pair."""
         try:
             from PIL import Image
+
             img_array = np.load(img_info["path"])
             if img_array.ndim != 3 or img_array.shape[2] != 3:
                 return None
@@ -122,8 +123,9 @@ class TrainingDataGenerator:
         proj = clip_vec[:d] if len(clip_vec) >= d else np.pad(clip_vec, (0, d - len(clip_vec)))
         return proj.astype(np.float32)
 
-    def generate_synthetic_captions(self, n_per_primitive: int = 10,
-                                    seed: int = 42) -> Dict[str, List]:
+    def generate_synthetic_captions(
+        self, n_per_primitive: int = 10, seed: int = 42
+    ) -> Dict[str, List]:
         """Generate synthetic text→primitive training pairs.
 
         For each primitive in the library, generates text descriptions
@@ -146,11 +148,30 @@ class TrainingDataGenerator:
         rng = np.random.default_rng(seed)
 
         # Color names for synthetic descriptions
-        colors = ["red", "blue", "green", "yellow", "black", "white",
-                  "orange", "purple", "brown", "pink"]
+        colors = [
+            "red",
+            "blue",
+            "green",
+            "yellow",
+            "black",
+            "white",
+            "orange",
+            "purple",
+            "brown",
+            "pink",
+        ]
         shapes = ["circle", "square", "triangle", "dot", "line", "blob"]
-        positions = ["top-left", "top-right", "bottom-left", "bottom-right",
-                     "center", "top", "bottom", "left", "right"]
+        positions = [
+            "top-left",
+            "top-right",
+            "bottom-left",
+            "bottom-right",
+            "center",
+            "top",
+            "bottom",
+            "left",
+            "right",
+        ]
 
         for name in list(self._library._primitives.keys())[:50]:  # Limit to 50
             prim_emb = self._library.get_embedding(name)
@@ -179,9 +200,9 @@ class TrainingDataGenerator:
             "primitive_sequences": primitive_sequences,
         }
 
-    def generate_random_primitives(self, n_samples: int = 200,
-                                   primitive_dim: int = 128,
-                                   seed: int = 42) -> Dict[str, List]:
+    def generate_random_primitives(
+        self, n_samples: int = 200, primitive_dim: int = 128, seed: int = 42
+    ) -> Dict[str, List]:
         """Generate random primitive sequences for pre-training.
 
         Creates random (random_clip_vec, random_primitive) pairs to

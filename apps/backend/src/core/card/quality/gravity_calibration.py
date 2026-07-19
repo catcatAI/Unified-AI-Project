@@ -56,8 +56,8 @@ class GravityCalibrator:
             for s in SOFTENING_CANDIDATES:
                 for r in REPULSION_CANDIDATES:
                     test_field = TextGravityField(g=g, softening=s)
-                    test_field._TextGravityField__repulsion_factor = (
-                        lambda c, r=r: self._repulsion(c, r)
+                    test_field._TextGravityField__repulsion_factor = lambda c, r=r: self._repulsion(
+                        c, r
                     )
                     aligned = 0
                     for c in chosen:

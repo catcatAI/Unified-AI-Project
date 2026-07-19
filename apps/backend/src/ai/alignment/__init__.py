@@ -85,18 +85,23 @@ class OntologySystem:
 try:
     from .alignment_manager import AlignmentManager
 except ImportError:
+
     class AlignmentManager:
         pass
+
 
 try:
     from .decision_theory_system import DecisionTheorySystem
 except ImportError:
+
     class DecisionTheorySystem:
         pass
+
 
 try:
     from .adversarial_generation_system import AdversarialGenerationSystem
 except ImportError:
+
     class AdversarialGenerationSystem:
         pass
 

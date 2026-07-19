@@ -5,9 +5,9 @@
 Live-status logger — one updating line for steady-state loops, errors inline.
 """
 
+import logging
 import sys
 import time
-import logging
 from collections import deque
 from typing import Optional
 
@@ -95,7 +95,9 @@ def err(msg: str, key: str = "") -> None:
 def _flush_suppressed() -> None:
     global _suppressed, _suppressed_key
     now = time.strftime("%Y-%m-%d %H:%M:%S")
-    sys.stderr.write(f"\r\x1b[33m  ⚠ [{now}] ... and {_suppressed} more suppressed ({_suppressed_key})\x1b[0m\n")
+    sys.stderr.write(
+        f"\r\x1b[33m  ⚠ [{now}] ... and {_suppressed} more suppressed ({_suppressed_key})\x1b[0m\n"
+    )
     _suppressed = 0
     _suppressed_key = ""
 

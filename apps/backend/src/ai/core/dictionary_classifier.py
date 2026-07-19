@@ -82,6 +82,7 @@ class DictionaryClassifier:
         self._loaded = True
         try:
             from ai.ed3n.dictionary_layer import DictionaryLayer
+
             self._dictionary = DictionaryLayer()
             self._dictionary.load_preset_responses_from_dir()
             self._load_training_data()
@@ -219,16 +220,24 @@ class DictionaryClassifier:
     @staticmethod
     def _map_file_action(entry, action_type: str) -> str:
         action_map = {
-            "删除": "delete", "刪除": "delete",
-            "创建": "create", "建立": "create", "新增": "create",
-            "读取": "read", "讀取": "read",
-            "写入": "write", "寫入": "write",
-            "移动": "move", "移動": "move",
-            "复制": "copy", "複製": "copy",
+            "删除": "delete",
+            "刪除": "delete",
+            "创建": "create",
+            "建立": "create",
+            "新增": "create",
+            "读取": "read",
+            "讀取": "read",
+            "写入": "write",
+            "寫入": "write",
+            "移动": "move",
+            "移動": "move",
+            "复制": "copy",
+            "複製": "copy",
             "重命名": "rename",
             "整理": "organize",
             "清理": "clean",
-            "编辑": "modify", "編輯": "modify",
+            "编辑": "modify",
+            "編輯": "modify",
             "修改": "modify",
             "列出": "list",
         }
@@ -238,21 +247,35 @@ class DictionaryClassifier:
     @staticmethod
     def _map_execute_action(entry, action_type: str) -> str:
         action_map = {
-            "执行": "execute", "執行": "execute",
-            "运行": "execute", "運行": "execute",
-            "开启": "open", "開啟": "open",
-            "关闭": "close", "關閉": "close",
-            "启动": "start", "啟動": "start",
+            "执行": "execute",
+            "執行": "execute",
+            "运行": "execute",
+            "運行": "execute",
+            "开启": "open",
+            "開啟": "open",
+            "关闭": "close",
+            "關閉": "close",
+            "启动": "start",
+            "啟動": "start",
             "停止": "stop",
-            "暂停": "pause", "暫停": "pause",
-            "下载": "download", "下載": "download",
-            "上传": "upload", "上傳": "upload",
+            "暂停": "pause",
+            "暫停": "pause",
+            "下载": "download",
+            "下載": "download",
+            "上传": "upload",
+            "上傳": "upload",
         }
         zh = entry.surface_forms.get("zh", "")
         return action_map.get(zh, action_type)
 
-    def learn(self, text: str, query_type: str, action_type: str = "none",
-              confidence: float = 0.6, persist: bool = True) -> str:
+    def learn(
+        self,
+        text: str,
+        query_type: str,
+        action_type: str = "none",
+        confidence: float = 0.6,
+        persist: bool = True,
+    ) -> str:
         """Online incremental learning: add a new surface form→query_type mapping.
 
         Creates a new dictionary entry and rebuilds the keyword index so subsequent
@@ -288,12 +311,13 @@ class DictionaryClassifier:
                 del self._dictionary.entries[existing_key]
             key = existing_key
 
-        if 'key' not in locals():
+        if "key" not in locals():
             # Auto-increment key
             key_num = len(self._training_data) + 1
             key = f"cls_learn_{key_num}"
 
         from ai.ed3n.dictionary_layer import DictionaryEntry
+
         entry = DictionaryEntry(
             key=key,
             surface_forms={"zh": text_stripped},
@@ -381,12 +405,14 @@ class DictionaryClassifier:
             entry = self._dictionary.entries.get(key)
             if not entry:
                 continue
-            results.append({
-                "key": key,
-                "score": score,
-                "surface_forms": entry.surface_forms,
-                "contexts": entry.contexts,
-            })
+            results.append(
+                {
+                    "key": key,
+                    "score": score,
+                    "surface_forms": entry.surface_forms,
+                    "contexts": entry.contexts,
+                }
+            )
         results.sort(key=lambda x: x["score"], reverse=True)
         return results
 

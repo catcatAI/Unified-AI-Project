@@ -46,6 +46,7 @@ def _lazy_torch():
             try:
                 import torch
                 import torch.nn.functional as F
+
                 _torch = (torch, F)
             except ImportError:
                 logger.warning("torch not installed; torch features degraded")
@@ -55,15 +56,18 @@ def _lazy_torch():
             _torch = (None, None)
     return _torch
 
+
 # ---------------------------------------------------------------------------
 # Data structures
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ConceptEntry:
     """One entry in the GARDEN vector dictionary."""
-    key: str                          # e.g. "g1"
-    surface_forms: Dict[str, str]     # {"zh": "你好", "en": "hello"}
+
+    key: str  # e.g. "g1"
+    surface_forms: Dict[str, str]  # {"zh": "你好", "en": "hello"}
     relations: Dict[str, List[str]] = field(default_factory=dict)
     confidence: float = 1.0
     # Vector embedding (set after encoding)
@@ -73,6 +77,7 @@ class ConceptEntry:
 # ---------------------------------------------------------------------------
 # Encoder backend (sentence-transformers or fallback)
 # ---------------------------------------------------------------------------
+
 
 class _TfidfEncoder:
     """
@@ -106,7 +111,7 @@ class _TfidfEncoder:
         # Chinese unigrams
         cjk_chars: List[str] = []
         for ch in lower:
-            if '\u4e00' <= ch <= '\u9fff' or '\u3040' <= ch <= '\u30ff':
+            if "\u4e00" <= ch <= "\u9fff" or "\u3040" <= ch <= "\u30ff":
                 tokens.append(ch)
                 cjk_chars.append(ch)
         # Chinese bigrams
@@ -143,7 +148,8 @@ class _TfidfEncoder:
         self._fitted = True
         logger.info(
             "GARDEN TF-IDF: fitted on %d documents, vocab=%d",
-            self.N, V,
+            self.N,
+            V,
         )
 
     @staticmethod
@@ -186,6 +192,7 @@ class _CharBagEncoder:
     CPU-only fallback encoder using numpy (no torch dependency).
     Produces deterministic dense vectors from character n-gram hashing.
     """
+
     DIM = 256
 
     def encode(self, texts: List[str]) -> Any:
@@ -197,7 +204,7 @@ class _CharBagEncoder:
                 idx = (ord(ch) * 31 + i) % self.DIM
                 v[idx] += 1.0
             for i in range(len(lower) - 1):
-                bigram = lower[i:i+2]
+                bigram = lower[i : i + 2]
                 idx = (zlib.adler32(bigram.encode()) & 0x7FFFFFFF) % self.DIM
                 v[idx] += 0.5
             norm = np.linalg.norm(v)
@@ -212,10 +219,12 @@ class _STEncoder:
 
     def __init__(self, model_name: str):
         from ._import_utils import subprocess_check
+
         if not subprocess_check("sentence_transformers"):
             raise ImportError("sentence_transformers not available (import check failed)")
         try:
             from sentence_transformers import SentenceTransformer
+
             self._model = SentenceTransformer(model_name)
         except (ImportError, Exception) as e:
             raise ImportError(f"sentence_transformers not available: {e}")
@@ -256,6 +265,7 @@ class _ChromaEncoder:
         import uuid
 
         from ._import_utils import subprocess_check
+
         if not subprocess_check("chromadb"):
             raise ImportError("chromadb not available (import probe failed)")
         try:
@@ -309,10 +319,14 @@ class _ChromaEncoder:
                         if emb is not None and len(emb) > 0:
                             embeddings.append(emb)
                         else:
-                            logger.warning("GARDEN: ChromaDB returned empty embedding for text '%s'", text[:50])
+                            logger.warning(
+                                "GARDEN: ChromaDB returned empty embedding for text '%s'", text[:50]
+                            )
                             embeddings.append([0.0] * self.EMBEDDING_DIM)
                     else:
-                        logger.warning("GARDEN: ChromaDB get() returned no embeddings for text '%s'", text[:50])
+                        logger.warning(
+                            "GARDEN: ChromaDB get() returned no embeddings for text '%s'", text[:50]
+                        )
                         embeddings.append([0.0] * self.EMBEDDING_DIM)
                 except Exception as e:
                     logger.warning("GARDEN: ChromaDB get() failed for text '%s': %s", text[:50], e)
@@ -336,7 +350,7 @@ class _ChromaEncoder:
             )
             embs = result.get("embeddings") if result else None
             if embs is not None and len(embs) > 0 and len(embs[0]) > 0:
-                return embs[0][0].tolist() if hasattr(embs[0][0], 'tolist') else list(embs[0][0])
+                return embs[0][0].tolist() if hasattr(embs[0][0], "tolist") else list(embs[0][0])
         except Exception as e:
             logger.debug("GARDEN: ChromaDB query_embedding failed: %s", e)
         return None
@@ -345,6 +359,7 @@ class _ChromaEncoder:
 # ---------------------------------------------------------------------------
 # VectorDictionary
 # ---------------------------------------------------------------------------
+
 
 class VectorDictionary:
     """
@@ -369,7 +384,11 @@ class VectorDictionary:
         device: str = "cpu",
         compatibility_mode: bool = False,
     ):
-        similarity_threshold = similarity_threshold if similarity_threshold is not None else threshold_value("ai.garden.dictionary.similarity_threshold", 0.30)
+        similarity_threshold = (
+            similarity_threshold
+            if similarity_threshold is not None
+            else threshold_value("ai.garden.dictionary.similarity_threshold", 0.30)
+        )
         self.model_name = model_name
         self.top_k = top_k
         self.similarity_threshold = similarity_threshold
@@ -379,9 +398,9 @@ class VectorDictionary:
         self.entries: Dict[str, ConceptEntry] = {}
         self._surface_set: Dict[str, str] = {}  # {lower_surface: key} for O(1) dedup
         self._encoder = self._build_encoder(model_name)
-        self._matrix: Optional[torch.Tensor] = None   # shape [N, D]
-        self._key_order: List[str] = []               # maps row index -> key
-        self._dirty = True                             # re-index flag
+        self._matrix: Optional[torch.Tensor] = None  # shape [N, D]
+        self._key_order: List[str] = []  # maps row index -> key
+        self._dirty = True  # re-index flag
         self._presets_loaded = False
         self.growth_threshold = threshold_value("ai.garden.dictionary.growth_threshold", 0.6)
         self.max_entries = 10000  # Max entries before stopping growth
@@ -419,7 +438,11 @@ class VectorDictionary:
         relations: Optional[Dict[str, List[str]]] = None,
         confidence: Optional[float] = None,
     ) -> ConceptEntry:
-        confidence = confidence if confidence is not None else confidence_value("ai.garden.dictionary.add_confidence", 1.0)
+        confidence = (
+            confidence
+            if confidence is not None
+            else confidence_value("ai.garden.dictionary.add_confidence", 1.0)
+        )
         entry = ConceptEntry(
             key=key,
             surface_forms=surface_forms,
@@ -437,8 +460,14 @@ class VectorDictionary:
         """Add a new entry learned from conversation."""
         if len(self.entries) >= self.max_entries:
             return ""  # Max entries reached
-        confidence = confidence if confidence is not None else confidence_value("ai.garden.dictionary.grow_confidence", 0.6)
-        existing = self._find_similar_key(text, threshold=threshold_value("ai.garden.dictionary.grow_dedup_threshold", 0.85))
+        confidence = (
+            confidence
+            if confidence is not None
+            else confidence_value("ai.garden.dictionary.grow_confidence", 0.6)
+        )
+        existing = self._find_similar_key(
+            text, threshold=threshold_value("ai.garden.dictionary.grow_dedup_threshold", 0.85)
+        )
         if existing:
             return existing
         idx = len(self.entries) + 1
@@ -450,13 +479,19 @@ class VectorDictionary:
     def grow_batch(self, texts: List[str], confidence: Optional[float] = None) -> List[str]:
         """Add multiple new entries learned from conversation without rebuilding index.
         Call rebuild_index() once after all grows to finalize."""
-        confidence = confidence if confidence is not None else confidence_value("ai.garden.dictionary.grow_confidence", 0.6)
+        confidence = (
+            confidence
+            if confidence is not None
+            else confidence_value("ai.garden.dictionary.grow_confidence", 0.6)
+        )
         new_keys: List[str] = []
         for text in texts:
             if len(self.entries) >= self.max_entries:
                 logger.info("GARDEN: max entries reached (%d), stopping growth", self.max_entries)
                 break
-            existing = self._find_similar_key(text, threshold=threshold_value("ai.garden.dictionary.grow_dedup_threshold", 0.85))
+            existing = self._find_similar_key(
+                text, threshold=threshold_value("ai.garden.dictionary.grow_dedup_threshold", 0.85)
+            )
             if existing:
                 continue
             idx = len(self.entries) + 1
@@ -470,7 +505,11 @@ class VectorDictionary:
     def _find_similar_key(self, text: str, threshold: Optional[float] = None) -> Optional[str]:
         """Return existing key if text is very similar to an existing surface form.
         Uses exact match first (O(1)), then semantic similarity if index is built."""
-        threshold = threshold if threshold is not None else threshold_value("ai.garden.dictionary.find_similar_threshold", 0.85)
+        threshold = (
+            threshold
+            if threshold is not None
+            else threshold_value("ai.garden.dictionary.find_similar_threshold", 0.85)
+        )
         lower = text.lower().strip()
         # Fast path: exact match via set lookup
         if lower in self._surface_set:
@@ -482,9 +521,9 @@ class VectorDictionary:
             query_vec = self._encoder.encode([text])
             query_vec = self._normalize(query_vec, dim=-1)
             scores = self._matrix @ query_vec.T
-            max_score = float(scores.max()) if hasattr(scores, 'max') else 0.0
+            max_score = float(scores.max()) if hasattr(scores, "max") else 0.0
             if max_score >= threshold:
-                idx = int(scores.argmax()) if hasattr(scores, 'argmax') else 0
+                idx = int(scores.argmax()) if hasattr(scores, "argmax") else 0
                 return self._key_order[idx]
         except Exception:
             logger.debug("Semantic dedup encoding failed", exc_info=True)
@@ -496,7 +535,7 @@ class VectorDictionary:
 
     def _normalize(self, arr: Any, dim: int = -1) -> Any:
         """L2-normalize along a dimension. Works with both torch and numpy."""
-        if hasattr(arr, 'norm'):  # torch tensor
+        if hasattr(arr, "norm"):  # torch tensor
             return arr / arr.norm(dim=dim, keepdim=True).clamp(min=1e-8)
         # numpy array
         norms = np.linalg.norm(arr, axis=dim if dim == -1 else dim, keepdims=True)
@@ -517,14 +556,18 @@ class VectorDictionary:
             forms = list(entry.surface_forms.values())
             texts.append(" ".join(forms))
 
-        if hasattr(self._encoder, 'fit'):
+        if hasattr(self._encoder, "fit"):
             self._encoder.fit(texts)
         embeddings = self._encoder.encode(texts)  # [N, D]
 
         self._matrix = self._normalize(embeddings, dim=-1)
 
         self._dirty = False
-        logger.debug("GARDEN: index rebuilt with %d entries, dim=%d", len(self._key_order), self._matrix.shape[1])
+        logger.debug(
+            "GARDEN: index rebuilt with %d entries, dim=%d",
+            len(self._key_order),
+            self._matrix.shape[1],
+        )
 
     # ------------------------------------------------------------------
     # Core encode / decode
@@ -539,14 +582,14 @@ class VectorDictionary:
         if self._matrix is None or len(self._key_order) == 0:
             return []
 
-        query_vec = self._encoder.encode([text])          # [1, D]
-        query_vec = self._normalize(query_vec, dim=-1)    # [1, D]
-        scores = (self._matrix @ query_vec.T)             # [N, 1] or [N]
-        if hasattr(scores, 'ndim') and scores.ndim > 1:
+        query_vec = self._encoder.encode([text])  # [1, D]
+        query_vec = self._normalize(query_vec, dim=-1)  # [1, D]
+        scores = self._matrix @ query_vec.T  # [N, 1] or [N]
+        if hasattr(scores, "ndim") and scores.ndim > 1:
             scores = scores.squeeze(-1)
 
         k = min(self.top_k, scores.shape[0])
-        if hasattr(scores, 'topk'):
+        if hasattr(scores, "topk"):
             # torch backend
             top_scores, top_indices = scores.topk(k)
         else:
@@ -668,68 +711,152 @@ class VectorDictionary:
     def _build_presets(self) -> List[Dict[str, Any]]:
         return [
             # --- Greetings ---
-            {"key": "g1", "surface_forms": {"zh": "你好", "en": "hello"},
-             "relations": {"synonym": ["g2", "g3", "g5"]}},
-            {"key": "g2", "surface_forms": {"zh": "早上好", "en": "good morning"},
-             "relations": {"synonym": ["g1"], "mapping": ["g5"]}},
-            {"key": "g3", "surface_forms": {"zh": "晚上好", "en": "good evening"},
-             "relations": {"synonym": ["g1"]}},
-            {"key": "g4", "surface_forms": {"zh": "欢迎", "en": "welcome"},
-             "relations": {"synonym": ["g1"]}},
-            {"key": "g5", "surface_forms": {"zh": "嗨", "en": "hi"},
-             "relations": {"synonym": ["g1", "g6"]}},
-            {"key": "g6", "surface_forms": {"zh": "哈喽", "en": "hey"},
-             "relations": {"synonym": ["g1", "g5"]}},
+            {
+                "key": "g1",
+                "surface_forms": {"zh": "你好", "en": "hello"},
+                "relations": {"synonym": ["g2", "g3", "g5"]},
+            },
+            {
+                "key": "g2",
+                "surface_forms": {"zh": "早上好", "en": "good morning"},
+                "relations": {"synonym": ["g1"], "mapping": ["g5"]},
+            },
+            {
+                "key": "g3",
+                "surface_forms": {"zh": "晚上好", "en": "good evening"},
+                "relations": {"synonym": ["g1"]},
+            },
+            {
+                "key": "g4",
+                "surface_forms": {"zh": "欢迎", "en": "welcome"},
+                "relations": {"synonym": ["g1"]},
+            },
+            {
+                "key": "g5",
+                "surface_forms": {"zh": "嗨", "en": "hi"},
+                "relations": {"synonym": ["g1", "g6"]},
+            },
+            {
+                "key": "g6",
+                "surface_forms": {"zh": "哈喽", "en": "hey"},
+                "relations": {"synonym": ["g1", "g5"]},
+            },
             # --- Farewells ---
-            {"key": "f1", "surface_forms": {"zh": "再见", "en": "goodbye"},
-             "relations": {"synonym": ["f2"]}},
-            {"key": "f2", "surface_forms": {"zh": "明天见", "en": "see you tomorrow"},
-             "relations": {"synonym": ["f1"]}},
+            {
+                "key": "f1",
+                "surface_forms": {"zh": "再见", "en": "goodbye"},
+                "relations": {"synonym": ["f2"]},
+            },
+            {
+                "key": "f2",
+                "surface_forms": {"zh": "明天见", "en": "see you tomorrow"},
+                "relations": {"synonym": ["f1"]},
+            },
             # --- Politeness ---
-            {"key": "p1", "surface_forms": {"zh": "谢谢", "en": "thank you"},
-             "relations": {"synonym": ["p4"], "mapping": ["e1", "r1"]}},
-            {"key": "p2", "surface_forms": {"zh": "对不起", "en": "sorry"},
-             "relations": {"synonym": ["r2"]}},
-            {"key": "p3", "surface_forms": {"zh": "没关系", "en": "no problem"},
-             "relations": {"synonym": ["r3"]}},
-            {"key": "p4", "surface_forms": {"zh": "请", "en": "please"},
-             "relations": {"mapping": ["g1", "p1"]}},
+            {
+                "key": "p1",
+                "surface_forms": {"zh": "谢谢", "en": "thank you"},
+                "relations": {"synonym": ["p4"], "mapping": ["e1", "r1"]},
+            },
+            {
+                "key": "p2",
+                "surface_forms": {"zh": "对不起", "en": "sorry"},
+                "relations": {"synonym": ["r2"]},
+            },
+            {
+                "key": "p3",
+                "surface_forms": {"zh": "没关系", "en": "no problem"},
+                "relations": {"synonym": ["r3"]},
+            },
+            {
+                "key": "p4",
+                "surface_forms": {"zh": "请", "en": "please"},
+                "relations": {"mapping": ["g1", "p1"]},
+            },
             # --- Emotions ---
-            {"key": "e1", "surface_forms": {"zh": "开心", "en": "happy"},
-             "relations": {"synonym": ["e5"], "mapping": ["c2"]}},
-            {"key": "e2", "surface_forms": {"zh": "难过", "en": "sad"},
-             "relations": {"mapping": ["p2", "c2"]}},
-            {"key": "e3", "surface_forms": {"zh": "烦恼", "en": "annoyed"},
-             "relations": {"mapping": ["e2", "c2"]}},
-            {"key": "e4", "surface_forms": {"zh": "无聊", "en": "bored"},
-             "relations": {"mapping": ["e2", "c1"]}},
-            {"key": "e5", "surface_forms": {"zh": "兴奋", "en": "excited"},
-             "relations": {"synonym": ["e1"], "mapping": ["c2"]}},
+            {
+                "key": "e1",
+                "surface_forms": {"zh": "开心", "en": "happy"},
+                "relations": {"synonym": ["e5"], "mapping": ["c2"]},
+            },
+            {
+                "key": "e2",
+                "surface_forms": {"zh": "难过", "en": "sad"},
+                "relations": {"mapping": ["p2", "c2"]},
+            },
+            {
+                "key": "e3",
+                "surface_forms": {"zh": "烦恼", "en": "annoyed"},
+                "relations": {"mapping": ["e2", "c2"]},
+            },
+            {
+                "key": "e4",
+                "surface_forms": {"zh": "无聊", "en": "bored"},
+                "relations": {"mapping": ["e2", "c1"]},
+            },
+            {
+                "key": "e5",
+                "surface_forms": {"zh": "兴奋", "en": "excited"},
+                "relations": {"synonym": ["e1"], "mapping": ["c2"]},
+            },
             # --- Common patterns ---
-            {"key": "c1", "surface_forms": {"zh": "在忙吗", "en": "are you busy"},
-             "relations": {"mapping": ["e5", "r1"]}},
-            {"key": "c2", "surface_forms": {"zh": "心情", "en": "mood"},
-             "relations": {"mapping": ["e1", "e2", "e3", "e5"]}},
-            {"key": "c3", "surface_forms": {"zh": "今天", "en": "today"},
-             "relations": {"mapping": ["g2", "g3", "c1"]}},
-            {"key": "c4", "surface_forms": {"zh": "名字", "en": "name"},
-             "relations": {"mapping": ["g1"]}},
-            {"key": "c5", "surface_forms": {"zh": "做什么", "en": "what are you doing"},
-             "relations": {"mapping": ["c1", "e5"]}},
+            {
+                "key": "c1",
+                "surface_forms": {"zh": "在忙吗", "en": "are you busy"},
+                "relations": {"mapping": ["e5", "r1"]},
+            },
+            {
+                "key": "c2",
+                "surface_forms": {"zh": "心情", "en": "mood"},
+                "relations": {"mapping": ["e1", "e2", "e3", "e5"]},
+            },
+            {
+                "key": "c3",
+                "surface_forms": {"zh": "今天", "en": "today"},
+                "relations": {"mapping": ["g2", "g3", "c1"]},
+            },
+            {
+                "key": "c4",
+                "surface_forms": {"zh": "名字", "en": "name"},
+                "relations": {"mapping": ["g1"]},
+            },
+            {
+                "key": "c5",
+                "surface_forms": {"zh": "做什么", "en": "what are you doing"},
+                "relations": {"mapping": ["c1", "e5"]},
+            },
             # --- Responses ---
-            {"key": "r1", "surface_forms": {"zh": "嗯", "en": "uh-huh"},
-             "relations": {"synonym": ["r2", "r3"]}},
-            {"key": "r2", "surface_forms": {"zh": "好的", "en": "okay"},
-             "relations": {"synonym": ["r1", "r3", "r4"]}},
-            {"key": "r3", "surface_forms": {"zh": "明白", "en": "understood"},
-             "relations": {"synonym": ["r1", "r2", "r4"]}},
-            {"key": "r4", "surface_forms": {"zh": "可以", "en": "sure"},
-             "relations": {"synonym": ["r2"]}},
+            {
+                "key": "r1",
+                "surface_forms": {"zh": "嗯", "en": "uh-huh"},
+                "relations": {"synonym": ["r2", "r3"]},
+            },
+            {
+                "key": "r2",
+                "surface_forms": {"zh": "好的", "en": "okay"},
+                "relations": {"synonym": ["r1", "r3", "r4"]},
+            },
+            {
+                "key": "r3",
+                "surface_forms": {"zh": "明白", "en": "understood"},
+                "relations": {"synonym": ["r1", "r2", "r4"]},
+            },
+            {
+                "key": "r4",
+                "surface_forms": {"zh": "可以", "en": "sure"},
+                "relations": {"synonym": ["r2"]},
+            },
             # --- Logic ---
-            {"key": "b1", "surface_forms": {"zh": "真", "en": "true"},
-             "relations": {"antonym": ["b2"]}},
-            {"key": "b2", "surface_forms": {"zh": "假", "en": "false"},
-             "relations": {"antonym": ["b1"]}},
+            {
+                "key": "b1",
+                "surface_forms": {"zh": "真", "en": "true"},
+                "relations": {"antonym": ["b2"]},
+            },
+            {
+                "key": "b2",
+                "surface_forms": {"zh": "假", "en": "false"},
+                "relations": {"antonym": ["b1"]},
+            },
             {"key": "b3", "surface_forms": {"zh": "且", "en": "and"}, "relations": {}},
             {"key": "b4", "surface_forms": {"zh": "或", "en": "or"}, "relations": {}},
             {"key": "b5", "surface_forms": {"zh": "非", "en": "not"}, "relations": {}},
@@ -745,16 +872,30 @@ class VectorDictionary:
             {"key": "m8", "surface_forms": {"zh": "八", "en": "eight"}, "relations": {}},
             {"key": "m9", "surface_forms": {"zh": "九", "en": "nine"}, "relations": {}},
             # --- Math operators ---
-            {"key": "op1", "surface_forms": {"zh": "加", "en": "plus"}, "relations": {"antonym": ["op2"]}},
-            {"key": "op2", "surface_forms": {"zh": "减", "en": "minus"}, "relations": {"antonym": ["op1"]}},
+            {
+                "key": "op1",
+                "surface_forms": {"zh": "加", "en": "plus"},
+                "relations": {"antonym": ["op2"]},
+            },
+            {
+                "key": "op2",
+                "surface_forms": {"zh": "减", "en": "minus"},
+                "relations": {"antonym": ["op1"]},
+            },
             {"key": "op3", "surface_forms": {"zh": "乘", "en": "multiply"}, "relations": {}},
             {"key": "op4", "surface_forms": {"zh": "除", "en": "divide"}, "relations": {}},
             {"key": "op5", "surface_forms": {"zh": "等于", "en": "equals"}, "relations": {}},
             # --- Angela identity ---
-            {"key": "id1", "surface_forms": {"zh": "Angela", "en": "angela"},
-             "relations": {"mapping": ["id2"]}},
-            {"key": "id2", "surface_forms": {"zh": "AI助手", "en": "AI assistant"},
-             "relations": {"mapping": ["id1"]}},
+            {
+                "key": "id1",
+                "surface_forms": {"zh": "Angela", "en": "angela"},
+                "relations": {"mapping": ["id2"]},
+            },
+            {
+                "key": "id2",
+                "surface_forms": {"zh": "AI助手", "en": "AI assistant"},
+                "relations": {"mapping": ["id1"]},
+            },
             # --- Questions ---
             {"key": "q1", "surface_forms": {"zh": "什么", "en": "what"}, "relations": {}},
             {"key": "q2", "surface_forms": {"zh": "为什么", "en": "why"}, "relations": {}},

@@ -60,6 +60,7 @@ class ConceptMapper:
         """
         if class_names is None:
             from .geometric_vocabulary import GeometricVocabulary
+
             class_names = GeometricVocabulary.CLASSES
 
         # Encode all class names at once
@@ -74,8 +75,9 @@ class ConceptMapper:
             for name in class_names:
                 self._concept_clip_embeddings[name] = rng.random(512).astype(np.float32)
 
-    def map_text_to_concept(self, clip_embedding: np.ndarray,
-                             top_k: int = 3) -> List[Tuple[str, float]]:
+    def map_text_to_concept(
+        self, clip_embedding: np.ndarray, top_k: int = 3
+    ) -> List[Tuple[str, float]]:
         """Map CLIP text embedding to closest concept(s).
 
         If concept space is available, use it for mapping.
@@ -163,9 +165,7 @@ class ConceptMapper:
         """Save concept mapper state."""
         data = {
             "clip_dim": self._clip_dim,
-            "concept_embeddings": {
-                k: v.tolist() for k, v in self._concept_clip_embeddings.items()
-            },
+            "concept_embeddings": {k: v.tolist() for k, v in self._concept_clip_embeddings.items()},
         }
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
         with open(path, "w") as f:

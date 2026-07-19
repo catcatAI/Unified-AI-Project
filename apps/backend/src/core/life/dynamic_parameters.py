@@ -55,20 +55,26 @@ class DynamicThresholdManager:
         if state_matrix is None:
             return
         try:
-            alpha = getattr(state_matrix, 'alpha', None)
+            alpha = getattr(state_matrix, "alpha", None)
             if alpha is not None:
                 energy = alpha.values.get("energy", 0.5)
-                self._parameters["emotion_happiness_threshold"] = max(0.1, min(0.9, 0.6 - energy * 0.2))
+                self._parameters["emotion_happiness_threshold"] = max(
+                    0.1, min(0.9, 0.6 - energy * 0.2)
+                )
                 self._parameters["emotion_anger_threshold"] = max(0.1, min(0.9, 0.5 + energy * 0.1))
 
-            gamma = getattr(state_matrix, 'gamma', None)
+            gamma = getattr(state_matrix, "gamma", None)
             if gamma is not None:
                 happiness = gamma.values.get("happiness", 0.5)
-                self._parameters["emotion_sadness_threshold"] = max(0.1, min(0.9, 0.5 - happiness * 0.2))
+                self._parameters["emotion_sadness_threshold"] = max(
+                    0.1, min(0.9, 0.5 - happiness * 0.2)
+                )
 
-            beta = getattr(state_matrix, 'beta', None)
+            beta = getattr(state_matrix, "beta", None)
             if beta is not None:
                 curiosity = beta.values.get("curiosity", 0.5)
-                self._parameters["social_initiative_threshold"] = max(0.1, min(0.9, 0.5 + curiosity * 0.2))
+                self._parameters["social_initiative_threshold"] = max(
+                    0.1, min(0.9, 0.5 + curiosity * 0.2)
+                )
         except Exception:
             logger.debug("Failed to update from state matrix", exc_info=True)

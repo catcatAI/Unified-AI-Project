@@ -55,12 +55,14 @@ class AudioPipeline:
     def _get_encoder(self):
         if self._encoder is None:
             from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
+
             self._encoder = AudioSpectralEncoder(feature_dim=self.AUDIO_DIM)
         return self._encoder
 
     def _get_latent_space(self):
         if self._latent_space is None:
             from ai.multimodal.shared_latent_space import get_shared_latent_space
+
             self._latent_space = get_shared_latent_space(latent_dim=self.LATENT_DIM)
         return self._latent_space
 
@@ -70,6 +72,7 @@ class AudioPipeline:
                 AudioWaveformDecoder,
                 load_default_audio_decoder_weights,
             )
+
             self._decoder = AudioWaveformDecoder()
             load_default_audio_decoder_weights(self._decoder)
         return self._decoder
@@ -136,8 +139,9 @@ class AudioPipeline:
             result["cache_hit"] = False
 
             # 7. Update cache (exclude large waveform from cache)
-            self._cache[audio_hash] = {k: v for k, v in result.items()
-                                       if k not in ("decoded_waveform",)}
+            self._cache[audio_hash] = {
+                k: v for k, v in result.items() if k not in ("decoded_waveform",)
+            }
             self._cache.move_to_end(audio_hash)
             while len(self._cache) > self.CACHE_SIZE:
                 self._cache.popitem(last=False)
@@ -191,6 +195,7 @@ class AudioPipeline:
     def _hash_audio(audio_data: bytes) -> str:
         """Generate a content-based hash for caching."""
         import hashlib
+
         return hashlib.md5(audio_data).hexdigest()
 
     @staticmethod
@@ -202,6 +207,7 @@ class AudioPipeline:
             if audio_data[:4] != b"RIFF":
                 return 0.0
             import struct
+
             channels = struct.unpack("<H", audio_data[22:24])[0]
             sample_rate = struct.unpack("<I", audio_data[24:28])[0]
             bits_per_sample = struct.unpack("<H", audio_data[34:36])[0]
@@ -245,13 +251,13 @@ class AudioPipeline:
             recon = decoded_wave[:min_len]
 
             # Signal power
-            signal_power = np.mean(orig ** 2)
+            signal_power = np.mean(orig**2)
             if signal_power < 1e-10:
                 return 100.0  # Silent original → perfect score
 
             # Noise power (difference)
             noise = orig - recon
-            noise_power = np.mean(noise ** 2)
+            noise_power = np.mean(noise**2)
             if noise_power < 1e-10:
                 return 100.0
 

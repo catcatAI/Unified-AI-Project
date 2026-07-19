@@ -17,9 +17,7 @@ Version: 6.0.0
 Date: 2026-02-02
 """
 
-
 from __future__ import annotations
-from core.utils import safe_error
 
 import asyncio
 import logging
@@ -36,6 +34,7 @@ from typing import Any, Callable, Dict, List, Optional, Set
 
 from core.system.config.async_io import async_write_file, async_write_text
 from core.system.config.magic_numbers import loop_sleep
+from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
 
@@ -181,8 +180,11 @@ class DesktopBrowserIntegration:
             task = asyncio.create_task(self._run_browser())
             self._browser_task = task
             task.add_done_callback(
-                lambda t: logger.warning("Task _run_browser failed: %s", t.exception())
-                if not t.cancelled() and t.exception() else None
+                lambda t: (
+                    logger.warning("Task _run_browser failed: %s", t.exception())
+                    if not t.cancelled() and t.exception()
+                    else None
+                )
             )
 
         except ImportError:
@@ -197,7 +199,9 @@ class DesktopBrowserIntegration:
             import webview
 
             webview.start()
-        except Exception as e:  # broad exception acceptable: browser runtime errors should not crash the system
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: browser runtime errors should not crash the system
             logger.error(f"浏览器运行错误: {e}", exc_info=True)
 
     async def browse_tutorial(self, tutorial_url: str) -> Dict:
@@ -240,7 +244,9 @@ class DesktopBrowserIntegration:
                 """
                 result = self.browser_window.evaluate_js(js_code)
             return result if result else {}
-        except Exception as e:  # broad exception acceptable: page content extraction should be resilient
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: page content extraction should be resilient
             logger.error(f"提取内容失败: {e}", exc_info=True)
             return {}
 
@@ -318,8 +324,8 @@ class DesktopBrowserIntegration:
                             "aspect_ratio": aspect_ratio,
                             "size": (width, height),
                             "mode": img.mode,
-"style_tags": self._infer_style_tags(img),
-                    }
+                            "style_tags": self._infer_style_tags(img),
+                        }
 
         except Exception as e:  # broad exception acceptable: style analysis should be resilient
             logger.error(f"风格分析失败: {e}", exc_info=True)
@@ -396,7 +402,11 @@ class DesktopInteraction:
             self.config.get("organized_path", "~/Desktop/Organized")
         ).expanduser()
         raw_wallpaper = self.config.get("wallpaper_path", None)
-        self.wallpaper_path = Path(raw_wallpaper).expanduser() if raw_wallpaper else Path.home() / "Pictures" / "Wallpapers"
+        self.wallpaper_path = (
+            Path(raw_wallpaper).expanduser()
+            if raw_wallpaper
+            else Path.home() / "Pictures" / "Wallpapers"
+        )
 
         # State
         self.current_state: DesktopState = DesktopState()
@@ -426,7 +436,9 @@ class DesktopInteraction:
         if not _is_safe_path(self.desktop_path, sandbox) or not _is_safe_path(
             self.organized_path, sandbox
         ):
-            logger.error("Desktop or organized path is outside allowed roots, refusing to initialize")
+            logger.error(
+                "Desktop or organized path is outside allowed roots, refusing to initialize"
+            )
             return
         self._running = True
 
@@ -526,7 +538,9 @@ class DesktopInteraction:
         for callback in self._file_change_callbacks:
             try:
                 callback(file_path, change_type)
-            except Exception as e:  # broad exception acceptable: callback errors should not block file change notifications
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: callback errors should not block file change notifications
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
     async def _check_auto_organize(self) -> None:
@@ -625,7 +639,9 @@ class DesktopInteraction:
                             file_path.unlink()
                             operation.status = "completed"
                             operations.append(operation)
-                    except Exception as e:  # broad exception acceptable: file organization errors should be logged
+                    except (
+                        Exception
+                    ) as e:  # broad exception acceptable: file organization errors should be logged
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         return operations
@@ -704,7 +720,9 @@ class DesktopInteraction:
         try:
             sandbox = [self.desktop_path, self.organized_path]
             if not _is_safe_path(source, sandbox) or not _is_safe_path(target, sandbox):
-                logger.error("Refusing to move file outside allowed roots: %s -> %s", source, target)
+                logger.error(
+                    "Refusing to move file outside allowed roots: %s -> %s", source, target
+                )
                 return False
             if source.exists():
                 shutil.move(str(source), str(target))
@@ -753,9 +771,10 @@ class DesktopInteraction:
                 loop = asyncio.get_running_loop()
                 try:
                     await loop.run_in_executor(
-                        None, lambda: subprocess.run(
+                        None,
+                        lambda: subprocess.run(
                             ["osascript", "-e", script], check=True, capture_output=True, text=True
-                        )
+                        ),
                     )
                     return True
                 except (subprocess.CalledProcessError, FileNotFoundError) as e:
@@ -769,7 +788,8 @@ class DesktopInteraction:
                     if "gnome" in de or "unity" in de:
                         image_uri = f"file://{image_path.absolute()}"
                         await loop.run_in_executor(
-                            None, lambda: subprocess.run(
+                            None,
+                            lambda: subprocess.run(
                                 [
                                     "gsettings",
                                     "set",
@@ -780,7 +800,7 @@ class DesktopInteraction:
                                 check=True,
                                 capture_output=True,
                                 text=True,
-                            )
+                            ),
                         )
                         return True
                     elif "kde" in de:
@@ -795,7 +815,8 @@ class DesktopInteraction:
                             "}"
                         )
                         await loop.run_in_executor(
-                            None, lambda: subprocess.run(
+                            None,
+                            lambda: subprocess.run(
                                 [
                                     "qdbus",
                                     "org.kde.plasmashell",
@@ -806,7 +827,7 @@ class DesktopInteraction:
                                 check=True,
                                 capture_output=True,
                                 text=True,
-                            )
+                            ),
                         )
                         return True
                 except (subprocess.CalledProcessError, FileNotFoundError) as e:
@@ -814,7 +835,9 @@ class DesktopInteraction:
                     return False
                 return True
 
-        except Exception as e:  # broad exception acceptable: wallpaper setting errors should be logged
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: wallpaper setting errors should be logged
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         return False
@@ -837,7 +860,9 @@ class DesktopInteraction:
                 next_wallpaper = random.choice(wallpapers)
                 return await self.set_wallpaper(next_wallpaper)
 
-        except Exception as e:  # broad exception acceptable: wallpaper rotation errors should be logged
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: wallpaper rotation errors should be logged
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         return False

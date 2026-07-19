@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import enum
 import math
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 
@@ -107,9 +107,11 @@ class PrecisionProjectionMatrix:
 
     def get_memory_estimate(self, num_entries: int) -> Dict[str, int]:
         return {
-            mode.value: _MEMORY_ESTIMATES[mode] * num_entries // 1000
-            if mode.value not in ("INT8", "DEC4", "DEC8")
-            else _MEMORY_ESTIMATES[mode]
+            mode.value: (
+                _MEMORY_ESTIMATES[mode] * num_entries // 1000
+                if mode.value not in ("INT8", "DEC4", "DEC8")
+                else _MEMORY_ESTIMATES[mode]
+            )
             for mode in PrecisionMode
         }
 

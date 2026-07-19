@@ -54,7 +54,8 @@ class DifferentiableRenderer:
     @staticmethod
     def _render_planes(vec, off, canvas, weight, nx, ny):
         from ai.multimodal.primitives.primitive_types import N_PLANES
-        planes = vec[off:off + N_PLANES * 9].reshape(N_PLANES, 9)
+
+        planes = vec[off : off + N_PLANES * 9].reshape(N_PLANES, 9)
         for i in range(N_PLANES):
             cx, cy, rx, ry = planes[i, :4]
             if rx < 0.001 and ry < 0.001:
@@ -70,7 +71,8 @@ class DifferentiableRenderer:
     @staticmethod
     def _render_circles(vec, off, canvas, weight, nx, ny):
         from ai.multimodal.primitives.primitive_types import N_CIRCLES
-        circles = vec[off:off + N_CIRCLES * 7].reshape(N_CIRCLES, 7)
+
+        circles = vec[off : off + N_CIRCLES * 7].reshape(N_CIRCLES, 7)
         for i in range(N_CIRCLES):
             cx, cy, r = circles[i, :3]
             if r < 0.001:
@@ -86,7 +88,8 @@ class DifferentiableRenderer:
         import math
 
         from ai.multimodal.primitives.primitive_types import N_ARCS
-        arcs = vec[off:off + N_ARCS * 10].reshape(N_ARCS, 10)
+
+        arcs = vec[off : off + N_ARCS * 10].reshape(N_ARCS, 10)
         for i in range(N_ARCS):
             cx, cy, r = arcs[i, :3]
             if r < 0.001:
@@ -98,7 +101,11 @@ class DifferentiableRenderer:
             angle = (angle + 2 * math.pi) % (2 * math.pi)
             sa_n = (sa + 2 * math.pi) % (2 * math.pi)
             ea_n = (ea + 2 * math.pi) % (2 * math.pi)
-            in_arc = (angle >= sa_n) & (angle <= ea_n) if sa_n <= ea_n else (angle >= sa_n) | (angle <= ea_n)
+            in_arc = (
+                (angle >= sa_n) & (angle <= ea_n)
+                if sa_n <= ea_n
+                else (angle >= sa_n) | (angle <= ea_n)
+            )
             radial = np.clip(1.0 - np.abs(dist - r) / max(aw * 0.5, 0.005), 0, 1)
             alpha = radial * in_arc.astype(np.float32)
             DifferentiableRenderer._layer(canvas, weight, alpha, color)
@@ -109,7 +116,8 @@ class DifferentiableRenderer:
         import math
 
         from ai.multimodal.primitives.primitive_types import N_LINES
-        lines = vec[off:off + N_LINES * 8].reshape(N_LINES, 8)
+
+        lines = vec[off : off + N_LINES * 8].reshape(N_LINES, 8)
         for i in range(N_LINES):
             sx, sy, ex, ey, lw = lines[i, :5]
             if sx == ex and sy == ey:
@@ -132,7 +140,8 @@ class DifferentiableRenderer:
     @staticmethod
     def _render_points(vec, off, canvas, weight, nx, ny):
         from ai.multimodal.primitives.primitive_types import N_POINTS
-        points = vec[off:off + N_POINTS * 5].reshape(N_POINTS, 5)
+
+        points = vec[off : off + N_POINTS * 5].reshape(N_POINTS, 5)
         for i in range(N_POINTS):
             px, py = points[i, :2]
             if px == 0 and py == 0:

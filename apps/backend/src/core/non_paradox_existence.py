@@ -39,7 +39,13 @@ class GrayZoneVariableType(Enum):
 
 
 class GrayZoneVariable:
-    def __init__(self, name: str = "", var_type: GrayZoneVariableType = GrayZoneVariableType.AMBIGUOUS, weight: float = 1.0, **kwargs):
+    def __init__(
+        self,
+        name: str = "",
+        var_type: GrayZoneVariableType = GrayZoneVariableType.AMBIGUOUS,
+        weight: float = 1.0,
+        **kwargs,
+    ):
         self.name = kwargs.get("variable_id", name) if not name else name
         self.variable_type = kwargs.get("variable_type", var_type)
         self.weight = weight
@@ -64,7 +70,9 @@ class GrayZoneVariable:
 
 
 class PossibilityState:
-    def __init__(self, description: str = "", probability: float = 0.5, resonance: float = 0.0, **kwargs):
+    def __init__(
+        self, description: str = "", probability: float = 0.5, resonance: float = 0.0, **kwargs
+    ):
         self.description = description
         self.probability = probability
         self.resonance = resonance
@@ -89,7 +97,11 @@ class CoexistenceField:
         self.coherence_score = kwargs.get("coherence", 0.0)
 
     def add_variable(self, variable: GrayZoneVariable) -> None:
-        name = variable.variable_id if hasattr(variable, "variable_id") and variable.variable_id else (variable.name if hasattr(variable, "name") else str(variable))
+        name = (
+            variable.variable_id
+            if hasattr(variable, "variable_id") and variable.variable_id
+            else (variable.name if hasattr(variable, "name") else str(variable))
+        )
         self.variables[name] = variable
         self.gray_zones[name] = variable
 
@@ -138,7 +150,9 @@ class NonParadoxExistence:
             "coherence": sum(f.get_coherence() for f in self.fields) / max(len(self.fields), 1),
         }
 
-    def create_gray_zone(self, variable_type: GrayZoneVariableType, description: str = "", threshold: float = 0.6) -> GrayZoneVariable:
+    def create_gray_zone(
+        self, variable_type: GrayZoneVariableType, description: str = "", threshold: float = 0.6
+    ) -> GrayZoneVariable:
         var_id = f"gz_{len(self.gray_zones) + 1}"
         var = GrayZoneVariable(
             variable_id=var_id,
@@ -155,7 +169,14 @@ class NonParadoxExistence:
             for p in var.possibilities.values():
                 p.resonance_weight = p.resonance_weight / total
 
-    def add_possibility(self, variable_id: str, possibility_id: str, description: Optional[str] = None, probability: Optional[float] = None, resonance_weight: Optional[float] = None) -> Optional[PossibilityState]:
+    def add_possibility(
+        self,
+        variable_id: str,
+        possibility_id: str,
+        description: Optional[str] = None,
+        probability: Optional[float] = None,
+        resonance_weight: Optional[float] = None,
+    ) -> Optional[PossibilityState]:
         var = self.gray_zones.get(variable_id)
         if var is None:
             return None
@@ -246,7 +267,9 @@ class NonParadoxExistence:
             "coexistence_active": self.coexistence_active,
             "gray_zones": {
                 "total": len(self.gray_zones),
-                "active_coexistence": sum(1 for v in self.gray_zones.values() if v.coexistence_active),
+                "active_coexistence": sum(
+                    1 for v in self.gray_zones.values() if v.coexistence_active
+                ),
             },
             "coexistence_fields": list(self.coexistence_fields.keys()),
             "resonance": self.max_resonance_weights,

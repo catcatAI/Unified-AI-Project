@@ -92,9 +92,7 @@ class JsonFileStateStore:
         """List all keys matching the given prefix."""
         try:
             pattern = f"{prefix.replace('/', '_')}*.json"
-            return sorted(
-                str(f.stem) for f in self._data_dir.glob(pattern)
-            )
+            return sorted(str(f.stem) for f in self._data_dir.glob(pattern))
         except Exception as e:
             logger.error(f"Failed to list keys prefix={prefix}: {e}", exc_info=True)
             return []

@@ -69,14 +69,20 @@ class MultimodalED3NAdapter:
         return ctx
 
     def index_image_for_retrieval(
-        self, image_data: bytes, key: str, label: str = "",
+        self,
+        image_data: bytes,
+        key: str,
+        label: str = "",
         metadata: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """Index an image for future retrieval."""
         return self._rag_engine.index_image(image_data, key, label, metadata)
 
     def index_audio_for_retrieval(
-        self, audio_data: bytes, key: str, label: str = "",
+        self,
+        audio_data: bytes,
+        key: str,
+        label: str = "",
         metadata: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """Index an audio for future retrieval."""

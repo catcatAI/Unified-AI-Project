@@ -181,7 +181,9 @@ def parse_version(version_str: str) -> VersionInfo:
         try:
             phase = ReleasePhase(phase_parts[0])
         except ValueError:
-            logger.warning("Invalid release phase '%s', using STABLE", phase_parts[0], exc_info=True)
+            logger.warning(
+                "Invalid release phase '%s', using STABLE", phase_parts[0], exc_info=True
+            )
             phase = ReleasePhase.STABLE
 
         if len(phase_parts) > 1:

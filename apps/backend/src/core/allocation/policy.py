@@ -34,6 +34,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 class AllocationAction(Enum):
     """分配動作枚舉 / Allocation action types"""
+
     ASSIGN = "assign"
     COMPOSITE = "composite"
     CREATE = "create"
@@ -43,6 +44,7 @@ class AllocationAction(Enum):
 @dataclass
 class AllocationContext:
     """分配上下文 / Context for allocation decision"""
+
     vector: List[float]
     label: str = ""
     similarities: Dict[str, float] = field(default_factory=dict)
@@ -60,6 +62,7 @@ class AllocationContext:
 @dataclass
 class AllocationDecision:
     """分配決策結果 / Result of allocation decision"""
+
     action: AllocationAction
     target: Optional[str] = None
     targets: Optional[List[Tuple[str, float]]] = None
@@ -125,9 +128,9 @@ class CompositeStage(BaseStage):
         return context.num_high_sim >= self.min_axes
 
     def decide(self, context: AllocationContext) -> AllocationDecision:
-        sorted_axes = sorted(
-            context.similarities.items(), key=lambda x: x[1], reverse=True
-        )[:context.num_high_sim]
+        sorted_axes = sorted(context.similarities.items(), key=lambda x: x[1], reverse=True)[
+            : context.num_high_sim
+        ]
         avg_sim = sum(s for _, s in sorted_axes) / max(1, len(sorted_axes))
         return AllocationDecision(
             action=AllocationAction.COMPOSITE,
@@ -147,7 +150,9 @@ class CreateStage(BaseStage):
         self.complexity_min = complexity_min
 
     def matches(self, context: AllocationContext) -> bool:
-        return context.novelty >= self.novelty_threshold and context.active_dims >= self.complexity_min
+        return (
+            context.novelty >= self.novelty_threshold and context.active_dims >= self.complexity_min
+        )
 
     def decide(self, context: AllocationContext) -> AllocationDecision:
         return AllocationDecision(
@@ -194,17 +199,21 @@ class AllocationPolicy:
     def _build_default_stages(self) -> List[BaseStage]:
         stages: List[BaseStage] = []
         if self.config.get("enable_composite", True):
-            stages.append(CompositeStage(
-                threshold=self.config.get("composite_threshold", 0.3),
-                min_axes=self.config.get("composite_min_axes", 2),
-            ))
+            stages.append(
+                CompositeStage(
+                    threshold=self.config.get("composite_threshold", 0.3),
+                    min_axes=self.config.get("composite_min_axes", 2),
+                )
+            )
         if self.config.get("enable_assign", True):
             stages.append(AssignStage(threshold=self.config.get("assign_threshold", 0.5)))
         if self.config.get("enable_create", True):
-            stages.append(CreateStage(
-                novelty_threshold=self.config.get("create_novelty_threshold", 0.8),
-                complexity_min=self.config.get("create_complexity_min", 3),
-            ))
+            stages.append(
+                CreateStage(
+                    novelty_threshold=self.config.get("create_novelty_threshold", 0.8),
+                    complexity_min=self.config.get("create_complexity_min", 3),
+                )
+            )
         stages.append(DeferStage(fallback=True))
         return stages
 
@@ -237,7 +246,9 @@ class AllocationPolicy:
                 return stage.decide(context)
         return DeferStage(fallback=True).decide(context)
 
-    def decide_from_profile(self, vector: List[float], profile: Any, label: str = "") -> AllocationDecision:
+    def decide_from_profile(
+        self, vector: List[float], profile: Any, label: str = ""
+    ) -> AllocationDecision:
         """
         從配置文件執行分配決策 / Execute decision from a profile object
 

@@ -230,14 +230,16 @@ class MultidimensionalTriggerSystem:
                 )
                 for c in item["conditions"]
             ]
-            self.add_trigger(MultidimensionalTrigger(
-                trigger_id=item["trigger_id"],
-                name=item["name"],
-                behavior_id=item["behavior_id"],
-                conditions=conds,
-                min_score=item["min_score"],
-                priority=item["priority"],
-            ))
+            self.add_trigger(
+                MultidimensionalTrigger(
+                    trigger_id=item["trigger_id"],
+                    name=item["name"],
+                    behavior_id=item["behavior_id"],
+                    conditions=conds,
+                    min_score=item["min_score"],
+                    priority=item["priority"],
+                )
+            )
 
     async def initialize(self) -> None:
         """Initialize the trigger system"""
@@ -296,7 +298,9 @@ class MultidimensionalTriggerSystem:
                 return True
         return False
 
-    def update_dimension(self, dimension: TriggerDimension, value: float, raw_value: Any = None) -> None:
+    def update_dimension(
+        self, dimension: TriggerDimension, value: float, raw_value: Any = None
+    ) -> None:
         """
         Update a dimension value
 
@@ -316,7 +320,9 @@ class MultidimensionalTriggerSystem:
             for callback in self._dimension_change_callbacks[dimension]:
                 try:
                     callback(self.dimension_values[dimension])
-                except Exception as e:  # broad exception acceptable: dimension callbacks should not break dimension updates
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: dimension callbacks should not break dimension updates
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
     def update_dimensions(self, values: Dict[TriggerDimension, Tuple[float, Any]]) -> None:
@@ -344,7 +350,9 @@ class MultidimensionalTriggerSystem:
                     for callback in self._trigger_callbacks[trigger.trigger_id]:
                         try:
                             callback(score)
-                        except Exception as e:  # broad exception acceptable: trigger callbacks should not break evaluation
+                        except (
+                            Exception
+                        ) as e:  # broad exception acceptable: trigger callbacks should not break evaluation
                             logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         # Sort by score descending

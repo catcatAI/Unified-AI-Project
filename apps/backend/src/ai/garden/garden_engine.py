@@ -24,8 +24,6 @@ import os
 import re
 from typing import Any, Dict, List, Optional
 
-from core.utils import any_keyword
-
 from ai.core.unicode_utils import is_english_dominant
 from core.system.config.magic_numbers import (
     cache_value,
@@ -34,6 +32,7 @@ from core.system.config.magic_numbers import (
     limit_value,
     threshold_value,
 )
+from core.utils import any_keyword
 
 from .dictionary import VectorDictionary
 from .snn_core import TensorSNNCore
@@ -44,6 +43,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Reflex layer (fast pattern table, same design as ED3N)
 # ---------------------------------------------------------------------------
+
 
 class _ReflexTable:
     """O(1) exact-pattern lookup with LRU cache. Triggers before vector encoding."""
@@ -71,7 +71,9 @@ class _ReflexTable:
     }
 
     def __init__(self, max_cache: Optional[int] = None):
-        max_cache = max_cache if max_cache is not None else cache_value("ai.garden.reflex.max_cache", 256)
+        max_cache = (
+            max_cache if max_cache is not None else cache_value("ai.garden.reflex.max_cache", 256)
+        )
         self.patterns: Dict[str, str] = dict(self.PRESETS)
         self._cache: Dict[str, str] = {}
         self._max_cache = max_cache
@@ -97,6 +99,7 @@ class _ReflexTable:
 # Output anchoring (prevent semantic drift)
 # ---------------------------------------------------------------------------
 
+
 def _anchored_decode(
     network_output: Dict[str, float],
     input_keys: List[str],
@@ -117,7 +120,7 @@ def _anchored_decode(
     output_keys = [k for k, _ in sorted_output[:top_k]]
 
     # Anchors = top-3 input keys (preserve intent)
-    anchors = input_keys[:limit_value("ai.garden.decode.anchor_keys", 3)]
+    anchors = input_keys[: limit_value("ai.garden.decode.anchor_keys", 3)]
 
     # Merge: anchors first, then new output keys (deduplicated)
     seen: set = set(anchors)
@@ -133,6 +136,7 @@ def _anchored_decode(
 # ---------------------------------------------------------------------------
 # GARDENEngine
 # ---------------------------------------------------------------------------
+
 
 class GARDENEngine:
     """
@@ -159,8 +163,16 @@ class GARDENEngine:
         compatibility_mode: bool = False,
     ):
         top_k = top_k if top_k is not None else limit_value("ai.garden.engine.top_k", 8)
-        similarity_threshold = similarity_threshold if similarity_threshold is not None else threshold_value("ai.garden.engine.similarity_threshold", 0.30)
-        snn_timesteps = snn_timesteps if snn_timesteps is not None else limit_value("ai.garden.engine.snn_timesteps", 6)
+        similarity_threshold = (
+            similarity_threshold
+            if similarity_threshold is not None
+            else threshold_value("ai.garden.engine.similarity_threshold", 0.30)
+        )
+        snn_timesteps = (
+            snn_timesteps
+            if snn_timesteps is not None
+            else limit_value("ai.garden.engine.snn_timesteps", 6)
+        )
         self.model_name = model_name
         self.device = device
 
@@ -218,13 +230,18 @@ class GARDENEngine:
                                 key=key,
                                 surface_forms=entry_data.get("surface_forms", {}),
                                 relations=entry_data.get("relations"),
-                                confidence=entry_data.get("confidence", confidence_value("ai.garden.engine.preset_confidence", 0.9)),
+                                confidence=entry_data.get(
+                                    "confidence",
+                                    confidence_value("ai.garden.engine.preset_confidence", 0.9),
+                                ),
                             )
                             loaded_from_config += 1
                 except Exception as e:
                     logger.warning("GARDEN: failed to load config %s: %s", fname, e)
             if loaded_from_config > 0:
-                logger.info("GARDEN: loaded %d additional concepts from config/", loaded_from_config)
+                logger.info(
+                    "GARDEN: loaded %d additional concepts from config/", loaded_from_config
+                )
 
         # Collect all unique keys (entries + relation targets) for pre-allocation
         all_keys: set = set(self.dictionary.entries.keys())
@@ -322,7 +339,9 @@ class GARDENEngine:
 
         if not response:
             # Fallback: decode input keys directly
-            response = self.dictionary.decode(input_keys[:limit_value("ai.garden.engine.fallback_decode_keys", 4)])
+            response = self.dictionary.decode(
+                input_keys[: limit_value("ai.garden.engine.fallback_decode_keys", 4)]
+            )
 
         if not response:
             self._last_confidence = 0.0
@@ -354,7 +373,9 @@ class GARDENEngine:
         key_ratio = min(1.0, len(input_keys) / limit_value("ai.garden.engine.top_k", 8))
         resp_quality = min(1.0, len(current_output) / 50.0)
         cycle_penalty = 1.0 - (cycles_used * 0.1)
-        self._last_confidence = round(max(0.0, key_ratio * 0.5 + resp_quality * 0.3 + 0.2 * cycle_penalty), 3)
+        self._last_confidence = round(
+            max(0.0, key_ratio * 0.5 + resp_quality * 0.3 + 0.2 * cycle_penalty), 3
+        )
 
         return current_output
 
@@ -362,7 +383,18 @@ class GARDENEngine:
     # Multi-step reasoning (Phase 4.3)
     # ------------------------------------------------------------------
 
-    _MULTI_STEP_MARKERS = ["然后", "然後", "接著", "接着", "之後", "之后", "然后再", "然後再", "and then", "after that"]
+    _MULTI_STEP_MARKERS = [
+        "然后",
+        "然後",
+        "接著",
+        "接着",
+        "之後",
+        "之后",
+        "然后再",
+        "然後再",
+        "and then",
+        "after that",
+    ]
 
     def _is_multi_step(self, text: str) -> bool:
         """Detect if the input contains multiple sequential steps."""
@@ -404,7 +436,9 @@ class GARDENEngine:
         response = _anchored_decode(network_output, input_keys, self.dictionary)
 
         if not response:
-            response = self.dictionary.decode(input_keys[:limit_value("ai.garden.engine.fallback_decode_keys", 4)])
+            response = self.dictionary.decode(
+                input_keys[: limit_value("ai.garden.engine.fallback_decode_keys", 4)]
+            )
 
         return response or ""
 
@@ -413,14 +447,45 @@ class GARDENEngine:
     # ------------------------------------------------------------------
 
     _EMOTION_KEYWORDS: Dict[str, List[str]] = {
-        "happy": ["开心", "高兴", "太好了", "happy", "great", "好开心", "好高兴",
-                  "開心", "高興", "好開心", "好高興"],
-        "sad": ["难过", "伤心", "糟糕", "sad", "bad", "好难过", "好伤心",
-                "難過", "傷心", "好難過", "好傷心"],
-        "angry": ["生气", "气死", "烦", "angry", "mad", "好生气",
-                  "生氣", "氣死", "好生氣"],
-        "anxious": ["担心", "紧张", "害怕", "worried", "anxious", "好担心",
-                    "擔心", "緊張", "害怕", "好擔心"],
+        "happy": [
+            "开心",
+            "高兴",
+            "太好了",
+            "happy",
+            "great",
+            "好开心",
+            "好高兴",
+            "開心",
+            "高興",
+            "好開心",
+            "好高興",
+        ],
+        "sad": [
+            "难过",
+            "伤心",
+            "糟糕",
+            "sad",
+            "bad",
+            "好难过",
+            "好伤心",
+            "難過",
+            "傷心",
+            "好難過",
+            "好傷心",
+        ],
+        "angry": ["生气", "气死", "烦", "angry", "mad", "好生气", "生氣", "氣死", "好生氣"],
+        "anxious": [
+            "担心",
+            "紧张",
+            "害怕",
+            "worried",
+            "anxious",
+            "好担心",
+            "擔心",
+            "緊張",
+            "害怕",
+            "好擔心",
+        ],
     }
 
     _HORMONE_ADJUSTMENTS: Dict[str, Dict[str, float]] = {
@@ -504,9 +569,7 @@ class GARDENEngine:
                 resolve_relational_chain,
             )
 
-            return parse_and_resolve_relational_chain(
-                text, resolver=resolve_relational_chain
-            )
+            return parse_and_resolve_relational_chain(text, resolver=resolve_relational_chain)
         except Exception as e:
             logger.debug("GARDEN: chain reasoning failed for %r: %s", text, e)
             return None
@@ -558,9 +621,19 @@ class GARDENEngine:
         Returns a summary dict.
         """
         if not self._learning_enabled:
-            return {"interaction": self._learn_count, "new_concepts": [], "input_keys": [], "output_keys": [], "hebbian_delta": 0.0}
+            return {
+                "interaction": self._learn_count,
+                "new_concepts": [],
+                "input_keys": [],
+                "output_keys": [],
+                "hebbian_delta": 0.0,
+            }
 
-        confidence = confidence if confidence is not None else confidence_value("ai.garden.engine.learn_confidence", 0.7)
+        confidence = (
+            confidence
+            if confidence is not None
+            else confidence_value("ai.garden.engine.learn_confidence", 0.7)
+        )
         if not self._presets_loaded:
             self.load_presets()
 
@@ -571,11 +644,16 @@ class GARDENEngine:
         # Grow dictionary with novel concepts from user text
         all_tokens = []
         for text in [user_text, response_text]:
-            tokens = [t for t in text.lower().split() if len(t) >= limit_value("ai.garden.engine.min_token_length", 3)]
+            tokens = [
+                t
+                for t in text.lower().split()
+                if len(t) >= limit_value("ai.garden.engine.min_token_length", 3)
+            ]
             all_tokens.extend(tokens)
 
         # Clean punctuation from tokens
         import string
+
         cleaned_tokens = []
         for token in all_tokens:
             cleaned = token.strip(string.punctuation)
@@ -584,7 +662,9 @@ class GARDENEngine:
 
         # Batch grow - don't rebuild index until all tokens processed
         for token in cleaned_tokens:
-            existing = self.dictionary._find_similar_key(token, threshold=threshold_value("ai.garden.engine.dedup_similarity", 0.90))
+            existing = self.dictionary._find_similar_key(
+                token, threshold=threshold_value("ai.garden.engine.dedup_similarity", 0.90)
+            )
             if not existing and confidence >= self.dictionary.growth_threshold:
                 new_key = self.dictionary.grow(token, token, confidence=confidence)
                 if new_key:
@@ -596,14 +676,17 @@ class GARDENEngine:
             self.dictionary._rebuild_index()
 
         # Compute input/output keys
-        input_keys  = self.dictionary.encode(user_text)
+        input_keys = self.dictionary.encode(user_text)
         output_keys = self.dictionary.encode(response_text)
 
         # Hebbian update
         delta = 0.0
         if input_keys and output_keys:
             delta = self.snn.hebbian_update(
-                input_keys, output_keys, lr=learning_rate("ai.garden.engine.hebbian_lr", 0.05), target_strength=confidence_value("ai.garden.engine.hebbian_target_strength", 0.7)
+                input_keys,
+                output_keys,
+                lr=learning_rate("ai.garden.engine.hebbian_lr", 0.05),
+                target_strength=confidence_value("ai.garden.engine.hebbian_target_strength", 0.7),
             )
 
         return {
@@ -634,7 +717,11 @@ class GARDENEngine:
         if not self._learning_enabled or not samples:
             return {"interaction": self._learn_count, "new_concepts": 0, "samples_processed": 0}
 
-        confidence = confidence if confidence is not None else confidence_value("ai.garden.engine.learn_confidence", 0.7)
+        confidence = (
+            confidence
+            if confidence is not None
+            else confidence_value("ai.garden.engine.learn_confidence", 0.7)
+        )
         if not self._presets_loaded:
             self.load_presets()
 
@@ -643,11 +730,16 @@ class GARDENEngine:
 
         # Stage 1: Collect all tokens from all samples
         import string
+
         for s in samples:
             user_text = s.get("input", "")
             response_text = s.get("output", "")
             for text in [user_text, response_text]:
-                tokens = [t for t in text.lower().split() if len(t) >= limit_value("ai.garden.engine.min_token_length", 3)]
+                tokens = [
+                    t
+                    for t in text.lower().split()
+                    if len(t) >= limit_value("ai.garden.engine.min_token_length", 3)
+                ]
                 all_tokens.extend(tokens)
 
         # Clean punctuation from tokens
@@ -659,7 +751,9 @@ class GARDENEngine:
 
         # Stage 2: Batch grow - don't rebuild index until all tokens processed
         for token in cleaned_tokens:
-            existing = self.dictionary._find_similar_key(token, threshold=threshold_value("ai.garden.engine.dedup_similarity", 0.90))
+            existing = self.dictionary._find_similar_key(
+                token, threshold=threshold_value("ai.garden.engine.dedup_similarity", 0.90)
+            )
             if not existing and confidence >= self.dictionary.growth_threshold:
                 new_key = self.dictionary.grow(token, token, confidence=confidence)
                 if new_key:
@@ -682,7 +776,12 @@ class GARDENEngine:
                 output_keys = self.dictionary.encode(response_text)
                 if input_keys and output_keys:
                     delta = self.snn.hebbian_update(
-                        input_keys, output_keys, lr=learning_rate("ai.garden.engine.hebbian_lr", 0.05), target_strength=confidence_value("ai.garden.engine.hebbian_target_strength", 0.7)
+                        input_keys,
+                        output_keys,
+                        lr=learning_rate("ai.garden.engine.hebbian_lr", 0.05),
+                        target_strength=confidence_value(
+                            "ai.garden.engine.hebbian_target_strength", 0.7
+                        ),
                     )
                     hebbian_delta += delta
 
@@ -710,7 +809,7 @@ class GARDENEngine:
 
     def stats(self) -> Dict[str, Any]:
         dict_stats = self.dictionary.get_stats()
-        snn_stats  = self.snn.get_stats()
+        snn_stats = self.snn.get_stats()
         return {
             "tier": "GARDEN-1G (Lightweight Local)",
             "query_count": self._query_count,
@@ -748,7 +847,7 @@ class GARDENEngine:
     def load(self, directory: str) -> None:
         """Load full engine state from a previously saved directory."""
         dict_path = os.path.join(directory, "dictionary.json")
-        snn_path  = os.path.join(directory, "snn.pt")
+        snn_path = os.path.join(directory, "snn.pt")
         meta_path = os.path.join(directory, "engine_meta.json")
 
         if os.path.exists(dict_path):

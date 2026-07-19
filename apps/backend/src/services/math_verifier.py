@@ -32,10 +32,14 @@ class MathExtractor:
     """Extracts and parses mathematical expressions from text."""
 
     SAFE_OPS = {
-        ast.Add: operator.add, ast.Sub: operator.sub,
-        ast.Mult: operator.mul, ast.Div: operator.truediv,
-        ast.FloorDiv: operator.floordiv, ast.Mod: operator.mod,
-        ast.Pow: operator.pow, ast.USub: operator.neg,
+        ast.Add: operator.add,
+        ast.Sub: operator.sub,
+        ast.Mult: operator.mul,
+        ast.Div: operator.truediv,
+        ast.FloorDiv: operator.floordiv,
+        ast.Mod: operator.mod,
+        ast.Pow: operator.pow,
+        ast.USub: operator.neg,
         ast.UAdd: operator.pos,
     }
 
@@ -45,21 +49,21 @@ class MathExtractor:
     def extract(self, text: str) -> Optional[Tuple[str, float]]:
         """Extract and evaluate a math expression from text."""
         patterns = [
-            r'(?:計算|=?\s*)([\d\s\+\-\*\/\%\(\)\.]+?)\s*(?:\=|[\?。！？]|$)',
-            r'(\d+\s*[\+\-\*\/\%]\s*\d+(?:\s*[\+\-\*\/]\s*\d+)*)',
+            r"(?:計算|=?\s*)([\d\s\+\-\*\/\%\(\)\.]+?)\s*(?:\=|[\?。！？]|$)",
+            r"(\d+\s*[\+\-\*\/\%]\s*\d+(?:\s*[\+\-\*\/]\s*\d+)*)",
         ]
         for p in patterns:
             m = re.search(p, text)
             if m:
                 expr = m.group(1).strip()
-                if len(expr) >= 2 and any(op in expr for op in '+-*/%'):
+                if len(expr) >= 2 and any(op in expr for op in "+-*/%"):
                     return expr, self._safe_eval(expr)
         return None
 
     def _safe_eval(self, expr: str) -> Optional[float]:
         """Safely evaluate a math expression using AST."""
         try:
-            tree = ast.parse(expr.strip(), mode='eval')
+            tree = ast.parse(expr.strip(), mode="eval")
             if not isinstance(tree.body, (ast.BinOp, ast.UnaryOp, ast.Constant)):
                 return None
             result = self._eval_node(tree.body)
@@ -115,9 +119,9 @@ class MathVerifier:
 
     def is_math_message(self, text: str) -> bool:
         math_patterns = [
-            r'\d+\s*[\+\-\*\/\%]\s*\d+',
-            r'(?:計算|求解|解方程|sum|calculate|compute)',
-            r'[\=\?]\s*\d+',
+            r"\d+\s*[\+\-\*\/\%]\s*\d+",
+            r"(?:計算|求解|解方程|sum|calculate|compute)",
+            r"[\=\?]\s*\d+",
         ]
         return any(re.search(p, text) for p in math_patterns)
 
@@ -126,11 +130,16 @@ class MathVerifier:
         extracted = self._extractor.extract(message)
         if extracted is None:
             # Check for simple numbers (e.g., "what is 5+3?")
-            num_pattern = r'(\d+)\s*([\+\-\*\/])\s*(\d+)'
+            num_pattern = r"(\d+)\s*([\+\-\*\/])\s*(\d+)"
             m = re.search(num_pattern, message)
             if m:
                 a, op, b = int(m.group(1)), m.group(2), int(m.group(3))
-                ops_map = {'+': operator.add, '-': operator.sub, '*': operator.mul, '/': operator.truediv}
+                ops_map = {
+                    "+": operator.add,
+                    "-": operator.sub,
+                    "*": operator.mul,
+                    "/": operator.truediv,
+                }
                 if op in ops_map:
                     try:
                         result = ops_map[op](a, b)
@@ -186,20 +195,56 @@ class MathVerifyResult:
 # ---------------------------------------------------------------------------
 
 _ZH_NUM = {
-    "零": 0, "一": 1, "二": 2, "三": 3, "四": 4,
-    "五": 5, "六": 6, "七": 7, "八": 8, "九": 9,
-    "十": 10, "百": 100, "千": 1000, "万": 10000,
-    "两": 2, "〇": 0, "壹": 1, "贰": 2, "叁": 3,
-    "肆": 4, "伍": 5, "陆": 6, "柒": 7, "捌": 8, "玖": 9,
+    "零": 0,
+    "一": 1,
+    "二": 2,
+    "三": 3,
+    "四": 4,
+    "五": 5,
+    "六": 6,
+    "七": 7,
+    "八": 8,
+    "九": 9,
+    "十": 10,
+    "百": 100,
+    "千": 1000,
+    "万": 10000,
+    "两": 2,
+    "〇": 0,
+    "壹": 1,
+    "贰": 2,
+    "叁": 3,
+    "肆": 4,
+    "伍": 5,
+    "陆": 6,
+    "柒": 7,
+    "捌": 8,
+    "玖": 9,
 }
 
 _ZH_OPS = {
-    "加": "+", "加上": "+", "减": "-", "减去": "-",
-    "乘": "*", "乘以": "*", "乘上": "*", "times": "*",
-    "除": "/", "除以": "/", "divided": "/",
-    "的和": "+", "的差": "-", "的积": "*", "的商": "/",
-    "等于": "=", "等於": "=", "是多少": "=", "等于几": "=", "结果": "=",
-    "plus": "+", "minus": "-",
+    "加": "+",
+    "加上": "+",
+    "减": "-",
+    "减去": "-",
+    "乘": "*",
+    "乘以": "*",
+    "乘上": "*",
+    "times": "*",
+    "除": "/",
+    "除以": "/",
+    "divided": "/",
+    "的和": "+",
+    "的差": "-",
+    "的积": "*",
+    "的商": "/",
+    "等于": "=",
+    "等於": "=",
+    "是多少": "=",
+    "等于几": "=",
+    "结果": "=",
+    "plus": "+",
+    "minus": "-",
 }
 
 _ZH_NUM_RE = re.compile(r"[零一二两三四五六七八九十百千万〇壹贰叁肆伍陆柒捌玖]+")

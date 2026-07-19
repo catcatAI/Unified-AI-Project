@@ -84,7 +84,13 @@ class BodyPart(Enum):
     CALVES = ("小腿", BodyRegion.LOWER_LIMBS, 0.5, (2.0, 1.0, 0.0))
     FEET = ("脚底", BodyRegion.LOWER_LIMBS, 0.8, (2.0, 0.0, 0.0))
 
-    def __init__(self, cn_name: str, region: BodyRegion, base_sensitivity: float, coordinate: Tuple[float, float, float]):
+    def __init__(
+        self,
+        cn_name: str,
+        region: BodyRegion,
+        base_sensitivity: float,
+        coordinate: Tuple[float, float, float],
+    ):
         self.cn_name = cn_name
         self.region = region
         self.base_sensitivity = base_sensitivity

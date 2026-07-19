@@ -44,27 +44,35 @@ class ChainOfThoughtReasoner:
 
         # Step 1: Identify key facts
         facts = self._extract_facts(problem, context)
-        steps.append({
-            "step": 1,
-            "reasoning": f"Identified {len(facts)} key facts",
-            "conclusion": "; ".join(facts[:5]) if facts else "No specific facts identified",
-        })
+        steps.append(
+            {
+                "step": 1,
+                "reasoning": f"Identified {len(facts)} key facts",
+                "conclusion": "; ".join(facts[:5]) if facts else "No specific facts identified",
+            }
+        )
 
         # Step 2: Identify relationships
         relationships = self._identify_relationships(facts)
-        steps.append({
-            "step": 2,
-            "reasoning": f"Found {len(relationships)} relationships between facts",
-            "conclusion": "; ".join(relationships[:3]) if relationships else "No clear relationships",
-        })
+        steps.append(
+            {
+                "step": 2,
+                "reasoning": f"Found {len(relationships)} relationships between facts",
+                "conclusion": (
+                    "; ".join(relationships[:3]) if relationships else "No clear relationships"
+                ),
+            }
+        )
 
         # Step 3: Apply logical inference
         inferences = self._apply_inference(facts, relationships)
-        steps.append({
-            "step": 3,
-            "reasoning": f"Applied logical inference, generated {len(inferences)} inferences",
-            "conclusion": "; ".join(inferences[:3]) if inferences else "No clear inferences",
-        })
+        steps.append(
+            {
+                "step": 3,
+                "reasoning": f"Applied logical inference, generated {len(inferences)} inferences",
+                "conclusion": "; ".join(inferences[:3]) if inferences else "No clear inferences",
+            }
+        )
 
         # Step 4: Draw conclusion
         conclusion = self._draw_conclusion(steps)
@@ -86,6 +94,7 @@ class ChainOfThoughtReasoner:
 
         # Split into sentences
         import re
+
         sentences = re.split(r"[.。!！?？;；]", problem)
         for s in sentences:
             s = s.strip()
@@ -192,11 +201,13 @@ class AnalogicalReasoner:
         for sc in source_concepts:
             for tc in target_concepts:
                 if self._concepts_match(sc, tc):
-                    similarities.append({
-                        "aspect": sc["type"],
-                        "source": sc["text"],
-                        "target": tc["text"],
-                    })
+                    similarities.append(
+                        {
+                            "aspect": sc["type"],
+                            "source": sc["text"],
+                            "target": tc["text"],
+                        }
+                    )
 
         strength = len(similarities) / max(len(source_concepts), 1)
 
@@ -210,6 +221,7 @@ class AnalogicalReasoner:
     def _extract_concepts(self, text: str) -> List[Dict[str, str]]:
         """Extract key concepts from text."""
         import re
+
         concepts: List[Dict[str, str]] = []
 
         # Simple concept extraction
@@ -254,35 +266,45 @@ class AbductiveReasoner:
         lower = observation.lower()
 
         if any_keyword(lower, ("錯誤", "error", "失敗", "fail")):
-            hypotheses.append({
-                "explanation": "System configuration issue",
-                "plausibility": 0.6,
-                "evidence": ["Error occurred", "May be environmental"],
-            })
-            hypotheses.append({
-                "explanation": "User input was ambiguous",
-                "plausibility": 0.4,
-                "evidence": ["Input processing failed"],
-            })
+            hypotheses.append(
+                {
+                    "explanation": "System configuration issue",
+                    "plausibility": 0.6,
+                    "evidence": ["Error occurred", "May be environmental"],
+                }
+            )
+            hypotheses.append(
+                {
+                    "explanation": "User input was ambiguous",
+                    "plausibility": 0.4,
+                    "evidence": ["Input processing failed"],
+                }
+            )
 
         if any_keyword(lower, ("慢", "slow", "延遲", "delay")):
-            hypotheses.append({
-                "explanation": "High system load",
-                "plausibility": 0.5,
-                "evidence": ["Performance degradation"],
-            })
-            hypotheses.append({
-                "explanation": "Network latency",
-                "plausibility": 0.3,
-                "evidence": ["Response delay"],
-            })
+            hypotheses.append(
+                {
+                    "explanation": "High system load",
+                    "plausibility": 0.5,
+                    "evidence": ["Performance degradation"],
+                }
+            )
+            hypotheses.append(
+                {
+                    "explanation": "Network latency",
+                    "plausibility": 0.3,
+                    "evidence": ["Response delay"],
+                }
+            )
 
         if not hypotheses:
-            hypotheses.append({
-                "explanation": "Insufficient information to determine cause",
-                "plausibility": 0.2,
-                "evidence": ["No clear indicators"],
-            })
+            hypotheses.append(
+                {
+                    "explanation": "Insufficient information to determine cause",
+                    "plausibility": 0.2,
+                    "evidence": ["No clear indicators"],
+                }
+            )
 
         # Sort by plausibility
         hypotheses.sort(key=lambda h: h["plausibility"], reverse=True)

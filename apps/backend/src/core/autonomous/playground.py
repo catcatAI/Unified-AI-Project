@@ -12,7 +12,6 @@ Standalone development script (not imported by production code).
 Author: Angela AI v7.5.0-dev
 """
 
-
 from core.engine.state_matrix_adapter import StateMatrixAdapter
 from core.ripple.node import MathOp
 
@@ -48,9 +47,11 @@ def _demo_state_matrix(sm: StateMatrixAdapter) -> None:
     sm.update_epsilon(logic=0.7, precision=0.6, certainty=0.65)
     sm.update_theta(novelty=0.5, complexity=0.4, creation_urge=0.1)
     averages = sm._sm.get_dimension_averages()
-    print(f"  Axis averages: α={averages['alpha']:.3f}, β={averages['beta']:.3f}, "
-          f"γ={averages['gamma']:.3f}, δ={averages['delta']:.3f}, "
-          f"ε={averages['epsilon']:.3f}, θ={averages['theta']:.3f}")
+    print(
+        f"  Axis averages: α={averages['alpha']:.3f}, β={averages['beta']:.3f}, "
+        f"γ={averages['gamma']:.3f}, δ={averages['delta']:.3f}, "
+        f"ε={averages['epsilon']:.3f}, θ={averages['theta']:.3f}"
+    )
     analysis = sm._sm.get_analysis()
     print(f"  Overall: {analysis['overall']:.3f}, Wellbeing: {analysis['wellbeing']:.3f}")
     print(f"  Arousal: {analysis['arousal']:.3f}, Valence: {analysis['valence']:.3f}")
@@ -118,7 +119,9 @@ def _demo_ripple_cascade(sm: StateMatrixAdapter) -> None:
     nodes = sm.apply_ripple(MathOp.MUL, 1.1, cascade_targets=["alpha", "beta", "gamma"])
     print(f"  Cascade: {len(nodes)} nodes produced")
     summary = sm.ripple_summary()
-    print(f"  Accumulator: {summary['count']} ripples, last_epsilon={summary.get('last_epsilon', 'N/A')}")
+    print(
+        f"  Accumulator: {summary['count']} ripples, last_epsilon={summary.get('last_epsilon', 'N/A')}"
+    )
 
 
 def _demo_attractor_field_navigation(sm: StateMatrixAdapter) -> None:
@@ -132,16 +135,23 @@ def _demo_attractor_field_navigation(sm: StateMatrixAdapter) -> None:
     print(f"  Blended tone: {g['blended_tone']}")
     n = sm.navigate_to_attractor(max_steps=3)
     print(f"  Navigate: {n['navigation_steps']} steps, new_state={n['new_state'][:3]}...")
-    print(f"  Triggered attractor: {n['nearest_attractors'][0]['description'] if n['nearest_attractors'] else 'none'}")
+    print(
+        f"  Triggered attractor: {n['nearest_attractors'][0]['description'] if n['nearest_attractors'] else 'none'}"
+    )
 
 
 def _demo_axis_port_routing(sm: StateMatrixAdapter) -> None:
     """Demonstrate axis port routing."""
     banner("8. Axis Port Routing")
-    sm.register_port(name="demo_llm", direction="io", semantic_vector=make_vector(0.9, nonzero=10),
-                     tags=["llm", "demo"])
-    sm.register_port(name="demo_cli", direction="out", semantic_vector=make_vector(0.5, nonzero=5),
-                     tags=["cli"])
+    sm.register_port(
+        name="demo_llm",
+        direction="io",
+        semantic_vector=make_vector(0.9, nonzero=10),
+        tags=["llm", "demo"],
+    )
+    sm.register_port(
+        name="demo_cli", direction="out", semantic_vector=make_vector(0.5, nonzero=5), tags=["cli"]
+    )
     ports = sm.list_ports()
     print(f"  Registered ports: {len(ports)}")
     for p in ports:
@@ -166,13 +176,15 @@ def _demo_state_persistence(sm: StateMatrixAdapter) -> None:
 def _demo_code_inspector_integration(sm: StateMatrixAdapter) -> None:
     """Demonstrate code inspector integration."""
     banner("10. Code Inspector Integration")
-    result = sm.integrate_code_inspect({
-        "report": None,
-        "total_issues": 5,
-        "critical": 1,
-        "high": 2,
-        "medium": 2,
-    })
+    result = sm.integrate_code_inspect(
+        {
+            "report": None,
+            "total_issues": 5,
+            "critical": 1,
+            "high": 2,
+            "medium": 2,
+        }
+    )
     print(f"  Integrate result: {result.get('status', 'unknown')}")
     ci_report = sm.code_inspect_report()
     for k, v in ci_report.items():
@@ -202,7 +214,14 @@ def _demo_full_report(sm: StateMatrixAdapter) -> None:
     banner("12. Full Report")
     report = sm.full_report()
     print(f"  Sections: {list(report.keys())}")
-    for section_name in ["state_matrix", "temporal", "influence", "allocation", "negativity", "port_routing"]:
+    for section_name in [
+        "state_matrix",
+        "temporal",
+        "influence",
+        "allocation",
+        "negativity",
+        "port_routing",
+    ]:
         if section_name in report:
             data = report[section_name]
             if isinstance(data, dict):
@@ -214,10 +233,11 @@ def _demo_fastapi_endpoints() -> None:
     """Demonstrate FastAPI endpoints preview."""
     banner("13. FastAPI Endpoints Preview")
     from services.api.state_matrix_api import state_matrix_router
+
     routes = state_matrix_router.routes
     print(f"  Total endpoints: {len(routes)}")
     for r in routes:
-        methods = list(r.methods) if hasattr(r.methods, '__iter__') else [str(r.methods)]
+        methods = list(r.methods) if hasattr(r.methods, "__iter__") else [str(r.methods)]
         print(f"  {methods[0]:4} {r.path}")
 
 
@@ -253,7 +273,7 @@ def main() -> None:
     print("\n下一步：")
     print("  1. 啟動服務: python -m uvicorn src.services.main_api_server:app --port 8000")
     print("  2. 查看 API:  GET /api/v1/state/summary")
-    print("  3. 測試路由: POST /api/v1/state/navigate  {\"max_steps\": 3}")
+    print('  3. 測試路由: POST /api/v1/state/navigate  {"max_steps": 3}')
     print("  4. 學習系統: 多次 allocation_decide() 後 AnchorLearningEngine 會自優化")
 
 

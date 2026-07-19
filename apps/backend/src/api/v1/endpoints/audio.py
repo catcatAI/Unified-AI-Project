@@ -7,7 +7,6 @@ import logging
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Body, Depends, HTTPException
-
 from services.audio_service import AudioService
 
 logger = logging.getLogger(__name__)

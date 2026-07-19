@@ -43,18 +43,19 @@ logger = logging.getLogger(__name__)
 # Cross-platform compatible: works on Win/Linux/macOS, CPU/GPU.
 # ---------------------------------------------------------------------------
 
-_xp: Any = None          # array module reference (torch or numpy)
+_xp: Any = None  # array module reference (torch or numpy)
 _is_torch: bool = False  # True if using torch
 
 
 def _check_torch_subprocess() -> bool:
     """Check if torch can be imported by spawning a subprocess with a strict timeout.
-    
+
     On Windows/Python 3.14, torch import hangs indefinitely in-process,
     so we probe in a short-lived subprocess that can be killed cleanly.
     """
     import subprocess
     import sys
+
     try:
         result = subprocess.run(
             [sys.executable, "-c", "import torch; print('ok')"],
@@ -73,6 +74,7 @@ def _get_backend():
         if _check_torch_subprocess():
             try:
                 import torch
+
                 _xp = torch
                 _is_torch = True
                 logger.debug("SNN using torch backend")
@@ -89,6 +91,7 @@ def _get_backend():
 
 # -- Backend helper functions (abstract torch/numpy API differences) ----------
 
+
 def _zeros(shape):
     xp, is_torch = _get_backend()
     if is_torch:
@@ -98,7 +101,7 @@ def _zeros(shape):
 
 def _float(arr):
     """Convert boolean/integer array to float32."""
-    if hasattr(arr, 'float'):
+    if hasattr(arr, "float"):
         return arr.float()
     return arr.astype(np.float32)
 
@@ -116,7 +119,7 @@ def _nonzero_indices(arr):
 
 
 def _numel(arr):
-    if hasattr(arr, 'numel'):
+    if hasattr(arr, "numel"):
         return arr.numel()
     return arr.size
 
@@ -156,19 +159,21 @@ def _load_checkpoint(path: str) -> dict:
     meta["W"] = W
     return meta
 
+
 # ---------------------------------------------------------------------------
 # LIF parameters (defaults)
 # ---------------------------------------------------------------------------
 
-DEFAULT_LEAK       = 0.2    # membrane potential leakage per timestep
-DEFAULT_THRESHOLD  = 0.35   # spike threshold
-DEFAULT_TIMESTEPS  = 6      # number of LIF integration steps
-DEFAULT_DECAY      = 0.6    # propagation decay per hop
+DEFAULT_LEAK = 0.2  # membrane potential leakage per timestep
+DEFAULT_THRESHOLD = 0.35  # spike threshold
+DEFAULT_TIMESTEPS = 6  # number of LIF integration steps
+DEFAULT_DECAY = 0.6  # propagation decay per hop
 
 
 # ---------------------------------------------------------------------------
 # Hormonal modulator (adjusts threshold)
 # ---------------------------------------------------------------------------
+
 
 class HormonalModulator:
     """
@@ -179,11 +184,11 @@ class HormonalModulator:
 
     def __init__(self):
         self.hormones: Dict[str, float] = {
-            "cortisol":     0.5,
-            "serotonin":    0.5,
-            "dopamine":     0.5,
-            "adrenaline":   0.3,
-            "oxytocin":     0.5,
+            "cortisol": 0.5,
+            "serotonin": 0.5,
+            "dopamine": 0.5,
+            "adrenaline": 0.3,
+            "oxytocin": 0.5,
             "noradrenaline": 0.3,
         }
 
@@ -191,8 +196,8 @@ class HormonalModulator:
         self.hormones[name] = max(0.0, min(1.0, value))
 
     def get_threshold_multiplier(self) -> float:
-        cortisol   = self.hormones.get("cortisol", 0.5)
-        serotonin  = self.hormones.get("serotonin", 0.5)
+        cortisol = self.hormones.get("cortisol", 0.5)
+        serotonin = self.hormones.get("serotonin", 0.5)
         adrenaline = self.hormones.get("adrenaline", 0.3)
         # Stress hormones lower threshold (more reactive)
         stress = cortisol * 0.4 + adrenaline * 0.2
@@ -207,6 +212,7 @@ class HormonalModulator:
 # ---------------------------------------------------------------------------
 # TensorSNNCore
 # ---------------------------------------------------------------------------
+
 
 class TensorSNNCore:
     """
@@ -250,7 +256,7 @@ class TensorSNNCore:
         self._idx_to_key: List[str] = []
 
         # Weight matrix (grows dynamically as new keys are registered)
-        self._W: Optional[Any] = None   # [V, V] float32 (torch.Tensor or np.ndarray)
+        self._W: Optional[Any] = None  # [V, V] float32 (torch.Tensor or np.ndarray)
 
         # LRU bookkeeping for eviction under the memory budget.
         self._last_used: Dict[int, int] = {}
@@ -456,7 +462,7 @@ class TensorSNNCore:
         thr_mult = self.modulator.get_threshold_multiplier()
         threshold = max(0.05, self.base_threshold * thr_mult)
 
-        potential  = _zeros(V)
+        potential = _zeros(V)
         cumulative = _zeros(V)
         total_active = 0
 
@@ -475,7 +481,7 @@ class TensorSNNCore:
             # Spike
             spikes = _float(potential >= threshold)
             # Decay for next step
-            a = spikes * (self.decay ** t)
+            a = spikes * (self.decay**t)
             # Accumulate
             cumulative += spikes
             total_active += len(active_idx)
@@ -549,14 +555,14 @@ class TensorSNNCore:
     def load(self, path: str) -> None:
         """Load weight matrix and key registry from a checkpoint."""
         state = _load_checkpoint(path)
-        self._W                    = state["W"]
-        self._key_to_idx           = state["key_to_idx"]
-        self._idx_to_key           = state["idx_to_key"]
-        self.leak                  = float(state.get("leak", DEFAULT_LEAK))
-        self.base_threshold        = float(state.get("base_threshold", DEFAULT_THRESHOLD))
-        self.timesteps             = int(state.get("timesteps", DEFAULT_TIMESTEPS))
-        self.decay                 = float(state.get("decay", DEFAULT_DECAY))
-        self.total_steps           = int(state.get("total_steps", 0))
+        self._W = state["W"]
+        self._key_to_idx = state["key_to_idx"]
+        self._idx_to_key = state["idx_to_key"]
+        self.leak = float(state.get("leak", DEFAULT_LEAK))
+        self.base_threshold = float(state.get("base_threshold", DEFAULT_THRESHOLD))
+        self.timesteps = int(state.get("timesteps", DEFAULT_TIMESTEPS))
+        self.decay = float(state.get("decay", DEFAULT_DECAY))
+        self.total_steps = int(state.get("total_steps", 0))
         self.total_hebbian_updates = int(state.get("total_hebbian_updates", 0))
         logger.info("GARDEN SNN: loaded checkpoint from %s (V=%d)", path, self.vocab_size)
 
@@ -569,7 +575,11 @@ class TensorSNNCore:
         if self._W is not None and _numel(self._W) > 0:
             density = float(_float(self._W[: self.vocab_size, : self.vocab_size] > 0).mean())
         total_possible = self.vocab_size * self.timesteps * max(1, self.total_steps)
-        sparsity_ratio = round(1.0 - (self._total_active / max(1, total_possible)), 4) if total_possible > 0 else 0.0
+        sparsity_ratio = (
+            round(1.0 - (self._total_active / max(1, total_possible)), 4)
+            if total_possible > 0
+            else 0.0
+        )
         # Report the *live* matrix region (vocab_size x vocab_size). The internal
         # _W may be over-allocated for amortized growth, but only the live region
         # participates in forward()/training, so that is the meaningful footprint.

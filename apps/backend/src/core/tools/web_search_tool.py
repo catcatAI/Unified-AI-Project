@@ -62,8 +62,12 @@ class WebSearchTool:
         try:
             data = urllib.parse.urlencode({"q": query, "kl": ""}).encode()
             req = urllib.request.Request(
-                self.ddg_url, data=data,
-                headers={"User-Agent": self.user_agent, "Content-Type": "application/x-www-form-urlencoded"},
+                self.ddg_url,
+                data=data,
+                headers={
+                    "User-Agent": self.user_agent,
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
             )
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:
                 html = resp.read().decode("utf-8", errors="replace")
@@ -85,10 +89,15 @@ class WebSearchTool:
 
     def _wiki_search(self, query: str, num_results: int = 5) -> List[Dict[str, Any]]:
         try:
-            params = urllib.parse.urlencode({
-                "action": "query", "list": "search", "srsearch": query,
-                "srlimit": num_results, "format": "json",
-            })
+            params = urllib.parse.urlencode(
+                {
+                    "action": "query",
+                    "list": "search",
+                    "srsearch": query,
+                    "srlimit": num_results,
+                    "format": "json",
+                }
+            )
             url = f"{self.wiki_api}?{params}"
             req = urllib.request.Request(url, headers={"User-Agent": self.user_agent})
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:
@@ -97,11 +106,13 @@ class WebSearchTool:
             for item in data.get("query", {}).get("search", []):
                 title = item.get("title", "")
                 snippet = re.sub(r"<[^>]+>", "", item.get("snippet", ""))
-                results.append({
-                    "title": title,
-                    "url": f"https://en.wikipedia.org/wiki/{urllib.parse.quote(title)}",
-                    "snippet": snippet,
-                })
+                results.append(
+                    {
+                        "title": title,
+                        "url": f"https://en.wikipedia.org/wiki/{urllib.parse.quote(title)}",
+                        "snippet": snippet,
+                    }
+                )
             return results
         except Exception as e:
             logger.debug(f"Wikipedia search failed: {e}")

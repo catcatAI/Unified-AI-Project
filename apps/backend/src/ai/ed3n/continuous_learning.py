@@ -70,9 +70,7 @@ class ContinuousLearningPipeline:
             "last_growth_time": None,
         }
 
-    def process_interaction(
-        self, user_text: str, response_text: str, context: Dict
-    ) -> Dict:
+    def process_interaction(self, user_text: str, response_text: str, context: Dict) -> Dict:
         with self._lock:
             return self._process_interaction_locked(user_text, response_text, context)
 
@@ -122,9 +120,7 @@ class ContinuousLearningPipeline:
     async def process_interaction_async(
         self, user_text: str, response_text: str, context: Dict
     ) -> Dict:
-        return await asyncio.to_thread(
-            self.process_interaction, user_text, response_text, context
-        )
+        return await asyncio.to_thread(self.process_interaction, user_text, response_text, context)
 
     def _detect_and_grow(self, text: str, context: Dict) -> List[str]:
         if self.engine is None or self.engine.dictionary is None:
@@ -156,9 +152,7 @@ class ContinuousLearningPipeline:
 
         return new_keys
 
-    def _queue_training_example(
-        self, user_text: str, response_text: str, context: Dict
-    ) -> None:
+    def _queue_training_example(self, user_text: str, response_text: str, context: Dict) -> None:
         example = TrainingExample(
             user_text=user_text,
             response_text=response_text,
@@ -252,9 +246,7 @@ class ContinuousLearningPipeline:
             timestamp=datetime.now().isoformat(),
         )
 
-    def train_from_replay(
-        self, replay_buffer: Any, batch_size: int = 32
-    ) -> Optional[TrainMetrics]:
+    def train_from_replay(self, replay_buffer: Any, batch_size: int = 32) -> Optional[TrainMetrics]:
         if self.trainer is None:
             logger.warning("No trainer available; skipping replay training.")
             return None
@@ -306,33 +298,39 @@ class ContinuousLearningPipeline:
         with self._lock:
             import json
             import os
+
             os.makedirs(save_dir, exist_ok=True)
             state = {
                 "interaction_count": self._interaction_count,
                 "stats": self._stats,
                 "history": self._history[-100:],
                 "buffer": [
-                {
-                    "user_text": ex.user_text,
-                    "response_text": ex.response_text,
-                    "context": ex.context,
-                    "timestamp": ex.timestamp,
-                }
-                for ex in self._training_buffer
-            ],
-            "saved_at": datetime.now().isoformat(),
-        }
+                    {
+                        "user_text": ex.user_text,
+                        "response_text": ex.response_text,
+                        "context": ex.context,
+                        "timestamp": ex.timestamp,
+                    }
+                    for ex in self._training_buffer
+                ],
+                "saved_at": datetime.now().isoformat(),
+            }
         path = os.path.join(save_dir, "cl_state.json")
         with open(path, "w", encoding="utf-8") as f:
             json.dump(state, f, ensure_ascii=False, indent=2)
-        logger.info("CL state saved to %s (%d interactions, %d buffered)",
-                    path, self._interaction_count, len(self._training_buffer))
+        logger.info(
+            "CL state saved to %s (%d interactions, %d buffered)",
+            path,
+            self._interaction_count,
+            len(self._training_buffer),
+        )
         return path
 
     @classmethod
     def load(cls, save_dir: str, engine=None, trainer=None) -> "ContinuousLearningPipeline":
         import json
         import os
+
         path = os.path.join(save_dir, "cl_state.json")
         with open(path, "r", encoding="utf-8") as f:
             state = json.load(f)
@@ -351,8 +349,12 @@ class ContinuousLearningPipeline:
             )
             pipeline._training_buffer.append(example)
 
-        logger.info("CL state loaded from %s (%d interactions, %d buffered)",
-                    path, pipeline._interaction_count, len(pipeline._training_buffer))
+        logger.info(
+            "CL state loaded from %s (%d interactions, %d buffered)",
+            path,
+            pipeline._interaction_count,
+            len(pipeline._training_buffer),
+        )
         return pipeline
 
     def get_stats(self) -> Dict:

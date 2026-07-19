@@ -17,6 +17,7 @@ class PrimitiveEncoder:
     def __init__(self, embedding_dim: int = 128):
         self._embedding_dim = embedding_dim
         from .primitive_types import TOTAL_DIM
+
         self._param_dim = TOTAL_DIM  # 263
 
         rng = np.random.default_rng(42)
@@ -25,15 +26,19 @@ class PrimitiveEncoder:
         scale_enc = np.sqrt(2.0 / self._param_dim)
         scale_dec = np.sqrt(2.0 / embedding_dim)
 
-        self._W_encode = rng.normal(0, scale_enc, (embedding_dim, self._param_dim)).astype(np.float32)
+        self._W_encode = rng.normal(0, scale_enc, (embedding_dim, self._param_dim)).astype(
+            np.float32
+        )
         self._b_encode = np.zeros(embedding_dim, dtype=np.float32)
 
-        self._W_decode = rng.normal(0, scale_dec, (self._param_dim, embedding_dim)).astype(np.float32)
+        self._W_decode = rng.normal(0, scale_dec, (self._param_dim, embedding_dim)).astype(
+            np.float32
+        )
         self._b_decode = np.zeros(self._param_dim, dtype=np.float32)
 
         # Training state
         self._trained = False
-        self._best_loss = float('inf')
+        self._best_loss = float("inf")
 
     def encode(self, instructions: DrawingInstructions) -> np.ndarray:
         """Encode drawing instructions to embedding vector.
@@ -54,8 +59,7 @@ class PrimitiveEncoder:
 
         return embedding.astype(np.float32)
 
-    def decode(self, embedding: np.ndarray,
-               canvas_size: tuple = (128, 128)) -> DrawingInstructions:
+    def decode(self, embedding: np.ndarray, canvas_size: tuple = (128, 128)) -> DrawingInstructions:
         """Decode embedding back to drawing instructions.
 
         Args:
@@ -74,8 +78,7 @@ class PrimitiveEncoder:
         # Convert to DrawingInstructions
         return DrawingInstructions.from_vector(param_vec, canvas_size)
 
-    def train_step(self, instructions: DrawingInstructions,
-                   lr: float = 0.001) -> float:
+    def train_step(self, instructions: DrawingInstructions, lr: float = 0.001) -> float:
         """Single training step to improve encode/decode fidelity.
 
         Uses reconstruction loss with gradient clipping.
@@ -99,7 +102,7 @@ class PrimitiveEncoder:
         loss = np.mean((param_vec - reconstructed) ** 2)
 
         if not np.isfinite(loss):
-            return float('inf')
+            return float("inf")
 
         # Backward pass with gradient clipping
         error = reconstructed - param_vec
@@ -110,7 +113,7 @@ class PrimitiveEncoder:
         grad_b_decode = error
 
         # Gradient clipping by norm
-        grad_norm = np.sqrt(np.sum(grad_W_decode ** 2) + np.sum(grad_b_decode ** 2))
+        grad_norm = np.sqrt(np.sum(grad_W_decode**2) + np.sum(grad_b_decode**2))
         if grad_norm > 5.0:
             scale = 5.0 / grad_norm
             grad_W_decode *= scale
@@ -125,7 +128,7 @@ class PrimitiveEncoder:
         grad_W_encode = np.outer(grad_embedding, param_vec)
         grad_b_encode = grad_embedding
 
-        grad_norm2 = np.sqrt(np.sum(grad_W_encode ** 2) + np.sum(grad_b_encode ** 2))
+        grad_norm2 = np.sqrt(np.sum(grad_W_encode**2) + np.sum(grad_b_encode**2))
         if grad_norm2 > 5.0:
             scale = 5.0 / grad_norm2
             grad_W_encode *= scale
@@ -137,8 +140,7 @@ class PrimitiveEncoder:
         self._trained = True
         return float(loss)
 
-    def train(self, instructions_list: list, epochs: int = 100,
-              lr: float = 0.001) -> dict:
+    def train(self, instructions_list: list, epochs: int = 100, lr: float = 0.001) -> dict:
         """Train encoder on a list of drawing instructions.
 
         Uses autoencoder reconstruction loss with early stopping.
@@ -165,7 +167,7 @@ class PrimitiveEncoder:
         best_b_enc = self._b_encode.copy()
         best_W_dec = self._W_decode.copy()
         best_b_dec = self._b_decode.copy()
-        best_loss = float('inf')
+        best_loss = float("inf")
         patience = max(10, epochs // 5)
         no_improve = 0
 
@@ -225,14 +227,16 @@ class PrimitiveEncoder:
             "b_decode": self._b_decode.tolist(),
         }
         import json
-        with open(path, 'w') as f:
+
+        with open(path, "w") as f:
             json.dump(data, f)
 
     @classmethod
-    def load(cls, path: str) -> 'PrimitiveEncoder':
+    def load(cls, path: str) -> "PrimitiveEncoder":
         """Load encoder weights from file."""
         import json
-        with open(path, 'r') as f:
+
+        with open(path, "r") as f:
             data = json.load(f)
 
         encoder = cls(embedding_dim=data["embedding_dim"])

@@ -13,13 +13,13 @@
 - 防止代碼注入攻擊
 """
 
-
 from __future__ import annotations
-from core.utils import safe_error
 
 import ast
 import operator
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
+
+from core.utils import safe_error
 
 SAFE_OPERATORS: Dict[type, Any] = {
     ast.Add: operator.add,
@@ -81,14 +81,20 @@ SAFE_NAMES: Dict[str, Any] = {
 
 class UnsafeExpressionError(ValueError):
     """表達式包含不允許的操作 / Expression contains unsafe operations"""
+
     pass
 
 
 class _SafeEvalChecker(ast.NodeVisitor):
     """AST node checker using NodeVisitor pattern for safe expression validation."""
 
-    def __init__(self, safe_ops: Dict[type, Any], safe_nms: Dict[str, Any],
-                 context: Optional[Dict[str, Any]], max_nodes: int):
+    def __init__(
+        self,
+        safe_ops: Dict[type, Any],
+        safe_nms: Dict[str, Any],
+        context: Optional[Dict[str, Any]],
+        max_nodes: int,
+    ):
         self.safe_ops = safe_ops
         self.safe_nms = safe_nms
         self.context = context
@@ -243,7 +249,11 @@ def safe_eval(
         (True, 7)
     """
     if not isinstance(expression, str):
-        return EvalResult(success=False, error=f"表達式必須是字串，得到 {type(expression).__name__}", expression=str(expression))
+        return EvalResult(
+            success=False,
+            error=f"表達式必須是字串，得到 {type(expression).__name__}",
+            expression=str(expression),
+        )
 
     safe_ops = SAFE_OPERATORS if _safe_operators is None else _safe_operators
     safe_nms = SAFE_NAMES if _safe_names is None else _safe_names
@@ -277,6 +287,7 @@ from dataclasses import dataclass, field
 @dataclass
 class EvalResult:
     """求值結果 / Evaluation result"""
+
     success: bool
     result: Any = None
     error: Optional[str] = None
@@ -312,13 +323,23 @@ class SafeEvaluator:
         """
         try:
             if not isinstance(expression, str):
-                return EvalResult(success=False, error=f"表達式必須是字串，得到 {type(expression).__name__}", expression=str(expression))
+                return EvalResult(
+                    success=False,
+                    error=f"表達式必須是字串，得到 {type(expression).__name__}",
+                    expression=str(expression),
+                )
             self._check_length(expression)
-            return safe_eval(expression, context, max_nodes=self.max_nodes if self.max_complexity <= 0 else self.max_complexity)
+            return safe_eval(
+                expression,
+                context,
+                max_nodes=self.max_nodes if self.max_complexity <= 0 else self.max_complexity,
+            )
         except (SyntaxError, UnsafeExpressionError) as e:
             return EvalResult(success=False, error=safe_error(e), expression=expression)
 
-    def evaluate_arithmetic(self, expression: str, context: Optional[Dict[str, Any]] = None) -> EvalResult:
+    def evaluate_arithmetic(
+        self, expression: str, context: Optional[Dict[str, Any]] = None
+    ) -> EvalResult:
         """
         安全地求值算術表達式 / Safely evaluate an arithmetic expression
 
@@ -331,10 +352,15 @@ class SafeEvaluator:
         """
         try:
             if not isinstance(expression, str):
-                return EvalResult(success=False, error=f"表達式必須是字串，得到 {type(expression).__name__}", expression=str(expression))
+                return EvalResult(
+                    success=False,
+                    error=f"表達式必須是字串，得到 {type(expression).__name__}",
+                    expression=str(expression),
+                )
             self._check_length(expression)
             return safe_eval_arithmetic(
-                expression, context,
+                expression,
+                context,
                 max_nodes=self.max_nodes if self.max_complexity <= 0 else self.max_complexity,
             )
         except (SyntaxError, UnsafeExpressionError) as e:
@@ -342,14 +368,34 @@ class SafeEvaluator:
 
 
 # 僅允許算術操作的 SAFE_OPERATORS 子集
-ARITHMETIC_OPERATORS = {k: v for k, v in SAFE_OPERATORS.items() if k in {
-    ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv, ast.Mod, ast.Pow, ast.USub, ast.UAdd,
-}}
+ARITHMETIC_OPERATORS = {
+    k: v
+    for k, v in SAFE_OPERATORS.items()
+    if k
+    in {
+        ast.Add,
+        ast.Sub,
+        ast.Mult,
+        ast.Div,
+        ast.FloorDiv,
+        ast.Mod,
+        ast.Pow,
+        ast.USub,
+        ast.UAdd,
+    }
+}
 
 # 僅允許數字和基本算術的 SAFE_NAMES 子集
 ARITHMETIC_NAMES: Dict[str, Any] = {
-    "True": True, "False": False, "None": None,
-    "int": int, "float": float, "bool": bool, "abs": abs, "round": round, "pow": pow,
+    "True": True,
+    "False": False,
+    "None": None,
+    "int": int,
+    "float": float,
+    "bool": bool,
+    "abs": abs,
+    "round": round,
+    "pow": pow,
 }
 
 
@@ -372,12 +418,18 @@ def safe_eval_arithmetic(
         EvalResult: 求值結果
     """
     result = safe_eval(
-        expression, context, max_nodes,
+        expression,
+        context,
+        max_nodes,
         _safe_operators=ARITHMETIC_OPERATORS,
         _safe_names=ARITHMETIC_NAMES,
     )
     if result.success and not isinstance(result.result, (int, float)):
-        return EvalResult(success=False, error=f"算術表達式返回非數值類型: {type(result.result).__name__}", expression=expression)
+        return EvalResult(
+            success=False,
+            error=f"算術表達式返回非數值類型: {type(result.result).__name__}",
+            expression=expression,
+        )
     return result
 
 

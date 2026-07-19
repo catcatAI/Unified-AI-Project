@@ -73,12 +73,9 @@ class CerebellumEngine:
         predicted = self._predicted_theta
         actual = actual_theta
         n = min(len(predicted), len(actual))
-        self._proprioception_error = [
-            predicted[i] - actual[i] if i < n else 0.0
-            for i in range(9)
-        ]
-        self._predicted_theta = list(actual) if len(actual) >= 9 else (
-            actual + [0.0] * (9 - len(actual))
+        self._proprioception_error = [predicted[i] - actual[i] if i < n else 0.0 for i in range(9)]
+        self._predicted_theta = (
+            list(actual) if len(actual) >= 9 else (actual + [0.0] * (9 - len(actual)))
         )
 
     def get_posture(self, name: str = "default") -> Dict[str, Any]:
@@ -153,6 +150,7 @@ class CerebellumEngine:
         theta = list(target["theta_matrix"])
         if tremor_active:
             import math as _m
+
             for i in range(9):
                 _phase = 2.0 * _m.pi * self._tremor_frequency * self._total_time + i * 1.3
                 theta[i] += tremor_amp * _m.sin(_phase)

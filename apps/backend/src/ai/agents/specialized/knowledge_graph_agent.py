@@ -58,7 +58,7 @@ class KnowledgeGraphAgent:
         callback_address = task_payload.get("callback_address", "")
         cap_name = capability_id_filter
         if self.agent_id and cap_name.startswith(self.agent_id + "_"):
-            cap_name = cap_name[len(self.agent_id) + 1:]
+            cap_name = cap_name[len(self.agent_id) + 1 :]
         if "_v" in cap_name:
             cap_name = cap_name.rsplit("_v", 1)[0]
         result_payload = {"request_id": request_id}
@@ -83,9 +83,17 @@ class KnowledgeGraphAgent:
         if not query:
             return {"status": "error", "message": "No query provided", "results": []}
         query_lower = query.lower()
-        results = [{"entity": k, "properties": v} for k, v in self._entities.items() if query_lower in k.lower()]
+        results = [
+            {"entity": k, "properties": v}
+            for k, v in self._entities.items()
+            if query_lower in k.lower()
+        ]
         logger.info(f"query_graph: '{query}' -> {len(results)} results")
-        return {"status": "success", "message": f"Found {len(results)} matching entities", "results": results}
+        return {
+            "status": "success",
+            "message": f"Found {len(results)} matching entities",
+            "results": results,
+        }
 
     def add_entity(self, entity: str, properties: Dict[str, Any]) -> Dict[str, Any]:
         """Add an entity to the knowledge graph."""
@@ -93,13 +101,23 @@ class KnowledgeGraphAgent:
             return {"status": "error", "message": "No entity name provided"}
         self._entities[entity] = properties
         logger.info(f"add_entity: '{entity}' with {len(properties)} properties")
-        return {"status": "success", "message": f"Entity '{entity}' added successfully", "entity": entity, "properties": properties}
+        return {
+            "status": "success",
+            "message": f"Entity '{entity}' added successfully",
+            "entity": entity,
+            "properties": properties,
+        }
 
     def find_relations(self, entity_a: str, entity_b: str) -> Dict[str, Any]:
         """Find relations between two entities."""
         if not entity_a or not entity_b:
             return {"status": "error", "message": "Both entity names required", "relations": []}
-        relations = [r for r in self._relations if r["source"] == entity_a and r["target"] == entity_b]
+        relations = [
+            r for r in self._relations if r["source"] == entity_a and r["target"] == entity_b
+        ]
         logger.info(f"find_relations: '{entity_a}' <-> '{entity_b}' -> {len(relations)} relations")
-        return {"status": "success", "message": f"Found {len(relations)} relations", "relations": relations}
-
+        return {
+            "status": "success",
+            "message": f"Found {len(relations)} relations",
+            "relations": relations,
+        }

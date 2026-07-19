@@ -57,6 +57,7 @@ class Axis:
         if self.name:
             try:
                 from core.state.axis_field import AxisFieldRegistry
+
                 for field in AxisFieldRegistry().fields_for(self.name):
                     self.values.setdefault(field.name, field.default)
             except Exception as e:
@@ -72,17 +73,17 @@ class Axis:
         return cls(axis_id, label=label, **kwargs)
 
     def set(self, field_type, value, clamp=True):
-        key = field_type.name if hasattr(field_type, 'name') else str(field_type)
-        if clamp and hasattr(field_type, 'clamp'):
+        key = field_type.name if hasattr(field_type, "name") else str(field_type)
+        if clamp and hasattr(field_type, "clamp"):
             value = field_type.clamp(value)
         self.values[key] = value
         return value
 
     def get(self, field_type):
-        key = field_type.name if hasattr(field_type, 'name') else str(field_type)
+        key = field_type.name if hasattr(field_type, "name") else str(field_type)
         if key in self.values:
             return self.values[key]
-        if hasattr(field_type, 'default'):
+        if hasattr(field_type, "default"):
             return field_type.default
         return None
 
@@ -161,6 +162,7 @@ class Axis:
 
     def distance_to(self, other):
         import math
+
         return math.sqrt(sum((a - b) ** 2 for a, b in zip(self.coordinate, other.coordinate)))
 
     def influence_factor_to(self, other):

@@ -61,7 +61,9 @@ class VisualEncoder:
                         dy = y - center
                         rx = dx * np.cos(theta) + dy * np.sin(theta)
                         ry = -dx * np.sin(theta) + dy * np.cos(theta)
-                        kernel[y, x] = np.exp(-0.5 * (rx**2 + ry**2) / sigma**2) * np.cos(2 * np.pi * rx / (sigma * 2))
+                        kernel[y, x] = np.exp(-0.5 * (rx**2 + ry**2) / sigma**2) * np.cos(
+                            2 * np.pi * rx / (sigma * 2)
+                        )
                 kernel -= kernel.mean()
                 kernel /= np.sqrt(np.sum(kernel**2)) + 1e-8
                 filters.append(kernel)
@@ -94,22 +96,24 @@ class VisualEncoder:
         activations = []
         for k in range(filters.shape[0]):
             fm = activations_2d[:, :, k]
-            activations.extend([
-                float(fm.mean()),
-                float(fm.std()),
-                float(np.max(fm)),
-                float(np.percentile(fm, 25)),
-                float(np.percentile(fm, 75)),
-                float(np.mean(np.abs(fm))),
-                float(np.sqrt(np.mean(fm**2))),
-                float(np.sum(fm > 0) / max(fm.size, 1)),
-            ])
+            activations.extend(
+                [
+                    float(fm.mean()),
+                    float(fm.std()),
+                    float(np.max(fm)),
+                    float(np.percentile(fm, 25)),
+                    float(np.percentile(fm, 75)),
+                    float(np.mean(np.abs(fm))),
+                    float(np.sqrt(np.mean(fm**2))),
+                    float(np.sum(fm > 0) / max(fm.size, 1)),
+                ]
+            )
         vec = np.array(activations, dtype=np.float32)
         target = self.CNN_FEATURE_DIM
         if len(vec) >= target:
             return vec[:target]
         padded = np.zeros(target, dtype=np.float32)
-        padded[:len(vec)] = vec
+        padded[: len(vec)] = vec
         return padded
 
     def encode(self, image_data: bytes) -> np.ndarray:
@@ -150,7 +154,7 @@ class VisualEncoder:
         gray = np.mean(arr, axis=2)
         gx = np.gradient(gray, axis=1)
         gy = np.gradient(gray, axis=0)
-        mag = np.sqrt(gx ** 2 + gy ** 2)
+        mag = np.sqrt(gx**2 + gy**2)
         ang = np.arctan2(gy, gx) + np.pi
         bin_idx = (ang / (2 * np.pi) * self.EDGE_BINS).astype(int) % self.EDGE_BINS
         hist = np.zeros(self.EDGE_BINS, dtype=np.float32)
@@ -182,8 +186,7 @@ class VisualEncoder:
         features = []
         for r in range(regions_per_side):
             for c_ in range(regions_per_side):
-                block = arr[r * region_h:(r + 1) * region_h,
-                            c_ * region_w:(c_ + 1) * region_w]
+                block = arr[r * region_h : (r + 1) * region_h, c_ * region_w : (c_ + 1) * region_w]
                 features.extend(block.mean(axis=(0, 1)).tolist())
         return features
 
@@ -193,18 +196,16 @@ class VisualEncoder:
             return raw
         if len(raw) < self._feature_dim:
             padded = np.zeros(self._feature_dim, dtype=np.float32)
-            padded[:len(raw)] = raw
+            padded[: len(raw)] = raw
             return padded
         if self._projection is None or self._projection.shape[1] != len(raw):
             rng = np.random.default_rng(42)
             self._projection = rng.normal(
-                0, 1 / np.sqrt(len(raw)),
-                (self._feature_dim, len(raw))
+                0, 1 / np.sqrt(len(raw)), (self._feature_dim, len(raw))
             ).astype(np.float32)
         return self._projection @ raw
 
-    def train_step(self, image_data: bytes, target_latent: np.ndarray,
-                   lr: float = 0.001) -> float:
+    def train_step(self, image_data: bytes, target_latent: np.ndarray, lr: float = 0.001) -> float:
         """Train the projection matrix to map image features to target latent.
 
         Uses MSE loss between projected features and target latent vector.
@@ -227,8 +228,8 @@ class VisualEncoder:
         projected = self._project(features)
 
         # Compute loss: MSE between projected and target
-        diff = projected - target_latent[:self._feature_dim]
-        loss = float(np.mean(diff ** 2))
+        diff = projected - target_latent[: self._feature_dim]
+        loss = float(np.mean(diff**2))
 
         # Gradient: d(loss)/d(projection) = 2 * diff @ features.T
         # Update projection: W -= lr * grad

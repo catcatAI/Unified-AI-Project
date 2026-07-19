@@ -27,8 +27,7 @@ class AudioQualityMonitor:
     rolling-window summary statistics.
     """
 
-    def __init__(self, max_history: int = 500,
-                 log_path: Optional[str] = None):
+    def __init__(self, max_history: int = 500, log_path: Optional[str] = None):
         self._max_history = max_history
         self._log_path = log_path
         self._records: List[Dict[str, Any]] = []
@@ -50,7 +49,7 @@ class AudioQualityMonitor:
         }
         self._records.append(record)
         if len(self._records) > self._max_history:
-            self._records = self._records[-self._max_history:]
+            self._records = self._records[-self._max_history :]
 
         if self._log_path:
             try:
@@ -91,7 +90,11 @@ class AudioQualityMonitor:
 
         sorted_times = sorted(times)
         p95_idx = int(len(sorted_times) * 0.95)
-        p95_time = sorted_times[p95_idx] if p95_idx < len(sorted_times) else (sorted_times[-1] if sorted_times else 0)
+        p95_time = (
+            sorted_times[p95_idx]
+            if p95_idx < len(sorted_times)
+            else (sorted_times[-1] if sorted_times else 0)
+        )
 
         return {
             "total_calls": len(all_records),

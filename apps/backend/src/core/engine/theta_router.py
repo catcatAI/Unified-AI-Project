@@ -40,13 +40,14 @@ logger = logging.getLogger("angela_theta_router")
 
 class RouteAction(Enum):
     """路由動作"""
-    BIND = "bind"            # 綁定端口到軸
+
+    BIND = "bind"  # 綁定端口到軸
     CREATE_AXIS = "create_axis"  # 創建新軸
-    REBIND = "rebind"       # 重新綁定
-    UNBIND = "unbind"       # 解綁定
-    CASCADE = "cascade"     # 廣播輸出
-    MERGE = "merge"         # 合併輸入
-    SKIP = "skip"           # 跳過
+    REBIND = "rebind"  # 重新綁定
+    UNBIND = "unbind"  # 解綁定
+    CASCADE = "cascade"  # 廣播輸出
+    MERGE = "merge"  # 合併輸入
+    SKIP = "skip"  # 跳過
 
 
 @dataclass
@@ -62,6 +63,7 @@ class RouteDecision:
         confidence: 置信度
         reasoning: 決策理由
     """
+
     action: RouteAction
     port_name: Optional[str] = None
     target_axis: Optional[str] = None
@@ -92,6 +94,7 @@ class AxisBinding:
         direction: 方向
         confidence: 置信度
     """
+
     axis_name: str
     port_names: List[str] = field(default_factory=list)
     direction: str = "io"
@@ -114,9 +117,9 @@ class ThetaRouter:
     - StateMatrixAdapter.create_axis() 時更新路由表
     """
 
-    DEFAULT_THRESHOLD = 0.5    # 相似度閾值
-    CREATE_THRESHOLD = 0.3    # 創建新軸的閾值
-    CASCADE_WEIGHT = 0.6      # 廣播閾值
+    DEFAULT_THRESHOLD = 0.5  # 相似度閾值
+    CREATE_THRESHOLD = 0.3  # 創建新軸的閾值
+    CASCADE_WEIGHT = 0.6  # 廣播閾值
 
     def __init__(
         self,
@@ -257,7 +260,9 @@ class ThetaRouter:
                 )
                 bindings.append(binding)
                 self._record_routing(port.name, decision)
-                sm.theta.update(creation_urge=max(0.3, sm.theta.values.get("creation_urge", 0) + 0.1))
+                sm.theta.update(
+                    creation_urge=max(0.3, sm.theta.values.get("creation_urge", 0) + 0.1)
+                )
 
         if bindings:
             logger.info(f"[ThetaRouter] Auto-allocated {len(bindings)} port-axis bindings")
@@ -302,7 +307,9 @@ class ThetaRouter:
                     "priority": port.priority,
                 }
 
-        logger.info(f"[ThetaRouter] Cascaded {axis_name} → {len(results)} ports ({sum(1 for r in results.values() if r['status'] == 'dispatched')} dispatched)")
+        logger.info(
+            f"[ThetaRouter] Cascaded {axis_name} → {len(results)} ports ({sum(1 for r in results.values() if r['status'] == 'dispatched')} dispatched)"
+        )
 
         return {
             "status": "completed",
@@ -430,7 +437,7 @@ class ThetaRouter:
         }
         self._routing_history.append(entry)
         if len(self._routing_history) > self._max_history:
-            self._routing_history = self._routing_history[-self._max_history:]
+            self._routing_history = self._routing_history[-self._max_history :]
 
     def get_routing_report(self) -> Dict[str, Any]:
         """獲取路由狀態報告"""

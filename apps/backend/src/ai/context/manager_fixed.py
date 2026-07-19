@@ -61,7 +61,9 @@ class ContextManager:
 
             # 保存到磁盘存储 (失败不抛异常，仅警告)
             if not self.disk_storage.save_context(context):
-                logger.warning(f"Failed to save context {context_id} to disk storage", exc_info=True)
+                logger.warning(
+                    f"Failed to save context {context_id} to disk storage", exc_info=True
+                )
 
             # 添加到缓存
             self._context_cache[context_id] = context
@@ -70,7 +72,9 @@ class ContextManager:
                 f"Created new context {context_id} of type {context_type.value if hasattr(context_type, 'value') else context_type}"
             )
             return context_id
-        except Exception as e:  # broad exception acceptable: initialization continues on optional component failure
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: initialization continues on optional component failure
             logger.error(f"Failed to create context: {e}", exc_info=True)
             raise
 
@@ -120,7 +124,9 @@ class ContextManager:
 
             # 保存到内存存储
             if not self.memory_storage.save_context(context):
-                logger.error(f"Failed to save context {context_id} to memory storage", exc_info=True)
+                logger.error(
+                    f"Failed to save context {context_id} to memory storage", exc_info=True
+                )
                 return False
 
             # 保存到磁盘存储
@@ -155,8 +161,8 @@ class ContextManager:
                 logger.info(f"Context {context_id} deleted successfully")
             else:
                 logger.warning(
-                    f"Failed to delete context {context_id} from one or more storage layers"
-                    , exc_info=True
+                    f"Failed to delete context {context_id} from one or more storage layers",
+                    exc_info=True,
                 )
 
             return success
@@ -246,11 +252,15 @@ class ContextManager:
 
             # 保存目标上下文
             if not self.memory_storage.save_context(target_context):
-                logger.error(f"Failed to save target context {target_id} to memory storage", exc_info=True)
+                logger.error(
+                    f"Failed to save target context {target_id} to memory storage", exc_info=True
+                )
                 return False
 
             if not self.disk_storage.save_context(target_context):
-                logger.error(f"Failed to save target context {target_id} to disk storage", exc_info=True)
+                logger.error(
+                    f"Failed to save target context {target_id} to disk storage", exc_info=True
+                )
                 return False
 
             # 更新缓存
@@ -259,7 +269,9 @@ class ContextManager:
             logger.info(f"Transferred context from {source_id} to {target_id}")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to transfer context from {source_id} to {target_id}: {e}", exc_info=True)
+            logger.error(
+                f"Failed to transfer context from {source_id} to {target_id}: {e}", exc_info=True
+            )
             return False
 
     def get_context_summary(self, context_id: str) -> Dict[str, Any]:

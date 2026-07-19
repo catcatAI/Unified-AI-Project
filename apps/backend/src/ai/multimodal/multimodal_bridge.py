@@ -41,6 +41,7 @@ class MultimodalBridge:
             load_default_audio_decoder_weights,
         )
         from ai.multimodal.visual_decoder import VisualDecoder, load_default_visual_decoder_weights
+
         self._visual_decoder = VisualDecoder()
         load_default_visual_decoder_weights(self._visual_decoder)
         self._audio_decoder = AudioWaveformDecoder()
@@ -141,8 +142,7 @@ class MultimodalBridge:
 
     # --- ED3N-compatible entry generation ---
 
-    def to_dictionary_entry(self, image_data: bytes,
-                            label: str = "") -> Dict[str, Any]:
+    def to_dictionary_entry(self, image_data: bytes, label: str = "") -> Dict[str, Any]:
         """Convert image bytes to an ED3N-compatible dictionary entry.
 
         Returns dict with 'key' (latent vector hash), 'value' (label),
@@ -154,8 +154,7 @@ class MultimodalBridge:
         key = f"mm_vision_{hash(tuple(latent[:8])) & 0xFFFFFFFF:08x}"
         return {"key": key, "value": label, "vector": latent}
 
-    def latent_to_entry(self, latent: List[float],
-                        label: str = "") -> Dict[str, Any]:
+    def latent_to_entry(self, latent: List[float], label: str = "") -> Dict[str, Any]:
         """Convert a latent vector to an ED3N-compatible entry."""
         if not latent:
             return {"key": "", "value": label, "vector": []}
@@ -171,6 +170,7 @@ class MultimodalBridge:
         """
         try:
             import numpy as np
+
             data = np.load(weights_path, allow_pickle=False)
         except Exception as e:
             logger.warning("Bridge load_weights failed: %s", e)

@@ -1,4 +1,5 @@
 """PixelRefiner: lightweight FC network to refine compositional image output."""
+
 import json
 import logging
 import os
@@ -82,8 +83,9 @@ class PixelRefiner:
         cache = {"x": x, "z1": z1, "h": h, "z2": z2, "out_raw": x + 0.01 * np.tanh(z2)}
         return out, cache
 
-    def train_step(self, rough_flat: np.ndarray, target_flat: np.ndarray,
-                   lr: float = 0.001) -> float:
+    def train_step(
+        self, rough_flat: np.ndarray, target_flat: np.ndarray, lr: float = 0.001
+    ) -> float:
         """Single training step with backprop.
 
         Args:
@@ -99,14 +101,14 @@ class PixelRefiner:
 
         # MSE loss
         diff = out - target
-        loss = float(np.mean(diff ** 2))
+        loss = float(np.mean(diff**2))
 
         # Backprop through skip connection
         d_out_raw = 2.0 * diff / self._flat_dim  # (flat_dim,)
 
         # d(tanh(z2))/dz2 = (1 - tanh^2(z2))
         tanh_z2 = np.tanh(cache["z2"])
-        d_tanh = 1.0 - tanh_z2 ** 2
+        d_tanh = 1.0 - tanh_z2**2
 
         # Through 0.01 * tanh(z2)
         d_z2 = d_out_raw * 0.01 * d_tanh
@@ -145,14 +147,21 @@ class PixelRefiner:
             Refined PIL Image (128x128)
         """
         from PIL import Image as PILImage
+
         arr = np.array(rough_image).astype(np.float32)
         flat = arr.flatten()
         refined_flat = self.forward(flat)
         refined_arr = refined_flat.reshape(self._img_size, self._img_size, 3)
         return PILImage.fromarray(refined_arr.astype(np.uint8))
 
-    def train(self, rough_images: list, target_images: list,
-              epochs: int = 50, lr: float = 0.005, batch_size: int = 8) -> Dict:
+    def train(
+        self,
+        rough_images: list,
+        target_images: list,
+        epochs: int = 50,
+        lr: float = 0.005,
+        batch_size: int = 8,
+    ) -> Dict:
         """Train on pairs of rough/target images.
 
         Args:
@@ -173,7 +182,7 @@ class PixelRefiner:
             indices = np.random.permutation(n)
 
             for start in range(0, n, batch_size):
-                batch_idx = indices[start:start + batch_size]
+                batch_idx = indices[start : start + batch_size]
                 batch_loss = 0.0
 
                 for idx in batch_idx:

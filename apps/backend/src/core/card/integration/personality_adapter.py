@@ -46,9 +46,7 @@ class PersonalityAdapter:
         if card.core_trait:
             adjustment["core_trait"] = card.core_trait
         if card.tokens:
-            adjustment["traits"] = {
-                t.name: t.strength for t in card.tokens
-            }
+            adjustment["traits"] = {t.name: t.strength for t in card.tokens}
         if card.meta_data:
             adjustment["meta"] = dict(card.meta_data)
 

@@ -102,4 +102,7 @@ class LearningLogDB:
             os.remove(self.db_path)
             logger.info(f"LearningLogDB file deleted: {self.db_path}")
         else:
-            logger.warning(f"Attempted to delete non-existent LearningLogDB file: {self.db_path}", exc_info=True)
+            logger.warning(
+                f"Attempted to delete non-existent LearningLogDB file: {self.db_path}",
+                exc_info=True,
+            )

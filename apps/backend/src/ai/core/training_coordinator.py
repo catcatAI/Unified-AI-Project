@@ -52,9 +52,12 @@ class TrainingCoordinator:
     - Cloud LLM: creative, opinion, general (heavy computation)
     """
 
-    def __init__(self, bus: Optional[Any] = None,
-                 max_examples_per_domain: int = 100,
-                 max_hashes_per_domain: int = 10000):
+    def __init__(
+        self,
+        bus: Optional[Any] = None,
+        max_examples_per_domain: int = 100,
+        max_hashes_per_domain: int = 10000,
+    ):
         self.bus = bus
         self._domain_map: Dict[str, DomainTrainingRecord] = {}
         self._seen_hashes: Dict[str, set] = {}
@@ -69,7 +72,9 @@ class TrainingCoordinator:
                 if result is not None:
                     return result
             except (AttributeError, TypeError, ValueError):
-                logger.warning("ModelBus.get_training_assignment failed for %s, falling back", domain)
+                logger.warning(
+                    "ModelBus.get_training_assignment failed for %s, falling back", domain
+                )
         return DOMAIN_OWNERSHIP.get(domain)
 
     async def record_training(
@@ -87,10 +92,10 @@ class TrainingCoordinator:
                 record.trained_count += count
                 record.last_trained = now
                 record.accuracy = accuracy
-                examples_to_add = examples[:self._max_examples]
+                examples_to_add = examples[: self._max_examples]
                 record.examples.extend(examples_to_add)
                 if len(record.examples) > self._max_examples:
-                    record.examples = record.examples[-self._max_examples:]
+                    record.examples = record.examples[-self._max_examples :]
             else:
                 self._domain_map[domain] = DomainTrainingRecord(
                     domain=domain,
@@ -98,7 +103,7 @@ class TrainingCoordinator:
                     trained_count=count,
                     last_trained=now,
                     accuracy=accuracy,
-                    examples=list(examples[:self._max_examples]),
+                    examples=list(examples[: self._max_examples]),
                 )
             for ex in examples:
                 inp = ex.get("input", "")
@@ -107,7 +112,7 @@ class TrainingCoordinator:
                     domain_hashes = self._seen_hashes.setdefault(domain, set())
                     domain_hashes.add(h)
                     if len(domain_hashes) > self._max_hashes:
-                        self._seen_hashes[domain] = set(list(domain_hashes)[-self._max_hashes:])
+                        self._seen_hashes[domain] = set(list(domain_hashes)[-self._max_hashes :])
         logger.info(
             "Recorded training: domain=%s model=%s count=%d accuracy=%.4f",
             domain,
@@ -194,13 +199,12 @@ class TrainingCoordinator:
                     "trained_count": r.trained_count,
                     "last_trained": r.last_trained,
                     "accuracy": r.accuracy,
-                    "examples": r.examples[:self._max_examples],
+                    "examples": r.examples[: self._max_examples],
                 }
                 for d, r in self._domain_map.items()
             },
             "seen_hashes": {
-                d: list(hashes)[-self._max_hashes:]
-                for d, hashes in self._seen_hashes.items()
+                d: list(hashes)[-self._max_hashes :] for d, hashes in self._seen_hashes.items()
             },
         }
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
@@ -226,6 +230,8 @@ class TrainingCoordinator:
                 )
             for d, hashes in state.get("seen_hashes", {}).items():
                 self._seen_hashes[d] = set(hashes)
-            logger.info("TrainingCoordinator: loaded from %s (%d domains)", path, len(self._domain_map))
+            logger.info(
+                "TrainingCoordinator: loaded from %s (%d domains)", path, len(self._domain_map)
+            )
         except Exception as e:
             logger.warning("TrainingCoordinator: failed to load %s: %s", path, e)

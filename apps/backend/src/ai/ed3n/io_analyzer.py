@@ -34,8 +34,7 @@ class IOAnalyzer:
             {
                 "summary": summary,
                 "reflex_patterns": [
-                    {"pattern": p, "count": c, "pct": pct}
-                    for p, c, pct in reflex_report
+                    {"pattern": p, "count": c, "pct": pct} for p, c, pct in reflex_report
                 ],
                 "latency_histograms": histograms,
             },
@@ -86,9 +85,7 @@ class IOAnalyzer:
         if not report:
             return "  Reflex Patterns: no matches recorded"
         lines = ["  Top Reflex Patterns (by match count):", ""]
-        lines.append(
-            f"  {'Pattern':<30} {'Count':<10} {'% of Queries':<15}"
-        )
+        lines.append(f"  {'Pattern':<30} {'Count':<10} {'% of Queries':<15}")
         lines.append("  " + "-" * 55)
         for pattern, count, pct in report[:20]:
             lines.append(f"  {pattern:<30} {count:<10} {pct:<15}")
@@ -152,9 +149,7 @@ class IOAnalyzer:
             else:
                 bucket_counts[4] += 1
         lines = ["  Confidence Distribution:", ""]
-        lines.append(
-            f"    Average Confidence: {avg:.4f}  (over {total} queries)"
-        )
+        lines.append(f"    Average Confidence: {avg:.4f}  (over {total} queries)")
         lines.append("")
         lines.append(f"  {'Bucket':<15} {'Count':<10} {'%':<10}")
         lines.append("  " + "-" * 35)

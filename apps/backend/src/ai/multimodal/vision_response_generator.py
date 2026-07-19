@@ -47,16 +47,14 @@ class VisionResponseGenerator:
         """Register a mapping from CLIP label text to dictionary key."""
         self._label_to_key[label_text.lower().strip()] = dict_key
 
-    def register_concept(self, concept_name: str, dict_key: str,
-                         labels: List[str]) -> None:
+    def register_concept(self, concept_name: str, dict_key: str, labels: List[str]) -> None:
         """Register all labels for a concept."""
         for label in labels:
             self._label_to_key[label.lower().strip()] = dict_key
 
-    def generate_response(self,
-                          classifications: List[Dict[str, Any]],
-                          language: str = "zh",
-                          action: str = "") -> str:
+    def generate_response(
+        self, classifications: List[Dict[str, Any]], language: str = "zh", action: str = ""
+    ) -> str:
         """Generate a natural language response from CLIP classifications.
 
         Args:
@@ -90,10 +88,9 @@ class VisionResponseGenerator:
 
         return response
 
-    def generate_with_confidence(self,
-                                 classifications: List[Dict[str, Any]],
-                                 language: str = "zh",
-                                 action: str = "") -> Dict[str, Any]:
+    def generate_with_confidence(
+        self, classifications: List[Dict[str, Any]], language: str = "zh", action: str = ""
+    ) -> Dict[str, Any]:
         """Generate response with confidence metadata.
 
         Returns:
@@ -138,11 +135,18 @@ class VisionResponseGenerator:
         "a picture of a cat sitting" -> "cat"
         """
         lower = label.lower()
-        for prefix in ["a photo of a ", "a picture of a ", "a photo of ",
-                       "a picture of ", "a photo of the ", "a picture of the ",
-                       "a drawing of a ", "an illustration of a "]:
+        for prefix in [
+            "a photo of a ",
+            "a picture of a ",
+            "a photo of ",
+            "a picture of ",
+            "a photo of the ",
+            "a picture of the ",
+            "a drawing of a ",
+            "an illustration of a ",
+        ]:
             if lower.startswith(prefix):
-                label = label[len(prefix):]
+                label = label[len(prefix) :]
                 break
         return label.split()[0] if label.split() else label
 

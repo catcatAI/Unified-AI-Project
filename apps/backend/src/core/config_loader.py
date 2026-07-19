@@ -146,7 +146,10 @@ class AngelaConfig:
             backends = unified.get("backends", {})
             if isinstance(backends, dict) and backends:
                 merged["providers"] = {
-                    bid: {"provider": bcfg.get("provider"), "model": bcfg.get("model") or bcfg.get("model_name")}
+                    bid: {
+                        "provider": bcfg.get("provider"),
+                        "model": bcfg.get("model") or bcfg.get("model_name"),
+                    }
                     for bid, bcfg in backends.items()
                     if isinstance(bcfg, dict)
                 }
@@ -157,7 +160,9 @@ class AngelaConfig:
                     merged["prompt_templates"] = routing.get("prompt_templates", {})
                 return merged
         except Exception:
-            logger.warning("get_llm_config: unified system/llm read failed, falling back", exc_info=True)
+            logger.warning(
+                "get_llm_config: unified system/llm read failed, falling back", exc_info=True
+            )
         providers_cfg = self.get_authority("llm_providers", {})
         if isinstance(providers_cfg, dict) and providers_cfg.get("providers"):
             return providers_cfg
@@ -185,7 +190,9 @@ class AngelaConfig:
                     policy["fallback_chain"] = routing.get("fallback_chain")
                 return policy
         except Exception:
-            logger.warning("get_routing_policy: unified system/llm read failed, falling back", exc_info=True)
+            logger.warning(
+                "get_routing_policy: unified system/llm read failed, falling back", exc_info=True
+            )
         providers_cfg = self.get_authority("llm_providers", {})
         policy = (
             dict(providers_cfg.get("routing_policy", {})) if isinstance(providers_cfg, dict) else {}

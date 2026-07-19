@@ -38,7 +38,9 @@ class VisionHandler:
             b64 = base64.b64encode(image_data).decode()
             if self._model_bus and hasattr(self._model_bus, "execute_handler"):
                 result = await self._model_bus.execute_handler(
-                    "vision", text, {"image_path": str(target), "image_b64": b64, "mime_type": mime_type}
+                    "vision",
+                    text,
+                    {"image_path": str(target), "image_b64": b64, "mime_type": mime_type},
                 )
                 if result.get("success"):
                     return f"（視覺分析）{result.get('result', '無結果')}"
@@ -59,10 +61,18 @@ class VisionHandler:
         m = re.search(r"([\w\\/:.\-]+\.(?:png|jpg|jpeg|gif|bmp|webp|svg))", text, re.IGNORECASE)
         if m:
             return m.group(1)
-        prefixes = ["分析圖片", "看看圖片", "描述圖片", "圖片", "analyze image", "describe image", "look at"]
+        prefixes = [
+            "分析圖片",
+            "看看圖片",
+            "描述圖片",
+            "圖片",
+            "analyze image",
+            "describe image",
+            "look at",
+        ]
         for p in prefixes:
             if text.lower().startswith(p):
-                rest = text[len(p):].strip().strip(":：").strip()
+                rest = text[len(p) :].strip().strip(":：").strip()
                 if rest:
                     return rest
         return text.strip() if "." in text else None

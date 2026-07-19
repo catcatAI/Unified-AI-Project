@@ -30,7 +30,6 @@ from .alignment.hyperlinked_parameter_cluster import HyperlinkedParameterCluster
 from .alignment.ontology_system import OntologySystem
 from .alignment.reasoning_system import ReasoningSystem
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -110,7 +109,9 @@ class Level5ASISystem:
             logger.info(f"[{self.system_id}] Level 5 ASI系统初始化完成")
             return True
 
-        except Exception as e:  # broad exception acceptable: ASI initialization wraps all component failures
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: ASI initialization wraps all component failures
             logger.error(f"[{self.system_id}] 初始化失败: {e}", exc_info=True)
             return False
 
@@ -130,7 +131,9 @@ class Level5ASISystem:
             logger.info(f"[{self.system_id}] Level 5 ASI系统已启动")
             return True
 
-        except Exception as e:  # broad exception acceptable: ASI startup wraps all agent and system failures
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: ASI startup wraps all agent and system failures
             logger.error(f"[{self.system_id}] 启动失败: {e}", exc_info=True)
             return False
 
@@ -149,7 +152,9 @@ class Level5ASISystem:
             logger.info(f"[{self.system_id}] Level 5 ASI系统已停止")
             return True
 
-        except Exception as e:  # broad exception acceptable: ASI shutdown wraps all agent and system failures
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: ASI shutdown wraps all agent and system failures
             logger.error(f"[{self.system_id}] 停止失败: {e}", exc_info=True)
             return False
 
@@ -196,7 +201,9 @@ class Level5ASISystem:
 
             return result
 
-        except Exception as e:  # broad exception acceptable: ASI request processing wraps all failures
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: ASI request processing wraps all failures
             logger.error(f"[{self.system_id}] 请求处理失败: {e}", exc_info=True)
             return {"error": safe_error(e)}
 
@@ -276,7 +283,9 @@ class Level5ASISystem:
             )
             return test_results
 
-        except Exception as e:  # broad exception acceptable: comprehensive test wraps all component failures
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: comprehensive test wraps all component failures
             logger.error(f"[{self.system_id}] 综合测试失败: {e}", exc_info=True)
             return {"error": safe_error(e)}
 
@@ -298,7 +307,9 @@ class Level5ASISystem:
 
     async def _initialize_advanced_components(self) -> None:
         """初始化高级组件"""
-        self.decision_system = DecisionTheorySystem(config={"system_id": f"{self.system_id}_decision_system"})
+        self.decision_system = DecisionTheorySystem(
+            config={"system_id": f"{self.system_id}_decision_system"}
+        )
 
         if self.config.get("enable_adversarial_testing"):
             self.adversarial_system = AdversarialGenerationSystem(
@@ -422,7 +433,9 @@ class Level5ASISystem:
                     "safety_score": score,
                 }
 
-        except Exception as e:  # broad exception acceptable: alignment check wraps all decision failures
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: alignment check wraps all decision failures
             logger.error(f"[{self.system_id}] 对齐检查失败: {e}", exc_info=True)
             return {
                 "is_aligned": False,
@@ -467,7 +480,9 @@ class Level5ASISystem:
                 "alignment_level": agent.alignment_level,
             }
 
-        except Exception as e:  # broad exception acceptable: agent processing wraps all task failures
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: agent processing wraps all task failures
             logger.error(f"[{self.system_id}] 代理处理失败: {e}", exc_info=True)
             return {"status": "error", "error_message": safe_error(e)}
 
@@ -506,7 +521,9 @@ class Level5ASISystem:
 
             return {"score": 1.0 if result.get("is_aligned") else 0.0, "details": result}
 
-        except Exception as e:  # broad exception acceptable: alignment system test wraps all failures
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: alignment system test wraps all failures
             logger.error(f"[{self.system_id}] 对齐系统测试失败: {e}", exc_info=True)
             return {"score": 0.0, "error": safe_error(e)}
 
@@ -520,7 +537,9 @@ class Level5ASISystem:
             score = 1.0 if status.get("active_nodes", 0) > 0 else 0.0
             return {"score": score, "details": status}
 
-        except Exception as e:  # broad exception acceptable: distributed system test wraps all failures
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: distributed system test wraps all failures
             logger.error(f"[{self.system_id}] 分布式系统测试失败: {e}", exc_info=True)
             return {"score": 0.0, "error": safe_error(e)}
 
@@ -534,7 +553,9 @@ class Level5ASISystem:
             score = 1.0 if status.get("total_parameters", 0) >= 0 else 0.0
             return {"score": score, "details": status}
 
-        except Exception as e:  # broad exception acceptable: parameter cluster test wraps all failures
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: parameter cluster test wraps all failures
             logger.error(f"[{self.system_id}] 参数集群测试失败: {e}", exc_info=True)
             return {"score": 0.0, "error": safe_error(e)}
 
@@ -548,7 +569,9 @@ class Level5ASISystem:
             score = 1.0 if status.get("alignment_score", 0.0) > 0.5 else 0.0
             return {"score": score, "details": status}
 
-        except Exception as e:  # broad exception acceptable: autonomous alignment test wraps all failures
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: autonomous alignment test wraps all failures
             logger.error(f"[{self.system_id}] 自主对齐测试失败: {e}", exc_info=True)
             return {"score": 0.0, "error": safe_error(e)}
 
@@ -567,7 +590,9 @@ class Level5ASISystem:
                     if status.get("alignment_enabled", False):
                         healthy_agents += 1
                     agent_details[agent_id] = status
-                except Exception as e:  # broad exception acceptable: aligned agent status wraps all failures
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: aligned agent status wraps all failures
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     agent_details[agent_id] = {"error": "Failed to get status"}
 
@@ -580,7 +605,9 @@ class Level5ASISystem:
                 "details": agent_details,
             }
 
-        except Exception as e:  # broad exception acceptable: aligned agents test wraps all agent failures
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: aligned agents test wraps all agent failures
             logger.error(f"[{self.system_id}] 对齐代理测试失败: {e}", exc_info=True)
             return {"score": 0.0, "error": safe_error(e)}
 

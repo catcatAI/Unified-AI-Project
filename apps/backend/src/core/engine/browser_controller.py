@@ -198,10 +198,9 @@ class BrowserController:
         try:
             if bookmarks_path.exists():
                 import json as _json
+
                 data = _json.loads(await async_read_text(bookmarks_path))
-                self.bookmarks = {
-                    bid: Bookmark(**bd) for bid, bd in data.items()
-                }
+                self.bookmarks = {bid: Bookmark(**bd) for bid, bd in data.items()}
                 logger.info(f"Loaded {len(self.bookmarks)} bookmarks")
         except Exception as e:
             logger.warning(f"Failed to load bookmarks: {e}")
@@ -212,6 +211,7 @@ class BrowserController:
         try:
             bookmarks_path.parent.mkdir(parents=True, exist_ok=True)
             import json as _json
+
             data = {bid: bd.__dict__ for bid, bd in self.bookmarks.items()}
             await async_write_text(bookmarks_path, _json.dumps(data, indent=2, default=str))
             logger.info(f"Saved {len(self.bookmarks)} bookmarks")
@@ -227,7 +227,9 @@ class BrowserController:
             for callback in self._state_change_callbacks:
                 try:
                     callback(old_state, new_state)
-                except Exception as e:  # broad exception acceptable: callback errors should not break state changes
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: callback errors should not break state changes
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
     async def search(
@@ -288,37 +290,45 @@ class BrowserController:
 
         try:
             async with aiohttp.ClientSession(headers=headers) as session:
-                async with session.post(url, data=data, timeout=timeout_value("http_post", 10.0)) as response:
+                async with session.post(
+                    url, data=data, timeout=timeout_value("http_post", 10.0)
+                ) as response:
                     if response.status == 200:
                         html = await response.text()
                         if BeautifulSoup is None:
-                            logger.warning("BeautifulSoup not installed; cannot parse search results")
+                            logger.warning(
+                                "BeautifulSoup not installed; cannot parse search results"
+                            )
                             return {"results": [], "error": "BeautifulSoup not available"}
                         soup = BeautifulSoup(html, "html.parser")
-                        
+
                         # 解析 DuckDuckGo 結果
-                        for result_div in soup.find_all("div", class_="result__body", limit=max_results):
+                        for result_div in soup.find_all(
+                            "div", class_="result__body", limit=max_results
+                        ):
                             title_a = result_div.find("a", class_="result__title")
                             snippet_a = result_div.find("a", class_="result__snippet")
                             result_div.find("a", class_="result__url")
-                            
+
                             if title_a and snippet_a:
                                 title = title_a.get_text(strip=True)
                                 link = title_a.get("href", "")
                                 snippet = snippet_a.get_text(strip=True)
-                                
+
                                 results.append(
                                     SearchResult(
                                         title=title,
                                         url=link,
                                         snippet=snippet,
                                         relevance_score=1.0 - (len(results) * 0.1),
-                                        source_engine="DuckDuckGo"
+                                        source_engine="DuckDuckGo",
                                     )
                                 )
-        except Exception as e:  # broad exception acceptable: real search should be resilient to network errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: real search should be resilient to network errors
             logger.error(f"Real search failed: {e}", exc_info=True)
-            
+
         return results
 
     async def extract_content(self, url: str) -> Optional[ExtractedContent]:
@@ -339,7 +349,9 @@ class BrowserController:
             self._set_state(BrowserState.IDLE)
             return content
 
-        except Exception as e:  # broad exception acceptable: content extraction should be resilient to errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: content extraction should be resilient to errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             self._set_state(BrowserState.IDLE)
 
@@ -359,39 +371,50 @@ class BrowserController:
                     if response.status == 200:
                         html = await response.text()
                         if BeautifulSoup is None:
-                            logger.warning("BeautifulSoup not installed; cannot extract page content")
+                            logger.warning(
+                                "BeautifulSoup not installed; cannot extract page content"
+                            )
                             return {"text": "", "error": "BeautifulSoup not available", "url": url}
                         soup = BeautifulSoup(html, "html.parser")
-                        
+
                         # 移除 script 與 style
                         for script in soup(["script", "style", "nav", "footer", "header"]):
                             script.extract()
-                            
+
                         # 取得純文字
                         text = soup.get_text(separator="\n", strip=True)
                         lines = (line.strip() for line in text.splitlines())
                         chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
                         clean_text = "\n".join(chunk for chunk in chunks if chunk)
-                        
+
                         # 提取圖片與連結 (前幾個)
-                        images = [img.get('src') for img in soup.find_all('img') if img.get('src')][:5]
-                        links = [a.get('href') for a in soup.find_all('a', href=True)][:5]
-                        
+                        images = [img.get("src") for img in soup.find_all("img") if img.get("src")][
+                            :5
+                        ]
+                        links = [a.get("href") for a in soup.find_all("a", href=True)][:5]
+
                         title = soup.title.string if soup.title else "Untitled"
-                        
+
                         return ExtractedContent(
                             url=url,
                             title=title.strip(),
-                            text_content=clean_text[:5000], # 限制長度避免過大
+                            text_content=clean_text[:5000],  # 限制長度避免過大
                             images=images,
                             links=links,
                             word_count=len(clean_text.split()),
-                            summary=clean_text[:200] + "..." if len(clean_text) > 200 else clean_text
+                            summary=(
+                                clean_text[:200] + "..." if len(clean_text) > 200 else clean_text
+                            ),
                         )
                     else:
-                        logger.warning(f"Extraction failed with status {response.status} for {url}", exc_info=True)
+                        logger.warning(
+                            f"Extraction failed with status {response.status} for {url}",
+                            exc_info=True,
+                        )
                         return None
-        except Exception as e:  # broad exception acceptable: real extraction should be resilient to network errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: real extraction should be resilient to network errors
             logger.error(f"Real extraction failed: {e}", exc_info=True)
             return None
 
@@ -423,7 +446,9 @@ class BrowserController:
                     for callback in self._game_detection_callbacks:
                         try:
                             callback(self.current_game)
-                        except Exception as e:  # broad exception acceptable: callback errors should not break game detection
+                        except (
+                            Exception
+                        ) as e:  # broad exception acceptable: callback errors should not break game detection
                             logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
                 self._set_state(BrowserState.PLAYING_GAME)

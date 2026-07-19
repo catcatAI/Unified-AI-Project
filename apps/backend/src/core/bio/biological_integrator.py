@@ -17,9 +17,7 @@ Version: 6.0.0
 Date: 2026-02-02
 """
 
-
 from __future__ import annotations
-from core.utils import safe_error
 
 import asyncio
 import logging
@@ -29,6 +27,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 from core.system.config.magic_numbers import loop_sleep
+from core.utils import safe_error
 from utils.async_utils import safe_create_task, safe_create_task_sync
 
 from .autonomic_nervous_system import AutonomicNervousSystem, NerveType
@@ -126,6 +125,7 @@ class BiologicalEventPublisher:
         if cns_type:
             try:
                 from core.system.state_store.global_store import state_store
+
                 state_store.emit_event(cns_type, data)
             except Exception as e:
                 logger.debug(f"Failed to forward bio event to CNS bus: {e}")
@@ -148,9 +148,10 @@ class BiologicalEventPublisher:
 class BiologicalIntegrator:
     """
     生物系统整合器主类 / Main biological integrator class (Singleton)
-    
+
     Coordinates and integrates all biological simulation systems for Angela AI.
     """
+
     _instance = None
 
     def __new__(cls, config: Optional[Dict[str, Any]] = None):
@@ -164,8 +165,9 @@ class BiologicalIntegrator:
             return
         self._initialized = True
         logger.info("🧬 [Bio] Initializing BiologicalIntegrator Singleton...")
-        
+
         from core.life.env_dynamics import EnvironmentDynamics
+
         self.config = config or {}
         self.dynamics = EnvironmentDynamics()
         self._update_interval = self.dynamics.get_dynamic_threshold("update_interval", 5.0)
@@ -176,13 +178,15 @@ class BiologicalIntegrator:
         self.nervous_system: AutonomicNervousSystem = AutonomicNervousSystem()
         self.neuroplasticity_system: NeuroplasticitySystem = NeuroplasticitySystem()
         self.emotional_system: EmotionalBlendingSystem = EmotionalBlendingSystem()
-        
+
         # 2030 Standard: Cerebellum Motor System
         from .cerebellum_engine import CerebellumEngine
+
         self.cerebellum: CerebellumEngine = CerebellumEngine()
-        
+
         # 2030 Standard: L4 Art Learning Workflow
         from core.engine.art_learning_workflow import get_art_workflow
+
         self.art_workflow = get_art_workflow(self)
 
         # P0-2: 生物事件发布器
@@ -220,6 +224,7 @@ class BiologicalIntegrator:
         Convenience method to bridge to external systems like WebSocket.
         """
         for event in BiologicalEvent:
+
             def create_wrapper(target_callback, event_name):
                 return lambda event_obj, data: target_callback(event_name, data)
 
@@ -251,7 +256,7 @@ class BiologicalIntegrator:
         if self._running:
             logger.info("🧬 [Bio] Already running, skipping initialize.")
             return
-        
+
         logger.info("🧬 [Bio] Starting systems initialization...")
         self._running = True
 
@@ -268,6 +273,7 @@ class BiologicalIntegrator:
         # [Phase 8 Activation] 啟動藝術學習工作流 (L1 -> L4 橋接)
         try:
             from core.engine.art_learning_workflow import get_art_workflow
+
             art_wf = get_art_workflow(bio=self)
             if art_wf:
                 logger.info("🎨 [Bio] ArtLearningWorkflow activated and linked.")
@@ -315,14 +321,18 @@ class BiologicalIntegrator:
 
         # High arousal triggers adrenaline (From Config [Phase 7])
         from core.system.config.tiered_loader import get_config
+
         beh_conf = get_config("standard/behavior/behavior")
-        stress_thresh = beh_conf.get("biological_thresholds", {}).get("arousal_stress_trigger", 70.0)
+        stress_thresh = beh_conf.get("biological_thresholds", {}).get(
+            "arousal_stress_trigger", 70.0
+        )
 
         if arousal > stress_thresh:
             safe_create_task_sync(
                 self.endocrine_system.trigger_stress_response(
                     (arousal - stress_thresh) / 30, stress_type="acute"
-                ), name="Bio-stress-response"
+                ),
+                name="Bio-stress-response",
             )
 
         # P0-2: 发布唤醒水平变化事件
@@ -334,7 +344,8 @@ class BiologicalIntegrator:
                     "energy": arousal / 100.0,  # 归一化到 0-1
                     "timestamp": datetime.now().isoformat(),
                 },
-            ), name="Bio-arousal-change"
+            ),
+            name="Bio-arousal-change",
         )
 
         # P0-2: 发布能量变化事件
@@ -346,7 +357,8 @@ class BiologicalIntegrator:
                     "arousal": arousal,
                     "timestamp": datetime.now().isoformat(),
                 },
-            ), name="Bio-energy-change"
+            ),
+            name="Bio-energy-change",
         )
 
     def _on_hormone_change(self, hormone_type: HormoneType, old_val: float, new_val: float) -> None:
@@ -374,7 +386,8 @@ class BiologicalIntegrator:
                     "new_value": new_val,
                     "timestamp": datetime.now().isoformat(),
                 },
-            ), name="Bio-hormone-change"
+            ),
+            name="Bio-hormone-change",
         )
 
     def _on_emotion_change(self, old_emotion, new_emotion) -> None:
@@ -406,7 +419,8 @@ class BiologicalIntegrator:
                     "intensity": new_emotion.intensity,
                     "timestamp": datetime.now().isoformat(),
                 },
-            ), name="Bio-emotion-change"
+            ),
+            name="Bio-emotion-change",
         )
 
         # P0-2: 发布心情变化事件
@@ -419,7 +433,8 @@ class BiologicalIntegrator:
                     "dominant_emotion": new_emotion.to_basic_emotions()[0][0].en_name,
                     "timestamp": datetime.now().isoformat(),
                 },
-            ), name="Bio-mood-change"
+            ),
+            name="Bio-mood-change",
         )
 
     async def _integration_loop(self) -> None:
@@ -444,12 +459,17 @@ class BiologicalIntegrator:
             await self.endocrine_system.advance_time(seconds=self._update_interval)
             # Only log if stress is significant to reduce spam
             if self.endocrine_system.stress_level > 0.05:
-                logger.debug(f"🧪 [Bio] Endocrine metabolism complete. Stress: {self.endocrine_system.stress_level:.2f}")
-        except Exception as e:  # broad exception acceptable: endocrine metabolism errors should not break homeostasis
+                logger.debug(
+                    f"🧪 [Bio] Endocrine metabolism complete. Stress: {self.endocrine_system.stress_level:.2f}"
+                )
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: endocrine metabolism errors should not break homeostasis
             logger.error(f"Failed to update endocrine metabolism: {e}", exc_info=True)
 
         # 3. Safety Fuse
         from core.system.config.tiered_loader import get_config
+
         beh_conf = get_config("standard/behavior/behavior")
         arousal_clamp_max = beh_conf.get("biological_thresholds", {}).get("arousal_clamp_max", 95)
         arousal_clamp_min = beh_conf.get("biological_thresholds", {}).get("arousal_clamp_min", 5)
@@ -460,25 +480,29 @@ class BiologicalIntegrator:
         """Synchronize states across all biological systems (2030 Standard)"""
         # Calculate integrated state
         integrated_state = self.get_biological_state()
-        
+
         # 1. [+N16.2] Proprioception Feedback Loop
         # 比較小腦預期姿勢與當前狀態 (這裡假設同步成功)
         self.cerebellum.update_proprioception(
-            actual_theta=integrated_state.get("posture", {}).get("theta_matrix", [0.0]*9)
+            actual_theta=integrated_state.get("posture", {}).get("theta_matrix", [0.0] * 9)
         )
 
         # Notify state callbacks
         for callback in self._state_callbacks:
             try:
                 callback(integrated_state)
-            except Exception as e:  # broad exception acceptable: state callback errors should not block synchronization
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: state callback errors should not block synchronization
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
     async def process_stress_event(self, intensity: float, duration: float = 10.0) -> None:
         """Execute the process stress event operation."""
         import math
-        if not math.isfinite(intensity): intensity = 0.0
-        
+
+        if not math.isfinite(intensity):
+            intensity = 0.0
+
         await self.nervous_system.apply_stimulus(
             "stress_event", NerveType.SYMPATHETIC, intensity, duration
         )
@@ -490,8 +514,10 @@ class BiologicalIntegrator:
     async def process_relaxation_event(self, intensity: float = 0.5) -> None:
         """Execute the process relaxation event operation."""
         import math
-        if not math.isfinite(intensity): intensity = 0.0
-        
+
+        if not math.isfinite(intensity):
+            intensity = 0.0
+
         await self.nervous_system.apply_stimulus(
             "relaxation", NerveType.PARASYMPATHETIC, intensity, 30.0
         )
@@ -535,7 +561,9 @@ class BiologicalIntegrator:
         if emotional_context in ["comfort", "love", "joy"]:
             await self.endocrine_system.adjust_hormone(HormoneType.OXYTOCIN, 15.0 * intensity)
 
-    async def process_visual_stimulus(self, stimulus_type: str, intensity: float, description: str) -> None:
+    async def process_visual_stimulus(
+        self, stimulus_type: str, intensity: float, description: str
+    ) -> None:
         """
         Process a visual stimulus (e.g., seeing the user, seeing a gift).
         """
@@ -577,7 +605,7 @@ class BiologicalIntegrator:
         nervous_state = self.nervous_system.get_system_summary()
         endocrine_effects = self.endocrine_system.calculate_systemic_effects()
         emotional_summary = self.emotional_system.get_emotion_summary()
-        
+
         # Safely get current emotion from history
         dominant_emotion = "neutral"
         confidence = 0.5
@@ -587,7 +615,7 @@ class BiologicalIntegrator:
             if hasattr(last_state, "primary_emotion"):
                 dominant_emotion = last_state.primary_emotion.value
                 confidence = last_state.emotion_intensity
-            elif hasattr(last_state, "emotion"): # 兼容舊版結構
+            elif hasattr(last_state, "emotion"):  # 兼容舊版結構
                 dominant_emotion = last_state.emotion
                 confidence = 0.5
 
@@ -702,7 +730,9 @@ class BiologicalIntegrator:
             # Log successful interaction
             results["status"] = "success"
 
-        except Exception as e:  # broad exception acceptable: system interaction errors should be handled gracefully
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: system interaction errors should be handled gracefully
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             results["status"] = "error"
 
@@ -719,6 +749,7 @@ class BiologicalIntegrator:
             await target.adjust_hormone(HormoneType.ADRENALINE, adrenaline_increase)
             results["changes"]["adrenaline"] = f"+{adrenaline_increase:.1f}"
             from core.system.config.tiered_loader import get_config as _get_bio3
+
             _beh3 = _get_bio3("standard/behavior/behavior")
             _cort_trigger = _beh3.get("biological_thresholds", {}).get("cortisol_trigger", 60)
             if arousal > _cort_trigger:
@@ -763,8 +794,11 @@ class BiologicalIntegrator:
                     target.set_arousal_directly(new_arousal)
                     results["changes"]["arousal"] = f"{new_arousal - current_arousal:+.1f}"
                     from core.system.config.tiered_loader import get_config as _get_bio3
+
                     _beh3 = _get_bio3("standard/behavior/behavior")
-                    _symp_act = _beh3.get("biological_thresholds", {}).get("sympathetic_activation", 70)
+                    _symp_act = _beh3.get("biological_thresholds", {}).get(
+                        "sympathetic_activation", 70
+                    )
                     if new_arousal > _symp_act and hasattr(target, "apply_stimulus"):
                         await target.apply_stimulus(
                             "emotional_arousal",
@@ -828,6 +862,7 @@ if __name__ == "__main__":
 
     # Demo purposes only — write to stderr (not stdout/logger) to avoid CodeQL
     import sys as _sys
+
     _demo_out = _sys.stderr
 
     async def demo() -> None:

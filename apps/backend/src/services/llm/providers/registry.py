@@ -13,6 +13,6 @@ class LLMBackend(Enum):
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
     ED3N = "ed3n"
-    GARDEN = "garden"   # GARDEN-1G: Lightweight 1GB local model (PyTorch SNN + VectorDict)
+    GARDEN = "garden"  # GARDEN-1G: Lightweight 1GB local model (PyTorch SNN + VectorDict)
     LOCAL = "local"
     NONE = "none"

@@ -19,8 +19,8 @@ import time
 from collections import OrderedDict
 from typing import Any, Dict, List, Optional, Tuple
 
-from core.utils import safe_error
 import numpy as np
+from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
 
@@ -55,24 +55,28 @@ class CrossModalRouter:
     def _get_multimodal_svc(self):
         if self._multimodal_svc is None:
             from services.multimodal_service import MultimodalService
+
             self._multimodal_svc = MultimodalService()
         return self._multimodal_svc
 
     def _get_vision_pipeline(self):
         if self._vision_pipeline is None:
             from ai.vision.vision_pipeline import VisionPipeline
+
             self._vision_pipeline = VisionPipeline()
         return self._vision_pipeline
 
     def _get_audio_pipeline(self):
         if self._audio_pipeline is None:
             from ai.audio.audio_pipeline import AudioPipeline
+
             self._audio_pipeline = AudioPipeline()
         return self._audio_pipeline
 
     def _get_latent_space(self):
         if self._latent_space is None:
             from ai.multimodal.shared_latent_space import get_shared_latent_space
+
             self._latent_space = get_shared_latent_space(latent_dim=self.LATENT_DIM)
         return self._latent_space
 
@@ -101,16 +105,20 @@ class CrossModalRouter:
         return None
 
     def _cache_put(self, key: str, result: Dict[str, Any]) -> None:
-        self._cache[key] = {k: v for k, v in result.items()
-                            if k not in ("decoded_image", "decoded_array", "decoded_waveform")}
+        self._cache[key] = {
+            k: v
+            for k, v in result.items()
+            if k not in ("decoded_image", "decoded_array", "decoded_waveform")
+        }
         self._cache.move_to_end(key)
         while len(self._cache) > self._cache_size:
             self._cache.popitem(last=False)
 
     # --- Core routing ---
 
-    async def route(self, modality: str, data: bytes, mode: str = "auto",
-                    item_id: Optional[str] = None) -> Dict[str, Any]:
+    async def route(
+        self, modality: str, data: bytes, mode: str = "auto", item_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Route a multimodal request to the correct pipeline.
 
         Args:
@@ -160,7 +168,8 @@ class CrossModalRouter:
                 result["pipeline"] = "cross"
             else:
                 return {
-                    "result": None, "pipeline": "unknown",
+                    "result": None,
+                    "pipeline": "unknown",
                     "confidence": 0.0,
                     "time_ms": round((time.time() - t0) * 1000, 1),
                     "error": f"Unknown modality: {modality}",
@@ -179,7 +188,8 @@ class CrossModalRouter:
         except Exception as e:
             logger.error("CrossModalRouter.route failed: %s", e, exc_info=True)
             return {
-                "result": None, "pipeline": "error",
+                "result": None,
+                "pipeline": "error",
                 "confidence": 0.0,
                 "time_ms": round((time.time() - t0) * 1000, 1),
                 "error": safe_error(e),
@@ -187,14 +197,16 @@ class CrossModalRouter:
 
     # --- Unimodal routing ---
 
-    async def _route_vision(self, data: bytes, mode: str = "auto",
-                            item_id: Optional[str] = None) -> Dict[str, Any]:
+    async def _route_vision(
+        self, data: bytes, mode: str = "auto", item_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Route to vision pipeline."""
         svc = self._get_multimodal_svc()
 
         if mode in ("auto", "encode", "pipeline"):
             # Use vision pipeline for full processing
             import asyncio
+
             pipeline = self._get_vision_pipeline()
             result_data = await asyncio.to_thread(pipeline.process, data)
             result = {
@@ -213,13 +225,15 @@ class CrossModalRouter:
         else:
             return {"result": None, "error": f"Unknown mode: {mode}", "confidence": 0.0}
 
-    async def _route_audio(self, data: bytes, mode: str = "auto",
-                           item_id: Optional[str] = None) -> Dict[str, Any]:
+    async def _route_audio(
+        self, data: bytes, mode: str = "auto", item_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Route to audio pipeline."""
         svc = self._get_multimodal_svc()
 
         if mode in ("auto", "encode", "pipeline"):
             import asyncio
+
             pipeline = self._get_audio_pipeline()
             result_data = await asyncio.to_thread(pipeline.process, data)
             snr_val = result_data.get("snr", 0.0)
@@ -240,8 +254,9 @@ class CrossModalRouter:
         else:
             return {"result": None, "error": f"Unknown mode: {mode}", "confidence": 0.0}
 
-    async def _route_cross(self, data: bytes, mode: str = "auto",
-                           item_id: Optional[str] = None) -> Dict[str, Any]:
+    async def _route_cross(
+        self, data: bytes, mode: str = "auto", item_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Route to cross-modal pipeline."""
         svc = self._get_multimodal_svc()
         ls = self._get_latent_space()
@@ -264,7 +279,9 @@ class CrossModalRouter:
             # Cross-modal generation via the registered items
             # Requires item_id to exist in multimodal service
             if item_id:
-                return await svc.generate(item_id, "audio" if item_id.startswith("vision") else "vision")
+                return await svc.generate(
+                    item_id, "audio" if item_id.startswith("vision") else "vision"
+                )
             return {"result": None, "error": "item_id required for generation", "confidence": 0.0}
 
         else:

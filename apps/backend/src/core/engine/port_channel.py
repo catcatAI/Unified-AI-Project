@@ -50,6 +50,7 @@ class PortChannel:
         last_push: 最後寫入時間
         last_pull: 最後讀取時間
     """
+
     port_name: str
     max_buffer: int = cache_value("port_channel_buffer", 100)
     buffer: deque = field(default_factory=lambda: deque(maxlen=100))
@@ -70,7 +71,9 @@ class PortChannel:
             是否成功
         """
         if len(self.buffer) >= self.max_buffer:
-            logger.warning(f"[PortChannel] Buffer full for '{self.port_name}', dropping oldest", exc_info=True)
+            logger.warning(
+                f"[PortChannel] Buffer full for '{self.port_name}', dropping oldest", exc_info=True
+            )
             self.buffer.popleft()
 
         self.buffer.append(data)
@@ -235,7 +238,9 @@ class AxisOutputManager:
             else:
                 results[port.name] = {"status": "skipped", "priority": port.priority}
 
-        logger.info(f"[AxisOutputManager] output('{axis_name}') → {dispatched}/{len(outputs)} ports dispatched")
+        logger.info(
+            f"[AxisOutputManager] output('{axis_name}') → {dispatched}/{len(outputs)} ports dispatched"
+        )
 
         return {
             "status": "completed",
@@ -288,7 +293,9 @@ class AxisOutputManager:
             for key in merged:
                 merged[key] /= total_weight
 
-        logger.info(f"[AxisOutputManager] input('{axis_name}') ← {len(inputs)} ports, {len(merged)} fields merged")
+        logger.info(
+            f"[AxisOutputManager] input('{axis_name}') ← {len(inputs)} ports, {len(merged)} fields merged"
+        )
 
         return {
             "status": "completed",
@@ -315,7 +322,13 @@ class AxisOutputManager:
         return {
             "status": "batch_completed",
             "axes": len(results),
-            "total_dispatched": sum(1 for r in results.values() if r.get("status") == "completed" for v in r.get("results", {}).values() if v.get("status") == "dispatched"),
+            "total_dispatched": sum(
+                1
+                for r in results.values()
+                if r.get("status") == "completed"
+                for v in r.get("results", {}).values()
+                if v.get("status") == "dispatched"
+            ),
             "details": results,
         }
 

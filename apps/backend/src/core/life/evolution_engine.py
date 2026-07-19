@@ -44,9 +44,7 @@ class EvolutionEngine:
         config: Optional[Dict[str, Any]] = None,
     ):
         self.dtm = dynamic_threshold_manager
-        self._traits: Dict[str, float] = dict(
-            personality_traits or _DEFAULT_TRAITS
-        )
+        self._traits: Dict[str, float] = dict(personality_traits or _DEFAULT_TRAITS)
         self.config = config or {}
         self._learning_rate: float = self.config.get("learning_rate", 0.05)
         self._decay_rate: float = self.config.get("decay_rate", 0.001)
@@ -101,35 +99,48 @@ class EvolutionEngine:
             self._traits["openness"] = max(0.0, min(1.0, self._traits["openness"] + delta_open))
 
             delta_extra = (happiness - 0.3) * lr * 0.8 + (arousal - 0.5) * lr * 0.3
-            self._traits["extraversion"] = max(0.0, min(1.0, self._traits["extraversion"] + delta_extra))
+            self._traits["extraversion"] = max(
+                0.0, min(1.0, self._traits["extraversion"] + delta_extra)
+            )
 
             delta_neuro = (fear * 0.4 + anger * 0.3) * lr
-            self._traits["neuroticism"] = max(0.0, min(1.0, self._traits["neuroticism"] + delta_neuro))
+            self._traits["neuroticism"] = max(
+                0.0, min(1.0, self._traits["neuroticism"] + delta_neuro)
+            )
 
             if anger > 0.5:
-                self._traits["agreeableness"] = max(0.0, self._traits["agreeableness"] - anger * lr * 0.5)
+                self._traits["agreeableness"] = max(
+                    0.0, self._traits["agreeableness"] - anger * lr * 0.5
+                )
 
         if safety_score is not None:
             safe = max(0.0, min(1.0, safety_score))
             unsafe = 1.0 - safe
 
-            self._traits["conscientiousness"] = max(0.0, min(1.0,
-                self._traits["conscientiousness"] + (safe - 0.5) * lr * 0.6))
+            self._traits["conscientiousness"] = max(
+                0.0, min(1.0, self._traits["conscientiousness"] + (safe - 0.5) * lr * 0.6)
+            )
 
-            self._traits["agreeableness"] = max(0.0, min(1.0,
-                self._traits["agreeableness"] + (safe - 0.5) * lr * 0.4))
+            self._traits["agreeableness"] = max(
+                0.0, min(1.0, self._traits["agreeableness"] + (safe - 0.5) * lr * 0.4)
+            )
 
-            self._traits["neuroticism"] = max(0.0, min(1.0,
-                self._traits["neuroticism"] + unsafe * lr * 0.3))
+            self._traits["neuroticism"] = max(
+                0.0, min(1.0, self._traits["neuroticism"] + unsafe * lr * 0.3)
+            )
 
-            self._traits["extraversion"] = max(0.0, min(1.0,
-                self._traits["extraversion"] - unsafe * lr * 0.2))
+            self._traits["extraversion"] = max(
+                0.0, min(1.0, self._traits["extraversion"] - unsafe * lr * 0.2)
+            )
 
         if self.dtm is not None:
             try:
                 extra = self._traits.get("extraversion", 0.5)
                 neuro = self._traits.get("neuroticism", 0.5)
-                self.dtm.set_parameter("social_initiative_threshold", max(0.1, min(0.9, 0.5 - extra * 0.15 + neuro * 0.1)))
+                self.dtm.set_parameter(
+                    "social_initiative_threshold",
+                    max(0.1, min(0.9, 0.5 - extra * 0.15 + neuro * 0.1)),
+                )
             except Exception:
                 logger.debug("Failed to propagate traits to DTM", exc_info=True)
 

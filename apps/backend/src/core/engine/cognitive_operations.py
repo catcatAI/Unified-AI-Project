@@ -28,6 +28,7 @@ class CognitiveOp(Enum):
     原生空間運算類型，將抽象數學邏輯轉化為幾何變換。
     Native spatial operations that transform abstract logic into geometry.
     """
+
     ACCUMULATE = auto()
     DECREMENT = auto()
     AMPLIFY = auto()
@@ -41,9 +42,7 @@ class CognitiveOp(Enum):
 SPATIAL_RATIO: Tuple[float, float, float] = (1.0, 0.3, 0.15)
 
 
-def compute_spatial_influence_factor(
-    dimensions: Dict[str, Any], source: str, target: str
-) -> float:
+def compute_spatial_influence_factor(dimensions: Dict[str, Any], source: str, target: str) -> float:
     """
     [Task N.20.1] 向量場計算 / Vector Field Computation
     Calculates the spatial distance and influence factor between two dimensions
@@ -91,7 +90,9 @@ def perform_spatial_reasoning(
 
     state.coordinate = new_coord
 
-    logger.info(f"[SpatialReasoning] {target_dim} moved to {new_coord} via {op.name}({magnitude}) ratio={ratio}")
+    logger.info(
+        f"[SpatialReasoning] {target_dim} moved to {new_coord} via {op.name}({magnitude}) ratio={ratio}"
+    )
     return new_coord
 
 
@@ -105,19 +106,13 @@ def get_dimension_value(dimensions: Dict[str, Any], dim_name: str) -> float:
 def get_position(dimensions: Dict[str, Any]) -> Dict[str, Dict[str, float]]:
     """獲取所有維度的當前座標"""
     return {
-        name: {
-            "x": state.coordinate[0],
-            "y": state.coordinate[1],
-            "z": state.coordinate[2]
-        }
+        name: {"x": state.coordinate[0], "y": state.coordinate[1], "z": state.coordinate[2]}
         for name, state in dimensions.items()
     }
 
 
 def execute_thought_chain(
-    dimensions: Dict[str, Any],
-    dimension: str,
-    instructions: List[Tuple[CognitiveOp, float]]
+    dimensions: Dict[str, Any], dimension: str, instructions: List[Tuple[CognitiveOp, float]]
 ) -> float:
     """
     [Task N.20.5] 執行認知操作鏈
@@ -136,13 +131,16 @@ def evaluate_math_spatially(dimensions: Dict[str, Any]) -> Callable[[str], float
     [L4-Reasoning] 將數學算式原生解析為空間變換。
     Returns a closure that evaluates math expressions using epsilon dimension.
     """
+
     def evaluator(expression: str) -> float:
         """Log a diagnostic message."""
         logger.info(f"[SpatialMath] Resolving expression: {expression}")
 
         tokens = re.findall(r"\d+\.?\d*|\*\*|[\+\-\*\/\(\)]", expression)
 
-        precedence = _get_spatial_config("operator_precedence", {"+": 1, "-": 1, "*": 2, "/": 2, "**": 3})
+        precedence = _get_spatial_config(
+            "operator_precedence", {"+": 1, "-": 1, "*": 2, "/": 2, "**": 3}
+        )
         output_queue = []
         operator_stack = []
 
@@ -156,8 +154,11 @@ def evaluate_math_spatially(dimensions: Dict[str, Any]) -> Callable[[str], float
                     output_queue.append(operator_stack.pop())
                 operator_stack.pop()
             else:
-                while (operator_stack and operator_stack[-1] != "(" and
-                       precedence[operator_stack[-1]] >= precedence[token]):
+                while (
+                    operator_stack
+                    and operator_stack[-1] != "("
+                    and precedence[operator_stack[-1]] >= precedence[token]
+                ):
                     output_queue.append(operator_stack.pop())
                 operator_stack.append(token)
 
@@ -178,7 +179,10 @@ def evaluate_math_spatially(dimensions: Dict[str, Any]) -> Callable[[str], float
                 a = execution_stack.pop()
 
                 if "epsilon" in dimensions:
-                    ey, ez = dimensions["epsilon"].coordinate[1], dimensions["epsilon"].coordinate[2]
+                    ey, ez = (
+                        dimensions["epsilon"].coordinate[1],
+                        dimensions["epsilon"].coordinate[2],
+                    )
                     dimensions["epsilon"].coordinate = (a, ey, ez)
 
                 if token == "+":
@@ -190,7 +194,7 @@ def evaluate_math_spatially(dimensions: Dict[str, Any]) -> Callable[[str], float
                 elif token == "/":
                     op = CognitiveOp.DIMINISH
                 elif token == "**":
-                    execution_stack.append(a ** b)
+                    execution_stack.append(a**b)
                     continue
                 else:
                     op = CognitiveOp.ACCUMULATE
@@ -211,9 +215,7 @@ def evaluate_math_spatially(dimensions: Dict[str, Any]) -> Callable[[str], float
                 1.0, dimensions["epsilon"].values.get("fatigue", 0.0) + fat_inc
             )
 
-        logger.info(
-            f"[SpatialMath] Epsilon calculation: {expression} = {final_result}"
-        )
+        logger.info(f"[SpatialMath] Epsilon calculation: {expression} = {final_result}")
         return final_result
 
     return evaluator
@@ -223,10 +225,13 @@ def _get_spatial_config(key: str, default: Any) -> Any:
     """從 spatial_parameters.yaml 獲取配置"""
     try:
         from app_config_loader import get_formula_config
+
         spatial_conf = get_formula_config("spatial")
         return spatial_conf.get("gravity", {}).get(key, default)
     except Exception:
-        logger.warning(f"_get_spatial_config({key}) from formula config failed, using default", exc_info=True)
+        logger.warning(
+            f"_get_spatial_config({key}) from formula config failed, using default", exc_info=True
+        )
         return default
 
 
@@ -235,13 +240,13 @@ class PotentialFieldEngine:
     位能場引擎 / Potential Field Engine
     使用梯度下降法計算座標位移。
     """
-    
+
     @staticmethod
     def calculate_attractive_displacement(
         current: Tuple[float, float, float],
         target: Tuple[float, float, float],
         pull_factor: float,
-        threshold: Optional[float] = None
+        threshold: Optional[float] = None,
     ) -> Tuple[float, float, float]:
         """
         計算吸引力產生的位移。
@@ -250,25 +255,25 @@ class PotentialFieldEngine:
         if threshold is None:
             threshold = _get_spatial_config("intent_gravity_threshold", 0.001)
         delta = _get_spatial_config("huber_delta", 0.5)
-        
+
         cx, cy, cz = current
         tx, ty, tz = target
-        
+
         dx, dy, dz = tx - cx, ty - cy, tz - cz
         dist = math.sqrt(dx**2 + dy**2 + dz**2)
-        
+
         if dist < threshold:
             return (0.0, 0.0, 0.0)
-            
+
         if dist > delta:
             force_mag = pull_factor * delta
         else:
             force_mag = pull_factor * dist
-            
+
         nx = (dx / dist) * force_mag
         ny = (dy / dist) * force_mag
         nz = (dz / dist) * force_mag
-        
+
         return (nx, ny, nz)
 
 
@@ -279,22 +284,22 @@ def apply_intent_gravity(dimensions: Dict[str, Any], pull_factor: Optional[float
     """
     if pull_factor is None:
         pull_factor = _get_spatial_config("intent_gravity_pull", 0.05)
-    
+
     engine = PotentialFieldEngine()
-    
+
     for name, state in dimensions.items():
         dx, dy, dz = engine.calculate_attractive_displacement(
-            state.coordinate,
-            state.intent_vector,
-            pull_factor
+            state.coordinate, state.intent_vector, pull_factor
         )
-        
+
         if dx != 0 or dy != 0 or dz != 0:
             cx, cy, cz = state.coordinate
             state.coordinate = (cx + dx, cy + dy, cz + dz)
 
 
-def set_intent_target(dimensions: Dict[str, Any], dimension: str, target: Tuple[float, float, float]) -> None:
+def set_intent_target(
+    dimensions: Dict[str, Any], dimension: str, target: Tuple[float, float, float]
+) -> None:
     """設置維度的目標意圖座標"""
     if dimension in dimensions:
         dimensions[dimension].intent_vector = target
@@ -310,7 +315,7 @@ def apply_inter_dimensional_drag(
     """
     if drag_factor is None:
         drag_factor = _get_spatial_config("inter_dimensional_drag", 0.02)
-        
+
     if trigger_dim not in dimensions:
         return
 
@@ -322,11 +327,9 @@ def apply_inter_dimensional_drag(
             continue
 
         dx, dy, dz = engine.calculate_attractive_displacement(
-            state.coordinate,
-            trigger_coord,
-            drag_factor
+            state.coordinate, trigger_coord, drag_factor
         )
-        
+
         if dx != 0 or dy != 0 or dz != 0:
             cx, cy, cz = state.coordinate
             state.coordinate = (cx + dx, cy + dy, cz + dz)

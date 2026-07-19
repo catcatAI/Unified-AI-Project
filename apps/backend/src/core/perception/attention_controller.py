@@ -42,9 +42,7 @@ class AttentionController:
         self._saliency_map: Optional[np.ndarray] = None
         self._current_time: float = 0.0
 
-    def update_target(
-        self, pos: Tuple[float, float], target_id: Optional[str] = None
-    ) -> bool:
+    def update_target(self, pos: Tuple[float, float], target_id: Optional[str] = None) -> bool:
         self._add_inhibition(self.last_focus_pos)
         self.mode = AttentionMode.FOCUS
         self.last_focus_pos = pos
@@ -89,9 +87,10 @@ class AttentionController:
     @staticmethod
     def _local_std(arr: np.ndarray, kernel: int) -> np.ndarray:
         from scipy.ndimage import uniform_filter
+
         mean = uniform_filter(arr, kernel)
-        mean_sq = uniform_filter(arr ** 2, kernel)
-        return np.sqrt(np.maximum(mean_sq - mean ** 2, 0))
+        mean_sq = uniform_filter(arr**2, kernel)
+        return np.sqrt(np.maximum(mean_sq - mean**2, 0))
 
     @staticmethod
     def _parse_candidate(candidate: Any) -> Tuple[Tuple[float, float], Optional[str], float]:
@@ -111,7 +110,7 @@ class AttentionController:
     def _is_inhibited(self, pos: Tuple[float, float]) -> bool:
         self._prune_inhibition()
         return any(
-            ((pos[0] - ix) ** 2 + (pos[1] - iy) ** 2) < self.ior_radius ** 2
+            ((pos[0] - ix) ** 2 + (pos[1] - iy) ** 2) < self.ior_radius**2
             for ix, iy, _ in self._inhibited_locations
         )
 

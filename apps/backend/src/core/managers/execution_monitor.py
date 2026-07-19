@@ -17,8 +17,6 @@ Angela Matrix Annotation:
 - M (Memory): L2 - Execution history and adaptive cache
 """
 
-from core.utils import safe_error
-
 import argparse
 import asyncio
 import logging
@@ -34,6 +32,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import psutil
 from core.system.config.magic_numbers import loop_sleep, timeout_value
+from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
 
@@ -203,7 +202,11 @@ class ExecutionMonitor:
                     creationflags=subprocess.CREATE_NO_WINDOW,
                 )
             else:  # Unix/Linux
-                subprocess.run(["echo", "test"], capture_output=True, timeout=timeout_value("terminal_test", 5.0))
+                subprocess.run(
+                    ["echo", "test"],
+                    capture_output=True,
+                    timeout=timeout_value("terminal_test", 5.0),
+                )
 
             response_time = time.time() - start_time
 
@@ -267,14 +270,14 @@ class ExecutionMonitor:
 
                 if memory_percent > self.config.memory_threshold:
                     self.logger.warning(
-                        f"High memory usage: {memory_percent:.1f}% ({memory_info.used / (1024 * 1024):.0f} MB used)"
-                        , exc_info=True
+                        f"High memory usage: {memory_percent:.1f}% ({memory_info.used / (1024 * 1024):.0f} MB used)",
+                        exc_info=True,
                     )
 
                 if disk_percent > self.config.disk_threshold:
                     self.logger.warning(
-                        f"High disk usage: {disk_percent:.1f}% ({disk_info.used / (1024 * 1024 * 1024):.1f} GB used)"
-                        , exc_info=True
+                        f"High disk usage: {disk_percent:.1f}% ({disk_info.used / (1024 * 1024 * 1024):.1f} GB used)",
+                        exc_info=True,
                     )
 
                 time.sleep(self.config.check_interval)
@@ -421,8 +424,10 @@ class ExecutionMonitor:
 
         # 設置信號處理器(Unix)或thread中斷(Windows)
         if hasattr(signal, "SIGALRM"):
+
             def _unix_handler(signum=None, frame=None) -> None:
                 raise TimeoutError(f"Operation timed out after {timeout} seconds")
+
             old_handler = signal.signal(signal.SIGALRM, _unix_handler)
             signal.alarm(int(timeout))
             try:
@@ -433,6 +438,7 @@ class ExecutionMonitor:
         else:
             # Windows: use _thread.interrupt_main() to raise in main thread
             import _thread
+
             timer = threading.Timer(timeout, lambda: _thread.interrupt_main())
             timer.daemon = True
             timer.start()
@@ -515,7 +521,9 @@ class ExecutionMonitor:
                 # 終止進程
                 process.terminate()
                 try:
-                    await asyncio.wait_for(process.wait(), timeout=timeout_value("terminal_test", 5.0))
+                    await asyncio.wait_for(
+                        process.wait(), timeout=timeout_value("terminal_test", 5.0)
+                    )
                 except asyncio.TimeoutError:
                     process.kill()
                     await process.wait()

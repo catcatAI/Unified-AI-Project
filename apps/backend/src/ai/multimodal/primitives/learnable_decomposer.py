@@ -73,8 +73,9 @@ class LearnableDecomposer:
         cache = {"x": x, "z1": z1, "h": h, "z2": z2, "sig": sig}
         return sig, cache
 
-    def decode_to_instructions(self, vec: np.ndarray,
-                                canvas_size=(128, 128)) -> DrawingInstructions:
+    def decode_to_instructions(
+        self, vec: np.ndarray, canvas_size=(128, 128)
+    ) -> DrawingInstructions:
         """Convert 263-dim vector to DrawingInstructions."""
         return DrawingInstructions.from_vector(vec, canvas_size)
 
@@ -84,41 +85,49 @@ class LearnableDecomposer:
         alpha = 1.0 / self._n_seen
         self._clip_mean = (1 - alpha) * self._clip_mean + alpha * clip_emb
         self._clip_std = np.sqrt(
-            (1 - alpha) * self._clip_std ** 2 +
-            alpha * (clip_emb - self._clip_mean) ** 2
+            (1 - alpha) * self._clip_std**2 + alpha * (clip_emb - self._clip_mean) ** 2
         )
 
-    def compute_approx_gradient(self, pred_vec: np.ndarray, target_arr: np.ndarray,
-                                 renderer, n_probe: int = 20) -> np.ndarray:
+    def compute_approx_gradient(
+        self, pred_vec: np.ndarray, target_arr: np.ndarray, renderer, n_probe: int = 20
+    ) -> np.ndarray:
         """Approximate gradient of pixel loss w.r.t. primitive params.
 
         Uses finite differences on a random subset of parameters.
         This is the key trick to handle the non-differentiable renderer.
         """
         h, w = target_arr.shape[:2]
-        base_rendered = np.array(renderer.render(
-            self.decode_to_instructions(pred_vec)), dtype=np.float32) / 255.0
+        base_rendered = (
+            np.array(renderer.render(self.decode_to_instructions(pred_vec)), dtype=np.float32)
+            / 255.0
+        )
         base_loss = np.mean((base_rendered - target_arr) ** 2)
 
         grad = np.zeros_like(pred_vec)
 
         # Probe random dimensions
-        probe_dims = np.random.choice(len(pred_vec), size=min(n_probe, len(pred_vec)), replace=False)
+        probe_dims = np.random.choice(
+            len(pred_vec), size=min(n_probe, len(pred_vec)), replace=False
+        )
         eps = 0.02  # Small perturbation
 
         for dim in probe_dims:
             # Positive perturbation
             pred_plus = pred_vec.copy()
             pred_plus[dim] = min(1.0, pred_plus[dim] + eps)
-            rendered_plus = np.array(renderer.render(
-                self.decode_to_instructions(pred_plus)), dtype=np.float32) / 255.0
+            rendered_plus = (
+                np.array(renderer.render(self.decode_to_instructions(pred_plus)), dtype=np.float32)
+                / 255.0
+            )
             loss_plus = np.mean((rendered_plus - target_arr) ** 2)
 
             # Negative perturbation
             pred_minus = pred_vec.copy()
             pred_minus[dim] = max(0.0, pred_minus[dim] - eps)
-            rendered_minus = np.array(renderer.render(
-                self.decode_to_instructions(pred_minus)), dtype=np.float32) / 255.0
+            rendered_minus = (
+                np.array(renderer.render(self.decode_to_instructions(pred_minus)), dtype=np.float32)
+                / 255.0
+            )
             loss_minus = np.mean((rendered_minus - target_arr) ** 2)
 
             # Finite difference gradient
@@ -126,8 +135,14 @@ class LearnableDecomposer:
 
         return grad
 
-    def train_step(self, clip_emb: np.ndarray, target_arr: np.ndarray,
-                   renderer, lr: float = 0.005, n_probe: int = 20) -> float:
+    def train_step(
+        self,
+        clip_emb: np.ndarray,
+        target_arr: np.ndarray,
+        renderer,
+        lr: float = 0.005,
+        n_probe: int = 20,
+    ) -> float:
         """Single training step with rendering loss.
 
         Args:
@@ -144,12 +159,14 @@ class LearnableDecomposer:
         pred_vec, cache = self.forward(clip_emb)
 
         # Compute loss
-        rendered = np.array(renderer.render(
-            self.decode_to_instructions(pred_vec)), dtype=np.float32) / 255.0
+        rendered = (
+            np.array(renderer.render(self.decode_to_instructions(pred_vec)), dtype=np.float32)
+            / 255.0
+        )
         loss = float(np.mean((rendered - target_arr) ** 2))
 
         if not np.isfinite(loss):
-            return float('inf')
+            return float("inf")
 
         # Approximate gradient in param space
         grad_params = self.compute_approx_gradient(pred_vec, target_arr, renderer, n_probe)
@@ -182,9 +199,16 @@ class LearnableDecomposer:
 
         return loss
 
-    def train(self, clip_embeddings: list, target_images: list,
-              renderer, epochs: int = 50, lr: float = 0.005,
-              n_probe: int = 15, batch_size: int = 4) -> dict:
+    def train(
+        self,
+        clip_embeddings: list,
+        target_images: list,
+        renderer,
+        epochs: int = 50,
+        lr: float = 0.005,
+        n_probe: int = 15,
+        batch_size: int = 4,
+    ) -> dict:
         """Train decomposer end-to-end with rendering loss.
 
         Args:
@@ -215,13 +239,13 @@ class LearnableDecomposer:
             n_batches = 0
 
             for start in range(0, n, batch_size):
-                batch_idx = indices[start:start + batch_size]
+                batch_idx = indices[start : start + batch_size]
                 batch_loss = 0.0
 
                 for idx in batch_idx:
                     loss = self.train_step(
-                        clip_embeddings[idx], target_arrs[idx],
-                        renderer, lr=lr, n_probe=n_probe)
+                        clip_embeddings[idx], target_arrs[idx], renderer, lr=lr, n_probe=n_probe
+                    )
                     batch_loss += loss
 
                 epoch_loss += batch_loss / len(batch_idx)

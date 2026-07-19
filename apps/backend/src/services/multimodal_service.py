@@ -79,12 +79,14 @@ class MultimodalService:
     def _get_visual_encoder(self):
         if "vision" not in self._encoders:
             from ai.multimodal.visual_encoder import VisualEncoder
+
             self._encoders["vision"] = VisualEncoder(feature_dim=self.VISION_DIM)
         return self._encoders["vision"]
 
     def _get_audio_encoder(self):
         if "audio" not in self._encoders:
             from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
+
             self._encoders["audio"] = AudioSpectralEncoder(feature_dim=self.AUDIO_DIM)
         return self._encoders["audio"]
 
@@ -94,6 +96,7 @@ class MultimodalService:
                 VisualDecoder,
                 load_default_visual_decoder_weights,
             )
+
             self._decoders["vdecoder"] = VisualDecoder()
             load_default_visual_decoder_weights(self._decoders["vdecoder"])
         return self._decoders["vdecoder"]
@@ -104,6 +107,7 @@ class MultimodalService:
                 AudioWaveformDecoder,
                 load_default_audio_decoder_weights,
             )
+
             self._decoders["adecoder"] = AudioWaveformDecoder()
             load_default_audio_decoder_weights(self._decoders["adecoder"])
         return self._decoders["adecoder"]
@@ -111,18 +115,21 @@ class MultimodalService:
     def _get_latent_space(self):
         if self._latent_space is None:
             from ai.multimodal.shared_latent_space import get_shared_latent_space
+
             self._latent_space = get_shared_latent_space(latent_dim=self.LATENT_DIM)
         return self._latent_space
 
     def _get_bridge(self):
         if self._bridge is None:
             from ai.multimodal.multimodal_bridge import MultimodalBridge
+
             self._bridge = MultimodalBridge()
         return self._bridge
 
     def _get_rag_engine(self):
         if self._rag_engine is None:
             from ai.multimodal.multimodal_rag_engine import MultimodalRAGEngine
+
             self._rag_engine = MultimodalRAGEngine()
         return self._rag_engine
 
@@ -130,6 +137,7 @@ class MultimodalService:
         """Get or create the VisionPipeline (P31)."""
         if self._vision_pipeline is None:
             from ai.vision.vision_pipeline import VisionPipeline
+
             self._vision_pipeline = VisionPipeline()
         return self._vision_pipeline
 
@@ -137,6 +145,7 @@ class MultimodalService:
         """Get or create the VisionQualityMonitor (P31)."""
         if self._quality_monitor is None:
             from ai.vision.quality_monitor import VisionQualityMonitor
+
             self._quality_monitor = VisionQualityMonitor()
         return self._quality_monitor
 
@@ -144,6 +153,7 @@ class MultimodalService:
         """Get or create the AudioPipeline (P32)."""
         if self._audio_pipeline is None:
             from ai.audio.audio_pipeline import AudioPipeline
+
             self._audio_pipeline = AudioPipeline()
         return self._audio_pipeline
 
@@ -151,6 +161,7 @@ class MultimodalService:
         """Get or create the AudioQualityMonitor (P32)."""
         if self._audio_quality_monitor is None:
             from ai.audio.quality_monitor import AudioQualityMonitor
+
             self._audio_quality_monitor = AudioQualityMonitor()
         return self._audio_quality_monitor
 
@@ -160,6 +171,7 @@ class MultimodalService:
         """Get or create the ContinuousMultimodalLearning instance."""
         if self._cml is None:
             from ai.multimodal.continuous_multimodal_learning import ContinuousMultimodalLearning
+
             self._cml = ContinuousMultimodalLearning(
                 buffer_max=64,
                 auto_train_threshold=32,
@@ -172,6 +184,7 @@ class MultimodalService:
         """Get or create the MultimodalMemoryStore instance."""
         if self._memory_store is None:
             from ai.multimodal.multimodal_memory import MultimodalMemoryStore
+
             self._memory_store = MultimodalMemoryStore(
                 store_dir=None,  # Will be set if data/ dir is available
                 max_entries=5000,
@@ -184,6 +197,7 @@ class MultimodalService:
         """Get or create the DualEncoderRouter (P42)."""
         if self._dual_encoder is None:
             from ai.multimodal.dual_encoder_router import DualEncoderRouter
+
             self._dual_encoder = DualEncoderRouter()
         return self._dual_encoder
 
@@ -216,8 +230,9 @@ class MultimodalService:
 
     # --- CML-integrated encode ---
 
-    async def cml_encode(self, data: bytes, modality: str,
-                         item_id: Optional[str] = None) -> Dict[str, Any]:
+    async def cml_encode(
+        self, data: bytes, modality: str, item_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Encode with automatic CML recording.
 
         Same as encode() but also records the example in CML buffer
@@ -249,8 +264,7 @@ class MultimodalService:
                 result["cml_trained"] = train_result.get("status") == "completed"
         return result
 
-    async def cml_quality_feedback(self, modality: str,
-                                   metrics: Dict[str, Any]) -> None:
+    async def cml_quality_feedback(self, modality: str, metrics: Dict[str, Any]) -> None:
         """Record quality feedback to CML."""
         self._get_cml().record_quality(metrics)
 
@@ -277,8 +291,9 @@ class MultimodalService:
         store = self._get_memory_store()
         return await store.store_from_item(item_id, item)
 
-    async def memory_search(self, query_item_id: str, top_k: int = 5,
-                            modality_filter: Optional[str] = None) -> List[Dict[str, Any]]:
+    async def memory_search(
+        self, query_item_id: str, top_k: int = 5, modality_filter: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """Search memory by latent similarity to a registered item."""
         async with self._items_lock:
             item = self._registered_items.get(query_item_id)
@@ -300,6 +315,7 @@ class MultimodalService:
     def _get_pipeline(self):
         if self._pipeline is None:
             from ai.multimodal.training_pipeline import FullTrainingPipeline
+
             self._pipeline = FullTrainingPipeline(
                 latent_space=self._get_latent_space(),
                 visual_encoder=self._get_visual_encoder(),
@@ -318,14 +334,24 @@ class MultimodalService:
             if self._initial_training_started:
                 return
             try:
-                weights_path = self._pipeline.DEFAULT_WEIGHTS_PATH
+                from ai.multimodal.training_pipeline import DEFAULT_WEIGHTS_PATH
+                weights_path = DEFAULT_WEIGHTS_PATH
                 if not os.path.exists(weights_path):
                     self._initial_training_started = True
-                    t = threading.Thread(target=self._pipeline.run, kwargs={
-                        "contrastive_epochs": 10, "recon_epochs": 10, "lr": 0.01,
-                    }, daemon=True)
+                    t = threading.Thread(
+                        target=self._pipeline.run,
+                        kwargs={
+                            "contrastive_epochs": 10,
+                            "recon_epochs": 10,
+                            "lr": 0.01,
+                        },
+                        daemon=True,
+                    )
                     t.start()
-                    logger.info("[Multimodal] No trained weights found at %s — background training started", weights_path)
+                    logger.info(
+                        "[Multimodal] No trained weights found at %s — background training started",
+                        weights_path,
+                    )
                 else:
                     self._initial_training_started = True
             except Exception as e:
@@ -333,8 +359,9 @@ class MultimodalService:
 
     # --- Encoding ---
 
-    async def encode(self, data: bytes, modality: str,
-                     item_id: Optional[str] = None) -> Dict[str, Any]:
+    async def encode(
+        self, data: bytes, modality: str, item_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Encode data into a feature vector and latent embedding.
 
         Args:
@@ -350,8 +377,9 @@ class MultimodalService:
             timeout=self.ENCODE_TIMEOUT,
         )
 
-    async def _encode_impl(self, data: bytes, modality: str,
-                           item_id: Optional[str] = None) -> Dict[str, Any]:
+    async def _encode_impl(
+        self, data: bytes, modality: str, item_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         t0 = time.time()
         result: Dict[str, Any] = {"modality": modality}
         if not data:
@@ -383,7 +411,7 @@ class MultimodalService:
             else:
                 return {"modality": modality, "error": f"Unknown modality: {modality}"}
 
-            if vec is None or (hasattr(vec, 'size') and vec.size == 0):
+            if vec is None or (hasattr(vec, "size") and vec.size == 0):
                 return {"modality": modality, "error": "Encoding returned empty feature vector"}
 
             # Ensure latent is projected through shared latent space
@@ -397,28 +425,46 @@ class MultimodalService:
             async with self._items_lock:
                 self._registered_items[item_id] = {
                     "modality": modality,
-                    "feature_vector": vec.tolist() if hasattr(vec, 'tolist') else (latent.tolist() if isinstance(vec, np.ndarray) else vec),
-                    "latent": latent.tolist() if hasattr(latent, 'tolist') else latent,
+                    "feature_vector": (
+                        vec.tolist()
+                        if hasattr(vec, "tolist")
+                        else (latent.tolist() if isinstance(vec, np.ndarray) else vec)
+                    ),
+                    "latent": latent.tolist() if hasattr(latent, "tolist") else latent,
                     "timestamp": t0,
                 }
 
-            result.update({
-                "item_id": item_id,
-                "latent": (latent.tolist() if hasattr(latent, 'tolist') else latent),
-                "feature_vector": (vec.tolist() if hasattr(vec, 'tolist') else vec),
-                "dim": len(vec) if hasattr(vec, '__len__') else 0,
-                "time_ms": round((time.time() - t0) * 1000, 1),
-            })
+            result.update(
+                {
+                    "item_id": item_id,
+                    "latent": (latent.tolist() if hasattr(latent, "tolist") else latent),
+                    "feature_vector": (vec.tolist() if hasattr(vec, "tolist") else vec),
+                    "dim": len(vec) if hasattr(vec, "__len__") else 0,
+                    "time_ms": round((time.time() - t0) * 1000, 1),
+                }
+            )
             # Feed into continuous multimodal learning
             try:
                 cml = self._get_cml()
                 quality = 0.0
                 if modality == "vision":
-                    quality = self._get_quality_monitor().last_score() if hasattr(self._get_quality_monitor(), 'last_score') else 0.0
+                    quality = (
+                        self._get_quality_monitor().last_score()
+                        if hasattr(self._get_quality_monitor(), "last_score")
+                        else 0.0
+                    )
                 elif modality == "audio":
-                    quality = self._get_audio_quality_monitor().last_score() if hasattr(self._get_audio_quality_monitor(), 'last_score') else 0.0
-                cml.record_encode(modality, vec.tolist() if hasattr(vec, 'tolist') else vec,
-                                  latent.tolist() if hasattr(latent, 'tolist') else latent, quality)
+                    quality = (
+                        self._get_audio_quality_monitor().last_score()
+                        if hasattr(self._get_audio_quality_monitor(), "last_score")
+                        else 0.0
+                    )
+                cml.record_encode(
+                    modality,
+                    vec.tolist() if hasattr(vec, "tolist") else vec,
+                    latent.tolist() if hasattr(latent, "tolist") else latent,
+                    quality,
+                )
                 if cml.should_train():
                     cml.micro_train()
             except Exception as cml_e:
@@ -430,8 +476,9 @@ class MultimodalService:
 
     # --- Decoding ---
 
-    async def decode(self, item_id: str, modality: str,
-                     output_format: str = "base64") -> Dict[str, Any]:
+    async def decode(
+        self, item_id: str, modality: str, output_format: str = "base64"
+    ) -> Dict[str, Any]:
         """Decode a previously encoded item's latent back to its modality.
 
         Args:
@@ -447,8 +494,9 @@ class MultimodalService:
             timeout=self.DECODE_TIMEOUT,
         )
 
-    async def _decode_impl(self, item_id: str, modality: str,
-                           output_format: str = "base64") -> Dict[str, Any]:
+    async def _decode_impl(
+        self, item_id: str, modality: str, output_format: str = "base64"
+    ) -> Dict[str, Any]:
         t0 = time.time()
         result: Dict[str, Any] = {
             "item_id": item_id,
@@ -475,11 +523,13 @@ class MultimodalService:
                     result["decoded"] = pil_img
                 else:
                     import base64
+
                     buf = io.BytesIO()
                     pil_img.save(buf, format="PNG")
                     b64 = base64.b64encode(buf.getvalue()).decode("ascii")
                     result["decoded"] = f"data:image/png;base64,{b64}"
                 from ai.multimodal.quality_metrics import ssim
+
                 original = item.get("feature_vector")
                 if original is not None:
                     result["quality"] = {"ssim": 0.0}  # feature-level no ssim
@@ -493,10 +543,12 @@ class MultimodalService:
                 else:
                     import base64
                     import struct
+
                     sample_rate = 16000
                     int16 = (np.clip(wav, -1.0, 1.0) * 32767).astype(np.int16)
                     buf = io.BytesIO()
                     import wave
+
                     with wave.open(buf, "wb") as wf:
                         wf.setnchannels(1)
                         wf.setsampwidth(2)
@@ -550,8 +602,9 @@ class MultimodalService:
 
     # --- Retrieval ---
 
-    async def retrieve(self, query_id: str, top_k: int = 5,
-                       modality_filter: Optional[str] = None) -> List[Dict[str, Any]]:
+    async def retrieve(
+        self, query_id: str, top_k: int = 5, modality_filter: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """Retrieve top-k similar entries for a given query item.
 
         Uses MultimodalRAGEngine to search across indexed modalities.
@@ -563,8 +616,9 @@ class MultimodalService:
             timeout=self.RETRIEVE_TIMEOUT,
         )
 
-    async def _retrieve_impl(self, query_id: str, top_k: int = 5,
-                             modality_filter: Optional[str] = None) -> List[Dict[str, Any]]:
+    async def _retrieve_impl(
+        self, query_id: str, top_k: int = 5, modality_filter: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         try:
             async with self._items_lock:
                 item = self._registered_items.get(query_id)
@@ -585,8 +639,9 @@ class MultimodalService:
 
     # --- Training ---
 
-    async def train(self, mode: str = "full", epochs: int = 5,
-                    lr: float = 0.01, use_real: bool = False) -> Dict[str, Any]:
+    async def train(
+        self, mode: str = "full", epochs: int = 5, lr: float = 0.01, use_real: bool = False
+    ) -> Dict[str, Any]:
         """Run training pipeline.
 
         Args:
@@ -602,8 +657,9 @@ class MultimodalService:
             timeout=self.TRAIN_TIMEOUT,
         )
 
-    async def _train_impl(self, mode: str = "full", epochs: int = 5,
-                          lr: float = 0.01, use_real: bool = False) -> Dict[str, Any]:
+    async def _train_impl(
+        self, mode: str = "full", epochs: int = 5, lr: float = 0.01, use_real: bool = False
+    ) -> Dict[str, Any]:
         t0 = time.time()
         result: Dict[str, Any] = {
             "mode": mode,
@@ -614,6 +670,7 @@ class MultimodalService:
             if use_real:
                 try:
                     from ai.multimodal.data_loader import RealDataProvider
+
                     dp = RealDataProvider()
                     if dp.has_data():
                         pipeline.run_on_real(
@@ -647,9 +704,9 @@ class MultimodalService:
 
     # --- Evaluation ---
 
-    async def evaluate(self, item_id: Optional[str] = None,
-                       modality: str = "vision",
-                       n_samples: int = 5) -> Dict[str, Any]:
+    async def evaluate(
+        self, item_id: Optional[str] = None, modality: str = "vision", n_samples: int = 5
+    ) -> Dict[str, Any]:
         """Evaluate generation quality.
 
         Args:
@@ -664,9 +721,9 @@ class MultimodalService:
             timeout=self.EVALUATE_TIMEOUT,
         )
 
-    async def _evaluate_impl(self, item_id: Optional[str] = None,
-                             modality: str = "vision",
-                             n_samples: int = 5) -> Dict[str, Any]:
+    async def _evaluate_impl(
+        self, item_id: Optional[str] = None, modality: str = "vision", n_samples: int = 5
+    ) -> Dict[str, Any]:
         result: Dict[str, Any] = {}
         try:
             if item_id:
@@ -703,8 +760,7 @@ class MultimodalService:
 
     # --- Generation ---
 
-    async def generate(self, source_item_id: str,
-                       target_modality: str) -> Dict[str, Any]:
+    async def generate(self, source_item_id: str, target_modality: str) -> Dict[str, Any]:
         """Cross-modal generation: convert source item to target modality.
 
         E.g., vision→audio (image describes a scene → generate ambient sound)
@@ -717,8 +773,7 @@ class MultimodalService:
             timeout=self.GENERATE_TIMEOUT,
         )
 
-    async def _generate_impl(self, source_item_id: str,
-                             target_modality: str) -> Dict[str, Any]:
+    async def _generate_impl(self, source_item_id: str, target_modality: str) -> Dict[str, Any]:
         result: Dict[str, Any] = {
             "source_item_id": source_item_id,
             "target_modality": target_modality,
@@ -740,6 +795,7 @@ class MultimodalService:
                 import base64
                 import struct
                 import wave
+
                 int16 = (np.clip(audio, -1.0, 1.0) * 32767).astype(np.int16)
                 buf = io.BytesIO()
                 with wave.open(buf, "wb") as wf:
@@ -756,6 +812,7 @@ class MultimodalService:
                 buf = io.BytesIO()
                 Image.fromarray(img).save(buf, format="PNG")
                 import base64
+
                 b64 = base64.b64encode(buf.getvalue()).decode("ascii")
                 result["generated"] = f"data:image/png;base64,{b64}"
                 result["quality"] = {"ssim": 0.0}
@@ -817,6 +874,7 @@ class MultimodalService:
         """Get or create the MultimodalErrorRecovery instance."""
         if self._error_recovery is None:
             from services.multimodal_error_recovery import MultimodalErrorRecovery
+
             self._error_recovery = MultimodalErrorRecovery(self)
         return self._error_recovery
 
@@ -824,6 +882,7 @@ class MultimodalService:
         """Get or create the MultimodalStatePersistence instance."""
         if self._state_persistence is None:
             from services.multimodal_state_persistence import MultimodalStatePersistence
+
             self._state_persistence = MultimodalStatePersistence(self)
         return self._state_persistence
 
@@ -835,26 +894,34 @@ class MultimodalService:
         """
         if self._mm_quality_monitor is None:
             from services.multimodal_quality_monitor import MultimodalQualityMonitor
+
             self._mm_quality_monitor = MultimodalQualityMonitor(self)
         return self._mm_quality_monitor
 
     # --- P37: Error recovery operations ---
 
-    async def encode_with_retry(self, data: bytes, modality: str,
-                                item_id: Optional[str] = None) -> Dict[str, Any]:
+    async def encode_with_retry(
+        self, data: bytes, modality: str, item_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Encode with automatic retry on failure."""
         return await self._get_error_recovery().encode_with_retry(data, modality, item_id)
 
-    async def decode_with_fallback(self, item_id: str, modality: str,
-                                   output_format: str = "base64") -> Dict[str, Any]:
+    async def decode_with_fallback(
+        self, item_id: str, modality: str, output_format: str = "base64"
+    ) -> Dict[str, Any]:
         """Decode with text fallback on failure."""
         return await self._get_error_recovery().decode_with_fallback(
             item_id, modality, output_format
         )
 
-    async def train_with_checkpoint(self, mode: str = "full", epochs: int = 5,
-                                    lr: float = 0.01, use_real: bool = False,
-                                    checkpoint_label: Optional[str] = None) -> Dict[str, Any]:
+    async def train_with_checkpoint(
+        self,
+        mode: str = "full",
+        epochs: int = 5,
+        lr: float = 0.01,
+        use_real: bool = False,
+        checkpoint_label: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Train with pre-training checkpoint for resumability."""
         return await self._get_error_recovery().train_with_checkpoint(
             mode, epochs, lr, use_real, checkpoint_label
@@ -938,7 +1005,7 @@ class MultimodalService:
         try:
             # P33: Check vision pipeline health
             vp = self._get_vision_pipeline()
-            if hasattr(vp, 'get_stats'):
+            if hasattr(vp, "get_stats"):
                 status["vision_pipeline"] = vp.get_stats()
         except Exception:
             logger.debug("vision pipeline health check failed", exc_info=True)

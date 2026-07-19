@@ -206,11 +206,17 @@ class BudgetScheduler:
         """Get time budget table."""
         cfg = self.config.get("time_budget_table", {})
         return {
-            HardwareTier.EXTREME.value: cfg.get("extreme", DEFAULT_TIME_BUDGET_TABLE[HardwareTier.EXTREME]),
+            HardwareTier.EXTREME.value: cfg.get(
+                "extreme", DEFAULT_TIME_BUDGET_TABLE[HardwareTier.EXTREME]
+            ),
             HardwareTier.HIGH.value: cfg.get("high", DEFAULT_TIME_BUDGET_TABLE[HardwareTier.HIGH]),
-            HardwareTier.MEDIUM.value: cfg.get("medium", DEFAULT_TIME_BUDGET_TABLE[HardwareTier.MEDIUM]),
+            HardwareTier.MEDIUM.value: cfg.get(
+                "medium", DEFAULT_TIME_BUDGET_TABLE[HardwareTier.MEDIUM]
+            ),
             HardwareTier.LOW.value: cfg.get("low", DEFAULT_TIME_BUDGET_TABLE[HardwareTier.LOW]),
-            HardwareTier.CRITICAL.value: cfg.get("critical", DEFAULT_TIME_BUDGET_TABLE[HardwareTier.CRITICAL]),
+            HardwareTier.CRITICAL.value: cfg.get(
+                "critical", DEFAULT_TIME_BUDGET_TABLE[HardwareTier.CRITICAL]
+            ),
         }
 
     def schedule(self, hw_score: float, tier: HardwareTier, energy: float = 0.5) -> int:
@@ -240,9 +246,13 @@ class BudgetScheduler:
 
         # 8D energy correction
         if energy < threshold_value("ai.neuro_auto_selector.energy_low", 0.3):
-            budget = int(budget * behavior_threshold("ai.neuro_auto_selector.energy_low_factor", 0.6))
+            budget = int(
+                budget * behavior_threshold("ai.neuro_auto_selector.energy_low_factor", 0.6)
+            )
         elif energy > threshold_value("ai.neuro_auto_selector.energy_high", 0.7):
-            budget = int(budget * behavior_threshold("ai.neuro_auto_selector.energy_high_factor", 1.1))
+            budget = int(
+                budget * behavior_threshold("ai.neuro_auto_selector.energy_high_factor", 1.1)
+            )
 
         # Clamp
         min_budget = self.config.get("min_time_budget_ms", 5000)
@@ -327,7 +337,9 @@ class StateInterpreter:
                 eta_data = full.get("eta", {})
                 result["eta_success_rate"] = float(eta_data.get("success_rate", 0.85))
             except (KeyError, TypeError, ValueError, AttributeError) as e:
-                logger.warning(f"Failed to get eta success_rate from export_for_llm: {e}", exc_info=True)
+                logger.warning(
+                    f"Failed to get eta success_rate from export_for_llm: {e}", exc_info=True
+                )
         except (KeyError, TypeError, ValueError, AttributeError) as e:
             logger.warning(f"Failed to get state dict from state matrix: {e}", exc_info=True)
 
@@ -374,7 +386,9 @@ class StateInterpreter:
 
         # alpha.energy low → reduce resource consumption
         if energy < threshold_value("ai.neuro_auto_selector.energy_low", 0.3):
-            decision.time_budget_ms = min(budget, limit_value("ai.neuro_auto_selector.energy_low_budget", 10000))
+            decision.time_budget_ms = min(
+                budget, limit_value("ai.neuro_auto_selector.energy_low_budget", 10000)
+            )
             decision.use_thinking = False
             decision.reason = "low_energy_economy_mode"
 
@@ -389,8 +403,13 @@ class StateInterpreter:
 
         # eta.success_rate low → be conservative
         if success_rate < threshold_value("ai.neuro_auto_selector.success_rate_low", 0.6):
-            decision.time_budget_ms = min(decision.time_budget_ms, limit_value("ai.neuro_auto_selector.success_rate_budget", 15000))
-            decision.max_tokens = min(decision.max_tokens, limit_value("ai.neuro_auto_selector.success_rate_tokens", 256))
+            decision.time_budget_ms = min(
+                decision.time_budget_ms,
+                limit_value("ai.neuro_auto_selector.success_rate_budget", 15000),
+            )
+            decision.max_tokens = min(
+                decision.max_tokens, limit_value("ai.neuro_auto_selector.success_rate_tokens", 256)
+            )
 
         return decision
 
@@ -433,7 +452,9 @@ class LearnRecorder:
             "success": success,
         }
         self._pending.append(record)
-        logger.debug(f"[LearnRecorder] Recorded: {record['backend']}/{record['model']} success={success}")
+        logger.debug(
+            f"[LearnRecorder] Recorded: {record['backend']}/{record['model']} success={success}"
+        )
 
         if len(self._pending) >= batch_value("ai.neuro_auto_selector.flush_batch", 100):
             self._flush()
@@ -474,8 +495,9 @@ class NeuroAutoSelector:
         Phase 6: LearnRecorder → record decision
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None,
-                 meta_controller: Optional[Any] = None):
+    def __init__(
+        self, config: Optional[Dict[str, Any]] = None, meta_controller: Optional[Any] = None
+    ):
         self.config = config or {}
         self.hardware = HardwareAnalyzer()
         self.budget_scheduler = BudgetScheduler(self.config.get("auto_mode", {}))
@@ -532,7 +554,9 @@ class NeuroAutoSelector:
         decision.load_factor = getattr(self.budget_scheduler, "_load_factor", 1.0)
 
         # Phase 5: Model selection
-        if decision.time_budget_ms < self.config.get("auto_mode", {}).get("min_time_budget_ms", 5000):
+        if decision.time_budget_ms < self.config.get("auto_mode", {}).get(
+            "min_time_budget_ms", 5000
+        ):
             return AutoDecision.neuroblender_fallback(
                 f"Time budget too low ({decision.time_budget_ms}ms < 5000ms)"
             )
@@ -573,13 +597,14 @@ class NeuroAutoSelector:
 
         # Load intent cost map from config
         intent_cost_map = (
-            self.config.get("auto_mode", {}).get("intent_cost", {})
-            or DEFAULT_INTENT_COST
+            self.config.get("auto_mode", {}).get("intent_cost", {}) or DEFAULT_INTENT_COST
         )
         intent_cost = intent_cost_map.get(intent, 0.4)
 
         # Message length cost
-        msg_len_cost = min(len(user_message) / limit_value("ai.neuro_auto_selector.msg_len_divisor", 2000), 1.0) * behavior_threshold("ai.neuro_auto_selector.msg_len_weight", 0.2)
+        msg_len_cost = min(
+            len(user_message) / limit_value("ai.neuro_auto_selector.msg_len_divisor", 2000), 1.0
+        ) * behavior_threshold("ai.neuro_auto_selector.msg_len_weight", 0.2)
 
         # Apply MetaController calibration adjustments to thresholds
         reasoning_threshold = threshold_value("ai.neuro_auto_selector.reasoning_threshold", 0.6)
@@ -605,13 +630,22 @@ class NeuroAutoSelector:
                 )
 
         # Total demand score
-        demand = min(intent_cost + complexity * behavior_threshold("ai.neuro_auto_selector.complexity_weight", 0.3) + msg_len_cost, 1.0)
+        demand = min(
+            intent_cost
+            + complexity * behavior_threshold("ai.neuro_auto_selector.complexity_weight", 0.3)
+            + msg_len_cost,
+            1.0,
+        )
 
         return TaskBudget(
             demand_score=demand,
             needs_reasoning=demand > reasoning_threshold or intent in ("math", "reasoning"),
             min_quality=intent_cost > quality_threshold,
-            preferred_context_window=batch_value("ai.neuro_auto_selector.high_demand_context", 8192) if demand > high_demand_threshold else batch_value("ai.neuro_auto_selector.normal_context", 4096),
+            preferred_context_window=(
+                batch_value("ai.neuro_auto_selector.high_demand_context", 8192)
+                if demand > high_demand_threshold
+                else batch_value("ai.neuro_auto_selector.normal_context", 4096)
+            ),
         )
 
     # ── Phase 5: Model Selection ────────────────────────────────────────────
@@ -684,7 +718,9 @@ class NeuroAutoSelector:
             adj = self._meta_controller.get_threshold_adjustment(f"neuro_auto_selector/{backend}")
             scored.append((adj, backend))
         scored.sort(key=lambda x: -x[0])
-        logger.debug(f"[NeuroAutoSelector] MetaController history: {[(b, f'{a:.2f}') for a, b in scored]}")
+        logger.debug(
+            f"[NeuroAutoSelector] MetaController history: {[(b, f'{a:.2f}') for a, b in scored]}"
+        )
         return [b for _, b in scored]
 
     def _apply_force_backend(self, decision: AutoDecision, force: str) -> None:
@@ -711,7 +747,10 @@ class NeuroAutoSelector:
         ram = hw_details.get("ram_total_gb", 0)
         vram = hw_details.get("vram_mb", 0)
         accelerator = hw_details.get("accelerator_type", "none")
-        return ram >= limit_value("ai.neuro_auto_selector.local_ram_min", 4) and (vram >= limit_value("ai.neuro_auto_selector.local_vram_min", 2048) or accelerator != "none")
+        return ram >= limit_value("ai.neuro_auto_selector.local_ram_min", 4) and (
+            vram >= limit_value("ai.neuro_auto_selector.local_vram_min", 2048)
+            or accelerator != "none"
+        )
 
     def _select_local(
         self, decision: AutoDecision, hw_details: Dict[str, Any], task: TaskBudget
@@ -793,7 +832,9 @@ class NeuroAutoSelector:
                         except ValueError:
                             logger.warning("Invalid AutoBackendChoice name", exc_info=True)
                 except (ConnectionError, TimeoutError, OSError):
-                    logger.warning("Failed to check backend health for %s", backend_type, exc_info=True)
+                    logger.warning(
+                        "Failed to check backend health for %s", backend_type, exc_info=True
+                    )
                     continue
         except (ImportError, ConnectionError, RuntimeError) as e:
             logger.warning(f"Failed to list available providers: {e}", exc_info=True)

@@ -6,12 +6,12 @@ import time
 
 import aiohttp
 from core.interfaces.protocols import LLMResponse
-from core.utils import safe_error
 from core.system.config.network_defaults import (
     ANTHROPIC_API_BASE,
     ANTHROPIC_TIMEOUT,
     DEFAULT_ANTHROPIC_MODEL,
 )
+from core.utils import safe_error
 
 from .base import BaseLLMBackend
 
@@ -21,7 +21,13 @@ logger = logging.getLogger(__name__)
 class AnthropicAPIBackend(BaseLLMBackend):
     """Anthropic API 後端 (Claude 系列)"""
 
-    def __init__(self, api_key: str, base_url: str = ANTHROPIC_API_BASE, model: str = DEFAULT_ANTHROPIC_MODEL, timeout: float = ANTHROPIC_TIMEOUT):
+    def __init__(
+        self,
+        api_key: str,
+        base_url: str = ANTHROPIC_API_BASE,
+        model: str = DEFAULT_ANTHROPIC_MODEL,
+        timeout: float = ANTHROPIC_TIMEOUT,
+    ):
         super().__init__()
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
@@ -59,16 +65,23 @@ class AnthropicAPIBackend(BaseLLMBackend):
                 if response.status == 200:
                     data = await response.json()
                     text = data.get("content", [{}])[0].get("text", "")
-                    tokens = data.get("usage", {}).get("input_tokens", 0) + data.get("usage", {}).get("output_tokens", 0)
+                    tokens = data.get("usage", {}).get("input_tokens", 0) + data.get(
+                        "usage", {}
+                    ).get("output_tokens", 0)
                     return LLMResponse(
-                        text=text, backend="anthropic", model=self.model,
-                        tokens_used=tokens, response_time_ms=(time.time() - start_time) * 1000,
+                        text=text,
+                        backend="anthropic",
+                        model=self.model,
+                        tokens_used=tokens,
+                        response_time_ms=(time.time() - start_time) * 1000,
                         confidence=0.95,
                     )
                 else:
                     text = await response.text()
                     return LLMResponse(
-                        text="", backend="anthropic", model=self.model,
+                        text="",
+                        backend="anthropic",
+                        model=self.model,
                         error=f"HTTP {response.status}: {text[:200]}",
                     )
         except Exception as e:

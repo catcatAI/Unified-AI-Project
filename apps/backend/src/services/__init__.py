@@ -33,7 +33,10 @@ _LAZY_SERVICES: dict = {
     "CrossModalQualityDashboard": ("services.cross_modal_quality", "CrossModalQualityDashboard"),
     "MultimodalQualityMonitor": ("services.multimodal_quality_monitor", "MultimodalQualityMonitor"),
     "MultimodalErrorRecovery": ("services.multimodal_error_recovery", "MultimodalErrorRecovery"),
-    "MultimodalStatePersistence": ("services.multimodal_state_persistence", "MultimodalStatePersistence"),
+    "MultimodalStatePersistence": (
+        "services.multimodal_state_persistence",
+        "MultimodalStatePersistence",
+    ),
     "HotReloadService": ("services.hot_reload_service", "HotReloadService"),
     "MainApiServer": ("services.main_api_server", "MainApiServer"),
     "SystemMetricsManager": ("services.main_api_server", "SystemMetricsManager"),
@@ -46,6 +49,7 @@ _warned: set = set()
 
 class _ServicesSentinel:
     """Sentinel for test patch compatibility."""
+
     _warned: set = set()
 
     def __init__(self, name: str) -> None:

@@ -26,7 +26,7 @@ class BaseLLMBackend(ABC):
 
     async def close(self) -> None:
         """Close the HTTP session. Call during shutdown."""
-        session = getattr(self, '_session', None)
+        session = getattr(self, "_session", None)
         if session and not session.closed:
             await session.close()
             self._session = None

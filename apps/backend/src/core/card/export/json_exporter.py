@@ -40,7 +40,9 @@ class JSONExporter:
             return False
 
     def export_zip(
-        self, cards: List[Card], zip_path: str,
+        self,
+        cards: List[Card],
+        zip_path: str,
         image_paths: Optional[Dict[str, str]] = None,
     ) -> bool:
         """Log a diagnostic message."""
@@ -82,7 +84,11 @@ class JSONExporter:
                 for r in card.social_distance
             ],
             "history_events": [
-                {"timestamp": e.timestamp.isoformat(), "title": e.title, "description": e.description}
+                {
+                    "timestamp": e.timestamp.isoformat(),
+                    "title": e.title,
+                    "description": e.description,
+                }
                 for e in card.history_events
             ],
             "conflicts": [

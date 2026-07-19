@@ -50,7 +50,7 @@ class DataAnalysisAgent:
         request_id = task_payload.get("request_id", "")
         cap_name = capability_id_filter
         if self.agent_id and cap_name.startswith(self.agent_id + "_"):
-            cap_name = cap_name[len(self.agent_id) + 1:]
+            cap_name = cap_name[len(self.agent_id) + 1 :]
         if "_v" in cap_name:
             cap_name = cap_name.rsplit("_v", 1)[0]
         result_payload = {"request_id": request_id}
@@ -80,7 +80,7 @@ class DataAnalysisAgent:
                         mean = sum(numeric) / len(numeric)
                         if len(numeric) > 1:
                             variance = sum((x - mean) ** 2 for x in numeric) / (len(numeric) - 1)
-                            stdev = variance ** 0.5
+                            stdev = variance**0.5
                         else:
                             stdev = 0.0
                         descriptive_stats[key] = {"mean": mean, "stdev": stdev}
@@ -133,9 +133,15 @@ class DataAnalysisAgent:
                     "count": 1,
                 }
         logger.info(f"analyze_dataset: {len(data)} rows, {len(stats)} numeric fields")
-        return {"status": "success", "message": f"Analyzed {len(data)} rows with {len(stats)} numeric fields", "stats": stats}
+        return {
+            "status": "success",
+            "message": f"Analyzed {len(data)} rows with {len(stats)} numeric fields",
+            "stats": stats,
+        }
 
-    def generate_report(self, data: List[Dict[str, Any]], report_type: str = "summary") -> Dict[str, Any]:
+    def generate_report(
+        self, data: List[Dict[str, Any]], report_type: str = "summary"
+    ) -> Dict[str, Any]:
         """Generate a report from the dataset."""
         if not data:
             return {"status": "error", "message": "No data provided"}
@@ -155,7 +161,11 @@ class DataAnalysisAgent:
     def find_correlations(self, data: List[Dict[str, Any]], columns: List[str]) -> Dict[str, Any]:
         """Find correlations between specified columns in the dataset."""
         if not data or len(columns) < 2:
-            return {"status": "error", "message": "Need data and at least 2 columns", "correlations": []}
+            return {
+                "status": "error",
+                "message": "Need data and at least 2 columns",
+                "correlations": [],
+            }
         series = {col: [] for col in columns}
         for row in data:
             for col in columns:
@@ -182,4 +192,3 @@ class DataAnalysisAgent:
             "message": f"Found {len(correlations)} correlations",
             "correlations": correlations,
         }
-

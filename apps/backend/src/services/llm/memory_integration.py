@@ -49,9 +49,7 @@ def _load_memory_modules() -> str:
         _MEMORY_ENHANCED = True
         logger.info("Memory modules loaded for memory integration")
     except ImportError as e:
-        logger.warning(
-            "Memory modules not available for memory integration: %s", e, exc_info=True
-        )
+        logger.warning("Memory modules not available for memory integration: %s", e, exc_info=True)
         _MEMORY_ENHANCED = False
 
     return _MEMORY_ENHANCED
@@ -87,7 +85,7 @@ class MemoryIntegration:
         from core.interfaces.protocols import ChatResponse
 
         try:
-            if not hasattr(self._svc, 'memory_manager') or self._svc.memory_manager is None:
+            if not hasattr(self._svc, "memory_manager") or self._svc.memory_manager is None:
                 return None
 
             results = await self._svc.memory_manager.retrieve_response_templates(

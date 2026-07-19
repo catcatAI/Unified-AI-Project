@@ -88,7 +88,9 @@ class FallbackConfigLoader:
                 self._config = self._merge_configs(self.DEFAULT_CONFIG, file_config)
                 logger.info(f"已加载配置文件: {self.config_path}")
 
-            except Exception as e:  # broad exception acceptable: YAML parsing may fail with various errors
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: YAML parsing may fail with various errors
                 logger.error(f"加载配置文件失败: {e}", exc_info=True)
                 self._config = self.DEFAULT_CONFIG.copy()
         else:
@@ -153,7 +155,9 @@ class FallbackConfigLoader:
 
             logger.info(f"配置已保存到: {save_path}")
 
-        except Exception as e:  # broad exception acceptable: file/directory operations may fail with various errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: file/directory operations may fail with various errors
             logger.error(f"保存配置失败: {e}", exc_info=True)
             raise
 
@@ -197,7 +201,9 @@ class FallbackConfigLoader:
             logger.info("配置验证通过")
             return True
 
-        except Exception as e:  # broad exception acceptable: config validation involves dict operations that may fail
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: config validation involves dict operations that may fail
             logger.error(f"配置验证失败: {e}", exc_info=True)
             return False
 

@@ -6,12 +6,12 @@ import time
 
 import aiohttp
 from core.interfaces.protocols import LLMResponse
-from core.utils import safe_error
 from core.system.config.network_defaults import (
     DEFAULT_OPENAI_MODEL,
     OPENAI_API_BASE,
     OPENAI_TIMEOUT,
 )
+from core.utils import safe_error
 
 from .base import BaseLLMBackend
 
@@ -21,7 +21,13 @@ logger = logging.getLogger(__name__)
 class OpenAIAPIBackend(BaseLLMBackend):
     """OpenAI API 後端 (GPT-4, GPT-3.5 等)"""
 
-    def __init__(self, api_key: str, base_url: str = OPENAI_API_BASE, model: str = DEFAULT_OPENAI_MODEL, timeout: float = OPENAI_TIMEOUT):
+    def __init__(
+        self,
+        api_key: str,
+        base_url: str = OPENAI_API_BASE,
+        model: str = DEFAULT_OPENAI_MODEL,
+        timeout: float = OPENAI_TIMEOUT,
+    ):
         super().__init__()
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
@@ -70,14 +76,19 @@ class OpenAIAPIBackend(BaseLLMBackend):
                     text = data["choices"][0]["message"]["content"]
                     tokens = data.get("usage", {}).get("total_tokens", 0)
                     return LLMResponse(
-                        text=text, backend="openai", model=self.model,
-                        tokens_used=tokens, response_time_ms=(time.time() - start_time) * 1000,
+                        text=text,
+                        backend="openai",
+                        model=self.model,
+                        tokens_used=tokens,
+                        response_time_ms=(time.time() - start_time) * 1000,
                         confidence=0.95,
                     )
                 else:
                     text = await response.text()
                     return LLMResponse(
-                        text="", backend="openai", model=self.model,
+                        text="",
+                        backend="openai",
+                        model=self.model,
                         error=f"HTTP {response.status}: {text[:200]}",
                     )
         except Exception as e:

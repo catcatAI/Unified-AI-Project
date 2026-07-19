@@ -26,6 +26,7 @@ def _get_controller():
     if _META_CONTROLLER is None:
         try:
             from ai.meta.meta_controller import MetaController
+
             _META_CONTROLLER = MetaController()
         except Exception as e:
             logger.warning("MetaController not available: %s", e)

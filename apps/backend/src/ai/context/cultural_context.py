@@ -28,39 +28,87 @@ CULTURE_MAP: Dict[str, str] = {
 
 CULTURAL_NOTES: Dict[str, List[Dict[str, str]]] = {
     "east_asian": [
-        {"concept": "greeting", "note": "Bowing is traditional; direct eye contact may feel confrontational"},
+        {
+            "concept": "greeting",
+            "note": "Bowing is traditional; direct eye contact may feel confrontational",
+        },
         {"concept": "respect", "note": "Family names precede given names; honorifics are expected"},
-        {"concept": "modesty", "note": "Self-deprecation is polite; direct refusal is often avoided"},
-        {"concept": "gift", "note": "Gifts are exchanged with both hands; wrapping matters more than the gift"},
+        {
+            "concept": "modesty",
+            "note": "Self-deprecation is polite; direct refusal is often avoided",
+        },
+        {
+            "concept": "gift",
+            "note": "Gifts are exchanged with both hands; wrapping matters more than the gift",
+        },
     ],
     "western": [
-        {"concept": "greeting", "note": "Handshake or hug depending on familiarity; direct eye contact is expected"},
+        {
+            "concept": "greeting",
+            "note": "Handshake or hug depending on familiarity; direct eye contact is expected",
+        },
         {"concept": "respect", "note": "First names are common after brief acquaintance"},
         {"concept": "modesty", "note": "Direct 'thank you' and compliments are expected"},
         {"concept": "gift", "note": "Cards often accompany gifts; opening immediately is normal"},
     ],
     "middle_eastern": [
         {"concept": "greeting", "note": "Right hand only for handshake; 'salaam' is customary"},
-        {"concept": "respect", "note": "Elders are addressed formally; public affection is restricted"},
+        {
+            "concept": "respect",
+            "note": "Elders are addressed formally; public affection is restricted",
+        },
         {"concept": "modesty", "note": "Modest dress expected; hospitality is paramount"},
-        {"concept": "gift", "note": "Gifts are not opened in front of giver; avoid alcohol-related gifts"},
+        {
+            "concept": "gift",
+            "note": "Gifts are not opened in front of giver; avoid alcohol-related gifts",
+        },
     ],
     "south_asian": [
-        {"concept": "greeting", "note": "Namaste (palms together) is traditional; head wobble can mean agreement"},
-        {"concept": "respect", "note": "Use titles + last name; elders are addressed with respect terms"},
-        {"concept": "modesty", "note": "Direct 'no' is softened; hospitality is offered insistently"},
-        {"concept": "gift", "note": "Gifts are given with right hand; avoid leather items for Hindu contexts"},
+        {
+            "concept": "greeting",
+            "note": "Namaste (palms together) is traditional; head wobble can mean agreement",
+        },
+        {
+            "concept": "respect",
+            "note": "Use titles + last name; elders are addressed with respect terms",
+        },
+        {
+            "concept": "modesty",
+            "note": "Direct 'no' is softened; hospitality is offered insistently",
+        },
+        {
+            "concept": "gift",
+            "note": "Gifts are given with right hand; avoid leather items for Hindu contexts",
+        },
     ],
     "southeast_asian": [
-        {"concept": "greeting", "note": "Wai (palms pressed) in Thailand; smile is used to mask discomfort"},
+        {
+            "concept": "greeting",
+            "note": "Wai (palms pressed) in Thailand; smile is used to mask discomfort",
+        },
         {"concept": "respect", "note": "Hierarchy matters; head is sacred, feet are low"},
-        {"concept": "modesty", "note": "Loud or confrontational speech is avoided; saving face is key"},
-        {"concept": "gift", "note": "Gifts are not opened immediately; use both hands to give or receive"},
+        {
+            "concept": "modesty",
+            "note": "Loud or confrontational speech is avoided; saving face is key",
+        },
+        {
+            "concept": "gift",
+            "note": "Gifts are not opened immediately; use both hands to give or receive",
+        },
     ],
     "eastern_european": [
-        {"concept": "greeting", "note": "Firm handshake with eye contact; remove gloves before shaking"},
-        {"concept": "respect", "note": "Use patronymic or title + last name until invited for first name"},
-        {"concept": "modesty", "note": "Direct communication style; pessimism can be a form of bonding"},
+        {
+            "concept": "greeting",
+            "note": "Firm handshake with eye contact; remove gloves before shaking",
+        },
+        {
+            "concept": "respect",
+            "note": "Use patronymic or title + last name until invited for first name",
+        },
+        {
+            "concept": "modesty",
+            "note": "Direct communication style; pessimism can be a form of bonding",
+        },
         {"concept": "gift", "note": "Flowers in odd numbers (even = funeral); no yellow flowers"},
     ],
 }
@@ -121,8 +169,7 @@ class CulturalContextModule:
                 return n["note"]
         return ""
 
-    def enrich_context(self, context: dict, user_message: str,
-                       language_code: str = "") -> dict:
+    def enrich_context(self, context: dict, user_message: str, language_code: str = "") -> dict:
         """Inject cultural context into the given context dict."""
         culture = self.detect(language_code, user_message)
         notes = self.get_notes(culture)

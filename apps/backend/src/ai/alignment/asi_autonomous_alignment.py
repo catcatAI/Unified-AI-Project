@@ -16,7 +16,11 @@ logger = logging.getLogger(__name__)
 class ASIAutonomousAlignment:
     """ASI自主对齐系统 - 管理自主对齐检查和自调节"""
 
-    def __init__(self, system_id: str = "asi_autonomous_alignment_v1", config: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        system_id: str = "asi_autonomous_alignment_v1",
+        config: Optional[Dict[str, Any]] = None,
+    ):
         self.system_id = system_id
         self.config = config or {}
         self.autonomy_level: float = 0.5

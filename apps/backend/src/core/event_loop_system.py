@@ -382,8 +382,11 @@ class DebounceThrottleManager:
                 task.add_done_callback(
                     lambda t: (
                         self._timer_tasks.discard(t),
-                        logger.warning("Throttle timer task failed: %s", t.exception())
-                        if not t.cancelled() and t.exception() else None
+                        (
+                            logger.warning("Throttle timer task failed: %s", t.exception())
+                            if not t.cancelled() and t.exception()
+                            else None
+                        ),
                     )
                 )
 
@@ -491,13 +494,19 @@ class EventLoopSystem:
         # Start processor
         self._processor_task = asyncio.create_task(self._event_processor())
         self._processor_task.add_done_callback(
-            lambda t: logger.critical("Event processor loop failed: %s", t.exception())
-            if not t.cancelled() and t.exception() else None
+            lambda t: (
+                logger.critical("Event processor loop failed: %s", t.exception())
+                if not t.cancelled() and t.exception()
+                else None
+            )
         )
         self._metrics_task = asyncio.create_task(self._metrics_collector())
         self._metrics_task.add_done_callback(
-            lambda t: logger.critical("Metrics collector loop failed: %s", t.exception())
-            if not t.cancelled() and t.exception() else None
+            lambda t: (
+                logger.critical("Metrics collector loop failed: %s", t.exception())
+                if not t.cancelled() and t.exception()
+                else None
+            )
         )
 
         logger.info("[EventLoopSystem] Initialization complete")
@@ -572,7 +581,10 @@ class EventLoopSystem:
             try:
                 # Get event from queue
                 event = await asyncio.wait_for(
-                    self.queue.dequeue(), timeout=timeout_value("timeout.queue_dequeue", 0.001)  # 1ms timeout for responsiveness
+                    self.queue.dequeue(),
+                    timeout=timeout_value(
+                        "timeout.queue_dequeue", 0.001
+                    ),  # 1ms timeout for responsiveness
                 )
 
                 if event:
@@ -600,7 +612,9 @@ class EventLoopSystem:
             except asyncio.TimeoutError:
                 # No events, continue
                 pass
-            except Exception as e:  # broad exception acceptable: event processor must be resilient to any error
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: event processor must be resilient to any error
                 logger.error(f"[EventLoopSystem] Processor error: {e}", exc_info=True)
                 self.metrics["processing_errors"] += 1
 
@@ -617,7 +631,9 @@ class EventLoopSystem:
                 else:
                     handler(event)
 
-        except Exception as e:  # broad exception acceptable: event processing must be resilient to handler errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: event processing must be resilient to handler errors
             logger.error(f"[EventLoopSystem] Event processing error: {e}", exc_info=True)
             event.status = EventStatus.FAILED
 

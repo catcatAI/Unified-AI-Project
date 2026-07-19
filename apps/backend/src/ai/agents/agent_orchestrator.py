@@ -77,6 +77,7 @@ class AgentOrchestrator:
         # IntentRegistry gate — density+anti+format scoring is canonical
         try:
             from core.intent_registry import IntentRegistry
+
             ir = IntentRegistry()
             ir_name, ir_conf = ir.detect(user_message)
             # Only gate if IntentRegistry is confident enough (>= 0.3).
@@ -104,7 +105,9 @@ class AgentOrchestrator:
             return "knowledge_query"
 
         # File operations (checked before creative to catch "寫入" vs creative "寫")
-        if re.search(r"(讀取|打開|查看|read|open|show|寫入|保存|write|save|刪除|delete|remove)", lower):
+        if re.search(
+            r"(讀取|打開|查看|read|open|show|寫入|保存|write|save|刪除|delete|remove)", lower
+        ):
             if re.search(r"(刪除|delete|remove|移除)", lower):
                 return "file_delete"
             if re.search(r"(寫入|保存|write|save|建立|create|新增|add)", lower):
@@ -153,8 +156,17 @@ class AgentOrchestrator:
         subtasks: List[Dict[str, Any]] = []
 
         # Check for multi-step markers
-        multi_step_markers = ["然後", "接著", "之後", "and then", "after that",
-                              "同時", "also", "另外", "additionally"]
+        multi_step_markers = [
+            "然後",
+            "接著",
+            "之後",
+            "and then",
+            "after that",
+            "同時",
+            "also",
+            "另外",
+            "additionally",
+        ]
         lower = user_message.lower()
 
         has_multiple_steps = any(m in lower for m in multi_step_markers)
@@ -170,20 +182,24 @@ class AgentOrchestrator:
                 if not part:
                     continue
                 intent = self.classify_intent(part)
-                subtasks.append({
-                    "intent": intent,
-                    "message": part,
-                    "priority": i + 1,
-                    "agent": self.select_agent(intent),
-                })
+                subtasks.append(
+                    {
+                        "intent": intent,
+                        "message": part,
+                        "priority": i + 1,
+                        "agent": self.select_agent(intent),
+                    }
+                )
         else:
             intent = self.classify_intent(user_message)
-            subtasks.append({
-                "intent": intent,
-                "message": user_message,
-                "priority": 1,
-                "agent": self.select_agent(intent),
-            })
+            subtasks.append(
+                {
+                    "intent": intent,
+                    "message": user_message,
+                    "priority": 1,
+                    "agent": self.select_agent(intent),
+                }
+            )
 
         return subtasks
 
@@ -203,21 +219,25 @@ class AgentOrchestrator:
             message = task["message"]
 
             if intent == "general":
-                results.append({
-                    "intent": intent,
-                    "agent": None,
-                    "result": None,
-                    "note": "No specialized agent; use LLM",
-                })
+                results.append(
+                    {
+                        "intent": intent,
+                        "agent": None,
+                        "result": None,
+                        "note": "No specialized agent; use LLM",
+                    }
+                )
                 continue
 
             if not agent_name:
-                results.append({
-                    "intent": intent,
-                    "agent": None,
-                    "result": None,
-                    "note": "No agent mapped for intent",
-                })
+                results.append(
+                    {
+                        "intent": intent,
+                        "agent": None,
+                        "result": None,
+                        "note": "No agent mapped for intent",
+                    }
+                )
                 continue
 
             # Try to execute via ModelBus if available
@@ -230,12 +250,14 @@ class AgentOrchestrator:
                 except Exception as e:
                     logger.debug(f"ModelBus execution failed for {agent_name}: {e}")
 
-            results.append({
-                "intent": intent,
-                "agent": agent_name,
-                "result": result,
-                "message": message,
-            })
+            results.append(
+                {
+                    "intent": intent,
+                    "agent": agent_name,
+                    "result": result,
+                    "message": message,
+                }
+            )
 
         return {
             "original_message": user_message,

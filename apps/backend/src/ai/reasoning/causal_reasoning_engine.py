@@ -35,12 +35,15 @@ class CausalReasoningEngine:
         rels = self._infer_relationships(observation)
         self._add_relationships(rels)
         self._evict_old()
-        state_store.emit_event("causal.learned", {
-            "observation_keys": list(observation.keys()),
-            "new_relationships": len(rels),
-            "total_relationships": len(self._relationships),
-            "total_observations": len(self._observations),
-        })
+        state_store.emit_event(
+            "causal.learned",
+            {
+                "observation_keys": list(observation.keys()),
+                "new_relationships": len(rels),
+                "total_relationships": len(self._relationships),
+                "total_observations": len(self._observations),
+            },
+        )
 
     async def learn_causal_relationships(
         self, observations: List[Dict[str, Any]]
@@ -66,19 +69,19 @@ class CausalReasoningEngine:
             intervene = self._do_calculus_intervene(cause, 1.0, context or {})
             for result in intervene:
                 if result.get("effect") == desired_outcome:
-                    candidates.append({
-                        "handle_variable": cause,
-                        "target_variable": desired_outcome,
-                        "estimated_effect": result.get("estimated_value", 0.0),
-                        "strength": result.get("strength", 0.0),
-                        "method": "do_calculus",
-                    })
+                    candidates.append(
+                        {
+                            "handle_variable": cause,
+                            "target_variable": desired_outcome,
+                            "estimated_effect": result.get("estimated_value", 0.0),
+                            "strength": result.get("strength", 0.0),
+                            "method": "do_calculus",
+                        }
+                    )
         candidates.sort(key=lambda c: c.get("strength", 0), reverse=True)
         return candidates
 
-    def predict(
-        self, cause: str, context: Optional[Dict[str, Any]] = None
-    ) -> List[Dict[str, Any]]:
+    def predict(self, cause: str, context: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """Predict effects of a cause, optionally via do-calculus intervention."""
         if context and "intervene" in context:
             results = self._do_calculus_intervene(cause, context["intervene"], context)
@@ -88,12 +91,15 @@ class CausalReasoningEngine:
                 key=lambda r: r.get("strength", 0),
                 reverse=True,
             )
-        state_store.emit_event("causal.prediction", {
-            "cause": cause,
-            "results_count": len(results),
-            "top_strength": round(results[0].get("strength", 0), 3) if results else 0.0,
-            "intervened": bool(context and "intervene" in context),
-        })
+        state_store.emit_event(
+            "causal.prediction",
+            {
+                "cause": cause,
+                "results_count": len(results),
+                "top_strength": round(results[0].get("strength", 0), 3) if results else 0.0,
+                "intervened": bool(context and "intervene" in context),
+            },
+        )
         return results
 
     def explain(self, effect: str) -> List[Dict[str, Any]]:
@@ -103,15 +109,14 @@ class CausalReasoningEngine:
             reverse=True,
         )
 
-    def ingest_temporal_state(
-        self, temporal_state: Any, window: int = 50
-    ) -> int:
+    def ingest_temporal_state(self, temporal_state: Any, window: int = 50) -> int:
         """Ingest data from a TemporalState into causal inference.
 
         Calls TemporalState.to_observations() and learns each observation.
         Returns the number of observations ingested.
         """
         from core.state.temporal import TemporalState
+
         if not isinstance(temporal_state, TemporalState):
             return 0
         observations = temporal_state.to_observations(window=window)
@@ -143,8 +148,10 @@ class CausalReasoningEngine:
         Returns the number of baseline relationships created.
         """
         if self._relationships:
-            logger.debug("CausalReasoningEngine already has %d relationships — skipping warm-start",
-                         len(self._relationships))
+            logger.debug(
+                "CausalReasoningEngine already has %d relationships — skipping warm-start",
+                len(self._relationships),
+            )
             return 0
 
         before = len(self._relationships)
@@ -158,12 +165,20 @@ class CausalReasoningEngine:
                 },
                 "id": "warm_start_baseline_1",
                 "relationships": [
-                    {"cause": "user_input", "effect": "angela_response",
-                     "strength": 0.65, "method": "warm_start",
-                     "confounders": ["conversation_momentum"]},
-                    {"cause": "conversation_momentum", "effect": "user_input",
-                     "strength": 0.45, "method": "warm_start",
-                     "confounders": []},
+                    {
+                        "cause": "user_input",
+                        "effect": "angela_response",
+                        "strength": 0.65,
+                        "method": "warm_start",
+                        "confounders": ["conversation_momentum"],
+                    },
+                    {
+                        "cause": "conversation_momentum",
+                        "effect": "user_input",
+                        "strength": 0.45,
+                        "method": "warm_start",
+                        "confounders": [],
+                    },
                 ],
             },
             {
@@ -175,12 +190,20 @@ class CausalReasoningEngine:
                 },
                 "id": "warm_start_baseline_2",
                 "relationships": [
-                    {"cause": "user_input", "effect": "angela_response",
-                     "strength": 0.55, "method": "warm_start",
-                     "confounders": ["query_complexity"]},
-                    {"cause": "query_complexity", "effect": "angela_response",
-                     "strength": 0.35, "method": "warm_start",
-                     "confounders": []},
+                    {
+                        "cause": "user_input",
+                        "effect": "angela_response",
+                        "strength": 0.55,
+                        "method": "warm_start",
+                        "confounders": ["query_complexity"],
+                    },
+                    {
+                        "cause": "query_complexity",
+                        "effect": "angela_response",
+                        "strength": 0.35,
+                        "method": "warm_start",
+                        "confounders": [],
+                    },
                 ],
             },
             {
@@ -192,12 +215,20 @@ class CausalReasoningEngine:
                 },
                 "id": "warm_start_baseline_3",
                 "relationships": [
-                    {"cause": "user_input", "effect": "angela_response",
-                     "strength": 0.50, "method": "warm_start",
-                     "confounders": ["interaction_value"]},
-                    {"cause": "interaction_value", "effect": "user_input",
-                     "strength": 0.30, "method": "warm_start",
-                     "confounders": []},
+                    {
+                        "cause": "user_input",
+                        "effect": "angela_response",
+                        "strength": 0.50,
+                        "method": "warm_start",
+                        "confounders": ["interaction_value"],
+                    },
+                    {
+                        "cause": "interaction_value",
+                        "effect": "user_input",
+                        "strength": 0.30,
+                        "method": "warm_start",
+                        "confounders": [],
+                    },
                 ],
             },
         ]
@@ -228,9 +259,9 @@ class CausalReasoningEngine:
 
     def _evict_old(self) -> None:
         if len(self._relationships) > self._MAX_RELATIONSHIPS:
-            self._relationships = self._relationships[-self._MAX_RELATIONSHIPS:]
+            self._relationships = self._relationships[-self._MAX_RELATIONSHIPS :]
         if len(self._observations) > self._MAX_OBSERVATIONS:
-            self._observations = self._observations[-self._MAX_OBSERVATIONS:]
+            self._observations = self._observations[-self._MAX_OBSERVATIONS :]
 
     def _infer_relationships(self, observation: Dict[str, Any]) -> List[Dict[str, Any]]:
         variables = observation.get("variables", [])
@@ -267,9 +298,7 @@ class CausalReasoningEngine:
 
     @staticmethod
     def _has_temporal_data(data: Dict[str, Any], variables: List[str]) -> bool:
-        return any(
-            isinstance(data.get(v), list) and len(data[v]) >= 5 for v in variables
-        )
+        return any(isinstance(data.get(v), list) and len(data[v]) >= 5 for v in variables)
 
     def _compute_relationship(
         self,
@@ -290,9 +319,9 @@ class CausalReasoningEngine:
 
         confounders = self._find_confounders(v1, v2, data, variables)
 
-        direction_strength = corr * (1.0 - max(
-            (c.get("strength", 0) for c in confounders), default=0.0
-        ))
+        direction_strength = corr * (
+            1.0 - max((c.get("strength", 0) for c in confounders), default=0.0)
+        )
         if direction_strength < self._causality_threshold:
             return None
 
@@ -310,9 +339,7 @@ class CausalReasoningEngine:
             "source": observation.get("id", "unknown"),
         }
 
-    async def _analyze_observation_causality(
-        self, observation: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _analyze_observation_causality(self, observation: Dict[str, Any]) -> Dict[str, Any]:
         variables = observation.get("variables", [])
         data = observation.get("data", {})
         correlation_matrix = {}
@@ -378,7 +405,7 @@ class CausalReasoningEngine:
         y_t = y[lag:]
         rss = 0.0
         for i in range(len(y_t)):
-            pred = sum(y[lag - 1 - j: n - 1 - j][i] for j in range(lag)) / lag
+            pred = sum(y[lag - 1 - j : n - 1 - j][i] for j in range(lag)) / lag
             rss += (y_t[i] - pred) ** 2
         return rss
 
@@ -390,8 +417,8 @@ class CausalReasoningEngine:
         y_t = y[lag:n]
         rss = 0.0
         for i in range(len(y_t)):
-            y_mean = sum(y[lag - 1 - j: n - 1 - j][i] for j in range(lag)) / lag
-            x_mean = sum(x[lag - 1 - j: n - 1 - j][i] for j in range(lag)) / lag
+            y_mean = sum(y[lag - 1 - j : n - 1 - j][i] for j in range(lag)) / lag
+            x_mean = sum(x[lag - 1 - j : n - 1 - j][i] for j in range(lag)) / lag
             pred = 0.5 * y_mean + 0.5 * x_mean
             rss += (y_t[i] - pred) ** 2
         return rss
@@ -421,19 +448,21 @@ class CausalReasoningEngine:
             if abs(r_xz) < self._causality_threshold or abs(r_yz) < self._causality_threshold:
                 continue
             try:
-                denom = (1.0 - r_xz ** 2) * (1.0 - r_yz ** 2)
+                denom = (1.0 - r_xz**2) * (1.0 - r_yz**2)
                 if denom <= 0:
                     continue
-                r_xy_given_z = (r_xy - r_xz * r_yz) / (denom ** 0.5)
+                r_xy_given_z = (r_xy - r_xz * r_yz) / (denom**0.5)
             except (ZeroDivisionError, ValueError):
                 continue
             if abs(r_xy_given_z) < abs(r_xy) * 0.5:
-                confounders.append({
-                    "confounder": z,
-                    "strength": round(min(abs(r_xz), abs(r_yz)), 4),
-                    "r_xz": round(r_xz, 4),
-                    "r_yz": round(r_yz, 4),
-                })
+                confounders.append(
+                    {
+                        "confounder": z,
+                        "strength": round(min(abs(r_xz), abs(r_yz)), 4),
+                        "r_xz": round(r_xz, 4),
+                        "r_yz": round(r_yz, 4),
+                    }
+                )
         return confounders
 
     def _do_calculus_intervene(
@@ -447,21 +476,23 @@ class CausalReasoningEngine:
         results = []
         data = context.get("data", {})
         variables = list({r["effect"] for r in effects})
-        all_vars = list(set(variables + [variable] + [
-            v for r in effects for v in r.get("confounders", [])
-        ]))
+        all_vars = list(
+            set(variables + [variable] + [v for r in effects for v in r.get("confounders", [])])
+        )
 
         for r in effects:
             y = r["effect"]
             confounders = self._find_confounders(variable, y, data, all_vars)
             cf_penalty = max((c["strength"] for c in confounders), default=0.0)
             adjusted = r["strength"] * (1.0 - cf_penalty)
-            results.append({
-                "intervention": f"do({variable}={value})",
-                "effect": y,
-                "estimated_value": round(value * adjusted, 4),
-                "strength": round(adjusted, 4),
-            })
+            results.append(
+                {
+                    "intervention": f"do({variable}={value})",
+                    "effect": y,
+                    "estimated_value": round(value * adjusted, 4),
+                    "strength": round(adjusted, 4),
+                }
+            )
         return results
 
 

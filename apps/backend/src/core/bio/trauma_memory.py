@@ -7,15 +7,15 @@ Manages traumatic memories with 70% slower forgetting rate.
 Handles memory reactivation and intrusive recall.
 """
 
-
 from __future__ import annotations
-from core.utils import safe_error
 
 import logging
 import math
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
 
@@ -229,10 +229,18 @@ class TraumaMemorySystem:
 
             # 2. 闪回处理 / Flashback handling
             self._handle_flashback(
-                trauma, memory_id, trigger_context, intrusion_likelihood, current_stress_level, results)
+                trauma,
+                memory_id,
+                trigger_context,
+                intrusion_likelihood,
+                current_stress_level,
+                results,
+            )
 
             # 3. 情感调节策略 / Emotional regulation strategies
-            effectiveness = self._apply_emotional_regulation(coping_strategy, current_stress_level, results)
+            effectiveness = self._apply_emotional_regulation(
+                coping_strategy, current_stress_level, results
+            )
 
             # 4. 避免过度激活的机制 / Prevent over-activation mechanism
             self._prevent_over_activation(current_stress_level, results)
@@ -244,8 +252,9 @@ class TraumaMemorySystem:
             self._generate_recommended_actions(trauma, current_stress_level, results)
 
             # 7. 记录处理结果 / Log processing results
-            self._log_processing_result(memory_id, trigger_context,
-                                        current_stress_level, coping_strategy, results)
+            self._log_processing_result(
+                memory_id, trigger_context, current_stress_level, coping_strategy, results
+            )
 
             results["status"] = "processed"
 
@@ -274,9 +283,18 @@ class TraumaMemorySystem:
             )
         return self.trauma_memories[memory_id]
 
-    def _handle_flashback(self, trauma, memory_id, trigger_context, intrusion_likelihood, current_stress_level, results) -> None:
+    def _handle_flashback(
+        self,
+        trauma,
+        memory_id,
+        trigger_context,
+        intrusion_likelihood,
+        current_stress_level,
+        results,
+    ) -> None:
         """Handle flashback request."""
         import math
+
         if intrusion_likelihood > 0.3:
             results["reactivation_occurred"] = True
             trauma.reactivation_count += 1
@@ -357,7 +375,9 @@ class TraumaMemorySystem:
             if not results["recommended_actions"]:
                 results["recommended_actions"].append("continue_monitoring")
 
-    def _log_processing_result(self, memory_id, trigger_context, current_stress_level, coping_strategy, results) -> None:
+    def _log_processing_result(
+        self, memory_id, trigger_context, current_stress_level, coping_strategy, results
+    ) -> None:
         """Log processing result."""
         processing_record = {
             "timestamp": datetime.now().isoformat(),

@@ -28,7 +28,11 @@ from .vocabulary_expander import VocabularyExpander
 
 __all__ = [
     # Shared
-    "Point", "Line", "Plane", "Circle", "Arc",
+    "Point",
+    "Line",
+    "Plane",
+    "Circle",
+    "Arc",
     "DrawingInstructions",
     "PrimitiveRenderer",
     "PrimitiveEncoder",

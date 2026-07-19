@@ -25,6 +25,7 @@ except ImportError:
 
 try:
     import warnings
+
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=DeprecationWarning, module="pynvml")
         import pynvml  # type: ignore[import-untyped]
@@ -87,14 +88,18 @@ class SystemMonitor:
                 name = pynvml.nvmlDeviceGetName(handle)
                 mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
                 util = pynvml.nvmlDeviceGetUtilizationRates(handle)
-                gpus.append({
-                    "id": i,
-                    "name": name,
-                    "memory_total_gb": mem_info.total / (1024**3),
-                    "memory_used_gb": mem_info.used / (1024**3),
-                    "memory_utilization": mem_info.used / mem_info.total * 100 if mem_info.total > 0 else 0.0,
-                    "gpu_utilization": util.gpu,
-                })
+                gpus.append(
+                    {
+                        "id": i,
+                        "name": name,
+                        "memory_total_gb": mem_info.total / (1024**3),
+                        "memory_used_gb": mem_info.used / (1024**3),
+                        "memory_utilization": (
+                            mem_info.used / mem_info.total * 100 if mem_info.total > 0 else 0.0
+                        ),
+                        "gpu_utilization": util.gpu,
+                    }
+                )
             return gpus
         except Exception as e:
             logger.warning(f"获取GPU信息失败: {e}", exc_info=True)
@@ -209,7 +214,9 @@ class SystemMonitor:
                 if metrics.memory_percent > threshold_value("memory_critical", 90):
                     logger.warning(f"内存使用率过高: {metrics.memory_percent:.1f}%")
                 await asyncio.sleep(self.monitoring_interval)
-            except Exception as e:  # broad exception acceptable: ensure monitoring loop continues even on collection errors
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: ensure monitoring loop continues even on collection errors
                 logger.error(f"监控过程中发生错误: {e}", exc_info=True)
                 await asyncio.sleep(self.monitoring_interval)
 
@@ -230,7 +237,9 @@ class SystemMonitor:
                     [m.to_dict() for m in self.metrics_history], f, ensure_ascii=False, indent=2
                 )
             logger.info(f"指标数据已导出到: {filepath}")
-        except Exception as e:  # broad exception acceptable: ensure export errors don't crash the caller
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: ensure export errors don't crash the caller
             logger.error(f"导出指标数据失败: {e}", exc_info=True)
 
 
@@ -248,5 +257,7 @@ if __name__ == "__main__":
         recommendations = monitor.get_resource_recommendations()
         logger.info(f"资源建议: {recommendations}")
 
-    except Exception as e:  # broad exception acceptable: ensure test errors are logged and don't crash the script
+    except (
+        Exception
+    ) as e:  # broad exception acceptable: ensure test errors are logged and don't crash the script
         logger.error(f"测试过程中发生错误: {e}", exc_info=True)

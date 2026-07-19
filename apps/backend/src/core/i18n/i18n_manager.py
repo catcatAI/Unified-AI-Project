@@ -234,6 +234,7 @@ class I18nManager:
 
 _default_manager = I18nManager()
 
+
 # ---------------------------------------------------------------------------
 # Auto-load locale files so translations work without requiring startup code.
 # This covers both tests and production entry points.

@@ -385,6 +385,7 @@ def _check_battery(system: str) -> Optional[str]:
     try:
         if system == "Darwin":
             import subprocess  # noqa: S404 — intentional os-level check
+
             result = subprocess.run(
                 ["pmset", "-g", "batt"],
                 capture_output=True,
@@ -400,6 +401,7 @@ def _check_battery(system: str) -> Optional[str]:
                         return "laptop"
         elif system == "Windows":
             import psutil  # noqa: S404 — intentional os-level check
+
             battery = psutil.sensors_battery()
             if battery is not None and not battery.power_plugged:
                 if battery.percent < 30:

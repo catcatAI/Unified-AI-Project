@@ -9,7 +9,6 @@
 import logging
 import re
 from collections import OrderedDict
-
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -108,7 +107,9 @@ class DialogueContextManager:
             logger.info(f"Added message to conversation {conversation_id}")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to add message to conversation {conversation_id}: {e}", exc_info=True)
+            logger.error(
+                f"Failed to add message to conversation {conversation_id}: {e}", exc_info=True
+            )
             return False
 
     def extract_key_points(self, text: str) -> List[str]:
@@ -225,8 +226,8 @@ class DialogueContextManager:
             return summary
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(
-                f"Failed to generate context summary for conversation {conversation_id}: {e}"
-                , exc_info=True
+                f"Failed to generate context summary for conversation {conversation_id}: {e}",
+                exc_info=True,
             )
             return None
 
@@ -258,7 +259,9 @@ class DialogueContextManager:
             ]
             return result
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to get context for conversation {conversation_id}: {e}", exc_info=True)
+            logger.error(
+                f"Failed to get context for conversation {conversation_id}: {e}", exc_info=True
+            )
             return None
 
     def get_recent_conversations(self, limit: int = 5) -> List[Dict[str, Any]]:
@@ -302,11 +305,15 @@ class DialogueContextManager:
         """传递对话上下文"""
         try:
             if source_conversation_id not in self.conversations:
-                logger.error(f"Source conversation {source_conversation_id} not found", exc_info=True)
+                logger.error(
+                    f"Source conversation {source_conversation_id} not found", exc_info=True
+                )
                 return False
 
             if target_conversation_id not in self.conversations:
-                logger.error(f"Target conversation {target_conversation_id} not found", exc_info=True)
+                logger.error(
+                    f"Target conversation {target_conversation_id} not found", exc_info=True
+                )
                 return False
 
             source_conv = self.conversations[source_conversation_id]
@@ -335,7 +342,7 @@ class DialogueContextManager:
             return False
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(
-                f"Failed to transfer context from {source_conversation_id} to {target_conversation_id}: {e}"
-                , exc_info=True
+                f"Failed to transfer context from {source_conversation_id} to {target_conversation_id}: {e}",
+                exc_info=True,
             )
             return False

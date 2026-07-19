@@ -134,11 +134,15 @@ class ModuleScanner:
         if isinstance(lifecycle_data, str):
             return LifecycleHooks(init=lifecycle_data)
         health_data = lifecycle_data.get("health", {})
-        health = HealthConfig(
-            endpoint=health_data.get("endpoint", ""),
-            interval=health_data.get("interval", 30),
-            timeout=health_data.get("timeout", 5),
-        ) if isinstance(health_data, dict) else HealthConfig()
+        health = (
+            HealthConfig(
+                endpoint=health_data.get("endpoint", ""),
+                interval=health_data.get("interval", 30),
+                timeout=health_data.get("timeout", 5),
+            )
+            if isinstance(health_data, dict)
+            else HealthConfig()
+        )
         hooks = []
         for hook in lifecycle_data.get("hooks", []):
             hooks.append(HookDecl(event=hook["event"], handler=hook["handler"]))

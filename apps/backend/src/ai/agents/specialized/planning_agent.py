@@ -37,13 +37,25 @@ class PlanningAgent:
             return {"status": "error", "message": "No goal provided"}
         constraints = constraints or {}
         plan_id = f"plan_{hash(goal) % 1000000}"
-        steps = [f"Step {i+1}: {phrase}" for i, phrase in enumerate(goal.split(". "))] if ". " in goal else [f"Step 1: {goal}"]
+        steps = (
+            [f"Step {i+1}: {phrase}" for i, phrase in enumerate(goal.split(". "))]
+            if ". " in goal
+            else [f"Step 1: {goal}"]
+        )
         plan = {"goal": goal, "steps": steps, "constraints": constraints, "status": "created"}
         self._plans[plan_id] = plan
         logger.info(f"create_plan: goal='{goal}', {len(steps)} steps, id={plan_id}")
-        return {"status": "success", "message": f"Created plan with {len(steps)} steps", "plan_id": plan_id, "steps": steps, "constraints": constraints}
+        return {
+            "status": "success",
+            "message": f"Created plan with {len(steps)} steps",
+            "plan_id": plan_id,
+            "steps": steps,
+            "constraints": constraints,
+        }
 
-    def optimize_plan(self, plan_id: str, optimization_criteria: Dict[str, Any] = None) -> Dict[str, Any]:
+    def optimize_plan(
+        self, plan_id: str, optimization_criteria: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
         """Optimize an existing plan based on criteria."""
         if plan_id not in self._plans:
             return {"status": "error", "message": f"Plan '{plan_id}' not found"}
@@ -76,4 +88,3 @@ class PlanningAgent:
             "completed_steps": done,
             "progress_percentage": progress_pct,
         }
-

@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 class FallbackProtocolType(Enum):
     """备选通信协议类型"""
+
     IN_PROCESS = "in_process"
     SHARED_MEMORY = "shared_memory"
     FILE_BASED = "file_based"
@@ -54,6 +55,8 @@ async def initialize_fallback_protocols(is_multiprocess: bool = False) -> bool:
         FallbackProtocolType.IN_PROCESS: FallbackProtocol(FallbackProtocolType.IN_PROCESS),
     }
     if is_multiprocess:
-        protocols[FallbackProtocolType.SHARED_MEMORY] = FallbackProtocol(FallbackProtocolType.SHARED_MEMORY)
+        protocols[FallbackProtocolType.SHARED_MEMORY] = FallbackProtocol(
+            FallbackProtocolType.SHARED_MEMORY
+        )
     logger.info(f"[MCP-Fallback] {len(protocols)} protocol(s) initialized")
     return True

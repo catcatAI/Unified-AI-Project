@@ -150,23 +150,22 @@ class TransitionManager:
         )
         animator = TransitionAnimator(config)
         self.animators[transition_id] = animator
-        self.history.append({
-            "transition_id": transition_id,
-            "type": transition_type.value,
-            "source": source_version,
-            "target": target_version,
-            "created_at": datetime.now().isoformat(),
-        })
+        self.history.append(
+            {
+                "transition_id": transition_id,
+                "type": transition_type.value,
+                "source": source_version,
+                "target": target_version,
+                "created_at": datetime.now().isoformat(),
+            }
+        )
         return animator
 
     def get_animator(self, transition_id: str) -> Optional[TransitionAnimator]:
         return self.animators.get(transition_id)
 
     def get_active_transitions(self) -> List[TransitionAnimator]:
-        return [
-            a for a in self.animators.values()
-            if not a.get_progress().is_complete
-        ]
+        return [a for a in self.animators.values() if not a.get_progress().is_complete]
 
 
 def create_transition_manager() -> TransitionManager:

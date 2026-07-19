@@ -1,4 +1,5 @@
 from services.error_handling import safe_error
+
 """
 ANGELA-MATRIX: [L3-L4] [βδ] [B] [L2]
 GoogleDriveHandler — processes google_drive intents from ChatService dispatch.
@@ -22,8 +23,16 @@ class GoogleDriveHandler:
     """
 
     SUPPORTED_ACTIONS = {
-        "list", "search", "sync", "download", "upload",
-        "delete", "rename", "move", "copy", "info",
+        "list",
+        "search",
+        "sync",
+        "download",
+        "upload",
+        "delete",
+        "rename",
+        "move",
+        "copy",
+        "info",
     }
 
     def __init__(self, drive_service: Any = None):
@@ -51,16 +60,33 @@ class GoogleDriveHandler:
                 files = []
                 for f in os.listdir(path):
                     fp = os.path.join(path, f)
-                    files.append({"name": f, "is_dir": os.path.isdir(fp), "size": os.path.getsize(fp) if os.path.isfile(fp) else 0})
+                    files.append(
+                        {
+                            "name": f,
+                            "is_dir": os.path.isdir(fp),
+                            "size": os.path.getsize(fp) if os.path.isfile(fp) else 0,
+                        }
+                    )
                 return {"status": "ok", "action": action, "files": files, "mode": "local_fs"}
             except Exception as e:
                 return {"status": "error", "action": action, "error": safe_error(e)}
         elif action == "info":
             if os.path.exists(path):
-                return {"status": "ok", "action": action, "exists": True, "is_file": os.path.isfile(path), "size": os.path.getsize(path) if os.path.isfile(path) else 0}
+                return {
+                    "status": "ok",
+                    "action": action,
+                    "exists": True,
+                    "is_file": os.path.isfile(path),
+                    "size": os.path.getsize(path) if os.path.isfile(path) else 0,
+                }
             return {"status": "ok", "action": action, "exists": False}
 
-        return {"status": "ok", "action": action, "mode": "local_fs", "note": f"Action '{action}' handled by local filesystem fallback; configure drive_service for full Drive API support"}
+        return {
+            "status": "ok",
+            "action": action,
+            "mode": "local_fs",
+            "note": f"Action '{action}' handled by local filesystem fallback; configure drive_service for full Drive API support",
+        }
 
 
 __all__ = ["GoogleDriveHandler"]

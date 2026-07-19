@@ -7,15 +7,16 @@ but AgentManager.execute_agent() expects agent.execute(task). This adapter
 wraps any specialized agent and routes task dicts to the correct method.
 """
 
+import inspect
+import logging
+from typing import Any, Dict, Optional
+
 from core.utils import safe_error
 
 # =============================================================================
 # ANGELA-MATRIX: [L6] [βδ] [A] [L4]
 # =============================================================================
 
-import inspect
-import logging
-from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -126,14 +127,19 @@ class AgentAdapter:
 
         if not method_name:
             logger.warning(f"[AgentAdapter] No method found for agent {self.agent_id}")
-            return {"status": "error", "error": "No method specified and no primary method detected"}
+            return {
+                "status": "error",
+                "error": "No method specified and no primary method detected",
+            }
 
         if not hasattr(self.agent, method_name):
             # Try fallback
             if self._fallback_method and hasattr(self.agent, self._fallback_method):
                 method_name = self._fallback_method
             else:
-                logger.warning(f"[AgentAdapter] Agent {self.agent_id} has no method '{method_name}'")
+                logger.warning(
+                    f"[AgentAdapter] Agent {self.agent_id} has no method '{method_name}'"
+                )
                 return {"status": "error", "error": f"Method '{method_name}' not found on agent"}
 
         method = getattr(self.agent, method_name)
@@ -159,7 +165,8 @@ class AgentAdapter:
             "agent_class": self.agent.__class__.__name__,
             "primary_method": self._primary_method,
             "available_methods": [
-                m for m in dir(self.agent)
+                m
+                for m in dir(self.agent)
                 if not m.startswith("_") and callable(getattr(self.agent, m))
             ],
         }
@@ -170,12 +177,24 @@ class AgentAdapter:
 
 # --- Agent ID → class mapping ---
 _AGENT_CLASSES: Dict[str, str] = {
-    "creative_writing_agent": ("ai.agents.specialized.creative_writing_agent", "CreativeWritingAgent"),
+    "creative_writing_agent": (
+        "ai.agents.specialized.creative_writing_agent",
+        "CreativeWritingAgent",
+    ),
     "web_search_agent": ("ai.agents.specialized.web_search_agent", "WebSearchAgent"),
-    "code_understanding_agent": ("ai.agents.specialized.code_understanding_agent", "CodeUnderstandingAgent"),
+    "code_understanding_agent": (
+        "ai.agents.specialized.code_understanding_agent",
+        "CodeUnderstandingAgent",
+    ),
     "data_analysis_agent": ("ai.agents.specialized.data_analysis_agent", "DataAnalysisAgent"),
-    "vision_processing_agent": ("ai.agents.specialized.vision_processing_agent", "VisionProcessingAgent"),
-    "audio_processing_agent": ("ai.agents.specialized.audio_processing_agent", "AudioProcessingAgent"),
+    "vision_processing_agent": (
+        "ai.agents.specialized.vision_processing_agent",
+        "VisionProcessingAgent",
+    ),
+    "audio_processing_agent": (
+        "ai.agents.specialized.audio_processing_agent",
+        "AudioProcessingAgent",
+    ),
     "knowledge_graph_agent": ("ai.agents.specialized.knowledge_graph_agent", "KnowledgeGraphAgent"),
     "nlp_processing_agent": ("ai.agents.specialized.nlp_processing_agent", "NLPProcessingAgent"),
     "planning_agent": ("ai.agents.specialized.planning_agent", "PlanningAgent"),

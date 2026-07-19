@@ -49,7 +49,7 @@ class CreativeWritingAgent:
         request_id = task_payload.get("request_id", "")
         cap_name = capability_id_filter
         if self.agent_id and cap_name.startswith(self.agent_id + "_"):
-            cap_name = cap_name[len(self.agent_id) + 1:]
+            cap_name = cap_name[len(self.agent_id) + 1 :]
         if "_v" in cap_name:
             cap_name = cap_name.rsplit("_v", 1)[0]
         result_payload = {"request_id": request_id}
@@ -67,17 +67,17 @@ class CreativeWritingAgent:
         await self.hsp_connector.send_task_result(result_payload)
 
     async def _generate_marketing_copy(self, params: dict) -> str:
-        if hasattr(self, 'llm_interface') and self.llm_interface is not None:
+        if hasattr(self, "llm_interface") and self.llm_interface is not None:
             response = await self.llm_interface.chat_completion(params)
-            if hasattr(response, 'content'):
+            if hasattr(response, "content"):
                 return response.content
             return str(response)
         return ""
 
     async def _polish_text(self, params: dict) -> str:
-        if hasattr(self, 'llm_interface') and self.llm_interface is not None:
+        if hasattr(self, "llm_interface") and self.llm_interface is not None:
             response = await self.llm_interface.chat_completion(params)
-            if hasattr(response, 'content'):
+            if hasattr(response, "content"):
                 return response.content
             return str(response)
         return ""
@@ -86,7 +86,9 @@ class CreativeWritingAgent:
         """Check if LLM backend for creative writing is configured."""
         return bool(self.config.get("llm_endpoint") or self.config.get("api_key"))
 
-    def generate_story(self, prompt: str, genre: str = "fantasy", length: str = "short") -> Dict[str, Any]:
+    def generate_story(
+        self, prompt: str, genre: str = "fantasy", length: str = "short"
+    ) -> Dict[str, Any]:
         """Generate a story outline/result from a prompt."""
         if not prompt:
             return {"status": "error", "message": "No prompt provided"}

@@ -37,6 +37,7 @@ def _get_service():
     if _SERVICE is None:
         try:
             from services.multimodal_service import MultimodalService
+
             _SERVICE = MultimodalService()
         except Exception as e:
             logger.warning("MultimodalService not available: %s", e)
@@ -49,6 +50,7 @@ def set_service(service) -> None:
 
 
 # --- Encode ---
+
 
 @router.post("/multimodal/encode")
 async def encode_endpoint(
@@ -74,6 +76,7 @@ async def encode_endpoint(
 
 # --- Decode ---
 
+
 @router.post("/multimodal/decode")
 async def decode_endpoint(
     item_id: str = Form(...),
@@ -95,6 +98,7 @@ async def decode_endpoint(
 
 # --- Compare ---
 
+
 @router.post("/multimodal/compare")
 async def compare_endpoint(
     item_a: str = Form(...),
@@ -115,6 +119,7 @@ async def compare_endpoint(
 
 # --- Retrieve ---
 
+
 @router.post("/multimodal/retrieve")
 async def retrieve_endpoint(
     query_id: str = Form(...),
@@ -133,6 +138,7 @@ async def retrieve_endpoint(
 
 
 # --- Train ---
+
 
 @router.post("/multimodal/train")
 async def train_endpoint(
@@ -155,6 +161,7 @@ async def train_endpoint(
 
 # --- Evaluate ---
 
+
 @router.post("/multimodal/evaluate")
 async def evaluate_endpoint(
     item_id: Optional[str] = Form(None),
@@ -174,6 +181,7 @@ async def evaluate_endpoint(
 
 
 # --- Generate (cross-modal) ---
+
 
 @router.post("/multimodal/generate")
 async def generate_endpoint(
@@ -202,11 +210,13 @@ def _get_router():
     global _ROUTER
     if _ROUTER is None:
         from services.cross_modal_router import CrossModalRouter
+
         _ROUTER = CrossModalRouter()
     return _ROUTER
 
 
 # --- Cross-modal inference ---
+
 
 @router.post("/multimodal/cross-infer")
 async def cross_infer_endpoint(
@@ -246,6 +256,7 @@ async def cross_infer_endpoint(
 
 # --- Quality dashboard ---
 
+
 @router.get("/multimodal/quality/dashboard")
 async def quality_dashboard_endpoint():
     """Get integrated quality dashboard for all multimodal pipelines.
@@ -253,12 +264,14 @@ async def quality_dashboard_endpoint():
     Returns vision_summary, audio_summary, and overall health assessment.
     """
     from services.cross_modal_quality import CrossModalQualityDashboard
+
     dashboard = CrossModalQualityDashboard()
     dash_report = dashboard.dashboard_simple()
     return {"success": True, **dash_report}
 
 
 # --- Visualize ---
+
 
 @router.post("/multimodal/visualize")
 async def visualize_endpoint(
@@ -287,28 +300,33 @@ async def visualize_endpoint(
             item = await svc.get_item(iid)
             if item and "latent" in item:
                 latent = np.array(item["latent"], dtype=np.float32)
-                points.append({
-                    "item_id": iid,
-                    "modality": item["modality"],
-                    "x": float(latent[0]),
-                    "y": float(latent[1]) if len(latent) > 1 else 0.0,
-                })
+                points.append(
+                    {
+                        "item_id": iid,
+                        "modality": item["modality"],
+                        "x": float(latent[0]),
+                        "y": float(latent[1]) if len(latent) > 1 else 0.0,
+                    }
+                )
     else:
         sample_keys = list(registered.keys())[:n_latents]
         for iid in sample_keys:
             item = await svc.get_item(iid)
             if item and "latent" in item:
                 latent = np.array(item["latent"], dtype=np.float32)
-                points.append({
-                    "item_id": iid,
-                    "modality": item["modality"],
-                    "x": float(latent[0]),
-                    "y": float(latent[1]) if len(latent) > 1 else 0.0,
-                })
+                points.append(
+                    {
+                        "item_id": iid,
+                        "modality": item["modality"],
+                        "x": float(latent[0]),
+                        "y": float(latent[1]) if len(latent) > 1 else 0.0,
+                    }
+                )
     return {"success": True, "points": points, "count": len(points)}
 
 
 # --- List items ---
+
 
 @router.get("/multimodal/items")
 async def list_items_endpoint():
@@ -325,6 +343,7 @@ async def list_items_endpoint():
 
 
 # --- CML (Continuous Multimodal Learning) ---
+
 
 @router.get("/multimodal/cml/stats")
 async def cml_stats_endpoint():
@@ -357,6 +376,7 @@ async def cml_train_endpoint(epochs: int = Form(3)):
 
 
 # --- Memory store ---
+
 
 @router.post("/multimodal/memory/store")
 async def memory_store_endpoint(item_id: str = Form(...)):
@@ -406,6 +426,7 @@ async def memory_stats_endpoint():
 
 # --- Clear items ---
 
+
 @router.post("/multimodal/clear")
 async def clear_items_endpoint():
     """Clear all registered items and reset latent space.
@@ -420,6 +441,7 @@ async def clear_items_endpoint():
 
 
 # --- Health (P37 enhanced) ---
+
 
 @router.get("/multimodal/health")
 async def multimodal_health():
@@ -436,6 +458,7 @@ async def multimodal_health():
 
 
 # --- P37: Error recovery ---
+
 
 @router.get("/multimodal/recovery/state")
 async def recovery_state_endpoint():
@@ -458,6 +481,7 @@ async def recovery_reset_endpoint():
 
 
 # --- P37: State persistence ---
+
 
 @router.post("/multimodal/checkpoint/save")
 async def checkpoint_save_endpoint(label: Optional[str] = Form(None)):
@@ -490,6 +514,7 @@ async def checkpoints_list_endpoint():
 
 
 # --- P37: Quality monitoring ---
+
 
 @router.get("/multimodal/quality/report")
 async def quality_report_endpoint():

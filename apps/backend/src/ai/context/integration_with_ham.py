@@ -8,7 +8,6 @@
 
 import logging
 from datetime import datetime
-
 from typing import Any, Dict, Optional
 
 # 假设这些是从现有系统导入的
@@ -85,7 +84,9 @@ class ContextHAMIntegration:
             logger.info(f"Synced HAM memory {ham_memory_id} to context {context_id}")
             return context_id
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to sync HAM memory {ham_memory_id} to context: {e}", exc_info=True)
+            logger.error(
+                f"Failed to sync HAM memory {ham_memory_id} to context: {e}", exc_info=True
+            )
             return None
 
     def create_memory_context_from_ham(self, ham_memory_data: Dict[str, Any]) -> Optional[str]:
@@ -103,7 +104,9 @@ class ContextHAMIntegration:
             context_id = f"ctx_mem_{memory_id}"
             logger.info(f"Created memory context {context_id} from HAM data")
             return context_id
-        except Exception as e:  # broad exception acceptable: initialization continues on optional component failure
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: initialization continues on optional component failure
             logger.error(f"Failed to create memory context from HAM data: {e}", exc_info=True)
             return None
 
@@ -126,7 +129,9 @@ class ContextHAMIntegration:
             logger.info(f"Updated HAM from memory context {memory_id}")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to update HAM from memory context {memory_id}: {e}", exc_info=True)
+            logger.error(
+                f"Failed to update HAM from memory context {memory_id}: {e}", exc_info=True
+            )
             return False
 
     def transfer_context_memory(self, source_context_id: str, target_memory_type: str) -> bool:
@@ -147,7 +152,6 @@ class ContextHAMIntegration:
                 logger.error(f"Source context {source_context_id} not found", exc_info=True)
                 return False
 
-
             # 如果源上下文有关联的HAM记忆, 也进行转移
             if "ham_memory_id" in source_context.content and self.ham_manager:
                 ham_id = source_context.content["ham_memory_id"]
@@ -158,12 +162,12 @@ class ContextHAMIntegration:
                     except Exception as e:
                         logger.warning(f"HAM memory transfer failed for {ham_id}: {e}")
 
-            logger.info(
-                f"Transferred context memory from {source_context_id}"
-            )
+            logger.info(f"Transferred context memory from {source_context_id}")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to transfer context memory from {source_context_id}: {e}", exc_info=True)
+            logger.error(
+                f"Failed to transfer context memory from {source_context_id}: {e}", exc_info=True
+            )
             return False
 
 
@@ -176,10 +180,8 @@ def example_usage() -> None:
     # 创建集成实例(HAM管理器在实际使用中需要传入)
     # integration = ContextHAMIntegration(context_manager, ham_manager=None)
 
-
     # 同步到HAM(在HAM管理器可用时)
     # success = integration.sync_context_to_ham(context_id)
-
 
     logger.info("Created memory context: memory_id")
 

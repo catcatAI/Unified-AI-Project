@@ -212,9 +212,14 @@ class AtomicModule:
 
 
 class ComposedModule:
-    def __init__(self, name: str, atoms: List[AtomicModule],
-                 composition: Dict[str, Any], output_mapping: Dict[str, Any],
-                 version: int = 1):
+    def __init__(
+        self,
+        name: str,
+        atoms: List[AtomicModule],
+        composition: Dict[str, Any],
+        output_mapping: Dict[str, Any],
+        version: int = 1,
+    ):
         self.name = name
         self.atoms = atoms
         self.composition = composition
@@ -236,12 +241,15 @@ class ComposedModule:
                 if k in new_params:
                     new_params[k] = v
             new_config = ModuleConfig(
-                name=cfg.name, module_type=cfg.module_type,
-                sub_type=cfg.sub_type, parameters=new_params,
+                name=cfg.name,
+                module_type=cfg.module_type,
+                sub_type=cfg.sub_type,
+                parameters=new_params,
             )
             new_atoms.append(AtomicModule(new_config))
         return ComposedModule(
-            name=self.name, atoms=new_atoms,
+            name=self.name,
+            atoms=new_atoms,
             composition=dict(self.composition),
             output_mapping=dict(self.output_mapping),
             version=self.version + 1,
@@ -276,7 +284,9 @@ class TriggerCurve:
     def compute_delta(self, complexity: float) -> float:
         return min(0.2, 0.15 * sigmoid(complexity - 0.5))
 
-    def compute_trigger_threshold(self, actual_rate: float, target_rate: float, current: float) -> float:
+    def compute_trigger_threshold(
+        self, actual_rate: float, target_rate: float, current: float
+    ) -> float:
         delta = (target_rate - actual_rate) * 0.1
         return max(0.1, min(0.9, current + delta))
 
@@ -300,7 +310,9 @@ class EtaAxisState:
         self.execution_count: int = 0
         self.success_rate: float = 1.0
         self.structural_drift: float = 0.0
-        self.module_composition: Dict[str, Any] = field(default_factory=lambda: {"total_modules": 0, "axes": []})
+        self.module_composition: Dict[str, Any] = field(
+            default_factory=lambda: {"total_modules": 0, "axes": []}
+        )
 
     def register_module(self, config: ModuleConfig) -> None:
         self.module_registry[config.name] = config
@@ -398,22 +410,47 @@ def create_default_modules() -> Dict[str, ModuleConfig]:
         ("or_gate", AtomicModuleType.LOGIC_GATE, LogicGateType.OR, {}),
         ("not_gate", AtomicModuleType.LOGIC_GATE, LogicGateType.NOT, {}),
         ("xor_gate", AtomicModuleType.LOGIC_GATE, LogicGateType.XOR, {}),
-        ("threshold_gate", AtomicModuleType.LOGIC_GATE, LogicGateType.THRESHOLD, {"threshold": 0.5, "operator": ">"}),
+        (
+            "threshold_gate",
+            AtomicModuleType.LOGIC_GATE,
+            LogicGateType.THRESHOLD,
+            {"threshold": 0.5, "operator": ">"},
+        ),
         ("nand_gate", AtomicModuleType.LOGIC_GATE, LogicGateType.NAND, {}),
         ("nor_gate", AtomicModuleType.LOGIC_GATE, LogicGateType.NOR, {}),
         ("add_op", AtomicModuleType.ARITHMETIC_OP, ArithmeticOpType.ADD, {}),
         ("sub_op", AtomicModuleType.ARITHMETIC_OP, ArithmeticOpType.SUB, {}),
         ("mul_op", AtomicModuleType.ARITHMETIC_OP, ArithmeticOpType.MUL, {}),
         ("div_op", AtomicModuleType.ARITHMETIC_OP, ArithmeticOpType.DIV, {}),
-        ("custom_expr", AtomicModuleType.ARITHMETIC_OP, ArithmeticOpType.CUSTOM_EXPR, {"expr": "a + b"}),
+        (
+            "custom_expr",
+            AtomicModuleType.ARITHMETIC_OP,
+            ArithmeticOpType.CUSTOM_EXPR,
+            {"expr": "a + b"},
+        ),
         ("sum_agg", AtomicModuleType.AGGREGATOR, AggregatorType.SUM, {}),
         ("mean_agg", AtomicModuleType.AGGREGATOR, AggregatorType.MEAN, {}),
         ("max_agg", AtomicModuleType.AGGREGATOR, AggregatorType.MAX, {}),
         ("min_agg", AtomicModuleType.AGGREGATOR, AggregatorType.MIN, {}),
-        ("weighted_avg", AtomicModuleType.AGGREGATOR, AggregatorType.WEIGHTED_AVG, {"weights": [0.5, 0.3, 0.2]}),
+        (
+            "weighted_avg",
+            AtomicModuleType.AGGREGATOR,
+            AggregatorType.WEIGHTED_AVG,
+            {"weights": [0.5, 0.3, 0.2]},
+        ),
         ("direct_router", AtomicModuleType.ROUTER, RouterType.DIRECT, {"targets": ["alpha"]}),
-        ("fanout_router", AtomicModuleType.ROUTER, RouterType.FANOUT, {"targets": ["alpha", "beta", "gamma"]}),
-        ("split_router", AtomicModuleType.ROUTER, RouterType.SPLIT, {"threshold": 0.5, "targets": ["high", "low"]}),
+        (
+            "fanout_router",
+            AtomicModuleType.ROUTER,
+            RouterType.FANOUT,
+            {"targets": ["alpha", "beta", "gamma"]},
+        ),
+        (
+            "split_router",
+            AtomicModuleType.ROUTER,
+            RouterType.SPLIT,
+            {"threshold": 0.5, "targets": ["high", "low"]},
+        ),
         ("round_robin", AtomicModuleType.ROUTER, RouterType.ROUND_ROBIN, {"targets": ["a", "b"]}),
     ]
     for name, mt, st, params in configs:

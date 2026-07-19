@@ -71,11 +71,10 @@ def _read_config_file(path: Path) -> Optional[Dict[str, Any]]:
             # Fall back to YAML if PyYAML is available
             try:
                 import yaml
+
                 data = yaml.safe_load(text)
             except ImportError:
-                logger.warning(
-                    "PyYAML not installed and file is not valid JSON: %s", path
-                )
+                logger.warning("PyYAML not installed and file is not valid JSON: %s", path)
                 return None
         if isinstance(data, dict):
             return data

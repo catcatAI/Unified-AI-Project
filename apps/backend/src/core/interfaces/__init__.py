@@ -8,7 +8,11 @@ from core.interfaces.protocols import L1Biological, L2Cognitive, L3Identity, L4C
 from core.interfaces.service_registry import ServiceRegistry, get_registry
 
 __all__ = [
-    "L1Biological", "L2Cognitive", "L3Identity", "L4Creative",
+    "L1Biological",
+    "L2Cognitive",
+    "L3Identity",
+    "L4Creative",
     "StatePersistence",
-    "ServiceRegistry", "get_registry",
+    "ServiceRegistry",
+    "get_registry",
 ]

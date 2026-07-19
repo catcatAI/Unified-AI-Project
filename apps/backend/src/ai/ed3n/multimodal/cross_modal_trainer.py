@@ -35,10 +35,7 @@ class CrossModalMapping:
             parts.append(f"image={self.image_key}")
         if self.audio_key:
             parts.append(f"audio={self.audio_key}")
-        return (
-            f"CrossModalMapping({', '.join(parts)}, "
-            f"conf={self.confidence:.2f})"
-        )
+        return f"CrossModalMapping({', '.join(parts)}, " f"conf={self.confidence:.2f})"
 
 
 class CrossModalTrainer:
@@ -66,8 +63,12 @@ class CrossModalTrainer:
                 self.mappings[text_key] = CrossModalMapping(
                     text_key=text_key, image_key=image_key, confidence=0.5
                 )
-            logger.debug("Co-occurrence recorded: %s <-> %s (count=%d)",
-                         text_key, image_key, self._co_occurrence[pair])
+            logger.debug(
+                "Co-occurrence recorded: %s <-> %s (count=%d)",
+                text_key,
+                image_key,
+                self._co_occurrence[pair],
+            )
 
         if audio_key:
             pair = (text_key, audio_key)
@@ -79,8 +80,12 @@ class CrossModalTrainer:
                 self.mappings[text_key] = CrossModalMapping(
                     text_key=text_key, audio_key=audio_key, confidence=0.5
                 )
-            logger.debug("Co-occurrence recorded: %s <-> %s (count=%d)",
-                         text_key, audio_key, self._co_occurrence[pair])
+            logger.debug(
+                "Co-occurrence recorded: %s <-> %s (count=%d)",
+                text_key,
+                audio_key,
+                self._co_occurrence[pair],
+            )
 
     def train_mapping(self, min_co_occurrences: int = 3) -> int:
         created = 0
@@ -113,7 +118,8 @@ class CrossModalTrainer:
 
         logger.info(
             "Trained %d cross-modal mappings (min_co_occurrences=%d)",
-            created, min_co_occurrences,
+            created,
+            min_co_occurrences,
         )
         return created
 
@@ -149,13 +155,17 @@ class CrossModalTrainer:
         for mapping in self.mappings.values():
             if mapping.image_key and mapping.confidence >= 0.6:
                 self.network.add_relation(
-                    mapping.text_key, "mapping", mapping.image_key,
+                    mapping.text_key,
+                    "mapping",
+                    mapping.image_key,
                     weight=mapping.confidence,
                 )
                 synced += 1
             if mapping.audio_key and mapping.confidence >= 0.6:
                 self.network.add_relation(
-                    mapping.text_key, "mapping", mapping.audio_key,
+                    mapping.text_key,
+                    "mapping",
+                    mapping.audio_key,
                     weight=mapping.confidence,
                 )
                 synced += 1
@@ -166,10 +176,7 @@ class CrossModalTrainer:
         total = len(self.mappings)
         with_image = sum(1 for m in self.mappings.values() if m.image_key)
         with_audio = sum(1 for m in self.mappings.values() if m.audio_key)
-        avg_conf = (
-            sum(m.confidence for m in self.mappings.values()) / total
-            if total else 0.0
-        )
+        avg_conf = sum(m.confidence for m in self.mappings.values()) / total if total else 0.0
         return {
             "total_mappings": total,
             "with_image": with_image,

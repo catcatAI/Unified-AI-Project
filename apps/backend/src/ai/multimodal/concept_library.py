@@ -25,10 +25,7 @@ class ConceptLibrary:
     Built at startup or on first use.
     """
 
-    def __init__(self,
-                 semantic_encoder=None,
-                 dictionary=None,
-                 key_mapper=None):
+    def __init__(self, semantic_encoder=None, dictionary=None, key_mapper=None):
         self._encoder = semantic_encoder
         self._dictionary = dictionary
         self._mapper = key_mapper
@@ -90,21 +87,28 @@ class ConceptLibrary:
                     raw_semantic=primary_vec,
                 )
 
-            if self._dictionary is not None and dict_key and dict_key not in self._dictionary.entries:
+            if (
+                self._dictionary is not None
+                and dict_key
+                and dict_key not in self._dictionary.entries
+            ):
                 zh = spec.get("zh", concept_name)
                 en = spec.get("en", concept_name)
-                self._dictionary.entries[dict_key] = type('Entry', (), {
-                    'surface_forms': {'zh': zh, 'en': en},
-                    'contexts': [],
-                    'relations': {},
-                    'confidence': 1.0,
-                })()
+                self._dictionary.entries[dict_key] = type(
+                    "Entry",
+                    (),
+                    {
+                        "surface_forms": {"zh": zh, "en": en},
+                        "contexts": [],
+                        "relations": {},
+                        "confidence": 1.0,
+                    },
+                )()
 
             count += 1
 
         self._built = True
-        logger.info("ConceptLibrary: indexed %d concepts (%d labels)",
-                     count, len(all_labels))
+        logger.info("ConceptLibrary: indexed %d concepts (%d labels)", count, len(all_labels))
         return count
 
     def classify(self, image_data: bytes, top_k: int = 3) -> List[Dict[str, Any]]:
@@ -125,20 +129,22 @@ class ConceptLibrary:
         label_idx = 0
         for name, info in self._concepts.items():
             n_labels = len(info["labels"])
-            concept_scores[name] = scores[label_idx:label_idx + n_labels].tolist()
+            concept_scores[name] = scores[label_idx : label_idx + n_labels].tolist()
             label_idx += n_labels
 
         results = []
         for name, info in self._concepts.items():
             scs = concept_scores[name]
             best_score = max(scs) if scs else 0.0
-            results.append({
-                "concept_name": name,
-                "dict_key": info["dict_key"],
-                "confidence": round(float(best_score), 4),
-                "action": info["action"],
-                "labels": info["labels"],
-            })
+            results.append(
+                {
+                    "concept_name": name,
+                    "dict_key": info["dict_key"],
+                    "confidence": round(float(best_score), 4),
+                    "action": info["action"],
+                    "labels": info["labels"],
+                }
+            )
 
         results.sort(key=lambda x: x["confidence"], reverse=True)
         return results[:top_k]
@@ -154,19 +160,21 @@ class ConceptLibrary:
         label_idx = 0
         for name, info in self._concepts.items():
             n_labels = len(info["labels"])
-            concept_scores[name] = scores[label_idx:label_idx + n_labels].tolist()
+            concept_scores[name] = scores[label_idx : label_idx + n_labels].tolist()
             label_idx += n_labels
 
         results = []
         for name, info in self._concepts.items():
             scs = concept_scores[name]
             best_score = max(scs) if scs else 0.0
-            results.append({
-                "concept_name": name,
-                "dict_key": info["dict_key"],
-                "confidence": round(float(best_score), 4),
-                "action": info["action"],
-            })
+            results.append(
+                {
+                    "concept_name": name,
+                    "dict_key": info["dict_key"],
+                    "confidence": round(float(best_score), 4),
+                    "action": info["action"],
+                }
+            )
 
         results.sort(key=lambda x: x["confidence"], reverse=True)
         return results[:top_k]

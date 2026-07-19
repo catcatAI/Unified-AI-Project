@@ -48,6 +48,7 @@ def append_quality_log(entry: Dict[str, Any]) -> None:
         log_path = os.path.join(QUALITY_LOG_DIR, "multimodal_quality.jsonl")
         os.makedirs(QUALITY_LOG_DIR, exist_ok=True)
         import json
+
         with open(log_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry, default=str) + "\n")
     except Exception as exc:

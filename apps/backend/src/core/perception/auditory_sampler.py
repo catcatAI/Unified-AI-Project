@@ -91,5 +91,3 @@ class AuditorySampler:
             "source_distribution": source_counts,
             "particle_count": len(self.particles),
         }
-
-

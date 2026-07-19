@@ -42,6 +42,7 @@ def _save_tasks(tasks: List[Dict[str, Any]]) -> None:
     if _TASKS_FILE.exists():
         try:
             import shutil
+
             shutil.copy2(_TASKS_FILE, _TASKS_DIR / "tasks.json.bak")
         except Exception as e:
             logger.debug(f"Task backup copy failed: {e}")
@@ -68,10 +69,20 @@ class TaskManagerHandler:
 
     def _parse(self, text: str) -> tuple:
         import re
+
         text = text.strip()
         if any_keyword(text, ("建立任務", "新增任務", "添加任務", "add task", "create task")):
             m = re.search(r"[：:]\s*(.+)", text)
-            title = m.group(1).strip() if m else re.sub(r"建立任務|新增任務|添加任務|add task|create task", "", text, flags=re.IGNORECASE).strip()
+            title = (
+                m.group(1).strip()
+                if m
+                else re.sub(
+                    r"建立任務|新增任務|添加任務|add task|create task",
+                    "",
+                    text,
+                    flags=re.IGNORECASE,
+                ).strip()
+            )
             return "create", {"title": title}
         if any_keyword(text, ("任務列表", "待辦事項", "todo list", "task list", "list tasks")):
             return "list", {}
@@ -97,12 +108,14 @@ class TaskManagerHandler:
             return t("task_ops.specify_title")
         tasks = _load_tasks()
         task_id = max((tk.get("id", 0) for tk in tasks), default=0) + 1
-        tasks.append({
-            "id": task_id,
-            "title": title,
-            "status": "pending",
-            "created_at": time.time(),
-        })
+        tasks.append(
+            {
+                "id": task_id,
+                "title": title,
+                "status": "pending",
+                "created_at": time.time(),
+            }
+        )
         _save_tasks(tasks)
         return t("task_ops.task_created", id=task_id, title=title)
 
@@ -131,11 +144,11 @@ class TaskManagerHandler:
             if task_id and task.get("id") == task_id:
                 task["status"] = "completed"
                 _save_tasks(tasks)
-                return t("task_ops.task_completed", id=task_id, title=task['title'])
+                return t("task_ops.task_completed", id=task_id, title=task["title"])
             if title and task.get("title") == title and task.get("status") == "pending":
                 task["status"] = "completed"
                 _save_tasks(tasks)
-                return t("task_ops.task_completed", id=task['id'], title=title)
+                return t("task_ops.task_completed", id=task["id"], title=title)
         return t("task_ops.task_not_found")
 
     def _delete(self, payload: Dict[str, Any]) -> str:
@@ -143,7 +156,12 @@ class TaskManagerHandler:
         task_id = payload.get("id")
         title = payload.get("title", "")
         original_len = len(tasks)
-        tasks = [tk for tk in tasks if not (task_id and tk.get("id") == task_id) and not (title and tk.get("title") == title)]
+        tasks = [
+            tk
+            for tk in tasks
+            if not (task_id and tk.get("id") == task_id)
+            and not (title and tk.get("title") == title)
+        ]
         if len(tasks) == original_len:
             return t("task_ops.task_not_found")
         _save_tasks(tasks)
@@ -163,7 +181,7 @@ class TaskManagerHandler:
                 old_title = task["title"]
                 task["title"] = new_title
                 _save_tasks(tasks)
-                return t("task_ops.task_updated", id=task['id'], old=old_title, new=new_title)
+                return t("task_ops.task_updated", id=task["id"], old=old_title, new=new_title)
         return t("task_ops.task_not_found")
 
 

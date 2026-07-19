@@ -33,9 +33,17 @@ def _isolate_shared_latent(monkeypatch):
     """
     stub = MagicMock()
     stub.project.return_value = np.zeros(64, dtype=np.float32)
+    # Also mock the continuous multimodal learning to avoid training errors with mocked latent
+    cml_stub = MagicMock()
+    cml_stub.should_train.return_value = False
+    cml_stub.micro_train = MagicMock()
+    cml_stub.record_encode = MagicMock()
     with patch(
         "ai.multimodal.shared_latent_space.get_shared_latent_space",
         return_value=stub,
+    ), patch(
+        "services.multimodal_service.MultimodalService._get_cml",
+        return_value=cml_stub,
     ):
         yield
 
@@ -45,7 +53,7 @@ def _isolate_shared_latent(monkeypatch):
 # =============================================================================
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def svc():
     """Create a real MultimodalService for stress testing."""
     from services.multimodal_service import MultimodalService

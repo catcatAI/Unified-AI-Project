@@ -31,7 +31,9 @@ class BehaviorExecutor:
             Execution result dict with status and output.
         """
         decision_type = kwargs.get("decision_type", "unknown")
-        success = True  # Currently all executions succeed; could be extended with real failure modes
+        success = (
+            True  # Currently all executions succeed; could be extended with real failure modes
+        )
 
         result = {
             "behavior_id": behavior_id or "default",
@@ -47,8 +49,12 @@ class BehaviorExecutor:
         else:
             self._type_fail[decision_type] = self._type_fail.get(decision_type, 0) + 1
 
-        logger.debug("BehaviorExecutor: executed %s (type=%s, success=%s)",
-                      result["behavior_id"], decision_type, success)
+        logger.debug(
+            "BehaviorExecutor: executed %s (type=%s, success=%s)",
+            result["behavior_id"],
+            decision_type,
+            success,
+        )
         return result
 
     def get_execution_history(self) -> List[Dict[str, Any]]:

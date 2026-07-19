@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import aiohttp
+
     HAS_AIOHTTP = True
 except ImportError:
     HAS_AIOHTTP = False
@@ -73,8 +74,12 @@ class WeatherService:
                 "description": desc.lower(),
                 "humidity": int(humidity) if humidity != "?" else None,
                 "wind_speed_kmph": int(wind_speed) if wind_speed != "?" else None,
-                "location": data.get("nearest_area", [{}])[0].get("areaName", [{}])[0].get("value", "unknown"),
-                "country": data.get("nearest_area", [{}])[0].get("country", [{}])[0].get("value", "unknown"),
+                "location": data.get("nearest_area", [{}])[0]
+                .get("areaName", [{}])[0]
+                .get("value", "unknown"),
+                "country": data.get("nearest_area", [{}])[0]
+                .get("country", [{}])[0]
+                .get("value", "unknown"),
             }
         except (KeyError, IndexError, ValueError, TypeError) as e:
             logger.warning("Failed to parse weather response: %s", e)

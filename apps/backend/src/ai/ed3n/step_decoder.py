@@ -52,14 +52,10 @@ class StepDecoder:
             seq_output = self.network.forward_sequential(
                 context, current_position=len(context) - 1, path_type="sequence"
             )
-            sorted_seq = sorted(
-                seq_output.items(), key=lambda x: x[1], reverse=True
-            )
+            sorted_seq = sorted(seq_output.items(), key=lambda x: x[1], reverse=True)
             net_only = {k: v for k, v in sorted_seq[:5]}
 
-            candidates = self._score_candidates(
-                context, net_only, seen
-            )
+            candidates = self._score_candidates(context, net_only, seen)
 
             if not candidates:
                 break
@@ -81,7 +77,7 @@ class StepDecoder:
             seen.add(next_key)
             context.append(next_key)
             if len(context) > self.context_window:
-                context = context[-self.context_window:]
+                context = context[-self.context_window :]
 
         return output_keys
 
@@ -107,26 +103,20 @@ class StepDecoder:
                 for target in targets:
                     if target in seen:
                         continue
-                    scores[target] = (
-                        scores.get(target, 0.0) + weight * entry.confidence
-                    )
+                    scores[target] = scores.get(target, 0.0) + weight * entry.confidence
 
         scores = {k: v for k, v in scores.items() if v >= self.min_score}
         sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-        return dict(sorted_scores[:self.top_k])
+        return dict(sorted_scores[: self.top_k])
 
-    def _sample(
-        self, candidates: Dict[str, float], temperature: float
-    ) -> Optional[str]:
+    def _sample(self, candidates: Dict[str, float], temperature: float) -> Optional[str]:
         if not candidates:
             return None
 
         if temperature <= 0 or len(candidates) == 1:
             return max(candidates, key=candidates.get)
 
-        scaled = {
-            k: v / max(temperature, 0.01) for k, v in candidates.items()
-        }
+        scaled = {k: v / max(temperature, 0.01) for k, v in candidates.items()}
         max_val = max(scaled.values())
         shifted = {k: math.exp(v - max_val) for k, v in scaled.items()}
         total = sum(shifted.values())

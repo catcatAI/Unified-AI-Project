@@ -119,7 +119,9 @@ class GoogleDriveService:
         self._service = build("drive", "v3", credentials=self._creds)
         return self._service
 
-    def list_files(self, page_size: int = batch_value("drive_list_page_size", 200), query: Optional[str] = None) -> List[Dict[str, Any]]:
+    def list_files(
+        self, page_size: int = batch_value("drive_list_page_size", 200), query: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """List files items."""
         try:
             service = self._get_service()
@@ -149,10 +151,14 @@ class GoogleDriveService:
     def get_file_metadata(self, file_id: str) -> Dict[str, Any]:
         """Get the file metadata by self."""
         service = self._get_service()
-        return service.files().get(
-            fileId=file_id,
-            fields="id,name,mimeType,size,modifiedTime,webViewLink,parents,description,owners",
-        ).execute()
+        return (
+            service.files()
+            .get(
+                fileId=file_id,
+                fields="id,name,mimeType,size,modifiedTime,webViewLink,parents,description,owners",
+            )
+            .execute()
+        )
 
     def download_file(self, file_id: str, dest_path: str) -> bool:
         """Log a diagnostic message."""
@@ -204,7 +210,9 @@ class GoogleDriveService:
             logger.error(f"Export gdoc error for {file_id}: {e}", exc_info=True)
             return None
 
-    def search_files(self, query: str, page_size: int = batch_value("drive_search_page_size", 10)) -> List[Dict[str, Any]]:
+    def search_files(
+        self, query: str, page_size: int = batch_value("drive_search_page_size", 10)
+    ) -> List[Dict[str, Any]]:
         """Search for files."""
         return self.list_files(page_size=page_size, query=query)
 
@@ -222,7 +230,12 @@ class GoogleDriveService:
             logger.warning(f"Could not get storage info: {e}", exc_info=True)
             return {"used": "0", "total": "0", "user": "unknown"}
 
-    def upload_file(self, local_path: str, drive_folder_id: Optional[str] = None, mime_type: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def upload_file(
+        self,
+        local_path: str,
+        drive_folder_id: Optional[str] = None,
+        mime_type: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
         """上傳本地檔案到 Google Drive"""
         try:
             service = self._get_service()
@@ -235,16 +248,29 @@ class GoogleDriveService:
             file_metadata = {"name": path.name}
             if drive_folder_id:
                 file_metadata["parents"] = [drive_folder_id]
-            uploaded = service.files().create(body=file_metadata, media_body=media, fields="id,name,mimeType,size,webViewLink").execute()
+            uploaded = (
+                service.files()
+                .create(
+                    body=file_metadata, media_body=media, fields="id,name,mimeType,size,webViewLink"
+                )
+                .execute()
+            )
             logger.info(f"Uploaded {path.name} to Drive (id={uploaded.get('id')})")
             return uploaded
         except Exception as e:
             logger.error(f"Upload failed: {e}", exc_info=True)
             return None
 
-    def create_file_from_text(self, file_name: str, content: str, mime_type: str = "text/plain", drive_folder_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def create_file_from_text(
+        self,
+        file_name: str,
+        content: str,
+        mime_type: str = "text/plain",
+        drive_folder_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
         """建立文字檔案並上傳到 Google Drive"""
         import tempfile
+
         suffix = ".txt"
         if mime_type == "text/markdown":
             suffix = ".md"
@@ -254,7 +280,9 @@ class GoogleDriveService:
             suffix = ".html"
         elif mime_type == "text/csv":
             suffix = ".csv"
-        with tempfile.NamedTemporaryFile(mode="w", suffix=suffix, delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=suffix, delete=False, encoding="utf-8"
+        ) as f:
             f.write(content)
             tmp_path = f.name
         try:

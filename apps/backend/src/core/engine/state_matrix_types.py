@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AllocateDecision:
     """θ 轴的分配决策 / Meta-cognitive allocation decision"""
+
     action: str
     target: Optional[str] = None
     targets: Optional[List[Tuple[str, float]]] = None
@@ -49,10 +50,10 @@ class AllocateDecision:
         }
 
 
-
 @dataclass
 class AxisSemanticAnchor:
     """軸的語義錨點 / Semantic anchor for axis identity"""
+
     name: str
     label: str
     description: str
@@ -96,11 +97,12 @@ class DimensionState:
     def compute_coordinate(self) -> Tuple[float, float, float]:
         """根據當前維度值計算實際座標 / Compute actual coordinate from current values"""
         from app_config_loader import get_formula_config
+
         proj_conf = get_formula_config("spatial").get("projection_weights", {}).get(self.name, {})
-        
+
         v = self.values
         n = self.name
-        
+
         # 獲取縮放因子，默認為 1.0
         xf = proj_conf.get("x_factor", 1.0)
         yf = proj_conf.get("y_factor", 1.0)
@@ -197,5 +199,3 @@ class DimensionState:
             if key in self.values:
                 self.values[key] = max(0.0, min(1.0, float(value)))
         self.timestamp = datetime.now()
-
-

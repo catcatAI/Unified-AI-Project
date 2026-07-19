@@ -11,18 +11,19 @@ Safety Audit — 安全決策審計系統
 - 異常檢測
 """
 
-from core.utils import safe_error
-
-# =============================================================================
-# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
-# =============================================================================
-
 import json
 import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
+
+from core.utils import safe_error
+
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +119,7 @@ class SafetyAudit:
             self.violations.append(entry)
 
         if len(self.entries) > self.max_entries:
-            self.entries = self.entries[-self.max_entries:]
+            self.entries = self.entries[-self.max_entries :]
 
         self._check_alerts(entry)
         return entry
@@ -302,8 +303,7 @@ class SafetyAudit:
         recent_violations = [
             e
             for e in self.entries
-            if e.severity in (Severity.HIGH, Severity.CRITICAL)
-            and e.timestamp >= recent_cutoff
+            if e.severity in (Severity.HIGH, Severity.CRITICAL) and e.timestamp >= recent_cutoff
         ]
         if len(recent_violations) >= self.alert_thresholds["violations_per_hour"]:
             logger.warning(

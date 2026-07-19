@@ -40,8 +40,7 @@ class ConceptSpaceMapper:
     - Generation: CLIP text → concept space → primitive distribution → optimize
     """
 
-    def __init__(self, clip_dim: int = 512, concept_dim: int = 64,
-                 hidden_dim: int = 128):
+    def __init__(self, clip_dim: int = 512, concept_dim: int = 64, hidden_dim: int = 128):
         self._clip_dim = clip_dim
         self._concept_dim = concept_dim
         self._hidden_dim = hidden_dim
@@ -91,10 +90,16 @@ class ConceptSpaceMapper:
             clip_features = clip_features.reshape(1, -1)
         return self._forward(clip_features)
 
-    def train(self, clip_features: np.ndarray, labels: np.ndarray,
-              class_names: List[str], n_epochs: int = 200,
-              lr: float = 0.001, batch_size: int = 32,
-              verbose: bool = True):
+    def train(
+        self,
+        clip_features: np.ndarray,
+        labels: np.ndarray,
+        class_names: List[str],
+        n_epochs: int = 200,
+        lr: float = 0.001,
+        batch_size: int = 32,
+        verbose: bool = True,
+    ):
         """Train the concept space mapping.
 
         Uses supervised contrastive loss:
@@ -116,7 +121,13 @@ class ConceptSpaceMapper:
 
         if verbose:
             logger.info("Training concept space: %d images, %d classes", n_samples, n_classes)
-            logger.info("  Architecture: %d → %d → %d → %d", self._clip_dim, self._hidden_dim, self._hidden_dim, self._concept_dim)
+            logger.info(
+                "  Architecture: %d → %d → %d → %d",
+                self._clip_dim,
+                self._hidden_dim,
+                self._hidden_dim,
+                self._concept_dim,
+            )
 
         t_start = time.time()
 
@@ -130,8 +141,8 @@ class ConceptSpaceMapper:
             n_batches = 0
 
             for i in range(0, n_samples, batch_size):
-                batch_clip = clip_shuffled[i:i+batch_size]
-                batch_labels = label_shuffled[i:i+batch_size]
+                batch_clip = clip_shuffled[i : i + batch_size]
+                batch_labels = label_shuffled[i : i + batch_size]
                 bs = len(batch_clip)
 
                 if bs < 2:
@@ -147,12 +158,12 @@ class ConceptSpaceMapper:
                 grad = self._compute_gradient(batch_clip, batch_labels)
 
                 # Update weights
-                self._W1 -= lr * grad['W1']
-                self._b1 -= lr * grad['b1']
-                self._W2 -= lr * grad['W2']
-                self._b2 -= lr * grad['b2']
-                self._W3 -= lr * grad['W3']
-                self._b3 -= lr * grad['b3']
+                self._W1 -= lr * grad["W1"]
+                self._b1 -= lr * grad["b1"]
+                self._W2 -= lr * grad["W2"]
+                self._b2 -= lr * grad["b2"]
+                self._W3 -= lr * grad["W3"]
+                self._b3 -= lr * grad["b3"]
 
                 total_loss += loss
                 n_batches += 1
@@ -160,7 +171,9 @@ class ConceptSpaceMapper:
             if verbose and (epoch + 1) % 50 == 0:
                 avg_loss = total_loss / max(n_batches, 1)
                 elapsed = time.time() - t_start
-                logger.info("  Epoch %d/%d: loss=%.4f (%.1fs)", epoch + 1, n_epochs, avg_loss, elapsed)
+                logger.info(
+                    "  Epoch %d/%d: loss=%.4f (%.1fs)", epoch + 1, n_epochs, avg_loss, elapsed
+                )
 
         # Compute class centers
         concept_vecs = self._forward(clip_features)
@@ -179,8 +192,7 @@ class ConceptSpaceMapper:
             elapsed = time.time() - t_start
             logger.info("Training complete (%.1fs)", elapsed)
 
-    def _contrastive_loss(self, concept_vecs: np.ndarray,
-                          labels: np.ndarray) -> float:
+    def _contrastive_loss(self, concept_vecs: np.ndarray, labels: np.ndarray) -> float:
         """Supervised contrastive loss.
 
         For each anchor, pull positive (same class) together,
@@ -214,16 +226,22 @@ class ConceptSpaceMapper:
         loss = -pos_sims.mean() / n_pos.mean() + np.log(denom.mean() + 1e-8)
         return float(loss)
 
-    def _compute_gradient(self, clip_batch: np.ndarray,
-                          labels: np.ndarray) -> Dict[str, np.ndarray]:
+    def _compute_gradient(
+        self, clip_batch: np.ndarray, labels: np.ndarray
+    ) -> Dict[str, np.ndarray]:
         """Compute gradients via finite differences."""
         eps = 0.001
         grad = {}
 
         # For each parameter, compute finite difference
-        for name, param in [('W1', self._W1), ('b1', self._b1),
-                            ('W2', self._W2), ('b2', self._b2),
-                            ('W3', self._W3), ('b3', self._b3)]:
+        for name, param in [
+            ("W1", self._W1),
+            ("b1", self._b1),
+            ("W2", self._W2),
+            ("b2", self._b2),
+            ("W3", self._W3),
+            ("b3", self._b3),
+        ]:
             grad[name] = np.zeros_like(param)
             # Random subspace (too many params for full finite diff)
             n_probe = min(20, param.size)
@@ -267,8 +285,7 @@ class ConceptSpaceMapper:
 
     def predict_batch(self, clip_features: np.ndarray) -> List[Tuple[int, float]]:
         """Predict classes for a batch."""
-        return [self.predict(clip_features[i:i+1])
-                for i in range(len(clip_features))]
+        return [self.predict(clip_features[i : i + 1]) for i in range(len(clip_features))]
 
     def get_concept_vector(self, clip_features: np.ndarray) -> np.ndarray:
         """Get concept space vector for use in generation pipeline."""
@@ -318,5 +335,10 @@ class ConceptSpaceMapper:
         if "class_centers" in data:
             mapper._class_centers = np.array(data["class_centers"], dtype=np.float32)
 
-        logger.info("Concept space loaded: %s → %s → %s", mapper._clip_dim, mapper._hidden_dim, mapper._concept_dim)
+        logger.info(
+            "Concept space loaded: %s → %s → %s",
+            mapper._clip_dim,
+            mapper._hidden_dim,
+            mapper._concept_dim,
+        )
         return mapper

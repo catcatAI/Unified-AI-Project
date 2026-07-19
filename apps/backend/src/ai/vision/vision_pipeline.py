@@ -55,12 +55,14 @@ class VisionPipeline:
     def _get_encoder(self):
         if self._encoder is None:
             from ai.multimodal.visual_encoder import VisualEncoder
+
             self._encoder = VisualEncoder(feature_dim=self.VISION_DIM)
         return self._encoder
 
     def _get_latent_space(self):
         if self._latent_space is None:
             from ai.multimodal.shared_latent_space import get_shared_latent_space
+
             self._latent_space = get_shared_latent_space(latent_dim=self.LATENT_DIM)
         return self._latent_space
 
@@ -70,6 +72,7 @@ class VisionPipeline:
                 VisualDecoder,
                 load_default_visual_decoder_weights,
             )
+
             self._decoder = VisualDecoder()
             load_default_visual_decoder_weights(self._decoder)
         return self._decoder
@@ -142,8 +145,9 @@ class VisionPipeline:
             result["cache_hit"] = False
 
             # 7. Update cache
-            self._cache[img_hash] = {k: v for k, v in result.items()
-                                     if k not in ("decoded_image", "decoded_array")}
+            self._cache[img_hash] = {
+                k: v for k, v in result.items() if k not in ("decoded_image", "decoded_array")
+            }
             self._cache.move_to_end(img_hash)
             while len(self._cache) > self.CACHE_SIZE:
                 self._cache.popitem(last=False)
@@ -203,6 +207,7 @@ class VisionPipeline:
     def _hash_image(image_data: bytes) -> str:
         """Generate a content-based hash for caching."""
         import hashlib
+
         return hashlib.md5(image_data).hexdigest()
 
     @staticmethod
@@ -229,7 +234,7 @@ class VisionPipeline:
             var_b = b.var()
             cov = ((a - mu_a) * (b - mu_b)).mean()
             num = (2 * mu_a * mu_b + c1) * (2 * cov + c2)
-            den = (mu_a ** 2 + mu_b ** 2 + c1) * (var_a + var_b + c2)
+            den = (mu_a**2 + mu_b**2 + c1) * (var_a + var_b + c2)
             scores.append(num / (den + eps))
         return float(np.mean(scores))
 

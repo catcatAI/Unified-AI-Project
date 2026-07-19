@@ -222,9 +222,15 @@ class ED3NEngine:
                     if load_trained and os.path.exists(cls._SHARED_CKPT):
                         try:
                             inst.load(cls._SHARED_CKPT)
-                            logger.info("ED3NEngine.get_shared: loaded trained checkpoint %s", cls._SHARED_CKPT)
+                            logger.info(
+                                "ED3NEngine.get_shared: loaded trained checkpoint %s",
+                                cls._SHARED_CKPT,
+                            )
                         except Exception as e:  # never block startup on a bad ckpt
-                            logger.warning("ED3NEngine.get_shared: checkpoint load failed (%s); presets only", e)
+                            logger.warning(
+                                "ED3NEngine.get_shared: checkpoint load failed (%s); presets only",
+                                e,
+                            )
                     cls._shared_instance = inst
         return cls._shared_instance
 
@@ -451,7 +457,6 @@ class ED3NEngine:
                 is_fallback=(not output or output == FALLBACK_STR),
             )
 
-
     def _stage_chain_reasoning(self, input_text, query_id, stages):
         """Offline relational-chain reasoning via CoreNetwork transitive closure.
 
@@ -471,16 +476,20 @@ class ED3NEngine:
             if answer is not None:
                 stages["chain"] = (time.perf_counter() - t0) * 1000
                 return self._telemetry_return(
-                    query_id, input_text, stages,
-                    reflex_match=None, cache_hit=False, matched_keys=[],
+                    query_id,
+                    input_text,
+                    stages,
+                    reflex_match=None,
+                    cache_hit=False,
+                    matched_keys=[],
                     output_text=answer,
-                    confidence=0.85, is_fallback=False,
+                    confidence=0.85,
+                    is_fallback=False,
                 )
         except Exception as e:
             logger.debug("Chain reasoning failed (non-critical): %s", e)
         stages["chain"] = (time.perf_counter() - t0) * 1000
         return None
-
 
         # Stage 1.5: Math evaluation
         math_result = self._stage_math(input_text, query_id, stages)
@@ -661,7 +670,6 @@ class ED3NEngine:
             )
         return None
 
-
     def _stage_knowledge(self, input_text, query_id, stages):
         t0 = time.perf_counter()
         result = self._try_knowledge(input_text)
@@ -680,7 +688,6 @@ class ED3NEngine:
             )
         return None
 
-
     def _stage_reasoning(self, input_text, query_id, stages):
         t0 = time.perf_counter()
         result = self._try_reasoning(input_text)
@@ -698,7 +705,6 @@ class ED3NEngine:
                 is_fallback=False,
             )
         return None
-
 
     def _stage_encode(self, input_text, query_id, stages):
         t0 = time.perf_counter()
@@ -773,7 +779,9 @@ class ED3NEngine:
         confidence = self._compute_confidence(keys)
         return enriched, confidence
 
-    def _stage_shallow_decode(self, keys, context, query_id, stages, cache_hit, FALLBACK_STR, input_text=""):
+    def _stage_shallow_decode(
+        self, keys, context, query_id, stages, cache_hit, FALLBACK_STR, input_text=""
+    ):
         t0 = time.perf_counter()
         decoded = self.dictionary.decode(keys, context)
         stages["decode"] = (time.perf_counter() - t0) * 1000

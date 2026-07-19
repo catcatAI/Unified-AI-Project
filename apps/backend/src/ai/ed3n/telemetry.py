@@ -64,9 +64,7 @@ class TelemetryCollector:
             else:
                 self._cache_misses += 1
             if reflex_match is not None:
-                self._reflex_counts[reflex_match] = (
-                    self._reflex_counts.get(reflex_match, 0) + 1
-                )
+                self._reflex_counts[reflex_match] = self._reflex_counts.get(reflex_match, 0) + 1
             for stage_name, latency_ms in stages.items():
                 if stage_name not in self._stage_times:
                     self._stage_times[stage_name] = []
@@ -100,11 +98,7 @@ class TelemetryCollector:
                     "p99_ms": self._percentile(sorted_t, 99),
                 }
 
-            confidences = [
-                r["confidence"]
-                for r in self._records
-                if r["confidence"] is not None
-            ]
+            confidences = [r["confidence"] for r in self._records if r["confidence"] is not None]
 
             return {
                 "total_queries": total,
@@ -114,9 +108,9 @@ class TelemetryCollector:
                 "cache_misses": self._cache_misses,
                 "cache_hit_rate": round(cache_hit_rate, 4),
                 "stages": stage_summary,
-                "confidence_avg": round(
-                    sum(confidences) / len(confidences), 4
-                ) if confidences else 0.0,
+                "confidence_avg": (
+                    round(sum(confidences) / len(confidences), 4) if confidences else 0.0
+                ),
                 "reflex_pattern_count": len(self._reflex_counts),
             }
 
@@ -125,17 +119,13 @@ class TelemetryCollector:
             total = self._total_queries
             if total == 0:
                 return []
-            sorted_patterns = sorted(
-                self._reflex_counts.items(), key=lambda x: x[1], reverse=True
-            )
+            sorted_patterns = sorted(self._reflex_counts.items(), key=lambda x: x[1], reverse=True)
             return [
                 (pattern, count, round(count / total * 100, 2))
                 for pattern, count in sorted_patterns
             ]
 
-    def get_latency_histogram(
-        self, stage: str, buckets: Optional[List[float]] = None
-    ) -> dict:
+    def get_latency_histogram(self, stage: str, buckets: Optional[List[float]] = None) -> dict:
         if buckets is None:
             buckets = [1.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0]
         with self._lock:

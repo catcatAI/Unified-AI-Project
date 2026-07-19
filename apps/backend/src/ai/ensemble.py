@@ -255,10 +255,14 @@ class ModelEnsemble:
         """Query a single model with error handling"""
         try:
             response = await self.llm_service.chat_completion(
-                messages=messages, model_id=model_id, max_tokens=int(llm_param("ensemble_max_tokens", 2048))
+                messages=messages,
+                model_id=model_id,
+                max_tokens=int(llm_param("ensemble_max_tokens", 2048)),
             )
             return response
-        except Exception as e:  # broad exception acceptable: model query wraps all API and network failures
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: model query wraps all API and network failures
             logger.error(f"Error querying model {model_id}: {e}", exc_info=True)
             raise
 
@@ -282,7 +286,9 @@ class ModelEnsemble:
                 ):
                     yield chunk
                 return  # Successful streaming
-            except Exception as e:  # broad exception acceptable: streaming ensemble wraps all model stream failures
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: streaming ensemble wraps all model stream failures
                 logger.warning(f"Streaming failed for {model_id}: {e}", exc_info=True)
                 logger.warning(f"Streaming failed for {model_id}: {e}", exc_info=True)
                 continue
@@ -301,9 +307,7 @@ class ModelEnsemble:
 
 
 # Convenience function for quick ensemble queries
-async def ensemble_query(
-    prompt: str, llm_service: Any, strategy: str = "best_single"
-) -> str:
+async def ensemble_query(prompt: str, llm_service: Any, strategy: str = "best_single") -> str:
     """Quick ensemble query returning just the text response"""
     ensemble = ModelEnsemble(llm_service)
     ensemble.configure_ensemble(

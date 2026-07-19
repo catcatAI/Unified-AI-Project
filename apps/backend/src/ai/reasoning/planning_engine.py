@@ -31,6 +31,7 @@ class StepStatus(Enum):
 @dataclass
 class PlanStep:
     """A single step in a plan."""
+
     step_id: str
     description: str
     action: str
@@ -46,6 +47,7 @@ class PlanStep:
 @dataclass
 class Plan:
     """A complete plan with steps and metadata."""
+
     plan_id: str
     goal: str
     steps: List[PlanStep] = field(default_factory=list)
@@ -233,9 +235,7 @@ class PlanningEngine:
         if not plan:
             return []
 
-        completed = {
-            s.step_id for s in plan.steps if s.status == StepStatus.COMPLETED
-        }
+        completed = {s.step_id for s in plan.steps if s.status == StepStatus.COMPLETED}
         ready = []
         for step in plan.steps:
             if step.status != StepStatus.PENDING:

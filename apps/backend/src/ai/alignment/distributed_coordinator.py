@@ -29,7 +29,9 @@ class DistributedCoordinator:
         self.is_initialized = True
         self.cluster_nodes = [f"node_{i}" for i in range(3)]
         self.active_nodes = list(self.cluster_nodes)
-        logger.info(f"[DistributedCoordinator] Initialized coordinator={self.coordinator_id} nodes={len(self.active_nodes)}")
+        logger.info(
+            f"[DistributedCoordinator] Initialized coordinator={self.coordinator_id} nodes={len(self.active_nodes)}"
+        )
 
     async def shutdown(self) -> None:
         self.is_initialized = False

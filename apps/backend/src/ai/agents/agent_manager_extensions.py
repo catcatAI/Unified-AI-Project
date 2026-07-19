@@ -65,7 +65,9 @@ class AgentManagerExtensions:
 
             logger.info(f"Launched process agent {agent_id} (PID: {process.pid})")
             return True
-        except Exception as e:  # broad exception acceptable: agent restart wraps all subprocess failures
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: agent restart wraps all subprocess failures
             logger.error(f"Failed to restart agent {agent_id}: {e}", exc_info=True)
             logger.error(f"Failed to launch process agent {agent_id}: {e}", exc_info=True)
             return False
@@ -107,7 +109,10 @@ class AgentManagerExtensions:
                 dead_agents = []
                 for agent_id, agent_info in agent_manager.process_agents.items():
                     if not agent_info.process.is_alive():
-                        logger.warning(f"Agent {agent_id} is dead (PID: {agent_info.process.pid})", exc_info=True)
+                        logger.warning(
+                            f"Agent {agent_id} is dead (PID: {agent_info.process.pid})",
+                            exc_info=True,
+                        )
                         dead_agents.append(agent_id)
 
                 # 嘗試重啟死亡代理
@@ -116,7 +121,9 @@ class AgentManagerExtensions:
             except asyncio.CancelledError:
                 logger.info("Health monitor loop cancelled")
                 break
-            except Exception as e:  # broad exception acceptable: health monitor loop wraps all task failures
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: health monitor loop wraps all task failures
                 logger.error(f"Failed to restart agent {agent_id}: {e}", exc_info=True)
                 return False
 

@@ -45,9 +45,7 @@ class BatchReorderEngine:
         self.batches.append(batch)
         return batch
 
-    def get_downstream(
-        self, spiked_keys: List[str], snn_network
-    ) -> Optional[SNNBatch]:
+    def get_downstream(self, spiked_keys: List[str], snn_network) -> Optional[SNNBatch]:
         """
         Get next batch: only neurons downstream of spiked ones.
         Returns None if no downstream neurons exist.
@@ -101,9 +99,7 @@ class BatchReorderEngine:
                     spiked.append(key)
         return spiked
 
-    def collect_output_spikes(
-        self, all_spikes: Dict[int, List[str]]
-    ) -> Dict[str, float]:
+    def collect_output_spikes(self, all_spikes: Dict[int, List[str]]) -> Dict[str, float]:
         """Collect all spikes across batches. Returns {key: spike_count}."""
         result: Dict[str, float] = {}
         for batch_id, spiked_keys in all_spikes.items():

@@ -28,6 +28,7 @@ _ALLOWED_ROOTS = [
     Path(os.environ.get("ANGELA_WORKSPACE", os.getcwd())),
 ]
 
+
 def _is_safe_path(target: Path) -> bool:
     try:
         resolved = target.resolve()
@@ -80,7 +81,9 @@ class FileOperationHandler:
         }
         handler_fn = handlers.get(action)
         if not handler_fn:
-            return t("file_ops.unsupported_action", action=action, actions=", ".join(handlers.keys()))
+            return t(
+                "file_ops.unsupported_action", action=action, actions=", ".join(handlers.keys())
+            )
 
         try:
             return await asyncio.to_thread(handler_fn, target, content=content, new_name=new_name)
@@ -101,7 +104,9 @@ class FileOperationHandler:
         if not target.exists():
             return t("file_ops.file_not_found", path=str(target))
         if target.is_dir():
-            items = [f"  {'📁' if p.is_dir() else '📄'} {p.name}" for p in sorted(target.iterdir())[:50]]
+            items = [
+                f"  {'📁' if p.is_dir() else '📄'} {p.name}" for p in sorted(target.iterdir())[:50]
+            ]
             return t("file_ops.dir_contents", path=str(target)) + "\n" + "\n".join(items)
         try:
             text = target.read_text(encoding="utf-8", errors="replace")
@@ -217,7 +222,9 @@ class FileOperationHandler:
             return t("file_ops.file_not_found", path=str(target))
         if target.is_dir():
             total = sum(f.stat().st_size for f in target.rglob("*") if f.is_file())
-            return t("file_ops.dir_size", path=str(target), size=f"{total} bytes ({total // 1024}KB)")
+            return t(
+                "file_ops.dir_size", path=str(target), size=f"{total} bytes ({total // 1024}KB)"
+            )
         s = target.stat().st_size
         return t("file_ops.file_size", path=str(target), size=f"{s} bytes ({s // 1024}KB)")
 

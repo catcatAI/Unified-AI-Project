@@ -193,8 +193,11 @@ class PetManager:
             task = asyncio.create_task(self._notify_state_change("sync_bio"))
             self._notify_task = task
             task.add_done_callback(
-                lambda t: logger.warning("Task _notify_state_change failed: %s", t.exception())
-                if not t.cancelled() and t.exception() else None
+                lambda t: (
+                    logger.warning("Task _notify_state_change failed: %s", t.exception())
+                    if not t.cancelled() and t.exception()
+                    else None
+                )
             )
         except RuntimeError:
             logger.debug("No running event loop during module import, skip notification")
@@ -216,7 +219,9 @@ class PetManager:
                     await self.broadcast_callback("pet_state_update", payload)
                 else:
                     self.broadcast_callback("pet_state_update", payload)
-            except Exception as e:  # broad exception acceptable: ensure broadcast failures don't break state notification flow
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: ensure broadcast failures don't break state notification flow
                 logger.error(f"Failed to broadcast pet state change: {e}", exc_info=True)
 
     async def handle_interaction(self, interaction_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -410,7 +415,7 @@ class PetManager:
 
     async def _check_survival_needs_inner(self) -> None:
         """Inner survival check implementation (must be called with _state_lock held).
-        
+
         Economy-based autonomous purchase logic was removed when the economy
         subsystem was deleted. Stats are still recorded for observability.
         """

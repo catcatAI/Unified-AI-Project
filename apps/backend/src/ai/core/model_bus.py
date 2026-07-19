@@ -14,11 +14,13 @@ from core.utils import safe_error
 logger = logging.getLogger(__name__)
 
 # Strings returned by engines when they cannot process input — treated as failed responses
-_ENGINE_FALLBACK_STRINGS = frozenset({
-    "抱歉，我没理解你的意思。",
-    "抱歉，我沒理解你的意思。",
-    "",
-})
+_ENGINE_FALLBACK_STRINGS = frozenset(
+    {
+        "抱歉，我没理解你的意思。",
+        "抱歉，我沒理解你的意思。",
+        "",
+    }
+)
 
 
 @dataclass
@@ -62,7 +64,9 @@ class ModelBus:
     - Route to handlers for FILE/SEARCH/CODE/EXECUTE/TASK intents
     """
 
-    def __init__(self, default_timeout: float = 30.0, meta_controller: Optional[Any] = None) -> None:
+    def __init__(
+        self, default_timeout: float = 30.0, meta_controller: Optional[Any] = None
+    ) -> None:
         self._registry: Dict[str, Tuple[Any, ModelCapability]] = {}
         self._handlers: Dict[str, Any] = {}
         self._handler_map: Dict[str, str] = {}
@@ -112,7 +116,7 @@ class ModelBus:
         Wraps backends that expose ``generate()`` instead of ``process()``
         so the internal ``_try_model`` dispatch can call ``process()`` uniformly.
         """
-        if not hasattr(backend, 'process'):
+        if not hasattr(backend, "process"):
             original = backend
 
             class _CloudAdapter:
@@ -121,6 +125,7 @@ class ModelBus:
 
                 async def process(self, query: str, context=None) -> str:
                     from core.interfaces.protocols import LLMResponse
+
                     kwargs = {"context": context} if context else {}
                     result: LLMResponse = await self._backend.generate(query, **kwargs)
                     return result.text if result else ""
@@ -158,7 +163,7 @@ class ModelBus:
 
     def _adapt_handler(self, handler: Any) -> Any:
         """Wrap a handler to expose process(query, context) interface."""
-        if hasattr(handler, 'process'):
+        if hasattr(handler, "process"):
             return handler
 
         class _HandlerAdapter:
@@ -167,8 +172,9 @@ class ModelBus:
 
             async def process(self, query: str, context=None) -> str:
                 intent = (context or {}).get("query_type", "unknown")
-                if hasattr(self._handler, 'handle'):
+                if hasattr(self._handler, "handle"):
                     import inspect
+
                     sig = inspect.signature(self._handler.handle)
                     params = list(sig.parameters.keys())
                     if len(params) >= 2:
@@ -185,8 +191,12 @@ class ModelBus:
         """执行 handler 并返回结构化结果"""
         handler = self._handlers.get(handler_id)
         if not handler:
-            return {"type": "unknown", "success": False, "result": None,
-                    "error": f"handler {handler_id} not found"}
+            return {
+                "type": "unknown",
+                "success": False,
+                "result": None,
+                "error": f"handler {handler_id} not found",
+            }
 
         try:
             if asyncio.iscoroutinefunction(handler.process):
@@ -254,14 +264,22 @@ class ModelBus:
 
         if self._meta_controller is not None:
             for mid, r in results.items():
-                self._meta_controller.record_confidence(source=f"model_bus:{mid}", confidence=r.confidence)
-            threshold_adj = self._meta_controller.get_threshold_adjustment(f"model_bus:{selected_model}")
+                self._meta_controller.record_confidence(
+                    source=f"model_bus:{mid}", confidence=r.confidence
+                )
+            threshold_adj = self._meta_controller.get_threshold_adjustment(
+                f"model_bus:{selected_model}"
+            )
             if threshold_adj != 0.0:
-                logger.debug("MetaController adjusted %s threshold by %.3f", selected_model, threshold_adj)
+                logger.debug(
+                    "MetaController adjusted %s threshold by %.3f", selected_model, threshold_adj
+                )
 
         if selected_model in ("ed3n", "garden") and 0.4 <= confidence < 0.8:
             if "cloud" in self._registry:
-                logger.info(f"ModelBus: {selected_model} confidence ({confidence:.2f}) in refinement zone. Routing to cloud for polish.")
+                logger.info(
+                    f"ModelBus: {selected_model} confidence ({confidence:.2f}) in refinement zone. Routing to cloud for polish."
+                )
 
         return RouteDecision(
             query=query,
@@ -342,7 +360,9 @@ class ModelBus:
                     )
                 else:
                     raw = await asyncio.wait_for(
-                        asyncio.to_thread(handler.process, query, context or {"query_type": query_type}),
+                        asyncio.to_thread(
+                            handler.process, query, context or {"query_type": query_type}
+                        ),
                         timeout=self.default_timeout,
                     )
                 elapsed = (time.perf_counter() - t0) * 1000
@@ -357,7 +377,10 @@ class ModelBus:
             except Exception as e:
                 logger.warning("Handler '%s' failed: %s", handler_id, e)
         if not results:
-            tasks = [self._try_model(mid, query, context, query_type) for mid in self._resolve_candidates(query_type)]
+            tasks = [
+                self._try_model(mid, query, context, query_type)
+                for mid in self._resolve_candidates(query_type)
+            ]
             for coro in asyncio.as_completed(tasks):
                 r = await coro
                 results[r.model_id] = r
@@ -367,7 +390,10 @@ class ModelBus:
         self, query: str, context: Optional[Dict[str, Any]], query_type: str
     ) -> Dict[str, ModelRouteResult]:
         results: Dict[str, ModelRouteResult] = {}
-        tasks = [self._try_model(mid, query, context, query_type) for mid in self._resolve_candidates(query_type)]
+        tasks = [
+            self._try_model(mid, query, context, query_type)
+            for mid in self._resolve_candidates(query_type)
+        ]
         for coro in asyncio.as_completed(tasks):
             r = await coro
             results[r.model_id] = r
@@ -379,11 +405,7 @@ class ModelBus:
 
     def get_models_for_domain(self, domain: str) -> List[str]:
         """Return all model IDs that handle the given domain."""
-        return [
-            mid
-            for mid, (_, cap) in self._registry.items()
-            if cap.domain == domain
-        ]
+        return [mid for mid, (_, cap) in self._registry.items() if cap.domain == domain]
 
     def get_training_assignment(self, domain: str) -> Optional[str]:
         """Return which model should train on this domain (deconfliction).
@@ -532,7 +554,9 @@ class ModelBus:
 
         if raw is not None and isinstance(raw, str) and raw not in _ENGINE_FALLBACK_STRINGS:
             confidence = cap.min_confidence
-            if hasattr(engine, '_last_confidence') and isinstance(getattr(engine, '_last_confidence', None), (int, float)):
+            if hasattr(engine, "_last_confidence") and isinstance(
+                getattr(engine, "_last_confidence", None), (int, float)
+            ):
                 engine_conf = engine._last_confidence
                 if engine_conf > 0:
                     confidence = max(confidence, engine_conf)

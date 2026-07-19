@@ -38,9 +38,9 @@ class WebSearchAgent:
         self._session: Optional[requests.Session] = None
         if REQUESTS_AVAILABLE:
             self._session = requests.Session()
-            self._session.headers.update({
-                "User-Agent": "Mozilla/5.0 (compatible; AngelaAI/1.0; +https://opencode.ai)"
-            })
+            self._session.headers.update(
+                {"User-Agent": "Mozilla/5.0 (compatible; AngelaAI/1.0; +https://opencode.ai)"}
+            )
         logger.info(f"WebSearchAgent initialized. HTTP available: {REQUESTS_AVAILABLE}")
 
     def is_available(self) -> bool:
@@ -52,7 +52,10 @@ class WebSearchAgent:
         if not query:
             return {"status": "error", "message": "No search query provided"}
         if not REQUESTS_AVAILABLE or not self._session:
-            return {"status": "unavailable", "message": "HTTP client not available; install requests"}
+            return {
+                "status": "unavailable",
+                "message": "HTTP client not available; install requests",
+            }
         try:
             resp = self._session.get(
                 "https://html.duckduckgo.com/html/",
@@ -61,18 +64,27 @@ class WebSearchAgent:
             )
             resp.raise_for_status()
             import re as _re
+
             results = []
-            for i, match in enumerate(_re.findall(
-                r'<a rel="nofollow" class="result__a" href="([^"]+)".*?>(.*?)</a>',
-                resp.text, _re.DOTALL
-            )):
+            for i, match in enumerate(
+                _re.findall(
+                    r'<a rel="nofollow" class="result__a" href="([^"]+)".*?>(.*?)</a>',
+                    resp.text,
+                    _re.DOTALL,
+                )
+            ):
                 if i >= num_results:
                     break
-                results.append({"url": match[0], "title": _re.sub(r"<[^>]+>", "", match[1]).strip()})
-            self._search_history.append({
-                "query": query, "num_results": num_results,
-                "timestamp": datetime.now().isoformat()
-            })
+                results.append(
+                    {"url": match[0], "title": _re.sub(r"<[^>]+>", "", match[1]).strip()}
+                )
+            self._search_history.append(
+                {
+                    "query": query,
+                    "num_results": num_results,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
             logger.info(f"search: '{query}' -> {len(results)} results")
             return {
                 "status": "success",
@@ -90,7 +102,10 @@ class WebSearchAgent:
         if not url:
             return {"status": "error", "message": "No URL provided"}
         if not REQUESTS_AVAILABLE or not self._session:
-            return {"status": "unavailable", "message": "HTTP client not available; install requests"}
+            return {
+                "status": "unavailable",
+                "message": "HTTP client not available; install requests",
+            }
         try:
             resp = self._session.get(url, timeout=15)
             resp.raise_for_status()

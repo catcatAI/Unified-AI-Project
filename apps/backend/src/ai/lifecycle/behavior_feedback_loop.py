@@ -175,7 +175,9 @@ class BehaviorFeedbackLoop:
                 await asyncio.sleep(interval)
             except asyncio.CancelledError:
                 break
-            except Exception as e:  # broad exception acceptable: loop must be resilient to prevent process termination
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: loop must be resilient to prevent process termination
                 logger.error(f"Error in feedback loop: {e}", exc_info=True)
                 await asyncio.sleep(loop_sleep("behavior_loop_tight", 1.0))  # 防止緊密循環
 
@@ -207,7 +209,9 @@ class BehaviorFeedbackLoop:
             # 5. 存儲學習結果
             await self._store_learning_results()
 
-        except Exception as e:  # broad exception acceptable: process feedback should not fail the caller
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: process feedback should not fail the caller
             logger.error(f"Error processing feedback: {e}", exc_info=True)
 
     def record_behavior(
@@ -294,7 +298,9 @@ class BehaviorFeedbackLoop:
             # 限制在 0-1 之間
             return max(0.0, min(1.0, score))
 
-        except Exception as e:  # broad exception acceptable: evaluation should gracefully handle edge cases
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: evaluation should gracefully handle edge cases
             logger.error(f"Error evaluating behavior: {e}", exc_info=True)
             return 0.5
 
@@ -386,7 +392,9 @@ class BehaviorFeedbackLoop:
                     data_type="behavior_learning",
                 )
 
-        except Exception as e:  # broad exception acceptable: storage failure should not crash the loop
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: storage failure should not crash the loop
             logger.warning(f"Error storing learning results: {e}", exc_info=True)
 
     def get_behavior_history(self, limit: int = 20) -> List[Dict[str, Any]]:

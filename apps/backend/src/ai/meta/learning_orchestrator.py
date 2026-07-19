@@ -23,6 +23,7 @@ class _SimpleEvaluator:
             "overall_rating": 0.5,
         }
 
+
 logger = logging.getLogger(__name__)
 
 

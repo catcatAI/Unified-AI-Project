@@ -24,9 +24,12 @@ class CrossModalQualityDashboard:
         audio_log_path: Optional path for JSONL audio quality logs
     """
 
-    def __init__(self, vision_log_path: Optional[str] = None,
-                 audio_log_path: Optional[str] = None,
-                 max_history: int = 500):
+    def __init__(
+        self,
+        vision_log_path: Optional[str] = None,
+        audio_log_path: Optional[str] = None,
+        max_history: int = 500,
+    ):
         self._max_history = max_history
         self._vision_log_path = vision_log_path
         self._audio_log_path = audio_log_path
@@ -38,6 +41,7 @@ class CrossModalQualityDashboard:
     def _get_vision_monitor(self):
         if self._vision_monitor is None:
             from ai.vision.quality_monitor import VisionQualityMonitor
+
             self._vision_monitor = VisionQualityMonitor(
                 max_history=self._max_history,
                 log_path=self._vision_log_path,
@@ -47,6 +51,7 @@ class CrossModalQualityDashboard:
     def _get_audio_monitor(self):
         if self._audio_monitor is None:
             from ai.audio.quality_monitor import AudioQualityMonitor
+
             self._audio_monitor = AudioQualityMonitor(
                 max_history=self._max_history,
                 log_path=self._audio_log_path,
@@ -73,8 +78,9 @@ class CrossModalQualityDashboard:
         """Record a cross-modal operation result."""
         # Cross-modal quality is derived from vision + audio quality
         # and the similarity score
-        logger.debug("Cross-modal operation recorded: similarity=%.4f",
-                     result.get("similarity", 0.0))
+        logger.debug(
+            "Cross-modal operation recorded: similarity=%.4f", result.get("similarity", 0.0)
+        )
 
     # --- Dashboard ---
 
@@ -98,7 +104,8 @@ class CrossModalQualityDashboard:
             "vision_summary": vision_report,
             "audio_summary": audio_report,
             "overall": overall,
-            "total_requests": vision_report.get("total_calls", 0) + audio_report.get("total_calls", 0),
+            "total_requests": vision_report.get("total_calls", 0)
+            + audio_report.get("total_calls", 0),
         }
 
     def dashboard_simple(self) -> Dict[str, Any]:
@@ -122,8 +129,9 @@ class CrossModalQualityDashboard:
 
     # --- Health computation ---
 
-    def _compute_overall_health(self, vision: Dict[str, Any],
-                                audio: Dict[str, Any]) -> Dict[str, Any]:
+    def _compute_overall_health(
+        self, vision: Dict[str, Any], audio: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Compute overall system health from vision + audio reports.
 
         Returns dict with health status, score, and degradation flags.

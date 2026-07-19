@@ -23,9 +23,10 @@ logger = logging.getLogger(__name__)
 @dataclass
 class VisualWord:
     """A single visual word — a pattern in primitive parameter space."""
+
     word_id: int
-    center: np.ndarray       # (263,) cluster center
-    count: int               # how many images map to this word
+    center: np.ndarray  # (263,) cluster center
+    count: int  # how many images map to this word
     primitive_signature: dict = field(default_factory=dict)  # which primitives dominate
 
     def to_dict(self) -> dict:
@@ -49,12 +50,13 @@ class VisualWord:
 @dataclass
 class ConceptDistribution:
     """Distribution of visual words for a concept (e.g., "cat")."""
+
     concept_name: str
     label: int
-    visual_word_ids: List[int]           # which words appear
-    word_frequencies: np.ndarray          # frequency of each word
-    param_means: np.ndarray              # (263,) mean parameters for this concept
-    param_stds: np.ndarray               # (263,) std of parameters
+    visual_word_ids: List[int]  # which words appear
+    word_frequencies: np.ndarray  # frequency of each word
+    param_means: np.ndarray  # (263,) mean parameters for this concept
+    param_stds: np.ndarray  # (263,) std of parameters
     n_images: int
 
     def to_dict(self) -> dict:
@@ -94,8 +96,18 @@ class GeometricVocabulary:
         - Recognition: image → extract parameters → match visual words → classify
     """
 
-    CLASSES = ["airplane", "automobile", "bird", "cat", "deer",
-               "dog", "frog", "horse", "ship", "truck"]
+    CLASSES = [
+        "airplane",
+        "automobile",
+        "bird",
+        "cat",
+        "deer",
+        "dog",
+        "frog",
+        "horse",
+        "ship",
+        "truck",
+    ]
 
     def __init__(self, n_visual_words: int = 20, param_dim: int = 263):
         self._n_visual_words = n_visual_words
@@ -105,8 +117,9 @@ class GeometricVocabulary:
         self._all_params: Optional[np.ndarray] = None  # (N, 263)
         self._all_labels: Optional[np.ndarray] = None  # (N,)
 
-    def build_from_optimized(self, params: np.ndarray, labels: np.ndarray,
-                              class_names: Optional[List[str]] = None):
+    def build_from_optimized(
+        self, params: np.ndarray, labels: np.ndarray, class_names: Optional[List[str]] = None
+    ):
         """Build vocabulary from optimized primitive vectors.
 
         Args:
@@ -136,8 +149,11 @@ class GeometricVocabulary:
             concept_params = params[mask]
             self._build_concept_distribution(name, label_int, concept_params)
 
-        logger.info("  Vocabulary built: %d visual words, %d concepts",
-                    len(self._visual_words), len(self._concept_distributions))
+        logger.info(
+            "  Vocabulary built: %d visual words, %d concepts",
+            len(self._visual_words),
+            len(self._concept_distributions),
+        )
 
     def _cluster_to_visual_words(self, params: np.ndarray):
         """K-means clustering to find visual words."""
@@ -179,12 +195,14 @@ class GeometricVocabulary:
             count = int(mask.sum())
             # Analyze which primitive types dominate this word
             sig = self._analyze_primitive_signature(centers[c])
-            self._visual_words.append(VisualWord(
-                word_id=c,
-                center=centers[c],
-                count=count,
-                primitive_signature=sig,
-            ))
+            self._visual_words.append(
+                VisualWord(
+                    word_id=c,
+                    center=centers[c],
+                    count=count,
+                    primitive_signature=sig,
+                )
+            )
 
     def _analyze_primitive_signature(self, center: np.ndarray) -> dict:
         """Analyze which primitive types contribute most to a visual word."""
@@ -194,49 +212,60 @@ class GeometricVocabulary:
         off = 5  # skip header
 
         # Points: [off:off + N_POINTS*5]
-        pts = center[off:off + N_POINTS * 5].reshape(N_POINTS, 5)
+        pts = center[off : off + N_POINTS * 5].reshape(N_POINTS, 5)
         active_pts = np.sum((pts[:, 0] > 0.01) | (pts[:, 1] > 0.01))
         sig["n_points"] = int(active_pts)
-        sig["point_colors"] = pts[pts[:, 0] > 0.01, 2:5].mean(axis=0).tolist() if active_pts > 0 else [0, 0, 0]
+        sig["point_colors"] = (
+            pts[pts[:, 0] > 0.01, 2:5].mean(axis=0).tolist() if active_pts > 0 else [0, 0, 0]
+        )
 
         off += N_POINTS * 5
 
         # Lines: [off:off + N_LINES*8]
-        lns = center[off:off + N_LINES * 8].reshape(N_LINES, 8)
+        lns = center[off : off + N_LINES * 8].reshape(N_LINES, 8)
         active_lines = np.sum((lns[:, 0] > 0.01) | (lns[:, 2] > 0.01))
         sig["n_lines"] = int(active_lines)
 
         off += N_LINES * 8
 
         # Planes: [off:off + N_PLANES*9]
-        pls = center[off:off + N_PLANES * 9].reshape(N_PLANES, 9)
+        pls = center[off : off + N_PLANES * 9].reshape(N_PLANES, 9)
         active_planes = np.sum((pls[:, 2] > 0.01) | (pls[:, 3] > 0.01))
         sig["n_planes"] = int(active_planes)
-        sig["plane_colors"] = pls[pls[:, 2] > 0.01, 4:7].mean(axis=0).tolist() if active_planes > 0 else [0, 0, 0]
+        sig["plane_colors"] = (
+            pls[pls[:, 2] > 0.01, 4:7].mean(axis=0).tolist() if active_planes > 0 else [0, 0, 0]
+        )
 
         off += N_PLANES * 9
 
         # Circles: [off:off + N_CIRCLES*7]
-        crs = center[off:off + N_CIRCLES * 7].reshape(N_CIRCLES, 7)
+        crs = center[off : off + N_CIRCLES * 7].reshape(N_CIRCLES, 7)
         active_circles = np.sum(crs[:, 2] > 0.005)
         sig["n_circles"] = int(active_circles)
-        sig["circle_colors"] = crs[crs[:, 2] > 0.005, 3:6].mean(axis=0).tolist() if active_circles > 0 else [0, 0, 0]
+        sig["circle_colors"] = (
+            crs[crs[:, 2] > 0.005, 3:6].mean(axis=0).tolist() if active_circles > 0 else [0, 0, 0]
+        )
 
         off += N_CIRCLES * 7
 
         # Arcs: [off:off + N_ARCS*10]
-        arcs = center[off:off + N_ARCS * 10].reshape(N_ARCS, 10)
+        arcs = center[off : off + N_ARCS * 10].reshape(N_ARCS, 10)
         active_arcs = np.sum(arcs[:, 2] > 0.005)
         sig["n_arcs"] = int(active_arcs)
 
         return sig
 
-    def _build_concept_distribution(self, name: str, label: int,
-                                     concept_params: np.ndarray):
+    def _build_concept_distribution(self, name: str, label: int, concept_params: np.ndarray):
         """Build distribution for a single concept."""
         # Find which visual words this concept uses
         dists = np.sqrt(
-            ((concept_params[:, None, :] - np.array([vw.center for vw in self._visual_words])[None, :, :]) ** 2).sum(axis=2)
+            (
+                (
+                    concept_params[:, None, :]
+                    - np.array([vw.center for vw in self._visual_words])[None, :, :]
+                )
+                ** 2
+            ).sum(axis=2)
         )
         assignments = np.argmin(dists, axis=1)
 
@@ -297,7 +326,7 @@ class GeometricVocabulary:
         """
         if not self._visual_words:
             if top_k == 1:
-                return -1, float('inf')
+                return -1, float("inf")
             return [], []
 
         centers = np.array([vw.center for vw in self._visual_words])
@@ -311,8 +340,9 @@ class GeometricVocabulary:
         top_dists = [float(dists[i]) for i in sorted_indices[:top_k]]
         return top_ids, top_dists
 
-    def initialize_from_concept(self, concept_name: str,
-                                 rng: Optional[np.random.Generator] = None) -> np.ndarray:
+    def initialize_from_concept(
+        self, concept_name: str, rng: Optional[np.random.Generator] = None
+    ) -> np.ndarray:
         """Initialize a parameter vector from a concept distribution.
 
         Returns a (263,) vector sampled from the concept's distribution.
@@ -374,7 +404,9 @@ class GeometricVocabulary:
             "n_visual_words": self._n_visual_words,
             "param_dim": self._param_dim,
             "visual_words": [vw.to_dict() for vw in self._visual_words],
-            "concept_distributions": {k: v.to_dict() for k, v in self._concept_distributions.items()},
+            "concept_distributions": {
+                k: v.to_dict() for k, v in self._concept_distributions.items()
+            },
         }
         if self._all_params is not None:
             data["all_params"] = self._all_params.tolist()
@@ -403,6 +435,9 @@ class GeometricVocabulary:
             vocab._all_params = np.array(data["all_params"], dtype=np.float32)
         if "all_labels" in data:
             vocab._all_labels = np.array(data["all_labels"], dtype=int)
-        logger.info("Vocabulary loaded: %d words, %d concepts",
-                    len(vocab._visual_words), len(vocab._concept_distributions))
+        logger.info(
+            "Vocabulary loaded: %d words, %d concepts",
+            len(vocab._visual_words),
+            len(vocab._concept_distributions),
+        )
         return vocab

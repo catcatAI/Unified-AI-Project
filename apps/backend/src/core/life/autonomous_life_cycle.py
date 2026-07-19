@@ -29,6 +29,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 from core.active_cognition_formula import ActiveCognitionFormula, OrderType, StressSource
+from core.autonomous.behavior_executor import BehaviorExecutor
 from core.cdm_dividend_model import (
     CDMCognitiveDividendModel,
     CognitiveActivity,
@@ -37,12 +38,11 @@ from core.cdm_dividend_model import (
 from core.hsm_formula_system import HSMFormulaSystem
 from core.life_intensity_formula import KnowledgeDomain, LifeIntensityFormula
 from core.non_paradox_existence import GrayZoneVariableType, NonParadoxExistence
-
-from core.autonomous.behavior_executor import BehaviorExecutor
 from core.system.config.magic_numbers import lifecycle_value
 from core.system.state_store.global_store import state_store
 
 logger = logging.getLogger(__name__)
+
 
 class LifePhase(Enum):
     """生命阶段 / Life phases based on theoretical metrics"""
@@ -131,8 +131,11 @@ class AutonomousLifeCycle:
         >>> print(f"Recommended: {decision.decision_type}")
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None,
-                 persist_path: Optional[str] = "data/autonomous_lifecycle_state.json"):
+    def __init__(
+        self,
+        config: Optional[Dict[str, Any]] = None,
+        persist_path: Optional[str] = "data/autonomous_lifecycle_state.json",
+    ):
         self.config = config or {}
         self._persist_path = persist_path
 
@@ -169,7 +172,9 @@ class AutonomousLifeCycle:
         # Running state
         self._running = False
         self._lifecycle_task: Optional[asyncio.Task] = None
-        self._decision_interval: float = self.config.get("decision_interval", 60.0)  # 1 minute (was 300s/5min, §8.6 #8)
+        self._decision_interval: float = self.config.get(
+            "decision_interval", 60.0
+        )  # 1 minute (was 300s/5min, §8.6 #8)
 
         # Behavior executor for dispatching decisions to real actions
         self._behavior_executor: BehaviorExecutor = BehaviorExecutor()
@@ -211,8 +216,11 @@ class AutonomousLifeCycle:
         # Start life cycle loop
         self._lifecycle_task = asyncio.create_task(self._lifecycle_loop())
         self._lifecycle_task.add_done_callback(
-            lambda t: logger.critical("Lifecycle task failed unexpectedly: %s", t.exception())
-            if not t.cancelled() and t.exception() else None
+            lambda t: (
+                logger.critical("Lifecycle task failed unexpectedly: %s", t.exception())
+                if not t.cancelled() and t.exception()
+                else None
+            )
         )
 
         # Initial metrics calculation
@@ -365,7 +373,9 @@ class AutonomousLifeCycle:
         for callback in self._metrics_callbacks:
             try:
                 callback(metrics)
-            except Exception as e:  # broad exception acceptable: metrics callbacks should not block updates
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: metrics callbacks should not block updates
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         return metrics
@@ -432,12 +442,18 @@ class AutonomousLifeCycle:
                 if ts["rate"] < 0.4:
                     # Type consistently fails → raise exploration threshold (more conservative)
                     if decision_type_hint == "exploration":
-                        adjusted_exploration_threshold = min(1.0, adjusted_exploration_threshold + 0.1)
-                    dynamic_confidence_threshold = min(1.0, dynamic_confidence_threshold + conf_penalty * 0.5)
+                        adjusted_exploration_threshold = min(
+                            1.0, adjusted_exploration_threshold + 0.1
+                        )
+                    dynamic_confidence_threshold = min(
+                        1.0, dynamic_confidence_threshold + conf_penalty * 0.5
+                    )
                     dynamic_risk_tolerance = max(0.1, dynamic_risk_tolerance - risk_penalty * 0.5)
                 elif ts["rate"] > 0.9:
                     # Type consistently succeeds → lower threshold (more confident)
-                    dynamic_confidence_threshold = max(0.3, dynamic_confidence_threshold - conf_boost * 0.5)
+                    dynamic_confidence_threshold = max(
+                        0.3, dynamic_confidence_threshold - conf_boost * 0.5
+                    )
                     dynamic_risk_tolerance = min(1.0, dynamic_risk_tolerance + risk_boost * 0.5)
 
         # Decision 1: Exploration (HSM-based) - affected by risk tolerance
@@ -600,7 +616,9 @@ class AutonomousLifeCycle:
         for callback in self._decision_callbacks:
             try:
                 callback(decision)
-            except Exception as e:  # broad exception acceptable: decision callbacks should not block recording
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: decision callbacks should not block recording
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
     async def _execute_decision(self, decision: LifeDecision) -> bool:
@@ -629,22 +647,30 @@ class AutonomousLifeCycle:
                 return await self._dispatch_reallocation(decision)
             else:
                 logger.warning(f"Unknown decision type: {decision.decision_type}")
-                state_store.emit_event("lifecycle.decision_executed", {
-                    "decision_id": decision.decision_id,
-                    "decision_type": decision.decision_type,
-                    "success": False,
-                    "phase": self._phase.value if hasattr(self, "_phase") else "unknown",
-                })
+                state_store.emit_event(
+                    "lifecycle.decision_executed",
+                    {
+                        "decision_id": decision.decision_id,
+                        "decision_type": decision.decision_type,
+                        "success": False,
+                        "phase": self._phase.value if hasattr(self, "_phase") else "unknown",
+                    },
+                )
                 return False
         except Exception as exc:
             logger.error(f"Failed to execute decision {decision.decision_id}: {exc}", exc_info=True)
-            state_store.emit_event("lifecycle.decision_executed", {
-                "decision_id": decision.decision_id,
-                "decision_type": decision.decision_type if hasattr(decision, "decision_type") else "unknown",
-                "success": False,
-                "error": str(exc),
-                "phase": self._phase.value if hasattr(self, "_phase") else "unknown",
-            })
+            state_store.emit_event(
+                "lifecycle.decision_executed",
+                {
+                    "decision_id": decision.decision_id,
+                    "decision_type": (
+                        decision.decision_type if hasattr(decision, "decision_type") else "unknown"
+                    ),
+                    "success": False,
+                    "error": str(exc),
+                    "phase": self._phase.value if hasattr(self, "_phase") else "unknown",
+                },
+            )
             return False
 
     async def _dispatch_exploration(self, decision: LifeDecision) -> bool:
@@ -665,12 +691,15 @@ class AutonomousLifeCycle:
         success = result.get("status") == "completed"
         if success:
             logger.info(f"🧭 [LifeCycle] Executed exploration: {decision.decision_id}")
-        state_store.emit_event("lifecycle.decision_executed", {
-            "decision_id": decision.decision_id,
-            "decision_type": decision.decision_type,
-            "success": success,
-            "phase": decision.phase.name if hasattr(decision, "phase") else "unknown",
-        })
+        state_store.emit_event(
+            "lifecycle.decision_executed",
+            {
+                "decision_id": decision.decision_id,
+                "decision_type": decision.decision_type,
+                "success": success,
+                "phase": decision.phase.name if hasattr(decision, "phase") else "unknown",
+            },
+        )
         return success
 
     async def _dispatch_coexistence(self, decision: LifeDecision) -> bool:
@@ -690,12 +719,15 @@ class AutonomousLifeCycle:
         success = result.get("status") == "completed"
         if success:
             logger.info(f"🔄 [LifeCycle] Executed coexistence: {decision.decision_id}")
-        state_store.emit_event("lifecycle.decision_executed", {
-            "decision_id": decision.decision_id,
-            "decision_type": decision.decision_type,
-            "success": success,
-            "phase": decision.phase.name if hasattr(decision, "phase") else "unknown",
-        })
+        state_store.emit_event(
+            "lifecycle.decision_executed",
+            {
+                "decision_id": decision.decision_id,
+                "decision_type": decision.decision_type,
+                "success": success,
+                "phase": decision.phase.name if hasattr(decision, "phase") else "unknown",
+            },
+        )
         return success
 
     async def _dispatch_construction(self, decision: LifeDecision) -> bool:
@@ -715,12 +747,15 @@ class AutonomousLifeCycle:
         success = result.get("status") == "completed"
         if success:
             logger.info(f"🏗️ [LifeCycle] Executed construction: {decision.decision_id}")
-        state_store.emit_event("lifecycle.decision_executed", {
-            "decision_id": decision.decision_id,
-            "decision_type": decision.decision_type,
-            "success": success,
-            "phase": decision.phase.name if hasattr(decision, "phase") else "unknown",
-        })
+        state_store.emit_event(
+            "lifecycle.decision_executed",
+            {
+                "decision_id": decision.decision_id,
+                "decision_type": decision.decision_type,
+                "success": success,
+                "phase": decision.phase.name if hasattr(decision, "phase") else "unknown",
+            },
+        )
         return success
 
     async def _dispatch_reallocation(self, decision: LifeDecision) -> bool:
@@ -740,12 +775,15 @@ class AutonomousLifeCycle:
         success = result.get("status") == "completed"
         if success:
             logger.info(f"📊 [LifeCycle] Executed reallocation: {decision.decision_id}")
-        state_store.emit_event("lifecycle.decision_executed", {
-            "decision_id": decision.decision_id,
-            "decision_type": decision.decision_type,
-            "success": success,
-            "phase": decision.phase.name if hasattr(decision, "phase") else "unknown",
-        })
+        state_store.emit_event(
+            "lifecycle.decision_executed",
+            {
+                "decision_id": decision.decision_id,
+                "decision_type": decision.decision_type,
+                "success": success,
+                "phase": decision.phase.name if hasattr(decision, "phase") else "unknown",
+            },
+        )
         return success
 
     async def _check_phase_transition(self, metrics: FormulaMetrics) -> None:
@@ -772,7 +810,9 @@ class AutonomousLifeCycle:
             for callback in self._phase_callbacks:
                 try:
                     callback(old_phase, new_phase)
-                except Exception as e:  # broad exception acceptable: phase callbacks should not block transition
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: phase callbacks should not block transition
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
     def get_current_metrics(self) -> FormulaMetrics:
@@ -948,8 +988,7 @@ class AutonomousLifeCycle:
         avg_interaction_quality = 1.0
         if self._interaction_quality:
             avg_interaction_quality = sum(
-                q["engagement"] * (1.5 if q["success"] else 0.5)
-                for q in self._interaction_quality
+                q["engagement"] * (1.5 if q["success"] else 0.5) for q in self._interaction_quality
             ) / len(self._interaction_quality)
             avg_interaction_quality = min(2.0, max(0.0, avg_interaction_quality))
 
@@ -985,28 +1024,30 @@ class AutonomousLifeCycle:
         """
         self._interaction_quality.append({"engagement": engagement_ratio, "success": success})
         self._interaction_count += 1
-        avg = sum(q["engagement"] for q in self._interaction_quality) / len(self._interaction_quality)
+        avg = sum(q["engagement"] for q in self._interaction_quality) / len(
+            self._interaction_quality
+        )
         logger.debug(
             f"[AutonomousLifeCycle] Interaction outcome: engagement={engagement_ratio:.2f}, "
             f"success={success}, avg_engagement={avg:.2f} ({len(self._interaction_quality)} samples)"
         )
-        state_store.emit_event("lifecycle.interaction_recorded", {
-            "engagement_ratio": engagement_ratio,
-            "success": success,
-            "avg_engagement": round(avg, 3),
-            "sample_count": len(self._interaction_quality),
-        })
+        state_store.emit_event(
+            "lifecycle.interaction_recorded",
+            {
+                "engagement_ratio": engagement_ratio,
+                "success": success,
+                "avg_engagement": round(avg, 3),
+                "sample_count": len(self._interaction_quality),
+            },
+        )
 
-    def register_execution_callback(
-        self, callback: Callable[[LifeDecision, bool], None]
-    ) -> None:
+    def register_execution_callback(self, callback: Callable[[LifeDecision, bool], None]) -> None:
         """Register callback for decision execution results.
 
         Args:
             callback: Called with (decision, success) after each execution.
         """
         self._execution_callbacks.append(callback)
-
 
     # ── C³ 5.0: State persistence ──────────────────────────────────────
 
@@ -1070,16 +1111,18 @@ class AutonomousLifeCycle:
                     phase = LifePhase[d["phase"]]
                 except (KeyError, ValueError):
                     phase = LifePhase.EMERGENCE
-                self.decision_history.append(LifeDecision(
-                    decision_id=d["decision_id"],
-                    timestamp=datetime.fromisoformat(d["timestamp"]),
-                    phase=phase,
-                    triggered_by=d["triggered_by"],
-                    decision_type=d["decision_type"],
-                    rationale=d["rationale"],
-                    expected_outcome={},
-                    confidence=d["confidence"],
-                ))
+                self.decision_history.append(
+                    LifeDecision(
+                        decision_id=d["decision_id"],
+                        timestamp=datetime.fromisoformat(d["timestamp"]),
+                        phase=phase,
+                        triggered_by=d["triggered_by"],
+                        decision_type=d["decision_type"],
+                        rationale=d["rationale"],
+                        expected_outcome={},
+                        confidence=d["confidence"],
+                    )
+                )
 
             # Re-inject behavior executor type stats by replaying synthetic executions
             for dt, stats in state.get("behavior_executor_type_stats", {}).items():

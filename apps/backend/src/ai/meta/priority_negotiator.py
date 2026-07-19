@@ -32,6 +32,7 @@ class VoterVote:
         tokens_bias: Additive max_tokens adjustment
         confidence: How confident the voter is in this vote (0.0-1.0)
     """
+
     routing_mode: Optional[str] = None
     response_style: Optional[str] = None
     temperature_bias: float = 0.0
@@ -165,6 +166,7 @@ class PriorityNegotiator:
 
 
 # ── Default Voter Functions ──────────────────────────────────────────
+
 
 def lifecycle_voter(context: Dict[str, Any]) -> Optional[VoterVote]:
     """Extract lifecycle routing preference from context."""

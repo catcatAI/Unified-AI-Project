@@ -39,7 +39,9 @@ class SelfIntrospector:
         dissonance_detected = float(score) > self.dissonance_threshold
 
         # Simple anomaly detection – collect low‑value entries.
-        anomalies = [k for k, v in combined_state.items() if isinstance(v, (int, float)) and v < 0.2]
+        anomalies = [
+            k for k, v in combined_state.items() if isinstance(v, (int, float)) and v < 0.2
+        ]
 
         return {
             "dissonance_detected": dissonance_detected,

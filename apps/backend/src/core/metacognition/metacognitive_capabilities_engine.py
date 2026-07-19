@@ -22,4 +22,3 @@ Level 5 AGI Phase 4 - 实现深度自我理解与调控能力
 - 认知架构反思 (Cognitive Architecture Reflection)
 - 智能内省能力 (Intelligent Introspection)
 """
-

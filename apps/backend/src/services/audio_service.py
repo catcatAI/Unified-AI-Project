@@ -11,7 +11,6 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import numpy as np
-
 from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
@@ -23,18 +22,21 @@ from core.perception.auditory_sampler import AudioFeatureType, AuditorySampler
 
 try:
     from core.sync.realtime_sync import SyncEvent, sync_manager
+
     _SYNC_AVAILABLE = True
 except ImportError:
     _SYNC_AVAILABLE = False
 
 try:
     from system.cluster_manager import cluster_manager
+
     _CLUSTER_AVAILABLE = True
 except ImportError:
     _CLUSTER_AVAILABLE = False
 
 try:
     import speech_recognition as sr
+
     SR_AVAILABLE = True
 except ImportError:
     SR_AVAILABLE = False
@@ -42,6 +44,7 @@ except ImportError:
 
 try:
     import edge_tts
+
     EDGE_TTS_AVAILABLE = True
 except ImportError:
     EDGE_TTS_AVAILABLE = False
@@ -187,7 +190,9 @@ class AudioService:
             "name": profile.name,
         }
 
-    async def _stt_faster_whisper(self, audio_data: bytes, language: Optional[str] = None) -> Optional[dict]:
+    async def _stt_faster_whisper(
+        self, audio_data: bytes, language: Optional[str] = None
+    ) -> Optional[dict]:
         """Offline STT via faster-whisper (when installed and model is loaded)."""
         try:
             from faster_whisper import WhisperModel
@@ -198,6 +203,7 @@ class AudioService:
             if _WHISPER_MODEL is None:
                 _WHISPER_MODEL = WhisperModel("base", device="cpu", compute_type="int8")
             import tempfile
+
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
                 f.write(audio_data)
                 tmp_path = f.name
@@ -205,8 +211,15 @@ class AudioService:
             text = " ".join(seg.text for seg in segments)
             os.unlink(tmp_path)
             if text.strip():
-                return {"text": text.strip(), "language": info.language if hasattr(info, 'language') else (language or "zh"),
-                        "confidence": round(info.language_probability, 3) if hasattr(info, 'language_probability') else 0.85}
+                return {
+                    "text": text.strip(),
+                    "language": info.language if hasattr(info, "language") else (language or "zh"),
+                    "confidence": (
+                        round(info.language_probability, 3)
+                        if hasattr(info, "language_probability")
+                        else 0.85
+                    ),
+                }
         except Exception as e:
             logger.debug("faster-whisper failed: %s", e)
         return None
@@ -235,18 +248,24 @@ class AudioService:
             return {"processing_id": processing_id, "text": text, "confidence": 0.9}
         except sr.UnknownValueError:
             return {
-                "processing_id": processing_id, "text": "", "confidence": 0.0,
+                "processing_id": processing_id,
+                "text": "",
+                "confidence": 0.0,
                 "error": "Could not understand audio",
             }
         except sr.RequestError as e:
             return {
-                "processing_id": processing_id, "text": "", "confidence": 0.0,
+                "processing_id": processing_id,
+                "text": "",
+                "confidence": 0.0,
                 "error": f"Recognition request failed: {e}",
             }
         except Exception as e:
             logger.warning("Speech recognition failed: %s", e)
             return {
-                "processing_id": processing_id, "text": "", "confidence": 0.0,
+                "processing_id": processing_id,
+                "text": "",
+                "confidence": 0.0,
                 "error": safe_error(e),
             }
 
@@ -287,6 +306,7 @@ class AudioService:
             return []
         try:
             from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
+
             encoder = AudioSpectralEncoder()
             vec = encoder.encode(audio_data)
             return vec.tolist()
@@ -304,6 +324,7 @@ class AudioService:
             return {"error": "Empty audio data"}
         try:
             from ai.audio.audio_pipeline import AudioPipeline
+
             pipeline = AudioPipeline()
             result = pipeline.process(audio_data)
             return result
@@ -330,6 +351,7 @@ class AudioService:
         """Clear AudioPipeline internal cache."""
         try:
             from ai.audio.audio_pipeline import AudioPipeline
+
             p = AudioPipeline()
             p.clear_cache()
         except Exception as e:

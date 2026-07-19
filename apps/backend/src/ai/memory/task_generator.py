@@ -37,13 +37,13 @@ class TaskGenerator:
 
         self._history.extend(recent_interactions)
         if len(self._history) > self._max_history:
-            self._history = self._history[-self._max_history:]
+            self._history = self._history[-self._max_history :]
 
         if user_id:
             user_hist = self._user_histories.setdefault(user_id, [])
             user_hist.extend(recent_interactions)
             if len(user_hist) > self._max_history:
-                self._user_histories[user_id] = user_hist[-self._max_history:]
+                self._user_histories[user_id] = user_hist[-self._max_history :]
 
         topics = {}
         prev_topic = None
@@ -71,11 +71,25 @@ class TaskGenerator:
         if self._history:
             patterns = self.analyze_patterns(self._history[-10:])
             dominant = patterns.get("dominant_topic", "general")
-            tasks.append({"task_type": "precompute_response", "priority": 5, "topic": dominant, "params": context})
+            tasks.append(
+                {
+                    "task_type": "precompute_response",
+                    "priority": 5,
+                    "topic": dominant,
+                    "params": context,
+                }
+            )
             top_topics = sorted(patterns.get("topics", {}).items(), key=lambda x: -x[1])[:2]
             for topic, count in top_topics:
                 if count > 1:
-                    tasks.append({"task_type": "prefetch_knowledge", "priority": 3, "topic": topic, "params": context})
+                    tasks.append(
+                        {
+                            "task_type": "prefetch_knowledge",
+                            "priority": 3,
+                            "topic": topic,
+                            "params": context,
+                        }
+                    )
         if not tasks:
             tasks.append({"task_type": "precompute_response", "priority": 5, "params": context})
         return tasks

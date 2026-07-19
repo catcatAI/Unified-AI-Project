@@ -12,12 +12,13 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, Optional, Tuple
 
+from core.system.config.magic_numbers import loop_sleep
+from core.system.live_logger import err as live_err
+from core.system.live_logger import info as live_info
+from core.system.live_logger import status as live_status
+from core.utils import safe_error
 from fastapi import WebSocket, WebSocketDisconnect
 from services.connection_session import get_session_manager
-
-from core.system.config.magic_numbers import loop_sleep
-from core.utils import safe_error
-from core.system.live_logger import status as live_status, err as live_err, info as live_info
 
 logger = logging.getLogger(__name__)
 
@@ -67,11 +68,15 @@ class ConnectionManager:
     def heartbeat_timeout(self):
         return self._sm.heartbeat_timeout
 
-    async def connect(self, websocket: WebSocket, session_id: str = None, metadata: dict = None) -> str:
+    async def connect(
+        self, websocket: WebSocket, session_id: str = None, metadata: dict = None
+    ) -> str:
         """Establish connection."""
         await websocket.accept()
         session = await self._sm.register(websocket, session_id, metadata, single_device_mode=True)
-        self._sessions_by_ws[id(websocket)] = session.client_id if hasattr(session, 'client_id') else session
+        self._sessions_by_ws[id(websocket)] = (
+            session.client_id if hasattr(session, "client_id") else session
+        )
         return session
 
     def disconnect(self, websocket: WebSocket) -> None:
@@ -80,7 +85,13 @@ class ConnectionManager:
         client_id = self._sessions_by_ws.pop(ws_key, None)
         if client_id:
             task = asyncio.create_task(self._sm.unregister(client_id, "Normal close"))
-            task.add_done_callback(lambda t: logger.debug(f"Unregister failed: {t.exception()}") if not t.cancelled() and t.exception() else None)
+            task.add_done_callback(
+                lambda t: (
+                    logger.debug(f"Unregister failed: {t.exception()}")
+                    if not t.cancelled() and t.exception()
+                    else None
+                )
+            )
 
     async def broadcast(self, message: dict) -> str:
         return await self._sm.broadcast(message)
@@ -136,6 +147,7 @@ async def broadcast_state_updates() -> None:
             if _bio_integrator is None:
                 try:
                     from core.bio.biological_integrator import BiologicalIntegrator
+
                     _bio_integrator = BiologicalIntegrator()
                 except Exception as e:
                     live_err(f"BioIntegrator init: {e}", "bio_init")
@@ -157,7 +169,10 @@ async def broadcast_state_updates() -> None:
                 logger.debug(f"Neuroplasticity state read failed: {e}")
 
             # HIGH-5: dynamic spatial posture from cerebellum
-            _posture = {"theta_matrix": [0.0] * 9, "finger_matrix": {"left": [0.0] * 5, "right": [0.0] * 5}}
+            _posture = {
+                "theta_matrix": [0.0] * 9,
+                "finger_matrix": {"left": [0.0] * 5, "right": [0.0] * 5},
+            }
             try:
                 _cb = _bio_integrator.cerebellum
                 if _cb and hasattr(_cb, "get_posture"):
@@ -170,10 +185,11 @@ async def broadcast_state_updates() -> None:
             _sm_data = {}
             try:
                 from api.lifespan import get_digital_life
+
                 dli = get_digital_life()
-                if dli and hasattr(dli, 'state_matrix'):
+                if dli and hasattr(dli, "state_matrix"):
                     sm = dli.state_matrix
-                    _sm_data = sm.get_state() if hasattr(sm, 'get_state') else {}
+                    _sm_data = sm.get_state() if hasattr(sm, "get_state") else {}
             except Exception as e:
                 logger.debug(f"StateMatrix4D read failed for broadcast: {e}")
 
@@ -185,33 +201,57 @@ async def broadcast_state_updates() -> None:
                     "stress": _current_stress,
                     "hormones": bio_state.get("hormonal_effects", {}),
                     # StateMatrix4D alpha values overlay
-                    **({k: v for k, v in _sm_data.get("alpha", {}).items() if k != "coordinate"} if _sm_data else {}),
+                    **(
+                        {k: v for k, v in _sm_data.get("alpha", {}).items() if k != "coordinate"}
+                        if _sm_data
+                        else {}
+                    ),
                 },
                 "beta": {
                     "learning_rate": _lr,
                     "cognitive_load": _cl,
                     # StateMatrix4D beta values overlay
-                    **({k: v for k, v in _sm_data.get("beta", {}).items() if k != "coordinate"} if _sm_data else {}),
+                    **(
+                        {k: v for k, v in _sm_data.get("beta", {}).items() if k != "coordinate"}
+                        if _sm_data
+                        else {}
+                    ),
                 },
                 "gamma": {
                     "happiness": _current_mood,
                     "emotion": bio_state.get("dominant_emotion", "calm"),
                     # StateMatrix4D gamma values overlay (includes sadness/anger/fear etc.)
-                    **({k: v for k, v in _sm_data.get("gamma", {}).items() if k != "coordinate"} if _sm_data else {}),
+                    **(
+                        {k: v for k, v in _sm_data.get("gamma", {}).items() if k != "coordinate"}
+                        if _sm_data
+                        else {}
+                    ),
                 },
                 "delta": {
                     "intensity": bio_state.get("arousal", 50.0) / 100.0,
                     # StateMatrix4D delta values overlay
-                    **({k: v for k, v in _sm_data.get("delta", {}).items() if k != "coordinate"} if _sm_data else {}),
+                    **(
+                        {k: v for k, v in _sm_data.get("delta", {}).items() if k != "coordinate"}
+                        if _sm_data
+                        else {}
+                    ),
                 },
                 "epsilon": {
                     **(_sm_data.get("epsilon", {}) if _sm_data else {}),
                 },
                 "theta": {
-                    **({k: v for k, v in _sm_data.get("theta", {}).items() if k != "coordinate"} if _sm_data else {}),
+                    **(
+                        {k: v for k, v in _sm_data.get("theta", {}).items() if k != "coordinate"}
+                        if _sm_data
+                        else {}
+                    ),
                 },
                 "zeta": {
-                    **({k: v for k, v in _sm_data.get("zeta", {}).items() if k != "coordinate"} if _sm_data else {}),
+                    **(
+                        {k: v for k, v in _sm_data.get("zeta", {}).items() if k != "coordinate"}
+                        if _sm_data
+                        else {}
+                    ),
                 },
                 "spatial": {
                     "x": 200.0,
@@ -222,28 +262,33 @@ async def broadcast_state_updates() -> None:
             }
 
             # Emit biological_event on significant state changes
-            bio_signature = f"{_current_stress:.2f}|{_current_mood:.2f}|{bio_state.get('arousal', 50.0):.1f}"
+            bio_signature = (
+                f"{_current_stress:.2f}|{_current_mood:.2f}|{bio_state.get('arousal', 50.0):.1f}"
+            )
             if bio_signature != _prev_bio_signature:
                 _prev_bio_signature = bio_signature
-                await manager.broadcast({
-                    "type": "biological_event",
-                    "data": {
-                        "event": "state_changed",
+                await manager.broadcast(
+                    {
+                        "type": "biological_event",
                         "data": {
-                            "stress_level": _current_stress,
-                            "mood": _current_mood,
-                            "arousal": bio_state.get("arousal", 50.0),
-                            "dominant_emotion": bio_state.get("dominant_emotion", "calm"),
+                            "event": "state_changed",
+                            "data": {
+                                "stress_level": _current_stress,
+                                "mood": _current_mood,
+                                "arousal": bio_state.get("arousal", 50.0),
+                                "dominant_emotion": bio_state.get("dominant_emotion", "calm"),
+                            },
                         },
-                    },
-                    "timestamp": datetime.now().isoformat(),
-                })
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
 
             # C2: include Live2D state (from service registry singleton) in broadcast
             try:
                 from core.interfaces.service_registry import get_registry
+
                 reg_live2d = get_registry().get("live2d_integration")
-                if reg_live2d is not None and hasattr(reg_live2d, 'get_live2d_state'):
+                if reg_live2d is not None and hasattr(reg_live2d, "get_live2d_state"):
                     state_data["live2d"] = reg_live2d.get_live2d_state()
             except Exception as e:
                 logger.warning(f"Failed to get live2d state for broadcast: {e}", exc_info=True)
@@ -283,26 +328,34 @@ async def _handle_handshake(websocket: WebSocket) -> Optional[tuple]:
     client_type = handshake.get("client_type", "desktop")
     client_version = handshake.get("client_version", "unknown")
 
-    session = await manager._sm.register(websocket, session_id, {
-        "client_type": client_type,
-        "client_version": client_version,
-    }, single_device_mode=True)
+    session = await manager._sm.register(
+        websocket,
+        session_id,
+        {
+            "client_type": client_type,
+            "client_version": client_version,
+        },
+        single_device_mode=True,
+    )
     client_id = session.client_id
 
     logger.info(f"[WebSocket] Connected - client_id: {client_id}, session_id: {session_id}")
 
-    await websocket.send_json({
-        "type": "connected",
-        "client_id": client_id,
-        "session_id": session_id,
-        "timestamp": datetime.now().isoformat(),
-        "server_version": "7.5.0-dev",
-    })
+    await websocket.send_json(
+        {
+            "type": "connected",
+            "client_id": client_id,
+            "session_id": session_id,
+            "timestamp": datetime.now().isoformat(),
+            "server_version": "7.5.0-dev",
+        }
+    )
     return client_id, session_id
 
 
 async def _handle_chat_message(websocket: WebSocket, data: dict, session_id: str) -> None:
     from api.routes.chat_routes import _handle_chat_request
+
     user_message = data.get("data", {}).get("content", "")
     message_id = data.get("data", {}).get("message_id", "")
     user_name = data.get("data", {}).get("user_name", "朋友")
@@ -315,69 +368,85 @@ async def _handle_chat_message(websocket: WebSocket, data: dict, session_id: str
             user_name=user_name,
             history=history,
             session_id=session_id,
-            origin="Human"
+            origin="Human",
         )
         # Store both user message and assistant response in history
         async with _session_history_lock:
             if session_id not in _session_history:
                 _session_history[session_id] = []
             _session_history[session_id].append({"role": "user", "content": user_message})
-            _session_history[session_id].append({"role": "assistant", "content": chat_res.get("response_text", "")})
+            _session_history[session_id].append(
+                {"role": "assistant", "content": chat_res.get("response_text", "")}
+            )
             # Trim to max size
             if len(_session_history[session_id]) > _MAX_HISTORY * 2:
-                _session_history[session_id] = _session_history[session_id][-_MAX_HISTORY * 2:]
+                _session_history[session_id] = _session_history[session_id][-_MAX_HISTORY * 2 :]
         _resp_preview = chat_res.get("response_text", "")[:80]
         _hit = chat_res.get("hit_score", 0.0)
         _src = chat_res.get("hit_source", "none")
-        logger.info(f"[WebSocket] Chat response sent ({_src}, score={_hit:.2f}): {_resp_preview}...")
-        await manager.send_personal_message({
-            "type": "chat_response",
-            "data": {
-                "message_id": message_id,
-                "content": chat_res["response_text"],
-                "sender": "angela",
-                "hit_score": chat_res.get("hit_score", 0.0),
-                "hit_source": chat_res.get("hit_source", "none"),
-                "route": chat_res.get("route", "llm"),
-                "emotion": chat_res.get("emotion", "happy"),
-                "emotion_intensity": chat_res.get("emotion_intensity", 0.5),
+        logger.info(
+            f"[WebSocket] Chat response sent ({_src}, score={_hit:.2f}): {_resp_preview}..."
+        )
+        await manager.send_personal_message(
+            {
+                "type": "chat_response",
+                "data": {
+                    "message_id": message_id,
+                    "content": chat_res["response_text"],
+                    "sender": "angela",
+                    "hit_score": chat_res.get("hit_score", 0.0),
+                    "hit_source": chat_res.get("hit_source", "none"),
+                    "route": chat_res.get("route", "llm"),
+                    "emotion": chat_res.get("emotion", "happy"),
+                    "emotion_intensity": chat_res.get("emotion_intensity", 0.5),
+                },
+                "timestamp": datetime.now().isoformat(),
             },
-            "timestamp": datetime.now().isoformat(),
-        }, websocket)
+            websocket,
+        )
     except Exception as chat_err:
         logger.error(f"[WebSocket] Chat error: {chat_err}", exc_info=True)
-        await manager.send_personal_message({
-            "type": "chat_response",
-            "data": {
-                "message_id": message_id,
-                "content": "（我的大腦似乎遇到了一點點小干擾，能再說一次嗎？）",
-                "sender": "angela",
-                "error": safe_error(chat_err)
+        await manager.send_personal_message(
+            {
+                "type": "chat_response",
+                "data": {
+                    "message_id": message_id,
+                    "content": "（我的大腦似乎遇到了一點點小干擾，能再說一次嗎？）",
+                    "sender": "angela",
+                    "error": safe_error(chat_err),
+                },
+                "timestamp": datetime.now().isoformat(),
             },
-            "timestamp": datetime.now().isoformat(),
-        }, websocket)
+            websocket,
+        )
 
 
 async def _handle_tactile_event(websocket: WebSocket, data: dict) -> None:
     from api.lifespan import get_tactile_service
+
     tactile_data = data.get("data", {})
     tactile_service = get_tactile_service()
     if not tactile_service:
         return
     res = await tactile_service.simulate_touch("user_hand", tactile_data, origin="Human")
-    await manager.send_personal_message({
-        "type": "biological_feedback",
-        "status": res.get("status"),
-        "reflex": res.get("reflex"),
-        "intensity": res.get("feedback", {}).get("intensity")
-    }, websocket)
+    await manager.send_personal_message(
+        {
+            "type": "biological_feedback",
+            "status": res.get("status"),
+            "reflex": res.get("reflex"),
+            "intensity": res.get("feedback", {}).get("intensity"),
+        },
+        websocket,
+    )
 
 
 async def _handle_heartbeat(websocket: WebSocket, data: dict) -> None:
-    await websocket.send_json({
-        "type": "heartbeat_ack" if data.get("type") == "heartbeat" else "echo",
-        "timestamp": datetime.now().isoformat(),
-    })
+    await websocket.send_json(
+        {
+            "type": "heartbeat_ack" if data.get("type") == "heartbeat" else "echo",
+            "timestamp": datetime.now().isoformat(),
+        }
+    )
 
 
 async def _handle_multimodal_encode(websocket: WebSocket, data: dict) -> None:
@@ -392,6 +461,7 @@ async def _handle_multimodal_encode(websocket: WebSocket, data: dict) -> None:
     }
     """
     import base64
+
     try:
         msg_data = data.get("data", {})
         modality = msg_data.get("modality", "vision")
@@ -402,20 +472,27 @@ async def _handle_multimodal_encode(websocket: WebSocket, data: dict) -> None:
         raw = base64.b64decode(content_b64)
 
         from services.multimodal_service import MultimodalService
+
         svc = MultimodalService()
         result = await svc.encode(raw, modality, item_id)
-        await manager.send_personal_message({
-            "type": "multimodal_encode_result",
-            "data": result,
-            "timestamp": datetime.now().isoformat(),
-        }, websocket)
+        await manager.send_personal_message(
+            {
+                "type": "multimodal_encode_result",
+                "data": result,
+                "timestamp": datetime.now().isoformat(),
+            },
+            websocket,
+        )
     except Exception as e:
         logger.error("Multimodal encode WS error: %s", e, exc_info=True)
-        await manager.send_personal_message({
-            "type": "multimodal_encode_result",
-            "data": {"error": safe_error(e)},
-            "timestamp": datetime.now().isoformat(),
-        }, websocket)
+        await manager.send_personal_message(
+            {
+                "type": "multimodal_encode_result",
+                "data": {"error": safe_error(e)},
+                "timestamp": datetime.now().isoformat(),
+            },
+            websocket,
+        )
 
 
 async def _handle_multimodal_decode(websocket: WebSocket, data: dict) -> None:
@@ -438,20 +515,27 @@ async def _handle_multimodal_decode(websocket: WebSocket, data: dict) -> None:
             raise ValueError("No item_id provided")
 
         from services.multimodal_service import MultimodalService
+
         svc = MultimodalService()
         result = await svc.decode(item_id, modality, output_format)
-        await manager.send_personal_message({
-            "type": "multimodal_decode_result",
-            "data": result,
-            "timestamp": datetime.now().isoformat(),
-        }, websocket)
+        await manager.send_personal_message(
+            {
+                "type": "multimodal_decode_result",
+                "data": result,
+                "timestamp": datetime.now().isoformat(),
+            },
+            websocket,
+        )
     except Exception as e:
         logger.error("Multimodal decode WS error: %s", e, exc_info=True)
-        await manager.send_personal_message({
-            "type": "multimodal_decode_result",
-            "data": {"error": safe_error(e)},
-            "timestamp": datetime.now().isoformat(),
-        }, websocket)
+        await manager.send_personal_message(
+            {
+                "type": "multimodal_decode_result",
+                "data": {"error": safe_error(e)},
+                "timestamp": datetime.now().isoformat(),
+            },
+            websocket,
+        )
 
 
 async def websocket_handler(websocket: WebSocket) -> str:
@@ -480,11 +564,13 @@ async def websocket_handler(websocket: WebSocket) -> str:
                 await _handle_heartbeat(websocket, data)
 
             elif msg_type == "state_update":
-                await manager.broadcast({
-                    "type": "state_update",
-                    "data": data.get("data", {}),
-                    "timestamp": datetime.now().isoformat(),
-                })
+                await manager.broadcast(
+                    {
+                        "type": "state_update",
+                        "data": data.get("data", {}),
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
 
             elif msg_type == "tactile_event":
                 await _handle_tactile_event(websocket, data)
@@ -499,11 +585,13 @@ async def websocket_handler(websocket: WebSocket) -> str:
                 await _handle_multimodal_decode(websocket, data)
 
             else:
-                await websocket.send_json({
-                    "type": "echo",
-                    "original": data,
-                    "timestamp": datetime.now().isoformat(),
-                })
+                await websocket.send_json(
+                    {
+                        "type": "echo",
+                        "original": data,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
 
         except asyncio.TimeoutError:
             logger.warning(f"[WebSocket] Heartbeat timeout: {client_id}", exc_info=True)
@@ -522,6 +610,12 @@ async def websocket_handler(websocket: WebSocket) -> str:
             continue
 
     task = asyncio.create_task(manager.unregister(client_id))
-    task.add_done_callback(lambda t: logger.debug(f"Final unregister failed: {t.exception()}") if not t.cancelled() and t.exception() else None)
+    task.add_done_callback(
+        lambda t: (
+            logger.debug(f"Final unregister failed: {t.exception()}")
+            if not t.cancelled() and t.exception()
+            else None
+        )
+    )
     async with _session_history_lock:
         _session_history.pop(session_id, None)

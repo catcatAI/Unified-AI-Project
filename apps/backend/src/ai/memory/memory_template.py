@@ -266,10 +266,17 @@ class MemoryTemplate:
         # 从配置读取权重
         try:
             from core.config_loader import get_angela_config
+
             _cfg = get_angela_config()
-            _w = _cfg.get_authority("angela_core", {}).get("template_matching", {}).get("score_weights", {})
+            _w = (
+                _cfg.get_authority("angela_core", {})
+                .get("template_matching", {})
+                .get("score_weights", {})
+            )
         except (ImportError, FileNotFoundError, KeyError):
-            logger.warning("Failed to load score weights from config, using defaults", exc_info=True)
+            logger.warning(
+                "Failed to load score weights from config, using defaults", exc_info=True
+            )
             _w = {}
         _kw_w = _w.get("content_similarity", 0.30)
         _st_w = _w.get("state_similarity", 0.40)
@@ -295,17 +302,26 @@ class MemoryTemplate:
 
     def _calculate_state_similarity(self, current_state: AngelaState) -> float:
         """计算状态相似度"""
-        if not current_state or not hasattr(current_state, '__dict__'):
+        if not current_state or not hasattr(current_state, "__dict__"):
             return 0.5
         try:
-            state_dict = current_state.__dict__ if hasattr(current_state, '__dict__') else {}
-            template_state = self.angela_state.__dict__ if hasattr(self, 'angela_state') and hasattr(self.angela_state, '__dict__') else {}
+            state_dict = current_state.__dict__ if hasattr(current_state, "__dict__") else {}
+            template_state = (
+                self.angela_state.__dict__
+                if hasattr(self, "angela_state") and hasattr(self.angela_state, "__dict__")
+                else {}
+            )
             if not state_dict or not template_state:
                 return 0.5
             common_keys = set(state_dict.keys()) & set(template_state.keys())
             if not common_keys:
                 return 0.5
-            diffs = [abs(float(state_dict[k]) - float(template_state[k])) for k in common_keys if isinstance(state_dict[k], (int, float)) and isinstance(template_state[k], (int, float))]
+            diffs = [
+                abs(float(state_dict[k]) - float(template_state[k]))
+                for k in common_keys
+                if isinstance(state_dict[k], (int, float))
+                and isinstance(template_state[k], (int, float))
+            ]
             if not diffs:
                 return 0.5
             return max(0.0, 1.0 - sum(diffs) / len(diffs))
@@ -315,17 +331,28 @@ class MemoryTemplate:
 
     def _calculate_impression_similarity(self, current_impression: UserImpression) -> float:
         """计算用户印象相似度"""
-        if not current_impression or not hasattr(current_impression, '__dict__'):
+        if not current_impression or not hasattr(current_impression, "__dict__"):
             return 0.5
         try:
-            imp_dict = current_impression.__dict__ if hasattr(current_impression, '__dict__') else {}
-            template_imp = self.user_impression.__dict__ if hasattr(self, 'user_impression') and hasattr(self.user_impression, '__dict__') else {}
+            imp_dict = (
+                current_impression.__dict__ if hasattr(current_impression, "__dict__") else {}
+            )
+            template_imp = (
+                self.user_impression.__dict__
+                if hasattr(self, "user_impression") and hasattr(self.user_impression, "__dict__")
+                else {}
+            )
             if not imp_dict or not template_imp:
                 return 0.5
             common_keys = set(imp_dict.keys()) & set(template_imp.keys())
             if not common_keys:
                 return 0.5
-            diffs = [abs(float(imp_dict[k]) - float(template_imp[k])) for k in common_keys if isinstance(imp_dict[k], (int, float)) and isinstance(template_imp[k], (int, float))]
+            diffs = [
+                abs(float(imp_dict[k]) - float(template_imp[k]))
+                for k in common_keys
+                if isinstance(imp_dict[k], (int, float))
+                and isinstance(template_imp[k], (int, float))
+            ]
             if not diffs:
                 return 0.5
             return max(0.0, 1.0 - sum(diffs) / len(diffs))

@@ -102,13 +102,9 @@ class CardImportPipeline:
         if card.core_trait and unresolved_texts:
             scored = self.text_gravity.compute_gravity(card.core_trait, unresolved_texts)
             for conflict in card.conflicts:
-                match = next(
-                    (s for s in scored if s[0] == conflict.description), None
-                )
+                match = next((s for s in scored if s[0] == conflict.description), None)
                 if match and match[1] >= ANGELA_THRESHOLD:
-                    conflict.resolution = (
-                        f"Gravity toward '{card.core_trait}': {match[1]:.3f}"
-                    )
+                    conflict.resolution = f"Gravity toward '{card.core_trait}': {match[1]:.3f}"
         if not card.tokens:
             combined = " ".join(unresolved_texts) if unresolved_texts else ""
             card.tokens = self.token_extractor.extract(combined or card.name)

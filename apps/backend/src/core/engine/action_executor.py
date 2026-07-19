@@ -18,9 +18,7 @@ Version: 6.0.0
 Date: 2026-02-02
 """
 
-
 from __future__ import annotations
-from core.utils import safe_error
 
 import asyncio
 import logging
@@ -40,6 +38,7 @@ from core.system.config.magic_numbers import (
     retry_value,
     timeout_value,
 )
+from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
 
@@ -276,7 +275,9 @@ class ActionExecutor:
         # Queue management
         self.queue = ActionQueue(max_size=cache_value("executor_max_queue_size", 1000))
         self.active_actions: dict[str, Action] = {}
-        self.max_concurrent = self.config.get("max_concurrent", cache_value("executor_max_concurrent", 5))
+        self.max_concurrent = self.config.get(
+            "max_concurrent", cache_value("executor_max_concurrent", 5)
+        )
 
         # Safety system
         self.safety_checks: dict[str, SafetyCheck] = {}
@@ -352,8 +353,11 @@ class ActionExecutor:
                 task.add_done_callback(
                     lambda t: (
                         self._background_tasks.discard(t),
-                        logger.warning("Background executor task failed: %s", t.exception())
-                        if not t.cancelled() and t.exception() else None
+                        (
+                            logger.warning("Background executor task failed: %s", t.exception())
+                            if not t.cancelled() and t.exception()
+                            else None
+                        ),
                     )
                 )
             else:
@@ -380,7 +384,9 @@ class ActionExecutor:
             bio = self._dli.biological_integrator.get_biological_state()
             stress = bio.get("stress_level", 0.0)
             arousal = bio.get("arousal", behavior_executor("arousal_default", 0.5))
-            strain_factor = (stress * behavior_executor("strain_stress_weight", 0.7)) + ((1.0 - arousal) * behavior_executor("strain_arousal_inverse_weight", 0.3))
+            strain_factor = (stress * behavior_executor("strain_stress_weight", 0.7)) + (
+                (1.0 - arousal) * behavior_executor("strain_arousal_inverse_weight", 0.3)
+            )
 
             thresh = behavior_executor("strain_factor_threshold", 0.6)
             if strain_factor > thresh:
@@ -425,6 +431,7 @@ class ActionExecutor:
             execution_time = asyncio.get_running_loop().time() - start_time
 
             import random
+
             actual_success = random.random() < success_rate
 
             if actual_success:
@@ -452,8 +459,8 @@ class ActionExecutor:
 
                 logger.warning(
                     f"[ActionExecutor] Action {action.name} failed due to "
-                    f"dynamic success rate ({success_rate:.2%})"
-                    , exc_info=True
+                    f"dynamic success rate ({success_rate:.2%})",
+                    exc_info=True,
                 )
 
         except asyncio.TimeoutError:
@@ -481,7 +488,9 @@ class ActionExecutor:
             for callback in self._pre_execution_callbacks:
                 try:
                     callback(action)
-                except Exception as e:  # broad exception acceptable: callback errors should not break action execution
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: callback errors should not break action execution
                     logger.warning(f"Pre-execution callback failed: {e}", exc_info=True)
 
             await self._apply_biological_strain(action)
@@ -494,10 +503,14 @@ class ActionExecutor:
             for callback in self._post_execution_callbacks:
                 try:
                     callback(action, action.result)
-                except Exception as e:  # broad exception acceptable: callback errors should not break execution loop
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: callback errors should not break execution loop
                     logger.warning(f"Post-execution callback failed: {e}", exc_info=True)
 
-        except Exception as e:  # broad exception acceptable: action execution must be resilient to errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: action execution must be resilient to errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             action.status = ActionStatus.FAILED
 
@@ -517,7 +530,6 @@ class ActionExecutor:
             if action.action_id in self._completion_events:
                 self._completion_events[action.action_id].set()
 
-
     async def _validate_action(self, action: Action) -> tuple[bool, Optional[str]]:
         """Validate action through safety checks"""
         for check_name in action.safety_checks:
@@ -531,8 +543,8 @@ class ActionExecutor:
                     else:
                         # Non-critical check failed - log but continue
                         logger.warning(
-                            f"Non-critical safety check failed: {check_name} - {message}"
-                            , exc_info=True
+                            f"Non-critical safety check failed: {check_name} - {message}",
+                            exc_info=True,
                         )
 
         return True, None
@@ -581,10 +593,12 @@ class ActionExecutor:
             for callback in self._status_change_callbacks[action.action_id]:
                 try:
                     callback(action.status)
-                except Exception as e:  # broad exception acceptable: status callbacks should not break execution
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: status callbacks should not break execution
                     logger.warning(
-                        f"Status change callback failed for action {action.action_id}: {e}"
-                        , exc_info=True
+                        f"Status change callback failed for action {action.action_id}: {e}",
+                        exc_info=True,
                     )
 
     def _register_default_safety_checks(self) -> None:
@@ -682,7 +696,9 @@ class ActionExecutor:
         """Register pre-execution callback"""
         self._pre_execution_callbacks.append(callback)
 
-    def register_post_execution_callback(self, callback: Callable[[Action, ActionResult], None]) -> None:
+    def register_post_execution_callback(
+        self, callback: Callable[[Action, ActionResult], None]
+    ) -> None:
         """Register post-execution callback"""
         self._post_execution_callbacks.append(callback)
 
@@ -755,7 +771,7 @@ class ActionExecutor:
             sm = self._dli.state_matrix
             alpha = sm.alpha.values
 
-            energy  = alpha.get("energy",  behavior_executor("energy_default", 0.5))
+            energy = alpha.get("energy", behavior_executor("energy_default", 0.5))
             comfort = alpha.get("comfort", behavior_executor("comfort_default", 0.5))
             tension = alpha.get("tension", 0.0)
 
@@ -768,7 +784,9 @@ class ActionExecutor:
                     3: behavior_executor("priority_cost_low", 0.15),
                     4: behavior_executor("priority_cost_background", 0.05),
                 }
-                priority_cost = cost_map.get(action.priority.level, behavior_executor("priority_cost_default", 0.3))
+                priority_cost = cost_map.get(
+                    action.priority.level, behavior_executor("priority_cost_default", 0.3)
+                )
 
             health_tension = sm.evaluate_math_spatially(
                 f"({energy:.4f} + {comfort:.4f}) / 2 - {tension:.4f} - {priority_cost:.4f}"
@@ -778,14 +796,19 @@ class ActionExecutor:
             success_rate_max = behavior_executor("success_rate_max", 0.99)
             success_rate_base = behavior_executor("success_rate_base", 0.5)
             success_rate_mult = behavior_executor("success_rate_tension_multiplier", 0.8)
-            success_rate = max(success_rate_min, min(success_rate_max, success_rate_base + health_tension * success_rate_mult))
-            logger.debug(
-                f"[動作引擎] 居體張力={health_tension:.3f} → 成功率={success_rate:.2%}"
+            success_rate = max(
+                success_rate_min,
+                min(success_rate_max, success_rate_base + health_tension * success_rate_mult),
             )
+            logger.debug(f"[動作引擎] 居體張力={health_tension:.3f} → 成功率={success_rate:.2%}")
             return success_rate
 
-        except Exception as e:  # broad exception acceptable: spatial calculation failure should fallback to default
-            logger.warning(f"[ActionExecutor] Spatial success rate failed, fallback: {e}", exc_info=True)
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: spatial calculation failure should fallback to default
+            logger.warning(
+                f"[ActionExecutor] Spatial success rate failed, fallback: {e}", exc_info=True
+            )
             return behavior_executor("success_rate_fallback", 0.85)
 
     def _record_action_outcome(self, action: Action, success: bool) -> None:
@@ -795,9 +818,15 @@ class ActionExecutor:
                 self._dynamic_params_manager.record_outcome(
                     action_type=action.category.value[1],  # English name
                     success=success,
-                    intensity=behavior_executor("outcome_high_intensity", 0.5) if action.priority.level <= 1 else behavior_executor("outcome_low_intensity", 0.3),
+                    intensity=(
+                        behavior_executor("outcome_high_intensity", 0.5)
+                        if action.priority.level <= 1
+                        else behavior_executor("outcome_low_intensity", 0.3)
+                    ),
                 )
-            except Exception as e:  # broad exception acceptable: recording failure should not affect action result
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: recording failure should not affect action result
                 logger.warning(f"[ActionExecutor] Failed to record outcome: {e}", exc_info=True)
 
     async def handle_autonomous_action(
@@ -877,7 +906,9 @@ class ActionExecutor:
                     execution_time_ms=execution_time,
                 )
 
-        except Exception as e:  # broad exception acceptable: fallback execution should be resilient to errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: fallback execution should be resilient to errors
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             execution_time = int((asyncio.get_running_loop().time() - start_time) * 1000)
 
@@ -894,7 +925,11 @@ class ActionExecutor:
 
     async def save_execution_history(self, filepath: Optional[str] = None) -> None:
         """Save execution history to file"""
-        path = Path(filepath).expanduser() if filepath else Path.home() / ".angela" / "executor_history.json"
+        path = (
+            Path(filepath).expanduser()
+            if filepath
+            else Path.home() / ".angela" / "executor_history.json"
+        )
         path.parent.mkdir(parents=True, exist_ok=True)
 
         history = []
@@ -923,10 +958,14 @@ class ActionExecutor:
 
     async def load_execution_history(self, filepath: Optional[str] = None) -> list:
         """Load execution history from file"""
-        path = Path(filepath).expanduser() if filepath else Path.home() / ".angela" / "executor_history.json"
+        path = (
+            Path(filepath).expanduser()
+            if filepath
+            else Path.home() / ".angela" / "executor_history.json"
+        )
 
         if path.exists():
-                return await async_json_load(str(path))
+            return await async_json_load(str(path))
         return []
 
     # ========== NEW: Retry Mechanism ==========
@@ -1000,7 +1039,9 @@ class ActionExecutor:
             try:
                 if not validator(result):
                     return False, f"Result validation failed: {validator.__name__}"
-            except Exception as e:  # broad exception acceptable: validator errors should not break validation
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: validator errors should not break validation
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 return False, f"Validation error: {safe_error(e)}"
 

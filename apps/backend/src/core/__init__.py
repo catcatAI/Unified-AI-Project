@@ -172,9 +172,7 @@ class _SubmoduleSentinel:
     def __init__(self, name: str) -> None:
         self._name = name
         if name not in self._warned:
-            logger.warning(
-                "core.%s 不存在（可能是已刪除的子系統，或測試 mock 路徑）", name
-            )
+            logger.warning("core.%s 不存在（可能是已刪除的子系統，或測試 mock 路徑）", name)
             self._warned.add(name)
 
     def __getattr__(self, attr: str) -> "_SubmoduleSentinel":

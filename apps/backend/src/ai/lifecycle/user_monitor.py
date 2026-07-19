@@ -158,7 +158,9 @@ class UserMonitor:
                 await asyncio.sleep(self.check_interval)
             except asyncio.CancelledError:
                 break
-            except Exception as e:  # broad exception acceptable: loop must be resilient to prevent process termination
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: loop must be resilient to prevent process termination
                 logger.error(f"Error in monitor loop: {e}", exc_info=True)
                 await asyncio.sleep(loop_sleep("user_monitor_tight", 1.0))  # 防止緊密循環
 
@@ -251,7 +253,9 @@ class UserMonitor:
                     await callback(event_type, data)
                 else:
                     callback(event_type, data)
-            except Exception as e:  # broad exception acceptable: callback failures should not crash notification loop
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: callback failures should not crash notification loop
                 logger.error(f"Error in state change callback: {e}", exc_info=True)
 
     def record_input(self, input_text: str, metadata: Optional[Dict[str, Any]] = None) -> None:
@@ -297,11 +301,7 @@ class UserMonitor:
             "surprise": UserEmotion.EXCITED,
             "calm": UserEmotion.RELAXED,
         }
-        return {
-            _map[k]: v
-            for k, v in EMOTION_KEYWORDS.items()
-            if k in _map
-        }
+        return {_map[k]: v for k, v in EMOTION_KEYWORDS.items() if k in _map}
 
     def _score_emotion_categories(self, text_lower: str) -> Dict[UserEmotion, int]:
         emotion_keywords = self._extract_emotion_keywords()

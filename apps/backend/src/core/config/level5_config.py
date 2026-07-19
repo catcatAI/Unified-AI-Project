@@ -113,7 +113,9 @@ class Level5PerformanceMetrics:
                 "timestamp": datetime.now().isoformat(),
             }
 
-        except Exception as e:  # broad exception acceptable: metrics calculation should return fallback values
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: metrics calculation should return fallback values
             logger.error(f"计算实时性能指标失败: {e}", exc_info=True)
             # 返回基础指标
             return {
@@ -157,7 +159,9 @@ class Level5SystemMonitor:
 
                 await asyncio.sleep(self.update_interval)
 
-            except Exception as e:  # broad exception acceptable: monitoring loop must be resilient to errors
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: monitoring loop must be resilient to errors
                 logger.error(f"系统监控循环错误: {e}", exc_info=True)
                 await asyncio.sleep(self.update_interval)
 
@@ -186,7 +190,9 @@ class Level5SystemMonitor:
             # 模拟创造性突破工作负载
             self.metrics.total_concepts_generated += random.randint(1, 6)
 
-        except Exception as e:  # broad exception acceptable: simulate_workload may raise various runtime errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: simulate_workload may raise various runtime errors
             logger.error(f"模拟工作负载失败: {e}", exc_info=True)
 
     def get_current_status(self) -> Dict[str, Any]:

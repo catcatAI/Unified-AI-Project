@@ -2,6 +2,7 @@
 Autonomous Neuroplasticity Submodule (Backward Compat)
 Re-exports from core.autonomous shim
 """
+
 from __future__ import annotations
 
 from core.bio.explicit_implicit_learning import (

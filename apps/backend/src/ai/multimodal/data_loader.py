@@ -31,6 +31,7 @@ DATA_DIR = ROOT / "data" / "multimodal"
 # CIFAR-10
 # ---------------------------------------------------------------------------
 
+
 class CIFAR10Loader:
     """Loads CIFAR-10 images and encodes them via VisualEncoder.
 
@@ -39,11 +40,22 @@ class CIFAR10Loader:
         data/multimodal/cifar10/index.json
     """
 
-    CLASS_NAMES = ["airplane", "automobile", "bird", "cat", "deer",
-                   "dog", "frog", "horse", "ship", "truck"]
+    CLASS_NAMES = [
+        "airplane",
+        "automobile",
+        "bird",
+        "cat",
+        "deer",
+        "dog",
+        "frog",
+        "horse",
+        "ship",
+        "truck",
+    ]
 
-    def __init__(self, data_dir: Optional[Path] = None,
-                 visual_encoder: Optional[VisualEncoder] = None):
+    def __init__(
+        self, data_dir: Optional[Path] = None, visual_encoder: Optional[VisualEncoder] = None
+    ):
         self._data_dir = Path(data_dir or DATA_DIR / "cifar10")
         self._encoder = visual_encoder or VisualEncoder()
         self._samples: List[Tuple[int, str]] = []  # (label, filepath)
@@ -76,8 +88,11 @@ class CIFAR10Loader:
 
         self._available = len(self._samples) > 0
         if self._available:
-            logger.info("CIFAR-10: %d images available (%d classes)",
-                        len(self._samples), len(self.CLASS_NAMES))
+            logger.info(
+                "CIFAR-10: %d images available (%d classes)",
+                len(self._samples),
+                len(self.CLASS_NAMES),
+            )
         else:
             logger.warning("CIFAR-10: no images found in %s", self._data_dir)
 
@@ -140,13 +155,20 @@ class CIFAR10Loader:
                 label, path = self._samples[i]
                 img_data = np.load(path).astype(np.uint8)
                 from PIL import Image
+
                 features = self._encoder.encode_from_pil(Image.fromarray(img_data))
-                if features is not None and (isinstance(features, np.ndarray) and features.sum() != 0):
+                if features is not None and (
+                    isinstance(features, np.ndarray) and features.sum() != 0
+                ):
                     self._encoded[i] = np.asarray(features, dtype=np.float32)
                     count += 1
             except Exception as e:
                 logger.debug("CIFAR-10 encode failed at index %d: %s", i, e)
-            if (i + 1) % checkpoint_interval == 0 or (i + 1) == len(self._samples) or count >= total:
+            if (
+                (i + 1) % checkpoint_interval == 0
+                or (i + 1) == len(self._samples)
+                or count >= total
+            ):
                 try:
                     indices = np.array(list(self._encoded.keys()), dtype=object)
                     feats = np.array(list(self._encoded.values()), dtype=object)
@@ -156,7 +178,8 @@ class CIFAR10Loader:
                 if (i + 1) % checkpoint_interval == 0:
                     logger.info(
                         "  Encoded %d/%d CIFAR-10 images (checkpoint saved)",
-                        i + 1, len(self._samples),
+                        i + 1,
+                        len(self._samples),
                     )
 
         if count == len(self._samples):
@@ -177,9 +200,9 @@ class CIFAR10Loader:
         """Return class label for a specific image index."""
         return self._samples[index][0]
 
-    def build_contrastive_pairs(self, n_pairs: int = 100,
-                                same_prob: float = 0.5,
-                                seed: int = 42) -> Tuple[List, List]:
+    def build_contrastive_pairs(
+        self, n_pairs: int = 100, same_prob: float = 0.5, seed: int = 42
+    ) -> Tuple[List, List]:
         """Build positive/negative contrastive pairs from class labels.
 
         Positive pairs: two images of the same class.
@@ -219,8 +242,7 @@ class CIFAR10Loader:
 
         return pos_pairs, neg_pairs
 
-    def build_reconstruction_samples(self, n_samples: int = 50,
-                                     seed: int = 42) -> List[np.ndarray]:
+    def build_reconstruction_samples(self, n_samples: int = 50, seed: int = 42) -> List[np.ndarray]:
         """Sample encoded features for reconstruction training.
 
         Returns list of feature vectors.
@@ -237,6 +259,7 @@ class CIFAR10Loader:
 # ESC-50
 # ---------------------------------------------------------------------------
 
+
 class ESC50Loader:
     """Loads ESC-50 audio clips and encodes them via AudioSpectralEncoder.
 
@@ -247,8 +270,9 @@ class ESC50Loader:
     Each .ref file contains the path to the original WAV file.
     """
 
-    def __init__(self, data_dir: Optional[Path] = None,
-                 audio_encoder: Optional[AudioSpectralEncoder] = None):
+    def __init__(
+        self, data_dir: Optional[Path] = None, audio_encoder: Optional[AudioSpectralEncoder] = None
+    ):
         self._data_dir = Path(data_dir or DATA_DIR / "esc50")
         self._encoder = audio_encoder or AudioSpectralEncoder()
         self._samples: List[Tuple[int, str, str]] = []  # (class_id, category, ref_path)
@@ -281,8 +305,11 @@ class ESC50Loader:
 
         self._available = len(self._samples) > 0
         if self._available:
-            logger.info("ESC-50: %d clips indexed (%d classes)",
-                        len(self._samples), len(idx.get("categories", [])))
+            logger.info(
+                "ESC-50: %d clips indexed (%d classes)",
+                len(self._samples),
+                len(idx.get("categories", [])),
+            )
         else:
             logger.warning("ESC-50: no clips found in %s", self._data_dir)
 
@@ -330,9 +357,9 @@ class ESC50Loader:
     def get_class_id(self, index: int) -> int:
         return self._samples[index][0]
 
-    def build_contrastive_pairs(self, n_pairs: int = 100,
-                                same_prob: float = 0.5,
-                                seed: int = 42) -> Tuple[List, List]:
+    def build_contrastive_pairs(
+        self, n_pairs: int = 100, same_prob: float = 0.5, seed: int = 42
+    ) -> Tuple[List, List]:
         """Build contrastive pairs from class labels (same class = positive)."""
         rng = np.random.RandomState(seed)
         pos_pairs: List = []
@@ -359,8 +386,7 @@ class ESC50Loader:
                             neg_pairs.append(("audio", fa, "audio", fb))
         return pos_pairs, neg_pairs
 
-    def build_reconstruction_samples(self, n_samples: int = 50,
-                                     seed: int = 42) -> List[np.ndarray]:
+    def build_reconstruction_samples(self, n_samples: int = 50, seed: int = 42) -> List[np.ndarray]:
         rng = np.random.RandomState(seed)
         encoded_indices = list(self._encoded.keys())
         if not encoded_indices:
@@ -372,6 +398,7 @@ class ESC50Loader:
 # ---------------------------------------------------------------------------
 # Combined real data provider
 # ---------------------------------------------------------------------------
+
 
 class RealDataProvider:
     """Combines CIFAR-10 and ESC-50 into a unified interface for the training pipeline.
@@ -388,8 +415,7 @@ class RealDataProvider:
 
     def has_data(self) -> bool:
         """Returns True if at least one dataset is available with encoded features."""
-        return (len(self.cifar10._encoded) > 0 or
-                len(self.esc50._encoded) > 0)
+        return len(self.cifar10._encoded) > 0 or len(self.esc50._encoded) > 0
 
     def encode_all(self, max_images: int = 0) -> Dict[str, int]:
         """Encode all data from available datasets.
@@ -406,9 +432,9 @@ class RealDataProvider:
             results["esc50"] = self.esc50.encode_all(max_images=max_images)
         return results
 
-    def contrastive_pairs(self, n_per_modality: int = 50,
-                          same_prob: float = 0.5,
-                          seed: int = 42) -> Tuple[List, List]:
+    def contrastive_pairs(
+        self, n_per_modality: int = 50, same_prob: float = 0.5, seed: int = 42
+    ) -> Tuple[List, List]:
         """Build contrastive pairs from real data."""
         pos_pairs: List = []
         neg_pairs: List = []
@@ -425,8 +451,9 @@ class RealDataProvider:
 
         return pos_pairs, neg_pairs
 
-    def reconstruction_samples(self, n_per_modality: int = 30,
-                               seed: int = 42) -> Dict[str, List[np.ndarray]]:
+    def reconstruction_samples(
+        self, n_per_modality: int = 30, seed: int = 42
+    ) -> Dict[str, List[np.ndarray]]:
         """Build reconstruction samples from real data."""
         result: Dict[str, List[np.ndarray]] = {}
         rng = np.random.RandomState(seed)

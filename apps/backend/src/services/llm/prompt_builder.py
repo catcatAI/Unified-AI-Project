@@ -25,13 +25,17 @@ def _get_autonomous_lifecycle():
     """
     try:
         from api.lifespan import get_lifecycle
+
         return get_lifecycle()
     except Exception:
-        logger.warning("_get_autonomous_lifecycle: lifespan unavailable, using fallback", exc_info=True)
+        logger.warning(
+            "_get_autonomous_lifecycle: lifespan unavailable, using fallback", exc_info=True
+        )
     # Fallback: create own singleton if lifespan not available
     global _autonomous_lifecycle
     if _autonomous_lifecycle is None:
         from core.life.autonomous_life_cycle import AutonomousLifeCycle
+
         _autonomous_lifecycle = AutonomousLifeCycle()
     return _autonomous_lifecycle
 
@@ -41,6 +45,7 @@ def _get_theta_router():
     global _theta_router
     if _theta_router is None:
         from core.engine.theta_router import ThetaRouter
+
         _theta_router = ThetaRouter()
     return _theta_router
 
@@ -71,16 +76,18 @@ def get_biological_state(context=None) -> str:
             if "mood" in bio:
                 parts.append(prompt("angela.bio.mood", value=f"{bio['mood']:.2f}"))
             if "dominant_emotion" in bio:
-                parts.append(prompt("angela.bio.emotion", value=bio['dominant_emotion']))
+                parts.append(prompt("angela.bio.emotion", value=bio["dominant_emotion"]))
             if parts:
                 return "、".join(parts)
         return str(bio)
-    
+
     # Priority 2: File-based state (fallback)
     try:
-        brain_path = os.path.join(os.path.dirname(__file__), "..", "..", "data", "brain_status.json")
+        brain_path = os.path.join(
+            os.path.dirname(__file__), "..", "..", "data", "brain_status.json"
+        )
         if os.path.exists(brain_path):
-            with open(brain_path, 'r', encoding='utf-8') as f:
+            with open(brain_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
             return json.dumps(data, ensure_ascii=False, indent=2)
     except Exception as e:
@@ -104,6 +111,7 @@ def _get_hsm():
     global _hsm_instance
     if _hsm_instance is None:
         from core.hsm_formula_system import HSMFormulaSystem
+
         _hsm_instance = HSMFormulaSystem()
     return _hsm_instance
 
@@ -112,6 +120,7 @@ def _get_life_intensity():
     global _life_intensity_instance
     if _life_intensity_instance is None:
         from core.life_intensity_formula import LifeIntensityFormula
+
         _life_intensity_instance = LifeIntensityFormula()
     return _life_intensity_instance
 
@@ -120,6 +129,7 @@ def _get_active_cognition():
     global _active_cognition_instance
     if _active_cognition_instance is None:
         from core.active_cognition_formula import ActiveCognitionFormula
+
         _active_cognition_instance = ActiveCognitionFormula()
     return _active_cognition_instance
 
@@ -128,6 +138,7 @@ def _get_cdm():
     global _cdm_instance
     if _cdm_instance is None:
         from core.cdm_dividend_model import CDMCognitiveDividendModel
+
         _cdm_instance = CDMCognitiveDividendModel()
     return _cdm_instance
 
@@ -136,6 +147,7 @@ def _get_non_paradox():
     global _non_paradox_instance
     if _non_paradox_instance is None:
         from core.non_paradox_existence import NonParadoxExistence
+
         _non_paradox_instance = NonParadoxExistence()
     return _non_paradox_instance
 
@@ -152,25 +164,48 @@ def get_formula_summaries() -> str:
     except (ImportError, AttributeError) as e:
         logger.debug(f"HSM formula unavailable: {e}")
     try:
-        lines.append(prompt("angela.formula.life_intensity", value=f"{_get_life_intensity().calculate_life_intensity():.4f}"))
+        lines.append(
+            prompt(
+                "angela.formula.life_intensity",
+                value=f"{_get_life_intensity().calculate_life_intensity():.4f}",
+            )
+        )
     except (ImportError, AttributeError) as e:
         logger.debug(f"LifeIntensity formula unavailable: {e}")
     try:
-        lines.append(prompt("angela.formula.active_cognition", value=f"{_get_active_cognition().calculate_active_cognition():.4f}"))
+        lines.append(
+            prompt(
+                "angela.formula.active_cognition",
+                value=f"{_get_active_cognition().calculate_active_cognition():.4f}",
+            )
+        )
     except (ImportError, AttributeError) as e:
         logger.debug(f"ActiveCognition formula unavailable: {e}")
     try:
         from core.cdm_dividend_model import CognitiveActivity, CognitiveInvestment
+
         cdm = _get_cdm()
-        inv = CognitiveInvestment(activity_type=CognitiveActivity.INTERACTING, duration_seconds=1.0, intensity=0.5)
+        inv = CognitiveInvestment(
+            activity_type=CognitiveActivity.INTERACTING, duration_seconds=1.0, intensity=0.5
+        )
         output = cdm.calculate_life_sense_output(inv)
-        lines.append(prompt("angela.formula.cdm", amount=f"{output.output_amount:.2f}", quality=f"{output.quality_score:.2f}"))
+        lines.append(
+            prompt(
+                "angela.formula.cdm",
+                amount=f"{output.output_amount:.2f}",
+                quality=f"{output.quality_score:.2f}",
+            )
+        )
     except (ImportError, AttributeError) as e:
         logger.debug(f"CDM formula unavailable: {e}")
     try:
         state = _get_non_paradox().calculate_coexistence_state("angela_dialogue")
         if state:
-            lines.append(prompt("angela.formula.non_paradox_coherence", value=f"{state.get('coherence', 0):.2f}"))
+            lines.append(
+                prompt(
+                    "angela.formula.non_paradox_coherence", value=f"{state.get('coherence', 0):.2f}"
+                )
+            )
         else:
             lines.append(prompt("angela.formula.non_paradox_inactive"))
     except (ImportError, AttributeError) as e:
@@ -190,22 +225,40 @@ def get_autonomous_decisions() -> str:
         lines = []
         current = summary.get("current_phase", {})
         if current:
-            lines.append(prompt("angela.decision.current_phase", phase=current.get('cn_name', current.get('name', 'unknown'))))
+            lines.append(
+                prompt(
+                    "angela.decision.current_phase",
+                    phase=current.get("cn_name", current.get("name", "unknown")),
+                )
+            )
 
         metrics = summary.get("current_metrics", {})
         if metrics:
             lines.append(f"HSM: {metrics.get('hsm_value', 0):.3f}")
-            lines.append(prompt("angela.formula.life_intensity", value=f"{metrics.get('life_intensity', 0):.3f}"))
+            lines.append(
+                prompt(
+                    "angela.formula.life_intensity", value=f"{metrics.get('life_intensity', 0):.3f}"
+                )
+            )
 
         decisions = summary.get("recent_decisions", [])
         if decisions:
             lines.append(prompt("angela.decision.recent"))
             for d in decisions[:3]:
-                lines.append(prompt("angela.decision.item", type=d.get('type', 'unknown'), trigger=d.get('triggered_by', 'unknown'), confidence=f"{d.get('confidence', 0):.2f}"))
+                lines.append(
+                    prompt(
+                        "angela.decision.item",
+                        type=d.get("type", "unknown"),
+                        trigger=d.get("triggered_by", "unknown"),
+                        confidence=f"{d.get('confidence', 0):.2f}",
+                    )
+                )
 
         stats = summary.get("statistics", {})
         if stats:
-            lines.append(prompt("angela.decision.explorations", count=stats.get('explorations_triggered', 0)))
+            lines.append(
+                prompt("angela.decision.explorations", count=stats.get("explorations_triggered", 0))
+            )
 
         return "\n".join(lines) if lines else ""
     except Exception as e:
@@ -221,9 +274,15 @@ def get_theta_state() -> str:
 
         lines = []
         if report.get("creation_urge", 0) > 0.6:
-            lines.append(prompt("angela.theta.creation_urge", value=f"{report.get('creation_urge', 0):.2f}"))
+            lines.append(
+                prompt("angela.theta.creation_urge", value=f"{report.get('creation_urge', 0):.2f}")
+            )
         if report.get("theta_negativity", 0) > 0.3:
-            lines.append(prompt("angela.theta.mismatch_doubt", value=f"{report.get('theta_negativity', 0):.2f}"))
+            lines.append(
+                prompt(
+                    "angela.theta.mismatch_doubt", value=f"{report.get('theta_negativity', 0):.2f}"
+                )
+            )
 
         return "\n".join(lines) if lines else ""
     except Exception as e:
@@ -268,7 +327,9 @@ def construct_angela_prompt(
     return messages
 
 
-def _build_core_prompt(state_for_llm: Optional[Dict], neuro_vocabulary: Optional[Any], bio_status: str) -> str:
+def _build_core_prompt(
+    state_for_llm: Optional[Dict], neuro_vocabulary: Optional[Any], bio_status: str
+) -> str:
     """Build the core system prompt from state, bio, and axis data."""
     axis_lines, theta_lines, eta_lines, guidance_lines = [], [], [], []
     if state_for_llm:
@@ -279,7 +340,11 @@ def _build_core_prompt(state_for_llm: Optional[Dict], neuro_vocabulary: Optional
             if vals:
                 parts = []
                 for k, v in list(vals.items())[:4]:
-                    desc = neuro_vocabulary.get_description(f"{axis_name}.{k}", v) if neuro_vocabulary else None
+                    desc = (
+                        neuro_vocabulary.get_description(f"{axis_name}.{k}", v)
+                        if neuro_vocabulary
+                        else None
+                    )
                     parts.append(f"{k}={v:.4f}（{desc}）" if desc else f"{k}={v:.4f}")
                 axis_lines.append(f"{axis_name.upper()}: {', '.join(parts)}")
 
@@ -288,16 +353,30 @@ def _build_core_prompt(state_for_llm: Optional[Dict], neuro_vocabulary: Optional
         ng = th.get("theta_negativity", 0)
         cr = th.get("creation_urge", 0)
         co = th.get("correction_urge", 0)
-        theta_lines.append(prompt("angela.theta.novelty", value=f"{nv:.2f} ({'話題新穎，需要更多認知資源' if nv > 0.5 else '正常'})"))
-        theta_lines.append(prompt("angela.theta.mismatch_doubt", value=f"{ng:.2f} ({'少量點位需要校正' if ng > 0.2 else '無需校正'})"))
+        theta_lines.append(
+            prompt(
+                "angela.theta.novelty",
+                value=f"{nv:.2f} ({'話題新穎，需要更多認知資源' if nv > 0.5 else '正常'})",
+            )
+        )
+        theta_lines.append(
+            prompt(
+                "angela.theta.mismatch_doubt",
+                value=f"{ng:.2f} ({'少量點位需要校正' if ng > 0.2 else '無需校正'})",
+            )
+        )
         theta_lines.append(prompt("angela.theta.creation_urge", value=f"{cr:.2f}"))
         theta_lines.append(prompt("angela.theta.correction", value=f"{co:.2f}"))
 
         eta = state_for_llm.get("eta", {})
         if eta:
-            eta_lines.append(prompt("angela.eta.active_modules", count=eta.get('module_count', 0)))
-            eta_lines.append(prompt("angela.eta.success_rate", value=f"{eta.get('success_rate', 0):.1%}"))
-            eta_lines.append(prompt("angela.eta.drift", value=f"{eta.get('structural_drift', 0):.2f}"))
+            eta_lines.append(prompt("angela.eta.active_modules", count=eta.get("module_count", 0)))
+            eta_lines.append(
+                prompt("angela.eta.success_rate", value=f"{eta.get('success_rate', 0):.1%}")
+            )
+            eta_lines.append(
+                prompt("angela.eta.drift", value=f"{eta.get('structural_drift', 0):.2f}")
+            )
 
         guidance = state_for_llm.get("guidance", [])
         if guidance:
@@ -433,10 +512,12 @@ def _append_retrieved_context(messages: List[Dict], context: Dict) -> None:
         role = item.get("role", "assistant")
         content = item.get("content", "")[:200]
         score = item.get("relevance", 0)
-        messages.append({
-            "role": "user",
-            "content": f"\n{prompt('angela.related_context')}\n- [{role}] {content} {prompt('angela.relevance', score=score)}\n"
-        })
+        messages.append(
+            {
+                "role": "user",
+                "content": f"\n{prompt('angela.related_context')}\n- [{role}] {content} {prompt('angela.relevance', score=score)}\n",
+            }
+        )
 
 
 def _append_multimodal_entries(messages: List[Dict], context: Dict) -> None:
@@ -462,10 +543,13 @@ def _append_dialogue_context(messages: List[Dict], context: Dict) -> None:
     summary = dialogue_ctx.get("summary", {})
     key_points = summary.get("key_points", [])
     if key_points:
-        messages.append({
-            "role": "system",
-            "content": f"{prompt('angela.dialogue_summary')}\n" + "\n".join(f"- {p}" for p in key_points[:5])
-        })
+        messages.append(
+            {
+                "role": "system",
+                "content": f"{prompt('angela.dialogue_summary')}\n"
+                + "\n".join(f"- {p}" for p in key_points[:5]),
+            }
+        )
     recent_msgs = dialogue_ctx.get("messages", [])
     if not recent_msgs:
         return
@@ -510,15 +594,17 @@ def _append_emotional_behavior(messages: List[Dict], context: Dict) -> None:
         block += f"- User emotion suggests routing_mode: {routing_mode}\n"
         block += f"- Recommended response_style: {response_style}\n"
         if routing_mode == "conservative":
-            block += "- ⚠️ User may be distressed — prioritize safety and empathy in your response.\n"
+            block += (
+                "- ⚠️ User may be distressed — prioritize safety and empathy in your response.\n"
+            )
         elif routing_mode == "exploratory":
             block += "- User appears receptive — you can be more creative and expressive.\n"
 
     if angela_emotion:
-        emot = angela_emotion.get('emotional_state', 'neutral')
-        intens = angela_emotion.get('emotion_intensity', 0.5)
-        val = angela_emotion.get('valence', 0.0)
-        aro = angela_emotion.get('arousal', 0.0)
+        emot = angela_emotion.get("emotional_state", "neutral")
+        intens = angela_emotion.get("emotion_intensity", 0.5)
+        val = angela_emotion.get("valence", 0.0)
+        aro = angela_emotion.get("arousal", 0.0)
         block += "\n[Angela's Emotional State]\n"
         block += f"- Current emotion: {emot} (intensity: {intens:.2f})\n"
         block += f"- Valence: {val:.2f}, Arousal: {aro:.2f}\n"
@@ -648,10 +734,12 @@ def _append_draft_response(messages: List[Dict], context: Dict) -> None:
     draft_response = context.get("draft_response")
     if not draft_response:
         return
-    messages.append({
-        "role": "system",
-        "content": f"\n{prompt('angela.draft_response')}\n{draft_response}\n\n{prompt('angela.refinement_instruction')}\n"
-    })
+    messages.append(
+        {
+            "role": "system",
+            "content": f"\n{prompt('angela.draft_response')}\n{draft_response}\n\n{prompt('angela.refinement_instruction')}\n",
+        }
+    )
 
 
 __all__ = [

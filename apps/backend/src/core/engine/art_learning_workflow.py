@@ -17,16 +17,20 @@ from core.interfaces.service_registry import get_registry
 
 logger = logging.getLogger(__name__)
 
+
 class WorkflowStage(Enum):
     """工作流阶段 / Workflow stages"""
+
     RESEARCH = ("研究", "Search for tutorials and references")
     ANALYSIS = ("分析", "Analyze images and techniques")
     PRACTICE = ("练习", "Practice and skill acquisition")
     EVOLUTION = ("演化", "Evolve aesthetics based on feedback")
     COMPLETE = ("完成", "Workflow complete")
 
+
 class LearningObjective:
     """代表 Angela 當前的藝術或美學學習目標"""
+
     def __init__(self, name: str, priority: float = 0.5):
         self.name = name
         self.priority = priority
@@ -37,14 +41,17 @@ class LearningObjective:
         """Update progress by a given increment, capped at 1.0."""
         self.progress = min(1.0, self.progress + increment)
 
+
 # =============================================================================
 # ANGELA-MATRIX: [L4] [βγ] [A] [L5+]
 # [Task N.22.1] 工作流資料類補完 / Workflow Data Class Completion
 # =============================================================================
 
+
 @dataclass
 class WorkflowProgress:
     """工作流進度追蹤器 / Workflow progress tracker"""
+
     stage: WorkflowStage = WorkflowStage.RESEARCH
     stage_completion: dict = field(default_factory=dict)
     start_time: datetime = field(default_factory=datetime.now)
@@ -81,9 +88,10 @@ class SkillAssessment:
     mastery = 1 - exp(-k * practice_count)
     k 由用戶反饋自適應調整。
     """
+
     skill_name: str
     practice_count: int = 0
-    decay_constant: float = 0.1   # AL-adjustable learning rate k
+    decay_constant: float = 0.1  # AL-adjustable learning rate k
     user_feedback_scores: List[float] = field(default_factory=list)
 
     def mastery_level(self) -> float:
@@ -116,9 +124,10 @@ class GenerationResult:
     生成結果記錄 — 構成 (state, output, feedback) 訓練三元組
     供後續 AL 更新使用。
     """
-    input_emotion_state: dict            # γ 維度快照
-    generated_params: dict               # 輸出的色彩/Live2D 參數
-    user_feedback: Optional[float] = None   # -1.0 壞 ~ +1.0 好
+
+    input_emotion_state: dict  # γ 維度快照
+    generated_params: dict  # 輸出的色彩/Live2D 參數
+    user_feedback: Optional[float] = None  # -1.0 壞 ~ +1.0 好
     timestamp: datetime = field(default_factory=datetime.now)
 
     def is_positive(self) -> bool:
@@ -133,11 +142,12 @@ class GenerationResult:
 @dataclass
 class WorkflowConfig:
     """工作流配置 / Workflow configuration"""
+
     max_research_tutorials: int = 5
     analysis_timeout_s: float = 30.0
     practice_target_mastery: float = 0.8
     auto_evolve_on_feedback: bool = True
-    al_learning_rate: float = 0.05      # AL 全域學習率
+    al_learning_rate: float = 0.05  # AL 全域學習率
 
 
 class ArtLearningWorkflow:
@@ -145,8 +155,16 @@ class ArtLearningWorkflow:
     Angela 的外觀演化協調器 (2030 Standard).
     負責將 L1 的生物脈動 轉化為 L4 的美學演化，最終在 L6 渲染層實體化。
     """
-    def __init__(self, bio_integrator=None, art_learning_system=None, avatar_generator=None,
-                 live2d_integration=None, physiological_tactile=None, cyber_identity=None):
+
+    def __init__(
+        self,
+        bio_integrator=None,
+        art_learning_system=None,
+        avatar_generator=None,
+        live2d_integration=None,
+        physiological_tactile=None,
+        cyber_identity=None,
+    ):
         self.bio = bio_integrator
         self.art_system = art_learning_system
         self.avatar_generator = avatar_generator
@@ -191,8 +209,11 @@ class ArtLearningWorkflow:
         }
         return color_map.get(emotion, color_map["neutral"])
 
+
 # 單例模式初始化 (由 BiologicalIntegrator 驅動)
 _instance = None
+
+
 def get_art_workflow(bio=None) -> None:
     """Get the art workflow by bio."""
     global _instance

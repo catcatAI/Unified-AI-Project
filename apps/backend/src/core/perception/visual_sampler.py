@@ -83,7 +83,9 @@ class VisualSampler:
         self.particles = particles
         return particles
 
-    def apply_transform(self, scale: float = 1.0, deformation: float = 0.0, rotation: float = 0.0) -> None:
+    def apply_transform(
+        self, scale: float = 1.0, deformation: float = 0.0, rotation: float = 0.0
+    ) -> None:
         """
         對粒子雲應用變換 / Apply transformations to the particle cloud
 

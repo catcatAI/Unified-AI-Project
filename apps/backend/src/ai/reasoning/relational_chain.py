@@ -17,9 +17,7 @@ from typing import Callable, Dict, List, Optional, Set, Tuple
 
 # A resolver takes (edges, entities, ask_max) and returns the resolved entity
 # string or None. Both CoreNetwork (ED3N) and TensorSNNCore (GARDEN) provide one.
-ChainResolver = Callable[
-    [List[Tuple[str, str, float]], List[str], bool], Optional[str]
-]
+ChainResolver = Callable[[List[Tuple[str, str, float]], List[str], bool], Optional[str]]
 
 _COMPARISON_RE = re.compile(
     r"\b([A-Za-z一-鿿]{1,20})\s+(?:is\s+)?(taller|shorter|bigger|smaller|larger|"
@@ -32,17 +30,51 @@ _COMPARISON_RE = re.compile(
 
 # Comparators that express the *lesser* direction (reverse the edge).
 _LESSER_COMPARATORS = {
-    "shorter", "smaller", "lighter", "younger", "slower",
-    "colder", "cooler", "poorer", "weaker", "lower", "wider",
-    "小", "矮", "輕", "慢", "冷", "窮", "弱", "低", "寬", "長",
+    "shorter",
+    "smaller",
+    "lighter",
+    "younger",
+    "slower",
+    "colder",
+    "cooler",
+    "poorer",
+    "weaker",
+    "lower",
+    "wider",
+    "小",
+    "矮",
+    "輕",
+    "慢",
+    "冷",
+    "窮",
+    "弱",
+    "低",
+    "寬",
+    "長",
 }
 
 # Question keywords that ask for the *least* entity rather than the greatest.
 _LEAST_KEYWORDS = (
-    "shortest", "smallest", "least", "youngest", "lightest",
-    "coldest", "lowest", "weakest", "poorest", "slowest",
-    "最小", "最短", "最矮", "最少", "最輕", "最冷", "最低",
-    "最弱", "最窮", "最慢",
+    "shortest",
+    "smallest",
+    "least",
+    "youngest",
+    "lightest",
+    "coldest",
+    "lowest",
+    "weakest",
+    "poorest",
+    "slowest",
+    "最小",
+    "最短",
+    "最矮",
+    "最少",
+    "最輕",
+    "最冷",
+    "最低",
+    "最弱",
+    "最窮",
+    "最慢",
 )
 
 

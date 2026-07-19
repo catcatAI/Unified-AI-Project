@@ -27,14 +27,16 @@ class SharedLatentSpace:
 
     def register_modality(self, name: str, input_dim: int) -> None:
         """Register a modality with its expected input dimension."""
-        rng = np.random.default_rng(hash(name) % (2 ** 31))
+        rng = np.random.default_rng(hash(name) % (2**31))
         self._projections[name] = {
-            "W": rng.normal(0, 1 / np.sqrt(input_dim),
-                           (self._latent_dim, input_dim)).astype(np.float32),
+            "W": rng.normal(0, 1 / np.sqrt(input_dim), (self._latent_dim, input_dim)).astype(
+                np.float32
+            ),
             "b": np.zeros(self._latent_dim, dtype=np.float32),
         }
-        logger.info("Registered modality '%s' (input %d → latent %d)",
-                    name, input_dim, self._latent_dim)
+        logger.info(
+            "Registered modality '%s' (input %d → latent %d)", name, input_dim, self._latent_dim
+        )
 
     def project(self, modality: str, features: np.ndarray) -> np.ndarray:
         """Project a modality-specific feature vector into latent space. Returns raw (unnormalized) vector.
@@ -93,8 +95,7 @@ class SharedLatentSpace:
         """
         self.register_modality(f"{base_name}_semantic", input_dim)
 
-    def semantic_consistency(self, modality: str,
-                             features_list: Sequence[np.ndarray]) -> float:
+    def semantic_consistency(self, modality: str, features_list: Sequence[np.ndarray]) -> float:
         """Measure how consistently a set of semantic features cluster in
         latent space.
 
@@ -141,13 +142,15 @@ class SharedLatentSpace:
         # Map from [-1, 1] to [0, 1]
         return max(0.0, (avg_sim + 1.0) / 2.0)
 
-    def semantic_contrastive_train(self,
-                                   pos_pairs: List[Tuple[np.ndarray, np.ndarray]],
-                                   neg_pairs: List[Tuple[np.ndarray, np.ndarray]],
-                                   modality: str = "vision_semantic",
-                                   epochs: int = 10,
-                                   lr: float = 0.01,
-                                   margin: float = 0.5) -> Dict[str, Any]:
+    def semantic_contrastive_train(
+        self,
+        pos_pairs: List[Tuple[np.ndarray, np.ndarray]],
+        neg_pairs: List[Tuple[np.ndarray, np.ndarray]],
+        modality: str = "vision_semantic",
+        epochs: int = 10,
+        lr: float = 0.01,
+        margin: float = 0.5,
+    ) -> Dict[str, Any]:
         """Train *semantic* projection weights with contrastive learning.
 
         Contrasts features projected through the ``{modality}`` projection
@@ -164,15 +167,20 @@ class SharedLatentSpace:
 
         formatted_pos = [(modality, a, modality, b) for a, b in pos_pairs]
         formatted_neg = [(modality, a, modality, b) for a, b in neg_pairs]
-        return self.train(formatted_pos, formatted_neg,
-                          epochs=epochs, lr=lr, margin=margin)
+        return self.train(formatted_pos, formatted_neg, epochs=epochs, lr=lr, margin=margin)
 
     # ------------------------------------------------------------------
     # P16: Contrastive learning
     # ------------------------------------------------------------------
 
-    def train(self, pos_pairs: List[Pair], neg_pairs: List[Pair],
-              epochs: int = 10, lr: float = 0.01, margin: float = 0.5) -> Dict[str, float]:
+    def train(
+        self,
+        pos_pairs: List[Pair],
+        neg_pairs: List[Pair],
+        epochs: int = 10,
+        lr: float = 0.01,
+        margin: float = 0.5,
+    ) -> Dict[str, float]:
         """Train projection weights using contrastive loss.
 
         Args:
@@ -195,8 +203,9 @@ class SharedLatentSpace:
                 logger.debug("Contrastive epoch %d/%d: loss=%.4f", epoch + 1, epochs, loss)
         return {"final_loss": float(history[-1]), "history": history}
 
-    def _train_epoch(self, pos_pairs: List[Pair], neg_pairs: List[Pair],
-                     lr: float, margin: float) -> float:
+    def _train_epoch(
+        self, pos_pairs: List[Pair], neg_pairs: List[Pair], lr: float, margin: float
+    ) -> float:
         """Single training epoch with contrastive loss."""
         total_loss = 0.0
         count = 0
@@ -221,9 +230,15 @@ class SharedLatentSpace:
 
         return total_loss / max(count, 1)
 
-    def _contrastive_loss(self, mod_a: str, feat_a: np.ndarray,
-                          mod_b: str, feat_b: np.ndarray,
-                          margin: float, is_positive: bool) -> Tuple[float, np.ndarray, np.ndarray]:
+    def _contrastive_loss(
+        self,
+        mod_a: str,
+        feat_a: np.ndarray,
+        mod_b: str,
+        feat_b: np.ndarray,
+        margin: float,
+        is_positive: bool,
+    ) -> Tuple[float, np.ndarray, np.ndarray]:
         """Compute contrastive loss and gradients w.r.t. latent embeddings.
 
         Uses cosine distance: d = 1 - cos(a,b).
@@ -258,8 +273,9 @@ class SharedLatentSpace:
 
         return loss, grad_a.astype(np.float32), grad_b.astype(np.float32)
 
-    def _apply_gradients(self, modality: str, features: np.ndarray,
-                         grad_latent: np.ndarray, lr: float) -> None:
+    def _apply_gradients(
+        self, modality: str, features: np.ndarray, grad_latent: np.ndarray, lr: float
+    ) -> None:
         """Update W and b using gradient w.r.t. latent embedding, with clipping."""
         proj = self._projections.get(modality)
         if proj is None or np.all(grad_latent == 0):

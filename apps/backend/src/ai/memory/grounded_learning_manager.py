@@ -10,13 +10,13 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 
+from ai.memory.claim_extractor import extract_claims
 from ai.memory.grounded_knowledge import (
     GroundedClaim,
     GroundedKnowledgeStore,
     SourceRef,
     VerificationStatus,
 )
-from ai.memory.claim_extractor import extract_claims
 from ai.meta.knowledge_verifier import KnowledgeVerifier, VerificationResult
 
 logger = logging.getLogger(__name__)
@@ -101,9 +101,7 @@ class GroundedLearningManager:
                 continue
             task = asyncio.create_task(self._verify_one(claim))
             self._in_flight[claim.claim_key] = task
-            task.add_done_callback(
-                lambda t, k=claim.claim_key: self._in_flight.pop(k, None)
-            )
+            task.add_done_callback(lambda t, k=claim.claim_key: self._in_flight.pop(k, None))
         return added
 
     async def _verify_one(self, claim: GroundedClaim) -> None:

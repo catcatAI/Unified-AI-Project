@@ -20,9 +20,9 @@ from api.lifespan import (
     get_digital_life,
     get_level5_asi,
 )
-from services.document_router import try_intent_routing as _try_intent_routing
 from core.utils import safe_error
 from fastapi import APIRouter, Body, File, Form, HTTPException, Request, UploadFile
+from services.document_router import try_intent_routing as _try_intent_routing
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,11 @@ class TTLSessionManager:
     def __init__(self):
         self._sessions: Dict[str, Dict[str, Any]] = {}
         self._lock = threading.Lock()
-        self._config = _angela_cfg.get_authority("angela_core", {}).get("session_manager", {}) if _angela_cfg else {}
+        self._config = (
+            _angela_cfg.get_authority("angela_core", {}).get("session_manager", {})
+            if _angela_cfg
+            else {}
+        )
         self._ttl = self._config.get("ttl_seconds", 3600)
         self._max_sessions = self._config.get("max_sessions", 1000)
         self._last_purge = time.time()
@@ -64,13 +68,18 @@ class TTLSessionManager:
             return
         self._last_purge = now
         cutoff = datetime.now() - timedelta(seconds=self._ttl)
-        expired = [sid for sid, s in self._sessions.items()
-                    if s.get("created_at") and datetime.fromisoformat(s["created_at"]) < cutoff]
+        expired = [
+            sid
+            for sid, s in self._sessions.items()
+            if s.get("created_at") and datetime.fromisoformat(s["created_at"]) < cutoff
+        ]
         for sid in expired:
             del self._sessions[sid]
         if len(self._sessions) > self._max_sessions:
-            sorted_sessions = sorted(self._sessions.items(), key=lambda x: x[1].get("created_at", ""))
-            for sid, _ in sorted_sessions[:len(sorted_sessions) - self._max_sessions]:
+            sorted_sessions = sorted(
+                self._sessions.items(), key=lambda x: x[1].get("created_at", "")
+            )
+            for sid, _ in sorted_sessions[: len(sorted_sessions) - self._max_sessions]:
                 del self._sessions[sid]
 
     def get(self, session_id: str) -> Optional[Dict[str, Any]]:
@@ -82,7 +91,9 @@ class TTLSessionManager:
         with self._lock:
             self._try_purge()
             if len(self._sessions) >= self._max_sessions:
-                oldest = min(self._sessions.keys(), key=lambda k: self._sessions[k].get("created_at", ""))
+                oldest = min(
+                    self._sessions.keys(), key=lambda k: self._sessions[k].get("created_at", "")
+                )
                 del self._sessions[oldest]
             self._sessions[session_id] = data
 
@@ -106,6 +117,7 @@ def _get_ed3n_engine():
     global _ed3n_engine
     if _ed3n_engine is None:
         from ai.ed3n.ed3n_engine import ED3NEngine
+
         _ed3n_engine = ED3NEngine.get_shared()
     return _ed3n_engine
 
@@ -117,6 +129,7 @@ def _get_bio_integrator():
     global _bio_integrator
     if _bio_integrator is None:
         from core.bio.biological_integrator import BiologicalIntegrator
+
         _bio_integrator = BiologicalIntegrator()
     return _bio_integrator
 
@@ -128,6 +141,7 @@ def _get_dialogue_ctx():
     global _dialogue_ctx_mgr
     if _dialogue_ctx_mgr is None:
         from ai.context.dialogue_context import DialogueContextManager
+
         _dialogue_ctx_mgr = DialogueContextManager()
     return _dialogue_ctx_mgr
 
@@ -147,13 +161,14 @@ def _get_modality_gateway():
     """
     try:
         dli = get_digital_life()
-        if dli and hasattr(dli, 'modality_gateway'):
+        if dli and hasattr(dli, "modality_gateway"):
             return dli.modality_gateway
     except Exception:
         logger.warning("_get_modality_gateway: DLI unavailable, using standalone", exc_info=True)
     global _modality_gateway
     if _modality_gateway is None:
         from core.life.digital_life_integrator import ModalityGateway
+
         _modality_gateway = ModalityGateway()
     return _modality_gateway
 
@@ -162,6 +177,7 @@ def _get_lifecycle():
     """Get the shared AutonomousLifeCycle singleton from lifespan."""
     try:
         from api.lifespan import get_lifecycle as _lifespan_get_lifecycle
+
         return _lifespan_get_lifecycle()
     except Exception:
         logger.warning("_get_lifecycle: lifespan unavailable, using fallback", exc_info=True)
@@ -169,6 +185,7 @@ def _get_lifecycle():
     global _lifecycle_fallback
     if _lifecycle_fallback is None:
         from core.life.autonomous_life_cycle import AutonomousLifeCycle
+
         _lifecycle_fallback = AutonomousLifeCycle()
     return _lifecycle_fallback
 
@@ -177,6 +194,7 @@ def _get_intent_manager():
     """Get the IntentManager from the DLI singleton."""
     try:
         from api.lifespan import get_digital_life
+
         dli = get_digital_life()
         if dli and hasattr(dli, "intent_manager"):
             return dli.intent_manager
@@ -190,6 +208,7 @@ def _get_emotion_analyzer():
     global _emotion_analyzer
     if _emotion_analyzer is None:
         from services.llm.emotion_analyzer import EmotionAnalyzer
+
         _emotion_analyzer = EmotionAnalyzer()
     return _emotion_analyzer
 
@@ -198,6 +217,7 @@ def _get_emotion_system():
     global _emotion_system
     if _emotion_system is None:
         from ai.alignment.emotion_system import EmotionSystem
+
         _emotion_system = EmotionSystem()
     return _emotion_system
 
@@ -209,13 +229,14 @@ def _get_state_matrix():
     """Get live state matrix from DLI when available, fallback to standalone."""
     try:
         dli = get_digital_life()
-        if dli and hasattr(dli, 'state_matrix'):
+        if dli and hasattr(dli, "state_matrix"):
             return dli.state_matrix
     except Exception:
         logger.debug("_get_state_matrix: DLI unavailable, using standalone")
     global _state_matrix
     if _state_matrix is None:
         from core.engine.state_matrix import StateMatrix4D
+
         _state_matrix = StateMatrix4D()
     return _state_matrix
 
@@ -250,14 +271,18 @@ async def _inject_emotion_behavioral_context(
     emotion = emotion_result.get("emotion", "neutral")
     # Map EmotionAnalyzer output keys to behavior map keys
     _EMOTION_TO_BEHAVIOR_KEY = {
-        "happy": "joy", "sad": "sadness", "angry": "anger",
-        "fear": "fear", "surprise": "surprise", "curious": "anticipation",
+        "happy": "joy",
+        "sad": "sadness",
+        "angry": "anger",
+        "fear": "fear",
+        "surprise": "surprise",
+        "curious": "anticipation",
         "calm": "trust",
     }
     mapped = _EMOTION_TO_BEHAVIOR_KEY.get(emotion, emotion)
-    behavior = _ANGELA_EMOTION_BEHAVIOR_MAP.get(mapped, {
-        "routing_mode": "neutral", "response_style": "standard"
-    })
+    behavior = _ANGELA_EMOTION_BEHAVIOR_MAP.get(
+        mapped, {"routing_mode": "neutral", "response_style": "standard"}
+    )
     context["emotional_behavior"] = behavior
 
     # Apply influence to Angela's EmotionSystem for internal state tracking
@@ -278,17 +303,24 @@ async def _inject_emotion_behavioral_context(
 
 # Emotion → Biological stress/relaxation mapping for C³ 4.0 cross-component chain
 _EMOTION_TO_STRESS_MAP: Dict[str, float] = {
-    "anger": 0.3, "fear": 0.35, "sadness": 0.15,
-    "disgust": 0.12, "surprise": 0.05, "anticipation": 0.05,
+    "anger": 0.3,
+    "fear": 0.35,
+    "sadness": 0.15,
+    "disgust": 0.12,
+    "surprise": 0.05,
+    "anticipation": 0.05,
 }
 
 _EMOTION_TO_RELAXATION_MAP: Dict[str, float] = {
-    "joy": 0.2, "trust": 0.1,
+    "joy": 0.2,
+    "trust": 0.1,
 }
 
 
 async def _apply_emotion_to_biology(
-    emotion: str, intensity: float, bio: Any,
+    emotion: str,
+    intensity: float,
+    bio: Any,
 ) -> None:
     """Map detected emotion to BiologicalIntegrator stress/relaxation event."""
     stress_intensity = _EMOTION_TO_STRESS_MAP.get(emotion, 0.0)
@@ -332,8 +364,13 @@ async def _try_math_verification(
     """Try dual-rail math verification. Returns response dict if math detected, else None."""
     try:
         from services.math_verifier import MathVerifier
+
         digital_life = get_digital_life()
-        matrix = digital_life.state_matrix if digital_life and hasattr(digital_life, "state_matrix") else None
+        matrix = (
+            digital_life.state_matrix
+            if digital_life and hasattr(digital_life, "state_matrix")
+            else None
+        )
         verifier = MathVerifier(state_matrix=matrix)
         if verifier.is_math_message(user_message):
             logger.info("\U0001f9ee [DualRail] Math task detected")
@@ -347,11 +384,14 @@ async def _try_math_verification(
             if matrix is not None:
                 try:
                     from ai.memory.domain_ripple import apply_domain_cognition
+
                     apply_domain_cognition(matrix, user_message)
                 except Exception as e:  # pragma: no cover - defensive
                     logger.debug(f"Bounded math cognition failed: {e}")
             if verification.response_text:
-                return _build_math_response(verification, matrix, user_message, session_id, schema_ver, trunc_msg)
+                return _build_math_response(
+                    verification, matrix, user_message, session_id, schema_ver, trunc_msg
+                )
     except Exception as e:
         logger.warning(f"\u26a0 [DualRail] Math verification failed: {e}")
     return None
@@ -383,16 +423,19 @@ async def _analyze_emotion_and_crisis(
     # Fire-and-forget: biological stimulus processing
     try:
         _spawn_background_task(
-            bio.process_auditory_stimulus(volume=0.6, content=user_message), "auditory_stimulus")
+            bio.process_auditory_stimulus(volume=0.6, content=user_message), "auditory_stimulus"
+        )
         if emotion_result:
             emotion = emotion_result.get("emotion", "neutral")
             intensity = emotion_result.get("intensity", 0.5)
             if emotion in ("sad", "angry", "fear"):
                 _spawn_background_task(
-                    bio.process_stress_event(intensity=intensity * 0.3), "stress_event")
+                    bio.process_stress_event(intensity=intensity * 0.3), "stress_event"
+                )
             elif emotion in ("happy", "calm"):
                 _spawn_background_task(
-                    bio.process_relaxation_event(intensity=intensity * 0.2), "relaxation_event")
+                    bio.process_relaxation_event(intensity=intensity * 0.2), "relaxation_event"
+                )
     except Exception as e:
         logger.debug(f"Biological state update from chat failed: {e}")
 
@@ -408,12 +451,14 @@ async def _try_alignment_check(
     try:
         asi = await get_level5_asi()
         if asi and asi.is_running:
-            alignment_result = await asi.process_request({
-                "request_id": str(uuid.uuid4()),
-                "capability_id": "chat_response",
-                "user_intent": {"text": user_message, "crisis_level": crisis_level},
-                "ethical_constraints": ["user_safety", "empathy", "no_harm"],
-            })
+            alignment_result = await asi.process_request(
+                {
+                    "request_id": str(uuid.uuid4()),
+                    "capability_id": "chat_response",
+                    "user_intent": {"text": user_message, "crisis_level": crisis_level},
+                    "ethical_constraints": ["user_safety", "empathy", "no_harm"],
+                }
+            )
             if alignment_result.get("status") == "alignment_failed":
                 logger.warning(f"[Level5ASI] Alignment failed: {alignment_result.get('reason')}")
                 context["alignment_override"] = "prioritize_safety"
@@ -495,6 +540,7 @@ async def _build_chat_context(
     # Memory context injection
     try:
         from ai.context.memory_context import MemoryContextManager
+
         memory_ctx = MemoryContextManager()
         recent_memories = memory_ctx.get_memories_by_type("short_term", limit=5)
         if recent_memories:
@@ -524,8 +570,25 @@ async def _handle_execution_gate(
         pending = context.pop("pending_action", None)
         if pending:
             msg_lower = user_message.strip().lower()
-            confirm_words = {"\u597d", "\u662f", "\u786e\u8ba4", "ok", "yes", "sure", "\u786e\u5b9a", "\u5bf9"}
-            cancel_words = {"\u4e0d\u8981", "\u53d6\u6d88", "\u7b97\u4e86", "no", "cancel", "skip", "\u4e0d\u7528"}
+            confirm_words = {
+                "\u597d",
+                "\u662f",
+                "\u786e\u8ba4",
+                "ok",
+                "yes",
+                "sure",
+                "\u786e\u5b9a",
+                "\u5bf9",
+            }
+            cancel_words = {
+                "\u4e0d\u8981",
+                "\u53d6\u6d88",
+                "\u7b97\u4e86",
+                "no",
+                "cancel",
+                "skip",
+                "\u4e0d\u7528",
+            }
 
             if msg_lower in confirm_words:
                 handler_id = pending.get("handler")
@@ -540,14 +603,18 @@ async def _handle_execution_gate(
                         try:
                             ExecutionGate().record_result(handler_id, True)
                         except Exception:
-                            logger.warning("Failed to record execution gate success feedback", exc_info=True)
+                            logger.warning(
+                                "Failed to record execution gate success feedback", exc_info=True
+                            )
                     except Exception as e:
                         logger.warning(f"Execution gate handler failed: {e}")
                         # Record confirm-path failure for ExecutionGate C³ feedback loop
                         try:
                             ExecutionGate().record_result(handler_id, False)
                         except Exception:
-                            logger.warning("Failed to record execution gate failure feedback", exc_info=True)
+                            logger.warning(
+                                "Failed to record execution gate failure feedback", exc_info=True
+                            )
             elif msg_lower in cancel_words:
                 return {
                     "response_text": "\u597d\u7684\uff0c\u4e0d\u6267\u884c\u3002\u8fd8\u6709\u4ec0\u4e48\u9700\u8981\u5e2e\u5fd9\u7684\u5417\uff1f",
@@ -581,11 +648,17 @@ async def _handle_execution_gate(
             _ir_confirms = True
             try:
                 from core.intent_registry import IntentRegistry
+
                 ir = IntentRegistry()
                 ir_name, ir_conf = ir.detect(user_message)
                 if ir_name and ir_conf >= 0.1:
-                    handler_to_ir = {"file_ops": "file_op", "web_search": "web_search", "code_exec": "code",
-                                     "task_mgr": "task", "vision": "vision"}
+                    handler_to_ir = {
+                        "file_ops": "file_op",
+                        "web_search": "web_search",
+                        "code_exec": "code",
+                        "task_mgr": "task",
+                        "vision": "vision",
+                    }
                     expected_ir = handler_to_ir.get(decision.handler)
                     if expected_ir and ir_name != expected_ir:
                         _ir_confirms = False
@@ -652,13 +725,26 @@ async def _try_agent_routing(
         classify_result = classifier.classify(user_message)
 
         # Only route non-actionable intents (execution gate handles actionable ones)
-        actionable = {QueryType.FILE, QueryType.SEARCH, QueryType.CODE, QueryType.EXECUTE, QueryType.TASK}
+        actionable = {
+            QueryType.FILE,
+            QueryType.SEARCH,
+            QueryType.CODE,
+            QueryType.EXECUTE,
+            QueryType.TASK,
+        }
         if classify_result.primary_type in actionable:
             return None
 
         # Map QueryType to agent suitability threshold — route all non-actionable intents
-        agent_types = {QueryType.CREATIVE, QueryType.KNOWLEDGE, QueryType.OPINION,
-                       QueryType.VISION, QueryType.AUDIO, QueryType.LOGIC, QueryType.COMMAND}
+        agent_types = {
+            QueryType.CREATIVE,
+            QueryType.KNOWLEDGE,
+            QueryType.OPINION,
+            QueryType.VISION,
+            QueryType.AUDIO,
+            QueryType.LOGIC,
+            QueryType.COMMAND,
+        }
         if classify_result.primary_type not in agent_types and classify_result.confidence < 0.3:
             return None
 
@@ -673,10 +759,10 @@ async def _try_agent_routing(
         if agent_result and isinstance(agent_result, dict) and agent_result.get("result"):
             response_text = str(agent_result["result"])
             context["_agent_result"] = response_text
-            context["_agent_result_source"] = primary.get('agent', 'unknown')
+            context["_agent_result_source"] = primary.get("agent", "unknown")
             return {
                 "response": response_text,
-                "source": primary.get('agent', 'unknown'),
+                "source": primary.get("agent", "unknown"),
                 "confidence": primary.get("confidence", 0.8),
             }
     except Exception as e:
@@ -701,11 +787,21 @@ def _get_causal_routing_adjustment() -> Dict[str, Any]:
     try:
         causal = get_causal_reasoning()
         if not causal:
-            return {"temperature_bias": 0.0, "max_tokens_bias": 0, "causal_confidence": 0.0, "effective_guidance": ""}
+            return {
+                "temperature_bias": 0.0,
+                "max_tokens_bias": 0,
+                "causal_confidence": 0.0,
+                "effective_guidance": "",
+            }
 
         rels = causal.get_relationships()
         if not rels:
-            return {"temperature_bias": 0.0, "max_tokens_bias": 0, "causal_confidence": 0.0, "effective_guidance": ""}
+            return {
+                "temperature_bias": 0.0,
+                "max_tokens_bias": 0,
+                "causal_confidence": 0.0,
+                "effective_guidance": "",
+            }
 
         temp_bias = 0.0
         tokens_bias = 0
@@ -726,7 +822,9 @@ def _get_causal_routing_adjustment() -> Dict[str, Any]:
             adj = -(0.15 * min(1.0, ui_strength))
             temp_bias += adj
             confidence += 0.3
-            guidance_parts.append(f"user_input→response (strength={ui_strength:.2f}, temp{adj:+.3f})")
+            guidance_parts.append(
+                f"user_input→response (strength={ui_strength:.2f}, temp{adj:+.3f})"
+            )
 
         # query_complexity → angela_response: complex queries need precise responses
         # → reduce temperature + increase max_tokens
@@ -737,7 +835,9 @@ def _get_causal_routing_adjustment() -> Dict[str, Any]:
             token_adj = int(128 * min(1.0, qc_strength))
             tokens_bias += token_adj
             confidence += 0.3
-            guidance_parts.append(f"complexity→response (strength={qc_strength:.2f}, temp{temp_adj:+.3f}, +{token_adj}tok)")
+            guidance_parts.append(
+                f"complexity→response (strength={qc_strength:.2f}, temp{temp_adj:+.3f}, +{token_adj}tok)"
+            )
 
         # conversation_momentum → user_input: high momentum = engaging conversation
         # → increase temperature for more creative, exploratory responses
@@ -748,7 +848,9 @@ def _get_causal_routing_adjustment() -> Dict[str, Any]:
             token_adj = int(64 * min(1.0, cm_strength))
             tokens_bias += token_adj
             confidence += 0.2
-            guidance_parts.append(f"momentum→input (strength={cm_strength:.2f}, temp{temp_adj:+.3f}, +{token_adj}tok)")
+            guidance_parts.append(
+                f"momentum→input (strength={cm_strength:.2f}, temp{temp_adj:+.3f}, +{token_adj}tok)"
+            )
 
         # interaction_value → user_input: high value interaction → boost response depth
         iv_strength = _avg_strength("interaction_value")
@@ -756,7 +858,9 @@ def _get_causal_routing_adjustment() -> Dict[str, Any]:
             token_adj = int(128 * min(1.0, iv_strength))
             tokens_bias += token_adj
             confidence += 0.2
-            guidance_parts.append(f"interaction_value→input (strength={iv_strength:.2f}, +{token_adj}tok)")
+            guidance_parts.append(
+                f"interaction_value→input (strength={iv_strength:.2f}, +{token_adj}tok)"
+            )
 
         effective_guidance = "; ".join(guidance_parts) if guidance_parts else ""
         return {
@@ -767,12 +871,15 @@ def _get_causal_routing_adjustment() -> Dict[str, Any]:
         }
     except Exception as e:
         logger.debug(f"Causal routing adjustment failed: {e}")
-        return {"temperature_bias": 0.0, "max_tokens_bias": 0, "causal_confidence": 0.0, "effective_guidance": ""}
+        return {
+            "temperature_bias": 0.0,
+            "max_tokens_bias": 0,
+            "causal_confidence": 0.0,
+            "effective_guidance": "",
+        }
 
 
-def _inject_causal_predictions(
-    context: Dict[str, Any]
-) -> None:
+def _inject_causal_predictions(context: Dict[str, Any]) -> None:
     """Inject causal reasoning predictions into LLM context before generation.
 
     Calls causal.predict() to surface learned causal relationships,
@@ -790,9 +897,7 @@ def _inject_causal_predictions(
                     "has_causal_data": len(causal.get_relationships()) > 0,
                     "total_relationships": len(causal.get_relationships()),
                 }
-                logger.debug(
-                    f"Injected {len(predictions)} causal predictions into context"
-                )
+                logger.debug(f"Injected {len(predictions)} causal predictions into context")
             # C³ closed-loop: inject concrete routing adjustments
             routing_adj = _get_causal_routing_adjustment()
             if routing_adj["causal_confidence"] >= 0.25:
@@ -816,10 +921,12 @@ _CAUSAL_BUFFER_MAX_SESSIONS = 200  # Evict oldest when exceeded
 # TemporalState bridge for causal ingest_temporal_state() (C³ 4.0)
 _CAUSAL_TEMPORAL_STATE = None
 
+
 def _get_causal_temporal_state():
     global _CAUSAL_TEMPORAL_STATE
     if _CAUSAL_TEMPORAL_STATE is None:
         from core.state.temporal import TemporalState
+
         _CAUSAL_TEMPORAL_STATE = TemporalState(max_size=200)
     return _CAUSAL_TEMPORAL_STATE
 
@@ -838,9 +945,7 @@ def _get_causal_buffer(session_id: str) -> Dict[str, List[float]]:
     return _CAUSAL_BUFFERS[session_id]
 
 
-def _fire_causal_learning(
-    response_text: str, user_message: str, session_id: str
-) -> None:
+def _fire_causal_learning(response_text: str, user_message: str, session_id: str) -> None:
     """Accumulate temporal data and learn causal relationships per session.
 
     Maintains per-session buffers so Granger causality (>= 5 samples) can
@@ -912,27 +1017,33 @@ def _fire_causal_learning(
                 "angela_response": [resp_len],
             }
 
-        causal.learn({
-            "variables": ["user_input", "angela_response"],
-            "data": data,
-            "relationships": [{
-                "cause": "user_input",
-                "effect": "angela_response",
-                "strength": dynamic_strength,
-                "source": f"chat_{session_id}",
-            }],
-        })
+        causal.learn(
+            {
+                "variables": ["user_input", "angela_response"],
+                "data": data,
+                "relationships": [
+                    {
+                        "cause": "user_input",
+                        "effect": "angela_response",
+                        "strength": dynamic_strength,
+                        "source": f"chat_{session_id}",
+                    }
+                ],
+            }
+        )
 
         # C³ 4.0: Record snapshot into TemporalState bridge and periodically
         # call ingest_temporal_state() for Granger causality over chat data.
         ts = _get_causal_temporal_state()
-        ts.record({
-            "interaction": {
-                "msg_length": msg_len,
-                "resp_length": resp_len,
-                "engagement_ratio": engagement,
-            },
-        })
+        ts.record(
+            {
+                "interaction": {
+                    "msg_length": msg_len,
+                    "resp_length": resp_len,
+                    "engagement_ratio": engagement,
+                },
+            }
+        )
         if ts.size() >= 5 and ts.size() % 5 == 0:
             causal.ingest_temporal_state(ts, window=20)
 
@@ -999,12 +1110,37 @@ def _learn_from_classification_feedback(
 
     # Step 2: Extract good keywords from the user's input (2-5 char tokens)
     import re
-    tokens = re.findall(r'[\w\u4e00-\u9fff]+', user_message)
-    keywords = [t for t in tokens if 2 <= len(t) <= 12 and t not in (
-        "你好", "請問", "可以", "幫我", "想要", "這個", "那個", "什麼",
-        "什麼", "怎麼", "為什麼", "如何", "我們", "你們", "他們",
-        "hello", "help", "please", "can", "you", "the",
-    )]
+
+    tokens = re.findall(r"[\w\u4e00-\u9fff]+", user_message)
+    keywords = [
+        t
+        for t in tokens
+        if 2 <= len(t) <= 12
+        and t
+        not in (
+            "你好",
+            "請問",
+            "可以",
+            "幫我",
+            "想要",
+            "這個",
+            "那個",
+            "什麼",
+            "什麼",
+            "怎麼",
+            "為什麼",
+            "如何",
+            "我們",
+            "你們",
+            "他們",
+            "hello",
+            "help",
+            "please",
+            "can",
+            "you",
+            "the",
+        )
+    ]
     keywords = keywords[:3]  # Max 3 keywords per learning cycle
 
     if not keywords:
@@ -1073,26 +1209,28 @@ def _format_chat_response(
     # bus, or a cloud LLM). The internal ``route`` field is unreliable for the
     # non-LLM paths (template/memory/knowledge/model_bus never set it and fall
     # back to the default "llm"), so derive an accurate route from ``backend``.
-    _backend = getattr(llm_response, 'backend', None) or 'unknown'
+    _backend = getattr(llm_response, "backend", None) or "unknown"
     _route_map = {
-        'knowledge': 'knowledge',
-        'knowledge_base': 'knowledge',
-        'model_bus': 'model_bus',
-        'ed3n': 'ed3n',
-        'garden': 'garden',
-        'neuro-blender': 'fallback',
-        'local-fallback': 'fallback',
-        'google': 'llm',
-        'openai': 'llm',
-        'anthropic': 'llm',
-        'ollama': 'llm',
-        'llamacpp': 'llm',
+        "knowledge": "knowledge",
+        "knowledge_base": "knowledge",
+        "model_bus": "model_bus",
+        "ed3n": "ed3n",
+        "garden": "garden",
+        "neuro-blender": "fallback",
+        "local-fallback": "fallback",
+        "google": "llm",
+        "openai": "llm",
+        "anthropic": "llm",
+        "ollama": "llm",
+        "llamacpp": "llm",
     }
     _derived_route = _route_map.get(_backend)
     if _derived_route is None:
-        _explicit_route = getattr(llm_response, 'route', None)
-        _derived_route = _explicit_route if _explicit_route else (
-            'fallback' if getattr(llm_response, 'metadata', {}).get('fallback') else 'llm'
+        _explicit_route = getattr(llm_response, "route", None)
+        _derived_route = (
+            _explicit_route
+            if _explicit_route
+            else ("fallback" if getattr(llm_response, "metadata", {}).get("fallback") else "llm")
         )
     return {
         "response_text": response_text,
@@ -1104,23 +1242,31 @@ def _format_chat_response(
         "emotion_confidence": emotion_result.get("confidence", 0.5) if emotion_result else 0.5,
         "emotion_intensity": emotion_result.get("intensity", 0.5) if emotion_result else 0.5,
         "backend": _backend,
-        "model": getattr(llm_response, 'model', None) or 'unknown',
-        "confidence": getattr(llm_response, 'confidence', None),
-        "hit_score": getattr(llm_response, 'hit_score', 0.0),
-        "hit_source": getattr(llm_response, 'hit_source', 'none'),
+        "model": getattr(llm_response, "model", None) or "unknown",
+        "confidence": getattr(llm_response, "confidence", None),
+        "hit_score": getattr(llm_response, "hit_score", 0.0),
+        "hit_source": getattr(llm_response, "hit_source", "none"),
         "route": _derived_route,
         "session_id": session_id,
     }
 
 
 async def _handle_chat_request(
-    user_message: str, user_name: str, history: List[Dict[str, Any]], session_id: str, origin: str = "Human",
+    user_message: str,
+    user_name: str,
+    history: List[Dict[str, Any]],
+    session_id: str,
+    origin: str = "Human",
     extra_context: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Orchestrate the full chat pipeline: validate → math → context → emotion/crisis → execution gate → agent routing → LLM."""
-    logger.info(f"\U0001f4e9 [LIS] Raw message received: '{user_message}' from {origin} (Session: {session_id})")
+    logger.info(
+        f"\U0001f4e9 [LIS] Raw message received: '{user_message}' from {origin} (Session: {session_id})"
+    )
 
-    chat_cfg = _angela_cfg.get_authority("angela_core", {}).get("chat_flow", {}) if _angela_cfg else {}
+    chat_cfg = (
+        _angela_cfg.get_authority("angela_core", {}).get("chat_flow", {}) if _angela_cfg else {}
+    )
     max_len = chat_cfg.get("max_message_length", 4000)
     schema_ver = chat_cfg.get("response_schema_version", "2.0")
     trunc_msg = chat_cfg.get("truncation_message", "...\uff08\u622a\u65ad\uff09")
@@ -1132,15 +1278,23 @@ async def _handle_chat_request(
 
     # Step 2: Initialize session
     if session_id not in sessions:
-        sessions.set(session_id, {
-            "created_at": datetime.now().isoformat(), "origin": origin, "user_name": user_name,
-        })
+        sessions.set(
+            session_id,
+            {
+                "created_at": datetime.now().isoformat(),
+                "origin": origin,
+                "user_name": user_name,
+            },
+        )
 
     # Step 3: Math dual-rail verification — gate through IntentRegistry first
-    math_result = await _try_math_verification(user_message, user_name, session_id, schema_ver, trunc_msg)
+    math_result = await _try_math_verification(
+        user_message, user_name, session_id, schema_ver, trunc_msg
+    )
     if math_result:
         try:
             from core.intent_registry import IntentRegistry
+
             ir = IntentRegistry()
             ir_name, ir_conf = ir.detect(user_message)
             if ir_name == "math" and ir_conf >= 0.1:
@@ -1227,6 +1381,7 @@ async def _handle_chat_request(
     # Step 5h: Wire DesktopInteraction into context for generic file operations
     try:
         from core.engine.desktop_interaction import DesktopInteraction
+
         _desktop = DesktopInteraction()
         context["desktop_interaction"] = _desktop
         logger.info("DesktopInteraction wired into chat context")
@@ -1238,7 +1393,9 @@ async def _handle_chat_request(
     await _build_chat_context(context, user_message, user_name, history, session_id, chat_svc, bio)
 
     # Step 7: Execution gate (intent classification → auto/confirm/reject — may short-circuit)
-    gate_result = await _handle_execution_gate(user_message, chat_svc, context, schema_ver, session_id)
+    gate_result = await _handle_execution_gate(
+        user_message, chat_svc, context, schema_ver, session_id
+    )
     if gate_result:
         return gate_result
 
@@ -1275,7 +1432,7 @@ async def _handle_chat_request(
         logger.error(f"Error in _handle_chat_request: {e}", exc_info=True)
         raise RuntimeError(f"chat request failed: {e}")
 
-    response_text = llm_response.text if hasattr(llm_response, 'text') else str(llm_response)
+    response_text = llm_response.text if hasattr(llm_response, "text") else str(llm_response)
     context["continuation_count"] = context.get("continuation_count", 0) + 1
     _fire_causal_learning(response_text, user_message, session_id)
 
@@ -1301,10 +1458,27 @@ async def _handle_chat_request(
     except Exception as e:
         logger.debug(f"Intent outcome recording unavailable: {e}")
 
-    return _format_chat_response(response_text, llm_response, emotion_result, schema_ver, trunc_msg, user_message, max_len, session_id, source=flow_source)
+    return _format_chat_response(
+        response_text,
+        llm_response,
+        emotion_result,
+        schema_ver,
+        trunc_msg,
+        user_message,
+        max_len,
+        session_id,
+        source=flow_source,
+    )
 
 
-def _build_math_response(verification, matrix, user_message: str, session_id: str, schema_version: str = "2.0", truncation_message: str = "") -> Dict[str, Any]:
+def _build_math_response(
+    verification,
+    matrix,
+    user_message: str,
+    session_id: str,
+    schema_version: str = "2.0",
+    truncation_message: str = "",
+) -> Dict[str, Any]:
     """Build math response."""
     if verification.needs_clarification:
         emotion, emotion_confidence, emotion_intensity = "confused", 0.7, 0.6
@@ -1316,14 +1490,20 @@ def _build_math_response(verification, matrix, user_message: str, session_id: st
         emotion, emotion_confidence, emotion_intensity = "calm", 0.6, 0.4
 
     if matrix and verification.final_answer is not None:
-        epsilon_conf = verification.extraction.get("confidence", 0.5) if verification.extraction else 0.5
+        epsilon_conf = (
+            verification.extraction.get("confidence", 0.5) if verification.extraction else 0.5
+        )
         matrix.epsilon.values["certainty"] = min(1.0, 0.5 + epsilon_conf * 0.5)
         matrix.epsilon.values["complexity"] = min(1.0, len(user_message) / 50.0)
         if not verification.matches:
             matrix.epsilon.values["certainty"] *= 0.5
-            matrix.gamma.values["surprise"] = min(1.0, matrix.gamma.values.get("surprise", 0.0) + 0.3)
+            matrix.gamma.values["surprise"] = min(
+                1.0, matrix.gamma.values.get("surprise", 0.0) + 0.3
+            )
         elif verification.needs_clarification:
-            matrix.beta.values["confusion"] = min(1.0, matrix.beta.values.get("confusion", 0.0) + 0.4)
+            matrix.beta.values["confusion"] = min(
+                1.0, matrix.beta.values.get("confusion", 0.0) + 0.4
+            )
         matrix.apply_epsilon_influence()
 
     return {
@@ -1344,7 +1524,9 @@ async def sync_key_c(request: Request) -> dict:
     """Log a diagnostic message."""
     client_host = request.client.host
     if client_host not in ["127.0.0.1", "::1", "localhost"]:
-        logger.warning(f"Unauthorized access attempt to sync-key-c from {client_host}", exc_info=True)
+        logger.warning(
+            f"Unauthorized access attempt to sync-key-c from {client_host}", exc_info=True
+        )
         raise HTTPException(status_code=403, detail="Access restricted to localhost")
     abc_key_manager = get_abc_key_manager()
     key_c = abc_key_manager.get_key("KeyC")
@@ -1357,12 +1539,20 @@ async def sync_key_c(request: Request) -> dict:
 async def start_session(request: Optional[Dict[str, Any]] = Body(default=None)) -> dict:
     """Execute the start session operation."""
     session_id = f"sess-{uuid.uuid4().hex[:8]}"
-    sessions.set(session_id, {
-        "created_at": datetime.now().isoformat(),
-        "messages": [],
-        "user_name": (request or {}).get("user_name", "User"),
-    })
-    return {"session_id": session_id, "message": _get_ed3n_engine().process("welcome", context={"session_id": session_id}, depth="reflex")}
+    sessions.set(
+        session_id,
+        {
+            "created_at": datetime.now().isoformat(),
+            "messages": [],
+            "user_name": (request or {}).get("user_name", "User"),
+        },
+    )
+    return {
+        "session_id": session_id,
+        "message": _get_ed3n_engine().process(
+            "welcome", context={"session_id": session_id}, depth="reflex"
+        ),
+    }
 
 
 @router.post("/session/{session_id}/send")
@@ -1373,13 +1563,9 @@ async def send_message(session_id: str, request: Dict[str, Any] = Body(...)) -> 
     user_message = request.get("text", request.get("message", ""))
     session = sessions.get(session_id)
     user_name = session.get("user_name", "User")
-    return await _handle_chat_request(user_message, user_name, session.get("messages", []), session_id)
-
-
-
-
-
-
+    return await _handle_chat_request(
+        user_message, user_name, session.get("messages", []), session_id
+    )
 
 
 @router.post("/chat/unified")
@@ -1447,6 +1633,7 @@ async def chat_with_image(
                     ed3n.load_external_dictionaries()
 
                 from ai.multimodal.semantic_key_mapper import SemanticKeyMapper
+
                 mapper = SemanticKeyMapper(max_entries=1000)
                 library = ConceptLibrary(
                     semantic_encoder=encoder,
@@ -1483,12 +1670,15 @@ async def chat_with_image(
             if image_data is None:
                 image_data = await file.read()
             from services.vision_service import VisionService
+
             vision = VisionService()
-            analysis = await vision.process({
-                "image_data": image_data,
-                "filename": file.filename,
-                "question": message or "描述這張圖片",
-            })
+            analysis = await vision.process(
+                {
+                    "image_data": image_data,
+                    "filename": file.filename,
+                    "question": message or "描述這張圖片",
+                }
+            )
             image_context = {
                 "filename": file.filename,
                 "analysis": analysis,
@@ -1529,12 +1719,18 @@ async def chat_with_audio(
 
     transcribed_text = ""
 
-    if file and file.content_type and (
-        file.content_type.startswith("audio/") or file.content_type == "application/octet-stream"
+    if (
+        file
+        and file.content_type
+        and (
+            file.content_type.startswith("audio/")
+            or file.content_type == "application/octet-stream"
+        )
     ):
         try:
             audio_data = await file.read()
             from services.audio_service import AudioService
+
             audio_svc = AudioService()
             stt_result = await audio_svc.speech_to_text(audio_data)
             transcribed_text = stt_result.get("text", "")

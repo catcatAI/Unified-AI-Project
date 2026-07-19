@@ -15,11 +15,11 @@
 #
 # =============================================================================
 
-from core.utils import safe_error
-
 import logging
 import os
 from typing import Any, Dict, List, Optional
+
+from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ class AudioProcessingAgent:
         request_id = task_payload.get("request_id", "")
         cap_name = capability_id_filter
         if self.agent_id and cap_name.startswith(self.agent_id + "_"):
-            cap_name = cap_name[len(self.agent_id) + 1:]
+            cap_name = cap_name[len(self.agent_id) + 1 :]
         if "_v" in cap_name:
             cap_name = cap_name.rsplit("_v", 1)[0]
         result_payload = {"request_id": request_id}
@@ -77,7 +77,10 @@ class AudioProcessingAgent:
                 result_payload["error_details"] = {"error_code": "CAPABILITY_NOT_SUPPORTED"}
         except ValueError as e:
             result_payload["status"] = "failure"
-            result_payload["error_details"] = {"error_code": "INVALID_PARAMETERS", "error_message": safe_error(e)}
+            result_payload["error_details"] = {
+                "error_code": "INVALID_PARAMETERS",
+                "error_message": safe_error(e),
+            }
         await self.hsp_connector.send_task_result(result_payload)
 
     def _perform_speech_recognition(self, params: dict) -> dict:

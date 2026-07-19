@@ -56,15 +56,15 @@ def _lazy_init_clip():
 class SemanticVisualEncoder:
     """Encodes images into 512-dim CLIP semantic vectors.
 
-    Parallel to VisualEncoder (256-dim structural CNN features).
-    Semantic vectors capture high-level meaning (objects, scenes, concepts)
-    rather than pixel-level statistics.
+      Parallel to VisualEncoder (256-dim structural CNN features).
+      Semantic vectors capture high-level meaning (objects, scenes, concepts)
+      rather than pixel-level statistics.
 
-    Features:
-    - torch-guarded lazy initialization
-    - 512-dim CLIP ViT embedding
-  - Graceful fallback: is_available = False when no torch/CLIP
-  - Singleton model instance (shared across all encoder instances)
+      Features:
+      - torch-guarded lazy initialization
+      - 512-dim CLIP ViT embedding
+    - Graceful fallback: is_available = False when no torch/CLIP
+    - Singleton model instance (shared across all encoder instances)
     """
 
     FEATURE_DIM: int = 512
@@ -106,9 +106,9 @@ class SemanticVisualEncoder:
             with torch.no_grad():
                 outputs = model.get_image_features(**inputs)
                 # get_image_features() may return BaseModelOutputWithPooling named tuple
-                if hasattr(outputs, 'pooler_output'):
+                if hasattr(outputs, "pooler_output"):
                     emb = outputs.pooler_output
-                elif hasattr(outputs, 'image_embeds'):
+                elif hasattr(outputs, "image_embeds"):
                     emb = outputs.image_embeds
                 else:
                     emb = outputs
@@ -133,9 +133,9 @@ class SemanticVisualEncoder:
             inputs = processor(images=img, return_tensors="pt")
             with torch.no_grad():
                 outputs = model.get_image_features(**inputs)
-                if hasattr(outputs, 'pooler_output'):
+                if hasattr(outputs, "pooler_output"):
                     emb = outputs.pooler_output
-                elif hasattr(outputs, 'image_embeds'):
+                elif hasattr(outputs, "image_embeds"):
                     emb = outputs.image_embeds
                 else:
                     emb = outputs
@@ -167,13 +167,14 @@ class SemanticVisualEncoder:
         try:
             import torch
 
-            inputs = processor(text=texts, return_tensors="pt",
-                               padding=True, truncation=True, max_length=77)
+            inputs = processor(
+                text=texts, return_tensors="pt", padding=True, truncation=True, max_length=77
+            )
             with torch.no_grad():
                 outputs = model.get_text_features(**inputs)
-            if hasattr(outputs, 'pooler_output'):
+            if hasattr(outputs, "pooler_output"):
                 text_features = outputs.pooler_output
-            elif hasattr(outputs, 'text_embeds'):
+            elif hasattr(outputs, "text_embeds"):
                 text_features = outputs.text_embeds
             else:
                 text_features = outputs
@@ -185,8 +186,9 @@ class SemanticVisualEncoder:
             logger.debug("SemanticVisualEncoder encode_text failed: %s", e)
             return None
 
-    def classify_image(self, image_data: bytes, labels: List[str],
-                       confidence_threshold: float = 0.15) -> List[Dict[str, Any]]:
+    def classify_image(
+        self, image_data: bytes, labels: List[str], confidence_threshold: float = 0.15
+    ) -> List[Dict[str, Any]]:
         """Zero-shot classify an image against text labels using CLIP.
 
         Compares the image embedding against text embeddings for each label.
@@ -217,12 +219,14 @@ class SemanticVisualEncoder:
         results = []
         for i, (label, prob) in enumerate(zip(labels, probs)):
             if prob >= confidence_threshold:
-                results.append({
-                    "label": label,
-                    "confidence": round(float(prob), 4),
-                    "raw_score": round(float(scores[i]), 4),
-                    "rank": 0,
-                })
+                results.append(
+                    {
+                        "label": label,
+                        "confidence": round(float(prob), 4),
+                        "raw_score": round(float(scores[i]), 4),
+                        "rank": 0,
+                    }
+                )
         results.sort(key=lambda x: x["confidence"], reverse=True)
         for i, r in enumerate(results):
             r["rank"] = i + 1

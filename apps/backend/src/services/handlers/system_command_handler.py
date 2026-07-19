@@ -19,11 +19,36 @@ _TIMEOUT = 15
 _MAX_OUTPUT = 4000
 
 _SAFE_COMMANDS = {
-    "date", "time", "whoami", "hostname", "pwd", "uname", "uptime",
-    "df", "du", "free", "top", "ps", "ls", "dir", "cat", "head",
-    "tail", "wc", "echo", "env", "printenv", "which", "where",
-    "tasklist", "systeminfo", "ipconfig", "ifconfig", "ping",
-    "git", "pnpm",
+    "date",
+    "time",
+    "whoami",
+    "hostname",
+    "pwd",
+    "uname",
+    "uptime",
+    "df",
+    "du",
+    "free",
+    "top",
+    "ps",
+    "ls",
+    "dir",
+    "cat",
+    "head",
+    "tail",
+    "wc",
+    "echo",
+    "env",
+    "printenv",
+    "which",
+    "where",
+    "tasklist",
+    "systeminfo",
+    "ipconfig",
+    "ifconfig",
+    "ping",
+    "git",
+    "pnpm",
 }
 
 
@@ -37,11 +62,14 @@ class SystemCommandHandler:
         parts = cmd.split()
         base_cmd = parts[0].lower() if parts else ""
         if base_cmd not in _SAFE_COMMANDS:
-            return t("sys_cmd.unsafe_command", cmd=base_cmd, allowed=", ".join(sorted(_SAFE_COMMANDS)))
+            return t(
+                "sys_cmd.unsafe_command", cmd=base_cmd, allowed=", ".join(sorted(_SAFE_COMMANDS))
+            )
         return await self._run(base_cmd, parts)
 
     def _extract_command(self, text: str) -> Optional[str]:
         import re
+
         m = re.search(r"```(?:bash|sh|shell|cmd)?\s*\n(.*?)```", text, re.DOTALL)
         if m:
             return m.group(1).strip()
@@ -51,7 +79,7 @@ class SystemCommandHandler:
         prefixes = ["執行", "运行", "執行命令", "运行命令", "run", "execute", "cmd"]
         for p in prefixes:
             if text.lower().startswith(p):
-                return text[len(p):].strip().strip(":：").strip()
+                return text[len(p) :].strip().strip(":：").strip()
         return text.strip()
 
     async def _run(self, base_cmd: str, parts: list) -> str:

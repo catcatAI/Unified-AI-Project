@@ -36,7 +36,9 @@ class AgentCollaborationManager:
         if agent_id not in self._agents:
             return None
         task_id = hashlib.md5(f"{agent_id}{task_type}{time.time()}".encode()).hexdigest()[:12]
-        task = CollaborationTask(task_id=task_id, agent_id=agent_id, task_type=task_type, payload=payload)
+        task = CollaborationTask(
+            task_id=task_id, agent_id=agent_id, task_type=task_type, payload=payload
+        )
         self._tasks[task_id] = task
         return task_id
 

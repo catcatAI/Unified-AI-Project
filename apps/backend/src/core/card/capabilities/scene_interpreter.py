@@ -62,10 +62,7 @@ class SceneInterpreter:
         ]
 
     def _summarize_relations(self, relations: List[Relation]) -> List[Dict[str, str]]:
-        return [
-            {"target": r.target_id, "grid": r.grid, "nature": r.nature}
-            for r in relations
-        ]
+        return [{"target": r.target_id, "grid": r.grid, "nature": r.nature} for r in relations]
 
     def _find_nucleus(self, card: Card) -> str:
         """Find nucleus."""

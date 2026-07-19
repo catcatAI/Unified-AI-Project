@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class ClusterPrecision(Enum):
     """Precision levels for cluster compute nodes (different from hardware precision)."""
+
     FP32 = "FP32"
     FP16 = "FP16"
     FP8 = "FP8"

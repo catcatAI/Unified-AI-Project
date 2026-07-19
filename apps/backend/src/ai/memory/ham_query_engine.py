@@ -16,7 +16,9 @@ class HAMQueryEngine:
         self.memory_manager = memory_manager
         self.config = config or {}
 
-    def query(self, query_text: str, top_k: int = 10, threshold: float = 0.0) -> List[Dict[str, Any]]:
+    def query(
+        self, query_text: str, top_k: int = 10, threshold: float = 0.0
+    ) -> List[Dict[str, Any]]:
         if self.memory_manager and hasattr(self.memory_manager, "query"):
             return self.memory_manager.query(query_text, top_k=top_k, threshold=threshold)
         return []

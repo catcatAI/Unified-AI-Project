@@ -316,7 +316,9 @@ class SelfGeneration:
         for callback in self._generation_callbacks:
             try:
                 callback(avatar)
-            except Exception as e:  # broad exception acceptable: callback errors should not break generation
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: callback errors should not break generation
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         return avatar
@@ -396,7 +398,9 @@ class SelfGeneration:
             sd_api_url = self.config.get("sd_api_url", "http://127.0.0.1:7860/sdapi/v1/txt2img")
 
             async with aiohttp.ClientSession() as session:
-                async with session.post(sd_api_url, json=payload, timeout=timeout_value("sd_api", 5.0)) as response:
+                async with session.post(
+                    sd_api_url, json=payload, timeout=timeout_value("sd_api", 5.0)
+                ) as response:
                     if response.status == 200:
                         data = await response.json()
                         if "images" in data and data["images"]:
@@ -595,7 +599,9 @@ class SelfGeneration:
             for callback in self._evolution_callbacks:
                 try:
                     callback(self.current_avatar, avatar)
-                except Exception as e:  # broad exception acceptable: callback errors should not break evolution
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: callback errors should not break evolution
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         return avatar

@@ -7,7 +7,6 @@ import logging
 from typing import Any, Dict
 
 from fastapi import APIRouter, Body, HTTPException
-
 from services.vision_service import VisionService
 
 logger = logging.getLogger(__name__)

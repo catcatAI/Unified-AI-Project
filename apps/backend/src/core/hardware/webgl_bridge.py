@@ -9,13 +9,12 @@ WebGL GPU 信息橋接模組
 - 同步 GPU 加速服務配置
 """
 
-from core.utils import safe_error
-
 import logging
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
 from core.interfaces.service_registry import get_registry
+from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +159,9 @@ class WebGLBridge:
             logger.info(f"WebGL Bridge result: {result}")
             return result
 
-        except Exception as e:  # broad exception acceptable: GPU info processing involves multiple conversions that may fail
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: GPU info processing involves multiple conversions that may fail
             logger.error(f"Failed to process GPU info: {e}", exc_info=True)
             return {"success": False, "error": safe_error(e)}
 

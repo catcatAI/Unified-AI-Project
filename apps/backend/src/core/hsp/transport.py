@@ -124,7 +124,9 @@ class LocalIPCTransport(HSPTransport):
             await loop.run_in_executor(None, self.send_queue.put, message)
             logger.debug(f"Published message to topic: {topic}")
             return True
-        except Exception as e:  # broad exception acceptable: IPC queue operations may raise various errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: IPC queue operations may raise various errors
             logger.error(f"Failed to publish message: {e}", exc_info=True)
             return False
 
@@ -170,7 +172,9 @@ class LocalIPCTransport(HSPTransport):
                     else:
                         logger.debug(f"No subscription for topic: {topic}")
 
-            except Exception as e:  # broad exception acceptable: listener operations may raise various errors
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: listener operations may raise various errors
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 if self._connected:
                     # 只在連接時記錄錯誤
@@ -226,7 +230,9 @@ class MQTTTransport(HSPTransport):
             logger.info(f"MQTT connection {'successful' if result else 'failed'}")
             return result
 
-        except Exception as e:  # broad exception acceptable: MQTT connection may fail with various errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: MQTT connection may fail with various errors
             logger.error(f"Failed to connect to MQTT broker: {e}", exc_info=True)
             return False
 
@@ -254,7 +260,10 @@ class MQTTTransport(HSPTransport):
     async def subscribe(self, topic: str, callback: Callable, qos: int = 0) -> bool:
         """訂閱 MQTT 主題"""
         if not self._external_connector or not self._subscription_manager:
-            logger.error("Not connected to MQTT broker or subscription manager not initialized", exc_info=True)
+            logger.error(
+                "Not connected to MQTT broker or subscription manager not initialized",
+                exc_info=True,
+            )
             return False
 
         try:
@@ -264,7 +273,9 @@ class MQTTTransport(HSPTransport):
             else:
                 logger.error(f"Failed to subscribe to topic: {topic}", exc_info=True)
             return result
-        except Exception as e:  # broad exception acceptable: subscription manager may fail with various errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: subscription manager may fail with various errors
             logger.error(f"Error subscribing to topic {topic}: {e}", exc_info=True)
             return False
 
@@ -277,7 +288,9 @@ class MQTTTransport(HSPTransport):
         try:
             result = await self._subscription_manager.unsubscribe(topic)
             return result
-        except Exception as e:  # broad exception acceptable: unsubscription may fail with various errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: unsubscription may fail with various errors
             logger.error(f"Error unsubscribing from topic {topic}: {e}", exc_info=True)
             return False
 
@@ -290,7 +303,9 @@ class MQTTTransport(HSPTransport):
         try:
             results = await self._subscription_manager.batch_subscribe(topics, callback, qos)
             return results
-        except Exception as e:  # broad exception acceptable: batch subscribe may fail with various errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: batch subscribe may fail with various errors
             logger.error(f"Error in batch subscribe: {e}", exc_info=True)
             return {}
 

@@ -246,7 +246,9 @@ class AudioSystem:
             for callback in self._state_callbacks:
                 try:
                     callback(old_state, new_state)
-                except Exception as e:  # broad exception acceptable: state callback errors should not block state changes
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: state callback errors should not block state changes
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
     async def speak(
@@ -287,7 +289,9 @@ class AudioSystem:
             self._set_state(AudioState.IDLE)
             return True
 
-        except Exception as e:  # broad exception acceptable: TTS errors should not crash the speak flow
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: TTS errors should not crash the speak flow
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             self._set_state(AudioState.IDLE)
 
@@ -374,7 +378,6 @@ class AudioSystem:
 
             await asyncio.sleep(loop_sleep("audio_poll", 0.1))
 
-
     async def sing(self, track: MusicTrack, lyrics: LyricsSync) -> bool:
         """
         Sing a song with synchronized lyrics
@@ -424,13 +427,14 @@ class AudioSystem:
                     for callback in self.lyrics_callbacks:
                         try:
                             callback(current_line, next_line)
-                        except Exception as e:  # broad exception acceptable: lyrics callback errors should not break sync
+                        except (
+                            Exception
+                        ) as e:  # broad exception acceptable: lyrics callback errors should not break sync
                             logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
                     last_line = current_line
 
             await asyncio.sleep(loop_sleep("audio_poll", 0.1))
-
 
     def _show_subtitle(self, subtitle: Subtitle) -> None:
         """Display subtitle"""
@@ -444,7 +448,9 @@ class AudioSystem:
         for callback in self.subtitle_callbacks:
             try:
                 callback(subtitle)
-            except Exception as e:  # broad exception acceptable: subtitle callback errors should not break display
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: subtitle callback errors should not break display
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
     async def pause(self) -> None:
@@ -545,7 +551,9 @@ class AudioSystem:
         """Register state change callback"""
         self._state_callbacks.append(callback)
 
-    def register_lyrics_callback(self, callback: Callable[[LyricLine, Optional[LyricLine]], None]) -> None:
+    def register_lyrics_callback(
+        self, callback: Callable[[LyricLine, Optional[LyricLine]], None]
+    ) -> None:
         """Register lyrics synchronization callback"""
         self.lyrics_callbacks.append(callback)
 

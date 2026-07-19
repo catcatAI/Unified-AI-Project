@@ -36,7 +36,9 @@ class TickleReflexSystem:
 
     def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         cfg = config or {}
-        self._body_parts: Dict[str, Dict[str, Any]] = cfg.get("body_parts", dict(_DEFAULT_BODY_PARTS))
+        self._body_parts: Dict[str, Dict[str, Any]] = cfg.get(
+            "body_parts", dict(_DEFAULT_BODY_PARTS)
+        )
         self._light_threshold: float = cfg.get("light_threshold", 0.3)
         self._medium_threshold: float = cfg.get("medium_threshold", 0.5)
         self._intense_threshold: float = cfg.get("intense_threshold", 0.58)
@@ -156,4 +158,3 @@ def get_reflex_system(config: Optional[Dict[str, Any]] = None) -> TickleReflexSy
     if _REFLEX_INSTANCE is None:
         _REFLEX_INSTANCE = TickleReflexSystem(config)
     return _REFLEX_INSTANCE
-

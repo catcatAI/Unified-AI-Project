@@ -4,13 +4,13 @@ ANGELA-MATRIX: [L3-L4] [βγδ] [B] [L2]
 純 stdlib，無網路依賴；可單元測試。
 """
 
+import hashlib
 import json
 import logging
-import hashlib
 import os
 import re
 import threading
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class VerificationStatus(str, Enum):
     """A claim's verification state."""
+
     UNVERIFIED = "unverified"
     VERIFIED = "verified"
     CONTRADICTED = "contradicted"
@@ -28,6 +29,7 @@ class VerificationStatus(str, Enum):
 @dataclass
 class SourceRef:
     """A single verification source (URL + snippet)."""
+
     url: str
     title: str = ""
     snippet: str = ""
@@ -36,6 +38,7 @@ class SourceRef:
 @dataclass
 class GroundedClaim:
     """A single factual claim with its verification lifecycle."""
+
     claim_key: str
     claim_text: str
     sources: List[SourceRef] = field(default_factory=list)
@@ -229,6 +232,7 @@ class GroundedKnowledgeStore:
 
 def _now_iso() -> str:
     from datetime import datetime, timezone
+
     return datetime.now(timezone.utc).isoformat()
 
 

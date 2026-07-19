@@ -188,6 +188,7 @@ class ExtendedBehaviorLibrary:
         """Initialize all 25+ predefined behaviors from JSON data file"""
         import json
         import os
+
         data_path = os.path.join(os.path.dirname(__file__), "behaviors_data.json")
         with open(data_path, "r", encoding="utf-8") as f:
             behaviors = json.load(f)
@@ -302,7 +303,9 @@ class ExtendedBehaviorLibrary:
             for callback in self._behavior_start_callbacks[behavior_id]:
                 try:
                     callback()
-                except Exception as e:  # broad exception acceptable: callback errors should not break behavior execution
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: callback errors should not break behavior execution
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         return True
@@ -314,7 +317,9 @@ class ExtendedBehaviorLibrary:
             for callback in self._behavior_end_callbacks[behavior.behavior_id]:
                 try:
                     callback()
-                except Exception as e:  # broad exception acceptable: callback errors should not break behavior cleanup
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: callback errors should not break behavior cleanup
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         self.active_behavior = None
@@ -335,13 +340,17 @@ class ExtendedBehaviorLibrary:
             return self.behavior_queue.pop(0)
         return None
 
-    def register_behavior_start_callback(self, behavior_id: str, callback: Callable[[], None]) -> None:
+    def register_behavior_start_callback(
+        self, behavior_id: str, callback: Callable[[], None]
+    ) -> None:
         """Register callback for when a behavior starts"""
         if behavior_id not in self._behavior_start_callbacks:
             self._behavior_start_callbacks[behavior_id] = []
         self._behavior_start_callbacks[behavior_id].append(callback)
 
-    def register_behavior_end_callback(self, behavior_id: str, callback: Callable[[], None]) -> None:
+    def register_behavior_end_callback(
+        self, behavior_id: str, callback: Callable[[], None]
+    ) -> None:
         """Register callback for when a behavior ends"""
         if behavior_id not in self._behavior_end_callbacks:
             self._behavior_end_callbacks[behavior_id] = []

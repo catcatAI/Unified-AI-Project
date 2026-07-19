@@ -50,4 +50,3 @@ def get_registry() -> ServiceRegistry:
     if _registry is None:
         _registry = ServiceRegistry()
     return _registry
-

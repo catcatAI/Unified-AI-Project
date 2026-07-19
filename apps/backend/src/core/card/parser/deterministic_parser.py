@@ -121,7 +121,7 @@ class DeterministicParser:
             card.card_id = f"TP-{letter}"
             card.card_type = CardType.PLAYER_TEMPLATE
             card.custom_fields["template_title"] = title
-            title_line = text[tmatch.start():tmatch.end()]
+            title_line = text[tmatch.start() : tmatch.end()]
             m_match = re.search(r"(M[1-6])", title_line)
             if m_match:
                 card.custom_fields["m_value_alignment"] = m_match.group(1)
@@ -177,7 +177,11 @@ class DeterministicParser:
             try:
                 strength = float(strength_str)
             except ValueError:
-                logger.warning("Failed to parse trait strength '%s', defaulting to 1.0", strength_str, exc_info=True)
+                logger.warning(
+                    "Failed to parse trait strength '%s', defaulting to 1.0",
+                    strength_str,
+                    exc_info=True,
+                )
                 strength = 1.0
             card.tokens.append(Token(category="trait", name=name.strip(), strength=strength))
         confidences["tokens"] = 0.95 if card.tokens else 0.0

@@ -25,7 +25,9 @@ class HyperlinkedParameterCluster:
     async def initialize(self) -> None:
         self.is_initialized = True
         self.parameters = {"learning_rate": 0.001, "batch_size": 32, "epochs": 10}
-        logger.info(f"[HyperlinkedParameterCluster] Initialized cluster={self.cluster_id} params={self.total_parameters}")
+        logger.info(
+            f"[HyperlinkedParameterCluster] Initialized cluster={self.cluster_id} params={self.total_parameters}"
+        )
 
     async def get_cluster_status(self) -> Optional[dict]:
         return {

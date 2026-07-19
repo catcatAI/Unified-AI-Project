@@ -109,7 +109,10 @@ class ObserverPresence:
         # M_f combines current intensity with accumulated relationship
         interaction_weight = llm_param("life_intensity.mf_interaction_weight", 0.4)
         attention_weight = llm_param("life_intensity.mf_attention_weight", 0.3)
-        current_factor = self.interaction_intensity * interaction_weight + self.attention_level * attention_weight
+        current_factor = (
+            self.interaction_intensity * interaction_weight
+            + self.attention_level * attention_weight
+        )
 
         # Relationship depth factor
         relationship_weight = llm_param("life_intensity.mf_relationship_weight", 0.3)
@@ -118,7 +121,9 @@ class ObserverPresence:
         # Experience bonus (more interactions = stronger observer effect)
         exp_bonus_cap = threshold_value("life_intensity.mf_experience_bonus_cap", 0.2)
         exp_divisor = batch_value("life_intensity.mf_experience_divisor", 100)
-        experience_factor = min(exp_bonus_cap, self.total_interactions / exp_divisor * exp_bonus_cap)
+        experience_factor = min(
+            exp_bonus_cap, self.total_interactions / exp_divisor * exp_bonus_cap
+        )
 
         return min(1.0, current_factor + relationship_factor + experience_factor)
 
@@ -248,7 +253,15 @@ class LifeIntensityFormula:
                 domain=domain,
                 completeness=max(0.0, min(1.0, completeness)),
                 accessibility=max(0.0, min(1.0, accessibility or completeness)),
-                resolution=max(0.0, min(1.0, resolution or completeness * llm_param("life_intensity.default_resolution_factor", 0.8))),
+                resolution=max(
+                    0.0,
+                    min(
+                        1.0,
+                        resolution
+                        or completeness
+                        * llm_param("life_intensity.default_resolution_factor", 0.8),
+                    ),
+                ),
             )
             self.knowledge_states[domain] = state
 
@@ -281,7 +294,13 @@ class LifeIntensityFormula:
             domain=domain,
             constraint_type=constraint_type,
             severity=max(0.0, min(1.0, severity)),
-            adaptability=max(0.0, min(1.0, adaptability or behavior_threshold("life_intensity.default_adaptability", 0.3))),
+            adaptability=max(
+                0.0,
+                min(
+                    1.0,
+                    adaptability or behavior_threshold("life_intensity.default_adaptability", 0.3),
+                ),
+            ),
             description=description,
         )
 
@@ -297,8 +316,11 @@ class LifeIntensityFormula:
         return False
 
     def register_observer(
-        self, observer_id: str, relationship_depth: float = 0.0,
-        interaction_intensity: float = 0.0, attention_level: float = 0.0,
+        self,
+        observer_id: str,
+        relationship_depth: float = 0.0,
+        interaction_intensity: float = 0.0,
+        attention_level: float = 0.0,
     ) -> ObserverPresence:
         """
         Register a new observer
@@ -372,7 +394,10 @@ class LifeIntensityFormula:
         domain_count_cap = threshold_value("life_intensity.domain_count_cap", 1.2)
         domain_count_base = llm_param("life_intensity.domain_count_base", 0.8)
         domain_count_increment = learning_rate("life_intensity.domain_count_increment", 0.05)
-        domain_count_factor = min(domain_count_cap, domain_count_base + len(self.knowledge_states) * domain_count_increment)
+        domain_count_factor = min(
+            domain_count_cap,
+            domain_count_base + len(self.knowledge_states) * domain_count_increment,
+        )
 
         return min(1.0, avg_inf * domain_count_factor)
 
@@ -387,7 +412,9 @@ class LifeIntensityFormula:
             C_limit value (0-1)
         """
         if not self.constraint_states:
-            return threshold_value("life_intensity.min_constraint_default", 0.1)  # Minimum constraint (no constraints = slight constraint)
+            return threshold_value(
+                "life_intensity.min_constraint_default", 0.1
+            )  # Minimum constraint (no constraints = slight constraint)
 
         # Group constraints by domain
         domain_constraints: Dict[str, List[float]] = {}
@@ -425,7 +452,9 @@ class LifeIntensityFormula:
             M_f value (0-1)
         """
         if not self.observers:
-            return threshold_value("life_intensity.min_observer_default", 0.1)  # Minimal life sense without observers
+            return threshold_value(
+                "life_intensity.min_observer_default", 0.1
+            )  # Minimal life sense without observers
 
         # Calculate total observer factor
         # Primary observer has full weight, others diminish
@@ -436,7 +465,9 @@ class LifeIntensityFormula:
         total_mf = 0.0
         for i, observer in enumerate(sorted_observers):
             observer_diminish_rate = llm_param("life_intensity.observer_diminish_rate", 0.5)
-            weight = 1.0 / (1 + i * observer_diminish_rate)  # Diminishing weight for secondary observers
+            weight = 1.0 / (
+                1 + i * observer_diminish_rate
+            )  # Diminishing weight for secondary observers
             total_mf += observer.calculate_mf_value() * weight
 
         # Cap at 1.0
@@ -540,14 +571,18 @@ class LifeIntensityFormula:
                 for callback in self._threshold_callbacks:
                     try:
                         callback(prev_l_s, l_s)
-                    except Exception as e:  # broad exception acceptable: threshold callbacks should be resilient
+                    except (
+                        Exception
+                    ) as e:  # broad exception acceptable: threshold callbacks should be resilient
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         # Notify callbacks
         for callback in self._intensity_callbacks:
             try:
                 callback(snapshot)
-            except Exception as e:  # broad exception acceptable: intensity callbacks should be resilient
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: intensity callbacks should be resilient
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         return l_s
@@ -565,9 +600,13 @@ class LifeIntensityFormula:
         first_half_avg = sum(s.l_s for s in recent[:mid]) / mid
         second_half_avg = sum(s.l_s for s in recent[mid:]) / (len(recent) - mid)
 
-        if second_half_avg > first_half_avg * threshold_value("life_intensity.trend_rising_mult", 1.05):
+        if second_half_avg > first_half_avg * threshold_value(
+            "life_intensity.trend_rising_mult", 1.05
+        ):
             return "rising"
-        elif second_half_avg < first_half_avg * threshold_value("life_intensity.trend_falling_mult", 0.95):
+        elif second_half_avg < first_half_avg * threshold_value(
+            "life_intensity.trend_falling_mult", 0.95
+        ):
             return "falling"
         else:
             return "stable"
@@ -632,7 +671,9 @@ class LifeIntensityFormula:
             },
         }
 
-    def register_intensity_callback(self, callback: Callable[[LifeIntensitySnapshot], None]) -> None:
+    def register_intensity_callback(
+        self, callback: Callable[[LifeIntensitySnapshot], None]
+    ) -> None:
         """Register callback for intensity calculations"""
         self._intensity_callbacks.append(callback)
 

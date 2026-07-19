@@ -4,13 +4,13 @@ HookRegistry — C3: backend hook system for plugins.
 Defines named hooks, registers handlers, executes them asynchronously.
 """
 
-from core.utils import safe_error
-
 import inspect
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
+
+from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +64,9 @@ class HookRegistry:
     def register_handler(self, hook_name: str, handler_name: str, handler: Callable) -> bool:
         """Register a handler function for a hook."""
         if hook_name not in self._hooks:
-            logger.warning(f"[HookRegistry] Unknown hook '{hook_name}', defining automatically", exc_info=True)
+            logger.warning(
+                f"[HookRegistry] Unknown hook '{hook_name}', defining automatically", exc_info=True
+            )
             self.define_hook(hook_name)
         self._handlers[hook_name].append((handler_name, handler))
         return True
@@ -91,7 +93,9 @@ class HookRegistry:
                     result = await result
                 current = result
             except Exception as e:
-                logger.error(f"[HookRegistry] Pipeline handler '{handler_name}' failed: {e}", exc_info=True)
+                logger.error(
+                    f"[HookRegistry] Pipeline handler '{handler_name}' failed: {e}", exc_info=True
+                )
         return current
 
     async def execute_hook(self, hook_name: str, data: Any = None) -> List[HookResult]:
@@ -104,20 +108,27 @@ class HookRegistry:
                 result = handler(data)
                 if inspect.iscoroutine(result):
                     result = await result
-                results.append(HookResult(
-                    hook_name=hook_name,
-                    handler_name=handler_name,
-                    success=True,
-                    result=result,
-                ))
+                results.append(
+                    HookResult(
+                        hook_name=hook_name,
+                        handler_name=handler_name,
+                        success=True,
+                        result=result,
+                    )
+                )
             except Exception as e:
-                logger.error(f"[HookRegistry] Handler '{handler_name}' for hook '{hook_name}' failed: {e}", exc_info=True)
-                results.append(HookResult(
-                    hook_name=hook_name,
-                    handler_name=handler_name,
-                    success=False,
-                    error=safe_error(e),
-                ))
+                logger.error(
+                    f"[HookRegistry] Handler '{handler_name}' for hook '{hook_name}' failed: {e}",
+                    exc_info=True,
+                )
+                results.append(
+                    HookResult(
+                        hook_name=hook_name,
+                        handler_name=handler_name,
+                        success=False,
+                        error=safe_error(e),
+                    )
+                )
         return results
 
     def get_stats(self) -> Dict[str, Any]:

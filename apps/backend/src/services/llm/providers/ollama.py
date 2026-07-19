@@ -7,8 +7,8 @@ import time
 
 import aiohttp
 from core.interfaces.protocols import LLMResponse
-from core.utils import safe_error
 from core.system.config.network_defaults import DEFAULT_OLLAMA_MODEL, OLLAMA_HOST, OLLAMA_TIMEOUT
+from core.utils import safe_error
 
 from .base import BaseLLMBackend
 
@@ -18,7 +18,13 @@ logger = logging.getLogger(__name__)
 class OllamaBackend(BaseLLMBackend):
     """Ollama 後端"""
 
-    def __init__(self, base_url: str = OLLAMA_HOST, model: str = DEFAULT_OLLAMA_MODEL, api_key: str = "", timeout: float = OLLAMA_TIMEOUT):
+    def __init__(
+        self,
+        base_url: str = OLLAMA_HOST,
+        model: str = DEFAULT_OLLAMA_MODEL,
+        api_key: str = "",
+        timeout: float = OLLAMA_TIMEOUT,
+    ):
         super().__init__()
         self.base_url = base_url.rstrip("/")
         self.model = model
@@ -80,13 +86,17 @@ class OllamaBackend(BaseLLMBackend):
                             except json.JSONDecodeError:
                                 continue
                     return LLMResponse(
-                        text=text, backend="ollama", model=self.model,
+                        text=text,
+                        backend="ollama",
+                        model=self.model,
                         response_time_ms=(time.time() - start_time) * 1000,
                         confidence=0.9,
                     )
                 else:
                     return LLMResponse(
-                        text="", backend="ollama", model=self.model,
+                        text="",
+                        backend="ollama",
+                        model=self.model,
                         error=f"HTTP {response.status}",
                     )
         except Exception as e:

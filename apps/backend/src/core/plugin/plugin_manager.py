@@ -45,14 +45,18 @@ class PluginManager:
         for name, desc in standard_hooks.items():
             self._hook_registry.define_hook(name, desc)
 
-    def register_plugin(self, name: str, version: str, description: str = "",
-                        hooks: Optional[List[str]] = None) -> PluginInfo:
+    def register_plugin(
+        self, name: str, version: str, description: str = "", hooks: Optional[List[str]] = None
+    ) -> PluginInfo:
         """Register a new plugin with the manager."""
         if name in self._plugins:
             logger.info(f"[PluginManager] Re-registering plugin: {name}")
         info = PluginInfo(
-            name=name, version=version, description=description,
-            enabled=True, hooks=hooks or [],
+            name=name,
+            version=version,
+            description=description,
+            enabled=True,
+            hooks=hooks or [],
         )
         self._plugins[name] = info
         logger.info(f"[PluginManager] Plugin registered: {name} v{version}")
@@ -89,8 +93,13 @@ class PluginManager:
         if enabled_only:
             plugins = [p for p in plugins if p.enabled]
         return [
-            {"name": p.name, "version": p.version, "description": p.description,
-             "enabled": p.enabled, "hooks": p.hooks}
+            {
+                "name": p.name,
+                "version": p.version,
+                "description": p.description,
+                "enabled": p.enabled,
+                "hooks": p.hooks,
+            }
             for p in plugins
         ]
 

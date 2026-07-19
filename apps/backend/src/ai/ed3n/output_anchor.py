@@ -11,7 +11,7 @@ from .input_enricher import EnrichedInput
 
 logger = logging.getLogger(__name__)
 
-KEY_WEIGHT_VARIANT = 0.6   # weight for keys discovered via text variant
+KEY_WEIGHT_VARIANT = 0.6  # weight for keys discovered via text variant
 
 
 def anchored_decode(
@@ -36,9 +36,7 @@ def anchored_decode(
         entry = dictionary.entries.get(key)
         if entry is None:
             continue
-        anchor_pool.append(
-            {"key": key, "entry": entry, "weight": 1.0, "source": "anchor"}
-        )
+        anchor_pool.append({"key": key, "entry": entry, "weight": 1.0, "source": "anchor"})
 
     # Stage 1b: Variant-based key discovery — encode each text variant to find
     # additional dictionary keys that primary encoding may have missed
@@ -55,12 +53,15 @@ def anchored_decode(
                 if ventry is None:
                     continue
                 anchor_pool.append(
-                    {"key": vkey, "entry": ventry, "weight": KEY_WEIGHT_VARIANT, "source": "variant"}
+                    {
+                        "key": vkey,
+                        "entry": ventry,
+                        "weight": KEY_WEIGHT_VARIANT,
+                        "source": "variant",
+                    }
                 )
 
-    sorted_network = sorted(
-        network_output.items(), key=lambda x: x[1], reverse=True
-    )
+    sorted_network = sorted(network_output.items(), key=lambda x: x[1], reverse=True)
     for key, score in sorted_network:
         if key in seen_keys:
             continue
@@ -68,9 +69,7 @@ def anchored_decode(
         entry = dictionary.entries.get(key)
         if entry is None:
             continue
-        anchor_pool.append(
-            {"key": key, "entry": entry, "weight": score, "source": "network"}
-        )
+        anchor_pool.append({"key": key, "entry": entry, "weight": score, "source": "network"})
 
     top_anchors = sorted(
         [a for a in anchor_pool if a["source"] == "anchor"],
@@ -90,13 +89,9 @@ def anchored_decode(
         if key not in combined:
             combined[key] = item
         else:
-            combined[key]["weight"] = max(
-                combined[key]["weight"], item["weight"]
-            )
+            combined[key]["weight"] = max(combined[key]["weight"], item["weight"])
 
-    scored = sorted(
-        combined.values(), key=lambda x: x["weight"], reverse=True
-    )
+    scored = sorted(combined.values(), key=lambda x: x["weight"], reverse=True)
 
     parts: List[str] = []
     seen_surfaces: set = set()
@@ -183,12 +178,8 @@ class ResponseAnchorValidator:
             for ak in anchored_set:
                 entry = self.dictionary.entries.get(ak)
                 if entry:
-                    anchored_syns.update(
-                        entry.relations.get("synonym", [])
-                    )
-                    anchored_syns.update(
-                        entry.relations.get("mapping", [])
-                    )
+                    anchored_syns.update(entry.relations.get("synonym", []))
+                    anchored_syns.update(entry.relations.get("mapping", []))
 
             expanded_set = anchored_set | anchored_syns
             overlap = response_set & expanded_set

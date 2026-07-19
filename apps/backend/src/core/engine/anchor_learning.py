@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 @dataclass
 class AllocationRecord:
     """分配決策記錄"""
+
     vector: List[float]
     action: str
     target: Optional[str]
@@ -37,6 +38,7 @@ class AllocationRecord:
 @dataclass
 class MisallocationRecord:
     """錯誤分配記錄"""
+
     vector: List[float]
     wrong_axis: str
     right_axis: Optional[str]
@@ -230,9 +232,7 @@ class AnchorLearningEngine:
     # 向量操作
     # =========================================================================
 
-    def _ema_update(
-        self, anchor: List[float], target: List[float], lr: float = 0.1
-    ) -> List[float]:
+    def _ema_update(self, anchor: List[float], target: List[float], lr: float = 0.1) -> List[float]:
         """
         EMA 更新錨點向量
 
@@ -251,18 +251,14 @@ class AnchorLearningEngine:
         updated = [alpha * a + (1.0 - alpha) * t for a, t in zip(anchor, target)]
         return self._normalize(updated)
 
-    def _push_toward(
-        self, vector: List[float], axis_name: str, lr: float
-    ) -> None:
+    def _push_toward(self, vector: List[float], axis_name: str, lr: float) -> None:
         """將指定軸的錨點推向向量"""
         anchor = self._resonance._semantic_vectors.get(axis_name)
         if anchor:
             new_anchor = self._ema_update(anchor, vector, lr=lr)
             self._resonance._semantic_vectors[axis_name] = new_anchor
 
-    def _push_away(
-        self, vector: List[float], axis_name: str, lr: float
-    ) -> None:
+    def _push_away(self, vector: List[float], axis_name: str, lr: float) -> None:
         """將指定軸的錨點遠離向量"""
         anchor = self._resonance._semantic_vectors.get(axis_name)
         if anchor:
@@ -270,9 +266,7 @@ class AnchorLearningEngine:
             new_anchor = self._ema_update(anchor, opposite, lr=lr)
             self._resonance._semantic_vectors[axis_name] = new_anchor
 
-    def _snapshot_to_vector(
-        self, snapshot: Dict[str, float], size: int = 32
-    ) -> List[float]:
+    def _snapshot_to_vector(self, snapshot: Dict[str, float], size: int = 32) -> List[float]:
         """
         將軸快照轉換為 32-dim 向量
 
@@ -339,9 +333,7 @@ class AnchorLearningEngine:
 
         assign_count = sum(1 for r in self._allocation_history if r.action == "ASSIGN")
         defer_count = sum(1 for r in self._allocation_history if r.action == "DEFER")
-        composite_count = sum(
-            1 for r in self._allocation_history if r.action == "COMPOSITE"
-        )
+        composite_count = sum(1 for r in self._allocation_history if r.action == "COMPOSITE")
 
         return {
             "allocations": {
@@ -376,11 +368,7 @@ class AnchorLearningEngine:
         if axis_name not in self._keyword_axis_weights:
             return []
         weights = self._keyword_axis_weights
-        scored = [
-            (word, w.get(axis_name, 0.0))
-            for word, w in weights.items()
-            if axis_name in w
-        ]
+        scored = [(word, w.get(axis_name, 0.0)) for word, w in weights.items() if axis_name in w]
         scored.sort(key=lambda x: x[1], reverse=True)
         return scored[:top_n]
 
@@ -401,21 +389,25 @@ class AnchorLearningEngine:
             if kw:
                 strong_kw = [(w, s) for w, s in kw if s > 0.15]
                 if strong_kw and self._update_counts.get(axis, 0) > 0:
-                    suggestions.append({
-                        "type": "intent_keyword",
-                        "axis": axis,
-                        "keywords": [w for w, _ in strong_kw],
-                        "confidence": strong_kw[0][1],
-                        "rationale": f"軸 {axis} 有 {len(strong_kw)} 個強關鍵字，置信度 > 0.15",
-                    })
+                    suggestions.append(
+                        {
+                            "type": "intent_keyword",
+                            "axis": axis,
+                            "keywords": [w for w, _ in strong_kw],
+                            "confidence": strong_kw[0][1],
+                            "rationale": f"軸 {axis} 有 {len(strong_kw)} 個強關鍵字，置信度 > 0.15",
+                        }
+                    )
 
         misalloc_rate = len(self._misallocation_history) / max(1, len(self._allocation_history))
         if misalloc_rate > 0.2:
-            suggestions.append({
-                "type": "threshold_adjust",
-                "metric": "misallocation_rate",
-                "value": round(misalloc_rate, 3),
-                "rationale": f"錯誤分配率 {misalloc_rate:.1%} 超過 20% 閾值",
-            })
+            suggestions.append(
+                {
+                    "type": "threshold_adjust",
+                    "metric": "misallocation_rate",
+                    "value": round(misalloc_rate, 3),
+                    "rationale": f"錯誤分配率 {misalloc_rate:.1%} 超過 20% 閾值",
+                }
+            )
 
         return suggestions

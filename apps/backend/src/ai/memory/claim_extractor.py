@@ -11,12 +11,36 @@ from typing import List
 logger = logging.getLogger(__name__)
 
 _COPULA = [
-    r"\bis\b", r"\bare\b", r"\bwas\b", r"\bwere\b", r"\bbe\b",
-    r"\bmeans\b", r"\bmeans that\b", r"\bequals?\b", r"\brefers to\b",
-    r"\bdiscovered\b", r"\binvented\b", r"\bfounded\b", r"\bestablished\b",
-    r"\bcreated\b", r"\bdeveloped\b", r"\bborn\b", r"\bdied\b",
-    r"是指", r"是", r"為", r"等於", r"成立於", r"發明", r"發現", r"創立",
-    r"成立", r"位於", r"位於於", r"屬於", r"來自",
+    r"\bis\b",
+    r"\bare\b",
+    r"\bwas\b",
+    r"\bwere\b",
+    r"\bbe\b",
+    r"\bmeans\b",
+    r"\bmeans that\b",
+    r"\bequals?\b",
+    r"\brefers to\b",
+    r"\bdiscovered\b",
+    r"\binvented\b",
+    r"\bfounded\b",
+    r"\bestablished\b",
+    r"\bcreated\b",
+    r"\bdeveloped\b",
+    r"\bborn\b",
+    r"\bdied\b",
+    r"是指",
+    r"是",
+    r"為",
+    r"等於",
+    r"成立於",
+    r"發明",
+    r"發現",
+    r"創立",
+    r"成立",
+    r"位於",
+    r"位於於",
+    r"屬於",
+    r"來自",
 ]
 _COPULA_RE = re.compile("|".join(_COPULA), re.IGNORECASE | re.UNICODE)
 
@@ -29,13 +53,43 @@ _QUESTION_RE = re.compile(r"[?？]$")
 
 # anchors: capitalized token, digit, quoted term, or a domain keyword
 _ANCHOR_TOKEN_RE = re.compile(r"[A-Z][a-zA-Z0-9]+|[\d][\d.,:%]*")
-_QUOTE_RE = re.compile(r"[""「『]([^""」』]{2,40})[""」』]")
+_QUOTE_RE = re.compile(r"[" "「『]([^" "」』]{2,40})[" "」』]")
 _DOMAIN_WORDS = {
-    "physics", "chemistry", "biology", "math", "mathematics", "history",
-    "science", "technology", "physics", "element", "molecule", "atom",
-    "water", "oxygen", "carbon", "gold", "silver", "energy", "force",
-    "光速", "原子", "分子", "元素", "化學", "物理", "生物", "數學", "歷史",
-    "科學", "科技", "能量", "力", "溫度", "質量", "速度",
+    "physics",
+    "chemistry",
+    "biology",
+    "math",
+    "mathematics",
+    "history",
+    "science",
+    "technology",
+    "physics",
+    "element",
+    "molecule",
+    "atom",
+    "water",
+    "oxygen",
+    "carbon",
+    "gold",
+    "silver",
+    "energy",
+    "force",
+    "光速",
+    "原子",
+    "分子",
+    "元素",
+    "化學",
+    "物理",
+    "生物",
+    "數學",
+    "歷史",
+    "科學",
+    "科技",
+    "能量",
+    "力",
+    "溫度",
+    "質量",
+    "速度",
 }
 _DOMAIN_RE = re.compile(
     r"\b(" + "|".join(re.escape(w) for w in _DOMAIN_WORDS) + r")\b", re.IGNORECASE
@@ -110,8 +164,24 @@ _SEARCH_INTENT_RE = re.compile(
 _CJK_RUN_RE = re.compile(r"[一-鿿㐀-䶿]{2,}", re.UNICODE)
 # Question words are not topical anchors on their own.
 _QUESTION_WORDS = {
-    "what", "who", "when", "where", "why", "how", "which", "whom",
-    "什麼", "誰", "何時", "哪", "如何", "怎麼", "為什麼", "多少", "幾", "哪裡",
+    "what",
+    "who",
+    "when",
+    "where",
+    "why",
+    "how",
+    "which",
+    "whom",
+    "什麼",
+    "誰",
+    "何時",
+    "哪",
+    "如何",
+    "怎麼",
+    "為什麼",
+    "多少",
+    "幾",
+    "哪裡",
 }
 _WORD_RE = re.compile(r"[A-Za-z][A-Za-z0-9]*", re.UNICODE)
 

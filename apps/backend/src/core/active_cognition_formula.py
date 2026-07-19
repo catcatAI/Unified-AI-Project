@@ -83,7 +83,9 @@ class StressVector:
     def calculate_stress_contribution(self) -> float:
         """Calculate this stress vector's contribution to total stress"""
         # Intensity matters most, but persistence amplifies
-        persistence_factor = llm_param("ac.stress_base_factor", 0.7) + (self.persistence * llm_param("ac.stress_persistence_weight", 0.3))
+        persistence_factor = llm_param("ac.stress_base_factor", 0.7) + (
+            self.persistence * llm_param("ac.stress_persistence_weight", 0.3)
+        )
         return self.intensity * persistence_factor
 
 
@@ -103,7 +105,8 @@ class OrderBaseline:
         return (
             self.stability * llm_param("ac.order_stability_weight", 0.5)
             + self.flexibility * llm_param("ac.order_flexibility_weight", 0.3)
-            + (1.0 - self.complexity * llm_param("ac.order_complexity_penalty", 0.2)) * llm_param("ac.order_simplicity_weight", 0.2)  # Simpler orders are more robust
+            + (1.0 - self.complexity * llm_param("ac.order_complexity_penalty", 0.2))
+            * llm_param("ac.order_simplicity_weight", 0.2)  # Simpler orders are more robust
         )
 
 
@@ -237,7 +240,9 @@ class ActiveCognitionFormula:
         for callback in self._stress_callbacks:
             try:
                 callback(vector)
-            except Exception as e:  # broad exception acceptable: user-defined callback, prevent crash
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: user-defined callback, prevent crash
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         return vector
@@ -337,7 +342,9 @@ class ActiveCognitionFormula:
             StressSource.AMBIGUITY: llm_param("ac.stress_weight_ambiguity", 1.1),
             StressSource.TIME_PRESSURE: llm_param("ac.stress_weight_time_pressure", 0.9),
             StressSource.COMPLEXITY: llm_param("ac.stress_weight_complexity", 1.0),
-            StressSource.OBSERVER_EXPECTATION: llm_param("ac.stress_weight_observer_expectation", 1.15),
+            StressSource.OBSERVER_EXPECTATION: llm_param(
+                "ac.stress_weight_observer_expectation", 1.15
+            ),
         }
 
         total_stress = 0.0
@@ -380,7 +387,9 @@ class ActiveCognitionFormula:
         total_weight = 0.0
 
         for baseline in self.order_baselines.values():
-            weight = type_weights.get(baseline.order_type, llm_param("ac.order_weight_fallback", 0.8))
+            weight = type_weights.get(
+                baseline.order_type, llm_param("ac.order_weight_fallback", 0.8)
+            )
             strength = baseline.calculate_order_strength()
             total_order += strength * weight
             total_weight += weight
@@ -491,7 +500,9 @@ class ActiveCognitionFormula:
             deviation_degree=deviation,
             construction_type=construction_type,
             outcome_description=outcome,
-            success_score=min(1.0, a_c / llm_param("ac.success_ac_divisor", 1.5)),  # Higher A_c = more successful deviation
+            success_score=min(
+                1.0, a_c / llm_param("ac.success_ac_divisor", 1.5)
+            ),  # Higher A_c = more successful deviation
         )
 
         self.construction_history.append(construction)
@@ -524,7 +535,11 @@ class ActiveCognitionFormula:
             }
 
         total = len(self.construction_history)
-        successful = sum(1 for c in self.construction_history if c.success_score > threshold_value("ac.construction_success_threshold", 0.6))
+        successful = sum(
+            1
+            for c in self.construction_history
+            if c.success_score > threshold_value("ac.construction_success_threshold", 0.6)
+        )
         avg_a_c = sum(c.a_c_value for c in self.construction_history) / total
         avg_deviation = sum(c.deviation_degree for c in self.construction_history) / total
 
@@ -620,7 +635,9 @@ class ActiveCognitionFormula:
                 "description_cn": "极端压力。存在系统超载或崩溃风险。",
             }
 
-    def register_construction_callback(self, callback: Callable[[ActiveConstruction], None]) -> None:
+    def register_construction_callback(
+        self, callback: Callable[[ActiveConstruction], None]
+    ) -> None:
         """Register callback for construction events"""
         self._construction_callbacks.append(callback)
 

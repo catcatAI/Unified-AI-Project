@@ -50,6 +50,7 @@ class CircuitBreaker:
 
     def record_failure(self) -> None:
         import time
+
         self._failure_count += 1
         self._last_failure_time = time.time()
         if self._failure_count >= self.failure_threshold:
@@ -65,6 +66,7 @@ class CircuitBreaker:
         if not self._is_open:
             return False
         import time
+
         if time.time() - self._last_failure_time > self.recovery_timeout:
             self._is_open = False
             self._failure_count = 0
@@ -84,4 +86,3 @@ class ErrorHandler:
             handler(error)
         else:
             logger.warning(f"No handler registered for {category.value}")
-

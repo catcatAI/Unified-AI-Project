@@ -121,7 +121,9 @@ class CausalTracer:
 
             return node.id
 
-        except Exception as e:  # broad exception acceptable: trace initialization may fail due to various runtime issues
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: trace initialization may fail due to various runtime issues
             logger.error(f"Error starting trace: {e}", exc_info=True)
             return ""
 
@@ -141,7 +143,9 @@ class CausalTracer:
         try:
             if trace_id in self._active_traces:
                 self._active_traces[trace_id].data[key] = value
-        except Exception as e:  # broad exception acceptable: dict assignment may fail for unexpected data types
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: dict assignment may fail for unexpected data types
             logger.error(f"Error recording trace data: {e}", exc_info=True)
 
     def finish(self, trace_id: str, result: Optional[Any] = None) -> None:
@@ -170,7 +174,9 @@ class CausalTracer:
                     self.set_current_trace(parent_id)
                 else:
                     self.set_current_trace(None)
-        except Exception as e:  # broad exception acceptable: trace cleanup may fail due to concurrent access or data corruption
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: trace cleanup may fail due to concurrent access or data corruption
             logger.error(f"Error finishing trace: {e}", exc_info=True)
 
     def get_chain(self, trace_id: str) -> Optional[CausalChain]:
@@ -189,7 +195,9 @@ class CausalTracer:
             if root_id:
                 return self._chains.get(root_id)
             return self._chains.get(trace_id)
-        except Exception as e:  # broad exception acceptable: chain traversal may fail due to concurrent modifications
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: chain traversal may fail due to concurrent modifications
             logger.error(f"Error getting chain: {e}", exc_info=True)
             return None
 

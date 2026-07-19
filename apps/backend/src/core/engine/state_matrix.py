@@ -44,8 +44,8 @@ logger = logging.getLogger(__name__)
 CognitiveOp = _CognitiveOp
 
 
-
 from .state_matrix_types import AllocateDecision, AxisSemanticAnchor, DimensionState
+
 
 class StateMatrix4D:
     """
@@ -102,7 +102,6 @@ class StateMatrix4D:
             return self.beta.values.get("focus", 1.0)
         return getattr(self, "_precision", 1.0)
 
-
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """
         Initialize 4D state matrix
@@ -110,11 +109,12 @@ class StateMatrix4D:
         if getattr(self, "_initialized", False):
             return
         self._initialized = True
-        
+
         from app_config_loader import get_formula_config
+
         self.formula_config = get_formula_config("spatial")
         self.config = config or {}
-        self._precision = 1.0 
+        self._precision = 1.0
         self._temporal_state: Optional[Any] = None
         self._temporal_synced = False
 
@@ -125,20 +125,77 @@ class StateMatrix4D:
     def _setup_dimensions(self) -> None:
         """設置維度初始狀態 (從分層配置讀取)"""
         from app_config_loader import get_formula_config
+
         matrix_conf = get_formula_config("matrix")
         dim_defs = matrix_conf.get("dimensions", {})
 
         # 默認維度定義（當配置中無定義時使用）
         DEFAULT_DIMENSIONS = {
-            "alpha": {"cn_name": "生理", "initial_values": {"energy": 0.5, "comfort": 0.5, "arousal": 0.5, "rest_need": 0.5}},
-            "beta": {"cn_name": "認知", "initial_values": {"curiosity": 0.5, "focus": 0.5, "confusion": 0.0, "learning": 0.5}},
-            "gamma": {"cn_name": "情感", "initial_values": {"happiness": 0.5, "sadness": 0.0, "anger": 0.0, "fear": 0.0, "disgust": 0.0, "surprise": 0.0, "trust": 0.5, "anticipation": 0.5}},
-            "delta": {"cn_name": "社交", "initial_values": {"attention": 0.5, "bond": 0.5, "trust": 0.5, "presence": 0.5}},
-            "epsilon": {"cn_name": "數理", "initial_values": {"logic": 0.5, "precision": 0.5, "abstraction": 0.5, "certainty": 0.5, "complexity": 0.5, "fatigue": 0.0}},
-            "theta": {"cn_name": "元認知", "initial_values": {"novelty": 0.5, "complexity": 0.5, "ambiguity": 0.5, "dimension_fit": 0.5, "creation_urge": 0.0, "theta_negativity": 0.0, "correction_urge": 0.0, "audit_intensity": 0.0}},
-            "zeta": {"cn_name": "意識流", "initial_values": {"narrative_flow": 0.5, "temporal_coherence": 0.5, "identity": 0.5, "memory_access": 0.5}},
+            "alpha": {
+                "cn_name": "生理",
+                "initial_values": {"energy": 0.5, "comfort": 0.5, "arousal": 0.5, "rest_need": 0.5},
+            },
+            "beta": {
+                "cn_name": "認知",
+                "initial_values": {
+                    "curiosity": 0.5,
+                    "focus": 0.5,
+                    "confusion": 0.0,
+                    "learning": 0.5,
+                },
+            },
+            "gamma": {
+                "cn_name": "情感",
+                "initial_values": {
+                    "happiness": 0.5,
+                    "sadness": 0.0,
+                    "anger": 0.0,
+                    "fear": 0.0,
+                    "disgust": 0.0,
+                    "surprise": 0.0,
+                    "trust": 0.5,
+                    "anticipation": 0.5,
+                },
+            },
+            "delta": {
+                "cn_name": "社交",
+                "initial_values": {"attention": 0.5, "bond": 0.5, "trust": 0.5, "presence": 0.5},
+            },
+            "epsilon": {
+                "cn_name": "數理",
+                "initial_values": {
+                    "logic": 0.5,
+                    "precision": 0.5,
+                    "abstraction": 0.5,
+                    "certainty": 0.5,
+                    "complexity": 0.5,
+                    "fatigue": 0.0,
+                },
+            },
+            "theta": {
+                "cn_name": "元認知",
+                "initial_values": {
+                    "novelty": 0.5,
+                    "complexity": 0.5,
+                    "ambiguity": 0.5,
+                    "dimension_fit": 0.5,
+                    "creation_urge": 0.0,
+                    "theta_negativity": 0.0,
+                    "correction_urge": 0.0,
+                    "audit_intensity": 0.0,
+                },
+            },
+            "zeta": {
+                "cn_name": "意識流",
+                "initial_values": {
+                    "narrative_flow": 0.5,
+                    "temporal_coherence": 0.5,
+                    "identity": 0.5,
+                    "memory_access": 0.5,
+                },
+            },
         }
-        
+
         # 動態初始化所有定義在配置中的維度
         self.dimensions = {}
         source = dim_defs if dim_defs else DEFAULT_DIMENSIONS
@@ -148,17 +205,18 @@ class StateMatrix4D:
                 cn_name=d_cfg.get("cn_name", name),
                 values=d_cfg.get("initial_values", {}).copy(),
                 weight=d_cfg.get("weight", 1.0),
-                coordinate=tuple(d_cfg.get("initial_coordinate", [0.0, 0.0, 0.0]))
+                coordinate=tuple(d_cfg.get("initial_coordinate", [0.0, 0.0, 0.0])),
             )
-            setattr(self, name, state) # 保持 self.alpha 等屬性兼容性
+            setattr(self, name, state)  # 保持 self.alpha 等屬性兼容性
             self.dimensions[name] = state
 
     def _setup_systems(self) -> None:
         """設置子系統與矩陣常數"""
         from app_config_loader import get_formula_config
+
         matrix_conf = get_formula_config("matrix")
         limits = matrix_conf.get("system_limits", {})
-        
+
         self.misallocation_log = []
         self.correction_audit_trail = []
         self.max_misallocation_log = limits.get("max_misallocation_log", 100)
@@ -166,12 +224,11 @@ class StateMatrix4D:
         self.unclassified_buffer = []
         self.buffer_tracking = {}
         self.axis_creation_log = []
-        
+
         # 加載影響矩陣 (Influence Matrix)
         spatial_conf = get_formula_config("spatial")
         self.influence_matrix = self.config.get(
-            "influence_matrix", 
-            spatial_conf.get("influence_matrix", {})
+            "influence_matrix", spatial_conf.get("influence_matrix", {})
         )
         if not self.influence_matrix:
             self.influence_matrix = {
@@ -183,13 +240,14 @@ class StateMatrix4D:
                 "theta": {"alpha": 0.3, "beta": 0.4, "gamma": 0.3, "delta": 0.2, "epsilon": 0.4},
                 "zeta": {"theta": 0.3, "delta": 0.2},
             }
-        
+
         self.semantic_anchors = {}
         self._init_semantic_anchors()
 
     def _setup_history(self) -> None:
         """設置歷史紀錄與追蹤"""
         from app_config_loader import get_formula_config
+
         matrix_conf = get_formula_config("matrix")
         limits = matrix_conf.get("system_limits", {})
 
@@ -251,50 +309,124 @@ class StateMatrix4D:
                 name="alpha",
                 label="生理",
                 description="Physical state: energy, comfort, arousal, rest",
-                semantic_vector=self._text_to_vector("energy comfort arousal physical body", dim_vector_size),
+                semantic_vector=self._text_to_vector(
+                    "energy comfort arousal physical body", dim_vector_size
+                ),
                 keywords=["energy", "comfort", "arousal", "tired", "body", "physical", "health"],
             ),
             "beta": AxisSemanticAnchor(
                 name="beta",
                 label="認知",
                 description="Cognitive state: curiosity, focus, confusion, learning",
-                semantic_vector=self._text_to_vector("think learn focus curiosity understanding", dim_vector_size),
-                keywords=["think", "learn", "focus", "curious", "confused", "understand", "remember", "decide"],
+                semantic_vector=self._text_to_vector(
+                    "think learn focus curiosity understanding", dim_vector_size
+                ),
+                keywords=[
+                    "think",
+                    "learn",
+                    "focus",
+                    "curious",
+                    "confused",
+                    "understand",
+                    "remember",
+                    "decide",
+                ],
             ),
             "gamma": AxisSemanticAnchor(
                 name="gamma",
                 label="情感",
                 description="Emotional state: happiness, sadness, anger, fear, love",
-                semantic_vector=self._text_to_vector("happy sad angry fear love emotional", dim_vector_size),
-                keywords=["happy", "sad", "angry", "fear", "love", "joy", "hurt", "emotion", "feeling"],
+                semantic_vector=self._text_to_vector(
+                    "happy sad angry fear love emotional", dim_vector_size
+                ),
+                keywords=[
+                    "happy",
+                    "sad",
+                    "angry",
+                    "fear",
+                    "love",
+                    "joy",
+                    "hurt",
+                    "emotion",
+                    "feeling",
+                ],
             ),
             "delta": AxisSemanticAnchor(
                 name="delta",
                 label="社交",
                 description="Social state: attention, bond, trust, presence, intimacy",
-                semantic_vector=self._text_to_vector("together social trust bond connection", dim_vector_size),
-                keywords=["together", "social", "trust", "bond", "connection", "friend", "alone", "community"],
+                semantic_vector=self._text_to_vector(
+                    "together social trust bond connection", dim_vector_size
+                ),
+                keywords=[
+                    "together",
+                    "social",
+                    "trust",
+                    "bond",
+                    "connection",
+                    "friend",
+                    "alone",
+                    "community",
+                ],
             ),
             "epsilon": AxisSemanticAnchor(
                 name="epsilon",
                 label="數理",
                 description="Mathematical/logical state: precision, abstraction, certainty",
-                semantic_vector=self._text_to_vector("number calculation logic precise math", dim_vector_size),
-                keywords=["calculate", "number", "math", "precise", "logic", "answer", "compute", "result"],
+                semantic_vector=self._text_to_vector(
+                    "number calculation logic precise math", dim_vector_size
+                ),
+                keywords=[
+                    "calculate",
+                    "number",
+                    "math",
+                    "precise",
+                    "logic",
+                    "answer",
+                    "compute",
+                    "result",
+                ],
             ),
             "theta": AxisSemanticAnchor(
                 name="theta",
                 label="元認知",
                 description="Meta-cognitive state: novelty, complexity, abstraction, creation",
-                semantic_vector=self._text_to_vector("think about thinking reflection analysis strategy plan", dim_vector_size),
-                keywords=["think", "reflection", "analyze", "meta", "novel", "create", "abstract", "complex", "strategy", "plan", "decision"],
+                semantic_vector=self._text_to_vector(
+                    "think about thinking reflection analysis strategy plan", dim_vector_size
+                ),
+                keywords=[
+                    "think",
+                    "reflection",
+                    "analyze",
+                    "meta",
+                    "novel",
+                    "create",
+                    "abstract",
+                    "complex",
+                    "strategy",
+                    "plan",
+                    "decision",
+                ],
             ),
             "zeta": AxisSemanticAnchor(
                 name="zeta",
                 label="意識流",
                 description="Consciousness flow: temporal coherence, memory, narrative, identity",
-                semantic_vector=self._text_to_vector("time memory story identity continuous self history", dim_vector_size),
-                keywords=["time", "memory", "story", "identity", "continuous", "self", "history", "narrative", "temporal", "flow"],
+                semantic_vector=self._text_to_vector(
+                    "time memory story identity continuous self history", dim_vector_size
+                ),
+                keywords=[
+                    "time",
+                    "memory",
+                    "story",
+                    "identity",
+                    "continuous",
+                    "self",
+                    "history",
+                    "narrative",
+                    "temporal",
+                    "flow",
+                ],
             ),
         }
 
@@ -330,18 +462,16 @@ class StateMatrix4D:
         )
 
         if fatigue > 0.7:
-            self.beta.values["focus"] = max(
-                0, self.beta.values.get("focus", 0.5) - fatigue * 0.1
-            )
-            self.gamma.values["calm"] = max(
-                0, self.gamma.values.get("calm", 0.5) - fatigue * 0.05
-            )
+            self.beta.values["focus"] = max(0, self.beta.values.get("focus", 0.5) - fatigue * 0.1)
+            self.gamma.values["calm"] = max(0, self.gamma.values.get("calm", 0.5) - fatigue * 0.05)
 
     # =============================================================================
     # [Task N.23-THETA] Meta-Cognitive Axis (θ) - 軸管理與分配決策
     # =============================================================================
 
-    def _meta_allocate_policy(self, semantic_vector: List[float], label: str = "") -> AllocateDecision:
+    def _meta_allocate_policy(
+        self, semantic_vector: List[float], label: str = ""
+    ) -> AllocateDecision:
         """
         使用 AllocationPolicy 的分配決策（Phase 2 重構結果）
 
@@ -441,17 +571,17 @@ class StateMatrix4D:
 
     def meta_allocate(self, semantic_vector: List[float], label: str = "") -> AllocateDecision:
         """
-        θ 轴分析输入，决定如何分配到状态空间。
+                θ 轴分析输入，决定如何分配到状态空间。
 
-        默認使用 AllocationPolicy 重構版本。
-        可以切換到 legacy 版本以保持完全向後兼容。
+                默認使用 AllocationPolicy 重構版本。
+                可以切換到 legacy 版本以保持完全向後兼容。
 
-        Args:
-            semantic_vector: 输入的语义向量（低维，32维）
-            label: 可选的输入标签/关键词
+                Args:
+                    semantic_vector: 输入的语义向量（低维，32维）
+                    label: 可选的输入标签/关键词
 
-Returns:
-            AllocateDecision: 分配決策
+        Returns:
+                    AllocateDecision: 分配決策
         """
         return self._meta_allocate_policy(semantic_vector, label)
 
@@ -465,7 +595,11 @@ Returns:
             self.theta.update(creation_urge=min(1.0, 0.5 + count * 0.05))
 
     def create_axis(
-        self, name: str, label: str, semantic_vector: List[float], initial_values: Optional[Dict[str, float]] = None
+        self,
+        name: str,
+        label: str,
+        semantic_vector: List[float],
+        initial_values: Optional[Dict[str, float]] = None,
     ) -> DimensionState:
         """
         动态创建新轴 / Dynamically create a new axis
@@ -480,7 +614,9 @@ Returns:
             新创建的 DimensionState
         """
         if name in self.dimensions:
-            logger.warning(f"[Theta] Axis '{name}' already exists, returning existing", exc_info=True)
+            logger.warning(
+                f"[Theta] Axis '{name}' already exists, returning existing", exc_info=True
+            )
             return self.dimensions[name]
 
         new_dim = DimensionState(
@@ -509,7 +645,9 @@ Returns:
         logger.info(f"[Theta] Created new axis '{name}' ({label})")
         return new_dim
 
-    def execute_decision(self, decision: AllocateDecision, input_vector: List[float]) -> Dict[str, Any]:
+    def execute_decision(
+        self, decision: AllocateDecision, input_vector: List[float]
+    ) -> Dict[str, Any]:
         """
         执行 θ 的分配决策 / Execute the allocation decision made by θ
 
@@ -591,7 +729,9 @@ Returns:
         return {
             "theta_values": self.theta.values.copy(),
             "axis_count": len(self.dimensions),
-            "semantic_anchors": {k: {"name": v.name, "label": v.label} for k, v in self.semantic_anchors.items()},
+            "semantic_anchors": {
+                k: {"name": v.name, "label": v.label} for k, v in self.semantic_anchors.items()
+            },
             "buffer_tracking": self.buffer_tracking.copy(),
             "axis_creation_log": self.axis_creation_log[-5:],
             "buffer_size": len(self.unclassified_buffer),
@@ -629,8 +769,10 @@ Returns:
             self.theta.values["correction_urge"] = min(
                 1.0, self.theta.values.get("correction_urge", 0.0) + strength * 0.3
             )
-            logger.info(f"[Theta-Neg] Negativity triggered: {self.theta.values['theta_negativity']:.2f}, "
-                        f"correction_urge: {self.theta.values['correction_urge']:.2f}")
+            logger.info(
+                f"[Theta-Neg] Negativity triggered: {self.theta.values['theta_negativity']:.2f}, "
+                f"correction_urge: {self.theta.values['correction_urge']:.2f}"
+            )
 
     def detect_misallocated_points(self) -> List[Dict[str, Any]]:
         """
@@ -678,23 +820,28 @@ Returns:
                 ideal_resonance = self._estimate_ideal_resonance(axis_name, dominant_key)
 
                 if ideal_resonance > 0 and current_resonance < ideal_resonance * 0.7:
-                    misallocated.append({
-                        "point_id": f"hist_{absolute_idx}_{axis_name}",
-                        "source_axis": axis_name,
-                        "original_key": dominant_key,
-                        "original_value": values.get(dominant_key, 0.5),
-                        "current_resonance": current_resonance,
-                        "ideal_resonance": ideal_resonance,
-                        "drift_ratio": current_resonance / max(0.01, ideal_resonance),
-                        "misallocation_confidence": 1.0 - (current_resonance / max(0.01, ideal_resonance)),
-                    })
+                    misallocated.append(
+                        {
+                            "point_id": f"hist_{absolute_idx}_{axis_name}",
+                            "source_axis": axis_name,
+                            "original_key": dominant_key,
+                            "original_value": values.get(dominant_key, 0.5),
+                            "current_resonance": current_resonance,
+                            "ideal_resonance": ideal_resonance,
+                            "drift_ratio": current_resonance / max(0.01, ideal_resonance),
+                            "misallocation_confidence": 1.0
+                            - (current_resonance / max(0.01, ideal_resonance)),
+                        }
+                    )
 
         self.misallocation_log.extend(misallocated[:20])
         if len(self.misallocation_log) > self.max_misallocation_log:
-            self.misallocation_log = self.misallocation_log[-self.max_misallocation_log:]
+            self.misallocation_log = self.misallocation_log[-self.max_misallocation_log :]
 
-        logger.info(f"[Theta-Neg] Detected {len(misallocated)} misallocated points, "
-                    f"theta_negativity={self.theta.values.get('theta_negativity',0):.2f}")
+        logger.info(
+            f"[Theta-Neg] Detected {len(misallocated)} misallocated points, "
+            f"theta_negativity={self.theta.values.get('theta_negativity',0):.2f}"
+        )
 
         return misallocated
 
@@ -716,6 +863,7 @@ Returns:
             return []
 
         from core.allocation.negativity import NegativityDetector
+
         detector = NegativityDetector(timeline=timeline)
         result = detector.detect()
         return result.items
@@ -787,10 +935,14 @@ Returns:
         }
         self.correction_audit_trail.append(correction)
         if len(self.correction_audit_trail) > self.max_audit_trail:
-            self.correction_audit_trail = self.correction_audit_trail[-self.max_audit_trail:]
+            self.correction_audit_trail = self.correction_audit_trail[-self.max_audit_trail :]
 
-        self.theta.values["theta_negativity"] = max(0.0, self.theta.values.get("theta_negativity", 0) - 0.1)
-        self.theta.values["correction_urge"] = max(0.0, self.theta.values.get("correction_urge", 0) - 0.15)
+        self.theta.values["theta_negativity"] = max(
+            0.0, self.theta.values.get("theta_negativity", 0) - 0.1
+        )
+        self.theta.values["correction_urge"] = max(
+            0.0, self.theta.values.get("correction_urge", 0) - 0.15
+        )
 
         logger.info(f"[Theta-Neg] Corrected {point_id}: {source_axis} → {target_axis}")
 
@@ -814,8 +966,12 @@ Returns:
             if result.get("status") == "corrected":
                 corrected_count += 1
 
-        self.theta.values["theta_negativity"] = max(0.0, self.theta.values.get("theta_negativity", 0) - corrected_count * 0.05)
-        self.theta.values["correction_urge"] = max(0.0, self.theta.values.get("correction_urge", 0) - corrected_count * 0.1)
+        self.theta.values["theta_negativity"] = max(
+            0.0, self.theta.values.get("theta_negativity", 0) - corrected_count * 0.05
+        )
+        self.theta.values["correction_urge"] = max(
+            0.0, self.theta.values.get("correction_urge", 0) - corrected_count * 0.1
+        )
 
         return {
             "status": "completed",
@@ -830,12 +986,30 @@ Returns:
         key_lower = key.lower()
 
         key_to_axis = {
-            "energy": "alpha", "comfort": "alpha", "arousal": "alpha", "tension": "alpha",
-            "curiosity": "beta", "focus": "beta", "confusion": "beta", "learning": "beta", "clarity": "beta",
-            "happiness": "gamma", "sadness": "gamma", "anger": "gamma", "fear": "gamma",
-            "surprise": "gamma", "trust": "gamma", "calm": "gamma",
-            "bond": "delta", "attention": "delta", "presence": "delta", "engagement": "delta",
-            "logic": "epsilon", "precision": "epsilon", "certainty": "epsilon", "complexity": "epsilon",
+            "energy": "alpha",
+            "comfort": "alpha",
+            "arousal": "alpha",
+            "tension": "alpha",
+            "curiosity": "beta",
+            "focus": "beta",
+            "confusion": "beta",
+            "learning": "beta",
+            "clarity": "beta",
+            "happiness": "gamma",
+            "sadness": "gamma",
+            "anger": "gamma",
+            "fear": "gamma",
+            "surprise": "gamma",
+            "trust": "gamma",
+            "calm": "gamma",
+            "bond": "delta",
+            "attention": "delta",
+            "presence": "delta",
+            "engagement": "delta",
+            "logic": "epsilon",
+            "precision": "epsilon",
+            "certainty": "epsilon",
+            "complexity": "epsilon",
         }
 
         if key_lower in key_to_axis:
@@ -899,7 +1073,9 @@ Returns:
                 key = self._dominant_key_from_vector(vector)
                 self.dimensions[axis_name].update(**{key: min(1.0, avg)})
                 count += 1
-        self.unclassified_buffer = [e for e in self.unclassified_buffer if e.get("label") != axis_name]
+        self.unclassified_buffer = [
+            e for e in self.unclassified_buffer if e.get("label") != axis_name
+        ]
         logger.info(f"[Theta] Migrated {count} buffer entries to axis '{axis_name}'")
         return count
 
@@ -921,6 +1097,7 @@ Returns:
         # --- Phase 2: Global State Store Integration ---
         try:
             from core.system.state_store import state_store
+
             dim_state = self.dimensions[dimension_name]
             state_store.update_state(dimension_name, dim_state.values.copy())
         except Exception as e:
@@ -931,7 +1108,9 @@ Returns:
         for callback in self._change_callbacks:
             try:
                 callback(dimension_name, dim_state.values.copy())
-            except Exception as e:  # broad exception acceptable: callback errors should not break state updates
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: callback errors should not break state updates
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         # Check thresholds
@@ -958,6 +1137,7 @@ Returns:
         """獲取關聯的 TemporalState（用於雙軌整合）"""
         if not hasattr(self, "_temporal_state"):
             from core.state.temporal import TemporalState
+
             self._temporal_state = TemporalState(max_size=self.max_history)
             self._temporal_synced = False
         return self._temporal_state
@@ -984,7 +1164,9 @@ Returns:
             if avg >= threshold:
                 try:
                     callback()
-                except Exception as e:  # broad exception acceptable: threshold callbacks should not break checks
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: threshold callbacks should not break checks
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
     # =============================================================================
@@ -998,15 +1180,15 @@ Returns:
         """
         source_coord = self.dimensions[source].coordinate
         target_coord = self.dimensions[target].coordinate
-        
+
         # Euclidean distance
         distance = sum((a - b) ** 2 for a, b in zip(source_coord, target_coord)) ** 0.5
-        
+
         # Inverse square law for cognitive gravity (with a softening parameter to avoid division by zero)
         softening = 10.0
         # Normalize so that average distances yield ~1.0, closer > 1.0, further < 1.0
         influence_factor = 25.0 / (distance**2 + softening)
-        
+
         return max(0.5, min(2.0, influence_factor))
 
     def compute_influences(self) -> Dict[str, Dict[str, float]]:
@@ -1032,7 +1214,13 @@ Returns:
                 spatial_factor = self.compute_spatial_influence_factor(source_name, target_name)
 
                 # Calculate actual influence (incorporating spatial topology)
-                influence = base_strength * source_avg * source_dim.weight * target_dim.weight * spatial_factor
+                influence = (
+                    base_strength
+                    * source_avg
+                    * source_dim.weight
+                    * target_dim.weight
+                    * spatial_factor
+                )
                 computed[source_name][target_name] = influence
 
                 # Apply influence
@@ -1044,13 +1232,9 @@ Returns:
         """应用影响 / Apply influence from source to target dimension"""
         try:
             from core.engine.influence_applicator import get_applicator
+
             applier = get_applicator()
-            applier.apply(
-                source, target,
-                self.dimensions[source],
-                self.dimensions[target],
-                amount
-            )
+            applier.apply(source, target, self.dimensions[source], self.dimensions[target], amount)
         except Exception:
             logger.warning("Failed to apply influence from %s to %s", source, target, exc_info=True)
 
@@ -1083,7 +1267,6 @@ Returns:
             "zeta": {**self.zeta.values.copy(), "coordinate": self.zeta.coordinate},
         }
 
-
     def get_dimension_averages(self) -> Dict[str, float]:
         """获取所有维度平均值 / Get averages for all dimensions"""
         return {
@@ -1096,7 +1279,7 @@ Returns:
             "zeta": self.zeta.get_average(),
         }
 
-# =============================================================================
+    # =============================================================================
     # ANGELA-MATRIX: [L4] [αβγδ] [A] [L9+]
     # [Task N.20.1] 原生空間推理 — delegated to cognitive_operations.py
     # =============================================================================
@@ -1118,16 +1301,19 @@ Returns:
         """獲取 4D 矩陣的完整座標映射"""
         return {name: state.coordinate for name, state in self.dimensions.items()}
 
-
-    def execute_thought_chain(self, dimension: str, instructions: List[Tuple[CognitiveOp, float]]) -> float:
+    def execute_thought_chain(
+        self, dimension: str, instructions: List[Tuple[CognitiveOp, float]]
+    ) -> float:
         """
         順暢地執行一連串的「空間思維鏈」。
         Execute a chain of "Spatial Thoughts" smoothly.
         """
-        logger.info(f"🧠 [ThoughtChain] Starting reasoning chain on '{dimension}' with {len(instructions)} steps.")
+        logger.info(
+            f"🧠 [ThoughtChain] Starting reasoning chain on '{dimension}' with {len(instructions)} steps."
+        )
         for op, magnitude in instructions:
             self.perform_spatial_reasoning(dimension, op, magnitude)
-        
+
         result = self.get_dimension_value(dimension)
         logger.info(f"✨ [ThoughtChain] Reasoning complete. Resulting scalar: {result}")
         return result
@@ -1175,8 +1361,7 @@ Returns:
             "wellbeing": self.compute_wellbeing(),
             "arousal": self.alpha.values.get("arousal", 0.5),
             "valence": (
-                self.gamma.values.get("happiness", 0.5)
-                - self.gamma.values.get("sadness", 0.0)
+                self.gamma.values.get("happiness", 0.5) - self.gamma.values.get("sadness", 0.0)
             ),
             "dominant_emotion": self.gamma.get_dominant(),
             "alpha": self.alpha.values.copy(),
@@ -1321,7 +1506,9 @@ Returns:
                     try:
                         callback()
                     except Exception as e:
-                        logger.warning(f"Threshold callback failed for {dimension}: {e}", exc_info=True)
+                        logger.warning(
+                            f"Threshold callback failed for {dimension}: {e}", exc_info=True
+                        )
 
     def export_for_llm(self, eta_state: Optional[Any] = None) -> Dict[str, Any]:
         """導出完整 7 維狀態 + θ + η，供 LLM prompt 使用。"""
@@ -1358,6 +1545,7 @@ Returns:
 
         guidance = []
         from core.system.config.tiered_loader import get_config
+
         _beh_conf = get_config("standard/behavior/behavior")
         _bio_thresh = _beh_conf.get("biological_thresholds", {})
         if avg_energy < _bio_thresh.get("energy_tone_low", 0.4):
@@ -1380,10 +1568,15 @@ Returns:
                 "correction_urge": correction_urge,
             },
             "eta": eta_data,
-            "temporal_trend": self._get_temporal_state().get_trend() if hasattr(self, "_temporal_state") and self._temporal_state else "stable",
+            "temporal_trend": (
+                self._get_temporal_state().get_trend()
+                if hasattr(self, "_temporal_state") and self._temporal_state
+                else "stable"
+            ),
             "wellbeing_score": self.compute_wellbeing(),
             "guidance": guidance,
         }
+
 
 # Example usage
 if __name__ == "__main__":
@@ -1447,8 +1640,10 @@ if __name__ == "__main__":
     matrix.apply_epsilon_influence()
 
     theta_analysis = matrix.get_theta_analysis()
-    logger.info(f"   θ State: novelty={theta_analysis['theta_values']['novelty']:.2f}, "
-                f"creation_urge={theta_analysis['theta_values']['creation_urge']:.2f}")
+    logger.info(
+        f"   θ State: novelty={theta_analysis['theta_values']['novelty']:.2f}, "
+        f"creation_urge={theta_analysis['theta_values']['creation_urge']:.2f}"
+    )
     logger.info(f"   Axis count: {theta_analysis['axis_count']}")
 
     logger.info("\n系統演示完成 / Demo complete")

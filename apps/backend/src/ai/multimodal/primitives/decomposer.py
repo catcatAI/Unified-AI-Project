@@ -1,4 +1,5 @@
 """Spatial decomposer: extracts points, lines, planes, circles, arcs from images."""
+
 import math
 import os
 import sys
@@ -18,7 +19,9 @@ from ai.multimodal.primitives.primitive_types import (
 )
 
 
-def grid_colors(arr: np.ndarray, grid_h: int = 4, grid_w: int = 4) -> List[List[Tuple[int, int, int]]]:
+def grid_colors(
+    arr: np.ndarray, grid_h: int = 4, grid_w: int = 4
+) -> List[List[Tuple[int, int, int]]]:
     """Extract dominant color per grid cell."""
     h, w, _ = arr.shape
     cell_h = h // grid_h
@@ -38,8 +41,7 @@ def grid_colors(arr: np.ndarray, grid_h: int = 4, grid_w: int = 4) -> List[List[
     return colors
 
 
-def find_regions(grid: List[List[Tuple[int, int, int]]],
-                 threshold: int = 50) -> List[dict]:
+def find_regions(grid: List[List[Tuple[int, int, int]]], threshold: int = 50) -> List[dict]:
     """Find connected regions of similar color."""
     gh = len(grid)
     gw = len(grid[0])
@@ -85,8 +87,7 @@ def fit_circle(points_xy: List[Tuple[float, float]]) -> Tuple[float, float, floa
     return float(cx), float(cy), r
 
 
-def extract_arcs_from_edges(arr: np.ndarray, grid_size: int = 4,
-                            max_arcs: int = 3) -> List[Arc]:
+def extract_arcs_from_edges(arr: np.ndarray, grid_size: int = 4, max_arcs: int = 3) -> List[Arc]:
     """Extract curved arcs from edge curvature analysis."""
     gray = np.mean(arr, axis=2).astype(np.uint8)
     pil = Image.fromarray(gray)
@@ -112,8 +113,9 @@ def extract_arcs_from_edges(arr: np.ndarray, grid_size: int = 4,
         sector_coords = coords[mask]
         if len(sector_coords) >= 5:
             # Compute curvature: variance of distances from center
-            dists = np.sqrt((sector_coords[:, 0] - center_y) ** 2 +
-                           (sector_coords[:, 1] - center_x) ** 2)
+            dists = np.sqrt(
+                (sector_coords[:, 0] - center_y) ** 2 + (sector_coords[:, 1] - center_x) ** 2
+            )
             mean_dist = np.mean(dists) / min(h, w)
             mean_angle = (a0 + a1) / 2
             # Sample color
@@ -134,15 +136,18 @@ def extract_arcs_from_edges(arr: np.ndarray, grid_size: int = 4,
     return arcs
 
 
-def decompose_spatial(img_arr: np.ndarray, grid_size: int = 6,
-                      color_threshold: int = 50) -> DrawingInstructions:
+def decompose_spatial(
+    img_arr: np.ndarray, grid_size: int = 6, color_threshold: int = 50
+) -> DrawingInstructions:
     arr = img_arr.astype(np.float32)
     h, w = arr.shape[:2]
 
     g_colors = grid_colors(arr, grid_size, grid_size)
     regions = find_regions(g_colors, threshold=color_threshold)
 
-    planes, circles = _extract_planes_and_circles(arr, g_colors, regions, h, w, grid_size, color_threshold)
+    planes, circles = _extract_planes_and_circles(
+        arr, g_colors, regions, h, w, grid_size, color_threshold
+    )
     points = _extract_boundary_points(arr, regions, h, w, grid_size)
     lines = _extract_edge_lines(arr, h, w)
     arcs = extract_arcs_from_edges(arr, grid_size, max_arcs=3)
@@ -150,9 +155,12 @@ def decompose_spatial(img_arr: np.ndarray, grid_size: int = 6,
     bg_color = regions[0]["color"] if regions else (128, 128, 128)
 
     return DrawingInstructions(
-        points=points[:15], lines=lines[:10], planes=planes[:5],
-        circles=circles[:4], arcs=arcs[:3],
-        background_color=bg_color
+        points=points[:15],
+        lines=lines[:10],
+        planes=planes[:5],
+        circles=circles[:4],
+        arcs=arcs[:3],
+        background_color=bg_color,
     )
 
 
@@ -174,11 +182,19 @@ def _extract_planes_and_circles(arr, g_colors, regions, h, w, grid_size, color_t
         ny0 = min_y * cell_h / h
         nx1 = (max_x + 1) * cell_w / w
         ny1 = (max_y + 1) * cell_h / h
-        planes.append(Plane(
-            [Point(nx0, ny0, (0, 0, 0), 0), Point(nx1, ny0, (0, 0, 0), 0),
-             Point(nx1, ny1, (0, 0, 0), 0), Point(nx0, ny1, (0, 0, 0), 0)],
-            color, (0, 0, 0), 0.01
-        ))
+        planes.append(
+            Plane(
+                [
+                    Point(nx0, ny0, (0, 0, 0), 0),
+                    Point(nx1, ny0, (0, 0, 0), 0),
+                    Point(nx1, ny1, (0, 0, 0), 0),
+                    Point(nx0, ny1, (0, 0, 0), 0),
+                ],
+                color,
+                (0, 0, 0),
+                0.01,
+            )
+        )
         pts = [((cx + 0.5) * cell_w / w, (cy + 0.5) * cell_h / h) for cy, cx in cells]
         ccx, ccy, cr = fit_circle(pts)
         if cr > 0.02:
@@ -206,6 +222,7 @@ def _extract_boundary_points(arr, regions, h, w, grid_size):
 
 def _extract_edge_lines(arr, h, w):
     from PIL import ImageFilter
+
     gray = np.mean(arr, axis=2).astype(np.uint8)
     edge_img = Image.fromarray(gray).filter(ImageFilter.FIND_EDGES)
     edge_arr = np.array(edge_img)
@@ -225,20 +242,39 @@ def _extract_edge_lines(arr, h, w):
             cy = float(np.mean(sector[:, 0])) / h
             cx = float(np.mean(sector[:, 1])) / w
             ry, rx = int(np.mean(sector[:, 0])), int(np.mean(sector[:, 1]))
-            color = (int(arr[min(ry, h-1), min(rx, w-1), 0]),
-                     int(arr[min(ry, h-1), min(rx, w-1), 1]),
-                     int(arr[min(ry, h-1), min(rx, w-1), 2]))
+            color = (
+                int(arr[min(ry, h - 1), min(rx, w - 1), 0]),
+                int(arr[min(ry, h - 1), min(rx, w - 1), 1]),
+                int(arr[min(ry, h - 1), min(rx, w - 1), 2]),
+            )
             if prev is not None:
-                lines.append(Line(
-                    Point(prev[0], prev[1], color, 0.03),
-                    Point(cx, cy, color, 0.03), 0.015, color))
+                lines.append(
+                    Line(
+                        Point(prev[0], prev[1], color, 0.03),
+                        Point(cx, cy, color, 0.03),
+                        0.015,
+                        color,
+                    )
+                )
             prev = (cx, cy, color)
     return lines
 
 
 if __name__ == "__main__":
     import json
-    data_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "..", "..", "data", "multimodal", "cifar10")
+
+    data_dir = os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "..",
+        "..",
+        "..",
+        "..",
+        "..",
+        "data",
+        "multimodal",
+        "cifar10",
+    )
     idx = json.load(open(os.path.join(data_dir, "index.json")))
 
     for cls in idx["classes"][:5]:
@@ -248,4 +284,6 @@ if __name__ == "__main__":
         instr = decompose_spatial(img)
         vec = instr.to_vector()
         nz = np.count_nonzero(vec)
-        print(f"{cls}: {len(instr.points)}pts {len(instr.lines)}lines {len(instr.planes)}planes {len(instr.circles)}circles {len(instr.arcs)}arcs vec={len(vec)} nonzero={nz}")
+        print(
+            f"{cls}: {len(instr.points)}pts {len(instr.lines)}lines {len(instr.planes)}planes {len(instr.circles)}circles {len(instr.arcs)}arcs vec={len(vec)} nonzero={nz}"
+        )

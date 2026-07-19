@@ -213,7 +213,9 @@ class PhysiologicalTactileSystem:
                 await self._adapt_receptors()
                 await self._decay_stimuli()
                 await asyncio.sleep(loop_sleep("tactile_update", 0.1))  # 100ms update interval
-            except Exception as e:  # broad exception acceptable: tactile update loop must be resilient
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: tactile update loop must be resilient
                 logger.error("Physiological tactile update loop error: %s", e, exc_info=True)
                 await asyncio.sleep(loop_sleep("tactile_update", 0.1))
 
@@ -318,7 +320,9 @@ class PhysiologicalTactileSystem:
         for callback in self._on_stimulus_callbacks:
             try:
                 callback(stimulus)
-            except Exception as e:  # broad exception acceptable: stimulus callbacks should not break stimulus processing
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: stimulus callbacks should not break stimulus processing
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
         # Check thresholds
@@ -330,7 +334,7 @@ class PhysiologicalTactileSystem:
             activated_receptors=len(relevant_receptors),
             duration=stimulus.duration,
             timestamp=datetime.now(),
-            spatial_token=(*stimulus.location.coordinate, datetime.now().timestamp())
+            spatial_token=(*stimulus.location.coordinate, datetime.now().timestamp()),
         )
 
     def _check_thresholds(self, body_part: BodyPart, intensity: float) -> None:
@@ -339,14 +343,18 @@ class PhysiologicalTactileSystem:
             for callback in self._on_threshold_callbacks[body_part]:
                 try:
                     callback(intensity)
-                except Exception as e:  # broad exception acceptable: threshold callbacks should not break threshold checking
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: threshold callbacks should not break threshold checking
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
     def register_stimulus_callback(self, callback: Callable[[TactileStimulus], None]) -> None:
         """Register a callback for stimulus events"""
         self._on_stimulus_callbacks.append(callback)
 
-    def register_threshold_callback(self, body_part: BodyPart, callback: Callable[[float], None]) -> None:
+    def register_threshold_callback(
+        self, body_part: BodyPart, callback: Callable[[float], None]
+    ) -> None:
         """Register a callback for threshold events on a specific body part"""
         if body_part not in self._on_threshold_callbacks:
             self._on_threshold_callbacks[body_part] = []

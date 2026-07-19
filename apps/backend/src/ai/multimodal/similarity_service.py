@@ -119,6 +119,7 @@ class MultimodalSimilarityService:
         """
         try:
             import numpy as np
+
             data = np.load(weights_path, allow_pickle=False)
         except Exception as e:
             logger.warning("Failed to load weights from %s: %s", weights_path, e)
@@ -152,6 +153,7 @@ class MultimodalSimilarityService:
             from pathlib import Path
 
             import numpy as np
+
             vis = self._latent_space._projections.get("vision", {})
             aud = self._latent_space._projections.get("audio", {})
             save_data = {
@@ -179,7 +181,9 @@ class MultimodalSimilarityService:
         self._latent_space.reset()
         self._items.clear()
 
-    def evaluate_image_generation(self, image_data: bytes, item_id: str) -> Optional[Dict[str, float]]:
+    def evaluate_image_generation(
+        self, image_data: bytes, item_id: str
+    ) -> Optional[Dict[str, float]]:
         """Encode → decode → evaluate SSIM for a registered image.
 
         Returns {'ssim': float} or None if item not found.
@@ -197,7 +201,9 @@ class MultimodalSimilarityService:
         ssim_val = ssim(np.array(original_pil), np.array(decoded_pil))
         return {"ssim": ssim_val}
 
-    def evaluate_audio_generation(self, audio_data: bytes, item_id: str) -> Optional[Dict[str, float]]:
+    def evaluate_audio_generation(
+        self, audio_data: bytes, item_id: str
+    ) -> Optional[Dict[str, float]]:
         """Encode → decode → evaluate SNR for a registered audio.
 
         Returns {'snr': float} or None if item not found.
@@ -216,7 +222,10 @@ class MultimodalSimilarityService:
                 raw = wf.readframes(wf.getnframes())
                 arr = np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768.0
         except Exception:
-            logger.warning("Wave decode failed, using raw float32 fallback for audio quality check", exc_info=True)
+            logger.warning(
+                "Wave decode failed, using raw float32 fallback for audio quality check",
+                exc_info=True,
+            )
             arr = np.frombuffer(audio_data, dtype=np.float32).flatten()
         if len(arr) == 0:
             return None
@@ -224,10 +233,13 @@ class MultimodalSimilarityService:
         snr_val = snr(arr[:min_len], wav[:min_len])
         return {"snr": snr_val}
 
-    def full_quality_report(self, image_data: Optional[bytes] = None,
-                            audio_data: Optional[bytes] = None,
-                            image_item: str = "",
-                            audio_item: str = "") -> Dict[str, Any]:
+    def full_quality_report(
+        self,
+        image_data: Optional[bytes] = None,
+        audio_data: Optional[bytes] = None,
+        image_item: str = "",
+        audio_item: str = "",
+    ) -> Dict[str, Any]:
         """Comprehensive quality report for both image and audio.
 
         Evaluates SSIM for image and SNR for audio.

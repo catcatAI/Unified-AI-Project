@@ -76,7 +76,9 @@ class NegativityDetector:
         """觸發 θ 負值，增加 negativity 和 correction_urge。"""
         self.negativity = min(1.0, self.negativity + strength)
         self.correction_urge = min(1.0, self.correction_urge + strength * 0.8)
-        logger.debug(f"Negativity triggered: neg={self.negativity:.2f}, urge={self.correction_urge:.2f}")
+        logger.debug(
+            f"Negativity triggered: neg={self.negativity:.2f}, urge={self.correction_urge:.2f}"
+        )
 
     def detect(self) -> DetectionResult:
         """檢測錯配的點位。"""

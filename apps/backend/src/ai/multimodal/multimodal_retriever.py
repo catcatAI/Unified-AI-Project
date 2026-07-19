@@ -32,8 +32,13 @@ class MultimodalRetriever:
         self._modalities: List[str] = []
         self._metadata: List[Dict[str, Any]] = []
 
-    def add(self, key: str, latent: np.ndarray,
-            modality: str = "", metadata: Optional[Dict[str, Any]] = None) -> None:
+    def add(
+        self,
+        key: str,
+        latent: np.ndarray,
+        modality: str = "",
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """Index a latent vector with a dictionary key."""
         if len(latent) != self.LATENT_DIM:
             logger.warning("Expected latent dim %d, got %d", self.LATENT_DIM, len(latent))
@@ -43,15 +48,18 @@ class MultimodalRetriever:
         self._modalities.append(modality)
         self._metadata.append(metadata or {})
 
-    def add_from_bridge(self, key: str, latent_list: List[float],
-                        modality: str = "",
-                        metadata: Optional[Dict[str, Any]] = None) -> None:
+    def add_from_bridge(
+        self,
+        key: str,
+        latent_list: List[float],
+        modality: str = "",
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """Add from MultimodalBridge-style List[float] latent."""
         arr = np.array(latent_list, dtype=np.float32)
         self.add(key, arr, modality, metadata)
 
-    def search(self, query_latent: np.ndarray, top_k: int = 5
-               ) -> List[Dict[str, Any]]:
+    def search(self, query_latent: np.ndarray, top_k: int = 5) -> List[Dict[str, Any]]:
         """Search index by cosine similarity. Returns top-k results.
 
         Each result: {'key': str, 'score': float, 'modality': str, 'metadata': dict}
@@ -59,8 +67,9 @@ class MultimodalRetriever:
         if len(self._vectors) == 0:
             return []
         if len(query_latent) != self.LATENT_DIM:
-            logger.warning("Query latent dim mismatch: %d != %d",
-                           len(query_latent), self.LATENT_DIM)
+            logger.warning(
+                "Query latent dim mismatch: %d != %d", len(query_latent), self.LATENT_DIM
+            )
             return []
 
         q = query_latent.astype(np.float32)
@@ -74,24 +83,25 @@ class MultimodalRetriever:
         top_indices = np.argsort(scores)[-top_k:][::-1]
         results = []
         for idx in top_indices:
-            results.append({
-                "key": self._keys[idx],
-                "score": float(scores[idx]),
-                "modality": self._modalities[idx],
-                "metadata": self._metadata[idx],
-            })
+            results.append(
+                {
+                    "key": self._keys[idx],
+                    "score": float(scores[idx]),
+                    "modality": self._modalities[idx],
+                    "metadata": self._metadata[idx],
+                }
+            )
         return results
 
-    def search_by_modality(self, query_latent: np.ndarray,
-                           target_modality: str,
-                           top_k: int = 5) -> List[Dict[str, Any]]:
+    def search_by_modality(
+        self, query_latent: np.ndarray, target_modality: str, top_k: int = 5
+    ) -> List[Dict[str, Any]]:
         """Search, filtering results to a specific target modality."""
         all_results = self.search(query_latent, top_k=len(self._vectors))
         filtered = [r for r in all_results if r["modality"] == target_modality]
         return filtered[:top_k]
 
-    def search_by_list(self, query_list: List[float],
-                       top_k: int = 5) -> List[Dict[str, Any]]:
+    def search_by_list(self, query_list: List[float], top_k: int = 5) -> List[Dict[str, Any]]:
         """Search from a List[float] query latent (e.g. from MultimodalBridge)."""
         q = np.array(query_list, dtype=np.float32)
         return self.search(q, top_k)
@@ -123,11 +133,15 @@ class MultimodalRetriever:
             np.save(filepath, np.zeros((0, self.LATENT_DIM), dtype=np.float32))
         meta_path = filepath.replace(".npy", ".json")
         with open(meta_path, "w", encoding="utf-8") as f:
-            json.dump({
-                "keys": self._keys,
-                "modalities": self._modalities,
-                "metadata": self._metadata,
-            }, f, ensure_ascii=False)
+            json.dump(
+                {
+                    "keys": self._keys,
+                    "modalities": self._modalities,
+                    "metadata": self._metadata,
+                },
+                f,
+                ensure_ascii=False,
+            )
 
     def load(self, filepath: str) -> int:
         """Load index from disk (npy + JSON). Returns entry count."""

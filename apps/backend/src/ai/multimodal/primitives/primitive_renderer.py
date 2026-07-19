@@ -50,10 +50,8 @@ class PrimitiveRenderer:
 
     def _draw_line(self, draw: ImageDraw, line: Line):
         """Draw a line."""
-        start = (int(line.start.x * self._canvas_size[0]),
-                 int(line.start.y * self._canvas_size[1]))
-        end = (int(line.end.x * self._canvas_size[0]),
-               int(line.end.y * self._canvas_size[1]))
+        start = (int(line.start.x * self._canvas_size[0]), int(line.start.y * self._canvas_size[1]))
+        end = (int(line.end.x * self._canvas_size[0]), int(line.end.y * self._canvas_size[1]))
         width = max(1, int(line.width * min(self._canvas_size) * 0.05))
         draw.line([start, end], fill=line.color, width=width)
 
@@ -61,8 +59,9 @@ class PrimitiveRenderer:
         """Draw a filled polygon."""
         if not plane.points:
             return
-        points = [(int(p.x * self._canvas_size[0]),
-                    int(p.y * self._canvas_size[1])) for p in plane.points]
+        points = [
+            (int(p.x * self._canvas_size[0]), int(p.y * self._canvas_size[1])) for p in plane.points
+        ]
         draw.polygon(points, fill=plane.fill_color, outline=plane.outline_color)
 
     def _draw_circle(self, draw: ImageDraw, circle: Circle):
@@ -85,11 +84,11 @@ class PrimitiveRenderer:
         width = max(1, int(arc.width * min(self._canvas_size) * 0.03))
         draw.arc(bbox, start_deg, end_deg, fill=arc.color, width=width)
 
-    def render_to_bytes(self, instructions: DrawingInstructions,
-                        format: str = "PNG") -> bytes:
+    def render_to_bytes(self, instructions: DrawingInstructions, format: str = "PNG") -> bytes:
         """Render to image bytes."""
         img = self.render(instructions)
         import io
+
         buffer = io.BytesIO()
         img.save(buffer, format=format)
         return buffer.getvalue()

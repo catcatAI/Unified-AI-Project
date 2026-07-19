@@ -48,8 +48,7 @@ class VectorDecoder:
                 break
 
             candidates = {
-                k: v for k, v in activations.items()
-                if k not in seen and v >= self.min_score
+                k: v for k, v in activations.items() if k not in seen and v >= self.min_score
             }
             if not candidates:
                 break
@@ -62,7 +61,7 @@ class VectorDecoder:
             seen.add(next_key)
 
         output_keys = [k for k in sequence if k not in set(input_keys)] or sequence
-        return self.dictionary.decode(output_keys[:self.dictionary.top_k])
+        return self.dictionary.decode(output_keys[: self.dictionary.top_k])
 
     def _sample(self, candidates: Dict[str, float]) -> Optional[str]:
         if not candidates:

@@ -39,19 +39,29 @@ class ExperienceTracker:
     def add_experience(self, amount: int, source: str = "") -> None:
         self.total_experience += amount
         self.level_experience += amount
-        self.experience_history.append({
-            "amount": amount,
-            "source": source,
-            "timestamp": datetime.now().isoformat(),
-        })
+        self.experience_history.append(
+            {
+                "amount": amount,
+                "source": source,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
         logger.debug(f"Added {amount} experience from {source}")
 
     def get_level(self) -> MaturityLevel:
         levels = [
-            (0, MaturityLevel.L0), (100, MaturityLevel.L1), (300, MaturityLevel.L2),
-            (600, MaturityLevel.L3), (1000, MaturityLevel.L4), (1500, MaturityLevel.L5),
-            (2100, MaturityLevel.L6), (2800, MaturityLevel.L7), (3600, MaturityLevel.L8),
-            (4500, MaturityLevel.L9), (5500, MaturityLevel.L10), (float("inf"), MaturityLevel.L11),
+            (0, MaturityLevel.L0),
+            (100, MaturityLevel.L1),
+            (300, MaturityLevel.L2),
+            (600, MaturityLevel.L3),
+            (1000, MaturityLevel.L4),
+            (1500, MaturityLevel.L5),
+            (2100, MaturityLevel.L6),
+            (2800, MaturityLevel.L7),
+            (3600, MaturityLevel.L8),
+            (4500, MaturityLevel.L9),
+            (5500, MaturityLevel.L10),
+            (float("inf"), MaturityLevel.L11),
         ]
         for threshold, level in levels:
             if self.total_experience < threshold:

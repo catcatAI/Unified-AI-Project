@@ -24,18 +24,23 @@ class InternalBus:
         if not self._task_semaphore.acquire(blocking=False):
             logger.warning("Dropping internal bus task: too many pending")
             return
+
         async def _wrapped():
             try:
                 await callback(message)
             finally:
                 self._task_semaphore.release()
+
         task = asyncio.create_task(_wrapped())
         _pending_tasks.add(task)
         task.add_done_callback(
             lambda t: (
                 _pending_tasks.discard(t),
-                logger.warning("InternalBus task failed: %s", t.exception())
-                if not t.cancelled() and t.exception() else None
+                (
+                    logger.warning("InternalBus task failed: %s", t.exception())
+                    if not t.cancelled() and t.exception()
+                    else None
+                ),
             )
         )
 

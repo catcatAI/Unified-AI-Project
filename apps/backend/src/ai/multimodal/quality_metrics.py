@@ -8,9 +8,9 @@ from typing import Dict, Tuple
 import numpy as np
 
 
-def ssim(img_a: np.ndarray, img_b: np.ndarray,
-         k1: float = 0.01, k2: float = 0.03,
-         L: float = 255.0) -> float:
+def ssim(
+    img_a: np.ndarray, img_b: np.ndarray, k1: float = 0.01, k2: float = 0.03, L: float = 255.0
+) -> float:
     """Structural Similarity Index between two uint8 RGB images.
 
     Computes per-channel SSIM and averages. Uses pixel-wise mean/variance
@@ -37,33 +37,34 @@ def ssim(img_a: np.ndarray, img_b: np.ndarray,
         sigma_ab = np.mean((channel_a - mu_a) * (channel_b - mu_b))
 
         numerator = (2 * mu_a * mu_b + c1) * (2 * sigma_ab + c2)
-        denominator = (mu_a ** 2 + mu_b ** 2 + c1) * (sigma_a + sigma_b + c2)
+        denominator = (mu_a**2 + mu_b**2 + c1) * (sigma_a + sigma_b + c2)
         scores.append(float(numerator / max(denominator, 1e-8)))
     return float(np.mean(scores))
 
 
 def snr(original: np.ndarray, reconstructed: np.ndarray) -> float:
     """Signal-to-Noise Ratio in dB between two float32 arrays."""
-    signal = np.mean(original ** 2)
+    signal = np.mean(original**2)
     noise = np.mean((original - reconstructed) ** 2)
     if noise < 1e-12 or signal < 1e-12:
         return 60.0 if noise < 1e-12 else 0.0
     return float(10.0 * np.log10(signal / noise))
 
 
-def psnr(original: np.ndarray, reconstructed: np.ndarray,
-         peak: float = 255.0) -> float:
+def psnr(original: np.ndarray, reconstructed: np.ndarray, peak: float = 255.0) -> float:
     """Peak Signal-to-Noise Ratio in dB."""
     mse = float(np.mean((original.astype(np.float32) - reconstructed.astype(np.float32)) ** 2))
     if mse < 1e-12:
         return 60.0
-    return float(10.0 * np.log10(peak ** 2 / mse))
+    return float(10.0 * np.log10(peak**2 / mse))
 
 
-def quality_report(decoded_img: np.ndarray,
-                   reference_img: np.ndarray,
-                   decoded_waveform: np.ndarray,
-                   reference_waveform: np.ndarray) -> Dict[str, float]:
+def quality_report(
+    decoded_img: np.ndarray,
+    reference_img: np.ndarray,
+    decoded_waveform: np.ndarray,
+    reference_waveform: np.ndarray,
+) -> Dict[str, float]:
     """Generate a comprehensive quality report for multimodal decoder outputs.
 
     Args:

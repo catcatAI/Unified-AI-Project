@@ -65,6 +65,7 @@ class EnrichedInput:
         Combined quality score = avg(key_scores) * (1 - 0.5*ambiguity) * coherence.
         Replaces raw ``_compute_confidence()``.
     """
+
     raw_text: str = ""
     normalized_text: str = ""
     text_variants: List[str] = field(default_factory=list)

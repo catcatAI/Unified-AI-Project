@@ -23,6 +23,7 @@ class GlobalStateStore:
     Modules push updates here, and consumers subscribe to changes.
     C5: supports optional persistence via StatePersistence protocol backend.
     """
+
     def __init__(self):
         if getattr(self, "_initialized", False):
             return
@@ -31,15 +32,15 @@ class GlobalStateStore:
         self._sync_lock = threading.Lock()
         self._states: Dict[str, Any] = {
             "alpha": {},  # Biological
-            "beta": {},   # Cognitive
+            "beta": {},  # Cognitive
             "gamma": {},  # Emotional
             "delta": {},  # Social
-            "epsilon": {}, # Mathematical
+            "epsilon": {},  # Mathematical
             "theta": {},  # Meta-cognitive
-            "zeta": {},   # Consciousness Flow
+            "zeta": {},  # Consciousness Flow
             "environment": {},
             "hardware": {},
-            "neuro_vocabulary": {}  # C6 數值→語意映射
+            "neuro_vocabulary": {},  # C6 數值→語意映射
         }
         self._subscribers: Dict[str, List[Callable]] = {k: [] for k in self._states.keys()}
         self._global_subscribers: List[Callable] = []
@@ -109,7 +110,9 @@ class GlobalStateStore:
         """Update state for a specific domain."""
         with self._sync_lock:
             if domain not in self._states:
-                logger.warning(f"[StateStore] Attempted to update unknown domain: {domain}", exc_info=True)
+                logger.warning(
+                    f"[StateStore] Attempted to update unknown domain: {domain}", exc_info=True
+                )
                 self._states[domain] = {}
                 self._subscribers[domain] = []
 
@@ -126,11 +129,16 @@ class GlobalStateStore:
         """Fire on_state_change plugin hook (non-blocking)."""
         try:
             from core.plugin import plugin_manager as _pm
+
             safe_create_task_sync(
-                _pm.execute_hook('on_state_change', {
-                    'domain': domain,
-                    'data': data,
-                }), name="StateStore-on_state_change"
+                _pm.execute_hook(
+                    "on_state_change",
+                    {
+                        "domain": domain,
+                        "data": data,
+                    },
+                ),
+                name="StateStore-on_state_change",
             )
         except Exception as e:
             logger.warning(f"Failed to execute plugin hook on_state_change: {e}", exc_info=True)
@@ -162,15 +170,18 @@ class GlobalStateStore:
             try:
                 callback(domain, data)
             except Exception as e:
-                logger.error(f"[StateStore] Error in subscriber callback for {domain}: {e}", exc_info=True)
+                logger.error(
+                    f"[StateStore] Error in subscriber callback for {domain}: {e}", exc_info=True
+                )
 
         # Notify global subscribers (iterate over copy for safety)
         for callback in list(self._global_subscribers):
             try:
                 callback(domain, data)
             except Exception as e:
-                logger.error(f"[StateStore] Error in global subscriber callback: {e}", exc_info=True)
-
+                logger.error(
+                    f"[StateStore] Error in global subscriber callback: {e}", exc_info=True
+                )
 
     # ── CNS Event Bus ────────────────────────────────────────────────
 
@@ -229,6 +240,7 @@ state_store = GlobalStateStore()
 # Attach default JSON file persistence backend
 try:
     from core.interfaces.persistence import JsonFileStateStore
+
     _default_backend = JsonFileStateStore(data_dir="data/state/")
     state_store.set_persistence(_default_backend)
 except Exception as e:

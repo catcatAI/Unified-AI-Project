@@ -6,12 +6,12 @@ import time
 
 import aiohttp
 from core.interfaces.protocols import LLMResponse
-from core.utils import safe_error
 from core.system.config.network_defaults import (
     DEFAULT_GOOGLE_MODEL,
     GOOGLE_API_BASE,
     GOOGLE_TIMEOUT,
 )
+from core.utils import safe_error
 
 from .base import BaseLLMBackend
 
@@ -23,7 +23,9 @@ class GoogleAPIBackend(BaseLLMBackend):
 
     GEMINI_BASE = GOOGLE_API_BASE
 
-    def __init__(self, api_key: str, model: str = DEFAULT_GOOGLE_MODEL, timeout: float = GOOGLE_TIMEOUT):
+    def __init__(
+        self, api_key: str, model: str = DEFAULT_GOOGLE_MODEL, timeout: float = GOOGLE_TIMEOUT
+    ):
         super().__init__()
         self.api_key = api_key
         self.model = model
@@ -65,14 +67,19 @@ class GoogleAPIBackend(BaseLLMBackend):
                     usage = data.get("usageMetadata", {})
                     tokens = usage.get("totalTokenCount", 0)
                     return LLMResponse(
-                        text=text, backend="google", model=self.model,
-                        tokens_used=tokens, response_time_ms=(time.time() - start_time) * 1000,
+                        text=text,
+                        backend="google",
+                        model=self.model,
+                        tokens_used=tokens,
+                        response_time_ms=(time.time() - start_time) * 1000,
                         confidence=0.95,
                     )
                 else:
                     err_text = await resp.text()
                     return LLMResponse(
-                        text="", backend="google", model=self.model,
+                        text="",
+                        backend="google",
+                        model=self.model,
                         error=f"HTTP {resp.status}: {err_text[:200]}",
                     )
         except Exception as e:

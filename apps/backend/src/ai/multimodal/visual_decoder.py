@@ -40,16 +40,23 @@ class VisualDecoder:
         self._b = np.zeros(self.FEATURE_DIM, dtype=np.float32)
         # CNN texture branch: latent → hidden → 4×4×16 feature map
         h_scale = 1.0 / np.sqrt(self.LATENT_DIM)
-        self._W_hidden = rng.normal(0, h_scale, (self.HIDDEN_DIM, self.LATENT_DIM)).astype(np.float32)
+        self._W_hidden = rng.normal(0, h_scale, (self.HIDDEN_DIM, self.LATENT_DIM)).astype(
+            np.float32
+        )
         self._b_hidden = np.zeros(self.HIDDEN_DIM, dtype=np.float32)
-        self._W_featmap = rng.normal(0, 1.0 / np.sqrt(self.HIDDEN_DIM),
-                                     (self.TEXTURE_MAP_SIZE * self.TEXTURE_MAP_SIZE * self.TEXTURE_CHANNELS,
-                                      self.HIDDEN_DIM)).astype(np.float32)
-        self._b_featmap = np.zeros(self.TEXTURE_MAP_SIZE * self.TEXTURE_MAP_SIZE * self.TEXTURE_CHANNELS,
-                                   dtype=np.float32)
+        self._W_featmap = rng.normal(
+            0,
+            1.0 / np.sqrt(self.HIDDEN_DIM),
+            (
+                self.TEXTURE_MAP_SIZE * self.TEXTURE_MAP_SIZE * self.TEXTURE_CHANNELS,
+                self.HIDDEN_DIM,
+            ),
+        ).astype(np.float32)
+        self._b_featmap = np.zeros(
+            self.TEXTURE_MAP_SIZE * self.TEXTURE_MAP_SIZE * self.TEXTURE_CHANNELS, dtype=np.float32
+        )
         # Transposed conv kernels (one per output channel × texture channel)
-        self._tex_kernels = rng.normal(0, 0.1,
-                                       (3, self.TEXTURE_CHANNELS, 5, 5)).astype(np.float32)
+        self._tex_kernels = rng.normal(0, 0.1, (3, self.TEXTURE_CHANNELS, 5, 5)).astype(np.float32)
 
     def decode(self, latent: np.ndarray) -> np.ndarray:
         """Decode latent vector into 128×128×3 RGB uint8 array."""
@@ -58,8 +65,8 @@ class VisualDecoder:
             return np.zeros((self.INPUT_SIZE, self.INPUT_SIZE, 3), dtype=np.uint8)
 
         raw = self._W @ latent + self._b
-        spatial_feats = raw[:self.SPATIAL_FEATURES]
-        color_feats = raw[self.SPATIAL_FEATURES:self.SPATIAL_FEATURES + self.COLOR_FEATURES]
+        spatial_feats = raw[: self.SPATIAL_FEATURES]
+        color_feats = raw[self.SPATIAL_FEATURES : self.SPATIAL_FEATURES + self.COLOR_FEATURES]
 
         img = self._layout_to_image(spatial_feats)
         img = self._apply_color_adjust(img, color_feats)
@@ -82,10 +89,12 @@ class VisualDecoder:
         idx = 0
         for r in range(grid_size):
             for c in range(grid_size):
-                rgb = spatial_feats[idx:idx + 3]
+                rgb = spatial_feats[idx : idx + 3]
                 rng = rgb.max() - rgb.min()
                 rgb = (rgb - rgb.min()) / max(rng, 1e-8) * 255
-                img[r * cell_h:(r + 1) * cell_h, c * cell_w:(c + 1) * cell_w] = rgb.reshape(1, 1, 3)
+                img[r * cell_h : (r + 1) * cell_h, c * cell_w : (c + 1) * cell_w] = rgb.reshape(
+                    1, 1, 3
+                )
                 idx += 3
         return img
 
@@ -94,7 +103,7 @@ class VisualDecoder:
         for c in range(3):
             channel = img[:, :, c].astype(np.float32)
             mean_val = float(channel.mean())
-            feat_slice = color_feats[c * 32:(c + 1) * 32]
+            feat_slice = color_feats[c * 32 : (c + 1) * 32]
             contrast = float(np.std(feat_slice))
             brightness = float(np.mean(feat_slice))
             contrast = np.clip(contrast * 0.3 + 0.7, 0.3, 2.0)
@@ -111,8 +120,9 @@ class VisualDecoder:
         """
         h = np.tanh(self._W_hidden @ latent + self._b_hidden)
         feat_map_flat = self._W_featmap @ h + self._b_featmap
-        feat_map = feat_map_flat.reshape(self.TEXTURE_MAP_SIZE, self.TEXTURE_MAP_SIZE,
-                                         self.TEXTURE_CHANNELS)
+        feat_map = feat_map_flat.reshape(
+            self.TEXTURE_MAP_SIZE, self.TEXTURE_MAP_SIZE, self.TEXTURE_CHANNELS
+        )
 
         # Transposed conv: upsample 4×4×16 → 128×128×3
         scale = self.INPUT_SIZE // self.TEXTURE_MAP_SIZE
@@ -132,7 +142,7 @@ class VisualDecoder:
         k_h, k_w = kernel.shape
         pad_h = k_h // 2
         pad_w = k_w // 2
-        padded = np.pad(x, ((pad_h, pad_h), (pad_w, pad_w)), mode='reflect')
+        padded = np.pad(x, ((pad_h, pad_h), (pad_w, pad_w)), mode="reflect")
         windows = np.lib.stride_tricks.sliding_window_view(padded, (k_h, k_w))
         return np.tensordot(windows, kernel, axes=((2, 3), (0, 1)))
 
@@ -145,10 +155,14 @@ class VisualDecoder:
         if b is not None and b.shape == self._b.shape:
             self._b = b.astype(np.float32)
 
-    def set_texture_weights(self, W_hidden: np.ndarray, b_hidden: Optional[np.ndarray] = None,
-                            W_featmap: Optional[np.ndarray] = None,
-                            b_featmap: Optional[np.ndarray] = None,
-                            tex_kernels: Optional[np.ndarray] = None) -> None:
+    def set_texture_weights(
+        self,
+        W_hidden: np.ndarray,
+        b_hidden: Optional[np.ndarray] = None,
+        W_featmap: Optional[np.ndarray] = None,
+        b_featmap: Optional[np.ndarray] = None,
+        tex_kernels: Optional[np.ndarray] = None,
+    ) -> None:
         """Inject trained weights for the CNN texture branch.
 
         Matches the pattern of set_projection() for training pipeline compatibility.
@@ -216,11 +230,17 @@ def save_visual_decoder_weights(decoder: VisualDecoder, save_path: str) -> bool:
             texture_b_featmap=decoder._b_featmap,
             texture_tex_kernels=decoder._tex_kernels,
         )
-        logger.info("Saved visual decoder weights (%d params) to %s",
-                    decoder._W.size + decoder._b.size + decoder._W_hidden.size +
-                    decoder._b_hidden.size + decoder._W_featmap.size +
-                    decoder._b_featmap.size + decoder._tex_kernels.size,
-                    save_path)
+        logger.info(
+            "Saved visual decoder weights (%d params) to %s",
+            decoder._W.size
+            + decoder._b.size
+            + decoder._W_hidden.size
+            + decoder._b_hidden.size
+            + decoder._W_featmap.size
+            + decoder._b_featmap.size
+            + decoder._tex_kernels.size,
+            save_path,
+        )
         return True
     except Exception as e:
         logger.error("Failed to save visual decoder weights: %s", e)

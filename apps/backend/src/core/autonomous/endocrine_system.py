@@ -2,6 +2,7 @@
 Autonomous Endocrine System Submodule (Backward Compat)
 Re-exports from core.autonomous shim
 """
+
 from __future__ import annotations
 
 from core.bio.endocrine_system_core import (

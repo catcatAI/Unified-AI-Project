@@ -6,12 +6,6 @@
 而不僅僅是被動回應。
 """
 
-from core.utils import safe_error
-
-# =============================================================================
-# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
-# =============================================================================
-
 import asyncio
 import json
 import logging
@@ -21,9 +15,15 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from core.system.config.magic_numbers import cache_value, loop_sleep
+from core.utils import safe_error
 from services.weather_service import WeatherService
 
 from .user_monitor import UserMonitor
+
+# =============================================================================
+# ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
+# =============================================================================
+
 
 logger = logging.getLogger(__name__)
 
@@ -167,7 +167,9 @@ class ProactiveInteractionSystem:
                 await asyncio.sleep(interval)
             except asyncio.CancelledError:
                 break
-            except Exception as e:  # broad exception acceptable: loop must be resilient to prevent process termination
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: loop must be resilient to prevent process termination
                 logger.error(f"Error in proactive loop: {e}", exc_info=True)
                 await asyncio.sleep(loop_sleep("proactive_tight", 1.0))  # 防止緊密循環
 
@@ -211,7 +213,9 @@ class ProactiveInteractionSystem:
             # 5. 清理隊列
             self._cleanup_queue()
 
-        except Exception as e:  # broad exception acceptable: proactive processing should not crash the loop
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: proactive processing should not crash the loop
             logger.error(f"Error processing proactive interaction: {e}", exc_info=True)
 
     async def _detect_user_state(self) -> Dict[str, Any]:
@@ -340,7 +344,9 @@ class ProactiveInteractionSystem:
                         }
                     )
                     self.stats["total_opportunities"] += 1
-        except Exception as e:  # broad exception acceptable: memory trigger checks should be fault-tolerant
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: memory trigger checks should be fault-tolerant
             logger.warning(f"Error checking memory triggers: {e}", exc_info=True)
 
     async def _check_weather_opportunities(self, opportunities: List[Dict[str, Any]]) -> None:
@@ -365,16 +371,18 @@ class ProactiveInteractionSystem:
                 and (now - self._last_weather_check).total_seconds() > 3600
             )
             if significant_change:
-                opportunities.append({
-                    "type": InteractionOpportunity.WEATHER_CHANGE.value,
-                    "priority": "low",
-                    "data": {
-                        "previous": self._last_weather_desc,
-                        "current": desc,
-                        "temperature": weather.get("temperature_c"),
-                        "location": weather.get("location"),
-                    },
-                })
+                opportunities.append(
+                    {
+                        "type": InteractionOpportunity.WEATHER_CHANGE.value,
+                        "priority": "low",
+                        "data": {
+                            "previous": self._last_weather_desc,
+                            "current": desc,
+                            "temperature": weather.get("temperature_c"),
+                            "location": weather.get("location"),
+                        },
+                    }
+                )
                 self.stats["total_opportunities"] += 1
                 self._last_weather_desc = desc
             self._last_weather_check = now
@@ -413,7 +421,9 @@ class ProactiveInteractionSystem:
                 message = await self._generate_weather_message(opportunity)
             else:
                 engine = self._get_ed3n_engine()
-                message = engine.process("unknown_opportunity", context={"opp_type": opp_type}, depth="reflex")
+                message = engine.process(
+                    "unknown_opportunity", context={"opp_type": opp_type}, depth="reflex"
+                )
 
             plan = InteractionPlan(
                 opportunity=opp_type,
@@ -425,13 +435,16 @@ class ProactiveInteractionSystem:
 
             return plan
 
-        except Exception as e:  # broad exception acceptable: planning action should not crash the loop
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: planning action should not crash the loop
             logger.error(f"Error planning proactive action: {e}", exc_info=True)
             return None
 
     def _get_ed3n_engine(self) -> Any:
-        if not hasattr(self.__class__, '_ed3n_engine'):
+        if not hasattr(self.__class__, "_ed3n_engine"):
             from ai.ed3n.ed3n_engine import ED3NEngine
+
             self.__class__._ed3n_engine = ED3NEngine.get_shared()
         return self.__class__._ed3n_engine
 
@@ -521,8 +534,12 @@ class ProactiveInteractionSystem:
                         }
                     )
                     logger.debug(f"Proactive action sent via WebSocket: {plan.opportunity}")
-                except Exception as e:  # broad exception acceptable: WebSocket failures should not block action execution
-                    logger.warning(f"Failed to send proactive action via WebSocket: {e}", exc_info=True)
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: WebSocket failures should not block action execution
+                    logger.warning(
+                        f"Failed to send proactive action via WebSocket: {e}", exc_info=True
+                    )
 
             return {"success": True, "sent": True, "message": plan.message}
 
@@ -557,5 +574,3 @@ class ProactiveInteractionSystem:
     def get_queue(self, limit: int = 10) -> List[Dict[str, Any]]:
         """獲取隊列"""
         return [p.to_dict() for p in self.interaction_queue[-limit:]]
-
-

@@ -12,17 +12,26 @@ from core.card.card_types import Token
 logger = logging.getLogger(__name__)
 
 TOKEN_LINE = re.compile(
-    r"(?:Token|特質|trait|屬性|attribute|特徵)\s*[：:]\s*"
-    r"(.+?)\s*[（(]?\s*([\d.]+)\s*[)）]?"
+    r"(?:Token|特質|trait|屬性|attribute|特徵)\s*[：:]\s*" r"(.+?)\s*[（(]?\s*([\d.]+)\s*[)）]?"
 )
 STRENGTH_WORD = re.compile(
     r"\b(高|強|中|低|弱|very|strong|medium|low|weak|expert|skilled|novice)\b",
     re.IGNORECASE,
 )
 STRENGTH_MAP = {
-    "高": 0.9, "強": 0.8, "中": 0.5, "低": 0.3, "弱": 0.2,
-    "very": 0.9, "strong": 0.8, "medium": 0.5, "low": 0.3, "weak": 0.2,
-    "expert": 0.95, "skilled": 0.75, "novice": 0.25,
+    "高": 0.9,
+    "強": 0.8,
+    "中": 0.5,
+    "低": 0.3,
+    "弱": 0.2,
+    "very": 0.9,
+    "strong": 0.8,
+    "medium": 0.5,
+    "low": 0.3,
+    "weak": 0.2,
+    "expert": 0.95,
+    "skilled": 0.75,
+    "novice": 0.25,
 }
 
 
@@ -47,7 +56,11 @@ class TokenExtractor:
             try:
                 strength = float(match.group(2))
             except (ValueError, TypeError):
-                logger.warning("Failed to parse token strength '%s', defaulting to 1.0", match.group(2), exc_info=True)
+                logger.warning(
+                    "Failed to parse token strength '%s', defaulting to 1.0",
+                    match.group(2),
+                    exc_info=True,
+                )
                 strength = 1.0
             tokens.append(Token(category="trait", name=name, strength=strength))
         return tokens

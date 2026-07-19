@@ -22,6 +22,7 @@ except (ImportError, SyntaxError):
 @dataclass
 class ChatMessage:
     """A single message in a conversation"""
+
     role: str = "user"
     content: str = ""
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -30,6 +31,7 @@ class ChatMessage:
 @dataclass
 class LLMResponse:
     """Response from an LLM call"""
+
     text: str = ""
     backend: str = "unknown"
     model: str = "unknown"
@@ -52,6 +54,7 @@ class LLMResponse:
 @dataclass
 class ChatResponse(LLMResponse):
     """Chat pipeline response — extends LLMResponse with hit scoring and routing."""
+
     hit_score: float = 0.0
     hit_source: str = "none"
     route: str = "llm"
@@ -61,9 +64,11 @@ class ChatResponse(LLMResponse):
     bio_state: Dict[str, Any] = field(default_factory=dict)
     retrieved_context: List[Dict[str, Any]] = field(default_factory=list)
 
+
 @dataclass
 class L1Biological:
     """L1 - Biological / Sensory inputs"""
+
     sensory_input: Dict[str, Any] = field(default_factory=dict)
     reaction_time_ms: float = 0.0
     signal_strength: float = 1.0
@@ -75,6 +80,7 @@ class L1Biological:
 @dataclass
 class L2Cognitive:
     """L2 - Cognitive / Pattern recognition"""
+
     cognitive_load: float = 0.0
     attention_focus: str = ""
     working_memory: Dict[str, Any] = field(default_factory=dict)
@@ -86,6 +92,7 @@ class L2Cognitive:
 @dataclass
 class L3Identity:
     """L3 - Identity / Self-awareness"""
+
     identity_id: str = ""
     core_values: Dict[str, float] = field(default_factory=dict)
     self_model: Dict[str, Any] = field(default_factory=dict)
@@ -97,9 +104,9 @@ class L3Identity:
 @dataclass
 class L4Creative:
     """L4 - Creative / Generative synthesis"""
+
     creative_context: Dict[str, Any] = field(default_factory=dict)
     generation_params: Dict[str, Any] = field(default_factory=dict)
 
     def generate(self) -> Dict[str, Any]:
         return {"status": "generated", "output": {}}
-

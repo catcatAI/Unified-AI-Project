@@ -48,7 +48,9 @@ class HAMBackgroundTasks:
                 memories_to_delete = self._identify_memories_to_delete()
                 memories_to_delete = self._trim_to_minimum(memories_to_delete)
                 await self._execute_deletion(memories_to_delete)
-            except Exception as e:  # broad exception acceptable: cleanup should not crash background task
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: cleanup should not crash background task
                 logger.error(f"Error during memory cleanup: {e}", exc_info=True)
 
             logger.info("Background task: Old experiences cleanup complete.")
@@ -81,7 +83,11 @@ class HAMBackgroundTasks:
                     timestamp = datetime.fromisoformat(timestamp_str)
                     age_days = (now - timestamp).days
                 except ValueError:
-                    logger.warning("Failed to parse timestamp '%s', skipping memory", timestamp_str, exc_info=True)
+                    logger.warning(
+                        "Failed to parse timestamp '%s', skipping memory",
+                        timestamp_str,
+                        exc_info=True,
+                    )
                     continue
 
                 should_delete = False

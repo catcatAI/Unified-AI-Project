@@ -1,8 +1,8 @@
-from core.utils import safe_error
-
 import logging
 from pathlib import Path
 from typing import Optional
+
+from core.utils import safe_error
 
 from .models import (
     HotplugResult,
@@ -98,11 +98,19 @@ class ModuleManager:
             descriptor = descriptors[0]
             missing = self._resolver.check_deps(descriptor, [i.descriptor for i in self._instances])
             if missing:
-                return HotplugResult(name=descriptor.name, success=False, error=f"missing deps: {missing}")
+                return HotplugResult(
+                    name=descriptor.name, success=False, error=f"missing deps: {missing}"
+                )
             deps = self._lifecycle._build_deps(descriptor, self._instances, registry=self._registry)
-            instances, init_results = await self._lifecycle.init_all([descriptor], {descriptor.name: deps})
+            instances, init_results = await self._lifecycle.init_all(
+                [descriptor], {descriptor.name: deps}
+            )
             if not instances:
-                return HotplugResult(name=descriptor.name, success=False, error=init_results[0].error if init_results else "init failed")
+                return HotplugResult(
+                    name=descriptor.name,
+                    success=False,
+                    error=init_results[0].error if init_results else "init failed",
+                )
             inst = instances[0]
             self._instances.append(inst)
             if self._registry is not None:
@@ -127,7 +135,9 @@ class ModuleManager:
             return HotplugResult(name=name, success=False, error="not found")
         for other in self._instances:
             if other.name != name and name in other.descriptor.depends_on.required:
-                return HotplugResult(name=name, success=False, error=f"module in use by {other.name}")
+                return HotplugResult(
+                    name=name, success=False, error=f"module in use by {other.name}"
+                )
         try:
             await self._lifecycle.stop_all([inst])
         except Exception:
@@ -188,16 +198,30 @@ class ModuleManager:
             "summary": {
                 "total": len(self._instances),
                 "running": sum(1 for i in self._instances if i.status == ModuleStatus.RUNNING),
-                "failed": sum(1 for i in self._instances if i.status in (ModuleStatus.INIT_FAILED, ModuleStatus.START_FAILED, ModuleStatus.DEAD)),
+                "failed": sum(
+                    1
+                    for i in self._instances
+                    if i.status
+                    in (ModuleStatus.INIT_FAILED, ModuleStatus.START_FAILED, ModuleStatus.DEAD)
+                ),
                 "started": self._started,
             },
         }
 
 
 __all__ = [
-    "ModuleManager", "ModuleScanner", "DependencyResolver",
-    "EventBus", "HealthMonitor", "ModuleLifecycle",
+    "ModuleManager",
+    "ModuleScanner",
+    "DependencyResolver",
+    "EventBus",
+    "HealthMonitor",
+    "ModuleLifecycle",
     "CycleError",
-    "ModuleDescriptor", "ModuleInstance", "ModuleStatus", "ModuleKind",
-    "InitResult", "StartResult", "HotplugResult",
+    "ModuleDescriptor",
+    "ModuleInstance",
+    "ModuleStatus",
+    "ModuleKind",
+    "InitResult",
+    "StartResult",
+    "HotplugResult",
 ]

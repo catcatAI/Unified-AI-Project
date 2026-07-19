@@ -51,7 +51,9 @@ class DatabaseStorage(Storage):
                 }
                 self._db[context.context_id] = context_data
             else:
-                logger.debug(f"Context {context.context_id} 存储到数据库 (connected mode)", exc_info=True)
+                logger.debug(
+                    f"Context {context.context_id} 存储到数据库 (connected mode)", exc_info=True
+                )
                 context_data = {
                     "context_id": context.context_id,
                     "context_type": context.context_type.value,
@@ -68,7 +70,10 @@ class DatabaseStorage(Storage):
             logger.debug(f"Context {context.context_id} saved to database storage")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to save context {context.context_id} to database storage, {e}", exc_info=True)
+            logger.error(
+                f"Failed to save context {context.context_id} to database storage, {e}",
+                exc_info=True,
+            )
             return False
 
     def load_context(self, context_id: str) -> Optional[Context]:
@@ -116,7 +121,9 @@ class DatabaseStorage(Storage):
                     logger.debug(f"Context {context_id} not found in database storage")
                     return None
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to load context {context_id} from database storage, {e}", exc_info=True)
+            logger.error(
+                f"Failed to load context {context_id} from database storage, {e}", exc_info=True
+            )
             return None
 
     def delete_context(self, context_id: str) -> bool:
@@ -142,7 +149,9 @@ class DatabaseStorage(Storage):
                 else:
                     return False
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to delete context {context_id} from database storage, {e}", exc_info=True)
+            logger.error(
+                f"Failed to delete context {context_id} from database storage, {e}", exc_info=True
+            )
             return False
 
     def list_contexts(self, context_type: Optional[ContextType] = None) -> List[str]:
@@ -193,7 +202,9 @@ class DatabaseStorage(Storage):
                     )
                     return False
             else:
-                logger.debug(f"Context {context_id} 元数据更新到数据库 (connected mode)", exc_info=True)
+                logger.debug(
+                    f"Context {context_id} 元数据更新到数据库 (connected mode)", exc_info=True
+                )
                 if context_id in self._db:
                     self._db[context_id]["metadata"].update(metadata)
                     self._db[context_id]["updated_at"] = datetime.now().isoformat()
@@ -201,7 +212,10 @@ class DatabaseStorage(Storage):
                 else:
                     return False
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to update context {context_id} metadata in database storage, {e}", exc_info=True)
+            logger.error(
+                f"Failed to update context {context_id} metadata in database storage, {e}",
+                exc_info=True,
+            )
             return False
 
     def get_storage_info(self) -> Dict[str, Any]:
@@ -209,7 +223,11 @@ class DatabaseStorage(Storage):
         try:
             if not self._connected:
                 logger.warning("Database storage not connected, using mock storage", exc_info=True)
-                return {"total_contexts": len(self._db), "storage_type": "database", "error": "not connected"}
+                return {
+                    "total_contexts": len(self._db),
+                    "storage_type": "database",
+                    "error": "not connected",
+                }
             else:
                 logger.debug("从数据库获取存储信息 (connected mode)", exc_info=True)
                 return {"total_contexts": len(self._db), "storage_type": "connected_database"}

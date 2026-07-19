@@ -33,20 +33,26 @@ class InstanceOptimizer:
     This is the generation path — where pixel similarity is the training signal.
     """
 
-    def __init__(self, vocabulary: GeometricVocabulary,
-                 concept_mapper: ConceptMapper,
-                 canvas_size: Tuple[int, int] = (128, 128)):
+    def __init__(
+        self,
+        vocabulary: GeometricVocabulary,
+        concept_mapper: ConceptMapper,
+        canvas_size: Tuple[int, int] = (128, 128),
+    ):
         self._vocabulary = vocabulary
         self._concept_mapper = concept_mapper
         self._diff_renderer = DifferentiableRenderer(canvas_size)
         self._pil_renderer = PrimitiveRenderer(canvas_size)
         self._canvas_size = canvas_size
 
-    def optimize_from_text(self, text_embedding: np.ndarray,
-                            n_iterations: int = 30,
-                            lr: float = 0.008,
-                            n_probes: int = 10,
-                            verbose: bool = False) -> dict:
+    def optimize_from_text(
+        self,
+        text_embedding: np.ndarray,
+        n_iterations: int = 30,
+        lr: float = 0.008,
+        n_probes: int = 10,
+        verbose: bool = False,
+    ) -> dict:
         """Optimize primitives from text CLIP embedding.
 
         Args:
@@ -70,7 +76,7 @@ class InstanceOptimizer:
         concept_name = mapping["concept"]
 
         if verbose:
-            logger.info("Concept: %s (sim=%.3f)", concept_name, mapping['similarity'])
+            logger.info("Concept: %s (sim=%.3f)", concept_name, mapping["similarity"])
 
         # Step 2: Initialize from concept distribution
         init_vec = mapping["initialization"]
@@ -78,8 +84,11 @@ class InstanceOptimizer:
         # Step 3: Optimize (pixel MSE)
         t0 = time.time()
         opt_vec, opt_loss = self._optimize_pixel_mse(
-            init_vec, target=None,  # no target image for text-only
-            n_iterations=n_iterations, lr=lr, n_probes=n_probes
+            init_vec,
+            target=None,  # no target image for text-only
+            n_iterations=n_iterations,
+            lr=lr,
+            n_probes=n_probes,
         )
         elapsed = time.time() - t0
 
@@ -95,12 +104,15 @@ class InstanceOptimizer:
             "elapsed": elapsed,
         }
 
-    def optimize_for_image(self, target_image: np.ndarray,
-                            concept_name: Optional[str] = None,
-                            n_iterations: int = 30,
-                            lr: float = 0.008,
-                            n_probes: int = 10,
-                            verbose: bool = False) -> dict:
+    def optimize_for_image(
+        self,
+        target_image: np.ndarray,
+        concept_name: Optional[str] = None,
+        n_iterations: int = 30,
+        lr: float = 0.008,
+        n_probes: int = 10,
+        verbose: bool = False,
+    ) -> dict:
         """Optimize primitives to match a specific target image.
 
         This is the CORE optimization — pixel MSE between rendered and target.
@@ -133,8 +145,7 @@ class InstanceOptimizer:
         # Step 2: Optimize (pixel MSE)
         t0 = time.time()
         opt_vec, opt_loss = self._optimize_pixel_mse(
-            init_vec, target_image,
-            n_iterations=n_iterations, lr=lr, n_probes=n_probes
+            init_vec, target_image, n_iterations=n_iterations, lr=lr, n_probes=n_probes
         )
         elapsed = time.time() - t0
 
@@ -150,11 +161,14 @@ class InstanceOptimizer:
             "elapsed": elapsed,
         }
 
-    def _optimize_pixel_mse(self, init_vec: np.ndarray,
-                             target: Optional[np.ndarray],
-                             n_iterations: int = 30,
-                             lr: float = 0.008,
-                             n_probes: int = 10) -> Tuple[np.ndarray, float]:
+    def _optimize_pixel_mse(
+        self,
+        init_vec: np.ndarray,
+        target: Optional[np.ndarray],
+        n_iterations: int = 30,
+        lr: float = 0.008,
+        n_probes: int = 10,
+    ) -> Tuple[np.ndarray, float]:
         """Optimize vector to minimize pixel MSE with target.
 
         Uses finite differences on the differentiable renderer.
@@ -162,7 +176,7 @@ class InstanceOptimizer:
         vec = init_vec.copy()
         eps = 0.015
         best_vec = vec.copy()
-        best_loss = float('inf')
+        best_loss = float("inf")
 
         for it in range(n_iterations):
             # Render current vector
@@ -204,19 +218,20 @@ class InstanceOptimizer:
 
         return best_vec, best_loss
 
-    def generate(self, text_embedding: np.ndarray,
-                  target_image: Optional[np.ndarray] = None,
-                  n_iterations: int = 30,
-                  verbose: bool = False) -> dict:
+    def generate(
+        self,
+        text_embedding: np.ndarray,
+        target_image: Optional[np.ndarray] = None,
+        n_iterations: int = 30,
+        verbose: bool = False,
+    ) -> dict:
         """End-to-end generation.
 
         If target_image is provided: optimize to match it (reconstruction).
         If not: generate from text concept only (text-to-image).
         """
         if target_image is not None:
-            return self.optimize_for_image(
-                target_image, n_iterations=n_iterations, verbose=verbose
-            )
+            return self.optimize_for_image(target_image, n_iterations=n_iterations, verbose=verbose)
         else:
             return self.optimize_from_text(
                 text_embedding, n_iterations=n_iterations, verbose=verbose

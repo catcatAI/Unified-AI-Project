@@ -41,7 +41,14 @@ class FantasyDMAgent:
         """Create a fantasy RPG character with stats."""
         if not character_class or not race:
             return {"status": "error", "message": "Both class and race are required"}
-        base_stats = {"strength": 10, "dexterity": 10, "constitution": 10, "intelligence": 10, "wisdom": 10, "charisma": 10}
+        base_stats = {
+            "strength": 10,
+            "dexterity": 10,
+            "constitution": 10,
+            "intelligence": 10,
+            "wisdom": 10,
+            "charisma": 10,
+        }
         class_bonus = {
             "warrior": {"strength": 3, "constitution": 2},
             "mage": {"intelligence": 3, "wisdom": 1},
@@ -66,7 +73,11 @@ class FantasyDMAgent:
             return {"status": "error", "message": "No action provided"}
         context = context or {}
         difficulty_class = context.get("difficulty_class", 10)
-        outcome = "success" if difficulty_class <= 10 else "failure" if difficulty_class > 15 else "partial"
+        outcome = (
+            "success"
+            if difficulty_class <= 10
+            else "failure" if difficulty_class > 15 else "partial"
+        )
         logger.info(f"resolve_action: action='{action}', dc={difficulty_class}")
         return {
             "status": "success",
@@ -76,4 +87,3 @@ class FantasyDMAgent:
             "outcome": outcome,
             "description": f"The action results in {outcome} (DC {difficulty_class})",
         }
-

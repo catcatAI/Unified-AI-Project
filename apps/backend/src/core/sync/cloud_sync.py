@@ -212,7 +212,9 @@ class CloudSyncManager:
         if event in self._callbacks:
             self._callbacks[event](data)
 
-    def add_to_sync(self, item_id: str, item_type: str, data: Dict[str, Any], priority: int = 0) -> None:
+    def add_to_sync(
+        self, item_id: str, item_type: str, data: Dict[str, Any], priority: int = 0
+    ) -> None:
         """添加到同步队列 / Add to sync queue"""
         item = SyncItem(
             item_id=item_id,
@@ -335,7 +337,9 @@ class CloudSyncManager:
                 item.remote_version = item.local_version
                 return True
 
-            except Exception as e:  # broad exception acceptable: upload retries handle various failure modes
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: upload retries handle various failure modes
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 await asyncio.sleep(self.config.retry_delay)
 

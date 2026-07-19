@@ -10,8 +10,18 @@ from typing import Any, Dict
 logger = logging.getLogger(__name__)
 
 IMPORTANT_KEYWORDS = [
-    "error", "critical", "urgent", "important", "bug", "crash", "failure",
-    "security", "vulnerability", "deadline", "priority", "blocker",
+    "error",
+    "critical",
+    "urgent",
+    "important",
+    "bug",
+    "crash",
+    "failure",
+    "security",
+    "vulnerability",
+    "deadline",
+    "priority",
+    "blocker",
 ]
 
 SOURCE_WEIGHTS = {
@@ -51,9 +61,9 @@ class ImportanceScorer:
                 factors += 1
 
             content_type_score = 0.0
-            if re.search(r'(def |class |import |@|\breturn\b)', content):
+            if re.search(r"(def |class |import |@|\breturn\b)", content):
                 content_type_score = max(content_type_score, 0.8)
-            if re.search(r'(error|exception|traceback|fail)', content_lower):
+            if re.search(r"(error|exception|traceback|fail)", content_lower):
                 content_type_score = max(content_type_score, 0.9)
             if content.endswith("?"):
                 content_type_score = max(content_type_score, 0.6)

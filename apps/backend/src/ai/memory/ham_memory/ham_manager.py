@@ -70,11 +70,13 @@ class HAMMemoryManager:
             logger.warning(f"HAMMemoryManager save failed: {e}")
 
     async def store_template(self, template: Any) -> None:
-        self._data["templates"].append({
-            "content": getattr(template, "content", str(template)),
-            "id": getattr(template, "id", None),
-            "keywords": getattr(template, "keywords", []),
-        })
+        self._data["templates"].append(
+            {
+                "content": getattr(template, "content", str(template)),
+                "id": getattr(template, "id", None),
+                "keywords": getattr(template, "keywords", []),
+            }
+        )
         await asyncio.to_thread(self._save)
 
     async def retrieve_response_templates(
@@ -94,11 +96,39 @@ class HAMMemoryManager:
         # otherwise every query containing "what"/"is"/"the" matches the first
         # template that lists those words (e.g. "opposite of hot"), which then
         # gets served verbatim as the answer to unrelated queries.
-        _STOPWORDS = frozenset({
-            "what", "is", "the", "a", "an", "of", "to", "do", "does", "did",
-            "you", "your", "i", "my", "me", "are", "how", "why", "who", "when",
-            "where", "which", "that", "this", "it", "in", "on", "at", "for",
-        })
+        _STOPWORDS = frozenset(
+            {
+                "what",
+                "is",
+                "the",
+                "a",
+                "an",
+                "of",
+                "to",
+                "do",
+                "does",
+                "did",
+                "you",
+                "your",
+                "i",
+                "my",
+                "me",
+                "are",
+                "how",
+                "why",
+                "who",
+                "when",
+                "where",
+                "which",
+                "that",
+                "this",
+                "it",
+                "in",
+                "on",
+                "at",
+                "for",
+            }
+        )
 
         scored = []
         for tpl in candidates:
@@ -121,7 +151,7 @@ class HAMMemoryManager:
                 scored.append((tpl, best_score))
 
         scored.sort(key=lambda x: x[1], reverse=True)
-        return scored[:limit or top_k]
+        return scored[: limit or top_k]
 
     @staticmethod
     def _char_bigrams(text: str) -> set:
@@ -174,11 +204,48 @@ class HAMMemoryManager:
         - other: converts to str then applies str logic.
         """
         _STOPWORDS = {
-            "你", "我", "他", "她", "的", "了", "吗", "呢", "吧",
-            "啊", "是", "在", "有", "和", "与", "the", "a", "an",
-            "is", "are", "was", "were", "it", "to", "of", "in",
-            "for", "on", "with", "at", "by", "from", "as", "this",
-            "that", "not", "be", "have", "has", "had", "do", "does",
+            "你",
+            "我",
+            "他",
+            "她",
+            "的",
+            "了",
+            "吗",
+            "呢",
+            "吧",
+            "啊",
+            "是",
+            "在",
+            "有",
+            "和",
+            "与",
+            "the",
+            "a",
+            "an",
+            "is",
+            "are",
+            "was",
+            "were",
+            "it",
+            "to",
+            "of",
+            "in",
+            "for",
+            "on",
+            "with",
+            "at",
+            "by",
+            "from",
+            "as",
+            "this",
+            "that",
+            "not",
+            "be",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
         }
 
         if isinstance(raw_data, dict):
@@ -206,8 +273,11 @@ class HAMMemoryManager:
             return filtered[:max_keywords]
 
         # Fallback: first N non-stopword chars from text
-        return [text[i:i+2] for i in range(0, min(len(text), max_keywords * 2), 2)
-                if text[i:i+2].lower() not in _STOPWORDS][:max_keywords]
+        return [
+            text[i : i + 2]
+            for i in range(0, min(len(text), max_keywords * 2), 2)
+            if text[i : i + 2].lower() not in _STOPWORDS
+        ][:max_keywords]
 
     def store_conversation(self, conversation: Dict[str, Any]) -> None:
         self._data["conversations"].append(conversation)

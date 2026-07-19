@@ -26,15 +26,17 @@ class ReconstructionCycle:
     matrices W_e (SharedLatentSpace) and W_d (Decoder) are updated.
     """
 
-    def __init__(self, latent_space: SharedLatentSpace,
-                 visual_decoder: Optional[VisualDecoder] = None,
-                 audio_decoder: Optional[AudioWaveformDecoder] = None):
+    def __init__(
+        self,
+        latent_space: SharedLatentSpace,
+        visual_decoder: Optional[VisualDecoder] = None,
+        audio_decoder: Optional[AudioWaveformDecoder] = None,
+    ):
         self._ls = latent_space
         self._visual_decoder = visual_decoder
         self._audio_decoder = audio_decoder
 
-    def train_step(self, modality: str, features: np.ndarray,
-                   lr: float = 0.01) -> float:
+    def train_step(self, modality: str, features: np.ndarray, lr: float = 0.01) -> float:
         """Single gradient descent step for feature-level reconstruction.
 
         Args:
@@ -73,11 +75,11 @@ class ReconstructionCycle:
         # Gradient clipping (norm-based)
         max_norm = 10.0
         for g in [grad_W_d, grad_W_e]:
-            norm = np.sqrt(np.sum(g ** 2))
+            norm = np.sqrt(np.sum(g**2))
             if norm > max_norm:
                 g *= max_norm / norm
         for g in [grad_b_d, grad_b_e]:
-            norm = np.sqrt(np.sum(g ** 2))
+            norm = np.sqrt(np.sum(g**2))
             if norm > max_norm:
                 g *= max_norm / norm
 
@@ -88,8 +90,9 @@ class ReconstructionCycle:
 
         return loss
 
-    def train(self, modality: str, features_list: List[np.ndarray],
-              epochs: int = 20, lr: float = 0.005) -> Dict:
+    def train(
+        self, modality: str, features_list: List[np.ndarray], epochs: int = 20, lr: float = 0.005
+    ) -> Dict:
         """Train over multiple samples for multiple epochs.
 
         Args:
@@ -141,9 +144,9 @@ class ReconstructionCycle:
             return self._audio_decoder
         return None
 
-    def train_texture_step(self, latents: np.ndarray,
-                           target_images: np.ndarray,
-                           lr: float = 0.001) -> float:
+    def train_texture_step(
+        self, latents: np.ndarray, target_images: np.ndarray, lr: float = 0.001
+    ) -> float:
         """Train VisualDecoder texture branch weights via pixel-level MSE.
 
         Takes a batch of (latent, target_image) pairs, runs the full decoder
@@ -185,18 +188,19 @@ class ReconstructionCycle:
 
             # 1. Forward: projection branch (frozen) → base image
             raw = decoder._W @ latent + decoder._b
-            spatial_feats = raw[:decoder.SPATIAL_FEATURES]
-            color_feats = raw[decoder.SPATIAL_FEATURES:
-                              decoder.SPATIAL_FEATURES + decoder.COLOR_FEATURES]
+            spatial_feats = raw[: decoder.SPATIAL_FEATURES]
+            color_feats = raw[
+                decoder.SPATIAL_FEATURES : decoder.SPATIAL_FEATURES + decoder.COLOR_FEATURES
+            ]
             base_img = decoder._layout_to_image(spatial_feats)
             base_img = decoder._apply_color_adjust(base_img, color_feats)
 
             # 2. Forward: texture branch with gradient cache
             h = np.tanh(decoder._W_hidden @ latent + decoder._b_hidden)  # (64,)
             fm_flat = decoder._W_featmap @ h + decoder._b_featmap  # (256,)
-            fm = fm_flat.reshape(decoder.TEXTURE_MAP_SIZE,
-                                 decoder.TEXTURE_MAP_SIZE,
-                                 decoder.TEXTURE_CHANNELS)  # (4, 4, 16)
+            fm = fm_flat.reshape(
+                decoder.TEXTURE_MAP_SIZE, decoder.TEXTURE_MAP_SIZE, decoder.TEXTURE_CHANNELS
+            )  # (4, 4, 16)
 
             scale = decoder.INPUT_SIZE // decoder.TEXTURE_MAP_SIZE  # 32
             ms = decoder.TEXTURE_MAP_SIZE  # 4
@@ -214,8 +218,9 @@ class ReconstructionCycle:
             for c_out in range(3):
                 for c_in in range(tc):
                     kernel = decoder._tex_kernels[c_out, c_in]
-                    padded = np.pad(cached_up[:, :, c_in],
-                                    ((pad_h, pad_h), (pad_w, pad_w)), mode='reflect')
+                    padded = np.pad(
+                        cached_up[:, :, c_in], ((pad_h, pad_h), (pad_w, pad_w)), mode="reflect"
+                    )
                     windows = np.lib.stride_tricks.sliding_window_view(padded, (k_h, k_w))
                     cached_windows[(c_out, c_in)] = windows
                     conv = np.tensordot(windows, kernel, axes=((2, 3), (0, 1)))
@@ -226,7 +231,7 @@ class ReconstructionCycle:
 
             # 3. Pixel-level MSE loss
             diff = output_img - target
-            loss = 0.5 * float(np.mean(diff ** 2))
+            loss = 0.5 * float(np.mean(diff**2))
             total_loss += loss
 
             # 4. Backward: gradient of loss wrt detail
@@ -248,7 +253,7 @@ class ReconstructionCycle:
                     dL_dpadded = np.zeros((H + 2 * pad_h, W + 2 * pad_w), dtype=dtype)
                     for di in range(k_h):
                         for dj in range(k_w):
-                            dL_dpadded[di:di + H, dj:dj + W] += d_conv * kernel[di, dj]
+                            dL_dpadded[di : di + H, dj : dj + W] += d_conv * kernel[di, dj]
                     d_up_acc[:, :, c_in] += dL_dpadded[pad_h:-pad_h, pad_w:-pad_w]
 
             # 6. Backward through nearest-neighbor upsample
@@ -256,8 +261,9 @@ class ReconstructionCycle:
             for c_in in range(tc):
                 for i in range(ms):
                     for j in range(ms):
-                        block = d_up_acc[i * scale:(i + 1) * scale,
-                                         j * scale:(j + 1) * scale, c_in]
+                        block = d_up_acc[
+                            i * scale : (i + 1) * scale, j * scale : (j + 1) * scale, c_in
+                        ]
                         d_fm[i, j, c_in] = np.sum(block)
             d_fm_flat = d_fm.reshape(-1)  # (256,)
 
@@ -267,7 +273,7 @@ class ReconstructionCycle:
             d_h = decoder._W_featmap.T @ d_fm_flat  # (64,)
 
             # 8. Backward through tanh: h = tanh(W_hidden @ z + b_hidden)
-            d_pre_act = d_h * (1.0 - h ** 2)  # (64,)
+            d_pre_act = d_h * (1.0 - h**2)  # (64,)
             d_W_hidden += np.outer(d_pre_act, latent)
             d_b_hidden += d_pre_act
 
@@ -282,11 +288,11 @@ class ReconstructionCycle:
         # Gradient clipping (norm-based)
         max_norm = 10.0
         for g in [d_W_hidden, d_W_featmap, d_tex_kernels.reshape(-1)]:
-            norm = np.sqrt(np.sum(g ** 2))
+            norm = np.sqrt(np.sum(g**2))
             if norm > max_norm:
                 g *= max_norm / norm
         for g in [d_b_hidden, d_b_featmap]:
-            norm = np.sqrt(np.sum(g ** 2))
+            norm = np.sqrt(np.sum(g**2))
             if norm > max_norm:
                 g *= max_norm / norm
 
@@ -299,9 +305,9 @@ class ReconstructionCycle:
 
         return total_loss / n
 
-    def train_wavetable_step(self, latents: np.ndarray,
-                              target_waveforms: np.ndarray,
-                              lr: float = 0.001) -> float:
+    def train_wavetable_step(
+        self, latents: np.ndarray, target_waveforms: np.ndarray, lr: float = 0.001
+    ) -> float:
         """Train AudioWaveformDecoder wavetable + hidden weights via waveform MSE.
 
         Takes a batch of (latent, target_waveform) pairs, runs the full decoder
@@ -359,21 +365,28 @@ class ReconstructionCycle:
 
             for band_idx, (lo, hi) in enumerate(decoder.BAND_LIMITS):
                 wt = wavetables[band_idx]
-                feats = spectral_env[band_idx * (len(spectral_env) // decoder.N_BANDS):
-                                     (band_idx + 1) * (len(spectral_env) // decoder.N_BANDS)]
+                feats = spectral_env[
+                    band_idx
+                    * (len(spectral_env) // decoder.N_BANDS) : (band_idx + 1)
+                    * (len(spectral_env) // decoder.N_BANDS)
+                ]
                 freq_hz = 200.0 + np.abs(feats[:5]).mean() * (hi - lo) / 800.0
                 freq_hz = np.clip(freq_hz, lo, hi)
 
                 phase = np.cumsum(2 * np.pi * freq_hz / decoder.SAMPLE_RATE * np.ones(n_samples))
                 phase = phase % (2 * np.pi)
-                idx = (phase / (2 * np.pi) * decoder.WAVETABLE_SIZE).astype(int) % decoder.WAVETABLE_SIZE
+                idx = (phase / (2 * np.pi) * decoder.WAVETABLE_SIZE).astype(
+                    int
+                ) % decoder.WAVETABLE_SIZE
                 band_wave = wt[idx].copy()
 
                 d_start = band_idx * (len(detail) // decoder.N_BANDS)
                 d_end = (band_idx + 1) * (len(detail) // decoder.N_BANDS)
                 band_detail = detail[d_start:d_end] if d_end <= len(detail) else detail[d_start:]
                 sin_terms: list = []
-                for h_idx in range(min(decoder.N_HARMONICS // decoder.N_BANDS, len(band_detail) // 2)):
+                for h_idx in range(
+                    min(decoder.N_HARMONICS // decoder.N_BANDS, len(band_detail) // 2)
+                ):
                     amp = np.abs(band_detail[h_idx * 2]) / max(np.abs(band_detail).max(), 1e-8)
                     amp = np.clip(amp, 0.0, 0.5)
                     h_freq = freq_hz * (h_idx + 2)
@@ -382,14 +395,20 @@ class ReconstructionCycle:
                         sin_terms.append(st)
                         band_wave += amp * st
 
-                cached_band_info.append({
-                    'idx': idx.copy(),
-                    'sin_terms': sin_terms,
-                })
+                cached_band_info.append(
+                    {
+                        "idx": idx.copy(),
+                        "sin_terms": sin_terms,
+                    }
+                )
                 waveform += band_wave * (1.0 / decoder.N_BANDS)
 
-            noise_rng = np.random.default_rng(int(abs(float(noise_mod[0] * 1000)) % (2 ** 31)))
-            noise_signal = noise_rng.normal(0, noise_strength, n_samples).astype(np.float32) if noise_strength >= 0.001 else np.zeros(n_samples, dtype=np.float32)
+            noise_rng = np.random.default_rng(int(abs(float(noise_mod[0] * 1000)) % (2**31)))
+            noise_signal = (
+                noise_rng.normal(0, noise_strength, n_samples).astype(np.float32)
+                if noise_strength >= 0.001
+                else np.zeros(n_samples, dtype=np.float32)
+            )
             waveform += noise_signal
             cached_noise_signal = noise_signal.copy()
             cached_noise_strength = noise_strength
@@ -409,7 +428,7 @@ class ReconstructionCycle:
             output = waveform / peak
 
             diff = output - target
-            loss = 0.5 * float(np.mean(diff ** 2))
+            loss = 0.5 * float(np.mean(diff**2))
             total_loss += loss
 
             # Backward
@@ -418,11 +437,15 @@ class ReconstructionCycle:
             d_pre_env = d_pre_norm * cached_env
 
             if cached_noise_strength >= 0.001:
-                d_noise_strength = float(np.sum(d_pre_env * cached_noise_signal / max(cached_noise_strength, 1e-8)))
+                d_noise_strength = float(
+                    np.sum(d_pre_env * cached_noise_signal / max(cached_noise_strength, 1e-8))
+                )
                 mean_nm = float(np.mean(noise_mod))
                 clip_val = abs(mean_nm) * 0.01
                 if 0.001 < clip_val < 0.15:
-                    d_noise_mod = np.full(16, d_noise_strength * 0.01 * np.sign(mean_nm) / 16.0, dtype=np.float32)
+                    d_noise_mod = np.full(
+                        16, d_noise_strength * 0.01 * np.sign(mean_nm) / 16.0, dtype=np.float32
+                    )
                 else:
                     d_noise_mod = np.zeros(16, dtype=np.float32)
                 d_W_noise += np.outer(d_noise_mod, cached_h)
@@ -437,7 +460,7 @@ class ReconstructionCycle:
             for band_idx in range(decoder.N_BANDS):
                 info = cached_band_info[band_idx]
                 d_band = d_per_band
-                idx = info['idx']
+                idx = info["idx"]
                 wt_grad_band = np.zeros(decoder.WAVETABLE_SIZE, dtype=np.float32)
                 np.add.at(wt_grad_band, idx, d_band)
                 start = band_idx * decoder.WAVETABLE_SIZE
@@ -448,7 +471,7 @@ class ReconstructionCycle:
             d_b_wavetable += d_wt_flat
             d_h_wt = decoder._W_wavetable.T @ d_wt_flat
             d_h = d_h_wt + d_h_noise
-            d_pre_hidden = d_h * (1.0 - cached_h ** 2)
+            d_pre_hidden = d_h * (1.0 - cached_h**2)
             d_W_hidden += np.outer(d_pre_hidden, latent)
             d_b_hidden += d_pre_hidden
 
@@ -462,11 +485,11 @@ class ReconstructionCycle:
 
         max_norm = 10.0
         for g in [d_W_hidden, d_W_wavetable, d_W_noise]:
-            norm = np.sqrt(np.sum(g ** 2))
+            norm = np.sqrt(np.sum(g**2))
             if norm > max_norm:
                 g *= max_norm / norm
         for g in [d_b_hidden, d_b_wavetable, d_b_noise]:
-            norm = np.sqrt(np.sum(g ** 2))
+            norm = np.sqrt(np.sum(g**2))
             if norm > max_norm:
                 g *= max_norm / norm
 
@@ -487,15 +510,19 @@ class CrossModalSynthesizer:
     into any target modality.
     """
 
-    def __init__(self, latent_space: SharedLatentSpace,
-                 visual_decoder: Optional[VisualDecoder] = None,
-                 audio_decoder: Optional[AudioWaveformDecoder] = None):
+    def __init__(
+        self,
+        latent_space: SharedLatentSpace,
+        visual_decoder: Optional[VisualDecoder] = None,
+        audio_decoder: Optional[AudioWaveformDecoder] = None,
+    ):
         self._ls = latent_space
         self._visual_decoder = visual_decoder
         self._audio_decoder = audio_decoder
 
-    def blend_latents(self, modalities: List[Tuple[str, np.ndarray]],
-                      weights: Optional[List[float]] = None) -> np.ndarray:
+    def blend_latents(
+        self, modalities: List[Tuple[str, np.ndarray]], weights: Optional[List[float]] = None
+    ) -> np.ndarray:
         """Blend multiple modality latents into a single latent vector.
 
         Args:
@@ -531,8 +558,9 @@ class CrossModalSynthesizer:
             return np.array([], dtype=np.float32)
         return self._audio_decoder.decode(latent)
 
-    def cross_generate(self, source_modality: str, source_features: np.ndarray,
-                       target_modality: str) -> np.ndarray:
+    def cross_generate(
+        self, source_modality: str, source_features: np.ndarray, target_modality: str
+    ) -> np.ndarray:
         """Encode source modality and decode into target modality.
 
         E.g., encode an image → decode as audio (vision→audio).

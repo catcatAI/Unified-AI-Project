@@ -23,6 +23,7 @@ class LearningHandler:
         if self._anchor is None:
             try:
                 from core.engine.anchor_learning import AnchorLearningEngine
+
                 self._anchor = AnchorLearningEngine()
             except Exception as e:
                 logger.warning(f"[LearningHandler] AnchorLearningEngine unavailable: {e}")
@@ -34,9 +35,8 @@ class LearningHandler:
         if not fact:
             return "（學習）想讓我記住什麼呢？請告訴我一些你想讓我學習的事情。"
         stored = await self._store_fact(fact)
-        return (
-            f"（學習）我記住了：{fact}\n"
-            + ("（已儲存到長期記憶）" if stored else "（暫時記在心上）")
+        return f"（學習）我記住了：{fact}\n" + (
+            "（已儲存到長期記憶）" if stored else "（暫時記在心上）"
         )
 
     async def _store_fact(self, fact: str) -> bool:
@@ -58,9 +58,22 @@ class LearningHandler:
     def _extract_fact(self, text: str) -> Optional[str]:
         """Extract fact."""
         prefixes = sorted(
-            ["記住這個", "記住", "學習", "記錄", "教我", "調整", "理解",
-             "please remember", "please learn", "remember", "learn", "teach"],
-            key=len, reverse=True,
+            [
+                "記住這個",
+                "記住",
+                "學習",
+                "記錄",
+                "教我",
+                "調整",
+                "理解",
+                "please remember",
+                "please learn",
+                "remember",
+                "learn",
+                "teach",
+            ],
+            key=len,
+            reverse=True,
         )
         for prefix in prefixes:
             pattern = re.compile(re.escape(prefix), re.IGNORECASE)

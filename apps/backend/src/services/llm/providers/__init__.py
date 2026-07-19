@@ -30,12 +30,16 @@ _warned: set = set()
 class _MissingSentinel:
     def __getattr__(self, attr):
         return self
+
     def __call__(self, *args, **kwargs):
         return self
+
     def __bool__(self):
         return True
+
     def __repr__(self):
         return "<missing>"
+
 
 _MISSING = _MissingSentinel()
 

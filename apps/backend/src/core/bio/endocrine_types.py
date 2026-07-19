@@ -101,7 +101,9 @@ class Hormone:
         """
         # 1. 計算自然代謝後的水平 (指數衰減至穩態)
         # 即使 current_level < base_level，此公式也會讓其平滑回歸至 base_level
-        self.current_level = self.base_level + (self.current_level - self.base_level) * math.exp(-self._k * dt_minutes)
+        self.current_level = self.base_level + (self.current_level - self.base_level) * math.exp(
+            -self._k * dt_minutes
+        )
 
         # 2. 應用邊界限制
         self.current_level = max(self.min_level, min(self.max_level, self.current_level))

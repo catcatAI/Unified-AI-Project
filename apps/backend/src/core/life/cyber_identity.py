@@ -171,7 +171,9 @@ class CyberIdentity:
 
         # Reflection configuration
         self._reflection_interval: float = 3600  # Reflect every hour
-        self._narrative_update_interval = loop_sleep("narrative_update", 86400.0)  # Update narrative daily
+        self._narrative_update_interval = loop_sleep(
+            "narrative_update", 86400.0
+        )  # Update narrative daily
 
         # Theoretical framework integration
         self.life_intensity_formula: Optional[LifeIntensityFormula] = None
@@ -199,8 +201,11 @@ class CyberIdentity:
         # Start reflection loop
         self._reflection_task = asyncio.create_task(self._reflection_loop())
         self._reflection_task.add_done_callback(
-            lambda t: logger.critical("Reflection loop failed: %s", t.exception())
-            if not t.cancelled() and t.exception() else None
+            lambda t: (
+                logger.critical("Reflection loop failed: %s", t.exception())
+                if not t.cancelled() and t.exception()
+                else None
+            )
         )
 
     def _initialize_self_knowledge_domains(self) -> None:
@@ -370,7 +375,9 @@ class CyberIdentity:
                 for callback in self._milestone_callbacks:
                     try:
                         callback(milestone)
-                    except Exception as e:  # broad exception acceptable: milestone callbacks should not block growth recording
+                    except (
+                        Exception
+                    ) as e:  # broad exception acceptable: milestone callbacks should not block growth recording
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
             # Record in history
@@ -391,7 +398,9 @@ class CyberIdentity:
                 for callback in self._growth_callbacks[aspect]:
                     try:
                         callback(growth_record.previous_level, growth_record.level)
-                    except Exception as e:  # broad exception acceptable: growth callbacks should not block updates
+                    except (
+                        Exception
+                    ) as e:  # broad exception acceptable: growth callbacks should not block updates
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
             # Update self-description if significant growth

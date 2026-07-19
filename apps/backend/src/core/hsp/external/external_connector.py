@@ -12,8 +12,13 @@ logger = logging.getLogger(__name__)
 
 
 class ExternalConnector:
-    def __init__(self, config: Optional[Dict[str, Any]] = None, ai_id: Optional[str] = None,
-                 broker_address: Optional[str] = None, broker_port: Optional[int] = None):
+    def __init__(
+        self,
+        config: Optional[Dict[str, Any]] = None,
+        ai_id: Optional[str] = None,
+        broker_address: Optional[str] = None,
+        broker_port: Optional[int] = None,
+    ):
         self.config = config or {}
         self.ai_id = ai_id or self.config.get("ai_id", "default")
         self.broker_address = broker_address or self.config.get("broker_address", "localhost")
@@ -23,6 +28,7 @@ class ExternalConnector:
     async def connect(self) -> bool:
         """Connect to broker via HTTP health-check."""
         import aiohttp
+
         url = f"http://{self.broker_address}:{self.broker_port}/health"
         try:
             async with aiohttp.ClientSession() as session:
@@ -37,10 +43,13 @@ class ExternalConnector:
     async def send(self, message: Dict[str, Any]) -> bool:
         """Send a message via HTTP POST to the broker."""
         import aiohttp
+
         url = f"http://{self.broker_address}:{self.broker_port}/message"
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.post(url, json=message, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                async with session.post(
+                    url, json=message, timeout=aiohttp.ClientTimeout(total=10)
+                ) as resp:
                     ok = resp.status == 200
                     logger.debug(f"ExternalConnector send -> {resp.status} ({ok})")
                     return ok
@@ -51,4 +60,3 @@ class ExternalConnector:
     async def disconnect(self) -> None:
         self.config = {}
         logger.debug("ExternalConnector disconnected")
-

@@ -157,4 +157,3 @@ async def get_hardware_center() -> UnifiedHardwareCenter:
         _center = UnifiedHardwareCenter()
         await _center.initialize()
     return _center
-

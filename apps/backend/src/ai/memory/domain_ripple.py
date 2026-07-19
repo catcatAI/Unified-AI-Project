@@ -70,19 +70,19 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Principled magnitude constants (all on the [0,1] StateMatrix scale)
 # ---------------------------------------------------------------------------
-JOY_ON_CORRECT = 0.12        # happiness bump for a freshly-solved problem
+JOY_ON_CORRECT = 0.12  # happiness bump for a freshly-solved problem
 EXCITEMENT_ON_CORRECT = 0.06  # γ.excitement (== happiness here) secondary bump
-WAITING_FOCUS = 0.05          # β.focus while attending / resolving
-WAITING_ANTICIPATION = 0.05   # γ.anticipation while attending
-REPEAT_FOCUS_PENALTY = 0.15   # β.focus drop on a repeated problem
+WAITING_FOCUS = 0.05  # β.focus while attending / resolving
+WAITING_ANTICIPATION = 0.05  # γ.anticipation while attending
+REPEAT_FOCUS_PENALTY = 0.15  # β.focus drop on a repeated problem
 REPEAT_EXCITE_PENALTY = 0.08  # γ.excitement drop on a repeated problem
 REPEAT_CLARITY_PENALTY = 0.05  # β.clarity drop on a repeated problem
 NEG_HAPPINESS_PENALTY = 0.10  # γ.happiness drop when the op confused/frightened
-NEG_FEAR = 0.20               # γ.fear when the op frightened
-NEG_CONFUSION = 0.15          # β.confusion when the op confused
-RPG_BOOST_BASE = 0.04         # baseline happiness for a high stateful value
+NEG_FEAR = 0.20  # γ.fear when the op frightened
+NEG_CONFUSION = 0.15  # β.confusion when the op confused
+RPG_BOOST_BASE = 0.04  # baseline happiness for a high stateful value
 RPG_BOOST_SLOPE = 1.0 / 4000.0  # per-unit scaling of the value
-RPG_BOOST_CAP = 0.15          # max extra happiness from a high value
+RPG_BOOST_CAP = 0.15  # max extra happiness from a high value
 
 # Unified ceiling for every ripple *delta* applied to the StateMatrix. This makes
 # the three domain engines consistent: MathRippleEngine produces unclamped deltas
@@ -101,21 +101,32 @@ _AXIS_SCHEMA = {
     "alpha": {"energy", "comfort", "arousal", "rest_need", "tension"},
     "beta": {"curiosity", "focus", "confusion", "learning", "clarity"},
     "gamma": {
-        "happiness", "sadness", "anger", "fear", "disgust",
-        "surprise", "trust", "anticipation", "calm",
+        "happiness",
+        "sadness",
+        "anger",
+        "fear",
+        "disgust",
+        "surprise",
+        "trust",
+        "anticipation",
+        "calm",
     },
     "delta": {"attention", "bond", "trust", "presence", "engagement"},
     "epsilon": {"logic", "precision", "abstraction", "certainty", "complexity", "fatigue"},
     "theta": {
-        "novelty", "complexity", "ambiguity", "dimension_fit",
-        "creation_urge", "theta_negativity", "correction_urge", "audit_intensity",
+        "novelty",
+        "complexity",
+        "ambiguity",
+        "dimension_fit",
+        "creation_urge",
+        "theta_negativity",
+        "correction_urge",
+        "audit_intensity",
     },
 }
 
 
-def apply_ripple_to_state(
-    state_matrix: Any, ripple: Dict[str, Any], scale: float = 1.0
-) -> None:
+def apply_ripple_to_state(state_matrix: Any, ripple: Dict[str, Any], scale: float = 1.0) -> None:
     """Apply a single ripple dict onto the real StateMatrix4D, fully.
 
     Unlike the old ``cognitive_pipeline._apply_ripple_to_state`` (which only
@@ -228,9 +239,7 @@ def _apply_cognition_deltas(state_matrix: Any, deltas: Dict[str, float]) -> None
         axis.values[dim] = max(0.0, min(1.0, cur + value))
 
 
-def apply_domain_cognition(
-    state_matrix: Any, text: str, recent=None
-) -> Dict[str, Any]:
+def apply_domain_cognition(state_matrix: Any, text: str, recent=None) -> Dict[str, Any]:
     """Apply bounded, meaningful-only domain cognition to ``state_matrix``.
 
     Single entry point used by BOTH the lab ``CognitivePipeline`` and the
@@ -306,8 +315,10 @@ class DomainRippleEngine(ABC):
         is_pure_arithmetic = len(pure_expr) == 0
         # For non-math domains, a computation that names a quantity is meaningful
         # even without an explicit question marker.
-        meaningful = bool(attribute) or is_question or (
-            self.domain != "math" and value is not None and not is_pure_arithmetic
+        meaningful = (
+            bool(attribute)
+            or is_question
+            or (self.domain != "math" and value is not None and not is_pure_arithmetic)
         )
         is_repetition = text.strip() in (recent or set())
         return {
@@ -340,16 +351,12 @@ class DomainRippleEngine(ABC):
         elif cls.get("is_repetition"):
             # Repeated problem → lower interest / enthusiasm (no joy).
             deltas["beta_focus"] = deltas.get("beta_focus", 0.0) - REPEAT_FOCUS_PENALTY
-            deltas["gamma_excitement"] = (
-                deltas.get("gamma_excitement", 0.0) - REPEAT_EXCITE_PENALTY
-            )
+            deltas["gamma_excitement"] = deltas.get("gamma_excitement", 0.0) - REPEAT_EXCITE_PENALTY
             deltas["beta_clarity"] = deltas.get("beta_clarity", 0.0) - REPEAT_CLARITY_PENALTY
         elif cls.get("is_question"):
             # Freshly solved problem (a posed question) → joy + slight excitement.
             deltas["gamma_happiness"] = deltas.get("gamma_happiness", 0.0) + JOY_ON_CORRECT
-            deltas["gamma_excitement"] = (
-                deltas.get("gamma_excitement", 0.0) + EXCITEMENT_ON_CORRECT
-            )
+            deltas["gamma_excitement"] = deltas.get("gamma_excitement", 0.0) + EXCITEMENT_ON_CORRECT
         # else: meaningful but not a question and not repeated (e.g. a stateful
         # attribute update that is not a "problem to solve") → no joy, only the
         # high-value happiness below + the transient waiting cognition.
@@ -363,9 +370,7 @@ class DomainRippleEngine(ABC):
 
         # Transient waiting / attending cognition while resolving.
         deltas["beta_focus"] = deltas.get("beta_focus", 0.0) + WAITING_FOCUS
-        deltas["gamma_anticipation"] = (
-            deltas.get("gamma_anticipation", 0.0) + WAITING_ANTICIPATION
-        )
+        deltas["gamma_anticipation"] = deltas.get("gamma_anticipation", 0.0) + WAITING_ANTICIPATION
         return deltas
 
 
@@ -374,8 +379,19 @@ class MathDomainEngine(DomainRippleEngine):
 
     domain = "math"
     attributes = {
-        "hp", "mp", "atk", "def", "str", "int", "dex", "lvl", "level",
-        "exp", "gold", "sp", "ap",
+        "hp",
+        "mp",
+        "atk",
+        "def",
+        "str",
+        "int",
+        "dex",
+        "lvl",
+        "level",
+        "exp",
+        "gold",
+        "sp",
+        "ap",
     }
 
     def __init__(self, state_matrix=None):
@@ -413,15 +429,28 @@ class MathDomainEngine(DomainRippleEngine):
 # Physics domain — real (minimal) kinematics / force / energy quantities.
 # ---------------------------------------------------------------------------
 _PHYSICS_KEYWORDS = {
-    "velocity": "speed", "speed": "speed", "速度": "speed",
-    "acceleration": "accel", "加速度": "accel",
-    "force": "force", "力": "force",
-    "mass": "mass", "質量": "mass",
-    "distance": "dist", "displacement": "dist", "距離": "dist", "位移": "dist",
-    "time": "time", "時間": "time",
-    "energy": "energy", "能量": "energy",
-    "momentum": "momentum", "動量": "momentum",
-    "pressure": "pressure", "壓力": "pressure", "压强": "pressure",
+    "velocity": "speed",
+    "speed": "speed",
+    "速度": "speed",
+    "acceleration": "accel",
+    "加速度": "accel",
+    "force": "force",
+    "力": "force",
+    "mass": "mass",
+    "質量": "mass",
+    "distance": "dist",
+    "displacement": "dist",
+    "距離": "dist",
+    "位移": "dist",
+    "time": "time",
+    "時間": "time",
+    "energy": "energy",
+    "能量": "energy",
+    "momentum": "momentum",
+    "動量": "momentum",
+    "pressure": "pressure",
+    "壓力": "pressure",
+    "压强": "pressure",
 }
 
 
@@ -484,13 +513,41 @@ class PhysicsDomainEngine(DomainRippleEngine):
 # Chemistry domain — real (minimal) molar mass + ideal gas from a formula.
 # ---------------------------------------------------------------------------
 _ATOMIC_WEIGHTS = {
-    "H": 1.008, "He": 4.0026, "Li": 6.94, "Be": 9.0122, "B": 10.81,
-    "C": 12.011, "N": 14.007, "O": 15.999, "F": 18.998, "Ne": 20.180,
-    "Na": 22.990, "Mg": 24.305, "Al": 26.982, "Si": 28.085, "P": 30.974,
-    "S": 32.06, "Cl": 35.45, "Ar": 39.948, "K": 39.098, "Ca": 40.078,
-    "Ti": 47.867, "Cr": 51.996, "Mn": 54.938, "Fe": 55.845, "Ni": 58.693,
-    "Cu": 63.546, "Zn": 65.38, "Br": 79.904, "Ag": 107.868, "I": 126.904,
-    "Ba": 137.327, "Au": 196.967, "Hg": 200.592, "Pb": 207.2, "U": 238.029,
+    "H": 1.008,
+    "He": 4.0026,
+    "Li": 6.94,
+    "Be": 9.0122,
+    "B": 10.81,
+    "C": 12.011,
+    "N": 14.007,
+    "O": 15.999,
+    "F": 18.998,
+    "Ne": 20.180,
+    "Na": 22.990,
+    "Mg": 24.305,
+    "Al": 26.982,
+    "Si": 28.085,
+    "P": 30.974,
+    "S": 32.06,
+    "Cl": 35.45,
+    "Ar": 39.948,
+    "K": 39.098,
+    "Ca": 40.078,
+    "Ti": 47.867,
+    "Cr": 51.996,
+    "Mn": 54.938,
+    "Fe": 55.845,
+    "Ni": 58.693,
+    "Cu": 63.546,
+    "Zn": 65.38,
+    "Br": 79.904,
+    "Ag": 107.868,
+    "I": 126.904,
+    "Ba": 137.327,
+    "Au": 196.967,
+    "Hg": 200.592,
+    "Pb": 207.2,
+    "U": 238.029,
 }
 _FORMULA_RE = re.compile(r"([A-Z][a-z]?)(\d*)")
 _CHEM_WORDS = {"mol", "mole", "molar", "莫耳", "摩爾", "formula", "化學", "chemical"}

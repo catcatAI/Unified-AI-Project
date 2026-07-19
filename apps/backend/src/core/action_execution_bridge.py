@@ -15,9 +15,7 @@ Version: 6.0.0
 Date: 2026-02-02
 """
 
-
 from __future__ import annotations
-from core.utils import safe_error
 
 import asyncio
 import json
@@ -30,6 +28,7 @@ from pathlib import Path
 from typing import Any, Callable, Optional, Union
 
 from core.system.config.magic_numbers import batch_value, cache_value, loop_sleep
+from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +41,7 @@ _DEFAULT_SEARCH_RESULTS = 5
 _DEFAULT_MEDIUM_LIMIT = 10
 _DEFAULT_DEEP_LIMIT = 20
 _MAX_FEEDBACK_HISTORY = 500
+
 
 class ActionType(Enum):
     """动作类型 / Action types supported by the system"""
@@ -264,7 +264,9 @@ class ActionExecutionBridge:
 
         # Execution control
         self._running = False
-        self._max_concurrent = self.config.get("max_concurrent", batch_value("execution_bridge_concurrent", 3))
+        self._max_concurrent = self.config.get(
+            "max_concurrent", batch_value("execution_bridge_concurrent", 3)
+        )
         self._semaphore = asyncio.Semaphore(self._max_concurrent)
         self._execution_task: Optional[asyncio.Task] = None
 
@@ -273,9 +275,15 @@ class ActionExecutionBridge:
 
         # History persistence
         raw_path = self.config.get("history_path", None)
-        self._history_file = Path(raw_path).expanduser() if raw_path else Path.home() / ".angela" / "action_history.json"
+        self._history_file = (
+            Path(raw_path).expanduser()
+            if raw_path
+            else Path.home() / ".angela" / "action_history.json"
+        )
         self._execution_history: list[dict[str, Any]] = []
-        self._max_history_size = self.config.get("max_history_size", cache_value("execution_history", 1000))
+        self._max_history_size = self.config.get(
+            "max_history_size", cache_value("execution_history", 1000)
+        )
 
         # Statistics
         self._stats = {
@@ -424,14 +432,19 @@ class ActionExecutionBridge:
                     task.add_done_callback(
                         lambda t: (
                             self._background_tasks.discard(t),
-                            logger.warning("Background action task failed: %s", t.exception())
-                            if not t.cancelled() and t.exception() else None
+                            (
+                                logger.warning("Background action task failed: %s", t.exception())
+                                if not t.cancelled() and t.exception()
+                                else None
+                            ),
                         )
                     )
                 else:
                     # No executable actions, wait a bit
                     await asyncio.sleep(loop_sleep("bridge_poll", 0.1))
-            except Exception as e:  # broad exception acceptable: execution loop must be resilient to prevent silent crash
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: execution loop must be resilient to prevent silent crash
                 logger.error("%s Execution loop error: %s", _LOG_PREFIX, e, exc_info=True)
                 await asyncio.sleep(loop_sleep("bridge_error_backoff", 0.5))
 
@@ -470,7 +483,9 @@ class ActionExecutionBridge:
             for callback in self._pre_execution_callbacks:
                 try:
                     callback(context)
-                except Exception as e:  # broad exception acceptable: callbacks are user-defined, prevent crash
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: callbacks are user-defined, prevent crash
                     logger.error(f"{_LOG_PREFIX} Pre-execution callback error: {e}", exc_info=True)
 
             # === Handler execution phase ===
@@ -506,7 +521,9 @@ class ActionExecutionBridge:
                 error_message="Action timed out",
                 execution_time_ms=execution_time,
             )
-        except Exception as e:  # broad exception acceptable: ensure all errors result in failure result
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: ensure all errors result in failure result
             logger.error(f"Error in {__name__}: {e}", exc_info=True)
             execution_time = int((asyncio.get_running_loop().time() - start_time) * 1000)
 
@@ -532,8 +549,12 @@ class ActionExecutionBridge:
                 for callback in self._post_execution_callbacks:
                     try:
                         callback(context, result)
-                    except Exception as e:  # broad exception acceptable: prevent callback errors from breaking flow
-                        logger.error(f"{_LOG_PREFIX} Post-execution callback error: {e}", exc_info=True)
+                    except (
+                        Exception
+                    ) as e:  # broad exception acceptable: prevent callback errors from breaking flow
+                        logger.error(
+                            f"{_LOG_PREFIX} Post-execution callback error: {e}", exc_info=True
+                        )
 
                 if self.cdm:
                     await self._send_feedback_to_cdm(result)
@@ -593,27 +614,32 @@ class ActionExecutionBridge:
         """Load execution history from file"""
         try:
             if await asyncio.to_thread(self._history_file.exists):
+
                 def read_history() -> str:
                     """Execute the read history operation."""
                     with open(self._history_file, "r", encoding="utf-8") as f:
                         return json.load(f)
-                
+
                 self._execution_history = await asyncio.to_thread(read_history)
-        except Exception as e:  # broad exception acceptable: non-critical history load, continue without it
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: non-critical history load, continue without it
             logger.error(f"{_LOG_PREFIX} Failed to load history: {e}", exc_info=True)
 
     async def _save_history(self) -> None:
         """Save execution history to file"""
         try:
             await asyncio.to_thread(self._history_file.parent.mkdir, parents=True, exist_ok=True)
-            
+
             def write_history() -> None:
                 """Execute the write history operation."""
                 with open(self._history_file, "w", encoding="utf-8") as f:
                     json.dump(self._execution_history, f, ensure_ascii=False, indent=2)
-            
+
             await asyncio.to_thread(write_history)
-        except Exception as e:  # broad exception acceptable: non-critical history save, log and continue
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: non-critical history save, log and continue
             logger.error(f"{_LOG_PREFIX} Failed to save history: {e}", exc_info=True)
 
     async def _send_feedback_to_cdm(self, result: ExecutionResult) -> None:
@@ -641,7 +667,9 @@ class ActionExecutionBridge:
                     if self.cdm.should_trigger_learning(delta):
                         if hasattr(self.cdm, "integrate_knowledge"):
                             self.cdm.integrate_knowledge(feedback_delta, delta)
-        except Exception as e:  # broad exception acceptable: non-critical CDM update, log and continue
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: non-critical CDM update, log and continue
             logger.error(f"{_LOG_PREFIX} Failed to send feedback to CDM: {e}", exc_info=True)
 
     # ========== Action Handlers ==========
@@ -667,7 +695,9 @@ class ActionExecutionBridge:
                 elif hasattr(self.orchestrator, "process_user_input"):
                     response = await self.orchestrator.process_user_input(f"[AUTONOMOUS] {message}")
                     result["orchestrator_response"] = response
-            except Exception as e:  # broad exception acceptable: optional orchestrator call, handle gracefully
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: optional orchestrator call, handle gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result["orchestrator_error"] = safe_error(e)
 
@@ -679,7 +709,9 @@ class ActionExecutionBridge:
                 elif hasattr(self.desktop_pet, "display_bubble"):
                     self.desktop_pet.display_bubble(message)
                 result["displayed"] = True
-            except Exception as e:  # broad exception acceptable: optional desktop pet display, handle gracefully
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: optional desktop pet display, handle gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result["display_error"] = safe_error(e)
 
@@ -700,7 +732,11 @@ class ActionExecutionBridge:
             try:
                 search_results = await self.web_search_tool.search(
                     query=topic,
-                    num_results=_DEFAULT_SEARCH_RESULTS if depth == "shallow" else _DEFAULT_MEDIUM_LIMIT if depth == "medium" else _DEFAULT_DEEP_LIMIT,
+                    num_results=(
+                        _DEFAULT_SEARCH_RESULTS
+                        if depth == "shallow"
+                        else _DEFAULT_MEDIUM_LIMIT if depth == "medium" else _DEFAULT_DEEP_LIMIT
+                    ),
                 )
                 result["exploration_data"]["search_results"] = search_results
             except Exception as e:  # broad exception acceptable: optional search, handle gracefully
@@ -714,7 +750,9 @@ class ActionExecutionBridge:
                 if hasattr(self.file_manager, "search_files"):
                     local_results = await self.file_manager.search_files(topic)
                     result["exploration_data"]["local_files"] = local_results
-            except Exception as e:  # broad exception acceptable: optional local search, handle gracefully
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: optional local search, handle gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result["local_search_error"] = safe_error(e)
 
@@ -729,7 +767,9 @@ class ActionExecutionBridge:
                             metadata={"topic": topic, "type": "exploration"},
                         )
                 result["integrated_to_cdm"] = True
-            except Exception as e:  # broad exception acceptable: optional CDM integration, handle gracefully
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: optional CDM integration, handle gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result["cdm_integration_error"] = safe_error(e)
 
@@ -815,7 +855,9 @@ class ActionExecutionBridge:
                 elif hasattr(self.desktop_pet, "display_bubble"):
                     self.desktop_pet.display_bubble(message)
                 result["displayed"] = True
-            except Exception as e:  # broad exception acceptable: optional display, handle gracefully
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: optional display, handle gracefully
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 result["display_error"] = safe_error(e)
 
@@ -898,7 +940,9 @@ class ActionExecutionBridge:
         try:
             if change_type == "expression":
                 if hasattr(self.live2d_integration, "set_expression"):
-                    await self.live2d_integration.set_expression(value, intensity=_DEFAULT_EXPRESSION_INTENSITY)
+                    await self.live2d_integration.set_expression(
+                        value, intensity=_DEFAULT_EXPRESSION_INTENSITY
+                    )
                     result["applied"] = True
 
             elif change_type == "outfit":

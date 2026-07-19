@@ -8,7 +8,6 @@
 
 import logging
 from datetime import datetime
-
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -257,7 +256,9 @@ class AgentContextManager:
             # context_id = self.context_manager.create_context(ContextType.MODEL, context_content)  # Commented - needs proper import
             logger.info(f"Started collaboration {collaboration.collaboration_id} with context")
             return collaboration.collaboration_id
-        except Exception as e:  # broad exception acceptable: initialization continues on optional component failure
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: initialization continues on optional component failure
             logger.error(f"Failed to start collaboration: {e}", exc_info=True)
             raise
 
@@ -357,5 +358,7 @@ class AgentContextManager:
                 result["end_time"] = collab.end_time.isoformat()
             return result
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
-            logger.error(f"Failed to get context for collaboration {collaboration_id}: {e}", exc_info=True)
+            logger.error(
+                f"Failed to get context for collaboration {collaboration_id}: {e}", exc_info=True
+            )
             return None

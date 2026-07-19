@@ -129,9 +129,19 @@ class HotplugResult:
 
 
 __all__ = [
-    "ModuleKind", "ModuleStatus",
-    "ServiceDecl", "AdapterDecl", "HealthConfig", "HookDecl",
-    "LifecycleHooks", "DependencySpec", "ProvidedServices",
-    "ModuleDescriptor", "ModuleInstance",
-    "InitResult", "StartResult", "HealthStatus", "HotplugResult",
+    "ModuleKind",
+    "ModuleStatus",
+    "ServiceDecl",
+    "AdapterDecl",
+    "HealthConfig",
+    "HookDecl",
+    "LifecycleHooks",
+    "DependencySpec",
+    "ProvidedServices",
+    "ModuleDescriptor",
+    "ModuleInstance",
+    "InitResult",
+    "StartResult",
+    "HealthStatus",
+    "HotplugResult",
 ]

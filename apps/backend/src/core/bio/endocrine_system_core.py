@@ -82,6 +82,7 @@ class EndocrineSystem:
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         from app_config_loader import get_formula_config
+
         self.formula_config = get_formula_config("biological")
         self.config = config or {}
         self.hormones: Dict[HormoneType, Hormone] = {}
@@ -141,7 +142,9 @@ class EndocrineSystem:
             await self._update_circadian_rhythm()
 
             last_run = now
-            await asyncio.sleep(loop_sleep("endocrine_update", 5.0))  # 提高採樣頻率以保證數值演化平滑 (5秒一跳)
+            await asyncio.sleep(
+                loop_sleep("endocrine_update", 5.0)
+            )  # 提高採樣頻率以保證數值演化平滑 (5秒一跳)
 
     async def _update_hormones(self) -> None:
         """(已由 advance_time 整合) 保持兼容性"""
@@ -348,7 +351,9 @@ class EndocrineSystem:
             for hormone_type, change in social_effects[interaction_type].items():
                 await self.adjust_hormone(hormone_type, change)
 
-    async def trigger_stress_response(self, stress_level: float, stress_type: str = "acute") -> None:
+    async def trigger_stress_response(
+        self, stress_level: float, stress_type: str = "acute"
+    ) -> None:
         """
         Trigger stress-related hormone changes
 
@@ -485,7 +490,9 @@ class EndocrineSystem:
 
         return effects
 
-    def register_change_callback(self, callback: Callable[[HormoneType, float, float], None]) -> None:
+    def register_change_callback(
+        self, callback: Callable[[HormoneType, float, float], None]
+    ) -> None:
         """Register callback for hormone level changes"""
         self._callbacks.append(callback)
 

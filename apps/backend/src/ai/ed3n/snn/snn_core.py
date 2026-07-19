@@ -30,9 +30,7 @@ except ImportError:
 class SNNRelationGroup:
     """An SNN-based relation group with LIF neurons."""
 
-    def __init__(
-        self, group_type: str, modulator: Optional[HormonalModulator] = None
-    ):
+    def __init__(self, group_type: str, modulator: Optional[HormonalModulator] = None):
         self.group_type = group_type
         self.neurons: Dict[str, LIFNeuron] = {}
         self.modulator = modulator
@@ -63,13 +61,9 @@ class SNNCore:
             "mapping": SNNRelationGroup("mapping"),
             "analogy": SNNRelationGroup("analogy"),
         }
-        self.classifier = classifier or (
-            RelationClassifier() if RelationClassifier else None
-        )
+        self.classifier = classifier or (RelationClassifier() if RelationClassifier else None)
         self.batch_engine = BatchReorderEngine() if BatchReorderEngine else None
-        self.sparse_engine = (
-            SparseComputationEngine() if SparseComputationEngine else None
-        )
+        self.sparse_engine = SparseComputationEngine() if SparseComputationEngine else None
         self.modulator = HormonalModulator()
         self._timestep: float = 1.0
 
@@ -97,9 +91,7 @@ class SNNCore:
 
         relation_type = "synonym"
         if input_keys and len(input_keys) >= 2 and self.classifier:
-            rt, _ = self.classifier.classify_pair(
-                input_keys[0], input_keys[1], context=context
-            )
+            rt, _ = self.classifier.classify_pair(input_keys[0], input_keys[1], context=context)
             relation_type = self._group_name_for(rt)
 
         active_group = self.groups.get(relation_type)
@@ -109,9 +101,7 @@ class SNNCore:
         input_currents = {k: 15.0 for k in input_keys}
         for key in input_keys:
             if key not in active_group.neurons:
-                active_group.add_neuron(
-                    LIFNeuron(key=key, group_type=relation_type)
-                )
+                active_group.add_neuron(LIFNeuron(key=key, group_type=relation_type))
 
         batch = (
             self.batch_engine.create_initial_batch(input_keys, input_currents)
@@ -126,9 +116,7 @@ class SNNCore:
 
         while batch is not None and iteration < max_iterations:
             active_neurons = {
-                k: active_group.neurons[k]
-                for k in batch.neuron_keys
-                if k in active_group.neurons
+                k: active_group.neurons[k] for k in batch.neuron_keys if k in active_group.neurons
             }
 
             spiked = self.batch_engine.compute_batch(
@@ -187,11 +175,7 @@ class SNNCore:
                 neuron.reset()
 
     def get_sparsity_report(self) -> Dict[str, Any]:
-        return (
-            self.sparse_engine.get_efficiency_report()
-            if self.sparse_engine
-            else {}
-        )
+        return self.sparse_engine.get_efficiency_report() if self.sparse_engine else {}
 
     def _group_name_for(self, rel_type) -> str:
         mapping = {
@@ -202,9 +186,5 @@ class SNNCore:
             "ANALOGY": "analogy",
             "ANTI_ANALOGY": "analogy",
         }
-        type_str = (
-            str(rel_type).split(".")[-1]
-            if "." in str(rel_type)
-            else str(rel_type)
-        )
+        type_str = str(rel_type).split(".")[-1] if "." in str(rel_type) else str(rel_type)
         return mapping.get(type_str.upper(), "synonym")

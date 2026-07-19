@@ -1,10 +1,10 @@
-from core.utils import safe_error
-
 import asyncio
 import importlib
 import logging
 import time
 from typing import Any, Optional
+
+from core.utils import safe_error
 
 from .models import (
     InitResult,

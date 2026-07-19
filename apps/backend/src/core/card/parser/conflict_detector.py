@@ -38,14 +38,17 @@ class ConflictDetector:
                 if a.card_type != b.card_type:
                     continue
                 if a.core_trait and b.core_trait and a.core_trait != b.core_trait:
-                    cross_conflicts.append((
-                        a.qualified_id, b.qualified_id,
-                        Conflict(
-                            type=ConflictType.MULTIVERSE,
-                            dimension="tone",
-                            description=f"Core trait differs: '{a.core_trait}' vs '{b.core_trait}'",
+                    cross_conflicts.append(
+                        (
+                            a.qualified_id,
+                            b.qualified_id,
+                            Conflict(
+                                type=ConflictType.MULTIVERSE,
+                                dimension="tone",
+                                description=f"Core trait differs: '{a.core_trait}' vs '{b.core_trait}'",
+                            ),
                         )
-                    ))
+                    )
         return cross_conflicts
 
     def _detect_physical(self, card: Card) -> List[Conflict]:
@@ -53,11 +56,13 @@ class ConflictDetector:
         conflicts = []
         for sf in card.source_files:
             if not sf.path.endswith(".gdoc") and not sf.path.endswith(".txt"):
-                conflicts.append(Conflict(
-                    type=ConflictType.HARD_ERROR,
-                    dimension="format",
-                    description=f"Unsupported source format: {sf.path}",
-                ))
+                conflicts.append(
+                    Conflict(
+                        type=ConflictType.HARD_ERROR,
+                        dimension="format",
+                        description=f"Unsupported source format: {sf.path}",
+                    )
+                )
         return conflicts
 
     def _detect_numerical(self, card: Card) -> List[Conflict]:
@@ -65,11 +70,13 @@ class ConflictDetector:
         conflicts = []
         for token in card.tokens:
             if token.strength < 0.0 or token.strength > 10.0:
-                conflicts.append(Conflict(
-                    type=ConflictType.HARD_ERROR,
-                    dimension="numerical",
-                    description=f"Token '{token.name}' strength {token.strength} out of range [0, 10]",
-                ))
+                conflicts.append(
+                    Conflict(
+                        type=ConflictType.HARD_ERROR,
+                        dimension="numerical",
+                        description=f"Token '{token.name}' strength {token.strength} out of range [0, 10]",
+                    )
+                )
         return conflicts
 
     def _detect_tone(self, card: Card) -> List[Conflict]:

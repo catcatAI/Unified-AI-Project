@@ -41,4 +41,3 @@ class MultimodalProcessor:
     def get_process_count(self) -> int:
         """Return total processed item count."""
         return self._process_count
-

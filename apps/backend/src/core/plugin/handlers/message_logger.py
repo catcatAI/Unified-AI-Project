@@ -19,7 +19,9 @@ async def message_logger_handler(data: dict) -> dict:
     model_id = data.get("model_id", "unknown")
     logger.info(
         "[Plugin:MessageLogger] message #%d | model=%s | len=%d",
-        _message_counter, model_id, len(user_text),
+        _message_counter,
+        model_id,
+        len(user_text),
     )
     data["plugin_logged_at"] = datetime.utcnow().isoformat()
     data["plugin_message_seq"] = _message_counter
@@ -39,7 +41,9 @@ class MessageLoggerHandler:
         model_id = data.get("model_id", "unknown")
         logger.info(
             "[Plugin:MessageLogger] message #%d | model=%s | len=%d",
-            self.counter, model_id, len(user_text),
+            self.counter,
+            model_id,
+            len(user_text),
         )
         data["plugin_logged_at"] = datetime.utcnow().isoformat()
         data["plugin_message_seq"] = self.counter

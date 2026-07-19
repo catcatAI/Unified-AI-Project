@@ -52,14 +52,19 @@ class AudioSpectralEncoder:
         if audio_data[:4] == b"RIFF":
             return self._decode_wav(audio_data)
         fmt = "<" + "h" * (len(audio_data) // 2)
-        samples = np.frombuffer(audio_data[:len(audio_data) - len(audio_data) % 2],
-                                dtype=np.int16).astype(np.float32) / 32768.0
+        samples = (
+            np.frombuffer(
+                audio_data[: len(audio_data) - len(audio_data) % 2], dtype=np.int16
+            ).astype(np.float32)
+            / 32768.0
+        )
         return samples
 
     def _decode_wav(self, data: bytes) -> np.ndarray:
         """Decode WAV file bytes to float samples."""
         try:
             import wave
+
             with io.BytesIO(data) as buf:
                 with wave.open(buf, "rb") as wf:
                     frames = wf.readframes(wf.getnframes())
@@ -92,7 +97,7 @@ class AudioSpectralEncoder:
             samples = np.pad(samples, (0, max(0, self.N_FFT - len(samples))))
 
         if len(samples) > self.SAMPLE_RATE * 5:
-            samples = samples[:self.SAMPLE_RATE * 5]
+            samples = samples[: self.SAMPLE_RATE * 5]
 
         stft = self._stft(samples)
         magnitude = np.abs(stft)
@@ -104,12 +109,14 @@ class AudioSpectralEncoder:
         mel_spec = self._mel_spectrogram(magnitude)
         mfccs = self._mfcc(mel_spec)
         for m in range(self.N_MFCC):
-            features.extend([
-                float(np.mean(mfccs[m, :])),
-                float(np.std(mfccs[m, :])),
-                float(np.max(mfccs[m, :])),
-                float(np.min(mfccs[m, :])),
-            ])
+            features.extend(
+                [
+                    float(np.mean(mfccs[m, :])),
+                    float(np.std(mfccs[m, :])),
+                    float(np.max(mfccs[m, :])),
+                    float(np.min(mfccs[m, :])),
+                ]
+            )
 
         # 2. Spectral features (6-dim)
         centroid = self._spectral_centroid(magnitude)
@@ -122,11 +129,13 @@ class AudioSpectralEncoder:
 
         # 3. Mel band statistics (60-dim)
         for m in range(self.N_MELS):
-            features.extend([
-                float(np.mean(mel_spec[m, :])),
-                float(np.std(mel_spec[m, :])),
-                float(np.max(mel_spec[m, :])),
-            ])
+            features.extend(
+                [
+                    float(np.mean(mel_spec[m, :])),
+                    float(np.std(mel_spec[m, :])),
+                    float(np.max(mel_spec[m, :])),
+                ]
+            )
 
         # 4. Temporal attention (10-dim)
         attn_features = self._temporal_attention(magnitude)
@@ -142,7 +151,7 @@ class AudioSpectralEncoder:
         stft = np.zeros((self.N_FFT // 2 + 1, n_frames), dtype=np.complex64)
         for t in range(n_frames):
             start = t * self.HOP_LENGTH
-            frame = samples[start:start + self.N_FFT]
+            frame = samples[start : start + self.N_FFT]
             if len(frame) < self.N_FFT:
                 frame = np.pad(frame, (0, self.N_FFT - len(frame)))
             stft[:, t] = np.fft.rfft(frame * window)
@@ -211,7 +220,7 @@ class AudioSpectralEncoder:
         band_size = n_freqs // bands
         contrast = []
         for b in range(bands):
-            band = magnitude[b * band_size:min((b + 1) * band_size, n_freqs), :]
+            band = magnitude[b * band_size : min((b + 1) * band_size, n_freqs), :]
             if band.size == 0:
                 contrast.extend([0.0, 0.0])
                 continue
@@ -233,8 +242,8 @@ class AudioSpectralEncoder:
         region_len = len(samples) // n_regions
         rms = []
         for i in range(n_regions):
-            region = samples[i * region_len:(i + 1) * region_len]
-            rms.append(float(np.sqrt(np.mean(region ** 2))) if len(region) > 0 else 0.0)
+            region = samples[i * region_len : (i + 1) * region_len]
+            rms.append(float(np.sqrt(np.mean(region**2))) if len(region) > 0 else 0.0)
         return rms
 
     def _temporal_attention(self, magnitude: np.ndarray) -> list:
@@ -243,7 +252,7 @@ class AudioSpectralEncoder:
         if n_frames == 0:
             return [0.0] * 10
 
-        energy_per_frame = np.sum(magnitude ** 2, axis=0)
+        energy_per_frame = np.sum(magnitude**2, axis=0)
         energy_per_frame = energy_per_frame / max(np.max(energy_per_frame), 1e-10)
         attention = np.exp(energy_per_frame * 2)
         attention = attention / max(np.sum(attention), 1e-10)
@@ -260,18 +269,16 @@ class AudioSpectralEncoder:
         """Project to target dimension if needed."""
         if len(raw) <= self._feature_dim:
             padded = np.zeros(self._feature_dim, dtype=np.float32)
-            padded[:len(raw)] = raw
+            padded[: len(raw)] = raw
             return padded
         if self._projection is None or self._projection.shape[1] != len(raw):
             rng = np.random.default_rng(42)
             self._projection = rng.normal(
-                0, 1 / np.sqrt(len(raw)),
-                (self._feature_dim, len(raw))
+                0, 1 / np.sqrt(len(raw)), (self._feature_dim, len(raw))
             ).astype(np.float32)
         return self._projection @ raw
 
-    def train_step(self, audio_data: bytes, target_latent: np.ndarray,
-                   lr: float = 0.001) -> float:
+    def train_step(self, audio_data: bytes, target_latent: np.ndarray, lr: float = 0.001) -> float:
         """Train the projection matrix to map audio features to target latent.
 
         Uses MSE loss between projected features and target latent vector.
@@ -294,8 +301,8 @@ class AudioSpectralEncoder:
         projected = self._project(features)
 
         # Compute loss: MSE between projected and target
-        diff = projected - target_latent[:self._feature_dim]
-        loss = float(np.mean(diff ** 2))
+        diff = projected - target_latent[: self._feature_dim]
+        loss = float(np.mean(diff**2))
 
         # Gradient: d(loss)/d(projection) = 2 * diff @ features.T
         # Update projection: W -= lr * grad

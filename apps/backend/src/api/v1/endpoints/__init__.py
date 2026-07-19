@@ -13,6 +13,7 @@ def include_endpoint_routers(parent_router, prefix: str = "") -> None:
     from . import tactile as _tactile
     from . import trace as _trace
     from . import vision as _vision
+
     parent_router.include_router(_drive.router, prefix=prefix)
     parent_router.include_router(_pet.router, prefix=prefix)
     parent_router.include_router(_vision.router, prefix=prefix)
@@ -21,5 +22,3 @@ def include_endpoint_routers(parent_router, prefix: str = "") -> None:
     parent_router.include_router(_mobile.router, prefix=prefix)
     parent_router.include_router(_trace.router, prefix=prefix)
     parent_router.include_router(_plugins.router, prefix=prefix)
-
-

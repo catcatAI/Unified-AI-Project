@@ -26,10 +26,12 @@ class AudioEncoder:
             return self._audio_system
         try:
             from core.engine.audio_system import AudioSystem
+
             self._audio_system = AudioSystem()
         except ImportError:
             try:
                 from core.engine.audio_system import AudioSystem
+
                 self._audio_system = AudioSystem()
             except ImportError:
                 logger.warning("AudioSystem not available")
@@ -45,10 +47,12 @@ class AudioEncoder:
             return self._audio_processing
         try:
             from ai.audio.audio_processing import AudioProcessing
+
             self._audio_processing = AudioProcessing()
         except ImportError:
             try:
                 from ai.audio.audio_processing import AudioProcessing
+
                 self._audio_processing = AudioProcessing()
             except ImportError:
                 logger.warning("AudioProcessing not available")
@@ -64,10 +68,12 @@ class AudioEncoder:
             return self._real_voice
         try:
             from core.art.real_edge_tts import AngelaRealVoice
+
             self._real_voice = AngelaRealVoice()
         except ImportError:
             try:
                 from core.art.real_edge_tts import AngelaRealVoice
+
                 self._real_voice = AngelaRealVoice()
             except ImportError:
                 logger.warning("AngelaRealVoice not available")
@@ -105,8 +111,10 @@ class AudioEncoder:
     def encode_text_from_speech(self, audio_data: bytes) -> str:
         try:
             import speech_recognition as sr
+
             recognizer = sr.Recognizer()
             from io import BytesIO
+
             audio_file = sr.AudioFile(BytesIO(audio_data))
             with audio_file as source:
                 audio = recognizer.record(source)

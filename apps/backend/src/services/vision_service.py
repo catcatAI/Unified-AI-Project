@@ -22,6 +22,7 @@ _MAX_PROCESSING_HISTORY = 500
 
 try:
     import pytesseract
+
     PYTESSERACT_AVAILABLE = True
 except ImportError:
     PYTESSERACT_AVAILABLE = False
@@ -38,7 +39,7 @@ class VisionService:
 
         # 2030 Standard: Hardware Bridge for OCR/Screen
         self.os_bridge = OSBridgeAdapter()
-        
+
         # 初始化視覺組件
         self.sampler = VisualSampler(self.config.get("sampler_config"))
         self.memory = PerceptualMemory(capacity=self.config.get("memory_capacity", 1000))
@@ -62,8 +63,11 @@ class VisionService:
             task = loop.create_task(self._init_sync_listener())
             self._init_task = task
             task.add_done_callback(
-                lambda t: logger.warning("Task _init_sync_listener failed: %s", t.exception())
-                if not t.cancelled() and t.exception() else None
+                lambda t: (
+                    logger.warning("Task _init_sync_listener failed: %s", t.exception())
+                    if not t.cancelled() and t.exception()
+                    else None
+                )
             )
         except RuntimeError:
             # No running event loop, this is fine during import or sync tests
@@ -110,19 +114,33 @@ class VisionService:
 
         analysis_results, requested_features = self._setup_analysis(image_data, features, context)
         if not image_data:
-            return {"error": "No image data provided", "processing_id": analysis_results.get("processing_id")}
+            return {
+                "error": "No image data provided",
+                "processing_id": analysis_results.get("processing_id"),
+            }
 
         try:
-            await self._extract_features(image_data, requested_features, analysis_results.get("context", {}), analysis_results)
+            await self._extract_features(
+                image_data,
+                requested_features,
+                analysis_results.get("context", {}),
+                analysis_results,
+            )
             self._record_processing(analysis_results.get("processing_id"), requested_features, True)
             return analysis_results
         except Exception as e:
-            logger.error(f"Error analyzing image {analysis_results.get('processing_id')}: {e}", exc_info=True)
+            logger.error(
+                f"Error analyzing image {analysis_results.get('processing_id')}: {e}", exc_info=True
+            )
             error_result = self._build_error_result(e, analysis_results.get("processing_id"))
-            self._record_processing(analysis_results.get("processing_id"), requested_features, False, safe_error(e))
+            self._record_processing(
+                analysis_results.get("processing_id"), requested_features, False, safe_error(e)
+            )
             return error_result
 
-    async def _auto_capture(self, image_data: Optional[bytes]) -> Tuple[Optional[bytes], Optional[Dict]]:
+    async def _auto_capture(
+        self, image_data: Optional[bytes]
+    ) -> Tuple[Optional[bytes], Optional[Dict]]:
         """Auto-capture screen if no image data provided."""
         if image_data is not None:
             return image_data, None
@@ -130,16 +148,19 @@ class VisionService:
             from io import BytesIO
 
             import pyautogui
+
             screenshot = pyautogui.screenshot()
             img_byte_arr = BytesIO()
-            screenshot.save(img_byte_arr, format='PNG')
+            screenshot.save(img_byte_arr, format="PNG")
             logger.info("📸 [Vision] Environment captured: Automated screen snapshot.")
             return img_byte_arr.getvalue(), None
         except Exception as e:
             logger.error(f"Failed to auto-capture screen: {e}", exc_info=True)
             return None, {"error": "Vision capture failed"}
 
-    def _setup_analysis(self, image_data: bytes, features: Optional[List[str]], context: Optional[Dict]) -> tuple:
+    def _setup_analysis(
+        self, image_data: bytes, features: Optional[List[str]], context: Optional[Dict]
+    ) -> tuple:
         """Initialize analysis results dict and feature list."""
         processing_id = self._generate_processing_id(image_data)
         requested_features = features or ["captioning", "object_detection", "scene_analysis"]
@@ -150,10 +171,14 @@ class VisionService:
             "requested_features": requested_features,
             "context": context or {},
         }
-        logger.info(f"Vision Service: Analyzing image (ID: {processing_id}) for features: {requested_features}")
+        logger.info(
+            f"Vision Service: Analyzing image (ID: {processing_id}) for features: {requested_features}"
+        )
         return analysis_results, requested_features
 
-    async def _extract_features(self, image_data: bytes, requested_features: List[str], context: Dict, results: Dict) -> None:
+    async def _extract_features(
+        self, image_data: bytes, requested_features: List[str], context: Dict, results: Dict
+    ) -> None:
         """Run requested feature extractors against the image."""
         if "captioning" in requested_features:
             results["caption"] = await self._generate_image_caption(image_data, context)
@@ -161,7 +186,9 @@ class VisionService:
             results["objects"] = await self._detect_objects(image_data)
         if "ocr" in requested_features:
             results["ocr_text"] = await self._extract_text_ocr(image_data)
-        if "face_recognition" in requested_features and self.model_config.get("enable_face_recognition"):
+        if "face_recognition" in requested_features and self.model_config.get(
+            "enable_face_recognition"
+        ):
             results["faces"] = await self._detect_faces(image_data)
         if "scene_analysis" in requested_features:
             results["scene"] = await self._analyze_scene(image_data)
@@ -170,9 +197,13 @@ class VisionService:
         if "color_analysis" in requested_features:
             results["colors"] = await self._analyze_colors(image_data)
         if context.get("text_context") or context.get("audio_context"):
-            results["multimodal_insights"] = await self._perform_multimodal_analysis(results, context)
+            results["multimodal_insights"] = await self._perform_multimodal_analysis(
+                results, context
+            )
 
-    def _record_processing(self, processing_id: str, features: List[str], success: bool, error_msg: str = "") -> None:
+    def _record_processing(
+        self, processing_id: str, features: List[str], success: bool, error_msg: str = ""
+    ) -> None:
         """Record analysis to processing history, trimming if needed."""
         entry = {
             "processing_id": processing_id,
@@ -223,6 +254,7 @@ class VisionService:
                     from io import BytesIO
 
                     from PIL import Image
+
                     img1 = Image.open(BytesIO(image_data1)).convert("RGB").resize((32, 32))
                     img2 = Image.open(BytesIO(image_data2)).convert("RGB").resize((32, 32))
                     p1 = list(img1.getdata())
@@ -246,8 +278,13 @@ class VisionService:
 
                     import numpy as np
                     from PIL import Image
-                    img1 = np.array(Image.open(BytesIO(image_data1)).convert("RGB").resize((64, 64)))
-                    img2 = np.array(Image.open(BytesIO(image_data2)).convert("RGB").resize((64, 64)))
+
+                    img1 = np.array(
+                        Image.open(BytesIO(image_data1)).convert("RGB").resize((64, 64))
+                    )
+                    img2 = np.array(
+                        Image.open(BytesIO(image_data2)).convert("RGB").resize((64, 64))
+                    )
                     diff = np.abs(img1.astype(int) - img2.astype(int))
                     diff_score = float(np.mean(diff) / 255.0)
                     comparison_result["difference_score"] = round(diff_score, 3)
@@ -259,7 +296,9 @@ class VisionService:
 
             elif comparison_type == "feature_match":
                 # Feature matching requires real CV libraries; use size-based heuristic
-                size_ratio = min(len(image_data1), len(image_data2)) / max(len(image_data1), len(image_data2), 1)
+                size_ratio = min(len(image_data1), len(image_data2)) / max(
+                    len(image_data1), len(image_data2), 1
+                )
                 comparison_result["feature_similarity"] = round(size_ratio, 3)
                 comparison_result["matched_features"] = {
                     "keypoints_matched": int(size_ratio * 50),
@@ -428,7 +467,9 @@ class VisionService:
                         )
                     )
                     logger.info(f"Broadcasted wallpaper injection for: {obj.label}")
-                except Exception as e:  # broad exception acceptable: broadcast is optional, should not block
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: broadcast is optional, should not block
                     logger.error(f"Failed to broadcast wallpaper injection: {e}", exc_info=True)
 
         return {
@@ -454,6 +495,7 @@ class VisionService:
             from io import BytesIO
 
             from PIL import Image
+
             img = Image.open(BytesIO(image_data))
             fmt = img.format or "unknown"
             size = f"{img.size[0]}x{img.size[1]}"
@@ -477,6 +519,7 @@ class VisionService:
             from io import BytesIO
 
             from PIL import Image
+
             img = Image.open(BytesIO(image_data))
             fmt = img.format or "unknown"
             w, h = img.size
@@ -515,10 +558,15 @@ class VisionService:
         """
         await asyncio.sleep(timing_value("vision.processing_ocr", 0.05))
         if not PYTESSERACT_AVAILABLE:
-            return {"text": "", "language": "auto", "confidence": 0.0,
-                    "status": "pytesseract not installed (pip install pytesseract)"}
+            return {
+                "text": "",
+                "language": "auto",
+                "confidence": 0.0,
+                "status": "pytesseract not installed (pip install pytesseract)",
+            }
         try:
             from PIL import Image
+
             img = Image.open(io.BytesIO(image_data))
             text = pytesseract.image_to_string(img)
             lang = pytesseract.get_languages()
@@ -530,8 +578,7 @@ class VisionService:
             }
         except Exception as e:
             logger.debug("pytesseract OCR failed: %s", e)
-            return {"text": "", "language": "auto", "confidence": 0.0,
-                    "status": f"ocr_failed: {e}"}
+            return {"text": "", "language": "auto", "confidence": 0.0, "status": f"ocr_failed: {e}"}
 
     async def _detect_faces(self, image_data: bytes) -> List[Dict[str, Any]]:
         """臉部檢測 — ML model required; returns image metadata when model unavailable"""
@@ -543,6 +590,7 @@ class VisionService:
             from io import BytesIO
 
             from PIL import Image
+
             img = Image.open(BytesIO(image_data))
             w, h = img.size
             if w < 32 or h < 32:
@@ -560,6 +608,7 @@ class VisionService:
             from io import BytesIO
 
             from PIL import Image
+
             img = Image.open(BytesIO(image_data)).convert("RGB").resize((64, 64))
             pixels = list(img.getdata())
             total = len(pixels)
@@ -567,7 +616,10 @@ class VisionService:
             g_avg = sum(p[1] for p in pixels) / total
             b_avg = sum(p[2] for p in pixels) / total
             brightness = (r_avg + g_avg + b_avg) / 3.0
-            variance = sum((p[0] - r_avg)**2 + (p[1] - g_avg)**2 + (p[2] - b_avg)**2 for p in pixels) / total
+            variance = (
+                sum((p[0] - r_avg) ** 2 + (p[1] - g_avg) ** 2 + (p[2] - b_avg) ** 2 for p in pixels)
+                / total
+            )
             contrast = math.sqrt(variance / 3.0)
 
             if brightness > 180:
@@ -618,6 +670,7 @@ class VisionService:
             from io import BytesIO
 
             from PIL import Image
+
             img = Image.open(BytesIO(image_data)).convert("RGB").resize((64, 64))
             pixels = list(img.getdata())
             total = len(pixels)
@@ -678,7 +731,9 @@ class VisionService:
         if context.get("text_context"):
             text_context = context["text_context"]
             caption = visual_analysis.get("caption", "a scene")
-            insights["context_enhanced_caption"] = f"Image shows {caption} related to: {text_context[:50]}"
+            insights["context_enhanced_caption"] = (
+                f"Image shows {caption} related to: {text_context[:50]}"
+            )
 
         # 結合音頻上下文
         if context.get("audio_context"):
@@ -698,6 +753,7 @@ class VisionService:
 
             import numpy as np
             from PIL import Image
+
             img1 = np.array(Image.open(BytesIO(image_data1)).convert("RGB").resize((32, 32)))
             img2 = np.array(Image.open(BytesIO(image_data2)).convert("RGB").resize((32, 32)))
             diff = np.abs(img1.astype(int) - img2.astype(int))
@@ -712,12 +768,14 @@ class VisionService:
                 region_key = (x // 8, y // 8)
                 if region_key not in seen:
                     seen.add(region_key)
-                    differences.append({
-                        "difference_id": f"diff_{len(differences) + 1}",
-                        "type": "color_change",
-                        "location": [int(x * 3.2), int(y * 3.2), 26, 26],
-                        "confidence": 0.85,
-                    })
+                    differences.append(
+                        {
+                            "difference_id": f"diff_{len(differences) + 1}",
+                            "type": "color_change",
+                            "location": [int(x * 3.2), int(y * 3.2), 26, 26],
+                            "confidence": 0.85,
+                        }
+                    )
                     if len(differences) >= 3:
                         break
             return differences
@@ -736,6 +794,7 @@ class VisionService:
             from io import BytesIO
 
             from PIL import Image
+
             img1 = Image.open(BytesIO(image_data1)).convert("RGB").resize((16, 16))
             img2 = Image.open(BytesIO(image_data2)).convert("RGB").resize((16, 16))
             h1 = hashlib.md5(img1.tobytes()).hexdigest()
@@ -751,8 +810,13 @@ class VisionService:
             }
         except Exception as err:
             logger.debug("Feature matching fallback: %s", err)
-            return {"keypoints_matched": 0, "total_keypoints_1": 0, "total_keypoints_2": 0,
-                    "match_quality": 0.0, "geometric_consistency": 0.0}
+            return {
+                "keypoints_matched": 0,
+                "total_keypoints_1": 0,
+                "total_keypoints_2": 0,
+                "match_quality": 0.0,
+                "geometric_consistency": 0.0,
+            }
 
     async def process(self, input_data: Any) -> Dict[str, Any]:
         """統一的處理方法, 用於統一控制中心調用"""
@@ -778,6 +842,7 @@ class VisionService:
             return []
         try:
             from ai.multimodal.visual_encoder import VisualEncoder
+
             encoder = VisualEncoder()
             vec = encoder.encode(image_data)
             return vec.tolist()
@@ -793,9 +858,11 @@ class VisionService:
         """
         try:
             from ai.vision.vision_pipeline import VisionPipeline
-            if not hasattr(self, '_vision_pipeline') or self._vision_pipeline is None:
+
+            if not hasattr(self, "_vision_pipeline") or self._vision_pipeline is None:
                 self._vision_pipeline = VisionPipeline()
             import asyncio
+
             return await asyncio.to_thread(self._vision_pipeline.process, image_data)
         except Exception as e:
             logger.warning("VisionPipeline failed: %s", e)
@@ -818,7 +885,7 @@ class VisionService:
 
     def clear_vision_pipeline_cache(self) -> None:
         """Clear the VisionPipeline LRU cache."""
-        if hasattr(self, '_vision_pipeline') and self._vision_pipeline is not None:
+        if hasattr(self, "_vision_pipeline") and self._vision_pipeline is not None:
             self._vision_pipeline.clear_cache()
 
 

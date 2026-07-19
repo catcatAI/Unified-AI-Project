@@ -8,12 +8,12 @@ Angela Real Browser - Playwright Integration
 2. playwright install chromium
 """
 
-from core.utils import safe_error
-
 import asyncio
 import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
+
+from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,9 @@ class AngelaRealBrowser:
             logger.info("✅ 浏览器已初始化")
             return True
 
-        except Exception as e:  # broad exception acceptable: browser launch may fail for various reasons
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: browser launch may fail for various reasons
             logger.error(f"❌ 浏览器初始化失败: {e}", exc_info=True)
             return False
 
@@ -139,7 +141,9 @@ class AngelaRealBrowser:
                 techniques=techniques,
             )
 
-        except Exception as e:  # broad exception acceptable: page navigation may fail or content extraction errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: page navigation may fail or content extraction errors
             logger.error(f"❌ 教程提取失败: {e}", exc_info=True)
             return None
 
@@ -191,7 +195,9 @@ class AngelaRealBrowser:
 
             logger.info(f"✅ 收集到 {len(artworks)} 个作品")
 
-        except Exception as e:  # broad exception acceptable: artwork collection should be resilient to extraction errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: artwork collection should be resilient to extraction errors
             logger.error(f"❌ 作品收集失败: {e}", exc_info=True)
 
         return artworks
@@ -226,7 +232,9 @@ class AngelaRealBrowser:
 
             return analysis
 
-        except Exception as e:  # broad exception acceptable: style analysis should be resilient to page errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: style analysis should be resilient to page errors
             logger.error(f"❌ 风格分析失败: {e}", exc_info=True)
             return {"error": safe_error(e)}
 
@@ -268,7 +276,9 @@ class AngelaRealBrowser:
 
             return results
 
-        except Exception as e:  # broad exception acceptable: search should be resilient to network errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: search should be resilient to network errors
             logger.error(f"❌ 搜索失败: {e}", exc_info=True)
             return []
 
@@ -325,7 +335,9 @@ async def test_browser() -> None:
         await browser.close()
         logger.info("\n✅ 测试完成!")
 
-    except Exception as e:  # broad exception acceptable: browser test should handle initialization failures gracefully
+    except (
+        Exception
+    ) as e:  # broad exception acceptable: browser test should handle initialization failures gracefully
         logger.exception("❌ 测试失败: %s", e)
 
 

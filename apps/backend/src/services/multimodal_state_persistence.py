@@ -27,7 +27,7 @@ def _json_default(obj):
     """JSON serializer for numpy/mock types in checkpoint serialization."""
     if isinstance(obj, dict):
         return obj
-    if hasattr(obj, 'tolist'):
+    if hasattr(obj, "tolist"):
         try:
             result = obj.tolist()
             if isinstance(result, (list, tuple)):
@@ -77,8 +77,12 @@ class MultimodalStatePersistence:
         metadata = self._write_checkpoint_metadata(cp_dir, label, components_saved)
         await self.prune_checkpoints()
 
-        logger.info("Checkpoint '%s' saved with %d components: %s",
-                     label, len(components_saved), components_saved)
+        logger.info(
+            "Checkpoint '%s' saved with %d components: %s",
+            label,
+            len(components_saved),
+            components_saved,
+        )
         return {
             "label": label,
             "path": cp_dir,
@@ -136,7 +140,14 @@ class MultimodalStatePersistence:
             items = await self._service.list_items()
             registry_path = os.path.join(cp_dir, "registry_summary.json")
             with open(registry_path, "w", encoding="utf-8") as f:
-                json.dump({"count": items.get("count", 0), "items": {k: v for k, v in items.get("items", {}).items()}}, f, indent=2)
+                json.dump(
+                    {
+                        "count": items.get("count", 0),
+                        "items": {k: v for k, v in items.get("items", {}).items()},
+                    },
+                    f,
+                    indent=2,
+                )
             components_saved.append("registry_summary")
         except Exception as e:
             logger.warning("Failed to save registry summary: %s", e)
@@ -220,8 +231,12 @@ class MultimodalStatePersistence:
                 logger.warning("Failed to load memory index: %s", e)
 
         status = "loaded" if components_loaded else "empty"
-        logger.info("Checkpoint '%s' loaded with %d components: %s",
-                     label, len(components_loaded), components_loaded)
+        logger.info(
+            "Checkpoint '%s' loaded with %d components: %s",
+            label,
+            len(components_loaded),
+            components_loaded,
+        )
         return {
             "label": label,
             "path": cp_dir,
@@ -257,12 +272,14 @@ class MultimodalStatePersistence:
                     logger.debug("Failed to parse checkpoint metadata JSON", exc_info=True)
             ts = meta.get("timestamp", os.path.getmtime(cp_dir))
             age_hours = round((now - ts) / 3600, 1)
-            checkpoints.append({
-                "label": name,
-                "timestamp": ts,
-                "age_hours": age_hours,
-                "components": meta.get("components_saved", []),
-            })
+            checkpoints.append(
+                {
+                    "label": name,
+                    "timestamp": ts,
+                    "age_hours": age_hours,
+                    "components": meta.get("components_saved", []),
+                }
+            )
 
         # Sort newest first
         checkpoints.sort(key=lambda x: x["timestamp"], reverse=True)
@@ -299,8 +316,7 @@ class MultimodalStatePersistence:
                     removed += 1
                     logger.info("Pruned old checkpoint: %s", cp["label"])
                 except Exception as e:
-                    logger.warning("Failed to prune checkpoint %s: %s",
-                                   cp["label"], e)
+                    logger.warning("Failed to prune checkpoint %s: %s", cp["label"], e)
 
         return removed
 

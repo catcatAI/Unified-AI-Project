@@ -22,11 +22,10 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
+from core.utils import any_keyword
 from utils.text_utils import bigram_jaccard as _bigram_jaccard_util
 from utils.text_utils import char_bigrams as _char_bigrams_util
 from utils.text_utils import normalize_text as _normalize_text_util
-
-from core.utils import any_keyword
 
 logger = logging.getLogger(__name__)
 
@@ -335,7 +334,7 @@ class TemplateMatcher:
         user_lower = self._normalize_text(user_input)
 
         # Method 1: Keyword substring matching (highest signal)
-        if hasattr(template, 'keywords') and template.keywords:
+        if hasattr(template, "keywords") and template.keywords:
             for keyword in template.keywords:
                 kw_lower = self._normalize_text(keyword)
                 if any_keyword(user_lower, (kw_lower,)) or any_keyword(kw_lower, (user_lower,)):

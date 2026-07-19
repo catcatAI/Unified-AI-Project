@@ -32,6 +32,7 @@ if __name__ == "__main__":
 
     # Demo purposes only — write to stderr (not stdout/logger) to avoid CodeQL
     import sys as _sys
+
     _demo_out = _sys.stderr
 
     async def demo() -> None:
@@ -52,12 +53,14 @@ if __name__ == "__main__":
         kinetics = HormoneKinetics()
         _ = kinetics.metabolize(80.0, HormoneType.CORTISOL, 1.0)
         _ = kinetics.calculate_occupancy(40, kd=30.0, hill_coefficient=1.5)
-        _ = kinetics.calculate_secretion(basal_rate=10.0, stimulus=20.0, pulse_frequency=4.0, time_hours=0.5)
+        _ = kinetics.calculate_secretion(
+            basal_rate=10.0, stimulus=20.0, pulse_frequency=4.0, time_hours=0.5
+        )
 
         # Feedback Loop Demo
         feedback = FeedbackLoop()
         hpa_result = feedback.simulate_hpa_axis(stress_input=30.0, simulation_hours=1.0)
-        _ = max(hpa_result['cortisol'])
+        _ = max(hpa_result["cortisol"])
         _ = feedback.negative_feedback(HormoneType.CORTISOL, HormoneType.ADRENALINE, 40)
         _ = feedback.circadian_rhythm(HormoneType.MELATONIN, 12, base_level=5.0)
         _demo_out.write("All subsystems verified OK\n")

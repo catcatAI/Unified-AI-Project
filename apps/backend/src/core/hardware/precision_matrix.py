@@ -61,7 +61,9 @@ class PrecisionManager:
             source=config.source_precision,
             target=config.target_precision,
         )
-        self._matrix.entries[f"{config.source_precision.value}->{config.target_precision.value}"] = info
+        self._matrix.entries[
+            f"{config.source_precision.value}->{config.target_precision.value}"
+        ] = info
         return info
 
     def get_matrix(self) -> PrecisionMatrix:

@@ -94,9 +94,9 @@ class TestCausalChain:
         chain.add_node(node1)
         chain.add_node(node2)
         
-        assert chain.has_layer(LayerType.L1) == True
-        assert chain.has_layer(LayerType.L3) == True
-        assert chain.has_layer(LayerType.L5) == False
+        assert chain.has_layer(LayerType.L1) is True
+        assert chain.has_layer(LayerType.L3) is True
+        assert chain.has_layer(LayerType.L5) is False
     
     def test_get_children(self):
         chain = CausalChain(root_id="root")
@@ -228,13 +228,13 @@ class TestCausalTracer:
         tracer = get_tracer()
         
         tracer.enable()
-        assert tracer.is_enabled() == True
+        assert tracer.is_enabled() is True
         
         trace_id = tracer.start("L1", "test", "action")
         assert trace_id != ""
         
         tracer.disable()
-        assert tracer.is_enabled() == False
+        assert tracer.is_enabled() is False
         
         trace_id = tracer.start("L1", "test", "action2")
         assert trace_id == ""
@@ -247,7 +247,7 @@ class TestChainValidator:
         
         result = validator.validate_chain(chain)
         
-        assert result.valid == False
+        assert result.valid is False
         assert len(result.errors) > 0
     
     def test_validate_complete_chain(self):
@@ -262,7 +262,7 @@ class TestChainValidator:
         
         result = validator.validate_chain(chain)
         
-        assert result.valid == True
+        assert result.valid is True
     
     def test_detect_broken_link(self):
         validator = ChainValidator()
@@ -276,7 +276,7 @@ class TestChainValidator:
         
         result = validator.validate_chain(chain)
         
-        assert result.valid == False
+        assert result.valid is False
         assert any("Broken link" in error for error in result.errors)
     
     def test_layer_coverage(self):
@@ -294,14 +294,14 @@ class TestChainValidator:
             [LayerType.L1, LayerType.L2]
         )
         
-        assert result.valid == True
+        assert result.valid is True
         
         result = validator.validate_layer_coverage(
             chain,
             [LayerType.L1, LayerType.L2, LayerType.L6]
         )
         
-        assert result.valid == False
+        assert result.valid is False
     
     def test_get_statistics(self):
         validator = ChainValidator()

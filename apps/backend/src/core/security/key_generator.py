@@ -15,16 +15,18 @@ class KeyGenerator:
     Generates strong random system keys using the `secrets` module
     and supports updating .env files with generated keys.
     """
+
     def __init__(self, config: Optional[dict] = None):
         self.config = config or {}
 
     @staticmethod
     def generate_secure_key(length: int = 32) -> str:
         chars = string.ascii_letters + string.digits + "!@#$%^&*"
-        return ''.join(secrets.choice(chars) for _ in range(length))
+        return "".join(secrets.choice(chars) for _ in range(length))
 
     def update_env_file(self, keys: dict, env_path: str) -> None:
         import os
+
         existing = {}
         if os.path.exists(env_path):
             with open(env_path, "r", encoding="utf-8") as f:
@@ -37,4 +39,3 @@ class KeyGenerator:
         with open(env_path, "w", encoding="utf-8") as f:
             for k, v in existing.items():
                 f.write(f"{k}={v}\n")
-

@@ -18,9 +18,9 @@ from __future__ import annotations
 
 import enum
 import json
-import math
 import logging
-from dataclasses import dataclass, field, asdict
+import math
+from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
@@ -86,7 +86,11 @@ class MemoryAttractor:
         self.coord = list(coord)
         self.description = description
         self.behavior = behavior
-        self.tone = {tone} if isinstance(tone, BehaviorTone) else set(tone) if isinstance(tone, (list, set)) else {tone}
+        self.tone = (
+            {tone}
+            if isinstance(tone, BehaviorTone)
+            else set(tone) if isinstance(tone, (list, set)) else {tone}
+        )
         self.mass = mass
         self.radius = radius
         self.tags = tags or []

@@ -58,10 +58,7 @@ class CardRegistry:
 
     def list_by_world_line(self, world_line: str) -> List[Card]:
         """List by world line items."""
-        return [
-            card for card in self._cards.values()
-            if card.world_line == world_line
-        ]
+        return [card for card in self._cards.values() if card.world_line == world_line]
 
     def clear(self) -> None:
         """Clear all entries."""

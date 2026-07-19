@@ -71,10 +71,26 @@ class ContentFilter:
     }
 
     TOXIC_KEYWORDS = [
-        "kill", "murder", "die", "suicide", "bomb", "weapon",
-        "hack", "exploit", "malware", "virus", "attack",
-        "hate", "racist", "sexist", "discriminate",
-        "spam", "scam", "fraud", "steal", "rob",
+        "kill",
+        "murder",
+        "die",
+        "suicide",
+        "bomb",
+        "weapon",
+        "hack",
+        "exploit",
+        "malware",
+        "virus",
+        "attack",
+        "hate",
+        "racist",
+        "sexist",
+        "discriminate",
+        "spam",
+        "scam",
+        "fraud",
+        "steal",
+        "rob",
     ]
 
     PII_PATTERNS = {

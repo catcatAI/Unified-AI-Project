@@ -223,7 +223,9 @@ class MouseMonitor:
             for callback in self._callbacks:
                 try:
                     callback(mouse_data)
-                except Exception as e:  # broad exception acceptable: mouse monitor callback errors should be logged
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: mouse monitor callback errors should be logged
                     logger.error(f"[MouseMonitor] Callback error: {e}", exc_info=True)
 
             # Update last position
@@ -280,7 +282,11 @@ class FileSystemMonitor:
     Tracks file creation, modification, deletion, and moves.
     """
 
-    def __init__(self, watch_paths: Optional[List[Path]] = None, poll_interval: float = loop_sleep("file_poll", 1.0)):
+    def __init__(
+        self,
+        watch_paths: Optional[List[Path]] = None,
+        poll_interval: float = loop_sleep("file_poll", 1.0),
+    ):
         self.watch_paths = watch_paths or [Path.home() / "Desktop"]
         self.poll_interval = poll_interval
 
@@ -389,7 +395,9 @@ class FileSystemMonitor:
 
                         self._file_states[item_str] = current_state
 
-                    except Exception as e:  # broad exception acceptable: path check errors should be logged
+                    except (
+                        Exception
+                    ) as e:  # broad exception acceptable: path check errors should be logged
                         logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
             # Check for deleted files
@@ -406,7 +414,9 @@ class FileSystemMonitor:
                     )
                     del self._file_states[old_file]
 
-        except Exception as e:  # broad exception acceptable: path change check errors should be logged
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: path change check errors should be logged
             logger.error(f"[FileSystemMonitor] Check error: {e}", exc_info=True)
 
     async def _emit_event(self, event: FileSystemEvent) -> None:
@@ -414,7 +424,9 @@ class FileSystemMonitor:
         for callback in self._callbacks:
             try:
                 callback(event)
-            except Exception as e:  # broad exception acceptable: file event callback errors should be logged
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: file event callback errors should be logged
                 logger.error(f"[FileSystemMonitor] Callback error: {e}", exc_info=True)
 
     def register_callback(self, callback: Callable[[FileSystemEvent], None]) -> None:
@@ -477,7 +489,9 @@ class TimeMonitor:
                     for callback in self._callbacks:
                         try:
                             callback(event)
-                        except Exception as e:  # broad exception acceptable: time event callback errors should be logged
+                        except (
+                            Exception
+                        ) as e:  # broad exception acceptable: time event callback errors should be logged
                             logger.error(f"[TimeMonitor] Callback error: {e}", exc_info=True)
 
                     # Remove or reschedule
@@ -553,10 +567,14 @@ class SystemStateMonitor:
                 for callback in self._callbacks:
                     try:
                         callback(state)
-                    except Exception as e:  # broad exception acceptable: system state callback errors should be logged
+                    except (
+                        Exception
+                    ) as e:  # broad exception acceptable: system state callback errors should be logged
                         logger.error(f"[SystemStateMonitor] Callback error: {e}", exc_info=True)
 
-            except Exception as e:  # broad exception acceptable: system state collection errors should be logged
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: system state collection errors should be logged
                 logger.error(f"[SystemStateMonitor] Collection error: {e}", exc_info=True)
 
             await asyncio.sleep(self.update_interval)
@@ -681,10 +699,16 @@ class UserActivityMonitor:
                     for callback in self._callbacks:
                         try:
                             callback(activity_data)
-                        except Exception as e:  # broad exception acceptable: user activity callback errors should be logged
-                            logger.error(f"[UserActivityMonitor] Callback error: {e}", exc_info=True)
+                        except (
+                            Exception
+                        ) as e:  # broad exception acceptable: user activity callback errors should be logged
+                            logger.error(
+                                f"[UserActivityMonitor] Callback error: {e}", exc_info=True
+                            )
 
-            except Exception as e:  # broad exception acceptable: user activity analysis errors should be logged
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: user activity analysis errors should be logged
                 logger.error(f"[UserActivityMonitor] Analysis error: {e}", exc_info=True)
 
             await asyncio.sleep(self.analysis_interval)
@@ -899,7 +923,9 @@ class RealTimeMonitor:
         for callback in callbacks:
             try:
                 callback(data)
-            except Exception as e:  # broad exception acceptable: dispatch callback errors should be logged
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: dispatch callback errors should be logged
                 logger.error(f"[RealTimeMonitor] Dispatch error: {e}", exc_info=True)
 
     def register_callback(self, event_type: str, callback: Callable[[Any], None]) -> None:
@@ -1011,7 +1037,9 @@ if __name__ == "__main__":
 
         system = monitor.get_system_state()
         if system:
-            logger.info(f"System: CPU {system.cpu_percent:.1f}%, " f"Memory {system.memory_percent:.1f}%")
+            logger.info(
+                f"System: CPU {system.cpu_percent:.1f}%, " f"Memory {system.memory_percent:.1f}%"
+            )
 
         await monitor.shutdown()
 

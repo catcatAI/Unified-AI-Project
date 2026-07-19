@@ -26,10 +26,11 @@ class SignedCommunicationMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.key_b = key_b or ""
         if not self.key_b:
-            logger.warning("SignedCommunicationMiddleware initialized without Key B — pass-through mode")
+            logger.warning(
+                "SignedCommunicationMiddleware initialized without Key B — pass-through mode"
+            )
         else:
             logger.debug("SignedCommunicationMiddleware initialized with Key B")
 
     async def dispatch(self, request: Request, call_next) -> Response:
         return await call_next(request)
-

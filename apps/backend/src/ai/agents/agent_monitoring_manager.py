@@ -49,4 +49,3 @@ class AgentMonitoringManager:
 
     def get_all_reports(self) -> Dict[str, AgentHealthReport]:
         return self._reports
-

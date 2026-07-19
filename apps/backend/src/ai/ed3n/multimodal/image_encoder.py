@@ -24,6 +24,7 @@ class ImageEncoder:
             return self._vision_service
         try:
             from services.vision_service import VisionService
+
             self._vision_service = VisionService()
         except (ImportError, RuntimeError, AttributeError) as e:
             logger.warning("VisionService not available: %s", e)
@@ -37,6 +38,7 @@ class ImageEncoder:
         if vs is not None:
             try:
                 import asyncio
+
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 try:
@@ -123,6 +125,7 @@ class ImageEncoder:
             from io import BytesIO
 
             from PIL import Image
+
             img = Image.open(BytesIO(image_data))
             fmt = img.format or "unknown"
             size = f"{img.size[0]}x{img.size[1]}"

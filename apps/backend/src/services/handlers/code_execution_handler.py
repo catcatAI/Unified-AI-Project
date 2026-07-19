@@ -21,12 +21,50 @@ _TIMEOUT = 10
 _MAX_TRACEBACK_LINES = 10
 
 _BUILTINS_WHITELIST = {
-    "abs", "all", "any", "bool", "chr", "dict", "dir", "enumerate",
-    "filter", "float", "format", "frozenset", "getattr", "hasattr",
-    "hash", "hex", "id", "int", "isinstance", "issubclass", "iter",
-    "len", "list", "map", "max", "min", "next", "oct", "ord", "pow",
-    "print", "range", "repr", "reversed", "round", "set", "setattr",
-    "slice", "sorted", "str", "sum", "tuple", "type", "zip",
+    "abs",
+    "all",
+    "any",
+    "bool",
+    "chr",
+    "dict",
+    "dir",
+    "enumerate",
+    "filter",
+    "float",
+    "format",
+    "frozenset",
+    "getattr",
+    "hasattr",
+    "hash",
+    "hex",
+    "id",
+    "int",
+    "isinstance",
+    "issubclass",
+    "iter",
+    "len",
+    "list",
+    "map",
+    "max",
+    "min",
+    "next",
+    "oct",
+    "ord",
+    "pow",
+    "print",
+    "range",
+    "repr",
+    "reversed",
+    "round",
+    "set",
+    "setattr",
+    "slice",
+    "sorted",
+    "str",
+    "sum",
+    "tuple",
+    "type",
+    "zip",
 }
 
 
@@ -43,6 +81,7 @@ class CodeExecutionHandler:
 
     def _extract_code(self, text: str) -> str:
         import re
+
         m = re.search(r"```(?:python)?\s*\n(.*?)```", text, re.DOTALL)
         if m:
             return m.group(1).strip()
@@ -53,9 +92,29 @@ class CodeExecutionHandler:
         code_lines = []
         for line in lines:
             stripped = line.strip()
-            if stripped.startswith(("import ", "from ", "def ", "class ", "if ", "for ",
-                                   "while ", "try:", "with ", "return ", "print(",
-                                   "#", "raise ", "assert ", "yield ")) or "=" in stripped or "(" in stripped:
+            if (
+                stripped.startswith(
+                    (
+                        "import ",
+                        "from ",
+                        "def ",
+                        "class ",
+                        "if ",
+                        "for ",
+                        "while ",
+                        "try:",
+                        "with ",
+                        "return ",
+                        "print(",
+                        "#",
+                        "raise ",
+                        "assert ",
+                        "yield ",
+                    )
+                )
+                or "=" in stripped
+                or "(" in stripped
+            ):
                 code_lines.append(line)
             elif code_lines:
                 break
@@ -69,7 +128,8 @@ class CodeExecutionHandler:
         restricted_globals: Dict[str, Any] = {"__builtins__": {}}
         for name in _BUILTINS_WHITELIST:
             restricted_globals["__builtins__"][name] = (
-                __builtins__[name] if isinstance(__builtins__, dict)
+                __builtins__[name]
+                if isinstance(__builtins__, dict)
                 else getattr(__builtins__, name)
             )
 
@@ -101,7 +161,10 @@ class CodeExecutionHandler:
             tb = traceback.format_exc()
             lines = tb.splitlines()
             if len(lines) > _MAX_TRACEBACK_LINES:
-                tb = "\n".join(lines[:_MAX_TRACEBACK_LINES]) + f"\n... (後續 {len(lines) - _MAX_TRACEBACK_LINES} 行已省略)"
+                tb = (
+                    "\n".join(lines[:_MAX_TRACEBACK_LINES])
+                    + f"\n... (後續 {len(lines) - _MAX_TRACEBACK_LINES} 行已省略)"
+                )
             if len(tb) > _MAX_OUTPUT:
                 tb = tb[:_MAX_OUTPUT] + "\n... (已截斷)"
             logger.warning(f"Code execution error: {e}")

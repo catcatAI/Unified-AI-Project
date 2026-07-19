@@ -60,7 +60,9 @@ class AxisField:
     def __post_init__(self) -> None:
         """Execute the   post init   operation."""
         if self.min_val >= self.max_val:
-            raise ValueError(f"AxisField '{self.name}': min_val ({self.min_val}) >= max_val ({self.max_val})")
+            raise ValueError(
+                f"AxisField '{self.name}': min_val ({self.min_val}) >= max_val ({self.max_val})"
+            )
 
     def in_range(self, value: float) -> bool:
         """檢查值是否在有效範圍內"""
@@ -156,7 +158,9 @@ class AxisFieldRegistry:
         """總 field 數"""
         return len(self._by_name)
 
-    def validate_axis_values(self, axis: str, values: Dict[str, float]) -> Dict[str, Tuple[bool, Optional[str]]]:
+    def validate_axis_values(
+        self, axis: str, values: Dict[str, float]
+    ) -> Dict[str, Tuple[bool, Optional[str]]]:
         """
         驗證某個軸的一組值，返回每個 key 的驗證結果
 
@@ -171,7 +175,10 @@ class AxisFieldRegistry:
                 results[key] = (True, None)
                 continue
             if not field.in_range(value):
-                results[key] = (False, f"{key} value {value} outside range [{field.min_val}, {field.max_val}]")
+                results[key] = (
+                    False,
+                    f"{key} value {value} outside range [{field.min_val}, {field.max_val}]",
+                )
             else:
                 results[key] = (True, None)
         return results

@@ -57,11 +57,13 @@ def get_state_matrix() -> StateMatrix4D:
 # Request/Response models
 class AxisUpdateRequest(BaseModel):
     """Request model for updating axis values."""
+
     values: Dict[str, float] = Field(default_factory=dict)
 
 
 class AxisResponse(BaseModel):
     """Response model for axis data."""
+
     name: str
     values: Dict[str, float]
     timestamp: str
@@ -69,6 +71,7 @@ class AxisResponse(BaseModel):
 
 class StateSummaryResponse(BaseModel):
     """Response model for complete state summary."""
+
     alpha: Dict[str, float]
     beta: Dict[str, float]
     gamma: Dict[str, float]
@@ -80,6 +83,7 @@ class StateSummaryResponse(BaseModel):
 
 class RippleRequest(BaseModel):
     """Request model for applying ripple effects."""
+
     source_axis: str
     source_value: float
     target_axes: List[str]
@@ -88,29 +92,34 @@ class RippleRequest(BaseModel):
 
 class AllocationRequest(BaseModel):
     """Request model for allocation decisions."""
+
     candidates: List[Dict[str, float]]
     dimension: str
 
 
 class SaveStateRequest(BaseModel):
     """Request model for saving state."""
+
     filepath: Optional[str] = None
 
 
 class LoadStateRequest(BaseModel):
     """Request model for loading state."""
+
     filepath: Optional[str] = None
 
 
 # Sync helpers for file I/O (called via asyncio.to_thread to avoid blocking the event loop)
 def _write_state_sync(filepath: str, state: dict) -> None:
     import json
+
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(state, f)
 
 
 def _read_state_sync(filepath: str) -> dict:
     import json
+
     with open(filepath, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -250,7 +259,9 @@ async def apply_ripple(request: RippleRequest) -> dict:
     """Apply ripple effect across axes."""
     matrix = get_state_matrix()
     if hasattr(matrix, "apply_ripple"):
-        matrix.apply_ripple(request.source_axis, request.source_value, request.target_axes, request.strength)
+        matrix.apply_ripple(
+            request.source_axis, request.source_value, request.target_axes, request.strength
+        )
         return {"status": "applied"}
     logger.warning("apply_ripple not implemented on StateMatrix4D")
     return {"status": "not_implemented"}

@@ -130,6 +130,7 @@ class TemplateLibrary:
         """初始化所有预定义模板"""
         import json
         import os
+
         data_path = os.path.join(os.path.dirname(__file__), "templates_data.json")
         with open(data_path, "r", encoding="utf-8") as f:
             templates = json.load(f)

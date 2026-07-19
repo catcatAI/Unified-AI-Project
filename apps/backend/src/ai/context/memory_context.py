@@ -70,7 +70,9 @@ class MemoryContextManager:
             # context_id = self.context_manager.create_context(ContextType.MEMORY, context_content)  # Commented - needs proper import
             logger.info(f"Created memory {memory.memory_id} with context")
             return memory.memory_id
-        except Exception as e:  # broad exception acceptable: initialization continues on optional component failure
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: initialization continues on optional component failure
             logger.error(f"Failed to create memory: {e}", exc_info=True)
             raise
 
@@ -334,7 +336,9 @@ class MemoryContextManager:
         """Return total number of stored memories."""
         return len(self.memories)
 
-    def search_by_embedding(self, query_embedding: List[float], top_k: int = 5) -> List[Dict[str, Any]]:
+    def search_by_embedding(
+        self, query_embedding: List[float], top_k: int = 5
+    ) -> List[Dict[str, Any]]:
         """Search memories by embedding similarity (Phase 5.4)."""
         try:
             if not query_embedding:
@@ -348,13 +352,15 @@ class MemoryContextManager:
             scored.sort(key=lambda x: x[0], reverse=True)
             results = []
             for sim, memory in scored[:top_k]:
-                results.append({
-                    "memory_id": memory.memory_id,
-                    "content": memory.content,
-                    "memory_type": memory.memory_type,
-                    "similarity": sim,
-                    "access_count": memory.access_count,
-                })
+                results.append(
+                    {
+                        "memory_id": memory.memory_id,
+                        "content": memory.content,
+                        "memory_type": memory.memory_type,
+                        "similarity": sim,
+                        "access_count": memory.access_count,
+                    }
+                )
             return results
         except Exception as e:
             logger.debug("Embedding search failed: %s", e)

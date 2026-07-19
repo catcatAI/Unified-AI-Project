@@ -36,11 +36,13 @@ class TextGravityField:
             results.append((text, score))
 
         results.sort(key=lambda x: x[1], reverse=True)
-        self._history.append({
-            "core_trait": core_trait,
-            "candidates": candidates,
-            "results": results,
-        })
+        self._history.append(
+            {
+                "core_trait": core_trait,
+                "candidates": candidates,
+                "results": results,
+            }
+        )
         if len(self._history) > 1000:
             self._history.pop(0)
         return results

@@ -39,13 +39,18 @@ class AudioWaveformDecoder:
         self._W = rng.normal(0, scale, (self.FEATURE_DIM, self.LATENT_DIM)).astype(np.float32)
         self._b = np.zeros(self.FEATURE_DIM, dtype=np.float32)
         h_scale = 1.0 / np.sqrt(self.LATENT_DIM)
-        self._W_hidden = rng.normal(0, h_scale, (self.HIDDEN_DIM, self.LATENT_DIM)).astype(np.float32)
+        self._W_hidden = rng.normal(0, h_scale, (self.HIDDEN_DIM, self.LATENT_DIM)).astype(
+            np.float32
+        )
         self._b_hidden = np.zeros(self.HIDDEN_DIM, dtype=np.float32)
-        self._W_noise = rng.normal(0, 1.0 / np.sqrt(self.HIDDEN_DIM), (16, self.HIDDEN_DIM)).astype(np.float32)
+        self._W_noise = rng.normal(0, 1.0 / np.sqrt(self.HIDDEN_DIM), (16, self.HIDDEN_DIM)).astype(
+            np.float32
+        )
         self._b_noise = np.zeros(16, dtype=np.float32)
         # Wavetable generators (per band): hidden → WAVETABLE_SIZE waveform
-        self._W_wavetable = rng.normal(0, 1.0 / np.sqrt(self.HIDDEN_DIM),
-                                       (self.N_BANDS * self.WAVETABLE_SIZE, self.HIDDEN_DIM)).astype(np.float32)
+        self._W_wavetable = rng.normal(
+            0, 1.0 / np.sqrt(self.HIDDEN_DIM), (self.N_BANDS * self.WAVETABLE_SIZE, self.HIDDEN_DIM)
+        ).astype(np.float32)
         self._b_wavetable = np.zeros(self.N_BANDS * self.WAVETABLE_SIZE, dtype=np.float32)
 
     def decode(self, latent: np.ndarray) -> np.ndarray:
@@ -70,9 +75,14 @@ class AudioWaveformDecoder:
         waveform = waveform / peak
         return waveform.astype(np.float32)
 
-    def _synthesize_wavetable(self, t: np.ndarray, spectral_env: np.ndarray,
-                               detail: np.ndarray, latent: np.ndarray,
-                               n_samples: int) -> np.ndarray:
+    def _synthesize_wavetable(
+        self,
+        t: np.ndarray,
+        spectral_env: np.ndarray,
+        detail: np.ndarray,
+        latent: np.ndarray,
+        n_samples: int,
+    ) -> np.ndarray:
         """Synthesize multi-band waveform using wavetable oscillators.
 
         Each band gets its own wavetable (256-sample waveform) derived from
@@ -87,8 +97,11 @@ class AudioWaveformDecoder:
 
         for band_idx, (lo, hi) in enumerate(self.BAND_LIMITS):
             wt = wavetables[band_idx]
-            feats = spectral_env[band_idx * (len(spectral_env) // self.N_BANDS):
-                                 (band_idx + 1) * (len(spectral_env) // self.N_BANDS)]
+            feats = spectral_env[
+                band_idx
+                * (len(spectral_env) // self.N_BANDS) : (band_idx + 1)
+                * (len(spectral_env) // self.N_BANDS)
+            ]
             freq_hz = 200.0 + np.abs(feats[:5]).mean() * (hi - lo) / 800.0
             freq_hz = np.clip(freq_hz, lo, hi)
 
@@ -112,20 +125,22 @@ class AudioWaveformDecoder:
 
         return waveform
 
-    def _add_noise_component(self, waveform: np.ndarray, latent: np.ndarray,
-                             n_samples: int) -> np.ndarray:
+    def _add_noise_component(
+        self, waveform: np.ndarray, latent: np.ndarray, n_samples: int
+    ) -> np.ndarray:
         """Add noise from non-linear hidden branch for richer timbre."""
         h = np.tanh(self._W_hidden @ latent + self._b_hidden)
         noise_mod = self._W_noise @ h + self._b_noise
         noise_strength = float(np.clip(np.abs(np.mean(noise_mod)) * 0.01, 0, 0.15))
         if noise_strength < 0.001:
             return waveform
-        rng = np.random.default_rng(int(abs(float(noise_mod[0] * 1000)) % (2 ** 31)))
+        rng = np.random.default_rng(int(abs(float(noise_mod[0] * 1000)) % (2**31)))
         noise = rng.normal(0, noise_strength, n_samples).astype(np.float32)
         return waveform + noise
 
-    def _apply_envelope(self, waveform: np.ndarray, temporal_env: np.ndarray,
-                        n_samples: int) -> np.ndarray:
+    def _apply_envelope(
+        self, waveform: np.ndarray, temporal_env: np.ndarray, n_samples: int
+    ) -> np.ndarray:
         """Apply temporal amplitude envelope."""
         n_env = len(temporal_env)
         env_points = np.linspace(0, n_samples, n_env + 1).astype(int)
@@ -146,9 +161,15 @@ class AudioWaveformDecoder:
         if b is not None and b.shape == self._b.shape:
             self._b = b.astype(np.float32)
 
-    def set_wavetable_weights(self, W_hidden: np.ndarray, b_hidden: np.ndarray,
-                                W_wavetable: np.ndarray, b_wavetable: np.ndarray,
-                                W_noise: np.ndarray, b_noise: np.ndarray) -> bool:
+    def set_wavetable_weights(
+        self,
+        W_hidden: np.ndarray,
+        b_hidden: np.ndarray,
+        W_wavetable: np.ndarray,
+        b_wavetable: np.ndarray,
+        W_noise: np.ndarray,
+        b_noise: np.ndarray,
+    ) -> bool:
         if W_hidden.shape == self._W_hidden.shape:
             self._W_hidden = W_hidden.astype(np.float32)
         if b_hidden.shape == self._b_hidden.shape:
@@ -173,15 +194,17 @@ def save_audio_decoder_weights(decoder: AudioWaveformDecoder, weights_path: str)
     Returns True on success.
     """
     try:
-        np.savez(weights_path,
-                 audio_decoder_W=decoder._W,
-                 audio_decoder_b=decoder._b,
-                 audio_W_hidden=decoder._W_hidden,
-                 audio_b_hidden=decoder._b_hidden,
-                 audio_W_wavetable=decoder._W_wavetable,
-                 audio_b_wavetable=decoder._b_wavetable,
-                 audio_W_noise=decoder._W_noise,
-                 audio_b_noise=decoder._b_noise)
+        np.savez(
+            weights_path,
+            audio_decoder_W=decoder._W,
+            audio_decoder_b=decoder._b,
+            audio_W_hidden=decoder._W_hidden,
+            audio_b_hidden=decoder._b_hidden,
+            audio_W_wavetable=decoder._W_wavetable,
+            audio_b_wavetable=decoder._b_wavetable,
+            audio_W_noise=decoder._W_noise,
+            audio_b_noise=decoder._b_noise,
+        )
         logger.info("Audio decoder weights saved to %s", weights_path)
         return True
     except Exception as e:
@@ -189,15 +212,22 @@ def save_audio_decoder_weights(decoder: AudioWaveformDecoder, weights_path: str)
         return False
 
 
-def load_default_audio_decoder_weights(decoder: AudioWaveformDecoder, weights_path: Optional[str] = None) -> bool:
+def load_default_audio_decoder_weights(
+    decoder: AudioWaveformDecoder, weights_path: Optional[str] = None
+) -> bool:
     """Load pre-trained audio decoder weights from p29_trained.npz.
 
     Returns True if weights were loaded, False otherwise.
     """
     if weights_path is None:
         # audio_decoder.py → multimodal → ai → src → backend → apps → root
-        weights_path = str(Path(__file__).resolve().parent.parent.parent.parent.parent.parent /
-                          "data" / "multimodal" / "weights" / "p29_trained.npz")
+        weights_path = str(
+            Path(__file__).resolve().parent.parent.parent.parent.parent.parent
+            / "data"
+            / "multimodal"
+            / "weights"
+            / "p29_trained.npz"
+        )
     wpath = Path(weights_path)
     if not wpath.exists():
         logger.debug("No pre-trained audio decoder weights at %s", wpath)

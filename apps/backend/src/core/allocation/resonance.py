@@ -71,8 +71,13 @@ def _entropy(similarities: Dict[str, float]) -> float:
 _AXIS_KEYWORDS: Dict[str, List[str]] = {
     "alpha": ["energy", "arousal", "comfort", "tension", "rest", "vitality", "strength"],
     "beta": [
-        "focus", "curiosity", "clarity", "confusion",
-        "learning", "creativity", "understanding"
+        "focus",
+        "curiosity",
+        "clarity",
+        "confusion",
+        "learning",
+        "creativity",
+        "understanding",
     ],
     "gamma": ["happiness", "calm", "fear", "sadness", "emotion", "feeling", "mood"],
     "delta": ["attention", "bond", "presence", "engagement", "social", "connection", "trust"],
@@ -183,10 +188,7 @@ class ResonanceEngine:
     def find_composite_axes(
         self, vector: List[float], threshold: float = 0.3
     ) -> List[Tuple[str, float]]:
-        sims = {
-            name: self.compute_resonance(vector, name)
-            for name in self._semantic_vectors
-        }
+        sims = {name: self.compute_resonance(vector, name) for name in self._semantic_vectors}
         result = [(n, s) for n, s in sorted(sims.items(), key=lambda x: -x[1]) if s > threshold]
         return result
 

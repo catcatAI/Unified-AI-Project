@@ -20,16 +20,19 @@ class UnifiedMemoryCoordinator:
 
     def __init__(self, memory_manager=None, logic_unit=None, cdm_model=None):
         self.memory_manager = memory_manager  # HAMMemoryManager
-        self.logic_unit = logic_unit          # LogicUnit
-        self.cdm_model = cdm_model            # CDMCognitiveDividendModel
+        self.logic_unit = logic_unit  # LogicUnit
+        self.cdm_model = cdm_model  # CDMCognitiveDividendModel
         logger.info(
             f"UnifiedMemoryCoordinator: HAM={memory_manager is not None}"
             f", LU={logic_unit is not None}, CDM={cdm_model is not None}"
         )
 
-    async def unified_query(self, keywords: Optional[List[str]] = None,
-                            context: Optional[Dict[str, Any]] = None,
-                            limit: int = 10) -> Dict[str, Any]:
+    async def unified_query(
+        self,
+        keywords: Optional[List[str]] = None,
+        context: Optional[Dict[str, Any]] = None,
+        limit: int = 10,
+    ) -> Dict[str, Any]:
         """Query across HAM + LU + CDM and merge results."""
         result: Dict[str, Any] = {"memories": [], "rule_action": None, "cognitive_stats": {}}
 
@@ -46,11 +49,16 @@ class UnifiedMemoryCoordinator:
 
         return result
 
-    async def store_experience(self, raw_data: Any, data_type: str,
-                               metadata: Optional[Dict[str, Any]] = None,
-                               activity_type=None, duration: float = 0.0,
-                               intensity: float = 0.5,
-                               context: Optional[Dict[str, Any]] = None) -> Optional[str]:
+    async def store_experience(
+        self,
+        raw_data: Any,
+        data_type: str,
+        metadata: Optional[Dict[str, Any]] = None,
+        activity_type=None,
+        duration: float = 0.0,
+        intensity: float = 0.5,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> Optional[str]:
         """Store in HAM and (optionally) record CDM investment."""
         mem_id = None
         if self.memory_manager:

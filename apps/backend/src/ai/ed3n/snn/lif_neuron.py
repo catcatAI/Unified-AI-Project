@@ -14,7 +14,7 @@ from typing import Deque, Dict, List
 @dataclass
 class LIFState:
     membrane_potential: float = 0.0
-    last_spike_time: float = -float('inf')
+    last_spike_time: float = -float("inf")
     refractory_remaining: int = 0
     spike_count: int = 0
     threshold: float = -55.0
@@ -51,7 +51,10 @@ class LIFNeuron:
             self.state.refractory_remaining -= 1
             return False
 
-        leak = -(self.state.membrane_potential - self.state.resting_potential) / self.state.time_constant
+        leak = (
+            -(self.state.membrane_potential - self.state.resting_potential)
+            / self.state.time_constant
+        )
         drive = input_current * self.state.membrane_resistance / self.state.time_constant
 
         self.state.membrane_potential += (leak + drive) * dt

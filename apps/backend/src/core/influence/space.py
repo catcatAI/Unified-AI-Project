@@ -25,8 +25,8 @@ Version: 6.2.1
 from __future__ import annotations
 
 import enum
-import math
 import logging
+import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
@@ -92,7 +92,9 @@ class EntropyRule(InfluenceRule):
         base_strength: float,
         context: Optional[Dict[str, Any]] = None,
     ) -> float:
-        src_vals = list(getattr(source, "values", {}).values()) if hasattr(source, "values") else [0.5] * 4
+        src_vals = (
+            list(getattr(source, "values", {}).values()) if hasattr(source, "values") else [0.5] * 4
+        )
         if not src_vals:
             return base_strength
         total = sum(abs(v) for v in src_vals) or 1.0
@@ -159,9 +161,7 @@ class InfluenceRuleSet:
         resolved = self._resolve(factors, ctx)
         return resolved, names
 
-    def _resolve(
-        self, factors: List[float], context: Optional[Dict[str, Any]] = None
-    ) -> float:
+    def _resolve(self, factors: List[float], context: Optional[Dict[str, Any]] = None) -> float:
         if not factors:
             return 0.0
         if self._strategy == ConflictStrategy.FIRST_WINS:
@@ -204,9 +204,7 @@ class InfluenceSpace:
     def add_rule(self, rule: InfluenceRule) -> None:
         self._rules.add(rule)
 
-    def compute(
-        self, source: str, target: str, use_cache: bool = True
-    ) -> float:
+    def compute(self, source: str, target: str, use_cache: bool = True) -> float:
         key = (source, target)
         if use_cache and key in self._cache:
             return self._cache[key]
@@ -232,9 +230,11 @@ class InfluenceSpace:
         self._cache.clear()
 
     def __repr__(self) -> str:
-        return (f"InfluenceSpace(axes={len(self._axes)}, "
-                f"rules={len(self._rules._rules)}, "
-                f"cached={len(self._cache)} pairs)")
+        return (
+            f"InfluenceSpace(axes={len(self._axes)}, "
+            f"rules={len(self._rules._rules)}, "
+            f"cached={len(self._cache)} pairs)"
+        )
 
 
 __all__ = [

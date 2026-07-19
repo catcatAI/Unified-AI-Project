@@ -7,6 +7,7 @@ instead of independent asyncio.sleep() loops. Supports:
 - Wall clock time reference
 - Start/stop lifecycle
 """
+
 import asyncio
 import logging
 import time
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TickSubscription:
     """A registered tick subscription."""
+
     interval_ticks: int
     callback: Callable[[int], Any]
     last_tick: int = 0
@@ -97,9 +99,7 @@ class GlobalSystemClock:
             last_tick=self._tick_count,
         )
         self._subscriptions.append(sub)
-        logger.debug(
-            f"[GlobalSystemClock] Subscribed callback every {interval_ticks} ticks"
-        )
+        logger.debug(f"[GlobalSystemClock] Subscribed callback every {interval_ticks} ticks")
         return sub
 
     def unsubscribe(self, subscription: TickSubscription) -> None:

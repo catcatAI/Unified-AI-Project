@@ -6,8 +6,8 @@ import time
 
 import aiohttp
 from core.interfaces.protocols import LLMResponse
-from core.utils import safe_error
 from core.system.config.network_defaults import LLAMACPP_HOST, LLM_REQUEST_TIMEOUT
+from core.utils import safe_error
 
 from .base import BaseLLMBackend
 
@@ -17,7 +17,9 @@ logger = logging.getLogger(__name__)
 class LlamaCppBackend(BaseLLMBackend):
     """llama.cpp 後端"""
 
-    def __init__(self, base_url: str = LLAMACPP_HOST, model: str = None, timeout: float = LLM_REQUEST_TIMEOUT):
+    def __init__(
+        self, base_url: str = LLAMACPP_HOST, model: str = None, timeout: float = LLM_REQUEST_TIMEOUT
+    ):
         super().__init__()
         self.base_url = base_url.rstrip("/")
         self.model = model
@@ -60,14 +62,19 @@ class LlamaCppBackend(BaseLLMBackend):
                     text = data["choices"][0]["message"]["content"]
                     tokens = data.get("usage", {}).get("total_tokens", 0)
                     return LLMResponse(
-                        text=text, backend="llama.cpp", model=self.model or "unknown",
-                        tokens_used=tokens, response_time_ms=(time.time() - start_time) * 1000,
+                        text=text,
+                        backend="llama.cpp",
+                        model=self.model or "unknown",
+                        tokens_used=tokens,
+                        response_time_ms=(time.time() - start_time) * 1000,
                         confidence=0.9,
                     )
                 else:
                     text = await response.text()
                     return LLMResponse(
-                        text="", backend="llama.cpp", model=self.model,
+                        text="",
+                        backend="llama.cpp",
+                        model=self.model,
                         error=f"HTTP {response.status}: {text[:200]}",
                     )
         except Exception as e:

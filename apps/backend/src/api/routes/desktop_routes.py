@@ -35,12 +35,15 @@ async def desktop_state(
     if interaction is None:
         raise HTTPException(503, "DesktopInteraction not available")
     state = interaction.get_desktop_state()
-    return {"success": True, "state": {
-        "total_files": getattr(state, "total_files", 0),
-        "total_size": getattr(state, "total_size", 0),
-        "categories": getattr(state, "categories", {}),
-        "clutter_level": getattr(state, "clutter_level", 0.0),
-    }}
+    return {
+        "success": True,
+        "state": {
+            "total_files": getattr(state, "total_files", 0),
+            "total_size": getattr(state, "total_size", 0),
+            "categories": getattr(state, "categories", {}),
+            "clutter_level": getattr(state, "clutter_level", 0.0),
+        },
+    }
 
 
 @router.post("/desktop/organize")
@@ -51,11 +54,17 @@ async def desktop_organize(
     if interaction is None:
         raise HTTPException(503, "DesktopInteraction not available")
     ops = await interaction.organize_desktop()
-    return {"success": True, "operations": [{
-        "source": str(op.source) if hasattr(op, "source") else "",
-        "destination": str(op.destination) if hasattr(op, "destination") else "",
-        "category": op.category if hasattr(op, "category") else "",
-    } for op in ops]}
+    return {
+        "success": True,
+        "operations": [
+            {
+                "source": str(op.source) if hasattr(op, "source") else "",
+                "destination": str(op.destination) if hasattr(op, "destination") else "",
+                "category": op.category if hasattr(op, "category") else "",
+            }
+            for op in ops
+        ],
+    }
 
 
 @router.post("/desktop/cleanup")
@@ -67,10 +76,16 @@ async def desktop_cleanup(
     if interaction is None:
         raise HTTPException(503, "DesktopInteraction not available")
     ops = await interaction.cleanup_desktop(days_old=days_old)
-    return {"success": True, "operations": [{
-        "source": str(op.source) if hasattr(op, "source") else "",
-        "category": op.category if hasattr(op, "category") else "",
-    } for op in ops]}
+    return {
+        "success": True,
+        "operations": [
+            {
+                "source": str(op.source) if hasattr(op, "source") else "",
+                "category": op.category if hasattr(op, "category") else "",
+            }
+            for op in ops
+        ],
+    }
 
 
 @router.get("/actions/status")

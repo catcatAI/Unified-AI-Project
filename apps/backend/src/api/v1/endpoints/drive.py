@@ -10,8 +10,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Body, Depends, File, Form, HTTPException, Query, UploadFile
 from core.utils import safe_error
+from fastapi import APIRouter, Body, Depends, File, Form, HTTPException, Query, UploadFile
 
 from ._deps import get_drive_service
 
@@ -60,6 +60,7 @@ class DriveDeduplication:
 
     def __init__(self):
         from pathlib import Path
+
         db_path = Path(__file__).parent.parent.parent.parent / "data" / "drive_sync_db.json"
         self._db_path = db_path
         self._syncs: Dict[str, Dict[str, Any]] = {}
@@ -70,6 +71,7 @@ class DriveDeduplication:
         if self._db_path.exists():
             try:
                 import json
+
                 with open(self._db_path, "r", encoding="utf-8") as f:
                     self._syncs = json.load(f)
             except Exception:
@@ -80,6 +82,7 @@ class DriveDeduplication:
         """Save."""
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
         import json
+
         with open(self._db_path, "w", encoding="utf-8") as f:
             json.dump(self._syncs, f, ensure_ascii=False, indent=2)
 
@@ -108,6 +111,7 @@ class DriveDeduplication:
     def compute_content_hash(self, file_path: str) -> str:
         """Compute content hash."""
         import hashlib
+
         path = Path(file_path)
         if not path.exists():
             return ""
@@ -134,7 +138,18 @@ class DocumentParser:
                 logger.warning(f"Failed to read text file: {path}", exc_info=True)
                 return ""
 
-        if suffix in (".md", ".py", ".js", ".ts", ".json", ".yaml", ".yml", ".html", ".css", ".xml"):
+        if suffix in (
+            ".md",
+            ".py",
+            ".js",
+            ".ts",
+            ".json",
+            ".yaml",
+            ".yml",
+            ".html",
+            ".css",
+            ".xml",
+        ):
             try:
                 with open(path, "r", encoding="utf-8") as f:
                     return f.read()
@@ -145,6 +160,7 @@ class DocumentParser:
         if suffix in (".docx",):
             try:
                 from docx import Document as DocxDocument
+
                 doc = DocxDocument(path)
                 return "\n".join(p.text for p in doc.paragraphs)
             except ImportError:
@@ -156,6 +172,7 @@ class DocumentParser:
         if suffix in (".xlsx", ".xls"):
             try:
                 import openpyxl
+
                 wb = openpyxl.load_workbook(path, read_only=True)
                 try:
                     lines = []
@@ -260,7 +277,9 @@ async def logout(svc=Depends(get_drive_service)) -> dict:
 @router.get("/files")
 async def list_files(
     page_size: int = Query(10, ge=1, le=100),
-    query: Optional[str] = Query(None, description='Drive search query (e.g. \'name contains "report"\')'),
+    query: Optional[str] = Query(
+        None, description="Drive search query (e.g. 'name contains \"report\"')"
+    ),
     svc=Depends(get_drive_service),
 ) -> dict:
     """列出文件"""
@@ -293,7 +312,9 @@ async def get_file_metadata(file_id: str, svc=Depends(get_drive_service)) -> dic
 async def sync_files(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_service)) -> dict:
     """同步選定的文件到本地並存入記憶"""
     file_ids = request.get("file_ids", [])
-    default_folder = str(Path(__file__).parent.parent.parent.parent.parent / "data" / "drive_downloads")
+    default_folder = str(
+        Path(__file__).parent.parent.parent.parent.parent / "data" / "drive_downloads"
+    )
     folder_key = request.get("folder_alias", request.get("folder_path", "default"))
     store_memory = request.get("store_memory", True)
 
@@ -315,7 +336,9 @@ async def sync_files(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_
             metadata = svc.get_file_metadata(fid)
         except Exception as e:
             logger.warning(f"Could not get metadata for {fid}: {e}", exc_info=True)
-            synced_files.append({"id": fid, "name": f"file_{fid}", "memorized": False, "error": safe_error(e)})
+            synced_files.append(
+                {"id": fid, "name": f"file_{fid}", "memorized": False, "error": safe_error(e)}
+            )
             continue
 
         dest_path = _safe_drive_dest(folder, metadata.get("name", f"file_{fid}"))
@@ -323,7 +346,9 @@ async def sync_files(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_
 
         if not deduplicator.should_download(metadata):
             skipped_count += 1
-            synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": False, "skipped": True})
+            synced_files.append(
+                {"id": fid, "name": metadata.get("name"), "memorized": False, "skipped": True}
+            )
             continue
 
         download_success = svc.download_file(fid, str(dest_path))
@@ -345,27 +370,50 @@ async def sync_files(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_
             if store_memory:
                 try:
                     from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+
                     ham = HAMMemoryManager()
                     content = parser.parse_document(str(dest_path))
-                    ham.store_conversation({
-                        "role": "system",
-                        "content": content[:5000] if content else f"[File: {dest_path.name}]",
-                        "type": "document",
-                        "metadata": memory_metadata,
-                        "timestamp": datetime.now().isoformat(),
-                    })
+                    ham.store_conversation(
+                        {
+                            "role": "system",
+                            "content": content[:5000] if content else f"[File: {dest_path.name}]",
+                            "type": "document",
+                            "metadata": memory_metadata,
+                            "timestamp": datetime.now().isoformat(),
+                        }
+                    )
                     memorized_count += 1
-                    synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": True})
+                    synced_files.append(
+                        {"id": fid, "name": metadata.get("name"), "memorized": True}
+                    )
                 except ImportError:
-                    logger.warning("HAMMemoryManager not available, skipping memory store", exc_info=True)
-                    synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": False})
+                    logger.warning(
+                        "HAMMemoryManager not available, skipping memory store", exc_info=True
+                    )
+                    synced_files.append(
+                        {"id": fid, "name": metadata.get("name"), "memorized": False}
+                    )
                 except Exception as me:
                     logger.warning(f"Memory store failed: {me}", exc_info=True)
-                    synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": False, "memory_error": safe_error(me)})
+                    synced_files.append(
+                        {
+                            "id": fid,
+                            "name": metadata.get("name"),
+                            "memorized": False,
+                            "memory_error": safe_error(me),
+                        }
+                    )
             else:
                 synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": False})
         else:
-            synced_files.append({"id": fid, "name": metadata.get("name"), "memorized": False, "error": "Download failed"})
+            synced_files.append(
+                {
+                    "id": fid,
+                    "name": metadata.get("name"),
+                    "memorized": False,
+                    "error": "Download failed",
+                }
+            )
 
     return {
         "status": "success",
@@ -399,10 +447,14 @@ async def search_and_list(
 
 
 @router.post("/analyze")
-async def analyze_drive(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_service)) -> dict:
+async def analyze_drive(
+    request: Dict[str, Any] = Body(...), svc=Depends(get_drive_service)
+) -> dict:
     """分析 Drive 文件並總結內容（需下載 + 解析）"""
     limit = request.get("limit", 5)
-    default_folder = str(Path(__file__).parent.parent.parent.parent.parent / "data" / "drive_downloads")
+    default_folder = str(
+        Path(__file__).parent.parent.parent.parent.parent / "data" / "drive_downloads"
+    )
     folder_key = request.get("folder_alias", request.get("folder_path", "default"))
     # Early path validation — whitelist-based, CodeQL-safe
     folder = _get_safe_drive_folder(folder_key)
@@ -416,12 +468,14 @@ async def analyze_drive(request: Dict[str, Any] = Body(...), svc=Depends(get_dri
             dest = _safe_drive_dest(folder, f.get("name", f"file_{f['id']}"))
             if svc.download_file(f["id"], str(dest)):
                 content = parser.parse_document(str(dest))
-                summaries.append({
-                    "name": f.get("name"),
-                    "size": f.get("size"),
-                    "modified": f.get("modifiedTime"),
-                    "preview": content[:500] if content else "",
-                })
+                summaries.append(
+                    {
+                        "name": f.get("name"),
+                        "size": f.get("size"),
+                        "modified": f.get("modifiedTime"),
+                        "preview": content[:500] if content else "",
+                    }
+                )
 
         analysis_parts = []
         for s in summaries:
@@ -451,6 +505,7 @@ async def upload_file(
     if not svc.is_authenticated():
         raise HTTPException(status_code=401, detail="Not authenticated")
     import os
+
     suffix = Path(file.filename).suffix if file.filename else ".tmp"
     fd, tmp_path = tempfile.mkstemp(suffix=suffix)
     try:

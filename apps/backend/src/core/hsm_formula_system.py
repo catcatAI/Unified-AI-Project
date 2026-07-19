@@ -56,8 +56,15 @@ class HSMFormulaSystem:
     def get_e_m2(self) -> float:
         return self.e_m2_constant
 
-    def detect_cognitive_gap(self, domain: str, uncertainty_level: float, information_deficit: float):
-        gap = CognitiveGap(gap_id=domain, domain=domain, uncertainty_level=uncertainty_level, information_deficit=information_deficit)
+    def detect_cognitive_gap(
+        self, domain: str, uncertainty_level: float, information_deficit: float
+    ):
+        gap = CognitiveGap(
+            gap_id=domain,
+            domain=domain,
+            uncertainty_level=uncertainty_level,
+            information_deficit=information_deficit,
+        )
         self.cognitive_gaps[domain] = gap
         return gap
 
@@ -125,7 +132,10 @@ class HSMFormulaSystem:
         return True
 
     def get_governance_summary(self) -> dict:
-        return {"total_rules": len(self.governance_blueprints), "rules_solidified": self.rules_solidified}
+        return {
+            "total_rules": len(self.governance_blueprints),
+            "rules_solidified": self.rules_solidified,
+        }
 
     def get_hsm_status(self) -> dict:
         return {
@@ -149,7 +159,14 @@ class HSMFormulaSystem:
 
 
 class CognitiveGap:
-    def __init__(self, gap_id: str = "", domain: str = "", uncertainty_level: float = 0.0, information_deficit: float = 0.0, exploration_attempts: int = 0):
+    def __init__(
+        self,
+        gap_id: str = "",
+        domain: str = "",
+        uncertainty_level: float = 0.0,
+        information_deficit: float = 0.0,
+        exploration_attempts: int = 0,
+    ):
         self.gap_id = gap_id
         self.domain = domain
         self.uncertainty_level = uncertainty_level
@@ -166,7 +183,13 @@ class CognitiveGap:
 
 
 class ExplorationEvent:
-    def __init__(self, event_type: str = "", data: dict = None, triggered_by: str = "", random_seed: float = 0.0):
+    def __init__(
+        self,
+        event_type: str = "",
+        data: dict = None,
+        triggered_by: str = "",
+        random_seed: float = 0.0,
+    ):
         self.event_id = str(uuid.uuid4())
         self.event_type = event_type
         self.data = data or {}
@@ -179,7 +202,13 @@ class ExplorationEvent:
 
 
 class GovernanceBlueprint:
-    def __init__(self, rules: list = None, rule_id: str = "", status: str = "pending", confidence: float = 0.0):
+    def __init__(
+        self,
+        rules: list = None,
+        rule_id: str = "",
+        status: str = "pending",
+        confidence: float = 0.0,
+    ):
         self.rules = rules or []
         self.rule_id = rule_id
         self.status = status

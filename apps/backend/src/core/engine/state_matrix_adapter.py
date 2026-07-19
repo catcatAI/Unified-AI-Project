@@ -14,11 +14,14 @@ logger = logging.getLogger(__name__)
 
 class _AxisProxy:
     """Proxy that wraps a dict and exposes it with .values for axis-like access."""
+
     def __init__(self, values: Optional[Dict[str, Any]] = None):
         self.values = values or {}
 
+
 class _TemporalProxy:
     """Proxy for temporal record/query access."""
+
     def __init__(self):
         self._records: List[Dict[str, Any]] = []
 
@@ -45,33 +48,48 @@ class _TemporalProxy:
         if std < 1e-6:
             return []
         return [
-            {"axis": r["axis"], "field": r["field"], "value": r["value"], "deviation": abs(r["value"] - mean) / std}
+            {
+                "axis": r["axis"],
+                "field": r["field"],
+                "value": r["value"],
+                "deviation": abs(r["value"] - mean) / std,
+            }
             for r in self._records[-20:]
             if abs(r["value"] - mean) / std > 2.0
         ]
 
+
 class _InfluenceSpaceProxy:
     """Proxy for influence space computation."""
+
     def compute(self, **kwargs) -> Dict[str, float]:
         return {}
 
+
 class _EtaProxy:
     """Proxy for ETA module registry access."""
+
     def __init__(self):
         self.module_registry = {}
 
+
 class _AnchorLearningProxy:
     """Proxy for anchor learning access."""
+
     def get_best_axis(self, **kwargs) -> Optional[str]:
         return None
 
+
 class _ResonanceEngineProxy:
     """Proxy for resonance engine access."""
+
     def compute_profile(self, **kwargs) -> Dict[str, Any]:
         return {}
 
+
 class _AllocationPolicyProxy:
     """Proxy for allocation policy access."""
+
     def __init__(self):
         self.stages = []
 
@@ -89,6 +107,7 @@ class _AllocationPolicyProxy:
 
 class _GradientFieldProxy:
     """Proxy for gradient field computation."""
+
     def compute_gradient(self, **kwargs) -> Dict[str, Any]:
         return {"gradient": {}, "gradient_strength": 0.0, "nearest_attractors": []}
 
@@ -98,8 +117,13 @@ class _GradientFieldProxy:
 
 class _GradientFieldProperty:
     """Property object for gradient_field access."""
+
     def compute_gradient(self, **kwargs) -> Dict[str, Any]:
-        return {"gradient": {}, "gradient_strength": 0.0, "nearest_attractors": [{"coord": (0.5, 0.5, 0.5, 0.5, 0.0), "behavior": "default"}]}
+        return {
+            "gradient": {},
+            "gradient_strength": 0.0,
+            "nearest_attractors": [{"coord": (0.5, 0.5, 0.5, 0.5, 0.0), "behavior": "default"}],
+        }
 
     def navigate(self, **kwargs) -> Dict[str, Any]:
         return {"navigation_steps": 1, "new_state": {}, "nearest_attractors": []}
@@ -164,7 +188,9 @@ class StateMatrixAdapter(JsonFileStateStore):
 
     def temporal_trend(self, axis: str, field: str, window: int = 5) -> Optional[float]:
         """Compute rolling trend for a specific axis/field from temporal records."""
-        matching = [r for r in self._temporal_proxy._records if r["axis"] == axis and r["field"] == field]
+        matching = [
+            r for r in self._temporal_proxy._records if r["axis"] == axis and r["field"] == field
+        ]
         if len(matching) < 2:
             return 0.0
         recent = matching[-window:]
@@ -231,7 +257,9 @@ class StateMatrixAdapter(JsonFileStateStore):
             if not src_vals:
                 influences[src] = 0.0
                 continue
-            src_avg = sum(v for v in src_vals.values() if isinstance(v, (int, float))) / max(len(src_vals), 1)
+            src_avg = sum(v for v in src_vals.values() if isinstance(v, (int, float))) / max(
+                len(src_vals), 1
+            )
             influence = 0.0
             for tgt in axes:
                 if tgt == src:
@@ -239,7 +267,9 @@ class StateMatrixAdapter(JsonFileStateStore):
                 tgt_vals = self._state.get(tgt, {})
                 if not tgt_vals:
                     continue
-                tgt_avg = sum(v for v in tgt_vals.values() if isinstance(v, (int, float))) / max(len(tgt_vals), 1)
+                tgt_avg = sum(v for v in tgt_vals.values() if isinstance(v, (int, float))) / max(
+                    len(tgt_vals), 1
+                )
                 influence += src_avg * tgt_avg
             influences[src] = round(influence / max(len(axes) - 1, 1), 4)
         return influences
@@ -251,11 +281,26 @@ class StateMatrixAdapter(JsonFileStateStore):
         return self._gradient_field
 
     def compute_gradient(self) -> Dict[str, Any]:
-        nearest = self._attractors[:3] if self._attractors else [{"coord": (0.5, 0.5, 0.5, 0.5, 0.0), "behavior": "default", "tone": "calm", "mass": 1.0}]
+        nearest = (
+            self._attractors[:3]
+            if self._attractors
+            else [
+                {
+                    "coord": (0.5, 0.5, 0.5, 0.5, 0.0),
+                    "behavior": "default",
+                    "tone": "calm",
+                    "mass": 1.0,
+                }
+            ]
+        )
         return {"gradient": {}, "gradient_strength": 0.0, "nearest_attractors": nearest}
 
     def navigate_to_attractor(self, max_steps: int = 3) -> Dict[str, Any]:
-        return {"navigation_steps": 1, "new_state": {}, "nearest_attractors": self._attractors[:1] if self._attractors else []}
+        return {
+            "navigation_steps": 1,
+            "new_state": {},
+            "nearest_attractors": self._attractors[:1] if self._attractors else [],
+        }
 
     def add_attractor(
         self,
@@ -265,12 +310,16 @@ class StateMatrixAdapter(JsonFileStateStore):
         mass: float = 1.0,
         tags: Optional[List[str]] = None,
     ) -> bool:
-        self._attractors.append({"coord": coord, "behavior": behavior, "tone": tone, "mass": mass, "tags": tags or []})
+        self._attractors.append(
+            {"coord": coord, "behavior": behavior, "tone": tone, "mass": mass, "tags": tags or []}
+        )
         return True
 
     def remove_attractor_by_tags(self, tags: List[str]) -> int:
         before = len(self._attractors)
-        self._attractors = [a for a in self._attractors if not any(t in a.get("tags", []) for t in tags)]
+        self._attractors = [
+            a for a in self._attractors if not any(t in a.get("tags", []) for t in tags)
+        ]
         return before - len(self._attractors)
 
     # --- Persistence ---

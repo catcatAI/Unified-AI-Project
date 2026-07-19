@@ -253,7 +253,9 @@ class AutonomicNervousSystem:
             for callback in self._state_change_callbacks:
                 try:
                     callback(self._last_state, current_state)
-                except Exception as e:  # broad exception acceptable: state change callbacks should not block detection
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: state change callbacks should not block detection
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
             self._last_state = current_state
@@ -262,7 +264,9 @@ class AutonomicNervousSystem:
         for callback in self._arousal_callbacks:
             try:
                 callback(self.arousal_level)
-            except Exception as e:  # broad exception acceptable: arousal callbacks should not block updates
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: arousal callbacks should not block updates
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
 
     async def process_tactile_input(self, data: Dict[str, Any]) -> None:
@@ -273,20 +277,20 @@ class AutonomicNervousSystem:
         intensity = data.get("intensity", 0.5)
         data.get("type", "pat")
         origin = data.get("origin", "System")
-        
+
         logger.info(f"🧠 [ANS] Processing tactile from {origin}: {part}")
-        
+
         # 2030 Detail: Social Weighting
         # Human touch has a 'resonance' effect on the parasympathetic system
         social_multiplier = 1.5 if origin == "Human" else 1.0
-        
+
         if part in ["head", "cheeks", "palms"]:
             # Soothing areas trigger Parasympathetic (Calming)
             await self.apply_stimulus(
                 name=f"tactile_{part}",
                 nerve_type=NerveType.PARASYMPATHETIC,
                 intensity=intensity * 0.8 * social_multiplier,
-                duration=5.0
+                duration=5.0,
             )
         else:
             # Sensitive areas trigger Sympathetic
@@ -294,7 +298,7 @@ class AutonomicNervousSystem:
                 name=f"tactile_{part}",
                 nerve_type=NerveType.SYMPATHETIC,
                 intensity=intensity * 0.5,
-                duration=3.0
+                duration=3.0,
             )
 
     async def apply_stimulus(
@@ -351,9 +355,10 @@ class AutonomicNervousSystem:
 
         # Physiological effects (Triggers from Config [Phase 7])
         from core.system.config.tiered_loader import get_config
+
         beh_conf = get_config("standard/behavior/behavior")
         bio_thresh = beh_conf.get("biological_thresholds", {})
-        
+
         sweat_thresh = bio_thresh.get("sweat_trigger", 0.6)
 
         physiological = PhysiologicalEffects(
@@ -371,9 +376,17 @@ class AutonomicNervousSystem:
         emotional = EmotionalEffects(
             anxiety=max(0, (arousal - 0.5) * 2.0),  # Increases above 50%
             calmness=max(0, 1.0 - arousal * 1.2),  # Decreases with arousal
-            excitement=arousal * bio_thresh.get("excitement_high_multiplier", 0.8) if arousal > bio_thresh.get("excitement_high_arousal", 0.4) else arousal * bio_thresh.get("excitement_low_multiplier", 0.3),
+            excitement=(
+                arousal * bio_thresh.get("excitement_high_multiplier", 0.8)
+                if arousal > bio_thresh.get("excitement_high_arousal", 0.4)
+                else arousal * bio_thresh.get("excitement_low_multiplier", 0.3)
+            ),
             irritability=max(0, (arousal - irritability_thresh) * 3.0),
-            confidence=0.5 + arousal * 0.3 if arousal < irritability_thresh else 0.8 - (arousal - irritability_thresh),
+            confidence=(
+                0.5 + arousal * 0.3
+                if arousal < irritability_thresh
+                else 0.8 - (arousal - irritability_thresh)
+            ),
         )
 
         # Cognitive effects
@@ -384,7 +397,11 @@ class AutonomicNervousSystem:
             focus=max(0, 1.0 - arousal_distance * 2.0),
             reaction_time=1.0 - arousal * 0.4,  # Faster at higher arousal
             memory_consolidation=1.0 - arousal * 0.3,  # Better at lower arousal
-            decision_speed=arousal * bio_thresh.get("decision_speed_high_multiplier", 0.8) if arousal > bio_thresh.get("decision_speed_high_arousal", 0.5) else arousal * bio_thresh.get("decision_speed_low_multiplier", 0.4),
+            decision_speed=(
+                arousal * bio_thresh.get("decision_speed_high_multiplier", 0.8)
+                if arousal > bio_thresh.get("decision_speed_high_arousal", 0.5)
+                else arousal * bio_thresh.get("decision_speed_low_multiplier", 0.4)
+            ),
             creativity=max(0, 1.0 - arousal * 1.2),  # Better at lower arousal
         )
 
@@ -406,7 +423,9 @@ class AutonomicNervousSystem:
         """Get list of currently active stimuli"""
         return self.active_stimuli.copy()
 
-    def register_state_change_callback(self, callback: Callable[[ANSState, ANSState], None]) -> None:
+    def register_state_change_callback(
+        self, callback: Callable[[ANSState, ANSState], None]
+    ) -> None:
         """Register callback for ANS state changes"""
         self._state_change_callbacks.append(callback)
 
@@ -483,6 +502,7 @@ if __name__ == "__main__":
 
     # Demo purposes only — write to stderr (not stdout/logger) to avoid CodeQL
     import sys as _sys
+
     _demo_out = _sys.stderr
 
     async def demo() -> None:

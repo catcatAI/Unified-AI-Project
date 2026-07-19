@@ -153,21 +153,29 @@ class MQTTSubscriptionManager:
                     else:
                         self.mqtt_client.subscribe(topic, qos)
                 else:
-                    logger.error("[MQTTSubManager] MQTT client has no subscribe method", exc_info=True)
+                    logger.error(
+                        "[MQTTSubManager] MQTT client has no subscribe method", exc_info=True
+                    )
                     return False
 
                 logger.info(f"[MQTTSubManager] Subscribed to: {topic} (QoS: {qos})")
                 return True
 
-            except Exception as e:  # broad exception acceptable: subscribe operations may fail with various errors
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: subscribe operations may fail with various errors
                 logger.error(f"Error in {__name__}: {e}", exc_info=True)
                 last_error = e
 
-                logger.warning(f"[MQTTSubManager] Subscribe attempt {attempt + 1} failed: {e}", exc_info=True)
+                logger.warning(
+                    f"[MQTTSubManager] Subscribe attempt {attempt + 1} failed: {e}", exc_info=True
+                )
                 if attempt < retry - 1:
                     await asyncio.sleep(1 * (attempt + 1))  # 指数退避
 
-        logger.error(f"[MQTTSubManager] Subscribe failed after {retry} attempts: {last_error}", exc_info=True)
+        logger.error(
+            f"[MQTTSubManager] Subscribe failed after {retry} attempts: {last_error}", exc_info=True
+        )
         return False
 
     async def unsubscribe(self, topic: str) -> bool:
@@ -208,7 +216,9 @@ class MQTTSubscriptionManager:
                 logger.info(f"[MQTTSubManager] Unsubscribed from: {topic}")
                 return True
 
-            except Exception as e:  # broad exception acceptable: unsubscribe may fail with various errors
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: unsubscribe may fail with various errors
                 logger.error(f"[MQTTSubManager] Unsubscribe failed: {e}", exc_info=True)
                 return False
 
@@ -244,7 +254,9 @@ class MQTTSubscriptionManager:
             self._register_callback(topic, callback)
             logger.info(f"[MQTTSubManager] Added callback for: {topic}")
         else:
-            logger.warning(f"[MQTTSubManager] Cannot add callback: not subscribed to {topic}", exc_info=True)
+            logger.warning(
+                f"[MQTTSubManager] Cannot add callback: not subscribed to {topic}", exc_info=True
+            )
 
     def remove_callback(self, topic: str, callback: Callable) -> None:
         """移除回调函数"""
@@ -304,12 +316,16 @@ class MQTTSubscriptionManager:
 
                     self.stats["callbacks_executed"] += 1
 
-                except Exception as e:  # broad exception acceptable: callback execution may raise various errors
+                except (
+                    Exception
+                ) as e:  # broad exception acceptable: callback execution may raise various errors
                     logger.error(f"Error in {__name__}: {e}", exc_info=True)
                     self.stats["callback_errors"] += 1
 
                     subscription.error_count += 1
-                    logger.error(f"[MQTTSubManager] Callback error for {matched_topic}: {e}", exc_info=True)
+                    logger.error(
+                        f"[MQTTSubManager] Callback error for {matched_topic}: {e}", exc_info=True
+                    )
 
     def _find_matching_topics(self, received_topic: str) -> List[str]:
         """

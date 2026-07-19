@@ -30,6 +30,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 class ExpressionType(str, Enum):
     """面部表情类型 / Facial expression types"""
+
     NEUTRAL = "neutral"
     HAPPY = "happy"
     SAD = "sad"
@@ -107,4 +108,5 @@ class Live2DIntegration:
                 cb(state)
             except Exception as e:
                 import logging
+
                 logging.getLogger(__name__).error(f"State callback error: {e}", exc_info=True)

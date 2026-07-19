@@ -110,16 +110,16 @@ class SemanticAudioEncoder:
 
             # Truncate to 30s max (Whisper limit)
             if len(samples) > self.SAMPLE_RATE * 30:
-                samples = samples[:self.SAMPLE_RATE * 30]
+                samples = samples[: self.SAMPLE_RATE * 30]
 
             # Extract log-mel spectrogram features
             if feat_extractor is not None:
-                inputs = feat_extractor(samples, sampling_rate=self.SAMPLE_RATE,
-                                        return_tensors="pt")
+                inputs = feat_extractor(
+                    samples, sampling_rate=self.SAMPLE_RATE, return_tensors="pt"
+                )
             else:
                 # Fallback: use processor
-                inputs = processor(samples, sampling_rate=self.SAMPLE_RATE,
-                                   return_tensors="pt")
+                inputs = processor(samples, sampling_rate=self.SAMPLE_RATE, return_tensors="pt")
 
             with torch.no_grad():
                 encoder_outputs = model.encoder(**inputs)
@@ -146,10 +146,12 @@ class SemanticAudioEncoder:
             return self._decode_wav(audio_data)
         # Assume raw PCM 16-bit
         try:
-            samples = np.frombuffer(
-                audio_data[:len(audio_data) - len(audio_data) % 2],
-                dtype=np.int16
-            ).astype(np.float32) / 32768.0
+            samples = (
+                np.frombuffer(
+                    audio_data[: len(audio_data) - len(audio_data) % 2], dtype=np.int16
+                ).astype(np.float32)
+                / 32768.0
+            )
             return samples
         except Exception as e:
             logger.debug("Failed to decode raw PCM audio: %s", e)
@@ -159,6 +161,7 @@ class SemanticAudioEncoder:
         """Decode WAV file bytes to float samples."""
         try:
             import wave
+
             with io.BytesIO(data) as buf:
                 with wave.open(buf, "rb") as wf:
                     frames = wf.readframes(wf.getnframes())

@@ -9,12 +9,12 @@ Handles vector storage and retrieval with automatic backend selection:
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
 # =============================================================================
 
+import asyncio
 import importlib
 import json
 import logging
 import os
 import struct
-import asyncio
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -24,9 +24,7 @@ logger = logging.getLogger(__name__)
 _chromadb = None
 
 # Default storage directory
-_DEFAULT_PERSIST_DIR = os.path.join(
-    os.environ.get("VECTOR_STORE_PATH", "data/vector_store")
-)
+_DEFAULT_PERSIST_DIR = os.path.join(os.environ.get("VECTOR_STORE_PATH", "data/vector_store"))
 
 # Embedding dimension for numpy backend (hashing trick)
 _NUMPY_EMBED_DIM = 512
@@ -131,9 +129,7 @@ class _NumpyBackend:
             self.documents.append(content)
             self.metadatas.append(meta or {})
         self.vectors = (
-            np.vstack([self.vectors, new_vecs])
-            if self.vectors.shape[0] > 0
-            else new_vecs
+            np.vstack([self.vectors, new_vecs]) if self.vectors.shape[0] > 0 else new_vecs
         )
         self._dirty = True
 
@@ -204,7 +200,9 @@ class _NumpyBackend:
                     self.metadatas = self.metadatas[:min_n]
                 logger.info("Loaded %d vectors from %s", len(self.ids), self.persist_dir)
             except Exception as e:
-                logger.warning("Failed to load vector store from %s: %s; starting fresh", self.persist_dir, e)
+                logger.warning(
+                    "Failed to load vector store from %s: %s; starting fresh", self.persist_dir, e
+                )
                 self.vectors = np.empty((0, _NUMPY_EMBED_DIM), dtype=np.float32)
                 self.ids = []
                 self.documents = []
@@ -300,9 +298,7 @@ class VectorMemoryStore:
         if self._numpy_backend is not None:
             await self._numpy_backend.add_memory(memory_id, content, metadata)
 
-    async def semantic_search(
-        self, query: str, limit: int = 10
-    ) -> Dict[str, Any]:
+    async def semantic_search(self, query: str, limit: int = 10) -> Dict[str, Any]:
         if self._numpy_backend is not None:
             return await self._numpy_backend.semantic_search(query, limit)
         return {}

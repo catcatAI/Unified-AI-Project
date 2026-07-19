@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 # Core Art Learning Classes (expected by autonomous shim and tests)
 
+
 class LearningType(Enum):
     EXPLICIT = "explicit"
     IMPLICIT = "implicit"
@@ -49,6 +50,7 @@ class ArtDomain(Enum):
 @dataclass
 class ArtKnowledge:
     """Represents a piece of art knowledge."""
+
     domain: ArtDomain
     content: Dict[str, Any]
     confidence: float = 0.5
@@ -59,6 +61,7 @@ class ArtKnowledge:
 @dataclass
 class TutorialContent:
     """Represents tutorial content."""
+
     title: str
     url: str
     domain: ArtDomain
@@ -70,6 +73,7 @@ class TutorialContent:
 @dataclass
 class ImageAnalysis:
     """Represents image analysis results."""
+
     image_path: str
     features: Dict[str, Any]
     detected_style: Optional[str] = None
@@ -80,6 +84,7 @@ class ImageAnalysis:
 @dataclass
 class LearningSession:
     """Represents a learning session."""
+
     session_id: str
     domain: ArtDomain
     tutorial: Optional[TutorialContent] = None
@@ -92,6 +97,7 @@ class LearningSession:
 @dataclass
 class BodyPartMapping:
     """Maps body parts to Live2D parameters."""
+
     part_name: str
     parameter_ids: List[str]
     weight: float = 1.0
@@ -100,6 +106,7 @@ class BodyPartMapping:
 @dataclass
 class Live2DParameter:
     """Represents a Live2D parameter."""
+
     parameter_id: str
     value: float = 0.0
     min_value: float = 0.0
@@ -131,9 +138,10 @@ class ArtLearningSystem:
 
     def learn_from_feedback(self, feedback_text: str, context: str) -> None:
         """Learn from user aesthetic feedback."""
-        self.knowledge.append(ArtKnowledge(
-            domain=ArtDomain.CHARACTER_DESIGN,
-            content={"feedback": feedback_text, "context": context},
-            source="user_feedback",
-        ))
-
+        self.knowledge.append(
+            ArtKnowledge(
+                domain=ArtDomain.CHARACTER_DESIGN,
+                content={"feedback": feedback_text, "context": context},
+                source="user_feedback",
+            )
+        )
