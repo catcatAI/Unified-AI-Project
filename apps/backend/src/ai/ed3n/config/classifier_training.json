@@ -3105,6 +3105,20 @@
       ],
       "relations": {},
       "confidence": 0.5
+    },
+    {
+      "key": "cls_learn_194",
+      "surface_forms": {
+        "zh": "test"
+      },
+      "contexts": [
+        {
+          "context_id": "conservative",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
     }
   ]
 }

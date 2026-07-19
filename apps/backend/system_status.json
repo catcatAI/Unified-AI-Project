@@ -16,7 +16,11 @@
     "performance_tier": "Low",
     "ai_capability_score": 18
   },
-  "performance": {},
-  "boot_time": "2026-07-13T02:33:34.928760",
+  "performance": {
+    "max_fps": 24,
+    "llm_model": "gemini-1.5-flash",
+    "precision": 0.3
+  },
+  "boot_time": "2026-07-19T14:44:24.260012",
   "status": "degraded"
 }

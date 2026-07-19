@@ -157,9 +157,10 @@ async def get_axis(name: str):
     }
     if name not in axis_map:
         raise HTTPException(status_code=404, detail=f"Axis '{name}' not found")
+    axis = axis_map[name]
     return {
         "name": name,
-        "values": axis_map[name],
+        "values": dict(axis.values or {}),
         "timestamp": datetime.datetime.now().isoformat(),
     }
 
@@ -186,8 +187,8 @@ async def update_axis(name: str, request: AxisUpdateRequest):
 async def compute_influences():
     """Compute inter-dimensional influences."""
     matrix = get_state_matrix()
-    matrix.compute_influences()
-    return {"status": "computed", "influences": matrix.influences}
+    influences = matrix.compute_influences()
+    return {"status": "computed", "influences": influences}
 
 
 @state_matrix_router.get("/gradient")
@@ -283,12 +284,13 @@ async def get_negativity():
     """Get theta self-correction state."""
     matrix = get_state_matrix()
     theta = matrix.theta
+    values = dict(theta.values or {})
     return {
-        "novelty": theta.get("novelty", 0),
-        "complexity": theta.get("complexity", 0),
-        "ambiguity": theta.get("ambiguity", 0),
-        "dimension_fit": theta.get("dimension_fit", 0),
-        "creation_urge": theta.get("creation_urge", 0),
+        "novelty": values.get("novelty", 0),
+        "complexity": values.get("complexity", 0),
+        "ambiguity": values.get("ambiguity", 0),
+        "dimension_fit": values.get("dimension_fit", 0),
+        "creation_urge": values.get("creation_urge", 0),
     }
 
 

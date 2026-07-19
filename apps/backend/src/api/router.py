@@ -89,3 +89,11 @@ try:
     logger.debug("Included image_generation_routes")
 except ImportError as e:
     logger.warning(f"image_generation_routes not available: {e}")
+
+try:
+    from services.api.state_matrix_api import state_matrix_router
+
+    router.include_router(state_matrix_router, prefix="/api/v1")
+    logger.debug("Included state_matrix_routes")
+except ImportError as e:
+    logger.warning(f"state_matrix_routes not available: {e}")
