@@ -231,21 +231,10 @@ pre-commit run --all-files
 
 > ✅ **NOTE (Updated 2026-07-15, §X #262)**: **§X #262**: Full-project audit + MD sync. Code audit (pyflakes + manual) found real defects that raise `NameError` on live paths — fixed: `intent_model.py:228` undefined `cat` -> `IntentCategory.EXPLORATION.value`; `llm_decision_loop.py:610` missing `import time`; `ed3n/__main__.py:113` `JointTrainer` only imported in `cmd_serve`; `dual_encoder_router.py`/`core/hsp/connector.py`/`utils/async_utils.py`/`ed3n/dictionary_layer.py` missing `List`/`Tuple` in typing imports; `ed3n/ed3n_engine.py:720` `np` only in non-evaluated annotation -> `List[Any]`. Also: `ham_core_storage.py` disk-usage fallback now logs instead of silent `0.0`; `main_api_server.py` removed deleted-economy header comments. MD sync (canonical **re-measured 2026-07-15**: **4,448 tests** in `tests/` — 0 errors, **4,960** total incl. `scripts/`; native benchmark **ED3N 33.3%** via `benchmark_ed3n_garden.py` (GARDEN benchmark non-reproducible, env timeout >200s); native **deterministic-engine capability 9.5/10** (math/physics/chemistry engines work = real capability) / **neural open-domain ≈0/10**; per-dimension arch 9.5 / 數理化 9.5 / knowledge+reasoning 8.6 / query+learning 9.0 / multimodal 5.1 / autonomy 9.0, with-LLM **6.0/10**, architecture **~95%**, all `7.5.0-dev`): fixed test counts in `INTELLIGENCE_ASSESSMENT.md` (4,464->4,448), `FRAMEWORK_OVERVIEW.md` (4,785/4,261->4,448), `tests/README.md` (4,961->4,448 x2), `MASTER_TASK_MAP.md` (marked historical 5,085 baseline); aligned native intelligence scores (`<0.5`/`4.5`->`3.0`) and architecture % (`85-90`->`95`) across `README.md`/`FRAMEWORK_OVERVIEW.md`/`IMPROVEMENT_ROADMAP.md`; updated benchmark % from stale 38% to measured ED3N 33.3% (GARDEN benchmark non-reproducible in env). Historical changelog/audit docs (dated or self-declared SUPERSEDED) left intact. Commits: `e32767e6` (code), `518feaba` (MD), this batch (re-measurement correction).
 >
-> > ✅ **NOTE (Updated 2026-06-29)**: Extended session continues — 158+ commits (Jun 25-29). §X #49-54 all DONE:
-> - **§X #49**: 5 real stub modules (precision_projection_matrix, resonance, cognitive_pipeline, attractor_field, negativity) — +70 tests
-> - **§X #50**: 2 more stubs (ripple/node, influence/space) — +10 tests
-> - **§X #51**: 11 magic numbers migrated to config-driven accessors
-> - **§X #52**: test_final.py StateConfig API mismatch fixed
-> - **§X #53**: 4 Level5ASI STUB classes → real modules (distributed_coordinator, hyperlinked_parameter_cluster, aligned_base_agent, HSPMessageEnvelope)
-> - **§X #54**: ~35-40 formula coefficients migrated (P9-3: ~0 formula coefficients remain)
-> - **T5 DONE**: ThreeLayerVisual automatic PCA training — 21 new tests (multimodal: 139→160)
-> - **0 docstring-only stubs remain** in source code
-> - **0 STUB markers** in source code
-> - **5,085 tests (full)** / **4,578 tests (tests/)** — 0 collection errors
-> - §0.5 banned: 2 remaining (Frontend Live2D, Frontend Dashboard)
-> - Architecture: ~85-90%
->
-
+> ✅ **NOTE (Updated 2026-07-19, §X #263)**: **§X #263**: GPU/CPU Compute Configuration — centralized per-feature compute control with hardware-profile awareness. Added `apps/backend/configs/system/compute.default.yaml` + `apps/backend/configs/standard/compute.default.yaml` with per-feature modes (`auto`/`on`/`off`): `ed3n_snn`, `garden_snn`, `three_layer_visual`, `semantic_visual`, `semantic_audio`, `multimodal_train`, `vector_store`, `gpu_accelerator`, `llm_local_gpu`. Hardware profiles (`high_performance_desktop`, `laptop_normal`, `laptop_power_saver`, `low_power_device`, `server_cloud`) auto-detected via `hardware_profile.py` with env override `ANGELA_HARDWARE_PROFILE`. Profile-specific overrides for vocab sizes, batch sizes, connection budgets. Added `compute_mode()`, `compute_bool()`, `compute_int()`, `compute_float()` helpers in `magic_numbers.py` with profile-aware priority chain (profile-specific > profile global > global feature > default). Integrated: ED3N `SNNCore.enabled` property returns `compute_bool("ed3n_snn")`; `forward()` returns early if disabled. GARDEN `TensorSNNCore.__init__` uses `compute_int("garden_snn", "max_vocab")` / `connection_budget`; `GARDENEngine`/`VectorDictionary` auto-set device based on `compute_bool("garden_snn")`. Config-driven, no hardcoded GPU/CPU logic remains. **4,387 tests — 0 errors**.
+> 
+> ✅ **NOTE (Updated 2026-07-19, §X #264)**: **§X #264**: Test suite re-verification after compute config integration. All 639 core tests pass (API, autonomous, core). ED3N (124), Memory (198), Benchmarks (5), GARDEN (218) all pass. Benchmark stress tests: concurrent encode/decode/compare/retrieve all pass. Hardware profile detection verified: `laptop_power_saver` forces `garden_snn=False`, `high_performance_desktop` enables with boosted budgets. flake8=0 on `apps/backend/src`. **All tests passing — 0 errors**.
+> 
 ### JavaScript/TypeScript
 
 ```bash

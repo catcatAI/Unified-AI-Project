@@ -395,8 +395,11 @@ class VectorDictionary:
         )
         # Use compute config to determine device
         use_gpu = compute_bool("garden_snn", True)
-        if device == "cpu" and use_gpu:
-            device = "cuda"
+        if use_gpu:
+            if device == "cpu":
+                device = "cuda"
+        else:
+            device = "cpu"
         
         self.model_name = model_name
         self.top_k = top_k

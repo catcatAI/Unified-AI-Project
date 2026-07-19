@@ -178,8 +178,11 @@ class GARDENEngine:
         
         # Use compute config to determine device for SNN
         use_gpu = compute_bool("garden_snn", True)
-        if device == "cpu" and use_gpu:
-            device = "cuda"  # Will be handled by SNN core's dual backend
+        if use_gpu:
+            if device == "cpu":
+                device = "cuda"  # Will be handled by SNN core's dual backend
+        else:
+            device = "cpu"
         
         self.model_name = model_name
         self.device = device

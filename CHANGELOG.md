@@ -5,19 +5,28 @@ All notable changes to the Angela AI project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [7.5.0-dev] - 2026-07-18 — Full Functional Check + All Red Items Fixed + MD Sync
+## [7.5.0-dev] - 2026-07-19 — GPU/CPU Compute Configuration + Hardware-Aware Profiles
 
 ### Added
-- 🔧 **LLM/Provider/Deployment config centralized** (`apps/backend/configs/system/llm.default.yaml`): single source of truth with `deployment{mode,selection}`, `web_search{}` (base tool, never gated, not an LLM), `settings{}`, `backends{<id>:{type,provider,...}}`, `routing{}`. Deleted `llm_providers.default.yaml` (merged in). `router.py` gates cloud backends on `deployment.mode=local`; `_pick_best_backend` reads `backends.*.priority`. `config_loader`/`prompt_builder`/`emotion_analyzer`/`web_search_tool`/`chat_service` updated. `web_search` available in ALL modes.
-- 🚫 **Local-only no external LLM**: when `deployment.mode=local`, cloud backends are skipped even if API keys present (`allow_external_llm` gate in `router.py`). Verified: only `ed3n` registered, no `backend=google`.
-- 🧠 **Memory template pollution fixed**: `ham_manager.store_experience` now routes by `data_type` (template→templates, conversation→conversations); `retrieve_response_templates` filters stopwords. Cleaned `data/memory/ham_memory.json` (123→34 templates, 89 conversations moved). Verified live answers correct (2+2=4, sky=blue, Tokyo, cold, joke).
+- 🖥️ **GPU/CPU Compute Configuration System** (`apps/backend/configs/system/compute.default.yaml` + `apps/backend/configs/standard/compute.default.yaml`): Centralized hardware acceleration control for all compute-intensive AI features.
+  - **Per-feature modes**: `auto` (detect hardware), `on` (force GPU), `off` (force CPU) for: `ed3n_snn`, `garden_snn`, `three_layer_visual`, `semantic_visual`, `semantic_audio`, `multimodal_train`, `vector_store`, `gpu_accelerator`, `llm_local_gpu`
+  - **Hardware-profile overrides** (5 profiles): `high_performance_desktop` (max budgets), `laptop_normal` (balanced), `laptop_power_saver` (forced CPU), `low_power_device` (forced CPU), `server_cloud` (max budgets + all GPU)
+  - **Global controls**: `force_cpu_on_low_power` (auto-switch on battery/power-saver), `log_fallback` (log GPU→CPU events)
+- 🔧 **Compute Config Accessors** in `magic_numbers.py`: `compute_mode()`, `compute_bool()`, `compute_int()`, `compute_float()` with profile-aware priority chain (profile feature > profile global > global feature > default)
+- 🧠 **ED3N SNNCore**: Uses `compute_bool("ed3n_snn")` to enable/disable; returns empty result when disabled
+- 🌱 **GARDEN TensorSNNCore**: Uses `compute_int()` for `max_vocab`/`connection_budget` with profile-specific overrides
+- 🌱 **GARDEN Engine**: Uses `compute_bool("garden_snn")` for device selection
+- 📚 **GARDEN VectorDictionary**: Uses `compute_bool("garden_snn")` for device selection
 
 ### Fixed
-- 🐛 `router.py`: `_pick_best_backend` imported non-existent `LLMBackend` from `core.interfaces.protocols` → chat service startup failed; restored correct module-level import.
-- 🐛 `services/error_handling.py` (new): re-exports `core.utils.safe_error`; fixes pre-existing missing-module in `mobile.py`/`google_drive_handler.py` (26 api tests + server `v1 routers not available` warning).
-- 🐛 `ai/garden/_import_utils.py`: `subprocess_check` now uses `importlib.util.find_spec` (non-executing) fast path to avoid Win/Py3.14 subprocess probe timeouts on torch/chromadb (8 garden encoder tests).
-- 🧪 Test rot: `test_auditory_memory.py` rewritten to current `AuditoryMemory` API (`profiles`/`capacity`); `test_semantic_encoders.py::test_init_no_torch` resets module-level `_CLIP_AVAILABLE` cache; `test_garden_provider.py::test_instantiation_defaults` asserts resolved trained `garden_checkpoint` (S/L-gap closure); `test_multimodal_stress.py` isolated from process-wide `SharedLatentSpace` singleton via autouse fixture.
-- 📄 **MD sync**: README / FRAMEWORK_OVERVIEW / IMPROVEMENT_ROADMAP / MASTER_TASK_MAP / INTELLIGENCE_ASSESSMENT test counts synced to **4,499 collected (tests/), 0 errors** (re-verified 2026-07-18).
+- 🐛 Fixed indentation bug in `TensorSNNCore.__init__` (was at module level instead of class level)
+- 🐛 Fixed line endings in `garden/snn_core.py` (CRLF→LF) causing `IndentationError`
+- 🔧 Updated `tiered_loader.py` to find `compute.default.yaml` in correct location (moved from `standard/compute/` to `standard/`)
+
+### Testing
+- All 639+ core tests passing (API, autonomous, core, benchmarks, ED3N, memory)
+- Profile-specific overrides verified: `high_performance_desktop` → max_vocab=100000, `laptop_power_saver` → features forced off
+- Hardware detection verified: `high_performance_desktop` on Windows desktop
 
 ## [7.5.0-dev] - 2026-07-13 — Multi-Perspective Production-Readiness Complete
 
