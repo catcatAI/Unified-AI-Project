@@ -1,0 +1,157 @@
+# =============================================================================
+# GPU/CPU Compute Configuration
+# Controls hardware acceleration for compute-intensive AI features.
+# =============================================================================
+# ANGELA-MATRIX: [L2] [β] [C] [L1]
+# =============================================================================
+#
+# Each feature has a "mode" that can be:
+#   - "auto"  : Detect hardware and use GPU if available, fallback to CPU
+#   - "on"    : Force GPU (will error if GPU unavailable)
+#   - "off"   : Force CPU-only (disables GPU acceleration)
+#
+# Features that can run on CPU (pure NumPy fallback available):
+#   - ed3n_snn        : ED3N Spiking Neural Network
+#   - garden_snn      : GARDEN TensorSNNCore
+#   - three_layer_visual : ThreeLayerVisual decoder training
+#   - semantic_visual : CLIP-based visual encoder
+#   - semantic_audio  : Whisper-based audio encoder
+#   - multimodal_train: FullTrainingPipeline (contrastive + reconstruction)
+#   - vector_store    : ChromaDB persistence (GPU only for embeddings)
+#
+# Features that REQUIRE GPU (no CPU fallback):
+#   - gpu_accelerator   : GPUAcceleratorService (WebGL compute shaders)
+#   - llm_local_gpu     : llama.cpp / ollama with GPU offload
+#
+# Hardware detection uses hardware_profile.py which auto-detects:
+#   - HIGH_PERFORMANCE_DESKTOP (GPU available)
+#   - LAPTOP_NORMAL (GPU may be available)
+#   - LAPTOP_POWER_SAVER (prefer CPU)
+#   - LOW_POWER_DEVICE (force CPU)
+#   - SERVER_CLOUD (GPU typically available)
+
+compute:
+  # Global GPU/CPU strategy
+  global:
+    mode: "auto"                    # auto | on | off
+    force_cpu_on_low_power: true    # Switch to CPU when LAPTOP_POWER_SAVER/LOW_POWER_DEVICE
+    log_fallback: true              # Log when falling back from GPU to CPU
+
+  # ED3N Spiking Neural Network
+  ed3n_snn:
+    mode: "auto"
+    batch_size_multiplier: 1.0      # Scale batch size for GPU memory
+    timestep_parallel: false        # Parallelize timesteps (GPU only)
+
+  # GARDEN TensorSNNCore
+  garden_snn:
+    mode: "auto"
+    max_vocab: 50000                # Auto-reduced on CPU
+    connection_budget: 100000       # Auto-reduced on CPU
+
+  # ThreeLayerVisual decoder training
+  three_layer_visual:
+    mode: "auto"
+    training_batch_size: 32
+    use_mixed_precision: true       # FP16 on GPU
+    pca_components: 64
+
+  # Semantic Visual Encoder (CLIP)
+  semantic_visual:
+    mode: "auto"
+    model_name: "openai/clip-vit-base-patch32"
+    batch_size: 16
+    use_flash_attention: false
+
+  # Semantic Audio Encoder (Whisper)
+  semantic_audio:
+    mode: "auto"
+    model_name: "openai/whisper-base"
+    batch_size: 8
+
+  # Multimodal Full Training Pipeline
+  multimodal_train:
+    mode: "auto"
+    contrastive_epochs: 10
+    recon_epochs: 10
+    batch_size: 20
+
+  # Vector Store (ChromaDB embeddings)
+  vector_store:
+    mode: "auto"
+    use_gpu_index: false            # GPU index only if >100k vectors
+
+  # GPU Accelerator Service (WebGL - requires GPU)
+  gpu_accelerator:
+    mode: "off"                     # Default off - requires WebGL context
+    webgl_version: 2
+    fallback_cpu: true
+
+  # Local LLM GPU offload (llama.cpp / ollama)
+  llm_local_gpu:
+    mode: "auto"
+    gpu_layers: -1                  # -1 = all layers on GPU
+    main_gpu: 0
+
+  # Per-hardware-profile overrides (merged with global)
+  # These are applied based on hardware_profile.py detection
+  profiles:
+    high_performance_desktop:
+      global:
+        mode: "auto"
+      ed3n_snn:
+        batch_size_multiplier: 2.0
+      garden_snn:
+        max_vocab: 100000
+        connection_budget: 500000
+      three_layer_visual:
+        training_batch_size: 64
+      semantic_visual:
+        batch_size: 32
+      semantic_audio:
+        batch_size: 16
+
+    laptop_normal:
+      global:
+        mode: "auto"
+      ed3n_snn:
+        batch_size_multiplier: 1.0
+      garden_snn:
+        max_vocab: 50000
+        connection_budget: 100000
+
+    laptop_power_saver:
+      global:
+        mode: "off"
+      ed3n_snn:
+        mode: "off"
+      garden_snn:
+        mode: "off"
+      three_layer_visual:
+        mode: "off"
+      semantic_visual:
+        mode: "off"
+      semantic_audio:
+        mode: "off"
+      multimodal_train:
+        mode: "off"
+      llm_local_gpu:
+        mode: "off"
+
+    low_power_device:
+      global:
+        mode: "off"
+      # All features forced to CPU/off
+
+    server_cloud:
+      global:
+        mode: "auto"
+      ed3n_snn:
+        batch_size_multiplier: 4.0
+      garden_snn:
+        max_vocab: 200000
+        connection_budget: 1000000
+      three_layer_visual:
+        training_batch_size: 128
+      semantic_visual:
+        batch_size: 32

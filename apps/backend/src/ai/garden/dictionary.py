@@ -26,7 +26,11 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from ai.core.unicode_utils import normalize_text
-from core.system.config.magic_numbers import confidence_value, threshold_value
+from core.system.config.magic_numbers import (
+    confidence_value,
+    compute_bool,
+    threshold_value,
+)
 
 from ._import_utils import subprocess_check
 
@@ -389,6 +393,11 @@ class VectorDictionary:
             if similarity_threshold is not None
             else threshold_value("ai.garden.dictionary.similarity_threshold", 0.30)
         )
+        # Use compute config to determine device
+        use_gpu = compute_bool("garden_snn", True)
+        if device == "cpu" and use_gpu:
+            device = "cuda"
+        
         self.model_name = model_name
         self.top_k = top_k
         self.similarity_threshold = similarity_threshold

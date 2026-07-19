@@ -28,6 +28,8 @@ from ai.core.unicode_utils import is_english_dominant
 from core.system.config.magic_numbers import (
     cache_value,
     confidence_value,
+    compute_bool,
+    compute_int,
     learning_rate,
     limit_value,
     threshold_value,
@@ -173,6 +175,12 @@ class GARDENEngine:
             if snn_timesteps is not None
             else limit_value("ai.garden.engine.snn_timesteps", 6)
         )
+        
+        # Use compute config to determine device for SNN
+        use_gpu = compute_bool("garden_snn", True)
+        if device == "cpu" and use_gpu:
+            device = "cuda"  # Will be handled by SNN core's dual backend
+        
         self.model_name = model_name
         self.device = device
 

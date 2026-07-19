@@ -224,21 +224,22 @@ class TensorSNNCore:
     """
 
     def __init__(
-        self,
-        leak: float = DEFAULT_LEAK,
-        threshold: float = DEFAULT_THRESHOLD,
-        timesteps: int = DEFAULT_TIMESTEPS,
-        decay: float = DEFAULT_DECAY,
-        device: str = "cpu",
-        max_vocab: int = 0,
-    ):
+            self,
+            leak: float = DEFAULT_LEAK,
+            threshold: float = DEFAULT_THRESHOLD,
+            timesteps: int = DEFAULT_TIMESTEPS,
+            decay: float = DEFAULT_DECAY,
+            device: str = "cpu",
+            max_vocab: int = 0,
+            connection_budget: int = 0,
+        ):
         self.leak = leak
         self.base_threshold = threshold
         self.timesteps = timesteps
         self.decay = decay
         self.device = device
 
-        from core.system.config.magic_numbers import limit_value
+        from core.system.config.magic_numbers import compute_int, limit_value
 
         # Hard memory budget on the concept vocabulary. The SNN keeps a dense
         # [V, V] weight matrix, so V**2 memory. Without a bound, ingesting a
@@ -247,7 +248,8 @@ class TensorSNNCore:
         # Instead of truncating the *input dataset*, we keep training ALL data
         # and evict the least-recently-used neurons once the budget is exceeded.
         # max_vocab <= 0 means "unbounded" (legacy behavior, not recommended).
-        self.max_vocab = max_vocab or limit_value("ai.garden.snn.max_vocab", 20000)
+        self.max_vocab = max_vocab or compute_int("garden_snn", "max_vocab", 50000)
+        self.connection_budget = connection_budget or compute_int("garden_snn", "connection_budget", 100000)
 
         self.modulator = HormonalModulator()
 

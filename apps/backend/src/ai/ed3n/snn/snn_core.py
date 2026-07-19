@@ -7,6 +7,8 @@ SNN-based core network replacing sequential CoreNetwork.
 
 from typing import Any, Dict, List, Optional
 
+from core.system.config.magic_numbers import compute_bool
+
 from .hormonal_modulator import HormonalModulator
 from .lif_neuron import LIFNeuron
 
@@ -66,6 +68,12 @@ class SNNCore:
         self.sparse_engine = SparseComputationEngine() if SparseComputationEngine else None
         self.modulator = HormonalModulator()
         self._timestep: float = 1.0
+        self._enabled = compute_bool("ed3n_snn")
+
+    @property
+    def enabled(self) -> bool:
+        """Whether SNN computation is enabled based on compute config."""
+        return self._enabled
 
     def connect_modulator(self, modulator: HormonalModulator) -> None:
         """Use an external modulator (shared across all SNN components)."""
@@ -83,6 +91,10 @@ class SNNCore:
         SNN forward pass with batch reordering.
         Follows the architecture plan's snn_forward() algorithm.
         """
+        if not self._enabled:
+            logger.debug("ed3n_snn disabled by compute config, returning empty result")
+            return {}
+        
         self.reset()
 
         self.modulator.sync_from_endocrine()

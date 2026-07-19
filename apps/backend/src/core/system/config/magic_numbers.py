@@ -182,6 +182,10 @@ def latency_value(key: str, default: float = 10.0) -> float:
     return _safe_float(_get(key, default), default)
 
 
+def latency_value(key: str, default: float = 10.0) -> float:
+    return _safe_float(_get(key, default), default)
+
+
 def limit_value(key: str, default: int = 100) -> int:
     return _safe_int(_get(key, default), default)
 
@@ -189,3 +193,114 @@ def limit_value(key: str, default: int = 100) -> int:
 def lifecycle_value(key: str, default: float = 0.5) -> float:
     """Lifecycle feedback threshold (e.g. success_rate_low, success_rate_high, adjustment)."""
     return _safe_float(_get(key, default), default)
+
+
+# =============================================================================
+# GPU/CPU Compute Configuration
+# =============================================================================
+
+def _get_compute_config() -> Dict[str, Any]:
+    """Get compute configuration from tiered config."""
+    # Config is nested: system.compute.compute
+    return _get("system.compute.compute", {})
+
+
+def compute_mode(feature: str, default: str = "auto") -> str:
+    """Get compute mode for a specific feature: 'auto', 'on', or 'off'."""
+    config = _get_compute_config()
+    # Check feature-specific mode first
+    feature_cfg = config.get(feature, {})
+    if isinstance(feature_cfg, dict) and "mode" in feature_cfg:
+        return feature_cfg["mode"]
+    # Fall back to global mode
+    global_cfg = config.get("global", {})
+    return global_cfg.get("mode", default)
+
+
+def compute_bool(feature: str, default: bool = True) -> bool:
+    """Get boolean compute setting for a feature (on/off -> True/False)."""
+    mode = compute_mode(feature, "auto")
+    if mode == "off":
+        return False
+    if mode == "on":
+        return True
+    # auto - check hardware
+    profile = _get_hardware_profile()
+    if profile is not None:
+        # Check per-profile override
+        profile_cfg = _get_compute_config().get("profiles", {}).get(profile.scenario.value, {})
+        feature_profile = profile_cfg.get(feature, {})
+        if "mode" in feature_profile:
+            return feature_profile["mode"] != "off"
+        # Check global profile override
+        global_profile = profile_cfg.get("global", {})
+        if "mode" in global_profile:
+            return global_profile["mode"] != "off"
+        # Check force_cpu_on_low_power
+        if profile_cfg.get("force_cpu_on_low_power", True):
+            if profile.scenario in (HardwareScenario.LAPTOP_POWER_SAVER, HardwareScenario.LOW_POWER_DEVICE):
+                return False
+    return True
+
+
+def compute_int(feature: str, key: str, default: int = 0) -> int:
+    """Get integer compute setting for a feature (e.g., batch_size, max_vocab).
+    
+    Priority: profile-specific feature > profile global > global feature > default
+    """
+    config = _get_compute_config()
+    profile = _get_hardware_profile()
+    
+    # Check profile-specific first
+    if profile is not None:
+        profile_cfg = config.get("profiles", {}).get(profile.scenario.value, {})
+        feature_profile = profile_cfg.get(feature, {})
+        val = feature_profile.get(key)
+        if val is not None:
+            return _safe_int(val, default)
+        global_profile = profile_cfg.get("global", {})
+        val = global_profile.get(key)
+        if val is not None:
+            return _safe_int(val, default)
+    
+    # Fall back to global feature config
+    feature_cfg = config.get(feature, {})
+    if isinstance(feature_cfg, dict):
+        val = feature_cfg.get(key)
+        if val is not None:
+            return _safe_int(val, default)
+    
+    return default
+
+
+def compute_float(feature: str, key: str, default: float = 0.0) -> float:
+    """Get float compute setting for a feature."""
+    config = _get_compute_config()
+    feature_cfg = config.get(feature, {})
+    if isinstance(feature_cfg, dict):
+        val = feature_cfg.get(key)
+        if val is not None:
+            return _safe_float(val, default)
+    profile = _get_hardware_profile()
+    if profile is not None:
+        profile_cfg = config.get("profiles", {}).get(profile.scenario.value, {})
+        feature_profile = profile_cfg.get(feature, {})
+        val = feature_profile.get(key)
+        if val is not None:
+            return _safe_float(val, default)
+        global_profile = profile_cfg.get("global", {})
+        val = global_profile.get(key)
+        if val is not None:
+            return _safe_float(val, default)
+    return default
+
+
+def compute_log_fallback() -> bool:
+    """Whether to log GPU->CPU fallback events."""
+    config = _get_compute_config()
+    global_cfg = config.get("global", {})
+    return global_cfg.get("log_fallback", True)
+
+
+# Re-export HardwareScenario for compute functions
+from core.system.config.hardware_profile import HardwareScenario  # noqa: E402
