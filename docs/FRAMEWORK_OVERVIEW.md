@@ -239,6 +239,92 @@ llm:
 
 See `apps/backend/configs/` for example configs and `core/config_loader.py` for the loader implementation.
 
+#### 4.6 GPU/CPU Compute Configuration (NEW)
+
+**Configuration Files:**
+- `apps/backend/configs/system/compute.default.yaml` — System-level compute config
+- `apps/backend/configs/standard/compute.default.yaml` — User-facing compute config
+
+**Per-Feature Modes:**
+- `auto` — Detect hardware, use GPU if available, fallback to CPU
+- `on` — Force GPU (errors if GPU unavailable)
+- `off` — Force CPU-only
+
+**Features with Compute Control:**
+| Feature | Config Key | Description |
+|---------|------------|-------------|
+| ED3N Spiking Neural Network | `ed3n_snn` | SNN reflex layers + cross-modal processing |
+| GARDEN TensorSNNCore | `garden_snn` | VectorDictionary + TensorSNNCore |
+| ThreeLayerVisual | `three_layer_visual` | PCA encoder + nonlinear decoder training |
+| Semantic Visual Encoder | `semantic_visual` | CLIP-based visual encoder (torch) |
+| Semantic Audio Encoder | `semantic_audio` | Whisper-based audio encoder (torch) |
+| Multimodal Training Pipeline | `multimodal_train` | FullTrainingPipeline (contrastive + reconstruction) |
+| Vector Store | `vector_store` | ChromaDB embeddings (GPU index optional) |
+| GPU Accelerator Service | `gpu_accelerator` | WebGL compute shaders (requires GPU) |
+| Local LLM GPU Offload | `llm_local_gpu` | llama.cpp / ollama GPU layers |
+
+**Hardware Profiles (auto-detected via `hardware_profile.py`):**
+| Profile | Description | Compute Strategy |
+|---------|-------------|------------------|
+| `high_performance_desktop` | GPU available, max budgets | All features `auto`, max vocab/connection budgets |
+| `laptop_normal` | GPU may be available | Standard budgets, `auto` mode |
+| `laptop_power_saver` | Prefer CPU | All features forced `off` |
+| `low_power_device` | Force CPU-only | All features forced `off` |
+| `server_cloud` | GPU typically available | Max budgets, all `auto` |
+
+**Global Settings:**
+- `force_cpu_on_low_power` — Auto-switch to CPU on battery/power-saver
+- `log_fallback` — Log when GPU→CPU fallback occurs
+
+**Code Integration:**
+```python
+from core.system.config.magic_numbers import compute_bool, compute_int
+
+# Enable/disable feature based on config + hardware
+if compute_bool("garden_snn"):
+    snn = TensorSNNCore(device="cuda")  # Will use GPU if profile allows
+else:
+    snn = TensorSNNCore(device="cpu")
+
+# Get profile-aware integer settings
+max_vocab = compute_int("garden_snn", "max_vocab", 50000)
+conn_budget = compute_int("garden_snn", "connection_budget", 100000)
+```
+
+**Accessors in `magic_numbers.py`:**
+- `compute_mode(feature, default="auto")` — returns "auto"/"on"/"off"
+- `compute_bool(feature, default=True)` — True/False based on mode + hardware
+- `compute_int(feature, key, default=0)` — profile-aware integer settings
+- `compute_float(feature, key, default=0.0)` — profile-aware float settings
+- `compute_log_fallback()` — whether to log GPU→CPU fallback events
+
+**Profile Detection:**
+Auto-detected via `hardware_profile.py` (5 scenarios: `high_performance_desktop`, `laptop_normal`, `laptop_power_saver`, `low_power_device`, `server_cloud`). Override with env var `ANGELA_HARDWARE_PROFILE`.
+
+**Profile-Specific Overrides (example):**
+```yaml
+profiles:
+  high_performance_desktop:
+    garden_snn:
+      max_vocab: 100000
+      connection_budget: 500000
+    three_layer_visual:
+      training_batch_size: 64
+  laptop_power_saver:
+    global:
+      mode: "off"
+    garden_snn:
+      mode: "off"
+```
+
+**Config Files:**
+- `apps/backend/configs/system/compute.default.yaml` (system-level)
+- `apps/backend/configs/standard/compute.default.yaml` (user-facing)
+
+Both files share the same structure; system config provides defaults, standard config can override.
+
+---
+
 #### 4.3 Adding an LLM Provider
 
 1. Create a class implementing the `LLMBackend` protocol in `services/llm/providers/`
