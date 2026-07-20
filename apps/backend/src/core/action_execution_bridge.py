@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Any, Callable, Optional, Union
 
 from core.system.config.magic_numbers import batch_value, cache_value, loop_sleep
+from core.system.config.async_io import async_json_dump, async_json_load
 from core.utils import safe_error
 
 logger = logging.getLogger(__name__)

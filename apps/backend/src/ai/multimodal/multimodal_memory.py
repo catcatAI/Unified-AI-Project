@@ -19,6 +19,7 @@ Key features:
 
 import json
 import logging
+from core.system.config.async_io import async_json_load
 import os
 import time
 from pathlib import Path
