@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
-import torch
 from ai.multimodal.audio_decoder import AudioWaveformDecoder, load_default_audio_decoder_weights
 from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
 from ai.multimodal.generator.sequence_generator import SequenceGenerator
