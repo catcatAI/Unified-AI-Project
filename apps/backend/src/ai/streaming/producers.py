@@ -6,11 +6,14 @@ Multi-source token producers for predictive, retrieval, and generative streams.
 from __future__ import annotations
 
 import asyncio
-import time
+import logging
 import re
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
+
+logger = logging.getLogger(__name__)
 
 from .token_stream import TokenStream, StreamToken, TokenType
 
@@ -194,18 +197,39 @@ class RetrievalProducer:
         from .token_stream import TokenStream
         self.stream = stream
         self.config = config or ProducerConfig()
-        self.multimodal = None
+        self.multimodal = multimodal_service
     
     async def produce(self, input_text: str, context: Dict[str, Any]) -> None:
         """Produce retrieved tokens."""
-        from .token_stream import StreamToken, TokenType
+        from .token_stream import StreamToken
         
         start = time.time()
-        config = context.get("retrieval_config", {})
         
-        # This would integrate with existing MultimodalService
-        # For now, placeholder
-        pass
+        # Attempt retrieval from MultimodalService if available
+        retrieved_chunks = []
+        if self.multimodal and hasattr(self.multimodal, "retrieve"):
+            try:
+                results = await self.multimodal.retrieve(input_text, top_k=3)
+                if results:
+                    retrieved_chunks = [str(r)[:200] for r in results if r]
+            except Exception as e:
+                logger.debug("Multimodal retrieval failed: %s", e)
+        
+        # Fallback: use context memory if available
+        if not retrieved_chunks:
+            memories = context.get("memories", []) or context.get("conversation_memory", [])
+            if memories:
+                retrieved_chunks = [str(m)[:200] for m in memories[:3]]
+        
+        # Emit tokens for each retrieved chunk
+        for chunk in retrieved_chunks:
+            token = StreamToken.create_retrieved(
+                content=chunk,
+                source="retrieval_multi",
+                confidence=0.8,
+                metadata={"stage": "retrieval", "latency_ms": (time.time() - start) * 1000}
+            )
+            await self.stream.put(token)
 
 
 class GenerativeProducer:
@@ -216,11 +240,52 @@ class GenerativeProducer:
                  config: Optional["ProducerConfig"] = None):
         self.stream = stream
         self.config = config or ProducerConfig()
-        self.router = None
+        self.router = llm_router
     
     async def produce(self, input_text: str, context: Dict[str, Any]) -> None:
         """Produce generated tokens."""
-        pass
+        from .token_stream import StreamToken
+        
+        start = time.time()
+        response_text = None
+        
+        # Attempt generation via LLM router if available
+        if self.router and hasattr(self.router, "generate"):
+            try:
+                response_text = await self.router.generate(input_text, context)
+            except Exception as e:
+                logger.debug("LLM router generation failed: %s", e)
+        
+        # Fallback: use response from context if pre-generated
+        if not response_text:
+            response_text = context.get("generated_text") or context.get("response")
+        
+        if not response_text:
+            logger.debug("GenerativeProducer: no text available to emit")
+            return
+        
+        # Chunk and emit tokens
+        chunks = []
+        sentences = re.split(r'(?<=[.!?])\s+', str(response_text))
+        current = ""
+        for sent in sentences:
+            if len(current) + len(sent) <= self.config.chunk_size:
+                current += sent + " "
+            else:
+                if current:
+                    chunks.append(current.strip())
+                current = sent + " "
+        if current:
+            chunks.append(current.strip())
+        
+        for chunk in chunks:
+            token = StreamToken.create_generated(
+                content=chunk,
+                source="generator_llm",
+                confidence=0.9,
+                metadata={"stage": "generation", "latency_ms": (time.time() - start) * 1000}
+            )
+            await self.stream.put(token)
 
 
 def create_producers(

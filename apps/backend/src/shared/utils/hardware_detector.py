@@ -131,20 +131,31 @@ class SystemHardwareProbe:
                     for line in f:
                         if "flags" in line:
                             return line.split(":")[-1].strip().split()
-            except Exception:
-                logger.debug("Failed to parse /proc/cpuinfo", exc_info=True)
+            except Exception as e:
+                logger.debug("Failed to parse /proc/cpuinfo: %s", e)
         elif self.platform_name == "windows":
-            # Windows flags are harder; usually inferred or via specialized tools
-            # We can use 'coreinfo' if available, but for now we fallback
-            pass
+            try:
+                result = subprocess.run(
+                    ["wmic", "cpu", "get", "Caption", "/format:list"],
+                    capture_output=True, text=True, timeout=5
+                )
+                for line in result.stdout.splitlines():
+                    if "Caption=" in line:
+                        flags.append(line.strip())
+            except Exception as e:
+                logger.debug("WMIC CPU query failed: %s", e)
         elif self.platform_name == "darwin":
             try:
-                result = subprocess.run(["sysctl", "-a"], capture_output=True, text=True)
+                result = subprocess.run(
+                    ["sysctl", "-a"], capture_output=True, text=True, timeout=5
+                )
                 for line in result.stdout.splitlines():
                     if "hw.optional." in line and ": 1" in line:
-                        flags.append(line.split(".")[2].split(":")[0])
-            except Exception:
-                logger.debug("Failed to parse sysctl output on macOS", exc_info=True)
+                        parts = line.split(".")
+                        if len(parts) >= 3:
+                            flags.append(parts[2].split(":")[0])
+            except Exception as e:
+                logger.debug("Failed to parse sysctl output on macOS: %s", e)
         return flags
 
     def _detect_ram(self) -> Tuple[float, float]:
