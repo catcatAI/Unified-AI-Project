@@ -18,10 +18,9 @@ class TestHSPSecurity:
     """HSP协议安全功能测试"""
 
     @pytest.fixture()
-    def security_manager(self):
+    def security_manager(self, monkeypatch):
         """创建安全管理器实例"""
-        # 在测试环境中设置测试模式
-        os.environ["TESTING_MODE"] = "true"
+        monkeypatch.setenv("TESTING_MODE", "true")
         return HSPSecurityManager()
 
     @pytest.fixture()
@@ -30,10 +29,9 @@ class TestHSPSecurity:
         return HSPSecurityContext(security_manager)
 
     @pytest.fixture()
-    def hsp_connector(self, security_manager, security_context):
+    def hsp_connector(self, security_manager, security_context, monkeypatch):
         """创建HSP连接器实例"""
-        # 在测试环境中设置测试模式
-        os.environ["TESTING_MODE"] = "true"
+        monkeypatch.setenv("TESTING_MODE", "true")
         connector = HSPConnector(
             ai_id="test_ai",
             broker_address="localhost",
@@ -44,16 +42,6 @@ class TestHSPSecurity:
         connector.security_manager = security_manager
         connector.security_context = security_context
         return connector
-
-    def setUp(self):
-        """测试前设置"""
-        self.test_data = {}
-        self.test_config = {}
-
-    def tearDown(self):
-        """测试后清理"""
-        self.test_data.clear()
-        self.test_config.clear()
 
     def test_security_manager_initialization(self, security_manager) -> None:
         """测试安全管理器初始化"""
