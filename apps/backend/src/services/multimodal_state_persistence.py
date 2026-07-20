@@ -20,6 +20,8 @@ import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from core.system.config.async_io import async_json_dump, async_json_load
+
 logger = logging.getLogger(__name__)
 
 
@@ -74,7 +76,7 @@ class MultimodalStatePersistence:
         await self._save_cml_component(cp_dir, components_saved)
         await self._save_memory_component(cp_dir, components_saved)
         await self._save_registry_component(cp_dir, components_saved)
-        metadata = self._write_checkpoint_metadata(cp_dir, label, components_saved)
+        metadata = await self._write_checkpoint_metadata(cp_dir, label, components_saved)
         await self.prune_checkpoints()
 
         logger.info(
@@ -114,8 +116,7 @@ class MultimodalStatePersistence:
                 return
             cml_serializable = json.loads(json.dumps(cml_state, default=_json_default))
             cml_path = os.path.join(cp_dir, "cml_state.json")
-            with open(cml_path, "w", encoding="utf-8") as f:
-                json.dump(cml_serializable, f, indent=2)
+            await async_json_dump(cml_serializable, cml_path, indent=2)
             components_saved.append("cml")
         except Exception as e:
             logger.warning("Failed to save CML state: %s", e)
@@ -139,20 +140,19 @@ class MultimodalStatePersistence:
                 return
             items = await self._service.list_items()
             registry_path = os.path.join(cp_dir, "registry_summary.json")
-            with open(registry_path, "w", encoding="utf-8") as f:
-                json.dump(
-                    {
-                        "count": items.get("count", 0),
-                        "items": {k: v for k, v in items.get("items", {}).items()},
-                    },
-                    f,
-                    indent=2,
-                )
+            await async_json_dump(
+                {
+                    "count": items.get("count", 0),
+                    "items": {k: v for k, v in items.get("items", {}).items()},
+                },
+                registry_path,
+                indent=2,
+            )
             components_saved.append("registry_summary")
         except Exception as e:
             logger.warning("Failed to save registry summary: %s", e)
 
-    def _write_checkpoint_metadata(self, cp_dir, label, components_saved):
+    async def _write_checkpoint_metadata(self, cp_dir, label, components_saved):
         metadata = {
             "label": label,
             "timestamp": time.time(),
@@ -161,8 +161,7 @@ class MultimodalStatePersistence:
             "checkpoint_dir": cp_dir,
         }
         meta_path = os.path.join(cp_dir, "metadata.json")
-        with open(meta_path, "w", encoding="utf-8") as f:
-            json.dump(metadata, f, indent=2)
+        await async_json_dump(metadata, meta_path, indent=2)
         return metadata
 
     # --- Load ---
@@ -187,8 +186,7 @@ class MultimodalStatePersistence:
         metadata = {}
         if os.path.exists(meta_path):
             try:
-                with open(meta_path, "r", encoding="utf-8") as f:
-                    metadata = json.load(f)
+                metadata = await async_json_load(meta_path)
             except Exception:
                 logger.warning("Failed to load checkpoint metadata, continuing", exc_info=True)
 
@@ -210,8 +208,7 @@ class MultimodalStatePersistence:
                 if hasattr(self._service, "_get_cml"):
                     cml = self._service._get_cml()
                     if hasattr(cml, "load_state_dict"):
-                        with open(cml_path, "r", encoding="utf-8") as f:
-                            cml_state = json.load(f)
+                        cml_state = await async_json_load(cml_path)
                         cml.load_state_dict(cml_state)
                         components_loaded.append("cml")
             except Exception as e:
@@ -266,8 +263,7 @@ class MultimodalStatePersistence:
             meta = {}
             if os.path.exists(meta_path):
                 try:
-                    with open(meta_path, "r", encoding="utf-8") as f:
-                        meta = json.load(f)
+                    meta = await async_json_load(meta_path)
                 except Exception:
                     logger.debug("Failed to parse checkpoint metadata JSON", exc_info=True)
             ts = meta.get("timestamp", os.path.getmtime(cp_dir))

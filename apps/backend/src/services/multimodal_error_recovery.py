@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 # Crisis log — use shared utility
 from core.crisis_log import write_crisis_log as _write_crisis_log
+from core.system.config.async_io import async_json_dump
 from core.utils import safe_error
 
 
@@ -296,23 +297,20 @@ class MultimodalErrorRecovery:
             if hasattr(self._service, "list_items"):
                 item_list = await self._service.list_items()
                 items = item_list.get("items", {})
-            import json
-
             summary_path = os.path.join(cp_dir, "checkpoint.json")
-            with open(summary_path, "w", encoding="utf-8") as f:
-                json.dump(
-                    {
-                        "label": label,
-                        "timestamp": time.time(),
-                        "registered_items": len(items),
-                        "components": {
-                            "weights": "weights.npz",
-                            "summary": "checkpoint.json",
-                        },
+            await async_json_dump(
+                {
+                    "label": label,
+                    "timestamp": time.time(),
+                    "registered_items": len(items),
+                    "components": {
+                        "weights": "weights.npz",
+                        "summary": "checkpoint.json",
                     },
-                    f,
-                    indent=2,
-                )
+                },
+                summary_path,
+                indent=2,
+            )
 
             return cp_dir
         except Exception as e:
