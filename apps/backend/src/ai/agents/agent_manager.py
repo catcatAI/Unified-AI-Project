@@ -385,18 +385,18 @@ class AgentManager:
         """注册代理工厂"""
         self.agent_factories[agent_type] = factory
 
-    def create_agent(self, agent_type: str, name: str) -> None:
+    async def create_agent(self, agent_type: str, name: str) -> Any:
         """创建代理"""
         if agent_type in self.agent_factories:
             return self.agent_factories[agent_type](name)
         return None
 
-    def add_agent(self, agent: Any) -> bool:
+    async def add_agent(self, agent: Any) -> bool:
         """添加代理"""
         self.agents[agent.agent_id] = agent
         return True
 
-    def remove_agent(self, agent_id: str) -> bool:
+    async def remove_agent(self, agent_id: str) -> bool:
         """移除代理"""
         if agent_id in self.agents:
             del self.agents[agent_id]

@@ -549,7 +549,7 @@ class EmotionSystem:
         """Get the emotion history by self."""
         return self.emotion_history[-limit:]
 
-    def get_current_emotion_state(self) -> str:
+    async def get_current_emotion_state(self) -> str:
         """
         [Compatibility] 獲取當前情緒狀態的字串描述。
         用於對接 DialogueManager 的非同步調用。
