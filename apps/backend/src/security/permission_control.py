@@ -271,16 +271,18 @@ if __name__ == "__main__":
     result = pcs.check_permission(context)
     print(f"Permission check result: {result}")
 
+    import tempfile
+    _tmpdir = tempfile.gettempdir()
     custom_rule = PermissionRule(
         permission_type=PermissionType.FILE_ACCESS,
         level=PermissionLevel.FULL_ACCESS,
-        resource_pattern="/tmp/*",
+        resource_pattern=os.path.join(_tmpdir, "*"),
         allowed_actions=["read", "write", "delete"],
     )
     pcs.add_user_rule("ai_agent_1", custom_rule)
 
     context2 = PermissionContext(
-        user_id="ai_agent_1", operation="file_access", resource="/tmp/test.txt", action="write"
+        user_id="ai_agent_1", operation="file_access", resource=os.path.join(_tmpdir, "test.txt"), action="write"
     )
     result2 = pcs.check_permission(context2)
     print(f"Permission check result with custom rule: {result2}")

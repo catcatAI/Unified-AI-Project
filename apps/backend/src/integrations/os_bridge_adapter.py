@@ -50,7 +50,9 @@ class OSBridgeAdapter:
         """Legacy synchronous execute - use _execute_async whenever possible"""
         cmd = [self.python_exe, self.bridge_path, command] + list(args)
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, encoding="utf-8", timeout=10
+            )
             if result.stdout:
                 return json.loads(result.stdout)
             return {"status": "error", "message": result.stderr}

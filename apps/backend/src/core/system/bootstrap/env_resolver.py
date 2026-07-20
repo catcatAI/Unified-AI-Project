@@ -79,7 +79,9 @@ $sc.WorkingDirectory = "{shortcut_workdir}"
 $sc.Description = "Angela AI - Digital Life"
 $sc.Save()
 """
-            subprocess.run(["powershell", "-Command", ps], capture_output=True, check=True)
+            subprocess.run(
+                ["powershell", "-Command", ps], capture_output=True, check=True, timeout=15
+            )
             logger.info("✅ Desktop shortcut created.")
             return True
         except Exception as e:
@@ -124,11 +126,13 @@ $sc.Save()
     def check_node_presence(self) -> Optional[str]:
         """Checks for node.js and returns version if found."""
         try:
-            res = subprocess.run(["node", "--version"], capture_output=True, text=True)
+            res = subprocess.run(
+                ["node", "--version"], capture_output=True, text=True, timeout=5
+            )
             if res.returncode == 0:
                 return res.stdout.strip()
-        except FileNotFoundError:
-            logger.warning("Node.js not found", exc_info=True)
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            logger.warning("Node.js check failed (not found or timed out)", exc_info=True)
         return None
 
     def resolve_pnpm_workspace(self) -> bool:

@@ -773,11 +773,11 @@ class DesktopInteraction:
                     await loop.run_in_executor(
                         None,
                         lambda: subprocess.run(
-                            ["osascript", "-e", script], check=True, capture_output=True, text=True
+                            ["osascript", "-e", script], check=True, capture_output=True, text=True, timeout=15
                         ),
                     )
                     return True
-                except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
                     logger.info(f"macOS 壁紙設置失敗: {e}")
                     return False
 
@@ -800,6 +800,7 @@ class DesktopInteraction:
                                 check=True,
                                 capture_output=True,
                                 text=True,
+                                timeout=10,
                             ),
                         )
                         return True
@@ -827,10 +828,11 @@ class DesktopInteraction:
                                 check=True,
                                 capture_output=True,
                                 text=True,
+                                timeout=10,
                             ),
                         )
                         return True
-                except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
                     logger.info(f"Linux 壁紙設置失敗: {e}")
                     return False
                 return True
