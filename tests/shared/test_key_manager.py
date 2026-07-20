@@ -6,13 +6,36 @@ from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
-sys.modules['cryptography'] = MagicMock()
-sys.modules['cryptography.fernet'] = MagicMock()
-sys.modules['pystray'] = MagicMock()
-sys.modules['PIL'] = MagicMock()
-sys.modules['PIL.Image'] = MagicMock()
-sys.modules['PIL.ImageDraw'] = MagicMock()
-sys.modules['yaml'] = MagicMock()
+
+@pytest.fixture(autouse=True)
+def _mock_external_modules():
+    """Mock external modules per-test to prevent cross-test sys.modules pollution.
+
+    Previously these were module-level assignments (sys.modules[X] = MagicMock()),
+    which permanently contaminated sys.modules for all subsequent tests.
+    Now they are cleaned up after each test completes.
+    """
+    modules_to_mock = [
+        "cryptography",
+        "cryptography.fernet",
+        "pystray",
+        "PIL",
+        "PIL.Image",
+        "PIL.ImageDraw",
+        "yaml",
+    ]
+    originals = {}
+    for mod_name in modules_to_mock:
+        originals[mod_name] = sys.modules.get(mod_name)
+        sys.modules[mod_name] = MagicMock()
+
+    yield
+
+    for mod_name, orig in originals.items():
+        if orig is not None:
+            sys.modules[mod_name] = orig
+        else:
+            sys.modules.pop(mod_name, None)
 
 
 class TestUnifiedKeyManager:
