@@ -321,8 +321,8 @@ class ChatService:
                 from core.system.config.tiered_loader import get_config
 
                 ws_cfg = get_config("system/llm").get("web_search", {}) or {}
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Web search config not available: %s", e)
             ws_timeout = float(ws_cfg.get("timeout", 2.5))
             ws_top = int(ws_cfg.get("max_results", 3))
             results = await asyncio.wait_for(

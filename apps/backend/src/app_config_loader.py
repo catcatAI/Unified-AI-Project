@@ -4,7 +4,10 @@
 
 """Application-level configuration loader for Angela AI."""
 
+import logging
 from typing import Any, Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 _CONFIG: Dict[str, Any] = {
     "bootstrap": {
@@ -69,9 +72,8 @@ def _merge_bootstrap_overrides() -> None:
         bootstrap = _tiered_get("system/bootstrap")
         if isinstance(bootstrap, dict) and bootstrap:
             _CONFIG.setdefault("bootstrap", {}).update(bootstrap)
-    except Exception:
-        # Fall back to hardcoded defaults if the tiered loader is unavailable.
-        pass
+    except Exception as e:
+        logger.debug("Tiered config loader unavailable, using hardcoded defaults: %s", e)
     finally:
         _bootstrap_merged = True
 
