@@ -29,6 +29,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+from core.system.config.async_io import async_json_dump
 from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
@@ -907,8 +908,7 @@ class Live2DAvatarGenerator:
 
         # Save configuration
         config_path = Path(avatar.output_directory) / f"{avatar.model_name}.model3.json"
-        with open(config_path, "w", encoding="utf-8") as f:
-            json.dump(model_config, f, indent=2, ensure_ascii=False)
+        await async_json_dump(model_config, str(config_path), indent=2, ensure_ascii=False)
 
         avatar.model_json_path = str(config_path)
 
@@ -1022,8 +1022,7 @@ class Live2DAvatarGenerator:
         }
 
         physics_path = Path(avatar.output_directory) / f"{avatar.model_name}.physics3.json"
-        with open(physics_path, "w", encoding="utf-8") as f:
-            json.dump(physics_config, f, indent=2)
+        await async_json_dump(physics_config, str(physics_path), indent=2)
 
     async def _generate_display_info(self, avatar: GeneratedAvatar) -> None:
         """Generate cdi3.json (Cubism Display Information)"""
@@ -1040,8 +1039,7 @@ class Live2DAvatarGenerator:
             display_info["Parts"].append({"Id": layer.layer_id, "Name": layer.layer_name})
 
         cdi_path = Path(avatar.output_directory) / f"{avatar.model_name}.cdi3.json"
-        with open(cdi_path, "w", encoding="utf-8") as f:
-            json.dump(display_info, f, indent=2)
+        await async_json_dump(display_info, str(cdi_path), indent=2)
 
     def _calculate_quality_score(self, avatar: GeneratedAvatar) -> float:
         """Calculate generation quality score"""
@@ -1133,8 +1131,7 @@ class Live2DAvatarGenerator:
         }
 
         config_path = export_dir / "desktop_pet_config.json"
-        with open(config_path, "w", encoding="utf-8") as f:
-            json.dump(integration_config, f, indent=2)
+        await async_json_dump(integration_config, str(config_path), indent=2)
 
         return str(export_dir)
 
