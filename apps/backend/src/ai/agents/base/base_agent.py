@@ -176,7 +176,7 @@ class BaseAgent:
             )
             self.initialize_basic()
 
-    def start(self) -> None:
+    async def start(self) -> None:
         """Starts the agent's main loop and connects to the HSP network."""
         if self.is_running:
             return
