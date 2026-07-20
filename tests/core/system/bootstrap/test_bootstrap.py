@@ -16,8 +16,8 @@ def test_bootstrap() -> None:
     print(f"Python: {state['environment']['python']}")
     print(f"Hardware Tier: {state['hardware']['performance_tier']}")
     print(f"GPU: {state['hardware']['gpu']}")
-    print(f"Max FPS: {state['performance']['max_fps']}")
-    print(f"LLM Model: {state['performance']['llm_model']}")
+    print(f"Max FPS: {state['performance'].get('max_fps', 'N/A')}")
+    print(f"LLM Model: {state['performance'].get('llm_model', 'N/A')}")
 
     assert "hardware" in state
     assert "environment" in state

@@ -11,7 +11,19 @@ _CONFIG: Dict[str, Any] = {
         "hardware": {
             "performance_tier": "standard",
             "gpu_enabled": False,
-        }
+        },
+        "hardware_tiers": {
+            "Extreme": {"score_threshold": 80, "max_fps": 60, "llm_model": "gemini-1.5-pro-latest", "precision": 1.0},
+            "High": {"score_threshold": 60, "max_fps": 60, "llm_model": "gemini-pro", "precision": 0.8},
+            "Medium": {"score_threshold": 40, "max_fps": 30, "llm_model": "gemini-pro", "precision": 0.5},
+            "Low": {"score_threshold": 0, "max_fps": 24, "llm_model": "gemini-1.5-flash", "precision": 0.3},
+        },
+        "scoring_weights": {
+            "cpu_core_multiplier": 2,
+            "memory_gb_multiplier": 1.25,
+            "gpu_rtx_bonus": 40,
+            "gpu_standard_bonus": 30,
+        },
     },
     "formula": {
         "spatial": {
@@ -51,7 +63,6 @@ def _merge_bootstrap_overrides() -> None:
     global _bootstrap_merged
     if _bootstrap_merged:
         return
-    _bootstrap_merged = True
     try:
         from core.system.config.tiered_loader import get_config as _tiered_get
 
@@ -61,6 +72,8 @@ def _merge_bootstrap_overrides() -> None:
     except Exception:
         # Fall back to hardcoded defaults if the tiered loader is unavailable.
         pass
+    finally:
+        _bootstrap_merged = True
 
 
 def load_config(path: Optional[str] = None) -> Dict[str, Any]:
