@@ -77,8 +77,8 @@ class AngelaConfig:
                 self._file_paths[stem] = yaml_file
                 try:
                     self._mtimes[stem] = yaml_file.stat().st_mtime
-                except OSError:
-                    pass
+                except OSError as e:
+                    logger.debug("Config file stat failed: %s (%s)", yaml_file, e)
                 # Flatten into the merged view for backward compatibility.
                 for key, value in data.items():
                     if isinstance(value, dict) and isinstance(self._data.get(key), dict):
@@ -119,7 +119,8 @@ class AngelaConfig:
             from core.intent_registry import IntentRegistry
 
             return IntentRegistry().get_keywords(intent)
-        except Exception:
+        except Exception as e:
+            logger.debug("Intent registry lookup failed: %s", e)
             return []
 
     def get_drive_all_operations(self) -> Dict[str, Any]:
@@ -389,7 +390,8 @@ class AngelaConfig:
         for stem, path in self._file_paths.items():
             try:
                 mtime = path.stat().st_mtime
-            except OSError:
+            except OSError as e:
+                logger.debug("Config file stat failed: %s (%s)", path, e)
                 continue
             if self._mtimes.get(stem) != mtime:
                 changed = True

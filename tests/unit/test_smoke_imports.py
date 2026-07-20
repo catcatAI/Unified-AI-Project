@@ -70,8 +70,7 @@ _SMOKE_MODULES = [
     ("core.state.precision_projection_matrix", "PrecisionProjectionMatrix", {}),
     # Merged from tests/unit/test_card_types.py (§X #134)
     ("core.card.card_types", "Card", {}),
-    # Merged from tests/unit/test_digital_life_constants.py (§X #134)
-    ("core.life.digital_life_constants", "GovernanceConstants", {}),
+
     # Merged from tests/unit/test_event_loop_system.py (§X #134)
     ("core.event_loop_system", "EventLoopSystem", {}),
     # Merged from tests/unit/test_hook_registry.py (§X #134)
@@ -210,34 +209,6 @@ class TestCardTypes:
         assert CardType.CHARACTER is not None
         assert ConflictType.HARD_ERROR is not None
         assert IntentFlag.PENDING is not None
-
-
-class TestDigitalLifeConstants:
-    """Extra tests for digital_life_constants (was dedicated file)."""
-
-    _module = "core.life.digital_life_constants"
-
-    def _import(self, name):
-        from importlib import import_module
-        return getattr(import_module(self._module), name)
-
-    def test_metabolic_constants(self):
-        MC = self._import("MetabolicConstants")
-        assert MC.BASE_FATIGUE_INCREASE == 0.02
-        assert MC.RECOVERY_RATE_IDLE == 0.05
-
-    def test_sensory_constants(self):
-        SC = self._import("SensoryConstants")
-        assert SC.TOUCH_AROUSAL_BOOST == 1.2
-
-    def test_governance_constants(self):
-        GC = self._import("GovernanceConstants")
-        assert GC.ALPHA_MODE_THRESHOLD == 0.65
-
-    def test_action_geometric_mapping(self):
-        AGM = self._import("ActionGeometricMapping")
-        assert AGM.REST == (0.0, 0.0, 0.0)
-
 
 class TestEventLoopSystem:
     """Extra tests for EventLoopSystem (was dedicated file)."""

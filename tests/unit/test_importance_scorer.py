@@ -1,4 +1,8 @@
-"""Tests for ai.memory.importance_scorer — matches actual calculate() behavior"""
+"""Tests for ai.memory.importance_scorer — matches actual calculate() behavior
+
+NOTE: ImportanceScorer.calculate() is SYNCHRONOUS (returns float),
+not async. Tests call it directly without asyncio.run().
+"""
 import pytest
 
 
@@ -12,38 +16,32 @@ class TestImportanceScorer:
         instance = ImportanceScorer()
         assert isinstance(instance, ImportanceScorer)
 
-    def test_calculate_is_coroutine(self):
+    def test_calculate_returns_float(self):
         from ai.memory.importance_scorer import ImportanceScorer
         instance = ImportanceScorer()
-        coro = instance.calculate("hello", {"source": "user"})
-        assert hasattr(coro, "__await__")
+        result = instance.calculate("hello", {"source": "user"})
+        assert isinstance(result, float)
 
     def test_calculate_returns_float_in_range(self):
-        import asyncio
-
         from ai.memory.importance_scorer import ImportanceScorer
         instance = ImportanceScorer()
-        score = asyncio.run(instance.calculate("test content", {"key": "value"}))
+        score = instance.calculate("test content", {"key": "value"})
         assert isinstance(score, float)
         assert 0.0 <= score <= 1.0
 
     def test_calculate_accepts_various_content_types(self):
-        import asyncio
-
         from ai.memory.importance_scorer import ImportanceScorer
         instance = ImportanceScorer()
-        score1 = asyncio.run(instance.calculate(42, {}))
+        score1 = instance.calculate(42, {})
         assert 0.0 <= score1 <= 1.0
-        score2 = asyncio.run(instance.calculate([1, 2, 3], {"tag": "list"}))
+        score2 = instance.calculate([1, 2, 3], {"tag": "list"})
         assert 0.0 <= score2 <= 1.0
-        score3 = asyncio.run(instance.calculate({"nested": True}, {"ctx": "dict"}))
+        score3 = instance.calculate({"nested": True}, {"ctx": "dict"})
         assert 0.0 <= score3 <= 1.0
 
     def test_calculate_returns_float_with_empty_metadata(self):
-        import asyncio
-
         from ai.memory.importance_scorer import ImportanceScorer
         instance = ImportanceScorer()
-        score = asyncio.run(instance.calculate("data", {}))
+        score = instance.calculate("data", {})
         assert isinstance(score, float)
         assert 0.0 <= score <= 1.0
