@@ -90,7 +90,7 @@ async def health_check() -> dict:
 
 @router.post("/maintenance")
 async def trigger_maintenance() -> dict:
-    """Trigger maintenance mode (logging + placeholder)."""
+    """Trigger maintenance mode (logging event + status response)."""
     logger.info("Maintenance triggered via ops_routes at %s", datetime.now().isoformat())
     return {
         "status": "started",

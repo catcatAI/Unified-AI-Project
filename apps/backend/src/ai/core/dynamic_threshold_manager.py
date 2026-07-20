@@ -29,8 +29,9 @@ from core.system.config.magic_numbers import (
     loop_sleep,
     retry_value,
     timeout_value,
-    get_config,
 )
+
+from core.system.config.tiered_loader import get_config
 
 from core.system.state_store.global_store import state_store
 
