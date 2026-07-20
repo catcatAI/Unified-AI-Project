@@ -158,3 +158,26 @@ class TestAxis:
         names = axis.field_names()
         assert len(names) > 0
         assert "energy" in names
+
+    def test_factory_create_all(self):
+        """Verify all factory methods produce valid axes"""
+        for factory, name in [
+            (Axis.create_alpha, "alpha"),
+            (Axis.create_beta, "beta"),
+            (Axis.create_gamma, "gamma"),
+            (Axis.create_delta, "delta"),
+            (Axis.create_epsilon, "epsilon"),
+            (Axis.create_theta, "theta"),
+        ]:
+            axis = factory()
+            assert axis.name == name
+            assert axis.average() >= 0.0
+
+    def test_repr(self):
+        """Verify __repr__ output"""
+        axis = Axis.create_alpha()
+        axis.set_str("energy", 0.9)
+        rep = repr(axis)
+        assert "Axis(" in rep
+        assert "alpha" in rep
+        assert "0.90" in rep
