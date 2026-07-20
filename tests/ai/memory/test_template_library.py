@@ -147,7 +147,7 @@ class TestTemplateLibraryAddRemove:
             content='async test',
         )
         before = lib.get_template_count()
-        await lib.add_custom_template_async(tpl)
+        lib.add_custom_template(tpl)
         assert lib.get_template_count() == before + 1
         assert lib.get_by_id('async_custom') is not None
 

@@ -22,14 +22,14 @@ class HyperlinkedParameterCluster:
         self.parameters: dict[str, Any] = {}
         self.total_parameters = 1000
 
-    async def initialize(self) -> None:
+    def initialize(self) -> None:
         self.is_initialized = True
         self.parameters = {"learning_rate": 0.001, "batch_size": 32, "epochs": 10}
         logger.info(
             f"[HyperlinkedParameterCluster] Initialized cluster={self.cluster_id} params={self.total_parameters}"
         )
 
-    async def get_cluster_status(self) -> Optional[dict]:
+    def get_cluster_status(self) -> Optional[dict]:
         return {
             "cluster_id": self.cluster_id,
             "is_initialized": self.is_initialized,
@@ -39,7 +39,7 @@ class HyperlinkedParameterCluster:
             "status": "active" if self.is_initialized else "inactive",
         }
 
-    async def update_parameters(self, updates: dict[str, Any]) -> dict[str, Any]:
+    def update_parameters(self, updates: dict[str, Any]) -> dict[str, Any]:
         self.parameters.update(updates)
         return {
             "status": "updated",

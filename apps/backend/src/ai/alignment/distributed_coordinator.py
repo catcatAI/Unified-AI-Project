@@ -9,7 +9,6 @@ distributed computing across multiple worker nodes.
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
 # =============================================================================
 
-import asyncio
 import logging
 import uuid
 from typing import Any, Optional
@@ -25,7 +24,7 @@ class DistributedCoordinator:
         self.active_nodes: list[str] = []
         self.task_queue: list[dict[str, Any]] = []
 
-    async def initialize(self) -> None:
+    def initialize(self) -> None:
         self.is_initialized = True
         self.cluster_nodes = [f"node_{i}" for i in range(3)]
         self.active_nodes = list(self.cluster_nodes)
@@ -33,12 +32,12 @@ class DistributedCoordinator:
             f"[DistributedCoordinator] Initialized coordinator={self.coordinator_id} nodes={len(self.active_nodes)}"
         )
 
-    async def shutdown(self) -> None:
+    def shutdown(self) -> None:
         self.is_initialized = False
         self.active_nodes = []
         logger.info(f"[DistributedCoordinator] Shutdown coordinator={self.coordinator_id}")
 
-    async def get_cluster_status(self) -> dict:
+    def get_cluster_status(self) -> dict:
         return {
             "coordinator_id": self.coordinator_id,
             "is_initialized": self.is_initialized,
@@ -49,7 +48,7 @@ class DistributedCoordinator:
             "status": "active" if self.is_initialized else "inactive",
         }
 
-    async def distribute_task(self, task: dict[str, Any]) -> dict[str, Any]:
+    def distribute_task(self, task: dict[str, Any]) -> dict[str, Any]:
         return {
             "status": "distributed",
             "task_id": task.get("task_id", str(uuid.uuid4())),
@@ -57,7 +56,7 @@ class DistributedCoordinator:
             "coordinator_id": self.coordinator_id,
         }
 
-    async def coordinate(self, task: dict[str, Any]) -> dict[str, Any]:
+    def coordinate(self, task: dict[str, Any]) -> dict[str, Any]:
         return {
             "status": "coordinated",
             "task_id": task.get("task_id", str(uuid.uuid4())),

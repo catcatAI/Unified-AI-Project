@@ -138,7 +138,7 @@ class BaseAgent:
         self._initialized = True
         logger.info(f"[{self.agent_id}] BaseAgent basic initialization complete.")
 
-    async def initialize_full(self) -> None:
+    def initialize_full(self) -> None:
         """Full asynchronous initialization including all services."""
         if self._initialized and self.hsp_connector:  # Avoid re-init
             return
@@ -176,7 +176,7 @@ class BaseAgent:
             )
             self.initialize_basic()
 
-    async def start(self) -> None:
+    def start(self) -> None:
         """Starts the agent's main loop and connects to the HSP network."""
         if self.is_running:
             return
@@ -185,7 +185,7 @@ class BaseAgent:
         self.is_running = True
         self._start_time = asyncio.get_running_loop().time()
 
-        await self.initialize_full()
+        self.initialize_full()
 
         if not self.hsp_connector:
             logger.error(f"[{self.agent_id}] Error: HSPConnector not available.", exc_info=True)
@@ -196,7 +196,7 @@ class BaseAgent:
         self.hsp_connector.register_on_task_request_callback(self.handle_task_request)
 
         for cap in self.capabilities:
-            await self.hsp_connector.advertise_capability(cap)
+            self.hsp_connector.advertise_capability(cap)
 
         logger.info(f"[{self.agent_id}] is running and listening for tasks.")
 

@@ -125,7 +125,7 @@ class MathVerifier:
         ]
         return any(re.search(p, text) for p in math_patterns)
 
-    async def verify(self, message: str, user_name: str = "") -> "MathVerifyResult":
+    def verify(self, message: str, user_name: str = "") -> "MathVerifyResult":
         """Verify a math expression by computing ground truth."""
         extracted = self._extractor.extract(message)
         if extracted is None:

@@ -186,11 +186,15 @@ class TemplateLibrary:
             self._templates[template.id] = template
         logger.info(f"Added custom template: {template.id}")
 
-    async def add_custom_template_async(self, template: MemoryTemplate) -> None:
-        """async 版本添加自定義模板（使用同一個 RLock）"""
+    def add_custom_template(self, template: MemoryTemplate) -> None:
+        """
+        添加自定义模板
+
+        使用 RLock 保護寫入 — 同步/非同步上下文皆安全。
+        """
         with self._lock:
             self._templates[template.id] = template
-        logger.info(f"Added custom template (async): {template.id}")
+        logger.info(f"Added custom template: {template.id}")
 
     def remove_template(self, template_id: str) -> bool:
         """

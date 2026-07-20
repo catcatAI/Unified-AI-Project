@@ -34,19 +34,19 @@ class AlignedBaseAgent:
         self.messages_processed = 0
         self.performance_score = 1.0
 
-    async def initialize_alignment_full(self) -> None:
+    def initialize_alignment_full(self) -> None:
         self.is_initialized = True
         logger.info(f"[AlignedBaseAgent] Initialized agent={self.agent_name}")
 
-    async def start(self) -> None:
+    def start(self) -> None:
         self.is_running = True
         logger.info(f"[AlignedBaseAgent] Started agent={self.agent_name}")
 
-    async def stop(self) -> None:
+    def stop(self) -> None:
         self.is_running = False
         logger.info(f"[AlignedBaseAgent] Stopped agent={self.agent_name}")
 
-    async def get_alignment_status(self) -> Optional[dict]:
+    def get_alignment_status(self) -> Optional[dict]:
         return {
             "agent_id": self.agent_id,
             "agent_name": self.agent_name,
@@ -61,7 +61,7 @@ class AlignedBaseAgent:
             "status": "active" if self.is_running else "inactive",
         }
 
-    async def handle_task_request(self, request, sender_id, envelope) -> dict:
+    def handle_task_request(self, request, sender_id, envelope) -> dict:
         self.task_count += 1
         self.messages_processed += 1
         return {
@@ -70,7 +70,7 @@ class AlignedBaseAgent:
             "task_id": request.get("request_id", str(uuid.uuid4())),
         }
 
-    async def process(self, request: dict[str, Any]) -> dict[str, Any]:
+    def process(self, request: dict[str, Any]) -> dict[str, Any]:
         self.task_count += 1
         return {
             "status": "completed",
@@ -78,7 +78,7 @@ class AlignedBaseAgent:
             "result": "Task processed by agent",
         }
 
-    async def update_alignment(self, alignment_data: dict[str, Any]) -> dict[str, Any]:
+    def update_alignment(self, alignment_data: dict[str, Any]) -> dict[str, Any]:
         self.alignment_enabled = alignment_data.get("alignment_enabled", self.alignment_enabled)
         self.performance_score = alignment_data.get("performance_score", self.performance_score)
         return {
@@ -87,7 +87,7 @@ class AlignedBaseAgent:
             "alignment_enabled": self.alignment_enabled,
         }
 
-    async def shutdown(self) -> None:
+    def shutdown(self) -> None:
         self.is_running = False
         self.is_initialized = False
         logger.info(f"[AlignedBaseAgent] Shutdown agent={self.agent_name}")

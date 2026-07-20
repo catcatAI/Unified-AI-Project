@@ -39,7 +39,7 @@ class ImportanceScorer:
     def __init__(self):
         logger.debug("[ImportanceScorer] Initialized")
 
-    async def calculate(self, content: Any, metadata: Dict[str, Any]) -> float:
+    def calculate(self, content: Any, metadata: Dict[str, Any]) -> float:
         """Calculate importance score based on content analysis and metadata."""
         score = 0.0
         factors = 0

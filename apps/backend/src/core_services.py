@@ -31,7 +31,7 @@ class _Services:
 _services = _Services()
 
 
-async def initialize_services(config=None, ai_id=None, use_mock_ham=False, operational_configs=None) -> None:
+def initialize_services(config=None, ai_id=None, use_mock_ham=False, operational_configs=None) -> None:
     """Initialize all services."""
     cfg = config or {}
     logger.info("CLI standalone mode: registering basic services")
@@ -67,6 +67,6 @@ def get_services() -> _Services:
     return _services
 
 
-async def shutdown_services() -> None:
+def shutdown_services() -> None:
     logger.info("CLI standalone mode: clearing service registry")
     _services._service_registry.clear()

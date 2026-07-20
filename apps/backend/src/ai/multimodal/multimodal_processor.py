@@ -23,17 +23,17 @@ class MultimodalProcessor:
         self._audio_encoder = None
         self._process_count = 0
 
-    async def process_text(self, text: str, **kwargs) -> Dict[str, Any]:
+    def process_text(self, text: str, **kwargs) -> Dict[str, Any]:
         """Process text input."""
         self._process_count += 1
         return {"type": "text", "length": len(text), "processed": True}
 
-    async def process_image(self, image_data: Any, **kwargs) -> Dict[str, Any]:
+    def process_image(self, image_data: Any, **kwargs) -> Dict[str, Any]:
         """Process image input."""
         self._process_count += 1
         return {"type": "image", "processed": True}
 
-    async def process_audio(self, audio_data: Any, **kwargs) -> Dict[str, Any]:
+    def process_audio(self, audio_data: Any, **kwargs) -> Dict[str, Any]:
         """Process audio input."""
         self._process_count += 1
         return {"type": "audio", "processed": True}

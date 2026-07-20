@@ -37,11 +37,11 @@ class PrecomputeService:
         self._tasks: Dict[str, PrecomputeTask] = {}
         self._running = False
 
-    async def start(self) -> None:
+    def start(self) -> None:
         self._running = True
         logger.info("PrecomputeService started")
 
-    async def stop(self) -> None:
+    def stop(self) -> None:
         self._running = False
         logger.info("PrecomputeService stopped")
 

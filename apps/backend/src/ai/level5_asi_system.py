@@ -289,7 +289,7 @@ class Level5ASISystem:
             logger.error(f"[{self.system_id}] 综合测试失败: {e}", exc_info=True)
             return {"error": safe_error(e)}
 
-    async def _initialize_alignment_systems(self) -> None:
+    def _initialize_alignment_systems(self) -> None:
         """初始化对齐系统"""
         self.reasoning_system = ReasoningSystem(f"{self.system_id}_reasoning")
         self.emotion_system = EmotionSystem(system_id=f"{self.system_id}_emotion")
@@ -305,7 +305,7 @@ class Level5ASISystem:
         )
         logger.info(f"[{self.system_id}] 对齐系统初始化完成")
 
-    async def _initialize_advanced_components(self) -> None:
+    def _initialize_advanced_components(self) -> None:
         """初始化高级组件"""
         self.decision_system = DecisionTheorySystem(
             config={"system_id": f"{self.system_id}_decision_system"}
@@ -387,7 +387,7 @@ class Level5ASISystem:
 
         logger.info(f"[{self.system_id}] 创建了 {len(self.aligned_agents)} 个对齐代理")
 
-    async def _create_alignment_context(self, request: dict[str, Any]) -> dict[str, Any]:
+    def _create_alignment_context(self, request: dict[str, Any]) -> dict[str, Any]:
         """创建对齐上下文"""
         return {
             "request_id": request.get("request_id", str(uuid.uuid4())),
@@ -402,7 +402,7 @@ class Level5ASISystem:
             },
         }
 
-    async def _perform_alignment_check(
+    def _perform_alignment_check(
         self, request: dict[str, Any], context: dict[str, Any]
     ) -> dict[str, Any]:
         """执行对齐检查"""
@@ -443,7 +443,7 @@ class Level5ASISystem:
                 "safety_score": 0.0,
             }
 
-    async def _select_agent(self, request: dict[str, Any]) -> Optional[AlignedBaseAgent]:
+    def _select_agent(self, request: dict[str, Any]) -> Optional[AlignedBaseAgent]:
         """选择合适的代理"""
         capability_id = request.get("capability_id")
         if not capability_id:
@@ -456,7 +456,7 @@ class Level5ASISystem:
 
         return None
 
-    async def _process_with_agent(
+    def _process_with_agent(
         self, agent: AlignedBaseAgent, request: dict[str, Any], context: dict[str, Any]
     ) -> dict[str, Any]:
         """使用代理处理请求"""
@@ -469,9 +469,9 @@ class Level5ASISystem:
                 message_type="task_request",
             )
 
-            await agent.handle_task_request(request, self.system_id, envelope)
+            agent.handle_task_request(request, self.system_id, envelope)
             # Allow event loop to process other tasks — real work done by handle_task_request
-            await asyncio.sleep(0)
+            # await asyncio.sleep(0)  # Removed - no await needed
 
             return {
                 "status": "success",
