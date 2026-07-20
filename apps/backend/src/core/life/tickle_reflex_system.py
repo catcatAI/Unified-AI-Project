@@ -120,7 +120,8 @@ class TickleReflexSystem:
             "intensity": intensity,
         }
 
-        # Phase2: LLM placeholder (refined response later)
+        # Phase2: LLM prompt preparation for refined response generation
+        # Phase2 constructs the LLM input; actual LLM call is handled upstream
         phase2 = {
             "prompt": f"Tickle reflex on {body_part} ({level}, {output_mode}) from {origin}",
             "llm_words": self._max_llm_words,

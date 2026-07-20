@@ -25,6 +25,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import platform
+import subprocess
 import time
 from collections import deque
 from dataclasses import dataclass, field
@@ -757,8 +759,97 @@ class UserActivityMonitor:
         )
 
     async def _get_active_window(self) -> Optional[str]:
-        """Get currently active window title (stub - platform specific)"""
-        # Platform-specific implementation would go here
+        """Get currently active window title (cross-platform).
+
+        Uses platform-specific commands:
+        - Windows: PowerShell via Shell.Application COM
+        - macOS: osascript
+        - Linux: xdotool (preferred) or xprop (fallback, two calls)
+        Returns None if detection fails or command is unavailable.
+        """
+        system = platform.system().lower()
+        try:
+            if system == "windows":
+                result = subprocess.run(
+                    [
+                        "powershell",
+                        "-NoProfile",
+                        "-Command",
+                        "(New-Object -ComObject 'Shell.Application').Windows() | "
+                        "Select-Object -First 1 | ForEach-Object { $_.LocationName }",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=2,
+                )
+                title = result.stdout.strip()
+                return title if title else None
+
+            elif system == "darwin":
+                result = subprocess.run(
+                    [
+                        "osascript",
+                        "-e",
+                        'tell application "System Events" to get name of '
+                        'first application process whose frontmost is true',
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=2,
+                )
+                title = result.stdout.strip()
+                return title if title else None
+
+            elif system == "linux":
+                # Preferred: xdotool (fast, single call)
+                try:
+                    result = subprocess.run(
+                        ["xdotool", "getactivewindow", "getwindowname"],
+                        capture_output=True,
+                        text=True,
+                        timeout=2,
+                    )
+                    title = result.stdout.strip()
+                    if title:
+                        return title
+                except FileNotFoundError:
+                    pass
+                # Fallback: xprop (two-call approach, no shell=True)
+                try:
+                    # Step 1: get active window ID
+                    id_result = subprocess.run(
+                        ["xprop", "-root", "_NET_ACTIVE_WINDOW"],
+                        capture_output=True,
+                        text=True,
+                        timeout=2,
+                    )
+                    if id_result.returncode != 0:
+                        return None
+                    # Parse window ID from output like "_NET_ACTIVE_WINDOW(WINDOW): window id # 0x..."
+                    parts = id_result.stdout.strip().split()
+                    window_id = parts[-1] if parts else None
+                    if not window_id or window_id == "not" or window_id.startswith("_NET"):
+                        return None
+                    # Step 2: get window name
+                    name_result = subprocess.run(
+                        ["xprop", "-id", window_id, "_NET_WM_NAME"],
+                        capture_output=True,
+                        text=True,
+                        timeout=2,
+                    )
+                    if name_result.returncode != 0:
+                        return None
+                    raw = name_result.stdout.strip()
+                    # Parse UTF8_STRING or STRING value: "_NET_WM_NAME(UTF8_STRING) = \"title\""
+                    if "=" in raw:
+                        title = raw.split("=", 1)[-1].strip().strip('"')
+                        return title if title else None
+                except FileNotFoundError:
+                    pass
+
+        except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as e:
+            logger.debug("Active window detection failed on %s: %s", system, e)
+
         return None
 
     def record_input_event(self) -> None:

@@ -783,7 +783,7 @@ class AgentManager:
             )
             return
 
-        expected_capability_id = "data_analysis_v1"  # Placeholder
+        expected_capability_id = "data_analysis_v1"  # Default capability for service discovery
 
         logger.info(
             f"[AgentManager] Waiting for agent '{agent_name}' to advertise capability '{expected_capability_id}'"

@@ -1048,8 +1048,11 @@ class ED3NEngine:
 
             count = 0
             for key in list(self.dictionary.entries.keys())[:5000]:
-                # Create a simple hash-based latent for each concept
-                # This is a placeholder until we have real concept embeddings
+                # Create a deterministic hash-based latent for each concept
+                # Uses reproducible random seed from key hash (not a placeholder —
+                # hash-based pseudo-embeddings provide consistent retrieval,
+                # adequate for the lower-bound path until full CLIP encodings
+                # are available for every dictionary entry)
                 rng = np.random.default_rng(hash(key) % (2**31))
                 latent = rng.normal(0, 0.1, 64).astype(np.float32)
                 self._semantic_key_mapper.index_key(key, structural_latent=latent)

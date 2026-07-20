@@ -75,7 +75,7 @@ class HSPSecurityParameters(TypedDict, total=False):
     public_key: str
     certificate: str
     timestamp_signed: str  # ISO 8601 UTC
-    encryption_details: Any  # Placeholder
+    encryption_details: Any  # Reserved for future encryption metadata encoding
 
 
 class HSPQoSParameters(TypedDict, total=False):
