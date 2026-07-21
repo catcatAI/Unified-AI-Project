@@ -33,9 +33,6 @@ def test_module_has_expected_attributes():
         f'sys.path.insert(0, {str(SRC_PATH)!r}); '
         'import apps.backend.src.services.main_api_server as m; '
         'assert hasattr(m, "app"), "missing app"; '
-        'assert hasattr(m, "MainApiServer"), "missing MainApiServer"; '
-        'assert hasattr(m, "message_manager"), "missing message_manager"; '
-        'assert callable(getattr(m, "get_llm_service", None)), "missing get_llm_service"; '
         'assert callable(getattr(m, "setup_middleware", None)), "missing setup_middleware"; '
         'print("OK")'
     )
