@@ -224,15 +224,15 @@ class TensorSNNCore:
     """
 
     def __init__(
-            self,
-            leak: float = DEFAULT_LEAK,
-            threshold: float = DEFAULT_THRESHOLD,
-            timesteps: int = DEFAULT_TIMESTEPS,
-            decay: float = DEFAULT_DECAY,
-            device: str = "cpu",
-            max_vocab: int = 0,
-            connection_budget: int = 0,
-        ):
+        self,
+        leak: float = DEFAULT_LEAK,
+        threshold: float = DEFAULT_THRESHOLD,
+        timesteps: int = DEFAULT_TIMESTEPS,
+        decay: float = DEFAULT_DECAY,
+        device: str = "cpu",
+        max_vocab: int = 0,
+        connection_budget: int = 0,
+    ):
         self.leak = leak
         self.base_threshold = threshold
         self.timesteps = timesteps
