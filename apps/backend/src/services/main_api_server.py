@@ -295,13 +295,13 @@ from services.multimodal_ws_handler import multimodal_stream_handler  # noqa: E4
 
 app.websocket("/multimodal/stream")(multimodal_stream_handler)
 
-from services.api.state_matrix_api import state_matrix_router  # noqa: E402
 from services.atlassian_api import atlassian_router  # noqa: E402
 
 # Include existing routers
+# NOTE: state_matrix_router is already included via api_v1_router (see api/router.py).
+# DO NOT duplicate it here — FastAPI would register duplicate routes.
 app.include_router(api_v1_router)
 app.include_router(atlassian_router)
-app.include_router(state_matrix_router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["health"])

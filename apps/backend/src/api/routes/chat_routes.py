@@ -707,6 +707,13 @@ async def _handle_execution_gate(
     return None
 
 
+# Module-level singleton caches for AgentManager + AgentOrchestrator
+# Created once on first request to avoid reinitializing AgentManager
+# (which re-registers all specialized agents) on every chat request.
+_agent_manager_instance = None
+_agent_orchestrator_instance = None
+
+
 async def _try_agent_routing(
     user_message: str,
     context: Dict[str, Any],
@@ -716,6 +723,8 @@ async def _try_agent_routing(
     """Try agent auto-routing for non-execution intents (creative/knowledge/opinion/search).
     Returns a response dict if an agent handled the query, else None (falls through to LLM)."""
     try:
+        global _agent_manager_instance, _agent_orchestrator_instance
+
         from ai.agents.agent_adapter import register_specialized_agents
         from ai.agents.agent_manager import AgentManager
         from ai.agents.agent_orchestrator import AgentOrchestrator
@@ -748,10 +757,14 @@ async def _try_agent_routing(
         if classify_result.primary_type not in agent_types and classify_result.confidence < 0.3:
             return None
 
-        # Lazy-init agent manager + orchestrator
-        agent_mgr = AgentManager(enable_process_agents=False, enable_router=False)
-        register_specialized_agents(agent_mgr)
-        orchestrator = AgentOrchestrator(agent_manager=agent_mgr)
+        # Singleton: lazy-init agent manager + orchestrator once, reuse across requests
+        if _agent_manager_instance is None:
+            _agent_manager_instance = AgentManager(enable_process_agents=False, enable_router=False)
+            register_specialized_agents(_agent_manager_instance)
+            _agent_orchestrator_instance = AgentOrchestrator(agent_manager=_agent_manager_instance)
+            logger.info("AgentManager/AgentOrchestrator singletons initialized")
+        agent_mgr = _agent_manager_instance
+        orchestrator = _agent_orchestrator_instance
         route_result = await orchestrator.route_task(user_message, context)
 
         primary = route_result.get("results", [{}])[0] if route_result.get("results") else {}
