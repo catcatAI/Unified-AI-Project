@@ -55,22 +55,22 @@ async def main():
         sub = sys.argv[2]
         
         if sub == "status":
-            # Fetches GSI-4 Governance Stats
-            res = await call_angela_api("GET", "/api/v1/system/status")
+            # Fetches system ops status (migrated from /api/v1/system/status to /api/v1/ops/status)
+            res = await call_angela_api("GET", "/api/v1/ops/status")
             print(json.dumps(res, indent=2))
         
         elif sub == "think":
             msg = sys.argv[3] if len(sys.argv) > 3 else "Hello Angela"
-            res = await call_angela_api("POST", "/angela/chat", {"message": msg, "origin": "System"})
+            # Migrated from /angela/chat to /api/v1/chat/unified in v7.5.0
+            res = await call_angela_api("POST", "/api/v1/chat/unified", {"message": msg, "origin": "System"})
             print(json.dumps(res, indent=2))
             
         elif sub == "stimulate":
-            part = sys.argv[3] if len(sys.argv) > 3 else "head"
-            res = await call_angela_api("POST", "/api/v1/tactile/touch", {
-                "object_id": "cli_tester",
-                "contact_point": {"body_part": part, "pressure": 0.8}
-            })
-            print(json.dumps(res, indent=2))
+            # NOTE: TactileService was removed in Phase 11 (no hardware support)
+            print(json.dumps({
+                "status": "unavailable",
+                "note": "TactileService removed in Phase 11 — no tactile hardware support"
+            }, indent=2))
 
         elif sub == "rest":
             # Manually trigger sleep cycle (memory consolidation)
