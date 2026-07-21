@@ -11,7 +11,7 @@
  * API endpoints:
  * - GET /health - 健康检查
  * - POST /api/v1/chat/unified - 统一对话接口
- * - GET /api/v1/system/status - 系统状态
+ * - GET /api/v1/ops/status - 系统状态
  * - WebSocket /ws - 实时双向通信
  *
  * @class AngelaAPIClient
@@ -57,7 +57,7 @@ class AngelaAPIClient {
     async validateEndpoints() {
         const endpoints = [
             { path: '/health', method: 'GET', required: true },
-            { path: '/api/v1/system/status', method: 'GET', required: true },
+            { path: '/api/v1/ops/status', method: 'GET', required: true },
             { path: this.unifiedChatPath, method: 'POST', required: true },
         ];
 
@@ -271,7 +271,7 @@ class AngelaAPIClient {
      */
     async getStatus() {
         try {
-            const response = await fetch(`${this.baseURL}/api/v1/system/status`);
+            const response = await fetch(`${this.baseURL}/api/v1/ops/status`);
             const data = await response.json();
             return {
                 success: true,
