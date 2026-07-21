@@ -376,7 +376,7 @@ class DynamicThresholdManager:
             }
 
             self.hardware_constraints = {
-                profile: config
+                config_name: config
                 for config_name, config in hardware_configs.items()
                 if config_name in self.hardware_profile.get_hardware_profile()
             }
