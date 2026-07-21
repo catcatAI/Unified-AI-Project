@@ -17,22 +17,20 @@ Usage:
 #
 # 主要端点:
 # - GET /health - 健康检查
-# - POST /dialogue - 对话接口
-# - POST /angela/chat - Angela 聊天接口 (集成 LLM)
+# - GET /api/v1/ops/status - 运维状态
+# - POST /api/v1/chat/unified - 统一聊天接口 (集成 LLM)
 # - WebSocket /ws - 实时双向通信
-# - POST /vision - 视觉分析
-# - POST /audio - 音频处理
-# - POST /tactile - 触觉输入处理
-# - GET /pet - 宠物信息
+# - WebSocket /multimodal/stream - 多模态流
 #
 # 集成服务:
 # - VisionService: 视觉处理
 # - AudioService: 音频处理
-# - TactileService: 触觉处理
 # - ChatService: 对话生成
 # - AngelaLLMService: LLM 服务 (Ollama/GPT/Gemini)
 # - DigitalLifeIntegrator: 数字生命集成
 # - BrainBridgeService: 大脑桥接服务
+# - CausalReasoningEngine: 因果推理引擎
+# - PluginSystem: 插件系统
 #
 # =============================================================================
 
@@ -40,7 +38,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -96,178 +94,8 @@ except ImportError:
         exc_info=True,
     )
 
-# ========== 修复：系统指标管理器 ==========
-try:
-    import psutil
-
-    PSUTIL_AVAILABLE = True
-except ImportError:
-    PSUTIL_AVAILABLE = False
-    logger.warning("psutil not available, system metrics will use fallback values", exc_info=True)
-
-
-class SystemMetricsManager:
-    """系统指标管理器
-
-    修复版本：统一的系统指标管理
-    - 统一数据源（使用 psutil）
-    - 统一计算方法
-    - 添加缓存机制
-    """
-
-    def __init__(self, cache_ttl: float = 5.0):
-        self.cache_ttl = cache_ttl  # 缓存生存时间（秒）
-        self._cache = {}
-        self._cache_timestamp = {}
-
-    def _is_cache_valid(self, key: str) -> bool:
-        """检查缓存是否有效"""
-        if key not in self._cache_timestamp:
-            return False
-        return (datetime.now() - self._cache_timestamp[key]).total_seconds() < self.cache_ttl
-
-    def _get_cached_or_compute(self, key: str, compute_func) -> Any:
-        """获取缓存值或计算新值"""
-        if self._is_cache_valid(key):
-            return self._cache[key]
-
-        value = compute_func()
-        self._cache[key] = value
-        self._cache_timestamp[key] = datetime.now()
-        return value
-
-    def get_cpu_percent(self) -> float:
-        """获取 CPU 使用率（统一数据源）"""
-        if not PSUTIL_AVAILABLE:
-            return 0.0
-
-        def compute() -> float:
-            return psutil.cpu_percent(interval=0.1)
-
-        return self._get_cached_or_compute("cpu_percent", compute)
-
-    def get_memory_percent(self) -> float:
-        """获取内存使用率（统一数据源）"""
-        if not PSUTIL_AVAILABLE:
-            return 0.0
-
-        def compute() -> float:
-            return psutil.virtual_memory().percent
-
-        return self._get_cached_or_compute("memory_percent", compute)
-
-    def get_disk_percent(self) -> float:
-        """获取磁盘使用率（统一数据源）"""
-        if not PSUTIL_AVAILABLE:
-            return 0.0
-
-        def compute() -> float:
-            return psutil.disk_usage("/").percent
-
-        return self._get_cached_or_compute("disk_percent", compute)
-
-    def get_all_metrics(self) -> Dict[str, float]:
-        """获取所有系统指标"""
-        return {
-            "cpu_percent": self.get_cpu_percent(),
-            "memory_percent": self.get_memory_percent(),
-            "disk_percent": self.get_disk_percent(),
-        }
-
-    def clear_cache(self) -> None:
-        """清除缓存"""
-        self._cache.clear()
-        self._cache_timestamp.clear()
-
-
-# 创建全局系统指标管理器实例
-system_metrics_manager = SystemMetricsManager()
-
-
-# ========== 修复：消息管理器 ==========
-class MessageManager:
-    """消息管理器
-
-    修复版本：添加消息序列号、状态合并和去重机制
-    - 消息序列号
-    - 状态合并
-    - 消息去重
-    """
-
-    def __init__(self):
-        self.message_counter = 0  # 消息序列号计数器
-        self.message_cache = {}  # 消息缓存（用于去重）
-        self.max_cache_size = 1000  # 最大缓存大小
-        self.state_history = {}  # 状态历史
-        self.max_state_history = 100  # 最大状态历史记录数
-
-    def get_next_message_id(self) -> str:
-        """获取下一个消息序列号"""
-        self.message_counter += 1
-        return f"msg_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{self.message_counter:06d}"
-
-    def is_duplicate_message(self, message_id: str) -> bool:
-        """检查消息是否重复"""
-        return message_id in self.message_cache
-
-    def cache_message(self, message_id: str, message_data: Dict[str, Any]) -> None:
-        """缓存消息"""
-        self.message_cache[message_id] = {
-            "data": message_data,
-            "timestamp": datetime.now().isoformat(),
-        }
-
-        # 限制缓存大小
-        if len(self.message_cache) > self.max_cache_size:
-            # 删除最旧的 10% 的消息
-            items_to_remove = int(self.max_cache_size * 0.1)
-            for _ in range(items_to_remove):
-                if self.message_cache:
-                    self.message_cache.pop(next(iter(self.message_cache)))
-
-    def merge_state(
-        self, current_state: Dict[str, Any], new_state: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """合并状态"""
-        merged = current_state.copy()
-
-        for key, value in new_state.items():
-            if isinstance(value, dict) and key in merged and isinstance(merged[key], dict):
-                # 递归合并嵌套字典
-                merged[key] = self.merge_state(merged[key], value)
-            else:
-                # 直接替换
-                merged[key] = value
-
-        return merged
-
-    def record_state(self, state_id: str, state_data: Dict[str, Any]) -> None:
-        """记录状态历史"""
-        if state_id not in self.state_history:
-            self.state_history[state_id] = []
-
-        self.state_history[state_id].append(
-            {"data": state_data, "timestamp": datetime.now().isoformat()}
-        )
-
-        # 限制历史记录大小
-        if len(self.state_history[state_id]) > self.max_state_history:
-            self.state_history[state_id] = self.state_history[state_id][-self.max_state_history :]
-
-    def get_state_history(self, state_id: str) -> List[Dict[str, Any]]:
-        """获取状态历史"""
-        return self.state_history.get(state_id, [])
-
-
-# 创建全局消息管理器实例
-message_manager = MessageManager()
-
 from api.router import router as api_v1_router  # noqa: E402
-from fastapi import (  # noqa: E402
-    Body,
-    Depends,
-    FastAPI,
-)
+from fastapi import FastAPI  # noqa: E402
 from services.angela_llm_service import get_llm_service  # noqa: E402
 
 app = FastAPI(
@@ -312,43 +140,6 @@ async def health() -> Dict[str, Any]:
     endpoint exists for load balancers / uptime checks that expect ``/health``.
     """
     return {"status": "healthy", "service": "angela-ai", "version": app.version}
-
-
-class MainApiServer:
-    """Stub class for legacy integration test compatibility.
-
-    Provides is_connected, reconnect, and queue_request methods
-    for use in error recovery tests (test_error_recovery.py).
-    """
-
-    def __init__(self) -> None:
-        self._connected = False
-        self._request_queue: List[Dict[str, Any]] = []
-        self._logger = logging.getLogger(f"{__name__}.MainApiServer")
-
-    async def is_connected(self) -> bool:
-        """Check if the API server is connected to external services."""
-        return self._connected
-
-    async def reconnect(self) -> Dict[str, Any]:
-        """Attempt to reconnect the API server to external services."""
-        self._connected = True
-        self._logger.info("MainApiServer reconnected successfully")
-        return {"reconnected": True, "attempts": 1}
-
-    async def queue_request(self, request: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Queue a request for deferred processing.
-
-        Args:
-            request: The request data to queue. If None, just returns
-                     the current queue position.
-
-        Returns:
-            Dict with queue status and position.
-        """
-        if request:
-            self._request_queue.append(request)
-        return {"queued": True, "queue_position": len(self._request_queue)}
 
 
 if __name__ == "__main__":
