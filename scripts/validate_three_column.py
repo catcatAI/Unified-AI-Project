@@ -210,8 +210,8 @@ def main() -> None:
         e.load_presets()
         try:
             e.process("warmup 1 + 1")  # absorb one-time lazy-init cost
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Warmup failed (benign): %s", exc)
         engines_to_run.append(("ed3n", e))
     if args.engine in ("garden", "both"):
         from ai.garden.garden_engine import GARDENEngine
@@ -220,8 +220,8 @@ def main() -> None:
         e.load_presets()
         try:
             e.process("warmup 1 + 1")
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Warmup failed (benign): %s", exc)
         engines_to_run.append(("garden", e))
 
     report: Dict[str, object] = {"datasets": {k: len(v) for k, v in datasets.items()},
@@ -243,8 +243,8 @@ def main() -> None:
                 inst.load_presets()
                 try:
                     inst.process("warmup 1 + 1")
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("Warmup failed (benign): %s", exc)
                 return inst
 
             hp, ht, ha = run_column(_new(), "hybrid", kind, cases)

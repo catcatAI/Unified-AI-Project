@@ -470,8 +470,8 @@ class Launcher:
                 self.progress.update(50, "后端已就绪", "success")
                 try:
                     self.pid_file.write_text(str(proc.pid), encoding='utf-8')
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("PID file write failed (non-critical): %s", e)
                 return proc
             else:
                 crashed = proc.poll() is not None
@@ -574,19 +574,17 @@ class Launcher:
                     proc.wait(timeout=5)
                 except Exception as e:
                     logger.error(f'Error in {__name__}: {e}', exc_info=True)
-                    try:
-
-                        proc.kill()
-                    except Exception as e:
-                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
-                        pass
+                try:
+                    proc.kill()
+                except Exception as e2:
+                    logger.error(f'Error in {__name__}: {e2}', exc_info=True)
 
         # Clean up PID file
         try:
             if self.pid_file.exists():
                 self.pid_file.unlink()
-        except Exception:
-            pass
+        except Exception as pid_err:
+            logger.debug("PID file cleanup failed (non-critical): %s", pid_err)
 
         
         self.progress.finish("已关闭")

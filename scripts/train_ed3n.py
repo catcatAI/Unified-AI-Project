@@ -97,8 +97,8 @@ def main():
             try:
                 engine.dictionary.grow(token, token, confidence=0.7)
                 grown += 1
-            except Exception:
-                pass
+            except Exception as e:
+                logging.warning("Failed to grow dictionary token '%s': %s", token, e)
     engine.dictionary._rebuild_index()
     print(f"  Dictionary: {before} -> {len(engine.dictionary.entries)} ({grown} new)")
 

@@ -108,8 +108,8 @@ for f in sorted(test_dir.rglob("*.py")):
         text = f.read_text(encoding="utf-8", errors="ignore")
         if "except Exception:" in text and "pytest.skip" in text:
             anti_patterns.append((f, "except Exception: pytest.skip"))
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"  ⚠️  Error reading test file: {e}")
 if anti_patterns:
     for f, pat in anti_patterns:
         check(f"Anti-pattern: {f.relative_to(PROJECT_ROOT)}", False, pat)

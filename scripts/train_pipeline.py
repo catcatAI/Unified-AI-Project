@@ -231,8 +231,8 @@ def load_knowledge_bases() -> List[Dict]:
                         desc = attrs.get("text_ending") or attrs.get("description") or ""
                         if desc:
                             data.append({"input": f"emotion {category}", "output": str(desc), "domain": "knowledge"})
-                except Exception:
-                    pass
+                except Exception as yaml_err:
+                    logger.debug("Failed to parse YAML knowledge base '%s': %s", fname, yaml_err)
         if data is None:
             logger.debug("Skipping knowledge base %s (unparseable)", fname)
             continue
@@ -732,8 +732,8 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
             try:
                 ed3n_engine.dictionary.grow(token, token, confidence=confidence_value("train.ed3n.grow_confidence", 0.7))
                 grown += 1
-            except Exception:
-                pass
+            except Exception as grow_err:
+                logger.debug("Failed to grow token '%s' (non-critical): %s", token, grow_err)
     ed3n_engine.dictionary._rebuild_index()
     print(f"  Dictionary: {before} -> {len(ed3n_engine.dictionary.entries)} ({grown} new)")
 
