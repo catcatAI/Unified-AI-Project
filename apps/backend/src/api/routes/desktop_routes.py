@@ -1,6 +1,6 @@
 """
 ANGELA-MATRIX: [L4-L5] [βγ] [A] [L2]
-Desktop interaction, action, tactile & brain API routes.
+Desktop interaction, action & brain API routes.
 Extracted from main_api_server.py (A3 god module split).
 """
 

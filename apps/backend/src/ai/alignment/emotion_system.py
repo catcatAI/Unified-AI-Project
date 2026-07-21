@@ -377,6 +377,20 @@ class EmotionSystem:
             arousal=new_arousal,
         )
         self.emotion_history.append(influenced_state)
+
+        # Record emotion trace in LifeEssence for deep accumulation
+        try:
+            from core.life.life_essence import get_life_essence
+            le = get_life_essence()
+            le.record_emotion_trace(
+                primary_emotion=new_emotion.value,
+                valence=new_valence,
+                arousal=new_arousal,
+                intensity=new_intensity,
+            )
+        except Exception as e:
+            logger.debug("LifeEssence emotion trace skipped: %s", e)
+
         state_store.emit_event(
             "emotion.updated",
             {
