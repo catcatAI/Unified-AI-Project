@@ -179,7 +179,8 @@ TaskGenerator = None
 
 # New subsystem imports (extracted from this module)
 from services.llm.emotion_analyzer import EmotionAnalyzer
-from services.llm.memory_integration import MemoryIntegration
+# MemoryIntegration imported lazily inside __init__ to avoid circular import:
+# router.py -> memory_integration.py -> (TYPE_CHECKING) -> router.py
 
 
 def _load_memory_modules() -> str:
@@ -307,6 +308,8 @@ class AngelaLLMService:
         self.emotion_analyzer = EmotionAnalyzer()
 
         # ========== 记忆集成系统（委派到 MemoryIntegration）==========
+        # Lazy import to break circular: router -> memory_integration -> (TYPE_CHECKING) -> router
+        from services.llm.memory_integration import MemoryIntegration
         self.memory_integration = MemoryIntegration(self)
 
         routing = self.config.get("routing") or {}

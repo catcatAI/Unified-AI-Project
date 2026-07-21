@@ -12,7 +12,6 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from core.bio.biological_integrator import BiologicalIntegrator
 from core.interfaces.service_registry import get_registry
 
 logger = logging.getLogger(__name__)
