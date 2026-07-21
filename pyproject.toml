@@ -88,13 +88,15 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 # pytest - Python 测试框架配置
-testpaths = ['tests', 'apps/backend/tests', 'apps/backend/src', 'scripts']
+testpaths = ['tests', 'apps/backend/tests', 'scripts']
 python_files = ['test_*.py', '*_test.py']
 python_classes = ['Test*']
 python_functions = ['test_*']
 filterwarnings = [
-    'ignore::DeprecationWarning',
-    'ignore::PendingDeprecationWarning',
+    # Let DeprecationWarning through so deprecated API usage is visible
+    # during test runs. Individual noisy entries can be added below.
+    # 'ignore::DeprecationWarning',  # removed: hide real deprecation issues
+    # 'ignore::PendingDeprecationWarning',  # removed
 ]
 addopts = [
     '-v',
