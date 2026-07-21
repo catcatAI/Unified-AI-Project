@@ -36,7 +36,6 @@ Usage:
 
 import logging
 import sys
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
 
@@ -96,7 +95,7 @@ except ImportError:
 
 from api.router import router as api_v1_router  # noqa: E402
 from fastapi import FastAPI  # noqa: E402
-from services.angela_llm_service import get_llm_service  # noqa: E402
+# get_llm_service is imported lazily by ChatService during lifespan startup
 
 app = FastAPI(
     title="Angela AI API",
@@ -113,8 +112,6 @@ setup_middleware(app)
 app.router.lifespan_context = lifespan
 
 
-from services.websocket_manager import broadcast_state_updates
-from services.websocket_manager import manager as ws_manager  # noqa: E402
 from services.websocket_manager import websocket_handler
 
 app.websocket("/ws")(websocket_handler)
@@ -143,7 +140,6 @@ async def health() -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
-    import sys
 
     if "--repl" in sys.argv:
         from cli.repl import run_repl_mode
