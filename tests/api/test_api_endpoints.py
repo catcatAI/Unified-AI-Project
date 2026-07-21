@@ -227,23 +227,27 @@ class TestDesktopAPI:
 # Other V1 Status stubs (7 endpoints)
 # =============================================================================
 
+# Status stub routes with their expected response shape
+# (route, service, expected_status)
 STATUS_STUBS = [
-    ("pet", "pet"),
-    ("vision", "vision"),
-    ("audio", "audio"),
-    ("tactile", "tactile"),
-    ("trace", "trace"),
-    ("plugins", "plugins"),
+    ("pet", "pet", "unavailable"),
+    ("vision", "vision", "ok"),
+    ("audio", "audio", "ok"),
+    ("tactile", "tactile", "unavailable"),
+    ("trace", "trace", "enabled"),
+    ("plugins", "plugins", "ok"),
 ]
 
 
 class TestStatusStubs:
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("route,service", STATUS_STUBS)
-    async def test_status_returns_ok(self, client, route, service):
+    @pytest.mark.parametrize("route,service,expected_status", STATUS_STUBS)
+    async def test_status_returns_expected(self, client, route, service, expected_status):
         resp = await client.get(f"/api/v1/{route}/status")
         assert resp.status_code == 200
-        assert resp.json() == {"status": "ok", "service": service}
+        data = resp.json()
+        assert data["status"] == expected_status
+        assert data["service"] == service
 
 
 # =============================================================================

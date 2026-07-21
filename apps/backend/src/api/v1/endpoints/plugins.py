@@ -8,7 +8,7 @@ Backed by core/plugin/ (PluginManager, HookRegistry).
 import logging
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Body, HTTPException
+from fastapi import APIRouter, Body, HTTPException, Query
 
 logger = logging.getLogger(__name__)
 
