@@ -196,6 +196,9 @@ class AutonomousLifeCycle:
         self._interaction_quality: deque = deque(maxlen=20)
         self._interaction_count: int = 0
 
+        # Life Essence accumulation system (generational iteration & deep personality)
+        self._life_essence = None  # lazy init via _get_life_essence()
+
         # Auto-load persisted state
         if self._persist_path and os.path.exists(self._persist_path):
             self.load_state(self._persist_path)
@@ -238,6 +241,16 @@ class AutonomousLifeCycle:
                 logger.debug("Lifecycle task cancelled during shutdown")
 
         await self.hsm.shutdown()
+
+    def _get_life_essence(self):
+        """Lazy initialize the LifeEssence accumulation system."""
+        if self._life_essence is None:
+            try:
+                from core.life.life_essence import get_life_essence
+                self._life_essence = get_life_essence()
+            except Exception as e:
+                logger.debug(f"[LifeEssence] Not available: {e}")
+        return self._life_essence
 
     def set_dynamic_params_manager(self, manager: Any) -> None:
         """Set the DynamicThresholdManager for dynamic threshold integration"""
@@ -313,6 +326,19 @@ class AutonomousLifeCycle:
 
             # Check for phase transitions
             await self._check_phase_transition(metrics)
+
+            # Check for generational bloom (LifeEssence accumulation)
+            le = self._get_life_essence()
+            if le and le.should_bloom():
+                try:
+                    summary = self.get_lifecycle_summary()
+                    le.bloom(summary)
+                    logger.info(
+                        f"[LifeCycle] 🌸 Generational bloom at generation {le.generation}, "
+                        f"tendencies: {le.get_all_blended_tendencies()}"
+                    )
+                except Exception as e:
+                    logger.warning(f"[LifeCycle] Generational bloom failed: {e}")
 
             await asyncio.sleep(self._decision_interval)
 
@@ -612,6 +638,16 @@ class AutonomousLifeCycle:
         self.decision_history.append(decision)
         self.decisions_made += 1
 
+        # Record essence trace for life accumulation
+        le = self._get_life_essence()
+        if le:
+            le.record_decision_trace(
+                decision_type=decision.decision_type,
+                triggered_by=decision.triggered_by,
+                confidence=decision.confidence,
+                phase=decision.phase.name,
+            )
+
         # Notify callbacks
         for callback in self._decision_callbacks:
             try:
@@ -805,6 +841,17 @@ class AutonomousLifeCycle:
 
         if new_phase != old_phase:
             self.current_phase = new_phase
+
+            # Record phase transition in LifeEssence
+            le = self._get_life_essence()
+            if le:
+                metrics_dict = {
+                    "life_intensity": metrics.life_intensity,
+                    "hsm_value": metrics.hsm_value,
+                    "a_c": metrics.a_c,
+                    "cdm_conversion_rate": metrics.cdm_conversion_rate,
+                }
+                le.record_phase_transition(old_phase.name, new_phase.name, metrics_dict)
 
             # Notify callbacks
             for callback in self._phase_callbacks:
@@ -1023,6 +1070,14 @@ class AutonomousLifeCycle:
         C³ 6.0: Closes the lifecycle→routing→interaction→feedback loop.
         """
         self._interaction_quality.append({"engagement": engagement_ratio, "success": success})
+
+        # Record interaction trace in LifeEssence
+        le = self._get_life_essence()
+        if le:
+            le.record_interaction_trace(
+                engagement_ratio=engagement_ratio,
+                success=success,
+            )
         self._interaction_count += 1
         avg = sum(q["engagement"] for q in self._interaction_quality) / len(
             self._interaction_quality
@@ -1055,9 +1110,19 @@ class AutonomousLifeCycle:
         """Persist lifecycle state (decision history, stats, behavior executor type stats)
         to a JSON file so the lifecycle resumes with accumulated context across restarts.
 
+        Also persists LifeEssence state concurrently so generational wisdom is preserved.
+
         Args:
             path: File path to save state to.
         """
+        # Save LifeEssence state alongside lifecycle state
+        le = self._get_life_essence()
+        if le:
+            try:
+                le_essence_path = path.replace("autonomous_lifecycle_state", "life_essence_state")
+                le.save_state(le_essence_path)
+            except Exception as e:
+                logger.debug(f"[LifeEssence] Save skipped: {e}")
         state = {
             "explorations_triggered": self.explorations_triggered,
             "coexistence_activated": self.coexistence_activated,
