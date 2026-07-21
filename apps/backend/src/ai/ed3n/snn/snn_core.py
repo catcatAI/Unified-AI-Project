@@ -5,12 +5,15 @@
 SNN-based core network replacing sequential CoreNetwork.
 """
 
+import logging
 from typing import Any, Dict, List, Optional
 
 from core.system.config.magic_numbers import compute_bool
 
 from .hormonal_modulator import HormonalModulator
 from .lif_neuron import LIFNeuron
+
+logger = logging.getLogger(__name__)
 
 try:
     from ..relation_classifier import RelationClassifier

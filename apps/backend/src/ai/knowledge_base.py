@@ -105,7 +105,6 @@ _ANTONYMS: Dict[str, str] = {
     "fast": "slow",
     "slow": "fast",
     "quick": "slow",
-    "slow": "quick",
     "happy": "sad",
     "sad": "happy",
     "open": "closed",
