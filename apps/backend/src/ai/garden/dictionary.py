@@ -219,9 +219,26 @@ class _CharBagEncoder:
 
 
 class _STEncoder:
-    """Wraps sentence-transformers SentenceTransformer for semantic encoding."""
+    """Wraps sentence-transformers SentenceTransformer for semantic encoding.
+
+    Uses a class-level model cache so the heavy SentenceTransformer model is
+    loaded exactly once per process.  This prevents cross-test thread-pool
+    contamination that can trigger ``Windows fatal exception: access violation``
+    in torch on Windows + Python 3.14 (``transformers`` internal
+    ``ThreadPoolExecutor`` workers accessing memory-mapped model files after
+    the test fixture has been torn down).
+    """
+
+    _model_cache: Dict[str, "_STEncoder"] = {}
 
     def __init__(self, model_name: str):
+        # Fast path: return model reference from the cached instance.
+        # Python always calls __init__ on the returned object, so we
+        # copy _model from the cached instance.
+        if model_name in self._model_cache:
+            self._model = self._model_cache[model_name]._model
+            return
+
         from ._import_utils import subprocess_check
 
         if not subprocess_check("sentence_transformers"):
@@ -230,6 +247,8 @@ class _STEncoder:
             from sentence_transformers import SentenceTransformer
 
             self._model = SentenceTransformer(model_name)
+            # Cache once loaded successfully
+            self._model_cache[model_name] = self
         except (ImportError, Exception) as e:
             raise ImportError(f"sentence_transformers not available: {e}")
         logger.info("GARDEN: loaded SentenceTransformer model '%s'", model_name)
