@@ -26,7 +26,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum, auto
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Dict, Optional
 
 from ai.lifecycle.llm_decision_loop import LLMDecisionLoop
 from ai.lifecycle.user_monitor import UserMonitor

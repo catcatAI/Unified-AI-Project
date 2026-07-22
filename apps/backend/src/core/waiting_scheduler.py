@@ -20,6 +20,7 @@ WaitingScheduler — 統一把等待線程
 from __future__ import annotations
 
 import asyncio
+from typing import Dict
 import time
 from dataclasses import dataclass
 from typing import Any, Optional

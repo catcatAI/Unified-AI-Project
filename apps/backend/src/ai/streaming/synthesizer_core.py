@@ -12,7 +12,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Any, Deque, Dict, List, Optional
 
-from .token_stream import StreamToken, TokenType, StreamToken, TokenType
+from .token_stream import StreamToken, TokenStream, TokenType
 
 
 @dataclass
