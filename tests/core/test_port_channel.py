@@ -106,17 +106,3 @@ def test_axis_output_manager_get_port_summary_no_channel():
     assert summary["status"] == "no_channel"
 
 
-if __name__ == "__main__":
-    test_port_channel_push_pull()
-    test_port_channel_overflow()
-    test_port_channel_peek()
-    test_port_channel_clear()
-    test_port_channel_is_full()
-    test_port_channel_summary()
-    test_axis_output_manager_init()
-    test_axis_output_manager_push_to_port_no_registry()
-    test_axis_output_manager_output_no_registry()
-    test_axis_output_manager_input_no_registry()
-    test_axis_output_manager_batch_output()
-    test_axis_output_manager_get_port_summary_no_channel()
-    print("All port_channel tests passed!")

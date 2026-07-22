@@ -2,12 +2,14 @@
 import pytest
 
 
+@pytest.mark.asyncio
 async def test_main_api_server_import():
     """Test main API server module can be imported"""
     from services.main_api_server import app
     assert app.title == "Angela AI API"
 
 
+@pytest.mark.asyncio
 async def test_app_title():
     """Test FastAPI app has correct title"""
     from services.main_api_server import app
@@ -16,6 +18,7 @@ async def test_app_title():
     assert app.version == "7.5.0-dev"
 
 
+@pytest.mark.asyncio
 async def test_app_has_websocket_route():
     """Test app has WebSocket route configured"""
     from services.main_api_server import app

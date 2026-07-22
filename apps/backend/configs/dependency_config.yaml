@@ -1,5 +1,8 @@
 # Dependency Configuration for Unified AI Project
-# This file defines core dependencies, optional dependencies, and their fallbacks
+# STALE: This file is OUT OF SYNC with the actual pyproject.toml.
+# The authoritative dependency list is in apps/backend/pyproject.toml.
+# This file is retained for historical reference only.
+# Last verified accurate: 2026-07-01 (now stale as of 2026-07-22)
 
 dependencies:
   # Core/Essential Dependencies - Project cannot run without these

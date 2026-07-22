@@ -99,23 +99,3 @@ def test_influence_rules_structure():
     assert INFLUENCE_RULES['gamma']['alpha']
 
 
-if __name__ == '__main__':
-    tests = [
-        test_applicator_basic,
-        test_applicator_gamma_to_alpha,
-        test_applicator_no_rule,
-        test_apply_influence_to_axis,
-        test_global_applicator_singleton,
-        test_custom_rules,
-        test_influence_rules_structure,
-    ]
-    passed = 0
-    failed = 0
-    for t in tests:
-        try:
-            t()
-            passed += 1
-        except Exception as e:
-            print(f"FAIL {t.__name__}: {e}")
-            failed += 1
-    print(f"\nInfluenceApplicator: {passed} passed, {failed} failed")

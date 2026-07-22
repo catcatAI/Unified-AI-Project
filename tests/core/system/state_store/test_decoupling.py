@@ -40,5 +40,3 @@ async def test_state_decoupling() -> None:
     print("\n✅ State decoupling test passed!")
 
 
-if __name__ == "__main__":
-    asyncio.run(test_state_decoupling())

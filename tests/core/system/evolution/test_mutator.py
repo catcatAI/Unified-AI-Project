@@ -34,5 +34,3 @@ def test_config_mutator() -> None:
     print("\n✅ ConfigMutator basic tests passed!")
 
 
-if __name__ == "__main__":
-    test_config_mutator()

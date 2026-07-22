@@ -153,30 +153,3 @@ def test_empty_temporal():
     assert tl.get_field_series('alpha', 'focus', 10) == []
 
 
-if __name__ == '__main__':
-    tests = [
-        test_record_and_get,
-        test_negative_index,
-        test_recent,
-        test_trend_rising,
-        test_trend_insufficient_data,
-        test_anomalies,
-        test_correlation,
-        test_find_drift,
-        test_query_by_axis,
-        test_query_by_field,
-        test_max_size_eviction,
-        test_clear,
-        test_callback,
-        test_empty_temporal,
-    ]
-    passed = 0
-    failed = 0
-    for t in tests:
-        try:
-            t()
-            passed += 1
-        except Exception as e:
-            print(f"FAIL {t.__name__}: {e}")
-            failed += 1
-    print(f"\nTemporalState: {passed} passed, {failed} failed")

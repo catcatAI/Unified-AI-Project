@@ -195,26 +195,3 @@ def test_decision_repr():
     assert 'alpha' in repr_str
 
 
-if __name__ == '__main__':
-    tests = [
-        test_assign_stage_high_sim,
-        test_assign_stage_low_sim,
-        test_composite_stage,
-        test_create_stage,
-        test_defer_stage,
-        test_policy_full_pipeline,
-        test_policy_falls_through_to_defer,
-        test_policy_decide_from_profile,
-        test_add_remove_stage,
-        test_decision_repr,
-    ]
-    passed = 0
-    failed = 0
-    for t in tests:
-        try:
-            t()
-            passed += 1
-        except Exception as e:
-            print(f"FAIL {t.__name__}: {e}")
-            failed += 1
-    print(f"\nAllocationPolicy: {passed} passed, {failed} failed")

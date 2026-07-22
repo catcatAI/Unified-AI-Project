@@ -85,25 +85,40 @@ class OntologySystem:
 try:
     from .alignment_manager import AlignmentManager
 except ImportError:
+    logger.debug("alignment_manager not available, using stub")
 
     class AlignmentManager:
-        pass
+        def __init__(self, *args, **kwargs):
+            raise ImportError(
+                "AlignmentManager requires ai.alignment.alignment_manager module. "
+                "Install with: pip install -e 'apps/backend[ml]'"
+            )
 
 
 try:
     from .decision_theory_system import DecisionTheorySystem
 except ImportError:
+    logger.debug("decision_theory_system not available, using stub")
 
     class DecisionTheorySystem:
-        pass
+        def __init__(self, *args, **kwargs):
+            raise ImportError(
+                "DecisionTheorySystem requires ai.alignment.decision_theory_system module. "
+                "Install with: pip install -e 'apps/backend[ml]'"
+            )
 
 
 try:
     from .adversarial_generation_system import AdversarialGenerationSystem
 except ImportError:
+    logger.debug("adversarial_generation_system not available, using stub")
 
     class AdversarialGenerationSystem:
-        pass
+        def __init__(self, *args, **kwargs):
+            raise ImportError(
+                "AdversarialGenerationSystem requires ai.alignment.adversarial_generation_system module. "
+                "Install with: pip install -e 'apps/backend[ml]'"
+            )
 
 
 class ASIAutonomousAlignment:

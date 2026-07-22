@@ -109,15 +109,3 @@ def test_exact_line_match():
     print("\nExact line match PASSED")
 
 
-if __name__ == "__main__":
-    print("=" * 60)
-    print("POEM CONTENT RETRIEVAL TEST")
-    print("=" * 60)
-
-    test_poem_retrieval()
-    test_poem_with_ed3n()
-    test_exact_line_match()
-
-    print("\n" + "=" * 60)
-    print("ALL TESTS PASSED")
-    print("=" * 60)

@@ -110,16 +110,3 @@ def test_theta_router_report():
     assert "recent_decisions" in report
 
 
-if __name__ == "__main__":
-    test_route_decision()
-    test_route_decision_create_axis()
-    test_theta_router_init()
-    test_theta_router_resolve_skip_no_port()
-    test_theta_router_auto_allocate_no_registry()
-    test_theta_router_merge_input_no_registry()
-    test_theta_router_cascade_no_registry()
-    test_theta_router_cascade_empty_outputs()
-    test_theta_router_re_evaluate_no_registry()
-    test_theta_router_record_routing()
-    test_theta_router_report()
-    print("All theta_router tests passed!")

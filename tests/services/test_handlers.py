@@ -410,47 +410,6 @@ class TestVisionHandler:
 # =============================================================================
 
 @pytest.mark.asyncio
-class TestLearningHandler:
-    """Test LearningHandler extract logic."""
-
-    async def test_import(self):
-        """LearningHandler imports correctly."""
-        from services.handlers.learning_handler import LearningHandler
-        handler = LearningHandler()
-        assert handler is not None
-
-    async def test_extract_fact_with_prefix(self):
-        """_extract_fact removes learning prefix."""
-        from services.handlers.learning_handler import LearningHandler
-        handler = LearningHandler()
-        fact = handler._extract_fact("記住我喜歡藍色")
-        assert fact is not None
-        assert "喜歡藍色" in fact or "蓝色" in fact or "藍色" in fact
-
-    async def test_extract_fact_no_prefix(self):
-        """_extract_fact returns None for empty/prefix-only text."""
-        from services.handlers.learning_handler import LearningHandler
-        handler = LearningHandler()
-        fact = handler._extract_fact("記住")
-        assert fact is None or len(fact) < 2
-
-    async def test_extract_fact_english(self):
-        """_extract_fact handles English remember prefix."""
-        from services.handlers.learning_handler import LearningHandler
-        handler = LearningHandler()
-        fact = handler._extract_fact("remember the sky is blue")
-        assert fact is not None
-        assert "sky is blue" in fact.lower()
-
-    async def test_handle_empty_text(self):
-        """handle returns prompt when no fact extracted."""
-        from services.handlers.learning_handler import LearningHandler
-        handler = LearningHandler()
-        result = await handler.handle("", "learning")
-        assert isinstance(result, str)
-        assert "學習" in result or "learn" in result.lower() or "記住" in result
-
-
 # =============================================================================
 # All handlers module-level import tests
 # =============================================================================

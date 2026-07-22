@@ -5,11 +5,13 @@ from core.life.evolution_engine import EvolutionEngine
 
 
 class TestSelfImprovement:
+    @pytest.mark.asyncio
     async def test_evolution_engine_instantiation(self):
         engine = EvolutionEngine()
         assert engine is not None
         assert len(engine._traits) == 5
 
+    @pytest.mark.asyncio
     async def test_evolution_engine_get_trait_default(self):
         engine = EvolutionEngine()
         trait = engine.get_trait("openness")

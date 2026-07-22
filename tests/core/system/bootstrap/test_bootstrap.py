@@ -25,5 +25,3 @@ def test_bootstrap() -> None:
     print("\n✅ Bootstrap test passed!")
 
 
-if __name__ == "__main__":
-    test_bootstrap()

@@ -592,7 +592,8 @@ class TrustManager:
 
             return max(0.1, min(1.0, confidence))
 
-        except Exception:
+        except Exception as e:
+            logger.debug("Evidence confidence calculation failed: %s", e)
             return 0.5
 
     def _get_current_evidence_count(
@@ -689,7 +690,8 @@ class TrustManager:
                 "category_assessments": category_risks,
             }
 
-        except Exception:
+        except Exception as e:
+            logger.warning("Risk assessment failed for entity %s: %s", entity_id, e)
             return {"overall_risk_level": 0.0, "risk_category": "none", "category_assessments": {}}
 
     def _get_trust_history_summary(self, entity_id: str) -> List[Dict[str, Any]]:
@@ -743,7 +745,8 @@ class TrustManager:
 
             return max(0.0, min(1.0, overall_risk))
 
-        except Exception:
+        except Exception as e:
+            logger.debug("Category risk calculation failed for %s/%s: %s", entity_id, category, e)
             return 0.0
 
     def _calculate_category_history_risk(
@@ -769,7 +772,8 @@ class TrustManager:
 
             return total_volatility / max(1, total_categories)
 
-        except Exception:
+        except Exception as e:
+            logger.debug("Category history risk calculation failed for %s/%s: %s", entity_id, category, e)
             return 0.0
 
     def _calculate_category_feature_risk(
@@ -795,7 +799,8 @@ class TrustManager:
             else:
                 return 0.0
 
-        except Exception:
+        except Exception as e:
+            logger.debug("Category feature risk calculation failed for %s/%s: %s", entity_id, category, e)
             return 0.0
 
     def _generate_risk_recommendations(
@@ -882,7 +887,8 @@ class TrustManager:
 
             return self._calculate_trend(all_scores)
 
-        except Exception:
+        except Exception as e:
+            logger.debug("Trust trend calculation failed for %s: %s", entity_id, e)
             return "stable"
 
     def _cleanup_cache_if_needed(self) -> None:

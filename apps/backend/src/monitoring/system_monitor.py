@@ -9,19 +9,17 @@ import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from unittest.mock import Mock
 
 from core.system.config.magic_numbers import threshold_value
 
 # Mock dependencies for syntax validation
 try:
     import psutil
+
+    PSUTIL_AVAILABLE = True
 except ImportError:
-    psutil = Mock()
-    psutil.cpu_percent.return_value = 0.0
-    psutil.virtual_memory.return_value = Mock(percent=0.0, available=0.0)
-    psutil.disk_usage.return_value = Mock(used=0.0, total=1.0, percent=0.0)
-    psutil.net_io_counters.return_value = Mock(bytes_sent=0, bytes_recv=0)
+    PSUTIL_AVAILABLE = False
+    psutil = None
 
 try:
     import warnings
@@ -30,8 +28,7 @@ try:
         warnings.filterwarnings("ignore", category=DeprecationWarning, module="pynvml")
         import pynvml  # type: ignore[import-untyped]
 except ImportError:
-    pynvml = Mock()
-    pynvml.nvmlInit.side_effect = ImportError
+    pynvml = None
 
 logger = logging.getLogger(__name__)
 
@@ -63,12 +60,18 @@ class SystemMonitor:
         self.max_history_size = self.config.get("max_history_size", 1000)
         self.monitoring_interval = self.config.get("monitoring_interval", 5)  # 秒
         self.is_monitoring = False
-        self._last_net_io = psutil.net_io_counters()
+        if PSUTIL_AVAILABLE:
+            self._last_net_io = psutil.net_io_counters()
+        else:
+            self._last_net_io = None
+            logger.warning("psutil not available — system metrics collection disabled")
         self.gpu_available = self._init_gpu_monitoring()
         logger.info("系统监控器 初始化完成")
 
     def _init_gpu_monitoring(self) -> bool:
         """Init gpu monitoring."""
+        if pynvml is None:
+            return False
         try:
             pynvml.nvmlInit()
             logger.info("GPU监控初始化成功")
@@ -107,6 +110,17 @@ class SystemMonitor:
 
     def collect_metrics(self) -> SystemMetrics:
         """Execute the collect metrics operation."""
+        if not PSUTIL_AVAILABLE:
+            return SystemMetrics(
+                timestamp=datetime.now().isoformat(),
+                cpu_percent=0.0,
+                memory_percent=0.0,
+                memory_available_gb=0.0,
+                disk_usage_percent=0.0,
+                network_bytes_sent=0,
+                network_bytes_recv=0,
+                gpu_info=[],
+            )
         cpu_percent = psutil.cpu_percent(interval=1)
         memory = psutil.virtual_memory()
         disk = psutil.disk_usage("/")
