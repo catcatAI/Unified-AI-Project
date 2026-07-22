@@ -4,11 +4,13 @@ Angela AI Desktop App Comprehensive Test Suite
 Tests frontend components, backend communication, and UI functionality
 """
 
+import os
 import sys
 import json
 import asyncio
 import time
 from datetime import datetime
+from pathlib import Path
 import logging
 logger = logging.getLogger(__name__)
 
@@ -174,9 +176,6 @@ class DesktopAppTester:
 
     def test_frontend_code(self):
         print_header("Frontend Code Tests")
-        from pathlib import Path
-import os
-
         base_path = str(Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "desktop-app" / "electron_app")
 
         # Test critical files exist
@@ -244,9 +243,6 @@ import os
 
     def test_live2d_code(self):
         print_header("Live2D Code Tests")
-        from pathlib import Path
-import os
-
         live2d_js = str(Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "desktop-app" / "electron_app" / "js" / "live2d-manager.js")
 
         if not os.path.exists(live2d_js):
@@ -274,9 +270,6 @@ import os
 
     def test_main_js(self):
         print_header("Main Process (main.js) Tests")
-        from pathlib import Path
-import os
-
         main_js = str(Path.home() / "Desktop" / "Unified-AI-Project" / "apps" / "desktop-app" / "electron_app" / "main.js")
 
         if not os.path.exists(main_js):
@@ -342,10 +335,11 @@ async def main():
     results = await tester.run_all_tests()
 
     # Save results
-    with open(str(Path.home() / "Desktop" / "Unified-AI-Project" / "test_results.json"), 'w', encoding='utf-8') as f:
+    results_path = Path.home() / "Desktop" / "Unified-AI-Project" / "test_results.json"
+    with open(str(results_path), 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
 
-    print(f"\n{BOLD}Results saved to: {Path.home() / 'Desktop' / 'Unified-AI-Project' / 'test_results.json'}{RESET}")
+    print(f"\n{BOLD}Results saved to: {results_path}{RESET}")
 
 if __name__ == "__main__":
     asyncio.run(main())
