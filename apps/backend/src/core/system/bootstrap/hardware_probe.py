@@ -168,8 +168,11 @@ class HardwareProbe:
         """Maps tier to actual system constants from config."""
         if not self.specs:
             self.probe()
+        specs = self.specs
+        if specs is None:
+            return {}
         tiers = self.bootstrap_config.get("hardware_tiers", {})
-        tier_config = tiers.get(self.specs.performance_tier, tiers.get("Medium", {}))
+        tier_config = tiers.get(specs.performance_tier, tiers.get("Medium", {}))
 
         # Strip score_threshold from the constants
         return {k: v for k, v in tier_config.items() if k != "score_threshold"}

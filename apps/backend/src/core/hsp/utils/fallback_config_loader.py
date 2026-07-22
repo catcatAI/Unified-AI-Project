@@ -114,33 +114,39 @@ class FallbackConfigLoader:
     def get_fallback_config(self) -> Dict[str, Any]:
         """获取fallback协议配置"""
         config = self.load_config()
-        return config.get("hsp_fallback")
+        fb = config.get("hsp_fallback")
+        return fb if isinstance(fb, dict) else {}
 
     def get_hsp_config(self) -> Dict[str, Any]:
         """获取HSP主协议配置"""
         config = self.load_config()
-        return config.get("hsp_primary")
+        primary = config.get("hsp_primary")
+        return primary if isinstance(primary, dict) else {}
 
     def is_fallback_enabled(self) -> bool:
         """检查是否启用fallback协议"""
         fallback_config = self.get_fallback_config()
-        return fallback_config.get("enabled", True)
+        return fallback_config.get("enabled", True) if isinstance(fallback_config, dict) else True
 
     def get_protocol_config(self, protocol_name: str) -> Dict[str, Any]:
         """获取特定协议的配置"""
         fallback_config = self.get_fallback_config()
-        protocols = fallback_config.get("protocols")
-        return protocols.get(protocol_name)
+        protocols = fallback_config.get("protocols", {}) if isinstance(fallback_config, dict) else {}
+        if isinstance(protocols, dict):
+            return protocols.get(protocol_name, {})
+        return {}
 
     def get_message_config(self) -> Dict[str, Any]:
         """获取消息配置"""
         fallback_config = self.get_fallback_config()
-        return fallback_config.get("message")
+        msg = fallback_config.get("message") if isinstance(fallback_config, dict) else None
+        return msg if isinstance(msg, dict) else {}
 
     def get_logging_config(self) -> Dict[str, Any]:
         """获取日志配置"""
         fallback_config = self.get_fallback_config()
-        return fallback_config.get("logging")
+        lc = fallback_config.get("logging") if isinstance(fallback_config, dict) else None
+        return lc if isinstance(lc, dict) else {}
 
     def save_config(self, config: Dict[str, Any], path: Optional[str] = None) -> None:
         """保存配置到文件"""
