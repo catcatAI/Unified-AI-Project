@@ -26,21 +26,6 @@ from core.system.config.magic_numbers import loop_sleep
 logger = logging.getLogger(__name__)
 
 
-def get_static_level5_capabilities() -> Dict[str, Any]:
-    """获取静态Level 5能力"""
-    return {
-        "capabilities": [
-            "knowledge_processing",
-            "multimodal_fusion",
-            "cognitive_constraint",
-            "autonomous_evolution",
-            "creative_breakthrough",
-            "metacognition",
-        ],
-        "level": 5,
-    }
-
-
 @dataclass
 class Level5PerformanceMetrics:
     """Level 5 AGI 性能指标"""

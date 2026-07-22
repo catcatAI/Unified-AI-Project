@@ -96,9 +96,9 @@ def anchored_decode(
     parts: List[str] = []
     seen_surfaces: set = set()
     for item in scored:
-        entry: DictionaryEntry = item["entry"]
-        zh = entry.surface_forms.get("zh")
-        en = entry.surface_forms.get("en")
+        anchored_entry: DictionaryEntry = item["entry"]
+        zh = anchored_entry.surface_forms.get("zh")
+        en = anchored_entry.surface_forms.get("en")
         surface = zh or en or item["key"]
         if surface in seen_surfaces:
             continue

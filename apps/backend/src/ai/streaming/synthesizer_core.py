@@ -23,7 +23,6 @@ class SynthesizerConfig:
     min_verified_confidence: float = 0.7
     max_pending_predicted: int = 128
     max_verified_context: int = 256
-    correction_threshold: float = 0.6
     max_corrections: int = 16
     flush_interval: float = 0.01
     enable_corrections: bool = True
@@ -196,6 +195,3 @@ class StreamSynthesizer:
         return dict(self._stats)
 
 
-class StreamSynthesizer(StreamSynthesizer):
-    """Alias for compatibility."""
-    pass
