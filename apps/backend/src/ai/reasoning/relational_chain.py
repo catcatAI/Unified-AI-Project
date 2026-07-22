@@ -120,7 +120,7 @@ def parse_and_resolve_relational_chain(
     if not edges:
         return None
     ask_max = ask_direction(text)
-    sol = resolver(edges, entities, ask_max=ask_max)
+    sol = resolver(edges, entities, ask_max)
     if sol is None:
         return None
     comp_word = comp_word_greatest if ask_max else comp_word_least
