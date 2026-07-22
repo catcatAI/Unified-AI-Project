@@ -58,7 +58,7 @@ class DependencyManager:
             # Correctly locate the project root and then the config file
             current_dir = Path(__file__).parent
             project_root = current_dir.parent.parent.parent  # Navigate up from src/core/managers
-            config_path = project_root / "configs" / "dependency_config.yaml"
+            config_path = str(project_root / "configs" / "dependency_config.yaml")
 
         self._load_config(config_path)
         self._setup_dependency_statuses()

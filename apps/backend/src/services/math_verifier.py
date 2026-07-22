@@ -46,7 +46,7 @@ class MathExtractor:
     def __init__(self):
         self._ready = True
 
-    def extract(self, text: str) -> Optional[Tuple[str, float]]:
+    def extract(self, text: str) -> Optional[Tuple[str, Optional[float]]]:
         """Extract and evaluate a math expression from text."""
         patterns = [
             r"(?:計算|=?\s*)([\d\s\+\-\*\/\%\(\)\.]+?)\s*(?:\=|[\?。！？]|$)",
