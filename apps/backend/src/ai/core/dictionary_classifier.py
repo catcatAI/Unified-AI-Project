@@ -394,15 +394,16 @@ class DictionaryClassifier:
     def get_all_matches(self, text: str, threshold: float = 0.15) -> List[Dict]:
         """Get all matching entries above threshold."""
         self._ensure_loaded()
-        if not self._dictionary:
+        dictionary = self._dictionary
+        if not dictionary:
             return []
 
-        scores = self._dictionary.encode_soft(text)
+        scores = dictionary.encode_soft(text)
         results = []
         for key, score in scores.items():
             if score < threshold:
                 continue
-            entry = self._dictionary.entries.get(key)
+            entry = dictionary.entries.get(key)
             if not entry:
                 continue
             results.append(

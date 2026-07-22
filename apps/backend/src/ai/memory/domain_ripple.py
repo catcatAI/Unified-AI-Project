@@ -258,6 +258,8 @@ def apply_domain_cognition(state_matrix: Any, text: str, recent=None) -> Dict[st
     engine, value, cls = route_domain(text, recent)
     if value is None or not cls.get("meaningful"):
         return cls  # stateless / non-domain -> no state change
+    if engine is None:
+        return cls
     ripples = []
     try:
         ripples = engine.make_ripples(text, value) or []
