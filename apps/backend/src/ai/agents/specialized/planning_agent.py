@@ -31,7 +31,7 @@ class PlanningAgent:
         self._plans: Dict[str, Dict[str, Any]] = {}
         logger.info(f"PlanningAgent initialized with config: {self.config}")
 
-    def create_plan(self, goal: str, constraints: Dict[str, Any] = None) -> Dict[str, Any]:
+    def create_plan(self, goal: str, constraints: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Create a plan with steps to achieve a goal."""
         if not goal:
             return {"status": "error", "message": "No goal provided"}
@@ -54,7 +54,7 @@ class PlanningAgent:
         }
 
     def optimize_plan(
-        self, plan_id: str, optimization_criteria: Dict[str, Any] = None
+        self, plan_id: str, optimization_criteria: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Optimize an existing plan based on criteria."""
         if plan_id not in self._plans:
