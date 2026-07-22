@@ -373,10 +373,10 @@ def generate_template_id(content: str) -> str:
 def create_template(
     content: str,
     category: ResponseCategory,
-    keywords: list[str] = None,
-    angela_state: AngelaState = None,
-    user_impression: UserImpression = None,
-    metadata: dict[str, Any] = None,
+    keywords: Optional[list[str]] = None,
+    angela_state: Optional[AngelaState] = None,
+    user_impression: Optional[UserImpression] = None,
+    metadata: Optional[dict[str, Any]] = None,
 ) -> MemoryTemplate:
     """
     创建新模板的便捷函数

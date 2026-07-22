@@ -24,6 +24,8 @@ import logging
 import random
 import uuid
 
+from typing import Optional
+
 from core.system.config.magic_numbers import cache_value, llm_param, threshold_value
 
 logger = logging.getLogger(__name__)
@@ -45,7 +47,7 @@ class HSMFormulaSystem:
         self._running = False
         logger.debug("HSMFormulaSystem initialized")
 
-    def calculate_spontaneity(self, cognitive_gap: float, randomness: float = None) -> float:
+    def calculate_spontaneity(self, cognitive_gap: float, randomness: Optional[float] = None) -> float:
         if randomness is None:
             randomness = llm_param("hsm_default_randomness", 0.1)
         return cognitive_gap * randomness
@@ -77,7 +79,7 @@ class HSMFormulaSystem:
     def calculate_hsm(self) -> float:
         return self.calculate_c_gap() * self.get_e_m2()
 
-    def trigger_exploration(self, gap_id: str = None) -> ExplorationEvent:
+    def trigger_exploration(self, gap_id: Optional[str] = None) -> ExplorationEvent:
         triggered_by = gap_id or "general"
         # E_M2 injection: exploration carries the E_M2 randomness constant plus a
         # stochastic component, so the seed is always strictly positive.
@@ -186,7 +188,7 @@ class ExplorationEvent:
     def __init__(
         self,
         event_type: str = "",
-        data: dict = None,
+        data: Optional[dict] = None,
         triggered_by: str = "",
         random_seed: float = 0.0,
     ):
@@ -204,7 +206,7 @@ class ExplorationEvent:
 class GovernanceBlueprint:
     def __init__(
         self,
-        rules: list = None,
+        rules: Optional[list] = None,
         rule_id: str = "",
         status: str = "pending",
         confidence: float = 0.0,
@@ -224,7 +226,7 @@ class GovernanceBlueprint:
 class ExplorationResult:
     RULE_CANDIDATE = "rule_candidate"
 
-    def __init__(self, success: bool = False, findings: list = None):
+    def __init__(self, success: bool = False, findings: Optional[list] = None):
         self.success = success
         self.findings = findings or []
 

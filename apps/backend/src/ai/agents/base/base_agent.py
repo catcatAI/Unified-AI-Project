@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 class AgentError(Exception):
     """Base exception for all agent-related errors."""
 
-    def __init__(self, message: str, agent_id: str = None, error_type: str = None):
+    def __init__(self, message: str, agent_id: Optional[str] = None, error_type: Optional[str] = None):
         super().__init__(message)
         self.agent_id = agent_id
         self.error_type = error_type
@@ -102,7 +102,7 @@ class BaseAgent:
     def __init__(
         self,
         agent_id: str,
-        capabilities: list[dict[str, Any]] = None,
+        capabilities: Optional[list[dict[str, Any]]] = None,
         agent_name: str = "BaseAgent",
         alignment_enabled: bool = False,
     ) -> None:

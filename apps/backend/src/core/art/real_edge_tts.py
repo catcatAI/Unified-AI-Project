@@ -51,7 +51,7 @@ class AngelaRealVoice:
         "calm": "+0%",
     }
 
-    def __init__(self, output_dir: str = None):
+    def __init__(self, output_dir: Optional[str] = None):
         self.output_dir = Path(output_dir) if output_dir else Path.home() / "Desktop"
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -145,7 +145,7 @@ class AngelaRealVoice:
     async def express_emotion(
         self,
         emotion: str,
-        custom_text: str = None,
+        custom_text: Optional[str] = None,
     ) -> Optional[Path]:
         """
         生成带情绪的语音
@@ -192,7 +192,7 @@ class AngelaRealVoice:
     async def narration(
         self,
         story_text: str,
-        voice_name: str = None,
+        voice_name: Optional[str] = None,
     ) -> Optional[Path]:
         """
         生成叙述语音

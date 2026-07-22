@@ -44,7 +44,7 @@ class Axis:
     _fields: Dict[str, AxisField]
     values: Dict[str, float]
 
-    def __init__(self, axis_id: str = None, label: str = "", **kwargs):
+    def __init__(self, axis_id: Optional[str] = None, label: str = "", **kwargs):
         name = kwargs.get("name")
         if axis_id is None:
             axis_id = name
@@ -68,7 +68,7 @@ class Axis:
         self._fields = {}
 
     @classmethod
-    def from_config(cls, axis_id: str = None, label: str = "", **kwargs) -> "Axis":
+    def from_config(cls, axis_id: Optional[str] = None, label: str = "", **kwargs) -> "Axis":
         label = kwargs.pop("label", label)
         return cls(axis_id, label=label, **kwargs)
 

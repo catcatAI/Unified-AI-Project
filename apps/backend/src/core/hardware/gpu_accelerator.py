@@ -97,7 +97,7 @@ class GPUAcceleratorService:
             "ultra": RenderQuality.ULTRA,
         }
 
-    async def initialize(self, gpu_info: dict[str, Any] = None) -> bool:
+    async def initialize(self, gpu_info: Optional[dict[str, Any]] = None) -> bool:
         """
         初始化 GPU 加速服務
 
@@ -274,13 +274,13 @@ class GPUAcceleratorService:
         if len(self.metrics_history) > 100:
             self.metrics_history = self.metrics_history[-100:]
 
-    def get_metrics(self, context_id: str = None) -> list[GPUMetrics]:
+    def get_metrics(self, context_id: Optional[str] = None) -> list[GPUMetrics]:
         """獲取 GPU 指標歷史"""
         if context_id:
             return [m for m in self.metrics_history if m.context_id == context_id]
         return self.metrics_history
 
-    def get_average_fps(self, context_id: str = None) -> float:
+    def get_average_fps(self, context_id: Optional[str] = None) -> float:
         """計算平均 FPS"""
         metrics = self.get_metrics(context_id)
         if not metrics:
@@ -365,7 +365,7 @@ def get_gpu_service() -> GPUAcceleratorService:
     return _gpu_service
 
 
-async def initialize_gpu_service(gpu_info: dict[str, Any] = None) -> bool:
+async def initialize_gpu_service(gpu_info: Optional[dict[str, Any]] = None) -> bool:
     """初始化 GPU 加速服務"""
     service = get_gpu_service()
     return await service.initialize(gpu_info)
