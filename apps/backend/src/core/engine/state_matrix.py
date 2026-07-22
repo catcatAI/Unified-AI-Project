@@ -119,6 +119,14 @@ class StateMatrix4D:
         self._temporal_synced = False
 
         self._setup_dimensions()
+        # Type annotations for dynamically set dimension attributes (mypy compat)
+        self.alpha: DimensionState
+        self.beta: DimensionState
+        self.gamma: DimensionState
+        self.delta: DimensionState
+        self.epsilon: DimensionState
+        self.theta: DimensionState
+        self.zeta: DimensionState
         self._setup_systems()
         self._setup_history()
 
@@ -1133,7 +1141,7 @@ class StateMatrix4D:
         if len(self.history) > self.max_history:
             self.history.pop(0)
 
-    def _get_temporal_state(self) -> str:
+    def _get_temporal_state(self) -> Any:
         """獲取關聯的 TemporalState（用於雙軌整合）"""
         if not hasattr(self, "_temporal_state"):
             from core.state.temporal import TemporalState
