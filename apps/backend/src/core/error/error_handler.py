@@ -55,7 +55,7 @@ class CircuitBreaker:
         self._last_failure_time = time.time()
         if self._failure_count >= self.failure_threshold:
             self._is_open = True
-            logger.warning(f"Circuit breaker '{self.name}' opened")
+            logger.warning(f"Circuit breaker '{self.service_name}' opened")
 
     def record_success(self) -> None:
         self._failure_count = 0
