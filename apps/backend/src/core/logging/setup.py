@@ -7,7 +7,7 @@ import logging
 from pathlib import Path
 
 
-def setup_logging(level=logging.INFO, log_file="backend.log") -> str:
+def setup_logging(level=logging.INFO, log_file="backend.log") -> logging.Logger:
     """
     Initializes the global logging system.
     Should only be called once from entry points (main.py, main_api_server.py).

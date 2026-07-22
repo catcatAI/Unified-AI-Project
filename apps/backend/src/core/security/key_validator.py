@@ -203,7 +203,6 @@ class KeyValidator:
         logger.error(f"嚴重問題: {summary['critical_issues']}", exc_info=True)
         logger.info(f"高優先級問題: {summary['high_issues']}")
         logger.info(f"整體狀態: {'✓ 通過' if summary['all_valid'] else '✗ 失敗'}")
-        logger.info()
 
         # 打印詳細結果
         for result in self.results:
@@ -222,7 +221,6 @@ class KeyValidator:
             if not result.is_valid:
                 for issue in result.issues:
                     logger.info(f"  - {issue}")
-            logger.info()
 
         logger.info("=" * 80)
 
@@ -233,7 +231,6 @@ class KeyValidator:
             logger.info("2. 確保密鑰長度符合要求")
             logger.info("3. 不要使用佔位符或默認值")
             logger.info("4. 運行: python -m src.core.security.key_generator 生成新密鑰")
-            logger.info()
 
 
 # 全局實例
