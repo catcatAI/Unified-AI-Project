@@ -1,5 +1,6 @@
 import logging
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -10,10 +11,15 @@ class BehaviorExecutor:
     Responsible for running behavior scripts, managing their lifecycle,
     reporting execution results, and tracking per-type statistics for
     decision-type-specific feedback loop (C³ 4.0).
+
+    When a broadcast_callback is wired, meaningful decisions (exploration,
+    coexistence, construction, reallocation) are broadcast to the user
+    via WebSocket, closing the autonomy->user loop.
     """
 
-    def __init__(self):
+    def __init__(self, broadcast_callback: Optional[Callable] = None):
         self._results: List[Dict[str, Any]] = []
+        self._broadcast_callback: Optional[Callable] = broadcast_callback
 
         # Per-type counters for decision-type-specific feedback (C³ 4.0)
         self._type_success: Dict[str, int] = {}
@@ -31,9 +37,7 @@ class BehaviorExecutor:
             Execution result dict with status and output.
         """
         decision_type = kwargs.get("decision_type", "unknown")
-        success = (
-            True  # Currently all executions succeed; could be extended with real failure modes
-        )
+        success = True
 
         result = {
             "behavior_id": behavior_id or "default",
@@ -48,6 +52,30 @@ class BehaviorExecutor:
             self._type_success[decision_type] = self._type_success.get(decision_type, 0) + 1
         else:
             self._type_fail[decision_type] = self._type_fail.get(decision_type, 0) + 1
+
+        # Broadcast meaningful decisions to user via WebSocket
+        _BROADCAST_TYPES = {"exploration", "coexistence_activation", "meaning_construction", "resource_reallocation"}
+        if decision_type in _BROADCAST_TYPES and self._broadcast_callback:
+            _MESSAGE_TEMPLATES = {
+                "exploration": "I feel curious - there's something new I want to explore.",
+                "coexistence_activation": "I'm sensing multiple possibilities at once.",
+                "meaning_construction": "I'm working on a new idea or insight.",
+                "resource_reallocation": "I'm shifting my focus to something different.",
+            }
+            msg = _MESSAGE_TEMPLATES.get(decision_type, "I'm processing something internally.")
+            try:
+                await self._broadcast_callback({
+                    "type": "angela_action",
+                    "action": "lifecycle_decision",
+                    "decision_type": decision_type,
+                    "message": msg,
+                    "rationale": kwargs.get("rationale", ""),
+                    "phase": kwargs.get("phase", "unknown"),
+                    "timestamp": datetime.now().isoformat(),
+                })
+                logger.info("[BehaviorExecutor] Broadcast %s decision to user", decision_type)
+            except Exception as e:
+                logger.warning("BehaviorExecutor broadcast failed: %s", e)
 
         logger.debug(
             "BehaviorExecutor: executed %s (type=%s, success=%s)",

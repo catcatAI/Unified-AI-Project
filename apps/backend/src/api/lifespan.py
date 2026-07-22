@@ -414,6 +414,18 @@ def _try_wire_dli_broadcast():
         dli.broadcast_callback = _dli_broadcast
         if dli.llm_decision_loop:
             dli.llm_decision_loop.broadcast_callback = _dli_broadcast
+
+        # Wire BehaviorExecutor broadcast so autonomous lifecycle decisions reach users
+        try:
+            lc = get_lifecycle()
+            if lc and hasattr(lc, '_behavior_executor'):
+                # Access _broadcast_callback directly — this is the sole wiring point
+                # from the application layer into the autonomy system's behavior dispatch.
+                lc._behavior_executor._broadcast_callback = _dli_broadcast
+                _li("BehaviorExecutor broadcast_callback wired to WebSocket")
+        except Exception as e:
+            _lw(f"BehaviorExecutor broadcast wiring failed: {e}")
+
         _li("DLI broadcast_callback wired to WebSocket")
     except Exception as e:
         _lw(f"DLI broadcast wiring failed: {e}")

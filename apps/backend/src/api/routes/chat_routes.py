@@ -552,6 +552,22 @@ async def _build_chat_context(
     if history:
         context["history"] = history
 
+    # LifeEssence tendency injection: accumulated personality from historical traces
+    try:
+        from core.life.life_essence import get_life_essence
+        le = get_life_essence()
+        if le:
+            summary = le.get_essence_summary()
+            context["life_essence"] = {
+                "tendencies": le.get_all_blended_tendencies(),
+                "generation": le.generation,
+                "total_traces": summary.get("total_traces", 0),
+                "ancestral_cores": summary.get("ancestral_cores", 0),
+            }
+            logger.debug("LifeEssence tendencies injected into chat context")
+    except Exception as e:
+        logger.debug(f"LifeEssence injection unavailable: {e}")
+
 
 async def _handle_execution_gate(
     user_message: str,
