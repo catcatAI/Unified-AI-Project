@@ -496,8 +496,9 @@ async def try_intent_routing(
                 return result
             # _parse_task_type rejected it (anti-pattern / no format gate)
             logger.debug(f"Document routing rejected by secondary gate ({intent_name})")
-            context.pop("_detected_intent", None)
-            context.pop("_intent_confidence", None)
+            if context:
+                context.pop("_detected_intent", None)
+                context.pop("_intent_confidence", None)
             return None
 
         if context:

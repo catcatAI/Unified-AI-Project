@@ -309,7 +309,10 @@ if __name__ == "__main__":
     print(f"Serialized context size: {len(serialized)} bytes")
 
     deserialized = deserialize_context(serialized)
-    print(f"Deserialized context ID: {deserialized.context_id}")
+    if deserialized:
+        print(f"Deserialized context ID: {deserialized.context_id}")
+    else:
+        print("Deserialized context is None")
 
     context_hash = calculate_context_hash(test_context)
     print(f"Context hash: {context_hash}")
