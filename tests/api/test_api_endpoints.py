@@ -230,10 +230,9 @@ class TestDesktopAPI:
 # Status stub routes with their expected response shape
 # (route, service, expected_status)
 STATUS_STUBS = [
-    ("pet", "pet", "unavailable"),
+    # pet and tactile removed: services intentionally deleted in Phase 11/12
     ("vision", "vision", "ok"),
     ("audio", "audio", "ok"),
-    ("tactile", "tactile", "unavailable"),
     ("trace", "trace", "enabled"),
     ("plugins", "plugins", "ok"),
 ]

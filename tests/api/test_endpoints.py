@@ -5,10 +5,8 @@ from fastapi import APIRouter
 
 ENDPOINT_MODULES = [
     "drive",
-    "pet",
     "vision",
     "audio",
-    "tactile",
     "mobile",
     "trace",
 ]

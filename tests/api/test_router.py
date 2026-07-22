@@ -43,10 +43,10 @@ class TestRouterConstruction:
     def test_endpoint_routes_registered(self, router):
         """Check that known endpoint routes exist."""
         paths = _collect_paths(router)
-        prefixes = ["/api/v1/drive", "/api/v1/pet", "/api/v1/vision",
-                    "/api/v1/audio", "/api/v1/tactile", "/api/v1/mobile"]
+        prefixes = ["/api/v1/drive", "/api/v1/vision",
+                    "/api/v1/audio", "/api/v1/mobile"]
         found = any(any(p.startswith(prefix) for p in paths) for prefix in prefixes)
-        assert found, "No endpoint routes found (drive/pet/vision/audio/tactile/mobile)"
+        assert found, "No endpoint routes found (drive/vision/audio/mobile)"
 
 
 class TestOpsRoutes:
@@ -84,15 +84,15 @@ class TestIncludeEndpointRouters:
         test_router = APIRouter()
         include_endpoint_routers(test_router)
         paths = _collect_paths(test_router)
-        prefixes = ["/drive", "/pet", "/vision", "/audio",
-                     "/tactile", "/mobile", "/trace"]
+        prefixes = ["/drive", "/vision", "/audio",
+                     "/mobile", "/trace"]
         for prefix in prefixes:
             assert any(p.startswith(prefix) for p in paths), f"No routes with {prefix}"
 
     def test_all_endpoint_prefixes_in_main_router(self, router):
         paths = _collect_paths(router)
-        prefixes = ["/api/v1/drive", "/api/v1/pet", "/api/v1/vision",
-                     "/api/v1/audio", "/api/v1/tactile", "/api/v1/mobile",
+        prefixes = ["/api/v1/drive", "/api/v1/vision",
+                     "/api/v1/audio", "/api/v1/mobile",
                      "/api/v1/trace"]
         for prefix in prefixes:
             assert any(p.startswith(prefix) for p in paths), f"No routes with {prefix}"
