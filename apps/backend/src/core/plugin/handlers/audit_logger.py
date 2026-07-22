@@ -4,7 +4,7 @@ AuditLoggerHandler — C3 handler that logs all hook activity at DEBUG level.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ class AuditLoggerHandler:
                 "[Plugin:AuditLogger] hook=%s | data_summary=%s | ts=%s",
                 hook_name,
                 summary,
-                datetime.utcnow().isoformat(),
+                datetime.now(timezone.utc).isoformat(),
             )
             return data
 

@@ -4,7 +4,7 @@ MessageLoggerHandler — C3 on_message handler that logs and annotates user mess
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ async def message_logger_handler(data: dict) -> dict:
         model_id,
         len(user_text),
     )
-    data["plugin_logged_at"] = datetime.utcnow().isoformat()
+    data["plugin_logged_at"] = datetime.now(timezone.utc).isoformat()
     data["plugin_message_seq"] = _message_counter
     return data
 
@@ -45,6 +45,6 @@ class MessageLoggerHandler:
             model_id,
             len(user_text),
         )
-        data["plugin_logged_at"] = datetime.utcnow().isoformat()
+        data["plugin_logged_at"] = datetime.now(timezone.utc).isoformat()
         data["plugin_message_seq"] = self.counter
         return data
