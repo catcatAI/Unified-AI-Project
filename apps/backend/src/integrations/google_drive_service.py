@@ -110,8 +110,8 @@ class GoogleDriveService:
             logger.error(f"Authentication failed: {e}", exc_info=True)
             return False
 
-    def _get_service(self) -> str:
-        """Get service."""
+    def _get_service(self) -> Any:
+        """Get service (returns Google Drive API Resource)."""
         if self._service is not None:
             return self._service
         if not self.is_authenticated():

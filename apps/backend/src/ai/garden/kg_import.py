@@ -34,7 +34,12 @@ import math
 import os
 import random
 import re
-from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Set, Tuple
+
+if TYPE_CHECKING:
+    from ai.garden.dictionary import VectorDictionary
+    from ai.garden.garden_engine import GARDENEngine
+    from ai.garden.snn_core import TensorSNNCore
 
 logger = logging.getLogger(__name__)
 
