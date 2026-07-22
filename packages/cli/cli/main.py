@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Dict, Any, Callable
 import asyncio
+import inspect
 import logging
 
 logger = logging.getLogger(__name__)
@@ -478,7 +479,7 @@ async def main_cli_logic():
 
             args = parser.parse_args()
             if hasattr(args, 'func'):
-                if asyncio.iscoroutinefunction(args.func):
+                if inspect.iscoroutinefunction(args.func):
                     await args.func(args)
                 else:
                     args.func(args)

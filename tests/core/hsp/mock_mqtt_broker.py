@@ -1,6 +1,7 @@
 """Mock MQTT broker for testing purposes."""
 
 import asyncio
+import inspect
 import json
 
 
@@ -26,7 +27,7 @@ class MockMqttBroker:
         for sub_topic, callbacks in self.subscriptions.items():
             if self._topic_matches(sub_topic, topic):
                 for callback in callbacks:
-                    if asyncio.iscoroutinefunction(callback):
+                    if inspect.iscoroutinefunction(callback):
                         await callback(topic, payload, qos)
                     else:
                         callback(topic, payload, qos)

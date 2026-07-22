@@ -4,6 +4,7 @@ MCPConnector - 多代理通信協議連接器
 """
 
 import asyncio
+import inspect
 import json
 import logging
 import uuid
@@ -153,7 +154,7 @@ class MCPConnector:
                 command_name = topic_parts[3]
                 if command_name in self.command_handlers:
                     handler = self.command_handlers[command_name]
-                    if asyncio.iscoroutinefunction(handler):
+                    if inspect.iscoroutinefunction(handler):
                         asyncio.run_coroutine_threadsafe(handler(data.get("args")), self.loop)
                     else:
                         handler(data.get("args"))

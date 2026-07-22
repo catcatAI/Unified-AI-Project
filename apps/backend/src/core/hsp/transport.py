@@ -5,6 +5,7 @@ HSP Transport Abstraction Layer
 """
 
 import asyncio
+import inspect
 import logging
 from abc import ABC, abstractmethod
 from enum import Enum
@@ -165,7 +166,7 @@ class LocalIPCTransport(HSPTransport):
                     # 調用訂閱的回調
                     if topic in self._subscriptions:
                         callback = self._subscriptions[topic]
-                        if asyncio.iscoroutinefunction(callback):
+                        if inspect.iscoroutinefunction(callback):
                             await callback(payload)
                         else:
                             callback(payload)

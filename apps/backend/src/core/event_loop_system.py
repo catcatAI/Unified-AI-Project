@@ -21,6 +21,7 @@ Date: 2026-02-02
 from __future__ import annotations
 
 import asyncio
+import inspect
 import heapq
 import logging
 import time
@@ -626,7 +627,7 @@ class EventLoopSystem:
 
             if handler:
                 # Execute handler
-                if asyncio.iscoroutinefunction(handler):
+                if inspect.iscoroutinefunction(handler):
                     await handler(event)
                 else:
                     handler(event)

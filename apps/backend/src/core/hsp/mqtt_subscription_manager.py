@@ -10,6 +10,7 @@ HSP MQTT Subscription Manager
 """
 
 import asyncio
+import inspect
 import json
 import logging
 from dataclasses import dataclass
@@ -148,7 +149,7 @@ class MQTTSubscriptionManager:
                 # 检查客户端类型并调用相应方法
                 if hasattr(self.mqtt_client, "subscribe"):
                     # paho-mqtt 或 gmqtt
-                    if asyncio.iscoroutinefunction(self.mqtt_client.subscribe):
+                    if inspect.iscoroutinefunction(self.mqtt_client.subscribe):
                         await self.mqtt_client.subscribe(topic, qos)
                     else:
                         self.mqtt_client.subscribe(topic, qos)
@@ -200,7 +201,7 @@ class MQTTSubscriptionManager:
 
             try:
                 if hasattr(self.mqtt_client, "unsubscribe"):
-                    if asyncio.iscoroutinefunction(self.mqtt_client.unsubscribe):
+                    if inspect.iscoroutinefunction(self.mqtt_client.unsubscribe):
                         await self.mqtt_client.unsubscribe(topic)
                     else:
                         self.mqtt_client.unsubscribe(topic)
@@ -309,7 +310,7 @@ class MQTTSubscriptionManager:
             callbacks = self._callback_registry.get(matched_topic, [])
             for callback in callbacks:
                 try:
-                    if asyncio.iscoroutinefunction(callback):
+                    if inspect.iscoroutinefunction(callback):
                         await callback(topic, message, qos, retain)
                     else:
                         callback(topic, message, qos, retain)

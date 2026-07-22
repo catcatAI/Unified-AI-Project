@@ -10,6 +10,7 @@
 # =============================================================================
 
 import asyncio
+import inspect
 import json
 import logging
 from dataclasses import dataclass, field
@@ -249,7 +250,7 @@ class UserMonitor:
         """通知狀態變化"""
         for callback in self._state_change_callbacks:
             try:
-                if asyncio.iscoroutinefunction(callback):
+                if inspect.iscoroutinefunction(callback):
                     await callback(event_type, data)
                 else:
                     callback(event_type, data)

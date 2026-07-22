@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import json
 import logging
 import os
@@ -330,7 +331,7 @@ class HSPConnector:
         """异步分发事实消息到回调"""
         for callback in self._fact_callbacks:
             try:
-                if asyncio.iscoroutinefunction(callback):
+                if inspect.iscoroutinefunction(callback):
                     await callback(message)
                 else:
                     callback(message)
@@ -343,7 +344,7 @@ class HSPConnector:
         """异步分发能力广告消息到回调"""
         for callback in self._capability_advertisement_callbacks:
             try:
-                if asyncio.iscoroutinefunction(callback):
+                if inspect.iscoroutinefunction(callback):
                     await callback(message)
                 else:
                     callback(message)
@@ -356,7 +357,7 @@ class HSPConnector:
         """异步分发任务请求消息到回调"""
         for callback in self._task_request_callbacks:
             try:
-                if asyncio.iscoroutinefunction(callback):
+                if inspect.iscoroutinefunction(callback):
                     await callback(message)
                 else:
                     callback(message)
@@ -477,7 +478,7 @@ class HSPConnector:
             # Also call the mock subscribe method
             if hasattr(self.external_connector, "subscribe"):
                 # 确保subscribe方法是可等待的
-                if asyncio.iscoroutinefunction(self.external_connector.subscribe):
+                if inspect.iscoroutinefunction(self.external_connector.subscribe):
                     await self.external_connector.subscribe(topic, qos)
                 else:
                     # For synchronous subscribe methods, just call directly
@@ -485,7 +486,7 @@ class HSPConnector:
         else:
             if hasattr(self.external_connector, "subscribe"):
                 # 确保subscribe方法是可等待的
-                if asyncio.iscoroutinefunction(self.external_connector.subscribe):
+                if inspect.iscoroutinefunction(self.external_connector.subscribe):
                     await self.external_connector.subscribe(topic, qos)
                 else:
                     # For synchronous subscribe methods, just call directly
@@ -705,7 +706,7 @@ class HSPConnector:
             # Also call the mock subscribe method
             if hasattr(self.external_connector, "subscribe"):
                 # 确保subscribe方法是可等待的
-                if asyncio.iscoroutinefunction(self.external_connector.subscribe):
+                if inspect.iscoroutinefunction(self.external_connector.subscribe):
                     await self.external_connector.subscribe(topic, qos)
                 else:
                     # For synchronous subscribe methods, just call directly
@@ -713,7 +714,7 @@ class HSPConnector:
         else:
             if hasattr(self.external_connector, "subscribe"):
                 # 确保subscribe方法是可等待的
-                if asyncio.iscoroutinefunction(self.external_connector.subscribe):
+                if inspect.iscoroutinefunction(self.external_connector.subscribe):
                     await self.external_connector.subscribe(topic, qos)
                 else:
                     # For synchronous subscribe methods, just call directly
@@ -812,7 +813,7 @@ class HSPConnector:
             result_payload = HSPTaskResultPayload(**cast(Dict[str, Any], payload))
             for callback in self._task_result_callbacks:
                 self.logger.debug(f"Calling on_task_result_callback: {callback}")
-                if asyncio.iscoroutinefunction(callback):
+                if inspect.iscoroutinefunction(callback):
                     await callback(result_payload, sender_ai_id, validated_message)
                 else:
                     callback(result_payload, sender_ai_id, validated_message)
@@ -884,7 +885,7 @@ class HSPConnector:
 
             for callback in self._acknowledgement_callbacks:
                 self.logger.debug(f"Calling on_acknowledgement_callback: {callback}")
-                if asyncio.iscoroutinefunction(callback):
+                if inspect.iscoroutinefunction(callback):
                     await callback(ack_payload, sender_ai_id, validated_message)
                 else:
                     callback(ack_payload, sender_ai_id, validated_message)

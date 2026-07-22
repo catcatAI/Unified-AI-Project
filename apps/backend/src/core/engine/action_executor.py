@@ -21,6 +21,7 @@ Date: 2026-02-02
 from __future__ import annotations
 
 import asyncio
+import inspect
 import logging
 import uuid
 from dataclasses import dataclass, field
@@ -551,7 +552,7 @@ class ActionExecutor:
 
     async def _run_action_function(self, action: Action) -> Any:
         """Run the actual action function"""
-        if asyncio.iscoroutinefunction(action.function):
+        if inspect.iscoroutinefunction(action.function):
             return await action.function(**action.parameters)
         else:
             # Run sync function in thread pool

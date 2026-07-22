@@ -9,6 +9,7 @@ instead of independent asyncio.sleep() loops. Supports:
 """
 
 import asyncio
+import inspect
 import logging
 import time
 from dataclasses import dataclass, field
@@ -200,7 +201,7 @@ class GlobalSystemClock:
                 if current_tick - sub.last_tick >= sub.interval_ticks:
                     sub.last_tick = current_tick
                     try:
-                        if asyncio.iscoroutinefunction(sub.callback):
+                        if inspect.iscoroutinefunction(sub.callback):
                             await sub.callback(current_tick)
                         else:
                             sub.callback(current_tick)

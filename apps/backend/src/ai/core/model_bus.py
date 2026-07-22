@@ -199,7 +199,7 @@ class ModelBus:
             }
 
         try:
-            if asyncio.iscoroutinefunction(handler.process):
+            if inspect.iscoroutinefunction(handler.process):
                 result = await asyncio.wait_for(
                     handler.process(query, context),
                     timeout=30.0,
@@ -353,7 +353,7 @@ class ModelBus:
             handler = self._handlers[handler_id]
             try:
                 t0 = time.perf_counter()
-                if asyncio.iscoroutinefunction(handler.process):
+                if inspect.iscoroutinefunction(handler.process):
                     raw = await asyncio.wait_for(
                         handler.process(query, context or {"query_type": query_type}),
                         timeout=self.default_timeout,
@@ -531,7 +531,7 @@ class ModelBus:
         error: Optional[str] = None
 
         try:
-            if asyncio.iscoroutinefunction(engine.process):
+            if inspect.iscoroutinefunction(engine.process):
                 raw = await asyncio.wait_for(
                     engine.process(query, context=context),
                     timeout=self.default_timeout,
