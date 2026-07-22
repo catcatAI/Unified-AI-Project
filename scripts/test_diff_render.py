@@ -1,4 +1,6 @@
-import sys, os, numpy as np
+import sys
+import os
+import numpy as np
 sys.path.insert(0, os.path.join("apps", "backend", "src"))
 from ai.multimodal.primitives.differentiable_renderer import DifferentiableRenderer
 from PIL import Image
@@ -16,7 +18,7 @@ vec[8] = 0.0
 vec[9] = 0.0
 
 # Green plane
-off = 5 + 15*5 + 10*8
+off=5 + 15*5 + 10*8
 vec[off] = 0.5
 vec[off+1] = 0.5
 vec[off+2] = 0.3

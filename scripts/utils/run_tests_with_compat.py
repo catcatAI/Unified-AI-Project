@@ -19,10 +19,10 @@ def run_tests_with_compat() -> bool:
     project_root = os.path.dirname(os.path.abspath(__file__))
 
     print("Setting up compatibility environment...")
-    print(f"TF_USE_LEGACY_KERAS = {os.environ.get('TF_USE_LEGACY_KERAS', 'not set')}")
+    print(f"TF_USE_LEGACY_KERAS={os.environ.get('TF_USE_LEGACY_KERAS', 'not set')}")
 
     try:
-        cmd = [
+        cmd=[
             sys.executable, "-m", "pytest",
             "apps/backend/tests/",
             "-v",

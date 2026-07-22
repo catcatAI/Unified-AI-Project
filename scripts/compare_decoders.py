@@ -1,20 +1,22 @@
 """Compare decoder sizes on PCA 128 dims."""
-import sys, os, time
+import sys
+import os
+import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
 
 import numpy as np
 import glob
 from PIL import Image
 
-CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
-IMG_DIM = 3072
-LATENT_DIM = 128
-OUTPUT_BASE = "data/multimodal/gvv/decoder_compare"
+CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+IMG_DIM=3072
+LATENT_DIM=128
+OUTPUT_BASE="data/multimodal/gvv/decoder_compare"
 
 
 def load_cifar(n_per_class=50):
-    images, labels = [], []
+    images, labels=[], []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[:n_per_class]
@@ -35,7 +37,7 @@ def main():
     all_imgs, all_labels = load_cifar(50)
 
     rng = np.random.default_rng(42)
-    train_idx, test_idx = [], []
+    train_idx, test_idx=[], []
     for c in range(10):
         idxs = np.where(all_labels == c)[0]
         rng.shuffle(idxs)
@@ -58,20 +60,20 @@ def main():
     X_test = torch.tensor(test_latent, dtype=torch.float32)
 
     # Decoder configs
-    configs = {
+    configs={
         "small_2layer": [256, 512],
         "large_3layer": [512, 1024, 1024],
         "xlarge_4layer": [512, 1024, 1024, 1024],
     }
 
-    results = {}
+    results={}
 
     for name, hidden_dims in configs.items():
         print(f"\n{'='*50}")
         print(f"=== {name}: {hidden_dims} ===")
         print(f"{'='*50}")
 
-        layers = []
+        layers=[]
         in_dim = LATENT_DIM
         for h in hidden_dims:
             layers.extend([nn.Linear(in_dim, h), nn.ReLU()])
@@ -85,14 +87,14 @@ def main():
         optimizer = torch.optim.Adam(decoder.parameters(), lr=0.001)
         criterion = nn.MSELoss()
 
-        batch_size = 64
-        n_epochs = 50
+        batch_size=64
+        n_epochs=50
         t0 = time.time()
 
         for epoch in range(n_epochs):
             perm = torch.randperm(len(X_train))
-            total_loss = 0.0
-            n_batches = 0
+            total_loss=0.0
+            n_batches=0
             for i in range(0, len(X_train), batch_size):
                 idx = perm[i:i+batch_size]
                 x, y = X_train[idx], Y_train[idx]

@@ -1,5 +1,8 @@
 """Train concept space mapping on CIFAR-10 and test recognition."""
-import sys, os, time, io
+import sys
+import os
+import time
+import io
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
 
 import numpy as np
@@ -8,13 +11,13 @@ from PIL import Image
 from ai.multimodal.semantic_visual import SemanticVisualEncoder
 from ai.multimodal.primitives.concept_space import ConceptSpaceMapper
 
-CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
 
 
 def load_images(n_per_class=50, skip_first=0):
-    images = []
-    labels = []
+    images=[]
+    labels=[]
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[skip_first:skip_first+n_per_class]
@@ -32,7 +35,7 @@ def load_images(n_per_class=50, skip_first=0):
 
 def encode_images(encoder, images, batch_size=16):
     """Encode images with CLIP."""
-    all_vecs = []
+    all_vecs=[]
     for i in range(0, len(images), batch_size):
         batch = images[i:i+batch_size]
         for img in batch:
@@ -97,8 +100,8 @@ def main():
 
     # Test recognition
     print("\n=== Recognition on Training Set ===")
-    correct = 0
-    per_class = {c: [0, 0] for c in CLASSES}
+    correct=0
+    per_class={c: [0, 0] for c in CLASSES}
     for i in range(len(train_clip)):
         pred_idx, conf = mapper.predict(train_clip[i:i+1])
         pred = CLASSES[pred_idx]
@@ -114,8 +117,8 @@ def main():
         print(f"  {cls:12s}: {c}/{t} = {c/t:.1%}" if t > 0 else f"  {cls}: 0")
 
     print("\n=== Recognition on Test Set (held-out) ===")
-    correct = 0
-    per_class = {c: [0, 0] for c in CLASSES}
+    correct=0
+    per_class={c: [0, 0] for c in CLASSES}
     for i in range(len(test_clip)):
         pred_idx, conf = mapper.predict(test_clip[i:i+1])
         pred = CLASSES[pred_idx]

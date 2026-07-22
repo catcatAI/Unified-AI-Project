@@ -45,8 +45,8 @@ class FunctionTestMapper:
     def run_mapper(self):
         """Run the function-test mapper."""
         print("Running function-test mapper...")
-        mapping = self.create_function_test_mapping()
-        coverage = self.generate_coverage_report(mapping)
+        mapping=self.create_function_test_mapping()
+        coverage=self.generate_coverage_report(mapping)
         print(f"Mapping Results: {coverage}")
 
 

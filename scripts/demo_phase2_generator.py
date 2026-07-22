@@ -52,7 +52,7 @@ def main():
         renderer=renderer,
     )
     
-    texts = ["a red circle", "a blue square", "a green blob"]
+    texts=["a red circle", "a blue square", "a green blob"]
     for text in texts:
         img = img_gen.generate_from_text(text, canvas_size=(128, 128))
         arr = np.array(img)

@@ -22,8 +22,8 @@ def check_python():
 def check_dependencies():
     """检查核心依赖"""
     print("\n🔍 检查核心依赖...")
-    required_modules = ["fastapi", "uvicorn", "pydantic", "numpy", "pandas", "cpuinfo", "psutil"]
-    all_ok = True
+    required_modules=["fastapi", "uvicorn", "pydantic", "numpy", "pandas", "cpuinfo", "psutil"]
+    all_ok=True
     
     for module in required_modules:
         try:
@@ -31,7 +31,7 @@ def check_dependencies():
             print(f"✅ {module}")
         except ImportError:
             print(f"❌ {module} - 未安装")
-            all_ok = False
+            all_ok=False
     
     return all_ok
 
@@ -67,12 +67,12 @@ def check_node_modules():
 def check_config_files():
     """检查配置文件"""
     print("\n🔍 检查配置文件...")
-    config_files = [
+    config_files=[
         ".env", 
         "requirements.txt", 
         "apps/desktop-app/electron_app/package.json"
     ]
-    all_ok = True
+    all_ok=True
     
     for file in config_files:
         file_path = Path(file)
@@ -80,15 +80,15 @@ def check_config_files():
             print(f"✅ {file}")
         else:
             print(f"❌ {file} - 不存在")
-            all_ok = False
+            all_ok=False
     
     return all_ok
 
 def check_scripts():
     """检查关键脚本"""
     print("\n🔍 检查关键脚本...")
-    scripts = ["run_angela.py", "quick_start.py"]
-    all_ok = True
+    scripts=["run_angela.py", "quick_start.py"]
+    all_ok=True
     
     for script in scripts:
         script_path = Path(script)
@@ -96,7 +96,7 @@ def check_scripts():
             print(f"✅ {script}")
         else:
             print(f"❌ {script} - 不存在")
-            all_ok = False
+            all_ok=False
     
     return all_ok
 
@@ -104,7 +104,7 @@ def main():
     print("🌟 Angela AI 健康检查")
     print("=" * 50)
     
-    checks = [
+    checks=[
         check_python,
         check_dependencies,
         check_nodejs,
@@ -113,7 +113,7 @@ def main():
         check_scripts
     ]
     
-    results = []
+    results=[]
     for check in checks:
         results.append(check())
     

@@ -194,7 +194,7 @@ class CloudSyncManager:
         conflicts: 冲突列表 / Conflict list
     """
 
-    def __init__(self, config: CloudSyncConfig = None):
+    def __init__(self, config: Optional[CloudSyncConfig] = None):
         self.config = config or CloudSyncConfig()
         self.queue = SyncQueue()
         self.local_store: Dict[str, SyncItem] = {}

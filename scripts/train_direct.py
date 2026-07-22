@@ -9,7 +9,10 @@ Skip the decomposer entirely. For each image:
 This proves primitives CAN represent images. Then we train decomposer to predict these optimized vectors.
 """
 
-import sys, os, json, time
+import sys
+import os
+import json
+import time
 import numpy as np
 from PIL import Image
 
@@ -56,7 +59,7 @@ def optimize_primitives(target_arr, renderer, n_iters=200, lr=0.005):
         
         # Compute gradient via finite differences (subset)
         d_vec = np.zeros(TOTAL_DIM, dtype=np.float32)
-        eps = 0.015
+        eps=0.015
         probe_dims = np.random.choice(TOTAL_DIM, size=40, replace=False)
         
         for dim in probe_dims:
@@ -83,7 +86,7 @@ def main():
     data_dir = os.path.join(os.path.dirname(__file__), "..", "data", "multimodal", "cifar10")
     idx = json.load(open(os.path.join(data_dir, "index.json")))
 
-    images, labels = [], []
+    images, labels=[], []
     for cls in idx["classes"][:3]:
         cls_dir = os.path.join(data_dir, cls)
         for f in sorted(os.listdir(cls_dir))[:5]:
@@ -99,14 +102,14 @@ def main():
     evaluator = GenerationEvaluator()
 
     # Target images
-    target_arrs = [np.array(Image.fromarray(img).resize((128, 128), Image.LANCZOS),
+    target_arrs=[np.array(Image.fromarray(img).resize((128, 128), Image.LANCZOS),
                             dtype=np.float32) / 255.0 for img in images]
 
     # Optimize each image
     save_dir = os.path.join(os.path.dirname(__file__), "..", "data", "multimodal", "samples_direct")
     os.makedirs(save_dir, exist_ok=True)
 
-    optimized_vecs = []
+    optimized_vecs=[]
 
     print("\nOptimizing primitives per image...", flush=True)
     for i in range(len(images)):
@@ -134,7 +137,7 @@ def main():
             i, labels[i], opt_loss, sim_diff, sim_pil, elapsed), flush=True)
 
     # Save optimized vectors for decomposer training
-    opt_data = {
+    opt_data={
         "vectors": [v.tolist() for v in optimized_vecs],
         "labels": labels[:len(images)]
     }

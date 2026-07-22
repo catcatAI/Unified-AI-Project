@@ -175,7 +175,7 @@ class ChatService:
         if self._ed3n_learning_integration:
             self._ham_sync_task = asyncio.create_task(self._ham_sync_loop())
 
-    async def generate_response(self, user_message: str, user_name: str = "", context: dict = None):
+    async def generate_response(self, user_message: str, user_name: str = "", context: Optional[dict] = None):
         """Generate Angela's response to a user message."""
         if not self._initialized:
             await self.initialize()

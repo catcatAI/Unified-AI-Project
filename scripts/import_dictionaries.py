@@ -44,7 +44,7 @@ def import_json(dictionary: DictionaryLayer, path: Path) -> int:
         return 0
 
     # Filter out entries that already exist
-    bulk = [e for e in entries_data if e.get("key") and e["key"] not in dictionary.entries]
+    bulk=[e for e in entries_data if e.get("key") and e["key"] not in dictionary.entries]
     if not bulk:
         return 0
     return dictionary.bulk_add_entries(bulk)
@@ -92,12 +92,12 @@ def main():
     )
     args = parser.parse_args()
     if args.train:
-        args.engine = True
+        args.engine=True
 
     # Determine which files to import
     dict_dir = ROOT / "data" / "dictionaries"
     if args.files:
-        files = [Path(f) for f in args.files]
+        files=[Path(f) for f in args.files]
     else:
         files = sorted(dict_dir.glob("*.json"))
 
@@ -109,7 +109,7 @@ def main():
     dictionary = DictionaryLayer(max_entries=500000)
     dictionary.load_preset_responses()  # load built-in presets first
 
-    total = 0
+    total=0
     for f in files:
         if not f.exists():
             logger.warning("File not found: %s", f)
@@ -140,8 +140,8 @@ def main():
             logger.info("Starting relation-based co-occurrence training …")
             trainer = ED3NTrainer(engine)
             max_examples = limit_value("train.relation.max_examples", 2000)
-            examples: list = []
-            processed = 0
+            examples: list=[]
+            processed=0
             t0 = time.perf_counter()
             for key, entry in dictionary.entries.items():
                 if not entry.relations:

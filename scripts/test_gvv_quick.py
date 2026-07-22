@@ -19,11 +19,11 @@ from ai.multimodal.recognition.geometric_recognizer import GeometricRecognizer
 from ai.multimodal.primitives.primitive_types import DrawingInstructions, TOTAL_DIM
 from ai.multimodal.primitives.primitive_renderer import PrimitiveRenderer
 
-CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES = ["airplane", "automobile", "bird", "cat", "deer",
+CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES=["airplane", "automobile", "bird", "cat", "deer",
            "dog", "frog", "horse", "ship", "truck"]
-MODEL_DIR = "D:/Projects/Unified-AI-Project/models"
-DATA_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/gvv"
+MODEL_DIR="D:/Projects/Unified-AI-Project/models"
+DATA_DIR="D:/Projects/Unified-AI-Project/data/multimodal/gvv"
 CANVAS_SIZE = (128, 128)
 
 
@@ -64,7 +64,7 @@ def main():
     # 4. Quick generation test
     print("\n=== Quick Generation Test ===")
     pil_renderer = PrimitiveRenderer(CANVAS_SIZE)
-    gen_similarities = []
+    gen_similarities=[]
 
     for i in range(min(5, len(opt_vecs))):
         concept_name = CLASSES[opt_labels[i]]
@@ -98,12 +98,12 @@ def main():
     print("\n=== Quick Recognition Test ===")
     recognizer = GeometricRecognizer(vocab, canvas_size=CANVAS_SIZE)
 
-    correct = 0
+    correct=0
     for i in range(min(20, len(opt_vecs))):
         # Use recognize_from_vector (direct, no re-optimization)
         result = recognizer.recognize_from_vector(opt_vecs[i])
         actual = CLASSES[opt_labels[i]]
-        match = "✓" if result['predicted_class'] == actual else "✗"
+        match="✓" if result['predicted_class'] == actual else "✗"
         if result['predicted_class'] == actual:
             correct += 1
         if i < 10:
@@ -117,7 +117,7 @@ def main():
     print(f"Vocabulary: {len(vocab.get_visual_words())} visual words, {len(vocab._concept_distributions)} concepts")
     print(f"Average init→opt similarity: {np.mean(gen_similarities):.4f}")
 
-    results = {
+    results={
         "n_visual_words": len(vocab.get_visual_words()),
         "n_concepts": len(vocab._concept_distributions),
         "avg_init_opt_similarity": float(np.mean(gen_similarities)),

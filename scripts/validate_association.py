@@ -47,7 +47,7 @@ class AssocAdapter:
         self.kind = kind
         self.net = network
 
-    def add_edge(self, a: str, b: str, weight: float = 1.0) -> None:
+    def add_edge(self, a: str, b: str, weight: float=1.0) -> None:
         if self.kind == "ed3n":
             # Use the DIRECTED API so directionality is preserved (add_relation
             # is bidirectional and would mask directional/perturbation tests).
@@ -98,9 +98,9 @@ def build_garden() -> AssocAdapter:
 def metric_directional(builder, chain: List[str]) -> float:
     """For each edge A->B, forward([A]) must activate B above a baseline and
     forward([B]) must NOT activate A strongly (directionality)."""
-    correct = 0
-    total = 0
-    baseline = 0.0
+    correct=0
+    total=0
+    baseline=0.0
     for i in range(len(chain) - 1):
         a, b = chain[i], chain[i + 1]
         adj = builder()
@@ -140,7 +140,7 @@ def metric_ranking(builder, chain: List[str]) -> float:
         adj.register(chain[i + 1])
         adj.add_edge(chain[i], chain[i + 1], weight=1.0)
 
-    reach = {}
+    reach={}
     for node in chain:
         acts = adj.query([node])
         reach[node] = sum(1 for n in chain if n != node and acts.get(n, 0.0) > 0.0)
@@ -177,7 +177,7 @@ def run_engine(builder, label: str) -> Dict[str, float]:
     # Use a 3-node chain (A>B>C) for the structural metrics: this tests
     # WHETHER transitive/ranking association works, independent of each engine's
     # raw propagation depth (a separate concern, not the association ability).
-    chain = ["A", "B", "C"]
+    chain=["A", "B", "C"]
     results: Dict[str, float] = {}
     t0 = time.time()
 

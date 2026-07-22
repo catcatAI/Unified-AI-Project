@@ -3,23 +3,25 @@
 Uses torch autograd for fast decoder training (no finite differences).
 Shows concept space captures geometric essence of each class.
 """
-import sys, os, time
+import sys
+import os
+import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
 
 import numpy as np
 import glob
 from PIL import Image
 
-CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
-LATENT_DIM = 128
-IMG_DIM = 3072
-OUTPUT_DIR = "data/multimodal/gvv/three_layer_test"
+CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+LATENT_DIM=128
+IMG_DIM=3072
+OUTPUT_DIR="data/multimodal/gvv/three_layer_test"
 
 
 def load_cifar(n_per_class=50):
-    images = []
-    labels = []
+    images=[]
+    labels=[]
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[:n_per_class]
@@ -42,8 +44,8 @@ def main():
 
     # Stratified split
     rng = np.random.default_rng(42)
-    train_idx = []
-    test_idx = []
+    train_idx=[]
+    test_idx=[]
     for c in range(10):
         idxs = np.where(all_labels == c)[0]
         rng.shuffle(idxs)
@@ -106,14 +108,14 @@ def main():
     X_test = torch.tensor(test_latent, dtype=torch.float32)
 
     # Train
-    batch_size = 64
-    n_epochs = 100
+    batch_size=64
+    n_epochs=100
     t0 = time.time()
 
     for epoch in range(n_epochs):
         perm = torch.randperm(len(X_train))
-        total_loss = 0.0
-        n_batches = 0
+        total_loss=0.0
+        n_batches=0
 
         for i in range(0, len(X_train), batch_size):
             idx = perm[i:i+batch_size]
@@ -143,7 +145,7 @@ def main():
     with torch.no_grad():
         test_recon = decoder(X_test).numpy()
 
-    total_mse = 0.0
+    total_mse=0.0
     for i in range(10):
         orig = test_imgs[i].reshape(32, 32, 3)
         recon = test_recon[i].reshape(32, 32, 3)
@@ -172,7 +174,7 @@ def main():
 
     # === Generate from interpolation ===
     print("\n=== Interpolation: airplane → cat ===")
-    n_interp = 10
+    n_interp=10
     airplane_center = class_centers[0]
     cat_center = class_centers[3]
     alphas = np.linspace(0, 1, n_interp)

@@ -20,7 +20,7 @@ async def main() -> None:
     print("ED3N TERMINAL DIALOGUE TEST")
     print("=" * 70)
 
-    turns = [
+    turns=[
         "what color is the sky",                       # knowledge: sky->blue
         "what is the red planet",                      # knowledge: mars
         "who is taller, a or c",                        # relational chain A>B>C

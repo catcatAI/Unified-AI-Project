@@ -15,18 +15,18 @@ from ai.multimodal.primitives.differentiable_renderer import DifferentiableRende
 from ai.multimodal.primitives.primitive_types import DrawingInstructions, TOTAL_DIM
 from ai.multimodal.primitives.primitive_renderer import PrimitiveRenderer
 
-CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES = ["airplane", "automobile", "bird", "cat", "deer",
+CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES=["airplane", "automobile", "bird", "cat", "deer",
            "dog", "frog", "horse", "ship", "truck"]
-NUM_IMAGES = 50
-N_ITERS = 15
-LR = 0.008
-N_PROBES = 10
+NUM_IMAGES=50
+N_ITERS=15
+LR=0.008
+N_PROBES=10
 
 
 def load_random_images(n):
-    all_files = []
-    all_labels = []
+    all_files=[]
+    all_labels=[]
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))
@@ -35,15 +35,15 @@ def load_random_images(n):
             all_labels.append(ci)
 
     indices = np.random.choice(len(all_files), n, replace=False)
-    images = []
-    labels = []
+    images=[]
+    labels=[]
     for idx in indices:
         arr = np.load(all_files[idx])
         if arr.shape == (3072,):
             arr = arr.reshape(3, 32, 32).transpose(1, 2, 0)
         elif arr.shape == (3, 32, 32):
             arr = arr.transpose(1, 2, 0)
-        # Resize to 128x128
+            # Resize to 128x128
         from PIL import Image
         pil_img = Image.fromarray(arr).resize((128, 128), Image.LANCZOS)
         arr = np.array(pil_img, dtype=np.float32) / 255.0
@@ -58,7 +58,7 @@ def optimize_one(target, renderer):
 
     best_vec = vec.copy()
     best_loss = float('inf')
-    eps = 0.015
+    eps=0.015
 
     for it in range(N_ITERS):
         rendered = renderer.render(vec)
@@ -98,8 +98,8 @@ def main():
     diff_renderer = DifferentiableRenderer((128, 128))
     pil_renderer = PrimitiveRenderer((128, 128))
 
-    optimized_vecs = []
-    losses = []
+    optimized_vecs=[]
+    losses=[]
     t_start = time.time()
 
     for i in range(NUM_IMAGES):

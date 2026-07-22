@@ -87,7 +87,7 @@ def main():
     
     # Create multiple variations
     print("\n5. Creating variations...")
-    variations = []
+    variations=[]
     for i in range(3):
         # Random variations
         var_instructions = DrawingInstructions(

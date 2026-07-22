@@ -15,7 +15,7 @@ import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "apps", "backend", "src"))
 
-PROBE = [
+PROBE=[
     ("蘋果", "apple"),
     ("貓", "cat"),
     ("狗", "dog"),
@@ -36,13 +36,13 @@ def probe_dictionary():
         dl = DictionaryLayer()
     except Exception as e:  # pragma: no cover
         return None, "init_failed: %s" % e
-    hits = 0
+    hits=0
     total = len(PROBE)
     for zh, en in PROBE:
         try:
             res = dl.lookup(zh) if hasattr(dl, "lookup") else None
         except Exception:
-            res = None
+            res=None
         if bool(res):
             hits += 1
     return (hits, total), "dict_hits=%d/%d" % (hits, total)

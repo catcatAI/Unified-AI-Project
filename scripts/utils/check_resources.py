@@ -22,9 +22,9 @@ def check_resources():
     print(f"{'PID':<8} {'Name':<25} {'CPU%':<10} {'Memory (MB)':<15} {'Status':<10}")
     print("-" * 60)
     
-    target_processes = ["python", "electron", "node", "uvicorn"]
+    target_processes=["python", "electron", "node", "uvicorn"]
     
-    found_processes = []
+    found_processes=[]
     
     for proc in psutil.process_iter(['pid', 'name', 'status']):
         try:

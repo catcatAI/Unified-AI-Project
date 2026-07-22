@@ -38,10 +38,10 @@ def main():
         if isinstance(raw_entries, dict):
             entries = raw_entries
         else:
-            entries = {e.get("key", str(i)): e for i, e in enumerate(raw_entries)}
+            entries={e.get("key", str(i)): e for i, e in enumerate(raw_entries)}
         print(f"  Dictionary entries: {len(entries)}")
         # Count Chinese vs English entries
-        zh_count = 0
+        zh_count=0
         for e in entries.values():
             forms = e.get("surface_forms", {})
             if isinstance(forms, dict):

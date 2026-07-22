@@ -3,7 +3,7 @@ import sys
 import logging
 logger = logging.getLogger(__name__)
 
-API_URL = "http://127.0.0.1:8000/api/v1"
+API_URL="http://127.0.0.1:8000/api/v1"
 
 def verify_drive_status():
     print("=== Google Drive Integration Verification ===\n")

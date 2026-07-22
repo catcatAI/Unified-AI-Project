@@ -16,14 +16,14 @@ import requests
 logger = logging.getLogger(__name__)
 
 # API 基礎配置
-BASE_URL = "http://127.0.0.1:8000"
-TIMEOUT = 30
+BASE_URL="http://127.0.0.1:8000"
+TIMEOUT=30
 
 # 測試結果存儲
-test_results = []
+test_results=[]
 
 
-def test_endpoint(method: str, path: str, data: Dict = None, params: Dict = None) -> Dict[str, Any]:
+def test_endpoint(method: str, path: str, data: Dict=None, params: Dict=None) -> Dict[str, Any]:
     """測試單個 API 端點"""
     url = f"{BASE_URL}{path}"
     start_time = time.time()
@@ -105,7 +105,7 @@ def run_tests():
 
     # 1. 基礎端點測試
     print("\n【1. 基礎端點測試】")
-    basic_tests = [
+    basic_tests=[
         ("GET", "/", None, None),
         ("GET", "/health", None, None),
         ("GET", "/api/v1/health", None, None),
@@ -116,14 +116,14 @@ def run_tests():
     for method, path, data, params in basic_tests:
         result = test_endpoint(method, path, data, params)
         test_results.append(result)
-        status_icon = "✓" if result["status"] == "SUCCESS" else "✗"
+        status_icon="✓" if result["status"] == "SUCCESS" else "✗"
         print(
             f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)"
         )
 
     # 2. 聊天 API 測試
     print("\n【2. 聊天 API 測試】")
-    chat_tests = [
+    chat_tests=[
         ("POST", "/angela/chat", {"message": "你好，Angela"}, None),
         ("POST", "/api/v1/angela/chat", {"message": "測試訊息"}, None),
         ("POST", "/dialogue", {"message": "對話測試"}, None),
@@ -132,7 +132,7 @@ def run_tests():
     for method, path, data, params in chat_tests:
         result = test_endpoint(method, path, data, params)
         test_results.append(result)
-        status_icon = "✓" if result["status"] == "SUCCESS" else "✗"
+        status_icon="✓" if result["status"] == "SUCCESS" else "✗"
         print(
             f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)"
         )
@@ -141,7 +141,7 @@ def run_tests():
 
     # 3. 代理系統測試
     print("\n【3. 代理系統測試】")
-    agent_tests = [
+    agent_tests=[
         ("GET", "/api/v1/agents", None, None),
         ("GET", "/api/v1/agents/1", None, None),
     ]
@@ -149,14 +149,14 @@ def run_tests():
     for method, path, data, params in agent_tests:
         result = test_endpoint(method, path, data, params)
         test_results.append(result)
-        status_icon = "✓" if result["status"] == "SUCCESS" else "✗"
+        status_icon="✓" if result["status"] == "SUCCESS" else "✗"
         print(
             f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)"
         )
 
     # 4. Pet 系統測試
     print("\n【4. Pet 系統測試】")
-    pet_tests = [
+    pet_tests=[
         ("GET", "/api/v1/pet/status", None, None),
         ("GET", "/api/v1/pet/config", None, None),
         ("POST", "/api/v1/pet/interaction", {"action": "touch", "part": "head"}, None),
@@ -165,14 +165,14 @@ def run_tests():
     for method, path, data, params in pet_tests:
         result = test_endpoint(method, path, data, params)
         test_results.append(result)
-        status_icon = "✓" if result["status"] == "SUCCESS" else "✗"
+        status_icon="✓" if result["status"] == "SUCCESS" else "✗"
         print(
             f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)"
         )
 
     # 5. 系統狀態測試
     print("\n【5. 系統狀態測試】")
-    system_tests = [
+    system_tests=[
         ("GET", "/api/v1/system/metrics/detailed", None, None),
         ("GET", "/api/v1/system/cluster/status", None, None),
         ("GET", "/api/v1/economy/status", None, None),
@@ -182,14 +182,14 @@ def run_tests():
     for method, path, data, params in system_tests:
         result = test_endpoint(method, path, data, params)
         test_results.append(result)
-        status_icon = "✓" if result["status"] == "SUCCESS" else "✗"
+        status_icon="✓" if result["status"] == "SUCCESS" else "✗"
         print(
             f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)"
         )
 
     # 6. 視覺和觸覺測試
     print("\n【6. 視覺和觸覺測試】")
-    sensory_tests = [
+    sensory_tests=[
         ("GET", "/api/v1/vision/control", None, None),
         ("GET", "/api/v1/tactile/model", None, None),
         ("GET", "/api/v1/audio/control", None, None),
@@ -198,14 +198,14 @@ def run_tests():
     for method, path, data, params in sensory_tests:
         result = test_endpoint(method, path, data, params)
         test_results.append(result)
-        status_icon = "✓" if result["status"] == "SUCCESS" else "✗"
+        status_icon="✓" if result["status"] == "SUCCESS" else "✗"
         print(
             f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)"
         )
 
     # 7. 其他 API 測試
     print("\n【7. 其他 API 測試】")
-    other_tests = [
+    other_tests=[
         ("GET", "/api/v1/models", None, None),
         ("GET", "/api/v1/actions/status", None, None),
         ("GET", "/api/v1/ops/dashboard", None, None),
@@ -215,7 +215,7 @@ def run_tests():
     for method, path, data, params in other_tests:
         result = test_endpoint(method, path, data, params)
         test_results.append(result)
-        status_icon = "✓" if result["status"] == "SUCCESS" else "✗"
+        status_icon="✓" if result["status"] == "SUCCESS" else "✗"
         print(
             f"{status_icon} {method} {path} - {result['status']} ({result.get('response_time', 0)}s)"
         )
@@ -234,7 +234,7 @@ def run_tests():
     print(f"失敗: {failed} ({failed/total*100:.1f}%)")
 
     # 響應時間統計
-    response_times = [r.get("response_time", 0) for r in test_results if "response_time" in r]
+    response_times=[r.get("response_time", 0) for r in test_results if "response_time" in r]
     if response_times:
         avg_time = sum(response_times) / len(response_times)
         max_time = max(response_times)

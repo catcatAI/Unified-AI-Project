@@ -37,7 +37,7 @@ class TestSuiteMaintainer:
     def run_maintenance(self):
         """Run the full maintenance process."""
         print("Running test suite maintenance...")
-        report = self.generate_test_health_report()
+        report=self.generate_test_health_report()
         print(f"Test Suite Health Report: {report}")
 
 

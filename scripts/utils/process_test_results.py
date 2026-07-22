@@ -17,7 +17,7 @@ def process_test_results(
     results_file: str,
     baseline_file: Optional[str] = None,
     historical_files: Optional[list] = None,
-    send_email: bool = False,
+    send_email: bool=False,
     recipient_emails: Optional[list] = None
 ) -> bool:
     """处理测试结果的完整流程"""

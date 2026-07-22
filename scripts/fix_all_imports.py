@@ -3,20 +3,20 @@ import os
 import subprocess
 import sys
 
-IMPORT_LINE = "from core.utils import safe_error"
-PROJECT_ROOT = "D:/Projects/Unified-AI-Project"
+IMPORT_LINE="from core.utils import safe_error"
+PROJECT_ROOT="D:/Projects/Unified-AI-Project"
 
 # Get all modified Python files
 result = subprocess.run(
     ["git", "diff", "--name-only"],
     capture_output=True, text=True, cwd=PROJECT_ROOT
 )
-modified_files = [f.strip() for f in result.stdout.strip().split("\n") if f.strip().endswith(".py")]
+modified_files=[f.strip() for f in result.stdout.strip().split("\n") if f.strip().endswith(".py")]
 
 print(f"Found {len(modified_files)} modified Python files")
 
-fixed_count = 0
-error_count = 0
+fixed_count=0
+error_count=0
 
 for filepath in modified_files:
     full_path = os.path.join(PROJECT_ROOT, filepath)
@@ -30,20 +30,20 @@ for filepath in modified_files:
     lines = content.split("\n")
     
     # Check if there's already a top-level import (no leading whitespace)
-    has_top_import = False
+    has_top_import=False
     for line in lines:
         if line.strip() == IMPORT_LINE and line.lstrip() == line:
-            has_top_import = True
+            has_top_import=True
             break
     
     # Remove ALL indented (inside function/class) imports
-    filtered_lines = []
-    removed_inside = False
+    filtered_lines=[]
+    removed_inside=False
     for line in lines:
         stripped = line.strip()
         indent = len(line) - len(line.lstrip())
         if stripped == IMPORT_LINE and indent > 0:
-            removed_inside = True
+            removed_inside=True
             print(f"  REMOVED misplaced import in {filepath} (indent={indent})")
             continue
         filtered_lines.append(line)
@@ -51,7 +51,7 @@ for filepath in modified_files:
     # If we removed inside imports but have no top-level import, add one
     if removed_inside and not has_top_import:
         # Find insertion point (after last import, before first non-import)
-        insert_idx = 0
+        insert_idx=0
         for i, line in enumerate(filtered_lines):
             s = line.strip()
             if s.startswith("import ") or (s.startswith("from ") and " import " in s):
@@ -73,7 +73,7 @@ print(f"\nFixed {fixed_count} files")
 
 # Now verify syntax of all modified files
 print("\nVerifying syntax...")
-syntax_errors = []
+syntax_errors=[]
 for filepath in modified_files:
     full_path = os.path.join(PROJECT_ROOT, filepath)
     if not os.path.exists(full_path):

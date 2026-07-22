@@ -36,10 +36,10 @@ def get_src_path() -> Path:
 # ---- Server lifecycle ----
 
 def start_server(
-    host: str = "127.0.0.1",
-    port: int = 8000,
-    wait_seconds: float = 30.0,
-    log_level: str = "info",
+    host: str="127.0.0.1",
+    port: int=8000,
+    wait_seconds: float=30.0,
+    log_level: str="info",
 ) -> subprocess.Popen:
     """Start the backend server using uvicorn.
 
@@ -49,7 +49,7 @@ def start_server(
     Returns the Popen object so the caller can terminate it later.
     """
     backend_dir = get_project_root() / "apps" / "backend"
-    cmd = [
+    cmd=[
         sys.executable,
         "-m", "uvicorn",
         "src.services.main_api_server:app",
@@ -80,7 +80,7 @@ def start_server(
     return proc
 
 
-def stop_server(proc: subprocess.Popen, timeout: float = 5.0) -> None:
+def stop_server(proc: subprocess.Popen, timeout: float=5.0) -> None:
     """Gracefully stop a server process."""
     proc.terminate()
     try:
@@ -93,7 +93,7 @@ def stop_server(proc: subprocess.Popen, timeout: float = 5.0) -> None:
 def _read_output_until(
     proc: subprocess.Popen,
     marker: str,
-    timeout: float = 10.0,
+    timeout: float=10.0,
 ) -> str:
     """Read server output until a marker appears or timeout.
 
@@ -126,10 +126,10 @@ def _read_output_until(
 
 
 def wait_for_server(
-    host: str = "127.0.0.1",
-    port: int = 8000,
-    timeout: float = 40.0,
-    interval: float = 1.0,
+    host: str="127.0.0.1",
+    port: int=8000,
+    timeout: float=40.0,
+    interval: float=1.0,
 ) -> bool:
     """Wait until the server is accepting connections.
 
@@ -149,9 +149,9 @@ def wait_for_server(
 # ---- Endpoint tests ----
 
 def test_health(
-    host: str = "127.0.0.1",
-    port: int = 8000,
-    timeout: float = 5.0,
+    host: str="127.0.0.1",
+    port: int=8000,
+    timeout: float=5.0,
 ) -> Tuple[bool, Dict[str, Any]]:
     """Test the health endpoint. Returns (ok, data)."""
     try:
@@ -164,10 +164,10 @@ def test_health(
 
 
 def test_chat(
-    message: str = "hello",
-    host: str = "127.0.0.1",
-    port: int = 8000,
-    timeout: float = 15.0,
+    message: str="hello",
+    host: str="127.0.0.1",
+    port: int=8000,
+    timeout: float=15.0,
 ) -> Tuple[bool, Dict[str, Any]]:
     """Test the chat endpoint. Returns (ok, data)."""
     try:
@@ -200,7 +200,7 @@ def get_llm_config() -> Dict[str, Any]:
 # ---- Quick run (standalone) ----
 
 if __name__ == "__main__":
-    print("=== Server Helper — Quick Test ===")
+    print(" === Server Helper — Quick Test === ")
     print(f"Project root: {get_project_root()}")
     print(f"Src path: {get_src_path()}")
 

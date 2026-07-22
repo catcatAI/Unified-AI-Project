@@ -242,7 +242,7 @@ def compare_versions(v1: str, v2: str) -> int:
     return 0
 
 
-def is_compatible(required_version: str, current_version: str = None) -> bool:
+def is_compatible(required_version: str, current_version: Optional[str] = None) -> bool:
     """检查版本兼容性
 
     Args:

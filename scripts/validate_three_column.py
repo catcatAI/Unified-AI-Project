@@ -63,7 +63,7 @@ def load_datasets() -> Dict[str, List[Tuple[str, str]]]:
     # Arithmetic test (2k).
     cp = os.path.join(DATA_DIR, "arithmetic_test_dataset.csv")
     if os.path.exists(cp):
-        rows = []
+        rows=[]
         with open(cp, "r", encoding="utf-8") as f:
             for row in csv.DictReader(f):
                 rows.append((row["problem"], row["answer"]))
@@ -96,7 +96,7 @@ def score(output: Optional[str], expected: str) -> bool:
     e = _normalize(expected)
     if not e:
         return False
-    # Contains-match: expected substring must appear in output.
+        # Contains-match: expected substring must appear in output.
     return e in o
 
 
@@ -144,7 +144,7 @@ def apply_mode(engine, mode: str, engine_kind: str) -> None:
             ):
                 if hasattr(engine, name):
                     setattr(engine, name, _stub_return_none)
-            # Reflex is a method on the engine itself.
+                    # Reflex is a method on the engine itself.
             engine.reflex.match = lambda text: None
         elif mode == "deterministic":
             # Disable the SNN + anchored decode; keep deterministic stages.
@@ -155,7 +155,7 @@ def apply_mode(engine, mode: str, engine_kind: str) -> None:
 def run_column(engine, mode: str, engine_kind: str,
                cases: List[Tuple[str, str]]) -> Tuple[int, int, float]:
     apply_mode(engine, mode, engine_kind)
-    passed = 0
+    passed=0
     total = len(cases)
     t0 = time.time()
     for inp, expected in cases:
@@ -163,7 +163,7 @@ def run_column(engine, mode: str, engine_kind: str,
             out = engine.process(inp)
         except Exception as e:
             logger.debug("process error in %s/%s: %s", engine_kind, mode, e)
-            out = ""
+            out=""
         if score(out, expected):
             passed += 1
     elapsed = time.time() - t0
@@ -202,7 +202,7 @@ def main() -> None:
     for dom, cases in datasets.items():
         print(f"  {dom:12s}: {len(cases)} cases")
 
-    engines_to_run = []
+    engines_to_run=[]
     if args.engine in ("ed3n", "both"):
         from ai.ed3n.ed3n_engine import ED3NEngine
 
@@ -266,7 +266,7 @@ def main() -> None:
 
         # Aggregate over all domains (weighted by case count).
         tot = sum(d["n"] for d in dom_summary.values())
-        agg = {"hybrid": 0.0, "deterministic": 0.0, "snn_only": 0.0}
+        agg={"hybrid": 0.0, "deterministic": 0.0, "snn_only": 0.0}
         for d in dom_summary.values():
             w = d["n"] / tot
             agg["hybrid"] += d["hybrid"] * w

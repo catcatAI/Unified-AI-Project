@@ -37,7 +37,7 @@ except Exception as e:
 
 # Step 2: Import key services
 print("\n[2/5] Importing key services...")
-services = [
+services=[
     ("LLM Router", "services.llm.router", "AngelaLLMService"),
     ("Chat Service", "services.chat_service", "ChatService"),
     ("Model Bus", "ai.core.model_bus", "ModelBus"),
@@ -64,7 +64,7 @@ import socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 result = sock.connect_ex(("127.0.0.1", 8000))
 sock.close()
-port_status = "in use" if result == 0 else "available"
+port_status="in use" if result == 0 else "available"
 print(f"\n[4/5] Port 8000: {port_status}")
 
 # Step 5: Start server and test

@@ -4,7 +4,7 @@ import json
 import logging
 logger = logging.getLogger(__name__)
 
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL="http://127.0.0.1:8000"
 
 def test_ice_loop():
     print("--- Testing ICE Loop (Self-Evolution) ---")
@@ -34,7 +34,7 @@ def test_ice_loop():
         return
     
     # 2. Simulate Interactions (Investigate Phase)
-    interactions = [
+    interactions=[
         "Hello, who are you?",
         "What is the capital of France?",
         "Tell me a joke about AI.",

@@ -75,7 +75,7 @@ def demo_primitive_library():
     library = PrimitiveLibrary(embedding_dim=64, max_primitives=100)
     
     # Create some primitives
-    primitives = []
+    primitives=[]
     for i in range(5):
         # Create random embedding
         embedding = np.random.randn(64).astype(np.float32)

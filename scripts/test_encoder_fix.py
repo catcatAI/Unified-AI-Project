@@ -1,5 +1,7 @@
 """Quick test: verify encoder fix (b_decode initialization)."""
-import sys, os, json
+import sys
+import os
+import json
 import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
@@ -15,7 +17,7 @@ def decompose(img_arr):
     h, w = arr.shape[:2]
     q = (arr / 64).astype(int)
     q = np.clip(q, 0, 3)
-    counts = {}
+    counts={}
     for p in q.reshape(-1, 3):
         key = (int(p[0]), int(p[1]), int(p[2]))
         counts[key] = counts.get(key, 0) + 1
@@ -24,14 +26,14 @@ def decompose(img_arr):
 
     gray = arr.mean(axis=2)
     coords = np.argwhere(gray > gray.mean() + gray.std())
-    points = []
+    points=[]
     if len(coords) > 0:
         step = max(1, len(coords) // 5)
         for y, x in coords[::step][:5]:
             r, g, b = int(arr[y, x, 0]), int(arr[y, x, 1]), int(arr[y, x, 2])
             points.append(Point(float(x)/w, float(y)/h, (r, g, b), 0.06))
 
-    planes = [Plane(
+    planes=[Plane(
         [Point(0,0,(0,0,0),0), Point(1,0,(0,0,0),0), Point(1,1,(0,0,0),0), Point(0,1,(0,0,0),0)],
         dom_color, (0,0,0), 0.0
     )]
@@ -42,7 +44,7 @@ def main():
     data_dir = os.path.join(os.path.dirname(__file__), "..", "data", "multimodal", "cifar10")
     idx = json.load(open(os.path.join(data_dir, "index.json")))
 
-    images, labels = [], []
+    images, labels=[], []
     for cls in idx["classes"][:5]:
         cls_dir = os.path.join(data_dir, cls)
         for f in sorted(os.listdir(cls_dir))[:4]:
@@ -52,7 +54,7 @@ def main():
 
     print(f"Loaded {len(images)} images from {len(set(labels))} classes")
 
-    instructions = [decompose(img) for img in images]
+    instructions=[decompose(img) for img in images]
 
     print("Training PrimitiveEncoder (150 epochs, lr=0.002)...")
     encoder = PrimitiveEncoder()

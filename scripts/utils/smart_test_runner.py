@@ -22,7 +22,7 @@ def setup_environment():
 
 def detect_test_errors(stderr_output: str, stdout_output: str) -> list:
     """检测测试错误"""
-    errors = []
+    errors=[]
     full_output = (stdout_output or "") + (stderr_output or "")
     return errors
 
@@ -35,7 +35,7 @@ def run_tests(pytest_args=None) -> int:
 
     setup_environment()
 
-    cmd = ["python", "-m", "pytest", "--tb=short", "-v"]
+    cmd=["python", "-m", "pytest", "--tb=short", "-v"]
     if pytest_args:
         cmd.extend(pytest_args.split())
 
@@ -71,7 +71,7 @@ def run_tests(pytest_args=None) -> int:
 
 def main() -> None:
     """主函数"""
-    pytest_args = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else None
+    pytest_args=" ".join(sys.argv[1:]) if len(sys.argv) > 1 else None
     exit_code = run_tests(pytest_args)
     sys.exit(exit_code)
 

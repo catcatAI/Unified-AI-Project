@@ -12,7 +12,11 @@ Approach:
 No differentiable renderer needed. Works with PIL.
 """
 
-import sys, os, json, time, math
+import sys
+import os
+import json
+import time
+import math
 import numpy as np
 from PIL import Image
 
@@ -42,8 +46,8 @@ def render_loss(decomposer, clip_emb, target_arr, renderer, sigma=0.1, n_samples
     # Get mean prediction
     mean_vec, cache = decomposer.forward(clip_emb)
     
-    losses = []
-    weighted_deltas = []
+    losses=[]
+    weighted_deltas=[]
     
     for _ in range(n_samples):
         # Sample: add noise to mean prediction
@@ -82,23 +86,23 @@ def train_reinforce(clip_embeddings, target_images, renderer,
     decomposer = LearnableDecomposer(clip_dim=512, hidden_dim=256)
     
     # Convert targets
-    target_arrs = [np.array(img, dtype=np.float32) / 255.0 for img in target_images]
+    target_arrs=[np.array(img, dtype=np.float32) / 255.0 for img in target_images]
     
     # Update CLIP stats
     for clip_emb in clip_embeddings:
         decomposer.update_clip_stats(clip_emb)
     
     n = len(clip_embeddings)
-    losses = []
+    losses=[]
     
     for epoch in range(epochs):
         indices = np.random.permutation(n)
-        epoch_loss = 0.0
-        n_batches = 0
+        epoch_loss=0.0
+        n_batches=0
         
         for start in range(0, n, batch_size):
             batch_idx = indices[start:start + batch_size]
-            batch_loss = 0.0
+            batch_loss=0.0
             
             # Accumulate gradients over batch
             batch_grad_W1 = np.zeros_like(decomposer._W1)
@@ -160,7 +164,7 @@ def main():
     idx = json.load(open(os.path.join(data_dir, "index.json")))
 
     # Load CIFAR-10
-    images, labels = [], []
+    images, labels=[], []
     for cls in idx["classes"]:
         cls_dir = os.path.join(data_dir, cls)
         for f in sorted(os.listdir(cls_dir))[:5]:
@@ -174,7 +178,7 @@ def main():
     print("CLIP encoding...", flush=True)
     from ai.multimodal.semantic_visual import SemanticVisualEncoder
     clip_model = SemanticVisualEncoder()
-    clip_embs = []
+    clip_embs=[]
     for img_arr in images:
         pil = Image.fromarray(img_arr).resize((224, 224), Image.LANCZOS)
         import io
@@ -185,7 +189,7 @@ def main():
     print("CLIP done: %d embeddings" % len(clip_embs), flush=True)
 
     # Target images
-    target_images = [Image.fromarray(img).resize((128, 128), Image.LANCZOS) for img in images]
+    target_images=[Image.fromarray(img).resize((128, 128), Image.LANCZOS) for img in images]
     renderer = PrimitiveRenderer((128, 128))
 
     # Train with REINFORCE

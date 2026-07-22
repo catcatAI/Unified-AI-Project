@@ -1,5 +1,7 @@
 """Test recognition WITHOUT per-image optimization — use raw image features."""
-import sys, os, time
+import sys
+import os
+import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
 
 import numpy as np
@@ -7,13 +9,13 @@ import glob
 from PIL import Image
 from ai.multimodal.primitives.geometric_vocabulary import GeometricVocabulary
 
-CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
 
 
 def load_test_images(n_per_class=10, skip_first=50):
-    images = []
-    labels = []
+    images=[]
+    labels=[]
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[skip_first:skip_first+n_per_class]
@@ -33,7 +35,7 @@ def load_test_images(n_per_class=10, skip_first=50):
 def recognize_by_matching(image, vocab):
     """Recognize by finding concept whose distribution best explains the image."""
     img_flat = image.flatten()
-    best_class = None
+    best_class=None
     best_score = -float('inf')
 
     for name, concept in vocab._concept_distributions.items():
@@ -62,8 +64,8 @@ def main():
 
     # Method 1: Direct image-to-concept matching
     print("\n=== Method 1: Direct image-to-concept matching ===")
-    correct = 0
-    per_class = {c: [0, 0] for c in CLASSES}
+    correct=0
+    per_class={c: [0, 0] for c in CLASSES}
     for i in range(len(images)):
         pred, score = recognize_by_matching(images[i], vocab)
         actual = CLASSES[labels[i]]
@@ -79,8 +81,8 @@ def main():
 
     # Method 2: Color histogram matching (simple baseline)
     print("\n=== Method 2: Color histogram matching ===")
-    correct = 0
-    per_class = {c: [0, 0] for c in CLASSES}
+    correct=0
+    per_class={c: [0, 0] for c in CLASSES}
     for i in range(len(images)):
         img = images[i]
         # Compute color histogram
@@ -90,7 +92,7 @@ def main():
         hist = np.concatenate([hist_r, hist_g, hist_b]).astype(float)
         hist = hist / (hist.sum() + 1e-8)
 
-        best_class = None
+        best_class=None
         best_sim = -1
         for name, concept in vocab._concept_distributions.items():
             # Use concept param_means as a rough color template

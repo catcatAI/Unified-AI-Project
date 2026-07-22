@@ -16,11 +16,11 @@ logger = logging.getLogger(__name__)
 
 
 class DetectionType(Enum):
-    DEADLOCK = "deadlock"
-    INFINITE_LOOP = "infinite_loop"
-    RESOURCE_LEAK = "resource_leak"
-    THREAD_LEAK = "thread_leak"
-    ASYNC_LEAK = "async_leak"
+    DEADLOCK="deadlock"
+    INFINITE_LOOP="infinite_loop"
+    RESOURCE_LEAK="resource_leak"
+    THREAD_LEAK="thread_leak"
+    ASYNC_LEAK="async_leak"
 
 
 @dataclass
@@ -36,20 +36,20 @@ class DetectionResult:
 class DeadlockDetector:
     def __init__(
         self,
-        check_interval: float = 1.0,
-        max_detection_time: float = 30.0
+        check_interval: float=1.0,
+        max_detection_time: float=30.0
     ) -> None:
         self.check_interval = check_interval
         self.max_detection_time = max_detection_time
         self.active_threads: Set[threading.Thread] = set()
         self.thread_states: Dict[int, Dict] = {}
-        self.detection_active = False
+        self.detection_active=False
         self._detection_thread: Optional[threading.Thread] = None
 
     def start_detection(self) -> None:
         if self.detection_active:
             return
-        self.detection_active = True
+        self.detection_active=True
         self._detection_thread = threading.Thread(
             target=self._detection_loop,
             daemon=True
@@ -58,7 +58,7 @@ class DeadlockDetector:
         logger.debug("Deadlock detection started")
 
     def stop_detection(self) -> None:
-        self.detection_active = False
+        self.detection_active=False
         if self._detection_thread and self._detection_thread.is_alive():
             self._detection_thread.join(timeout=1.0)
         logger.debug("Deadlock detection stopped")
@@ -101,12 +101,12 @@ class DeadlockDetector:
 
     def _report_potential_deadlock(self, thread: threading.Thread, frame: Any) -> None:
         import traceback
-        stack_trace = ''.join(traceback.format_stack(frame))
+        stack_trace=''.join(traceback.format_stack(frame))
         logger.error(f"Deadlock detected in thread {thread.name}\n{stack_trace}")
 
 
 class LoopDetector:
-    def __init__(self, max_iterations: int = 10000, check_interval: int = 100) -> None:
+    def __init__(self, max_iterations: int=10000, check_interval: int=100) -> None:
         self.max_iterations = max_iterations
         self.check_interval = check_interval
         self.iteration_counts: Dict[str, int] = {}
@@ -128,9 +128,9 @@ class LoopDetector:
 
 class ResourceLeakDetector:
     def __init__(self) -> None:
-        self.initial_thread_count = 0
-        self.initial_file_descriptors = 0
-        self.initial_memory_usage = 0
+        self.initial_thread_count=0
+        self.initial_file_descriptors=0
+        self.initial_memory_usage=0
 
     def start_monitoring(self) -> None:
         self.initial_thread_count = threading.active_count()
@@ -169,22 +169,22 @@ class ResourceLeakDetector:
 
 
 class AsyncLoopDetector:
-    def __init__(self, max_pending_tasks: int = 100) -> None:
+    def __init__(self, max_pending_tasks: int=100) -> None:
         self.max_pending_tasks = max_pending_tasks
-        self.initial_task_count = 0
+        self.initial_task_count=0
 
     def start_monitoring(self) -> None:
         try:
             loop = asyncio.get_running_loop()
             self.initial_task_count = len([task for task in asyncio.all_tasks(loop) if not task.done()])
         except RuntimeError:
-            self.initial_task_count = 0
+            self.initial_task_count=0
 
     def check_async_leaks(self) -> List[DetectionResult]:
         results: List[DetectionResult] = []
         try:
             loop = asyncio.get_running_loop()
-            current_tasks = [task for task in asyncio.all_tasks(loop) if not task.done()]
+            current_tasks=[task for task in asyncio.all_tasks(loop) if not task.done()]
             if len(current_tasks) > self.max_pending_tasks:
                 results.append(DetectionResult(
                     detection_type=DetectionType.ASYNC_LEAK,
@@ -198,7 +198,7 @@ class AsyncLoopDetector:
 
 
 @contextmanager
-def deadlock_detection(timeout: float = 30.0, check_interval: float = 1.0):
+def deadlock_detection(timeout: float=30.0, check_interval: float=1.0):
     detector = DeadlockDetector(check_interval=check_interval, max_detection_time=timeout)
     resource_detector = ResourceLeakDetector()
     async_detector = AsyncLoopDetector()
@@ -216,7 +216,7 @@ def deadlock_detection(timeout: float = 30.0, check_interval: float = 1.0):
                 logger.warning(f"Resource leak detected: {leak.details}")
 
 
-def loop_detection(max_iterations: int = 10000):
+def loop_detection(max_iterations: int=10000):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):

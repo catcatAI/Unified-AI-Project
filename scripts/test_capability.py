@@ -69,7 +69,7 @@ try:
     from ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
     cre = CausalReasoningEngine()
     # Check attributes
-    attrs = [a for a in dir(cre) if not a.startswith('_')]
+    attrs=[a for a in dir(cre) if not a.startswith('_')]
     print(f"  Public methods: {len(attrs)}")
     print("  ✅ CausalReasoningEngine: OK")
 except Exception as e:
@@ -81,7 +81,7 @@ try:
     from ai.alignment.emotion_system import EmotionSystem
     es = EmotionSystem()
     # Check what methods are available
-    methods = [m for m in dir(es) if not m.startswith('_') and callable(getattr(es, m))]
+    methods=[m for m in dir(es) if not m.startswith('_') and callable(getattr(es, m))]
     print(f"  Methods: {methods[:5]}...")
     print("  ✅ EmotionSystem: OK")
 except Exception as e:
@@ -93,7 +93,7 @@ try:
     from core.life.intent_model import IntentModel
     im = IntentModel()
     # Check what methods are available
-    methods = [m for m in dir(im) if not m.startswith('_') and callable(getattr(im, m))]
+    methods=[m for m in dir(im) if not m.startswith('_') and callable(getattr(im, m))]
     print(f"  Methods: {methods[:5]}...")
     print("  ✅ IntentModel: OK")
 except Exception as e:
@@ -105,7 +105,7 @@ try:
     from core.life.autonomous_life_cycle import AutonomousLifeCycle
     alc = AutonomousLifeCycle()
     # Check what methods are available
-    methods = [m for m in dir(alc) if not m.startswith('_') and callable(getattr(alc, m))]
+    methods=[m for m in dir(alc) if not m.startswith('_') and callable(getattr(alc, m))]
     print(f"  Methods: {methods[:5]}...")
     print("  ✅ AutonomousLifeCycle: OK")
 except Exception as e:

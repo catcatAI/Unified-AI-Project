@@ -7,7 +7,10 @@ Step 3: At inference: CLIP → decomposer → DrawingInstructions → render
 No rendering during training. Pure matrix operations. Fast CPU training.
 """
 
-import sys, os, json, time
+import sys
+import os
+import json
+import time
 import numpy as np
 from PIL import Image
 
@@ -24,7 +27,7 @@ def main():
     idx = json.load(open(os.path.join(data_dir, "index.json")))
 
     # Load CIFAR-10
-    images, labels = [], []
+    images, labels=[], []
     for cls in idx["classes"]:
         cls_dir = os.path.join(data_dir, cls)
         for f in sorted(os.listdir(cls_dir))[:5]:
@@ -37,7 +40,7 @@ def main():
     # Step 1: Pre-extract primitive vectors using rule-based decomposer
     print("\n[Step 1] Extracting primitive vectors from images...", flush=True)
     t0 = time.time()
-    target_vecs = []
+    target_vecs=[]
     for img in images:
         instr = decompose_spatial(img)
         vec = instr.to_vector()
@@ -51,7 +54,7 @@ def main():
     from ai.multimodal.semantic_visual import SemanticVisualEncoder
     clip_model = SemanticVisualEncoder()
 
-    clip_embs = []
+    clip_embs=[]
     for img_arr in images:
         pil = Image.fromarray(img_arr).resize((224, 224), Image.LANCZOS)
         import io
@@ -67,15 +70,15 @@ def main():
     decomposer = LearnableDecomposer(clip_dim=512, hidden_dim=256)
 
     # Train with MSE loss on primitive vectors (NO rendering needed)
-    epochs = 200
-    lr = 0.01
-    losses = []
+    epochs=200
+    lr=0.01
+    losses=[]
     t0 = time.time()
 
     for epoch in range(epochs):
         # Shuffle
         indices = np.random.permutation(len(clip_embs))
-        epoch_loss = 0.0
+        epoch_loss=0.0
 
         for idx in indices:
             clip_emb = clip_embs[idx]
@@ -90,7 +93,7 @@ def main():
             epoch_loss += loss
 
             # Backprop (pure matrix operations)
-            d_out = 2.0 * error / decomposer._out_dim
+            d_out=2.0 * error / decomposer._out_dim
 
             # Through sigmoid
             d_z2 = d_out * cache["sig"] * (1 - cache["sig"])
@@ -130,7 +133,7 @@ def main():
     print("\n[Step 4] Evaluating with rendering...", flush=True)
     renderer = PrimitiveRenderer((128, 128))
     evaluator = GenerationEvaluator()
-    target_images = [Image.fromarray(img).resize((128, 128), Image.LANCZOS) for img in images]
+    target_images=[Image.fromarray(img).resize((128, 128), Image.LANCZOS) for img in images]
 
     save_dir = os.path.join(os.path.dirname(__file__), "..", "data", "multimodal", "samples_learned")
     os.makedirs(save_dir, exist_ok=True)

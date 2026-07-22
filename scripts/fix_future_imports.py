@@ -11,9 +11,9 @@ def main():
         cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
         timeout=15
     )
-    files = [f.strip() for f in result.stdout.strip().split('\n') if f.strip() and f.endswith('.py')]
+    files=[f.strip() for f in result.stdout.strip().split('\n') if f.strip() and f.endswith('.py')]
     
-    fixed = 0
+    fixed=0
     for filepath in sorted(files):
         content = open(filepath, 'r', encoding='utf-8').read()
         lines = content.split('\n')
@@ -52,7 +52,7 @@ def main():
                 insert_at += 1
             lines.insert(insert_at, line_to_move)
             
-            new_content = '\n'.join(lines)
+            new_content='\n'.join(lines)
             
             try:
                 ast.parse(new_content)

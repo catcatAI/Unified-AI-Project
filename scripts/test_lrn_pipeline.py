@@ -24,7 +24,7 @@ text = lrn.generate(latent, max_tokens=5)
 print(f"Generated text: {text}")
 
 # Train LRN on some examples
-examples = [
+examples=[
     ("the sky is blue", "blue"),
     ("what color is the sky", "blue"),
     ("how many days in a week", "seven"),

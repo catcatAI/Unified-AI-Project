@@ -80,7 +80,7 @@ def main():
             print("  No weights found or load failed (will train from scratch)")
 
     # Real data mode: load and optionally encode real datasets
-    data_provider = None
+    data_provider=None
     if args.real or args.encode:
         try:
             from ai.multimodal.data_loader import RealDataProvider

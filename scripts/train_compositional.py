@@ -28,8 +28,8 @@ from ai.multimodal.primitives.primitive_types import DrawingInstructions, Point,
 from ai.multimodal.evaluation.generation_evaluator import GenerationEvaluator
 
 
-def load_cifar10_images(data_dir: str, n_samples: int = 500,
-                        classes: list = None, seed: int = 42):
+def load_cifar10_images(data_dir: str, n_samples: int=500,
+                        classes: list=None, seed: int=42):
     """Load CIFAR-10 images as numpy arrays."""
     index_path = os.path.join(data_dir, "index.json")
     with open(index_path, 'r') as f:
@@ -37,17 +37,17 @@ def load_cifar10_images(data_dir: str, n_samples: int = 500,
     
     all_classes = idx["classes"]
     if classes:
-        all_classes = [c for c in all_classes if c in classes]
+        all_classes=[c for c in all_classes if c in classes]
     
-    images = []
-    labels = []
+    images=[]
+    labels=[]
     rng = np.random.default_rng(seed)
     
     for cls in all_classes:
         cls_dir = os.path.join(data_dir, cls)
         if not os.path.isdir(cls_dir):
             continue
-        npy_files = [f for f in os.listdir(cls_dir) if f.endswith('.npy')]
+        npy_files=[f for f in os.listdir(cls_dir) if f.endswith('.npy')]
         if len(npy_files) > 50:
             npy_files = list(rng.choice(npy_files, 50, replace=False))
         
@@ -59,13 +59,13 @@ def load_cifar10_images(data_dir: str, n_samples: int = 500,
     # Sample subset
     if n_samples < len(images):
         indices = rng.choice(len(images), n_samples, replace=False)
-        images = [images[i] for i in indices]
-        labels = [labels[i] for i in indices]
+        images=[images[i] for i in indices]
+        labels=[labels[i] for i in indices]
     
     return images, labels
 
 
-def images_to_embeddings(images: list, use_clip: bool = False):
+def images_to_embeddings(images: list, use_clip: bool=False):
     """Convert images to CLIP-like embeddings.
     
     Fast mode: random projection (deterministic from image hash).
@@ -75,7 +75,7 @@ def images_to_embeddings(images: list, use_clip: bool = False):
         try:
             from ai.multimodal.semantic_visual import SemanticVisualEncoder
             encoder = SemanticVisualEncoder()
-            embeddings = []
+            embeddings=[]
             for img_arr in images:
                 pil = Image.fromarray(img_arr).resize((224, 224), Image.LANCZOS)
                 import io
@@ -95,7 +95,7 @@ def images_to_embeddings(images: list, use_clip: bool = False):
     proj = rng.normal(0, 1, (32 * 32 * 3, 512)).astype(np.float32)
     proj /= np.linalg.norm(proj, axis=1, keepdims=True)
     
-    embeddings = []
+    embeddings=[]
     for img_arr in images:
         flat = img_arr.flatten().astype(np.float32) / 255.0
         emb = flat @ proj
@@ -113,7 +113,7 @@ def images_to_primitives(images: list, labels: list):
     - Points for bright spots
     - Lines for edges
     """
-    sequences = []
+    sequences=[]
     
     for img_arr, label in zip(images, labels):
         arr = img_arr.astype(np.float32)
@@ -131,7 +131,7 @@ def images_to_primitives(images: list, labels: list):
         bright_mask = gray > gray.mean() + gray.std()
         bright_coords = np.argwhere(bright_mask)
         
-        points = []
+        points=[]
         if len(bright_coords) > 0:
             # Sample up to 5 bright spots
             if len(bright_coords) > 5:
@@ -147,9 +147,9 @@ def images_to_primitives(images: list, labels: list):
         # Find edges as lines
         dx = np.abs(np.diff(gray, axis=1))
         dy = np.abs(np.diff(gray, axis=0))
-        edge_threshold = 30
+        edge_threshold=30
         
-        lines = []
+        lines=[]
         edge_y, edge_x = np.where(dx > edge_threshold)
         if len(edge_x) > 0:
             # Sample up to 3 edge segments
@@ -174,7 +174,7 @@ def images_to_primitives(images: list, labels: list):
                     break
         
         # Background plane
-        planes = [Plane(
+        planes=[Plane(
             [Point(0.0, 0.0, (0,0,0), 0), Point(1.0, 0.0, (0,0,0), 0),
              Point(1.0, 1.0, (0,0,0), 0), Point(0.0, 1.0, (0,0,0), 0)],
             bg_color, (0, 0, 0), 0.0
@@ -196,7 +196,7 @@ def train(images, labels, clip_embeddings, instructions_list,
     
     # Encode instructions to primitive embeddings
     print(f"Encoding {len(instructions_list)} instructions to embeddings...")
-    primitive_seqs = []
+    primitive_seqs=[]
     for instr in instructions_list:
         emb = encoder.encode(instr)
         primitive_seqs.append([emb])  # Wrap as single-step sequence
@@ -206,10 +206,10 @@ def train(images, labels, clip_embeddings, instructions_list,
     n_train = int(n * 0.8)
     indices = np.random.permutation(n)
     
-    train_embs = [clip_embeddings[i] for i in indices[:n_train]]
-    train_seqs = [primitive_seqs[i] for i in indices[:n_train]]
-    val_embs = [clip_embeddings[i] for i in indices[n_train:]]
-    val_seqs = [primitive_seqs[i] for i in indices[n_train:]]
+    train_embs=[clip_embeddings[i] for i in indices[:n_train]]
+    train_seqs=[primitive_seqs[i] for i in indices[:n_train]]
+    val_embs=[clip_embeddings[i] for i in indices[n_train:]]
+    val_seqs=[primitive_seqs[i] for i in indices[n_train:]]
     
     print(f"Train: {len(train_embs)}, Val: {len(val_embs)}")
     
@@ -225,7 +225,7 @@ def train(images, labels, clip_embeddings, instructions_list,
     
     # Evaluate on validation set
     if val_embs:
-        val_losses = []
+        val_losses=[]
         for emb, seq in zip(val_embs, val_seqs):
             loss = gen.train_step(emb, seq, lr=0.0)  # No update, just compute loss
             val_losses.append(loss)

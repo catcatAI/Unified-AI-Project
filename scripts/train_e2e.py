@@ -6,7 +6,10 @@ This is the correct approach:
 3. Train on CIFAR-10 to match target images
 """
 
-import sys, os, json, time
+import sys
+import os
+import json
+import time
 import numpy as np
 from PIL import Image
 
@@ -22,7 +25,7 @@ def main():
     data_dir = os.path.join(os.path.dirname(__file__), "..", "data", "multimodal", "cifar10")
     idx = json.load(open(os.path.join(data_dir, "index.json")))
 
-    images, labels = [], []
+    images, labels=[], []
     for cls in idx["classes"]:
         cls_dir = os.path.join(data_dir, cls)
         for f in sorted(os.listdir(cls_dir))[:5]:
@@ -36,7 +39,7 @@ def main():
     print("CLIP encoding...", flush=True)
     from ai.multimodal.semantic_visual import SemanticVisualEncoder
     clip_model = SemanticVisualEncoder()
-    clip_embs = []
+    clip_embs=[]
     for img_arr in images:
         pil = Image.fromarray(img_arr).resize((224, 224), Image.LANCZOS)
         import io
@@ -48,7 +51,7 @@ def main():
     print("CLIP done: %s" % str(clip_embs.shape), flush=True)
 
     # Target images (128x128 float)
-    target_arrs = [np.array(Image.fromarray(img).resize((128, 128), Image.LANCZOS),
+    target_arrs=[np.array(Image.fromarray(img).resize((128, 128), Image.LANCZOS),
                             dtype=np.float32) / 255.0 for img in images]
 
     # Differentiable renderer
@@ -62,14 +65,14 @@ def main():
     for clip_emb in clip_embs:
         decomposer.update_clip_stats(clip_emb)
 
-    epochs = 100
-    lr = 0.001
-    losses = []
+    epochs=100
+    lr=0.001
+    losses=[]
     t0 = time.time()
 
     for epoch in range(epochs):
         indices = np.random.permutation(len(clip_embs))
-        epoch_loss = 0.0
+        epoch_loss=0.0
 
         for idx in indices:
             clip_emb = clip_embs[idx]
@@ -94,7 +97,7 @@ def main():
 
             # Simple approximation: treat each param independently
             d_vec = np.zeros(TOTAL_DIM, dtype=np.float32)
-            eps = 0.01
+            eps=0.01
 
             # Probe each dimension (too slow for 263 dims, do subset)
             probe_dims = np.random.choice(TOTAL_DIM, size=30, replace=False)

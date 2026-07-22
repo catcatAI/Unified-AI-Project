@@ -7,7 +7,9 @@ Note: pytest collection will skip this file; run directly via python.
 import pytest
 pytest.skip("DEPRECATED script - use test_gvv_quick.py instead", allow_module_level=True)
 
-import sys, os, json
+import sys
+import os
+import json
 import numpy as np
 from PIL import Image
 
@@ -20,13 +22,13 @@ from ai.multimodal.primitives.primitive_renderer import PrimitiveRenderer
 try:
     from ai.multimodal.primitives.pixel_refiner import PixelRefiner
 except ImportError:
-    PixelRefiner = None
+    PixelRefiner=None
 from ai.multimodal.evaluation.generation_evaluator import GenerationEvaluator
 
 print("Loading data...", flush=True)
 data_dir = os.path.join("data", "multimodal", "cifar10")
 idx = json.load(open(os.path.join(data_dir, "index.json")))
-images, labels = [], []
+images, labels=[], []
 for cls in idx["classes"][:3]:
     cls_dir = os.path.join(data_dir, cls)
     f = sorted(os.listdir(cls_dir))[0]
@@ -35,7 +37,7 @@ for cls in idx["classes"][:3]:
 print(f"{len(images)} images: {labels}", flush=True)
 
 # Decompose
-instructions = [decompose_enhanced(img) for img in images]
+instructions=[decompose_enhanced(img) for img in images]
 print("Decomposed", flush=True)
 
 # Train encoder
@@ -45,7 +47,7 @@ print("Encoder trained", flush=True)
 
 # Generate rough images
 renderer = PrimitiveRenderer((128, 128))
-rough_images = []
+rough_images=[]
 for i in range(len(images)):
     enc = encoder.encode(instructions[i])
     decoded = encoder.decode(enc)
@@ -53,7 +55,7 @@ for i in range(len(images)):
     print(f"  Rough [{i}] ok", flush=True)
 
 # Train PixelRefiner
-target_images = [Image.fromarray(img).resize((128, 128), Image.LANCZOS) for img in images]
+target_images=[Image.fromarray(img).resize((128, 128), Image.LANCZOS) for img in images]
 refiner = PixelRefiner(hidden_dim=256, img_size=128)
 result = refiner.train(rough_images, target_images, epochs=30, lr=0.005, batch_size=2)
 loss_val = result["final_loss"]

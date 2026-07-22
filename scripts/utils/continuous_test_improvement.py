@@ -30,12 +30,12 @@ class ContinuousTestImprovement:
             project_root: 项目根目录
         """
         self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent
-        self.scripts_dir = self.project_root / "scripts"
-        self.reports_dir = self.project_root / "test_reports"
+        self.scripts_dir=self.project_root / "scripts"
+        self.reports_dir=self.project_root / "test_reports"
         self.reports_dir.mkdir(exist_ok=True)
 
     # 改进系统配置
-    self.improvement_config = {
+    self.improvement_config={
         "monitoring": {
             "interval_hours": 24,
             "coverage_threshold": 0.85,
@@ -63,7 +63,7 @@ class ContinuousTestImprovement:
         logger.info("Starting continuous test improvement cycle...")
         cycle_start_time = datetime.now()
 
-        cycle_results = {
+        cycle_results={
             "timestamp": cycle_start_time.isoformat(),
             "phases": {}
         }
@@ -113,7 +113,7 @@ class ContinuousTestImprovement:
 
         try:
             # 运行集成测试并收集覆盖率
-            cmd = [
+            cmd=[
                 sys.executable,
                 "-m",
                 "pytest",
@@ -132,7 +132,7 @@ class ContinuousTestImprovement:
                 timeout=3600  # 1小时超时
             )
 
-            execution_result = {
+            execution_result={
                 "success": result.returncode == 0,
                 "return_code": result.returncode,
                 "stdout": result.stdout,
@@ -169,22 +169,22 @@ class ContinuousTestImprovement:
 
         try:
             # 调用测试质量评估器
-            quality_assessor_script = self.scripts_dir / "test_quality_assessor.py"
+            quality_assessor_script=self.scripts_dir / "test_quality_assessor.py"
             if not quality_assessor_script.exists():
                 ogger.warning("Test quality assessor script not found")
                 return {"status": "skipped", "reason": "Script not found"}
 
-            cmd = [
-                sys.executable(),
+            cmd=[
+                sys.executable,
                 str(quality_assessor_script),
                 "assess"
             ]
 
             result = subprocess.run(
                 cmd,
-    cwd=self.project_root(),
-                capture_output = True,
-                text = True
+    cwd=self.project_root,
+                capture_output=True,
+                text=True
             )
 
             if result.returncode != 0:
@@ -196,7 +196,7 @@ class ContinuousTestImprovement:
                 }
 
             # 解析质量评估结果
-            quality_metrics = self._parse_quality_assessment()
+            quality_metrics=self._parse_quality_assessment()
 
             logger.info(f"Test quality analysis completed. Overall score: {quality_metrics.get('overall_score', 0):.2f}")
             return {
@@ -260,14 +260,14 @@ class ContinuousTestImprovement:
 
         try:
             # 调用覆盖率监控器
-            coverage_monitor_script = self.scripts_dir / "coverage_monitor.py"
+            coverage_monitor_script=self.scripts_dir / "coverage_monitor.py"
             if not coverage_monitor_script.exists():
                 ogger.warning("Coverage monitor script not found")
                 return {"status": "skipped", "reason": "Script not found"}
 
             # 生成趋势报告
-            cmd = [
-                sys.executable(),
+            cmd=[
+                sys.executable,
                 str(coverage_monitor_script),
                 "report",
                 "--days",
@@ -276,9 +276,9 @@ class ContinuousTestImprovement:
 
             result = subprocess.run(
                 cmd,
-    cwd=self.project_root(),
-                capture_output = True,
-                text = True
+    cwd=self.project_root,
+                capture_output=True,
+                text=True
             )
 
             if result.returncode != 0:
@@ -315,22 +315,22 @@ class ContinuousTestImprovement:
 
         try:
             # 调用测试质量评估器获取建议
-            quality_assessor_script = self.scripts_dir / "test_quality_assessor.py"
+            quality_assessor_script=self.scripts_dir / "test_quality_assessor.py"
             if not quality_assessor_script.exists():
                 ogger.warning("Test quality assessor script not found")
                 return {"status": "skipped", "reason": "Script not found"}
 
-            cmd = [
-                sys.executable(),
+            cmd=[
+                sys.executable,
                 str(quality_assessor_script),
                 "recommend"
             ]
 
             result = subprocess.run(
                 cmd,
-    cwd=self.project_root(),
-                capture_output = True,
-                text = True
+    cwd=self.project_root,
+                capture_output=True,
+                text=True
             )
 
             if result.returncode != 0:
@@ -342,7 +342,7 @@ class ContinuousTestImprovement:
                 }
 
             # 解析建议(这里简化处理)
-            recommendations = self._parse_recommendations(result.stdout)
+            recommendations=self._parse_recommendations(result.stdout)
 
             logger.info(f"Generated {len(recommendations)} improvement recommendations")
             return {
@@ -371,7 +371,7 @@ class ContinuousTestImprovement:
             List: 改进建议列表
         """
         # 这里简化处理,实际项目中可能需要解析具体的输出格式
-        recommendations = [
+        recommendations=[
             "Improve test pass rate by fixing failed tests",
             "Increase line coverage to 85% by adding missing tests",
             "Optimize slow tests to reduce execution time",
@@ -400,10 +400,10 @@ class ContinuousTestImprovement:
 
         try:
             recommendations = recommendations_result.get("recommendations", [])
-            improvements_made = []
+            improvements_made=[]
             # 实施简单的自动改进措施
             for recommendation in recommendations[:self.improvement_config["improvement"]["max_recommendations"]]:
-                improvement = self._implement_single_improvement(recommendation, "auto")
+                improvement=self._implement_single_improvement(recommendation, "auto")
                 if improvement:
                     improvements_made.append(improvement)
 
@@ -478,7 +478,7 @@ class ContinuousTestImprovement:
         try:
             # 生成文件名
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            results_file = self.reports_dir / f"improvement_cycle_{timestamp}.json"
+            results_file=self.reports_dir / f"improvement_cycle_{timestamp}.json"
 
             # 保存结果
             with open(results_file, "w", encoding='utf-8') as f:
@@ -498,7 +498,7 @@ class ContinuousTestImprovement:
         # 这里可以设置定时任务或监控服务
         # 实际项目中可能需要使用cron、systemd定时器或其他调度系统
 
-        monitoring_config = {
+        monitoring_config={
             "schedule": f"0 */{self.improvement_config['monitoring']['interval_hours']} * * *",
             "command": f"{sys.executable} {__file__} run-cycle",
             "description": "Unified AI Project Continuous Test Improvement"
@@ -517,12 +517,12 @@ class ContinuousTestImprovement:
         Returns: str 生成的仪表板路径
     """
         if output_file is None:
-            output_file = self.reports_dir / f"improvement_dashboard_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+            output_file=self.reports_dir / f"improvement_dashboard_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
         else:
             output_file = Path(output_file)
 
         # 生成HTML仪表板
-        dashboard_content = self._generate_dashboard_html()
+        dashboard_content=self._generate_dashboard_html()
 
         try:
 
@@ -657,10 +657,10 @@ Returns: str HTML内容
                 <strong>Line Coverage:</strong> Increase from 81% to 85% by adding missing tests
             </div>
             <div class="recommendation-item">
-                <strong>Performance,</strong> Optimize 5 slow tests (>5 seconds)
+                <strong>Performance:</strong> Optimize 5 slow tests (>5 seconds)
             </div>
             <div class="recommendation-item">
-                <strong>Code Quality,</strong> Improve naming of 15 poorly named tests
+                <strong>Code Quality:</strong> Improve naming of 15 poorly named tests
             </div>
     </div>
 

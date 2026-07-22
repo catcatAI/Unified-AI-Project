@@ -12,9 +12,9 @@ def main():
         cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
         timeout=15
     )
-    files = [f.strip() for f in result.stdout.strip().split('\n') if f.strip() and f.endswith('.py')]
+    files=[f.strip() for f in result.stdout.strip().split('\n') if f.strip() and f.endswith('.py')]
     
-    fixed = 0
+    fixed=0
     for filepath in files:
         content = open(filepath, 'r', encoding='utf-8').read()
         
@@ -34,19 +34,19 @@ def main():
         
         # Check if import is inside a docstring (between """ and """)
         # Count """ before this line
-        docstring_count = 0
-        in_docstring = False
+        docstring_count=0
+        in_docstring=False
         for j in range(import_line_idx):
             stripped = lines[j].strip()
             if stripped.startswith('"""') or stripped.startswith("'''"):
                 if not in_docstring:
-                    in_docstring = True
+                    in_docstring=True
                     remainder = stripped[3:]
                     delim = stripped[:3]
                     if delim in remainder:
-                        in_docstring = False
+                        in_docstring=False
                 else:
-                    in_docstring = False
+                    in_docstring=False
         
         if in_docstring:
             # Import is inside docstring! Move it after the docstring end.
@@ -70,10 +70,10 @@ def main():
             
             # Find the first non-blank line after closing docstring
             # to determine if we need a blank line
-            has_code_after = False
+            has_code_after=False
             for j in range(insert_idx + 1, len(lines)):
                 if lines[j].strip() and not lines[j].strip().startswith('#') and not lines[j].strip().startswith('"""') and not lines[j].strip().startswith("'''"):
-                    has_code_after = True
+                    has_code_after=True
                     break
             
             if has_code_after:
@@ -85,7 +85,7 @@ def main():
                 # No code after docstring - insert before the next code
                 lines.insert(insert_idx + 1, 'from core.utils import safe_error')
             
-            new_content = '\n'.join(lines)
+            new_content='\n'.join(lines)
             
             # Verify it compiles
             try:

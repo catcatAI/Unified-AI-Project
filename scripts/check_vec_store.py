@@ -14,7 +14,7 @@ def check_vector_store():
     with open(store_path, "r", encoding="utf-8") as f:
         memories = json.load(f)
 
-    drive_memories = [m for m in memories if m.get("metadata", {}).get("source") == "google_drive"]
+    drive_memories=[m for m in memories if m.get("metadata", {}).get("source") == "google_drive"]
     
     print(f"Total memories: {len(memories)}")
     print(f"Google Drive memories: {len(drive_memories)}")

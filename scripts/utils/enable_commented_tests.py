@@ -19,11 +19,11 @@ logger = logging.getLogger(__name__)
 class CommentedTestEnabler:
     def __init__(self, project_root, str) -> None:
         self.project_root = Path(project_root)
-        self.backend_tests_dir = self.project_root / "apps" / "backend" / "tests"
+        self.backend_tests_dir=self.project_root / "apps" / "backend" / "tests"
 
     def find_test_files(self) -> List[Path]:
         """Find all test files in the project."""
-        test_files = []
+        test_files=[]
         for root, dirs, files in os.walk(self.backend_tests_dir):
             for file in files:
                 if file.startswith('test_') and file.endswith('.py'):
@@ -32,7 +32,7 @@ class CommentedTestEnabler:
 
     def find_commented_tests(self, file_path, Path) -> List[Tuple[int, str]]:
         """Find commented out test functions in a file."""
-        commented_tests = []
+        commented_tests=[]
         with open(file_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
 
@@ -47,8 +47,8 @@ class CommentedTestEnabler:
         with open(file_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
 
-        changes_made = []
-        enabled_count = 0
+        changes_made=[]
+        enabled_count=0
 
         for i, line in enumerate(lines):
             match = re.search(r'^(\s*)#\s*(def test_.*)', line)
@@ -67,15 +67,15 @@ class CommentedTestEnabler:
     
     def process_all_files(self) -> Dict:
         """Process all test files to enable commented out tests."""
-        test_files = self.find_test_files()
-        total_enabled = 0
-        files_changed = []
-        all_changes = []
+        test_files=self.find_test_files()
+        total_enabled=0
+        files_changed=[]
+        all_changes=[]
         
         for test_file in test_files:
-            commented_tests = self.find_commented_tests(test_file)
+            commented_tests=self.find_commented_tests(test_file)
             if commented_tests:
-                enabled_count, changes = self.enable_commented_tests(test_file)
+                enabled_count, changes=self.enable_commented_tests(test_file)
                 if enabled_count > 0:
                     total_enabled += enabled_count
                     files_changed.append(str(test_file.relative_to(self.project_root)))
@@ -95,7 +95,7 @@ class CommentedTestEnabler:
         print("Running commented test enabler...")
         
         # Process all files
-        results = self.process_all_files()
+        results=self.process_all_files()
         
         # Print summary
         print("\nCommented Test Enabler Results,")

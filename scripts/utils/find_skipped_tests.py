@@ -3,7 +3,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-skipped_files = []
+skipped_files=[]
 for file in glob.glob("**/*.py", recursive=True):
     with open(file, "r", encoding="utf-8", errors="ignore") as f:
         content = f.read()

@@ -32,6 +32,6 @@ def check_test_collection() -> None:
     except Exception as e:
         print(f"Error running pytest collection: {e}")
         return None
-    #
+        #
     # if __name"__main__":
     check_test_collection()

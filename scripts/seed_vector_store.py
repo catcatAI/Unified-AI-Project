@@ -33,7 +33,7 @@ logger = logging.getLogger("seed_vector_store")
 
 # Batch size for numpy bulk_add_memories — 5000 entries per call
 # Each call is ~0.4s, so 100 batches of 5000 = ~40s for all 460K
-BATCH_SIZE = 5000
+BATCH_SIZE=5000
 
 # ---------------------------------------------------------------------------
 # Dictionary file discovery
@@ -70,7 +70,7 @@ def _iter_semantic_parts(entry: dict) -> List[str]:
             parts.append(s)
 
     # Context fields with semantic meaning
-    semantic_keys = {"pinyin", "reading", "pos", "definition",
+    semantic_keys={"pinyin", "reading", "pos", "definition",
                      "gloss", "example", "meaning", "note"}
     contexts = entry.get("contexts", [])
     if isinstance(contexts, list):
@@ -104,11 +104,11 @@ def _flush_batch(store, batch: List[Tuple[str, str, dict]]) -> int:
     if backend is not None:
         backend.bulk_add_memories(batch)
         return len(batch)
-    # Fallback: chromadb batch insert
+        # Fallback: chromadb batch insert
     if store.collection is not None:
-        ids = [b[0] for b in batch]
-        docs = [b[1] for b in batch]
-        metas = [b[2] for b in batch]
+        ids=[b[0] for b in batch]
+        docs=[b[1] for b in batch]
+        metas=[b[2] for b in batch]
         store.collection.add(documents=docs, metadatas=metas, ids=ids)
         return len(batch)
     return 0
@@ -122,7 +122,7 @@ def _flush_batch(store, batch: List[Tuple[str, str, dict]]) -> int:
 def seed_vector_store(
     limit: Optional[int] = None,
     source_filter: Optional[str] = None,
-    dry_run: bool = False,
+    dry_run: bool=False,
 ) -> int:
     """Entry point — seeds the VectorMemoryStore.
 
@@ -149,8 +149,8 @@ def seed_vector_store(
                 seen_keys.add(k)
         logger.info("  Loaded %d existing keys from numpy backend", len(seen_keys))
 
-    total_imported = 0
-    total_skipped = 0
+    total_imported=0
+    total_skipped=0
     batch: List[Tuple[str, str, dict]] = []
 
     def _commit_batch():
@@ -159,7 +159,7 @@ def seed_vector_store(
             return
         _flush_batch(store, batch)
         logger.info("  Batch %d committed", len(batch))
-        batch = []
+        batch=[]
 
     for fname, label in DICT_SOURCES.items():
         if source_filter and source_filter.lower() not in fname:
@@ -173,13 +173,13 @@ def seed_vector_store(
         with open(filepath, "r", encoding="utf-8") as f:
             raw = json.load(f)
 
-        items: list = []
+        items: list=[]
         if isinstance(raw, list):
             items = raw
         elif isinstance(raw, dict):
             items = raw.get("entries", raw.get("dictionary", []))
 
-        file_count = 0
+        file_count=0
         t_file = time.time()
         for entry in items:
             if not isinstance(entry, dict):
@@ -194,12 +194,12 @@ def seed_vector_store(
             seen_keys.add(entry_key)
 
             parts = _iter_semantic_parts(entry)
-            content = " ".join(p.strip() for p in parts if p.strip())
+            content=" ".join(p.strip() for p in parts if p.strip())
             if not content.strip():
                 total_skipped += 1
                 continue
 
-            metadata = {
+            metadata={
                 "source": label,
                 "key": entry_key or "",
                 "confidence": _get_entry_confidence(entry),

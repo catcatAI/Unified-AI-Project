@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class TestReportGenerator:
     """测试报告生成器"""
 
-    def __init__(self, report_dir: str = "test_reports") -> None:
+    def __init__(self, report_dir: str="test_reports") -> None:
         """
         初始化测试报告生成器
 
@@ -32,7 +32,7 @@ class TestReportGenerator:
         self.report_dir = Path(report_dir)
         self.report_dir.mkdir(exist_ok=True)
 
-    def generate_html_report(self, test_results: Dict[str, Any], output_file: str = None) -> str:
+    def generate_html_report(self, test_results: Dict[str, Any], output_file: str=None) -> str:
         """
         生成HTML测试报告
 
@@ -43,11 +43,11 @@ class TestReportGenerator:
         Returns: str 生成的HTML报告路径
         """
         if output_file is None:
-            output_file = self.report_dir / f"integration_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+            output_file=self.report_dir / f"integration_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
         else:
             output_file = Path(output_file)
 
-        html_content = self._generate_html_content(test_results)
+        html_content=self._generate_html_content(test_results)
 
         try:
             with open(output_file, "w", encoding='utf-8') as f:
@@ -272,7 +272,7 @@ class TestReportGenerator:
             tree = ET.parse(xml_file)
             root = tree.getroot()
 
-            test_results = {
+            test_results={
                 "timestamp": datetime.now().isoformat(),
                 "summary": {},
                 "test_cases": []
@@ -282,7 +282,7 @@ class TestReportGenerator:
             for testsuite in root.findall(".//testsuite"):
                 # 解析测试用例
                 for testcase in testsuite.findall("testcase"):
-                    est_case_data = {
+                    est_case_data={
                         "name": testcase.get("name", ""),
                         "module": testcase.get("classname", ""),
                         "duration": float(testcase.get("time", 0)),
@@ -312,7 +312,7 @@ class TestReportGenerator:
             logger.error(f"Error parsing JUnit XML file {xml_file} {e}")
             return {}
 
-    def generate_performance_report(self, benchmark_results: Dict[str, Any], output_file: str = None) -> str:
+    def generate_performance_report(self, benchmark_results: Dict[str, Any], output_file: str=None) -> str:
         """
         生成性能测试报告
 
@@ -323,11 +323,11 @@ class TestReportGenerator:
         Returns: str 生成的性能报告路径
         """
         if output_file is None:
-            output_file = self.report_dir / f"performance_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+            output_file=self.report_dir / f"performance_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
         else:
             output_file = Path(output_file)
 
-        html_content = self._generate_performance_html_content(benchmark_results)
+        html_content=self._generate_performance_html_content(benchmark_results)
 
         try:
             with open(output_file, "w", encoding='utf-8') as f:
@@ -488,7 +488,7 @@ def main() -> None:
         # 执行操作
         if args.action == "html":
             # 生成HTML报告(需要测试结果数据)
-            test_results = {
+            test_results={
                 "timestamp": datetime.now().isoformat(),
                 "summary": {},
                 "test_cases": [
@@ -548,4 +548,4 @@ if __name__ == "__main__":
     main()
 
 # 添加pytest标记,防止被误认为测试类
-TestReportGenerator.__test__ = False
+TestReportGenerator.__test__=False

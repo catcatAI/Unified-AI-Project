@@ -1,6 +1,8 @@
 """Compare recognition methods: primitives vs CLIP zero-shot."""
 
-import sys, os, time
+import sys
+import os
+import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
 
@@ -8,13 +10,13 @@ import numpy as np
 import glob
 from PIL import Image
 
-CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
 
 
 def load_test_images(n_per_class=10, skip_first=50):
-    images = []
-    labels = []
+    images=[]
+    labels=[]
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[
@@ -43,7 +45,7 @@ def run_clip_zero_shot(images, labels):
         return 0.0
 
     # Create text prompts
-    text_prompts = [f"a photo of a {cls}" for cls in CLASSES]
+    text_prompts=[f"a photo of a {cls}" for cls in CLASSES]
 
     # Encode text
     text_vecs = encoder.encode_text(text_prompts)
@@ -53,8 +55,8 @@ def run_clip_zero_shot(images, labels):
 
     print(f"Encoded {len(text_prompts)} text prompts")
 
-    correct = 0
-    per_class = {c: [0, 0] for c in CLASSES}
+    correct=0
+    per_class={c: [0, 0] for c in CLASSES}
     t_start = time.time()
 
     for i, (img, label) in enumerate(zip(images, labels)):

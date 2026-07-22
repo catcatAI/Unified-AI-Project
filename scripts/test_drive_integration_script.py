@@ -6,10 +6,10 @@ import logging
 try:
     import requests
 except ImportError:
-    requests = None
+    requests=None
 logger = logging.getLogger(__name__)
 
-BASE_URL = "http://127.0.0.1:8000/api/v1/drive"
+BASE_URL="http://127.0.0.1:8000/api/v1/drive"
 
 def test_drive_integration():
     if requests is None:
@@ -46,7 +46,7 @@ def test_drive_integration():
         # 4. Sync (if files exist)
         if files:
             print("\n4. Syncing files...")
-            file_ids = [f["id"] for f in files[:2]]
+            file_ids=[f["id"] for f in files[:2]]
             sync_res = requests.post(
                 f"{BASE_URL}/files/sync",
                 json={"file_ids": file_ids, "folder_path": "data/drive_downloads"},

@@ -34,7 +34,7 @@ async def main():
     # Note: store loads from disk, which might take time if not already loaded by a running backend.
     # But here we are a standalone script, so we load it independently.
     
-    categories = [
+    categories=[
         {
             "topic": "Project Goals & Philosophy",
             "query": "What are the core goals, philosophy, and ultimate vision of the Unified AI Project mentioned in the logs?",
@@ -57,7 +57,7 @@ async def main():
         }
     ]
     
-    report_lines = ["# Development Roadmap & Insights (Derived from Activity Logs)\n"]
+    report_lines=["# Development Roadmap & Insights (Derived from Activity Logs)\n"]
     
     print("[INFO] Starting Deep Analysis of Logs...")
     
@@ -77,7 +77,7 @@ async def main():
             continue
             
         # 2. Synthesize with LLM
-        context_str = "\n".join([f"- {r['document']}" for r in results])
+        context_str="\n".join([f"- {r['document']}" for r in results])
         
         prompt = f"""
         You are a Technical Project Manager analyzing user activity logs.
@@ -102,7 +102,7 @@ async def main():
         # But HybridBrain is complex.
         # Let's try to use `brain.providers['ollama'].generate(prompt)` if available.
         
-        response_text = "Analysis Failed"
+        response_text="Analysis Failed"
         
         try:
             # Check provider availability (provider definition is implicit in brain.class_a_provider)
@@ -111,9 +111,9 @@ async def main():
             if provider:
                 response_text = await provider.generate(prompt)
                 if not response_text:
-                     response_text = "LLM Generation returned empty. (Ollama might be down)"
+                     response_text="LLM Generation returned empty. (Ollama might be down)"
             else:
-                response_text = "No LLM Provider available."
+                response_text="No LLM Provider available."
                 
         except Exception as e:
             print(f"    [ERROR] LLM Generation failed: {e}")

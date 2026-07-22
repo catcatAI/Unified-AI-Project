@@ -37,8 +37,8 @@ class TestSuiteOptimizer:
     def run_optimizer(self):
         """Run the test suite optimizer."""
         print("Running test suite optimizer...")
-        duplicates = self.find_duplicate_tests()
-        structure = self.analyze_test_structure()
+        duplicates=self.find_duplicate_tests()
+        structure=self.analyze_test_structure()
         print(f"Found {len(duplicates)} duplicate test names")
         print(f"Analyzed {structure['total_test_files']} test files")
 

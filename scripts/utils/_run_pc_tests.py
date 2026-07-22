@@ -64,8 +64,8 @@ assert cleaned[0] == "["
 print("  OK: JSON cleaned")
 
 print("Test 5: _integrate_subtask_results fallback")
-coord.prompts = {}
-results = {0: "Result A", 1: "Result B"}
+coord.prompts={}
+results={0: "Result A", 1: "Result B"}
 llm_mock = AsyncMock()
 llm_mock.generate_text = AsyncMock(return_value="整合結果")
 async def test_integrate():
@@ -124,7 +124,7 @@ loop.close()
 print(f"  OK: build returned {len(result.segments)} segments")
 
 print("Test 12: build() with segment failure")
-attempt = {"count": 0}
+attempt={"count": 0}
 async def flaky_llm(prompt, **kwargs):
     attempt["count"] += 1
     if attempt["count"] == 1:
@@ -145,7 +145,7 @@ async def hung_llm(prompt, **kwargs):
     await asyncio.sleep(2.0)
     return "Should not reach"
 builder4 = DocumentBuilder(llm_generate_fn=hung_llm, max_segments=2, tokens_per_segment=64)
-builder4._segment_timeout_seconds = 0.5
+builder4._segment_timeout_seconds=0.5
 builder4._update_eta = MagicMock()
 builder4.eta_state = MagicMock()
 async def test_timeout():

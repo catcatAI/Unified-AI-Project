@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """ED3N Training + Reflex Generation Pipeline."""
-import sys, os, json, re, csv, time, logging
+import sys
+import os
+import json
+import re
+import csv
+import time
+import logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src")))
@@ -10,7 +16,7 @@ from ai.ed3n.training_types import TrainingExample, TrainingBatch
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-OP_MAP = {"+": " plus ", "-": " minus ", "*": " times ", "/": " over "}
+OP_MAP={"+": " plus ", "-": " minus ", "*": " times ", "/": " over "}
 
 def preprocess(text):
     text = text.lower().strip()
@@ -21,7 +27,7 @@ def preprocess(text):
     return text
 
 def load_data(data_dir):
-    samples = []
+    samples=[]
     for fname in ["arithmetic_train_dataset.json", "logic_test.json"]:
         path = os.path.join(data_dir, fname)
         if not os.path.exists(path):
@@ -33,8 +39,8 @@ def load_data(data_dir):
             out = item.get("answer", "")
             out = str(out).lower() if isinstance(out, bool) else str(out)
             samples.append({"input": inp, "output": out, "domain": fname.split("_")[0]})
-        print(f"  {fname}: {sum(1 for s in samples if s['domain']==fname.split('_')[0])}")
-    # Also CSV
+        print(f"  {fname}: {sum(1 for s in samples if s['domain'] == fname.split('_')[0])}")
+        # Also CSV
     path = os.path.join(data_dir, "arithmetic_test_dataset.csv")
     if os.path.exists(path):
         with open(path, encoding="utf-8") as f:
@@ -46,7 +52,7 @@ def load_data(data_dir):
 
 def add_reflex_patterns(engine, samples, top_n=5000):
     """Generate reflex patterns directly from training data."""
-    count = 0
+    count=0
     for s in samples:
         output_str = s["output"]
         if not output_str:
@@ -61,7 +67,7 @@ def test(engine, queries, label=""):
     print(f"\n  --- {label} ---")
     for q, expected in queries:
         r = engine.process(q)
-        ok = "OK" if (expected and expected in r) else "?"
+        ok="OK" if (expected and expected in r) else "?"
         print(f"  [{ok}] {q:35s} -> {r[:60] if r and len(r)>60 else r}")
 
 def main():
@@ -91,7 +97,7 @@ def main():
             if len(t) >= 1:
                 all_tokens.add(t)
     before = len(engine.dictionary.entries)
-    grown = 0
+    grown=0
     for token in sorted(all_tokens):
         if not engine.dictionary.encode(token):
             try:
@@ -103,8 +109,8 @@ def main():
     print(f"  Dictionary: {before} -> {len(engine.dictionary.entries)} ({grown} new)")
 
     # Create TrainingExamples with keys
-    examples = []
-    skip = 0
+    examples=[]
+    skip=0
     for s in samples:
         inp = preprocess(s["input"])
         out = preprocess(s["output"])
@@ -113,7 +119,7 @@ def main():
         if not ik or not ok:
             skip += 1
             continue
-        pairs = [(a, "mapping", b) for a in ik[:5] for b in ok[:3]]
+        pairs=[(a, "mapping", b) for a in ik[:5] for b in ok[:3]]
         examples.append(TrainingExample(
             input_text=s["input"], expected_output=s["output"],
             input_keys=ik, output_keys=ok,
@@ -139,7 +145,7 @@ def main():
     trainer.save(os.path.join(output_dir, "trainer_state.json"))
     engine.network.save_connections(os.path.join(output_dir, "network.json"))
     # Also export reflex patterns
-    reflex_data = {"patterns": list(engine.reflex.responses.items()) if hasattr(engine.reflex, "responses") else []}
+    reflex_data={"patterns": list(engine.reflex.responses.items()) if hasattr(engine.reflex, "responses") else []}
     with open(os.path.join(output_dir, "reflex_patterns.json"), "w", encoding="utf-8") as f:
         json.dump(reflex_data, f, ensure_ascii=False, indent=2)
     print(f"  Saved to {output_dir}")

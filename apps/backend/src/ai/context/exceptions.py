@@ -2,6 +2,8 @@
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
 # =============================================================================
 
+from typing import Optional
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -85,7 +87,7 @@ class MCPIntegrationError(IntegrationError):
 # 异常处理工具函数
 
 
-def handle_context_exception(exception: Exception, context_id: str = None) -> str:
+def handle_context_exception(exception: Exception, context_id: Optional[str] = None) -> str:
     """
     处理上下文异常并返回友好的错误信息
 

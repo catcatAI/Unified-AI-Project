@@ -18,15 +18,15 @@ sys.path.append(str(PROJECT_ROOT / "apps" / "backend" / "src"))
 from ai.memory.vector_store import VectorMemoryStore
 
 ACTIVITY_DIR = PROJECT_ROOT / "我的活動"
-MAX_CHARS_PER_SEGMENT = 2000
+MAX_CHARS_PER_SEGMENT=2000
 
 
 def split_content(content: str) -> list[str]:
-    raw = [s for s in content.split("\n\n") if s.strip()]
+    raw=[s for s in content.split("\n\n") if s.strip()]
     segments: list[str] = []
     for seg in raw:
         if len(seg) > MAX_CHARS_PER_SEGMENT:
-            current = ""
+            current=""
             for line in seg.splitlines(True):
                 if len(current) + len(line) > MAX_CHARS_PER_SEGMENT:
                     if current.strip():
@@ -58,7 +58,7 @@ async def ingest_file(file_path: Path, store: VectorMemoryStore, existing_ids: s
         doc_id = f"{relative}#seg_{idx}"
         if doc_id in existing_ids:
             continue
-        metadata = {
+        metadata={
             "source": "我的活動",
             "filename": file_path.name,
             "segment_index": idx,

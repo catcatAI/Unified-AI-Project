@@ -45,7 +45,7 @@ def run_integration_tests(test_type="all", markers=None, parallel=False) -> dict
     """运行集成测试"""
     print(f"Running integration tests (type: {test_type})...")
 
-    cmd = [sys.executable, "-m", "pytest"]
+    cmd=[sys.executable, "-m", "pytest"]
 
     if test_type == "all":
         cmd.extend(["tests/integration/", "-v"])
@@ -77,7 +77,7 @@ def generate_test_report(test_results, output_dir="test_reports") -> None:
 
     Path(output_dir).mkdir(exist_ok=True)
 
-    report_data = {
+    report_data={
         "timestamp": datetime.now().isoformat(),
         "test_results": test_results,
         "summary": {

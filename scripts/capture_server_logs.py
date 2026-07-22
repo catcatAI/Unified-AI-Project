@@ -22,7 +22,7 @@ SRC = get_src_path()
 
 print("=== Capturing Server Startup Logs ===\n")
 
-cmd = [
+cmd=[
     sys.executable,
     "-m", "uvicorn",
     "src.services.main_api_server:app",

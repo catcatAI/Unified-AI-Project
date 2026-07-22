@@ -61,7 +61,7 @@ def demo_clip_to_primitives():
     
     # Demo: Generate primitives from text
     print("\nGenerating primitives from text descriptions...")
-    texts = ["a red circle", "a blue line", "a green square"]
+    texts=["a red circle", "a blue line", "a green square"]
     
     for text in texts:
         # Encode text with CLIP

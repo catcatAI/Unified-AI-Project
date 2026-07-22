@@ -1,5 +1,7 @@
 """Train Three-Layer Visual Architecture on CIFAR-10."""
-import sys, os, time
+import sys
+import os
+import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
 
 import numpy as np
@@ -7,13 +9,13 @@ import glob
 from PIL import Image
 from ai.multimodal.three_layer_visual import ThreeLayerVisual
 
-CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
-OUTPUT_DIR = "data/multimodal/gvv/three_layer_train"
+CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+OUTPUT_DIR="data/multimodal/gvv/three_layer_train"
 
 
 def load_cifar(n_per_class=50):
-    images, labels = [], []
+    images, labels=[], []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[:n_per_class]

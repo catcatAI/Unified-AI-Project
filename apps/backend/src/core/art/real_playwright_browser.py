@@ -282,7 +282,7 @@ class AngelaRealBrowser:
             logger.error(f"❌ 搜索失败: {e}", exc_info=True)
             return []
 
-    async def take_screenshot(self, path: str = None) -> str:
+    async def take_screenshot(self, path: Optional[str] = None) -> str:
         """
         截图当前页面
 

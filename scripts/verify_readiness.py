@@ -31,31 +31,31 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "apps/backend"))
 sys.path.insert(0, str(PROJECT_ROOT / "apps/backend/src"))
 
-PASS = 0
-FAIL = 0
-WARN = 0
+PASS=0
+FAIL=0
+WARN=0
 TOTAL_START = time.time()
 
 
-def check(name: str, ok: bool, detail: str = "") -> None:
+def check(name: str, ok: bool, detail: str="") -> None:
     global PASS, FAIL, WARN
     if ok:
         PASS += 1
-        status = "✅"
+        status="✅"
     elif detail and "warning" in detail.lower():
         WARN += 1
-        status = "⚠️"
-        ok = True  # Treat warnings as pass for exit code
+        status="⚠️"
+        ok=True  # Treat warnings as pass for exit code
     else:
         FAIL += 1
-        status = "❌"
+        status="❌"
     d = f" — {detail}" if detail else ""
     print(f"  {status} {name}{d}")
 
 
 def run_pytest() -> dict:
     """Run pytest and return summary."""
-    result = {"total": 0, "passed": 0, "failed": 0, "errors": 0, "warnings": 0}
+    result={"total": 0, "passed": 0, "failed": 0, "errors": 0, "warnings": 0}
     try:
         output = subprocess.run(
             [sys.executable, "-m", "pytest", "tests/", "--tb=line", "--no-header", "-q",
@@ -102,7 +102,7 @@ print("\n━━━ T1: TEST SUITE HEALTH ━━━")
 test_dir = PROJECT_ROOT / "tests"
 
 # Anti-patterns: broad except + pytest.skip
-anti_patterns = []
+anti_patterns=[]
 for f in sorted(test_dir.rglob("*.py")):
     try:
         text = f.read_text(encoding="utf-8", errors="ignore")
@@ -144,7 +144,7 @@ try:
     import sys
     if "main" in sys.modules:
         del sys.modules["main"]
-    # Clean slate for route module caches that might have side effects
+        # Clean slate for route module caches that might have side effects
     for key in list(sys.modules.keys()):
         if "api.routes" in key or "api.v1" in key:
             del sys.modules[key]
@@ -155,24 +155,24 @@ try:
     # Clear the ABCKeyManager singleton
     if hasattr(main_module, "km"):
         main_module.km = MagicMock()
-        main_module.km.has_key.return_value = True
-        main_module.km.get_key.return_value = "test-key"
+        main_module.km.has_key.return_value=True
+        main_module.km.get_key.return_value="test-key"
 
     app = main_module.create_app()
 
-    routes = []
+    routes=[]
     for route in app.routes:
         if hasattr(route, "methods") and hasattr(route, "path"):
             for m in route.methods:
                 if m in ("GET", "POST", "PUT", "DELETE", "PATCH"):
                     routes.append(f"{m} {route.path}")
 
-    doc_routes = [r for r in routes if "/docs" in r or "/openapi" in r or "/redoc" in r]
-    api_routes = [r for r in routes if "/api/" in r or r.startswith("GET /health")]
+    doc_routes=[r for r in routes if "/docs" in r or "/openapi" in r or "/redoc" in r]
+    api_routes=[r for r in routes if "/api/" in r or r.startswith("GET /health")]
     check("Server creates without errors", True, f"{len(routes)} routes ({len(api_routes)} API, {len(doc_routes)} docs)")
 except Exception as e:
     check("Server startup", False, str(e)[:200])
-    app = None
+    app=None
 
 # ============================================================================
 # T3: Endpoint Integrity
@@ -180,8 +180,8 @@ except Exception as e:
 print("\n━━━ T3: ENDPOINT INTEGRITY ━━━")
 
 if app is not None:
-    api_routes = [(m, p) for p in routes for m in [p.split()[0]] if "/api/" in p.split(" ", 1)[-1] or p.startswith("GET /health")]
-    api_routes_clean = [(m.split()[0] if " " in m else m, p.split(" ", 1)[1] if " " in p else p) for p in routes for m in [p.split()[0]] if True]
+    api_routes=[(m, p) for p in routes for m in [p.split()[0]] if "/api/" in p.split(" ", 1)[-1] or p.startswith("GET /health")]
+    api_routes_clean=[(m.split()[0] if " " in m else m, p.split(" ", 1)[1] if " " in p else p) for p in routes for m in [p.split()[0]] if True]
 
     # Re-parse properly
     api_routes_clean = set()
@@ -193,9 +193,9 @@ if app is not None:
     check("API endpoints registered", len(api_routes_clean) >= 80, f"{len(api_routes_clean)} endpoints")
 
     # Verify no deprecated/removed endpoints remain
-    bad_patterns = ["angela/chat", "/dialogue", "vision/analyze", "generate-image", "mobile/test",
+    bad_patterns=["angela/chat", "/dialogue", "vision/analyze", "generate-image", "mobile/test",
                     "encode-with-retry", "decode-with-fallback", "train-with-checkpoint"]
-    remaining_bad = [(m, p) for m, p in api_routes_clean if any(b in p for b in bad_patterns)]
+    remaining_bad=[(m, p) for m, p in api_routes_clean if any(b in p for b in bad_patterns)]
     if remaining_bad:
         for m, p in remaining_bad:
             check(f"Removed endpoint: {m} {p}", False)
@@ -208,7 +208,7 @@ if app is not None:
 print("\n━━━ T4: IMPORT HEALTH ━━━")
 
 # Import individual modules in a fresh process to verify
-key_modules = [
+key_modules=[
     "ai.ed3n.ed3n_engine",
     "ai.garden.garden_engine",
     "ai.memory.ham_memory.ham_manager",
@@ -250,12 +250,12 @@ api_client = PROJECT_ROOT / "packages/shared-js/js/api-client.js"
 if api_client.exists():
     text = api_client.read_text(encoding="utf-8", errors="ignore")
     paths_found = re.findall(r"'([^']*(?:/api/v1/[^']*|/health)[^']*)'", text)
-    mismatched = []
+    mismatched=[]
     for p in paths_found:
-        found = False
+        found=False
         for m_test in ["GET", "POST"]:
             if (m_test, p) in backend_paths:
-                found = True
+                found=True
                 break
         if not found:
             mismatched.append(p)
@@ -269,13 +269,13 @@ mm_client = PROJECT_ROOT / "apps/desktop-app/electron_app/js/multimodal-client.j
 if mm_client.exists():
     text = mm_client.read_text(encoding="utf-8", errors="ignore")
     paths_found = re.findall(r"'([^']*(?:/multimodal/[^']*|/health)[^']*)'", text)
-    mismatched = []
+    mismatched=[]
     for p in paths_found:
         api_p = f"/api/v1{p}" if not p.startswith("/api/v1") else p
-        found = False
+        found=False
         for m_test in ["GET", "POST"]:
             if (m_test, api_p) in backend_paths:
-                found = True
+                found=True
                 break
         if not found:
             mismatched.append(api_p)
@@ -328,7 +328,7 @@ print("\n━━━ T7: SESSION MANAGEMENT ━━━")
 try:
     from api.routes.chat_routes import TTLSessionManager
     sm = TTLSessionManager()
-    test_sid = "verify-test-session"
+    test_sid="verify-test-session"
     sm.set(test_sid, {"created_at": "2026-07-13T00:00:00", "user_name": "Verify"})
     retrieved = sm.get(test_sid)
     check("Session set/get", retrieved and retrieved.get("user_name") == "Verify")

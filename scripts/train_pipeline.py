@@ -64,7 +64,7 @@ STATE_FILE = os.path.join(CKPT_DIR, "training_state.json")
 # Step 1a — preprocessing helpers
 # ---------------------------------------------------------------------------
 
-OP_MAP = {"+": " plus ", "-": " minus ", "*": " times ", "/": " over "}
+OP_MAP={"+": " plus ", "-": " minus ", "*": " times ", "/": " over "}
 
 
 def preprocess(text: str) -> str:
@@ -109,7 +109,7 @@ def _parse_malformed_logic_json(raw: str) -> List[Dict]:
             return samples
     except json.JSONDecodeError:
         pass
-    # Fallback: regex after normalizing
+        # Fallback: regex after normalizing
     s2 = re.sub(r'\s+', ' ', s)
     for m in re.finditer(r'proposition\s*:\s*"([^"]*)"\s*,\s*answer\s*:\s*"([^"]*)"', s2):
         samples.append({"proposition": m.group(1), "answer": m.group(2)})
@@ -150,7 +150,7 @@ def load_all_data() -> List[Dict]:
 
     # CSV
     csv_path = os.path.join(DATA_DIR, "arithmetic_test_dataset.csv")
-    csv_count = 0
+    csv_count=0
     if os.path.exists(csv_path):
         with open(csv_path, encoding="utf-8") as f:
             for row in csv.DictReader(f):
@@ -199,7 +199,7 @@ def load_templates_data() -> List[Dict]:
     data = _load_json(TEMPLATES_PATH)
     samples: List[Dict] = []
     for item in data:
-        inp = " ".join(item.get("keywords", []))
+        inp=" ".join(item.get("keywords", []))
         out = item.get("content", "")
         if inp and out:
             samples.append({"input": inp, "output": out, "domain": "reflex"})
@@ -217,7 +217,7 @@ def load_knowledge_bases() -> List[Dict]:
         if not fname.endswith((".json", ".yaml", ".yml")):
             continue
         fpath = os.path.join(KB_DIR, fname)
-        data = None
+        data=None
         try:
             data = _load_json(fpath)
         except Exception:
@@ -226,7 +226,7 @@ def load_knowledge_bases() -> List[Dict]:
                     with open(fpath, encoding="utf-8") as _fy:
                         raw = _fy.read()
                     parsed = _parse_simple_yaml(raw)
-                    data = []
+                    data=[]
                     for category, attrs in parsed.items():
                         desc = attrs.get("text_ending") or attrs.get("description") or ""
                         if desc:
@@ -273,8 +273,8 @@ def _parse_simple_yaml(text: str) -> dict:
           subkey: value
           subkey: value
     """
-    result = {}
-    current_key = None
+    result={}
+    current_key=None
     for line in text.splitlines():
         if not line.strip() or line.strip().startswith("#"):
             continue
@@ -324,7 +324,7 @@ def load_presets_data() -> List[Dict]:
                 continue
             fpath = os.path.join(GARDEN_CONFIG_DIR, fname)
             data = _load_json(fpath)
-            sub_samples = []
+            sub_samples=[]
             for trigger, response in data.get("reflex_patterns", {}).items():
                 if trigger and response:
                     sub_samples.append({"input": trigger, "output": response, "domain": "reflex"})
@@ -477,7 +477,7 @@ def generate_knowledge_data() -> List[Dict]:
     ]
 
     # Generate additional samples via template expansion to reach 500+
-    templates_en = [
+    templates_en=[
         ("what is {topic}", "{topic} is a fundamental concept in {field}"),
         ("explain {topic}", "{topic} refers to the study and application of {field} principles"),
         ("define {topic}", "{topic} is defined as a core aspect of {field}"),
@@ -485,15 +485,15 @@ def generate_knowledge_data() -> List[Dict]:
         ("describe {topic}", "{topic} encompasses key ideas in {field}"),
         ("what does {topic} mean", "{topic} means studying how {field} works in practice"),
     ]
-    templates_zh = [
+    templates_zh=[
         ("什么是{topic}", "{topic}是{field}领域的重要概念"),
         ("解释{topic}", "{topic}是指{field}中的基本原理和方法"),
         ("定义{topic}", "{topic}是{field}的一个核心概念"),
         ("描述{topic}", "{topic}是{field}的重要组成部分"),
     ]
-    fields_en = ["computer science", "mathematics", "physics", "biology", "engineering", "technology"]
-    fields_zh = ["计算机", "数学", "物理", "生物", "工程", "科技"]
-    topics_en = ["data structure", "sorting algorithm", "database index", "network topology",
+    fields_en=["computer science", "mathematics", "physics", "biology", "engineering", "technology"]
+    fields_zh=["计算机", "数学", "物理", "生物", "工程", "科技"]
+    topics_en=["data structure", "sorting algorithm", "database index", "network topology",
                  "quantum computing", "machine vision", "speech recognition", "encryption protocol",
                  "distributed system", "memory management", "thread pool", "load balancer",
                  "cache coherency", "transaction processing", "fault tolerance", "digital signal",
@@ -506,7 +506,7 @@ def generate_knowledge_data() -> List[Dict]:
                  "version control", "agile methodology", "rest api", "graph database",
                  "neural network", "deep learning", "reinforcement learning", "transfer learning",
                  "computer vision", "natural language", "recommender system", "anomaly detection"]
-    topics_zh = ["面向对象编程", "函数式编程", "设计模式", "软件架构", "微服务",
+    topics_zh=["面向对象编程", "函数式编程", "设计模式", "软件架构", "微服务",
                  "容器技术", "持续集成", "版本控制", "敏捷开发", "测试驱动开发",
                  "数据结构", "算法设计", "操作系统", "计算机网络", "信息安全",
                  "人工智能", "机器学习", "数据挖掘", "云计算", "大数据",
@@ -556,7 +556,7 @@ def generate_knowledge_data() -> List[Dict]:
                 break
         if len(pairs) >= target:
             break
-    # Chinese pass
+            # Chinese pass
     if len(pairs) < target:
         for template, tmpl_out in templates_zh:
             for topic in topics_zh:
@@ -570,7 +570,7 @@ def generate_knowledge_data() -> List[Dict]:
                     break
             if len(pairs) >= target:
                 break
-    # Fill remaining with enumerated variants if still under target
+                # Fill remaining with enumerated variants if still under target
     if len(pairs) < target:
         remaining = target - len(pairs)
         for i in range(remaining + limit_value("train.generate.buffer_extra", 10)):
@@ -596,11 +596,11 @@ def evaluate(
     garden_engine: Optional[GARDENEngine],
     model_bus: ModelBus,
     test_cases: List[Tuple[str, str, Optional[str]]],
-    label: str = "",
+    label: str="",
 ) -> Dict[str, Any]:
     """Run test cases through Model Bus and individual engines.
     Returns structured results with pass/fail per test case."""
-    results = {"label": label, "total": len(test_cases), "passed": 0, "failed": 0, "details": []}
+    results={"label": label, "total": len(test_cases), "passed": 0, "failed": 0, "details": []}
     print(f"\n  --- {label} ---")
     classifier = QueryClassifier()
     for query, expected_domain, expected_contains in test_cases:
@@ -615,8 +615,8 @@ def evaluate(
             bus_text = getattr(bus_text, 'text', str(bus_text)) if not isinstance(bus_text, str) else bus_text
         except Exception as e:
             bus_text = f"<error: {e}>"
-        # 3) Direct engine call
-        direct = ""
+            # 3) Direct engine call
+        direct=""
         try:
             if expected_domain in ("math", "logic", "reflex", "greeting"):
                 direct = ed3n_engine.process(query)
@@ -624,9 +624,9 @@ def evaluate(
                 direct = garden_engine.process(query)
         except Exception as e:
             direct = f"<error: {e}>"
-        # Check pass/fail
+            # Check pass/fail
         domain_ok = qtype.value == expected_domain
-        contains_ok = True
+        contains_ok=True
         if expected_contains:
             contains_ok = expected_contains in direct or expected_contains in str(bus_text)
         passed = domain_ok and contains_ok
@@ -641,10 +641,10 @@ def evaluate(
             "passed": passed,
             "bus_response": str(bus_text)[:100],
         })
-        domain_str = "OK" if domain_ok else f"({qtype.value})"
-        contains_str = " OK" if contains_ok else " ?"
+        domain_str="OK" if domain_ok else f"({qtype.value})"
+        contains_str=" OK" if contains_ok else " ?"
         print(f"  [{domain_str}]{contains_str} {query:40s} -> bus={str(bus_text)[:50]}")
-    # Summary
+        # Summary
     pass_rate = results["passed"] / max(results["total"], 1) * 100
     print(f"\n  Results: {results['passed']}/{results['total']} passed ({pass_rate:.0f}%)")
     return results
@@ -712,7 +712,7 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
         print(f"  Resumed ED3N from {resume_ckpt} (epochs_done={epochs_done})")
     else:
         ed3n_engine.load_presets()
-        epochs_done = 0
+        epochs_done=0
     print(f"  Presets loaded: {len(ed3n_engine.dictionary.entries)} dict entries, "
           f"{len(ed3n_engine.reflex.patterns)} reflex patterns")
 
@@ -726,7 +726,7 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
                 all_tokens.add(t)
 
     before = len(ed3n_engine.dictionary.entries)
-    grown = 0
+    grown=0
     for token in sorted(all_tokens):
         if not ed3n_engine.dictionary.encode(token):
             try:
@@ -748,10 +748,10 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
     # indistinguishable from a normal memorizing AI).
     # Only reflex/greeting/math/logic-style samples train the SNN as
     # associations. reasoning/tooluse/knowledge are excluded from SNN training.
-    snn_training_domains = {"reflex", "greeting", "math", "logic", "association"}
+    snn_training_domains={"reflex", "greeting", "math", "logic", "association"}
     examples: List[TrainingExample] = []
-    skip = 0
-    skipped_domain = 0
+    skip=0
+    skipped_domain=0
     for s in ed3n_samples:
         if s.get("domain") not in snn_training_domains:
             # Fact/relation/intent: dictionary growth already handled it above.
@@ -765,7 +765,7 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
         if not ik or not ok_:
             skip += 1
             continue
-        pairs = [(a, "mapping", b) for a in ik[:limit_value("train.ed3n.max_input_keys", 5)] for b in ok_[:limit_value("train.ed3n.max_output_keys", 3)]]
+        pairs=[(a, "mapping", b) for a in ik[:limit_value("train.ed3n.max_input_keys", 5)] for b in ok_[:limit_value("train.ed3n.max_output_keys", 3)]]
         examples.append(TrainingExample(
             input_text=s["input"],
             expected_output=s["output"],
@@ -793,7 +793,7 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
             print(f"    Epoch {epoch+1}/{epochs_total}: loss={m.loss:.4f} acc={m.accuracy:.4f} ({time.time()-t0:.1f}s)")
             # Record with coordinator — preserve the true per-domain label so the
             # coverage report is accurate (previously collapsed to math/logic).
-            seen_domains = {e.metadata.get("domain", "unknown") for e in batch.examples}
+            seen_domains={e.metadata.get("domain", "unknown") for e in batch.examples}
             record_domain = next(iter(seen_domains)) if len(seen_domains) == 1 else "mixed"
             asyncio.run(coordinator.record_training(
                 domain=record_domain,
@@ -822,8 +822,8 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
     # killed after recording the marker but before persisting ed3n_full.json
     # would otherwise permanently lose them on the next resume.
     print("  Adding reflex patterns from training data...")
-    reflex_count = 0
-    reflex_domain_blacklist = {"reasoning", "tooluse", "math", "logic"}
+    reflex_count=0
+    reflex_domain_blacklist={"reasoning", "tooluse", "math", "logic"}
     for s in ed3n_samples:
         output_str = s["output"]
         if not output_str:
@@ -918,7 +918,7 @@ def _step5_train_garden(coordinator, batches, resume_state=None, save_state=None
               f"no SNN Hebbian mirror)...")
 
         # Use batch learning for speed (rebuilds index ONCE, not per sample)
-        BATCH_SIZE = 500
+        BATCH_SIZE=500
         batch_done = int(resume_state.get("garden_batch_done", 0))
         total_learned = batch_done
         for i in range(batch_done, len(garden_samples), BATCH_SIZE):
@@ -998,7 +998,7 @@ def _step6_sync_knowledge(ed3n_engine, garden_engine, model_bus, coordinator, al
     # ED3N
     ed3n_engine.save(os.path.join(CKPT_DIR, "ed3n_full.json"))
     ed3n_engine.network.save_connections(os.path.join(CKPT_DIR, "network.json"))
-    reflex_data = {"patterns": list(ed3n_engine.reflex.patterns.items())}
+    reflex_data={"patterns": list(ed3n_engine.reflex.patterns.items())}
     with open(os.path.join(CKPT_DIR, "reflex_patterns.json"), "w", encoding="utf-8") as f:
         json.dump(reflex_data, f, ensure_ascii=False, indent=2)
     print(f"  ED3N saved to {CKPT_DIR}")
@@ -1016,7 +1016,7 @@ def _step6_sync_knowledge(ed3n_engine, garden_engine, model_bus, coordinator, al
         print(f"  GARDEN saved to {garden_ckpt_dir}")
 
     # Training report
-    training_report = {
+    training_report={
         "pipeline": "unified_ed3n_garden",
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "samples_loaded": len(all_samples),
@@ -1057,7 +1057,7 @@ def main() -> None:
 
     # Check for resume state
     STATE_FILE = os.path.join(CKPT_DIR, "training_state.json")
-    resume_state = {}
+    resume_state={}
     if os.path.exists(STATE_FILE):
         try:
             with open(STATE_FILE, "r", encoding="utf-8") as f:
@@ -1067,9 +1067,9 @@ def main() -> None:
             print(f"  Resuming from step {len(completed_steps) + 1}/8...")
         except Exception as e:
             print(f"  Warning: Could not load state file: {e}")
-            resume_state = {}
+            resume_state={}
     else:
-        completed_steps = []
+        completed_steps=[]
 
     def save_state(step: int, data: Optional[Dict] = None) -> None:
         """Save training state for resume."""
@@ -1146,7 +1146,7 @@ def main() -> None:
         ed3n_engine.load(os.path.join(CKPT_DIR, "ed3n_full.json"))
         # Get sample count from resume state
         examples_count = resume_state.get("ed3n_samples", 0)
-        examples = []
+        examples=[]
     else:
         ed3n_engine, examples = _step4_train_ed3n(coordinator, batches, resume_state, save_state)
         save_state(4, {"ed3n_samples": len(examples)})

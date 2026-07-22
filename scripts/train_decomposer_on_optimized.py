@@ -20,11 +20,11 @@ from ai.multimodal.primitives.learnable_decomposer import LearnableDecomposer
 from ai.multimodal.primitives.primitive_types import DrawingInstructions, TOTAL_DIM
 from ai.multimodal.primitives.primitive_renderer import PrimitiveRenderer
 
-CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES = ["airplane", "automobile", "bird", "cat", "deer",
+CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES=["airplane", "automobile", "bird", "cat", "deer",
            "dog", "frog", "horse", "ship", "truck"]
-MODEL_DIR = "D:/Projects/Unified-AI-Project/models"
-SAVE_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/samples_optimized_decomposer"
+MODEL_DIR="D:/Projects/Unified-AI-Project/models"
+SAVE_DIR="D:/Projects/Unified-AI-Project/data/multimodal/samples_optimized_decomposer"
 
 
 def load_cifar_images_and_labels():
@@ -32,14 +32,14 @@ def load_cifar_images_and_labels():
     optimized_labels = np.load(os.path.join(CIFAR_DIR, "optimized_labels.npy"))
 
     # Load one image per label to match the order
-    all_files = {}
+    all_files={}
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted([f for f in os.listdir(cls_dir) if f.endswith(".npy")])
         all_files[ci] = [os.path.join(cls_dir, f) for f in files]
 
-    images = []
-    labels = []
+    images=[]
+    labels=[]
     for label in optimized_labels:
         f = all_files[int(label)].pop(0)
         arr = np.load(f)
@@ -61,7 +61,7 @@ def get_clip_embeddings(images):
 
     sv = SemanticVisualEncoder()
 
-    embeddings = []
+    embeddings=[]
     for img_arr in images:
         pil = Image.fromarray((img_arr * 255).astype(np.uint8))
         buf = io.BytesIO()
@@ -87,7 +87,7 @@ def train_decomposer(clip_embs, optimized_vecs, epochs=200, lr=0.002):
     clip_embs_arr = np.array(clip_embs, dtype=np.float32)
     opt_vecs_arr = np.array(optimized_vecs, dtype=np.float32)
 
-    losses = []
+    losses=[]
     best_loss = float('inf')
     best_W1 = decomposer._W1.copy()
     best_b1 = decomposer._b1.copy()
@@ -96,7 +96,7 @@ def train_decomposer(clip_embs, optimized_vecs, epochs=200, lr=0.002):
 
     for epoch in range(epochs):
         indices = np.random.permutation(n)
-        epoch_loss = 0.0
+        epoch_loss=0.0
 
         for i in range(0, n, 8):
             batch_idx = indices[i:i + 8]
@@ -104,8 +104,8 @@ def train_decomposer(clip_embs, optimized_vecs, epochs=200, lr=0.002):
             batch_target = opt_vecs_arr[batch_idx]
 
             # Forward
-            batch_pred = []
-            batch_caches = []
+            batch_pred=[]
+            batch_caches=[]
             for j in range(len(batch_idx)):
                 pred, cache = decomposer.forward(batch_clip[j])
                 batch_pred.append(pred)
@@ -121,7 +121,7 @@ def train_decomposer(clip_embs, optimized_vecs, epochs=200, lr=0.002):
                 cache = batch_caches[j]
 
                 # MSE gradient: d(loss)/d(pred) = 2*(pred - target)/n
-                d_pred = 2.0 * (pred - target) / len(batch_idx)
+                d_pred=2.0 * (pred - target) / len(batch_idx)
 
                 # Through sigmoid: d(sig)/dz = sig * (1 - sig)
                 d_z2 = d_pred * cache["sig"] * (1 - cache["sig"])
@@ -182,7 +182,7 @@ def evaluate_end_to_end(decomposer, images, labels):
 
     os.makedirs(SAVE_DIR, exist_ok=True)
 
-    sims = []
+    sims=[]
     for i in range(min(20, len(images))):
         # Get CLIP embedding
         pil_orig = Image.fromarray((images[i] * 255).astype(np.uint8))

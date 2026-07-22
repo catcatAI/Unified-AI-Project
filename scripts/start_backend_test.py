@@ -17,7 +17,7 @@ if _PROJECT_ROOT not in sys.path:
 
 from scripts._server_helper import start_server, stop_server, wait_for_server, test_health, test_chat
 
-WAIT_SECONDS = 10.0
+WAIT_SECONDS=10.0
 
 
 def main():

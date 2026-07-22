@@ -81,7 +81,7 @@ def main():
     joint_path = os.path.join(save_dir, "p29_trained.npz")
 
     # Collect visual decoder weights
-    vd_weights = {
+    vd_weights={
         "visual_decoder_W": pipeline._visual_decoder._W,
         "visual_decoder_b": pipeline._visual_decoder._b,
         "texture_W_hidden": pipeline._visual_decoder._W_hidden,
@@ -92,7 +92,7 @@ def main():
     }
     # Collect audio decoder weights
     ad = pipeline._audio_decoder
-    ad_weights = {
+    ad_weights={
         "audio_decoder_W": ad._W,
         "audio_decoder_b": ad._b,
         "audio_W_hidden": ad._W_hidden,
@@ -104,7 +104,7 @@ def main():
     }
     # Merge and save
     import numpy as np
-    all_weights = {**vd_weights, **ad_weights}
+    all_weights={**vd_weights, **ad_weights}
     np.savez(joint_path, **all_weights)
     print(f"\n✅ Saved joint weights ({len(all_weights)} arrays) to {joint_path}")
 

@@ -1,5 +1,8 @@
 """Fast concept space training using linear probing + center loss."""
-import sys, os, time, io
+import sys
+import os
+import time
+import io
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
 
 import numpy as np
@@ -7,13 +10,13 @@ import glob
 from PIL import Image
 from ai.multimodal.semantic_visual import SemanticVisualEncoder
 
-CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
 
 
 def load_images(n_per_class=50, skip_first=0):
-    images = []
-    labels = []
+    images=[]
+    labels=[]
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[skip_first:skip_first+n_per_class]
@@ -30,7 +33,7 @@ def load_images(n_per_class=50, skip_first=0):
 
 
 def encode_images(encoder, images):
-    all_vecs = []
+    all_vecs=[]
     for i, img in enumerate(images):
         buf = io.BytesIO()
         img.save(buf, format="PNG")
@@ -67,10 +70,10 @@ def main():
 
     # === Method 1: Pure CLIP cosine similarity (baseline) ===
     print("\n=== CLIP Cosine Similarity (no training) ===")
-    text_prompts = [f"a photo of a {cls}" for cls in CLASSES]
+    text_prompts=[f"a photo of a {cls}" for cls in CLASSES]
     text_vecs = encoder.encode_text(text_prompts)
 
-    correct = 0
+    correct=0
     for i in range(len(test_clip)):
         sims = text_vecs @ test_clip[i]
         pred = int(np.argmax(sims))
@@ -81,7 +84,7 @@ def main():
     # === Method 2: Linear classifier on CLIP features ===
     print("\n=== Linear Classifier on CLIP Features ===")
     n_classes = len(CLASSES)
-    n_features = 512
+    n_features=512
 
     # One-hot encode labels
     Y = np.zeros((len(train_clip), n_classes), dtype=np.float32)
@@ -94,8 +97,8 @@ def main():
     W = np.linalg.solve(XtX, X.T @ Y)  # (512, 10)
 
     # Test
-    correct = 0
-    per_class = {c: [0, 0] for c in CLASSES}
+    correct=0
+    per_class={c: [0, 0] for c in CLASSES}
     for i in range(len(test_clip)):
         scores = test_clip[i] @ W  # (10,)
         pred = int(np.argmax(scores))
@@ -134,8 +137,8 @@ def main():
         centers[c] /= np.linalg.norm(centers[c]) + 1e-8
 
     # Test
-    correct = 0
-    per_class = {c: [0, 0] for c in CLASSES}
+    correct=0
+    per_class={c: [0, 0] for c in CLASSES}
     for i in range(len(test_clip)):
         proj_vec = (test_clip[i] - X_mean) @ proj.T
         norm = np.linalg.norm(proj_vec)
@@ -166,7 +169,7 @@ def main():
     mapper._b3 = np.zeros(64, dtype=np.float32)
     mapper._class_centers = centers
     mapper._class_names = CLASSES
-    mapper._is_trained = True
+    mapper._is_trained=True
     mapper.save("models/concept_space.json")
     print("\nSaved concept space (PCA-based)")
 

@@ -51,7 +51,7 @@ class HealthMonitor:
         status: ModuleStatus,
         alive: bool,
         latency_ms: float = 0.0,
-        error: str = None,
+        error: Optional[str] = None,
         consecutive_fails: int = 0,
     ) -> None:
         """Execute the check operation."""

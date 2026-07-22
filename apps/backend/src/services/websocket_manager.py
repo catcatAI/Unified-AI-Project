@@ -69,7 +69,7 @@ class ConnectionManager:
         return self._sm.heartbeat_timeout
 
     async def connect(
-        self, websocket: WebSocket, session_id: str = None, metadata: dict = None
+        self, websocket: WebSocket, session_id: Optional[str] = None, metadata: Optional[dict] = None
     ) -> str:
         """Establish connection."""
         await websocket.accept()

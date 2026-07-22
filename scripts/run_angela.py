@@ -39,19 +39,19 @@ class SecurityError(Exception):
 class ProgressDisplay:
     """进度显示器 - 使用 live_logger 实现单行动态更新"""
 
-    def __init__(self, total_steps: int = 100):
+    def __init__(self, total_steps: int=100):
         self.total_steps = total_steps
-        self.current_step = 0
+        self.current_step=0
         self._last_pct = -1
 
-    def update(self, step: int, message: str, stat: str = "info") -> None:
+    def update(self, step: int, message: str, stat: str="info") -> None:
         from core.system.live_logger import status, status_done
         self.current_step = step
         percent = min(100, int((step / self.total_steps) * 100))
         if percent == self._last_pct and stat not in ("error",):
             return
         self._last_pct = percent
-        bar = "█" * (percent // 2) + "░" * (50 - percent // 2)
+        bar="█" * (percent // 2) + "░" * (50 - percent // 2)
         status(f"[{bar}] {percent:3d}% {message}")
         if stat in ("success", "error"):
             status_done(f"[{bar}] {percent:3d}% {'✅' if stat == 'success' else '❌'} {message}")
@@ -82,9 +82,9 @@ class ErrorRecovery:
         """确保日志目录存在"""
         self.log_file.parent.mkdir(parents=True, exist_ok=True)
     
-    def log_error(self, component: str, error: Exception, context: dict = None) -> None:
+    def log_error(self, component: str, error: Exception, context: dict=None) -> None:
         """记录错误"""
-        error_entry = {
+        error_entry={
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "component": component,
             "error_type": type(error).__name__,
@@ -93,7 +93,7 @@ class ErrorRecovery:
         }
         
         # 写入错误日志文件
-        errors = self._load_errors()
+        errors=self._load_errors()
         errors.append(error_entry)
         
         with open(self.error_log_file, 'w', encoding='utf-8') as f:
@@ -122,7 +122,7 @@ class ErrorRecovery:
     
     def suggest_recovery(self, component: str) -> List[str]:
         """建议恢复方案"""
-        suggestions = {
+        suggestions={
             "backend": [
                 "检查 Python 依赖是否已安装",
                 "运行: pip install -r requirements.txt",
@@ -237,7 +237,7 @@ def wait_for_server(port=8000, timeout=360, progress: Optional[ProgressDisplay] 
     import socket
 
     start = time.time()
-    check_interval = 0.5
+    check_interval=0.5
     
     while time.time() - start < timeout:
         if proc is not None and proc.poll() is not None:
@@ -268,15 +268,15 @@ def wait_for_server(port=8000, timeout=360, progress: Optional[ProgressDisplay] 
 class Launcher:
     def __init__(self):
         self.project_root = Path(__file__).parent.parent.resolve()
-        self.backend_dir = self.project_root / "apps" / "backend"
-        self.electron_dir = self.project_root / "apps" / "desktop-app" / "electron_app"
-        self.mode = "user"  # Default mode
+        self.backend_dir=self.project_root / "apps" / "backend"
+        self.electron_dir=self.project_root / "apps" / "desktop-app" / "electron_app"
+        self.mode="user"  # Default mode
         self.progress = ProgressDisplay(total_steps=100)
         self.recovery = ErrorRecovery(self.project_root)
-        self.pid_file = self.project_root / ".angela_backend.pid"
+        self.pid_file=self.project_root / ".angela_backend.pid"
         
         # 加载 .env 文件
-        env_file = self.project_root / ".env"
+        env_file=self.project_root / ".env"
         if env_file.exists():
             _load_env_file(env_file)
         elif (self.project_root / ".env.example").exists():
@@ -299,7 +299,7 @@ class Launcher:
         """强制终止占用指定端口的进程"""
         try:
             import psutil
-            killed = False
+            killed=False
             for conn in psutil.net_connections(kind='inet'):
                 if conn.laddr.port == port and conn.pid:
                     try:
@@ -308,7 +308,7 @@ class Launcher:
                         logger.warning(f"Killing process {proc.pid} ({proc_name}) on port {port}")
                         proc.kill()
                         proc.wait(timeout=5)
-                        killed = True
+                        killed=True
                     except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                         logger.warning(f"Could not kill process {conn.pid}: {e}")
             return killed
@@ -333,8 +333,8 @@ class Launcher:
         """检查核心依赖是否安装"""
         self.progress.update(5, "检查环境依赖...")
         
-        missing = []
-        required_packages = {
+        missing=[]
+        required_packages={
             "fastapi": "FastAPI",
             "uvicorn": "Uvicorn",
             "psutil": "psutil",
@@ -370,7 +370,7 @@ class Launcher:
     def install_dependencies(self, missing: List[str]) -> bool:
         """自动安装缺失的依赖"""
         self.progress.update(8, f"自动安装缺失依赖 ({len(missing)} 个)...")
-        req_file = self.project_root / "requirements.txt"
+        req_file=self.project_root / "requirements.txt"
         if not req_file.exists():
             self.progress.error("找不到 requirements.txt")
             return False
@@ -431,7 +431,7 @@ class Launcher:
         
         try:
             python = sys.executable
-            cmd = [
+            cmd=[
                 python,
                 "-m",
                 "uvicorn",
@@ -455,7 +455,7 @@ class Launcher:
             if sys.platform == "win32":
                 creation_flags = subprocess.CREATE_NEW_CONSOLE if self.mode == "dev" else 0
             else:
-                creation_flags = 0
+                creation_flags=0
             
             proc = subprocess.Popen(
                 cmd,
@@ -506,7 +506,7 @@ class Launcher:
         
         try:
             if sys.platform == "win32":
-                electron = self.electron_dir / "node_modules" / ".bin" / "electron.cmd"
+                electron=self.electron_dir / "node_modules" / ".bin" / "electron.cmd"
                 if not electron.exists():
                     self.progress.update(70, "请先安装桌面依赖", "warning")
                     return None
@@ -550,7 +550,7 @@ class Launcher:
             sc.Targetpath = sys.executable
             sc.Arguments = f'"{self.project_root / "scripts" / "run_angela.py"}'
             sc.WorkingDirectory = str(self.project_root)
-            sc.Description = "Angela AI - 桌面数字生命"
+            sc.Description="Angela AI - 桌面数字生命"
             sc.save()
 
             self.progress.finish(f"快捷方式已创建: {shortcut_path}")
@@ -595,7 +595,7 @@ class Launcher:
         print("🔍 Angela AI 健康检查")
         print("=" * 60)
         
-        checks = [
+        checks=[
             ("Python 版本", self.check_python_version, True),
             ("Python 依赖", lambda: self.check_dependencies()[0], True),
             ("Node.js 安装", self.check_node_installed, True),
@@ -604,18 +604,18 @@ class Launcher:
             ("桌面目录存在", lambda: self.electron_dir.exists(), False),
         ]
         
-        all_pass = True
+        all_pass=True
         for name, check_func, required in checks:
             try:
                 result = check_func()
-                icon = "✅" if result else "❌"
+                icon="✅" if result else "❌"
                 print(f"{icon} {name}")
                 if required and not result:
-                    all_pass = False
+                    all_pass=False
             except Exception as e:
                 print(f"❌ {name} (检查失败: {e})")
                 if required:
-                    all_pass = False
+                    all_pass=False
         
         print("=" * 60)
         if all_pass:
@@ -681,7 +681,7 @@ def main():
             try:
                 response = input("是否自动安装缺失依赖? (Y/n): ").strip().lower()
             except (EOFError, KeyboardInterrupt):
-                response = "y"
+                response="y"
             if response == "" or response == "y":
                 if not launcher.install_dependencies(missing):
                     return 1
@@ -731,8 +731,8 @@ def main():
         print("启动已安全终止。")
         return 1
 
-    backend_proc = None
-    desktop_proc = None
+    backend_proc=None
+    desktop_proc=None
 
     if not args.desktop_only:
         backend_proc = launcher.start_backend()

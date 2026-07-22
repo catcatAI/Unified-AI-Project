@@ -32,7 +32,7 @@ def main():
     print(f"   Status:    {'PASS' if entry_count <= 10000 else 'FAIL'}")
 
     # 3. GARDEN SNN size
-    snn_path = "data/checkpoints/garden_checkpoint/snn.pt.npy"
+    snn_path="data/checkpoints/garden_checkpoint/snn.pt.npy"
     if os.path.exists(snn_path):
         size_mb = os.path.getsize(snn_path) / 1024 / 1024
         print("\n3. GARDEN SNN:")
@@ -59,8 +59,8 @@ def main():
     print(f"   Dict size: {report.get('dictionary_size', 0)}")
 
     # 6. JointTrainer / SequenceTrainer
-    joint_path = "data/checkpoints/joint_trainer.json"
-    seq_path = "data/checkpoints/sequence_trainer.json"
+    joint_path="data/checkpoints/joint_trainer.json"
+    seq_path="data/checkpoints/sequence_trainer.json"
     if os.path.exists(joint_path):
         joint = json.load(open(joint_path, "r", encoding="utf-8"))
         history = joint.get("history", [])

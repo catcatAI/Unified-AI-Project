@@ -103,7 +103,7 @@ def update_env_file_with_keys() -> bool:
 
 def create_directories() -> bool:
     """创建必要的目录"""
-    directories = [
+    directories=[
         "logs",
         "data",
         "data/vector_db",
@@ -111,7 +111,7 @@ def create_directories() -> bool:
         "test_data",
     ]
     
-    success = True
+    success=True
     for dir_name in directories:
         dir_path = Path.cwd() / dir_name
         if not dir_path.exists():
@@ -172,24 +172,24 @@ def main():
         print_info("当前目录:", Path.cwd())
         sys.exit(1)
     
-    steps = [
+    steps=[
         ("创建 .env 文件", copy_env_example),
         ("生成安全密钥", update_env_file_with_keys),
         ("创建必要目录", create_directories),
         ("验证配置", validate_config),
     ]
     
-    all_success = True
+    all_success=True
     for step_name, step_func in steps:
         print_info(f"\n步骤: {step_name}")
         try:
             if not step_func():
-                all_success = False
+                all_success=False
         except Exception as e:
             logger.error(f'Error in {__name__}: {e}', exc_info=True)
             print_error(f"{step_name} 失败: {e}")
 
-            all_success = False
+            all_success=False
     
     print_header("初始化完成")
     

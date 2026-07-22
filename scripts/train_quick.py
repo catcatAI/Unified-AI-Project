@@ -1,6 +1,9 @@
 """Quick direct primitive optimization: 50 iterations per image."""
 
-import sys, os, json, time
+import sys
+import os
+import json
+import time
 import numpy as np
 from PIL import Image
 
@@ -16,7 +19,7 @@ def main():
     data_dir = os.path.join(os.path.dirname(__file__), "..", "data", "multimodal", "cifar10")
     idx = json.load(open(os.path.join(data_dir, "index.json")))
 
-    images, labels = [], []
+    images, labels=[], []
     for cls in idx["classes"][:3]:
         cls_dir = os.path.join(data_dir, cls)
         for f in sorted(os.listdir(cls_dir))[:3]:
@@ -30,7 +33,7 @@ def main():
     pil_renderer = PrimitiveRenderer((128, 128))
     evaluator = GenerationEvaluator()
 
-    target_arrs = [np.array(Image.fromarray(img).resize((32, 32), Image.LANCZOS),
+    target_arrs=[np.array(Image.fromarray(img).resize((32, 32), Image.LANCZOS),
                             dtype=np.float32) / 255.0 for img in images]
 
     save_dir = os.path.join(os.path.dirname(__file__), "..", "data", "multimodal", "samples_direct")
@@ -45,7 +48,7 @@ def main():
         vec[0:3] = target.mean(axis=(0, 1))
 
         for it in range(50):
-            eps = 0.02
+            eps=0.02
             probe_dims = np.random.choice(TOTAL_DIM, size=20, replace=False)
             d_vec = np.zeros(TOTAL_DIM, dtype=np.float32)
             for dim in probe_dims:

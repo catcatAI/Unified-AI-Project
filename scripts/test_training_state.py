@@ -22,7 +22,7 @@ print("=" * 60)
 print("\n--- 1. Loading Training Data ---")
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "data", "raw_datasets")
 
-samples = []
+samples=[]
 
 # Math data
 math_path = os.path.join(DATA_DIR, "arithmetic_train_dataset.json")
@@ -60,13 +60,13 @@ try:
     engine = ED3NEngine()
     
     # Test math
-    test_cases = [
+    test_cases=[
         ("1+1", "2"),
         ("2*3", "6"),
         ("10-5", "5"),
     ]
     
-    correct = 0
+    correct=0
     for expr, expected in test_cases:
         result = engine.process(expr)
         answer = result.get("answer", "") if isinstance(result, dict) else str(result)
@@ -88,7 +88,7 @@ try:
     garden = GARDENEngine()
     
     # Test knowledge retrieval
-    test_queries = [
+    test_queries=[
         "What is the capital of France?",
         "What color is the sky?",
     ]

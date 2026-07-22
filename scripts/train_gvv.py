@@ -23,18 +23,18 @@ from ai.multimodal.primitives.differentiable_renderer import DifferentiableRende
 from ai.multimodal.primitives.primitive_renderer import PrimitiveRenderer
 from ai.multimodal.primitives.primitive_types import DrawingInstructions, TOTAL_DIM
 
-CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES = ["airplane", "automobile", "bird", "cat", "deer",
+CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES=["airplane", "automobile", "bird", "cat", "deer",
            "dog", "frog", "horse", "ship", "truck"]
-MODEL_DIR = "D:/Projects/Unified-AI-Project/models"
-DATA_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/gvv"
+MODEL_DIR="D:/Projects/Unified-AI-Project/models"
+DATA_DIR="D:/Projects/Unified-AI-Project/data/multimodal/gvv"
 CANVAS_SIZE = (128, 128)
 
 
 def load_cifar_images(n_per_class=10):
     """Load n images per class from CIFAR-10."""
-    images = []
-    labels = []
+    images=[]
+    labels=[]
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[:n_per_class]
@@ -63,7 +63,7 @@ def optimize_all_images(images, labels, n_iterations=20):
         return opt_vecs, opt_labels
 
     renderer = DifferentiableRenderer(CANVAS_SIZE)
-    optimized = []
+    optimized=[]
 
     print(f"Optimizing {len(images)} images ({n_iterations} iterations each)...")
     t0 = time.time()
@@ -76,8 +76,8 @@ def optimize_all_images(images, labels, n_iterations=20):
         # Pixel MSE optimization
         best_vec = vec.copy()
         best_loss = float('inf')
-        eps = 0.015
-        n_probes = 8
+        eps=0.015
+        n_probes=8
 
         for it in range(n_iterations):
             rendered = renderer.render(vec)
@@ -125,7 +125,7 @@ def build_concept_embeddings():
         rng = np.random.default_rng(42)
         return {cls: rng.random(512).astype(np.float32) for cls in CLASSES}
 
-    embeddings = {}
+    embeddings={}
     for cls in CLASSES:
         import io
         # Create a simple image with the concept name
@@ -141,7 +141,7 @@ def evaluate_generation(optimizer, concept_mapper, images, labels, n_eval=10):
     print("\n=== Generation Evaluation ===")
     pil_renderer = PrimitiveRenderer(CANVAS_SIZE)
 
-    sims = []
+    sims=[]
     for i in range(min(n_eval, len(images))):
         # Generate from concept
         concept_name = CLASSES[labels[i]]
@@ -186,7 +186,7 @@ def evaluate_recognition(recognizer, images, labels, n_eval=20):
     """Evaluate image recognition."""
     print("\n=== Recognition Evaluation ===")
 
-    correct = 0
+    correct=0
     total = min(n_eval, len(images))
 
     for i in range(total):
@@ -254,7 +254,7 @@ def main():
     print(f"Recognition accuracy: {rec_acc:.2%}")
 
     # Save results
-    results = {
+    results={
         "n_visual_words": len(vocab.get_visual_words()),
         "n_concepts": len(vocab._concept_distributions),
         "generation_cos_sim": float(gen_sim),

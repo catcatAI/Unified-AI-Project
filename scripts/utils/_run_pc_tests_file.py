@@ -2,7 +2,7 @@
 import importlib.util
 import time
 
-log = []
+log=[]
 
 def log_print(msg):
     log.append(msg)
@@ -63,7 +63,7 @@ assert cleaned[0] == "["
 log_print("  OK")
 
 log_print("Test 5: integrate fallback")
-coord.prompts = {}
+coord.prompts={}
 llm_mock = AsyncMock()
 llm_mock.generate_text = AsyncMock(return_value="整合結果")
 async def ti():
@@ -116,7 +116,7 @@ loop2.close()
 log_print(f"  OK: {len(result.segments)} segments")
 
 log_print("Test 11: build segment failure")
-attempt = {"count": 0}
+attempt={"count": 0}
 async def fl(**k):
     attempt["count"] += 1
     if attempt["count"] == 1:
@@ -137,7 +137,7 @@ async def hl(**k):
     await asyncio.sleep(2.0)
     return "timeout"
 builder4 = DocumentBuilder(llm_generate_fn=hl, max_segments=2, tokens_per_segment=64)
-builder4._segment_timeout_seconds = 0.5
+builder4._segment_timeout_seconds=0.5
 builder4._update_eta = MagicMock()
 builder4.eta_state = MagicMock()
 async def th():

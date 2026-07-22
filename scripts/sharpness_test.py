@@ -1,20 +1,22 @@
 """Edge sharpness post-processing comparison."""
-import sys, os, time
+import sys
+import os
+import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
 
 import numpy as np
 import glob
 from PIL import Image, ImageFilter
 
-CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
-IMG_DIM = 3072
-LATENT_DIM = 128
-OUTPUT_DIR = "data/multimodal/gvv/sharpness_test"
+CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+IMG_DIM=3072
+LATENT_DIM=128
+OUTPUT_DIR="data/multimodal/gvv/sharpness_test"
 
 
 def load_cifar(n_per_class=50):
-    images, labels = [], []
+    images, labels=[], []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[:n_per_class]
@@ -42,7 +44,7 @@ def main():
 
     all_imgs, all_labels = load_cifar(50)
     rng = np.random.default_rng(42)
-    train_idx, test_idx = [], []
+    train_idx, test_idx=[], []
     for c in range(10):
         idxs = np.where(all_labels == c)[0]
         rng.shuffle(idxs)

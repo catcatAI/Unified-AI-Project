@@ -53,7 +53,7 @@ def main():
                 # Quantize to 8 colors
                 quantized = (pixels // 32) * 32
                 color_counts = Counter(map(tuple, quantized))
-                dominant_colors = [color for color, _ in color_counts.most_common(8)]
+                dominant_colors=[color for color, _ in color_counts.most_common(8)]
                 
                 print(f"Dominant colors: {dominant_colors}")
                 

@@ -34,14 +34,14 @@ class AutomatedIntegrationTestPipeline:
             project_root, 项目根目录
         """
         self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent
-        self.scripts_dir = self.project_root / "scripts"
-        self.tests_dir = self.project_root / "tests" / "integration"
-        self.reports_dir = self.project_root / "test_reports"
+        self.scripts_dir=self.project_root / "scripts"
+        self.tests_dir=self.project_root / "tests" / "integration"
+        self.reports_dir=self.project_root / "test_reports"
         self.reports_dir.mkdir(exist_ok=True)
 
         # 流水线配置
 
-        self.pipeline_config = {
+        self.pipeline_config={
             "environment": {
                 "services": ["chromadb", "mqtt"],
                 "setup_timeout": 300,
@@ -87,7 +87,7 @@ class AutomatedIntegrationTestPipeline:
                 return False
 
             # 3. 执行集成测试
-            test_results = self._run_integration_tests()
+            test_results=self._run_integration_tests()
             if not test_results:
                 logger.error("Failed to run integration tests")
                 return False
@@ -128,13 +128,13 @@ class AutomatedIntegrationTestPipeline:
 
         try:
             # 运行环境管理脚本
-            env_manager_script = self.scripts_dir / "test_environment_manager.py"
+            env_manager_script=self.scripts_dir / "test_environment_manager.py"
 
             if not env_manager_script.exists():
                 logger.warning("Environment manager script not found, skipping environment setup")
                 return True
 
-            cmd = [sys.executable, str(env_manager_script), "setup", "--services"] + self.pipeline_config["environment"]["services"]
+            cmd=[sys.executable, str(env_manager_script), "setup", "--services"] + self.pipeline_config["environment"]["services"]
 
             result = subprocess.run(
                 cmd,
@@ -172,15 +172,15 @@ class AutomatedIntegrationTestPipeline:
         try:
             # 运行数据管理脚本
 
-            data_manager_script = self.scripts_dir / "test_data_manager.py"
+            data_manager_script=self.scripts_dir / "test_data_manager.py"
 
             if not data_manager_script.exists():
                 logger.warning("Data manager script not found, skipping data generation")
-#                 return True
+                #                 return True
 # 
 
-            cmd = [
-            #                 sys.executable(),
+            cmd=[
+            #                 sys.executable,
 
 #                 str(data_manager_script),
 # 
@@ -193,9 +193,9 @@ self.pipeline_config["data"]["dataset_size"]
 
             result = subprocess.run(
                 cmd,
-    cwd=self.project_root(),
-                capture_output = True,
-                text = True,
+    cwd=self.project_root,
+                capture_output=True,
+                text=True,
                 timeout=self.pipeline_config["data"]["generation_timeout"]
             )
 
@@ -228,8 +228,8 @@ self.pipeline_config["data"]["dataset_size"]
         try:
             # 构建pytest命令
 
-            cmd = [
-                sys.executable(),
+            cmd=[
+                sys.executable,
                 "-m",
                 "pytest",
                 str(self.tests_dir()),
@@ -241,7 +241,7 @@ self.pipeline_config["data"]["dataset_size"]
             ]
 
             # 添加测试类型标记
-            #             test_types = self.pipeline_config["testing"]["test_types"]
+            #             test_types=self.pipeline_config["testing"]["test_types"]
 
             if "system" in test_types:
                 #                 cmd.extend(["-m", "system_integration"])
@@ -250,14 +250,14 @@ self.pipeline_config["data"]["dataset_size"]
 
             elif "all" not in test_types:
                 # 添加自定义标记
-                markers = " or ".join(test_types)
+                markers=" or ".join(test_types)
                 cmd.extend(["-m", markers])
 
             result = subprocess.run(
                 cmd,
-    cwd=self.project_root(),
-                capture_output = True,
-                text = True,
+    cwd=self.project_root,
+                capture_output=True,
+                text=True,
                 timeout=self.pipeline_config["testing"]["execution_timeout"]
             )
 
@@ -265,7 +265,7 @@ self.pipeline_config["data"]["dataset_size"]
             logger.info(f"Integration tests completed in {test_end_time - test_start_time:.2f} seconds")
 
             # 解析测试结果
-            test_results = {
+            test_results={
                 "success": result.returncode == 0,
                 "return_code": result.returncode,
                 "execution_time": test_end_time - test_start_time,
@@ -275,7 +275,7 @@ self.pipeline_config["data"]["dataset_size"]
             }
 
             # 保存测试结果
-            results_file = self.reports_dir / "test_results.json"
+            results_file=self.reports_dir / "test_results.json"
             with open(results_file, "w", encoding='utf-8') as f:
                 json.dump(test_results, f, indent=2, ensure_ascii=False)
 
@@ -304,14 +304,14 @@ self.pipeline_config["data"]["dataset_size"]
         try:
 
 
-            success = True
+            success=True
 
             # 生成HTML报告
             if self.pipeline_config["reporting"]["generate_html"]:
-                report_generator_script = self.scripts_dir / "generate_test_report.py"
+                report_generator_script=self.scripts_dir / "generate_test_report.py"
                 if report_generator_script.exists():
-                    cmd = [
-                            sys.executable(),
+                    cmd=[
+                            sys.executable,
                             str(report_generator_script),
                             "html",
                             "--output",
@@ -320,15 +320,15 @@ self.pipeline_config["data"]["dataset_size"]
 
                     result = subprocess.run(
                             cmd,
-    cwd=self.project_root(),
-                            capture_output = True,
-                            text = True
+    cwd=self.project_root,
+                            capture_output=True,
+                            text=True
                     )
 
                     if result.returncode != 0:
                         logger.error(f"HTML report generation failed, {result.stderr}")
 
-                        success = False
+                        success=False
                     else:
                         logger.info("HTML report generated successfully")
                 else:
@@ -336,15 +336,15 @@ self.pipeline_config["data"]["dataset_size"]
                     logger.warning("Report generator script not found, skipping HTML report generation")
 
             # 解析JUnit XML并生成详细报告
-            junit_xml = self.project_root / "test_results.xml"
+            junit_xml=self.project_root / "test_results.xml"
 
 
             if junit_xml.exists():
-                #                 report_generator_script = self.scripts_dir / "generate_test_report.py"
+                #                 report_generator_script=self.scripts_dir / "generate_test_report.py"
 
 #                 if report_generator_script.exists()::
-                    cmd = [
-#                     sys.executable(),
+                    cmd=[
+                    #                     sys.executable,
 
                             str(report_generator_script),
                             "parse-xml",
@@ -356,14 +356,14 @@ self.pipeline_config["data"]["dataset_size"]
 
                     result = subprocess.run(
                         cmd,
-    cwd=self.project_root(),
-                        capture_output = True,
-                        text = True
+    cwd=self.project_root,
+                        capture_output=True,
+                        text=True
                     )
 
                     if result.returncode != 0:
                         logger.error(f"XML parsing failed, {result.stderr}")
-                        success = False
+                        success=False
                     else:
                         logger.info("JUnit XML parsed successfully")
 
@@ -388,14 +388,14 @@ self.pipeline_config["data"]["dataset_size"]
 
         try:
             # 运行环境管理脚本
-#             env_manager_script = self.scripts_dir / "test_environment_manager.py"
+#             env_manager_script=self.scripts_dir / "test_environment_manager.py"
             if not env_manager_script.exists():
                 #                 logger.warning("Environment manager script not found, skipping environment cleanup")
 # 
                 return True
 
-            cmd = [
-                sys.executable(),
+            cmd=[
+                sys.executable,
                 str(env_manager_script),
                 "teardown",
                 "--services"
@@ -403,9 +403,9 @@ self.pipeline_config["data"]["dataset_size"]
 
             result = subprocess.run(
                 cmd,
-    cwd=self.project_root(),
-                capture_output = True,
-                text = True,
+    cwd=self.project_root,
+                capture_output=True,
+                text=True,
                 timeout=120  # 2分钟超时
             )
 
@@ -458,7 +458,7 @@ def main() -> None:
     args = parser.parse_args()
 
     # 构建流水线配置
-    pipeline_config = {
+    pipeline_config={
         "testing": {
             "test_types": args.test_types
         },

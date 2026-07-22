@@ -1,19 +1,21 @@
 """Three-Layer Architecture: Compare PCA dimensions (128/256/512/3072)."""
-import sys, os, time
+import sys
+import os
+import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
 
 import numpy as np
 import glob
 from PIL import Image
 
-CIFAR_DIR = "D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
-CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
-IMG_DIM = 3072
-OUTPUT_BASE = "data/multimodal/gvv/pca_compare"
+CIFAR_DIR="D:/Projects/Unified-AI-Project/data/multimodal/cifar10"
+CLASSES=["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+IMG_DIM=3072
+OUTPUT_BASE="data/multimodal/gvv/pca_compare"
 
 
 def load_cifar(n_per_class=50):
-    images, labels = [], []
+    images, labels=[], []
     for ci, cls in enumerate(CLASSES):
         cls_dir = os.path.join(CIFAR_DIR, cls)
         files = sorted(glob.glob(os.path.join(cls_dir, "*.npy")))[:n_per_class]
@@ -35,7 +37,7 @@ def main():
     print(f"Total: {len(all_imgs)}")
 
     rng = np.random.default_rng(42)
-    train_idx, test_idx = [], []
+    train_idx, test_idx=[], []
     for c in range(10):
         idxs = np.where(all_labels == c)[0]
         rng.shuffle(idxs)
@@ -55,8 +57,8 @@ def main():
     explained_all = (S ** 2).sum()
     print(f"SVD done: {pca_time:.1f}s")
 
-    dims_to_test = [128, 256, 512, 3072]
-    results = {}
+    dims_to_test=[128, 256, 512, 3072]
+    results={}
 
     for LATENT_DIM in dims_to_test:
         if LATENT_DIM > len(S):
@@ -106,14 +108,14 @@ def main():
         X_train = torch.tensor(train_latent, dtype=torch.float32)
         Y_train = torch.tensor(train_imgs, dtype=torch.float32)
 
-        batch_size = 64
-        n_epochs = 100
+        batch_size=64
+        n_epochs=100
         t0 = time.time()
 
         for epoch in range(n_epochs):
             perm = torch.randperm(len(X_train))
-            total_loss = 0.0
-            n_batches = 0
+            total_loss=0.0
+            n_batches=0
             for i in range(0, len(X_train), batch_size):
                 idx = perm[i:i+batch_size]
                 x, y = X_train[idx], Y_train[idx]

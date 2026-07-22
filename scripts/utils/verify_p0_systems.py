@@ -25,10 +25,10 @@ try:
     manager.set("test.value", 42)
     hash1 = manager.get_state_hash()
     print(f"  ✓ State hash generated: {hash1[:16]}...")
-    p0_1_ok = True
+    p0_1_ok=True
 except Exception as e:
     print(f"  ✗ Import failed: {e}")
-    p0_1_ok = False
+    p0_1_ok=False
 
 # P0-2: Response Composition & Matching
 print("\n[P0-2] Response Composition & Matching")
@@ -45,10 +45,10 @@ try:
     matcher.add_template("greet_hello", "你好", keywords=["你好", "hello"], category="greeting")
     result = matcher.match("你好")
     print(f"  ✓ Match test: score={result.score:.2f}, level={result.level.value}")
-    p0_2_ok = True
+    p0_2_ok=True
 except Exception as e:
     print(f"  ✗ Import failed: {e}")
-    p0_2_ok = False
+    p0_2_ok=False
 
 # P0-3: Causal Chain Tracing
 print("\n[P0-3] Causal Chain Tracing")
@@ -64,10 +64,10 @@ try:
     tracer = CausalTracer()
     trace_id = tracer.start(LayerType.L1_ENDOCRINE, "test_module", "test_action", {"key": "value"})
     print(f"  ✓ Trace started: {trace_id[:16]}...")
-    p0_3_ok = True
+    p0_3_ok=True
 except Exception as e:
     print(f"  ✗ Import failed: {e}")
-    p0_3_ok = False
+    p0_3_ok=False
 
 # Summary
 print("\n" + "="*60)

@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 def create_improved_live2d_manager():
     """创建改进的 Live2DManager 代码"""
 
-    code = '''
+    code='''
 /**
  * =============================================================================
  * 改进的 Live2D 模型加载系统
@@ -32,7 +32,7 @@ def create_improved_live2d_manager():
  */
 
 // ========== 模型配置 ==========
-const LIVE2D_MODEL_CONFIG = {
+const LIVE2D_MODEL_CONFIG={
     // 默认模型路径
     defaultModel: 'models/miara_pro_en/runtime/miara_pro_t03.model3.json',
     
@@ -65,7 +65,7 @@ const LIVE2D_MODEL_CONFIG = {
 class Live2DModelCache {
     constructor() {
         this.cache = new Map();
-        this.maxSize = 5;  // 最多缓存 5 个模型
+        this.maxSize=5;  // 最多缓存 5 个模型
     }
     
     set(key, data) {
@@ -109,8 +109,8 @@ class Live2DModelValidator {
      * @returns {Promise<{valid: boolean, errors: string[]}>}
      */
     static async validate(modelPath) {
-        const errors = [];
-        const warnings = [];
+        const errors=[];
+        const warnings=[];
         
         try {
             // 检查 model3.json
@@ -154,7 +154,7 @@ class Live2DModelValidator {
             if (textures.length === 0) {
                 warnings.push('模型没有纹理文件');
             } else {
-                for (let i = 0; i < textures.length; i++) {
+                for (let i=0; i < textures.length; i++) {
                     const texPath = `local://${baseDir}${textures[i]}`;
                     try {
                         const texResponse = await fetch(texPath, { method: 'HEAD' });
@@ -196,7 +196,7 @@ class ImprovedLive2DManager extends Live2DManager {
         this.modelCache = new Live2DModelCache();
         
         // 添加模型加载状态
-        this.loadingState = {
+        this.loadingState={
             isLoading: false,
             currentAttempt: 0,
             lastError: null
@@ -213,7 +213,7 @@ class ImprovedLive2DManager extends Live2DManager {
      * @param {Object} options - 加载选项
      * @returns {Promise<boolean>}
      */
-    async loadModel(modelIdOrPath, options = {}) {
+    async loadModel(modelIdOrPath, options={}) {
         const {
             useCache = LIVE2D_MODEL_CONFIG.loading.cacheEnabled,
             validate = LIVE2D_MODEL_CONFIG.loading.validateFiles,
@@ -241,7 +241,7 @@ class ImprovedLive2DManager extends Live2DManager {
         }
         
         this.loadingState.isLoading = true;
-        this.loadingState.currentAttempt = 0;
+        this.loadingState.currentAttempt=0;
         
         try {
             // 检查缓存
@@ -324,7 +324,7 @@ class ImprovedLive2DManager extends Live2DManager {
      * @returns {Promise<boolean>}
      */
     async _loadModelWithRetry(modelPath, maxRetries) {
-        for (let attempt = 0; attempt < maxRetries; attempt++) {
+        for (let attempt=0; attempt < maxRetries; attempt++) {
             this.loadingState.currentAttempt = attempt + 1;
             
             try {
@@ -426,7 +426,7 @@ class ImprovedLive2DManager extends Live2DManager {
 
 // ========== 导出 ==========
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
+    module.exports={
         ImprovedLive2DManager,
         Live2DModelCache,
         Live2DModelValidator,

@@ -509,7 +509,7 @@ class EmotionAnalyzer:
             "secondary_emotions": secondary_emotions,
         }
 
-    def analyze_emotion(self, text: str, response_text: str = None) -> Dict[str, Any]:
+    def analyze_emotion(self, text: str, response_text: Optional[str] = None) -> Dict[str, Any]:
         """
         Analyze emotional state based on keyword-based multi-dimensional emotion analysis.
 

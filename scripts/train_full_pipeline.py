@@ -47,7 +47,7 @@ def decompose_image(img_arr: np.ndarray) -> DrawingInstructions:
     pixels = quantized.reshape(-1, 3)
     
     # Find most common color bin
-    color_counts = {}
+    color_counts={}
     for p in pixels:
         key = (int(p[0]), int(p[1]), int(p[2]))
         color_counts[key] = color_counts.get(key, 0) + 1
@@ -60,7 +60,7 @@ def decompose_image(img_arr: np.ndarray) -> DrawingInstructions:
     dominant_color = tuple(max(0, min(255, c)) for c in dominant_color)
     
     # 2. Find accent colors (top 3 non-dominant colors)
-    accent_colors = []
+    accent_colors=[]
     for bin_key, count in sorted_colors[1:6]:
         if count > h * w * 0.01:  # At least 1% of pixels
             accent = tuple(int(c * 64 + 32) for c in bin_key)
@@ -72,7 +72,7 @@ def decompose_image(img_arr: np.ndarray) -> DrawingInstructions:
     bright_threshold = gray.mean() + gray.std()
     bright_mask = gray > bright_threshold
     
-    points = []
+    points=[]
     bright_coords = np.argwhere(bright_mask)
     if len(bright_coords) > 0:
         # Grid sample for even distribution
@@ -97,7 +97,7 @@ def decompose_image(img_arr: np.ndarray) -> DrawingInstructions:
     edge_threshold = edge_arr.mean() + edge_arr.std() * 0.5
     edge_mask = edge_arr > edge_threshold
     
-    lines = []
+    lines=[]
     edge_coords = np.argwhere(edge_mask)
     if len(edge_coords) > 0:
         step = max(1, len(edge_coords) // 6)
@@ -127,7 +127,7 @@ def decompose_image(img_arr: np.ndarray) -> DrawingInstructions:
             ))
     
     # 5. Background plane from dominant color
-    planes = [Plane(
+    planes=[Plane(
         [Point(0.0, 0.0, (0,0,0), 0), Point(1.0, 0.0, (0,0,0), 0),
          Point(1.0, 1.0, (0,0,0), 0), Point(0.0, 1.0, (0,0,0), 0)],
         dominant_color, (0, 0, 0), 0.0
@@ -162,7 +162,7 @@ def get_clip_encoder():
 
 def encode_images_with_clip(images, clip_encoder):
     """Encode images with real CLIP."""
-    embeddings = []
+    embeddings=[]
     for img_arr in images:
         pil = Image.fromarray(img_arr).resize((224, 224), Image.LANCZOS)
         import io
@@ -182,7 +182,7 @@ def encode_images_random(images):
     proj = rng.normal(0, 1, (32 * 32 * 3, 512)).astype(np.float32)
     proj /= np.linalg.norm(proj, axis=1, keepdims=True)
     
-    embeddings = []
+    embeddings=[]
     for img_arr in images:
         flat = img_arr.flatten().astype(np.float32) / 255.0
         emb = flat @ proj
@@ -200,15 +200,15 @@ def load_cifar10(data_dir, n_samples=200, seed=42):
         idx = json.load(f)
     
     all_classes = idx["classes"]
-    images = []
-    labels = []
+    images=[]
+    labels=[]
     rng = np.random.default_rng(seed)
     
     for cls in all_classes:
         cls_dir = os.path.join(data_dir, cls)
         if not os.path.isdir(cls_dir):
             continue
-        npy_files = [f for f in os.listdir(cls_dir) if f.endswith('.npy')]
+        npy_files=[f for f in os.listdir(cls_dir) if f.endswith('.npy')]
         if len(npy_files) > 30:
             npy_files = list(rng.choice(npy_files, 30, replace=False))
         for f in npy_files:
@@ -218,8 +218,8 @@ def load_cifar10(data_dir, n_samples=200, seed=42):
     
     if n_samples < len(images):
         indices = rng.choice(len(images), n_samples, replace=False)
-        images = [images[i] for i in indices]
-        labels = [labels[i] for i in indices]
+        images=[images[i] for i in indices]
+        labels=[labels[i] for i in indices]
     
     return images, labels
 
@@ -255,7 +255,7 @@ def train_generator(clip_embeddings, primitive_embeddings, epochs=100, lr=0.005)
     gen = SequenceGenerator(hidden_dim=64, max_steps=5)
     
     # Wrap as single-step sequences
-    sequences = [[emb] for emb in primitive_embeddings]
+    sequences=[[emb] for emb in primitive_embeddings]
     
     result = gen.train(clip_embeddings, sequences, epochs=epochs, lr=lr)
     print(f"  Loss: {result['history'][0]:.6f} → {result['final_loss']:.6f}")
@@ -315,7 +315,7 @@ def main():
     # Decompose images into primitives
     print("\n[*] Decomposing images into primitives...")
     t0 = time.time()
-    instructions_list = [decompose_image(img) for img in images]
+    instructions_list=[decompose_image(img) for img in images]
     print(f"  {len(instructions_list)} instructions ({time.time()-t0:.1f}s)")
     
     # Verify decomposition quality

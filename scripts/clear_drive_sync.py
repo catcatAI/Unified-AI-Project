@@ -19,7 +19,7 @@ def clear_sync():
         print("Cancelled.")
         return
 
-    conn = None
+    conn=None
     try:
         conn = sqlite3.connect(str(db_path))
         cursor = conn.cursor()

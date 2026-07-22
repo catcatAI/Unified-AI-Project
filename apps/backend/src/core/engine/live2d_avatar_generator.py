@@ -568,7 +568,7 @@ class Live2DAvatarGenerator:
         self._progress_callbacks.append(callback)
 
     def _notify_progress(
-        self, stage: GenerationStage, progress: float, message: str, details: Dict = None
+        self, stage: GenerationStage, progress: float, message: str, details: Optional[Dict] = None
     ) -> None:
         """Notify progress callbacks"""
         progress_obj = GenerationProgress(
