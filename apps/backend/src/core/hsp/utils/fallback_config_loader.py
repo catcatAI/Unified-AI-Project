@@ -174,10 +174,19 @@ class FallbackConfigLoader:
         try:
             # 检查必要的配置项
             fallback_config = config.get("hsp_fallback")
+            if not isinstance(fallback_config, dict):
+                logger.error("配置缺少 hsp_fallback 部分", exc_info=True)
+                return False
 
             # 检查协议配置
             protocols = fallback_config.get("protocols")
+            if not isinstance(protocols, dict):
+                logger.error("配置缺少 protocols 部分", exc_info=True)
+                return False
             for protocol_name, protocol_config in protocols.items():
+                if not isinstance(protocol_config, dict):
+                    logger.error(f"协议 {protocol_name} 的配置格式错误", exc_info=True)
+                    return False
                 if not isinstance(protocol_config.get("priority"), int):
                     logger.error(f"协议 {protocol_name} 的优先级必须是整数", exc_info=True)
                     return False
@@ -188,6 +197,9 @@ class FallbackConfigLoader:
 
             # 检查消息配置
             message_config = fallback_config.get("message")
+            if not isinstance(message_config, dict):
+                logger.error("配置缺少 message 部分", exc_info=True)
+                return False
             if message_config.get("default_max_retries") is not None:
                 if (
                     not isinstance(message_config["default_max_retries"], int)
