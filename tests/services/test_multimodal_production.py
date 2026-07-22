@@ -96,12 +96,14 @@ class TestErrorRecoveryEncode:
         assert result["recovery"]["attempts"] == 2
 
     @pytest.mark.asyncio
-    async def test_encode_all_retries_fail(self, error_recovery, mock_service):
+    async def test_encode_all_retries_fail(self, error_recovery, mock_service, tmp_path):
         """All retries fail returns error dict."""
         mock_service.encode.side_effect = [
             {"error": "err1"}, {"error": "err2"}, {"error": "err3"}, {"error": "err4"},
         ]
-        result = await error_recovery.encode_with_retry(b"test_data", "vision", max_retries=3)
+        log_path = str(tmp_path / "crisis_log.txt")
+        with patch("core.crisis_log.CRISIS_LOG_PATH", log_path):
+            result = await error_recovery.encode_with_retry(b"test_data", "vision", max_retries=3)
         assert "error" in result
         assert result["recovery"]["failed"] is True
         assert result["recovery"]["attempts"] == 4
@@ -161,12 +163,14 @@ class TestErrorRecoveryTrain:
         assert result["checkpoint"]["saved_before_training"] is True
 
     @pytest.mark.asyncio
-    async def test_train_checkpoint_on_failure(self, error_recovery, mock_service):
+    async def test_train_checkpoint_on_failure(self, error_recovery, mock_service, tmp_path):
         """Failed training returns checkpoint info for resumability."""
         mock_service.train.side_effect = RuntimeError("Training failed")
-        result = await error_recovery.train_with_checkpoint(
-            mode="contrastive", epochs=2, checkpoint_label="fail_cp"
-        )
+        log_path = str(tmp_path / "crisis_log.txt")
+        with patch("core.crisis_log.CRISIS_LOG_PATH", log_path):
+            result = await error_recovery.train_with_checkpoint(
+                mode="contrastive", epochs=2, checkpoint_label="fail_cp"
+            )
         assert result.get("status") == "error"
         assert result["checkpoint"]["resumable"] is True
         assert result["checkpoint"]["saved_before_training"] is True
