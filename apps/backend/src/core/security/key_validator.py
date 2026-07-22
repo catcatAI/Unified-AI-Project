@@ -169,7 +169,7 @@ class KeyValidator:
         """獲取所有高優先級問題"""
         return [r for r in self.results if r.severity == "high"]
 
-    def get_validation_summary(self) -> Dict[str, any]:
+    def get_validation_summary(self) -> Dict[str, Any]:
         """
         獲取驗證摘要
 

@@ -253,12 +253,6 @@ class HSPEnvironmentalStatePayload(TypedDict, total=False):  # Also known as Con
     relevance_decay_rate: Optional[float]
 
 
-class HSPAcknowledgementPayload(TypedDict, total=False):
-    status: Literal["received", "processed"]  # Example statuses
-    ack_timestamp: str  # ISO 8601 UTC
-    target_message_id: str  # ID of the message being acknowledged
-
-
 class HSPNegativeAcknowledgementPayload(TypedDict):
     status: Literal["error", "rejected", "validation_failed"]  # Example statuses
     nack_timestamp: str  # ISO 8601 UTC
