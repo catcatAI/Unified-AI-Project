@@ -36,6 +36,8 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
+from core.system.config.magic_numbers import timeout_value
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -60,7 +62,7 @@ def _check_torch_subprocess() -> bool:
         result = subprocess.run(
             [sys.executable, "-c", "import torch; print('ok')"],
             capture_output=True,
-            timeout=10,
+            timeout=timeout_value("garden.torch_check", 10),
         )
         return result.returncode == 0
     except (subprocess.TimeoutExpired, Exception):

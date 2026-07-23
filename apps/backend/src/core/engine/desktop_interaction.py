@@ -33,7 +33,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set
 
 from core.system.config.async_io import async_write_file, async_write_text
-from core.system.config.magic_numbers import loop_sleep
+from core.system.config.magic_numbers import loop_sleep, timeout_value
 from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
@@ -786,7 +786,7 @@ class DesktopInteraction:
                     await loop.run_in_executor(
                         None,
                         lambda: subprocess.run(
-                            ["osascript", "-e", script], check=True, capture_output=True, text=True, timeout=15
+                            ["osascript", "-e", script], check=True, capture_output=True, text=True, timeout=timeout_value("desktop.wallpaper_macos", 15)
                         ),
                     )
                     return True
@@ -813,7 +813,7 @@ class DesktopInteraction:
                                 check=True,
                                 capture_output=True,
                                 text=True,
-                                timeout=10,
+                                timeout=timeout_value("desktop.wallpaper_gsettings", 10),
                             ),
                         )
                         return True
@@ -841,7 +841,7 @@ class DesktopInteraction:
                                 check=True,
                                 capture_output=True,
                                 text=True,
-                                timeout=10,
+                                timeout=timeout_value("desktop.wallpaper_kde", 10),
                             ),
                         )
                         return True

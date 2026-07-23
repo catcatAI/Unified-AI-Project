@@ -10,6 +10,8 @@ import sys
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
+from core.system.config.magic_numbers import timeout_value
+
 logger = logging.getLogger(__name__)
 
 
@@ -141,13 +143,13 @@ class HardwareProbe:
                     ["system_profiler", "SPHardwareDataType"],
                     capture_output=True,
                     text=True,
-                    timeout=10,
+                    timeout=timeout_value("hardware.gpu_detection", 10),
                 )
                 if "Apple" in result.stdout:
                     return "Apple Silicon"
                 return "Unknown GPU"
             else:
-                result = subprocess.run(["lspci"], capture_output=True, text=True, timeout=5)
+                result = subprocess.run(["lspci"], capture_output=True, text=True, timeout=timeout_value("hardware.lspci", 5))
                 for line in result.stdout.split("\n"):
                     if "VGA" in line or "3D" in line or "Display" in line:
                         return line.strip()

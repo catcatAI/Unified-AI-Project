@@ -18,6 +18,8 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from core.system.config.magic_numbers import timeout_value
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -60,7 +62,7 @@ class WebSearchAgent:
             resp = self._session.get(
                 "https://html.duckduckgo.com/html/",
                 params={"q": query},
-                timeout=10,
+                timeout=timeout_value("web_search.duckduckgo", 10),
             )
             resp.raise_for_status()
             import re as _re
@@ -107,7 +109,7 @@ class WebSearchAgent:
                 "message": "HTTP client not available; install requests",
             }
         try:
-            resp = self._session.get(url, timeout=15)
+            resp = self._session.get(url, timeout=timeout_value("web_fetch.http", 15))
             resp.raise_for_status()
             content_type = resp.headers.get("Content-Type", "")
             text = resp.text

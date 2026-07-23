@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 
+from core.system.config.magic_numbers import timeout_value
 from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
@@ -51,7 +52,7 @@ class OSBridgeAdapter:
         cmd = [self.python_exe, self.bridge_path, command] + list(args)
         try:
             result = subprocess.run(
-                cmd, capture_output=True, text=True, encoding="utf-8", timeout=10
+                cmd, capture_output=True, text=True, encoding="utf-8", timeout=timeout_value("os_bridge.execute", 10)
             )
             if result.stdout:
                 return json.loads(result.stdout)

@@ -10,6 +10,8 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from core.system.config.magic_numbers import timeout_value
+
 logger = logging.getLogger(__name__)
 
 
@@ -80,7 +82,7 @@ $sc.Description = "Angela AI - Digital Life"
 $sc.Save()
 """
             subprocess.run(
-                ["powershell", "-Command", ps], capture_output=True, check=True, timeout=15
+                ["powershell", "-Command", ps], capture_output=True, check=True, timeout=timeout_value("bootstrap.shortcut_creation", 15)
             )
             logger.info("✅ Desktop shortcut created.")
             return True
