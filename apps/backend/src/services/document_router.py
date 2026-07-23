@@ -185,7 +185,7 @@ def _load_examples() -> Dict[str, List[Dict]]:
         else:
             _examples_cache = {}
     except Exception as e:
-        logger.debug(f"Failed to load document examples: {e}")
+        logger.warning(f"Failed to load document examples: {e}", exc_info=True)
         _examples_cache = {}
     return _examples_cache
 
@@ -260,7 +260,7 @@ async def _try_local_processing(
                 "route": "document_router",
             }
     except Exception as e:
-        logger.debug(f"ED3N local processing unavailable: {e}")
+        logger.warning(f"ED3N local processing unavailable: {e}", exc_info=True)
 
     try:
         from ai.garden.garden_engine import GARDENEngine
@@ -280,7 +280,7 @@ async def _try_local_processing(
                 "route": "document_router",
             }
     except Exception as e:
-        logger.debug(f"GARDEN local processing unavailable: {e}")
+        logger.warning(f"GARDEN local processing unavailable: {e}", exc_info=True)
 
     return None
 
@@ -377,7 +377,7 @@ async def _learn_from_llm_output(
         engine = ED3NEngine.get_instance()
         engine.learn_reflex(f"doc_{task_type}", llm_output[:200])
     except Exception as e:
-        logger.debug("ED3N learn_reflex failed in document_router: %s", e)
+        logger.warning("ED3N learn_reflex failed in document_router: %s", e, exc_info=True)
 
     try:
         from ai.garden.garden_engine import GARDENEngine
@@ -387,7 +387,7 @@ async def _learn_from_llm_output(
             content = await _read_file_content(f)
             engine.learn_from_interaction(content[:1000], llm_output[:1000], confidence=0.5)
     except Exception as e:
-        logger.debug("GARDEN learn_from_interaction failed in document_router: %s", e)
+        logger.warning("GARDEN learn_from_interaction failed in document_router: %s", e, exc_info=True)
 
 
 # ═══════════════════════════════════════════════
@@ -506,7 +506,7 @@ async def try_intent_routing(
             context["_intent_confidence"] = confidence
 
     except Exception as e:
-        logger.debug(f"Intent routing unavailable: {e}")
+        logger.warning(f"Intent routing unavailable: {e}", exc_info=True)
 
     return None
 

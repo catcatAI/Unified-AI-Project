@@ -33,7 +33,7 @@ def _load_tasks() -> List[Dict[str, Any]]:
                 try:
                     return json.loads(backup.read_text(encoding="utf-8"))
                 except Exception as e:
-                    logger.debug(f"Task backup read failed: {e}")
+                    logger.warning(f"Task backup read failed: {e}", exc_info=True)
     return []
 
 
@@ -45,7 +45,7 @@ def _save_tasks(tasks: List[Dict[str, Any]]) -> None:
 
             shutil.copy2(_TASKS_FILE, _TASKS_DIR / "tasks.json.bak")
         except Exception as e:
-            logger.debug(f"Task backup copy failed: {e}")
+            logger.warning(f"Task backup copy failed: {e}", exc_info=True)
     _TASKS_FILE.write_text(json.dumps(tasks, ensure_ascii=False, indent=2), encoding="utf-8")
 
 

@@ -389,7 +389,7 @@ class EmotionSystem:
                 intensity=new_intensity,
             )
         except Exception as e:
-            logger.debug("LifeEssence emotion trace skipped: %s", e)
+            logger.warning("LifeEssence emotion trace skipped: %s", e, exc_info=True)
 
         state_store.emit_event(
             "emotion.updated",

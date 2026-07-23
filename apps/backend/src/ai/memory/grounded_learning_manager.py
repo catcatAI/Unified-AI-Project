@@ -80,7 +80,7 @@ class GroundedLearningManager:
                 await self.verify_claim(claim)
                 done += 1
             except Exception as e:  # pragma: no cover - defensive
-                logger.debug("verify_claim failed for '%s': %s", claim.claim_text[:40], e)
+                logger.warning("verify_claim failed for '%s': %s", claim.claim_text[:40], e, exc_info=True)
         if done:
             self.save()
         return done
@@ -108,7 +108,7 @@ class GroundedLearningManager:
         try:
             await self.verify_claim(claim)
         except Exception as e:  # pragma: no cover - defensive
-            logger.debug("background verify failed for '%s': %s", claim.claim_text[:40], e)
+            logger.warning("background verify failed for '%s': %s", claim.claim_text[:40], e, exc_info=True)
 
     # ---- read path (cheap, local) ----------------------------------------
     def get_grounded_context(self, query: str, limit: int = 3) -> str:
@@ -186,7 +186,7 @@ def get_grounded_learning_manager() -> GroundedLearningManager:
             try:
                 _manager.load()
             except Exception as e:  # pragma: no cover - defensive
-                logger.debug("GroundedLearningManager startup load skipped: %s", e)
+                logger.warning("GroundedLearningManager startup load skipped: %s", e, exc_info=True)
     return _manager
 
 

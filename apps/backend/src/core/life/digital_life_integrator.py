@@ -744,7 +744,7 @@ class DigitalLifeIntegrator:
             try:
                 await self.user_monitor.start()
             except Exception as e:
-                logger.debug(f"[DigitalLife] AWAKENING: User monitor start skipped: {e}")
+                logger.warning(f"[DigitalLife] AWAKENING: User monitor start skipped: {e}", exc_info=True)
             # 生物系統覺醒
             await self.biological_integrator.process_relaxation_event(intensity=0.3)
             logger.info("🔆 [DigitalLife] AWAKENING: Systems awakening — exploration beginning.")
@@ -810,7 +810,7 @@ class DigitalLifeIntegrator:
                             f"💤 [DigitalLife] DORMANT: {len(drifted_params)} drifted params identified."
                         )
                 except Exception as e:
-                    logger.debug(f"[DigitalLife] DORMANT: Param check skipped: {e}")
+                    logger.warning(f"[DigitalLife] DORMANT: Param check skipped: {e}", exc_info=True)
             logger.info("💤 [DigitalLife] DORMANT: Deep sleep — resource reclamation active.")
         else:
             logger.warning(f"[DigitalLife] Unknown state: {state}")

@@ -306,7 +306,7 @@ class HAMQueryEngine:
                 relevance=final_score,
             )
         except Exception as err:
-            logger.debug("Memory reconstruction failed for %s: %s", mem_id, err)
+            logger.warning("Memory reconstruction failed for %s: %s", mem_id, err, exc_info=True)
             return None
 
     def _try_b64_fallback(

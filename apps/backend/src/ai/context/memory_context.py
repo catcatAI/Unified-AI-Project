@@ -363,7 +363,7 @@ class MemoryContextManager:
                 )
             return results
         except Exception as e:
-            logger.debug("Embedding search failed: %s", e)
+            logger.warning("Embedding search failed: %s", e, exc_info=True)
             return []
 
     @staticmethod

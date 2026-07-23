@@ -65,14 +65,14 @@ class CrossModalQualityDashboard:
         try:
             self._get_vision_monitor().record(result)
         except Exception as e:
-            logger.debug("Failed to record vision quality: %s", e)
+            logger.warning("Failed to record vision quality: %s", e, exc_info=True)
 
     def record_audio(self, result: Dict[str, Any]) -> None:
         """Record an audio pipeline result."""
         try:
             self._get_audio_monitor().record(result)
         except Exception as e:
-            logger.debug("Failed to record audio quality: %s", e)
+            logger.warning("Failed to record audio quality: %s", e, exc_info=True)
 
     def record_cross_modal(self, result: Dict[str, Any]) -> None:
         """Record a cross-modal operation result."""
@@ -214,8 +214,8 @@ class CrossModalQualityDashboard:
         try:
             self._get_vision_monitor().clear()
         except Exception:
-            logger.debug("Failed to clear vision monitor", exc_info=True)
+            logger.warning("Failed to clear vision monitor", exc_info=True)
         try:
             self._get_audio_monitor().clear()
         except Exception:
-            logger.debug("Failed to clear audio monitor", exc_info=True)
+            logger.warning("Failed to clear audio monitor", exc_info=True)

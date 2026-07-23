@@ -35,7 +35,7 @@ def _json_default(obj):
             if isinstance(result, (list, tuple)):
                 return result
         except Exception:
-            logger.debug("Failed to convert object to list, falling back to str", exc_info=True)
+            logger.warning("Failed to convert object to list, falling back to str", exc_info=True)
     return str(obj)
 
 
@@ -265,7 +265,7 @@ class MultimodalStatePersistence:
                 try:
                     meta = await async_json_load(meta_path)
                 except Exception:
-                    logger.debug("Failed to parse checkpoint metadata JSON", exc_info=True)
+                    logger.warning("Failed to parse checkpoint metadata JSON", exc_info=True)
             ts = meta.get("timestamp", os.path.getmtime(cp_dir))
             age_hours = round((now - ts) / 3600, 1)
             checkpoints.append(

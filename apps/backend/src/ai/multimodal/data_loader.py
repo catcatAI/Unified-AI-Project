@@ -163,7 +163,7 @@ class CIFAR10Loader:
                     self._encoded[i] = np.asarray(features, dtype=np.float32)
                     count += 1
             except Exception as e:
-                logger.debug("CIFAR-10 encode failed at index %d: %s", i, e)
+                logger.warning("CIFAR-10 encode failed at index %d: %s", i, e, exc_info=True)
             if (
                 (i + 1) % checkpoint_interval == 0
                 or (i + 1) == len(self._samples)
@@ -186,7 +186,7 @@ class CIFAR10Loader:
             try:
                 checkpoint_path.unlink(missing_ok=True)
             except Exception:
-                logger.debug("Failed to remove checkpoint file", exc_info=True)
+                logger.warning("Failed to remove checkpoint file", exc_info=True)
             logger.info("CIFAR-10: encoded all %d images", count)
         else:
             logger.info("CIFAR-10: encoded %d/%d images", count, len(self._samples))
@@ -345,7 +345,7 @@ class ESC50Loader:
                     self._encoded[i] = features
                     count += 1
             except Exception as e:
-                logger.debug("ESC-50 encode failed at index %d: %s", i, e)
+                logger.warning("ESC-50 encode failed at index %d: %s", i, e, exc_info=True)
             if (i + 1) % 500 == 0:
                 logger.info("  Encoded %d/%d ESC-50 clips", i + 1, len(self._samples))
         logger.info("ESC-50: encoded %d/%d clips", count, len(self._samples))

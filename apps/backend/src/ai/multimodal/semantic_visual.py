@@ -119,7 +119,7 @@ class SemanticVisualEncoder:
                 vec = vec / norm
             return vec
         except Exception as e:
-            logger.debug("SemanticVisualEncoder encode failed: %s", e)
+            logger.warning("SemanticVisualEncoder encode failed: %s", e, exc_info=True)
             return None
 
     def encode_from_pil(self, img: Image.Image) -> Optional[np.ndarray]:
@@ -145,7 +145,7 @@ class SemanticVisualEncoder:
                 vec = vec / norm
             return vec
         except Exception as e:
-            logger.debug("SemanticVisualEncoder encode_from_pil failed: %s", e)
+            logger.warning("SemanticVisualEncoder encode_from_pil failed: %s", e, exc_info=True)
             return None
 
     def encode_text(self, texts: List[str]) -> Optional[np.ndarray]:
@@ -183,7 +183,7 @@ class SemanticVisualEncoder:
             norms[norms == 0] = 1.0
             return vecs / norms
         except Exception as e:
-            logger.debug("SemanticVisualEncoder encode_text failed: %s", e)
+            logger.warning("SemanticVisualEncoder encode_text failed: %s", e, exc_info=True)
             return None
 
     def classify_image(

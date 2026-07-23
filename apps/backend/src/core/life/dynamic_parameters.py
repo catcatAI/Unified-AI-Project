@@ -77,4 +77,4 @@ class DynamicThresholdManager:
                     0.1, min(0.9, 0.5 + curiosity * 0.2)
                 )
         except Exception:
-            logger.debug("Failed to update from state matrix", exc_info=True)
+            logger.warning("Failed to update from state matrix", exc_info=True)

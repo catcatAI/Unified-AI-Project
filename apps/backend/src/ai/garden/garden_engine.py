@@ -532,7 +532,7 @@ class GARDENEngine:
 
             return VectorDictionary.route_math(text)
         except Exception as e:
-            logger.debug("GARDEN: math routing failed for %r: %s", text, e)
+            logger.warning("GARDEN: math routing failed for %r: %s", text, e, exc_info=True)
             return None
 
     def _try_knowledge(self, text: str) -> Optional[str]:
@@ -547,7 +547,7 @@ class GARDENEngine:
 
             return route_knowledge(text)
         except Exception as e:
-            logger.debug("GARDEN: knowledge routing failed for %r: %s", text, e)
+            logger.warning("GARDEN: knowledge routing failed for %r: %s", text, e, exc_info=True)
             return None
 
     def _try_reasoning(self, text: str) -> Optional[str]:
@@ -562,7 +562,7 @@ class GARDENEngine:
 
             return route_reasoning(text)
         except Exception as e:
-            logger.debug("GARDEN: symbolic reasoning failed for %r: %s", text, e)
+            logger.warning("GARDEN: symbolic reasoning failed for %r: %s", text, e, exc_info=True)
             return None
 
     def _try_chain_reasoning(self, text: str) -> Optional[str]:
@@ -582,7 +582,7 @@ class GARDENEngine:
 
             return parse_and_resolve_relational_chain(text, resolver=resolve_relational_chain)
         except Exception as e:
-            logger.debug("GARDEN: chain reasoning failed for %r: %s", text, e)
+            logger.warning("GARDEN: chain reasoning failed for %r: %s", text, e, exc_info=True)
             return None
 
     # ------------------------------------------------------------------

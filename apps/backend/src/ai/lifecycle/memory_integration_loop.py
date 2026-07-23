@@ -321,7 +321,7 @@ class MemoryIntegrationLoop:
                             if hasattr(self._neuroplasticity, "consolidate"):
                                 self._neuroplasticity.consolidate()
                         except Exception as e:
-                            logger.debug("Neuroplasticity encoding failed: %s", e)
+                            logger.warning("Neuroplasticity encoding failed: %s", e, exc_info=True)
 
                     # Phase 5.3: Importance boosting based on access count
                     if info.importance < 1.0 and info.integrated:
@@ -443,7 +443,7 @@ class MemoryIntegrationLoop:
                         logger.debug("Promoted memory to long-term: %s", info.content[:50])
 
         except Exception as e:
-            logger.debug("Memory promotion failed: %s", e)
+            logger.warning("Memory promotion failed: %s", e, exc_info=True)
 
     def add_memory(
         self, content: str, memory_type: str = "general", importance: float = 0.5

@@ -85,7 +85,7 @@ class AgentOrchestrator:
             if ir_name and ir_conf >= 0.3:
                 return "general"
         except Exception as e:
-            logger.debug("IntentRegistry detection failed in classify_intent(): %s", e)
+            logger.warning("IntentRegistry detection failed in classify_intent(): %s", e, exc_info=True)
 
         # Sub-classification only runs after the gate passes
         # (IntentRegistry didn't match → treat as general creative/conversational)
@@ -248,7 +248,7 @@ class AgentOrchestrator:
                         agent_name, message, context or {}
                     )
                 except Exception as e:
-                    logger.debug(f"ModelBus execution failed for {agent_name}: {e}")
+                    logger.warning(f"ModelBus execution failed for {agent_name}: {e}", exc_info=True)
 
             results.append(
                 {

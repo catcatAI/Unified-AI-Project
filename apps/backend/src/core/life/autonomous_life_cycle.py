@@ -249,7 +249,7 @@ class AutonomousLifeCycle:
                 from core.life.life_essence import get_life_essence
                 self._life_essence = get_life_essence()
             except Exception as e:
-                logger.debug(f"[LifeEssence] Not available: {e}")
+                logger.warning(f"[LifeEssence] Not available: {e}", exc_info=True)
         return self._life_essence
 
     def set_dynamic_params_manager(self, manager: Any) -> None:
@@ -1122,7 +1122,7 @@ class AutonomousLifeCycle:
                 le_essence_path = path.replace("autonomous_lifecycle_state", "life_essence_state")
                 le.save_state(le_essence_path)
             except Exception as e:
-                logger.debug(f"[LifeEssence] Save skipped: {e}")
+                logger.warning(f"[LifeEssence] Save skipped: {e}", exc_info=True)
         state = {
             "explorations_triggered": self.explorations_triggered,
             "coexistence_activated": self.coexistence_activated,

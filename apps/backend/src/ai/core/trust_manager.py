@@ -593,7 +593,7 @@ class TrustManager:
             return max(0.1, min(1.0, confidence))
 
         except Exception as e:
-            logger.debug("Evidence confidence calculation failed: %s", e)
+            logger.warning("Evidence confidence calculation failed: %s", e, exc_info=True)
             return 0.5
 
     def _get_current_evidence_count(
@@ -746,7 +746,7 @@ class TrustManager:
             return max(0.0, min(1.0, overall_risk))
 
         except Exception as e:
-            logger.debug("Category risk calculation failed for %s/%s: %s", entity_id, category, e)
+            logger.warning("Category risk calculation failed for %s/%s: %s", entity_id, category, e, exc_info=True)
             return 0.0
 
     def _calculate_category_history_risk(
@@ -773,7 +773,7 @@ class TrustManager:
             return total_volatility / max(1, total_categories)
 
         except Exception as e:
-            logger.debug("Category history risk calculation failed for %s/%s: %s", entity_id, category, e)
+            logger.warning("Category history risk calculation failed for %s/%s: %s", entity_id, category, e, exc_info=True)
             return 0.0
 
     def _calculate_category_feature_risk(
@@ -800,7 +800,7 @@ class TrustManager:
                 return 0.0
 
         except Exception as e:
-            logger.debug("Category feature risk calculation failed for %s/%s: %s", entity_id, category, e)
+            logger.warning("Category feature risk calculation failed for %s/%s: %s", entity_id, category, e, exc_info=True)
             return 0.0
 
     def _generate_risk_recommendations(
@@ -888,7 +888,7 @@ class TrustManager:
             return self._calculate_trend(all_scores)
 
         except Exception as e:
-            logger.debug("Trust trend calculation failed for %s: %s", entity_id, e)
+            logger.warning("Trust trend calculation failed for %s: %s", entity_id, e, exc_info=True)
             return "stable"
 
     def _cleanup_cache_if_needed(self) -> None:

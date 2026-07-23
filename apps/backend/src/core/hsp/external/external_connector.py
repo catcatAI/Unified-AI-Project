@@ -37,7 +37,7 @@ class ExternalConnector:
                     logger.debug(f"ExternalConnector connect -> {resp.status} ({ok})")
                     return ok
         except Exception as e:
-            logger.debug(f"ExternalConnector connect failed (broker may be down): {e}")
+            logger.warning(f"ExternalConnector connect failed (broker may be down): {e}", exc_info=True)
             return False
 
     async def send(self, message: Dict[str, Any]) -> bool:
@@ -54,7 +54,7 @@ class ExternalConnector:
                     logger.debug(f"ExternalConnector send -> {resp.status} ({ok})")
                     return ok
         except Exception as e:
-            logger.debug(f"ExternalConnector send failed: {e}")
+            logger.warning(f"ExternalConnector send failed: {e}", exc_info=True)
             return False
 
     async def disconnect(self) -> None:

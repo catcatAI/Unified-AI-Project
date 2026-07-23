@@ -33,7 +33,7 @@ def _is_safe_path(target: Path) -> bool:
     try:
         resolved = target.resolve()
     except Exception as e:
-        logger.debug("Path resolution failed: %s", e)
+        logger.warning("Path resolution failed: %s", e, exc_info=True)
         return False
     for root in _ALLOWED_ROOTS:
         try:

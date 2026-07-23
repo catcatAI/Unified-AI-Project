@@ -142,7 +142,7 @@ class EvolutionEngine:
                     max(0.1, min(0.9, 0.5 - extra * 0.15 + neuro * 0.1)),
                 )
             except Exception:
-                logger.debug("Failed to propagate traits to DTM", exc_info=True)
+                logger.warning("Failed to propagate traits to DTM", exc_info=True)
 
         return self.traits
 
@@ -154,7 +154,7 @@ class EvolutionEngine:
             for key, val in self._traits.items():
                 life_stats.personality_traits[key] = val
         except Exception:
-            logger.debug("Failed to sync traits to life_stats", exc_info=True)
+            logger.warning("Failed to sync traits to life_stats", exc_info=True)
 
 
 __all__ = ["EvolutionEngine"]

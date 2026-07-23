@@ -130,7 +130,7 @@ class AudioService:
                     )
                     await cluster_manager.distribute_task("Audio", feature_vector)
                 except Exception:  # cluster distribution is optional, must not block perception
-                    logger.debug("Audio cluster distribution failed", exc_info=True)
+                    logger.warning("Audio cluster distribution failed", exc_info=True)
 
             profile = self.memory.identify_or_register(
                 p.feature_vector,
@@ -221,7 +221,7 @@ class AudioService:
                     ),
                 }
         except Exception as e:
-            logger.debug("faster-whisper failed: %s", e)
+            logger.warning("faster-whisper failed: %s", e, exc_info=True)
         return None
 
     async def speech_to_text(self, audio_data: bytes, language: Optional[str] = None) -> dict:
@@ -355,7 +355,7 @@ class AudioService:
             p = AudioPipeline()
             p.clear_cache()
         except Exception as e:
-            logger.debug("Clear cache failed: %s", e)
+            logger.warning("Clear cache failed: %s", e, exc_info=True)
 
     def set_peer_services(self, services: dict) -> None:
         self.peer_services = services

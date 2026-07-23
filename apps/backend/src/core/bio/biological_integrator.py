@@ -128,7 +128,7 @@ class BiologicalEventPublisher:
 
                 state_store.emit_event(cns_type, data)
             except Exception as e:
-                logger.debug(f"Failed to forward bio event to CNS bus: {e}")
+                logger.warning(f"Failed to forward bio event to CNS bus: {e}", exc_info=True)
 
     def get_subscribers_count(self, event_type: Optional[str] = None) -> Dict[str, int]:
         """

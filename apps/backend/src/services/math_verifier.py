@@ -69,7 +69,7 @@ class MathExtractor:
             result = self._eval_node(tree.body)
             return float(result) if result is not None else None
         except Exception:
-            logger.debug("Failed to evaluate expression '%s'", expr, exc_info=True)
+            logger.warning("Failed to evaluate expression '%s'", expr, exc_info=True)
             return None
 
     def _eval_node(self, node) -> Optional[float]:
@@ -149,7 +149,7 @@ class MathVerifier:
                             explanation=f"計算結果: {result}",
                         )
                     except (ZeroDivisionError, Exception):
-                        logger.debug("Math evaluation failed for expression: %s", message)
+                        logger.warning("Math evaluation failed for expression: %s", message, exc_info=True)
             return MathVerifyResult(
                 response_text=None,
                 is_correct=False,

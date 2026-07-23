@@ -375,7 +375,7 @@ class _ChromaEncoder:
             if embs is not None and len(embs) > 0 and len(embs[0]) > 0:
                 return embs[0][0].tolist() if hasattr(embs[0][0], "tolist") else list(embs[0][0])
         except Exception as e:
-            logger.debug("GARDEN: ChromaDB query_embedding failed: %s", e)
+            logger.warning("GARDEN: ChromaDB query_embedding failed: %s", e, exc_info=True)
         return None
 
 
@@ -557,7 +557,7 @@ class VectorDictionary:
                 idx = int(scores.argmax()) if hasattr(scores, "argmax") else 0
                 return self._key_order[idx]
         except Exception:
-            logger.debug("Semantic dedup encoding failed", exc_info=True)
+            logger.warning("Semantic dedup encoding failed", exc_info=True)
         return None
 
     # ------------------------------------------------------------------

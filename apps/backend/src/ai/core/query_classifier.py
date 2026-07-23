@@ -555,7 +555,7 @@ class QueryClassifier:
                     reason="dictionary_match",
                 )
         except Exception as e:
-            logger.debug(f"Dictionary lookup failed: {e}")
+            logger.warning(f"Dictionary lookup failed: {e}", exc_info=True)
         return None
 
     def _classify_by_regex(self, text: str, has_negation: bool) -> Optional[QueryResult]:

@@ -387,7 +387,7 @@ class ProactiveInteractionSystem:
                 self._last_weather_desc = desc
             self._last_weather_check = now
         except Exception as e:
-            logger.debug("Weather check skipped: %s", e)
+            logger.warning("Weather check skipped: %s", e, exc_info=True)
 
     async def _plan_proactive_action(
         self, opportunity: Dict[str, Any], user_state: Dict[str, Any]

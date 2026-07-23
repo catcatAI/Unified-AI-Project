@@ -193,7 +193,7 @@ class MultimodalErrorRecovery:
                         f"Item {item_id} not found in registry"
                     )
             except Exception:
-                logger.debug("Failed to get item metadata for fallback description", exc_info=True)
+                logger.warning("Failed to get item metadata for fallback description", exc_info=True)
                 fallback_result["fallback_description"] = f"Item {item_id} (fallback)"
 
             # Log crisis on repeated failures
