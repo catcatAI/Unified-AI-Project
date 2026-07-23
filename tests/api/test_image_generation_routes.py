@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from fastapi import HTTPException
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "apps/backend/src"))
 
@@ -71,46 +72,33 @@ class TestImageGenerationModels:
         """POST /image/generate returns 503 when GVV pipeline not available."""
         from api.routes.image_generation_routes import GenerateImageRequest, image_generate
         req = GenerateImageRequest(text="test", canvas_size=128)
-        try:
+        with pytest.raises(HTTPException) as exc_info:
             await image_generate(req)
-        except Exception as e:
-            # Should be an HTTPException with status 503
-            from fastapi import HTTPException
-            assert isinstance(e, HTTPException), f"Expected HTTPException, got {type(e)}"
-            assert e.status_code == 503, f"Expected 503, got {e.status_code}"
+        assert exc_info.value.status_code == 503
 
     async def test_recognize_image_fails_without_gvv(self):
         """POST /image/recognize returns 503 when GVV pipeline not available."""
         from api.routes.image_generation_routes import RecognizeImageRequest, image_recognize
         req = RecognizeImageRequest(image_base64="AAAA")
-        try:
+        with pytest.raises(HTTPException) as exc_info:
             await image_recognize(req)
-        except Exception as e:
-            from fastapi import HTTPException
-            assert isinstance(e, HTTPException), f"Expected HTTPException, got {type(e)}"
-            assert e.status_code in (503, 400), f"Expected 503/400, got {e.status_code}"
+        assert exc_info.value.status_code in (503, 400)
 
     async def test_reconstruct_image_fails_without_model(self):
         """POST /image/reconstruct returns 503 when ThreeLayerVisual not available."""
         from api.routes.image_generation_routes import ReconstructImageRequest, image_reconstruct
         req = ReconstructImageRequest(image_base64="AAAA")
-        try:
+        with pytest.raises(HTTPException) as exc_info:
             await image_reconstruct(req)
-        except Exception as e:
-            from fastapi import HTTPException
-            assert isinstance(e, HTTPException), f"Expected HTTPException, got {type(e)}"
-            assert e.status_code in (503, 500), f"Expected 503/500, got {e.status_code}"
+        assert exc_info.value.status_code in (503, 500)
 
     async def test_interpolate_image_fails_without_model(self):
         """POST /image/interpolate returns 503 when ThreeLayerVisual not available."""
         from api.routes.image_generation_routes import InterpolateRequest, image_interpolate
         req = InterpolateRequest(class_a=0, class_b=1)
-        try:
+        with pytest.raises(HTTPException) as exc_info:
             await image_interpolate(req)
-        except Exception as e:
-            from fastapi import HTTPException
-            assert isinstance(e, HTTPException), f"Expected HTTPException, got {type(e)}"
-            assert e.status_code in (503, 500), f"Expected 503/500, got {e.status_code}"
+        assert exc_info.value.status_code in (503, 500)
 
     async def test_status_works_without_models(self):
         """GET /image/status returns status dict even without models."""

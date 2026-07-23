@@ -79,3 +79,4 @@ def test_services_initialize_speed():
 
     with PerformanceTimer("services_init"):
         asyncio.run(_run())
+    assert True

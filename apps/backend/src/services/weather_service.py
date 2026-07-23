@@ -9,6 +9,8 @@ import logging
 import time
 from typing import Any, Dict, Optional
 
+from core.system.config.magic_numbers import timeout_value
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -43,7 +45,7 @@ class WeatherService:
         try:
             url = f"https://wttr.in/{loc}?format=j1"
             async with aiohttp.ClientSession() as session:
-                async with session.get(url, timeout=10) as resp:
+                async with session.get(url, timeout=timeout_value("weather_api.http", 10)) as resp:
                     if resp.status != 200:
                         logger.warning("Weather API returned status %d", resp.status)
                         return self._offline_result()

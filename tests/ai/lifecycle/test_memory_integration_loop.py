@@ -257,6 +257,7 @@ class TestAnalyzePatterns:
         integration_loop.add_memory('test test test', 'conversation', 0.5)
         with patch.object(integration_loop.memory_infos[0], 'content', 123):
             await integration_loop._analyze_patterns()  # should not raise
+        assert len(integration_loop.knowledge_patterns) == 0
 
 
 class TestStructureMemory:

@@ -59,6 +59,7 @@ def _find_spec_fast(module_name: str) -> Optional[bool]:
     except (ImportError, ValueError, ModuleNotFoundError):
         return False
     except Exception:
+        logger.debug("find_spec failed for %r", module_name, exc_info=True)
         return None
 
 
@@ -83,4 +84,5 @@ def subprocess_check(module_name: str, timeout: Optional[int] = None) -> bool:
         )
         return result.returncode == 0
     except (subprocess.TimeoutExpired, Exception):
+        logger.debug("subprocess import check failed for %r", module_name, exc_info=True)
         return False

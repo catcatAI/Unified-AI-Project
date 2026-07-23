@@ -255,7 +255,7 @@ class ED3NEngine:
                     self._external_dicts_loaded = True
                     logger.info("Lazy-loaded %d external dictionary entries on first query", count)
             except Exception as e:
-                logger.debug("Lazy dictionary load failed (non-critical): %s", e)
+                logger.warning("Lazy dictionary load failed (non-critical): %s", e, exc_info=True)
 
         with self._process_lock:
             output = self._process_unlocked(input_text, context, depth)
@@ -277,7 +277,7 @@ class ED3NEngine:
                 self._external_dicts_loaded = True
                 logger.info("Warm-up: loaded %d external dictionary entries", count)
         except Exception as e:
-            logger.debug("Warm-up dictionary load failed (non-critical): %s", e)
+            logger.warning("Warm-up dictionary load failed (non-critical): %s", e, exc_info=True)
         return count
 
     def _maybe_learn(self, input_text: str, output_text: str, context: Dict[str, Any]) -> None:
@@ -298,7 +298,7 @@ class ED3NEngine:
 
             return DictionaryLayer.route_math(text)
         except Exception as e:
-            logger.debug("Math routing via dictionary layer failed: %s", e)
+            logger.warning("Math routing via dictionary layer failed: %s", e, exc_info=True)
             return None
 
     def _try_knowledge(self, text: str) -> Optional[str]:
@@ -313,7 +313,7 @@ class ED3NEngine:
 
             return route_knowledge(text)
         except Exception as e:
-            logger.debug("Knowledge routing via knowledge base failed: %s", e)
+            logger.warning("Knowledge routing via knowledge base failed: %s", e, exc_info=True)
             return None
 
     def _try_reasoning(self, text: str) -> Optional[str]:
@@ -329,7 +329,7 @@ class ED3NEngine:
 
             return route_reasoning(text)
         except Exception as e:
-            logger.debug("Symbolic reasoning routing failed: %s", e)
+            logger.warning("Symbolic reasoning routing failed: %s", e, exc_info=True)
             return None
 
     def _perform_encode(self, input_text: str) -> Tuple[List[str], bool]:
@@ -487,7 +487,7 @@ class ED3NEngine:
                     is_fallback=False,
                 )
         except Exception as e:
-            logger.debug("Chain reasoning failed (non-critical): %s", e)
+            logger.warning("Chain reasoning failed (non-critical): %s", e, exc_info=True)
         stages["chain"] = (time.perf_counter() - t0) * 1000
         return None
 
@@ -651,7 +651,7 @@ class ED3NEngine:
 
             stages["latent"] = (time.perf_counter() - t0) * 1000
         except Exception as e:
-            logger.debug("Latent reasoning failed (non-critical): %s", e)
+            logger.warning("Latent reasoning failed (non-critical): %s", e, exc_info=True)
             stages["latent"] = 0.0
         return additional_keys
 
@@ -822,7 +822,7 @@ class ED3NEngine:
                 self.dictionary.modality_encoders["text"] = text_encoder
                 logger.info("ED3N text modality encoder enabled")
             except Exception as e:
-                logger.debug("Text encoder init failed: %s", e)
+                logger.warning("Text encoder init failed: %s", e, exc_info=True)
         self.cross_modal_trainer = CrossModalTrainer(
             dictionary_layer=self.dictionary,
             core_network=self.network,
@@ -877,7 +877,7 @@ class ED3NEngine:
             latent = self._latent_space.project("text", vec)
             return latent
         except Exception as e:
-            logger.debug("encode_text_to_latent failed: %s", e)
+            logger.warning("encode_text_to_latent failed: %s", e, exc_info=True)
             return None
 
     def get_latent_space(self):
@@ -942,7 +942,7 @@ class ED3NEngine:
                 count += 1
             logger.info("Populated SemanticKeyMapper with %d dictionary concepts", count)
         except Exception as e:
-            logger.debug("Key mapper population failed: %s", e)
+            logger.warning("Key mapper population failed: %s", e, exc_info=True)
 
     def is_multimodal_available(self) -> bool:
         return self.image_encoder is not None or self.audio_encoder is not None
@@ -974,7 +974,7 @@ class ED3NEngine:
                 if combined is not None:
                     query_latents.append(combined)
             except Exception as e:
-                logger.debug("Semantic vision encoding failed: %s", e)
+                logger.warning("Semantic vision encoding failed: %s", e, exc_info=True)
 
         if audio_data:
             try:
@@ -983,7 +983,7 @@ class ED3NEngine:
                 if combined is not None:
                     query_latents.append(combined)
             except Exception as e:
-                logger.debug("Semantic audio encoding failed: %s", e)
+                logger.warning("Semantic audio encoding failed: %s", e, exc_info=True)
 
         for latent in query_latents:
             matches = mapper.map_latent_to_keys(latent, top_k=3, mode="combined")
@@ -1052,7 +1052,7 @@ class ED3NEngine:
                 if key and key not in combined_keys:
                     combined_keys.insert(0, key)
         except Exception as e:
-            logger.debug("Multimodal RAG retrieval failed (non-critical): %s", e)
+            logger.warning("Multimodal RAG retrieval failed (non-critical): %s", e, exc_info=True)
         return combined_keys
 
     def _enrich_with_semantic_keys(
@@ -1069,7 +1069,7 @@ class ED3NEngine:
                 if key and key not in combined_keys:
                     combined_keys.insert(0, key)
         except Exception as e:
-            logger.debug("Semantic key retrieval failed (non-critical): %s", e)
+            logger.warning("Semantic key retrieval failed (non-critical): %s", e, exc_info=True)
         return combined_keys
 
     def _record_cross_modal_cooccurrence(
@@ -1170,7 +1170,7 @@ class ED3NEngine:
                 lrn_path = path.replace(".json", "_lrn.npz")
                 self._latent_reasoning.save(lrn_path)
             except Exception as e:
-                logger.debug("ED3N: failed to save LatentReasoningNetwork: %s", e)
+                logger.warning("ED3N: failed to save LatentReasoningNetwork: %s", e, exc_info=True)
         logger.info("ED3NEngine saved to %s", path)
 
     def load(self, path: str) -> None:
@@ -1213,7 +1213,7 @@ class ED3NEngine:
             try:
                 self._latent_reasoning = type(self._latent_reasoning).load(lrn_path)
             except Exception as e:
-                logger.debug("ED3N: failed to load LatentReasoningNetwork: %s", e)
+                logger.warning("ED3N: failed to load LatentReasoningNetwork: %s", e, exc_info=True)
         logger.info("ED3NEngine loaded from %s", path)
 
     def train(

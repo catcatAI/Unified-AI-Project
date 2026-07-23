@@ -10,6 +10,7 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 
+from core.system.config.magic_numbers import timeout_value
 from core.utils import safe_error
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -70,7 +71,7 @@ class AtlassianCLIBridge:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=30)
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout_value("atlassian.cli", 30))
 
             if process.returncode == 0:
                 out_str = stdout.decode().strip()

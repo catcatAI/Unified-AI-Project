@@ -211,9 +211,11 @@ class TestTaskQueue:
         await base_agent.handle_task_request(payload, "sender", {})
 
         # Let async processing settle
-        await asyncio.sleep(0.01)
+        await asyncio.sleep(0.05)
 
-        # Verify the task was queued for processing — no crash = success
+        # Verify the task was processed (queue drained) without crash
+        assert len(base_agent.task_queue) == 0
+
     async def test_register_task_handler(self, base_agent):
         """Test registering a custom handler for a capability."""
         handler = Mock()

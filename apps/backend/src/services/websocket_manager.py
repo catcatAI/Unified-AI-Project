@@ -12,7 +12,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, Optional, Tuple
 
-from core.system.config.magic_numbers import loop_sleep
+from core.system.config.magic_numbers import loop_sleep, timeout_value
 from core.system.live_logger import err as live_err
 from core.system.live_logger import info as live_info
 from core.system.live_logger import status as live_status
@@ -308,7 +308,7 @@ async def broadcast_state_updates() -> None:
 
 async def _handle_handshake(websocket: WebSocket) -> Optional[tuple]:
     try:
-        raw_data = await asyncio.wait_for(websocket.receive_text(), timeout=10)
+        raw_data = await asyncio.wait_for(websocket.receive_text(), timeout=timeout_value("ws.handshake", 10))
         try:
             handshake = json.loads(raw_data)
         except json.JSONDecodeError:

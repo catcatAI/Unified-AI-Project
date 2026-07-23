@@ -64,6 +64,7 @@ def _check_torch_subprocess() -> bool:
         )
         return result.returncode == 0
     except (subprocess.TimeoutExpired, Exception):
+        logger.debug("torch availability subprocess check failed", exc_info=True)
         return False
 
 

@@ -89,7 +89,7 @@ class TestDynamicAgentRegistry:
     async def test_unregister_nonexistent_agent(self, registry):
         """Test unregistering a non-existent agent does not raise."""
         await registry.unregister_agent("nonexistent")
-        # No exception expected
+        assert "nonexistent" not in registry.registered_agents
 
     async def test_get_agent(self, registry):
         """Test get_agent returns the RegisteredAgent by ID."""

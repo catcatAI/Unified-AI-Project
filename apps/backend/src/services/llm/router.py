@@ -21,6 +21,7 @@ from typing import Any, Dict, List, NamedTuple, Optional
 
 from core.interfaces.protocols import ChatMessage, ChatResponse, LLMResponse
 from core.interfaces.service_registry import get_registry
+from core.system.config.magic_numbers import timeout_value
 from core.system.config.network_defaults import (
     ANTHROPIC_API_BASE,
     DEFAULT_ANTHROPIC_MODEL,
@@ -1610,7 +1611,7 @@ class AngelaLLMService:
                                 temperature=0.7,
                                 max_tokens=512,
                             ),
-                            timeout=30.0,
+                            timeout=timeout_value("llm.fallback_chain", 30.0),
                         )
                         self.active_backend = bobj
                         logger.info(f"[Fallback] Switched to {btype.name}")
@@ -1840,7 +1841,7 @@ class AngelaLLMService:
                     temperature=temperature,
                     max_tokens=max_tokens,
                 ),
-                timeout=60.0,
+                timeout=timeout_value("llm.generate_text", 60.0),
             )
 
         try:
@@ -1907,7 +1908,7 @@ class AngelaLLMService:
                         temperature=temperature,
                         max_tokens=max_tokens,
                     ),
-                    timeout=60.0,
+                timeout=timeout_value("llm.generate_text", 60.0),
                 )
 
             text = await _call_with_retry(_do_chat, label="chat_completion")

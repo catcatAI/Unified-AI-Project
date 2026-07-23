@@ -203,12 +203,12 @@ class ModelBus:
             if inspect.iscoroutinefunction(handler.process):
                 result = await asyncio.wait_for(
                     handler.process(query, context),
-                    timeout=30.0,
+                    timeout=timeout_value("model_bus.handler_dispatch", 30.0),
                 )
             else:
                 result = await asyncio.wait_for(
                     asyncio.to_thread(handler.process, query, context),
-                    timeout=30.0,
+                    timeout=timeout_value("model_bus.handler_dispatch", 30.0),
                 )
             return {
                 "type": handler_id,

@@ -79,7 +79,7 @@ class ChatService:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.debug("HAM sync loop error: %s", e)
+                logger.warning("HAM sync loop error: %s", e, exc_info=True)
 
     async def initialize(self) -> None:
         if self._initialized:
@@ -121,7 +121,7 @@ class ChatService:
             self._training_coordinator = get_training_coordinator()
             logger.info("TrainingCoordinator wired into ChatService")
         except Exception as e:
-            logger.debug("TrainingCoordinator not available: %s", e)
+            logger.warning("TrainingCoordinator not available: %s", e, exc_info=True)
         # Initialize GARDEN engine for continuous learning (Phase 4.5)
         try:
             from ai.garden.garden_engine import GARDENEngine
@@ -168,7 +168,7 @@ class ChatService:
             self._cultural_context = CulturalContextModule()
             logger.info("CulturalContextModule initialized")
         except Exception as e:
-            logger.debug("CulturalContextModule init skipped: %s", e)
+            logger.warning("CulturalContextModule init skipped: %s", e, exc_info=True)
         self._initialized = True
         logger.info("ChatService initialized")
         # Start periodic HAM sync background task (Phase 5.2)
@@ -211,7 +211,7 @@ class ChatService:
                 merged_context, user_message, language_code=lang
             )
         except Exception as e:
-            logger.debug("Cultural context enrichment skipped: %s", e)
+            logger.warning("Cultural context enrichment skipped: %s", e, exc_info=True)
         return merged_context
 
     async def _inject_memory_context(self, merged_context: dict, user_message: str) -> dict:
@@ -232,7 +232,7 @@ class ChatService:
             except asyncio.TimeoutError:
                 logger.debug("VectorStore query skipped (exceeded 1.0s budget)")
             except Exception as e:
-                logger.debug("VectorStore query failed: %s", e)
+                logger.warning("VectorStore query failed: %s", e, exc_info=True)
         if self._ham_memory is not None:
             try:
                 ham_results = await self._ham_memory.retrieve_response_templates(
@@ -246,7 +246,7 @@ class ChatService:
                 if memories:
                     merged_context["conversation_memory"] = memories
             except Exception as e:
-                logger.debug("HAM memory query failed: %s", e)
+                logger.warning("HAM memory query failed: %s", e, exc_info=True)
         if "dictionary_context" in merged_context or "conversation_memory" in merged_context:
             logger.debug(
                 "Memory context injected: dict=%d, conv=%d",
@@ -275,7 +275,7 @@ class ChatService:
                         merged_context, image_data=image_data, top_k=3
                     )
                 except Exception as e:
-                    logger.debug("Multimodal retrieval failed (non-critical): %s", e)
+                    logger.warning("Multimodal retrieval failed (non-critical): %s", e, exc_info=True)
         return merged_context, mm_adapter
 
     def _inject_grounded_context(self, merged_context: dict, user_message: str) -> dict:
@@ -288,7 +288,7 @@ class ChatService:
                 merged_context["grounded_context"] = block
                 logger.debug("Grounded context injected (%d chars)", len(block))
         except Exception as e:
-            logger.debug("Grounded context injection skipped: %s", e)
+            logger.warning("Grounded context injection skipped: %s", e, exc_info=True)
         return merged_context
 
     async def _maybe_search_and_ground(self, user_message: str, merged_context: dict) -> dict:
@@ -322,7 +322,7 @@ class ChatService:
 
                 ws_cfg = get_config("system/llm").get("web_search", {}) or {}
             except Exception as e:
-                logger.debug("Web search config not available: %s", e)
+                logger.warning("Web search config not available: %s", e, exc_info=True)
             ws_timeout = float(ws_cfg.get("timeout", 2.5))
             ws_top = int(ws_cfg.get("max_results", 3))
             results = await asyncio.wait_for(
@@ -349,7 +349,7 @@ class ChatService:
             get_grounded_learning_manager().learn_verified_from_search(user_message, usable)
             logger.debug("Proactive web grounding applied (%d results)", len(usable))
         except Exception as e:
-            logger.debug("Proactive web grounding skipped: %s", e)
+            logger.warning("Proactive web grounding skipped: %s", e, exc_info=True)
         return merged_context
 
     async def _process_multimodal_output(self, response, merged_context: dict, mm_adapter) -> None:
@@ -371,7 +371,7 @@ class ChatService:
                 if decoded_wav is not None:
                     response.metadata["generated_audio"] = decoded_wav[:16000]
         except Exception as e:
-            logger.debug("Multimodal decode output failed (non-critical): %s", e)
+            logger.warning("Multimodal decode output failed (non-critical): %s", e, exc_info=True)
 
     async def _process_continuous_learning(
         self, user_message: str, response, merged_context: dict
@@ -421,7 +421,7 @@ class ChatService:
                 await asyncio.to_thread(self._garden_engine.save, garden_state_dir)
                 logger.info("GARDEN engine saved after %d interactions", self._garden_learn_count)
         except Exception as e:
-            logger.debug("GARDEN learning failed: %s", e)
+            logger.warning("GARDEN learning failed: %s", e, exc_info=True)
 
     def _schedule_grounded_learning(self, user_message: str, response) -> None:
         """Fire-and-forget: extract claims and verify them in the background.
@@ -436,7 +436,7 @@ class ChatService:
             resp_text = getattr(response, "text", str(response))
             asyncio.create_task(mgr.queue_claims(user_message, resp_text))
         except Exception as e:
-            logger.debug("Grounded learning schedule skipped: %s", e)
+            logger.warning("Grounded learning schedule skipped: %s", e, exc_info=True)
 
     async def _store_interaction_memories(self, user_message: str, response) -> None:
         # Vector-store writes are best-effort and must NOT block the answer path.
@@ -453,7 +453,7 @@ class ChatService:
                     self._vector_store.add_memory(memory_id, content, {"type": "conversation"})
                 )
             except Exception as e:
-                logger.debug("VectorStore memory store failed: %s", e)
+                logger.warning("VectorStore memory store failed: %s", e, exc_info=True)
         if getattr(self._llm_service, "enable_memory_enhancement", False):
             try:
                 mm = getattr(self._llm_service, "memory_manager", None)
@@ -465,7 +465,7 @@ class ChatService:
                         )
                     )
             except Exception as e:
-                logger.debug("Memory store failed: %s", e)
+                logger.warning("Memory store failed: %s", e, exc_info=True)
 
     def _post_process_response(self, response, context: dict):
         """Enrich response with biological/emotional state context.
@@ -541,7 +541,7 @@ class ChatService:
                 result = self._ed3n_learning_integration.synchronize_knowledge()
                 logger.info("Final HAM sync on shutdown: %d entries", result.get("synced", 0))
             except Exception as e:
-                logger.debug("Final HAM sync failed: %s", e)
+                logger.warning("Final HAM sync failed: %s", e, exc_info=True)
         if self._continuous_learning:
             report = self._continuous_learning.get_learning_report()
             logger.info("Continuous learning final report:\n%s", report)
