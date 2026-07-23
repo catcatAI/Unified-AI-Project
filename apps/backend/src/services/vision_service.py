@@ -263,7 +263,7 @@ class VisionService:
                     max_diff = len(p1) * 3 * 255
                     similarity_score = 1.0 - (diffs / max_diff)
                 except Exception as err:
-                    logger.debug("Image similarity comparison fallback (PIL failed): %s", err)
+                    logger.warning("Image similarity comparison fallback (PIL failed): %s", err, exc_info=True)
                     size_factor = 1 - abs(len(image_data1) - len(image_data2)) / max(
                         len(image_data1), len(image_data2), 1
                     )
@@ -289,7 +289,7 @@ class VisionService:
                     diff_score = float(np.mean(diff) / 255.0)
                     comparison_result["difference_score"] = round(diff_score, 3)
                 except Exception as err:
-                    logger.debug("Image difference fallback (numpy failed): %s", err)
+                    logger.warning("Image difference fallback (numpy failed): %s", err, exc_info=True)
                     comparison_result["difference_score"] = round(
                         1 - len(image_data1) / max(len(image_data2), 1), 3
                     )
@@ -505,7 +505,7 @@ class VisionService:
                 base_caption += f", related to: {context['text_context'][:50]}"
             return base_caption
         except Exception as err:
-            logger.debug("Caption generation fallback: %s", err)
+            logger.warning("Caption generation fallback: %s", err, exc_info=True)
             base_caption = "An image (format could not be determined)"
             if context.get("text_context"):
                 base_caption += f" related to {context['text_context'][:50]}"
@@ -535,10 +535,10 @@ class VisionService:
                 feature_hash = [ord(c) / 255.0 for c in hashlib.md5(image_data).hexdigest()[:64]]
                 await cluster_manager.distribute_task("Vision", feature_hash)
             except Exception:
-                logger.debug("Cluster distribution failed", exc_info=True)
+                logger.warning("Cluster distribution failed", exc_info=True)
             return properties
         except Exception as err:
-            logger.debug("Object detection fallback: %s", err)
+            logger.warning("Object detection fallback: %s", err, exc_info=True)
             return [{"label": "unrecognized_image", "confidence": 0.5, "property": "format"}]
 
     async def initialize(self) -> bool:
@@ -577,7 +577,7 @@ class VisionService:
                 "status": "success" if text.strip() else "no_text_found",
             }
         except Exception as e:
-            logger.debug("pytesseract OCR failed: %s", e)
+            logger.warning("pytesseract OCR failed: %s", e, exc_info=True)
             return {"text": "", "language": "auto", "confidence": 0.0, "status": f"ocr_failed: {e}"}
 
     async def _detect_faces(self, image_data: bytes) -> List[Dict[str, Any]]:
@@ -596,7 +596,7 @@ class VisionService:
             if w < 32 or h < 32:
                 return []
         except Exception:
-            logger.debug("_extract_visual_features: image decode failed", exc_info=True)
+            logger.warning("_extract_visual_features: image decode failed", exc_info=True)
         return []
 
     async def _analyze_scene(self, image_data: bytes) -> Dict[str, Any]:
@@ -686,7 +686,7 @@ class VisionService:
                 "avg_rgb": [round(r_total), round(g_total), round(b_total)],
             }
         except Exception as err:
-            logger.debug("Color analysis fallback: %s", err)
+            logger.warning("Color analysis fallback: %s", err, exc_info=True)
             return {"dominant_colors": ["unknown"], "color_distribution": {}, "brightness": 0.5}
 
     def _extract_dominant_colors(self, img: Any, total: int) -> List[Dict[str, Any]]:
@@ -809,7 +809,7 @@ class VisionService:
                 "geometric_consistency": round(similarity * 0.9, 3),
             }
         except Exception as err:
-            logger.debug("Feature matching fallback: %s", err)
+            logger.warning("Feature matching fallback: %s", err, exc_info=True)
             return {
                 "keypoints_matched": 0,
                 "total_keypoints_1": 0,

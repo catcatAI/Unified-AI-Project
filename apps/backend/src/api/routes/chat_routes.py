@@ -200,7 +200,7 @@ def _get_intent_manager():
             return dli.intent_manager
         return None
     except Exception:
-        logger.debug("_get_intent_manager: DLI unavailable")
+        logger.warning("_get_intent_manager: DLI unavailable", exc_info=True)
         return None
 
 
@@ -232,7 +232,7 @@ def _get_state_matrix():
         if dli and hasattr(dli, "state_matrix"):
             return dli.state_matrix
     except Exception:
-        logger.debug("_get_state_matrix: DLI unavailable, using standalone")
+        logger.warning("_get_state_matrix: DLI unavailable, using standalone", exc_info=True)
     global _state_matrix
     if _state_matrix is None:
         from core.engine.state_matrix import StateMatrix4D
@@ -298,7 +298,7 @@ async def _inject_emotion_behavioral_context(
         if bio is not None:
             await _apply_emotion_to_biology(emotion, intensity, bio)
     except Exception as e:
-        logger.debug(f"EmotionSystem behavioral injection failed: {e}")
+        logger.warning(f"EmotionSystem behavioral injection failed: {e}", exc_info=True)
 
 
 # Emotion → Biological stress/relaxation mapping for C³ 4.0 cross-component chain
@@ -387,7 +387,7 @@ async def _try_math_verification(
 
                     apply_domain_cognition(matrix, user_message)
                 except Exception as e:  # pragma: no cover - defensive
-                    logger.debug(f"Bounded math cognition failed: {e}")
+                    logger.warning(f"Bounded math cognition failed: {e}", exc_info=True)
             if verification.response_text:
                 return _build_math_response(
                     verification, matrix, user_message, session_id, schema_ver, trunc_msg
@@ -418,7 +418,7 @@ async def _analyze_emotion_and_crisis(
             if crisis_level > 0:
                 logger.info(f"[CrisisSystem] Level {crisis_level} detected")
     except Exception as e:
-        logger.debug(f"Crisis assessment unavailable: {e}")
+        logger.warning(f"Crisis assessment unavailable: {e}", exc_info=True)
 
     # Fire-and-forget: biological stimulus processing
     try:
@@ -437,7 +437,7 @@ async def _analyze_emotion_and_crisis(
                     bio.process_relaxation_event(intensity=intensity * 0.2), "relaxation_event"
                 )
     except Exception as e:
-        logger.debug(f"Biological state update from chat failed: {e}")
+        logger.warning(f"Biological state update from chat failed: {e}", exc_info=True)
 
     return emotion_result, crisis_level
 
@@ -463,7 +463,7 @@ async def _try_alignment_check(
                 logger.warning(f"[Level5ASI] Alignment failed: {alignment_result.get('reason')}")
                 context["alignment_override"] = "prioritize_safety"
     except Exception as e:
-        logger.debug(f"Level5ASI alignment check unavailable: {e}")
+        logger.warning(f"Level5ASI alignment check unavailable: {e}", exc_info=True)
 
 
 async def _build_chat_context(
@@ -481,7 +481,7 @@ async def _build_chat_context(
     try:
         context["bio_state"] = bio.get_biological_state()
     except Exception as e:
-        logger.debug(f"Biological state retrieval failed: {e}")
+        logger.warning(f"Biological state retrieval failed: {e}", exc_info=True)
 
     # State matrix 4D axes
     try:
@@ -504,7 +504,7 @@ async def _build_chat_context(
             "guidance": [],
         }
     except Exception as e:
-        logger.debug(f"StateMatrix4D unavailable: {e}")
+        logger.warning(f"StateMatrix4D unavailable: {e}", exc_info=True)
 
     # ED3N context retrieval from history
     retrieved_ctx: List[Dict[str, Any]] = []
@@ -523,7 +523,7 @@ async def _build_chat_context(
             retrieved_ctx.sort(key=lambda x: x["relevance"], reverse=True)
             retrieved_ctx = retrieved_ctx[:5]
         except Exception as e:
-            logger.debug(f"ED3N context retrieval failed: {e}")
+            logger.warning(f"ED3N context retrieval failed: {e}", exc_info=True)
     context["retrieved_context"] = retrieved_ctx
 
     # Dialogue context injection
@@ -535,7 +535,7 @@ async def _build_chat_context(
             if conv_ctx:
                 context["dialogue_context"] = conv_ctx
     except Exception as e:
-        logger.debug(f"Dialogue context unavailable: {e}")
+        logger.warning(f"Dialogue context unavailable: {e}", exc_info=True)
 
     # Memory context injection
     try:
@@ -546,7 +546,7 @@ async def _build_chat_context(
         if recent_memories:
             context["recent_memories"] = recent_memories
     except Exception as e:
-        logger.debug(f"Memory context unavailable: {e}")
+        logger.warning(f"Memory context unavailable: {e}", exc_info=True)
 
     # History in context
     if history:
@@ -566,7 +566,7 @@ async def _build_chat_context(
             }
             logger.debug("LifeEssence tendencies injected into chat context")
     except Exception as e:
-        logger.debug(f"LifeEssence injection unavailable: {e}")
+        logger.warning(f"LifeEssence injection unavailable: {e}", exc_info=True)
 
 
 async def _handle_execution_gate(
@@ -679,7 +679,7 @@ async def _handle_execution_gate(
                     if expected_ir and ir_name != expected_ir:
                         _ir_confirms = False
             except Exception as e:
-                logger.debug("IntentRegistry gate failed in execution gate: %s", e)
+                logger.warning("IntentRegistry gate failed in execution gate: %s", e, exc_info=True)
             if _ir_confirms and decision.handler and chat_svc and chat_svc.model_bus:
                 try:
                     action_result = await chat_svc.model_bus.execute_handler(
@@ -719,7 +719,7 @@ async def _handle_execution_gate(
             # reject: clear action result, continue to LLM
             context["last_action_result"] = None
     except Exception as e:
-        logger.debug(f"Execution gate unavailable: {e}")
+        logger.warning(f"Execution gate unavailable: {e}", exc_info=True)
     return None
 
 
@@ -795,7 +795,7 @@ async def _try_agent_routing(
                 "confidence": primary.get("confidence", 0.8),
             }
     except Exception as e:
-        logger.debug(f"Agent routing unavailable: {e}")
+        logger.warning(f"Agent routing unavailable: {e}", exc_info=True)
     return None
 
 
@@ -899,7 +899,7 @@ def _get_causal_routing_adjustment() -> Dict[str, Any]:
             "effective_guidance": effective_guidance,
         }
     except Exception as e:
-        logger.debug(f"Causal routing adjustment failed: {e}")
+        logger.warning(f"Causal routing adjustment failed: {e}", exc_info=True)
         return {
             "temperature_bias": 0.0,
             "max_tokens_bias": 0,
@@ -938,7 +938,7 @@ def _inject_causal_predictions(context: Dict[str, Any]) -> None:
                     f"{routing_adj['effective_guidance']}"
                 )
     except Exception as e:
-        logger.debug(f"Causal prediction injection failed: {e}")
+        logger.warning(f"Causal prediction injection failed: {e}", exc_info=True)
 
 
 # ── Per-session temporal buffers for causal learning ─────────────────────
@@ -1005,7 +1005,7 @@ def _fire_causal_learning(response_text: str, user_message: str, session_id: str
                     response_success=None,
                 )
         except Exception as e:
-            logger.debug(f"Emotion feedback loop failed: {e}")
+            logger.warning(f"Emotion feedback loop failed: {e}", exc_info=True)
 
         # DLI feedback loop: interaction outcome → modality gateway adjustment
         try:
@@ -1016,7 +1016,7 @@ def _fire_causal_learning(response_text: str, user_message: str, session_id: str
                     success=len(response_text) > 0,
                 )
         except Exception as e:
-            logger.debug(f"DLI feedback loop failed: {e}")
+            logger.warning(f"DLI feedback loop failed: {e}", exc_info=True)
 
         # Lifecycle feedback loop: interaction outcome → phase-aware routing
         try:
@@ -1027,7 +1027,7 @@ def _fire_causal_learning(response_text: str, user_message: str, session_id: str
                     success=len(response_text) > 0,
                 )
         except Exception as e:
-            logger.debug(f"Lifecycle feedback loop failed: {e}")
+            logger.warning(f"Lifecycle feedback loop failed: {e}", exc_info=True)
 
         # Dynamic strength: higher when response is substantive relative to query
         dynamic_strength = min(0.9, max(0.1, engagement / 5.0))
@@ -1083,7 +1083,7 @@ def _fire_causal_learning(response_text: str, user_message: str, session_id: str
             buf["engagement_ratios"] = buf["engagement_ratios"][-50:]
 
     except Exception as e:
-        logger.debug(f"Causal learning failed: {e}")
+        logger.warning(f"Causal learning failed: {e}", exc_info=True)
 
 
 def _learn_from_classification_feedback(
@@ -1206,7 +1206,7 @@ def _handle_timeout(session_id: str, schema_ver: str) -> Dict[str, Any]:
             "timeout_response", context={"fallback": True}, depth="reflex"
         )
     except Exception as e:
-        logger.debug(f"ED3N fallback failed in timeout handler: {e}")
+        logger.warning(f"ED3N fallback failed in timeout handler: {e}", exc_info=True)
         timeout_text = "\u62b1\u6b49\uff0c\u6211\u76ee\u524d\u65e0\u6cd5\u56de\u5e94\uff0c\u8bf7\u7a0d\u540e\u518d\u8bd5\u3002"
     return {
         "response_text": timeout_text,
@@ -1329,7 +1329,7 @@ async def _handle_chat_request(
             if ir_name == "math" and ir_conf >= 0.1:
                 return math_result  # IntentRegistry confirms → fast path
         except Exception as e:
-            logger.debug("IntentRegistry math gate failed: %s", e)
+            logger.warning("IntentRegistry math gate failed: %s", e, exc_info=True)
         # IntentRegistry didn't confirm → enrich context instead
         math_result_context = math_result
 
@@ -1358,7 +1358,7 @@ async def _handle_chat_request(
                     f"(phase={lc_adj.get('phase')}, decision={lc_adj.get('decision_type')})"
                 )
         except Exception as e:
-            logger.debug(f"Lifecycle behavioral adjustment unavailable: {e}")
+            logger.warning(f"Lifecycle behavioral adjustment unavailable: {e}", exc_info=True)
         # Step 5d: Inject intent routing adjustment (C³ 4.0→5.0)
         try:
             im = _get_intent_manager()
@@ -1372,7 +1372,7 @@ async def _handle_chat_request(
                         f"strength={intent_adj['intent_strength']}"
                     )
         except Exception as e:
-            logger.debug(f"Intent routing adjustment unavailable: {e}")
+            logger.warning(f"Intent routing adjustment unavailable: {e}", exc_info=True)
         # Step 5e: Inject modality gateway state (C³ 3.0 — was never consumed)
         try:
             mg = _get_modality_gateway()
@@ -1383,14 +1383,14 @@ async def _handle_chat_request(
                     f"{len(context['modality_state'].get('inactive', []))} inactive"
                 )
         except Exception as e:
-            logger.debug(f"Modality state unavailable: {e}")
+            logger.warning(f"Modality state unavailable: {e}", exc_info=True)
         # Step 5f: Inject DLI awareness injection into context (C³ 6.0)
         try:
             dli = get_digital_life()
             if dli:
                 context["awareness_injection"] = dli.get_awareness_injection()
         except Exception as e:
-            logger.debug(f"Awareness injection unavailable: {e}")
+            logger.warning(f"Awareness injection unavailable: {e}", exc_info=True)
     if crisis_level > 0:
         context["crisis_level"] = crisis_level
         context["crisis_instruction"] = (
@@ -1415,7 +1415,7 @@ async def _handle_chat_request(
         context["desktop_interaction"] = _desktop
         logger.info("DesktopInteraction wired into chat context")
     except Exception as e:
-        logger.debug(f"DesktopInteraction wiring failed: {e}")
+        logger.warning(f"DesktopInteraction wiring failed: {e}", exc_info=True)
 
     # Step 6: Build full LLM context (bio state, state matrix, ED3N retrieval, dialogue, memory)
     chat_svc = await _get_chat_service()
@@ -1469,7 +1469,7 @@ async def _handle_chat_request(
     try:
         _learn_from_classification_feedback(user_message, response_text, context)
     except Exception as e:
-        logger.debug(f"Online learning step skipped: {e}")
+        logger.warning(f"Online learning step skipped: {e}", exc_info=True)
 
     # Step 10b: Record intent outcome feedback loop (C³ 5.0→6.0)
     try:
@@ -1485,7 +1485,7 @@ async def _handle_chat_request(
                 f"actual={actual_mode}, success={success}"
             )
     except Exception as e:
-        logger.debug(f"Intent outcome recording unavailable: {e}")
+        logger.warning(f"Intent outcome recording unavailable: {e}", exc_info=True)
 
     return _format_chat_response(
         response_text,
@@ -1683,7 +1683,7 @@ async def chat_with_image(
                         results, language="zh", action=action
                     )
         except Exception as e:
-            logger.debug(f"CLIP classification failed, falling back to LLM: {e}")
+            logger.warning(f"CLIP classification failed, falling back to LLM: {e}", exc_info=True)
 
     if clip_response:
         return {

@@ -468,7 +468,7 @@ class MultimodalService:
                 if cml.should_train():
                     cml.micro_train()
             except Exception as cml_e:
-                logger.debug("CML feed failed (non-fatal): %s", cml_e)
+                logger.warning("CML feed failed (non-fatal): %s", cml_e, exc_info=True)
         except Exception as e:
             logger.error("Encode failed: %s", e, exc_info=True)
             result["error"] = safe_error(e)
@@ -988,19 +988,19 @@ class MultimodalService:
             _ = self._get_visual_encoder()
             status["encoders"] = {"vision": True}
         except Exception as err:
-            logger.debug("Vision encoder health check failed: %s", err)
+            logger.warning("Vision encoder health check failed: %s", err, exc_info=True)
             status["encoders"] = {"vision": False}
         try:
             _ = self._get_audio_encoder()
             status["encoders"]["audio"] = True
         except Exception as err:
-            logger.debug("Audio encoder health check failed: %s", err)
+            logger.warning("Audio encoder health check failed: %s", err, exc_info=True)
             status["encoders"]["audio"] = False
         try:
             _ = self._get_latent_space()
             status["latent_space"] = True
         except Exception as err:
-            logger.debug("Latent space health check failed: %s", err)
+            logger.warning("Latent space health check failed: %s", err, exc_info=True)
             status["latent_space"] = False
         try:
             # P33: Check vision pipeline health
@@ -1008,28 +1008,28 @@ class MultimodalService:
             if hasattr(vp, "get_stats"):
                 status["vision_pipeline"] = vp.get_stats()
         except Exception:
-            logger.debug("vision pipeline health check failed", exc_info=True)
+            logger.warning("vision pipeline health check failed", exc_info=True)
         try:
             async with self._items_lock:
                 status["registered_items"] = len(self._registered_items)
         except Exception as err:
-            logger.debug("Registered items count failed: %s", err)
+            logger.warning("Registered items count failed: %s", err, exc_info=True)
             status["registered_items"] = 0
         # P37: Add production hardening health info
         try:
             if self._error_recovery is not None:
                 status["recovery_state"] = self._error_recovery.get_recovery_state()
         except Exception:
-            logger.debug("error recovery health check failed", exc_info=True)
+            logger.warning("error recovery health check failed", exc_info=True)
         try:
             if self._state_persistence is not None:
                 cp_list = await self._state_persistence.list_checkpoints()
                 status["checkpoints"] = cp_list
         except Exception:
-            logger.debug("state persistence health check failed", exc_info=True)
+            logger.warning("state persistence health check failed", exc_info=True)
         try:
             if self._mm_quality_monitor is not None:
                 status["quality_monitor"] = self._mm_quality_monitor.report()
         except Exception:
-            logger.debug("quality monitor health check failed", exc_info=True)
+            logger.warning("quality monitor health check failed", exc_info=True)
         return status
