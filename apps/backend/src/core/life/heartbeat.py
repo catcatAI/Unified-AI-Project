@@ -41,14 +41,15 @@ class MetabolicHeartbeat:
         self.start_time = datetime.now()
 
         # --- Spatial State (Angela's physical presence) ---
-        self.screen_w = 1920
-        self.screen_h = 1080
         self.x = 200.0
         self.y = 0.0
         self.target_x = 200.0
         from core.system.config.tiered_loader import get_config as _gc
 
         self._beh_cfg = _gc("standard/behavior/behavior")
+        _spatial_cfg = _gc("system/bootstrap").get("hardware_tiers", {}).get("default", {}).get("screen", {})
+        self.screen_w = _spatial_cfg.get("width", 1920)
+        self.screen_h = _spatial_cfg.get("height", 1080)
         self.velocity = self._beh_cfg.get("movement", {}).get("base_velocity", 0.05)
         self.posture = {"spine_bend": 0.0, "theta_matrix": [0.0] * 9}
 

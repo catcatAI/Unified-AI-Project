@@ -38,6 +38,18 @@ from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
 
+
+def _get_screen_size() -> tuple:
+    """Read screen size from bootstrap config, with safe fallback."""
+    try:
+        from core.system.config.tiered_loader import get_config
+
+        cfg = get_config("system/bootstrap")
+        screen = cfg.get("hardware_tiers", {}).get("default", {}).get("screen", {})
+        return (screen.get("width", 1920), screen.get("height", 1080))
+    except Exception:
+        return (1920, 1080)
+
 # =============================================================================
 # ANGELA-MATRIX: [L4] [δ] [A] [L6+]
 # Max-size bound for unbounded operation history collection
@@ -160,12 +172,13 @@ class DesktopBrowserIntegration:
         try:
             import webview
 
+            _sw, _sh = _get_screen_size()
             # 创建无边框窗口，位于桌面层
             self.browser_window = webview.create_window(
                 "Angela Browser",
                 url=url,
-                width=1920,
-                height=1080,
+                width=_sw,
+                height=_sh,
                 x=0,
                 y=0,
                 frameless=True,

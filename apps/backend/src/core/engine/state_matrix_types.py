@@ -96,7 +96,10 @@ class DimensionState:
 
     def compute_coordinate(self) -> Tuple[float, float, float]:
         """根據當前維度值計算實際座標 / Compute actual coordinate from current values"""
-        from app_config_loader import get_formula_config
+        try:
+            from app_config_loader import get_formula_config
+        except ImportError:
+            get_formula_config = lambda d: {}
 
         proj_conf = get_formula_config("spatial").get("projection_weights", {}).get(self.name, {})
 

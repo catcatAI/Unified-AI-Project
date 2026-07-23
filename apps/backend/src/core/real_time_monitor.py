@@ -39,6 +39,21 @@ from core.system.config.magic_numbers import loop_sleep
 
 logger = logging.getLogger(__name__)
 
+
+def _get_default_screen_size() -> tuple:
+    """Read default screen size from config, falling back to None (caller decides)."""
+    try:
+        from app_config_loader import get_formula_config
+
+        spatial = get_formula_config("spatial")
+        screen = spatial.get("screen", {})
+        return (screen.get("width", 1920), screen.get("height", 1080))
+    except Exception:
+        return (1920, 1080)
+
+
+_DEFAULT_W, _DEFAULT_H = _get_default_screen_size()
+
 # =============================================================================
 # ANGELA-MATRIX: [L4] [δ] [A] [L6+]
 # Max-size bounds for unbounded history collections
@@ -81,8 +96,8 @@ class MouseData:
     velocity_x: float = 0.0
     velocity_y: float = 0.0
     timestamp: datetime = field(default_factory=datetime.now)
-    screen_width: int = 1920
-    screen_height: int = 1080
+    screen_width: int = _DEFAULT_W
+    screen_height: int = _DEFAULT_H
 
     @property
     def velocity(self) -> float:

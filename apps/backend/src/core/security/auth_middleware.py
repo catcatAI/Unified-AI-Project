@@ -34,7 +34,13 @@ class AuthMiddleware:
 
     def __init__(self, config: Optional[dict[str, Any]] = None):
         self.config = config or {}
-        self.secret_key = self.config.get("secret_key", self._generate_secret_key())
+        # Priority: env var > config dict > auto-generated
+        import os
+        self.secret_key = (
+            os.environ.get("SECRET_KEY")
+            or self.config.get("secret_key")
+            or self._generate_secret_key()
+        )
         self.algorithm = self.config.get("algorithm", "HS256")
         self.access_token_expire_minutes = self.config.get("access_token_expire_minutes", 30)
         self.refresh_token_expire_days = self.config.get("refresh_token_expire_days", 7)

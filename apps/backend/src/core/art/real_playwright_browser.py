@@ -15,6 +15,18 @@ from typing import Any, Dict, List, Optional
 
 from core.utils import safe_error
 
+
+def _get_browser_viewport() -> dict:
+    """Read browser viewport from bootstrap config."""
+    try:
+        from core.system.config.tiered_loader import get_config
+
+        cfg = get_config("system/bootstrap")
+        screen = cfg.get("hardware_tiers", {}).get("default", {}).get("screen", {})
+        return {"width": screen.get("width", 1920), "height": screen.get("height", 1080)}
+    except Exception:
+        return {"width": 1920, "height": 1080}
+
 logger = logging.getLogger(__name__)
 
 
@@ -72,7 +84,7 @@ class AngelaRealBrowser:
                 self.browser = await playwright.chromium.launch(headless=False)
 
             self.context = await self.browser.new_context(
-                viewport={"width": 1920, "height": 1080},
+                viewport=_get_browser_viewport(),
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
             )
 

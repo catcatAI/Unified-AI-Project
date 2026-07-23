@@ -32,7 +32,9 @@ hsp:
 
 # 安全配置
 security:
-  secret_key: "development-secret-key-change-in-production"
+  # Secret key: read from SECRET_KEY env var; this is a dev-only fallback.
+  # NEVER deploy to production with this value.
+  secret_key: "${SECRET_KEY:-development-secret-key-change-in-production}"
   algorithm: "HS256"
   access_token_expire_minutes: 30
 

@@ -110,7 +110,10 @@ class StateMatrix4D:
             return
         self._initialized = True
 
-        from app_config_loader import get_formula_config
+        try:
+            from app_config_loader import get_formula_config
+        except ImportError:
+            get_formula_config = lambda d: {}
 
         self.formula_config = get_formula_config("spatial")
         self.config = config or {}
@@ -132,7 +135,10 @@ class StateMatrix4D:
 
     def _setup_dimensions(self) -> None:
         """設置維度初始狀態 (從分層配置讀取)"""
-        from app_config_loader import get_formula_config
+        try:
+            from app_config_loader import get_formula_config
+        except ImportError:
+            get_formula_config = lambda d: {}
 
         matrix_conf = get_formula_config("matrix")
         dim_defs = matrix_conf.get("dimensions", {})
@@ -220,7 +226,10 @@ class StateMatrix4D:
 
     def _setup_systems(self) -> None:
         """設置子系統與矩陣常數"""
-        from app_config_loader import get_formula_config
+        try:
+            from app_config_loader import get_formula_config
+        except ImportError:
+            get_formula_config = lambda d: {}
 
         matrix_conf = get_formula_config("matrix")
         limits = matrix_conf.get("system_limits", {})
@@ -254,7 +263,10 @@ class StateMatrix4D:
 
     def _setup_history(self) -> None:
         """設置歷史紀錄與追蹤"""
-        from app_config_loader import get_formula_config
+        try:
+            from app_config_loader import get_formula_config
+        except ImportError:
+            get_formula_config = lambda d: {}
 
         matrix_conf = get_formula_config("matrix")
         limits = matrix_conf.get("system_limits", {})

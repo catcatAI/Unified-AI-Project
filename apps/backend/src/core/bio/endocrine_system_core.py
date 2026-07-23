@@ -81,7 +81,10 @@ class EndocrineSystem:
     """
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        from app_config_loader import get_formula_config
+        try:
+            from app_config_loader import get_formula_config
+        except ImportError:
+            get_formula_config = lambda d: {}
 
         self.formula_config = get_formula_config("biological")
         self.config = config or {}

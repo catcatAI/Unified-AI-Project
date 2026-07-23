@@ -31,7 +31,10 @@ class HardwareProbe:
     """
 
     def __init__(self):
-        from app_config_loader import get_bootstrap_config
+        try:
+            from app_config_loader import get_bootstrap_config
+        except ImportError:
+            get_bootstrap_config = lambda: {}
 
         self.bootstrap_config = get_bootstrap_config()
         self.specs: Optional[HardwareSpecs] = None
