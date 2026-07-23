@@ -67,7 +67,7 @@ def _load_config() -> Optional[Dict[str, Any]]:
     except Exception as e:
         # broad except intentional: config loading must never crash; silent fallback to defaults
         logger = logging.getLogger(__name__)
-        logger.debug(f"Tiered config loading failed, using defaults: {e}")
+        logger.warning("Tiered config loading failed, using defaults: %s", e, exc_info=True)
         _MAGIC_CACHE = {}
     return _MAGIC_CACHE
 

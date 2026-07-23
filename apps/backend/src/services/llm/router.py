@@ -1036,7 +1036,7 @@ class AngelaLLMService:
                     pn_vote = pn.resolve(user_message, context)
                     routing_mode = pn_vote.get("routing_mode", "neutral")
                 except Exception as e:
-                    logger.debug("PriorityNegotiator resolve failed: %s", e)
+                    logger.warning("PriorityNegotiator resolve failed: %s", e, exc_info=True)
                 effective_threshold = direct_threshold
                 if routing_mode == "conservative":
                     effective_threshold = max(0.9, direct_threshold)
@@ -1382,7 +1382,7 @@ class AngelaLLMService:
                 adj = self.meta_controller.get_weighted_adjustment()
                 context["meta_calibration"] = {"weighted_adjustment": adj}
             except Exception:
-                logger.debug("MetaController calibration unavailable")
+                logger.warning("MetaController calibration unavailable", exc_info=True)
 
         # Inject Heartbeat system health into context for PriorityNegotiator
         try:
@@ -1391,7 +1391,7 @@ class AngelaLLMService:
             hb = get_metabolic_heartbeat()
             context["heartbeat_health"] = hb.get_system_health()
         except Exception:
-            logger.debug("Heartbeat health unavailable")
+            logger.warning("Heartbeat health unavailable", exc_info=True)
 
         # Inject DLI lifecycle state into context for PriorityNegotiator
         try:
@@ -1404,7 +1404,7 @@ class AngelaLLMService:
                 ),
             }
         except Exception:
-            logger.debug("DLI state unavailable")
+            logger.warning("DLI state unavailable", exc_info=True)
 
         if self.llm_mode == "auto" and self.auto_selector is not None:
             try:
