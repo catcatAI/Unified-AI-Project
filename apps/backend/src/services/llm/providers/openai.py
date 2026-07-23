@@ -47,7 +47,7 @@ class OpenAIAPIBackend(BaseLLMBackend):
             ) as response:
                 return response.status == 200
         except Exception as e:
-            logger.debug(f"OpenAI health check failed: {e}")
+            logger.warning(f"OpenAI health check failed: {e}", exc_info=True)
         return False
 
     async def generate(self, prompt: str, **kwargs) -> LLMResponse:

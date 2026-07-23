@@ -70,5 +70,5 @@ class ED3NBackend(BaseLLMBackend):
                 self._engine = ED3NEngine.get_shared()
             return self._engine is not None
         except Exception as e:
-            logger.debug(f"ED3N health check failed: {e}")
+            logger.warning(f"ED3N health check failed: {e}", exc_info=True)
             return False

@@ -90,5 +90,5 @@ class GARDENBackend(BaseLLMBackend):
             engine = self._get_engine()
             return engine is not None
         except Exception as e:
-            logger.debug("GARDEN health check failed: %s", e)
+            logger.warning("GARDEN health check failed: %s", e, exc_info=True)
             return False

@@ -38,7 +38,7 @@ class LlamaCppBackend(BaseLLMBackend):
                     self.model = data.get("model_name", self.model)
                     return True
         except Exception as e:
-            logger.debug(f"llama.cpp health check failed: {e}")
+            logger.warning(f"llama.cpp health check failed: {e}", exc_info=True)
         return False
 
     async def generate(self, prompt: str, **kwargs) -> LLMResponse:

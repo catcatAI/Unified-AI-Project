@@ -48,7 +48,7 @@ class OllamaBackend(BaseLLMBackend):
                         self.model = models[0].get("name", DEFAULT_OLLAMA_MODEL)
                         return True
         except Exception as e:
-            logger.debug(f"Ollama health check failed: {e}")
+            logger.warning(f"Ollama health check failed: {e}", exc_info=True)
         return False
 
     async def generate(self, prompt: str, **kwargs) -> LLMResponse:
