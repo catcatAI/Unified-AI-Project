@@ -786,7 +786,8 @@ class UserActivityMonitor:
         system = platform.system().lower()
         try:
             if system == "windows":
-                result = subprocess.run(
+                result = await asyncio.to_thread(
+                    subprocess.run,
                     [
                         "powershell",
                         "-NoProfile",
@@ -802,7 +803,8 @@ class UserActivityMonitor:
                 return title if title else None
 
             elif system == "darwin":
-                result = subprocess.run(
+                result = await asyncio.to_thread(
+                    subprocess.run,
                     [
                         "osascript",
                         "-e",
@@ -819,7 +821,8 @@ class UserActivityMonitor:
             elif system == "linux":
                 # Preferred: xdotool (fast, single call)
                 try:
-                    result = subprocess.run(
+                    result = await asyncio.to_thread(
+                        subprocess.run,
                         ["xdotool", "getactivewindow", "getwindowname"],
                         capture_output=True,
                         text=True,
@@ -833,7 +836,8 @@ class UserActivityMonitor:
                 # Fallback: xprop (two-call approach, no shell=True)
                 try:
                     # Step 1: get active window ID
-                    id_result = subprocess.run(
+                    id_result = await asyncio.to_thread(
+                        subprocess.run,
                         ["xprop", "-root", "_NET_ACTIVE_WINDOW"],
                         capture_output=True,
                         text=True,
@@ -847,7 +851,8 @@ class UserActivityMonitor:
                     if not window_id or window_id == "not" or window_id.startswith("_NET"):
                         return None
                     # Step 2: get window name
-                    name_result = subprocess.run(
+                    name_result = await asyncio.to_thread(
+                        subprocess.run,
                         ["xprop", "-id", window_id, "_NET_WM_NAME"],
                         capture_output=True,
                         text=True,
