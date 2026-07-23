@@ -664,6 +664,7 @@ class DigitalLifeIntegrator:
             )
         except Exception:
             # broad except acceptable: spatial math parse errors must not break maturity calc
+            logger.debug("spatial math parse failed for maturity calc, using fallback", exc_info=True)
             maturity = (alpha_stability + beta_stability + gamma_stability + delta_stability) / 4
 
         return max(0.0, min(1.0, maturity))

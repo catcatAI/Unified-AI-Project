@@ -6,7 +6,7 @@ from ai.memory.grounded_learning_manager import (
     GroundedLearningManager,
     get_grounded_learning_manager,
 )
-from ai.memory.grounded_knowledge import VerificationStatus
+from ai.memory.grounded_knowledge import GroundedKnowledgeStore, SourceRef, VerificationStatus
 from ai.meta.knowledge_verifier import KnowledgeVerifier
 
 
@@ -25,7 +25,7 @@ SUPPORT = [
 
 
 def _manager_with_support():
-    store = __import__("ai.memory.grounded_knowledge", fromlist=["GroundedKnowledgeStore"]).GroundedKnowledgeStore()
+    store = GroundedKnowledgeStore()
     verifier = KnowledgeVerifier(search_tool=FakeSearchTool(SUPPORT))
     return GroundedLearningManager(store=store, verifier=verifier)
 
@@ -65,7 +65,7 @@ def test_get_grounded_context_only_verified():
     # simulate verification result applied
     mgr.store.record_verification(
         claim.claim_key, VerificationStatus.VERIFIED,
-        [__import__("ai.memory.grounded_knowledge", fromlist=["SourceRef"]).SourceRef(
+        [SourceRef(
             url="https://en.wikipedia.org/wiki/Speed_of_light")],
         0.9,
     )

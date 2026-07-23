@@ -124,6 +124,7 @@ class ED3NLearningIntegration:
                 )
                 synced_count += 1
             except Exception as e:
+                logger.warning("Failed to sync entry %s: %s", key, e, exc_info=True)
                 errors.append(f"Failed to sync entry {key}: {e}")
 
         self._sync_history.append(

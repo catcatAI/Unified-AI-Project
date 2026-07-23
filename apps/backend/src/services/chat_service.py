@@ -54,6 +54,7 @@ class ChatService:
 
             keywords = get_angela_config().get_intent_keywords("google_drive")
         except Exception:
+            logger.debug("Failed to load Google Drive intent keywords", exc_info=True)
             keywords = []
         lowered = text.lower()
         for kw in keywords:

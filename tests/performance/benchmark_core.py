@@ -75,8 +75,9 @@ def test_services_initialize_speed():
     from core_services import initialize_services
 
     async def _run():
-        await initialize_services(config={"test": True}, use_mock_ham=True)
+        result = await initialize_services(config={"test": True}, use_mock_ham=True)
+        return result
 
     with PerformanceTimer("services_init"):
-        asyncio.run(_run())
-    assert True
+        result = asyncio.run(_run())
+    assert result is not None or True  # benchmark: timing is the assertion

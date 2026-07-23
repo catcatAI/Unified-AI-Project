@@ -129,6 +129,7 @@ class MultimodalQualityMonitor:
                     "source": "synthetic_evaluation",
                 }
         except Exception as e:
+            logger.debug("Vision quality evaluation failed: %s", safe_error(e), exc_info=True)
             sample["vision"] = {"quality": 0.0, "error": safe_error(e)}
 
         # Sample audio quality
@@ -146,6 +147,7 @@ class MultimodalQualityMonitor:
                     "source": "synthetic_evaluation",
                 }
         except Exception as e:
+            logger.debug("Audio quality evaluation failed: %s", safe_error(e), exc_info=True)
             sample["audio"] = {"quality": 0.0, "error": safe_error(e)}
 
         sample["sampling_time_ms"] = round((time.time() - t0) * 1000, 1)

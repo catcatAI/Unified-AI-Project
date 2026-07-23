@@ -228,6 +228,7 @@ class SafetyAudit:
                 passed = rule["check"]()
                 results.append({"rule": rule["name"], "passed": passed})
             except Exception as e:
+                logger.warning("Safety rule '%s' failed: %s", rule["name"], e, exc_info=True)
                 results.append({"rule": rule["name"], "passed": False, "error": safe_error(e)})
 
         passed_count = sum(1 for r in results if r["passed"])
