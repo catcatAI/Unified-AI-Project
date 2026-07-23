@@ -3,6 +3,7 @@ ANGELA-MATRIX: [L3-L4] [β] [B] [L2]
 CodeExecutionHandler — executes Python code in a restricted sandbox.
 """
 
+import ast
 import asyncio
 import io
 import logging
@@ -19,6 +20,51 @@ logger = logging.getLogger(__name__)
 _MAX_OUTPUT = 4000
 _TIMEOUT = 10
 _MAX_TRACEBACK_LINES = 10
+
+_BLOCKED_DUNDER_ATTRS = frozenset({
+    "__subclasses__", "__class__", "__bases__", "__mro__",
+    "__globals__", "__code__", "__closure__", "__defaults__",
+    "__import__", "__builtins__", "__loader__", "__spec__",
+    "__dict__", "__weakref__", "__slots__", "__qualname__",
+    "__init_subclass__", "__set_name__", "__init__",
+    "__del__", "__delattr__", "__delete__",
+    "__format__", "__round__", "__trunc__", "__floor__", "__ceil__",
+    "__pos__", "__neg__", "__abs__", "__invert__",
+    "__add__", "__sub__", "__mul__", "__truediv__", "__floordiv__",
+    "__mod__", "__pow__", "__lshift__", "__rshift__",
+    "__and__", "__or__", "__xor__",
+    "__getattr__", "__getattribute__",
+    "__setattr__", "__set__", "__set_name__",
+    "__call__", "__len__", "__length_hint__",
+    "__getitem__", "__setitem__", "__delitem__",
+    "__contains__", "__iter__", "__next__",
+    "__enter__", "__exit__",
+    "__aenter__", "__aexit__",
+    "__index__", "__int__", "__float__", "__complex__",
+    "__bool__", "__hash__", "__eq__", "__ne__",
+    "__lt__", "__le__", "__gt__", "__ge__",
+    "__repr__", "__str__", "__bytes__",
+    "__copy__", "__deepcopy__", "__reduce__", "__reduce_ex__",
+    "__sizeof__", "__dir__",
+})
+
+_BLOCKED_CALL_NAMES = frozenset({
+    "exec", "eval", "compile", "__import__", "open", "input",
+    "breakpoint", "exit", "quit", "help",
+})
+
+_BLOCKED_IMPORT_MODULES = frozenset({
+    "os", "sys", "subprocess", "shutil", "pathlib",
+    "socket", "http", "urllib", "requests",
+    "ctypes", "importlib", "code", "codeop",
+    "signal", "threading", "multiprocessing",
+    "pickle", "shelve", "marshal",
+})
+
+
+class _SandboxViolation(Exception):
+    """Raised when code violates sandbox restrictions."""
+
 
 _BUILTINS_WHITELIST = {
     "abs",
@@ -66,6 +112,73 @@ _BUILTINS_WHITELIST = {
     "type",
     "zip",
 }
+
+
+class _SafetyChecker(ast.NodeVisitor):
+    """AST walker that rejects sandbox-escape patterns."""
+
+    def __init__(self):
+        self._depth = 0
+
+    def _check_name(self, node: ast.expr, context: str = "") -> None:
+        if isinstance(node, ast.Name) and node.id in _BLOCKED_CALL_NAMES:
+            raise _SandboxViolation(f"Blocked call: {node.id}{context}")
+
+    def visit_Attribute(self, node: ast.Attribute) -> None:
+        if node.attr in _BLOCKED_DUNDER_ATTRS:
+            raise _SandboxViolation(f"Blocked attribute: {node.attr}")
+        if node.attr.startswith("__") and node.attr.endswith("__"):
+            raise _SandboxViolation(f"Blocked dunder attribute: {node.attr}")
+        self.generic_visit(node)
+
+    def visit_Call(self, node: ast.Call) -> None:
+        if isinstance(node.func, ast.Name):
+            self._check_name(node.func, "()")
+        elif isinstance(node.func, ast.Attribute):
+            if node.func.attr in _BLOCKED_CALL_NAMES:
+                raise _SandboxViolation(f"Blocked method call: {node.func.attr}()")
+            if node.func.attr.startswith("__") and node.func.attr.endswith("__"):
+                raise _SandboxViolation(f"Blocked dunder method call: {node.func.attr}()")
+        self.generic_visit(node)
+
+    def visit_Import(self, node: ast.Import) -> None:
+        for alias in node.names:
+            root = alias.name.split(".")[0]
+            if root in _BLOCKED_IMPORT_MODULES:
+                raise _SandboxViolation(f"Blocked import: {alias.name}")
+            if alias.name.startswith("_"):
+                raise _SandboxViolation(f"Blocked private import: {alias.name}")
+
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+        if node.module:
+            root = node.module.split(".")[0]
+            if root in _BLOCKED_IMPORT_MODULES:
+                raise _SandboxViolation(f"Blocked import: {node.module}")
+            if node.level > 0:
+                raise _SandboxViolation("Blocked relative import")
+
+    def visit_Name(self, node: ast.Name) -> None:
+        if node.id in _BLOCKED_CALL_NAMES:
+            raise _SandboxViolation(f"Blocked name access: {node.id}")
+        self.generic_visit(node)
+
+    def visit_Subscript(self, node: ast.Subscript) -> None:
+        self.generic_visit(node)
+
+    def visit_Starred(self, node: ast.Starred) -> None:
+        self.generic_visit(node)
+
+
+def _validate_code_safety(code: str) -> None:
+    """Parse code and reject sandbox-escape patterns via AST analysis."""
+    try:
+        tree = ast.parse(code, mode="exec")
+    except SyntaxError as e:
+        raise _SandboxViolation(f"Syntax error: {e}") from e
+
+    checker = _SafetyChecker()
+    for node in ast.walk(tree):
+        checker.visit(node)
 
 
 class CodeExecutionHandler:
@@ -121,6 +234,13 @@ class CodeExecutionHandler:
         return "\n".join(code_lines).strip() if code_lines else text.strip()
 
     async def _execute(self, code: str) -> str:
+        try:
+            _validate_code_safety(code)
+        except _SandboxViolation as e:
+            logger.warning(f"Code sandbox violation: {e}")
+            safe_msg = safe_error(e) if isinstance(e, Exception) else str(e)
+            return t("code_exec.execution_error", traceback=safe_msg)
+
         old_stdout = sys.stdout
         old_stderr = sys.stderr
         captured_out = io.StringIO()
