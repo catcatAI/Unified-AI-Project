@@ -58,7 +58,7 @@ class AudioQualityMonitor:
                 with open(path, "a", encoding="utf-8") as f:
                     f.write(json.dumps(record, ensure_ascii=False) + "\n")
             except Exception as e:
-                logger.debug("Failed to write quality log: %s", e)
+                logger.warning("Failed to write quality log: %s", e, exc_info=True)
 
     def report(self, window: Optional[int] = None) -> Dict[str, Any]:
         """Generate quality summary statistics.

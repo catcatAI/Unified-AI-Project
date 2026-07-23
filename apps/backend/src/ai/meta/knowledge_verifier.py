@@ -195,7 +195,7 @@ class KnowledgeVerifier:
 
                 search_tool = WebSearchTool()
             except Exception as e:  # pragma: no cover - defensive
-                logger.warning("KnowledgeVerifier: WebSearchTool unavailable: %s", e)
+                logger.warning("KnowledgeVerifier: WebSearchTool unavailable: %s", e, exc_info=True)
                 search_tool = None
         self.search_tool = search_tool
         self.assessor = assessor or heuristic_assess
@@ -227,7 +227,7 @@ class KnowledgeVerifier:
         try:
             results = await asyncio.to_thread(self.search_tool.search, query, num_results)
         except Exception as e:
-            logger.debug("KnowledgeVerifier: search failed for '%s': %s", query, e)
+            logger.warning("KnowledgeVerifier: search failed for '%s': %s", query, e, exc_info=True)
             results = []
 
         status, confidence = self.assessor(claim_text, results)

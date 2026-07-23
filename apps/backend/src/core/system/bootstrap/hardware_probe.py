@@ -117,7 +117,7 @@ class HardwareProbe:
                     if part.isdigit():
                         return int(int(part) // 1024)
         except Exception as e:
-            logger.debug("Memory detection failed, using default: %s", e)
+            logger.warning("Memory detection failed, using default: %s", e, exc_info=True)
         return 8  # Default fallback
 
     @staticmethod
@@ -152,7 +152,7 @@ class HardwareProbe:
                     if "VGA" in line or "3D" in line or "Display" in line:
                         return line.strip()
         except Exception as e:
-            logger.debug("GPU detection failed, using default: %s", e)
+            logger.warning("GPU detection failed, using default: %s", e, exc_info=True)
         return "Software"
 
     def _assign_tier(self, score: float) -> str:

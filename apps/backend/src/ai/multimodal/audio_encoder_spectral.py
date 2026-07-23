@@ -44,7 +44,7 @@ class AudioSpectralEncoder:
             samples = self._decode_audio(audio_data)
             return self._encode_samples(samples)
         except Exception as e:
-            logger.debug("AudioSpectralEncoder failed: %s", e)
+            logger.warning("AudioSpectralEncoder failed: %s", e, exc_info=True)
             return np.zeros(self._feature_dim, dtype=np.float32)
 
     def _decode_audio(self, audio_data: bytes) -> np.ndarray:
@@ -85,7 +85,7 @@ class AudioSpectralEncoder:
                 samples = samples.reshape(-1, nchannels).mean(axis=1)
             return samples
         except Exception as e:
-            logger.debug("Failed to decode WAV audio in SpectralEncoder: %s", e)
+            logger.warning("Failed to decode WAV audio in SpectralEncoder: %s", e, exc_info=True)
             return np.array([], dtype=np.float32)
 
     def _encode_samples(self, samples: np.ndarray) -> np.ndarray:

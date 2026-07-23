@@ -28,7 +28,7 @@ def _load_web_search_config() -> dict:
         if isinstance(ws, dict):
             return ws
     except Exception:
-        logger.debug("web_search config read failed, using defaults", exc_info=True)
+        logger.warning("web_search config read failed, using defaults", exc_info=True)
     return {}
 
 
@@ -84,7 +84,7 @@ class WebSearchTool:
                     break
             return results
         except Exception as e:
-            logger.debug(f"DDG search failed: {e}")
+            logger.warning(f"DDG search failed: {e}", exc_info=True)
             return [{"error": safe_error(e)}]
 
     def _wiki_search(self, query: str, num_results: int = 5) -> List[Dict[str, Any]]:
@@ -115,7 +115,7 @@ class WebSearchTool:
                 )
             return results
         except Exception as e:
-            logger.debug(f"Wikipedia search failed: {e}")
+            logger.warning(f"Wikipedia search failed: {e}", exc_info=True)
             return [{"error": safe_error(e)}]
 
 

@@ -90,7 +90,7 @@ class NegativityDetector:
                     deviation = 0.1 + (i % 5) * 0.05
                     items.append({"point_id": i, "deviation": deviation})
             except Exception:
-                logger.debug("Failed to iterate timeline for negativity detection", exc_info=True)
+                logger.warning("Failed to iterate timeline for negativity detection", exc_info=True)
         return DetectionResult(count=len(items), items=items)
 
     def correct(self, point_id: int, dry_run: bool = False) -> CorrectionResult:

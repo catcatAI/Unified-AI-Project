@@ -106,7 +106,7 @@ class GenerationEvaluator:
             sim = float(np.dot(img_norm, txt_norm))
             return max(0.0, min(1.0, (sim + 1) / 2))  # Map [-1,1] to [0,1]
         except Exception as e:
-            logger.debug("CLIP text similarity failed: %s", e)
+            logger.warning("CLIP text similarity failed: %s", e, exc_info=True)
             return 0.0
 
     def _clip_image_similarity(self, img1: Image.Image, img2: Image.Image) -> float:
@@ -133,7 +133,7 @@ class GenerationEvaluator:
             sim = float(np.dot(norm1, norm2))
             return max(0.0, min(1.0, (sim + 1) / 2))
         except Exception as e:
-            logger.debug("CLIP image similarity failed: %s", e)
+            logger.warning("CLIP image similarity failed: %s", e, exc_info=True)
             return 0.0
 
     def _pixel_text_heuristic(self, image: Image.Image, text: str) -> float:

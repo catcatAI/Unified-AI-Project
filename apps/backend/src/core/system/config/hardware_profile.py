@@ -408,5 +408,5 @@ def _check_battery(system: str) -> Optional[str]:
                     return "power_saver"
                 return "laptop"
     except Exception:  # noqa: S110 — broad except intentional; battery check is best-effort
-        logger.debug("Battery detection failed (non-critical)")
+        logger.warning("Battery detection failed (non-critical)", exc_info=True)
     return None

@@ -265,7 +265,7 @@ class AudioPipeline:
             return float(np.clip(snr_val, -20.0, 100.0))
 
         except Exception as e:
-            logger.debug("SNR computation failed: %s", e)
+            logger.warning("SNR computation failed: %s", e, exc_info=True)
             return 0.0
 
     def get_stats(self) -> Dict[str, Any]:

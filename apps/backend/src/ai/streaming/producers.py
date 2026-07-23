@@ -213,7 +213,7 @@ class RetrievalProducer:
                 if results:
                     retrieved_chunks = [str(r)[:200] for r in results if r]
             except Exception as e:
-                logger.debug("Multimodal retrieval failed: %s", e)
+                logger.warning("Multimodal retrieval failed: %s", e, exc_info=True)
         
         # Fallback: use context memory if available
         if not retrieved_chunks:
@@ -254,7 +254,7 @@ class GenerativeProducer:
             try:
                 response_text = await self.router.generate(input_text, context)
             except Exception as e:
-                logger.debug("LLM router generation failed: %s", e)
+                logger.warning("LLM router generation failed: %s", e, exc_info=True)
         
         # Fallback: use response from context if pre-generated
         if not response_text:

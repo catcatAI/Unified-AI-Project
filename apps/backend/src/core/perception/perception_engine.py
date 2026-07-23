@@ -79,7 +79,7 @@ class PerceptionEngine:
             try:
                 self.attention.compute_saliency_map(visual_data)
             except Exception:
-                logger.debug("Saliency map computation failed", exc_info=True)
+                logger.warning("Saliency map computation failed", exc_info=True)
 
         if candidates:
             self.attention.get_next_focus_point(candidates)

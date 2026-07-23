@@ -440,7 +440,7 @@ def _try_warm_ed3n():
         if count > 0:
             logger.info("[ED3N] Pre-warmed %d external dictionary entries", count)
     except Exception as e:
-        logger.debug(f"[ED3N] Warm-up skipped (non-critical): {e}")
+        logger.warning(f"[ED3N] Warm-up skipped (non-critical): {e}", exc_info=True)
 
 
 async def _shutdown_services(broadcast_task, module_manager):
@@ -452,7 +452,7 @@ async def _shutdown_services(broadcast_task, module_manager):
             await _llm.shutdown()
             logger.info("[LLM] Backend HTTP sessions closed")
     except Exception as e:
-        logger.debug(f"[LLM] Shutdown skipped: {e}")
+        logger.warning(f"[LLM] Shutdown skipped: {e}", exc_info=True)
     if _agent_manager_instance is not None:
         try:
             _agent_manager_instance.shutdown_all_agents()
@@ -506,7 +506,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     try:
         _ = get_lifecycle()
     except Exception:
-        logger.debug("[LifeCycle] Pre-init skipped — will lazily initialize on first use")
+        logger.warning("[LifeCycle] Pre-init skipped — will lazily initialize on first use", exc_info=True)
 
     # Wire DLI broadcast_callback so LLMDecisionLoop proactive actions reach frontend
     _try_wire_dli_broadcast()
@@ -517,7 +517,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await hb.start()
         logger.info("[Heartbeat] MetabolicHeartbeat started during lifespan")
     except Exception:
-        logger.debug("[Heartbeat] Pre-init skipped — will lazily initialize on first use")
+        logger.warning("[Heartbeat] Pre-init skipped — will lazily initialize on first use", exc_info=True)
 
     # Pre-initialize ChatService at startup so its (potentially slow) memory
     # backends (e.g. chromadb PersistentClient) are warmed up before the first
@@ -526,7 +526,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         chat = await _get_chat_service()
         logger.info("[ChatService] Pre-initialized during lifespan")
     except Exception:
-        logger.debug("[ChatService] Pre-init skipped — will lazily initialize on first use")
+        logger.warning("[ChatService] Pre-init skipped — will lazily initialize on first use", exc_info=True)
 
     yield
 
@@ -536,4 +536,4 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         hb_inst = get_metabolic_heartbeat()
         await hb_inst.stop()
     except Exception as err:
-        logger.debug(f"Heartbeat stop on shutdown skipped: {err}")
+        logger.warning(f"Heartbeat stop on shutdown skipped: {err}", exc_info=True)

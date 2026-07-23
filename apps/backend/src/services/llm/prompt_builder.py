@@ -91,7 +91,7 @@ def get_biological_state(context=None) -> str:
                 data = json.load(f)
             return json.dumps(data, ensure_ascii=False, indent=2)
     except Exception as e:
-        logger.debug(f"Brain status file read failed: {e}")
+        logger.warning(f"Brain status file read failed: {e}", exc_info=True)
     return ""
 
 
@@ -262,7 +262,7 @@ def get_autonomous_decisions() -> str:
 
         return "\n".join(lines) if lines else ""
     except Exception as e:
-        logger.debug(f"Autonomous decisions unavailable: {e}")
+        logger.warning(f"Autonomous decisions unavailable: {e}", exc_info=True)
         return ""
 
 
@@ -286,7 +286,7 @@ def get_theta_state() -> str:
 
         return "\n".join(lines) if lines else ""
     except Exception as e:
-        logger.debug(f"Theta state unavailable: {e}")
+        logger.warning(f"Theta state unavailable: {e}", exc_info=True)
         return ""
 
 

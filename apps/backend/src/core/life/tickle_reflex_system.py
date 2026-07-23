@@ -132,7 +132,7 @@ class TickleReflexSystem:
             try:
                 state_matrix.shift_axis("gamma", -0.1 if sustained else -0.05)
             except Exception:
-                logger.debug("Failed to shift gamma axis for tickle reflex", exc_info=True)
+                logger.warning("Failed to shift gamma axis for tickle reflex", exc_info=True)
 
         elapsed = (time.perf_counter() - t0) * 1000
         return {

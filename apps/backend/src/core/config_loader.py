@@ -120,7 +120,7 @@ class AngelaConfig:
 
             return IntentRegistry().get_keywords(intent)
         except Exception as e:
-            logger.debug("Intent registry lookup failed: %s", e)
+            logger.warning("Intent registry lookup failed: %s", e, exc_info=True)
             return []
 
     def get_drive_all_operations(self) -> Dict[str, Any]:

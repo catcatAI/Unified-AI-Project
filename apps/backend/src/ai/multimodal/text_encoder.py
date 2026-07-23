@@ -108,7 +108,7 @@ class TextEncoder:
             norms[norms == 0] = 1.0
             return vecs / norms
         except Exception as e:
-            logger.debug("TextEncoder encode_batch failed: %s", e)
+            logger.warning("TextEncoder encode_batch failed: %s", e, exc_info=True)
             return None
 
     @property

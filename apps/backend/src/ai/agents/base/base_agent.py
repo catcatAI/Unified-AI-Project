@@ -570,4 +570,4 @@ class BaseAgent:
         except RuntimeError:
             logger.debug(f"[{self.agent_id}] No running event loop in destructor")
         except Exception as err:
-            logger.debug(f"[{self.agent_id}] Destructor cleanup skipped: {err}")
+            logger.warning(f"[{self.agent_id}] Destructor cleanup skipped: {err}", exc_info=True)

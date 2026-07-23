@@ -264,7 +264,7 @@ def apply_domain_cognition(state_matrix: Any, text: str, recent=None) -> Dict[st
     try:
         ripples = engine.make_ripples(text, value) or []
     except Exception as e:  # pragma: no cover - defensive
-        logger.debug("domain_ripple: ripple analysis failed for %r: %s", text, e)
+        logger.warning("domain_ripple: ripple analysis failed for %r: %s", text, e, exc_info=True)
     for ripple in ripples:
         apply_ripple_to_state(state_matrix, ripple)
     deltas = engine.cognition_deltas(cls, value, ripples)
@@ -403,7 +403,7 @@ class MathDomainEngine(DomainRippleEngine):
 
             self._engine = MathRippleEngine(state_matrix=state_matrix)
         except Exception as e:  # pragma: no cover - defensive
-            logger.debug("MathDomainEngine: ripple engine unavailable: %s", e)
+            logger.warning("MathDomainEngine: ripple engine unavailable: %s", e, exc_info=True)
             self._engine = None
 
     def can_handle(self, text: str) -> bool:
@@ -423,7 +423,7 @@ class MathDomainEngine(DomainRippleEngine):
             analysis = self._engine.analyze_expression(text, cascade=False)
             return analysis.get("ripples", []) or []
         except Exception as e:  # pragma: no cover - defensive
-            logger.debug("MathDomainEngine: ripple analysis failed: %s", e)
+            logger.warning("MathDomainEngine: ripple analysis failed: %s", e, exc_info=True)
             return []
 
 

@@ -132,7 +132,7 @@ class SystemHardwareProbe:
                         if "flags" in line:
                             return line.split(":")[-1].strip().split()
             except Exception as e:
-                logger.debug("Failed to parse /proc/cpuinfo: %s", e)
+                logger.warning("Failed to parse /proc/cpuinfo: %s", e, exc_info=True)
         elif self.platform_name == "windows":
             try:
                 result = subprocess.run(
@@ -143,7 +143,7 @@ class SystemHardwareProbe:
                     if "Caption=" in line:
                         flags.append(line.strip())
             except Exception as e:
-                logger.debug("WMIC CPU query failed: %s", e)
+                logger.warning("WMIC CPU query failed: %s", e, exc_info=True)
         elif self.platform_name == "darwin":
             try:
                 result = subprocess.run(
@@ -155,7 +155,7 @@ class SystemHardwareProbe:
                         if len(parts) >= 3:
                             flags.append(parts[2].split(":")[0])
             except Exception as e:
-                logger.debug("Failed to parse sysctl output on macOS: %s", e)
+                logger.warning("Failed to parse sysctl output on macOS: %s", e, exc_info=True)
         return flags
 
     def _detect_ram(self) -> Tuple[float, float]:
@@ -181,7 +181,7 @@ class SystemHardwareProbe:
                     parts = lines[0].split(",")
                     return AcceleratorType.NVIDIA, parts[0].strip(), int(parts[1].strip())
         except Exception:
-            logger.debug("nvidia-smi not available or failed")
+            logger.warning("nvidia-smi not available or failed", exc_info=True)
 
         # 2. Apple Metal
         if self.platform_name == "darwin":
@@ -195,7 +195,7 @@ class SystemHardwareProbe:
             if result.returncode == 0:
                 return AcceleratorType.AMD, "AMD GPU", 0
         except Exception:
-            logger.debug("rocm-smi not available or failed")
+            logger.warning("rocm-smi not available or failed", exc_info=True)
 
         # 4. Windows WMIC Fallback
         if self.platform_name == "windows":
@@ -234,7 +234,7 @@ class SystemHardwareProbe:
                         atype = AcceleratorType.INTEL
                     return atype, name, ram
             except Exception:
-                logger.debug("WMIC command failed on Windows")
+                logger.warning("WMIC command failed on Windows", exc_info=True)
 
         return AcceleratorType.NONE, "None", 0
 

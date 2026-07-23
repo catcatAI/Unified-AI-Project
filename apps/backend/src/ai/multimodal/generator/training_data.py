@@ -102,7 +102,7 @@ class TrainingDataGenerator:
             prim_emb = self._find_primitive_match(clip_vec)
             return (clip_vec, prim_emb)
         except Exception as e:
-            logger.debug("Skipping %s: %s", img_info["path"], e)
+            logger.warning("Skipping %s: %s", img_info["path"], e, exc_info=True)
             return None
 
     def _find_primitive_match(self, clip_vec: np.ndarray) -> np.ndarray:

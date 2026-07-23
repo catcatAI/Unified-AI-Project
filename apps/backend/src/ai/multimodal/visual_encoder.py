@@ -122,7 +122,7 @@ class VisualEncoder:
             img = Image.open(io.BytesIO(image_data)).convert("RGB")
             return self.encode_from_pil(img)
         except Exception as e:
-            logger.debug("VisualEncoder failed: %s", e)
+            logger.warning("VisualEncoder failed: %s", e, exc_info=True)
             return np.zeros(self._feature_dim, dtype=np.float32)
 
     def encode_from_pil(self, img: Image.Image) -> np.ndarray:

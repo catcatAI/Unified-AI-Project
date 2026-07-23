@@ -73,7 +73,7 @@ def _merge_bootstrap_overrides() -> None:
         if isinstance(bootstrap, dict) and bootstrap:
             _CONFIG.setdefault("bootstrap", {}).update(bootstrap)
     except Exception as e:
-        logger.debug("Tiered config loader unavailable, using hardcoded defaults: %s", e)
+        logger.warning("Tiered config loader unavailable, using hardcoded defaults: %s", e, exc_info=True)
     finally:
         _bootstrap_merged = True
 

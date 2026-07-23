@@ -752,7 +752,7 @@ class MathRippleEngine:
             if verified is not None:
                 final_result = verified
         except Exception as e:  # pragma: no cover - defensive
-            logger.debug("MathRipple: verified result unavailable: %s", e)
+            logger.warning("MathRipple: verified result unavailable: %s", e, exc_info=True)
 
         return final_result, ripples
 

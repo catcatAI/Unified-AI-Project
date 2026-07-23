@@ -102,7 +102,7 @@ def __getattr__(name: str) -> Any:
             return result
         except Exception as e:
             if name not in _warned:
-                logger.debug("Failed to lazy-import %s from %s: %s", name, module_path, e)
+                logger.warning("Failed to lazy-import %s from %s: %s", name, module_path, e, exc_info=True)
                 _warned.add(name)
             _lazy_cache[name] = None
             return None

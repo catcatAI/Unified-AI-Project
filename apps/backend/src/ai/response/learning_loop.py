@@ -146,7 +146,7 @@ class LearningLoop:
                             "[LearningLoop] Grew ED3N dictionary: %s -> %s", phrase, new_key
                         )
         except Exception as e:
-            logger.debug("[LearningLoop] ED3N dictionary growth failed: %s", e)
+            logger.warning("[LearningLoop] ED3N dictionary growth failed: %s", e, exc_info=True)
 
     def process_user_feedback(
         self,
@@ -165,7 +165,7 @@ class LearningLoop:
                     self._garden_engine.learn_from_interaction(user_message, response)
                     logger.debug("[LearningLoop] GARDEN weights updated from feedback")
             except Exception as e:
-                logger.debug("[LearningLoop] GARDEN feedback processing failed: %s", e)
+                logger.warning("[LearningLoop] GARDEN feedback processing failed: %s", e, exc_info=True)
 
         self.record_user_engagement(positive)
 

@@ -134,7 +134,7 @@ class SemanticAudioEncoder:
                 vec = vec / norm
             return vec
         except Exception as e:
-            logger.debug("SemanticAudioEncoder encode failed: %s", e)
+            logger.warning("SemanticAudioEncoder encode failed: %s", e, exc_info=True)
             return None
 
     def _decode_audio(self, audio_data: bytes) -> np.ndarray:
@@ -154,7 +154,7 @@ class SemanticAudioEncoder:
             )
             return samples
         except Exception as e:
-            logger.debug("Failed to decode raw PCM audio: %s", e)
+            logger.warning("Failed to decode raw PCM audio: %s", e, exc_info=True)
             return np.array([], dtype=np.float32)
 
     def _decode_wav(self, data: bytes) -> np.ndarray:
@@ -182,5 +182,5 @@ class SemanticAudioEncoder:
                 samples = samples.reshape(-1, nchannels).mean(axis=1)
             return samples
         except Exception as e:
-            logger.debug("Failed to decode WAV audio: %s", e)
+            logger.warning("Failed to decode WAV audio: %s", e, exc_info=True)
             return np.array([], dtype=np.float32)

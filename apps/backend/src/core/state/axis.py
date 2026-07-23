@@ -61,7 +61,7 @@ class Axis:
                 for field in AxisFieldRegistry().fields_for(self.name):
                     self.values.setdefault(field.name, field.default)
             except Exception as e:
-                logger.debug(f"AxisFieldRegistry lookup failed for {self.name}: {e}")
+                logger.warning(f"AxisFieldRegistry lookup failed for {self.name}: {e}", exc_info=True)
         initial = kwargs.get("initial_values") or kwargs.get("_values")
         if initial:
             self.values.update(initial)
