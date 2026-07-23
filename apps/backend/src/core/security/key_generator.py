@@ -39,3 +39,5 @@ class KeyGenerator:
         with open(env_path, "w", encoding="utf-8") as f:
             for k, v in existing.items():
                 f.write(f"{k}={v}\n")
+        if os.name != "nt":
+            os.chmod(env_path, 0o600)

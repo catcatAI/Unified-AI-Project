@@ -150,26 +150,26 @@ class TestProcessStressEvent:
     """Core tests for process_stress_event — called by §X #80 chain."""
 
     @pytest.mark.asyncio
-    async def test_calls_nervous_system(self, integrator):
+    async def test_calls_nervous_system_stress(self, integrator):
         await integrator.process_stress_event(0.5, 15.0)
         integrator.nervous_system.apply_stimulus.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_calls_endocrine_system(self, integrator):
+    async def test_calls_endocrine_system_stress(self, integrator):
         await integrator.process_stress_event(0.3, 10.0)
         integrator.endocrine_system.trigger_stress_response.assert_awaited_once_with(
             0.3, stress_type="acute"
         )
 
     @pytest.mark.asyncio
-    async def test_calls_emotional_system(self, integrator):
+    async def test_calls_emotional_system_stress(self, integrator):
         await integrator.process_stress_event(0.7, 20.0)
         integrator.emotional_system.apply_influence.assert_called_once_with(
             "physiological", "stress", 0.7, 0.8
         )
 
     @pytest.mark.asyncio
-    async def test_intensity_float_guard(self, integrator):
+    async def test_intensity_float_guard_stress(self, integrator):
         """Non-finite intensity should be clamped to 0."""
         await integrator.process_stress_event(float("nan"), 10.0)
         integrator.nervous_system.apply_stimulus.assert_awaited_once()

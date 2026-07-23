@@ -43,7 +43,7 @@ class TestVisualDecoderWeights:
     def test_weights_exist(self, weights_path):
         assert weights_path is not None
 
-    def test_load_weights(self, weights_path):
+    def test_load_visual_decoder_weights(self, weights_path):
         decoder = VisualDecoder()
         ok = load_default_visual_decoder_weights(decoder, weights_path)
         assert ok, "load_default_visual_decoder_weights returned False"

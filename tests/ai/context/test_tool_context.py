@@ -20,7 +20,7 @@ from apps.backend.src.ai.context.tool_context import (
 
 
 class TestToolCategory:
-    def test_creation(self):
+    def test_creation_tool_category(self):
         cat = ToolCategory('cat1', 'Category 1', 'A test category')
         assert cat.category_id == 'cat1'
         assert cat.name == 'Category 1'
@@ -49,7 +49,7 @@ class TestToolCategory:
 
 
 class TestTool:
-    def test_creation(self):
+    def test_creation_tool(self):
         tool = Tool('tool1', 'Tool 1', 'A test tool', 'cat1')
         assert tool.tool_id == 'tool1'
         assert tool.name == 'Tool 1'

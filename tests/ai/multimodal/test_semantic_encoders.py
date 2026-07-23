@@ -76,7 +76,7 @@ def sample_wav() -> bytes:
 class TestSemanticVisualEncoderInit:
     """P42a: SemanticVisualEncoder initialization and backend detection."""
 
-    def test_init_no_torch(self):
+    def test_init_no_torch_visual(self):
         """S1: SemanticVisualEncoder reports unavailable when CLIP can't load."""
         import ai.multimodal.semantic_visual as sve_mod
         # Reset module-level cache so the probe re-runs under the mock.
@@ -167,7 +167,7 @@ class TestSemanticVisualEncoderInit:
 class TestSemanticAudioEncoder:
     """P42b: SemanticAudioEncoder tests."""
 
-    def test_init(self):
+    def test_init_audio_encoder(self):
         """A1: SemanticAudioEncoder initializes."""
         sae = SemanticAudioEncoder()
         assert hasattr(sae, 'is_available')
@@ -236,7 +236,7 @@ class TestSemanticAudioEncoder:
         assert np.min(samples) >= -1.0
         assert np.max(samples) <= 1.0
 
-    def test_encode_empty_audio(self):
+    def test_encode_empty_audio_encoder(self):
         """A6: encode handles empty audio gracefully."""
         with patch.object(SemanticAudioEncoder, '_get_backend',
                           return_value=(None, None, None)):

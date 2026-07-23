@@ -47,14 +47,14 @@ class TestResponseCategory:
 
 class TestAngelaState:
 
-    def test_default_creation(self):
+    def test_default_creation_angela_state(self):
         state = AngelaState()
         assert state.alpha == {}
         assert state.beta == {}
         assert state.gamma == {}
         assert state.delta == {}
 
-    def test_custom_creation(self):
+    def test_custom_creation_angela_state(self):
         state = AngelaState(
             alpha={'energy': 0.8},
             beta={'mood': 0.6},
@@ -66,12 +66,12 @@ class TestAngelaState:
         assert state.gamma['load'] == 0.3
         assert state.delta['fatigue'] == 0.2
 
-    def test_to_dict(self):
+    def test_to_dict_angela_state(self):
         state = AngelaState(alpha={'energy': 0.9})
         d = state.to_dict()
         assert d == {'alpha': {'energy': 0.9}, 'beta': {}, 'gamma': {}, 'delta': {}}
 
-    def test_from_dict(self):
+    def test_from_dict_angela_state(self):
         data = {'alpha': {'a': 1.0}, 'beta': {'b': 0.5}, 'gamma': {}, 'delta': {}}
         state = AngelaState.from_dict(data)
         assert state.alpha == {'a': 1.0}
@@ -85,14 +85,14 @@ class TestAngelaState:
 
 class TestUserImpression:
 
-    def test_default_creation(self):
+    def test_default_creation_user_impression(self):
         imp = UserImpression()
         assert imp.relationship_level == 0.3
         assert imp.preferred_style == 'casual'
         assert imp.interaction_count == 0
         assert imp.tags == []
 
-    def test_custom_creation(self):
+    def test_custom_creation_user_impression(self):
         imp = UserImpression(
             relationship_level=0.9,
             preferred_style='formal',
@@ -104,14 +104,14 @@ class TestUserImpression:
         assert imp.interaction_count == 42
         assert imp.tags == ['friendly', 'tech']
 
-    def test_to_dict(self):
+    def test_to_dict_user_impression(self):
         imp = UserImpression(relationship_level=0.5, tags=['a'])
         d = imp.to_dict()
         assert d['relationship_level'] == 0.5
         assert d['preferred_style'] == 'casual'
         assert d['tags'] == ['a']
 
-    def test_from_dict(self):
+    def test_from_dict_user_impression(self):
         data = {'relationship_level': 0.8, 'preferred_style': 'playful', 'tags': ['x']}
         imp = UserImpression.from_dict(data)
         assert imp.relationship_level == 0.8

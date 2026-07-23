@@ -4,6 +4,7 @@ Formalized from auto_install.py
 """
 
 import logging
+import os
 import platform
 import subprocess
 import sys
@@ -54,6 +55,8 @@ ANGELA_KEY_C={secrets.token_hex(32)}
 """
             with open(env_file, "w", encoding="utf-8") as f:
                 f.write(content)
+            if os.name != "nt":
+                os.chmod(env_file, 0o600)
             return True
         except Exception as e:
             logger.error(f"Failed to generate .env: {e}", exc_info=True)

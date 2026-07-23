@@ -35,7 +35,7 @@ class TestAsyncReadText:
         content = await async_read_text(path)
         assert content == "Line1\nLine2"
 
-    async def test_file_not_found(self, tmp_path):
+    async def test_file_not_found_read_text(self, tmp_path):
         path = tmp_path / "nonexistent.txt"
         with pytest.raises(FileNotFoundError):
             await async_read_text(path)

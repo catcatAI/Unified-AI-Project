@@ -19,7 +19,7 @@ from apps.backend.src.ai.context.dialogue_context import (
 
 
 class TestMessage:
-    def test_creation(self):
+    def test_creation_message(self):
         msg = Message('alice', 'Hello!', 'text')
         assert msg.sender == 'alice'
         assert msg.content == 'Hello!'
@@ -34,7 +34,7 @@ class TestMessage:
 
 
 class TestConversation:
-    def test_creation(self):
+    def test_creation_conversation(self):
         conv = Conversation('conv1', ['alice', 'bob'])
         assert conv.conversation_id == 'conv1'
         assert conv.participants == ['alice', 'bob']
@@ -43,7 +43,7 @@ class TestConversation:
         assert conv.end_time is None
         assert conv.context_summary is None
 
-    def test_add_message(self):
+    def test_add_message_to_conversation(self):
         conv = Conversation('conv1', ['alice'])
         msg = Message('alice', 'Hi')
         conv.add_message(msg)

@@ -21,7 +21,7 @@ class TestVisualWord:
         assert vw.count == 10
         assert len(vw.center) == TOTAL_DIM
 
-    def test_to_dict_and_from_dict(self):
+    def test_to_dict_and_from_dict_visual_word(self):
         center = np.random.rand(TOTAL_DIM).astype(np.float32)
         vw = VisualWord(word_id=1, center=center, count=5,
                         primitive_signature={"n_circles": 2})

@@ -12,7 +12,7 @@ class TestHSPAdvancedPerformanceEnhancer:
         assert enh.config == {}
         assert enh.enabled is True
 
-    def test_init_with_config(self):
+    def test_init_with_config_enhancer(self):
         enh = HSPAdvancedPerformanceEnhancer(config={"opt": True}, enabled=False)
         assert enh.config["opt"] is True
         assert enh.enabled is False

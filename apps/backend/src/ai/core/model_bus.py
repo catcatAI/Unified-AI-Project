@@ -219,6 +219,7 @@ class ModelBus:
         except asyncio.TimeoutError:
             return {"type": handler_id, "success": False, "result": None, "error": "timeout"}
         except Exception as e:
+            logger.warning("Handler '%s' failed", handler_id, exc_info=True)
             return {"type": handler_id, "success": False, "result": None, "error": safe_error(e)}
 
     # ------------------------------------------------------------------

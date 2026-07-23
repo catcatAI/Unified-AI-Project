@@ -114,6 +114,7 @@ class FileOperationHandler:
                 text = text[:4000] + "\n... (已截斷)"
             return t("file_ops.file_contents", path=str(target)) + "\n" + text
         except Exception as e:
+            logger.warning("File read failed: %s", _safe_error(e), exc_info=True)
             return t("file_ops.read_failed", error=_safe_error(e))
 
     def _write(self, target: Path, content: str = "", **kw) -> str:
@@ -193,6 +194,8 @@ class FileOperationHandler:
         if not new_name:
             return t("file_ops.specify_new_name")
         dest = target.parent / new_name
+        if not _is_safe_path(dest):
+            return t("file_ops.unsafe_path", path=str(dest))
         if dest.exists():
             return t("file_ops.target_name_exists", path=str(dest))
         target.rename(dest)
@@ -203,6 +206,8 @@ class FileOperationHandler:
             return t("file_ops.file_not_found", path=str(target))
         dest_name = new_name or f"{target.name}.copy"
         dest = target.parent / dest_name
+        if not _is_safe_path(dest):
+            return t("file_ops.unsafe_path", path=str(dest))
         if dest.exists():
             return t("file_ops.target_exists", path=str(dest))
         if target.is_dir():

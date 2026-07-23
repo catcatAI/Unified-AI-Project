@@ -95,7 +95,7 @@ class TestAnchoredDecode:
 class TestGARDENEngineInit:
     """Tests for engine construction."""
 
-    def test_init_defaults(self):
+    def test_init_defaults_engine(self):
         engine = GARDENEngine(compatibility_mode=True)
         assert engine.reflex is not None
         assert engine.dictionary is not None

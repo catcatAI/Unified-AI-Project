@@ -6,14 +6,14 @@ from core.hardware.webgl_bridge import WebGLGPUInfo
 
 
 class TestWebGLGPUInfo:
-    def test_import(self):
+    def test_import_webgl_gpu_info(self):
         assert hasattr(WebGLGPUInfo, 'from_dict')
         assert hasattr(WebGLGPUInfo, 'to_uhrc_format')
         assert hasattr(WebGLGPUInfo, '_detect_gpu_type')
         assert hasattr(WebGLGPUInfo, '_estimate_memory')
         assert hasattr(WebGLGPUInfo, '_get_capabilities')
 
-    def test_instantiation(self):
+    def test_instantiation_webgl_gpu_info(self):
         instance = WebGLGPUInfo(
             available=True,
             name="TestGPU",

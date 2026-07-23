@@ -48,6 +48,7 @@ def _get_screen_size() -> tuple:
         screen = cfg.get("hardware_tiers", {}).get("default", {}).get("screen", {})
         return (screen.get("width", 1920), screen.get("height", 1080))
     except Exception:
+        logger.debug("Screen size config load failed, using defaults", exc_info=True)
         return (1920, 1080)
 
 # =============================================================================

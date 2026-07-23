@@ -69,6 +69,7 @@ class GoogleDriveHandler:
                     )
                 return {"status": "ok", "action": action, "files": files, "mode": "local_fs"}
             except Exception as e:
+                logger.warning("Drive operation failed: %s", safe_error(e), exc_info=True)
                 return {"status": "error", "action": action, "error": safe_error(e)}
         elif action == "info":
             if os.path.exists(path):

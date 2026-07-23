@@ -21,7 +21,7 @@ from apps.backend.src.ai.context.model_context import (
 
 
 class TestModelCallRecord:
-    def test_creation(self):
+    def test_creation_model_call_record(self):
         record = ModelCallRecord('model_a', 'model_b', {'param': 1}, 'result', 0.5, True)
         assert record.caller_model_id == 'model_a'
         assert record.callee_model_id == 'model_b'
@@ -57,7 +57,7 @@ class TestModelPerformanceMetrics:
 
 
 class TestAgentCollaboration:
-    def test_creation(self):
+    def test_creation_agent_collaboration(self):
         collab = AgentCollaboration('task1', ['agent_a', 'agent_b'])
         assert collab.task_id == 'task1'
         assert collab.participating_agents == ['agent_a', 'agent_b']
@@ -98,7 +98,7 @@ class TestCollaborationStep:
 
 
 class TestModelContextManager:
-    def test_init(self):
+    def test_init_model_context_manager(self):
         mock_cm = MagicMock()
         mgr = ModelContextManager(mock_cm)
         assert mgr.context_manager is mock_cm

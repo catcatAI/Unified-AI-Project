@@ -50,7 +50,7 @@ class TestSSIM:
 
 class TestPSNR:
 
-    def test_identical_returns_high(self, ref_image, identical_image):
+    def test_identical_returns_high_psnr(self, ref_image, identical_image):
         from ai.multimodal.quality_metrics import psnr
         score = psnr(ref_image, identical_image)
         assert score > 50.0

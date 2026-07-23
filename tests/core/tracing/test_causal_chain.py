@@ -31,7 +31,7 @@ class TestCausalNode:
         node = CausalNode(module="test", action="execute")
         assert node.id is not None
 
-    def test_to_dict(self):
+    def test_to_dict_node(self):
         node = CausalNode(
             id="node_1", parent_id="root",
             layer=LayerType.L3, module="test_mod",
@@ -45,7 +45,7 @@ class TestCausalNode:
         assert d["data"]["key"] == "val"
         assert "timestamp" in d
 
-    def test_from_dict_roundtrip(self):
+    def test_from_dict_roundtrip_node(self):
         original = CausalNode(
             id="node_1", parent_id="root",
             layer=LayerType.L4, module="m",

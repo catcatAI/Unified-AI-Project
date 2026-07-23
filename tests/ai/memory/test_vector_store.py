@@ -59,12 +59,12 @@ class TestNumpyBackendCRUD:
         assert results == {}
 
     @pytest.mark.asyncio
-    async def test_add_memory_no_metadata(self, backend):
+    async def test_add_memory_no_metadata_numpy(self, backend):
         await backend.add_memory("id1", "content")
         assert len(backend) == 1
 
     @pytest.mark.asyncio
-    async def test_persist(self, backend):
+    async def test_persist_numpy(self, backend):
         await backend.add_memory("id1", "hello world")
         assert backend._dirty is False  # auto-saved
 

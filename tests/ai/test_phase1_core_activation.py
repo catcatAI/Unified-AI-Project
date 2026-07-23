@@ -27,7 +27,7 @@ pytestmark = pytest.mark.skipif(
 class TestDialogueContext:
     """Tests for DialogueContextManager"""
 
-    def test_initialization(self):
+    def test_initialization_dialogue(self):
         mock_cm = MagicMock()
         dc = DialogueContextManager(mock_cm)
         assert dc is not None
@@ -36,7 +36,7 @@ class TestDialogueContext:
 class TestModelContext:
     """Tests for ModelContextManager"""
 
-    def test_initialization(self):
+    def test_initialization_model(self):
         mock_cm = MagicMock()
         mc = ModelContextManager(mock_cm)
         assert mc is not None
@@ -45,7 +45,7 @@ class TestModelContext:
 class TestToolContext:
     """Tests for ToolContextManager"""
 
-    def test_initialization(self):
+    def test_initialization_tool(self):
         mock_cm = MagicMock()
         tc = ToolContextManager(mock_cm)
         assert tc is not None
@@ -54,11 +54,11 @@ class TestToolContext:
 class TestED3NCycling:
     """Tests for ED3N cycling behavior"""
 
-    def test_initialization(self):
+    def test_initialization_ed3n(self):
         engine = ED3NEngine()
         assert engine is not None
 
-    def test_process_returns_string(self):
+    def test_process_returns_string_ed3n(self):
         engine = ED3NEngine()
         result = engine.process({"input": "What is AI?", "context": {}})
         assert result is not None
@@ -68,11 +68,11 @@ class TestED3NCycling:
 class TestGARDENCycling:
     """Tests for GARDEN cycling behavior"""
 
-    def test_initialization(self):
+    def test_initialization_garden(self):
         engine = GARDENEngine()
         assert engine is not None
 
-    def test_process_returns_string(self):
+    def test_process_returns_string_garden(self):
         engine = GARDENEngine()
         result = engine.process({"input": "What is AI?", "context": {}})
         assert result is not None

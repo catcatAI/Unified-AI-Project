@@ -57,7 +57,7 @@ class TestVisualDecoder:
         unique = np.unique(img)
         assert len(unique) > 1
 
-    def test_get_projection_shape(self, visual_decoder):
+    def test_get_projection_shape_visual(self, visual_decoder):
         W = visual_decoder.get_projection()
         assert W.shape == (256, 64)
 

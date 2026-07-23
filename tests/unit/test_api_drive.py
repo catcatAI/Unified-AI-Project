@@ -5,7 +5,7 @@ import pytest
 class TestDriveDeduplication:
     """Tests for DriveDeduplication"""
 
-    def test_import(self):
+    def test_import_drive_deduplication(self):
         from api.v1.endpoints.drive import DriveDeduplication
         assert DriveDeduplication is not None
 

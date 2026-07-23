@@ -190,12 +190,12 @@ class TestReflexExpansionPresets:
         result = self.engine.process_reflex("HELLO")
         assert result is not None
 
-    def test_reflex_priority_over_math(self):
+    def test_reflex_priority_over_math_presets(self):
         result = self.engine.process("你好")
         assert result is not None
         assert "=" not in result
 
-    def test_math_priority_over_encode(self):
+    def test_math_priority_over_encode_presets(self):
         result = self.engine.process("1+1")
         assert result is not None
         assert "=" in result

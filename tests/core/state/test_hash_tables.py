@@ -13,7 +13,7 @@ from apps.backend.src.core.state.integer_hash_table import IntegerHashTable
 class TestIntegerHashTable:
     """測試整數哈希表"""
 
-    def test_set_and_get(self):
+    def test_set_and_get_integer(self):
         """測試基本的 set/get 操作"""
         table = IntegerHashTable()
 
@@ -33,7 +33,7 @@ class TestIntegerHashTable:
 
         assert retrieved_hash == hash_value
 
-    def test_verify_hash(self):
+    def test_verify_hash_integer(self):
         """測試哈希驗證"""
         table = IntegerHashTable()
 
@@ -42,7 +42,7 @@ class TestIntegerHashTable:
 
         assert table.verify_hash("nonexistent") is False
 
-    def test_state_fingerprint(self):
+    def test_state_fingerprint_integer(self):
         """測試狀態指紋"""
         table = IntegerHashTable()
 
