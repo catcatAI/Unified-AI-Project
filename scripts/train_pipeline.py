@@ -938,6 +938,50 @@ def _step5_train_garden(coordinator, batches, resume_state=None, save_state=None
 
         print(f"  learn_batch calls: {total_learned} (associations_trained=False)")
 
+        # 5c: Train GARDEN on real WordNet association data (Hebbian learning ON).
+        # This teaches the SNN real concept-to-concept associations from WordNet.
+        ASSOC_DATA = os.path.join(
+            os.path.dirname(__file__), "..", "apps", "backend", "data",
+            "raw_datasets", "association_training_data.json",
+        )
+        if os.path.exists(ASSOC_DATA):
+            print(f"\n  [5c] Training GARDEN SNN on real association data...")
+            try:
+                with open(ASSOC_DATA, "r", encoding="utf-8") as f:
+                    assoc_triples = json.load(f)
+                # Convert triples to learn_batch format: input=concept_a, output=concept_b
+                assoc_samples = [
+                    {"input": t["concept_a"], "output": t["concept_b"]}
+                    for t in assoc_triples
+                    if t.get("concept_a") and t.get("concept_b")
+                ]
+                print(f"  Loaded {len(assoc_samples)} association triples")
+
+                ASSOC_BATCH = 200
+                assoc_done = int(resume_state.get("assoc_batch_done", 0))
+                assoc_total = assoc_done
+                for i in range(assoc_done, len(assoc_samples), ASSOC_BATCH):
+                    batch = assoc_samples[i:i+ASSOC_BATCH]
+                    result = garden_engine.learn_batch(
+                        samples=batch,
+                        confidence=0.8,
+                        train_associations=True,  # Hebbian learning ON
+                    )
+                    assoc_total += result["samples_processed"]
+                    garden_engine.save(garden_ckpt)
+                    assoc_done = min(i + ASSOC_BATCH, len(assoc_samples))
+                    prog_save(5, {"assoc_batch_done": assoc_done})
+                    if assoc_total % 2000 == 0 or i + ASSOC_BATCH >= len(assoc_samples):
+                        print(f"    Association training: {assoc_total}/{len(assoc_samples)}...")
+
+                print(f"  Association training complete: {assoc_total} samples "
+                      f"(Hebbian learning ON)")
+            except Exception as e:
+                logger.warning("Association training failed (non-fatal): %s", e)
+                print(f"  [WARNING] Association training skipped: {e}")
+        else:
+            print(f"  [5c] No association data found at {ASSOC_DATA}, skipping")
+
         # Record with coordinator
         asyncio.run(coordinator.record_training(
             domain="knowledge",
