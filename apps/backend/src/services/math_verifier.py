@@ -310,6 +310,36 @@ def compute_arithmetic(text: str) -> Optional[float]:
     return result
 
 
+def evaluate_logic(text: str) -> Optional[str]:
+    """Evaluate boolean logic expressions (true/false/AND/OR/NOT).
+
+    Returns "true" or "false" string, or None when not a logic expression.
+    """
+    if not text:
+        return None
+    t = text.strip().lower().rstrip("？?！!。.")
+    # Must contain at least one boolean keyword
+    if not re.search(r"\b(true|false|and|or|not)\b", t):
+        return None
+    # Replace keywords with Python operators
+    expr = t
+    expr = re.sub(r"\btrue\b", "True", expr)
+    expr = re.sub(r"\bfalse\b", "False", expr)
+    expr = re.sub(r"\bAND\b", "and", expr)
+    expr = re.sub(r"\bOR\b", "or", expr)
+    expr = re.sub(r"\bNOT\b", "not", expr)
+    # Validate: only boolean operators, parentheses, whitespace allowed
+    cleaned = re.sub(r"[\s()]", "", expr)
+    cleaned = re.sub(r"\b(True|False|and|or|not)\b", "", cleaned)
+    if cleaned:
+        return None  # contains non-boolean tokens
+    try:
+        result = eval(expr)  # noqa: S307 — sanitized to True/False/and/or/not only
+        return "true" if result else "false"
+    except Exception:
+        return None
+
+
 def evaluate_math(text: str) -> Optional[str]:
     """Single-source math answer for ED3N/GARDEN dictionary-layer routing.
 

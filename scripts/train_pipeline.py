@@ -926,7 +926,7 @@ def _step5_train_garden(coordinator, batches, resume_state=None, save_state=None
             result = garden_engine.learn_batch(
                 samples=[{"input": s["input"], "output": s["output"]} for s in batch],
                 confidence=confidence_value("train.garden.learn_confidence", 0.7),
-                train_associations=False,
+                train_associations=True,
             )
             total_learned += result["samples_processed"]
             # Persist after each batch so a kill resumes from the next batch.
@@ -936,7 +936,7 @@ def _step5_train_garden(coordinator, batches, resume_state=None, save_state=None
             if total_learned % 1000 == 0 or i + BATCH_SIZE >= len(garden_samples):
                 print(f"    Processed {total_learned}/{len(garden_samples)}...")
 
-        print(f"  learn_batch calls: {total_learned} (associations_trained=False)")
+        print(f"  learn_batch calls: {total_learned} (associations_trained=True)")
 
         # Record with coordinator
         asyncio.run(coordinator.record_training(

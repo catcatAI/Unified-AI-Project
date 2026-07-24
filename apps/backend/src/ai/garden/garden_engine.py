@@ -300,6 +300,11 @@ class GARDENEngine:
             self._last_confidence = 0.85
             return math_result
 
+        logic_result = self._try_logic_eval(text)
+        if logic_result is not None:
+            self._last_confidence = 0.85
+            return logic_result
+
         reasoning_result = self._try_reasoning(text)
         if reasoning_result is not None:
             self._last_confidence = 0.85
@@ -533,6 +538,16 @@ class GARDENEngine:
             return VectorDictionary.route_math(text)
         except Exception as e:
             logger.warning("GARDEN: math routing failed for %r: %s", text, e, exc_info=True)
+            return None
+
+    def _try_logic_eval(self, text: str) -> Optional[str]:
+        """Evaluate boolean logic via MathVerifier.evaluate_logic."""
+        try:
+            from services.math_verifier import evaluate_logic
+
+            return evaluate_logic(text)
+        except Exception as e:
+            logger.debug("GARDEN: logic eval failed for %r: %s", text, e)
             return None
 
     def _try_knowledge(self, text: str) -> Optional[str]:

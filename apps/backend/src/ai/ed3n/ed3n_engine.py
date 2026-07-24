@@ -301,6 +301,16 @@ class ED3NEngine:
             logger.warning("Math routing via dictionary layer failed: %s", e, exc_info=True)
             return None
 
+    def _try_logic_eval(self, text: str) -> Optional[str]:
+        """Evaluate boolean logic expressions (true/false/AND/OR/NOT)."""
+        try:
+            from services.math_verifier import evaluate_logic
+
+            return evaluate_logic(text)
+        except Exception as e:
+            logger.debug("Logic evaluation failed: %s", e)
+            return None
+
     def _try_knowledge(self, text: str) -> Optional[str]:
         """Answer simple factual questions via the curated knowledge base.
 
@@ -395,6 +405,11 @@ class ED3NEngine:
         math_result = self._stage_math(input_text, query_id, stages)
         if math_result is not None:
             return math_result
+
+        # Stage 1.5b: Boolean logic evaluation
+        logic_result = self._try_logic_eval(input_text)
+        if logic_result is not None:
+            return logic_result
 
         # Stage 1.6: Symbolic reasoning (transitive / syllogism / calendar / qty).
         # Runs BEFORE knowledge: structural reasoning is higher-precision and must

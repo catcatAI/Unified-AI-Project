@@ -125,6 +125,7 @@ def apply_mode(engine, mode: str, engine_kind: str) -> None:
                 "_stage_reasoning",
                 "_stage_knowledge",
                 "_stage_chain_reasoning",
+                "_try_logic_eval",
             ):
                 setattr(engine, name, _stub_return_none)
         elif mode == "deterministic":
@@ -141,6 +142,7 @@ def apply_mode(engine, mode: str, engine_kind: str) -> None:
                 "_try_reasoning",
                 "_try_chain_reasoning",
                 "_try_knowledge",
+                "_try_logic_eval",
             ):
                 if hasattr(engine, name):
                     setattr(engine, name, _stub_return_none)
@@ -224,7 +226,7 @@ def main() -> None:
     if args.engine in ("garden", "both"):
         from ai.garden.garden_engine import GARDENEngine
 
-        e = GARDENEngine()
+        e = GARDENEngine(compatibility_mode=True)
         garden_ckpt = os.path.join(CKPT_DIR, "garden_checkpoint")
         if os.path.isdir(garden_ckpt):
             e.load(garden_ckpt)
@@ -257,11 +259,13 @@ def main() -> None:
             if kind == "ed3n":
                 patch_names = ["_stage_reflex", "_stage_math", "_stage_reasoning",
                                "_stage_knowledge", "_stage_chain_reasoning",
+                               "_try_logic_eval",
                                "_stage_network_forward", "_stage_anchored_decode",
                                "_stage_cycling", "_stage_validate"]
             else:
                 patch_names = ["_try_math_eval", "_try_reasoning", "_try_chain_reasoning",
-                               "_try_knowledge", "_single_step_process"]
+                               "_try_knowledge", "_try_logic_eval",
+                               "_single_step_process"]
             for name in patch_names:
                 if hasattr(engine, name):
                     originals[name] = getattr(engine, name)
