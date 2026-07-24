@@ -914,8 +914,8 @@ def _step5_train_garden(coordinator, batches, resume_state=None, save_state=None
         # NOT mirror input->output (train_associations=False), so facts are not
         # baked into neural weights. The SNN stays specialized for associations.
         garden_samples = batches.get("garden", [])
-        print(f"  Processing {len(garden_samples)} knowledge samples (dict-only, "
-              f"no SNN Hebbian mirror)...")
+        print(f"  Processing {len(garden_samples)} knowledge samples "
+              f"(dict + SNN Hebbian associations)...")
 
         # Use batch learning for speed (rebuilds index ONCE, not per sample)
         BATCH_SIZE=500

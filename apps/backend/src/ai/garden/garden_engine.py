@@ -794,22 +794,40 @@ class GARDENEngine:
         # Skipped when train_associations=False (knowledge-only ingestion: the
         # fact lives in the dictionary, the SNN only ever learns associations).
         hebbian_delta = 0.0
+        auto_regressive_delta = 0.0
         if train_associations:
+            lr = learning_rate("ai.garden.engine.hebbian_lr", 0.05)
+            target_str = confidence_value(
+                "ai.garden.engine.hebbian_target_strength", 0.7
+            )
             for s in samples:
                 user_text = s.get("input", "")
                 response_text = s.get("output", "")
                 input_keys = self.dictionary.encode(user_text)
                 output_keys = self.dictionary.encode(response_text)
                 if input_keys and output_keys:
+                    # Pass 1: Direct association input -> output
                     delta = self.snn.hebbian_update(
-                        input_keys,
-                        output_keys,
-                        lr=learning_rate("ai.garden.engine.hebbian_lr", 0.05),
-                        target_strength=confidence_value(
-                            "ai.garden.engine.hebbian_target_strength", 0.7
-                        ),
+                        input_keys, output_keys, lr=lr,
+                        target_strength=target_str,
                     )
                     hebbian_delta += delta
+
+                    # Pass 2: Auto-regressive — SNN forward, then teach
+                    # (input + intermediate) -> output.  This chains
+                    # associations so the SNN learns multi-hop reasoning.
+                    snn_intermediate = self.snn.forward(input_keys)
+                    intermediate_keys = [
+                        k for k, v in snn_intermediate.items()
+                        if v > 0.3
+                    ]
+                    if intermediate_keys:
+                        combined = list(dict.fromkeys(input_keys + intermediate_keys))
+                        delta_ar = self.snn.hebbian_update(
+                            combined, output_keys, lr=lr * 0.5,
+                            target_strength=target_str,
+                        )
+                        auto_regressive_delta += delta_ar
 
         self._learn_count += len(samples)
 
@@ -818,6 +836,7 @@ class GARDENEngine:
             "new_concepts": len(all_new_keys),
             "samples_processed": len(samples),
             "hebbian_delta": round(hebbian_delta, 6),
+            "auto_regressive_delta": round(auto_regressive_delta, 6),
             "associations_trained": train_associations,
         }
 

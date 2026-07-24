@@ -605,7 +605,14 @@ class VectorDictionary:
     # ------------------------------------------------------------------
 
     def encode(self, text: str) -> List[str]:
-        """Map text to a ranked list of concept keys via cosine similarity."""
+        """Map text to concept keys via token-level + whole-text similarity.
+
+        Strategy:
+          1. Tokenize text into atomic tokens (split on whitespace/punctuation)
+          2. Match each token individually against the dictionary
+          3. Also try whole-text matching for phrase-level entries
+          4. Return deduplicated keys preserving order
+        """
         if not text or not isinstance(text, str):
             return []
         if self._dirty or self._matrix is None:
@@ -613,25 +620,54 @@ class VectorDictionary:
         if self._matrix is None or len(self._key_order) == 0:
             return []
 
-        query_vec = self._encoder.encode([text])  # [1, D]
-        query_vec = self._normalize(query_vec, dim=-1)  # [1, D]
-        scores = self._matrix @ query_vec.T  # [N, 1] or [N]
-        if hasattr(scores, "ndim") and scores.ndim > 1:
-            scores = scores.squeeze(-1)
+        import re as _re
 
-        k = min(self.top_k, scores.shape[0])
-        if hasattr(scores, "topk"):
-            # torch backend
-            top_scores, top_indices = scores.topk(k)
-        else:
-            # numpy fallback
-            top_indices = np.argsort(-scores)[:k]
-            top_scores = scores[top_indices]
+        seen_keys: set = set()
+        results: List[str] = []
 
-        results = []
-        for score, idx in zip(top_scores.tolist(), top_indices.tolist()):
-            if score >= self.similarity_threshold:
-                results.append(self._key_order[idx])
+        def _match_single(query: str) -> List[str]:
+            """Match a single string against the dictionary, return top keys."""
+            if not query or len(query.strip()) < 1:
+                return []
+            qvec = self._encoder.encode([query])  # [1, D]
+            qvec = self._normalize(qvec, dim=-1)
+            scores = self._matrix @ qvec.T  # [N, 1] or [N]
+            if hasattr(scores, "ndim") and scores.ndim > 1:
+                scores = scores.squeeze(-1)
+            k = min(self.top_k, scores.shape[0])
+            if hasattr(scores, "topk"):
+                top_scores, top_indices = scores.topk(k)
+            else:
+                top_indices = np.argsort(-scores)[:k]
+                top_scores = scores[top_indices]
+            matched = []
+            for score, idx in zip(top_scores.tolist(), top_indices.tolist()):
+                if score >= self.similarity_threshold:
+                    matched.append(self._key_order[idx])
+            return matched
+
+        # Step 1: Tokenize into atomic tokens
+        tokens = _re.findall(r"[a-zA-Z0-9]+|.", text)
+
+        # Step 2: Match each token individually
+        for token in tokens:
+            for key in _match_single(token):
+                if key not in seen_keys:
+                    seen_keys.add(key)
+                    results.append(key)
+            # Also try lowercase
+            if token != token.lower():
+                for key in _match_single(token.lower()):
+                    if key not in seen_keys:
+                        seen_keys.add(key)
+                        results.append(key)
+
+        # Step 3: Whole-text matching (catches phrase-level entries)
+        for key in _match_single(text):
+            if key not in seen_keys:
+                seen_keys.add(key)
+                results.append(key)
+
         return results
 
     def decode(self, keys: List[str]) -> str:

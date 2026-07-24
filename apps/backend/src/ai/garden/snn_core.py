@@ -490,7 +490,12 @@ class TensorSNNCore:
             # Sparse propagation: only follow outgoing edges from active neurons
             active_idx = _nonzero_indices(a)
             if len(active_idx) > 0:
-                if _is_torch:
+                # Check actual array type, not global flag (checkpoint may be numpy
+                # even when torch is available)
+                _use_torch = hasattr(W[active_idx], "sum") and hasattr(
+                    W[active_idx].sum, "dim"
+                )
+                if _use_torch:
                     incoming = W[active_idx].sum(dim=0)
                 else:
                     incoming = W[active_idx].sum(axis=0)
