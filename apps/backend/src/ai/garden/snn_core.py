@@ -150,17 +150,31 @@ def _save_checkpoint(path: str, state: dict) -> None:
 
 
 def _load_checkpoint(path: str) -> dict:
-    """Load SNN checkpoint — handles both numpy and torch formats."""
+    """Load SNN checkpoint — handles both numpy and torch formats.
+
+    Auto-detects format: if .npy file exists, load as numpy regardless of
+    current backend (training may have used torch, inference may use numpy).
+    """
+    npy_path = path if path.endswith(".npy") else path + ".npy"
+    json_path = path.rsplit(".", 1)[0] + ".json"
+
+    # Prefer numpy format if .npy exists (cross-backend compatible)
+    if os.path.exists(npy_path):
+        W = np.load(npy_path)
+        meta = {}
+        if os.path.exists(json_path):
+            with open(json_path, "r", encoding="utf-8") as f:
+                meta = json.load(f)
+        meta["W"] = W
+        return meta
+
+    # Fall back to torch format
     xp, is_torch = _get_backend()
     if is_torch:
         return xp.load(path, map_location="cpu", weights_only=True)
-    npy_path = path if path.endswith(".npy") else path + ".npy"
-    W = np.load(npy_path)
-    json_path = path.rsplit(".", 1)[0] + ".json"
-    with open(json_path, "r", encoding="utf-8") as f:
-        meta = json.load(f)
-    meta["W"] = W
-    return meta
+
+    # Neither format found
+    raise FileNotFoundError(f"No checkpoint found at {path} (tried {npy_path} and torch format)")
 
 
 # ---------------------------------------------------------------------------
@@ -242,17 +256,18 @@ class TensorSNNCore:
         self.decay = decay
         self.device = device
 
-        from core.system.config.magic_numbers import compute_int, limit_value
+        from core.system.config.magic_numbers import compute_int, limit_value, model_sizing_config
 
-        # Hard memory budget on the concept vocabulary. The SNN keeps a dense
-        # [V, V] weight matrix, so V**2 memory. Without a bound, ingesting a
-        # large knowledge corpus registers every token as a new neuron and the
-        # matrix grows without limit (and is reallocated on every new key).
-        # Instead of truncating the *input dataset*, we keep training ALL data
-        # and evict the least-recently-used neurons once the budget is exceeded.
-        # max_vocab <= 0 means "unbounded" (legacy behavior, not recommended).
-        self.max_vocab = max_vocab or compute_int("garden_snn", "max_vocab", 50000)
-        self.connection_budget = connection_budget or compute_int("garden_snn", "connection_budget", 100000)
+        # Use dynamic model sizing config (conservative/extended) unless explicit values passed.
+        sizing = model_sizing_config()
+        self.max_vocab = max_vocab if max_vocab > 0 else sizing["max_vocab"]
+        self.connection_budget = connection_budget if connection_budget > 0 else sizing["connection_budget"]
+        logger.info(
+            "SNN sizing: max_vocab=%d, connection_budget=%d (%.1fMB matrix)",
+            self.max_vocab,
+            self.connection_budget,
+            self.max_vocab * self.max_vocab * 4 / 1024 / 1024,
+        )
 
         self.modulator = HormonalModulator()
 

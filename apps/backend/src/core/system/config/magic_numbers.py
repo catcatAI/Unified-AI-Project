@@ -7,6 +7,8 @@ All values loaded from TieredConfigLoader with inline fallback defaults.
 import logging
 from typing import Any, Dict, Optional, Union
 
+logger = logging.getLogger(__name__)
+
 _MAGIC_CACHE: Dict[str, Any] = {}
 _HARDWARE_PROFILE: Optional[Any] = None  # lazy-loaded HardwareProfile singleton
 
@@ -296,6 +298,30 @@ def compute_log_fallback() -> bool:
     config = _get_compute_config()
     global_cfg = config.get("global", {})
     return global_cfg.get("log_fallback", True)
+
+
+# =============================================================================
+# Dynamic Model Sizing (conservative / extended)
+# =============================================================================
+# GARDEN SNN weight matrix: vocab² × 4 bytes
+#   vocab=10K → 400MB (conservative, safe for 7.7GB RAM)
+#   vocab=20K → 1.6GB (extended, requires ~4GB free)
+#
+# Conservative mode is default. Extended mode requires ANGELA_EXTENDED_MODEL=1.
+
+def model_sizing_config() -> Dict[str, int]:
+    """Return (max_vocab, connection_budget) based on the sizing mode.
+
+    Conservative (default): max_vocab=10000, connection_budget=50000
+    Extended (ANGELA_EXTENDED_MODEL=1): max_vocab=20000, connection_budget=200000
+    """
+    import os
+    extended = os.environ.get("ANGELA_EXTENDED_MODEL", "0") == "1"
+    if extended:
+        logger.info("Model sizing: EXTENDED mode (max_vocab=20000, budget=200000)")
+        return {"max_vocab": 20000, "connection_budget": 200000}
+    logger.info("Model sizing: CONSERVATIVE mode (max_vocab=10000, budget=50000)")
+    return {"max_vocab": 10000, "connection_budget": 50000}
 
 
 # Re-export HardwareScenario for compute functions

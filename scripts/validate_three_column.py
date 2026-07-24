@@ -202,14 +202,22 @@ def main() -> None:
     for dom, cases in datasets.items():
         print(f"  {dom:12s}: {len(cases)} cases")
 
+    CKPT_DIR = os.path.join(ROOT, "data", "checkpoints")
+
     engines_to_run=[]
     if args.engine in ("ed3n", "both"):
         from ai.ed3n.ed3n_engine import ED3NEngine
 
         e = ED3NEngine()
-        e.load_presets()
+        ed3n_ckpt = os.path.join(CKPT_DIR, "ed3n_full.json")
+        if os.path.exists(ed3n_ckpt):
+            e.load(ed3n_ckpt)
+            logger.info("Loaded trained ED3N from %s", ed3n_ckpt)
+        else:
+            e.load_presets()
+            logger.info("No trained ED3N checkpoint; using presets")
         try:
-            e.process("warmup 1 + 1")  # absorb one-time lazy-init cost
+            e.process("warmup 1 + 1")
         except Exception as exc:
             logger.debug("Warmup failed (benign): %s", exc)
         engines_to_run.append(("ed3n", e))
@@ -217,7 +225,13 @@ def main() -> None:
         from ai.garden.garden_engine import GARDENEngine
 
         e = GARDENEngine()
-        e.load_presets()
+        garden_ckpt = os.path.join(CKPT_DIR, "garden_checkpoint")
+        if os.path.isdir(garden_ckpt):
+            e.load(garden_ckpt)
+            logger.info("Loaded trained GARDEN from %s", garden_ckpt)
+        else:
+            e.load_presets()
+            logger.info("No trained GARDEN checkpoint; using presets")
         try:
             e.process("warmup 1 + 1")
         except Exception as exc:
@@ -237,19 +251,46 @@ def main() -> None:
         print("  " + "-" * 62)
         dom_summary: Dict[str, Dict[str, float]] = {}
         for dom, cases in datasets.items():
-            # Re-instantiate per column so monkeypatches don't leak.
-            def _new():
-                inst = ED3NEngine() if kind == "ed3n" else GARDENEngine()
-                inst.load_presets()
-                try:
-                    inst.process("warmup 1 + 1")
-                except Exception as exc:
-                    logger.debug("Warmup failed (benign): %s", exc)
-                return inst
+            # Save original methods, apply mode, run, restore.
+            # This avoids re-loading sentence-transformers 9 times.
+            originals = {}
+            if kind == "ed3n":
+                patch_names = ["_stage_reflex", "_stage_math", "_stage_reasoning",
+                               "_stage_knowledge", "_stage_chain_reasoning",
+                               "_stage_network_forward", "_stage_anchored_decode",
+                               "_stage_cycling", "_stage_validate"]
+            else:
+                patch_names = ["_try_math_eval", "_try_reasoning", "_try_chain_reasoning",
+                               "_try_knowledge", "_single_step_process"]
+            for name in patch_names:
+                if hasattr(engine, name):
+                    originals[name] = getattr(engine, name)
 
-            hp, ht, ha = run_column(_new(), "hybrid", kind, cases)
-            dp, dt, da = run_column(_new(), "deterministic", kind, cases)
-            sp, st, sa = run_column(_new(), "snn", kind, cases)
+            # Save reflex.match for garden
+            if kind == "garden":
+                originals["reflex_match"] = engine.reflex.match
+
+            hp, ht, ha = run_column(engine, "hybrid", kind, cases)
+            # Restore before next column
+            for name, val in originals.items():
+                if name == "reflex_match":
+                    engine.reflex.match = val
+                else:
+                    setattr(engine, name, val)
+
+            dp, dt, da = run_column(engine, "deterministic", kind, cases)
+            for name, val in originals.items():
+                if name == "reflex_match":
+                    engine.reflex.match = val
+                else:
+                    setattr(engine, name, val)
+
+            sp, st, sa = run_column(engine, "snn", kind, cases)
+            for name, val in originals.items():
+                if name == "reflex_match":
+                    engine.reflex.match = val
+                else:
+                    setattr(engine, name, val)
 
             carry = ha - sa  # how much hybrid beats pure-SNN
             dom_summary[dom] = {
