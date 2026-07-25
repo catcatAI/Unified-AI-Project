@@ -180,13 +180,17 @@ class TrainingCoordinator:
         return "\n".join(lines)
 
     async def deconflict_samples(self, samples: List[Dict]) -> Dict[str, List[Dict]]:
+        """Assign samples to ALL engines (not by domain).
+
+        Both ED3N and GARDEN train on the full dataset:
+        - ED3N: coarse learning (deterministic rules, knowledge graph)
+        - GARDEN: fine learning (associations, pattern matching)
+        """
         batches: Dict[str, List[Dict]] = {}
         for sample in samples:
-            domain = sample.get("domain", "unknown")
-            model_id = await self.assign_domain(domain)
-            if model_id is None:
-                model_id = "unassigned"
-            batches.setdefault(model_id, []).append(sample)
+            # Every sample goes to both engines
+            for model_id in ("ed3n", "garden"):
+                batches.setdefault(model_id, []).append(sample)
         return batches
 
     def save(self, path: str) -> None:

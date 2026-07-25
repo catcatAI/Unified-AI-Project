@@ -679,7 +679,7 @@ def _step3_generate_knowledge():
 
 
 def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
-    # Step 4: Train ED3N on reflex/math/logic/association domain
+    # Step 4: Train ED3N — coarse learning on ALL data
     # -----------------------------------------------------------------------
     # Resumability: training is split into independently-completable sub-stages
     # (each ED3N epoch, reflex patterns, sequence trainer, joint trainer). Each
@@ -880,7 +880,7 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
 
 
 def _step5_train_garden(coordinator, batches, resume_state=None, save_state=None):
-    # Step 5: Train GARDEN on knowledge/general domain
+    # Step 5: Train GARDEN — fine learning on ALL data
     # -----------------------------------------------------------------------
     # Resumable per batch: progress index (garden_batch_done) is recorded in
     # resume_state and the engine checkpoint is saved after each batch, so a
@@ -1116,7 +1116,7 @@ def main() -> None:
     print("  ModelBus: ready | QueryClassifier: ready | Coordinator: ready")
 
     # -----------------------------------------------------------------------
-    # Step 3: Deconflict samples by domain
+    # Step 3: Distribute samples to ALL engines (no domain splitting)
     # -----------------------------------------------------------------------
     print("\n[3/8] Deconflicting samples by domain...")
     batches = asyncio.run(coordinator.deconflict_samples(all_samples))
@@ -1137,7 +1137,7 @@ def main() -> None:
         return
 
     # -----------------------------------------------------------------------
-    # Step 4: Train ED3N on reflex/math/logic domain
+    # Step 4: Train ED3N — coarse learning on ALL data
     # -----------------------------------------------------------------------
     if 4 in completed_steps:
         print("\n[4/8] Training ED3N... (SKIPPED - already completed)")
@@ -1153,7 +1153,7 @@ def main() -> None:
         coordinator.save(COORD_STATE)
 
     # -----------------------------------------------------------------------
-    # Step 5: Train GARDEN on knowledge/general domain
+    # Step 5: Train GARDEN — fine learning on ALL data
     # -----------------------------------------------------------------------
     if 5 in completed_steps:
         print("\n[5/8] Training GARDEN... (SKIPPED - already completed)")

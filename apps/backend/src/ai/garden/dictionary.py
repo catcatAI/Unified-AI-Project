@@ -107,11 +107,15 @@ class _TfidfEncoder:
         lower = normalize_text(text).lower()
         if not lower:
             return tokens
-        # English words (split on whitespace)
+        # English words + numbers (split on whitespace)
         for word in lower.split():
             cleaned = word.strip(",.!?;:\"'()[]{}")
-            if cleaned and all(c.isalpha() or c in "'-" for c in cleaned):
+            if cleaned:
                 tokens.append(cleaned)
+        # Operators as individual tokens
+        for ch in "+-*/=<>!?&|^~%":
+            if ch in lower:
+                tokens.append(ch)
         # Chinese unigrams
         cjk_chars: List[str] = []
         for ch in lower:
@@ -608,6 +612,7 @@ class VectorDictionary:
         """Map text to concept keys via token-level + whole-text similarity.
 
         Strategy:
+          0. Direct exact-match lookup (numbers, short tokens)
           1. Tokenize text into atomic tokens (split on whitespace/punctuation)
           2. Match each token individually against the dictionary
           3. Also try whole-text matching for phrase-level entries
@@ -624,6 +629,24 @@ class VectorDictionary:
 
         seen_keys: set = set()
         results: List[str] = []
+
+        # Build reverse lookup: surface_form_word -> key (lazy, cached)
+        if not hasattr(self, "_surface_to_key") or self._surface_to_key is None:
+            self._surface_to_key = {}
+            for key, entry in self.entries.items():
+                for form in entry.surface_forms.values():
+                    if form:
+                        # Index individual words from the surface form
+                        for word in form.lower().split():
+                            if word and word not in self._surface_to_key:
+                                self._surface_to_key[word] = key
+
+        def _exact_match(token: str) -> Optional[str]:
+            """Direct exact-match lookup for a token."""
+            t = token.lower().strip()
+            if t in self._surface_to_key:
+                return self._surface_to_key[t]
+            return None
 
         def _match_single(query: str) -> List[str]:
             """Match a single string against the dictionary, return top keys."""
@@ -646,16 +669,24 @@ class VectorDictionary:
                     matched.append(self._key_order[idx])
             return matched
 
-        # Step 1: Tokenize into atomic tokens
+        # Step 0: Tokenize into atomic tokens
         tokens = _re.findall(r"[a-zA-Z0-9]+|.", text)
 
-        # Step 2: Match each token individually
+        # Step 1: Direct exact-match for each token (fast path for numbers/operators)
         for token in tokens:
+            key = _exact_match(token)
+            if key and key not in seen_keys:
+                seen_keys.add(key)
+                results.append(key)
+
+        # Step 2: TF-IDF matching for each token (handles unknown words)
+        for token in tokens:
+            if token in seen_keys or _exact_match(token):
+                continue
             for key in _match_single(token):
                 if key not in seen_keys:
                     seen_keys.add(key)
                     results.append(key)
-            # Also try lowercase
             if token != token.lower():
                 for key in _match_single(token.lower()):
                     if key not in seen_keys:
@@ -928,30 +959,33 @@ class VectorDictionary:
             {"key": "b4", "surface_forms": {"zh": "或", "en": "or"}, "relations": {}},
             {"key": "b5", "surface_forms": {"zh": "非", "en": "not"}, "relations": {}},
             # --- Math numbers 0-9 ---
-            {"key": "m0", "surface_forms": {"zh": "零", "en": "zero"}, "relations": {}},
-            {"key": "m1", "surface_forms": {"zh": "一", "en": "one"}, "relations": {}},
-            {"key": "m2", "surface_forms": {"zh": "二", "en": "two"}, "relations": {}},
-            {"key": "m3", "surface_forms": {"zh": "三", "en": "three"}, "relations": {}},
-            {"key": "m4", "surface_forms": {"zh": "四", "en": "four"}, "relations": {}},
-            {"key": "m5", "surface_forms": {"zh": "五", "en": "five"}, "relations": {}},
-            {"key": "m6", "surface_forms": {"zh": "六", "en": "six"}, "relations": {}},
-            {"key": "m7", "surface_forms": {"zh": "七", "en": "seven"}, "relations": {}},
-            {"key": "m8", "surface_forms": {"zh": "八", "en": "eight"}, "relations": {}},
-            {"key": "m9", "surface_forms": {"zh": "九", "en": "nine"}, "relations": {}},
+            {"key": "m0", "surface_forms": {"zh": "零 0", "en": "zero 0"}, "relations": {}},
+            {"key": "m1", "surface_forms": {"zh": "一 1", "en": "one 1"}, "relations": {}},
+            {"key": "m2", "surface_forms": {"zh": "二 2", "en": "two 2"}, "relations": {}},
+            {"key": "m3", "surface_forms": {"zh": "三 3", "en": "three 3"}, "relations": {}},
+            {"key": "m4", "surface_forms": {"zh": "四 4", "en": "four 4"}, "relations": {}},
+            {"key": "m5", "surface_forms": {"zh": "五 5", "en": "five 5"}, "relations": {}},
+            {"key": "m6", "surface_forms": {"zh": "六 6", "en": "six 6"}, "relations": {}},
+            {"key": "m7", "surface_forms": {"zh": "七 7", "en": "seven 7"}, "relations": {}},
+            {"key": "m8", "surface_forms": {"zh": "八 8", "en": "eight 8"}, "relations": {}},
+            {"key": "m9", "surface_forms": {"zh": "九 9", "en": "nine 9"}, "relations": {}},
             # --- Math operators ---
             {
                 "key": "op1",
-                "surface_forms": {"zh": "加", "en": "plus"},
+                "surface_forms": {"zh": "加", "en": "plus +"},
                 "relations": {"antonym": ["op2"]},
             },
             {
                 "key": "op2",
-                "surface_forms": {"zh": "减", "en": "minus"},
+                "surface_forms": {"zh": "减", "en": "minus -"},
                 "relations": {"antonym": ["op1"]},
             },
-            {"key": "op3", "surface_forms": {"zh": "乘", "en": "multiply"}, "relations": {}},
-            {"key": "op4", "surface_forms": {"zh": "除", "en": "divide"}, "relations": {}},
-            {"key": "op5", "surface_forms": {"zh": "等于", "en": "equals"}, "relations": {}},
+            {"key": "op3", "surface_forms": {"zh": "乘", "en": "multiply *"}, "relations": {}},
+            {"key": "op4", "surface_forms": {"zh": "除", "en": "divide /"}, "relations": {}},
+            {"key": "op5", "surface_forms": {"zh": "等于", "en": "equals ="}, "relations": {}},
+            {"key": "op6", "surface_forms": {"zh": "大于", "en": "greater >"}, "relations": {}},
+            {"key": "op7", "surface_forms": {"zh": "小于", "en": "less <"}, "relations": {}},
+            {"key": "op8", "surface_forms": {"zh": "问号", "en": "question ?"}, "relations": {}},
             # --- Angela identity ---
             {
                 "key": "id1",

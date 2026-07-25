@@ -905,4 +905,43 @@ class GARDENEngine:
             self._query_count = meta.get("query_count", 0)
             self._learn_count = meta.get("learn_count", 0)
         self._presets_loaded = True
+        # Apply updated preset surface forms (adds Arabic numerals, operator symbols)
+        self._apply_preset_updates()
         logger.info("GARDEN: engine loaded from %s", directory)
+
+    def _apply_preset_updates(self) -> None:
+        """Update existing preset entries with enriched surface forms.
+
+        This handles the case where a checkpoint was saved before new surface
+        forms (e.g., Arabic numerals, operator symbols) were added to presets.
+        """
+        updates = {
+            "m0": {"zh": "零 0", "en": "zero 0"},
+            "m1": {"zh": "一 1", "en": "one 1"},
+            "m2": {"zh": "二 2", "en": "two 2"},
+            "m3": {"zh": "三 3", "en": "three 3"},
+            "m4": {"zh": "四 4", "en": "four 4"},
+            "m5": {"zh": "五 5", "en": "five 5"},
+            "m6": {"zh": "六 6", "en": "six 6"},
+            "m7": {"zh": "七 7", "en": "seven 7"},
+            "m8": {"zh": "八 8", "en": "eight 8"},
+            "m9": {"zh": "九 9", "en": "nine 9"},
+            "op1": {"zh": "加", "en": "plus +"},
+            "op2": {"zh": "减", "en": "minus -"},
+            "op3": {"zh": "乘", "en": "multiply *"},
+            "op4": {"zh": "除", "en": "divide /"},
+            "op5": {"zh": "等于", "en": "equals ="},
+        }
+        new_entries = {
+            "op6": {"surface_forms": {"zh": "大于", "en": "greater >"}, "relations": {}},
+            "op7": {"surface_forms": {"zh": "小于", "en": "less <"}, "relations": {}},
+            "op8": {"surface_forms": {"zh": "问号", "en": "question ?"}, "relations": {}},
+        }
+        for key, forms in updates.items():
+            if key in self.dictionary.entries:
+                self.dictionary.entries[key].surface_forms = forms
+        for key, entry_data in new_entries.items():
+            if key not in self.dictionary.entries:
+                self.dictionary.add_entry(key=key, **entry_data)
+        self.dictionary._dirty = True
+        self.dictionary._surface_to_key = None
