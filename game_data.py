@@ -984,6 +984,65 @@ def expand_game():
             sim_systems.RECIPES.append(r)
             existing_r.add(r["recipe_id"])
             cnt["recipes"] += 1
+        # Scene card locations → merge into WORLD_MAP
+    _NEW_LOCATION_VIBES = {
+        "概念學術高等學校": "📚 學術の薫り漂う校舎",
+        "學生宿舍": "🏠 靜かな學生の住まい",
+        "校園後方廢棄倉庫": "🏚 使われなくなった倉庫",
+        "概念戰場模擬區": "⚔ 模擬戦用の広場",
+        "地下避難所": "🕳 地下に広がる避難施設",
+        "夜間巡逻路線": "🌙 夜の巡邏路",
+        "校園屋頂": "🌅 校舎の屋上、見晴らしが良い",
+        "食堂": "🍽 學生たちの集う食堂",
+        "圖書館分館": "📖 小さな図書室",
+        "迴廊深層夢境": "✨ 夢の回廊、現実が曖昧になる",
+        "綻放混成園": "🌺 花が咲き乱れる庭園",
+        "軌道居住站大學院": "🚀 宇宙に浮かぶ学術都市",
+        "銀行區": "🏛 荘厳な銀行街",
+        "珊瑚台": "🪸 珊瑚が輝く台地",
+        "黑淵台": "🌑 深淵を見下ろす崖",
+        "彩紋礁": "🌈 色彩豊かな珊瑚礁",
+        "流光": "💫 光が流れる神秘的な場所",
+        "鏡湖周邊": "💧 鏡のように靜かな湖面",
+    }
+    _SCENE_TO_WORLD_CONNECTIONS = {
+        "概念學術高等學校": {"south":"方碑丘"},
+        "學生宿舍": {"south":"方碑丘"},
+        "校園後方廢棄倉庫": {"enter":"方碑丘"},
+        "概念戰場模擬區": {"enter":"方碑丘"},
+        "地下避難所": {"enter":"方碑丘"},
+        "夜間巡逻路線": {"west":"方碑丘"},
+        "校園屋頂": {"enter":"方碑丘"},
+        "食堂": {"north":"方碑丘"},
+        "圖書館分館": {"south":"中央大圖書館"},
+        "迴廊深層夢境": {"enter":"中央大圖書館"},
+        "綻放混成園": {"enter":"中央大圖書館"},
+        "軌道居住站大學院": {"enter":"中央大圖書館"},
+        "銀行區": {"west":"中央大圖書館","south":"西翼大市集"},
+        "珊瑚台": {"north":"海峽"},
+        "黑淵台": {"south":"海峽"},
+        "彩紋礁": {"north":"珊瑚台"},
+        "流光": {"enter":"鏡湖"},
+        "鏡湖周邊": {"enter":"鏡湖"},
+    }
+    scene_locs_added = 0
+    for scene_id, sdata in ALL_LOCATIONS.items():
+        sname = sdata.get("name","")
+        if not sname or sname in sim_systems.WORLD_MAP:
+            continue
+        # Add to WORLD_MAP
+        conn = _SCENE_TO_WORLD_CONNECTIONS.get(sname, {"south":"方碑丘"})
+        sim_systems.WORLD_MAP[sname] = conn
+        # Add vibe
+        vibe = _NEW_LOCATION_VIBES.get(sname, sdata.get("vibe", "📍 未知の地"))
+        sim_systems.LOCATION_VIBES[sname] = vibe
+        # Add enemy distribution
+        _enemy_pool = list(sim_systems.ENEMIES)
+        if _enemy_pool:
+            sim_systems.LOCATION_ENEMIES.setdefault(sname, []).append(
+                _seed.choice(_enemy_pool)["name"])
+        scene_locs_added += 1
+    cnt["locations"] = scene_locs_added
     
     after = {
         "items": len(sim_systems.ITEM_CATALOG),
@@ -1003,7 +1062,7 @@ def expand_game():
     sched_entries = sum(len(s) for s in sim_systems.NPC_SCHEDULES.values())
     
     # Count locations: original + scene card generated
-    loc_count = len(sim_systems.WORLD_MAP) + len(ALL_LOCATIONS)
+    loc_count = len(sim_systems.WORLD_MAP)
     
     # Count game cards
     card_count = len(_ALL_CARDS)
