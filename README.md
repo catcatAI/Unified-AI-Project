@@ -21,6 +21,7 @@
 - [English Version](#english-version)
   - [Current Status](#current-status-code-verified-as-of-2026-06-15)
 - [Quick Start](#quick-start) ([Detailed](docs/usage/QUICK_START.md), [Scenarios](docs/usage/SCENARIOS.md))
+- [Text Adventure Game](#text-adventure-game-tui)
 - [Scripts Reference](#scripts-reference)
 - [What Actually Works](#what-actually-works-code-verified-2026-06-15)
 - [What's Broken / Never Finished](#what-does-not-work--is-stub)
@@ -35,6 +36,7 @@
 - [繁體中文版](#繁體中文版)
 - [當前進度](#當前進度2026-06-15-代碼驗證)
 - [快速啟動](#快速啟動-1) ([詳細](docs/usage/QUICK_START.zh.md), [場景](docs/usage/SCENARIOS.zh.md))
+- [文字冒險遊戲](#文字冒險遊戲-tui)
 - [腳本參考](#腳本參考)
 - [什麼能跑](#什麼能跑2026-06-15-驗證)
 - [什麼不能用](#什麼無法運作-1)
@@ -225,6 +227,10 @@ python apps/backend/start_server.py
 
 # Option 3: Start desktop app (separate terminal)
 npx pnpm dev:desktop
+
+# Option 4: Play the text adventure game (no LLM needed)
+pip install -e "apps/backend[tui]"   # Install TUI dependencies (textual + rich)
+python run_game.py                   # Launch game from project root
 ```
 
 **Prerequisites**: Python 3.10+, Node.js 16+, Ollama (LLM backend).
@@ -233,11 +239,28 @@ npx pnpm dev:desktop
 
 ---
 
+### Text Adventure Game (TUI)
+
+A text-based adventure game running on ED3N/GARDEN + deterministic engines — **no LLM required**.
+
+```bash
+# Install TUI dependencies
+pip install -e "apps/backend[tui]"
+
+# Launch from project root
+python run_game.py
+```
+
+**Features**: Three-column TUI layout (character stats / dialogue / scene info), D12 dice-based combat, scene exploration, inventory system. 211 cards loaded from `data/game_cards.json`. Refresh is event-driven (no polling).
+
+---
+
 ### Scripts Reference
 
 | Category | Script | Description |
 |----------|--------|-------------|
 | **Launch** | `scripts/run_angela.py` | Primary launcher (recommended) |
+| **Launch** | `run_game.py` | Text adventure game TUI (no LLM needed) |
 | **Launch** | `scripts/start_all.bat` | Start backend + frontend concurrently |
 | **Launch** | `scripts/start_backend.bat` | Start backend in dev mode |
 | **Launch** | `scripts/unified-ai.bat` | Comprehensive project launcher |
@@ -518,6 +541,10 @@ python apps/backend/start_server.py
 
 # 方式三：手動啟動桌面端 (另開終端機)
 npx pnpm dev:desktop
+
+# 方式四：文字冒險遊戲（無需 LLM）
+pip install -e "apps/backend[tui]"   # 安裝 TUI 依賴（textual + rich）
+python run_game.py                   # 從專案根目錄啟動遊戲
 ```
 
 **環境需求**：Python 3.10+、Node.js 16+、Ollama（LLM 後端）
@@ -526,11 +553,28 @@ npx pnpm dev:desktop
 
 ---
 
+### 文字冒險遊戲 (TUI)
+
+基於 ED3N/GARDEN + 確定性引擎的文字冒險遊戲 — **無需 LLM**。
+
+```bash
+# 安裝 TUI 依賴
+pip install -e "apps/backend[tui]"
+
+# 從專案根目錄啟動
+python run_game.py
+```
+
+**功能**：三欄 TUI 介面（角色狀態 / 對話區 / 場景資訊）、D12 骰點戰鬥、場景探索、背包系統。載入 211 張卡片（`data/game_cards.json`）。事件驅動刷新，不輪詢。
+
+---
+
 ### 腳本參考
 
 | 類別 | 腳本 | 說明 |
 |------|------|------|
 | **啟動** | `scripts/run_angela.py` | 主要啟動器（推薦） |
+| **啟動** | `run_game.py` | 文字冒險遊戲 TUI（無需 LLM） |
 | **啟動** | `scripts/start_all.bat` | 同時啟動後端 + 桌面端 |
 | **啟動** | `scripts/start_backend.bat` | 開發模式啟動後端 |
 | **啟動** | `scripts/unified-ai.bat` | 綜合專案啟動器 |
@@ -731,3 +775,21 @@ npx pnpm dev:desktop
 ---
 
 **Version**: 7.5.0-dev | **Code Stats**: 610 Python files, ~96K lines | **Tests**: ~4,499 (tests/) — 0 errors | **Security**: 72+ alerts fixed → 0 remaining (Dependabot/CodeQL/Secret Scanning all clean) | **Intelligence**: 6.0/10 (upper, with LLM) / native: 數理化引擎 9.5 · 神經開放域 0 (re-measured 2026-07-15; see INTELLIGENCE_ASSESSMENT.md §1) | **Architecture**: ~95% | **Learning Architecture**: 80-90% (weights ~5% trained) | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)
+
+
+## 附屬遊戲 (Ancillary Game)
+
+本專案包含一個 CLI 命令列角色扮演模擬遊戲，系統設計與實作文件位於 docs/02-game-design/：
+
+| 文件 | 說明 |
+|------|------|
+| [GAME_OVERVIEW.md](docs/02-game-design/GAME_OVERVIEW.md) | 遊戲總覽與定位 |
+| [ARCHITECTURE.md](docs/02-game-design/ARCHITECTURE.md) | 技術架構 |
+| [INTERFACE_TERMINAL.md](docs/02-game-design/INTERFACE_TERMINAL.md) | CLI 終端介面 |
+| [WORLD_AND_STORY.md](docs/02-game-design/WORLD_AND_STORY.md) | 世界觀與劇情 |
+| [CHARACTER_SYSTEM.md](docs/02-game-design/CHARACTER_SYSTEM.md) | 角色系統 |
+| [ITEM_EQUIPMENT_SYSTEM.md](docs/02-game-design/ITEM_EQUIPMENT_SYSTEM.md) | 物品與裝備系統 |
+| [NUMERICAL_SYSTEMS.md](docs/02-game-design/NUMERICAL_SYSTEMS.md) | 數值系統 |
+| [MAP_AND_SCENES.md](docs/02-game-design/MAP_AND_SCENES.md) | 地圖與場景 |
+| [SIMULATION_SYSTEMS.md](docs/02-game-design/SIMULATION_SYSTEMS.md) | 模擬系統 |
+| [FILE_INVENTORY.md](docs/02-game-design/FILE_INVENTORY.md) | 檔案總覽 |
