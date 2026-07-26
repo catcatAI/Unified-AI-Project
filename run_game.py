@@ -1009,7 +1009,7 @@ def do_vehicle_menu(character):
                 vdef = VEHICLES.get(vname,{})
                 riding = character.get("riding")==vname
                 status = C.GREEN+"騎乘中"+C.RESET if riding else C.GRAY+"待機"+C.RESET
-                print(C.CYAN+"│  "+C.YELLOW+vname+C.RESET+" - %s | 速度x%.1f | %s"%(vdef.get("desc",""),vdef.get("speed",1.0),status).ljust(40)+C.CYAN+"│"+C.RESET)
+                print(C.CYAN+("│  "+C.YELLOW+vname+C.RESET+" - %s | 速度x%.1f | %s"%(vdef.get("desc",""),vdef.get("speed",1.0),status)).ljust(46)+C.CYAN+"│"+C.RESET)
     print(C.CYAN+"├"+"─"*44+"┤"+C.RESET)
     current = character.get("riding")
     if current:
