@@ -247,7 +247,7 @@ def do_combat(character, enemy):
             for m in gain_skill_exp(character,"combat",3):
                 print("      "+C.CYAN+m+C.RESET)
             # Consume weapon durability
-            for hand in ["right_hand","left_hand"]:
+            for hand in ["right_hand","left_hand","both_hands"]:
                 broke = equipment.use_durability(hand, 1)
                 if broke:
                     eq_info = equipment.slots.get(hand)
@@ -270,10 +270,9 @@ def do_combat(character, enemy):
         apply_damage(character, ed, bp)
         ds = C.BLUE+" (減半)"+C.RESET if defending else ""
         print(C.MAGENTA+"    💥 %s 造成 %d 傷害!%s" % (enemy["name"],ed,ds)+C.RESET)
-        # Consume armor durability on hit
+        # Consume armor durability on hit (per ITEM_EQUIPMENT_SYSTEM.md: 戰鬥受擊消耗耐久)
         for slot in ["torso","head","legs","feet","back"]:
-            hit_dura = _random.randint(1,3)
-            equipment.use_durability(slot, hit_dura)
+            equipment.use_durability(slot, _random.randint(2,6))
         ebar = C.RED+"█"*int(max(0,e_hp/e_max)*10)+C.DIM+"░"*(10-int(max(0,e_hp/e_max)*10))+C.RESET
         print("      Enemy: %s %d/%d" % (ebar,e_hp,e_max))
         print("      Your:  "+_mini_bar(character)+" %d/%d"%(character["hp"],character["max_hp"]))
@@ -1156,8 +1155,7 @@ def start_game():
     equipment = EquipmentManager()
     equipment.apply_stat_bonuses(character)
 
-    # Auto-accept main quest MQ-01
-    from sim_systems import QUESTS
+    # Auto-accept main quest MQ-01 (QUESTS is imported at module level)
     mq1 = next((q for q in QUESTS if q["id"]=="MQ-01"), None)
     if mq1:
         accept_quest(character, mq1)
