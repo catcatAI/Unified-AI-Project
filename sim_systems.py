@@ -1,59 +1,557 @@
-from dataclasses import dataclass
+"""
+Simulation Systems — Complete data layer for CLI RPG.
+Items: 54 | Enemies: 12 | Recipes: 16 | Locations: 10 | Quests: 14 | Vehicles: 4 | Scene objects: 20 | Junk: 20
+"""
+from dataclasses import dataclass, field
+from typing import Optional, List, Dict
+import random as _random
 
-@dataclass
-class NPCRoutine:
-    time_start: int = 0
-    time_end: int = 23
-    activity: str = ""
-    location: str = ""
-    mood: str = "neutral"
+MAX_INVENTORY_SLOTS = 30
+MAX_INVENTORY_WEIGHT = 60.0
+MAX_PROPERTIES = 5
+
+# ═══════════════════════════════════════════════════════════
+# ITEM CATALOG (54 items)
+# ═══════════════════════════════════════════════════════════
+
+ITEM_CATALOG = {
+    # ── Materials (13) ──
+    "草藥":  {"type": "material", "weight": 0.2, "value": 10, "tags": ["herb"], "desc": "常見草藥，可用於合成"},
+    "木柄":  {"type": "material", "weight": 0.5, "value": 5,  "tags": ["wood"], "desc": "武器握柄材料"},
+    "鐵礦":  {"type": "material", "weight": 2.0, "value": 15, "tags": ["ore"], "desc": "未熔煉的鐵礦石"},
+    "火元素":{"type": "material", "weight": 0.3, "value": 30, "tags": ["element"], "desc": "凝聚的火元素碎片"},
+    "鐵錠":  {"type": "material", "weight": 1.0, "value": 20, "tags": ["metal"], "desc": "熔煉後的鐵錠"},
+    "皮革":  {"type": "material", "weight": 0.8, "value": 12, "tags": ["leather"], "desc": "處理過的獸皮"},
+    "布料":  {"type": "material", "weight": 0.3, "value": 8,  "tags": ["cloth"], "desc": "普通布料"},
+    "水晶碎片":{"type":"material","weight":0.2,"value": 25, "tags": ["crystal"], "desc":"發著微光的水晶碎片"},
+    "魔法粉": {"type": "material", "weight": 0.1, "value": 40, "tags": ["magic"], "desc": "研磨的魔法材料"},
+    "龍鱗":  {"type": "material", "weight": 1.5, "value": 80, "tags": ["rare"], "desc": "閃爍的龍鱗片"},
+    "靈木":  {"type": "material", "weight": 0.7, "value": 35, "tags": ["wood","magic"], "desc": "蘊含靈力的木材"},
+    "絲線":  {"type": "material", "weight": 0.1, "value": 6,  "tags": ["cloth"], "desc": "精緻的絲線"},
+    "黏土":  {"type": "material", "weight": 1.0, "value": 3,  "tags": ["clay"], "desc": "可塑形的黏土"},
+
+    # ── Consumables (10) ──
+    "火焰藥水":{"type":"consumable","weight":0.3,"value": 50, "heal_hp": 50, "heal_sp":10, "desc":"恢復50HP+10SP"},
+    "治療藥水":{"type":"consumable","weight":0.3,"value": 40, "heal_hp": 40, "desc":"恢復40HP"},
+    "魔力藥水":{"type":"consumable","weight":0.3,"value": 35, "heal_sp": 30, "desc":"恢復30SP"},
+    "乾糧":   {"type":"consumable","weight":0.5,"value": 8,  "heal_hp": 12, "desc":"恢復12HP"},
+    "解毒草": {"type":"consumable","weight":0.2,"value": 20, "desc":"解除中毒狀態"},
+    "靈力藥": {"type":"consumable","weight":0.3,"value": 45, "heal_sp": 50, "desc":"恢復50SP"},
+    "生命果": {"type":"consumable","weight":0.4,"value": 60, "heal_hp": 80, "desc":"恢復80HP（稀有）"},
+    "提神茶": {"type":"consumable","weight":0.2,"value": 15, "heal_sp": 15, "desc":"恢復15SP"},
+    "繃帶":   {"type":"consumable","weight":0.2,"value": 12, "heal_hp": 15, "desc":"簡易包紮，恢復15HP"},
+    "濃縮藥水":{"type":"consumable","weight":0.4,"value": 80, "heal_hp": 100,"heal_sp":30,"desc":"高級恢復品"},
+
+    # ── Weapons (7) ──
+    "鐵劍":{"type":"weapon","weight":3.0,"value": 80, "durability":100,"slot":"right_hand",
+            "stat_multipliers":{"atk":0.3,"spd":-0.05},"desc":"鐵劍 (+30%ATK,-5%SPD)"},
+    "鋼刀":{"type":"weapon","weight":2.5,"value": 120,"durability":120,"slot":"right_hand",
+            "stat_multipliers":{"atk":0.4,"spd":-0.03},"desc":"鋼刀 (+40%ATK)"},
+    "木杖":{"type":"weapon","weight":1.5,"value": 25, "durability":60, "slot":"right_hand",
+            "stat_multipliers":{"atk":0.1,"karma":0.2},"desc":"木杖 (+10%ATK,+20%運)"},
+    "匕首":{"type":"weapon","weight":1.0,"value": 45, "durability":70, "slot":"right_hand",
+            "stat_multipliers":{"atk":0.2,"spd":0.1},"desc":"匕首 (+20%ATK,+10%SPD)"},
+    "長弓":{"type":"weapon","weight":2.0,"value": 90, "durability":85, "slot":"both_hands",
+            "stat_multipliers":{"atk":0.35,"spd":0.05},"desc":"長弓 (+35%ATK)"},
+    "盾牌":{"type":"weapon","weight":3.5,"value": 70, "durability":150,"slot":"left_hand",
+            "stat_multipliers":{"defense":0.5,"spd":-0.1},"desc":"盾牌 (+50%DEF,-10%SPD)"},
+    "水晶法杖":{"type":"weapon","weight":1.8,"value": 200,"durability":90, "slot":"right_hand",
+               "stat_multipliers":{"atk":0.2,"defense":0.2,"karma":0.3},"desc":"水晶法杖 (全屬性提升)"},
+
+    # ── Armor (7) ──
+    "皮甲": {"type":"armor","weight":2.0,"value": 60, "durability":80, "slot":"torso",
+             "stat_multipliers":{"defense":0.2,"spd":-0.05},"desc":"皮甲 (+20%DEF)"},
+    "鐵甲": {"type":"armor","weight":5.0,"value": 150,"durability":200,"slot":"torso",
+             "stat_multipliers":{"defense":0.4,"spd":-0.15},"desc":"鐵甲 (+40%DEF,-15%SPD)"},
+    "皮帽": {"type":"armor","weight":0.5,"value": 25, "durability":50, "slot":"head",
+             "stat_multipliers":{"defense":0.1},"desc":"皮帽 (+10%DEF)"},
+    "鐵盔": {"type":"armor","weight":1.5,"value": 55, "durability":120,"slot":"head",
+             "stat_multipliers":{"defense":0.2,"spd":-0.05},"desc":"鐵盔 (+20%DEF)"},
+    "草鞋": {"type":"armor","weight":0.5,"value": 15, "durability":40, "slot":"feet",
+             "stat_multipliers":{"spd":0.1},"desc":"草鞋 (+10%SPD)"},
+    "鐵靴": {"type":"armor","weight":2.0,"value": 65, "durability":150,"slot":"feet",
+             "stat_multipliers":{"defense":0.15,"spd":-0.08},"desc":"鐵靴 (+15%DEF)"},
+    "斗篷": {"type":"armor","weight":1.0,"value": 45, "durability":60, "slot":"back",
+             "stat_multipliers":{"defense":0.15,"karma":0.1},"desc":"斗篷 (+15%DEF)"},
+
+    # ── Accessories (5) ──
+    "護身符":{"type":"accessory","weight":0.1,"value":100,"durability":50, "slot":"neck",
+              "stat_multipliers":{"defense":0.1,"karma":0.1},"desc":"護身符 (+10%DEF,+10%運)"},
+    "戒指":  {"type":"accessory","weight":0.05,"value":80, "durability":40, "slot":"left_hand",
+              "stat_multipliers":{"atk":0.1,"spd":0.05},"desc":"戒指 (+10%ATK)"},
+    "手鐲":  {"type":"accessory","weight":0.1,"value":70, "durability":60, "slot":"right_hand",
+              "stat_multipliers":{"defense":0.1,"karma":0.05},"desc":"手鐲 (+10%DEF)"},
+    "腰帶":  {"type":"accessory","weight":0.3,"value":40, "durability":80, "slot":"waist",
+              "stat_multipliers":{"spd":0.05},"desc":"腰帶 (+5%SPD)"},
+    "項鍊":  {"type":"accessory","weight":0.1,"value":120,"durability":30, "slot":"neck",
+              "stat_multipliers":{"karma":0.2},"desc":"項鍊 (+20%運)"},
+
+    # ── Quest items (5) ──
+    "古老鑰匙":{"type":"quest","weight":0.1,"value":0,  "desc":"生鏽的鑰匙，不知道開什麼門"},
+    "神秘地圖":{"type":"quest","weight":0.1,"value":0,  "desc":"標記了某個隱藏位置的地圖"},
+    "書信":   {"type":"quest","weight":0.05,"value":0, "desc":"一封未署名的信"},
+    "記憶水晶":{"type":"quest","weight":0.2,"value":0,  "desc":"儲存著片段記憶的水晶"},
+    "古代硬幣":{"type":"quest","weight":0.1,"value":0,  "desc":"上面刻著看不懂的文字"},
+
+    # ── Junk / Decorative (17) ──
+    "空瓶":   {"type":"junk","weight":0.2,"value":1,  "desc":"空的玻璃瓶"},
+    "破布":   {"type":"junk","weight":0.3,"value":0,  "desc":"一塊破舊的布料"},
+    "生鏽釘子":{"type":"junk","weight":0.1,"value":0, "desc":"已經生鏽的鐵釘"},
+    "樹枝":   {"type":"junk","weight":0.4,"value":0,  "desc":"從樹上掉落的樹枝"},
+    "小石頭": {"type":"junk","weight":0.3,"value":0,  "desc":"一顆普通的鵝卵石"},
+    "羽毛":   {"type":"junk","weight":0.05,"value":1, "desc":"一根漂亮的鳥羽"},
+    "貝殼":   {"type":"junk","weight":0.1,"value":2,  "desc":"一個螺旋貝殼"},
+    "乾燥花": {"type":"junk","weight":0.1,"value":1,  "desc":"壓乾的花朵書籤"},
+    "蠟燭頭": {"type":"junk","weight":0.2,"value":1,  "desc":"燒剩一半的蠟燭"},
+    "麻繩":   {"type":"junk","weight":0.3,"value":2,  "desc":"一條結實的麻繩"},
+    "碎陶瓷": {"type":"junk","weight":0.4,"value":0,  "desc":"破碗的碎片"},
+    "舊鑰匙圈":{"type":"junk","weight":0.1,"value":1, "desc":"一個生鏽的鑰匙圈"},
+    "炭筆":   {"type":"junk","weight":0.1,"value":1,  "desc":"可以用來寫字的炭筆"},
+    "木雕":   {"type":"junk","weight":0.3,"value":3,  "desc":"一個小巧的木雕裝飾品"},
+    "松果":   {"type":"junk","weight":0.2,"value":0,  "desc":"從松樹上掉下來的松果"},
+    "彩色玻璃片":{"type":"junk","weight":0.1,"value":2,"desc":"彩色玻璃的碎片"},
+    "幸運幣": {"type":"junk","weight":0.05,"value":5, "desc":"一枚據說會帶來好運的硬幣"},
+}
+
+
+def get_item_def(item_name: str) -> dict:
+    return ITEM_CATALOG.get(item_name, {"type": "misc", "weight": 0.5, "value": 0, "desc": "不知名的東西"})
+
+def get_junk_items() -> list:
+    return [k for k, v in ITEM_CATALOG.items() if v["type"] == "junk"]
+
+
+# ═══════════════════════════════════════════════════════════
+# RECIPES (16 recipes)
+# ═══════════════════════════════════════════════════════════
+
+RECIPES = [
+    # combine (組合)
+    {"recipe_id":"R01","name":"火焰藥水","category":"alchemize",
+     "ingredients":[{"item":"草藥","quantity":2},{"item":"火元素","quantity":1}],
+     "result_item":"火焰藥水","result_quantity":1,"failure_chance":0.1},
+    {"recipe_id":"R02","name":"鐵劍","category":"craft",
+     "ingredients":[{"item":"鐵礦","quantity":3},{"item":"木柄","quantity":1}],
+     "result_item":"鐵劍","result_quantity":1,"failure_chance":0.2},
+    {"recipe_id":"R03","name":"鐵錠","category":"process",
+     "ingredients":[{"item":"鐵礦","quantity":5}],
+     "result_item":"鐵錠","result_quantity":2,"failure_chance":0.0},
+    {"recipe_id":"R04","name":"治療藥水","category":"alchemize",
+     "ingredients":[{"item":"草藥","quantity":3},{"item":"空瓶","quantity":1}],
+     "result_item":"治療藥水","result_quantity":1,"failure_chance":0.15},
+    {"recipe_id":"R05","name":"皮甲","category":"craft",
+     "ingredients":[{"item":"皮革","quantity":3},{"item":"絲線","quantity":2}],
+     "result_item":"皮甲","result_quantity":1,"failure_chance":0.2},
+    {"recipe_id":"R06","name":"鋼刀","category":"craft",
+     "ingredients":[{"item":"鐵錠","quantity":3},{"item":"木柄","quantity":1}],
+     "result_item":"鋼刀","result_quantity":1,"failure_chance":0.25},
+    {"recipe_id":"R07","name":"魔力藥水","category":"alchemize",
+     "ingredients":[{"item":"魔法粉","quantity":2},{"item":"空瓶","quantity":1}],
+     "result_item":"魔力藥水","result_quantity":1,"failure_chance":0.1},
+    {"recipe_id":"R08","name":"解毒草","category":"alchemize",
+     "ingredients":[{"item":"草藥","quantity":1},{"item":"水晶碎片","quantity":1}],
+     "result_item":"解毒草","result_quantity":1,"failure_chance":0.1},
+    {"recipe_id":"R09","name":"靈力藥","category":"alchemize",
+     "ingredients":[{"item":"靈木","quantity":2},{"item":"空瓶","quantity":1}],
+     "result_item":"靈力藥","result_quantity":1,"failure_chance":0.15},
+    {"recipe_id":"R10","name":"護身符","category":"craft",
+     "ingredients":[{"item":"絲線","quantity":3},{"item":"水晶碎片","quantity":2}],
+     "result_item":"護身符","result_quantity":1,"failure_chance":0.3},
+    {"recipe_id":"R11","name":"鐵甲","category":"craft",
+     "ingredients":[{"item":"鐵錠","quantity":5},{"item":"皮革","quantity":2}],
+     "result_item":"鐵甲","result_quantity":1,"failure_chance":0.35},
+    {"recipe_id":"R12","name":"濃縮藥水","category":"alchemize",
+     "ingredients":[{"item":"火焰藥水","quantity":1},{"item":"魔力藥水","quantity":1}],
+     "result_item":"濃縮藥水","result_quantity":1,"failure_chance":0.3},
+    {"recipe_id":"R13","name":"斗篷","category":"craft",
+     "ingredients":[{"item":"布料","quantity":4},{"item":"絲線","quantity":1}],
+     "result_item":"斗篷","result_quantity":1,"failure_chance":0.15},
+    {"recipe_id":"R14","name":"匕首","category":"craft",
+     "ingredients":[{"item":"鐵礦","quantity":2},{"item":"木柄","quantity":1}],
+     "result_item":"匕首","result_quantity":1,"failure_chance":0.1},
+    {"recipe_id":"R15","name":"水晶法杖","category":"craft",
+     "ingredients":[{"item":"靈木","quantity":3},{"item":"水晶碎片","quantity":3},{"item":"魔法粉","quantity":2}],
+     "result_item":"水晶法杖","result_quantity":1,"failure_chance":0.4},
+    {"recipe_id":"R16","name":"生命果","category":"alchemize",
+     "ingredients":[{"item":"龍鱗","quantity":1},{"item":"治療藥水","quantity":2}],
+     "result_item":"生命果","result_quantity":1,"failure_chance":0.4},
+]
+
+def craft_item(recipe_id, inventory):
+    recipe = next((r for r in RECIPES if r["recipe_id"] == recipe_id), None)
+    if not recipe:
+        return False, None, "未知配方"
+    for ing in recipe["ingredients"]:
+        if inventory.count(ing["item"]) < ing["quantity"]:
+            return False, None, "缺少材料: %s x%d" % (ing["item"], ing["quantity"])
+    for ing in recipe["ingredients"]:
+        for _ in range(ing["quantity"]):
+            inventory.remove(ing["item"])
+    if _random.random() < recipe["failure_chance"]:
+        # Return some materials on fail
+        for ing in recipe["ingredients"]:
+            inventory.append(ing["item"])
+        return False, None, "合成失敗（材料已歸還）"
+    result = recipe["result_item"]
+    count = recipe["result_quantity"]
+    for _ in range(count):
+        inventory.append(result)
+    return True, result, "合成成功: %s x%d" % (result, count)
+
+
+# ═══════════════════════════════════════════════════════════
+# ENEMIES (12 enemies)
+# ═══════════════════════════════════════════════════════════
+
+ENEMIES = [
+    {"name":"野狼",  "hp":40,"atk":12,"def":5, "spd":6, "exp":30,"gold":10,"loot":["皮革"],          "desc":"飢餓的野狼"},
+    {"name":"哥布林","hp":30,"atk":8, "def":3, "spd":4, "exp":20,"gold":5, "loot":["木柄","小石頭"],"desc":"膽小的哥布林"},
+    {"name":"石像鬼","hp":80,"atk":18,"def":12,"spd":2, "exp":60,"gold":25,"loot":["鐵礦","黏土"],  "desc":"古老的石像鬼"},
+    {"name":"暗影靈","hp":25,"atk":15,"def":2, "spd":8, "exp":35,"gold":15,"loot":["魔法粉"],       "desc":"飄忽的暗影生物"},
+    {"name":"廢鐵傀儡","hp":100,"atk":10,"def":20,"spd":1,"exp":50,"gold":30,"loot":["鐵錠","鐵礦","生鏽釘子"],"desc":"生鏽的機械傀儡"},
+    {"name":"晶石蜘蛛","hp":55,"atk":14,"def":8, "spd":7, "exp":40,"gold":20,"loot":["水晶碎片","絲線"],"desc":"結晶體的蜘蛛"},
+    {"name":"盜賊", "hp":35,"atk":16,"def":4, "spd":9, "exp":45,"gold":35,"loot":["匕首","乾糧"],   "desc":"鬼祟的人形盜賊"},
+    {"name":"蛇妖", "hp":45,"atk":20,"def":6, "spd":5, "exp":55,"gold":22,"loot":["解毒草","皮革"], "desc":"有毒牙的蛇妖"},
+    {"name":"幽靈", "hp":20,"atk":22,"def":1, "spd":10,"exp":50,"gold":12,"loot":["魔法粉","破布"], "desc":"無實體的怨靈"},
+    {"name":"巨熊", "hp":120,"atk":25,"def":10,"spd":3, "exp":80,"gold":40,"loot":["皮革","生命果"], "desc":"龐大的棕熊"},
+    {"name":"元素核心","hp":60,"atk":28,"def":8, "spd":4, "exp":70,"gold":35,"loot":["火元素","水晶碎片"],"desc":"凝聚的元素能量體"},
+    {"name":"古代守衛","hp":150,"atk":20,"def":25,"spd":2,"exp":100,"gold":50,"loot":["古老鑰匙","龍鱗"],"desc":"古代遺跡的守衛"},
+]
+
+LOCATION_ENEMIES = {
+    "方碑丘":         ["野狼","哥布林","盜賊"],
+    "鏡湖":           ["晶石蜘蛛","暗影靈","蛇妖"],
+    "西翼大市集":     ["哥布林","盜賊"],
+    "中央大圖書館":   ["暗影靈","石像鬼","幽靈"],
+    "海峽":           ["廢鐵傀儡","石像鬼","蛇妖"],
+    "秘密鐵工廠":     ["廢鐵傀儡","哥布林"],
+    "便利店":         ["盜賊","哥布林"],
+    "英靈殿":         ["古代守衛","幽靈","元素核心"],
+    "廢棄礦坑":       ["巨熊","晶石蜘蛛","廢鐵傀儡"],
+    "森林深處":       ["巨熊","野狼","蛇妖","元素核心"],
+}
+
+def get_enemy(location: str) -> Optional[dict]:
+    names = LOCATION_ENEMIES.get(location, [])
+    if not names:
+        return None
+    name = _random.choice(names)
+    for e in ENEMIES:
+        if e["name"] == name:
+            return dict(e)
+    return None
+
+ENEMY_ENCOUNTER_CHANCE = 0.4
+
+def resolve_combat_turn(attacker_atk, attacker_spd, defender_def, defender_hp):
+    base = attacker_atk * 1.5
+    dmg = max(1, int(base - defender_def * 0.5))
+    crit = _random.random() < attacker_spd * 0.02
+    if crit:
+        dmg = int(dmg * 1.5)
+    return min(dmg, defender_hp), crit
+
+
+# ═══════════════════════════════════════════════════════════
+# WORLD MAP (10 locations)
+# ═══════════════════════════════════════════════════════════
+
+WORLD_MAP = {
+    "方碑丘":         {"east":"西翼大市集", "south":"中央大圖書館", "north":"鏡湖", "west":"森林深處"},
+    "鏡湖":           {"south":"方碑丘", "east":"海峽"},
+    "西翼大市集":     {"west":"方碑丘", "north":"便利店"},
+    "中央大圖書館":   {"north":"方碑丘", "east":"英靈殿"},
+    "海峽":           {"west":"鏡湖"},
+    "秘密鐵工廠":     {"east":"方碑丘"},
+    "便利店":         {"south":"西翼大市集"},
+    "英靈殿":         {"west":"中央大圖書館"},
+    "廢棄礦坑":       {"enter":"方碑丘"},
+    "森林深處":       {"east":"方碑丘"},
+}
+
+LOCATION_VIBES = {
+    "方碑丘":         "🌾 微風吹拂的寧靜村莊",
+    "鏡湖":           "💧 湖面如鏡，空氣中帶著水氣",
+    "西翼大市集":     "🏪 市集熱鬧，叫賣聲此起彼落",
+    "中央大圖書館":   "📚 書香四溢，安靜肅穆",
+    "海峽":           "🌊 海風陣陣，波濤拍打海岸",
+    "秘密鐵工廠":     "🔧 鐵鎚聲與蒸氣交織，火花四濺",
+    "便利店":         "🏪 明亮的小店，貨架上擺滿日常用品",
+    "英靈殿":         "⚔ 古老的大殿，牆上掛滿武器與旗幟",
+    "廢棄礦坑":       "⛏ 陰暗的礦坑入口，深不見底",
+    "森林深處":       "🌲 參天大樹遮天蔽日，鳥鳴迴盪",
+}
+
+REAL_ESTATE = {
+    "方碑丘小屋": {"type":"house", "price":500,  "functions":["rest","store"], "desc":"樸素的村莊小屋"},
+    "西翼商店鋪": {"type":"shop", "price":800,  "functions":["trade"],       "desc":"市集的小店鋪"},
+    "湖畔工坊":   {"type":"workshop","price":1200,"functions":["craft","rest"],"desc":"鏡湖旁的工坊"},
+    "圖書館密室": {"type":"house", "price":2000, "functions":["rest","study"],"desc":"圖書館內的安靜房間"},
+    "礦坑倉庫":   {"type":"warehouse","price":600,"functions":["store"],      "desc":"廢棄礦坑旁的倉庫"},
+}
+
+REAL_ESTATE_KEYS = list(REAL_ESTATE.keys())
+
+HOUR_NAMES = {0:"子時",2:"丑時",4:"寅時",6:"卯時",8:"辰時",10:"巳時",
+              12:"午時",14:"未時",16:"申時",18:"酉時",20:"戌時",22:"亥時"}
+
+def get_time_desc(hour, day):
+    period = "早晨" if 6<=hour<12 else "午後" if 12<=hour<18 else "夜晚"
+    return "第%d天·%s（%s）" % (day, HOUR_NAMES.get(hour, "%d:00"%hour), period)
+
+
+# ═══════════════════════════════════════════════════════════
+# NPC SCHEDULES (3 NPCs with full daily routines)
+# ═══════════════════════════════════════════════════════════
 
 NPC_SCHEDULES = {
     "小狐丸": [
-        (6, 10, "整理冰晶", "鏡湖火山口", "calm"),
-        (10, 14, "巡視鏡湖", "鏡湖", "alert"),
-        (14, 18, "休息", "鏡湖火山口", "rest"),
-        (18, 22, "交流", "秘密鐵工廠", "friendly"),
-        (22, 6, "睡眠", "鏡湖火山口", "sleep"),
+        (6,10,  "整理冰晶","鏡湖",       "calm"),
+        (10,14, "巡視湖面","鏡湖",       "alert"),
+        (14,18, "休息",    "秘密鐵工廠",  "rest"),
+        (18,22, "交流",    "西翼大市集",  "friendly"),
+        (22,6,  "睡眠",    "鏡湖",        "sleep"),
     ],
     "左間小蒼蘭": [
-        (7, 12, "在鐵工廠工作", "秘密鐵工廠", "focused"),
-        (12, 13, "午餐休息", "秘密鐵工廠", "rest"),
-        (13, 18, "繼續工作", "秘密鐵工廠", "focused"),
-        (18, 21, "整理工具", "秘密鐵工廠", "calm"),
-        (21, 7, "睡眠", "女僕長宿舍", "sleep"),
+        (7,12,  "打鐵",    "秘密鐵工廠",  "focused"),
+        (12,13, "午餐",    "便利店",      "rest"),
+        (13,18, "繼續工作","秘密鐵工廠",  "focused"),
+        (18,21, "整理工具","秘密鐵工廠",  "calm"),
+        (21,7,  "睡眠",    "秘密鐵工廠",  "sleep"),
     ],
     "紅": [
-        (6, 10, "整理貨架", "便利店", "calm"),
-        (10, 18, "值班看店", "便利店", "friendly"),
-        (18, 22, "晚班", "便利店", "friendly"),
-        (22, 6, "睡眠", "便利店樓上", "sleep"),
+        (6,10,  "整理貨架","便利店",     "calm"),
+        (10,18, "值班",    "便利店",      "friendly"),
+        (18,22, "晚班",    "便利店",      "friendly"),
+        (22,6,  "休息",    "便利店",      "sleep"),
     ],
 }
 
 def get_npc_activity(npc_name, hour):
     schedule = NPC_SCHEDULES.get(npc_name)
     if not schedule:
-        return "休息", "", "neutral"
-    for start, end, activity, location, mood in schedule:
+        return "休息","","neutral"
+    for start,end,activity,location,mood in schedule:
         if start <= end:
             if start <= hour < end:
-                return activity, location, mood
+                return activity,location,mood
         else:
             if hour >= start or hour < end:
-                return activity, location, mood
-    return "休息", "", "neutral"
+                return activity,location,mood
+    return "休息","","neutral"
+
+
+# ═══════════════════════════════════════════════════════════
+# QUESTS (14 quests — main + side)
+# ═══════════════════════════════════════════════════════════
+
+QUESTS = [
+    # ── Main Quests ──
+    {"id":"MQ-01","title":"鏡湖的秘密","type":"main","giver":"系統",
+     "desc":"探索鏡湖周邊，找出湖底發光的原因。",
+     "objectives":[{"type":"visit","target":"鏡湖","detail":"造訪鏡湖"},
+                   {"type":"collect","target":"水晶碎片","qty":1,"detail":"收集水晶碎片"}],
+     "reward_exp":80,"reward_gold":30,"reward_item":"古老鑰匙"},
+    {"id":"MQ-02","title":"大正浪漫的迴響","type":"main","giver":"左間小蒼蘭",
+     "desc":"幫助左間小蒼蘭修復秘密鐵工廠的古董機械。",
+     "objectives":[{"type":"visit","target":"秘密鐵工廠","detail":"拜訪秘密鐵工廠"},
+                   {"type":"collect","target":"鐵錠","qty":3,"detail":"收集3個鐵錠"},
+                   {"type":"collect","target":"魔法粉","qty":1,"detail":"收集魔法粉"}],
+     "reward_exp":120,"reward_gold":50,"reward_item":"鋼刀"},
+    {"id":"MQ-03","title":"圖書館之謎","type":"main","giver":"系統",
+     "desc":"中央大圖書館的地下層藏著古老的秘密。",
+     "objectives":[{"type":"visit","target":"中央大圖書館","detail":"造訪中央大圖書館"},
+                   {"type":"visit","target":"英靈殿","detail":"探索英靈殿"}],
+     "reward_exp":100,"reward_gold":40,"reward_item":"記憶水晶"},
+    {"id":"MQ-04","title":"世界的盡頭","type":"main","giver":"系統",
+     "desc":"前往海峽，尋找通往世界盡頭的道路。",
+     "objectives":[{"type":"visit","target":"海峽","detail":"到達海峽"},
+                   {"type":"defeat","target":"古代守衛","qty":1,"detail":"擊敗古代守衛"}],
+     "reward_exp":200,"reward_gold":100,"reward_item":"神秘地圖"},
+
+    # ── Side Quests ──
+    {"id":"SQ-01","title":"收集藥材","type":"side","giver":"紅",
+     "desc":"紅需要草藥來製作藥水。",
+     "objectives":[{"type":"collect","target":"草藥","qty":5,"detail":"收集5份草藥"}],
+     "reward_exp":30,"reward_gold":15,"reward_item":"治療藥水"},
+    {"id":"SQ-02","title":"強化作戰","type":"side","giver":"小狐丸",
+     "desc":"小狐丸需要一些鐵礦來強化武器。",
+     "objectives":[{"type":"collect","target":"鐵礦","qty":4,"detail":"收集4個鐵礦"}],
+     "reward_exp":40,"reward_gold":20,"reward_item":"鐵劍"},
+    {"id":"SQ-03","title":"妖精的請求","type":"side","giver":"晴空",
+     "desc":"機械妖精晴空需要魔法粉來維持飛行翼膜。",
+     "objectives":[{"type":"collect","target":"魔法粉","qty":2,"detail":"收集2份魔法粉"}],
+     "reward_exp":50,"reward_gold":25,"reward_item":"護身符"},
+    {"id":"SQ-04","title":"森林巡邏","type":"side","giver":"系統",
+     "desc":"森林深處最近不太平靜，去巡邏一下。",
+     "objectives":[{"type":"visit","target":"森林深處","detail":"造訪森林深處"},
+                   {"type":"defeat","target":"巨熊","qty":1,"detail":"擊敗巨熊"}],
+     "reward_exp":60,"reward_gold":30,"reward_item":"皮革"},
+    {"id":"SQ-05","title":"礦坑探險","type":"side","giver":"系統",
+     "desc":"廢棄礦坑據說有豐富的礦產資源。",
+     "objectives":[{"type":"visit","target":"廢棄礦坑","detail":"造訪廢棄礦坑"},
+                   {"type":"collect","target":"鐵礦","qty":6,"detail":"收集6個鐵礦"}],
+     "reward_exp":70,"reward_gold":35,"reward_item":"鐵盔"},
+    {"id":"SQ-06","title":"貨物運送","type":"side","giver":"紅",
+     "desc":"幫紅運送一批貨物到西翼大市集。",
+     "objectives":[{"type":"visit","target":"西翼大市集","detail":"造訪西翼大市集"}],
+     "reward_exp":25,"reward_gold":40,"reward_item":"乾糧"},
+    {"id":"SQ-07","title":"修理工具","type":"side","giver":"左間小蒼蘭",
+     "desc":"左間小蒼蘭的工具壞了，需要鐵錠修理。",
+     "objectives":[{"type":"collect","target":"鐵錠","qty":2,"detail":"收集2個鐵錠"}],
+     "reward_exp":35,"reward_gold":15,"reward_item":"匕首"},
+    {"id":"SQ-08","title":"驅除暗影","type":"side","giver":"小狐丸",
+     "desc":"鏡湖附近出現暗影靈，需要清除。",
+     "objectives":[{"type":"defeat","target":"暗影靈","qty":2,"detail":"擊敗2隻暗影靈"}],
+     "reward_exp":55,"reward_gold":25,"reward_item":"魔力藥水"},
+    {"id":"SQ-09","title":"收集材料","type":"side","giver":"系統",
+     "desc":"收集各種材料以充實倉庫。",
+     "objectives":[{"type":"collect","target":"木材","qty":3,"detail":"收集3份木材", "alt_item":"木柄"},
+                   {"type":"collect","target":"皮革","qty":2,"detail":"收集2份皮革"}],
+     "reward_exp":20,"reward_gold":10,"reward_item":"空瓶"},
+    {"id":"SQ-10","title":"探索英靈殿","type":"side","giver":"系統",
+     "desc":"英靈殿最近傳出奇怪的聲音。",
+     "objectives":[{"type":"visit","target":"英靈殿","detail":"造訪英靈殿"}],
+     "reward_exp":45,"reward_gold":20,"reward_item":"古老鑰匙"},
+]
+
+
+# ═══════════════════════════════════════════════════════════
+# VEHICLES (4 vehicles)
+# ═══════════════════════════════════════════════════════════
+
+VEHICLES = {
+    "腳踏車":{"speed":1.5,"capacity":1,"cargo":20,"fuel":-1,"desc":"普通的腳踏車，省力快速"},
+    "馬":    {"speed":2.0,"capacity":1,"cargo":30,"fuel":-1,"desc":"一匹溫順的馬"},
+    "馬車":  {"speed":1.2,"capacity":3,"cargo":100,"fuel":-1,"desc":"載貨用馬車"},
+    "小舟":  {"speed":1.3,"capacity":2,"cargo":15,"fuel":-1,"desc":"簡易的小舟，可渡水"},
+}
+
+VEHICLE_LOCATIONS = {
+    "方碑丘":     "腳踏車",
+    "西翼大市集": "馬",
+    "鏡湖":       "小舟",
+    "秘密鐵工廠": "馬車",
+}
+
+
+# ═══════════════════════════════════════════════════════════
+# SCENE OBJECTS (20 objects across locations)
+# ═══════════════════════════════════════════════════════════
+
+SCENE_OBJECTS = {
+    "方碑丘": [
+        {"id":"well",    "name":"水井",     "type":"container","desc":"村莊中央的老水井","contents":["空瓶","小石頭"],"locked":False,"interactable":True},
+        {"id":"bench",   "name":"長椅",     "type":"decoration","desc":"一張木製長椅","interactable":True},
+        {"id":"notice",  "name":"佈告欄",    "type":"decoration","desc":"貼滿了各種告示","note":"徵人啟事：需要冒險者協助處理鏡湖異變","interactable":True},
+    ],
+    "鏡湖": [
+        {"id":"crystal","name":"發光水晶",  "type":"container","desc":"湖邊的發光水晶叢","contents":["水晶碎片","水晶碎片","魔法粉"],"locked":False,"interactable":True},
+        {"id":"boat", "name":"小舟", "type":"vehicle", "desc":"一艘停靠在岸邊的小舟", "vehicle_type":"小舟", "interactable":True},
+    ],
+    "西翼大市集": [
+        {"id":"stall1", "name":"雜貨攤",    "type":"container","desc":"擺滿了各種雜物","contents":["乾糧","布料","麻繩"],"locked":False,"interactable":True},
+        {"id":"stall2", "name":"古董攤",    "type":"container","desc":"賣舊貨的攤位","contents":["古代硬幣","舊鑰匙圈","木雕"],"locked":False,"interactable":True},
+    ],
+    "中央大圖書館": [
+        {"id":"bookshelf","name":"書架",    "type":"container","desc":"高大的書架，上面擺滿了書","contents":["書信","神秘地圖"],"locked":False,"interactable":True},
+        {"id":"desk",     "name":"閱讀桌",  "type":"decoration","desc":"一張安靜的閱讀桌","interactable":True},
+    ],
+    "秘密鐵工廠": [
+        {"id":"forge", "name":"鍛造爐",    "type":"workstation","desc":"熊熊燃燒的鍛造爐","station_type":"forge","interactable":True},
+        {"id":"anvil", "name":"鐵砧",      "type":"workstation","desc":"沉重的鐵砧","station_type":"anvil","interactable":True},
+        {"id":"chest", "name":"工具箱",    "type":"container","desc":"左間小蒼蘭的工具箱","contents":["鐵礦","鐵礦","木柄"],"locked":False,"interactable":True},
+    ],
+    "便利店": [
+        {"id":"shelf1","name":"貨架A",     "type":"container","desc":"飲料和食品","contents":["乾糧","乾糧","提神茶"],"locked":False,"interactable":True},
+        {"id":"shelf2","name":"貨架B",     "type":"container","desc":"日用品","contents":["繃帶","空瓶","蠟燭頭"],"locked":False,"interactable":True},
+    ],
+    "英靈殿": [
+        {"id":"altar",   "name":"祭壇",     "type":"container","desc":"古老的祭壇，上面放著什麼","contents":["古代硬幣","龍鱗","記憶水晶"],"locked":True,"key":"古老鑰匙","interactable":True},
+        {"id":"weapons", "name":"武器架",   "type":"container","desc":"陳列著古老的武器","contents":["長弓","水晶法杖"],"locked":False,"interactable":True},
+    ],
+    "廢棄礦坑": [
+        {"id":"ore_vein","name":"礦脈",     "type":"container","desc":"裸露的鐵礦脈","contents":["鐵礦","鐵礦","鐵礦","鐵礦","水晶碎片"],"locked":False,"interactable":True},
+        {"id":"trolley", "name":"礦車",     "type":"container","desc":"廢棄的礦車","contents":["小石頭","黏土","生鏽釘子"],"locked":False,"interactable":True},
+    ],
+    "森林深處": [
+        {"id":"tree",    "name":"古老樹木", "type":"container","desc":"一棵巨大的古樹，樹幹上有個洞","contents":["靈木","羽毛","松果"],"locked":False,"interactable":True},
+        {"id":"camp",    "name":"廢棄營地", "type":"container","desc":"冒險者留下的舊營地","contents":["乾糧","繃帶","破布"],"locked":False,"interactable":True},
+    ],
+}
+
+
+# ═══════════════════════════════════════════════════════════
+# WEATHER SYSTEM
+# ═══════════════════════════════════════════════════════════
+
+WEATHER_TYPES = ["☀晴","⛅多雲","🌧雨","🌫霧","🌩雷雨","❄雪"]
+
+def roll_weather():
+    r = _random.random()
+    if r < 0.40: return "☀晴"
+    if r < 0.65: return "⛅多雲"
+    if r < 0.80: return "🌧雨"
+    if r < 0.90: return "🌫霧"
+    if r < 0.97: return "🌩雷雨"
+    return "❄雪"
+
+WEATHER_EFFECTS = {
+    "☀晴":   {"encounter":0.35, "loot_bonus":0,   "rest_bonus":1.0, "desc":"視野良好"},
+    "⛅多雲": {"encounter":0.40, "loot_bonus":0,   "rest_bonus":0.9, "desc":"天色陰沉"},
+    "🌧雨":  {"encounter":0.30, "loot_bonus":0.1, "rest_bonus":1.1, "desc":"雨聲掩蓋了腳步"},
+    "🌫霧":  {"encounter":0.50, "loot_bonus":0.2, "rest_bonus":0.8, "desc":"視線受阻"},
+    "🌩雷雨":{"encounter":0.20, "loot_bonus":0.3, "rest_bonus":1.2, "desc":"雷聲轟鳴"},
+    "❄雪":  {"encounter":0.25, "loot_bonus":0.1, "rest_bonus":1.3, "desc":"白雪覆蓋大地"},
+}
+
+
+# ═══════════════════════════════════════════════════════════
+# RANDOM EVENT POOL
+# ═══════════════════════════════════════════════════════════
+
+RANDOM_EVENTS = [
+    ("你發現地上有個錢包，裡面有5金幣。", lambda c: c.update({"gold":c.get("gold",0)+5})),
+    ("一陣風吹來，你打了個噴嚏。", None),
+    ("你看到遠處有一隻兔子快速跑過。", None),
+    ("草叢中有沙沙聲...但什麼都沒有。", None),
+    ("你聽到遠方傳來的鐘聲。", None),
+    ("一隻蝴蝶停在你肩膀上，然後飛走了。", None),
+    ("你撿到一根漂亮的羽毛。", lambda c: c["inventory"].append("羽毛")),
+    ("地面有一個閃亮的東西——是一枚硬幣！", lambda c: c.update({"gold":c.get("gold",0)+3})),
+    ("你發現了一些可食用的野莓。", lambda c: c.update({"hp":min(c["max_hp"],c["hp"]+5)})),
+    ("你注意到石頭下壓著一朵乾燥花。", lambda c: c["inventory"].append("乾燥花")),
+    ("你踩到一灘水，腳濕了。", None),
+    ("這裡的空氣特別清新，你深呼吸了一下。", lambda c: c.update({"sp":min(c["max_sp"],c["sp"]+5)})),
+    ("你看到一隻松鼠在樹上看著你。", None),
+    ("路邊有一個被遺忘的貝殼。", lambda c: c["inventory"].append("貝殼")),
+    ("你的影子看起來比平常長一些。", None),
+]
+
+def roll_random_event(character):
+    if _random.random() < 0.2:  # 20% chance
+        desc, action = _random.choice(RANDOM_EVENTS)
+        print("  " + desc)
+        if action:
+            action(character)
+        return True
+    return False
+
+
+# ═══════════════════════════════════════════════════════════
+# EQUIPMENT MANAGER (12 slots)
+# ═══════════════════════════════════════════════════════════
 
 EQUIPMENT_SLOTS = [
-    ("head", "頭部"), ("face", "面部"), ("neck", "頸部"),
-    ("torso", "軀幹"), ("left_arm", "左臂"), ("right_arm", "右臂"),
-    ("left_hand", "左手"), ("right_hand", "右手"),
-    ("waist", "腰部"), ("legs", "腿部"), ("feet", "腳部"), ("back", "背部"),
+    ("head","頭部"),("face","面部"),("neck","頸部"),
+    ("torso","軀幹"),("left_arm","左臂"),("right_arm","右臂"),
+    ("left_hand","左手"),("right_hand","右手"),
+    ("waist","腰部"),("legs","腿部"),("feet","腳部"),("back","背部"),
 ]
 
 class EquipmentManager:
     def __init__(self):
-        self.slots = {s_id: None for s_id, _ in EQUIPMENT_SLOTS}
+        self.slots = {s[0]: None for s in EQUIPMENT_SLOTS}
 
     def equip(self, slot_id, item):
         old = self.slots.get(slot_id)
@@ -69,11 +567,24 @@ class EquipmentManager:
 
     def get_stat_bonuses(self):
         bonuses = {}
-        for slot_id, eq in self.slots.items():
+        for sid, eq in self.slots.items():
             if eq and eq["item"]:
                 for stat, mult in eq["item"].get("stat_multipliers", {}).items():
                     bonuses[stat] = bonuses.get(stat, 0.0) + mult
         return bonuses
+
+    def apply_stat_bonuses(self, character):
+        bonuses = self.get_stat_bonuses()
+        token_list = character.get("token_list", [])
+        base_atk = 10 + (character["level"] - 1) * 1 + len([t for t in token_list if t.get("category")=="combat"])*3
+        base_def = 5 + (character["level"] - 1) * 1 + len([t for t in token_list if t.get("category")=="vitality"])*2
+        base_spd = character.get("spd", 5)
+        base_karma = character.get("karma", 5)
+        character["atk"] = max(1, int(base_atk * (1.0 + bonuses.get("atk", 0.0))))
+        character["defense"] = max(1, int(base_def * (1.0 + bonuses.get("defense", 0.0))))
+        character["spd"] = max(1, int(base_spd * (1.0 + bonuses.get("spd", 0.0))))
+        if "karma" in character:
+            character["karma"] = max(1, int(base_karma * (1.0 + bonuses.get("karma", 0.0))))
 
     def use_durability(self, slot_id, amount=1):
         eq = self.slots.get(slot_id)
@@ -92,90 +603,48 @@ class EquipmentManager:
             return "空"
         cur = eq["item"].get("current_durability", eq["item"].get("durability", 100))
         mx = eq["item"].get("durability", 100)
-        ratio = cur / mx if mx > 0 else 1
-        if ratio > 0.8: return "完好"
-        if ratio > 0.6: return "輕微磨損"
-        if ratio > 0.4: return "中度磨損"
-        if ratio > 0.2: return "嚴重磨損"
+        ratio = cur/mx if mx>0 else 1
+        if ratio>0.8: return "完好"
+        if ratio>0.6: return "輕微磨損"
+        if ratio>0.4: return "中度磨損"
+        if ratio>0.2: return "嚴重磨損"
         return "已損壞"
 
     def display(self):
         lines = ["裝備欄:"]
-        for slot_id, name in EQUIPMENT_SLOTS:
-            eq = self.slots.get(slot_id)
+        for sid, sname in EQUIPMENT_SLOTS:
+            eq = self.slots.get(sid)
             if eq and eq["item"]:
-                cond = self.condition_name(slot_id)
-                lines.append("  %s: %s [%s]" % (slot_id, eq["item"].get("name", "?"), cond))
+                c = self.condition_name(sid)
+                lines.append("  %s: %s [%s]" % (sid, eq["item"].get("name","?"), c))
             else:
-                lines.append("  %s: （空）" % slot_id)
+                lines.append("  %s: （空）"% sid)
         return "\n".join(lines)
 
-RECIPES = [
-    {"recipe_id": "R01", "name": "火焰藥水", "category": "alchemize",
-     "ingredients": [{"item": "草藥", "quantity": 2}, {"item": "火元素", "quantity": 1}],
-     "result_item": "火焰藥水", "result_quantity": 1, "failure_chance": 0.1},
-    {"recipe_id": "R02", "name": "鐵劍", "category": "craft",
-     "ingredients": [{"item": "鐵礦", "quantity": 3}, {"item": "木柄", "quantity": 1}],
-     "result_item": "鐵劍", "result_quantity": 1, "failure_chance": 0.2},
-    {"recipe_id": "R03", "name": "鐵錠", "category": "process",
-     "ingredients": [{"item": "鐵礦", "quantity": 5}],
-     "result_item": "鐵錠", "result_quantity": 2, "failure_chance": 0.0},
-]
 
-def craft_item(recipe_id, inventory):
-    recipe = next((r for r in RECIPES if r["recipe_id"] == recipe_id), None)
-    if not recipe:
-        return False, None, "未知配方"
-    for ing in recipe["ingredients"]:
-        if inventory.count(ing["item"]) < ing["quantity"]:
-            return False, None, "缺少材料: %s x%d" % (ing["item"], ing["quantity"])
-    for ing in recipe["ingredients"]:
-        for _ in range(ing["quantity"]):
-            inventory.remove(ing["item"])
-    if __import__("random").random() < recipe["failure_chance"]:
-        return False, None, "合成失敗"
-    result = recipe["result_item"]
-    count = recipe["result_quantity"]
-    for _ in range(count):
-        inventory.append(result)
-    return True, result, "合成成功: %s x%d" % (result, count)
-
-WORLD_MAP = {
-    "方碑丘": {"east": "西翼大市集", "south": "中央大圖書館", "north": "鏡湖"},
-    "鏡湖": {"north": "方碑丘", "east": "海峽"},
-    "西翼大市集": {"west": "方碑丘"},
-    "中央大圖書館": {"north": "方碑丘"},
-    "海峽": {"west": "鏡湖"},
-}
-
-REAL_ESTATE = {
-    "方碑丘民居": {"type": "house", "price": 500, "functions": ["rest", "store"]},
-    "西翼商鋪": {"type": "shop", "price": 800, "functions": ["trade", "store"]},
-    "中央工坊": {"type": "workshop", "price": 1000, "functions": ["craft", "store"]},
-}
-
-HOUR_NAMES = {0: "子時", 6: "卯時", 8: "辰時", 12: "午時", 14: "未時", 18: "酉時", 22: "亥時"}
-
-def get_time_desc(hour, day):
-    period = "早晨" if 6 <= hour < 12 else "午後" if 12 <= hour < 18 else "夜晚"
-    return "第%d天，%s（%s）" % (day, HOUR_NAMES.get(hour, "%d:00" % hour), period)
+# ═══════════════════════════════════════════════════════════
+# DISPLAY HELPERS
+# ═══════════════════════════════════════════════════════════
 
 def display_world_map(current_location):
     lines = []
     lines.append('世界地図:')
     lines.append('')
-    lines.append('    +--------+--------+')
-    lines.append('    |  鏡湖  |        |')
-    lines.append('    +--------+--------+')
-    lines.append('    |        |        |')
-    marker = '<-- 你' if current_location == '方碑丘' else '      '
-    lines.append('    |方碑丘%s|西翼大市集|' % marker)
-    lines.append('    |        |        |')
-    lines.append('    +--------+--------+')
-    lines.append('    |        |        |')
-    lines.append('    |中央大圖|英靈殿   |')
-    lines.append('    |書館    |・錬金術  |')
-    lines.append('    +--------+--------+')
+    lines.append('    +---------+---------+')
+    lines.append('    |  鏡湖   |  海峽   |')
+    lines.append('    +----+----+----+----+')
+    lines.append('    |秘鐵| 方碑丘 |西翼 |')
+    lines.append('    +----+----+----+----+')
+    lines.append('         |    |    |    |')
+    lines.append('    +----+----+----+    +')
+    lines.append('    |森林|圖書館|英靈殿|')
+    lines.append('    +----+----+----+----+')
+    lines.append('         |廢礦|')
+    lines.append('         +----+')
     lines.append('')
-    lines.append('  現在位置: %s' % current_location)
-    return chr(10).join(lines)
+    lines.append('  現在位置: ' + current_location)
+    for loc, vibe in LOCATION_VIBES.items():
+        if loc == current_location:
+            lines.append('  ' + vibe)
+            break
+    return "\n".join(lines)

@@ -1,4 +1,4 @@
-"""Launch the CLI RPG simulation game."""
+"""CLI RPG Simulation — Complete Game Loop."""
 import sys
 import random as _random
 from pathlib import Path
@@ -12,375 +12,1204 @@ from sim_systems import (
     get_npc_activity,
     get_time_desc,
     display_world_map,
+    get_enemy,
+    resolve_combat_turn,
+    get_item_def,
+    get_junk_items,
+    ENEMY_ENCOUNTER_CHANCE,
     REAL_ESTATE,
     WORLD_MAP,
+    LOCATION_VIBES,
     RECIPES,
     NPC_SCHEDULES,
     EQUIPMENT_SLOTS,
+    ITEM_CATALOG,
+    QUESTS,
+    VEHICLES,
+    VEHICLE_LOCATIONS,
+    SCENE_OBJECTS,
+    WEATHER_TYPES,
+    roll_weather,
+    WEATHER_EFFECTS,
+    roll_random_event,
+    MAX_INVENTORY_SLOTS,
+    MAX_INVENTORY_WEIGHT,
+    MAX_PROPERTIES,
+)
+from game_data import expand_game
+
+from character_system import (
+    generate_character_from_card,
+    create_blank_character,
+    get_character_cards,
+    display_character_sheet,
+    display_body_parts,
+    display_relationships,
+    apply_damage,
+    heal_character,
+    add_relationship,
+    get_relationship,
+    gain_exp,
+    gain_exp_with_skills,
+    gain_skill_exp,
+    get_skill_modifier,
+    init_skills,
+    init_quest_state,
+    accept_quest,
+    advance_quest_objective,
+    check_quest_completion,
+    complete_quest,
+    get_active_quests,
+    init_vehicle_state,
+    mount_vehicle,
+    dismount_vehicle,
+    get_portrait,
+    get_reputation_tier,
+    modify_reputation,
+    BODY_PARTS,
+    C,
 )
 
+# ── Globals ────────────────────────────────────────────────────────────────
+_current_weather = "☀晴"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# HELPERS
+# ═══════════════════════════════════════════════════════════════════════════
 
 def advance_time(character, hours=1):
+    global _current_weather
     character["hour"] = (character["hour"] + hours) % 24
     if character["hour"] == 0:
         character["day"] += 1
+        _current_weather = roll_weather()
+
+def print_banner(text, color=C.CYAN):
+    print(color + "═"*50 + C.RESET)
+    print(color + text.center(50) + C.RESET)
+    print(color + "═"*50 + C.RESET)
+
+def _restore(c, stat, amount):
+    mk = "max_" + stat
+    c[stat] = min(c.get(mk, 100), c.get(stat,0) + amount)
+
+def _mini_bar(character, width=10):
+    ratio = character["hp"] / character["max_hp"] if character["max_hp"]>0 else 0
+    f = int(ratio * width)
+    return C.RED + "█"*f + C.DIM + "░"*(width-f) + C.RESET
 
 
-def show_help():
+# ═══════════════════════════════════════════════════════════════════════════
+# STATUS & HELP
+# ═══════════════════════════════════════════════════════════════════════════
+
+def print_status(character):
+    global _current_weather
     print("")
-    print("  可用指令:")
-    print("    1. 探索周圍")
-    print("    2. 與NPC對話")
-    print("    3. 前往其他場景")
-    print("    4. 休息 (恢復HP/SP)")
-    print("    5. 查看物品欄")
-    print("    6. 查看/裝備物品")
-    print("    7. 查看地圖")
-    print("    8. 合成物品")
-    print("    h. 顯示幫助")
-    print("    q/quit. 退出遊戲")
-    print("")
-
-
-def init_character():
-    return {
-        "name": "旅人",
-        "hp": 100,
-        "max_hp": 100,
-        "sp": 50,
-        "max_sp": 50,
-        "atk": 10,
-        "def": 5,
-        "exp": 0,
-        "gold": 50,
-        "location": "方碑丘",
-        "day": 1,
-        "hour": 8,
-        "inventory": ["草藥", "木柄"],
-    }
-
-
-def apply_equipment_bonuses(character, equipment):
-    bonuses = equipment.get_stat_bonuses()
-    character["atk"] = 10 + int(bonuses.get("atk", 0) * 10)
-    character["def"] = 5 + int(bonuses.get("def", 0) * 10)
-
-
-def do_explore(character):
-    print("  你仔細探索了周圍的環境...")
-    find = _random.choice(["草藥", "木柄", "火元素", "鐵礦", None, None])
-    if find:
-        character["inventory"].append(find)
-        print("  你發現了: %s!" % find)
+    time_str = get_time_desc(character["hour"], character["day"])
+    weather_info = _current_weather + " " + WEATHER_EFFECTS.get(_current_weather,{}).get("desc","")
+    print(C.DIM + "─"*50 + C.RESET)
+    print(C.CYAN + "  ◈ " + time_str + C.RESET + "  " + weather_info)
+    print(C.WHITE + "  位置: " + character["location"] + C.RESET, end="")
+    if character.get("riding"):
+        print(C.YELLOW + " [騎乘: " + character["riding"] + "]" + C.RESET)
     else:
-        print("  什麼特别的東西都沒找到。")
+        print("")
 
+    # HP / SP / EXP bars
+    hp_r = character["hp"]/character["max_hp"] if character["max_hp"]>0 else 0
+    sp_r = character["sp"]/character["max_sp"] if character["max_sp"]>0 else 0
+    hp_b = C.RED + "█"*int(hp_r*15) + C.DIM + "░"*(15-int(hp_r*15)) + C.RESET
+    sp_b = C.BLUE + "█"*int(sp_r*15) + C.DIM + "░"*(15-int(sp_r*15)) + C.RESET
+    print("  " + C.RED + "HP:" + C.RESET + " %3d/%d %s" % (character["hp"],character["max_hp"],hp_b) +
+          "  " + C.RED + "ATK:%3d" % character["atk"] + C.RESET + "  " + C.RED + "DEF:%3d" % character["defense"] + C.RESET)
+    print("  " + C.BLUE + "SP:" + C.RESET + " %3d/%d %s" % (character["sp"],character["max_sp"],sp_b) +
+          "  " + C.YELLOW + "Lv.%d" % character["level"] + C.RESET + "  " + C.GREEN + "EXP:%d/%d" % (character["exp"], exp_needed_for_level(character["level"])) + C.RESET)
+
+    # All NPCs — show those at current location + some high-rep ones
+    print(C.DIM + "─"*50 + C.RESET)
+    cur_loc = character["location"]
+    npcs_here = []
+    all_sched = NPC_SCHEDULES
+    for npc_name in list(all_sched.keys())[:25]:
+        act, aloc, mood = get_npc_activity(npc_name, character["hour"])
+        if aloc == cur_loc:
+            npcs_here.append((npc_name, act, aloc, mood))
+    for npc_name, act, nloc, mood in npcs_here[:5]:
+        mc = {"calm":C.GREEN,"alert":C.RED,"rest":C.BLUE,"friendly":C.MAGENTA,"sleep":C.GRAY,"focused":C.CYAN}
+        mcol = mc.get(mood, C.WHITE)
+        print("  " + C.CYAN + npc_name + C.RESET + ": " + act + " @ " + cur_loc + " (" + mcol + mood + C.RESET + ")")
+    if not npcs_here:
+        print(C.GRAY + "  附近似乎沒有NPC。" + C.RESET)
+    # Active quests count
+    active = get_active_quests(character)
+    if active:
+        print(C.GREEN + "  進行中任務: %d" % len(active) + C.RESET)
+    print(C.DIM + "─"*50 + C.RESET)
+    print("")
+
+def exp_needed_for_level(level):
+    return 100 + (level - 1) * 50
+
+def print_help():
+    print(C.WHITE + C.BOLD + "╔═══════════════════════════╗" + C.RESET)
+    print(C.WHITE + C.BOLD + "║  指令選單" + " "*21 + C.BOLD + "║" + C.RESET)
+    print(C.WHITE + C.BOLD + "╠═══════════════════════════╣" + C.RESET)
+    print(C.WHITE + C.BOLD + "║" + C.RESET + " 1.探索  2.NPC對話  3.移動")
+    print(C.WHITE + C.BOLD + "║" + C.RESET + " 4.休息  5.物品欄  6.角色")
+    print(C.WHITE + C.BOLD + "║" + C.RESET + " 7.身體  8.裝備   9.地圖")
+    print(C.WHITE + C.BOLD + "║" + C.RESET + "10.關係 11.合成  12.搜索")
+    print(C.WHITE + C.BOLD + "║" + C.RESET + "13.任務 14.車輛  15.不動產")
+    print(C.WHITE + C.BOLD + "║" + C.RESET + " h.幫助    q.退出")
+    print(C.WHITE + C.BOLD + "╚═══════════════════════════╝" + C.RESET)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CHARACTER SELECTION
+# ═══════════════════════════════════════════════════════════════════════════
+
+def select_character():
+    cards = get_character_cards()
+    print_banner("選擇你的角色", C.MAGENTA)
+    print("")
+    card_limit = min(len(cards), 15)
+    for i, card in enumerate(cards[:card_limit], 1):
+        name = card.get("name","?")
+        cid = card.get("card_id","???")
+        ts = card.get("token_summary",{})
+        if isinstance(ts, dict):
+            tstr = " ".join("%s:%d"%(k,v) for k,v in ts.items())
+        else:
+            tstr = str(ts)[:50]
+        print("  %s%2d. [%s]%s %s" % (C.CYAN,i,cid,C.RESET,name))
+        print("      %s%s%s" % (C.DIM,tstr[:50],C.RESET))
+    print("  %s%2d.%s 自定義角色" % (C.CYAN,card_limit+1,C.RESET))
+    print("")
+    ch = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
+    if ch.isdigit():
+        idx = int(ch)-1
+        if 0 <= idx < card_limit:
+            card = cards[idx]
+            char = generate_character_from_card(card)
+            init_skills(char)
+            init_quest_state(char)
+            init_vehicle_state(char)
+            print(C.GREEN + "\n  你選擇了: %s (卡片 %s)" % (char["name"],char["card_id"]) + C.RESET)
+            advance_time(char)
+            return char
+    print(C.YELLOW + "\n  你選擇了自定義角色。" + C.RESET)
+    char = create_blank_character()
+    name = input(C.CYAN + "  輸入角色名稱: " + C.RESET).strip()
+    if name:
+        char["name"] = name
+    init_skills(char)
+    init_quest_state(char)
+    init_vehicle_state(char)
+    advance_time(char)
+    return char
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# COMBAT
+# ═══════════════════════════════════════════════════════════════════════════
+
+def do_combat(character, enemy):
+    print(C.RED+C.BOLD+"\n⚔ "+"="*40+" ⚔"+C.RESET)
+    print(C.RED+C.BOLD+"  戰鬥! 遭遇了 %s!" % enemy["name"]+C.RESET)
+    print("  " + enemy.get("desc","") + " | HP:%d ATK:%d DEF:%d" % (enemy["hp"],enemy["atk"],enemy["def"]))
+    print(C.RED+C.BOLD+"⚔ "+"="*40+" ⚔"+C.RESET)
+    e_hp = enemy["hp"]
+    e_max = enemy["hp"]
+    while e_hp > 0 and character["hp"] > 0:
+        print("\n  " + C.WHITE+C.BOLD+"[你的回合]"+C.RESET)
+        print("    "+C.GREEN+"1. 攻擊"+C.RESET+"    "+C.BLUE+"2. 防禦"+C.RESET+"    "+C.YELLOW+"0. 逃跑"+C.RESET)
+        act = input("    "+C.YELLOW+">"+C.RESET+" ").strip()
+        defending = False
+        if act == "2":
+            defending = True
+            print(C.BLUE+"    🛡 防禦姿態!"+C.RESET)
+        # Escape
+        if act == "0":
+            if _random.random() < 0.5:
+                print(C.GREEN+"    ✓ 成功逃脫!"+C.RESET)
+                return True
+            else:
+                print(C.RED+"    ✗ 逃跑失敗!"+C.RESET)
+
+        if act == "1" or act == "0":
+            pa = character["atk"] + get_skill_modifier(character, "combat")
+            ps = character.get("spd",5)
+            dmg, crit = resolve_combat_turn(pa, ps, enemy["def"], e_hp)
+            e_hp -= dmg
+            cs = C.YELLOW+" (暴擊!)"+C.RESET if crit else ""
+            print(C.RED+"    ⚔ 造成 %d 傷害!%s" % (dmg,cs)+C.RESET)
+            for m in gain_skill_exp(character,"combat",3):
+                print("      "+C.CYAN+m+C.RESET)
+            # Consume weapon durability
+            for hand in ["right_hand","left_hand"]:
+                broke = equipment.use_durability(hand, 1)
+                if broke:
+                    eq_info = equipment.slots.get(hand)
+                    if eq_info and eq_info["item"]:
+                        iname = eq_info["item"].get("name","?")
+                        print(f"      {C.RED}⚡ {iname} 損壞了!{C.RESET}")
+                        old = equipment.unequip(hand)
+                        if old:
+                            character["inventory"].append(old.get("name","?"))
+                        equipment.apply_stat_bonuses(character)
+
+        if e_hp <= 0:
+            break
+
+        dm = 0.7 if defending else 1.0
+        ed = max(1, int(enemy["atk"]*dm - character["defense"]*0.3))
+        ed = min(ed, character["hp"])
+        valid = [p[0] for p in BODY_PARTS if p[0] in character.get("body_parts",{})]
+        bp = _random.choice(valid) if valid else "torso"
+        apply_damage(character, ed, bp)
+        ds = C.BLUE+" (減半)"+C.RESET if defending else ""
+        print(C.MAGENTA+"    💥 %s 造成 %d 傷害!%s" % (enemy["name"],ed,ds)+C.RESET)
+        # Consume armor durability on hit
+        for slot in ["torso","head","legs","feet","back"]:
+            hit_dura = _random.randint(1,3)
+            equipment.use_durability(slot, hit_dura)
+        ebar = C.RED+"█"*int(max(0,e_hp/e_max)*10)+C.DIM+"░"*(10-int(max(0,e_hp/e_max)*10))+C.RESET
+        print("      Enemy: %s %d/%d" % (ebar,e_hp,e_max))
+        print("      Your:  "+_mini_bar(character)+" %d/%d"%(character["hp"],character["max_hp"]))
+
+    if e_hp <= 0:
+        eg = enemy["exp"]
+        gg = enemy["gold"]
+        print("\n"+C.GREEN+C.BOLD+"  勝利!"+C.RESET)
+        print("  "+C.YELLOW+"獲得 %d EXP, %d 金幣!"%(eg,gg)+C.RESET)
+        for li in enemy.get("loot",[]):
+            if _random.random()<0.5:
+                character["inventory"].append(li)
+                print("  "+C.CYAN+"獲得物品: %s"%li+C.RESET)
+        character["gold"] = character.get("gold",0) + gg
+        modify_reputation(character,2)
+        for m in gain_exp_with_skills(character,eg,"exploration",5):
+            print("  "+C.MAGENTA+C.BOLD+m+C.RESET)
+        # Advance quest objectives
+        for q in get_active_quests(character):
+            qdef, qdata = q
+            advance_quest_objective(character, qdef["id"], "defeat", enemy["name"], 1)
+        advance_time(character)
+        return True
+    else:
+        print(C.RED+C.BOLD+"  ☠ 被擊敗!"+C.RESET)
+        return False
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# EXPLORATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+def do_explore(character, equipment):
+    global _current_weather
+    we = WEATHER_EFFECTS.get(_current_weather, {"encounter":0.4,"loot_bonus":0})
+    enc_chance = we["encounter"]
+    loot_bonus = we["loot_bonus"]
+
+    print(C.CYAN+"\n  🧭 探索 " + character["location"] + " ..."+C.RESET)
+    # Random event before combat
+    roll_random_event(character)
+
+    # Combat check
+    riding_bonus = 1.0
+    if character.get("riding"):
+        v = VEHICLES.get(character["riding"])
+        if v:
+            riding_bonus = v.get("speed", 1.0)
+    if _random.random() < enc_chance / riding_bonus:
+        enemy = get_enemy(character["location"])
+        if enemy:
+            result = do_combat(character, enemy)
+            if not result:
+                character["hp"] = max(1, character["max_hp"]//4)
+                print(C.RED+"  你在昏迷中醒來...體力嚴重消耗。"+C.RESET)
+                advance_time(character,3)
+            return
+
+    # Loot
+    all_finds = ["草藥","木柄","火元素","鐵礦","乾糧","治療藥水","空瓶","樹枝","小石頭","貝殼","麻繩"]
+    if character["hour"]>=20 or character["hour"]<5:
+        all_finds += ["魔力藥水","護身符","火元素","水晶碎片","魔法粉"]
+    explore_mod = get_skill_modifier(character,"exploration")
+    if explore_mod>0 and _random.random()<0.3:
+        all_finds += ["皮甲","鐵錠","匕首","靈木","鐵劍"]
+
+    # Maybe junk
+    if _random.random() < 0.25:
+        junk = get_junk_items()
+        if junk:
+            all_finds.append(_random.choice(junk))
+
+    # Loot bonus from weather
+    if loot_bonus > 0 and _random.random() < loot_bonus:
+        all_finds.append("水晶碎片")
+
+    find = _random.choice(all_finds)
+    if find:
+        idf = get_item_def(find)
+        character["inventory"].append(find)
+        print(C.GREEN+"  ✓ 發現: %s!"%find+C.RESET)
+        if idf.get("desc"):
+            print(C.DIM+"    %s"%idf["desc"]+C.RESET)
+    else:
+        print(C.GRAY+"  ⋯ 什麼都沒有。"+C.RESET)
+    for m in gain_skill_exp(character,"exploration",2):
+        print("  "+C.CYAN+m+C.RESET)
+    # Consume feet/legs durability during exploration
+    for slot in ["feet","legs"]:
+        equipment.use_durability(slot, _random.randint(1,2))
+    advance_time(character)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TRAVEL
+# ═══════════════════════════════════════════════════════════════════════════
 
 def do_travel(character):
-    destinations = WORLD_MAP.get(character["location"], {})
-    if not destinations:
-        print("  這裡沒有已知的通路。")
+    dests = WORLD_MAP.get(character["location"], {})
+    if not dests:
+        print(C.GRAY+"  ⚻ 沒有通路。"+C.RESET)
         return
-    print("  可以去的地方:")
-    for i, (direction, dest) in enumerate(destinations.items(), 1):
-        print("    %d. %s -> %s" % (i, direction, dest))
-    print("    0. 取消")
-    choice = input("  選擇: ").strip()
-    if not choice.isdigit():
-        print("  無效的選擇。")
-        return
-    idx = int(choice)
-    if idx == 0:
-        print("  取消移動。")
-        return
-    if 1 <= idx <= len(destinations):
-        dest = list(destinations.values())[idx - 1]
+    print(C.CYAN+"  可去的地方:"+C.RESET)
+    icons = {"east":"→","west":"←","north":"↑","south":"↓","enter":"🚪","exit":"🚶"}
+    for i,(d,loc) in enumerate(dests.items(),1):
+        ic = icons.get(d,"•")
+        vibe = LOCATION_VIBES.get(loc,"")
+        print("    %d. %s %s  %s"%(i,ic,loc,vibe))
+    print("    %s0. 取消%s"%(C.GRAY,C.RESET))
+    ch = input("  %s選擇:%s " % (C.YELLOW,C.RESET)).strip()
+    if not ch.isdigit(): return
+    idx = int(ch)
+    if idx==0: return
+    if 1<=idx<=len(dests):
+        dest = list(dests.values())[idx-1]
+        # Travel time
+        hours = 1
+        if character.get("riding"):
+            v = VEHICLES.get(character["riding"])
+            if v:
+                hours = max(1, int(1 / v.get("speed",1.0)))
         character["location"] = dest
-        advance_time(character)
-        print("  移動到 %s。" % dest)
+        advance_time(character, hours)
+        vibe = LOCATION_VIBES.get(dest,"")
+        print(C.GREEN+"  移動到 %s。%s" % (dest, vibe)+C.RESET)
+        # Random event on travel
+        roll_random_event(character)
         return
-    print("  無效的選擇。")
+    print(C.RED+"  無效。"+C.RESET)
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+# REST
+# ═══════════════════════════════════════════════════════════════════════════
 
 def do_rest(character):
-    heal = min(character["max_hp"] - character["hp"], 30)
-    sp_heal = min(character["max_sp"] - character["sp"], 20)
-    character["hp"] += heal
-    character["sp"] += sp_heal
-    print("  你休息了，恢復了 %dHP 和 %dSP。" % (heal, sp_heal))
-    advance_time(character, 2)
+    global _current_weather
+    we = WEATHER_EFFECTS.get(_current_weather, {"rest_bonus":1.0})
+    bonus = we["rest_bonus"]
+    heal_hp = min(character["max_hp"]-character["hp"], int(35*bonus))
+    heal_sp = min(character["max_sp"]-character["sp"], int(25*bonus))
+    character["hp"] += heal_hp
+    character["sp"] += heal_sp
 
+    events = [
+        (0.2,"夢境","🌙 做了奇異的夢...關於鏡湖的光。",
+         lambda c:[_restore(c,"sp",30),_restore(c,"hp",40),
+                   gain_exp_with_skills(c,10,"knowledge",10)]),
+        (0.1,"NPC訪問","🌷 有NPC來探望你，感覺心情好了。",
+         lambda c:[_restore(c,"hp",20),_restore(c,"sp",20),modify_reputation(c,3)]),
+        (0.1,"危險","⚡ 被聲響驚醒!幸好沒事。",
+         lambda c: c["hp"]<c["max_hp"]-10 and c.update({"hp":min(c["max_hp"],c["hp"]+10)})),
+        (0.6,"平靜","💤 安安靜靜地休息。",
+         lambda c:[_restore(c,"hp",35),_restore(c,"sp",25)]),
+    ]
+    roll = _random.random()
+    cum = 0.0
+    triggered = False
+    for prob, ename, desc, action in events:
+        cum += prob
+        if roll < cum:
+            print(C.CYAN+"\n  [休息事件: %s]"%ename+C.RESET+" "+desc)
+            action(character)
+            triggered = True
+            break
+    if not triggered:
+        print(C.CYAN+"\n  💤 休息，恢復 %dHP %dSP。"%(heal_hp,heal_sp)+C.RESET)
+    else:
+        print(C.GRAY+"  (HP+%d, SP+%d)"%(heal_hp,heal_sp)+C.RESET)
+    advance_time(character,2)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# INVENTORY
+# ═══════════════════════════════════════════════════════════════════════════
 
 def do_inventory(character):
     inv = character["inventory"]
+    total_w = sum(get_item_def(i).get("weight",0.5) for i in inv)
     print("")
-    print("  物品欄 (%d):" % len(inv))
-    for i, item in enumerate(inv, 1):
-        print("    %d. %s" % (i, item))
+    print(C.CYAN+"┌"+"─"*40+"┐"+C.RESET)
+    print(C.CYAN+"│  物品欄 (%d/%d)  負重 %.1f/%.0f kg" % (len(inv),MAX_INVENTORY_SLOTS,total_w,MAX_INVENTORY_WEIGHT)+C.RESET)
+    print(C.CYAN+"├"+"─"*40+"┤"+C.RESET)
+    tc = {"consumable":C.GREEN,"weapon":C.RED,"armor":C.BLUE,"material":C.YELLOW,
+          "accessory":C.MAGENTA,"quest":C.CYAN,"junk":C.GRAY,"misc":C.WHITE}
     if not inv:
-        print("    （物品欄為空）")
-    print("  金幣: %d" % character.get("gold", 0))
+        print(C.CYAN+"│  "+C.GRAY+"（空）"+C.RESET+" "*33+C.CYAN+"│"+C.RESET)
+    else:
+        for i, item in enumerate(inv,1):
+            d = get_item_def(item)
+            ty = d.get("type","misc")
+            co = tc.get(ty,C.WHITE)
+            wt = d.get("weight",0.5)
+            val = d.get("value",0)
+            line = "  %s%2d.%s %s%s%s (%.1fkg)" % (co,i,C.RESET,co,item,C.RESET,wt)
+            print(C.CYAN+"│ "+line.ljust(38)+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"└"+"─"*40+"┘"+C.RESET)
+    print("  "+C.YELLOW+"金幣: %d"%character.get("gold",0)+C.RESET)
+    if total_w > MAX_INVENTORY_WEIGHT:
+        print(C.RED+"  ⚠ 負重過載!"+C.RESET)
+    if len(inv) >= MAX_INVENTORY_SLOTS:
+        print(C.YELLOW+"  ⚠ 物品欄已滿!"+C.RESET)
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+# EQUIPMENT
+# ═══════════════════════════════════════════════════════════════════════════
 
 def do_equipment_menu(character, equipment):
-    print("")
-    print("  1. 查看裝備欄")
-    print("  2. 裝備物品")
-    print("  3. 卸下裝備")
-    print("  0. 返回")
-    choice = input("  > ").strip()
-    if choice == "1":
+    print("\n"+C.WHITE+C.BOLD+"  裝備管理"+C.RESET)
+    print("  "+C.CYAN+"1. 查看"+C.RESET+"  "+C.CYAN+"2. 裝備"+C.RESET+"  "+C.CYAN+"3. 卸下"+C.RESET+"  "+C.GRAY+"0. 返回"+C.RESET)
+    ch = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
+    if ch=="1":
         print(equipment.display())
-        return
-    if choice == "2":
-        print("  物品欄:")
-        for i, item in enumerate(character["inventory"], 1):
-            print("    %d. %s" % (i, item))
-        if not character["inventory"]:
-            print("    （物品欄為空）")
+        b = equipment.get_stat_bonuses()
+        if b:
+            print(C.DIM+"  加成: "+" ".join("%s%+.1f"%(k,v) for k,v in b.items())+C.RESET)
+    elif ch=="2":
+        inv = character["inventory"]
+        print(C.CYAN+"  物品欄:"+C.RESET)
+        for i,item in enumerate(inv,1):
+            d = get_item_def(item)
+            sl = d.get("slot","")
+            h = " (→%s)"%sl if sl else ""
+            print("    %d. %s%s"%(i,item,h))
+        if not inv:
+            print(C.GRAY+"    （空）"+C.RESET); return
+        ic = input("  %s編號:%s " % (C.YELLOW,C.RESET)).strip()
+        if not ic.isdigit(): return
+        idx = int(ic)-1
+        if idx<0 or idx>=len(inv): return
+        iname = inv[idx]
+        idf = get_item_def(iname)
+        # Consumable: use directly
+        if idf.get("type")=="consumable":
+            hh = idf.get("heal_hp",0)
+            hs = idf.get("heal_sp",0)
+            if hh>0:
+                ah = min(character["max_hp"]-character["hp"],hh)
+                character["hp"] += ah
+                print(C.GREEN+"  使用了 %s +%dHP!"%(iname,ah)+C.RESET)
+            if hs>0:
+                a2 = min(character["max_sp"]-character["sp"],hs)
+                character["sp"] += a2
+                print(C.BLUE+"  使用了 %s +%dSP!"%(iname,a2)+C.RESET)
+            inv.pop(idx)
+            gain_skill_exp(character,"craft",1)
             return
-        item_choice = input("  選擇物品編號: ").strip()
-        if not item_choice.isdigit():
-            print("  無效選擇。")
-            return
-        idx = int(item_choice) - 1
-        if idx < 0 or idx >= len(character["inventory"]):
-            print("  無效的編號。")
-            return
-        item_name = character["inventory"][idx]
-        print("  可槽位:")
-        for j, (sid, sname) in enumerate(EQUIPMENT_SLOTS, 1):
+        # Equip
+        ss = idf.get("slot","")
+        print(C.CYAN+"  槽位:"+C.RESET)
+        for j,(sid,sname) in enumerate(EQUIPMENT_SLOTS):
             cur = equipment.slots.get(sid)
-            status = cur["item"]["name"] if cur and cur["item"] else "(空)"
-            print("    %d. %s [%s]" % (j, sname, status))
-        slot_choice = input("  選擇槽位編號: ").strip()
-        if not slot_choice.isdigit():
-            print("  無效選擇。")
-            return
-        slot_idx = int(slot_choice) - 1
-        if slot_idx < 0 or slot_idx >= len(EQUIPMENT_SLOTS):
-            print("  無效的槽位。")
-            return
-        slot_id = EQUIPMENT_SLOTS[slot_idx][0]
-        old = equipment.equip(slot_id, {"name": item_name, "durability": 100})
+            st = cur["item"]["name"] if cur and cur["item"] else "(空)"
+            mk = " ★" if sid==ss else ""
+            print("    %d. %s [%s]%s"%(j+1,sname,st,mk))
+        sc = input("  %s槽位編號:%s " % (C.YELLOW,C.RESET)).strip()
+        if not sc.isdigit(): return
+        si = int(sc)-1
+        if si<0 or si>=len(EQUIPMENT_SLOTS): return
+        sid = EQUIPMENT_SLOTS[si][0]
+        md = idf.get("durability",100)
+        old = equipment.equip(sid, {"name":iname,"durability":md,"current_durability":md,
+                                     "stat_multipliers":idf.get("stat_multipliers",{})})
         if old:
-            character["inventory"].append(old)
-        character["inventory"].pop(idx)
-        apply_equipment_bonuses(character, equipment)
-        print("  已裝備: %s -> %s" % (item_name, EQUIPMENT_SLOTS[slot_idx][1]))
-    elif choice == "3":
+            character["inventory"].append(old.get("name",old))
+        inv.pop(idx)
+        equipment.apply_stat_bonuses(character)
+        print(C.GREEN+"  已裝備 %s → %s"%(iname,EQUIPMENT_SLOTS[si][1])+C.RESET)
+    elif ch=="3":
         print(equipment.display())
-        slot_id = input("  輸入要卸下的槽位ID: ").strip()
-        valid_slots = {s[0] for s in EQUIPMENT_SLOTS}
-        if slot_id not in valid_slots:
-            print("  無效的槽位。")
-            return
-        old = equipment.unequip(slot_id)
+        sid = input("  %s卸下槽位ID:%s " % (C.YELLOW,C.RESET)).strip()
+        vs = {s[0] for s in EQUIPMENT_SLOTS}
+        if sid not in vs: return
+        old = equipment.unequip(sid)
         if old:
-            character["inventory"].append(old)
-            apply_equipment_bonuses(character, equipment)
-            print("  已卸下: %s" % old.get("name", "?"))
+            character["inventory"].append(old.get("name","?"))
+            equipment.apply_stat_bonuses(character)
+            print(C.GREEN+"  已卸下 %s"%old.get("name","?")+C.RESET)
         else:
-            print("  該槽位是空的。")
+            print(C.GRAY+"  該槽位空的。"+C.RESET)
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CRAFTING
+# ═══════════════════════════════════════════════════════════════════════════
 
 def do_crafting(character):
     print("")
-    print("  可用配方:")
+    print(C.CYAN+"┌"+"─"*44+"┐"+C.RESET)
+    print(C.CYAN+"│  合成系統"+C.RESET+" "*33+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"├"+"─"*44+"┤"+C.RESET)
     for r in RECIPES:
-        print("    %s: %s (分類: %s, 失敗率: %d%%)" % (r["recipe_id"], r["name"], r["category"], int(r["failure_chance"] * 100)))
-    recipe_id = input("  輸入配方ID (或按Enter取消): ").strip()
-    if not recipe_id:
-        return
-    success, result, msg = craft_item(recipe_id, character["inventory"])
-    if success:
-        print("  [成功] %s" % msg)
+        igs = ", ".join("%s x%d"%(ig["item"],ig["quantity"]) for ig in r["ingredients"])
+        has = all(character["inventory"].count(ig["item"])>=ig["quantity"] for ig in r["ingredients"])
+        st = C.GREEN+"✓"+C.RESET if has else C.RED+"✗"+C.RESET
+        print(C.CYAN+"│ %s %s %s: %s"%(st,r["recipe_id"],r["name"],igs).ljust(42)+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"└"+"─"*44+"┘"+C.RESET)
+    rid = input("  %s配方ID (Enter取消):%s " % (C.YELLOW,C.RESET)).strip()
+    if not rid: return
+    suc, res, msg = craft_item(rid, character["inventory"])
+    if suc:
+        print(C.GREEN+"  ✓ "+msg+C.RESET)
+        gain_skill_exp(character,"craft",8)
     else:
-        print("  [失敗] %s" % msg)
+        print(C.RED+"  ✗ "+msg+C.RESET)
     advance_time(character)
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+# SCENE OBJECT INTERACTION (搜索)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def do_scene_search(character, equipment):
+    loc = character["location"]
+    objs = SCENE_OBJECTS.get(loc, [])
+    if not objs:
+        print(C.GRAY+"\n  這裡沒有可互動的物體。"+C.RESET)
+        return
+
+    # Check for workstation bonus
+    has_workshop = False
+    for prop_name, prop in character.get("owned_properties", {}).items():
+        if "craft" in prop.get("functions", []):
+            has_workshop = True
+
+    print(C.CYAN+"\n  可互動物體:"+C.RESET)
+    for i, obj in enumerate(objs, 1):
+        icons = {"container":"📦","decoration":"🎨","workstation":"🔧","vehicle":"🚢"}
+        ic = icons.get(obj["type"],"•")
+        locked = " 🔒" if obj.get("locked") else ""
+        print("    %d. %s %s%s" % (i, ic, obj["name"], locked))
+    print("    %s0. 取消%s" % (C.GRAY, C.RESET))
+    ch = input("  %s選擇:%s " % (C.YELLOW, C.RESET)).strip()
+    if not ch.isdigit(): return
+    idx = int(ch)-1
+    if idx<0 or idx>=len(objs): return
+    obj = objs[idx]
+    obj_name = obj.get("name","?")
+    obj_type = obj.get("type","")
+    print(C.CYAN+"\n  [%s] %s" % (obj_name, obj.get("desc",""))+C.RESET)
+
+    if obj_type == "decoration":
+        note = obj.get("note","")
+        if note:
+            print("  " + C.YELLOW + note + C.RESET)
+        else:
+            print(C.GRAY+"  只是個普通的%s。"%obj_name+C.RESET)
+
+    elif obj_type == "container":
+        if obj.get("locked"):
+            key_needed = obj.get("key","")
+            has_key = key_needed and key_needed in character["inventory"]
+            if has_key:
+                print(C.GREEN+"  🔑 用%s解鎖了!"%key_needed+C.RESET)
+                obj["locked"] = False
+            else:
+                print(C.RED+"  🔒 鎖住了。需要: %s"%key_needed+C.RESET)
+                return
+        contents = obj.get("contents", [])
+        if contents:
+            print(C.GREEN+"  📦 找到:"+C.RESET)
+            for item in contents:
+                character["inventory"].append(item)
+                print("    ✓ %s"%item)
+            obj["contents"] = []  # looted
+        else:
+            print(C.GRAY+"  📦 裡面是空的。"+C.RESET)
+
+    elif obj_type == "workstation":
+        st = obj.get("station_type","")
+        print(C.CYAN+"  🔧 這是個%s工作台。"%st+C.RESET)
+        if has_workshop:
+            print(C.GREEN+"  (你擁有的工坊提供額外加成!)"+C.RESET)
+        print(C.GREEN+"  1. 使用工作台(恢復SP)"+C.RESET)
+        print(C.GREEN+"  2. 合成(使用工作台加成)"+C.RESET)
+        print(C.GRAY+"  0. 離開"+C.RESET)
+        wc = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
+        if wc == "1":
+            heal = 15 * (2 if has_workshop else 1)
+            _restore(character, "sp", heal)
+            print(C.BLUE+"  在%s休息，恢復%dSP。"%(obj_name,heal)+C.RESET)
+        elif wc == "2":
+            do_crafting(character)
+
+    elif obj_type == "vehicle":
+        vt = obj.get("vehicle_type","")
+        if vt:
+            # Check if player owns it or can use it
+            if vt in VEHICLES:
+                print(C.CYAN+"  🚢 %s - %s" % (vt, VEHICLES[vt]["desc"])+C.RESET)
+                print(C.GREEN+"  1. 騎乘"+C.RESET)
+                print(C.GRAY+"  0. 取消"+C.RESET)
+                vc = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
+                if vc == "1":
+                    # Check if owned or can be found here
+                    veh_state = character.get("vehicles", {})
+                    if vt not in veh_state or not veh_state[vt].get("owned", False):
+                        veh_state[vt] = {"owned": True, "location": loc}
+                        character["vehicles"] = veh_state
+                        print(C.GREEN+"  你獲得了 %s!"%vt+C.RESET)
+                    mount_vehicle(character, vt, veh_state)
+                    print(C.GREEN+"  騎上了 %s!"%vt+C.RESET)
+
+    advance_time(character)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# NPC INTERACTION
+# ═══════════════════════════════════════════════════════════════════════════
 
 def do_interact_npc(character):
     loc = character["location"]
-    if loc == "方碑丘":
-        print("")
-        print("  你遇到了小狐丸。她正在整理鏡湖火山口的冰晶。")
-        print("  小狐丸: 「你好，旅人。需要什麼幫助嗎？」")
-        print("  1. 詢問消息")
-        print("  2. 交流 (消耗SP)")
-        print("  0. 離開")
-        choice = input("  > ").strip()
-        if choice == "1":
-            print('  小狐丸: 「鏡湖的水晶最近變得不太穩定...最好小心點。」')
-        elif choice == "2":
-            if character["sp"] >= 10:
-                character["sp"] -= 10
-                character["exp"] += 15
-                print("  小狐丸分享了她的知識。你獲得了15點經驗。")
-                print("  (SP -10)")
+    rep = character.get("reputation",0)
+    # Find ALL NPCs at this location based on schedule
+    npcs_here = []
+    all_sched = NPC_SCHEDULES
+    for npc_name in all_sched:
+        act, aloc, mood = get_npc_activity(npc_name, character["hour"])
+        if aloc == loc:
+            npcs_here.append((npc_name, act, aloc, mood))
+
+    if not npcs_here:
+        print(C.GRAY+"\n  這裡沒有可互動的NPC。"+C.RESET)
+        return
+
+    print(C.CYAN+"\n  遇到的NPC:"+C.RESET)
+    for i,(n,act,aloc,m) in enumerate(npcs_here,1):
+        mc_icons = {"focused":"⚔","alert":"👁","rest":"💤","friendly":"😊","sleep":"😴"}
+        ic = mc_icons.get(m,"•")
+        print("    %d. %s%s %s (%s)"%(i,ic,n,act))
+    print("    %s0. 取消%s"%(C.GRAY,C.RESET))
+    ch = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
+    if not ch.isdigit(): return
+    idx = int(ch)-1
+    if idx<0 or idx>=len(npcs_here): return
+    npc_name, npc_act, npc_loc, npc_mood = npcs_here[idx]
+
+    # NPC-specific interactions for known NPCs, generic for others
+    if npc_name == "小狐丸":
+        print("\n" + C.CYAN + "  小狐丸正在" + npc_act + "。" + C.RESET)
+        if rep >= 20:
+            print(C.CYAN+"  小狐丸: 「你好，旅人。」"+C.RESET)
+            print(C.GREEN+"  1. 詢問消息"+C.RESET)
+            print(C.CYAN+"  2. 交流 (SP-10)"+C.RESET)
+            print(C.GREEN+"  3. 送禮物"+C.RESET)
+            print(C.CYAN+"  4. 接受任務"+C.RESET)
+        else:
+            print(C.CYAN+"  小狐丸淡淡看了你一眼。"+C.RESET)
+            print(C.GREEN+"  1. 打招呼"+C.RESET)
+            print(C.CYAN+"  2. 交流 (SP-10)"+C.RESET)
+        print(C.GRAY+"  0. 離開"+C.RESET)
+        c = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
+
+        if c=="1":
+            if rep>=20:
+                print(C.YELLOW+'  小狐丸: 「鏡湖的水晶最近不太穩定...小心點。」'+C.RESET)
+                add_relationship(character,"小狐丸",2)
+                modify_reputation(character,1)
             else:
-                print("  SP不足，無法進行交流。")
+                print(C.YELLOW+'  小狐丸: 「...你好。」'+C.RESET)
+                add_relationship(character,"小狐丸",1)
+        elif c=="2":
+            if character["sp"]>=10:
+                character["sp"]-=10
+                eg = 15+rep//10
+                print(C.CYAN+"  交流獲得%d經驗。"%eg+C.RESET+C.GRAY+" (SP-10)"+C.RESET)
+                for m in gain_exp_with_skills(character,eg,"knowledge",5):
+                    print("  "+C.MAGENTA+m+C.RESET)
+                add_relationship(character,"小狐丸",5)
+            else:
+                print(C.RED+"  SP不足!"+C.RESET)
+        elif c=="3" and rep>=20:
+            gifts = [g for g in ["草藥","火元素","水晶碎片"] if g in character["inventory"]]
+            if gifts:
+                g = _random.choice(gifts)
+                character["inventory"].remove(g)
+                add_relationship(character,"小狐丸",10)
+                modify_reputation(character,2)
+                print(C.GREEN+"  送出%s, +10好感!"%g+C.RESET)
+            else:
+                print(C.GRAY+"  你沒有可送的禮物。"+C.RESET)
+        elif c=="4" and rep>=20:
+            _try_accept_quest(character, "SQ-02") or _try_accept_quest(character, "SQ-08")
         else:
-            print("  你告別了小狐丸。")
-    elif loc == "秘密鐵工廠":
-        print("")
-        print("  你遇到了左間小蒼蘭。她正在工作台前忙碌。")
-        print("  左間小蒼蘭: 「需要什麼嗎？我可以幫你打造東西。」")
-        print("  1. 詢問合成配方")
-        print("  2. 休息 (恢復SP)")
-        print("  0. 離開")
-        choice = input("  > ").strip()
-        if choice == "1":
-            print("  左間小蒼蘭: 「你有火焰藥水配方和鐵劍配方。需要我詳細解釋嗎？」")
-        elif choice == "2":
-            character["sp"] = min(character["max_sp"], character["sp"] + 20)
-            print("  你在工坊休息，恢復了20SP。")
+            if rep>=20: add_relationship(character,"小狐丸",-1)
+            print(C.GRAY+"  告別小狐丸。"+C.RESET)
+
+    elif npc_name == "左間小蒼蘭":
+        print("\n"+C.CYAN+"  左間小蒼蘭正在%s。"%npc_act+C.RESET)
+        print(C.CYAN+"  左間小蒼蘭: 「需要什麼？」"+C.RESET)
+        print(C.GREEN+"  1. 詢問合成配方"+C.RESET)
+        print(C.CYAN+"  2. 工坊休息 (SP+20)"+C.RESET)
+        print(C.GREEN+"  3. 學習製作 (SP-8)"+C.RESET)
+        print(C.CYAN+"  4. 接受任務"+C.RESET)
+        print(C.GRAY+"  0. 離開"+C.RESET)
+        c = input("  %s>%s "%(C.YELLOW,C.RESET)).strip()
+        if c=="1":
+            print(C.YELLOW+"  小蒼蘭展示了配方: 火焰藥水、鐵劍、皮甲、治療藥水。"+C.RESET)
+            add_relationship(character,"左間小蒼蘭",3)
+        elif c=="2":
+            hs = min(character["max_sp"]-character["sp"],25)
+            character["sp"]+=hs
+            print(C.BLUE+"  工坊休息 +%dSP。"%hs+C.RESET)
+            add_relationship(character,"左間小蒼蘭",2)
+        elif c=="3":
+            if character["sp"]>=8:
+                character["sp"]-=8
+                for m in gain_exp_with_skills(character,10,"craft",8):
+                    print("  "+C.MAGENTA+m+C.RESET)
+                print(C.GREEN+"  學到製作技巧!"+C.RESET)
+                add_relationship(character,"左間小蒼蘭",4)
+            else:
+                print(C.RED+"  SP不足!"+C.RESET)
+        elif c=="4":
+            _try_accept_quest(character,"MQ-02") or _try_accept_quest(character,"SQ-07")
         else:
-            print("  你告別了左間小蒼蘭。")
-    elif loc == "便利店":
-        print("")
-        print("  你遇到了紅。她正在店裡值班。")
-        print("  紅: 「歡迎光臨！有需要什麼嗎？」")
-        print("  1. 查看商店")
-        print("  2. 交流")
-        print("  0. 離開")
-        choice = input("  > ").strip()
-        if choice == "1":
-            print("  紅: 「我有些草藥和材料可以交換你的物品。」")
-            print("  (商店功能開發中)")
-        elif choice == "2":
-            print('  紅: 「這裡是方碑丘的安全區，白天和夜晚都很平靜。」')
+            add_relationship(character,"左間小蒼蘭",-1)
+            print(C.GRAY+"  告別小蒼蘭。"+C.RESET)
+
+    elif npc_name == "紅":
+        print("\n"+C.CYAN+"  紅正在%s。"%npc_act+C.RESET)
+        if rep>=15:
+            print(C.CYAN+"  紅: 「歡迎光臨!」"+C.RESET)
         else:
-            print("  你告別了紅。")
+            print(C.CYAN+"  紅: 「...需要什麼？」"+C.RESET)
+        print(C.GREEN+"  1. 商店"+C.RESET)
+        print(C.CYAN+"  2. 交流"+C.RESET)
+        print(C.CYAN+"  3. 接受任務"+C.RESET)
+        print(C.GRAY+"  0. 離開"+C.RESET)
+        c = input("  %s>%s "%(C.YELLOW,C.RESET)).strip()
+        if c=="1":
+            print(C.CYAN+"  紅的商店:"+C.RESET)
+            items_sold = [("草藥",10),("乾糧",8),("治療藥水",40),("皮甲",60),("解毒草",20)]
+            for i,(name,price) in enumerate(items_sold,1):
+                lock = "" if i<4 else C.DIM+" (需聲望%d)"%({"皮甲":20,"解毒草":10}.get(name,0))+C.RESET
+                print("  %d. %s (%dG)%s"%(i,name,price,lock))
+            bc = input("  %s購買編號 (0取消):%s "%(C.YELLOW,C.RESET)).strip()
+            if bc.isdigit():
+                bi = int(bc)-1
+                if 0<=bi<len(items_sold):
+                    iname, iprice = items_sold[bi]
+                    rep_needed = {"草藥":0,"乾糧":0,"治療藥水":0,"皮甲":20,"解毒草":10}.get(iname,0)
+                    if rep<rep_needed:
+                        print(C.RED+"  聲望不足 (需%d)"%rep_needed+C.RESET)
+                    elif character.get("gold",0)>=iprice:
+                        character["gold"]=character.get("gold",0)-iprice
+                        character["inventory"].append(iname)
+                        print(C.GREEN+"  買了 %s!"%iname+C.RESET)
+                        add_relationship(character,"紅",1)
+                    else:
+                        print(C.RED+"  金幣不足!"+C.RESET)
+        elif c=="2":
+            print(C.YELLOW+'  紅: 「這裡是安全區。」'+C.RESET)
+            add_relationship(character,"紅",2)
+            modify_reputation(character,1)
+        elif c=="3":
+            _try_accept_quest(character,"SQ-01") or _try_accept_quest(character,"SQ-06")
+        else:
+            add_relationship(character,"紅",-1)
+            print(C.GRAY+"  告別紅。"+C.RESET)
+
     else:
-        print("  這裡沒有可以互動的NPC。")
+        # Generic NPC interaction for dynamically generated NPCs
+        print("\n"+C.CYAN+"  %s正在%s。"%(npc_name,npc_act)+C.RESET)
+        rep_tier = get_reputation_tier(rep)
+        mood_color = {"calm":C.GREEN,"alert":C.RED,"rest":C.BLUE,"friendly":C.MAGENTA,"sleep":C.GRAY,"focused":C.CYAN}
+        mood_icon = {"focused":"⚔","alert":"👁","rest":"💤","friendly":"😊","sleep":"😴"}
+        print(C.CYAN+"  %s: 聲望[%s] %s%s%s"%(npc_name,rep_tier,mood_icon.get(npc_mood,""),mood_color.get(npc_mood,C.WHITE),npc_mood)+C.RESET)
+        # Reputation-based greeting variety
+        greet_pool = {
+            "敵意": ["「...離我遠點。」","「哼。」","「你來做什麼？」"],
+            "冷淡": ["「...你好。」","「有事嗎？」","「說吧。」"],
+            "中立": ["「你好啊。」","「今天天氣不錯。」","「有什麼需要？」"],
+            "友好": ["「嗨!」","「又見面了!」","「有什麼能幫你的？」"],
+            "親密": ["「你來啦!」","「剛好想找你!」","「一起去喝杯茶？」"],
+        }
+        greet = _random.choice(greet_pool.get(rep_tier, ["「...」"]))
+        print(C.CYAN+"  1. "+C.GREEN+"打招呼"+C.RESET)
+        print(C.CYAN+"  2. "+C.BLUE+"交流"+C.RESET+" (SP-10)")
+        print(C.CYAN+"  3. "+C.CYAN+"送禮物"+C.RESET)
+        # Higher reputation unlocks extra options
+        if rep >= 50 and len(get_active_quests(character)) < 3:
+            print(C.CYAN+"  4. "+C.YELLOW+"接受任務"+C.RESET)
+        print(C.GRAY+"  0. 離開"+C.RESET)
+        c = input("  %s>%s "%(C.YELLOW,C.RESET)).strip()
+        if c=="1":
+            npc_emote = _random.choice(["「こんにちは。」","「ニーハオ。」","「ハロー。」"])
+            print(C.YELLOW+'  %s: %s %s'%(npc_name,greet,npc_emote)+C.RESET)
+            add_relationship(character,npc_name,2)
+            modify_reputation(character,1)
+        elif c=="2":
+            if character["sp"]>=10:
+                character["sp"]-=10
+                eg = 10+rep//15
+                print(C.CYAN+"  交流獲得%d經驗。"%eg+C.RESET+C.GRAY+" (SP-10)"+C.RESET)
+                for m in gain_exp_with_skills(character,eg,"social",3):
+                    print("  "+C.MAGENTA+m+C.RESET)
+                add_relationship(character,npc_name,5)
+            else:
+                print(C.RED+"  SP不足!"+C.RESET)
+        elif c=="3":
+            gifts = [g for g in ["草藥","空瓶","貝殼","乾糧","乾燥花","羽毛"] if g in character.get("inventory",[])]
+            if gifts:
+                g = _random.choice(gifts)
+                character["inventory"].remove(g)
+                rep_gain = 8 + rep//20  # More rep = better gift reception
+                add_relationship(character,npc_name,rep_gain)
+                modify_reputation(character,2)
+                gift_responses = {
+                    "敵意": ["「...不要。」","「拿走。」"],
+                    "冷淡": ["「...謝謝。」","「放這吧。」"],
+                    "中立": ["「哦，謝謝!」","「你太客氣了。」"],
+                    "友好": ["「哇，是%s! 謝謝!」","「你最好了!」"],
+                    "親密": ["「謝謝你送的%s!」","「我會好好珍惜%s的!」"],
+                }
+                gr = _random.choice(gift_responses.get(rep_tier, ["「...」"]))
+                if "%s" in gr:
+                    print(C.GREEN+"  送出%s! %s"%(g,gr%g)+C.RESET)
+                else:
+                    print(C.GREEN+"  送出%s! %s"%(g,gr)+C.RESET)
+            else:
+                print(C.GRAY+"  沒有可送的禮物。"+C.RESET)
+        elif c=="4" and rep >= 50:
+            # Try to find an available side quest
+            active_ids = {qid for qid in character.get("quests",{})}
+            completed = character.get("completed_quests",[])
+            avail = [q for q in QUESTS if q["id"] not in completed and q["id"] not in active_ids and q["type"]=="side"]
+            if avail:
+                q = _random.choice(avail)
+                accept_quest(character, q)
+                print(C.GREEN+"  ✓ 接受了任務: %s"%q["title"]+C.RESET)
+                print(C.DIM+"    %s"%q["desc"]+C.RESET)
+                add_relationship(character,npc_name,10)
+            else:
+                print(C.GRAY+"  目前沒有可接受的任務。"+C.RESET)
+        else:
+            add_relationship(character,npc_name,-1)
+            print(C.GRAY+"  告別%s。"%npc_name+C.RESET)
+
     advance_time(character)
+
+def _try_accept_quest(character, qid):
+    q = next((qq for qq in QUESTS if qq["id"]==qid), None)
+    if not q:
+        return False
+    if accept_quest(character, q):
+        print(C.GREEN+"  ✓ 接受了任務: %s"%q["title"]+C.RESET)
+        print(C.DIM+"    %s"%q["desc"]+C.RESET)
+        return True
+    return False
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# QUEST SYSTEM
+# ═══════════════════════════════════════════════════════════════════════════
+
+def do_quest_menu(character):
     print("")
-    print("-" * 40)
-    print(get_time_desc(character["hour"], character["day"]))
-    print("位置: %s" % character["location"])
-    print("HP: %d/%d  |  SP: %d/%d  |  攻擊: %d  |  防禦: %d  |  經驗: %d  |  金幣: %d" % (
-        character["hp"], character["max_hp"],
-        character["sp"], character["max_sp"],
-        character["atk"], character["def"],
-        character["exp"], character["gold"],
-    ))
-    print("-" * 40)
-    activity, npc_loc, mood = get_npc_activity("小狐丸", character["hour"])
-    print("NPC 小狐丸: %s @ %s (%s)" % (activity, npc_loc, mood))
-    if 6 <= character["hour"] < 10:
-        print("  (早晨 - 精力充沛)")
-    elif 10 <= character["hour"] < 14:
-        print("  (上午 - 正當午)")
-    elif 14 <= character["hour"] < 18:
-        print("  (午後 - 熱浪襲來)")
-    elif 18 <= character["hour"] < 22:
-        print("  (傍晚 - 涼風習習)")
+    print(C.CYAN+"┌"+"─"*44+"┐"+C.RESET)
+    print(C.CYAN+"│  任務系統"+C.RESET+" "*33+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"├"+"─"*44+"┤"+C.RESET)
+    print(C.CYAN+"│  1. 查看進行中的任務"+C.RESET+" "*17+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"│  2. 查看可接受的任務"+C.RESET+" "*16+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"│  3. 查看已完成任務"+C.RESET+" "*17+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"│  "+C.GRAY+"0. 返回"+C.RESET+" "*32+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"└"+"─"*44+"┘"+C.RESET)
+    ch = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
+    if ch=="1":
+        active = get_active_quests(character)
+        if not active:
+            print(C.GRAY+"  沒有進行中的任務。"+C.RESET)
+            return
+        for qdef, qdata in active:
+            type_color = C.RED if qdef["type"]=="main" else C.GREEN
+            print("\n  " + type_color + "[%s] %s: %s" % (qdef["id"],qdef["title"],qdef["desc"]) + C.RESET)
+            print("  " + C.DIM + "    給予者: %s" % qdef.get("giver","?") + C.RESET)
+            for obj in qdef["objectives"]:
+                key = obj["type"]+":"+obj["target"]
+                prog = qdata["progress"].get(key,0)
+                qty = obj.get("qty",1)
+                done = "✓" if prog>=qty else "%d/%d"%(prog,qty)
+                ac = C.GREEN if prog>=qty else C.YELLOW
+                print("    %s %s [%s]" % (ac, obj.get("detail","?"), done) + C.RESET)
+            print("    報酬: %dEXP %dG%s" % (qdef.get("reward_exp",0),qdef.get("reward_gold",0),
+                  " +"+qdef.get("reward_item","") if qdef.get("reward_item") else ""))
+    elif ch=="2":
+        completed = character.get("completed_quests",[])
+        active_ids = {qid for qid in character.get("quests",{})}
+        avail = [q for q in QUESTS if q["id"] not in completed and q["id"] not in active_ids]
+        if not avail:
+            print(C.GRAY+"  沒有可接受的任務。"+C.RESET)
+            return
+        for q in avail:
+            tc = C.RED if q["type"]=="main" else C.GREEN
+            print("  %s[%s] %s%s" % (tc,q["id"],q["title"],C.RESET)+" - "+q.get("giver","?"))
+            print("    "+C.DIM+q["desc"][:50]+C.RESET)
+    elif ch=="3":
+        completed = character.get("completed_quests",[])
+        if not completed:
+            print(C.GRAY+"  尚未完成任何任務。"+C.RESET)
+            return
+        for cid in completed:
+            q = next((qq for qq in QUESTS if qq["id"]==cid), None)
+            if q:
+                print(f"  {C.GREEN}✓ [{q['id']}] {q['title']}{C.RESET}")
+
+    # Check quest completion after any action
+    for qdef, qdata in get_active_quests(character):
+        if check_quest_completion(character, qdef["id"]):
+            reward = complete_quest(character, qdef["id"])
+            if reward:
+                print("\n"+C.YELLOW+C.BOLD+"  ⭐ 任務完成: %s!"%qdef["title"]+C.RESET)
+                print("    "+C.GREEN+"獲得 %dEXP, %dG"%(reward["exp"],reward["gold"])+C.RESET)
+                if reward.get("item"):
+                    print("    "+C.CYAN+"獲得物品: %s"%reward["item"]+C.RESET)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# VEHICLE
+# ═══════════════════════════════════════════════════════════════════════════
+
+def do_vehicle_menu(character):
+    print("\n"+C.CYAN+"┌"+"─"*44+"┐"+C.RESET)
+    print(C.CYAN+"│  載具系統"+C.RESET+" "*33+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"├"+"─"*44+"┤"+C.RESET)
+
+    owned = character.get("vehicles",{})
+    if not owned or not any(v.get("owned",False) for v in owned.values()):
+        print(C.CYAN+"│  "+C.GRAY+"尚未擁有載具。探索世界找到它們!"+C.RESET+" "*6+C.CYAN+"│"+C.RESET)
     else:
-        print("  (夜晚 - 闇影籠罩)")
-    print("")
-
-
-def print_status(character):
-    print("")
-    print("-" * 40)
-    print(get_time_desc(character["hour"], character["day"]))
-    print("位置: %s" % character["location"])
-    print("HP: %d/%d  |  SP: %d/%d  |  攻擊: %d  |  防禦: %d  |  經驗: %d  |  金幣: %d" % (
-        character["hp"], character["max_hp"],
-        character["sp"], character["max_sp"],
-        character["atk"], character["def"],
-        character["exp"], character["gold"],
-    ))
-    print("-" * 40)
-    activity, npc_loc, mood = get_npc_activity("小狐丸", character["hour"])
-    print("NPC 小狐丸: %s @ %s (%s)" % (activity, npc_loc, mood))
-    if 6 <= character["hour"] < 10:
-        print("  (早晨 - 精力充沛)")
-    elif 10 <= character["hour"] < 14:
-        print("  (上午 - 正當午)")
-    elif 14 <= character["hour"] < 18:
-        print("  (午後 - 熱浪襲來)")
-    elif 18 <= character["hour"] < 22:
-        print("  (傍晚 - 涼風習習)")
+        for vname, vstate in owned.items():
+            if vstate.get("owned",False):
+                vdef = VEHICLES.get(vname,{})
+                riding = character.get("riding")==vname
+                status = C.GREEN+"騎乘中"+C.RESET if riding else C.GRAY+"待機"+C.RESET
+                print(C.CYAN+"│  "+C.YELLOW+vname+C.RESET+" - %s | 速度x%.1f | %s"%(vdef.get("desc",""),vdef.get("speed",1.0),status).ljust(40)+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"├"+"─"*44+"┤"+C.RESET)
+    current = character.get("riding")
+    if current:
+        print(C.CYAN+"│  目前騎乘: "+C.GREEN+current+C.RESET+" "*24+C.CYAN+"│"+C.RESET)
+        print(C.CYAN+"│  2. 下載具"+C.RESET+" "*32+C.CYAN+"│"+C.RESET)
     else:
-        print("  (夜晚 - 闇影籠罩)")
-    print("")
+        print(C.CYAN+"│  目前: 步行"+C.RESET+" "*29+C.CYAN+"│"+C.RESET)
+        owned_list = [v for v,vs in owned.items() if vs.get("owned",False)]
+        if owned_list:
+            print(C.CYAN+"│  2. 騎乘載具"+C.RESET+" "*28+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"│  "+C.GRAY+"0. 返回"+C.RESET+" "*32+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"└"+"─"*44+"┘"+C.RESET)
+    ch = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
+    if ch=="2":
+        if character.get("riding"):
+            dismount_vehicle(character)
+            print(C.GRAY+"  下了載具。"+C.RESET)
+        else:
+            owned_list = [v for v,vs in owned.items() if vs.get("owned",False)]
+            if owned_list:
+                print(C.CYAN+"  可用載具:"+C.RESET)
+                for i, vn in enumerate(owned_list,1):
+                    print("    %d. %s"%(i,vn))
+                vc = input("  %s選擇:%s "%(C.YELLOW,C.RESET)).strip()
+                if vc.isdigit():
+                    vi = int(vc)-1
+                    if 0<=vi<len(owned_list):
+                        vn = owned_list[vi]
+                        mount_vehicle(character, vn, owned)
+                        print(C.GREEN+"  騎上 %s!"%vn+C.RESET)
+            else:
+                print(C.GRAY+"  沒有可用載具。"+C.RESET)
 
 
-def print_menu():
-    print("  1. 探索周圍")
-    print("  2. 與NPC對話")
-    print("  3. 前往其他場景")
-    print("  4. 休息")
-    print("  5. 查看物品欄")
-    print("  6. 查看/裝備物品")
-    print("  7. 查看地圖")
-    print("  8. 合成物品")
-    print("  h. 幫助")
-    print("")
-    print("  > ", end="")
+# ═══════════════════════════════════════════════════════════════════════════
+# REAL ESTATE
+# ═══════════════════════════════════════════════════════════════════════════
 
+def do_real_estate(character):
+    print("\n"+C.CYAN+"┌"+"─"*44+"┐"+C.RESET)
+    print(C.CYAN+"│  不動產系統"+C.RESET+" "*31+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"├"+"─"*44+"┤"+C.RESET)
+    owned = character.get("owned_properties", {})
+    if owned:
+        print(C.CYAN+"│  擁有的不動產:"+C.RESET+" "*25+C.CYAN+"│"+C.RESET)
+        for pname, pdata in owned.items():
+            pd = REAL_ESTATE.get(pname, {})
+            funcs = ", ".join(pd.get("functions",[]))
+            print(C.CYAN+"│  "+C.YELLOW+"🏠 %s"%pname+C.RESET+" [%s]"%funcs + " "*(30-len(pname)-len(funcs)) + C.CYAN+"│"+C.RESET)
+    else:
+        print(C.CYAN+"│  "+C.GRAY+"你還沒有不動產。"+C.RESET+" "*22+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"├"+"─"*44+"┤"+C.RESET)
+    print(C.CYAN+"│  1. 查看可購買的不動產"+C.RESET+" "*12+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"│  2. 使用不動產功能"+C.RESET+" "*14+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"│  "+C.GRAY+"0. 返回"+C.RESET+" "*32+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"└"+"─"*44+"┘"+C.RESET)
+    ch = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
+    if ch=="1":
+        print(C.CYAN+"  可購買:"+C.RESET)
+        from sim_systems import REAL_ESTATE_KEYS
+        for i, pname in enumerate(REAL_ESTATE_KEYS,1):
+            pd = REAL_ESTATE[pname]
+            owned_flag = " ✓" if pname in owned else ""
+            print("    %d. 🏠 %s — %dG [%s]%s"%(i,pname,pd["price"],",".join(pd["functions"]),owned_flag))
+        bc = input("  %s購買編號 (0取消):%s "%(C.YELLOW,C.RESET)).strip()
+        if bc.isdigit():
+            bi = int(bc)-1
+            if 0<=bi<len(REAL_ESTATE_KEYS):
+                pname = REAL_ESTATE_KEYS[bi]
+                pd = REAL_ESTATE[pname]
+                price = pd["price"]
+                if pname in owned:
+                    print(C.YELLOW+"  你已經擁有這個不動產。"+C.RESET)
+                elif character.get("gold",0) >= price and len(owned) < MAX_PROPERTIES:
+                    character["gold"] = character.get("gold",0) - price
+                    character.setdefault("owned_properties",{})[pname] = {"name":pname,"functions":pd["functions"]}
+                    character["owned_properties"][pname]["location"] = character["location"]
+                    print(C.GREEN+"  ✓ 購買了 %s!"%pname+C.RESET)
+                    modify_reputation(character,5)
+                elif len(owned) >= MAX_PROPERTIES:
+                    print(C.RED+"  已達不動產上限 (%d)!"%MAX_PROPERTIES+C.RESET)
+                else:
+                    print(C.RED+"  金幣不足 (需要%dG)!"%price+C.RESET)
+    elif ch=="2":
+        if not owned:
+            print(C.GRAY+"  沒有不動產可用。"+C.RESET)
+            return
+        print(C.CYAN+"  你的不動產:"+C.RESET)
+        for i, pname in enumerate(owned.keys(),1):
+            pd = REAL_ESTATE.get(pname, {})
+            funcs = pd.get("functions",[])
+            print("    %d. 🏠 %s [%s]"%(i,pname,",".join(funcs)))
+        pc = input("  %s使用編號:%s "%(C.YELLOW,C.RESET)).strip()
+        if pc.isdigit():
+            pi = int(pc)-1
+            owned_list = list(owned.keys())
+            if 0<=pi<len(owned_list):
+                pname = owned_list[pi]
+                pd = REAL_ESTATE.get(pname, {})
+                funcs = pd.get("functions",[])
+                print(C.CYAN+"  🏠 %s — 可用功能: %s"%(pname,",".join(funcs))+C.RESET)
+                if "rest" in funcs:
+                    print(C.GREEN+"    1. 休息 (完全恢復)"+C.RESET)
+                if "craft" in funcs:
+                    print(C.GREEN+"    2. 使用工作台(合成)"+C.RESET)
+                if "store" in funcs:
+                    print(C.GREEN+"    3. 倉庫(查看物品)"+C.RESET)
+                print(C.GRAY+"    0. 取消"+C.RESET)
+                ac = input("  %s>%s "%(C.YELLOW,C.RESET)).strip()
+                if ac=="1" and "rest" in funcs:
+                    character["hp"] = character["max_hp"]
+                    character["sp"] = character["max_sp"]
+                    print(C.GREEN+"  ✓ 完全恢復!"+C.RESET)
+                    advance_time(character,2)
+                elif ac=="2" and "craft" in funcs:
+                    do_crafting(character)
+                elif ac=="3" and "store" in funcs:
+                    do_inventory(character)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# MAIN GAME LOOP
+# ═══════════════════════════════════════════════════════════════════════════
 
 def start_game():
+    global _current_weather
+    # Expand game data from game_data module (card-based content)
+    expand_game()
     print("")
-    print("=" * 60)
-    print("  角色扮演模擬 — CLI RPG Simulation")
-    print("  Target: CLI only, no UI, symbol portraits")
-    print("=" * 60)
+    print(C.MAGENTA+C.BOLD+"╔"+"═"*58+"╗"+C.RESET)
+    print(C.MAGENTA+C.BOLD+"║"+C.RESET+"  "+C.WHITE+C.BOLD+"CLI 角色扮演模擬 — CLI RPG Simulation"+C.RESET + " "*9 + C.MAGENTA+C.BOLD+"║"+C.RESET)
+    print(C.MAGENTA+C.BOLD+"║"+C.RESET+"  "+C.CYAN+"CLI only, symbol portraits, simulation"+C.RESET + " "*12 + C.MAGENTA+C.BOLD+"║"+C.RESET)
+    print(C.MAGENTA+C.BOLD+"╚"+"═"*58+"╝"+C.RESET)
     print("")
-    print("  這是一個基於終端機的角色扮演模擬遊戲。")
-    print("  使用數字鍵盤輸入指令，輸入 q 退出遊戲。")
+    print(C.GRAY+"  基於終端機的角色扮演模擬遊戲。"+C.RESET)
+    print(C.GRAY+"  使用數字指令，輸入 q 退出。"+C.RESET)
     print("")
-    show_help()
-    input("  按 Enter 開始遊戲...")
+    print_help()
+    input("  "+C.YELLOW+"按 Enter 開始..."+C.RESET)
 
-    character = init_character()
+    _current_weather = roll_weather()
+    character = select_character()
     equipment = EquipmentManager()
-    location = character["location"]
+    equipment.apply_stat_bonuses(character)
+
+    # Auto-accept main quest MQ-01
+    from sim_systems import QUESTS
+    mq1 = next((q for q in QUESTS if q["id"]=="MQ-01"), None)
+    if mq1:
+        accept_quest(character, mq1)
+        print(C.GREEN+"\n  自動接受主線任務: 鏡湖的秘密"+C.RESET)
 
     while True:
+        portrait = get_portrait(character)
+        print(C.CYAN + portrait + C.RESET)
         print_status(character)
-        print_menu()
-        ch = input().strip().lower()
+        print_help()
+        ch = input("  %s>%s " % (C.YELLOW,C.RESET)).strip().lower()
 
-        if ch in ("q", "quit", "exit"):
-            print("")
-            print("遊戲結束。謝謝遊玩！")
+        if ch in ("q","quit","exit"):
+            print(C.GREEN+C.BOLD+"\n遊戲結束。謝謝遊玩!"+C.RESET)
+            print(C.GRAY+"  最終: Lv.%d | %d天 | %dG | %d任務完成" % (
+                character["level"], character["day"], character.get("gold",0),
+                len(character.get("completed_quests",[]))) + C.RESET)
+            rels = character.get("relationships",{})
+            if rels:
+                top = max(rels, key=rels.get)
+                print(C.GRAY+"  最佳關係: %s (%d)" % (top, rels[top]) + C.RESET)
             break
+        if ch=="h": print_help(); continue
+        if ch=="1": do_explore(character, equipment)
+        elif ch=="2": do_interact_npc(character)
+        elif ch=="3": do_travel(character)
+        elif ch=="4": do_rest(character)
+        elif ch=="5": do_inventory(character)
+        elif ch=="6":
+            p = get_portrait(character)
+            print(C.CYAN+p+C.RESET)
+            print(display_character_sheet(character))
+        elif ch=="7": print(display_body_parts(character))
+        elif ch=="8": do_equipment_menu(character, equipment)
+        elif ch=="9": print(display_world_map(character["location"]))
+        elif ch=="10": print(display_relationships(character))
+        elif ch=="11": do_crafting(character)
+        elif ch=="12": do_scene_search(character, equipment)
+        elif ch=="13": do_quest_menu(character)
+        elif ch=="14": do_vehicle_menu(character)
+        elif ch=="15": do_real_estate(character)
+        else: print(C.RED+"  未知指令。輸入 h 查看幫助。"+C.RESET)
 
-        if ch == "h":
-            show_help()
-            continue
-
-        if ch == "1":
-            do_explore(character)
-
-        elif ch == "2":
-            do_interact_npc(character)
-            advance_time(character)
-
-        elif ch == "3":
-            do_travel(character)
-
-        elif ch == "4":
-            do_rest(character)
-
-        elif ch == "5":
-            do_inventory(character)
-
-        elif ch == "6":
-            do_equipment_menu(character, equipment)
-
-        elif ch == "7":
-            print(display_world_map(location))
-
-        elif ch == "8":
-            do_crafting(character)
-
-        else:
-            print("  未知指令。輸入 h 查看幫助。")
-
+        # Auto-check quest completion after any action
+        for qdef, qdata in get_active_quests(character):
+            if check_quest_completion(character, qdef["id"]):
+                reward = complete_quest(character, qdef["id"])
+                if reward:
+                    print("\n"+C.YELLOW+C.BOLD+"  ⭐ 任務完成: %s!"%qdef["title"]+C.RESET)
+                    print("    "+C.GREEN+"獲得 %dEXP, %dG"%(reward["exp"],reward["gold"])+C.RESET)
+                    if reward.get("item"):
+                        print("    "+C.CYAN+"獲得物品: %s"%reward["item"]+C.RESET)
 
 if __name__ == "__main__":
     start_game()
