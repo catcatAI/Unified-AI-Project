@@ -129,6 +129,11 @@ installer = [
 game = [
   "pygame",
 ]
+# Textual TUI for the text adventure game.
+tui = [
+  "textual>=0.80.0",
+  "rich>=13.0.0",
+]
 
 # ===========================================================================
 # USER TIERS — pick ONE based on who you are.

@@ -12,7 +12,7 @@
 
 ### 設計文檔
 
-位於 `docs/02-game-design/`，以下為當前遊戲設計文檼：
+位於 `docs/02-game-design/`，以下為當前唯一有效的設計文檔：
 
 | 檔案 | 說明 |
 |------|------|
@@ -27,47 +27,6 @@
 | `MAP_AND_SCENES.md` | 地圖、場景、不動產、物件、載具 |
 | `SIMULATION_SYSTEMS.md` | NPC 作息、行程、生活模擬 |
 | `FILE_INVENTORY.md` | 這份文件 |
-
-### 已存在的舊設計文檼
-
-以下舊文檼屬於之前的遊戲概念，已被新的 RPG 模擬設計取代但保留供參考：
-
-| 檔案 | 說明 | 狀態 |
-|------|------|------|
-| `angela-design.md` | Angela 角色設計 | 舊概念 |
-| `angela-game-entity.md` | Angela 遊戲實體 | 舊概念 |
-| `art-asset-specification.md` | 美術資源規範 | 舊概念（本遊戲無圖片） |
-| `characters.md` | 角色設計 | 舊概念 |
-| `game-main.md` | 主模組設計 | 舊設計參考 |
-| `game-systems-overview.md` | 系統總覽 | 舊概念 |
-| `game-systems.md` | 遊戲系統統計設計 | 舊設計參考 |
-| `game-utils.md` | 遊戲工具 | 舊概念 |
-| `inventory.md` | 物品欄設計 | 舊設計 |
-| `items-and-inventory.md` | 物品與物品欄 | 舊設計 |
-| `items.md` | 物品定義 | 舊概念 |
-| `main-design.md` | 主設計 | 舊設計參考 |
-| `map-design.md` | 地圖設計 | 舊設計 |
-| `minigames.md` | 小遊戲 | 舊概念 |
-| `npcs.md` | NPC 系統設計 | 舊設計 |
-| `player.md` | 玩家設計 | 舊概念 |
-| `scenes.md` | 場景設計 | 舊設計 |
-| `success-criteria.md` | 成功標準 | 舊設計 |
-| `text-adventure-game-design.md` | 文字冒險遊戲詳細設計 | 舊概念（60KB 完整文本冒險） |
-| `tiles.md` | 圖塊設計 | 舊概念 |
-| `token-card-system.md` | Token 卡片系統 | 舊系統 |
-| `ui.md` | UI 設計 | 已移除（本遊戲無 UI） |
-| `world-and-scenes.md` | 世界與場景 | 舊設計 |
-| `tiles.md` | 地圖磚設計 | 舊概念 |
-
-### 子目錄舊設計文檼
-
-| 檔案 | 說明 |
-|------|------|
-| `character-design/angela-design.md` | Angela 角色設計 |
-| `character-design/general-characters.md` | 通用角色設計 |
-| `scenes/village.md` | 村莊場景設計 |
-| `workflow/FLOW_DEMONSTRATION.md` | 工作流程演示 |
-| `workflow/STANDARD_PROCESS.md` | 標準流程 |
 
 ### 後端遊戲原始碼
 
@@ -104,18 +63,25 @@
 | `export/` | 匯出模組 |
 | `integration/` | 整合模組 |
 
-### 遊戲資料
+### 遊戲資料（卡片堆）
 
 路徑: `data/`
 
 | 檔案 | 大小 | 說明 |
 |------|------|------|
-| `game_cards.json` | 347 KB | 主卡片資料 |
+| `game_cards.json` | 347 KB | 主卡片資料（含角色卡、世界觀卡、物品卡、場景卡等） |
 | `card_registry.json` | 93 KB | 卡片註冊表 |
 | `all_cards.json` | 169 KB | 整合卡片資料 |
 | `all_cards_final.json` | 381 KB | 最終整合卡片 |
 | `parsed_cards.json` | 86 KB | 解析後卡片 |
 | `card_deck_inventory.json` | 44 KB | 卡片堆庫存 |
+
+#### 卡片堆說明
+
+- 卡片堆中的設定文本多為**框架性**的（世界觀、規則、系統），而非具體角色定義
+- 角色卡從卡片堆中生成的模式為：隱藏世界中的勇者、村民等角色（角色卡都是勇者+村民的生成模型）
+- 卡片提取的差異是「有或沒有」的差異，不是「多或少」的差異
+- 卡片堆支撐從隱藏世界觀中動態生成角色（勇者和常規村民均可由框架推算生成）
 
 ### 工具腳本
 
