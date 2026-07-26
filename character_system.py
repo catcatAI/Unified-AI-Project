@@ -128,10 +128,10 @@ def gain_exp(character, amount: int) -> list:
             character["spd"] += 1
         if "karma" in character:
             character["karma"] += 1
-        # Body part HP increase
-        for part_id in character.get("body_parts", {}):
+        # Body part HP increase (distribute 5 HP across parts)
+        for i, part_id in enumerate(character.get("body_parts", {})):
             bp = character["body_parts"][part_id]
-            bp["max_hp"] += 5 // len(BODY_PARTS)
+            bp["max_hp"] += 1 if i < 5 else 0
         messages.append(f"✨ 升級! 你現在 Lv.{character['level']} (HP+5, SP+3, ATK+1, DEF+1)")
     return messages
 
@@ -235,11 +235,15 @@ def generate_character_from_card(card):
     craft_skill = len(craft_tokens) * 3 + int(stats.get("craft_bonus", 0))
 
     body_parts = {}
-    for part_id, part_name in BODY_PARTS:
+    num_parts = len(BODY_PARTS)
+    base_hp = max_hp // num_parts
+    extra = max_hp % num_parts
+    for i, (part_id, part_name) in enumerate(BODY_PARTS):
+        part_hp = base_hp + (1 if i < extra else 0)
         body_parts[part_id] = {
             "name": part_name,
-            "hp": max_hp // len(BODY_PARTS),
-            "max_hp": max_hp // len(BODY_PARTS),
+            "hp": part_hp,
+            "max_hp": part_hp,
             "condition": "完好",
         }
 
@@ -296,8 +300,8 @@ def create_blank_character(name="旅人"):
         "level": 1,
         "gold": 50,
         "body_parts": {
-            part_id: {"name": part_name, "hp": 20, "max_hp": 20, "condition": "完好"}
-            for part_id, part_name in BODY_PARTS
+            part_id: {"name": part_name, "hp": 100 // len(BODY_PARTS) + (1 if i < 100 % len(BODY_PARTS) else 0), "max_hp": 100 // len(BODY_PARTS) + (1 if i < 100 % len(BODY_PARTS) else 0), "condition": "完好"}
+            for i, (part_id, part_name) in enumerate(BODY_PARTS)
         },
         "relationships": {},
         "inventory": [],
