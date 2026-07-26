@@ -407,6 +407,14 @@ def _make_item(name: str, typ: str, slot: str, atk: float, dfn: float, spd: floa
         d["weight"] = 0.3
     if typ == "junk":
         d["weight"] = 0.2
+    # Archetype restriction based on tags (for race-specific equipment)
+    # 艦娘/combat type → naval items; 術士/element type → magical items; 獸娘/vitality type → beast items
+    if "naval" in tags:
+        d["required_archetype"] = "combat"
+    elif "elemental" in tags or "magic" in tags:
+        d["required_archetype"] = "element"
+    elif "beast" in tags or "natural" in tags:
+        d["required_archetype"] = "vitality"
     return d
 
 def generate_all_items() -> Dict[str, dict]:

@@ -521,9 +521,16 @@ def do_equipment_menu(character, equipment):
             inv.pop(idx)
             gain_skill_exp(character,"craft",1)
             return
+        # Archetype/race equipment check
+        req_arch = idf.get("required_archetype", "")
+        if req_arch:
+            char_tokens = {t.get("category","") for t in character.get("token_list", [])}
+            if req_arch not in char_tokens:
+                print(C.RED+"  ⚠ %s 需要 [%s] 類別特質才能裝備!" % (iname, req_arch)+C.RESET)
+                print(C.GRAY+"    你的角色沒有「%s」類別的token。" % req_arch+C.RESET)
+                return
         # Equip
         ss = idf.get("slot","")
-        print(C.CYAN+"  槽位:"+C.RESET)
         for j,(sid,sname) in enumerate(EQUIPMENT_SLOTS):
             cur = equipment.slots.get(sid)
             st = cur["item"]["name"] if cur and cur["item"] else "(空)"
