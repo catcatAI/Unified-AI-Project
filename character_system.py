@@ -189,9 +189,14 @@ def get_portrait(character) -> str:
 
 
 def load_cards():
-    with open(CARD_DATA_PATH, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    return data.get("cards", [])
+    try:
+        with open(CARD_DATA_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data.get("cards", [])
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print("  ⚠ 角色卡文件載入失敗: %s" % e)
+        print("  使用空白角色開始遊戲。")
+        return []
 
 
 def get_character_cards():
