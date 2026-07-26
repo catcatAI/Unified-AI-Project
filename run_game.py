@@ -569,7 +569,7 @@ def do_crafting(character):
         igs = ", ".join("%s x%d"%(ig["item"],ig["quantity"]) for ig in r["ingredients"])
         has = all(character["inventory"].count(ig["item"])>=ig["quantity"] for ig in r["ingredients"])
         st = C.GREEN+"✓"+C.RESET if has else C.RED+"✗"+C.RESET
-        print(C.CYAN+"│ %s %s %s: %s"%(st,r["recipe_id"],r["name"],igs).ljust(42)+C.CYAN+"│"+C.RESET)
+        print(C.CYAN+("│ %s %s %s: %s"%(st,r["recipe_id"],r["name"],igs)).ljust(42)+C.CYAN+"│"+C.RESET)
     print(C.CYAN+"└"+"─"*44+"┘"+C.RESET)
     rid = input("  %s配方ID (Enter取消):%s " % (C.YELLOW,C.RESET)).strip()
     if not rid: return
