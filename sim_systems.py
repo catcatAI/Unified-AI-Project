@@ -543,6 +543,135 @@ REAL_ESTATE = {
 
 REAL_ESTATE_KEYS = list(REAL_ESTATE.keys())
 
+
+# ═══════════════════════════════════════════════════════════
+# MECHANISM HELPERS (per MAP_AND_SCENES.md)
+# ═══════════════════════════════════════════════════════════
+
+MECHANISM_TYPES = {
+    "lever":          {"name":"拉桿",      "icon":"🕹", "desc":"扳動後觸發效果"},
+    "pedestal":       {"name":"基座",      "icon":"🗿", "desc":"放置物品觸發效果"},
+    "pressure_plate": {"name":"壓力板",    "icon":"⬇",  "desc":"踩踏觸發"},
+    "hidden_switch":  {"name":"隱藏開關",  "icon":"🔍", "desc":"發現後觸發"},
+    "gear":           {"name":"齒輪機關",  "icon":"⚙",  "desc":"多次操作後觸發"},
+}
+
+EFFECT_TYPES = {
+    "teleport":    {"name":"傳送",      "icon":"🌀"},
+    "route_open":  {"name":"開路",      "icon":"🛤"},
+    "reveal":      {"name":"顯現",      "icon":"✨"},
+    "trap":        {"name":"陷阱",      "icon":"⚠"},
+    "summon":      {"name":"召喚",      "icon":"👻"},
+    "heal":        {"name":"恢復",      "icon":"💚"},
+    "quest_advance":{"name":"任務推進",  "icon":"⚑"},
+}
+
+
+def resolve_mechanism_effect(obj, character, current_location=None):
+    """Resolve a mechanism's effect when activated.
+    Returns (success, message, side_effects_dict).
+    side_effects: { 'teleport_to': loc, 'enemy_spawn': enemy_name, 'route_add': (dir, target, cur_loc), ... }
+    """
+    effect = obj.get("effect", {})
+    etype = effect.get("type", "")
+    side = {}
+
+    if etype == "teleport":
+        target = effect.get("target", "")
+        if target:
+            side["teleport_to"] = target
+        return True, effect.get("message", "傳送了！"), side
+
+    elif etype == "route_open":
+        target_loc = effect.get("target", "")
+        direction = effect.get("value", "")
+        cur_loc = current_location or "?"
+        if target_loc and direction:
+            side["route_add"] = (direction, target_loc, cur_loc)
+        return True, effect.get("message", "新的道路出現了！"), side
+
+    elif etype == "reveal":
+        items = effect.get("items", [])
+        inv = character.get("inventory", [])
+        for item in items:
+            inv.append(item)
+        return True, effect.get("message", "獲得了物品！"), side
+
+    elif etype == "summon":
+        enemy_name = effect.get("enemy", "")
+        count = effect.get("count", 1)
+        if enemy_name:
+            side["enemy_spawn"] = enemy_name
+            side["enemy_count"] = count
+        return True, effect.get("message", "敵人出現了！"), side
+
+    elif etype == "heal":
+        hp = effect.get("hp", 0)
+        sp = effect.get("sp", 0)
+        if hp:
+            character["hp"] = min(character.get("max_hp", 100), character.get("hp", 0) + hp)
+        if sp:
+            character["sp"] = min(character.get("max_sp", 100), character.get("sp", 0) + sp)
+        if character.get("fatigue", 0) > 0:
+            character["fatigue"] = max(0, character["fatigue"] - 50)
+        if character.get("pain", 0) > 0:
+            character["pain"] = max(0, character["pain"] - 30)
+        return True, effect.get("message", "恢復了！"), side
+
+    elif etype == "quest_advance":
+        qid = effect.get("quest_id", "")
+        if qid:
+            side["quest_advance"] = qid
+        return True, effect.get("message", "任務進展了！"), side
+
+    elif etype == "trap":
+        dmg = effect.get("damage", 10)
+        character["hp"] = max(0, character.get("hp", 100) - dmg)
+        return True, effect.get("message", "觸發了陷阱！"), side
+
+    return True, "機關啟動了，但似乎沒有任何事情發生。", side
+
+
+def check_mechanism_requirements(obj, character):
+    """Check if a mechanism's activation requirements are met.
+    Returns (can_activate, message).
+    """
+    reqs = obj.get("requirements", {})
+    if not reqs:
+        return True, None
+
+    # Level check
+    min_lv = reqs.get("level", 0)
+    if min_lv > 0 and character.get("level", 1) < min_lv:
+        return False, ("需要等級 %d 以上。" % min_lv)
+
+    # Item check
+    req_item = reqs.get("item", "")
+    req_qty = reqs.get("qty", 1)
+    if req_item:
+        inv = character.get("inventory", [])
+        count = inv.count(req_item)
+        if count < req_qty:
+            return False, ("需要 %s x%d。（目前: %d）" % (req_item, req_qty, count))
+
+    return True, None
+
+
+def consume_mechanism_requirements(obj, character):
+    """Consume items required by a mechanism."""
+    reqs = obj.get("requirements", {})
+    consume = reqs.get("consume", True)
+    if not consume:
+        return
+    req_item = reqs.get("item", "")
+    req_qty = reqs.get("qty", 1)
+    if req_item:
+        inv = character.get("inventory", [])
+        for _ in range(req_qty):
+            if req_item in inv:
+                inv.remove(req_item)
+
+
 def upgrade_property(character, property_name):
     """Upgrade an owned property to the next level.
     Returns (success, message).
@@ -831,39 +960,101 @@ SCENE_OBJECTS = {
         {"id":"well",    "name":"水井",     "type":"container","desc":"村莊中央的老水井","contents":["空瓶","小石頭"],"locked":False,"interactable":True},
         {"id":"bench",   "name":"長椅",     "type":"decoration","desc":"一張木製長椅","interactable":True},
         {"id":"notice",  "name":"佈告欄",    "type":"decoration","desc":"貼滿了各種告示","note":"徵人啟事：需要冒險者協助處理鏡湖異變","interactable":True},
+        {"id":"bell",    "name":"村莊鐘樓",  "type":"mechanism","mechanism_type":"lever","desc":"村莊中央的古老鐘樓，拉繩可以敲響大鐘",
+         "state":False,"trigger_once":False,"triggered":False,
+         "effect":{"type":"heal","hp":0,"sp":40,                   "message":"鐘聲響徹雲霄！悠揚的鐘聲讓身心得到了休息。"},
+         "on_repeat":"鐘聲再次響起，迴盪在山谷之間。"},
     ],
     "鏡湖": [
-        {"id":"crystal","name":"發光水晶",  "type":"container","desc":"湖邊的發光水晶叢","contents":["水晶碎片","水晶碎片","魔法粉"],"locked":False,"interactable":True},
-        {"id":"boat", "name":"小舟", "type":"vehicle", "desc":"一艘停靠在岸邊的小舟", "vehicle_type":"小舟", "interactable":True},
+        {"id":"crystal", "name":"水晶簇",    "type":"container","desc":"湖邊的水晶簇","contents":["水晶碎片","水晶碎片"],"locked":False,"interactable":True},
+        {"id":"boat",    "name":"小木船",    "type":"vehicle","desc":"停靠在湖邊的小船","vehicle_type":"小木船","interactable":True},
+        {"id":"shrine",  "name":"湖底祭壇",  "type":"mechanism","mechanism_type":"pedestal","desc":"湖中央的古老祭壇，似乎需要某種祭品",
+         "state":False,"trigger_once":True,"triggered":False,
+         "requirements":{"item":"水晶碎片","consume":True,"qty":3},
+         "effect":{"type":"reveal","items":["記憶水晶","古老鑰匙"],
+                   "message":"祭壇發出耀眼的光芒！從水中浮現出了寶物！"},
+         "requirements_msg":"需要在水晶祭壇上放置3枚水晶碎片。",
+         "failure_msg":"祭壇沒有反應...需要放入更多的水晶碎片。"},
     ],
     "西翼大市集": [
-        {"id":"stall1", "name":"雜貨攤",    "type":"container","desc":"擺滿了各種雜物","contents":["乾糧","布料","麻繩"],"locked":False,"interactable":True},
-        {"id":"stall2", "name":"古董攤",    "type":"container","desc":"賣舊貨的攤位","contents":["古代硬幣","舊鑰匙圈","木雕"],"locked":False,"interactable":True},
+        {"id":"stall1",  "name":"蔬果攤",    "type":"container","desc":"擺滿新鮮蔬果的攤位","contents":["乾糧","草藥"],"locked":False,"interactable":True},
+        {"id":"stall2",  "name":"雜貨攤",    "type":"container","desc":"賣著各種日用品的攤位","contents":["空瓶","麻繩","蠟燭頭"],"locked":False,"interactable":True},
     ],
     "中央大圖書館": [
-        {"id":"bookshelf","name":"書架",    "type":"container","desc":"高大的書架，上面擺滿了書","contents":["書信","神秘地圖"],"locked":False,"interactable":True},
-        {"id":"desk",     "name":"閱讀桌",  "type":"decoration","desc":"一張安靜的閱讀桌","interactable":True},
+        {"id":"bookshelf","name":"書架",     "type":"container","desc":"高大的書架，上面擺滿了書","contents":["書信","古老鑰匙"],"locked":False,"interactable":True},
+        {"id":"desk",    "name":"閱讀桌",    "type":"decoration","desc":"一張木製閱讀桌","note":"桌上攤開了一本關於鏡湖的古老文獻","interactable":True},
+        {"id":"hidden_switch","name":"隱藏書架","type":"mechanism","mechanism_type":"hidden_switch","desc":"書架上的一本書位置有些奇怪",
+         "state":False,"trigger_once":True,"triggered":False,
+         "effect":{"type":"reveal","items":["古老鑰匙","神秘地圖"],
+                   "message":"書架緩緩滑開，露出了後方的暗格！"},
+         "on_repeat":"暗格已經被打開了。"},
+    ],
+    "海峽": [
+        {"id":"lighthouse","name":"燈塔開關","type":"mechanism","mechanism_type":"lever","desc":"海峽燈塔的控制桿",
+         "state":False,"trigger_once":False,"triggered":False,
+         "effect":{"type":"route_open","target":"海峽","value":"east",
+                   "message":"燈塔的光芒照射向遠方，照亮了一片未知的海域！"},
+         "on_repeat":"燈塔已經被點亮了。"},
     ],
     "秘密鐵工廠": [
-        {"id":"forge", "name":"鍛造爐",    "type":"workstation","desc":"熊熊燃燒的鍛造爐","station_type":"forge","interactable":True},
-        {"id":"anvil", "name":"鐵砧",      "type":"workstation","desc":"沉重的鐵砧","station_type":"anvil","interactable":True},
-        {"id":"chest", "name":"工具箱",    "type":"container","desc":"左間小蒼蘭的工具箱","contents":["鐵礦","鐵礦","木柄"],"locked":False,"interactable":True},
+        {"id":"forge",   "name":"熔爐",     "type":"workstation","desc":"熾熱的熔爐","station_type":"forge","interactable":True},
+        {"id":"anvil",   "name":"鐵砧",     "type":"decoration","desc":"沉重的鐵砧","note":"上面有精美的雕紋","interactable":True},
+        {"id":"toolbox", "name":"工具箱",    "type":"container","desc":"師傅的工具箱","contents":["鐵錠","鐵礦","鐵礦"],"locked":False,"interactable":True},
+        {"id":"valve",   "name":"蒸氣閥門",  "type":"mechanism","mechanism_type":"gear","desc":"巨大的蒸氣閥門，需要多次轉動才能打開",
+         "state":False,"trigger_once":False,"triggered":False,
+         "charges":0,"max_charges":3,
+         "effect":{"type":"reveal","items":["龍鱗","火元素","鐵錠"],
+                   "message":"閥門完全打開！蒸氣散去，露出了隱藏的儲藏室！"},
+         "progress_msg":"閥門轉動了 %d/3 圈。",
+         "fail_msg":"閥門紋絲不動...需要更大的力量。",
+         "on_repeat":"閥門已經完全打開了。"},
     ],
     "便利店": [
-        {"id":"shelf1","name":"貨架A",     "type":"container","desc":"飲料和食品","contents":["乾糧","乾糧","提神茶"],"locked":False,"interactable":True},
-        {"id":"shelf2","name":"貨架B",     "type":"container","desc":"日用品","contents":["繃帶","空瓶","蠟燭頭"],"locked":False,"interactable":True},
+        {"id":"shelf1",  "name":"貨架A",    "type":"container","desc":"飲料和食品貨架","contents":["提神茶","乾糧","乾糧"],"locked":False,"interactable":True},
+        {"id":"shelf2",  "name":"貨架B",    "type":"container","desc":"日用百貨貨架","contents":["繃帶","蠟燭頭","麻繩"],"locked":False,"interactable":True},
     ],
     "英靈殿": [
-        {"id":"altar",   "name":"祭壇",     "type":"container","desc":"古老的祭壇，上面放著什麼","contents":["古代硬幣","龍鱗","記憶水晶"],"locked":True,"key":"古老鑰匙","interactable":True},
-        {"id":"weapons", "name":"武器架",   "type":"container","desc":"陳列著古老的武器","contents":["長弓","水晶法杖"],"locked":False,"interactable":True},
+        {"id":"altar",   "name":"祭祀台",    "type":"container","desc":"古老的祭祀台","contents":["龍鱗","古老鑰匙"],"locked":True,"key":"古老鑰匙","interactable":True},
+        {"id":"weapon_rack","name":"武器架",  "type":"container","desc":"陳列著武器的架子","contents":["鋼刀","鐵劍"],"locked":False,"interactable":True},
+        {"id":"summon_pedestal","name":"英靈召喚台","type":"mechanism","mechanism_type":"pedestal","desc":"召喚古代英靈的基座",
+         "state":False,"trigger_once":True,"triggered":False,
+         "requirements":{"item":"古老鑰匙","level":5,"consume":False},
+         "effect":{"type":"summon","enemy":"古代守衛","count":1,
+                   "message":"基座發出耀眼的光芒！一位古代英靈降臨了！"},
+         "requirements_msg":"需要古老的鑰匙和高超的實力才能啟動。（Lv.5+）",
+         "failure_msg":"基座毫無反應..."},
+        {"id":"throne","name":"王之寶座",    "type":"mechanism","mechanism_type":"pressure_plate","desc":"大殿正中央的王座",
+         "state":False,"trigger_once":True,"triggered":False,
+         "effect":{"type":"reveal","items":["水晶法杖","龍鱗"],
+                   "message":"你坐上了王座，地面震動，暗門打開露出了寶庫！"},
+         "on_repeat":"寶庫已經被打開了。"},
     ],
     "廢棄礦坑": [
-        {"id":"ore_vein","name":"礦脈",     "type":"container","desc":"裸露的鐵礦脈","contents":["鐵礦","鐵礦","鐵礦","鐵礦","水晶碎片"],"locked":False,"interactable":True},
-        {"id":"trolley", "name":"礦車",     "type":"container","desc":"廢棄的礦車","contents":["小石頭","黏土","生鏽釘子"],"locked":False,"interactable":True},
+        {"id":"ore_vein","name":"礦脈",     "type":"container","desc":"裸露的礦石脈","contents":["鐵礦","鐵礦","水晶碎片"],"locked":False,"interactable":True},
+        {"id":"trolley", "name":"礦車",     "type":"container","desc":"廢棄的礦車","contents":["鐵礦","小石頭"],"locked":False,"interactable":True},
+        {"id":"lever",   "name":"礦車控制桿","type":"mechanism","mechanism_type":"lever","desc":"控制礦車軌道的轉轍器",
+         "state":False,"trigger_once":True,"triggered":False,
+         "effect":{"type":"teleport","target":"方碑丘",
+                   "message":"你拉下了控制桿！礦車順著軌道疾馳而去..."},
+         "on_repeat":"轉轍器已經被扳動過了。"},
+        {"id":"explosive","name":"爆破裝置",  "type":"mechanism","mechanism_type":"pedestal","desc":"礦坑深處的爆破裝置",
+         "state":False,"trigger_once":True,"triggered":False,
+         "requirements":{"item":"火元素","consume":True,"qty":2},
+         "effect":{"type":"route_open","target":"廢棄礦坑","value":"deep",
+                   "message":"轟！！爆炸聲在礦坑中迴盪，通往更深處的通道被打開了！"},
+         "requirements_msg":"需要2枚火元素來引爆。",
+         "failure_msg":"缺少引爆物..."},
     ],
     "森林深處": [
-        {"id":"tree",    "name":"古老樹木", "type":"container","desc":"一棵巨大的古樹，樹幹上有個洞","contents":["靈木","羽毛","松果"],"locked":False,"interactable":True},
-        {"id":"camp",    "name":"廢棄營地", "type":"container","desc":"冒險者留下的舊營地","contents":["乾糧","繃帶","破布"],"locked":False,"interactable":True},
+        {"id":"ancient_tree","name":"古樹",  "type":"container","desc":"參天的古老巨木","contents":["靈木","靈木","生命果"],"locked":False,"interactable":True},
+        {"id":"camp",    "name":"廢棄營地",  "type":"container","desc":"冒險者留下的營地","contents":["乾糧","繃帶","木柄"],"locked":False,"interactable":True},
+        {"id":"monolith","name":"古老石碑",  "type":"mechanism","mechanism_type":"pedestal","desc":"刻滿符文的神秘石碑",
+         "state":False,"trigger_once":True,"triggered":False,
+         "requirements":{"item":"生命果","consume":True,"qty":1},
+         "effect":{"type":"heal","hp":999,"sp":999,
+                   "message":"石碑上的符文亮起！森林的力量湧入你的體內！"},
+         "requirements_msg":"需要獻上1枚生命果作為祭品。",
+         "failure_msg":"石碑沒有反應..."},
     ],
 }
 

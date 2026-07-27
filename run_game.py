@@ -51,6 +51,11 @@ from sim_systems import (
     ENTRY_REQUIREMENTS,
     check_entry_requirement,
     get_entry_requirement_hint,
+    MECHANISM_TYPES,
+    EFFECT_TYPES,
+    resolve_mechanism_effect,
+    check_mechanism_requirements,
+    consume_mechanism_requirements,
 )
 from game_data import expand_game
 
@@ -644,7 +649,7 @@ def do_travel(character):
         print(C.GRAY+"  ⚻ 沒有通路。"+C.RESET)
         return
     print(C.CYAN+"  可去的地方:"+C.RESET)
-    icons = {"east":"→","west":"←","north":"↑","south":"↓","enter":"🚪","exit":"🚶"}
+    icons = {"east":"→","west":"←","north":"↑","south":"↓","enter":"🚪","exit":"🚶","deep":"⬇"}
     for i,(d,loc) in enumerate(dests.items(),1):
         ic = icons.get(d,"•")
         vibe = LOCATION_VIBES.get(loc,"")
@@ -1000,8 +1005,14 @@ def do_scene_search(character, equipment):
     for i, obj in enumerate(objs, 1):
         icons = {"container":"📦","decoration":"🎨","workstation":"🔧","vehicle":"🚢"}
         ic = icons.get(obj["type"],"•")
+        # Mechanism-specific icons
+        if obj["type"] == "mechanism":
+            mtype = obj.get("mechanism_type", "")
+            ic = MECHANISM_TYPES.get(mtype, {}).get("icon", "⚙")
         locked = " 🔒" if obj.get("locked") else ""
-        print("    %d. %s %s%s" % (i, ic, obj["name"], locked))
+        triggered_flag = " ✅" if obj.get("triggered") else " 🔄"
+        mech_flag = triggered_flag if obj["type"] == "mechanism" else ""
+        print("    %d. %s %s%s%s" % (i, ic, obj["name"], locked, mech_flag))
     print("    %s0. 取消%s" % (C.GRAY, C.RESET))
     ch = input("  %s選擇:%s " % (C.YELLOW, C.RESET)).strip()
     if not ch.isdigit(): return
@@ -1075,6 +1086,102 @@ def do_scene_search(character, equipment):
                         print(C.GREEN+"  你獲得了 %s! (燃料:%d)"%(vt,init_fuel)+C.RESET)
                     mount_vehicle(character, vt, veh_state)
                     print(C.GREEN+"  騎上了 %s!"%vt+C.RESET)
+
+    elif obj_type == "mechanism":
+        mech_type = obj.get("mechanism_type","?")
+        mech_info = MECHANISM_TYPES.get(mech_type, {})
+
+        # Already triggered / one-time?
+        if obj.get("triggered") and obj.get("trigger_once"):
+            repeat_msg = obj.get("on_repeat", "這個機關已經被觸發過了。")
+            print(C.GRAY+"  " + repeat_msg + C.RESET)
+            advance_time(character)
+            return
+
+        # Show mechanism info
+        print(C.YELLOW+"  ⚙ 機關類型: %s %s" % (mech_info.get("icon","⚙"), mech_info.get("name",mech_type))+C.RESET)
+        reqs = obj.get("requirements", {})
+        if reqs:
+            req_msg = obj.get("requirements_msg", "需要特定條件才能觸發。")
+            print(C.MAGENTA+"  ! " + req_msg + C.RESET)
+
+        # Show charges-based progress
+        charges = obj.get("charges", 0)
+        max_ch = obj.get("max_charges", 0)
+        if max_ch > 0:
+            progress = obj.get("progress_msg", "")
+            if progress:
+                print(C.CYAN+"  " + (progress % obj.get("charges", 0)) + C.RESET)
+
+        # Check requirements
+        can_activate, req_fail_msg = check_mechanism_requirements(obj, character)
+        if not can_activate:
+            fail_msg = obj.get("failure_msg", req_fail_msg or "條件不足，無法啟動。")
+            print(C.RED+"  ✗ " + fail_msg + C.RESET)
+            advance_time(character)
+            return
+
+        # Activation prompt
+        print(C.GREEN+"  1. 啟動機關"+C.RESET)
+        print(C.GRAY+"  0. 取消"+C.RESET)
+        mc = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
+        if mc != "1":
+            return
+
+        # Consume requirements
+        consume_mechanism_requirements(obj, character)
+
+        # Resolve effect
+        success, msg, side = resolve_mechanism_effect(obj, character, loc)
+        if success:
+            print(C.CYAN+"  " + msg + C.RESET)
+        else:
+            print(C.RED+"  " + msg + C.RESET)
+
+        # Mark triggered
+        if obj.get("trigger_once"):
+            obj["triggered"] = True
+        elif max_ch > 0:
+            # Gear mechanism: increment charges
+            obj["charges"] = obj.get("charges", 0) + 1
+            if obj["charges"] >= max_ch:
+                obj["triggered"] = True
+            else:
+                # Show progress
+                progress = obj.get("progress_msg", "")
+                if progress:
+                    print(C.CYAN+"  " + (progress % obj["charges"]) + C.RESET)
+
+        # Handle side effects
+        s_teleport = side.get("teleport_to")
+        if s_teleport:
+            character["location"] = s_teleport
+            print(C.GREEN+"  🌀 你被傳送到了 %s！" % s_teleport + C.RESET)
+            _gm_narrate(character, s_teleport)
+
+        s_enemy = side.get("enemy_spawn")
+        if s_enemy:
+            print(C.RED+"  👻 %s 出現了！" % s_enemy + C.RESET)
+            # Find enemy definition
+            for e in ENEMIES:
+                if e["name"] == s_enemy:
+                    do_combat(character, e)
+                    break
+
+        s_route = side.get("route_add")
+        if s_route:
+            direction, target_loc = s_route
+            # Add route to WORLD_MAP for the relevant location
+            if target_loc in WORLD_MAP:
+                if direction not in WORLD_MAP[target_loc]:
+                    WORLD_MAP[target_loc][direction] = loc
+                if target_loc not in WORLD_MAP.get(loc, {}):
+                    # Also add reverse route
+                    rev_dirs = {"東":"西","西":"東","南":"北","北":"南","深處":"入口","入口":"深處"}
+                    rev_dir = rev_dirs.get(direction, direction)
+                    if loc not in WORLD_MAP.get(target_loc, {}):
+                        WORLD_MAP.setdefault(target_loc, {})[rev_dir] = loc
+                print(C.GREEN+"  🛤 新的道路被打開了！%s → %s" % (direction, target_loc) + C.RESET)
 
     advance_time(character)
 
