@@ -19,6 +19,8 @@ from sim_systems import (
     get_item_def,
     get_junk_items,
     ENEMY_ENCOUNTER_CHANCE,
+    ENEMIES,
+    LOCATION_ENEMIES,
     REAL_ESTATE,
     WORLD_MAP,
     LOCATION_VIBES,
@@ -95,34 +97,180 @@ def clear_screen():
     os.system("cls" if os.name == "nt" else "clear")
 
 
-def _gm_narrate(character, new_location=None):
-    """GM-style scene narration per GAME_OVERVIEW.md GM system."""
-    loc = new_location or character.get("location","?")
-    vibes = LOCATION_VIBES.get(loc,"")
-    gm_descs = {
-        "方碑丘": "微風吹過金黃色的稻田，村莊裡炊煙裊裊升起。",
-        "鏡湖": "湖面如鏡，倒映著天空的雲彩。空氣中彌漫著淡淡的水氣。",
-        "西翼大市集": "人聲鼎沸，各種叫賣聲此起彼落。香料和烤肉的香氣交織在一起。",
-        "中央大圖書館": "宏偉的建築內藏書萬卷，陽光透過彩色玻璃窗灑落。",
-        "海峽": "海風強勁，潮汐拍打著岩岸。遠方海平面與天際融為一線。",
-        "秘密鐵工廠": "鐵鎚聲與蒸氣嘶鳴交織，火花在昏暗的空間中四濺。",
-        "便利店": "明亮的燈光透過玻璃門照出，貨架上擺滿了日常用品。",
-        "英靈殿": "古老的大殿中迴盪著腳步聲，牆上掛滿了武器與褪色的旗幟。",
-        "廢棄礦坑": "陰暗的礦坑入口散發著潮濕的氣息，深不見底的黑暗令人卻步。",
-        "森林深處": "參天大樹遮天蔽日，鳥鳴與蟲鳴交織成自然的交響曲。",
-    }
-    desc = gm_descs.get(loc)
-    if desc:
-        print(C.DIM + "  [GM] " + desc + C.RESET)
-    print(vibes)
-    npcs_near = []
-    for npc_name in list(NPC_SCHEDULES.keys()):
-        act, aloc, mood = get_npc_activity(npc_name, character["hour"])
-        if aloc == loc:
-            npcs_near.append(npc_name)
-    if npcs_near:
-        print(C.DIM + "  [GM] 你看到" + "、".join(npcs_near) + "在附近。" + C.RESET)
+def _get_time_period(hour):
+    """Get time period label for dynamic narration."""
+    if 6 <= hour < 11: return "早晨"
+    if 11 <= hour < 13: return "正午"
+    if 13 <= hour < 17: return "午後"
+    if 17 <= hour < 21: return "傍晚"
+    return "夜晚"
 
+def _gm_narrate(character, new_location=None):
+    """GM-style scene narration per GAME_OVERVIEW.md GM system.
+    Shows only content NOT duplicated by print_status():
+    location prose, player state, and relevant quest hints.
+    """
+    loc = new_location or character.get("location","?")
+    hour = character.get("hour", 8)
+    period = _get_time_period(hour)
+    global _current_weather
+    weather_today = _current_weather or "☀晴"
+
+    # ── Weather-time feeling (short, unique) ──
+    weather_feel = {
+        "☀晴": { "早晨":"和煦的晨光", "正午":"烈日當空", "午後":"溫暖的陽光", "傍晚":"夕陽餘暉", "夜晚":"清冷的月光" },
+        "⛅多雲": { "早晨":"天光微亮", "正午":"雲遮烈日", "午後":"天色陰沉", "傍晚":"灰暗的雲霞", "夜晚":"雲遮星光" },
+        "🌧雨": { "早晨":"細雨綿綿", "正午":"雨勢不小", "午後":"雨水滴答", "傍晚":"雨中的暮色", "夜晚":"夜雨瀟瀟" },
+        "🌫霧": { "早晨":"晨霧濃重", "正午":"迷霧籠罩", "午後":"霧氣繚繞", "傍晚":"暮靄沉沉", "夜晚":"夜霧瀰漫" },
+        "🌩雷雨": { "早晨":"雷聲隱隱", "正午":"暴雨傾盆", "午後":"雷雨交加", "傍晚":"風雨暮色", "夜晚":"雷雨之夜" },
+        "❄雪": { "早晨":"白雪覆蓋", "正午":"雪花飄落", "午後":"銀白世界", "傍晚":"雪映餘暉", "夜晚":"雪夜寒星" },
+    }
+    wf = weather_feel.get(weather_today, {}).get(period, "")
+    if wf:
+        wf = "（" + wf + "）"
+
+    # ── Location prose (time-specific) ──
+    gm_descs = {
+        "方碑丘": {
+            "早晨": "晨霧中的稻田閃爍著露珠，村莊從睡夢中醒來，雞鳴聲此起彼落。",
+            "正午": "村莊廣場上熱鬧了起來，農民們在樹蔭下休息，分享著午餐。",
+            "午後": "慵懶的午後，風吹過稻田，掀起金色的波浪。幾隻狗趴在路邊打盹。",
+            "傍晚": "炊煙裊裊升起，村民們結束了一天的勞作，笑語聲從各家各戶傳來。",
+            "夜晚": "村莊沉浸在夜色中，只有幾盞燈火在窗後搖曳。蟲鳴聲在田野間迴盪。",
+        },
+        "鏡湖": {
+            "早晨": "湖面平靜如鏡，倒映著晨光中的雲彩。水氣在湖面上形成一層薄霧。",
+            "正午": "陽光直射湖面，水波粼粼，像是撒了一把碎金。偶爾有魚躍出水面。",
+            "午後": "湖面波光瀲灩，岸邊的蘆葦隨風搖曳。空氣中帶著淡淡的水草香氣。",
+            "傍晚": "夕陽將湖面染成一片金紅，天色與水色交融，美不勝收。",
+            "夜晚": "月光灑在湖面上，銀白色的光芒在水中搖曳。四周一片寂靜。",
+        },
+        "西翼大市集": {
+            "早晨": "攤販們忙著擺設商品，市集漸漸甦醒。新鮮蔬果的香氣在空氣中飄散。",
+            "正午": "市集達到高峰，人聲鼎沸。各種叫賣聲、討價還價聲交織成熱鬧的樂章。",
+            "午後": "人潮稍退，但仍有不少顧客在各個攤位前流連。烤肉和香料的香氣交織。",
+            "傍晚": "攤販們開始收拾，市集即將打烊。最後幾筆交易在暮色中完成。",
+            "夜晚": "市集的燈火逐一熄滅，只剩下幾盞照明燈在空蕩的街道上投下光影。",
+        },
+        "中央大圖書館": {
+            "早晨": "晨光透過彩繪玻璃窗，在書架間投下斑斕的光影。空氣中飄散著紙張和墨水香。",
+            "正午": "圖書館內光線明亮，陽光從高處的天窗灑落。讀書人的翻頁聲輕輕迴盪。",
+            "午後": "午後的圖書館格外寧靜，只有筆尖在紙上摩擦的沙沙聲。塵埃在光柱中飛舞。",
+            "傍晚": "暮色中的圖書館籠罩在一片溫暖的昏暗中，管理員開始點燃油燈。",
+            "夜晚": "月光從窗戶透入，書架在黑暗中投下長長的影子。圖書館幽深而神秘。",
+        },
+        "海峽": {
+            "早晨": "晨風強勁，海面上波光粼粼。海鷗在礁石上棲息，時而振翅飛起。",
+            "正午": "陽光下的海面一片湛藍，浪花拍打著岩岸，濺起白色的泡沫。",
+            "午後": "海風帶著鹹味，潮汐漸漸退去，露出潮間帶的岩石和貝殼。",
+            "傍晚": "夕陽沈入海平面，將天空和海面染成一片絢麗的橘紅。美景令人屏息。",
+            "夜晚": "海浪聲在夜色中格外清晰。海面上倒映著月光，像是碎銀鋪成的路。",
+        },
+        "秘密鐵工廠": {
+            "早晨": "鐵工廠一早便響起金屬撞擊聲。爐火映紅了工人的臉龐。",
+            "正午": "爐火熊熊燃燒，鐵水在高溫下發出耀眼的光芒。鎚聲不絕於耳。",
+            "午後": "師傅們專注地打磨著作品，火花在昏暗的空間中四濺。蒸氣嘶嘶作響。",
+            "傍晚": "工作接近尾聲，鐵鎚聲漸漸稀疏。爐火的餘燼在暮色中閃著微光。",
+            "夜晚": "工廠陷入寂靜，尚未完全冷卻的鐵器在黑暗中散發著淡淡的紅光。",
+        },
+        "便利店": {
+            "早晨": "玻璃門上的『營業中』牌子已經翻轉，店員正在整理貨架上的商品。",
+            "正午": "午休時間，店裡來了幾位客人，正在挑選便當和飲料。",
+            "午後": "店內播放著輕柔的音樂，陽光透過玻璃門照進來，在地板上形成長長的影子。",
+            "傍晚": "夕陽斜照，便利店的燈光亮起，在暮色中顯得格外溫暖明亮。",
+            "夜晚": "便利店的燈光在夜色中像是一座燈塔，照亮了門前的街道。",
+        },
+        "英靈殿": {
+            "早晨": "穿過厚重的石門，晨光投射在大殿的地面上。牆上的武器閃爍著冷光。",
+            "正午": "高窗射入的光線照亮了壁畫上英雄們的容顏。大殿中央瀰漫著莊嚴的氣息。",
+            "午後": "光線移動，壁畫在不同的光影下呈現不同的面貌。腳步聲在石板上迴盪。",
+            "傍晚": "暮色中的大殿顯得格外肅穆。褪色的旗幟在微風中輕輕飄動。",
+            "夜晚": "月光透過高窗灑落，將大理石地板照得發白。大殿在夜色中顯得神秘莫測。",
+        },
+        "廢棄礦坑": {
+            "早晨": "礦坑入口處的雜草掛滿了露珠。從黑暗中傳出滴水的迴音。",
+            "正午": "洞口的光線勉強照亮了前幾公尺的空間。更深處是一片絕對的黑暗。",
+            "午後": "潮濕的空氣從礦坑深處湧出，帶著鐵鏽和泥土的氣味。",
+            "傍晚": "暮色讓礦坑的入口顯得更為陰森。蝙蝠在洞口盤旋。",
+            "夜晚": "月光勾勒出礦坑入口的輪廓。黑暗中似乎有什麼在注視著外面。",
+        },
+        "森林深處": {
+            "早晨": "晨光穿過層層樹葉，在林間形成一道道光束。鳥鳴聲此起彼落。",
+            "正午": "高大的樹冠遮蔽了大部分陽光，林間格外清涼。偶爾有松鼠跳過。",
+            "午後": "午後的森林充滿了生機：蝴蝶在花叢間飛舞，啄木鳥在遠處敲打著樹幹。",
+            "傍晚": "暮色中的森林漸漸安靜下來，夜行性動物開始甦醒。貓頭鷹的叫聲從遠處傳來。",
+            "夜晚": "森林陷入黑暗，只有月光勉強照亮小徑。螢火蟲在草叢間閃爍著微光。",
+        },
+    }
+
+    # Print location prose
+    desc_vibe = LOCATION_VIBES.get(loc, "")
+    loc_descs = gm_descs.get(loc, {})
+    desc = loc_descs.get(period, "")
+    if desc:
+        print(C.DIM + f"  {wf} {desc}" + C.RESET)
+    elif desc_vibe:
+        print(C.DIM + f"  {wf} {desc_vibe}" + C.RESET)
+
+    # ── Player state notes (short) ──
+    state_notes = []
+    hp_r = character["hp"] / character["max_hp"] if character["max_hp"] > 0 else 1.0
+    if hp_r < 0.3:
+        state_notes.append("重傷")
+    elif hp_r < 0.6:
+        state_notes.append("帶傷")
+    if character.get("fatigue", 0) > 80:
+        state_notes.append("極度疲勞")
+    elif character.get("fatigue", 0) > 50:
+        state_notes.append("有些疲倦")
+    if character.get("pain", 0) > 60:
+        state_notes.append("傷口疼痛")
+    if character.get("bleed_rate", 0) > 0:
+        state_notes.append(f"出血({character.get('bleed_rate',0)})")
+    if character.get("riding"):
+        vname = character["riding"]
+        v = VEHICLES.get(vname, {})
+        vs = character.get("vehicles", {}).get(vname, {})
+        fuel_pct = int(vs.get("fuel", v.get("fuel", 100)) / max(v.get("fuel", 100), 1) * 100)
+        state_notes.append(f"騎乘{vname}(燃料:{fuel_pct}%)")
+    if state_notes:
+        print(C.YELLOW + "  [" + " | ".join(state_notes) + "]" + C.RESET)
+
+    # ── Quest hints (only for relevant items at this location) ──
+    active_qs = get_active_quests(character)
+    for qdef, qdata in active_qs:
+        for obj in qdef.get("objectives", []):
+            # Visit objective: direct location match
+            if obj.get("type") == "visit" and obj.get("target") == loc:
+                print(C.YELLOW + f"  ⚑ 你記得你的任務：{qdef['title']}" + C.RESET)
+                break
+            # Collect objective: check if item is findable at this location
+            if obj.get("type") == "collect":
+                target = obj.get("target", "")
+                # Check scene objects
+                scene_objs = SCENE_OBJECTS.get(loc, [])
+                obj_item_found = False
+                for sobj in scene_objs:
+                    if target in sobj.get("contents", []):
+                        obj_item_found = True
+                        break
+                # Check enemy loot at this location
+                if not obj_item_found:
+                    enemy_names = LOCATION_ENEMIES.get(loc, [])
+                    for en in ENEMIES:
+                        if en["name"] in enemy_names and target in en.get("loot", []):
+                            obj_item_found = True
+                            break
+                # Also check alt_item
+                alt = obj.get("alt_item", "")
+                if alt and not obj_item_found:
+                    for sobj in scene_objs:
+                        if alt in sobj.get("contents", []):
+                            obj_item_found = True
+                            break
+                if obj_item_found:
+                    print(C.YELLOW + f"  ⚑ {obj.get('detail','此處可能有任務材料')}" + C.RESET)
+                    break
 def advance_time(character, hours=1):
     global _current_weather
     character["hour"] = (character["hour"] + hours) % 24
@@ -513,8 +661,11 @@ def do_travel(character):
                             print(C.YELLOW+"    ⛽ 燃料: %d%%"%fuel_pct+C.RESET)
             character["location"] = dest
             advance_time(character, hours)
+            # Arrival announcement
             vibe = LOCATION_VIBES.get(dest,"")
-            print(C.GREEN+"  移動到 %s。%s" % (dest, vibe)+C.RESET)
+            print(C.GREEN + "  ⇨ 到達%s。%s" % (dest, vibe) + C.RESET)
+            # GM narration on arrival
+            _gm_narrate(character, dest)
             # Random event on travel
             roll_random_event(character)
             return
