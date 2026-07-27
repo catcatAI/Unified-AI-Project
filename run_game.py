@@ -48,6 +48,11 @@ from sim_systems import (
     LOCATION_TYPES,
     SCENE_TYPE_ICONS,
     SCENE_TYPE_NAMES,
+    FACTIONS,
+    NATIONS,
+    ACTIVE_RULES,
+    LOCATION_NATIONS,
+    LOCATION_RULES,
     ENTRY_REQUIREMENTS,
     check_entry_requirement,
     get_entry_requirement_hint,
@@ -355,18 +360,20 @@ def print_status(character):
     sicon = SCENE_TYPE_ICONS.get(stype, "🌄")
     stname = SCENE_TYPE_NAMES.get(stype, "?")
     print(C.WHITE + "  " + sicon + " 位置: " + loc + C.RESET + "  " + C.MAGENTA + "[ " + race + " ]" + C.RESET + C.DIM + " (%s)" % stname + C.RESET, end="")
-    # Nation info
-    loc_nation = LOCATION_NATIONS.get(loc) if hasattr(sim_systems, 'LOCATION_NATIONS') else None
-    if loc_nation and loc_nation in NATIONS:
-        nname = NATIONS[loc_nation].get("name","")[:12]
-        if nname:
-            print(C.CYAN + " 🏛" + nname + C.RESET, end="")
-    # Active rules at this location
-    loc_rules = LOCATION_RULES.get(loc) if hasattr(sim_systems, 'LOCATION_RULES') else None
-    if loc_rules:
-        rule_names = [ACTIVE_RULES.get(r,{}).get("name","")[:8] for r in loc_rules if r in ACTIVE_RULES]
-        if rule_names:
-            print(C.DIM + " 📜" + ",".join(rule_names) + C.RESET, end="")
+    # Nation info (safe check)
+    if 'LOCATION_NATIONS' in dir() and 'NATIONS' in dir():
+        loc_nation = LOCATION_NATIONS.get(loc) if isinstance(LOCATION_NATIONS.get(loc), str) else None
+        if loc_nation and loc_nation in NATIONS:
+            nname = NATIONS[loc_nation].get("name","")[:12]
+            if nname:
+                print(C.CYAN + " 🏛" + nname + C.RESET, end="")
+    # Active rules at this location (safe check)
+    if 'LOCATION_RULES' in dir() and 'ACTIVE_RULES' in dir():
+        loc_rules = LOCATION_RULES.get(loc) if LOCATION_RULES.get(loc) else None
+        if loc_rules:
+            rule_names = [ACTIVE_RULES.get(r,{}).get("name","")[:8] for r in loc_rules if r in ACTIVE_RULES]
+            if rule_names:
+                print(C.DIM + " 📜" + ",".join(rule_names) + C.RESET, end="")
     if character.get("riding"):
         print(C.YELLOW + " [騎乘: " + character["riding"] + "]" + C.RESET)
     else:
@@ -1425,6 +1432,12 @@ def do_interact_npc(character):
         mood_color = {"calm":C.GREEN,"alert":C.RED,"rest":C.BLUE,"friendly":C.MAGENTA,"sleep":C.GRAY,"focused":C.CYAN}
         mood_icon = {"focused":"⚔","alert":"👁","rest":"💤","friendly":"😊","sleep":"😴"}
         print(C.CYAN+"  %s: 聲望[%s] %s%s%s"%(npc_name,rep_tier,mood_icon.get(npc_mood,""),mood_color.get(npc_mood,C.WHITE),npc_mood)+C.RESET)
+    # Show NPC abilities if available (from NPC_SCHEDULES data)
+    npc_data = NPC_SCHEDULES.get(npc_name, {}) if "npc_abilities_list" not in dir() else []
+    if isinstance(npc_data, dict) and npc_data.get("ability_details"):
+        ab_names = [a.get("name","")[:12] for a in npc_data["ability_details"] if a.get("name","")]
+        if ab_names:
+            print(C.YELLOW+"  ✦ 能力: "+C.RESET+", ".join(ab_names))
         # Reputation-based greeting variety
         greet_pool = {
             "敵意": ["「...離我遠點。」","「哼。」","「你來做什麼？」"],

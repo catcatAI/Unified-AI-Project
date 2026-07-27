@@ -1223,9 +1223,15 @@ def expand_game():
                 if rel_name in odata.get('name','') or odata.get('name','') in rel_name:
                     _npc_faction_map[name] = ocid
                     break
-    if hasattr(sim_systems, 'NPC_SCHEDULES'):
-        for npc_name in list(sim_systems.NPC_SCHEDULES.keys())[:10]:
-            pass  # faction integration placeholder for now
+    # Assign factions to NPCs based on NPC_SCHEDULES
+    if hasattr(sim_systems, 'NPC_SCHEDULES') and _npc_faction_map:
+        if not hasattr(sim_systems, 'NPC_FACTIONS'):
+            sim_systems.NPC_FACTIONS = {}
+        for npc_name in list(sim_systems.NPC_SCHEDULES.keys()):
+            for cname, ocid in _npc_faction_map.items():
+                if cname in npc_name or npc_name in cname:
+                    sim_systems.NPC_FACTIONS[npc_name] = ocid
+                    break
     
     # Assign territory to locations from NAT cards
     # Simple approach: assign nations to locations based on lore keywords
@@ -1489,9 +1495,15 @@ def expand_game():
                 if rel_name in odata.get('name','') or odata.get('name','') in rel_name:
                     _npc_faction_map[name] = ocid
                     break
-    if hasattr(sim_systems, 'NPC_SCHEDULES'):
-        for npc_name in list(sim_systems.NPC_SCHEDULES.keys())[:10]:
-            pass  # faction integration placeholder for now
+    # Assign factions to NPCs based on NPC_SCHEDULES
+    if hasattr(sim_systems, 'NPC_SCHEDULES') and _npc_faction_map:
+        if not hasattr(sim_systems, 'NPC_FACTIONS'):
+            sim_systems.NPC_FACTIONS = {}
+        for npc_name in list(sim_systems.NPC_SCHEDULES.keys()):
+            for cname, ocid in _npc_faction_map.items():
+                if cname in npc_name or npc_name in cname:
+                    sim_systems.NPC_FACTIONS[npc_name] = ocid
+                    break
     
     # Assign territory to locations from NAT cards
     # Simple approach: assign nations to locations based on lore keywords
