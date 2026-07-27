@@ -342,7 +342,17 @@ def generate_all_npcs() -> Dict[str, dict]:
     npcs = {}
     for i, card in enumerate(_CHARACTER_CARDS):
         cid = card.get("card_id", f"CC-{i:02d}")
-        name = card.get("name", "?").split("(")[0].strip()
+        raw_npc_name = card.get("name", "?").split("(")[0].strip()
+        # Fix empty names: use lore token value as fallback
+        lore_toks_for_name = _tokens_by_cat(card, "lore")
+        if not raw_npc_name or raw_npc_name == '?':
+            lore_fallback = ""
+            for t in lore_toks_for_name:
+                v = t.get("value","")[:10]
+                if v: lore_fallback = v; break
+            name = lore_fallback if lore_fallback else f"無名角色({cid})"
+        else:
+            name = raw_npc_name
         if not name: name = card.get("name", "?")
         home = _NPC_LOCATIONS_POOL[i % len(_NPC_LOCATIONS_POOL)]
         tokens = card.get("tokens", [])
@@ -377,6 +387,10 @@ def generate_all_npcs() -> Dict[str, dict]:
             "archetype": archetype,
             "token_categories": list(token_cats),
             "abilities": [a.get("name","") for a in card.get("abilities", [])],
+            "ability_details": card.get("abilities", []),
+            "has_abilities": len(card.get("abilities", [])) > 0,
+            "ability_details": card.get("abilities", []),
+            "has_abilities": len(card.get("abilities", [])) > 0,
             "offers": offers[:8],
             "gives_quests": "social" in token_cats or "knowledge" in token_cats or "craft" in token_cats,
             "quest_type": "side",
@@ -624,10 +638,20 @@ ALL_ENEMIES = generate_all_enemies()
 def generate_locations() -> dict:
     locs = {}
     for card in _SCENE_CARDS:
-        name = card.get("name","?").split("·")[-1].strip()
-        if not name or len(name) > 8:
-            name = card.get("name","?").split("（")[0].split("(")[0].strip()[:8]
         sid = card.get("card_id","S??")
+        raw_loc_name = card.get("name","?").split("·")[-1].strip()
+        if not raw_loc_name or len(raw_loc_name) > 8:
+            raw_loc_name = card.get("name","?").split("（")[0].split("(")[0].strip()[:8]
+        # Fix empty names: use lore token value as fallback
+        lore_toks_for_loc = _tokens_by_cat(card, "lore")
+        if not raw_loc_name or raw_loc_name == '?':
+            lore_fallback = ""
+            for t in lore_toks_for_loc:
+                v = t.get("value","")[:15]
+                if v: lore_fallback = v; break
+            name = lore_fallback if lore_fallback else f"未命名場景({sid})"
+        else:
+            name = raw_loc_name
         lore_tokens = _tokens_by_cat(card, "lore")
         vibe = "📍 未知の地"
         for t in lore_tokens:
@@ -655,13 +679,22 @@ def generate_quests() -> list:
     # From all story nodes
     npc_names = list(ALL_NPCS.keys())
     for i, card in enumerate(_STORY_CARDS):
-        name = card.get("name","?").split("（")[0].strip()[:20]
+        raw_name = card.get("name","?").split("（")[0].strip()[:20]
         lore_tokens = _tokens_by_cat(card, "lore")
         story = ""
         for t in lore_tokens:
             v = t.get("value","")
             story = v[:60]
-        if not story: story = f"調查關於{name}的線索。"
+        if not story: story = f"調查關於{raw_name}的線索。"
+        # Fix empty names: use first lore token value as fallback
+        if not raw_name or raw_name == '?':
+            lore_fallback = ""
+            for t in lore_tokens:
+                lore_fallback = t.get("value","")[:20]
+                if lore_fallback: break
+            name = lore_fallback if lore_fallback else f"未命名EP({i+1})"
+        else:
+            name = raw_name
         loc_target = _seed.choice(locations_pool)
         qtype = "main" if i < 15 else "side"
         qid = f"SN-{i+1:02d}"
@@ -955,7 +988,539 @@ def expand_game():
         if e["name"] not in existing_e:
             sim_systems.ENEMIES.append(e)
             existing_e.add(e["name"])
-            cnt["enemies"] += 1
+        
+    # ════════════════════════════════════════════════
+    # Card system integration: ORG/NAT/RC
+    # ════════════════════════════════════════════════
+    
+    # Factions (from ORG cards)
+    sim_systems.FACTIONS = {
+  "ORG-03": {
+    "name": "紫晶石集會",
+    "lore": "W01 靈子塵埃",
+    "relations": {
+      "關係_對外認知": "對外認知: 無。尚未被任何外部組織知曉",
+      "關係_水晶能與特定人類產生": "水晶能與特定人類產生共鳴，賦予變身能力: 水晶的來源（天然？人造？古代遺產？）",
+      "關係_變身後的形態與能力因": "變身後的形態與能力因水晶顏色而異: 水晶能量的上限與持續時間",
+      "關係_水晶可透過接觸進行分": "水晶可透過接觸進行分配，但接受者需與水晶有共鳴: 長期使用水晶是否對人體有副作用"
+    }
+  },
+  "ORG-04": {
+    "name": "失戀集團",
+    "lore": "W01 靈子塵埃",
+    "relations": {}
+  },
+  "ORG-05": {
+    "name": "終末燭光",
+    "lore": "W01 靈子塵埃",
+    "relations": {}
+  },
+  "ORG-06": {
+    "name": "新世界集團",
+    "lore": "W01 靈子塵埃",
+    "relations": {
+      "關係_聖諭同盟與唯靈聯邦": "聖諭同盟與唯靈聯邦: 組織在兩大陣營內部都有滲透。他們的長期計劃可能包括利用兩大陣營的戰爭來掩護「黎明計劃」的執行"
+    }
+  },
+  "ORG-08": {
+    "name": "脈動工業（Pulse Industrie",
+    "lore": "W01 靈子塵埃",
+    "relations": {
+      "歷史_歷史線": "歷史線: 冷戰線（成立約 15 年）"
+    }
+  },
+  "ORG-09": {
+    "name": "永恆義體（Eternal Cyberne",
+    "lore": "W01 靈子塵埃",
+    "relations": {
+      "歷史_歷史線": "歷史線: 冷戰線（成立約 8 年，比脈動工業晚）"
+    }
+  },
+  "ORG-10": {
+    "name": "鐵砧防務（Anvil Defense）",
+    "lore": "W01 靈子塵埃",
+    "relations": {
+      "歷史_歷史線": "歷史線: 冷戰線（成立約 25 年，原為軍事實驗室，後獨立）"
+    }
+  },
+  "ORG-16": {
+    "name": "鼠族工業聯合體（簡稱「鼠聯」）",
+    "lore": "",
+    "relations": {
+      "關係_競爭對手": "競爭對手: 貓族海盜（非正式，但常被搶）"
+    }
+  },
+  "ORG-17": {
+    "name": "貓族海盜聯合艦隊（簡稱「黑帆」）",
+    "lore": "",
+    "relations": {
+      "關係_競爭對手": "競爭對手: 鼠族工業聯合體（目標）、陸地海軍（偶爾）"
+    }
+  },
+  "ORG-18": {
+    "name": "藍鰭航運",
+    "lore": "",
+    "relations": {}
+  },
+  "ORG-19": {
+    "name": "潮汐基金會",
+    "lore": "",
+    "relations": {}
+  },
+  "ORG-20": {
+    "name": "納迦皇家地熱",
+    "lore": "",
+    "relations": {
+      "關係_競爭對手": "競爭對手: 莫比迪克邦联的潮汐能产业（无直接竞争，因市场不同）"
+    }
+  },
+  "ORG-21": {
+    "name": "人魚聲吶網絡",
+    "lore": "",
+    "relations": {}
+  },
+  "ORG-22": {
+    "name": "海蛞蝓生技",
+    "lore": "",
+    "relations": {}
+  },
+  "ORG-23": {
+    "name": "水母幻光娛樂",
+    "lore": "",
+    "relations": {}
+  },
+  "ORG-24": {
+    "name": "海葵共生農場",
+    "lore": "",
+    "relations": {}
+  }
+}
+    
+    # Nations (from NAT cards)
+    sim_systems.NATIONS = {
+  "NAT-01": {
+    "name": "「神權引領進化」。靈子是神賜的恩典，應以",
+    "lore": "「神權引領進化」。靈子是神賜的恩典，應以符文工藝優雅地運用，而非粗暴的工業化"
+  },
+  "NAT-02": {
+    "name": "「靈子應被工具化」。靈子不是神聖的，它是",
+    "lore": "「靈子應被工具化」。靈子不是神聖的，它是可被測量、提煉、工業化應用的資源。神靈種不是守護神，是武器"
+  },
+  "NAT-03": {
+    "name": "「不參與陣營對抗」。拒絕在聖諭同盟與唯靈",
+    "lore": "「不參與陣營對抗」。拒絕在聖諭同盟與唯靈聯邦之間選邊"
+  },
+  "NAT-04": {
+    "name": "「利潤不選邊」。同時向聖諭同盟與唯靈聯邦",
+    "lore": "「利潤不選邊」。同時向聖諭同盟與唯靈聯邦出售資源、技術、與軍事物資"
+  },
+  "NAT-05": {
+    "name": "「和平來自於力量均勢」。向所有陣營出售武",
+    "lore": "「和平來自於力量均勢」。向所有陣營出售武器，確保任何一方都無法取得決定性優勢"
+  },
+  "NAT-06": {
+    "name": "莫比迪克自由邦聯（簡稱「莫比迪克」）",
+    "lore": "W01 靈子塵埃"
+  },
+  "NAT-07": {
+    "name": "阿比薩深渊联邦",
+    "lore": "W01 靈子塵埃"
+  }
+}
+    
+    # Rules (from RC cards)
+    sim_systems.ACTIVE_RULES = {
+  "RC-01": {
+    "name": "迴廊 (The Corridor)",
+    "lore": "連接多元宇宙各個世界線的「橋樑」，由概念、數據流、意識碎片和世界法則交織而成的虛無維度",
+    "mechanism": "資訊與邏輯概念匯聚之地"
+  },
+  "RC-02": {
+    "name": "未命名規則(RC-02)",
+    "lore": "",
+    "mechanism": "使用D12，預見的本質不穩定，波動較小"
+  },
+  "RC-03": {
+    "name": "未命名規則(RC-03)",
+    "lore": "",
+    "mechanism": "使用D20"
+  },
+  "RC-05": {
+    "name": "中央大圖書館 · 地下遺跡深層休眠區",
+    "lore": "迴廊（The Corridor）· 物語核（RC-02）邊緣",
+    "mechanism": ""
+  },
+  "RC-06": {
+    "name": "森幽小徑（Shadow-wood Pathway）",
+    "lore": "迴廊 · 物語核邊緣",
+    "mechanism": ""
+  },
+  "RC-07": {
+    "name": "暈輝湖（Glow-water Cavity）",
+    "lore": "迴廊 · 物語核邊緣",
+    "mechanism": ""
+  },
+  "RC-08": {
+    "name": "阿拉克涅小鎮（Arachne Town）",
+    "lore": "迴廊 · 物語核邊緣",
+    "mechanism": ""
+  },
+  "RC-09": {
+    "name": "拉米雅小鎮（Lamia Town）",
+    "lore": "迴廊 · 物語核邊緣",
+    "mechanism": ""
+  },
+  "RC-10": {
+    "name": "地下西翼大市集（Trade Bazaar）",
+    "lore": "迴廊 · 物語核邊緣",
+    "mechanism": ""
+  },
+  "RC-11": {
+    "name": "概念學術高等學校（The Academy）",
+    "lore": "迴廊 · 物語核邊緣",
+    "mechanism": ""
+  },
+  "RC-12": {
+    "name": "蝠群襲掠婚規則（Bat Flock Raid-We",
+    "lore": "W01 靈子塵埃（煦掠族群）",
+    "mechanism": "透過「捕食儀式化」篩選具備警覺性與回應意願的伴侶"
+  },
+  "RC-13": {
+    "name": "至高神祇命名混合算法（Theonymic Blen",
+    "lore": "W01 靈子塵埃（神話層）",
+    "mechanism": "將神祇在不同文化與時期的稱呼「碎片」透過演算法混合為全名，並簡化為日常使用姓名。"
+  },
+  "RC-14": {
+    "name": "神祇召喚全名吟唱規則（Theonymic Invo",
+    "lore": "跨世界線（適用於W01神話層及任何存在「全名」的高位存在）",
+    "mechanism": "將「召喚神祇」從單純的擲骰判定，轉變為需要玩家「實際唸出全名」的表演環節，增加遊戲的荒誕性與儀式感"
+  },
+  "RC-15": {
+    "name": "鼠立方（Rodent Cube）",
+    "lore": "W01 靈子塵埃",
+    "mechanism": ""
+  },
+  "RC-16": {
+    "name": "黑帆掠奪者（Black Sail Reaver）",
+    "lore": "W01 靈子塵埃",
+    "mechanism": ""
+  }
+}
+    
+    # Assign NPC affiliations based on relation tokens
+    # (Injects org info into NPC data where relation tokens exist)
+    _npc_faction_map = {}
+    for card in _CHARACTER_CARDS:
+        cid = card.get('card_id','?')
+        name = card.get('name','?').split('(')[0].strip()[:10]
+        if not name: name = '?'
+        relation_tokens = [t for t in card.get('tokens',[]) if t.get('category')=='relation']
+        for rt in relation_tokens:
+            rel_name = rt.get('name','')
+            rel_val = rt.get('value','')
+            # Check if this relation references an ORG card
+            for ocid, odata in sim_systems.FACTIONS.items():
+                if rel_name in odata.get('name','') or odata.get('name','') in rel_name:
+                    _npc_faction_map[name] = ocid
+                    break
+    if hasattr(sim_systems, 'NPC_SCHEDULES'):
+        for npc_name in list(sim_systems.NPC_SCHEDULES.keys())[:10]:
+            pass  # faction integration placeholder for now
+    
+    # Assign territory to locations from NAT cards
+    # Simple approach: assign nations to locations based on lore keywords
+    _loc_nation_map = {}
+    for loc_name in list(sim_systems.WORLD_MAP.keys())[:20]:
+        for nid, ndata in sim_systems.NATIONS.items():
+            ndesc = ndata.get('lore','') + ndata.get('name','')
+            # Very simple heuristic: check if location appears in nation lore
+            if loc_name[:2] in ndesc:
+                _loc_nation_map[loc_name] = nid
+                break
+    if not hasattr(sim_systems, 'LOCATION_NATIONS'):
+        sim_systems.LOCATION_NATIONS = _loc_nation_map
+    
+    # Track which rules are active at which locations
+    _loc_rules = {}
+    for loc_name in list(sim_systems.WORLD_MAP.keys())[:20]:
+        for rid, rdata in sim_systems.ACTIVE_RULES.items():
+            rdesc = rdata.get('lore','') + rdata.get('name','')
+            if loc_name[:2] in rdesc:
+                if loc_name not in _loc_rules:
+                    _loc_rules[loc_name] = []
+                _loc_rules[loc_name].append(rid)
+    if not hasattr(sim_systems, 'LOCATION_RULES'):
+        sim_systems.LOCATION_RULES = _loc_rules
+    
+    print(f"[game_data] Factions: {len(sim_systems.FACTIONS)}, Nations: {len(sim_systems.NATIONS)}, Rules: {len(sim_systems.ACTIVE_RULES)}")
+
+
+    # ════════════════════════════════════════════════
+    # Card system integration: ORG/NAT/RC
+    # ════════════════════════════════════════════════
+    
+    # Factions (from ORG cards)
+    sim_systems.FACTIONS = {
+  "ORG-03": {
+    "name": "紫晶石集會",
+    "lore": "W01 靈子塵埃",
+    "relations": {
+      "關係_對外認知": "對外認知: 無。尚未被任何外部組織知曉",
+      "關係_水晶能與特定人類產生": "水晶能與特定人類產生共鳴，賦予變身能力: 水晶的來源（天然？人造？古代遺產？）",
+      "關係_變身後的形態與能力因": "變身後的形態與能力因水晶顏色而異: 水晶能量的上限與持續時間",
+      "關係_水晶可透過接觸進行分": "水晶可透過接觸進行分配，但接受者需與水晶有共鳴: 長期使用水晶是否對人體有副作用"
+    }
+  },
+  "ORG-04": {
+    "name": "失戀集團",
+    "lore": "W01 靈子塵埃",
+    "relations": {}
+  },
+  "ORG-05": {
+    "name": "終末燭光",
+    "lore": "W01 靈子塵埃",
+    "relations": {}
+  },
+  "ORG-06": {
+    "name": "新世界集團",
+    "lore": "W01 靈子塵埃",
+    "relations": {
+      "關係_聖諭同盟與唯靈聯邦": "聖諭同盟與唯靈聯邦: 組織在兩大陣營內部都有滲透。他們的長期計劃可能包括利用兩大陣營的戰爭來掩護「黎明計劃」的執行"
+    }
+  },
+  "ORG-08": {
+    "name": "脈動工業（Pulse Industrie",
+    "lore": "W01 靈子塵埃",
+    "relations": {
+      "歷史_歷史線": "歷史線: 冷戰線（成立約 15 年）"
+    }
+  },
+  "ORG-09": {
+    "name": "永恆義體（Eternal Cyberne",
+    "lore": "W01 靈子塵埃",
+    "relations": {
+      "歷史_歷史線": "歷史線: 冷戰線（成立約 8 年，比脈動工業晚）"
+    }
+  },
+  "ORG-10": {
+    "name": "鐵砧防務（Anvil Defense）",
+    "lore": "W01 靈子塵埃",
+    "relations": {
+      "歷史_歷史線": "歷史線: 冷戰線（成立約 25 年，原為軍事實驗室，後獨立）"
+    }
+  },
+  "ORG-16": {
+    "name": "鼠族工業聯合體（簡稱「鼠聯」）",
+    "lore": "",
+    "relations": {
+      "關係_競爭對手": "競爭對手: 貓族海盜（非正式，但常被搶）"
+    }
+  },
+  "ORG-17": {
+    "name": "貓族海盜聯合艦隊（簡稱「黑帆」）",
+    "lore": "",
+    "relations": {
+      "關係_競爭對手": "競爭對手: 鼠族工業聯合體（目標）、陸地海軍（偶爾）"
+    }
+  },
+  "ORG-18": {
+    "name": "藍鰭航運",
+    "lore": "",
+    "relations": {}
+  },
+  "ORG-19": {
+    "name": "潮汐基金會",
+    "lore": "",
+    "relations": {}
+  },
+  "ORG-20": {
+    "name": "納迦皇家地熱",
+    "lore": "",
+    "relations": {
+      "關係_競爭對手": "競爭對手: 莫比迪克邦联的潮汐能产业（无直接竞争，因市场不同）"
+    }
+  },
+  "ORG-21": {
+    "name": "人魚聲吶網絡",
+    "lore": "",
+    "relations": {}
+  },
+  "ORG-22": {
+    "name": "海蛞蝓生技",
+    "lore": "",
+    "relations": {}
+  },
+  "ORG-23": {
+    "name": "水母幻光娛樂",
+    "lore": "",
+    "relations": {}
+  },
+  "ORG-24": {
+    "name": "海葵共生農場",
+    "lore": "",
+    "relations": {}
+  }
+}
+    
+    # Nations (from NAT cards)
+    sim_systems.NATIONS = {
+  "NAT-01": {
+    "name": "「神權引領進化」。靈子是神賜的恩典，應以",
+    "lore": "「神權引領進化」。靈子是神賜的恩典，應以符文工藝優雅地運用，而非粗暴的工業化"
+  },
+  "NAT-02": {
+    "name": "「靈子應被工具化」。靈子不是神聖的，它是",
+    "lore": "「靈子應被工具化」。靈子不是神聖的，它是可被測量、提煉、工業化應用的資源。神靈種不是守護神，是武器"
+  },
+  "NAT-03": {
+    "name": "「不參與陣營對抗」。拒絕在聖諭同盟與唯靈",
+    "lore": "「不參與陣營對抗」。拒絕在聖諭同盟與唯靈聯邦之間選邊"
+  },
+  "NAT-04": {
+    "name": "「利潤不選邊」。同時向聖諭同盟與唯靈聯邦",
+    "lore": "「利潤不選邊」。同時向聖諭同盟與唯靈聯邦出售資源、技術、與軍事物資"
+  },
+  "NAT-05": {
+    "name": "「和平來自於力量均勢」。向所有陣營出售武",
+    "lore": "「和平來自於力量均勢」。向所有陣營出售武器，確保任何一方都無法取得決定性優勢"
+  },
+  "NAT-06": {
+    "name": "莫比迪克自由邦聯（簡稱「莫比迪克」）",
+    "lore": "W01 靈子塵埃"
+  },
+  "NAT-07": {
+    "name": "阿比薩深渊联邦",
+    "lore": "W01 靈子塵埃"
+  }
+}
+    
+    # Rules (from RC cards)
+    sim_systems.ACTIVE_RULES = {
+  "RC-01": {
+    "name": "迴廊 (The Corridor)",
+    "lore": "連接多元宇宙各個世界線的「橋樑」，由概念、數據流、意識碎片和世界法則交織而成的虛無維度",
+    "mechanism": "資訊與邏輯概念匯聚之地"
+  },
+  "RC-02": {
+    "name": "未命名規則(RC-02)",
+    "lore": "",
+    "mechanism": "使用D12，預見的本質不穩定，波動較小"
+  },
+  "RC-03": {
+    "name": "未命名規則(RC-03)",
+    "lore": "",
+    "mechanism": "使用D20"
+  },
+  "RC-05": {
+    "name": "中央大圖書館 · 地下遺跡深層休眠區",
+    "lore": "迴廊（The Corridor）· 物語核（RC-02）邊緣",
+    "mechanism": ""
+  },
+  "RC-06": {
+    "name": "森幽小徑（Shadow-wood Pathway）",
+    "lore": "迴廊 · 物語核邊緣",
+    "mechanism": ""
+  },
+  "RC-07": {
+    "name": "暈輝湖（Glow-water Cavity）",
+    "lore": "迴廊 · 物語核邊緣",
+    "mechanism": ""
+  },
+  "RC-08": {
+    "name": "阿拉克涅小鎮（Arachne Town）",
+    "lore": "迴廊 · 物語核邊緣",
+    "mechanism": ""
+  },
+  "RC-09": {
+    "name": "拉米雅小鎮（Lamia Town）",
+    "lore": "迴廊 · 物語核邊緣",
+    "mechanism": ""
+  },
+  "RC-10": {
+    "name": "地下西翼大市集（Trade Bazaar）",
+    "lore": "迴廊 · 物語核邊緣",
+    "mechanism": ""
+  },
+  "RC-11": {
+    "name": "概念學術高等學校（The Academy）",
+    "lore": "迴廊 · 物語核邊緣",
+    "mechanism": ""
+  },
+  "RC-12": {
+    "name": "蝠群襲掠婚規則（Bat Flock Raid-We",
+    "lore": "W01 靈子塵埃（煦掠族群）",
+    "mechanism": "透過「捕食儀式化」篩選具備警覺性與回應意願的伴侶"
+  },
+  "RC-13": {
+    "name": "至高神祇命名混合算法（Theonymic Blen",
+    "lore": "W01 靈子塵埃（神話層）",
+    "mechanism": "將神祇在不同文化與時期的稱呼「碎片」透過演算法混合為全名，並簡化為日常使用姓名。"
+  },
+  "RC-14": {
+    "name": "神祇召喚全名吟唱規則（Theonymic Invo",
+    "lore": "跨世界線（適用於W01神話層及任何存在「全名」的高位存在）",
+    "mechanism": "將「召喚神祇」從單純的擲骰判定，轉變為需要玩家「實際唸出全名」的表演環節，增加遊戲的荒誕性與儀式感"
+  },
+  "RC-15": {
+    "name": "鼠立方（Rodent Cube）",
+    "lore": "W01 靈子塵埃",
+    "mechanism": ""
+  },
+  "RC-16": {
+    "name": "黑帆掠奪者（Black Sail Reaver）",
+    "lore": "W01 靈子塵埃",
+    "mechanism": ""
+  }
+}
+    
+    # Assign NPC affiliations based on relation tokens
+    # (Injects org info into NPC data where relation tokens exist)
+    _npc_faction_map = {}
+    for card in _CHARACTER_CARDS:
+        cid = card.get('card_id','?')
+        name = card.get('name','?').split('(')[0].strip()[:10]
+        if not name: name = '?'
+        relation_tokens = [t for t in card.get('tokens',[]) if t.get('category')=='relation']
+        for rt in relation_tokens:
+            rel_name = rt.get('name','')
+            rel_val = rt.get('value','')
+            # Check if this relation references an ORG card
+            for ocid, odata in sim_systems.FACTIONS.items():
+                if rel_name in odata.get('name','') or odata.get('name','') in rel_name:
+                    _npc_faction_map[name] = ocid
+                    break
+    if hasattr(sim_systems, 'NPC_SCHEDULES'):
+        for npc_name in list(sim_systems.NPC_SCHEDULES.keys())[:10]:
+            pass  # faction integration placeholder for now
+    
+    # Assign territory to locations from NAT cards
+    # Simple approach: assign nations to locations based on lore keywords
+    _loc_nation_map = {}
+    for loc_name in list(sim_systems.WORLD_MAP.keys())[:20]:
+        for nid, ndata in sim_systems.NATIONS.items():
+            ndesc = ndata.get('lore','') + ndata.get('name','')
+            # Very simple heuristic: check if location appears in nation lore
+            if loc_name[:2] in ndesc:
+                _loc_nation_map[loc_name] = nid
+                break
+    if not hasattr(sim_systems, 'LOCATION_NATIONS'):
+        sim_systems.LOCATION_NATIONS = _loc_nation_map
+    
+    # Track which rules are active at which locations
+    _loc_rules = {}
+    for loc_name in list(sim_systems.WORLD_MAP.keys())[:20]:
+        for rid, rdata in sim_systems.ACTIVE_RULES.items():
+            rdesc = rdata.get('lore','') + rdata.get('name','')
+            if loc_name[:2] in rdesc:
+                if loc_name not in _loc_rules:
+                    _loc_rules[loc_name] = []
+                _loc_rules[loc_name].append(rid)
+    if not hasattr(sim_systems, 'LOCATION_RULES'):
+        sim_systems.LOCATION_RULES = _loc_rules
+    
+    print(f"[game_data] Factions: {len(sim_systems.FACTIONS)}, Nations: {len(sim_systems.NATIONS)}, Rules: {len(sim_systems.ACTIVE_RULES)}")
+
+    cnt["enemies"] += 1
     
     # Enemy distribution
     loc_list = list(sim_systems.LOCATION_ENEMIES.keys())

@@ -355,6 +355,18 @@ def print_status(character):
     sicon = SCENE_TYPE_ICONS.get(stype, "🌄")
     stname = SCENE_TYPE_NAMES.get(stype, "?")
     print(C.WHITE + "  " + sicon + " 位置: " + loc + C.RESET + "  " + C.MAGENTA + "[ " + race + " ]" + C.RESET + C.DIM + " (%s)" % stname + C.RESET, end="")
+    # Nation info
+    loc_nation = LOCATION_NATIONS.get(loc) if hasattr(sim_systems, 'LOCATION_NATIONS') else None
+    if loc_nation and loc_nation in NATIONS:
+        nname = NATIONS[loc_nation].get("name","")[:12]
+        if nname:
+            print(C.CYAN + " 🏛" + nname + C.RESET, end="")
+    # Active rules at this location
+    loc_rules = LOCATION_RULES.get(loc) if hasattr(sim_systems, 'LOCATION_RULES') else None
+    if loc_rules:
+        rule_names = [ACTIVE_RULES.get(r,{}).get("name","")[:8] for r in loc_rules if r in ACTIVE_RULES]
+        if rule_names:
+            print(C.DIM + " 📜" + ",".join(rule_names) + C.RESET, end="")
     if character.get("riding"):
         print(C.YELLOW + " [騎乘: " + character["riding"] + "]" + C.RESET)
     else:
