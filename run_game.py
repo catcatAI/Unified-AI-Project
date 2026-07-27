@@ -1,5 +1,6 @@
 """CLI RPG Simulation — Complete Game Loop."""
 import sys
+import os
 import random as _random
 from pathlib import Path
 
@@ -83,6 +84,11 @@ _current_weather = "☀晴"
 # ═══════════════════════════════════════════════════════════════════════════
 # HELPERS
 # ═══════════════════════════════════════════════════════════════════════════
+
+
+def clear_screen():
+    """Clear terminal screen per INTERFACE_TERMINAL.md§清屏"""
+    os.system("cls" if os.name == "nt" else "clear")
 
 def advance_time(character, hours=1):
     global _current_weather
@@ -168,7 +174,7 @@ def print_help():
     print(C.WHITE + C.BOLD + "║" + C.RESET + " 7.身體  8.裝備   9.地圖")
     print(C.WHITE + C.BOLD + "║" + C.RESET + "10.關係 11.合成  12.搜索")
     print(C.WHITE + C.BOLD + "║" + C.RESET + "13.任務 14.車輛  15.不動產")
-    print(C.WHITE + C.BOLD + "║" + C.RESET + " h.幫助    q.退出")
+    print(C.WHITE + C.BOLD + "║" + C.RESET + "  s.存檔   l.讀檔   q.退出")
     print(C.WHITE + C.BOLD + "╚═══════════════════════════╝" + C.RESET)
 
 
@@ -301,6 +307,15 @@ def do_combat(character, enemy):
         valid = [p[0] for p in BODY_PARTS if p[0] in character.get("body_parts",{})]
         bp = _random.choice(valid) if valid else "torso"
         apply_damage(character, ed, bp)
+        # Fatigue/pain system per NUMERICAL_SYSTEMS.md
+        character["fatigue"] = character.get("fatigue", 0) + _random.randint(3, 8)
+        character["pain"] = character.get("pain", 0) + _random.randint(2, 6)
+        # Fatigue affects speed
+        if character.get("fatigue", 0) > 80:
+            print(C.YELLOW+"      💤 疲勞度已高! 行動速度下降。"+C.RESET)
+        # Pain affects actions
+        if character.get("pain", 0) > 60 and _random.random() < 0.3:
+            print(C.RED+"      😖 傷口疼痛使你行動失敗!"+C.RESET)
         ds = C.BLUE+" (減半)"+C.RESET if defending else ""
         print(C.MAGENTA+"    💥 %s 造成 %d 傷害!%s" % (enemy["name"],ed,ds)+C.RESET)
         # Consume armor durability on hit (per ITEM_EQUIPMENT_SYSTEM.md: 戰鬥受擊消耗耐久)
@@ -378,9 +393,12 @@ def do_explore(character, equipment):
         if junk:
             all_finds.append(_random.choice(junk))
 
-    # Loot bonus from weather
-    if loot_bonus > 0 and _random.random() < loot_bonus:
-        all_finds.append("水晶碎片")
+    # Loot bonus from weather (full WEATHER_EFFECTS implementation)
+    if loot_bonus > 0:
+        bonus_finds = []
+        if _random.random() < loot_bonus:
+            bonus_finds = ["水晶碎片","魔法粉","火元素","靈木"]
+            all_finds.append(_random.choice(bonus_finds))
 
     find = _random.choice(all_finds)
     if find:
@@ -449,6 +467,9 @@ def do_rest(character):
     heal_sp = min(character["max_sp"]-character["sp"], int(25*bonus))
     character["hp"] += heal_hp
     character["sp"] += heal_sp
+    # Fatigue/pain recovery during rest
+    character["fatigue"] = max(0, character.get("fatigue", 0) - 30)
+    character["pain"] = max(0, character.get("pain", 0) - 20)
 
     events = [
         (0.2,"夢境","🌙 做了奇異的夢...關於鏡湖的光。",
@@ -508,6 +529,42 @@ def do_inventory(character):
         print(C.RED+"  ⚠ 負重過載!"+C.RESET)
     if len(inv) >= MAX_INVENTORY_SLOTS:
         print(C.YELLOW+"  ⚠ 物品欄已滿!"+C.RESET)
+    # ── Use/Discard items ──
+    if inv:
+        print("  "+C.CYAN+"選擇物品編號使用，或輸入 d+編號 丟棄 (如 d3)"+C.RESET)
+        ch = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
+        if ch.startswith('d') or ch.startswith('D'):
+            idx_str = ch[1:]
+            if idx_str.isdigit():
+                idx = int(idx_str) - 1
+                if 0 <= idx < len(inv):
+                    item_name = inv.pop(idx)
+                    print(C.GRAY+"  丟棄了 %s。"%item_name+C.RESET)
+        elif ch.isdigit():
+            idx = int(ch) - 1
+            if 0 <= idx < len(inv):
+                item_name = inv[idx]
+                idf = get_item_def(item_name)
+                if idf.get("type") == "consumable":
+                    hh = idf.get("heal_hp", 0)
+                    hs = idf.get("heal_sp", 0)
+                    if hh > 0 or hs > 0:
+                        if hh > 0:
+                            ah = min(character["max_hp"]-character["hp"], hh)
+                            character["hp"] += ah
+                            print(C.GREEN+"  使用了 %s +%dHP!"%(item_name,ah)+C.RESET)
+                        if hs > 0:
+                            a2 = min(character["max_sp"]-character["sp"], hs)
+                            character["sp"] += a2
+                            print(C.BLUE+"  使用了 %s +%dSP!"%(item_name,a2)+C.RESET)
+                        inv.pop(idx)
+                    elif "解毒" in item_name or idf.get("cure"):
+                        print(C.GREEN+"  使用了 %s。"%item_name+C.RESET)
+                        inv.pop(idx)
+                    else:
+                        print(C.GRAY+"  無法直接使用。"+C.RESET)
+                else:
+                    print(C.GRAY+"  %s 無法直接使用。去裝備欄裝備它。"%item_name+C.RESET)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1248,6 +1305,9 @@ def start_game():
         accept_quest(character, mq1)
         print(C.GREEN+"\n  自動接受主線任務: 鏡湖的秘密"+C.RESET)
     
+    # Auto-save on start
+    save_game(character)
+    
     # Auto-accept race-specific task
     char_race = character.get("race", "人類")
     race_task_id = {"艦娘":"TASK-01","術士":"TASK-02","竜族":"TASK-03","機械":"TASK-04"}.get(char_race)
@@ -1278,6 +1338,10 @@ def start_game():
         ch = input("  %s>%s " % (C.YELLOW,C.RESET)).strip().lower()
 
         if ch in ("q","quit","exit"):
+            save = input("  %s存檔後離開? (y/n):%s " % (C.YELLOW,C.RESET)).strip().lower()
+            if save == "y":
+                save_game(character)
+                print(C.GREEN+"  存檔完成!"+C.RESET)
             print(C.GREEN+C.BOLD+"\n遊戲結束。謝謝遊玩!"+C.RESET)
             print(C.GRAY+"  最終: Lv.%d | %d天 | %dG | %d任務完成" % (
                 character["level"], character["day"], character.get("gold",0),
@@ -1287,6 +1351,18 @@ def start_game():
                 top = max(rels, key=rels.get)
                 print(C.GRAY+"  最佳關係: %s (%d)" % (top, rels[top]) + C.RESET)
             break
+        if ch == "s":
+            save_game(character)
+            print(C.GREEN+"  存檔完成!"+C.RESET)
+            continue
+        if ch == "l":
+            saved = load_game()
+            if saved:
+                character = saved
+                print(C.GREEN+"  讀檔成功!"+C.RESET)
+            else:
+                print(C.RED+"  沒有存檔。"+C.RESET)
+            continue
         if ch=="h": print_help(); continue
         if ch=="1": do_explore(character, equipment)
         elif ch=="2": do_interact_npc(character)

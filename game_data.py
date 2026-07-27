@@ -9,7 +9,7 @@ from pathlib import Path
 DATA_DIR = Path(__file__).resolve().parent / "data"
 CARD_PATH = DATA_DIR / "game_cards.json"
 
-_seed = _random.Random(42)  # deterministic
+_seed = _random.Random()  # non-deterministic (time-based)
 
 def _load_cards() -> dict:
     if CARD_PATH.exists():

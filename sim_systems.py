@@ -244,9 +244,8 @@ def get_enemy(location: str) -> Optional[dict]:
 ENEMY_ENCOUNTER_CHANCE = 0.4
 
 def resolve_combat_turn(attacker_atk, attacker_spd, defender_def, defender_hp):
-    base = attacker_atk * 1.5
-    dmg = max(1, int(base - defender_def * 0.5))
-    crit = _random.random() < attacker_spd * 0.02
+    dmg = max(1, int(attacker_atk * 1.5 - defender_def * 0.5))
+    crit = _random.random() < attacker_spd * 0.05
     if crit:
         dmg = int(dmg * 1.5)
     return min(dmg, defender_hp), crit
@@ -508,10 +507,10 @@ RACE_TASK_IDS = ["TASK-01","TASK-02","TASK-03","TASK-04"]
 # ═══════════════════════════════════════════════════════════
 
 VEHICLES = {
-    "腳踏車":{"speed":1.5,"capacity":1,"cargo":20,"fuel":-1,"desc":"普通的腳踏車，省力快速"},
-    "馬":    {"speed":2.0,"capacity":1,"cargo":30,"fuel":-1,"desc":"一匹溫順的馬"},
-    "馬車":  {"speed":1.2,"capacity":3,"cargo":100,"fuel":-1,"desc":"載貨用馬車"},
-    "小舟":  {"speed":1.3,"capacity":2,"cargo":15,"fuel":-1,"desc":"簡易的小舟，可渡水"},
+    "腳踏車":{"speed":1.5,"capacity":1,"cargo":20,"fuel":100,"fuel_type":"stamina","fuel_per_hour":2,"desc":"普通的腳踏車，省力快速"},
+    "馬":    {"speed":2.0,"capacity":1,"cargo":30,"fuel":80,"fuel_type":"feed","fuel_per_hour":3,"desc":"一匹溫順的馬"},
+    "馬車":  {"speed":1.2,"capacity":3,"cargo":100,"fuel":120,"fuel_type":"feed","fuel_per_hour":2,"desc":"載貨用馬車"},
+    "小舟":  {"speed":1.3,"capacity":2,"cargo":15,"fuel":60,"fuel_type":"stamina","fuel_per_hour":4,"desc":"簡易的小舟，可渡水"},
 }
 
 VEHICLE_LOCATIONS = {

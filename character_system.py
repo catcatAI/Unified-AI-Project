@@ -73,21 +73,65 @@ EMOTION_FACES = {
 }
 
 SYMBOLS = {
-    "CC-01": "👤",   "CC-02": "👤",   "CC-03": "🦊",   "CC-04": "👤",
-    "CC-05": "👤",   "CC-06": "👤",   "CC-07": "👤",   "CC-08": "👤",
-    "CC-09": "👤",   "CC-10": "👤",   "CC-11": "👤",   "CC-12": "👤",
-    "CC-13": "👤",   "CC-14": "👤",   "CC-15": "👤",   "CC-16": "👤",
-    "CC-17": "👤",   "CC-18": "👤",   "CC-19": "👤",   "CC-20": "👤",
-    "CC-21": "👤",   "CC-22": "👤",   "CC-23": "👤",   "CC-24": "👤",
-    "CC-25": "👤",   "CC-26": "👤",   "CC-27": "👤",   "CC-28": "👤",
-    "CC-29": "👤",   "CC-30": "👤",   "CC-31": "👤",   "CC-32": "👤",
-    "CC-33": "👤",   "CC-34": "👤",   "CC-35": "👤",   "CC-36": "👤",
-    "CC-37": "👤",   "CC-38": "👤",   "CC-39": "👤",   "CC-40": "👤",
-    "CC-41": "👤",   "CC-42": "👤",   "CC-43": "👤",   "CC-44": "👤",
-    "CC-45": "👤",   "CC-46": "👤",   "CC-47": "👤",   "CC-48": "👤",
-    "CC-49": "👤",   "CC-50": "👤",   "CC-51": "👤",   "CC-52": "👤",
-    "CC-53": "👤",   "CC-54": "👤",   "CC-55": "👤",   "CC-56": "👤",
-    "CC-57": "👤",   "CC-58": "👤",   "CC-59": "👤",
+    "CC-01": "🔮",   # 織織 (Zhī Zhī)
+    "CC-02": "🔮",   # 壞壞米亞 (The Ch
+    "CC-03": "🔮",   # 星辰米亞 (The St
+    "CC-04": "🔮",   # 純真米亞 (The In
+    "CC-05": "🔮",   # 惡意精靈 (The Ma
+    "CC-06": "🔮",   # 楓
+    "CC-07": "🔮",   # 亞瑟 (Arthur)
+    "CC-08": "🔮",   # 概念調味師
+    "CC-09": "🔮",   # 安潔莉卡
+    "CC-10": "🔮",   # 靜子
+    "CC-11": "🔮",   # 米米
+    "CC-12": "🔮",   # 艾比 (Abby)
+    "CC-16": "🔮",   # 無限
+    "CC-17": "🔮",   # 左間小蒼蘭
+    "CC-18": "🔮",   # 小狐丸
+    "CC-19": "🔮",   # 晴空
+    "CC-20": "🔮",   # 米拉
+    "CC-21": "🔮",   # 千島 雉（ちしま きじ）
+    "CC-22": "🔮",   # 千島 忠臣（ちしま ただ
+    "CC-23": "🔮",   # 記憶者
+    "CC-28": "⚔️",   # 味道者
+    "CC-29": "⚔️",   # 溫度者
+    "CC-30": "⚔️",   # 濕度者
+    "CC-31": "⚙️",   # 空間者
+    "CC-32": "⚔️",   # 雲龍院 晴空（うんりゅう
+    "CC-33": "⚔️",   # 東 雲（しののめ くも）
+    "CC-34": "⚔️",   # 萊姆（ライム）
+    "CC-35": "⚔️",   # 輝夜（かぐや）
+    "CC-36": "🔮",   # 輝夜姬
+    "CC-38": "⚔️",   # 晞咕萊雅（Xigulay
+    "CC-39": "⚔️",   # 暈咔繆露（Yunkami
+    "CC-40": "⚔️",   # 髂審芬蒂（Kashinf
+    "CC-41": "⚔️",   # 芬喀涅（Fenkani）
+    "CC-42": "⚔️",   # 喪咕 雪禍咪 閃雷（通稱
+    "CC-43": "⚔️",   # 猞妒蝕津
+    "CC-44": "⚔️",   # 猞妒忌依
+    "CC-45": "🔧",   # 奶油泡芙（自稱）
+    "CC-46": "📜",   # 司萌
+    "CC-47": "📜",   # 呃咔
+    "CC-48": "⚔️",   # 鈿乾 芊蒔
+    "CC-49": "📜",   # 晞吶（Xina）
+    "CC-50": "⚔️",   # 翎翾（Líng Xuān
+    "CC-51": "⚔️",   # 夜鈴（Yè Líng）
+    "CC-52": "🔮",   # 煦掠（Xù Lüè）
+    "CC-53": "🔮",   # 小無（Xiǎo Wú）
+    "CC-54": "🔧",   # 嚶鳴（Yīng Míng
+    "CC-55": "📜",   # 蓋婭（Gaia）
+    "CC-56": "🔮",   # 塞勒涅（Selene）
+    "CC-57": "⚔️",   # 
+    "CC-58": "⚔️",   # 
+    "CC-59": "⚔️",   # 
+    "CC-61": "🔮",   # 藤真 佐和（Fujima
+    "CC-62": "⚔️",   # 汐見 琴音（Shiomi
+    "CC-63": "🔧",   # 啮輪·鋼須
+    "CC-64": "⚔️",   # 暗爪·刃尾
+    "CC-65": "🔧",   # 深痕 · 裂脊
+    "CC-66": "📜",   # 漣 · 迴聲
+    "CC-67": "🔧",   # 沫 · 彩衣
+    "CCK-01": "🔮",   # 克洛諾斯
 }
 BODY_PARTS = [
     ("head", "頭部"), ("torso", "軀幹"), ("left_arm", "左上臂"),
@@ -582,6 +626,7 @@ def accept_quest(character, quest):
         "status": "active",
         "progress": {obj["type"] + ":" + obj["target"]: 0 for obj in quest["objectives"]},
         "objectives": [dict(obj) for obj in quest["objectives"]],
+        "start_day": character.get("day", 1),
     }
     return True
 
@@ -863,3 +908,48 @@ def modify_reputation(character, amount: int):
     current = character.get("reputation", 0)
     character["reputation"] = max(-100, min(100, current + amount))
     return character["reputation"]
+
+
+# =============================================================================
+# Save/Load system (存檔系統)
+# =============================================================================
+
+SAVE_FILE = 'data/save_game.json'
+
+def save_game(character):
+    """Save character state to JSON file."""
+    import os
+    try:
+        save_dir = os.path.dirname(SAVE_FILE)
+        if save_dir and not os.path.exists(save_dir):
+            os.makedirs(save_dir, exist_ok=True)
+        # Convert body_parts for serialization
+        save_data = dict(character)
+        # Remove non-serializable if any
+        with open(SAVE_FILE, 'w', encoding='utf-8') as f:
+            json.dump(save_data, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        print('  Save failed:', e)
+        return False
+
+def load_game():
+    """Load character state from JSON file."""
+    import os
+    try:
+        if not os.path.exists(SAVE_FILE):
+            return None
+        with open(SAVE_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return data
+    except Exception:
+        return None
+
+def delete_save():
+    """Delete save file."""
+    import os
+    try:
+        if os.path.exists(SAVE_FILE):
+            os.remove(SAVE_FILE)
+    except Exception:
+        pass
