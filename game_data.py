@@ -325,6 +325,21 @@ _NPC_LOCATIONS_POOL = [
     "秘密鐵工廠", "便利店", "英靈殿", "廢棄礦坑", "森林深處",
 ]
 
+
+def _get_fallback_race(card) -> str:
+    """Get race from non-lore tokens when lore tokens are missing."""
+    name = card.get("name","?").split("(")[0].strip()
+    if name and name != '?':
+        return name[:6]
+    for cat in ['vitality', 'element', 'energy', 'combat', 'skill']:
+        for t in card.get("tokens", []):
+            if t.get("category") == cat:
+                v = t.get("value", "") or t.get("name", "")
+                if v and len(v) < 10:
+                    return v[:6]
+    return "精灵"
+
+
 def _generate_npc_schedule(npc_name: str, home_loc: str) -> list:
     schedules = []
     slots = [(6,10),(10,14),(14,18),(18,22),(22,6)]
@@ -365,6 +380,12 @@ def generate_all_npcs() -> Dict[str, dict]:
             archetype = "mage"
         elif "craft" in token_cats or "social" in token_cats:
             archetype = "merchant"
+        elif "skill" in token_cats and "relation" in token_cats:
+            archetype = "specialist"
+        elif "exploration" in token_cats:
+            archetype = "scout"
+        elif "mechanism" in token_cats:
+            archetype = "engineer"
         else:
             archetype = "default"
         
@@ -387,8 +408,6 @@ def generate_all_npcs() -> Dict[str, dict]:
             "archetype": archetype,
             "token_categories": list(token_cats),
             "abilities": [a.get("name","") for a in card.get("abilities", [])],
-            "ability_details": card.get("abilities", []),
-            "has_abilities": len(card.get("abilities", [])) > 0,
             "ability_details": card.get("abilities", []),
             "has_abilities": len(card.get("abilities", [])) > 0,
             "offers": offers[:8],
@@ -1207,40 +1226,60 @@ def expand_game():
   }
 }
     
+
     # Assign NPC affiliations based on relation tokens
     # (Injects org info into NPC data where relation tokens exist)
     _npc_faction_map = {}
     for card in _CHARACTER_CARDS:
-        cid = card.get('card_id','?')
-        name = card.get('name','?').split('(')[0].strip()[:10]
-        if not name: name = '?'
+        raw_name = card.get('name','?').split('(')[0].strip()
+        if not raw_name: raw_name = '?'
+        _candidates = []
+        if raw_name in ALL_NPCS:
+            _candidates.append(raw_name)
+        else:
+            for an in ALL_NPCS:
+                if raw_name and (raw_name in an or an[:max(2,len(raw_name))] == raw_name[:max(2,len(raw_name))]):
+                    _candidates.append(an)
         relation_tokens = [t for t in card.get('tokens',[]) if t.get('category')=='relation']
         for rt in relation_tokens:
             rel_name = rt.get('name','')
-            rel_val = rt.get('value','')
-            # Check if this relation references an ORG card
             for ocid, odata in sim_systems.FACTIONS.items():
-                if rel_name in odata.get('name','') or odata.get('name','') in rel_name:
-                    _npc_faction_map[name] = ocid
+                fname = odata.get('name','').lower()
+                if rel_name.lower() in fname or fname in rel_name.lower():
+                    for cn in _candidates:
+                        _npc_faction_map[cn] = ocid
                     break
-    # Assign factions to NPCs based on NPC_SCHEDULES
-    if hasattr(sim_systems, 'NPC_SCHEDULES') and _npc_faction_map:
-        if not hasattr(sim_systems, 'NPC_FACTIONS'):
-            sim_systems.NPC_FACTIONS = {}
-        for npc_name in list(sim_systems.NPC_SCHEDULES.keys()):
-            for cname, ocid in _npc_faction_map.items():
-                if cname in npc_name or npc_name in cname:
-                    sim_systems.NPC_FACTIONS[npc_name] = ocid
-                    break
+    
+    # Assign factions from mapping
+    if not hasattr(sim_systems, 'NPC_FACTIONS'):
+        sim_systems.NPC_FACTIONS = {}
+    for npc_name, ocid in _npc_faction_map.items():
+        sim_systems.NPC_FACTIONS[npc_name] = ocid
+    
+    # Location-based fallback for ALL NPCs
+    _loc_to_faction = {}
+    for lid, lv in sim_systems.FACTIONS.items():
+        fl = (str(lv.get('lore','')) + str(lv.get('name',''))).lower()
+        for loc in sim_systems.WORLD_MAP:
+            ll = loc.lower()
+            if len(ll) >= 2 and ll[:2] in fl:
+                _loc_to_faction[loc] = lid
+                break
+    # Fallback: assign faction based on NPC home location
+    for npc_name in list(ALL_NPCS.keys()):
+        if npc_name not in sim_systems.NPC_FACTIONS:
+            nl = ALL_NPCS.get(npc_name, {}).get('location', '')
+            if nl in _loc_to_faction:
+                sim_systems.NPC_FACTIONS[npc_name] = _loc_to_faction[nl]
     
     # Assign territory to locations from NAT cards
     # Simple approach: assign nations to locations based on lore keywords
     _loc_nation_map = {}
-    for loc_name in list(sim_systems.WORLD_MAP.keys())[:20]:
+    for loc_name in list(sim_systems.WORLD_MAP.keys()):
         for nid, ndata in sim_systems.NATIONS.items():
             ndesc = ndata.get('lore','') + ndata.get('name','')
             # Very simple heuristic: check if location appears in nation lore
-            if loc_name[:2] in ndesc:
+            if len(loc_name) >= 2 and any(sub in ndesc for sub in [loc_name, loc_name[::-1][:4], loc_name[:4]]):
                 _loc_nation_map[loc_name] = nid
                 break
     if not hasattr(sim_systems, 'LOCATION_NATIONS'):
@@ -1248,10 +1287,10 @@ def expand_game():
     
     # Track which rules are active at which locations
     _loc_rules = {}
-    for loc_name in list(sim_systems.WORLD_MAP.keys())[:20]:
+    for loc_name in list(sim_systems.WORLD_MAP.keys()):
         for rid, rdata in sim_systems.ACTIVE_RULES.items():
             rdesc = rdata.get('lore','') + rdata.get('name','')
-            if loc_name[:2] in rdesc:
+            if len(loc_name) >= 2 and any(sub in rdesc for sub in [loc_name, loc_name[::-1][:4], loc_name[:4]]):
                 if loc_name not in _loc_rules:
                     _loc_rules[loc_name] = []
                 _loc_rules[loc_name].append(rid)
@@ -1550,6 +1589,19 @@ def expand_game():
                 sim_systems.NPC_SCHEDULES[name] = sched
                 cnt["npcs"] += 1
     
+    # Sync NPC metadata into NPC_METADATA (keeps NPC_SCHEDULES as list)
+    if not hasattr(sim_systems, 'NPC_METADATA'):
+        sim_systems.NPC_METADATA = {}
+    for name, nd in ALL_NPCS.items():
+        sim_systems.NPC_METADATA[name] = {
+            'ability_details': nd.get('ability_details', []),
+            'has_abilities': nd.get('has_abilities', False),
+            'archetype': nd.get('archetype', 'default'),
+            'race': nd.get('race', '\u4e0d\u660e'),
+            'location': nd.get('location', ''),
+            'token_categories': nd.get('token_categories', []),
+            'offers': nd.get('offers', []),
+        }
     # Quests
     existing_q = {q["id"] for q in sim_systems.QUESTS}
     for q in ALL_QUESTS:
