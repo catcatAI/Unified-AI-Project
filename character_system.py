@@ -660,6 +660,107 @@ def get_active_quests(character):
     return result
 
 
+def check_quest_eligibility(character, quest, current_hour=None):
+    """Check if a character can accept a quest.
+    Returns (bool, reason_string).
+    """
+    from sim_systems import QUESTS
+    if quest is None:
+        return False, "任務不存在"
+    conds = quest.get("conditions", {})
+    
+    # Check level
+    req_lv = conds.get("required_level", 0)
+    if req_lv > 0 and character.get("level", 1) < req_lv:
+        return False, "等級不足 (需要 Lv.%d)" % req_lv
+    
+    # Check race
+    req_race = conds.get("required_race", "")
+    if req_race and character.get("race", "人類") != req_race:
+        return False, "種族不符 (需要 %s)" % req_race
+    
+    # Check reputation
+    req_rep = conds.get("required_reputation", 0)
+    if req_rep > 0 and character.get("reputation", 0) < req_rep:
+        return False, "聲望不足 (需要 %d)" % req_rep
+    
+    # Check relationships
+    req_rels = conds.get("required_relationships", {})
+    if req_rels:
+        rels = character.get("relationships", {})
+        for npc_name, needed_val in req_rels.items():
+            current_val = rels.get(npc_name, 0)
+            if current_val < needed_val:
+                return False, "好感度不足 (%s 需要 %d, 目前 %d)" % (npc_name, needed_val, current_val)
+    
+    # Check prerequisite quests
+    req_quests = conds.get("required_quests", [])
+    if req_quests:
+        completed = character.get("completed_quests", [])
+        for rq in req_quests:
+            if rq not in completed:
+                qdef = next((qq for qq in QUESTS if qq["id"] == rq), None)
+                title = qdef["title"] if qdef else rq
+                return False, "需要先完成「%s」" % title
+    
+    # Check required tokens
+    req_tokens = conds.get("required_tokens", [])
+    if req_tokens:
+        token_cats = {t.get("category", "") for t in character.get("token_list", [])}
+        for tok in req_tokens:
+            if tok not in token_cats:
+                return False, "需要 [%s] 類別特質" % tok
+    
+    # Check time availability
+    time_avail = conds.get("time_available", {})
+    if time_avail:
+        if current_hour is None:
+            current_hour = character.get("hour", 8)
+        start_h = time_avail.get("start_hour", 0)
+        end_h = time_avail.get("end_hour", 24)
+        if start_h <= end_h:
+            if not (start_h <= current_hour < end_h):
+                return False, "現在不是接取時間 (%d:00~%d:00)" % (start_h, end_h)
+        else:
+            # Wrap-around (e.g. 18:00~6:00)
+            if not (current_hour >= start_h or current_hour < end_h):
+                return False, "現在不是接取時間 (%d:00~%d:00)" % (start_h, end_h)
+    
+    # Check required skills
+    req_skill = conds.get("required_skill", {})
+    if req_skill:
+        skills = character.get("skills", {})
+        for sname, slevel in req_skill.items():
+            cur_level = skills.get(sname, {}).get("level", 0)
+            if cur_level < slevel:
+                return False, "技能等級不足 (%s Lv.%d)" % (sname, slevel)
+    
+    return True, ""
+
+
+def get_available_quests(character):
+    """Get list of quests that the character can accept.
+    Filters by conditions, not completed, not active.
+    Returns list of (quest_def, reason_if_not_available_or_None).
+    """
+    from sim_systems import QUESTS
+    qs = character.get("quests", {})
+    completed = character.get("completed_quests", [])
+    current_hour = character.get("hour", 8)
+    result = []
+    for q in QUESTS:
+        if q["id"] in qs and qs[q["id"]]["status"] == "active":
+            continue
+        if q["id"] in completed:
+            continue
+        eligible, reason = check_quest_eligibility(character, q, current_hour)
+        if eligible:
+            result.append((q, None))
+        else:
+            result.append((q, reason))
+    return result
+
+
 # =============================================================================
 # Vehicle state
 # =============================================================================

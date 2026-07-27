@@ -346,74 +346,161 @@ def get_npc_activity(npc_name, hour):
 # ═══════════════════════════════════════════════════════════
 
 QUESTS = [
-    # ── Main Quests ──
+    # ── Main Quests (with conditions) ──
     {"id":"MQ-01","title":"鏡湖的秘密","type":"main","giver":"系統",
      "desc":"探索鏡湖周邊，找出湖底發光的原因。",
+     "conditions":{"required_reputation":0,"time_available":{"start_hour":0,"end_hour":24}},
      "objectives":[{"type":"visit","target":"鏡湖","detail":"造訪鏡湖"},
                    {"type":"collect","target":"水晶碎片","qty":1,"detail":"收集水晶碎片"}],
-     "reward_exp":80,"reward_gold":30,"reward_item":"古老鑰匙"},
+     "reward_exp":80,"reward_gold":30,"reward_item":"古老鑰匙","reward_reputation":10,
+     "next_quest":"MQ-02"},
     {"id":"MQ-02","title":"大正浪漫的迴響","type":"main","giver":"左間小蒼蘭",
      "desc":"幫助左間小蒼蘭修復秘密鐵工廠的古董機械。",
+     "conditions":{"required_level":3,"required_quests":["MQ-01"],"time_available":{"start_hour":7,"end_hour":21}},
      "objectives":[{"type":"visit","target":"秘密鐵工廠","detail":"拜訪秘密鐵工廠"},
                    {"type":"collect","target":"鐵錠","qty":3,"detail":"收集3個鐵錠"},
                    {"type":"collect","target":"魔法粉","qty":1,"detail":"收集魔法粉"}],
-     "reward_exp":120,"reward_gold":50,"reward_item":"鋼刀"},
+     "reward_exp":120,"reward_gold":50,"reward_item":"鋼刀","reward_reputation":15,
+     "reward_relationships":{"左間小蒼蘭":20},"next_quest":"MQ-03"},
     {"id":"MQ-03","title":"圖書館之謎","type":"main","giver":"系統",
      "desc":"中央大圖書館的地下層藏著古老的秘密。",
+     "conditions":{"required_level":5,"required_quests":["MQ-02"],"time_available":{"start_hour":0,"end_hour":24}},
      "objectives":[{"type":"visit","target":"中央大圖書館","detail":"造訪中央大圖書館"},
                    {"type":"visit","target":"英靈殿","detail":"探索英靈殿"}],
-     "reward_exp":100,"reward_gold":40,"reward_item":"記憶水晶"},
+     "reward_exp":100,"reward_gold":40,"reward_item":"記憶水晶","reward_reputation":20,
+     "next_quest":"MQ-04"},
     {"id":"MQ-04","title":"世界的盡頭","type":"main","giver":"系統",
      "desc":"前往海峽，尋找通往世界盡頭的道路。",
+     "conditions":{"required_level":7,"required_quests":["MQ-03"],"time_available":{"start_hour":0,"end_hour":24}},
      "objectives":[{"type":"visit","target":"海峽","detail":"到達海峽"},
                    {"type":"defeat","target":"古代守衛","qty":1,"detail":"擊敗古代守衛"}],
-     "reward_exp":200,"reward_gold":100,"reward_item":"神秘地圖"},
+     "reward_exp":200,"reward_gold":100,"reward_item":"神秘地圖","reward_reputation":30,
+     "failure":{"timeout_hours":72,"on_fail":"penalty","penalty":{"gold":-50,"rep":-10}}},
 
-    # ── Side Quests ──
+    # ── Side Quests (with conditions) ──
     {"id":"SQ-01","title":"收集藥材","type":"side","giver":"紅",
      "desc":"紅需要草藥來製作藥水。",
+     "conditions":{"required_relationships":{"紅":10},"time_available":{"start_hour":8,"end_hour":20}},
      "objectives":[{"type":"collect","target":"草藥","qty":5,"detail":"收集5份草藥"}],
-     "reward_exp":30,"reward_gold":15,"reward_item":"治療藥水"},
+     "reward_exp":30,"reward_gold":15,"reward_item":"治療藥水","reward_reputation":5,
+     "reward_relationships":{"紅":10}},
     {"id":"SQ-02","title":"強化作戰","type":"side","giver":"小狐丸",
      "desc":"小狐丸需要一些鐵礦來強化武器。",
+     "conditions":{"required_relationships":{"小狐丸":20},"time_available":{"start_hour":6,"end_hour":18}},
      "objectives":[{"type":"collect","target":"鐵礦","qty":4,"detail":"收集4個鐵礦"}],
-     "reward_exp":40,"reward_gold":20,"reward_item":"鐵劍"},
+     "reward_exp":40,"reward_gold":20,"reward_item":"鐵劍","reward_reputation":8,
+     "reward_relationships":{"小狐丸":15},"next_quest":"SQ-08"},
     {"id":"SQ-03","title":"妖精的請求","type":"side","giver":"晴空",
      "desc":"機械妖精晴空需要魔法粉來維持飛行翼膜。",
+     "conditions":{"required_race":"獸娘","required_relationships":{"晴空":15},"time_available":{"start_hour":8,"end_hour":20}},
      "objectives":[{"type":"collect","target":"魔法粉","qty":2,"detail":"收集2份魔法粉"}],
-     "reward_exp":50,"reward_gold":25,"reward_item":"護身符"},
+     "reward_exp":50,"reward_gold":25,"reward_item":"護身符","reward_reputation":10,
+     "reward_relationships":{"晴空":15}},
     {"id":"SQ-04","title":"森林巡邏","type":"side","giver":"系統",
      "desc":"森林深處最近不太平靜，去巡邏一下。",
+     "conditions":{"required_level":3,"time_available":{"start_hour":6,"end_hour":18}},
      "objectives":[{"type":"visit","target":"森林深處","detail":"造訪森林深處"},
                    {"type":"defeat","target":"巨熊","qty":1,"detail":"擊敗巨熊"}],
-     "reward_exp":60,"reward_gold":30,"reward_item":"皮革"},
+     "reward_exp":60,"reward_gold":30,"reward_item":"皮革","reward_reputation":12},
     {"id":"SQ-05","title":"礦坑探險","type":"side","giver":"系統",
      "desc":"廢棄礦坑據說有豐富的礦產資源。",
+     "conditions":{"required_level":5,"time_available":{"start_hour":0,"end_hour":24}},
      "objectives":[{"type":"visit","target":"廢棄礦坑","detail":"造訪廢棄礦坑"},
                    {"type":"collect","target":"鐵礦","qty":6,"detail":"收集6個鐵礦"}],
-     "reward_exp":70,"reward_gold":35,"reward_item":"鐵盔"},
+     "reward_exp":70,"reward_gold":35,"reward_item":"鐵盔","reward_reputation":15},
     {"id":"SQ-06","title":"貨物運送","type":"side","giver":"紅",
      "desc":"幫紅運送一批貨物到西翼大市集。",
+     "conditions":{"required_relationships":{"紅":15},"time_available":{"start_hour":6,"end_hour":20}},
      "objectives":[{"type":"visit","target":"西翼大市集","detail":"造訪西翼大市集"}],
-     "reward_exp":25,"reward_gold":40,"reward_item":"乾糧"},
+     "reward_exp":25,"reward_gold":40,"reward_item":"乾糧","reward_reputation":5,
+     "reward_relationships":{"紅":10}},
     {"id":"SQ-07","title":"修理工具","type":"side","giver":"左間小蒼蘭",
      "desc":"左間小蒼蘭的工具壞了，需要鐵錠修理。",
+     "conditions":{"required_relationships":{"左間小蒼蘭":15},"giver_activity":"focused","time_available":{"start_hour":7,"end_hour":21}},
      "objectives":[{"type":"collect","target":"鐵錠","qty":2,"detail":"收集2個鐵錠"}],
-     "reward_exp":35,"reward_gold":15,"reward_item":"匕首"},
+     "reward_exp":35,"reward_gold":15,"reward_item":"匕首","reward_reputation":8,
+     "reward_relationships":{"左間小蒼蘭":12}},
     {"id":"SQ-08","title":"驅除暗影","type":"side","giver":"小狐丸",
      "desc":"鏡湖附近出現暗影靈，需要清除。",
+     "conditions":{"required_quests":["SQ-02"],"time_available":{"start_hour":18,"end_hour":6}},
      "objectives":[{"type":"defeat","target":"暗影靈","qty":2,"detail":"擊敗2隻暗影靈"}],
-     "reward_exp":55,"reward_gold":25,"reward_item":"魔力藥水"},
+     "reward_exp":55,"reward_gold":25,"reward_item":"魔力藥水","reward_reputation":10,
+     "reward_relationships":{"小狐丸":15}},
     {"id":"SQ-09","title":"收集材料","type":"side","giver":"系統",
      "desc":"收集各種材料以充實倉庫。",
+     "conditions":{"required_level":2,"time_available":{"start_hour":0,"end_hour":24}},
      "objectives":[{"type":"collect","target":"木材","qty":3,"detail":"收集3份木材", "alt_item":"木柄"},
                    {"type":"collect","target":"皮革","qty":2,"detail":"收集2份皮革"}],
-     "reward_exp":20,"reward_gold":10,"reward_item":"空瓶"},
+     "reward_exp":20,"reward_gold":10,"reward_item":"空瓶","reward_reputation":3},
     {"id":"SQ-10","title":"探索英靈殿","type":"side","giver":"系統",
      "desc":"英靈殿最近傳出奇怪的聲音。",
+     "conditions":{"required_level":4,"time_available":{"start_hour":0,"end_hour":24}},
      "objectives":[{"type":"visit","target":"英靈殿","detail":"造訪英靈殿"}],
-     "reward_exp":45,"reward_gold":20,"reward_item":"古老鑰匙"},
+     "reward_exp":45,"reward_gold":20,"reward_item":"古老鑰匙","reward_reputation":10},
+
+    # ── Race-specific Tasks ──
+    {"id":"TASK-01","title":"艦裝調整","type":"side","giver":"系統",
+     "desc":"艦裝身需要定期調整才能維持最佳戰鬥狀態。",
+     "conditions":{"required_race":"艦娘","required_level":3,"time_available":{"start_hour":0,"end_hour":24}},
+     "objectives":[{"type":"collect","target":"鐵礦","qty":3,"detail":"收集3個鐵礦(艦裝維護)"}],
+     "reward_exp":40,"reward_gold":20,"reward_item":"鋼刀","reward_reputation":5},
+    {"id":"TASK-02","title":"魔力核心充能","type":"side","giver":"系統",
+     "desc":"魔力核心需要定期充能才能維持魔力輸出。",
+     "conditions":{"required_race":"術士","required_level":3,"time_available":{"start_hour":0,"end_hour":24}},
+     "objectives":[{"type":"collect","target":"魔法粉","qty":2,"detail":"收集2份魔法粉(充能)"}],
+     "reward_exp":35,"reward_gold":25,"reward_item":"魔力藥水","reward_reputation":5},
+    {"id":"TASK-03","title":"翼膜保養","type":"side","giver":"系統",
+     "desc":"翼膜需要特殊材料來保養，才能維持飛行能力。",
+     "conditions":{"required_race":"竜族","required_level":3,"time_available":{"start_hour":0,"end_hour":24}},
+     "objectives":[{"type":"collect","target":"靈木","qty":3,"detail":"收集3份靈木(翼膜保養)"}],
+     "reward_exp":50,"reward_gold":30,"reward_item":"龍鱗","reward_reputation":5},
+    {"id":"TASK-04","title":"義體校準","type":"side","giver":"系統",
+     "desc":"機械義體需要定期校準才能保持精確。",
+     "conditions":{"required_race":"機械","required_level":3,"time_available":{"start_hour":0,"end_hour":24}},
+     "objectives":[{"type":"collect","target":"鐵礦","qty":4,"detail":"收集4個鐵礦(義體校準)"}],
+     "reward_exp":35,"reward_gold":25,"reward_item":"鐵錠","reward_reputation":5},
+
+    # ── Daily Quests (reset each day) ──
+    {"id":"DQ-01","title":"每日採集","type":"daily","giver":"系統",
+     "desc":"每天到野外採集一些材料。",
+     "conditions":{"required_level":1,"time_available":{"start_hour":0,"end_hour":24}},
+     "objectives":[{"type":"collect","target":"草藥","qty":3,"detail":"採集3份草藥"}],
+     "reward_exp":15,"reward_gold":5,"reward_reputation":1},
+    {"id":"DQ-02","title":"每日鍛鍊","type":"daily","giver":"系統",
+     "desc":"每天進行戰鬥訓練。",
+     "conditions":{"required_level":1,"time_available":{"start_hour":0,"end_hour":24}},
+     "objectives":[{"type":"defeat","target":"野狼","qty":1,"detail":"擊敗1隻野狼"}],
+     "reward_exp":20,"reward_gold":8,"reward_reputation":1},
+    {"id":"DQ-03","title":"每日交友","type":"daily","giver":"系統",
+     "desc":"每天與NPC交流增進關係。",
+     "conditions":{"required_level":1,"time_available":{"start_hour":0,"end_hour":24}},
+     "objectives":[{"type":"social","target":"任何NPC","qty":1,"detail":"與任意NPC對話交流"}],
+     "reward_exp":10,"reward_gold":5,"reward_reputation":2},
 ]
+
+# Daily quest tracking — reset when day changes
+DAILY_QUESTS_IDS = ["DQ-01","DQ-02","DQ-03"]
+_LAST_DAILY_RESET_DAY = 0
+
+def reset_daily_quests(character, current_day):
+    """Reset daily quest completion tracking each day."""
+    global _LAST_DAILY_RESET_DAY
+    if current_day != _LAST_DAILY_RESET_DAY:
+        _LAST_DAILY_RESET_DAY = current_day
+        # Remove daily quests from completed list so they can be done again
+        completed = character.get("completed_quests", [])
+        character["completed_quests"] = [qid for qid in completed if qid not in DAILY_QUESTS_IDS]
+        # Remove completed daily entries from quest tracking
+        qs = character.get("quests", {})
+        for dqid in DAILY_QUESTS_IDS:
+            if dqid in qs and qs[dqid]["status"] == "completed":
+                del qs[dqid]
+        return True
+    return False
+
+# Race-specific task IDs
+RACE_TASK_IDS = ["TASK-01","TASK-02","TASK-03","TASK-04"]
+
 
 
 # ═══════════════════════════════════════════════════════════

@@ -26,6 +26,9 @@ from sim_systems import (
     get_equipment_slots_for_character,
     ITEM_CATALOG,
     QUESTS,
+    DAILY_QUESTS_IDS,
+    reset_daily_quests,
+    RACE_TASK_IDS,
     VEHICLES,
     VEHICLE_LOCATIONS,
     SCENE_OBJECTS,
@@ -61,6 +64,8 @@ from character_system import (
     check_quest_completion,
     complete_quest,
     get_active_quests,
+    check_quest_eligibility,
+    get_available_quests,
     init_vehicle_state,
     mount_vehicle,
     dismount_vehicle,
@@ -941,16 +946,19 @@ def do_interact_npc(character):
             else:
                 print(C.GRAY+"  沒有可送的禮物。"+C.RESET)
         elif c=="4" and rep >= 50:
-            # Try to find an available side quest
-            active_ids = {qid for qid in character.get("quests",{})}
-            completed = character.get("completed_quests",[])
-            avail = [q for q in QUESTS if q["id"] not in completed and q["id"] not in active_ids and q["type"]=="side"]
-            if avail:
-                q = _random.choice(avail)
+            # Find eligible available quests
+            available = get_available_quests(character)
+            eligible = [q for q, reason in available if reason is None and q["type"]=="side"]
+            ineligible = [q for q, reason in available if reason is not None and q["type"]=="side"]
+            if eligible:
+                q = _random.choice(eligible)
                 accept_quest(character, q)
                 print(C.GREEN+"  ✓ 接受了任務: %s"%q["title"]+C.RESET)
                 print(C.DIM+"    %s"%q["desc"]+C.RESET)
                 add_relationship(character,npc_name,10)
+            elif ineligible:
+                q, reason = ineligible[0]
+                print(C.YELLOW+"  ⚠ 有任務但條件不符: %s - %s" % (q["title"], reason)+C.RESET)
             else:
                 print(C.GRAY+"  目前沒有可接受的任務。"+C.RESET)
         else:
@@ -959,9 +967,24 @@ def do_interact_npc(character):
 
     advance_time(character)
 
+def _time_range_str(time_avail):
+    """Format time range for display."""
+    if not time_avail:
+        return ""
+    sh = time_avail.get("start_hour", 0)
+    eh = time_avail.get("end_hour", 24)
+    if sh == 0 and eh == 24:
+        return "隨時可接"
+    return "%d:00~%d:00" % (sh, eh)
+
 def _try_accept_quest(character, qid):
     q = next((qq for qq in QUESTS if qq["id"]==qid), None)
     if not q:
+        return False
+    # Check eligibility
+    eligible, reason = check_quest_eligibility(character, q)
+    if not eligible:
+        print(C.RED+"  ⚠ %s"%reason+C.RESET)
         return False
     if accept_quest(character, q):
         print(C.GREEN+"  ✓ 接受了任務: %s"%q["title"]+C.RESET)
@@ -991,7 +1014,7 @@ def do_quest_menu(character):
             print(C.GRAY+"  沒有進行中的任務。"+C.RESET)
             return
         for qdef, qdata in active:
-            type_color = C.RED if qdef["type"]=="main" else C.GREEN
+            type_color = C.RED if qdef["type"]=="main" else (C.MAGENTA if qdef["type"]=="daily" else C.GREEN)
             print("\n  " + type_color + "[%s] %s: %s" % (qdef["id"],qdef["title"],qdef["desc"]) + C.RESET)
             print("  " + C.DIM + "    給予者: %s" % qdef.get("giver","?") + C.RESET)
             for obj in qdef["objectives"]:
@@ -1004,16 +1027,22 @@ def do_quest_menu(character):
             print("    報酬: %dEXP %dG%s" % (qdef.get("reward_exp",0),qdef.get("reward_gold",0),
                   " +"+qdef.get("reward_item","") if qdef.get("reward_item") else ""))
     elif ch=="2":
-        completed = character.get("completed_quests",[])
-        active_ids = {qid for qid in character.get("quests",{})}
-        avail = [q for q in QUESTS if q["id"] not in completed and q["id"] not in active_ids]
+        avail = get_available_quests(character)
         if not avail:
-            print(C.GRAY+"  沒有可接受的任務。"+C.RESET)
+            print(C.GRAY+"  目前沒有可接受的任務。"+C.RESET)
             return
-        for q in avail:
-            tc = C.RED if q["type"]=="main" else C.GREEN
-            print("  %s[%s] %s%s" % (tc,q["id"],q["title"],C.RESET)+" - "+q.get("giver","?"))
+        print(C.GREEN+"  ✓ = 可接取   ⚠ = 有條件不符合"+C.RESET)
+        for q, reason in avail:
+            tc = C.RED if q["type"]=="main" else (C.MAGENTA if q["type"]=="daily" else C.GREEN)
+            status = C.GREEN+"✓"+C.RESET if reason is None else C.YELLOW+"⚠"+C.RESET
+            print("  %s %s[%s] %s%s" % (status, tc, q["id"], q["title"], C.RESET)+" - "+q.get("giver","?"))
             print("    "+C.DIM+q["desc"][:50]+C.RESET)
+            if reason:
+                print("    "+C.RED+"  ⚠ "+reason+C.RESET)
+            # Show time availability
+            ta = q.get("conditions",{}).get("time_available",{})
+            if ta:
+                print("    "+C.CYAN+"  🕐 "+_time_range_str(ta)+C.RESET)
     elif ch=="3":
         completed = character.get("completed_quests",[])
         if not completed:
@@ -1033,6 +1062,20 @@ def do_quest_menu(character):
                 print("    "+C.GREEN+"獲得 %dEXP, %dG"%(reward["exp"],reward["gold"])+C.RESET)
                 if reward.get("item"):
                     print("    "+C.CYAN+"獲得物品: %s"%reward["item"]+C.RESET)
+                # Apply reputation reward
+                rep_r = qdef.get("reward_reputation", 0)
+                if rep_r:
+                    modify_reputation(character, rep_r)
+                # Apply relationship rewards
+                rel_r = qdef.get("reward_relationships", {})
+                if rel_r:
+                    for npc_name, val in rel_r.items():
+                        add_relationship(character, npc_name, val)
+                        print("    "+C.YELLOW+"🤝 %s 好感度 +%d"%(npc_name,val)+C.RESET)
+                # Unlock next quest chain
+                nq = qdef.get("next_quest", "")
+                if nq:
+                    print("    "+C.CYAN+"解鎖下一階段任務!"+C.RESET)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1204,8 +1247,30 @@ def start_game():
     if mq1:
         accept_quest(character, mq1)
         print(C.GREEN+"\n  自動接受主線任務: 鏡湖的秘密"+C.RESET)
+    
+    # Auto-accept race-specific task
+    char_race = character.get("race", "人類")
+    race_task_id = {"艦娘":"TASK-01","術士":"TASK-02","竜族":"TASK-03","機械":"TASK-04"}.get(char_race)
+    if race_task_id:
+        rt = next((q for q in QUESTS if q["id"]==race_task_id), None)
+        if rt:
+            accept_quest(character, rt)
+            print(C.CYAN+"  自動接受種族任務: %s"%rt["title"]+C.RESET)
 
+    last_day_checked = character["day"]
     while True:
+        # Reset daily quests each new day
+        if character["day"] != last_day_checked:
+            reset_daily_quests(character, character["day"])
+            # Auto-accept daily quests
+            for dq in QUESTS:
+                if dq["type"] == "daily" and dq["id"] not in character.get("quests",{}):
+                    eligible, reason = check_quest_eligibility(character, dq)
+                    if eligible:
+                        accept_quest(character, dq)
+                        print(C.MAGENTA+"\n  📋 新的一天 — 自動接受每日任務: %s"%dq["title"]+C.RESET)
+            last_day_checked = character["day"]
+        
         portrait = get_portrait(character)
         print(C.CYAN + portrait + C.RESET)
         print_status(character)
@@ -1252,6 +1317,21 @@ def start_game():
                     print("    "+C.GREEN+"獲得 %dEXP, %dG"%(reward["exp"],reward["gold"])+C.RESET)
                     if reward.get("item"):
                         print("    "+C.CYAN+"獲得物品: %s"%reward["item"]+C.RESET)
+                    # Apply reputation reward
+                    rep_r = qdef.get("reward_reputation", 0)
+                    if rep_r:
+                        modify_reputation(character, rep_r)
+                        print("    "+C.MAGENTA+"聲望 +%d"%rep_r+C.RESET)
+                    # Apply relationship rewards
+                    rel_r = qdef.get("reward_relationships", {})
+                    if rel_r:
+                        for npc_name, val in rel_r.items():
+                            add_relationship(character, npc_name, val)
+                            print("    "+C.YELLOW+"🤝 %s 好感度 +%d"%(npc_name,val)+C.RESET)
+                    # Unlock next quest chain
+                    nq = qdef.get("next_quest", "")
+                    if nq:
+                        print("    "+C.CYAN+"解鎖下一階段任務!"+C.RESET)
 
 if __name__ == "__main__":
     start_game()

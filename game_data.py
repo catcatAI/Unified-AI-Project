@@ -667,44 +667,63 @@ def generate_quests() -> list:
         qid = f"SN-{i+1:02d}"
         reward_exp = 20 + i * 3
         reward_gold = 8 + i * 2
+        # Add conditions with level requirement scaling with index
+        req_level = max(1, i // 15)  # later nodes require higher level
         q = {
             "id": qid, "title": name[:20], "type": qtype,
             "giver": _seed.choice(npc_names),
             "desc": story[:80],
+            "conditions": {
+                "required_level": req_level,
+                "time_available": {"start_hour": 0, "end_hour": 24},
+            },
             "objectives": [
                 {"type":"visit","target":loc_target,"detail":f"前往{loc_target}"},
                 {"type":"collect","target":_seed.choice(["水晶碎片","鐵礦","魔法粉","靈木","草藥","皮革"]),
                  "qty":_seed.randint(1,3),"detail":"收集指定物品"},
             ],
             "reward_exp": reward_exp, "reward_gold": reward_gold,
+            "reward_reputation": max(2, i // 10),
             "reward_item": _seed.choice(["治療藥水","鐵劍","護身符","鋼刀","記憶水晶","皮甲","斗篷","匕首","靈力藥","生命果"]),
         }
         quests.append(q)
     
-    # NPC-generated quests
+    # NPC-generated quests (with conditions based on NPC attributes)
     for i, (npc_name, npc_data) in enumerate(ALL_NPCS.items()):
         if npc_data.get("gives_quests") and i < 60:
             cats = npc_data.get("token_categories", [])
             loc = npc_data.get("location", "方碑丘")
             qid = f"NPC-{i+1:02d}"
+            req_rel = {npc_name: 20 + _seed.randint(0, 20)}
+            conditions = {
+                "required_relationships": req_rel,
+                "time_available": {"start_hour": 8, "end_hour": 20},
+            }
             if "craft" in cats:
                 quests.append({"id":qid,"title":f"{npc_name}の依頼","type":"side","giver":npc_name,
                     "desc":"材料を集めてほしい。",
+                    "conditions": dict(conditions),
                     "objectives":[{"type":"collect","target":_seed.choice(["鐵礦","皮革","靈木","草藥"]),"qty":_seed.randint(2,5),"detail":"收集材料"}],
                     "reward_exp":30+_seed.randint(0,30),"reward_gold":15+_seed.randint(0,20),
+                    "reward_reputation":5,"reward_relationships":{npc_name: 10},
                     "reward_item":_seed.choice(["治療藥水","匕首","鐵劍","護身符","皮甲"])})
             elif "combat" in cats:
+                conditions["required_level"] = 3
                 quests.append({"id":qid,"title":f"{npc_name}の退治","type":"side","giver":npc_name,
                     "desc":"近くの敵を退治してほしい。",
+                    "conditions": dict(conditions),
                     "objectives":[{"type":"visit","target":loc,"detail":f"前往{loc}"},
                                   {"type":"defeat","target":_seed.choice(["野狼","虎","毒蛇","盜賊","哥布林"]),"qty":_seed.randint(1,3),"detail":"擊敗指定敵人"}],
                     "reward_exp":40+_seed.randint(0,40),"reward_gold":20+_seed.randint(0,30),
+                    "reward_reputation":8,"reward_relationships":{npc_name: 12},
                     "reward_item":_seed.choice(["鋼刀","鐵甲","生命果","火焰藥水","靈力藥"])})
             elif "knowledge" in cats:
                 quests.append({"id":qid,"title":f"{npc_name}の探求","type":"side","giver":npc_name,
                     "desc":"探索して知見を持ち帰れ。",
+                    "conditions": dict(conditions),
                     "objectives":[{"type":"visit","target":_seed.choice(["中央大圖書館","英靈殿","森林深處"]),"detail":"指定場所を訪れる"}],
                     "reward_exp":25+_seed.randint(0,25),"reward_gold":10+_seed.randint(0,15),
+                    "reward_reputation":6,"reward_relationships":{npc_name: 10},
                     "reward_item":_seed.choice(["記憶水晶","神秘地圖","書信","魔力藥水","護身符"])})
 
     print(f"[game_data] Generated {len(quests)} quests")
