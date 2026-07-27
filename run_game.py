@@ -69,6 +69,12 @@ from sim_systems import (
     get_vehicle_part_bonuses,
     get_vehicle_part_status,
     apply_vehicle_part_bonuses,
+    VEHICLE_ABILITIES,
+    get_vehicle_abilities,
+    get_active_abilities,
+    get_water_routes,
+    do_fishing,
+    do_trade,
 )
 from game_data import expand_game
 
@@ -507,8 +513,15 @@ def do_combat(character, enemy):
             else:
                 print(C.RED+"    ✗ 逃跑失敗!"+C.RESET)
 
+        # Horse charge bonus (passive ability)
+        charge_bonus = 0
+        if character.get("riding") == "馬":
+            charge_bonus = int(character["atk"] * 0.3)  # +30% first strike
+            if charge_bonus > 0:
+                print(C.YELLOW+"    🐴 馬の突襲！攻擊力 +%d！（+30%%）" % charge_bonus + C.RESET)
+            
         if act == "1" or act == "0":
-            pa = character["atk"] + get_skill_modifier(character, "combat")
+            pa = character["atk"] + get_skill_modifier(character, "combat") + charge_bonus
             ps = character.get("spd",5)
             dmg, crit = resolve_combat_turn(pa, ps, enemy["def"], e_hp)
             e_hp -= dmg
@@ -1530,6 +1543,21 @@ def do_quest_menu(character):
     print(C.CYAN+"│  1. 查看進行中的任務"+C.RESET+" "*17+C.CYAN+"│"+C.RESET)
     print(C.CYAN+"│  2. 查看可接受的任務"+C.RESET+" "*16+C.CYAN+"│"+C.RESET)
     print(C.CYAN+"│  3. 查看已完成任務"+C.RESET+" "*17+C.CYAN+"│"+C.RESET)
+    
+    # Vehicle abilities display
+    if character.get("riding"):
+        abilities = get_active_abilities(character["riding"], character, character.get("location",""))
+        if abilities:
+            print(C.CYAN+"├"+"─"*44+"┤"+C.RESET)
+            print(C.CYAN+"│  "+C.MAGENTA+"✦ 特殊能力:"+C.RESET+" "*26+C.CYAN+"│"+C.RESET)
+            for i, (key, ab) in enumerate(abilities, 1):
+                cost_info = ""
+                ct = ab.get("cost_type","none")
+                cv = ab.get("cost",0)
+                if ct=="sp": cost_info = " (SP-"+str(cv)+")"
+                elif ct=="fuel": cost_info = " (燃料-"+str(cv)+")"
+                desc = ab.get("desc","")
+                print(C.CYAN+("│   %d. %s%s"%(i,ab.get("name","?")+cost_info,desc)).ljust(46)+C.CYAN+"│"+C.RESET)
     print(C.CYAN+"│  "+C.GRAY+"0. 返回"+C.RESET+" "*32+C.CYAN+"│"+C.RESET)
     print(C.CYAN+"└"+"─"*44+"┘"+C.RESET)
     ch = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
@@ -1647,18 +1675,74 @@ def do_vehicle_menu(character):
                     print("    %d. %s"%(i,vn))
                 vc = input("  %s選擇:%s "%(C.YELLOW,C.RESET)).strip()
                 if vc.isdigit():
-                    vi = int(vc)-1
-                    if 0<=vi<len(owned_list):
-                        vn = owned_list[vi]
+                    idx = int(vc)-1
+                    if 0<=idx<len(owned_list):
+                        vn = owned_list[idx]
                         mount_vehicle(character, vn, owned)
                         print(C.GREEN+"  騎上 %s!"%vn+C.RESET)
             else:
                 print(C.GRAY+"  沒有可用載具。"+C.RESET)
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# REAL ESTATE
-# ═══════════════════════════════════════════════════════════════════════════
+    # Ability handling (ch is a number for ability activation)
+    elif ch.isdigit() and character.get("riding"):
+        current_v = character.get("riding")
+        abilities = get_active_abilities(current_v, character, character.get("location",""))
+        ch_idx = int(ch) - 1
+        if 0 <= ch_idx < len(abilities):
+            key, ab = abilities[ch_idx]
+            if key == "衝刺":
+                dests = WORLD_MAP.get(character["location"], {})
+                if dests:
+                    icons = {"east":"→","west":"←","north":"↑","south":"↓","enter":"🚪","exit":"🚶","deep":"⬇"}
+                    print(C.CYAN+"  衝刺目標:"+C.RESET)
+                    dl = list(dests.items())
+                    for i,(d,loc) in enumerate(dl,1):
+                        ic = icons.get(d,"•")
+                        print("    %d. %s %s"%(i,ic,loc))
+                    print("    0. 取消")
+                    sc = input("  %s>%s "%(C.YELLOW,C.RESET)).strip()
+                    if sc.isdigit() and 1<=int(sc)<=len(dl):
+                        dloc = dl[int(sc)-1][1]
+                        character["location"] = dloc
+                        character["sp"] = max(0, character["sp"] - 10)
+                        print(C.GREEN+"  🚴 衝刺！瞬間到達 %s！（消耗 10SP）"%dloc+C.RESET)
+                        _gm_narrate(character, dloc)
+                else:
+                    print(C.RED+"  這裡沒有可前往的地點。"+C.RESET)
+            elif key == "貿易":
+                msg, ok = do_trade(character, character["location"])
+                print(C.CYAN+msg+C.RESET)
+                advance_time(character, 2)
+            elif key == "釣魚":
+                msg, items = do_fishing(character, character["location"])
+                print(C.CYAN+msg+C.RESET)
+                advance_time(character, 1)
+            elif key == "渡水":
+                routes = get_water_routes(character["location"])
+                if routes:
+                    icons = {"boat_deep":"⛵","boat_market":"🚢"}
+                    print(C.CYAN+"  🌊 水域路線:"+C.RESET)
+                    rl = list(routes.items())
+                    for i,(route,loc) in enumerate(rl,1):
+                        ic = icons.get(route,"🚣")
+                        vibe = LOCATION_VIBES.get(loc,"")
+                        print("    %d. %s %s %s"%(i,ic,loc,vibe))
+                    print("    0. 取消")
+                    sc = input("  %s>%s "%(C.YELLOW,C.RESET)).strip()
+                    if sc.isdigit() and 1<=int(sc)<=len(rl):
+                        dloc = rl[int(sc)-1][1]
+                        character["location"] = dloc
+                        v = VEHICLES.get("小舟", {})
+                        veh_state = character.get("vehicles",{}).get("小舟",{})
+                        veh_fuel = veh_state.get("fuel", v.get("fuel", 60))
+                        veh_fuel = max(0, veh_fuel - 10)
+                        if "vehicles" not in character: character["vehicles"] = {}
+                        if "小舟" not in character["vehicles"]: character["vehicles"]["小舟"] = {}
+                        character["vehicles"]["小舟"]["fuel"] = veh_fuel
+                        print(C.CYAN+"  🚣 划向 %s...（燃料-10）"%dloc+C.RESET)
+                        advance_time(character, 2)
+                        _gm_narrate(character, dloc)
+                else:
+                    print(C.RED+"  這裡沒有可航行的水域路線。"+C.RESET)
 
 def do_real_estate(character, equipment=None):
     print("\n"+C.CYAN+"┌"+"─"*44+"┐"+C.RESET)

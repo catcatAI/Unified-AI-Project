@@ -986,6 +986,214 @@ VEHICLE_LOCATIONS = {
 }
 
 # ═══════════════════════════════════════════════════════════
+# VEHICLE SPECIAL ABILITIES
+# ═══════════════════════════════════════════════════════════
+
+VEHICLE_ABILITIES = {
+    "腳踏車": {
+        "衝刺": {
+            "name":"🚴 衝刺",
+            "desc":"消耗10SP，瞬間移動到相鄰場景（不消耗時間）",
+            "cost_type":"sp",
+            "cost":10,
+            "cooldown":0,
+            "require_riding":True,
+        },
+    },
+    "馬": {
+        "突襲": {
+            "name":"🐴 突襲",
+            "desc":"騎乘時遭遇戰鬥獲得先制攻擊（第一回合敵人無法反擊）",
+            "cost_type":"none",
+            "cost":0,
+            "cooldown":0,
+            "require_riding":True,
+            "passive":True,
+        },
+    },
+    "馬車": {
+        "貿易": {
+            "name":"📦 貿易",
+            "desc":"在不同城鎮間買賣貨物賺取差價（消耗30SP）",
+            "cost_type":"sp",
+            "cost":30,
+            "cooldown":3,
+            "require_riding":True,
+        },
+    },
+    "小舟": {
+        "釣魚": {
+            "name":"🎣 釣魚",
+            "desc":"在湖/海場景釣魚，獲得物品（消耗15SP）",
+            "cost_type":"sp",
+            "cost":15,
+            "cooldown":1,
+            "require_riding":False,
+            "water_only":True,
+        },
+        "渡水": {
+            "name":"🌊 渡水",
+            "desc":"騎乘小舟時可通過水域路線，發現隱藏的水域場景",
+            "cost_type":"fuel",
+            "cost":10,
+            "cooldown":0,
+            "require_riding":True,
+            "passive":True,
+        },
+    },
+}
+
+WATER_LOCATIONS = {
+    "水上集市": {
+        "desc":"漂浮在水上的神秘市集，只有駕船才能到達",
+        "vibe":"🎪 熱鬧的水上市集，船隻往來穿梭",
+        "type":"outdoor",
+    },
+    "湖心島": {
+        "desc":"鏡湖中央的小島，據說有遠古遺跡",
+        "vibe":"🏝 被湖水環繞的寧靜小島",
+        "type":"outdoor",
+    },
+}
+
+
+def get_vehicle_abilities(vehicle_name):
+    """Get all abilities for a vehicle."""
+    return VEHICLE_ABILITIES.get(vehicle_name, {})
+
+
+def get_active_abilities(vehicle_name, character, location=""):
+    """Get currently usable abilities based on context."""
+    abilities = VEHICLE_ABILITIES.get(vehicle_name, {})
+    active = []
+    riding = character.get("riding") == vehicle_name if vehicle_name else False
+
+    for key, ab in abilities.items():
+        if ab.get("passive"):
+            continue
+        if ab.get("require_riding") and not riding:
+            continue
+        if ab.get("water_only"):
+            is_water = any(w in location for w in ["湖","海","水","川","河"])
+            if not is_water:
+                continue
+        cooldown_key = "ability_cd_" + key
+        vs = character.get("vehicle_state", {}).get(vehicle_name, {})
+        if vs.get(cooldown_key, 0) > 0:
+            continue
+        cost_type = ab.get("cost_type", "none")
+        cost = ab.get("cost", 0)
+        if cost_type == "sp" and character.get("sp", 0) < cost:
+            continue
+        if cost_type == "fuel":
+            veh_state = character.get("vehicles", {}).get(vehicle_name, {})
+            if veh_state.get("fuel", 0) < cost:
+                continue
+        active.append((key, ab))
+    return active
+
+
+def get_water_routes(current_location):
+    """Get water routes available from current location (bidirectional)."""
+    WATER_ROUTES = {
+        "鏡湖":   {"boat_deep":"湖心島"},
+        "湖心島": {"boat_back":"鏡湖"},
+        "海峽":   {"boat_market":"水上集市"},
+        "水上集市": {"boat_back":"海峽"},
+    }
+    return WATER_ROUTES.get(current_location, {})
+
+
+def do_fishing(character, location):
+    """Execute fishing ability."""
+    fish_tables = {
+        "鏡湖": [("水晶碎片",0.3),("魚",0.5),("空瓶",0.3),("貝殼",0.4),("魔法粉",0.15),("古老硬幣",0.05)],
+        "海峽": [("魚",0.6),("貝殼",0.5),("彩色玻璃片",0.2),("幸運幣",0.1),("龍鱗",0.02)],
+    }
+    table = fish_tables.get(location, [("魚",0.4),("空瓶",0.3),("貝殼",0.3)])
+    roll = _random.random()
+    cum = 0.0
+    found = None
+    for item, prob in table:
+        cum += prob
+        if roll < cum:
+            found = item
+            break
+    if found:
+        character["inventory"].append(found)
+        return "🎣 釣到了 " + found + "！", [found]
+    return "🎣 釣了一會兒，但什麼都沒釣到。", []
+
+
+def do_trade(character, location):
+    """Execute trade ability — buy/sell goods with location prices."""
+    MARKET_PRICES = {
+        "方碑丘":       {"buy":1.0, "sell":0.6, "goods":["乾糧","草藥","空瓶"]},
+        "西翼大市集":   {"buy":0.8, "sell":0.7, "goods":["布料","絲線","皮革","乾糧"]},
+        "秘密鐵工廠":   {"buy":1.2, "sell":0.5, "goods":["鐵礦","鐵錠","木柄","黏土"]},
+        "鏡湖":         {"buy":1.1, "sell":0.5, "goods":["水晶碎片","魔法粉","魚"]},
+        "海峽":         {"buy":0.9, "sell":0.6, "goods":["貝殼","彩色玻璃片","魚","幸運幣"]},
+        "中央大圖書館": {"buy":1.3, "sell":0.4, "goods":["書信","蠟燭頭","記憶水晶"]},
+        "便利店":       {"buy":0.9, "sell":0.6, "goods":["乾糧","提神茶","繃帶"]},
+        "森林深處":     {"buy":1.0, "sell":0.5, "goods":["草藥","靈木","木柄","羽毛"]},
+    }
+    market = MARKET_PRICES.get(location, {"buy":1.0, "sell":0.5, "goods":["乾糧"]})
+    goods = market["goods"]
+    inv = character.get("inventory", [])
+    gold = character.get("gold", 0)
+    lines = []
+    lines.append("📊 " + location + " 市場行情：")
+    lines.append("  買入倍率: x" + str(market["buy"]) + "  賣出倍率: x" + str(market["sell"]))
+    lines.append("  熱門商品: " + ", ".join(goods))
+    # Buy
+    bought = []
+    for g in goods:
+        base_val = sum(v.get("value",10) for k,v in [("x",ITEM_CATALOG.get(g, {}))]) if False else ITEM_CATALOG.get(g, {}).get("value", 10)
+        base_val2 = 10
+        # Find base value
+        for k,v in ITEM_CATALOG.items():
+            if k == g:
+                base_val2 = v.get("value", 10)
+                break
+        buy_price = int(base_val2 * market["buy"])
+        if gold >= buy_price:
+            total_w = sum(ITEM_CATALOG.get(i,{}).get("weight",0.5) for i in inv)
+            item_w = ITEM_CATALOG.get(g,{}).get("weight",0.5)
+            if total_w + item_w <= MAX_INVENTORY_WEIGHT and len(inv) < MAX_INVENTORY_SLOTS:
+                inv.append(g)
+                gold -= buy_price
+                bought.append((g, buy_price))
+    if bought:
+        lines.append("  ✅ 購入: " + "; ".join(g + "(" + str(p) + "G)" for g,p in bought))
+    else:
+        lines.append("  ⚠ 沒有足夠金幣或空間進貨")
+    # Sell
+    sold = []
+    to_remove = []
+    for item in list(inv):
+        idf = ITEM_CATALOG.get(item, {})
+        if idf.get("type") in ("material","junk","consumable") and len(to_remove) < 5:
+            sell_price = int(idf.get("value",5) * market["sell"])
+            if sell_price > 0:
+                to_remove.append(item)
+                gold += sell_price
+                sold.append((item, sell_price))
+    for item in to_remove:
+        inv.remove(item)
+    if sold:
+        lines.append("  💰 售出: " + "; ".join(g + "(+" + str(p) + "G)" for g,p in sold))
+    character["gold"] = gold
+    lines.append("  💳 剩餘金幣: " + str(gold) + "G")
+    profit = sum(p for _,p in sold) - sum(p for _,p in bought)
+    if profit > 0:
+        lines.append("  📈 本次貿易淨利: +" + str(profit) + "G")
+    elif profit < 0:
+        lines.append("  📉 本次貿易淨利: " + str(profit) + "G")
+    return "\n".join(lines), len(bought) > 0 or len(sold) > 0
+
+
+
+# ═══════════════════════════════════════════════════════════
 # VEHICLE PARTS (per ITEM_EQUIPMENT_SYSTEM.md §載具系統)
 # ═══════════════════════════════════════════════════════════
 
