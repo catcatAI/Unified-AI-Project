@@ -1640,6 +1640,19 @@ def expand_game():
             sim_systems.QUESTS.append(q)
             existing_q.add(q["id"])
             cnt["quests"] += 1
+    # Fallback: add NPC_METADATA for NPCs in NPC_SCHEDULES but not in ALL_NPCS
+    for _nname in list(getattr(sim_systems, 'NPC_SCHEDULES', {}).keys()):
+        if _nname not in sim_systems.NPC_METADATA:
+            sim_systems.NPC_METADATA[_nname] = {
+                'ability_details': [],
+                'has_abilities': False,
+                'archetype': 'default',
+                'race': '\u4e0d\u660e',
+                'location': '\u65b9\u7891\u4e18',
+                'token_categories': [],
+                'offers': ['\u8349\u85e5','\u5e72\u7ce7','\u7a7a\u74f6','\u9ebb\u7e6b'],
+            }
+    
     
     # Vehicles
     for vn, vd in ALL_VEHICLES.items():
@@ -1683,22 +1696,6 @@ def expand_game():
             sim_systems.VEHICLE_LOCATIONS[loc] = veh
             _used_locs.add(loc)
     
-    # Extended vehicle coverage for all locations without vehicles
-    if isinstance(sim_systems.VEHICLES, dict):
-        _veh_list = [v.get("name","") for v in sim_systems.VEHICLES.values() if isinstance(v, dict) and v.get("name","")]
-    elif isinstance(sim_systems.VEHICLES, list):
-        _veh_list = [v.get("name","") for v in sim_systems.VEHICLES if isinstance(v, dict) and v.get("name","")]
-    else:
-        _veh_list = []
-    if not _veh_list:
-        _veh_list = ['\u8173\u8e0f\u8eca','\u99ac','\u99ac\u8eca','\u5c0f\u821f','\u81ea\u8f2a\u8eca','\u30de\u30a6\u30f3\u30c6\u30f3\u30d0\u30a4\u30af','\u99ff\u99ac','\u5927\u578b\u99ac\u8eca','\u6f01\u8239','\u30aa\u30fc\u30c8\u30d0\u30a4','\u30b8\u30fc\u30d7','\u5e06\u8239','\u71b1\u6c23\u7403','\u9b54\u6cd5\u306e\u7be4','\u98db\u7a7a\u633a','\u7adc\u9a0e\u4e58','\u96ea\u6a3d']
-    _used_locs = set(sim_systems.VEHICLE_LOCATIONS.keys()) if hasattr(sim_systems,"VEHICLE_LOCATIONS") else set()
-    if not hasattr(sim_systems, "VEHICLE_LOCATIONS"):
-        sim_systems.VEHICLE_LOCATIONS = {}
-    for vi, vloc in enumerate(list(sim_systems.WORLD_MAP.keys())):
-        if vloc not in _used_locs and _veh_list:
-            sim_systems.VEHICLE_LOCATIONS[vloc] = _veh_list[vi % len(_veh_list)]
-            _used_locs.add(vloc)
     # Real estate — also sync REAL_ESTATE_KEYS
     for rn, rd in ALL_REAL_ESTATE.items():
         if rn not in sim_systems.REAL_ESTATE:
@@ -1795,6 +1792,16 @@ def expand_game():
                 _seed.choice(_enemy_pool)["name"])
         scene_locs_added += 1
     cnt["locations"] = scene_locs_added
+    
+    # Final VEHICLE_LOCATIONS fallback: ensure ALL WORLD_MAP locations have vehicles
+    _vlist = ['腳踏車','馬','馬車','小舟','自転車','マウンテンバイク','駿馬','大型馬車','漁船',
+              'オートバイ','ジープ','帆船','熱気球','魔法の箒','飛空挺','竜騎乗','雪橇']
+    if not hasattr(sim_systems, 'VEHICLE_LOCATIONS'):
+        sim_systems.VEHICLE_LOCATIONS = {}
+    _occupied = set(sim_systems.VEHICLE_LOCATIONS.keys())
+    for _vi, _loc in enumerate(sim_systems.WORLD_MAP):
+        if _loc not in _occupied:
+            sim_systems.VEHICLE_LOCATIONS[_loc] = _vlist[_vi % len(_vlist)]
     
     after = {
         "items": len(sim_systems.ITEM_CATALOG),
