@@ -1701,8 +1701,21 @@ def expand_game():
         if rn not in sim_systems.REAL_ESTATE:
             sim_systems.REAL_ESTATE[rn] = rd
             cnt["estate"] += 1
+    # Ensure all real estate entries have location field
+    for _rn, _rd in list(sim_systems.REAL_ESTATE.items()):
+        if 'location' not in _rd:
+            _infer = None
+            for _loc in sim_systems.WORLD_MAP:
+                if _loc[:2] in _rn or _rn[:2] in _loc:
+                    _infer = _loc; break
+            _rd['location'] = _infer if _infer else list(sim_systems.WORLD_MAP.keys())[0]
     # Refresh REAL_ESTATE_KEYS to include new entries
     sim_systems.REAL_ESTATE_KEYS = list(sim_systems.REAL_ESTATE.keys())
+    
+    # Ensure all consumables have tags
+    for _iname, _idata in list(sim_systems.ITEM_CATALOG.items()):
+        if _idata.get('type') == 'consumable' and 'tags' not in _idata:
+            _idata['tags'] = ['consumable']
     
     # Scene objects
     for loc, objs in ALL_SCENE_OBJECTS.items():
