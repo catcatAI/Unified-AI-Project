@@ -1271,6 +1271,20 @@ def expand_game():
             nl = ALL_NPCS.get(npc_name, {}).get('location', '')
             if nl in _loc_to_faction:
                 sim_systems.NPC_FACTIONS[npc_name] = _loc_to_faction[nl]
+    # Additional fallback: use LOCATION_NATIONS for faction assignment
+    if not sim_systems.NPC_FACTIONS or len(sim_systems.NPC_FACTIONS) == 0:
+        _loc_to_nat = getattr(sim_systems, "LOCATION_NATIONS", {}) or {}
+        for npc_name in list(ALL_NPCS.keys()):
+            if npc_name not in sim_systems.NPC_FACTIONS:
+                nl = ALL_NPCS[npc_name].get("location", "")
+                nat_id = _loc_to_nat.get(nl) if isinstance(_loc_to_nat, dict) else None
+                if nat_id and hasattr(sim_systems, "NATIONS"):
+                    nn = str(sim_systems.NATIONS.get(nat_id, {}).get("name", "")).lower()
+                    for fid, fv in sim_systems.FACTIONS.items():
+                        fn = str(fv.get("name", "")).lower()
+                        if fn and nn and (fn[:4] in nn or nn[:4] in fn):
+                            sim_systems.NPC_FACTIONS[npc_name] = fid
+                            break
     
     # Assign territory to locations from NAT cards
     # Simple approach: assign nations to locations based on lore keywords
@@ -1297,6 +1311,23 @@ def expand_game():
     if not hasattr(sim_systems, 'LOCATION_RULES'):
         sim_systems.LOCATION_RULES = _loc_rules
     
+    # Fallback: use location vibes to assign nations
+    if not _loc_nation_map or not any(v for v in _loc_nation_map.values()):
+        if hasattr(sim_systems, "LOCATION_VIBES"):
+            _vibe_to_nation = {
+                '\U0001f4a7': 'NAT-06',
+                '\U0001f3aa': 'NAT-04',
+                '\U0001f4da': 'NAT-02',
+                '\U0001f573': 'NAT-03',
+                '\U0001f4cd': 'NAT-05',
+            }
+            for loc_name in sim_systems.WORLD_MAP:
+                if loc_name not in _loc_nation_map or not _loc_nation_map.get(loc_name):
+                    vibe = sim_systems.LOCATION_VIBES.get(loc_name, "")
+                    for vibe_emoji, nid in _vibe_to_nation.items():
+                        if vibe_emoji in vibe:
+                            _loc_nation_map[loc_name] = nid
+                            break
     print(f"[game_data] Factions: {len(sim_systems.FACTIONS)}, Nations: {len(sim_systems.NATIONS)}, Rules: {len(sim_systems.ACTIVE_RULES)}")
 
 
@@ -1652,6 +1683,22 @@ def expand_game():
             sim_systems.VEHICLE_LOCATIONS[loc] = veh
             _used_locs.add(loc)
     
+    # Extended vehicle coverage for all locations without vehicles
+    if isinstance(sim_systems.VEHICLES, dict):
+        _veh_list = [v.get("name","") for v in sim_systems.VEHICLES.values() if isinstance(v, dict) and v.get("name","")]
+    elif isinstance(sim_systems.VEHICLES, list):
+        _veh_list = [v.get("name","") for v in sim_systems.VEHICLES if isinstance(v, dict) and v.get("name","")]
+    else:
+        _veh_list = []
+    if not _veh_list:
+        _veh_list = ['\u8173\u8e0f\u8eca','\u99ac','\u99ac\u8eca','\u5c0f\u821f','\u81ea\u8f2a\u8eca','\u30de\u30a6\u30f3\u30c6\u30f3\u30d0\u30a4\u30af','\u99ff\u99ac','\u5927\u578b\u99ac\u8eca','\u6f01\u8239','\u30aa\u30fc\u30c8\u30d0\u30a4','\u30b8\u30fc\u30d7','\u5e06\u8239','\u71b1\u6c23\u7403','\u9b54\u6cd5\u306e\u7be4','\u98db\u7a7a\u633a','\u7adc\u9a0e\u4e58','\u96ea\u6a3d']
+    _used_locs = set(sim_systems.VEHICLE_LOCATIONS.keys()) if hasattr(sim_systems,"VEHICLE_LOCATIONS") else set()
+    if not hasattr(sim_systems, "VEHICLE_LOCATIONS"):
+        sim_systems.VEHICLE_LOCATIONS = {}
+    for vi, vloc in enumerate(list(sim_systems.WORLD_MAP.keys())):
+        if vloc not in _used_locs and _veh_list:
+            sim_systems.VEHICLE_LOCATIONS[vloc] = _veh_list[vi % len(_veh_list)]
+            _used_locs.add(vloc)
     # Real estate — also sync REAL_ESTATE_KEYS
     for rn, rd in ALL_REAL_ESTATE.items():
         if rn not in sim_systems.REAL_ESTATE:

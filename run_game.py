@@ -8,6 +8,7 @@ from pathlib import Path
 src = Path(__file__).resolve().parent / "apps" / "backend" / "src"
 sys.path.insert(0, str(src))
 
+import sim_systems
 from sim_systems import (
     EquipmentManager,
     craft_item,
@@ -80,7 +81,6 @@ from sim_systems import (
     get_water_routes,
     do_fishing,
     do_trade,
-    NPC_METADATA,
 )
 from game_data import expand_game
 
@@ -1433,8 +1433,7 @@ def do_interact_npc(character):
         mood_color = {"calm":C.GREEN,"alert":C.RED,"rest":C.BLUE,"friendly":C.MAGENTA,"sleep":C.GRAY,"focused":C.CYAN}
         mood_icon = {"focused":"⚔","alert":"👁","rest":"💤","friendly":"😊","sleep":"😴"}
         print(C.CYAN+"  %s: 聲望[%s] %s%s%s"%(npc_name,rep_tier,mood_icon.get(npc_mood,""),mood_color.get(npc_mood,C.WHITE),npc_mood)+C.RESET)
-    # Show NPC abilities if available (from NPC_SCHEDULES data)
-    npc_data = NPC_METADATA.get(npc_name, {}) if "npc_abilities_list" not in dir() else []
+    # Show NPC abilities if available (from NPC_SCHEDULES data)        npc_data = getattr(sim_systems, 'NPC_METADATA', {}).get(npc_name, {}) if "npc_abilities_list" not in dir() else []
     if isinstance(npc_data, dict) and npc_data.get("ability_details"):
         ab_names = [a.get("name","")[:12] for a in npc_data["ability_details"] if a.get("name","")]
         if ab_names:
