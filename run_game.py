@@ -1185,7 +1185,7 @@ def start_game():
 
     _current_weather = roll_weather()
     character = select_character()
-    equipment = EquipmentManager()
+    equipment = EquipmentManager(character)  # Pass character for race-specific slots
     equipment.apply_stat_bonuses(character)
 
     # Auto-accept main quest MQ-01 (QUESTS is imported at module level)

@@ -539,19 +539,130 @@ def roll_random_event(character):
 
 
 # ═══════════════════════════════════════════════════════════
-# EQUIPMENT MANAGER (12 slots)
+# RACE DATA — defines body parts, slots, bonuses per race
 # ═══════════════════════════════════════════════════════════
 
-EQUIPMENT_SLOTS = [
+RACE_DATA = {
+    "人類": {
+        "body_parts": ["head", "torso", "left_arm", "right_arm", "left_leg", "right_leg"],
+        "extra_slots": [],
+        "required_tokens": [],
+        "innate_bonuses": {},
+        "base_hp": 100, "base_sp": 50,
+        "desc": "標準人型生物"
+    },
+    "艦娘": {
+        "body_parts": ["head", "torso", "left_arm", "right_arm", "left_leg", "right_leg", "rigging_body"],
+        "extra_slots": [("rigging","艦裝")],
+        "required_tokens": ["naval"],
+        "innate_bonuses": {"spd": 0.5},
+        "base_hp": 120, "base_sp": 40,
+        "desc": "擁有艦裝身的人型艦艇"
+    },
+    "獸娘": {
+        "body_parts": ["head", "torso", "left_arm", "right_arm", "left_leg", "right_leg", "tail", "claws"],
+        "extra_slots": [("tail","尾部"), ("claws","爪部")],
+        "required_tokens": ["beast"],
+        "innate_bonuses": {"spd": 0.3, "atk": 0.2},
+        "base_hp": 110, "base_sp": 45,
+        "desc": "具有動物特徵的人型生物"
+    },
+    "術士": {
+        "body_parts": ["head", "torso", "left_arm", "right_arm", "left_leg", "right_leg", "mana_core"],
+        "extra_slots": [("core","核心")],
+        "required_tokens": ["element"],
+        "innate_bonuses": {"karma": 0.5},
+        "base_hp": 80, "base_sp": 80,
+        "desc": "擁有魔力核心的魔法使用者"
+    },
+    "竜族": {
+        "body_parts": ["head", "torso", "left_arm", "right_arm", "left_leg", "right_leg", "wings", "horns"],
+        "extra_slots": [("wings","翼部"), ("horns","角部")],
+        "required_tokens": ["draconic"],
+        "innate_bonuses": {"atk": 0.5, "def": 0.3},
+        "base_hp": 150, "base_sp": 30,
+        "desc": "具有龍族血統的強大生物"
+    },
+    "機械": {
+        "body_parts": ["head", "torso", "left_arm", "right_arm", "left_leg", "right_leg", "cyber_limbs"],
+        "extra_slots": [("upgrade","升級")],
+        "required_tokens": ["mechanism"],
+        "innate_bonuses": {"def": 0.4, "spd": -0.1},
+        "base_hp": 130, "base_sp": 20,
+        "desc": "機械義體改造者"
+    },
+    "精霊": {
+        "body_parts": ["head", "torso", "left_arm", "right_arm", "left_leg", "right_leg", "spirit_body"],
+        "extra_slots": [("aura","靈裝")],
+        "required_tokens": ["spiritual"],
+        "innate_bonuses": {"karma": 0.3, "spd": 0.2},
+        "base_hp": 60, "base_sp": 100,
+        "desc": "半靈體存在的精靈"
+    },
+}
+
+RACE_DETECT_MAP = {
+    "naval": "艦娘",
+    "beast": "獸娘",
+    "draconic": "竜族",
+    "mechanism": "機械",
+    "element": "術士",
+    "spiritual": "精霊",
+}
+
+def detect_race(token_list: list) -> str:
+    """Detect character's race from their token categories."""
+    cats = {t.get("category", "") for t in token_list if t.get("category")}
+    for tok_cat, race in RACE_DETECT_MAP.items():
+        if tok_cat in cats:
+            return race
+    return "人類"
+
+def get_race_slots(race: str) -> list:
+    """Get extra equipment slots for a race."""
+    rd = RACE_DATA.get(race, RACE_DATA["人類"])
+    return rd.get("extra_slots", [])
+
+def get_race_body_parts(race: str) -> list:
+    """Get body part IDs for a race."""
+    rd = RACE_DATA.get(race, RACE_DATA["人類"])
+    return rd.get("body_parts", [])
+
+RACE_NAMES = sorted(RACE_DATA.keys())
+
+# ═══════════════════════════════════════════════════════════
+# EQUIPMENT MANAGER (12 base slots + race-specific slots)
+# ═══════════════════════════════════════════════════════════
+
+BASE_EQUIPMENT_SLOTS = [
     ("head","頭部"),("face","面部"),("neck","頸部"),
     ("torso","軀幹"),("left_arm","左臂"),("right_arm","右臂"),
     ("left_hand","左手"),("right_hand","右手"),
     ("waist","腰部"),("legs","腿部"),("feet","腳部"),("back","背部"),
 ]
 
+def get_equipment_slots_for_character(character) -> list:
+    """Get full equipment slots list including race-specific ones."""
+    slots = list(BASE_EQUIPMENT_SLOTS)
+    race = character.get("race", "人類")
+    extra = get_race_slots(race)
+    for slot_id, slot_name in extra:
+        if (slot_id, slot_name) not in slots:
+            slots.append((slot_id, slot_name))
+    return slots
+
+# For backward compatibility
+EQUIPMENT_SLOTS = list(BASE_EQUIPMENT_SLOTS)
+
 class EquipmentManager:
-    def __init__(self):
-        self.slots = {s[0]: None for s in EQUIPMENT_SLOTS}
+    def __init__(self, character=None):
+        slots_base = BASE_EQUIPMENT_SLOTS
+        self.race = "人類"
+        if character:
+            slots_base = get_equipment_slots_for_character(character)
+            self.race = character.get("race", "人類")
+        self.slots = {s[0]: None for s in slots_base}
+        self._slot_order = slots_base
 
     def equip(self, slot_id, item):
         old = self.slots.get(slot_id)
@@ -571,6 +682,10 @@ class EquipmentManager:
             if eq and eq["item"]:
                 for stat, mult in eq["item"].get("stat_multipliers", {}).items():
                     bonuses[stat] = bonuses.get(stat, 0.0) + mult
+        # Add race innate bonuses
+        rd = RACE_DATA.get(self.race, {})
+        for stat, mult in rd.get("innate_bonuses", {}).items():
+            bonuses[stat] = bonuses.get(stat, 0.0) + mult
         return bonuses
 
     def apply_stat_bonuses(self, character):
@@ -611,14 +726,14 @@ class EquipmentManager:
         return "已損壞"
 
     def display(self):
-        lines = ["裝備欄:"]
-        for sid, sname in EQUIPMENT_SLOTS:
+        lines = ["%s 裝備欄:" % self.race]
+        for sid, sname in self._slot_order:
             eq = self.slots.get(sid)
             if eq and eq["item"]:
                 c = self.condition_name(sid)
-                lines.append("  %s: %s [%s]" % (sid, eq["item"].get("name","?"), c))
+                lines.append("  %s: %s [%s]" % (sname, eq["item"].get("name","?"), c))
             else:
-                lines.append("  %s: （空）"% sid)
+                lines.append("  %s: （空）"% sname)
         return "\n".join(lines)
 
 

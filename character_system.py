@@ -239,11 +239,21 @@ def generate_character_from_card(card):
     karma = 5 + len(social_tokens) * 2 + len(knowledge_tokens) * 1 + int(stats.get("karma_bonus", 0))
     craft_skill = len(craft_tokens) * 3 + int(stats.get("craft_bonus", 0))
 
+    # Detect race from token categories
+    from sim_systems import detect_race, RACE_DATA, get_race_body_parts
+    race = detect_race(tokens)
+    
+    # Build body parts from race data
+    body_part_ids = get_race_body_parts(race)
+    rd = RACE_DATA.get(race, RACE_DATA["人類"])
     body_parts = {}
-    num_parts = len(BODY_PARTS)
-    base_hp = max_hp // num_parts
-    extra = max_hp % num_parts
-    for i, (part_id, part_name) in enumerate(BODY_PARTS):
+    # Use actual BODY_PARTS names for base parts
+    bp_names = {bp[0]: bp[1] for bp in BODY_PARTS}
+    num_parts = len(body_part_ids)
+    base_hp = max_hp // num_parts if num_parts > 0 else max_hp
+    extra = max_hp % num_parts if num_parts > 0 else 0
+    for i, part_id in enumerate(body_part_ids):
+        part_name = bp_names.get(part_id, part_id)
         part_hp = base_hp + (1 if i < extra else 0)
         body_parts[part_id] = {
             "name": part_name,
@@ -255,6 +265,7 @@ def generate_character_from_card(card):
     character = {
         "name": name,
         "card_id": card.get("card_id", "???"),
+        "race": race,
         "tokens": token_categories,
         "token_list": tokens,
         "abilities": abilities,
@@ -288,6 +299,7 @@ def create_blank_character(name="旅人"):
     return {
         "name": name,
         "card_id": None,
+        "race": "人類",
         "tokens": {},
         "token_list": [],
         "abilities": [],
@@ -305,8 +317,9 @@ def create_blank_character(name="旅人"):
         "level": 1,
         "gold": 50,
         "body_parts": {
-            part_id: {"name": part_name, "hp": 100 // len(BODY_PARTS) + (1 if i < 100 % len(BODY_PARTS) else 0), "max_hp": 100 // len(BODY_PARTS) + (1 if i < 100 % len(BODY_PARTS) else 0), "condition": "完好"}
-            for i, (part_id, part_name) in enumerate(BODY_PARTS)
+            pid: {"name": name, "hp": 100 // 6 + (1 if i < 100 % 6 else 0),
+                  "max_hp": 100 // 6 + (1 if i < 100 % 6 else 0), "condition": "完好"}
+            for i, (pid, name) in enumerate(BODY_PARTS)
         },
         "relationships": {},
         "inventory": [],
@@ -355,6 +368,7 @@ def display_character_sheet(character):
     lines.append(C.CYAN + "│  " + C.BOLD + "%s %s" % (symbol, character["name"]) + C.RESET + " " * max(0, 26 - len(character["name"])) + C.CYAN + "│" + C.RESET)
     if character.get("card_id"):
         lines.append(C.CYAN + "│  ID: %s" % character["card_id"].ljust(29) + C.CYAN + "│" + C.RESET)
+    lines.append(C.CYAN + "│  種族: %s" % character.get("race","人類").ljust(26) + C.CYAN + "│" + C.RESET)
     lines.append(C.CYAN + ("│  Lv.%d  EXP:%d/%d" % (character["level"], character["exp"], exp_needed_for_level(character["level"]))).ljust(30) + C.CYAN + "│" + C.RESET)
     lines.append(C.CYAN + "├" + "─" * 32 + "┤" + C.RESET)
     # HP bar
