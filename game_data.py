@@ -986,6 +986,42 @@ def expand_game():
         if vn not in sim_systems.VEHICLES:
             sim_systems.VEHICLES[vn] = vd
             cnt["vehicles"] += 1
+    # Also sync VEHICLE_LOCATIONS for all vehicles (keyed by loc -> veh)
+    # Build reverse index: every new vehicle → its primary location
+    _vehicle_to_primary_loc = {
+        "自転車":       "便利店",
+        "マウンテンバイク": "森林深處",
+        "駿馬":         "西翼大市集",
+        "大型馬車":     "秘密鐵工廠",
+        "漁船":         "鏡湖",
+        "帆船":         "鏡湖",
+        "オートバイ":   "方碑丘",
+        "大型オートバイ": "海峽",
+        "ジープ":       "廢棄礦坑",
+        "大型帆船":     "海峽",
+        "熱気球":       "中央大圖書館",
+        "蒸気機関車":   "秘密鐵工廠",
+        "魔法の箒":     "英靈殿",
+        "魔法の絨毯":   "中央大圖書館",
+        "飛空挺":       "海峽",
+        "竜騎乗":       "森林深處",
+        "雪橇":         "廢棄礦坑",
+    }
+    # Build VEHICLE_TO_LOCATION reverse mapping (all vehicles → their location)
+    veh_to_loc = {}
+    for vn in sim_systems.VEHICLES:
+        if vn in _vehicle_to_primary_loc:
+            veh_to_loc[vn] = _vehicle_to_primary_loc[vn]
+    if not hasattr(sim_systems, 'VEHICLE_TO_LOCATION'):
+        sim_systems.VEHICLE_TO_LOCATION = veh_to_loc
+    else:
+        sim_systems.VEHICLE_TO_LOCATION.update(veh_to_loc)
+    # Also populate VEHICLE_LOCATIONS with first vehicle per unique location
+    _used_locs = set(sim_systems.VEHICLE_LOCATIONS.keys())
+    for veh, loc in _vehicle_to_primary_loc.items():
+        if veh in sim_systems.VEHICLES and loc not in _used_locs:
+            sim_systems.VEHICLE_LOCATIONS[loc] = veh
+            _used_locs.add(loc)
     
     # Real estate — also sync REAL_ESTATE_KEYS
     for rn, rd in ALL_REAL_ESTATE.items():
@@ -1067,6 +1103,15 @@ def expand_game():
         # Add vibe
         vibe = _NEW_LOCATION_VIBES.get(sname, sdata.get("vibe", "📍 未知の地"))
         sim_systems.LOCATION_VIBES[sname] = vibe
+        # Assign scene type for new locations
+        loc_type = "outdoor"
+        if any(kw in sname for kw in ["教室","圖書館","食堂","宿舍","倉庫","避難所","館","工場","店"]):
+            loc_type = "indoor"
+        elif any(kw in sname for kw in ["迷宮","遺跡","坑","地下","洞"]):
+            loc_type = "dungeon"
+        elif any(kw in sname for kw in ["夢境","異空間","次元"]):
+            loc_type = "special"
+        sim_systems.LOCATION_TYPES[sname] = loc_type
         # Add enemy distribution
         _enemy_pool = list(sim_systems.ENEMIES)
         if _enemy_pool:
