@@ -171,43 +171,69 @@ def print_help():
 
 def select_character():
     cards = get_character_cards()
-    print_banner("選擇你的角色", C.MAGENTA)
-    print("")
-    card_limit = min(len(cards), 15)
-    for i, card in enumerate(cards[:card_limit], 1):
-        name = card.get("name","?")
-        cid = card.get("card_id","???")
-        ts = card.get("token_summary",{})
-        if isinstance(ts, dict):
-            tstr = " ".join("%s:%d"%(k,v) for k,v in ts.items())
-        else:
-            tstr = str(ts)[:50]
-        print("  %s%2d. [%s]%s %s" % (C.CYAN,i,cid,C.RESET,name))
-        print("      %s%s%s" % (C.DIM,tstr[:50],C.RESET))
-    print("  %s%2d.%s 自定義角色" % (C.CYAN,card_limit+1,C.RESET))
-    print("")
-    ch = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
-    if ch.isdigit():
-        idx = int(ch)-1
-        if 0 <= idx < card_limit:
-            card = cards[idx]
-            char = generate_character_from_card(card)
+    PAGE_SIZE = 10
+    total_cards = len(cards)
+    total_pages = (total_cards + PAGE_SIZE - 1) // PAGE_SIZE
+    page = 0
+
+    while True:
+        print_banner("選擇你的角色 (%d位)" % total_cards, C.MAGENTA)
+        print("")
+        start = page * PAGE_SIZE
+        end = min(start + PAGE_SIZE, total_cards)
+        for i in range(start, end):
+            card = cards[i]
+            name = card.get("name","?")
+            cid = card.get("card_id","???")
+            ts = card.get("token_summary",{})
+            if isinstance(ts, dict):
+                tstr = " ".join("%s:%d"%(k,v) for k,v in ts.items())
+            else:
+                tstr = str(ts)[:50]
+            print("  %s%2d. [%s]%s %s" % (C.CYAN,i+1,cid,C.RESET,name))
+            print("      %s%s%s" % (C.DIM,tstr[:50],C.RESET))
+        print("")
+        # Navigation footer
+        nav = []
+        if page > 0:
+            nav.append("p.上一頁")
+        if page < total_pages - 1:
+            nav.append("n.下一頁")
+        nav.append("c.自定義角色")
+        print("  " + "  ".join(nav))
+        print(C.GRAY + "  第 %d/%d 頁 — 輸入編號選擇角色" % (page + 1, total_pages) + C.RESET)
+        print("")
+        ch = input("  %s>%s " % (C.YELLOW,C.RESET)).strip().lower()
+        if ch in ("n", "next") and page < total_pages - 1:
+            page += 1
+            continue
+        elif ch in ("p", "prev") and page > 0:
+            page -= 1
+            continue
+        elif ch in ("c", "custom"):
+            print(C.YELLOW + "\n  你選擇了自定義角色。" + C.RESET)
+            char = create_blank_character()
+            name = input(C.CYAN + "  輸入角色名稱: " + C.RESET).strip()
+            if name:
+                char["name"] = name
             init_skills(char)
             init_quest_state(char)
             init_vehicle_state(char)
-            print(C.GREEN + "\n  你選擇了: %s (卡片 %s)" % (char["name"],char["card_id"]) + C.RESET)
             advance_time(char)
             return char
-    print(C.YELLOW + "\n  你選擇了自定義角色。" + C.RESET)
-    char = create_blank_character()
-    name = input(C.CYAN + "  輸入角色名稱: " + C.RESET).strip()
-    if name:
-        char["name"] = name
-    init_skills(char)
-    init_quest_state(char)
-    init_vehicle_state(char)
-    advance_time(char)
-    return char
+        elif ch.isdigit():
+            idx = int(ch) - 1
+            if 0 <= idx < total_cards:
+                card = cards[idx]
+                char = generate_character_from_card(card)
+                init_skills(char)
+                init_quest_state(char)
+                init_vehicle_state(char)
+                print(C.GREEN + "\n  你選擇了: %s (卡片 %s)" % (char["name"],char["card_id"]) + C.RESET)
+                advance_time(char)
+                return char
+        print(C.RED + "  無效輸入。" + C.RESET)
+        continue
 
 
 # ═══════════════════════════════════════════════════════════════════════════
