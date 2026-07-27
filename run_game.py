@@ -45,6 +45,12 @@ from sim_systems import (
     MAX_PROPERTIES,
     upgrade_property,
     get_property_upgrade_cost,
+    LOCATION_TYPES,
+    SCENE_TYPE_ICONS,
+    SCENE_TYPE_NAMES,
+    ENTRY_REQUIREMENTS,
+    check_entry_requirement,
+    get_entry_requirement_hint,
 )
 from game_data import expand_game
 
@@ -206,13 +212,17 @@ def _gm_narrate(character, new_location=None):
     }
 
     # Print location prose
+    stype = LOCATION_TYPES.get(loc, "outdoor")
+    sicon = SCENE_TYPE_ICONS.get(stype, "🌄")
+    stname = SCENE_TYPE_NAMES.get(stype, "?")
     desc_vibe = LOCATION_VIBES.get(loc, "")
     loc_descs = gm_descs.get(loc, {})
     desc = loc_descs.get(period, "")
     if desc:
-        print(C.DIM + f"  {wf} {desc}" + C.RESET)
+        print(C.DIM + sicon + f" {wf} {desc}" + C.RESET)
+        print(C.DIM + "  [%s] %s" % (stname, desc_vibe) + C.RESET)
     elif desc_vibe:
-        print(C.DIM + f"  {wf} {desc_vibe}" + C.RESET)
+        print(C.DIM + sicon + f" {wf} {desc_vibe}" + C.RESET)
 
     # ── Player state notes (short) ──
     state_notes = []
@@ -307,7 +317,11 @@ def print_status(character):
     print(C.DIM + "─"*50 + C.RESET)
     print(C.CYAN + "  ◈ " + time_str + C.RESET + "  " + weather_info)
     race = character.get("race", "人類")
-    print(C.WHITE + "  位置: " + character["location"] + C.RESET + "  " + C.MAGENTA + "[ " + race + " ]" + C.RESET, end="")
+    loc = character["location"]
+    stype = LOCATION_TYPES.get(loc, "outdoor")
+    sicon = SCENE_TYPE_ICONS.get(stype, "🌄")
+    stname = SCENE_TYPE_NAMES.get(stype, "?")
+    print(C.WHITE + "  " + sicon + " 位置: " + loc + C.RESET + "  " + C.MAGENTA + "[ " + race + " ]" + C.RESET + C.DIM + " (%s)" % stname + C.RESET, end="")
     if character.get("riding"):
         print(C.YELLOW + " [騎乘: " + character["riding"] + "]" + C.RESET)
     else:
@@ -323,6 +337,11 @@ def print_status(character):
     print("  " + C.BLUE + "SP:" + C.RESET + " %3d/%d %s" % (character["sp"],character["max_sp"],sp_b) +
           "  " + C.YELLOW + "Lv.%d" % character["level"] + C.RESET + "  " + C.GREEN + "EXP:%d/%d" % (character["exp"], exp_needed_for_level(character["level"])) + C.RESET)
 
+    # Scene type info
+    stype = LOCATION_TYPES.get(character["location"], "outdoor")
+    sicon = SCENE_TYPE_ICONS.get(stype, "🌄")
+    stname = SCENE_TYPE_NAMES.get(stype, "?")
+    print(C.DIM + "  類型: " + sicon + " " + stname)
     # All NPCs — show those at current location + some high-rep ones
     print(C.DIM + "─"*50 + C.RESET)
     cur_loc = character["location"]
@@ -629,7 +648,11 @@ def do_travel(character):
     for i,(d,loc) in enumerate(dests.items(),1):
         ic = icons.get(d,"•")
         vibe = LOCATION_VIBES.get(loc,"")
-        print("    %d. %s %s  %s"%(i,ic,loc,vibe))
+        stype = LOCATION_TYPES.get(loc, "outdoor")
+        sicon = SCENE_TYPE_ICONS.get(stype, "🌄")
+        req_hint = get_entry_requirement_hint(loc)
+        req_color = C.RED if req_hint else C.GREEN
+        print("    %d. %s %s %s  %s%s%s"%(i,ic,sicon,loc,vibe,req_color,req_hint,C.RESET))
     print("    %s0. 取消%s"%(C.GRAY,C.RESET))
     ch = input("  %s選擇:%s " % (C.YELLOW,C.RESET)).strip()
     if not ch.isdigit(): return
@@ -661,6 +684,11 @@ def do_travel(character):
                         else:
                             fuel_pct = int(veh_fuel / v.get("fuel", 100) * 100)
                             print(C.YELLOW+"    ⛽ 燃料: %d%%"%fuel_pct+C.RESET)
+            # Check entry requirements
+            can_enter, fail_msg = check_entry_requirement(dest, character)
+            if not can_enter:
+                print(C.RED + "  🔒 " + (fail_msg or "無法進入。") + C.RESET)
+                return
             character["location"] = dest
             advance_time(character, hours)
             # Arrival announcement

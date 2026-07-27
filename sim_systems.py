@@ -321,6 +321,168 @@ LOCATION_VIBES = {
     "森林深處":       "🌲 參天大樹遮天蔽日，鳥鳴迴盪",
 }
 
+# ═══════════════════════════════════════════════════════════
+# SCENE TYPES & ENTRY REQUIREMENTS (per MAP_AND_SCENES.md)
+# ═══════════════════════════════════════════════════════════
+
+LOCATION_TYPES = {
+    "方碑丘":         "outdoor",
+    "鏡湖":           "outdoor",
+    "西翼大市集":     "outdoor",
+    "中央大圖書館":   "indoor",
+    "海峽":           "outdoor",
+    "秘密鐵工廠":     "indoor",
+    "便利店":         "indoor",
+    "英靈殿":         "dungeon",
+    "廢棄礦坑":       "dungeon",
+    "森林深處":       "outdoor",
+}
+
+SCENE_TYPE_ICONS = {
+    "outdoor": "🌄",
+    "indoor":  "🏛",
+    "dungeon": "🕳",
+    "special": "✨",
+}
+
+SCENE_TYPE_NAMES = {
+    "outdoor": "室外",
+    "indoor":  "室內",
+    "dungeon": "地下城",
+    "special": "特殊",
+}
+
+ENTRY_REQUIREMENTS = {
+    # Format: "location": {"type": condition_type, ...}
+    # condition_type: "level" -> requires min level
+    #                 "item" -> requires item in inventory
+    #                 "quest" -> requires completed quest in quest log
+    #                 "reputation" -> requires min reputation
+    #                 "time" -> requires specific time range
+    #                 "or" -> any of sub-conditions
+    #                 "and" -> all of sub-conditions
+    "英靈殿": {
+        "type": "or",
+        "conditions": [
+            {"type": "level", "min": 5, "msg": "需要等級 5 以上"},
+            {"type": "item", "item": "古老鑰匙", "msg": "需要「古老鑰匙」"},
+            {"type": "quest", "quest_id": "MQ-03", "msg": "需要完成主線「圖書館之謎」"},
+        ],
+        "fail_msg": "英靈殿的大門緊閉，似乎只有夠強壯的冒險者才能打開。",
+    },
+    "廢棄礦坑": {
+        "type": "level",
+        "min": 3,
+        "fail_msg": "礦坑入口的塌陷處擋住了去路。你需要更強健的體魄才能通過。（等級 3）",
+    },
+    "森林深處": {
+        "type": "level",
+        "min": 2,
+        "fail_msg": "森林入口的荊棘叢生，你還沒有能力穿越。（等級 2）",
+    },
+    "海峽": {
+        "type": "level",
+        "min": 4,
+        "fail_msg": "通往海峽的棧道已經損壞，需要足夠的經驗才能安全通過。（等級 4）",
+    },
+}
+
+
+def check_entry_requirement(location, character):
+    """Check if character meets entry requirements for a location.
+    Returns (can_enter: bool, message: str or None).
+    """
+    req = ENTRY_REQUIREMENTS.get(location)
+    if not req:
+        return True, None  # No requirements
+
+    fail_msg = req.get("fail_msg", "無法進入。")
+
+    if req["type"] == "level":
+        level = character.get("level", 1)
+        if level >= req.get("min", 1):
+            return True, None
+        return False, fail_msg
+
+    elif req["type"] == "item":
+        inv = character.get("inventory", [])
+        if req.get("item", "") in inv:
+            return True, None
+        return False, fail_msg
+
+    elif req["type"] == "quest":
+        quests = character.get("quests", {})
+        qid = req.get("quest_id", "")
+        qdata = quests.get(qid)
+        if qdata and qdata.get("status") == "completed":
+            return True, None
+        return False, fail_msg
+
+    elif req["type"] == "reputation":
+        rep = character.get("reputation", 0)
+        if rep >= req.get("min", 0):
+            return True, None
+        return False, fail_msg
+
+    elif req["type"] == "or":
+        for cond in req.get("conditions", []):
+            can, _ = check_entry_requirement_by_type(cond, character)
+            if can:
+                return True, None
+        # Show all condition hints
+        hints = [cond.get("msg", "???") for cond in req.get("conditions", [])]
+        hint_str = "  或 ".join(hints)
+        return False, "%s（%s）" % (fail_msg, hint_str)
+
+    elif req["type"] == "and":
+        for cond in req.get("conditions", []):
+            can, _ = check_entry_requirement_by_type(cond, character)
+            if not can:
+                return False, fail_msg
+        return True, None
+
+    return True, None
+
+
+def check_entry_requirement_by_type(cond, character):
+    """Check a single condition entry."""
+    ctype = cond.get("type", "")
+    if ctype == "level":
+        level = character.get("level", 1)
+        return level >= cond.get("min", 1), None
+    elif ctype == "item":
+        return cond.get("item", "") in character.get("inventory", []), None
+    elif ctype == "quest":
+        qid = cond.get("quest_id", "")
+        qdata = character.get("quests", {}).get(qid)
+        return qdata and qdata.get("status") == "completed", None
+    elif ctype == "reputation":
+        return character.get("reputation", 0) >= cond.get("min", 0), None
+    return True, None
+
+
+def get_entry_requirement_hint(location):
+    """Get a short hint string about what is required to enter a location."""
+    req = ENTRY_REQUIREMENTS.get(location)
+    if not req:
+        return ""
+
+    conds = req.get("conditions", []) if req.get("type") in ("or", "and") else [req]
+    hints = []
+    for c in conds:
+        ct = c.get("type", "")
+        if ct == "level":
+            hints.append("Lv.%d+" % c.get("min", 1))
+        elif ct == "item":
+            hints.append("「%s」" % c.get("item", "?"))
+        elif ct == "quest":
+            hints.append("需完成相應任務")
+    if hints:
+        sep = " AND " if req.get("type") == "and" else " OR "
+        return " (" + sep.join(hints) + ")"
+    return ""
+
+
 REAL_ESTATE = {
     "方碑丘小屋": {
         "type":"house", "price":500, "functions":["rest","store"],
