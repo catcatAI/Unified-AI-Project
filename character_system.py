@@ -360,6 +360,8 @@ def generate_character_from_card(card):
         "hour": 8,
         "alignment": "neutral",
         "reputation": 0,
+        "fatigue": 0,
+        "pain": 0,
     }
     return character
 
@@ -398,6 +400,8 @@ def create_blank_character(name="旅人"):
         "hour": 8,
         "alignment": "neutral",
         "reputation": 0,
+        "fatigue": 0,
+        "pain": 0,
     }
 
 

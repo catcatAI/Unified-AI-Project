@@ -73,6 +73,9 @@ from character_system import (
     get_portrait,
     get_reputation_tier,
     modify_reputation,
+    save_game,
+    load_game,
+    delete_save,
     BODY_PARTS,
     C,
 )
@@ -438,20 +441,38 @@ def do_travel(character):
     idx = int(ch)
     if idx==0: return
     if 1<=idx<=len(dests):
-        dest = list(dests.values())[idx-1]
-        # Travel time
-        hours = 1
-        if character.get("riding"):
-            v = VEHICLES.get(character["riding"])
-            if v:
-                hours = max(1, int(1 / v.get("speed",1.0)))
-        character["location"] = dest
-        advance_time(character, hours)
-        vibe = LOCATION_VIBES.get(dest,"")
-        print(C.GREEN+"  移動到 %s。%s" % (dest, vibe)+C.RESET)
-        # Random event on travel
-        roll_random_event(character)
-        return
+            dest = list(dests.values())[idx-1]
+            # Travel time
+            hours = 1
+            if character.get("riding"):
+                v = VEHICLES.get(character["riding"])
+                if v:
+                    hours = max(1, int(1 / v.get("speed",1.0)))
+                    # Vehicle fuel consumption
+                    fuel_used = v.get("fuel_per_hour", 0) * hours
+                    if fuel_used > 0:
+                        # Track fuel in vehicle state
+                        veh_state = character.get("vehicles", {}).get(character["riding"], {})
+                        veh_fuel = veh_state.get("fuel", v.get("fuel", 100))
+                        veh_fuel = max(0, veh_fuel - fuel_used)
+                        if "vehicles" not in character:
+                            character["vehicles"] = {}
+                        if character["riding"] not in character["vehicles"]:
+                            character["vehicles"][character["riding"]] = {}
+                        character["vehicles"][character["riding"]]["fuel"] = veh_fuel
+                        if veh_fuel <= 0:
+                            print(C.RED+"    ⛽ %s燃料耗盡，無法騎乘!"%character["riding"]+C.RESET)
+                            character["riding"] = None
+                        else:
+                            fuel_pct = int(veh_fuel / v.get("fuel", 100) * 100)
+                            print(C.YELLOW+"    ⛽ 燃料: %d%%"%fuel_pct+C.RESET)
+            character["location"] = dest
+            advance_time(character, hours)
+            vibe = LOCATION_VIBES.get(dest,"")
+            print(C.GREEN+"  移動到 %s。%s" % (dest, vibe)+C.RESET)
+            # Random event on travel
+            roll_random_event(character)
+            return
     print(C.RED+"  無效。"+C.RESET)
 
 
@@ -521,8 +542,14 @@ def do_inventory(character):
             co = tc.get(ty,C.WHITE)
             wt = d.get("weight",0.5)
             val = d.get("value",0)
-            line = "  %s%2d.%s %s%s%s (%.1fkg)" % (co,i,C.RESET,co,item,C.RESET,wt)
-            print(C.CYAN+"│ "+line.ljust(38)+C.CYAN+"│"+C.RESET)
+            # Rarity display
+            rarity = C.DIM+""+C.RESET
+            if "rare" in d.get("tags", []) or "龍鱗" in item or "生命" in item:
+                rarity = C.YELLOW+"★"+C.RESET
+            elif val > 150:
+                rarity = C.MAGENTA+"✦"+C.RESET
+            line = "  %s%2d.%s %s%s %s%s (%.1fkg)" % (co,i,C.RESET,rarity,co,item,C.RESET,wt)
+            print(C.CYAN+"│ "+line.ljust(40)+C.CYAN+"│"+C.RESET)
     print(C.CYAN+"└"+"─"*40+"┘"+C.RESET)
     print("  "+C.YELLOW+"金幣: %d"%character.get("gold",0)+C.RESET)
     if total_w > MAX_INVENTORY_WEIGHT:

@@ -10,6 +10,14 @@ MAX_INVENTORY_SLOTS = 30
 MAX_INVENTORY_WEIGHT = 60.0
 MAX_PROPERTIES = 5
 
+# Item stacking — add max_stack to consumables
+DEFAULT_MAX_STACK = {
+    "consumable": 10,
+    "material": 20,
+    "junk": 5,
+    "quest": 1,
+}
+
 # ═══════════════════════════════════════════════════════════
 # ITEM CATALOG (54 items)
 # ═══════════════════════════════════════════════════════════
@@ -31,16 +39,16 @@ ITEM_CATALOG = {
     "黏土":  {"type": "material", "weight": 1.0, "value": 3,  "tags": ["clay"], "desc": "可塑形的黏土"},
 
     # ── Consumables (10) ──
-    "火焰藥水":{"type":"consumable","weight":0.3,"value": 50, "heal_hp": 50, "heal_sp":10, "desc":"恢復50HP+10SP"},
-    "治療藥水":{"type":"consumable","weight":0.3,"value": 40, "heal_hp": 40, "desc":"恢復40HP"},
-    "魔力藥水":{"type":"consumable","weight":0.3,"value": 35, "heal_sp": 30, "desc":"恢復30SP"},
-    "乾糧":   {"type":"consumable","weight":0.5,"value": 8,  "heal_hp": 12, "desc":"恢復12HP"},
-    "解毒草": {"type":"consumable","weight":0.2,"value": 20, "desc":"解除中毒狀態"},
-    "靈力藥": {"type":"consumable","weight":0.3,"value": 45, "heal_sp": 50, "desc":"恢復50SP"},
-    "生命果": {"type":"consumable","weight":0.4,"value": 60, "heal_hp": 80, "desc":"恢復80HP（稀有）"},
-    "提神茶": {"type":"consumable","weight":0.2,"value": 15, "heal_sp": 15, "desc":"恢復15SP"},
-    "繃帶":   {"type":"consumable","weight":0.2,"value": 12, "heal_hp": 15, "desc":"簡易包紮，恢復15HP"},
-    "濃縮藥水":{"type":"consumable","weight":0.4,"value": 80, "heal_hp": 100,"heal_sp":30,"desc":"高級恢復品"},
+    "火焰藥水":{"type":"consumable","weight":0.3,"value": 50, "heal_hp": 50, "heal_sp":10, "max_stack":10, "desc":"恢復50HP+10SP"},
+    "治療藥水":{"type":"consumable","weight":0.3,"value": 40, "heal_hp": 40, "max_stack":10, "desc":"恢復40HP"},
+    "魔力藥水":{"type":"consumable","weight":0.3,"value": 35, "heal_sp": 30, "max_stack":10, "desc":"恢復30SP"},
+    "乾糧":   {"type":"consumable","weight":0.5,"value": 8,  "heal_hp": 12, "max_stack":20, "desc":"恢復12HP"},
+    "解毒草": {"type":"consumable","weight":0.2,"value": 20, "max_stack":10, "desc":"解除中毒狀態"},
+    "靈力藥": {"type":"consumable","weight":0.3,"value": 45, "heal_sp": 50, "max_stack":10, "desc":"恢復50SP"},
+    "生命果": {"type":"consumable","weight":0.4,"value": 60, "heal_hp": 80, "max_stack":5, "desc":"恢復80HP（稀有）"},
+    "提神茶": {"type":"consumable","weight":0.2,"value": 15, "heal_sp": 15, "max_stack":20, "desc":"恢復15SP"},
+    "繃帶":   {"type":"consumable","weight":0.2,"value": 12, "heal_hp": 15, "max_stack":10, "desc":"簡易包紮，恢復15HP"},
+    "濃縮藥水":{"type":"consumable","weight":0.4,"value": 80, "heal_hp": 100,"heal_sp":30, "max_stack":5, "desc":"高級恢復品"},
 
     # ── Weapons (7) ──
     "鐵劍":{"type":"weapon","weight":3.0,"value": 80, "durability":100,"slot":"right_hand",
@@ -175,7 +183,39 @@ RECIPES = [
     {"recipe_id":"R16","name":"生命果","category":"alchemize",
      "ingredients":[{"item":"龍鱗","quantity":1},{"item":"治療藥水","quantity":2}],
      "result_item":"生命果","result_quantity":1,"failure_chance":0.4},
+    # ── Repair recipes (物品修復) ──
+    {"recipe_id":"R17","name":"修復武器","category":"repair",
+     "ingredients":[{"item":"鐵礦","quantity":2},{"item":"鐵錠","quantity":1}],
+     "result_item":"修復服務","result_quantity":1,"failure_chance":0.0,"repair_all":True},
+    {"recipe_id":"R18","name":"修復防具","category":"repair",
+     "ingredients":[{"item":"皮革","quantity":2},{"item":"布料","quantity":1}],
+     "result_item":"修復服務","result_quantity":1,"failure_chance":0.0,"repair_all":True},
 ]
+
+def repair_equipment(equipment_manager, character):
+    """Repair all equipped items using materials from inventory.
+    Returns (success, message).
+    """
+    repaired_count = 0
+    for sid, eq in equipment_manager.slots.items():
+        if eq and eq["item"]:
+            mx = eq["item"].get("durability", 100)
+            cur = eq["item"].get("current_durability", mx)
+            if cur < mx:
+                # Repair cost: 1 iron + 1 leather per item
+                inv = character.get("inventory", [])
+                cost_iron = 1 if "鐵礦" in inv or "鐵錠" in inv else 0
+                if cost_iron:
+                    if "鐵礦" in inv:
+                        inv.remove("鐵礦")
+                    elif "鐵錠" in inv:
+                        inv.remove("鐵錠")
+                    eq["item"]["current_durability"] = mx
+                    eq["durability_loss"] = 0
+                    repaired_count += 1
+    if repaired_count:
+        return True, "修復了 %d 件裝備" % repaired_count
+    return False, "沒有需要修復的裝備，或缺少修復材料"
 
 def craft_item(recipe_id, inventory):
     recipe = next((r for r in RECIPES if r["recipe_id"] == recipe_id), None)
