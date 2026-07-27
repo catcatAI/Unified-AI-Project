@@ -8,7 +8,7 @@ import random as _random
 
 MAX_INVENTORY_SLOTS = 30
 MAX_INVENTORY_WEIGHT = 60.0
-MAX_PROPERTIES = 5
+MAX_PROPERTIES = 8
 
 # Item stacking — add max_stack to consumables
 DEFAULT_MAX_STACK = {
@@ -322,14 +322,113 @@ LOCATION_VIBES = {
 }
 
 REAL_ESTATE = {
-    "方碑丘小屋": {"type":"house", "price":500,  "functions":["rest","store"], "desc":"樸素的村莊小屋"},
-    "西翼商店鋪": {"type":"shop", "price":800,  "functions":["trade"],       "desc":"市集的小店鋪"},
-    "湖畔工坊":   {"type":"workshop","price":1200,"functions":["craft","rest"],"desc":"鏡湖旁的工坊"},
-    "圖書館密室": {"type":"house", "price":2000, "functions":["rest","study"],"desc":"圖書館內的安靜房間"},
-    "礦坑倉庫":   {"type":"warehouse","price":600,"functions":["store"],      "desc":"廢棄礦坑旁的倉庫"},
+    "方碑丘小屋": {
+        "type":"house", "price":500, "functions":["rest","store"],
+        "desc":"樸素的村莊小屋", "max_level":3,
+        "upgrades":[
+            {"level":2, "cost":300, "add_functions":["study"], "desc":"增建書房"},
+            {"level":3, "cost":600, "add_functions":["guest"], "desc":"增設客房"},
+        ],
+    },
+    "西翼商店鋪": {
+        "type":"shop", "price":800, "functions":["trade"],
+        "desc":"市集的小店鋪", "max_level":3,
+        "upgrades":[
+            {"level":2, "cost":500, "add_functions":["rest"], "desc":"增設休息區"},
+            {"level":3, "cost":1000, "add_functions":["craft"], "desc":"增設工坊區"},
+        ],
+    },
+    "湖畔工坊": {
+        "type":"workshop", "price":1200, "functions":["craft","rest"],
+        "desc":"鏡湖旁的工坊", "max_level":3,
+        "upgrades":[
+            {"level":2, "cost":800, "add_functions":["study"], "desc":"增設研究區"},
+            {"level":3, "cost":1500, "add_functions":["alchemy"], "desc":"增設煉金臺"},
+        ],
+    },
+    "圖書館密室": {
+        "type":"house", "price":2000, "functions":["rest","study"],
+        "desc":"圖書館內的安靜房間", "max_level":2,
+        "upgrades":[
+            {"level":2, "cost":1200, "add_functions":["store"], "desc":"增設書架倉庫"},
+        ],
+    },
+    "礦坑倉庫": {
+        "type":"warehouse", "price":600, "functions":["store"],
+        "desc":"廢棄礦坑旁的倉庫", "max_level":2,
+        "upgrades":[
+            {"level":2, "cost":400, "add_functions":["rest"], "desc":"簡易改造為休息處"},
+        ],
+    },
+    # ── New property types per MAP_AND_SCENES.md ──
+    "森林農場": {
+        "type":"farm", "price":1500, "functions":["farm","rest"],
+        "desc":"森林深處的小農場", "max_level":3,
+        "upgrades":[
+            {"level":2, "cost":800, "add_functions":["store"], "desc":"增設農具倉庫"},
+            {"level":3, "cost":1600, "add_functions":["trade"], "desc":"增設農產直銷點"},
+        ],
+    },
+    "鏡湖觀測塔": {
+        "type":"tower", "price":2500, "functions":["study","observe"],
+        "desc":"鏡湖旁的觀測塔", "max_level":3,
+        "upgrades":[
+            {"level":2, "cost":1200, "add_functions":["rest"], "desc":"增設休息室"},
+            {"level":3, "cost":2000, "add_functions":["teleport"], "desc":"增設傳送陣"},
+        ],
+    },
 }
 
 REAL_ESTATE_KEYS = list(REAL_ESTATE.keys())
+
+def upgrade_property(character, property_name):
+    """Upgrade an owned property to the next level.
+    Returns (success, message).
+    """
+    owned = character.get("owned_properties", {})
+    if property_name not in owned:
+        return False, "你沒有這個不動產"
+    re_def = REAL_ESTATE.get(property_name, {})
+    upgrades = re_def.get("upgrades", [])
+    if not upgrades:
+        return False, "這個不動產無法升級"
+    current_level = owned[property_name].get("level", 1)
+    max_level = re_def.get("max_level", 1)
+    if current_level >= max_level:
+        return False, "已達最高等級 (%d/%d)" % (current_level, max_level)
+    # Find next upgrade
+    next_upgrade = None
+    for upg in upgrades:
+        if upg["level"] == current_level + 1:
+            next_upgrade = upg
+            break
+    if not next_upgrade:
+        return False, "沒有可用的升級"
+    cost = next_upgrade["cost"]
+    if character.get("gold", 0) < cost:
+        return False, "金幣不足！需要 %dG" % cost
+    # Apply upgrade
+    character["gold"] -= cost
+    owned[property_name]["level"] = current_level + 1
+    owned[property_name].setdefault("functions", re_def.get("functions", []))
+    for func in next_upgrade.get("add_functions", []):
+        if func not in owned[property_name]["functions"]:
+            owned[property_name]["functions"].append(func)
+    return True, "🏠 %s 升級到 Lv.%d！花費 %dG" % (property_name, current_level + 1, cost)
+
+def get_property_upgrade_cost(character, property_name):
+    """Get the cost to upgrade a property to the next level, or None if maxed."""
+    owned = character.get("owned_properties", {})
+    re_def = REAL_ESTATE.get(property_name, {})
+    upgrades = re_def.get("upgrades", [])
+    current_level = owned.get(property_name, {}).get("level", 1)
+    max_level = re_def.get("max_level", 1)
+    if current_level >= max_level:
+        return None
+    for upg in upgrades:
+        if upg["level"] == current_level + 1:
+            return upg["cost"], upg.get("desc",""), upg.get("add_functions",[])
+    return None
 
 HOUR_NAMES = {0:"子時",2:"丑時",4:"寅時",6:"卯時",8:"辰時",10:"巳時",
               12:"午時",14:"未時",16:"申時",18:"酉時",20:"戌時",22:"亥時"}

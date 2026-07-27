@@ -43,6 +43,8 @@ from sim_systems import (
     MAX_INVENTORY_SLOTS,
     MAX_INVENTORY_WEIGHT,
     MAX_PROPERTIES,
+    upgrade_property,
+    get_property_upgrade_cost,
 )
 from game_data import expand_game
 
@@ -1471,32 +1473,40 @@ def do_vehicle_menu(character):
 # REAL ESTATE
 # ═══════════════════════════════════════════════════════════════════════════
 
-def do_real_estate(character):
+def do_real_estate(character, equipment=None):
     print("\n"+C.CYAN+"┌"+"─"*44+"┐"+C.RESET)
-    print(C.CYAN+"│  不動產系統"+C.RESET+" "*31+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"│  不動產系統 (升級系統已開放)"+C.RESET+" "*16+C.CYAN+"│"+C.RESET)
     print(C.CYAN+"├"+"─"*44+"┤"+C.RESET)
     owned = character.get("owned_properties", {})
     if owned:
         print(C.CYAN+"│  擁有的不動產:"+C.RESET+" "*25+C.CYAN+"│"+C.RESET)
         for pname, pdata in owned.items():
             pd = REAL_ESTATE.get(pname, {})
-            funcs = ", ".join(pd.get("functions",[]))
-            print(C.CYAN+"│  "+C.YELLOW+"🏠 %s"%pname+C.RESET+" [%s]"%funcs + " "*(30-len(pname)-len(funcs)) + C.CYAN+"│"+C.RESET)
+            lv = pdata.get("level", 1)
+            mlv = pd.get("max_level", 1)
+            funcs = ", ".join(pdata.get("functions", pd.get("functions",[])))
+            lv_str = "Lv.%d/%d" % (lv, mlv)
+            print(C.CYAN+"│  "+C.YELLOW+"🏠 %s"%pname+C.RESET+" [%s] %s"%(funcs, lv_str) + " "*(28-len(pname)-len(funcs)-len(lv_str)) + C.CYAN+"│"+C.RESET)
     else:
         print(C.CYAN+"│  "+C.GRAY+"你還沒有不動產。"+C.RESET+" "*22+C.CYAN+"│"+C.RESET)
     print(C.CYAN+"├"+"─"*44+"┤"+C.RESET)
-    print(C.CYAN+"│  1. 查看可購買的不動產"+C.RESET+" "*12+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"│  1. 查看/購買可購買的不動產"+C.RESET+" "*6+C.CYAN+"│"+C.RESET)
     print(C.CYAN+"│  2. 使用不動產功能"+C.RESET+" "*14+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"│  3. 升級不動產"+C.RESET+" "*18+C.CYAN+"│"+C.RESET)
     print(C.CYAN+"│  "+C.GRAY+"0. 返回"+C.RESET+" "*32+C.CYAN+"│"+C.RESET)
     print(C.CYAN+"└"+"─"*44+"┘"+C.RESET)
     ch = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
     if ch=="1":
         print(C.CYAN+"  可購買:"+C.RESET)
-        from sim_systems import REAL_ESTATE_KEYS
-        for i, pname in enumerate(REAL_ESTATE_KEYS,1):
+        for i,pname in enumerate(REAL_ESTATE_KEYS,1):
             pd = REAL_ESTATE[pname]
             owned_flag = " ✓" if pname in owned else ""
-            print("    %d. 🏠 %s — %dG [%s]%s"%(i,pname,pd["price"],",".join(pd["functions"]),owned_flag))
+            ptype = pd.get("type","?")
+            mlv = pd.get("max_level", 1)
+            type_icons = {"house":"🏠","shop":"🏪","workshop":"🔧","warehouse":"📦","farm":"🌾","tower":"🗼"}
+            ic = type_icons.get(ptype,"🏠")
+            print("    %d. %s %s — %dG [%s] Lv.%d%s"%(i,ic,pname,pd["price"],",".join(pd["functions"]),mlv,owned_flag))
+            print("       "+C.DIM+"%s"%pd.get("desc","")+C.RESET)
         bc = input("  %s購買編號 (0取消):%s "%(C.YELLOW,C.RESET)).strip()
         if bc.isdigit():
             bi = int(bc)-1
@@ -1508,7 +1518,7 @@ def do_real_estate(character):
                     print(C.YELLOW+"  你已經擁有這個不動產。"+C.RESET)
                 elif character.get("gold",0) >= price and len(owned) < MAX_PROPERTIES:
                     character["gold"] = character.get("gold",0) - price
-                    character.setdefault("owned_properties",{})[pname] = {"name":pname,"functions":pd["functions"]}
+                    character.setdefault("owned_properties",{})[pname] = {"name":pname,"functions":list(pd["functions"]),"level":1}
                     character["owned_properties"][pname]["location"] = character["location"]
                     print(C.GREEN+"  ✓ 購買了 %s!"%pname+C.RESET)
                     modify_reputation(character,5)
@@ -1516,47 +1526,134 @@ def do_real_estate(character):
                     print(C.RED+"  已達不動產上限 (%d)!"%MAX_PROPERTIES+C.RESET)
                 else:
                     print(C.RED+"  金幣不足 (需要%dG)!"%price+C.RESET)
+
     elif ch=="2":
         if not owned:
             print(C.GRAY+"  沒有不動產可用。"+C.RESET)
             return
         print(C.CYAN+"  你的不動產:"+C.RESET)
-        for i, pname in enumerate(owned.keys(),1):
+        olist = list(owned.keys())
+        for i, pname in enumerate(olist,1):
             pd = REAL_ESTATE.get(pname, {})
-            funcs = pd.get("functions",[])
-            print("    %d. 🏠 %s [%s]"%(i,pname,",".join(funcs)))
+            funcs = ", ".join(owned[pname].get("functions", pd.get("functions",[])))
+            lv = owned[pname].get("level", 1)
+            print("    %d. 🏠 %s [%s] Lv.%d"%(i,pname,funcs,lv))
         pc = input("  %s使用編號:%s "%(C.YELLOW,C.RESET)).strip()
         if pc.isdigit():
             pi = int(pc)-1
-            owned_list = list(owned.keys())
-            if 0<=pi<len(owned_list):
-                pname = owned_list[pi]
+            if 0<=pi<len(olist):
+                pname = olist[pi]
                 pd = REAL_ESTATE.get(pname, {})
-                funcs = pd.get("functions",[])
-                print(C.CYAN+"  🏠 %s — 可用功能: %s"%(pname,",".join(funcs))+C.RESET)
+                funcs = owned[pname].get("functions", pd.get("functions",[]))
+                lv = owned[pname].get("level", 1)
+                print(C.CYAN+"  🏠 %s — Lv.%d 功能: %s"%(pname,lv,", ".join(funcs))+C.RESET)
                 if "rest" in funcs:
                     print(C.GREEN+"    1. 休息 (完全恢復)"+C.RESET)
                 if "craft" in funcs:
                     print(C.GREEN+"    2. 使用工作台(合成)"+C.RESET)
                 if "store" in funcs:
                     print(C.GREEN+"    3. 倉庫(查看物品)"+C.RESET)
+                if "study" in funcs:
+                    print(C.GREEN+"    4. 研究 (SP消耗→技能經驗)"+C.RESET)
+                if "farm" in funcs:
+                    print(C.GREEN+"    5. 農場 (收穫作物)"+C.RESET)
+                if "observe" in funcs:
+                    print(C.GREEN+"    6. 觀測 (探索情報)"+C.RESET)
+                if "trade" in funcs:
+                    print(C.GREEN+"    7. 交易 (買賣物品)"+C.RESET)
+                if "guest" in funcs:
+                    print(C.GREEN+"    8. 招待客人 (好感度提升)"+C.RESET)
                 print(C.GRAY+"    0. 取消"+C.RESET)
                 ac = input("  %s>%s "%(C.YELLOW,C.RESET)).strip()
                 if ac=="1" and "rest" in funcs:
                     character["hp"] = character["max_hp"]
                     character["sp"] = character["max_sp"]
-                    print(C.GREEN+"  ✓ 完全恢復!"+C.RESET)
+                    character["fatigue"] = 0
+                    character["pain"] = 0
+                    print(C.GREEN+"  ✓ 完全恢復! 疲勞和痛覺已消除。"+C.RESET)
                     advance_time(character,2)
                 elif ac=="2" and "craft" in funcs:
                     do_crafting(character, equipment)
                 elif ac=="3" and "store" in funcs:
                     do_inventory(character)
+                elif ac=="4" and "study" in funcs:
+                    if character["sp"] >= 15:
+                        character["sp"] -= 15
+                        gain_skill_exp(character, "knowledge", 10)
+                        gain_exp_with_skills(character, 20, "knowledge", 15)
+                        print(C.GREEN+"  研究完畢! 知識技能經驗提升。"+C.RESET+" (SP-15)")
+                        advance_time(character,1)
+                    else:
+                        print(C.RED+"  SP不足 (需要15)!"+C.RESET)
+                elif ac=="5" and "farm" in funcs:
+                    crops = ["草藥","乾糧","靈木","生命果"]
+                    roll = _random.random()
+                    if roll < 0.4:
+                        harvest = "草藥"
+                        qty = _random.randint(2,5)
+                    elif roll < 0.7:
+                        harvest = "乾糧"
+                        qty = _random.randint(3,6)
+                    elif roll < 0.9:
+                        harvest = "靈木"
+                        qty = _random.randint(1,3)
+                    else:
+                        harvest = "生命果"
+                        qty = 1
+                    for _ in range(qty):
+                        character["inventory"].append(harvest)
+                    print(C.GREEN+"  🌾 收穫了 %s x%d!"%(harvest,qty)+C.RESET)
+                    advance_time(character,1)
+                elif ac=="6" and "observe" in funcs:
+                    gain_exp_with_skills(character, 15, "exploration", 5)
+                    print(C.CYAN+"  你觀察到遠方有什麼在發光..."+C.RESET)
+                    print(C.DIM+"  (探索技能經驗提升)"+C.RESET)
+                    advance_time(character,1)
+                elif ac=="7" and "trade" in funcs:
+                    do_inventory(character)
+                    print(C.GRAY+"  (交易功能: 可在商店購買/出售)"+C.RESET)
+                elif ac=="8" and "guest" in funcs:
+                    modify_reputation(character, 5)
+                    print(C.GREEN+"  你招待了客人，聲望 +5!"+C.RESET)
+                    advance_time(character,1)
 
-
-# ═══════════════════════════════════════════════════════════════════════════
-# MAIN GAME LOOP
-# ═══════════════════════════════════════════════════════════════════════════
-
+    elif ch=="3":
+        if not owned:
+            print(C.GRAY+"  沒有不動產可升級。"+C.RESET)
+            return
+        print(C.CYAN+"  可升級的不動產:"+C.RESET)
+        olist = list(owned.keys())
+        upg_available = []
+        for i, pname in enumerate(olist,1):
+            pd = REAL_ESTATE.get(pname, {})
+            lv = owned[pname].get("level", 1)
+            mlv = pd.get("max_level", 1)
+            cost_info = get_property_upgrade_cost(character, pname)
+            cost_str = ""
+            if cost_info:
+                cost_g, cost_desc, add_funcs = cost_info
+                cost_str = C.GREEN+" → Lv.%d: %dG (%s)"%(lv+1, cost_g, cost_desc)+C.RESET
+                upg_available.append(i)
+            else:
+                cost_str = C.GRAY+" (已達最高等級)"+C.RESET
+            print("    %d. 🏠 %s [Lv.%d/%d] %s"%(i,pname,lv,mlv,cost_str))
+        if not upg_available:
+            print(C.GRAY+"  所有不動產已達最高等級。"+C.RESET)
+            return
+        uc = input("  %s升級編號 (0取消):%s "%(C.YELLOW,C.RESET)).strip()
+        if uc.isdigit():
+            ui = int(uc)-1
+            if 0<=ui<len(olist):
+                pname = olist[ui]
+                if ui+1 not in upg_available:
+                    print(C.RED+"  該不動產已達最高等級。"+C.RESET)
+                    return
+                succ, msg = upgrade_property(character, pname)
+                if succ:
+                    print(C.GREEN+"  ✓ "+msg+C.RESET)
+                    gain_skill_exp(character, "craft", 5)
+                else:
+                    print(C.RED+"  ✗ "+msg+C.RESET)
 def start_game():
     global _current_weather
     # Expand game data from game_data module (card-based content)
@@ -1660,7 +1757,7 @@ def start_game():
         elif ch=="12": do_scene_search(character, equipment)
         elif ch=="13": do_quest_menu(character)
         elif ch=="14": do_vehicle_menu(character)
-        elif ch=="15": do_real_estate(character)
+        elif ch=="15": do_real_estate(character, equipment)
         else: print(C.RED+"  未知指令。輸入 h 查看幫助。"+C.RESET)
 
         # Auto-check quest completion after any action
