@@ -2,6 +2,7 @@
 import sys
 import os
 import random as _random
+from collections import Counter as _Counter
 from pathlib import Path
 
 src = Path(__file__).resolve().parent / "apps" / "backend" / "src"
@@ -92,6 +93,35 @@ _current_weather = "☀晴"
 def clear_screen():
     """Clear terminal screen per INTERFACE_TERMINAL.md§清屏"""
     os.system("cls" if os.name == "nt" else "clear")
+
+
+def _gm_narrate(character, new_location=None):
+    """GM-style scene narration per GAME_OVERVIEW.md GM system."""
+    loc = new_location or character.get("location","?")
+    vibes = LOCATION_VIBES.get(loc,"")
+    gm_descs = {
+        "方碑丘": "微風吹過金黃色的稻田，村莊裡炊煙裊裊升起。",
+        "鏡湖": "湖面如鏡，倒映著天空的雲彩。空氣中彌漫著淡淡的水氣。",
+        "西翼大市集": "人聲鼎沸，各種叫賣聲此起彼落。香料和烤肉的香氣交織在一起。",
+        "中央大圖書館": "宏偉的建築內藏書萬卷，陽光透過彩色玻璃窗灑落。",
+        "海峽": "海風強勁，潮汐拍打著岩岸。遠方海平面與天際融為一線。",
+        "秘密鐵工廠": "鐵鎚聲與蒸氣嘶鳴交織，火花在昏暗的空間中四濺。",
+        "便利店": "明亮的燈光透過玻璃門照出，貨架上擺滿了日常用品。",
+        "英靈殿": "古老的大殿中迴盪著腳步聲，牆上掛滿了武器與褪色的旗幟。",
+        "廢棄礦坑": "陰暗的礦坑入口散發著潮濕的氣息，深不見底的黑暗令人卻步。",
+        "森林深處": "參天大樹遮天蔽日，鳥鳴與蟲鳴交織成自然的交響曲。",
+    }
+    desc = gm_descs.get(loc)
+    if desc:
+        print(C.DIM + "  [GM] " + desc + C.RESET)
+    print(vibes)
+    npcs_near = []
+    for npc_name in list(NPC_SCHEDULES.keys()):
+        act, aloc, mood = get_npc_activity(npc_name, character["hour"])
+        if aloc == loc:
+            npcs_near.append(npc_name)
+    if npcs_near:
+        print(C.DIM + "  [GM] 你看到" + "、".join(npcs_near) + "在附近。" + C.RESET)
 
 def advance_time(character, hours=1):
     global _current_weather
@@ -313,12 +343,27 @@ def do_combat(character, enemy):
         # Fatigue/pain system per NUMERICAL_SYSTEMS.md
         character["fatigue"] = character.get("fatigue", 0) + _random.randint(3, 8)
         character["pain"] = character.get("pain", 0) + _random.randint(2, 6)
-        # Fatigue affects speed
-        if character.get("fatigue", 0) > 80:
+        # Bleeding: ongoing damage per NUMERICAL_SYSTEMS.md
+        bleed = character.get("bleed_rate", 0)
+        if bleed > 0:
+            bdmg = min(character["hp"], bleed)
+            character["hp"] -= bdmg
+            print(C.RED+"      🩸 傷口流血，失去 %dHP! (出血率:%d)"%(bdmg,bleed)+C.RESET)
+        if _random.random() < 0.15 and character.get("pain", 0) > 30:
+            character["bleed_rate"] = character.get("bleed_rate", 0) + 1
+            print(C.RED+"      🩸 傷口開始流血!"+C.RESET)
+        # Fatigue thresholds per NUMERICAL_SYSTEMS.md
+        fatigue_val = character.get("fatigue", 0)
+        if fatigue_val > 80:
             print(C.YELLOW+"      💤 疲勞度已高! 行動速度下降。"+C.RESET)
-        # Pain affects actions
-        if character.get("pain", 0) > 60 and _random.random() < 0.3:
+        if fatigue_val > 90 and _random.random() < 0.3:
+            print(C.RED+"      💤 疲勞過度，無法行動!"+C.RESET)
+        # Pain thresholds per NUMERICAL_SYSTEMS.md
+        pain_val = character.get("pain", 0)
+        if pain_val > 60 and _random.random() < 0.3:
             print(C.RED+"      😖 傷口疼痛使你行動失敗!"+C.RESET)
+        if pain_val > 80 and _random.random() < 0.5:
+            print(C.RED+"      😖 劇痛使你癱瘓!"+C.RESET)
         ds = C.BLUE+" (減半)"+C.RESET if defending else ""
         print(C.MAGENTA+"    💥 %s 造成 %d 傷害!%s" % (enemy["name"],ed,ds)+C.RESET)
         # Consume armor durability on hit (per ITEM_EQUIPMENT_SYSTEM.md: 戰鬥受擊消耗耐久)
@@ -536,20 +581,31 @@ def do_inventory(character):
     if not inv:
         print(C.CYAN+"│  "+C.GRAY+"（空）"+C.RESET+" "*33+C.CYAN+"│"+C.RESET)
     else:
+        item_counts = _Counter(inv)
+        seen = set()
+        display_idx = 1
         for i, item in enumerate(inv,1):
+            if item in seen:
+                continue
+            seen.add(item)
+            count = item_counts[item]
             d = get_item_def(item)
             ty = d.get("type","misc")
             co = tc.get(ty,C.WHITE)
             wt = d.get("weight",0.5)
             val = d.get("value",0)
-            # Rarity display
+            stack_str = ""
+            max_stk = d.get("max_stack", 0)
+            if max_stk > 0 and count > 1:
+                stack_str = C.DIM+" x%d"%count+C.RESET
             rarity = C.DIM+""+C.RESET
             if "rare" in d.get("tags", []) or "龍鱗" in item or "生命" in item:
                 rarity = C.YELLOW+"★"+C.RESET
             elif val > 150:
                 rarity = C.MAGENTA+"✦"+C.RESET
-            line = "  %s%2d.%s %s%s %s%s (%.1fkg)" % (co,i,C.RESET,rarity,co,item,C.RESET,wt)
+            line = "  %s%2d.%s %s%s %s%s%s" % (co,display_idx,C.RESET,rarity,co,item,stack_str,C.RESET) + " (%.1fkg)"%wt
             print(C.CYAN+"│ "+line.ljust(40)+C.CYAN+"│"+C.RESET)
+            display_idx += 1
     print(C.CYAN+"└"+"─"*40+"┘"+C.RESET)
     print("  "+C.YELLOW+"金幣: %d"%character.get("gold",0)+C.RESET)
     if total_w > MAX_INVENTORY_WEIGHT:
@@ -560,17 +616,31 @@ def do_inventory(character):
     if inv:
         print("  "+C.CYAN+"選擇物品編號使用，或輸入 d+編號 丟棄 (如 d3)"+C.RESET)
         ch = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
+        # Map display index to flat index (first occurrence of Nth unique item)
+        unique_items = []
+        seen = set()
+        for it in inv:
+            if it not in seen:
+                seen.add(it)
+                unique_items.append(it)
+        def _display_to_flat(didx):
+            if 0 <= didx < len(unique_items):
+                target = unique_items[didx]
+                return inv.index(target)
+            return -1
         if ch.startswith('d') or ch.startswith('D'):
             idx_str = ch[1:]
             if idx_str.isdigit():
-                idx = int(idx_str) - 1
-                if 0 <= idx < len(inv):
-                    item_name = inv.pop(idx)
+                didx = int(idx_str) - 1
+                fidx = _display_to_flat(didx)
+                if fidx >= 0:
+                    item_name = inv.pop(fidx)
                     print(C.GRAY+"  丟棄了 %s。"%item_name+C.RESET)
         elif ch.isdigit():
-            idx = int(ch) - 1
-            if 0 <= idx < len(inv):
-                item_name = inv[idx]
+            didx = int(ch) - 1
+            fidx = _display_to_flat(didx)
+            if fidx >= 0:
+                item_name = inv[fidx]
                 idf = get_item_def(item_name)
                 if idf.get("type") == "consumable":
                     hh = idf.get("heal_hp", 0)
@@ -584,10 +654,10 @@ def do_inventory(character):
                             a2 = min(character["max_sp"]-character["sp"], hs)
                             character["sp"] += a2
                             print(C.BLUE+"  使用了 %s +%dSP!"%(item_name,a2)+C.RESET)
-                        inv.pop(idx)
+                        inv.pop(fidx)
                     elif "解毒" in item_name or idf.get("cure"):
                         print(C.GREEN+"  使用了 %s。"%item_name+C.RESET)
-                        inv.pop(idx)
+                        inv.pop(fidx)
                     else:
                         print(C.GRAY+"  無法直接使用。"+C.RESET)
                 else:
@@ -693,7 +763,7 @@ def do_equipment_menu(character, equipment):
 # CRAFTING
 # ═══════════════════════════════════════════════════════════════════════════
 
-def do_crafting(character):
+def do_crafting(character, equipment=None):
     print("")
     print(C.CYAN+"┌"+"─"*44+"┐"+C.RESET)
     print(C.CYAN+"│  合成系統"+C.RESET+" "*33+C.CYAN+"│"+C.RESET)
@@ -703,9 +773,22 @@ def do_crafting(character):
         has = all(character["inventory"].count(ig["item"])>=ig["quantity"] for ig in r["ingredients"])
         st = C.GREEN+"✓"+C.RESET if has else C.RED+"✗"+C.RESET
         print(C.CYAN+("│ %s %s %s: %s"%(st,r["recipe_id"],r["name"],igs)).ljust(42)+C.CYAN+"│"+C.RESET)
+    print(C.CYAN+"│  "+C.GREEN+"輸入 r 修復裝備"+C.RESET+" "*20+C.CYAN+"│"+C.RESET)
     print(C.CYAN+"└"+"─"*44+"┘"+C.RESET)
-    rid = input("  %s配方ID (Enter取消):%s " % (C.YELLOW,C.RESET)).strip()
+    rid = input("  %s配方ID (r=修復, Enter取消):%s " % (C.YELLOW,C.RESET)).strip().lower()
     if not rid: return
+    if rid == 'r':
+        if equipment:
+            from sim_systems import repair_equipment as _repair
+            suc, msg = _repair(equipment, character)
+            if suc:
+                print(C.GREEN+"  ✓ "+msg+C.RESET)
+            else:
+                print(C.RED+"  ✗ "+msg+C.RESET)
+        else:
+            print(C.RED+"  無法修復: 無裝備管理器。"+C.RESET)
+        advance_time(character)
+        return
     suc, res, msg = craft_item(rid, character["inventory"])
     if suc:
         print(C.GREEN+"  ✓ "+msg+C.RESET)
@@ -789,7 +872,7 @@ def do_scene_search(character, equipment):
             _restore(character, "sp", heal)
             print(C.BLUE+"  在%s休息，恢復%dSP。"%(obj_name,heal)+C.RESET)
         elif wc == "2":
-            do_crafting(character)
+            do_crafting(character, equipment)
 
     elif obj_type == "vehicle":
         vt = obj.get("vehicle_type","")
@@ -804,9 +887,11 @@ def do_scene_search(character, equipment):
                     # Check if owned or can be found here
                     veh_state = character.get("vehicles", {})
                     if vt not in veh_state or not veh_state[vt].get("owned", False):
-                        veh_state[vt] = {"owned": True, "location": loc}
+                        vdef = VEHICLES.get(vt, {})
+                        init_fuel = vdef.get("fuel", 100)
+                        veh_state[vt] = {"owned": True, "location": loc, "fuel": init_fuel}
                         character["vehicles"] = veh_state
-                        print(C.GREEN+"  你獲得了 %s!"%vt+C.RESET)
+                        print(C.GREEN+"  你獲得了 %s! (燃料:%d)"%(vt,init_fuel)+C.RESET)
                     mount_vehicle(character, vt, veh_state)
                     print(C.GREEN+"  騎上了 %s!"%vt+C.RESET)
 
@@ -984,12 +1069,28 @@ def do_interact_npc(character):
             "親密": ["「你來啦!」","「剛好想找你!」","「一起去喝杯茶？」"],
         }
         greet = _random.choice(greet_pool.get(rep_tier, ["「...」"]))
+        # 80+ reputation: hidden info & special dialogue
+        if rep >= 80:
+            print(C.MAGENTA + "  (好感度高，%s露出了開心的笑容。)"%npc_name + C.RESET)
+            if _random.random() < 0.4:
+                hidden_info = [
+                    "悄悄告訴你，鏡湖深處藏著古代的遺跡...",
+                    "你知道嗎？英靈殿底下還有更深的樓層。",
+                    "我聽說西翼市集有人賣很特別的東西...",
+                    "這個世界遠比你想像的大。",
+                ]
+                print(C.MAGENTA + "  %s低聲說: 「%s」" % (npc_name, _random.choice(hidden_info)) + C.RESET)
+                gain_skill_exp(character, "knowledge", 5)
         print(C.CYAN+"  1. "+C.GREEN+"打招呼"+C.RESET)
         print(C.CYAN+"  2. "+C.BLUE+"交流"+C.RESET+" (SP-10)")
         print(C.CYAN+"  3. "+C.CYAN+"送禮物"+C.RESET)
-        # Higher reputation unlocks extra options
+        # Shop option for NPCs at commercial locations
+        shop_locations = ["西翼大市集","便利店"]
+        if loc in shop_locations:
+            print(C.CYAN+"  4. "+C.YELLOW+"商店 (買東西)"+C.RESET)
+        quest_opt = 5 if loc in shop_locations else 4
         if rep >= 50 and len(get_active_quests(character)) < 3:
-            print(C.CYAN+"  4. "+C.YELLOW+"接受任務"+C.RESET)
+            print(C.CYAN+"  %d. "%quest_opt+C.YELLOW+"接受任務"+C.RESET)
         print(C.GRAY+"  0. 離開"+C.RESET)
         c = input("  %s>%s "%(C.YELLOW,C.RESET)).strip()
         if c=="1":
@@ -1296,7 +1397,7 @@ def do_real_estate(character):
                     print(C.GREEN+"  ✓ 完全恢復!"+C.RESET)
                     advance_time(character,2)
                 elif ac=="2" and "craft" in funcs:
-                    do_crafting(character)
+                    do_crafting(character, equipment)
                 elif ac=="3" and "store" in funcs:
                     do_inventory(character)
 
@@ -1404,7 +1505,7 @@ def start_game():
         elif ch=="8": do_equipment_menu(character, equipment)
         elif ch=="9": print(display_world_map(character["location"]))
         elif ch=="10": print(display_relationships(character))
-        elif ch=="11": do_crafting(character)
+        elif ch=="11": do_crafting(character, equipment)
         elif ch=="12": do_scene_search(character, equipment)
         elif ch=="13": do_quest_menu(character)
         elif ch=="14": do_vehicle_menu(character)
