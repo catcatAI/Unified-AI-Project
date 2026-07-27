@@ -132,7 +132,7 @@ def print_status(character):
     cur_loc = character["location"]
     npcs_here = []
     all_sched = NPC_SCHEDULES
-    for npc_name in list(all_sched.keys())[:25]:
+    for npc_name in list(all_sched.keys()):
         act, aloc, mood = get_npc_activity(npc_name, character["hour"])
         if aloc == cur_loc:
             npcs_here.append((npc_name, act, aloc, mood))

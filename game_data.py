@@ -377,7 +377,7 @@ def generate_all_npcs() -> Dict[str, dict]:
             "archetype": archetype,
             "token_categories": list(token_cats),
             "abilities": [a.get("name","") for a in card.get("abilities", [])],
-            "offers": offers[:4],
+            "offers": offers[:8],
             "gives_quests": "social" in token_cats or "knowledge" in token_cats or "craft" in token_cats,
             "quest_type": "side",
             "raw_tokens": len(tokens),
@@ -471,7 +471,7 @@ def generate_all_items() -> Dict[str, dict]:
             tok_name = t.get("name","")[:15]
             if not tok_name or not cat: continue
             key = f"{cid}:{tok_name}"
-            if key in item_names_set or card_item_count >= 600:
+            if key in item_names_set or card_item_count >= 2000:
                 continue
             item_type = _cat_item_types.get(cat)
             if item_type:
@@ -485,7 +485,7 @@ def generate_all_items() -> Dict[str, dict]:
             aname = ability.get("name", "")
             if not aname: continue
             key = f"{cid}:{aname}"
-            if key in item_names_set or card_item_count >= 600:
+            if key in item_names_set or card_item_count >= 2000:
                 continue
             items[key] = _make_item(key, "accessory", "neck", 0.1, 0.1, 0.05, 0.15,
                                     50, 80, f"{aname[:15]}", ["card_item", "ability"])
@@ -657,7 +657,7 @@ def generate_quests() -> list:
         reward_gold = 8 + i * 2
         q = {
             "id": qid, "title": name[:20], "type": qtype,
-            "giver": _seed.choice(npc_names[:min(20,len(npc_names))]),
+            "giver": _seed.choice(npc_names),
             "desc": story[:80],
             "objectives": [
                 {"type":"visit","target":loc_target,"detail":f"前往{loc_target}"},
@@ -775,10 +775,10 @@ def generate_recipes() -> list:
     weapon_types = [k for k, v in ALL_ITEMS.items() if v.get("type") == "weapon"]
     consumable_types = [k for k, v in ALL_ITEMS.items() if v.get("type") == "consumable"]
     
-    # Generate up to 200 recipes
+    # Generate up to 400 recipes
     used_pairs = set()
-    for i, name in enumerate(item_names[:300]):
-        if i >= 200: break
+    for i, name in enumerate(item_names[:1000]):
+        if i >= 400: break
         item = ALL_ITEMS[name]
         if item["type"] in ("junk",) or not item.get("tags"):
             continue
@@ -802,8 +802,8 @@ def generate_recipes() -> list:
         })
     
     # Potion recipes (consumable + material)
-    for i, ctype in enumerate(consumable_types[:30]):
-        mat = _seed.choice(material_tags[:20] if material_tags else ["草藥"])
+    for i, ctype in enumerate(consumable_types):
+        mat = _seed.choice(material_tags if material_tags else ["草藥"])
         rid = f"GD-POT{i+1:04d}"
         recipes.append({
             "recipe_id": rid, "name": f"{ctype[:10]}の調合",
