@@ -89,11 +89,21 @@ SYMBOLS = {
     "CC-53": "👤",   "CC-54": "👤",   "CC-55": "👤",   "CC-56": "👤",
     "CC-57": "👤",   "CC-58": "👤",   "CC-59": "👤",
 }
-
 BODY_PARTS = [
     ("head", "頭部"), ("torso", "軀幹"), ("left_arm", "左上臂"),
     ("right_arm", "右上臂"), ("left_leg", "左腿"), ("right_leg", "右腿"),
 ]
+
+# Race keyword detection for auto-injecting race token categories
+# Maps race category → list of keywords to search in token names/values
+_RACE_KEYWORDS = {
+    "naval": ["艦","naval","ship","砲","魚雷","連裝","戰艦","航母","駆逐"],
+    "beast": ["獣","beast","狼","爪","尾","毛皮","牙","fur","claw","tail"],
+    "draconic": ["龍","竜","dragon","draconic","鱗","翼膜","吐息"],
+    "mechanism": ["機械","mechan","robot","機","義體","gear","steam"],
+    "element": ["炎","冰","氷","雷","風","element","魔","咒","杖","術","mana","core"],
+    "spiritual": ["精霊","spirit","霊","ghost","幽","angel","天使"],
+}
 
 RED_BAR = "█"
 BLUE_BAR = "▓"
@@ -214,7 +224,7 @@ def get_card_by_id(card_id):
 
 def generate_character_from_card(card):
     name = card.get("name", "旅人")
-    tokens = card.get("tokens", [])
+    tokens = list(card.get("tokens", []))  # Copy to avoid mutating shared card list
     stats = card.get("stats", {})
     abilities = card.get("abilities", [])
     token_categories = {}
@@ -239,8 +249,23 @@ def generate_character_from_card(card):
     karma = 5 + len(social_tokens) * 2 + len(knowledge_tokens) * 1 + int(stats.get("karma_bonus", 0))
     craft_skill = len(craft_tokens) * 3 + int(stats.get("craft_bonus", 0))
 
-    # Detect race from token categories
+    # Detect race from token names/values + categories
     from sim_systems import detect_race, RACE_DATA, get_race_body_parts
+    
+    # Build token name/value text for race keyword detection
+    _token_text = " ".join(str(t.get("name","")+t.get("value","")) for t in tokens).lower()
+    _card_name = card.get("name","").lower()
+    _all_text = _token_text + " " + _card_name
+    
+    # Inject race category tokens based on keyword detection
+    _existing_cats = {t.get("category","") for t in tokens}
+    for race_cat, keywords in _RACE_KEYWORDS.items():
+        if race_cat not in _existing_cats:
+            for kw in keywords:
+                if kw in _all_text:
+                    tokens.append({"category": race_cat, "name": f"{race_cat}_auto", "value": ""})
+                    break
+    
     race = detect_race(tokens)
     
     # Build body parts from race data
@@ -416,8 +441,9 @@ def _get_symbol(character):
 
 def display_body_parts(character):
     lines = [C.CYAN + "身體部位:" + C.RESET]
-    for part_id, part_name in BODY_PARTS:
-        bp = character["body_parts"].get(part_id, {})
+    bp_names = dict(BODY_PARTS)
+    for part_id, bp in character.get("body_parts", {}).items():
+        part_name = bp.get("name", bp_names.get(part_id, part_id))
         hp = bp.get("hp", 0)
         mx = bp.get("max_hp", 1)
         ratio = hp / mx if mx > 0 else 0

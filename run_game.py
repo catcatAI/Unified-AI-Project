@@ -23,6 +23,7 @@ from sim_systems import (
     RECIPES,
     NPC_SCHEDULES,
     EQUIPMENT_SLOTS,
+    get_equipment_slots_for_character,
     ITEM_CATALOG,
     QUESTS,
     VEHICLES,
@@ -111,7 +112,8 @@ def print_status(character):
     weather_info = _current_weather + " " + WEATHER_EFFECTS.get(_current_weather,{}).get("desc","")
     print(C.DIM + "─"*50 + C.RESET)
     print(C.CYAN + "  ◈ " + time_str + C.RESET + "  " + weather_info)
-    print(C.WHITE + "  位置: " + character["location"] + C.RESET, end="")
+    race = character.get("race", "人類")
+    print(C.WHITE + "  位置: " + character["location"] + C.RESET + "  " + C.MAGENTA + "[ " + race + " ]" + C.RESET, end="")
     if character.get("riding"):
         print(C.YELLOW + " [騎乘: " + character["riding"] + "]" + C.RESET)
     else:
@@ -532,6 +534,13 @@ def do_equipment_menu(character, equipment):
         if idx<0 or idx>=len(inv): return
         iname = inv[idx]
         idf = get_item_def(iname)
+        # Check race requirement
+        req_race = idf.get("required_race", "")
+        if req_race:
+            char_race = character.get("race", "人類")
+            if req_race != char_race:
+                print(C.RED+"  ⚠ %s 是 %s 專用裝備! 你的角色是 %s。" % (iname, req_race, char_race)+C.RESET)
+                return
         # Consumable: use directly
         if idf.get("type")=="consumable":
             hh = idf.get("heal_hp",0)
@@ -555,9 +564,10 @@ def do_equipment_menu(character, equipment):
                 print(C.RED+"  ⚠ %s 需要 [%s] 類別特質才能裝備!" % (iname, req_arch)+C.RESET)
                 print(C.GRAY+"    你的角色沒有「%s」類別的token。" % req_arch+C.RESET)
                 return
-        # Equip
+        # Equip — use dynamic slot list from equipment object
         ss = idf.get("slot","")
-        for j,(sid,sname) in enumerate(EQUIPMENT_SLOTS):
+        slot_list = equipment._slot_order
+        for j,(sid,sname) in enumerate(slot_list):
             cur = equipment.slots.get(sid)
             st = cur["item"]["name"] if cur and cur["item"] else "(空)"
             mk = " ★" if sid==ss else ""
@@ -565,8 +575,8 @@ def do_equipment_menu(character, equipment):
         sc = input("  %s槽位編號:%s " % (C.YELLOW,C.RESET)).strip()
         if not sc.isdigit(): return
         si = int(sc)-1
-        if si<0 or si>=len(EQUIPMENT_SLOTS): return
-        sid = EQUIPMENT_SLOTS[si][0]
+        if si<0 or si>=len(slot_list): return
+        sid = slot_list[si][0]
         md = idf.get("durability",100)
         old = equipment.equip(sid, {"name":iname,"durability":md,"current_durability":md,
                                      "stat_multipliers":idf.get("stat_multipliers",{})})
@@ -574,11 +584,12 @@ def do_equipment_menu(character, equipment):
             character["inventory"].append(old.get("name",old))
         inv.pop(idx)
         equipment.apply_stat_bonuses(character)
-        print(C.GREEN+"  已裝備 %s → %s"%(iname,EQUIPMENT_SLOTS[si][1])+C.RESET)
+        slot_name = next((n for s,n in slot_list if s==sid), sid)
+        print(C.GREEN+"  已裝備 %s → %s"%(iname,slot_name)+C.RESET)
     elif ch=="3":
         print(equipment.display())
         sid = input("  %s卸下槽位ID:%s " % (C.YELLOW,C.RESET)).strip()
-        vs = {s[0] for s in EQUIPMENT_SLOTS}
+        vs = {s[0] for s in equipment._slot_order}
         if sid not in vs: return
         old = equipment.unequip(sid)
         if old:

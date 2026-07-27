@@ -407,14 +407,26 @@ def _make_item(name: str, typ: str, slot: str, atk: float, dfn: float, spd: floa
         d["weight"] = 0.3
     if typ == "junk":
         d["weight"] = 0.2
-    # Archetype restriction based on tags (for race-specific equipment)
-    # 艦娘/combat type → naval items; 術士/element type → magical items; 獸娘/vitality type → beast items
+    # Race/archetype restriction based on tags
+    # Race-specific: only characters with matching race can equip
     if "naval" in tags:
+        d["required_race"] = "艦娘"
         d["required_archetype"] = "combat"
     elif "elemental" in tags or "magic" in tags:
+        d["required_race"] = "術士"
         d["required_archetype"] = "element"
     elif "beast" in tags or "natural" in tags:
+        d["required_race"] = "獸娘"
         d["required_archetype"] = "vitality"
+    elif "draconic" in tags:
+        d["required_race"] = "竜族"
+        d["required_archetype"] = "combat"
+    elif "mechanical" in tags:
+        d["required_race"] = "機械"
+        d["required_archetype"] = "mechanism"
+    elif "spiritual" in tags:
+        d["required_race"] = "精霊"
+        d["required_archetype"] = "energy"
     return d
 
 def generate_all_items() -> Dict[str, dict]:
