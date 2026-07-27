@@ -1712,10 +1712,16 @@ def expand_game():
     # Refresh REAL_ESTATE_KEYS to include new entries
     sim_systems.REAL_ESTATE_KEYS = list(sim_systems.REAL_ESTATE.keys())
     
-    # Ensure all consumables have tags
+    # Ensure ALL items have tags (based on type)
+    _default_tags = {
+        'weapon': ['weapon'], 'armor': ['armor'], 'accessory': ['accessory'],
+        'consumable': ['consumable'], 'quest': ['quest'], 'junk': ['junk'],
+        'material': ['material'], 'misc': ['misc'],
+    }
     for _iname, _idata in list(sim_systems.ITEM_CATALOG.items()):
-        if _idata.get('type') == 'consumable' and 'tags' not in _idata:
-            _idata['tags'] = ['consumable']
+        if 'tags' not in _idata:
+            _typ = _idata.get('type', 'misc')
+            _idata['tags'] = _default_tags.get(_typ, ['misc'])
     
     # Scene objects
     for loc, objs in ALL_SCENE_OBJECTS.items():
