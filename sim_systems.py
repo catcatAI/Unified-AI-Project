@@ -756,7 +756,42 @@ NPC_SCHEDULES = {
     ],
 }
 
-def get_npc_activity(npc_name, hour):
+# Season-based schedule variants for get_npc_activity
+SEASON_SCHEDULE_VARIANTS = {
+    "小狐丸": {
+        "夏": [(6,10,"避暑","鏡湖","calm"),(10,14,"戲水","鏡湖","friendly"),
+               (14,18,"午睡","鏡湖","rest"),(18,22,"夜遊","鏡湖","friendly"),(22,6,"睡眠","鏡湖","sleep")],
+        "冬": [(7,10,"晨練","鏡湖","calm"),(10,14,"曬太陽","鏡湖","rest"),
+               (14,18,"取暖","秘密鐵工廠","rest"),(18,21,"喝茶","便利店","friendly"),(21,7,"睡眠","鏡湖","sleep")],
+    },
+    "左間小蒼蘭": {
+        "夏": [(6,11,"夏季鍛造","秘密鐵工廠","focused"),(11,13,"午休","便利店","rest"),
+               (13,18,"繼續工作","秘密鐵工廠","focused"),(18,21,"散步","西翼大市集","calm"),(21,6,"睡眠","秘密鐵工廠","sleep")],
+        "冬": [(8,12,"打鐵","秘密鐵工廠","focused"),(12,13,"午餐","便利店","rest"),
+               (13,17,"繼續工作","秘密鐵工廠","focused"),(17,20,"整理工具","秘密鐵工廠","calm"),(20,8,"睡眠","秘密鐵工廠","sleep")],
+    },
+    "紅": {
+        "夏": [(6,9,"進貨","西翼大市集","calm"),(9,12,"整理貨架","便利店","calm"),
+               (12,18,"值班","便利店","friendly"),(18,22,"晚班","便利店","friendly"),(22,6,"休息","便利店","sleep")],
+        "冬": [(7,11,"整理貨架","便利店","calm"),(11,19,"值班","便利店","friendly"),
+               (19,22,"晚班","便利店","friendly"),(22,7,"休息","便利店","sleep")],
+    },
+}
+
+def get_npc_activity(npc_name, hour, season=None):
+    """Get NPC activity, optionally adjusted for season."""
+    if season:
+        variants = SEASON_SCHEDULE_VARIANTS.get(npc_name, {})
+        var = variants.get(season)
+        if var:
+            for start,end,activity,location,mood in var:
+                if start <= end:
+                    if start <= hour < end:
+                        return activity,location,mood
+                else:
+                    if hour >= start or hour < end:
+                        return activity,location,mood
+            return "休息","","neutral"
     schedule = NPC_SCHEDULES.get(npc_name)
     if not schedule:
         return "休息","","neutral"
@@ -1063,24 +1098,92 @@ SCENE_OBJECTS = {
 # WEATHER SYSTEM
 # ═══════════════════════════════════════════════════════════
 
+# ═══════════════════════════════════════════════════════════
+# SEASONS (per SIMULATION_SYSTEMS.md)
+# ═══════════════════════════════════════════════════════════
+
+SEASONS = ["春", "夏", "秋", "冬"]
+SEASON_ICONS = {"春":"🌸","夏":"☀️","秋":"🍂","冬":"❄️"}
+SEASON_NAMES = {"春":"Spring·春","夏":"Summer·夏","秋":"Autumn·秋","冬":"Winter·冬"}
+
+# Per-season weather probability modifiers (additive base, then normalized)
+SEASON_WEATHER_MODIFIERS = {
+    "春": {"☀晴":-0.05,"🌧雨":+0.10,"🌫霧":+0.05,"🌩雷雨":+0.03,"❄雪":-0.02},
+    "夏": {"☀晴":+0.10,"🌧雨":-0.05,"🌫霧":-0.03,"🌩雷雨":+0.08,"❄雪":-0.03},
+    "秋": {"☀晴":+0.00,"🌧雨":+0.00,"🌫霧":+0.05,"🌩雷雨":-0.02,"❄雪":+0.02},
+    "冬": {"☀晴":-0.08,"🌧雨":-0.03,"🌫霧":+0.08,"🌩雷雨":-0.05,"❄雪":+0.15},
+}
+
+# Per-season farming yield multipliers
+SEASON_FARMING = {
+    "春": {"草藥":1.5, "乾糧":1.0, "靈木":1.2, "生命果":1.0},
+    "夏": {"草藥":1.2, "乾糧":1.5, "靈木":1.0, "生命果":0.8},
+    "秋": {"草藥":1.0, "乾糧":1.2, "靈木":1.5, "生命果":1.2},
+    "冬": {"草藥":0.6, "乾糧":0.8, "靈木":1.2, "生命果":0.5},
+}
+
+SEASON_CYCLE = 120  # Full cycle days
+SEASON_THRESHOLDS = {"春":0,"夏":30,"秋":60,"冬":90}
+
+
+def get_season(day):
+    """Get current season based on day number."""
+    cycle_day = day % SEASON_CYCLE
+    if cycle_day < 30: return "春"
+    if cycle_day < 60: return "夏"
+    if cycle_day < 90: return "秋"
+    return "冬"
+
+
+def get_season_crop_bonus(season, crop):
+    """Get yield multiplier for a crop in a given season."""
+    return SEASON_FARMING.get(season, {}).get(crop, 1.0)
+
+
+def get_season_weather_desc(weather, season):
+    """Get season-specific weather description."""
+    wdata = WEATHER_EFFECTS.get(weather, {})
+    sdesc = wdata.get("season_desc", {}).get(season, "")
+    return sdesc or wdata.get("desc", "")
+
+
 WEATHER_TYPES = ["☀晴","⛅多雲","🌧雨","🌫霧","🌩雷雨","❄雪"]
 
-def roll_weather():
+def roll_weather(season=None):
+    """Roll weather with optional season modifiers."""
     r = _random.random()
-    if r < 0.40: return "☀晴"
-    if r < 0.65: return "⛅多雲"
-    if r < 0.80: return "🌧雨"
-    if r < 0.90: return "🌫霧"
-    if r < 0.97: return "🌩雷雨"
-    return "❄雪"
+    mods = SEASON_WEATHER_MODIFIERS.get(season, {}) if season else {}
+    # Build probability table
+    probs = [
+        ("☀晴", 0.40 + mods.get("☀晴", 0.0)),
+        ("⛅多雲", 0.25 + mods.get("⛅多雲", 0.0)),
+        ("🌧雨",  0.15 + mods.get("🌧雨", 0.0)),
+        ("🌫霧",  0.10 + mods.get("🌫霧", 0.0)),
+        ("🌩雷雨", 0.07 + mods.get("🌩雷雨", 0.0)),
+        ("❄雪",   0.03 + mods.get("❄雪", 0.0)),
+    ]
+    # Normalize to ensure total = 1.0
+    total = sum(p for _, p in probs)
+    cum = 0.0
+    for wtype, prob in probs:
+        cum += prob / total
+        if r < cum:
+            return wtype
+    return "☀晴"
 
 WEATHER_EFFECTS = {
-    "☀晴":   {"encounter":0.35, "loot_bonus":0,   "rest_bonus":1.0, "desc":"視野良好"},
-    "⛅多雲": {"encounter":0.40, "loot_bonus":0,   "rest_bonus":0.9, "desc":"天色陰沉"},
-    "🌧雨":  {"encounter":0.30, "loot_bonus":0.1, "rest_bonus":1.1, "desc":"雨聲掩蓋了腳步"},
-    "🌫霧":  {"encounter":0.50, "loot_bonus":0.2, "rest_bonus":0.8, "desc":"視線受阻"},
-    "🌩雷雨":{"encounter":0.20, "loot_bonus":0.3, "rest_bonus":1.2, "desc":"雷聲轟鳴"},
-    "❄雪":  {"encounter":0.25, "loot_bonus":0.1, "rest_bonus":1.3, "desc":"白雪覆蓋大地"},
+    "☀晴":   {"encounter":0.35, "loot_bonus":0,   "rest_bonus":1.0, "desc":"視野良好",
+               "season_desc":{"春":"春光明媚，百花盛開","夏":"炎炎烈日，蟬聲陣陣","秋":"秋高氣爽，天高雲淡","冬":"晴空萬里，寒風凜冽"}},
+    "⛅多雲": {"encounter":0.40, "loot_bonus":0,   "rest_bonus":0.9, "desc":"天色陰沉",
+               "season_desc":{"春":"春雲淡淡","夏":"厚重的雲層","秋":"秋雲舒捲","冬":"陰雲密布"}},
+    "🌧雨":  {"encounter":0.30, "loot_bonus":0.1, "rest_bonus":1.1, "desc":"雨聲掩蓋了腳步",
+               "season_desc":{"春":"春雨綿綿，滋潤大地","夏":"午後雷陣雨","秋":"秋雨蕭瑟","冬":"冷雨刺骨"}},
+    "🌫霧":  {"encounter":0.50, "loot_bonus":0.2, "rest_bonus":0.8, "desc":"視線受阻",
+               "season_desc":{"春":"春霧迷濛，如詩如畫","夏":"蒸騰的熱霧","秋":"晨霧濃重","冬":"寒霧籠罩"}},
+    "🌩雷雨":{"encounter":0.20, "loot_bonus":0.3, "rest_bonus":1.2, "desc":"雷聲轟鳴",
+               "season_desc":{"春":"春雷乍響","夏":"狂風暴雨，閃電交加","秋":"秋雷悶響","冬":"冬雷震震（罕見）"}},
+    "❄雪":  {"encounter":0.25, "loot_bonus":0.15,"rest_bonus":0.7, "desc":"積雪難行",
+               "season_desc":{"春":"春雪消融，泥濘難行","夏":"—","秋":"初雪降臨","冬":"大雪紛飛，銀裝素裹"}},
 }
 
 

@@ -56,6 +56,12 @@ from sim_systems import (
     resolve_mechanism_effect,
     check_mechanism_requirements,
     consume_mechanism_requirements,
+    get_season,
+    SEASON_ICONS,
+    SEASONS,
+    SEASON_NAMES,
+    get_season_crop_bonus,
+    get_season_weather_desc,
 )
 from game_data import expand_game
 
@@ -97,6 +103,7 @@ from character_system import (
 )
 
 # ── Globals ────────────────────────────────────────────────────────────────
+_current_season = "春"
 _current_weather = "☀晴"
 
 
@@ -126,7 +133,8 @@ def _gm_narrate(character, new_location=None):
     loc = new_location or character.get("location","?")
     hour = character.get("hour", 8)
     period = _get_time_period(hour)
-    global _current_weather
+    global _current_weather, _current_season
+    cur_season = _current_season
     weather_today = _current_weather or "☀晴"
 
     # ── Weather-time feeling (short, unique) ──
@@ -223,11 +231,13 @@ def _gm_narrate(character, new_location=None):
     desc_vibe = LOCATION_VIBES.get(loc, "")
     loc_descs = gm_descs.get(loc, {})
     desc = loc_descs.get(period, "")
+    season_tag = SEASON_ICONS.get(cur_season,"") + " " + SEASON_NAMES.get(cur_season, cur_season)
     if desc:
         print(C.DIM + sicon + f" {wf} {desc}" + C.RESET)
-        print(C.DIM + "  [%s] %s" % (stname, desc_vibe) + C.RESET)
+        print(C.DIM + "  [%s] %s [%s]" % (stname, desc_vibe, season_tag) + C.RESET)
     elif desc_vibe:
         print(C.DIM + sicon + f" {wf} {desc_vibe}" + C.RESET)
+        print(C.DIM + "  %s" % season_tag + C.RESET)
 
     # ── Player state notes (short) ──
     state_notes = []
@@ -289,11 +299,16 @@ def _gm_narrate(character, new_location=None):
                     print(C.YELLOW + f"  ⚑ {obj.get('detail','此處可能有任務材料')}" + C.RESET)
                     break
 def advance_time(character, hours=1):
-    global _current_weather
+    global _current_weather, _current_season
     character["hour"] = (character["hour"] + hours) % 24
     if character["hour"] == 0:
         character["day"] += 1
-        _current_weather = roll_weather()
+        old_season = _current_season
+        _current_season = get_season(character["day"])
+        _current_weather = roll_weather(_current_season)
+        if _current_season != old_season:
+            from sim_systems import SEASON_ICONS as _sic, SEASON_NAMES as _snm
+            print(_sic.get(_current_season,"") + C.CYAN + "  ★ 季節更替: " + _snm.get(_current_season, _current_season) + " 來了！" + C.RESET)
 
 def print_banner(text, color=C.CYAN):
     print(color + "═"*50 + C.RESET)
@@ -315,10 +330,10 @@ def _mini_bar(character, width=10):
 # ═══════════════════════════════════════════════════════════════════════════
 
 def print_status(character):
-    global _current_weather
+    global _current_weather, _current_season
     print("")
     time_str = get_time_desc(character["hour"], character["day"])
-    weather_info = _current_weather + " " + WEATHER_EFFECTS.get(_current_weather,{}).get("desc","")
+    weather_info = _current_weather + " " + get_season_weather_desc(_current_weather, _current_season)
     print(C.DIM + "─"*50 + C.RESET)
     print(C.CYAN + "  ◈ " + time_str + C.RESET + "  " + weather_info)
     race = character.get("race", "人類")
@@ -342,6 +357,8 @@ def print_status(character):
     print("  " + C.BLUE + "SP:" + C.RESET + " %3d/%d %s" % (character["sp"],character["max_sp"],sp_b) +
           "  " + C.YELLOW + "Lv.%d" % character["level"] + C.RESET + "  " + C.GREEN + "EXP:%d/%d" % (character["exp"], exp_needed_for_level(character["level"])) + C.RESET)
 
+    # Season info
+    print(C.DIM + "  季節: " + SEASON_ICONS.get(_current_season,"🌸") + " " + SEASON_NAMES.get(_current_season,_current_season))
     # Scene type info
     stype = LOCATION_TYPES.get(character["location"], "outdoor")
     sicon = SCENE_TYPE_ICONS.get(stype, "🌄")
@@ -353,7 +370,7 @@ def print_status(character):
     npcs_here = []
     all_sched = NPC_SCHEDULES
     for npc_name in list(all_sched.keys()):
-        act, aloc, mood = get_npc_activity(npc_name, character["hour"])
+        act, aloc, mood = get_npc_activity(npc_name, character["hour"], _current_season)
         if aloc == cur_loc:
             npcs_here.append((npc_name, act, aloc, mood))
     for npc_name, act, nloc, mood in npcs_here[:5]:
@@ -576,7 +593,7 @@ def do_combat(character, enemy):
 # ═══════════════════════════════════════════════════════════════════════════
 
 def do_explore(character, equipment):
-    global _current_weather
+    global _current_weather, _current_season
     we = WEATHER_EFFECTS.get(_current_weather, {"encounter":0.4,"loot_bonus":0})
     enc_chance = we["encounter"]
     loot_bonus = we["loot_bonus"]
@@ -712,7 +729,7 @@ def do_travel(character):
 # ═══════════════════════════════════════════════════════════════════════════
 
 def do_rest(character):
-    global _current_weather
+    global _current_weather, _current_season
     we = WEATHER_EFFECTS.get(_current_weather, {"rest_bonus":1.0})
     bonus = we["rest_bonus"]
     heal_hp = min(character["max_hp"]-character["hp"], int(35*bonus))
@@ -1197,7 +1214,7 @@ def do_interact_npc(character):
     npcs_here = []
     all_sched = NPC_SCHEDULES
     for npc_name in all_sched:
-        act, aloc, mood = get_npc_activity(npc_name, character["hour"])
+        act, aloc, mood = get_npc_activity(npc_name, character["hour"], _current_season)
         if aloc == loc:
             npcs_here.append((npc_name, act, aloc, mood))
 
@@ -1735,6 +1752,9 @@ def do_real_estate(character, equipment=None):
                     else:
                         harvest = "生命果"
                         qty = 1
+                    # Apply season crop bonus
+                    season_bonus = get_season_crop_bonus(_current_season, harvest)
+                    qty = max(1, int(qty * season_bonus))
                     for _ in range(qty):
                         character["inventory"].append(harvest)
                     print(C.GREEN+"  🌾 收穫了 %s x%d!"%(harvest,qty)+C.RESET)
