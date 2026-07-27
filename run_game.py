@@ -62,6 +62,13 @@ from sim_systems import (
     SEASON_NAMES,
     get_season_crop_bonus,
     get_season_weather_desc,
+    VEHICLE_PART_CATALOG,
+    VEHICLE_PART_SLOTS,
+    equip_vehicle_part,
+    unequip_vehicle_part,
+    get_vehicle_part_bonuses,
+    get_vehicle_part_status,
+    apply_vehicle_part_bonuses,
 )
 from game_data import expand_game
 
@@ -687,9 +694,15 @@ def do_travel(character):
             if character.get("riding"):
                 v = VEHICLES.get(character["riding"])
                 if v:
-                    hours = max(1, int(1 / v.get("speed",1.0)))
+                    # Apply part bonuses to vehicle stats
+                    veh_state = character.get("vehicles", {}).get(character["riding"], {})
+                    parts_data = {}
+                    for sid, pname in veh_state.get("parts",{}).items():
+                        parts_data[sid] = VEHICLE_PART_CATALOG.get(pname, {})
+                    mod_v = apply_vehicle_part_bonuses(v, parts_data)
+                    hours = max(1, int(1 / mod_v.get("speed",1.0)))
                     # Vehicle fuel consumption
-                    fuel_used = v.get("fuel_per_hour", 0) * hours
+                    fuel_used = mod_v.get("fuel_per_hour", v.get("fuel_per_hour", 0)) * hours
                     if fuel_used > 0:
                         # Track fuel in vehicle state
                         veh_state = character.get("vehicles", {}).get(character["riding"], {})
@@ -706,6 +719,28 @@ def do_travel(character):
                         else:
                             fuel_pct = int(veh_fuel / v.get("fuel", 100) * 100)
                             print(C.YELLOW+"    ⛽ 燃料: %d%%"%fuel_pct+C.RESET)
+                    # Vehicle part durability decay during travel
+                    if character.get("riding"):
+                        veh_state = character.get("vehicles", {}).get(character["riding"], {})
+                        parts_durability = veh_state.get("parts_durability", {})
+                        decayed = False
+                        for sid in list(parts_durability.keys()):
+                            old_dur = parts_durability[sid]
+                            new_dur = max(0, old_dur - _random.randint(1, 2))
+                            parts_durability[sid] = new_dur
+                            if old_dur > 0 and new_dur == 0:
+                                part_name = veh_state.get("parts", {}).get(sid, "")
+                                print(C.RED+"    ⚡ [%s] %s 損壞了!" % (sid, part_name) + C.RESET)
+                                decayed = True
+                                # Remove broken part, return to inventory
+                                character["inventory"].append(part_name)
+                                del veh_state["parts"][sid]
+                                if sid in parts_durability:
+                                    del parts_durability[sid]
+                            else:
+                                decayed = True
+                        if decayed:
+                            veh_state["parts_durability"] = parts_durability
             # Check entry requirements
             can_enter, fail_msg = check_entry_requirement(dest, character)
             if not can_enter:
@@ -1098,7 +1133,7 @@ def do_scene_search(character, equipment):
                     if vt not in veh_state or not veh_state[vt].get("owned", False):
                         vdef = VEHICLES.get(vt, {})
                         init_fuel = vdef.get("fuel", 100)
-                        veh_state[vt] = {"owned": True, "location": loc, "fuel": init_fuel}
+                        veh_state[vt] = {"owned": True, "location": loc, "fuel": init_fuel, "parts": {}, "parts_durability": {}}
                         character["vehicles"] = veh_state
                         print(C.GREEN+"  你獲得了 %s! (燃料:%d)"%(vt,init_fuel)+C.RESET)
                     mount_vehicle(character, vt, veh_state)

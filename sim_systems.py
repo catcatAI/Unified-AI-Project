@@ -985,6 +985,206 @@ VEHICLE_LOCATIONS = {
     "秘密鐵工廠": "馬車",
 }
 
+# ═══════════════════════════════════════════════════════════
+# VEHICLE PARTS (per ITEM_EQUIPMENT_SYSTEM.md §載具系統)
+# ═══════════════════════════════════════════════════════════
+
+VEHICLE_PART_SLOTS = {
+    "腳踏車": [("engine","引擎"),("cargo","貨架")],
+    "馬":     [("engine","馬具"),("armor","馬甲"),("weapon","馬鞍")],
+    "馬車":   [("engine","挽具"),("armor","裝甲"),("cargo","貨箱"),("weapon","武裝")],
+    "小舟":   [("engine","船槳/帆"),("cargo","船艙"),("armor","船殼")],
+}
+
+VEHICLE_PART_CATALOG = {
+    # ── Engines (速度/燃料影響) ──
+    "輕量化齒輪":{
+        "slot":"engine","desc":"輕量化齒輪，提升速度和燃料效率",
+        "stat_multipliers":{"speed":0.3,"fuel_efficiency":0.2},
+        "durability":80,"value":200,"level":1,
+    },
+    "強化引擎":{
+        "slot":"engine","desc":"強化引擎，大幅提升速度但油耗增加",
+        "stat_multipliers":{"speed":0.6,"fuel_efficiency":-0.15},
+        "durability":120,"value":350,"level":2,
+    },
+    "節能動力":{
+        "slot":"engine","desc":"節能動力系統，提升燃料效率",
+        "stat_multipliers":{"speed":0.1,"fuel_efficiency":0.4},
+        "durability":60,"value":280,"level":2,
+    },
+    "魔法推進器":{
+        "slot":"engine","desc":"魔法驅動的推進器，速度大幅提升",
+        "stat_multipliers":{"speed":0.8,"fuel_efficiency":-0.3},
+        "durability":90,"value":500,"level":3,
+    },
+    # ── Armor (防禦/耐久影響) ──
+    "輕型裝甲":{
+        "slot":"armor","desc":"輕型裝甲板，基本防護不影響速度",
+        "stat_multipliers":{"armor":0.3,"speed":-0.05},
+        "durability":100,"value":180,"level":1,
+    },
+    "重型裝甲":{
+        "slot":"armor","desc":"重型裝甲，大幅提升防護但降低速度",
+        "stat_multipliers":{"armor":0.7,"speed":-0.2},
+        "durability":200,"value":320,"level":2,
+    },
+    "魔法護盾":{
+        "slot":"armor","desc":"魔法護盾產生器，平衡防護與速度",
+        "stat_multipliers":{"armor":0.5,"speed":-0.05},
+        "durability":80,"value":450,"level":3,
+    },
+    # ── Cargo (貨物容量) ──
+    "加大貨箱":{
+        "slot":"cargo","desc":"加大貨箱，提升載貨量",
+        "stat_multipliers":{"cargo":0.5,"speed":-0.05},
+        "durability":60,"value":150,"level":1,
+    },
+    "輕量貨箱":{
+        "slot":"cargo","desc":"輕量化貨箱，不影響速度",
+        "stat_multipliers":{"cargo":0.3,"speed":0.0},
+        "durability":40,"value":200,"level":2,
+    },
+    "擴展貨艙":{
+        "slot":"cargo","desc":"擴展貨艙，大幅增加容量",
+        "stat_multipliers":{"cargo":0.8,"speed":-0.1},
+        "durability":80,"value":300,"level":2,
+    },
+    # ── Weapons (戰鬥能力) ──
+    "衝角":{
+        "slot":"weapon","desc":"裝備衝角，可在騎乘時衝撞敵人",
+        "stat_multipliers":{"atk":0.4,"speed":-0.05},
+        "durability":100,"value":250,"level":1,
+    },
+    "騎乘弩":{
+        "slot":"weapon","desc":"騎乘用弩，遠程攻擊能力",
+        "stat_multipliers":{"atk":0.6,"speed":-0.1},
+        "durability":70,"value":380,"level":2,
+    },
+    "魔法砲":{
+        "slot":"weapon","desc":"小型魔法砲，強大攻擊力但沉重",
+        "stat_multipliers":{"atk":1.0,"speed":-0.2},
+        "durability":60,"value":600,"level":3,
+    },
+}
+
+# Default no-part bonuses
+
+def get_vehicle_part_bonuses(equipped_parts):
+    """Calculate total stat bonuses from all equipped vehicle parts.
+    equipped_parts: {slot_name: {part_data}} or {slot_name: None}
+    Returns: {stat_name: total_bonus}
+    """
+    bonuses = {}
+    for slot, part in equipped_parts.items():
+        if not part:
+            continue
+        multipliers = part.get("stat_multipliers", {})
+        for stat, mult in multipliers.items():
+            bonuses[stat] = bonuses.get(stat, 0.0) + mult
+    return bonuses
+
+
+def apply_vehicle_part_bonuses(vehicle_def, equipped_parts):
+    """Apply part bonuses to a copy of vehicle definition and return modified copy."""
+    v = dict(vehicle_def)
+    bonuses = get_vehicle_part_bonuses(equipped_parts)
+    # Apply speed modifier
+    if "speed" in bonuses:
+        v["speed"] = max(0.3, v["speed"] * (1.0 + bonuses["speed"]))
+    # Apply cargo modifier
+    if "cargo" in bonuses:
+        v["cargo"] = max(5, int(v["cargo"] * (1.0 + bonuses["cargo"])))
+    # Apply fuel efficiency (reduces fuel_per_hour)
+    if "fuel_efficiency" in bonuses:
+        eff = 1.0 - bonuses["fuel_efficiency"]
+        v["fuel_per_hour"] = max(0, int(v.get("fuel_per_hour", 2) * eff))
+    # Apply armor (separate stat, used in combat)
+    if "armor" in bonuses:
+        v["armor_bonus"] = bonuses["armor"]
+    # Apply attack
+    if "atk" in bonuses:
+        v["atk_bonus"] = bonuses["atk"]
+    return v
+
+
+def equip_vehicle_part(vehicle_name, part_name, character):
+    """Equip a part to a vehicle. Returns (success, message).
+    part_name is key into VEHICLE_PART_CATALOG.
+    """
+    veh_state = character.get("vehicles", {}).get(vehicle_name)
+    if not veh_state or not veh_state.get("owned"):
+        return False, "你沒有這個載具"
+    part_def = VEHICLE_PART_CATALOG.get(part_name)
+    if not part_def:
+        return False, "未知部件"
+    # Check level requirement
+    req_level = part_def.get("level", 1)
+    char_level = character.get("level", 1)
+    if char_level < req_level:
+        return False, "需要等級 %d 才能裝備 %s（目前: %d）" % (req_level, part_name, char_level)
+    slots = VEHICLE_PART_SLOTS.get(vehicle_name, [])
+    slot_id = part_def.get("slot", "")
+    # Check if this vehicle has this slot
+    if slot_id not in [s[0] for s in slots]:
+        return False, "這個載具沒有 %s 槽位" % slot_id
+    # Check if part is already in inventory
+    inv = character.get("inventory", [])
+    if part_name not in inv:
+        return False, "物品欄中沒有這個部件"
+    # Ensure vehicle has parts dict
+    if "parts" not in veh_state:
+        veh_state["parts"] = {}
+    # Unequip old part in same slot if exists
+    old_part = veh_state["parts"].get(slot_id)
+    if old_part:
+        inv.append(old_part)
+    # Equip new part
+    inv.remove(part_name)
+    veh_state["parts"][slot_id] = part_name
+    # Set current durability
+    if "parts_durability" not in veh_state:
+        veh_state["parts_durability"] = {}
+    veh_state["parts_durability"][slot_id] = part_def.get("durability", 100)
+    return True, "已裝備 %s → %s 的 %s槽位" % (part_name, vehicle_name, slot_id)
+
+
+def unequip_vehicle_part(vehicle_name, slot_id, character):
+    """Unequip a part from a vehicle slot. Returns (success, message)."""
+    veh_state = character.get("vehicles", {}).get(vehicle_name)
+    if not veh_state or not veh_state.get("owned"):
+        return False, "你沒有這個載具"
+    parts = veh_state.get("parts", {})
+    if slot_id not in parts:
+        return False, "該槽位沒有部件"
+    part_name = parts.pop(slot_id)
+    # Remove durability tracking
+    veh_state.get("parts_durability", {}).pop(slot_id, None)
+    # Return to inventory
+    character["inventory"].append(part_name)
+    return True, "已卸下 %s" % part_name
+
+
+def get_vehicle_part_status(vehicle_name, character):
+    """Get readable status of all parts on a vehicle."""
+    veh_state = character.get("vehicles", {}).get(vehicle_name, {})
+    parts = veh_state.get("parts", {})
+    durabilities = veh_state.get("parts_durability", {})
+    slots = VEHICLE_PART_SLOTS.get(vehicle_name, [])
+    lines = []
+    for slot_id, slot_name in slots:
+        part_name = parts.get(slot_id)
+        if part_name:
+            dur = durabilities.get(slot_id, 100)
+            pd = VEHICLE_PART_CATALOG.get(part_name, {})
+            dur_pct = dur / max(pd.get("durability", 100), 1) * 100
+            dur_color = "完好" if dur_pct > 80 else "輕度" if dur_pct > 50 else "中度" if dur_pct > 20 else "嚴重"
+            lines.append("  %s [%s]: %s (耐久:%d%% %s)" % (slot_name, slot_id, part_name, dur_pct, dur_color))
+        else:
+            lines.append("  %s [%s]: (空)" % (slot_name, slot_id))
+    return "\n".join(lines) if lines else "  此載具沒有可裝備的部件槽位。"
+
+
 
 # ═══════════════════════════════════════════════════════════
 # SCENE OBJECTS (20 objects across locations)
