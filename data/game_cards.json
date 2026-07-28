@@ -396,7 +396,8 @@
         }
       ],
       "stats": {
-        "role定位": "惡意精靈 (The Malice Sprite)"
+        "role定位": "惡意精靈 (The Malice Sprite)",
+        "race": "概念精靈"
       },
       "raw_field_count": 6,
       "abilities": [
@@ -588,7 +589,8 @@
         }
       ],
       "stats": {
-        "role定位": "概念調味師"
+        "role定位": "概念調味師",
+        "race": "概念精靈"
       },
       "raw_field_count": 4,
       "abilities": [
@@ -645,7 +647,8 @@
         }
       ],
       "stats": {
-        "role定位": "安潔莉卡"
+        "role定位": "安潔莉卡",
+        "race": "人造精靈"
       },
       "raw_field_count": 5,
       "abilities": [
@@ -701,7 +704,8 @@
         }
       ],
       "stats": {
-        "role定位": "靜子"
+        "role定位": "靜子",
+        "race": "人類"
       },
       "raw_field_count": 4,
       "abilities": [
@@ -757,7 +761,8 @@
         }
       ],
       "stats": {
-        "role定位": "米米"
+        "role定位": "米米",
+        "race": "狐妖"
       },
       "raw_field_count": 4,
       "abilities": [
@@ -826,7 +831,8 @@
       ],
       "stats": {
         "role定位": "農學院玩家角色",
-        "era": "2245年"
+        "era": "2245年",
+        "race": "人類"
       },
       "raw_field_count": 6,
       "token_summary": {
@@ -971,7 +977,8 @@
       "stats": {
         "role定位": "工匠之女、小狐丸的夥伴",
         "era": "大正年間",
-        "location": "秘密鐵工廠"
+        "location": "秘密鐵工廠",
+        "race": "人類"
       },
       "raw_field_count": 7,
       "token_summary": {
@@ -1196,7 +1203,8 @@
         }
       ],
       "stats": {
-        "role定位": "蒼青的幻影，半神話龍娘，W01靈子塵埃的化身"
+        "role定位": "蒼青的幻影，半神話龍娘，W01靈子塵埃的化身",
+        "race": "概念龍娘"
       },
       "raw_field_count": 5,
       "token_summary": {
@@ -1459,7 +1467,8 @@
         }
       ],
       "stats": {
-        "role定位": "與楓香：同睡一房，卻隔著無限格。與露露：物資採購。與櫻：幫寄過同人誌（不知內容）。"
+        "role定位": "與楓香：同睡一房，卻隔著無限格。與露露：物資採購。與櫻：幫寄過同人誌（不知內容）。",
+        "race": "人類"
       },
       "raw_field_count": 7,
       "relationships": [
@@ -1530,7 +1539,8 @@
         }
       ],
       "stats": {
-        "role定位": "與伊吹：0.3秒壓制的撕裂。與東雲（CC-33）：出題者。與晴空（CC-32）：說「W01有天空但妳的翼膜會崩解」。"
+        "role定位": "與伊吹：0.3秒壓制的撕裂。與東雲（CC-33）：出題者。與晴空（CC-32）：說「W01有天空但妳的翼膜會崩解」。",
+        "race": "人類"
       },
       "raw_field_count": 7,
       "token_summary": {
@@ -1582,7 +1592,8 @@
         }
       ],
       "stats": {
-        "role定位": "多元宇宙 / GSI-4 核心實驗場潛在隔離區"
+        "role定位": "多元宇宙 / GSI-4 核心實驗場潛在隔離區",
+        "race": "特戰人形"
       },
       "raw_field_count": 5,
       "token_summary": {
@@ -1636,7 +1647,8 @@
       "stats": {
         "ui_style": "Glitch Art",
         "colors": "螢光綠、故障紫、深鈦灰",
-        "role定位": "極光全息故障藝術（Glitch Art），電學螢光綠、故障紫、深鈦灰"
+        "role定位": "極光全息故障藝術（Glitch Art），電學螢光綠、故障紫、深鈦灰",
+        "race": "AI"
       },
       "raw_field_count": 5,
       "relationships": [
@@ -11297,7 +11309,8 @@
         "attack": 3,
         "defense": 4,
         "speed": 7,
-        "role定位": "兔娘 + 神話血統（月兔分支）"
+        "role定位": "兔娘 + 神話血統（月兔分支）",
+        "race": "兔娘（月兔）"
       },
       "raw_field_count": 9,
       "abilities": [
@@ -14653,7 +14666,8 @@
         "attack": 4,
         "defense": 5,
         "speed": 6,
-        "role定位": "魔女學徒／海洋研究者"
+        "role定位": "魔女學徒／海洋研究者",
+        "race": "人類"
       },
       "raw_field_count": 6,
       "abilities": [
@@ -14722,7 +14736,8 @@
         "attack": 4,
         "defense": 5,
         "speed": 6,
-        "role定位": "植物偵探，田野觀察者"
+        "role定位": "植物偵探，田野觀察者",
+        "race": "妖精"
       },
       "raw_field_count": 6,
       "abilities": [
@@ -14786,7 +14801,8 @@
         "attack": 4,
         "defense": 5,
         "speed": 6,
-        "role定位": "魔女學府見習生"
+        "role定位": "魔女學府見習生",
+        "race": "人類"
       },
       "raw_field_count": 6,
       "abilities": [
