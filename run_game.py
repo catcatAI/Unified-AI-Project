@@ -49,11 +49,6 @@ from sim_systems import (
     LOCATION_TYPES,
     SCENE_TYPE_ICONS,
     SCENE_TYPE_NAMES,
-    FACTIONS,
-    NATIONS,
-    ACTIVE_RULES,
-    LOCATION_NATIONS,
-    LOCATION_RULES,
     ENTRY_REQUIREMENTS,
     check_entry_requirement,
     get_entry_requirement_hint,
@@ -82,6 +77,8 @@ from sim_systems import (
     do_fishing,
     do_trade,
 )
+# Dynamic attributes populated by game_data.expand_game() - access via sim_systems module
+# FACTIONS, NATIONS, ACTIVE_RULES, LOCATION_NATIONS, LOCATION_RULES
 from game_data import expand_game
 
 from character_system import (
@@ -362,17 +359,17 @@ def print_status(character):
     stname = SCENE_TYPE_NAMES.get(stype, "?")
     print(C.WHITE + "  " + sicon + " 位置: " + loc + C.RESET + "  " + C.MAGENTA + "[ " + race + " ]" + C.RESET + C.DIM + " (%s)" % stname + C.RESET, end="")
     # Nation info (safe check)
-    if 'LOCATION_NATIONS' in dir() and 'NATIONS' in dir():
-        loc_nation = LOCATION_NATIONS.get(loc) if isinstance(LOCATION_NATIONS.get(loc), str) else None
-        if loc_nation and loc_nation in NATIONS:
-            nname = NATIONS[loc_nation].get("name","")[:12]
+    if hasattr(sim_systems, 'LOCATION_NATIONS') and hasattr(sim_systems, 'NATIONS'):
+        loc_nation = sim_systems.LOCATION_NATIONS.get(loc) if isinstance(sim_systems.LOCATION_NATIONS.get(loc), str) else None
+        if loc_nation and loc_nation in sim_systems.NATIONS:
+            nname = sim_systems.NATIONS[loc_nation].get("name","")[:12]
             if nname:
                 print(C.CYAN + " 🏛" + nname + C.RESET, end="")
     # Active rules at this location (safe check)
-    if 'LOCATION_RULES' in dir() and 'ACTIVE_RULES' in dir():
-        loc_rules = LOCATION_RULES.get(loc) if LOCATION_RULES.get(loc) else None
+    if hasattr(sim_systems, 'LOCATION_RULES') and hasattr(sim_systems, 'ACTIVE_RULES'):
+        loc_rules = sim_systems.LOCATION_RULES.get(loc) if sim_systems.LOCATION_RULES.get(loc) else None
         if loc_rules:
-            rule_names = [ACTIVE_RULES.get(r,{}).get("name","")[:8] for r in loc_rules if r in ACTIVE_RULES]
+            rule_names = [sim_systems.ACTIVE_RULES.get(r,{}).get("name","")[:8] for r in loc_rules if r in sim_systems.ACTIVE_RULES]
             if rule_names:
                 print(C.DIM + " 📜" + ",".join(rule_names) + C.RESET, end="")
     if character.get("riding"):
@@ -1433,18 +1430,19 @@ def do_interact_npc(character):
         mood_color = {"calm":C.GREEN,"alert":C.RED,"rest":C.BLUE,"friendly":C.MAGENTA,"sleep":C.GRAY,"focused":C.CYAN}
         mood_icon = {"focused":"⚔","alert":"👁","rest":"💤","friendly":"😊","sleep":"😴"}
         print(C.CYAN+"  %s: 聲望[%s] %s%s%s"%(npc_name,rep_tier,mood_icon.get(npc_mood,""),mood_color.get(npc_mood,C.WHITE),npc_mood)+C.RESET)
-    # Show NPC abilities if available (from NPC_SCHEDULES data)        npc_data = getattr(sim_systems, 'NPC_METADATA', {}).get(npc_name, {}) if "npc_abilities_list" not in dir() else []
-    if isinstance(npc_data, dict) and npc_data.get("ability_details"):
-        ab_names = [a.get("name","")[:12] for a in npc_data["ability_details"] if a.get("name","")]
-        if ab_names:
-            print(C.YELLOW+"  ✦ 能力: "+C.RESET+", ".join(ab_names))
+        # Show NPC abilities if available (from NPC_SCHEDULES data)
+        npc_data = getattr(sim_systems, 'NPC_METADATA', {}).get(npc_name, {})
+        if isinstance(npc_data, dict) and npc_data.get("ability_details"):
+            ab_names = [a.get("name","")[:12] for a in npc_data["ability_details"] if a.get("name","")]
+            if ab_names:
+                print(C.YELLOW+"  ✦ 能力: "+C.RESET+", ".join(ab_names))
         # Reputation-based greeting variety
         greet_pool = {
             "敵意": ["「...離我遠點。」","「哼。」","「你來做什麼？」"],
             "冷淡": ["「...你好。」","「有事嗎？」","「說吧。」"],
             "中立": ["「你好啊。」","「今天天氣不錯。」","「有什麼需要？」"],
-            "友好": ["「嗨!」","「又見面了!」","「有什麼能幫你的？」"],
-            "親密": ["「你來啦!」","「剛好想找你!」","「一起去喝杯茶？」"],
+            "友好": ["「嗨!」「","「又見面了!」「","「有什麼能幫你的?」「"],
+            "親密": ["「你來啦!","","「剛好想找你!","","一起去喝杯茶?",""],
         }
         greet = _random.choice(greet_pool.get(rep_tier, ["「...」"]))
         # 80+ reputation: hidden info & special dialogue
@@ -1459,6 +1457,18 @@ def do_interact_npc(character):
                 ]
                 print(C.MAGENTA + "  %s低聲說: 「%s」" % (npc_name, _random.choice(hidden_info)) + C.RESET)
                 gain_skill_exp(character, "knowledge", 5)
+        
+        # Use NPC_DIALOGUES for varied dialogue options
+        npc_dialogues = getattr(sim_systems, 'NPC_DIALOGUES', {}).get(npc_name, [])
+        if npc_dialogues:
+            # Filter out goodbye line and flavor lines (微笑んだ, 考え込んでいる, 遠くを見つめている)
+            dialogue_lines = [d for d in npc_dialogues
+                              if d != "「また会おう。」"
+                              and not ("微笑" in d or "考え込" in d or "遠くを見つめ" in d)]
+            if dialogue_lines:
+                extra_dialogue = _random.choice(dialogue_lines[:6])  # Pick from first 6 token-based lines
+                print(C.DIM + "  %s" % extra_dialogue + C.RESET)
+        
         print(C.CYAN+"  1. "+C.GREEN+"打招呼"+C.RESET)
         print(C.CYAN+"  2. "+C.BLUE+"交流"+C.RESET+" (SP-10)")
         print(C.CYAN+"  3. "+C.CYAN+"送禮物"+C.RESET)

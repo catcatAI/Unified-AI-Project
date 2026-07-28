@@ -10,6 +10,18 @@ MAX_INVENTORY_SLOTS = 30
 MAX_INVENTORY_WEIGHT = 60.0
 MAX_PROPERTIES = 8
 
+# Placeholders populated by game_data.expand_game()
+FACTIONS = {}
+NATIONS = {}
+ACTIVE_RULES = {}
+NPC_FACTIONS = {}
+LOCATION_NATIONS = {}
+LOCATION_RULES = {}
+REAL_ESTATE_KEYS = []
+NPC_METADATA = {}
+VEHICLE_TO_LOCATION = {}
+NPC_DIALOGUES = {}
+
 # Item stacking — add max_stack to consumables
 DEFAULT_MAX_STACK = {
     "consumable": 10,
