@@ -9,6 +9,19 @@ from pathlib import Path
 DATA_DIR = Path(__file__).resolve().parent / "data"
 CARD_PATH = DATA_DIR / "game_cards.json"
 
+# ══════════════════════════════════════════════════════════════════
+# Supplement data: items/equipment/enemies not in the card deck
+# (NAVAL_DATA, ANIMAL_DATA, HERBAL_ITEMS, ELEMENTAL_ITEMS, etc.)
+# ══════════════════════════════════════════════════════════════════
+SUPPLEMENT_PATH = DATA_DIR / "game_supplement.json"
+_SUPPLEMENT: dict = {}
+if SUPPLEMENT_PATH.exists():
+    try:
+        with open(SUPPLEMENT_PATH, "r", encoding="utf-8") as _f:
+            _SUPPLEMENT = json.load(_f)
+    except Exception:
+        _SUPPLEMENT = {}
+
 _seed = _random.Random()  # non-deterministic (time-based)
 
 def _load_cards() -> dict:
@@ -42,289 +55,6 @@ IGNORED_CARD_TYPES = frozenset([
 
 def _tokens_by_cat(card, cat: str) -> list:
     return [t for t in card.get("tokens", []) if t.get("category") == cat]
-
-# ══════════════════════════════════════════════════════════════════
-# 1. NAVAL WEAPONS — 60 real warship classes (艦娘)
-# ══════════════════════════════════════════════════════════════════
-
-# Format: (name, type, slot, atk_mult, def_mult, durability, value, nation, ship_class)
-NAVAL_DATA = [
-    # ==== Japan (IJN) ====
-    ("46cm連裝砲","weapon","right_hand",0.80,0.0,200,500,"日本","大和型戦艦"),
-    ("41cm連裝砲","weapon","right_hand",0.60,0.0,180,400,"日本","長門型戦艦"),
-    ("36.5cm連裝砲改","weapon","right_hand",0.55,0.0,170,380,"日本","金剛型戦艦改"),
-    ("41cm三連裝砲","weapon","right_hand",0.65,0.0,190,420,"日本","加賀型戦艦"),
-    ("51cm連裝砲","weapon","right_hand",0.95,-0.1,150,700,"日本","超大和型計画"),
-    ("20.3cm連裝砲","weapon","right_hand",0.35,0.0,120,250,"日本","重巡主砲"),
-    ("15.5cm三連裝砲","weapon","right_hand",0.30,0.0,100,200,"日本","軽巡主砲"),
-    ("12.7cm連装砲","weapon","right_hand",0.25,0.0,80,150,"日本","駆逐主砲"),
-    ("10cm連装高角砲","weapon","right_hand",0.20,0.0,70,130,"日本","秋月型駆逐"),
-    ("61cm四連裝魚雷","weapon","right_hand",0.70,-0.1,80,400,"日本","酸素魚雷"),
-    ("61cm五連裝魚雷","weapon","right_hand",0.80,-0.15,70,500,"日本","改修魚雷"),
-    ("甲標的甲型","weapon","right_hand",0.90,-0.2,60,600,"日本","特殊潜航艇"),
-    ("甲標的丙型","weapon","right_hand",0.95,-0.25,50,700,"日本","特殊潜航艇改"),
-    ("彗星艦爆","weapon","both_hands",0.50,0.1,90,300,"日本","艦載爆撃機"),
-    ("彗星一二型","weapon","both_hands",0.55,0.1,85,340,"日本","艦爆改良型"),
-    ("天山艦攻","weapon","both_hands",0.40,0.15,100,280,"日本","艦載攻撃機"),
-    ("流星艦攻","weapon","both_hands",0.45,0.15,95,320,"日本","攻撃機"),
-    ("紫電改二","weapon","both_hands",0.45,0.2,85,350,"日本","局地戦闘機"),
-    ("烈風","weapon","both_hands",0.55,0.1,95,380,"日本","艦載戦闘機"),
-    ("紫電","weapon","both_hands",0.40,0.2,90,310,"日本","局地戦闘機"),
-    ("零戦五二型","weapon","both_hands",0.35,0.15,100,280,"日本","艦載戦闘機"),
-    ("零戦二一型","weapon","both_hands",0.30,0.1,110,250,"日本","艦載戦闘機"),
-    # ==== USA (USN) ====
-    ("16inch三連裝砲","weapon","right_hand",0.75,0.0,210,550,"美国","Iowa型戦艦"),
-    ("14inch三連裝砲","weapon","right_hand",0.55,0.05,190,400,"美国","NewMexico型戦艦"),
-    ("12inch連裝砲","weapon","right_hand",0.45,0.05,170,350,"美国","標準型戦艦"),
-    ("8inch三連裝砲","weapon","right_hand",0.38,0.05,130,280,"美国","重巡主砲"),
-    ("6inch三連裝砲","weapon","right_hand",0.32,0.05,110,220,"美国","軽巡主砲"),
-    ("5inch兩用砲","weapon","right_hand",0.22,0.1,90,160,"美国","駆逐主砲"),
-    ("40mm四連裝機関砲","weapon","right_hand",0.18,0.15,70,120,"美国","ボフォース"),
-    ("20mm機関砲","weapon","right_hand",0.12,0.1,60,80,"美国","エリコン"),
-    ("Mk13魚雷","weapon","right_hand",0.45,0.0,70,250,"美国","航空魚雷"),
-    ("F4Uコルセア","weapon","both_hands",0.50,0.2,100,360,"美国","艦載戦闘機"),
-    ("F6Fヘルキャット","weapon","both_hands",0.48,0.15,110,340,"美国","艦載戦闘機"),
-    ("SBDドーントレス","weapon","both_hands",0.45,0.1,95,300,"美国","艦載爆撃機"),
-    ("TBFアベンジャー","weapon","both_hands",0.42,0.15,105,290,"美国","艦載攻撃機"),
-    ("SB2Cヘルダイバー","weapon","both_hands",0.48,0.08,90,310,"美国","艦爆"),
-    # ==== UK (RN) ====
-    ("15inch連裝砲","weapon","right_hand",0.50,0.0,185,380,"英国","Nelson型戦艦"),
-    ("14inch四連裝砲","weapon","right_hand",0.55,0.0,175,390,"英国","KingGeorgeV型"),
-    ("16inch連裝砲","weapon","right_hand",0.70,0.0,200,520,"英国","Vanguard型"),
-    ("6inch連裝砲","weapon","right_hand",0.30,0.05,100,200,"英国","軽巡主砲"),
-    ("4.7inch砲","weapon","right_hand",0.20,0.0,75,130,"英国","駆逐主砲"),
-    ("21inch魚雷","weapon","right_hand",0.50,-0.05,65,280,"英国","魚雷"),
-    ("スーパーマリン","weapon","both_hands",0.52,0.18,105,370,"英国","艦載戦闘機"),
-    ("フェアリーソード","weapon","both_hands",0.38,0.12,100,260,"英国","艦載攻撃機"),
-    # ==== Germany (KM) ====
-    ("38cm連裝砲","weapon","right_hand",0.60,0.0,175,420,"德国","Bismarck型"),
-    ("28cm三連裝砲","weapon","right_hand",0.45,0.0,160,350,"德国","Scharnhorst型"),
-    ("20.3cm連裝砲","weapon","right_hand",0.40,0.0,125,270,"德国","AdmiralHipper型"),
-    ("15cm連裝砲","weapon","right_hand",0.28,0.05,95,190,"德国","軽巡主砲"),
-    ("12.7cm砲","weapon","right_hand",0.22,0.05,80,150,"德国","駆逐主砲"),
-    ("53.3cm魚雷","weapon","right_hand",0.55,-0.05,75,320,"德国","G7a魚雷"),
-    ("G7e魚雷","weapon","right_hand",0.60,-0.1,70,350,"德国","電動魚雷"),
-    ("Me262","weapon","both_hands",0.65,0.25,60,600,"德国"," jet戦闘機"),
-    # ==== Italy (RM) ====
-    ("381mm三連裝砲","weapon","right_hand",0.58,0.0,170,400,"意大利","Littorio型"),
-    ("320mm四連裝砲","weapon","right_hand",0.50,0.0,160,350,"意大利","Doria型"),
-    ("203mm連裝砲","weapon","right_hand",0.36,0.0,115,260,"意大利","Zara型"),
-    ("152mm三連裝砲","weapon","right_hand",0.30,0.05,95,210,"意大利","軽巡主砲"),
-    ("533mm魚雷","weapon","right_hand",0.45,-0.05,70,260,"意大利","魚雷"),
-    ("Reggiane2005","weapon","both_hands",0.55,0.2,85,400,"意大利","戦闘機"),
-]
-
-# ══════════════════════════════════════════════════════════════════
-# 2. ANIMAL ARMOR/WEAPONS — 80 real species (獣娘)
-# ══════════════════════════════════════════════════════════════════
-
-ANIMAL_DATA = [
-    # (name, type, slot, atk_mult, def_mult, spd_mult, karma_mult, durability, value, species, biome)
-    # ==== Mammals: Canids ====
-    ("狼王毛皮","armor","torso",0.0,0.35,0.15,0.0,120,150,"狼","森林"),
-    ("狼牙首飾","accessory","neck",0.15,0.0,0.05,0.05,80,100,"狼","森林"),
-    ("銀狼の尾","armor","back",0.0,0.10,0.25,0.05,70,130,"銀狼","雪山"),
-    ("狐の霊衣","armor","torso",0.0,0.20,0.30,0.10,110,180,"狐","森林"),
-    ("狐火の腕輪","accessory","left_hand",0.10,0.0,0.10,0.15,60,140,"狐","森林"),
-    ("柴犬の忠誠","accessory","neck",0.0,0.10,0.05,0.30,90,110,"柴犬","村"),
-    # ==== Mammals: Ursids ====
-    ("熊の鉄壁","armor","torso",0.0,0.50,0.0,0.0,200,250,"熊","山岳"),
-    ("熊の腕力","weapon","right_hand",0.40,-0.05,-0.05,0.0,150,220,"熊","山岳"),
-    ("白熊の毛","armor","legs",0.0,0.35,0.0,0.05,180,230,"白熊","極地"),
-    ("熊猫の柔軟","armor","torso",0.0,0.20,0.10,0.15,100,160,"熊猫","竹林"),
-    # ==== Mammals: Felids ====
-    ("虎の縞鎧","armor","torso",0.0,0.40,0.10,0.0,160,220,"虎","密林"),
-    ("虎爪の手甲","weapon","right_hand",0.35,0.0,0.10,0.0,100,200,"虎","密林"),
-    ("獅子の鬣","armor","head",0.0,0.25,0.0,0.15,130,200,"獅子","草原"),
-    ("豹の敏捷","armor","feet",0.0,0.10,0.35,0.0,80,180,"豹","草原"),
-    ("猫の軽靴","armor","feet",0.0,0.05,0.30,0.05,70,100,"猫","市街"),
-    ("猫の器用","accessory","right_hand",0.05,0.0,0.15,0.10,60,90,"猫","市街"),
-    ("黒猫の護符","accessory","neck",0.0,0.10,0.10,0.20,50,120,"黑猫","市街"),
-    # ==== Mammals: Cervids ====
-    ("鹿の角冠","armor","head",0.05,0.10,0.05,0.25,90,120,"鹿","森林"),
-    ("鹿の敏捷","armor","feet",0.0,0.0,0.25,0.10,70,100,"鹿","森林"),
-    ("大鹿の角","weapon","right_hand",0.25,0.0,0.0,0.10,100,130,"大鹿","森林"),
-    # ==== Mammals: Equids & Bovids ====
-    ("馬の蹄鉄","armor","feet",0.0,0.15,0.20,0.0,120,80,"馬","草原"),
-    ("馬の雄姿","armor","torso",0.0,0.15,0.15,0.10,90,110,"馬","草原"),
-    ("野牛の剛角","weapon","right_hand",0.30,0.0,-0.05,0.0,150,180,"野牛","草原"),
-    ("山羊の軽業","armor","legs",0.0,0.05,0.20,0.05,70,80,"山羊","山岳"),
-    # ==== Mammals: Primates ====
-    ("猿の器用","accessory","left_hand",0.05,0.0,0.15,0.05,60,90,"猿","密林"),
-    ("大猩猩の剛腕","weapon","right_hand",0.45,0.0,-0.10,0.0,180,250,"大猩猩","密林"),
-    # ==== Mammals: Marine ====
-    ("海豚の流線","armor","legs",0.0,0.05,0.25,0.05,60,140,"海豚","海"),
-    ("鯨の強靭","armor","torso",0.0,0.45,0.0,0.05,250,320,"鯨","海"),
-    ("鯨の骨鎧","armor","torso",0.0,0.55,0.0,0.0,300,400,"鯨","海"),
-    ("海豹の滑走","armor","feet",0.0,0.0,0.15,0.10,50,90,"海豹","海"),
-    # ==== Birds ====
-    ("鷹の翼膜","armor","back",0.0,0.15,0.35,0.05,100,160,"鷹","山岳"),
-    ("鷹の爪","weapon","right_hand",0.25,0.0,0.15,0.0,80,140,"鷹","山岳"),
-    ("梟の知恵","accessory","head",0.0,0.0,0.05,0.30,60,150,"梟","森林"),
-    ("鴉の羽","armor","back",0.0,0.10,0.20,0.10,70,100,"鴉","市街"),
-    ("白鳥の優雅","accessory","neck",0.0,0.05,0.10,0.25,50,130,"白鳥","湖"),
-    ("燕の俊敏","armor","feet",0.0,0.0,0.30,0.05,50,110,"燕","空"),
-    ("孔雀の華麗","accessory","neck",0.0,0.05,0.05,0.30,40,160,"孔雀","森林"),
-    ("鶴の寿命","armor","legs",0.0,0.10,0.10,0.20,80,140,"鶴","湖"),
-    ("渡り鳥の羽","armor","back",0.0,0.05,0.20,0.05,60,90,"渡鳥","空"),
-    # ==== Reptiles & Amphibians ====
-    ("蛇の鱗衣","armor","torso",0.0,0.30,0.10,0.20,110,140,"蛇","森林"),
-    ("蛇の毒牙","weapon","right_hand",0.20,0.0,0.10,0.0,70,120,"蛇","森林"),
-    ("亀の甲羅盾","weapon","left_hand",0.0,0.60,0.0,0.05,250,250,"亀","湖"),
-    ("鰐の顎","weapon","right_hand",0.35,0.0,-0.05,0.0,140,200,"鰐","水辺"),
-    ("鰐の鱗","armor","torso",0.0,0.35,0.0,0.05,180,220,"鰐","水辺"),
-    ("蜥蜴の尾","armor","back",0.0,0.05,0.20,0.05,60,80,"蜥蜴","砂漠"),
-    ("壁虎の足掛","armor","feet",0.0,0.0,0.15,0.10,50,90,"壁虎","市街"),
-    ("蛙の跳躍","armor","legs",0.0,0.0,0.20,0.05,40,70,"蛙","水辺"),
-    # ==== Arthropods ====
-    ("蝶の鱗粉","accessory","neck",0.0,0.10,0.10,0.20,50,90,"蝶","花園"),
-    ("蝶の翅","armor","back",0.0,0.05,0.15,0.15,40,100,"蝶","花園"),
-    ("蜂の針","weapon","right_hand",0.20,0.0,0.10,0.0,30,80,"蜂","花園"),
-    ("蜘蛛の糸","armor","legs",0.0,0.15,0.10,0.0,70,100,"蜘蛛","森林"),
-    ("蠍の毒針","weapon","right_hand",0.25,0.0,0.0,0.0,60,110,"蠍","砂漠"),
-    ("蠍の甲殻","armor","torso",0.0,0.25,0.0,0.05,130,150,"蠍","砂漠"),
-    ("蟻の力","accessory","waist",0.10,0.0,0.0,0.05,80,70,"蟻","草原"),
-    ("蜻蛉の複眼","accessory","head",0.0,0.0,0.15,0.10,40,110,"蜻蛉","水辺"),
-    # ==== Mythical/Cryptid ====
-    ("蛟の逆鱗","armor","torso",0.10,0.30,0.10,0.05,200,350,"蛟","深潭"),
-    ("鳳凰の羽衣","armor","back",0.05,0.20,0.20,0.30,150,500,"鳳凰","天"),
-    ("麒麟の角","accessory","head",0.10,0.10,0.10,0.35,180,450,"麒麟","仙境"),
-    ("白澤の知慧","accessory","neck",0.0,0.05,0.05,0.50,100,400,"白澤","仙境"),
-]
-
-# ══════════════════════════════════════════════════════════════════
-# 3. JUNK ITEMS — 200 non-interactive flavor items
-# ══════════════════════════════════════════════════════════════════
-
-JUNK_TEMPLATES = [
-    # (base_name, prefix_variants)
-    ("錆びた釘", ["錆びた","古びた","曲がった","折れた","欠けた"]),
-    ("割れた瓶", ["割れた","ひび割れた","小さな","大きな"]),
-    ("埃を被った本", ["埃を被った","濡れた","焼けた","破れた"]),
-    ("使い古した筆", ["使い古した","新しい","折れた","乾いた"]),
-    ("折れた枝", ["折れた","太い","細い","乾燥した"]),
-    ("乾燥した葉", ["乾燥した","新鮮な","色づいた","虫食いの"]),
-    ("小さな石ころ", ["丸い","尖った","平たい","光る","重い"]),
-    ("色あせた布", ["色あせた","鮮やかな","絹の","麻の"]),
-    ("切れた紐", ["切れた","丈夫な","細い","太い"]),
-    ("空き箱", ["小さな","大きな","頑丈な","薄っぺらい"]),
-    ("壊れた時計", ["壊れた","古い","金の","銀の"]),
-    ("焦げた紙", ["焦げた","濡れた","皺くちゃ","破れた"]),
-    ("欠けた宝石", ["欠けた","小さな","光る","色褪せた"]),
-    ("歪んだ鏡", ["歪んだ","割れた","丸い","四角い"]),
-    ("古い賽子", ["古い","新しい","歪んだ","小さい"]),
-    ("空のインク壺", ["空の","半分の","乾いた","割れた"]),
-    ("片方の手袋", ["片方の","毛糸の","皮の","布の"]),
-    ("錆びたスプーン", ["錆びた","銀の","木の","曲がった"]),
-    ("曲がった針", ["曲がった","錆びた","細い","折れた"]),
-    ("ほつれた靴下", ["ほつれた","新しい","破れた","色褪せた"]),
-    ("ぼろぼろの日記", ["ぼろぼろの","新しい","読めない","鍵付きの"]),
-    ("異国の切手", ["異国の","古い","美しい","珍しい"]),
-    ("使い捨ての箸", ["使い捨ての","塗りの","竹の","折れた"]),
-    ("燃え残った薪", ["燃え残った","太い","細い","乾いた"]),
-    ("読めない文字のメモ", ["読めない","走り書きの","丁寧な","濡れた"]),
-    ("虫食いの木片", ["虫食いの","滑らかな","彫刻された","腐った"]),
-    ("古いボタン", ["古い","真鍮の","貝の","木の"]),
-    ("色褪せたリボン", ["色褪せた","赤い","青い","絹の"]),
-    ("埃まみれの置物", ["埃まみれの","陶器の","木彫りの","石の"]),
-    ("古い写真", ["古い","色褪せた","破れた","丸まった"]),
-    ("錆びた針金", ["錆びた","真鍮の","鉄の","太い"]),
-    ("抜け落ちた羽根", ["抜け落ちた","白い","黒い","模様のある"]),
-    ("乾いた泥", ["乾いた","湿った","固まった","柔らかい"]),
-    ("空瓶", ["小さな","大きな","茶色の","透明な","緑の"]),
-    ("猫じゃらし", ["枯れた","乾いた","長い","短い"]),
-    ("使い古した鞄", ["使い古した","革の","布の","破れた"]),
-    ("ほころびた帽子", ["ほころびた","新しい","藁の","布の"]),
-    ("折れた万年筆", ["折れた","金の","銀の","プラスチックの"]),
-    ("切れた腕輪", ["切れた","銀の","木の","革の"]),
-    ("絡まった毛糸", ["絡まった","赤い","青い","白い","黄色い"]),
-    ("食べかけの飴", ["食べかけの","包み紙の","溶けた","固まった"]),
-    ("鳥の巣の残骸", ["鳥の巣の","崩れた","小さな","大きな"]),
-    ("穴の開いた靴下", ["穴の開いた","毛糸の","綿の","絹の"]),
-    ("錆びた剣の柄", ["錆びた","木の","革巻きの","銀の"]),
-    ("古びた地図の切れ端", ["古びた","濡れた","焼けた","破れた"]),
-    ("使い古した歯ブラシ", ["使い古した","新しい","折れた","曲がった"]),
-    ("乾燥した花びら", ["乾燥した","色褪せた","押し花の","砕けた"]),
-    ("錆びた自転車の部品", ["錆びた","壊れた","古い","曲がった"]),
-    ("切れた靴紐", ["切れた","新しい","濡れた","固まった"]),
-    ("壊れた花瓶", ["壊れた","陶器の","ガラスの","木の"]),
-    ("半分の硬貨", ["半分の","古い","光る","錆びた"]),
-    ("謎の液体の瓶", ["謎の","青い","赤い","緑の","泡立つ"]),
-    ("小さな貝殻", ["螺旋の","平たい","尖った","欠けた","白い"]),
-    ("錆びた鈴", ["錆びた","小さな","壊れた","古い"]),
-]
-
-JUNK_ITEMS = []
-for base, prefixes in JUNK_TEMPLATES:
-    for p in prefixes[:2]:  # limit to avoid too many
-        JUNK_ITEMS.append(f"{p}{base}" if "の" not in p else f"{p}{base}")
-# Add all base names too
-JUNK_ITEMS.extend([t[0] for t in JUNK_TEMPLATES])
-# Remove duplicates while preserving order
-seen = set()
-JUNK_ITEMS = [x for x in JUNK_ITEMS if not (x in seen or seen.add(x))]
-# Total: ~150
-
-
-# ══════════════════════════════════════════════════════════════════
-# 4. HERBAL / CONSUMABLE ITEMS
-# ══════════════════════════════════════════════════════════════════
-
-HERBAL_ITEMS = [
-    ("艾草","consumable",0.2,8,15,0,"艾草で作った薬"),
-    ("薄荷","consumable",0.1,5,0,10,"清涼感のある薄荷"),
-    ("蒲公英","consumable",0.1,3,5,5,"蒲公英の根"),
-    ("人参","consumable",0.3,25,30,0,"高麗人参"),
-    ("霊芝","consumable",0.2,30,20,15,"千年霊芝"),
-    ("金創薬","consumable",0.3,35,45,0,"傷薬"),
-    ("気付け薬","consumable",0.2,20,10,20,"気を鎮める薬"),
-    ("万霊薬","consumable",0.4,60,60,40,"万能薬"),
-    ("龍涎香","consumable",0.3,80,50,30,"竜の香り"),
-    ("七星丹","consumable",0.3,120,80,50,"七つの星の力"),
-    ("還魂草","consumable",0.2,50,100,0,"死者をも甦らせる草"),
-    ("清心丸","consumable",0.2,40,10,40,"心を清める丸薬"),
-    ("壮骨散","consumable",0.3,45,60,10,"骨を強くする薬"),
-    ("止血草","consumable",0.2,10,25,0,"止血に効く草"),
-    ("安眠茶","consumable",0.2,15,5,25,"安眠を誘う茶"),
-    ("精力剤","consumable",0.3,50,10,60,"精力が湧く薬"),
-    ("解毒散","consumable",0.2,25,20,15,"解毒の粉末"),
-    ("保湿軟膏","consumable",0.2,18,20,10,"肌を癒す軟膏"),
-    ("活力ドリンク","consumable",0.3,30,15,25,"即効性の活力剤"),
-    ("養生酒","consumable",0.4,60,30,40,"養生の薬酒"),
-    ("気功丸","consumable",0.3,55,20,45,"気を整える丸薬"),
-    ("百草丹","consumable",0.3,70,55,35,"百の草から作った丹薬"),
-    ("神水","consumable",0.2,200,100,80,"伝説の神水"),
-    ("神秘のキノコ","consumable",0.2,50,_seed.randint(10,50),_seed.randint(10,30),"神秘の力を持つキノコ"),
-    ("月の雫","consumable",0.1,80,40,30,"月明かりが凝縮した雫"),
-    ("時空の砂","consumable",0.1,0,0,0,"時空の砂（効果不明）"),
-]
-
-# ══════════════════════════════════════════════════════════════════
-# 5. ELEMENTAL / MAGIC ITEMS
-# ══════════════════════════════════════════════════════════════════
-
-ELEMENTAL_ITEMS = [
-    ("炎帝の剣","weapon","right_hand",0.6,-0.1,"灼熱の炎を纏う剣",300,80),
-    ("氷晶の杖","weapon","right_hand",0.3,0.3,"氷の結晶で出来た杖",280,75),
-    ("雷神の鎚","weapon","right_hand",0.7,-0.15,"雷を呼ぶ戦鎚",350,70),
-    ("風霊の弓","weapon","both_hands",0.4,0.25,"風の精霊が宿る弓",260,85),
-    ("大地の盾","weapon","left_hand",0.0,0.7,"大地の力が宿る盾",300,150),
-    ("光輝の鎧","armor","torso",0.3,0.3,"聖なる光を放つ鎧",350,120),
-    ("闇夜の外套","armor","back",0.2,0.4,"影に溶ける暗黒の外套",280,80),
-    ("精霊の指環","accessory","left_hand",0.2,0.3,"精霊の力が宿る指環",200,40),
-    ("炎の精霊石","accessory","neck",0.3,0.1,"火の精霊が宿る石",180,50),
-    ("氷の結晶","armor","head",0.1,0.3,"永遠に溶けない氷",160,60),
-    ("雷の宝玉","accessory","right_hand",0.2,0.15,"雷光を放つ宝玉",170,45),
-    ("風の羽織","armor","back",0.15,0.25,"風の如く軽い羽織",150,70),
-    ("地の護石","accessory","neck",0.0,0.35,"大地の加護を受けた石",200,65),
-    ("太陽の輝き","armor","head",0.25,0.25,"太陽の光を纏う冠",250,100),
-    ("星屑のマント","armor","back",0.1,0.2,"星の力が宿るマント",190,90),
-    ("虚空の欠片","accessory","left_hand",0.15,0.15,"虚空の力が宿る欠片",140,80),
-    ("混沌の種","accessory","neck",0.2,0.1,"混沌から生まれた種",160,95),
-    ("秩序の天秤","weapon","left_hand",0.1,0.3,"均衡を司る天秤",200,120),
-]
-
-# Note: consumable-type elemental items moved to HERBAL_ITEMS above
 
 # ══════════════════════════════════════════════════════════════════
 # 6. NPC GENERATION — character cards → interactive NPCs
@@ -398,6 +128,118 @@ def _extract_race_from_card(card) -> str:
                 if v and len(v) < 10:
                     return v[:8]
     return "不明"
+
+
+def _build_abilities_from_skills(card: dict, all_cards: list) -> list:
+    """Generate abilities from SK-* skill cards instead of hardcoded templates."""
+    # Build a mapping: token category -> skill card
+    skill_cards = [c for c in all_cards if c.get("card_type", "") == "技能卡"]
+    _cat_skill_map: dict = {}
+    for sc in skill_cards:
+        sc_name = sc.get("name", "")
+        sc_tokens = sc.get("tokens", [])
+        sc_ability = next((t.get("value", "") for t in sc_tokens if t.get("category") == "ability"), "")
+        # Map this skill to relevant token categories
+        keywords = []
+        if any(kw in sc_name for kw in ["植物","botany","Botany"]):
+            keywords.append("knowledge")
+        if any(kw in sc_name for kw in ["地質","geology","Geology"]):
+            keywords.append("knowledge")
+        if any(kw in sc_name for kw in ["文獻","philology","Philology"]):
+            keywords.append("knowledge")
+        if any(kw in sc_name for kw in ["妖精生態","fairy","Fairy"]):
+            keywords.append("knowledge")
+        if any(kw in sc_name for kw in ["格鬥","martial","Martial"]):
+            keywords.append("combat")
+        if any(kw in sc_name for kw in ["弓道","archer","Archer"]):
+            keywords.append("combat")
+        if any(kw in sc_name for kw in ["陷阱","trap","Trap"]):
+            keywords.append("combat")
+        if any(kw in sc_name for kw in ["道術","Taoism","taoism"]):
+            keywords.append("element")
+        if any(kw in sc_name for kw in ["四季魔法","四季","Magic","magic"]):
+            keywords.append("element")
+        if any(kw in sc_name for kw in ["奇蹟","miracle","Miracle"]):
+            keywords.append("energy")
+        if any(kw in sc_name for kw in ["種族特有","race","Race"]):
+            keywords.append("vitality")
+        if any(kw in sc_name for kw in ["妖精技","fairy tech"]):
+            keywords.append("craft")
+        if any(kw in sc_name for kw in ["有翼","wing","Wing"]):
+            keywords.append("skill")
+        if any(kw in sc_name for kw in ["機械工","mechanical","Mechanical"]):
+            keywords.append("craft")
+            keywords.append("mechanism")
+        if any(kw in sc_name for kw in ["工藝","crafting","Crafting"]):
+            keywords.append("craft")
+        if any(kw in sc_name for kw in ["潛伏","stealth","Stealth"]):
+            keywords.append("social")
+        if any(kw in sc_name for kw in ["植物学","Botany"]):
+            keywords.append("exploration")
+        if any(kw in sc_name for kw in ["打電話","telecom","Telecom"]):
+            keywords.append("social")
+        if any(kw in sc_name for kw in ["上網","internet","Internet"]):
+            keywords.append("tech")
+        if any(kw in sc_name for kw in ["駭客","hack","Hack"]):
+            keywords.append("tech")
+        if any(kw in sc_name for kw in ["義體","prosthetic","Prosthetic"]):
+            keywords.append("tech")
+            keywords.append("craft")
+        for kw in keywords:
+            _cat_skill_map.setdefault(kw, []).append({"name": sc_name, "desc": sc_ability})
+    
+    result = []
+    existing = card.get("abilities", [])
+    if existing:
+        # Use existing abilities from card deck (already populated)
+        return existing
+    
+    # Generate from token categories using SK card mapping
+    tokens = card.get("tokens", [])
+    cats_found = set()
+    for t in tokens:
+        cat = t.get("category", "")
+        if cat:
+            cats_found.add(cat)
+    
+    # Build abilities from matched skill cards
+    used_skills = []
+    for cat in ["combat", "element", "energy", "craft", "skill", "knowledge", "social", "exploration", "vitality", "mechanism", "tech"]:
+        if cat in cats_found and cat in _cat_skill_map:
+            for sk in _cat_skill_map[cat]:
+                if sk["name"] not in used_skills:
+                    result.append({
+                        "name": sk["name"],
+                        "description": sk["desc"],
+                        "type": cat,
+                        "level": 1,
+                    })
+                    used_skills.append(sk["name"])
+                    if len(result) >= 3:
+                        break
+        if len(result) >= 3:
+            break
+    
+    # Fallback: race-based generic ability
+    if not result:
+        race = card.get("stats", {}).get("race", "")
+        if race:
+            result.append({
+                "name": f"{race[:10]}の能力",
+                "description": f"{race[:10]}としての基本的な能力",
+                "type": "general",
+                "level": 1,
+            })
+        else:
+            result.append({
+                "name": "基礎能力",
+                "description": "基本的な戦闘や生活の能力",
+                "type": "general",
+                "level": 1,
+            })
+    
+    return result[:5]
+
 
 
 def _generate_npc_schedule(npc_name: str, home_loc: str) -> list:
@@ -642,8 +484,8 @@ def generate_all_npcs() -> Dict[str, dict]:
             "archetype": archetype,
             "token_categories": list(token_cats),
             "abilities": [a.get("name","") if isinstance(a, dict) else str(a) for a in card.get("abilities", [])],
-            "ability_details": card.get("abilities", []),
-            "has_abilities": len(card.get("abilities", [])) > 0,
+            "ability_details": _build_abilities_from_skills(card, _CHARACTER_CARDS),
+            "has_abilities": True,
             "offers": offers[:12],
             "is_merchant": archetype == "merchant" or bool(offers),
             "gives_quests": "social" in token_cats or "knowledge" in token_cats or "craft" in token_cats,
@@ -807,29 +649,34 @@ def generate_all_items() -> Dict[str, dict]:
     items = {}
     
     # Naval weapons
-    for name, typ, slot, atk, dfn, dur, val, nation, ship in NAVAL_DATA:
+    for _entry_n in _SUPPLEMENT.get("naval_data", []):
+        name, typ, slot, atk, dfn, dur, val = _entry_n["name"], _entry_n["type"], _entry_n["slot"], _entry_n["atk_mult"], _entry_n["def_mult"], _entry_n["durability"], _entry_n["value"]
+        nation, ship = _entry_n.get("nation", ""), _entry_n.get("ship_class", "")
         items[name] = _make_item(name, typ, slot, atk, dfn, 0, 0, dur, val,
                                  f"{nation} {ship}", ["naval","rare"] if val>300 else ["naval"])
     
     # Animal items
-    for name, typ, slot, atk, dfn, spd, krm, dur, val, species, biome in ANIMAL_DATA:
+    for _entry_a in _SUPPLEMENT.get("animal_data", []):
+        name, typ, slot, atk, dfn, spd, krm, dur, val, species, biome = _entry_a["name"], _entry_a["type"], _entry_a["slot"], _entry_a["atk_mult"], _entry_a["def_mult"], _entry_a["spd_mult"], _entry_a["karma_mult"], _entry_a["durability"], _entry_a["value"], _entry_a["species"], _entry_a["biome"]
         items[name] = _make_item(name, typ, slot, atk, dfn, spd, krm, dur, val,
                                  f"{species}（{biome}）", ["beast","natural"])
     
     # Elemental
-    for name, typ, slot, atk, dfn, desc, val, dur in ELEMENTAL_ITEMS:
+    for _entry_e in _SUPPLEMENT.get("elemental_items", []):
+        name, typ, slot, atk, dfn, desc, val, dur = _entry_e["name"], _entry_e["type"], _entry_e["slot"], _entry_e["atk_mult"], _entry_e["def_mult"], _entry_e["description"], _entry_e["value"], _entry_e["durability"]
         items[name] = _make_item(name, typ, slot, atk, dfn, 0, 0, dur, val,
                                  desc, ["elemental","magic"])
     
     # Herbal
-    for name, typ, wt, val, hp, sp, desc in HERBAL_ITEMS:
+    for _entry_h in _SUPPLEMENT.get("herbal_items", []):
+        name, typ, wt, val, hp, sp, desc = _entry_h["name"], _entry_h["type"], _entry_h["weight"], _entry_h["value"], _entry_h["heal_hp"], _entry_h["heal_sp"], _entry_h["description"]
         d = {"type": typ, "weight": wt, "value": val, "desc": desc, "tags": ["herbal"]}
         if hp: d["heal_hp"] = abs(hp)
         if sp: d["heal_sp"] = abs(sp)
         items[name] = d
     
     # Junk
-    for name in JUNK_ITEMS:
+    for name in _SUPPLEMENT.get("junk_items", []):
         items[name] = {"type": "junk", "weight": 0.2, "value": 0,
                        "desc": f"一個{name}。", "tags": ["junk"]}
     
@@ -902,33 +749,14 @@ ALL_ITEMS = generate_all_items()
 # 8. ENEMY GENERATION — 400+
 # ══════════════════════════════════════════════════════════════════
 
-ANIMAL_ENEMIES_TEMPLATE = [
-    # (name, base_hp, base_atk, base_def, base_spd, exp_mod, gold_mod, loot, desc, biome)
-    ("森狼",35,10,4,7,25,8,["皮革"],"森に棲む狼","forest"),
-    ("山熊",120,28,12,3,100,50,["熊の鉄壁","生命果"],"巨大な山熊","mountain"),
-    ("毒蛇",30,22,3,9,45,15,["解毒草","蛇の鱗衣"],"毒牙を持つ蛇","forest"),
-    ("猛禽",25,18,2,12,35,12,["鷹の翼膜","羽毛"],"空から狙う猛禽","sky"),
-    ("野猪",70,15,8,5,40,18,["皮革","狼王毛皮"],"荒ぶる猪","grassland"),
-    ("大蜘蛛",40,12,6,6,30,10,["絲線","解毒草"],"巨大な蜘蛛","cave"),
-    ("虎",90,30,10,7,80,35,["虎の縞鎧","皮革"],"百獣の王","forest"),
-    ("大鹿",50,8,5,9,25,15,["鹿の角冠","皮革"],"森の守護者","forest"),
-    ("電鱗魚",35,25,4,8,50,20,["猫の軽靴","魔力藥水"],"雷を帯びた魚","water"),
-    ("鎌鼬",28,20,2,11,40,14,["羽毛","草藥"],"風を切る鼬","grassland"),
-    ("岩亀",200,8,35,1,120,60,["亀の甲羅盾","黏土"],"動く岩の如き亀","mountain"),
-    ("吸血蝙蝠",20,15,2,10,30,8,["空瓶","破布"],"夜に飛び回る蝙蝠","cave"),
-    ("黄金蛇",40,18,5,8,55,25,["蛇の鱗衣","古代硬貨"],"黄金の鱗を持つ蛇","ruins"),
-    ("氷狼",50,15,8,6,60,22,["銀狼の尾","皮革"],"氷雪地帯の狼","snow"),
-    ("砂蝎",60,20,12,4,50,28,["蠍の甲殻","毒針"],"砂漠に潜む蠍","desert"),
-    ("火蜥蜴",45,25,6,5,55,20,["火元素","皮革"],"炎を吐く蜥蜴","volcano"),
-    ("翠鳥",22,14,3,13,30,10,["羽毛","靈木"],"森の宝石と呼ばれる鳥","forest"),
-    ("鉄甲虫",80,10,25,2,45,18,["鐵礦","黏土"],"鋼の甲殻を持つ虫","cave"),
-    ("水馬",55,12,7,8,35,15,["貝殼","絲線"],"水辺の幻獣","water"),
-    ("旋風狼",40,18,5,9,50,22,["狼王毛皮","魔法粉"],"風を操る狼","grassland"),
-]
+# Animal enemies template (from supplement)
+_ANIMAL_ENEMIES_TEMPLATE = _SUPPLEMENT.get("animal_enemies_template", [])
+
 
 def _generate_enemies_from_template() -> list:
     enemies = []
-    for name, hp, atk, dfn, spd, exp_, gold, loot, desc, biome in ANIMAL_ENEMIES_TEMPLATE:
+    for _entry in _ANIMAL_ENEMIES_TEMPLATE:
+        name, hp, atk, dfn, spd, exp_, gold, loot, desc, biome = _entry["name"], _entry["base_hp"], _entry["base_atk"], _entry["base_def"], _entry["base_spd"], _entry["exp_mod"], _entry["gold_mod"], _entry["loot"], _entry["desc"], _entry["biome"]
         enemies.append({"name":name,"hp":hp,"atk":atk,"def":dfn,"spd":spd,
                         "exp":exp_,"gold":gold,"loot":list(loot),"desc":desc})
         # Tier 2: stronger variant
@@ -961,24 +789,14 @@ def _generate_card_enemies() -> list:
                         "desc":"深淵から現れた強力な影"})
     return enemies
 
-# Elemental enemies
-ELEMENTAL_ENEMIES = [
-    ("火霊",60,30,8,5,65,30,["火元素","魔法粉"],"炎の精霊"),
-    ("水霊",50,18,12,6,45,20,["水晶碎片","貝殼"],"水の精霊"),
-    ("風霊",35,22,5,12,55,25,["羽毛","魔法粉"],"風の精霊"),
-    ("地霊",100,15,25,2,60,35,["黏土","靈木"],"大地の精霊"),
-    ("光霊",40,25,10,8,70,40,["護身符","靈木"],"光の精霊"),
-    ("闇霊",45,28,8,9,65,35,["魔法粉","破布"],"闇の精霊"),
-    ("雷霊",40,35,6,10,80,45,["水晶碎片","火元素"],"雷の精霊"),
-    ("氷霊",55,20,15,5,50,28,["空瓶","草藥"],"氷の精霊"),
-    ("森霊",70,14,18,4,45,22,["靈木","樹枝"],"森の精霊"),
-    ("星霊",30,20,8,14,90,50,["星屑のマント","記憶水晶"],"星の精霊"),
-]
+# Elemental enemies (from supplement)
+_ELEMENTAL_ENEMIES = _SUPPLEMENT.get("elemental_enemies", [])
 
 def generate_all_enemies() -> list:
     enemies = _generate_enemies_from_template()  # 60 enemies
     enemies.extend(_generate_card_enemies())      # ~118 enemies
-    for name, hp, atk, dfn, spd, exp_, gold, loot, desc in ELEMENTAL_ENEMIES:
+    for entry in _SUPPLEMENT.get("elemental_enemies", []):
+        name, hp, atk, dfn, spd, exp_, gold, loot, desc = entry["name"], entry["hp"], entry["atk"], entry["def"], entry["spd"], entry["exp"], entry["gold"], entry["loot"], entry["desc"]
         enemies.append({"name":name,"hp":hp,"atk":atk,"def":dfn,"spd":spd,
                         "exp":exp_,"gold":gold,"loot":list(loot),"desc":desc})
         # Tier 2 for elemental
@@ -1129,10 +947,7 @@ ALL_QUESTS = generate_quests()
 # 11. SCENE OBJECT GENERATION — 200+
 # ══════════════════════════════════════════════════════════════════
 
-LOCATIONS_FOR_OBJECTS = [
-    "聖十字校園","鏡湖","鬱鬱山","卡洛夫角","霧海群島",
-    "秘密鐵工廠","便利店","英靈殿","廢棄礦坑","森林深處","煙雲溫泉湖","清溪河","鏡山",
-]
+_LOCATIONS_FOR_OBJECTS = _SUPPLEMENT.get("locations_for_objects", [])
 
 def generate_scene_objects() -> Dict[str, list]:
     objects = {}
@@ -1160,7 +975,7 @@ def generate_scene_objects() -> Dict[str, list]:
     ws_pool = [("鍛冶台","forge"),("作業台","workbench"),("錬金釜","alchemy"),
                ("魔法陣","enchant"),("彫刻台","carve"),("調合台","blend")]
     
-    for loc in LOCATIONS_FOR_OBJECTS:
+    for loc in _SUPPLEMENT.get("locations_for_objects", []):
         loc_objs = []
         # 2-3 containers
         for _ in range(_seed.randint(2,3)):
