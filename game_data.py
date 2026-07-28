@@ -112,24 +112,30 @@ def _get_npc_home_from_card(card: dict, fallback_idx: int) -> str:
 
 
 def _extract_race_from_card(card) -> str:
-    """Extract race from lore tokens, fallback to stats, then fallback name."""
+    """Extract race from lore tokens, fallback to stats, then token categories, then name."""
     lore_toks = _tokens_by_cat(card, "lore")
     race_from_lore = next((t.get("value","") for t in lore_toks if "種族" in t.get("name","")), "")
     if race_from_lore:
         return race_from_lore
     stats = card.get("stats", {})
     stats_race = stats.get("race", "")
-    if stats_race:
+    if stats_race and stats_race not in ("實證主義角色", "不明", ""):
         return stats_race
-    name = card.get("name","?").split("(")[0].strip()
-    if name and name != '?':
-        return name[:10]
+    # Try token category name as race hint
     for cat in ['vitality', 'element', 'energy', 'combat', 'skill']:
         for t in card.get("tokens", []):
             if t.get("category") == cat:
                 v = t.get("value", "") or t.get("name", "")
-                if v and len(v) < 10:
-                    return v[:8]
+                if v and len(v) < 15:
+                    return v[:12]
+    # Use card name as fallback
+    name = card.get("name","?").split("(")[0].strip()
+    if name and name != '?' and not any(kw in name for kw in ["", " "]):
+        return name[:10]
+    # Extreme fallback: use token category names
+    cats = list(set(t.get("category","") for t in card.get("tokens",[]) if t.get("category","")))
+    if cats:
+        return cats[0][:8]
     return "不明"
 
 
@@ -489,7 +495,12 @@ def generate_all_npcs() -> Dict[str, dict]:
         if role_desc:
             greeting = f"「我是{name}。{role_desc[:30]}。有什麼事嗎？」"
         else:
-            greeting = f"「我是{name}。你好。」"
+            # Use race or lore for a better generic greeting
+            race_hint = _extract_race_from_card(card)
+            if race_hint and race_hint != "不明":
+                greeting = f"「我是{name}，{race_hint}。你找我？」"
+            else:
+                greeting = f"「我是{name}。你好。」"
 
         npcs[name] = {
             "card_id": cid, "name": name,
