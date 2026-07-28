@@ -1,20 +1,20 @@
 {
-  "version": "1.5",
-  "total_cards": 319,
-  "total_tokens": 1238,
+  "version": "1.6",
+  "total_cards": 321,
+  "total_tokens": 1283,
   "total_relationships": 103,
   "total_abilities": 33,
   "token_by_category": {
-    "lore": 416,
-    "energy": 39,
-    "skill": 67,
-    "vitality": 92,
-    "combat": 89,
+    "lore": 421,
+    "energy": 40,
+    "skill": 75,
+    "vitality": 101,
+    "combat": 96,
     "status": 44,
-    "exploration": 33,
-    "craft": 43,
-    "social": 90,
-    "knowledge": 54,
+    "exploration": 35,
+    "craft": 46,
+    "social": 94,
+    "knowledge": 60,
     "relation": 97,
     "element": 69,
     "mechanism": 51,
@@ -23,7 +23,7 @@
     "ability": 22
   },
   "cards_by_type": {
-    "角色卡": 90,
+    "角色卡": 92,
     "劇情節點卡": 80,
     "國家卡": 7,
     "組織卡": 18,
@@ -845,80 +845,80 @@
     {
       "card_id": "CC-16",
       "card_type": "角色卡",
-      "name": "無限",
+      "name": "小倉靜子",
       "tokens": [
         {
           "category": "lore",
-          "name": "交互歷史",
-          "value": "與Angela：系統依賴。與露露：物資採購（幾乎不說話）。與春日：短暫交集。",
+          "name": "身份",
+          "value": "小倉陸軍造兵廠指定供應商千金，超能力「時之眼」持有者",
           "strength": 0.5
         },
         {
           "category": "lore",
-          "name": "人生經歷1",
-          "value": "第一次懷疑自己是否真實（服役初期）。她看著海面說「妾身所見是否真實」。Angela說「數據沒有真假，只有是否一致」。她學會「真實可能不需要被證明」。",
+          "name": "種族",
+          "value": "人類（大正年間）",
           "strength": 0.5
         },
         {
           "category": "lore",
-          "name": "人生經歷2",
-          "value": "第一次與春日接觸（某次監測任務）。春日說「妳的鍋爐震動頻率，跟地脈波長一樣」。霜愣住，春日已經離開。學會「有人可以看見她看不見的東西」。",
+          "name": "時代",
+          "value": "大正～昭和（1924-1945）",
           "strength": 0.5
-        },
-        {
-          "category": "knowledge",
-          "name": "歷史",
-          "value": "交互歷史: 與Angela：系統依賴。與露露：物資採購（幾乎不說話）。與春日：短暫交集。",
-          "strength": 0.5
-        },
-        {
-          "category": "relation",
-          "name": "歷史_交互歷史",
-          "value": "交互歷史: 與Angela：系統依賴。與露露：物資採購（幾乎不說話）。與春日：短暫交集。",
-          "strength": 0.5
-        },
-        {
-          "category": "vitality",
-          "name": "生存",
-          "value": "概念靈——「可能性」的化身，可短暫改變事件概率",
-          "strength": 0.6
-        },
-        {
-          "category": "combat",
-          "name": "戰鬥",
-          "value": "概率操控——改變戰鬥結果的概率",
-          "strength": 0.6
-        },
-        {
-          "category": "energy",
-          "name": "靈活躍度",
-          "value": "概念體的靈子無限循環",
-          "strength": 0.7
         },
         {
           "category": "skill",
-          "name": "技能",
-          "value": "概率操控——改變事件發生的概率",
+          "name": "時之眼",
+          "value": "接觸精密機械的黃銅齒輪、聆聽高亢軍樂、或在茶道儀式中觸發，看見精準冰冷缺乏色彩的既定歷史事實",
+          "strength": 0.8
+        },
+        {
+          "category": "craft",
+          "name": "精密機械設計",
+          "value": "自學防空砲設計與精密機械加工",
           "strength": 0.7
+        },
+        {
+          "category": "combat",
+          "name": "防空砲操作",
+          "strength": 0.6
+        },
+        {
+          "category": "knowledge",
+          "name": "軍工知識",
+          "strength": 0.7
+        },
+        {
+          "category": "vitality",
+          "name": "精神力",
+          "value": "孤獨觀測二十餘年，心智遠超年齡",
+          "strength": 0.6
         }
       ],
       "stats": {
-        "role定位": "與Angela：系統依賴。與露露：物資採購（幾乎不說話）。與春日：短暫交集。"
+        "role定位": "小倉陸軍造兵廠千金，時之眼持有者，孤獨的防空砲設計者",
+        "race": "人類",
+        "era": "大正～昭和（1924-1945）",
+        "age": "12歲（故事起點）"
       },
-      "raw_field_count": 9,
+      "raw_field_count": 11,
       "token_summary": {
-        "total": 9,
+        "total": 8,
         "categories": {
           "lore": 3,
-          "knowledge": 1,
-          "relation": 1,
-          "vitality": 1,
+          "skill": 1,
+          "craft": 1,
           "combat": 1,
-          "energy": 1,
-          "skill": 1
+          "knowledge": 1,
+          "vitality": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "時之眼",
+          "description": "能看見精準、冰冷、缺乏色彩的既定歷史事實。透過接觸精密機械的黃銅齒輪、聆聽高亢軍樂、或在茶道儀式後觸發",
+          "category": "skill"
+        }
+      ]
     },
     {
       "card_id": "CC-17",
@@ -1088,7 +1088,7 @@
     {
       "card_id": "CC-19",
       "card_type": "角色卡",
-      "name": "晴空",
+      "name": "左間カチッ",
       "tokens": [
         {
           "category": "lore",
@@ -1162,7 +1162,7 @@
     {
       "card_id": "CC-20",
       "card_type": "角色卡",
-      "name": "米拉",
+      "name": "冰喀啦",
       "tokens": [
         {
           "category": "lore",
@@ -1196,7 +1196,7 @@
         }
       ],
       "stats": {
-        "role定位": "W01 靈子塵埃"
+        "role定位": "蒼青的幻影，半神話龍娘，W01靈子塵埃的化身"
       },
       "raw_field_count": 5,
       "token_summary": {
@@ -1260,11 +1260,11 @@
         }
       ],
       "stats": {
-        "race": "貓娘",
+        "race": "貓娘（千島家）",
         "gender": "女性",
         "name": "千島 雉（ちしま きじ）",
         "age": 8.0,
-        "role定位": "貓娘"
+        "role定位": "紫水晶持有者，8歲領袖，貓娘"
       },
       "raw_field_count": 7,
       "token_summary": {
@@ -1328,11 +1328,11 @@
         }
       ],
       "stats": {
-        "race": "人類",
+        "race": "人類（千島家）",
         "gender": "男性",
         "name": "千島 忠臣（ちしま ただおみ）",
         "age": 34.0,
-        "role定位": "人類"
+        "role定位": "藍水晶持有者，千島家管家"
       },
       "raw_field_count": 7,
       "token_summary": {
@@ -1352,7 +1352,7 @@
     {
       "card_id": "CC-23",
       "card_type": "角色卡",
-      "name": "記憶者",
+      "name": "千島鐵之介",
       "tokens": [
         {
           "category": "energy",
@@ -1386,7 +1386,10 @@
         }
       ],
       "stats": {
-        "role定位": "記憶者"
+        "role定位": "研究主任，千島家當主",
+        "race": "人類",
+        "era": "現代（實證主義世界線）",
+        "age": "42歲"
       },
       "raw_field_count": 5,
       "abilities": [
@@ -1410,7 +1413,7 @@
     {
       "card_id": "CC-28",
       "card_type": "角色卡",
-      "name": "味道者",
+      "name": "京島伊吹",
       "tokens": [
         {
           "category": "lore",
@@ -1481,7 +1484,7 @@
     {
       "card_id": "CC-29",
       "card_type": "角色卡",
-      "name": "溫度者",
+      "name": "京島楓香",
       "tokens": [
         {
           "category": "lore",
@@ -1545,7 +1548,7 @@
     {
       "card_id": "CC-30",
       "card_type": "角色卡",
-      "name": "濕度者",
+      "name": "特戰偶像團",
       "tokens": [
         {
           "category": "lore",
@@ -1597,7 +1600,7 @@
     {
       "card_id": "CC-31",
       "card_type": "角色卡",
-      "name": "空間者",
+      "name": "台灣AI小N",
       "tokens": [
         {
           "category": "lore",
@@ -4663,7 +4666,7 @@
     },
     {
       "card_id": "CCK-01",
-      "card_type": "角色卡",
+      "card_type": "元設定卡",
       "name": "克洛諾斯",
       "tokens": [
         {
@@ -8667,7 +8670,7 @@
     {
       "card_id": "S01",
       "card_type": "場景卡",
-      "name": "方碑丘·概念學術高等學校",
+      "name": "聖十字環形堡壘校園",
       "tokens": [
         {
           "category": "lore",
@@ -8864,7 +8867,7 @@
     {
       "card_id": "S02",
       "card_type": "場景卡",
-      "name": "方碑丘·學生宿舍",
+      "name": "鬱鬱山",
       "tokens": [
         {
           "category": "lore",
@@ -8962,7 +8965,7 @@
     {
       "card_id": "S03",
       "card_type": "場景卡",
-      "name": "方碑丘·校園後方廢棄倉庫",
+      "name": "煙雲溫泉湖",
       "tokens": [
         {
           "category": "lore",
@@ -9046,7 +9049,7 @@
     {
       "card_id": "S04",
       "card_type": "場景卡",
-      "name": "方碑丘·概念戰場模擬區",
+      "name": "春日微縮立方",
       "tokens": [
         {
           "category": "lore",
@@ -9177,7 +9180,7 @@
     {
       "card_id": "S05",
       "card_type": "場景卡",
-      "name": "方碑丘·地下避難所",
+      "name": "清溪河",
       "tokens": [
         {
           "category": "lore",
@@ -9250,7 +9253,7 @@
     {
       "card_id": "S06",
       "card_type": "場景卡",
-      "name": "方碑丘·夜間巡逻路線",
+      "name": "鏽蝕城邦（W04）",
       "tokens": [
         {
           "category": "skill",
@@ -9341,7 +9344,7 @@
     {
       "card_id": "S07",
       "card_type": "場景卡",
-      "name": "方碑丘·校園屋頂",
+      "name": "熒光沼澤（W04）",
       "tokens": [
         {
           "category": "lore",
@@ -9420,7 +9423,7 @@
     {
       "card_id": "S08",
       "card_type": "場景卡",
-      "name": "方碑丘·食堂",
+      "name": "玻璃荒漠（W04）",
       "tokens": [
         {
           "category": "lore",
@@ -9486,7 +9489,7 @@
     {
       "card_id": "S09",
       "card_type": "場景卡",
-      "name": "方碑丘·圖書館分館",
+      "name": "極北冰原",
       "tokens": [
         {
           "category": "lore",
@@ -9596,7 +9599,7 @@
     {
       "card_id": "S10",
       "card_type": "場景卡",
-      "name": "迴廊深層夢境（結晶大氣層）",
+      "name": "高密度大氣結晶行星（夢境層）",
       "tokens": [
         {
           "category": "lore",
@@ -9742,7 +9745,7 @@
     {
       "card_id": "S12",
       "card_type": "場景卡",
-      "name": "軌道居住站大學院",
+      "name": "軌道居住站大學院（三層區劃）",
       "tokens": [
         {
           "category": "lore",
@@ -9846,7 +9849,7 @@
     {
       "card_id": "S13",
       "card_type": "場景卡",
-      "name": "鏡湖火山口",
+      "name": "鏡山",
       "tokens": [
         {
           "category": "lore",
@@ -9945,7 +9948,7 @@
     {
       "card_id": "S14",
       "card_type": "場景卡",
-      "name": "中央大圖書館",
+      "name": "卡洛夫山脈",
       "tokens": [
         {
           "category": "lore",
@@ -9988,7 +9991,7 @@
     {
       "card_id": "S15",
       "card_type": "場景卡",
-      "name": "鏡湖周邊",
+      "name": "鏡湖",
       "tokens": [
         {
           "category": "lore",
@@ -10038,7 +10041,7 @@
     {
       "card_id": "S16",
       "card_type": "場景卡",
-      "name": "海峽",
+      "name": "卡洛夫角",
       "tokens": [
         {
           "category": "lore",
@@ -10086,7 +10089,7 @@
     {
       "card_id": "S17",
       "card_type": "場景卡",
-      "name": "西翼大市集",
+      "name": "霧海北海峽",
       "tokens": [
         {
           "category": "lore",
@@ -10132,7 +10135,7 @@
     {
       "card_id": "SC-01",
       "card_type": "場景卡",
-      "name": "英雄堡·銀行區",
+      "name": "農學院（The Institute）",
       "tokens": [
         {
           "category": "lore",
@@ -10170,7 +10173,7 @@
     {
       "card_id": "SC-02",
       "card_type": "場景卡",
-      "name": "暮色後巷",
+      "name": "魔女學府 M-值工程沙盒",
       "tokens": [
         {
           "category": "lore",
@@ -10207,7 +10210,7 @@
     {
       "card_id": "SC-20",
       "card_type": "場景卡",
-      "name": "虛空觀測台",
+      "name": "星光舞台（特戰偶像團載具）",
       "tokens": [
         {
           "category": "lore",
@@ -11520,27 +11523,32 @@
         {
           "category": "energy",
           "name": "春分靈氣",
-          "strength": 0.7
+          "strength": 0.7,
+          "value": "春分時節的妖精靈氣，能夠感知大地的復甦與生命能量的流動"
         },
         {
           "category": "exploration",
           "name": "隨行引導",
-          "strength": 0.6
+          "strength": 0.6,
+          "value": "作為春分隨行者，引導旅人穿越季節變換的地域"
         },
         {
           "category": "skill",
           "name": "節氣感知",
-          "strength": 0.6
+          "strength": 0.6,
+          "value": "精準感知二十四節氣的變化，預測天氣與自然現象"
         },
         {
           "category": "vitality",
           "name": "妖精生命力",
-          "strength": 0.4
+          "strength": 0.4,
+          "value": "妖精體質帶來的強韌生命力，與自然節律同步恢復"
         },
         {
           "category": "knowledge",
           "name": "自然曆法",
-          "strength": 0.6
+          "strength": 0.6,
+          "value": "掌握古老的節氣曆法知識，能解讀自然循環的奧秘"
         },
         {
           "category": "lore",
@@ -12090,27 +12098,32 @@
         {
           "category": "exploration",
           "name": "田野調查",
-          "strength": 0.7
+          "strength": 0.7,
+          "value": "長期在野外進行生態調查，記錄各類生物的習性與分布"
         },
         {
           "category": "knowledge",
           "name": "自然生態",
-          "strength": 0.6
+          "strength": 0.6,
+          "value": "深入理解自然生態系統的平衡與運作機制"
         },
         {
           "category": "energy",
           "name": "妖精螢光",
-          "strength": 0.6
+          "strength": 0.6,
+          "value": "妖精特有的螢光能力，在黑暗中發出柔和光芒，可用於照明與通訊"
         },
         {
           "category": "skill",
           "name": "隱蔽觀察",
-          "strength": 0.5
+          "strength": 0.5,
+          "value": "利用自然環境進行隱蔽，在不被發現的情況下觀察目標"
         },
         {
           "category": "vitality",
           "name": "妖精體質",
-          "strength": 0.4
+          "strength": 0.4,
+          "value": "妖精的輕盈體質，移動無聲且不易被察覺"
         },
         {
           "category": "lore",
@@ -14676,27 +14689,32 @@
         {
           "category": "knowledge",
           "name": "植物學",
-          "strength": 0.7
+          "strength": 0.7,
+          "value": "精通各類植物辨識、培育與應用知識"
         },
         {
           "category": "vitality",
           "name": "自然體質",
-          "strength": 0.5
+          "strength": 0.5,
+          "value": "與自然環境高度同步，在森林中獲得體質加成"
         },
         {
           "category": "exploration",
           "name": "野外勘察",
-          "strength": 0.6
+          "strength": 0.6,
+          "value": "擅長在野外尋找線索、追蹤目標與辨識地形"
         },
         {
           "category": "craft",
           "name": "樣本分析",
-          "strength": 0.5
+          "strength": 0.5,
+          "value": "快速分析植物樣本的成分與特性，推斷生長環境與用途"
         },
         {
           "category": "combat",
           "name": "藤蔓束縛",
-          "strength": 0.4
+          "strength": 0.4,
+          "value": "操控植物藤蔓進行束縛與絞殺，藤蔓上帶有細微倒刺"
         }
       ],
       "stats": {
@@ -14704,7 +14722,7 @@
         "attack": 4,
         "defense": 5,
         "speed": 6,
-        "role定位": "植物偵探"
+        "role定位": "植物偵探，田野觀察者"
       },
       "raw_field_count": 6,
       "abilities": [
@@ -14975,7 +14993,7 @@
     {
       "card_id": "S19",
       "card_type": "場景卡",
-      "name": "霧海南岸",
+      "name": "霧海南岸（沙灘與平原）",
       "tokens": [
         {
           "category": "lore",
@@ -15916,6 +15934,185 @@
         "total": 1,
         "categories": {
           "lore": 1
+        }
+      }
+    },
+    {
+      "card_id": "W02-小吉",
+      "card_type": "角色卡",
+      "name": "小吉",
+      "tokens": [
+        {
+          "category": "lore",
+          "name": "身份",
+          "value": "天翼種(幼年)，小吉鎮鎮長",
+          "strength": 0.6
+        },
+        {
+          "category": "lore",
+          "name": "種族",
+          "value": "天翼種（W02無魔版本）",
+          "strength": 0.5
+        },
+        {
+          "category": "lore",
+          "name": "年齡",
+          "value": "12歲（幼年期，壽命約800-1000年）",
+          "strength": 0.4
+        },
+        {
+          "category": "social",
+          "name": "交易話術",
+          "strength": 0.8
+        },
+        {
+          "category": "skill",
+          "name": "飛行滑翔",
+          "strength": 0.6
+        },
+        {
+          "category": "skill",
+          "name": "記憶交易細節",
+          "strength": 0.7
+        },
+        {
+          "category": "knowledge",
+          "name": "各村特產",
+          "strength": 0.6
+        },
+        {
+          "category": "vitality",
+          "name": "天翼種體質",
+          "strength": 0.5
+        },
+        {
+          "category": "craft",
+          "name": "收集鑑定",
+          "strength": 0.6
+        },
+        {
+          "category": "exploration",
+          "name": "空中偵察",
+          "strength": 0.5
+        }
+      ],
+      "stats": {
+        "role定位": "天翼種(幼年)，小吉鎮鎮長，交易樞紐創立者",
+        "race": "天翼種",
+        "age": "12",
+        "era": "W02琥珀紀元"
+      },
+      "raw_field_count": 10,
+      "abilities": [
+        {
+          "name": "交易話術",
+          "description": "資訊整合成精確價格判斷",
+          "category": "social"
+        },
+        {
+          "name": "飛行滑翔",
+          "description": "純空氣力學翅膀，需上升氣流",
+          "category": "skill"
+        },
+        {
+          "name": "語言模仿",
+          "description": "各村方言模仿",
+          "category": "skill"
+        },
+        {
+          "name": "絕對記憶",
+          "description": "記得每一件見過的貨物和交易細節",
+          "category": "knowledge"
+        }
+      ],
+      "token_summary": {
+        "total": 10,
+        "categories": {
+          "lore": 3,
+          "social": 1,
+          "skill": 2,
+          "knowledge": 1,
+          "vitality": 1,
+          "craft": 1,
+          "exploration": 1
+        }
+      }
+    },
+    {
+      "card_id": "W02-雞頭四",
+      "card_type": "角色卡",
+      "name": "雞頭四",
+      "tokens": [
+        {
+          "category": "lore",
+          "name": "身份",
+          "value": "大根莖村守護者兼祭典執行者（四人組）",
+          "strength": 0.6
+        },
+        {
+          "category": "lore",
+          "name": "所屬",
+          "value": "W02琥珀紀元·大根莖村",
+          "strength": 0.5
+        },
+        {
+          "category": "social",
+          "name": "祭典領導",
+          "strength": 0.6
+        },
+        {
+          "category": "skill",
+          "name": "破土之舞",
+          "strength": 0.6
+        },
+        {
+          "category": "vitality",
+          "name": "村民體魄",
+          "strength": 0.5
+        },
+        {
+          "category": "knowledge",
+          "name": "農耕曆法",
+          "strength": 0.5
+        },
+        {
+          "category": "combat",
+          "name": "雞頭威嚇",
+          "strength": 0.3
+        }
+      ],
+      "stats": {
+        "role定位": "大根莖村四位未婚青年擔任的守護者兼祭典執行者",
+        "race": "人類",
+        "era": "W02琥珀紀元"
+      },
+      "raw_field_count": 7,
+      "abilities": [
+        {
+          "name": "破土之舞",
+          "description": "播種祭儀式舞蹈，祈求豐收",
+          "category": "skill"
+        },
+        {
+          "name": "大根殿管理",
+          "description": "管理村中聖地大根殿",
+          "category": "skill"
+        },
+        {
+          "name": "祭典執行",
+          "description": "帶領三大祭典全部儀式",
+          "category": "social"
+        }
+      ],
+      "token_summary": {
+        "total": 7,
+        "categories": {
+          "lore": 2,
+          "social": 1,
+          "skill": 1,
+          "vitality": 1,
+          "knowledge": 1,
+          "combat": 1
         }
       }
     }

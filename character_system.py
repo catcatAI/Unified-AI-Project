@@ -355,7 +355,7 @@ def generate_character_from_card(card):
         "relationships": {},
         "inventory": [],
         "equipment": {},
-        "location": "方碑丘",
+        "location": "聖十字校園",
         "day": 1,
         "hour": 8,
         "alignment": "neutral",
@@ -395,13 +395,14 @@ def create_blank_character(name="旅人"):
         "relationships": {},
         "inventory": [],
         "equipment": {},
-        "location": "方碑丘",
+        "location": "聖十字校園",
         "day": 1,
         "hour": 8,
         "alignment": "neutral",
         "reputation": 0,
         "fatigue": 0,
         "pain": 0,
+        "familiarity": {},
     }
 
 

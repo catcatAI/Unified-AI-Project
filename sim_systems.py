@@ -271,16 +271,19 @@ ENEMIES = [
 ]
 
 LOCATION_ENEMIES = {
-    "方碑丘":         ["野狼","哥布林","盜賊"],
-    "鏡湖":           ["晶石蜘蛛","暗影靈","蛇妖"],
-    "西翼大市集":     ["哥布林","盜賊"],
-    "中央大圖書館":   ["暗影靈","石像鬼","幽靈"],
-    "海峽":           ["廢鐵傀儡","石像鬼","蛇妖"],
-    "秘密鐵工廠":     ["廢鐵傀儡","哥布林"],
-    "便利店":         ["盜賊","哥布林"],
-    "英靈殿":         ["古代守衛","幽靈","元素核心"],
-    "廢棄礦坑":       ["巨熊","晶石蜘蛛","廢鐵傀儡"],
-    "森林深處":       ["巨熊","野狼","蛇妖","元素核心"],
+    "聖十字校園":   ["哥布林","盜賊","野狼"],
+    "鏡湖":         ["晶石蜘蛛","暗影靈","蛇妖"],
+    "鬱鬱山":       ["巨熊","野狼","哥布林"],
+    "卡洛夫角":     ["盜賊","廢鐵傀儡","蛇妖"],
+    "霧海群島":     ["蛇妖","古代守衛","幽靈"],
+    "秘密鐵工廠":   ["廢鐵傀儡","哥布林"],
+    "便利店":       ["盜賊","哥布林"],
+    "英靈殿":       ["古代守衛","幽靈","元素核心"],
+    "廢棄礦坑":     ["巨熊","晶石蜘蛛","廢鐵傀儡"],
+    "森林深處":     ["巨熊","野狼","蛇妖","元素核心"],
+    "煙雲溫泉湖":   ["暗影靈","晶石蜘蛛"],
+    "清溪河":       ["野狼","蛇妖"],
+    "鏡山":         ["石像鬼","幽靈","古代守衛"],
 }
 
 def get_enemy(location: str) -> Optional[dict]:
@@ -304,33 +307,39 @@ def resolve_combat_turn(attacker_atk, attacker_spd, defender_def, defender_hp):
 
 
 # ═══════════════════════════════════════════════════════════
-# WORLD MAP (10 locations)
+# WORLD MAP (14 locations — rebuilt from scene cards)
 # ═══════════════════════════════════════════════════════════
 
 WORLD_MAP = {
-    "方碑丘":         {"east":"西翼大市集", "south":"中央大圖書館", "north":"鏡湖", "west":"森林深處"},
-    "鏡湖":           {"south":"方碑丘", "east":"海峽"},
-    "西翼大市集":     {"west":"方碑丘", "north":"便利店"},
-    "中央大圖書館":   {"north":"方碑丘", "east":"英靈殿"},
-    "海峽":           {"west":"鏡湖"},
-    "秘密鐵工廠":     {"east":"方碑丘"},
-    "便利店":         {"south":"西翼大市集"},
-    "英靈殿":         {"west":"中央大圖書館"},
-    "廢棄礦坑":       {"enter":"方碑丘"},
-    "森林深處":       {"east":"方碑丘"},
+    "聖十字校園": {"north":"鏡湖", "east":"鬱鬱山", "south":"清溪河", "west":"便利店"},
+    "鏡湖":       {"south":"聖十字校園", "east":"鏡山"},
+    "鬱鬱山":     {"west":"聖十字校園", "north":"煙雲溫泉湖", "east":"卡洛夫角"},
+    "卡洛夫角":   {"west":"鬱鬱山", "east":"霧海群島"},
+    "霧海群島":   {"west":"卡洛夫角"},
+    "秘密鐵工廠": {"east":"聖十字校園"},
+    "便利店":     {"east":"聖十字校園"},
+    "英靈殿":     {"east":"聖十字校園", "north":"鏡山"},
+    "廢棄礦坑":   {"enter":"清溪河"},
+    "森林深處":   {"east":"便利店"},
+    "煙雲溫泉湖": {"south":"鬱鬱山"},
+    "清溪河":     {"north":"聖十字校園"},
+    "鏡山":       {"south":"英靈殿", "west":"鏡湖"},
 }
 
 LOCATION_VIBES = {
-    "方碑丘":         "🌾 微風吹拂的寧靜村莊",
-    "鏡湖":           "💧 湖面如鏡，空氣中帶著水氣",
-    "西翼大市集":     "🏪 市集熱鬧，叫賣聲此起彼落",
-    "中央大圖書館":   "📚 書香四溢，安靜肅穆",
-    "海峽":           "🌊 海風陣陣，波濤拍打海岸",
-    "秘密鐵工廠":     "🔧 鐵鎚聲與蒸氣交織，火花四濺",
-    "便利店":         "🏪 明亮的小店，貨架上擺滿日常用品",
-    "英靈殿":         "⚔ 古老的大殿，牆上掛滿武器與旗幟",
-    "廢棄礦坑":       "⛏ 陰暗的礦坑入口，深不見底",
-    "森林深處":       "🌲 參天大樹遮天蔽日，鳥鳴迴盪",
+    "聖十字校園": "🏛 莊嚴的學術殿堂，迴廊與鐘樓交錯",
+    "鏡湖":       "💧 湖面如鏡，倒映著天空與山巒",
+    "鬱鬱山":     "⛰ 蒼翠山林，小徑蜿蜒其間",
+    "卡洛夫角":   "⚓ 海風吹拂的港灣，船隻往來",
+    "霧海群島":   "🏝 迷霧中的群島，神秘莫測",
+    "秘密鐵工廠": "🔧 鐵鎚聲不斷，火花四濺的工坊",
+    "便利店":     "🏪 明亮整潔的小店，應有盡有",
+    "英靈殿":     "🏛 古老的殿堂，牆上刻滿史詩",
+    "廢棄礦坑":   "⛏ 幽暗深邃的礦坑，深處傳來回聲",
+    "森林深處":   "🌲 密林遮天，只有獸徑可循",
+    "煙雲溫泉湖": "♨ 煙霧裊繞的溫泉，水氣氤氳",
+    "清溪河":     "🏞 清澈的溪流，河床鋪滿卵石",
+    "鏡山":       "🗻 山峰倒映在鏡湖中，如幻似真",
 }
 
 # ═══════════════════════════════════════════════════════════
@@ -338,16 +347,19 @@ LOCATION_VIBES = {
 # ═══════════════════════════════════════════════════════════
 
 LOCATION_TYPES = {
-    "方碑丘":         "outdoor",
-    "鏡湖":           "outdoor",
-    "西翼大市集":     "outdoor",
-    "中央大圖書館":   "indoor",
-    "海峽":           "outdoor",
-    "秘密鐵工廠":     "indoor",
-    "便利店":         "indoor",
-    "英靈殿":         "dungeon",
-    "廢棄礦坑":       "dungeon",
-    "森林深處":       "outdoor",
+    "聖十字校園":   "indoor",
+    "鏡湖":         "outdoor",
+    "鬱鬱山":       "outdoor",
+    "卡洛夫角":     "outdoor",
+    "霧海群島":     "outdoor",
+    "秘密鐵工廠":   "indoor",
+    "便利店":       "indoor",
+    "英靈殿":       "dungeon",
+    "廢棄礦坑":     "dungeon",
+    "森林深處":     "outdoor",
+    "煙雲溫泉湖":   "outdoor",
+    "清溪河":       "outdoor",
+    "鏡山":         "outdoor",
 }
 
 SCENE_TYPE_ICONS = {
@@ -392,10 +404,10 @@ ENTRY_REQUIREMENTS = {
         "min": 2,
         "fail_msg": "森林入口的荊棘叢生，你還沒有能力穿越。（等級 2）",
     },
-    "海峽": {
+    "卡洛夫角": {
         "type": "level",
         "min": 4,
-        "fail_msg": "通往海峽的棧道已經損壞，需要足夠的經驗才能安全通過。（等級 4）",
+        "fail_msg": "通往卡洛夫角的棧道已經損壞，需要足夠的經驗才能安全通過。（等級 4）",
     },
 }
 
@@ -496,7 +508,7 @@ def get_entry_requirement_hint(location):
 
 
 REAL_ESTATE = {
-    "方碑丘小屋": {
+    "聖十字校園宿舍": {
         "type":"house", "price":500, "functions":["rest","store"],
         "desc":"樸素的村莊小屋", "max_level":3,
         "upgrades":[
@@ -839,16 +851,16 @@ QUESTS = [
      "reward_exp":120,"reward_gold":50,"reward_item":"鋼刀","reward_reputation":15,
      "reward_relationships":{"左間小蒼蘭":20},"next_quest":"MQ-03"},
     {"id":"MQ-03","title":"圖書館之謎","type":"main","giver":"系統",
-     "desc":"中央大圖書館的地下層藏著古老的秘密。",
+     "desc":"聖十字校園的地下層藏著古老的秘密。",
      "conditions":{"required_level":5,"required_quests":["MQ-02"],"time_available":{"start_hour":0,"end_hour":24}},
-     "objectives":[{"type":"visit","target":"中央大圖書館","detail":"造訪中央大圖書館"},
+     "objectives":[{"type":"visit","target":"聖十字校園","detail":"探索聖十字校園地下層"},
                    {"type":"visit","target":"英靈殿","detail":"探索英靈殿"}],
      "reward_exp":100,"reward_gold":40,"reward_item":"記憶水晶","reward_reputation":20,
      "next_quest":"MQ-04"},
     {"id":"MQ-04","title":"世界的盡頭","type":"main","giver":"系統",
-     "desc":"前往海峽，尋找通往世界盡頭的道路。",
+     "desc":"前往卡洛夫角，尋找通往世界盡頭的道路。",
      "conditions":{"required_level":7,"required_quests":["MQ-03"],"time_available":{"start_hour":0,"end_hour":24}},
-     "objectives":[{"type":"visit","target":"海峽","detail":"到達海峽"},
+     "objectives":[{"type":"visit","target":"卡洛夫角","detail":"到達卡洛夫角"},
                    {"type":"defeat","target":"古代守衛","qty":1,"detail":"擊敗古代守衛"}],
      "reward_exp":200,"reward_gold":100,"reward_item":"神秘地圖","reward_reputation":30,
      "failure":{"timeout_hours":72,"on_fail":"penalty","penalty":{"gold":-50,"rep":-10}}},
@@ -866,12 +878,12 @@ QUESTS = [
      "objectives":[{"type":"collect","target":"鐵礦","qty":4,"detail":"收集4個鐵礦"}],
      "reward_exp":40,"reward_gold":20,"reward_item":"鐵劍","reward_reputation":8,
      "reward_relationships":{"小狐丸":15},"next_quest":"SQ-08"},
-    {"id":"SQ-03","title":"妖精的請求","type":"side","giver":"晴空",
-     "desc":"機械妖精晴空需要魔法粉來維持飛行翼膜。",
-     "conditions":{"required_race":"獸娘","required_relationships":{"晴空":15},"time_available":{"start_hour":8,"end_hour":20}},
+    {"id":"SQ-03","title":"妖精的請求","type":"side","giver":"紅",
+     "desc":"便利店需要魔法粉來補充貨架上的特殊商品。",
+     "conditions":{"required_race":"獸娘","required_relationships":{"紅":15},"time_available":{"start_hour":8,"end_hour":20}},
      "objectives":[{"type":"collect","target":"魔法粉","qty":2,"detail":"收集2份魔法粉"}],
      "reward_exp":50,"reward_gold":25,"reward_item":"護身符","reward_reputation":10,
-     "reward_relationships":{"晴空":15}},
+     "reward_relationships":{"紅":15}},
     {"id":"SQ-04","title":"森林巡邏","type":"side","giver":"系統",
      "desc":"森林深處最近不太平靜，去巡邏一下。",
      "conditions":{"required_level":3,"time_available":{"start_hour":6,"end_hour":18}},
@@ -885,9 +897,9 @@ QUESTS = [
                    {"type":"collect","target":"鐵礦","qty":6,"detail":"收集6個鐵礦"}],
      "reward_exp":70,"reward_gold":35,"reward_item":"鐵盔","reward_reputation":15},
     {"id":"SQ-06","title":"貨物運送","type":"side","giver":"紅",
-     "desc":"幫紅運送一批貨物到西翼大市集。",
+     "desc":"幫紅運送一批貨物到卡洛夫角。",
      "conditions":{"required_relationships":{"紅":15},"time_available":{"start_hour":6,"end_hour":20}},
-     "objectives":[{"type":"visit","target":"西翼大市集","detail":"造訪西翼大市集"}],
+     "objectives":[{"type":"visit","target":"卡洛夫角","detail":"造訪卡洛夫角"}],
      "reward_exp":25,"reward_gold":40,"reward_item":"乾糧","reward_reputation":5,
      "reward_relationships":{"紅":10}},
     {"id":"SQ-07","title":"修理工具","type":"side","giver":"左間小蒼蘭",
@@ -991,8 +1003,7 @@ VEHICLES = {
 }
 
 VEHICLE_LOCATIONS = {
-    "方碑丘":     "腳踏車",
-    "西翼大市集": "馬",
+    "聖十字校園": "腳踏車",
     "鏡湖":       "小舟",
     "秘密鐵工廠": "馬車",
 }
@@ -1110,8 +1121,8 @@ def get_water_routes(current_location):
     WATER_ROUTES = {
         "鏡湖":   {"boat_deep":"湖心島"},
         "湖心島": {"boat_back":"鏡湖"},
-        "海峽":   {"boat_market":"水上集市"},
-        "水上集市": {"boat_back":"海峽"},
+        "卡洛夫角":   {"boat_market":"水上集市"},
+        "水上集市": {"boat_back":"卡洛夫角"},
     }
     return WATER_ROUTES.get(current_location, {})
 
@@ -1120,7 +1131,7 @@ def do_fishing(character, location):
     """Execute fishing ability."""
     fish_tables = {
         "鏡湖": [("水晶碎片",0.3),("魚",0.5),("空瓶",0.3),("貝殼",0.4),("魔法粉",0.15),("古老硬幣",0.05)],
-        "海峽": [("魚",0.6),("貝殼",0.5),("彩色玻璃片",0.2),("幸運幣",0.1),("龍鱗",0.02)],
+        "卡洛夫角": [("魚",0.6),("貝殼",0.5),("彩色玻璃片",0.2),("幸運幣",0.1),("龍鱗",0.02)],
     }
     table = fish_tables.get(location, [("魚",0.4),("空瓶",0.3),("貝殼",0.3)])
     roll = _random.random()
@@ -1140,12 +1151,10 @@ def do_fishing(character, location):
 def do_trade(character, location):
     """Execute trade ability — buy/sell goods with location prices."""
     MARKET_PRICES = {
-        "方碑丘":       {"buy":1.0, "sell":0.6, "goods":["乾糧","草藥","空瓶"]},
-        "西翼大市集":   {"buy":0.8, "sell":0.7, "goods":["布料","絲線","皮革","乾糧"]},
+        "聖十字校園":   {"buy":1.0, "sell":0.6, "goods":["乾糧","草藥","空瓶"]},
         "秘密鐵工廠":   {"buy":1.2, "sell":0.5, "goods":["鐵礦","鐵錠","木柄","黏土"]},
         "鏡湖":         {"buy":1.1, "sell":0.5, "goods":["水晶碎片","魔法粉","魚"]},
-        "海峽":         {"buy":0.9, "sell":0.6, "goods":["貝殼","彩色玻璃片","魚","幸運幣"]},
-        "中央大圖書館": {"buy":1.3, "sell":0.4, "goods":["書信","蠟燭頭","記憶水晶"]},
+        "卡洛夫角":     {"buy":0.9, "sell":0.6, "goods":["貝殼","彩色玻璃片","魚","幸運幣"]},
         "便利店":       {"buy":0.9, "sell":0.6, "goods":["乾糧","提神茶","繃帶"]},
         "森林深處":     {"buy":1.0, "sell":0.5, "goods":["草藥","靈木","木柄","羽毛"]},
     }
@@ -1411,7 +1420,7 @@ def get_vehicle_part_status(vehicle_name, character):
 # ═══════════════════════════════════════════════════════════
 
 SCENE_OBJECTS = {
-    "方碑丘": [
+    "聖十字校園": [
         {"id":"well",    "name":"水井",     "type":"container","desc":"村莊中央的老水井","contents":["空瓶","小石頭"],"locked":False,"interactable":True},
         {"id":"bench",   "name":"長椅",     "type":"decoration","desc":"一張木製長椅","interactable":True},
         {"id":"notice",  "name":"佈告欄",    "type":"decoration","desc":"貼滿了各種告示","note":"徵人啟事：需要冒險者協助處理鏡湖異變","interactable":True},
@@ -1431,23 +1440,10 @@ SCENE_OBJECTS = {
          "requirements_msg":"需要在水晶祭壇上放置3枚水晶碎片。",
          "failure_msg":"祭壇沒有反應...需要放入更多的水晶碎片。"},
     ],
-    "西翼大市集": [
-        {"id":"stall1",  "name":"蔬果攤",    "type":"container","desc":"擺滿新鮮蔬果的攤位","contents":["乾糧","草藥"],"locked":False,"interactable":True},
-        {"id":"stall2",  "name":"雜貨攤",    "type":"container","desc":"賣著各種日用品的攤位","contents":["空瓶","麻繩","蠟燭頭"],"locked":False,"interactable":True},
-    ],
-    "中央大圖書館": [
-        {"id":"bookshelf","name":"書架",     "type":"container","desc":"高大的書架，上面擺滿了書","contents":["書信","古老鑰匙"],"locked":False,"interactable":True},
-        {"id":"desk",    "name":"閱讀桌",    "type":"decoration","desc":"一張木製閱讀桌","note":"桌上攤開了一本關於鏡湖的古老文獻","interactable":True},
-        {"id":"hidden_switch","name":"隱藏書架","type":"mechanism","mechanism_type":"hidden_switch","desc":"書架上的一本書位置有些奇怪",
-         "state":False,"trigger_once":True,"triggered":False,
-         "effect":{"type":"reveal","items":["古老鑰匙","神秘地圖"],
-                   "message":"書架緩緩滑開，露出了後方的暗格！"},
-         "on_repeat":"暗格已經被打開了。"},
-    ],
-    "海峽": [
+    "卡洛夫角": [
         {"id":"lighthouse","name":"燈塔開關","type":"mechanism","mechanism_type":"lever","desc":"海峽燈塔的控制桿",
          "state":False,"trigger_once":False,"triggered":False,
-         "effect":{"type":"route_open","target":"海峽","value":"east",
+         "effect":{"type":"route_open","target":"卡洛夫角","value":"east",
                    "message":"燈塔的光芒照射向遠方，照亮了一片未知的海域！"},
          "on_repeat":"燈塔已經被點亮了。"},
     ],
@@ -1489,7 +1485,7 @@ SCENE_OBJECTS = {
         {"id":"trolley", "name":"礦車",     "type":"container","desc":"廢棄的礦車","contents":["鐵礦","小石頭"],"locked":False,"interactable":True},
         {"id":"lever",   "name":"礦車控制桿","type":"mechanism","mechanism_type":"lever","desc":"控制礦車軌道的轉轍器",
          "state":False,"trigger_once":True,"triggered":False,
-         "effect":{"type":"teleport","target":"方碑丘",
+         "effect":{"type":"teleport","target":"聖十字校園",
                    "message":"你拉下了控制桿！礦車順著軌道疾馳而去..."},
          "on_repeat":"轉轍器已經被扳動過了。"},
         {"id":"explosive","name":"爆破裝置",  "type":"mechanism","mechanism_type":"pedestal","desc":"礦坑深處的爆破裝置",
@@ -1847,9 +1843,11 @@ def display_world_map(current_location):
     lines.append('世界地図:')
     lines.append('')
     lines.append('    +---------+---------+')
-    lines.append('    |  鏡湖   |  海峽   |')
+    lines.append('    |  鏡湖   |  鏡山   |')
+    lines.append('    +----+----+---------+')
+    lines.append('    |聖校|  鬱鬱山  卡洛夫|')
     lines.append('    +----+----+----+----+')
-    lines.append('    |秘鐵| 方碑丘 |西翼 |')
+    lines.append('    |清溪河  |  煙雲   |')
     lines.append('    +----+----+----+----+')
     lines.append('         |    |    |    |')
     lines.append('    +----+----+----+    +')

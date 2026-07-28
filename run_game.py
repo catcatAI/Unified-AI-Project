@@ -117,6 +117,8 @@ from character_system import (
     BODY_PARTS,
     C,
 )
+from game_familiarity import (get_display_name, get_revealed_info,
+    get_level_name, gain_familiarity, get_level_up_message, init_familiarity)
 
 # ── Globals ────────────────────────────────────────────────────────────────
 _current_season = "春"
@@ -168,7 +170,7 @@ def _gm_narrate(character, new_location=None):
 
     # ── Location prose (time-specific) ──
     gm_descs = {
-        "方碑丘": {
+        "聖十字校園": {
             "早晨": "晨霧中的稻田閃爍著露珠，村莊從睡夢中醒來，雞鳴聲此起彼落。",
             "正午": "村莊廣場上熱鬧了起來，農民們在樹蔭下休息，分享著午餐。",
             "午後": "慵懶的午後，風吹過稻田，掀起金色的波浪。幾隻狗趴在路邊打盹。",
@@ -182,26 +184,17 @@ def _gm_narrate(character, new_location=None):
             "傍晚": "夕陽將湖面染成一片金紅，天色與水色交融，美不勝收。",
             "夜晚": "月光灑在湖面上，銀白色的光芒在水中搖曳。四周一片寂靜。",
         },
-        "西翼大市集": {
+        "卡洛夫角": {
             "早晨": "攤販們忙著擺設商品，市集漸漸甦醒。新鮮蔬果的香氣在空氣中飄散。",
             "正午": "市集達到高峰，人聲鼎沸。各種叫賣聲、討價還價聲交織成熱鬧的樂章。",
             "午後": "人潮稍退，但仍有不少顧客在各個攤位前流連。烤肉和香料的香氣交織。",
             "傍晚": "攤販們開始收拾，市集即將打烊。最後幾筆交易在暮色中完成。",
             "夜晚": "市集的燈火逐一熄滅，只剩下幾盞照明燈在空蕩的街道上投下光影。",
-        },
-        "中央大圖書館": {
-            "早晨": "晨光透過彩繪玻璃窗，在書架間投下斑斕的光影。空氣中飄散著紙張和墨水香。",
-            "正午": "圖書館內光線明亮，陽光從高處的天窗灑落。讀書人的翻頁聲輕輕迴盪。",
-            "午後": "午後的圖書館格外寧靜，只有筆尖在紙上摩擦的沙沙聲。塵埃在光柱中飛舞。",
-            "傍晚": "暮色中的圖書館籠罩在一片溫暖的昏暗中，管理員開始點燃油燈。",
-            "夜晚": "月光從窗戶透入，書架在黑暗中投下長長的影子。圖書館幽深而神秘。",
-        },
-        "海峽": {
-            "早晨": "晨風強勁，海面上波光粼粼。海鷗在礁石上棲息，時而振翅飛起。",
-            "正午": "陽光下的海面一片湛藍，浪花拍打著岩岸，濺起白色的泡沫。",
-            "午後": "海風帶著鹹味，潮汐漸漸退去，露出潮間帶的岩石和貝殼。",
-            "傍晚": "夕陽沈入海平面，將天空和海面染成一片絢麗的橘紅。美景令人屏息。",
-            "夜晚": "海浪聲在夜色中格外清晰。海面上倒映著月光，像是碎銀鋪成的路。",
+            "海峽-早晨": "晨風強勁，海面上波光粼粼。海鷗在礁石上棲息，時而振翅飛起。",
+            "海峽-正午": "陽光下的海面一片湛藍，浪花拍打著岩岸，濺起白色的泡沫。",
+            "海峽-午後": "海風帶著鹹味，潮汐漸漸退去，露出潮間帶的岩石和貝殼。",
+            "海峽-傍晚": "夕陽沈入海平面，將天空和海面染成一片絢麗的橘紅。美景令人屏息。",
+            "海峽-夜晚": "海浪聲在夜色中格外清晰。海面上倒映著月光，像是碎銀鋪成的路。",
         },
         "秘密鐵工廠": {
             "早晨": "鐵工廠一早便響起金屬撞擊聲。爐火映紅了工人的臉龐。",
@@ -406,7 +399,9 @@ def print_status(character):
     for npc_name, act, nloc, mood in npcs_here[:5]:
         mc = {"calm":C.GREEN,"alert":C.RED,"rest":C.BLUE,"friendly":C.MAGENTA,"sleep":C.GRAY,"focused":C.CYAN}
         mcol = mc.get(mood, C.WHITE)
-        print("  " + C.CYAN + npc_name + C.RESET + ": " + act + " @ " + cur_loc + " (" + mcol + mood + C.RESET + ")")
+        npc_data = getattr(sim_systems, 'NPC_METADATA', {}).get(npc_name, {})
+        display_name = get_display_name(character, npc_name, npc_data)
+        print("  " + C.CYAN + display_name + C.RESET + ": " + act + " @ " + cur_loc + " (" + mcol + mood + C.RESET + ")")
     if not npcs_here:
         print(C.GRAY + "  附近似乎沒有NPC。" + C.RESET)
     # Active quests count
@@ -1272,6 +1267,29 @@ def do_scene_search(character, equipment):
 # NPC INTERACTION
 # ═══════════════════════════════════════════════════════════════════════════
 
+def _shop_at_location(character, loc):
+    """Generic shop at commercial locations."""
+    rep = character.get("reputation", 0)
+    print(C.CYAN+"  商店 ("+loc+"):"+C.RESET)
+    items_sold = [("草藥",10),("乾糧",8),("治療藥水",40),("皮甲",60),("解毒草",20)]
+    for i,(name,price) in enumerate(items_sold,1):
+        lock = "" if i<4 else C.DIM+" (需聲望%d)"%({"皮甲":20,"解毒草":10}.get(name,0))+C.RESET
+        print("  %d. %s (%dG)%s"%(i,name,price,lock))
+    bc = input("  %s購買編號 (0取消):%s "%(C.YELLOW,C.RESET)).strip()
+    if bc.isdigit():
+        bi = int(bc)-1
+        if 0<=bi<len(items_sold):
+            iname, iprice = items_sold[bi]
+            rep_needed = {"草藥":0,"乾糧":0,"治療藥水":0,"皮甲":20,"解毒草":10}.get(iname,0)
+            if rep<rep_needed:
+                print(C.RED+"  聲望不足 (需%d)"%rep_needed+C.RESET)
+            elif character.get("gold",0)>=iprice:
+                character["gold"]=character.get("gold",0)-iprice
+                character["inventory"].append(iname)
+                print(C.GREEN+"  買了 %s!"%iname+C.RESET)
+            else:
+                print(C.RED+"  金幣不足!"+C.RESET)
+
 def do_interact_npc(character):
     loc = character["location"]
     rep = character.get("reputation",0)
@@ -1291,7 +1309,9 @@ def do_interact_npc(character):
     for i,(n,act,aloc,m) in enumerate(npcs_here,1):
         mc_icons = {"focused":"⚔","alert":"👁","rest":"💤","friendly":"😊","sleep":"😴"}
         ic = mc_icons.get(m,"•")
-        print("    %d. %s%s %s (%s)"%(i,ic,n,act))
+        npc_data = getattr(sim_systems, 'NPC_METADATA', {}).get(n, {})
+        dname = get_display_name(character, n, npc_data)
+        print("    %d. %s%s %s (%s)"%(i, ic, dname, act))
     print("    %s0. 取消%s"%(C.GRAY,C.RESET))
     ch = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
     if not ch.isdigit(): return
@@ -1425,17 +1445,26 @@ def do_interact_npc(character):
 
     else:
         # Generic NPC interaction for dynamically generated NPCs
-        print("\n"+C.CYAN+"  %s正在%s。"%(npc_name,npc_act)+C.RESET)
+        npc_data = getattr(sim_systems, 'NPC_METADATA', {}).get(npc_name, {})
+        revealed = get_revealed_info(character, npc_name, npc_data)
+        dname = get_display_name(character, npc_name, npc_data)
+        flev_name = get_level_name(character, npc_name)
         rep_tier = get_reputation_tier(rep)
         mood_color = {"calm":C.GREEN,"alert":C.RED,"rest":C.BLUE,"friendly":C.MAGENTA,"sleep":C.GRAY,"focused":C.CYAN}
         mood_icon = {"focused":"⚔","alert":"👁","rest":"💤","friendly":"😊","sleep":"😴"}
-        print(C.CYAN+"  %s: 聲望[%s] %s%s%s"%(npc_name,rep_tier,mood_icon.get(npc_mood,""),mood_color.get(npc_mood,C.WHITE),npc_mood)+C.RESET)
-        # Show NPC abilities if available (from NPC_SCHEDULES data)
-        npc_data = getattr(sim_systems, 'NPC_METADATA', {}).get(npc_name, {})
-        if isinstance(npc_data, dict) and npc_data.get("ability_details"):
-            ab_names = [a.get("name","")[:12] for a in npc_data["ability_details"] if a.get("name","")]
-            if ab_names:
-                print(C.YELLOW+"  ✦ 能力: "+C.RESET+", ".join(ab_names))
+        # Show progressive info based on familiarity
+        print("\n"+C.CYAN+"  %s正在%s。"%(dname,npc_act)+C.RESET)
+        print(C.DIM+"  熟識度: %s | 聲望: [%s] %s%s%s"%(flev_name,rep_tier,mood_icon.get(npc_mood,""),mood_color.get(npc_mood,C.WHITE),npc_mood)+C.RESET)
+        if revealed.get("race") and revealed.get("level") >= 1:
+            print(C.CYAN+"  種族: %s"%revealed["race"]+C.RESET)
+        if revealed.get("role_hint"):
+            print(C.CYAN+"  印象: %s"%revealed["role_hint"]+C.RESET)
+        if revealed.get("description"):
+            print(C.CYAN+"  ── "+revealed["description"][:200]+C.RESET)
+        if revealed.get("abilities"):
+            print(C.YELLOW+"  ✦ 能力: "+C.RESET+", ".join(revealed["abilities"]))
+        if revealed.get("secrets_unlocked"):
+            print(C.MAGENTA+"  ★ 羈絆: 你與%s之間有著深厚的連結。"%npc_name+C.RESET)
         # Reputation-based greeting variety
         greet_pool = {
             "敵意": ["「...離我遠點。」","「哼。」","「你來做什麼？」"],
@@ -1445,35 +1474,32 @@ def do_interact_npc(character):
             "親密": ["「你來啦!","","「剛好想找你!","","一起去喝杯茶?",""],
         }
         greet = _random.choice(greet_pool.get(rep_tier, ["「...」"]))
-        # 80+ reputation: hidden info & special dialogue
         if rep >= 80:
             print(C.MAGENTA + "  (好感度高，%s露出了開心的笑容。)"%npc_name + C.RESET)
             if _random.random() < 0.4:
                 hidden_info = [
                     "悄悄告訴你，鏡湖深處藏著古代的遺跡...",
                     "你知道嗎？英靈殿底下還有更深的樓層。",
-                    "我聽說西翼市集有人賣很特別的東西...",
+                    "我聽說卡洛夫角有人賣很特別的東西...",
                     "這個世界遠比你想像的大。",
                 ]
                 print(C.MAGENTA + "  %s低聲說: 「%s」" % (npc_name, _random.choice(hidden_info)) + C.RESET)
                 gain_skill_exp(character, "knowledge", 5)
-        
-        # Use NPC_DIALOGUES for varied dialogue options
+
+        # NPC_DIALOGUES for varied dialogue
         npc_dialogues = getattr(sim_systems, 'NPC_DIALOGUES', {}).get(npc_name, [])
         if npc_dialogues:
-            # Filter out goodbye line and flavor lines (微笑んだ, 考え込んでいる, 遠くを見つめている)
             dialogue_lines = [d for d in npc_dialogues
                               if d != "「また会おう。」"
                               and not ("微笑" in d or "考え込" in d or "遠くを見つめ" in d)]
             if dialogue_lines:
-                extra_dialogue = _random.choice(dialogue_lines[:6])  # Pick from first 6 token-based lines
+                extra_dialogue = _random.choice(dialogue_lines[:6])
                 print(C.DIM + "  %s" % extra_dialogue + C.RESET)
-        
+
         print(C.CYAN+"  1. "+C.GREEN+"打招呼"+C.RESET)
         print(C.CYAN+"  2. "+C.BLUE+"交流"+C.RESET+" (SP-10)")
         print(C.CYAN+"  3. "+C.CYAN+"送禮物"+C.RESET)
-        # Shop option for NPCs at commercial locations
-        shop_locations = ["西翼大市集","便利店"]
+        shop_locations = ["卡洛夫角","便利店"]
         if loc in shop_locations:
             print(C.CYAN+"  4. "+C.YELLOW+"商店 (買東西)"+C.RESET)
         quest_opt = 5 if loc in shop_locations else 4
@@ -1486,6 +1512,9 @@ def do_interact_npc(character):
             print(C.YELLOW+'  %s: %s %s'%(npc_name,greet,npc_emote)+C.RESET)
             add_relationship(character,npc_name,2)
             modify_reputation(character,1)
+            lvl_up = gain_familiarity(character, npc_name, "greet")
+            if lvl_up:
+                print(C.MAGENTA+"  ★ "+get_level_up_message(npc_name, lvl_up)+C.RESET)
         elif c=="2":
             if character["sp"]>=10:
                 character["sp"]-=10
@@ -1494,6 +1523,9 @@ def do_interact_npc(character):
                 for m in gain_exp_with_skills(character,eg,"social",3):
                     print("  "+C.MAGENTA+m+C.RESET)
                 add_relationship(character,npc_name,5)
+                lvl_up = gain_familiarity(character, npc_name, "chat")
+                if lvl_up:
+                    print(C.MAGENTA+"  ★ "+get_level_up_message(npc_name, lvl_up)+C.RESET)
             else:
                 print(C.RED+"  SP不足!"+C.RESET)
         elif c=="3":
@@ -1501,7 +1533,7 @@ def do_interact_npc(character):
             if gifts:
                 g = _random.choice(gifts)
                 character["inventory"].remove(g)
-                rep_gain = 8 + rep//20  # More rep = better gift reception
+                rep_gain = 8 + rep//20
                 add_relationship(character,npc_name,rep_gain)
                 modify_reputation(character,2)
                 gift_responses = {
@@ -1516,10 +1548,14 @@ def do_interact_npc(character):
                     print(C.GREEN+"  送出%s! %s"%(g,gr%g)+C.RESET)
                 else:
                     print(C.GREEN+"  送出%s! %s"%(g,gr)+C.RESET)
+                lvl_up = gain_familiarity(character, npc_name, "gift")
+                if lvl_up:
+                    print(C.MAGENTA+"  ★ "+get_level_up_message(npc_name, lvl_up)+C.RESET)
             else:
                 print(C.GRAY+"  沒有可送的禮物。"+C.RESET)
-        elif c=="4" and rep >= 50:
-            # Find eligible available quests
+        elif c=="4" and loc in shop_locations:
+            _shop_at_location(character, loc)
+        elif c==str(quest_opt) and rep >= 50:
             available = get_available_quests(character)
             eligible = [q for q, reason in available if reason is None and q["type"]=="side"]
             ineligible = [q for q, reason in available if reason is not None and q["type"]=="side"]
@@ -1529,6 +1565,9 @@ def do_interact_npc(character):
                 print(C.GREEN+"  ✓ 接受了任務: %s"%q["title"]+C.RESET)
                 print(C.DIM+"    %s"%q["desc"]+C.RESET)
                 add_relationship(character,npc_name,10)
+                lvl_up = gain_familiarity(character, npc_name, "quest")
+                if lvl_up:
+                    print(C.MAGENTA+"  ★ "+get_level_up_message(npc_name, lvl_up)+C.RESET)
             elif ineligible:
                 q, reason = ineligible[0]
                 print(C.YELLOW+"  ⚠ 有任務但條件不符: %s - %s" % (q["title"], reason)+C.RESET)
@@ -1981,6 +2020,7 @@ def start_game():
 
     _current_weather = roll_weather()
     character = select_character()
+    init_familiarity(character)
     equipment = EquipmentManager(character)  # Pass character for race-specific slots
     equipment.apply_stat_bonuses(character)
 
@@ -2044,6 +2084,7 @@ def start_game():
             saved = load_game()
             if saved:
                 character = saved
+                init_familiarity(character)
                 print(C.GREEN+"  讀檔成功!"+C.RESET)
             else:
                 print(C.RED+"  沒有存檔。"+C.RESET)
