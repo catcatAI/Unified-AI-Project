@@ -266,11 +266,85 @@ def get_card_by_id(card_id):
     return None
 
 
+def _auto_categorize_token(name: str, value: str) -> str:
+    """Auto-assign a category to a token if it doesn't have one.
+    This ensures new cards with missing category field still work correctly.
+    
+    NOTE: Priority order is designed to match scripts/_fix_card_tokens.py
+    for consistency. First-match wins.
+    """
+    text = (name + " " + str(value)).lower()
+    
+    # Priority order: vitality (HP/body) → combat → craft → knowledge → social → element → energy → exploration
+    # This matches the character_system.py stat calculation expectation
+    
+    vitality_kw = ["體力", "生命", "活力", "體質", "耐久", "hp", "vitality", "恢復",
+                    "治癒", "復活", "護盾", "防禦", "defense", "健康", "耐力",
+                    "傷", "痛", "疲勞", "流血", "身體", "感官", "生理", "體能"]
+    for kw in vitality_kw:
+        if kw in text:
+            return "vitality"
+    
+    combat_kw = ["戰鬥", "攻", "戰", "武", "兵", "劍", "刀", "槍", "弓", "attack", "combat",
+                 "格鬥", "近戰", "遠程", "射擊", "暗殺", "獵殺", "戰技", "破壞",
+                 "戰術", "暴擊", "殺", "殲滅"]
+    for kw in combat_kw:
+        if kw in text:
+            return "combat"
+    
+    craft_kw = ["製作", "工匠", "鍛造", "工藝", "craft", "製造", "合成", "修理", "料理",
+                 "烹飪", "採集", "挖礦", "建築", "材料", "工具", "手工", "零件"]
+    for kw in craft_kw:
+        if kw in text:
+            return "craft"
+    
+    knowledge_kw = ["知識", "研究", "學習", "閱讀", "智慧", "情報", "解析",
+                     "實驗", "教學", "教育", "術式", "咒", "符文", "科學"]
+    for kw in knowledge_kw:
+        if kw in text:
+            return "knowledge"
+    
+    social_kw = ["社交", "人際", "溝通", "交易", "商", "貿易", "social", "charisma",
+                  "關係", "交涉", "說服", "表演", "歌唱", "音樂", "聲望", "服務"]
+    for kw in social_kw:
+        if kw in text:
+            return "social"
+    
+    element_kw = ["元素", "火", "炎", "水", "冰", "風", "雷", "電", "土", "光", "闇", "暗",
+                   "element", "神性", "神力", "龍", "精靈", "魔法", "魔力", "mana"]
+    for kw in element_kw:
+        if kw in text:
+            return "element"
+    
+    energy_kw = ["能量", "能源", "動力", "靈力", "內力", "法力", "energy", "power",
+                  "靈子", "氣", "精神", "意志", "蒸氣", "共鳴", "迴廊"]
+    for kw in energy_kw:
+        if kw in text:
+            return "energy"
+    
+    explore_kw = ["探索", "探險", "冒險", "旅行", "移動", "地圖", "發現", "搜索", "速度",
+                   "敏捷", "飛行", "奔跑", "騎乘", "exploration", "adventure",
+                   "野外", "洞穴", "隱匿", "潛行"]
+    for kw in explore_kw:
+        if kw in text:
+            return "exploration"
+    
+    return "general"
+
+
 def generate_character_from_card(card):
     name = card.get("name", "旅人")
     tokens = list(card.get("tokens", []))  # Copy to avoid mutating shared card list
     stats = card.get("stats", {})
     abilities = card.get("abilities", [])
+    
+    # Auto-assign category for tokens missing it (future-proofing)
+    for t in tokens:
+        if isinstance(t, dict) and not t.get("category"):
+            tname = t.get("name", t.get("id", ""))
+            tval = t.get("value", "")
+            t["category"] = _auto_categorize_token(tname, tval)
+    
     token_categories = {}
     for t in tokens:
         cat = t.get("category", "unknown")
