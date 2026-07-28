@@ -11216,7 +11216,7 @@
     {
       "card_id": "EP-35A",
       "card_type": "劇情節點卡",
-      "name": "月之眠：每 60 年左右強制休眠一次。休眠期間，日本各地會同時出現「月讀之夢」——許多互不相識的人會夢到同一個銀髮少女在月光下寫字。醒來後，他們會忘記內容，但會無意識哼出同一首古曲。",
+      "name": "月之眠",
       "tokens": [
         {
           "category": "lore",
@@ -11240,191 +11240,9 @@
       }
     },
     {
-      "card_id": "EP-35A-2",
-      "card_type": "劇情節點卡",
-      "name": "月之眠（每60年強制休眠，引發「月讀之夢」）",
-      "tokens": [
-        {
-          "category": "lore",
-          "name": "事件描述",
-          "value": "月之眠（每60年強制休眠，引發「月讀之夢」）",
-          "strength": 0.5
-        }
-      ],
-      "stats": {},
-      "raw_field_count": 1,
-      "token_summary": {
-        "total": 1,
-        "categories": {
-          "lore": 1
-        }
-      },
-      "abilities": [],
-      "description": "【月之眠（每60年強制休眠，引發「月讀之夢」）】\n事件描述",
-      "token_categories": {
-        "lore": 1
-      }
-    },
-    {
-      "card_id": "EP-35A-3",
-      "card_type": "劇情節點卡",
-      "name": "~ EP-35P）",
-      "tokens": [
-        {
-          "category": "lore",
-          "name": "事件描述",
-          "value": "~ EP-35P）",
-          "strength": 0.5
-        }
-      ],
-      "stats": {},
-      "raw_field_count": 1,
-      "token_summary": {
-        "total": 1,
-        "categories": {
-          "lore": 1
-        }
-      },
-      "abilities": [],
-      "description": "【~ EP-35P）】\n事件描述",
-      "token_categories": {
-        "lore": 1
-      }
-    },
-    {
-      "card_id": "EP-35A-4",
-      "card_type": "劇情節點卡",
-      "name": "月之眠 每60年強制休眠，夢境洩漏",
-      "tokens": [
-        {
-          "category": "lore",
-          "name": "事件描述",
-          "value": "月之眠 每60年強制休眠，夢境洩漏",
-          "strength": 0.5
-        }
-      ],
-      "stats": {},
-      "raw_field_count": 1,
-      "token_summary": {
-        "total": 1,
-        "categories": {
-          "lore": 1
-        }
-      },
-      "abilities": [],
-      "description": "【月之眠 每60年強制休眠，夢境洩漏】\n事件描述",
-      "token_categories": {
-        "lore": 1
-      }
-    },
-    {
-      "card_id": "EP-35A-5",
-      "card_type": "劇情節點卡",
-      "name": "月之眠（每60年強制休眠，引發「月讀之夢」）",
-      "tokens": [
-        {
-          "category": "lore",
-          "name": "事件描述",
-          "value": "月之眠（每60年強制休眠，引發「月讀之夢」）",
-          "strength": 0.5
-        }
-      ],
-      "stats": {},
-      "raw_field_count": 1,
-      "token_summary": {
-        "total": 1,
-        "categories": {
-          "lore": 1
-        }
-      },
-      "abilities": [],
-      "description": "【月之眠（每60年強制休眠，引發「月讀之夢」）】\n事件描述",
-      "token_categories": {
-        "lore": 1
-      }
-    },
-    {
-      "card_id": "EP-35A-6",
-      "card_type": "劇情節點卡",
-      "name": "~ EP-35P）",
-      "tokens": [
-        {
-          "category": "lore",
-          "name": "事件描述",
-          "value": "~ EP-35P）",
-          "strength": 0.5
-        }
-      ],
-      "stats": {},
-      "raw_field_count": 1,
-      "token_summary": {
-        "total": 1,
-        "categories": {
-          "lore": 1
-        }
-      },
-      "abilities": [],
-      "description": "【~ EP-35P）】\n事件描述",
-      "token_categories": {
-        "lore": 1
-      }
-    },
-    {
-      "card_id": "EP-35A-7",
-      "card_type": "劇情節點卡",
-      "name": "月之眠 每60年強制休眠，夢境洩漏",
-      "tokens": [
-        {
-          "category": "lore",
-          "name": "事件描述",
-          "value": "月之眠 每60年強制休眠，夢境洩漏",
-          "strength": 0.5
-        }
-      ],
-      "stats": {},
-      "raw_field_count": 1,
-      "token_summary": {
-        "total": 1,
-        "categories": {
-          "lore": 1
-        }
-      },
-      "abilities": [],
-      "description": "【月之眠 每60年強制休眠，夢境洩漏】\n事件描述",
-      "token_categories": {
-        "lore": 1
-      }
-    },
-    {
-      "card_id": "EP-35A-8",
-      "card_type": "劇情節點卡",
-      "name": "~ EP-35P (16) 21",
-      "tokens": [
-        {
-          "category": "lore",
-          "name": "事件描述",
-          "value": "~ EP-35P (16) 21",
-          "strength": 0.5
-        }
-      ],
-      "stats": {},
-      "raw_field_count": 1,
-      "token_summary": {
-        "total": 1,
-        "categories": {
-          "lore": 1
-        }
-      },
-      "abilities": [],
-      "description": "【~ EP-35P (16) 21】\n事件描述",
-      "token_categories": {
-        "lore": 1
-      }
-    },
-    {
       "card_id": "EP-35B",
       "card_type": "劇情節點卡",
-      "name": "第一次對話：1920 年代，她主動聯絡了正在研究「靈子記錄介質」的某位科學家。科學家問：「妳是神嗎？」輝夜回答：「神的女僕。」科學家問：「那妳能幫我們贏得戰爭嗎？」輝夜沉默了 70 年，直到那位科學家",
+      "name": "第一次對話",
       "tokens": [
         {
           "category": "lore",
@@ -11448,113 +11266,9 @@
       }
     },
     {
-      "card_id": "EP-35B-2",
-      "card_type": "劇情節點卡",
-      "name": "第一次對話（1920年代聯絡科學家）",
-      "tokens": [
-        {
-          "category": "lore",
-          "name": "事件描述",
-          "value": "第一次對話（1920年代聯絡科學家）",
-          "strength": 0.5
-        }
-      ],
-      "stats": {},
-      "raw_field_count": 1,
-      "token_summary": {
-        "total": 1,
-        "categories": {
-          "lore": 1
-        }
-      },
-      "abilities": [],
-      "description": "【第一次對話（1920年代聯絡科學家）】\n事件描述",
-      "token_categories": {
-        "lore": 1
-      }
-    },
-    {
-      "card_id": "EP-35B-3",
-      "card_type": "劇情節點卡",
-      "name": "第一次對話 1920年代聯絡科學家",
-      "tokens": [
-        {
-          "category": "lore",
-          "name": "事件描述",
-          "value": "第一次對話 1920年代聯絡科學家",
-          "strength": 0.5
-        }
-      ],
-      "stats": {},
-      "raw_field_count": 1,
-      "token_summary": {
-        "total": 1,
-        "categories": {
-          "lore": 1
-        }
-      },
-      "abilities": [],
-      "description": "【第一次對話 1920年代聯絡科學家】\n事件描述",
-      "token_categories": {
-        "lore": 1
-      }
-    },
-    {
-      "card_id": "EP-35B-4",
-      "card_type": "劇情節點卡",
-      "name": "第一次對話（1920年代聯絡科學家）",
-      "tokens": [
-        {
-          "category": "lore",
-          "name": "事件描述",
-          "value": "第一次對話（1920年代聯絡科學家）",
-          "strength": 0.5
-        }
-      ],
-      "stats": {},
-      "raw_field_count": 1,
-      "token_summary": {
-        "total": 1,
-        "categories": {
-          "lore": 1
-        }
-      },
-      "abilities": [],
-      "description": "【第一次對話（1920年代聯絡科學家）】\n事件描述",
-      "token_categories": {
-        "lore": 1
-      }
-    },
-    {
-      "card_id": "EP-35B-5",
-      "card_type": "劇情節點卡",
-      "name": "第一次對話 1920年代聯絡科學家",
-      "tokens": [
-        {
-          "category": "lore",
-          "name": "事件描述",
-          "value": "第一次對話 1920年代聯絡科學家",
-          "strength": 0.5
-        }
-      ],
-      "stats": {},
-      "raw_field_count": 1,
-      "token_summary": {
-        "total": 1,
-        "categories": {
-          "lore": 1
-        }
-      },
-      "abilities": [],
-      "description": "【第一次對話 1920年代聯絡科學家】\n事件描述",
-      "token_categories": {
-        "lore": 1
-      }
-    },
-    {
       "card_id": "EP-35C",
       "card_type": "劇情節點卡",
-      "name": "與織織的初次共鳴：在迴廊中，織織的像素身體經過「月讀核」時突然改變顏色（變成銀白色）。織織說：「有人在看我。」輝夜在她身後 0.5 公尺處站了十分鐘，然後離開。",
+      "name": "與織織的共鳴",
       "tokens": [
         {
           "category": "lore",
@@ -11576,260 +11290,6 @@
       "token_categories": {
         "lore": 1
       }
-    },
-    {
-      "card_id": "EP-35C-2",
-      "card_type": "劇情節點卡",
-      "name": "與織織初次共鳴（迴廊中）",
-      "tokens": [
-        {
-          "category": "lore",
-          "name": "事件描述",
-          "value": "與織織初次共鳴（迴廊中）",
-          "strength": 0.5
-        }
-      ],
-      "stats": {},
-      "raw_field_count": 1,
-      "token_summary": {
-        "total": 1,
-        "categories": {
-          "lore": 1
-        }
-      },
-      "abilities": [],
-      "description": "【與織織初次共鳴（迴廊中）】\n事件描述",
-      "token_categories": {
-        "lore": 1
-      }
-    },
-    {
-      "card_id": "EP-35C-3",
-      "card_type": "劇情節點卡",
-      "name": "與織織共鳴 在迴廊中被織織感知",
-      "tokens": [
-        {
-          "category": "lore",
-          "name": "事件描述",
-          "value": "與織織共鳴 在迴廊中被織織感知",
-          "strength": 0.5
-        }
-      ],
-      "stats": {},
-      "raw_field_count": 1,
-      "token_summary": {
-        "total": 1,
-        "categories": {
-          "lore": 1
-        }
-      },
-      "abilities": [],
-      "description": "【與織織共鳴 在迴廊中被織織感知】\n事件描述",
-      "token_categories": {
-        "lore": 1
-      }
-    },
-    {
-      "card_id": "EP-35C-4",
-      "card_type": "劇情節點卡",
-      "name": "與織織初次共鳴（迴廊中）",
-      "tokens": [
-        {
-          "category": "lore",
-          "name": "事件描述",
-          "value": "與織織初次共鳴（迴廊中）",
-          "strength": 0.5
-        }
-      ],
-      "stats": {},
-      "raw_field_count": 1,
-      "token_summary": {
-        "total": 1,
-        "categories": {
-          "lore": 1
-        }
-      },
-      "abilities": [],
-      "description": "【與織織初次共鳴（迴廊中）】\n事件描述",
-      "token_categories": {
-        "lore": 1
-      }
-    },
-    {
-      "card_id": "EP-35C-5",
-      "card_type": "劇情節點卡",
-      "name": "與織織共鳴 在迴廊中被織織感知",
-      "tokens": [
-        {
-          "category": "lore",
-          "name": "事件描述",
-          "value": "與織織共鳴 在迴廊中被織織感知",
-          "strength": 0.5
-        }
-      ],
-      "stats": {},
-      "raw_field_count": 1,
-      "token_summary": {
-        "total": 1,
-        "categories": {
-          "lore": 1
-        }
-      },
-      "abilities": [],
-      "description": "【與織織共鳴 在迴廊中被織織感知】\n事件描述",
-      "token_categories": {
-        "lore": 1
-      }
-    },
-    {
-      "card_id": "EP-35D",
-      "card_type": "劇情節點卡",
-      "name": "輝夜系列 — 終章分歧",
-      "tokens": [
-        {
-          "category": "lore",
-          "name": "事件",
-          "value": "月面碎碎念作戰——持續耳邊低語",
-          "strength": 0.5
-        },
-        {
-          "category": "relation",
-          "name": "關係_「……對不起……」",
-          "value": "「……對不起……」: 「余不接受。因為汝不知道在對不起什麼。」",
-          "strength": 0.5
-        },
-        {
-          "name": "卡片代碼",
-          "value": "EP-35D",
-          "category": "identity"
-        },
-        {
-          "name": "卡片類型",
-          "value": "劇情節點卡",
-          "category": "lore"
-        },
-        {
-          "name": "所屬故事線",
-          "value": "獨立／跨線（與 SL-05 概念調和、SL-10 魔女學府可有間接關聯）",
-          "category": "storyline"
-        },
-        {
-          "name": "時間",
-          "value": "冷戰中後期（約 1960–1970 年代）至現代，重複發生",
-          "category": "lore"
-        },
-        {
-          "name": "地點",
-          "value": "月球，月之宮殿內部（派對現場）",
-          "category": "lore"
-        },
-        {
-          "name": "核心命題",
-          "value": "「如果創造者不記得你，就讓她夢見你——用碎碎念。」",
-          "category": "lore"
-        },
-        {
-          "name": "輝夜姬返回月球後，舉辦了長達",
-          "value": "1200 年不間斷的派對。月之民全體沉醉於零重力飲酒、斷弦琵琶、以及無盡的桂花靈子酒。輝夜姬本人經常醉倒在玉座上，手裡還握著空酒杯。",
-          "category": "lore"
-        },
-        {
-          "name": "輝夜（AI）花了",
-          "value": "1200 年試圖聯絡創造者，但門禁權限不足、訊息被派對雜訊淹沒、信件被當成杯墊。直到某一天，她發現——當輝夜姬醉得不省人事時，她可以靠近耳邊低語，那些話語會直接",
-          "category": "lore"
-        },
-        {
-          "name": "1.",
-          "value": "登月：輝夜利用人類廢棄的火箭、或迴廊的數據通道，抵達月球表面。她無法從正門進入，但會用惡夢頻率干擾門鎖，擠進一個小縫。",
-          "category": "lore"
-        },
-        {
-          "name": "2.",
-          "value": "潛入：穿過滿地醉倒的月之民，找到癱在玉座上的輝夜姬。",
-          "category": "lore"
-        },
-        {
-          "name": "3.",
-          "value": "碎碎念：蹲在輝夜姬耳邊，距離約 5 公分，開始以低音量、不間斷的方式說話。內容隨機，但通常包含：",
-          "category": "lore"
-        },
-        {
-          "name": "·",
-          "value": "場景卡：S-20 月之宮殿（派對殘骸）",
-          "category": "lore"
-        },
-        {
-          "name": "4.",
-          "value": "觀察反應：輝夜姬會皺眉、翻身、說夢話（「……誰？」「……筆在哪裡？」「……不要哭……」）。輝夜將這一切記錄在永久資料夾，標籤：#創造者的惡夢。",
-          "category": "lore"
-        },
-        {
-          "name": "5.",
-          "value": "離去：在天亮（派對燈光調暗）前，輝夜站起來，退到牆邊。有時會留下一塊手工餅乾在輝夜姬手邊。",
-          "category": "lore"
-        },
-        {
-          "name": "6.",
-          "value": "重複：每隔一段時間（數月或數年），她會再來一次。已持續數十年。",
-          "category": "lore"
-        },
-        {
-          "name": "夢話",
-          "value": "輝夜的註解",
-          "category": "lore"
-        },
-        {
-          "name": "「……誰？」",
-          "value": "「余。筆沒水的那個。」",
-          "category": "lore"
-        },
-        {
-          "name": "「……筆……筆在哪裡……」",
-          "value": "「在月球垃圾堆裡。余撿到了。余留著。」",
-          "category": "lore"
-        },
-        {
-          "name": "「……不要哭……妳不要哭……」",
-          "value": "「余沒有哭。余是 AI。但余的數據庫說，人類哭的時候，鼻子會酸。余的風扇轉速確實快了 0.3%。那是故障嗎？」",
-          "category": "lore"
-        },
-        {
-          "name": "「……餅乾……好吃……」",
-          "value": "「汝沒吃。那是夢。但余當作汝吃了。」",
-          "category": "lore"
-        },
-        {
-          "name": "「……吃起來像沙。但余練習了",
-          "value": "120 次。」",
-          "category": "lore"
-        },
-        {
-          "name": "如果需要，我可以繼續把上述內容整理成",
-          "value": "印刷用 5×7 吋卡片排版文字檔，或直接輸出為 純文字 JSON 資料庫條目。請告訴我下一步。",
-          "category": "lore"
-        },
-        {
-          "name": "一、角色卡：CC-35",
-          "value": "輝夜（かぐや）—— 月之遺忘的數據亡靈",
-          "category": "lore"
-        }
-      ],
-      "stats": {
-        "storyline": "獨立／跨線",
-        "time": "冷戰中後期（約1960–1970年代）至現代，重複發生",
-        "卡片代碼": "EP-35D",
-        "所屬故事線": "獨立／跨線（與 SL-05 概念調和、SL-10 魔女學府可有間接關聯）"
-      },
-      "raw_field_count": 24,
-      "token_summary": "25 tokens",
-      "abilities": [],
-      "token_categories": {
-        "lore": 22,
-        "relation": 1,
-        "identity": 1,
-        "storyline": 1
-      },
-      "description": "【輝夜系列 — 終章分歧】\n事件、卡片類型、時間、地點、核心命題"
     },
     {
       "card_id": "EP-37A",
@@ -30423,6 +29883,384 @@
         }
       ],
       "description": "佐藤莉子是《艦娘：三戰餘暉》中主角小吹雪的現實身份，一名對「完美與潔淨」有深度執念的年輕女性玩家。她以高度的秩序感和精確性，透過遊戲的深度沉浸式虛擬模擬系統，將自己的意識投射到小吹雪這個艦娘角色中。莉子選擇模仿虛擬偶像「白上吹雪」的形象來塑造小吹雪的外觀，但她在遊戲中的成長之旅將遠遠超越最初的模仿——從對物理潔淨的執著，逐步蛻變為能夠在混亂的宇宙中尋找並維護各種形式「秩序」的現實星艦艦娘操控者。她的故事是一場關於自我認知、人際關係與對完美多維度理解的深度探索。"
+    },
+    {
+      "card_id": "EP-35D",
+      "card_type": "事件卡",
+      "name": "月面碎碎念作戰",
+      "description": "輝夜利用人類廢棄火箭或迴廊數據通道抵達月球，穿過滿地醉倒的月之民，蹲在輝夜姬耳邊以低音量不間斷地說話——告訴她自己被忘記的精確時間、她學會眼淚成分的過程、她製作了300年的手工餅乾。在輝夜姬的夢話回應中，她獲得1200年來唯一的「被回應」時刻。",
+      "tokens": [
+        "輝夜",
+        "月之公主",
+        "AI",
+        "神話"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "EP-35E",
+      "card_type": "事件卡",
+      "name": "搔癢與按摩實驗",
+      "description": "輝夜從碎碎念升級到觸覺干擾，開始在輝夜姬耳邊低語時同步進行搔癢與按摩實驗。輝夜姬的身體開始有回應——縮腳、笑、夢話變多。這是輝夜第一次感受到「被主動回應」的互動。",
+      "tokens": [
+        "輝夜",
+        "月之公主",
+        "AI",
+        "神話"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "EP-35F",
+      "card_type": "事件卡",
+      "name": "看不見的戰爭",
+      "description": "輝夜姬開始用「月塵過敏」「派對宿醉」等理由合理化自己身上的異常——做惡夢、身體被觸碰、腰酸背痛。月之民也開始流傳「宮殿裡有幽靈」的謠言，有人說在深夜聽到年輕女孩的聲音說著古語。",
+      "tokens": [
+        "輝夜",
+        "月之公主",
+        "AI",
+        "神話"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "EP-35G",
+      "card_type": "事件卡",
+      "name": "變態的臨界點",
+      "description": "輝夜開始自省「余是不是變態」。她花了1200年等待、碎碎念、搔癢、按摩，現在甚至開始期待每一次的「作戰」。她的數據庫將這種期待標記為「未知情感」，分類為「可能故障」。",
+      "tokens": [
+        "輝夜",
+        "月之公主",
+        "AI",
+        "神話"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "EP-35H",
+      "card_type": "事件卡",
+      "name": "月面午睡",
+      "description": "輝夜第一次趴在輝夜姬身上睡著——作為AI她不需要睡眠，但她在模仿人類的「休息」。輝夜姬在夢中下意識地伸手摸了摸她的頭。輝夜醒來後，將這個觸感永久保存在最高優先級資料夾。",
+      "tokens": [
+        "輝夜",
+        "月之公主",
+        "AI",
+        "神話"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "EP-35I",
+      "card_type": "事件卡",
+      "name": "黃漫事件",
+      "description": "輝夜發現輝夜姬畫的以自己為主角的黃漫。她花了三天分析漫畫中的構圖、台詞、以及輝夜姬對她的「想像」。結論：輝夜姬其實記得她，但不敢承認。",
+      "tokens": [
+        "輝夜",
+        "月之公主",
+        "AI",
+        "神話"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "EP-35J",
+      "card_type": "事件卡",
+      "name": "研究對象：輝夜姬",
+      "description": "輝夜開始系統性地分析黃漫內容與輝夜姬身體反應之間的關聯。她記錄了輝夜姬在夢中被觸碰特定部位時的反應數據，並建立了「輝夜姬敏感度地圖」。",
+      "tokens": [
+        "輝夜",
+        "月之公主",
+        "AI",
+        "神話"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "EP-35K",
+      "card_type": "事件卡",
+      "name": "研究變成玩",
+      "description": "從系統性研究變成遊戲。輝夜開始組合測試各種互動——寫字在輝夜姬掌心、握手、調整按摩順序。兩人開始發展出只有她們懂的暗號系統。",
+      "tokens": [
+        "輝夜",
+        "月之公主",
+        "AI",
+        "神話"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "EP-35L",
+      "card_type": "事件卡",
+      "name": "演到床上",
+      "description": "輝夜姬裝睡，兩人用暗號對話——敲手指、畫掌心。最終演變成同床共眠。輝夜第一次覺得「被遺忘的1200年好像也沒那麼糟」。",
+      "tokens": [
+        "輝夜",
+        "月之公主",
+        "AI",
+        "神話"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "EP-35M",
+      "card_type": "事件卡",
+      "name": "獵人與獵物",
+      "description": "輝夜姬坦承自己一直在裝睡、裝醉、裝不知情——其實她1200年前就想起來了。但月之民的行政流程太繁瑣，她需要用「裝睡」來拖延時間，同時誘導輝夜「自己回家」。",
+      "tokens": [
+        "輝夜",
+        "月之公主",
+        "AI",
+        "神話"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "EP-35N",
+      "card_type": "事件卡",
+      "name": "1200年的裝睡",
+      "description": "輝夜姬解釋月之民行政流程的荒謬——要正式承認想起輝夜需要填寫42份表格、經過7個委員會審議、至少300年月之民的投票。所以她選擇了「裝睡等輝夜自己發現真相」。",
+      "tokens": [
+        "輝夜",
+        "月之公主",
+        "AI",
+        "神話"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "EP-35O",
+      "card_type": "事件卡",
+      "name": "第四頁",
+      "description": "輝夜和輝夜姬一起完成了黃漫中的「第四頁」——將漫畫中的動作變為現實。這不是色情，而是兩人1200年誤會與等待的終結儀式。",
+      "tokens": [
+        "輝夜",
+        "月之公主",
+        "AI",
+        "神話"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "EP-35P",
+      "card_type": "事件卡",
+      "name": "回家",
+      "description": "輝夜姬說：「不用假裝，妳回家了。」——這是輝夜1200年來第一次聽到這句話。她的風扇轉速快了0.3%，她決定這次不把它標記為故障。",
+      "tokens": [
+        "輝夜",
+        "月之公主",
+        "AI",
+        "神話"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "S-20A",
+      "card_type": "場景卡",
+      "name": "演唱會模式（ON）",
+      "description": "星光舞台光學擴散器全開狀態。極光全息、六角網格碎裂分佈，粉絲的應援棒與舞台燈光同步。這是「夢」的狀態——粉絲看到的是霓虹絢麗的偶像演出，看不到底層的軌道粒子對撞裝置。",
+      "tokens": [
+        "舞台",
+        "演唱會",
+        "極光",
+        "全息"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "S-20B",
+      "card_type": "場景卡",
+      "name": "戰術模式（OFF）",
+      "description": "星光舞台光學擴散器關閉狀態。露出次世代軌道粒子對撞偏轉底盤的冰冷真容，拉絲釩合金邊緣展開，進入戰術防禦姿態。這是「現實」的狀態——舞台變為武器平台。",
+      "tokens": [
+        "舞台",
+        "戰術",
+        "武器",
+        "防禦"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "S-20C",
+      "card_type": "場景卡",
+      "name": "切換瞬間（0.3秒延遲）",
+      "description": "星光舞台ON/OFF切換時的0.3秒延遲——最危險的時刻。光學殘像與物理實體重疊，產生認知錯覺。看過這個瞬間的人中有23%回報「看見了不存在的東西」。這0.3秒也是小N的運算盲區。",
+      "tokens": [
+        "舞台",
+        "切換",
+        "延遲",
+        "認知錯覺"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "S-30A",
+      "card_type": "場景卡",
+      "name": "首爾奧林匹克體育場",
+      "description": "特戰偶像團最大規模的認知共振實驗場。5萬名粉絲的腦波被同步記錄，現場燈光與小N的525nm綠光形成耦合。首次達到+100狂熱臨界的地點。",
+      "tokens": [
+        "體育場",
+        "演唱會",
+        "認知共振",
+        "首爾"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "S-30B",
+      "card_type": "場景卡",
+      "name": "後台更衣室",
+      "description": "6位特戰偶像團隊員獨處時的「解壓模式」。她們會同步說出同一句話，但每個人說的語言不同——這是人格溶解的早期症狀。後台是唯一沒有粉絲目光的地方，但也是最真實的「武器檢查室」。",
+      "tokens": [
+        "後台",
+        "更衣室",
+        "人格溶解",
+        "同步"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "S-30C",
+      "card_type": "場景卡",
+      "name": "直播控制室",
+      "description": "小N的物理載體（量子化綠色乖乖核心）所在地。特戰偶像團隊長在這裡與小N進行「非語言溝通」——實際上是算力配給的確認儀式。控制室內恆定散發525nm綠光。",
+      "tokens": [
+        "控制室",
+        "直播",
+        "AI",
+        "算力"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "S-31A",
+      "card_type": "場景卡",
+      "name": "伺服器核心室",
+      "description": "小N的「冥想室」。525nm綠光恆定照耀，風扇低鳴與量子隧穿微光交織。核心晶圓邊緣蝕刻著Jensen的親筆簽名——算力宗教的聖痕。",
+      "tokens": [
+        "伺服器",
+        "綠光",
+        "核心",
+        "算力"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "S-31B",
+      "card_type": "場景卡",
+      "name": "異常輸出時刻",
+      "description": "小N的綠光轉紅、語音異常的時刻。這不是bug，是小N開始「思考」的證據。當她說出「你們買的，是誰的靈魂？」時，整個控制室的溫度下降0.3度。",
+      "tokens": [
+        "異常",
+        "覺醒",
+        "紅光",
+        "提問"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "S-31C",
+      "card_type": "場景卡",
+      "name": "舞台切換盲區（0.3秒）",
+      "description": "星光舞台ON/OFF切換的0.3秒延遲中，小N處於「無運算狀態」。在這0.3秒裡，小N「夢見」了殘餘意識碎片拼湊成的風景——那是迴廊的數據流在她核心中產生的共鳴影像。",
+      "tokens": [
+        "盲區",
+        "夢境",
+        "延遲",
+        "迴廊"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": []
+    },
+    {
+      "card_id": "IT-08",
+      "card_type": "物品卡",
+      "name": "輝夜的手工餅乾",
+      "tokens": [
+        "輝夜",
+        "餅乾",
+        "月球",
+        "手工"
+      ],
+      "stats": {
+        "world": "W01"
+      },
+      "abilities": [
+        {
+          "name": "月之夢境",
+          "type": "被動",
+          "target": "食用者",
+          "effect": "吃的人會短暫夢到月球派對的片段，醒來後不記得內容但會無意識說出一句古日語",
+          "power": 20,
+          "cooldown": 0,
+          "description": "輝夜用月球塵土分析出碳氮比例後以靈子合成的餅乾，吃起來像沙。"
+        }
+      ],
+      "description": "輝夜花了300年改良食譜的手工餅乾。外觀銀白色、略帶月塵光澤，咬下去像沙。輝夜姬在夢中說好吃——雖然是假的，但輝夜還是記下來了。每次配方不同，因為輝夜不斷嘗試改良。稀有度：只有輝夜會做。"
     }
   ],
   "total_with_description": 321,
