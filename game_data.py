@@ -378,18 +378,26 @@ def _get_npc_home_from_card(card: dict, fallback_idx: int) -> str:
     return _NPC_LOCATIONS_POOL[fallback_idx % len(_NPC_LOCATIONS_POOL)]
 
 
-def _get_fallback_race(card) -> str:
-    """Get race from non-lore tokens when lore tokens are missing."""
+def _extract_race_from_card(card) -> str:
+    """Extract race from lore tokens, fallback to stats, then fallback name."""
+    lore_toks = _tokens_by_cat(card, "lore")
+    race_from_lore = next((t.get("value","") for t in lore_toks if "種族" in t.get("name","")), "")
+    if race_from_lore:
+        return race_from_lore
+    stats = card.get("stats", {})
+    stats_race = stats.get("race", "")
+    if stats_race:
+        return stats_race
     name = card.get("name","?").split("(")[0].strip()
     if name and name != '?':
-        return name[:6]
+        return name[:10]
     for cat in ['vitality', 'element', 'energy', 'combat', 'skill']:
         for t in card.get("tokens", []):
             if t.get("category") == cat:
                 v = t.get("value", "") or t.get("name", "")
                 if v and len(v) < 10:
-                    return v[:6]
-    return "精灵"
+                    return v[:8]
+    return "不明"
 
 
 def _generate_npc_schedule(npc_name: str, home_loc: str) -> list:
@@ -626,7 +634,7 @@ def generate_all_npcs() -> Dict[str, dict]:
         npcs[name] = {
             "card_id": cid, "name": name,
             "description": description,
-            "race": next((t.get("value","") for t in lore_toks if "種族" in t.get("name","")), "不明"),
+            "race": _extract_race_from_card(card),
             "role": role_desc,
             "location": home,
             "schedule": _generate_npc_schedule(name, home),
@@ -1712,6 +1720,7 @@ def expand_game():
             'description': nd.get('description', ''),
             'ability_details': nd.get('ability_details', []),
             'has_abilities': nd.get('has_abilities', False),
+            'home_location': nd.get('location', ''),
             'archetype': nd.get('archetype', 'default'),
             'race': nd.get('race', '\u4e0d\u660e'),
             'location': nd.get('location', ''),
@@ -1907,6 +1916,28 @@ def expand_game():
     for _vi, _loc in enumerate(sim_systems.WORLD_MAP):
         if _loc not in _occupied:
             sim_systems.VEHICLE_LOCATIONS[_loc] = _vlist[_vi % len(_vlist)]
+    
+    # ── NPC schedule location fallback ──
+    # Some NPCs reference locations not in WORLD_MAP or scene cards
+    _NPC_FALLBACK_LOCATIONS = {
+        "中央大圖書館": {"west":"聖十字校園", "east":"英靈殿"},
+        "西翼大市集": {"east":"聖十字校園", "north":"便利店"},
+        "小吉鎮": {"south":"霧海群島"},
+        "大根莖村": {"west":"小吉鎮"},
+        "迴廊": {"north":"聖十字校園"},
+        "魔女學府": {"south":"聖十字校園"},
+    }
+    for _loc, _conn in _NPC_FALLBACK_LOCATIONS.items():
+        if _loc not in sim_systems.WORLD_MAP:
+            sim_systems.WORLD_MAP[_loc] = _conn
+            if _loc not in sim_systems.LOCATION_VIBES:
+                sim_systems.LOCATION_VIBES[_loc] = "📍 地図にない場所"
+            if _loc not in sim_systems.LOCATION_TYPES:
+                sim_systems.LOCATION_TYPES[_loc] = "indoor" if _loc in ("中央大圖書館","迴廊","魔女學府") else "outdoor"
+    if hasattr(sim_systems, 'LOCATION_NATIONS'):
+        for _loc in _NPC_FALLBACK_LOCATIONS:
+            if _loc not in sim_systems.LOCATION_NATIONS:
+                sim_systems.LOCATION_NATIONS[_loc] = ""
     
     after = {
         "items": len(sim_systems.ITEM_CATALOG),
