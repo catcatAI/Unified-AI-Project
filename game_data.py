@@ -29,6 +29,10 @@ _STORY_CARDS = _cards_by_type("劇情節點卡")
 _ORG_CARDS = _cards_by_type("組織卡")
 _NATION_CARDS = _cards_by_type("國家卡")
 _RULE_CARDS = _cards_by_type("規則卡")
+_SKILL_CARDS = _cards_by_type("技能卡")
+_STORYLINE_CARDS = _cards_by_type("故事線卡") + _cards_by_type("故事線補充卡")
+_WORLD_CORE_CARDS = _cards_by_type("世界觀核心卡")
+_MECHANISM_CARDS = _cards_by_type("通用機制卡")
 
 def _tokens_by_cat(card, cat: str) -> list:
     return [t for t in card.get("tokens", []) if t.get("category") == cat]
@@ -321,7 +325,7 @@ ELEMENTAL_ITEMS = [
 # ══════════════════════════════════════════════════════════════════
 
 _NPC_LOCATIONS_POOL = [
-    "方碑丘", "鏡湖", "西翼大市集", "中央大圖書館", "海峽",
+    "聖十字校園", "鏡湖", "鬱鬱山", "卡洛夫角", "霧海群島",
     "秘密鐵工廠", "便利店", "英靈殿", "廢棄礦坑", "森林深處",
 ]
 
@@ -346,7 +350,7 @@ def _generate_npc_schedule(npc_name: str, home_loc: str) -> list:
     activities = ["仕事","巡邏","休息","社交","睡眠"]
     moods = ["focused","alert","rest","friendly","sleep"]
     social_locs = _seed.sample(
-        ["方碑丘","西翼大市集","便利店","鏡湖","中央大圖書館"],
+        ["聖十字校園","鬱鬱山","便利店","鏡湖","卡洛夫角"],
         k=min(5, len(_NPC_LOCATIONS_POOL)))
     locs = [home_loc, home_loc, home_loc, social_locs[0], home_loc]
     for i, (s,e) in enumerate(slots):
@@ -357,7 +361,7 @@ def generate_all_npcs() -> Dict[str, dict]:
     npcs = {}
     for i, card in enumerate(_CHARACTER_CARDS):
         cid = card.get("card_id", f"CC-{i:02d}")
-        raw_npc_name = card.get("name", "?").split("(")[0].strip()
+        raw_npc_name = card.get("name", "?").split("(")[0].split("（")[0].strip()
         # Fix empty names: use lore token value as fallback
         lore_toks_for_name = _tokens_by_cat(card, "lore")
         if not raw_npc_name or raw_npc_name == '?':
@@ -374,18 +378,19 @@ def generate_all_npcs() -> Dict[str, dict]:
         token_cats = {t.get("category") for t in tokens}
         lore_toks = _tokens_by_cat(card, "lore")
         
-        if "combat" in token_cats and "vitality" in token_cats:
-            archetype = "warrior"
-        elif "element" in token_cats or "energy" in token_cats:
-            archetype = "mage"
+        # Archetype: check specific categories before combat+vitality default
+        if "mechanism" in token_cats:
+            archetype = "engineer"
+        elif "exploration" in token_cats and "knowledge" in token_cats:
+            archetype = "scout"
         elif "craft" in token_cats or "social" in token_cats:
             archetype = "merchant"
+        elif "element" in token_cats or "energy" in token_cats:
+            archetype = "mage"
         elif "skill" in token_cats and "relation" in token_cats:
             archetype = "specialist"
-        elif "exploration" in token_cats:
-            archetype = "scout"
-        elif "mechanism" in token_cats:
-            archetype = "engineer"
+        elif "combat" in token_cats and "vitality" in token_cats:
+            archetype = "warrior"
         else:
             archetype = "default"
         
@@ -399,8 +404,47 @@ def generate_all_npcs() -> Dict[str, dict]:
         if not offers:
             offers = ["乾糧","草藥","木柄","空瓶","麻繩"]
         
+        # Build description from stats + lore tokens + key tokens + abilities
+        stats = card.get("stats", {})
+        role_desc = stats.get("role定位", "")
+        desc_parts = []
+        if role_desc:
+            desc_parts.append(role_desc)
+        # Add lore token values
+        for t in lore_toks:
+            n = t.get("name", "")
+            v = t.get("value", "")
+            if v and n != "身份" and n != "種族":
+                desc_parts.append(f"{n}: {v}")
+        # Add element/energy/relation/status/vitality/exploration token values
+        for cat in ("element", "energy", "relation", "status", "vitality", "exploration"):
+            for t in _tokens_by_cat(card, cat):
+                v = t.get("value", "")
+                if v:
+                    desc_parts.append(v)
+        # Add key token names (skills, traits)
+        key_tokens = _tokens_by_cat(card, "skill") + _tokens_by_cat(card, "combat") + _tokens_by_cat(card, "craft") + _tokens_by_cat(card, "knowledge")
+        token_names = [t.get("name","") for t in key_tokens if t.get("name","")]
+        if token_names:
+            desc_parts.append("特徵：" + "、".join(token_names[:8]))
+        # Add ability names with descriptions
+        ab_details = card.get("abilities", [])
+        if ab_details:
+            ab_lines = []
+            for a in ab_details[:4]:
+                an = a.get("name","") if isinstance(a, dict) else str(a)
+                ad = a.get("description","")[:60] if isinstance(a, dict) else ""
+                if an and ad:
+                    ab_lines.append(f"{an}（{ad}）")
+                elif an:
+                    ab_lines.append(an)
+            if ab_lines:
+                desc_parts.append("能力：" + "、".join(ab_lines))
+        description = "，".join(desc_parts) if desc_parts else role_desc or "不明"
+
         npcs[name] = {
             "card_id": cid, "name": name,
+            "description": description,
             "race": next((t.get("value","") for t in lore_toks if "種族" in t.get("name","")), "不明"),
             "location": home,
             "schedule": _generate_npc_schedule(name, home),
@@ -418,6 +462,112 @@ def generate_all_npcs() -> Dict[str, dict]:
     return npcs
 
 ALL_NPCS = generate_all_npcs()
+
+
+# ══════════════════════════════════════════════════════════════════
+# 6b. SKILL GENERATION — from skill cards (SK-01~SK-22)
+# ══════════════════════════════════════════════════════════════════
+
+def generate_all_skills() -> dict:
+    skills = {}
+    for card in _SKILL_CARDS:
+        cid = card.get("card_id", "SK-??")
+        name = card.get("name", "").strip()
+        if not name:
+            continue
+        tokens = card.get("tokens", [])
+        desc = ""
+        for t in tokens:
+            if t.get("category") == "ability":
+                desc = t.get("value", t.get("name", ""))
+                break
+        if not desc:
+            desc = name.split("：")[-1] if "：" in name else name
+        # Determine primary category from name
+        cat = "general"
+        if any(kw in name for kw in ["道術","魔法","奇蹟","四季"]):
+            cat = "magic"
+        elif any(kw in name for kw in ["格鬥","弓道","陷阱"]):
+            cat = "combat"
+        elif any(kw in name for kw in ["潛伏","駭客"]):
+            cat = "stealth"
+        elif any(kw in name for kw in ["植物","地質","文獻","妖精"]):
+            cat = "knowledge"
+        elif any(kw in name for kw in ["機械","工藝","換裝","義體"]):
+            cat = "craft"
+        elif any(kw in name for kw in ["打電話","上網"]):
+            cat = "tech"
+        skills[cid] = {
+            "name": name,
+            "description": desc,
+            "category": cat,
+            "source_card": cid,
+            "trainable": True,
+            "level": 1,
+        }
+    return skills
+
+ALL_SKILLS = generate_all_skills()
+
+
+# ══════════════════════════════════════════════════════════════════
+# 6c. STORYLINE GENERATION — from storyline cards (SL-01~SL-11)
+# ══════════════════════════════════════════════════════════════════
+
+def generate_all_storyline_quests() -> list:
+    quests = []
+    for card in _STORYLINE_CARDS:
+        cid = card.get("card_id", "SL-??")
+        name = card.get("name", "").strip()
+        if not name:
+            continue
+        tokens = card.get("tokens", [])
+        theme = ""
+        for t in tokens:
+            if t.get("category") == "lore" and "核心" in t.get("name",""):
+                theme = t.get("value", t.get("name", ""))
+                break
+        if not theme:
+            theme = name
+        quests.append({
+            "id": f"{cid}-MAIN",
+            "title": name,
+            "description": theme,
+            "quest_type": "main",
+            "objectives": [{"description": f"探索 {name} 的故事線", "require_action": "advance", "require_times": 3}],
+            "rewards": [f"完成 {name} 主線劇情"],
+            "source_card_id": cid,
+        })
+    return quests
+
+ALL_STORYLINE_QUESTS = generate_all_storyline_quests()
+
+
+# ══════════════════════════════════════════════════════════════════
+# 6d. WORLD CORE GENERATION — from world core cards (WC/W series)
+# ══════════════════════════════════════════════════════════════════
+
+def generate_world_modifiers() -> dict:
+    modifiers = {}
+    for card in _WORLD_CORE_CARDS:
+        cid = card.get("card_id", "WC-??")
+        name = card.get("name", "").strip()
+        tokens = card.get("tokens", [])
+        desc = ""
+        for t in tokens:
+            if t.get("category") == "lore":
+                desc = t.get("value", t.get("name", ""))
+                break
+        if not desc:
+            desc = name
+        modifiers[cid] = {
+            "name": name,
+            "description": desc,
+            "effect": "world_modifier",
+        }
+    return modifiers
+
+ALL_WORLD_MODIFIERS = generate_world_modifiers()
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -692,8 +842,8 @@ ALL_LOCATIONS = generate_locations()
 
 def generate_quests() -> list:
     quests = []
-    locations_pool = ["方碑丘","鏡湖","西翼大市集","中央大圖書館","海峽",
-                      "秘密鐵工廠","便利店","英靈殿","廢棄礦坑","森林深處"]
+    locations_pool = ["聖十字校園","鏡湖","鬱鬱山","卡洛夫角","霧海群島",
+                      "秘密鐵工廠","便利店","英靈殿","廢棄礦坑","森林深處","煙雲溫泉湖","清溪河","鏡山"]
     
     # From all story nodes
     npc_names = list(ALL_NPCS.keys())
@@ -744,7 +894,7 @@ def generate_quests() -> list:
     for i, (npc_name, npc_data) in enumerate(ALL_NPCS.items()):
         if npc_data.get("gives_quests") and i < 60:
             cats = npc_data.get("token_categories", [])
-            loc = npc_data.get("location", "方碑丘")
+            loc = npc_data.get("location", "聖十字校園")
             qid = f"NPC-{i+1:02d}"
             req_rel = {npc_name: 20 + _seed.randint(0, 20)}
             conditions = {
@@ -773,7 +923,7 @@ def generate_quests() -> list:
                 quests.append({"id":qid,"title":f"{npc_name}の探求","type":"side","giver":npc_name,
                     "desc":"探索して知見を持ち帰れ。",
                     "conditions": dict(conditions),
-                    "objectives":[{"type":"visit","target":_seed.choice(["中央大圖書館","英靈殿","森林深處"]),"detail":"指定場所を訪れる"}],
+                    "objectives":[{"type":"visit","target":_seed.choice(["聖十字校園","英靈殿","森林深處"]),"detail":"指定場所を訪れる"}],
                     "reward_exp":25+_seed.randint(0,25),"reward_gold":10+_seed.randint(0,15),
                     "reward_reputation":6,"reward_relationships":{npc_name: 10},
                     "reward_item":_seed.choice(["記憶水晶","神秘地圖","書信","魔力藥水","護身符"])})
@@ -789,8 +939,8 @@ ALL_QUESTS = generate_quests()
 # ══════════════════════════════════════════════════════════════════
 
 LOCATIONS_FOR_OBJECTS = [
-    "方碑丘","鏡湖","西翼大市集","中央大圖書館","海峽",
-    "秘密鐵工廠","便利店","英靈殿","廢棄礦坑","森林深處",
+    "聖十字校園","鏡湖","鬱鬱山","卡洛夫角","霧海群島",
+    "秘密鐵工廠","便利店","英靈殿","廢棄礦坑","森林深處","煙雲溫泉湖","清溪河","鏡山",
 ]
 
 def generate_scene_objects() -> Dict[str, list]:
@@ -936,8 +1086,8 @@ ALL_VEHICLES = {
 # ══════════════════════════════════════════════════════════════════
 
 ALL_REAL_ESTATE = {
-    "方碑丘小屋":{"type":"house","price":500,"functions":["rest","store"],"desc":"村はずれの小さな家"},
-    "西翼商店":{"type":"shop","price":800,"functions":["trade"],"desc":"市集の小店舗"},
+    "聖十字校園小屋":{"type":"house","price":500,"functions":["rest","store"],"desc":"村はずれの小さな家"},
+    "カールフ商店":{"type":"shop","price":800,"functions":["trade"],"desc":"市集の小店舗"},
     "湖畔工房":{"type":"workshop","price":1200,"functions":["craft","rest"],"desc":"湖畔の工房"},
     "図書室":{"type":"house","price":2000,"functions":["rest","study"],"desc":"図書館の一室"},
     "廃坑倉庫":{"type":"warehouse","price":600,"functions":["store"],"desc":"廃鉱山の倉庫"},
@@ -1165,7 +1315,7 @@ def expand_game():
     "mechanism": "使用D20"
   },
   "RC-05": {
-    "name": "中央大圖書館 · 地下遺跡深層休眠區",
+        "name": "聖十字校園 · 地下遺跡深層休眠區",
     "lore": "迴廊（The Corridor）· 物語核（RC-02）邊緣",
     "mechanism": ""
   },
@@ -1190,7 +1340,7 @@ def expand_game():
     "mechanism": ""
   },
   "RC-10": {
-    "name": "地下西翼大市集（Trade Bazaar）",
+        "name": "聖十字校園 · 地下市集區（Trade Bazaar）",
     "lore": "迴廊 · 物語核邊緣",
     "mechanism": ""
   },
@@ -1316,11 +1466,11 @@ def expand_game():
     if not _loc_nation_map or not any(v for v in _loc_nation_map.values()):
         if hasattr(sim_systems, "LOCATION_VIBES"):
             _vibe_to_nation = {
-                '\U0001f33e': 'NAT-06',  # 🌾 EAR OF RICE -> 方碑丘
+                '\U0001f33e': 'NAT-06',  # 🌾 EAR OF RICE -> 聖十字校園
                 '\U0001f4a7': 'NAT-06',  # 💧 DROPLET -> 鏡湖
-                '\U0001f3ea': 'NAT-04',  # 🏪 CONVENIENCE STORE -> 西翼大市集, 便利店
-                '\U0001f4da': 'NAT-02',  # 📚 BOOKS -> 中央大圖書館
-                '\U0001f30a': 'NAT-06',  # 🌊 WATER WAVE -> 海峽
+                '\U0001f3ea': 'NAT-04',  # 🏪 CONVENIENCE STORE -> 卡洛夫角, 便利店
+                '\U0001f4da': 'NAT-02',  # 📚 BOOKS -> 聖十字校園
+                '\U0001f30a': 'NAT-06',  # 🌊 WATER WAVE -> 卡洛夫角
                 '\U0001f527': 'NAT-05',  # 🔧 WRENCH -> 秘密鐵工廠
                 '\U00002694': 'NAT-05',  # ⚔ CROSSED SWORDS -> 英靈殿
                 '\U000026cf': 'NAT-05',  # ⛏ PICK -> 廢棄礦坑
@@ -1334,6 +1484,24 @@ def expand_game():
                             _loc_nation_map[loc_name] = nid
                             break
     print(f"[game_data] Factions: {len(sim_systems.FACTIONS)}, Nations: {len(sim_systems.NATIONS)}, Rules: {len(sim_systems.ACTIVE_RULES)}")
+    
+    # Skills (from SK-01~SK-22)
+    sim_systems.ALL_SKILLS = ALL_SKILLS
+    print(f"[game_data] Skills: {len(ALL_SKILLS)}")
+    
+    # Storyline quests (from SL cards)
+    existing_qids = {q["id"] for q in sim_systems.QUESTS}
+    for sq in ALL_STORYLINE_QUESTS:
+        if sq["id"] not in existing_qids:
+            sim_systems.QUESTS.append(sq)
+            existing_qids.add(sq["id"])
+            cnt["quests"] += 1
+    # Also push to game engine's quest log if accessible
+    print(f"[game_data] Storyline quests: +{len(ALL_STORYLINE_QUESTS)}")
+    
+    # World modifiers (from WC/W series)
+    sim_systems.WORLD_MODIFIERS = ALL_WORLD_MODIFIERS
+    print(f"[game_data] World modifiers: {len(ALL_WORLD_MODIFIERS)}")
 
     cnt["enemies"] += 1
     
@@ -1358,6 +1526,7 @@ def expand_game():
         sim_systems.NPC_METADATA = {}
     for name, nd in ALL_NPCS.items():
         sim_systems.NPC_METADATA[name] = {
+            'description': nd.get('description', ''),
             'ability_details': nd.get('ability_details', []),
             'has_abilities': nd.get('has_abilities', False),
             'archetype': nd.get('archetype', 'default'),
@@ -1377,11 +1546,12 @@ def expand_game():
     for _nname in list(getattr(sim_systems, 'NPC_SCHEDULES', {}).keys()):
         if _nname not in sim_systems.NPC_METADATA:
             sim_systems.NPC_METADATA[_nname] = {
+                'description': '',
                 'ability_details': [],
                 'has_abilities': False,
                 'archetype': 'default',
                 'race': '\u4e0d\u660e',
-                'location': '\u65b9\u7891\u4e18',
+                'location': '\u8056\u5341\u5b57\u6821\u5712',
                 'token_categories': [],
                 'offers': ['\u8349\u85e5','\u5e72\u7ce7','\u7a7a\u74f6','\u9ebb\u7e6b'],
             }
@@ -1397,19 +1567,19 @@ def expand_game():
     _vehicle_to_primary_loc = {
         "自転車":       "便利店",
         "マウンテンバイク": "森林深處",
-        "駿馬":         "西翼大市集",
+        "駿馬":         "卡洛夫角",
         "大型馬車":     "秘密鐵工廠",
         "漁船":         "鏡湖",
         "帆船":         "鏡湖",
-        "オートバイ":   "方碑丘",
-        "大型オートバイ": "海峽",
+        "オートバイ":   "聖十字校園",
+        "大型オートバイ": "卡洛夫角",
         "ジープ":       "廢棄礦坑",
-        "大型帆船":     "海峽",
-        "熱気球":       "中央大圖書館",
+        "大型帆船":     "卡洛夫角",
+        "熱気球":       "聖十字校園",
         "蒸気機関車":   "秘密鐵工廠",
         "魔法の箒":     "英靈殿",
-        "魔法の絨毯":   "中央大圖書館",
-        "飛空挺":       "海峽",
+        "魔法の絨毯":   "聖十字校園",
+        "飛空挺":       "卡洛夫角",
         "竜騎乗":       "森林深處",
         "雪橇":         "廢棄礦坑",
     }
@@ -1498,21 +1668,21 @@ def expand_game():
         "鏡湖周邊": "💧 鏡のように靜かな湖面",
     }
     _SCENE_TO_WORLD_CONNECTIONS = {
-        "概念學術高等學校": {"south":"方碑丘"},
-        "學生宿舍": {"south":"方碑丘"},
-        "校園後方廢棄倉庫": {"enter":"方碑丘"},
-        "概念戰場模擬區": {"enter":"方碑丘"},
-        "地下避難所": {"enter":"方碑丘"},
-        "夜間巡逻路線": {"west":"方碑丘"},
-        "校園屋頂": {"enter":"方碑丘"},
-        "食堂": {"north":"方碑丘"},
-        "圖書館分館": {"south":"中央大圖書館"},
-        "迴廊深層夢境": {"enter":"中央大圖書館"},
-        "綻放混成園": {"enter":"中央大圖書館"},
-        "軌道居住站大學院": {"enter":"中央大圖書館"},
-        "銀行區": {"west":"中央大圖書館","south":"西翼大市集"},
-        "珊瑚台": {"north":"海峽"},
-        "黑淵台": {"south":"海峽"},
+        "概念學術高等學校": {"south":"聖十字校園"},
+        "學生宿舍": {"south":"聖十字校園"},
+        "校園後方廢棄倉庫": {"enter":"聖十字校園"},
+        "概念戰場模擬區": {"enter":"聖十字校園"},
+        "地下避難所": {"enter":"聖十字校園"},
+        "夜間巡逻路線": {"west":"聖十字校園"},
+        "校園屋頂": {"enter":"聖十字校園"},
+        "食堂": {"north":"聖十字校園"},
+        "圖書館分館": {"south":"聖十字校園"},
+        "迴廊深層夢境": {"enter":"聖十字校園"},
+        "綻放混成園": {"enter":"聖十字校園"},
+        "軌道居住站大學院": {"enter":"聖十字校園"},
+        "銀行區": {"west":"聖十字校園","south":"聖十字校園"},
+        "珊瑚台": {"north":"卡洛夫角"},
+        "黑淵台": {"south":"卡洛夫角"},
         "彩紋礁": {"north":"珊瑚台"},
         "流光": {"enter":"鏡湖"},
         "鏡湖周邊": {"enter":"鏡湖"},
@@ -1523,7 +1693,7 @@ def expand_game():
         if not sname or sname in sim_systems.WORLD_MAP:
             continue
         # Add to WORLD_MAP
-        conn = _SCENE_TO_WORLD_CONNECTIONS.get(sname, {"south":"方碑丘"})
+        conn = _SCENE_TO_WORLD_CONNECTIONS.get(sname, {"south":"聖十字校園"})
         sim_systems.WORLD_MAP[sname] = conn
         # Add vibe
         vibe = _NEW_LOCATION_VIBES.get(sname, sdata.get("vibe", "📍 未知の地"))
@@ -1588,6 +1758,8 @@ def expand_game():
     print(f"  Enemies: +{cnt['enemies']} → {after['enemies']} (dists: +{enemy_dists})")
     print(f"  NPCs: +{cnt['npcs']} → {after['npcs']} (schedule entries: {sched_entries})")
     print(f"  Quests: +{cnt['quests']} → {after['quests']}")
+    print(f"  Skills: {len(ALL_SKILLS)}")
+    print(f"  WorldModifiers: {len(ALL_WORLD_MODIFIERS)}")
     print(f"  Vehicles: +{cnt['vehicles']} → {after['vehicles']}")
     print(f"  RealEstate: +{cnt['estate']} → {after['estate']}")
     print(f"  SceneObjs: +{cnt['objs']} → {after['objs']}")
