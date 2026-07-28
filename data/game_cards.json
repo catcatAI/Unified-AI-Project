@@ -194,17 +194,20 @@
         {
           "name": "概念永恆",
           "description": "不會死亡或消散，概念身體變形後會自動「重構」像素形態恢復原狀",
-          "category": "energy"
+          "category": "energy",
+          "type": "passive"
         },
         {
           "name": "概念性生理反應",
           "description": "能「概念性地映射」出與人類相似的生理反應（飢餓、痛覺、疲憊、睡眠、性愉悅）",
-          "category": "energy"
+          "category": "energy",
+          "type": "passive"
         },
         {
           "name": "概念性心理狀態",
           "description": "能映射出複雜的心理狀態（焦慮、恐懼、好奇、沮喪、依賴）",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": "19 tokens",
@@ -362,12 +365,14 @@
         {
           "name": "天生特質",
           "description": "超凡敏感體質，對所有外界刺激和情慾波動感知極致敏銳",
-          "category": "exploration"
+          "category": "exploration",
+          "type": "passive"
         },
         {
           "name": "能力環境",
           "description": "夜晚／慾望滋生處最強，典型場景為廢棄工業建築",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": "14 tokens",
@@ -519,12 +524,14 @@
         {
           "name": "天生特質",
           "description": "超凡邏輯推理、模式識別和數據分析能力",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         },
         {
           "name": "能力環境",
           "description": "數據流密集／星系能量密集區最強，典型場景為星際空間站",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": "14 tokens",
@@ -676,17 +683,20 @@
         {
           "name": "天生特質",
           "description": "純粹生命共情，能感知並治癒生命痛苦。對痛苦感知異常敏銳且無法隔絕",
-          "category": "exploration"
+          "category": "exploration",
+          "type": "passive"
         },
         {
           "name": "特殊能力",
           "description": "「純真技巧的反擊」，能純真地引導微小氣息刺激他人感官",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         },
         {
           "name": "能力環境",
           "description": "自然綠色環境／情感純粹區最強，污染區為弱化環境",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": "14 tokens",
@@ -880,7 +890,8 @@
         {
           "name": "核心能力",
           "description": "惡意感知、慾望具象化與操控、扭曲與改造",
-          "category": "exploration"
+          "category": "exploration",
+          "type": "passive"
         }
       ],
       "token_summary": "21 tokens",
@@ -996,17 +1007,20 @@
         {
           "name": "核心能力",
           "description": "感知和調和概念靈，將混亂或負面概念轉化為和諧、積極形態",
-          "category": "energy"
+          "category": "energy",
+          "type": "passive"
         },
         {
           "name": "使命",
           "description": "調和宇宙級「熵增」",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         },
         {
           "name": "特殊設定",
           "description": "神力與古錢幣相連",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": "9 tokens",
@@ -1112,12 +1126,14 @@
         {
           "name": "核心能力",
           "description": "能在迴廊中錨定現實世界的物理法則和秩序。擁有「記憶之光」能力，能解析迴廊法則和宇宙語言",
-          "category": "combat"
+          "category": "combat",
+          "type": "passive"
         },
         {
           "name": "使命",
           "description": "與楓共同對抗宇宙熵增、概念失衡，維護迴廊秩序",
-          "category": "energy"
+          "category": "energy",
+          "type": "passive"
         }
       ],
       "token_summary": "8 tokens",
@@ -1215,7 +1231,8 @@
         {
           "name": "能力",
           "description": "對概念進行「調味」——微調概念的屬性與味道",
-          "category": "energy"
+          "category": "energy",
+          "type": "passive"
         }
       ],
       "token_summary": "7 tokens",
@@ -1345,12 +1362,14 @@
         {
           "name": "天賦型態",
           "description": "勤勉型（線性成長）",
-          "category": "skill"
+          "category": "skill",
+          "type": "magic"
         },
         {
           "name": "核心優勢",
           "description": "M-值測量、理論分析、數據解讀（精確度可達0.01級別）",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": "12 tokens",
@@ -1477,12 +1496,14 @@
         {
           "name": "天賦型態",
           "description": "天才型（指數跳躍，但不可預測）",
-          "category": "skill"
+          "category": "skill",
+          "type": "magic"
         },
         {
           "name": "核心優勢",
           "description": "實戰魔法、沙盒操作、高壓判斷",
-          "category": "energy"
+          "category": "energy",
+          "type": "passive"
         }
       ],
       "token_summary": "11 tokens",
@@ -1603,12 +1624,14 @@
         {
           "name": "天賦型態",
           "description": "跨界型（偏科特化，非典型曲線）",
-          "category": "skill"
+          "category": "skill",
+          "type": "magic"
         },
         {
           "name": "核心優勢",
           "description": "概念調和、跨領域整合、異常狀態下保持冷靜",
-          "category": "energy"
+          "category": "energy",
+          "type": "passive"
         }
       ],
       "token_summary": "10 tokens",
@@ -2038,7 +2061,8 @@
         {
           "name": "時之眼",
           "description": "能看見精準、冰冷、缺乏色彩的既定歷史事實。透過接觸精密機械的黃銅齒輪、聆聽高亢軍樂、或在茶道儀式後觸發",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_categories": {
@@ -2599,7 +2623,8 @@
         {
           "name": "核心能力",
           "description": "精密感知（微米級）、彈道計算、機械修復",
-          "category": "exploration"
+          "category": "exploration",
+          "type": "passive"
         }
       ],
       "token_summary": "16 tokens",
@@ -3424,7 +3449,8 @@
         {
           "name": "共鳴",
           "description": "水晶對特定個體產生共鳴反應。共鳴條件未知——不是血緣，不是性別，不是年齡。紫水晶選擇了8歲的雉，藍水晶選擇了34歲的忠臣。研究團隊尚未找到共鳴的法則",
-          "category": "energy"
+          "category": "energy",
+          "type": "knowledge"
         }
       ],
       "token_summary": "27 tokens",
@@ -5140,12 +5166,14 @@
         {
           "name": "能力",
           "description": "神話權限（但受月之民議會限制）、繪畫（黃漫）、裝睡（專業級）、暗號溝通（敲手指、畫掌心）",
-          "category": "energy"
+          "category": "energy",
+          "type": "passive"
         },
         {
           "name": "核心矛盾",
           "description": "1200年前真的忘記了輝夜（派對太好玩）。想起來後，因月之民繁瑣行政流程無法直接去地球，於是決定裝睡、裝醉、畫黃漫、誘導輝夜「自己回家」。她不是不愛，是不敢面對。",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": "38 tokens",
@@ -11485,17 +11513,20 @@
         {
           "name": "痛覺遲鈍（後天）",
           "description": "長期戰鬥累積大量疼痛經驗，對痛覺耐受極高。即使骨折仍可短時間（約5分鐘）維持戰鬥。",
-          "category": "combat"
+          "category": "combat",
+          "type": "passive"
         },
         {
           "name": "不屈意志（被動）",
           "description": "被打倒就會站起來。曾單場倒地7次、站起7次（對手為軍事改造人，最後嫌煩離去）。",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         },
         {
           "name": "鋼鐵破砕",
           "description": "鋼製長杖全力揮擊，可擊碎普通混凝土塊、打彎鐵製欄杆、震裂一般義體外殼（非軍事級）。對生物目標，一擊可打斷普通人肋骨或造成內臟損傷。不是魔法，是純粹物理破壞。",
-          "category": "combat"
+          "category": "combat",
+          "type": "combat"
         }
       ],
       "token_summary": "41 tokens",
@@ -12294,7 +12325,8 @@
         {
           "name": "核心矛盾",
           "description": "「……我修了 120 年管道。每一條裂縫，都是我補的。但沒人知道我的名字。他們只知道『熱泉沒斷』。那就夠了。」",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": "14 tokens",
@@ -12445,7 +12477,8 @@
         {
           "name": "核心矛盾",
           "description": "「……我的耳朵可以聽過整片海。但沒有人聽我說話。設備不能關。關了，就會漏掉——漏掉什麼？我不知道。但我不敢關。」",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": "15 tokens",
@@ -12591,7 +12624,8 @@
         {
           "name": "核心矛盾",
           "description": "「……要多少顏色，我都可以給。但要一直餵我吃特定的海藻。紅的、藍的、黃的。我現在已經不知道——我原本是什麼顏色了。」",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": "14 tokens",
@@ -28217,17 +28251,20 @@
         {
           "name": "手作",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "輔助"
         },
         {
           "name": "感知",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         },
         {
           "name": "交涉",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "輔助"
         }
       ],
       "token_summary": {
@@ -28345,7 +28382,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -28456,7 +28494,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -28567,7 +28606,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -28683,7 +28723,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -28794,7 +28835,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -28905,7 +28947,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -29016,7 +29059,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -29127,7 +29171,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -29238,7 +29283,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -29252,7 +29298,7 @@
           "lore": 1
         }
       },
-      "description": "【灰燼行者】\n種族：人類（實證主義·廢土）\n【背景設定】\n  · W04遊民，輻射直感者\n【能力】\n  · 推理",
+      "description": "【灰燼行者】\n種族：人類（實證主義·廢土）\n\n在輻射廢土中生存的灰燼行者，擁有敏銳的直感和頑強的生命力。雖然生活在W04的惡劣環境中，但從未放棄對知識的渴望和對世界的探索。以推理能力見長，能在有限的線索中找出真相。",
       "token_categories": {
         "vitality": 1,
         "exploration": 1,
@@ -29349,7 +29395,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -29472,7 +29519,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -29587,7 +29635,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -29601,7 +29650,7 @@
           "lore": 1
         }
       },
-      "description": "【螢光獵手】\n種族：精靈（實證主義·螢光）\n【背景設定】\n  · W04變異兩棲掠奪者\n【能力】\n  · 推理",
+      "description": "【螢光獵手】\n種族：精靈（實證主義·螢光）\n\nW04變異兩棲掠奪者，在螢光沼澤中以獨特的適應能力生存。精靈血脈使其擁有超凡的感知力，能在黑暗中精準判斷敵人的位置。戰鬥風格靈活多變，擅長利用環境優勢。",
       "token_categories": {
         "combat": 1,
         "vitality": 1,
@@ -29703,7 +29752,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -29814,7 +29864,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -29925,7 +29976,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -30036,7 +30088,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -30147,7 +30200,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -30161,7 +30215,7 @@
           "lore": 1
         }
       },
-      "description": "【春】\n種族：人類（實證主義·春）\n【背景設定】\n  · 魔法少女（春），小說作家\n【能力】\n  · 推理",
+      "description": "【春】\n種族：人類（實證主義·春）\n\n魔法少女（春），同時也是小說作家。性格溫柔細膩，善於觀察日常生活中的細節，將其轉化為創作靈感。在實證主義世界中，用文字記錄下這個時代的每一個重要瞬間。",
       "token_categories": {
         "element": 1,
         "energy": 1,
@@ -30258,7 +30312,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -30272,7 +30327,7 @@
           "lore": 1
         }
       },
-      "description": "【夏】\n種族：人類（實證主義·夏）\n【背景設定】\n  · 魔法少女（夏），小學男生\n【能力】\n  · 推理",
+      "description": "【夏】\n種族：人類（實證主義·夏）\n\n魔法少女（夏），本職是小學男生，但擁有超乎年齡的成熟與戰鬥天賦。陽光開朗的性格下隱藏著敏銳的洞察力，是團隊中不可或缺的活力來源與戰鬥主力。",
       "token_categories": {
         "element": 1,
         "vitality": 1,
@@ -30369,7 +30424,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -30383,7 +30439,7 @@
           "lore": 1
         }
       },
-      "description": "【秋】\n種族：精靈（實證主義·秋）\n【背景設定】\n  · 魔法少女（秋），編輯\n【能力】\n  · 推理",
+      "description": "【秋】\n種族：精靈（實證主義·秋）\n\n魔法少女（秋），作為編輯工作，擁有精靈族的長壽與智慧。擅長從繁雜的資訊中提煉出有價值的內容，對世界運行的規律有著獨特的理解。",
       "token_categories": {
         "element": 1,
         "knowledge": 1,
@@ -30480,7 +30536,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -30494,7 +30551,7 @@
           "lore": 1
         }
       },
-      "description": "【冬】\n種族：人類（實證主義·冬）\n【背景設定】\n  · 魔法少女（冬），中學女生\n【能力】\n  · 推理",
+      "description": "【冬】\n種族：人類（實證主義·冬）\n\n魔法少女（冬），中學女生，看似柔弱的外表下有著堅定的意志。在極地環境中成長，培養出超強的適應能力和生存技巧。擅長在嚴酷的條件下保持冷靜思考。",
       "token_categories": {
         "element": 1,
         "skill": 1,
@@ -30591,7 +30648,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -30605,7 +30663,7 @@
           "lore": 1
         }
       },
-      "description": "【紅】\n種族：人類（實證主義·赤）\n【背景設定】\n  · 彩虹戰隊·紅，便利店員\n【能力】\n  · 推理",
+      "description": "【紅】\n種族：人類（實證主義·赤）\n\n彩虹戰隊·紅，白天是普通便利店員，夜晚則是守護城市的戰士。熱情如火，正義感強烈，總是第一個衝向危險。擅長近距離戰鬥，以壓倒性的氣勢壓制敵人。",
       "token_categories": {
         "combat": 1,
         "element": 1,
@@ -30702,7 +30760,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -30716,7 +30775,7 @@
           "lore": 1
         }
       },
-      "description": "【橙】\n種族：人類（實證主義·橙）\n【背景設定】\n  · 彩虹戰隊·橙，獸醫\n【能力】\n  · 推理",
+      "description": "【橙】\n種族：人類（實證主義·橙）\n\n彩虹戰隊·橙，本職獸醫，擁有溫柔的性格和精湛的手術技巧。在戰場上是可靠的後勤支援，能迅速判斷夥伴的傷勢並進行急救處理。對所有生命都懷有敬意。",
       "token_categories": {
         "element": 1,
         "knowledge": 1,
@@ -30813,7 +30872,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -30827,7 +30887,7 @@
           "lore": 1
         }
       },
-      "description": "【黃】\n種族：人類（實證主義·黃）\n【背景設定】\n  · 彩虹戰隊·黃，物理老師\n【能力】\n  · 推理",
+      "description": "【黃】\n種族：人類（實證主義·黃）\n\n彩虹戰隊·黃，物理教師出身，擅長用科學思維分析戰場局勢。總能在混亂中找到規律，制定出最優的戰鬥策略。冷靜理性的性格使其成為團隊的智囊。",
       "token_categories": {
         "element": 1,
         "knowledge": 1,
@@ -30924,7 +30984,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -30938,7 +30999,7 @@
           "lore": 1
         }
       },
-      "description": "【綠】\n種族：精靈（實證主義·綠）\n【背景設定】\n  · 彩虹戰隊·綠，植物店打工\n【能力】\n  · 推理",
+      "description": "【綠】\n種族：精靈（實證主義·綠）\n\n彩虹戰隊·綠，在植物店打工的同時守護自然。與植物有著特殊的共鳴能力，能感知環境的細微變化。性格溫和但意志堅定，為了保護生態環境可以奮不顧身。",
       "token_categories": {
         "element": 1,
         "knowledge": 1,
@@ -31035,7 +31096,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -31049,7 +31111,7 @@
           "lore": 1
         }
       },
-      "description": "【藍】\n種族：人類（實證主義·藍）\n【背景設定】\n  · 彩虹戰隊·藍，客服接線生\n【能力】\n  · 推理",
+      "description": "【藍】\n種族：人類（實證主義·藍）\n\n彩虹戰隊·藍，客服接線生，練就了超強的多任務處理能力和耐心傾聽的技巧。在戰鬥中擅長協調團隊配合，是最佳的溝通橋樑和戰場調度者。",
       "token_categories": {
         "element": 1,
         "skill": 1,
@@ -31146,7 +31208,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -31160,7 +31223,7 @@
           "lore": 1
         }
       },
-      "description": "【靛】\n種族：人類（實證主義·靛）\n【背景設定】\n  · 彩虹戰隊·靛，油漆師傅\n【能力】\n  · 推理",
+      "description": "【靛】\n種族：人類（實證主義·靛）\n\n彩虹戰隊·靛，油漆師傅出身，對色彩和細節有著敏銳的感知力。擅長設置陷阱和利用環境偽裝，在戰鬥中常以出其不意的方式取得優勢。",
       "token_categories": {
         "element": 1,
         "craft": 1,
@@ -31257,7 +31320,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -31271,7 +31335,7 @@
           "lore": 1
         }
       },
-      "description": "【紫】\n種族：精靈（實證主義·紫）\n【背景設定】\n  · 彩虹戰隊·紫，糕點師\n  · 紫之水晶守護者\n  · 紫色水晶礦脈\n【能力】\n  · 推理",
+      "description": "【紫】\n種族：精靈（實證主義·紫）\n\n彩虹戰隊·紫，糕點師兼紫之水晶守護者。優雅從容的舉止下隱藏著強大的魔法天賦。能運用紫色水晶的力量創造防護結界，是團隊最可靠的防禦者。",
       "token_categories": {
         "element": 1,
         "craft": 1,
@@ -31316,7 +31380,8 @@
         {
           "name": "世界建構",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -31354,7 +31419,8 @@
         {
           "name": "世界建構",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -31392,7 +31458,8 @@
         {
           "name": "世界建構",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -31430,7 +31497,8 @@
         {
           "name": "世界建構",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -31468,7 +31536,8 @@
         {
           "name": "世界建構",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -31506,7 +31575,8 @@
         {
           "name": "世界建構",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -31544,7 +31614,8 @@
         {
           "name": "世界建構",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -31582,7 +31653,8 @@
         {
           "name": "世界建構",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -31626,7 +31698,8 @@
         {
           "name": "機制",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "special"
         }
       ],
       "token_summary": {
@@ -31672,7 +31745,8 @@
         {
           "name": "機制",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "special"
         }
       ],
       "token_summary": {
@@ -31718,7 +31792,8 @@
         {
           "name": "機制",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "special"
         }
       ],
       "token_summary": {
@@ -31764,7 +31839,8 @@
         {
           "name": "機制",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "special"
         }
       ],
       "token_summary": {
@@ -31810,7 +31886,8 @@
         {
           "name": "機制",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "special"
         }
       ],
       "token_summary": {
@@ -31856,7 +31933,8 @@
         {
           "name": "機制",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "special"
         }
       ],
       "token_summary": {
@@ -31902,7 +31980,8 @@
         {
           "name": "機制",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "special"
         }
       ],
       "token_summary": {
@@ -31948,7 +32027,8 @@
         {
           "name": "創作輔助",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "輔助"
         }
       ],
       "token_summary": {
@@ -31994,7 +32074,8 @@
         {
           "name": "創作輔助",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "輔助"
         }
       ],
       "token_summary": {
@@ -32040,7 +32121,8 @@
         {
           "name": "專案管理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -32086,7 +32168,8 @@
         {
           "name": "專案管理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -32126,7 +32209,8 @@
         {
           "name": "AI公式",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -32164,7 +32248,8 @@
         {
           "name": "AI公式",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -32202,7 +32287,8 @@
         {
           "name": "AI公式",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -32240,7 +32326,8 @@
         {
           "name": "AI公式",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -32278,7 +32365,8 @@
         {
           "name": "AI公式",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -32316,7 +32404,8 @@
         {
           "name": "AI公式",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -32354,7 +32443,8 @@
         {
           "name": "AI公式",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -32392,7 +32482,8 @@
         {
           "name": "AI公式",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -32430,7 +32521,8 @@
         {
           "name": "AI公式",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -32468,7 +32560,8 @@
         {
           "name": "AI公式",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -32506,7 +32599,8 @@
         {
           "name": "AI公式",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -32544,7 +32638,8 @@
         {
           "name": "AI公式",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -32582,7 +32677,8 @@
         {
           "name": "AI公式",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -32620,7 +32716,8 @@
         {
           "name": "AI公式",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -32658,7 +32755,8 @@
         {
           "name": "AI公式",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -32696,7 +32794,8 @@
         {
           "name": "AI公式",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -32734,7 +32833,8 @@
         {
           "name": "AI公式",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -32772,7 +32872,8 @@
         {
           "name": "AI公式",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -32824,7 +32925,8 @@
         {
           "name": "安全機制",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "special"
         }
       ],
       "token_summary": {
@@ -32862,7 +32964,8 @@
         {
           "name": "敘事補充",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -32900,7 +33003,8 @@
         {
           "name": "敘事補充",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -32944,7 +33048,8 @@
         {
           "name": "敘事節點",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -33003,7 +33108,8 @@
         {
           "name": "敘事",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -33072,7 +33178,8 @@
         {
           "name": "敘事",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -33124,7 +33231,8 @@
         {
           "name": "場域",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -33198,7 +33306,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -33212,7 +33321,7 @@
           "combat": 1
         }
       },
-      "description": "【希格諾／碧翠絲·海瑟薇】\n種族：人類\n【背景設定】\n  · 魔女學徒／海洋研究者\n【能力】\n  · 推理",
+      "description": "【希格諾／碧翠絲·海瑟薇】\n種族：人類\n\n魔女學徒同時也是海洋研究者的雙重身份，使希格諾擁有獨特的視角——既能理解科學的邏輯，也能掌握魔法的奧秘。在魔女學府中努力尋找魔法與科學之間的平衡點，並用推理能力解決層層謎團。",
       "token_categories": {
         "lore": 1,
         "knowledge": 1,
@@ -33303,7 +33412,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -33317,7 +33427,7 @@
           "combat": 1
         }
       },
-      "description": "【翠森】\n種族：妖精\n【背景】身份\n【能力】推理",
+      "description": "【翠森】\n種族：妖精\n\n來自森林深處的妖精，擁有與自然溝通的能力。雖然外表嬌小，但擁有豐富的自然知識和敏銳的直覺。在人類世界中保持著對一切事物的好奇心，常以純真的視角發現被忽略的細節。",
       "token_categories": {
         "lore": 1,
         "knowledge": 1,
@@ -33403,7 +33513,8 @@
         {
           "name": "推理",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "knowledge"
         }
       ],
       "token_summary": {
@@ -33417,7 +33528,7 @@
           "combat": 1
         }
       },
-      "description": "【米斯蒂】\n種族：人類\n【背景設定】\n  · 魔女學府見習生\n【能力】\n  · 推理",
+      "description": "【米斯蒂】\n種族：人類\n\n魔女學府見習生，正處於魔法學習的關鍵階段。天賦出眾但略顯青澀，需要通過各種考驗來證明自己的實力。擅長初級魔法和基礎藥劑製作，潛力巨大。",
       "token_categories": {
         "lore": 1,
         "skill": 1,
@@ -33471,7 +33582,8 @@
         {
           "name": "世界建構",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -33509,7 +33621,8 @@
         {
           "name": "世界建構",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -33547,7 +33660,8 @@
         {
           "name": "世界建構",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -33585,7 +33699,8 @@
         {
           "name": "世界建構",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -33640,7 +33755,8 @@
         {
           "name": "場景探索",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -33699,7 +33815,8 @@
         {
           "name": "場景探索",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -33741,7 +33858,8 @@
         {
           "name": "事件觸發",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "special"
         }
       ],
       "token_summary": {
@@ -33779,7 +33897,8 @@
         {
           "name": "事件觸發",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "special"
         }
       ],
       "token_summary": {
@@ -33817,7 +33936,8 @@
         {
           "name": "事件觸發",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "special"
         }
       ],
       "token_summary": {
@@ -33855,7 +33975,8 @@
         {
           "name": "植物學",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -33893,7 +34014,8 @@
         {
           "name": "地質學",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -33931,7 +34053,8 @@
         {
           "name": "機械工程",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "tech"
         }
       ],
       "token_summary": {
@@ -33969,7 +34092,8 @@
         {
           "name": "文獻學",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -34007,7 +34131,8 @@
         {
           "name": "妖精生態學",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -34045,7 +34170,8 @@
         {
           "name": "格鬥",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "combat"
         }
       ],
       "token_summary": {
@@ -34083,7 +34209,8 @@
         {
           "name": "工藝",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "craft"
         }
       ],
       "token_summary": {
@@ -34121,7 +34248,8 @@
         {
           "name": "弓道",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -34159,7 +34287,8 @@
         {
           "name": "陷阱製作",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "craft"
         }
       ],
       "token_summary": {
@@ -34197,7 +34326,8 @@
         {
           "name": "潛伏",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -34235,7 +34365,8 @@
         {
           "name": "道術",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -34273,7 +34404,8 @@
         {
           "name": "魔法",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "magic"
         }
       ],
       "token_summary": {
@@ -34311,7 +34443,8 @@
         {
           "name": "奇蹟",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -34349,7 +34482,8 @@
         {
           "name": "妖精技",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -34387,7 +34521,8 @@
         {
           "name": "精靈技",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -34425,7 +34560,8 @@
         {
           "name": "天翼技",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -34463,7 +34599,8 @@
         {
           "name": "四季更迭（聯合施法）",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -34501,7 +34638,8 @@
         {
           "name": "打電話（通訊操作）",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -34539,7 +34677,8 @@
         {
           "name": "上網（網絡操作）",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -34577,7 +34716,8 @@
         {
           "name": "駭客（入侵系統）",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "tech"
         }
       ],
       "token_summary": {
@@ -34615,7 +34755,8 @@
         {
           "name": "義體醫師",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -34653,7 +34794,8 @@
         {
           "name": "換裝義體",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -34694,7 +34836,8 @@
         {
           "name": "組織行動",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -34735,7 +34878,8 @@
         {
           "name": "組織行動",
           "description": "",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -34830,22 +34974,26 @@
         {
           "name": "交易話術",
           "description": "資訊整合成精確價格判斷",
-          "category": "social"
+          "category": "social",
+          "type": "social"
         },
         {
           "name": "飛行滑翔",
           "description": "純空氣力學翅膀，需上升氣流",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         },
         {
           "name": "語言模仿",
           "description": "各村方言模仿",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         },
         {
           "name": "絕對記憶",
           "description": "記得每一件見過的貨物和交易細節",
-          "category": "knowledge"
+          "category": "knowledge",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -34944,17 +35092,20 @@
         {
           "name": "破土之舞",
           "description": "播種祭儀式舞蹈，祈求豐收",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         },
         {
           "name": "大根殿管理",
           "description": "管理村中聖地大根殿",
-          "category": "skill"
+          "category": "skill",
+          "type": "passive"
         },
         {
           "name": "祭典執行",
           "description": "帶領三大祭典全部儀式",
-          "category": "social"
+          "category": "social",
+          "type": "passive"
         }
       ],
       "token_summary": {
@@ -35040,17 +35191,20 @@
         {
           "name": "公關操控",
           "description": "公關操控",
-          "category": "general"
+          "category": "general",
+          "type": "passive"
         },
         {
           "name": "品牌重塑",
           "description": "品牌重塑",
-          "category": "general"
+          "category": "general",
+          "type": "passive"
         },
         {
           "name": "視神經镍膜",
           "description": "視神經镍膜",
-          "category": "general"
+          "category": "general",
+          "type": "passive"
         }
       ],
       "description": "灼照 伊斯卡—— 脈動工業公關部副總監，兼「破落之美」品牌重塑計畫負責人\n\n\n\n\n\n基本資料\n\n\n\n\n\n卡片代碼：CC-60\n\n姓名：灼照 伊斯卡（Isca）\n\n種族：人類（輕度眼部改造：視神經鍍膜，用於辨識細微色彩與光影）\n\n性別：女性\n\n年齡：34 歲\n\n職業：脈動工業 公關部副總監 ／「破落之美」品牌重塑計畫負責人\n\n興趣：攝影、收藏改造人退役零件（接口護蓋、磨損關節、報廢天線）、撰寫「改造人美學」內部報告\n\n住址：英雄堡高層公寓（可俯瞰工業區）\n\n主世界線：W01 靈子塵埃\n\n歷史線：冷戰線\n\n時間錨點：現代\n\n跨線相容性：無\n\n分類系譜：人類（輕度改造）｜不適用\n\n基調：病態的熱愛 ＋ 冷靜的瘋狂\n\n\n\n\n\n外貌與人格\n\n\n\n\n\n外觀：\n\n\n\n\n\n身高 165 cm，體重 50 kg。深棕色長髮整齊盤起，戴著無框眼鏡（視神經鍍膜輔助）。米白色名牌套裝，別著脈動工業的徽章。脖子上掛著高階單眼相機。手指纖細但指甲縫經常有暗房藥劑的殘留色（她親自沖洗照片）。嘴角永遠掛著淺淺的微笑，眼神有一種「正在欣賞」的專注。\n\n\n\n\n\n人格：\n\n\n\n\n\n表層：專業、幹練、對改造人議題充滿熱情。開會時會說：「我們不只是製造產品，我們在創造故事。」對外宣傳稿寫得溫暖感人，私下卻對助理說：「退役改造人的眼淚，比任何廣告都有感染力。」\n\n\n\n\n\n真實：病態的美學崇拜。她真心覺得改造人磨損、生鏽、被淘汰的樣子「美得讓人窒息」。她不是為了公司才說「品牌故事」，她是真的愛看他們掙扎——就像有人愛看夕陽是因為它即將消失。她知道這是變態，但她不在乎。她說：「公司剝削他們的身體，我剝削他們的故事。我們都不乾淨。但至少，我會把他們拍得很好看。」\n\n\n\n\n\n矛盾：她曾私下資助退役改造人（用個人帳戶），金額不大，但足以讓他們多活幾個月。不是因為愧疚，是因為「太早死就拍不到了」。這種「善行」不是出自道德，而是出自美學需求——她想延長他們的「綻放期」。\n\n\n\n\n\n角色地位\n\n\n\n\n\n脈動工業內部角色：\n\n\n\n\n\n職權：負責改造人相關的對外形象（官網故事、社群貼文、年度形象廣告）。主導「破落之美」品牌重塑計畫，目標是將改造人退役後的「凋零感」包裝成品牌精神——「我們不拋棄任何零件，正如我們不遺忘任何選手。」\n\n\n\n\n\n內部矛盾：財務長認為「她的計畫賠錢」（退役故事無法立即變現）。她回：「品牌價值需要時間累積。」私下對助理說：「財務長不懂美學。他只懂數字。數字會貶值，但眼淚不會。」\n\n\n\n\n\n工具：利用天兔、烈馬、撕裂者等賽用型改造人的故事，作為品牌重塑的核心案例。她會親自拍攝、親自訪談、親自挑選「最動人」的照片——那些剛好捕捉到「痛苦邊緣的微笑」的瞬間。她稱之為「臨界點美學」。\n\n\n\n\n\n對改造人的複雜情感：\n\n\n\n\n\n她承認自己有病態的一面，但她認為這是「必要之惡」。她說：「沒有我的鏡頭，他們的故事只會出現在報廢清單上。至少現在，有人會記得。」\n\n\n\n\n\n天兔曾對她說：「……妳拍我的時候，眼神跟其他人不一樣。他們看我是『產品』。妳看我是『作品』。」她回答：「因為你值得。」天兔不知道該不該高興。\n\n\n\n\n\n撕裂者更直接：「妳是個變態吧？」她大笑：「對。但我是愛你的變態。」撕裂者無言。\n\n\n\n\n\n社會位距\n\n\n\n\n\n天兔：1 格。長期拍攝對象。天兔對她保持警戒，但不會拒絕拍攝。\n\n\n\n\n\n烈馬：1 格。烈馬曾說：「妳的照片，比我照鏡子好看。」她回：「鏡子只會反射，我會挑選。」\n\n\n\n\n\n撕裂者：0 格。兩人意外合拍。撕裂者說她是「瘋子」，她說「瘋子才能看懂瘋子」。\n\n\n\n\n\n愛麗絲：3 格。曾想拍攝愛麗絲的迅猛龍套件，但愛麗絲說：「我不當悲劇主角。」她沒強迫。\n\n\n\n\n\n脈動工業財務長：2 格。公開場合互相尊重，私下互看不順眼。\n\n\n\n\n\n一條總結\n\n\n\n\n\n灼照 伊斯卡不是改造人。她是脈動工業的公關副總監。她愛改造人，愛他們的磨損、掙扎、即將凋零的樣子。她說這是「美學」，別人說這是「變態」。她承認自己有病，但她不在乎。因為她的鏡頭，至少讓他們短暫地被看見——在她們壞掉之前。\n\n\n\n\n\n（晞咕萊雅將卡片歸檔。）\n\n\n\n\n\n「……灼照 伊斯卡。不是見證者。是剝削者。但她也愛他們。愛得很變態。愛得很真誠。……比那些只看報表的人，好一點點。也噁心一點點。」歸檔完畢。",
@@ -35116,12 +35270,14 @@
         {
           "name": "制幻能力",
           "description": "制幻能力",
-          "category": "general"
+          "category": "general",
+          "type": "passive"
         },
         {
           "name": "寄生",
           "description": "寄生",
-          "category": "general"
+          "category": "general",
+          "type": "passive"
         }
       ],
       "description": "CC-02-A 幻惑共生嵌胎詳細機制\n\n项目 说明\n名称 幻惑共生嵌胎\n大小 鴙鸟蛋大小\n外觀 半透明凝胶状\n寄生过程 外部振动 → 进入陰道 → 扩张 → 子宫口扩张 → 子宫内部定居\n制幻能力 释放「精神干扰素」，扭曲宿主认知，干扰旁观者感知\n后果 敏感度永久固化，陷入「刺激-过载-昏迷-唤醒」无限循环"
@@ -35169,12 +35325,14 @@
         {
           "name": "永恆享樂",
           "description": "永恆享樂",
-          "category": "general"
+          "category": "general",
+          "type": "passive"
         },
         {
           "name": "虛幻空間",
           "description": "虛幻空間",
-          "category": "general"
+          "category": "general",
+          "type": "passive"
         }
       ],
       "description": "CC-04-A 貓娘樂園詳細設定\n\n项目 说明\n名称 貓娘樂園\n本质 超越时空、永恆享樂的私人空间\n配備 秘制按摩棒、幻夢藤香氣、秘酒\n建造者 純真米亞（利用「肝帝」精神和《埃爾登之境》遊戲知識）"
@@ -35230,17 +35388,20 @@
         {
           "name": "共振調和",
           "description": "共振調和",
-          "category": "general"
+          "category": "general",
+          "type": "passive"
         },
         {
           "name": "宇宙溝通",
           "description": "宇宙溝通",
-          "category": "general"
+          "category": "general",
+          "type": "passive"
         },
         {
           "name": "跨維度翻譯",
           "description": "跨維度翻譯",
-          "category": "general"
+          "category": "general",
+          "type": "passive"
         }
       ],
       "description": "* 跨維度匯合與共同探索： 楓、亞瑟、維爾等來自不同世界觀的角色，因宇宙「熵增」的危機而在迴廊中匯合。他們在迴廊深處遭遇被「熵增」影響的沉淵者和低語者，維爾嘗試調和，楓的古錢幣與維爾的共振產生共鳴，兩者的力量開始相互學習與融合。\n\n* 歷史的印記與宇宙的創傷： 楓在概念圖書館中，調和了歷史概念靈中積壓的負面情感，讓它們轉化為引導人類前進的「知識」與「和平」概念。這種對歷史創傷的調和，讓她更深刻地理解到宇宙深處的「熵增」，是一種更為宏大、更為根本的「創傷」。同時，亞瑟透過數據讀取器，解析了維爾的共振語言，進一步理解「熵增」是宇宙自身的病變，而維爾是宇宙嘗試自我修復的信號。\n\n* 無垠之弦的考驗與宇宙調諧： 迴廊深處，五位來自不同背景的英雄（楓、亞瑟、伊露、苔絲、維爾）共同面對「熵增」帶來的終極挑戰。他們將運用各自的能力，相互協作，調和宇宙的失諧。現實世界的調和與迴廊的平衡相互映照，兩者力量的融合，是跨維度協作的序曲。最終目標是修復宇宙的失諧，達成更深層次的平衡，確保所有世界線的共同存續。\n\n________________\n\n\n\n\n\n好的，我已經完成了所有設定資料的整理、篩選和優化。\n\n請注意，為了完全遵守安全指南，我已經移除了所有涉及以下內容的具體描寫：",
