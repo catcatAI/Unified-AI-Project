@@ -330,12 +330,46 @@ def _auto_categorize_token(name: str, value: str) -> str:
             return "exploration"
     
     # Extended fallback rules (matches scripts/_improve_token_types.py)
-    # These handle common patterns that don't fit the main 8 categories
+    # These patterns don't map to the 8 main mechanic categories
+    # but provide more specific types for display/lore purposes
     
-    attr_kw = ["屬性", "能力值", "基本數值", "基礎數值", "參數", "數值"]
-    for kw in attr_kw:
+    mechanism_kw = ["機制", "系統", "引擎", "法則", "模塊", "模組", "程序", "protocol",
+                     "規則", "條款", "規章"]
+    for kw in mechanism_kw:
         if kw in text:
-            return "general"
+            return "mechanism"
+    status_kw = ["狀態", "狀況", "參數", "進度", "程度", "等級", "狀態"]
+    for kw in status_kw:
+        if kw in text:
+            return "status"
+    purpose_kw = ["核心目的", "宗旨", "目標", "使命", "任務", "意圖", "目的"]
+    for kw in purpose_kw:
+        if kw in text:
+            return "purpose"
+    theme_kw = ["主題", "主軸", "核心主題", "議題"]
+    for kw in theme_kw:
+        if kw in text:
+            return "theme"
+    occupation_kw = ["業務", "職責", "分管", "負責", "職業", "工作"]
+    for kw in occupation_kw:
+        if kw in text:
+            return "occupation"
+    body_kw = ["身體", "體重", "身高", "外貌", "外表", "外觀", "體格", "體型"]
+    for kw in body_kw:
+        if kw in text:
+            return "body"
+    feature_kw = ["特色", "特點", "特徵", "特性", "特質", "性質"]
+    for kw in feature_kw:
+        if kw in text:
+            return "feature"
+    classification_kw = ["分類", "類別", "類型", "種類", "系譜", "譜系", "分類"]
+    for kw in classification_kw:
+        if kw in text:
+            return "classification"
+    connection_kw = ["連接", "關聯", "聯繫", "通道", "橋樑", "紐帶"]
+    for kw in connection_kw:
+        if kw in text:
+            return "connection"
     
     return "general"
 
