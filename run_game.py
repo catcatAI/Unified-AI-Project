@@ -120,6 +120,8 @@ from character_system import (
 from game_familiarity import (get_display_name, get_revealed_info,
     get_level_name, gain_familiarity, get_level_up_message, init_familiarity)
 
+import world_clock as wc
+
 # ── Globals ────────────────────────────────────────────────────────────────
 _current_season = "春"
 _current_weather = "☀晴"
@@ -318,6 +320,19 @@ def advance_time(character, hours=1):
         if _current_season != old_season:
             from sim_systems import SEASON_ICONS as _sic, SEASON_NAMES as _snm
             print(_sic.get(_current_season,"") + C.CYAN + "  ★ 季節更替: " + _snm.get(_current_season, _current_season) + " 來了！" + C.RESET)
+        # Advance world clock — 1 game day = 1 world clock day
+        # ~360 game days = 1 world year (matching 12 months × 30 days)
+        wc_result = wc.advance_time(24)
+        if wc_result["year_passed"]:
+            era_str = wc.get_era_name()
+            year = wc.get_current_year()
+            print(C.YELLOW + f"\n  ★ 靈子曆 {year}年 —— {era_str} 到來！" + C.RESET)
+        if wc_result["era_changed"]:
+            print(C.MAGENTA + f"\n  ★ 紀元更替：進入「{wc_result['new_era']}」" + C.RESET)
+        for evt_name in wc_result["events_triggered"]:
+            evt = wc.get_event_by_name(evt_name)
+            if evt:
+                print(C.CYAN + f"  📜 歷史事件：{evt['name']} — {evt['description'][:60]}" + C.RESET)
 
 def print_banner(text, color=C.CYAN):
     print(color + "═"*50 + C.RESET)
@@ -414,6 +429,102 @@ def print_status(character):
 def exp_needed_for_level(level):
     return 100 + (level - 1) * 50
 
+def do_world_time(character, equipment):
+    """Display the world clock and character's time context."""
+    print(C.CYAN + "\n" + "═"*50 + C.RESET)
+    print(C.YELLOW + C.BOLD + "  世界時鐘 — 靈子曆" + C.RESET)
+    print(C.CYAN + "═"*50 + C.RESET)
+    
+    # ── Current world time ──
+    year = wc.get_current_year()
+    era = wc.get_era_name()
+    season = wc.get_season()
+    hour = character.get("hour", 8)
+    print(f"  {C.WHITE}當前時間：{C.CYAN}{wc.get_full_time_string(hour)}{C.RESET}")
+    print(f"  {C.WHITE}所處紀元：{C.MAGENTA}{era}{C.RESET}")
+    print(f"  {C.WHITE}當前季節：{C.GREEN}{season}{C.RESET}")
+    print()
+    
+    # ── Character time info ──
+    card_id = character.get("card_id", "")
+    if card_id:
+        status = wc.get_character_status_summary(card_id, year)
+        print(f"  {C.WHITE}角色時間資訊：{C.RESET}")
+        alive_icon = "✅ 存活" if status["alive"] else "💀 已故"
+        age_str = f"{status['age']}歲" if status['age'] is not None else "?歲"
+        print(f"    {alive_icon} | 年齡：{C.YELLOW}{age_str}{C.RESET}")
+        if status.get("life_stage"):
+            print(f"    📖 人生階段：{C.CYAN}{status['life_stage']}{C.RESET}")
+        if status.get("birth_year"):
+            print(f"    🎂 出生：靈子曆 {status['birth_year']}年")
+        if status.get("death_year"):
+            print(f"    ⚰️  死亡：靈子曆 {status['death_year']}年")
+        events_count = len(status["events_lived_through"])
+        print(f"    📜 經歷過的重大事件：{C.YELLOW}{events_count}件{C.RESET}")
+        if events_count > 0:
+            print(f"    {C.DIM}{'、'.join(status['events_lived_through'][:5])}{C.RESET}")
+            if events_count > 5:
+                print(f"    {C.DIM}...及其他 {events_count - 5} 件{C.RESET}")
+    else:
+        print(f"  {C.GRAY}（自定義角色，無世界時間記錄）{C.RESET}")
+    
+    # ── Era timeline ──
+    print()
+    print(f"  {C.WHITE}紀元時間線：{C.RESET}")
+    for e in wc.get_eras()[::-1]:
+        prefix = "▶ " if e["start_year"] <= year <= e["end_year"] else "  "
+        color = C.YELLOW if e["start_year"] <= year <= e["end_year"] else C.DIM
+        print(f"  {color}{prefix}{e['name']} ({e['start_year']}~{e['end_year']}年){C.RESET}")
+    
+    # ── Recent events ──
+    print()
+    print(f"  {C.WHITE}近期歷史事件：{C.RESET}")
+    recent = [e for e in wc.get_all_events() if e.get("year", 0) >= max(990, year - 50)]
+    for evt in sorted(recent, key=lambda x: x.get("year", 0))[:8]:
+        icon = {"world_forming":"🌍","discovery":"🔬","technological":"⚙️","war":"⚔️","political":"🏛️","cultural":"📚","disaster":"⚠️"}.get(evt.get("type",""), "📌")
+        year_str = str(evt.get("year", "?"))
+        print(f"    {icon} [{year_str}] {evt['name']}")
+    
+    # ── Current location landmark info ──
+    loc = character.get("location", "")
+    landmark = wc.get_landmark(loc)
+    if landmark:
+        age = wc.get_landmark_age(loc, year)
+        print()
+        print(f"  {C.WHITE}當前地點：{loc}{C.RESET}")
+        print(f"    📅 {landmark.get('era', '')} · 建立於 {landmark.get('founded_year', '?')}年")
+        if age:
+            print(f"    📆 {loc}已有 {age} 年歷史")
+    
+    # ── Resolved past event outcomes ──
+    start_flags = character.get("start_flags", {})
+    if start_flags:
+        print()
+        print(f"  {C.WHITE}歷史事件影響（開始時已確定）：{C.RESET}")
+        fav_count = sum(1 for v in start_flags.values() if v == "favorable")
+        unfav_count = sum(1 for v in start_flags.values() if v == "unfavorable")
+        print(f"    ✅ {C.GREEN}有利事件：{fav_count}{C.RESET}   ⚠️ {C.RED}不利事件：{unfav_count}{C.RESET}")
+        
+        # Show event effects on gameplay
+        for flag_key, outcome in sorted(start_flags.items()):
+            eid = flag_key.replace("event_", "")
+            evt = wc.get_event(eid)
+            if evt:
+                icon = "✅" if outcome == "favorable" else "⚠️"
+                effect_desc = {
+                    "EVT-007": ("⚔️ 靈子衝突的影響仍在——附近區域的治安狀況受到影響" if outcome == "unfavorable" else "🕊️ 戰爭創傷正在癒合，局勢逐漸穩定"),
+                    "EVT-014": ("☣️ 概念污染的陰影籠罩——部分地區出現異常生物" if outcome == "unfavorable" else "🌱 概念污染得到控制，生態正在恢復"),
+                    "EVT-013": ("🌑 新世界集團的威脅暗流湧動——情報顯示他們在暗處活動" if outcome == "favorable" else "🌐 新世界集團的行動暴露了，各方有所警戒"),
+                    "EVT-016": ("🌊 鏡湖異變的後續影響——概念實體在物質世界的活動頻率增加" if outcome == "unfavorable" else "💧 鏡湖的異常已經平息，但入口仍然存在"),
+                    "EVT-018": ("🌀 迴廊共鳴的創傷——部分世界線的連接仍然脆弱" if outcome == "unfavorable" else "🌉 迴廊共鳴開拓了新的可能性，跨世界交流活躍"),
+                }.get(eid, "")
+                if effect_desc:
+                    print(f"    {icon} {C.DIM}{evt['name']}: {effect_desc}{C.RESET}")
+    
+    print(C.CYAN + "═"*50 + C.RESET)
+    input(C.GRAY + "  按 Enter 返回..." + C.RESET)
+
+
 def print_help():
     print(C.WHITE + C.BOLD + "╔═══════════════════════════╗" + C.RESET)
     print(C.WHITE + C.BOLD + "║  指令選單" + " "*21 + C.BOLD + "║" + C.RESET)
@@ -423,13 +534,69 @@ def print_help():
     print(C.WHITE + C.BOLD + "║" + C.RESET + " 7.身體  8.裝備   9.地圖")
     print(C.WHITE + C.BOLD + "║" + C.RESET + "10.關係 11.合成  12.搜索")
     print(C.WHITE + C.BOLD + "║" + C.RESET + "13.任務 14.車輛  15.不動產")
-    print(C.WHITE + C.BOLD + "║" + C.RESET + "  s.存檔   l.讀檔   q.退出")
+    print(C.WHITE + C.BOLD + "║" + C.RESET + "16.世界時間  s.存檔   l.讀檔")
+    print(C.WHITE + C.BOLD + "║" + C.RESET + "  q.退出")
     print(C.WHITE + C.BOLD + "╚═══════════════════════════╝" + C.RESET)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 # CHARACTER SELECTION
 # ═══════════════════════════════════════════════════════════════════════════
+
+def _select_start_time():
+    """Let player choose game start year. Returns (year, events_resolved).
+    Events before start year are pseudo-randomly resolved."""
+    options = wc.get_era_start_year_options()
+    print(C.CYAN + "\n" + "═"*50 + C.RESET)
+    print(C.YELLOW + C.BOLD + "  選擇開始時間" + C.RESET)
+    print(C.CYAN + "═"*50 + C.RESET)
+    print(C.DIM + "  你將在靈子曆的哪個時代開始你的冒險？\n" + C.RESET)
+
+    for i, opt in enumerate(options, 1):
+        era = wc.get_era_name(opt["year"])
+        print(f"  {C.CYAN}{i}.{C.RESET} {opt['label']}")
+        print(f"     {C.DIM}{opt['desc']}{C.RESET}")
+
+    # Show NPC lifespan context
+    print()
+    print(C.DIM + "  開始年份會影響哪些NPC還活著、哪些歷史事件已發生。" + C.RESET)
+    print()
+
+    while True:
+        ch = input(f"  {C.YELLOW}選擇開始時代 (1-{len(options)}, Enter=預設當前):{C.RESET} ").strip()
+        if not ch:
+            start_year = wc.get_current_year()
+            break
+        if ch.isdigit():
+            idx = int(ch) - 1
+            if 0 <= idx < len(options):
+                start_year = options[idx]["year"]
+                break
+        print(C.RED + "  無效輸入。" + C.RESET)
+
+    # Resolve past events
+    print()
+    print(C.YELLOW + f"  🔮 正在解析靈子曆 {start_year}年之前的歷史事件..." + C.RESET)
+    events_resolved = wc.resolve_past_events(start_year, seed=f"char_{_random.randint(0,99999)}")
+
+    favorable = sum(1 for r in events_resolved.values() if r["favorable"])
+    total = len(events_resolved)
+    print(C.CYAN + f"  📜 已確定 {total} 個歷史事件的結果：{C.GREEN}{favorable}個有利{C.RESET} / {C.RED}{total-favorable}個不利{C.RESET}")
+
+    # Show top 3 most impactful events
+    impactful = sorted(events_resolved.values(), key=lambda r: abs(r["roll"] - 0.5), reverse=True)[:3]
+    for evt in impactful:
+        icon = "✅" if evt["favorable"] else "⚠️"
+        print(f"     {icon} {evt['event_name']}: {evt['description'][:60]}")
+
+    # Set world clock to start time
+    wc.set_current_time(start_year, 1, 1)
+    print()
+    print(C.GREEN + f"  ★ 開始時間設定為：{wc.format_era_date()}{C.RESET}")
+    print()
+
+    return start_year, events_resolved
+
 
 def select_character():
     cards = get_character_cards()
@@ -438,6 +605,10 @@ def select_character():
     total_pages = (total_cards + PAGE_SIZE - 1) // PAGE_SIZE
     page = 0
 
+    # Step 1: Select start time
+    start_year, events_resolved = _select_start_time()
+
+    # Step 2: Select character
     while True:
         print_banner("選擇你的角色 (%d位)" % total_cards, C.MAGENTA)
         print("")
@@ -452,7 +623,23 @@ def select_character():
                 tstr = " ".join("%s:%d"%(k,v) for k,v in ts.items())
             else:
                 tstr = str(ts)[:50]
-            print("  %s%2d. [%s]%s %s" % (C.CYAN,i+1,cid,C.RESET,name))
+            # Show age at start time
+            age_str = ""
+            td = card.get("time_data")
+            if td and td.get("birth_year"):
+                birth = td["birth_year"]
+                if birth > start_year:
+                    age_str = C.DIM + " [尚未誕生]" + C.RESET
+                else:
+                    age = start_year - birth
+                    death = td.get("death_year")
+                    if death and start_year > death:
+                        age_str = C.RED + " [已故]" + C.RESET
+                    else:
+                        age_str = C.DIM + f" (約{age}歲)" + C.RESET
+            else:
+                age_str = ""
+            print("  %s%2d. [%s]%s %s%s" % (C.CYAN,i+1,cid,C.RESET,name,age_str))
             print("      %s%s%s" % (C.DIM,tstr[:50],C.RESET))
         print("")
         # Navigation footer
@@ -491,6 +678,10 @@ def select_character():
                 init_skills(char)
                 init_quest_state(char)
                 init_vehicle_state(char)
+                # Apply past events to character flags
+                char["start_flags"] = {}
+                for eid, resolution in events_resolved.items():
+                    char["start_flags"][f"event_{eid}"] = "favorable" if resolution["favorable"] else "unfavorable"
                 print(C.GREEN + "\n  你選擇了: %s (卡片 %s)" % (char["name"],char["card_id"]) + C.RESET)
                 advance_time(char)
                 return char
@@ -624,11 +815,72 @@ def do_combat(character, enemy):
 # EXPLORATION
 # ═══════════════════════════════════════════════════════════════════════════
 
+def _get_event_effects(character):
+    """Calculate gameplay modifiers from resolved past events.
+    Returns dict with multipliers: {encounter_rate, loot_quality}
+    
+    NOTE: References event IDs (EVT-007, EVT-013, EVT-014, etc.) from
+    world_clock.json. If world_clock.json events are renumbered, these
+    lookups will silently return default 1.0 multipliers.
+    """
+    sf = character.get("start_flags", {})
+    if not sf:
+        return {"encounter_rate": 1.0, "loot_quality": 1.0}
+    
+    # Event-specific effects on gameplay
+    # Each unfavorable event = slightly harder world, but more loot
+    # Each favorable event = easier world, but less risky loot
+    
+    # War events
+    war_unfav = sf.get("event_EVT-007") == "unfavorable"
+    # Disaster events  
+    disaster_unfav = sf.get("event_EVT-014") == "unfavorable"
+    disaster_fav = sf.get("event_EVT-014") == "favorable"
+    # Political events
+    org_unfav = sf.get("event_EVT-013") == "favorable"  # ORG thriving = unfavorable for world
+    # Technology events
+    tech_fav = sf.get("event_EVT-017") == "favorable"
+    # Discovery events
+    discovery_fav = sf.get("event_EVT-012") == "favorable"
+    
+    encounter_rate = 1.0
+    loot_quality = 1.0
+    
+    if war_unfav:
+        encounter_rate *= 1.3  # More enemies
+        loot_quality *= 1.2  # Better loot (war economy)
+    if disaster_unfav:
+        encounter_rate *= 1.2  # More monster encounters
+    if disaster_fav:
+        encounter_rate *= 0.85  # Safer environment
+        loot_quality *= 0.9  # Less desperate loot
+    if org_unfav:
+        encounter_rate *= 1.15  # More shadowy figures
+        loot_quality *= 1.15  # More contraband
+    if tech_fav:
+        loot_quality *= 1.15  # Better tech/items available
+    if discovery_fav:
+        loot_quality *= 1.1  # More knowledge available
+        encounter_rate *= 0.9  # Better understanding = safer
+    
+    # Cap extreme values to prevent gameplay balance issues
+    encounter_rate = min(max(encounter_rate, 0.5), 2.5)
+    loot_quality = min(max(loot_quality, 0.5), 2.5)
+    
+    return {"encounter_rate": round(encounter_rate, 2),
+            "loot_quality": round(loot_quality, 2)}
+
+
 def do_explore(character, equipment):
     global _current_weather, _current_season
     we = WEATHER_EFFECTS.get(_current_weather, {"encounter":0.4,"loot_bonus":0})
     enc_chance = we["encounter"]
     loot_bonus = we["loot_bonus"]
+    
+    # Apply event effects
+    evt_eff = _get_event_effects(character)
+    enc_chance *= evt_eff["encounter_rate"]
+    loot_bonus *= evt_eff["loot_quality"]
 
     print(C.CYAN+"\n  🧭 探索 " + character["location"] + " ..."+C.RESET)
     # Random event before combat
@@ -2108,6 +2360,7 @@ def start_game():
         elif ch=="13": do_quest_menu(character)
         elif ch=="14": do_vehicle_menu(character)
         elif ch=="15": do_real_estate(character, equipment)
+        elif ch=="16": do_world_time(character, equipment)
         else: print(C.RED+"  未知指令。輸入 h 查看幫助。"+C.RESET)
 
         # Auto-check quest completion after any action
