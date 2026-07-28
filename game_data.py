@@ -19,8 +19,11 @@ if SUPPLEMENT_PATH.exists():
     try:
         with open(SUPPLEMENT_PATH, "r", encoding="utf-8") as _f:
             _SUPPLEMENT = json.load(_f)
-    except Exception:
+    except Exception as _e:
+        print(f"WARNING: Failed to load supplement data from {SUPPLEMENT_PATH}: {_e}")
         _SUPPLEMENT = {}
+else:
+    print(f"WARNING: Supplement file not found: {SUPPLEMENT_PATH}")
 
 _seed = _random.Random()  # non-deterministic (time-based)
 
@@ -135,56 +138,71 @@ def _build_abilities_from_skills(card: dict, all_cards: list) -> list:
     # Build a mapping: token category -> skill card
     skill_cards = [c for c in all_cards if c.get("card_type", "") == "技能卡"]
     _cat_skill_map: dict = {}
+    
+    # Card-ID-based mapping (primary): maps SK card ID prefix to token category
+    _SK_CATEGORY_MAP = {
+        # Knowledge skills
+        "SK-01": ["knowledge"],  # 植物學：北極生態
+        "SK-02": ["knowledge"],  # 地質學：靈子礦脈
+        "SK-04": ["knowledge"],  # 文獻學：舊時代解讀
+        "SK-05": ["knowledge"],  # 妖精生態學
+        "SK-16": ["knowledge"],  # 天翼技：知識掠取
+        # Combat skills
+        "SK-06": ["combat"],     # 格鬥：十字禁錮
+        "SK-08": ["combat"],     # 弓道：靜心射擊
+        "SK-09": ["combat"],     # 陷阱製作：極地狩獵
+        # Element/Magic skills
+        "SK-11": ["element"],    # 道術：五雷正法
+        "SK-12": ["element"],    # 魔法：集束魔炮
+        "SK-17": ["element"],    # 四季更迭（聯合施法）
+        # Energy skills
+        "SK-13": ["energy"],     # 奇蹟：奇蹟賜予於我
+        # Craft skills
+        "SK-03": ["craft", "mechanism"],  # 機械工程：螺旋葉輪
+        "SK-07": ["craft"],      # 工藝：機械加工
+        "SK-14": ["craft"],      # 妖精技：螢光開關
+        "SK-21": ["craft", "tech"],  # 義體醫師
+        "SK-22": ["craft"],      # 換裝義體
+        # Skill specialty
+        "SK-15": ["skill"],      # 精靈技：觀測結晶
+        # Social skills
+        "SK-10": ["social"],     # 潛伏：無聲移動
+        "SK-18": ["social"],     # 打電話（通訊操作）
+        # Tech skills
+        "SK-19": ["tech"],       # 上網（網絡操作）
+        "SK-20": ["tech"],       # 駭客（入侵系統）
+    }
+    
     for sc in skill_cards:
+        sc_id = sc.get("card_id", "")
         sc_name = sc.get("name", "")
         sc_tokens = sc.get("tokens", [])
         sc_ability = next((t.get("value", "") for t in sc_tokens if t.get("category") == "ability"), "")
-        # Map this skill to relevant token categories
+        
+        # Primary: lookup by card_id
         keywords = []
-        if any(kw in sc_name for kw in ["植物","botany","Botany"]):
-            keywords.append("knowledge")
-        if any(kw in sc_name for kw in ["地質","geology","Geology"]):
-            keywords.append("knowledge")
-        if any(kw in sc_name for kw in ["文獻","philology","Philology"]):
-            keywords.append("knowledge")
-        if any(kw in sc_name for kw in ["妖精生態","fairy","Fairy"]):
-            keywords.append("knowledge")
-        if any(kw in sc_name for kw in ["格鬥","martial","Martial"]):
-            keywords.append("combat")
-        if any(kw in sc_name for kw in ["弓道","archer","Archer"]):
-            keywords.append("combat")
-        if any(kw in sc_name for kw in ["陷阱","trap","Trap"]):
-            keywords.append("combat")
-        if any(kw in sc_name for kw in ["道術","Taoism","taoism"]):
-            keywords.append("element")
-        if any(kw in sc_name for kw in ["四季魔法","四季","Magic","magic"]):
-            keywords.append("element")
-        if any(kw in sc_name for kw in ["奇蹟","miracle","Miracle"]):
-            keywords.append("energy")
-        if any(kw in sc_name for kw in ["種族特有","race","Race"]):
-            keywords.append("vitality")
-        if any(kw in sc_name for kw in ["妖精技","fairy tech"]):
-            keywords.append("craft")
-        if any(kw in sc_name for kw in ["有翼","wing","Wing"]):
-            keywords.append("skill")
-        if any(kw in sc_name for kw in ["機械工","mechanical","Mechanical"]):
-            keywords.append("craft")
-            keywords.append("mechanism")
-        if any(kw in sc_name for kw in ["工藝","crafting","Crafting"]):
-            keywords.append("craft")
-        if any(kw in sc_name for kw in ["潛伏","stealth","Stealth"]):
-            keywords.append("social")
-        if any(kw in sc_name for kw in ["植物学","Botany"]):
-            keywords.append("exploration")
-        if any(kw in sc_name for kw in ["打電話","telecom","Telecom"]):
-            keywords.append("social")
-        if any(kw in sc_name for kw in ["上網","internet","Internet"]):
-            keywords.append("tech")
-        if any(kw in sc_name for kw in ["駭客","hack","Hack"]):
-            keywords.append("tech")
-        if any(kw in sc_name for kw in ["義體","prosthetic","Prosthetic"]):
-            keywords.append("tech")
-            keywords.append("craft")
+        for sk_prefix, cats in _SK_CATEGORY_MAP.items():
+            if sc_id.startswith(sk_prefix):
+                keywords.extend(cats)
+                break
+        
+        # Fallback: keyword-based matching for non-SK skill cards
+        if not keywords:
+            for kw, cat in [
+                (["植物","botany"], "knowledge"), (["地質","geology"], "knowledge"),
+                (["文獻","philology"], "knowledge"), (["妖精生態","fairy"], "knowledge"),
+                (["格鬥","martial"], "combat"), (["弓道","archer"], "combat"),
+                (["陷阱","trap"], "combat"), (["道術"], "element"),
+                (["四季","魔法","magic"], "element"), (["奇蹟","miracle"], "energy"),
+                (["種族"], "vitality"), (["妖精技"], "craft"),
+                (["有翼","wing"], "skill"), (["機械工","mechanical"], "craft"),
+                (["工藝","craft"], "craft"), (["潛伏","stealth"], "social"),
+                (["打電話","telecom"], "social"), (["上網","internet"], "tech"),
+                (["駭客","hack"], "tech"), (["義體","prosthetic"], "tech"),
+            ]:
+                if any(k in sc_name for k in kw):
+                    keywords.append(cat)
+        
         for kw in keywords:
             _cat_skill_map.setdefault(kw, []).append({"name": sc_name, "desc": sc_ability})
     
@@ -683,18 +701,7 @@ def generate_all_items() -> Dict[str, dict]:
     # Card ability items — generate up to 600
     card_item_count = 0
     item_names_set = set(items.keys())
-    _cat_item_types = {
-        "energy": ("accessory","neck",0.1,0.1,0,0.2,60,80),
-        "element": ("accessory","neck",0.1,0.1,0,0.2,60,80),
-        "combat": ("weapon","right_hand",0.25,0,0.1,0,80,100),
-        "skill": ("weapon","right_hand",0.25,0,0.1,0,80,100),
-        "craft": ("armor","torso",0,0.15,0,0.15,70,90),
-        "social": ("armor","torso",0,0.15,0,0.15,70,90),
-        "lore": ("armor","back",0,0.1,0,0.2,50,70),
-        "vitality": ("armor","torso",0,0.2,0,0,80,85),
-        "exploration": ("armor","feet",0,0,0.15,0.1,60,75),
-        "knowledge": ("accessory","head",0,0,0,0.25,50,95),
-    }
+    _cat_item_types = _SUPPLEMENT.get("cat_item_types", {})
     for card in _CHARACTER_CARDS:
         tokens = card.get("tokens", [])
         cid = card.get('card_id','?')
