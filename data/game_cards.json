@@ -71,14 +71,14 @@
           "name": "概念永恆",
           "value": "不會死亡或消散，概念身體變形後會自動「重構」像素形態恢復原狀",
           "strength": 0.6,
-          "type": "general"
+          "type": "immortality"
         },
         {
           "category": "energy",
           "name": "概念性生理反應",
           "value": "能「概念性地映射」出與人類相似的生理反應（飢餓、痛覺、疲憊、睡眠、性愉悅）",
           "strength": 0.6,
-          "type": "general"
+          "type": "physiology"
         },
         {
           "category": "skill",
@@ -149,7 +149,7 @@
           "name": "概念器官的臨時改變",
           "value": "遭受具象化衝擊時，像素身體受衝擊部位暫時性變色、隆起或出現裂痕，伴隨「概念性痛覺」，修復臨時且可逆",
           "category": "lore",
-          "type": "general"
+          "type": "physiology"
         },
         {
           "name": "概念性自動高潮",
@@ -173,13 +173,13 @@
           "name": "概念固化",
           "value": "極其嚴重的「概念性干涉」，核心構成概念被強行「永久性改寫」 導致本質變化",
           "category": "lore",
-          "type": "general"
+          "type": "physiology"
         },
         {
           "name": "CC-02",
           "value": "壞壞米亞 — 貓娘 — 暗夜少女",
           "category": "lore",
-          "type": "general"
+          "type": "reference"
         }
       ],
       "stats": {
@@ -347,7 +347,7 @@
           "name": "CC-03",
           "value": "星辰米亞 — 狐妖工程師 → 艦娘",
           "category": "lore",
-          "type": "general"
+          "type": "reference"
         }
       ],
       "stats": {
@@ -442,7 +442,7 @@
           "name": "身體",
           "value": "身體異化: 仿生器官、機械骨骼",
           "strength": 0.5,
-          "type": "general"
+          "type": "body"
         },
         {
           "category": "combat",
@@ -504,7 +504,7 @@
           "name": "CC-04",
           "value": "純真米亞 — 花妖娘／依月",
           "category": "lore",
-          "type": "general"
+          "type": "reference"
         }
       ],
       "stats": {
@@ -637,7 +637,7 @@
           "name": "核心主題",
           "value": "在治癒世間痛苦中學習理解生命的循環，最終找到「純粹的清明」",
           "category": "lore",
-          "type": "general"
+          "type": "theme"
         },
         {
           "name": "時間哲學",
@@ -649,7 +649,7 @@
           "name": "生理特性",
           "value": "生理脆弱，不擅長物理抵抗",
           "category": "vitality",
-          "type": "general"
+          "type": "feature"
         },
         {
           "name": "故事線",
@@ -834,7 +834,7 @@
           "name": "畸變體",
           "value": "形態徹底扭曲",
           "category": "lore",
-          "type": "general"
+          "type": "ability"
         },
         {
           "name": "地點",
@@ -852,7 +852,7 @@
           "name": "深淵之境",
           "value": "抽象精神空間，感官被無限放大扭曲，現實與幻象交織",
           "category": "lore",
-          "type": "general"
+          "type": "dimension"
         },
         {
           "name": "隱匿之所",
@@ -1201,7 +1201,7 @@
           "name": "性質",
           "value": "獨立短篇角色，可與SL-05的概念調和體系產生聯繫",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         }
       ],
       "stats": {
@@ -1259,7 +1259,7 @@
           "name": "天賦型態",
           "value": "勤勉型（線性成長）",
           "strength": 0.6,
-          "type": "general"
+          "type": "ability"
         },
         {
           "category": "skill",
@@ -1323,7 +1323,7 @@
           "name": "沙盒角色",
           "value": "數據記錄者",
           "category": "role",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "CC-10",
@@ -1398,7 +1398,7 @@
           "name": "天賦型態",
           "value": "天才型（指數跳躍，但不可預測）",
           "strength": 0.6,
-          "type": "general"
+          "type": "ability"
         },
         {
           "category": "energy",
@@ -1530,7 +1530,7 @@
           "name": "天賦型態",
           "value": "跨界型（偏科特化，非典型曲線）",
           "strength": 0.6,
-          "type": "general"
+          "type": "ability"
         },
         {
           "category": "energy",
@@ -1587,7 +1587,7 @@
           "name": "沙盒角色",
           "value": "異常處理者",
           "category": "role",
-          "type": "general"
+          "type": "character"
         }
       ],
       "stats": {
@@ -1763,13 +1763,13 @@
           "name": "數值承算模型",
           "value": "未記錄 完整收錄（含難度權重、好感度矩陣）",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         },
         {
           "name": "雙結局路線",
           "value": "未記錄 完整收錄（成功線與失敗線）",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         },
         {
           "name": "魔女學府內容",
@@ -1781,7 +1781,7 @@
           "name": "農學院主角",
           "value": "未記錄 新增CC-12-A",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         }
       ],
       "stats": {
@@ -1938,7 +1938,7 @@
           "name": "晞咕萊雅",
           "value": "等待未分類的書 低耗能、接受不確定",
           "category": "lore",
-          "type": "general"
+          "type": "classification"
         },
         {
           "name": "暈咔繆露",
@@ -2082,7 +2082,7 @@
           "name": "角色",
           "value": "左間小蒼蘭，小狐丸的夥伴，大正年間的工匠之女",
           "strength": 0.5,
-          "type": "general"
+          "type": "character"
         },
         {
           "category": "skill",
@@ -2148,7 +2148,7 @@
           "name": "神社的意義",
           "value": "對小蒼蘭而言，這座神社不只是祭拜的場所。它是她唯一可以同時見到「神明的存在」和「自己的天賦」不會被否定、不會被嘲笑的地方。小狐丸從不認為她只是一個工匠的女兒。小",
           "category": "lore",
-          "type": "general"
+          "type": "ability"
         },
         {
           "name": "階段",
@@ -2576,7 +2576,7 @@
           "name": "六、角色補充卡",
           "value": "(CC-A/B) — 新增 2 張",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "CC-04-B",
@@ -2699,7 +2699,7 @@
           "name": "島嶼數量",
           "value": "約40餘座大小島嶼，分為內外兩列",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         },
         {
           "name": "地質",
@@ -2912,7 +2912,7 @@
           "name": "認真",
           "value": "她對自己被賦予的角色非常認真。她可能不完全理解「領袖」意味著什麼，但她會努力做好。會議中她會坐在主位上，雙腳搆不到地板，但她會坐得筆直",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "寡言",
@@ -3110,7 +3110,7 @@
           "name": "變身咒語",
           "value": "「秩序，展開。」",
           "category": "ability",
-          "type": "general"
+          "type": "ability"
         },
         {
           "name": "日常",
@@ -3140,7 +3140,7 @@
           "name": "隱藏的溫暖",
           "value": "他從不表現出對雉的寵溺，但他記得她的所有小事：她喜歡的茶溫、她討厭的食材、她什麼時候會睡著。他不會說「我關心她」。他只會在她睡著時，把一條毯子蓋在她身上",
           "category": "lore",
-          "type": "general"
+          "type": "interest"
         },
         {
           "name": "能力",
@@ -3920,7 +3920,7 @@
           "name": "連接",
           "value": "格數        性質",
           "category": "lore",
-          "type": "general"
+          "type": "connection"
         },
         {
           "name": "CC-30",
@@ -4733,7 +4733,7 @@
           "name": "概念體溫",
           "value": "她可以讓自己的數據投影產生「觸覺」。不是真正的觸覺，而是讓接觸者的大腦「相信」她是溫暖的。她最常用來在月面冰冷的地板上坐著時，讓自己「感覺沒那麼冷」。",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         },
         {
           "name": "碎碎念植入（被動）",
@@ -5099,7 +5099,7 @@
           "name": "20世紀中",
           "value": "碎碎念、搔癢、按摩 身體回應（縮腳、笑、夢話） 觸覺遊戲",
           "category": "lore",
-          "type": "general"
+          "type": "body"
         },
         {
           "name": "20世紀末",
@@ -5123,7 +5123,7 @@
           "name": "如果需要，我可以將以上內容轉換為",
           "value": "印刷用5×7吋卡片排版文字，或輸出為 JSON資料庫條目。請告訴我下一步。",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         }
       ],
       "stats": {
@@ -5262,7 +5262,7 @@
           "name": "體重",
           "value": "28 kg（蛇尾肌肉密度較高）",
           "category": "lore",
-          "type": "general"
+          "type": "body"
         },
         {
           "name": "職業",
@@ -5304,7 +5304,7 @@
           "name": "·",
           "value": "蛇尾的環境限制：乾燥環境會導致鱗片乾裂，需要定期塗抹保濕油（她自己調配，原料來自地下遺跡的苔蘚）。低溫（<5°C）會讓她行動遲緩——她會不自覺盤成圓形，進入半休",
           "category": "lore",
-          "type": "general"
+          "type": "environment"
         },
         {
           "name": "能力",
@@ -5334,7 +5334,7 @@
           "name": "礦石親和（微量）",
           "value": "她喜歡冰涼的礦石，不是因為美，是因為「溫度穩定，不會干擾數據處理」。某些礦石（如石英、螢石）可以幫助她聚焦注意力——類似人類的「冥想」。",
           "category": "lore",
-          "type": "general"
+          "type": "interest"
         },
         {
           "name": "古籍修復（基礎）",
@@ -5346,7 +5346,7 @@
           "name": "「……我分析過",
           "value": "3,472 本人類的情感相關文獻。愛情的底層邏輯是『依賴』與『恐懼失去』的動態平衡。但……我從未體驗過。我編目的言情小說越來越多，而我對它們的分類越來越精確。但",
           "category": "lore",
-          "type": "general"
+          "type": "classification"
         },
         {
           "name": "對象",
@@ -5370,7 +5370,7 @@
           "name": "織織（CC-01）",
           "value": "2 格 織織的「概念共鳴」會干擾她的感測鱗片——織織靠近時，她的尾尖會感受到「無法歸類的震動」。她記錄為：「……不明。待觀察。」",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         },
         {
           "name": "純真米亞（CC-04）",
@@ -5382,7 +5382,7 @@
           "name": "吉普莉爾（C11）",
           "value": "2 格（間接） 她知道吉普莉爾是「另一個圖書館的管理員」，而且「她的收集慾望會破壞數據完整性」。她從未見過吉普，但她在自己的筆記上寫：「……不建議與此人交換文獻",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         },
         {
           "name": "京島楓香（CC-29）",
@@ -5569,7 +5569,7 @@
           "name": "體重",
           "value": "41 kg",
           "category": "lore",
-          "type": "general"
+          "type": "body"
         },
         {
           "name": "職業",
@@ -5665,7 +5665,7 @@
           "name": "晞咕萊雅的礦石袋",
           "value": "0 格（物理接觸） 過載時會偷偷借用（拿幾顆放在額頭上降溫）。用完會放回去。晞咕萊雅從未表示知道此事，但礦石袋的數量每年增加——暈咔繆露懷疑是晞咕萊雅故意多放的",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         }
       ],
       "stats": {
@@ -5838,7 +5838,7 @@
           "name": "體重",
           "value": "148 kg（黑曜石質外殼與節肢密度極高）",
           "category": "lore",
-          "type": "general"
+          "type": "body"
         },
         {
           "name": "職業",
@@ -5874,7 +5874,7 @@
           "name": "·",
           "value": "內在：極度可靠。嘴上嫌麻煩，但只要書架或館員遇到概念崩潰危險，她的絲線總能在 0.1 秒內精準把人提回安全區。對精細手工藝非常有耐心。",
           "category": "lore",
-          "type": "general"
+          "type": "technology"
         },
         {
           "name": "能力",
@@ -5928,7 +5928,7 @@
           "name": "五、角色卡：CC-41",
           "value": "芬喀涅（Fenkani）—— 書架群間的「重型維護員」",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         }
       ],
       "stats": {
@@ -6101,7 +6101,7 @@
           "name": "體重",
           "value": "145 kg",
           "category": "lore",
-          "type": "general"
+          "type": "body"
         },
         {
           "name": "職業",
@@ -6209,7 +6209,7 @@
           "name": "是否需要我將這組卡片輸出為",
           "value": "印刷用 A5 排版文字 或 JSON 資料庫條目？",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         }
       ],
       "stats": {
@@ -6751,7 +6751,7 @@
           "name": "角色卡：CC-44",
           "value": "猞妒忌依（依戀之貪）",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         }
       ],
       "stats": {
@@ -6986,7 +6986,7 @@
           "name": "角色卡：CC-45",
           "value": "奶油泡芙（甜品成精）",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         }
       ],
       "stats": {
@@ -7208,7 +7208,7 @@
           "name": "角色卡：CC-46",
           "value": "司萌（萌萌的怪獸）",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         }
       ],
       "stats": {
@@ -7424,7 +7424,7 @@
           "name": "角色卡：CC-47",
           "value": "呃咔（反派吉祥物）",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         }
       ],
       "stats": {
@@ -7640,7 +7640,7 @@
           "name": "角色卡：CC-48",
           "value": "鈿乾 芊蒔（反派魔法少女）",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         }
       ],
       "stats": {
@@ -8293,7 +8293,7 @@
           "name": "興趣",
           "value": "競速（低空飛行競賽、穿越峽谷計時賽）",
           "category": "lore",
-          "type": "general"
+          "type": "interest"
         },
         {
           "name": "住址",
@@ -8401,7 +8401,7 @@
           "name": "角色卡：CC-51",
           "value": "夜鈴（Yè Líng）—— 蝙蝠娘的戀愛相談室",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         }
       ],
       "stats": {
@@ -8578,7 +8578,7 @@
           "name": "興趣",
           "value": "戀愛諮詢（自封「校園情感顧問」）",
           "category": "lore",
-          "type": "general"
+          "type": "interest"
         },
         {
           "name": "住址",
@@ -8626,7 +8626,7 @@
           "name": "超音波感知（被動）",
           "value": "可發出人耳聽不到的聲波，透過回聲建構周圍環境的 3D 地圖（精確到 5cm）。在黑暗中仍可「看見」，但無法辨識顏色和文字。",
           "category": "lore",
-          "type": "general"
+          "type": "environment"
         },
         {
           "name": "情感回聲（主動）",
@@ -8644,7 +8644,7 @@
           "name": "「……我給過",
           "value": "47 個人戀愛建議。其中 12 對結婚了。3 對離婚。剩下的還在交往。但我自己……連『我喜歡你』都不敢說。不是因為我怕被拒絕。是因為——我怕對方說『好』之後，我",
           "category": "lore",
-          "type": "general"
+          "type": "interest"
         },
         {
           "name": "對象",
@@ -8674,7 +8674,7 @@
           "name": "晞咕萊雅（CC-38）",
           "value": "3 格 夜鈴曾想幫晞咕萊雅做戀愛諮詢（因為聽說她「無法分類心動」）。晞咕萊雅說「……不需要」。夜鈴沒放棄，每個月會寄一張匿名明信片，上面寫「今天有人對你心動嗎？",
           "category": "lore",
-          "type": "general"
+          "type": "classification"
         },
         {
           "name": "已知事件（EP",
@@ -8870,7 +8870,7 @@
           "name": "體重",
           "value": "7 kg",
           "category": "lore",
-          "type": "general"
+          "type": "body"
         },
         {
           "name": "職業",
@@ -8882,7 +8882,7 @@
           "name": "興趣",
           "value": "襲掠（族群的伴侶挑選儀式）、收集亮晶晶的小東西、倒掛在樹上吃果醬麵包",
           "category": "lore",
-          "type": "general"
+          "type": "interest"
         },
         {
           "name": "住址",
@@ -8918,19 +8918,19 @@
           "name": "·",
           "value": "EP-52C 目標確定：（待您指定）",
           "category": "lore",
-          "type": "general"
+          "type": "purpose"
         },
         {
           "name": "目標反應",
           "value": "結果 後續",
           "category": "lore",
-          "type": "general"
+          "type": "purpose"
         },
         {
           "name": "目標發現了，並做出「相應動作」",
           "value": "「失敗」（目標通過考驗） 進入第五階段。",
           "category": "lore",
-          "type": "general"
+          "type": "purpose"
         },
         {
           "name": "目標在發現襲掠後，必須在短時間內（通常為第一次襲掠後的",
@@ -8966,7 +8966,7 @@
           "name": "襲掠嗅覺",
           "value": "能記住目標的「個體氣味」，誤差 < 15%。用於跟蹤。",
           "category": "lore",
-          "type": "general"
+          "type": "purpose"
         },
         {
           "name": "對象",
@@ -8978,19 +8978,19 @@
           "name": "夜鈴（CC-51）",
           "value": "1 格 室友，候選目標之一。煦掠常偷看她，但還沒決定。",
           "category": "lore",
-          "type": "general"
+          "type": "purpose"
         },
         {
           "name": "翎翾（CC-50）",
           "value": "2 格 候選目標之一。煦掠羨慕她的飛行速度，曾跟蹤過幾次。",
           "category": "lore",
-          "type": "general"
+          "type": "purpose"
         },
         {
           "name": "紅（C21）",
           "value": "2 格 候選目標之一。煦掠每週去買布丁時會觀察他。",
           "category": "lore",
-          "type": "general"
+          "type": "purpose"
         },
         {
           "name": "晞咕萊雅（CC-38）",
@@ -9186,7 +9186,7 @@
           "name": "體重",
           "value": "不可測（在體重計上顯示為「error」）",
           "category": "lore",
-          "type": "general"
+          "type": "body"
         },
         {
           "name": "職業",
@@ -9312,7 +9312,7 @@
           "name": "角色卡：CC-54",
           "value": "嚶鳴（Yīng Míng）—— 被遺忘恐懼的意識體，小無的眷屬",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         }
       ],
       "stats": {
@@ -9501,7 +9501,7 @@
           "name": "體重",
           "value": "30 kg",
           "category": "lore",
-          "type": "general"
+          "type": "body"
         },
         {
           "name": "身份",
@@ -9513,7 +9513,7 @@
           "name": "興趣",
           "value": "算房貸利率、寫保險合約、製作詐騙劇本（她覺得這些是「藝術」）",
           "category": "lore",
-          "type": "general"
+          "type": "interest"
         },
         {
           "name": "住址",
@@ -9828,7 +9828,7 @@
           "name": "情境",
           "value": "表達",
           "category": "lore",
-          "type": "general"
+          "type": "situation"
         },
         {
           "name": "生氣時",
@@ -9900,7 +9900,7 @@
           "name": "角色卡：CC-56",
           "value": "塞勒涅（Selene）—— 永恆的月車御者",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         }
       ],
       "stats": {
@@ -10042,7 +10042,7 @@
           "name": "全名（混合算法生成）",
           "value": "Nannasin Khonsu Luna（源自蘇美爾南那、埃及孔蘇、羅馬盧娜，經語音平滑與本人確認）",
           "category": "lore",
-          "type": "general"
+          "type": "dialogue"
         },
         {
           "name": "真名",
@@ -10138,7 +10138,7 @@
           "name": "情境",
           "value": "表達",
           "category": "lore",
-          "type": "general"
+          "type": "situation"
         },
         {
           "name": "難過時",
@@ -10162,7 +10162,7 @@
           "name": "生氣時",
           "value": "月面出現極細的裂紋（肉眼不可見，但天文望遠鏡會記錄到異常）。",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         },
         {
           "name": "想念恩底彌翁時",
@@ -10347,7 +10347,7 @@
           "name": "產品型號",
           "value": "兔系列 賽用型17號",
           "category": "lore",
-          "type": "general"
+          "type": "item"
         },
         {
           "name": "宣傳名稱",
@@ -10413,7 +10413,7 @@
           "name": "分類系譜",
           "value": "義體人｜ C1-H2-B2（輕度義體、部分暴露、生物腦增強）",
           "category": "lore",
-          "type": "general"
+          "type": "classification"
         },
         {
           "name": "·",
@@ -10449,7 +10449,7 @@
           "name": "情境",
           "value": "表達",
           "category": "lore",
-          "type": "general"
+          "type": "situation"
         },
         {
           "name": "比賽前",
@@ -10515,7 +10515,7 @@
           "name": "角色卡：CC-58",
           "value": "馬系列 賽用型14型『烈馬』（Steed）—— 耐力型長途競速義體人",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         }
       ],
       "stats": {
@@ -10664,7 +10664,7 @@
           "name": "產品型號",
           "value": "馬系列 賽用型14型",
           "category": "lore",
-          "type": "general"
+          "type": "item"
         },
         {
           "name": "宣傳名稱",
@@ -10724,7 +10724,7 @@
           "name": "分類系譜",
           "value": "義體人｜ C2-H2-B2（中度義體、部分暴露、生物腦增強）",
           "category": "lore",
-          "type": "general"
+          "type": "classification"
         },
         {
           "name": "·",
@@ -10742,7 +10742,7 @@
           "name": "高效氧交換",
           "value": "可在低氧環境（海拔 4000m）持續奔跑 8 小時不間斷。",
           "category": "lore",
-          "type": "general"
+          "type": "environment"
         },
         {
           "name": "神經快傳",
@@ -10754,13 +10754,13 @@
           "name": "「……我能跑完",
           "value": "1000 公里不停。但當我停下來，我會發抖。不是冷。是……我的身體還在問：『下一站在哪？』」",
           "category": "lore",
-          "type": "general"
+          "type": "body"
         },
         {
           "name": "情境",
           "value": "表達",
           "category": "lore",
-          "type": "general"
+          "type": "situation"
         },
         {
           "name": "靜止時",
@@ -10778,7 +10778,7 @@
           "name": "被人超越時",
           "value": "不加速，只是瞇起眼睛，記住對手的編號。",
           "category": "lore",
-          "type": "general"
+          "type": "meta"
         },
         {
           "name": "抵達終點後",
@@ -10814,7 +10814,7 @@
           "name": "角色卡：CC-59",
           "value": "迅猛龍系列 賽用型21型『撕裂者』（Ripper）—— 爆發型短程衝刺義體人",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         }
       ],
       "stats": {
@@ -10946,7 +10946,7 @@
           "name": "身體消耗",
           "value": "每次爆發都是對身體的破壞，知道自己壞得很快，每一場都當最後一場",
           "strength": 0.5,
-          "type": "general"
+          "type": "body"
         },
         {
           "name": "卡片代碼",
@@ -10958,7 +10958,7 @@
           "name": "產品型號",
           "value": "迅猛龍系列 賽用型21型",
           "category": "lore",
-          "type": "general"
+          "type": "item"
         },
         {
           "name": "宣傳名稱",
@@ -11018,7 +11018,7 @@
           "name": "分類系譜",
           "value": "義體人｜ C3-H3-B2（重度義體、非人形態、生物腦增強）",
           "category": "lore",
-          "type": "general"
+          "type": "classification"
         },
         {
           "name": "·",
@@ -11054,7 +11054,7 @@
           "name": "情境",
           "value": "表達",
           "category": "lore",
-          "type": "general"
+          "type": "situation"
         },
         {
           "name": "起跑前",
@@ -11333,7 +11333,7 @@
           "name": "分類系譜",
           "value": "人類｜不適用",
           "category": "lore",
-          "type": "general"
+          "type": "classification"
         },
         {
           "name": "·",
@@ -11351,13 +11351,13 @@
           "name": "情境",
           "value": "表達",
           "category": "lore",
-          "type": "general"
+          "type": "situation"
         },
         {
           "name": "出動時",
           "value": "雙手緊握魔法杖，深呼吸三次，大喊「正義出擊！」（聲音破音）",
           "category": "lore",
-          "type": "general"
+          "type": "alignment_value"
         },
         {
           "name": "看到真正的魔法少女",
@@ -11630,7 +11630,7 @@
           "name": "興趣",
           "value": "折紙鶴（每次治療藤真後折一隻，已累積 400+ 隻）、清潔紗布（即使拋棄式）、在病歷空白處畫愛心（隨即塗掉）",
           "category": "lore",
-          "type": "general"
+          "type": "interest"
         },
         {
           "name": "住址",
@@ -11702,7 +11702,7 @@
           "name": "情境",
           "value": "表達",
           "category": "lore",
-          "type": "general"
+          "type": "situation"
         },
         {
           "name": "藤真受傷出現時",
@@ -11714,13 +11714,13 @@
           "name": "治療藤真時",
           "value": "低頭不看他，睫毛輕顫，手指刻意保持專業（但會多按一秒）。",
           "category": "lore",
-          "type": "general"
+          "type": "knowledge_field"
         },
         {
           "name": "藤真道謝時",
           "value": "低頭，把急救包抱在胸前：「……任務。」（背後的手在發抖）",
           "category": "lore",
-          "type": "general"
+          "type": "purpose"
         },
         {
           "name": "藤真離開後",
@@ -11896,7 +11896,7 @@
           "name": "機械",
           "value": "精通機械維修與工程設計",
           "strength": 0.5,
-          "type": "general"
+          "type": "technology"
         },
         {
           "name": "卡片代碼",
@@ -11938,7 +11938,7 @@
           "name": "分類系譜",
           "value": "獸娘｜ S-H-P（標準種、類人型、純血）",
           "category": "lore",
-          "type": "general"
+          "type": "classification"
         },
         {
           "name": "·",
@@ -11950,7 +11950,7 @@
           "name": "角色卡：CC-64",
           "value": "暗爪·刃尾 —— 黑帆掠奪者船長",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         }
       ],
       "stats": {
@@ -12109,7 +12109,7 @@
           "name": "分類系譜",
           "value": "獸娘｜ S-H-P（標準種、類人型、純血）",
           "category": "lore",
-          "type": "general"
+          "type": "classification"
         },
         {
           "name": "·",
@@ -12262,7 +12262,7 @@
           "name": "分類系譜",
           "value": "獸娘｜ S-S-P（標準種、標準型、純血）",
           "category": "lore",
-          "type": "general"
+          "type": "classification"
         },
         {
           "name": "一條總結",
@@ -12274,7 +12274,7 @@
           "name": "角色卡：CC-66",
           "value": "漣 · 迴聲 —— 人魚聲吶網絡離線觀測員",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         }
       ],
       "stats": {
@@ -12413,7 +12413,7 @@
           "name": "分類系譜",
           "value": "獸娘｜ S-H-P（標準種、類人型、純血）",
           "category": "lore",
-          "type": "general"
+          "type": "classification"
         },
         {
           "name": "一條總結",
@@ -12425,7 +12425,7 @@
           "name": "角色卡：CC-67",
           "value": "沫 · 彩衣 —— 海蛞蝓生技首席調色師",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         }
       ],
       "stats": {
@@ -12522,7 +12522,7 @@
           "name": "色素分泌",
           "value": "海蛞蝓生技首席調色師，身體是活的顏料廠",
           "strength": 0.6,
-          "type": "general"
+          "type": "body"
         },
         {
           "category": "vitality",
@@ -12559,7 +12559,7 @@
           "name": "分類系譜",
           "value": "獸娘｜ S-C-P（標準種、類原型、純血）",
           "category": "lore",
-          "type": "general"
+          "type": "classification"
         },
         {
           "name": "一條總結",
@@ -12571,7 +12571,7 @@
           "name": "場景卡：SC-22",
           "value": "黑淵台（Abyssal Podium）—— 阿比薩聯邦議會與地熱心臟",
           "category": "lore",
-          "type": "general"
+          "type": "situation"
         }
       ],
       "stats": {
@@ -12734,7 +12734,7 @@
           "name": "連接",
           "value": "格數        性質",
           "category": "lore",
-          "type": "general"
+          "type": "connection"
         },
         {
           "name": "CC-31",
@@ -12812,7 +12812,7 @@
           "name": "EP-30C",
           "value": "小N的異常回應        某次算力配給中，小N沒有說標準語音「The more you buy, the more you save」，而是說：「你們買的，",
           "category": "lore",
-          "type": "general"
+          "type": "dialogue"
         }
       ],
       "stats": {
@@ -12924,7 +12924,7 @@
           "name": "左間",
           "value": "カチッ (防空砲小妖精) 依然存在於「靜子型」的每一尊砲裡。她可以在不同的砲之間移動，但她最喜歡待在原型砲的殘骸旁邊——那尊砲被小蒼蘭保存在工廠角落，上面刻著「",
           "category": "lore",
-          "type": "general"
+          "type": "interest"
         },
         {
           "name": "小狐丸",
@@ -13015,7 +13015,7 @@
           "name": "涉及角色",
           "value": "純真米亞、壞壞米亞、星辰米亞、小精靈艾莉、龍娘艾拉",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "EP-03",
@@ -13057,7 +13057,7 @@
           "category": "mechanism",
           "name": "進入迴廊場景時機率觸發",
           "strength": 0.5,
-          "type": "general"
+          "type": "situation"
         },
         {
           "name": "卡片代碼",
@@ -13075,7 +13075,7 @@
           "name": "涉及角色",
           "value": "織織、純真米亞、其他未命名角色",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "意義",
@@ -13087,7 +13087,7 @@
           "name": "四、場景卡",
           "value": "(SC) — 新增 2 張",
           "category": "lore",
-          "type": "general"
+          "type": "situation"
         },
         {
           "name": "SC-01",
@@ -13208,7 +13208,7 @@
           "name": "善惡值",
           "value": "0。尚未做出任何道德選擇",
           "category": "lore",
-          "type": "general"
+          "type": "alignment"
         },
         {
           "name": "潛在威脅",
@@ -13232,7 +13232,7 @@
           "name": "類別",
           "value": "原數量 新增 總數",
           "category": "lore",
-          "type": "general"
+          "type": "classification"
         },
         {
           "name": "組織卡",
@@ -13244,7 +13244,7 @@
           "name": "角色卡",
           "value": "52張 +3 (CC-21/22/23) 55張",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "物品卡",
@@ -13256,7 +13256,7 @@
           "name": "場景卡",
           "value": "19張 +1 (SC-20) 20張",
           "category": "lore",
-          "type": "general"
+          "type": "situation"
         },
         {
           "name": "劇情節點卡",
@@ -13268,7 +13268,7 @@
           "name": "合計",
           "value": "約140張 +7張 約147張",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         }
       ],
       "stats": {
@@ -13427,7 +13427,7 @@
           "name": "角色代碼",
           "value": "CC-29",
           "category": "lore",
-          "type": "general"
+          "type": "meta"
         },
         {
           "name": "姓名",
@@ -14903,7 +14903,7 @@
           "name": "全稱",
           "value": "聖諭同盟（Sanctuary Alliance）",
           "strength": 0.5,
-          "type": "general"
+          "type": "meta"
         },
         {
           "category": "social",
@@ -14988,7 +14988,7 @@
           "name": "全稱",
           "value": "唯靈聯邦（Collective Spirit Union）",
           "strength": 0.5,
-          "type": "general"
+          "type": "meta"
         },
         {
           "category": "social",
@@ -15079,14 +15079,14 @@
           "name": "全稱",
           "value": "永久中立地帶（Permanent Neutral Zone）",
           "strength": 0.5,
-          "type": "general"
+          "type": "meta"
         },
         {
           "category": "social",
           "name": "政治結構",
           "value": "無中央機構。各國獨立決策，但定期舉行非正式的外交協商",
           "strength": 0.5,
-          "type": "general"
+          "type": "politics"
         },
         {
           "category": "combat",
@@ -15176,14 +15176,14 @@
           "name": "全稱",
           "value": "緩衝商業聯合體（Buffer Commerce Coalition）",
           "strength": 0.5,
-          "type": "general"
+          "type": "meta"
         },
         {
           "category": "social",
           "name": "政治結構",
           "value": "由各成員國的商會聯合體主導。政府首腦多為前企業領袖",
           "strength": 0.5,
-          "type": "general"
+          "type": "politics"
         },
         {
           "category": "combat",
@@ -15211,7 +15211,7 @@
           "name": "核心信念",
           "value": "「利潤不選邊」。同時向聖諭同盟與唯靈聯邦出售資源、技術、與軍事物資",
           "strength": 0.6,
-          "type": "general"
+          "type": "technology"
         },
         {
           "category": "status",
@@ -15463,7 +15463,7 @@
           "name": "政治結構",
           "value": "各城邦（多為移動平台或島嶼）高度自治，邦聯議會處理跨城邦事務（貿易、環保、海盜問題）",
           "strength": 0.5,
-          "type": "general"
+          "type": "politics"
         },
         {
           "category": "combat",
@@ -15572,7 +15572,7 @@
           "name": "政治結構",
           "value": "各海底城邦高度自治，联邦议会处理跨城邦事务（地熱能源分配、廢料管理、与外界的贸易）",
           "strength": 0.5,
-          "type": "general"
+          "type": "politics"
         },
         {
           "category": "combat",
@@ -15681,7 +15681,7 @@
           "name": "善惡值",
           "value": 0,
           "strength": 0.0,
-          "type": "general"
+          "type": "alignment"
         },
         {
           "category": "social",
@@ -15964,7 +15964,7 @@
           "name": "善惡值",
           "value": -30,
           "strength": 0.3,
-          "type": "general"
+          "type": "alignment"
         },
         {
           "category": "social",
@@ -15989,7 +15989,7 @@
           "name": "成員數",
           "value": "約20-30人（流動性高）",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         },
         {
           "name": "活動範圍",
@@ -16013,7 +16013,7 @@
           "name": "情感驅動",
           "value": "所有成員都是因為「伴侶或準伴侶被英雄/魔法少女的魅力吸引而離開」而加入。這不是意識形態，是創傷",
           "category": "lore",
-          "type": "general"
+          "type": "ability"
         },
         {
           "name": "匿名性",
@@ -16103,7 +16103,7 @@
           "name": "魔法少女",
           "value": "主要目標之一。春（C17）的簽書會曾被人舉牌。她在台上看到了，但沒有停下簽書的動作",
           "category": "lore",
-          "type": "general"
+          "type": "purpose"
         },
         {
           "name": "魔法少女聯合體",
@@ -16192,7 +16192,7 @@
           "name": "善惡值",
           "value": -60,
           "strength": 0.6,
-          "type": "general"
+          "type": "alignment"
         },
         {
           "category": "social",
@@ -16238,7 +16238,7 @@
           "name": "成員數",
           "value": "核心約50人，外圍信眾約300-500人",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         },
         {
           "name": "活動範圍",
@@ -16250,7 +16250,7 @@
           "name": "知名度",
           "value": "中低。政府將其列為「可疑新興宗教」，但尚未採取行動",
           "category": "lore",
-          "type": "general"
+          "type": "politics"
         },
         {
           "name": "角色",
@@ -16385,7 +16385,7 @@
           "name": "善惡值",
           "value": -80,
           "strength": 0.8,
-          "type": "general"
+          "type": "alignment"
         },
         {
           "category": "social",
@@ -16438,7 +16438,7 @@
           "name": "成員數",
           "value": "核心約100人，外圍協力者不詳",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         },
         {
           "name": "活動範圍",
@@ -16618,7 +16618,7 @@
           "name": "類別",
           "value": "原數量 新增 總數",
           "category": "lore",
-          "type": "general"
+          "type": "classification"
         },
         {
           "name": "組織卡",
@@ -16630,7 +16630,7 @@
           "name": "合計",
           "value": "約147張 +3張 約150張",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         }
       ],
       "stats": {
@@ -16674,7 +16674,7 @@
           "name": "善惡值",
           "value": -20,
           "strength": 0.2,
-          "type": "general"
+          "type": "alignment"
         },
         {
           "category": "social",
@@ -16731,7 +16731,7 @@
           "name": "·",
           "value": "完全脫離公司後，公司會銷毀所有備份資料，但會保留「匿名化運行數據」用於研發（改造人可選擇退出，但需簽署放棄退役基金的補充協議）。",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         },
         {
           "name": "脈動工業",
@@ -16818,7 +16818,7 @@
           "name": "善惡值",
           "value": -10,
           "strength": 0.1,
-          "type": "general"
+          "type": "alignment"
         },
         {
           "category": "social",
@@ -16857,7 +16857,7 @@
           "name": "總部",
           "value": "英雄堡新興商業區（玻璃帷幕大樓，強調透明、開放）",
           "category": "lore",
-          "type": "general"
+          "type": "location"
         },
         {
           "name": "核心業務",
@@ -16875,7 +16875,7 @@
           "name": "面向",
           "value": "脈動工業 永恆義體",
           "category": "lore",
-          "type": "general"
+          "type": "dimension"
         },
         {
           "name": "退役機制",
@@ -16893,7 +16893,7 @@
           "name": "道德包裝",
           "value": "不否認零件化，但強調「效率」 主打「全生涯照顧」，實則用津貼綁架改造人",
           "category": "lore",
-          "type": "general"
+          "type": "alignment_value"
         },
         {
           "name": "公關策略",
@@ -16968,7 +16968,7 @@
           "name": "善惡值",
           "value": -40,
           "strength": 0.4,
-          "type": "general"
+          "type": "alignment"
         },
         {
           "category": "social",
@@ -17007,7 +17007,7 @@
           "name": "總部",
           "value": "鬱鬱山麓地下設施（軍事管制區，不對外開放）",
           "category": "lore",
-          "type": "general"
+          "type": "location"
         },
         {
           "name": "核心業務",
@@ -17031,7 +17031,7 @@
           "name": "面向",
           "value": "脈動工業 永恆義體 鐵砧防務",
           "category": "lore",
-          "type": "general"
+          "type": "dimension"
         },
         {
           "name": "退役機制",
@@ -17138,13 +17138,13 @@
           "name": "總部",
           "value": "鼠立方「堅殼號」（RC-15 之一）",
           "category": "lore",
-          "type": "general"
+          "type": "location"
         },
         {
           "name": "特色",
           "value": "每個鼠立方都是一座獨立工廠，產品品質不一但極度耐用（「鼠族標準」：能用就是好）",
           "category": "lore",
-          "type": "general"
+          "type": "feature"
         },
         {
           "name": "子公司",
@@ -17232,7 +17232,7 @@
           "name": "總部",
           "value": "無固定，旗艦為「黑帆掠奪者」（RC-16）",
           "category": "lore",
-          "type": "general"
+          "type": "location"
         },
         {
           "name": "特色",
@@ -17294,7 +17294,7 @@
           "name": "業務",
           "value": "全球貨運（冷鏈、散貨、貨櫃）、保險、造船",
           "strength": 0.5,
-          "type": "general"
+          "type": "occupation"
         },
         {
           "category": "lore",
@@ -17319,13 +17319,13 @@
           "name": "總部",
           "value": "莫比迪克邦聯最大人工島「藍鰭港」",
           "category": "lore",
-          "type": "general"
+          "type": "location"
         },
         {
           "name": "特色",
           "value": "與鼠聯合作建造標準化貨櫃船，與黑帆有「非正式互不侵犯協議」（付保護費變相買平安）",
           "category": "lore",
-          "type": "general"
+          "type": "feature"
         },
         {
           "name": "一條總結",
@@ -17399,13 +17399,13 @@
           "name": "總部",
           "value": "莫比迪克邦聯的科研城邦「珊瑚台」",
           "category": "lore",
-          "type": "general"
+          "type": "location"
         },
         {
           "name": "特色",
           "value": "與鼠聯合作回收廢料，與黑帆衝突（海盜丟棄的廢油危害生態）",
           "category": "lore",
-          "type": "general"
+          "type": "feature"
         },
         {
           "name": "一條總結",
@@ -17454,7 +17454,7 @@
           "name": "業務",
           "value": "深海熱泉發電、热能管道铺设（至各城邦与莫比迪克邦联的海底电缆）、地热设备制造",
           "strength": 0.5,
-          "type": "general"
+          "type": "occupation"
         },
         {
           "category": "relation",
@@ -17486,13 +17486,13 @@
           "name": "總部",
           "value": "黑淵台",
           "category": "lore",
-          "type": "general"
+          "type": "location"
         },
         {
           "name": "特色",
           "value": "以“控制熱泉者控制深渊”为信条，拒绝向外族转让核心技术",
           "category": "lore",
-          "type": "general"
+          "type": "feature"
         },
         {
           "name": "子公司",
@@ -17548,7 +17548,7 @@
           "name": "業務",
           "value": "跨城邦声呐通讯、深海导航、间谍网络（监听黑帆海盗）",
           "strength": 0.5,
-          "type": "general"
+          "type": "occupation"
         },
         {
           "category": "lore",
@@ -17573,7 +17573,7 @@
           "name": "總部",
           "value": "黑淵台",
           "category": "lore",
-          "type": "general"
+          "type": "location"
         },
         {
           "name": "特色",
@@ -17653,7 +17653,7 @@
           "name": "總部",
           "value": "珊瑚礁城邦「彩紋礁」",
           "category": "lore",
-          "type": "general"
+          "type": "location"
         },
         {
           "name": "特色",
@@ -17788,7 +17788,7 @@
           "name": "業務",
           "value": "共生圈養（與小丑魚等小型魚類共生）、有機廢料處理、藥用海葵毒素",
           "strength": 0.5,
-          "type": "general"
+          "type": "occupation"
         },
         {
           "category": "lore",
@@ -17813,13 +17813,13 @@
           "name": "總部",
           "value": "無固定（隨海葵移動）",
           "category": "lore",
-          "type": "general"
+          "type": "location"
         },
         {
           "name": "特色",
           "value": "海葵族不區分「場地」與「身體」",
           "category": "lore",
-          "type": "general"
+          "type": "feature"
         },
         {
           "name": "一條總結",
@@ -17882,7 +17882,7 @@
           "name": "卡片類別",
           "value": "原數量 新增 更新 總數",
           "strength": 0.4,
-          "type": "general"
+          "type": "classification"
         },
         {
           "category": "lore",
@@ -17903,14 +17903,14 @@
           "name": "角色卡",
           "value": "(CC) 9 +7 — 16",
           "strength": 0.4,
-          "type": "general"
+          "type": "character"
         },
         {
           "category": "lore",
           "name": "角色補充卡",
           "value": "(CC-A/B) 2 +1 — 3",
           "strength": 0.4,
-          "type": "general"
+          "type": "character"
         },
         {
           "category": "lore",
@@ -17924,7 +17924,7 @@
           "name": "場景卡",
           "value": "(SC) 0 +2 — 2",
           "strength": 0.4,
-          "type": "general"
+          "type": "situation"
         },
         {
           "category": "lore",
@@ -17987,7 +17987,7 @@
           "name": "合計",
           "value": "60 +23 — 83",
           "strength": 0.4,
-          "type": "general"
+          "type": "status"
         },
         {
           "category": "status",
@@ -18033,7 +18033,7 @@
           "name": "核心特性",
           "value": "無序與混沌，是概念靈的溫床，也是維度橋樑",
           "strength": 0.6,
-          "type": "general"
+          "type": "dimension"
         },
         {
           "category": "mechanism",
@@ -18054,14 +18054,14 @@
           "name": "傷核",
           "value": "痛苦與創傷概念的凝結空間",
           "strength": 0.5,
-          "type": "general"
+          "type": "dimension"
         },
         {
           "category": "mechanism",
           "name": "怪核",
           "value": "熟悉場景被輕微扭曲，帶來認知上的不安",
           "strength": 0.5,
-          "type": "general"
+          "type": "situation"
         },
         {
           "category": "mechanism",
@@ -18149,7 +18149,7 @@
           "name": "雙重本質",
           "value": "概念流的通道 + 超高擬真的數據場域",
           "category": "lore",
-          "type": "general"
+          "type": "connection"
         },
         {
           "name": "RC-02",
@@ -18197,7 +18197,7 @@
           "name": "住民",
           "value": "職責",
           "category": "lore",
-          "type": "general"
+          "type": "occupation"
         },
         {
           "name": "編織者",
@@ -18221,7 +18221,7 @@
           "name": "生長之靈",
           "value": "負責迴廊內概念生態的繁榮與再生",
           "category": "lore",
-          "type": "general"
+          "type": "environment"
         },
         {
           "name": "RC-04",
@@ -18317,7 +18317,7 @@
           "name": "WC-08",
           "value": "存在層級與維度",
           "category": "lore",
-          "type": "general"
+          "type": "dimension"
         },
         {
           "name": "五、通用機制卡",
@@ -18335,7 +18335,7 @@
           "name": "UM-02",
           "value": "泛用機械與科技",
           "category": "lore",
-          "type": "general"
+          "type": "technology"
         },
         {
           "name": "UM-03",
@@ -18425,7 +18425,7 @@
           "name": "類別",
           "value": "範例",
           "category": "lore",
-          "type": "general"
+          "type": "classification"
         },
         {
           "name": "魔法",
@@ -18509,7 +18509,7 @@
           "name": "碎片化處理與數據結構化",
           "value": "分解並結構化複雜輸入",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         },
         {
           "name": "高標準細節與一致性",
@@ -18598,13 +18598,13 @@
           "name": "適用角色",
           "value": "靜子（區間+2成功，大失敗區間縮小至僅12）",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "環境加成",
           "value": "接觸黃銅齒輪：成功區間+1。靈壓真空帶（如鏡湖）：成功區間-2",
           "category": "lore",
-          "type": "general"
+          "type": "environment"
         }
       ],
       "stats": {
@@ -18689,7 +18689,7 @@
           "name": "適用角色",
           "value": "經驗豐富的船長（成功區間+2）、霧海群島島民（成功區間+1）",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "環境加成",
@@ -18701,7 +18701,7 @@
           "name": "維度",
           "value": "Token檢定 骰子判定",
           "category": "lore",
-          "type": "general"
+          "type": "dimension"
         },
         {
           "name": "計算方式",
@@ -18822,7 +18822,7 @@
           "name": "卡片類型",
           "value": "場域卡",
           "category": "lore",
-          "type": "general"
+          "type": "meta"
         },
         {
           "name": "時間錨點",
@@ -18888,7 +18888,7 @@
           "name": "參數",
           "value": "數值",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         },
         {
           "name": "氣溫",
@@ -18985,7 +18985,7 @@
           "name": "卡片類型",
           "value": "場域卡",
           "category": "lore",
-          "type": "general"
+          "type": "meta"
         },
         {
           "name": "時間錨點",
@@ -19015,7 +19015,7 @@
           "name": "菌菇迷宮（核心區）",
           "value": "天然緩衝帶，防止外部混亂生態入侵 所有人",
           "category": "lore",
-          "type": "general"
+          "type": "environment"
         },
         {
           "name": "紅杉林地（物料區）",
@@ -19098,7 +19098,7 @@
           "category": "mechanism",
           "name": "探索檢定決定發現物資/線索/危險",
           "strength": 0.7,
-          "type": "general"
+          "type": "storyline"
         },
         {
           "name": "卡片代碼",
@@ -19116,7 +19116,7 @@
           "name": "卡片類型",
           "value": "場域卡",
           "category": "lore",
-          "type": "general"
+          "type": "meta"
         },
         {
           "name": "時間錨點",
@@ -19205,7 +19205,7 @@
           "name": "卡片類型",
           "value": "場域卡",
           "category": "lore",
-          "type": "general"
+          "type": "meta"
         },
         {
           "name": "時間錨點",
@@ -19294,7 +19294,7 @@
           "name": "卡片類型",
           "value": "場域卡",
           "category": "lore",
-          "type": "general"
+          "type": "meta"
         },
         {
           "name": "時間錨點",
@@ -19383,7 +19383,7 @@
           "name": "卡片類型",
           "value": "場域卡",
           "category": "lore",
-          "type": "general"
+          "type": "meta"
         },
         {
           "name": "時間錨點",
@@ -19472,7 +19472,7 @@
           "name": "卡片類型",
           "value": "場域卡",
           "category": "lore",
-          "type": "general"
+          "type": "meta"
         },
         {
           "name": "時間錨點",
@@ -19586,31 +19586,31 @@
           "name": "2",
           "value": "隱蔽 不再留痕，開始跟蹤目標，觀察其警覺程度",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         },
         {
           "name": "3",
           "value": "第一次襲掠 從暗處無聲俯衝，用翼膜包裹目標軀幹，留下氣味標記，隨即飛離",
           "category": "lore",
-          "type": "general"
+          "type": "purpose"
         },
         {
           "name": "4",
           "value": "結果判定 依據目標在3次接觸內的反應，判定為「成功命中」、「伴侶接受」或「伴侶拒絕」",
           "category": "lore",
-          "type": "general"
+          "type": "purpose"
         },
         {
           "name": "目標反應",
           "value": "結果 後果",
           "category": "lore",
-          "type": "general"
+          "type": "purpose"
         },
         {
           "name": "完全未察覺",
           "value": "「成功命中」 目標降級為「只比食物高一點點」；族中可任意驅趕",
           "category": "lore",
-          "type": "general"
+          "type": "purpose"
         },
         {
           "name": "察覺並「抱住」",
@@ -19628,19 +19628,19 @@
           "name": "面向",
           "value": "保守派（標準） 溫和派 激進派",
           "category": "lore",
-          "type": "general"
+          "type": "dimension"
         },
         {
           "name": "降級條款",
           "value": "❌ 無。失敗目標不會變成「食物」，可反覆被同一或不同蝙蝠娘襲掠",
           "category": "lore",
-          "type": "general"
+          "type": "purpose"
         },
         {
           "name": "襲掠動作",
           "value": "直接撲向目標身上，用翼膜包裹",
           "category": "lore",
-          "type": "general"
+          "type": "purpose"
         },
         {
           "name": "回合限制",
@@ -19670,7 +19670,7 @@
           "name": "結果判定",
           "value": "目標抱住＝接受；目標躲避＝拒絕",
           "category": "lore",
-          "type": "general"
+          "type": "purpose"
         },
         {
           "name": "·",
@@ -19778,13 +19778,13 @@
           "name": "語音和諧度",
           "value": "相鄰音節的銜接是否流暢 自動比對，衝突時插入停頓或弱音",
           "category": "lore",
-          "type": "general"
+          "type": "dialogue"
         },
         {
           "name": "神祇偏好",
           "value": "神祇可手動調整權重（若有偏好） 蓋婭偏好「蓋婭」>「約爾德」",
           "category": "lore",
-          "type": "general"
+          "type": "interest"
         },
         {
           "name": "1.",
@@ -19814,7 +19814,7 @@
           "name": "5.",
           "value": "取現代科學名：拉丁「Terra」→ 英語「Earth」",
           "category": "lore",
-          "type": "general"
+          "type": "technology"
         },
         {
           "name": "Gaia",
@@ -19838,7 +19838,7 @@
           "name": "→",
           "value": "Gkaihouta Teral（全名，蓋婭偏好版本）",
           "category": "lore",
-          "type": "general"
+          "type": "meta"
         },
         {
           "name": "全名",
@@ -20061,7 +20061,7 @@
           "name": "角色卡更新：CC-36",
           "value": "辉夜姬（Kaguya-hime）—— 月之公主，派对主办者",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "项目",
@@ -20305,7 +20305,7 @@
           "name": "角色卡：CC-63",
           "value": "啮輪·鋼須（Gear Ratchet）—— 鼠立方首席工程師",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         }
       ],
       "stats": {
@@ -20347,7 +20347,7 @@
           "name": "場景角色",
           "value": "不知道的事",
           "strength": 0.4,
-          "type": "general"
+          "type": "character"
         },
         {
           "category": "knowledge",
@@ -20375,7 +20375,7 @@
           "name": "技術",
           "value": "陸、技術附錄: (Technical Appendix)",
           "strength": 0.5,
-          "type": "general"
+          "type": "technology"
         },
         {
           "category": "craft",
@@ -20526,7 +20526,7 @@
           "name": "傳遞路徑",
           "value": "櫻 →（路人/同學）→ 露露 →（專業術語轉換）→ 春日",
           "category": "lore",
-          "type": "general"
+          "type": "knowledge_field"
         },
         {
           "name": "衰減率",
@@ -20574,7 +20574,7 @@
           "name": "現象",
           "value": "Angela對櫻而言是不可見的後台程序",
           "category": "lore",
-          "type": "general"
+          "type": "mechanism"
         },
         {
           "name": "反向",
@@ -20586,7 +20586,7 @@
           "name": "禁令",
           "value": "違反示例 修復手法（GM或AI自動執行）",
           "category": "lore",
-          "type": "general"
+          "type": "skill"
         },
         {
           "name": "6.",
@@ -20916,7 +20916,7 @@
           "name": "性質",
           "value": "完全偶然的單向傳播，非任何角色刻意的跨域聯繫",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "傳播物",
@@ -21030,7 +21030,7 @@
           "name": "微層次交流",
           "value": "允許進行極微小的、非語言的「問候」：如希雅在書中夾入枯葉、吉普莉爾將書歸錯類別",
           "category": "lore",
-          "type": "general"
+          "type": "classification"
         },
         {
           "name": "12.4",
@@ -21048,7 +21048,7 @@
           "name": "使用場合",
           "value": "僅限每個學期的第一次公開見面",
           "category": "lore",
-          "type": "general"
+          "type": "situation"
         },
         {
           "name": "希雅的潛台詞",
@@ -21090,13 +21090,13 @@
           "name": "觀測即存在",
           "value": "所有現象皆可被記錄。未被記錄的現象等於未發生",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         },
         {
           "name": "存檔即永恆",
           "value": "結晶化是文明的最高貢獻。將一生記錄轉化為可傳承的記憶結晶",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         },
         {
           "name": "孤獨即常態",
@@ -21150,7 +21150,7 @@
           "name": "觸發",
           "value": "精靈自覺「記錄了足夠多的現象」，自主啟動結晶化",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         },
         {
           "name": "過程",
@@ -21180,13 +21180,13 @@
           "name": "維度",
           "value": "精靈族 天翼種",
           "category": "lore",
-          "type": "general"
+          "type": "dimension"
         },
         {
           "name": "文明本質",
           "value": "記錄與存檔 收集與佔有",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         },
         {
           "name": "時間感知",
@@ -21276,7 +21276,7 @@
           "name": "靈敏度",
           "value": "可檢測0.01μT級別的磁場異常",
           "category": "lore",
-          "type": "general"
+          "type": "identity"
         },
         {
           "name": "1.4",
@@ -21324,7 +21324,7 @@
           "name": "聲學特性",
           "value": "固有頻率約15Hz，與清溪河震動頻率共振",
           "category": "lore",
-          "type": "general"
+          "type": "feature"
         },
         {
           "name": "1.6",
@@ -21336,7 +21336,7 @@
           "name": "精度",
           "value": "反射角度誤差<0.1度",
           "category": "lore",
-          "type": "general"
+          "type": "dimension"
         },
         {
           "name": "1.7",
@@ -21444,7 +21444,7 @@
           "name": "環境類型：廢墟化",
           "value": "/ 沙漠化 / 荒漠化 / 優養化 / 污染化 / 戈壁化",
           "category": "lore",
-          "type": "general"
+          "type": "environment"
         },
         {
           "name": "場景：S06",
@@ -21462,13 +21462,13 @@
           "name": "捌、角色扮演補丁",
           "value": "(RP Patch)",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "霜",
           "value": "露露的招牌秘密、櫻的手機密碼、春日的懶散程度",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         },
         {
           "name": "觸發條件",
@@ -21492,7 +21492,7 @@
           "name": "環境濕度>90%或出現霧氣",
           "value": "無意識摸腰間儀器，皺眉",
           "category": "lore",
-          "type": "general"
+          "type": "environment"
         },
         {
           "name": "露露送來物資（非系統相關）",
@@ -21504,7 +21504,7 @@
           "name": "見到金幣/高價值金屬",
           "value": "瞳孔放大，耳朵豎立，開始快速計算「能買多少銅線」",
           "category": "lore",
-          "type": "general"
+          "type": "economy"
         },
         {
           "name": "發情期（每30天約5天）",
@@ -21636,7 +21636,7 @@
           "name": "吉普展示假數據",
           "value": "會後提交一份不公開的「數據溯源報告」，下次見面時輕聲：「上次的數據，我已經完成溯源了。結果很有趣，要列入我的年度報告？」 你給我的錯誤，我也會建檔。謝謝你的貢獻",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         },
         {
           "name": "吉普顯露疲態",
@@ -21648,7 +21648,7 @@
           "name": "進入新環境（如都市街道）",
           "value": "尾巴不自覺地捲曲，左顧右盼，腳步變慢",
           "category": "lore",
-          "type": "general"
+          "type": "environment"
         },
         {
           "name": "遇到露露以外的親戚",
@@ -21690,7 +21690,7 @@
           "name": "吉普莉爾",
           "value": "希雅的結晶化進度",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         },
         {
           "name": "希雅進圖書館",
@@ -21786,7 +21786,7 @@
           "name": "想記錄",
           "value": "塞東西/畫筆記",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         },
         {
           "name": "睡前",
@@ -21798,7 +21798,7 @@
           "name": "3.",
           "value": "認知邊界速查表（角色→不知道的事）",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "4.",
@@ -21864,7 +21864,7 @@
           "name": "磷的行為模式",
           "value": "好奇→觀察/提問；被噪音干擾→驅逐（丟東西）；想記錄→塞東西/畫筆記",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         },
         {
           "name": "玖、演繹追加",
@@ -21913,7 +21913,7 @@
           "name": "核心動機",
           "value": "技術性貪婪。金錢不是目的，材料才是。視金錢為「材料轉換券」",
           "strength": 0.5,
-          "type": "general"
+          "type": "technology"
         },
         {
           "category": "skill",
@@ -21955,7 +21955,7 @@
           "name": "工藝",
           "value": "工藝：機械加工: 動作系/製造 ●",
           "strength": 0.5,
-          "type": "general"
+          "type": "technology"
         },
         {
           "category": "element",
@@ -22006,7 +22006,7 @@
           "name": "商業嗅覺",
           "value": "會用「這在我們這很值錢」來壓低對方的價格；也會隱瞞自己商品的真實價值",
           "category": "lore",
-          "type": "general"
+          "type": "economy"
         },
         {
           "name": "生理躁動",
@@ -22042,7 +22042,7 @@
           "name": "出口（W01→W02）",
           "value": "金屬工具、舊零件（她認為是瑕疵品，但在W02是頂級工藝）",
           "category": "lore",
-          "type": "general"
+          "type": "technology"
         },
         {
           "name": "進口（W02→W01）",
@@ -22090,7 +22090,7 @@
           "name": "連接",
           "value": "格數 性質",
           "category": "lore",
-          "type": "general"
+          "type": "connection"
         },
         {
           "name": "春日",
@@ -22286,7 +22286,7 @@
           "name": "連接",
           "value": "格數 性質",
           "category": "lore",
-          "type": "general"
+          "type": "connection"
         },
         {
           "name": "冬時",
@@ -22304,7 +22304,7 @@
           "name": "·",
           "value": "兔群管理是冬日的主要職責之一",
           "category": "lore",
-          "type": "general"
+          "type": "occupation"
         },
         {
           "name": "植物學：北極生態",
@@ -22374,14 +22374,14 @@
           "name": "機械",
           "value": "機械工程：螺旋葉輪: - ● - - - - - - - - - - -",
           "strength": 0.5,
-          "type": "general"
+          "type": "technology"
         },
         {
           "category": "craft",
           "name": "工藝",
           "value": "工藝：機械加工: - ● - - - - - - ◐ - - - -",
           "strength": 0.5,
-          "type": "general"
+          "type": "technology"
         },
         {
           "category": "craft",
@@ -22476,7 +22476,7 @@
           "name": "適用角色",
           "value": "吉普莉爾（C11）",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "能量消耗",
@@ -22506,7 +22506,7 @@
           "name": "植物學：北極生態",
           "value": "- - - - ● - - ● ● - - - -",
           "category": "lore",
-          "type": "general"
+          "type": "environment"
         },
         {
           "name": "地質學：靈子礦脈",
@@ -22518,7 +22518,7 @@
           "name": "妖精生態學",
           "value": "- - ◐ - - - - - - - - - ●",
           "category": "lore",
-          "type": "general"
+          "type": "environment"
         },
         {
           "name": "奇蹟：奇蹟賜予於我",
@@ -22530,7 +22530,7 @@
           "name": "●",
           "value": "= 專精（自動成功或高加權），◐ = 兼修（部分加權），- = 不具備",
           "category": "lore",
-          "type": "general"
+          "type": "knowledge_field"
         },
         {
           "name": "5.",
@@ -22644,7 +22644,7 @@
           "name": "database.json",
           "value": "結構化數據庫",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         },
         {
           "name": "\"version\":",
@@ -22823,7 +22823,7 @@
           "name": "環境耐受",
           "value": "極強的環境耐受力與爆發力",
           "category": "lore",
-          "type": "general"
+          "type": "environment"
         },
         {
           "name": "感官敏銳度",
@@ -22841,7 +22841,7 @@
           "name": "連接",
           "value": "格數 性質",
           "category": "lore",
-          "type": "general"
+          "type": "connection"
         },
         {
           "name": "露露",
@@ -22859,7 +22859,7 @@
           "name": "其他",
           "value": "2-3格 與主要角色保持距離",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "·",
@@ -23013,7 +23013,7 @@
           "name": "表面",
           "value": "維護圖書館秩序，協助師生查找資料",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         },
         {
           "name": "真實",
@@ -23043,7 +23043,7 @@
           "name": "連接",
           "value": "格數 性質",
           "category": "lore",
-          "type": "general"
+          "type": "connection"
         },
         {
           "name": "希雅",
@@ -23208,7 +23208,7 @@
           "name": "想記錄",
           "value": "塞東西/畫筆記",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         },
         {
           "name": "狀態",
@@ -23232,7 +23232,7 @@
           "name": "連接",
           "value": "格數 性質",
           "category": "lore",
-          "type": "general"
+          "type": "connection"
         },
         {
           "name": "春日",
@@ -23274,7 +23274,7 @@
           "name": "近距離觀察櫻",
           "value": "停在櫻肩膀上記錄瞳孔顏色、體溫、尾巴動作，將櫻登記為「觀察對象」。櫻答應做觀察對象，並說「我會找你」",
           "category": "lore",
-          "type": "general"
+          "type": "records"
         },
         {
           "name": "守夜",
@@ -23478,7 +23478,7 @@
           "name": "連接",
           "value": "格數 性質",
           "category": "lore",
-          "type": "general"
+          "type": "connection"
         },
         {
           "name": "Angela/Red",
@@ -23496,7 +23496,7 @@
           "name": "春日",
           "value": "3格 同為觀測者，領域不同",
           "category": "lore",
-          "type": "general"
+          "type": "dimension"
         },
         {
           "name": "櫻",
@@ -23767,13 +23767,13 @@
           "name": "4.4",
           "value": "與W01的關聯",
           "category": "lore",
-          "type": "general"
+          "type": "connection"
         },
         {
           "name": "·",
           "value": "角色傳承：W01角色的後代或轉化體可能出現於W04，但需經過數十年的環境適應",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "│",
@@ -23881,7 +23881,7 @@
           "name": "貳、場景卡",
           "value": "(Scene Cards): 精確座標與物理規格",
           "category": "lore",
-          "type": "general"
+          "type": "situation"
         },
         {
           "name": "S01",
@@ -23929,7 +23929,7 @@
           "name": "1.2",
           "value": "精確參數",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         },
         {
           "name": "中心結構",
@@ -23959,7 +23959,7 @@
           "name": "高架橋",
           "value": "四座放射跨線橋，沿正東西南北軸線，長度120m，跨越操場連接圍牆大門",
           "category": "lore",
-          "type": "general"
+          "type": "connection"
         },
         {
           "name": "圍牆",
@@ -24127,13 +24127,13 @@
           "name": "3.1",
           "value": "三態參數對照",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         },
         {
           "name": "參數",
           "value": "E000 初始態 E001 噴發態 E002-A 枯竭態（Path A） E002-B 枯竭態（Path B）",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         },
         {
           "name": "SO₂濃度",
@@ -24235,7 +24235,7 @@
           "name": "4.1",
           "value": "空間本質",
           "category": "lore",
-          "type": "general"
+          "type": "dimension"
         },
         {
           "name": "體積",
@@ -24406,13 +24406,13 @@
           "name": "10.2",
           "value": "環境參數",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         },
         {
           "name": "參數",
           "value": "數值",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         },
         {
           "name": "大氣壓力",
@@ -24436,7 +24436,7 @@
           "name": "重力",
           "value": "約地球的2.5倍，角色感知為「動作變慢」",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "聲音傳導",
@@ -24448,7 +24448,7 @@
           "name": "10.3",
           "value": "空間分佈",
           "category": "lore",
-          "type": "general"
+          "type": "dimension"
         },
         {
           "name": "[大氣上層",
@@ -24598,7 +24598,7 @@
           "name": "核心張力",
           "value": "表面的甜美和諧 vs 角色內在的壓抑情感",
           "strength": 0.6,
-          "type": "general"
+          "type": "character"
         },
         {
           "category": "mechanism",
@@ -24619,7 +24619,7 @@
           "name": "環境",
           "value": "永恆黃昏，色溫2500K，輕柔弦樂，杯盤聲清晰，每個人聞到的花香不同",
           "strength": 0.5,
-          "type": "general"
+          "type": "environment"
         },
         {
           "category": "element",
@@ -24656,13 +24656,13 @@
           "name": "11.2",
           "value": "環境參數",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         },
         {
           "name": "參數",
           "value": "數值",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         },
         {
           "name": "天空",
@@ -24686,7 +24686,7 @@
           "name": "11.3",
           "value": "空間分佈",
           "category": "lore",
-          "type": "general"
+          "type": "dimension"
         },
         {
           "name": "[園區中心",
@@ -24853,7 +24853,7 @@
           "name": "技術",
           "value": "陸、技術附錄: → 【保持原樣】",
           "strength": 0.5,
-          "type": "general"
+          "type": "technology"
         },
         {
           "category": "element",
@@ -24929,7 +24929,7 @@
           "name": "內臟",
           "value": "奈米機械強化複合內臟 抗輻射、加速代謝毒素、可在輕度汙染環境中正常呼吸",
           "category": "lore",
-          "type": "general"
+          "type": "environment"
         },
         {
           "name": "頭部",
@@ -25013,7 +25013,7 @@
           "name": "高速移動",
           "value": "迅猛龍套件讓她在狹窄複雜空間中移動如飛",
           "category": "lore",
-          "type": "general"
+          "type": "dimension"
         },
         {
           "name": "弱點：EMP",
@@ -25031,7 +25031,7 @@
           "name": "連接",
           "value": "格數 性質",
           "category": "lore",
-          "type": "general"
+          "type": "connection"
         },
         {
           "name": "義體家庭",
@@ -25085,7 +25085,7 @@
           "name": "含義優先",
           "value": "角色在夢境中交談時，說出的話會自動轉化為「含義」。對方感知到的不是精確詞句，而是這句話想表達的核心",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "重點浮現",
@@ -25121,13 +25121,13 @@
           "name": "表面禮節",
           "value": "所有角色自動遵守輕柔禮節，使用敬語、主動遞茶、對他人微笑",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "真實滲透",
           "value": "角色的真實情緒透過食物味道、椅子花色變化、花卉的開合等環境細節洩漏",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "社交強制",
@@ -25284,7 +25284,7 @@
           "name": "維度",
           "value": "S03 煙雲溫泉湖 S15 鏡湖",
           "category": "lore",
-          "type": "general"
+          "type": "dimension"
         },
         {
           "name": "標高",
@@ -25477,13 +25477,13 @@
           "name": "地質類型",
           "value": "褶曲山脈（中生代至新生代造山運動形成）",
           "category": "lore",
-          "type": "general"
+          "type": "classification"
         },
         {
           "name": "走向",
           "value": "L型：東西向連接鬱鬱山，南北向連接鏡山",
           "category": "lore",
-          "type": "general"
+          "type": "connection"
         },
         {
           "name": "全長",
@@ -25531,13 +25531,13 @@
           "name": "S02",
           "value": "鬱鬱山 山脈東端連接鬱鬱山南麓（約800m處）",
           "category": "lore",
-          "type": "general"
+          "type": "connection"
         },
         {
           "name": "S13",
           "value": "鏡山 山脈北端連接鏡山南麓（約1,200m處）",
           "category": "lore",
-          "type": "general"
+          "type": "connection"
         },
         {
           "name": "S05",
@@ -25583,14 +25583,14 @@
           "name": "場景",
           "value": "鏡湖周邊區域，包含卡洛夫山脈、海濱、沙灘",
           "strength": 0.5,
-          "type": "general"
+          "type": "situation"
         },
         {
           "category": "lore",
           "name": "生態",
           "value": "耐鹽草種、海濱灌木、海鳥群、小型哺乳類、潮間帶生物",
           "strength": 0.4,
-          "type": "general"
+          "type": "environment"
         },
         {
           "category": "energy",
@@ -25898,7 +25898,7 @@
           "name": "場景卡：S18",
           "value": "霧海群島",
           "category": "lore",
-          "type": "general"
+          "type": "situation"
         }
       ],
       "stats": {
@@ -26054,7 +26054,7 @@
           "name": "認知濾鏡開關",
           "value": "右下角撥片。ON=瘋狂模式（作物娘清晰），OFF=科學模式（數據化）",
           "category": "lore",
-          "type": "general"
+          "type": "technology"
         },
         {
           "name": "底部導航",
@@ -26152,7 +26152,7 @@
           "name": "五、角色卡",
           "value": "(CC) — 新增 7 張",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "CC-09",
@@ -26194,7 +26194,7 @@
           "name": "邊緣運算與熵穩定",
           "value": "在舞台周邊5km範圍內，即時運算所有粉絲的腦波數據，並將環境熵值維持在穩定區間",
           "strength": 0.7,
-          "type": "general"
+          "type": "environment"
         },
         {
           "category": "element",
@@ -26258,7 +26258,7 @@
           "name": "+100",
           "value": "算力充沛        熵值穩定，運算最佳化        啟動 Extended 推理，強制作動 E{M2} = 0.1，以完美的降維算力壓制周邊環境的熵值。",
           "category": "lore",
-          "type": "general"
+          "type": "environment"
         },
         {
           "name": "0",
@@ -26294,7 +26294,7 @@
           "name": "連接",
           "value": "格數        性質",
           "category": "lore",
-          "type": "general"
+          "type": "connection"
         },
         {
           "name": "CC-30",
@@ -26626,7 +26626,7 @@
           "name": "場景卡：SC-23",
           "value": "彩紋礁（Chromata Reef）—— 海蛞蝓生技總部與藝術市集",
           "category": "lore",
-          "type": "general"
+          "type": "location_type"
         }
       ],
       "stats": {
@@ -26952,7 +26952,7 @@
           "name": "核心主題",
           "value": "極致感官與虛擬沉溺、生命進化與惡墮模式、迴廊本身的奧秘",
           "strength": 0.7,
-          "type": "general"
+          "type": "theme"
         },
         {
           "category": "element",
@@ -26965,7 +26965,7 @@
           "name": "主角",
           "value": "織織（CC-01），像素貓娘「概念共鳴體」",
           "category": "lore",
-          "type": "general"
+          "type": "main_character"
         },
         {
           "name": "故事線",
@@ -27023,7 +27023,7 @@
           "name": "主要角色",
           "value": "壞壞米亞（CC-02）、星辰米亞（CC-03）、純真米亞（CC-04）",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "SL-04",
@@ -27073,7 +27073,7 @@
           "name": "主要角色",
           "value": "惡意精靈（CC-05）",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "SL-05",
@@ -27118,7 +27118,7 @@
           "name": "主要角色",
           "value": "秋狐神明楓（CC-06）、人類文明先導者亞瑟（CC-07）",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         },
         {
           "name": "核心情節",
@@ -27154,7 +27154,7 @@
           "name": "核心主題",
           "value": "匠師魂——對「製造」與「結構」的絕對理解力",
           "strength": 0.7,
-          "type": "general"
+          "type": "theme"
         },
         {
           "category": "skill",
@@ -27248,7 +27248,7 @@
           "name": "少年期（1930年代）",
           "value": "父親過世後，她成為靜子秘密鐵工廠的實際運營者。靜子提供資金與設計圖，她負責現場管理、材料採購、老鐵匠的調度。工廠名義上是「廢棄的民間鐵工廠」，實際上生產的是超越",
           "category": "lore",
-          "type": "general"
+          "type": "occupation"
         },
         {
           "name": "青年期（1940-1945年）",
@@ -27266,7 +27266,7 @@
           "name": "維度",
           "value": "小倉靜子 左間小蒼蘭",
           "category": "lore",
-          "type": "general"
+          "type": "dimension"
         },
         {
           "name": "階級",
@@ -27356,7 +27356,7 @@
           "name": "主角",
           "value": "一隻貓娘，隱藏著一個不能讓任何人知道的秘密",
           "category": "lore",
-          "type": "general"
+          "type": "main_character"
         },
         {
           "name": "SL-09",
@@ -27397,7 +27397,7 @@
           "name": "核心主題",
           "value": "小說集合總索引",
           "strength": 0.7,
-          "type": "general"
+          "type": "theme"
         },
         {
           "name": "卡片代碼",
@@ -27479,7 +27479,7 @@
           "name": "主要場景",
           "value": "SC-01 農學院",
           "category": "lore",
-          "type": "general"
+          "type": "situation"
         },
         {
           "name": "SL-10",
@@ -27585,7 +27585,7 @@
           "name": "連接",
           "value": "格數        性質",
           "category": "lore",
-          "type": "general"
+          "type": "connection"
         },
         {
           "name": "雲龍院鐵舟（父親）",
@@ -27651,7 +27651,7 @@
           "name": "S-32D",
           "value": "學府圖書館（禁書區外）        晴空在查詢「如何人為觸發情緒劇變」。她想知道父親拒絕告訴她的「雲龍院傳統訓練法」。吉普莉爾知道她在查什麼，但還沒有行動",
           "category": "lore",
-          "type": "general"
+          "type": "culture"
         },
         {
           "name": "事件代碼",
@@ -27675,13 +27675,13 @@
           "name": "EP-32C",
           "value": "楓香的歸途術旁觀        楓香在學府廣場演示歸途術時，晴空在人群中觀看。她看見楓香消失在「非空間」中，然後帶著W01的塵埃回來。晴空問：「W01有天空嗎？",
           "category": "lore",
-          "type": "general"
+          "type": "dimension"
         },
         {
           "name": "維度",
           "value": "楓香        晴空",
           "category": "lore",
-          "type": "general"
+          "type": "dimension"
         },
         {
           "name": "身份",
@@ -27794,19 +27794,19 @@
           "name": "核心主題",
           "value": "農學院（新版），作物娘共鳴",
           "strength": 0.7,
-          "type": "general"
+          "type": "theme"
         },
         {
           "name": "認知濾鏡開關",
           "value": "右下角撥片。ON：作物娘立繪清晰，語音溫暖；OFF：作物娘變為綠色波形數據，語音變為機械報告音",
           "category": "lore",
-          "type": "general"
+          "type": "dialogue"
         },
         {
           "name": "回合",
           "value": "任務 教學目的",
           "category": "lore",
-          "type": "general"
+          "type": "purpose"
         },
         {
           "name": "D1",
@@ -27836,7 +27836,7 @@
           "name": "+80",
           "value": "~ +100 靈魂共鳴 30%機率不扣HP，命中/閃避+25% 語音充滿依賴，立繪色澤明亮",
           "category": "lore",
-          "type": "general"
+          "type": "dialogue"
         },
         {
           "name": "+1",
@@ -27848,7 +27848,7 @@
           "name": "0",
           "value": "陌生/純數據 完全遵循現實農學公式 語音機械化",
           "category": "lore",
-          "type": "general"
+          "type": "dialogue"
         },
         {
           "name": "-1",
@@ -27866,13 +27866,13 @@
           "name": "數值承算模型（標準難度",
           "value": "±0）",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         },
         {
           "name": "參數",
           "value": "範圍",
           "category": "lore",
-          "type": "general"
+          "type": "status"
         },
         {
           "name": "承算倍率",
@@ -27920,7 +27920,7 @@
           "name": "角色卡：CC-12",
           "value": "艾比 (Abby) — 農業部聯絡官",
           "category": "lore",
-          "type": "general"
+          "type": "character"
         }
       ],
       "stats": {
@@ -28037,7 +28037,7 @@
           "name": "版本",
           "value": "Ver 1.0",
           "strength": 0.4,
-          "type": "general"
+          "type": "meta"
         },
         {
           "category": "lore",
@@ -28100,7 +28100,7 @@
           "name": "│",
           "value": "└── 跨線遺產：B → A（靜子型技術理念）",
           "strength": 0.4,
-          "type": "general"
+          "type": "technology"
         },
         {
           "category": "lore",
@@ -31085,7 +31085,7 @@
           "category": "craft",
           "name": "油漆工藝",
           "strength": 0.7,
-          "type": "general"
+          "type": "technology"
         },
         {
           "category": "skill",
@@ -31568,7 +31568,7 @@
           "name": "核心概念",
           "value": "物理維度、概念維度、意識維度三層存在結構",
           "strength": 0.7,
-          "type": "general"
+          "type": "dimension"
         }
       ],
       "stats": {
@@ -31612,7 +31612,7 @@
           "category": "mechanism",
           "name": "概念錨定、調和、跨維度協作的基礎網絡結構",
           "strength": 0.6,
-          "type": "general"
+          "type": "dimension"
         }
       ],
       "stats": {
@@ -31842,7 +31842,7 @@
           "category": "mechanism",
           "name": "生命形態演化、變異、交互規律，包括惡墮與畸變",
           "strength": 0.6,
-          "type": "general"
+          "type": "ability"
         }
       ],
       "stats": {
@@ -32026,7 +32026,7 @@
           "category": "mechanism",
           "name": "創作流程管理：開始→繼續→出版目標",
           "strength": 0.4,
-          "type": "general"
+          "type": "purpose"
         }
       ],
       "stats": {
@@ -32810,7 +32810,7 @@
           "name": "白名單",
           "value": "可安全使用的詞彙/概念/指令（如「參考現實」、「科技發展」）",
           "strength": 0.5,
-          "type": "general"
+          "type": "technology"
         }
       ],
       "stats": {
@@ -33271,14 +33271,14 @@
           "name": "野外勘察",
           "strength": 0.6,
           "value": "擅長在野外尋找線索、追蹤目標與辨識地形",
-          "type": "general"
+          "type": "purpose"
         },
         {
           "category": "craft",
           "name": "樣本分析",
           "strength": 0.5,
           "value": "快速分析植物樣本的成分與特性，推斷生長環境與用途",
-          "type": "general"
+          "type": "environment"
         },
         {
           "category": "combat",
@@ -35378,7 +35378,7 @@
           "category": "general",
           "name": "主角",
           "value": "主角",
-          "type": "general"
+          "type": "main_character"
         },
         {
           "category": "general",
@@ -36037,7 +36037,7 @@
           "category": "general",
           "name": "舞台",
           "value": "舞台",
-          "type": "general"
+          "type": "location"
         },
         {
           "category": "general",
@@ -36073,7 +36073,7 @@
           "category": "general",
           "name": "舞台",
           "value": "舞台",
-          "type": "general"
+          "type": "location"
         },
         {
           "category": "combat",
@@ -36109,7 +36109,7 @@
           "category": "general",
           "name": "舞台",
           "value": "舞台",
-          "type": "general"
+          "type": "location"
         },
         {
           "category": "general",
@@ -36805,7 +36805,7 @@
           "category": "general",
           "name": "界域壓制",
           "value": "界域壓制",
-          "type": "general"
+          "type": "dimension"
         },
         {
           "category": "general",
@@ -36913,7 +36913,7 @@
           "category": "general",
           "name": "界域",
           "value": "界域",
-          "type": "general"
+          "type": "dimension"
         },
         {
           "category": "general",
@@ -36943,7 +36943,7 @@
           "category": "general",
           "name": "分類",
           "value": "分類",
-          "type": "general"
+          "type": "classification"
         },
         {
           "category": "general",

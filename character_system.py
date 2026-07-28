@@ -329,6 +329,14 @@ def _auto_categorize_token(name: str, value: str) -> str:
         if kw in text:
             return "exploration"
     
+    # Extended fallback rules (matches scripts/_improve_token_types.py)
+    # These handle common patterns that don't fit the main 8 categories
+    
+    attr_kw = ["屬性", "能力值", "基本數值", "基礎數值", "參數", "數值"]
+    for kw in attr_kw:
+        if kw in text:
+            return "general"
+    
     return "general"
 
 
