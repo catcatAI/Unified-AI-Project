@@ -1741,6 +1741,7 @@ def expand_game():
                 'description': '',
                 'ability_details': [],
                 'has_abilities': False,
+                'home_location': '聖十字校園',
                 'archetype': 'default',
                 'race': '\u4e0d\u660e',
                 'location': '\u8056\u5341\u5b57\u6821\u5712',
@@ -1931,7 +1932,15 @@ def expand_game():
         if _loc not in sim_systems.WORLD_MAP:
             sim_systems.WORLD_MAP[_loc] = _conn
             if _loc not in sim_systems.LOCATION_VIBES:
-                sim_systems.LOCATION_VIBES[_loc] = "📍 地図にない場所"
+                _vibe_map = {
+                    '中央大圖書館': '📚 知識が詰まった巨大図書館',
+                    '西翼大市集': '🏪 異世界の商品が並ぶ大市場',
+                    '小吉鎮': '🍃 温かい雰囲気の田舎町',
+                    '大根莖村': '🌱 地下の神秘的な村',
+                    '迴廊': '🧩 空間が歪む古代の回廊',
+                    '魔女學府': '🔮 魔法と科学が交錯する学び舎',
+                }
+                sim_systems.LOCATION_VIBES[_loc] = _vibe_map.get(_loc, '🌍 未知の場所')
             if _loc not in sim_systems.LOCATION_TYPES:
                 sim_systems.LOCATION_TYPES[_loc] = "indoor" if _loc in ("中央大圖書館","迴廊","魔女學府") else "outdoor"
     if hasattr(sim_systems, 'LOCATION_NATIONS'):

@@ -846,7 +846,26 @@
           "skill": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "能量感知（靈活躍度）",
+          "description": "普通人類的基礎靈子水平",
+          "type": "magic",
+          "level": 1
+        },
+        {
+          "name": "特殊技能",
+          "description": "獨特的專業技能",
+          "type": "special",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-16",
@@ -992,7 +1011,26 @@
           "energy": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "能量感知（靈活躍度）",
+          "description": "工匠的專注力轉化為靈子輸出",
+          "type": "magic",
+          "level": 1
+        },
+        {
+          "name": "特殊技能（匠師魂）",
+          "description": "對「製造」與「結構」的絕對理解力。觸碰工具或機械零件時，瞬間理解其最優使用方式與",
+          "type": "special",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-18",
@@ -1090,7 +1128,26 @@
           "skill": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "元素操控（冰元素）",
+          "description": "冰磚屋頂: 洞口上方搭建了由鏡湖冰磚砌成的半透明屋頂。冰磚是她從湖面切割下來的—",
+          "type": "magic",
+          "level": 1
+        },
+        {
+          "name": "能量感知（冰晶操控）",
+          "description": "用冰晶反覆凍融擴張岩洞，在光線照射下將光線折射成淡青色",
+          "type": "magic",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-19",
@@ -1217,7 +1274,26 @@
           "skill": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "龍鱗堅韌",
+          "description": "龍族的堅韌身軀",
+          "type": "passive",
+          "level": 2
+        },
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "能量感知（靈活躍度）",
+          "description": "米拉的基礎靈子感知",
+          "type": "magic",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-21",
@@ -1285,7 +1361,26 @@
           "skill": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "元素操控（水元素）",
+          "description": "水晶的共鳴: 她與紫水晶之間有某種無法解釋的連結。她能「感覺」到水晶的意志——不",
+          "type": "magic",
+          "level": 1
+        },
+        {
+          "name": "特殊技能",
+          "description": "獨特的專業技能",
+          "type": "special",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-22",
@@ -1355,7 +1450,26 @@
           "skill": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "元素操控（水元素）",
+          "description": "藍水晶護盾: 手杖可展開為水晶盾，能抵擋物理與靈子攻擊。盾的強度取決於他的意志集",
+          "type": "magic",
+          "level": 1
+        },
+        {
+          "name": "特殊技能",
+          "description": "獨特的專業技能",
+          "type": "special",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-23",
@@ -1488,7 +1602,26 @@
           "combat": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "知識儲備（歷史）",
+          "description": "交互歷史: 與楓香：同睡一房，卻隔著無限格。與露露：物資採購。與櫻：幫寄過同人誌",
+          "type": "knowledge",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存）",
+          "description": "概念靈——「味道」的化身",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-29",
@@ -1553,7 +1686,26 @@
           "combat": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "知識儲備（歷史）",
+          "description": "交互歷史: 與伊吹：0.3秒壓制的撕裂。與東雲（CC-33）：出題者。與晴空（C",
+          "type": "knowledge",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存）",
+          "description": "概念靈——「溫度」的化身",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-30",
@@ -1606,7 +1758,26 @@
           "combat": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "知識儲備（歷史）",
+          "description": "歷史線: 2026年全球粉絲經濟盲動線（表面）／ 未來戰略特戰敵後滲透線（底層）",
+          "type": "knowledge",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存）",
+          "description": "概念靈——「濕度」的化身",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-31",
@@ -1668,7 +1839,26 @@
           "combat": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "數據處理",
+          "description": "高速數據處理",
+          "type": "tech",
+          "level": 2
+        },
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "元素操控（風元素）",
+          "description": "終端風格: 極光全息故障藝術（Glitch Art）",
+          "type": "magic",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-32",
@@ -1732,7 +1922,26 @@
           "combat": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "龍鱗堅韌",
+          "description": "龍族的堅韌身軀",
+          "type": "passive",
+          "level": 2
+        },
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "知識儲備（歷史）",
+          "description": "歷史線: 學府時間（與W01時間流速比約1:7，11歲的她在W01只過了約1.5",
+          "type": "knowledge",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-33",
@@ -1796,7 +2005,26 @@
           "combat": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "龍鱗堅韌",
+          "description": "龍族的堅韌身軀",
+          "type": "passive",
+          "level": 2
+        },
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "知識儲備（歷史）",
+          "description": "歷史線: 學府時間（與W01時間流速比約1:7，但她的「深層」位置讓比例更極端）",
+          "type": "knowledge",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-34",
@@ -1867,7 +2095,26 @@
           "combat": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "特殊技能（女僕修業）",
+          "description": "7歲即學會「微笑時不讓眼睛參與」，情緒壓抑訓練",
+          "type": "special",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存）",
+          "description": "7歲人類女性，微量鬼族基因（與拉姆/雷姆遠親），女僕長預備役",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-35",
@@ -1965,7 +2212,26 @@
           "combat": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "數據處理",
+          "description": "高速數據處理",
+          "type": "tech",
+          "level": 2
+        },
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "知識儲備（歷史）",
+          "description": "歷史線: 神話殘留線（未公開），與 W01 冷戰線平行，偶爾交錯",
+          "type": "knowledge",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-36",
@@ -2154,7 +2420,26 @@
           "combat": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "知識儲備（歷史）",
+          "description": "歷史線: 迴廊原生種（不屬於任何世界線的歷史，獨立時間流）",
+          "type": "knowledge",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存_身高）",
+          "description": "身高: 135 cm（蛇尾拉直約 2.5 m）",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-39",
@@ -2243,7 +2528,26 @@
           "combat": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "知識儲備（歷史）",
+          "description": "歷史線: 迴廊原生種（獨立時間流）",
+          "type": "knowledge",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存_身高）",
+          "description": "身高: 152 cm（蛇尾拉直約 3.5 m）",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-40",
@@ -2338,7 +2642,26 @@
           "status": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "特殊技能（古籍修復）",
+          "description": "中央大圖書館見習生，古籍縫合與概念加固專家",
+          "type": "special",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存_身高）",
+          "description": "身高: 175 cm（算上蜘蛛足站立高度 220–260 cm）",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-41",
@@ -2433,7 +2756,26 @@
           "status": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "工藝技巧（重型維護）",
+          "description": "書架更替與重型結構修復，中央大圖書館後勤組",
+          "type": "craft",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存_身高）",
+          "description": "身高: 172 cm（站立高度 210–250 cm）",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-42",
@@ -2539,7 +2881,26 @@
           "combat": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "知識儲備（歷史）",
+          "description": "歷史線: 概念線（不屬於任何歷史，但會「沾染」歷史）",
+          "type": "knowledge",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存）",
+          "description": "概念體——喪咕的雪禍咪，暴風雪中誕生",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-43",
@@ -2631,7 +2992,26 @@
           "combat": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "社交能力（權力）",
+          "description": "新世界集團「影子金主」，蝕津財閥幕後控制者",
+          "type": "social",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存）",
+          "description": "人類女性，約28歲，無特殊體質強化",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-44",
@@ -2723,7 +3103,26 @@
           "combat": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "社交能力（失戀）",
+          "description": "失戀集團核心成員（最極端案例），無法建立新情感連結",
+          "type": "social",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存）",
+          "description": "人類女性，約25歲，前大學研究生",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-45",
@@ -2803,7 +3202,20 @@
           "status": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "工藝技巧（甜品）",
+          "description": "從西翼大市集的甜品攤溢出，身上散發濃郁奶油香",
+          "type": "craft",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存）",
+          "description": "概念怪獸（甜點溢出物），約10歲，壞掉後在西翼大市集重奶油香氣中重生",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-46",
@@ -2883,7 +3295,20 @@
           "status": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "社交能力（守護）",
+          "description": "方碑丘學童的「絨毛守護者」，秘密朋友",
+          "type": "social",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存）",
+          "description": "概念怪獸（繪本溢出物），約5歲，從兒童繪本中誕生",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-47",
@@ -2968,7 +3393,20 @@
           "vitality": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "知識儲備（歷史）",
+          "description": "歷史線: 冷戰線（1960年代起活躍）",
+          "type": "knowledge",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存）",
+          "description": "概念怪獸——反派吉祥物，壞掉後會重組",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-48",
@@ -3055,7 +3493,20 @@
           "status": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧（魔法戰鬥）",
+          "description": "反派魔法少女變身——變身時間越長，日常人格越模糊",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存）",
+          "description": "人類女性，約19歲，契約反派魔法少女",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-49",
@@ -3156,7 +3607,20 @@
           "vitality": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "知識儲備（歷史）",
+          "description": "歷史線: 迴廊原生種（比晞咕萊雅早約 1500 年孵化）",
+          "type": "knowledge",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存）",
+          "description": "晞吶——海蛞蝓族，脆弱但能分泌毒素",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-50",
@@ -3248,7 +3712,26 @@
           "skill": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "特殊技能（快遞）",
+          "description": "翎羽快遞一人公司，獨立快遞員",
+          "type": "special",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存）",
+          "description": "哈比（人形鳥類），翼展大，骨骼中空，體重極輕，約23歲",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-51",
@@ -3341,7 +3824,26 @@
           "skill": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧（感知）",
+          "description": "超音波感知建構3D地圖（精確到5cm），情感回聲推測真實情緒（85%準確率）",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "特殊技能（短途飛行）",
+          "description": "翼膜滑翔最長30分鐘，時速40km/h",
+          "type": "special",
+          "level": 1
+        },
+        {
+          "name": "社交能力（戀愛諮詢）",
+          "description": "自封校園情感顧問，已幫助12對交往、3對離婚，但自己從未談過戀愛",
+          "type": "social",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-52",
@@ -3448,7 +3950,26 @@
           "social": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧",
+          "description": "基本的戰鬥能力",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "元素操控（風元素）",
+          "description": "目標完全沒發現（沒感覺到翼膜、沒聞到氣味、或以為是風）: 「成功命中」 目標被視",
+          "type": "magic",
+          "level": 1
+        },
+        {
+          "name": "社交能力（襲掠求偶）",
+          "description": "族群伴侶挑選儀式——襲掠（第一次接觸）→三階段反應→正式伴侶",
+          "type": "social",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-53",
@@ -3552,7 +4073,26 @@
           "relation": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "元素操控（光元素）",
+          "description": "無光潛行: 在任何陰影中移動（類似喪咕的能力，但更古老）。她的移動不會留下任何痕",
+          "type": "magic",
+          "level": 1
+        },
+        {
+          "name": "知識儲備（歷史）",
+          "description": "歷史線: 冷戰線（但她的存在遠早於此，只是「在此刻醒著」）",
+          "type": "knowledge",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（免疫）",
+          "description": "原初恐懼免疫: 她不會被任何形式的恐懼影響。不是「不怕」，是「恐懼本身就是她」。",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-54",
@@ -3647,7 +4187,20 @@
           "status": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "工藝技巧（數據化）",
+          "description": "將恐懼轉化為數值、圖表、合約——一分鐘算出「房貸利率上漲1%對焦慮程度的影響係數",
+          "type": "craft",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存_身高）",
+          "description": "身高: 135 cm",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-55",
@@ -3732,7 +4285,20 @@
           "vitality": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "知識儲備（歷史）",
+          "description": "歷史線: 超時間線（貫穿所有歷史）",
+          "type": "knowledge",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存）",
+          "description": "蓋婭——大地之母概念體，與地脈連結",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-56",
@@ -3817,7 +4383,20 @@
           "vitality": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "元素操控（光元素）",
+          "description": "月光淨化: 月光所及之處，可清除輕微詛咒、毒素、惡意。對概念級污染（如喪咕的貪婪",
+          "type": "magic",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存）",
+          "description": "塞勒涅——月光概念體，夜間能力強化",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-57",
@@ -3908,7 +4487,26 @@
           "status": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧（競速）",
+          "description": "神經快傳反應延遲0.3ms，最高時速280km/h衝刺",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "工藝技巧（義體改裝）",
+          "description": "腿部接口可快速更換賽道模組（直排輪/彈跳腳/冰刀）",
+          "type": "craft",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存）",
+          "description": "人造改造人（賽博格），出廠3年，輕量化競速特化",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-58",
@@ -3994,7 +4592,26 @@
           "status": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧（耐力）",
+          "description": "高效氧交換可在海拔4000m持續奔跑8小時不間斷",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "工藝技巧（能量回收）",
+          "description": "奔跑時動能轉電能，滿電可供額外6小時高速運行",
+          "type": "craft",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存）",
+          "description": "人造改造人（賽博格），出廠5年，長途耐力特化",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-59",
@@ -4080,7 +4697,26 @@
           "status": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧（衝刺）",
+          "description": "增壓噴射0.5秒加速至120km/h，反向關節爆發起步加速度2.5G",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "工藝技巧（義體維護）",
+          "description": "迅猛龍套件永久植入，反向關節結構參考愛麗絲C16",
+          "type": "craft",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存）",
+          "description": "人造改造人（賽博格），出廠2年，爆發衝刺特化，重度義體",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-61",
@@ -4308,7 +4944,20 @@
           "status": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧（神蹟）",
+          "description": "治傷（小）——每分鐘修復一根肋骨；神域醫療帳篷——直徑10m防禦光幕",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存）",
+          "description": "天使（第三環・醫療專責），外觀20-22歲，實際存在約800年",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-63",
@@ -4378,7 +5027,26 @@
           "knowledge": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "工藝技巧（工程）",
+          "description": "鼠立方核心引擎室工程師，務實固執",
+          "type": "craft",
+          "level": 1
+        },
+        {
+          "name": "知識儲備（機械）",
+          "description": "精通機械維修與工程設計",
+          "type": "knowledge",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存_身高）",
+          "description": "身高: 135 cm",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-64",
@@ -4448,7 +5116,26 @@
           "social": 1
         }
       },
-      "abilities": []
+      "abilities": [
+        {
+          "name": "戰鬥技巧（海戰）",
+          "description": "海盜船長，掠奪品掛滿艦橋",
+          "type": "combat",
+          "level": 1
+        },
+        {
+          "name": "社交能力（領導）",
+          "description": "黑帆掠奪者船長，狂野孤獨",
+          "type": "social",
+          "level": 1
+        },
+        {
+          "name": "生命力強化（生存_身高）",
+          "description": "身高: 168 cm",
+          "type": "passive",
+          "level": 1
+        }
+      ]
     },
     {
       "card_id": "CC-65",
