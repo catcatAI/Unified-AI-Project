@@ -112,15 +112,18 @@ def _get_npc_home_from_card(card: dict, fallback_idx: int) -> str:
 
 
 def _extract_race_from_card(card) -> str:
-    """Extract race from lore tokens, fallback to stats, then token categories, then name."""
-    lore_toks = _tokens_by_cat(card, "lore")
-    race_from_lore = next((t.get("value","") for t in lore_toks if "種族" in t.get("name","")), "")
-    if race_from_lore:
-        return race_from_lore
+    """Extract race from stats.race (primary), fallback to lore tokens, then name.
+    
+    Priority: stats.race (from game_cards.json) > lore tokens > token categories > name.
+    """
     stats = card.get("stats", {})
     stats_race = stats.get("race", "")
     if stats_race and stats_race not in ("實證主義角色", "不明", ""):
         return stats_race
+    lore_toks = _tokens_by_cat(card, "lore")
+    race_from_lore = next((t.get("value","") for t in lore_toks if "種族" in t.get("name","")), "")
+    if race_from_lore:
+        return race_from_lore
     # Try token category name as race hint
     for cat in ['vitality', 'element', 'energy', 'combat', 'skill']:
         for t in card.get("tokens", []):
