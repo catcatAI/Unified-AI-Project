@@ -501,7 +501,7 @@ class VectorDictionary:
             else confidence_value("ai.garden.dictionary.grow_confidence", 0.6)
         )
         existing = self._find_similar_key(
-            text, threshold=threshold_value("ai.garden.dictionary.grow_dedup_threshold", 0.85)
+            text, threshold=threshold_value("ai.garden.dictionary.grow_dedup_threshold", 0.5)
         )
         if existing:
             return existing
@@ -525,7 +525,7 @@ class VectorDictionary:
                 logger.info("GARDEN: max entries reached (%d), stopping growth", self.max_entries)
                 break
             existing = self._find_similar_key(
-                text, threshold=threshold_value("ai.garden.dictionary.grow_dedup_threshold", 0.85)
+                text, threshold=threshold_value("ai.garden.dictionary.grow_dedup_threshold", 0.5)
             )
             if existing:
                 continue
@@ -539,30 +539,74 @@ class VectorDictionary:
 
     def _find_similar_key(self, text: str, threshold: Optional[float] = None) -> Optional[str]:
         """Return existing key if text is very similar to an existing surface form.
-        Uses exact match first (O(1)), then semantic similarity if index is built."""
+        Uses exact match first (O(1)), then TF-IDF semantic similarity,
+        then prefix-based dedup for word forms (happy/happiness, run/running)."""
         threshold = (
             threshold
             if threshold is not None
-            else threshold_value("ai.garden.dictionary.find_similar_threshold", 0.85)
+            else threshold_value("ai.garden.dictionary.find_similar_threshold", 0.5)
         )
         lower = text.lower().strip()
         # Fast path: exact match via set lookup
         if lower in self._surface_set:
             return self._surface_set[lower]
         # Semantic dedup: check cosine similarity with existing entries
-        if self._dirty or self._matrix is None or len(self._key_order) == 0:
-            return None  # Skip dedup if index not built
+        if not (self._dirty or self._matrix is None or len(self._key_order) == 0):
+            try:
+                query_vec = self._encoder.encode([text])
+                query_vec = self._normalize(query_vec, dim=-1)
+                scores = self._matrix @ query_vec.T
+                max_score = float(scores.max()) if hasattr(scores, "max") else 0.0
+                if max_score >= threshold:
+                    idx = int(scores.argmax()) if hasattr(scores, "argmax") else 0
+                    return self._key_order[idx]
+            except Exception:
+                logger.warning("Semantic dedup encoding failed", exc_info=True)
+        # Fallback: prefix-based dedup for word forms (always runs, no matrix needed)
+        # Catches "happy"/"happiness" (shared "happ" prefix) and
+        # "run"/"running" (shared "runn" prefix) but not "happy"/"glad"
         try:
-            query_vec = self._encoder.encode([text])
-            query_vec = self._normalize(query_vec, dim=-1)
-            scores = self._matrix @ query_vec.T
-            max_score = float(scores.max()) if hasattr(scores, "max") else 0.0
-            if max_score >= threshold:
-                idx = int(scores.argmax()) if hasattr(scores, "argmax") else 0
-                return self._key_order[idx]
+            best_key = None
+            best_score = 0.0
+            for key, entry in self.entries.items():
+                for form in entry.surface_forms.values():
+                    if not form:
+                        continue
+                    form_lower = form.lower().strip()
+                    score = self._prefix_overlap(lower, form_lower)
+                    if score > best_score:
+                        best_score = score
+                        best_key = key
+            if best_score >= threshold and best_key:
+                return best_key
         except Exception:
-            logger.warning("Semantic dedup encoding failed", exc_info=True)
+            logger.warning("Prefix dedup failed", exc_info=True)
         return None
+
+    @staticmethod
+    def _prefix_overlap(a: str, b: str, min_prefix: int = 3) -> float:
+        """Compute prefix overlap ratio between two strings.
+        Returns 1.0 for exact match, ~0.8 for 'happy'/'happiness', 0.0 for unrelated.
+        Used for word-form dedup (happy/happiness, run/running, big/bigger)."""
+        if a == b:
+            return 1.0
+        if not a or not b:
+            return 0.0
+        # Find longest common prefix
+        prefix_len = 0
+        for ca, cb in zip(a, b):
+            if ca == cb:
+                prefix_len += 1
+            else:
+                break
+        if prefix_len < min_prefix:
+            return 0.0
+        # Score based on prefix length relative to shorter word
+        # "happy"/"happiness": prefix=4, min_len=5 → 0.8
+        # "big"/"bigger": prefix=3, min_len=3 → 1.0
+        # "test"/"testing": prefix=4, min_len=4 → 1.0
+        min_len = min(len(a), len(b))
+        return prefix_len / min_len if min_len > 0 else 0.0
 
     # ------------------------------------------------------------------
     # Index building (lazy)
