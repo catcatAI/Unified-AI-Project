@@ -1,17 +1,30 @@
 """Tests for ThreeLayerVisual — PCA encoder + nonlinear decoder."""
 import os
+import subprocess
+import sys
 import tempfile
 
 import numpy as np
 import pytest
 
 
+_HAS_TORCH_CACHE = None
+
+
 def _has_torch():
+    """Check if torch is importable without hanging (subprocess probe, cached)."""
+    global _HAS_TORCH_CACHE
+    if _HAS_TORCH_CACHE is not None:
+        return _HAS_TORCH_CACHE
     try:
-        import torch
-        return True
-    except ImportError:
-        return False
+        result = subprocess.run(
+            [sys.executable, "-c", "import torch; print('ok')"],
+            capture_output=True, timeout=10,
+        )
+        _HAS_TORCH_CACHE = result.returncode == 0
+    except Exception:
+        _HAS_TORCH_CACHE = False
+    return _HAS_TORCH_CACHE
 
 
 @pytest.fixture

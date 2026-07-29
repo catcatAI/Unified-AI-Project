@@ -8,11 +8,39 @@ in a shared 64-dim latent space.
 """
 
 import logging
+import subprocess
+import sys
 from typing import List, Optional
 
 import numpy as np
 
 logger = logging.getLogger(__name__)
+
+_TORCH_CHECKED = False
+_TORCH_AVAILABLE = False
+
+
+def _check_torch_subprocess() -> bool:
+    """Check if torch can be imported without hanging the process.
+
+    On Windows/Python 3.14, torch import hangs indefinitely in-process.
+    Uses a subprocess probe that can be killed cleanly.
+    """
+    global _TORCH_CHECKED, _TORCH_AVAILABLE
+    if _TORCH_CHECKED:
+        return _TORCH_AVAILABLE
+    _TORCH_CHECKED = True
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", "import torch; print('ok')"],
+            capture_output=True,
+            timeout=10,
+        )
+        _TORCH_AVAILABLE = result.returncode == 0
+    except (subprocess.TimeoutExpired, Exception):
+        logger.debug("torch subprocess check failed", exc_info=True)
+        _TORCH_AVAILABLE = False
+    return _TORCH_AVAILABLE
 
 
 class TextEncoder:
@@ -45,6 +73,10 @@ class TextEncoder:
         """Lazy-load CLIP model and processor."""
         if self._clip_available and self._model is not None:
             return self._model, self._processor
+        if not _check_torch_subprocess():
+            logger.info("TextEncoder: torch unavailable, CLIP disabled")
+            self._clip_available = False
+            return None, None
         try:
             import torch
             from transformers import CLIPModel, CLIPProcessor
@@ -90,6 +122,8 @@ class TextEncoder:
         """
         model, processor = self._get_clip()
         if model is None or processor is None:
+            return None
+        if not _check_torch_subprocess():
             return None
         try:
             import torch

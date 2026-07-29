@@ -15,6 +15,8 @@ The DualEncoderRouter combines both outputs.
 
 import io
 import logging
+import subprocess
+import sys
 from typing import Optional, Tuple
 
 import numpy as np
@@ -26,13 +28,42 @@ _WHISPER_AVAILABLE = False
 _WHISPER_MODEL = None
 _WHISPER_PROCESSOR = None
 _WHISPER_FEATURE_EXTRACTOR = None
+_TORCH_CHECKED = False
+_TORCH_AVAILABLE = False
+
+
+def _check_torch_subprocess() -> bool:
+    """Check if torch can be imported without hanging the process.
+
+    On Windows/Python 3.14, torch import hangs indefinitely in-process.
+    Uses a subprocess probe that can be killed cleanly.
+    """
+    global _TORCH_CHECKED, _TORCH_AVAILABLE
+    if _TORCH_CHECKED:
+        return _TORCH_AVAILABLE
+    _TORCH_CHECKED = True
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", "import torch; print('ok')"],
+            capture_output=True,
+            timeout=10,
+        )
+        _TORCH_AVAILABLE = result.returncode == 0
+    except (subprocess.TimeoutExpired, Exception):
+        logger.debug("torch subprocess check failed", exc_info=True)
+        _TORCH_AVAILABLE = False
+    return _TORCH_AVAILABLE
 
 
 def _lazy_init_whisper():
-    """Try to load Whisper model and processor. Returns (model, processor) or (None, None)."""
+    """Try to load Whisper model and processor. Returns (model, processor, feature_extractor) or (None, None, None)."""
     global _WHISPER_AVAILABLE, _WHISPER_MODEL, _WHISPER_PROCESSOR, _WHISPER_FEATURE_EXTRACTOR
     if _WHISPER_AVAILABLE:
         return _WHISPER_MODEL, _WHISPER_PROCESSOR, _WHISPER_FEATURE_EXTRACTOR
+    if not _check_torch_subprocess():
+        logger.info("SemanticAudioEncoder: torch unavailable, Whisper disabled")
+        _WHISPER_AVAILABLE = False
+        return None, None, None
     try:
         import torch
         import transformers
@@ -100,6 +131,8 @@ class SemanticAudioEncoder:
         """
         model, processor, feat_extractor = self._get_backend()
         if model is None or processor is None:
+            return None
+        if not _check_torch_subprocess():
             return None
         try:
             import torch

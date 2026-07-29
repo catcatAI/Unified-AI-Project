@@ -24,6 +24,8 @@ Performance:
 
 import logging
 import os
+import subprocess
+import sys
 import time
 from typing import Dict, List, Optional, Tuple
 
@@ -33,9 +35,33 @@ logger = logging.getLogger(__name__)
 
 # Lazy-load torch
 _TORCH_AVAILABLE = False
+_TORCH_CHECKED = False
 _torch = None
 _nn = None
 _F = None
+
+
+def _check_torch_subprocess() -> bool:
+    """Check if torch can be imported without hanging the process.
+
+    On Windows/Python 3.14, torch import hangs indefinitely in-process.
+    Uses a subprocess probe that can be killed cleanly.
+    """
+    global _TORCH_CHECKED, _TORCH_AVAILABLE
+    if _TORCH_CHECKED:
+        return _TORCH_AVAILABLE
+    _TORCH_CHECKED = True
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", "import torch; print('ok')"],
+            capture_output=True,
+            timeout=10,
+        )
+        _TORCH_AVAILABLE = result.returncode == 0
+    except (subprocess.TimeoutExpired, Exception):
+        logger.debug("torch subprocess check failed", exc_info=True)
+        _TORCH_AVAILABLE = False
+    return _TORCH_AVAILABLE
 
 
 def _lazy_init_torch():
@@ -43,6 +69,10 @@ def _lazy_init_torch():
     global _TORCH_AVAILABLE, _torch, _nn, _F
     if _TORCH_AVAILABLE:
         return _torch, _nn, _F
+    if not _check_torch_subprocess():
+        logger.info("ThreeLayerVisual: torch unavailable, using numpy backend")
+        _TORCH_AVAILABLE = False
+        return None, None, None
     try:
         import torch
         import torch.nn as nn

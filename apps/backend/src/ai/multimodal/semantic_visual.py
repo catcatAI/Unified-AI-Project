@@ -14,6 +14,8 @@ The DualEncoderRouter combines both outputs.
 
 import io
 import logging
+import subprocess
+import sys
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -25,6 +27,31 @@ logger = logging.getLogger(__name__)
 _CLIP_AVAILABLE = False
 _CLIP_MODEL = None
 _CLIP_PROCESSOR = None
+_TORCH_CHECKED = False
+_TORCH_AVAILABLE = False
+
+
+def _check_torch_subprocess() -> bool:
+    """Check if torch can be imported without hanging the process.
+
+    On Windows/Python 3.14, torch import hangs indefinitely in-process.
+    Uses a subprocess probe that can be killed cleanly.
+    """
+    global _TORCH_CHECKED, _TORCH_AVAILABLE
+    if _TORCH_CHECKED:
+        return _TORCH_AVAILABLE
+    _TORCH_CHECKED = True
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", "import torch; print('ok')"],
+            capture_output=True,
+            timeout=10,
+        )
+        _TORCH_AVAILABLE = result.returncode == 0
+    except (subprocess.TimeoutExpired, Exception):
+        logger.debug("torch subprocess check failed", exc_info=True)
+        _TORCH_AVAILABLE = False
+    return _TORCH_AVAILABLE
 
 
 def _lazy_init_clip():
@@ -32,6 +59,10 @@ def _lazy_init_clip():
     global _CLIP_AVAILABLE, _CLIP_MODEL, _CLIP_PROCESSOR
     if _CLIP_AVAILABLE:
         return _CLIP_MODEL, _CLIP_PROCESSOR
+    if not _check_torch_subprocess():
+        logger.info("SemanticVisualEncoder: torch unavailable, CLIP disabled")
+        _CLIP_AVAILABLE = False
+        return None, None
     try:
         import torch
         import transformers
@@ -98,6 +129,8 @@ class SemanticVisualEncoder:
         if model is None or processor is None:
             logger.debug("SemanticVisualEncoder: CLIP unavailable, returning None")
             return None
+        if not _check_torch_subprocess():
+            return None
         try:
             import torch
 
@@ -126,6 +159,8 @@ class SemanticVisualEncoder:
         """Encode a PIL Image into a 512-dim CLIP semantic vector."""
         model, processor = self._get_backend()
         if model is None or processor is None:
+            return None
+        if not _check_torch_subprocess():
             return None
         try:
             import torch
@@ -163,6 +198,8 @@ class SemanticVisualEncoder:
         """
         model, processor = self._get_backend()
         if model is None or processor is None:
+            return None
+        if not _check_torch_subprocess():
             return None
         try:
             import torch

@@ -110,7 +110,8 @@ class TestSemanticVisualEncoderInit:
 
     def test_encode_returns_512dim(self, sample_png):
         """S4: encode with mock CLIP backend returns 512-dim vector."""
-        with patch('ai.multimodal.semantic_visual._lazy_init_clip') as mock_init:
+        with patch('ai.multimodal.semantic_visual._lazy_init_clip') as mock_init, \
+             patch('ai.multimodal.semantic_visual._check_torch_subprocess', return_value=True):
             mock_model = MagicMock()
             mock_processor = MagicMock()
             mock_init.return_value = (mock_model, mock_processor)
@@ -145,7 +146,8 @@ class TestSemanticVisualEncoderInit:
         mock_model.get_image_features.return_value = mock_output
 
         with patch.object(SemanticVisualEncoder, '_get_backend',
-                          return_value=(mock_model, mock_processor)):
+                          return_value=(mock_model, mock_processor)), \
+             patch('ai.multimodal.semantic_visual._check_torch_subprocess', return_value=True):
             sve = SemanticVisualEncoder()
             result = sve.encode_from_pil(img)
             assert result is not None
@@ -216,7 +218,8 @@ class TestSemanticAudioEncoder:
         mock_model.encoder.return_value = encoder_output
 
         with patch('ai.multimodal.semantic_audio._lazy_init_whisper',
-                   return_value=(mock_model, mock_processor, mock_feat)):
+                   return_value=(mock_model, mock_processor, mock_feat)), \
+             patch('ai.multimodal.semantic_audio._check_torch_subprocess', return_value=True):
             sae = SemanticAudioEncoder()
             sae._model = None
             result = sae.encode(sample_wav)
@@ -396,6 +399,18 @@ class TestSemanticEncoderRealModels:
     @pytest.fixture(scope="class")
     def clip_model(self):
         """Load real CLIP model once per class."""
+        import subprocess
+        import sys
+        try:
+            result = subprocess.run(
+                [sys.executable, "-c", "import torch; print('ok')"],
+                capture_output=True, timeout=10,
+            )
+            torch_ok = result.returncode == 0
+        except Exception:
+            torch_ok = False
+        if not torch_ok:
+            pytest.skip("torch unavailable (subprocess check failed)")
         from ai.multimodal.semantic_visual import _lazy_init_clip
         model, processor = _lazy_init_clip()
         assert model is not None, "CLIP model failed to load from HF cache"
@@ -405,6 +420,18 @@ class TestSemanticEncoderRealModels:
     @pytest.fixture(scope="class")
     def whisper_model(self):
         """Load real Whisper model once per class."""
+        import subprocess
+        import sys
+        try:
+            result = subprocess.run(
+                [sys.executable, "-c", "import torch; print('ok')"],
+                capture_output=True, timeout=10,
+            )
+            torch_ok = result.returncode == 0
+        except Exception:
+            torch_ok = False
+        if not torch_ok:
+            pytest.skip("torch unavailable (subprocess check failed)")
         from ai.multimodal.semantic_audio import _lazy_init_whisper
         model, processor, feat = _lazy_init_whisper()
         assert model is not None, "Whisper model failed to load from HF cache"
