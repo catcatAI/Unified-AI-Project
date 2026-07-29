@@ -30,9 +30,10 @@ logger = logging.getLogger(__name__)
 
 
 class HardwareScenario(Enum):
-    """5 種硬體場景 / Hardware scenarios (§8.7)"""
+    """5+1 種硬體場景 / Hardware scenarios (§8.7)"""
 
     HIGH_PERFORMANCE_DESKTOP = "high_performance_desktop"
+    DESKTOP_IGPU = "desktop_igpu"          # Desktop with integrated GPU only
     LAPTOP_NORMAL = "laptop_normal"
     LAPTOP_POWER_SAVER = "laptop_power_saver"
     LOW_POWER_DEVICE = "low_power_device"
@@ -106,6 +107,30 @@ PROFILES: Dict[HardwareScenario, FrequencyProfile] = {
         tactile_update=0.1,
         transport_poll=0.1,
         base_multiplier=1.0,
+    ),
+    HardwareScenario.DESKTOP_IGPU: FrequencyProfile(
+        ans_update=0.7,
+        heartbeat_min=8.0,
+        heartbeat_max=45.0,
+        decision_interval=90.0,
+        neuroplasticity_update=90.0,
+        lifecycle_check=15.0,
+        proactive_check=20.0,
+        agent_poll=0.7,
+        agent_cleanup=45.0,
+        scan_desktop=45.0,
+        endocrine_update=7.0,
+        bio_monitor=7.0,
+        emotion_update=1.5,
+        execution_check=1.5,
+        ham_sync=3600.0,
+        narrative_update=86400.0,
+        cml_auto_train=90.0,
+        action_executor=0.07,
+        audio_poll=0.15,
+        tactile_update=0.15,
+        transport_poll=0.15,
+        base_multiplier=0.8,
     ),
     HardwareScenario.LAPTOP_NORMAL: FrequencyProfile(
         ans_update=1.0,
@@ -250,7 +275,8 @@ class HardwareProfile:
         3. Headless Linux → SERVER_CLOUD
         4. ARM Linux → LOW_POWER_DEVICE
         5. Battery discharging (laptop) → power mode
-        6. Default → HIGH_PERFORMANCE_DESKTOP
+        6. Desktop with iGPU only → DESKTOP_IGPU
+        7. Default → HIGH_PERFORMANCE_DESKTOP
         """
         # 1. Env override
         env_override = os.environ.get("ANGELA_HARDWARE_PROFILE")
@@ -286,13 +312,18 @@ class HardwareProfile:
         if system in ("Windows", "Darwin"):
             battery_status = _check_battery(system)
             if battery_status == "power_saver":
-                logger.info("HardwareProfile: battery discharging <30% → LAPTOP_POWER_SAVER")
+                logger.info("HardwareProfile: battery discharging <30%% → LAPTOP_POWER_SAVER")
                 return HardwareScenario.LAPTOP_POWER_SAVER
             if battery_status == "laptop":
                 logger.info("HardwareProfile: battery discharging → LAPTOP_NORMAL")
                 return HardwareScenario.LAPTOP_NORMAL
 
-        # 6. Default
+        # 6. Desktop with iGPU only (no discrete GPU) → DESKTOP_IGPU
+        if system == "Windows" and _has_intel_igpu_only():
+            logger.info("HardwareProfile: Intel iGPU detected (no dGPU) → DESKTOP_IGPU")
+            return HardwareScenario.DESKTOP_IGPU
+
+        # 7. Default
         logger.info("HardwareProfile: default → HIGH_PERFORMANCE_DESKTOP")
         return HardwareScenario.HIGH_PERFORMANCE_DESKTOP
 
@@ -410,3 +441,36 @@ def _check_battery(system: str) -> Optional[str]:
     except Exception:  # noqa: S110 — broad except intentional; battery check is best-effort
         logger.warning("Battery detection failed (non-critical)", exc_info=True)
     return None
+
+
+def _has_intel_igpu_only() -> bool:
+    """Detect if the system has an Intel integrated GPU but no discrete GPU.
+
+    Uses WMIC on Windows to query video controllers. Returns True if:
+    - An Intel GPU is found (UHD, Iris, HD Graphics, etc.)
+    - No NVIDIA/AMD GPU is found
+    """
+    try:
+        import subprocess  # noqa: S404
+
+        result = subprocess.run(
+            ["wmic", "path", "win32_VideoController", "get", "name"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode != 0:
+            return False
+        lines = [line.strip() for line in result.stdout.split("\n") if line.strip()]
+        # Skip header line
+        gpu_names = [line for line in lines if line != "Name"]
+        has_intel = any("INTEL" in name.upper() for name in gpu_names)
+        has_dgpu = any(
+            kw in name.upper()
+            for name in gpu_names
+            for kw in ("NVIDIA", "GEFORCE", "RTX", "GTX", "QUADRO", "RADEON", "AMD")
+        )
+        return has_intel and not has_dgpu
+    except Exception:
+        logger.debug("iGPU detection failed (non-critical)", exc_info=True)
+        return False

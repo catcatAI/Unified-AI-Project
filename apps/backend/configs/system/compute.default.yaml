@@ -120,6 +120,21 @@ compute:
         max_vocab: 50000
         connection_budget: 100000
 
+    desktop_igpu:
+      global:
+        mode: "auto"
+      ed3n_snn:
+        batch_size_multiplier: 1.0
+      garden_snn:
+        max_vocab: 50000
+        connection_budget: 100000
+      three_layer_visual:
+        training_batch_size: 32
+      semantic_visual:
+        batch_size: 16
+      semantic_audio:
+        batch_size: 8
+
     laptop_power_saver:
       global:
         mode: "off"

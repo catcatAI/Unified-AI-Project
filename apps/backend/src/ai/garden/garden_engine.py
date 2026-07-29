@@ -712,7 +712,7 @@ class GARDENEngine:
                 input_keys,
                 output_keys,
                 lr=learning_rate("ai.garden.engine.hebbian_lr", 0.05),
-                target_strength=confidence_value("ai.garden.engine.hebbian_target_strength", 0.7),
+                target_strength=confidence_value("ai.garden.engine.hebbian_target_strength", 0.35),
             )
 
         return {
@@ -798,7 +798,7 @@ class GARDENEngine:
         if train_associations:
             lr = learning_rate("ai.garden.engine.hebbian_lr", 0.05)
             target_str = confidence_value(
-                "ai.garden.engine.hebbian_target_strength", 0.7
+                "ai.garden.engine.hebbian_target_strength", 0.35
             )
             for s in samples:
                 user_text = s.get("input", "")

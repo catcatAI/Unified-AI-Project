@@ -182,7 +182,7 @@ def _load_checkpoint(path: str) -> dict:
 # ---------------------------------------------------------------------------
 
 DEFAULT_LEAK = 0.2  # membrane potential leakage per timestep
-DEFAULT_THRESHOLD = 0.35  # spike threshold
+DEFAULT_THRESHOLD = 0.30  # spike threshold (balanced: fires on strong connections only)
 DEFAULT_TIMESTEPS = 6  # number of LIF integration steps
 DEFAULT_DECAY = 0.6  # propagation decay per hop
 
@@ -454,20 +454,23 @@ class TensorSNNCore:
         self,
         input_keys: List[str],
         context: Optional[Dict[str, Any]] = None,
+        top_k_ratio: float = 0.05,
     ) -> Dict[str, float]:
-        """
-        Run LIF integration for self.timesteps steps using sparse propagation.
-        Only neurons with active (spiking) input participate in each timestep,
-        avoiding the full [V, V] dense matrix-vector multiply.
+        """Run LIF integration with top-k competition.
+
+        Improvements over original:
+        - Top-k competition: only top 5% neurons fire per timestep
+        - Weight decay during training prevents saturation
+        - Lower target_strength (0.35) keeps weights moderate
+
         Returns dict of concept_key -> cumulative activation.
         """
         if not input_keys or self._W is None or self.vocab_size == 0:
             return {}
 
         V = self.vocab_size
-        W = self._W[:V, :V]  # live [V, V] region (guard against any over-allocation)
+        W = self._W[:V, :V]
 
-        # Build initial activation vector
         a = _zeros(V)
         for key in input_keys:
             idx = self._key_to_idx.get(key)
@@ -478,20 +481,18 @@ class TensorSNNCore:
         if a.sum() == 0.0:
             return {}
 
-        # Hormonal modulation: adjust threshold
         thr_mult = self.modulator.get_threshold_multiplier()
-        threshold = max(0.05, self.base_threshold * thr_mult)
+        threshold = max(0.01, self.base_threshold * thr_mult)
 
         potential = _zeros(V)
         cumulative = _zeros(V)
         total_active = 0
+        max_active = max(1, int(V * top_k_ratio))
 
         for t in range(self.timesteps):
-            # Sparse propagation: only follow outgoing edges from active neurons
             active_idx = _nonzero_indices(a)
-            if len(active_idx) > 0:
-                # Check actual array type, not global flag (checkpoint may be numpy
-                # even when torch is available)
+            n_active = len(active_idx)
+            if n_active > 0:
                 _use_torch = hasattr(W[active_idx], "sum") and hasattr(
                     W[active_idx].sum, "dim"
                 )
@@ -503,18 +504,26 @@ class TensorSNNCore:
             else:
                 potential = potential * (1.0 - self.leak)
 
-            # Spike
-            spikes = _float(potential >= threshold)
-            # Decay for next step
-            a = spikes * (self.decay**t)
-            # Accumulate
+            # Top-k competition
+            if _numel(potential) > max_active:
+                sorted_idx = np.argpartition(potential, -max_active)[-max_active:]
+            else:
+                sorted_idx = _nonzero_indices(potential)
+            spike_mask = _float(potential >= threshold)
+            topk_mask = _zeros(V)
+            if hasattr(sorted_idx, "tolist"):
+                topk_mask[sorted_idx.tolist()] = 1.0
+            else:
+                topk_mask[sorted_idx] = 1.0
+            spikes = spike_mask * topk_mask
+
+            a = spikes * (self.decay ** t)
             cumulative += spikes
-            total_active += len(active_idx)
+            total_active += n_active
 
         self.total_steps += 1
         self._total_active += total_active
 
-        # Map back to keys
         result: Dict[str, float] = {}
         for idx in _nonzero_indices(cumulative).tolist():
             key = self._idx_to_key[idx]
@@ -530,10 +539,18 @@ class TensorSNNCore:
         input_keys: List[str],
         target_keys: List[str],
         lr: float = 0.05,
-        target_strength: float = 0.8,
+        target_strength: float = 0.35,
+        weight_decay: float = 0.002,
     ) -> float:
-        """
-        Hebbian weight update: strengthen connections between co-active input and target keys.
+        """Hebbian weight update with Oja's rule + global weight decay.
+
+        After each batch of updates:
+        1. Oja's rule drives connections toward target_strength (low = sparse)
+        2. Global weight decay shrinks all weights to prevent saturation
+        3. Near-zero pruning maintains sparsity
+
+        The forward() pass handles signal normalization (divides by n_active).
+
         Returns total weight delta applied.
         """
         if not input_keys or not target_keys:
@@ -545,7 +562,6 @@ class TensorSNNCore:
             for tgt in target_keys:
                 j = self._register_key(tgt)
                 old_w = float(self._W[i, j])
-                # Oja's rule variant: Δw = lr * (target - w)
                 delta = lr * (target_strength - old_w)
                 new_w = max(0.0, min(1.0, old_w + delta))
                 self._W[i, j] = new_w
@@ -553,6 +569,14 @@ class TensorSNNCore:
                 self._touch(i)
                 self._touch(j)
                 delta_total += abs(delta)
+
+        # Global weight decay + pruning
+        if weight_decay > 0 and self._W is not None:
+            V = self.vocab_size
+            mask = self._W[:V, :V] > 0.0
+            self._W[:V, :V][mask] = self._W[:V, :V][mask] * (1.0 - weight_decay)
+            prune_mask = self._W[:V, :V] < 0.01
+            self._W[:V, :V][prune_mask] = 0.0
 
         self.total_hebbian_updates += 1
         return delta_total
@@ -591,23 +615,54 @@ class TensorSNNCore:
         self.total_hebbian_updates = int(state.get("total_hebbian_updates", 0))
         logger.info("GARDEN SNN: loaded checkpoint from %s (V=%d)", path, self.vocab_size)
 
+    def reset_for_retrain(self) -> None:
+        """Reset weight matrix to sparse random initialization for retraining.
+
+        Use when the SNN has become saturated and produces identical outputs.
+        Preserves key registry but reinitializes weights.
+        """
+        if self._W is None:
+            return
+        V = self.vocab_size
+        xp, is_torch = _get_backend()
+        if is_torch:
+            self._W = xp.rand(V, V, dtype=xp.float32) * 0.3
+            self._W = (self._W + self._W.T) / 2.0
+            mask = xp.rand(V, V) > 0.05
+            self._W[mask] = 0.0
+        else:
+            self._W = np.random.rand(V, V).astype(np.float32) * 0.3
+            self._W = (self._W + self._W.T) / 2.0
+            mask = np.random.rand(V, V) > 0.05
+            self._W[mask] = 0.0
+        self.total_steps = 0
+        self.total_hebbian_updates = 0
+        self._total_active = 0
+        nnz = int(np.count_nonzero(self._W)) if not is_torch else int((self._W != 0).sum())
+        logger.info(
+            "GARDEN SNN: reset weights for retrain (V=%d, nnz=%d, density=%.2f%%)",
+            V, nnz, nnz / (V * V) * 100,
+        )
+
     # ------------------------------------------------------------------
     # Introspection
     # ------------------------------------------------------------------
 
     def get_stats(self) -> Dict[str, Any]:
         density = 0.0
+        mean_weight = 0.0
         if self._W is not None and _numel(self._W) > 0:
-            density = float(_float(self._W[: self.vocab_size, : self.vocab_size] > 0).mean())
+            live = self._W[: self.vocab_size, : self.vocab_size]
+            density = float(_float(live > 0).mean())
+            nnz = int(_float(live > 0).sum())
+            if nnz > 0:
+                mean_weight = float(_float(live[live > 0]).mean())
         total_possible = self.vocab_size * self.timesteps * max(1, self.total_steps)
         sparsity_ratio = (
             round(1.0 - (self._total_active / max(1, total_possible)), 4)
             if total_possible > 0
             else 0.0
         )
-        # Report the *live* matrix region (vocab_size x vocab_size). The internal
-        # _W may be over-allocated for amortized growth, but only the live region
-        # participates in forward()/training, so that is the meaningful footprint.
         live_W = self.vocab_size
         if self._W is None:
             live_shape: List[int] = []
@@ -618,6 +673,7 @@ class TensorSNNCore:
             "max_vocab": self.max_vocab,
             "weight_matrix_shape": live_shape,
             "matrix_density": round(density, 4),
+            "mean_weight": round(mean_weight, 4),
             "matrix_memory_bytes": (live_W * live_W * 4),
             "leak": self.leak,
             "threshold": self.base_threshold,
