@@ -540,18 +540,12 @@ class TensorSNNCore:
         target_keys: List[str],
         lr: float = 0.05,
         target_strength: float = 0.35,
-        weight_decay: float = 0.002,
     ) -> float:
-        """Hebbian weight update with Oja's rule + global weight decay.
-
-        After each batch of updates:
-        1. Oja's rule drives connections toward target_strength (low = sparse)
-        2. Global weight decay shrinks all weights to prevent saturation
-        3. Near-zero pruning maintains sparsity
-
-        The forward() pass handles signal normalization (divides by n_active).
+        """Hebbian weight update with Oja's rule.
 
         Returns total weight delta applied.
+        Weight decay and pruning are batch-level — call apply_decay() once
+        per batch to avoid O(V^2) cost per sample.
         """
         if not input_keys or not target_keys:
             return 0.0
@@ -570,16 +564,19 @@ class TensorSNNCore:
                 self._touch(j)
                 delta_total += abs(delta)
 
-        # Global weight decay + pruning
-        if weight_decay > 0 and self._W is not None:
-            V = self.vocab_size
-            mask = self._W[:V, :V] > 0.0
-            self._W[:V, :V][mask] = self._W[:V, :V][mask] * (1.0 - weight_decay)
-            prune_mask = self._W[:V, :V] < 0.01
-            self._W[:V, :V][prune_mask] = 0.0
-
         self.total_hebbian_updates += 1
         return delta_total
+
+    def apply_decay(self, weight_decay: float = 0.002) -> None:
+        """Apply weight decay + pruning to the entire matrix. Call once per batch."""
+        if weight_decay <= 0 or self._W is None:
+            return
+        V = self.vocab_size
+        live = self._W[:V, :V]
+        mask = live > 0.0
+        live[mask] = live[mask] * (1.0 - weight_decay)
+        prune_mask = live < 0.01
+        live[prune_mask] = 0.0
 
     # ------------------------------------------------------------------
     # Persistence

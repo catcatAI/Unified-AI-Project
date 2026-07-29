@@ -831,6 +831,9 @@ class GARDENEngine:
 
         self._learn_count += len(samples)
 
+        # Apply weight decay once per batch (not per sample — O(V^2) cost)
+        self.snn.apply_decay(weight_decay=0.002)
+
         return {
             "interaction": self._learn_count,
             "new_concepts": len(all_new_keys),
