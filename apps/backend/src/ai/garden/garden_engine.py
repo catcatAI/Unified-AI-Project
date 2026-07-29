@@ -775,16 +775,10 @@ class GARDENEngine:
             if cleaned and len(cleaned) >= limit_value("ai.garden.engine.min_token_length", 3):
                 cleaned_tokens.append(cleaned)
 
-        # Stage 2: Batch grow - don't rebuild index until all tokens processed
-        for token in cleaned_tokens:
-            existing = self.dictionary._find_similar_key(
-                token, threshold=threshold_value("ai.garden.engine.dedup_similarity", 0.90)
-            )
-            if not existing and confidence >= self.dictionary.growth_threshold:
-                new_key = self.dictionary.grow(token, token, confidence=confidence)
-                if new_key:
-                    self.snn._register_key(new_key)
-                    all_new_keys.append(new_key)
+        # Stage 2: Grow new concepts from training data
+        # Skip during batch training — dictionary should be fixed.
+        # Growth only happens in learn_from_interaction (online learning).
+        # This prevents unbounded V growth from token-level dedup failures.
 
         # Stage 3: Rebuild index ONCE after all grows
         if all_new_keys and self.dictionary._dirty:
