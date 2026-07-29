@@ -775,10 +775,18 @@ class GARDENEngine:
             if cleaned and len(cleaned) >= limit_value("ai.garden.engine.min_token_length", 3):
                 cleaned_tokens.append(cleaned)
 
-        # Stage 2: Grow new concepts from training data
-        # Skip during batch training — dictionary should be fixed.
-        # Growth only happens in learn_from_interaction (online learning).
-        # This prevents unbounded V growth from token-level dedup failures.
+        # Stage 2: Grow new concepts from training data.
+        # With prefix dedup (threshold=0.5), word forms share neurons:
+        # "happy"/"happiness"/"happier" → same neuron, "glad" → new neuron.
+        # V grows proportionally to unique concepts, not word forms.
+        seen_tokens: set = set()
+        for token in cleaned_tokens:
+            if token in seen_tokens:
+                continue
+            seen_tokens.add(token)
+            existing = self.dictionary._find_similar_key(token)
+            if not existing:
+                self.dictionary.grow(token, token, confidence=confidence)
 
         # Stage 3: Rebuild index ONCE after all grows
         if all_new_keys and self.dictionary._dirty:
