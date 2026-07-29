@@ -780,16 +780,17 @@ class GARDENEngine:
         # "happy"/"happiness"/"happier" → same neuron, "glad" → new neuron.
         # V grows proportionally to unique concepts, not word forms.
         seen_tokens: set = set()
+        grew_any = False
         for token in cleaned_tokens:
             if token in seen_tokens:
                 continue
             seen_tokens.add(token)
-            existing = self.dictionary._find_similar_key(token)
-            if not existing:
-                self.dictionary.grow(token, token, confidence=confidence)
+            result_key = self.dictionary.grow(token, token, confidence=confidence)
+            if result_key and result_key.startswith("l"):
+                grew_any = True
 
         # Stage 3: Rebuild index ONCE after all grows
-        if all_new_keys and self.dictionary._dirty:
+        if grew_any and self.dictionary._dirty:
             self.dictionary._rebuild_index()
 
         # Stage 4: Hebbian updates for each sample.

@@ -489,6 +489,7 @@ class VectorDictionary:
         for sf in surface_forms.values():
             self._surface_set[sf.lower().strip()] = key
         self._dirty = True
+        self._surface_to_key = None  # Invalidate encode() cache
         return entry
 
     def grow(self, text: str, surface_form: str, confidence: Optional[float] = None) -> str:
@@ -722,6 +723,26 @@ class VectorDictionary:
             if key and key not in seen_keys:
                 seen_keys.add(key)
                 results.append(key)
+
+        # Step 1.5: Prefix-based dedup for word forms (happy/happiness, run/running)
+        for token in tokens:
+            if token in seen_keys:
+                continue
+            t = token.lower().strip()
+            best_key = None
+            best_score = 0.0
+            for key, entry in self.entries.items():
+                for form in entry.surface_forms.values():
+                    if not form:
+                        continue
+                    form_lower = form.lower().strip()
+                    score = self._prefix_overlap(t, form_lower)
+                    if score > best_score:
+                        best_score = score
+                        best_key = key
+            if best_score >= 0.5 and best_key and best_key not in seen_keys:
+                seen_keys.add(best_key)
+                results.append(best_key)
 
         # Step 2: TF-IDF matching for each token (handles unknown words)
         for token in tokens:
