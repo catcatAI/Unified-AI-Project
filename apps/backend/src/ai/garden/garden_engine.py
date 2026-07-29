@@ -800,7 +800,7 @@ class GARDENEngine:
             target_str = confidence_value(
                 "ai.garden.engine.hebbian_target_strength", 0.35
             )
-            for s in samples:
+            for idx, s in enumerate(samples):
                 user_text = s.get("input", "")
                 response_text = s.get("output", "")
                 input_keys = self.dictionary.encode(user_text)
@@ -829,10 +829,11 @@ class GARDENEngine:
                         )
                         auto_regressive_delta += delta_ar
 
-        self._learn_count += len(samples)
+                # Periodic global decay every 1000 samples
+                if (idx + 1) % 1000 == 0:
+                    self.snn.apply_decay(weight_decay=0.002)
 
-        # Apply weight decay once per batch (not per sample — O(V^2) cost)
-        self.snn.apply_decay(weight_decay=0.002)
+        self._learn_count += len(samples)
 
         return {
             "interaction": self._learn_count,

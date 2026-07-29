@@ -540,21 +540,27 @@ class TensorSNNCore:
         target_keys: List[str],
         lr: float = 0.05,
         target_strength: float = 0.35,
+        weight_decay: float = 0.002,
     ) -> float:
-        """Hebbian weight update with Oja's rule.
+        """Hebbian weight update with Oja's rule + targeted row decay.
+
+        Oja's rule drives connections toward target_strength.
+        After updating, applies decay ONLY to rows that were modified
+        (O(nnz_per_row) instead of O(V^2)).
 
         Returns total weight delta applied.
-        Weight decay and pruning are batch-level — call apply_decay() once
-        per batch to avoid O(V^2) cost per sample.
         """
         if not input_keys or not target_keys:
             return 0.0
 
         delta_total = 0.0
+        touched_rows = set()
         for src in input_keys:
             i = self._register_key(src)
+            touched_rows.add(i)
             for tgt in target_keys:
                 j = self._register_key(tgt)
+                touched_rows.add(j)
                 old_w = float(self._W[i, j])
                 delta = lr * (target_strength - old_w)
                 new_w = max(0.0, min(1.0, old_w + delta))
@@ -564,11 +570,24 @@ class TensorSNNCore:
                 self._touch(j)
                 delta_total += abs(delta)
 
+        # Targeted decay: only decay rows that were touched (O(nnz_per_row))
+        if weight_decay > 0:
+            for row in touched_rows:
+                row_data = self._W[row, :]
+                mask = row_data > 0.0
+                row_data[mask] = row_data[mask] * (1.0 - weight_decay)
+                # Prune near-zero in this row only
+                prune = row_data < 0.01
+                row_data[prune] = 0.0
+
         self.total_hebbian_updates += 1
         return delta_total
 
     def apply_decay(self, weight_decay: float = 0.002) -> None:
-        """Apply weight decay + pruning to the entire matrix. Call once per batch."""
+        """Apply weight decay + pruning to ALL non-zero weights. O(nnz).
+
+        Call periodically (e.g., every 1000 samples) for global forgetting.
+        """
         if weight_decay <= 0 or self._W is None:
             return
         V = self.vocab_size
