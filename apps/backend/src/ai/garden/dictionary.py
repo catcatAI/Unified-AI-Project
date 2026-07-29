@@ -493,7 +493,11 @@ class VectorDictionary:
         return entry
 
     def grow(self, text: str, surface_form: str, confidence: Optional[float] = None) -> str:
-        """Add a new entry learned from conversation."""
+        """Add a new entry learned from conversation.
+
+        Uses only exact match + prefix dedup (word forms).
+        TF-IDF semantic dedup is skipped here to allow V to grow from training data.
+        """
         if len(self.entries) >= self.max_entries:
             return ""  # Max entries reached
         confidence = (
@@ -501,9 +505,7 @@ class VectorDictionary:
             if confidence is not None
             else confidence_value("ai.garden.dictionary.grow_confidence", 0.6)
         )
-        existing = self._find_similar_key(
-            text, threshold=threshold_value("ai.garden.dictionary.grow_dedup_threshold", 0.5)
-        )
+        existing = self._find_similar_key_no_tfidf(text)
         if existing:
             return existing
         idx = len(self.entries) + 1
@@ -579,6 +581,35 @@ class VectorDictionary:
                         best_score = score
                         best_key = key
             if best_score >= threshold and best_key:
+                return best_key
+        except Exception:
+            logger.warning("Prefix dedup failed", exc_info=True)
+        return None
+
+    def _find_similar_key_no_tfidf(self, text: str) -> Optional[str]:
+        """Find similar key using only exact match + prefix dedup (no TF-IDF).
+
+        Used by grow() to allow V to grow from training data without
+        TF-IDF semantic dedup suppressing all new concepts.
+        """
+        lower = text.lower().strip()
+        # Fast path: exact match via set lookup
+        if lower in self._surface_set:
+            return self._surface_set[lower]
+        # Prefix-based dedup for word forms only
+        try:
+            best_key = None
+            best_score = 0.0
+            for key, entry in self.entries.items():
+                for form in entry.surface_forms.values():
+                    if not form:
+                        continue
+                    form_lower = form.lower().strip()
+                    score = self._prefix_overlap(lower, form_lower)
+                    if score > best_score:
+                        best_score = score
+                        best_key = key
+            if best_score >= 0.8 and best_key:
                 return best_key
         except Exception:
             logger.warning("Prefix dedup failed", exc_info=True)
