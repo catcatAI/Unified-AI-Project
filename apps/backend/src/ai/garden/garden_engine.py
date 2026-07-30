@@ -390,11 +390,13 @@ def _learn_template(
     if not cleaned:
         return
 
-    # Bound storage
+    # Deduplicate: skip if identical template already exists
+    entry = (input_prefix, input_suffix, output_template)
     existing = _TEMPLATES.setdefault(engine_type, [])
-    if len(existing) >= 20:
-        existing.pop(0)
-    existing.append((input_prefix, input_suffix, output_template))
+    if entry not in existing:
+        if len(existing) >= 20:
+            existing.pop(0)
+        existing.append(entry)
 
 
 def _reconstruct_with_template(
@@ -404,9 +406,12 @@ def _reconstruct_with_template(
 ) -> str:
     """Apply saved templates to wrap engine_result back into NL.
 
-    Finds a matching template by input_prefix/suffix, then fills
-    {L0_input} and {L0_result} with the current user input's
+    Finds a matching template by non-empty input_prefix/suffix, then
+    fills {L0_input} and {L0_result} with the current user input's
     consumed expression and the engine's result value.
+
+    Only matches templates where input_prefix or input_suffix is
+    non-empty, so generic templates don't accidentally match every input.
     """
     templates = _TEMPLATES.get(engine_type, [])
     if not templates:
@@ -421,7 +426,8 @@ def _reconstruct_with_template(
         result_val = engine_result.strip()
 
     for input_prefix, input_suffix, output_template in templates:
-        # Check if this template matches by input prefix/suffix
+        if not input_prefix and not input_suffix:
+            continue
         if user_input.startswith(input_prefix) and user_input.endswith(input_suffix):
             middle = user_input[len(input_prefix):]
             if input_suffix:
