@@ -17,7 +17,7 @@ fallback string.
 from __future__ import annotations
 
 import re
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 # subject -> attribute -> value
 _KNOWLEDGE: Dict[str, Dict[str, str]] = {
@@ -90,6 +90,76 @@ _KNOWLEDGE: Dict[str, Dict[str, str]] = {
     "diamond": {"hardness": "hardest"},
     "iron": {"metal": "yes"},
     "gold_metal": {"metal": "yes"},
+}
+
+# unit conversion table: (unit_a, unit_b) -> multiplier from a to b
+_UNIT_CONVERSIONS: Dict[Tuple[str, str], Tuple[float, str]] = {
+    # length
+    ("km", "m"): (1000.0, "kilometer"),
+    ("m", "km"): (0.001, "meter"),
+    ("km", "cm"): (100000.0, "kilometer"),
+    ("cm", "km"): (1e-5, "centimeter"),
+    ("cm", "m"): (0.01, "centimeter"),
+    ("m", "cm"): (100.0, "meter"),
+    ("mm", "m"): (0.001, "millimeter"),
+    ("m", "mm"): (1000.0, "meter"),
+    ("mm", "m"): (0.001, "millimeter"),
+    ("m", "mm"): (1000.0, "meter"),
+    ("km", "mile"): (0.621371, "kilometer"),
+    ("mile", "km"): (1.60934, "mile"),
+    ("m", "yard"): (1.09361, "meter"),
+    ("yard", "m"): (0.9144, "yard"),
+    ("m", "foot"): (3.28084, "meter"),
+    ("foot", "m"): (0.3048, "foot"),
+    ("foot", "inch"): (12.0, "foot"),
+    ("inch", "cm"): (2.54, "inch"),
+    ("cm", "inch"): (0.393701, "centimeter"),
+    # weight / mass
+    ("kg", "g"): (1000.0, "kilogram"),
+    ("g", "kg"): (0.001, "gram"),
+    ("kg", "lb"): (2.20462, "kilogram"),
+    ("lb", "kg"): (0.453592, "pound"),
+    ("g", "mg"): (1000.0, "gram"),
+    ("mg", "g"): (0.001, "milligram"),
+    ("tonne", "kg"): (1000.0, "tonne"),
+    ("kg", "tonne"): (0.001, "kilogram"),
+    # volume
+    ("l", "ml"): (1000.0, "liter"),
+    ("ml", "l"): (0.001, "milliliter"),
+    ("l", "gallon"): (0.264172, "liter"),
+    ("gallon", "l"): (3.78541, "gallon"),
+    # temperature (special: conversion formulas, not simple multiplier)
+    # time
+    ("minute", "second"): (60.0, "minute"),
+    ("hour", "minute"): (60.0, "hour"),
+    ("day", "hour"): (24.0, "day"),
+    ("week", "day"): (7.0, "week"),
+}
+
+# chemical formula map: common_name -> formula
+_CHEMICAL_FORMULAS: Dict[str, str] = {
+    "water": "H2O",
+    "salt": "NaCl",
+    "sodium chloride": "NaCl",
+    "carbon dioxide": "CO2",
+    "oxygen": "O2",
+    "hydrogen": "H2",
+    "nitrogen": "N2",
+    "methane": "CH4",
+    "ammonia": "NH3",
+    "glucose": "C6H12O6",
+    "ethanol": "C2H5OH",
+    "sulfuric acid": "H2SO4",
+    "hydrochloric acid": "HCl",
+    "nitric acid": "HNO3",
+    "sodium hydroxide": "NaOH",
+    "calcium carbonate": "CaCO3",
+    "carbon monoxide": "CO",
+    "sulfur dioxide": "SO2",
+    "hydrogen peroxide": "H2O2",
+    "ozone": "O3",
+    "aspirin": "C9H8O4",
+    "caffeine": "C8H10N4O2",
 }
 
 # antonym pairs
@@ -214,6 +284,29 @@ def route_knowledge(text: str) -> Optional[str]:
             )
             if prim:
                 return prim
+
+    # 6) unit conversion: "how many m in a km", "convert 5 km to m"
+    m = re.search(r"(?:convert|how many|how much)\s+(-?\d+(?:\.\d+)?)?\s*(\w+)\s+(?:to|in a|in|per)\s+(\w+)", t)
+    if m:
+        value_str, src_unit, dst_unit = m.group(1), m.group(2), m.group(3)
+        conv = _UNIT_CONVERSIONS.get((src_unit, dst_unit))
+        if conv is not None:
+            multiplier, src_name = conv
+            if value_str:
+                value = float(value_str)
+                converted = value * multiplier
+                return f"{value} {src_unit} = {converted:.4f} {dst_unit}"
+            else:
+                return f"1 {src_unit} = {multiplier} {dst_unit}"
+
+    # 7) chemical formula: "formula of water", "what is the formula of salt"
+    m = re.search(r"(?:formula|composition|chemical)\s+(?:of|for|is)?\s*(\w+(?:\s+\w+)?)", t)
+    if m:
+        name = m.group(1).strip()
+        formula = _CHEMICAL_FORMULAS.get(name)
+        if formula:
+            return f"{name} = {formula}"
+
     return None
 
 

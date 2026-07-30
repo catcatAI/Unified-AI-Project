@@ -25,7 +25,7 @@ import ast
 import math
 import operator
 import re
-from typing import Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class MathExtractor:
@@ -51,12 +51,13 @@ class MathExtractor:
         patterns = [
             r"(?:計算|=?\s*)(-?[\d\s\+\-\*\/\%\(\)\.]+?)\s*(?:\=|[\?。！？]|$)",
             r"(-?\d+\s*[\+\-\*\/\%]\s*-?\d+(?:\s*[\+\-\*\/]\s*-?\d+)*)",
+            r"([a-zA-Z_]\w*(?:\s*\([^)]*\))(?:\s*[\+\-\*\/]\s*[a-zA-Z_]\w*(?:\s*\([^)]*\)))*)",
         ]
         for p in patterns:
             m = re.search(p, text)
             if m:
                 expr = m.group(1).strip()
-                if len(expr) >= 2 and any(op in expr for op in "+-*/%"):
+                if len(expr) >= 2 and (any(op in expr for op in "+-*/%") or re.search(r"[a-zA-Z_]\w*\(", expr)):
                     return expr, self._safe_eval(expr)
         return None
 
@@ -64,7 +65,7 @@ class MathExtractor:
         """Safely evaluate a math expression using AST."""
         try:
             tree = ast.parse(expr.strip(), mode="eval")
-            if not isinstance(tree.body, (ast.BinOp, ast.UnaryOp, ast.Constant)):
+            if not isinstance(tree.body, (ast.BinOp, ast.UnaryOp, ast.Constant, ast.Call)):
                 return None
             result = self._eval_node(tree.body)
             return float(result) if result is not None else None
@@ -74,7 +75,13 @@ class MathExtractor:
 
     def _eval_node(self, node) -> Optional[float]:
         if isinstance(node, ast.Constant):
-            return float(node.value) if isinstance(node.value, (int, float)) else None
+            if isinstance(node.value, bool):
+                return float(node.value)
+            if isinstance(node.value, int):
+                return node.value
+            if isinstance(node.value, float):
+                return node.value
+            return None
         if isinstance(node, ast.UnaryOp):
             op = self.SAFE_OPS.get(type(node.op))
             if op is None:
@@ -92,6 +99,20 @@ class MathExtractor:
             try:
                 return op(left, right)
             except (ZeroDivisionError, OverflowError):
+                return None
+        if isinstance(node, ast.Call):
+            if not isinstance(node.func, ast.Name):
+                return None
+            fn_name = node.func.id
+            fn = _SAFE_FUNCTIONS.get(fn_name)
+            if fn is None:
+                return None
+            args = [self._eval_node(a) for a in node.args]
+            if any(a is None for a in args):
+                return None
+            try:
+                return float(fn(*args))
+            except (ValueError, OverflowError, ZeroDivisionError):
                 return None
         return None
 
@@ -222,6 +243,68 @@ _ZH_NUM = {
     "玖": 9,
 }
 
+# Safe functions for AST Call node evaluation
+_SAFE_FUNCTIONS: Dict[str, Any] = {
+    "sin": math.sin,
+    "cos": math.cos,
+    "tan": math.tan,
+    "asin": math.asin,
+    "acos": math.acos,
+    "atan": math.atan,
+    "atan2": math.atan2,
+    "sqrt": math.sqrt,
+    "log": math.log,
+    "log10": math.log10,
+    "exp": math.exp,
+    "abs": abs,
+    "round": round,
+    "floor": math.floor,
+    "ceil": math.ceil,
+    "radians": math.radians,
+    "degrees": math.degrees,
+    "factorial": math.factorial,
+    "sinh": math.sinh,
+    "cosh": math.cosh,
+    "tanh": math.tanh,
+}
+
+# Math constant name → (display_name, numeric_value)
+_MATH_CONSTANTS: Dict[str, Tuple[str, float]] = {
+    "pi": ("π", math.pi),
+    "π": ("π", math.pi),
+    "e": ("e", math.e),
+    "inf": ("∞", float("inf")),
+}
+
+# Number theory helpers
+def _is_prime(n: float) -> bool:
+    m = int(n)
+    if m != n or m < 2:
+        return False
+    if m < 4:
+        return True
+    if m % 2 == 0 or m % 3 == 0:
+        return False
+    i = 5
+    while i * i <= m:
+        if m % i == 0 or m % (i + 2) == 0:
+            return False
+        i += 6
+    return True
+
+
+def _gcd(a: float, b: float) -> int:
+    x, y = int(a), int(b)
+    while y:
+        x, y = y, x % y
+    return abs(x)
+
+
+def _lcm(a: float, b: float) -> int:
+    d = _gcd(a, b)
+    return (int(a) // d) * int(b) if d else 0
+
+
 _ZH_OPS = {
     "加": "+",
     "加上": "+",
@@ -311,33 +394,82 @@ def compute_arithmetic(text: str) -> Optional[float]:
 
 
 def evaluate_logic(text: str) -> Optional[str]:
-    """Evaluate boolean logic expressions (true/false/AND/OR/NOT).
+    """Evaluate boolean logic expressions.
+
+    Supports:
+    - English: true/false/and/or/not/nor/nand/xor (case-insensitive)
+    - Chinese: 真/假/或/且/既不是/並非/不成立/矛盾/衝突
 
     Returns "true" or "false" string, or None when not a logic expression.
     """
     if not text:
         return None
+
     t = text.strip().lower().rstrip("？?！!。.")
-    # Must contain at least one boolean keyword
-    if not re.search(r"\b(true|false|and|or|not)\b", t):
+
+    # ---- Chinese path ----
+    if any(kw in t for kw in ("或", "且", "既不是", "並非", "不成立", "矛盾", "衝突", "真", "假")):
+        expr = t
+        expr = expr.replace("真的", "True").replace("假的", "False")
+        expr = expr.replace("真", "True").replace("假", "False")
+        expr = expr.replace("或", " or ")
+        expr = expr.replace("且", " and ")
+        expr = expr.replace("既不是", " not ")
+        expr = expr.replace("並非", " not ")
+        expr = expr.replace("不成立", " not True ")
+        expr = expr.replace("矛盾", " False ").replace("衝突", " False ")
+        tokens = re.findall(r"\b\w+\b", expr)
+        if all(t in ("True", "False", "and", "or", "not") for t in tokens):
+            try:
+                result = eval(expr, {"__builtins__": {}}, {})  # noqa: S307
+                return "true" if result else "false"
+            except Exception:
+                return None
         return None
-    # Replace keywords with Python operators
+
+    # ---- English path ----
+    if not re.search(r"\b(true|false|and|or|not|nor|nand|xor)\b", t):
+        return None
+
     expr = t
     expr = re.sub(r"\btrue\b", "True", expr)
     expr = re.sub(r"\bfalse\b", "False", expr)
-    expr = re.sub(r"\bAND\b", "and", expr)
-    expr = re.sub(r"\bOR\b", "or", expr)
-    expr = re.sub(r"\bNOT\b", "not", expr)
-    # Validate: only boolean operators, parentheses, whitespace allowed
-    cleaned = re.sub(r"[\s()]", "", expr)
-    cleaned = re.sub(r"\b(True|False|and|or|not)\b", "", cleaned)
-    if cleaned:
-        return None  # contains non-boolean tokens
-    try:
-        result = eval(expr)  # noqa: S307 — sanitized to True/False/and/or/not only
-        return "true" if result else "false"
-    except Exception:
-        return None
+
+    # Expand compound operators: nor/nand/xor have fixed arity of 2
+    def _expand_nor(m):
+        parts = re.findall(r"(True|False)", m.group(0))
+        if len(parts) == 2:
+            return f"not ({parts[0]} or {parts[1]})"
+        return m.group(0)
+
+    def _expand_nand(m):
+        parts = re.findall(r"(True|False)", m.group(0))
+        if len(parts) == 2:
+            return f"not ({parts[0]} and {parts[1]})"
+        return m.group(0)
+
+    def _expand_xor(m):
+        parts = re.findall(r"(True|False)", m.group(0))
+        if len(parts) == 2:
+            return f"({parts[0]} and not {parts[1]}) or (not {parts[0]} and {parts[1]})"
+        return m.group(0)
+
+    expr = re.sub(r"\bnor\s+(True|False)\s+(True|False)\b", _expand_nor, expr)
+    expr = re.sub(r"\bnand\s+(True|False)\s+(True|False)\b", _expand_nand, expr)
+    expr = re.sub(r"\bxor\s+(True|False)\s+(True|False)\b", _expand_xor, expr)
+
+    expr = re.sub(r"\band\b", "and", expr)
+    expr = re.sub(r"\bor\b", "or", expr)
+    expr = re.sub(r"\bnot\b", "not", expr)
+
+    tokens = re.findall(r"\b\w+\b", expr)
+    if all(t in ("True", "False", "and", "or", "not") for t in tokens):
+        try:
+            result = eval(expr, {"__builtins__": {}}, {})  # noqa: S307
+            return "true" if result else "false"
+        except Exception:
+            return None
+    return None
 
 
 def evaluate_math(text: str) -> Optional[str]:
@@ -347,13 +479,51 @@ def evaluate_math(text: str) -> Optional[str]:
     expression (not the original text with natural language), or None
     when not a math expression.  Float results use full precision to
     allow value-based comparison downstream.
+
+    Supports arithmetic (``+ - * / % **``), trig (``sin, cos, tan``),
+    sqrt, log, constants (``pi, e``), and number theory (``factorial``).
     """
     if not text:
         return None
+
+    # Step 1: constant queries ("what is pi", "value of e")
+    const_match = re.search(
+        r"\b(pi|π|euler(?:'s)?\s*(?:number|constant)?|e\b|inf(?:inity)?)\b",
+        text.strip().lower(),
+    )
+    if const_match:
+        key = const_match.group(1)
+        # Map variants to canonical constant keys
+        if key in ("pi", "π"):
+            display, val = _MATH_CONSTANTS["pi"]
+            return f"{display} = {val}"
+        if key == "e" or "euler" in key:
+            display, val = _MATH_CONSTANTS["e"]
+            return f"{display} = {val}"
+        if key in ("inf", "infinity"):
+            return "∞ = 無限大"
+
+    # Step 2: number theory queries ("is 17 prime", "gcd 12 18")
+    prime_m = re.search(r"(?:is|是)\s*(-?\d+)\s*(?:prime|質數|素数)", text.strip().lower())
+    if prime_m:
+        n = int(prime_m.group(1))
+        result = _is_prime(n)
+        return f"{n} is prime = {'true' if result else 'false'}"
+
+    gcd_m = re.search(r"(?:gcd|最大公因數|最大公约数)\s*[：(]?\s*(-?\d+)\s*,?\s*(-?\d+)", text.strip().lower())
+    if gcd_m:
+        a, b = int(gcd_m.group(1)), int(gcd_m.group(2))
+        return f"gcd({a}, {b}) = {_gcd(a, b)}"
+
+    lcm_m = re.search(r"(?:lcm|最小公倍數|最小公倍数)\s*[：(]?\s*(-?\d+)\s*,?\s*(-?\d+)", text.strip().lower())
+    if lcm_m:
+        a, b = int(lcm_m.group(1)), int(lcm_m.group(2))
+        return f"lcm({a}, {b}) = {_lcm(a, b)}"
+
+    # Step 3: normal expression evaluation
     expr = _normalize_expr(text)
-    if not re.search(r"-?\d+\s*(\*\*|//|[+\-*/%])\s*-?\d+", expr):
+    if not re.search(r"-?\d+\s*(\*\*|//|[+\-*/%])\s*-?\d+", expr) and not re.search(r"[a-zA-Z_]\w*\s*\(", expr):
         return None
-    # Division by zero -> dedicated message (preserves prior behaviour)
     if re.search(r"/\s*0(?![.\d])", expr):
         return f"{_normalize_expr(text)} = 除数不能为零"
     extracted = MathExtractor().extract(expr)
@@ -366,6 +536,5 @@ def evaluate_math(text: str) -> Optional[str]:
         return f"{math_expr} = {result}"
     if isinstance(result, float) and math.isinf(result):
         return f"{math_expr} = 除数不能为零"
-    # Full precision (strip trailing zeros) so value matching works downstream
     float_str = f"{result:.10f}".rstrip("0").rstrip(".")
     return f"{math_expr} = {float_str}"
