@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 # Math formula patterns to strip
 _MATH_PATTERNS = [
-    (r"\$\$[^$]*\$\$", "[MATH]"),
+    (r"\$\$[^$]*?\$\$", "[MATH]"),
     (r"\$[^$\n]{1,200}\$", "[MATH]"),
     (r"\\\([^)]*\\\)", "[MATH]"),
     (r"\\\[[^\]]*\\\]", "[MATH]"),

@@ -42,7 +42,8 @@ async def multimodal_stream_handler(websocket: WebSocket) -> None:
 
             try:
                 result = await _dispatch(svc, action, payload, websocket)
-                await websocket.send_json({"action": action, "status": "ok", "result": result})
+                if action not in ("chat_stream", "chat"):
+                    await websocket.send_json({"action": action, "status": "ok", "result": result})
             except Exception as e:
                 logger.warning(f"Multimodal WS action '{action}' failed: {e}")
                 await websocket.send_json(
@@ -111,14 +112,14 @@ async def _handle_chat_stream(websocket: WebSocket, payload: Dict[str, Any]) -> 
     if not text:
         return "empty_input"
 
-    from ai.streaming import StreamingPipeline, TokenStream, StreamConfig
+    from ai.streaming import StreamingPipeline, TokenStream
     from ai.garden.garden_engine import GARDENEngine
     from ai.ed3n.ed3n_engine import ED3NEngine
 
     garden = GARDENEngine()
     ed3n = ED3NEngine.get_shared(load_trained=False)
 
-    stream = TokenStream(StreamConfig(buffer_size=100))
+    stream = TokenStream()
     pipeline = StreamingPipeline(garden=garden, ed3n=ed3n)
     pipeline_task = asyncio.create_task(pipeline.stream(text, stream))
 

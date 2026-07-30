@@ -12,7 +12,6 @@ import time
 from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple
 
 from .token_stream import TokenStream, StreamToken, TokenType
-from .synthesizer_core import StreamSynthesizer, SynthesizerConfig
 from .producers import (
     SectionProducer,
     ParagraphProducer,
@@ -45,7 +44,6 @@ class StreamingPipeline:
     ) -> None:
         """Run streaming pipeline, emitting tokens to stream."""
         buffer = ""
-        fast_only = False
 
         for level_name, producer in self.producers:
             if not producer.garden and not producer.ed3n:
@@ -77,7 +75,6 @@ class StreamingPipeline:
 
             # If section level produced nothing, skip remaining (no learned knowledge)
             if level_name == "section" and not buffer and not fast_out:
-                fast_only = True
                 break
 
         # Final: if buffer is still empty, trigger fallback
