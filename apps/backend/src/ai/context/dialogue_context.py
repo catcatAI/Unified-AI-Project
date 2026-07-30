@@ -116,7 +116,7 @@ class DialogueContextManager:
         """提取关键点"""
         # 简单的关键点提取实现
         # 在实际应用中, 这可能涉及更复杂的NLP处理
-        sentences = re.split(r"[.!?]+\s+", text)
+        sentences = re.split(r"[。！？.!?]+\s*", text)
         key_points = []
         for sentence in sentences:
             sentence = sentence.strip()

@@ -853,12 +853,11 @@ class NeuroVocabulary:
                 category = category.value if hasattr(category, "value") else str(category)
             tmpl_id = getattr(tmpl, "id", "unknown")
 
-            # 按标点拆分为句子（只分中句号/感叹/问号，不分英文句点避免打断省略号）
             import re as _re
 
             normalized = content.replace("...", "…").replace("。。", "。")
             sentences = [
-                s.strip() for s in _re.split(r"(?<=[。！？！?!])\s*", normalized) if s.strip()
+                s.strip() for s in _re.split(r"(?<=[。！？.!?])\s*", normalized) if s.strip()
             ]
 
             for i, sentence in enumerate(sentences):
