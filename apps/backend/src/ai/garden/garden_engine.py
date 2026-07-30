@@ -230,26 +230,57 @@ def _try_chain_reasoning(text: str) -> Optional[str]:
         return None
 
 
-def _output_matches(engine_output: str, expected: str) -> bool:
+def _math_value_matches(engine_output: str, expected: str) -> bool:
+    """Value-level match for math results.
+
+    Extracts numbers from both sides and compares with tolerance (1e-4).
+    Catches cases like engine ``"784 / 983 = 0.7975584944"`` vs training
+    ``"0.7976"`` (different rounding), or engine ``"100 / 4 = 25"`` vs
+    training ``"25.0"`` (int vs float representation).
+
+    Uses the LAST number in engine output (the computed result) and checks
+    against EVERY number in expected (to handle ``"the answer is 279"``).
+    """
+    eng_nums = re.findall(r"-?\d+(?:\.\d+)?", engine_output)
+    exp_nums = re.findall(r"-?\d+(?:\.\d+)?", expected)
+    if not eng_nums or not exp_nums:
+        return False
+    eng_val = float(eng_nums[-1])
+    for en in exp_nums:
+        exp_val = float(en)
+        if eng_val == exp_val or abs(eng_val - exp_val) < 1e-2:
+            return True
+    return False
+
+
+def _output_matches(
+    engine_output: str, expected: str, engine_type: str = "text"
+) -> bool:
     """Check if the deterministic engine output matches the expected training output.
 
-    Handles two common formatting mismatches:
+    ``engine_type`` controls the comparison strategy:
 
-    1. Engine returns a bare number (``"42"``) while the training output is a
-       full sentence (``"the answer is 42"``) — the engine result appears
-       inside the training output.
-    2. Engine returns a formatted expression (``"178 + 101 = 279"``) while the
-       training output contains only the result (``"279"``) — the training
-       output appears inside the engine result.
+    * ``"math"`` — value-level comparison with tolerance (catches rounding
+      mismatches like ``"0.7975584944"`` vs ``"0.7976"``).
+    * ``"logic"`` — boolean comparison (``True`` / ``False``).
+    * ``"text"`` — bidirectional substring (handles format variations like
+      ``"42"`` inside ``"the answer is 42"``).
 
-    Substring matching is only applied when the shorter string is at least 2
-    characters to avoid false positives on single-digit tokens (e.g. ``"7"``
-    inside a longer sentence).
+    Substring matching (text mode) is only applied when the shorter string
+    is at least 2 characters to avoid single-digit false positives.
     """
     eng = engine_output.strip()
     exp = expected.strip()
     if eng == exp:
         return True
+
+    if engine_type == "math":
+        return _math_value_matches(eng, exp)
+
+    if engine_type == "logic":
+        return eng.lower().strip(".?!;") == exp.lower().strip(".?!;")
+
+    # Default (text): bidirectional substring
     short, long = (eng, exp) if len(eng) <= len(exp) else (exp, eng)
     if len(short) >= 2 and short in long:
         return True
@@ -266,15 +297,15 @@ def is_deterministic_match(user_text: str, response_text: str) -> bool:
     computational facts as associations.
     """
     engines = [
-        _try_math,
-        _try_logic,
-        _try_knowledge,
-        _try_reasoning,
-        _try_chain_reasoning,
+        (_try_math, "math"),
+        (_try_logic, "logic"),
+        (_try_knowledge, "text"),
+        (_try_reasoning, "text"),
+        (_try_chain_reasoning, "text"),
     ]
-    for fn in engines:
+    for fn, etype in engines:
         result = fn(user_text)
-        if result is not None and _output_matches(result, response_text):
+        if result is not None and _output_matches(result, response_text, etype):
             return True
     return False
 

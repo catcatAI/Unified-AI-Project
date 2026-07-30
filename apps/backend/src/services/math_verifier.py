@@ -49,8 +49,8 @@ class MathExtractor:
     def extract(self, text: str) -> Optional[Tuple[str, Optional[float]]]:
         """Extract and evaluate a math expression from text."""
         patterns = [
-            r"(?:計算|=?\s*)([\d\s\+\-\*\/\%\(\)\.]+?)\s*(?:\=|[\?。！？]|$)",
-            r"(\d+\s*[\+\-\*\/\%]\s*\d+(?:\s*[\+\-\*\/]\s*\d+)*)",
+            r"(?:計算|=?\s*)(-?[\d\s\+\-\*\/\%\(\)\.]+?)\s*(?:\=|[\?。！？]|$)",
+            r"(-?\d+\s*[\+\-\*\/\%]\s*-?\d+(?:\s*[\+\-\*\/]\s*-?\d+)*)",
         ]
         for p in patterns:
             m = re.search(p, text)
@@ -343,25 +343,29 @@ def evaluate_logic(text: str) -> Optional[str]:
 def evaluate_math(text: str) -> Optional[str]:
     """Single-source math answer for ED3N/GARDEN dictionary-layer routing.
 
-    Returns a formatted "expr = result" string, or None when not a math expression.
+    Returns a formatted "expr = result" string using only the extracted
+    expression (not the original text with natural language), or None
+    when not a math expression.  Float results use full precision to
+    allow value-based comparison downstream.
     """
     if not text:
         return None
-    display = text.strip().rstrip("？?！!。.")
     expr = _normalize_expr(text)
-    if not re.search(r"\d+\s*(\*\*|//|[+\-*/%])\s*\d+", expr):
+    if not re.search(r"-?\d+\s*(\*\*|//|[+\-*/%])\s*-?\d+", expr):
         return None
     # Division by zero -> dedicated message (preserves prior behaviour)
     if re.search(r"/\s*0(?![.\d])", expr):
-        return f"{display} = 除数不能为零"
+        return f"{_normalize_expr(text)} = 除数不能为零"
     extracted = MathExtractor().extract(expr)
     if extracted is None:
         return None
-    _, result = extracted
+    math_expr, result = extracted
     if isinstance(result, float) and result.is_integer():
         result = int(result)
     if isinstance(result, int):
-        return f"{display} = {result}"
+        return f"{math_expr} = {result}"
     if isinstance(result, float) and math.isinf(result):
-        return f"{display} = 除数不能为零"
-    return f"{display} = {result:.2f}"
+        return f"{math_expr} = 除数不能为零"
+    # Full precision (strip trailing zeros) so value matching works downstream
+    float_str = f"{result:.10f}".rstrip("0").rstrip(".")
+    return f"{math_expr} = {float_str}"
