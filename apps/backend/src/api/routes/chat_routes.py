@@ -4,12 +4,15 @@ Chat & session API routes extracted from main_api_server.py (A3 god module split
 """
 
 import asyncio
+import json
 import logging
 import threading
 import time
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple
+
+from fastapi.responses import StreamingResponse
 
 from api.lifespan import (
     _angela_cfg,
@@ -1815,3 +1818,54 @@ async def learn_document(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     except Exception as e:
         logger.warning("Document learn failed: %s", e, exc_info=True)
         return {"status": "error", "message": safe_error(e)}
+
+
+@router.post("/document/stream")
+async def stream_document(request: Dict[str, Any] = Body(...)) -> StreamingResponse:
+    """SSE streaming endpoint: learn + stream document content progressively."""
+    text = request.get("text", request.get("content", ""))
+    if not text:
+        return StreamingResponse(
+            _sse_events([{"type": "error", "content": "No text provided"}]),
+            media_type="text/event-stream",
+        )
+    from ai.garden.garden_engine import GARDENEngine
+    from ai.ed3n.ed3n_engine import ED3NEngine
+    from ai.streaming import StreamingPipeline, TokenStream
+    garden = GARDENEngine()
+    ed3n = ED3NEngine.get_shared(load_trained=False)
+    return StreamingResponse(
+        _stream_doc_events(text, garden, ed3n),
+        media_type="text/event-stream",
+    )
+
+
+async def _stream_doc_events(text: str, garden, ed3n) -> AsyncGenerator[str, None]:
+    """Async generator yielding SSE-formatted events from the streaming pipeline."""
+    from ai.streaming import StreamingPipeline, TokenStream
+    stream = TokenStream()
+    pipeline = StreamingPipeline(garden=garden, ed3n=ed3n)
+    pipeline_task = asyncio.create_task(pipeline.stream(text, stream))
+
+    async for token in stream:
+        if token.type.value == "control":
+            if "DONE" in token.content:
+                break
+            continue
+        event = {
+            "type": "predicted" if token.confidence < 0.7 else "corrected",
+            "content": token.content,
+            "confidence": round(token.confidence, 2),
+            "level": token.metadata.get("level", "unknown"),
+            "pass": token.metadata.get("pass", "fast"),
+        }
+        yield f"data: {json.dumps(event)}\n\n"
+
+    await pipeline_task
+    yield f"data: {json.dumps({'type': 'control', 'content': '[DONE]'})}\n\n"
+
+
+async def _sse_events(events: list) -> AsyncGenerator[str, None]:
+    """Yield a list of events as SSE, for error responses."""
+    for event in events:
+        yield f"data: {json.dumps(event)}\n\n"

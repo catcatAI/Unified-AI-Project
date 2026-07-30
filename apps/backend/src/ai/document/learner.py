@@ -9,13 +9,20 @@ from __future__ import annotations
 import hashlib
 import logging
 import time
+from collections import OrderedDict
 from typing import Dict, Optional
 
 from ai.document.chunker import DocumentChunker
 
 logger = logging.getLogger(__name__)
 
-_DOCUMENT_REGISTRY: Dict[str, float] = {}
+_MAX_REGISTRY_SIZE = 1000
+_DOCUMENT_REGISTRY: OrderedDict[str, float] = OrderedDict()
+
+
+def _evict_oldest() -> None:
+    while len(_DOCUMENT_REGISTRY) > _MAX_REGISTRY_SIZE:
+        _DOCUMENT_REGISTRY.popitem(last=False)
 
 
 class DocumentLearner:
@@ -27,11 +34,13 @@ class DocumentLearner:
     def learn(self, text: str, source: str = "") -> Dict:
         doc_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
         if doc_hash in _DOCUMENT_REGISTRY:
+            _DOCUMENT_REGISTRY.move_to_end(doc_hash)
             elapsed = time.time() - _DOCUMENT_REGISTRY[doc_hash]
             logger.warning("Duplicate document '%s' (learned %.1fs ago), skipping", source, elapsed)
             return {"status": "skipped_duplicate", "source": source, "hash": doc_hash}
 
         _DOCUMENT_REGISTRY[doc_hash] = time.time()
+        _evict_oldest()
 
         tree = self.chunker.chunk(text, source=source)
         stats = {"sections": 0, "paragraphs": 0, "sentences": 0, "tokens": 0}
