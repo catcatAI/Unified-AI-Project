@@ -117,6 +117,7 @@ async def _handle_chat_stream(websocket: WebSocket, payload: Dict[str, Any]) -> 
     from ai.ed3n.ed3n_engine import ED3NEngine
 
     garden = GARDENEngine()
+    garden.load_presets()
     ed3n = ED3NEngine.get_shared(load_trained=False)
 
     stream = TokenStream()

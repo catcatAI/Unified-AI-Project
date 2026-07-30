@@ -69,6 +69,7 @@ credentials.json
 *credential*
 *secret*
 *token*
+!**/token_stream.py
 *.key
 *.pem
 .env

@@ -1833,6 +1833,7 @@ async def stream_document(request: Dict[str, Any] = Body(...)) -> StreamingRespo
     from ai.ed3n.ed3n_engine import ED3NEngine
     from ai.streaming import StreamingPipeline, TokenStream
     garden = GARDENEngine()
+    garden.load_presets()
     ed3n = ED3NEngine.get_shared(load_trained=False)
     return StreamingResponse(
         _stream_doc_events(text, garden, ed3n),
