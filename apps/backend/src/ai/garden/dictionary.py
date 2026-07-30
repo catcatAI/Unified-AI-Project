@@ -496,7 +496,9 @@ class VectorDictionary:
         """Add a new entry learned from conversation.
 
         Uses only exact match + prefix dedup (word forms).
-        TF-IDF semantic dedup is skipped here to allow V to grow from training data.
+        When a prefix match is found, the new word is ALSO registered as a
+        surface form on the existing entry, so encode() finds it via exact
+        match and the original input is preserved for decode.
         """
         if len(self.entries) >= self.max_entries:
             return ""  # Max entries reached
@@ -507,6 +509,38 @@ class VectorDictionary:
         )
         existing = self._find_similar_key_no_tfidf(text)
         if existing:
+            # Register the new word as an additional surface form on the
+            # existing entry, so encode() finds it via exact match (Step 1)
+            # instead of prefix dedup (Step 1.5). This preserves the original
+            # input word form for the decode step.
+            entry = self.entries.get(existing)
+            if entry:
+                en_form = surface_form or text
+                zh_form = text
+                if en_form not in entry.surface_forms.values():
+                    # Add with a unique key to preserve all surface forms
+                    form_key = "en" 
+                    idx = 2
+                    while form_key in entry.surface_forms:
+                        form_key = f"en{idx}"
+                        idx += 1
+                    entry.surface_forms[form_key] = en_form
+                if zh_form not in entry.surface_forms.values():
+                    form_key = "zh"
+                    idx = 2
+                    while form_key in entry.surface_forms:
+                        form_key = f"zh{idx}"
+                        idx += 1
+                    entry.surface_forms[form_key] = zh_form
+                # Update surface set so exact match works
+                added = set()
+                for sf in (en_form, zh_form):
+                    key_lower = sf.lower().strip()
+                    if key_lower not in added:
+                        self._surface_set[key_lower] = existing
+                        added.add(key_lower)
+                self._surface_to_key = None  # Invalidate encode() cache
+                self._dirty = True  # Rebuild TF-IDF index to include new forms
             return existing
         idx = len(self.entries) + 1
         key = f"l{idx}"
@@ -684,53 +718,48 @@ class VectorDictionary:
     # Core encode / decode
     # ------------------------------------------------------------------
 
-    def encode(self, text: str) -> List[str]:
-        """Map text to concept keys via token-level + whole-text similarity.
+    def encode(self, text: str) -> Dict[str, float]:
+        """Map text to concept keys with per-key confidence scores.
 
-        Strategy:
-          0. Direct exact-match lookup (numbers, short tokens)
-          1. Tokenize text into atomic tokens (split on whitespace/punctuation)
-          2. Match each token individually against the dictionary
-          3. Also try whole-text matching for phrase-level entries
-          4. Return deduplicated keys preserving order
+        Strategy (minimal hard decisions — let the SNN learn the rest):
+          1. CJK runs → check ALL substrings against exact match → conf = len(sub)/len(run)
+          2. Non-CJK tokens → exact match → conf = 1.0
+          3. Unmatched non-CJK tokens → prefix dedup → conf = overlap_score × 0.85
+          4. Still-unmatched tokens → TF-IDF → conf = similarity capped at 0.5
+          5. Whole-text → TF-IDF → conf capped at 0.6 (phrase-level catch-all)
+
+        Returns Dict[str, float] so the SNN receives weighted activations.
         """
         if not text or not isinstance(text, str):
-            return []
+            return {}
         if self._dirty or self._matrix is None:
             self._rebuild_index()
         if self._matrix is None or len(self._key_order) == 0:
-            return []
+            return {}
 
         import re as _re
 
-        seen_keys: set = set()
-        results: List[str] = []
-
-        # Build reverse lookup: surface_form_word -> key (lazy, cached)
+        # Build reverse lookup cache
         if not hasattr(self, "_surface_to_key") or self._surface_to_key is None:
             self._surface_to_key = {}
             for key, entry in self.entries.items():
                 for form in entry.surface_forms.values():
                     if form:
-                        # Index individual words from the surface form
                         for word in form.lower().split():
                             if word and word not in self._surface_to_key:
                                 self._surface_to_key[word] = key
 
-        def _exact_match(token: str) -> Optional[str]:
-            """Direct exact-match lookup for a token."""
-            t = token.lower().strip()
-            if t in self._surface_to_key:
-                return self._surface_to_key[t]
-            return None
+        def _exact_match(tok: str) -> Optional[str]:
+            t = tok.lower().strip()
+            return self._surface_to_key.get(t)
 
-        def _match_single(query: str) -> List[str]:
-            """Match a single string against the dictionary, return top keys."""
+        def _match_single(query: str) -> List[Tuple[str, float]]:
+            """Return (key, similarity_score) for TF-IDF match."""
             if not query or len(query.strip()) < 1:
                 return []
-            qvec = self._encoder.encode([query])  # [1, D]
+            qvec = self._encoder.encode([query])
             qvec = self._normalize(qvec, dim=-1)
-            scores = self._matrix @ qvec.T  # [N, 1] or [N]
+            scores = self._matrix @ qvec.T
             if hasattr(scores, "ndim") and scores.ndim > 1:
                 scores = scores.squeeze(-1)
             k = min(self.top_k, scores.shape[0])
@@ -742,70 +771,152 @@ class VectorDictionary:
             matched = []
             for score, idx in zip(top_scores.tolist(), top_indices.tolist()):
                 if score >= self.similarity_threshold:
-                    matched.append(self._key_order[idx])
+                    matched.append((self._key_order[idx], score))
             return matched
 
-        # Step 0: Tokenize into atomic tokens
+        def _is_cjk(ch: str) -> bool:
+            return "\u4e00" <= ch <= "\u9fff" or "\u3040" <= ch <= "\u30ff"
+
+        result: Dict[str, float] = {}
         tokens = _re.findall(r"[a-zA-Z0-9]+|.", text)
 
-        # Step 1: Direct exact-match for each token (fast path for numbers/operators)
-        for token in tokens:
-            key = _exact_match(token)
-            if key and key not in seen_keys:
-                seen_keys.add(key)
-                results.append(key)
+        # Track which non-CJK tokens are already matched (skip later steps)
+        matched_tokens: set = set()
 
-        # Step 1.5: Prefix-based dedup for word forms (happy/happiness, run/running)
-        for token in tokens:
-            if token in seen_keys:
-                continue
-            t = token.lower().strip()
-            best_key = None
-            best_score = 0.0
-            for key, entry in self.entries.items():
-                for form in entry.surface_forms.values():
-                    if not form:
-                        continue
-                    form_lower = form.lower().strip()
-                    score = self._prefix_overlap(t, form_lower)
-                    if score > best_score:
-                        best_score = score
-                        best_key = key
-            if best_score >= 0.5 and best_key and best_key not in seen_keys:
-                seen_keys.add(best_key)
-                results.append(best_key)
+        # ======================================================================
+        # Step 1: CJK runs — all substrings exact match
+        # ======================================================================
+        i = 0
+        while i < len(tokens):
+            tok = tokens[i]
+            if tok and _is_cjk(tok[0]):
+                # Build contiguous CJK run
+                run_chars: List[str] = []
+                while i < len(tokens) and tokens[i] and _is_cjk(tokens[i][0]):
+                    run_chars.append(tokens[i])
+                    i += 1
+                run = "".join(run_chars)
+                run_len = len(run)
+                if run_len == 0:
+                    continue
+                # Check all substrings for exact match
+                for start in range(run_len):
+                    for end in range(start + 1, run_len + 1):
+                        sub = run[start:end]
+                        key = _exact_match(sub)
+                        if key:
+                            conf = len(sub) / run_len
+                            if key not in result or conf > result[key]:
+                                result[key] = conf
+            else:
+                i += 1
 
-        # Step 2: TF-IDF matching for each token (handles unknown words)
-        for token in tokens:
-            if token in seen_keys or _exact_match(token):
-                continue
-            for key in _match_single(token):
-                if key not in seen_keys:
-                    seen_keys.add(key)
-                    results.append(key)
-            if token != token.lower():
-                for key in _match_single(token.lower()):
-                    if key not in seen_keys:
-                        seen_keys.add(key)
-                        results.append(key)
+        # ======================================================================
+        # Step 2: Non-CJK tokens — exact match
+        # ======================================================================
+        i = 0
+        while i < len(tokens):
+            tok = tokens[i]
+            if tok and not _is_cjk(tok[0]) and tok.strip():
+                key = _exact_match(tok)
+                if key:
+                    result[key] = max(result.get(key, 0.0), 1.0)
+                    matched_tokens.add(tok.lower().strip())
+            i += 1
 
-        # Step 3: Whole-text matching (catches phrase-level entries)
-        for key in _match_single(text):
-            if key not in seen_keys:
-                seen_keys.add(key)
-                results.append(key)
+        # ======================================================================
+        # Step 3: Unmatched non-CJK tokens — prefix dedup (word forms)
+        # ======================================================================
+        i = 0
+        while i < len(tokens):
+            tok = tokens[i]
+            if tok and not _is_cjk(tok[0]) and tok.strip():
+                token_lower = tok.lower().strip()
+                if token_lower in matched_tokens:
+                    i += 1
+                    continue
+                best_key = None
+                best_score = 0.0
+                for key, entry in self.entries.items():
+                    for form in entry.surface_forms.values():
+                        if not form:
+                            continue
+                        score = self._prefix_overlap(token_lower, form.lower().strip())
+                        if score > best_score:
+                            best_score = score
+                            best_key = key
+                if best_score >= 0.5 and best_key:
+                    conf = min(best_score, 0.85)  # cap prefix dedup confidence
+                    result[best_key] = max(result.get(best_key, 0.0), conf)
+                    matched_tokens.add(token_lower)
+            i += 1
 
-        return results
+        # ======================================================================
+        # Step 4: Still-unmatched tokens — TF-IDF per-token
+        # ======================================================================
+        i = 0
+        while i < len(tokens):
+            tok = tokens[i]
+            if tok and tok.strip():
+                token_lower = tok.lower().strip()
+                if token_lower in matched_tokens:
+                    i += 1
+                    continue
+                for key, score in _match_single(tok):
+                    conf = min(score, 0.5)
+                    result[key] = max(result.get(key, 0.0), conf)
+            i += 1
 
-    def decode(self, keys: List[str]) -> str:
-        """Turn a list of concept keys back into a human-readable string."""
+        # ======================================================================
+        # Step 5: Whole-text TF-IDF (phrase-level catch-all)
+        # ======================================================================
+        for key, score in _match_single(text):
+            conf = min(score, 0.6)
+            if key not in result or conf > result[key]:
+                result[key] = conf
+
+        return result
+
+    def decode(self, keys: List[str], original_text: Optional[str] = None) -> str:
+        """Turn a list of concept keys back into a human-readable string.
+
+        When original_text is provided, tries to match it (full-text and
+        individual tokens) against surface forms to preserve the input word
+        form through the pipeline.  For multi-word inputs like "happy happiness",
+        each token is checked independently so "happiness" correctly maps back
+        to the "happiness" surface form even though both share key l1.
+        """
         parts = []
+        # Build token set from original text for surface-form matching
+        orig_tokens: set = set()
+        lower_orig: Optional[str] = None
+        if original_text:
+            lower_orig = original_text.lower().strip()
+            import re as _re
+            for t in _re.findall(r"[a-zA-Z0-9]+|.", original_text.lower()):
+                t = t.strip()
+                if t:
+                    orig_tokens.add(t)
         for key in keys:
             entry = self.entries.get(key)
             if entry is None:
                 continue
-            # Prefer Chinese, then English
-            surface = entry.surface_forms.get("zh") or entry.surface_forms.get("en") or key
+            # Try to match original text against surface forms
+            surface = None
+            if lower_orig is not None:
+                # 1) Full-text match (catches CJK multi-char entries like "北京")
+                for sf in entry.surface_forms.values():
+                    if sf and sf.lower().strip() == lower_orig:
+                        surface = sf
+                        break
+                if surface is None:
+                    # 2) Token-level match (for multi-word inputs like "happy happiness")
+                    for sf in entry.surface_forms.values():
+                        if sf and sf.lower().strip() in orig_tokens:
+                            surface = sf
+                            break
+            if surface is None:
+                surface = entry.surface_forms.get("zh") or entry.surface_forms.get("en") or key
             parts.append(surface)
         return " ".join(parts)
 

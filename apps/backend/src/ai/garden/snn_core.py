@@ -452,16 +452,16 @@ class TensorSNNCore:
 
     def forward(
         self,
-        input_keys: List[str],
+        input_keys: Dict[str, float],
         context: Optional[Dict[str, Any]] = None,
         top_k_ratio: float = 0.05,
     ) -> Dict[str, float]:
         """Run LIF integration with top-k competition.
 
-        Improvements over original:
-        - Top-k competition: only top 5% neurons fire per timestep
-        - Weight decay during training prevents saturation
-        - Lower target_strength (0.35) keeps weights moderate
+        input_keys is a dict of key → confidence (from VectorDictionary.encode()).
+        Each key activates its neuron at the given confidence level instead of
+        a hard binary 1.0.  Low-confidence matches contribute less to the SNN
+        dynamics, letting learned weights override weak signals.
 
         Returns dict of concept_key -> cumulative activation.
         """
@@ -472,10 +472,10 @@ class TensorSNNCore:
         W = self._W[:V, :V]
 
         a = _zeros(V)
-        for key in input_keys:
+        for key, conf in input_keys.items():
             idx = self._key_to_idx.get(key)
             if idx is not None:
-                a[idx] = 1.0
+                a[idx] = max(0.0, min(1.0, conf))
                 self._touch(idx)
 
         if a.sum() == 0.0:
@@ -517,6 +517,13 @@ class TensorSNNCore:
                 topk_mask[sorted_idx] = 1.0
             spikes = spike_mask * topk_mask
 
+            # Reset potential for spiking neurons (refractory period).
+            # Without this, strongly-coupled pairs enter runaway oscillation
+            # and prevent 2+ hop propagation.
+            spike_idx = _nonzero_indices(spikes)
+            if len(spike_idx) > 0:
+                potential[spike_idx] = 0.0
+
             a = spikes * (self.decay ** t)
             cumulative += spikes
             total_active += n_active
@@ -536,13 +543,17 @@ class TensorSNNCore:
 
     def hebbian_update(
         self,
-        input_keys: List[str],
-        target_keys: List[str],
+        input_keys: Dict[str, float],
+        target_keys: Dict[str, float],
         lr: float = 0.05,
         target_strength: float = 0.35,
         weight_decay: float = 0.002,
     ) -> float:
         """Hebbian weight update with Oja's rule + targeted row decay.
+
+        input_keys and target_keys are Dict[str, float] from VectorDictionary.encode().
+        The confidence score gates the learning rate: low-confidence matches
+        contribute less to weight changes, reducing noise from fuzzy matches.
 
         Oja's rule drives connections toward target_strength.
         After updating, applies decay ONLY to rows that were modified
@@ -555,14 +566,16 @@ class TensorSNNCore:
 
         delta_total = 0.0
         touched_rows = set()
-        for src in input_keys:
+        for src, conf_i in input_keys.items():
             i = self._register_key(src)
             touched_rows.add(i)
-            for tgt in target_keys:
+            for tgt, conf_j in target_keys.items():
                 j = self._register_key(tgt)
                 touched_rows.add(j)
                 old_w = float(self._W[i, j])
-                delta = lr * (target_strength - old_w)
+                # Confidence-gated learning: low-conf → small update
+                gate = conf_i * conf_j
+                delta = lr * gate * (target_strength - old_w)
                 new_w = max(0.0, min(1.0, old_w + delta))
                 self._W[i, j] = new_w
                 self._W[j, i] = new_w  # symmetric

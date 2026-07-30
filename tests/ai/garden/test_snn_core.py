@@ -157,35 +157,35 @@ class TestTensorSNNCoreForward:
 
     def test_forward_known_input(self, snn_core: TensorSNNCore):
         core = snn_core
-        result = core.forward(["g1"])
+        result = core.forward({"g1": 1.0})
         assert isinstance(result, dict)
         assert len(result) >= 1
 
     def test_forward_empty_keys(self, snn_core: TensorSNNCore):
         core = snn_core
-        assert core.forward([]) == {}
+        assert core.forward({}) == {}
 
     def test_forward_unregistered_keys(self, snn_core: TensorSNNCore):
         core = snn_core
-        assert core.forward(["nonexistent"]) == {}
+        assert core.forward({"nonexistent": 1.0}) == {}
 
     def test_forward_propagates(self, snn_core: TensorSNNCore):
         """Input 'g1' should propagate to 'g5' (synonym) and 'r1'/'r2'."""
         core = snn_core
-        result = core.forward(["g1"])
+        result = core.forward({"g1": 1.0})
         assert "g5" in result
         # g5 connects to r1, so r1 should be activated (2 hops)
         assert "r1" in result
 
     def test_forward_scores_normalized(self, snn_core: TensorSNNCore):
         core = snn_core
-        result = core.forward(["g1"])
+        result = core.forward({"g1": 1.0})
         for score in result.values():
             assert 0.0 <= score <= 1.0
 
     def test_forward_with_context(self, snn_core: TensorSNNCore):
         core = snn_core
-        result = core.forward(["g1"], context={"mode": "test"})
+        result = core.forward({"g1": 1.0}, context={"mode": "test"})
         assert isinstance(result, dict)
         assert len(result) >= 1
 
@@ -194,12 +194,12 @@ class TestTensorSNNCoreForward:
         # Set high stress
         core.modulator.set_hormone("cortisol", 1.0)
         core.modulator.set_hormone("adrenaline", 1.0)
-        result = core.forward(["g1"])
+        result = core.forward({"g1": 1.0})
         assert isinstance(result, dict)
 
     def test_forward_no_w_matrix(self):
         core = TensorSNNCore()
-        result = core.forward(["g1"])
+        result = core.forward({"g1": 1.0})
         assert result == {}
 
 
@@ -208,7 +208,7 @@ class TestTensorSNNCoreHebbian:
 
     def test_hebbian_update(self, snn_core: TensorSNNCore):
         core = snn_core
-        delta = core.hebbian_update(["g1"], ["e1"], lr=0.1, target_strength=0.8)
+        delta = core.hebbian_update({"g1": 1.0}, {"e1": 1.0}, lr=0.1, target_strength=0.8)
         assert delta > 0
         i = core._key_to_idx["g1"]
         j = core._key_to_idx["e1"]
@@ -217,21 +217,21 @@ class TestTensorSNNCoreHebbian:
 
     def test_hebbian_empty_input(self, snn_core: TensorSNNCore):
         core = snn_core
-        assert core.hebbian_update([], ["e1"]) == 0.0
+        assert core.hebbian_update({}, {"e1": 1.0}) == 0.0
 
     def test_hebbian_empty_target(self, snn_core: TensorSNNCore):
         core = snn_core
-        assert core.hebbian_update(["g1"], []) == 0.0
+        assert core.hebbian_update({"g1": 1.0}, {}) == 0.0
 
     def test_hebbian_tracks_updates(self, snn_core: TensorSNNCore):
         core = snn_core
         before = core.total_hebbian_updates
-        core.hebbian_update(["g1"], ["e1"])
+        core.hebbian_update({"g1": 1.0}, {"e1": 1.0})
         assert core.total_hebbian_updates == before + 1
 
     def test_hebbian_symmetric(self, snn_core: TensorSNNCore):
         core = snn_core
-        core.hebbian_update(["g1"], ["e1"], lr=0.5, target_strength=0.9)
+        core.hebbian_update({"g1": 1.0}, {"e1": 1.0}, lr=0.5, target_strength=0.9)
         i = core._key_to_idx["g1"]
         j = core._key_to_idx["e1"]
         assert core._W[i, j] == core._W[j, i]
@@ -267,7 +267,7 @@ class TestTensorSNNCorePersistence:
 
     def test_save_load_hebbian_history(self, snn_core: TensorSNNCore):
         core = snn_core
-        core.hebbian_update(["g1"], ["e1"])
+        core.hebbian_update({"g1": 1.0}, {"e1": 1.0})
         core.total_steps = 42
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "snn.pt")

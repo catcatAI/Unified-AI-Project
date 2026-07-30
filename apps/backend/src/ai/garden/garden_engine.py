@@ -104,35 +104,179 @@ class _ReflexTable:
 
 def _anchored_decode(
     network_output: Dict[str, float],
-    input_keys: List[str],
+    input_keys: Dict[str, float],
     dictionary: VectorDictionary,
     top_k: Optional[int] = None,
+    original_text: Optional[str] = None,
 ) -> str:
     """
-    Combine highest-scored network output keys with top anchor input keys,
+    Combine highest-scored SNN output keys with top anchor input keys,
     then decode to text.  Anchoring prevents the response from drifting
     entirely away from the user's original intent.
+
+    Dynamic slot allocation based on input length:
+      Short (<=3 tokens)   : keep all input + up to 4 SNN keys
+      Normal (4-15 tokens) : 3 anchors + 3 SNN keys
+      Long  (>15 tokens)   : 3 anchors + 6 SNN keys (paragraph recall)
+
+    Score threshold (>=0.15 = at least 1 spike in 6 timesteps) ensures
+    only actually-spiked neurons enter.  No aggressive correlation/novelty
+    filtering — Hebbian weight_decay naturally dissolves single-shot noise
+    (w ~0.017) while signal is reinforced toward target (0.35).
+
+    When original_text is provided, decode preserves the input word forms
+    so that tokens sharing the same concept key (e.g. "happy"/"happiness")
+    produce the correct surface form in the output.
     """
-    top_k = top_k if top_k is not None else limit_value("ai.garden.decode.top_k", 6)
     if not network_output and not input_keys:
         return ""
 
-    # Sort network output by score, take top_k
-    sorted_output = sorted(network_output.items(), key=lambda x: x[1], reverse=True)
-    output_keys = [k for k, _ in sorted_output[:top_k]]
+    # Separate SNN output from input self-activation
+    snn_only = {k: v for k, v in network_output.items() if k not in input_keys}
 
-    # Anchors = top-3 input keys (preserve intent)
-    anchors = input_keys[: limit_value("ai.garden.decode.anchor_keys", 3)]
+    # Score threshold: at least 1 spike in 6 timesteps (~0.167) with margin
+    snn_candidates = [k for k, v in snn_only.items() if v >= 0.15]
+    snn_sorted = sorted(snn_candidates, key=lambda k: snn_only[k], reverse=True)
 
-    # Merge: anchors first, then new output keys (deduplicated)
-    seen: set = set(anchors)
-    combined = list(anchors)
-    for k in output_keys:
+    # Dynamic slot allocation
+    n_input = len(input_keys)
+    if n_input <= 3:
+        anchor_slots = min(3, n_input)
+        snn_slots = 4
+    elif n_input <= 15:
+        anchor_slots = 3
+        snn_slots = 3
+    else:
+        anchor_slots = 3
+        snn_slots = 6
+
+    # Anchors = top input keys by confidence
+    anchor_keys = sorted(input_keys.keys(), key=lambda k: input_keys[k], reverse=True)[:anchor_slots]
+
+    # Combine: anchors first, then SNN output keys (deduplicated)
+    seen: set = set(anchor_keys)
+    combined = list(anchor_keys)
+    for k in snn_sorted:
         if k not in seen:
+            if len(combined) - len(anchor_keys) >= snn_slots:
+                break
             seen.add(k)
             combined.append(k)
 
-    return dictionary.decode(combined[:top_k])
+    return dictionary.decode(combined, original_text=original_text)
+
+
+# ---------------------------------------------------------------------------
+# Module-level deterministic-engine helpers
+# Shared by GARDENEngine (defense-in-depth) and the training pipeline
+# (single-pass filtering for both ED3N and GARDEN).
+# Each function delegates to its respective deterministic subsystem.
+# ---------------------------------------------------------------------------
+
+
+def _try_math(text: str) -> Optional[str]:
+    """Evaluate math expression via VectorDictionary route_math."""
+    try:
+        return VectorDictionary.route_math(text)
+    except Exception as e:
+        logger.debug("GARDEN: math routing failed for %r: %s", text, e)
+        return None
+
+
+def _try_logic(text: str) -> Optional[str]:
+    """Evaluate boolean logic via MathVerifier."""
+    try:
+        from services.math_verifier import evaluate_logic
+
+        return evaluate_logic(text)
+    except Exception as e:
+        logger.debug("GARDEN: logic eval failed for %r: %s", text, e)
+        return None
+
+
+def _try_knowledge(text: str) -> Optional[str]:
+    """Answer factual question via knowledge base."""
+    try:
+        from ai.knowledge_base import route_knowledge
+
+        return route_knowledge(text)
+    except Exception as e:
+        logger.debug("GARDEN: knowledge routing failed for %r: %s", text, e)
+        return None
+
+
+def _try_reasoning(text: str) -> Optional[str]:
+    """Apply symbolic reasoning via symbolic_reasoner."""
+    try:
+        from ai.symbolic_reasoner import route_reasoning
+
+        return route_reasoning(text)
+    except Exception as e:
+        logger.debug("GARDEN: symbolic reasoning failed for %r: %s", text, e)
+        return None
+
+
+def _try_chain_reasoning(text: str) -> Optional[str]:
+    """Resolve relational chain via relational_chain resolver."""
+    try:
+        from ai.reasoning.relational_chain import (
+            parse_and_resolve_relational_chain,
+            resolve_relational_chain,
+        )
+
+        return parse_and_resolve_relational_chain(text, resolver=resolve_relational_chain)
+    except Exception as e:
+        logger.debug("GARDEN: chain reasoning failed for %r: %s", text, e)
+        return None
+
+
+def _output_matches(engine_output: str, expected: str) -> bool:
+    """Check if the deterministic engine output matches the expected training output.
+
+    Handles two common formatting mismatches:
+
+    1. Engine returns a bare number (``"42"``) while the training output is a
+       full sentence (``"the answer is 42"``) — the engine result appears
+       inside the training output.
+    2. Engine returns a formatted expression (``"178 + 101 = 279"``) while the
+       training output contains only the result (``"279"``) — the training
+       output appears inside the engine result.
+
+    Substring matching is only applied when the shorter string is at least 2
+    characters to avoid false positives on single-digit tokens (e.g. ``"7"``
+    inside a longer sentence).
+    """
+    eng = engine_output.strip()
+    exp = expected.strip()
+    if eng == exp:
+        return True
+    short, long = (eng, exp) if len(eng) <= len(exp) else (exp, eng)
+    if len(short) >= 2 and short in long:
+        return True
+    return False
+
+
+def is_deterministic_match(user_text: str, response_text: str) -> bool:
+    """Run all 5 deterministic engines against user_text; return True if any
+    produces output that matches response_text.
+
+    When True, the sample is a pure computational fact (math/logic/knowledge/
+    reasoning) that the engines already handle correctly.  Training should
+    skip this sample — neither ED3N nor GARDEN benefits from learning
+    computational facts as associations.
+    """
+    engines = [
+        _try_math,
+        _try_logic,
+        _try_knowledge,
+        _try_reasoning,
+        _try_chain_reasoning,
+    ]
+    for fn in engines:
+        result = fn(user_text)
+        if result is not None and _output_matches(result, response_text):
+            return True
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -217,7 +361,12 @@ class GARDENEngine:
         """
         if self._presets_loaded:
             return
-        self.dictionary.load_presets()
+        try:
+            self.dictionary.load_presets()
+        except Exception as e:
+            logger.error("GARDEN: dictionary.load_presets() failed: %s", e, exc_info=True)
+            self._presets_loaded = True
+            return
 
         # Also load from config JSON files
         config_dir = os.path.join(os.path.dirname(__file__), "config")
@@ -351,12 +500,14 @@ class GARDENEngine:
         network_output = self.snn.forward(input_keys, context=context)
 
         # Stage 7: Anchored decode
-        response = _anchored_decode(network_output, input_keys, self.dictionary)
+        response = _anchored_decode(network_output, input_keys, self.dictionary, original_text=text)
 
         if not response:
             # Fallback: decode input keys directly
+            fallback_keys = list(input_keys.keys())[: limit_value("ai.garden.engine.fallback_decode_keys", 4)]
             response = self.dictionary.decode(
-                input_keys[: limit_value("ai.garden.engine.fallback_decode_keys", 4)]
+                fallback_keys,
+                original_text=text,
             )
 
         if not response:
@@ -380,7 +531,7 @@ class GARDENEngine:
             cycle_context["cycle"] = cycle + 1
 
             cycle_network = self.snn.forward(input_keys, context=cycle_context)
-            cycle_response = _anchored_decode(cycle_network, input_keys, self.dictionary)
+            cycle_response = _anchored_decode(cycle_network, input_keys, self.dictionary, original_text=text)
 
             if cycle_response and len(cycle_response) > len(current_output):
                 current_output = cycle_response
@@ -449,11 +600,12 @@ class GARDENEngine:
             return ""
 
         network_output = self.snn.forward(input_keys, context=context)
-        response = _anchored_decode(network_output, input_keys, self.dictionary)
+        response = _anchored_decode(network_output, input_keys, self.dictionary, original_text=text)
 
         if not response:
             response = self.dictionary.decode(
-                input_keys[: limit_value("ai.garden.engine.fallback_decode_keys", 4)]
+                list(input_keys.keys())[: limit_value("ai.garden.engine.fallback_decode_keys", 4)],
+                original_text=text,
             )
 
         return response or ""
@@ -527,78 +679,27 @@ class GARDENEngine:
             self.set_hormone(hormone, level)
 
     def _try_math_eval(self, text: str) -> Optional[str]:
-        """Evaluate math via the dictionary-layer compute-routing hook.
-
-        Math is delegated to MathVerifier (single source of truth) through
-        VectorDictionary.route_math — GARDEN no longer computes arithmetic itself.
-        """
-        try:
-            from ai.garden.dictionary import VectorDictionary
-
-            return VectorDictionary.route_math(text)
-        except Exception as e:
-            logger.warning("GARDEN: math routing failed for %r: %s", text, e, exc_info=True)
-            return None
+        return _try_math(text)
 
     def _try_logic_eval(self, text: str) -> Optional[str]:
-        """Evaluate boolean logic via MathVerifier.evaluate_logic."""
-        try:
-            from services.math_verifier import evaluate_logic
-
-            return evaluate_logic(text)
-        except Exception as e:
-            logger.debug("GARDEN: logic eval failed for %r: %s", text, e)
-            return None
+        return _try_logic(text)
 
     def _try_knowledge(self, text: str) -> Optional[str]:
-        """Answer simple factual questions via the curated knowledge base.
-
-        Mirrors the math-routing design: trivial, high-certainty factual recall
-        is delegated to ``ai.knowledge_base.route_knowledge`` instead of being
-        squeezed through the vector/SNN pipeline (which would hallucinate).
-        """
-        try:
-            from ai.knowledge_base import route_knowledge
-
-            return route_knowledge(text)
-        except Exception as e:
-            logger.warning("GARDEN: knowledge routing failed for %r: %s", text, e, exc_info=True)
-            return None
+        return _try_knowledge(text)
 
     def _try_reasoning(self, text: str) -> Optional[str]:
-        """Apply deterministic symbolic reasoning to structured questions.
-
-        Delegates transitive / syllogism / calendar / quantity / mass-trick
-        reasoning to ``ai.symbolic_reasoner.route_reasoning`` — a real,
-        high-certainty capability (valid inference over stated premises).
-        """
-        try:
-            from ai.symbolic_reasoner import route_reasoning
-
-            return route_reasoning(text)
-        except Exception as e:
-            logger.warning("GARDEN: symbolic reasoning failed for %r: %s", text, e, exc_info=True)
-            return None
+        return _try_reasoning(text)
 
     def _try_chain_reasoning(self, text: str) -> Optional[str]:
-        """Offline relational-chain reasoning via transitive closure.
+        return _try_chain_reasoning(text)
 
-        Delegates to the shared ``ai.reasoning.relational_chain`` resolver. It
-        parses explicit comparison statements in the query, builds directed
-        "greater-than" edges, and resolves the dominant/least entity. This
-        complements the regex-based symbolic reasoner by handling novel
-        comparators and paraphrases that the fixed patterns do not match.
+    def _is_deterministic_match(self, user_text: str, response_text: str) -> bool:
+        """Return True when a deterministic engine already handles this query.
+
+        Delegates to the shared module-level ``is_deterministic_match()`` so
+        the pipeline can also call it directly for pre-filtering.
         """
-        try:
-            from ai.reasoning.relational_chain import (
-                parse_and_resolve_relational_chain,
-                resolve_relational_chain,
-            )
-
-            return parse_and_resolve_relational_chain(text, resolver=resolve_relational_chain)
-        except Exception as e:
-            logger.warning("GARDEN: chain reasoning failed for %r: %s", text, e, exc_info=True)
-            return None
+        return is_deterministic_match(user_text, response_text)
 
     # ------------------------------------------------------------------
     # VectorDecoder (iterative generation)
@@ -653,6 +754,17 @@ class GARDENEngine:
                 "input_keys": [],
                 "output_keys": [],
                 "hebbian_delta": 0.0,
+            }
+
+        # If a deterministic engine already handles this input, skip learning
+        if self._is_deterministic_match(user_text, response_text):
+            return {
+                "interaction": self._learn_count,
+                "new_concepts": [],
+                "input_keys": [],
+                "output_keys": [],
+                "hebbian_delta": 0.0,
+                "engine_handled": True,
             }
 
         confidence = (
@@ -751,13 +863,33 @@ class GARDENEngine:
         if not self._presets_loaded:
             self.load_presets()
 
+        # Pre-compute which samples are handled by deterministic engines.
+        # Those samples are pure computational facts — skip dictionary growth
+        # and Hebbian learning to keep numeric/formula noise out of GARDEN's
+        # vocabulary.
+        filtered_indices: List[int] = []
+        for idx, s in enumerate(samples):
+            user_text = s.get("input", "")
+            response_text = s.get("output", "")
+            if not self._is_deterministic_match(user_text, response_text):
+                filtered_indices.append(idx)
+
+        if not filtered_indices:
+            return {
+                "interaction": self._learn_count,
+                "new_concepts": 0,
+                "samples_processed": len(samples),
+                "engine_handled_count": len(samples),
+            }
+
         all_new_keys: List[str] = []
         all_tokens: List[str] = []
 
-        # Stage 1: Collect all tokens from all samples
+        # Stage 1: Collect all tokens from non-engine-handled samples
         import string
 
-        for s in samples:
+        for idx in filtered_indices:
+            s = samples[idx]
             user_text = s.get("input", "")
             response_text = s.get("output", "")
             for text in [user_text, response_text]:
@@ -793,17 +925,19 @@ class GARDENEngine:
         if grew_any and self.dictionary._dirty:
             self.dictionary._rebuild_index()
 
-        # Stage 4: Hebbian updates for each sample.
+        # Stage 4: Hebbian updates for each non-engine-handled sample.
         # Skipped when train_associations=False (knowledge-only ingestion: the
         # fact lives in the dictionary, the SNN only ever learns associations).
         hebbian_delta = 0.0
         auto_regressive_delta = 0.0
+        updates_performed = 0
         if train_associations:
             lr = learning_rate("ai.garden.engine.hebbian_lr", 0.05)
             target_str = confidence_value(
                 "ai.garden.engine.hebbian_target_strength", 0.35
             )
-            for idx, s in enumerate(samples):
+            for idx in filtered_indices:
+                s = samples[idx]
                 user_text = s.get("input", "")
                 response_text = s.get("output", "")
                 input_keys = self.dictionary.encode(user_text)
@@ -820,31 +954,39 @@ class GARDENEngine:
                     # (input + intermediate) -> output.  This chains
                     # associations so the SNN learns multi-hop reasoning.
                     snn_intermediate = self.snn.forward(input_keys)
-                    intermediate_keys = [
-                        k for k, v in snn_intermediate.items()
+                    intermediate: Dict[str, float] = {
+                        k: v for k, v in snn_intermediate.items()
                         if v > 0.3
-                    ]
-                    if intermediate_keys:
-                        combined = list(dict.fromkeys(input_keys + intermediate_keys))
+                    }
+                    if intermediate:
+                        # Merge input and intermediate keys (keep max conf)
+                        combined: Dict[str, float] = dict(intermediate)
+                        for k, v in input_keys.items():
+                            if k not in combined or v > combined[k]:
+                                combined[k] = v
                         delta_ar = self.snn.hebbian_update(
                             combined, output_keys, lr=lr * 0.5,
                             target_strength=target_str,
                         )
                         auto_regressive_delta += delta_ar
 
-                # Periodic global decay every 1000 samples
-                if (idx + 1) % 1000 == 0:
+                    updates_performed += 1
+
+                # Periodic global decay every 1000 Hebbian updates
+                if updates_performed > 0 and updates_performed % 1000 == 0:
                     self.snn.apply_decay(weight_decay=0.002)
 
         self._learn_count += len(samples)
 
+        engine_handled = len(samples) - len(filtered_indices)
         return {
             "interaction": self._learn_count,
             "new_concepts": len(all_new_keys),
-            "samples_processed": len(samples),
+            "samples_processed": len(filtered_indices),
             "hebbian_delta": round(hebbian_delta, 6),
             "auto_regressive_delta": round(auto_regressive_delta, 6),
             "associations_trained": train_associations,
+            "engine_handled_count": engine_handled,
         }
 
     # ------------------------------------------------------------------

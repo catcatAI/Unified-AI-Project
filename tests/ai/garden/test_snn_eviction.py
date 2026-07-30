@@ -37,7 +37,7 @@ class TestSNNMemoryBounds:
             core.add_relation(f"a{i}", f"b{i}", weight=0.8)
         # A still-registered key must forward without shape/broadcast errors.
         core.add_relation("probe", "target", weight=0.9)
-        result = core.forward(["probe"])
+        result = core.forward({"probe": 1.0})
         assert isinstance(result, dict)
 
     def test_eviction_is_bounded_time(self):

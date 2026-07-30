@@ -38,12 +38,12 @@ class VectorDecoder:
         if not input_keys:
             return ""
 
-        sequence: List[str] = list(input_keys)
+        sequence: List[str] = list(input_keys.keys())
         seen: set = set(sequence)
         limit = max_steps or self.max_steps
 
         for _ in range(limit):
-            activations = self.snn.forward(sequence)
+            activations = self.snn.forward({k: 1.0 for k in sequence})
             if not activations:
                 break
 
@@ -60,7 +60,7 @@ class VectorDecoder:
             sequence.append(next_key)
             seen.add(next_key)
 
-        output_keys = [k for k in sequence if k not in set(input_keys)] or sequence
+        output_keys = [k for k in sequence if k not in set(input_keys.keys())] or sequence
         return self.dictionary.decode(output_keys[: self.dictionary.top_k])
 
     def _sample(self, candidates: Dict[str, float]) -> Optional[str]:

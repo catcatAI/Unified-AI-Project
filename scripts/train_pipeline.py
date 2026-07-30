@@ -52,7 +52,7 @@ from ai.ed3n.training_types import (
     TrainingExample, TrainingBatch, SeqBatch,
     make_synthetic_seq_batch,
 )
-from ai.garden.garden_engine import GARDENEngine
+from ai.garden.garden_engine import GARDENEngine, is_deterministic_match
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DATA_DIR = os.path.join(ROOT, "apps/backend/data/raw_datasets")
@@ -748,7 +748,7 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
     # indistinguishable from a normal memorizing AI).
     # Only reflex/greeting/math/logic-style samples train the SNN as
     # associations. reasoning/tooluse/knowledge are excluded from SNN training.
-    snn_training_domains={"reflex", "greeting", "math", "logic", "association"}
+    snn_training_domains={"reflex", "greeting", "association"}
     examples: List[TrainingExample] = []
     skip=0
     skipped_domain=0
@@ -823,7 +823,7 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
     # would otherwise permanently lose them on the next resume.
     print("  Adding reflex patterns from training data...")
     reflex_count=0
-    reflex_domain_blacklist={"reasoning", "tooluse", "math", "logic"}
+    reflex_domain_blacklist={"reasoning", "tooluse"}
     for s in ed3n_samples:
         output_str = s["output"]
         if not output_str:
@@ -1124,6 +1124,28 @@ def main() -> None:
         print(f"  {model_id:15s} -> {len(batch):5d} samples")
     total_deconflicted = sum(len(v) for v in batches.values())
     print(f"  Total deconflicted: {total_deconflicted}")
+
+    # -----------------------------------------------------------------------
+    # Step 3a: Filter out deterministic-engine-handled samples.
+    # Both ED3N and GARDEN receive the same filtered data — computational
+    # facts (math, logic, exact-knowledge) that the deterministic engines
+    # already handle correctly are excluded from training.  This prevents:
+    #   - GARDEN vocabulary pollution (each unique number → new dict entry)
+    #   - ED3N wasted Hebbian capacity (digit→digit associations unused at inference)
+    #   - ~40k arithmetic/logic samples from consuming training time on both engines
+    # -----------------------------------------------------------------------
+    det_filtered = {m: [] for m in batches}
+    for model_id in batches:
+        original = len(batches[model_id])
+        batches[model_id] = [
+            s for s in batches[model_id]
+            if not is_deterministic_match(s["input"], s["output"])
+        ]
+        filtered = original - len(batches[model_id])
+        det_filtered[model_id] = filtered
+        if filtered:
+            print(f"  {model_id:15s} -> filtered {filtered:5d} deterministic-handled samples"
+                  f" ({original} -> {len(batches[model_id])})")
 
     # Dry-run check: stop here
     if dry_run:

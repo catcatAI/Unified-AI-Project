@@ -12,7 +12,9 @@ import pytest
 from ai.garden.garden_engine import (
     GARDENEngine,
     _anchored_decode,
+    _output_matches,
     _ReflexTable,
+    is_deterministic_match,
 )
 
 
@@ -67,25 +69,25 @@ class TestAnchoredDecode:
     def test_decode_with_output(self, dictionary):
         result = _anchored_decode(
             network_output={"g5": 0.9, "r1": 0.7},
-            input_keys=["g1"],
+            input_keys={"g1": 1.0},
             dictionary=dictionary,
         )
         assert isinstance(result, str)
         assert len(result) > 0
 
     def test_decode_empty(self, dictionary):
-        result = _anchored_decode({}, [], dictionary)
+        result = _anchored_decode({}, {}, dictionary)
         assert result == ""
 
     def test_decode_empty_keys(self, dictionary):
-        result = _anchored_decode({"g5": 0.9}, ["g1"], dictionary)
+        result = _anchored_decode({"g5": 0.9}, {"g1": 1.0}, dictionary)
         assert isinstance(result, str)
 
     def test_decode_anchoring(self, dictionary):
         """Anchors should appear in output."""
         result = _anchored_decode(
             network_output={"g5": 0.9},
-            input_keys=["g1"],
+            input_keys={"g1": 1.0},
             dictionary=dictionary,
             top_k=2,
         )
@@ -397,3 +399,60 @@ class TestVectorDecoderSampling:
             snn=engine.snn,
         )
         assert vd._sample({}) is None
+
+
+class TestOutputMatches:
+    """Tests for _output_matches — deterministic engine ↔ training output."""
+
+    def test_exact_match(self):
+        assert _output_matches("279", "279") is True
+
+    def test_engine_in_expected(self):
+        """Engine returns bare number, training has formatted expression."""
+        assert _output_matches("279", "178 + 101 = 279") is True
+
+    def test_expected_in_engine(self):
+        """Engine returns formatted expression, training has bare number."""
+        assert _output_matches("178 + 101 = 279", "279") is True
+
+    def test_no_match(self):
+        assert _output_matches("42", "hello world") is False
+
+    def test_short_token_no_false_positive(self):
+        """Single-digit numbers should not substring-match, too ambiguous."""
+        assert _output_matches("7", "I have 7 cats") is False
+
+    def test_both_empty(self):
+        assert _output_matches("", "") is True
+
+    def test_case_mismatch(self):
+        assert _output_matches("Hello", "hello") is False
+
+    def test_single_digit_no_false_positive(self):
+        """Single-digit numbers guarded by length >= 2."""
+        assert _output_matches("7", "I have 7 cats") is False
+
+    def test_spaces_stripped(self):
+        assert _output_matches("  279  ", "279") is True
+
+    def test_multi_word_engine_in_expected(self):
+        assert _output_matches("42", "the answer is 42") is True
+
+
+class TestIsDeterministicMatch:
+    """Tests for is_deterministic_match — end-to-end engine dispatch."""
+
+    def test_math_query(self):
+        assert is_deterministic_match("178 + 101", "279") is True
+
+    def test_math_as_sentence(self):
+        assert is_deterministic_match("What is 178 + 101?", "279") is True
+
+    def test_non_math_query(self):
+        assert is_deterministic_match("Hello, how are you?", "I'm fine") is False
+
+    def test_division(self):
+        assert is_deterministic_match("100 / 4", "100 / 4 = 25") is True
+
+    def test_float_result(self):
+        assert is_deterministic_match("22 / 7", "22 / 7 = 3.14") is True

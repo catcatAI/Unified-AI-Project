@@ -126,7 +126,7 @@ class TestVectorDictionaryEncodeDecode:
         d = dictionary
         keys = d.encode("你好")
         assert "g1" in keys
-        assert isinstance(keys, list)
+        assert isinstance(keys, dict)
 
     def test_encode_english(self, dictionary: VectorDictionary):
         d = dictionary
@@ -136,20 +136,20 @@ class TestVectorDictionaryEncodeDecode:
     def test_encode_unknown(self, dictionary: VectorDictionary):
         d = dictionary
         keys = d.encode("zxvqwpbj")
-        assert keys == [] or not keys
+        assert not keys
 
     def test_encode_empty(self, dictionary: VectorDictionary):
         d = dictionary
-        assert d.encode("") == []
+        assert d.encode("") == {}
 
     def test_encode_none(self, dictionary: VectorDictionary):
         d = dictionary
-        assert d.encode(None) == []
+        assert d.encode(None) == {}
 
     def test_encode_special_chars(self, dictionary: VectorDictionary):
         d = dictionary
         keys = d.encode("!!! @@@ ###")
-        assert isinstance(keys, list)
+        assert isinstance(keys, dict)
 
     def test_decode_known(self, dictionary: VectorDictionary):
         d = dictionary
@@ -254,7 +254,7 @@ class TestVectorDictionaryEmpty:
 
     def test_encode_empty_dict(self):
         d = VectorDictionary(compatibility_mode=True)
-        assert d.encode("hello") == []
+        assert d.encode("hello") == {}
 
     def test_decode_empty_dict(self):
         d = VectorDictionary(compatibility_mode=True)

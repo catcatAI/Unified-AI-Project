@@ -232,4 +232,4 @@ class TestKGImporterGARDENIntegration:
         kg.bulk_load(engine)
         # Encode should return some keys
         keys = engine.dictionary.encode("dog")
-        assert isinstance(keys, list)
+        assert isinstance(keys, dict)
