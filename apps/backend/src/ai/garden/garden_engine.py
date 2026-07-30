@@ -306,8 +306,141 @@ def is_deterministic_match(user_text: str, response_text: str) -> bool:
     for fn, etype in engines:
         result = fn(user_text)
         if result is not None and _output_matches(result, response_text, etype):
+            _learn_template(user_text, response_text, etype, result)
             return True
     return False
+
+
+# ---------------------------------------------------------------------------
+# TemplateLearner: inverse matching + L0 placeholder for NL reconstruction
+# ---------------------------------------------------------------------------
+# The idea: when a deterministic engine matches a training sample, we can
+# learn which parts of (input, output) are "consumed" by the engine and
+# which parts are natural-language wrapping.  At runtime, the engine
+# computes the answer and the template reconstructs the full NL sentence.
+#
+# Template storage keyed by engine_type. Each entry:
+#   (input_prefix, input_suffix, output_template)
+# where output_template uses {L0_input} (the consumed input expression)
+# and {L0_result} (the engine's computed result).
+#
+# Example: sample ("What is 178 + 101", "What is 178 + 101 = 279")
+#   engine → "178 + 101 = 279"
+#   expr="178 + 101", result="279"
+#   output: "What is {L0_input} = {L0_result}"
+#   runtime "What is 55 + 23" → "What is 55 + 23 = 78"
+
+_TEMPLATES: Dict[str, List[Tuple[str, str, str]]] = {}
+"""engine_type -> [(input_prefix, input_suffix, output_template)]"""
+
+
+def _learn_template(
+    sample_input: str,
+    sample_output: str,
+    engine_type: str,
+    engine_result: str,
+) -> None:
+    """Extract and store a template from a deterministic match.
+
+    Reverse-searches the engine result inside the sample to determine
+    which parts are natural-language wrapping.
+    """
+    input_prefix, input_suffix = "", sample_input
+
+    # Extract expression and result from engine_result
+    if engine_type == "math":
+        parts = engine_result.split(" = ", 1)
+        expr = parts[0].strip() if len(parts) == 2 else ""
+        result_val = parts[1].strip() if len(parts) == 2 else engine_result
+    else:
+        expr = ""
+        result_val = engine_result.strip()
+
+    # --- Input side: find where the engine's consumed input appears ---
+    if expr and expr in sample_input:
+        idx = sample_input.find(expr)
+        input_prefix = sample_input[:idx]
+        input_suffix = sample_input[idx + len(expr):]
+    elif not expr:
+        # Non-math engines consume the whole input
+        input_prefix, input_suffix = "", ""
+
+    # --- Output side: build output_template with placeholders ---
+    output_template = sample_output
+
+    # Replace result value with {L0_result} in output
+    rv = result_val
+    if rv in output_template:
+        output_template = output_template.replace(rv, "{L0_result}", 1)
+    else:
+        # Try finding by numeric value
+        nums = re.findall(r"-?\d+(?:\.\d+)?", output_template)
+        for n in nums:
+            if engine_type == "math":
+                if _math_value_matches(rv, n):
+                    output_template = output_template.replace(n, "{L0_result}", 1)
+                    break
+
+    # Replace input expression with {L0_input} in output (if present)
+    if expr and expr in output_template:
+        output_template = output_template.replace(expr, "{L0_input}", 1)
+
+    # Only store if output has NL wrapping beyond bare placeholders
+    cleaned = output_template.replace("{L0_input}", "").replace("{L0_result}", "").strip()
+    if not cleaned:
+        return
+
+    # Bound storage
+    existing = _TEMPLATES.setdefault(engine_type, [])
+    if len(existing) >= 20:
+        existing.pop(0)
+    existing.append((input_prefix, input_suffix, output_template))
+
+
+def _reconstruct_with_template(
+    user_input: str,
+    engine_result: str,
+    engine_type: str,
+) -> str:
+    """Apply saved templates to wrap engine_result back into NL.
+
+    Finds a matching template by input_prefix/suffix, then fills
+    {L0_input} and {L0_result} with the current user input's
+    consumed expression and the engine's result value.
+    """
+    templates = _TEMPLATES.get(engine_type, [])
+    if not templates:
+        return engine_result
+
+    if engine_type == "math":
+        parts = engine_result.split(" = ", 1)
+        expr = parts[0].strip() if len(parts) == 2 else ""
+        result_val = parts[1].strip() if len(parts) == 2 else engine_result
+    else:
+        expr = user_input.strip()
+        result_val = engine_result.strip()
+
+    for input_prefix, input_suffix, output_template in templates:
+        # Check if this template matches by input prefix/suffix
+        if user_input.startswith(input_prefix) and user_input.endswith(input_suffix):
+            middle = user_input[len(input_prefix):]
+            if input_suffix:
+                middle = middle[:-len(input_suffix)] if len(input_suffix) else middle
+            filled = output_template.replace("{L0_input}", middle).replace("{L0_result}", result_val)
+            if filled != engine_result:
+                return filled
+
+    return engine_result
+
+
+def record_template_match(
+    sample_input: str,
+    sample_output: str,
+    engine_type: str,
+    engine_result: str,
+) -> None:
+    """Public entry point for training pipeline to record a template."""
+    _learn_template(sample_input, sample_output, engine_type, engine_result)
 
 
 # ---------------------------------------------------------------------------
@@ -478,17 +611,17 @@ class GARDENEngine:
         math_result = self._try_math_eval(text)
         if math_result is not None:
             self._last_confidence = 0.85
-            return math_result
+            return _reconstruct_with_template(text, math_result, "math")
 
         logic_result = self._try_logic_eval(text)
         if logic_result is not None:
             self._last_confidence = 0.85
-            return logic_result
+            return _reconstruct_with_template(text, logic_result, "logic")
 
         reasoning_result = self._try_reasoning(text)
         if reasoning_result is not None:
             self._last_confidence = 0.85
-            return reasoning_result
+            return _reconstruct_with_template(text, reasoning_result, "text")
 
         # Stage 1.6b: Relational-chain reasoning (offline graph derivation).
         # Catches relational comparison questions the symbolic reasoner's regex
@@ -498,7 +631,7 @@ class GARDENEngine:
         chain_result = self._try_chain_reasoning(text)
         if chain_result is not None:
             self._last_confidence = 0.85
-            return chain_result
+            return _reconstruct_with_template(text, chain_result, "text")
 
         # Stage 2: Reflex (fast pattern match) — greetings / canned replies.
         reflex_hit = self.reflex.match(text)
@@ -510,7 +643,7 @@ class GARDENEngine:
         kb_result = self._try_knowledge(text)
         if kb_result is not None:
             self._last_confidence = 0.80
-            return kb_result
+            return _reconstruct_with_template(text, kb_result, "text")
 
         # Stage 4: Multi-step detection
         if self._is_multi_step(text):
