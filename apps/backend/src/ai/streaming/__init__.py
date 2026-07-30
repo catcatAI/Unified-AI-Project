@@ -1,26 +1,25 @@
-"""
-AI Streaming Infrastructure
-
-Unified token stream infrastructure for incremental, multi-source synthesis.
-"""
 from .token_stream import TokenStream, StreamToken, TokenType, StreamConfig
 from .synthesizer import StreamSynthesizer, SynthesizerConfig
 from .producers import (
-    PredictiveProducer,
-    RetrievalProducer, 
-    GenerativeProducer,
-    ProducerConfig,
+    SectionProducer,
+    ParagraphProducer,
+    SentenceProducer,
+    TokenProducer,
+    BaseLevelProducer,
 )
+from .pipeline import StreamingPipeline
 
 __all__ = [
     "TokenStream",
-    "StreamToken", 
+    "StreamToken",
     "TokenType",
     "StreamConfig",
     "StreamSynthesizer",
     "SynthesizerConfig",
-    "PredictiveProducer",
-    "RetrievalProducer",
-    "GenerativeProducer",
-    "ProducerConfig",
+    "SectionProducer",
+    "ParagraphProducer",
+    "SentenceProducer",
+    "TokenProducer",
+    "BaseLevelProducer",
+    "StreamingPipeline",
 ]

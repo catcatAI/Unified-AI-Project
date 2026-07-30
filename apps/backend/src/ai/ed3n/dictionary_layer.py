@@ -96,19 +96,20 @@ class DictionaryLayer:
     MAX_ENCODE_KEYS: int = limit_value("ai.dictionary_layer.max_encode_keys", 5)
     MIN_ENCODE_SCORE: float = threshold_value("ai.dictionary_layer.min_encode_score", 0.25)
 
-    def encode(self, text: str, modality: str = "text") -> List[str]:
+    def encode(self, text: str, modality: str = "text", max_keys: Optional[int] = None) -> List[str]:
         raw: List[str]
         with self._lock:
             raw = self._encode_locked(text, modality)
-        if len(raw) <= self.MAX_ENCODE_KEYS:
+        cap = max_keys if max_keys is not None else self.MAX_ENCODE_KEYS
+        if len(raw) <= cap:
             return raw
         soft = self.encode_soft(text)
         scored = [(k, soft.get(k, 0.0)) for k in raw]
         scored.sort(key=lambda x: x[1], reverse=True)
         filtered = [k for k, s in scored if s >= self.MIN_ENCODE_SCORE]
         if not filtered:
-            return raw[: self.MAX_ENCODE_KEYS]
-        return filtered[: self.MAX_ENCODE_KEYS]
+            return raw[:cap]
+        return filtered[:cap]
 
     def encode_soft(self, text: str) -> Dict[str, float]:
         if not text or not isinstance(text, str):

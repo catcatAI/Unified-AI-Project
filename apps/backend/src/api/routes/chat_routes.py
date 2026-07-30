@@ -1794,3 +1794,24 @@ async def chat_with_audio(
         session_id=session_id,
         origin="Human",
     )
+
+
+@router.post("/document/learn")
+async def learn_document(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """Learn a document into GARDEN + ED3N engines."""
+    text = request.get("text", request.get("content", ""))
+    source = request.get("source", request.get("filename", "inline"))
+    if not text:
+        return {"status": "error", "message": "No text provided"}
+    from ai.document.learner import DocumentLearner
+    from ai.garden.garden_engine import GARDENEngine
+    from ai.ed3n.ed3n_engine import ED3NEngine
+    try:
+        garden = GARDENEngine()
+        ed3n = ED3NEngine.get_shared(load_trained=False)
+        learner = DocumentLearner(garden_engine=garden, ed3n_engine=ed3n)
+        result = learner.learn(text, source=source)
+        return {"status": result.get("status", "ok"), "sections": result.get("sections", 0)}
+    except Exception as e:
+        logger.warning("Document learn failed: %s", e, exc_info=True)
+        return {"status": "error", "message": safe_error(e)}

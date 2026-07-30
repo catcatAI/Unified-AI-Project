@@ -3,6 +3,7 @@ ANGELA-MATRIX: [L5] [αβγδεθ] [A] [L3]
 Dedicated WebSocket handler for /multimodal/stream — persistent connection for real-time multimodal operations.
 """
 
+import asyncio
 import json
 import logging
 from typing import Any, Dict, Optional
@@ -40,7 +41,7 @@ async def multimodal_stream_handler(websocket: WebSocket) -> None:
             payload = data.get("data", data.get("payload", {}))
 
             try:
-                result = await _dispatch(svc, action, payload)
+                result = await _dispatch(svc, action, payload, websocket)
                 await websocket.send_json({"action": action, "status": "ok", "result": result})
             except Exception as e:
                 logger.warning(f"Multimodal WS action '{action}' failed: {e}")
@@ -54,7 +55,7 @@ async def multimodal_stream_handler(websocket: WebSocket) -> None:
         logger.error(f"Multimodal WS error: {e}")
 
 
-async def _dispatch(svc: MultimodalService, action: str, payload: Dict[str, Any]) -> Any:
+async def _dispatch(svc: MultimodalService, action: str, payload: Dict[str, Any], websocket: Optional[WebSocket] = None) -> Any:
     if action in ("encode", "multimodal_encode"):
         return await svc.encode(
             (
@@ -98,5 +99,46 @@ async def _dispatch(svc: MultimodalService, action: str, payload: Dict[str, Any]
         return await svc.health()
     elif action == "memory_search":
         return await svc.memory_search(payload.get("query", ""), payload.get("top_k", 5))
+    elif action in ("chat_stream", "chat"):
+        return await _handle_chat_stream(websocket, payload)
     else:
         raise ValueError(f"Unknown multimodal action: {action}")
+
+
+async def _handle_chat_stream(websocket: WebSocket, payload: Dict[str, Any]) -> str:
+    """Run streaming pipeline and send tokens progressively."""
+    text = payload.get("text", payload.get("content", ""))
+    if not text:
+        return "empty_input"
+
+    from ai.streaming import StreamingPipeline, TokenStream, StreamConfig
+    from ai.garden.garden_engine import GARDENEngine
+    from ai.ed3n.ed3n_engine import ED3NEngine
+
+    garden = GARDENEngine()
+    ed3n = ED3NEngine.get_shared(load_trained=False)
+
+    stream = TokenStream(StreamConfig(buffer_size=100))
+    pipeline = StreamingPipeline(garden=garden, ed3n=ed3n)
+    pipeline_task = asyncio.create_task(pipeline.stream(text, stream))
+
+    full_response = ""
+    async for token in stream:
+        if token.type.value == "control":
+            if "DONE" in token.content:
+                break
+            continue
+        ttype = "predicted" if token.confidence < 0.7 else "corrected"
+        msg = {
+            "type": ttype,
+            "content": token.content,
+            "confidence": round(token.confidence, 2),
+            "level": token.metadata.get("level", "unknown"),
+            "pass": token.metadata.get("pass", "fast"),
+        }
+        await websocket.send_json(msg)
+        full_response += token.content + " "
+
+    await pipeline_task
+    await websocket.send_json({"type": "control", "content": "[DONE]"})
+    return full_response.strip()

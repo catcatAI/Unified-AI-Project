@@ -1,18 +1,14 @@
-"""
-Streaming Pipeline Integration
-
-Main entry point for the streaming pipeline.
-"""
 from .token_stream import TokenStream, StreamToken, TokenType, StreamConfig
-from .synthesizer_core import StreamSynthesizer, SynthesizerConfig, SynthesizerConfig
+from .synthesizer_core import StreamSynthesizer, SynthesizerConfig
 from .producers import (
-    PredictiveProducer,
-    RetrievalProducer, 
-    GenerativeProducer,
+    SectionProducer,
+    ParagraphProducer,
+    SentenceProducer,
+    TokenProducer,
+    BaseLevelProducer,
     ProducerConfig,
-    BaseProducer,
-    create_producers,
 )
+from .pipeline import StreamingPipeline
 
 __all__ = [
     "TokenStream",
@@ -21,10 +17,11 @@ __all__ = [
     "StreamConfig",
     "SynthesizerConfig",
     "StreamSynthesizer",
-    "PredictiveProducer",
-    "RetrievalProducer",
-    "GenerativeProducer",
+    "SectionProducer",
+    "ParagraphProducer",
+    "SentenceProducer",
+    "TokenProducer",
+    "BaseLevelProducer",
     "ProducerConfig",
-    "BaseProducer",
-    "create_producers",
+    "StreamingPipeline",
 ]
