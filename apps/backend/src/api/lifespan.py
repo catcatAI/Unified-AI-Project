@@ -37,6 +37,7 @@ _level5_asi_instance = None
 _training_coordinator_instance = None
 _lifecycle_instance = None
 _heartbeat_instance = None
+_brain_bridge_instance = None
 
 
 # --- Config (lazy proxy) ---
@@ -260,6 +261,28 @@ async def _try_start_bio():
         logger.warning(f"[Bio] BiologicalIntegrator initialization failed: {e}")
 
 
+async def _try_start_brain_bridge():
+    """Start BrainBridgeService if DLI is available.
+
+    BrainBridgeService writes data/brain_status.json which prompt_builder's
+    get_biological_state() consumes as its Priority 2 fallback. Without this
+    startup hook, the file is never produced and the consumer always misses.
+    """
+    global _brain_bridge_instance
+    try:
+        from services.brain_bridge_service import BrainBridgeService
+
+        dli = get_digital_life()
+        if not dli:
+            logger.warning("[BrainBridge] DLI not available — bridge not started")
+            return
+        _brain_bridge_instance = BrainBridgeService(dli)
+        await _brain_bridge_instance.start()
+        logger.info("[BrainBridge] BrainBridgeService started")
+    except Exception as e:
+        logger.warning(f"[BrainBridge] Startup failed: {e}")
+
+
 async def _try_start_agents():
     """Initialize AgentManager and register specialized agents."""
     global _agent_manager_instance
@@ -465,6 +488,12 @@ async def _shutdown_services(broadcast_task, module_manager):
             logger.info("[Bio] BiologicalIntegrator shut down")
         except Exception as e:
             logger.warning(f"[Bio] BiologicalIntegrator shutdown error: {e}")
+    if _brain_bridge_instance is not None:
+        try:
+            await _brain_bridge_instance.stop()
+            logger.info("[BrainBridge] BrainBridgeService stopped")
+        except Exception as e:
+            logger.warning(f"[BrainBridge] Shutdown error: {e}")
     if broadcast_task is not None:
         broadcast_task.cancel()
         try:
@@ -496,6 +525,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     _init_plugins()
     _bio = await _try_start_bio()
+    await _try_start_brain_bridge()
     _agents = await _try_start_agents()
     _crisis = _try_init_crisis()
     _causal = _try_init_causal_reasoning()

@@ -83,9 +83,7 @@ def get_biological_state(context=None) -> str:
 
     # Priority 2: File-based state (fallback)
     try:
-        brain_path = os.path.join(
-            os.path.dirname(__file__), "..", "..", "data", "brain_status.json"
-        )
+        brain_path = str(Path(__file__).resolve().parents[3] / "data" / "brain_status.json")
         if os.path.exists(brain_path):
             with open(brain_path, "r", encoding="utf-8") as f:
                 data = json.load(f)

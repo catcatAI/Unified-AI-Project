@@ -74,6 +74,8 @@ def _get_backend():
     """Return (module, is_torch) — prefers torch, falls back to numpy."""
     global _xp, _is_torch
     if _xp is None:
+        from core.system.config.magic_numbers import compute_log_fallback
+
         if _check_torch_subprocess():
             try:
                 import torch
@@ -82,11 +84,13 @@ def _get_backend():
                 _is_torch = True
                 logger.debug("SNN using torch backend")
             except ImportError:
-                logger.info("torch not installed; SNN using numpy backend")
+                if compute_log_fallback():
+                    logger.info("torch not installed; SNN using numpy backend")
                 _xp = np
                 _is_torch = False
         else:
-            logger.info("torch unavailable (subprocess check failed); SNN using numpy backend")
+            if compute_log_fallback():
+                logger.info("torch unavailable (subprocess check failed); SNN using numpy backend")
             _xp = np
             _is_torch = False
     return _xp, _is_torch
@@ -258,10 +262,15 @@ class TensorSNNCore:
 
         from core.system.config.magic_numbers import compute_int, limit_value, model_sizing_config
 
-        # Use dynamic model sizing config (conservative/extended) unless explicit values passed.
+        # Use compute config (profile-aware) unless explicit values passed.
+        # Falls back to dynamic model sizing config (conservative/extended).
         sizing = model_sizing_config()
-        self.max_vocab = max_vocab if max_vocab > 0 else sizing["max_vocab"]
-        self.connection_budget = connection_budget if connection_budget > 0 else sizing["connection_budget"]
+        self.max_vocab = max_vocab if max_vocab > 0 else compute_int("garden_snn", "max_vocab", sizing["max_vocab"])
+        self.connection_budget = (
+            connection_budget
+            if connection_budget > 0
+            else compute_int("garden_snn", "connection_budget", sizing["connection_budget"])
+        )
         logger.info(
             "SNN sizing: max_vocab=%d, connection_budget=%d (%.1fMB matrix)",
             self.max_vocab,

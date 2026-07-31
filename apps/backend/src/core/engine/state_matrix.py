@@ -36,6 +36,7 @@ from core.engine.cognitive_operations import perform_spatial_reasoning as _psr
 from core.engine.cognitive_operations import (
     set_intent_target,
 )
+from core.state.text_to_vector import text_to_vector as _text_to_vector_impl
 
 logger = logging.getLogger(__name__)
 
@@ -452,15 +453,7 @@ class StateMatrix4D:
 
     def _text_to_vector(self, text: str, size: int) -> List[float]:
         """将文本转换为低维语义向量（基于词频哈希）/ Convert text to low-dim semantic vector"""
-        words = text.lower().split()
-        vector = [0.0] * size
-        for i, word in enumerate(words):
-            hash_val = hash(word) % size
-            vector[hash_val] += 0.5 * (1.0 if i % 2 == 0 else -0.3)
-        norm = math.sqrt(sum(v * v for v in vector))
-        if norm > 0:
-            vector = [v / norm for v in vector]
-        return vector
+        return _text_to_vector_impl(text, size)
 
     def apply_epsilon_influence(self) -> None:
         """

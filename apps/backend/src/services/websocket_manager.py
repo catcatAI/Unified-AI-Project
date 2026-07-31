@@ -15,7 +15,7 @@ from typing import Any, Dict, Optional, Tuple
 from core.system.config.magic_numbers import loop_sleep, timeout_value
 from core.system.live_logger import err as live_err
 from core.system.live_logger import info as live_info
-from core.system.live_logger import status as live_status
+from core.system.live_logger import status_interval
 from core.utils import safe_error
 from fastapi import WebSocket, WebSocketDisconnect
 from services.connection_session import get_session_manager
@@ -303,7 +303,7 @@ async def broadcast_state_updates() -> None:
         except Exception as e:
             live_err(f"Broadcast: {e}", "broadcast")
         await asyncio.sleep(_interval)
-        live_status(f"WS broadcast ({len(manager.active_connections)} clients, {_interval:.1f}s)")
+        status_interval(f"WS broadcast ({len(manager.active_connections)} clients)", _interval)
 
 
 async def _handle_handshake(websocket: WebSocket) -> Optional[tuple]:

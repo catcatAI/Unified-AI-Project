@@ -324,7 +324,7 @@ class DynamicThresholdManager:
             if not self.hardware_profile:
                 return
 
-            profile_name = self.hardware_profile.get_profile_name()
+            profile_name = self.hardware_profile.scenario.value
 
             # 根据硬件配置加载约束
             hardware_configs = {
@@ -378,7 +378,7 @@ class DynamicThresholdManager:
             self.hardware_constraints = {
                 config_name: config
                 for config_name, config in hardware_configs.items()
-                if config_name in self.hardware_profile.get_hardware_profile()
+                if config_name == self.hardware_profile.scenario.value
             }
 
             logger.debug(f"Loaded {len(self.hardware_constraints)} hardware constraint sets")
@@ -780,7 +780,7 @@ class DynamicThresholdManager:
 
             # 硬件信息
             if self.hardware_profile:
-                profile_name = self.hardware_profile.get_profile_name()
+                profile_name = self.hardware_profile.scenario.value
                 system_info["hardware_profile"] = profile_name
                 system_info["hardware_constraints"] = self.hardware_constraints.get(profile_name, {})
 
@@ -857,11 +857,14 @@ class DynamicThresholdManager:
         # 检查硬件约束
         if "hardware_constraints" in system_info:
             constraints = system_info["hardware_constraints"]
-            if metrics.get("resource_usage", 0) > constraints.get("cpu_limit", 1.0):
+            cpu_limit = getattr(constraints, "cpu_limit", 1.0)
+            memory_limit = getattr(constraints, "memory_limit", 1.0)
+            thermal_limit = getattr(constraints, "thermal_limit", 1.0)
+            if metrics.get("resource_usage", 0) > cpu_limit:
                 violations.append("cpu_usage_exceeded")
-            if metrics.get("memory_usage", 0) > constraints.get("memory_limit", 1.0):
+            if metrics.get("memory_usage", 0) > memory_limit:
                 violations.append("memory_usage_exceeded")
-            if metrics.get("resource_usage", 0) > constraints.get("thermal_limit", 1.0):
+            if metrics.get("resource_usage", 0) > thermal_limit:
                 violations.append("thermal_limit_exceeded")
 
         return violations
@@ -918,7 +921,9 @@ class DynamicThresholdManager:
             return False
 
         constraints = system_info["hardware_constraints"]
-        return constraints.get("cpu_limit", 1.0) < 0.8 or constraints.get("memory_limit", 1.0) < 0.8
+        cpu_limit = getattr(constraints, "cpu_limit", 1.0)
+        memory_limit = getattr(constraints, "memory_limit", 1.0)
+        return cpu_limit < 0.8 or memory_limit < 0.8
 
     def _generate_adaptation_recommendations(
         self,
@@ -1116,33 +1121,36 @@ class DynamicThresholdManager:
         adaptations = []
 
         # 获取当前硬件配置
-        profile_name = self.hardware_profile.get_profile_name()
+        profile_name = self.hardware_profile.scenario.value
         constraints = self.hardware_constraints.get(profile_name, {})
 
         if not constraints:
             return adaptations
 
         # 根据硬件约束调整阈值
-        if constraints.get("cpu_limit", 1.0) < 0.8:
+        cpu_limit = constraints.cpu_limit if constraints else 1.0
+        memory_limit = constraints.memory_limit if constraints else 1.0
+
+        if cpu_limit < 0.8:
             adaptations.append({
                 "type": "hardware",
                 "target": "temperature_threshold",
                 "before": self.thresholds["temperature_threshold"].value,
-                "after": self.thresholds["temperature_threshold"].value * constraints.get("cpu_limit", 0.8),
-                "improvement": constraints.get("cpu_limit", 0.8) - self.thresholds["temperature_threshold"].value,
+                "after": self.thresholds["temperature_threshold"].value * cpu_limit,
+                "improvement": cpu_limit - self.thresholds["temperature_threshold"].value,
                 "performance_gain": 0.0,
-                "feedback": f"Hardware constraint: CPU limit {constraints.get('cpu_limit', 0.8)}",
+                "feedback": f"Hardware constraint: CPU limit {cpu_limit}",
             })
 
-        if constraints.get("memory_limit", 1.0) < 0.8:
+        if memory_limit < 0.8:
             adaptations.append({
                 "type": "hardware",
                 "target": "confidence_threshold",
                 "before": self.thresholds["confidence_threshold"].value,
-                "after": self.thresholds["confidence_threshold"].value * constraints.get("memory_limit", 0.8),
-                "improvement": constraints.get("memory_limit", 0.8) - self.thresholds["confidence_threshold"].value,
+                "after": self.thresholds["confidence_threshold"].value * memory_limit,
+                "improvement": memory_limit - self.thresholds["confidence_threshold"].value,
                 "performance_gain": 0.0,
-                "feedback": f"Hardware constraint: Memory limit {constraints.get('memory_limit', 0.8)}",
+                "feedback": f"Hardware constraint: Memory limit {memory_limit}",
             })
 
         return adaptations
@@ -1388,6 +1396,16 @@ class DynamicThresholdManager:
 
     def get_system_status(self) -> Dict[str, Any]:
         """获取系统状态"""
+        history = list(self.adaptation_history)
+        if history:
+            improvements = [entry.improvement for entry in history]
+            performance_gains = [entry.performance_gain for entry in history]
+            adaptation_efficiency = sum(improvements) / len(improvements)
+            optimization_effectiveness = sum(performance_gains) / len(performance_gains)
+        else:
+            adaptation_efficiency = 0.0
+            optimization_effectiveness = 0.0
+
         return {
             "timestamp": time.time(),
             "is_initialized": True,
@@ -1395,9 +1413,9 @@ class DynamicThresholdManager:
             "performance_history_size": len(self.performance_history),
             "adaptation_history_size": len(self.adaptation_history),
             "thresholds_count": len(self.thresholds) + len(self.performance_thresholds),
-            "hardware_profile": self.hardware_profile.get_profile_name() if self.hardware_profile else "unknown",
-            "adaptation_efficiency": self._calculate_adaptation_efficiency(),
-            "optimization_effectiveness": self._calculate_optimization_effectiveness(),
+            "hardware_profile": self.hardware_profile.scenario.value if self.hardware_profile else "unknown",
+            "adaptation_efficiency": adaptation_efficiency,
+            "optimization_effectiveness": optimization_effectiveness,
         }
 
     def reset_system(self) -> None:

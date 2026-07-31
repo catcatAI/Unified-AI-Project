@@ -309,7 +309,7 @@ def is_deterministic_match(user_text: str, response_text: str) -> bool:
     for fn, etype in engines:
         result = fn(user_text)
         if result is not None and _output_matches(result, response_text, etype):
-            _learn_template(user_text, response_text, etype, result)
+            record_template_match(user_text, response_text, etype, result)
             return True
     return False
 

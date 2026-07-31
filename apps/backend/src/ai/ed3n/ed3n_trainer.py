@@ -291,10 +291,15 @@ class ED3NTrainer:
         return trainer
 
     def train_from_replay(self, batch_size: Optional[int] = None) -> Optional[TrainMetrics]:
+        from core.system.config.magic_numbers import compute_float
+
         batch_size = (
             batch_size
             if batch_size is not None
-            else batch_value("ai.ed3n.trainer.replay_batch_size", 32)
+            else int(
+                batch_value("ai.ed3n.trainer.replay_batch_size", 32)
+                * compute_float("ed3n_snn", "batch_size_multiplier", 1.0)
+            )
         )
         if self.replay_buffer is None:
             logger.warning("No replay buffer set; skipping replay training")
