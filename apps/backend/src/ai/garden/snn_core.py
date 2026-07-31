@@ -487,6 +487,18 @@ class TensorSNNCore:
                 a[idx] = max(0.0, min(1.0, conf))
                 self._touch(idx)
 
+        # NeuralBridge injection: the context slot was declared but never read.
+        # StateMatrix axis values (mapped to concept keys, all in [0,1]) are
+        # merged into the initial activations — a minimal-translation direct
+        # numeric link (no vector projection). Skip keys outside the vocab.
+        neural_state = (context or {}).get("neural_state")
+        if neural_state:
+            for key, conf in neural_state.items():
+                idx = self._key_to_idx.get(key)
+                if idx is not None and a[idx] == 0:
+                    a[idx] = max(0.0, min(1.0, conf))
+                    self._touch(idx)
+
         if a.sum() == 0.0:
             return {}
 

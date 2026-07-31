@@ -820,6 +820,14 @@ class AngelaLLMService:
         if knowledge_result is not None:
             return knowledge_result
 
+        # NeuralBridge: when the switch is ON, bypass the LLM text-based
+        # transfer and route through the direct neural connection (StateMatrix
+        # → GARDEN SNN → StateMatrix). Falls back to the normal LLM path if the
+        # neural route produces no usable response.
+        neural_result = await self._try_neural_bridge(user_message, context)
+        if neural_result is not None:
+            return neural_result
+
         if not self.is_available or self.active_backend is None:
             bus_result = await self._try_model_bus(user_message, context)
             if bus_result is not None:
@@ -970,6 +978,54 @@ class AngelaLLMService:
             self.stats["total_response_time"] / self.stats["total_requests"]
         )
         self.stats["memory_hit_rate"] = self.stats["memory_hits"] / self.stats["total_requests"]
+
+    async def _try_neural_bridge(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
+        """NeuralBridge path — bypasses LLM text transfer when the switch is ON.
+
+        Routes the message through the direct neural connection: StateMatrix
+        axis values are injected into the GARDEN SNN as input activations and
+        the SNN output is written back to the state matrix. Returns None when
+        the switch is off, the GARDEN backend is unavailable, or the neural
+        route produced no usable response (caller then falls back to LLM).
+        """
+        try:
+            from ai.bridge.neural_bridge import neural_bridge_enabled
+
+            if not neural_bridge_enabled():
+                return None
+        except Exception:
+            return None
+
+        from services.llm.providers.registry import LLMBackend
+
+        garden_backend = self.backends.get(LLMBackend.GARDEN)
+        if garden_backend is None:
+            return None
+
+        start_time = time.time()
+        try:
+            result = await garden_backend.generate(user_message, context=context)
+        except Exception as e:
+            logger.warning(f"NeuralBridge route failed: {e}", exc_info=True)
+            return None
+
+        if not result or not result.text or result.text in _KNOWN_FALLBACK_RESPONSES:
+            return None
+
+        response_time_ms = (time.time() - start_time) * 1000
+        result.metadata = result.metadata or {}
+        result.metadata["neural_bridge"] = True
+        result.metadata["bypassed_llm"] = True
+        result.metadata["route"] = "neural_bridge"
+        result.response_time_ms = response_time_ms
+        logger.info(
+            f"NeuralBridge route: {response_time_ms:.0f}ms "
+            f"(bypassed LLM text transfer)"
+        )
+        self.stats["total_response_time"] += response_time_ms
+        return result
 
     async def _try_template_match(
         self, user_message: str, context: Dict[str, Any], start_time: float

@@ -519,6 +519,15 @@ class GARDENEngine:
         self._learn_count = 0
         self._learning_enabled = True
         self._last_confidence = 0.0
+        self._last_network_output: Dict[str, float] = {}
+
+    def get_last_network_output(self) -> Dict[str, float]:
+        """Return the most recent SNN forward() activation output (writeback source).
+
+        Used by the NeuralBridge to map SNN activations back into the
+        StateMatrix axis values, closing the minimal-translation loop.
+        """
+        return dict(self._last_network_output or {})
 
     # ------------------------------------------------------------------
     # Preset / init
@@ -671,6 +680,7 @@ class GARDENEngine:
 
         # Stage 6: SNN forward
         network_output = self.snn.forward(input_keys, context=context)
+        self._last_network_output = network_output
 
         # Stage 7: Anchored decode
         response = _anchored_decode(network_output, input_keys, self.dictionary, original_text=text)

@@ -49,6 +49,13 @@ compute:
     max_vocab: 50000                # Auto-reduced on CPU
     connection_budget: 100000       # Auto-reduced on CPU
 
+  # NeuralBridge — StateMatrix ↔ GARDEN/ED3N SNN direct numeric connection.
+  # When "on", state axis values are injected into the SNN as input
+  # activations and SNN outputs are written back to the state matrix,
+  # bypassing the LLM text-based transfer.
+  neural_bridge:
+    mode: "off"                     # off | auto | on
+
   # ThreeLayerVisual decoder training
   three_layer_visual:
     mode: "auto"
