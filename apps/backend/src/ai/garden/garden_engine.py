@@ -238,10 +238,13 @@ def _math_value_matches(engine_output: str, expected: str) -> bool:
     ``"0.7976"`` (different rounding), or engine ``"100 / 4 = 25"`` vs
     training ``"25.0"`` (int vs float representation).
 
-    Uses the LAST number in engine output (the computed result) and checks
-    against EVERY number in expected (to handle ``"the answer is 279"``).
+    Uses the number on the RESULT side of engine output (after ``" = "``,
+    avoiding operands in number-theory outputs like ``"17 is prime = true"``)
+    and checks against EVERY number in expected (to handle
+    ``"the answer is 279"``).
     """
-    eng_nums = re.findall(r"-?\d+(?:\.\d+)?", engine_output)
+    result_part = engine_output.split(" = ", 1)[-1] if " = " in engine_output else engine_output
+    eng_nums = re.findall(r"-?\d+(?:\.\d+)?", result_part)
     exp_nums = re.findall(r"-?\d+(?:\.\d+)?", expected)
     if not eng_nums or not exp_nums:
         return False

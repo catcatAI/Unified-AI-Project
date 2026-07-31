@@ -58,7 +58,7 @@ class CardImportPipeline:
         self.timeline_resolver = TimelineResolver()
         self.text_gravity = TextGravityField()
         self.token_extractor = TokenExtractor()
-        self.llm_fallback = LLMFallback()
+        self.llm_fallback = LLMFallback(llm_service=self.llm_service)
 
     def process(self, raw_text: str, source_label: str = "unknown") -> PipelineResult:
         """Process incoming data."""

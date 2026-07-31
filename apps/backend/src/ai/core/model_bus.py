@@ -19,6 +19,11 @@ _ENGINE_FALLBACK_STRINGS = frozenset(
     {
         "抱歉，我没理解你的意思。",
         "抱歉，我沒理解你的意思。",
+        "抱歉，我暂时无法理解你的意思。",
+        "抱歉，我無法理解你的意思。",
+        "抱歉，我无法理解这些步骤。",
+        "Sorry, I didn't understand what you meant.",
+        "Sorry, I couldn't understand what you meant.",
         "",
     }
 )

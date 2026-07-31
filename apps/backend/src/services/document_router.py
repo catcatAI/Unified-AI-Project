@@ -245,13 +245,13 @@ async def _try_local_processing(
     try:
         from ai.ed3n.ed3n_engine import ED3NEngine
 
-        engine = ED3NEngine.get_instance()
+        engine = ED3NEngine.get_shared()
         file_summaries = []
         for f in files[:5]:
             content = await _read_file_content(f)
-            result = await engine.process(content[:2000], depth="shallow")
-            if result and result.get("output"):
-                file_summaries.append(f"{f.name}: {result['output'][:200]}")
+            result = engine.process(content[:2000], depth="shallow")
+            if result:
+                file_summaries.append(f"{f.name}: {result[:200]}")
         if file_summaries:
             summary = "\n".join(file_summaries)
             return {
@@ -269,9 +269,9 @@ async def _try_local_processing(
         file_summaries = []
         for f in files[:5]:
             content = await _read_file_content(f)
-            result = await engine.process(content[:2000])
-            if result and result.get("output"):
-                file_summaries.append(f"{f.name}: {result['output'][:200]}")
+            result = engine.process(content[:2000])
+            if result:
+                file_summaries.append(f"{f.name}: {result[:200]}")
         if file_summaries:
             summary = "\n".join(file_summaries)
             return {
@@ -374,7 +374,7 @@ async def _learn_from_llm_output(
     try:
         from ai.ed3n.ed3n_engine import ED3NEngine
 
-        engine = ED3NEngine.get_instance()
+        engine = ED3NEngine.get_shared()
         engine.learn_reflex(f"doc_{task_type}", llm_output[:200])
     except Exception as e:
         logger.warning("ED3N learn_reflex failed in document_router: %s", e, exc_info=True)

@@ -73,7 +73,7 @@ async def _run_repl() -> None:
 
         print("\U0001f4ad Angela: ", end="", flush=True)
         response = await service.generate_response(text)
-        print(response)
+        print(getattr(response, "text", response))
         cmd_history.append(text)
         if len(cmd_history) > 100:
             cmd_history = cmd_history[-100:]

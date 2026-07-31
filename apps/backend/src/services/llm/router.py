@@ -1175,6 +1175,8 @@ class AngelaLLMService:
                 decision = await self.model_bus.route(user_message, query_type, context)
                 if decision.selected_model != "none":
                     result = decision.results[decision.selected_model]
+                    if not result.text or result.text in _KNOWN_FALLBACK_RESPONSES:
+                        return None
                     return LLMResponse(
                         text=result.text,
                         backend=result.model_id,
@@ -1209,7 +1211,7 @@ class AngelaLLMService:
             if backend:
                 try:
                     result = await backend.generate(user_message, context=context)
-                    if result and result.text:
+                    if result and result.text and result.text not in _KNOWN_FALLBACK_RESPONSES:
                         result.metadata = result.metadata or {}
                         result.metadata["fallback"] = True
                         result.metadata["tier"] = tier_name
