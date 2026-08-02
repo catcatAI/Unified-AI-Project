@@ -749,6 +749,11 @@ async def _try_agent_routing(
         from ai.agents.agent_orchestrator import AgentOrchestrator
         from ai.core.query_classifier import QueryClassifier, QueryType
 
+        try:
+            from api.lifespan import get_agent_manager as _lifespan_get_agent_manager
+        except ImportError:
+            _lifespan_get_agent_manager = None
+
         classifier = QueryClassifier(ed3n_engine=_get_ed3n_engine())
         classify_result = classifier.classify(user_message)
 
@@ -776,12 +781,18 @@ async def _try_agent_routing(
         if classify_result.primary_type not in agent_types and classify_result.confidence < 0.3:
             return None
 
-        # Singleton: lazy-init agent manager + orchestrator once, reuse across requests
+        # Singleton: lazy-init agent manager + orchestrator once, reuse across requests.
+        # Prefer the lifespan-initialized AgentManager singleton when available so
+        # specialized agents are only registered once per process.
+        if _agent_manager_instance is None and _lifespan_get_agent_manager is not None:
+            _agent_manager_instance = _lifespan_get_agent_manager()
         if _agent_manager_instance is None:
             _agent_manager_instance = AgentManager(enable_process_agents=False, enable_router=False)
             register_specialized_agents(_agent_manager_instance)
             _agent_orchestrator_instance = AgentOrchestrator(agent_manager=_agent_manager_instance)
             logger.info("AgentManager/AgentOrchestrator singletons initialized")
+        elif _agent_orchestrator_instance is None:
+            _agent_orchestrator_instance = AgentOrchestrator(agent_manager=_agent_manager_instance)
         agent_mgr = _agent_manager_instance
         orchestrator = _agent_orchestrator_instance
         route_result = await orchestrator.route_task(user_message, context)
