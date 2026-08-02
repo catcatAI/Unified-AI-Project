@@ -146,14 +146,20 @@ def get_action_executor():
         return None
 
 
-def get_vision_service():
-    try:
-        from services.vision_service import VisionService
+_vision_service_instance = None
 
-        return VisionService()
-    except Exception as e:
-        logger.warning(f"VisionService not available: {e}")
-        return None
+
+def get_vision_service():
+    global _vision_service_instance
+    if _vision_service_instance is None:
+        try:
+            from services.vision_service import VisionService
+
+            _vision_service_instance = VisionService()
+        except Exception as e:
+            logger.warning(f"VisionService not available: {e}")
+            return None
+    return _vision_service_instance
 
 
 _tactile_service_instance = None

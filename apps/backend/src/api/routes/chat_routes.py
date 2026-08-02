@@ -137,6 +137,23 @@ def _get_bio_integrator():
     return _bio_integrator
 
 
+_vision_service = None
+
+
+def _get_vision_service():
+    global _vision_service
+    if _vision_service is None:
+        try:
+            from api.lifespan import get_vision_service
+
+            _vision_service = get_vision_service()
+        except ImportError:
+            from services.vision_service import VisionService
+
+            _vision_service = VisionService()
+    return _vision_service
+
+
 _dialogue_ctx_mgr = None
 
 
@@ -1712,21 +1729,20 @@ async def chat_with_image(
         try:
             if image_data is None:
                 image_data = await file.read()
-            from services.vision_service import VisionService
-
-            vision = VisionService()
-            analysis = await vision.process(
-                {
-                    "image_data": image_data,
+            vision = _get_vision_service()
+            if vision is not None:
+                analysis = await vision.process(
+                    {
+                        "image_data": image_data,
+                        "filename": file.filename,
+                        "question": message or "描述這張圖片",
+                    }
+                )
+                image_context = {
                     "filename": file.filename,
-                    "question": message or "描述這張圖片",
+                    "analysis": analysis,
+                    "image_data": image_data,
                 }
-            )
-            image_context = {
-                "filename": file.filename,
-                "analysis": analysis,
-                "image_data": image_data,
-            }
         except Exception as e:
             logger.warning(f"Image analysis failed, continuing with text only: {e}")
 
