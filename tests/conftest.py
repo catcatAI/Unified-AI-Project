@@ -20,6 +20,10 @@ if SRC_PATH not in sys.path:
 def pytest_configure(config):
     config.addinivalue_line("markers", "benchmark: mark tests for benchmarking")
     config.addinivalue_line("markers", "performance: mark tests for performance benchmarking")
+    # Prevent ED3NEngine from lazy-loading the full external dictionary
+    # (hundreds of thousands of entries) on every test's first process() call.
+    # Tests exercise presets/reflex logic, not the production dictionary corpus.
+    os.environ.setdefault("ANGELA_SKIP_EXTERNAL_DICTS", "1")
 
 
 def benchmark(func: Callable, *args, iterations: int = 10, **kwargs) -> Dict[str, float]:

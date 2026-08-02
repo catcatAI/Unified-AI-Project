@@ -162,6 +162,10 @@ class ED3NEngine:
         self.multimodal_adapter: Optional[Any] = None
         self._continuous_learning = continuous_learning
         self._external_dicts_loaded = False
+        self._dict_load_attempted = (
+            self._external_dicts_loaded
+            or os.environ.get("ANGELA_SKIP_EXTERNAL_DICTS", "").lower() in ("1", "true", "yes")
+        )
         self._last_confidence = 0.0
         self._dual_encoder_router: Optional[Any] = None
         self._semantic_key_mapper: Optional[Any] = None
@@ -243,17 +247,20 @@ class ED3NEngine:
     def process(
         self, input_text: str, context: Optional[Dict[str, Any]] = None, depth: str = "auto"
     ) -> str:
-        # Lazy-load external dictionaries on first query if not already loaded
+        # Lazy-load external dictionaries once, on first query, only if not
+        # already loaded or attempted. Prevents re-scanning/rebuilding the
+        # full dictionary on every subsequent query (cold-start only).
         if (
-            not self._external_dicts_loaded
+            not self._dict_load_attempted
             and self.dictionary is not None
             and len(self.dictionary.entries) < 100
         ):
             try:
                 count = self.load_external_dictionaries()
                 if count > 0:
-                    self._external_dicts_loaded = True
-                    logger.info("Lazy-loaded %d external dictionary entries on first query", count)
+                    logger.info(
+                        "Lazy-loaded %d external dictionary entries on first query", count
+                    )
             except Exception as e:
                 logger.warning("Lazy dictionary load failed (non-critical): %s", e, exc_info=True)
 
@@ -1376,6 +1383,7 @@ class ED3NEngine:
             self.dictionary._rebuild_index()
             self.network.sync_from_dictionary(self.dictionary)
             self._external_dicts_loaded = True
+        self._dict_load_attempted = True
         logger.info("ED3NEngine loaded %d external dictionary entries total.", total)
         return total
 

@@ -6,6 +6,7 @@ from ai.ed3n.ed3n_engine import ED3NEngine
 def engine():
     e = ED3NEngine()
     e.load_presets()
+    e._external_dicts_loaded = True
     return e
 
 
@@ -13,6 +14,7 @@ def engine():
 def trained_engine():
     e = ED3NEngine()
     e.load_presets()
+    e._external_dicts_loaded = True
     from ai.ed3n.ed3n_trainer import ED3NTrainer
     from ai.ed3n.training_types import TrainingBatch, TrainingExample
 
