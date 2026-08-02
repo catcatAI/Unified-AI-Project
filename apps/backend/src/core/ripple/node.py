@@ -196,12 +196,12 @@ ExponentialCascadeStrategy = ExponentialCascade
 AdaptiveCascadeStrategy = AdaptiveCascade
 
 AxisRippleApplicator = RippleApplicatorRegistry
-AlphaRippleApplicator = object
-BetaRippleApplicator = object
-GammaRippleApplicator = object
-DeltaRippleApplicator = object
-ThetaRippleApplicator = object
-EpsilonRippleApplicator = object
+AlphaRippleApplicator = RippleApplicatorRegistry
+BetaRippleApplicator = RippleApplicatorRegistry
+GammaRippleApplicator = RippleApplicatorRegistry
+DeltaRippleApplicator = RippleApplicatorRegistry
+ThetaRippleApplicator = RippleApplicatorRegistry
+EpsilonRippleApplicator = RippleApplicatorRegistry
 
 
 __all__ = [

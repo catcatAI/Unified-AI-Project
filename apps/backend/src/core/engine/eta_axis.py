@@ -291,18 +291,6 @@ class TriggerCurve:
         return max(0.1, min(0.9, current + delta))
 
 
-def hotplug_manager() -> str:
-    return "hotplug_manager"
-
-
-def eta_axis_runner() -> str:
-    return "eta_axis_runner"
-
-
-def main() -> str:
-    return "eta_axis_main"
-
-
 class EtaAxisState:
     def __init__(self):
         self.module_registry: Dict[str, ModuleConfig] = {}

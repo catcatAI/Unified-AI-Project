@@ -15,6 +15,8 @@ import paho.mqtt.client as mqtt
 
 logger = logging.getLogger(__name__)
 
+from mcp.fallback.mcp_fallback_protocols import initialize_fallback_protocols
+
 
 from shared.error import ProjectError
 
@@ -37,12 +39,16 @@ class MCPMessagePriority:
 
 
 class FallbackManager:
+    """Manage MCP fallback protocol instances and command routing."""
+
     def __init__(self):
         self._handlers: dict = {}
         self._command_log: list = []
 
     def register_command_handler(self, command_name, handler) -> None:
         self._handlers[command_name] = handler
+        for protocol in _fallback_protocols.values():
+            protocol.register_handler(command_name, handler)
 
     async def send_command(
         self, sender_id, recipient_id, command_name, parameters, priority
@@ -56,17 +62,29 @@ class FallbackManager:
                 "priority": priority,
             }
         )
+        for protocol in _fallback_protocols.values():
+            await protocol.send_message(
+                target=recipient_id, command=command_name, payload=parameters
+            )
         return True
 
     def get_status(self) -> dict:
         return {"active_protocol": "fallback", "queued_commands": len(self._command_log)}
 
 
+_fallback_protocols: dict = {}
+
+
 def get_mcp_fallback_manager() -> dict:
-    return FallbackManager()
+    manager = FallbackManager()
+    manager._fallback_protocols = _fallback_protocols
+    return manager
 
 
 async def initialize_mcp_fallback_protocols(is_multiprocess: bool) -> bool:
+    protocols = await initialize_fallback_protocols(is_multiprocess=is_multiprocess)
+    _fallback_protocols.clear()
+    _fallback_protocols.update(protocols)
     return True
 
 

@@ -30,6 +30,7 @@ class AudioProcessingAgent:
     def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         self.config = config or {}
         self.agent_id = kwargs.get("agent_id")
+        self.hsp_connector: Optional[Any] = None
         self.capabilities = [
             {
                 "name": "speech_recognition",
@@ -81,6 +82,12 @@ class AudioProcessingAgent:
                 "error_code": "INVALID_PARAMETERS",
                 "error_message": safe_error(e),
             }
+        if self.hsp_connector is None:
+            logger.warning(
+                f"AudioProcessingAgent hsp_connector not set; dropping task result for request {request_id}",
+                exc_info=True,
+            )
+            return
         await self.hsp_connector.send_task_result(result_payload)
 
     def _perform_speech_recognition(self, params: dict) -> dict:

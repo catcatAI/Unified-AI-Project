@@ -51,6 +51,7 @@ dist/
 # Data & Cache
 data/
 !data/README.md
+!tests/data/
 model_cache/
 logs/
 *.log
@@ -115,7 +116,6 @@ tmp/
 scripts/tests/
 # Root binary (Angela CLI)
 /acli.exe
-game/
 apps/backend/test_results/
 test_results/
 test_models/

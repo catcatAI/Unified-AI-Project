@@ -48,15 +48,19 @@ class FallbackProtocol:
         return count
 
 
-async def initialize_fallback_protocols(is_multiprocess: bool = False) -> bool:
-    """初始化所有备选通信协议"""
+async def initialize_fallback_protocols(
+    is_multiprocess: bool = False,
+) -> Dict[str, "FallbackProtocol"]:
+    """初始化所有备选通信协议并返回协议实例映射"""
     logger.info(f"[MCP-Fallback] Initializing protocols (multiprocess={is_multiprocess})...")
     protocols = {
-        FallbackProtocolType.IN_PROCESS: FallbackProtocol(FallbackProtocolType.IN_PROCESS),
+        FallbackProtocolType.IN_PROCESS.value: FallbackProtocol(
+            FallbackProtocolType.IN_PROCESS
+        ),
     }
     if is_multiprocess:
-        protocols[FallbackProtocolType.SHARED_MEMORY] = FallbackProtocol(
+        protocols[FallbackProtocolType.SHARED_MEMORY.value] = FallbackProtocol(
             FallbackProtocolType.SHARED_MEMORY
         )
     logger.info(f"[MCP-Fallback] {len(protocols)} protocol(s) initialized")
-    return True
+    return protocols

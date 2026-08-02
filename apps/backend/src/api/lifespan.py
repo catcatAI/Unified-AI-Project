@@ -156,16 +156,6 @@ def get_vision_service():
         return None
 
 
-def get_audio_service():
-    try:
-        from services.audio_service import AudioService
-
-        return AudioService()
-    except Exception as e:
-        logger.warning(f"AudioService not available: {e}")
-        return None
-
-
 _tactile_service_instance = None
 
 
@@ -208,6 +198,8 @@ async def get_level5_asi():
 
 def setup_middleware(app: FastAPI) -> None:
     """Configure application middleware."""
+    from core.api.versioning import APIVersionMiddleware
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -215,6 +207,7 @@ def setup_middleware(app: FastAPI) -> None:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.add_middleware(APIVersionMiddleware)
 
 
 _metrics_handler = None

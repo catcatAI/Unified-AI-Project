@@ -27,6 +27,7 @@ class CreativeWritingAgent:
     def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         self.config = config or {}
         self.agent_id = kwargs.get("agent_id")
+        self.hsp_connector: Optional[Any] = None
         self.capabilities = [
             {
                 "name": "generate_marketing_copy",
@@ -64,6 +65,12 @@ class CreativeWritingAgent:
         else:
             result_payload["status"] = "failure"
             result_payload["error_details"] = {"error_code": "CAPABILITY_NOT_SUPPORTED"}
+        if self.hsp_connector is None:
+            logger.warning(
+                f"CreativeWritingAgent hsp_connector not set; dropping task result for request {request_id}",
+                exc_info=True,
+            )
+            return
         await self.hsp_connector.send_task_result(result_payload)
 
     async def _generate_marketing_copy(self, params: dict) -> str:

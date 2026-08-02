@@ -166,7 +166,7 @@ class TrustManager:
 
         # 初始化风险阈值
         self.risk_thresholds = {
-            category: self.config["risk_thresholds"][category.value]
+            category.value: self.config["risk_thresholds"][category.value]
             for category in RiskCategory
         }
 

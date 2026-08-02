@@ -53,6 +53,24 @@ class ContextHAMIntegration:
                 logger.error(f"Context {context_id} not found", exc_info=True)
                 return False
 
+            # 将上下文内容转换为HAM conversation 记录并写入
+            conversation = {
+                "context_id": context.context_id,
+                "context_type": (
+                    context.context_type.value
+                    if hasattr(context.context_type, "value")
+                    else str(context.context_type)
+                ),
+                "content": context.content,
+                "metadata": context.metadata,
+                "created_at": context.created_at.isoformat(),
+                "updated_at": context.updated_at.isoformat(),
+            }
+            store = getattr(self.ham_manager, "store_conversation", None)
+            if not store:
+                logger.warning("HAM store_conversation not available, skipping sync", exc_info=True)
+                return False
+            store(conversation)
             logger.info(f"Synced context {context_id} to HAM memory")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
@@ -64,7 +82,7 @@ class ContextHAMIntegration:
         将HAM内存同步到上下文系统
 
         Args:
-            ham_memory_id: HAM内存ID
+            ham_memory_id: HAM内存ID (context_id 在 HAM 中的记录标识)
 
         Returns:
             Optional[str] 创建的上下文ID, 如果失败则返回None
@@ -74,9 +92,18 @@ class ContextHAMIntegration:
                 logger.warning("HAM manager not available, skipping sync", exc_info=True)
                 return None
 
-            # Retrieve memory data from HAM
-            memory_data = self.ham_manager.get_memory(ham_memory_id)
-            if not memory_data:
+            # 从 HAM conversations 中检索匹配记录
+            data = getattr(self.ham_manager, "_data", None)
+            if not data:
+                logger.warning("HAM data store not available, skipping sync", exc_info=True)
+                return None
+
+            conversation = None
+            for record in data.get("conversations", []):
+                if record.get("context_id") == ham_memory_id:
+                    conversation = record
+                    break
+            if not conversation:
                 logger.error(f"HAM memory {ham_memory_id} not found", exc_info=True)
                 return None
 
@@ -100,8 +127,19 @@ class ContextHAMIntegration:
             Optional[str]: 创建的记忆上下文ID, 如果不可用则返回None
         """
         try:
-            memory_id = ham_memory_data.get("memory_id", "unknown")
-            context_id = f"ctx_mem_{memory_id}"
+            create = getattr(self.context_manager, "create_context", None)
+            if not create:
+                logger.warning(
+                    "context_manager.create_context not available, cannot create memory context",
+                    exc_info=True,
+                )
+                return None
+            from ai.context.storage.base import ContextType
+
+            context_id = create(
+                ContextType.MEMORY,
+                {"content": ham_memory_data.get("content", ""), **ham_memory_data},
+            )
             logger.info(f"Created memory context {context_id} from HAM data")
             return context_id
         except (
@@ -126,6 +164,28 @@ class ContextHAMIntegration:
                 logger.warning("HAM manager not available, skipping update", exc_info=True)
                 return False
 
+            data = getattr(self.ham_manager, "_data", None)
+            if not data:
+                logger.warning("HAM data store not available, skipping update", exc_info=True)
+                return False
+
+            updated = False
+            for record in data.get("conversations", []):
+                if record.get("context_id") == memory_id:
+                    record["content"] = updates.get("content", record.get("content"))
+                    if "metadata" in updates:
+                        record["metadata"] = updates["metadata"]
+                    updated = True
+                    break
+            if not updated:
+                logger.warning(
+                    f"HAM memory {memory_id} not found for update", exc_info=True
+                )
+                return False
+
+            save = getattr(self.ham_manager, "_save", None)
+            if save:
+                save()
             logger.info(f"Updated HAM from memory context {memory_id}")
             return True
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
@@ -152,15 +212,33 @@ class ContextHAMIntegration:
                 logger.error(f"Source context {source_context_id} not found", exc_info=True)
                 return False
 
-            # 如果源上下文有关联的HAM记忆, 也进行转移
-            if "ham_memory_id" in source_context.content and self.ham_manager:
-                ham_id = source_context.content["ham_memory_id"]
-                transfer_method = getattr(self.ham_manager, "transfer_memory", None)
-                if transfer_method:
-                    try:
-                        transfer_method(ham_id, target_memory_type)
-                    except Exception as e:
-                        logger.warning(f"HAM memory transfer failed for {ham_id}: {e}")
+            # 创建目标上下文并转移内容
+            create = getattr(self.context_manager, "create_context", None)
+            if not create:
+                logger.warning(
+                    "context_manager.create_context not available, cannot transfer",
+                    exc_info=True,
+                )
+                return False
+            from ai.context.storage.base import ContextType
+
+            target_context_id = create(ContextType.MEMORY, dict(source_context.content))
+            transfer = getattr(self.context_manager, "transfer_context", None)
+            if transfer:
+                transfer(source_context_id, target_context_id)
+
+            # 同步到HAM(如果可用)
+            if self.ham_manager:
+                sync = getattr(self.ham_manager, "store_conversation", None)
+                if sync:
+                    sync(
+                        {
+                            "context_id": target_context_id,
+                            "memory_type": target_memory_type,
+                            "source_context_id": source_context_id,
+                            "content": dict(source_context.content),
+                        }
+                    )
 
             logger.info(f"Transferred context memory from {source_context_id}")
             return True

@@ -370,7 +370,11 @@ class AutonomousLifeCycle:
         npe_summary = self.non_paradox.get_non_paradox_summary()
         cognitive_gap = npe_summary["global_cognitive_gap"]
         coexistence_active = npe_summary["coexistence_active"]
-        resonance_total = npe_summary["resonance"]["total_active_resonance"]
+        resonance_value = npe_summary["resonance"]
+        if isinstance(resonance_value, dict):
+            resonance_total = resonance_value.get("total_active_resonance", 0)
+        else:
+            resonance_total = int(resonance_value)
 
         metrics = FormulaMetrics(
             timestamp=datetime.now(),

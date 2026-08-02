@@ -66,12 +66,6 @@ class InitializationError(AgentError):
     pass
 
 
-class ConfigurationError(AgentError):
-    """Error during configuration loading."""
-
-    pass
-
-
 class TaskPriority(Enum):
     LOW = 1
     NORMAL = 2

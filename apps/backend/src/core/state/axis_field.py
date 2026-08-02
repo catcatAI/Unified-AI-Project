@@ -27,7 +27,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -209,9 +209,7 @@ class AxisFieldEnum(Enum):
     但推薦直接用 AxisFieldRegistry.fields_for('alpha') 返回的列表。
     """
 
-    _registry: AxisFieldRegistry = field(default_factory=AxisFieldRegistry)
-
     @classmethod
     def get(cls, axis: str, name: str) -> Optional[AxisField]:
         """Execute the get operation."""
-        return cls._registry.get(axis, name)
+        return AxisFieldRegistry().get(axis, name)

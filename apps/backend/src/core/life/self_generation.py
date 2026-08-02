@@ -193,9 +193,20 @@ class SelfGeneration:
         self.avatars_by_id: Dict[str, GeneratedAvatar] = {}
 
         # Configuration
+        style_value = self.config.get("style", "ANIME")
+        if isinstance(style_value, str):
+            style_member = AvatarStyle.__members__.get(style_value.upper())
+            if style_member is None:
+                # Fall back to matching by the Chinese label value
+                style_member = next(
+                    (s for s in AvatarStyle if s.value[0] == style_value), AvatarStyle.ANIME
+                )
+            style = style_member
+        else:
+            style = style_value if isinstance(style_value, AvatarStyle) else AvatarStyle.ANIME
         self.live2d_config: Live2DGenerationConfig = Live2DGenerationConfig(
             model_name=self.config.get("model_name", "angela_base"),
-            style=AvatarStyle(self.config.get("style", "ANIME")),
+            style=style,
         )
 
         # Output paths

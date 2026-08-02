@@ -656,7 +656,7 @@ class AgentManager:
                 )
                 env = os.environ.copy()
                 env["PYTHONPATH"] = backend_root
-                env["ANGELA_AGENT_MODE"] = "subprocess"
+                env["ANGELA_AGENT_MODE"] = AgentType.SUBPROCESS.value
 
                 logger.info(
                     f"[AgentManager] Launching '{agent_name}' with PYTHONPATH={backend_root}"
