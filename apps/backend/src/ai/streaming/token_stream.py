@@ -173,6 +173,8 @@ class TokenStream:
         """Put token into stream with backpressure."""
         if self._closed:
             raise RuntimeError("Stream is closed")
+        if not isinstance(token, StreamToken):
+            raise TokenTypeMismatch(f"Expected StreamToken, got {type(token).__name__}")
         
         # Assign sequence IDs
         token.seq_id = self._next_seq(token.source)
@@ -212,6 +214,8 @@ class TokenStream:
         """Non-blocking put."""
         if self._closed:
             return False
+        if not isinstance(token, StreamToken):
+            raise TokenTypeMismatch(f"Expected StreamToken, got {type(token).__name__}")
         token.seq_id = self._next_seq(token.source)
         token.producer_seq = self._producer_counters.get(token.source, 0)
         try:

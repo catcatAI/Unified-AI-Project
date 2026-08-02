@@ -9,7 +9,6 @@ import inspect
 
 from services.atlassian_api import AtlassianConfig, AtlassianCLIBridge, ConfluencePageCreate, JiraIssueCreate, TaskAssignment
 from services.hot_reload_service import HotReloadService, get_hot_reload_service
-from services.math_verifier import SpatialEngine
 from shared.utils.hardware_detector import SystemHardwareProbe, get_profile
 from utils.async_utils import gather_with_concurrency
 
@@ -53,18 +52,6 @@ class TestHotReloadServiceGetter:
             mod._instance = None
 
 
-class TestSpatialEngine:
-    def test_compute_delegates_to_extractor(self):
-        engine = SpatialEngine()
-        assert engine._ready is True
-        assert engine.compute("1+2") is not None
-
-    def test_compute_invalid(self):
-        engine = SpatialEngine()
-        result = engine.compute("not a math expression @#$")
-        assert result is None
-
-
 class TestGetProfile:
     def test_get_profile_returns_hardware_profile(self):
         profile = get_profile()
@@ -79,6 +66,14 @@ class TestTokenTypeMismatch:
         exc = TokenTypeMismatch("type mismatch")
         assert str(exc) == "type mismatch"
         assert isinstance(exc, Exception)
+
+    def test_put_validates_token_type(self):
+        import pytest
+        from ai.streaming.token_stream import StreamToken, TokenStream, TokenTypeMismatch
+
+        stream = TokenStream()
+        with pytest.raises(TokenTypeMismatch):
+            stream.put_nowait("not a token")
 
 
 class TestSetService:

@@ -7,7 +7,6 @@ Angela Math Verifier - 雙軌數學驗證系統
 | 組件 | 職責 |
 |------|------|
 | MathExtractor | LLM 提取數學表達式 + 理解 |
-| SpatialEngine | 原生空間幾何運算（ground truth）|
 | MathVerifier | 比對器 + 觸發狀態更新 |
 
 Author: Angela AI Development Team
@@ -115,19 +114,6 @@ class MathExtractor:
             except (ValueError, OverflowError, ZeroDivisionError):
                 return None
         return None
-
-
-class SpatialEngine:
-    """Native spatial geometry engine for ground truth computation."""
-
-    def __init__(self):
-        self._ready = True
-        self._extractor = MathExtractor()
-
-    def compute(self, expression: str) -> Optional[float]:
-        """Compute a numeric expression (delegates to MathExtractor)."""
-        result = self._extractor.extract(expression)
-        return result[1] if result else None
 
 
 class MathVerifier:

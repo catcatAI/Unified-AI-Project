@@ -179,16 +179,4 @@ class HAMMemoryResult:
     query_metadata: Dict[str, Any]
 
 
-class HAMDataPackageInternal(TypedDict):
-    """HAM內部數據包"""
-
-    package_id: str
-    data_type: str
-    content: Dict[str, Any]
-    metadata: Dict[str, Any]
-    timestamp: str
-    source_ai_id: str
-    confidence_score: float
-
-
 logger.debug("common_types.py (debug version) finished definitions.")

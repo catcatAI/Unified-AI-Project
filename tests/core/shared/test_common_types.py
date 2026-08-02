@@ -4,7 +4,6 @@ from apps.backend.src.core.shared.types.common_types import (
     CritiqueResult,
     DialogueMemoryEntryMetadata,
     DialogueTurn,
-    HAMDataPackageInternal,
     HAMMemoryResult,
     LLMConfig,
     LLMModelInfo,
@@ -161,14 +160,15 @@ class TestHAMMemoryTypes:
         assert result.total_count == 1
         assert result.memories[0]["id"] == "m1"
 
-    def test_ham_data_package_fields(self):
+    def test_ham_data_package_canonical_in_memory_types(self):
+        from apps.backend.src.ai.memory.types import HAMDataPackageInternal
+
         for field in (
-            "package_id",
-            "data_type",
-            "content",
-            "metadata",
             "timestamp",
-            "source_ai_id",
-            "confidence_score",
+            "data_type",
+            "encrypted_package",
+            "metadata",
+            "relevance",
+            "protected",
         ):
             assert field in HAMDataPackageInternal.__annotations__
