@@ -20,18 +20,18 @@ from apps.backend.src.core.system.config.hardware_profile import (
 
 
 class TestHardwareScenario:
-    """Verify 5 scenarios exist with distinct profiles"""
+    """Verify 6 scenarios exist with distinct profiles"""
 
     def test_all_scenarios_have_profiles(self) -> None:
-        """All 5 scenarios must have a predefined profile."""
-        assert len(PROFILES) == 5
+        """All 6 scenarios must have a predefined profile."""
+        assert len(PROFILES) == 6
         for scenario in HardwareScenario:
             assert scenario in PROFILES, f"Missing profile for {scenario}"
 
     def test_profiles_have_distinct_multipliers(self) -> None:
         """Each scenario should have a different base_multiplier to be useful."""
         multipliers = {p.base_multiplier for p in PROFILES.values()}
-        assert len(multipliers) == 5, f"Expected 5 distinct multipliers, got {multipliers}"
+        assert len(multipliers) == 6, f"Expected 6 distinct multipliers, got {multipliers}"
 
     def test_multiplier_ordering(self) -> None:
         """High-performance should be fastest, low-power slowest."""

@@ -1,5 +1,7 @@
 """core.config 配置模块测试"""
 
+from unittest.mock import patch
+
 from apps.backend.src.core.config.level5_config import (
     Level5PerformanceMetrics,
     Level5SystemMonitor,
@@ -20,6 +22,7 @@ class TestGetSystemConfig:
         for section in ("environment", "debug", "host", "port", "ai_ops", "hsp", "memory", "training"):
             assert section in config
 
+    @patch.dict("os.environ", {"LOG_LEVEL": "INFO"}, clear=True)
     def test_has_defaults(self):
         config = get_system_config()
         assert config["host"] == "0.0.0.0"

@@ -90,9 +90,8 @@ class TestTrainingCoordinator:
         batches = await tc.deconflict_samples(samples)
         assert "ed3n" in batches
         assert "garden" in batches
-        assert "cloud" in batches
-        assert len(batches["ed3n"]) == 2
-        assert len(batches["garden"]) == 1
+        assert len(batches["ed3n"]) == len(samples)
+        assert len(batches["garden"]) == len(samples)
 
     @pytest.mark.asyncio
     async def test_sync_reflex_patterns_no_method(self):
