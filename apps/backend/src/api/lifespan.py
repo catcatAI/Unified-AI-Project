@@ -282,6 +282,30 @@ async def _try_start_brain_bridge():
         logger.warning(f"[BrainBridge] Startup failed: {e}")
 
 
+async def _try_start_digital_life():
+    """Initialize the shared DigitalLifeIntegrator singleton.
+
+    ``get_digital_life()`` only constructs the object; without ``initialize()``
+    the core subsystems it owns (LLMDecisionLoop, AutonomousLifeCycle, the
+    life-cycle state machine, and the health-check loop that updates the
+    modality gateway) never start. Chat routes read ``intent_manager`` /
+    ``state_matrix`` / ``modality_gateway`` off the singleton, and
+    ``_try_wire_dli_broadcast()`` expects ``llm_decision_loop`` to exist — both
+    silently degrade when initialization is skipped. ``initialize()`` is fully
+    fault-tolerant (each step degrades gracefully), so this never blocks startup.
+    """
+    try:
+        dli = get_digital_life()
+        if not dli:
+            logger.warning("[DLI] Not available — digital life not started")
+            return
+        if not getattr(dli, "is_initialized", False):
+            await dli.initialize()
+            logger.info("[DLI] DigitalLifeIntegrator initialized (life cycle state machine online)")
+    except Exception as e:
+        logger.warning(f"[DLI] Initialization failed: {e}")
+
+
 async def _try_start_agents():
     """Initialize AgentManager and register specialized agents."""
     global _agent_manager_instance
@@ -524,6 +548,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     _init_plugins()
     _bio = await _try_start_bio()
+    await _try_start_digital_life()
     await _try_start_brain_bridge()
     _agents = await _try_start_agents()
     _crisis = _try_init_crisis()

@@ -113,6 +113,9 @@ class TTLSessionManager:
 
 sessions = TTLSessionManager()
 
+# Latest pipeline response, captured so _handle_chat_request can persist the turn.
+_latest_response: Dict[str, Any] = {}
+
 _ed3n_engine = None
 
 
@@ -363,7 +366,12 @@ def _validate_and_truncate_input(
     user_message: str,
     chat_cfg: Dict[str, Any],
 ) -> str:
-    """Validate user message and truncate if it exceeds the maximum length."""
+    """Validate user message and truncate if it exceeds the maximum length.
+
+    Returns the (possibly truncated) message. Use ``len(raw) > max_len`` on the
+    original input to know whether truncation occurred — the returned value is
+    already clamped and cannot be re-checked for its original length.
+    """
     if not user_message or not user_message.strip():
         raise ValueError("訊號遺失：消息不能為空")
     max_len = chat_cfg.get("max_message_length", 4000)
@@ -380,6 +388,7 @@ async def _try_math_verification(
     session_id: str,
     schema_ver: str,
     trunc_msg: str,
+    was_truncated: bool = False,
 ) -> Optional[Dict[str, Any]]:
     """Try dual-rail math verification. Returns response dict if math detected, else None."""
     try:
@@ -410,7 +419,12 @@ async def _try_math_verification(
                     logger.warning(f"Bounded math cognition failed: {e}", exc_info=True)
             if verification.response_text:
                 return _build_math_response(
-                    verification, matrix, user_message, session_id, schema_ver, trunc_msg
+                    verification,
+                    matrix,
+                    user_message,
+                    session_id,
+                    schema_ver,
+                    trunc_msg if was_truncated else "",
                 )
     except Exception as e:
         logger.warning(f"\u26a0 [DualRail] Math verification failed: {e}")
@@ -1262,6 +1276,7 @@ def _format_chat_response(
     max_len: int,
     session_id: str,
     source: str = "angela_chat_service",
+    was_truncated: bool = False,
 ) -> Dict[str, Any]:
     """Build the final standardized chat response dict."""
     # Make the actual provider/model explicit so callers can see exactly which
@@ -1297,7 +1312,7 @@ def _format_chat_response(
         "response": response_text,
         "source": source,
         "schema_version": schema_ver,
-        "truncation_message": trunc_msg if len(user_message) > max_len else "",
+        "truncation_message": trunc_msg if was_truncated else "",
         "emotion": emotion_result.get("emotion", "neutral") if emotion_result else "neutral",
         "emotion_confidence": emotion_result.get("confidence", 0.5) if emotion_result else 0.5,
         "emotion_intensity": emotion_result.get("intensity", 0.5) if emotion_result else 0.5,
@@ -1319,7 +1334,80 @@ async def _handle_chat_request(
     origin: str = "Human",
     extra_context: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Orchestrate the full chat pipeline: validate → math → context → emotion/crisis → execution gate → agent routing → LLM."""
+    """Orchestrate the full chat pipeline and persist the turn to session memory.
+
+    Delegates to ``_run_chat_pipeline`` and always appends the user message +
+    assistant response to the session's ``messages`` history (multi-turn memory),
+    even on early-return paths (math/gate/agent/timeout).
+    """
+    # Session lifecycle is owned by the wrapper so every path (including
+    # exceptions) has a session to persist the turn into.
+    if session_id not in sessions:
+        sessions.set(
+            session_id,
+            {
+                "created_at": datetime.now().isoformat(),
+                "origin": origin,
+                "user_name": user_name,
+                "messages": [],
+            },
+        )
+    # Multi-turn memory: when the caller did not supply history, fall back to
+    # the messages persisted for this session so past turns are not lost.
+    # A copy is passed downstream so pipeline mutations never alias the
+    # persisted session messages.
+    if not history:
+        session = sessions.get(session_id) or {}
+        history = list(session.get("messages", []))
+    result = None
+    try:
+        result = await _run_chat_pipeline(
+            user_message, user_name, history, session_id, origin, extra_context
+        )
+        return result
+    finally:
+        # Prefer the pipeline return value; fall back to the last captured
+        # response so exceptions/partial failures still persist the turn.
+        response_text = (result or {}).get("response_text") or _latest_response.get(
+            "response_text"
+        )
+        if session_id in sessions and user_message and response_text:
+            try:
+                session = sessions.get(session_id)
+                messages = session.setdefault("messages", [])
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": user_message,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
+                messages.append(
+                    {
+                        "role": "assistant",
+                        "content": response_text,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
+                # Bound history to avoid unbounded growth (keep last 40 turns)
+                if len(messages) > 80:
+                    del messages[: len(messages) - 80]
+                session["messages"] = messages
+                sessions.set(session_id, session)
+            except Exception as e:
+                logger.warning(f"Session history persistence failed: {e}", exc_info=True)
+
+
+async def _run_chat_pipeline(
+    user_message: str,
+    user_name: str,
+    history: List[Dict[str, Any]],
+    session_id: str,
+    origin: str = "Human",
+    extra_context: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Core chat pipeline: validate → math → context → emotion/crisis → execution gate → agent routing → LLM."""
+    global _latest_response
     logger.info(
         f"\U0001f4e9 [LIS] Raw message received: '{user_message}' from {origin} (Session: {session_id})"
     )
@@ -1334,22 +1422,13 @@ async def _handle_chat_request(
     flow_source = chat_cfg.get("default_flow", "angela_chat_service")
 
     # Step 1: Validate and truncate input
+    _raw_input_len = len(user_message)
     user_message = _validate_and_truncate_input(user_message, chat_cfg)
-
-    # Step 2: Initialize session
-    if session_id not in sessions:
-        sessions.set(
-            session_id,
-            {
-                "created_at": datetime.now().isoformat(),
-                "origin": origin,
-                "user_name": user_name,
-            },
-        )
+    _was_truncated = _raw_input_len > max_len
 
     # Step 3: Math dual-rail verification — gate through IntentRegistry first
     math_result = await _try_math_verification(
-        user_message, user_name, session_id, schema_ver, trunc_msg
+        user_message, user_name, session_id, schema_ver, trunc_msg, _was_truncated
     )
     if math_result:
         try:
@@ -1358,6 +1437,7 @@ async def _handle_chat_request(
             ir = IntentRegistry()
             ir_name, ir_conf = ir.detect(user_message)
             if ir_name == "math" and ir_conf >= 0.1:
+                _latest_response = math_result
                 return math_result  # IntentRegistry confirms → fast path
         except Exception as e:
             logger.warning("IntentRegistry math gate failed: %s", e, exc_info=True)
@@ -1457,22 +1537,25 @@ async def _handle_chat_request(
         user_message, chat_svc, context, schema_ver, session_id
     )
     if gate_result:
+        _latest_response = gate_result
         return gate_result
 
     # Step 8: Agent auto-routing (creative/knowledge/opinion/vision/audio — may short-circuit)
     agent_result = await _try_agent_routing(user_message, context, schema_ver, session_id)
     if agent_result:
-        return {
+        agent_response = {
             "response_text": agent_result["response"],
             "response": agent_result["response"],
             "source": agent_result.get("source", "agent"),
             "schema_version": schema_ver,
-            "truncation_message": trunc_msg,
+            "truncation_message": trunc_msg if _was_truncated else "",
             "emotion": "calm",
             "emotion_confidence": 0.6,
             "emotion_intensity": 0.4,
             "session_id": session_id,
         }
+        _latest_response = agent_response
+        return agent_response
 
     # Step 9: Inject causal predictions into context (learned from past interactions)
     _inject_causal_predictions(context)
@@ -1484,7 +1567,8 @@ async def _handle_chat_request(
             timeout=timeout,
         )
     except asyncio.TimeoutError:
-        return _handle_timeout(session_id, schema_ver)
+        _latest_response = _handle_timeout(session_id, schema_ver)
+        return _latest_response
     except asyncio.CancelledError:
         logger.info("Client disconnected mid-response, cancelling")
         raise
@@ -1518,7 +1602,7 @@ async def _handle_chat_request(
     except Exception as e:
         logger.warning(f"Intent outcome recording unavailable: {e}", exc_info=True)
 
-    return _format_chat_response(
+    _latest_response = _format_chat_response(
         response_text,
         llm_response,
         emotion_result,
@@ -1528,7 +1612,9 @@ async def _handle_chat_request(
         max_len,
         session_id,
         source=flow_source,
+        was_truncated=_was_truncated,
     )
+    return _latest_response
 
 
 def _build_math_response(

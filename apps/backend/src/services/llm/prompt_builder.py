@@ -315,6 +315,7 @@ def construct_angela_prompt(
     _append_emotional_behavior(messages, context)
     _append_modality_state(messages, context)
     _append_awareness_injection(messages, context)
+    _append_crisis_safety(messages, context)
     _append_draft_response(messages, context)
     _append_document_context(messages, context)
     _append_knowledge_context(messages, context)
@@ -674,6 +675,22 @@ def _append_awareness_injection(messages: List[Dict], context: Dict) -> None:
     if not injection:
         return
     messages[0]["content"] += f"\n\n[Self-Awareness]\n{injection}\n"
+
+
+def _append_crisis_safety(messages: List[Dict], context: Dict) -> None:
+    """Append crisis-safety instructions to the system prompt.
+
+    Reads context["crisis_instruction"] (set by the chat pipeline when the
+    CrisisSystem flags an at-risk user input) and injects it as a mandatory
+    safety directive so the LLM responds with empathy and care.
+    """
+    instruction = context.get("crisis_instruction")
+    if not instruction:
+        return
+    messages[0]["content"] += (
+        f"\n\n[SAFETY INSTRUCTION — MANDATORY]\n{instruction}\n"
+        "You MUST prioritize user safety and well-being above all other goals.\n"
+    )
 
 
 def _append_document_context(messages: List[Dict], context: Dict) -> None:

@@ -48,6 +48,39 @@ class TestRouterConstruction:
         found = any(any(p.startswith(prefix) for p in paths) for prefix in prefixes)
         assert found, "No endpoint routes found (drive/vision/audio/mobile)"
 
+    def test_cluster_status_route_registered(self, router):
+        """Frontend settings monitor polls /api/v1/system/cluster/status."""
+        paths = _collect_paths(router)
+        assert "/api/v1/system/cluster/status" in paths, (
+            "Frontend settings.js polls this endpoint but it is not registered"
+        )
+
+
+class TestClusterStatusEndpoint:
+    """Verify the cluster/status endpoint contract matches the frontend monitor."""
+
+    def test_returns_hardware_and_cluster_shape(self):
+        from api.router import get_cluster_status
+        data = get_cluster_status()
+
+        hw = data["hardware"]
+        assert isinstance(hw["cpu"]["usage"], float)
+        assert isinstance(hw["cpu"]["brand"], str)
+        assert isinstance(hw["memory"]["usage_percent"], float)
+        assert isinstance(hw["memory"]["total"], int)
+        assert isinstance(hw["performance_tier"], str)
+        assert isinstance(hw["ai_capability_score"], (int, float))
+
+        cluster = data["cluster"]
+        assert isinstance(cluster["active_nodes"], int)
+        assert isinstance(cluster["total_nodes"], int)
+        assert isinstance(cluster["nodes"], list)
+        for node in cluster["nodes"]:
+            assert node["id"]
+            assert node["type"]
+            assert node["status"] in ("online", "offline")
+            assert isinstance(node["load"], float)
+
 
 class TestOpsRoutes:
     """Verify ops_routes are included properly."""

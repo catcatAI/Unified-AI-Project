@@ -75,20 +75,58 @@ def _load_config() -> Optional[Dict[str, Any]]:
 
 
 def _get(key: str, default: Any = None) -> Any:
-    """Look up a key from the config, falling back to default."""
+    """Look up a key from the config, falling back to default.
+
+    Two lookup strategies are tried in order:
+    1. Exact dotted-path walk (e.g. ``system.compute.compute``).
+    2. Suffix match: the key (or its dotted tail) must match the tail of a
+       leaf path in the nested config tree (e.g. ``sleep_short`` matches
+       ``system.timing.timing.loop.sleep_short``). This lets call sites use
+       flat key names while the YAML stays hierarchically organized.
+    """
     config = _load_config()
     if config is None:
         return default
+
+    # 1. Exact dotted-path walk
     keys = key.split(".")
     val = config
+    found = True
     for k in keys:
-        if isinstance(val, dict):
-            val = val.get(k, {})
+        if isinstance(val, dict) and k in val:
+            val = val[k]
         else:
+            found = False
+            break
+    if found:
+        if isinstance(val, dict) and not val:
             return default
-    if isinstance(val, dict) and not val:
+        return val if val is not None else default
+
+    # 2. Suffix match against leaf paths
+    candidates = _suffix_matches(config, key)
+    if not candidates:
         return default
-    return val if val is not None else default
+    if len(candidates) == 1:
+        val = candidates[0][1]
+        return val if val is not None else default
+    # Multiple matches: prefer system-rooted paths (authoritative tier)
+    for path, value in candidates:
+        if path.split(".")[0] == "system":
+            return value if value is not None else default
+    return default
+
+
+def _suffix_matches(node: Any, key: str, prefix: str = "") -> list:
+    """Collect (path, value) leaf pairs whose dotted tail equals ``key``."""
+    result = []
+    for k, v in node.items():
+        path = f"{prefix}.{k}" if prefix else k
+        if isinstance(v, dict):
+            result.extend(_suffix_matches(v, key, path))
+        elif path == key or path.endswith("." + key):
+            result.append((path, v))
+    return result
 
 
 def _safe_float(value: Any, default: Any = None) -> Any:

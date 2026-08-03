@@ -7,7 +7,8 @@ import pytest
 
 class TestGetBiologicalState:
     @patch("services.llm.prompt_builder._get_llm_config", return_value={})
-    def test_returns_empty_when_no_status_file(self, mock_cfg):
+    @patch("services.llm.prompt_builder.os.path.exists", return_value=False)
+    def test_returns_empty_when_no_status_file(self, mock_exists, mock_cfg):
         from services.llm.prompt_builder import get_biological_state
 
         result = get_biological_state()
@@ -274,3 +275,43 @@ class TestFormulaSummaries:
         result = construct_angela_prompt("test", context)
         combined = " ".join(msg["content"] for msg in result)
         assert combined, "Prompt should contain content"
+
+
+class TestCrisisSafety:
+    def test_append_crisis_safety_no_context(self):
+        from services.llm.prompt_builder import _append_crisis_safety
+
+        messages = [{"role": "system", "content": "Base prompt"}]
+        original = messages[0]["content"]
+        _append_crisis_safety(messages, {})
+        assert messages[0]["content"] == original
+
+    def test_append_crisis_safety_with_context(self):
+        from services.llm.prompt_builder import _append_crisis_safety
+
+        context = {"crisis_instruction": "User input has crisis level 2. Respond with empathy."}
+        messages = [{"role": "system", "content": "Base prompt"}]
+        _append_crisis_safety(messages, context)
+        content = messages[0]["content"]
+        assert "[SAFETY INSTRUCTION" in content
+        assert "Respond with empathy" in content
+        assert "prioritize user safety" in content.lower()
+
+    def test_construct_angela_prompt_includes_crisis_instruction(self):
+        from services.llm.prompt_builder import construct_angela_prompt
+
+        context = {
+            "angela_data": {},
+            "biological_state": "",
+            "formula_summaries": "",
+            "autonomous_decisions": "",
+            "action_logs": [],
+            "drive_files": [],
+            "history": [],
+            "crisis_instruction": "User input has crisis level 3. Prioritize safety.",
+        }
+        result = construct_angela_prompt("test", context)
+        combined = " ".join(msg["content"] for msg in result)
+        assert "[SAFETY INSTRUCTION" in combined
+        assert "crisis level 3" in combined
+

@@ -57,3 +57,32 @@ class TestMagicNumbers:
         from core.system.config.magic_numbers import behavior_executor
         val = behavior_executor("default_action_timeout")
         assert val is not None
+
+
+class TestMagicNumbersSuffixLookup:
+    """Flat/partial key names must resolve against the nested tiered YAML tree."""
+
+    def test_flat_key_matches_nested_yaml(self):
+        from core.system.config.magic_numbers import _get
+        val = _get("sleep_medium", 99.0)
+        assert val == 0.5
+
+    def test_flat_key_matches_heartbeat(self):
+        from core.system.config.magic_numbers import _get
+        val = _get("max_interval", 99.0)
+        assert val == 60.0
+
+    def test_partial_dotted_key_matches(self):
+        from core.system.config.magic_numbers import _get
+        val = _get("loop.sleep_very_long", 99.0)
+        assert val == 10.0
+
+    def test_missing_key_falls_back(self):
+        from core.system.config.magic_numbers import _get
+        assert _get("definitely_not_a_key", 42) == 42
+
+    def test_exact_dotted_path_still_works(self):
+        from core.system.config.magic_numbers import _get
+        cfg = _get("system.compute.compute", {})
+        assert isinstance(cfg, dict)
+        assert "ed3n_snn" in cfg

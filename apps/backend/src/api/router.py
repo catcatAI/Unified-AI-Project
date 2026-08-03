@@ -3,12 +3,15 @@ API路由模块
 """
 
 import logging
+from typing import Dict, Optional
 
 from fastapi import APIRouter
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+_hw_caps_cache: Optional[Dict[str, object]] = None
 
 
 @router.get("/api/v1/")
@@ -30,6 +33,81 @@ def trigger_emergency_mode() -> dict:
         "status": "emergency_active",
         "action": "Visual/Audio components suspended",
         "mode": "text-only",
+    }
+
+
+def _get_hw_caps() -> Dict[str, object]:
+    """Get cached hardware capability snapshot (probe once, reuse)."""
+    global _hw_caps_cache
+    if _hw_caps_cache is not None:
+        return _hw_caps_cache
+    try:
+        from shared.utils.hardware_detector import SystemHardwareProbe
+
+        probe = SystemHardwareProbe().detect()
+        _hw_caps_cache = {
+            "cpu_brand": probe.cpu_brand,
+            "performance_tier": probe.performance_tier,
+            "ai_capability_score": probe.ai_capability_score,
+        }
+    except Exception as err:
+        logger.warning("Hardware capability probe failed: %s", err, exc_info=True)
+        _hw_caps_cache = {
+            "cpu_brand": "Unknown",
+            "performance_tier": "Unknown",
+            "ai_capability_score": 0.0,
+        }
+    return _hw_caps_cache
+
+
+@router.get("/api/v1/system/cluster/status")
+def get_cluster_status() -> dict:
+    """系統叢集與硬體狀態總覽（供前端監控面板輪詢）。"""
+    cpu_usage = 0.0
+    mem_percent = 0.0
+    mem_total = 0
+    try:
+        import psutil
+
+        cpu_usage = psutil.cpu_percent(interval=0.1)
+        mem = psutil.virtual_memory()
+        mem_percent = mem.percent
+        mem_total = mem.total
+    except Exception as err:
+        logger.warning("Cluster/status metrics unavailable: %s", err, exc_info=True)
+
+    hw = _get_hw_caps()
+
+    try:
+        from core.system.cluster_manager import cluster_manager
+
+        cluster = cluster_manager.get_cluster_status()
+    except Exception as err:
+        logger.warning("Cluster manager unavailable: %s", err, exc_info=True)
+        cluster = {"node_count": 0, "nodes": {}}
+
+    nodes = [
+        {
+            "id": node_id,
+            "type": info.get("type", "unknown"),
+            "status": "online" if info.get("status") in ("idle", "busy") else "offline",
+            "load": 0.0,
+        }
+        for node_id, info in cluster.get("nodes", {}).items()
+    ]
+
+    return {
+        "hardware": {
+            "cpu": {"usage": cpu_usage, "brand": hw["cpu_brand"]},
+            "memory": {"usage_percent": mem_percent, "total": mem_total},
+            "performance_tier": hw["performance_tier"],
+            "ai_capability_score": hw["ai_capability_score"],
+        },
+        "cluster": {
+            "active_nodes": len(nodes),
+            "total_nodes": cluster.get("node_count", len(nodes)),
+            "nodes": nodes,
+        },
     }
 
 

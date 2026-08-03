@@ -27,3 +27,28 @@ class TestLifespanServiceGetters:
         # shutdown_all_agents should be callable only when the instance is set
         lifespan_module._agent_manager_instance = None
         assert lifespan_module.get_agent_manager() is None
+
+
+@pytest.mark.asyncio
+class TestDigitalLifeStartup:
+    """_try_start_digital_life must actually initialize the DLI singleton."""
+
+    async def test_start_digital_life_initializes_singleton(self):
+        from apps.backend.src.api.lifespan import (
+            _digital_life_instance,
+            _try_start_digital_life,
+            get_digital_life,
+        )
+
+        # Reset the singleton so we exercise the real startup path
+        saved = lifespan_module._digital_life_instance
+        lifespan_module._digital_life_instance = None
+        try:
+            await _try_start_digital_life()
+            dli = get_digital_life()
+            assert dli is not None
+            assert getattr(dli, "is_initialized", False) is True
+            assert dli.llm_decision_loop is not None
+            assert dli.autonomous_lifecycle is not None
+        finally:
+            lifespan_module._digital_life_instance = saved
