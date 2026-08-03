@@ -31,7 +31,6 @@ const root = '../../packages/shared-js/js/'
 | `unified-display-matrix.js` | Display matrix management |
 | `live2d-manager.js` | Live2D model lifecycle |
 | `live2d-cubism-wrapper.js` | Cubism SDK wrapper |
-| `simple-live2d-loader.js` | Lightweight Live2D loader |
 | `angela-character-config.js` | Character configuration |
 | `angela-character-images-config.js` | Character image assets config |
 | `dialogue-ui.js` | Chat/dialogue UI components |

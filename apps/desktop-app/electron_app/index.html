@@ -417,6 +417,23 @@
             cursor: nwse-resize;
         }
 
+        #status-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            min-width: 200px;
+            font-size: 13px;
+            z-index: 90;
+        }
+
+        #status-panel .status-item {
+            margin: 6px 0;
+        }
+
         #status-bar {
             position: absolute;
             top: 10px;
@@ -810,6 +827,15 @@
         <div class="resize-handle corner bottom-right"></div>
     </div>
 
+    <!-- System status panel (persistent) -->
+    <div id="status-panel">
+        <div class="status-item">🖥️ Backend: <span id="stat-backend">Offline</span></div>
+        <div class="status-item">⚙️ Service: <span id="stat-service">—</span></div>
+        <div class="status-item">📊 CPU: <span id="stat-cpu">—</span></div>
+        <div class="status-item">🧠 Memory: <span id="stat-memory">—</span></div>
+        <div class="status-item">💾 Disk: <span id="stat-disk">—</span></div>
+    </div>
+
     <div id="status-bar"></div>
 
     <div id="audio-visualizer"></div>
@@ -900,7 +926,40 @@
             console.log('[App] Starting Angela App initialization...');
             window.angelaApp = new AngelaApp();
             _initTerminal();
+            _initSystemStatusPanel();
         });
+
+        function _initSystemStatusPanel() {
+            const panel = document.getElementById('status-panel');
+            if (!panel) return;
+
+            async function poll() {
+                const backendHost = localStorage.getItem('backend_ip') || 'http://localhost:8000';
+                try {
+                    const res = await fetch(`${backendHost}/api/v1/ops/status`);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const data = await res.json();
+                    const online = data.status === 'ok';
+                    document.getElementById('stat-backend').textContent = online ? 'Online' : `Error ${res.status}`;
+                    document.getElementById('stat-backend').style.color = online ? 'var(--success-color)' : 'var(--danger-color)';
+                    document.getElementById('stat-service').textContent = data.service || '—';
+                    const metrics = data.metrics || {};
+                    document.getElementById('stat-cpu').textContent = `${metrics.cpu_percent ?? '—'}%`;
+                    document.getElementById('stat-memory').textContent = `${metrics.memory_percent ?? '—'}%`;
+                    document.getElementById('stat-disk').textContent = `${metrics.disk_percent ?? '—'}%`;
+                } catch (err) {
+                    document.getElementById('stat-backend').textContent = 'Offline';
+                    document.getElementById('stat-backend').style.color = 'var(--danger-color)';
+                    document.getElementById('stat-service').textContent = '—';
+                    document.getElementById('stat-cpu').textContent = '—';
+                    document.getElementById('stat-memory').textContent = '—';
+                    document.getElementById('stat-disk').textContent = '—';
+                }
+            }
+
+            poll();
+            setInterval(poll, 5000);
+        }
 
         function _initTerminal() {
             const app = window.angelaApp;
