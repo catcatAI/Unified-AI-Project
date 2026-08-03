@@ -145,13 +145,76 @@ class MultimodalPanel {
 
     _handleAudioFile(file) {
         const reader = new FileReader();
-        reader.onload = (e) => {
-            this.audioData = e.target.result;
+        reader.onload = async (e) => {
+            this.audioData = await this._convertToWav(e.target.result, file.type);
         };
         reader.readAsArrayBuffer(file);
     }
 
     // ========== Audio Recording ==========
+
+    /**
+     * Convert any audio buffer (WebM from MediaRecorder or uploaded file)
+     * into a 16-bit PCM WAV buffer the backend audio pipeline can decode.
+     * Returns the original buffer unchanged if it is already WAV.
+     */
+    async _convertToWav(arrayBuffer, mimeType = 'audio/webm') {
+        if (mimeType && mimeType.includes('wav')) {
+            return arrayBuffer;
+        }
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            const ctx = new AudioCtx();
+            const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+            const numChannels = audioBuffer.numberOfChannels;
+            const sampleRate = audioBuffer.sampleRate;
+            const numFrames = audioBuffer.length;
+            const bytesPerSample = 2;
+            const blockAlign = numChannels * bytesPerSample;
+            const buffer = new ArrayBuffer(44 + numFrames * blockAlign);
+            const view = new DataView(buffer);
+
+            const writeString = (offset, str) => {
+                for (let i = 0; i < str.length; i++) {
+                    view.setUint8(offset + i, str.charCodeAt(i));
+                }
+            };
+
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + numFrames * blockAlign, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * blockAlign, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, numFrames * blockAlign, true);
+
+            const channels = [];
+            for (let ch = 0; ch < numChannels; ch++) {
+                channels.push(audioBuffer.getChannelData(ch));
+            }
+            let offset = 44;
+            for (let i = 0; i < numFrames; i++) {
+                for (let ch = 0; ch < numChannels; ch++) {
+                    const sample = Math.max(-1, Math.min(1, channels[ch][i]));
+                    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+                    offset += bytesPerSample;
+                }
+            }
+            if (ctx && typeof ctx.close === 'function') {
+                ctx.close();
+            }
+            return buffer;
+        } catch (err) {
+            console.error('[MultimodalPanel] Audio conversion failed, passing raw buffer:', err);
+            return arrayBuffer;
+        }
+    }
 
     _bindRecording() {
         const btn = document.getElementById('record-btn');
@@ -180,10 +243,10 @@ class MultimodalPanel {
                 stream.getTracks().forEach(t => t.stop());
                 const blob = new Blob(this.audioChunks, { type: 'audio/webm' });
                 const buffer = await blob.arrayBuffer();
-                this.audioData = buffer;
+                this.audioData = await this._convertToWav(buffer, 'audio/webm');
 
                 // Convert to WAV for the API
-                this._showResult('audio-result', { status: 'Recorded', size: buffer.byteLength }, true);
+                this._showResult('audio-result', { status: 'Recorded', size: this.audioData.byteLength }, true);
             };
 
             this.mediaRecorder.start();

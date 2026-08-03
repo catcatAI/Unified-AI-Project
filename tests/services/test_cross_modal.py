@@ -207,6 +207,8 @@ class TestCrossModalQualityDashboard:
         assert "vision" in simple
         assert "audio" in simple
         assert "overall_health" in simple
+        assert "avg_time_ms" in simple["vision"]
+        assert "avg_time_ms" in simple["audio"]
 
     def test_empty_dashboard(self):
         """T13: Empty dashboard returns zeros."""

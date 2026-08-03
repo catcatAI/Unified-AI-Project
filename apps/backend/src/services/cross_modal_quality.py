@@ -117,10 +117,12 @@ class CrossModalQualityDashboard:
             "vision": {
                 "avg_ssim": v.get("avg_ssim", 0.0),
                 "avg_psnr": v.get("avg_psnr", 0.0),
+                "avg_time_ms": v.get("avg_time_ms", 0.0),
                 "total_calls": v.get("total_calls", 0),
             },
             "audio": {
                 "avg_snr": a.get("avg_snr", 0.0),
+                "avg_time_ms": a.get("avg_time_ms", 0.0),
                 "total_calls": a.get("total_calls", 0),
             },
             "overall_health": full["overall"]["health"],
