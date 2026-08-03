@@ -183,7 +183,7 @@ class AngelaAPIClient {
                     persona_id: 'angela_desktop',
                     client_id: 'desktop_electron'
                 }),
-                signal: AbortSignal.timeout(this.timeouts.dialogue)
+                signal: AbortSignal.timeout(this.timeouts.chat)
             });
 
             // No backward compatibility fallback — legacy /dialogue removed in v7.5.0
@@ -276,7 +276,8 @@ class AngelaAPIClient {
             return {
                 success: true,
                 status: data.status || 'idle',
-                components: data.components || {},
+                metrics: data.metrics || {},
+                service: data.service || null,
                 timestamp: data.timestamp || new Date().toISOString()
             };
         } catch (error) {
@@ -284,7 +285,8 @@ class AngelaAPIClient {
             return {
                 success: false,
                 status: 'offline',
-                components: {},
+                metrics: {},
+                service: null,
                 timestamp: new Date().toISOString()
             };
         }
