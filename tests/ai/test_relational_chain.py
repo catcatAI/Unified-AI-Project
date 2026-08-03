@@ -96,7 +96,7 @@ def test_ed3n_chain_stage():
 def test_garden_chain_stage():
     from ai.garden.garden_engine import GARDENEngine
 
-    engine = GARDENEngine()
+    engine = GARDENEngine(compatibility_mode=True)
     engine.load_presets()
     assert "Z" in engine.process(
         "X is richer than Y. Y is richer than Z. Who is the poorest?"

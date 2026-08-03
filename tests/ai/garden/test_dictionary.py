@@ -25,7 +25,7 @@ class TestVectorDictionaryInit:
         assert d._matrix is None
 
     def test_init_custom(self):
-        d = VectorDictionary(top_k=5, similarity_threshold=0.5, device="cpu")
+        d = VectorDictionary(top_k=5, similarity_threshold=0.5, device="cpu", compatibility_mode=True)
         assert d.top_k == 5
         assert d.similarity_threshold == 0.5
 

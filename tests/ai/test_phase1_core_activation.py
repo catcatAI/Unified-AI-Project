@@ -69,11 +69,11 @@ class TestGARDENCycling:
     """Tests for GARDEN cycling behavior"""
 
     def test_initialization_garden(self):
-        engine = GARDENEngine()
+        engine = GARDENEngine(compatibility_mode=True)
         assert engine is not None
 
     def test_process_returns_string_garden(self):
-        engine = GARDENEngine()
-        result = engine.process({"input": "What is AI?", "context": {}})
+        engine = GARDENEngine(compatibility_mode=True)
+        result = engine.process("What is AI?")
         assert result is not None
         assert isinstance(result, str)

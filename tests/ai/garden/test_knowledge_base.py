@@ -44,8 +44,9 @@ class TestKnowledgeBase:
 
     def test_engine_returns_answer_for_knowledge_question(self):
         # Smoke: the engine path must surface the KB answer (not fall through).
+        # compatibility_mode avoids loading the full sentence-transformers model.
         from ai.garden.garden_engine import GARDENEngine
 
-        eng = GARDENEngine()
+        eng = GARDENEngine(compatibility_mode=True)
         result = eng.process("What color is the sky?")
         assert "blue" in result
