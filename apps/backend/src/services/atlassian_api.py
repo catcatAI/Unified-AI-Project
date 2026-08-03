@@ -172,6 +172,24 @@ async def get_projects() -> dict:
     return result
 
 
+@atlassian_router.get("/jira/issues")
+async def get_issues(jql: Optional[str] = None, limit: int = 50) -> dict:
+    """Get Jira issues (query param: jql, limit)."""
+    result = await atlassian_bridge.get_jira_issues(jql, limit)
+    if not result["success"]:
+        raise HTTPException(status_code=500, detail=result.get("error"))
+    return result
+
+
+@atlassian_router.get("/confluence/search")
+async def search_confluence(query: str = "", limit: int = 25) -> dict:
+    """Search Confluence content."""
+    result = await atlassian_bridge.search_confluence_content(query)
+    if not result["success"]:
+        raise HTTPException(status_code=500, detail=result.get("error"))
+    return result
+
+
 @atlassian_router.post("/jira/issues")
 async def create_issue(issue: JiraIssueCreate) -> dict:
     """Create issue."""

@@ -65,19 +65,19 @@ class UnifiedAIClient:
     def chat(self, message: str, user_id: str = "cli_user",
              session_id: str = "cli_session") -> Dict[str, Any]:
         data = {"text": message, "user_id": user_id, "session_id": session_id}
-        return self._make_request("POST", "chat", data=data)
+        return self._make_request("POST", "chat/unified", data=data)
 
     def analyze_code(self, code: str, language: str = "auto") -> Dict[str, Any]:
-        data = {"code": code, "language": language}
-        return self._make_request("POST", "code", data=data)
+        data = {"text": code, "user_id": "cli_user", "session_id": "cli_session"}
+        return self._make_request("POST", "chat/unified", data=data)
 
     def search(self, query: str) -> Dict[str, Any]:
-        data = {"query": query}
-        return self._make_request("POST", "search", data=data)
+        data = {"text": query, "user_id": "cli_user", "session_id": "cli_session"}
+        return self._make_request("POST", "chat/unified", data=data)
 
     def generate_image(self, prompt: str, style: str = "realistic") -> Dict[str, Any]:
         data = {"prompt": prompt, "style": style}
-        return self._make_request("POST", "image", data=data)
+        return self._make_request("POST", "image/generate", data=data)
 
     def get_atlassian_status(self) -> Dict[str, Any]:
         return self._make_request("GET", "atlassian/status")
@@ -99,7 +99,7 @@ class UnifiedAIClient:
             "description": description,
             "issue_type": issue_type,
         }
-        return self._make_request("POST", "atlassian/jira/issue", data=data)
+        return self._make_request("POST", "atlassian/jira/issues", data=data)
 
     def get_confluence_spaces(self) -> Dict[str, Any]:
         return self._make_request("GET", "atlassian/confluence/spaces")

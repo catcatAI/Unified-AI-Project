@@ -7,7 +7,14 @@
 
 import inspect
 
-from services.atlassian_api import AtlassianConfig, AtlassianCLIBridge, ConfluencePageCreate, JiraIssueCreate, TaskAssignment
+from services.atlassian_api import (
+    AtlassianConfig,
+    AtlassianCLIBridge,
+    ConfluencePageCreate,
+    JiraIssueCreate,
+    TaskAssignment,
+    atlassian_router,
+)
 from services.hot_reload_service import HotReloadService, get_hot_reload_service
 from shared.utils.hardware_detector import SystemHardwareProbe, get_profile
 from utils.async_utils import gather_with_concurrency
@@ -117,3 +124,21 @@ def test_hardware_probe_detect_is_functional():
 def test_atlassian_bridge_still_complete():
     assert inspect.isclass(AtlassianConfig)
     assert inspect.isclass(AtlassianCLIBridge)
+
+
+def test_atlassian_router_exposes_issue_listing():
+    assert any(
+        hasattr(r, "methods")
+        and r.path == "/api/v1/atlassian/jira/issues"
+        and "GET" in r.methods
+        for r in atlassian_router.routes
+    )
+
+
+def test_atlassian_router_exposes_confluence_search():
+    assert any(
+        hasattr(r, "methods")
+        and r.path == "/api/v1/atlassian/confluence/search"
+        and "GET" in r.methods
+        for r in atlassian_router.routes
+    )
