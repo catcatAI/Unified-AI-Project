@@ -720,6 +720,30 @@ class TestWorldLineEntryGates:
         _w, fx = sim_systems.get_world_line_effect("小吉鎮")
         assert fx.get("magic_scale") == 0.0
 
+    def test_world_line_equipment_scaling(self):
+        """魔法裝備的 stat_multipliers 受世界線聚合度縮放（V3.4）：
+        W02 絕對無魔→失效、W03 靈子低落→減半、玻璃荒漠靈爆核心→增強；
+        普通武器不受影響。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        ch = {"race": "人類", "mechanic_race": "人類", "token_list": [], "level": 1}
+        em = sim_systems.EquipmentManager(ch)
+        em.equip("right_hand", {"name": "炎帝之劍", "durability": 100,
+                                "current_durability": 100, "stat_multipliers": {"atk": 0.5}})
+        b = em.get_stat_bonuses("小吉鎮")
+        assert b.get("atk", 0) == 0.0, "W02 絕對無魔魔法武器應失效"
+        b = em.get_stat_bonuses("軌道居住站大學院")
+        assert abs(b.get("atk", 0) - 0.25) < 1e-6, "W03 靈子低落魔法武器應減半"
+        b = em.get_stat_bonuses("玻璃荒漠")
+        assert abs(b.get("atk", 0) - 1.0) < 1e-6, "玻璃荒漠靈爆核心魔法武器應增強"
+        # 普通武器不受世界線影響
+        em2 = sim_systems.EquipmentManager(ch)
+        em2.equip("right_hand", {"name": "鐵劍", "durability": 100,
+                                 "current_durability": 100, "stat_multipliers": {"atk": 0.3}})
+        b = em2.get_stat_bonuses("小吉鎮")
+        assert abs(b.get("atk", 0) - 0.3) < 1e-6, "普通武器不受世界線影響"
+
     def test_w02_villages_via_corridor(self):
         """W02 村落（小吉鎮/大根莖村）只能經由迴廊到達——霧海群島
         不再直連小吉鎮（跨線邊全經迴廊）。"""

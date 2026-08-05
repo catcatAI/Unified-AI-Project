@@ -2500,11 +2500,31 @@ class EquipmentManager:
             return eq["item"]
         return None
 
-    def get_stat_bonuses(self):
+    def get_stat_bonuses(self, location=""):
+        """收集所有裝備加成。location 非空時套用世界線聚合度縮放：
+        魔法/電子系裝備的 stat_multipliers × 世界線 magic/tech scale
+        （V3.4：W02 絕對無魔——魔法武器完全失效；W03 電子最高精度/靈子
+        低落；W04 靈子過載）。裝備槽 dict 只存 name，須回查 ITEM_CATALOG
+        取 tags 判分類。"""
         bonuses = {}
+        wl_scale = None
+        if location:
+            _wl, wl_scale = get_world_line_effect(location)
         for sid, eq in self.slots.items():
             if eq and eq["item"]:
-                for stat, mult in eq["item"].get("stat_multipliers", {}).items():
+                mults = dict(eq["item"].get("stat_multipliers", {}) or {})
+                if location and mults:
+                    iname = eq["item"].get("name", "")
+                    cat = get_item_world_category(ITEM_CATALOG.get(iname, {}), iname)
+                    if cat == "magic":
+                        s = wl_scale.get("magic_scale", 1.0) if wl_scale else 1.0
+                        for _k in list(mults):
+                            mults[_k] = mults[_k] * s
+                    elif cat == "tech":
+                        s = wl_scale.get("tech_scale", 1.0) if wl_scale else 1.0
+                        for _k in list(mults):
+                            mults[_k] = mults[_k] * s
+                for stat, mult in mults.items():
                     bonuses[stat] = bonuses.get(stat, 0.0) + mult
         # Add race innate bonuses
         rd = RACE_DATA.get(self.race, {})
@@ -2513,7 +2533,7 @@ class EquipmentManager:
         return bonuses
 
     def apply_stat_bonuses(self, character):
-        bonuses = self.get_stat_bonuses()
+        bonuses = self.get_stat_bonuses(character.get("location", ""))
         token_list = character.get("token_list", [])
         base_atk = 10 + (character["level"] - 1) * 1 + len([t for t in token_list if t.get("category")=="combat"])*3
         base_def = 5 + (character["level"] - 1) * 1 + len([t for t in token_list if t.get("category")=="vitality"])*2

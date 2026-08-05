@@ -1009,7 +1009,7 @@ def do_explore(character, equipment):
 # TRAVEL
 # ═══════════════════════════════════════════════════════════════════════════
 
-def do_travel(character):
+def do_travel(character, equipment=None):
     dests = WORLD_MAP.get(character["location"], {})
     if not dests:
         print(C.GRAY+"  ⚻ 沒有通路。"+C.RESET)
@@ -1186,6 +1186,10 @@ def do_travel(character):
             if not character.get("riding"):
                 hours = max(1, round(base_hours / _speed_mult))
             character["location"] = dest
+            # 世界線聚合度隨地點改變——重新套用裝備屬性（reviewer：
+            # 進入 W02 絕對無魔後魔法武器加成應立即失效，而非等到重裝備）
+            if equipment is not None:
+                equipment.apply_stat_bonuses(character)
             advance_time(character, hours)
             # Arrival announcement
             vibe = LOCATION_VIBES.get(dest,"")
@@ -1395,9 +1399,14 @@ def do_equipment_menu(character, equipment):
     ch = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
     if ch=="1":
         print(equipment.display())
-        b = equipment.get_stat_bonuses()
+        b = equipment.get_stat_bonuses(character.get("location", ""))
         if b:
             print(C.DIM+"  加成: "+" ".join("%s%+.1f"%(k,v) for k,v in b.items())+C.RESET)
+            # 世界線聚合度影響提示（魔法/電子裝備被縮放時）
+            _wl, _wlfx = sim_systems.get_world_line_effect(character.get("location", ""))
+            if _wlfx.get("magic_scale", 1.0) != 1.0 or _wlfx.get("tech_scale", 1.0) != 1.0:
+                print(C.DIM+"  （世界線%3s：魔法×%.1f 電子×%.1f）" % (
+                    _wl, _wlfx.get("magic_scale", 1.0), _wlfx.get("tech_scale", 1.0))+C.RESET)
     elif ch=="2":
         inv = character["inventory"]
         print(C.CYAN+"  物品欄:"+C.RESET)
@@ -1781,6 +1790,8 @@ def do_scene_search(character, equipment):
         s_teleport = side.get("teleport_to")
         if s_teleport:
             character["location"] = s_teleport
+            # 世界線聚合度隨地點改變——重新套用裝備屬性
+            equipment.apply_stat_bonuses(character)
             print(C.GREEN+"  🌀 你被傳送到了 %s！" % s_teleport + C.RESET)
             _gm_narrate(character, s_teleport)
 
@@ -2877,7 +2888,7 @@ def start_game():
         if ch=="h": print_help(); continue
         if ch=="1": do_explore(character, equipment)
         elif ch=="2": do_interact_npc(character)
-        elif ch=="3": do_travel(character)
+        elif ch=="3": do_travel(character, equipment)
         elif ch=="4": do_rest(character)
         elif ch=="5": do_inventory(character)
         elif ch=="6":
