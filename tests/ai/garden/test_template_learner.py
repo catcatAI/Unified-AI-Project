@@ -8,6 +8,7 @@ import pytest
 from ai.garden.garden_engine import (
     _TEMPLATES,
     _learn_template,
+    _output_matches,
     _reconstruct_with_template,
     record_template_match,
     is_deterministic_match,
@@ -129,3 +130,41 @@ class TestDeterministicMatchRecordsTemplates:
         before = dict(_TEMPLATES)
         is_deterministic_match("What is the meaning of life", "42")
         assert _TEMPLATES == before
+
+
+class TestReasoningOutputMatch:
+    def test_numeric_multiset_ignores_ordering_and_wrapping(self):
+        assert _output_matches(
+            "23 chicken, 12 rabbit", "there are 12 rabbits and 23 chickens", "reasoning"
+        )
+        assert _output_matches(
+            "6 chicken, 4 rabbit", "the answer is 6 chickens and 4 rabbits", "reasoning"
+        )
+
+    def test_numeric_multiset_rejects_wrong_counts(self):
+        assert not _output_matches("23 chicken, 12 rabbit", "24 chicken, 11 rabbit", "reasoning")
+
+    def test_reasoning_falls_back_to_text_without_numbers(self):
+        assert _output_matches("Mallory", "Mallory is the tallest.", "reasoning")
+        assert not _output_matches("Mallory", "Judy is the tallest.", "reasoning")
+
+
+class TestWordProblemDeterministicBoundary:
+    def setup_method(self):
+        _TEMPLATES.clear()
+
+    def test_word_problem_marked_deterministic(self):
+        # Word-problem answers are deterministic; training must skip them (§B).
+        assert is_deterministic_match(
+            "The cage has chickens and rabbits, 35 heads and 94 legs. How many of each?",
+            "there are 23 chickens and 12 rabbits",
+        )
+
+    def test_word_problem_records_reasoning_template(self):
+        record_template_match(
+            "The cage has chickens and rabbits, 35 heads and 94 legs. How many of each?",
+            "there are 23 chickens and 12 rabbits",
+            "reasoning",
+            "23 chicken, 12 rabbit",
+        )
+        assert len(_TEMPLATES.get("reasoning", [])) == 1

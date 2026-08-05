@@ -266,6 +266,9 @@ def _output_matches(
     * ``"math"`` — value-level comparison with tolerance (catches rounding
       mismatches like ``"0.7975584944"`` vs ``"0.7976"``).
     * ``"logic"`` — boolean comparison (``True`` / ``False``).
+    * ``"reasoning"`` — numeric-multiset comparison (structured outputs like
+      ``"23 chicken, 12 rabbit"`` vs ``"12 rabbits and 23 chickens"``); falls
+      back to ``"text"`` when either side carries no numbers.
     * ``"text"`` — bidirectional substring (handles format variations like
       ``"42"`` inside ``"the answer is 42"``).
 
@@ -282,6 +285,12 @@ def _output_matches(
 
     if engine_type == "logic":
         return eng.lower().strip(".?!;") == exp.lower().strip(".?!;")
+
+    if engine_type == "reasoning":
+        eng_nums = re.findall(r"-?\d+", eng)
+        exp_nums = re.findall(r"-?\d+", exp)
+        if eng_nums and exp_nums:
+            return sorted(eng_nums) == sorted(exp_nums)
 
     # Default (text): bidirectional substring
     short, long = (eng, exp) if len(eng) <= len(exp) else (exp, eng)
@@ -303,7 +312,7 @@ def is_deterministic_match(user_text: str, response_text: str) -> bool:
         (_try_math, "math"),
         (_try_logic, "logic"),
         (_try_knowledge, "text"),
-        (_try_reasoning, "text"),
+        (_try_reasoning, "reasoning"),
         (_try_chain_reasoning, "text"),
     ]
     for fn, etype in engines:

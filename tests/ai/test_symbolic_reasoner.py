@@ -128,10 +128,44 @@ def test_chicken_rabbit_small_case():
     assert "6" in out and "4" in out
 
 
+@pytest.mark.parametrize(
+    "question, a, b",
+    [
+        # bicycles/tricycles: 20 vehicles, 54 wheels -> 6 bikes (12) + 14 trikes (42)
+        ("There are bicycles and tricycles, 20 vehicles and 54 wheels. How many of each?", 6, 14),
+        # nickels/dimes: 18 coins, 140 cents -> 8 nickels (40) + 10 dimes (100)
+        ("Nickels and dimes, 18 coins worth 140 cents. How many of each?", 8, 10),
+        # nickels/quarters with decimal dollar total: 17 coins, $2.05 -> 11 nickels (55) + 6 quarters (150)
+        ("I have 17 coins worth $2.05, all nickels and quarters. How many of each?", 11, 6),
+        # motorcycles/cars: 30 vehicles, 100 wheels -> 10 motorcycles (20) + 20 cars (80)
+        ("A parking lot has motorcycles and cars, 30 vehicles and 100 wheels. How many of each?", 10, 20),
+    ],
+)
+def test_word_problem_extended_kinds(question, a, b):
+    out = route_reasoning(question)
+    assert out is not None
+    assert str(a) in out and str(b) in out
+
+
+def test_word_problem_coin_chinese():
+    # 12 枚硬幣總值 80 分 -> 8 nickel (40) + 4 dime (40)
+    out = route_reasoning("有 12 枚硬幣，總值 80 分，全是五分錢和一角硬幣，各有多少枚？")
+    assert out is not None
+    assert "8" in out and "4" in out
+
+
+def test_word_problem_rejects_unsolvable():
+    # No clean integer solution -> fall through (None).
+    out = route_reasoning("I have 25 coins worth $4.10, all nickels and quarters. How many of each?")
+    assert out is None
+
+
 def test_word_problem_out_of_scope_returns_none():
     # Only one entity present or no explicit legs total -> fall through.
     assert route_reasoning("The cage has chickens. How many legs total?") is None
     assert route_reasoning("A chicken has how many legs?") is None
+    # Two entities but no totals -> fall through.
+    assert route_reasoning("How many chickens and rabbits are there in this picture?") is None
 
 
 # ---------------------------------------------------------------------------
