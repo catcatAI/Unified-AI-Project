@@ -1928,6 +1928,27 @@ def expand_game():
                    "enter": "軌道居住站大學院", "exit": "鏽蝕城邦",
                    "deep": "玻璃荒漠"},
     }
+    # ════════════════════════════════════════════════════════════
+    # 迴廊場景物件（依《多元宇宙與概念之橋》迴廊文本：概念、數據流、
+    # 意識碎片、世界法則交織的虛無維度）——讓 Lv1-5 玩家在樞紐也有探索內容
+    # type 必須對應 do_scene_search 既有處理器（decoration/container/
+    # workstation/vehicle/mechanism/rest），否則物件可互動卻無效果
+    _CORRIDOR_OBJS = [
+        {"name": "世界法則碎片", "type": "decoration", "interactable": True,
+         "desc": "一塊凝固的世界法則殘片，表面流動著各世界線的剪影。",
+         "note": "碎片映出四條世界線的縮影：高靈子的 W01、無魔的 W02、軌道上的 W03、灰燼不穩的 W04——它們都被迴廊串在一起。"},
+        {"name": "漂浮的數據流", "type": "container", "interactable": True,
+         "desc": "概念數據流凝成的光帶，觸碰時指尖浮現不屬於任何世界的文字。",
+         "contents": ["水晶碎片"]},
+        {"name": "意識碎片映池", "type": "rest", "interactable": True,
+         "desc": "倒映意識碎片的淺池，凝視片刻能讓思緒沉澱。",
+         "rest_sp": 12},
+    ]
+    _exist = {o.get("name") for o in sim_systems.SCENE_OBJECTS.setdefault("迴廊", [])}
+    for _o in _CORRIDOR_OBJS:
+        if _o["name"] not in _exist:
+            sim_systems.SCENE_OBJECTS["迴廊"].append(dict(_o))
+
     for _loc, _conn in _CORRIDOR_ONLY.items():
         sim_systems.WORLD_MAP[_loc] = dict(_conn)
 

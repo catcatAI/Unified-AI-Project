@@ -617,3 +617,54 @@ class TestWorldLineLocations:
         assert wl.get("鏽蝕城邦") == "W04"
         assert wl.get("軌道居住站大學院") == "W03"
         assert wl.get("高密度大氣結晶行星") == "夢境層"
+
+
+class TestWorldLineEntryGates:
+    """跨世界線門檻：迴廊樞紐無門檻，W03/W04/夢境層需等級歷練。"""
+
+    def test_corridor_hub_is_free(self):
+        """迴廊是連接各世界線的橋樑，Lv1 即可進入。"""
+        from sim_systems import check_entry_requirement
+        ok, _ = check_entry_requirement("迴廊", {"level": 1})
+        assert ok
+
+    def test_w03_w04_require_level(self):
+        """W03 軌道站/W04 廢土需 Lv6，玻璃荒漠（靈爆核心）Lv8。"""
+        from sim_systems import check_entry_requirement
+        ch = {"level": 1}
+        for loc in ("軌道居住站大學院", "鏽蝕城邦", "熒光沼澤",
+                    "高密度大氣結晶行星", "綻放混成園"):
+            ok, _ = check_entry_requirement(loc, ch)
+            assert not ok, "%s Lv1 不該進入" % loc
+        assert check_entry_requirement("鏽蝕城邦", {"level": 6})[0]
+        assert not check_entry_requirement("玻璃荒漠", {"level": 6})[0]
+        assert check_entry_requirement("玻璃荒漠", {"level": 8})[0]
+
+    def test_cross_line_quest_givers_reachable_early(self):
+        """所有排程含跨線地點的 NPC，社交時段（18+）必須在 W01 可及處——
+        Lv1 玩家也能接任務，流程不卡死。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        wl = sim_systems.LOCATION_WORLD_LINES
+        cross_line = []
+        for name, sched in sim_systems.NPC_SCHEDULES.items():
+            locs = {l for (_st, _e, _a, l, _m) in sched}
+            if any(wl.get(l, "W01") not in ("W01", "W01+迴廊") for l in locs):
+                cross_line.append(name)
+        assert cross_line, "應存在跨線 NPC"
+        for name in cross_line:
+            sched = sim_systems.NPC_SCHEDULES[name]
+            # 社交時段：與 18-22 有交集的槽位（涵蓋 17-21/19-23 等跨界範圍）
+            social = [(l, st, et) for (st, et, _a, l, _m) in sched if st < 22 and et > 18]
+            assert social, "%s 應有社交時段" % name
+            assert any(wl.get(l, "W01") in ("W01", "W01+迴廊") for l, _s, _e in social), \
+                "%s 社交時段應在 W01 可及處" % name
+
+    def test_corridor_hub_has_explorable_content(self):
+        """迴廊樞紐 Lv1 可進——需有場景物件讓低等玩家有探索內容（不只折返）。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        objs = sim_systems.SCENE_OBJECTS.get("迴廊", [])
+        assert len(objs) >= 3, "迴廊應有世界法則碎片/數據流等探索物件"

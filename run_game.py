@@ -1093,6 +1093,12 @@ def do_travel(character):
                 print(C.YELLOW + "  🧩 通往[%s]需先經由迴廊（世界線之間的橋樑）。" % _dst_wl + C.RESET)
                 print(C.YELLOW + "     前往「迴廊」後可轉往其他世界線。" + C.RESET)
                 return
+            # 進入門檻檢查（等級/道具/任務等）：與世界線檢查並排，
+            # 在載具燃料/耐久消耗之前——被擋的移動不該燒燃料損零件
+            can_enter, fail_msg = check_entry_requirement(dest, character)
+            if not can_enter:
+                print(C.RED + "  🔒 " + (fail_msg or "無法進入。") + C.RESET)
+                return
             # Travel time
             base_hours = 2  # 徒步跨一個區域的基準耗時
             hours = base_hours
@@ -1148,11 +1154,6 @@ def do_travel(character):
                                 decayed = True
                         if decayed:
                             veh_state["parts_durability"] = parts_durability
-            # Check entry requirements
-            can_enter, fail_msg = check_entry_requirement(dest, character)
-            if not can_enter:
-                print(C.RED + "  🔒 " + (fail_msg or "無法進入。") + C.RESET)
-                return
             # 未騎乘時套用移動能力速度（飛行/艦裝航行比徒步快）
             if not character.get("riding"):
                 hours = max(1, round(base_hours / _speed_mult))
@@ -1638,6 +1639,11 @@ def do_scene_search(character, equipment):
                         print(C.GREEN+"  你獲得了 %s! (燃料:%d)"%(vt,init_fuel)+C.RESET)
                     mount_vehicle(character, vt, veh_state)
                     print(C.GREEN+"  騎上了 %s!"%vt+C.RESET)
+
+    elif obj_type == "rest":
+        rest_sp = obj.get("rest_sp", 10)
+        _restore(character, "sp", rest_sp)
+        print(C.BLUE + "  在%s沉澱思緒，恢復%dSP。" % (obj_name, rest_sp) + C.RESET)
 
     elif obj_type == "mechanism":
         mech_type = obj.get("mechanism_type","?")
