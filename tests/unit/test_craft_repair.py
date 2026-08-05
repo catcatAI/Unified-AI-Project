@@ -4,7 +4,18 @@
 R17/R18 是 category=repair、repair_all=True 的修復服務配方：
 消耗配方材料直接修復裝備，不應把不存在的「修復服務」物品塞進物品欄。
 """
+import pytest
 import sim_systems
+
+
+@pytest.fixture(autouse=True)
+def _no_random_failure(monkeypatch):
+    """固定配方隨機：failure_chance 最高 0.25，回傳 0.9 保證走成功路徑。
+
+    原先測試未固定隨機，R04（0.15）/R07 等配方約 15% 機率隨機失敗
+    造成測試偶發紅——非污染，是測試本身未隔離隨機性。
+    """
+    monkeypatch.setattr(sim_systems._random, "random", lambda: 0.9)
 
 
 class _FakeEquip:

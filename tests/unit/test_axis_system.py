@@ -56,6 +56,44 @@ class TestSkillCardAxis:
         assert ax.skill_card_target_skill(self._card("x", "knowledge")) == "knowledge"
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# 戰鬥軸譜相剋（批次 33）
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+class TestCombatAxis:
+    """靈體敵人對物理攻擊減傷、能量/靈性維度角色克制。"""
+
+    _aff_mystic = {"物質": 0.4, "能量": 0.72, "靈性": 0.75, "機械": 0.05, "資訊": 0.12}
+    _aff_physical = {"物質": 0.8, "能量": 0.17, "靈性": 0.17, "機械": 0.1, "資訊": 0.1}
+
+    def test_normal_enemy_no_modifier(self):
+        mult, is_spirit, note = ax.combat_axis_multiplier(self._aff_physical, "野狼")
+        assert mult == 1.0 and not is_spirit and note == ""
+
+    def test_spirit_enemy_physical_reduced(self):
+        mult, is_spirit, note = ax.combat_axis_multiplier(self._aff_physical, "暗影靈")
+        assert mult == 0.5 and is_spirit and note == "減傷"
+
+    def test_spirit_enemy_mystic_boost(self):
+        mult, is_spirit, note = ax.combat_axis_multiplier(self._aff_mystic, "幽靈")
+        assert mult == 1.5 and is_spirit and note == "克制"
+
+    def test_shadow_enemy_detected(self):
+        mult, is_spirit, _ = ax.combat_axis_multiplier(self._aff_mystic, "織織之影")
+        assert is_spirit and mult == 1.5
+
+    def test_spirit_enemy_name_variants(self):
+        for name in ("暗影靈", "幽靈", "織織之影", "深淵楓之影", "亡靈"):
+            _, is_spirit, _ = ax.combat_axis_multiplier(self._aff_physical, name)
+            assert is_spirit, name
+
+    def test_gargoyle_not_spirit(self):
+        """石像鬼是石像生物（掉落鐵礦/黏土），物理實體不該被靈體減傷。"""
+        mult, is_spirit, note = ax.combat_axis_multiplier(self._aff_physical, "石像鬼")
+        assert not is_spirit and mult == 1.0 and note == ""
+
+
 # =============================================================================
 # 1. 軸碼解析
 # =============================================================================

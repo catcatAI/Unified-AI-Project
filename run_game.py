@@ -744,6 +744,10 @@ def select_character():
 # ═══════════════════════════════════════════════════════════════════════════
 
 def do_combat(character, enemy, equipment=None):
+    # 軸譜相剋：靈體/幽靈/影/鬼類敵人（無形體）對物理攻擊減傷，能量/靈性維度克制。
+    from axis_system import combat_axis_multiplier
+    _aff_cb = character.get("axis", {}).get("affinity", {}) or {}
+    _spirit_mult, _is_spirit_enemy, _spirit_note = combat_axis_multiplier(_aff_cb, enemy.get("name", ""))
     print(C.RED+C.BOLD+"\n⚔ "+"="*40+" ⚔"+C.RESET)
     print(C.RED+C.BOLD+"  戰鬥! 遭遇了 %s!" % enemy["name"]+C.RESET)
     print("  " + enemy.get("desc","") + " | HP:%d ATK:%d DEF:%d" % (enemy["hp"],enemy["atk"],enemy["def"]))
@@ -775,6 +779,13 @@ def do_combat(character, enemy, equipment=None):
             
         if act == "1" or act == "0":
             pa = character["atk"] + get_skill_modifier(character, "combat") + charge_bonus
+            # 軸譜相剋：靈體敵人物理減半、能量/靈性維度角色克制加成（乘數由 axis_system 統一）。
+            if _is_spirit_enemy:
+                pa = int(pa * _spirit_mult)
+                if _spirit_note == "克制":
+                    print(C.MAGENTA+"    ✦ 你的能量/靈性維度靈力對%s的無形之體特別有效！"%enemy["name"]+C.RESET)
+                else:
+                    print(C.DIM+"    （%s是無形靈體，物理攻擊效果有限……）"%enemy["name"]+C.RESET)
             ps = character.get("spd",5)
             dmg, crit = resolve_combat_turn(pa, ps, enemy["def"], e_hp)
             e_hp -= dmg
