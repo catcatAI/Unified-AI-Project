@@ -37,8 +37,9 @@ ed3n:
     auto_sync_dictionary: true
 
   # Arithmetic digit-cell learner (research A+B landing).
-  # Autonomous loop: self-generates digit/carry truth table when sparse,
-  # stops when learned/unconvergeable, checkpoint-resumable.
+  # Autonomous loop: self-generates deterministic truth tables (add carry cell,
+  # sub borrow cell, mul lattice, boolean logic gates) when sparse, stops when
+  # learned/unconvergeable, checkpoint-resumable.
   train:
     arithmetic:
       representation: "onehot"   # onehot | counting (§5 / §3.1)

@@ -18,12 +18,18 @@ import os
 import tempfile
 
 import pytest
-
 from ai.arithmetic.arithmetic_learner import (
+    _LOGIC_OPS,
     ArithmeticLearner,
-    DigitRepresentation,
     CellSample,
+    DigitRepresentation,
+    LogicSample,
+    MulCellSample,
+    SubCellSample,
     _label_add,
+    _label_mul,
+    _label_sub,
+    _logic_result,
 )
 
 
@@ -175,3 +181,166 @@ def test_clp_dialogue_hook() -> None:
     al.run(max_epochs=5, stall_epochs=2)
     assert al.predict_addition(12, 5) == 17
     assert al.learned
+
+
+# ---------------------------------------------------------------- sub/mul/logic
+def test_label_sub_parses_deterministic_result() -> None:
+    assert _label_sub(9, 3) == 6
+    assert _label_sub(100, 1) == 99
+    assert _label_sub(52, 80) == -28
+
+
+def test_label_mul_parses_deterministic_result() -> None:
+    assert _label_mul(7, 6) == 42
+    assert _label_mul(12, 34) == 408
+
+
+def test_sub_truth_table_covers_digits_and_borrows() -> None:
+    l = ArithmeticLearner()
+    table = l.generate_sub_truth_table()
+    assert len(table) == 200  # 10 digits x 10 digits x 2 borrow-in
+    borrows = {s.borrow_in for s in table}
+    assert borrows == {0, 1}
+
+
+def test_sub_borrow_semantics() -> None:
+    l = ArithmeticLearner()
+    table = {("da", s.da, "db", s.db, "bin", s.borrow_in): s for s in l.generate_sub_truth_table()}
+    s = table[("da", 5, "db", 7, "bin", 0)]
+    assert s.digit_diff == 8  # 5-7 wraps: +10
+    assert s.borrow_out == 1
+    s2 = table[("da", 9, "db", 4, "bin", 1)]
+    assert s2.digit_diff == 4
+    assert s2.borrow_out == 0
+
+
+def test_mul_truth_table_covers_grid() -> None:
+    l = ArithmeticLearner()
+    table = l.generate_mul_truth_table()
+    assert len(table) == 100  # 10 x 10
+    for s in table:
+        assert s.da * s.db == s.digit_high * 10 + s.digit_low
+
+
+def test_logic_truth_table_covers_gates() -> None:
+    l = ArithmeticLearner()
+    table = l.generate_logic_truth_table()
+    assert len(table) == len(_LOGIC_OPS) * 4  # 7 gates x 4 combos
+    assert {s.op for s in table} == set(_LOGIC_OPS)
+
+
+def test_logic_result_matches_boolean_truth() -> None:
+    assert _logic_result("AND", 1, 1) == 1
+    assert _logic_result("AND", 1, 0) == 0
+    assert _logic_result("OR", 0, 1) == 1
+    assert _logic_result("XOR", 1, 1) == 0
+    assert _logic_result("NAND", 1, 1) == 0
+    assert _logic_result("NOR", 0, 0) == 1
+    assert _logic_result("XNOR", 1, 1) == 1
+    assert _logic_result("NOT", 1, 0) == 0
+    assert _logic_result("NOT", 0, 0) == 1
+
+
+def test_op_cells_learned_to_perfection(learner: ArithmeticLearner) -> None:
+    assert learner.evaluate_sub_accuracy() == pytest.approx(1.0)
+    assert learner.evaluate_mul_accuracy() == pytest.approx(1.0)
+    assert learner.evaluate_logic_accuracy() == pytest.approx(1.0)
+    for op, acc in learner.snapshot.task_accuracy.items():
+        assert acc == pytest.approx(1.0), op
+
+
+def test_subtraction_composition(learner: ArithmeticLearner) -> None:
+    cases = [(10, 1, 9), (100, 1, 99), (532, 147, 385), (1000, 567, 433), (56, 56, 0), (5, 8, -3)]
+    for a, b, expected in cases:
+        assert learner.predict_subtraction(a, b) == expected, f"{a}-{b}"
+
+
+def test_random_subtraction(learner: ArithmeticLearner) -> None:
+    import random
+
+    rng = random.Random(11)
+    ok = 0
+    for _ in range(200):
+        a = rng.randrange(0, 5000)
+        b = rng.randrange(0, 5000)
+        if learner.predict_subtraction(a, b) == a - b:
+            ok += 1
+    assert ok == 200
+
+
+def test_multiplication_composition(learner: ArithmeticLearner) -> None:
+    cases = [(7, 6, 42), (23, 17, 391), (123, 45, 5535), (999, 99, 98901), (0, 5, 0)]
+    for a, b, expected in cases:
+        assert learner.predict_multiplication(a, b) == expected, f"{a}*{b}"
+
+
+def test_random_multiplication(learner: ArithmeticLearner) -> None:
+    import random
+
+    rng = random.Random(23)
+    ok = 0
+    for _ in range(100):
+        a = rng.randrange(0, 1000)
+        b = rng.randrange(0, 1000)
+        if learner.predict_multiplication(a, b) == a * b:
+            ok += 1
+    assert ok == 100
+
+
+def test_logic_gates_predict(learner: ArithmeticLearner) -> None:
+    cases = [
+        ("AND", 1, 1, 1),
+        ("AND", 1, 0, 0),
+        ("OR", 0, 1, 1),
+        ("XOR", 1, 1, 0),
+        ("NAND", 1, 1, 0),
+        ("NOR", 0, 0, 1),
+        ("XNOR", 0, 1, 0),
+        ("NOT", 1, 0, 0),
+        ("NOT", 0, 0, 1),
+    ]
+    for op, a, b, expected in cases:
+        assert learner.predict_logic_gate(op, a, b) == expected, f"{op}({a},{b})"
+
+
+def test_logic_unknown_gate_rejected(learner: ArithmeticLearner) -> None:
+    import pytest as _pytest
+
+    with _pytest.raises(ValueError):
+        learner.predict_logic_gate("NAND2", 1, 0)
+
+
+def test_save_load_resume_op_cells(tmp_path: "Any") -> None:
+    import numpy as np
+
+    l = ArithmeticLearner()
+    l.run(max_epochs=3)
+    path = os.path.join(tmp_path, "arith_ops.npz")
+    l.save(path)
+    l2 = ArithmeticLearner()
+    l2.load(path)
+    assert l2.predict_subtraction(532, 147) == 385
+    assert l2.predict_multiplication(23, 17) == 391
+    assert l2.predict_logic_gate("XOR", 1, 1) == 0
+    assert np.array_equal(l2._sub_cell.hidden_w, l._sub_cell.hidden_w)
+    assert np.array_equal(l2._mul_cell.hidden_w, l._mul_cell.hidden_w)
+    assert np.array_equal(l2._logic_cell.hidden_w, l._logic_cell.hidden_w)
+
+
+def test_dialogue_learning_sub_and_mul() -> None:
+    l = ArithmeticLearner()
+    snap = l.learn_from_dialogue("what is 100 - 1?", "that is 99")
+    assert snap is not None
+    assert l.predict_subtraction(100, 1) == 99
+    snap2 = l.learn_from_dialogue("what is 7 * 6?", "that is 42")
+    assert snap2 is not None
+    assert l.predict_multiplication(7, 6) == 42
+
+
+def test_op_sample_hashable() -> None:
+    assert SubCellSample(5, 7, 0, 8, 1) == SubCellSample(5, 7, 0, 8, 1)
+    assert MulCellSample(7, 6, 2, 4) == MulCellSample(7, 6, 2, 4)
+    assert LogicSample("AND", 1, 1, 1) == LogicSample("AND", 1, 1, 1)
+    assert hash(SubCellSample(5, 7, 0, 8, 1)) == hash(SubCellSample(5, 7, 0, 8, 1))
+    assert hash(MulCellSample(7, 6, 2, 4)) == hash(MulCellSample(7, 6, 2, 4))
+    assert hash(LogicSample("AND", 1, 1, 1)) == hash(LogicSample("AND", 1, 1, 1))

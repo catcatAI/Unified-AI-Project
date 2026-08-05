@@ -166,14 +166,18 @@ train=1.000, test=1.000 (含借位 + 負數)
 
 - **`apps/backend/src/ai/arithmetic/`**(新套件)— 自主加法 digit-cell 學習迴圈:
   - `DigitRepresentation` — 可切換 `onehot`(預設,研究 §5 閉合真值表可靠收斂)與 `counting`(僅供外推實驗 opt-in)。
-  - `CellSample`(hashable)、`LoopSnapshot`(resume)資料類別。
-  - `ArithmeticLearner` — `run()` 自主閉環:數據不足自動生成 digit/carry 真值表;學會自動結束(`learned-optimal`/`learned-threshold`)‧無法收斂自動結束(`unconvergeable-stall`/`max-epochs-reached`)‧`save()/load()` 可續訓。
-  - 學習核心 `_fit_mlp` 重用研究證實的 **L-BFGS-B tanh-MLP**(`capability_math3.py`),1s 收斂 100%,非 Adam/線性 readout。
-  - `predict_addition` 逐欄組合 digit-cell,carry 為輸入維度(§B6,無未見 carry 外推);carry 鏈加 `nd+4` 上限保護未收斂網路。
-  - `learn_from_dialogue` — 從對話抽取 `x + y` 算式(確定性引擎為標籤來源→正確逐欄 cell),`auto_run=False` 佇列、週期性全量 fit。
+  - `CellSample`(hashable)、`LoopSnapshot`(resume,含 `task_accuracy` 逐 op 精準度)資料類別。
+  - `ArithmeticLearner` — `run()` 自主閉環:數據不足自動生成各 op 確定性真值表;學會自動結束(`learned-optimal`/`learned-threshold`)‧無法收斂自動結束(`unconvergeable-stall`/`max-epochs-reached`)‧`save()/load()` 可續訓(向後相容舊 checkpoint)。
+  - 學習核心 `_CellMLP` 泛化研究證實的 **L-BFGS-B tanh-MLP + 多 softmax head**(`capability_math3.py`),1s 收斂 100%,非 Adam/線性 readout;**四個 op cell 共用同一優化路徑**:
+    - **加法** carry cell(維持原樣,`min_cols` 保護不變);
+    - **減法** borrow cell(`hidden_size≥128` 並 `maxiter=600`,因 borrow 輸出類別不平衡需要額外容量);
+    - **乘法** 單 digit lattice(`da * db -> low, high`);
+    - **邏輯閘** AND/OR/XOR/NAND/NOR/XNOR/NOT 閉合 `{0,1}` 真值表(`_logic_result` 純布林定義 —— `evaluate_math` 字集無位元運算)。
+  - `predict_addition`/`predict_subtraction`/`predict_multiplication`/`predict_logic_gate` 逐欄組合 cell;carry/borrow 為輸入維度(§B6,無未見 carry/borrow 外推);carry 鏈加 `nd+4` 上限保護未收斂網路;負數差以對稱 `-(b-a)` 處理;多位乘法走 Schoolbook 部分積、以加法 cell 求和。
+  - `learn_from_dialogue` — 從對話抽取 `x + y`/`x - y`/`x * y` 算式(確定性引擎為標籤來源→正確逐欄 cell;邏輯閘因自然語言 AND/OR 過於歧義僅從閉合真值表學習),`auto_run=False` 佇列、週期性全量 fit。
 - **`apps/backend/src/ai/ed3n/continuous_learning.py`** — `ContinuousLearningPipeline` 新增 `arithmetic_learner` hook,`process_interaction` 於 `interaction % train_interval == 0` 觸發全量 re-fit。
-- **`scripts/train_pipeline.py`** — B 類接入:新增 `_step5b_train_arithmetic`,`main()` 加 5b step 並 `save_state(5.5)`。
+- **`scripts/train_pipeline.py`** — B 類接入:新增 `_step5b_train_arithmetic`,`main()` 加 5b step 並 `save_state(5.5)`;擴充 spot-check 涵蓋 add/sub/mul/logic 並輸出 `arithmetic_per_op` 精準度。
 - **`apps/backend/configs/system/ed3n.default.yaml`** — `ed3n.train.arithmetic.*` 配置(representation/dim/min_acc/max_epochs/stall_epochs)。
-- **`tests/unit/test_arithmetic_learner.py`** — 15 tests:收斂 100%‧多位加法‧隨機 200 例‧save/load 續訓‧dialogue/CLP 整合‧真值表與表示模式‧終止保證。
+- **`tests/unit/test_arithmetic_learner.py`** — 32 tests:四 op cell 收斂 100%‧多位加/減/乘與負數差‧邏輯閘全組合‧隨機 200/100 例‧save/load 續訓(含 op cell weights)‧dialogue/CLP 整合‧真值表與表示模式‧終止保證。落地 commit:`281a2870`(A+B 基礎),本批擴充(sub/mul/logic cell)。
 
-分工複述:數值真相永遠來自確定性引擎(`services.math_verifier.evaluate_math`,永不參與學習);SNN/digit-cell 只學習符號映射與 digit 組合。
+分工複述:數值真相永遠來自確定性引擎(`services.math_verifier.evaluate_math`,永不參與學習;減法/乘法標籤亦走引擎,邏輯閘標籤用純布林定義);SNN/digit-cell 只學習符號映射與 digit 組合。

@@ -35,25 +35,36 @@ logging.basicConfig(
 )
 logger = logging.getLogger("TrainPipeline")
 # Silence noisy loggers
-for n in ("ed3n_engine", "garden_engine", "dictionary_layer", "VectorDictionary",
-          "TensorSNNCore", "CoreNetwork", "ModelBus", "TrainingCoordinator"):
+for n in (
+    "ed3n_engine",
+    "garden_engine",
+    "dictionary_layer",
+    "VectorDictionary",
+    "TensorSNNCore",
+    "CoreNetwork",
+    "ModelBus",
+    "TrainingCoordinator",
+):
     logging.getLogger(n).setLevel(logging.WARNING)
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src")))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
+)
 
-from core.system.config.magic_numbers import confidence_value, learning_rate, limit_value
-
+from ai.arithmetic.arithmetic_learner import ArithmeticLearner
 from ai.core.model_bus import ModelBus, ModelCapability
 from ai.core.query_classifier import QueryClassifier, QueryType
 from ai.core.training_coordinator import TrainingCoordinator
 from ai.ed3n.ed3n_engine import ED3NEngine
-from ai.ed3n.ed3n_trainer import ED3NTrainer, SequenceTrainer, JointTrainer
+from ai.ed3n.ed3n_trainer import ED3NTrainer, JointTrainer, SequenceTrainer
 from ai.ed3n.training_types import (
-    TrainingExample, TrainingBatch, SeqBatch,
+    SeqBatch,
+    TrainingBatch,
+    TrainingExample,
     make_synthetic_seq_batch,
 )
 from ai.garden.garden_engine import GARDENEngine, is_deterministic_match
-from ai.arithmetic.arithmetic_learner import ArithmeticLearner
+from core.system.config.magic_numbers import confidence_value, learning_rate, limit_value
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DATA_DIR = os.path.join(ROOT, "apps/backend/data/raw_datasets")
@@ -65,7 +76,7 @@ STATE_FILE = os.path.join(CKPT_DIR, "training_state.json")
 # Step 1a — preprocessing helpers
 # ---------------------------------------------------------------------------
 
-OP_MAP={"+": " plus ", "-": " minus ", "*": " times ", "/": " over "}
+OP_MAP = {"+": " plus ", "-": " minus ", "*": " times ", "/": " over "}
 
 
 def preprocess(text: str) -> str:
@@ -81,6 +92,7 @@ def preprocess(text: str) -> str:
 # Step 1b — data loading
 # ---------------------------------------------------------------------------
 
+
 def _load_json(path: str) -> List[Dict]:
     with open(path, encoding="utf-8") as f:
         return json.load(f)
@@ -88,7 +100,7 @@ def _load_json(path: str) -> List[Dict]:
 
 def _parse_malformed_logic_json(raw: str) -> List[Dict]:
     """logic_train.json uses backslash as quote char with embedded newlines.
-    
+
     Format: [{prop: val, ans: val}, ...] with backslash-escaped quotes.
     Strategy: replace backslash -> quote, collapse newlines -> space, parse JSON.
     """
@@ -98,20 +110,24 @@ def _parse_malformed_logic_json(raw: str) -> List[Dict]:
     # Collapse newlines inside string values (replace with space)
     s = s.replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
     # Remove BOM
-    if s.startswith('\ufeff'):
+    if s.startswith("\ufeff"):
         s = s[1:]
     try:
         data = json.loads(s)
         if isinstance(data, list):
             for item in data:
                 inp = item.get("proposition", "")
-                out = str(item.get("answer", "")).lower() if isinstance(item.get("answer"), bool) else str(item.get("answer", ""))
+                out = (
+                    str(item.get("answer", "")).lower()
+                    if isinstance(item.get("answer"), bool)
+                    else str(item.get("answer", ""))
+                )
                 samples.append({"proposition": inp, "answer": out})
             return samples
     except json.JSONDecodeError:
         pass
         # Fallback: regex after normalizing
-    s2 = re.sub(r'\s+', ' ', s)
+    s2 = re.sub(r"\s+", " ", s)
     for m in re.finditer(r'proposition\s*:\s*"([^"]*)"\s*,\s*answer\s*:\s*"([^"]*)"', s2):
         samples.append({"proposition": m.group(1), "answer": m.group(2)})
     return samples
@@ -139,7 +155,11 @@ def load_all_data() -> List[Dict]:
         if domain == "logic":
             for item in data:
                 inp = item.get(inp_key, "")
-                out = str(item.get(out_key, "")).lower() if isinstance(item.get(out_key), bool) else str(item.get(out_key, ""))
+                out = (
+                    str(item.get(out_key, "")).lower()
+                    if isinstance(item.get(out_key), bool)
+                    else str(item.get(out_key, ""))
+                )
                 samples.append({"input": inp, "output": out, "domain": domain})
         else:
             for item in data:
@@ -151,13 +171,15 @@ def load_all_data() -> List[Dict]:
 
     # CSV
     csv_path = os.path.join(DATA_DIR, "arithmetic_test_dataset.csv")
-    csv_count=0
+    csv_count = 0
     if os.path.exists(csv_path):
         with open(csv_path, encoding="utf-8") as f:
             for row in csv.DictReader(f):
                 samples.append({"input": row["problem"], "output": row["answer"], "domain": "math"})
                 csv_count += 1
-        logger.info("  Loaded %-35s -> %d %s samples", "arithmetic_test_dataset.csv", csv_count, "math")
+        logger.info(
+            "  Loaded %-35s -> %d %s samples", "arithmetic_test_dataset.csv", csv_count, "math"
+        )
 
     logger.info("  Total samples loaded: %d", len(samples))
     return samples
@@ -174,7 +196,9 @@ KB_DIR = os.path.join(ROOT, "apps/backend/data/knowledge_bases")
 
 def load_alpaca_data(max_samples: Optional[int] = None) -> List[Dict]:
     """Load Alpaca-style instruction dataset as knowledge-domain samples."""
-    max_samples = max_samples if max_samples is not None else limit_value("train.alpaca.max_samples", 10000)
+    max_samples = (
+        max_samples if max_samples is not None else limit_value("train.alpaca.max_samples", 10000)
+    )
     if not os.path.exists(ALPACA_PATH):
         logger.warning("Alpaca data not found at %s", ALPACA_PATH)
         return []
@@ -200,7 +224,7 @@ def load_templates_data() -> List[Dict]:
     data = _load_json(TEMPLATES_PATH)
     samples: List[Dict] = []
     for item in data:
-        inp=" ".join(item.get("keywords", []))
+        inp = " ".join(item.get("keywords", []))
         out = item.get("content", "")
         if inp and out:
             samples.append({"input": inp, "output": out, "domain": "reflex"})
@@ -218,7 +242,7 @@ def load_knowledge_bases() -> List[Dict]:
         if not fname.endswith((".json", ".yaml", ".yml")):
             continue
         fpath = os.path.join(KB_DIR, fname)
-        data=None
+        data = None
         try:
             data = _load_json(fpath)
         except Exception:
@@ -227,11 +251,17 @@ def load_knowledge_bases() -> List[Dict]:
                     with open(fpath, encoding="utf-8") as _fy:
                         raw = _fy.read()
                     parsed = _parse_simple_yaml(raw)
-                    data=[]
+                    data = []
                     for category, attrs in parsed.items():
                         desc = attrs.get("text_ending") or attrs.get("description") or ""
                         if desc:
-                            data.append({"input": f"emotion {category}", "output": str(desc), "domain": "knowledge"})
+                            data.append(
+                                {
+                                    "input": f"emotion {category}",
+                                    "output": str(desc),
+                                    "domain": "knowledge",
+                                }
+                            )
                 except Exception as yaml_err:
                     logger.debug("Failed to parse YAML knowledge base '%s': %s", fname, yaml_err)
         if data is None:
@@ -242,11 +272,11 @@ def load_knowledge_bases() -> List[Dict]:
                 if isinstance(val, str):
                     samples.append({"input": str(key), "output": val, "domain": "knowledge"})
                 elif isinstance(val, list):
-                    for v in val[:limit_value("train.knowledge.max_per_key", 5)]:
+                    for v in val[: limit_value("train.knowledge.max_per_key", 5)]:
                         if isinstance(v, str):
                             samples.append({"input": str(key), "output": v, "domain": "knowledge"})
         elif isinstance(data, list):
-            for item in data[:limit_value("train.knowledge.max_per_list", 100)]:
+            for item in data[: limit_value("train.knowledge.max_per_list", 100)]:
                 inp = item.get("input") or item.get("question") or item.get("keyword") or ""
                 out = item.get("output") or item.get("answer") or item.get("response") or ""
                 if inp and out:
@@ -268,14 +298,14 @@ RAW_DIR = os.path.join(ROOT, "apps/backend/data/raw_datasets")
 
 def _parse_simple_yaml(text: str) -> dict:
     """Minimal YAML parser for flat key: value blocks.
-    
+
     Handles the LingCat_emotion_map.yaml format:
         key:
           subkey: value
           subkey: value
     """
-    result={}
-    current_key=None
+    result = {}
+    current_key = None
     for line in text.splitlines():
         if not line.strip() or line.strip().startswith("#"):
             continue
@@ -325,7 +355,7 @@ def load_presets_data() -> List[Dict]:
                 continue
             fpath = os.path.join(GARDEN_CONFIG_DIR, fname)
             data = _load_json(fpath)
-            sub_samples=[]
+            sub_samples = []
             for trigger, response in data.get("reflex_patterns", {}).items():
                 if trigger and response:
                     sub_samples.append({"input": trigger, "output": response, "domain": "reflex"})
@@ -337,7 +367,9 @@ def load_presets_data() -> List[Dict]:
                         sfs = list(sfs.values())
                     out = sfs[0] if sfs else entry.get("value") or entry.get("definition") or ""
                     if inp and out:
-                        sub_samples.append({"input": str(inp), "output": str(out), "domain": "knowledge"})
+                        sub_samples.append(
+                            {"input": str(inp), "output": str(out), "domain": "knowledge"}
+                        )
             if sub_samples:
                 samples.extend(sub_samples)
                 logger.info("  Loaded GARDEN config %-25s -> %d samples", fname, len(sub_samples))
@@ -356,16 +388,22 @@ def load_trpg_codex() -> List[Dict]:
         if isinstance(items, dict):
             for cname, cdata in items.items():
                 if isinstance(cdata, dict):
-                    desc = cdata.get("description") or cdata.get("desc") or cdata.get("flavor") or ""
+                    desc = (
+                        cdata.get("description") or cdata.get("desc") or cdata.get("flavor") or ""
+                    )
                     if desc:
-                        samples.append({"input": f"what is {cname}", "output": str(desc), "domain": "world"})
+                        samples.append(
+                            {"input": f"what is {cname}", "output": str(desc), "domain": "world"}
+                        )
         elif isinstance(items, list):
-            for item in items[:limit_value("train.trpg.max_per_category", 200)]:
+            for item in items[: limit_value("train.trpg.max_per_category", 200)]:
                 if isinstance(item, dict):
                     name = item.get("name") or item.get("id") or ""
                     desc = item.get("description") or item.get("desc") or item.get("flavor") or ""
                     if name and desc:
-                        samples.append({"input": f"describe {name}", "output": str(desc), "domain": "world"})
+                        samples.append(
+                            {"input": f"describe {name}", "output": str(desc), "domain": "world"}
+                        )
     logger.info("  Loaded TRPG codex: %d world samples", len(samples))
     return samples
 
@@ -384,7 +422,11 @@ def load_secondary_raw() -> List[Dict]:
                 out = item.get("response") or item.get("output") or ""
                 if inp and out:
                     samples.append({"input": str(inp), "output": str(out), "domain": "knowledge"})
-        logger.info("  Loaded secondary %-30s -> %d samples", fname, len([s for s in samples if "knowledge" in s.get("domain", "")]))
+        logger.info(
+            "  Loaded secondary %-30s -> %d samples",
+            fname,
+            len([s for s in samples if "knowledge" in s.get("domain", "")]),
+        )
     return samples
 
 
@@ -392,126 +434,498 @@ def load_secondary_raw() -> List[Dict]:
 # Step 1e — generate knowledge data
 # ---------------------------------------------------------------------------
 
+
 def generate_knowledge_data() -> List[Dict]:
     """Generate 500+ knowledge Q&A pairs for GARDEN training."""
     pairs: List[Dict[str, str]] = [
         # 计算机 / Computer
-        {"input": "什么是人工智能", "output": "人工智能是模拟人类智能的计算机系统", "domain": "knowledge"},
-        {"input": "what is machine learning", "output": "Machine learning is a subset of AI that learns from data", "domain": "knowledge"},
-        {"input": "什么是深度学习", "output": "深度学习是多层神经网络的机器学习方法", "domain": "knowledge"},
-        {"input": "what is a neural network", "output": "A neural network is a computing system inspired by biological brains", "domain": "knowledge"},
-        {"input": "什么是CPU", "output": "CPU是中央处理器，是计算机的核心运算单元", "domain": "knowledge"},
-        {"input": "what is GPU", "output": "GPU is a graphics processing unit for parallel computation", "domain": "knowledge"},
-        {"input": "什么是RAM", "output": "RAM是随机存取存储器，用于临时存储数据", "domain": "knowledge"},
-        {"input": "what is an algorithm", "output": "An algorithm is a step-by-step procedure for solving a problem", "domain": "knowledge"},
-        {"input": "什么是数据库", "output": "数据库是结构化存储和管理数据的系统", "domain": "knowledge"},
-        {"input": "what is cloud computing", "output": "Cloud computing delivers computing services over the internet", "domain": "knowledge"},
-        {"input": "什么是区块链", "output": "区块链是分布式账本技术，用于安全记录交易", "domain": "knowledge"},
-        {"input": "what is encryption", "output": "Encryption is the process of encoding data to prevent unauthorized access", "domain": "knowledge"},
-        {"input": "什么是编程语言", "output": "编程语言是用于编写计算机程序的形式化语言", "domain": "knowledge"},
-        {"input": "what is Python", "output": "Python is a high-level interpreted programming language", "domain": "knowledge"},
-        {"input": "什么是API", "output": "API是应用程序编程接口，用于软件组件之间的通信", "domain": "knowledge"},
+        {
+            "input": "什么是人工智能",
+            "output": "人工智能是模拟人类智能的计算机系统",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is machine learning",
+            "output": "Machine learning is a subset of AI that learns from data",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是深度学习",
+            "output": "深度学习是多层神经网络的机器学习方法",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is a neural network",
+            "output": "A neural network is a computing system inspired by biological brains",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是CPU",
+            "output": "CPU是中央处理器，是计算机的核心运算单元",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is GPU",
+            "output": "GPU is a graphics processing unit for parallel computation",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是RAM",
+            "output": "RAM是随机存取存储器，用于临时存储数据",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is an algorithm",
+            "output": "An algorithm is a step-by-step procedure for solving a problem",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是数据库",
+            "output": "数据库是结构化存储和管理数据的系统",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is cloud computing",
+            "output": "Cloud computing delivers computing services over the internet",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是区块链",
+            "output": "区块链是分布式账本技术，用于安全记录交易",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is encryption",
+            "output": "Encryption is the process of encoding data to prevent unauthorized access",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是编程语言",
+            "output": "编程语言是用于编写计算机程序的形式化语言",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is Python",
+            "output": "Python is a high-level interpreted programming language",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是API",
+            "output": "API是应用程序编程接口，用于软件组件之间的通信",
+            "domain": "knowledge",
+        },
         # 科学 / Science
-        {"input": "什么是光合作用", "output": "光合作用是植物利用光能将二氧化碳和水转化为有机物", "domain": "knowledge"},
-        {"input": "what is gravity", "output": "Gravity is a natural force that attracts objects with mass", "domain": "knowledge"},
-        {"input": "什么是DNA", "output": "DNA是脱氧核糖核酸，携带生物遗传信息", "domain": "knowledge"},
-        {"input": "what is evolution", "output": "Evolution is the change in species over generations through natural selection", "domain": "knowledge"},
-        {"input": "什么是原子", "output": "原子是化学元素的最小单位，由原子核和电子组成", "domain": "knowledge"},
-        {"input": "what is a black hole", "output": "A black hole is a region of spacetime with gravitational pull so strong nothing can escape", "domain": "knowledge"},
-        {"input": "什么是细胞", "output": "细胞是生命体的基本结构和功能单位", "domain": "knowledge"},
-        {"input": "what is photosynthesis", "output": "Photosynthesis is the process plants use to convert light into chemical energy", "domain": "knowledge"},
-        {"input": "什么是生态系统", "output": "生态系统是生物群落与其环境相互作用的系统", "domain": "knowledge"},
-        {"input": "what is climate change", "output": "Climate change refers to long-term shifts in global weather patterns", "domain": "knowledge"},
-        {"input": "什么是病毒", "output": "病毒是依赖宿主细胞复制的微小感染源", "domain": "knowledge"},
-        {"input": "what is a chemical reaction", "output": "A chemical reaction transforms substances into different chemical compounds", "domain": "knowledge"},
-        {"input": "什么是地心引力", "output": "地心引力是地球吸引物体的自然力", "domain": "knowledge"},
-        {"input": "what is renewable energy", "output": "Renewable energy comes from sources that are naturally replenished", "domain": "knowledge"},
-        {"input": "什么是相对论", "output": "相对论是爱因斯坦提出的关于时空和引力的理论", "domain": "knowledge"},
+        {
+            "input": "什么是光合作用",
+            "output": "光合作用是植物利用光能将二氧化碳和水转化为有机物",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is gravity",
+            "output": "Gravity is a natural force that attracts objects with mass",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是DNA",
+            "output": "DNA是脱氧核糖核酸，携带生物遗传信息",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is evolution",
+            "output": "Evolution is the change in species over generations through natural selection",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是原子",
+            "output": "原子是化学元素的最小单位，由原子核和电子组成",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is a black hole",
+            "output": "A black hole is a region of spacetime with gravitational pull so strong nothing can escape",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是细胞",
+            "output": "细胞是生命体的基本结构和功能单位",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is photosynthesis",
+            "output": "Photosynthesis is the process plants use to convert light into chemical energy",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是生态系统",
+            "output": "生态系统是生物群落与其环境相互作用的系统",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is climate change",
+            "output": "Climate change refers to long-term shifts in global weather patterns",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是病毒",
+            "output": "病毒是依赖宿主细胞复制的微小感染源",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is a chemical reaction",
+            "output": "A chemical reaction transforms substances into different chemical compounds",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是地心引力",
+            "output": "地心引力是地球吸引物体的自然力",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is renewable energy",
+            "output": "Renewable energy comes from sources that are naturally replenished",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是相对论",
+            "output": "相对论是爱因斯坦提出的关于时空和引力的理论",
+            "domain": "knowledge",
+        },
         # 数学 / Mathematics
-        {"input": "什么是质数", "output": "质数是只能被1和自身整除的大于1的自然数", "domain": "knowledge"},
-        {"input": "what is pi", "output": "Pi is the ratio of a circle's circumference to its diameter", "domain": "knowledge"},
-        {"input": "什么是微积分", "output": "微积分是研究变化和积累的数学分支", "domain": "knowledge"},
-        {"input": "what is a derivative", "output": "A derivative measures how a function changes as its input changes", "domain": "knowledge"},
-        {"input": "什么是概率", "output": "概率是衡量事件发生可能性的数学量", "domain": "knowledge"},
-        {"input": "what is a logarithm", "output": "A logarithm is the inverse operation to exponentiation", "domain": "knowledge"},
-        {"input": "什么是三角函数", "output": "三角函数是描述角度与边长关系的数学函数", "domain": "knowledge"},
-        {"input": "what is a matrix", "output": "A matrix is a rectangular array of numbers arranged in rows and columns", "domain": "knowledge"},
-        {"input": "什么是斐波那契数列", "output": "斐波那契数列是每个数等于前两个数之和的数列", "domain": "knowledge"},
-        {"input": "what is a prime number", "output": "A prime number is a natural number greater than 1 with no positive divisors other than 1 and itself", "domain": "knowledge"},
-        {"input": "什么是统计", "output": "统计学是收集、分析和解释数据的科学", "domain": "knowledge"},
-        {"input": "what is a function", "output": "A function maps each input to exactly one output", "domain": "knowledge"},
-        {"input": "什么是几何", "output": "几何是研究形状、大小和空间属性的数学", "domain": "knowledge"},
-        {"input": "what is a vector", "output": "A vector is a quantity with both magnitude and direction", "domain": "knowledge"},
-        {"input": "什么是代数", "output": "代数是使用符号表示数和运算的数学分支", "domain": "knowledge"},
+        {
+            "input": "什么是质数",
+            "output": "质数是只能被1和自身整除的大于1的自然数",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is pi",
+            "output": "Pi is the ratio of a circle's circumference to its diameter",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是微积分",
+            "output": "微积分是研究变化和积累的数学分支",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is a derivative",
+            "output": "A derivative measures how a function changes as its input changes",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是概率",
+            "output": "概率是衡量事件发生可能性的数学量",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is a logarithm",
+            "output": "A logarithm is the inverse operation to exponentiation",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是三角函数",
+            "output": "三角函数是描述角度与边长关系的数学函数",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is a matrix",
+            "output": "A matrix is a rectangular array of numbers arranged in rows and columns",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是斐波那契数列",
+            "output": "斐波那契数列是每个数等于前两个数之和的数列",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is a prime number",
+            "output": "A prime number is a natural number greater than 1 with no positive divisors other than 1 and itself",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是统计",
+            "output": "统计学是收集、分析和解释数据的科学",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is a function",
+            "output": "A function maps each input to exactly one output",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是几何",
+            "output": "几何是研究形状、大小和空间属性的数学",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is a vector",
+            "output": "A vector is a quantity with both magnitude and direction",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是代数",
+            "output": "代数是使用符号表示数和运算的数学分支",
+            "domain": "knowledge",
+        },
         # 自然 / Nature
-        {"input": "什么是地震", "output": "地震是地壳快速释放能量引起的震动", "domain": "knowledge"},
-        {"input": "what is a tornado", "output": "A tornado is a violently rotating column of air extending from a thunderstorm", "domain": "knowledge"},
-        {"input": "什么是火山", "output": "火山是地壳中岩浆喷出地表形成的山体", "domain": "knowledge"},
-        {"input": "what is an ecosystem", "output": "An ecosystem is a community of living organisms interacting with their environment", "domain": "knowledge"},
-        {"input": "什么是恐龙", "output": "恐龙是中生代时期统治地球的爬行动物", "domain": "knowledge"},
-        {"input": "what is a glacier", "output": "A glacier is a persistent body of dense ice that moves under its own weight", "domain": "knowledge"},
-        {"input": "什么是全球变暖", "output": "全球变暖是地球平均气温升高的现象", "domain": "knowledge"},
-        {"input": "what is biodiversity", "output": "Biodiversity is the variety of life forms on Earth", "domain": "knowledge"},
-        {"input": "什么是光合细菌", "output": "光合细菌是利用光能进行光合作用的微生物", "domain": "knowledge"},
-        {"input": "what is a mammal", "output": "Mammals are warm-blooded vertebrates with hair or fur that nurse their young", "domain": "knowledge"},
-        {"input": "什么是潮汐", "output": "潮汐是海洋水位因月球和太阳引力而周期性升降的现象", "domain": "knowledge"},
-        {"input": "what is the water cycle", "output": "The water cycle describes the continuous movement of water through evaporation, condensation, and precipitation", "domain": "knowledge"},
-        {"input": "什么是大气层", "output": "大气层是地球外围的气体层，保护生命免受太阳辐射", "domain": "knowledge"},
-        {"input": "what is a species", "output": "A species is a group of organisms that can interbreed and produce fertile offspring", "domain": "knowledge"},
-        {"input": "什么是岩石圈", "output": "岩石圈是地球最外层的固体岩石部分", "domain": "knowledge"},
+        {
+            "input": "什么是地震",
+            "output": "地震是地壳快速释放能量引起的震动",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is a tornado",
+            "output": "A tornado is a violently rotating column of air extending from a thunderstorm",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是火山",
+            "output": "火山是地壳中岩浆喷出地表形成的山体",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is an ecosystem",
+            "output": "An ecosystem is a community of living organisms interacting with their environment",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是恐龙",
+            "output": "恐龙是中生代时期统治地球的爬行动物",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is a glacier",
+            "output": "A glacier is a persistent body of dense ice that moves under its own weight",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是全球变暖",
+            "output": "全球变暖是地球平均气温升高的现象",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is biodiversity",
+            "output": "Biodiversity is the variety of life forms on Earth",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是光合细菌",
+            "output": "光合细菌是利用光能进行光合作用的微生物",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is a mammal",
+            "output": "Mammals are warm-blooded vertebrates with hair or fur that nurse their young",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是潮汐",
+            "output": "潮汐是海洋水位因月球和太阳引力而周期性升降的现象",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is the water cycle",
+            "output": "The water cycle describes the continuous movement of water through evaporation, condensation, and precipitation",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是大气层",
+            "output": "大气层是地球外围的气体层，保护生命免受太阳辐射",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is a species",
+            "output": "A species is a group of organisms that can interbreed and produce fertile offspring",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是岩石圈",
+            "output": "岩石圈是地球最外层的固体岩石部分",
+            "domain": "knowledge",
+        },
         # 技术 / Technology
-        {"input": "什么是物联网", "output": "物联网是互联设备通过网络通信和交换数据的系统", "domain": "knowledge"},
-        {"input": "what is 5G", "output": "5G is the fifth generation of cellular network technology with high speed and low latency", "domain": "knowledge"},
-        {"input": "什么是虚拟现实", "output": "虚拟现实是计算机生成的沉浸式三维环境", "domain": "knowledge"},
-        {"input": "what is augmented reality", "output": "Augmented reality overlays digital information onto the real world", "domain": "knowledge"},
-        {"input": "什么是大数据", "output": "大数据是规模巨大、无法用传统方法处理的数据集", "domain": "knowledge"},
-        {"input": "what is cybersecurity", "output": "Cybersecurity is the practice of protecting systems and data from digital attacks", "domain": "knowledge"},
-        {"input": "什么是机器人", "output": "机器人是可编程的自动化机器，能执行各种任务", "domain": "knowledge"},
-        {"input": "what is an operating system", "output": "An operating system is software that manages computer hardware and software resources", "domain": "knowledge"},
-        {"input": "什么是编译器", "output": "编译器是将高级语言代码转换为机器码的程序", "domain": "knowledge"},
-        {"input": "what is a protocol", "output": "A protocol is a set of rules governing data communication between devices", "domain": "knowledge"},
-        {"input": "什么是机器学习", "output": "机器学习是让计算机从数据中学习模式的方法", "domain": "knowledge"},
-        {"input": "what is natural language processing", "output": "NLP enables computers to understand and generate human language", "domain": "knowledge"},
-        {"input": "什么是计算机视觉", "output": "计算机视觉使机器能够理解和处理视觉信息", "domain": "knowledge"},
-        {"input": "what is a server", "output": "A server provides services or resources to other computers over a network", "domain": "knowledge"},
-        {"input": "什么是缓存", "output": "缓存是用于暂存数据以提高访问速度的存储层", "domain": "knowledge"},
+        {
+            "input": "什么是物联网",
+            "output": "物联网是互联设备通过网络通信和交换数据的系统",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is 5G",
+            "output": "5G is the fifth generation of cellular network technology with high speed and low latency",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是虚拟现实",
+            "output": "虚拟现实是计算机生成的沉浸式三维环境",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is augmented reality",
+            "output": "Augmented reality overlays digital information onto the real world",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是大数据",
+            "output": "大数据是规模巨大、无法用传统方法处理的数据集",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is cybersecurity",
+            "output": "Cybersecurity is the practice of protecting systems and data from digital attacks",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是机器人",
+            "output": "机器人是可编程的自动化机器，能执行各种任务",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is an operating system",
+            "output": "An operating system is software that manages computer hardware and software resources",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是编译器",
+            "output": "编译器是将高级语言代码转换为机器码的程序",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is a protocol",
+            "output": "A protocol is a set of rules governing data communication between devices",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是机器学习",
+            "output": "机器学习是让计算机从数据中学习模式的方法",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is natural language processing",
+            "output": "NLP enables computers to understand and generate human language",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是计算机视觉",
+            "output": "计算机视觉使机器能够理解和处理视觉信息",
+            "domain": "knowledge",
+        },
+        {
+            "input": "what is a server",
+            "output": "A server provides services or resources to other computers over a network",
+            "domain": "knowledge",
+        },
+        {
+            "input": "什么是缓存",
+            "output": "缓存是用于暂存数据以提高访问速度的存储层",
+            "domain": "knowledge",
+        },
     ]
 
     # Generate additional samples via template expansion to reach 500+
-    templates_en=[
+    templates_en = [
         ("what is {topic}", "{topic} is a fundamental concept in {field}"),
         ("explain {topic}", "{topic} refers to the study and application of {field} principles"),
         ("define {topic}", "{topic} is defined as a core aspect of {field}"),
-        ("tell me about {topic}", "{topic} is an important topic in {field} that involves various complex mechanisms"),
+        (
+            "tell me about {topic}",
+            "{topic} is an important topic in {field} that involves various complex mechanisms",
+        ),
         ("describe {topic}", "{topic} encompasses key ideas in {field}"),
         ("what does {topic} mean", "{topic} means studying how {field} works in practice"),
     ]
-    templates_zh=[
+    templates_zh = [
         ("什么是{topic}", "{topic}是{field}领域的重要概念"),
         ("解释{topic}", "{topic}是指{field}中的基本原理和方法"),
         ("定义{topic}", "{topic}是{field}的一个核心概念"),
         ("描述{topic}", "{topic}是{field}的重要组成部分"),
     ]
-    fields_en=["computer science", "mathematics", "physics", "biology", "engineering", "technology"]
-    fields_zh=["计算机", "数学", "物理", "生物", "工程", "科技"]
-    topics_en=["data structure", "sorting algorithm", "database index", "network topology",
-                 "quantum computing", "machine vision", "speech recognition", "encryption protocol",
-                 "distributed system", "memory management", "thread pool", "load balancer",
-                 "cache coherency", "transaction processing", "fault tolerance", "digital signal",
-                 "control system", "information theory", "game theory", "graph theory",
-                 "set theory", "number theory", "linear algebra", "combinatorics",
-                 "topology", "calculus", "statistical inference", "regression analysis",
-                 "time complexity", "space complexity", "hash function", "binary tree",
-                 "object oriented programming", "functional programming", "design pattern",
-                 "software architecture", "test driven development", "continuous deployment",
-                 "version control", "agile methodology", "rest api", "graph database",
-                 "neural network", "deep learning", "reinforcement learning", "transfer learning",
-                 "computer vision", "natural language", "recommender system", "anomaly detection"]
-    topics_zh=["面向对象编程", "函数式编程", "设计模式", "软件架构", "微服务",
-                 "容器技术", "持续集成", "版本控制", "敏捷开发", "测试驱动开发",
-                 "数据结构", "算法设计", "操作系统", "计算机网络", "信息安全",
-                 "人工智能", "机器学习", "数据挖掘", "云计算", "大数据",
-                 "区块链", "物联网", "虚拟现实", "增强现实", "边缘计算"]
+    fields_en = [
+        "computer science",
+        "mathematics",
+        "physics",
+        "biology",
+        "engineering",
+        "technology",
+    ]
+    fields_zh = ["计算机", "数学", "物理", "生物", "工程", "科技"]
+    topics_en = [
+        "data structure",
+        "sorting algorithm",
+        "database index",
+        "network topology",
+        "quantum computing",
+        "machine vision",
+        "speech recognition",
+        "encryption protocol",
+        "distributed system",
+        "memory management",
+        "thread pool",
+        "load balancer",
+        "cache coherency",
+        "transaction processing",
+        "fault tolerance",
+        "digital signal",
+        "control system",
+        "information theory",
+        "game theory",
+        "graph theory",
+        "set theory",
+        "number theory",
+        "linear algebra",
+        "combinatorics",
+        "topology",
+        "calculus",
+        "statistical inference",
+        "regression analysis",
+        "time complexity",
+        "space complexity",
+        "hash function",
+        "binary tree",
+        "object oriented programming",
+        "functional programming",
+        "design pattern",
+        "software architecture",
+        "test driven development",
+        "continuous deployment",
+        "version control",
+        "agile methodology",
+        "rest api",
+        "graph database",
+        "neural network",
+        "deep learning",
+        "reinforcement learning",
+        "transfer learning",
+        "computer vision",
+        "natural language",
+        "recommender system",
+        "anomaly detection",
+    ]
+    topics_zh = [
+        "面向对象编程",
+        "函数式编程",
+        "设计模式",
+        "软件架构",
+        "微服务",
+        "容器技术",
+        "持续集成",
+        "版本控制",
+        "敏捷开发",
+        "测试驱动开发",
+        "数据结构",
+        "算法设计",
+        "操作系统",
+        "计算机网络",
+        "信息安全",
+        "人工智能",
+        "机器学习",
+        "数据挖掘",
+        "云计算",
+        "大数据",
+        "区块链",
+        "物联网",
+        "虚拟现实",
+        "增强现实",
+        "边缘计算",
+    ]
 
     seen_inputs: set = set()
 
@@ -520,21 +934,57 @@ def generate_knowledge_data() -> List[Dict]:
             seen_inputs.add(item["input"])
 
     extra_knowledge: List[Tuple[str, str]] = [
-        ("what is a transistor", "A transistor is a semiconductor device used to amplify or switch electronic signals"),
-        ("what is a database index", "A database index is a data structure that improves data retrieval speed"),
-        ("what is recursion", "Recursion is a technique where a function calls itself to solve smaller subproblems"),
-        ("what is a hash table", "A hash table maps keys to values using a hash function for efficient lookup"),
-        ("what is a linked list", "A linked list is a linear data structure where elements are linked via pointers"),
+        (
+            "what is a transistor",
+            "A transistor is a semiconductor device used to amplify or switch electronic signals",
+        ),
+        (
+            "what is a database index",
+            "A database index is a data structure that improves data retrieval speed",
+        ),
+        (
+            "what is recursion",
+            "Recursion is a technique where a function calls itself to solve smaller subproblems",
+        ),
+        (
+            "what is a hash table",
+            "A hash table maps keys to values using a hash function for efficient lookup",
+        ),
+        (
+            "what is a linked list",
+            "A linked list is a linear data structure where elements are linked via pointers",
+        ),
         ("what is a stack", "A stack is a LIFO data structure with push and pop operations"),
         ("what is a queue", "A queue is a FIFO data structure with enqueue and dequeue operations"),
-        ("what is a binary search", "Binary search is an O(log n) algorithm for finding elements in sorted arrays"),
-        ("what is a sorting algorithm", "A sorting algorithm arranges elements in a specified order"),
-        ("what is an API gateway", "An API gateway is a server that acts as an entry point for API requests"),
-        ("what is a microservice", "A microservice is a small independent service in a distributed architecture"),
-        ("what is Docker", "Docker is a platform for developing and running applications in containers"),
-        ("what is Kubernetes", "Kubernetes is an orchestration system for managing containerized applications"),
+        (
+            "what is a binary search",
+            "Binary search is an O(log n) algorithm for finding elements in sorted arrays",
+        ),
+        (
+            "what is a sorting algorithm",
+            "A sorting algorithm arranges elements in a specified order",
+        ),
+        (
+            "what is an API gateway",
+            "An API gateway is a server that acts as an entry point for API requests",
+        ),
+        (
+            "what is a microservice",
+            "A microservice is a small independent service in a distributed architecture",
+        ),
+        (
+            "what is Docker",
+            "Docker is a platform for developing and running applications in containers",
+        ),
+        (
+            "what is Kubernetes",
+            "Kubernetes is an orchestration system for managing containerized applications",
+        ),
         ("what is CI CD", "CI/CD automates building, testing, and deployment of software"),
-        ("what is a neural network", "A neural network consists of layers of interconnected neurons that learn patterns"),
+        (
+            "what is a neural network",
+            "A neural network consists of layers of interconnected neurons that learn patterns",
+        ),
     ]
     for inp, out in extra_knowledge:
         if inp not in seen_inputs:
@@ -592,16 +1042,17 @@ def generate_knowledge_data() -> List[Dict]:
 # Evaluation
 # ---------------------------------------------------------------------------
 
+
 def evaluate(
     ed3n_engine: ED3NEngine,
     garden_engine: Optional[GARDENEngine],
     model_bus: ModelBus,
     test_cases: List[Tuple[str, str, Optional[str]]],
-    label: str="",
+    label: str = "",
 ) -> Dict[str, Any]:
     """Run test cases through Model Bus and individual engines.
     Returns structured results with pass/fail per test case."""
-    results={"label": label, "total": len(test_cases), "passed": 0, "failed": 0, "details": []}
+    results = {"label": label, "total": len(test_cases), "passed": 0, "failed": 0, "details": []}
     print(f"\n  --- {label} ---")
     classifier = QueryClassifier()
     for query, expected_domain, expected_contains in test_cases:
@@ -612,12 +1063,20 @@ def evaluate(
         # 2) Route via bus
         try:
             decision = asyncio.run(model_bus.route(query, qtype.value))
-            bus_text = decision.results.get(decision.selected_model, {}).text if hasattr(decision, 'results') else ""
-            bus_text = getattr(bus_text, 'text', str(bus_text)) if not isinstance(bus_text, str) else bus_text
+            bus_text = (
+                decision.results.get(decision.selected_model, {}).text
+                if hasattr(decision, "results")
+                else ""
+            )
+            bus_text = (
+                getattr(bus_text, "text", str(bus_text))
+                if not isinstance(bus_text, str)
+                else bus_text
+            )
         except Exception as e:
             bus_text = f"<error: {e}>"
             # 3) Direct engine call
-        direct=""
+        direct = ""
         try:
             if expected_domain in ("math", "logic", "reflex", "greeting"):
                 direct = ed3n_engine.process(query)
@@ -627,23 +1086,25 @@ def evaluate(
             direct = f"<error: {e}>"
             # Check pass/fail
         domain_ok = qtype.value == expected_domain
-        contains_ok=True
+        contains_ok = True
         if expected_contains:
             contains_ok = expected_contains in direct or expected_contains in str(bus_text)
         passed = domain_ok and contains_ok
         results["passed" if passed else "failed"] += 1
-        results["details"].append({
-            "query": query,
-            "expected_domain": expected_domain,
-            "got_domain": qtype.value,
-            "domain_ok": domain_ok,
-            "expected_contains": expected_contains,
-            "contains_ok": contains_ok,
-            "passed": passed,
-            "bus_response": str(bus_text)[:100],
-        })
-        domain_str="OK" if domain_ok else f"({qtype.value})"
-        contains_str=" OK" if contains_ok else " ?"
+        results["details"].append(
+            {
+                "query": query,
+                "expected_domain": expected_domain,
+                "got_domain": qtype.value,
+                "domain_ok": domain_ok,
+                "expected_contains": expected_contains,
+                "contains_ok": contains_ok,
+                "passed": passed,
+                "bus_response": str(bus_text)[:100],
+            }
+        )
+        domain_str = "OK" if domain_ok else f"({qtype.value})"
+        contains_str = " OK" if contains_ok else " ?"
         print(f"  [{domain_str}]{contains_str} {query:40s} -> bus={str(bus_text)[:50]}")
         # Summary
     pass_rate = results["passed"] / max(results["total"], 1) * 100
@@ -671,8 +1132,15 @@ def _step2_load_datasets():
     presets_samples = load_presets_data()
     trpg_samples = load_trpg_codex()
     secondary_samples = load_secondary_raw()
-    return (dataset_samples, alpaca_samples, template_samples, kb_samples,
-            presets_samples, trpg_samples, secondary_samples)
+    return (
+        dataset_samples,
+        alpaca_samples,
+        template_samples,
+        kb_samples,
+        presets_samples,
+        trpg_samples,
+        secondary_samples,
+    )
 
 
 def _step3_generate_knowledge():
@@ -690,6 +1158,7 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
     # of step 4 from scratch.
     resume_state = resume_state or {}
     save_state = save_state or (lambda step, data=None: None)
+
     # Progress-only recorder: records resume markers but does NOT mark step 4 as
     # "completed" (that must wait until all of 4a-4g finish, see end of step).
     def prog_save(step, data=None):
@@ -707,15 +1176,19 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
     # network + dictionary instead of retraining everything.
     epochs_total = limit_value("train.ed3n.epochs", 2)
     epochs_done = int(resume_state.get("ed3n_epochs_done", 0))
-    resume_ckpt = os.path.join(CKPT_DIR, f"ed3n_epoch{epochs_done}.json") if epochs_done > 0 else None
+    resume_ckpt = (
+        os.path.join(CKPT_DIR, f"ed3n_epoch{epochs_done}.json") if epochs_done > 0 else None
+    )
     if resume_ckpt and os.path.exists(resume_ckpt):
         ed3n_engine.load(resume_ckpt)
         print(f"  Resumed ED3N from {resume_ckpt} (epochs_done={epochs_done})")
     else:
         ed3n_engine.load_presets()
-        epochs_done=0
-    print(f"  Presets loaded: {len(ed3n_engine.dictionary.entries)} dict entries, "
-          f"{len(ed3n_engine.reflex.patterns)} reflex patterns")
+        epochs_done = 0
+    print(
+        f"  Presets loaded: {len(ed3n_engine.dictionary.entries)} dict entries, "
+        f"{len(ed3n_engine.reflex.patterns)} reflex patterns"
+    )
 
     # 4a + 4b: Expand dictionary for math/logic tokens
     ed3n_samples = batches.get("ed3n", [])
@@ -727,11 +1200,13 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
                 all_tokens.add(t)
 
     before = len(ed3n_engine.dictionary.entries)
-    grown=0
+    grown = 0
     for token in sorted(all_tokens):
         if not ed3n_engine.dictionary.encode(token):
             try:
-                ed3n_engine.dictionary.grow(token, token, confidence=confidence_value("train.ed3n.grow_confidence", 0.7))
+                ed3n_engine.dictionary.grow(
+                    token, token, confidence=confidence_value("train.ed3n.grow_confidence", 0.7)
+                )
                 grown += 1
             except Exception as grow_err:
                 logger.debug("Failed to grow token '%s' (non-critical): %s", token, grow_err)
@@ -749,10 +1224,10 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
     # indistinguishable from a normal memorizing AI).
     # Only reflex/greeting/math/logic-style samples train the SNN as
     # associations. reasoning/tooluse/knowledge are excluded from SNN training.
-    snn_training_domains={"reflex", "greeting", "association"}
+    snn_training_domains = {"reflex", "greeting", "association"}
     examples: List[TrainingExample] = []
-    skip=0
-    skipped_domain=0
+    skip = 0
+    skipped_domain = 0
     for s in ed3n_samples:
         if s.get("domain") not in snn_training_domains:
             # Fact/relation/intent: dictionary growth already handled it above.
@@ -766,43 +1241,64 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
         if not ik or not ok_:
             skip += 1
             continue
-        pairs=[(a, "mapping", b) for a in ik[:limit_value("train.ed3n.max_input_keys", 5)] for b in ok_[:limit_value("train.ed3n.max_output_keys", 3)]]
-        examples.append(TrainingExample(
-            input_text=s["input"],
-            expected_output=s["output"],
-            input_keys=ik,
-            output_keys=ok_,
-            relation_pairs=pairs,
-            confidence=confidence_value("train.ed3n.example_confidence", 0.8),
-            metadata={"domain": s["domain"]},
-        ))
-    print(f"  Examples created: {len(examples)} ({skip} skipped, "
-          f"{skipped_domain} non-association domains excluded from SNN)")
+        pairs = [
+            (a, "mapping", b)
+            for a in ik[: limit_value("train.ed3n.max_input_keys", 5)]
+            for b in ok_[: limit_value("train.ed3n.max_output_keys", 3)]
+        ]
+        examples.append(
+            TrainingExample(
+                input_text=s["input"],
+                expected_output=s["output"],
+                input_keys=ik,
+                output_keys=ok_,
+                relation_pairs=pairs,
+                confidence=confidence_value("train.ed3n.example_confidence", 0.8),
+                metadata={"domain": s["domain"]},
+            )
+        )
+    print(
+        f"  Examples created: {len(examples)} ({skip} skipped, "
+        f"{skipped_domain} non-association domains excluded from SNN)"
+    )
 
     # 4d: Train epochs — resumable per epoch.
     # Each epoch is checkpointed to ed3n_epoch{N}.json AND recorded in
     # resume_state as ed3n_epochs_done=N, so a killed run resumes at the next
     # epoch instead of retraining from scratch.
     if examples:
-        print(f"  Training network ({epochs_total} epochs, {len(examples)} examples"
-              f"{', resuming from epoch ' + str(epochs_done + 1) if epochs_done else ''})...")
-        trainer = ED3NTrainer(ed3n_engine, dictionary_lr=learning_rate("train.ed3n.dictionary_lr", 0.05), network_lr=learning_rate("train.ed3n.network_lr", 0.05))
+        print(
+            f"  Training network ({epochs_total} epochs, {len(examples)} examples"
+            f"{', resuming from epoch ' + str(epochs_done + 1) if epochs_done else ''})..."
+        )
+        trainer = ED3NTrainer(
+            ed3n_engine,
+            dictionary_lr=learning_rate("train.ed3n.dictionary_lr", 0.05),
+            network_lr=learning_rate("train.ed3n.network_lr", 0.05),
+        )
         for epoch in range(epochs_done, epochs_total):
             t0 = time.time()
             batch = TrainingBatch(examples=examples, batch_id=f"ed3n_ep{epoch}")
             m = trainer.train_step(batch)
-            print(f"    Epoch {epoch+1}/{epochs_total}: loss={m.loss:.4f} acc={m.accuracy:.4f} ({time.time()-t0:.1f}s)")
+            print(
+                f"    Epoch {epoch+1}/{epochs_total}: loss={m.loss:.4f} acc={m.accuracy:.4f} ({time.time()-t0:.1f}s)"
+            )
             # Record with coordinator — preserve the true per-domain label so the
             # coverage report is accurate (previously collapsed to math/logic).
-            seen_domains={e.metadata.get("domain", "unknown") for e in batch.examples}
+            seen_domains = {e.metadata.get("domain", "unknown") for e in batch.examples}
             record_domain = next(iter(seen_domains)) if len(seen_domains) == 1 else "mixed"
-            asyncio.run(coordinator.record_training(
-                domain=record_domain,
-                model_id="ed3n",
-                count=len(examples),
-                accuracy=m.accuracy,
-                examples=[{"input": e.input_text, "output": e.expected_output} for e in examples[:limit_value("train.ed3n.max_examples_per_epoch", 50)]],
-            ))
+            asyncio.run(
+                coordinator.record_training(
+                    domain=record_domain,
+                    model_id="ed3n",
+                    count=len(examples),
+                    accuracy=m.accuracy,
+                    examples=[
+                        {"input": e.input_text, "output": e.expected_output}
+                        for e in examples[: limit_value("train.ed3n.max_examples_per_epoch", 50)]
+                    ],
+                )
+            )
             # Save mid-training checkpoint + record epoch as done (resume point).
             ed3n_engine.save(os.path.join(CKPT_DIR, f"ed3n_epoch{epoch+1}.json"))
             epochs_done = epoch + 1
@@ -823,8 +1319,8 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
     # killed after recording the marker but before persisting ed3n_full.json
     # would otherwise permanently lose them on the next resume.
     print("  Adding reflex patterns from training data...")
-    reflex_count=0
-    reflex_domain_blacklist={"reasoning", "tooluse"}
+    reflex_count = 0
+    reflex_domain_blacklist = {"reasoning", "tooluse"}
     for s in ed3n_samples:
         output_str = s["output"]
         if not output_str:
@@ -843,9 +1339,18 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
     # 4f: Sequence training (optional — improves next-token prediction)
     print("  Training SequenceTrainer (next-token prediction)...")
     if examples:
-        seq_trainer = SequenceTrainer(ed3n_engine, seq_lr=learning_rate("train.ed3n.sequence_lr", 0.1))
+        seq_trainer = SequenceTrainer(
+            ed3n_engine, seq_lr=learning_rate("train.ed3n.sequence_lr", 0.1)
+        )
         seq_batch = make_synthetic_seq_batch(
-            [(e.input_keys[:limit_value("train.ed3n.seq_input_keys", 3)], e.output_keys[:limit_value("train.ed3n.seq_output_keys", 2)]) for e in examples[:limit_value("train.ed3n.seq_max_examples", 1000)] if e.input_keys and e.output_keys],
+            [
+                (
+                    e.input_keys[: limit_value("train.ed3n.seq_input_keys", 3)],
+                    e.output_keys[: limit_value("train.ed3n.seq_output_keys", 2)],
+                )
+                for e in examples[: limit_value("train.ed3n.seq_max_examples", 1000)]
+                if e.input_keys and e.output_keys
+            ],
             "pipeline_seq",
         )
         if seq_batch and seq_batch.examples:
@@ -856,10 +1361,25 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
     # 4g: Joint training (combines ED3N + sequence)
     print("  Training JointTrainer (combined)...")
     if examples:
-        joint_trainer = JointTrainer(ed3n_engine, dict_lr=learning_rate("train.joint.dict_lr", 0.05), network_lr=learning_rate("train.joint.network_lr", 0.05), seq_lr=learning_rate("train.joint.seq_lr", 0.1))
-        joint_batch = TrainingBatch(examples=examples[:limit_value("train.joint.max_examples", 500)], batch_id="joint_pipeline")
+        joint_trainer = JointTrainer(
+            ed3n_engine,
+            dict_lr=learning_rate("train.joint.dict_lr", 0.05),
+            network_lr=learning_rate("train.joint.network_lr", 0.05),
+            seq_lr=learning_rate("train.joint.seq_lr", 0.1),
+        )
+        joint_batch = TrainingBatch(
+            examples=examples[: limit_value("train.joint.max_examples", 500)],
+            batch_id="joint_pipeline",
+        )
         joint_seq_batch = make_synthetic_seq_batch(
-            [(e.input_keys[:limit_value("train.joint.seq_input_keys", 3)], e.output_keys[:limit_value("train.joint.seq_output_keys", 2)]) for e in examples[:limit_value("train.joint.seq_max_examples", 500)] if e.input_keys and e.output_keys],
+            [
+                (
+                    e.input_keys[: limit_value("train.joint.seq_input_keys", 3)],
+                    e.output_keys[: limit_value("train.joint.seq_output_keys", 2)],
+                )
+                for e in examples[: limit_value("train.joint.seq_max_examples", 500)]
+                if e.input_keys and e.output_keys
+            ],
             "joint_seq",
         )
         joint_metrics = joint_trainer.train_step(joint_batch, joint_seq_batch)
@@ -872,9 +1392,16 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
     ed3n_engine.save(os.path.join(CKPT_DIR, "ed3n_full.json"))
 
     # Step 4 fully done — record completion markers.
-    save_state(4, {"ed3n_epochs_done": epochs_done, "ed3n_reflex_done": True,
-                   "ed3n_seq_done": True, "ed3n_joint_done": True,
-                   "ed3n_samples": len(examples)})
+    save_state(
+        4,
+        {
+            "ed3n_epochs_done": epochs_done,
+            "ed3n_reflex_done": True,
+            "ed3n_seq_done": True,
+            "ed3n_joint_done": True,
+            "ed3n_samples": len(examples),
+        },
+    )
 
     # -----------------------------------------------------------------------
     return ed3n_engine, examples
@@ -888,6 +1415,7 @@ def _step5_train_garden(coordinator, batches, resume_state=None, save_state=None
     # killed run continues from the next unprocessed batch.
     resume_state = resume_state or {}
     save_state = save_state or (lambda step, data=None: None)
+
     # Progress-only recorder: records garden_batch_done but does NOT mark step 5
     # as "completed" until all batches finish (see end of step).
     def prog_save(step, data=None):
@@ -904,26 +1432,32 @@ def _step5_train_garden(coordinator, batches, resume_state=None, save_state=None
         garden_ckpt = os.path.join(CKPT_DIR, "garden_checkpoint")
         if os.path.isdir(garden_ckpt) and resume_state.get("garden_batch_done", 0) > 0:
             garden_engine.load(garden_ckpt)
-            print(f"  Resumed GARDEN from {garden_ckpt} (batch_done={resume_state['garden_batch_done']})")
+            print(
+                f"  Resumed GARDEN from {garden_ckpt} (batch_done={resume_state['garden_batch_done']})"
+            )
         else:
             garden_engine.load_presets()
-        print(f"  Presets loaded: {len(garden_engine.dictionary.entries)} dict entries, "
-              f"{len(garden_engine.reflex.patterns)} reflex patterns")
+        print(
+            f"  Presets loaded: {len(garden_engine.dictionary.entries)} dict entries, "
+            f"{len(garden_engine.reflex.patterns)} reflex patterns"
+        )
 
         # 5b: Add knowledge entries to vector dictionary.
         # Knowledge facts are ingested into the DICTIONARY ONLY — the SNN does
         # NOT mirror input->output (train_associations=False), so facts are not
         # baked into neural weights. The SNN stays specialized for associations.
         garden_samples = batches.get("garden", [])
-        print(f"  Processing {len(garden_samples)} knowledge samples "
-              f"(dict + SNN Hebbian associations)...")
+        print(
+            f"  Processing {len(garden_samples)} knowledge samples "
+            f"(dict + SNN Hebbian associations)..."
+        )
 
         # Use batch learning for speed (rebuilds index ONCE, not per sample)
-        BATCH_SIZE=500
+        BATCH_SIZE = 500
         batch_done = int(resume_state.get("garden_batch_done", 0))
         total_learned = batch_done
         for i in range(batch_done, len(garden_samples), BATCH_SIZE):
-            batch = garden_samples[i:i+BATCH_SIZE]
+            batch = garden_samples[i : i + BATCH_SIZE]
             result = garden_engine.learn_batch(
                 samples=[{"input": s["input"], "output": s["output"]} for s in batch],
                 confidence=confidence_value("train.garden.learn_confidence", 0.7),
@@ -940,13 +1474,17 @@ def _step5_train_garden(coordinator, batches, resume_state=None, save_state=None
         print(f"  learn_batch calls: {total_learned} (associations_trained=True)")
 
         # Record with coordinator
-        asyncio.run(coordinator.record_training(
-            domain="knowledge",
-            model_id="garden",
-            count=total_learned,
-            accuracy=confidence_value("train.garden.record_accuracy", 0.7),
-            examples=[{"input": s["input"], "output": s["output"]} for s in garden_samples[:50]],
-        ))
+        asyncio.run(
+            coordinator.record_training(
+                domain="knowledge",
+                model_id="garden",
+                count=total_learned,
+                accuracy=confidence_value("train.garden.record_accuracy", 0.7),
+                examples=[
+                    {"input": s["input"], "output": s["output"]} for s in garden_samples[:50]
+                ],
+            )
+        )
 
     except Exception as e:
         logger.warning("GARDEN training failed (non-fatal): %s", e)
@@ -966,10 +1504,19 @@ def _step5b_train_arithmetic(coordinator, resume_state=None, save_state=None):
     digit cell ``(digit_a, digit_b, carry_in) -> (digit_sum, carry_out)`` is
     best represented with per-symbol (one-hot) digit classification plus an
     explicit carry channel, learned from deterministic-engine truth. This step
-    runs the :class:`ArithmeticLearner` which:
+    runs the :class:`ArithmeticLearner` which now trains four op cells on the
+    same proven readout:
 
-    * self-generates its full digit/carry truth table when data is sparse
-      (`insufficient data -> auto-generate`);
+    * **addition** ``carry cell`` and **subtraction** ``borrow cell`` — labels
+      from ``evaluate_math`` (+ - are in engine scope);
+    * **multiplication** single-digit lattice (``da * db -> low, high``) —
+      multi-digit results are composed via the addition cell;
+    * **logic gates** AND/OR/XOR/NAND/NOR/XNOR/NOT over ``{0,1}`` — truth from
+      the boolean definition (engine scope has no bitwise ops);
+
+    and for each one:
+
+    * self-generates its full deterministic truth table when sparse;
     * stops automatically when learned (100% cell accuracy / loss tolerance)
       or when unconvergeable (no improvement over a stall window);
     * writes a checkpoint to ``data/checkpoints/arithmetic_learner.npz`` for
@@ -1000,21 +1547,60 @@ def _step5b_train_arithmetic(coordinator, resume_state=None, save_state=None):
         stall_epochs=int(limit_value("ed3n.train.arithmetic.stall_epochs", 25)),
     )
     learner.save(ckpt)
-    print(f"  Arithmetic cell: stop={snap.stopped_reason} "
-          f"accuracy={snap.cell_accuracy:.4f} best={snap.best_accuracy:.4f}")
-    # Quick verification on representative multi-digit additions.
-    ok = sum(
-        1 for a, b in [(3, 7), (29, 38), (999, 1), (56, 44), (123, 987)]
+    print(
+        f"  Arithmetic cells: stop={snap.stopped_reason} "
+        f"overall_acc={snap.cell_accuracy:.4f} best={snap.best_accuracy:.4f}"
+    )
+    task = snap.task_accuracy or {}
+    per_op = ", ".join(f"{k}={v:.4f}" for k, v in task.items())
+    print(f"    per-op accuracy: {per_op}")
+    # Quick verification on representative multi-digit operations.
+    add_ok = sum(
+        1
+        for a, b in [(3, 7), (29, 38), (999, 1), (56, 44), (123, 987)]
         if learner.predict_addition(a, b) == a + b
     )
-    print(f"  Multi-digit spot-check: {ok}/5 correct")
+    sub_ok = sum(
+        1
+        for a, b in [(10, 1), (100, 1), (532, 147), (1000, 567), (5, 8)]
+        if learner.predict_subtraction(a, b) == a - b
+    )
+    mul_ok = sum(
+        1
+        for a, b in [(7, 6), (23, 17), (123, 45), (999, 99), (0, 5)]
+        if learner.predict_multiplication(a, b) == a * b
+    )
+    logic_ok = sum(
+        1
+        for op, a, b, exp in [
+            ("AND", 1, 1, 1),
+            ("XOR", 1, 1, 0),
+            ("NAND", 1, 1, 0),
+            ("NOR", 0, 0, 1),
+            ("XNOR", 0, 1, 0),
+            ("NOT", 0, 0, 1),
+        ]
+        if learner.predict_logic_gate(op, a, b) == exp
+    )
+    print(
+        f"  Multi-digit spot-check: add={add_ok}/5 sub={sub_ok}/5 "
+        f"mul={mul_ok}/5 logic={logic_ok}/6 correct"
+    )
     if save_state:
-        save_state(5.5, {"arithmetic_stop": snap.stopped_reason,
-                         "arithmetic_acc": snap.cell_accuracy})
+        save_state(
+            5.5,
+            {
+                "arithmetic_stop": snap.stopped_reason,
+                "arithmetic_acc": snap.cell_accuracy,
+                "arithmetic_per_op": task,
+            },
+        )
     return learner
 
 
-def _step6_sync_knowledge(ed3n_engine, garden_engine, model_bus, coordinator, all_samples, batches, examples):
+def _step6_sync_knowledge(
+    ed3n_engine, garden_engine, model_bus, coordinator, all_samples, batches, examples
+):
     # Step 6: Sync knowledge — copy high-confidence ED3N patterns to GARDEN
     # -----------------------------------------------------------------------
     print("\n[6/8] Syncing knowledge (ED3N -> GARDEN)...")
@@ -1027,19 +1613,25 @@ def _step6_sync_knowledge(ed3n_engine, garden_engine, model_bus, coordinator, al
         ed3n_patterns: List[Tuple[str, str]] = []
         seen_triggers: set = set()
         for trigger, response in ed3n_engine.reflex.patterns.items():
-            if trigger not in seen_triggers and len(response) > limit_value("train.sync.min_response_length", 2):
+            if trigger not in seen_triggers and len(response) > limit_value(
+                "train.sync.min_response_length", 2
+            ):
                 ed3n_patterns.append((trigger, response))
                 seen_triggers.add(trigger)
 
-        synced = asyncio.run(coordinator.sync_reflex_patterns(
-            source_engine=ed3n_engine,
-            target_engine=garden_engine,
-            top_n=min(limit_value("train.sync.pattern_limit", 200), len(ed3n_patterns)),
-        ))
+        synced = asyncio.run(
+            coordinator.sync_reflex_patterns(
+                source_engine=ed3n_engine,
+                target_engine=garden_engine,
+                top_n=min(limit_value("train.sync.pattern_limit", 200), len(ed3n_patterns)),
+            )
+        )
         print(f"  Synced {synced} reflex patterns via coordinator")
 
         # Also use ModelBus.sync_knowledge
-        bus_synced = model_bus.sync_knowledge("ed3n", "garden", ed3n_patterns[:limit_value("train.sync.modelbus_limit", 200)])
+        bus_synced = model_bus.sync_knowledge(
+            "ed3n", "garden", ed3n_patterns[: limit_value("train.sync.modelbus_limit", 200)]
+        )
         print(f"  Synced {bus_synced} patterns via ModelBus")
     else:
         model_bus.register_ed3n(ed3n_engine)
@@ -1054,7 +1646,7 @@ def _step6_sync_knowledge(ed3n_engine, garden_engine, model_bus, coordinator, al
     # ED3N
     ed3n_engine.save(os.path.join(CKPT_DIR, "ed3n_full.json"))
     ed3n_engine.network.save_connections(os.path.join(CKPT_DIR, "network.json"))
-    reflex_data={"patterns": list(ed3n_engine.reflex.patterns.items())}
+    reflex_data = {"patterns": list(ed3n_engine.reflex.patterns.items())}
     with open(os.path.join(CKPT_DIR, "reflex_patterns.json"), "w", encoding="utf-8") as f:
         json.dump(reflex_data, f, ensure_ascii=False, indent=2)
     print(f"  ED3N saved to {CKPT_DIR}")
@@ -1072,7 +1664,7 @@ def _step6_sync_knowledge(ed3n_engine, garden_engine, model_bus, coordinator, al
         print(f"  GARDEN saved to {garden_ckpt_dir}")
 
     # Training report
-    training_report={
+    training_report = {
         "pipeline": "unified_ed3n_garden",
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "samples_loaded": len(all_samples),
@@ -1090,19 +1682,25 @@ def _step6_sync_knowledge(ed3n_engine, garden_engine, model_bus, coordinator, al
     # Step 8: Evaluation
     # -----------------------------------------------------------------------
     print("\n[8/8] Evaluation")
-    evaluate(ed3n_engine, garden_engine, model_bus, [
-        # (query, expected_domain, expected_contains)
-        ("178 + 101",      "math", "279"),
-        ("917 * 814",      "math", "746438"),
-        ("true OR false",  "logic", "true"),
-        ("NOT false",      "logic", "true"),
-        ("什么是人工智能",   "knowledge", "人工智能"),
-        ("what is machine learning", "knowledge", "Machine learning"),
-        ("你好",           "greeting", None),
-        ("bye",            "greeting", None),
-        ("999 + 1",        "math", None),
-        ("50 * 50",        "math", None),
-    ], "Mixed queries (bus routing + direct)")
+    evaluate(
+        ed3n_engine,
+        garden_engine,
+        model_bus,
+        [
+            # (query, expected_domain, expected_contains)
+            ("178 + 101", "math", "279"),
+            ("917 * 814", "math", "746438"),
+            ("true OR false", "logic", "true"),
+            ("NOT false", "logic", "true"),
+            ("什么是人工智能", "knowledge", "人工智能"),
+            ("what is machine learning", "knowledge", "Machine learning"),
+            ("你好", "greeting", None),
+            ("bye", "greeting", None),
+            ("999 + 1", "math", None),
+            ("50 * 50", "math", None),
+        ],
+        "Mixed queries (bus routing + direct)",
+    )
 
 
 def main() -> None:
@@ -1113,7 +1711,7 @@ def main() -> None:
 
     # Check for resume state
     STATE_FILE = os.path.join(CKPT_DIR, "training_state.json")
-    resume_state={}
+    resume_state = {}
     if os.path.exists(STATE_FILE):
         try:
             with open(STATE_FILE, "r", encoding="utf-8") as f:
@@ -1123,9 +1721,9 @@ def main() -> None:
             print(f"  Resuming from step {len(completed_steps) + 1}/8...")
         except Exception as e:
             print(f"  Warning: Could not load state file: {e}")
-            resume_state={}
+            resume_state = {}
     else:
-        completed_steps=[]
+        completed_steps = []
 
     def save_state(step: int, data: Optional[Dict] = None) -> None:
         """Save training state for resume."""
@@ -1144,9 +1742,26 @@ def main() -> None:
     # Step 1: Load + generate data (always required)
     # -----------------------------------------------------------------------
     print("\n[1/8] Loading and generating data...")
-    dataset_samples, alpaca_samples, template_samples, kb_samples, presets_samples, trpg_samples, secondary_samples = _step2_load_datasets()
+    (
+        dataset_samples,
+        alpaca_samples,
+        template_samples,
+        kb_samples,
+        presets_samples,
+        trpg_samples,
+        secondary_samples,
+    ) = _step2_load_datasets()
     knowledge_samples = _step3_generate_knowledge()
-    all_samples = dataset_samples + alpaca_samples + template_samples + kb_samples + presets_samples + trpg_samples + secondary_samples + knowledge_samples
+    all_samples = (
+        dataset_samples
+        + alpaca_samples
+        + template_samples
+        + kb_samples
+        + presets_samples
+        + trpg_samples
+        + secondary_samples
+        + knowledge_samples
+    )
     print(f"  Dataset samples:       {len(dataset_samples)}")
     print(f"  Alpaca samples:        {len(alpaca_samples)}")
     print(f"  Template samples:      {len(template_samples)}")
@@ -1194,14 +1809,15 @@ def main() -> None:
     for model_id in batches:
         original = len(batches[model_id])
         batches[model_id] = [
-            s for s in batches[model_id]
-            if not is_deterministic_match(s["input"], s["output"])
+            s for s in batches[model_id] if not is_deterministic_match(s["input"], s["output"])
         ]
         filtered = original - len(batches[model_id])
         det_filtered[model_id] = filtered
         if filtered:
-            print(f"  {model_id:15s} -> filtered {filtered:5d} deterministic-handled samples"
-                  f" ({original} -> {len(batches[model_id])})")
+            print(
+                f"  {model_id:15s} -> filtered {filtered:5d} deterministic-handled samples"
+                f" ({original} -> {len(batches[model_id])})"
+            )
 
     # Dry-run check: stop here
     if dry_run:
@@ -1224,7 +1840,7 @@ def main() -> None:
         ed3n_engine.load(os.path.join(CKPT_DIR, "ed3n_full.json"))
         # Get sample count from resume state
         examples_count = resume_state.get("ed3n_samples", 0)
-        examples=[]
+        examples = []
     else:
         ed3n_engine, examples = _step4_train_ed3n(coordinator, batches, resume_state, save_state)
         save_state(4, {"ed3n_samples": len(examples)})
@@ -1257,7 +1873,9 @@ def main() -> None:
     # Steps 6-8: Sync knowledge — Save checkpoints — Evaluation
     # -----------------------------------------------------------------------
     if 6 not in completed_steps:
-        _step6_sync_knowledge(ed3n_engine, garden_engine, model_bus, coordinator, all_samples, batches, examples)
+        _step6_sync_knowledge(
+            ed3n_engine, garden_engine, model_bus, coordinator, all_samples, batches, examples
+        )
         save_state(6)
 
     print("\n" + "=" * 60)
