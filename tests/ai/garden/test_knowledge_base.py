@@ -42,6 +42,16 @@ class TestKnowledgeBase:
         assert "sky" in subjects
         assert "cat" in subjects
 
+    def test_wheels_lookup(self):
+        assert route_knowledge("How many wheels does a bicycle have?") == "2"
+        assert route_knowledge("A car has how many wheels?") == "4"
+        assert route_knowledge("腳踏車有幾個輪子?") == "2"
+
+    def test_coin_value_lookup(self):
+        assert route_knowledge("How much is a nickel worth?") == "5"
+        assert route_knowledge("What is the value of a quarter?") == "25"
+        assert route_knowledge("一角硬幣值多少?") == "10"
+
     def test_engine_returns_answer_for_knowledge_question(self):
         # Smoke: the engine path must surface the KB answer (not fall through).
         # compatibility_mode avoids loading the full sentence-transformers model.

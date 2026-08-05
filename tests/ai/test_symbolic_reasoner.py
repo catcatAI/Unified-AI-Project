@@ -168,6 +168,14 @@ def test_word_problem_out_of_scope_returns_none():
     assert route_reasoning("How many chickens and rabbits are there in this picture?") is None
 
 
+def test_word_problem_three_entities_falls_through():
+    # 3 species is not a 2-variable linear system -> None (never a wrong pair).
+    out = route_reasoning(
+        "A farm has chickens, rabbits and ducks, 35 heads and 94 legs. How many of each?"
+    )
+    assert out is None
+
+
 # ---------------------------------------------------------------------------
 # Out-of-scope (should fall through -> None)
 # ---------------------------------------------------------------------------

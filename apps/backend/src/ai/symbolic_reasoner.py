@@ -513,7 +513,10 @@ def _solve_word_problem(text: str) -> Optional[str]:
     """
     low = text.lower()
     present = [key for key, al in _ENTITY_ALIASES.items() if any(_alias_present(a, low) for a in al)]
-    if len(present) < 2:
+    if len(present) != 2:
+        # Fewer than two objects cannot be a pair; more than two is not a
+        # 2-variable linear system -> fall through rather than risk a wrong
+        # answer for a genuinely different problem.
         return None
     a, b = present[0], present[1]
 

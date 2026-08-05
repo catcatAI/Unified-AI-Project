@@ -346,6 +346,24 @@ _TEMPLATES: Dict[str, List[Tuple[str, str, str]]] = {}
 """engine_type -> [(input_prefix, input_suffix, output_template)]"""
 
 
+def _data_region(text: str) -> str:
+    """Substring from the first to the last number in ``text``.
+
+    This is the numeric data a deterministic engine consumes (e.g. the
+    ``"35 heads and 94 legs"`` span of a chicken-rabbit prompt), or ``""``
+    when the text carries no numbers.
+    """
+    nums = list(re.finditer(r"-?\d+(?:\.\d+)?", text))
+    if not nums:
+        return ""
+    return text[nums[0].start():nums[-1].end()]
+
+
+def _result_numbers(text: str) -> List[str]:
+    """The numbers in an engine result, in order, as strings."""
+    return [m.group(0) for m in re.finditer(r"-?\d+(?:\.\d+)?", text)]
+
+
 def _learn_template(
     sample_input: str,
     sample_output: str,
@@ -364,6 +382,11 @@ def _learn_template(
         parts = engine_result.split(" = ", 1)
         expr = parts[0].strip() if len(parts) == 2 else ""
         result_val = parts[1].strip() if len(parts) == 2 else engine_result
+    elif engine_type == "reasoning":
+        # The consumed input is the numeric data region (e.g. "35 heads and
+        # 94 legs"); the result numbers are replaced with {R0}, {R1}, ...
+        expr = _data_region(sample_input)
+        result_val = engine_result.strip()
     else:
         expr = ""
         result_val = engine_result.strip()
@@ -379,27 +402,45 @@ def _learn_template(
 
     # --- Output side: build output_template with placeholders ---
     output_template = sample_output
+    inserted = False
 
-    # Replace result value with {L0_result} in output
-    rv = result_val
-    if rv in output_template:
-        output_template = output_template.replace(rv, "{L0_result}", 1)
+    if engine_type == "reasoning":
+        # Replace result numbers in order with {R0}, {R1}, ...
+        for i, n in enumerate(_result_numbers(result_val)):
+            m = re.search(re.escape(n), output_template)
+            if m:
+                output_template = output_template[:m.start()] + f"{{R{i}}}" + output_template[m.end():]
+                inserted = True
+        if expr and expr in output_template:
+            output_template = output_template.replace(expr, "{L0_input}", 1)
+            inserted = True
     else:
-        # Try finding by numeric value
-        nums = re.findall(r"-?\d+(?:\.\d+)?", output_template)
-        for n in nums:
-            if engine_type == "math":
-                if _math_value_matches(rv, n):
-                    output_template = output_template.replace(n, "{L0_result}", 1)
-                    break
+        # Replace result value with {L0_result} in output
+        rv = result_val
+        if rv in output_template:
+            output_template = output_template.replace(rv, "{L0_result}", 1)
+            inserted = True
+        else:
+            # Try finding by numeric value
+            nums = re.findall(r"-?\d+(?:\.\d+)?", output_template)
+            for n in nums:
+                if engine_type == "math":
+                    if _math_value_matches(rv, n):
+                        output_template = output_template.replace(n, "{L0_result}", 1)
+                        inserted = True
+                        break
 
-    # Replace input expression with {L0_input} in output (if present)
-    if expr and expr in output_template:
-        output_template = output_template.replace(expr, "{L0_input}", 1)
+        # Replace input expression with {L0_input} in output (if present)
+        if expr and expr in output_template:
+            output_template = output_template.replace(expr, "{L0_input}", 1)
+            inserted = True
 
-    # Only store if output has NL wrapping beyond bare placeholders
-    cleaned = output_template.replace("{L0_input}", "").replace("{L0_result}", "").strip()
-    if not cleaned:
+    # Only store if output has NL wrapping beyond bare placeholders AND at
+    # least one placeholder was actually substituted (skips garbage templates
+    # whose output never referenced the engine result).
+    cleaned = output_template.replace("{L0_input}", "").replace("{L0_result}", "")
+    cleaned = re.sub(r"\{R\d+\}", "", cleaned).strip()
+    if not cleaned or not inserted:
         return
 
     # Deduplicate: skip if identical template already exists
@@ -436,6 +477,21 @@ def _reconstruct_with_template(
     else:
         expr = user_input.strip()
         result_val = engine_result.strip()
+
+    if engine_type == "reasoning":
+        result_nums = _result_numbers(engine_result)
+        for input_prefix, input_suffix, output_template in templates:
+            if not input_prefix and not input_suffix:
+                continue
+            if user_input.startswith(input_prefix) and user_input.endswith(input_suffix):
+                filled = output_template
+                for i, n in enumerate(result_nums):
+                    filled = filled.replace(f"{{R{i}}}", n, 1)
+                if "{L0_input}" in filled:
+                    filled = filled.replace("{L0_input}", _data_region(user_input), 1)
+                if filled != engine_result:
+                    return filled
+        return engine_result
 
     for input_prefix, input_suffix, output_template in templates:
         if not input_prefix and not input_suffix:
@@ -648,7 +704,7 @@ class GARDENEngine:
         reasoning_result = self._try_reasoning(text)
         if reasoning_result is not None:
             self._last_confidence = 0.85
-            return _reconstruct_with_template(text, reasoning_result, "text")
+            return _reconstruct_with_template(text, reasoning_result, "reasoning")
 
         # Stage 1.6b: Relational-chain reasoning (offline graph derivation).
         # Catches relational comparison questions the symbolic reasoner's regex

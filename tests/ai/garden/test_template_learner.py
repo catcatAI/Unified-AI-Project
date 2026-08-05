@@ -168,3 +168,46 @@ class TestWordProblemDeterministicBoundary:
             "23 chicken, 12 rabbit",
         )
         assert len(_TEMPLATES.get("reasoning", [])) == 1
+
+    def test_reasoning_garbage_template_not_stored(self):
+        # Result not reflected in output -> no placeholder -> not stored.
+        record_template_match(
+            "The cage has chickens and rabbits, 35 heads and 94 legs. How many of each?",
+            "there are three dozen creatures",
+            "reasoning",
+            "23 chicken, 12 rabbit",
+        )
+        assert len(_TEMPLATES.get("reasoning", [])) == 0
+
+
+class TestReasoningTemplateReconstruct:
+    def setup_method(self):
+        _TEMPLATES.clear()
+
+    def test_word_problem_reconstruct(self):
+        _learn_template(
+            "The cage has chickens and rabbits, 35 heads and 94 legs. How many of each?",
+            "there are 23 chickens and 12 rabbits",
+            "reasoning",
+            "23 chicken, 12 rabbit",
+        )
+        result = _reconstruct_with_template(
+            "The cage has chickens and rabbits, 10 heads and 28 legs. How many of each?",
+            "6 chicken, 4 rabbit",
+            "reasoning",
+        )
+        assert result == "there are 6 chickens and 4 rabbits"
+
+    def test_word_problem_prefix_mismatch_returns_engine_result(self):
+        _learn_template(
+            "The cage has chickens and rabbits, 35 heads and 94 legs. How many of each?",
+            "there are 23 chickens and 12 rabbits",
+            "reasoning",
+            "23 chicken, 12 rabbit",
+        )
+        result = _reconstruct_with_template(
+            "A farm has chickens and rabbits, 10 heads and 28 legs. How many of each?",
+            "6 chicken, 4 rabbit",
+            "reasoning",
+        )
+        assert result == "6 chicken, 4 rabbit"

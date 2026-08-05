@@ -223,6 +223,26 @@ _ANTONYMS: Dict[str, str] = {
     "lose": "win",
 }
 
+# Chinese aliases for entity subjects whose canonical key is English. The
+# subject-attribute lookup below matches a subject when either its key or one
+# of these aliases appears in the question.
+_ZH_SUBJECT_ALIASES: Dict[str, List[str]] = {
+    "chicken": ["雞", "鸡"],
+    "rabbit": ["兔", "兔子"],
+    "horse": ["馬", "马"],
+    "pig": ["豬", "猪"],
+    "duck": ["鴨", "鸭"],
+    "cow": ["牛"],
+    "bicycle": ["腳踏車", "脚踏车", "自行車", "自行车", "單車", "单车"],
+    "tricycle": ["三輪車", "三轮车"],
+    "car": ["汽車", "汽车", "小汽車", "小汽车"],
+    "motorcycle": ["機車", "机车", "摩托車", "摩托车"],
+    "penny": ["一分錢", "一分"],
+    "nickel": ["五分錢", "鎳幣", "镍币"],
+    "dime": ["一角硬幣", "一角硬币", "一毛"],
+    "quarter": ["兩角五分", "兩毛五", "二十五分", "25分硬幣"],
+}
+
 
 def route_knowledge(text: str) -> Optional[str]:
     """Answer a simple factual question from the curated knowledge store.
@@ -273,7 +293,8 @@ def route_knowledge(text: str) -> Optional[str]:
 
     # 5) subject attribute lookup
     for subject, attrs in _KNOWLEDGE.items():
-        if subject in t:
+        aliases = _ZH_SUBJECT_ALIASES.get(subject)
+        if subject in t or (aliases and any(a in t for a in aliases)):
             if any(k in t for k in ("color", "colour")) and ("color" in attrs or "colour" in attrs):
                 return attrs.get("color") or attrs.get("colour")
             if any(k in t for k in ("sound", "says", "say", "noise")) and "sound" in attrs:
@@ -284,6 +305,10 @@ def route_knowledge(text: str) -> Optional[str]:
                 return attrs["sides"]
             if "leg" in t and "legs" in attrs:
                 return attrs["legs"]
+            if any(k in t for k in ("wheel", "輪子", "輪")) and "wheels" in attrs:
+                return attrs["wheels"]
+            if any(k in t for k in ("value", "worth", "值", "價值")) and "value" in attrs:
+                return attrs["value"]
             prim = (
                 attrs.get("color")
                 or attrs.get("known_as")
