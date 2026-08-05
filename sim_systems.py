@@ -1857,7 +1857,7 @@ SCENE_OBJECTS = {
     ],
     "鏡湖": [
         {"id":"crystal", "name":"水晶簇",    "type":"container","desc":"湖邊的水晶簇","contents":["水晶碎片","水晶碎片"],"locked":False,"interactable":True},
-        {"id":"boat",    "name":"小木船",    "type":"vehicle","desc":"停靠在湖邊的小船","vehicle_type":"小木船","interactable":True},
+        {"id":"boat",    "name":"小舟",      "type":"vehicle","desc":"停靠在湖邊的小船","vehicle_type":"小舟","interactable":True},
         {"id":"shrine",  "name":"湖底祭壇",  "type":"mechanism","mechanism_type":"pedestal","desc":"湖中央的古老祭壇，似乎需要某種祭品",
          "state":False,"trigger_once":True,"triggered":False,
          "requirements":{"item":"水晶碎片","consume":True,"qty":3,"axis":{"靈性":0.3}},

@@ -496,3 +496,21 @@ class TestVehicleAxis:
     def test_common_vehicle_unrestricted(self):
         for fuel in ("stamina", "feed"):
             assert ax.can_use_vehicle(self._char(), self._v(fuel))[0]
+
+    def test_all_vehicles_mounted_on_scene(self):
+        """每地點的載具都該掛到場景物件（原本 18 種載具是永遠拿不到的死資料）。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        veh_by_loc = {}
+        for loc, objs in sim_systems.SCENE_OBJECTS.items():
+            for o in objs:
+                if o.get("type") == "vehicle":
+                    veh_by_loc[loc] = o.get("vehicle_type", "")
+        for loc, vname in sim_systems.VEHICLE_LOCATIONS.items():
+            assert vname in sim_systems.VEHICLES, "載具 %s 不在 VEHICLES" % vname
+            assert veh_by_loc.get(loc) == vname, (
+                "地點 %s 應掛載載具 %s，實際 %s" % (loc, vname, veh_by_loc.get(loc))
+            )
+        # 至少掛載 20 個地點（遠多於手寫 3 個）
+        assert len(veh_by_loc) >= 20

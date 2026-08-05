@@ -2594,9 +2594,13 @@ def do_real_estate(character, equipment=None):
                 elif ac=="4" and "study" in funcs:
                     if character["sp"] >= 15:
                         character["sp"] -= 15
-                        gain_skill_exp(character, "knowledge", 10)
-                        gain_exp_with_skills(character, 20, "knowledge", 15)
-                        print(C.GREEN+"  研究完畢! 知識技能經驗提升。"+C.RESET+" (SP-15)")
+                        # 軸譜加成：魔法塔/書房研究——能量或靈性維度角色研讀更深入
+                        _aff = (character.get("axis") or {}).get("affinity") or {}
+                        _boost = 1.5 if max(_aff.get("能量", 0), _aff.get("靈性", 0)) >= 0.4 else 1.0
+                        gain_skill_exp(character, "knowledge", int(10 * _boost))
+                        gain_exp_with_skills(character, int(20 * _boost), "knowledge", 15)
+                        _tag = "（能量/靈性維度共鳴，研究更深入！）" if _boost > 1 else ""
+                        print(C.GREEN+"  研究完畢! 知識技能經驗提升。"+C.RESET+" (SP-15)" + C.MAGENTA+_tag+C.RESET)
                         advance_time(character,1)
                     else:
                         print(C.RED+"  SP不足 (需要15)!"+C.RESET)
@@ -2618,13 +2622,24 @@ def do_real_estate(character, equipment=None):
                     # Apply season crop bonus
                     season_bonus = get_season_crop_bonus(_current_season, harvest)
                     qty = max(1, int(qty * season_bonus))
+                    # 軸譜加成：物質維度（務農/自然）角色收穫更多。
+                    # 門檻 0.6——人類基線 0.85 不誤觸發，只有真正物質系（野獸/獸娘等）生效。
+                    _aff = (character.get("axis") or {}).get("affinity") or {}
+                    _mat = _aff.get("物質", 0)
+                    if _mat >= 0.6:
+                        qty += 1
                     for _ in range(qty):
                         character["inventory"].append(harvest)
-                    print(C.GREEN+"  🌾 收穫了 %s x%d!"%(harvest,qty)+C.RESET)
+                    _tag2 = "（物質維度感應土地，收穫略增！）" if _mat >= 0.6 else ""
+                    print(C.GREEN+"  🌾 收穫了 %s x%d!"%(harvest,qty)+C.RESET + C.MAGENTA+_tag2+C.RESET)
                     advance_time(character,1)
                 elif ac=="6" and "observe" in funcs:
-                    gain_exp_with_skills(character, 15, "exploration", 5)
-                    print(C.CYAN+"  你觀察到遠方有什麼在發光..."+C.RESET)
+                    # 軸譜加成：觀測塔——靈性或資訊維度角色感知更敏銳
+                    _aff = (character.get("axis") or {}).get("affinity") or {}
+                    _boost = 1.5 if max(_aff.get("靈性", 0), _aff.get("資訊", 0)) >= 0.4 else 1.0
+                    gain_exp_with_skills(character, int(15 * _boost), "exploration", 5)
+                    _tag3 = "（你的靈性/資訊維度讓觀察更敏銳！）" if _boost > 1 else ""
+                    print(C.CYAN+"  你觀察到遠方有什麼在發光..."+C.RESET + C.MAGENTA+_tag3+C.RESET)
                     print(C.DIM+"  (探索技能經驗提升)"+C.RESET)
                     advance_time(character,1)
                 elif ac=="7" and "trade" in funcs:

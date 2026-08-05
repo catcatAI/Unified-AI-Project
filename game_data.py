@@ -1669,9 +1669,7 @@ def expand_game():
                 if o["id"] not in existing_ids:
                     sim_systems.SCENE_OBJECTS[loc].append(o)
                     existing_ids.add(o["id"])
-                    cnt["objs"] += 1
-    
-    # Recipes
+                    cnt["objs"] += 1    # Recipes
     existing_r = {r["recipe_id"] for r in sim_systems.RECIPES}
     for r in ALL_RECIPES:
         if r["recipe_id"] not in existing_r:
@@ -1756,7 +1754,57 @@ def expand_game():
     for _vi, _loc in enumerate(sim_systems.WORLD_MAP):
         if _loc not in _occupied:
             sim_systems.VEHICLE_LOCATIONS[_loc] = _vlist[_vi % len(_vlist)]
-    
+
+    # 知名地點載具配對覆寫：fallback 任意指派可能不符常理
+    # （如極北冰原配蒸氣機車、魔女學府配熱氣球），依地理/文本常理修正。
+    _VEHICLE_LOCATION_OVERRIDES = {
+        "極北冰原": "雪橇",          # 冰原雪橇
+        "魔女學府": "魔法掃帚",      # 魔女學府的掃帚
+        "農學院":   "馬車",          # 農產運輸
+        "清溪河":   "小舟",          # 河流渡水
+        "鏡山":     "登山自行車",    # 山路
+        "鬱鬱山":   "登山自行車",    # 山林越野
+        "煙雲溫泉湖": "重型機車",    # 溫泉山路
+    }
+    for _ov_loc, _ov_veh in _VEHICLE_LOCATION_OVERRIDES.items():
+        if _ov_veh in sim_systems.VEHICLES:
+            sim_systems.VEHICLE_LOCATIONS[_ov_loc] = _ov_veh
+
+    # 載具掛載：VEHICLE_LOCATIONS 的載具（魔法掃帚/吉普車/飛空艇等）原只在地圖
+    # 顯示、未掛到場景物件——玩家永遠拿不到（18 種死資料）。
+    # 每個地點若無 vehicle 類型物件，就掛上該地點的載具供探索取得。
+    # （VEHICLE_LOCATIONS 在此處已完整生成，故掛載放這裡。）
+    _veh_desc = {"魔法掃帚": "插在石縫中的掃帚，隱隱流轉著魔力",
+                 "魔法飛毯": "攤開的飛毯，邊緣繡著符文",
+                 "飛空艇": "停泊的魔導飛空艇，船體刻著魔法陣",
+                 "龍騎乘": "盤踞的巨龍，等待與它心意相通的人",
+                 "熱氣球": "充好氣的熱氣球，吊籃裡備著燃料",
+                 "吉普車": "越野吉普車，車況良好",
+                 "機車": "一輛機車，鑰匙還插著",
+                 "重型機車": "粗獷的重型機車",
+                 "蒸氣機車": "停在軌道上的蒸氣機車，爐火尚溫",
+                 "帆船": "泊在碼頭的帆船",
+                 "大型帆船": "雄偉的大型帆船，船舷高聳",
+                 "漁船": "作業中的漁船，漁網堆在甲板上",
+                 "雪橇": "狗拉雪橇，雪橇犬已經就位",
+                 "登山自行車": "齒比粗大的登山自行車",
+                 "自行車": "一輛乾淨的自行車",
+                 "駿馬": "一匹精神抖擻的駿馬",
+                 "大型馬車": "寬敞的大型馬車，可載多人",
+                 "馬車": "載貨用馬車"}
+    for _vloc, _vname in list(sim_systems.VEHICLE_LOCATIONS.items()):
+        if _vname not in sim_systems.VEHICLES:
+            continue
+        _scene_objs = sim_systems.SCENE_OBJECTS.setdefault(_vloc, [])
+        if any(o.get("type") == "vehicle" for o in _scene_objs):
+            continue
+        _scene_objs.append({
+            "id": "veh_%s" % _vloc, "name": _vname, "type": "vehicle",
+            "vehicle_type": _vname,
+            "desc": _veh_desc.get(_vname, "停靠在此的%s" % _vname),
+            "interactable": True,
+        })
+
     # ── NPC schedule location fallback ──
     # Some NPCs reference locations not in WORLD_MAP or scene cards
     _NPC_FALLBACK_LOCATIONS = {
