@@ -31,6 +31,17 @@ from ai.arithmetic.arithmetic_learner import (
     _label_sub,
     _logic_result,
 )
+from ai.arithmetic.gate_router import (
+    get_arithmetic_learner,
+    set_arithmetic_learner,
+    try_logic_gate,
+)
+
+
+@pytest.fixture(autouse=True)
+def _reset_gate_registry():
+    yield
+    set_arithmetic_learner(None)
 
 
 @pytest.fixture(scope="module")
@@ -344,3 +355,66 @@ def test_op_sample_hashable() -> None:
     assert hash(SubCellSample(5, 7, 0, 8, 1)) == hash(SubCellSample(5, 7, 0, 8, 1))
     assert hash(MulCellSample(7, 6, 2, 4)) == hash(MulCellSample(7, 6, 2, 4))
     assert hash(LogicSample("AND", 1, 1, 1)) == hash(LogicSample("AND", 1, 1, 1))
+
+
+# ------------------------------------------- dict-layer gate fallback (1+2 A/B)
+def test_gate_router_noop_without_learner() -> None:
+    set_arithmetic_learner(None)
+    assert get_arithmetic_learner() is None
+    assert try_logic_gate("1 XNOR 1") is None
+
+
+def test_gate_router_noop_for_engine_math(learner: ArithmeticLearner) -> None:
+    set_arithmetic_learner(learner)
+    # evaluate_math answers this exactly; the learner must NOT shadow it.
+    assert try_logic_gate("12 + 5") is None
+    assert try_logic_gate("7 * 6") is None
+
+
+def test_gate_router_noop_for_engine_logic(learner: ArithmeticLearner) -> None:
+    set_arithmetic_learner(learner)
+    # evaluate_logic owns boolean-word forms (true/false, and/or) — no shadow.
+    assert try_logic_gate("true and true") is None
+    assert try_logic_gate("真 或 假") is None
+
+
+def test_gate_router_fires_for_xnor(learner: ArithmeticLearner) -> None:
+    set_arithmetic_learner(learner)
+    # XNOR is the gate evaluate_logic cannot express -> learner fills the gap.
+    assert try_logic_gate("0 XNOR 0") == "1"
+    assert try_logic_gate("0 XNOR 1") == "0"
+    assert try_logic_gate("1 XNOR 0") == "0"
+    assert try_logic_gate("1 XNOR 1") == "1"
+    # trailing question mark still parses
+    assert try_logic_gate("1 XNOR 1 = ?") == "1"
+
+
+def test_route_math_reaches_gate_fallback(learner: ArithmeticLearner) -> None:
+    from ai.ed3n.dictionary_layer import DictionaryLayer
+    from ai.garden.dictionary import VectorDictionary
+
+    set_arithmetic_learner(learner)
+    assert DictionaryLayer.route_math("1 XNOR 1") == "1"
+    assert VectorDictionary.route_math("0 XNOR 1") == "0"
+    # engine-scope arithmetic still routed to MathVerifier, untouched
+    assert DictionaryLayer.route_math("12 + 5") == evaluate_deterministic("12 + 5")
+
+
+def evaluate_deterministic(text: str) -> str:
+    from services.math_verifier import evaluate_math
+
+    return evaluate_math(text)
+
+
+def test_export_logic_patterns_only_xnor(learner: ArithmeticLearner) -> None:
+    patterns = learner.export_logic_patterns()
+    assert set(patterns) == {"0 XNOR 0", "0 XNOR 1", "1 XNOR 0", "1 XNOR 1"}
+    assert patterns["0 XNOR 0"] == "1"
+    assert patterns["0 XNOR 1"] == "0"
+    assert patterns["1 XNOR 0"] == "0"
+    assert patterns["1 XNOR 1"] == "1"
+
+
+def test_export_logic_patterns_empty_untrained() -> None:
+    fresh = ArithmeticLearner()
+    assert fresh.export_logic_patterns() == {}

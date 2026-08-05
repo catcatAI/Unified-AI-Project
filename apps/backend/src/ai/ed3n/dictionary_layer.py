@@ -96,7 +96,9 @@ class DictionaryLayer:
     MAX_ENCODE_KEYS: int = limit_value("ai.dictionary_layer.max_encode_keys", 5)
     MIN_ENCODE_SCORE: float = threshold_value("ai.dictionary_layer.min_encode_score", 0.25)
 
-    def encode(self, text: str, modality: str = "text", max_keys: Optional[int] = None) -> List[str]:
+    def encode(
+        self, text: str, modality: str = "text", max_keys: Optional[int] = None
+    ) -> List[str]:
         raw: List[str]
         with self._lock:
             raw = self._encode_locked(text, modality)
@@ -360,10 +362,20 @@ class DictionaryLayer:
         The dictionary layer is the canonical entry point for the "compute"
         symbol — it routes arithmetic to MathVerifier instead of evaluating
         locally. This keeps ED3N/GARDEN from re-implementing a math engine.
+
+        A learned logic-gate fallback is consulted only when the deterministic
+        engine returns nothing (genuine engine-scope gap, e.g. XNOR) — see
+        ``ai.arithmetic.gate_router``. With no learner trained/registered this
+        is a pure no-op, so engine-only behaviour is preserved.
         """
         from services.math_verifier import evaluate_math
 
-        return evaluate_math(text)
+        result = evaluate_math(text)
+        if result is not None:
+            return result
+        from ai.arithmetic.gate_router import try_logic_gate
+
+        return try_logic_gate(text)
 
     def get_related(self, key: str, relation_type: Optional[str] = None) -> List[str]:
         entry = self.entries.get(key)

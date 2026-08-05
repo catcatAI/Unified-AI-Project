@@ -27,8 +27,8 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 from ai.core.unicode_utils import normalize_text
 from core.system.config.magic_numbers import (
-    confidence_value,
     compute_bool,
+    confidence_value,
     threshold_value,
 )
 
@@ -423,7 +423,7 @@ class VectorDictionary:
                 device = "cuda"
         else:
             device = "cpu"
-        
+
         self.model_name = model_name
         self.top_k = top_k
         self.similarity_threshold = similarity_threshold
@@ -519,7 +519,7 @@ class VectorDictionary:
                 zh_form = text
                 if en_form not in entry.surface_forms.values():
                     # Add with a unique key to preserve all surface forms
-                    form_key = "en" 
+                    form_key = "en"
                     idx = 2
                     while form_key in entry.surface_forms:
                         form_key = f"en{idx}"
@@ -893,6 +893,7 @@ class VectorDictionary:
         if original_text:
             lower_orig = original_text.lower().strip()
             import re as _re
+
             for t in _re.findall(r"[a-zA-Z0-9]+|.", original_text.lower()):
                 t = t.strip()
                 if t:
@@ -926,10 +927,17 @@ class VectorDictionary:
 
         Mirrors ED3N's DictionaryLayer.route_math so both engines route the
         "compute" symbol through MathVerifier instead of evaluating locally.
+        Falls back to the learned logic-gate router for engine-scope gaps
+        (XNOR etc.) when a learner is registered; a no-op otherwise.
         """
         from services.math_verifier import evaluate_math
 
-        return evaluate_math(text)
+        result = evaluate_math(text)
+        if result is not None:
+            return result
+        from ai.arithmetic.gate_router import try_logic_gate
+
+        return try_logic_gate(text)
 
     def get_synonyms(self, key: str) -> List[str]:
         entry = self.entries.get(key)

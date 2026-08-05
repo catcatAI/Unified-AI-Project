@@ -30,6 +30,11 @@ from .arithmetic_learner import (
     _label_mul,
     _label_sub,
 )
+from .gate_router import (
+    get_arithmetic_learner,
+    set_arithmetic_learner,
+    try_logic_gate,
+)
 
 __all__ = [
     "ArithmeticLearner",
@@ -42,4 +47,7 @@ __all__ = [
     "_label_add",
     "_label_mul",
     "_label_sub",
+    "get_arithmetic_learner",
+    "set_arithmetic_learner",
+    "try_logic_gate",
 ]

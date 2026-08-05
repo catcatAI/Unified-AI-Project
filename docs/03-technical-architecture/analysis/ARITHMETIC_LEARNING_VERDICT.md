@@ -176,8 +176,10 @@ train=1.000, test=1.000 (含借位 + 負數)
   - `predict_addition`/`predict_subtraction`/`predict_multiplication`/`predict_logic_gate` 逐欄組合 cell;carry/borrow 為輸入維度(§B6,無未見 carry/borrow 外推);carry 鏈加 `nd+4` 上限保護未收斂網路;負數差以對稱 `-(b-a)` 處理;多位乘法走 Schoolbook 部分積、以加法 cell 求和。
   - `learn_from_dialogue` — 從對話抽取 `x + y`/`x - y`/`x * y` 算式(確定性引擎為標籤來源→正確逐欄 cell;邏輯閘因自然語言 AND/OR 過於歧義僅從閉合真值表學習),`auto_run=False` 佇列、週期性全量 fit。
 - **`apps/backend/src/ai/ed3n/continuous_learning.py`** — `ContinuousLearningPipeline` 新增 `arithmetic_learner` hook,`process_interaction` 於 `interaction % train_interval == 0` 觸發全量 re-fit。
-- **`scripts/train_pipeline.py`** — B 類接入:新增 `_step5b_train_arithmetic`,`main()` 加 5b step 並 `save_state(5.5)`;擴充 spot-check 涵蓋 add/sub/mul/logic 並輸出 `arithmetic_per_op` 精準度。
+- **`apps/backend/src/ai/arithmetic/gate_router.py`**(新)— 學習成果進字典/SNN 的唯一正式 runtime 接點:module 級 registry(`set/get_arithmetic_learner`) + `try_logic_gate`。只在 `evaluate_math` **與** `evaluate_logic` **皆回 None**(真引擎字集缺口,現為 XNOR)且文字為數字位元 `N OP M` 形式時,才委派給 learner 的 `predict_logic_gate` —— 對引擎已精確回答的算術/布林一律 no-op,不重複、不遮蔽、不競合。
+- **`apps/backend/src/ai/ed3n/dictionary_layer.py` / `apps/backend/src/ai/garden/dictionary.py`** — `route_math` 維持「先委派 MathVerifier」,僅在其回 None 後才 consult `try_logic_gate`(無 learner 註冊即純 no-op,引擎行為不變)。ED3N/GARDEN 兩顆 SNN 的字典層共用同一 compute 入口,對話正是經此調用字典/SNN。
+- **`scripts/train_pipeline.py`** — B 類接入:新增 `_step5b_train_arithmetic`,`main()` 加 5b step 並 `save_state(5.5)`;擴充 spot-check 涵蓋 add/sub/mul/logic 並輸出 `arithmetic_per_op` 精準度;訓練後(1)把 learner 註冊進 `gate_router`(runtime fallback),(2)將 `export_logic_patterns()`(嚴格只有 XNOR 4 列)物化進 `ed3n_engine.reflex` 知識層 —— 即使無 live learner,對話也能經字典取到學習結果。
 - **`apps/backend/configs/system/ed3n.default.yaml`** — `ed3n.train.arithmetic.*` 配置(representation/dim/min_acc/max_epochs/stall_epochs)。
-- **`tests/unit/test_arithmetic_learner.py`** — 32 tests:四 op cell 收斂 100%‧多位加/減/乘與負數差‧邏輯閘全組合‧隨機 200/100 例‧save/load 續訓(含 op cell weights)‧dialogue/CLP 整合‧真值表與表示模式‧終止保證。落地 commit:`281a2870`(A+B 基礎),本批擴充(sub/mul/logic cell)。
+- **`tests/unit/test_arithmetic_learner.py`** — 39 tests:四 op cell 收斂 100%‧多位加/減/乘與負數差‧邏輯閘全組合‧隨機 200/100 例‧save/load 續訓(含 op cell weights)‧dialogue/CLP 整合‧真值表與表示模式‧終止保證‧gate_router 三種 no-op(無 learner/引擎算術/引擎布林)+ XNOR 填補 + 兩顆 route_math 都通 + export 只含 XNOR 且未訓練為空。落地 commit:`281a2870`(A+B 基礎)、`ce32a98e`(sub/mul/logic cell 擴充)、本批(dict-layer 1+2 接入)。
 
-分工複述:數值真相永遠來自確定性引擎(`services.math_verifier.evaluate_math`,永不參與學習;減法/乘法標籤亦走引擎,邏輯閘標籤用純布林定義);SNN/digit-cell 只學習符號映射與 digit 組合。
+分工複述:數值真相永遠來自確定性引擎(`services.math_verifier.evaluate_math`,永不參與學習;減法/乘法標籤亦走引擎,邏輯閘標籤用純布林定義);SNN/digit-cell 只學習符號映射與 digit 組合。**學習成果進入 dict/SNN 的範圍 = 引擎字集之外的缺口(現為 XNOR)**,引擎已覆蓋的明確數學永不經由 learner。

@@ -1497,7 +1497,9 @@ def _step5_train_garden(coordinator, batches, resume_state=None, save_state=None
     return garden_engine
 
 
-def _step5b_train_arithmetic(coordinator, resume_state=None, save_state=None):
+def _step5b_train_arithmetic(
+    coordinator, resume_state=None, save_state=None, ed3n_engine=None, garden_engine=None
+):
     """Step 5b (A+B research landing): autonomous arithmetic learner.
 
     The research verdict (ARITHMETIC_LEARNING_VERDICT.md §5, §B6) shows the
@@ -1526,6 +1528,16 @@ def _step5b_train_arithmetic(coordinator, resume_state=None, save_state=None):
     the research reference ``capability_math3.py``) and does not alter either
     engine's runtime path — numeric truth remains delegated to the
     deterministic engine at inference.
+
+    Two safe wiring paths connect the learned output to the dictionary/SNN the
+    dialogue actually reaches (matching the "learn math the engine can't, don't
+    duplicate what it can" scope):
+
+    * registers the learner into ``ai.arithmetic.gate_router`` so ED3N/GARDEN
+      ``route_math`` serves engine-scope gaps (e.g. XNOR) at runtime — a no-op
+      for every in-scope arithmetic that MathVerifier answers exactly;
+    * materialises ``export_logic_patterns()`` (strictly XNOR, the gate
+      ``evaluate_logic`` lacks) into ``ed3n_engine.reflex`` as knowledge rows.
     """
     print("\n[5b/8] Training arithmetic digit cell (autonomous loop)...")
     resume_state = resume_state or {}
@@ -1586,6 +1598,29 @@ def _step5b_train_arithmetic(coordinator, resume_state=None, save_state=None):
         f"  Multi-digit spot-check: add={add_ok}/5 sub={sub_ok}/5 "
         f"mul={mul_ok}/5 logic={logic_ok}/6 correct"
     )
+    # Register the learner as the dict-layer gate fallback so ED3N/GARDEN
+    # route_math can serve engine-scope gaps (XNOR) at runtime; a no-op for
+    # every in-scope arithmetic because route_math never reaches the fallback.
+    try:
+        from ai.arithmetic import set_arithmetic_learner
+
+        set_arithmetic_learner(learner)
+        print("  Registered arithmetic learner as dict-layer logic-gate fallback")
+    except Exception as e:  # noqa: BLE001
+        print(f"  Warning: could not register arithmetic learner: {e}")
+    # Materialise the engine-missed gate truths into the ED3N knowledge layer
+    # (reflex), so dialogue reaches the learned result via the dictionary even
+    # without the live learner.
+    patterns = learner.export_logic_patterns()
+    if ed3n_engine is not None and patterns:
+        added = 0
+        for pattern, response in patterns.items():
+            if pattern not in ed3n_engine.reflex.patterns:
+                ed3n_engine.reflex.add_pattern(pattern, response)
+                added += 1
+        print(f"  Materialised {added}/{len(patterns)} logic-gate patterns into ED3N reflex")
+    elif ed3n_engine is None and patterns:
+        print("  [SKIP] No ED3N engine available for logic-gate reflex materialisation")
     if save_state:
         save_state(
             5.5,
@@ -1593,6 +1628,7 @@ def _step5b_train_arithmetic(coordinator, resume_state=None, save_state=None):
                 "arithmetic_stop": snap.stopped_reason,
                 "arithmetic_acc": snap.cell_accuracy,
                 "arithmetic_per_op": task,
+                "logic_patterns": len(patterns),
             },
         )
     return learner
@@ -1866,7 +1902,9 @@ def main() -> None:
         print("\n[5b/8] Training arithmetic digit cell... (SKIPPED - already completed)")
         arithmetic_learner = None
     else:
-        arithmetic_learner = _step5b_train_arithmetic(coordinator, resume_state, save_state)
+        arithmetic_learner = _step5b_train_arithmetic(
+            coordinator, resume_state, save_state, ed3n_engine, garden_engine
+        )
         save_state(5.5)
 
     # -----------------------------------------------------------------------

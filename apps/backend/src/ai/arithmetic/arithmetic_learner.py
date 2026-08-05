@@ -742,6 +742,25 @@ class ArithmeticLearner:
             raise ValueError(f"unknown logic gate {op!r}; expected one of {list(_LOGIC_OPS)}")
         return self.forward_logic(op, int(bool(a)), int(bool(b)))
 
+    def export_logic_patterns(self) -> Dict[str, str]:
+        """Materialise engine-missed gate truths as ``{trigger: response}``.
+
+        Only gates the deterministic engine cannot answer are exported, so the
+        training output is persisted into the dictionary/SNN knowledge layer
+        (ED3N reflex) *without* duplicating explicit engine math. Today that is
+        strictly **XNOR** — absent from ``MathVerifier.evaluate_logic`` — in the
+        numeric ``N XNOR M`` form over the closed ``{0,1}`` truth table. Returns
+        an empty dict for an untrained learner (no unverified answers).
+        """
+        if not self.learned:
+            return {}
+        out: Dict[str, str] = {}
+        for a in _BIT:
+            for b in _BIT:
+                trigger = f"{a} XNOR {b}"
+                out[trigger] = str(self.predict_logic_gate("XNOR", a, b))
+        return out
+
     # -------------------------------------------------------------- training
     def _cell_features_matrix(self, samples: List[CellSample]) -> np.ndarray:
         rows = [self.cell_input_vector(s.da, s.db, s.carry_in) for s in samples]
