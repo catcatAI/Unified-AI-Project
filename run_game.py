@@ -1099,6 +1099,34 @@ def do_travel(character):
             if not can_enter:
                 print(C.RED + "  🔒 " + (fail_msg or "無法進入。") + C.RESET)
                 return
+            # 世界線載具檢查：魔法/電子載具受世界線靈子聚合度影響
+            # （V3.4：W02 絕對無魔——魔法與電子設備無法運作；W04 電子大量
+            # 損壞、靈子可能過載）。被擋的移動不燒燃料損零件。
+            _vfuel_mult = 1.0
+            if character.get("riding"):
+                _vdef = VEHICLES.get(character["riding"], {})
+                _vcat = sim_systems.get_vehicle_world_category(_vdef)
+                _vwl, _vfx = sim_systems.get_world_line_effect(character.get("location", ""))
+                if _vcat == "magic" and _vfx.get("magic_scale", 1.0) <= 0.0:
+                    print(C.RED + "  🚫 %s需要靈子驅動，但在[%s]（%s）完全無法運作。" % (
+                        character["riding"], character.get("location", ""),
+                        _vfx.get("desc", "")) + C.RESET)
+                    return
+                if _vcat == "tech" and _vfx.get("tech_scale", 1.0) <= 0.0:
+                    print(C.RED + "  🚫 %s是電子機械設備，在[%s]（%s）不存在/無法運作。" % (
+                        character["riding"], character.get("location", ""),
+                        _vfx.get("desc", "")) + C.RESET)
+                    return
+                # W04 靈子過載：魔法載具可能失控（魔法載具 fuel 是字串不扣數值
+                # 燃料——改為消耗 SP 作為過載代價）
+                if _vcat == "magic" and _vfx.get("magic_overload", 0) > 0 and _random.random() < _vfx["magic_overload"]:
+                    _ov_sp = max(3, character.get("sp", 10) // 5)
+                    character["sp"] = max(0, character.get("sp", 0) - _ov_sp)
+                    print(C.YELLOW + "  ⚡ 靈子過載！%s 失控劇烈震盪……消耗 %d SP 勉強穩定下來。" % (character["riding"], _ov_sp) + C.RESET)
+                # W04 電子損壞：電子載具可能故障（燃料加倍）
+                if _vcat == "tech" and _vfx.get("tech_break", 0) > 0 and _random.random() < _vfx["tech_break"]:
+                    print(C.YELLOW + "  💥 %s 電子故障（靈子干涉），燃料消耗加倍。" % character["riding"] + C.RESET)
+                    _vfuel_mult = 2.0
             # Travel time
             base_hours = 2  # 徒步跨一個區域的基準耗時
             hours = base_hours
@@ -1113,7 +1141,7 @@ def do_travel(character):
                     mod_v = apply_vehicle_part_bonuses(v, parts_data)
                     hours = max(1, round(base_hours / max(mod_v.get("speed", 1.0), 0.1)))
                     # Vehicle fuel consumption
-                    fuel_used = mod_v.get("fuel_per_hour", v.get("fuel_per_hour", 0)) * hours
+                    fuel_used = mod_v.get("fuel_per_hour", v.get("fuel_per_hour", 0)) * hours * _vfuel_mult
                     # 生成載具 fuel 為字串型別（無限燃料）；只有數字燃料才扣減，
                     # 避免 str - int 的 TypeError 地雷
                     if fuel_used > 0 and not isinstance(v.get("fuel"), str):
@@ -1307,8 +1335,20 @@ def do_inventory(character):
                 item_name = inv[fidx]
                 idf = get_item_def(item_name)
                 if idf.get("type") == "consumable":
+                    # 世界線效果：魔法/靈子消耗品受世界線聚合度影響
+                    # （W02 絕對無魔失效、W03 減半、W04 過載）
+                    _wl_mult, _wl_block = sim_systems.world_line_consumable_effect(
+                        character.get("location", ""), idf, item_name)
+                    if _wl_block:
+                        print(C.RED + "  🚫 " + _wl_block + C.RESET)
+                        return
                     hh = idf.get("heal_hp", 0)
                     hs = idf.get("heal_sp", 0)
+                    if _wl_mult < 1.0:
+                        hh = int(hh * _wl_mult)
+                        hs = int(hs * _wl_mult)
+                        _wl_name = sim_systems.get_world_line_effect(character.get("location", ""))[1]
+                        print(C.DIM + "  （世界線靈子聚合度影響：%s 效能 ×%.1f）" % (_wl_name.get("desc", ""), _wl_mult) + C.RESET)
                     if hh > 0 or hs > 0:
                         if hh > 0:
                             ah = min(character["max_hp"]-character["hp"], hh)
@@ -1383,8 +1423,19 @@ def do_equipment_menu(character, equipment):
                 _can_c, _depth_c, _dim_c, _reason_c = evaluate_consumable(_aff_c, idf)
                 if _depth_c < 0.3:
                     print(C.DIM+"  （%s 為 %s 屬性道具，契合度偏低 %.2f）" % (iname, dimension_label(_dim_c), _depth_c)+C.RESET)
+            # 世界線效果：魔法/靈子消耗品受世界線聚合度影響
+            _wl_mult, _wl_block = sim_systems.world_line_consumable_effect(
+                character.get("location", ""), idf, iname)
+            if _wl_block:
+                print(C.RED + "  🚫 " + _wl_block + C.RESET)
+                return
             hh = idf.get("heal_hp",0)
             hs = idf.get("heal_sp",0)
+            if _wl_mult < 1.0:
+                hh = int(hh * _wl_mult)
+                hs = int(hs * _wl_mult)
+                _wl_name = sim_systems.get_world_line_effect(character.get("location", ""))[1]
+                print(C.DIM + "  （世界線靈子聚合度影響：%s 效能 ×%.1f）" % (_wl_name.get("desc", ""), _wl_mult) + C.RESET)
             if hh>0:
                 ah = min(character["max_hp"]-character["hp"],hh)
                 character["hp"] += ah
@@ -1423,8 +1474,19 @@ def do_equipment_menu(character, equipment):
             if not _ok_r:
                 print(C.RED+"  ⚠ "+_msg_r+C.RESET)
                 return
+            # 世界線效果：魔法/靈子消耗品受世界線聚合度影響
+            _wl_mult, _wl_block = sim_systems.world_line_consumable_effect(
+                character.get("location", ""), idf, iname)
+            if _wl_block:
+                print(C.RED + "  🚫 " + _wl_block + C.RESET)
+                return
             hh = idf.get("heal_hp",0)
             hs = idf.get("heal_sp",0)
+            if _wl_mult < 1.0:
+                hh = int(hh * _wl_mult)
+                hs = int(hs * _wl_mult)
+                _wl_name = sim_systems.get_world_line_effect(character.get("location", ""))[1]
+                print(C.DIM + "  （世界線靈子聚合度影響：%s 效能 ×%.1f）" % (_wl_name.get("desc", ""), _wl_mult) + C.RESET)
             if hh>0:
                 ah = min(character["max_hp"]-character["hp"],hh)
                 character["hp"] += ah

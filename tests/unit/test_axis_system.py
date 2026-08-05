@@ -668,3 +668,78 @@ class TestWorldLineEntryGates:
         expand_game()
         objs = sim_systems.SCENE_OBJECTS.get("迴廊", [])
         assert len(objs) >= 3, "迴廊應有世界法則碎片/數據流等探索物件"
+
+    def test_world_line_rules_w02_no_magic(self):
+        """W02 琥珀紀元絕對無魔——小吉鎮/大根莖村魔法道具與魔法載具失效
+        （V3.4：零靈子聚合度、靈子/電子設備無法運作）。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        wl = sim_systems.LOCATION_WORLD_LINES
+        assert wl.get("小吉鎮") == "W02"
+        assert wl.get("大根莖村") == "W02"
+        for loc in ("小吉鎮", "大根莖村"):
+            _w, fx = sim_systems.get_world_line_effect(loc)
+            assert _w == "W02"
+            assert fx.get("magic_scale") == 0.0
+            assert fx.get("tech_scale") == 0.0
+        # 魔力藥水在 W02 完全失效、草藥不受影響
+        potion = sim_systems.ITEM_CATALOG.get("魔力藥水")
+        mult, blk = sim_systems.world_line_consumable_effect("小吉鎮", potion, "魔力藥水")
+        assert mult == 0.0 and blk
+        herb = sim_systems.ITEM_CATALOG.get("草藥")
+        mult2, blk2 = sim_systems.world_line_consumable_effect("小吉鎮", herb, "草藥")
+        assert mult2 == 1.0 and not blk2
+
+    def test_world_line_rules_scales(self):
+        """世界線魔法/電子倍率依 V3.4：W03 電子最高精度+靈子低落、
+        W04 電子損壞；地點級聚合度修正（聖十字校園低、玻璃荒漠極高）。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        _w, fx = sim_systems.get_world_line_effect("軌道居住站大學院")
+        assert fx.get("magic_scale") == 0.5   # 靈子不足效能低落
+        assert fx.get("tech_scale") == 1.5    # 電子最高精度
+        _w, fx = sim_systems.get_world_line_effect("玻璃荒漠")
+        assert fx.get("magic_scale") == 2.0   # 靈爆核心 >100ppm
+        assert fx.get("tech_scale") == 0.2    # 電子大量損壞
+        # 地點級聚合度：聖十字校園靈波吸收層降低靈子
+        _w, fx = sim_systems.get_world_line_effect("聖十字校園")
+        assert fx.get("magic_scale") < 1.0
+
+    def test_world_line_vehicle_category(self):
+        """載具世界線分類：魔法掃帚 magic、機車 tech、馬/小舟 natural。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        assert sim_systems.get_vehicle_world_category(sim_systems.VEHICLES["魔法掃帚"]) == "magic"
+        assert sim_systems.get_vehicle_world_category(sim_systems.VEHICLES["機車"]) == "tech"
+        assert sim_systems.get_vehicle_world_category(sim_systems.VEHICLES["馬"]) == "natural"
+        assert sim_systems.get_vehicle_world_category(sim_systems.VEHICLES["小舟"]) == "natural"
+        # 魔法載具在 W02 無法運作（magic_scale 0.0）
+        _w, fx = sim_systems.get_world_line_effect("小吉鎮")
+        assert fx.get("magic_scale") == 0.0
+
+    def test_w02_villages_via_corridor(self):
+        """W02 村落（小吉鎮/大根莖村）只能經由迴廊到達——霧海群島
+        不再直連小吉鎮（跨線邊全經迴廊）。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        wl = sim_systems.LOCATION_WORLD_LINES
+        assert sim_systems.WORLD_MAP.get("小吉鎮", {}).get("enter") == "迴廊"
+        assert sim_systems.WORLD_MAP.get("霧海群島", {}).get("north") == "迴廊"
+        assert sim_systems.WORLD_MAP.get("迴廊", {}).get("west") == "小吉鎮"
+        # 未經迴廊的跨線邊 = 0
+        bad = []
+        for loc, conns in sim_systems.WORLD_MAP.items():
+            cur = wl.get(loc, "W01")
+            for _d, dest in conns.items():
+                dst = wl.get(dest, "W01")
+                if dest == "迴廊" or loc == "迴廊":
+                    continue
+                if "W01+迴廊" in (cur, dst):
+                    continue
+                if dst != cur:
+                    bad.append(f"{loc}[{cur}] → {dest}[{dst}]")
+        assert not bad, "跨線邊應全經迴廊: %s" % bad

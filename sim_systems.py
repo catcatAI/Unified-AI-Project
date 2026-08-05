@@ -1418,6 +1418,127 @@ RACE_TASK_IDS = ["TASK-01","TASK-02","TASK-03","TASK-04"]
 
 
 # ═══════════════════════════════════════════════════════════
+# WORLD LINE RULES (per V3.4 世界線聚合度權威表)
+# ═══════════════════════════════════════════════════════════
+# V3.4 權威表：世界 | 靈子聚合度 | 靈子-電子干涉 | 表現
+#   W01 靈子塵埃  高（1-15ppm）   強       電子設備需屏蔽；靈子計算成熟
+#   W02 琥珀紀元  零（絕對無魔）  無       電子設備不存在（技術斷層）；靈子設備無法運作
+#   W03 軌道站    極低（<0.01ppm）微弱    電子設備無干擾達最高精度；靈子設備因靈子不足效能低落
+#   W04 灰燼紀元  不穩定（0-100+ppm）極強不可預測  電子設備大量損壞；靈子設備可能過載失控
+
+WORLD_LINE_RULES = {
+    "W01": {
+        "name": "靈子塵埃",
+        "magic_scale": 1.0,   # 靈子計算成熟 → 魔法/靈子道具正常
+        "tech_scale": 0.8,    # 電子設備需屏蔽 → 電子道具效能低落
+        "desc": "靈子塵埃：電子需屏蔽（效能↓），靈子計算成熟",
+    },
+    "W02": {
+        "name": "琥珀紀元",
+        "magic_scale": 0.0,   # 絕對無魔 → 靈子/魔法設備無法運作
+        "tech_scale": 0.0,    # 技術斷層 → 電子設備不存在
+        "desc": "琥珀紀元：絕對無魔，靈子/電子設備皆無法運作",
+    },
+    "W03": {
+        "name": "軌道站",
+        "magic_scale": 0.5,   # 靈子不足 → 魔法/靈子道具效能低落
+        "tech_scale": 1.5,    # 電子無干擾 → 電子道具最高精度
+        "desc": "軌道站：電子達最高精度（效能↑），靈子效能低落",
+    },
+    "W04": {
+        "name": "灰燼紀元",
+        "magic_scale": 1.0,
+        "magic_overload": 0.35,  # 靈子過載失控機率（使用魔法道具時）
+        "tech_scale": 0.5,
+        "tech_break": 0.45,      # 電子損壞機率（使用電子道具時）
+        "desc": "灰燼紀元：電子大量損壞（效能↓），靈子可能過載失控",
+    },
+}
+
+# 地點級聚合度修正（V3.4 區域聚合度表：聖十字校園低、鬱鬱山極低、
+# 極北冰原接近零、玻璃荒漠核心極高 >100ppm、鏽蝕城邦地下低）
+LOCATION_AGGREGATION = {
+    "聖十字校園": {"wl": "W01", "magic_scale": 0.7,
+                    "desc": "校園圍牆靈波吸收層（靈子↓）"},
+    "鬱鬱山":     {"wl": "W01", "magic_scale": 0.3,
+                    "desc": "高電導率地質散射電磁波，同時削弱靈子場"},
+    "極北冰原":   {"wl": "W01", "magic_scale": 0.1,
+                    "desc": "天然靈壓真空帶（<0.1ppm）"},
+    "玻璃荒漠":   {"wl": "W04", "magic_scale": 2.0, "tech_scale": 0.2,
+                    "desc": "靈爆中心殘留（>100ppm）"},
+    "鏽蝕城邦地下": {"wl": "W04", "magic_scale": 0.6, "tech_scale": 0.8,
+                    "magic_overload": 0.0, "tech_break": 0.0,
+                    "desc": "拾荒王改造的舊時代屏蔽設施（屏蔽下無過載/故障風險）"},
+}
+
+
+def get_world_line_effect(location):
+    """依所在地回傳 (world_line, effect_dict)。地點級聚合度優先，
+    其次用 LOCATION_WORLD_LINES（game_data expand 時寫入）推世界線，
+    最後回退 W01 基準。"""
+    agg = LOCATION_AGGREGATION.get(location, {})
+    _wl_map = globals().get("LOCATION_WORLD_LINES") or {}
+    wl = agg.get("wl") or _wl_map.get(location, "W01")
+    base = dict(WORLD_LINE_RULES.get(str(wl), WORLD_LINE_RULES["W01"]))
+    for k, v in agg.items():
+        if k in ("wl", "desc"):
+            continue
+        base[k] = v
+    return wl, base
+
+
+def get_vehicle_world_category(vehicle_def):
+    """載具世界線分類：magic（魔法/靈子）、tech（電子/機械）、
+    natural（生物/人力/帆等，不受世界線干涉）。"""
+    ft = str(vehicle_def.get("fuel_type", vehicle_def.get("fuel", "")))
+    if ft == "magic":
+        return "magic"
+    if ft in ("gas", "coal"):
+        return "tech"
+    return "natural"
+
+
+def get_item_world_category(item_def, item_name=""):
+    """道具世界線分類：magic（魔法/靈子）、tech（電子/機械）、
+    natural（草藥/材料/食物等，不受世界線干涉）。
+    ITEM_CATALOG 的 dict 不含 name 欄位（name 是 key），故 name 由
+    呼叫方以 item_name 傳入（get_item_def 不注入 name）。"""
+    tags = item_def.get("tags", []) or []
+    if "magic" in tags or "elemental" in tags or "crystal" in tags:
+        return "magic"
+    if "electronic" in tags or "tech" in tags:
+        return "tech"
+    name = str(item_def.get("name", "")) or str(item_name)
+    # 只認明確的魔法系詞：魔力/靈力/魔法/護身符。靈芝/萬靈藥雖有
+    # 「靈/萬」字樣，但 tags 是 herbal（療傷草藥），非魔法道具。
+    if any(k in name for k in ("魔力", "靈力", "魔法", "護身符")):
+        return "magic"
+    return "natural"
+
+
+def world_line_consumable_effect(location, item_def, item_name=""):
+    """魔法/靈子消耗品受世界線聚合度影響。回傳 (multiplier, block_msg)。
+    multiplier 0.0 = 完全失效（W02 絕對無魔）；block_msg 非空時擋下。
+    W04 靈子過載有機率讓魔法道具失效。"""
+    cat = get_item_world_category(item_def, item_name)
+    if cat == "natural":
+        return 1.0, ""
+    wl, fx = get_world_line_effect(location)
+    scale_key = "magic_scale" if cat == "magic" else "tech_scale"
+    scale = fx.get(scale_key, 1.0)
+    _nm = str(item_def.get("name", "")) or str(item_name) or "該道具"
+    if scale <= 0.0:
+        return 0.0, "%s在此世界線（%s：%s）完全無法運作。" % (_nm, wl, fx.get("desc", ""))
+    if cat == "magic" and fx.get("magic_overload", 0) > 0:
+        if _random.random() < fx["magic_overload"]:
+            return 0.0, "靈子過載！%s失控消散了。" % _nm
+    if cat == "tech" and fx.get("tech_break", 0) > 0:
+        if _random.random() < fx["tech_break"]:
+            return 0.0, "電子故障！%s失靈了。" % _nm
+    return scale, ""
+
+
+# ═══════════════════════════════════════════════════════════
 # VEHICLES (4 vehicles)
 # ═══════════════════════════════════════════════════════════
 

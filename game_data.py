@@ -107,6 +107,9 @@ _LOCATION_WORLD_LINES: Dict[str, str] = {
     "魔女學府": "W01", "魔女學府 M-值工程沙盒": "W01",
     # 夢境層（跨世界共享，非任一世界線）
     "高密度大氣結晶行星": "夢境層", "綻放混成園": "夢境層",
+    # W02 琥珀紀元（絕對無魔，應用物理統治的硬核中世紀村落——
+    # Ver 3.1：小吉鎮/大根莖村「世界：W02琥珀紀元」）
+    "小吉鎮": "W02", "大根莖村": "W02",
     # 迴廊（連接各世界線的橋樑）
     "迴廊": "迴廊",
     # 星光舞台（W01 偶像劇場＋迴廊投影）
@@ -1922,9 +1925,14 @@ def expand_game():
         "玻璃荒漠": {"enter": "迴廊"},
         "高密度大氣結晶行星": {"enter": "迴廊"},
         "綻放混成園": {"enter": "迴廊"},
+        # W02 琥珀紀元村落（Ver 3.1：小吉鎮/大根莖村屬 W02）——
+        # 從 W01 無法直達，需經迴廊（霧海群島的舊直連邊改連迴廊）
+        "小吉鎮": {"enter": "迴廊", "east": "大根莖村"},
+        "大根莖村": {"west": "小吉鎮"},
         # SL-10 界域內部：M-值工程沙盒 是魔女學府的實驗區，從學府進入
         "魔女學府 M-值工程沙盒": {"enter": "魔女學府"},
         "迴廊": {"north": "聖十字校園", "south": "鏡湖",
+                   "west": "小吉鎮", "east": "霧海群島",
                    "enter": "軌道居住站大學院", "exit": "鏽蝕城邦",
                    "deep": "玻璃荒漠"},
     }
@@ -1971,7 +1979,17 @@ def expand_game():
                 _bidir_fixed += 1
     if _bidir_fixed:
         print(f"[game_data] 地圖雙向邊修正: +{_bidir_fixed}")
-    
+
+    # 霧海群島原手寫 north:小吉鎮 是 W01→W02 跨線邊——改連迴廊樞紐。
+    # 放在雙向邊修正之後：north:小吉鎮 由雙向修正補上（小吉鎮 south:霧海群島），
+    # 此時覆寫為迴廊，並確保迴廊→霧海群島 有回程（迴廊 east:霧海群島）。
+    _wuhai = sim_systems.WORLD_MAP.get("霧海群島")
+    if _wuhai:
+        _wuhai["north"] = "迴廊"
+        _corr_conns = sim_systems.WORLD_MAP.setdefault("迴廊", {})
+        if "east" not in _corr_conns:
+            _corr_conns["east"] = "霧海群島"
+
     after = {
         "items": len(sim_systems.ITEM_CATALOG),
         "enemies": len(sim_systems.ENEMIES),
