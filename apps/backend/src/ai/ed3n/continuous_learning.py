@@ -47,6 +47,7 @@ class ContinuousLearningPipeline:
         auto_grow: bool = True,
         max_buffer_size: int = 500,
         max_history_size: int = 1000,
+        arithmetic_learner: Optional[Any] = None,
     ):
         self.engine = engine
         self.trainer = trainer
@@ -56,6 +57,10 @@ class ContinuousLearningPipeline:
         self.auto_grow = auto_grow
         self.max_buffer_size = max_buffer_size
         self.max_history_size = max_history_size
+        # Optional hook: arithmetic autonomous learner (research §5 / A-dir).
+        # When provided, arithmetic expressions seen in dialogue are fed to it
+        # so the digit cell is continuously refined from conversation.
+        self.arithmetic_learner = arithmetic_learner
 
         self._lock = threading.RLock()
         self._interaction_count: int = 0
@@ -86,6 +91,19 @@ class ContinuousLearningPipeline:
                 new_concepts = self._detect_and_grow(user_text, context)
 
         self._queue_training_example(user_text, response_text, context)
+
+        # Optional: feed arithmetic-bearing dialogue into the autonomous learner
+        # (research §5 / A-dir). Lightweight cell feed every interaction;
+        # a full re-fit is triggered periodically (on the training cadence) to
+        # avoid an LBFGS fit per online interaction.
+        if self.arithmetic_learner is not None:
+            try:
+                auto_run = self._interaction_count % self.train_interval == 0
+                self.arithmetic_learner.learn_from_dialogue(
+                    user_text, response_text, context, auto_run=auto_run
+                )
+            except Exception:
+                logger.debug("Arithmetic dialogue hook failed (non-critical)", exc_info=True)
 
         result: Dict[str, Any] = {
             "interaction": self._interaction_count,

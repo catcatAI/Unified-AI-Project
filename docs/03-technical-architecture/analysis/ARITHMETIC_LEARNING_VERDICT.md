@@ -70,7 +70,42 @@ train=1.000, test=1.000 (含借位 + 負數)
 
 - **硬編**: 在程式碼注入 `return a+b` / 乘法表 / 序結構 embedding。本實驗不含任何此類。
 - **學會**: 表示層(embedding)+ 生成機制(carry/組合)都由數據梯度學習。carry 值、部分積、結果 digit 全是學出來的。
-- **符號外推(b9 鐵律)**: 測「未見過的符號」原理上不可能(離散 key 無序可用),不屬「學會」範圍。
+- **符號外推 vs 計數外推(關鍵區分,§3.1)**: 兩個不同概念,實驗證明一者不可、一者可。
+
+### 3.1 符號外推 vs 計數外推(訓 0-5、測 6-9 對照)
+
+| 表示方式 | 訓 0-5 | 測 6-9 | 結論 |
+|---------|--------|--------|------|
+| **A) 符號查表**(digit=孤立離散 token) | 0.000 | **0/4 全錯**(6→0.45, 7→-0.93) | 無法生造未見符號(原始人無字寫試卷) |
+| **B) 計數**(digit=d 個重用的「一」單位向量) | 0.000 | **4/4 全對**(6→6.00 ... 9→9.00) | 數數可延伸到未知量 |
+
+**核心結論(B2 修正)**: 同網路、同損失、同訓練集,唯一差異是表示方式——
+- **符號查表** → 無法外推 digit 值(離散 key 無量值可依)
+- **計數/組合表示**(可重用單位相加)→ 完美外推
+
+因此「符號外推不可能」**不是天生鐵律,是表示選擇的結果**。若 digit 表示為可組合單位(計數式),則外推可行。
+
+### 3.2 兩引擎 digit 表示實證(GARDEN / ED3N)
+
+| 引擎 | 量測方法 | 結果 | 解讀 |
+|-----|---------|------|------|
+| GARDEN | 載入 TF-IDF 相容模式,量 m0..m9 向量 cosine 相似矩陣 | **全正交**: off-diagonal 全 0,`sim(4,5)=sim(0,9)=0` | 每個 digit 獨立孤立符號,無量值結構 → 符號查表 |
+| ED3N | `_stage_math` 建 m1..m10,`sync_from_dictionary` 後檢查 relations | **m1..m10 relations 全空** | 孤立網路節點,無 inter-digit 權重 → 符號查表 |
+
+### 3.3 佔位符延遲綁定研究(placeholder_bind.py)
+
+**方案**: 字典加入 `m_gen` 泛化佔位槽,未見符號路由過去;佔位槽只提供「確定性學到的量值」(計數結構);網路在計數結構上外推取得暫無對應符號的結果;之後取得真實字形再綁定。
+
+**對照實驗**(值回歸任務,訓 0-5,測未見量值 ★=6):
+
+| 佔位槽表示 | ★(=6) 預測 | 結果 |
+|-----------|-----------|------|
+| **計數槽** `v(d)=d·u`(單位向量重複) | 5.65 | **✓ 外推成功**(線性結構自然延伸) |
+| **孤立槽**(正交向量) | 2.99 | ✗ 只能指到訓練範圍內的值(綁定後也用不了) |
+
+**關鍵前提**: 計數表示必須是「單位向量重複」`d·u`,不是「正字計數」prefix-ones——後者因第 6 個位置從未啟用,外推同樣失敗。
+
+**結論**: 佔位符的價值在「**可組合單位的槽**」(計數),不在孤立符號槽。它提供的是**機制**(讓未命名的量值先能被計算、後綁字形),不是憑空生造字形的能力——量值外推仍由計數結構承擔,字形綁定是監督步驟。這與 §3.1 一致:可延伸的是量值,名字靠綁定。
 
 ## 4. ED3N/GARDEN 修復與對齊標記
 
@@ -81,7 +116,7 @@ train=1.000, test=1.000 (含借位 + 負數)
 | # | 位置 | 問題 | 狀態 |
 |---|------|------|------|
 | A3 | ED3N `_build_math_presets` + `config/math_presets.json` | ASCII 運算子 `+ - * / =` encode 後丟失 | **✅ 已修** — m11..m15 en 加 ASCII(`"plus +"` 等);`3+4`→`['m4','m5','m11']`;與 GARDEN `op1..op5` 對齊;ED3N 86 測試全通過 |
-| A8 | 表示層需「位置」概念 | 實驗證明逐位處理是學會多位元算術的關鍵 | **建議研究**: ED3N/GARDEN 加入位置索引(與 A3 同屬表示層對齊) |
+| A8 | 表示層需「位置 + 計數式單位」概念 | 實驗證明逐位處理是學會多位元算術關鍵;計數表示(§3.1 B)可外推 digit 值;佔位符槽須為可組合單位(§3.3) | **建議研究**: ED3N/GARDEN 加入位置索引 + 可組合計數式 digit 單位 + `m_gen` 佔位槽(與 A3 同屬表示層對齊);§3.2 顯示目前 digit 為孤立符號,此為主要改良方向 |
 
 ### 降級項(評估後不修改)
 
@@ -96,17 +131,18 @@ train=1.000, test=1.000 (含借位 + 負數)
 | # | 邊界 | 證據 | 處理 |
 |---|------|------|------|
 | B1 | 純量回歸無法泛化多位元算術 | diag_add(tens 位 50%) | 學習機制輸出須採逐位符號分類 |
-| B2 | **符號外推不可能** | v9: 訓 0-5 digit 測 6-9 → 12.5% | 不得聲稱能推導未見過的數字符號 |
+| B2 | **符號表示下無法外推 digit 值(表示層選擇,非硬上限)** | counting.py A: 訓 0-5 測 6-9 全錯;B: 計數表示全對;GARDEN m0..m9 全正交、ED3N m1..m10 relations 全空 | 符號(正交/孤立)表徵學不出 magnitude;計數/組合表徵則可外推。兩引擎用符號表徵 → 目前無法,但可透過表示層對齊(A8 計數式/位置表示)改變,不得斷言天生不可能 |
 | B3 | 乘法需組合性(非直接函數) | v7: 逐位分類 `*`train 14% | 需可重用的組合模組,B4 |
 | B4 | 單 digit 模組需全域符號訓練才可組合 | v8 vs v9 | 組合泛化成立;符號外推不成立;兩者須明確區分 |
+| B6 | SNN 加法為記憶(map),非演算法理解;外推=edge-case 全錯 | capability_generalize E1: 只學 carry0 → carry1 盲測 7% | 每個符號元件(含 carry 進位)須顯式納入訓練(carry0+1),無「自動學會進位規則」;構成「確定性引擎補組合、SNN補符號映射」的分工依據 |
 | B5 | `//` 的「成功」為容差帶假象 | 早期 | 除法組合性需整除判定,列為後續研究,不得以準確率為證據 |
 
 ## 5. 對齊目標規格(ED3N vs GARDEN「僅體量與精度不同」)
 
 - **確定性算術真相**: 兩引擎 `route_math` 皆委派 `evaluate_math` ✅ 已一致
 - **ASCII 運算子進表示**: ED3N m11..m15 現含 ASCII,與 GARDEN op1..op5 一致 ✅(本批修復)
-- **輸出表示(關鍵)**: 逐位符號分類 + carry 通道(實驗證實的唯一可行方式)——列為 A8 建議,是兩引擎表示層對齊方向
-- **能力邊界聲明一致**: 符號外推不可能(B2)、乘法需組合(B3),兩引擎統一
+- **輸出表示(關鍵)**: 逐位符號分類 + carry 通道(實驗證實的可行方式)**已在 `capability_math3` 證實**:獨立 carry_in 0/1 真值表 → digit 母版 100%、多位加法 10/10 ✓;計數式單位表示(§3.1 B)可進一步達成 digit 值外推——列為 A8 建議,是兩引擎表示層對齊方向
+- **能力邊界聲明一致**: 符號表示下無外推 digit 值(B2)、乘法需組合(B3),兩引擎統一
 - **僅差**: 體量(字典/網路規模)、精度(量化/容差)
 - **m-key/op-key 內部命名差異**: 因持久化相容維持現狀
 
@@ -117,5 +153,27 @@ train=1.000, test=1.000 (含借位 + 負數)
 - `mul_compose.py` — 乘法組合 0-99 100% ✓
 - `mul_strong.py` — 符號外推測試(證偽 B2)✓
 - `mul_final.py` — 組合公平 held-out 100% ✓
+- `counting.py` — 符號 vs 計數表示對照(§3.1:B2 由「鐵律」改為「表示層選擇」)✓
+- `placeholder_bind.py` — 佔位符綁定:計數槽可延伸未見量值、孤立槽不能(§3.3)✓
+- `capability_math3.py` — digit 加法母版(carry0+1 獨立真值表):多位加法 10/10 ✓(carry 鏈 bug 修正過程見 `capability_math2.py`)
+- `capability_generalize.py` — 泛化邊界:E1 只學 carry0→carry1 盲測 7%;E2 只學 digit0-7→digit8-9 盲測 0%;E3 完整母版→隨機 0-1999 加法 30/30 ✓
 - `seq_arith.py` / `digitslot_fair.py` / `diag_add.py` — 中間迭代
 - `arith5.py` / `mul_test.py` / `mul_cap.py` — v1 負面結論腳本(已被推翻,僅存歷史)
+
+## 7. A+B 落地(專業化為正式碼)
+
+本研發結論(A 表示層對齊 + B 訓練流程接入 + 對話學習 + 自主閉環)已從 `temp/` 實作進 `apps/backend/src`:
+
+- **`apps/backend/src/ai/arithmetic/`**(新套件)— 自主加法 digit-cell 學習迴圈:
+  - `DigitRepresentation` — 可切換 `onehot`(預設,研究 §5 閉合真值表可靠收斂)與 `counting`(僅供外推實驗 opt-in)。
+  - `CellSample`(hashable)、`LoopSnapshot`(resume)資料類別。
+  - `ArithmeticLearner` — `run()` 自主閉環:數據不足自動生成 digit/carry 真值表;學會自動結束(`learned-optimal`/`learned-threshold`)‧無法收斂自動結束(`unconvergeable-stall`/`max-epochs-reached`)‧`save()/load()` 可續訓。
+  - 學習核心 `_fit_mlp` 重用研究證實的 **L-BFGS-B tanh-MLP**(`capability_math3.py`),1s 收斂 100%,非 Adam/線性 readout。
+  - `predict_addition` 逐欄組合 digit-cell,carry 為輸入維度(§B6,無未見 carry 外推);carry 鏈加 `nd+4` 上限保護未收斂網路。
+  - `learn_from_dialogue` — 從對話抽取 `x + y` 算式(確定性引擎為標籤來源→正確逐欄 cell),`auto_run=False` 佇列、週期性全量 fit。
+- **`apps/backend/src/ai/ed3n/continuous_learning.py`** — `ContinuousLearningPipeline` 新增 `arithmetic_learner` hook,`process_interaction` 於 `interaction % train_interval == 0` 觸發全量 re-fit。
+- **`scripts/train_pipeline.py`** — B 類接入:新增 `_step5b_train_arithmetic`,`main()` 加 5b step 並 `save_state(5.5)`。
+- **`apps/backend/configs/system/ed3n.default.yaml`** — `ed3n.train.arithmetic.*` 配置(representation/dim/min_acc/max_epochs/stall_epochs)。
+- **`tests/unit/test_arithmetic_learner.py`** — 15 tests:收斂 100%‧多位加法‧隨機 200 例‧save/load 續訓‧dialogue/CLP 整合‧真值表與表示模式‧終止保證。
+
+分工複述:數值真相永遠來自確定性引擎(`services.math_verifier.evaluate_math`,永不參與學習);SNN/digit-cell 只學習符號映射與 digit 組合。

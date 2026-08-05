@@ -53,6 +53,7 @@ from ai.ed3n.training_types import (
     make_synthetic_seq_batch,
 )
 from ai.garden.garden_engine import GARDENEngine, is_deterministic_match
+from ai.arithmetic.arithmetic_learner import ArithmeticLearner
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DATA_DIR = os.path.join(ROOT, "apps/backend/data/raw_datasets")
@@ -958,6 +959,61 @@ def _step5_train_garden(coordinator, batches, resume_state=None, save_state=None
     return garden_engine
 
 
+def _step5b_train_arithmetic(coordinator, resume_state=None, save_state=None):
+    """Step 5b (A+B research landing): autonomous arithmetic learner.
+
+    The research verdict (ARITHMETIC_LEARNING_VERDICT.md §5, §B6) shows the
+    digit cell ``(digit_a, digit_b, carry_in) -> (digit_sum, carry_out)`` is
+    best represented with per-symbol (one-hot) digit classification plus an
+    explicit carry channel, learned from deterministic-engine truth. This step
+    runs the :class:`ArithmeticLearner` which:
+
+    * self-generates its full digit/carry truth table when data is sparse
+      (`insufficient data -> auto-generate`);
+    * stops automatically when learned (100% cell accuracy / loss tolerance)
+      or when unconvergeable (no improvement over a stall window);
+    * writes a checkpoint to ``data/checkpoints/arithmetic_learner.npz`` for
+      resumable continuation.
+
+    ``ArithmeticLearner`` is dependency-light (numpy + scipy LBFGS, matching
+    the research reference ``capability_math3.py``) and does not alter either
+    engine's runtime path — numeric truth remains delegated to the
+    deterministic engine at inference.
+    """
+    print("\n[5b/8] Training arithmetic digit cell (autonomous loop)...")
+    resume_state = resume_state or {}
+    save_state = save_state or (lambda step, data=None: None)
+    ckpt = os.path.join(CKPT_DIR, "arithmetic_learner.npz")
+    learner = ArithmeticLearner(
+        representation=limit_value("ed3n.train.arithmetic.representation", "onehot"),
+        dim=int(limit_value("ed3n.train.arithmetic.dim", 64)),
+    )
+    if os.path.exists(ckpt):
+        try:
+            learner.load(ckpt)
+            print(f"  Resumed arithmetic learner from {ckpt} (epoch={learner.snapshot.epoch})")
+        except Exception as e:
+            print(f"  Warning: could not resume arithmetic checkpoint: {e}")
+    snap = learner.run(
+        min_cell_accuracy=float(limit_value("ed3n.train.arithmetic.min_acc", 1.0)),
+        max_epochs=int(limit_value("ed3n.train.arithmetic.max_epochs", 200)),
+        stall_epochs=int(limit_value("ed3n.train.arithmetic.stall_epochs", 25)),
+    )
+    learner.save(ckpt)
+    print(f"  Arithmetic cell: stop={snap.stopped_reason} "
+          f"accuracy={snap.cell_accuracy:.4f} best={snap.best_accuracy:.4f}")
+    # Quick verification on representative multi-digit additions.
+    ok = sum(
+        1 for a, b in [(3, 7), (29, 38), (999, 1), (56, 44), (123, 987)]
+        if learner.predict_addition(a, b) == a + b
+    )
+    print(f"  Multi-digit spot-check: {ok}/5 correct")
+    if save_state:
+        save_state(5.5, {"arithmetic_stop": snap.stopped_reason,
+                         "arithmetic_acc": snap.cell_accuracy})
+    return learner
+
+
 def _step6_sync_knowledge(ed3n_engine, garden_engine, model_bus, coordinator, all_samples, batches, examples):
     # Step 6: Sync knowledge — copy high-confidence ED3N patterns to GARDEN
     # -----------------------------------------------------------------------
@@ -1186,6 +1242,16 @@ def main() -> None:
         garden_engine = _step5_train_garden(coordinator, batches, resume_state, save_state)
         save_state(5, {"garden_samples": len(batches.get("garden", []))})
         coordinator.save(COORD_STATE)
+
+    # -----------------------------------------------------------------------
+    # Step 5b: Autonomous arithmetic digit-cell learning (research A+B landing)
+    # -----------------------------------------------------------------------
+    if 5.5 in completed_steps:
+        print("\n[5b/8] Training arithmetic digit cell... (SKIPPED - already completed)")
+        arithmetic_learner = None
+    else:
+        arithmetic_learner = _step5b_train_arithmetic(coordinator, resume_state, save_state)
+        save_state(5.5)
 
     # -----------------------------------------------------------------------
     # Steps 6-8: Sync knowledge — Save checkpoints — Evaluation

@@ -35,3 +35,14 @@ ed3n:
     templates_as_presets: true
     neuro_blender_fallback: true
     auto_sync_dictionary: true
+
+  # Arithmetic digit-cell learner (research A+B landing).
+  # Autonomous loop: self-generates digit/carry truth table when sparse,
+  # stops when learned/unconvergeable, checkpoint-resumable.
+  train:
+    arithmetic:
+      representation: "onehot"   # onehot | counting (§5 / §3.1)
+      dim: 64
+      min_acc: 1.0
+      max_epochs: 200
+      stall_epochs: 25
