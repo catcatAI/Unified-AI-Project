@@ -1294,6 +1294,23 @@ def do_inventory(character):
 # EQUIPMENT
 # ═══════════════════════════════════════════════════════════════════════════
 
+def _check_race_requirement(character, idf, iname):
+    """專用裝備（required_race）硬性檢查：mechanic_race 或文本種族含該詞才符合。
+
+    軸譜親和力是軟門檻（能否穿實體裝備），required_race 是硬限制
+    （艦裝＝艦娘專用——龍娘/獸娘即使物質親和力高也不能穿）。
+    回傳 (ok, 不符訊息)；無限制時 (True, "")。
+    """
+    req = idf.get("required_race", "")
+    if not req:
+        return True, ""
+    m_race = character.get("mechanic_race") or character.get("race", "人類")
+    t_race = str(character.get("race", ""))
+    if req != m_race and req not in t_race and t_race not in req:
+        return False, "%s 是 %s 專用裝備! 你的角色是 %s。" % (iname, req, t_race or m_race)
+    return True, ""
+
+
 def do_equipment_menu(character, equipment):
     print("\n"+C.WHITE+C.BOLD+"  裝備管理"+C.RESET)
     print("  "+C.CYAN+"1. 查看"+C.RESET+"  "+C.CYAN+"2. 裝備"+C.RESET+"  "+C.CYAN+"3. 卸下"+C.RESET+"  "+C.GRAY+"0. 返回"+C.RESET)
@@ -1353,17 +1370,21 @@ def do_equipment_menu(character, equipment):
             if not _can:
                 print(C.RED+"  ⚠ 軸譜交互不符: %s（%s）" % (iname, _reason)+C.RESET)
                 return
+            # 專用裝備（required_race）是硬性限制：有軸譜角色也須種族相符——
+            # 軸譜親和力是軟門檻（能穿實體裝備），專用限制是硬限制（艦裝＝艦娘專用，
+            # 龍娘/獸娘即使物質親和力高也不能穿）。
+            _ok_r, _msg_r = _check_race_requirement(character, idf, iname)
+            if not _ok_r:
+                print(C.RED+"  ⚠ "+_msg_r+C.RESET)
+                return
             if _depth < 0.3 and idf.get("required_race"):
                 print(C.DIM+"  （%s 為 %s 專用裝備，交互深度偏低 %.2f）" % (iname, dimension_label(_dim), _depth)+C.RESET)
         else:
             # 無軸譜角色：以 required_race（機制種族字串）檢查
-            req_race = idf.get("required_race", "")
-            if req_race:
-                char_race = character.get("mechanic_race") or character.get("race", "人類")
-                _t_race = str(character.get("race", ""))
-                if req_race != char_race and req_race not in _t_race and _t_race not in req_race:
-                    print(C.RED+"  ⚠ %s 是 %s 專用裝備! 你的角色是 %s。" % (iname, req_race, _t_race or char_race)+C.RESET)
-                    return
+            _ok_r, _msg_r = _check_race_requirement(character, idf, iname)
+            if not _ok_r:
+                print(C.RED+"  ⚠ "+_msg_r+C.RESET)
+                return
             hh = idf.get("heal_hp",0)
             hs = idf.get("heal_sp",0)
             if hh>0:
@@ -1696,6 +1717,18 @@ def _shop_at_location(character, loc):
                 character["gold"]=character.get("gold",0)-iprice
                 character["inventory"].append(iname)
                 print(C.GREEN+"  買了 %s!"%iname+C.RESET)
+                # 軸譜提示：實體裝備若與角色親和力不符，買了也可能穿不上（購買≠穿戴）
+                _idf = get_item_def(iname)
+                _aff_s = character.get("axis", {}).get("affinity")
+                if _idf.get("type") != "consumable" and _aff_s:
+                    from axis_system import evaluate_equipment
+                    _can_s, _depth_s, _dim_s, _reason_s = evaluate_equipment(_aff_s, _idf)
+                    if not _can_s:
+                        print(C.DIM+"  ⚠ 此%s與你的軸譜親和力不符（%s），可能無法穿戴。"%(iname, _reason_s)+C.RESET)
+                # 專用限制（required_race）硬檢查：買了穿不上也要先警告
+                _ok_r, _msg_r = _check_race_requirement(character, _idf, iname)
+                if not _ok_r:
+                    print(C.RED+"  ⚠ %s（買了也無法穿戴）"%_msg_r+C.RESET)
                 return True
             else:
                 print(C.RED+"  金幣不足!"+C.RESET)
@@ -1925,10 +1958,27 @@ def do_interact_npc(character):
             if character["sp"]>=10:
                 character["sp"]-=10
                 eg = 10+rep//15
+                # 軸譜契合：NPC 主要維度 vs 玩家親和力 → 交流深度影響經驗與好感
+                # （同屬靈性的精靈 NPC 與靈體角色交流更有共鳴；物質維度玩家與靈體 NPC 話不投機）
+                from axis_system import npc_affinity_dimension, interaction_depth
+                _npc_race = getattr(sim_systems, 'NPC_METADATA', {}).get(npc_name, {}).get('race', '')
+                _npc_dim = npc_affinity_dimension(_npc_race)
+                _depth = 1.0
+                _aff_n = character.get("axis", {}).get("affinity")
+                if _npc_dim and _aff_n:
+                    _depth = interaction_depth(_aff_n, _npc_dim)
+                    # 有軸譜維度的 NPC 才套乘數：匹配維度更深→經驗更多；
+                    # 空維度（如純人類）維持中性 1.0×，不因預設值拿到最高加成。
+                    eg = int(eg * (0.8 + 0.6 * _depth))
+                _rel_gain = 3 if (_npc_dim and _depth < 0.3) else 5
                 print(C.CYAN+"  交流獲得%d經驗。"%eg+C.RESET+C.GRAY+" (SP-10)"+C.RESET)
+                if _npc_dim and _depth < 0.3:
+                    print(C.DIM+"  （你與%s在%s維度幾乎沒有共鳴，交流效果有限）"%(npc_name, _npc_dim)+C.RESET)
+                elif _npc_dim and _depth >= 0.7:
+                    print(C.MAGENTA+"  ✦ 你與%s在%s維度上共鳴強烈，交流特別深入！"%(npc_name, _npc_dim)+C.RESET)
                 for m in gain_exp_with_skills(character,eg,"social",3):
                     print("  "+C.CYAN+m+C.RESET)
-                add_relationship(character,npc_name,5)
+                add_relationship(character,npc_name,_rel_gain)
                 lvl_up = gain_familiarity(character, npc_name, "chat")
                 if lvl_up:
                     print(C.MAGENTA+"  ★ "+get_level_up_message(npc_name, lvl_up)+C.RESET)
@@ -1946,9 +1996,24 @@ def do_interact_npc(character):
             if gifts:
                 g = _random.choice(gifts)
                 character["inventory"].remove(g)
+                # 送禮軸譜契合：同維度（靈性對靈性）好感加倍；話不投機則減半
+                from axis_system import npc_affinity_dimension, interaction_depth
+                _g_race = getattr(sim_systems, 'NPC_METADATA', {}).get(npc_name, {}).get('race', '')
+                _g_dim = npc_affinity_dimension(_g_race)
+                _g_aff = character.get("axis", {}).get("affinity")
+                _g_depth = 1.0
                 rep_gain = 8 + rep//20
+                if _g_dim and _g_aff:
+                    _g_depth = interaction_depth(_g_aff, _g_dim)
+                    # 有軸譜維度的 NPC 才套乘數（匹配維度好感加倍；話不投機減半），
+                    # 空維度（純人類）維持中性。
+                    rep_gain = int(rep_gain * (0.7 + 0.6 * _g_depth))
                 add_relationship(character,npc_name,rep_gain)
                 modify_reputation(character,2)
+                if _g_dim and _g_depth >= 0.7:
+                    print(C.MAGENTA+"  ✦ %s感受到你的心意與%s維度的共鳴，特別珍惜這份禮物！"%(npc_name, _g_dim)+C.RESET)
+                elif _g_dim and _g_depth < 0.3:
+                    print(C.DIM+"  （%s對%s維度的禮物興趣缺缺……）"%(npc_name, _g_dim)+C.RESET)
                 gift_responses = {
                     "敵意": ["「...不要。」","「拿走。」"],
                     "冷淡": ["「...謝謝。」","「放這吧。」"],
