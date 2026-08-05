@@ -445,3 +445,54 @@ class TestRelationshipQuestGates:
         q = self._q("MQ-02")
         reqs = (q.get("conditions", {}) or {}).get("required_relationships", {}) or {}
         assert reqs == {}
+
+
+# =============================================================================
+# 9. 載具軸譜（批次 36）
+# =============================================================================
+
+class TestVehicleAxis:
+    """載具依 fuel 類型判定誰能騎：魔法→能量/靈性、龍→龍族、機動→機械。"""
+
+    def _v(self, fuel):
+        return {"name": "test", "fuel": fuel}
+
+    def _char(self, energy=0.17, spirit=0.17, mech=0.12, race="貓娘", mrace="獸娘"):
+        return {
+            "axis": {"affinity": {"能量": energy, "靈性": spirit, "機械": mech}},
+            "race": race, "mechanic_race": mrace,
+        }
+
+    def test_vehicle_axis_mapping(self):
+        assert ax.vehicle_axis(self._v("magic"))[0] == ("能量", "靈性")
+        assert ax.vehicle_axis(self._v("bond"))[0] == ("龍族",)
+        assert ax.vehicle_axis(self._v("fire"))[0] == ("能量",)
+        assert ax.vehicle_axis(self._v("gas"))[0] == ("機械",)
+        assert ax.vehicle_axis(self._v("coal"))[0] == ("機械",)
+        for fuel in ("stamina", "feed", "human", "wind", "sail", "dog", 100):
+            assert ax.vehicle_axis(self._v(fuel))[0] == ()
+
+    def test_magic_broom_blocks_physical(self):
+        cat = self._char()
+        ok, reason = ax.can_use_vehicle(cat, self._v("magic"))
+        assert not ok and "能量" in reason
+
+    def test_magic_broom_allows_mage(self):
+        mage = self._char(energy=0.72, spirit=0.75, race="術式適應體", mrace="術士")
+        assert ax.can_use_vehicle(mage, self._v("magic"))[0]
+
+    def test_dragon_mount_requires_dragon(self):
+        dragon = self._char(energy=0.5, race="天空龍娘", mrace="龍族")
+        cat = self._char()
+        assert ax.can_use_vehicle(dragon, self._v("bond"))[0]
+        assert not ax.can_use_vehicle(cat, self._v("bond"))[0]
+
+    def test_motor_vehicle_requires_mechanical(self):
+        eng = self._char(mech=0.85, race="艦娘", mrace="艦娘")
+        cat = self._char()
+        assert ax.can_use_vehicle(eng, self._v("gas"))[0]
+        assert not ax.can_use_vehicle(cat, self._v("gas"))[0]
+
+    def test_common_vehicle_unrestricted(self):
+        for fuel in ("stamina", "feed"):
+            assert ax.can_use_vehicle(self._char(), self._v(fuel))[0]

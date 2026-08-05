@@ -710,3 +710,54 @@ def axis_display(lineage, code, axes):
 def affinity_display(affinity: dict) -> str:
     parts = " ".join(f"{dim}:{affinity.get(dim, 0):.2f}" for dim in DIMENSIONS)
     return parts
+
+
+# =============================================================================
+# 12. 載具軸譜（批次 36）——依 fuel 類型判定誰能騎：
+#   magic（魔法掃帚/魔法飛毯/飛空艇）→ 能量或靈性 0.4（術士/魔女才能駕馭）
+#   bond（龍騎乘）→ 龍族（與龍的羈絆）
+#   fire（熱氣球）→ 能量 0.3（火元素操作）
+#   gas/coal（機車/吉普車/蒸氣機車）→ 機械 0.3（會開機械載具）
+#   其餘（腳踏車/馬/馬車/小舟/帆船/雪橇）→ 無限制
+# =============================================================================
+
+
+def vehicle_axis(vehicle_def):
+    """依載具定義回傳所需軸譜 (dims, threshold, note)。無限制回傳 ((), 0.0, "")。"""
+    if not vehicle_def:
+        return (), 0.0, ""
+    fuel = str(vehicle_def.get("fuel", "")).lower()
+    if fuel == "magic":
+        return ("能量", "靈性"), 0.4, "魔法載具需要能量或靈性維度駕馭（術士/魔女/靈體）"
+    if fuel == "bond":
+        return ("龍族",), 0.0, "龍騎乘需要與龍的羈絆（龍族）"
+    if fuel == "fire":
+        return ("能量",), 0.3, "熱氣球需要能量維度操作火元素"
+    if fuel in ("gas", "coal"):
+        return ("機械",), 0.3, "機動載具需要機械維度（會開）"
+    return (), 0.0, ""
+
+
+def can_use_vehicle(character, vehicle_def):
+    """判定角色能否騎乘此載具。回傳 (ok, reason)。"""
+    dims, thr, note = vehicle_axis(vehicle_def)
+    if not dims:
+        return True, ""
+    aff = (character.get("axis") or {}).get("affinity") or {}
+    # bond 類：以機制種族判定。mechanic_race 有值時以它為準（避免
+    # 名稱含「龍」的非龍族角色如艦娘「飛龍」誤放行）；mechanic_race
+    # 未知才回退文本種族子字串。
+    if dims == ("龍族",):
+        _mr = character.get("mechanic_race") or ""
+        _txt = str(character.get("race", ""))
+        if _mr == "龍族":
+            return True, ""
+        if not _mr and "龍" in _txt:
+            return True, ""
+        return False, "需要與龍的羈絆（龍族）才能騎乘"
+    # 一般維度：任一達標即可（magic 類能量或靈性）
+    for dim in dims:
+        if aff.get(dim, 0.0) >= thr:
+            return True, ""
+    missing = "、".join("%s(你 %.2f/需 %.1f)" % (d, aff.get(d, 0.0), thr) for d in dims)
+    return False, "%s——%s。" % (note, missing)

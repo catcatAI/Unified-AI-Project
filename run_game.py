@@ -1590,6 +1590,15 @@ def do_scene_search(character, equipment):
             # Check if player owns it or can use it
             if vt in VEHICLES:
                 print(C.CYAN+"  🚢 %s - %s" % (vt, VEHICLES[vt]["desc"])+C.RESET)
+                # 軸譜檢查：魔法掃帚/飛空艇/龍騎乘/機動載具需要對應維度才能駕馭
+                from axis_system import can_use_vehicle
+                _vdef = VEHICLES.get(vt, {})
+                _vok, _vwhy = can_use_vehicle(character, _vdef)
+                if not _vok:
+                    print(C.RED+"  ⚠ %s"%_vwhy+C.RESET)
+                    print(C.DIM+"  你無法駕馭這台%s。"%vt+C.RESET)
+                    advance_time(character)
+                    return
                 print(C.GREEN+"  1. 騎乘"+C.RESET)
                 print(C.GRAY+"  0. 取消"+C.RESET)
                 vc = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
@@ -2373,8 +2382,14 @@ def do_vehicle_menu(character):
                     idx = int(vc)-1
                     if 0<=idx<len(owned_list):
                         vn = owned_list[idx]
-                        mount_vehicle(character, vn, owned)
-                        print(C.GREEN+"  騎上 %s!"%vn+C.RESET)
+                        # 軸譜檢查：魔法/龍/機動載具需要對應維度（與取得時一致）
+                        from axis_system import can_use_vehicle
+                        _ok_v, _why_v = can_use_vehicle(character, VEHICLES.get(vn, {}))
+                        if _ok_v:
+                            mount_vehicle(character, vn, owned)
+                            print(C.GREEN+"  騎上 %s!"%vn+C.RESET)
+                        else:
+                            print(C.RED+"  ⚠ %s"%_why_v+C.RESET)
             else:
                 print(C.GRAY+"  沒有可用載具。"+C.RESET)
     # Ability handling (ch is a number for ability activation)
