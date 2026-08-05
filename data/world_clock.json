@@ -1,312 +1,504 @@
 {
-  "version": "1.0",
-  "epoch": "靈子曆 (AL — After Lumina)",
-  "current_year": 1024,
-  "current_month": 3,
-  "current_day": 15,
-  "days_per_month": 30,
-  "months_per_year": 12,
-  "eras": [
-    {
-      "id": "mythic",
-      "name": "神話紀元",
-      "name_en": "Mythic Era",
-      "start_year": -9999,
-      "end_year": 0,
-      "description": "概念初生，神靈行走於大地。世界尚未分化，多元宇宙的迴廊剛剛形成。傳說中的神靈種、概念精靈、與初生世界意志在此時代活躍。"
+  "version": "2.0.0",
+  "_comment": "多世界線時間模型。每個世界線有自己的時鐘與曆法；整體時鐘(master_clock)只存在於程式碼中(文本外)，用於跨線換算，不對玩家顯示。「MULTI(多元·各故事線)」以 internal_current_year(內部相對年) 標記各故事線自己的時間，不是統一曆法。",
+  "master_clock": {
+    "name": "整體時鐘（文本外）",
+    "epoch": "隱藏基準時軸 (Hidden Master Timeline)",
+    "current_year": 1965,
+    "current_month": 3,
+    "current_day": 15,
+    "days_per_month": 30,
+    "months_per_year": 12,
+    "flow_basis": "以 W01-A 冷戰線為基準流速 (1.0)，其他世界線依文本流速比換算。"
+  },
+  "active_world_line": "W01-A",
+  "world_lines": {
+    "W01-A": {
+      "id": "W01-A",
+      "name": "W01 靈子塵埃 · 冷戰線",
+      "description": "19XX 冷戰時期。靈子已被人類發現並武器化。",
+      "calendar": "公元曆",
+      "time_anchor": "19XX（冷戰時期）",
+      "years_per_master_year": 1.0,
+      "current_year": 1965,
+      "current_month": 3,
+      "current_day": 15,
+      "days_per_month": 30,
+      "months_per_year": 12,
+      "eras": [
+        {
+          "name": "二戰末期",
+          "name_en": "Late WWII Era",
+          "start_year": 1939,
+          "end_year": 1946
+        },
+        {
+          "name": "冷戰時期",
+          "name_en": "Cold War Era",
+          "start_year": 1947,
+          "end_year": 1991
+        }
+      ],
+      "events": [
+        {
+          "id": "EVT-004",
+          "year": 1948,
+          "name": "靈子發現",
+          "type": "discovery",
+          "era": "w01a_coldwar",
+          "description": "靈子首次被人類系統化發現，開啟靈子研究時代。",
+          "favorable_outcome": "艾莉西亞的研究筆記完整保留，靈子技術的基礎理論得以快速傳播。煉金術與科學的結合開啟了前所未有的技術繁榮。",
+          "unfavorable_outcome": "靈子發現的關鍵部分——靈子的意識敏感性——被刻意隱瞞。這導致後續的靈子工業化忽視了安全問題，最終引發了概念污染危機。"
+        },
+        {
+          "id": "EVT-005",
+          "year": 1952,
+          "name": "第一次靈子革命",
+          "type": "technological",
+          "era": "w01a_coldwar",
+          "description": "靈子技術第一次大規模應用於工業與軍事。",
+          "favorable_outcome": "靈子能源的普及極大改善了生活品質，醫療、交通、通訊等領域經歷了革命性進步。平民也能享受到靈子技術帶來的好處。",
+          "unfavorable_outcome": "靈子革命加劇了社會不平等。掌握靈子技術的精英階層壟斷了資源，底層民眾被迫成為靈子能源的消耗品。技術進步的代價由弱者承擔。"
+        },
+        {
+          "id": "EVT-006",
+          "year": 1955,
+          "name": "迴廊研究先驅",
+          "type": "discovery",
+          "era": "w01a_coldwar",
+          "description": "研究者首次觀測到迴廊的存在，展開跨世界線研究。",
+          "favorable_outcome": "迴廊研究的理論框架為後世學者提供了堅實的基礎。重要的安全協議和研究倫理在這個時期被建立起來。",
+          "unfavorable_outcome": "早期研究者過於急功近利，忽略了一些關鍵的警告信號。他們錯誤地認為迴廊是可控的，這種過度自信導致了日後的災難。"
+        },
+        {
+          "id": "EVT-007",
+          "year": 1958,
+          "name": "靈子衝突爆發",
+          "type": "war",
+          "era": "w01a_coldwar",
+          "description": "聖諭同盟與唯靈聯邦因靈子技術路線分歧爆發衝突。",
+          "favorable_outcome": "衝突促進了靈子軍事技術的快速發展，同時也催生了戰時外交和衝突調解機制。戰爭雖然慘烈，但塑造了後來的國際秩序。",
+          "unfavorable_outcome": "長期的戰爭消耗了大量靈子資源，導致多個地區的概念環境遭到不可逆轉的破壞。無數知識和技術在戰火中遺失。戰爭的創傷至今仍在。"
+        },
+        {
+          "id": "EVT-008",
+          "year": 1960,
+          "name": "緩衝商業聯合體成立",
+          "type": "political",
+          "era": "w01a_coldwar",
+          "description": "商業勢力成立中立組織，向雙方出售資源與技術。",
+          "favorable_outcome": "商業聯合體成為重要的中立調解力量，在戰火中保護了大量平民和知識遺產。其建立的商業網絡至今仍然是跨世界貿易的骨幹。",
+          "unfavorable_outcome": "商業聯合體表面上中立，實則利用戰爭牟取暴利。他們向雙方出售武器和情報，延長了戰爭的持續時間。中立的外衣下是赤裸裸的利益。"
+        },
+        {
+          "id": "EVT-009",
+          "year": 1963,
+          "name": "停戰協定",
+          "type": "political",
+          "era": "w01a_coldwar",
+          "description": "大規模戰爭暫歇，進入冷戰對峙期。",
+          "favorable_outcome": "停戰協定為世界帶來了長達三百年的和平時期。各國將注意力轉向內部發展，文化和科技迎來了黃金時代。",
+          "unfavorable_outcome": "停戰協定只是勉強凍結了衝突，並未解決根本矛盾。戰敗方的復仇情緒在暗處滋長，最終形成了像新世界集團這樣的激進組織。"
+        },
+        {
+          "id": "EVT-010",
+          "year": 1950,
+          "name": "聖十字校園創立",
+          "type": "cultural",
+          "era": "w01a_coldwar",
+          "description": "聖十字環形堡壘校園建立，成為冷戰規則下的人才培育機構。",
+          "favorable_outcome": "聖十字校園成為多元宇宙中最重要的知識聖地之一，培養了無數優秀的學者、研究者和守護者。其圖書館保存了最完整的迴廊研究資料。",
+          "unfavorable_outcome": "校園的建立吸引了過多注意力，使其成為各方勢力滲透和爭奪的目標。校園內部出現了嚴重的派系鬥爭，部分珍貴資料在內鬥中被銷毀。"
+        },
+        {
+          "id": "EVT-012",
+          "year": 1962,
+          "name": "迴廊理論標準化",
+          "type": "discovery",
+          "era": "w01a_coldwar",
+          "description": "迴廊研究的理論體系被標準化，成為可傳承的學科。",
+          "favorable_outcome": "晞咕萊雅的前輩們完成的標準化理論體系使得迴廊研究變得系統化和可傳承。圖書館的建立保護了大量珍貴知識免於流失。",
+          "unfavorable_outcome": "標準化過程中，部分非主流但可能重要的理論被刻意排除。知識的統一也意味著知識的控制，有些真相被鎖在了圖書館最深處的書架上。"
+        },
+        {
+          "id": "EVT-013",
+          "year": 1956,
+          "name": "新世界集團崛起",
+          "type": "political",
+          "era": "w01a_coldwar",
+          "description": "新世界集團開始浮上檯面，在暗處擴張勢力。",
+          "favorable_outcome": "新世界集團的活動引起了各國情報機構的警覺，促使各國加強了對靈子技術的監管和安全合作。其部分極端計劃因過早暴露而失敗。",
+          "unfavorable_outcome": "新世界集團成功在暗處站穩了腳跟，收集了大量靈子技術和禁忌知識。他們在各國政府中安插了棋子，擁有了足以撼動世界秩序的力量。"
+        },
+        {
+          "id": "EVT-017",
+          "year": 1964,
+          "name": "靈子工業化浪潮",
+          "type": "technological",
+          "era": "w01a_coldwar",
+          "description": "靈子技術全面工業化，義體產業與軍工複合體興起。",
+          "favorable_outcome": "靈子工業化在唯靈聯邦推動了經濟起飛，創造了大量就業機會。新技術也應用於環境修復，部分受污染地區得到了有效治理。",
+          "unfavorable_outcome": "靈子工業化以犧牲安全和環境為代價追求效率。工廠排放的靈子廢料污染了周邊地區，工人們在沒有足夠保護的情況下暴露於高濃度靈子環境中。"
+        }
+      ],
+      "calendar_name": "公元曆",
+      "epoch": "公元"
     },
-    {
-      "id": "lumina_dawn",
-      "name": "靈子黎明",
-      "name_en": "Lumina Dawn",
-      "start_year": 1,
-      "end_year": 200,
-      "description": "靈子（Lumina）被首次發現並定義。文明在靈子能量的啟發下快速發展，魔法與科技開始交織。各國從部落社會向文明國家過渡。"
+    "W01-B": {
+      "id": "W01-B",
+      "name": "W01 靈子塵埃 · 大正浪漫線",
+      "description": "1924-1955+。靈子未被發現，自然存在；大正至昭和初期的浪漫與鋼鐵殉葬。",
+      "calendar": "大正曆",
+      "time_anchor": "1924-1955+（大正線）",
+      "years_per_master_year": 1.0,
+      "current_year": 1928,
+      "current_month": 3,
+      "current_day": 15,
+      "days_per_month": 30,
+      "months_per_year": 12,
+      "eras": [
+        {
+          "name": "明治末期",
+          "name_en": "Late Meiji Era",
+          "start_year": 1900,
+          "end_year": 1911
+        },
+        {
+          "name": "大正時代",
+          "name_en": "Taisho Era",
+          "start_year": 1912,
+          "end_year": 1926
+        },
+        {
+          "name": "昭和時代",
+          "name_en": "Showa Era",
+          "start_year": 1926,
+          "end_year": 1989
+        }
+      ],
+      "events": [
+        {
+          "id": "EVT-016",
+          "year": 1926,
+          "name": "鏡湖異變",
+          "type": "disaster",
+          "era": "w01b_showa",
+          "description": "鏡湖深處的迴廊入口出現異常，概念實體開始在物質世界具現化。",
+          "favorable_outcome": "鏡湖異變的早期預警系統成功運作，聖十字校園及時疏散了師生，沒有人員傷亡。異變也暴露了鏡湖迴廊入口的位置，加速了探索進程。",
+          "unfavorable_outcome": "鏡湖異變導致大量概念實體在物質世界具現化，造成了廣泛的混亂和破壞。聖十字校園的師生中出現了多起概念污染案例。"
+        },
+        {
+          "id": "EVT-EP01",
+          "year": 1924,
+          "name": "防空砲靜子號列裝事件",
+          "type": "war",
+          "era": "w01b_taisho",
+          "description": "小倉靜子設計的防空砲「靜子號」完成列裝（EP-01）。"
+        }
+      ],
+      "calendar_name": "大正曆",
+      "epoch": "大正"
     },
-    {
-      "id": "era_of_strife",
-      "name": "爭霸紀元",
-      "name_en": "Era of Strife",
-      "start_year": 201,
-      "end_year": 500,
-      "description": "靈子技術引發大規模戰爭。聖諭同盟與唯靈聯邦的意識形態對立激化，多數現代國家（NAT系列）在此時期形成邊界與政治體系。"
+    "W01-C": {
+      "id": "W01-C",
+      "name": "W01 靈子塵埃 · 灰燼未來線",
+      "description": "未來分支。靈子失控，靈爆後殘留的灰燼世界（W04 前身）。",
+      "calendar": "灰燼未來曆",
+      "time_anchor": "未來分支（灰燼紀元前身）",
+      "years_per_master_year": 1.0,
+      "current_year": 2085,
+      "current_month": 3,
+      "current_day": 15,
+      "days_per_month": 30,
+      "months_per_year": 12,
+      "eras": [
+        {
+          "id": "w01c_ash",
+          "start_year": 2075,
+          "end_year": 2150,
+          "name": "灰燼年代",
+          "name_en": "Ash Age"
+        }
+      ],
+      "events": [
+        {
+          "id": "EVT-W01C-01",
+          "year": 2078,
+          "name": "靈爆",
+          "type": "disaster",
+          "era": "w01c_ash",
+          "description": "靈子能量失控爆發，文明遭到毀滅性打擊。"
+        }
+      ],
+      "calendar_name": "灰燼未來曆",
+      "epoch": "灰燼未來"
     },
-    {
-      "id": "era_of_balance",
-      "name": "平衡紀元",
-      "name_en": "Era of Balance",
-      "start_year": 501,
-      "end_year": 800,
-      "description": "相對和平的時期。聖十字校園、魔女學府等教育機構建立。迴廊研究正式成為學術領域。各國專注於內部發展與靈子技術的民用化。"
+    "W02": {
+      "id": "W02",
+      "name": "W02 琥珀紀元",
+      "description": "硬核中世紀。絕對無魔（零聚合），應用物理與交易網絡。",
+      "calendar": "琥珀紀元",
+      "time_anchor": "硬核中世紀",
+      "years_per_master_year": 1.0,
+      "current_year": 1100,
+      "current_month": 3,
+      "current_day": 15,
+      "days_per_month": 30,
+      "months_per_year": 12,
+      "eras": [
+        {
+          "id": "w02_amber",
+          "start_year": 1000,
+          "end_year": 1300,
+          "name": "琥珀紀元",
+          "name_en": "Amber Era"
+        }
+      ],
+      "events": [],
+      "calendar_name": "琥珀紀元",
+      "epoch": "琥珀紀元"
     },
-    {
-      "id": "pre_turmoil",
-      "name": "動盪前夜",
-      "name_en": "Pre-Turmoil Era",
-      "start_year": 801,
-      "end_year": 1000,
-      "description": "表面和平下暗流湧動。迴廊的異變頻率增加，失落技術被重新發現。新世界集團等秘密組織開始活躍，為未來的動盪埋下伏筆。"
+    "W03": {
+      "id": "W03",
+      "name": "W03 軌道居住站",
+      "description": "宇宙時代。極低靈子聚合，軌道居住站大學院三層區劃。",
+      "calendar": "星曆",
+      "time_anchor": "宇宙時代",
+      "years_per_master_year": 1.0,
+      "current_year": 2300,
+      "current_month": 3,
+      "current_day": 15,
+      "days_per_month": 30,
+      "months_per_year": 12,
+      "eras": [
+        {
+          "id": "w03_orbit",
+          "start_year": 2200,
+          "end_year": 2600,
+          "name": "軌道時代",
+          "name_en": "Orbital Era"
+        }
+      ],
+      "events": [],
+      "calendar_name": "星曆",
+      "epoch": "星曆"
     },
-    {
-      "id": "current",
-      "name": "當前紀元",
-      "name_en": "Current Era",
-      "start_year": 1001,
-      "end_year": 1200,
-      "description": "遊戲發生的時代。舊有秩序動搖，新勢力崛起。迴廊的活躍達到歷史高峰，概念干涉事件頻傳。英雄與反派的命運在此交織。"
+    "W04": {
+      "id": "W04",
+      "name": "W04 灰燼紀元",
+      "description": "後末日時代。不穩定靈子聚合，靈子飽和打擊後的廢墟世界。",
+      "calendar": "灰燼紀元",
+      "time_anchor": "後末日",
+      "years_per_master_year": 1.0,
+      "current_year": 100,
+      "current_month": 3,
+      "current_day": 15,
+      "days_per_month": 30,
+      "months_per_year": 12,
+      "eras": [
+        {
+          "id": "w04_ash",
+          "start_year": 1,
+          "end_year": 200,
+          "name": "灰燼紀元",
+          "name_en": "Ash Era"
+        }
+      ],
+      "events": [],
+      "calendar_name": "灰燼紀元",
+      "epoch": "灰燼紀元"
+    },
+    "SL-10": {
+      "id": "SL-10",
+      "name": "SL-10 魔女學府（界域內）",
+      "description": "界域內獨立時間流。學府曆第144期，對應W01約1925-1955年間的某個切片；與W01時間流速比約1:7。",
+      "calendar": "學府曆",
+      "time_anchor": "學府曆第144期（對應W01約1925-1955）",
+      "years_per_master_year": 7.0,
+      "current_year": 144,
+      "current_month": 3,
+      "current_day": 15,
+      "days_per_month": 30,
+      "months_per_year": 12,
+      "eras": [
+        {
+          "name": "學府曆創校期",
+          "name_en": "Academy Founding",
+          "start_year": 1,
+          "end_year": 100
+        },
+        {
+          "name": "學府曆近代",
+          "name_en": "Academy Modern",
+          "start_year": 101,
+          "end_year": 144
+        }
+      ],
+      "events": [
+        {
+          "id": "EVT-011",
+          "year": 1,
+          "name": "魔女學府成立",
+          "type": "cultural",
+          "era": "sl10_144",
+          "description": "魔女學府建立，M-值工程沙盒啟用。",
+          "favorable_outcome": "魔女學府在靈子與概念的高階研究上取得了突破性進展。其獨特的教育理念培養出了許多能夠與迴廊直接溝通的天才。",
+          "unfavorable_outcome": "魔女學府的封閉式研究和對秘密的執著導致其與主流學術界漸行漸遠。部分極端實驗引發了小規模的概念污染，被迫遷移到更深的山區。"
+        }
+      ],
+      "calendar_name": "學府曆",
+      "epoch": "學府"
+    },
+    "CORRIDOR": {
+      "id": "CORRIDOR",
+      "name": "迴廊（The Corridor）／多元",
+      "description": "概念構成的核心場域。時間錨點不固定，各故事線有獨立時間流；迴廊原生種不屬於任何世界線的歷史。",
+      "calendar": "概念時間流（不固定）",
+      "time_anchor": "不固定",
+      "years_per_master_year": 0.0,
+      "current_year": null,
+      "current_month": null,
+      "current_day": null,
+      "days_per_month": 30,
+      "months_per_year": 12,
+      "eras": [],
+      "events": [
+        {
+          "id": "EVT-001",
+          "year": null,
+          "name": "迴廊初生",
+          "type": "world_forming",
+          "era": null,
+          "description": "迴廊作為概念的匯聚之地誕生。",
+          "favorable_outcome": "迴廊的結構異常穩定，能量流動順暢，為後世的研究者提供了安全的實驗環境。多個世界線在早期就建立了穩定的連接通道。",
+          "unfavorable_outcome": "迴廊初生時就存在結構不穩定的缺陷，部分世界線的連接通道出現裂縫，導致能量洩漏和概念污染，為後來的災難埋下伏筆。"
+        },
+        {
+          "id": "EVT-002",
+          "year": null,
+          "name": "神靈種誕生",
+          "type": "world_forming",
+          "era": null,
+          "description": "概念能量凝聚出第一批神靈種。",
+          "favorable_outcome": "神靈種與物質世界的生物建立了和諧的共生關係，教導早期文明掌握靈子的基本運用。世界的規則因此而更加豐富多元。",
+          "unfavorable_outcome": "神靈種的誕生引發了概念領域的震盪，部分神靈種因無法適應物質世界而墮落，成為後來概念污染的核心來源之一。"
+        },
+        {
+          "id": "EVT-003",
+          "year": null,
+          "name": "原罪之殿與美德之殿成立",
+          "type": "world_forming",
+          "era": null,
+          "description": "負面與正面概念分別凝聚為原罪之殿與美德之殿。",
+          "favorable_outcome": "兩殿的制衡機制運作良好，確保了概念世界的穩定發展。正面與負面概念在平衡中共同推動了文明的進步。",
+          "unfavorable_outcome": "兩殿的分化導致概念世界的極化加劇，負面概念逐漸累積形成污染核。殿與殿之間的對立為日後的衝突埋下了根源。"
+        },
+        {
+          "id": "EVT-014",
+          "year": null,
+          "name": "概念污染事件",
+          "type": "disaster",
+          "era": null,
+          "description": "概念污染首次大規模發生，影響多條世界線。",
+          "favorable_outcome": "概念污染事件雖然造成了影響，但也讓人類對概念安全有了更深刻的認識。污染控制技術在這個時期取得了重大突破。",
+          "unfavorable_outcome": "概念污染迅速蔓延，影響了多個世界線的生態系統。受到污染的地區出現了扭曲生物和異常現象，部分區域被迫永久隔離。"
+        },
+        {
+          "id": "EVT-015",
+          "year": null,
+          "name": "千年轉折",
+          "type": "world_forming",
+          "era": null,
+          "description": "世界各地的異常概念波動開始出現。",
+          "favorable_outcome": "千年轉折的預言被正確解讀，各國得以提前做好準備。部分地區甚至利用概念波動開闢了新的靈子能源來源，迎來了短暫的繁榮。",
+          "unfavorable_outcome": "千年轉折的能量波動引發了連鎖反應，多個休眠中的概念污染核被激活。預言中的動盪時代比預期更加猛烈地降臨了。"
+        },
+        {
+          "id": "EVT-018",
+          "year": null,
+          "name": "迴廊共鳴事件",
+          "type": "disaster",
+          "era": null,
+          "description": "多個世界線交疊共鳴，迴廊入口在多處開啟。",
+          "favorable_outcome": "迴廊共鳴促進了多個世界線之間的文化和技術交流，許多長期以來的科學難題在跨世界合作下得到解決。和平發展的新時代由此開始。",
+          "unfavorable_outcome": "迴廊共鳴造成的世界線交疊導致了嚴重的身份混淆和現實認知障礙。許多人無法確定自己所屬的世界線，社會秩序一度崩潰。"
+        }
+      ]
+    },
+    "MULTI": {
+      "id": "MULTI",
+      "name": "多元 · 各故事線",
+      "description": "艦娘世界、秋狐神明世界、GSI-4 隔離區等各故事線的獨立時間流。不對應統一曆法，以故事內部相對年（internal_current_year）標記。",
+      "calendar": "各故事線（內部相對年）",
+      "time_anchor": "各故事線獨立",
+      "years_per_master_year": null,
+      "current_year": null,
+      "internal_current_year": 1024,
+      "current_month": null,
+      "current_day": null,
+      "days_per_month": 30,
+      "months_per_year": 12,
+      "eras": [],
+      "events": []
+    },
+    "SL-04": {
+      "id": "SL-04",
+      "name": "SL-04 墮落之城",
+      "description": "靈子飽和的墮落都市。以故事內部相對年標記，不對應統一曆法。",
+      "calendar": "墮落之城內部年",
+      "time_anchor": "墮落之城內部年（無實年對照）",
+      "years_per_master_year": null,
+      "current_year": null,
+      "internal_current_year": 1024,
+      "current_month": null,
+      "current_day": null,
+      "days_per_month": 30,
+      "months_per_year": 12,
+      "eras": [],
+      "events": []
     }
-  ],
-  "major_events": [
-    {
-      "id": "EVT-001",
-      "year": -5000,
-      "era": "mythic",
-      "name": "迴廊初生",
-      "description": "多元宇宙的概念迴廊首次成型，成為連接所有世界線的通道。",
-      "type": "world_forming",
-      "impact": "global",
-      "favorable_outcome": "迴廊的結構異常穩定，能量流動順暢，為後世的研究者提供了安全的實驗環境。多個世界線在早期就建立了穩定的連接通道。",
-      "unfavorable_outcome": "迴廊初生時就存在結構不穩定的缺陷，部分世界線的連接通道出現裂縫，導致能量洩漏和概念污染，為後來的災難埋下伏筆。"
-    },
-    {
-      "id": "EVT-002",
-      "year": -3000,
-      "era": "mythic",
-      "name": "神靈種誕生",
-      "description": "第一批神靈種從純粹概念中誕生，成為世界意志的具體化身。",
-      "type": "world_forming",
-      "impact": "global",
-      "favorable_outcome": "神靈種與物質世界的生物建立了和諧的共生關係，教導早期文明掌握靈子的基本運用。世界的規則因此而更加豐富多元。",
-      "unfavorable_outcome": "神靈種的誕生引發了概念領域的震盪，部分神靈種因無法適應物質世界而墮落，成為後來概念污染的核心來源之一。"
-    },
-    {
-      "id": "EVT-003",
-      "year": -1000,
-      "era": "mythic",
-      "name": "原罪之殿與美德之殿成立",
-      "description": "概念世界分化為正面與負面兩個極域，迴廊的平衡機制正式啟動。",
-      "type": "world_forming",
-      "impact": "global",
-      "favorable_outcome": "兩殿的制衡機制運作良好，確保了概念世界的穩定發展。正面與負面概念在平衡中共同推動了文明的進步。",
-      "unfavorable_outcome": "兩殿的分化導致概念世界的極化加劇，負面概念逐漸累積形成污染核。殿與殿之間的對立為日後的衝突埋下了根源。"
-    },
-    {
-      "id": "EVT-004",
-      "year": 1,
-      "era": "lumina_dawn",
-      "name": "靈子發現",
-      "description": "煉金術師艾莉西亞·輝光首次定義並測量出靈子（Lumina）能量粒子，開啟靈子紀元。",
-      "type": "discovery",
-      "impact": "global",
-      "favorable_outcome": "艾莉西亞的研究筆記完整保留，靈子技術的基礎理論得以快速傳播。煉金術與科學的結合開啟了前所未有的技術繁榮。",
-      "unfavorable_outcome": "靈子發現的關鍵部分——靈子的意識敏感性——被刻意隱瞞。這導致後續的靈子工業化忽視了安全問題，最終引發了概念污染危機。"
-    },
-    {
-      "id": "EVT-005",
-      "year": 50,
-      "era": "lumina_dawn",
-      "name": "第一次靈子革命",
-      "description": "靈子能源的基礎應用技術突破，文明進入快速發展期。",
-      "type": "technological",
-      "impact": "global",
-      "favorable_outcome": "靈子能源的普及極大改善了生活品質，醫療、交通、通訊等領域經歷了革命性進步。平民也能享受到靈子技術帶來的好處。",
-      "unfavorable_outcome": "靈子革命加劇了社會不平等。掌握靈子技術的精英階層壟斷了資源，底層民眾被迫成為靈子能源的消耗品。技術進步的代價由弱者承擔。"
-    },
-    {
-      "id": "EVT-006",
-      "year": 100,
-      "era": "lumina_dawn",
-      "name": "迴廊研究先驅",
-      "description": "學者們開始系統性研究迴廊現象，建立初步理論框架。",
-      "type": "discovery",
-      "impact": "global",
-      "favorable_outcome": "迴廊研究的理論框架為後世學者提供了堅實的基礎。重要的安全協議和研究倫理在這個時期被建立起來。",
-      "unfavorable_outcome": "早期研究者過於急功近利，忽略了一些關鍵的警告信號。他們錯誤地認為迴廊是可控的，這種過度自信導致了日後的災難。"
-    },
-    {
-      "id": "EVT-007",
-      "year": 200,
-      "era": "era_of_strife",
-      "name": "靈子衝突爆發",
-      "description": "聖諭同盟與唯靈聯邦因靈子使用方式的根本分歧爆發第一次大規模衝突。",
-      "type": "war",
-      "impact": "global",
-      "favorable_outcome": "衝突促進了靈子軍事技術的快速發展，同時也催生了戰時外交和衝突調解機制。戰爭雖然慘烈，但塑造了後來的國際秩序。",
-      "unfavorable_outcome": "長期的戰爭消耗了大量靈子資源，導致多個地區的概念環境遭到不可逆轉的破壞。無數知識和技術在戰火中遺失。戰爭的創傷至今仍在。"
-    },
-    {
-      "id": "EVT-008",
-      "year": 350,
-      "era": "era_of_strife",
-      "name": "緩衝商業聯合體成立",
-      "description": "中立商業勢力在戰火中崛起，形成第四極力量。",
-      "type": "political",
-      "impact": "regional",
-      "favorable_outcome": "商業聯合體成為重要的中立調解力量，在戰火中保護了大量平民和知識遺產。其建立的商業網絡至今仍然是跨世界貿易的骨幹。",
-      "unfavorable_outcome": "商業聯合體表面上中立，實則利用戰爭牟取暴利。他們向雙方出售武器和情報，延長了戰爭的持續時間。中立的外衣下是赤裸裸的利益。"
-    },
-    {
-      "id": "EVT-009",
-      "year": 500,
-      "era": "era_of_balance",
-      "name": "停戰協定",
-      "description": "長達三百年的爭霸時代以停戰協定告終，各國邊界大致底定。",
-      "type": "political",
-      "impact": "global",
-      "favorable_outcome": "停戰協定為世界帶來了長達三百年的和平時期。各國將注意力轉向內部發展，文化和科技迎來了黃金時代。",
-      "unfavorable_outcome": "停戰協定只是勉強凍結了衝突，並未解決根本矛盾。戰敗方的復仇情緒在暗處滋長，最終形成了像新世界集團這樣的激進組織。"
-    },
-    {
-      "id": "EVT-010",
-      "year": 550,
-      "era": "era_of_balance",
-      "name": "聖十字校園創立",
-      "description": "聖十字校園在鏡湖旁建立，成為多元宇宙中最重要的知識傳承地之一。",
-      "type": "cultural",
-      "impact": "regional",
-      "favorable_outcome": "聖十字校園成為多元宇宙中最重要的知識聖地之一，培養了無數優秀的學者、研究者和守護者。其圖書館保存了最完整的迴廊研究資料。",
-      "unfavorable_outcome": "校園的建立吸引了過多注意力，使其成為各方勢力滲透和爭奪的目標。校園內部出現了嚴重的派系鬥爭，部分珍貴資料在內鬥中被銷毀。"
-    },
-    {
-      "id": "EVT-011",
-      "year": 600,
-      "era": "era_of_balance",
-      "name": "魔女學府成立",
-      "description": "魔女學府在鬱鬱山區創立，專注於靈子與概念的高階研究。",
-      "type": "cultural",
-      "impact": "regional",
-      "favorable_outcome": "魔女學府在靈子與概念的高階研究上取得了突破性進展。其獨特的教育理念培養出了許多能夠與迴廊直接溝通的天才。",
-      "unfavorable_outcome": "魔女學府的封閉式研究和對秘密的執著導致其與主流學術界漸行漸遠。部分極端實驗引發了小規模的概念污染，被迫遷移到更深的山區。"
-    },
-    {
-      "id": "EVT-012",
-      "year": 700,
-      "era": "era_of_balance",
-      "name": "迴廊理論標準化",
-      "description": "晞咕萊雅的前輩們完成了迴廊研究的標準化理論體系，圖書館系統建立。",
-      "type": "discovery",
-      "impact": "regional",
-      "favorable_outcome": "晞咕萊雅的前輩們完成的標準化理論體系使得迴廊研究變得系統化和可傳承。圖書館的建立保護了大量珍貴知識免於流失。",
-      "unfavorable_outcome": "標準化過程中，部分非主流但可能重要的理論被刻意排除。知識的統一也意味著知識的控制，有些真相被鎖在了圖書館最深處的書架上。"
-    },
-    {
-      "id": "EVT-013",
-      "year": 800,
-      "era": "pre_turmoil",
-      "name": "新世界集團崛起",
-      "description": "神秘組織「新世界集團」（ORG-06）開始在暗處活動，收集靈子技術與禁忌知識。",
-      "type": "political",
-      "impact": "global",
-      "favorable_outcome": "新世界集團的活動引起了各國情報機構的警覺，促使各國加強了對靈子技術的監管和安全合作。其部分極端計劃因過早暴露而失敗。",
-      "unfavorable_outcome": "新世界集團成功在暗處站穩了腳跟，收集了大量靈子技術和禁忌知識。他們在各國政府中安插了棋子，擁有了足以撼動世界秩序的力量。"
-    },
-    {
-      "id": "EVT-014",
-      "year": 900,
-      "era": "pre_turmoil",
-      "name": "概念污染事件",
-      "description": "污染核在迴廊中異常活躍，導致多個世界線出現概念扭曲現象。",
-      "type": "disaster",
-      "impact": "global",
-      "favorable_outcome": "概念污染事件雖然造成了影響，但也讓人類對概念安全有了更深刻的認識。污染控制技術在這個時期取得了重大突破。",
-      "unfavorable_outcome": "概念污染迅速蔓延，影響了多個世界線的生態系統。受到污染的地區出現了扭曲生物和異常現象，部分區域被迫永久隔離。"
-    },
-    {
-      "id": "EVT-015",
-      "year": 1000,
-      "era": "pre_turmoil",
-      "name": "千年轉折",
-      "description": "靈子曆進入第二個千年，世界各地出現異常概念波動。傳說中預言的動盪時代拉開序幕。",
-      "type": "world_forming",
-      "impact": "global",
-      "favorable_outcome": "千年轉折的預言被正確解讀，各國得以提前做好準備。部分地區甚至利用概念波動開闢了新的靈子能源來源，迎來了短暫的繁榮。",
-      "unfavorable_outcome": "千年轉折的能量波動引發了連鎖反應，多個休眠中的概念污染核被激活。預言中的動盪時代比預期更加猛烈地降臨了。"
-    },
-    {
-      "id": "EVT-016",
-      "year": 1010,
-      "era": "current",
-      "name": "鏡湖異變",
-      "description": "鏡湖深處的迴廊入口出現異常活躍，概念實體開始在物質世界具現化。",
-      "type": "disaster",
-      "impact": "regional",
-      "favorable_outcome": "鏡湖異變的早期預警系統成功運作，聖十字校園及時疏散了師生，沒有人員傷亡。異變也暴露了鏡湖迴廊入口的位置，加速了探索進程。",
-      "unfavorable_outcome": "鏡湖異變導致大量概念實體在物質世界具現化，造成了廣泛的混亂和破壞。聖十字校園的師生中出現了多起概念污染案例。"
-    },
-    {
-      "id": "EVT-017",
-      "year": 1015,
-      "era": "current",
-      "name": "靈子工業化浪潮",
-      "description": "唯靈聯邦在靈子工業化上取得突破性進展，引發新一輪軍備競賽。",
-      "type": "technological",
-      "impact": "global",
-      "favorable_outcome": "靈子工業化在唯靈聯邦推動了經濟起飛，創造了大量就業機會。新技術也應用於環境修復，部分受污染地區得到了有效治理。",
-      "unfavorable_outcome": "靈子工業化以犧牲安全和環境為代價追求效率。工廠排放的靈子廢料污染了周邊地區，工人們在沒有足夠保護的情況下暴露於高濃度靈子環境中。"
-    },
-    {
-      "id": "EVT-018",
-      "year": 1020,
-      "era": "current",
-      "name": "迴廊共鳴事件",
-      "description": "大規模的迴廊共鳴現象導致多個世界線短暫交疊，造成混亂但也促進了跨世界交流。",
-      "type": "disaster",
-      "impact": "global",
-      "favorable_outcome": "迴廊共鳴促進了多個世界線之間的文化和技術交流，許多長期以來的科學難題在跨世界合作下得到解決。和平發展的新時代由此開始。",
-      "unfavorable_outcome": "迴廊共鳴造成的世界線交疊導致了嚴重的身份混淆和現實認知障礙。許多人無法確定自己所屬的世界線，社會秩序一度崩潰。"
-    }
-  ],
+  },
   "season_cycle": {
     "spring": {
-      "start_month": 3,
-      "end_month": 5,
       "name": "春",
-      "name_en": "Spring"
+      "name_en": "Spring",
+      "start_month": 1,
+      "end_month": 3
     },
     "summer": {
-      "start_month": 6,
-      "end_month": 8,
       "name": "夏",
-      "name_en": "Summer"
+      "name_en": "Summer",
+      "start_month": 4,
+      "end_month": 6
     },
     "autumn": {
-      "start_month": 9,
-      "end_month": 11,
       "name": "秋",
-      "name_en": "Autumn"
+      "name_en": "Autumn",
+      "start_month": 7,
+      "end_month": 9
     },
     "winter": {
-      "start_month": 12,
-      "end_month": 14,
       "name": "冬",
-      "name_en": "Winter"
+      "name_en": "Winter",
+      "start_month": 10,
+      "end_month": 12
     }
   },
   "world_landmarks": {
-    "聖十字校園": {
-      "founded_year": 550,
-      "era": "era_of_balance",
-      "description": "最古老的學術機構之一"
-    },
-    "魔女學府": {
-      "founded_year": 600,
-      "era": "era_of_balance",
-      "description": "高階靈子研究重鎮"
-    },
     "鏡湖": {
-      "discovered_year": 1,
-      "era": "lumina_dawn",
-      "description": "與迴廊相連的神秘湖泊"
+      "era": "W01-B 大正線",
+      "founded_year": null,
+      "description": "鏡湖死火山口湖泊，迴廊入口之一。"
     },
-    "卡洛夫角": {
-      "founded_year": 300,
-      "era": "era_of_strife",
-      "description": "天然深水港，從軍事要塞轉變為貿易港"
+    "聖十字校園": {
+      "era": "W01-A 冷戰線",
+      "founded_year": 1950,
+      "description": "聖十字環形堡壘校園。"
     },
     "中央大圖書館": {
-      "founded_year": 700,
-      "era": "era_of_balance",
-      "description": "迴廊知識的最大存儲地"
+      "era": "迴廊",
+      "founded_year": null,
+      "description": "位於迴廊物語核邊緣的知識聖地。"
     }
   }
 }

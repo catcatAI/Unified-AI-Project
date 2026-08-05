@@ -25,7 +25,9 @@ if SUPPLEMENT_PATH.exists():
 else:
     print(f"WARNING: Supplement file not found: {SUPPLEMENT_PATH}")
 
-_seed = _random.Random()  # non-deterministic (time-based)
+# 固定種子：世界內容（配方/任務/容器/社交地點）確定性生成。
+# 若用時間種子，每次啟動配方表不同，存檔引用的配方/任務 ID 會因重啟而失效。
+_seed = _random.Random(20260720)
 
 def _load_cards() -> dict:
     if CARD_PATH.exists():
@@ -92,7 +94,26 @@ _NPC_LOCATIONS_POOL = [
 
 
 def _get_npc_home_from_card(card: dict, fallback_idx: int) -> str:
-    """Derive NPC home location from lore tokens (not random round-robin)."""
+    """Derive NPC home location from card data (text authority).
+
+    優先序（文本權威）：
+    1. 卡片 stats.location（已清潔的主要場景，如『神社』『彩紋礁』『黑淵台聲吶站』）
+    2. lore token 關鍵字（主要場景/所在/棲息地等）
+    3. 隨機池（僅當卡片完全無位置資訊時）
+    """
+    # 1. 已清潔的 stats.location 優先（文本明載的主要場景）
+    stats = card.get("stats", {}) or {}
+    loc = str(stats.get("location") or "").strip()
+    if loc:
+        for scene_key, mapped in _SCENE_NAME_MAP.items():
+            if len(scene_key) >= 2 and scene_key in loc:
+                return mapped
+        # 直接命中可探索地點
+        import sim_systems as _ss
+        wm = getattr(_ss, "WORLD_MAP", {})
+        if loc in wm:
+            return loc
+    # 2. lore token 關鍵字掃描（舊機制保留為 fallback）
     lore_toks = _tokens_by_cat(card, "lore")
     home_keywords = ["主要場景", "所在", "家鄉", "基地", "棲息地", "活動範圍", "世界線"]
     for kw in home_keywords:
@@ -252,15 +273,15 @@ def _build_abilities_from_skills(card: dict, all_cards: list) -> list:
         race = card.get("stats", {}).get("race", "")
         if race:
             result.append({
-                "name": f"{race[:10]}の能力",
-                "description": f"{race[:10]}としての基本的な能力",
+                "name": f"{race[:10]}的能力",
+                "description": f"{race[:10]}的基本能力",
                 "type": "general",
                 "level": 1,
             })
         else:
             result.append({
                 "name": "基礎能力",
-                "description": "基本的な戦闘や生活の能力",
+                "description": "基本的戰鬥與生活能力",
                 "type": "general",
                 "level": 1,
             })
@@ -269,7 +290,25 @@ def _build_abilities_from_skills(card: dict, all_cards: list) -> list:
 
 
 
-def _generate_npc_schedule(npc_name: str, home_loc: str) -> list:
+def _generate_npc_schedule(npc_name: str, home_loc: str, race_text: str = "") -> list:
+    """產生 NPC 作息排程。夜行性角色（蝙蝠娘等文本明言夜行）晝伏夜出：
+    白天睡眠、傍晚起床、夜晚活動——符合常理與文本。
+    """
+    # 夜行性判定：文本種族含 夜行/蝙蝠 等關鍵字
+    _night_active = any(kw in (race_text or "") for kw in ("夜行", "蝙蝠娘", "蝙蝠"))
+    if _night_active:
+        # 晝伏夜出：睡眠(6-18) → 起床活動(18-22) → 夜間活動(22-2) → 深夜活動(2-6)
+        slots = [(6, 18), (18, 22), (22, 2), (2, 6)]
+        activities = ["睡眠", "工作", "巡邏", "社交"]
+        moods = ["sleep", "focused", "alert", "friendly"]
+        social_locs = _seed.sample(
+            ["聖十字校園", "鬱鬱山", "便利店", "鏡湖", "卡洛夫角"],
+            k=min(5, len(_NPC_LOCATIONS_POOL)))
+        locs = [home_loc, home_loc, social_locs[0], social_locs[1] if len(social_locs) > 1 else home_loc]
+        schedules = []
+        for i, (s, e) in enumerate(slots):
+            schedules.append((s, e, activities[i], locs[i] if i < len(locs) else home_loc, moods[i]))
+        return schedules
     schedules = []
     slots = [(6,10),(10,14),(14,18),(18,22),(22,6)]
     activities = ["工作","巡邏","休息","社交","睡眠"]
@@ -511,7 +550,7 @@ def generate_all_npcs() -> Dict[str, dict]:
             "race": _extract_race_from_card(card),
             "role": role_desc,
             "location": home,
-            "schedule": _generate_npc_schedule(name, home),
+            "schedule": _generate_npc_schedule(name, home, _extract_race_from_card(card)),
             "greeting": greeting,
             "archetype": archetype,
             "token_categories": list(token_cats),
@@ -655,6 +694,9 @@ def _make_item(name: str, typ: str, slot: str, atk: float, dfn: float, spd: floa
         d["weight"] = 0.3
     if typ == "junk":
         d["weight"] = 0.2
+    # 軸譜交互：裝備可交互性由角色軸譜親和力決定（axis_system.evaluate_equipment
+    # 依 tags 即時判定主交互維度）；required_race 僅為無軸譜角色
+    # （人類/艦娘等未分類）的後備提示，不再以 token 猜種族。
     # Race/archetype restriction based on tags
     # Race-specific: only characters with matching race can equip
     if "naval" in tags:
@@ -667,13 +709,13 @@ def _make_item(name: str, typ: str, slot: str, atk: float, dfn: float, spd: floa
         d["required_race"] = "獸娘"
         d["required_archetype"] = "vitality"
     elif "draconic" in tags:
-        d["required_race"] = "竜族"
+        d["required_race"] = "龍族"
         d["required_archetype"] = "combat"
     elif "mechanical" in tags:
         d["required_race"] = "機械"
         d["required_archetype"] = "mechanism"
     elif "spiritual" in tags:
-        d["required_race"] = "精霊"
+        d["required_race"] = "精靈"
         d["required_archetype"] = "energy"
     return d
 
@@ -720,10 +762,13 @@ def generate_all_items() -> Dict[str, dict]:
         tokens = card.get("tokens", [])
         cid = card.get('card_id','?')
         # Generate items from token categories
+        # （排除物種分類 token：分類系譜是描述性資料，不應變成物品）
         for i, t in enumerate(tokens):
             cat = t.get("category","")
             tok_name = t.get("name","")[:15]
             if not tok_name or not cat: continue
+            if tok_name in ("分類系譜", "物種分類"):
+                continue
             key = f"{cid}:{tok_name}"
             if key in item_names_set or card_item_count >= 2000:
                 continue
@@ -731,7 +776,7 @@ def generate_all_items() -> Dict[str, dict]:
             if item_type:
                 typ, slot, atk, dfn, spd, krm, dur, val = item_type
                 items[key] = _make_item(key, typ, slot, atk, dfn, spd, krm, dur, val,
-                                        f"{tok_name}の力", ["card_item", cat])
+                                        f"{tok_name}之力", ["card_item", cat])
                 item_names_set.add(key)
                 card_item_count += 1
         # Generate from abilities too
@@ -752,11 +797,11 @@ def generate_all_items() -> Dict[str, dict]:
         cid = card.get('card_id','?')
         for cat in token_cats:
             if cat in _cat_item_types and card_item_count < 600:
-                key = f"{cid}:{cat}の結晶"
+                key = f"{cid}:{cat}結晶"
                 if key not in item_names_set:
                     typ, slot, atk, dfn, spd, krm, dur, val = _cat_item_types[cat]
                     items[key] = _make_item(key, typ, slot, atk, dfn, spd, krm, dur, val,
-                                            f"{cat}の結晶", ["card_item", cat])
+                                            f"{cat}結晶", ["card_item", cat])
                     item_names_set.add(key)
                     card_item_count += 1
     
@@ -781,13 +826,13 @@ def _generate_enemies_from_template() -> list:
         enemies.append({"name":name,"hp":hp,"atk":atk,"def":dfn,"spd":spd,
                         "exp":exp_,"gold":gold,"loot":list(loot),"desc":desc})
         # Tier 2: stronger variant
-        enemies.append({"name":f"凶暴な{name}","hp":int(hp*1.8),"atk":int(atk*1.5),"def":int(dfn*1.3),
+        enemies.append({"name":f"凶暴{name}","hp":int(hp*1.8),"atk":int(atk*1.5),"def":int(dfn*1.3),
                         "spd":min(spd+2,15),"exp":int(exp_*1.5),"gold":int(gold*1.5),
-                        "loot":list(loot)+(["魔法粉"] if len(loot)<3 else []),"desc":f"凶暴化した{desc}"})
+                        "loot":list(loot)+(["魔法粉"] if len(loot)<3 else []),"desc":f"兇暴化的{desc}"})
         # Tier 3: elite variant
-        enemies.append({"name":f"古の{name}","hp":int(hp*3.0),"atk":int(atk*2.2),"def":int(dfn*2.0),
+        enemies.append({"name":f"遠古{name}","hp":int(hp*3.0),"atk":int(atk*2.2),"def":int(dfn*2.0),
                         "spd":min(spd+4,18),"exp":int(exp_*2.5),"gold":int(gold*2.5),
-                        "loot":list(loot)+["龍鱗","靈木"],"desc":f"古代から生きる{desc}"})
+                        "loot":list(loot)+["龍鱗","靈木"],"desc":f"存活於古代的{desc}"})
     return enemies
 
 # Card shadow enemies (from each character card combat tokens)
@@ -796,18 +841,18 @@ def _generate_card_enemies() -> list:
     for card in _CHARACTER_CARDS:
         combat_tokens = _tokens_by_cat(card, "combat")
         name = card.get("name","?").split("(")[0].strip()[:6]
-        shadow_name = f"{name}の影"
+        shadow_name = f"{name}之影"
         base_hp = 45 + len(combat_tokens)*10 if combat_tokens else 40
         base_atk = 14 + len(combat_tokens)*3 if combat_tokens else 12
         base_def = 5 + len(combat_tokens)*2 if combat_tokens else 4
         enemies.append({"name":shadow_name,"hp":base_hp,"atk":base_atk,"def":base_def,
                         "spd":5,"exp":40+len(combat_tokens)*10,"gold":20+len(combat_tokens)*5,
-                        "loot":["魔法粉","水晶碎片"],"desc":"カードから現れた影"})
+                        "loot":["魔法粉","水晶碎片"],"desc":"從卡片現身的影子"})
         # Stronger variant
-        enemies.append({"name":f"深淵の{shadow_name}","hp":int(base_hp*2.5),"atk":int(base_atk*2.0),
+        enemies.append({"name":f"深淵{shadow_name}","hp":int(base_hp*2.5),"atk":int(base_atk*2.0),
                         "def":int(base_def*1.8),"spd":8,"exp":int(40+len(combat_tokens)*25),
                         "gold":int(20+len(combat_tokens)*12),"loot":["龍鱗","靈木","魔力藥水"],
-                        "desc":"深淵から現れた強力な影"})
+                        "desc":"從深淵現身的強大影子"})
     return enemies
 
 # Elemental enemies (from supplement)
@@ -823,7 +868,7 @@ def generate_all_enemies() -> list:
         # Tier 2 for elemental
         enemies.append({"name":f"大{name}","hp":int(hp*2.2),"atk":int(atk*1.8),"def":int(dfn*1.5),
                         "spd":min(spd+2,16),"exp":int(exp_*2),"gold":int(gold*2),
-                        "loot":list(loot)+["龍鱗"],"desc":f"強大な{desc}"})
+                        "loot":list(loot)+["龍鱗"],"desc":f"強大的{desc}"})
     return enemies
 
 ALL_ENEMIES = generate_all_enemies()
@@ -840,7 +885,9 @@ def generate_locations() -> dict:
         sid = card.get("card_id","S??")
         raw_loc_name = card.get("name","?").split("·")[-1].strip()
         if not raw_loc_name or len(raw_loc_name) > 8:
-            raw_loc_name = card.get("name","?").split("（")[0].split("(")[0].strip()[:8]
+            # 名稱含括號描述（如「（夢境層）」）或過長時：取括號前完整基底名
+            #——不再 [:8] 強制截斷（會砍掉完整名尾巴，如 聖十字環形堡壘校園→校）
+            raw_loc_name = card.get("name","?").split("（")[0].split("(")[0].strip()
         # Fix empty names: use lore token value as fallback
         lore_toks_for_loc = _tokens_by_cat(card, "lore")
         if not raw_loc_name or raw_loc_name == '?':
@@ -852,12 +899,12 @@ def generate_locations() -> dict:
         else:
             name = raw_loc_name
         lore_tokens = _tokens_by_cat(card, "lore")
-        vibe = "📍 未知の地"
+        vibe = "📍 未知之地"
         for t in lore_tokens:
             v = t.get("value","")
-            if "校園" in v or "教室" in v: vibe = "📚 学びの場"
-            elif "湖" in v or "水" in v: vibe = "💧 水辺"
-            elif "市" in v or "市場" in v: vibe = "🏪 賑わい"
+            if "校園" in v or "教室" in v: vibe = "📚 求學之地"
+            elif "湖" in v or "水" in v: vibe = "💧 水邊"
+            elif "市" in v or "市場" in v: vibe = "🏪 熱鬧市集"
             elif "地下" in v or "洞" in v: vibe = "🕳 地下"
             elif "空" in v or "星" in v: vibe = "✨ 星空"
         locs[sid] = {"name":name,"vibe":vibe,"card_id":sid}
@@ -932,8 +979,8 @@ def generate_quests() -> list:
                 "time_available": {"start_hour": 8, "end_hour": 20},
             }
             if "craft" in cats:
-                quests.append({"id":qid,"title":f"{npc_name}の依頼","type":"side","giver":npc_name,
-                    "desc":"材料を集めてほしい。",
+                quests.append({"id":qid,"title":f"{npc_name}的委託","type":"side","giver":npc_name,
+                    "desc":"需要你幫忙收集材料。",
                     "conditions": dict(conditions),
                     "objectives":[{"type":"collect","target":_seed.choice(["鐵礦","皮革","靈木","草藥"]),"qty":_seed.randint(2,5),"detail":"收集材料"}],
                     "reward_exp":30+_seed.randint(0,30),"reward_gold":15+_seed.randint(0,20),
@@ -941,19 +988,44 @@ def generate_quests() -> list:
                     "reward_item":_seed.choice(["治療藥水","匕首","鐵劍","護身符","皮甲"])})
             elif "combat" in cats:
                 conditions["required_level"] = 3
-                quests.append({"id":qid,"title":f"{npc_name}の退治","type":"side","giver":npc_name,
-                    "desc":"近くの敵を退治してほしい。",
-                    "conditions": dict(conditions),
-                    "objectives":[{"type":"visit","target":loc,"detail":f"前往{loc}"},
-                                  {"type":"defeat","target":_seed.choice(["野狼","虎","毒蛇","盜賊","哥布林"]),"qty":_seed.randint(1,3),"detail":"擊敗指定敵人"}],
-                    "reward_exp":40+_seed.randint(0,40),"reward_gold":20+_seed.randint(0,30),
-                    "reward_reputation":8,"reward_relationships":{npc_name: 12},
-                    "reward_item":_seed.choice(["鋼刀","鐵甲","生命果","火焰藥水","靈力藥"])})
+                # 目標敵人從該 NPC 家所在地的敵人群選，確保任務可完成
+                # （固定清單會選出目標地點根本不存在的敵人，造成任務卡死）
+                import sim_systems as _ss
+                loc_pool = list(_ss.LOCATION_ENEMIES.get(loc, []))
+                # 排除強敵：前綴（凶暴/遠古/深淵）或數值超標（ATK≥20 或 HP≥90）
+                # ——Lv3 討伐任務不該要求打古代守衛/巨熊/元素核心等無前綴強敵
+                _enemy_by_name = {e["name"]: e for e in _ss.ENEMIES}
+                def _too_strong(n):
+                    if any(k in n for k in ("遠古","凶暴","兇暴","深淵")):
+                        return True
+                    e = _enemy_by_name.get(n)
+                    return bool(e and (e.get("atk", 0) >= 20 or e.get("hp", 0) >= 90))
+                _plain = [n for n in loc_pool if not _too_strong(n)]
+                _target_pool = _plain or loc_pool
+                if not _target_pool:
+                    # 該地點沒有敵人群：退而求其次，改為收集任務而非討伐
+                    quests.append({"id":qid,"title":f"{npc_name}的委託","type":"side","giver":npc_name,
+                        "desc":"需要你幫忙收集材料。",
+                        "conditions": dict(conditions),
+                        "objectives":[{"type":"collect","target":_seed.choice(["鐵礦","皮革","靈木","草藥"]),"qty":_seed.randint(2,5),"detail":"收集材料"}],
+                        "reward_exp":30+_seed.randint(0,30),"reward_gold":15+_seed.randint(0,20),
+                        "reward_reputation":5,"reward_relationships":{npc_name: 10},
+                        "reward_item":_seed.choice(["治療藥水","匕首","鐵劍","護身符","皮甲"])})
+                else:
+                    target_enemy = _seed.choice(_target_pool)
+                    quests.append({"id":qid,"title":f"{npc_name}的討伐","type":"side","giver":npc_name,
+                        "desc":"附近的敵人需要討伐。",
+                        "conditions": dict(conditions),
+                        "objectives":[{"type":"visit","target":loc,"detail":f"前往{loc}"},
+                                      {"type":"defeat","target":target_enemy,"qty":_seed.randint(1,3),"detail":"擊敗指定敵人"}],
+                        "reward_exp":40+_seed.randint(0,40),"reward_gold":20+_seed.randint(0,30),
+                        "reward_reputation":8,"reward_relationships":{npc_name: 12},
+                        "reward_item":_seed.choice(["鋼刀","鐵甲","生命果","火焰藥水","靈力藥"])})
             elif "knowledge" in cats:
-                quests.append({"id":qid,"title":f"{npc_name}の探求","type":"side","giver":npc_name,
-                    "desc":"探索して知見を持ち帰れ。",
+                quests.append({"id":qid,"title":f"{npc_name}的探索","type":"side","giver":npc_name,
+                    "desc":"探索並帶回見聞。",
                     "conditions": dict(conditions),
-                    "objectives":[{"type":"visit","target":_seed.choice(["聖十字校園","英靈殿","森林深處"]),"detail":"指定場所を訪れる"}],
+                    "objectives":[{"type":"visit","target":_seed.choice(["聖十字校園","英靈殿","森林深處"]),"detail":"前往指定地點"}],
                     "reward_exp":25+_seed.randint(0,25),"reward_gold":10+_seed.randint(0,15),
                     "reward_reputation":6,"reward_relationships":{npc_name: 10},
                     "reward_item":_seed.choice(["記憶水晶","神秘地圖","書信","魔力藥水","護身符"])})
@@ -974,27 +1046,27 @@ def generate_scene_objects() -> Dict[str, list]:
     objects = {}
     container_pool = [
         (["草藥","空瓶","小石頭"],"木箱","木箱"),
-        (["魔法粉","水晶碎片","靈木"],"魔法箱","光る箱"),
-        (["乾糧","治療藥水","繃帶"],"保管箱","応急箱"),
-        (["鐵礦","黏土","樹枝"],"鉱石箱","鉱石箱"),
-        (["書信","羽毛","貝殼"],"小箱","鍵付き小箱"),
+        (["魔法粉","水晶碎片","靈木"],"魔法箱","發光箱"),
+        (["乾糧","治療藥水","繃帶"],"保管箱","應急箱"),
+        (["鐵礦","黏土","樹枝"],"礦石箱","礦石箱"),
+        (["書信","羽毛","貝殼"],"小箱","帶鎖小箱"),
         (["皮革","布","絲線"],"材料箱","素材箱"),
-        (["火元素","空瓶","蠟燭頭"],"実験箱","実験箱"),
-        (["古代硬貨","記憶水晶","神秘地圖"],"古い箱","古の箱"),
+        (["火元素","空瓶","蠟燭頭"],"實驗箱","實驗箱"),
+        (["古代硬貨","記憶水晶","神秘地圖"],"舊箱","遠古之箱"),
         (["靈木","龍鱗","魔法粉"],"貴重品箱","貴重品箱"),
-        (["草薬","解毒草","靈芝"],"薬箱","薬箱"),
+        (["草藥","解毒草","靈芝"],"藥箱","藥箱"),
         (["木柄","鐵礦","麻繩"],"道具箱","道具箱"),
-        (["治療藥水","火焰藥水","魔力藥水"],"薬品棚","薬品棚"),
-        (["乾燥花","彩色玻璃片","貝殼"],"飾り箱","装飾箱"),
+        (["治療藥水","火焰藥水","魔力藥水"],"藥品棚","藥品棚"),
+        (["乾燥花","彩色玻璃片","貝殼"],"裝飾箱","飾品箱"),
         (["鐵錠","鐵礦","鐵劍"],"武器箱","武器箱"),
-        (["書信","神秘地圖","乾燥花"],"手紙箱","書簡箱"),
+        (["書信","神秘地圖","乾燥花"],"信件箱","書信箱"),
     ]
     deco_pool = [
-        "看板","ベンチ","街灯","像","花壇","旗","噴水","井戸",
-        "案内板","時計台","吊り橋","鳥篭","焚火跡","石垣","門",
+        "看板","長椅","街燈","雕像","花壇","旗幟","噴水池","水井",
+        "告示板","鐘樓","吊橋","鳥籠","營火遺跡","石牆","城門",
     ]
-    ws_pool = [("鍛冶台","forge"),("作業台","workbench"),("錬金釜","alchemy"),
-               ("魔法陣","enchant"),("彫刻台","carve"),("調合台","blend")]
+    ws_pool = [("鍛造台","forge"),("作業台","workbench"),("鍊金釜","alchemy"),
+               ("魔法陣","enchant"),("雕刻台","carve"),("調合台","blend")]
     
     for loc in _SUPPLEMENT.get("locations_for_objects", []):
         loc_objs = []
@@ -1010,7 +1082,7 @@ def generate_scene_objects() -> Dict[str, list]:
         for _ in range(_seed.randint(1,2)):
             d = _seed.choice(deco_pool)
             loc_objs.append({"id":f"dec_{loc}_{len(loc_objs)}","name":d,"type":"decoration",
-                             "desc":f"一{d}。","note":"特に何もない。","interactable":True})
+                             "desc":f"一個{d}。","note":"沒有特別之處。","interactable":True})
         # 0-1 workstation
         if _seed.random() < 0.5:
             ws = _seed.choice(ws_pool)
@@ -1029,9 +1101,12 @@ ALL_SCENE_OBJECTS = generate_scene_objects()
 def generate_recipes() -> list:
     recipes = []
     item_names = list(ALL_ITEMS.keys())
+    # 配方材料：beast/natural/elemental/herb 標籤皆可當材料（含野獸掉落物如狼王毛皮/熊之臂力），
+    # 唯獨排除 naval 軍武（砲/魚雷/戰鬥機）——軍武不應成為其他物品的製作材料
     material_tags = [k for k, v in ALL_ITEMS.items()
-                     if v.get("tags") and ("naval" in v["tags"] or "beast" in v["tags"]
-                     or "natural" in v["tags"] or "elemental" in v["tags"])]
+                     if v.get("tags") and "naval" not in v["tags"]
+                     and ("beast" in v["tags"] or "natural" in v["tags"]
+                          or "elemental" in v["tags"] or "herb" in v["tags"])]
     weapon_types = [k for k, v in ALL_ITEMS.items() if v.get("type") == "weapon"]
     consumable_types = [k for k, v in ALL_ITEMS.items() if v.get("type") == "consumable"]
     
@@ -1042,34 +1117,81 @@ def generate_recipes() -> list:
         item = ALL_ITEMS[name]
         if item["type"] in ("junk",) or not item.get("tags"):
             continue
-        mat = _seed.sample([m for m in material_tags if m != name],
-                           min(3, len(material_tags)))
+        # 軍武（naval）只能從商店/掉落/任務獲得，不可合成（避免野獸材料造砲的荒謬配方）
+        if "naval" in item.get("tags", []):
+            continue
+        result_val = ALL_ITEMS[name].get("value", 0)
+        # 配方經濟學：材料總成本不得超過結果價值（合成至少打平，不做虧本生意）
+        if result_val <= 0:
+            continue
+        if item["type"] not in ("material", "ingredient", "consumable", "weapon", "armor", "accessory"):
+            continue
+        cheap_mats = [m for m in material_tags if m != name
+                      and ALL_ITEMS[m].get("value", 0) <= result_val]
+        if len(cheap_mats) < 2:
+            continue
+        mat = _seed.sample(cheap_mats, min(3, len(cheap_mats)))
         if len(mat) < 2: continue
         pair_key = tuple(sorted(mat[:2]))
         if pair_key in used_pairs: continue
         used_pairs.add(pair_key)
-        
+        q1, q2 = _seed.randint(1, 2), _seed.randint(1, 2)
+        cost = ALL_ITEMS[mat[0]].get("value", 0) * q1 + ALL_ITEMS[mat[1]].get("value", 0) * q2
+        if cost > result_val:
+            continue
         cat_choices = ["craft","alchemize","process","combine"]
         cat = _seed.choice(cat_choices)
         recipes.append({
             "recipe_id": f"GD-{i+1:04d}",
-            "name": f"{name[:12]}の製作",
+            "name": f"{name[:12]}製作",
             "category": cat,
-            "ingredients": [{"item": mat[0], "quantity": _seed.randint(1,2)},
-                           {"item": mat[1], "quantity": _seed.randint(1,2)}],
+            "ingredients": [{"item": mat[0], "quantity": q1},
+                           {"item": mat[1], "quantity": q2}],
             "result_item": name, "result_quantity": 1,
             "failure_chance": round(_seed.uniform(0.05, 0.35), 2),
         })
     
     # Potion recipes (consumable + material)
+    # 藥水材料只用自然/植物/元素類的低價材料（排除 naval 軍武與高價野獸掉落物
+    # ——狼王毛皮/熊之臂力不應成為藥水材料，也不該讓藥水配方虧本）
+    potion_materials = [k for k, v in ALL_ITEMS.items()
+                        if v.get("tags") and ("natural" in v["tags"] or "elemental" in v["tags"]
+                        or "herb" in v["tags"])
+                        and v.get("type") in ("material", "ingredient", "consumable")
+                        and v.get("value", 0) <= 60]
+    if not potion_materials:
+        potion_materials = ["草藥", "靈木", "魔法粉"]
+    # 材料價值查詢：ALL_ITEMS 與 sim_systems.ITEM_CATALOG 合併（fallback 材料在 ITEM_CATALOG）
+    import sim_systems as _ss
+    _value_of = {**{k: (v.get("value") or 0) for k, v in ALL_ITEMS.items()},
+                 **{k: (v.get("value") or 0) for k, v in _ss.ITEM_CATALOG.items()}}
+    _ctype_val = lambda c: _value_of.get(c, 0)
     for i, ctype in enumerate(consumable_types):
-        mat = _seed.choice(material_tags if material_tags else ["草藥"])
+        # 排除自指（材料=結果，避免「治療藥水調合：治療藥水 x2」的荒謬配方）
+        _pool = [m for m in potion_materials if m != ctype] or potion_materials
+        if not _pool:
+            continue
+        ctype_val = _ctype_val(ctype)
+        # 低價值消耗品（艾草/薄荷/蒲公英等路邊採集物）不值得煉製——直接跳過
+        if ctype_val < 40:
+            continue
+        # 材料成本必須 ≤ 結果價值×1.5，避免虧本配方（無誘因的合成）
+        _cheap = [m for m in _pool if _value_of.get(m, 0) <= ctype_val * 1.5]
+        if not _cheap:
+            continue
+        mat = _seed.choice(_cheap)
+        aux = _seed.choice(["空瓶","魔法粉","靈木"])
+        aux_val = _value_of.get(aux, 0) or 1
+        q_mat = _seed.randint(1, 2)
+        cost = _value_of.get(mat, 0) * q_mat + aux_val
+        if cost > ctype_val * 1.5:
+            continue
         rid = f"GD-POT{i+1:04d}"
         recipes.append({
-            "recipe_id": rid, "name": f"{ctype[:10]}の調合",
+            "recipe_id": rid, "name": f"{ctype[:10]}調合",
             "category": "alchemize",
-            "ingredients": [{"item": mat, "quantity": 2},
-                           {"item": _seed.choice(["空瓶","魔法粉","靈木"]), "quantity": 1}],
+            "ingredients": [{"item": mat, "quantity": q_mat},
+                           {"item": aux, "quantity": 1}],
             "result_item": ctype, "result_quantity": _seed.randint(1,2),
             "failure_chance": round(_seed.uniform(0.1, 0.3), 2),
         })
@@ -1085,26 +1207,26 @@ ALL_RECIPES = generate_recipes()
 # ══════════════════════════════════════════════════════════════════
 
 ALL_VEHICLES = {
-    "自転車":{"speed":1.5,"capacity":1,"cargo":20,"fuel":"human","desc":"軽快な自転車"},
-    "マウンテンバイク":{"speed":1.8,"capacity":1,"cargo":15,"fuel":"human","desc":"悪路に強い自転車"},
+    "自行車":{"speed":1.5,"capacity":1,"cargo":20,"fuel":"human","desc":"輕快的自行車"},
+    "登山自行車":{"speed":1.8,"capacity":1,"cargo":15,"fuel":"human","desc":"善於越野的自行車"},
     "馬":{"speed":2.0,"capacity":1,"cargo":30,"fuel":"feed","desc":"駿馬"},
-    "駿馬":{"speed":2.5,"capacity":1,"cargo":25,"fuel":"feed","desc":"純血の駿馬"},
+    "駿馬":{"speed":2.5,"capacity":1,"cargo":25,"fuel":"feed","desc":"純血的駿馬"},
     "馬車":{"speed":1.2,"capacity":3,"cargo":100,"fuel":"feed","desc":"荷馬車"},
-    "大型馬車":{"speed":1.0,"capacity":5,"cargo":300,"fuel":"feed","desc":"大型の輸送馬車"},
-    "小舟":{"speed":1.3,"capacity":2,"cargo":15,"fuel":"human","desc":"川を渡る小舟"},
-    "漁船":{"speed":1.5,"capacity":4,"cargo":100,"fuel":"sail","desc":"漁に使う船"},
-    "オートバイ":{"speed":2.5,"capacity":1,"cargo":10,"fuel":"gas","desc":"快速二輪"},
-    "大型オートバイ":{"speed":2.8,"capacity":2,"cargo":20,"fuel":"gas","desc":"大型二輪"},
-    "ジープ":{"speed":2.0,"capacity":4,"cargo":200,"fuel":"gas","desc":"悪路走破車"},
+    "大型馬車":{"speed":1.0,"capacity":5,"cargo":300,"fuel":"feed","desc":"大型運輸馬車"},
+    "小舟":{"speed":1.3,"capacity":2,"cargo":15,"fuel":"human","desc":"渡河的小舟"},
+    "漁船":{"speed":1.5,"capacity":4,"cargo":100,"fuel":"sail","desc":"捕魚用的船"},
+    "機車":{"speed":2.5,"capacity":1,"cargo":10,"fuel":"gas","desc":"快速的二輪車"},
+    "重型機車":{"speed":2.8,"capacity":2,"cargo":20,"fuel":"gas","desc":"大型二輪車"},
+    "吉普車":{"speed":2.0,"capacity":4,"cargo":200,"fuel":"gas","desc":"越野走破車"},
     "帆船":{"speed":1.8,"capacity":6,"cargo":500,"fuel":"wind","desc":"帆船"},
     "大型帆船":{"speed":2.0,"capacity":12,"cargo":1200,"fuel":"wind","desc":"大型帆船"},
-    "熱気球":{"speed":1.5,"capacity":3,"cargo":50,"fuel":"fire","desc":"空飛ぶ気球"},
-    "蒸気機関車":{"speed":3.0,"capacity":10,"cargo":1000,"fuel":"coal","desc":"蒸気機関車（軌道限定）"},
-    "魔法の箒":{"speed":2.8,"capacity":1,"cargo":5,"fuel":"magic","desc":"魔女の箒"},
-    "魔法の絨毯":{"speed":3.0,"capacity":2,"cargo":30,"fuel":"magic","desc":"空飛ぶ絨毯"},
-    "飛空挺":{"speed":2.5,"capacity":8,"cargo":800,"fuel":"magic","desc":"魔導飛空挺"},
-    "竜騎乗":{"speed":3.5,"capacity":1,"cargo":10,"fuel":"bond","desc":"竜との絆で空を翔る"},
-    "雪橇":{"speed":1.8,"capacity":2,"cargo":40,"fuel":"dog","desc":"犬ぞり"},
+    "熱氣球":{"speed":1.5,"capacity":3,"cargo":50,"fuel":"fire","desc":"飛行的熱氣球"},
+    "蒸氣機車":{"speed":3.0,"capacity":10,"cargo":1000,"fuel":"coal","desc":"蒸氣機車（軌道限定）"},
+    "魔法掃帚":{"speed":2.8,"capacity":1,"cargo":5,"fuel":"magic","desc":"魔女的掃帚"},
+    "魔法飛毯":{"speed":3.0,"capacity":2,"cargo":30,"fuel":"magic","desc":"飛行的飛毯"},
+    "飛空艇":{"speed":2.5,"capacity":8,"cargo":800,"fuel":"magic","desc":"魔導飛空艇"},
+    "龍騎乘":{"speed":3.5,"capacity":1,"cargo":10,"fuel":"bond","desc":"與龍的羈絆翱翔天際"},
+    "雪橇":{"speed":1.8,"capacity":2,"cargo":40,"fuel":"dog","desc":"狗拉雪橇"},
 }
 
 
@@ -1113,25 +1235,23 @@ ALL_VEHICLES = {
 # ══════════════════════════════════════════════════════════════════
 
 ALL_REAL_ESTATE = {
-    "聖十字校園小屋":{"type":"house","price":500,"functions":["rest","store"],"desc":"村はずれの小さな家"},
-    "カールフ商店":{"type":"shop","price":800,"functions":["trade"],"desc":"市集の小店舗"},
-    "湖畔工房":{"type":"workshop","price":1200,"functions":["craft","rest"],"desc":"湖畔の工房"},
-    "図書室":{"type":"house","price":2000,"functions":["rest","study"],"desc":"図書館の一室"},
-    "廃坑倉庫":{"type":"warehouse","price":600,"functions":["store"],"desc":"廃鉱山の倉庫"},
-    "灯台":{"type":"house","price":1500,"functions":["rest","study"],"desc":"海を見渡す灯台"},
-    "森林小屋":{"type":"house","price":900,"functions":["rest","store"],"desc":"森の中の隠れ家"},
-    "展望台":{"type":"tower","price":2500,"functions":["study","rest"],"desc":"星を観測する展望台"},
-    "鏡湖別荘":{"type":"house","price":3000,"functions":["rest","craft","store"],"desc":"鏡湖の畔の別荘"},
-    "工房拡張":{"type":"workshop","price":1800,"functions":["craft","store"],"desc":"工房の拡張工房"},
-    "秘密の隠れ家":{"type":"house","price":1500,"functions":["rest","store"],"desc":"秘密の隠れ家"},
-    "市集の倉庫":{"type":"warehouse","price":400,"functions":["store"],"desc":"市集の小さな倉庫"},
-    "海岸の小屋":{"type":"house","price":1200,"functions":["rest"],"desc":"海岸に建つ小さな家"},
-    "魔法塔":{"type":"tower","price":5000,"functions":["study","craft","rest"],"desc":"魔力が集まる塔"},
-    "古道の宿":{"type":"house","price":800,"functions":["rest","store"],"desc":"古道沿いの宿屋"},
-    "英霊祠":{"type":"shrine","price":3000,"functions":["rest","study"],"desc":"英霊を祀る祠"},
-    "大樹の家":{"type":"house","price":2000,"functions":["rest","store","craft"],"desc":"大樹に作られた家"},
-    "鉱山公社":{"type":"warehouse","price":1000,"functions":["store"],"desc":"鉱山の管理事務所"},
-    "スカイハウス":{"type":"house","price":4000,"functions":["rest","study","craft"],"desc":"高台の豪邸"},
+    # 地點依名稱/描述與地圖場景對應（湖畔工房/圖書室/廢坑倉庫/聖十字校園小屋
+    # 與 sim_systems 手寫房地產重複，不再生成）
+    "卡洛夫商店":{"type":"shop","price":800,"functions":["trade"],"desc":"市集小店鋪","location":"卡洛夫角"},
+    "燈塔":{"type":"house","price":1500,"functions":["rest","study"],"desc":"眺望大海的燈塔","location":"卡洛夫角"},
+    "森林小屋":{"type":"house","price":900,"functions":["rest","store"],"desc":"森林中的隱居小屋","location":"森林深處"},
+    "展望台":{"type":"tower","price":2500,"functions":["study","rest"],"desc":"觀星用的展望台","location":"鏡山"},
+    "鏡湖別莊":{"type":"house","price":3000,"functions":["rest","craft","store"],"desc":"鏡湖畔的別莊","location":"鏡湖"},
+    "工房擴建":{"type":"workshop","price":1800,"functions":["craft","store"],"desc":"工房的擴建區","location":"聖十字校園"},
+    "秘密藏身處":{"type":"house","price":1500,"functions":["rest","store"],"desc":"祕密的藏身處","location":"秘密鐵工廠"},
+    "市集倉庫":{"type":"warehouse","price":400,"functions":["store"],"desc":"市集的小倉庫","location":"西翼大市集"},
+    "海岸小屋":{"type":"house","price":1200,"functions":["rest"],"desc":"海岸邊的小屋","location":"霧海南岸"},
+    "魔法塔":{"type":"tower","price":5000,"functions":["study","craft","rest"],"desc":"魔力匯聚的塔","location":"魔女學府"},
+    "古道旅店":{"type":"house","price":800,"functions":["rest","store"],"desc":"古道旁的旅店","location":"卡洛夫山脈"},
+    "英靈祠":{"type":"shrine","price":3000,"functions":["rest","study"],"desc":"供奉英靈的祠堂","location":"英靈殿"},
+    "大樹之家":{"type":"house","price":2000,"functions":["rest","store","craft"],"desc":"建在大樹上的家","location":"綻放混成園"},
+    "礦山公社":{"type":"warehouse","price":1000,"functions":["store"],"desc":"礦山的行政辦公室","location":"廢棄礦坑"},
+    "天空豪宅":{"type":"house","price":4000,"functions":["rest","study","craft"],"desc":"高台上的豪宅","location":"霧海群島"},
 }
 
 
@@ -1143,18 +1263,18 @@ def generate_npc_dialogues() -> Dict[str, list]:
     dialogues = {}
     for name, npc_data in ALL_NPCS.items():
         cats = npc_data.get("token_categories", [])
-        lines = [npc_data.get("greeting", "「こんにちは。」")]
-        if "combat" in cats: lines.extend(["「戦いなら任せて。」","「実戦が一番の教師だ。」","「武器の手入れは大事だ。」"])
-        if "craft" in cats: lines.extend(["「何か作ろうか？」","「素材があれば何でも作れる。」","「職人の技を見せよう。」"])
-        if "knowledge" in cats: lines.extend(["「知っていることを話そう。」","「知識は力だ。」","「本を読むことを勧める。」"])
-        if "social" in cats: lines.extend(["「話し相手になってくれる？」","「今日はいい天気だね。」","「一緒に食事しない？」"])
-        if "element" in cats: lines.extend(["「元素の力を感じる...」","「自然のエネルギーが満ちている。」","「元素のバランスが大事だ。」"])
-        if "energy" in cats: lines.extend(["「靈力が満ちているね。」","「氣の流れを感じる。」","「エネルギーをチャージしよう。」"])
-        if "lore" in cats: lines.extend(["「昔話を聞きたい？」","「この地には古い伝説がある。」","「歴史は繰り返す。」"])
-        if "exploration" in cats: lines.extend(["「新しい場所を探検しよう。」","「地図を見せてくれ。」","「荒野に冒険の香りがする。」"])
-        lines.append("「また会おう。」")
+        lines = [npc_data.get("greeting", "「你好啊。」")]
+        if "combat" in cats: lines.extend(["「戰鬥的話就交給我吧。」","「實戰才是最好的老師。」","「武器的保養很重要。」"])
+        if "craft" in cats: lines.extend(["「要我幫你做點什麼嗎？」","「只要有材料，什麼都能做出來。」","「讓你看見工匠的手藝。」"])
+        if "knowledge" in cats: lines.extend(["「來聊聊我所知道的吧。」","「知識就是力量。」","「多讀點書準沒錯。」"])
+        if "social" in cats: lines.extend(["「願意陪我說說話嗎？」","「今天天氣真不錯呢。」","「要一起吃飯嗎？」"])
+        if "element" in cats: lines.extend(["「我能感受到元素的力量……」","「自然的能量正滿溢而出。」","「元素的平衡非常重要。」"])
+        if "energy" in cats: lines.extend(["「靈力正充盈著呢。」","「我能感受到氣的流動。」","「幫能量充個電吧。」"])
+        if "lore" in cats: lines.extend(["「想聽聽古老的故事嗎？」","「這片土地流傳著古老的傳說。」","「歷史總是不斷重演。」"])
+        if "exploration" in cats: lines.extend(["「我們去探索新的地方吧。」","「把地圖拿來給我看。」","「荒野中飄散著冒險的氣息。」"])
+        lines.append("「下次再見。」")
         # Add random flavor
-        flavors = [f"「{name}は微笑んだ。」",f"「{name}は考え込んでいる。」",f"「{name}は遠くを見つめている。」"]
+        flavors = [f"「{name}微微笑了。」",f"「{name}若有所思地沉思著。」",f"「{name}眺望著遠方。」"]
         lines.extend(flavors)
         dialogues[name] = lines
     return dialogues
@@ -1188,144 +1308,10 @@ def expand_game():
     # ════════════════════════════════════════════════
     # Card system integration: ORG/NAT/RC
     # ════════════════════════════════════════════════
-    
-    # Factions (from ORG cards)
-    sim_systems.FACTIONS = {
-  "ORG-03": {
-    "name": "紫晶石集會",
-    "lore": "W01 靈子塵埃",
-    "relations": {
-      "關係_對外認知": "對外認知: 無。尚未被任何外部組織知曉",
-      "關係_水晶能與特定人類產生": "水晶能與特定人類產生共鳴，賦予變身能力: 水晶的來源（天然？人造？古代遺產？）",
-      "關係_變身後的形態與能力因": "變身後的形態與能力因水晶顏色而異: 水晶能量的上限與持續時間",
-      "關係_水晶可透過接觸進行分": "水晶可透過接觸進行分配，但接受者需與水晶有共鳴: 長期使用水晶是否對人體有副作用"
-    }
-  },
-  "ORG-04": {
-    "name": "失戀集團",
-    "lore": "W01 靈子塵埃",
-    "relations": {}
-  },
-  "ORG-05": {
-    "name": "終末燭光",
-    "lore": "W01 靈子塵埃",
-    "relations": {}
-  },
-  "ORG-06": {
-    "name": "新世界集團",
-    "lore": "W01 靈子塵埃",
-    "relations": {
-      "關係_聖諭同盟與唯靈聯邦": "聖諭同盟與唯靈聯邦: 組織在兩大陣營內部都有滲透。他們的長期計劃可能包括利用兩大陣營的戰爭來掩護「黎明計劃」的執行"
-    }
-  },
-  "ORG-08": {
-    "name": "脈動工業（Pulse Industrie",
-    "lore": "W01 靈子塵埃",
-    "relations": {
-      "歷史_歷史線": "歷史線: 冷戰線（成立約 15 年）"
-    }
-  },
-  "ORG-09": {
-    "name": "永恆義體（Eternal Cyberne",
-    "lore": "W01 靈子塵埃",
-    "relations": {
-      "歷史_歷史線": "歷史線: 冷戰線（成立約 8 年，比脈動工業晚）"
-    }
-  },
-  "ORG-10": {
-    "name": "鐵砧防務（Anvil Defense）",
-    "lore": "W01 靈子塵埃",
-    "relations": {
-      "歷史_歷史線": "歷史線: 冷戰線（成立約 25 年，原為軍事實驗室，後獨立）"
-    }
-  },
-  "ORG-16": {
-    "name": "鼠族工業聯合體（簡稱「鼠聯」）",
-    "lore": "",
-    "relations": {
-      "關係_競爭對手": "競爭對手: 貓族海盜（非正式，但常被搶）"
-    }
-  },
-  "ORG-17": {
-    "name": "貓族海盜聯合艦隊（簡稱「黑帆」）",
-    "lore": "",
-    "relations": {
-      "關係_競爭對手": "競爭對手: 鼠族工業聯合體（目標）、陸地海軍（偶爾）"
-    }
-  },
-  "ORG-18": {
-    "name": "藍鰭航運",
-    "lore": "",
-    "relations": {}
-  },
-  "ORG-19": {
-    "name": "潮汐基金會",
-    "lore": "",
-    "relations": {}
-  },
-  "ORG-20": {
-    "name": "納迦皇家地熱",
-    "lore": "",
-    "relations": {
-      "關係_競爭對手": "競爭對手: 莫比迪克邦联的潮汐能产业（无直接竞争，因市场不同）"
-    }
-  },
-  "ORG-21": {
-    "name": "人魚聲吶網絡",
-    "lore": "",
-    "relations": {}
-  },
-  "ORG-22": {
-    "name": "海蛞蝓生技",
-    "lore": "",
-    "relations": {}
-  },
-  "ORG-23": {
-    "name": "水母幻光娛樂",
-    "lore": "",
-    "relations": {}
-  },
-  "ORG-24": {
-    "name": "海葵共生農場",
-    "lore": "",
-    "relations": {}
-  }
-}
-    
-    # Nations (from NAT cards)
-    sim_systems.NATIONS = {
-  "NAT-01": {
-    "name": "「神權引領進化」。靈子是神賜的恩典，應以",
-    "lore": "「神權引領進化」。靈子是神賜的恩典，應以符文工藝優雅地運用，而非粗暴的工業化"
-  },
-  "NAT-02": {
-    "name": "「靈子應被工具化」。靈子不是神聖的，它是",
-    "lore": "「靈子應被工具化」。靈子不是神聖的，它是可被測量、提煉、工業化應用的資源。神靈種不是守護神，是武器"
-  },
-  "NAT-03": {
-    "name": "「不參與陣營對抗」。拒絕在聖諭同盟與唯靈",
-    "lore": "「不參與陣營對抗」。拒絕在聖諭同盟與唯靈聯邦之間選邊"
-  },
-  "NAT-04": {
-    "name": "「利潤不選邊」。同時向聖諭同盟與唯靈聯邦",
-    "lore": "「利潤不選邊」。同時向聖諭同盟與唯靈聯邦出售資源、技術、與軍事物資"
-  },
-  "NAT-05": {
-    "name": "「和平來自於力量均勢」。向所有陣營出售武",
-    "lore": "「和平來自於力量均勢」。向所有陣營出售武器，確保任何一方都無法取得決定性優勢"
-  },
-  "NAT-06": {
-    "name": "莫比迪克自由邦聯（簡稱「莫比迪克」）",
-    "lore": "W01 靈子塵埃"
-  },
-  "NAT-07": {
-    "name": "阿比薩深渊联邦",
-    "lore": "W01 靈子塵埃"
-  }
-}
+    # FACTIONS/NATIONS 由 sim_systems 基底提供（名稱與描述已正確），不再覆寫。
     
     # Rules (from RC cards)
-    sim_systems.ACTIVE_RULES = {
+    _new_rules = {
   "RC-01": {
     "name": "迴廊 (The Corridor)",
     "lore": "連接多元宇宙各個世界線的「橋樑」，由概念、數據流、意識碎片和世界法則交織而成的虛無維度",
@@ -1377,17 +1363,17 @@ def expand_game():
     "mechanism": ""
   },
   "RC-12": {
-    "name": "蝠群襲掠婚規則（Bat Flock Raid-We",
+    "name": "蝠群襲掠婚規則（Bat Flock Raid-Wedding Code）",
     "lore": "W01 靈子塵埃（煦掠族群）",
     "mechanism": "透過「捕食儀式化」篩選具備警覺性與回應意願的伴侶"
   },
   "RC-13": {
-    "name": "至高神祇命名混合算法（Theonymic Blen",
+    "name": "至高神祇命名混合算法（Theonymic Blending Algorithm）",
     "lore": "W01 靈子塵埃（神話層）",
     "mechanism": "將神祇在不同文化與時期的稱呼「碎片」透過演算法混合為全名，並簡化為日常使用姓名。"
   },
   "RC-14": {
-    "name": "神祇召喚全名吟唱規則（Theonymic Invo",
+    "name": "神祇召喚全名吟唱規則（Theonymic Invocation Rule）",
     "lore": "跨世界線（適用於W01神話層及任何存在「全名」的高位存在）",
     "mechanism": "將「召喚神祇」從單純的擲骰判定，轉變為需要玩家「實際唸出全名」的表演環節，增加遊戲的荒誕性與儀式感"
   },
@@ -1402,6 +1388,9 @@ def expand_game():
     "mechanism": ""
   }
 }
+    for _rid, _rdata in _new_rules.items():
+        if _rid not in sim_systems.ACTIVE_RULES:
+            sim_systems.ACTIVE_RULES[_rid] = _rdata
     
 
     # Assign NPC affiliations based on relation tokens
@@ -1540,6 +1529,16 @@ def expand_game():
             sim_systems.LOCATION_ENEMIES.setdefault(loc, []).append(e["name"])
             cnt["enemy_dist"] += 1
     
+    # 正規化敵人名稱：日文漢字 → 繁體中文（與遊戲文本一致，如 鉄甲虫→鐵甲蟲）
+    _JP_TW_ENEMY = {"鉄": "鐵", "亀": "龜", "猪": "豬", "黄": "黃"}
+    _enemy_name_map = {}
+    for _e in sim_systems.ENEMIES:
+        _new = "".join(_JP_TW_ENEMY.get(c, c) for c in _e["name"])
+        _enemy_name_map[_e["name"]] = _new
+        _e["name"] = _new
+    for _loc, _names in sim_systems.LOCATION_ENEMIES.items():
+        sim_systems.LOCATION_ENEMIES[_loc] = [_enemy_name_map.get(n, n) for n in _names]
+    
     # NPCs
     for name, nd in ALL_NPCS.items():
         if name not in sim_systems.NPC_SCHEDULES:
@@ -1562,6 +1561,10 @@ def expand_game():
             'location': nd.get('location', ''),
             'token_categories': nd.get('token_categories', []),
             'offers': nd.get('offers', []),
+            'role': nd.get('role', ''),
+            'greeting': nd.get('greeting', ''),
+            'schedule': nd.get('schedule', []),
+            'is_merchant': nd.get('is_merchant', False),
         }
     # Quests
     existing_q = {q["id"] for q in sim_systems.QUESTS}
@@ -1594,22 +1597,22 @@ def expand_game():
     # Also sync VEHICLE_LOCATIONS for all vehicles (keyed by loc -> veh)
     # Build reverse index: every new vehicle → its primary location
     _vehicle_to_primary_loc = {
-        "自転車":       "便利店",
-        "マウンテンバイク": "森林深處",
+        "自行車":       "便利店",
+        "登山自行車":   "森林深處",
         "駿馬":         "卡洛夫角",
         "大型馬車":     "秘密鐵工廠",
         "漁船":         "鏡湖",
         "帆船":         "鏡湖",
-        "オートバイ":   "聖十字校園",
-        "大型オートバイ": "卡洛夫角",
-        "ジープ":       "廢棄礦坑",
+        "機車":         "聖十字校園",
+        "重型機車":     "卡洛夫角",
+        "吉普車":       "廢棄礦坑",
         "大型帆船":     "卡洛夫角",
-        "熱気球":       "聖十字校園",
-        "蒸気機関車":   "秘密鐵工廠",
-        "魔法の箒":     "英靈殿",
-        "魔法の絨毯":   "聖十字校園",
-        "飛空挺":       "卡洛夫角",
-        "竜騎乗":       "森林深處",
+        "熱氣球":       "聖十字校園",
+        "蒸氣機車":     "秘密鐵工廠",
+        "魔法掃帚":     "英靈殿",
+        "魔法飛毯":     "聖十字校園",
+        "飛空艇":       "卡洛夫角",
+        "龍騎乘":       "森林深處",
         "雪橇":         "廢棄礦坑",
     }
     # Build VEHICLE_TO_LOCATION reverse mapping (all vehicles → their location)
@@ -1677,24 +1680,24 @@ def expand_game():
             cnt["recipes"] += 1
         # Scene card locations → merge into WORLD_MAP
     _NEW_LOCATION_VIBES = {
-        "概念學術高等學校": "📚 學術の薫り漂う校舎",
-        "學生宿舍": "🏠 靜かな學生の住まい",
-        "校園後方廢棄倉庫": "🏚 使われなくなった倉庫",
-        "概念戰場模擬區": "⚔ 模擬戦用の広場",
-        "地下避難所": "🕳 地下に広がる避難施設",
-        "夜間巡逻路線": "🌙 夜の巡邏路",
-        "校園屋頂": "🌅 校舎の屋上、見晴らしが良い",
-        "食堂": "🍽 學生たちの集う食堂",
-        "圖書館分館": "📖 小さな図書室",
-        "迴廊深層夢境": "✨ 夢の回廊、現実が曖昧になる",
-        "綻放混成園": "🌺 花が咲き乱れる庭園",
-        "軌道居住站大學院": "🚀 宇宙に浮かぶ学術都市",
-        "銀行區": "🏛 荘厳な銀行街",
-        "珊瑚台": "🪸 珊瑚が輝く台地",
-        "黑淵台": "🌑 深淵を見下ろす崖",
-        "彩紋礁": "🌈 色彩豊かな珊瑚礁",
-        "流光": "💫 光が流れる神秘的な場所",
-        "鏡湖周邊": "💧 鏡のように靜かな湖面",
+        "概念學術高等學校": "📚 學術氛圍濃厚的校舍",
+        "學生宿舍": "🏠 寧靜的學生住所",
+        "校園後方廢棄倉庫": "🏚 早已無人使用的倉庫",
+        "概念戰場模擬區": "⚔ 模擬戰用廣場",
+        "地下避難所": "🕳 向地下延伸的避難設施",
+        "夜間巡邏路線": "🌙 夜間巡邏路線",
+        "校園屋頂": "🌅 校舍屋頂，視野極佳",
+        "食堂": "🍽 學生們聚集的食堂",
+        "圖書館分館": "📖 小型圖書室",
+        "迴廊深層夢境": "✨ 夢境迴廊，現實變得模糊",
+        "綻放混成園": "🌺 繁花盛開的庭園",
+        "軌道居住站大學院": "🚀 漂浮在宇宙中的學術都市",
+        "銀行區": "🏛 莊嚴的銀行街",
+        "珊瑚台": "🪸 珊瑚閃耀的高地",
+        "黑淵台": "🌑 俯瞰深淵的懸崖",
+        "彩紋礁": "🌈 色彩繽紛的珊瑚礁",
+        "流光": "💫 流光溢彩的神祕之地",
+        "鏡湖周邊": "💧 鏡面般寧靜的湖面",
     }
     _SCENE_TO_WORLD_CONNECTIONS = {
         "概念學術高等學校": {"south":"聖十字校園"},
@@ -1702,7 +1705,7 @@ def expand_game():
         "校園後方廢棄倉庫": {"enter":"聖十字校園"},
         "概念戰場模擬區": {"enter":"聖十字校園"},
         "地下避難所": {"enter":"聖十字校園"},
-        "夜間巡逻路線": {"west":"聖十字校園"},
+        "夜間巡邏路線": {"west":"聖十字校園"},
         "校園屋頂": {"enter":"聖十字校園"},
         "食堂": {"north":"聖十字校園"},
         "圖書館分館": {"south":"聖十字校園"},
@@ -1725,7 +1728,7 @@ def expand_game():
         conn = _SCENE_TO_WORLD_CONNECTIONS.get(sname, {"south":"聖十字校園"})
         sim_systems.WORLD_MAP[sname] = conn
         # Add vibe
-        vibe = _NEW_LOCATION_VIBES.get(sname, sdata.get("vibe", "📍 未知の地"))
+        vibe = _NEW_LOCATION_VIBES.get(sname, sdata.get("vibe", "📍 未知之地"))
         sim_systems.LOCATION_VIBES[sname] = vibe
         # Assign scene type for new locations
         loc_type = "outdoor"
@@ -1745,8 +1748,8 @@ def expand_game():
     cnt["locations"] = scene_locs_added
     
     # Final VEHICLE_LOCATIONS fallback: ensure ALL WORLD_MAP locations have vehicles
-    _vlist = ['腳踏車','馬','馬車','小舟','自転車','マウンテンバイク','駿馬','大型馬車','漁船',
-              'オートバイ','ジープ','帆船','熱気球','魔法の箒','飛空挺','竜騎乗','雪橇']
+    _vlist = ['腳踏車','馬','馬車','小舟','自行車','登山自行車','駿馬','大型馬車','漁船',
+    '機車','重型機車','吉普車','帆船','大型帆船','熱氣球','蒸氣機車','魔法掃帚','魔法飛毯','飛空艇','龍騎乘','雪橇']
     if not hasattr(sim_systems, 'VEHICLE_LOCATIONS'):
         sim_systems.VEHICLE_LOCATIONS = {}
     _occupied = set(sim_systems.VEHICLE_LOCATIONS.keys())
@@ -1769,20 +1772,42 @@ def expand_game():
             sim_systems.WORLD_MAP[_loc] = _conn
             if _loc not in sim_systems.LOCATION_VIBES:
                 _vibe_map = {
-                    '中央大圖書館': '📚 知識が詰まった巨大図書館',
-                    '西翼大市集': '🏪 異世界の商品が並ぶ大市場',
-                    '小吉鎮': '🍃 温かい雰囲気の田舎町',
-                    '大根莖村': '🌱 地下の神秘的な村',
-                    '迴廊': '🧩 空間が歪む古代の回廊',
-                    '魔女學府': '🔮 魔法と科学が交錯する学び舎',
+        '中央大圖書館': '📚 藏書豐富的巨大圖書館',
+        '西翼大市集': '🏪 陳列著異世界商品的市集',
+        '小吉鎮': '🍃 氛圍溫馨的鄉村小鎮',
+        '大根莖村': '🌱 地下的神祕村莊',
+        '迴廊': '🧩 空間扭曲的古代迴廊',
+        '魔女學府': '🔮 魔法與科學交織的學府',
                 }
-                sim_systems.LOCATION_VIBES[_loc] = _vibe_map.get(_loc, '🌍 未知の場所')
+                sim_systems.LOCATION_VIBES[_loc] = _vibe_map.get(_loc, '🌍 未知之地')
             if _loc not in sim_systems.LOCATION_TYPES:
                 sim_systems.LOCATION_TYPES[_loc] = "indoor" if _loc in ("中央大圖書館","迴廊","魔女學府") else "outdoor"
     if hasattr(sim_systems, 'LOCATION_NATIONS'):
         for _loc in _NPC_FALLBACK_LOCATIONS:
             if _loc not in sim_systems.LOCATION_NATIONS:
                 sim_systems.LOCATION_NATIONS[_loc] = ""
+    
+    # ════════════════════════════════════════════════════════════
+    # 地圖連通性修正：補齊雙向邊（常理——能進就能出）
+    # 所有 WORLD_MAP 寫入完成後統一處理，避免單向死路卡死 NPC 家／任務回報。
+    # ════════════════════════════════════════════════════════════
+    _REVERSE_DIR = {"east": "west", "west": "east", "north": "south", "south": "north",
+                     "enter": "exit", "exit": "enter", "deep": "up", "up": "deep"}
+    _bidir_fixed = 0
+    for _loc in list(sim_systems.WORLD_MAP.keys()):
+        for _d, _dest in list(sim_systems.WORLD_MAP.get(_loc, {}).items()):
+            _rev = _REVERSE_DIR.get(_d)
+            if not _rev:
+                continue
+            _dest_conns = sim_systems.WORLD_MAP.setdefault(_dest, {})
+            # 已可回到 _loc 則跳過（任意方向有通往 _loc 的邊即可）
+            if any(v == _loc for v in _dest_conns.values()):
+                continue
+            if _rev not in _dest_conns:
+                _dest_conns[_rev] = _loc
+                _bidir_fixed += 1
+    if _bidir_fixed:
+        print(f"[game_data] 地圖雙向邊修正: +{_bidir_fixed}")
     
     after = {
         "items": len(sim_systems.ITEM_CATALOG),

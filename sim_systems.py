@@ -38,7 +38,7 @@ FACTIONS = {
         "description": "「和平來自於力量均勢」。向所有陣營出售武器，確保任何一方都無法取得決定性優勢"
     },
     "NAT-06": {
-        "name": "莫比迪克自由邦聯 (莫比迪克)",
+        "name": "莫比迪克自由邦聯（簡稱「莫比迪克」）",
         "type": "nation",
         "description": "W01 靈子塵埃"
     },
@@ -165,7 +165,7 @@ NATIONS = {
         "description": "「和平來自於力量均勢」。向所有陣營出售武器，確保任何一方都無法取得決定性優勢"
     },
     "NAT-06": {
-        "name": "莫比迪克自由邦聯 (莫比迪克)",
+        "name": "莫比迪克自由邦聯（簡稱「莫比迪克」）",
         "type": "nation",
         "description": "W01 靈子塵埃"
     },
@@ -253,7 +253,7 @@ LOCATION_NATIONS = {
         "description": "「和平來自於力量均勢」。向所有陣營出售武器，確保任何一方都無法取得決定性優勢"
     },
     "NAT-06": {
-        "name": "莫比迪克自由邦聯 (莫比迪克)",
+        "name": "莫比迪克自由邦聯（簡稱「莫比迪克」）",
         "type": "nation",
         "description": "W01 靈子塵埃"
     },
@@ -287,7 +287,7 @@ ITEM_CATALOG = {
     "木柄":  {"type": "material", "weight": 0.5, "value": 5,  "tags": ["wood"], "desc": "武器握柄材料"},
     "鐵礦":  {"type": "material", "weight": 2.0, "value": 15, "tags": ["ore"], "desc": "未熔煉的鐵礦石"},
     "火元素":{"type": "material", "weight": 0.3, "value": 30, "tags": ["element"], "desc": "凝聚的火元素碎片"},
-    "鐵錠":  {"type": "material", "weight": 1.0, "value": 20, "tags": ["metal"], "desc": "熔煉後的鐵錠"},
+    "鐵錠":  {"type": "material", "weight": 1.0, "value": 35, "tags": ["metal"], "desc": "熔煉後的鐵錠"},
     "皮革":  {"type": "material", "weight": 0.8, "value": 12, "tags": ["leather"], "desc": "處理過的獸皮"},
     "布料":  {"type": "material", "weight": 0.3, "value": 8,  "tags": ["cloth"], "desc": "普通布料"},
     "水晶碎片":{"type":"material","weight":0.2,"value": 25, "tags": ["crystal"], "desc":"發著微光的水晶碎片"},
@@ -296,18 +296,20 @@ ITEM_CATALOG = {
     "靈木":  {"type": "material", "weight": 0.7, "value": 35, "tags": ["wood","magic"], "desc": "蘊含靈力的木材"},
     "絲線":  {"type": "material", "weight": 0.1, "value": 6,  "tags": ["cloth"], "desc": "精緻的絲線"},
     "黏土":  {"type": "material", "weight": 1.0, "value": 3,  "tags": ["clay"], "desc": "可塑形的黏土"},
+    "毒針":  {"type": "material", "weight": 0.2, "value": 25, "tags": ["venom"], "desc": "蠍尾的毒針，可作為素材"},
+    "古代硬貨":{"type":"junk", "weight": 0.1, "value": 150, "tags": ["rare"], "desc": "古代文明流通的稀有貨幣，價值不菲"},
 
     # ── Consumables (10) ──
     "火焰藥水":{"type":"consumable","weight":0.3,"value": 50, "heal_hp": 50, "heal_sp":10, "max_stack":10, "desc":"恢復50HP+10SP"},
     "治療藥水":{"type":"consumable","weight":0.3,"value": 40, "heal_hp": 40, "max_stack":10, "desc":"恢復40HP"},
-    "魔力藥水":{"type":"consumable","weight":0.3,"value": 35, "heal_sp": 30, "max_stack":10, "desc":"恢復30SP"},
+    "魔力藥水":{"type":"consumable","weight":0.3,"value": 45, "heal_sp": 30, "max_stack":10, "desc":"恢復30SP"},
     "乾糧":   {"type":"consumable","weight":0.5,"value": 8,  "heal_hp": 12, "max_stack":20, "desc":"恢復12HP"},
-    "解毒草": {"type":"consumable","weight":0.2,"value": 20, "max_stack":10, "desc":"解除中毒狀態"},
-    "靈力藥": {"type":"consumable","weight":0.3,"value": 45, "heal_sp": 50, "max_stack":10, "desc":"恢復50SP"},
-    "生命果": {"type":"consumable","weight":0.4,"value": 60, "heal_hp": 80, "max_stack":5, "desc":"恢復80HP（稀有）"},
+    "解毒草": {"type":"consumable","weight":0.2,"value": 40, "max_stack":10, "desc":"解除中毒狀態"},
+    "靈力藥": {"type":"consumable","weight":0.3,"value": 50, "heal_sp": 50, "max_stack":10, "desc":"恢復50SP"},
+    "生命果": {"type":"consumable","weight":0.4,"value": 120, "heal_hp": 80, "max_stack":5, "desc":"恢復80HP（稀有）"},
     "提神茶": {"type":"consumable","weight":0.2,"value": 15, "heal_sp": 15, "max_stack":20, "desc":"恢復15SP"},
     "繃帶":   {"type":"consumable","weight":0.2,"value": 12, "heal_hp": 15, "max_stack":10, "desc":"簡易包紮，恢復15HP"},
-    "濃縮藥水":{"type":"consumable","weight":0.4,"value": 80, "heal_hp": 100,"heal_sp":30, "max_stack":5, "desc":"高級恢復品"},
+    "濃縮藥水":{"type":"consumable","weight":0.4,"value": 100, "heal_hp": 100,"heal_sp":30, "max_stack":5, "desc":"高級恢復品"},
 
     # ── Weapons (7) ──
     "鐵劍":{"type":"weapon","weight":3.0,"value": 80, "durability":100,"slot":"right_hand",
@@ -328,7 +330,7 @@ ITEM_CATALOG = {
     # ── Armor (7) ──
     "皮甲": {"type":"armor","weight":2.0,"value": 60, "durability":80, "slot":"torso",
              "stat_multipliers":{"defense":0.2,"spd":-0.05},"desc":"皮甲 (+20%DEF)"},
-    "鐵甲": {"type":"armor","weight":5.0,"value": 150,"durability":200,"slot":"torso",
+    "鐵甲": {"type":"armor","weight":5.0,"value": 200,"durability":200,"slot":"torso",
              "stat_multipliers":{"defense":0.4,"spd":-0.15},"desc":"鐵甲 (+40%DEF,-15%SPD)"},
     "皮帽": {"type":"armor","weight":0.5,"value": 25, "durability":50, "slot":"head",
              "stat_multipliers":{"defense":0.1},"desc":"皮帽 (+10%DEF)"},
@@ -401,7 +403,7 @@ RECIPES = [
      "ingredients":[{"item":"鐵礦","quantity":3},{"item":"木柄","quantity":1}],
      "result_item":"鐵劍","result_quantity":1,"failure_chance":0.2},
     {"recipe_id":"R03","name":"鐵錠","category":"process",
-     "ingredients":[{"item":"鐵礦","quantity":5}],
+     "ingredients":[{"item":"鐵礦","quantity":3}],
      "result_item":"鐵錠","result_quantity":2,"failure_chance":0.0},
     {"recipe_id":"R04","name":"治療藥水","category":"alchemize",
      "ingredients":[{"item":"草藥","quantity":3},{"item":"空瓶","quantity":1}],
@@ -413,13 +415,13 @@ RECIPES = [
      "ingredients":[{"item":"鐵錠","quantity":3},{"item":"木柄","quantity":1}],
      "result_item":"鋼刀","result_quantity":1,"failure_chance":0.25},
     {"recipe_id":"R07","name":"魔力藥水","category":"alchemize",
-     "ingredients":[{"item":"魔法粉","quantity":2},{"item":"空瓶","quantity":1}],
+     "ingredients":[{"item":"魔法粉","quantity":1},{"item":"空瓶","quantity":1}],
      "result_item":"魔力藥水","result_quantity":1,"failure_chance":0.1},
     {"recipe_id":"R08","name":"解毒草","category":"alchemize",
-     "ingredients":[{"item":"草藥","quantity":1},{"item":"水晶碎片","quantity":1}],
+     "ingredients":[{"item":"草藥","quantity":2},{"item":"空瓶","quantity":1}],
      "result_item":"解毒草","result_quantity":1,"failure_chance":0.1},
     {"recipe_id":"R09","name":"靈力藥","category":"alchemize",
-     "ingredients":[{"item":"靈木","quantity":2},{"item":"空瓶","quantity":1}],
+     "ingredients":[{"item":"靈木","quantity":1},{"item":"空瓶","quantity":1}],
      "result_item":"靈力藥","result_quantity":1,"failure_chance":0.15},
     {"recipe_id":"R10","name":"護身符","category":"craft",
      "ingredients":[{"item":"絲線","quantity":3},{"item":"水晶碎片","quantity":2}],
@@ -437,10 +439,10 @@ RECIPES = [
      "ingredients":[{"item":"鐵礦","quantity":2},{"item":"木柄","quantity":1}],
      "result_item":"匕首","result_quantity":1,"failure_chance":0.1},
     {"recipe_id":"R15","name":"水晶法杖","category":"craft",
-     "ingredients":[{"item":"靈木","quantity":3},{"item":"水晶碎片","quantity":3},{"item":"魔法粉","quantity":2}],
+     "ingredients":[{"item":"靈木","quantity":2},{"item":"水晶碎片","quantity":2},{"item":"魔法粉","quantity":1}],
      "result_item":"水晶法杖","result_quantity":1,"failure_chance":0.4},
     {"recipe_id":"R16","name":"生命果","category":"alchemize",
-     "ingredients":[{"item":"龍鱗","quantity":1},{"item":"治療藥水","quantity":2}],
+     "ingredients":[{"item":"龍鱗","quantity":1},{"item":"治療藥水","quantity":1}],
      "result_item":"生命果","result_quantity":1,"failure_chance":0.4},
     # ── Repair recipes (物品修復) ──
     {"recipe_id":"R17","name":"修復武器","category":"repair",
@@ -451,9 +453,10 @@ RECIPES = [
      "result_item":"修復服務","result_quantity":1,"failure_chance":0.0,"repair_all":True},
 ]
 
-def repair_equipment(equipment_manager, character):
+def repair_equipment(equipment_manager, character, free=False):
     """Repair all equipped items using materials from inventory.
     Returns (success, message).
+    free=True: 不另扣材料（材料由修復服務配方支付，如 R17/R18）。
     """
     repaired_count = 0
     for sid, eq in equipment_manager.slots.items():
@@ -461,14 +464,14 @@ def repair_equipment(equipment_manager, character):
             mx = eq["item"].get("durability", 100)
             cur = eq["item"].get("current_durability", mx)
             if cur < mx:
-                # Repair cost: 1 iron + 1 leather per item
                 inv = character.get("inventory", [])
                 cost_iron = 1 if "鐵礦" in inv or "鐵錠" in inv else 0
-                if cost_iron:
-                    if "鐵礦" in inv:
-                        inv.remove("鐵礦")
-                    elif "鐵錠" in inv:
-                        inv.remove("鐵錠")
+                if free or cost_iron:
+                    if not free:
+                        if "鐵礦" in inv:
+                            inv.remove("鐵礦")
+                        elif "鐵錠" in inv:
+                            inv.remove("鐵錠")
                     eq["item"]["current_durability"] = mx
                     eq["durability_loss"] = 0
                     repaired_count += 1
@@ -476,13 +479,19 @@ def repair_equipment(equipment_manager, character):
         return True, "修復了 %d 件裝備" % repaired_count
     return False, "沒有需要修復的裝備，或缺少修復材料"
 
-def craft_item(recipe_id, inventory):
+def craft_item(recipe_id, inventory, equipment=None, character=None):
     recipe = next((r for r in RECIPES if r["recipe_id"] == recipe_id), None)
     if not recipe:
         return False, None, "未知配方"
     for ing in recipe["ingredients"]:
         if inventory.count(ing["item"]) < ing["quantity"]:
             return False, None, "缺少材料: %s x%d" % (ing["item"], ing["quantity"])
+    # 修復服務類配方（R17/R18）：前置檢查裝備管理器，避免白扣材料。
+    # 修復不是產出物品——「修復服務」不在 ITEM_CATALOG，
+    # 若照一般配方會把不存在的物品塞進物品欄。
+    is_repair = bool(recipe.get("repair_all") or recipe.get("category") == "repair")
+    if is_repair and (equipment is None or character is None):
+        return False, None, "沒有裝備可修復（需要裝備管理器）"
     for ing in recipe["ingredients"]:
         for _ in range(ing["quantity"]):
             inventory.remove(ing["item"])
@@ -491,6 +500,15 @@ def craft_item(recipe_id, inventory):
         for ing in recipe["ingredients"]:
             inventory.append(ing["item"])
         return False, None, "合成失敗（材料已歸還）"
+    if is_repair:
+        # 修復配方已支付材料，修復時不另扣（free=True）
+        suc, msg = repair_equipment(equipment, character, free=True)
+        if not suc:
+            # 無物可修：退還材料
+            for ing in recipe["ingredients"]:
+                for _ in range(ing["quantity"]):
+                    inventory.append(ing["item"])
+        return suc, None, msg
     result = recipe["result_item"]
     count = recipe["result_quantity"]
     for _ in range(count):
@@ -533,11 +551,25 @@ LOCATION_ENEMIES = {
     "鏡山":         ["石像鬼","幽靈","古代守衛"],
 }
 
-def get_enemy(location: str) -> Optional[dict]:
+def get_enemy(location: str, level: int = 1) -> Optional[dict]:
+    """依地點取得敵人。level 越高越可能遭遇強敵；低等級角色不會遇到遠古/兇暴級。"""
     names = LOCATION_ENEMIES.get(location, [])
     if not names:
         return None
-    name = _random.choice(names)
+    # 依角色等級過濾過強敵人（遠古/凶暴/兇暴/暗影/深淵系，含繁簡體）
+    strong_kw = ("遠古", "凶暴", "兇暴", "暗影", "深淵", "傳說")
+    pool = names
+    if level < 3:
+        pool = [n for n in names if not any(k in n for k in strong_kw)]
+    elif level < 5:
+        pool = [n for n in names if not any(k in n for k in strong_kw)]
+        if pool and _random.random() < 0.2 * (level - 2):
+            strong = [n for n in names if any(k in n for k in strong_kw)]
+            if strong:
+                pool = strong
+    if not pool:
+        pool = names
+    name = _random.choice(pool)
     for e in ENEMIES:
         if e["name"] == name:
             return dict(e)
@@ -769,7 +801,7 @@ def get_entry_requirement_hint(location):
 REAL_ESTATE = {
     "聖十字校園宿舍": {
         "type":"house", "price":500, "functions":["rest","store"],
-        "desc":"樸素的村莊小屋", "max_level":3,
+        "desc":"樸素的村莊小屋", "location":"聖十字校園", "max_level":3,
         "upgrades":[
             {"level":2, "cost":300, "add_functions":["study"], "desc":"增建書房"},
             {"level":3, "cost":600, "add_functions":["guest"], "desc":"增設客房"},
@@ -777,7 +809,7 @@ REAL_ESTATE = {
     },
     "西翼商店鋪": {
         "type":"shop", "price":800, "functions":["trade"],
-        "desc":"市集的小店鋪", "max_level":3,
+        "desc":"市集的小店鋪", "location":"西翼大市集", "max_level":3,
         "upgrades":[
             {"level":2, "cost":500, "add_functions":["rest"], "desc":"增設休息區"},
             {"level":3, "cost":1000, "add_functions":["craft"], "desc":"增設工坊區"},
@@ -785,7 +817,7 @@ REAL_ESTATE = {
     },
     "湖畔工坊": {
         "type":"workshop", "price":1200, "functions":["craft","rest"],
-        "desc":"鏡湖旁的工坊", "max_level":3,
+        "desc":"鏡湖旁的工坊", "location":"鏡湖", "max_level":3,
         "upgrades":[
             {"level":2, "cost":800, "add_functions":["study"], "desc":"增設研究區"},
             {"level":3, "cost":1500, "add_functions":["alchemy"], "desc":"增設煉金臺"},
@@ -793,14 +825,14 @@ REAL_ESTATE = {
     },
     "圖書館密室": {
         "type":"house", "price":2000, "functions":["rest","study"],
-        "desc":"圖書館內的安靜房間", "max_level":2,
+        "desc":"圖書館內的安靜房間", "location":"中央大圖書館", "max_level":2,
         "upgrades":[
             {"level":2, "cost":1200, "add_functions":["store"], "desc":"增設書架倉庫"},
         ],
     },
     "礦坑倉庫": {
         "type":"warehouse", "price":600, "functions":["store"],
-        "desc":"廢棄礦坑旁的倉庫", "max_level":2,
+        "desc":"廢棄礦坑旁的倉庫", "location":"廢棄礦坑", "max_level":2,
         "upgrades":[
             {"level":2, "cost":400, "add_functions":["rest"], "desc":"簡易改造為休息處"},
         ],
@@ -808,7 +840,7 @@ REAL_ESTATE = {
     # ── New property types per MAP_AND_SCENES.md ──
     "森林農場": {
         "type":"farm", "price":1500, "functions":["farm","rest"],
-        "desc":"森林深處的小農場", "max_level":3,
+        "desc":"森林深處的小農場", "location":"森林深處", "max_level":3,
         "upgrades":[
             {"level":2, "cost":800, "add_functions":["store"], "desc":"增設農具倉庫"},
             {"level":3, "cost":1600, "add_functions":["trade"], "desc":"增設農產直銷點"},
@@ -816,7 +848,7 @@ REAL_ESTATE = {
     },
     "鏡湖觀測塔": {
         "type":"tower", "price":2500, "functions":["study","observe"],
-        "desc":"鏡湖旁的觀測塔", "max_level":3,
+        "desc":"鏡湖旁的觀測塔", "location":"鏡湖", "max_level":3,
         "upgrades":[
             {"level":2, "cost":1200, "add_functions":["rest"], "desc":"增設休息室"},
             {"level":3, "cost":2000, "add_functions":["teleport"], "desc":"增設傳送陣"},
@@ -1192,13 +1224,13 @@ QUESTS = [
      "conditions":{"required_level":5,"required_quests":["MQ-02"],"time_available":{"start_hour":0,"end_hour":24}},
      "objectives":[{"type":"visit","target":"聖十字校園","detail":"探索聖十字校園地下層"},
                    {"type":"visit","target":"英靈殿","detail":"探索英靈殿"}],
-     "reward_exp":100,"reward_gold":40,"reward_item":"記憶水晶","reward_reputation":20,
+     "reward_exp":180,"reward_gold":80,"reward_item":"記憶水晶","reward_reputation":20,
      "next_quest":"MQ-04"},
     {"id":"MQ-04","title":"世界的盡頭","type":"main","giver":"系統",
      "desc":"前往卡洛夫角，尋找通往世界盡頭的道路。",
      "conditions":{"required_level":7,"required_quests":["MQ-03"],"time_available":{"start_hour":0,"end_hour":24}},
-     "objectives":[{"type":"visit","target":"卡洛夫角","detail":"到達卡洛夫角"},
-                   {"type":"defeat","target":"古代守衛","qty":1,"detail":"擊敗古代守衛"}],
+     "objectives":[{"type":"visit","target":"霧海群島","detail":"穿過卡洛夫角，到達霧海群島"},
+                   {"type":"defeat","target":"古代守衛","qty":1,"detail":"擊敗守衛世界盡頭的古代守衛"}],
      "reward_exp":200,"reward_gold":100,"reward_item":"神秘地圖","reward_reputation":30,
      "failure":{"timeout_hours":72,"on_fail":"penalty","penalty":{"gold":-50,"rep":-10}}},
 
@@ -1232,12 +1264,12 @@ QUESTS = [
      "conditions":{"required_level":5,"time_available":{"start_hour":0,"end_hour":24}},
      "objectives":[{"type":"visit","target":"廢棄礦坑","detail":"造訪廢棄礦坑"},
                    {"type":"collect","target":"鐵礦","qty":6,"detail":"收集6個鐵礦"}],
-     "reward_exp":70,"reward_gold":35,"reward_item":"鐵盔","reward_reputation":15},
+     "reward_exp":110,"reward_gold":55,"reward_item":"鐵盔","reward_reputation":15},
     {"id":"SQ-06","title":"貨物運送","type":"side","giver":"紅",
      "desc":"幫紅運送一批貨物到卡洛夫角。",
-     "conditions":{"required_relationships":{"紅":15},"time_available":{"start_hour":6,"end_hour":20}},
+     "conditions":{"required_level":4,"required_relationships":{"紅":15},"time_available":{"start_hour":6,"end_hour":20}},
      "objectives":[{"type":"visit","target":"卡洛夫角","detail":"造訪卡洛夫角"}],
-     "reward_exp":25,"reward_gold":40,"reward_item":"乾糧","reward_reputation":5,
+     "reward_exp":85,"reward_gold":50,"reward_item":"乾糧","reward_reputation":5,
      "reward_relationships":{"紅":10}},
     {"id":"SQ-07","title":"修理工具","type":"side","giver":"左間小蒼蘭",
      "desc":"左間小蒼蘭的工具壞了，需要鐵錠修理。",
@@ -1256,12 +1288,12 @@ QUESTS = [
      "conditions":{"required_level":2,"time_available":{"start_hour":0,"end_hour":24}},
      "objectives":[{"type":"collect","target":"木材","qty":3,"detail":"收集3份木材", "alt_item":"木柄"},
                    {"type":"collect","target":"皮革","qty":2,"detail":"收集2份皮革"}],
-     "reward_exp":20,"reward_gold":10,"reward_item":"空瓶","reward_reputation":3},
+     "reward_exp":45,"reward_gold":20,"reward_item":"空瓶","reward_reputation":3},
     {"id":"SQ-10","title":"探索英靈殿","type":"side","giver":"系統",
      "desc":"英靈殿最近傳出奇怪的聲音。",
      "conditions":{"required_level":4,"time_available":{"start_hour":0,"end_hour":24}},
      "objectives":[{"type":"visit","target":"英靈殿","detail":"造訪英靈殿"}],
-     "reward_exp":45,"reward_gold":20,"reward_item":"古老鑰匙","reward_reputation":10},
+     "reward_exp":75,"reward_gold":35,"reward_item":"古老鑰匙","reward_reputation":10},
 
     # ── Race-specific Tasks ──
     {"id":"TASK-01","title":"艦裝調整","type":"side","giver":"系統",
@@ -1276,7 +1308,7 @@ QUESTS = [
      "reward_exp":35,"reward_gold":25,"reward_item":"魔力藥水","reward_reputation":5},
     {"id":"TASK-03","title":"翼膜保養","type":"side","giver":"系統",
      "desc":"翼膜需要特殊材料來保養，才能維持飛行能力。",
-     "conditions":{"required_race":"竜族","required_level":3,"time_available":{"start_hour":0,"end_hour":24}},
+     "conditions":{"required_race":"龍族","required_level":3,"time_available":{"start_hour":0,"end_hour":24}},
      "objectives":[{"type":"collect","target":"靈木","qty":3,"detail":"收集3份靈木(翼膜保養)"}],
      "reward_exp":50,"reward_gold":30,"reward_item":"龍鱗","reward_reputation":5},
     {"id":"TASK-04","title":"義體校準","type":"side","giver":"系統",
@@ -1447,21 +1479,55 @@ def get_active_abilities(vehicle_name, character, location=""):
             continue
         if cost_type == "fuel":
             veh_state = character.get("vehicles", {}).get(vehicle_name, {})
-            if veh_state.get("fuel", 0) < cost:
+            _veh_fuel = veh_state.get("fuel", 0)
+            # 非數字燃料（生成載具，無限）不視為不足
+            if isinstance(_veh_fuel, (int, float)) and _veh_fuel < cost:
                 continue
         active.append((key, ab))
     return active
 
 
-def get_water_routes(current_location):
-    """Get water routes available from current location (bidirectional)."""
+def get_water_routes(current_location, character=None):
+    """Get water routes available from current location (bidirectional).
+
+    有移動能力的角色（飛行／艦娘艦裝航行／水棲游泳）不需小舟即可渡水：
+    — 飛行：飛越水域，到湖心島／水上集市
+    — 艦娘：艦裝即船，自行航行
+    — 水棲：游泳渡水
+    一般角色仍需小舟（渡水能力）。
+    """
     WATER_ROUTES = {
         "鏡湖":   {"boat_deep":"湖心島"},
         "湖心島": {"boat_back":"鏡湖"},
         "卡洛夫角":   {"boat_market":"水上集市"},
         "水上集市": {"boat_back":"卡洛夫角"},
     }
-    return WATER_ROUTES.get(current_location, {})
+    routes = WATER_ROUTES.get(current_location, {})
+    if not routes:
+        return {}
+    # 無角色參數（相容舊呼叫）：回傳小舟路線
+    if character is None:
+        return routes
+    # 判定移動能力（飛行／艦裝航行／游泳）
+    try:
+        from axis_system import movement_abilities
+        mob = movement_abilities(
+            text_race=str(character.get("race", "")),
+            mechanic_race=str(character.get("mechanic_race", "")),
+            lineage=(character.get("axis") or {}).get("lineage", ""),
+        )
+    except Exception:
+        mob = {"fly": False, "sail": False, "swim": False}
+    # 有移動能力：直接開通水域路線（不需小舟）
+    if mob.get("fly") or mob.get("sail") or mob.get("swim"):
+        return routes
+    # 一般角色：需騎乘小舟（或擁有小舟）才可渡水
+    riding = character.get("riding")
+    vehicles = character.get("vehicles", {}) or {}
+    has_boat = (riding == "小舟") or ("小舟" in vehicles and vehicles.get("小舟", {}).get("owned"))
+    if not has_boat:
+        return {}
+    return routes
 
 
 def do_fishing(character, location):
@@ -1975,6 +2041,9 @@ def roll_random_event(character):
 # ═══════════════════════════════════════════════════════════
 # RACE DATA — defines body parts, slots, bonuses per race
 # ═══════════════════════════════════════════════════════════
+# 註：required_tokens 欄位為舊 token 設計的殘留——目前無任何運行時代碼消費
+#（裝備/任務已改由軸譜五維度親和力判定；此欄僅保留以相容 docs/02-game-design/
+# CHARACTER_SYSTEM.md 之記載，屬文檔相容資料，勿再依賴。
 
 RACE_DATA = {
     "人類": {
@@ -2009,7 +2078,7 @@ RACE_DATA = {
         "base_hp": 80, "base_sp": 80,
         "desc": "擁有魔力核心的魔法使用者"
     },
-    "竜族": {
+    "龍族": {
         "body_parts": ["head", "torso", "left_arm", "right_arm", "left_leg", "right_leg", "wings", "horns"],
         "extra_slots": [("wings","翼部"), ("horns","角部")],
         "required_tokens": ["draconic"],
@@ -2025,7 +2094,7 @@ RACE_DATA = {
         "base_hp": 130, "base_sp": 20,
         "desc": "機械義體改造者"
     },
-    "精霊": {
+    "精靈": {
         "body_parts": ["head", "torso", "left_arm", "right_arm", "left_leg", "right_leg", "spirit_body"],
         "extra_slots": [("aura","靈裝")],
         "required_tokens": ["spiritual"],
@@ -2038,14 +2107,155 @@ RACE_DATA = {
 RACE_DETECT_MAP = {
     "naval": "艦娘",
     "beast": "獸娘",
-    "draconic": "竜族",
+    "draconic": "龍族",
     "mechanism": "機械",
     "element": "術士",
-    "spiritual": "精霊",
+    "spiritual": "精靈",
 }
 
-def detect_race(token_list: list) -> str:
-    """Detect character's race from their token categories."""
+# =============================================================================
+# ANGELA-MATRIX: [L3] [β] [A] [L5]
+# 物種分類架構（三軸系統）— 文本《物種分類架構（三軸系統）.txt》／卡片 WC-10
+# 四套平行三軸分類軸系：獸娘/魔物娘（N-C-P）、AI（F-A-O）、義體人（C-H-B）、
+# 神話種（D-O-M）。分類系譜為物種分類的文本權威來源。
+# =============================================================================
+SPECIES_LINEAGES = {
+    "獸娘": {
+        "system": "物種分類三軸系統",
+        "axes": {
+            "原種距離": {"N": "近原種", "S": "標準種", "F": "遠原種"},
+            "人形比例": {"H": "類人型", "S": "標準型", "C": "類原型"},
+            "混血譜系": {"P": "純血", "M1": "混血一級", "M2": "混血二級", "M3": "混血三級"},
+        },
+    },
+    "AI": {
+        "system": "F-A-O 三軸",
+        "axes": {
+            "人形模仿度": {"F0": "無形體", "F1": "抽象載體", "F2": "部分人形", "F3": "仿真人形"},
+            "自主性": {"A0": "被動型", "A1": "條件型", "A2": "學習型", "A3": "完全自主"},
+            "程序開放度": {"O0": "封閉黑箱", "O1": "部分開源", "O2": "完全開源"},
+        },
+    },
+    "義體人": {
+        "system": "C-H-B 三軸",
+        "axes": {
+            "義體化比例": {"C1": "輕度（<30%）", "C2": "中度（30%-70%）", "C3": "重度（70%-95%）", "C4": "全身義體（>95%）"},
+            "外觀人形保留度": {"H1": "完全人形", "H2": "部分暴露", "H3": "非人形態"},
+            "神經保留度": {"B1": "生物腦完整", "B2": "生物腦增強", "B3": "意識上傳"},
+        },
+    },
+    "神話種": {
+        "system": "D-O-M 三軸",
+        "axes": {
+            "神性濃度": {"D1": "傳說級", "D2": "信仰級", "D3": "原初級"},
+            "原典忠實度": {"O1": "自由改編", "O2": "部分保留", "O3": "高度還原"},
+            "存在維度": {"M1": "物質顯形", "M2": "靈體/概念", "M3": "跨維度"},
+        },
+    },
+}
+
+# 分類系譜 → 機制種族（RACE_DATA 層級）對應。分類系譜是物種分類的權威來源，
+# 當角色卡具有分類系譜 token 時，優先以系譜決定機制種族，取代粗糙的 token 關鍵字偵測。
+SPECIES_LINEAGE_TO_RACE = {
+    "獸娘": "獸娘",
+    "AI": "機械",
+    "義體人": "機械",
+    "神話種": "精靈",
+}
+
+# 機制種族例外：三軸分類與機制種族存在文本明示的轉化／例外。
+# CC-03 星辰米亞：狐妖→艦娘（文本三軸文件備註「後轉艦娘」），機制種族維持艦娘。
+# CC-34 萊姆：人類＋鬼族混血（三軸文件列 S-H-M1，屬混血譜系），無動物特徵，維持人類。
+SPECIES_MECHANIC_EXCEPTIONS = {
+    "CC-03": "艦娘",
+    "CC-34": "人類",
+    # CC-24 維爾：共振文明使者（八足晶體智慧生命），概念生命 → 精靈
+    "CC-24": "精靈",
+    # 龍娘卡（三軸分類 F-H-P 屬獸娘系譜，但機制種族為龍族——翼膜/龍角/龍尾、
+    # TASK-03「翼膜保養」龍族任務）。CC-32 另有場所詞「魔女學府…術式」需覆蓋。
+    "C15": "龍族",
+    "CC-20": "龍族",
+    "CC-32": "龍族",
+}
+
+
+def parse_species_classification(value):
+    """解析分類系譜 token 值（如『獸娘｜ S-S-P（標準種、標準型、純血）』）。
+
+    回傳 dict{lineage, code, axes}；無法解析時回傳 None。
+    """
+    if not value:
+        return None
+    v = str(value).strip()
+    if "｜" in v:
+        lineage, rest = v.split("｜", 1)
+    elif "|" in v:
+        lineage, rest = v.split("|", 1)
+    else:
+        return None
+    lineage = lineage.strip()
+    rest = rest.strip()
+    code = rest.split("（")[0].strip() if "（" in rest else rest
+    axes = ""
+    if "（" in rest and "）" in rest:
+        axes = rest.split("（", 1)[1].rsplit("）", 1)[0]
+    return {"lineage": lineage, "code": code, "axes": axes}
+
+
+# 文本種族 → 機制種族 關鍵字對應（來源：卡片 stats.race／源文本權威種族標記）
+# 當卡片無分類系譜時，以文本種族為權威，取代舊的 token 關鍵字猜測。
+# 順序重要：先匹配更特定種族（艦娘/AI/魔女/天翼種…），後匹配泛獸娘，最後才是人類。
+_TEXT_RACE_RULES = [
+    # 魔女先於人類：CC-29 京島楓香文本「人類（魔女學府畢業生，準大魔女）」→ 術士（魔法使用者）
+    (["魔女", "術式適應體"], "術士"),
+    (["人類"], "人類"),
+    (["艦娘"], "艦娘"),
+    # 人造精靈本質是靈體（人造僅為來源），歸精靈而非機械
+    (["AI", "人造意識", "特戰人形", "義體", "賽博格", "基因強化人", "機械妖精", "機械", "人形機"], "機械"),
+    # 概念怪獸／概念生物／怪獸是概念實體，不是獸娘——此規則必須在獸娘規則之前命中
+    (["天翼種", "天使", "智天使", "神明", "邪神", "概念", "靈體", "神話", "世界意志", "欲墮魔", "惡意",
+      "精靈", "人造精靈", "高階靈體", "怪獸"], "精靈"),
+    # 龍娘：三軸分類屬獸娘系譜（F-H-P 遠原種範例），但機制種族為龍族——
+    # 文本明示龍娘有龍族血脈/龍角/龍鱗/龍尾/翼膜，TASK-03「翼膜保養」required_race=龍族
+    # （RACE_DATA 龍族 body_parts 含 wings/horns）。
+    (["龍娘", "龍族", "龍人娘"], "龍族"),
+    # 獸娘規則：明確「獸娘」優先，其餘為具體物種詞；不放泛「獸」——
+    # 「怪獸／概念怪獸」含「獸」但屬概念實體（精靈），泛「獸」會誤判（CC-45/46 概念怪獸）
+    (["獸娘", "狐", "貓", "兔", "狼", "蝙蝠", "拉米雅", "阿拉克涅",
+      "哈比", "妖精", "魔物娘", "鼠", "納迦", "人魚", "海蛞蝓", "蛇", "兩棲"], "獸娘"),
+]
+
+
+def detect_race(token_list: list, species_lineage: str = None, card_id: str = None,
+                text_race: str = "") -> str:
+    """Detect character's race.
+
+    優先序（文本權威）：
+    1. 機制種族例外（SPECIES_MECHANIC_EXCEPTIONS，依卡片代碼）
+    2. 分類系譜（三軸系統）→ 機制種族映射
+    3. 文本種族關鍵字（卡片 stats.race 的明確種族詞，如『狐妖』『天翼種』『魔女』）
+    4. 原始 token 類別關鍵字偵測
+    5. 人類（預設）
+    """
+    # 例外：文本明示的轉化／例外（如 CC-03 狐妖→艦娘、CC-34 人類+鬼族混血）
+    if card_id and card_id in SPECIES_MECHANIC_EXCEPTIONS:
+        return SPECIES_MECHANIC_EXCEPTIONS[card_id]
+    # 分類系譜為物種分類的文本權威，優先於 token 關鍵字偵測
+    if species_lineage:
+        race = SPECIES_LINEAGE_TO_RACE.get(species_lineage)
+        # 龍娘：三軸分類屬獸娘系譜（F-H-P 遠原種範例），但機制種族為龍族——
+        # 文本明示龍娘有龍族血脈/龍角/龍鱗/龍尾/翼膜，TASK-03「翼膜保養」required_race=龍族。
+        # 此覆寫使系譜為獸娘但文本種族含龍娘的卡自動歸龍族（不需例外表逐卡登記）。
+        if race == "獸娘" and "龍娘" in text_race:
+            return "龍族"
+        if race:
+            return race
+    # 文本種族關鍵字（卡片 stats.race）— 取代舊的純 token 猜測
+    if text_race:
+        for kws, race in _TEXT_RACE_RULES:
+            for kw in kws:
+                if kw in text_race:
+                    return race
     cats = {t.get("category", "") for t in token_list if t.get("category")}
     for tok_cat, race in RACE_DETECT_MAP.items():
         if tok_cat in cats:
@@ -2078,7 +2288,8 @@ BASE_EQUIPMENT_SLOTS = [
 def get_equipment_slots_for_character(character) -> list:
     """Get full equipment slots list including race-specific ones."""
     slots = list(BASE_EQUIPMENT_SLOTS)
-    race = character.get("race", "人類")
+    # 機制種族（分類 bucket）才定義裝備槽；race 是文本種族（如「天空龍娘」），不直接進 RACE_DATA
+    race = character.get("mechanic_race") or character.get("race", "人類")
     extra = get_race_slots(race)
     for slot_id, slot_name in extra:
         if (slot_id, slot_name) not in slots:
@@ -2094,7 +2305,7 @@ class EquipmentManager:
         self.race = "人類"
         if character:
             slots_base = get_equipment_slots_for_character(character)
-            self.race = character.get("race", "人類")
+            self.race = character.get("mechanic_race") or character.get("race", "人類")
         self.slots = {s[0]: None for s in slots_base}
         self._slot_order = slots_base
 

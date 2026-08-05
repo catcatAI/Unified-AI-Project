@@ -145,6 +145,36 @@ def _get_time_period(hour):
     if 17 <= hour < 21: return "傍晚"
     return "夜晚"
 
+def _update_visit_quests(character, loc):
+    """到達地點時推進 visit 類任務目標（地圖/場景狀態直接影響任務進度）。
+    每次到達（旅行／渡水／傳送）都會經過 _gm_narrate，在此統一更新。
+    """
+    for qdef, qdata in get_active_quests(character):
+        for obj in qdef.get("objectives", []):
+            if obj.get("type") == "visit" and obj.get("target") == loc:
+                key = "visit:" + loc
+                qty = obj.get("qty", 1)
+                if qdata["progress"].get(key, 0) < qty:
+                    advance_quest_objective(character, qdef["id"], "visit", loc, 1)
+
+
+def _update_collect_quests(character, item_name):
+    """獲得物品時推進 collect 類任務目標（場景狀態／拾獲物直接影響任務進度）。
+    目標物品若不存在於物品目錄（如「木材」），以 alt_item 替代名匹配（如「木柄」）。
+    """
+    for qdef, qdata in get_active_quests(character):
+        for obj in qdef.get("objectives", []):
+            if obj.get("type") != "collect":
+                continue
+            tgt = obj.get("target")
+            match = (tgt == item_name) or (tgt != item_name and obj.get("alt_item") == item_name)
+            if match:
+                key = "collect:" + tgt
+                qty = obj.get("qty", 1)
+                if qdata["progress"].get(key, 0) < qty:
+                    advance_quest_objective(character, qdef["id"], "collect", tgt, 1)
+
+
 def _gm_narrate(character, new_location=None):
     """GM-style scene narration per GAME_OVERVIEW.md GM system.
     Shows only content NOT duplicated by print_status():
@@ -156,6 +186,8 @@ def _gm_narrate(character, new_location=None):
     global _current_weather, _current_season
     cur_season = _current_season
     weather_today = _current_weather or "☀晴"
+    # 地圖/場景狀態影響任務：到達時推進 visit 目標
+    _update_visit_quests(character, loc)
 
     # ── Weather-time feeling (short, unique) ──
     weather_feel = {
@@ -269,7 +301,12 @@ def _gm_narrate(character, new_location=None):
         vname = character["riding"]
         v = VEHICLES.get(vname, {})
         vs = character.get("vehicles", {}).get(vname, {})
-        fuel_pct = int(vs.get("fuel", v.get("fuel", 100)) / max(v.get("fuel", 100), 1) * 100)
+        # 生成載具 fuel 為字串型別（無限燃料）→ 顯示 100%；數字燃料照常計算
+        v_fuel = v.get("fuel", 100)
+        if isinstance(v_fuel, str):
+            fuel_pct = 100
+        else:
+            fuel_pct = int(vs.get("fuel", v_fuel) / max(v_fuel, 1) * 100)
         state_notes.append(f"騎乘{vname}(燃料:{fuel_pct}%)")
     if state_notes:
         print(C.YELLOW + "  [" + " | ".join(state_notes) + "]" + C.RESET)
@@ -326,7 +363,7 @@ def advance_time(character, hours=1):
         if wc_result["year_passed"]:
             era_str = wc.get_era_name()
             year = wc.get_current_year()
-            print(C.YELLOW + f"\n  ★ 靈子曆 {year}年 —— {era_str} 到來！" + C.RESET)
+            print(C.YELLOW + f"\n  ★ {wc.get_calendar()} {year}年 —— {era_str} 到來！" + C.RESET)
         if wc_result["era_changed"]:
             print(C.MAGENTA + f"\n  ★ 紀元更替：進入「{wc_result['new_era']}」" + C.RESET)
         for evt_name in wc_result["events_triggered"]:
@@ -360,7 +397,7 @@ def print_status(character):
     weather_info = _current_weather + " " + get_season_weather_desc(_current_weather, _current_season)
     print(C.DIM + "─"*50 + C.RESET)
     print(C.CYAN + "  ◈ " + time_str + C.RESET + "  " + weather_info)
-    race = character.get("race", "人類")
+    race = character.get("race_label") or character.get("race", "人類")
     loc = character["location"]
     stype = LOCATION_TYPES.get(loc, "outdoor")
     sicon = SCENE_TYPE_ICONS.get(stype, "🌄")
@@ -377,7 +414,13 @@ def print_status(character):
     if hasattr(sim_systems, 'LOCATION_RULES') and hasattr(sim_systems, 'ACTIVE_RULES'):
         loc_rules = sim_systems.LOCATION_RULES.get(loc) if sim_systems.LOCATION_RULES.get(loc) else None
         if loc_rules:
-            rule_names = [sim_systems.ACTIVE_RULES.get(r,{}).get("name","")[:8] for r in loc_rules if r in sim_systems.ACTIVE_RULES]
+            # 規則名剝離「{地點} · 」前綴，避免與已顯示的位置名重複
+            rule_names = []
+            for r in loc_rules:
+                rn = sim_systems.ACTIVE_RULES.get(r,{}).get("name","")
+                if rn.startswith(loc + " · "):
+                    rn = rn[len(loc) + 3:]
+                rule_names.append(rn[:14])
             if rule_names:
                 print(C.DIM + " 📜" + ",".join(rule_names) + C.RESET, end="")
     if character.get("riding"):
@@ -432,7 +475,7 @@ def exp_needed_for_level(level):
 def do_world_time(character, equipment):
     """Display the world clock and character's time context."""
     print(C.CYAN + "\n" + "═"*50 + C.RESET)
-    print(C.YELLOW + C.BOLD + "  世界時鐘 — 靈子曆" + C.RESET)
+    print(C.YELLOW + C.BOLD + "  世界時鐘 — %s" % wc.get_world_line_name() + C.RESET)
     print(C.CYAN + "═"*50 + C.RESET)
     
     # ── Current world time ──
@@ -448,7 +491,7 @@ def do_world_time(character, equipment):
     # ── Character time info ──
     card_id = character.get("card_id", "")
     if card_id:
-        status = wc.get_character_status_summary(card_id, year)
+        status = wc.get_character_status_summary(card_id)
         print(f"  {C.WHITE}角色時間資訊：{C.RESET}")
         alive_icon = "✅ 存活" if status["alive"] else "💀 已故"
         age_str = f"{status['age']}歲" if status['age'] is not None else "?歲"
@@ -456,9 +499,9 @@ def do_world_time(character, equipment):
         if status.get("life_stage"):
             print(f"    📖 人生階段：{C.CYAN}{status['life_stage']}{C.RESET}")
         if status.get("birth_year"):
-            print(f"    🎂 出生：靈子曆 {status['birth_year']}年")
+            print(f"    🎂 出生：{status.get('calendar','')} {status['birth_year']}年")
         if status.get("death_year"):
-            print(f"    ⚰️  死亡：靈子曆 {status['death_year']}年")
+            print(f"    ⚰️  死亡：{status.get('calendar','')} {status['death_year']}年")
         events_count = len(status["events_lived_through"])
         print(f"    📜 經歷過的重大事件：{C.YELLOW}{events_count}件{C.RESET}")
         if events_count > 0:
@@ -492,7 +535,11 @@ def do_world_time(character, equipment):
         age = wc.get_landmark_age(loc, year)
         print()
         print(f"  {C.WHITE}當前地點：{loc}{C.RESET}")
-        print(f"    📅 {landmark.get('era', '')} · 建立於 {landmark.get('founded_year', '?')}年")
+        fy = landmark.get('founded_year')
+        if fy is None:
+            print(f"    📅 {landmark.get('era', '')} · 起源不詳（非人造，無建立年份）")
+        else:
+            print(f"    📅 {landmark.get('era', '')} · 建立於 {fy}年")
         if age:
             print(f"    📆 {loc}已有 {age} 年歷史")
     
@@ -550,7 +597,7 @@ def _select_start_time():
     print(C.CYAN + "\n" + "═"*50 + C.RESET)
     print(C.YELLOW + C.BOLD + "  選擇開始時間" + C.RESET)
     print(C.CYAN + "═"*50 + C.RESET)
-    print(C.DIM + "  你將在靈子曆的哪個時代開始你的冒險？\n" + C.RESET)
+    print(C.DIM + "  你將在「%s」的哪個時代開始你的冒險？\n" % wc.get_world_line_name() + C.RESET)
 
     for i, opt in enumerate(options, 1):
         era = wc.get_era_name(opt["year"])
@@ -576,7 +623,7 @@ def _select_start_time():
 
     # Resolve past events
     print()
-    print(C.YELLOW + f"  🔮 正在解析靈子曆 {start_year}年之前的歷史事件..." + C.RESET)
+    print(C.YELLOW + f"  🔮 正在解析 {wc.get_calendar()} {start_year}年之前的歷史事件..." + C.RESET)
     events_resolved = wc.resolve_past_events(start_year, seed=f"char_{_random.randint(0,99999)}")
 
     favorable = sum(1 for r in events_resolved.values() if r["favorable"])
@@ -623,22 +670,24 @@ def select_character():
                 tstr = " ".join("%s:%d"%(k,v) for k,v in ts.items())
             else:
                 tstr = str(ts)[:50]
-            # Show age at start time
+            # Show age at start time (world-line aware: each character is aged
+            # on their own world line's clock & calendar)
             age_str = ""
-            td = card.get("time_data")
-            if td and td.get("birth_year"):
-                birth = td["birth_year"]
-                if birth > start_year:
-                    age_str = C.DIM + " [尚未誕生]" + C.RESET
-                else:
-                    age = start_year - birth
-                    death = td.get("death_year")
-                    if death and start_year > death:
-                        age_str = C.RED + " [已故]" + C.RESET
-                    else:
-                        age_str = C.DIM + f" (約{age}歲)" + C.RESET
+            cstatus = wc.get_character_status_summary(cid)
+            if cstatus.get("birth_year") is None:
+                age_str = C.DIM + " [時間錨點不固定]" + C.RESET
+            elif not cstatus.get("alive"):
+                age_str = C.RED + " [已故]" + C.RESET
+            elif cstatus.get("age") is not None:
+                cal = cstatus.get("calendar", "")
+                age_str = C.DIM + f" (約{cstatus['age']}歲·{cal})" + C.RESET
             else:
-                age_str = ""
+                # 錨點存在但所屬線無當前年（如跨線角色）：回退到卡片文本明載的 stats.age
+                card_age = card.get("stats", {}).get("age")
+                if isinstance(card_age, (int, float)):
+                    age_str = C.DIM + f" (約{int(card_age)}歲)" + C.RESET
+                else:
+                    age_str = C.DIM + " [時間錨點不固定]" + C.RESET
             print("  %s%2d. [%s]%s %s%s" % (C.CYAN,i+1,cid,C.RESET,name,age_str))
             print("      %s%s%s" % (C.DIM,tstr[:50],C.RESET))
         print("")
@@ -693,7 +742,7 @@ def select_character():
 # COMBAT
 # ═══════════════════════════════════════════════════════════════════════════
 
-def do_combat(character, enemy):
+def do_combat(character, enemy, equipment=None):
     print(C.RED+C.BOLD+"\n⚔ "+"="*40+" ⚔"+C.RESET)
     print(C.RED+C.BOLD+"  戰鬥! 遭遇了 %s!" % enemy["name"]+C.RESET)
     print("  " + enemy.get("desc","") + " | HP:%d ATK:%d DEF:%d" % (enemy["hp"],enemy["atk"],enemy["def"]))
@@ -721,7 +770,7 @@ def do_combat(character, enemy):
         if character.get("riding") == "馬":
             charge_bonus = int(character["atk"] * 0.3)  # +30% first strike
             if charge_bonus > 0:
-                print(C.YELLOW+"    🐴 馬の突襲！攻擊力 +%d！（+30%%）" % charge_bonus + C.RESET)
+                print(C.YELLOW+"    🐴 駿馬衝鋒！攻擊力 +%d！（+30%%）" % charge_bonus + C.RESET)
             
         if act == "1" or act == "0":
             pa = character["atk"] + get_skill_modifier(character, "combat") + charge_bonus
@@ -732,18 +781,19 @@ def do_combat(character, enemy):
             print(C.RED+"    ⚔ 造成 %d 傷害!%s" % (dmg,cs)+C.RESET)
             for m in gain_skill_exp(character,"combat",3):
                 print("      "+C.CYAN+m+C.RESET)
-            # Consume weapon durability
-            for hand in ["right_hand","left_hand","both_hands"]:
-                broke = equipment.use_durability(hand, 1)
-                if broke:
-                    eq_info = equipment.slots.get(hand)
-                    if eq_info and eq_info["item"]:
-                        iname = eq_info["item"].get("name","?")
-                        print(f"      {C.RED}⚡ {iname} 損壞了!{C.RESET}")
-                        old = equipment.unequip(hand)
-                        if old:
-                            character["inventory"].append(old.get("name","?"))
-                        equipment.apply_stat_bonuses(character)
+            # Consume weapon durability (equipment may be None on non-menu callers)
+            if equipment is not None:
+                for hand in ["right_hand","left_hand","both_hands"]:
+                    broke = equipment.use_durability(hand, 1)
+                    if broke:
+                        eq_info = equipment.slots.get(hand)
+                        if eq_info and eq_info["item"]:
+                            iname = eq_info["item"].get("name","?")
+                            print(f"      {C.RED}⚡ {iname} 損壞了!{C.RESET}")
+                            old = equipment.unequip(hand)
+                            if old:
+                                character["inventory"].append(old.get("name","?"))
+                            equipment.apply_stat_bonuses(character)
 
         if e_hp <= 0:
             break
@@ -781,8 +831,9 @@ def do_combat(character, enemy):
         ds = C.BLUE+" (減半)"+C.RESET if defending else ""
         print(C.MAGENTA+"    💥 %s 造成 %d 傷害!%s" % (enemy["name"],ed,ds)+C.RESET)
         # Consume armor durability on hit (per ITEM_EQUIPMENT_SYSTEM.md: 戰鬥受擊消耗耐久)
-        for slot in ["torso","head","legs","feet","back"]:
-            equipment.use_durability(slot, _random.randint(2,6))
+        if equipment is not None:
+            for slot in ["torso","head","legs","feet","back"]:
+                equipment.use_durability(slot, _random.randint(2,6))
         ebar = C.RED+"█"*int(max(0,e_hp/e_max)*10)+C.DIM+"░"*(10-int(max(0,e_hp/e_max)*10))+C.RESET
         print("      Enemy: %s %d/%d" % (ebar,e_hp,e_max))
         print("      Your:  "+_mini_bar(character)+" %d/%d"%(character["hp"],character["max_hp"]))
@@ -795,6 +846,7 @@ def do_combat(character, enemy):
         for li in enemy.get("loot",[]):
             if _random.random()<0.5:
                 character["inventory"].append(li)
+                _update_collect_quests(character, li)
                 print("  "+C.CYAN+"獲得物品: %s"%li+C.RESET)
         character["gold"] = character.get("gold",0) + gg
         modify_reputation(character,2)
@@ -893,9 +945,9 @@ def do_explore(character, equipment):
         if v:
             riding_bonus = v.get("speed", 1.0)
     if _random.random() < enc_chance / riding_bonus:
-        enemy = get_enemy(character["location"])
+        enemy = get_enemy(character["location"], character.get("level", 1))
         if enemy:
-            result = do_combat(character, enemy)
+            result = do_combat(character, enemy, equipment)
             if not result:
                 character["hp"] = max(1, character["max_hp"]//4)
                 print(C.RED+"  你在昏迷中醒來...體力嚴重消耗。"+C.RESET)
@@ -927,6 +979,7 @@ def do_explore(character, equipment):
     if find:
         idf = get_item_def(find)
         character["inventory"].append(find)
+        _update_collect_quests(character, find)
         print(C.GREEN+"  ✓ 發現: %s!"%find+C.RESET)
         if idf.get("desc"):
             print(C.DIM+"    %s"%idf["desc"]+C.RESET)
@@ -958,16 +1011,54 @@ def do_travel(character):
         sicon = SCENE_TYPE_ICONS.get(stype, "🌄")
         req_hint = get_entry_requirement_hint(loc)
         req_color = C.RED if req_hint else C.GREEN
-        print("    %d. %s %s %s  %s%s%s"%(i,ic,sicon,loc,vibe,req_color,req_hint,C.RESET))
+        print("    %d. %s %s %s  %s%s%s%s" % (i, ic, sicon, loc, vibe, req_color, req_hint, C.RESET))
+    # 移動能力：飛行／艦裝航行／游泳 角色可直接渡水到水域場景（不需小舟）
+    from axis_system import movement_abilities
+    _mob = movement_abilities(
+        text_race=str(character.get("race", "")),
+        mechanic_race=str(character.get("mechanic_race", "")),
+        lineage=(character.get("axis") or {}).get("lineage", ""),
+    )
+    if _mob.get("fly") or _mob.get("sail") or _mob.get("swim"):
+        wroutes = get_water_routes(character["location"], character)
+        if wroutes:
+            wicons = {"boat_deep":"🕊","boat_back":"🕊","boat_market":"⚓"}
+            print(C.CYAN+"  🌊 水域路線（%s）:"%_mob.get("label")+C.RESET)
+            for i,(wr,wloc) in enumerate(wroutes.items(), len(dests)+1):
+                wic = wicons.get(wr,"🏊")
+                wvibe = LOCATION_VIBES.get(wloc,"")
+                print("    %d. %s %s %s  %s"%(i,wic,wloc,wvibe,""))
+            _has_water = wroutes
+        else:
+            _has_water = False
+    else:
+        _has_water = False
+    # 移動速度倍率（飛行 2.0 最快，艦裝航行 1.5，其餘徒步 1.0）
+    _speed_mult = max(float(_mob.get("speed_multiplier", 1.0) or 1.0), 1.0)
     print("    %s0. 取消%s"%(C.GRAY,C.RESET))
     ch = input("  %s選擇:%s " % (C.YELLOW,C.RESET)).strip()
     if not ch.isdigit(): return
     idx = int(ch)
     if idx==0: return
+    # 水域選項：有移動能力的角色可直接渡水（飛行/艦裝航行/游泳）
+    _water_dest = None
+    if _has_water:
+        _wmap = {len(dests)+i+1: wl for i, (wr, wl) in enumerate(wroutes.items())}
+        if idx in _wmap:
+            _water_dest = _wmap[idx]
+    if _water_dest:
+        character["location"] = _water_dest
+        wvibe = LOCATION_VIBES.get(_water_dest,"")
+        print(C.GREEN + "  ⇨ %s %s。%s" % (_mob.get("label"), _water_dest, wvibe) + C.RESET)
+        advance_time(character, max(1, round(2 / _speed_mult)))
+        _gm_narrate(character, _water_dest)
+        roll_random_event(character)
+        return
     if 1<=idx<=len(dests):
             dest = list(dests.values())[idx-1]
             # Travel time
-            hours = 1
+            base_hours = 2  # 徒步跨一個區域的基準耗時
+            hours = base_hours
             if character.get("riding"):
                 v = VEHICLES.get(character["riding"])
                 if v:
@@ -977,10 +1068,12 @@ def do_travel(character):
                     for sid, pname in veh_state.get("parts",{}).items():
                         parts_data[sid] = VEHICLE_PART_CATALOG.get(pname, {})
                     mod_v = apply_vehicle_part_bonuses(v, parts_data)
-                    hours = max(1, int(1 / mod_v.get("speed",1.0)))
+                    hours = max(1, round(base_hours / max(mod_v.get("speed", 1.0), 0.1)))
                     # Vehicle fuel consumption
                     fuel_used = mod_v.get("fuel_per_hour", v.get("fuel_per_hour", 0)) * hours
-                    if fuel_used > 0:
+                    # 生成載具 fuel 為字串型別（無限燃料）；只有數字燃料才扣減，
+                    # 避免 str - int 的 TypeError 地雷
+                    if fuel_used > 0 and not isinstance(v.get("fuel"), str):
                         # Track fuel in vehicle state
                         veh_state = character.get("vehicles", {}).get(character["riding"], {})
                         veh_fuel = veh_state.get("fuel", v.get("fuel", 100))
@@ -1023,6 +1116,9 @@ def do_travel(character):
             if not can_enter:
                 print(C.RED + "  🔒 " + (fail_msg or "無法進入。") + C.RESET)
                 return
+            # 未騎乘時套用移動能力速度（飛行/艦裝航行比徒步快）
+            if not character.get("riding"):
+                hours = max(1, round(base_hours / _speed_mult))
             character["location"] = dest
             advance_time(character, hours)
             # Arrival announcement
@@ -1129,7 +1225,7 @@ def do_inventory(character):
         print(C.YELLOW+"  ⚠ 物品欄已滿!"+C.RESET)
     # ── Use/Discard items ──
     if inv:
-        print("  "+C.CYAN+"選擇物品編號使用，或輸入 d+編號 丟棄 (如 d3)"+C.RESET)
+        print("  "+C.CYAN+"選擇物品編號使用，或輸入 d+編號 丟棄 (如 d3)、s+編號 售出 (如 s3)"+C.RESET)
         ch = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
         # Map display index to flat index (first occurrence of Nth unique item)
         unique_items = []
@@ -1143,7 +1239,22 @@ def do_inventory(character):
                 target = unique_items[didx]
                 return inv.index(target)
             return -1
-        if ch.startswith('d') or ch.startswith('D'):
+        if ch.startswith('s') or ch.startswith('S'):
+            idx_str = ch[1:]
+            if idx_str.isdigit():
+                didx = int(idx_str) - 1
+                fidx = _display_to_flat(didx)
+                if fidx >= 0:
+                    item_name = inv[fidx]
+                    idf = get_item_def(item_name)
+                    sval = int(idf.get("value", 0) * 0.5)  # 半價售出
+                    if idf.get("type") == "quest":
+                        print(C.GRAY+"  任務物品無法售出。"+C.RESET)
+                    else:
+                        inv.pop(fidx)
+                        character["gold"] = character.get("gold", 0) + sval
+                        print(C.GREEN+"  售出了 %s，獲得 %dG。"%(item_name, sval)+C.RESET)
+        elif ch.startswith('d') or ch.startswith('D'):
             idx_str = ch[1:]
             if idx_str.isdigit():
                 didx = int(idx_str) - 1
@@ -1208,15 +1319,15 @@ def do_equipment_menu(character, equipment):
         if idx<0 or idx>=len(inv): return
         iname = inv[idx]
         idf = get_item_def(iname)
-        # Check race requirement
-        req_race = idf.get("required_race", "")
-        if req_race:
-            char_race = character.get("race", "人類")
-            if req_race != char_race:
-                print(C.RED+"  ⚠ %s 是 %s 專用裝備! 你的角色是 %s。" % (iname, req_race, char_race)+C.RESET)
-                return
-        # Consumable: use directly
+        # 消耗品優先處理：任何角色皆可使用（evaluate_consumable 寬鬆門檻——
+        # 避免靈體無形體無法治療等遊戲性卡死）；交互深度反映契合度。
         if idf.get("type")=="consumable":
+            _aff_c = character.get("axis", {}).get("affinity")
+            if _aff_c:
+                from axis_system import evaluate_consumable, dimension_label
+                _can_c, _depth_c, _dim_c, _reason_c = evaluate_consumable(_aff_c, idf)
+                if _depth_c < 0.3:
+                    print(C.DIM+"  （%s 為 %s 屬性道具，契合度偏低 %.2f）" % (iname, dimension_label(_dim_c), _depth_c)+C.RESET)
             hh = idf.get("heal_hp",0)
             hs = idf.get("heal_sp",0)
             if hh>0:
@@ -1230,14 +1341,51 @@ def do_equipment_menu(character, equipment):
             inv.pop(idx)
             gain_skill_exp(character,"craft",1)
             return
-        # Archetype/race equipment check
-        req_arch = idf.get("required_archetype", "")
-        if req_arch:
-            char_tokens = {t.get("category","") for t in character.get("token_list", [])}
-            if req_arch not in char_tokens:
-                print(C.RED+"  ⚠ %s 需要 [%s] 類別特質才能裝備!" % (iname, req_arch)+C.RESET)
-                print(C.GRAY+"    你的角色沒有「%s」類別的token。" % req_arch+C.RESET)
+        # 軸譜交互：以五維度親和力判定可否交互與交互深度（文本權威——三軸文件明言
+        # 各系譜有自己的尺，裝備可交互性由軸譜親和力決定，而非機制種族字串）。
+        # 有軸譜系譜角色（lineage 存在）完全以軸譜判定為準；無軸譜角色
+        # （人類/艦娘等未分類）才用 required_race/required_archetype 後備檢查。
+        _use_axis = bool(character.get("axis", {}).get("lineage") and character.get("axis", {}).get("affinity"))
+        _aff = character.get("axis", {}).get("affinity")
+        if _use_axis:
+            from axis_system import evaluate_equipment, dimension_label
+            _can, _depth, _dim, _reason = evaluate_equipment(_aff, idf)
+            if not _can:
+                print(C.RED+"  ⚠ 軸譜交互不符: %s（%s）" % (iname, _reason)+C.RESET)
                 return
+            if _depth < 0.3 and idf.get("required_race"):
+                print(C.DIM+"  （%s 為 %s 專用裝備，交互深度偏低 %.2f）" % (iname, dimension_label(_dim), _depth)+C.RESET)
+        else:
+            # 無軸譜角色：以 required_race（機制種族字串）檢查
+            req_race = idf.get("required_race", "")
+            if req_race:
+                char_race = character.get("mechanic_race") or character.get("race", "人類")
+                _t_race = str(character.get("race", ""))
+                if req_race != char_race and req_race not in _t_race and _t_race not in req_race:
+                    print(C.RED+"  ⚠ %s 是 %s 專用裝備! 你的角色是 %s。" % (iname, req_race, _t_race or char_race)+C.RESET)
+                    return
+            hh = idf.get("heal_hp",0)
+            hs = idf.get("heal_sp",0)
+            if hh>0:
+                ah = min(character["max_hp"]-character["hp"],hh)
+                character["hp"] += ah
+                print(C.GREEN+"  使用了 %s +%dHP!"%(iname,ah)+C.RESET)
+            if hs>0:
+                a2 = min(character["max_sp"]-character["sp"],hs)
+                character["sp"] += a2
+                print(C.BLUE+"  使用了 %s +%dSP!"%(iname,a2)+C.RESET)
+            inv.pop(idx)
+            gain_skill_exp(character,"craft",1)
+            return
+        # Archetype/race equipment check（僅無軸譜角色——有軸譜者已由親和力判定）
+        if not _use_axis:
+            req_arch = idf.get("required_archetype", "")
+            if req_arch:
+                char_tokens = {t.get("category","") for t in character.get("token_list", [])}
+                if req_arch not in char_tokens:
+                    print(C.RED+"  ⚠ %s 需要 [%s] 類別特質才能裝備!" % (iname, req_arch)+C.RESET)
+                    print(C.GRAY+"    你的角色沒有「%s」類別的token。" % req_arch+C.RESET)
+                    return
         # Equip — use dynamic slot list from equipment object
         ss = idf.get("slot","")
         slot_list = equipment._slot_order
@@ -1304,7 +1452,7 @@ def do_crafting(character, equipment=None):
             print(C.RED+"  無法修復: 無裝備管理器。"+C.RESET)
         advance_time(character)
         return
-    suc, res, msg = craft_item(rid, character["inventory"])
+    suc, res, msg = craft_item(rid, character["inventory"], equipment, character)
     if suc:
         print(C.GREEN+"  ✓ "+msg+C.RESET)
         gain_skill_exp(character,"craft",8)
@@ -1374,6 +1522,7 @@ def do_scene_search(character, equipment):
             print(C.GREEN+"  📦 找到:"+C.RESET)
             for item in contents:
                 character["inventory"].append(item)
+                _update_collect_quests(character, item)
                 print("    ✓ %s"%item)
             obj["contents"] = []  # looted
         else:
@@ -1494,7 +1643,7 @@ def do_scene_search(character, equipment):
             # Find enemy definition
             for e in ENEMIES:
                 if e["name"] == s_enemy:
-                    do_combat(character, e)
+                    do_combat(character, e, equipment)
                     break
 
         s_route = side.get("route_add")
@@ -1520,18 +1669,26 @@ def do_scene_search(character, equipment):
 # ═══════════════════════════════════════════════════════════════════════════
 
 def _shop_at_location(character, loc):
-    """Generic shop at commercial locations."""
+    """Generic shop at commercial locations.
+    價格一律以 ITEM_CATALOG 的 value 為準（單一價格來源，避免硬編碼價與目錄價脫鉤）。
+    """
     rep = character.get("reputation", 0)
     print(C.CYAN+"  商店 ("+loc+"):"+C.RESET)
-    items_sold = [("草藥",10),("乾糧",8),("治療藥水",40),("皮甲",60),("解毒草",20)]
-    for i,(name,price) in enumerate(items_sold,1):
+    # 商店貨架：基礎材料/消耗品/防具，價格取自 ITEM_CATALOG
+    items_sold = ["草藥","乾糧","治療藥水","皮甲","解毒草"]
+    def _price(name):
+        d = get_item_def(name)
+        return d.get("value", 10)
+    for i,name in enumerate(items_sold,1):
+        price = _price(name)
         lock = "" if i<4 else C.DIM+" (需聲望%d)"%({"皮甲":20,"解毒草":10}.get(name,0))+C.RESET
         print("  %d. %s (%dG)%s"%(i,name,price,lock))
     bc = input("  %s購買編號 (0取消):%s "%(C.YELLOW,C.RESET)).strip()
     if bc.isdigit():
         bi = int(bc)-1
         if 0<=bi<len(items_sold):
-            iname, iprice = items_sold[bi]
+            iname = items_sold[bi]
+            iprice = _price(iname)
             rep_needed = {"草藥":0,"乾糧":0,"治療藥水":0,"皮甲":20,"解毒草":10}.get(iname,0)
             if rep<rep_needed:
                 print(C.RED+"  聲望不足 (需%d)"%rep_needed+C.RESET)
@@ -1539,8 +1696,10 @@ def _shop_at_location(character, loc):
                 character["gold"]=character.get("gold",0)-iprice
                 character["inventory"].append(iname)
                 print(C.GREEN+"  買了 %s!"%iname+C.RESET)
+                return True
             else:
                 print(C.RED+"  金幣不足!"+C.RESET)
+    return False
 
 def do_interact_npc(character):
     loc = character["location"]
@@ -1563,7 +1722,7 @@ def do_interact_npc(character):
         ic = mc_icons.get(m,"•")
         npc_data = getattr(sim_systems, 'NPC_METADATA', {}).get(n, {})
         dname = get_display_name(character, n, npc_data)
-        print("    %d. %s%s %s (%s)"%(i, ic, dname, act))
+        print("    %d. %s%s %s (%s)"%(i, ic, dname, act, aloc))
     print("    %s0. 取消%s"%(C.GRAY,C.RESET))
     ch = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
     if not ch.isdigit(): return
@@ -1665,26 +1824,10 @@ def do_interact_npc(character):
         print(C.GRAY+"  0. 離開"+C.RESET)
         c = input("  %s>%s "%(C.YELLOW,C.RESET)).strip()
         if c=="1":
-            print(C.CYAN+"  紅的商店:"+C.RESET)
-            items_sold = [("草藥",10),("乾糧",8),("治療藥水",40),("皮甲",60),("解毒草",20)]
-            for i,(name,price) in enumerate(items_sold,1):
-                lock = "" if i<4 else C.DIM+" (需聲望%d)"%({"皮甲":20,"解毒草":10}.get(name,0))+C.RESET
-                print("  %d. %s (%dG)%s"%(i,name,price,lock))
-            bc = input("  %s購買編號 (0取消):%s "%(C.YELLOW,C.RESET)).strip()
-            if bc.isdigit():
-                bi = int(bc)-1
-                if 0<=bi<len(items_sold):
-                    iname, iprice = items_sold[bi]
-                    rep_needed = {"草藥":0,"乾糧":0,"治療藥水":0,"皮甲":20,"解毒草":10}.get(iname,0)
-                    if rep<rep_needed:
-                        print(C.RED+"  聲望不足 (需%d)"%rep_needed+C.RESET)
-                    elif character.get("gold",0)>=iprice:
-                        character["gold"]=character.get("gold",0)-iprice
-                        character["inventory"].append(iname)
-                        print(C.GREEN+"  買了 %s!"%iname+C.RESET)
-                        add_relationship(character,"紅",1)
-                    else:
-                        print(C.RED+"  金幣不足!"+C.RESET)
+            # 價格一律以 ITEM_CATALOG 為準（與 _shop_at_location 同一來源，避免硬編碼價脫鉤）
+            # 只有實際買了東西才加好感（避免進店刷好感）
+            if _shop_at_location(character, loc):
+                add_relationship(character,"紅",1)
         elif c=="2":
             print(C.YELLOW+'  紅: 「這裡是安全區。」'+C.RESET)
             add_relationship(character,"紅",2)
@@ -1741,9 +1884,8 @@ def do_interact_npc(character):
         # NPC_DIALOGUES for varied dialogue
         npc_dialogues = getattr(sim_systems, 'NPC_DIALOGUES', {}).get(npc_name, [])
         if npc_dialogues:
-            dialogue_lines = [d for d in npc_dialogues
-                              if d != "「また会おう。」"
-                              and not ("微笑" in d or "考え込" in d or "遠くを見つめ" in d)]
+            dialogue_lines = [d for d in npc_dialogues if d != "「下次再見。」"
+            and not ("微笑" in d or "沉思" in d or "眺望" in d)]
             if dialogue_lines:
                 extra_dialogue = _random.choice(dialogue_lines[:6])
                 print(C.DIM + "  %s" % extra_dialogue + C.RESET)
@@ -1755,12 +1897,24 @@ def do_interact_npc(character):
         if loc in shop_locations:
             print(C.CYAN+"  4. "+C.YELLOW+"商店 (買東西)"+C.RESET)
         quest_opt = 5 if loc in shop_locations else 4
-        if rep >= 50 and len(get_active_quests(character)) < 3:
-            print(C.CYAN+"  %d. "%quest_opt+C.YELLOW+"接受任務"+C.RESET)
+        # 好感度分支：此 NPC 可給的任務（giver 匹配）＋好感度門檻
+        _npc_quests = [q for q, _r in get_available_quests(character)
+                       if q.get("giver") == npc_name and q.get("type") == "side"]
+        _rel_val = get_relationship(character, npc_name)
+        # 好感度解鎖門檻：關係值越高，越多任務解鎖（依任務 required_relationships 或 預設 50）
+        _unlocked_npc_quests = []
+        for _q in _npc_quests:
+            _need = (_q.get("conditions", {}).get("required_relationships", {}) or {}).get(npc_name, 50)
+            if _rel_val >= _need:
+                _unlocked_npc_quests.append(_q)
+        if _unlocked_npc_quests and len(get_active_quests(character)) < 3:
+            print(C.CYAN+"  %d. "%quest_opt+C.YELLOW+"接受任務 (%d)"%len(_unlocked_npc_quests)+C.RESET)
+        elif _npc_quests and _rel_val < 50:
+            print(C.CYAN+"  %d. "%quest_opt+C.RED+"接受任務 (好感度不足)"+C.RESET)
         print(C.GRAY+"  0. 離開"+C.RESET)
         c = input("  %s>%s "%(C.YELLOW,C.RESET)).strip()
         if c=="1":
-            npc_emote = _random.choice(["「こんにちは。」","「ニーハオ。」","「ハロー。」"])
+            npc_emote = _random.choice(["「你好。」","「嗨。」","「哈囉。」"])
             print(C.YELLOW+'  %s: %s %s'%(npc_name,greet,npc_emote)+C.RESET)
             add_relationship(character,npc_name,2)
             modify_reputation(character,1)
@@ -1773,11 +1927,18 @@ def do_interact_npc(character):
                 eg = 10+rep//15
                 print(C.CYAN+"  交流獲得%d經驗。"%eg+C.RESET+C.GRAY+" (SP-10)"+C.RESET)
                 for m in gain_exp_with_skills(character,eg,"social",3):
-                    print("  "+C.MAGENTA+m+C.RESET)
+                    print("  "+C.CYAN+m+C.RESET)
                 add_relationship(character,npc_name,5)
                 lvl_up = gain_familiarity(character, npc_name, "chat")
                 if lvl_up:
                     print(C.MAGENTA+"  ★ "+get_level_up_message(npc_name, lvl_up)+C.RESET)
+                # 推進 social 類任務目標（如每日交友 DQ-03：與任何 NPC 交流）
+                for _qd, _qdata in get_active_quests(character):
+                    for _obj in _qd.get("objectives", []):
+                        if _obj.get("type") == "social":
+                            _key = "social:" + _obj.get("target", npc_name)
+                            if _qdata["progress"].get(_key, 0) < _obj.get("qty", 1):
+                                advance_quest_objective(character, _qd["id"], "social", _obj.get("target", npc_name), 1)
             else:
                 print(C.RED+"  SP不足!"+C.RESET)
         elif c=="3":
@@ -1807,24 +1968,22 @@ def do_interact_npc(character):
                 print(C.GRAY+"  沒有可送的禮物。"+C.RESET)
         elif c=="4" and loc in shop_locations:
             _shop_at_location(character, loc)
-        elif c==str(quest_opt) and rep >= 50:
-            available = get_available_quests(character)
-            eligible = [q for q, reason in available if reason is None and q["type"]=="side"]
-            ineligible = [q for q, reason in available if reason is not None and q["type"]=="side"]
-            if eligible:
-                q = _random.choice(eligible)
+        elif c==str(quest_opt) and _unlocked_npc_quests:
+            # 好感度分支：只接受「此 NPC 給」且好感度達標的任務（不再隨機抓別人的任務）
+            q = _random.choice(_unlocked_npc_quests)
+            eligible, reason = check_quest_eligibility(character, q)
+            if not eligible:
+                print(C.YELLOW+"  ⚠ 條件不符: %s - %s" % (q["title"], reason)+C.RESET)
+            else:
                 accept_quest(character, q)
-                print(C.GREEN+"  ✓ 接受了任務: %s"%q["title"]+C.RESET)
+                print(C.GREEN+"  ✓ %s委託你: %s"%(npc_name, q["title"])+C.RESET)
                 print(C.DIM+"    %s"%q["desc"]+C.RESET)
                 add_relationship(character,npc_name,10)
                 lvl_up = gain_familiarity(character, npc_name, "quest")
                 if lvl_up:
                     print(C.MAGENTA+"  ★ "+get_level_up_message(npc_name, lvl_up)+C.RESET)
-            elif ineligible:
-                q, reason = ineligible[0]
-                print(C.YELLOW+"  ⚠ 有任務但條件不符: %s - %s" % (q["title"], reason)+C.RESET)
-            else:
-                print(C.GRAY+"  目前沒有可接受的任務。"+C.RESET)
+        elif c==str(quest_opt) and _npc_quests:
+            print(C.YELLOW+"  ⚠ %s願意託付任務，但你們的關係還不夠深。"%npc_name+C.RESET)
         else:
             add_relationship(character,npc_name,-1)
             print(C.GRAY+"  告別%s。"%npc_name+C.RESET)
@@ -1941,6 +2100,9 @@ def do_quest_menu(character):
                 print("    "+C.GREEN+"獲得 %dEXP, %dG"%(reward["exp"],reward["gold"])+C.RESET)
                 if reward.get("item"):
                     print("    "+C.CYAN+"獲得物品: %s"%reward["item"]+C.RESET)
+                # 升級訊息（complete_quest 內 gain_exp 可能觸發升級）
+                for m in reward.get("level_up_msgs", []):
+                    print("    "+C.MAGENTA+C.BOLD+m+C.RESET)
                 # Apply reputation reward
                 rep_r = qdef.get("reward_reputation", 0)
                 if rep_r:
@@ -2043,13 +2205,28 @@ def do_vehicle_menu(character):
                 print(C.CYAN+msg+C.RESET)
                 advance_time(character, 1)
             elif key == "渡水":
-                routes = get_water_routes(character["location"])
+                routes = get_water_routes(character["location"], character)
                 if routes:
-                    icons = {"boat_deep":"⛵","boat_market":"🚢"}
-                    print(C.CYAN+"  🌊 水域路線:"+C.RESET)
+                    # 依移動能力決定渡水方式（艦娘艦裝航行／飛行／游泳／划船）
+                    from axis_system import movement_abilities
+                    mob = movement_abilities(
+                        text_race=str(character.get("race", "")),
+                        mechanic_race=str(character.get("mechanic_race", "")),
+                        lineage=(character.get("axis") or {}).get("lineage", ""),
+                    )
+                    if mob.get("fly"):
+                        move_icon, move_verb, fuel_cost = "🕊", "飛向", 0
+                    elif mob.get("sail"):
+                        move_icon, move_verb, fuel_cost = "⚓", "航行至", 0
+                    elif mob.get("swim"):
+                        move_icon, move_verb, fuel_cost = "🏊", "游向", 0
+                    else:
+                        move_icon, move_verb, fuel_cost = "🚣", "划向", 10
+                    icons = {"boat_deep":move_icon,"boat_market":move_icon}
+                    print(C.CYAN+"  🌊 水域路線:"+C.RESET + ("（%s）"%mob.get("label") if mob.get("label") else "（需小舟）"))
                     rl = list(routes.items())
                     for i,(route,loc) in enumerate(rl,1):
-                        ic = icons.get(route,"🚣")
+                        ic = icons.get(route,move_icon)
                         vibe = LOCATION_VIBES.get(loc,"")
                         print("    %d. %s %s %s"%(i,ic,loc,vibe))
                     print("    0. 取消")
@@ -2057,14 +2234,21 @@ def do_vehicle_menu(character):
                     if sc.isdigit() and 1<=int(sc)<=len(rl):
                         dloc = rl[int(sc)-1][1]
                         character["location"] = dloc
-                        v = VEHICLES.get("小舟", {})
-                        veh_state = character.get("vehicles",{}).get("小舟",{})
-                        veh_fuel = veh_state.get("fuel", v.get("fuel", 60))
-                        veh_fuel = max(0, veh_fuel - 10)
-                        if "vehicles" not in character: character["vehicles"] = {}
-                        if "小舟" not in character["vehicles"]: character["vehicles"]["小舟"] = {}
-                        character["vehicles"]["小舟"]["fuel"] = veh_fuel
-                        print(C.CYAN+"  🚣 划向 %s...（燃料-10）"%dloc+C.RESET)
+                        if fuel_cost > 0:
+                            v = VEHICLES.get("小舟", {})
+                            veh_state = character.get("vehicles",{}).get("小舟",{})
+                            veh_fuel = veh_state.get("fuel", v.get("fuel", 60))
+                            if not isinstance(veh_fuel, (int, float)):
+                                veh_fuel = 60  # 非數字燃料（無限）不扣減
+                            else:
+                                veh_fuel = max(0, veh_fuel - fuel_cost)
+                            if "vehicles" not in character: character["vehicles"] = {}
+                            if "小舟" not in character["vehicles"]: character["vehicles"]["小舟"] = {}
+                            character["vehicles"]["小舟"]["fuel"] = veh_fuel
+                            fuel_msg = "（燃料-%d）"%fuel_cost
+                        else:
+                            fuel_msg = ""
+                        print(C.CYAN+"  %s %s %s...%s"%(move_icon,move_verb,dloc,fuel_msg)+C.RESET)
                         advance_time(character, 2)
                         _gm_narrate(character, dloc)
                 else:
@@ -2094,9 +2278,15 @@ def do_real_estate(character, equipment=None):
     print(C.CYAN+"└"+"─"*44+"┘"+C.RESET)
     ch = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
     if ch=="1":
-        print(C.CYAN+"  可購買:"+C.RESET)
-        for i,pname in enumerate(REAL_ESTATE_KEYS,1):
-            pd = REAL_ESTATE[pname]
+        # 只能在該不動產所在地購買（符合常理：在聖十字校園買不到魔女學府的魔法塔）
+        here = character["location"]
+        buyable = [(pname, pd) for pname, pd in REAL_ESTATE.items()
+                   if pd.get("location", "") == here]
+        if not buyable:
+            print(C.GRAY+"  這裡沒有可購買的不動產。"+C.RESET)
+            return
+        print(C.CYAN+"  可購買 (當前地點 %s):"%here+C.RESET)
+        for i,(pname,pd) in enumerate(buyable,1):
             owned_flag = " ✓" if pname in owned else ""
             ptype = pd.get("type","?")
             mlv = pd.get("max_level", 1)
@@ -2107,16 +2297,16 @@ def do_real_estate(character, equipment=None):
         bc = input("  %s購買編號 (0取消):%s "%(C.YELLOW,C.RESET)).strip()
         if bc.isdigit():
             bi = int(bc)-1
-            if 0<=bi<len(REAL_ESTATE_KEYS):
-                pname = REAL_ESTATE_KEYS[bi]
-                pd = REAL_ESTATE[pname]
+            if 0<=bi<len(buyable):
+                pname, pd = buyable[bi]
                 price = pd["price"]
                 if pname in owned:
                     print(C.YELLOW+"  你已經擁有這個不動產。"+C.RESET)
                 elif character.get("gold",0) >= price and len(owned) < MAX_PROPERTIES:
                     character["gold"] = character.get("gold",0) - price
                     character.setdefault("owned_properties",{})[pname] = {"name":pname,"functions":list(pd["functions"]),"level":1}
-                    character["owned_properties"][pname]["location"] = character["location"]
+                    # 不動產自身地點（不是玩家當前所在地）
+                    character["owned_properties"][pname]["location"] = pd.get("location", here)
                     print(C.GREEN+"  ✓ 購買了 %s!"%pname+C.RESET)
                     modify_reputation(character,5)
                 elif len(owned) >= MAX_PROPERTIES:
@@ -2128,8 +2318,14 @@ def do_real_estate(character, equipment=None):
         if not owned:
             print(C.GRAY+"  沒有不動產可用。"+C.RESET)
             return
-        print(C.CYAN+"  你的不動產:"+C.RESET)
-        olist = list(owned.keys())
+        # 只能使用位於當前地點的不動產（人在鏡湖無法使用魔女學府的魔法塔）
+        here = character["location"]
+        usable = [pname for pname in owned if REAL_ESTATE.get(pname, {}).get("location", "") == here]
+        if not usable:
+            print(C.GRAY+"  當前地點沒有可用的不動產。"+C.RESET)
+            return
+        print(C.CYAN+"  你的不動產 (當前地點 %s):"%here+C.RESET)
+        olist = usable
         for i, pname in enumerate(olist,1):
             pd = REAL_ESTATE.get(pname, {})
             funcs = ", ".join(owned[pname].get("functions", pd.get("functions",[])))
@@ -2210,8 +2406,9 @@ def do_real_estate(character, equipment=None):
                     print(C.DIM+"  (探索技能經驗提升)"+C.RESET)
                     advance_time(character,1)
                 elif ac=="7" and "trade" in funcs:
-                    do_inventory(character)
-                    print(C.GRAY+"  (交易功能: 可在商店購買/出售)"+C.RESET)
+                    # 商店型不動產：真正的買賣（價格單一來源 ITEM_CATALOG）
+                    _shop_at_location(character, character["location"])
+                    advance_time(character,1)
                 elif ac=="8" and "guest" in funcs:
                     modify_reputation(character, 5)
                     print(C.GREEN+"  你招待了客人，聲望 +5!"+C.RESET)
@@ -2221,8 +2418,14 @@ def do_real_estate(character, equipment=None):
         if not owned:
             print(C.GRAY+"  沒有不動產可升級。"+C.RESET)
             return
-        print(C.CYAN+"  可升級的不動產:"+C.RESET)
-        olist = list(owned.keys())
+        # 只能升級位於當前地點的不動產（與購買/使用一致）
+        here = character["location"]
+        olist = [pname for pname in owned
+                 if REAL_ESTATE.get(pname, {}).get("location", "") == here]
+        if not olist:
+            print(C.GRAY+"  當前地點沒有可升級的不動產。"+C.RESET)
+            return
+        print(C.CYAN+"  可升級的不動產 (當前地點 %s):"%here+C.RESET)
         upg_available = []
         for i, pname in enumerate(olist,1):
             pd = REAL_ESTATE.get(pname, {})
@@ -2286,8 +2489,8 @@ def start_game():
     save_game(character)
     
     # Auto-accept race-specific task
-    char_race = character.get("race", "人類")
-    race_task_id = {"艦娘":"TASK-01","術士":"TASK-02","竜族":"TASK-03","機械":"TASK-04"}.get(char_race)
+    char_race = character.get("mechanic_race") or character.get("race", "人類")
+    race_task_id = {"艦娘":"TASK-01","術士":"TASK-02","龍族":"TASK-03","機械":"TASK-04"}.get(char_race)
     if race_task_id:
         rt = next((q for q in QUESTS if q["id"]==race_task_id), None)
         if rt:
@@ -2365,13 +2568,14 @@ def start_game():
 
         # Auto-check quest completion after any action
         for qdef, qdata in get_active_quests(character):
-            if check_quest_completion(character, qdef["id"]):
-                reward = complete_quest(character, qdef["id"])
-                if reward:
+            if check_quest_completion(character, qdef["id"]):            reward = complete_quest(character, qdef["id"])
+            if reward:
                     print("\n"+C.YELLOW+C.BOLD+"  ⭐ 任務完成: %s!"%qdef["title"]+C.RESET)
                     print("    "+C.GREEN+"獲得 %dEXP, %dG"%(reward["exp"],reward["gold"])+C.RESET)
                     if reward.get("item"):
                         print("    "+C.CYAN+"獲得物品: %s"%reward["item"]+C.RESET)
+                    for m in reward.get("level_up_msgs", []):
+                        print("    "+C.MAGENTA+C.BOLD+m+C.RESET)
                     # Apply reputation reward
                     rep_r = qdef.get("reward_reputation", 0)
                     if rep_r:

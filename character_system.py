@@ -141,12 +141,12 @@ BODY_PARTS = [
 # Race keyword detection for auto-injecting race token categories
 # Maps race category → list of keywords to search in token names/values
 _RACE_KEYWORDS = {
-    "naval": ["艦","naval","ship","砲","魚雷","連裝","戰艦","航母","駆逐"],
-    "beast": ["獣","beast","狼","爪","尾","毛皮","牙","fur","claw","tail"],
-    "draconic": ["龍","竜","dragon","draconic","鱗","翼膜","吐息"],
+    "naval": ["艦","naval","ship","砲","魚雷","連裝","戰艦","航母","驅逐"],
+    "beast": ["獸","beast","狼","爪","尾","毛皮","牙","fur","claw","tail"],
+    "draconic": ["龍","dragon","draconic","鱗","翼膜","吐息"],
     "mechanism": ["機械","mechan","robot","機","義體","gear","steam"],
     "element": ["炎","冰","氷","雷","風","element","魔","咒","杖","術","mana","core"],
-    "spiritual": ["精霊","spirit","霊","ghost","幽","angel","天使"],
+    "spiritual": ["精靈","spirit","靈","ghost","幽","angel","天使"],
 }
 
 RED_BAR = "█"
@@ -264,6 +264,41 @@ def get_card_by_id(card_id):
         if c.get("card_id") == card_id:
             return c
     return None
+
+
+def _resolve_start_location(card) -> str:
+    """Resolve character's starting location from the card's text-authoritative
+    stats.location (主要場景), mapping to a world-map location when possible.
+
+    文本明載每個角色有主要場景（如 CC-18 小狐丸=神社、CC-67 沫·彩衣=彩紋礁、
+    CC-36 輝夜姬=月球），舊實作把所有人都硬編碼在聖十字校園——不符合文本。
+    此處依卡片 stats.location 決定起點；若該場景不在 WORLD_MAP 可探索地點中
+    （如神社、月球、彩紋礁），回退到聖十字校園（遊戲起點），保持可玩性。
+    """
+    from sim_systems import WORLD_MAP
+    stats = card.get("stats", {}) or {}
+    loc = str(stats.get("location") or "").strip()
+    if not loc:
+        return "聖十字校園"
+    # 直接命中世界地圖地點
+    if loc in WORLD_MAP:
+        return loc
+    # 模糊對應：包含世界地圖地點名（如『魔女學府 深層 第零雲路』→ 魔女學府）
+    for wl_key in sorted(WORLD_MAP, key=len, reverse=True):
+        if len(wl_key) >= 3 and wl_key in loc:
+            return wl_key
+    # 特殊別名（聖十字環形堡壘校園 → 聖十字校園；軌道居住站 → 軌道居住站大學院）
+    aliases = {
+        "聖十字環形堡壘校園": "聖十字校園",
+        "軌道居住站": "軌道居住站大學院",
+        "霧海北海峽": "霧海群島",
+        "霧海南岸": "霧海群島",
+        "農學院（The Institute）": "農學院",
+    }
+    for key, mapped in aliases.items():
+        if key in loc:
+            return mapped
+    return "聖十字校園"
 
 
 def _auto_categorize_token(name: str, value: str) -> str:
@@ -409,8 +444,21 @@ def generate_character_from_card(card):
     karma = 5 + len(social_tokens) * 2 + len(knowledge_tokens) * 1 + int(stats.get("karma_bonus", 0))
     craft_skill = len(craft_tokens) * 3 + int(stats.get("craft_bonus", 0))
 
-    # Detect race from token names/values + categories
-    from sim_systems import detect_race, RACE_DATA, get_race_body_parts
+    # 軸譜解析（文本權威）：文件分類表 → 卡片 token → 文本推導（不再用 token 猜種族）
+    from axis_system import (
+        resolve_card_axis, affinity_vector, stat_modifiers as axis_stat_mods,
+        mechanic_race_from_axis, body_parts_from_axis, axis_display,
+        MECH_AFFINITY_BOOST,
+    )
+    from sim_systems import (
+        detect_race, RACE_DATA, get_race_body_parts,
+    )
+
+    axis_lineage, axis_code, axis_axes = resolve_card_axis(card)
+    species_lineage = axis_lineage
+    species_code = axis_code
+    species_axes = axis_axes
+    axis_affinity = affinity_vector(axis_lineage, axis_axes)
     
     # Build token name/value text for race keyword detection
     _token_text = " ".join(str(t.get("name","")+t.get("value","")) for t in tokens).lower()
@@ -418,19 +466,49 @@ def generate_character_from_card(card):
     _all_text = _token_text + " " + _card_name
     
     # Inject race category tokens based on keyword detection
+    # （有分類系譜時不需注入——文本權威已決定機制種族，避免 auto token 污染）
     _existing_cats = {t.get("category","") for t in tokens}
-    for race_cat, keywords in _RACE_KEYWORDS.items():
-        if race_cat not in _existing_cats:
-            for kw in keywords:
-                if kw in _all_text:
-                    tokens.append({"category": race_cat, "name": f"{race_cat}_auto", "value": ""})
-                    break
+    if not species_lineage:
+        for race_cat, keywords in _RACE_KEYWORDS.items():
+            if race_cat not in _existing_cats:
+                for kw in keywords:
+                    if kw in _all_text:
+                        tokens.append({"category": race_cat, "name": f"{race_cat}_auto", "value": ""})
+                        break
     
-    race = detect_race(tokens)
+    # 種族（文本權威）：卡片 stats.race 的原文種族（如「狐娘（北極狐亞種）」「天空龍娘」）
+    # 完整保留為 character["race"]；機制種族 detect_race 僅是遊戲抽象（RACE_DATA 身體部位／
+    # 裝備槽／戰鬥加成）——三軸文件明言各分類系譜各有自己的尺，不能硬套同一把尺，
+    # 更不能用機制分類取代文本種族。
+    stats_race = (stats.get("race") or "").strip()
+    if axis_lineage and axis_axes:
+        # 有軸譜：機制種族由軸譜系譜＋文本種族推導
+        mechanic_race = mechanic_race_from_axis(axis_lineage, axis_axes, stats_race)
+    else:
+        # 未分類（純人類等）：以文本關鍵字偵測為輔（人類/艦娘/魔女/機械妖精等）
+        mechanic_race = detect_race(tokens, species_lineage=species_lineage,
+                                    card_id=card.get("card_id", ""),
+                                    text_race=stats_race)
+        # 未分類角色（無軸譜）：依機制種族補強五維度親和力——
+        # 艦娘/機械可交互機械維度、術士可用魔導器（人類基線不足）
+        for _dim, _boost in (MECH_AFFINITY_BOOST.get(mechanic_race) or {}).items():
+            axis_affinity[_dim] = min(1.0, axis_affinity.get(_dim, 0.0) + _boost)
+    race = stats_race or mechanic_race
+    race_label = race
+
+    # 軸譜數值計算：由五維度親和力調整基礎屬性（數值計算以軸譜為準）
+    _amods = axis_stat_mods(axis_affinity)
+    max_hp = max(10, int(max_hp * _amods["hp"]))
+    max_sp = max(5, int(max_sp * _amods["sp"]))
+    atk = max(1, int(atk * _amods["atk"]))
+    defense = max(1, int(defense * _amods["defense"]))
+    spd = max(1, int(spd * _amods["spd"]))
+    karma = max(1, int(karma * _amods["karma"]))
     
-    # Build body parts from race data
-    body_part_ids = get_race_body_parts(race)
-    rd = RACE_DATA.get(race, RACE_DATA["人類"])
+    # Build body parts from race data (mechanic race)
+    _axis_body = body_parts_from_axis(axis_lineage, axis_axes)
+    body_part_ids = _axis_body if (axis_lineage and axis_axes) else get_race_body_parts(mechanic_race)
+    rd = RACE_DATA.get(mechanic_race, RACE_DATA["人類"])
     body_parts = {}
     # Use actual BODY_PARTS names for base parts
     bp_names = {bp[0]: bp[1] for bp in BODY_PARTS}
@@ -447,10 +525,24 @@ def generate_character_from_card(card):
             "condition": "完好",
         }
 
+    _start_loc = _resolve_start_location(card)
     character = {
         "name": name,
         "card_id": card.get("card_id", "???"),
         "race": race,
+        "race_label": race_label,
+        "mechanic_race": mechanic_race,
+        "species_lineage": species_lineage,
+        "species_code": species_code,
+        "species_axes": species_axes,
+        "axis": {
+            "lineage": axis_lineage,
+            "code": axis_code,
+            "axes": axis_axes,
+            "affinity": axis_affinity,
+            "display": axis_display(axis_lineage, axis_code, axis_axes),
+        },
+        "start_location": _start_loc,
         "tokens": token_categories,
         "token_list": tokens,
         "abilities": abilities,
@@ -471,7 +563,7 @@ def generate_character_from_card(card):
         "relationships": {},
         "inventory": [],
         "equipment": {},
-        "location": "聖十字校園",
+        "location": _start_loc,
         "day": 1,
         "hour": 8,
         "alignment": "neutral",
@@ -558,7 +650,15 @@ def display_character_sheet(character):
     lines.append(C.CYAN + "│  " + C.BOLD + "%s %s" % (symbol, character["name"]) + C.RESET + " " * max(0, 26 - len(character["name"])) + C.CYAN + "│" + C.RESET)
     if character.get("card_id"):
         lines.append(C.CYAN + "│  ID: %s" % character["card_id"].ljust(29) + C.CYAN + "│" + C.RESET)
-    lines.append(C.CYAN + "│  種族: %s" % character.get("race","人類").ljust(26) + C.CYAN + "│" + C.RESET)
+    lines.append(C.CYAN + "│  種族: %s" % str(character.get("race_label", character.get("race","人類")))[:24].ljust(24) + C.CYAN + "│" + C.RESET)
+    _ax = character.get("axis", {}) or {}
+    if _ax.get("display"):
+        lines.append(C.CYAN + ("│  軸譜: %s" % _ax["display"][:26]).ljust(30) + C.CYAN + "│" + C.RESET)
+        _aff = _ax.get("affinity") or {}
+        _aff_str = " ".join("%s%.0f" % (k, _aff.get(k, 0) * 100) for k in ("物質", "靈性", "機械", "能量", "資訊"))
+        lines.append(C.CYAN + ("│  親和: %s" % _aff_str[:26]).ljust(30) + C.CYAN + "│" + C.RESET)
+    # 軸譜行已含系譜＋代碼＋標籤（例如「物種｜S-S-P（標準種、類人型、純血）」）
+    # species_lineage/species_code 保留於資料中供機制使用，不再重複顯示。
     lines.append(C.CYAN + ("│  Lv.%d  EXP:%d/%d" % (character["level"], character["exp"], exp_needed_for_level(character["level"]))).ljust(30) + C.CYAN + "│" + C.RESET)
     lines.append(C.CYAN + "├" + "─" * 32 + "┤" + C.RESET)
     # HP bar
@@ -810,7 +910,11 @@ def complete_quest(character, quest_id):
     character["gold"] = character.get("gold", 0) + gold
     if item:
         character.setdefault("inventory", []).append(item)
-    return {"gold": gold, "exp": exp, "item": item}
+    # 實際發放經驗（原實作只回傳不發放，任務完成卻拿不到 EXP 的假獎勵）
+    lvl_msgs = []
+    if exp > 0:
+        lvl_msgs = gain_exp(character, exp)
+    return {"gold": gold, "exp": exp, "item": item, "level_up_msgs": lvl_msgs}
 
 
 def get_active_quests(character):
@@ -840,10 +944,31 @@ def check_quest_eligibility(character, quest, current_hour=None):
     if req_lv > 0 and character.get("level", 1) < req_lv:
         return False, "等級不足 (需要 Lv.%d)" % req_lv
     
-    # Check race
+    # Check race（required_race 是機制分類值；mechanic_race 或文本種族含該詞皆算符合，
+    # 如「天空龍娘」文本 → TASK-03 龍族任務）
     req_race = conds.get("required_race", "")
-    if req_race and character.get("race", "人類") != req_race:
-        return False, "種族不符 (需要 %s)" % req_race
+    if req_race:
+        _m_race = character.get("mechanic_race") or character.get("race", "人類")
+        _t_race = str(character.get("race", ""))
+        if req_race != _m_race and req_race not in _t_race and _t_race not in req_race:
+            return False, "種族不符 (需要 %s)" % req_race
+
+    # 軸譜條件（以五維度親和力判定）：{"系譜": "神話種"} 或 {"維度": {"靈性": 0.5}}
+    ax_cond = conds.get("axis", {}) or {}
+    if ax_cond:
+        _axis = character.get("axis", {}) or {}
+        req_lineage = ax_cond.get("系譜")
+        if req_lineage and _axis.get("lineage") != req_lineage:
+            return False, "軸譜系譜不符 (需要 %s)" % req_lineage
+        dims = ax_cond.get("維度", {})
+        if dims:
+            from axis_system import evaluate_quest
+            _aff = _axis.get("affinity")
+            if not _aff:
+                return False, "軸譜不明"
+            _ok_ax, _dep, _missing = evaluate_quest(_aff, {"維度": dims})
+            if not _ok_ax:
+                return False, "軸譜親和力不足 (需要 %s)" % "、".join(_missing)
     
     # Check reputation
     req_rep = conds.get("required_reputation", 0)

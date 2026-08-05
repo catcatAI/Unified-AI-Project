@@ -90,12 +90,17 @@ def generate_vague_label(archetype, race, npc_name=""):
     prefix = random.choice(prefixes)
 
     if race and race not in ("不明", "?", ""):
-        race_short = race.split("（")[0].strip()[:6]
-        parts = [prefix, race_short, arch_label]
+        race_short = race.split("（")[0].strip()
+        # 避免 [:6] 把全形字元切半（如「像素貓娘「概念」→「像素貓娘「概」）；
+        # 截斷時以「…」標示，且不與職業標籤重複（種族名已含職業意義時不疊加）
+        if len(race_short) > 8:
+            race_short = race_short[:8] + "…"
+        arch_extra = arch_label if arch_label not in race_short else ""
+        parts = [prefix, race_short, arch_extra]
     else:
         parts = [prefix, arch_label]
 
-    return "[" + "".join(parts) + "]"
+    return "[" + "".join(p for p in parts if p) + "]"
 
 
 def get_display_name(character, npc_name, npc_data):

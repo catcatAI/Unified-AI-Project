@@ -1,4 +1,4 @@
-"""Add favorable/unfavorable outcome descriptions to all 18 world events."""
+"""Add favorable/unfavorable outcome descriptions to all world events."""
 import json
 
 with open('data/world_clock.json', 'r', encoding='utf-8') as f:
@@ -79,14 +79,17 @@ outcomes = {
     }
 }
 
-# Update events
-for evt in wc.get('major_events', []):
-    eid = evt.get('id')
-    if eid in outcomes:
-        evt['favorable_outcome'] = outcomes[eid]['favorable_outcome']
-        evt['unfavorable_outcome'] = outcomes[eid]['unfavorable_outcome']
+# Update events (v2 format: events live per world line)
+updated = 0
+for wl_id, line in wc.get('world_lines', {}).items():
+    for evt in line.get('events', []):
+        eid = evt.get('id')
+        if eid in outcomes:
+            evt['favorable_outcome'] = outcomes[eid]['favorable_outcome']
+            evt['unfavorable_outcome'] = outcomes[eid]['unfavorable_outcome']
+            updated += 1
 
 with open('data/world_clock.json', 'w', encoding='utf-8') as f:
     json.dump(wc, f, ensure_ascii=False, indent=2)
 
-print(f"Updated {len(outcomes)} events with outcome descriptions.")
+print(f"Updated {updated} events with outcome descriptions.")
