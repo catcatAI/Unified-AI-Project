@@ -27,8 +27,8 @@
 | `evaluate_math` | `services/math_verifier.py` | 算式求值：`+ − × ÷ % **`、三角、sqrt/log、常數、factorial、中文數字。全專案唯一的運算來源（單一 compute source）。 |
 | `evaluate_logic` | `services/math_verifier.py` | 布林自我語言：true/false、and/or/not、等值。**注意：無法表達 XNOR**（引擎缺口）。 |
 | `gate_router.try_logic_gate` | `ai/arithmetic/gate_router.py` | 閘路路由橋：引擎優先（先問 `evaluate_logic`）；僅當引擎表達不出來時（今日為 **XNOR** 與數值位元形式 `N OP M`）才落到學習器。路由本身確定。 |
-| `route_reasoning` | `ai/symbolic_reasoner.py` | 符號推理 pattern：傳遞關係、三段論、日曆、數量（單變量給/拿）、質量騙局、**雞兔同籠類二元線性組**（`_solve_word_problem`）。 |
-| `route_knowledge` | `ai/knowledge_base.py` | 事實查詢：顏色、聲音、單位換算、化學式、動物腿腳/頭數（含 `chicken legs=2`、`rabbit legs=4`）。 |
+| `route_reasoning` | `ai/symbolic_reasoner.py` | 符號推理 pattern：傳遞關係、三段論、日曆、數量（單變量給/拿）、質量騙局、**雞兔同籠類二元線性組**（`_solve_word_problem`）。僅在恰兩類實體存在時求解，3+ 實體退回。 |
+| `route_knowledge` | `ai/knowledge_base.py` | 事實查詢：顏色、聲音、單位換算、化學式、動物腿腳/頭數、**車輛輪數、硬幣價值**（`chicken legs=2`、`rabbit legs=4`、`bicycle wheels=2`、`quarter value=25`）。主體屬性查詢支援英文及**中文別名**（`腳踏車`/`一角硬幣` 等）。 |
 | `relational_chain` | `ai/reasoning/relational_chain.py` | 比較關係鏈解析（A 比 B 高…，誰最高）。 |
 | Reflex 表 | ED3N `_stage_reflex` / GARDEN `_ReflexTable` | 精確 / 子字串的 canned 回應匹配（問候、既定回答）。 |
 | 安全性規則 | 危機評級、負面詞過濾、硬編門檻 | 依規則表判定，不涉及學習。 |
@@ -129,7 +129,8 @@
 | `ce32a98e` | 數字學習器擴充減 / 乘 / 邏輯 cell | 半定性（模型層） |
 | `ccd3c35a` | 學習閘路接進 dict/SNN（1+2） | 半定性（模型層）＋確定性路由（對話層） |
 | `cf14ec49` | `route_reasoning` 新增雞兔同籠二元線性求解 + KB 新增 chicken/rabbit + 本分類文件 | 確定性（模型層） |
-| 本次（未提交） | 解題器泛化到 **legs / wheels / value** 三屬性（雞兔/車輛/硬幣）、KB 新增腳踏車/硬幣；`_output_matches` 新增 **reasoning 數值多重集合** 比較（訓練邊界把確定性樣本正確跳過） | 確定性（模型層）＋半定性（訓練層邊界） |
+| `a179f7a9` | 解題器泛化到 **legs / wheels / value** 三屬性（雞兔/車輛/硬幣）、KB 新增腳踏車/硬幣；`_output_matches` 新增 **reasoning 數值多重集合** 比較（訓練邊界把確定性樣本正確跳過） | 確定性（模型層）＋半定性（訓練層邊界） |
+| `6ed19173` | reasoning 模板重建接通 runtime（`process()` 以 `"reasoning"` 鍵派遣、`{R0}/{R1}` 取代）；`_solve_word_problem` 3+ 實體退回；KB wheels/value 屬性查詢＋中文別名 | 確定性（模型層）＋半定性（對話層模板） |
 
 ---
 
@@ -145,7 +146,7 @@
 | 訓練邊界 reasoning 化 | `_output_matches` 對結構化 reasoning 輸出用數值多重集合比較，讓確定性樣本（雞兔/硬幣等）在訓練時被正確跳過、並學習 NL 重建模板 | ✅ 已實作（本次） |
 | 閘路 cell 擴張 | 學習器已支援 AND/OR/XOR/NAND/NOR/XNOR/NOT；可再加多 bit 位元形式與組合閘，補足 `evaluate_logic` 數值位元缺口 | 提案 |
 | 關係 cell 模糊後援 | 以學得 cell 作為解題器**解析失敗**時的近似後援（NL 換言之泛化）；嚴守「只補解析缺口、不重做確定性數學」 | 提案（風險中） |
-| reasoning 模板重建 | 把 `_reconstruct_with_template` 的 reasoning 分支改為消費輸入中的數字（35/94）而非整句，讓變體措辭能自動包回 NL | 提案 |
+| reasoning 模板重建 | 把 `_reconstruct_with_template` 的 reasoning 分支改為消費輸入中的數字（35/94）而非整句，讓變體措辭能自動包回 NL | ✅ 已實作（`6ed19173`） |
 | ε-增強訓練 | 在封閉真值表旁注入少量語序/同義換言之樣本（以 seed 控制），提升半定性層對措辭變異的韌性 | 提案 |
 
 ### 非定性（隨機/生成層）增強
