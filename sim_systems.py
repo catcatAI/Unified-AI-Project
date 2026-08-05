@@ -486,6 +486,12 @@ def craft_item(recipe_id, inventory, equipment=None, character=None):
     for ing in recipe["ingredients"]:
         if inventory.count(ing["item"]) < ing["quantity"]:
             return False, None, "缺少材料: %s x%d" % (ing["item"], ing["quantity"])
+    # 軸譜檢查：魔法類配方（魔力藥水/靈力藥/法杖/護身符/魔法裝備）需要能量或靈性親和力。
+    if character is not None:
+        from axis_system import check_craft_axis
+        _ok_ax, _why_ax = check_craft_axis(character, recipe)
+        if not _ok_ax:
+            return False, None, _why_ax
     # 修復服務類配方（R17/R18）：前置檢查裝備管理器，避免白扣材料。
     # 修復不是產出物品——「修復服務」不在 ITEM_CATALOG，
     # 若照一般配方會把不存在的物品塞進物品欄。

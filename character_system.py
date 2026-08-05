@@ -461,7 +461,7 @@ def generate_character_from_card(card):
     axis_affinity = affinity_vector(axis_lineage, axis_axes)
     
     # Build token name/value text for race keyword detection
-    _token_text = " ".join(str(t.get("name","")+t.get("value","")) for t in tokens).lower()
+    _token_text = " ".join(str(t.get("name","")) + " " + str(t.get("value","")) for t in tokens).lower()
     _card_name = card.get("name","").lower()
     _all_text = _token_text + " " + _card_name
     

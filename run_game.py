@@ -1456,7 +1456,14 @@ def do_crafting(character, equipment=None):
         igs = ", ".join("%s x%d"%(ig["item"],ig["quantity"]) for ig in r["ingredients"])
         has = all(character["inventory"].count(ig["item"])>=ig["quantity"] for ig in r["ingredients"])
         st = C.GREEN+"✓"+C.RESET if has else C.RED+"✗"+C.RESET
-        print(C.CYAN+("│ %s %s %s: %s"%(st,r["recipe_id"],r["name"],igs)).ljust(42)+C.CYAN+"│"+C.RESET)
+        # 魔法類配方標記（軸譜需求：能量/靈性 ≥ 0.5）
+        _magic = ""
+        from axis_system import is_magic_craft
+        from sim_systems import get_item_def as _gid
+        _d = _gid(r["result_item"])  # R17/R18 修復服務不在 ITEM_CATALOG → None
+        if is_magic_craft(r["result_item"], _d.get("tags", []) if _d else []):
+            _magic = C.MAGENTA+"🔮"+C.RESET+" "
+        print(C.CYAN+("│ %s%s %s %s: %s"%(_magic,st,r["recipe_id"],r["name"],igs)).ljust(44)+C.CYAN+"│"+C.RESET)
     print(C.CYAN+"│  "+C.GREEN+"輸入 r 修復裝備"+C.RESET+" "*20+C.CYAN+"│"+C.RESET)
     print(C.CYAN+"└"+"─"*44+"┘"+C.RESET)
     rid = input("  %s配方ID (r=修復, Enter取消):%s " % (C.YELLOW,C.RESET)).strip().lower()

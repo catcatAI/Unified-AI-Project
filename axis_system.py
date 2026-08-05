@@ -495,6 +495,45 @@ def item_dimension(item_def: dict) -> str:
     return "物質"  # 其餘（含 naval/draconic/beast/武器/防具/無 tag）皆為實體
 
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [β] [B] [L4]
+# =============================================================================
+# 魔法類製作判定：產物 tags 標 magic/elemental/energy，或名稱含基礎魔法詞。
+# 對照文本：術士／魔女／術式適應體等能量維度角色才能調製魔法物品；
+# 純人類（能量親和力 0.15 基線）無法製作魔力藥水、靈力藥、法杖、護身符。
+MAGIC_TAGS = {"magic", "elemental", "energy"}
+MAGIC_NAME_KW = ("魔力", "靈力", "法杖", "護身符")
+
+
+def is_magic_craft(item_name: str = "", tags=None) -> bool:
+    """配方產物是否屬魔法類（製作需要能量/靈性親和力）。"""
+    if tags and any(t in MAGIC_TAGS for t in tags):
+        return True
+    return any(kw in str(item_name or "") for kw in MAGIC_NAME_KW)
+
+
+def check_craft_axis(character, recipe) -> tuple:
+    """檢查角色能否製作此配方 → (ok, 原因)。
+
+    魔法類配方要求能量或靈性親和力 ≥ 0.5（對齊 evaluate_equipment 門檻）；
+    一般配方（鐵劍/藥草/修復等）無軸譜限制。
+    """
+    result_item = (recipe or {}).get("result_item", "")
+    tags = None
+    try:
+        from sim_systems import get_item_def
+        _d = get_item_def(result_item)
+        tags = _d.get("tags", []) if _d else []
+    except Exception:
+        tags = []
+    if not is_magic_craft(result_item, tags):
+        return True, ""
+    affinity = (character or {}).get("axis", {}).get("affinity", {}) or {}
+    if affinity.get("能量", 0.0) >= 0.5 or affinity.get("靈性", 0.0) >= 0.5:
+        return True, ""
+    return False, "軸譜不符：%s 是魔法類物品，需要能量或靈性親和力 ≥ 0.5" % result_item
+
+
 def evaluate_equipment(affinity: dict, item_def: dict):
     """評估裝備交互 → (可否裝備, 交互深度, 維度, 原因)。
 

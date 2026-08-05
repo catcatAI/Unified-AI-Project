@@ -119,13 +119,13 @@ def _get_npc_home_from_card(card: dict, fallback_idx: int) -> str:
     for kw in home_keywords:
         for t in lore_toks:
             if kw in t.get("name", ""):
-                val = t.get("value", "")
+                val = str(t.get("value", ""))  # token value 可能是 int（如善惡值）
                 for scene_key, mapped in _SCENE_NAME_MAP.items():
                     if len(scene_key) >= 2 and scene_key in val:
                         return mapped
     # Fallback: scan all lore token values for any scene name
     for t in lore_toks:
-        val = t.get("value", "")
+        val = str(t.get("value", ""))
         for scene_key, mapped in _SCENE_NAME_MAP.items():
             if len(scene_key) >= 3 and scene_key in val:
                 return mapped
