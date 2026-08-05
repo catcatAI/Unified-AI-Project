@@ -1634,7 +1634,12 @@ def do_scene_search(character, equipment):
         # Check requirements
         can_activate, req_fail_msg = check_mechanism_requirements(obj, character)
         if not can_activate:
-            fail_msg = obj.get("failure_msg", req_fail_msg or "條件不足，無法啟動。")
+            # 情境文本（failure_msg）＋ 詳細診斷（req_fail_msg：缺哪些材料/軸譜數值）
+            flavor = obj.get("failure_msg", "") or ""
+            if req_fail_msg:
+                fail_msg = ((flavor + " ") if flavor else "") + req_fail_msg
+            else:
+                fail_msg = flavor or "條件不足，無法啟動。"
             print(C.RED+"  ✗ " + fail_msg + C.RESET)
             advance_time(character)
             return

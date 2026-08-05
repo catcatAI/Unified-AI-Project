@@ -975,6 +975,23 @@ def check_mechanism_requirements(obj, character):
         if count < req_qty:
             return False, ("需要 %s x%d。（目前: %d）" % (req_item, req_qty, count))
 
+    # 軸譜檢查：儀式/靈性類機制（祭壇/英靈召喚台/石碑）需靈性連結、
+    # 機械類（蒸氣閥門）需機械維度、能量類（爆破裝置）需能量維度。
+    ax_req = reqs.get("axis", {}) or {}
+    if ax_req:
+        aff = character.get("axis", {}).get("affinity", {}) or {}
+        missing = [
+            (dim, thr) for dim, thr in ax_req.items()
+            if aff.get(dim, 0.0) < thr
+        ]
+        if missing:
+            # 每維度列出需求與目前數值（多維度如爆破裝置＝能量+機械）
+            detail = "、".join(
+                "%s(你 %.2f / 需 %.1f)" % (dim, aff.get(dim, 0.0), thr)
+                for dim, thr in missing
+            )
+            return False, ("軸譜不足：%s。" % detail)
+
     return True, None
 
 
@@ -1843,11 +1860,11 @@ SCENE_OBJECTS = {
         {"id":"boat",    "name":"小木船",    "type":"vehicle","desc":"停靠在湖邊的小船","vehicle_type":"小木船","interactable":True},
         {"id":"shrine",  "name":"湖底祭壇",  "type":"mechanism","mechanism_type":"pedestal","desc":"湖中央的古老祭壇，似乎需要某種祭品",
          "state":False,"trigger_once":True,"triggered":False,
-         "requirements":{"item":"水晶碎片","consume":True,"qty":3},
+         "requirements":{"item":"水晶碎片","consume":True,"qty":3,"axis":{"靈性":0.3}},
          "effect":{"type":"reveal","items":["記憶水晶","古老鑰匙"],
                    "message":"祭壇發出耀眼的光芒！從水中浮現出了寶物！"},
-         "requirements_msg":"需要在水晶祭壇上放置3枚水晶碎片。",
-         "failure_msg":"祭壇沒有反應...需要放入更多的水晶碎片。"},
+         "requirements_msg":"需要在水晶祭壇上放置3枚水晶碎片（靈性連結）。",
+         "failure_msg":"祭壇沒有反應...需要更多的水晶碎片與靈性連結。"},
     ],
     "卡洛夫角": [
         {"id":"lighthouse","name":"燈塔開關","type":"mechanism","mechanism_type":"lever","desc":"海峽燈塔的控制桿",
@@ -1863,10 +1880,11 @@ SCENE_OBJECTS = {
         {"id":"valve",   "name":"蒸氣閥門",  "type":"mechanism","mechanism_type":"gear","desc":"巨大的蒸氣閥門，需要多次轉動才能打開",
          "state":False,"trigger_once":False,"triggered":False,
          "charges":0,"max_charges":3,
+         "requirements":{"axis":{"機械":0.3}},
          "effect":{"type":"reveal","items":["龍鱗","火元素","鐵錠"],
                    "message":"閥門完全打開！蒸氣散去，露出了隱藏的儲藏室！"},
          "progress_msg":"閥門轉動了 %d/3 圈。",
-         "fail_msg":"閥門紋絲不動...需要更大的力量。",
+         "fail_msg":"閥門紋絲不動...需要機械維度的理解。",
          "on_repeat":"閥門已經完全打開了。"},
     ],
     "便利店": [
@@ -1878,11 +1896,11 @@ SCENE_OBJECTS = {
         {"id":"weapon_rack","name":"武器架",  "type":"container","desc":"陳列著武器的架子","contents":["鋼刀","鐵劍"],"locked":False,"interactable":True},
         {"id":"summon_pedestal","name":"英靈召喚台","type":"mechanism","mechanism_type":"pedestal","desc":"召喚古代英靈的基座",
          "state":False,"trigger_once":True,"triggered":False,
-         "requirements":{"item":"古老鑰匙","level":5,"consume":False},
+         "requirements":{"item":"古老鑰匙","level":5,"consume":False,"axis":{"靈性":0.5}},
          "effect":{"type":"summon","enemy":"古代守衛","count":1,
                    "message":"基座發出耀眼的光芒！一位古代英靈降臨了！"},
-         "requirements_msg":"需要古老的鑰匙和高超的實力才能啟動。（Lv.5+）",
-         "failure_msg":"基座毫無反應..."},
+         "requirements_msg":"需要古老的鑰匙、高超的實力與靈性連結才能啟動。（Lv.5+）",
+         "failure_msg":"基座毫無反應...缺乏靈性連結。"},
         {"id":"throne","name":"王之寶座",    "type":"mechanism","mechanism_type":"pressure_plate","desc":"大殿正中央的王座",
          "state":False,"trigger_once":True,"triggered":False,
          "effect":{"type":"reveal","items":["水晶法杖","龍鱗"],
@@ -1899,22 +1917,22 @@ SCENE_OBJECTS = {
          "on_repeat":"轉轍器已經被扳動過了。"},
         {"id":"explosive","name":"爆破裝置",  "type":"mechanism","mechanism_type":"pedestal","desc":"礦坑深處的爆破裝置",
          "state":False,"trigger_once":True,"triggered":False,
-         "requirements":{"item":"火元素","consume":True,"qty":2},
+         "requirements":{"item":"火元素","consume":True,"qty":2,"axis":{"能量":0.4,"機械":0.3}},
          "effect":{"type":"route_open","target":"廢棄礦坑","value":"deep",
                    "message":"轟！！爆炸聲在礦坑中迴盪，通往更深處的通道被打開了！"},
-         "requirements_msg":"需要2枚火元素來引爆。",
-         "failure_msg":"缺少引爆物..."},
+         "requirements_msg":"需要2枚火元素與能量引導來引爆。",
+         "failure_msg":"缺少引爆物或能量引導..."},
     ],
     "森林深處": [
         {"id":"ancient_tree","name":"古樹",  "type":"container","desc":"參天的古老巨木","contents":["靈木","靈木","生命果"],"locked":False,"interactable":True},
         {"id":"camp",    "name":"廢棄營地",  "type":"container","desc":"冒險者留下的營地","contents":["乾糧","繃帶","木柄"],"locked":False,"interactable":True},
         {"id":"monolith","name":"古老石碑",  "type":"mechanism","mechanism_type":"pedestal","desc":"刻滿符文的神秘石碑",
          "state":False,"trigger_once":True,"triggered":False,
-         "requirements":{"item":"生命果","consume":True,"qty":1},
+         "requirements":{"item":"生命果","consume":True,"qty":1,"axis":{"靈性":0.3}},
          "effect":{"type":"heal","hp":999,"sp":999,
                    "message":"石碑上的符文亮起！森林的力量湧入你的體內！"},
-         "requirements_msg":"需要獻上1枚生命果作為祭品。",
-         "failure_msg":"石碑沒有反應..."},
+         "requirements_msg":"需要獻上1枚生命果並以靈性連結石碑。",
+         "failure_msg":"石碑沒有反應...缺乏靈性連結。"},
     ],
 }
 
