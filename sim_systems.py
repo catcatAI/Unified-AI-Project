@@ -1302,7 +1302,7 @@ QUESTS = [
      "reward_relationships":{"左間小蒼蘭":12}},
     {"id":"SQ-08","title":"驅除暗影","type":"side","giver":"小狐丸",
      "desc":"鏡湖附近出現暗影靈，需要清除。",
-     "conditions":{"required_quests":["SQ-02"],"time_available":{"start_hour":18,"end_hour":6}},
+     "conditions":{"required_quests":["SQ-02"],"required_relationships":{"小狐丸":30},"time_available":{"start_hour":18,"end_hour":6}},
      "objectives":[{"type":"defeat","target":"暗影靈","qty":2,"detail":"擊敗2隻暗影靈"}],
      "reward_exp":55,"reward_gold":25,"reward_item":"魔力藥水","reward_reputation":10,
      "reward_relationships":{"小狐丸":15}},

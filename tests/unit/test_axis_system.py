@@ -389,3 +389,59 @@ class TestBoost:
 
     def test_human_empty(self):
         assert ax.MECH_AFFINITY_BOOST["人類"] == {}
+
+
+# =============================================================================
+# 8. 好感度任務門檻（批次 35）
+# =============================================================================
+
+class TestRelationshipQuestGates:
+    """NPC giver 的支線任務都該有好感度門檻——不同好感度解鎖不同任務分支。"""
+
+    def _q(self, qid):
+        import sim_systems
+        return next(q for q in sim_systems.QUESTS if q["id"] == qid)
+
+    def test_npc_side_quests_have_relationship_gate(self):
+        import sim_systems
+        npc_gated = 0
+        for q in sim_systems.QUESTS:
+            giver = q.get("giver", "")
+            if q.get("type") == "side" and giver and giver != "系統":
+                reqs = (q.get("conditions", {}) or {}).get("required_relationships", {}) or {}
+                assert reqs.get(giver, 0) > 0, (
+                    "支線任務 %s 由 %s 給出但無好感度門檻" % (q["id"], giver)
+                )
+                npc_gated += 1
+        assert npc_gated >= 4  # 紅×2、小狐丸×2、小蒼蘭×1 等
+
+    def test_quest_gate_matches_giver(self):
+        import sim_systems
+        for q in sim_systems.QUESTS:
+            giver = q.get("giver", "")
+            if giver and giver != "系統":
+                reqs = (q.get("conditions", {}) or {}).get("required_relationships", {}) or {}
+                for npc in reqs:
+                    assert npc == giver, (
+                        "任務 %s 的好感度門檻對象 %s 與 giver %s 不符"
+                        % (q["id"], npc, giver)
+                    )
+
+    def test_low_relationship_blocks_quest(self):
+        from character_system import check_quest_eligibility
+        q = self._q("SQ-02")
+        char = {"level": 5, "race": "人類", "mechanic_race": "人類",
+                "reputation": 0, "relationships": {"小狐丸": 10},
+                "completed_quests": [], "token_list": [], "axis": {}}
+        ok, reason = check_quest_eligibility(char, q)
+        assert not ok
+        assert "好感度不足" in reason
+        char["relationships"]["小狐丸"] = 20
+        ok, reason = check_quest_eligibility(char, q)
+        assert ok
+
+    def test_main_quest_not_gated_by_relationship(self):
+        """主線 MQ-02（左間小蒼蘭給）不設好感度門檻——主線不該被支線好感卡死。"""
+        q = self._q("MQ-02")
+        reqs = (q.get("conditions", {}) or {}).get("required_relationships", {}) or {}
+        assert reqs == {}

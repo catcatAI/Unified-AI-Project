@@ -1865,7 +1865,17 @@ def do_interact_npc(character):
     # NPC-specific interactions for known NPCs, generic for others
     if npc_name == "小狐丸":
         print("\n" + C.CYAN + "  小狐丸正在" + npc_act + "。" + C.RESET)
-        if rep >= 20:
+        # 對話分支以「與小狐丸的好感度」為準（不再是全域聲望）——
+        # 好感度 <20 只有招呼/交流；≥20 解鎖消息/送禮/任務；≥60 摯友級特殊對話。
+        fox_rel = get_relationship(character, "小狐丸")
+        if fox_rel >= 60:
+            print(C.MAGENTA+"  小狐丸: 「旅人，你來了。鏡湖的風都記得你的腳步。」"+C.RESET)
+            print(C.GREEN+"  1. 詢問消息"+C.RESET)
+            print(C.CYAN+"  2. 交流 (SP-10)"+C.RESET)
+            print(C.GREEN+"  3. 送禮物"+C.RESET)
+            print(C.CYAN+"  4. 接受任務"+C.RESET)
+            print(C.CYAN+"  5. 聆聽往事 (好感≥60)"+C.RESET)
+        elif fox_rel >= 20:
             print(C.CYAN+"  小狐丸: 「你好，旅人。」"+C.RESET)
             print(C.GREEN+"  1. 詢問消息"+C.RESET)
             print(C.CYAN+"  2. 交流 (SP-10)"+C.RESET)
@@ -1879,13 +1889,24 @@ def do_interact_npc(character):
         c = input("  %s>%s " % (C.YELLOW,C.RESET)).strip()
 
         if c=="1":
-            if rep>=20:
+            if fox_rel>=20:
                 print(C.YELLOW+'  小狐丸: 「鏡湖的水晶最近不太穩定...小心點。」'+C.RESET)
                 add_relationship(character,"小狐丸",2)
                 modify_reputation(character,1)
             else:
                 print(C.YELLOW+'  小狐丸: 「...你好。」'+C.RESET)
                 add_relationship(character,"小狐丸",1)
+        elif c=="5" and fox_rel>=60:
+            # 摯友級回憶對話：好感度達標的專屬劇情分支
+            print(C.MAGENTA+"  小狐丸: 「說來話長...我曾守護過一座神社，如今只剩下這把刀還記得。」"+C.RESET)
+            print(C.DIM+"  （你默默聆聽，小狐丸難得地露出懷念的神情。）"+C.RESET)
+            add_relationship(character,"小狐丸",3)
+            modify_reputation(character,2)
+            for m in gain_exp_with_skills(character,25,"knowledge",5):
+                print("  "+C.MAGENTA+m+C.RESET)
+            lvl_up = gain_familiarity(character, "小狐丸", "chat")
+            if lvl_up:
+                print(C.MAGENTA+"  ★ "+get_level_up_message("小狐丸", lvl_up)+C.RESET)
         elif c=="2":
             if character["sp"]>=10:
                 character["sp"]-=10
@@ -1896,7 +1917,7 @@ def do_interact_npc(character):
                 add_relationship(character,"小狐丸",5)
             else:
                 print(C.RED+"  SP不足!"+C.RESET)
-        elif c=="3" and rep>=20:
+        elif c=="3":
             gifts = [g for g in ["草藥","火元素","水晶碎片"] if g in character["inventory"]]
             if gifts:
                 g = _random.choice(gifts)
@@ -1906,15 +1927,23 @@ def do_interact_npc(character):
                 print(C.GREEN+"  送出%s, +10好感!"%g+C.RESET)
             else:
                 print(C.GRAY+"  你沒有可送的禮物。"+C.RESET)
-        elif c=="4" and rep>=20:
+        elif c=="4":
             _try_accept_quest(character, "SQ-02") or _try_accept_quest(character, "SQ-08")
         else:
-            if rep>=20: add_relationship(character,"小狐丸",-1)
+            if fox_rel>=20: add_relationship(character,"小狐丸",-1)
             print(C.GRAY+"  告別小狐丸。"+C.RESET)
 
     elif npc_name == "左間小蒼蘭":
         print("\n"+C.CYAN+"  左間小蒼蘭正在%s。"%npc_act+C.RESET)
-        print(C.CYAN+"  左間小蒼蘭: 「需要什麼？」"+C.RESET)
+        # 對話分支以「與左間小蒼蘭的好感度」為準：
+        # <10 公事公辦；≥10 熟客；≥40 摯友（主線 giver 的專屬對話）。
+        ran_rel = get_relationship(character, "左間小蒼蘭")
+        if ran_rel >= 40:
+            print(C.MAGENTA+"  左間小蒼蘭: 「你來得正好——最近那批古董機械，有你在我放心多了。」"+C.RESET)
+        elif ran_rel >= 10:
+            print(C.CYAN+"  左間小蒼蘭: 「需要什麼？今天工坊很安靜。」"+C.RESET)
+        else:
+            print(C.CYAN+"  左間小蒼蘭: 「需要什麼？」"+C.RESET)
         print(C.GREEN+"  1. 詢問合成配方"+C.RESET)
         print(C.CYAN+"  2. 工坊休息 (SP+20)"+C.RESET)
         print(C.GREEN+"  3. 學習製作 (SP-8)"+C.RESET)
@@ -1946,7 +1975,12 @@ def do_interact_npc(character):
 
     elif npc_name == "紅":
         print("\n"+C.CYAN+"  紅正在%s。"%npc_act+C.RESET)
-        if rep>=15:
+        # 對話分支以「與紅的好感度」為準（不再是全域聲望）——
+        # 好感度 <15 生疏；≥15 熟客；≥40 摯友級（專屬對話）。
+        red_rel = get_relationship(character, "紅")
+        if red_rel >= 40:
+            print(C.MAGENTA+"  紅: 「你又來啦！今天想找點什麼？」（紅眸含笑，語氣親切）"+C.RESET)
+        elif red_rel >= 15:
             print(C.CYAN+"  紅: 「歡迎光臨!」"+C.RESET)
         else:
             print(C.CYAN+"  紅: 「...需要什麼？」"+C.RESET)
@@ -1961,9 +1995,16 @@ def do_interact_npc(character):
             if _shop_at_location(character, loc):
                 add_relationship(character,"紅",1)
         elif c=="2":
-            print(C.YELLOW+'  紅: 「這裡是安全區。」'+C.RESET)
-            add_relationship(character,"紅",2)
-            modify_reputation(character,1)
+            if red_rel >= 40:
+                print(C.YELLOW+'  紅: 「別看我這樣，我以前也是會上陣的...這裡有你在，我安心多了。」'+C.RESET)
+                add_relationship(character,"紅",3)
+                modify_reputation(character,2)
+                for m in gain_exp_with_skills(character,20,"social",3):
+                    print("  "+C.MAGENTA+m+C.RESET)
+            else:
+                print(C.YELLOW+'  紅: 「這裡是安全區。」'+C.RESET)
+                add_relationship(character,"紅",2)
+                modify_reputation(character,1)
         elif c=="3":
             _try_accept_quest(character,"SQ-01") or _try_accept_quest(character,"SQ-06")
         else:
@@ -2001,7 +2042,9 @@ def do_interact_npc(character):
             "親密": ["「你來啦!","","「剛好想找你!","","一起去喝杯茶?",""],
         }
         greet = _random.choice(greet_pool.get(rep_tier, ["「...」"]))
-        if rep >= 80:
+        # 專屬情報以「與此 NPC 的好感度」解鎖（非全域聲望）——
+        # 好感度 ≥50 時該 NPC 才會吐露私密情報。
+        if get_relationship(character, npc_name) >= 50:
             print(C.MAGENTA + "  (好感度高，%s露出了開心的笑容。)"%npc_name + C.RESET)
             if _random.random() < 0.4:
                 hidden_info = [
