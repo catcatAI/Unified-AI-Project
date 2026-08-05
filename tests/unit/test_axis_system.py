@@ -569,3 +569,51 @@ class TestNpcHomeVsCardText:
         # 地球意志：森林深處
         key = next((k for k in scheds if "蓋婭" in k), None)
         assert key and scheds[key][0][3] == "森林深處"
+
+
+class TestWorldLineLocations:
+    """世界線標記與跨線移動：W03/W04 地點只能經由迴廊到達（文本權威）。"""
+
+    def test_locations_tagged_with_world_line(self):
+        """48 個可探索地點全有世界線標記。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        wl = sim_systems.LOCATION_WORLD_LINES
+        assert len(wl) == len(sim_systems.WORLD_MAP)
+        for loc in sim_systems.WORLD_MAP:
+            assert wl.get(loc), "地點 %s 無世界線標記" % loc
+
+    def test_cross_world_line_edges_go_through_corridor(self):
+        """W03/W04/夢境層 地點只能從迴廊進入，不能從 W01 直接走路到。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        wl = sim_systems.LOCATION_WORLD_LINES
+        bad = []
+        for loc, conns in sim_systems.WORLD_MAP.items():
+            cur = wl.get(loc, "W01")
+            for _d, dest in conns.items():
+                dst = wl.get(dest, "W01")
+                if dest == "迴廊" or loc == "迴廊":
+                    continue  # 迴廊是樞紐
+                if "W01+迴廊" in (cur, dst):
+                    continue  # W01+迴廊 雙屬
+                if dst != cur:
+                    bad.append("%s[%s]→%s[%s]" % (loc, cur, dest, dst))
+        assert not bad, "跨世界線邊未經迴廊:\n" + "\n".join(bad)
+
+    def test_corridor_connects_all_world_lines(self):
+        """迴廊樞紐連通 W01/W03/W04/夢境層。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        corridor = sim_systems.WORLD_MAP.get("迴廊", {})
+        dests = set(corridor.values())
+        assert "聖十字校園" in dests, "迴廊應連 W01"
+        assert "軌道居住站大學院" in dests, "迴廊應連 W03"
+        assert "鏽蝕城邦" in dests, "迴廊應連 W04"
+        wl = sim_systems.LOCATION_WORLD_LINES
+        assert wl.get("鏽蝕城邦") == "W04"
+        assert wl.get("軌道居住站大學院") == "W03"
+        assert wl.get("高密度大氣結晶行星") == "夢境層"

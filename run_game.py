@@ -1015,6 +1015,12 @@ def do_travel(character):
         print(C.GRAY+"  ⚻ 沒有通路。"+C.RESET)
         return
     print(C.CYAN+"  可去的地方:"+C.RESET)
+    # 世界線標記（依場景卡文本權威表）：跨世界線地點需先經由迴廊
+    _wl_map = getattr(sim_systems, "LOCATION_WORLD_LINES", {})
+    _cur_wl = _wl_map.get(character.get("location", ""), "W01")
+    _WL_ICONS = {"W01":"🌍", "W02":"🟡", "W03":"🛰", "W04":"🔥",
+                 "SL-10":"🔮", "SL-11":"🌾", "夢境層":"💭", "迴廊":"🧩",
+                 "W01+迴廊":"🎤"}
     icons = {"east":"→","west":"←","north":"↑","south":"↓","enter":"🚪","exit":"🚶","deep":"⬇"}
     for i,(d,loc) in enumerate(dests.items(),1):
         ic = icons.get(d,"•")
@@ -1023,7 +1029,12 @@ def do_travel(character):
         sicon = SCENE_TYPE_ICONS.get(stype, "🌄")
         req_hint = get_entry_requirement_hint(loc)
         req_color = C.RED if req_hint else C.GREEN
-        print("    %d. %s %s %s  %s%s%s%s" % (i, ic, sicon, loc, vibe, req_color, req_hint, C.RESET))
+        # 跨世界線標記：與所在地不同世界線時顯示世界線圖示
+        _wloc = _wl_map.get(loc, "W01")
+        _w_tag = ""
+        if _wloc != _cur_wl:
+            _w_tag = " %s[%s]" % (_WL_ICONS.get(_wloc, "🌌"), _wloc)
+        print("    %d. %s %s %s %s %s%s%s%s" % (i, ic, sicon, loc, _w_tag, vibe, req_color, req_hint, C.RESET))
     # 移動能力：飛行／艦裝航行／游泳 角色可直接渡水到水域場景（不需小舟）
     from axis_system import movement_abilities
     _mob = movement_abilities(
@@ -1068,6 +1079,20 @@ def do_travel(character):
         return
     if 1<=idx<=len(dests):
             dest = list(dests.values())[idx-1]
+            # 世界線檢查：跨世界線地點需先經由迴廊（文本：迴廊是連接
+            # 各世界線的橋樑，不能從 W01 直接走路到 W04）。
+            # 放在載具燃料/耐久消耗之前——被擋的移動不該燒燃料損零件。
+            _wl_map = getattr(sim_systems, "LOCATION_WORLD_LINES", {})
+            _cur_wl = _wl_map.get(character.get("location", ""), "W01")
+            _dst_wl = _wl_map.get(dest, "W01")
+            _in_corridor = character.get("location", "") == "迴廊"
+            # 迴廊樞紐本身永遠可進入（世界線之間的橋樑）
+            _to_corridor = dest == "迴廊"
+            if (not _in_corridor and not _to_corridor
+                    and _dst_wl != _cur_wl and "+" not in str(_dst_wl)):
+                print(C.YELLOW + "  🧩 通往[%s]需先經由迴廊（世界線之間的橋樑）。" % _dst_wl + C.RESET)
+                print(C.YELLOW + "     前往「迴廊」後可轉往其他世界線。" + C.RESET)
+                return
             # Travel time
             base_hours = 2  # 徒步跨一個區域的基準耗時
             hours = base_hours
