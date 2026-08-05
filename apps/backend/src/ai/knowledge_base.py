@@ -60,6 +60,8 @@ _KNOWLEDGE: Dict[str, Dict[str, str]] = {
     "spider": {"legs": "8"},
     "insect": {"legs": "6"},
     "octopus": {"legs": "8", "arms": "8"},
+    "chicken": {"legs": "2", "head": "1", "sound": "cluck", "animal": "chicken"},
+    "rabbit": {"legs": "4", "head": "1", "sound": "thump", "animal": "rabbit"},
     "triangle": {"sides": "3"},
     "square": {"sides": "4"},
     "rectangle": {"sides": "4"},

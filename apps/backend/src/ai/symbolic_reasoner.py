@@ -16,6 +16,12 @@ Covered patterns (the benchmark's open-domain reasoning cases):
   * calendar             — "If today is Monday, what day is tomorrow?"
   * quantity comparison  — "John has 3 apples. He gives 1 away. How many left?"
   * mass trick           — "Which is heavier: 1kg of feathers or 1kg of steel?"
+  * two-object linear pair (chicken-rabbit cage) — "chickens and rabbits,
+    35 heads and 94 legs. How many of each?" (see _solve_word_problem)
+
+All covered patterns are deterministic (no weights, no learning). See
+docs/03-technical-architecture/DETERMINISM_CLASSIFICATION.md for the
+determinism classification of this module and the rest of the pipeline.
 """
 
 from __future__ import annotations
@@ -429,6 +435,101 @@ def _solve_mass_trick(text: str) -> Optional[str]:
     return None
 
 
+_ENTITY_ALIASES: Dict[str, List[str]] = {
+    # English label first, then common Chinese aliases (for output & matching).
+    "chicken": ["chicken", "chickens", "雞", "鸡"],
+    "rabbit": ["rabbit", "rabbits", "hare", "兔子", "兔"],
+    "horse": ["horse", "horses", "馬", "马"],
+    "pig": ["pig", "pigs", "piglet", "豬", "猪"],
+    "duck": ["duck", "ducks", "鴨", "鸭"],
+    "cow": ["cow", "cows", "cattle", "牛"],
+    "octopus": ["octopus", "octopuses", "章魚", "章鱼"],
+}
+
+
+def _solve_word_problem(text: str) -> Optional[str]:
+    """Solve a two-object linear pair.
+
+    Canonical case is the chicken-rabbit cage problem, but the solver is
+    generic: any two entities (A, B) with known per-object attribute values
+    (e.g. legs), a stated total object count C and a stated total attribute
+    R. Solves A+B=C, attrA*A+attrB*B=R for integer non-negative (A, B).
+
+    Examples that resolve:
+      * "The cage has chickens and rabbits, 35 heads and 94 legs. How many of each?"
+      * "籠中共有雞和兔子 35 隻，腳 94 隻，問雞兔各幾隻?"
+      * "共 35 頭，94 腳"
+
+    Returns ``None`` when the pattern is not matched or does not admit a clean
+    integer solution, so the caller falls through to its normal pipeline.
+    """
+    low = text.lower()
+    present = [key for key, al in _ENTITY_ALIASES.items() if any(a in low for a in al)]
+    if len(present) < 2:
+        return None
+    a, b = present[0], present[1]
+
+    def _attr_val(key: str) -> Optional[int]:
+        # Prefer an explicit per-object attribute stated in the prompt.
+        alias_alt = "|".join(re.escape(x) for x in _ENTITY_ALIASES[key])
+        m = re.search(
+            rf"(?:each|per|每隻|每只|每)\s*(?:{alias_alt})\s*(?:has|have|有)\s*(\d+)\s*(?:腳|脚|腿|legs?)",
+            low,
+        )
+        if m:
+            return int(m.group(1))
+        try:
+            from ai.knowledge_base import _KNOWLEDGE
+
+            raw = _KNOWLEDGE.get(key, {}).get("legs")
+            return int(raw) if raw is not None else None
+        except (TypeError, ValueError):
+            return None
+
+    a_val = _attr_val(a)
+    b_val = _attr_val(b)
+    if a_val is None or b_val is None or a_val == b_val:
+        return None
+
+    # Total attribute R (legs).
+    m_r = re.search(
+        r"(?:(\d+)\s*(?:隻|只)?\s*(?:腳|脚|腿|legs?))|(?:腳|脚|腿|legs?)\s*[:=：]?\s*(\d+)",
+        low,
+    )
+    if not m_r:
+        return None
+    total_attr = int(m_r.group(1) or m_r.group(2))
+
+    # Total object count C (heads/animals first, then a "共 N" form).
+    m_c = re.search(r"(\d+)\s*(?:個頭|頭|heads?|animals?)", low)
+    if m_c:
+        total_obj = int(m_c.group(1))
+    else:
+        m = re.search(r"(?:共有|共|總共|總計)\D*?(\d+)\s*(?:隻|只|個)", low)
+        if not m:
+            return None
+        total_obj = int(m.group(1))
+
+    # Solve A+B=C ; a_val*A + b_val*B = R.
+    numerator = total_attr - b_val * total_obj
+    denominator = a_val - b_val
+    if denominator == 0 or numerator % denominator != 0:
+        return None
+    count_a = numerator // denominator
+    count_b = total_obj - count_a
+    if count_a < 0 or count_b < 0:
+        return None
+
+    cjk = any("\u4e00" <= ch <= "\u9fff" for ch in low)
+    aliases = _ENTITY_ALIASES
+    if cjk:
+        label_a = next((x for x in aliases[a] if any("\u4e00" <= ch <= "\u9fff" for ch in x)), aliases[a][0])
+        label_b = next((x for x in aliases[b] if any("\u4e00" <= ch <= "\u9fff" for ch in x)), aliases[b][0])
+    else:
+        label_a, label_b = aliases[a][0], aliases[b][0]
+    return f"{count_a} {label_a}, {count_b} {label_b}"
+
+
 def route_reasoning(text: str) -> Optional[str]:
     """Apply deterministic symbolic reasoning to a question.
 
@@ -447,6 +548,9 @@ def route_reasoning(text: str) -> Optional[str]:
     if result is not None:
         return result
     result = _solve_quantity(t)
+    if result is not None:
+        return result
+    result = _solve_word_problem(t)
     if result is not None:
         return result
     result = _solve_syllogism(t)
