@@ -534,6 +534,48 @@ def check_craft_axis(character, recipe) -> tuple:
     return False, "軸譜不符：%s 是魔法類物品，需要能量或靈性親和力 ≥ 0.5" % result_item
 
 
+# =============================================================================
+# ANGELA-MATRIX: [L3] [β] [B] [L4]
+# =============================================================================
+# 技能卡（SK-01~22）學習的軸譜判定：魔法卡需能量/靈性、義體卡需機械、
+# 妖精/精靈/天翼種族技需靈性、戰鬥卡需物質等——軸譜決定可學性。
+SKILL_CARD_AXIS = {
+    "magic":     (("能量", "靈性"), 0.4),  # 道術/魔炮/奇蹟/四季施法
+    "tech":      (("資訊",), 0.4),           # 通訊/網絡/駭客
+    "craft":     (("機械",), 0.3),           # 機械加工工藝
+    "combat":    (("物質",), 0.3),           # 格鬥/弓道/陷阱
+    "knowledge": (("資訊",), 0.3),           # 文獻/生態/地質學
+}
+SKILL_CARD_RACE_KW = {  # 名稱關鍵字 → 所需維度（優先於 category）
+    "義體": (("機械",), 0.4),
+    "妖精": (("靈性",), 0.4),
+    "精靈": (("靈性",), 0.4),
+    "天翼": (("靈性",), 0.4),
+    "駭客": (("資訊",), 0.4),  # 駭客比通訊/上網更進階，同樣需要資訊維度
+}
+
+
+def skill_card_axis(card) -> tuple:
+    """技能卡學習所需軸譜 → ((維度...), 門檻)。無限制回傳 ((), 0.0)。"""
+    name = str((card or {}).get("name", ""))
+    for kw, req in SKILL_CARD_RACE_KW.items():
+        if kw in name:
+            return req
+    cat = str((card or {}).get("category", ""))
+    return SKILL_CARD_AXIS.get(cat, ((), 0.0))
+
+
+# 技能卡 category → 實際技能類別（magic→combat 魔法戰鬥、stealth→exploration 潛伏、tech→craft 操作）
+SKILL_CARD_TO_SKILL = {
+    "knowledge": "knowledge", "craft": "craft", "combat": "combat",
+    "magic": "combat", "stealth": "exploration", "tech": "craft", "general": "knowledge",
+}
+
+
+def skill_card_target_skill(card) -> str:
+    return SKILL_CARD_TO_SKILL.get(str((card or {}).get("category", "")), "knowledge")
+
+
 def evaluate_equipment(affinity: dict, item_def: dict):
     """評估裝備交互 → (可否裝備, 交互深度, 維度, 原因)。
 

@@ -14,6 +14,48 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 import axis_system as ax
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# 技能卡軸譜學習（批次 32）
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+class TestSkillCardAxis:
+    """技能卡學習的軸譜判定（魔法→能量/靈性、義體→機械、駭客→資訊等）。"""
+
+    def _card(self, name, cat):
+        return {"name": name, "category": cat}
+
+    def test_magic_needs_energy_or_spirit(self):
+        dims, thr = ax.skill_card_axis(self._card("道術：五雷正法", "magic"))
+        assert set(dims) == {"能量", "靈性"} and thr == 0.4
+
+    def test_tech_needs_information(self):
+        dims, thr = ax.skill_card_axis(self._card("上網（網絡操作）", "tech"))
+        assert dims == ("資訊",) and thr == 0.4
+
+    def test_hacking_needs_information(self):
+        dims, thr = ax.skill_card_axis(self._card("駭客（入侵系統）", "stealth"))
+        assert dims == ("資訊",) and thr == 0.4
+
+    def test_cyborg_body_needs_mechanical(self):
+        dims, thr = ax.skill_card_axis(self._card("義體醫師", "craft"))
+        assert dims == ("機械",) and thr == 0.4
+
+    def test_race_skill_needs_spirit(self):
+        dims, thr = ax.skill_card_axis(self._card("天翼技：知識掠取", "general"))
+        assert dims == ("靈性",) and thr == 0.4
+
+    def test_general_stealth_unrestricted(self):
+        dims, thr = ax.skill_card_axis(self._card("潛伏：無聲移動", "stealth"))
+        assert dims == () and thr == 0.0
+
+    def test_target_skill_mapping(self):
+        assert ax.skill_card_target_skill(self._card("x", "magic")) == "combat"
+        assert ax.skill_card_target_skill(self._card("x", "stealth")) == "exploration"
+        assert ax.skill_card_target_skill(self._card("x", "tech")) == "craft"
+        assert ax.skill_card_target_skill(self._card("x", "knowledge")) == "knowledge"
+
+
 # =============================================================================
 # 1. 軸碼解析
 # =============================================================================

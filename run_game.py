@@ -581,7 +581,8 @@ def print_help():
     print(C.WHITE + C.BOLD + "║" + C.RESET + " 7.身體  8.裝備   9.地圖")
     print(C.WHITE + C.BOLD + "║" + C.RESET + "10.關係 11.合成  12.搜索")
     print(C.WHITE + C.BOLD + "║" + C.RESET + "13.任務 14.車輛  15.不動產")
-    print(C.WHITE + C.BOLD + "║" + C.RESET + "16.世界時間  s.存檔   l.讀檔")
+    print(C.WHITE + C.BOLD + "║" + C.RESET + "16.世界時間 17.技能卡")
+    print(C.WHITE + C.BOLD + "║" + C.RESET + "  s.存檔    l.讀檔    q.退出")
     print(C.WHITE + C.BOLD + "║" + C.RESET + "  q.退出")
     print(C.WHITE + C.BOLD + "╚═══════════════════════════╝" + C.RESET)
 
@@ -1693,6 +1694,81 @@ def do_scene_search(character, equipment):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# SKILL CARDS（技能卡 SK-01~22：軸譜學習系統）
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def do_skill_cards(character):
+    """技能卡學習/升級選單。
+
+    22 張技能卡（SK-01~22）來自卡片堆文本：植物學/地質學/機械工程/道術/
+    魔法/駭客/義體等。學習需要軸譜契合（魔法卡→能量/靈性、義體卡→機械、
+    種族技→靈性等）＋金幣＋SP；效果＝對應實際技能類別升級。
+    """
+    from sim_systems import ALL_SKILLS
+    from axis_system import skill_card_axis, skill_card_target_skill
+    cards = character.setdefault("skill_cards", {})
+    sids = sorted(ALL_SKILLS.keys())
+    aff = character.get("axis", {}).get("affinity", {})
+    while True:
+        print("")
+        print(C.CYAN + "┌" + "─" * 46 + "┐" + C.RESET)
+        print(C.CYAN + "│  技能卡（軸譜學習）" + C.RESET + " " * 24 + C.CYAN + "│" + C.RESET)
+        print(C.CYAN + "├" + "─" * 46 + "┤" + C.RESET)
+        for i, sid in enumerate(sids, 1):
+            s = ALL_SKILLS[sid]
+            lv = cards.get(sid, 0)
+            dims, thr = skill_card_axis(s)
+            if dims:
+                ok_ax = any(aff.get(d, 0.0) >= thr for d in dims)
+            else:
+                ok_ax = True
+            if lv > 0:
+                st = C.GREEN + "Lv.%d" % lv + C.RESET
+            elif ok_ax:
+                st = C.CYAN + "可學" + C.RESET
+            else:
+                st = C.DIM + "需%s≥%.1f" % ("/".join(dims), thr) + C.RESET
+            cost = 50 + 30 * lv
+            line = "│ %2d. [%s] %s %s (%dG)" % (i, sid, s.get("name", ""), st, cost)
+            print(C.CYAN + line.ljust(48) + C.CYAN + "│" + C.RESET)
+        print(C.CYAN + "└" + "─" * 46 + "┘" + C.RESET)
+        c = input("  %s技能卡編號 (0離開):%s " % (C.YELLOW, C.RESET)).strip()
+        if not c.isdigit():
+            return
+        idx = int(c) - 1
+        if idx < 0 or idx >= len(sids):
+            return
+        sid = sids[idx]
+        s = ALL_SKILLS[sid]
+        lv = cards.get(sid, 0)
+        dims, thr = skill_card_axis(s)
+        if dims and not any(aff.get(d, 0.0) >= thr for d in dims):
+            print(C.RED + "  ✗ 軸譜不符：%s 需要 %s 親和力 ≥ %.1f（你 %s）" % (
+                s.get("name", ""), "/".join(dims), thr,
+                "、".join("%s %.2f" % (d, aff.get(d, 0.0)) for d in dims)) + C.RESET)
+            continue
+        cost = 50 + 30 * lv
+        if character.get("gold", 0) < cost:
+            print(C.RED + "  ✗ 金幣不足（需 %dG，你有 %dG）" % (cost, character.get("gold", 0)) + C.RESET)
+            continue
+        if character.get("sp", 0) < 10:
+            print(C.RED + "  ✗ SP不足（需 10）" + C.RESET)
+            continue
+        character["gold"] -= cost
+        character["sp"] -= 10
+        cards[sid] = lv + 1
+        cat = skill_card_target_skill(s)
+        msgs = gain_skill_exp(character, cat, 40)
+        print(C.GREEN + "  ✓ 學會 %s Lv.%d！(%s 技能 +經驗)" % (s.get("name", ""), lv + 1, cat) + C.RESET)
+        for m in msgs:
+            print("    " + m)
+        if lv == 0:
+            print(C.DIM + "  這張技能卡的知識流入你的腦海……" + C.RESET)
+        advance_time(character)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # NPC INTERACTION
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -2636,6 +2712,7 @@ def start_game():
         elif ch=="14": do_vehicle_menu(character)
         elif ch=="15": do_real_estate(character, equipment)
         elif ch=="16": do_world_time(character, equipment)
+        elif ch=="17": do_skill_cards(character)
         else: print(C.RED+"  未知指令。輸入 h 查看幫助。"+C.RESET)
 
         # Auto-check quest completion after any action
