@@ -514,3 +514,58 @@ class TestVehicleAxis:
             )
         # 至少掛載 20 個地點（遠多於手寫 3 個）
         assert len(veh_by_loc) >= 20
+
+
+class TestNpcHomeVsCardText:
+    """NPC 基地必須符合卡片文本：月球神在月之宮殿、艦娘在港鎮等。"""
+
+    def test_key_npc_homes_match_card_text(self):
+        """卡片文本明載地點的 NPC，排程基地必須落在文本提到的地點。"""
+        import json
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        cards = json.load(open("data/game_cards.json", encoding="utf-8"))["cards"]
+        wm = sim_systems.WORLD_MAP
+        misses = []
+        for c in cards:
+            nm = c.get("name", "")
+            raw = nm.split("(")[0].split("（")[0].strip()
+            loc = str((c.get("stats") or {}).get("location", "") or "")
+            if not loc:
+                continue
+            mentioned = [l for l in wm if len(l) >= 2 and l in loc]
+            if not mentioned:
+                continue
+            sched = sim_systems.NPC_SCHEDULES.get(raw)
+            if not sched:
+                continue
+            home = sched[0][3]
+            if home not in mentioned:
+                misses.append("%s: 卡%s home=%s" % (nm, mentioned, home))
+        assert not misses, "\n".join(misses)
+
+    def test_species_base_override(self):
+        """無地點資訊的 NPC 依種族/職業常理歸屬地（艦娘→港鎮、人魚→聲吶站、軌道管家→軌道站）。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        scheds = sim_systems.NPC_SCHEDULES
+        # 海艦娘：卡洛夫角（港鎮）；星艦原型是太空船 → 軌道站
+        for name in ("霜", "星辰米亞"):
+            key = next((k for k in scheds if name in k), None)
+            assert key, "找不到 NPC %s" % name
+            assert scheds[key][0][3] == "卡洛夫角", "%s 應在港鎮" % name
+        key = next((k for k in scheds if "小吹雪" in k), None)
+        assert key and scheds[key][0][3] == "軌道居住站大學院", "星艦原型應在軌道站"
+        # 月之女神 / 月之公主：月之宮殿
+        for name in ("塞勒涅", "輝夜姬"):
+            key = next((k for k in scheds if name in k), None)
+            assert key, "找不到 NPC %s" % name
+            assert scheds[key][0][3] == "月之宮殿", "%s 應在月之宮殿" % name
+        # 軌道站莊園管家：軌道居住站大學院
+        key = next((k for k in scheds if "艾菈" in k), None)
+        assert key and scheds[key][0][3] == "軌道居住站大學院"
+        # 地球意志：森林深處
+        key = next((k for k in scheds if "蓋婭" in k), None)
+        assert key and scheds[key][0][3] == "森林深處"

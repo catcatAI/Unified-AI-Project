@@ -84,6 +84,8 @@ _SCENE_NAME_MAP: Dict[str, str] = {
     "小吉鎮": "小吉鎮", "煙雲溫泉湖": "煙雲溫泉湖",
     "清溪河": "清溪河", "極北冰原": "極北冰原",
     "春日微縮立方": "春日微縮立方",
+    "月之宮殿": "月之宮殿", "廣寒殿": "月之宮殿", "月球": "月之宮殿",
+    "森林深處": "森林深處", "古老森林": "森林深處", "萬物之庭": "森林深處",
 }
 
 _NPC_LOCATIONS_POOL = [
@@ -130,6 +132,27 @@ def _get_npc_home_from_card(card: dict, fallback_idx: int) -> str:
             if len(scene_key) >= 3 and scene_key in val:
                 return mapped
     return _NPC_LOCATIONS_POOL[fallback_idx % len(_NPC_LOCATIONS_POOL)]
+
+
+def _species_home_override(race_text: str = "", role_text: str = "") -> str:
+    """種族/職業基地覆寫：卡片無明確地點時，依種族與職業的常理歸屬地。
+
+    優先序：職業（軌道管家→軌道站）> 種族（艦娘→港鎮、人魚→黑淵台）。
+    """
+    if not race_text and not role_text:
+        return ""
+    # 職業：軌道站莊園管家 → 軌道居住站大學院（收窄關鍵字，避免軌道砲/大學院教授誤導）
+    if any(k in (role_text or "") for k in ("軌道站", "太空站", "軌道居住", "軌道大學院")):
+        return "軌道居住站大學院"
+    # 種族：星艦/太空艦娘 → 軌道居住站大學院（星艦是太空船不是海船）
+    if any(k in (race_text or "") for k in ("星艦", "太空", "宇宙")):
+        return "軌道居住站大學院"
+    # 種族：艦娘 → 港鎮（卡洛夫角）；人魚 → 黑淵台聲吶站
+    if "艦娘" in (race_text or ""):
+        return "卡洛夫角"
+    if "人魚" in (race_text or ""):
+        return "黑淵台"
+    return ""
 
 
 def _extract_race_from_card(card) -> str:
@@ -464,6 +487,13 @@ def generate_all_npcs() -> Dict[str, dict]:
         if not role_desc:
             stats = card.get("stats", {})
             role_desc = stats.get("role定位", "")
+
+        # 卡片完全無地點資訊時，依種族/職業常理覆寫基地（艦娘在港鎮、人魚在聲吶站等）
+        if not str((card.get("stats") or {}).get("location") or "").strip():
+            _ov = _species_home_override(
+                race_text=_extract_race_from_card(card), role_text=role_desc)
+            if _ov:
+                home = _ov
 
         # Archetype: check specific categories before combat+vitality default
         if "mechanism" in token_cats:
