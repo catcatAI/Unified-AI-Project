@@ -767,3 +767,105 @@ class TestWorldLineEntryGates:
                 if dst != cur:
                     bad.append(f"{loc}[{cur}] → {dest}[{dst}]")
         assert not bad, "跨線邊應全經迴廊: %s" % bad
+
+    def test_world_line_enemies_match_line(self):
+        """批次 43：跨線地點的遭遇敵人應符合世界線權威（《世界線錨定—補充欄位》：
+        W04 = 灰燼行者/拾荒王/螢光獵手；W03 = 下層工業港機械系；
+        夢境層 = 概念構成（暗影/幽靈/元素）；S07 熒光沼澤 = 變異兩棲生物）。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        le = sim_systems.LOCATION_ENEMIES
+        assert "螢光獵手" in le.get("熒光沼澤", []), "熒光沼澤應有螢光獵手（變異兩棲生物）"
+        assert "灰燼行者" in le.get("玻璃荒漠", []), "玻璃荒漠應有灰燼行者（靈爆中心）"
+        assert "拾荒王" in le.get("鏽蝕城邦", []), "鏽蝕城邦應有拾荒王"
+        assert "站內巡邏無人機" in le.get("軌道居住站大學院", []), "W03 應有機械系敵人"
+        for loc in ("高密度大氣結晶行星", "綻放混成園"):
+            assert any(n in le.get(loc, []) for n in ("暗影靈", "幽靈", "元素核心")), \
+                f"夢境層 {loc} 應有概念構成系敵人"
+        # 這些地點不該再有隨機/影之敵
+        for loc in ("熒光沼澤", "玻璃荒漠", "鏽蝕城邦", "軌道居住站大學院"):
+            assert not any("之影" in n for n in le.get(loc, [])), f"{loc} 不應有影之敵"
+
+    def test_safe_zones_no_elite_enemies(self):
+        """批次 43：新手安全區（便利店/聖十字校園/鏡湖/清溪河/W02 村落）
+        不得有凶暴/遠古/深淵/W03-W04 強敵。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        strong_kw = ("凶暴", "兇暴", "遠古", "深淵", "灰燼", "拾荒", "螢光",
+                     "無人機", "維修機械")
+        for loc in ("便利店", "聖十字校園", "鏡湖", "清溪河"):
+            bad = [n for n in sim_systems.LOCATION_ENEMIES.get(loc, []) if any(k in n for k in strong_kw)]
+            assert not bad, f"安全區 {loc} 出現強敵: {bad}"
+        # W02 村落是絕對無魔安全村——無遭遇敵人
+        for loc in ("小吉鎮", "大根莖村"):
+            assert not sim_systems.LOCATION_ENEMIES.get(loc), f"{loc} 應無遭遇敵人"
+
+    def test_shadow_enemy_names_no_broken_parentheses(self):
+        """批次 43：卡片影之敵名稱不能含殘留括號（全形括號 split 失敗
+        會產生「小無（Xiǎ之影」這種缺右括號的名字）。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        shadows = [e["name"] for e in sim_systems.ENEMIES if "之影" in e["name"]]
+        assert shadows, "應有影之敵"
+        bad = [s for s in shadows if "（" in s or "(" in s]
+        assert not bad, f"影之敵名稱含殘留括號: {bad}"
+        # 演出場景刻意保留影之敵（演出對戰），普通場景不得污染
+        perf = [loc for loc in sim_systems.LOCATION_ENEMIES if any(
+            k in loc for k in ("舞台", "演唱會", "直播", "模式"))]
+        assert any(any("之影" in n for n in sim_systems.LOCATION_ENEMIES.get(loc, [])) for loc in perf), \
+            "演出場景應保留影之敵"
+
+    def test_w04_enemy_stats_present(self):
+        """批次 43：新增 W03/W04 專屬敵人有完整數值（世界線錨定實證）。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        names = {e["name"]: e for e in sim_systems.ENEMIES}
+        for n in ("灰燼行者", "灰燼行者長", "螢光獵手", "沼澤變異體", "拾荒王",
+                  "站內巡邏無人機", "軌道站維修機械"):
+            e = names.get(n)
+            assert e, f"缺少 W03/W04 敵人: {n}"
+            assert e["hp"] > 0 and e["atk"] > 0 and e["exp"] > 0, f"{n} 數值不完整"
+
+    def test_no_wl_enemy_leak_anywhere(self):
+        """批次 43 reviewer：W03/W04 專屬敵人只能出現在跨線覆寫目標地點，
+        不得洩漏到任何 W01 地點（含場景卡建立的地點，如珊瑚台）。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        wl = sim_systems.LOCATION_WORLD_LINES
+        targets = ("熒光沼澤", "玻璃荒漠", "鏽蝕城邦", "鏽蝕城邦地下",
+                   "軌道居住站大學院", "高密度大氣結晶行星", "綻放混成園")
+        wl_names = ("灰燼行者", "灰燼行者長", "螢光獵手", "沼澤變異體", "拾荒王",
+                    "站內巡邏無人機", "軌道站維修機械")
+        leak = []
+        for loc, names in sim_systems.LOCATION_ENEMIES.items():
+            if loc in targets:
+                continue
+            for n in names:
+                if n in wl_names:
+                    leak.append(f"{loc}:{n}")
+        assert not leak, f"W03/W04 敵人洩漏到 W01: {leak}"
+
+    def test_normal_scenes_no_shadow_enemies(self):
+        """批次 43 reviewer：影之敵（X之影）只允許出現在演出場景
+        （舞台/演唱會/直播/競技等）；普通場景不得被演出敵污染。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        perf_kw = ("舞台", "演唱會", "模式", "瞬間", "盲區", "更衣室", "直播",
+                   "控制室", "核心室", "體育場", "競技", "演出")
+        bad = []
+        for loc, names in sim_systems.LOCATION_ENEMIES.items():
+            if any(k in loc for k in perf_kw):
+                continue
+            if any("之影" in n for n in names):
+                bad.append(loc)
+        assert not bad, f"普通場景被影之敵污染: {bad}"
+        # 演出場景保留影之敵
+        assert any(any("之影" in n for n in sim_systems.LOCATION_ENEMIES.get(loc, []))
+                   for loc in sim_systems.LOCATION_ENEMIES if any(k in loc for k in perf_kw)), \
+            "演出場景應保留影之敵"

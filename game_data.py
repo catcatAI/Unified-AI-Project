@@ -909,7 +909,12 @@ def _generate_card_enemies() -> list:
     enemies = []
     for card in _CHARACTER_CARDS:
         combat_tokens = _tokens_by_cat(card, "combat")
-        name = card.get("name","?").split("(")[0].strip()[:6]
+        # 卡片名可能用全形括號（如「小無（Xiǎ…」）——split("(") 對全形括號無效
+        # 會產生「小無（Xiǎ之影」這種缺右括號的壞名字。全形/半形括號都切。
+        _raw_name = card.get("name", "?")
+        for _sep in ("(", "（", "[", "［"):
+            _raw_name = _raw_name.split(_sep)[0]
+        name = _raw_name.strip()[:6]
         shadow_name = f"{name}之影"
         base_hp = 45 + len(combat_tokens)*10 if combat_tokens else 40
         base_atk = 14 + len(combat_tokens)*3 if combat_tokens else 12
@@ -924,12 +929,51 @@ def _generate_card_enemies() -> list:
                         "desc":"從深淵現身的強大影子"})
     return enemies
 
+# ────────────────────────────────────────────────────────────────
+# W03/W04 世界線專屬敵人 — 依《世界線錨定 — 補充欄位》權威表：
+#   W04 灰燼紀元（後末日時代，不穩定聚合）：灰燼行者、拾荒王、螢光獵手
+#   W03 軌道居住站（宇宙時代，極低聚合）   ：下層工業港機械系
+#   Ver 3.1 S07 熒光沼澤：變異兩棲生物（原人類長期暴露熒光沼澤，
+#   體型增大 2-3 倍，食物鏈頂端，具攻擊性）
+#   Ver 3.1 S08 玻璃荒漠：靈爆中心殘留（>100ppm），舊時代設施封存
+# ────────────────────────────────────────────────────────────────
+def _generate_world_line_enemies() -> list:
+    enemies = []
+    # W04 玻璃荒漠 / 鏽蝕城邦 — 靈爆後廢土掠奪者
+    enemies.append({"name": "灰燼行者", "hp": 120, "atk": 25, "def": 15, "spd": 7,
+                    "exp": 90, "gold": 40, "loot": ["廢鐵", "魔力藥水"],
+                    "desc": "靈爆後廢土上遊蕩的灰燼行者"})
+    enemies.append({"name": "灰燼行者長", "hp": 200, "atk": 32, "def": 20, "spd": 9,
+                    "exp": 150, "gold": 80, "loot": ["廢鐵", "龍鱗", "魔力藥水"],
+                    "desc": "灰燼行者中的首領，劫掠廢土聚落"})
+    # W04 熒光沼澤 — 變異兩棲生物（世界線錨定實證：螢光獵手）
+    enemies.append({"name": "螢光獵手", "hp": 110, "atk": 24, "def": 12, "spd": 10,
+                    "exp": 85, "gold": 35, "loot": ["熒光藻", "水晶碎片"],
+                    "desc": "長期暴露熒光沼澤的變異兩棲生物，具趨光性與攻擊性"})
+    enemies.append({"name": "沼澤變異體", "hp": 180, "atk": 30, "def": 16, "spd": 12,
+                    "exp": 140, "gold": 70, "loot": ["熒光藻", "靈木", "水晶碎片"],
+                    "desc": "熒光沼澤食物鏈頂端的巨大變異體"})
+    # W04 鏽蝕城邦 — 拾荒王（世界線錨定實證）
+    enemies.append({"name": "拾荒王", "hp": 230, "atk": 28, "def": 26, "spd": 6,
+                    "exp": 170, "gold": 120, "loot": ["廢鐵", "龍鱗", "靈木"],
+                    "desc": "鏽蝕城邦的拾荒王，統領廢土拾荒者"})
+    # W03 軌道居住站下層工業港 — 機械系（宇宙時代電子環境）
+    enemies.append({"name": "站內巡邏無人機", "hp": 70, "atk": 22, "def": 18, "spd": 11,
+                    "exp": 75, "gold": 30, "loot": ["廢鐵", "電子零件"],
+                    "desc": "軌道居住站下層工業港的巡邏無人機"})
+    enemies.append({"name": "軌道站維修機械", "hp": 130, "atk": 18, "def": 28, "spd": 4,
+                    "exp": 95, "gold": 45, "loot": ["廢鐵", "電子零件", "護身符"],
+                    "desc": "失控的軌道站維修機械，攻擊所有進入工業港的生物"})
+    return enemies
+
+
 # Elemental enemies (from supplement)
 _ELEMENTAL_ENEMIES = _SUPPLEMENT.get("elemental_enemies", [])
 
 def generate_all_enemies() -> list:
     enemies = _generate_enemies_from_template()  # 60 enemies
     enemies.extend(_generate_card_enemies())      # ~118 enemies
+    enemies.extend(_generate_world_line_enemies())  # W03/W04 專屬
     for entry in _SUPPLEMENT.get("elemental_enemies", []):
         name, hp, atk, dfn, spd, exp_, gold, loot, desc = entry["name"], entry["hp"], entry["atk"], entry["def"], entry["spd"], entry["exp"], entry["gold"], entry["loot"], entry["desc"]
         enemies.append({"name":name,"hp":hp,"atk":atk,"def":dfn,"spd":spd,
@@ -1366,6 +1410,24 @@ def expand_game():
         if k not in sim_systems.ITEM_CATALOG:
             sim_systems.ITEM_CATALOG[k] = v
             cnt["items"] += 1
+
+    # 世界線材料：W03/W04 敵人的 loot（依 S07 熒光沼澤「藻類可提煉
+    # 低級乙太燃料」、W03 下層工業港電子環境）。補進目錄避免掉落
+    # 顯示不存在的道具。
+    for _iname, _idata in (
+        ("熒光藻", {"type": "material", "weight": 0.1, "value": 30,
+                     "tags": ["herbal", "alchemy"],
+                     "desc": "熒光沼澤的發光藻類，可提煉低級乙太燃料"}),
+        ("電子零件", {"type": "material", "weight": 0.3, "value": 45,
+                       "tags": ["tech"],
+                       "desc": "軌道居住站的精密電子零件"}),
+        ("廢鐵", {"type": "material", "weight": 2.0, "value": 12,
+                   "tags": ["junk", "metal"],
+                   "desc": "鏽蝕的廢鐵，熔煉後可再利用"}),
+    ):
+        if _iname not in sim_systems.ITEM_CATALOG:
+            sim_systems.ITEM_CATALOG[_iname] = _idata
+            cnt["items"] += 1
     
     # Enemies
     existing_e = {e["name"] for e in sim_systems.ENEMIES}
@@ -1591,10 +1653,18 @@ def expand_game():
     cnt["enemies"] += 1
     
     # Enemy distribution
+    # 強敵（凶暴/遠古/深淵/W03/W04 專屬）不得隨機塞進新手安全區——
+    # 原先隨機指派讓便利店出現遠古水馬、軌道站維修機械（W03）等，違反常理。
+    # 安全區：新手村/校園/湖畔/溪畔/W02 村落（絕對無魔安全區）。
+    _SAFE_LOCS = {"便利店", "聖十字校園", "鏡湖", "清溪河", "小吉鎮", "大根莖村"}
     loc_list = list(sim_systems.LOCATION_ENEMIES.keys())
+    _strong_loc_list = [l for l in loc_list if l not in _SAFE_LOCS] or loc_list
+    _strong_kw = ("凶暴", "兇暴", "遠古", "深淵", "灰燼", "拾荒王", "螢光獵手",
+                  "沼澤變異體", "站內巡邏無人機", "軌道站維修機械")
     for e in ALL_ENEMIES:
         if not any(e["name"] in names for names in sim_systems.LOCATION_ENEMIES.values()):
-            loc = _seed.choice(loc_list)
+            _is_strong = any(k in e["name"] for k in _strong_kw)
+            loc = _seed.choice(_strong_loc_list if _is_strong else loc_list)
             sim_systems.LOCATION_ENEMIES.setdefault(loc, []).append(e["name"])
             cnt["enemy_dist"] += 1
     
@@ -1813,6 +1883,33 @@ def expand_game():
                 _seed.choice(_enemy_pool)["name"])
         scene_locs_added += 1
     cnt["locations"] = scene_locs_added
+
+    # ────────────────────────────────────────────────────────────
+    # 跨線地點遭遇敵人覆寫 — 依《世界線錨定 — 補充欄位》權威表：
+    #   W04 灰燼紀元 = 灰燼行者/拾荒王/螢光獵手（後末日不穩定聚合）
+    #   W03 軌道站   = 下層工業港機械系（宇宙時代極低聚合）
+    #   S07 熒光沼澤 = 變異兩棲生物（原人類暴露變異、食物鏈頂端）
+    #   S08 玻璃荒漠 = 靈爆中心殘留（>100ppm）
+    #   夢境層 S10/S11 = 概念構成（暗影/幽靈/元素）
+    #   原先這些地點的遭遇敵人是隨機指派（玻璃荒漠=虎、軌道站=晞咕萊雅之影），
+    #   且卡片影之敵（X之影/深淵X之影）是任務演出專用，不應出現在一般遭遇池。
+    # ────────────────────────────────────────────────────────────
+    _WORLD_LINE_ENEMY_OVERRIDES = {
+        "熒光沼澤":         ["螢光獵手", "沼澤變異體", "暗影靈"],
+        "玻璃荒漠":         ["灰燼行者", "灰燼行者長", "元素核心"],
+        "鏽蝕城邦":         ["灰燼行者", "拾荒王", "廢鐵傀儡"],
+        "鏽蝕城邦地下":     ["灰燼行者", "拾荒王", "廢鐵傀儡"],
+        "軌道居住站大學院": ["站內巡邏無人機", "軌道站維修機械", "廢鐵傀儡"],
+        "高密度大氣結晶行星": ["暗影靈", "幽靈", "元素核心"],
+        "綻放混成園":       ["暗影靈", "幽靈", "元素核心"],
+    }
+    for _loc, _names in _WORLD_LINE_ENEMY_OVERRIDES.items():
+        if _loc in sim_systems.WORLD_MAP or _loc in sim_systems.LOCATION_ENEMIES:
+            sim_systems.LOCATION_ENEMIES[_loc] = list(_names)
+
+    # 世界線敵人洩漏清理 + 影之敵排除移往 expand_game 尾部（after 統計前）：
+    # 卡片整合段（珊瑚台等）在覆寫表之後才建立場景並指派敵人，
+    # 清理必須在全部來源建立完成後執行才能涵蓋。
     
     # Final VEHICLE_LOCATIONS fallback: ensure ALL WORLD_MAP locations have vehicles
     _vlist = ['腳踏車','馬','馬車','小舟','自行車','登山自行車','駿馬','大型馬車','漁船',
@@ -1989,6 +2086,43 @@ def expand_game():
         _corr_conns = sim_systems.WORLD_MAP.setdefault("迴廊", {})
         if "east" not in _corr_conns:
             _corr_conns["east"] = "霧海群島"
+
+    # ────────────────────────────────────────────────────────────
+    # 尾部清理（所有 WORLD_MAP / LOCATION_ENEMIES 來源都建立完成後）：
+    # 1. 世界線洩漏清理——distribution/場景/卡片整合各段可能把 W03/W04
+    #    專屬敵隨機塞進 W01 地點；覆寫表只替換跨線目標，此處把世界線
+    #    敵人名從所有非目標地點移除（如珊瑚台被隨機指派站內巡邏無人機）。
+    # 2. 影之敵排除——卡片影之敵（X之影/深淵X之影）是任務演出專用；
+    #    普通場景不得被演出敵污染日常遭遇，演出場景刻意保留。
+    # ────────────────────────────────────────────────────────────
+    _WL_NAMES = set()
+    for _nlist in _WORLD_LINE_ENEMY_OVERRIDES.values():
+        _WL_NAMES.update(_nlist)
+    for _loc, _names in list(sim_systems.LOCATION_ENEMIES.items()):
+        if _loc in _WORLD_LINE_ENEMY_OVERRIDES:
+            continue
+        _clean = [n for n in _names if n not in _WL_NAMES]
+        if len(_clean) != len(_names):
+            if _clean:
+                sim_systems.LOCATION_ENEMIES[_loc] = _clean
+            else:
+                _plain = [e for e in sim_systems.ENEMIES
+                          if e["name"] not in _WL_NAMES and "之影" not in e["name"]]
+                sim_systems.LOCATION_ENEMIES[_loc] = [_seed.choice(_plain)["name"]]
+    _PERF_KW = ("舞台", "演唱會", "模式", "瞬間", "盲區", "更衣室", "直播",
+                "控制室", "核心室", "體育場", "競技", "演出")
+    # fallback 池同時排除世界線敵人（_WL_NAMES）：否則影之敵排除後
+    # 補普通敵人時可能抽到 W03/W04 專屬敵（如珊瑚台被補成站內巡邏無人機）。
+    _non_shadow_enemies = [e for e in sim_systems.ENEMIES
+                           if "之影" not in e["name"] and e["name"] not in _WL_NAMES]
+    for _loc, _names in list(sim_systems.LOCATION_ENEMIES.items()):
+        if _loc in _WORLD_LINE_ENEMY_OVERRIDES:
+            continue
+        if any(k in _loc for k in _PERF_KW):
+            continue
+        if any("之影" in n for n in _names) and _non_shadow_enemies:
+            sim_systems.LOCATION_ENEMIES[_loc] = [
+                n for n in _names if "之影" not in n] or [_seed.choice(_non_shadow_enemies)["name"]]
 
     after = {
         "items": len(sim_systems.ITEM_CATALOG),
