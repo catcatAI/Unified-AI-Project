@@ -1010,7 +1010,17 @@ def do_explore(character, equipment):
 # ═══════════════════════════════════════════════════════════════════════════
 
 def do_travel(character, equipment=None):
-    dests = WORLD_MAP.get(character["location"], {})
+    # 目的地 = 自身出邊 ∪ 全域反向入邊（所有連到當前地點的場景都可返回）。
+    # 地圖邊結構是「方向→單一地點」——多個場景連同一樞紐時，方向鍵衝突
+    # （如校園 west 只能是便利店或秘密鐵工廠之一）會讓部分場景成單向死路
+    # （玩家進去就回不來）。反向索引確保每個連過來的場景都可再前往。
+    _loc_here = character.get("location", "")
+    dests = dict(WORLD_MAP.get(_loc_here, {}))
+    _incoming = [v for v, e in WORLD_MAP.items() if v != _loc_here
+                 and any(dst == _loc_here for dst in e.values())]
+    for _inc in _incoming:
+        if _inc not in dests.values():
+            dests["back" + str(len(dests))] = _inc
     if not dests:
         print(C.GRAY+"  ⚻ 沒有通路。"+C.RESET)
         return

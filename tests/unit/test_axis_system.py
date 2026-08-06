@@ -1011,3 +1011,33 @@ class TestWorldLineEntryGates:
         assert sim_systems.get_vehicle_world_category(v["馬"]) == "natural"
         assert sim_systems.get_vehicle_world_category(v["腳踏車"]) == "natural"
         assert sim_systems.get_vehicle_world_category(v["漁船"]) == "natural"
+
+    def test_all_locations_reachable_from_campus(self):
+        """批次 47：地圖全域可達性——從聖十字校園出發（含反向入邊，
+        等同 run_game do_travel 合併邏輯）所有 WORLD_MAP 地點皆可達。
+        原缺陷：方向鍵衝突（校園 west 只能存便利店或秘密鐵工廠之一）
+        讓 12+ 場景單向死路（星光舞台/英靈殿/迴廊/月之宮殿等
+        玩家進去就回不來或根本進不去）。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        wm = sim_systems.WORLD_MAP
+        from collections import deque
+        start = "聖十字校園"
+        reach = {start}
+        q = deque([start])
+        while q:
+            cur = q.popleft()
+            outs = list(wm.get(cur, {}).values())
+            for loc, e in wm.items():
+                if loc != cur and cur in e.values():
+                    outs.append(loc)
+            for d in outs:
+                if d and d not in reach:
+                    reach.add(d)
+                    q.append(d)
+        unreachable = [l for l in wm if l not in reach]
+        assert not unreachable, f"不可達地點: {unreachable}"
+        # 演出場景（星光舞台及其子區域）必須可達（SC-20 卡片內容可玩）
+        assert "星光舞台" in reach, "星光舞台不可達"
+        assert "演唱會模式" in reach, "演唱會模式不可達"
