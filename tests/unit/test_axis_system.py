@@ -1041,3 +1041,87 @@ class TestWorldLineEntryGates:
         # 演出場景（星光舞台及其子區域）必須可達（SC-20 卡片內容可玩）
         assert "星光舞台" in reach, "星光舞台不可達"
         assert "演唱會模式" in reach, "演唱會模式不可達"
+
+
+# =============================================================================
+# 10. 演出場景內容（批次 48）
+# =============================================================================
+
+class TestPerformanceScenes:
+    """SC-20 星光舞台演出場景稽核：載具不得誤停（漁船/熱氣球塞進舞台）、
+    須有舞台設備物件（主舞台/音響塔/導播台）、偶像團 NPC 依文本歸位。"""
+
+    _PERF_KW = ("舞台", "演唱會", "模式", "瞬間", "盲區", "更衣室", "直播",
+                "控制室", "核心室", "體育場", "異常")
+
+    def test_no_vehicles_parked_in_performance_scenes(self):
+        """演出場景不得被載具 fallback 隨機指派（原缺陷：星光舞台=漁船、
+        演唱會模式=熱氣球、伺服器核心室=雪橇——與演出語境完全無關）。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        bad = [(loc, vn) for loc, vn in sim_systems.VEHICLE_LOCATIONS.items()
+               if any(k in loc for k in self._PERF_KW)]
+        assert not bad, f"演出場景誤停載具: {bad}"
+
+    def test_performance_scenes_have_stage_equipment(self):
+        """星光舞台須有舞台設備物件（主舞台/音響塔/導播台等），
+        而非被交通工具塞滿。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        objs = [o.get("name", "") for o in sim_systems.SCENE_OBJECTS.get("星光舞台", [])]
+        stage_kw = ("主舞台", "音響", "導播台", "燈光", "麥克風", "舞台")
+        hits = [o for o in objs if any(k in o for k in stage_kw)]
+        assert hits, f"星光舞台應有舞台設備物件: {objs}"
+        # 不得再有交通工具型場景物件（漁船/熱氣球）
+        veh = [o for o in objs if any(v in o for v in ("漁船", "熱氣球", "蒸氣機車", "飛空艇"))]
+        assert not veh, f"星光舞台仍有交通工具物件: {veh}"
+
+    def test_cross_world_line_contextual_vehicles(self):
+        """跨線場景的載具應符語境：熒光沼澤（沼澤）不得停腳踏車。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        assert sim_systems.VEHICLE_LOCATIONS.get("熒光沼澤") != "腳踏車", "熒光沼澤不該停腳踏車"
+        assert sim_systems.VEHICLE_LOCATIONS.get("軌道居住站大學院") != "自行車", \
+            "軌道站不該停自行車（太空站）"
+
+    def test_idol_group_npcs_at_star_stage(self):
+        """文本（CC-30/31/47）：特戰偶像團、台灣AI小N、呃咔屬星光舞台
+        演出區域——主要排程地點須在星光舞台。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        for name, expect in (("特戰偶像團", "星光舞台"), ("台灣AI小N", "星光舞台"),
+                             ("呃咔", "星光舞台"), ("奶油泡芙", "西翼大市集")):
+            nd = sim_systems.NPC_METADATA.get(name)
+            assert nd, f"NPC {name} 不存在"
+            sched = sim_systems.NPC_SCHEDULES.get(name, [])
+            assert sched, f"NPC {name} 無排程"
+            main = sched[0][3]
+            assert main == expect, f"{name} 主要排程地 {main} ≠ {expect}"
+            assert main in sim_systems.WORLD_MAP, f"{name} 的基地 {main} 不在可探索地圖（玩家無法到達）"
+
+    def test_idol_group_reachable_at_work_hours(self):
+        """10 點（工作時段）在星光舞台能遇到偶像團（排程查詢）。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        found = []
+        for name in ("特戰偶像團", "台灣AI小N", "呃咔"):
+            act, aloc, _mood = sim_systems.get_npc_activity(name, 10, "春")
+            if aloc == "星光舞台":
+                found.append(name)
+        assert found == ["特戰偶像團", "台灣AI小N", "呃咔"], f"10點星光舞台應有 3 偶像團: {found}"
+
+    def test_idol_group_offers_in_catalog(self):
+        """偶像團 NPC 的商店庫存（offers）全部存在於 ITEM_CATALOG
+        （演唱會門票/簽名海報/特戰偶像團周邊等演出語境商品）。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        cat = sim_systems.ITEM_CATALOG
+        for n in ("特戰偶像團", "呃咔", "奶油泡芙"):
+            for it in sim_systems.NPC_METADATA.get(n, {}).get("offers", []):
+                assert it in cat, f"{n} 的 offers 引用不存在道具: {it}"

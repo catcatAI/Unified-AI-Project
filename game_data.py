@@ -180,6 +180,10 @@ def _species_home_override(race_text: str = "", role_text: str = "") -> str:
     """
     if not race_text and not role_text:
         return ""
+    # 職業：偶像/演出者 → 星光舞台（SC-20 特戰偶像團是星光舞台的
+    # 演出者——文本「舞台是她們的武器，也是她們的牢籠」）
+    if any(k in (role_text or "") for k in ("偶像", "演出者", "歌手", "舞者", "應援")):
+        return "星光舞台"
     # 職業：軌道站莊園管家 → 軌道居住站大學院（收窄關鍵字，避免軌道砲/大學院教授誤導）
     if any(k in (role_text or "") for k in ("軌道站", "太空站", "軌道居住", "軌道大學院")):
         return "軌道居住站大學院"
@@ -680,6 +684,19 @@ def generate_all_npcs() -> Dict[str, dict]:
                 race_text=_extract_race_from_card(card), role_text=role_desc)
             if _ov:
                 home = _ov
+
+        # 卡片角色專屬位置覆寫（依卡片文本權威——SC-20 特戰偶像團是星光
+        # 舞台演出者、小N 伺服器掛在舞台底部、呃咔住星光舞台旁、奶油泡芙
+        # 在西翼大市集初登場）。卡片位置 token 是描述性文字（「工業區 ·
+        # 星光舞台旁二樓辦公室」）不是地圖點，需對映到實際可到達場景。
+        _NPC_HOME_OVERRIDES = {
+            "特戰偶像團": "星光舞台",
+            "台灣AI小N": "星光舞台",
+            "呃咔": "星光舞台",
+            "奶油泡芙": "西翼大市集",
+        }
+        if name in _NPC_HOME_OVERRIDES:
+            home = _NPC_HOME_OVERRIDES[name]
 
         # Archetype: check specific categories before combat+vitality default
         if "mechanism" in token_cats:
@@ -2131,9 +2148,20 @@ def expand_game():
     if not hasattr(sim_systems, 'VEHICLE_LOCATIONS'):
         sim_systems.VEHICLE_LOCATIONS = {}
     _occupied = set(sim_systems.VEHICLE_LOCATIONS.keys())
+    # 演出場景（星光舞台/演唱會模式等）不該停靠普通載具（SC-20 是
+    # 偶像演出載具，不是停車場）；W04/夢境層/W03 等也由下方語境覆寫處理。
+    _PERF_SCENE_KW = ("舞台", "演唱會", "模式", "瞬間", "盲區", "更衣室",
+                      "直播", "控制室", "核心室", "體育場", "異常")
+    _CROSS_LINE_EXCLUDE = ("軌道居住站大學院", "鏽蝕城邦", "熒光沼澤", "玻璃荒漠",
+                           "高密度大氣結晶行星", "綻放混成園")
     for _vi, _loc in enumerate(sim_systems.WORLD_MAP):
-        if _loc not in _occupied:
-            sim_systems.VEHICLE_LOCATIONS[_loc] = _vlist[_vi % len(_vlist)]
+        if _loc in _occupied:
+            continue
+        if any(_k in _loc for _k in _PERF_SCENE_KW):
+            continue
+        if _loc in _CROSS_LINE_EXCLUDE:
+            continue
+        sim_systems.VEHICLE_LOCATIONS[_loc] = _vlist[_vi % len(_vlist)]
 
     # 知名地點載具配對覆寫：fallback 任意指派可能不符常理
     # （如極北冰原配蒸氣機車、魔女學府配熱氣球），依地理/文本常理修正。
@@ -2145,6 +2173,15 @@ def expand_game():
         "鏡山":     "登山自行車",    # 山路
         "鬱鬱山":   "登山自行車",    # 山林越野
         "煙雲溫泉湖": "重型機車",    # 溫泉山路
+        # 跨線場景語境載具（依世界線文本——W04 灰燼紀元廢土、
+        # 夢境層）：不能用腳踏車/馬這種無關載具。
+        "熒光沼澤": "小舟",          # W04 熒光沼澤：沼澤渡水
+        "玻璃荒漠": "吉普車",        # W04 玻璃荒漠：越野廢土車
+        "鏽蝕城邦": "吉普車",        # W04 鏽蝕城邦：廢土越野
+        "高密度大氣結晶行星": "馬車",  # 夢境層：概念馬車
+        "綻放混成園": "熱氣球",      # 夢境層：飛越花園
+        # 註：軌道居住站大學院（W03）不指派載具——太空站內部
+        # 無普通載具可停（自行車/馬與軌道站語境不符），fallback 已排除。
     }
     for _ov_loc, _ov_veh in _VEHICLE_LOCATION_OVERRIDES.items():
         if _ov_veh in sim_systems.VEHICLES:
@@ -2184,6 +2221,56 @@ def expand_game():
             "desc": _veh_desc.get(_vname, "停靠在此的%s" % _vname),
             "interactable": True,
         })
+
+    # 演出場景舞台設備（依 SC-20 星光舞台文本：偶像演出載具，有舞台、
+    # 燈光、音響、後台設備）——演出場景原本只有隨機載具物件，完全
+    # 沒有舞台語境物件，探索時看不到演出相關內容。
+    _STAGE_OBJS = {
+        "星光舞台": [
+            {"name": "主舞台", "type": "decoration", "interactable": True,
+             "desc": "光芒四射的主舞台，特戰偶像團在此演出。",
+             "note": "舞台地板微微發熱，是燈光與音響全開的證據。"},
+            {"name": "粉絲應援台", "type": "container", "interactable": True,
+             "desc": "堆滿應援物的小檯子。", "contents": ["彩帶", "螢光棒"]},
+            {"name": "舞台燈光控制台", "type": "workstation", "interactable": True,
+             "desc": "控制追光與頻閃的燈光台。", "station_type": "enchant"},
+        ],
+        "演唱會模式": [
+            {"name": "音響塔", "type": "decoration", "interactable": True,
+             "desc": "巨大音響塔，低音震得地板發顫。",
+             "note": "音響運作中——演出進行時的沉浸感是這裡的全部。"},
+        ],
+        "戰術模式": [
+            {"name": "戰術演練檯", "type": "workstation", "interactable": True,
+             "desc": "偶像團戰術演練用的指揮檯。", "station_type": "forge"},
+        ],
+        "後台更衣室": [
+            {"name": "演出服衣架", "type": "container", "interactable": True,
+             "desc": "掛滿華麗演出服的衣架。", "contents": ["絲線", "彩色玻璃片"]},
+            {"name": "化妝檯", "type": "decoration", "interactable": True,
+             "desc": "燈泡環繞的化妝檯。",
+             "note": "檯面上散著演出用的亮片與假睫毛。"},
+        ],
+        "直播控制室": [
+            {"name": "直播導播台", "type": "workstation", "interactable": True,
+             "desc": "切換鏡頭與畫面的導播台。", "station_type": "workbench"},
+        ],
+        "伺服器核心室": [
+            {"name": "邊緣運算伺服器", "type": "decoration", "interactable": True,
+             "desc": "處理粉絲腦波數據的運算伺服器（SC-20：5km 內即時運算）。",
+             "note": "機櫃嗡鳴，熵穩定裝置默默運作著。"},
+        ],
+        "首爾奧林匹克體育場": [
+            {"name": "巨型螢幕", "type": "decoration", "interactable": True,
+             "desc": "高掛的巨型螢幕，播放著舞台特寫。",
+             "note": "畫面裡的偶像團正對著台下揮手。"},
+        ],
+    }
+    for _sloc, _sobj_list in _STAGE_OBJS.items():
+        _exist_names = {o.get("name") for o in sim_systems.SCENE_OBJECTS.setdefault(_sloc, [])}
+        for _so in _sobj_list:
+            if _so["name"] not in _exist_names:
+                sim_systems.SCENE_OBJECTS[_sloc].append(dict(_so))
 
     # ── NPC schedule location fallback ──
     # Some NPCs reference locations not in WORLD_MAP or scene cards
