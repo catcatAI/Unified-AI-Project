@@ -160,14 +160,23 @@ _NEGATION_WORDS = {"不要", "别", "取消", "停止", "stop", "cancel", "don't
 _WORD_BOUNDARY = r"(?:^|[\s，。！？,.\s])"
 _WORD_BOUNDARY_END = r"(?:[\s，。！？,.\s]|$)"
 
+# Static tables are pure data (never mutated) — build once per process and share
+# across instances instead of recompiling ~25 regexes per construction.
+_CLASSIFIER_PATTERNS: Optional[List[Tuple[QueryType, Pattern, float]]] = None
+_CLASSIFIER_REFLEX_WORDS: Optional[set] = None
+
 
 class QueryClassifier:
     """Pattern-based query classifier v2 for Model Bus routing."""
 
     def __init__(self, ed3n_engine=None):
+        global _CLASSIFIER_PATTERNS, _CLASSIFIER_REFLEX_WORDS
+        if _CLASSIFIER_PATTERNS is None:
+            _CLASSIFIER_REFLEX_WORDS = self._build_reflex_words()
+            _CLASSIFIER_PATTERNS = self._build_patterns()
         self._ed3n = ed3n_engine
-        self._reflex_words = self._build_reflex_words()
-        self._patterns = self._build_patterns()
+        self._reflex_words = _CLASSIFIER_REFLEX_WORDS
+        self._patterns = _CLASSIFIER_PATTERNS
 
     @staticmethod
     def _build_reflex_words() -> set:

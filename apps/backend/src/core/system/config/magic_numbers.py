@@ -5,12 +5,13 @@ All values loaded from TieredConfigLoader with inline fallback defaults.
 """
 
 import logging
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
 _MAGIC_CACHE: Dict[str, Any] = {}
 _HARDWARE_PROFILE: Optional[Any] = None  # lazy-loaded HardwareProfile singleton
+_SUFFIX_LEAF_INDEX: Optional[Tuple[int, Dict[str, Any]]] = None  # (id(config), {key: value})
 
 
 def _get_hardware_profile() -> Optional[Any]:
@@ -104,7 +105,7 @@ def _get(key: str, default: Any = None) -> Any:
         return val if val is not None else default
 
     # 2. Suffix match against leaf paths
-    candidates = _suffix_matches(config, key)
+    candidates = _suffix_matches_indexed(config, key)
     if not candidates:
         return default
     if len(candidates) == 1:
@@ -117,15 +118,44 @@ def _get(key: str, default: Any = None) -> Any:
     return default
 
 
-def _suffix_matches(node: Any, key: str, prefix: str = "") -> list:
-    """Collect (path, value) leaf pairs whose dotted tail equals ``key``."""
+def _leaf_dotted_index(node: Dict[str, Any]) -> Dict[str, List[Tuple[str, Any]]]:
+    """Flatten a nested config tree into {final_segment: [(full_dotted_path, value)]}.
+
+    Built once per config object and reused by _suffix_matches_indexed; avoids a
+    full recursive tree walk on every config lookup miss. Buckets preserve the
+    dictionary insertion order that _suffix_matches walks, so result ordering is
+    identical.
+    """
+    index: Dict[str, List[Tuple[str, Any]]] = {}
+
+    def walk(current: Any, prefix: str) -> None:
+        for k, v in current.items():
+            path = f"{prefix}.{k}" if prefix else k
+            if isinstance(v, dict):
+                walk(v, path)
+            else:
+                index.setdefault(k, []).append((path, v))
+
+    walk(node, "")
+    return index
+
+
+def _suffix_matches_indexed(node: Dict[str, Any], key: str) -> list:
+    """Exact-preserving replacement for _suffix_matches(node, key) using a leaf index.
+
+    A leaf path is included iff ``path == key or path.endswith("." + key)``, so
+    every candidate shares the query key's final segment — only that segment
+    bucket is scanned instead of the whole config tree.
+    """
+    global _SUFFIX_LEAF_INDEX
+    if _SUFFIX_LEAF_INDEX is None or _SUFFIX_LEAF_INDEX[0] != id(node):
+        _SUFFIX_LEAF_INDEX = (id(node), _leaf_dotted_index(node))
+    index = _SUFFIX_LEAF_INDEX[1]
+    tail = key.split(".")[-1]
     result = []
-    for k, v in node.items():
-        path = f"{prefix}.{k}" if prefix else k
-        if isinstance(v, dict):
-            result.extend(_suffix_matches(v, key, path))
-        elif path == key or path.endswith("." + key):
-            result.append((path, v))
+    for path, value in index.get(tail, ()):
+        if path == key or path.endswith("." + key):
+            result.append((path, value))
     return result
 
 

@@ -97,6 +97,15 @@ _formula_cache = None
 _formula_cache_time = 0
 _FORMULA_CACHE_TTL = 60
 
+# Short-TTL caches for state report blocks: dedups recomputation within a single
+# request cycle (LLM call + fallback retries) while keeping the state fresh
+# across turns. Mirrors the _formula_cache pattern above.
+_theta_state_cache = None
+_theta_state_cache_time = 0
+_autonomous_cache = None
+_autonomous_cache_time = 0
+_STATE_CACHE_TTL = 2
+
 # Module-level formula singletons (avoid creating fresh instances each time)
 _hsm_instance = None
 _life_intensity_instance = None
@@ -216,6 +225,9 @@ def get_formula_summaries() -> str:
 
 def get_autonomous_decisions() -> str:
     """Get recent autonomous lifecycle decisions for prompt context."""
+    global _autonomous_cache, _autonomous_cache_time
+    if _autonomous_cache is not None and (time.time() - _autonomous_cache_time) < _STATE_CACHE_TTL:
+        return _autonomous_cache
     try:
         lifecycle = _get_autonomous_lifecycle()
         summary = lifecycle.get_lifecycle_summary()
@@ -258,7 +270,10 @@ def get_autonomous_decisions() -> str:
                 prompt("angela.decision.explorations", count=stats.get("explorations_triggered", 0))
             )
 
-        return "\n".join(lines) if lines else ""
+        result = "\n".join(lines) if lines else ""
+        _autonomous_cache = result
+        _autonomous_cache_time = time.time()
+        return result
     except Exception as e:
         logger.warning(f"Autonomous decisions unavailable: {e}", exc_info=True)
         return ""
@@ -266,6 +281,9 @@ def get_autonomous_decisions() -> str:
 
 def get_theta_state() -> str:
     """Get theta router state for prompt context."""
+    global _theta_state_cache, _theta_state_cache_time
+    if _theta_state_cache is not None and (time.time() - _theta_state_cache_time) < _STATE_CACHE_TTL:
+        return _theta_state_cache
     try:
         router = _get_theta_router()
         report = router.get_routing_report()
@@ -282,7 +300,10 @@ def get_theta_state() -> str:
                 )
             )
 
-        return "\n".join(lines) if lines else ""
+        result = "\n".join(lines) if lines else ""
+        _theta_state_cache = result
+        _theta_state_cache_time = time.time()
+        return result
     except Exception as e:
         logger.warning(f"Theta state unavailable: {e}", exc_info=True)
         return ""

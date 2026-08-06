@@ -25,6 +25,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
+from collections import OrderedDict
 from ai.core.unicode_utils import normalize_text
 from core.system.config.magic_numbers import (
     compute_bool,
@@ -432,6 +433,10 @@ class VectorDictionary:
 
         self.entries: Dict[str, ConceptEntry] = {}
         self._surface_set: Dict[str, str] = {}  # {lower_surface: key} for O(1) dedup
+        self._surface_to_key: Optional[Dict[str, str]] = None  # lazy reverse lookup cache
+        self._prefix_first: Optional[Dict[str, List[Tuple[str, str]]]] = None  # first-3-char → [(lower_form, key)]
+        self._embed_cache: Optional[OrderedDict] = None  # query → normalized qvec (LRU)
+        self._embed_cache_max = 1024
         self._encoder = self._build_encoder(model_name)
         self._matrix: Optional[torch.Tensor] = None  # shape [N, D]
         self._key_order: List[str] = []  # maps row index -> key
@@ -490,6 +495,7 @@ class VectorDictionary:
             self._surface_set[sf.lower().strip()] = key
         self._dirty = True
         self._surface_to_key = None  # Invalidate encode() cache
+        self._prefix_first = None  # Invalidate prefix-bucket cache
         return entry
 
     def grow(self, text: str, surface_form: str, confidence: Optional[float] = None) -> str:
@@ -540,6 +546,7 @@ class VectorDictionary:
                         self._surface_set[key_lower] = existing
                         added.add(key_lower)
                 self._surface_to_key = None  # Invalidate encode() cache
+                self._prefix_first = None  # Invalidate prefix-bucket cache
                 self._dirty = True  # Rebuild TF-IDF index to include new forms
             return existing
         idx = len(self.entries) + 1
@@ -742,23 +749,40 @@ class VectorDictionary:
         # Build reverse lookup cache
         if not hasattr(self, "_surface_to_key") or self._surface_to_key is None:
             self._surface_to_key = {}
+            self._prefix_first = {}
             for key, entry in self.entries.items():
                 for form in entry.surface_forms.values():
                     if form:
-                        for word in form.lower().split():
+                        f_lower = form.lower().strip()
+                        for word in f_lower.split():
                             if word and word not in self._surface_to_key:
                                 self._surface_to_key[word] = key
+                        if f_lower:
+                            bucket = f_lower[:3]
+                            self._prefix_first.setdefault(bucket, []).append((f_lower, key))
 
         def _exact_match(tok: str) -> Optional[str]:
             t = tok.lower().strip()
             return self._surface_to_key.get(t)
 
+        def _cache_embed(query: str, qvec: Any) -> None:
+            if self._embed_cache is None:
+                self._embed_cache = OrderedDict()
+            self._embed_cache[query] = qvec
+            self._embed_cache.move_to_end(query)
+            while len(self._embed_cache) > self._embed_cache_max:
+                self._embed_cache.popitem(last=False)
+
         def _match_single(query: str) -> List[Tuple[str, float]]:
             """Return (key, similarity_score) for TF-IDF match."""
             if not query or len(query.strip()) < 1:
                 return []
-            qvec = self._encoder.encode([query])
-            qvec = self._normalize(qvec, dim=-1)
+            cache_key = query.lower().strip()
+            qvec = self._embed_cache.get(cache_key) if self._embed_cache else None
+            if qvec is None:
+                qvec = self._encoder.encode([query])
+                qvec = self._normalize(qvec, dim=-1)
+                _cache_embed(cache_key, qvec)
             scores = self._matrix @ qvec.T
             if hasattr(scores, "ndim") and scores.ndim > 1:
                 scores = scores.squeeze(-1)
@@ -837,14 +861,13 @@ class VectorDictionary:
                     continue
                 best_key = None
                 best_score = 0.0
-                for key, entry in self.entries.items():
-                    for form in entry.surface_forms.values():
-                        if not form:
-                            continue
-                        score = self._prefix_overlap(token_lower, form.lower().strip())
-                        if score > best_score:
-                            best_score = score
-                            best_key = key
+                # _prefix_overlap needs a shared prefix >= min_prefix(3), so any
+                # form scoring >0 must share the first 3 chars — bucket is exact.
+                for form, key in self._prefix_first.get(token_lower[:3], ()):
+                    score = self._prefix_overlap(token_lower, form)
+                    if score > best_score:
+                        best_score = score
+                        best_key = key
                 if best_score >= 0.5 and best_key:
                     conf = min(best_score, 0.85)  # cap prefix dedup confidence
                     result[best_key] = max(result.get(best_key, 0.0), conf)
@@ -852,20 +875,55 @@ class VectorDictionary:
             i += 1
 
         # ======================================================================
-        # Step 4: Still-unmatched tokens — TF-IDF per-token
+        # Step 4: Still-unmatched tokens — TF-IDF (single batched matmul)
         # ======================================================================
+        unique_tokens: List[str] = []
+        seen_tokens: set = set()
         i = 0
         while i < len(tokens):
             tok = tokens[i]
             if tok and tok.strip():
                 token_lower = tok.lower().strip()
-                if token_lower in matched_tokens:
-                    i += 1
-                    continue
-                for key, score in _match_single(tok):
-                    conf = min(score, 0.5)
-                    result[key] = max(result.get(key, 0.0), conf)
+                if token_lower not in matched_tokens and token_lower not in seen_tokens:
+                    seen_tokens.add(token_lower)
+                    unique_tokens.append(tok)
             i += 1
+        if unique_tokens:
+            qvecs_list: List[Any] = []
+            missing: List[str] = []
+            for tok in unique_tokens:
+                cached = self._embed_cache.get(tok.lower().strip()) if self._embed_cache else None
+                if cached is not None:
+                    qvecs_list.append(cached)
+                else:
+                    missing.append(tok)
+            if missing:
+                batch = self._encoder.encode(missing)
+                batch = self._normalize(batch, dim=-1)
+                for j, tok in enumerate(missing):
+                    _cache_embed(tok.lower().strip(), batch[j])
+                    qvecs_list.append(batch[j])
+            if hasattr(qvecs_list[0], "norm"):
+                import torch as _torch
+
+                qbatch = _torch.stack(qvecs_list, dim=0)
+            else:
+                qbatch = np.stack(qvecs_list)
+            all_scores = self._matrix @ qbatch.T  # [V, T]
+            for j, tok in enumerate(unique_tokens):
+                col = all_scores[:, j]
+                if hasattr(col, "ndim") and col.ndim > 1:
+                    col = col.squeeze(-1)
+                k = min(self.top_k, col.shape[0])
+                if hasattr(col, "topk"):
+                    top_scores, top_indices = col.topk(k)
+                else:
+                    top_indices = np.argsort(-col)[:k]
+                    top_scores = col[top_indices]
+                for score, idx in zip(top_scores.tolist(), top_indices.tolist()):
+                    if score >= self.similarity_threshold:
+                        conf = min(float(score), 0.5)
+                        result[self._key_order[idx]] = max(result.get(self._key_order[idx], 0.0), conf)
 
         # ======================================================================
         # Step 5: Whole-text TF-IDF (phrase-level catch-all)

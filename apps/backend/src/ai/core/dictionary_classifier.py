@@ -10,6 +10,7 @@ Maps ED3N dictionary context_id to QueryType.
 import json
 import logging
 import os
+import re
 from typing import Dict, List, Optional, Tuple
 
 from core.utils import any_keyword
@@ -74,6 +75,7 @@ class DictionaryClassifier:
         self._training_data = {}
         self._loaded = False
         self._keyword_index: Dict[str, List[str]] = {}  # keyword -> list of entry keys
+        self._match_tables: Optional[Tuple[Dict[str, List[str]], List[Tuple[str, List[str]]], Dict[str, int]]] = None  # inverted lookup cache
         self._cache: Dict[str, Tuple[str, str, float]] = {}  # text -> (type, action, conf)
 
     def _ensure_loaded(self):
@@ -108,6 +110,7 @@ class DictionaryClassifier:
                     if sf_lower not in self._keyword_index:
                         self._keyword_index[sf_lower] = []
                     self._keyword_index[sf_lower].append(key)
+        self._match_tables = None  # rebuild inverted lookup from new index
 
     def _load_training_data(self):
         """Load classifier training data and merge into dictionary."""
@@ -185,18 +188,57 @@ class DictionaryClassifier:
                 best_score = 1.0
 
         if best_score < 0.5:
-            for keyword, keys in self._keyword_index.items():
-                if any_keyword(text_lower, (keyword,)):
-                    pos = text_lower.find(keyword)
-                    len_ratio = len(keyword) / max(len(text_lower), 1)
-                    position_boost = 1.3 if pos == 0 else 1.0
-                    min_score = 0.6 if len(keyword) >= 2 else 0.4
-                    score = max(min_score, min(1.0, len_ratio * position_boost * 2.0))
-                    if score > best_score:
-                        best_score = score
-                        best_key = keys[0] if keys else None
+            self._ensure_match_tables()
+            alpha_token_keys, substring_pairs, rank = self._match_tables
+            # Invert the scan: only keywords actually present in the text are
+            # candidates (exactly the set any_keyword() would accept), so we avoid
+            # re-compiling regexes / sweeping the whole index on every query.
+            # Tie-break preserves the original keyword_index insertion order.
+            best_pair = None  # (score, -rank, keyword, keys)
+            for token in set(re.findall(r"[a-zA-Z]+", text_lower)):
+                keys = alpha_token_keys.get(token)
+                if keys:
+                    pair = (self._keyword_score(text_lower, token), -rank[token], token, keys)
+                    if best_pair is None or pair > best_pair:
+                        best_pair = pair
+            for keyword, keys in substring_pairs:
+                if keyword in text_lower:
+                    pair = (self._keyword_score(text_lower, keyword), -rank[keyword], keyword, keys)
+                    if best_pair is None or pair > best_pair:
+                        best_pair = pair
+            if best_pair is not None and best_pair[0] > best_score:
+                best_score = best_pair[0]
+                best_key = best_pair[3][0] if best_pair[3] else None
 
         return best_key, best_score
+
+    def _ensure_match_tables(self) -> None:
+        """Build inverted lookup tables derived from _keyword_index.
+
+        - alpha ASCII keywords match iff they appear as a whole letter-run token
+        - all other keywords (CJK etc.) match iff they appear as a substring
+        Rebuilt lazily whenever _keyword_index is mutated (learn/forget/build).
+        """
+        if self._match_tables is not None:
+            return
+        alpha_token_keys: Dict[str, List[str]] = {}
+        substring_pairs: List[Tuple[str, List[str]]] = []
+        rank: Dict[str, int] = {}
+        for rank_idx, (keyword, keys) in enumerate(self._keyword_index.items()):
+            rank[keyword] = rank_idx
+            if keyword.isascii() and keyword.isalpha():
+                alpha_token_keys[keyword] = keys
+            else:
+                substring_pairs.append((keyword, keys))
+        self._match_tables = (alpha_token_keys, substring_pairs, rank)
+
+    @staticmethod
+    def _keyword_score(text_lower: str, keyword: str) -> float:
+        pos = text_lower.find(keyword)
+        len_ratio = len(keyword) / max(len(text_lower), 1)
+        position_boost = 1.3 if pos == 0 else 1.0
+        min_score = 0.6 if len(keyword) >= 2 else 0.4
+        return max(min_score, min(1.0, len_ratio * position_boost * 2.0))
 
     def _resolve_entry(self, best_key: str) -> Tuple[str, str]:
         entry = self._dictionary.entries.get(best_key)
@@ -340,6 +382,7 @@ class DictionaryClassifier:
         if text_stripped not in self._keyword_index:
             self._keyword_index[text_stripped] = []
         self._keyword_index[text_stripped].append(key)
+        self._match_tables = None  # rebuild inverted lookup from new keyword
 
         # Clear affected cache entries
         keys_to_clear = [k for k in self._cache if text_stripped in k]
@@ -382,6 +425,7 @@ class DictionaryClassifier:
             self._keyword_index[sf] = [k for k in self._keyword_index[sf] if k != key]
             if not self._keyword_index[sf]:
                 del self._keyword_index[sf]
+        self._match_tables = None  # rebuild inverted lookup from updated index
 
         keys_to_clear = [k for k in self._cache if sf in k]
         for k in keys_to_clear:
