@@ -97,7 +97,7 @@ class TestConceptLibraryBuild:
             assert info["text_embedding"] is not None
             assert info["text_embedding"].shape == (512,)
 
-    def test_concepts_registered_in_dictionary(self, ed3n):
+    def test_concepts_registered_in_dictionary(self, library, ed3n):
         for key in ["concept_chicken", "concept_cat", "concept_dog", "concept_bird"]:
             assert key in ed3n.dictionary.entries
 
