@@ -9,7 +9,7 @@ Lexical datasets:
     cedict       CC-CEDICT (Chinese-English, ~5MB, ~120K entries)
     jmdict       JMdict (Japanese-English, ~15MB, ~200K entries)
     wordnet      WordNet 3.0 (English, ~11MB, ~155K synsets)
-    koedict      Korean-English Dictionary (~1MB, ~40K entries)
+    koedict      Korean-English Dictionary (cc-kedict YAML, ~2MB, ~13K entries)
 
 Multimodal training datasets:
     cifar10      CIFAR-10 (60K 32×32 images, 10 classes, ~163MB)
@@ -395,14 +395,13 @@ def process_wordnet() -> Path:
 # ---------------------------------------------------------------------------
 
 KOEDICT_URL = (
-    "https://raw.githubusercontent.com/mhagiwara/korean-english-dictionary/"
-    "master/data/korean_english_dictionary.txt"
+    "https://raw.githubusercontent.com/mhagiwara/cc-kedict/master/kedict.yml"
 )
-KOEDICT_TXT = OUT_DIR / "korean_english_dictionary.txt"
+KOEDICT_TXT = OUT_DIR / "kedict.yml"
 
 
 def download_koedict() -> Path:
-    """Download Korean-English dictionary tabfile; return path."""
+    """Download Korean-English dictionary (cc-kedict YAML); return path."""
     if KOEDICT_TXT.exists() and KOEDICT_TXT.stat().st_size > 100_000:
         logger.info("KOEDict already downloaded (%s)", KOEDICT_TXT)
         return KOEDICT_TXT
@@ -410,52 +409,71 @@ def download_koedict() -> Path:
     return KOEDICT_TXT
 
 
-def convert_koedict(txt_path: Path) -> Path:
-    """Parse Korean-English tabfile and write ED3N JSON.
+def convert_koedict(yaml_path: Path) -> Path:
+    """Parse cc-kedict YAML and write ED3N JSON.
 
-    Format per line:  korean<TAB>english
+    Each entry is a block starting with ``- word: <korean>`` containing
+    optional ``romaja``/``pos`` fields and a ``defs`` list whose first
+    definition is taken as the English gloss. Zero external dependencies.
     """
     entries: list[dict] = []
     key_counts: dict[str, int] = {}
     seen_pairs: set[tuple[str, str]] = set()
 
-    logger.info("Parsing KOEDict …")
-    with open(txt_path, "r", encoding="utf-8") as f:
+    word_re = re.compile(r"^-\s+word:\s+(.+)$")
+    romaja_re = re.compile(r"^\s+romaja:\s*(.*)$")
+    def_re = re.compile(r"^\s*-\s+def:\s*(.*)$")
+
+    logger.info("Parsing KOEDict (cc-kedict YAML) …")
+    cur_word: str | None = None
+    cur_romaja = ""
+    have_def = False
+    with open(yaml_path, "r", encoding="utf-8") as f:
         for line in f:
-            line = line.strip()
-            if not line or line.startswith("#"):
+            m = word_re.match(line)
+            if m:
+                cur_word = m.group(1).strip().strip('"').strip("'")
+                cur_romaja = ""
+                have_def = False
                 continue
-            parts = line.split("\t", 1)
-            if len(parts) != 2:
+            if cur_word is None:
                 continue
-            ko, en = parts[0].strip(), parts[1].strip()
-            if not ko or not en:
+            m = romaja_re.match(line)
+            if m and m.group(1).strip():
+                cur_romaja = m.group(1).strip().strip('"').strip("'")
                 continue
-                # Deduplicate identical ko↔en pairs
-            pair = (ko, en)
-            if pair in seen_pairs:
-                continue
-            seen_pairs.add(pair)
+            m = def_re.match(line)
+            if m and not have_def:
+                en = m.group(1).strip().strip('"').strip("'")
+                if en and not en.startswith(":") and not en.startswith("Examples"):
+                    ko = cur_word
+                    if not ko or not en:
+                        continue
+                    pair = (ko, en)
+                    if pair in seen_pairs:
+                        continue
+                    seen_pairs.add(pair)
+                    have_def = True
 
-            sf: dict[str, str] = {"ko": ko, "en": en}
+                    sf: dict[str, str] = {"ko": ko, "en": en}
 
-            en_key = re.sub(r"[^a-zA-Z0-9_]", "_", en.lower().strip())
-            en_key = re.sub(r"_+", "_", en_key).strip("_")
-            if not en_key or len(en_key) < 2:
-                en_key = f"koedict_{hash(ko) % 10**6}"
+                    en_key = re.sub(r"[^a-zA-Z0-9_]", "_", en.lower().strip())
+                    en_key = re.sub(r"_+", "_", en_key).strip("_")
+                    if not en_key or len(en_key) < 2:
+                        en_key = f"koedict_{hash(ko) % 10**6}"
 
-            key_counts[en_key] = key_counts.get(en_key, 0) + 1
-            cnt = key_counts[en_key]
-            dedup_key = f"{en_key}_{cnt}" if cnt > 1 else en_key
+                    key_counts[en_key] = key_counts.get(en_key, 0) + 1
+                    cnt = key_counts[en_key]
+                    dedup_key = f"{en_key}_{cnt}" if cnt > 1 else en_key
 
-            entry={
-                "key": f"koedict_{dedup_key}",
-                "surface_forms": sf,
-                "contexts": [{"context_id": "koedict"}],
-                "relations": {},
-                "confidence": 1.0,
-            }
-            entries.append(entry)
+                    entry = {
+                        "key": f"koedict_{dedup_key}",
+                        "surface_forms": sf,
+                        "contexts": ([{"context_id": "koedict", "romaja": cur_romaja}] if cur_romaja else [{"context_id": "koedict"}]),
+                        "relations": {},
+                        "confidence": 1.0,
+                    }
+                    entries.append(entry)
 
     out_path = OUT_DIR / "koedict.json"
     data={"version": "2.0", "source": "KOEDict", "entries": entries}
