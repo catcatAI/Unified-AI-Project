@@ -102,6 +102,28 @@ class _ReflexTable:
 # ---------------------------------------------------------------------------
 
 
+# Decode gate: the minimum SNN activation score an output key needs to be
+# decodable (>=1 spike in 6 timesteps ≈ 0.167 with margin). Single source of
+# truth for both the anchored-decode filter and the learned-rescue floor, so a
+# rescaled learned candidate is exactly at the decodable boundary — not above
+# (arbitrary boost) and not below (invisible).
+_DECODE_GATE = 0.15
+
+
+def _slot_budget(n_input: int) -> tuple:
+    """Return (anchor_slots, snn_slots) for an input of *n_input* concept keys.
+
+    Single source of truth for both ``_anchored_decode`` and the learned-rescue
+    merge, so the number of learned candidates gathered always matches the
+    number of SNN slots the decoder can actually place.
+    """
+    if n_input <= 3:
+        return min(3, n_input), 4
+    if n_input <= 15:
+        return 3, 3
+    return 3, 6
+
+
 def _anchored_decode(
     network_output: Dict[str, float],
     input_keys: Dict[str, float],
@@ -135,20 +157,12 @@ def _anchored_decode(
     snn_only = {k: v for k, v in network_output.items() if k not in input_keys}
 
     # Score threshold: at least 1 spike in 6 timesteps (~0.167) with margin
-    snn_candidates = [k for k, v in snn_only.items() if v >= 0.15]
+    snn_candidates = [k for k, v in snn_only.items() if v >= _DECODE_GATE]
     snn_sorted = sorted(snn_candidates, key=lambda k: snn_only[k], reverse=True)
 
     # Dynamic slot allocation
     n_input = len(input_keys)
-    if n_input <= 3:
-        anchor_slots = min(3, n_input)
-        snn_slots = 4
-    elif n_input <= 15:
-        anchor_slots = 3
-        snn_slots = 3
-    else:
-        anchor_slots = 3
-        snn_slots = 6
+    anchor_slots, snn_slots = _slot_budget(n_input)
 
     # Anchors = top input keys by confidence
     anchor_keys = sorted(input_keys.keys(), key=lambda k: input_keys[k], reverse=True)[:anchor_slots]
@@ -699,7 +713,7 @@ class GARDENEngine:
     def _retrieval_targets(
         self,
         input_keys: Dict[str, float],
-        top_k: int = 4,
+        slots: Optional[int] = None,
     ) -> Dict[str, float]:
         """Return the strongest *learned* output targets for the active input.
 
@@ -710,9 +724,14 @@ class GARDENEngine:
         learned output candidates from the engine-side provenance store
         (recorded by learn_batch/learn_from_interaction), scored by how much the
         stored input set overlaps the current input.
+
+        ``slots`` is the SNN slot budget the decoder can place for the current
+        input (from ``_slot_budget``); the returned candidate count is capped by
+        it so we never gather more than the decoder can use.
         """
         if not input_keys or not self._learned_recall:
             return {}
+        slots = slots if slots is not None and slots > 0 else 3
         input_set = set(input_keys.keys())
         acc: Dict[str, float] = {}
         for in_set, out_keys in self._learned_recall:
@@ -729,7 +748,7 @@ class GARDENEngine:
                     acc[k] = sc
         if not acc:
             return {}
-        ranked = sorted(acc.items(), key=lambda kv: -kv[1])[:top_k]
+        ranked = sorted(acc.items(), key=lambda kv: -kv[1])[:slots]
         return dict(ranked)
 
     def process(self, text: str, context: Optional[Dict[str, Any]] = None) -> str:
@@ -815,11 +834,17 @@ class GARDENEngine:
         # them at a decodable magnitude so the neural layer's learned
         # associations actually surface. Inert when nothing was learned for the
         # active input.
-        rescue = self._retrieval_targets(input_keys)
+        rescue = self._retrieval_targets(
+            input_keys, slots=_slot_budget(len(input_keys))[1]
+        )
         if rescue:
             w_max = max(rescue.values())
             for k, w in rescue.items():
-                scaled = 0.20 + 0.8 * (w / w_max)
+                # Rescale into the decodable band [gate, 1]: the floor is the
+                # decode gate itself (a candidate is visible iff >= gate), so
+                # the strongest learned target maps to 1.0 and the weakest to
+                # exactly gate — monotone, non-arbitrary.
+                scaled = _DECODE_GATE + (1.0 - _DECODE_GATE) * (w / w_max)
                 if scaled > network_output.get(k, 0.0):
                     network_output[k] = scaled
             self._last_network_output = network_output
