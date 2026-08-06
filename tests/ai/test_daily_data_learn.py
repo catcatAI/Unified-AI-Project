@@ -112,3 +112,79 @@ class TestDailyDataLearnable:
             if _tokens(it["output"]) & _tokens(engine.process(it["input"]))
         )
         assert recovered >= 1
+
+
+@pytest.mark.unit
+class TestLearnedRecallIndex:
+    """Inverted-index provenance store: correctness + eviction coherence
+    (migration of ``_retrieval_targets`` off a full linear scan)."""
+
+    @staticmethod
+    def _linear_full(records, input_set):
+        acc = {}
+        for in_set, out_keys in records:
+            overlap = in_set & input_set
+            if not overlap:
+                continue
+            w = len(overlap) / max(1.0, len(in_set))
+            for k, v in out_keys.items():
+                if k in input_set:
+                    continue
+                sc = v * (0.5 + 0.5 * w)
+                if sc > acc.get(k, 0.0):
+                    acc[k] = sc
+        return acc
+
+    @staticmethod
+    def _index_full(engine, qd):
+        q = set(qd.keys())
+        cand = set()
+        for c in q:
+            cand |= engine._learned_index.get(c, set())
+        acc = {}
+        for rid in cand:
+            rec = engine._learned_recall.get(rid)
+            if rec is None:
+                continue
+            in_set, out_keys = rec
+            overlap = in_set & q
+            if not overlap:
+                continue
+            w = len(overlap) / max(1.0, len(in_set))
+            for k, v in out_keys.items():
+                if k in q:
+                    continue
+                sc = v * (0.5 + 0.5 * w)
+                if sc > acc.get(k, 0.0):
+                    acc[k] = sc
+        return acc
+
+    def test_index_matches_linear_reference(self):
+        engine = GARDENEngine(compatibility_mode=True)
+        rng = random.Random(5)
+        vocab = [f"c{i}" for i in range(2000)]
+        for _ in range(300):
+            cs = frozenset(rng.sample(vocab, 6))
+            out = {k: 0.5 for k in rng.sample(vocab, 5)}
+            engine._record_learned({k: 0.7 for k in cs}, out)
+        records = list(engine._learned_recall.values())
+        for _ in range(50):
+            q = set(rng.sample(vocab, 6))
+            qd = {k: 0.7 for k in q}
+            assert self._index_full(engine, qd) == self._linear_full(records, q)
+
+    def test_eviction_keeps_index_coherent(self):
+        engine = GARDENEngine(compatibility_mode=True)
+        engine._learned_recall_cap = 40
+        rng = random.Random(6)
+        vocab = [f"c{i}" for i in range(2000)]
+        for _ in range(300):
+            cs = frozenset(rng.sample(vocab, 6))
+            engine._record_learned(
+                {k: 0.7 for k in cs}, {k: 0.5 for k in rng.sample(vocab, 5)}
+            )
+        assert len(engine._learned_recall) == 40
+        assert len(engine._learned_order) == 40
+        assert engine._learned_next_id == 300
+        indexed = set().union(*engine._learned_index.values()) if engine._learned_index else set()
+        assert indexed == set(engine._learned_recall.keys())

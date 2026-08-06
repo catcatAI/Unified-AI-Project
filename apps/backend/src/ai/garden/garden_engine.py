@@ -22,6 +22,7 @@ import json
 import logging
 import os
 import re
+from collections import deque
 from typing import Any, Dict, List, Optional
 
 from ai.core.unicode_utils import is_english_dominant
@@ -605,7 +606,14 @@ class GARDENEngine:
         # output-concept set) here so process() can surface learned output
         # tokens whose Hebbian weight never reaches the SNN spike/decode
         # threshold on a single pass. Cap prevents unbounded growth.
-        self._learned_recall: List[tuple] = []
+        #
+        # Storage is an inverted index over input concepts so retrieval touches
+        # only records that share a concept with the query (near-constant)
+        # instead of a full linear scan over every stored record.
+        self._learned_recall: Dict[int, tuple] = {}
+        self._learned_order = deque()
+        self._learned_index: Dict[str, set] = {}
+        self._learned_next_id = 0
         self._learned_recall_cap = limit_value("ai.garden.engine.learned_recall_cap", 5000)
 
     def get_last_network_output(self) -> Dict[str, float]:
@@ -703,12 +711,35 @@ class GARDENEngine:
 
         Bounded to ``_learned_recall_cap`` (FIFO) to prevent unbounded growth.
         Composition-layer bookkeeping; does not touch the dictionary or SNN.
+
+        Storage is an inverted index keyed by input concept: each record gets a
+        stable monotonic id, indexed under every concept of its input set. FIFO
+        eviction pops the oldest id from the deque and removes only that record's
+        concepts from the index (O(concepts-here)), so adds/evicts stay cheap and
+        retrieval only ever visits records that actually share a concept.
         """
         if not input_keys or not output_keys:
             return
-        self._learned_recall.append((frozenset(input_keys.keys()), dict(output_keys)))
-        while len(self._learned_recall) > self._learned_recall_cap:
-            self._learned_recall.pop(0)
+        rec_id = self._learned_next_id
+        self._learned_next_id += 1
+        concepts = frozenset(input_keys.keys())
+        self._learned_recall[rec_id] = (concepts, dict(output_keys))
+        self._learned_order.append(rec_id)
+        for c in concepts:
+            self._learned_index.setdefault(c, set()).add(rec_id)
+
+        # FIFO eviction: pop the oldest id and drop only its concepts.
+        while len(self._learned_recall) > self._learned_recall_cap and self._learned_order:
+            old_id = self._learned_order.popleft()
+            old_rec = self._learned_recall.pop(old_id, None)
+            if old_rec is None:
+                continue
+            for c in old_rec[0]:
+                slot = self._learned_index.get(c)
+                if slot is not None:
+                    slot.discard(old_id)
+                    if not slot:
+                        self._learned_index.pop(c, None)
 
     def _retrieval_targets(
         self,
@@ -728,13 +759,27 @@ class GARDENEngine:
         ``slots`` is the SNN slot budget the decoder can place for the current
         input (from ``_slot_budget``); the returned candidate count is capped by
         it so we never gather more than the decoder can use.
+
+        Uses the inverted index: candidate records are the union of the index
+        buckets for the query's input concepts, so cost is proportional to
+        matching overlap — not to total stored records (was a full linear scan).
         """
         if not input_keys or not self._learned_recall:
             return {}
         slots = slots if slots is not None and slots > 0 else 3
         input_set = set(input_keys.keys())
+
+        # Candidate record ids = union of the index buckets for input concepts.
+        cand_ids: set = set()
+        for c in input_set:
+            cand_ids |= self._learned_index.get(c, set())
+
         acc: Dict[str, float] = {}
-        for in_set, out_keys in self._learned_recall:
+        for rec_id in cand_ids:
+            rec = self._learned_recall.get(rec_id)
+            if rec is None:
+                continue
+            in_set, out_keys = rec
             overlap = in_set & input_set
             if not overlap:
                 continue
