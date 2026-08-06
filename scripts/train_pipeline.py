@@ -24,6 +24,7 @@ import json
 import logging
 import os
 import re
+import subprocess
 import sys
 import time
 from typing import Any, Dict, List, Optional, Tuple
@@ -1739,13 +1740,36 @@ def _step6_sync_knowledge(
     )
 
 
+def _ensure_daily_data() -> None:
+    """Auto-download the real daily-dialogue/commonsense corpus if missing.
+
+    Runs at training start so the real everyday/commonsense data is always
+    present. The downloader fetches a genuine open dataset (no synthetic
+    fabrication) — on failure it only warns and training continues without it.
+    """
+    if os.path.exists(os.path.join(DATA_DIR, "alpaca_data.json")):
+        return
+    script = os.path.join(os.path.dirname(__file__), "download_daily_data.py")
+    if not os.path.exists(script):
+        return
+    logger.info("Real daily-dialogue dataset missing; downloading it ...")
+    try:
+        code = subprocess.run(
+            [sys.executable, script], capture_output=True, text=True, timeout=600
+        ).returncode
+        if code != 0:
+            logger.warning(
+                "Daily-dialogue auto-download failed; training continues without it."
+            )
+    except Exception as e:  # noqa: BLE001 - network/timer failures must not abort training
+        logger.warning("Daily-dialogue auto-download skipped: %s", e)
+
+
 def main() -> None:
     print("=" * 60)
     print("  UNIFIED ED3N + GARDEN TRAINING PIPELINE")
     print("=" * 60)
     t_start = time.time()
-
-    # Check for resume state
     STATE_FILE = os.path.join(CKPT_DIR, "training_state.json")
     resume_state = {}
     if os.path.exists(STATE_FILE):
@@ -1778,6 +1802,7 @@ def main() -> None:
     # Step 1: Load + generate data (always required)
     # -----------------------------------------------------------------------
     print("\n[1/8] Loading and generating data...")
+    _ensure_daily_data()
     (
         dataset_samples,
         alpaca_samples,

@@ -148,6 +148,11 @@
 | 關係 cell 模糊後援 | 以學得 cell 作為解題器**解析失敗**時的近似後援（NL 換言之泛化）；嚴守「只補解析缺口、不重做確定性數學」 | 提案（風險中） |
 | reasoning 模板重建 | 把 `_reconstruct_with_template` 的 reasoning 分支改為消費輸入中的數字（35/94）而非整句，讓變體措辭能自動包回 NL | ✅ 已實作（`6ed19173`） |
 | ε-增強訓練 | 在封閉真值表旁注入少量語序/同義換言之樣本（以 seed 控制），提升半定性層對措辭變異的韌性 | 提案 |
+| 真實日常/常識語料 | 以 `scripts/download_daily_data.py` 下載真實 Stanford Alpaca（52,002 條開放指令對話，CC BY-NC 4.0），`train_pipeline` 訓練起始自動確保；抽樣測試證明與確定性引擎 **0 重疊**（互補）、字典吸收 + Hebbian 學習發生 | ✅ 已實作（本次）；⚠ 測量發現開放長文 recall ~15%，見 §非定性 |
+
+> **測量發現（誠實記錄）**：隨機抽樣 40 條 Alpaca，`learn_batch` 全部吸收（dict 增長、hebbian_delta>0），但 `process()` 開放長文 token-overlap recall 僅 **6/40 ≈ 15%**。
+> 即：小關聯 SNN 對開放散文記憶力有限，anchored decode 偏輸入。因此半定性層的可行範圍是
+> 短結構化輸出的學習與重建；完整開放對話仍需 LLM fallback（非定性層）承接——此為既有架構分工，非本次回歸。
 
 ### 非定性（隨機/生成層）增強
 
