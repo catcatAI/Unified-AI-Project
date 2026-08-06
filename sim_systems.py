@@ -1657,8 +1657,12 @@ def get_active_abilities(vehicle_name, character, location=""):
             continue
         if cost_type == "fuel":
             veh_state = character.get("vehicles", {}).get(vehicle_name, {})
-            _veh_fuel = veh_state.get("fuel", 0)
-            # 非數字燃料（生成載具，無限）不視為不足
+            _veh_fuel = veh_state.get("fuel")
+            if _veh_fuel is None:
+                # 無個人載具狀態：查載具定義——fuel 為字串（無限燃料）
+                # 不視為不足，且沒有累積燃料可扣
+                _def_fuel = VEHICLES.get(vehicle_name, {}).get("fuel")
+                _veh_fuel = _def_fuel if not isinstance(_def_fuel, (int, float)) else 0
             if isinstance(_veh_fuel, (int, float)) and _veh_fuel < cost:
                 continue
         active.append((key, ab))
@@ -1696,11 +1700,21 @@ def get_water_routes(current_location, character=None):
         )
     except Exception:
         mob = {"fly": False, "sail": False, "swim": False}
+    # 騎乘載具能力：飛行載具（熱氣球/魔法掃帚/飛空艇/龍騎乘）飛越水域，
+    # 船（漁船/帆船/大型帆船/小舟）航行渡水。
+    riding = character.get("riding")
+    if riding:
+        _rkeys = set(VEHICLE_ABILITIES.get(riding, {}).keys())
+        if "飛行" in _rkeys:
+            mob = dict(mob)
+            mob["fly"] = True
+        elif "渡水" in _rkeys:
+            mob = dict(mob)
+            mob["sail"] = True
     # 有移動能力：直接開通水域路線（不需小舟）
     if mob.get("fly") or mob.get("sail") or mob.get("swim"):
         return routes
     # 一般角色：需騎乘小舟（或擁有小舟）才可渡水
-    riding = character.get("riding")
     vehicles = character.get("vehicles", {}) or {}
     has_boat = (riding == "小舟") or ("小舟" in vehicles and vehicles.get("小舟", {}).get("owned"))
     if not has_boat:

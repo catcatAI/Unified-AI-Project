@@ -963,3 +963,51 @@ class TestWorldLineEntryGates:
                     if obj.get("location") and obj.get("location") not in loc_set:
                         problems.append(f"goto 目標地點不存在: {obj.get('location')} ({q.get('id')})")
         assert not problems, "\n".join(problems[:12])
+
+    def test_flying_and_water_vehicle_abilities(self):
+        """批次 46：擴充載具（熱氣球/魔法掃帚/飛空艇/龍騎乘/漁船/帆船）
+        必須有對應能力——飛行載具可飛越水域、船可渡水。騎乘時
+        get_water_routes 需開通水域路線；非飛行/渡水載具（腳踏車）不得。"""
+        import sim_systems
+        from game_data import expand_game
+        from character_system import generate_character_from_card, init_skills, mount_vehicle
+        expand_game()
+        abilities = sim_systems.VEHICLE_ABILITIES
+        # 飛行載具
+        for vn in ("熱氣球", "魔法掃帚", "魔法飛毯", "飛空艇", "龍騎乘"):
+            assert "飛行" in abilities.get(vn, {}), f"{vn} 應有飛行能力（描述為飛行載具）"
+        # 水載具
+        for vn in ("漁船", "帆船", "大型帆船", "小舟"):
+            assert "渡水" in abilities.get(vn, {}), f"{vn} 應有渡水能力"
+        # 騎乘飛行載具 → 水域路線開通
+        import json
+        cards = json.load(open("data/game_cards.json", encoding="utf-8"))["cards"]
+        ch = generate_character_from_card(next(c for c in cards if c["card_id"] == "CC-01"))
+        init_skills(ch)
+        ch.setdefault("vehicles", {})["熱氣球"] = {"owned": True, "fuel": "fire"}
+        mount_vehicle(ch, "熱氣球", ch["vehicles"])
+        assert sim_systems.get_water_routes("鏡湖", ch), "騎熱氣球應可飛越水域"
+        # 騎帆船 → 渡水
+        ch.setdefault("vehicles", {})["帆船"] = {"owned": True, "fuel": "wind"}
+        mount_vehicle(ch, "帆船", ch["vehicles"])
+        assert sim_systems.get_water_routes("鏡湖", ch), "騎帆船應可渡水"
+        # 腳踏車（無能力）不得渡水
+        ch.setdefault("vehicles", {})["腳踏車"] = {"owned": True, "fuel": 100}
+        mount_vehicle(ch, "腳踏車", ch["vehicles"])
+        assert not sim_systems.get_water_routes("鏡湖", ch), "腳踏車不能渡水"
+
+    def test_vehicle_world_line_category(self):
+        """批次 46：載具世界線分類——魔法載具（魔法掃帚/飛空艇）→ magic
+        （W02 失效）、蒸汽/機動（蒸氣機車/機車/吉普車）→ tech、
+        生物/人力（馬/腳踏車/船）→ natural。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        v = sim_systems.VEHICLES
+        assert sim_systems.get_vehicle_world_category(v["魔法掃帚"]) == "magic"
+        assert sim_systems.get_vehicle_world_category(v["飛空艇"]) == "magic"
+        assert sim_systems.get_vehicle_world_category(v["蒸氣機車"]) == "tech"
+        assert sim_systems.get_vehicle_world_category(v["機車"]) == "tech"
+        assert sim_systems.get_vehicle_world_category(v["馬"]) == "natural"
+        assert sim_systems.get_vehicle_world_category(v["腳踏車"]) == "natural"
+        assert sim_systems.get_vehicle_world_category(v["漁船"]) == "natural"

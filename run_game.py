@@ -1036,12 +1036,27 @@ def do_travel(character, equipment=None):
             _w_tag = " %s[%s]" % (_WL_ICONS.get(_wloc, "🌌"), _wloc)
         print("    %d. %s %s %s %s %s%s%s%s" % (i, ic, sicon, loc, _w_tag, vibe, req_color, req_hint, C.RESET))
     # 移動能力：飛行／艦裝航行／游泳 角色可直接渡水到水域場景（不需小舟）
+    # 騎乘載具的能力也計算在內——飛行載具（熱氣球/魔法掃帚/飛空艇/龍騎乘）
+    # 飛越水域，船（漁船/帆船/大型帆船）航行渡水。
     from axis_system import movement_abilities
     _mob = movement_abilities(
         text_race=str(character.get("race", "")),
         mechanic_race=str(character.get("mechanic_race", "")),
         lineage=(character.get("axis") or {}).get("lineage", ""),
     )
+    if character.get("riding"):
+        # passive 能力（飛行/渡水）自動生效，不需玩家觸發——直接查能力表
+        _ride_keys = set(
+            getattr(sim_systems, "VEHICLE_ABILITIES", {})
+            .get(character["riding"], {}).keys())
+        if "飛行" in _ride_keys:
+            _mob = dict(_mob)
+            _mob["fly"] = True
+            _mob["label"] = "騎乘飛行"
+        elif "渡水" in _ride_keys:
+            _mob = dict(_mob)
+            _mob["sail"] = True
+            _mob["label"] = "駕船航行"
     if _mob.get("fly") or _mob.get("sail") or _mob.get("swim"):
         wroutes = get_water_routes(character["location"], character)
         if wroutes:

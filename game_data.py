@@ -1900,6 +1900,40 @@ def expand_game():
         if vn not in sim_systems.VEHICLES:
             sim_systems.VEHICLES[vn] = vd
             cnt["vehicles"] += 1
+
+    # 載具能力擴充：基底 VEHICLE_ABILITIES 只定義 4 種手寫載具，
+    # 擴充載具（熱氣球/飛空艇/帆船等）完全沒有能力——熱氣球描述
+    # 「飛行的」卻不能飛、帆船不能渡水，與文本/常理不符。
+    # 飛行載具：飛行能力（跨水域不需船）；水載具：渡水能力。
+    _VEHICLE_ABILITY_EXT = {
+        "漁船": {"渡水": {"name": "⚓ 渡水", "desc": "駕船可通過水域路線",
+                            "cost_type": "fuel", "cost": 10, "cooldown": 0,
+                            "require_riding": True, "passive": True}},
+        "帆船": {"渡水": {"name": "⚓ 渡水", "desc": "駕帆船可通過水域路線",
+                            "cost_type": "fuel", "cost": 10, "cooldown": 0,
+                            "require_riding": True, "passive": True}},
+        "大型帆船": {"渡水": {"name": "⚓ 渡水", "desc": "大型帆船可通過水域路線",
+                                  "cost_type": "fuel", "cost": 10, "cooldown": 0,
+                                  "require_riding": True, "passive": True}},
+        "熱氣球": {"飛行": {"name": "🕊 飛行", "desc": "熱氣球飛越地形（含水域）",
+                             "cost_type": "fuel", "cost": 15, "cooldown": 0,
+                             "require_riding": True, "passive": True}},
+        "魔法掃帚": {"飛行": {"name": "🕊 飛行", "desc": "魔女掃帚翱翔天際",
+                                "cost_type": "sp", "cost": 8, "cooldown": 0,
+                                "require_riding": True, "passive": True}},
+        "魔法飛毯": {"飛行": {"name": "🕊 飛行", "desc": "飛毯載人飛行",
+                                "cost_type": "sp", "cost": 8, "cooldown": 0,
+                                "require_riding": True, "passive": True}},
+        "飛空艇": {"飛行": {"name": "🕊 飛行", "desc": "魔導飛空艇長途飛行",
+                              "cost_type": "fuel", "cost": 20, "cooldown": 0,
+                              "require_riding": True, "passive": True}},
+        "龍騎乘": {"飛行": {"name": "🕊 飛行", "desc": "乘龍翱翔天際",
+                              "cost_type": "sp", "cost": 12, "cooldown": 0,
+                              "require_riding": True, "passive": True}},
+    }
+    _VEHICLE_ABILITIES = getattr(sim_systems, "VEHICLE_ABILITIES", {})
+    for _vn, _abs in _VEHICLE_ABILITY_EXT.items():
+        _VEHICLE_ABILITIES.setdefault(_vn, {}).update(_abs)
     # Also sync VEHICLE_LOCATIONS for all vehicles (keyed by loc -> veh)
     # Build reverse index: every new vehicle → its primary location
     _vehicle_to_primary_loc = {
