@@ -903,3 +903,63 @@ class TestWorldLineEntryGates:
         assert any(any("之影" in n for n in sim_systems.LOCATION_ENEMIES.get(loc, []))
                    for loc in sim_systems.LOCATION_ENEMIES if any(k in loc for k in perf_kw)), \
             "演出場景應保留影之敵"
+
+    def test_wood_drop_enables_quest_completion(self):
+        """批次 45：SQ-09「收集材料」需木材×3——先前木材 0 掉落
+        （商店/掉落/配方皆無）→ 任務永不可完成。森林系敵人
+        （哥布林/森狼/野豬/巨熊/大鹿/虎/狼）必須掉木材。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        cat = sim_systems.ITEM_CATALOG
+        assert "木材" in cat, "木材必須存在於 ITEM_CATALOG"
+        wood_droppers = [e["name"] for e in sim_systems.ENEMIES if "木材" in e.get("loot", [])]
+        assert wood_droppers, "沒有任何敵人掉木材——SQ-09 永不可完成"
+        # 森林系基底敵人至少有一個掉木材
+        keys = ("哥布林", "森狼", "野豬", "巨熊", "大鹿", "虎")
+        assert any(any(k in n for k in keys) for n in wood_droppers), \
+            f"森林系敵人應掉木材: {wood_droppers}"
+        # 全任務 collect 目標都至少有獲取路徑（商店/掉落/配方）
+        shop_items = {it for n, nd in sim_systems.NPC_METADATA.items()
+                      for it in nd.get("offers", [])}
+        loot_items = {it for e in sim_systems.ENEMIES for it in e.get("loot", [])}
+        recipe_items = {r.get("result_item") or r.get("result") for r in sim_systems.RECIPES}
+        recipe_items |= {ing.get("item") if isinstance(ing, dict) else ing
+                         for r in sim_systems.RECIPES
+                         for ing in r.get("ingredients", []) or r.get("materials", [])}
+        unobtainable = []
+        for q in sim_systems.QUESTS:
+            for obj in q.get("objectives", []):
+                if obj.get("type") == "collect":
+                    t = obj.get("target")
+                    if t not in shop_items and t not in loot_items and t not in recipe_items:
+                        unobtainable.append(f"{q.get('id')}:{t}")
+        assert not unobtainable, f"collect 目標無獲取路徑: {unobtainable}"
+
+    def test_quest_givers_and_targets_exist(self):
+        """批次 45：所有任務 giver NPC 必須存在於 NPC_METADATA，
+        giver_location 與 defeat/goto 目標地點必須存在於地圖。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        loc_set = (set(sim_systems.WORLD_MAP) | set(sim_systems.LOCATION_ENEMIES)
+                   | set(sim_systems.LOCATION_VIBES))
+        enemy_set = {e["name"] for e in sim_systems.ENEMIES}
+        npc_set = set(sim_systems.NPC_METADATA)
+        problems = []
+        for q in sim_systems.QUESTS:
+            g = q.get("giver", "")
+            if g and g != "系統" and g not in npc_set:
+                problems.append(f"giver NPC 不存在: {g} ({q.get('id')})")
+            gl = q.get("giver_location", "") or q.get("location", "")
+            if gl and gl not in loc_set:
+                problems.append(f"giver 地點不存在: {gl} ({q.get('id')})")
+            for obj in q.get("objectives", []):
+                if obj.get("type") == "defeat":
+                    en = obj.get("enemy") or obj.get("target")
+                    if en and en not in enemy_set:
+                        problems.append(f"defeat 目標敵人不存在: {en} ({q.get('id')})")
+                elif obj.get("type") == "goto":
+                    if obj.get("location") and obj.get("location") not in loc_set:
+                        problems.append(f"goto 目標地點不存在: {obj.get('location')} ({q.get('id')})")
+        assert not problems, "\n".join(problems[:12])

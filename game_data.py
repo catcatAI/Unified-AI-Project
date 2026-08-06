@@ -1590,6 +1590,18 @@ def expand_game():
         if e["name"] not in existing_e:
             sim_systems.ENEMIES.append(e)
             existing_e.add(e["name"])
+
+    # 森林系敵人補木材掉落（SQ-09「收集材料」需木材×3，先前木材 0 掉落
+    # → 任務永不可完成）。依常理：木柄/木製武器的敵人（哥布林）與
+    # 森林棲息生物（森狼/野豬/巨熊/大鹿/虎）都可能攜帶或留下木材。
+    _WOOD_ENEMY_KEYS = ("哥布林", "森狼", "野豬", "巨熊", "大鹿", "虎",
+                        "狼", "樹精", "木乃", "野人")
+    for e in sim_systems.ENEMIES:
+        _loot = list(e.get("loot", []) or [])
+        if "木材" in _loot:
+            continue
+        if any(_k in e["name"] for _k in _WOOD_ENEMY_KEYS):
+            e["loot"] = _loot + ["木材"]
         
     # ════════════════════════════════════════════════
     # Card system integration: ORG/NAT/RC
