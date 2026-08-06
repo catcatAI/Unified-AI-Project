@@ -58,6 +58,8 @@ class DictionaryLayer:
         self._next_key_id: int = 1
         self._keyword_index: Dict[str, List[str]] = {}
         self._bigram_index: Dict[str, List[str]] = {}
+        self._keyword_rank: Dict[str, int] = {}  # keyword -> insertion order (tie-break)
+        self._max_kw_len: int = 0  # longest keyword, bounds substring enumeration
         self._rebuilt_index: bool = False
         self._dirty: bool = True
         self._lock = threading.RLock()
@@ -127,9 +129,8 @@ class DictionaryLayer:
 
         # Collect candidate keys from keyword/bigram index
         candidates: set = set()
-        for kw, keys in self._keyword_index.items():
-            if kw in text_lower:
-                candidates.update(keys)
+        for kw in self._matching_keywords(text_lower):
+            candidates.update(self._keyword_index[kw])
         for bigram, keys in self._bigram_index.items():
             if bigram in text_lower:
                 candidates.update(keys)
@@ -198,6 +199,31 @@ class DictionaryLayer:
         scored.sort(key=lambda x: x[1], reverse=True)
         return [k for k, _ in scored]
 
+    def _matching_keywords(self, text_lower: str) -> List[str]:
+        """Return keywords present in text (substring match), in index order.
+
+        A keyword matches iff it is a substring of text (``kw in text``). Any such
+        keyword has length <= _max_kw_len, so enumerating all substrings of text
+        up to that length and looking them up in the keyword index yields exactly
+        the same match set as sweeping the whole index — without the O(K) scan.
+        Results are ordered by keyword insertion rank to preserve the original
+        `matched_keys` ordering in _encode_locked.
+        """
+        max_kw = self._max_kw_len
+        if max_kw <= 0 or not text_lower:
+            return []
+        matched = set()
+        n = len(text_lower)
+        for i in range(n):
+            limit = min(max_kw, n - i)
+            for length in range(1, limit + 1):
+                sub = text_lower[i : i + length]
+                if sub in self._keyword_index:
+                    matched.add(sub)
+        if not matched:
+            return []
+        return sorted(matched, key=self._keyword_rank.__getitem__)
+
     def _encode_locked(self, text: str, modality: str = "text") -> List[str]:
         if not text or not isinstance(text, str):
             return []
@@ -216,9 +242,8 @@ class DictionaryLayer:
         text_lower = text.lower().strip()
         matched_keys: List[str] = []
 
-        for kw, keys in self._keyword_index.items():
-            if kw in text_lower:
-                matched_keys.extend(keys)
+        for kw in self._matching_keywords(text_lower):
+            matched_keys.extend(self._keyword_index[kw])
 
         for bigram, keys in self._bigram_index.items():
             if bigram in text_lower:
@@ -656,6 +681,12 @@ class DictionaryLayer:
                             bigram = surface_lower[i : i + 2]
                             if re.match(r"[\w]", bigram[0]) and re.match(r"[\w]", bigram[1]):
                                 self._bigram_index.setdefault(bigram, []).append(key)
+            if self._keyword_index:
+                self._max_kw_len = max(len(k) for k in self._keyword_index)
+                self._keyword_rank = {k: i for i, k in enumerate(self._keyword_index)}
+            else:
+                self._max_kw_len = 0
+                self._keyword_rank = {}
             self._rebuilt_index = True
             self._dirty = False
             self._index_version += 1
