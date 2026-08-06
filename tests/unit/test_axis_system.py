@@ -830,6 +830,40 @@ class TestWorldLineEntryGates:
             assert e, f"缺少 W03/W04 敵人: {n}"
             assert e["hp"] > 0 and e["atk"] > 0 and e["exp"] > 0, f"{n} 數值不完整"
 
+    def test_npc_shop_offers_all_in_catalog(self):
+        """批次 44：卡片 NPC 的個人商店庫存（offers）必須全部存在於
+        ITEM_CATALOG——否則商店固定只賣 5 種，語境庫存（艦娘裝備/神話道具/
+        義體/極地裝備等）是死資料。"""
+        import json
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        cat = sim_systems.ITEM_CATALOG
+        missing = {}
+        for n, nd in sim_systems.NPC_METADATA.items():
+            for it in nd.get("offers", []):
+                if it not in cat:
+                    missing.setdefault(it, []).append(n)
+        assert not missing, f"NPC offers 引用不存在道具: {list(missing)[:8]}"
+
+    def test_npc_personal_shop_world_categories(self):
+        """批次 44：NPC 個人商店道具的世界線分類正確——靈子電池/神諭碎片
+        是 magic（W02 絕對無魔失效）、12.7cm連装砲是 tech（W03 電子加成）、
+        乾糧是 natural（不受世界線影響）。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        cat = sim_systems.ITEM_CATALOG
+        assert sim_systems.get_item_world_category(cat["靈子電池"], "靈子電池") == "magic"
+        assert sim_systems.get_item_world_category(cat["12.7cm連装砲"], "12.7cm連装砲") == "tech"
+        assert sim_systems.get_item_world_category(cat["神諭碎片"], "神諭碎片") == "magic"
+        assert sim_systems.get_item_world_category(cat["魔力補充藥水"], "魔力補充藥水") == "magic"
+        assert sim_systems.get_item_world_category(cat["乾糧（高密度）"], "乾糧（高密度）") == "natural"
+        # 世界線效果：靈子電池在 W02 失效、W03 減半
+        m, blk = sim_systems.world_line_consumable_effect(
+            "小吉鎮", cat["靈子電池"], "靈子電池")
+        assert m == 0.0 and blk, "W02 絕對無魔下靈子電池應失效"
+
     def test_no_wl_enemy_leak_anywhere(self):
         """批次 43 reviewer：W03/W04 專屬敵人只能出現在跨線覆寫目標地點，
         不得洩漏到任何 W01 地點（含場景卡建立的地點，如珊瑚台）。"""

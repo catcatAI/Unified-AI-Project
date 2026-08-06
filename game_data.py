@@ -439,6 +439,153 @@ _LORE_TRADE_CATALOG: Dict[str, List[str]] = {
     "default": ["乾糧（高密度）","靈子電池","多功能工具刀","急救包","旅行地圖"],
 }
 
+# ────────────────────────────────────────────────────────────────
+# NPC 個人商店道具目錄（依 _LORE_TRADE_CATALOG 卡片語境）
+# 卡片 NPC 的 offers 引用大量語境道具（義體/艦娘/符文/神話/廢土/極地等），
+# 這些道具必須存在於 ITEM_CATALOG，NPC 個人商店才能真正販賣——否則
+# NPC_METADATA.offers 是死資料（商店固定只賣 5 種，語境庫存全丟）。
+# 規則化生成 + 重點手寫覆寫。魔法/電子關鍵字標記正確的世界線分類
+# （batch 41/42：W02 絕對無魔、W03 電子加成、W04 過載）。
+# ────────────────────────────────────────────────────────────────
+_NPC_SHOP_ITEM_OVERRIDES: Dict[str, dict] = {
+    # 艦娘（tech 武器）
+    "12.7cm連装砲":   {"type": "weapon", "tags": ["weapon", "tech"], "value": 280, "weight": 6.0, "desc": "艦娘使用的 12.7cm 連裝砲"},
+    "彗星艦爆":       {"type": "weapon", "tags": ["weapon", "tech"], "value": 320, "weight": 2.0, "desc": "艦娘搭載的彗星艦上爆擊機"},
+    "天山艦攻":       {"type": "weapon", "tags": ["weapon", "tech"], "value": 300, "weight": 2.0, "desc": "艦娘搭載的天山艦上攻擊機"},
+    "戰術海圖":       {"type": "material", "tags": ["document"], "value": 120, "weight": 0.4, "desc": "標記戰術航線的海圖"},
+    "艦隊通訊密碼本": {"type": "material", "tags": ["document"], "value": 140, "weight": 0.4, "desc": "艦隊通訊使用的密碼本"},
+    "艦用信號旗":     {"type": "material", "tags": ["material"], "value": 60, "weight": 0.5, "desc": "艦隊傳訊用的信號旗"},
+    "艦橋儀表板":     {"type": "material", "tags": ["tech"], "value": 200, "weight": 2.0, "desc": "艦橋使用的儀表板"},
+    # 靈子/魔法混合（世界線敏感）
+    "靈子驅動原型機": {"type": "accessory", "tags": ["tech", "magic", "rare"], "value": 520, "weight": 1.5, "desc": "試作型靈子驅動裝置"},
+    "靈子電池":       {"type": "material", "tags": ["tech", "magic"], "value": 80, "weight": 0.5, "desc": "儲存靈子能量的電池"},
+    "靈子結晶":       {"type": "material", "tags": ["magic", "crystal"], "value": 90, "weight": 0.4, "desc": "凝聚靈子能量的結晶"},
+    "靈子掃描器":     {"type": "material", "tags": ["tech"], "value": 220, "weight": 1.0, "desc": "掃描靈子濃度的手持儀器"},
+    "靈子焊接棒":     {"type": "material", "tags": ["tech"], "value": 160, "weight": 1.2, "desc": "以靈子加熱的焊接棒"},
+    "靈子箭矢":       {"type": "weapon", "tags": ["weapon", "magic"], "value": 130, "weight": 0.3, "desc": "灌注靈力的箭矢"},
+    "靈子-電子轉換器": {"type": "material", "tags": ["tech", "magic"], "value": 240, "weight": 1.0, "desc": "靈子與電子能量互換的轉換器"},
+    # 神話/神明（magic）
+    "神諭碎片":       {"type": "material", "tags": ["magic", "rare"], "value": 400, "weight": 0.3, "desc": "神話時代遺留的神諭碎片"},
+    "召喚謳唱卷軸":   {"type": "consumable", "tags": ["consumable", "magic"], "value": 350, "weight": 0.2, "desc": "記載召喚謳唱的卷軸"},
+    "神祇全名記錄冊": {"type": "material", "tags": ["magic", "document"], "value": 500, "weight": 0.8, "desc": "記載神祇全名的記錄冊"},
+    "全名吟唱指南":   {"type": "material", "tags": ["magic", "document"], "value": 450, "weight": 0.6, "desc": "正確吟唱神祇全名的指南"},
+    "神話時代遺物":   {"type": "material", "tags": ["magic", "rare"], "value": 380, "weight": 1.0, "desc": "神話時代留存下來的遺物"},
+    # 魔法少女
+    "魔法少女入門手冊": {"type": "material", "tags": ["magic", "document"], "value": 120, "weight": 0.5, "desc": "魔法少女的入門教學手冊"},
+    "變身核心水晶":   {"type": "material", "tags": ["magic", "crystal", "rare"], "value": 340, "weight": 0.4, "desc": "魔法少女變身的核心水晶"},
+    "概念核心碎片":   {"type": "material", "tags": ["magic", "rare"], "value": 290, "weight": 0.3, "desc": "凝聚概念的碎片"},
+    "反派邀請函":     {"type": "material", "tags": ["document"], "value": 70, "weight": 0.1, "desc": "來路不明的反派邀請函"},
+    # 符文/元素（magic）
+    "初級符文石":     {"type": "material", "tags": ["magic", "crystal"], "value": 80, "weight": 0.5, "desc": "刻有初級符文的石頭"},
+    "符文工藝刻刀":   {"type": "material", "tags": ["magic", "tool"], "value": 150, "weight": 0.4, "desc": "雕刻符文的工藝刻刀"},
+    "符文解析儀":     {"type": "material", "tags": ["magic", "tech"], "value": 210, "weight": 1.0, "desc": "解析符文結構的儀器"},
+    "火焰元素核心":   {"type": "material", "tags": ["magic", "crystal"], "value": 180, "weight": 0.6, "desc": "凝聚火焰元素的結晶核心"},
+    "水元素結晶":     {"type": "material", "tags": ["magic", "crystal"], "value": 160, "weight": 0.6, "desc": "凝聚水元素的結晶"},
+    "風精靈羽毛":     {"type": "material", "tags": ["magic"], "value": 110, "weight": 0.1, "desc": "風精靈脫落的羽毛"},
+    "雷電引導棒":     {"type": "weapon", "tags": ["weapon", "magic"], "value": 170, "weight": 1.5, "desc": "引導雷電之力的棍棒"},
+    "地脈石":         {"type": "material", "tags": ["magic", "crystal"], "value": 130, "weight": 0.8, "desc": "蘊含地脈之力的石頭"},
+    "黃雷元素電容":   {"type": "material", "tags": ["tech", "magic"], "value": 190, "weight": 0.8, "desc": "儲存黃雷元素能量的電容"},
+    "靛色元素塗料":   {"type": "material", "tags": ["magic"], "value": 95, "weight": 0.6, "desc": "蘊含靛色元素的塗料"},
+    "紫暗元素糖霜":   {"type": "consumable", "tags": ["consumable", "magic"], "value": 55, "weight": 0.2, "desc": "以紫暗元素調味的糖霜"},
+    # 義體/科技（tech）
+    "初級感覺義體手臂": {"type": "accessory", "tags": ["tech"], "value": 240, "weight": 2.0, "desc": "初級的感覺義體手臂"},
+    "神經介面晶片":   {"type": "accessory", "tags": ["tech"], "value": 280, "weight": 0.2, "desc": "連接神經與機器的介面晶片"},
+    "義眼（熱成像型）": {"type": "accessory", "tags": ["tech"], "value": 260, "weight": 0.3, "desc": "具熱成像功能的義眼"},
+    "義足（競速型）": {"type": "accessory", "tags": ["tech"], "value": 250, "weight": 1.5, "desc": "競速用義足"},
+    "義體冷卻液":     {"type": "consumable", "tags": ["consumable", "tech"], "value": 90, "weight": 0.4, "desc": "冷卻義體運作的液體", "heal_sp": 8},
+    "義體診斷工具":   {"type": "material", "tags": ["tech", "tool"], "value": 140, "weight": 0.8, "desc": "診斷義體狀態的工具"},
+    "GSI-4感知擴展儀": {"type": "accessory", "tags": ["tech"], "value": 300, "weight": 0.8, "desc": "擴展感知能力的 GSI-4 儀器"},
+    "動物溝通晶片":   {"type": "accessory", "tags": ["tech"], "value": 150, "weight": 0.2, "desc": "輔助與動物溝通的晶片"},
+    "電子改造工具包": {"type": "material", "tags": ["tech", "tool"], "value": 180, "weight": 1.5, "desc": "街頭技客的電子改造工具包"},
+    "駭客程序卷軸":   {"type": "consumable", "tags": ["consumable", "tech"], "value": 150, "weight": 0.2, "desc": "封存駭客程序的卷軸", "heal_sp": 15},
+    "靈子加速迴路":   {"type": "accessory", "tags": ["tech", "magic"], "value": 360, "weight": 0.6, "desc": "加速靈子運算的迴路"},
+    "肌肉纖維強化套件": {"type": "accessory", "tags": ["tech"], "value": 310, "weight": 1.2, "desc": "強化肌肉纖維的套件"},
+    "感官擴展義耳":   {"type": "accessory", "tags": ["tech"], "value": 230, "weight": 0.3, "desc": "擴展聽覺的義耳"},
+    "仿生皮膚補片":   {"type": "material", "tags": ["tech"], "value": 120, "weight": 0.2, "desc": "修補義體外觀的仿生皮膚補片"},
+    "神經穩定劑":     {"type": "consumable", "tags": ["consumable", "tech"], "value": 170, "weight": 0.3, "desc": "穩定神經訊號的藥劑", "heal_hp": 15, "heal_sp": 8},
+    "裝甲外骨骼胸甲": {"type": "armor", "tags": ["armor", "tech"], "value": 420, "weight": 8.0, "desc": "外骨骼式裝甲胸甲"},
+    "軍規神經加速器": {"type": "accessory", "tags": ["tech", "rare"], "value": 480, "weight": 0.5, "desc": "軍規級神經加速器"},
+    "戰場維修套件":   {"type": "material", "tags": ["tech", "tool"], "value": 190, "weight": 1.5, "desc": "戰場緊急維修套件"},
+    # 神道（magic）
+    "神社限定御朱印帳": {"type": "material", "tags": ["document"], "value": 100, "weight": 0.4, "desc": "神社限定版的御朱印帳"},
+    "結界石":         {"type": "material", "tags": ["magic", "crystal"], "value": 120, "weight": 0.8, "desc": "佈設結界的石頭"},
+    "弓道練習靶":     {"type": "material", "tags": ["material"], "value": 45, "weight": 2.0, "desc": "弓道練習用靶"},
+    "練習用弓":       {"type": "weapon", "tags": ["weapon"], "value": 110, "weight": 1.5, "desc": "弓道練習用弓"},
+    "弓道手套":       {"type": "accessory", "tags": ["accessory"], "value": 40, "weight": 0.2, "desc": "弓道專用手套"},
+    "靜心符咒":       {"type": "consumable", "tags": ["consumable", "magic"], "value": 60, "weight": 0.1, "desc": "安定心神的符咒", "heal_sp": 10},
+    "弓弦蠟":         {"type": "material", "tags": ["material"], "value": 25, "weight": 0.2, "desc": "保養弓弦的蠟"},
+    # reviewer 修正：規則生成誤分類的重點道具 + 任務目標補齊
+    "多功能工具刀":   {"type": "material", "tags": ["tool"], "value": 130, "weight": 0.6, "desc": "多功能工具刀，冒險者常用工具"},
+    "急救包":         {"type": "consumable", "tags": ["consumable"], "value": 60, "weight": 0.6, "desc": "緊急止血包紮的急救包", "heal_hp": 20},
+    "木材":           {"type": "material", "tags": ["wood", "material"], "value": 15, "weight": 1.0, "desc": "未加工的木頭，建築與製作材料"},
+    # 消耗品補實效（reviewer：無 heal_hp/heal_sp 的消耗品使用時補 0）
+    "魔力補充藥水":   {"type": "consumable", "tags": ["consumable", "magic"], "value": 60, "weight": 0.3, "desc": "補充魔力的藥水", "heal_sp": 30},
+    "魔法奶油泡芙":   {"type": "consumable", "tags": ["consumable", "magic"], "value": 45, "weight": 0.2, "desc": "注入魔力的奶油泡芙", "heal_sp": 15, "heal_hp": 10},
+    "靈力催化劑":     {"type": "consumable", "tags": ["consumable", "magic"], "value": 140, "weight": 0.2, "desc": "催化靈力流動的藥劑", "heal_sp": 25},
+    "靈力祈禱符":     {"type": "consumable", "tags": ["consumable", "magic"], "value": 70, "weight": 0.1, "desc": "灌注靈力的祈禱符", "heal_sp": 10},
+    "基因強化注射器": {"type": "consumable", "tags": ["consumable", "tech"], "value": 260, "weight": 0.4, "desc": "注入基因強化藥劑的注射器", "heal_hp": 35},
+    "基因穩定劑":     {"type": "consumable", "tags": ["consumable", "tech"], "value": 200, "weight": 0.3, "desc": "穩定基因改造副作用的藥劑", "heal_hp": 25, "heal_sp": 10},
+    "御守":           {"type": "consumable", "tags": ["consumable", "magic"], "value": 50, "weight": 0.1, "desc": "神社的御守護身符", "heal_sp": 8},
+    "神社御守":       {"type": "consumable", "tags": ["consumable", "magic"], "value": 55, "weight": 0.1, "desc": "神社特別加持的御守", "heal_sp": 10},
+    "神道儀式酒":     {"type": "consumable", "tags": ["consumable"], "value": 65, "weight": 0.6, "desc": "神道儀式使用的清酒", "heal_sp": 12},
+    "防寒藥草茶":     {"type": "consumable", "tags": ["consumable"], "value": 40, "weight": 0.3, "desc": "驅寒的藥草茶", "heal_hp": 15},
+    "極地生存口糧":   {"type": "consumable", "tags": ["consumable"], "value": 45, "weight": 0.4, "desc": "極地特製的高熱量口糧", "heal_hp": 18},
+    "防寒急救藥包":   {"type": "consumable", "tags": ["consumable"], "value": 70, "weight": 0.6, "desc": "極地用急救藥包", "heal_hp": 25},
+    "淨化水囊":       {"type": "consumable", "tags": ["consumable"], "value": 35, "weight": 0.5, "desc": "過濾淨化的水囊", "heal_hp": 12},
+    "重金屬解毒劑":   {"type": "consumable", "tags": ["consumable"], "value": 90, "weight": 0.3, "desc": "解除重金屬中毒的藥劑", "heal_hp": 20},
+    "季節特製蛋糕":   {"type": "consumable", "tags": ["consumable"], "value": 55, "weight": 0.3, "desc": "季節限定的特製蛋糕", "heal_hp": 15, "heal_sp": 10},
+    "創意造型餅乾":   {"type": "consumable", "tags": ["consumable"], "value": 30, "weight": 0.2, "desc": "造型可愛的手工餅乾", "heal_hp": 10},
+    "元素調味餐乾":   {"type": "consumable", "tags": ["consumable", "magic"], "value": 50, "weight": 0.3, "desc": "以元素調味的餐乾", "heal_hp": 12, "heal_sp": 8},
+    "獸娘健康補品":   {"type": "consumable", "tags": ["consumable"], "value": 85, "weight": 0.4, "desc": "獸娘專用的健康補品", "heal_hp": 22},
+    "物種適用藥品":   {"type": "consumable", "tags": ["consumable"], "value": 75, "weight": 0.3, "desc": "適用各種物種的藥品", "heal_hp": 20},
+}
+
+
+def _build_npc_shop_item_def(name: str) -> dict:
+    """規則化生成 NPC 商店道具定義（名稱關鍵字分類）。
+    覆蓋 _NPC_SHOP_ITEM_OVERRIDES 未列出的語境道具，確保 offers 全部可販賣。"""
+    def _rare_mult(nm):
+        if any(k in nm for k in ("限定", "試作", "原型", "軍規", "頂級", "神明", "神祇",
+                                 "傳說", "高感度", "獨家", "限量", "深海")):
+            return 3.0
+        if any(k in nm for k in ("初級", "練習", "普通", "原創", "基礎")):
+            return 0.6
+        return 1.0
+    mult = _rare_mult(name)
+    # 文件/書類
+    if any(k in name for k in ("手冊", "圖鑑", "指南", "辭典", "海圖", "地圖", "筆記", "記錄",
+                               "教材", "許可", "護照", "匯票", "憑單", "門票", "合約", "藍圖",
+                               "設計圖", "索引卡", "表", "憑證", "禮儀")):
+        return {"type": "material", "tags": ["document"], "value": int(90 * mult),
+                "weight": 0.5, "desc": f"{name}，記錄重要資訊的文檔"}
+    # 武器
+    if any(k in name for k in ("砲", "艦爆", "艦攻", "彎刀", "弓", "劍", "刀", "槍", "獵具", "棒")):
+        return {"type": "weapon", "tags": ["weapon"], "value": int(140 * mult),
+                "weight": 3.0, "desc": f"{name}，一件趁手的武器"}
+    # 防具
+    if any(k in name for k in ("披風", "鎧", "裝甲", "護具", "套裝", "胸甲", "盾")):
+        return {"type": "armor", "tags": ["armor"], "value": int(160 * mult),
+                "weight": 4.0, "desc": f"{name}，提供防護的裝備"}
+    # 飾品
+    if any(k in name for k in ("手環", "飾品", "晶石", "耳", "配件")):
+        return {"type": "accessory", "tags": ["accessory"], "value": int(120 * mult),
+                "weight": 0.3, "desc": f"{name}，精巧的飾品"}
+    # 消耗品
+    if any(k in name for k in ("藥", "劑", "卷軸", "符", "御守", "茶", "酒", "水", "口糧",
+                               "餅乾", "蛋糕", "糖", "補給", "餐乾", "蜜", "湯", "點心", "飲料")):
+        return {"type": "consumable", "tags": ["consumable"], "value": int(50 * mult),
+                "weight": 0.3, "desc": f"{name}，可使用的消耗品"}
+    # 科技/儀器
+    if any(k in name for k in ("義體", "義肢", "義眼", "義足", "注射器", "驅動", "儀", "掃描",
+                               "偵測", "定位", "計算", "診斷", "工具", "電池", "晶片", "迴路",
+                               "零件", "機械", "電容")):
+        return {"type": "material", "tags": ["tech"], "value": int(180 * mult),
+                "weight": 1.0, "desc": f"{name}，科技產物"}
+    # 材料
+    return {"type": "material", "tags": ["material"], "value": int(60 * mult),
+            "weight": 0.5, "desc": f"{name}，可交易的材料"}
+
+
 
 def _build_lore_offers(card: dict, role_text: str, craft_toks: list) -> List[str]:
     """Build a lore-accurate trade inventory from a card's actual world setting."""
@@ -1424,10 +1571,18 @@ def expand_game():
         ("廢鐵", {"type": "material", "weight": 2.0, "value": 12,
                    "tags": ["junk", "metal"],
                    "desc": "鏽蝕的廢鐵，熔煉後可再利用"}),
+        ("木材", {"type": "material", "weight": 1.0, "value": 15,
+                   "tags": ["wood", "material"],
+                   "desc": "未加工的木頭，建築與製作材料"}),
     ):
         if _iname not in sim_systems.ITEM_CATALOG:
             sim_systems.ITEM_CATALOG[_iname] = _idata
             cnt["items"] += 1
+
+    # NPC 個人商店道具補齊移至 expand_game 尾部（NPC_METADATA 建立之後執行）：
+    # 卡片 NPC 的 offers 引用大量語境道具（義體/艦娘/符文/神話/廢土/極地等），
+    # 這些必須存在於 ITEM_CATALOG，個人商店才能販賣。手寫覆寫優先（世界線
+    # 分類正確），其餘規則化生成。
     
     # Enemies
     existing_e = {e["name"] for e in sim_systems.ENEMIES}
@@ -2109,6 +2264,22 @@ def expand_game():
                 _plain = [e for e in sim_systems.ENEMIES
                           if e["name"] not in _WL_NAMES and "之影" not in e["name"]]
                 sim_systems.LOCATION_ENEMIES[_loc] = [_seed.choice(_plain)["name"]]
+    # NPC 個人商店道具補齊（所有 NPC_METADATA 建立完成後）
+    for _nname, _ndata in sim_systems.NPC_METADATA.items():
+        for _offer in _ndata.get("offers", []):
+            if _offer in sim_systems.ITEM_CATALOG:
+                continue
+            _def = _NPC_SHOP_ITEM_OVERRIDES.get(_offer) or _build_npc_shop_item_def(_offer)
+            # reviewer 修正：規則生成的消耗品補預設治癒值（無 heal_hp/heal_sp
+            # 的消耗品使用時補 0，買了等於沒用）
+            if _def["type"] == "consumable" and "heal_hp" not in _def and "heal_sp" not in _def:
+                if "magic" in _def.get("tags", []):
+                    _def["heal_sp"] = 12
+                else:
+                    _def["heal_hp"] = 15
+            sim_systems.ITEM_CATALOG[_offer] = dict(_def)
+            cnt["items"] += 1
+
     _PERF_KW = ("舞台", "演唱會", "模式", "瞬間", "盲區", "更衣室", "直播",
                 "控制室", "核心室", "體育場", "競技", "演出")
     # fallback 池同時排除世界線敵人（_WL_NAMES）：否則影之敵排除後

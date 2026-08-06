@@ -1901,14 +1901,16 @@ def do_skill_cards(character):
 # NPC INTERACTION
 # ═══════════════════════════════════════════════════════════════════════════
 
-def _shop_at_location(character, loc):
-    """Generic shop at commercial locations.
-    價格一律以 ITEM_CATALOG 的 value 為準（單一價格來源，避免硬編碼價與目錄價脫鉤）。
+def _shop_at_location(character, loc, offers=None):
+    """商店：價格一律以 ITEM_CATALOG 的 value 為準（單一價格來源）。
+    offers=None 時為地點商店（固定基礎貨架）；提供 offers 時為 NPC 個人商店
+    （卡片文本定義的個人庫存——不再只有固定 5 種，艦娘裝備/神話道具等
+    語境庫存真正可販賣）。
     """
     rep = character.get("reputation", 0)
     print(C.CYAN+"  商店 ("+loc+"):"+C.RESET)
-    # 商店貨架：基礎材料/消耗品/防具，價格取自 ITEM_CATALOG
-    items_sold = ["草藥","乾糧","治療藥水","皮甲","解毒草"]
+    # 商店貨架：基礎材料/消耗品/防具（地點商店）或 NPC 個人庫存（個人商店）
+    items_sold = offers if offers else ["草藥","乾糧","治療藥水","皮甲","解毒草"]
     def _price(name):
         d = get_item_def(name)
         return d.get("value", 10)
@@ -2182,9 +2184,13 @@ def do_interact_npc(character):
         print(C.CYAN+"  2. "+C.BLUE+"交流"+C.RESET+" (SP-10)")
         print(C.CYAN+"  3. "+C.CYAN+"送禮物"+C.RESET)
         shop_locations = ["卡洛夫角","便利店"]
-        if loc in shop_locations:
+        # NPC 個人商店：卡片 NPC 的 offers（個人庫存）非空就可交易——
+        # 不再只有地點商店，艦娘裝備/神話道具等語境庫存真正可販賣。
+        _npc_offers = getattr(sim_systems, 'NPC_METADATA', {}).get(npc_name, {}).get("offers", [])
+        _has_shop = bool(_npc_offers) or loc in shop_locations
+        if _has_shop:
             print(C.CYAN+"  4. "+C.YELLOW+"商店 (買東西)"+C.RESET)
-        quest_opt = 5 if loc in shop_locations else 4
+        quest_opt = 5 if _has_shop else 4
         # 好感度分支：此 NPC 可給的任務（giver 匹配）＋好感度門檻
         _npc_quests = [q for q, _r in get_available_quests(character)
                        if q.get("giver") == npc_name and q.get("type") == "side"]
@@ -2286,8 +2292,8 @@ def do_interact_npc(character):
                     print(C.MAGENTA+"  ★ "+get_level_up_message(npc_name, lvl_up)+C.RESET)
             else:
                 print(C.GRAY+"  沒有可送的禮物。"+C.RESET)
-        elif c=="4" and loc in shop_locations:
-            _shop_at_location(character, loc)
+        elif c=="4" and _has_shop:
+            _shop_at_location(character, loc, _npc_offers or None)
         elif c==str(quest_opt) and _unlocked_npc_quests:
             # 好感度分支：只接受「此 NPC 給」且好感度達標的任務（不再隨機抓別人的任務）
             q = _random.choice(_unlocked_npc_quests)
