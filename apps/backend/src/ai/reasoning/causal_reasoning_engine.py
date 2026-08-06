@@ -29,6 +29,8 @@ class CausalReasoningEngine:
         self._relationships: List[Dict[str, Any]] = []
         self._observations: List[Dict[str, Any]] = []
         self._graph: Dict[str, Set[str]] = {}
+        self._cause_index: Dict[str, List[Dict[str, Any]]] = {}
+        self._effect_index: Dict[str, List[Dict[str, Any]]] = {}
 
     def learn(self, observation: Dict[str, Any]) -> None:
         self._observations.append(observation)
@@ -87,7 +89,7 @@ class CausalReasoningEngine:
             results = self._do_calculus_intervene(cause, context["intervene"], context)
         else:
             results = sorted(
-                [r for r in self._relationships if r.get("cause") == cause],
+                self._cause_index.get(cause, []),
                 key=lambda r: r.get("strength", 0),
                 reverse=True,
             )
@@ -104,7 +106,7 @@ class CausalReasoningEngine:
 
     def explain(self, effect: str) -> List[Dict[str, Any]]:
         return sorted(
-            [r for r in self._relationships if r.get("effect") == effect],
+            self._effect_index.get(effect, []),
             key=lambda r: r.get("strength", 0),
             reverse=True,
         )
@@ -255,11 +257,21 @@ class CausalReasoningEngine:
             if cause and effect:
                 self._graph.setdefault(cause, set()).add(effect)
                 self._graph.setdefault(effect, set())
+                self._cause_index.setdefault(cause, []).append(r)
+                self._effect_index.setdefault(effect, []).append(r)
         self._relationships.extend(rels)
 
     def _evict_old(self) -> None:
         if len(self._relationships) > self._MAX_RELATIONSHIPS:
             self._relationships = self._relationships[-self._MAX_RELATIONSHIPS :]
+            self._cause_index.clear()
+            self._effect_index.clear()
+            for r in self._relationships:
+                cause = r.get("cause", "")
+                effect = r.get("effect", "")
+                if cause and effect:
+                    self._cause_index.setdefault(cause, []).append(r)
+                    self._effect_index.setdefault(effect, []).append(r)
         if len(self._observations) > self._MAX_OBSERVATIONS:
             self._observations = self._observations[-self._MAX_OBSERVATIONS :]
 
@@ -472,7 +484,7 @@ class CausalReasoningEngine:
 
         Uses basic adjustment: causal strength × value, reduced by confounder influence.
         """
-        effects = [r for r in self._relationships if r.get("cause") == variable]
+        effects = self._cause_index.get(variable, [])
         results = []
         data = context.get("data", {})
         variables = list({r["effect"] for r in effects})
