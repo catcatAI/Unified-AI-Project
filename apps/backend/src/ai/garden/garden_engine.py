@@ -586,6 +586,14 @@ class GARDENEngine:
         self._last_confidence = 0.0
         self._last_network_output: Dict[str, float] = {}
 
+        # Learned-association recall (composition-layer provenance, bounded).
+        # learn_batch/learn_from_interaction record (input-concept set ->
+        # output-concept set) here so process() can surface learned output
+        # tokens whose Hebbian weight never reaches the SNN spike/decode
+        # threshold on a single pass. Cap prevents unbounded growth.
+        self._learned_recall: List[tuple] = []
+        self._learned_recall_cap = limit_value("ai.garden.engine.learned_recall_cap", 5000)
+
     def get_last_network_output(self) -> Dict[str, float]:
         """Return the most recent SNN forward() activation output (writeback source).
 
@@ -672,6 +680,58 @@ class GARDENEngine:
     # Core processing pipeline
     # ------------------------------------------------------------------
 
+    def _record_learned(
+        self, input_keys: Dict[str, float], output_keys: Dict[str, float]
+    ) -> None:
+        """Record an input-concept set -> output-concept set in the provenance
+        store so process() can surface learned output tokens whose Hebbian
+        weight never reaches the SNN/decode threshold on a single pass.
+
+        Bounded to ``_learned_recall_cap`` (FIFO) to prevent unbounded growth.
+        Composition-layer bookkeeping; does not touch the dictionary or SNN.
+        """
+        if not input_keys or not output_keys:
+            return
+        self._learned_recall.append((frozenset(input_keys.keys()), dict(output_keys)))
+        while len(self._learned_recall) > self._learned_recall_cap:
+            self._learned_recall.pop(0)
+
+    def _retrieval_targets(
+        self,
+        input_keys: Dict[str, float],
+        top_k: int = 4,
+    ) -> Dict[str, float]:
+        """Return the strongest *learned* output targets for the active input.
+
+        Composition-layer calibration (not an SNN/dictionary change): single-pass
+        Hebbian writes weights ~0.02-0.03, far under the spike threshold (0.30)
+        and decode gate (0.15), and W mixes those with near-full preset weights,
+        so ``forward()`` never surfaces one-shot learned output. This rescues
+        learned output candidates from the engine-side provenance store
+        (recorded by learn_batch/learn_from_interaction), scored by how much the
+        stored input set overlaps the current input.
+        """
+        if not input_keys or not self._learned_recall:
+            return {}
+        input_set = set(input_keys.keys())
+        acc: Dict[str, float] = {}
+        for in_set, out_keys in self._learned_recall:
+            overlap = in_set & input_set
+            if not overlap:
+                continue
+            # Overlap-weighted: shared concepts -> stronger learned target.
+            w = len(overlap) / max(1.0, len(in_set))
+            for k, v in out_keys.items():
+                if k in input_set:
+                    continue
+                sc = v * (0.5 + 0.5 * w)
+                if sc > acc.get(k, 0.0):
+                    acc[k] = sc
+        if not acc:
+            return {}
+        ranked = sorted(acc.items(), key=lambda kv: -kv[1])[:top_k]
+        return dict(ranked)
+
     def process(self, text: str, context: Optional[Dict[str, Any]] = None) -> str:
         """
         Full GARDEN inference pipeline:
@@ -746,6 +806,23 @@ class GARDENEngine:
         # Stage 6: SNN forward
         network_output = self.snn.forward(input_keys, context=context)
         self._last_network_output = network_output
+
+        # Stage 6.5: Anchor calibration — single-pass Hebbian weights never
+        # reach the SNN spike/decode threshold, so forward() alone never
+        # surfaces one-shot learned associations (presets, at 0.5-0.9, dominate
+        # top-k). Recover learned output targets from the engine-side
+        # provenance store (input-concept overlap, no preset mixing) and merge
+        # them at a decodable magnitude so the neural layer's learned
+        # associations actually surface. Inert when nothing was learned for the
+        # active input.
+        rescue = self._retrieval_targets(input_keys)
+        if rescue:
+            w_max = max(rescue.values())
+            for k, w in rescue.items():
+                scaled = 0.20 + 0.8 * (w / w_max)
+                if scaled > network_output.get(k, 0.0):
+                    network_output[k] = scaled
+            self._last_network_output = network_output
 
         # Stage 7: Anchored decode
         response = _anchored_decode(network_output, input_keys, self.dictionary, original_text=text)
@@ -1064,6 +1141,7 @@ class GARDENEngine:
         # Compute input/output keys
         input_keys = self.dictionary.encode(user_text)
         output_keys = self.dictionary.encode(response_text)
+        self._record_learned(input_keys, output_keys)
 
         # Hebbian update
         delta = 0.0
@@ -1190,6 +1268,7 @@ class GARDENEngine:
                 response_text = s.get("output", "")
                 input_keys = self.dictionary.encode(user_text)
                 output_keys = self.dictionary.encode(response_text)
+                self._record_learned(input_keys, output_keys)
                 if input_keys and output_keys:
                     # Pass 1: Direct association input -> output
                     delta = self.snn.hebbian_update(

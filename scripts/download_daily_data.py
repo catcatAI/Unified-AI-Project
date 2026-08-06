@@ -46,6 +46,13 @@ OUT_PATH = os.path.join(DATA_DIR, "alpaca_data.json")
 # Stanford Alpaca — real instruction-dialogue corpus (CC BY-NC 4.0, 52K turns).
 ALPACA_URL = "https://raw.githubusercontent.com/tatsu-lab/stanford_alpaca/main/alpaca_data.json"
 
+# Alpaca-Data-Cleaned — a cleaned/respell of the same format (CC BY-NC 4.0, 51K
+# turns). Merging the two grows the real daily-dialogue/commonsense pool while
+# keeping the same instruction/input/output schema that train_pipeline reads.
+CLEANED_URL = "https://raw.githubusercontent.com/gururise/AlpacaDataCleaned/main/alpaca_data_cleaned.json"
+
+CORPORA = (("alpaca", ALPACA_URL), ("cleaned", CLEANED_URL))
+
 TIMEOUT = 300
 MIN_VALID_BYTES = 500_000  # a truncated/empty response below this is treated as invalid
 
@@ -102,6 +109,41 @@ def _cap_entries(path: str, max_entries: int) -> None:
     logger.info("Capped dataset to first %d entries", max_entries)
 
 
+def _load_valid(path: str) -> list:
+    """Load a JSON-array dataset, raising if schema is wrong. No fabrication."""
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    if not isinstance(data, list):
+        raise ValueError(f"{os.path.basename(path)} root is not a JSON array")
+    if data:
+        required = ("instruction", "output")
+        if any(not isinstance(i, dict) or not all(k in i for k in required) for i in data):
+            raise ValueError(f"{os.path.basename(path)} entry missing instruction/output keys")
+    return data
+
+
+def _build_merged(parts: list) -> None:
+    """Merge per-corpus part files into OUT_PATH, dedup by instruction.
+
+    All corpora share the instruction/input/output schema, so entries can be
+    concatenated. Dedup is by exact instruction text (keeps the first), so the
+    overlapping Stanford/Cleaned Alpaca don't double-count.
+    """
+    seen = set()
+    merged = []
+    for part in parts:
+        for item in _load_valid(part):
+            inst = item.get("instruction", "")
+            if inst in seen:
+                continue
+            seen.add(inst)
+            merged.append(item)
+    with open(OUT_PATH, "w", encoding="utf-8") as f:
+        json.dump(merged, f, ensure_ascii=False)
+    logger.info("Merged %d unique real turns from %d corpora -> %s", len(merged), len(parts), OUT_PATH)
+    return len(merged)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--max-entries", type=int, default=None, help="cap to N entries")
@@ -113,18 +155,21 @@ def main() -> int:
     exists = os.path.exists(OUT_PATH)
 
     if args.dry_run:
-        try:
-            req = urllib.request.Request(ALPACA_URL, method="HEAD", headers={"User-Agent": "ED3N/1.0"})
-            with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
-                logger.info(
-                    "Dry-run OK: source reachable (status %s, ~%sMB)",
-                    resp.status,
-                    round(int(resp.headers.get("Content-Length", 0)) / (1024 * 1024), 1),
-                )
-        except Exception as e:  # noqa: BLE001 - connectivity probe is intentionally broad
-            logger.error("Dry-run FAILED: %s", e)
-            return 1
-        return 0
+        ok = True
+        for _name, url in CORPORA:
+            try:
+                req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": "ED3N/1.0"})
+                with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+                    logger.info(
+                        "Dry-run OK: %s reachable (status %s, ~%sMB)",
+                        _name,
+                        resp.status,
+                        round(int(resp.headers.get("Content-Length", 0)) / (1024 * 1024), 1),
+                    )
+            except Exception as e:  # noqa: BLE001 - connectivity probe is intentionally broad
+                logger.error("Dry-run FAILED: %s (%s)", _name, e)
+                ok = False
+        return 0 if ok else 1
 
     if exists and not args.force:
         try:
@@ -133,23 +178,31 @@ def main() -> int:
             logger.warning("Existing file invalid (%s); re-downloading.", e)
             os.remove(OUT_PATH)
         else:
-            logger.info("Dataset already present (%d entries). Use --force to re-download.", n)
+            logger.info("Merged dataset already present (%d entries). Use --force to re-download.", n)
             return 0
 
-    tmp = OUT_PATH + f".part-{os.getpid()}"
+    parts = []
     try:
-        size = _urlretrieve(ALPACA_URL, tmp)
-        if size < MIN_VALID_BYTES:
-            raise ValueError(f"response too small ({size} bytes); refusing to use it")
-        _validate(tmp)
-        _cap_entries(tmp, args.max_entries)
-        os.replace(tmp, OUT_PATH)
+        for _name, url in CORPORA:
+            part = os.path.join(DATA_DIR, f"download-daily-{_name}.part-{os.getpid()}")
+            size = _urlretrieve(url, part)
+            if size < MIN_VALID_BYTES:
+                raise ValueError(f"{_name} response too small ({size} bytes); refusing to use it")
+            _load_valid(part)
+            parts.append(part)
+        n = _build_merged(parts)
+        _cap_entries(OUT_PATH, args.max_entries)
         n = _validate(OUT_PATH)
     except Exception as e:  # noqa: BLE001 - any failure means: no data, clear error
         logger.error("Download FAILED — no data written: %s", e)
-        if os.path.exists(tmp):
-            os.remove(tmp)
+        for part in parts:
+            if os.path.exists(part):
+                os.remove(part)
         return 1
+
+    for part in parts:
+        if os.path.exists(part):
+            os.remove(part)
 
     final_mb = round(os.path.getsize(OUT_PATH) / (1024 * 1024), 2)
     logger.info("READY: %d real dialogue/commonsense turns -> %s (%.1fMB)", n, OUT_PATH, final_mb)

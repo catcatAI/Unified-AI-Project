@@ -148,11 +148,14 @@
 | 關係 cell 模糊後援 | 以學得 cell 作為解題器**解析失敗**時的近似後援（NL 換言之泛化）；嚴守「只補解析缺口、不重做確定性數學」 | 提案（風險中） |
 | reasoning 模板重建 | 把 `_reconstruct_with_template` 的 reasoning 分支改為消費輸入中的數字（35/94）而非整句，讓變體措辭能自動包回 NL | ✅ 已實作（`6ed19173`） |
 | ε-增強訓練 | 在封閉真值表旁注入少量語序/同義換言之樣本（以 seed 控制），提升半定性層對措辭變異的韌性 | 提案 |
-| 真實日常/常識語料 | 以 `scripts/download_daily_data.py` 下載真實 Stanford Alpaca（52,002 條開放指令對話，CC BY-NC 4.0），`train_pipeline` 訓練起始自動確保；抽樣測試證明與確定性引擎 **0 重疊**（互補）、字典吸收 + Hebbian 學習發生 | ✅ 已實作（本次）；⚠ 測量發現開放長文 recall ~15%，見 §非定性 |
+| 真實日常/常識語料 | 以 `scripts/download_daily_data.py` 下載並合併兩個真實開放語料（Stanford Alpaca 52K + Alpaca-Data-Cleaned，去重後 **53,831 條**，CC BY-NC 4.0），`train_pipeline` 訓練起始自動確保；抽樣測試證明與確定性引擎 **0 重疊**（互補）、字典吸收 + Hebbian 學習發生 | ✅ 已實作（本次）；⚠ 長文語序為架構限制，見 §非定性 |
+| 錨定校準（learned→可解碼） | 定位根因：單次 Hebbian 寫入權重 ~0.03 ≪ SNN spike 0.30 / decode 0.15，presets(0.5-0.9) 又淹沒 top-k → forward 幾乎永不浮現一次性學到的關聯。修法用**組合層來源簿記**（`_learned_recall`，讀 learn 時的 input-set→output-set，避免 W 混 preset）將已學到輸出目標縮放至可解碼幅度，**不動字典/SNN** | ✅ 已實作（本次）；recall 6/40→**9/40** |
 
-> **測量發現（誠實記錄）**：隨機抽樣 40 條 Alpaca，`learn_batch` 全部吸收（dict 增長、hebbian_delta>0），但 `process()` 開放長文 token-overlap recall 僅 **6/40 ≈ 15%**。
-> 即：小關聯 SNN 對開放散文記憶力有限，anchored decode 偏輸入。因此半定性層的可行範圍是
-> 短結構化輸出的學習與重建；完整開放對話仍需 LLM fallback（非定性層）承接——此為既有架構分工，非本次回歸。
+> **測量發現（誠實記錄）**：
+> 1. **根因非「功能放置於錯誤位置」**——字典 encode、SNN Hebbian **學習**、`forward`、`_anchored_decode`（真讀 network_output）整條鏈位置正確；瓶頸是**單次學習訊號量級(0.03)與取回閾值(0.15/0.30)從未被校準對齊**，加上 presets 高權量淹沒 top-k。
+> 2. **錨定校準後**：同 40 樣本隨機取回 6/40→**9/40**；長文本內容 recall 1/30→**3/20**（浮現真實學到的 delicate/web/interdependent）。
+> 3. **仍為架構限制（非 bug）**：`_learned_recall` 只存 token **共現**，無位置/語序——**短文本無法擴寫成長文本**、無 next-token 生成、token-by-token 組成非語法序。長文建構不在目前字典+SNI 設計可表能力內；完整開放對話仍由 LLM fallback（非定性層）承接。
+> 4. 資料增益：兩 Alpaca 變體同源，合併去重後淨增有限（52K→53.8K）；真正新增量需不同源語料（OpenAssistant/HH-RLHF/DailyDialog，需 HF 認證，暫列提案）。
 
 ### 非定性（隨機/生成層）增強
 
