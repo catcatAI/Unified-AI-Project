@@ -802,6 +802,26 @@ class TestWorldLineEntryGates:
         for loc in ("小吉鎮", "大根莖村"):
             assert not sim_systems.LOCATION_ENEMIES.get(loc), f"{loc} 應無遭遇敵人"
 
+    def test_all_map_locations_have_enemy_pools(self):
+        """批次 50：所有地圖地點都有敵人群可遭遇（探索不落空），
+        唯文本設定的絕對無魔安全村（小吉鎮/大根莖村）除外。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        no_magic_villages = ("小吉鎮", "大根莖村")
+        empty = []
+        for loc in sim_systems.WORLD_MAP:
+            if loc in no_magic_villages:
+                continue
+            if not sim_systems.LOCATION_ENEMIES.get(loc):
+                empty.append(loc)
+        assert not empty, f"無敵人群的地圖地點: {empty}"
+        # 敵人群不得引用不存在的敵人
+        emap = {e["name"] for e in sim_systems.ENEMIES}
+        ghost = [(loc, n) for loc, pool in sim_systems.LOCATION_ENEMIES.items()
+                 for n in pool if n not in emap]
+        assert not ghost, f"幽靈敵人: {ghost}"
+
     def test_shadow_enemy_names_no_broken_parentheses(self):
         """批次 43：卡片影之敵名稱不能含殘留括號（全形括號 split 失敗
         會產生「小無（Xiǎ之影」這種缺右括號的名字）。"""
