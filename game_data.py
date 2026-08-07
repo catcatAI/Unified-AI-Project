@@ -128,9 +128,12 @@ def get_location_world_line(loc_name: str) -> str:
     return _LOCATION_WORLD_LINES.get(loc_name, "W01")
 
 _NPC_LOCATIONS_POOL = [
+    # 僅 W01 主世界線地點：W03 軌道居住站大學院已移除——無地點資訊的角色卡
+    # 落入回退池時不應隨機被分到其他世界線（小倉靜子/藤真佐和/希雅/秋
+    # 曾被取模誤配到 W03；W03 角色一律以文本依據顯式指派）。
     "聖十字校園", "鏡湖", "鬱鬱山", "卡洛夫角", "霧海群島",
     "秘密鐵工廠", "便利店", "英靈殿", "廢棄礦坑", "森林深處",
-    "中央大圖書館", "農學院", "軌道居住站大學院",
+    "中央大圖書館", "農學院",
 ]
 
 
@@ -360,6 +363,16 @@ def _generate_npc_schedule(npc_name: str, home_loc: str, race_text: str = "") ->
     """產生 NPC 作息排程。夜行性角色（蝙蝠娘等文本明言夜行）晝伏夜出：
     白天睡眠、傍晚起床、夜晚活動——符合常理與文本。
     """
+    # 社交地點池：須與家鄉同一世界線（W02 絕對無魔村莊不會每天去 W01 便利店；
+    # W03 軌道居住站居民不會每天下到地表；W04 灰燼拾荒王同理——跨線通勤
+    # 不合文本常理）。迴廊／W01+迴廊／W01 居民可留在既有 W01 社交池
+    # （文本：迴廊是連接各世界線的橋樑）。
+    _home_wl = get_location_world_line(home_loc)
+    if _home_wl in ("W02", "W03", "W04", "夢境層"):
+        _same_wl = sorted(loc for loc, wl in _LOCATION_WORLD_LINES.items() if wl == _home_wl)
+        social_pool = _same_wl if len(_same_wl) >= 2 else [home_loc] + _same_wl
+    else:
+        social_pool = ["聖十字校園", "鬱鬱山", "便利店", "鏡湖", "卡洛夫角"]
     # 夜行性判定：文本種族含 夜行/蝙蝠 等關鍵字
     _night_active = any(kw in (race_text or "") for kw in ("夜行", "蝙蝠娘", "蝙蝠"))
     if _night_active:
@@ -367,9 +380,7 @@ def _generate_npc_schedule(npc_name: str, home_loc: str, race_text: str = "") ->
         slots = [(6, 18), (18, 22), (22, 2), (2, 6)]
         activities = ["睡眠", "工作", "巡邏", "社交"]
         moods = ["sleep", "focused", "alert", "friendly"]
-        social_locs = _seed.sample(
-            ["聖十字校園", "鬱鬱山", "便利店", "鏡湖", "卡洛夫角"],
-            k=min(5, len(_NPC_LOCATIONS_POOL)))
+        social_locs = _seed.sample(social_pool, k=min(len(social_pool), len(_NPC_LOCATIONS_POOL)))
         locs = [home_loc, home_loc, social_locs[0], social_locs[1] if len(social_locs) > 1 else home_loc]
         schedules = []
         for i, (s, e) in enumerate(slots):
@@ -379,9 +390,7 @@ def _generate_npc_schedule(npc_name: str, home_loc: str, race_text: str = "") ->
     slots = [(6,10),(10,14),(14,18),(18,22),(22,6)]
     activities = ["工作","巡邏","休息","社交","睡眠"]
     moods = ["focused","alert","rest","friendly","sleep"]
-    social_locs = _seed.sample(
-        ["聖十字校園","鬱鬱山","便利店","鏡湖","卡洛夫角"],
-        k=min(5, len(_NPC_LOCATIONS_POOL)))
+    social_locs = _seed.sample(social_pool, k=min(len(social_pool), len(_NPC_LOCATIONS_POOL)))
     locs = [home_loc, home_loc, home_loc, social_locs[0], home_loc]
     for i, (s,e) in enumerate(slots):
         schedules.append((s,e,activities[i],locs[i] if i<len(locs) else home_loc,moods[i]))
@@ -643,6 +652,16 @@ def generate_all_npcs() -> Dict[str, dict]:
         raw = sc.get("name", "").split("—")[0].split(" ")[0].strip()
         _supp_map.setdefault(raw, []).append(sc)
 
+    # 別名合併（文本權威）：CC-10「靜子」＝ CC-16「小倉靜子」——世界線錨定總表
+    # 將「靜子」歸於 W01-B 大正浪漫線，小倉靜子為其全名，兩卡是同一角色。
+    # 若正名卡片存在，別名卡不另立 NPC，避免同一角色以兩個身份出現在遊戲中。
+    _NPC_ALIAS_TO_CANON: Dict[str, str] = {"靜子": "小倉靜子"}
+    _canon_card_names = set()
+    for _card in _CHARACTER_CARDS:
+        _rn = _card.get("name", "?").split("(")[0].split("（")[0].strip()
+        if _rn:
+            _canon_card_names.add(_rn)
+
     npcs = {}
     for i, card in enumerate(_CHARACTER_CARDS):
         cid = card.get("card_id", f"CC-{i:02d}")
@@ -658,7 +677,9 @@ def generate_all_npcs() -> Dict[str, dict]:
         else:
             name = raw_npc_name
         if not name: name = card.get("name", "?")
-
+        # 別名卡去重：正名卡片存在時不另立 NPC（CC-10 靜子 → 小倉靜子）
+        if name in _NPC_ALIAS_TO_CANON and _NPC_ALIAS_TO_CANON[name] in _canon_card_names:
+            continue
         # Derive home location from card lore (not round-robin)
         home = _get_npc_home_from_card(card, i)
 
@@ -694,6 +715,22 @@ def generate_all_npcs() -> Dict[str, dict]:
             "台灣AI小N": "星光舞台",
             "呃咔": "星光舞台",
             "奶油泡芙": "西翼大市集",
+            # 小倉靜子（CC-16）：世界線錨定總表歸 W01-B 大正浪漫線。卡片無地點 token
+            # 落入回退池誤配到 W03 軌道居住站大學院；手寫排程整天在 W01
+            # （聖十字校園巡邏/睡眠、卡洛夫角防空訓練、秘密鐵工廠保養），
+            # 故以聖十字校園為基地（文本權威）。
+            "小倉靜子": "聖十字校園",
+            # 愛麗絲（C16）：世界線錨定總表明載 W03 軌道居住站（艾菈、愛麗絲、
+            # 導師AI）。卡片為義體人/實驗室人造人（基因強化技客）——軌道站
+            # 高科技實驗室是合理歸屬；原回退池誤配到森林深處。
+            "愛麗絲": "軌道居住站大學院",
+            # 藤真佐和（CC-61）：住址「都市後方老舊公寓一樓」——W01 都市，
+            # 非軌道站（魔法少女（偽）於城市活動）。
+            "藤真 佐和": "便利店",
+            # 希雅（C06）：翠綠精靈群落／森林精靈教師——W01 鬱鬱山。
+            "希雅": "鬱鬱山",
+            # 秋（C19）：魔法少女（秋），起源秋之森林——W01 森林深處。
+            "秋": "森林深處",
         }
         if name in _NPC_HOME_OVERRIDES:
             home = _NPC_HOME_OVERRIDES[name]
