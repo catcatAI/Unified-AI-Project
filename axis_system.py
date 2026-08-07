@@ -415,6 +415,31 @@ SAIL_KEYWORDS = ["艦娘", "星艦"]
 SWIM_KEYWORDS = ["人魚", "納迦", "魚人", "海蛞蝓", "水棲"]
 
 
+def _kw_positive(text: str, keywords) -> bool:
+    """關鍵字匹配（否定語境感知，批次 53）：文本種族描述常以否定句排除
+    亞種歸屬（如「純血術式適應體，非龍娘/獸人/妖精等亞種」）——否定子句
+    內的關鍵字不應觸發能力判定（東 雲 純血魔女曾被誤判可飛行）。
+    子句邊界僅為句讀級標點（，；。：—（））；、／ 是列表分隔符，
+    不中斷否定範圍（「非A、B、C」整串都是否定）。否定詞表僅含明確否定
+    頭（不是/並非/沒有/不能/不會/不可/非/無），不含 不/未 單字——
+    「未來型天使」「不具人形的妖精」等正常詞不受誤傷。"""
+    _BOUNDS = "，；。：—（）()"
+    _NEG_HEADS = ("不是", "並非", "沒有", "不能", "不會", "不可", "非", "無")
+    for kw in keywords:
+        pos = 0
+        while True:
+            i = text.find(kw, pos)
+            if i < 0:
+                break
+            seg_start = max(text.rfind(c, 0, i) for c in _BOUNDS) + 1
+            segment = text[seg_start:i].strip()
+            if segment and any(segment.startswith(h) for h in _NEG_HEADS):
+                pos = i + len(kw)
+                continue
+            return True
+    return False
+
+
 def movement_abilities(text_race: str = "", mechanic_race: str = "", lineage: str = "") -> dict:
     """判定角色的移動能力（依文本種族關鍵字，非 token 猜測）。
 
@@ -427,9 +452,9 @@ def movement_abilities(text_race: str = "", mechanic_race: str = "", lineage: st
     text = str(text_race or "")
     mech = str(mechanic_race or "")
     combined = text + " " + mech
-    fly = any(kw in combined for kw in FLY_KEYWORDS)
-    sail = any(kw in combined for kw in SAIL_KEYWORDS)
-    swim = any(kw in combined for kw in SWIM_KEYWORDS)
+    fly = _kw_positive(combined, FLY_KEYWORDS)
+    sail = _kw_positive(combined, SAIL_KEYWORDS)
+    swim = _kw_positive(combined, SWIM_KEYWORDS)
     label_parts = []
     speed_multiplier = 1.0
     if fly:

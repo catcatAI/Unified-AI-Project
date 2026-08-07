@@ -1097,6 +1097,33 @@ class TestWorldLineEntryGates:
         assert sim_systems.get_vehicle_world_category(v["腳踏車"]) == "natural"
         assert sim_systems.get_vehicle_world_category(v["漁船"]) == "natural"
 
+    def test_movement_abilities_negation_aware(self):
+        """批次 53：移動能力關鍵字匹配需否定語境感知——文本種族描述常以
+        否定句排除亞種歸屬（「純血術式適應體，非龍娘/獸人/妖精等亞種」），
+        否定子句內的關鍵字不得觸發能力（東 雲 純血魔女曾被誤判可飛行）；
+        真天使（否定的是位階非翅膀）仍可飛行。"""
+        from axis_system import movement_abilities
+        # 否定語境：純血魔女明言非龍娘/妖精等亞種 → 不得因「妖精」字眼飛
+        m = movement_abilities(
+            text_race="魔女（まじょ）——純血術式適應體，非龍娘/獸人/妖精等亞種")
+        assert not m.get("fly"), f"否定子句誤觸發飛行: {m}"
+        # 真天使（無大天使位階是位階否定，非翅膀否定）→ 可飛行
+        m2 = movement_abilities(
+            text_race="天使（第三環・醫療專責／非戰鬥型，無大天使位階，無熾天使權能）")
+        assert m2.get("fly"), f"真天使應可飛行: {m2}"
+        # 、/／ 是列表分隔符不中斷否定範圍（「非A、B、C」整串否定）
+        m3 = movement_abilities(
+            text_race="魔女——純血術式適應體，非龍娘、獸人、妖精等亞種")
+        assert not m3.get("fly"), f"、分隔的否定列表誤觸發飛行: {m3}"
+        # 不/未 單字不視為否定（未來型天使/不具人形的妖精仍為天使/妖精）
+        assert movement_abilities(text_race="未來型天使（試作）").get("fly")
+        assert movement_abilities(text_race="不具人形的妖精").get("fly")
+        # 正常正向匹配不受影響
+        assert movement_abilities(text_race="天空龍娘").get("fly")
+        assert movement_abilities(text_race="艦娘").get("sail")
+        assert movement_abilities(text_race="人魚").get("swim")
+        assert not movement_abilities(text_race="人類").get("fly")
+
     def test_all_locations_reachable_from_campus(self):
         """批次 47：地圖全域可達性——從聖十字校園出發（含反向入邊，
         等同 run_game do_travel 合併邏輯）所有 WORLD_MAP 地點皆可達。
