@@ -883,8 +883,11 @@ class TestWorldLineEntryGates:
             assert not any("之影" in n for n in le.get(loc, [])), f"{loc} 不應有影之敵"
 
     def test_safe_zones_no_elite_enemies(self):
-        """批次 43：新手安全區（便利店/聖十字校園/鏡湖/清溪河/W02 村落）
-        不得有凶暴/遠古/深淵/W03-W04 強敵。"""
+        """批次 43 + 58：新手安全區（便利店/聖十字校園/鏡湖/清溪河/W02 村落）
+        不得有凶暴/遠古/深淵/W03-W04 強敵。
+        W02 村落（批次 58）：原實作完全空盪（0 場景物件 0 敵人），玩家到 W02
+        什麼都不能做——琥珀紀元世界線形同虛設。現在有普通等級荒野敵
+        （野狼/哥布林/野豬等，HP<120/ATK<30）可遭遇、可探索，但不得有強敵。"""
         import sim_systems
         from game_data import expand_game
         expand_game()
@@ -893,21 +896,25 @@ class TestWorldLineEntryGates:
         for loc in ("便利店", "聖十字校園", "鏡湖", "清溪河"):
             bad = [n for n in sim_systems.LOCATION_ENEMIES.get(loc, []) if any(k in n for k in strong_kw)]
             assert not bad, f"安全區 {loc} 出現強敵: {bad}"
-        # W02 村落是絕對無魔安全村——無遭遇敵人
+        # W02 村落：有普通級荒野敵（可遭遇/探索）但不得有強敵
+        emap = {e["name"]: e for e in sim_systems.ENEMIES}
         for loc in ("小吉鎮", "大根莖村"):
-            assert not sim_systems.LOCATION_ENEMIES.get(loc), f"{loc} 應無遭遇敵人"
+            pool = sim_systems.LOCATION_ENEMIES.get(loc, [])
+            assert pool, f"{loc} 應有遭遇敵人（批次 58 修復空盪世界線）"
+            for n in pool:
+                assert not any(k in n for k in strong_kw), f"{loc} 出現強敵: {n}"
+                _e = emap.get(n, {})
+                assert (_e.get("hp") or 0) < 120 and (_e.get("atk") or 0) < 30, \
+                    f"{loc} 出現數值強敵: {n}"
 
     def test_all_map_locations_have_enemy_pools(self):
-        """批次 50：所有地圖地點都有敵人群可遭遇（探索不落空），
-        唯文本設定的絕對無魔安全村（小吉鎮/大根莖村）除外。"""
+        """批次 50 + 58：所有地圖地點都有敵人群可遭遇（探索不落空）——
+        含 W02 琥珀紀元村落（批次 58 修復空盪世界線）。"""
         import sim_systems
         from game_data import expand_game
         expand_game()
-        no_magic_villages = ("小吉鎮", "大根莖村")
         empty = []
         for loc in sim_systems.WORLD_MAP:
-            if loc in no_magic_villages:
-                continue
             if not sim_systems.LOCATION_ENEMIES.get(loc):
                 empty.append(loc)
         assert not empty, f"無敵人群的地圖地點: {empty}"
@@ -916,6 +923,18 @@ class TestWorldLineEntryGates:
         ghost = [(loc, n) for loc, pool in sim_systems.LOCATION_ENEMIES.items()
                  for n in pool if n not in emap]
         assert not ghost, f"幽靈敵人: {ghost}"
+
+    def test_w02_villages_have_scene_objects(self):
+        """批次 58：W02 琥珀紀元村落（小吉鎮/大根莖村）有場景物件可探索
+        （原實作 locations_for_objects 只有 W01 地點，W02 完全空盪）。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        for loc in ("小吉鎮", "大根莖村"):
+            objs = sim_systems.SCENE_OBJECTS.get(loc, [])
+            assert objs, f"{loc} 應有場景物件（批次 58 修復空盪世界線）"
+            assert any(o.get("type") in ("container", "workstation") for o in objs), \
+                f"{loc} 場景物件應含可互動容器/工作台"
 
     def test_relax_locations_no_strong_enemies(self):
         """批次 51：休閒/商業/住宅場所（市集/溫泉/圖書館/學府/校園/便利店

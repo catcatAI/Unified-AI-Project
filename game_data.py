@@ -1479,12 +1479,34 @@ def generate_scene_objects() -> Dict[str, list]:
     ]
     ws_pool = [("鍛造台","forge"),("作業台","workbench"),("鍊金釜","alchemy"),
                ("魔法陣","enchant"),("雕刻台","carve"),("調合台","blend")]
-    
+    # W02 絕對無魔世界線（琥珀紀元）：容器/工作台排除魔法/電子語境——
+    # 魔法箱（魔法粉/靈木）、實驗箱（火元素）、貴重品箱（龍鱗/魔法粉）、
+    # 藥品棚（魔力藥水）與鍊金釜/魔法陣在「零聚合（絕對無魔）」村莊
+    # 不該出現（與批次 55/56 商店/任務世界線相容同類矛盾）。
+    # 注意：本函式在模組層執行（sim_systems 尚未 import），用 game_data
+    # 自己的權威世界線表（get_location_world_line 同源）。
+    _NATURAL_CONTAINERS = [
+        (["草藥","空瓶","小石頭"],"木箱","木箱"),
+        (["乾糧","治療藥水","繃帶"],"保管箱","應急箱"),
+        (["鐵礦","黏土","樹枝"],"礦石箱","礦石箱"),
+        (["書信","羽毛","貝殼"],"小箱","帶鎖小箱"),
+        (["皮革","布","絲線"],"材料箱","素材箱"),
+        (["草藥","解毒草","靈芝"],"藥箱","藥箱"),
+        (["木柄","鐵礦","麻繩"],"道具箱","道具箱"),
+        (["乾燥花","彩色玻璃片","貝殼"],"裝飾箱","飾品箱"),
+        (["鐵錠","鐵礦","鐵劍"],"武器箱","武器箱"),
+        (["書信","神秘地圖","乾燥花"],"信件箱","書信箱"),
+    ]
+    _NATURAL_WS = [("鍛造台","forge"),("作業台","workbench"),("雕刻台","carve"),("調合台","blend")]
+
     for loc in _SUPPLEMENT.get("locations_for_objects", []):
         loc_objs = []
+        # 依地點世界線選擇容器池：W02 絕對無魔用自然池（無魔法/電子）
+        _cpool = container_pool if get_location_world_line(loc) != "W02" else _NATURAL_CONTAINERS
+        _wspool = ws_pool if get_location_world_line(loc) != "W02" else _NATURAL_WS
         # 2-3 containers
         for _ in range(_seed.randint(2,3)):
-            ct = _seed.choice(container_pool)
+            ct = _seed.choice(_cpool)
             items, cname, cdesc = ct
             cid = f"box_{loc}_{len(loc_objs)}"
             loc_objs.append({"id":cid,"name":f"{cname}({loc[:2]})","type":"container",
@@ -1497,7 +1519,7 @@ def generate_scene_objects() -> Dict[str, list]:
                              "desc":f"一個{d}。","note":"沒有特別之處。","interactable":True})
         # 0-1 workstation
         if _seed.random() < 0.5:
-            ws = _seed.choice(ws_pool)
+            ws = _seed.choice(_wspool)
             loc_objs.append({"id":f"ws_{loc}","name":ws[0],"type":"workstation",
                              "desc":f"{ws[0]}。","station_type":ws[1],"interactable":True})
         objects[loc] = loc_objs
@@ -1985,17 +2007,34 @@ def expand_game():
         # （影之敵演出設計仍由卡片段保留）
         "星光舞台", "演唱會模式", "伺服器核心室", "後台更衣室", "首爾奧林匹克體育場",
     }
+    # W02 琥珀紀元村落種子化——原實作小吉鎮/大根莖村無場景物件、無敵人
+    # （locations_for_objects 只有 W01 地點、LOCATION_ENEMIES 無 W02 鍵），
+    # 玩家到 W02 什麼都不能做，琥珀紀元世界線形同虛設。
+    # 用通用中世紀荒野敵（HP<120/ATK<30，非強敵）；因村莊在 _SAFE_LOCS，
+    # distribution 的強敵清洗不會把強敵塞進來，安全區保證不破壞。
+    sim_systems.LOCATION_ENEMIES.setdefault("小吉鎮", ["野狼", "哥布林", "野豬"])
+    sim_systems.LOCATION_ENEMIES.setdefault("大根莖村", ["毒蛇", "大蜘蛛", "森狼"])
     loc_list = list(sim_systems.LOCATION_ENEMIES.keys())
     _strong_loc_list = [l for l in loc_list if l not in _NO_STRONG_LOCS] or loc_list
     _strong_kw = ("凶暴", "兇暴", "遠古", "深淵", "灰燼", "拾荒王", "螢光獵手",
                   "沼澤變異體", "站內巡邏無人機", "軌道站維修機械")
     _all_enemy_map = {e2["name"]: e2 for e2 in ALL_ENEMIES}
+    # 超自然系敵（鎌鼬/地靈/星靈/精靈/元素/妖怪/幽靈/鬼/龍）不進 W02 絕對無魔
+    # 村莊（琥珀紀元零聚合——這些是靈子/魔法系生物，村莊無此類遭遇；
+    # 星靈/地靈等 desc 明載「X的精靈」）。注意：自然荒野獸（野狼/野豬/毒蛇）
+    # 不含這些字樣不受誤傷。
+    _NATURAL_W02_LOCS = {"小吉鎮", "大根莖村"}
+    _SPIRIT_KW = ("鎌鼬", "地靈", "星靈", "精靈", "元素", "妖怪", "幽靈", "鬼", "龍", "魔")
     for e in ALL_ENEMIES:
         if not any(e["name"] in names for names in sim_systems.LOCATION_ENEMIES.values()):
             _ed = _all_enemy_map.get(e["name"], {})
             _is_strong = (any(k in e["name"] for k in _strong_kw)
                           or (_ed.get("hp") or 0) >= 120 or (_ed.get("atk") or 0) >= 30)
             loc = _seed.choice(_strong_loc_list if _is_strong else loc_list)
+            # 超自然系敵誤選 W02 村莊時改選一般地點（村莊維持自然荒野語境）
+            if loc in _NATURAL_W02_LOCS and any(k in e["name"] for k in _SPIRIT_KW):
+                _plain = [l for l in loc_list if l not in _NATURAL_W02_LOCS] or loc_list
+                loc = _seed.choice(_plain)
             sim_systems.LOCATION_ENEMIES.setdefault(loc, []).append(e["name"])
             cnt["enemy_dist"] += 1
     
@@ -2274,6 +2313,10 @@ def expand_game():
     #   出現，不應被隨機指派污染這些世界線規範敵人群。
     # ────────────────────────────────────────────────────────────
     _WORLD_LINE_ENEMY_OVERRIDES = {
+        # W02 琥珀紀元村落（小吉鎮/大根莖村）不放進此表：野狼/哥布林/野豬
+        # 是通用荒野敵，標成 W02 專屬會被尾部清理從 W01 荒野地點誤刪。
+        # W02 村莊改在 distribution 前種子化（見下），強敵因 _SAFE_LOCS
+        # 不會進安全區。
         "熒光沼澤":         ["螢光獵手", "沼澤變異體", "暗影靈"],
         "玻璃荒漠":         ["灰燼行者", "灰燼行者長", "元素核心"],
         "鏽蝕城邦":         ["灰燼行者", "拾荒王", "廢鐵傀儡"],
@@ -2283,8 +2326,12 @@ def expand_game():
         "綻放混成園":       ["暗影靈", "幽靈", "元素核心"],
     }
     for _loc, _names in _WORLD_LINE_ENEMY_OVERRIDES.items():
-        if _loc in sim_systems.WORLD_MAP or _loc in sim_systems.LOCATION_ENEMIES:
-            sim_systems.LOCATION_ENEMIES[_loc] = list(_names)
+        # 無條件指派（不再要求 _loc 已在 WORLD_MAP/LOCATION_ENEMIES）：
+        # 覆寫表執行時 W02 村莊（小吉鎮/大根莖村）尚未由後續
+        # _NPC_FALLBACK_LOCATIONS 段建入 WORLD_MAP——原條件讓 W02 覆寫
+        # 被跳過，造成琥珀紀元村落 0 敵人（空盪世界線）。
+        # 地點最終必會被建立；提前指派可確保世界線規範敵人群生效。
+        sim_systems.LOCATION_ENEMIES[_loc] = list(_names)
 
     # 世界線敵人洩漏清理 + 影之敵排除移往 expand_game 尾部（after 統計前）：
     # 卡片整合段（珊瑚台等）在覆寫表之後才建立場景並指派敵人，
