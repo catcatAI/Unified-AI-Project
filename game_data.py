@@ -1221,10 +1221,12 @@ def generate_quests() -> list:
         loc_target = _seed.choice(locations_pool)
         qtype = "main" if i < 15 else "side"
         qid = f"SN-{i+1:02d}"
-        reward_exp = 20 + i * 3
-        reward_gold = 8 + i * 2
-        # Add conditions with level requirement scaling with index
-        req_level = max(1, i // 15)  # later nodes require higher level
+        # 等級隨故事推進漸進（每級 6 節，60 節跨 Lv1-10），獎勵依等級曲線。
+        # ——原實作把 60 節全塞進 Lv1-4 且 EXP=20+i*3 線性暴漲，
+        #   造成 Lv1 故事節 EXP 107 高於手寫 Lv3-5 任務（獎勵倒掛）。
+        req_level = min(10, 1 + i // 6)
+        reward_exp = 35 + req_level * 22 + (i % 6) * 2
+        reward_gold = 15 + req_level * 12 + (i % 6)
         q = {
             "id": qid, "title": name[:20], "type": qtype,
             "giver": _seed.choice(npc_names),
@@ -1255,38 +1257,64 @@ def generate_quests() -> list:
                 "required_relationships": req_rel,
                 "time_available": {"start_hour": 8, "end_hour": 20},
             }
+            # 獎勵依等級曲線縮放——原實作固定 25~80 EXP 不隨 required_level，
+            # 造成 Lv3 討伐最低 42 EXP 低於 Lv2 故事節 89 EXP（倒掛）
+            rl = conditions.get("required_level", 1)
             if "craft" in cats:
                 quests.append({"id":qid,"title":f"{npc_name}的委託","type":"side","giver":npc_name,
                     "desc":"需要你幫忙收集材料。",
                     "conditions": dict(conditions),
                     "objectives":[{"type":"collect","target":_seed.choice(["鐵礦","皮革","靈木","草藥"]),"qty":_seed.randint(2,5),"detail":"收集材料"}],
-                    "reward_exp":30+_seed.randint(0,30),"reward_gold":15+_seed.randint(0,20),
+                    "reward_exp":25+rl*12+_seed.randint(0,15),"reward_gold":12+rl*8+_seed.randint(0,10),
                     "reward_reputation":5,"reward_relationships":{npc_name: 10},
                     "reward_item":_seed.choice(["治療藥水","匕首","鐵劍","護身符","皮甲"])})
             elif "combat" in cats:
                 conditions["required_level"] = 3
+                rl = 3
                 # 目標敵人從該 NPC 家所在地的敵人群選，確保任務可完成
                 # （固定清單會選出目標地點根本不存在的敵人，造成任務卡死）
                 import sim_systems as _ss
-                loc_pool = list(_ss.LOCATION_ENEMIES.get(loc, []))
-                # 排除強敵：前綴（凶暴/遠古/深淵）或數值超標（ATK≥20 或 HP≥90）
-                # ——Lv3 討伐任務不該要求打古代守衛/巨熊/元素核心等無前綴強敵
                 _enemy_by_name = {e["name"]: e for e in _ss.ENEMIES}
+                # 只保留存在於敵人的名字——幽靈名（ENEMIES 無此條目）會以 HP/ATK=0
+                # 被最弱選擇誤中，產生打不死的目標
+                loc_pool = [n for n in _ss.LOCATION_ENEMIES.get(loc, []) if n in _enemy_by_name]
+                # 排除強敵：前綴（凶暴/遠古/深淵）或數值超標（ATK≥25 或 HP≥120）
+                # ——Lv3 討伐任務不該要求打古代守衛/遠古系列等；蛇妖(ATK20/HP45)、
+                #   砂蝎(ATK20/HP60) 等 Lv3-5 可打的普通敵人要保留（原閾值 20/90
+                #   過嚴：24 個 combat NPC 中 16 個地點被判全強敵，退回全池
+                #   後誤選古代守衛 HP150，造成任務強度倒掛）
                 def _too_strong(n):
                     if any(k in n for k in ("遠古","凶暴","兇暴","深淵")):
                         return True
                     e = _enemy_by_name.get(n)
-                    return bool(e and (e.get("atk", 0) >= 20 or e.get("hp", 0) >= 90))
+                    return bool(e and (e.get("atk", 0) >= 25 or e.get("hp", 0) >= 120))
                 _plain = [n for n in loc_pool if not _too_strong(n)]
-                _target_pool = _plain or loc_pool
+                if _plain:
+                    _target_pool = _plain
+                else:
+                    # 全池皆強敵：不退回全池（會誤選古代守衛/遠古系列），改選最弱
+                    # 敵人；最弱仍超 Lv5 程度（HP≥150 或 ATK≥30）→ 收集 fallback
+                    _by_strength = sorted(
+                        loc_pool,
+                        key=lambda n: (_enemy_by_name.get(n, {}).get("hp", 0),
+                                       _enemy_by_name.get(n, {}).get("atk", 0)))
+                    weakest = _by_strength[0] if _by_strength else None
+                    _we = _enemy_by_name.get(weakest, {}) if weakest else {}
+                    if weakest and _we.get("hp", 0) < 150 and _we.get("atk", 0) < 30:
+                        _target_pool = [weakest]
+                    else:
+                        _target_pool = []
                 if not _target_pool:
                     # 該地點沒有敵人群：退而求其次，改為收集任務而非討伐
+                    # （conditions 已含 required_level=3，獎勵須匹配 Lv3 曲線——
+                    #   原實作沿用 Lv1 收集獎勵 30+rand30 造成 Lv3 給 31 EXP 太低）
                     quests.append({"id":qid,"title":f"{npc_name}的委託","type":"side","giver":npc_name,
                         "desc":"需要你幫忙收集材料。",
                         "conditions": dict(conditions),
                         "objectives":[{"type":"collect","target":_seed.choice(["鐵礦","皮革","靈木","草藥"]),"qty":_seed.randint(2,5),"detail":"收集材料"}],
-                        "reward_exp":30+_seed.randint(0,30),"reward_gold":15+_seed.randint(0,20),
-                        "reward_reputation":5,"reward_relationships":{npc_name: 10},
+                        # 退化收集任務獎勵略低於討伐（35+rl*12 vs 30+rl*15）
+                        "reward_exp":35+rl*12+_seed.randint(0,15),"reward_gold":18+rl*8+_seed.randint(0,10),
+                        "reward_reputation":8,"reward_relationships":{npc_name: 12},
                         "reward_item":_seed.choice(["治療藥水","匕首","鐵劍","護身符","皮甲"])})
                 else:
                     target_enemy = _seed.choice(_target_pool)
@@ -1295,7 +1323,7 @@ def generate_quests() -> list:
                         "conditions": dict(conditions),
                         "objectives":[{"type":"visit","target":loc,"detail":f"前往{loc}"},
                                       {"type":"defeat","target":target_enemy,"qty":_seed.randint(1,3),"detail":"擊敗指定敵人"}],
-                        "reward_exp":40+_seed.randint(0,40),"reward_gold":20+_seed.randint(0,30),
+                        "reward_exp":30+rl*15+_seed.randint(0,20),"reward_gold":15+rl*10+_seed.randint(0,15),
                         "reward_reputation":8,"reward_relationships":{npc_name: 12},
                         "reward_item":_seed.choice(["鋼刀","鐵甲","生命果","火焰藥水","靈力藥"])})
             elif "knowledge" in cats:
@@ -1303,7 +1331,7 @@ def generate_quests() -> list:
                     "desc":"探索並帶回見聞。",
                     "conditions": dict(conditions),
                     "objectives":[{"type":"visit","target":_seed.choice(["聖十字校園","英靈殿","森林深處"]),"detail":"前往指定地點"}],
-                    "reward_exp":25+_seed.randint(0,25),"reward_gold":10+_seed.randint(0,15),
+                    "reward_exp":20+rl*10+_seed.randint(0,15),"reward_gold":10+rl*6+_seed.randint(0,10),
                     "reward_reputation":6,"reward_relationships":{npc_name: 10},
                     "reward_item":_seed.choice(["記憶水晶","神秘地圖","書信","魔力藥水","護身符"])})
 

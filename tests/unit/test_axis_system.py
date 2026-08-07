@@ -1125,3 +1125,151 @@ class TestPerformanceScenes:
         for n in ("特戰偶像團", "呃咔", "奶油泡芙"):
             for it in sim_systems.NPC_METADATA.get(n, {}).get("offers", []):
                 assert it in cat, f"{n} 的 offers 引用不存在道具: {it}"
+
+
+# =============================================================================
+# 11. 任務可達性與平衡（批次 49）
+# =============================================================================
+
+class TestQuestReachabilityBalance:
+    """任務稽核：giver 排程時段可達、獎勵曲線不倒掛、
+    目標敵人強度與任務等級匹配、時段限制與 giver 排程重疊。"""
+
+    def _req_lv(self, q):
+        c = q.get("conditions", {}) or {}
+        return c.get("required_level") or q.get("required_level") or q.get("level", 1)
+
+    def _overlap(self, a, b, c, d):
+        a2, b2 = (a, b) if b > a else (a, b + 24)
+        c2, d2 = (c, d) if d > c else (c, d + 24)
+        return a2 < d2 and c2 < b2
+
+    def test_quest_giver_schedules_cover_wake_hours(self):
+        """所有 giver NPC 排程涵蓋常見造訪時段（8-22 逐時）——
+        玩家在白天/傍晚造訪不會撲空。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        probs = []
+        for q in sim_systems.QUESTS:
+            g = q.get("giver", "")
+            if not g or g == "系統":
+                continue
+            sched = sim_systems.NPC_SCHEDULES.get(g)
+            assert sched, f"giver {g} 無排程"
+            hours = set()
+            for st, et, _a, _l, _m in sched:
+                h = st
+                while h != et:
+                    hours.add(h)
+                    h = (h + 1) % 24
+            missing = [h for h in (8, 10, 12, 14, 16, 18, 20, 22) if h not in hours]
+            if missing:
+                probs.append(f"{q['id']} ({g}): 缺口 {missing}")
+        assert not probs, "\n".join(probs[:10])
+
+    def test_quest_reward_curve_no_inversion(self):
+        """任務獎勵曲線：同級任務 EXP 差異 ≤3 倍、高級任務不低於低級 2 倍。"""
+        import collections
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        by_level = collections.defaultdict(list)
+        for q in sim_systems.QUESTS:
+            # 每日任務（DQ）是刻意低獎勵的重複性任務，不納入曲線；
+            # reward_exp 非數值（None/文字列表，如 SL-XX-MAIN 故事追蹤任務
+            # 獎勵=劇情）亦排除——依 schema 判斷而非 id 後綴。
+            if q.get("type") == "daily":
+                continue
+            rw = q.get("reward_exp")
+            if not isinstance(rw, (int, float)):
+                continue
+            lv = self._req_lv(q)
+            by_level[lv].append((q["id"], rw))
+        for lv, items in by_level.items():
+            exps = [e for _i, e in items if e > 0]
+            if len(exps) >= 2:
+                assert max(exps) / min(exps) <= 3.0, (
+                    f"Lv{lv} 同級 EXP 差過大: {items}")
+        for lv in sorted(by_level):
+            for lv2 in sorted(by_level):
+                if lv2 > lv:
+                    hi = max(e for _i, e in by_level[lv] if e > 0)
+                    lo = min(e for _i, e in by_level[lv2] if e > 0)
+                    assert hi <= lo * 2, f"倒掛: Lv{lv} 最高 {hi} > Lv{lv2} 最低 {lo}"
+
+    def test_quest_enemy_strength_matches_level(self):
+        """任務 defeat 目標的敵人強度（HP 推估等級）不得超過任務等級 +2——
+        Lv1 任務不該叫玩家打 HP150 的古代守衛。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        enemy_map = {e["name"]: e for e in sim_systems.ENEMIES}
+        probs = []
+        for q in sim_systems.QUESTS:
+            lv = self._req_lv(q)
+            for obj in q.get("objectives", []):
+                if obj.get("type") == "defeat":
+                    en = obj.get("enemy") or obj.get("target")
+                    e = enemy_map.get(en)
+                    if not e:
+                        continue
+                    est_lv = max(1, (e.get("hp", 30) - 20) // 25 + 1)
+                    if est_lv > lv + 2:
+                        probs.append(f"{q['id']} Lv{lv} 要打 {en} (HP{e.get('hp')})")
+        assert not probs, "\n".join(probs[:10])
+
+    def test_quest_time_window_overlaps_giver_schedule(self):
+        """任務 time_available 時段內 giver 至少有排程槽位重疊
+        （含跨午夜時段如 SQ-08 18-6——小狐丸 18-22 西翼大市集）。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        probs = []
+        for q in sim_systems.QUESTS:
+            g = q.get("giver", "")
+            if not g or g == "系統":
+                continue
+            ta = (q.get("conditions", {}) or {}).get("time_available")
+            if not ta:
+                continue
+            sh, eh = ta.get("start_hour", 0), ta.get("end_hour", 24)
+            sched = sim_systems.NPC_SCHEDULES.get(g, [])
+            ok = any(self._overlap(sh, eh, st, et) for (st, et, _a, _l, _m) in sched)
+            if not ok:
+                probs.append(f"{q['id']} ({g}): 時段 {sh}-{eh} 內無排程")
+        assert not probs, "\n".join(probs[:10])
+
+    def test_quest_goto_targets_world_line_reachable(self):
+        """任務 goto/visit 目標若是跨世界線地點，其進入等級不得超過任務等級——
+        Lv1 任務不該要玩家去需 Lv6 的 W03/W04。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        wl = sim_systems.LOCATION_WORLD_LINES
+        entry = sim_systems.ENTRY_REQUIREMENTS
+        probs = []
+        for q in sim_systems.QUESTS:
+            lv = self._req_lv(q)
+            for obj in q.get("objectives", []):
+                loc = obj.get("location") or obj.get("target")
+                if obj.get("type") in ("goto", "visit") and loc:
+                    w = wl.get(loc, "W01")
+                    if w not in ("W01", "W01+迴廊"):
+                        req = (entry.get(loc, {}) or {}).get("required_level", 0)
+                        if req > lv:
+                            probs.append(f"{q['id']} Lv{lv} → {loc} 需 Lv{req} ({w})")
+        assert not probs, "\n".join(probs[:10])
+
+    def test_common_consumable_prices_sane(self):
+        """初期消耗品價格與 Lv1-3 任務平均獎勵相符——
+        治療藥水 40G 對 Lv1-3 任務約 50G 平均獎勵可負擔。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        cat = sim_systems.ITEM_CATALOG
+        assert cat["治療藥水"]["value"] <= 60, "治療藥水不該過貴"
+        assert cat["乾糧"]["value"] <= 15, "乾糧應是廉價口糧"
+        # 艦裝/軍武類（稀有）可高價，但常規消耗品不得 >150G
+        for n in ("解毒草", "草藥", "魔力藥水", "治療藥水", "乾糧"):
+            assert cat[n]["value"] <= 150, f"常規道具 {n} 價格離群"
