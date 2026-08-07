@@ -600,7 +600,7 @@ def _build_npc_shop_item_def(name: str) -> dict:
 
 
 
-def _build_lore_offers(card: dict, role_text: str, craft_toks: list) -> List[str]:
+def _build_lore_offers(card: dict, role_text: str, craft_toks: list, home_loc: str = "") -> List[str]:
     """Build a lore-accurate trade inventory from a card's actual world setting."""
     offers: List[str] = []
     lore_toks = _tokens_by_cat(card, "lore")
@@ -642,6 +642,21 @@ def _build_lore_offers(card: dict, role_text: str, craft_toks: list) -> List[str
     # Final fallback
     if not offers:
         offers = list(_LORE_TRADE_CATALOG["default"])
+
+    # 世界線庫存過濾（文本：W02 琥珀紀元絕對無魔＋技術斷層——魔法/靈子/
+    # 電子道具不存在，商店不得販賣死亡庫存；W03/W04 依聚合度縮放/過載，
+    # 由執行層處理）。注意：本函式在 expand_game() 之前執行（生成
+    # ALL_NPCS 時），ITEM_CATALOG 尚未注入 _NPC_SHOP_ITEM_OVERRIDES，
+    # 故道具定義需同時查 override 表；W02 的 magic/tech scale 皆為 0，
+    # 直接以 natural 分類保留（自足判定，不依賴執行時聚合度表）。
+    if home_loc and get_location_world_line(home_loc) == "W02":
+        import sim_systems as _ss
+        _kept = []
+        for _o in offers:
+            _idf = _NPC_SHOP_ITEM_OVERRIDES.get(_o) or _ss.ITEM_CATALOG.get(_o, {})
+            if _ss.get_item_world_category(_idf, _o) == "natural":
+                _kept.append(_o)
+        offers = _kept
 
     return offers[:12]
 
@@ -752,7 +767,7 @@ def generate_all_npcs() -> Dict[str, dict]:
             archetype = "default"
 
         # Build LORE-ACCURATE trade inventory (replaces fabricated generic items)
-        offers = _build_lore_offers(card, role_desc, craft_toks)
+        offers = _build_lore_offers(card, role_desc, craft_toks, home)
 
         # Apply supplement card patches
         supp_patches = _supp_map.get(name, []) + _supp_map.get(cid, [])
@@ -764,7 +779,7 @@ def generate_all_npcs() -> Dict[str, dict]:
                 if v:
                     supp_notes.append(v[:60])
             sp_craft = _tokens_by_cat(sp, "craft")
-            extra_offers = _build_lore_offers(sp, sp.get("name", ""), sp_craft)
+            extra_offers = _build_lore_offers(sp, sp.get("name", ""), sp_craft, home)
             for item in extra_offers:
                 if item not in offers and len(offers) < 12:
                     offers.append(item)

@@ -1936,6 +1936,20 @@ def _shop_at_location(character, loc, offers=None):
     print(C.CYAN+"  商店 ("+loc+"):"+C.RESET)
     # 商店貨架：基礎材料/消耗品/防具（地點商店）或 NPC 個人庫存（個人商店）
     items_sold = offers if offers else ["草藥","乾糧","治療藥水","皮甲","解毒草"]
+    # 世界線庫存過濾（文本：W02 琥珀紀元絕對無魔——魔法/靈子/電子道具不存在，
+    # 商店不得販賣死亡庫存；W03/W04 依聚合度縮放/過載，保留但效能受限）。
+    # 資料層 _build_lore_offers 已濾掉 W02 家鄉商店的死亡庫存；此為執行層
+    # 最後防線（涵蓋地點商店與任何來源的 offers）。
+    _wl_fx = sim_systems.get_world_line_effect(loc)[1]
+    if _wl_fx.get("magic_scale", 1.0) <= 0.0 or _wl_fx.get("tech_scale", 1.0) <= 0.0:
+        _shop_kept = []
+        for _n in items_sold:
+            _idf = get_item_def(_n)
+            _cat = sim_systems.get_item_world_category(_idf, _n)
+            _sk = "magic_scale" if _cat == "magic" else "tech_scale"
+            if _cat == "natural" or _wl_fx.get(_sk, 1.0) > 0.0:
+                _shop_kept.append(_n)
+        items_sold = _shop_kept or ["乾糧", "草藥"]
     def _price(name):
         d = get_item_def(name)
         return d.get("value", 10)

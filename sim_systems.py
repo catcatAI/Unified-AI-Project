@@ -1523,10 +1523,16 @@ def get_item_world_category(item_def, item_name=""):
     if "electronic" in tags or "tech" in tags:
         return "tech"
     name = str(item_def.get("name", "")) or str(item_name)
-    # 只認明確的魔法系詞：魔力/靈力/魔法/護身符。靈芝/萬靈藥雖有
-    # 「靈/萬」字樣，但 tags 是 herbal（療傷草藥），非魔法道具。
-    if any(k in name for k in ("魔力", "靈力", "魔法", "護身符")):
+    # 只認明確的魔法/靈子系詞：魔力/靈力/靈子/魔法/護身符/符文/神道/
+    # 祈禱/變身核心。靈芝/萬靈藥雖有「靈/萬」字樣，但 tags 是 herbal
+    # （療傷草藥），非魔法道具——故「靈子」必須與「靈芝」明確區分
+    # （靈子 是靈子塵埃世界的魔法/科技混合粒子）。
+    if any(k in name for k in ("魔力", "靈力", "靈子", "魔法", "護身符",
+                               "符文", "變身核心")):
         return "magic"
+    if any(k in name for k in ("電子", "晶片", "迴路", "義體", "機械",
+                               "程式", "診斷儀", "掃描器", "驅動")):
+        return "tech"
     return "natural"
 
 

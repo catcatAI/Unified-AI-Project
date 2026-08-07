@@ -705,6 +705,32 @@ class TestWorldLineEntryGates:
         mult2, blk2 = sim_systems.world_line_consumable_effect("小吉鎮", herb, "草藥")
         assert mult2 == 1.0 and not blk2
 
+    def test_w02_shops_no_dead_stock(self):
+        """W02 絕對無魔村莊商店不得販賣魔法/電子道具（死亡庫存）——
+        小吉/雞頭四 offers 中任何道具在家鄉使用時不得完全失效。"""
+        import sim_systems
+        from game_data import expand_game, ALL_NPCS
+        expand_game()
+        for nm in ("小吉", "雞頭四"):
+            home = ALL_NPCS.get(nm, {}).get("location", "")
+            assert home in ("小吉鎮", "大根莖村")
+            for o in (ALL_NPCS.get(nm, {}).get("offers") or []):
+                idf = sim_systems.ITEM_CATALOG.get(o, {})
+                if not idf:
+                    continue
+                mult, blk = sim_systems.world_line_consumable_effect(home, idf, o)
+                assert mult > 0.0, "%s 的 %s 在 %s 完全失效（死亡庫存）" % (nm, o, home)
+
+    def test_item_world_category_name_keywords(self):
+        """get_item_world_category 名稱關鍵字：靈子系→magic、電子/機械系→tech，
+        天然療傷草藥（靈芝）不受誤傷。"""
+        import sim_systems
+        assert sim_systems.get_item_world_category({}, "靈子電池") == "magic"
+        assert sim_systems.get_item_world_category({}, "精密機械零件") == "tech"
+        assert sim_systems.get_item_world_category({}, "靈芝") == "natural"
+        assert sim_systems.get_item_world_category({}, "草藥") == "natural"
+        assert sim_systems.get_item_world_category({}, "治療藥水") == "natural"
+
     def test_world_line_rules_scales(self):
         """世界線魔法/電子倍率依 V3.4：W03 電子最高精度+靈子低落、
         W04 電子損壞；地點級聚合度修正（聖十字校園低、玻璃荒漠極高）。"""
