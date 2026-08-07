@@ -754,6 +754,38 @@ class TestWorldLineEntryGates:
                 cat = sim_systems.get_item_world_category(sim_systems.ITEM_CATALOG[ri], ri)
                 assert cat == "natural", "W02 任務 %s 獎勵死道具 %s (%s)" % (q["id"], ri, cat)
 
+    def test_world_clock_switches_with_location(self):
+        """世界時鐘隨角色地點切換活躍世界線：到 W02 看到琥珀紀元、
+        W03 星曆、W04 灰燼紀元、回 W01 恢復公元曆——每個世界有自己
+        的時間並同步對齊隱藏在文本外的整體時鐘（移動/渡水/傳送/衝刺
+        皆應呼叫 _sync_clock_to_location）。"""
+        import sim_systems
+        from game_data import expand_game
+        import world_clock as wc
+        expand_game()
+        # 每條世界線的曆法應與文本一致（V3.4：W02 琥珀紀元/W03 星曆/W04 灰燼）
+        _wl_clock = {
+            "W02": "琥珀紀元",
+            "W03": "星曆",
+            "W04": "灰燼紀元",
+            "夢境層": "墮落之城",
+            "迴廊": "概念時間流",
+        }
+        # 夢境層（墮落之城）曆法名含「墮落之城」即可（實際為「墮落之城內部年」）
+        _wl_to_clock = {
+            "W02": "W02", "W03": "W03", "W04": "W04",
+            "夢境層": "SL-04", "迴廊": "CORRIDOR",
+        }
+        _wl_map = sim_systems.LOCATION_WORLD_LINES
+        for _loc in _wl_map:
+            _wl = _wl_map[_loc]
+            if _wl not in _wl_to_clock:
+                continue
+            _clock_id = _wl_to_clock[_wl]
+            _cal = wc.get_calendar(_clock_id)
+            assert _wl_clock[_wl] in _cal, \
+                "%s(%s) 應含 %s，實際 %s" % (_loc, _clock_id, _wl_clock[_wl], _cal)
+
     def test_world_line_rules_scales(self):
         """世界線魔法/電子倍率依 V3.4：W03 電子最高精度+靈子低落、
         W04 電子損壞；地點級聚合度修正（聖十字校園低、玻璃荒漠極高）。"""

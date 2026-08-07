@@ -122,6 +122,32 @@ from game_familiarity import (get_display_name, get_revealed_info,
 
 import world_clock as wc
 
+# 地點世界線 → 世界時鐘世界線 ID（玩家跨世界線移動時切換時鐘活躍線，
+# 每個世界有自己的時間並同步對齊隱藏在文本外的整體時鐘——
+# 到 W02 琥珀紀元看到中世紀年、到 W03 軌道站看到星曆、回 W01 看到公元曆）
+_WL_TO_CLOCK_ID = {
+    "W01": "W01-A",
+    "W02": "W02",
+    "W03": "W03",
+    "W04": "W04",
+    "夢境層": "SL-04",
+    "迴廊": "CORRIDOR",
+    "SL-10": "SL-10",
+    # W01+迴廊 是 W01 的演唱會/直播次元場地（星光舞台、首爾體育場等），
+    # 仍屬 W01 靈子塵埃主線——顯示公元曆而非迴廊概念時間流
+    "W01+迴廊": "W01-A",
+}
+
+
+def _sync_clock_to_location(character):
+    """依角色當前地點切換世界時鐘活躍世界線（該世界線的紀元/曆法/年份）。"""
+    _wl_map = getattr(sim_systems, "LOCATION_WORLD_LINES", {})
+    _wl = _wl_map.get(character.get("location", ""), "W01")
+    _clock_id = _WL_TO_CLOCK_ID.get(_wl)
+    if _clock_id and wc.get_active_world_line() != _clock_id:
+        wc.set_active_world_line(_clock_id)
+
+
 # ── Globals ────────────────────────────────────────────────────────────────
 _current_season = "春"
 _current_weather = "☀晴"
@@ -1098,6 +1124,7 @@ def do_travel(character, equipment=None):
         character["location"] = _water_dest
         wvibe = LOCATION_VIBES.get(_water_dest,"")
         print(C.GREEN + "  ⇨ %s %s。%s" % (_mob.get("label"), _water_dest, wvibe) + C.RESET)
+        _sync_clock_to_location(character)
         advance_time(character, max(1, round(2 / _speed_mult)))
         _gm_narrate(character, _water_dest)
         roll_random_event(character)
@@ -1211,6 +1238,9 @@ def do_travel(character, equipment=None):
             if not character.get("riding"):
                 hours = max(1, round(base_hours / _speed_mult))
             character["location"] = dest
+            # 世界時鐘隨地點切換活躍世界線（每個世界有自己的時間並同步對齊
+            # 隱藏在文本外的整體時鐘——W02 琥珀紀元 / W03 星曆 / W04 灰燼）
+            _sync_clock_to_location(character)
             # 世界線聚合度隨地點改變——重新套用裝備屬性（reviewer：
             # 進入 W02 絕對無魔後魔法武器加成應立即失效，而非等到重裝備）
             if equipment is not None:
@@ -1815,6 +1845,7 @@ def do_scene_search(character, equipment):
         s_teleport = side.get("teleport_to")
         if s_teleport:
             character["location"] = s_teleport
+            _sync_clock_to_location(character)
             # 世界線聚合度隨地點改變——重新套用裝備屬性
             equipment.apply_stat_bonuses(character)
             print(C.GREEN+"  🌀 你被傳送到了 %s！" % s_teleport + C.RESET)
@@ -2562,6 +2593,7 @@ def do_vehicle_menu(character):
                     if sc.isdigit() and 1<=int(sc)<=len(dl):
                         dloc = dl[int(sc)-1][1]
                         character["location"] = dloc
+                        _sync_clock_to_location(character)
                         character["sp"] = max(0, character["sp"] - 10)
                         print(C.GREEN+"  🚴 衝刺！瞬間到達 %s！（消耗 10SP）"%dloc+C.RESET)
                         _gm_narrate(character, dloc)
@@ -2926,6 +2958,9 @@ def start_game():
             if saved:
                 character = saved
                 init_familiarity(character)
+                # 讀檔後依角色所在世界線恢復時鐘活躍線（存檔在 W02
+                # 重載後不該顯示 W01 的公元曆）
+                _sync_clock_to_location(character)
                 print(C.GREEN+"  讀檔成功!"+C.RESET)
             else:
                 print(C.RED+"  沒有存檔。"+C.RESET)
