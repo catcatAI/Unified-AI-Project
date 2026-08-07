@@ -927,24 +927,67 @@ class TestWorldLineEntryGates:
         assert not leak, f"W03/W04 敵人洩漏到 W01: {leak}"
 
     def test_normal_scenes_no_shadow_enemies(self):
-        """批次 43 reviewer：影之敵（X之影）只允許出現在演出場景
-        （舞台/演唱會/直播/競技等）；普通場景不得被演出敵污染。"""
+        """批次 52（改）：影之敵（X之影）只允許出現在演出場景與角色家鄉
+        （批次 52 的暗影挑戰指派 _SHADOW_HOME_MAP）；隨機污染普通場景的
+        影之敵（非家鄉指派）不得存在。"""
         import sim_systems
         from game_data import expand_game
         expand_game()
         perf_kw = ("舞台", "演唱會", "模式", "瞬間", "盲區", "更衣室", "直播",
                    "控制室", "核心室", "體育場", "競技", "演出")
+        home_map = getattr(sim_systems, "SHADOW_HOME_MAP", {}) or {}
         bad = []
         for loc, names in sim_systems.LOCATION_ENEMIES.items():
             if any(k in loc for k in perf_kw):
                 continue
-            if any("之影" in n for n in names):
-                bad.append(loc)
-        assert not bad, f"普通場景被影之敵污染: {bad}"
+            assigned = set(home_map.get(loc, []))
+            for n in names:
+                if "之影" in n and n not in assigned:
+                    bad.append(f"{loc}:{n}")
+        assert not bad, f"非家鄉指派的影之敵污染普通場景: {bad}"
         # 演出場景保留影之敵
         assert any(any("之影" in n for n in sim_systems.LOCATION_ENEMIES.get(loc, []))
                    for loc in sim_systems.LOCATION_ENEMIES if any(k in loc for k in perf_kw)), \
             "演出場景應保留影之敵"
+
+    def test_card_shadow_enemies_encounterable(self):
+        """批次 52：卡片影之敵（X之影/深淵X之影）不得是死資料——
+        普通版暗影必須可遭遇（絕對無魔安全村角色或家鄉池已達上限者除外），
+        且任一場所的影之敵不得超過其非影敵（文明場所遭遇以場所主題為主）。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        perf_kw = ("舞台", "演唱會", "模式", "瞬間", "盲區", "更衣室", "直播",
+                   "控制室", "核心室", "體育場", "競技", "演出")
+        placed = {n for pool in sim_systems.LOCATION_ENEMIES.values() for n in pool}
+        all_shadows = [e["name"] for e in sim_systems.ENEMIES if "之影" in e["name"]]
+        unplaced = [n for n in all_shadows if n not in placed]
+        normal = [n for n in unplaced if not n.startswith("深淵")]
+        reg = getattr(sim_systems, "SHADOW_CHALLENGES", {}) or {}
+        # 普通版未放置只允許：安全村角色，或家鄉池已達上限（影之敵≥非影敵）
+        for n in normal:
+            home = reg.get(n, "")
+            pool = sim_systems.LOCATION_ENEMIES.get(home, [])
+            nonshadow = len([x for x in pool if "之影" not in x])
+            shadowcnt = len([x for x in pool if "之影" in x])
+            assert (home in ("小吉鎮", "大根莖村") or shadowcnt >= nonshadow), \
+                f"普通版影之敵 {n}@{home} 未放置且未達上限"
+        # 影之敵不得淹沒非演出場所的遭遇池（演出場景是暗影對戰場地，豁免）；
+        # 無非影敵的場所（角色家鄉即挑戰點）最多 1 個影之敵。
+        for loc, pool in sim_systems.LOCATION_ENEMIES.items():
+            if any(k in loc for k in perf_kw):
+                continue
+            nonshadow = len([x for x in pool if "之影" not in x])
+            shadowcnt = len([x for x in pool if "之影" in x])
+            assert shadowcnt <= max(1, nonshadow), \
+                f"{loc} 影之敵({shadowcnt})超過非影敵({nonshadow})"
+        # 家鄉指派的一致性：SHADOW_HOME_MAP 的每個條目都真的在該地點池中
+        home_map = getattr(sim_systems, "SHADOW_HOME_MAP", {}) or {}
+        for loc, names in home_map.items():
+            pool = sim_systems.LOCATION_ENEMIES.get(loc, [])
+            for n in names:
+                assert n in pool, f"家鄉指派 {n}@{loc} 不在遭遇池"
+        assert placed, "沒有任何影之敵可遭遇"
 
     def test_wood_drop_enables_quest_completion(self):
         """批次 45：SQ-09「收集材料」需木材×3——先前木材 0 掉落

@@ -2163,7 +2163,8 @@ def expand_game():
     #   S08 玻璃荒漠 = 靈爆中心殘留（>100ppm）
     #   夢境層 S10/S11 = 概念構成（暗影/幽靈/元素）
     #   原先這些地點的遭遇敵人是隨機指派（玻璃荒漠=虎、軌道站=晞咕萊雅之影），
-    #   且卡片影之敵（X之影/深淵X之影）是任務演出專用，不應出現在一般遭遇池。
+    #   且卡片影之敵（X之影/深淵X之影）只限演出場景與角色家鄉指派（批次 52）
+    #   出現，不應被隨機指派污染這些世界線規範敵人群。
     # ────────────────────────────────────────────────────────────
     _WORLD_LINE_ENEMY_OVERRIDES = {
         "熒光沼澤":         ["螢光獵手", "沼澤變異體", "暗影靈"],
@@ -2433,8 +2434,9 @@ def expand_game():
     # 1. 世界線洩漏清理——distribution/場景/卡片整合各段可能把 W03/W04
     #    專屬敵隨機塞進 W01 地點；覆寫表只替換跨線目標，此處把世界線
     #    敵人名從所有非目標地點移除（如珊瑚台被隨機指派站內巡邏無人機）。
-    # 2. 影之敵排除——卡片影之敵（X之影/深淵X之影）是任務演出專用；
-    #    普通場景不得被演出敵污染日常遭遇，演出場景刻意保留。
+    # 2. 影之敵排除——卡片影之敵（X之影/深淵X之影）只允許出現在演出場景
+    #    與角色家鄉指派（批次 52 _SHADOW_HOME_MAP）；隨機指派污染普通場景
+    #    的影之敵移除，演出場景刻意保留。
     # ────────────────────────────────────────────────────────────
     _WL_NAMES = set()
     for _nlist in _WORLD_LINE_ENEMY_OVERRIDES.values():
@@ -2450,6 +2452,87 @@ def expand_game():
                 _plain = [e for e in sim_systems.ENEMIES
                           if e["name"] not in _WL_NAMES and "之影" not in e["name"]]
                 sim_systems.LOCATION_ENEMIES[_loc] = [_seed.choice(_plain)["name"]]
+    # 2.1 卡片影之敵指派——每個角色卡的暗影挑戰（X之影/深淵X之影）
+    #     出現在角色家鄉：卡片 combat token → 暗影，代表在角色所在處可被
+    #     挑戰的戰鬥化身（演出場景的暗影另由演出段保留）。
+    #     規則：絕對無魔安全村（小吉鎮/大根莖村）不放（無敵人規則優先）；
+    #     世界線權威地點（軌道站/鏽蝕城邦/熒光沼澤等）不摻入（W03 機械系/
+    #     W04 灰燼系為文本規範專屬敵）；深淵版（強敵）只放非休閒/文明場所
+    #     （休閒場所無強敵規則，批次 51）；且任一場所的影之敵不得超過其
+    #     非影敵數量（文明場所遭遇以場所主題敵人為主——全量放置曾讓
+    #     中央大圖書館 88% 遭遇是角色暗影，違反文本常理）。超出上限的角色
+    #     暗影仍登記於 sim_systems.SHADOW_CHALLENGES（未來「NPC 挑戰」
+    #     功能引用），不再污染日常遭遇池。原先影之敵僅靠隨機指派命中演出
+    #     場景，200 個中 194 個永遠不可遭遇（死資料）——此處以角色家鄉
+    #     為錨全部成為可遭遇的暗影挑戰。
+    _ABSOLUTE_SAFE = {"小吉鎮", "大根莖村"}
+    _SHADOW_HOME_MAP: Dict[str, list] = {}
+    _SHADOW_CHALLENGES: Dict[str, str] = {}
+
+    def _shadow_priority(_c: dict) -> int:
+        # 有 combat token 的角色優先進池（暗影挑戰主要是戰鬥角色）
+        return len(_tokens_by_cat(_c, "combat"))
+
+    for _scard in sorted(_CHARACTER_CARDS, key=_shadow_priority, reverse=True):
+        # 影之敵由 _generate_card_enemies 對**所有**角色卡生成（非 combat 卡
+        # 也有較弱的暗影）——指派同樣涵蓋全部角色卡，避免半數暗影死資料。
+        _sraw = _scard.get("name", "?")
+        for _ssep in ("(", "（", "[", "［"):
+            _sraw = _sraw.split(_ssep)[0]
+        _sraw = _sraw.strip()
+        if not _sraw:
+            continue
+        _snpc = ALL_NPCS.get(_sraw)
+        if not _snpc:
+            continue
+        _shome = str(_snpc.get("location", "") or "")
+        if not _shome or _shome in _ABSOLUTE_SAFE:
+            continue
+        if _shome in _WORLD_LINE_ENEMY_OVERRIDES:
+            continue
+        if _shome not in sim_systems.WORLD_MAP and _shome not in sim_systems.LOCATION_ENEMIES:
+            continue
+        _sname = f"{_sraw[:6]}之影"
+        _dname = f"深淵{_sname}"
+        # 完整登記（含超出池上限者）：供未來 NPC 挑戰功能引用，不死資料。
+        # 注意：絕對無魔安全村（小吉鎮/大根莖村）與世界線權威地點的角色
+        # 在下方 continue 前不登記（村莊無敵人規則/世界線規範敵優先）。
+        _scombat = len(_tokens_by_cat(_scard, "combat"))
+        _sbase_hp = 45 + _scombat * 10 if _scombat else 40
+        _sbase_atk = 14 + _scombat * 3 if _scombat else 12
+        # 數值強敵（HP>=120 或 ATK>=30，與批次 51 強敵定義一致）不得進
+        # 休閒/文明場所——高 combat token 角色的普通暗影可達 HP115/ATK35，
+        # 而強敵清洗豁免之影、get_enemy 關鍵字過濾（遠古/深淵）也抓不到
+        # 無前綴的數值強敵，會破壞新手安全區保證。
+        _sstrong = (_sbase_hp >= 120 or _sbase_atk >= 30)
+        _SHADOW_CHALLENGES[_sname] = _shome
+        _SHADOW_CHALLENGES[_dname] = _shome
+        _spool = sim_systems.LOCATION_ENEMIES.setdefault(_shome, [])
+        # 非影敵數以池內現況計；影之敵額度以「本段已指派數」計——
+        # distribution 段會先隨機把影之敵塞進各池（尾部 step 2 才清除），
+        # 讀池內 shadowcnt 會被隨機污染佔掉額度；且放置前查池內去重，
+        # 否則同一名字會因 distribution 隨機命中家鄉而重複兩次。
+        _nonshadow = len([_x for _x in _spool if "之影" not in _x]) or 1
+        _placed_here = _SHADOW_HOME_MAP.setdefault(_shome, [])
+        _shadowcnt = len(_placed_here)
+        if _sname in _spool:
+            # 已被 distribution 隨機放進池（恰為家鄉）→ 直接登記為指派
+            if _sname not in _placed_here:
+                _placed_here.append(_sname)
+        elif _shadowcnt < _nonshadow and not (_shome in _NO_STRONG_LOCS and _sstrong):
+            _spool.append(_sname)
+            _placed_here.append(_sname)
+            _shadowcnt += 1
+        if _shome not in _NO_STRONG_LOCS:
+            if _dname in _spool:
+                if _dname not in _placed_here:
+                    _placed_here.append(_dname)
+            elif _shadowcnt < _nonshadow:
+                _spool.append(_dname)
+                _placed_here.append(_dname)
+                _shadowcnt += 1
+    sim_systems.SHADOW_CHALLENGES = dict(_SHADOW_CHALLENGES)
+
     # NPC 個人商店道具補齊（所有 NPC_METADATA 建立完成後）
     for _nname, _ndata in sim_systems.NPC_METADATA.items():
         for _offer in _ndata.get("offers", []):
@@ -2477,9 +2560,17 @@ def expand_game():
             continue
         if any(k in _loc for k in _PERF_KW):
             continue
-        if any("之影" in n for n in _names) and _non_shadow_enemies:
-            sim_systems.LOCATION_ENEMIES[_loc] = [
-                n for n in _names if "之影" not in n] or [_seed.choice(_non_shadow_enemies)["name"]]
+        # 只清「非指派」的影之敵：隨機指派污染的影之敵移除，角色家鄉指派
+        # （_SHADOW_HOME_MAP，批次 52）的暗影挑戰刻意保留。
+        _shadow_assigned = _SHADOW_HOME_MAP.get(_loc, ())
+        if any("之影" in n and n not in _shadow_assigned for n in _names):
+            _clean = [n for n in _names if "之影" not in n or n in _shadow_assigned]
+            if _clean:
+                sim_systems.LOCATION_ENEMIES[_loc] = _clean
+            elif _non_shadow_enemies:
+                sim_systems.LOCATION_ENEMIES[_loc] = [_seed.choice(_non_shadow_enemies)["name"]]
+            else:
+                sim_systems.LOCATION_ENEMIES[_loc] = _clean
 
     # 3. 休閒/商業/住宅場所強敵清洗——所有地點來源（distribution/場景/
     #    卡片整合/NPC 段）都完成後執行：市集/溫泉/圖書館/學府等文明場所
@@ -2507,6 +2598,34 @@ def expand_game():
             _rkeep = list(_RELAX_FALLBACK[_loc])
         if _rkeep != _rnames:
             sim_systems.LOCATION_ENEMIES[_loc] = _rkeep
+
+    # 4. 最終影之敵比例校驗（批次 52）——步驟 3 的強敵清洗可能移除非影敵
+    #    （如火靈 ATK30），使放置時的額度失效（影之敵反超非影敵）。
+    #    最後確保任何非演出場所的影之敵 ≤ 非影敵；超出者依指派優先序
+    #    （SHADOW_HOME_MAP 順序，combat 角色在前）丟棄，避免文明場所
+    #    被角色暗影淹沒（先前全量放置讓中央大圖書館 88% 遭遇是暗影）。
+    for _loc in list(sim_systems.LOCATION_ENEMIES.keys()):
+        if any(k in _loc for k in _PERF_KW):
+            continue
+        _names = sim_systems.LOCATION_ENEMIES[_loc]
+        _nonshadow = len([_x for _x in _names if "之影" not in _x])
+        _shadows = [_x for _x in _names if "之影" in _x]
+        _keep_n = _nonshadow or 1
+        if len(_shadows) <= _keep_n:
+            continue
+        _order = _SHADOW_HOME_MAP.get(_loc, [])
+        _keep = [s for s in _order if s in _shadows][:_keep_n]
+        if len(_keep) < _keep_n:
+            _keep += [s for s in _shadows if s not in _keep][:_keep_n - len(_keep)]
+        sim_systems.LOCATION_ENEMIES[_loc] = [
+            _x for _x in _names if "之影" not in _x] + _keep
+        # 丟棄的影之敵同步從 SHADOW_HOME_MAP 移除（保持指派一致性）
+        if _order:
+            _SHADOW_HOME_MAP[_loc] = [s for s in _order if s in _keep]
+            if not _SHADOW_HOME_MAP[_loc]:
+                del _SHADOW_HOME_MAP[_loc]
+    # 最終指派表（所有清洗/校驗完成後）導出：供測試與未來 NPC 挑戰功能引用
+    sim_systems.SHADOW_HOME_MAP = {_k: list(_v) for _k, _v in _SHADOW_HOME_MAP.items()}
 
     after = {
         "items": len(sim_systems.ITEM_CATALOG),
