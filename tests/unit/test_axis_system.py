@@ -822,6 +822,28 @@ class TestWorldLineEntryGates:
                  for n in pool if n not in emap]
         assert not ghost, f"幽靈敵人: {ghost}"
 
+    def test_relax_locations_no_strong_enemies(self):
+        """批次 51：休閒/商業/住宅場所（市集/溫泉/圖書館/學府/校園/便利店
+        等）不得有非影之敵的強敵（遠古/凶暴/深淵前綴或 HP>=120/ATK>=30）
+        ——文明場所出現遠古虎/大地靈違反文本常理；影之敵（演出設計）豁免。"""
+        import sim_systems
+        from game_data import expand_game
+        expand_game()
+        relax = ("便利店", "聖十字校園", "鏡湖", "清溪河", "小吉鎮", "大根莖村",
+                 "中央大圖書館", "煙雲溫泉湖", "西翼大市集", "農學院", "魔女學府",
+                 "聖十字環形堡壘校園", "直播控制室")
+        emap = {e["name"]: e for e in sim_systems.ENEMIES}
+        bad = []
+        for loc in relax:
+            for n in sim_systems.LOCATION_ENEMIES.get(loc, []):
+                if "之影" in n:
+                    continue
+                e = emap.get(n, {})
+                if (any(k in n for k in ("遠古", "凶暴", "兇暴", "深淵"))
+                        or (e.get("hp") or 0) >= 120 or (e.get("atk") or 0) >= 30):
+                    bad.append((loc, n))
+        assert not bad, f"休閒場所出現強敵: {bad}"
+
     def test_shadow_enemy_names_no_broken_parentheses(self):
         """批次 43：卡片影之敵名稱不能含殘留括號（全形括號 split 失敗
         會產生「小無（Xiǎ之影」這種缺右括號的名字）。"""

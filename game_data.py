@@ -1865,17 +1865,29 @@ def expand_game():
     cnt["enemies"] += 1
     
     # Enemy distribution
-    # 強敵（凶暴/遠古/深淵/W03/W04 專屬）不得隨機塞進新手安全區——
-    # 原先隨機指派讓便利店出現遠古水馬、軌道站維修機械（W03）等，違反常理。
-    # 安全區：新手村/校園/湖畔/溪畔/W02 村落（絕對無魔安全區）。
+    # 強敵（凶暴/遠古/深淵/數值超標 HP>=120 或 ATK>=30）不得隨機塞進
+    # 新手安全區或休閒/商業/住宅場所——原先隨機指派讓便利店出現遠古水馬、
+    # 西翼大市集出現遠古虎(HP270)、煙雲溫泉湖出現大地靈(HP220)等，違反常理。
+    # 新手安全區：新手村/校園/湖畔/溪畔/W02 村落（絕對無魔安全區）。
+    # 休閒/商業/住宅場所：市集/溫泉/圖書館/學府/農場/直播室等文明場所。
     _SAFE_LOCS = {"便利店", "聖十字校園", "鏡湖", "清溪河", "小吉鎮", "大根莖村"}
+    _NO_STRONG_LOCS = _SAFE_LOCS | {
+        "中央大圖書館", "煙雲溫泉湖", "西翼大市集", "農學院", "魔女學府",
+        "聖十字環形堡壘校園", "直播控制室",
+        # 演出/文明場所：舞台、體育場、機房、後台不得被 distribution 塞強敵
+        # （影之敵演出設計仍由卡片段保留）
+        "星光舞台", "演唱會模式", "伺服器核心室", "後台更衣室", "首爾奧林匹克體育場",
+    }
     loc_list = list(sim_systems.LOCATION_ENEMIES.keys())
-    _strong_loc_list = [l for l in loc_list if l not in _SAFE_LOCS] or loc_list
+    _strong_loc_list = [l for l in loc_list if l not in _NO_STRONG_LOCS] or loc_list
     _strong_kw = ("凶暴", "兇暴", "遠古", "深淵", "灰燼", "拾荒王", "螢光獵手",
                   "沼澤變異體", "站內巡邏無人機", "軌道站維修機械")
+    _all_enemy_map = {e2["name"]: e2 for e2 in ALL_ENEMIES}
     for e in ALL_ENEMIES:
         if not any(e["name"] in names for names in sim_systems.LOCATION_ENEMIES.values()):
-            _is_strong = any(k in e["name"] for k in _strong_kw)
+            _ed = _all_enemy_map.get(e["name"], {})
+            _is_strong = (any(k in e["name"] for k in _strong_kw)
+                          or (_ed.get("hp") or 0) >= 120 or (_ed.get("atk") or 0) >= 30)
             loc = _seed.choice(_strong_loc_list if _is_strong else loc_list)
             sim_systems.LOCATION_ENEMIES.setdefault(loc, []).append(e["name"])
             cnt["enemy_dist"] += 1
@@ -1889,7 +1901,7 @@ def expand_game():
         _e["name"] = _new
     for _loc, _names in sim_systems.LOCATION_ENEMIES.items():
         sim_systems.LOCATION_ENEMIES[_loc] = [_enemy_name_map.get(n, n) for n in _names]
-    
+
     # NPCs
     for name, nd in ALL_NPCS.items():
         if name not in sim_systems.NPC_SCHEDULES:
@@ -2468,6 +2480,33 @@ def expand_game():
         if any("之影" in n for n in _names) and _non_shadow_enemies:
             sim_systems.LOCATION_ENEMIES[_loc] = [
                 n for n in _names if "之影" not in n] or [_seed.choice(_non_shadow_enemies)["name"]]
+
+    # 3. 休閒/商業/住宅場所強敵清洗——所有地點來源（distribution/場景/
+    #    卡片整合/NPC 段）都完成後執行：市集/溫泉/圖書館/學府等文明場所
+    #    不得出現遠古虎/大地靈/遠古吸血蝙蝠（文本常理：文明場所安全）。
+    #    影之敵（演出專用，在關聯場景刻意保留）豁免；場所被清空時補語境
+    #    普通敵人。
+    _emap_final = {e3["name"]: e3 for e3 in sim_systems.ENEMIES}
+    _RELAX_FALLBACK = {
+        "聖十字環形堡壘校園": ["石像鬼", "哥布林"],
+        "農學院": ["鐵甲虫"],
+        "魔女學府": ["星靈"],
+        "直播控制室": ["盜賊"],
+        "星光舞台": ["盜賊"], "演唱會模式": ["哥布林"],
+        "伺服器核心室": ["哥布林"], "後台更衣室": ["盜賊"],
+        "首爾奧林匹克體育場": ["盜賊", "哥布林"],
+    }
+    for _loc in _NO_STRONG_LOCS:
+        _rnames = sim_systems.LOCATION_ENEMIES.get(_loc, [])
+        _rkeep = [n for n in _rnames
+                  if "之影" in n
+                  or not (any(k in n for k in ("遠古", "凶暴", "兇暴", "深淵"))
+                          or (_emap_final.get(n, {}).get("hp") or 0) >= 120
+                          or (_emap_final.get(n, {}).get("atk") or 0) >= 30)]
+        if not _rkeep and _loc in _RELAX_FALLBACK:
+            _rkeep = list(_RELAX_FALLBACK[_loc])
+        if _rkeep != _rnames:
+            sim_systems.LOCATION_ENEMIES[_loc] = _rkeep
 
     after = {
         "items": len(sim_systems.ITEM_CATALOG),
