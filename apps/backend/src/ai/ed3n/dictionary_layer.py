@@ -65,6 +65,7 @@ class DictionaryLayer:
         self._lock = threading.RLock()
         self._growth_history: List[Dict[str, Any]] = []
         self._index_version: int = 0
+        self._surface_norm_cache: Dict[str, List[str]] = {}
         self._encode_cache: OrderedDict = OrderedDict()
         self._encode_cache_max: int = cache_value("ai.dictionary_layer.encode_cache_max", 256)
 
@@ -108,9 +109,11 @@ class DictionaryLayer:
         if len(raw) <= cap:
             return raw
         soft = self.encode_soft(text)
-        scored = [(k, soft.get(k, 0.0)) for k in raw]
+        scored = [
+            (k, soft[k]) for k in raw if k in soft and soft[k] >= self.MIN_ENCODE_SCORE
+        ]
         scored.sort(key=lambda x: x[1], reverse=True)
-        filtered = [k for k, s in scored if s >= self.MIN_ENCODE_SCORE]
+        filtered = [k for k, s in scored]
         if not filtered:
             return raw[:cap]
         return filtered[:cap]
@@ -142,8 +145,10 @@ class DictionaryLayer:
             if entry is None:
                 continue
             best = 0.0
-            for sf in entry.surface_forms.values():
-                sf_lower = normalize_text(sf).lower().strip()
+            surface_lower_list = self._surface_norm_cache.get(key)
+            if surface_lower_list is None:
+                continue
+            for sf_lower in surface_lower_list:
                 if not sf_lower:
                     continue
                 if sf_lower == text_lower:
@@ -660,15 +665,18 @@ class DictionaryLayer:
         with self._lock:
             self._keyword_index.clear()
             self._bigram_index.clear()
+            self._surface_norm_cache.clear()
             large_dict = len(self.entries) > 1000
             for key, entry in self.entries.items():
+                norm_surfaces = []
                 for lang, surface in entry.surface_forms.items():
-                    surface_lower = normalize_text(surface).lower()
+                    surface_norm = normalize_text(surface).lower()
+                    norm_surfaces.append(surface_norm.strip())
 
-                    if surface_lower.isascii():
-                        tokens = surface_lower.split()
+                    if surface_norm.isascii():
+                        tokens = surface_norm.split()
                     else:
-                        tokens = re.findall(r"[\w]+", surface_lower)
+                        tokens = re.findall(r"[\w]+", surface_norm)
                     for token in tokens:
                         self._keyword_index.setdefault(token, []).append(key)
 
@@ -676,11 +684,12 @@ class DictionaryLayer:
                     # to avoid O(n * m) performance cost.
                     # Bigram index is only used as a fallback in encode_soft()
                     # when keyword search finds no candidates.
-                    if not large_dict and len(surface_lower) >= 4:
-                        for i in range(len(surface_lower) - 1):
-                            bigram = surface_lower[i : i + 2]
+                    if not large_dict and len(surface_norm) >= 4:
+                        for i in range(len(surface_norm) - 1):
+                            bigram = surface_norm[i : i + 2]
                             if re.match(r"[\w]", bigram[0]) and re.match(r"[\w]", bigram[1]):
                                 self._bigram_index.setdefault(bigram, []).append(key)
+                self._surface_norm_cache[key] = norm_surfaces
             if self._keyword_index:
                 self._max_kw_len = max(len(k) for k in self._keyword_index)
                 self._keyword_rank = {k: i for i, k in enumerate(self._keyword_index)}
