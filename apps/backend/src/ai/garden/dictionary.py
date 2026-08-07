@@ -27,9 +27,12 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 from collections import OrderedDict
 from ai.core.unicode_utils import normalize_text
+from ai.data_eng.dedup import prefix_dedup, prefix_overlap, surface_dedup
+from ai.data_eng.grow import growth_cap_ok, resolved_max_entries
 from core.system.config.magic_numbers import (
     compute_bool,
     confidence_value,
+    model_sizing_config,
     threshold_value,
 )
 
@@ -443,7 +446,12 @@ class VectorDictionary:
         self._dirty = True  # re-index flag
         self._presets_loaded = False
         self.growth_threshold = threshold_value("ai.garden.dictionary.growth_threshold", 0.6)
-        self.max_entries = 10000  # Max entries before stopping growth
+        # Single cap authority: magic_numbers sizing (10k conservative / config-driven extended).
+        # Extended mode raises this toward the capacity cascade so a 10GB GARDEN
+        # model can actually hold 40k+ concepts instead of stopping at 10k.
+        self.max_entries = resolved_max_entries(
+            model_sizing_config().get("max_vocab"), default=10000
+        )
 
     # ------------------------------------------------------------------
     # Encoder setup
@@ -506,7 +514,7 @@ class VectorDictionary:
         surface form on the existing entry, so encode() finds it via exact
         match and the original input is preserved for decode.
         """
-        if len(self.entries) >= self.max_entries:
+        if not growth_cap_ok(len(self.entries), self.max_entries):
             return ""  # Max entries reached
         confidence = (
             confidence
@@ -565,7 +573,7 @@ class VectorDictionary:
         )
         new_keys: List[str] = []
         for text in texts:
-            if len(self.entries) >= self.max_entries:
+            if not growth_cap_ok(len(self.entries), self.max_entries):
                 logger.info("GARDEN: max entries reached (%d), stopping growth", self.max_entries)
                 break
             existing = self._find_similar_key(
@@ -592,8 +600,9 @@ class VectorDictionary:
         )
         lower = text.lower().strip()
         # Fast path: exact match via set lookup
-        if lower in self._surface_set:
-            return self._surface_set[lower]
+        exact = surface_dedup(lower, self._surface_set)
+        if exact:
+            return exact
         # Semantic dedup: check cosine similarity with existing entries
         if not (self._dirty or self._matrix is None or len(self._key_order) == 0):
             try:
@@ -610,18 +619,14 @@ class VectorDictionary:
         # Catches "happy"/"happiness" (shared "happ" prefix) and
         # "run"/"running" (shared "runn" prefix) but not "happy"/"glad"
         try:
-            best_key = None
-            best_score = 0.0
-            for key, entry in self.entries.items():
-                for form in entry.surface_forms.values():
-                    if not form:
-                        continue
-                    form_lower = form.lower().strip()
-                    score = self._prefix_overlap(lower, form_lower)
-                    if score > best_score:
-                        best_score = score
-                        best_key = key
-            if best_score >= threshold and best_key:
+            forms = (
+                (form.lower().strip(), key)
+                for key, entry in self.entries.items()
+                for form in entry.surface_forms.values()
+                if form
+            )
+            best_key, _best_score = prefix_dedup(lower, forms, threshold=threshold)
+            if best_key:
                 return best_key
         except Exception:
             logger.warning("Prefix dedup failed", exc_info=True)
@@ -635,22 +640,19 @@ class VectorDictionary:
         """
         lower = text.lower().strip()
         # Fast path: exact match via set lookup
-        if lower in self._surface_set:
-            return self._surface_set[lower]
+        exact = surface_dedup(lower, self._surface_set)
+        if exact:
+            return exact
         # Prefix-based dedup for word forms only
         try:
-            best_key = None
-            best_score = 0.0
-            for key, entry in self.entries.items():
-                for form in entry.surface_forms.values():
-                    if not form:
-                        continue
-                    form_lower = form.lower().strip()
-                    score = self._prefix_overlap(lower, form_lower)
-                    if score > best_score:
-                        best_score = score
-                        best_key = key
-            if best_score >= 0.8 and best_key:
+            forms = (
+                (form.lower().strip(), key)
+                for key, entry in self.entries.items()
+                for form in entry.surface_forms.values()
+                if form
+            )
+            best_key, _best_score = prefix_dedup(lower, forms, threshold=0.8)
+            if best_key:
                 return best_key
         except Exception:
             logger.warning("Prefix dedup failed", exc_info=True)
@@ -659,27 +661,12 @@ class VectorDictionary:
     @staticmethod
     def _prefix_overlap(a: str, b: str, min_prefix: int = 3) -> float:
         """Compute prefix overlap ratio between two strings.
+
         Returns 1.0 for exact match, ~0.8 for 'happy'/'happiness', 0.0 for unrelated.
-        Used for word-form dedup (happy/happiness, run/running, big/bigger)."""
-        if a == b:
-            return 1.0
-        if not a or not b:
-            return 0.0
-        # Find longest common prefix
-        prefix_len = 0
-        for ca, cb in zip(a, b):
-            if ca == cb:
-                prefix_len += 1
-            else:
-                break
-        if prefix_len < min_prefix:
-            return 0.0
-        # Score based on prefix length relative to shorter word
-        # "happy"/"happiness": prefix=4, min_len=5 → 0.8
-        # "big"/"bigger": prefix=3, min_len=3 → 1.0
-        # "test"/"testing": prefix=4, min_len=4 → 1.0
-        min_len = min(len(a), len(b))
-        return prefix_len / min_len if min_len > 0 else 0.0
+        Used for word-form dedup (happy/happiness, run/running, big/bigger).
+        Single source of truth in ``ai.data_eng.dedup.prefix_overlap``.
+        """
+        return prefix_overlap(a, b, min_prefix=min_prefix)
 
     # ------------------------------------------------------------------
     # Index building (lazy)
@@ -713,6 +700,14 @@ class VectorDictionary:
         embeddings = self._encoder.encode(texts)  # [N, D]
 
         self._matrix = self._normalize(embeddings, dim=-1)
+
+        # The encoder re-fit may change the embedding dimension (e.g. the
+        # TF-IDF fallback grows its vocab as the dictionary grows).  Any
+        # query vectors cached from before the re-fit have the OLD dimension
+        # and would crash the batched np.stack/torch.stack in encode()
+        # ("all input arrays must have the same shape") on the next query.
+        # Drop the cache so only current-dimension vectors are ever stacked.
+        self._embed_cache = None
 
         self._dirty = False
         logger.debug(

@@ -6,6 +6,8 @@ Tests for GARDEN GARDENEngine.
 """
 
 import os
+import random
+import string
 import tempfile
 
 import pytest
@@ -456,3 +458,54 @@ class TestIsDeterministicMatch:
 
     def test_float_result(self):
         assert is_deterministic_match("22 / 7", "22 / 7 = 3.14") is True
+
+
+def _rand_word(min_len=4, max_len=10):
+    return "".join(random.choice(string.ascii_lowercase) for _ in range(random.randint(min_len, max_len)))
+
+
+class TestLearnBatchRobustness:
+    """GARDEN learn_batch must tolerate non-string / empty training samples."""
+
+    def _engine(self):
+        e = GARDENEngine(compatibility_mode=True)
+        e.load_presets()
+        return e
+
+    def test_non_string_samples(self):
+        e = self._engine()
+        samples = [
+            {"input": None, "output": "hello world"},
+            {"input": 123, "output": "numeric input"},
+            {"input": "", "output": ""},
+            {"input": "x", "output": "y"},  # below min token length
+            {"input": "a b c", "output": "d e f"},
+        ]
+        result = e.learn_batch(samples, confidence=0.7, train_associations=True)
+        assert result["samples_processed"] == len(samples)
+
+    def test_cross_batch_vocab_growth_no_crash(self):
+        """Regression: stale embed cache after encoder re-fit (dim change) must
+        not raise 'all input arrays must have the same shape'."""
+        e = self._engine()
+        b1 = [{"input": _rand_word() + " one", "output": _rand_word() + " two"} for _ in range(8)]
+        e.learn_batch(b1, confidence=0.7)
+        # Batch 2 adds many distinct tokens -> encoder re-fit with larger dim.
+        b2 = [
+            {"input": _rand_word() + " xyzqr abcde", "output": _rand_word()}
+            for _ in range(30)
+        ]
+        r2 = e.learn_batch(b2, confidence=0.7)
+        assert r2["samples_processed"] == 30
+        # A query that must run TF-IDF Step 4 (unmatched token, uses cache).
+        out = e.process("ponupp zzz")
+        assert isinstance(out, str)
+
+    def test_cjk_batch(self):
+        e = self._engine()
+        samples = [
+            {"input": "中国是世界上人口最多的国家", "output": "中国拥有十四亿人口"},
+            {"input": "北京是中国的首都", "output": "北京是政治文化中心"},
+        ]
+        result = e.learn_batch(samples, confidence=0.7, train_associations=True)
+        assert result["samples_processed"] == 2

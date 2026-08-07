@@ -1747,6 +1747,8 @@ def _ensure_daily_data() -> None:
     present. The downloader fetches a genuine open dataset (no synthetic
     fabrication) — on failure it only warns and training continues without it.
     """
+    if os.environ.get("TRAIN_DRY_RUN", "0") == "1":
+        return
     if os.path.exists(os.path.join(DATA_DIR, "alpaca_data.json")):
         return
     script = os.path.join(os.path.dirname(__file__), "download_daily_data.py")
@@ -1763,6 +1765,37 @@ def _ensure_daily_data() -> None:
             )
     except Exception as e:  # noqa: BLE001 - network/timer failures must not abort training
         logger.warning("Daily-dialogue auto-download skipped: %s", e)
+
+
+def _ensure_corpus() -> None:
+    """Resume-download the multilingual wiki/tatoeba corpus toward ~10GB.
+
+    Resumable: each source records its byte offset in state.json, so a
+    re-run (even after an interruption) continues where it left off. On any
+    failure it only warns — training proceeds with whatever corpus exists.
+    Only runs in a real training pass (skipped in TRAIN_DRY_RUN=1), and can be
+    turned off entirely with TRAIN_NO_CORPUS=1.
+    """
+    if os.environ.get("TRAIN_DRY_RUN", "0") == "1":
+        return
+    if os.environ.get("TRAIN_NO_CORPUS", "0") == "1":
+        logger.info("Corpus download disabled (TRAIN_NO_CORPUS=1); skipping.")
+        return
+    script = os.path.join(os.path.dirname(__file__), "download_corpus.py")
+    if not os.path.exists(script):
+        return
+    logger.info("Resuming multilingual corpus download (resumable, ~10GB target)...")
+    try:
+        code = subprocess.run(
+            [sys.executable, script],
+            capture_output=True,
+            text=True,
+            timeout=1200,
+        ).returncode
+        if code != 0:
+            logger.warning("Corpus auto-download failed; training continues without it.")
+    except Exception as e:  # noqa: BLE001 - network/timer failures must not abort training
+        logger.warning("Corpus auto-download skipped: %s", e)
 
 
 def main() -> None:
@@ -1803,6 +1836,7 @@ def main() -> None:
     # -----------------------------------------------------------------------
     print("\n[1/8] Loading and generating data...")
     _ensure_daily_data()
+    _ensure_corpus()
     (
         dataset_samples,
         alpaca_samples,

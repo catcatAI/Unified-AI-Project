@@ -35,6 +35,9 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "apps" / "backend" / "src"))
+from ai.data_eng.dedup import count_suffix_key  # noqa: E402
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -230,9 +233,7 @@ def convert_jmdict(gz_path: Path) -> Path:
         if not en_key or len(en_key) < 2:
             en_key = f"jmdict_{hash(ja) % 10**6}"
 
-        key_counts[en_key] = key_counts.get(en_key, 0) + 1
-        count = key_counts[en_key]
-        dedup_key = f"{en_key}_{count}" if count > 1 else en_key
+        dedup_key, _ = count_suffix_key(en_key, key_counts)
 
         entry={
             "key": f"jmdict_{dedup_key}",
@@ -351,9 +352,7 @@ def convert_wordnet(tgz_path: Path) -> Path:
                 entry_key = lemma.lower().replace(" ", "_")
                 entry_key = re.sub(r"[^a-z0-9_]", "", entry_key)
 
-                key_counts[entry_key] = key_counts.get(entry_key, 0) + 1
-                cnt = key_counts[entry_key]
-                dedup_key = f"{entry_key}_{cnt}" if cnt > 1 else entry_key
+                dedup_key, _ = count_suffix_key(entry_key, key_counts)
 
                 # Add synonyms as relations
                 rels: dict[str, list[str]] = {}
@@ -462,9 +461,7 @@ def convert_koedict(yaml_path: Path) -> Path:
                     if not en_key or len(en_key) < 2:
                         en_key = f"koedict_{hash(ko) % 10**6}"
 
-                    key_counts[en_key] = key_counts.get(en_key, 0) + 1
-                    cnt = key_counts[en_key]
-                    dedup_key = f"{en_key}_{cnt}" if cnt > 1 else en_key
+                    dedup_key, _ = count_suffix_key(en_key, key_counts)
 
                     entry = {
                         "key": f"koedict_{dedup_key}",

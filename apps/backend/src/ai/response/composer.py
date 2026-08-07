@@ -23,6 +23,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
 from ai.ed3n.ed3n_engine import ED3NEngine as _ED3NEngine_cls
+from ai.data_eng.chunk import split_sentence_blocks
 from core.system.config.magic_numbers import (
     confidence_value,
     learning_rate,
@@ -275,18 +276,8 @@ class FragmentComposer:
         )
 
     def _split_template(self, template: str, context: Dict[str, Any]) -> List[Fragment]:
-        """将模板切分为片段"""
-        sentences = []
-        current = ""
-        for char in template:
-            current += char
-            if char in ["。", "！", "？", ".", "!", "?"]:
-                if current.strip():
-                    sentences.append(current.strip())
-                current = ""
-
-        if current.strip():
-            sentences.append(current.strip())
+        """将模板切分为片段（delegates to data_eng.chunk）"""
+        sentences = split_sentence_blocks(template)
 
         fragments = []
         for i, sentence in enumerate(sentences):

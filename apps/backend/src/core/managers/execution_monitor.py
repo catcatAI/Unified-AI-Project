@@ -31,10 +31,22 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
 import psutil
-from core.system.config.magic_numbers import loop_sleep, timeout_value
+from core.system.config.magic_numbers import capacity_percent, loop_sleep, timeout_value
 from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
+
+
+def _disk_capacity_percent() -> float:
+    """Disk cap (%) from the capacity cascade (system.capacity.capacity.disk.max_percent)."""
+    try:
+        p = capacity_percent("disk", 0.8)
+        if isinstance(p, dict):
+            p = p.get("max_percent", 0.8)
+        v = float(p) if p else 80.0
+        return v * 100 if 0 < v <= 1 else v
+    except (TypeError, ValueError):
+        return 80.0
 
 
 class ExecutionStatus(Enum):
@@ -68,6 +80,7 @@ class ExecutionConfig:
     terminal_check_interval: float = loop_sleep("terminal_check", 5.0)
     cpu_threshold: float = 90.0
     memory_threshold: float = 85.0
+    disk_threshold: float = _disk_capacity_percent()
     adaptive_timeout: bool = True
     enable_terminal_check: bool = True
     enable_process_monitor: bool = True

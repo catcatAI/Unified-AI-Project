@@ -262,6 +262,58 @@ def lifecycle_value(key: str, default: float = 0.5) -> float:
 
 
 # =============================================================================
+# Capacity Limits — numeric AND percentage limits work TOGETHER.
+# Every upper limit is a pair [max_bytes, max_percent]; the effective cap is
+# min(max_bytes, total × max_percent). Whichever fires first is the cap.
+# =============================================================================
+
+def _get_capacity_config() -> Dict[str, Any]:
+    """Get the capacity cascade from tiered config: system.capacity.capacity."""
+    return _get("system.capacity.capacity", {})
+
+
+def capacity_bytes(key: str, default: Optional[float] = None) -> Optional[float]:
+    """Numeric (bytes) floor from capacity config. None = not set."""
+    return _get_capacity_config().get(key, default)
+
+
+def capacity_percent(key: str, default: Optional[float] = None) -> Optional[float]:
+    """Percentage limit (0..1) for the same resource. None = not set."""
+    return _get_capacity_config().get(key, default)
+
+
+def capacity_loss_model(key: str, default: str = "precision") -> str:
+    """Loss model on cap-hit: 'precision' (graceful) vs 'truncate' (hard)."""
+    return _get_capacity_config().get(key, {}).get("loss_model", default)
+
+
+def effective_capacity_bytes(
+    key: str,
+    total_gb: Optional[float] = None,
+    numeric_mb: Optional[float] = None,
+    percent: Optional[float] = None,
+) -> float:
+    """Joint numeric+percent cap: effective = min(numeric_bytes, total×percent).
+
+    ``key`` is the resource block (e.g. 'memory' or 'disk'); its numeric cap
+    comes from its ``default_mb`` / ``dynamic_mb`` member, and its ``percent``
+    from ``max_percent``. Explicit ``numeric_mb``/``percent`` overrides win.
+    ``total_gb`` = physical RAM / partition size; if absent, only numeric cap
+    applies (percent requires a base to scale against). Returns bytes.
+    """
+    cfg = _get_capacity_config().get(key, {})
+    if numeric_mb is None:
+        numeric_mb = cfg.get("default_mb", cfg.get("dynamic_mb", cfg.get("max_vocab_bytes", 0)))
+    if percent is None:
+        percent = cfg.get("max_percent", 0.0)
+    numeric_bytes = max(0.0, float(numeric_mb) * 1024 * 1024)
+    if total_gb is not None and total_gb > 0 and percent and 0 < percent <= 1:
+        cap_by_percent = float(total_gb) * 1024 * 1024 * 1024 * float(percent)
+        return min(numeric_bytes, cap_by_percent)
+    return numeric_bytes
+
+
+# =============================================================================
 # GPU/CPU Compute Configuration
 # =============================================================================
 
@@ -372,24 +424,67 @@ def compute_log_fallback() -> bool:
 # Dynamic Model Sizing (conservative / extended)
 # =============================================================================
 # GARDEN SNN weight matrix: vocab² × 4 bytes
-#   vocab=10K → 400MB (conservative, safe for 7.7GB RAM)
-#   vocab=20K → 1.6GB (extended, requires ~4GB free)
-#
-# Conservative mode is default. Extended mode requires ANGELA_EXTENDED_MODEL=1.
+#   vocab=10K → 400MB   (conservative)
+#   vocab=52K → ~10GB   (extended — the 10 GB trained-model target)
+# The 52K target comes from capacity.default.yaml (garden_snn.vocabulary
+# target_keys). The matrix the model allocates is then ALSO bounded by the
+# joint [bytes, %ram] capacity cascade (min of the two), so vocab can reach
+# 10 GB only when physical RAM allows; otherwise app runs precision-loss.
 
 def model_sizing_config() -> Dict[str, int]:
     """Return (max_vocab, connection_budget) based on the sizing mode.
 
-    Conservative (default): max_vocab=10000, connection_budget=50000
-    Extended (ANGELA_EXTENDED_MODEL=1): max_vocab=20000, connection_budget=200000
+    Conservative (default): max_vocab=10000, connection_budget=50000.
+    Extended (ANGELA_EXTENDED_MODEL=1): driven by the capacity cascade — the
+    vocabulary target (default 51812 → ~10 GB matrix), then clamped by the
+    joint memory/% cap so it never exceeds what RAM actually holds.
     """
     import os
     extended = os.environ.get("ANGELA_EXTENDED_MODEL", "0") == "1"
     if extended:
-        logger.info("Model sizing: EXTENDED mode (max_vocab=20000, budget=200000)")
-        return {"max_vocab": 20000, "connection_budget": 200000}
+        target_keys = _safe_int(
+            _get_capacity_config().get("garden_snn", {}).get("vocabulary", {}).get(
+                "target_keys"
+            ),
+            51812,
+        )
+        # Clamp by memory: bytes cap / (4 B) then sqrt → max keys RAM allows.
+        ram_total = _probe_ram_total_gb()
+        if ram_total and ram_total > 0:
+            dynamic_mb = _get_capacity_config().get("memory", {}).get("dynamic_mb", 8192)
+            cap_bytes = effective_capacity_bytes("memory", total_gb=ram_total, numeric_mb=dynamic_mb)
+            max_keys_by_ram = int((cap_bytes / 4.0) ** 0.5)
+            target_keys = max(1, min(target_keys, max_keys_by_ram))
+        else:
+            target_keys = max(1, target_keys)
+        budget = _safe_int(
+            _get_capacity_config().get("ed3n", {}).get("core_connections"), 200000
+        )
+        logger.info(
+            "Model sizing: EXTENDED mode (max_vocab=%d, budget=%d ≈%.2fGB matrix)",
+            target_keys,
+            budget,
+            target_keys * target_keys * 4 / 1024**3,
+        )
+        return {"max_vocab": target_keys, "connection_budget": budget}
     logger.info("Model sizing: CONSERVATIVE mode (max_vocab=10000, budget=50000)")
     return {"max_vocab": 10000, "connection_budget": 50000}
+
+
+def _probe_ram_total_gb() -> Optional[float]:
+    """Total physical RAM in GB (best-effort), else None."""
+    try:
+        import psutil  # type: ignore[import-untyped]
+
+        return psutil.virtual_memory().total / (1024**3)
+    except Exception:
+        pass
+    try:
+        import shutil  # noqa: F401  (unused; kept for parity guard)
+
+        return None
+    except Exception:
+        return None
 
 
 # Re-export HardwareScenario for compute functions

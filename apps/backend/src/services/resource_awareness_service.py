@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SimulatedDiskConfig:
     space_gb: float = 1.0
-    warning_threshold_percent: int = 90
-    critical_threshold_percent: int = 98
+    warning_threshold_percent: int = 80
+    critical_threshold_percent: int = 90
     lag_factor_warning: float = 1.0
     lag_factor_critical: float = 1.0
 
@@ -108,8 +108,16 @@ class ResourceAwarenessService:
         cpu = self.psutil.cpu_percent(interval=None)
         mem = self.psutil.virtual_memory().percent
 
-        # 壓力定義：CPU > 80% 或 MEM > 90%
-        return cpu > 80 or mem > 90
+        # 壓力定義：CPU > 80% 或 MEM > 容量上限（預設 80%）
+        from core.system.config.magic_numbers import capacity_percent
+
+        mem_cap = capacity_percent("memory", 0.8)
+        if isinstance(mem_cap, dict):
+            mem_cap = mem_cap.get("max_percent", 0.8)
+        mem_pct = float(mem_cap) if mem_cap else 0.8
+        if 0 < mem_pct <= 1:
+            mem_pct *= 100
+        return cpu > 80 or mem > mem_pct
 
     def get_throttling_factor(self) -> float:
         """
@@ -127,6 +135,51 @@ class ResourceAwarenessService:
         load = min(cpu * 0.6 + mem * 0.4, 1.0)
 
         return max(1.0 - load, 0.2)
+
+    def get_available_disk_space_gb(self, path: Optional[str] = None) -> float:
+        """Get free disk space in GB for ``path`` (default '/').
+
+        Used by memory backends to refuse writes before the disk cap is hit
+        (graceful precision-loss: skip the write, never truncate the store).
+        Returns the free space on success, or 0.0 when psutil is unavailable.
+        """
+        if not self.psutil:
+            return 0.0
+        try:
+            target = path or "/"
+            usage = self.psutil.disk_usage(target)
+            return usage.free / (1024 * 1024 * 1024)
+        except Exception as e:
+            logger.warning("Disk usage unavailable for %s: %s", path, e)
+            return 0.0
+
+    def is_disk_at_capacity(self, path: Optional[str] = None) -> bool:
+        """True when disk usage is at/above the capacity cascade's disk cap.
+
+        Uses the joint [bytes, percent] rule from system.capacity.capacity.disk:
+        whichever of (numeric cap, percent cap) triggers first is the limit.
+        """
+        from core.system.config.magic_numbers import capacity_percent, effective_capacity_bytes
+
+        if not self.psutil:
+            return False
+        try:
+            target = path or "/"
+            usage = self.psutil.disk_usage(target)
+            disk_pct = usage.used / usage.total
+            cap = capacity_percent("disk", 0.8)
+            if isinstance(cap, dict):
+                cap = cap.get("max_percent", 0.8)
+            pct_cap = float(cap) if cap else 0.8
+            if 0 < pct_cap <= 1:
+                pct_cap *= 100
+            numeric_cap_bytes = effective_capacity_bytes("disk", total_gb=usage.total / (1024**3))
+            at_pct = disk_pct * 100 >= pct_cap
+            at_bytes = usage.used >= numeric_cap_bytes if numeric_cap_bytes > 0 else False
+            return at_pct or at_bytes
+        except Exception as e:
+            logger.warning("Disk capacity check failed: %s", e)
+            return False
 
     def get_available_ram_mb(self) -> float:
         """獲取可用 RAM（MB）"""

@@ -1,0 +1,58 @@
+# =============================================================================
+# ANGELA-MATRIX: [L2] [β] [C] [L1]
+# Capacity Limits — numeric AND percentage limits work TOGETHER.
+# Physical truth: EVERY upper limit is a pair [max_bytes / max_percent].
+#   - If BOTH are positive, the EFFECTIVE cap is min(bytes_cap, total × percent).
+#   - loss_model: how the cap is enforced when hit:
+#       "precision"  = graceful precision-loss (evict LRU neurons, compact that
+#                      matrix, drop lowest-value weight) — NOT truncation.
+#       "truncate"   = hard index/window cut (reserved ONLY for dataset volume).
+#   - Model weight matrix formula: vocab² × 4 bytes (float32), i.e. GARDEN.
+#   - 10 GB GARDEN model ⇔ max_vocab ≈ 51,812 distinct keys. Dataset volume is a
+#     TARGET to reach (10 GB via-loader data), NOT a hard cap here.
+# =============================================================================
+
+capacity:
+  # ---------------------------------------------------------------------------
+  # GARDEN SNN weight matrix (vocab² × 4 bytes). max_vocab is the neuron/row
+  # cap; the matrix it allocates is memory-limited by the joint caps below.
+  # ---------------------------------------------------------------------------
+  garden_snn:
+    loss_model: "precision"          # evict LRU neurons down to 90%, not cross-cut
+    vocabulary:
+      target_keys: 51812             # → ~10 GB float32 matrix (V²×4 bytes)
+      max_vocab_bytes: 6442450944    # 6 GiB numeric floor (min(bytes, ram×pct))
+      max_vocab_percent: 0.80        # 80% of ram
+      decay_rate: 0.90               # LRU eviction target = 90% of max_vocab
+
+  # ---------------------------------------------------------------------------
+  # ED3N dictionary + core-network memory.
+  # ---------------------------------------------------------------------------
+  ed3n:
+    loss_model: "precision"
+    dictionary_entries: 500000
+    core_connections: 200000
+
+  # ---------------------------------------------------------------------------
+  # Process RAM (training + dialogue). Dual cap: numeric + percent, min() wins.
+  # ---------------------------------------------------------------------------
+  memory:
+    loss_model: "precision"
+    default_mb: 2048                 # 2 GiB default cap
+    dynamic_mb: 8192                 # 8 GiB dynamic cap (background / heavy)
+    max_percent: 0.80                # 80% of total physical RAM
+  # ---------------------------------------------------------------------------
+  # Disk. 80% is the REAL hard cap (disk is the actual limit).
+  # ---------------------------------------------------------------------------
+  disk:
+    loss_model: "precision"
+    max_percent: 0.80                # 80% of partition = real cap
+    critical_percent: 0.90
+  # ---------------------------------------------------------------------------
+  # Dataset volume. A TARGET, NOT a cap — training must reach it, never be
+  # truncated by it. Dataset is the only domain allowed to *append*/grow.
+  # ---------------------------------------------------------------------------
+  dataset:
+    loss_model: "truncate"           # only dataset uses real truncation
+    target_volume_mb: 10240          # 10 GB target (user-requested data volume)
+    max_percent: null                # no percent cap → dataset is not disk-capped

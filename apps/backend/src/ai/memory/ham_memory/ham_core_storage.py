@@ -82,12 +82,19 @@ class HAMCoreStorage:
             # Simulate I/O delay
             # await asyncio.sleep(self.BASE_SAVE_DELAY_SECONDS)
 
-            # Check disk space before saving
-            if self.resource_awareness_service:
-                available_space_gb = self.resource_awareness_service.get_available_disk_space_gb()
-                if available_space_gb < 0.1:  # Example: require at least 0.1 GB free
+            # Check disk space before saving (graceful: skip write, never truncate).
+            if self.resource_awareness_service is not None:
+                if getattr(self.resource_awareness_service, "is_disk_at_capacity", None) and self.resource_awareness_service.is_disk_at_capacity():
                     logger.warning(
-                        "Insufficient disk space to save core memory. Skipping save.", exc_info=True
+                        "Disk at capacity — skipping core memory save (no truncation).",
+                        exc_info=True,
+                    )
+                    return False
+                available_space_gb = self.resource_awareness_service.get_available_disk_space_gb()
+                if available_space_gb < 0.1:  # safety floor: require at least 0.1 GB free
+                    logger.warning(
+                        "Insufficient disk space to save core memory. Skipping save.",
+                        exc_info=True,
                     )
                     return False
 

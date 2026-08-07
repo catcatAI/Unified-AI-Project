@@ -3,13 +3,14 @@
 # =============================================================================
 
 import asyncio
-import hashlib
 import json
 import logging
 import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+
+from ai.data_eng.dedup import hash_domain_dedup, hash_input
 
 logger = logging.getLogger(__name__)
 
@@ -108,11 +109,12 @@ class TrainingCoordinator:
             for ex in examples:
                 inp = ex.get("input", "")
                 if inp:
-                    h = hashlib.sha256(inp.encode("utf-8")).hexdigest()
-                    domain_hashes = self._seen_hashes.setdefault(domain, set())
-                    domain_hashes.add(h)
-                    if len(domain_hashes) > self._max_hashes:
-                        self._seen_hashes[domain] = set(list(domain_hashes)[-self._max_hashes :])
+                    hash_domain_dedup(
+                        inp,
+                        self._seen_hashes,
+                        domain,
+                        max_hashes_per_domain=self._max_hashes,
+                    )
         logger.info(
             "Recorded training: domain=%s model=%s count=%d accuracy=%.4f",
             domain,
@@ -122,7 +124,7 @@ class TrainingCoordinator:
         )
 
     async def should_skip(self, domain: str, sample_input: str) -> bool:
-        h = hashlib.sha256(sample_input.encode("utf-8")).hexdigest()
+        h = hash_input(sample_input)
         async with self._lock:
             domain_hashes = self._seen_hashes.get(domain, set())
             return h in domain_hashes

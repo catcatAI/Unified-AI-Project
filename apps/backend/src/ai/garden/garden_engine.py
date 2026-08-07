@@ -26,6 +26,7 @@ from collections import deque
 from typing import Any, Dict, List, Optional
 
 from ai.core.unicode_utils import is_english_dominant
+from ai.data_eng.assemble import decode_slot_budget, select_anchored_keys
 from core.system.config.magic_numbers import (
     cache_value,
     confidence_value,
@@ -114,15 +115,9 @@ _DECODE_GATE = 0.15
 def _slot_budget(n_input: int) -> tuple:
     """Return (anchor_slots, snn_slots) for an input of *n_input* concept keys.
 
-    Single source of truth for both ``_anchored_decode`` and the learned-rescue
-    merge, so the number of learned candidates gathered always matches the
-    number of SNN slots the decoder can actually place.
+    Single source of truth in ``ai.data_eng.assemble.decode_slot_budget``.
     """
-    if n_input <= 3:
-        return min(3, n_input), 4
-    if n_input <= 15:
-        return 3, 3
-    return 3, 6
+    return decode_slot_budget(n_input)
 
 
 def _anchored_decode(
@@ -137,47 +132,13 @@ def _anchored_decode(
     then decode to text.  Anchoring prevents the response from drifting
     entirely away from the user's original intent.
 
-    Dynamic slot allocation based on input length:
-      Short (<=3 tokens)   : keep all input + up to 4 SNN keys
-      Normal (4-15 tokens) : 3 anchors + 3 SNN keys
-      Long  (>15 tokens)   : 3 anchors + 6 SNN keys (paragraph recall)
-
-    Score threshold (>=0.15 = at least 1 spike in 6 timesteps) ensures
-    only actually-spiked neurons enter.  No aggressive correlation/novelty
-    filtering — Hebbian weight_decay naturally dissolves single-shot noise
-    (w ~0.017) while signal is reinforced toward target (0.35).
-
-    When original_text is provided, decode preserves the input word forms
-    so that tokens sharing the same concept key (e.g. "happy"/"happiness")
-    produce the correct surface form in the output.
+    Selection policy lives in ``ai.data_eng.assemble.select_anchored_keys``
+    (single canonical anchor-first + deduped-SNN-keys rule shared with ED3N).
     """
     if not network_output and not input_keys:
         return ""
 
-    # Separate SNN output from input self-activation
-    snn_only = {k: v for k, v in network_output.items() if k not in input_keys}
-
-    # Score threshold: at least 1 spike in 6 timesteps (~0.167) with margin
-    snn_candidates = [k for k, v in snn_only.items() if v >= _DECODE_GATE]
-    snn_sorted = sorted(snn_candidates, key=lambda k: snn_only[k], reverse=True)
-
-    # Dynamic slot allocation
-    n_input = len(input_keys)
-    anchor_slots, snn_slots = _slot_budget(n_input)
-
-    # Anchors = top input keys by confidence
-    anchor_keys = sorted(input_keys.keys(), key=lambda k: input_keys[k], reverse=True)[:anchor_slots]
-
-    # Combine: anchors first, then SNN output keys (deduplicated)
-    seen: set = set(anchor_keys)
-    combined = list(anchor_keys)
-    for k in snn_sorted:
-        if k not in seen:
-            if len(combined) - len(anchor_keys) >= snn_slots:
-                break
-            seen.add(k)
-            combined.append(k)
-
+    combined = select_anchored_keys(network_output, input_keys, decode_gate=_DECODE_GATE)
     return dictionary.decode(combined, original_text=original_text)
 
 
@@ -1265,9 +1226,9 @@ class GARDENEngine:
         # vocabulary.
         filtered_indices: List[int] = []
         for idx, s in enumerate(samples):
-            user_text = s.get("input", "")
-            response_text = s.get("output", "")
-            if not self._is_deterministic_match(user_text, response_text):
+            user_text = s.get("input", "") or ""
+            response_text = s.get("output", "") or ""
+            if not self._is_deterministic_match(str(user_text), str(response_text)):
                 filtered_indices.append(idx)
 
         if not filtered_indices:
@@ -1286,8 +1247,11 @@ class GARDENEngine:
 
         for idx in filtered_indices:
             s = samples[idx]
-            user_text = s.get("input", "")
-            response_text = s.get("output", "")
+            user_text = s.get("input", "") or ""
+            response_text = s.get("output", "") or ""
+            if not isinstance(user_text, str) or not isinstance(response_text, str):
+                user_text = str(user_text)
+                response_text = str(response_text)
             for text in [user_text, response_text]:
                 tokens = [
                     t
@@ -1334,10 +1298,10 @@ class GARDENEngine:
             )
             for idx in filtered_indices:
                 s = samples[idx]
-                user_text = s.get("input", "")
-                response_text = s.get("output", "")
-                input_keys = self.dictionary.encode(user_text)
-                output_keys = self.dictionary.encode(response_text)
+                user_text = s.get("input", "") or ""
+                response_text = s.get("output", "") or ""
+                input_keys = self.dictionary.encode(str(user_text))
+                output_keys = self.dictionary.encode(str(response_text))
                 self._record_learned(input_keys, output_keys)
                 if input_keys and output_keys:
                     # Pass 1: Direct association input -> output

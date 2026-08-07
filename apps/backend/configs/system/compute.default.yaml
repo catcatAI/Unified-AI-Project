@@ -43,10 +43,12 @@ compute:
     batch_size_multiplier: 1.0      # Scale batch size for GPU memory
     timestep_parallel: false        # Parallelize timesteps (GPU only)
 
-  # GARDEN TensorSNNCore
+  # GARDEN TensorSNNCore — max_vocab targets the 10 GB trained-model size
+  # (vocab≈51812 → V²×4B ≈ 10 GB). The joint memory/% capacity cascade
+  # (capacity.default.yaml) reduces this on weaker RAM; these are ceilings.
   garden_snn:
     mode: "auto"
-    max_vocab: 50000                # Auto-reduced on CPU
+    max_vocab: 51812                # → ~10 GB matrix (10 GB model target)
     connection_budget: 100000       # Auto-reduced on CPU
 
   # NeuralBridge — StateMatrix ↔ GARDEN/ED3N SNN direct numeric connection.
@@ -109,7 +111,7 @@ compute:
       ed3n_snn:
         batch_size_multiplier: 2.0
       garden_snn:
-        max_vocab: 100000
+        max_vocab: 51812
         connection_budget: 500000
       three_layer_visual:
         training_batch_size: 64
@@ -124,7 +126,7 @@ compute:
       ed3n_snn:
         batch_size_multiplier: 1.0
       garden_snn:
-        max_vocab: 50000
+        max_vocab: 51812
         connection_budget: 100000
 
     desktop_igpu:
@@ -133,7 +135,7 @@ compute:
       ed3n_snn:
         batch_size_multiplier: 1.0
       garden_snn:
-        max_vocab: 50000
+        max_vocab: 51812
         connection_budget: 100000
       three_layer_visual:
         training_batch_size: 32
@@ -171,7 +173,7 @@ compute:
       ed3n_snn:
         batch_size_multiplier: 4.0
       garden_snn:
-        max_vocab: 200000
+        max_vocab: 51812
         connection_budget: 1000000
       three_layer_visual:
         training_batch_size: 128
