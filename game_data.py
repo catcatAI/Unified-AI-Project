@@ -2,7 +2,7 @@
 game_data.py — MASSIVE content expansion for CLI RPG.
 Generates 3000+ entities from card data + real-world analogies.
 """
-import json, os, random as _random
+import json, os, random as _random, re
 from typing import Any, Dict, List, Optional
 from pathlib import Path
 
@@ -1254,12 +1254,25 @@ def generate_quests() -> list:
     # From all story nodes
     npc_names = list(ALL_NPCS.keys())
     for i, card in enumerate(_STORY_CARDS):
-        raw_name = card.get("name","?").split("（")[0].strip()[:20]
+        # 劇情節點卡 name 常為「標題 + 多空白 + 長敘事」（53/64 張）——
+        # 只取標題段（首個連續空白前），長敘事留給 desc 用，避免任務標題
+        # 變成「幫櫻寄件        13歲時，櫻請她...」的卡面殘片（batch 56）。
+        _raw_full = (card.get("name", "?") or "?").strip()
+        _title_part = re.split(r"\s{2,}", _raw_full)[0].strip()
+        raw_name = _title_part.split("（")[0].strip()[:20]
         lore_tokens = _tokens_by_cat(card, "lore")
         story = ""
         for t in lore_tokens:
-            v = t.get("value","")
-            story = v[:60]
+            v = t.get("value", "").strip()
+            if not v:
+                continue
+            # 敘事若以標題段開頭則剝離（EP-28D「幫櫻寄件 13歲時，櫻請她…」）
+            if _title_part and v.startswith(_title_part):
+                v = v[len(_title_part):].lstrip()
+            # 取第一句（含結尾句號），避免整段敘事塞爆 desc
+            _dot = v.find("。")
+            story = (v[:_dot + 1] if _dot > 0 else v[:80])
+            break
         if not story: story = f"調查關於{raw_name}的線索。"
         # Fix empty names: use first lore token value as fallback
         if not raw_name or raw_name == '?':
@@ -1386,6 +1399,48 @@ def generate_quests() -> list:
                     "reward_exp":20+rl*10+_seed.randint(0,15),"reward_gold":10+rl*6+_seed.randint(0,10),
                     "reward_reputation":6,"reward_relationships":{npc_name: 10},
                     "reward_item":_seed.choice(["記憶水晶","神秘地圖","書信","魔力藥水","護身符"])})
+
+    # 世界線入口門檻同步（batch 56）：任務 giver 家鄉所在世界線有等級閘門時，
+    # 任務 required_level 不得低於閘門——否則玩家接了任務卻永遠到不了 giver
+    # （SN-22 小吹雪在 W03 軌道站（閘門 Lv6）但任務 Lv4、SN-27 拾荒王在
+    #  W04 鏽蝕城邦（閘門 Lv6）但任務 Lv5——低等可接卻進不去，任務卡死）。
+    # 目標地點的閘門也納入（visit 目標在世界線內時同規則）。
+    import sim_systems as _ss
+    _entry_gates = getattr(_ss, "ENTRY_REQUIREMENTS", {}) or {}
+    for _q in quests:
+        _rl = (_q.get("conditions") or {}).get("required_level") or 1
+        _gloc = ""
+        _g = _q.get("giver")
+        if _g in ALL_NPCS:
+            _gloc = ALL_NPCS[_g].get("location", "")
+        _gate = (_entry_gates.get(_gloc) or {}).get("min", 0) or 0
+        for _obj in _q.get("objectives") or []:
+            if _obj.get("type") == "visit" and _obj.get("target"):
+                _gate = max(_gate, (_entry_gates.get(_obj["target"]) or {}).get("min", 0) or 0)
+        if _gate > _rl:
+            _q.setdefault("conditions", {})["required_level"] = _gate
+            _q["required_level"] = _gate
+            # 獎勵隨等級上調維持曲線（避免高難度低報酬倒掛）
+            _q["reward_exp"] = int(_q.get("reward_exp", 0) + (_gate - _rl) * 22)
+            _q["reward_gold"] = int(_q.get("reward_gold", 0) + (_gate - _rl) * 8)
+
+    # 獎勵道具世界線相容（batch 56）：giver 家鄉為絕對無魔（W02）時，
+    # 魔法/電子道具獎勵在該世界線完全失效（SN-08 雞頭四獎勵「靈力藥」——
+    # W02 magic/tech scale 皆 0，拿到也用不了，與文本「靈子/電子無法運作」矛盾）
+    # ——改發 natural 道具。
+    _natural_rw = ["治療藥水", "鐵劍", "鋼刀", "皮甲", "匕首", "生命果", "草藥", "乾糧", "解毒草"]
+    for _q in quests:
+        _ri = _q.get("reward_item") or ""
+        if not _ri:
+            continue
+        _gloc2 = ""
+        _g2 = _q.get("giver")
+        if _g2 in ALL_NPCS:
+            _gloc2 = ALL_NPCS[_g2].get("location", "")
+        if get_location_world_line(_gloc2) == "W02":
+            _cat2 = _ss.get_item_world_category(_ss.ITEM_CATALOG.get(_ri, {}), _ri)
+            if _cat2 in ("magic", "tech"):
+                _q["reward_item"] = _seed.choice(_natural_rw)
 
     print(f"[game_data] Generated {len(quests)} quests")
     return quests

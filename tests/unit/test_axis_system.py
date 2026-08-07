@@ -731,6 +731,29 @@ class TestWorldLineEntryGates:
         assert sim_systems.get_item_world_category({}, "草藥") == "natural"
         assert sim_systems.get_item_world_category({}, "治療藥水") == "natural"
 
+    def test_story_quest_title_clean_and_w02_rewards(self):
+        """SN 故事任務標題/描述淨化（劇情節點卡 name 含「標題+多空白+長敘事」時
+        只取標題段、描述取第一句），且 W02 giver 任務獎勵不得為 magic/tech
+        道具（絕對無魔世界線拿到也用不了）。"""
+        import sim_systems
+        from game_data import expand_game, ALL_NPCS
+        expand_game()
+        wl = sim_systems.LOCATION_WORLD_LINES
+        item_names = set(sim_systems.ITEM_CATALOG)
+        # 標題不得含長敘事殘片（多空白或「歲時」等卡面敘事字樣）
+        for q in sim_systems.QUESTS:
+            if q["id"].startswith("SN-"):
+                assert len(q["title"]) <= 22, "SN 任務標題過長: %s %r" % (q["id"], q["title"])
+                assert "  " not in q["title"], "SN 任務標題含多空白: %s" % q["id"]
+        # W02 giver 任務獎勵不得為 magic/tech
+        for q in sim_systems.QUESTS:
+            ri = q.get("reward_item") or ""
+            giver = q.get("giver") or ""
+            gloc = (ALL_NPCS.get(giver) or {}).get("location", "")
+            if wl.get(gloc, "W01") == "W02" and ri in item_names:
+                cat = sim_systems.get_item_world_category(sim_systems.ITEM_CATALOG[ri], ri)
+                assert cat == "natural", "W02 任務 %s 獎勵死道具 %s (%s)" % (q["id"], ri, cat)
+
     def test_world_line_rules_scales(self):
         """世界線魔法/電子倍率依 V3.4：W03 電子最高精度+靈子低落、
         W04 電子損壞；地點級聚合度修正（聖十字校園低、玻璃荒漠極高）。"""
