@@ -1,3111 +1,3113 @@
 {
-  "version": "2.0",
-  "description": "Supplement data for CLI RPG - items, equipment, enemies not in the card deck",
-  "naval_data": [
-    {
-      "name": "46cm連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.8,
-      "def_mult": 0.0,
-      "durability": 200,
-      "value": 500,
-      "nation": "日本",
-      "ship_class": "大和型戰艦"
-    },
-    {
-      "name": "41cm連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.6,
-      "def_mult": 0.0,
-      "durability": 180,
-      "value": 400,
-      "nation": "日本",
-      "ship_class": "長門型戰艦"
-    },
-    {
-      "name": "36.5cm連裝砲改",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.55,
-      "def_mult": 0.0,
-      "durability": 170,
-      "value": 380,
-      "nation": "日本",
-      "ship_class": "金剛型戰艦改"
-    },
-    {
-      "name": "41cm三連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.65,
-      "def_mult": 0.0,
-      "durability": 190,
-      "value": 420,
-      "nation": "日本",
-      "ship_class": "加賀型戰艦"
-    },
-    {
-      "name": "51cm連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.95,
-      "def_mult": -0.1,
-      "durability": 150,
-      "value": 700,
-      "nation": "日本",
-      "ship_class": "超大和型計畫"
-    },
-    {
-      "name": "20.3cm連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.35,
-      "def_mult": 0.0,
-      "durability": 120,
-      "value": 250,
-      "nation": "日本",
-      "ship_class": "重巡主砲"
-    },
-    {
-      "name": "15.5cm三連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.3,
-      "def_mult": 0.0,
-      "durability": 100,
-      "value": 200,
-      "nation": "日本",
-      "ship_class": "輕巡主砲"
-    },
-    {
-      "name": "12.7cm連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.25,
-      "def_mult": 0.0,
-      "durability": 80,
-      "value": 150,
-      "nation": "日本",
-      "ship_class": "驅逐主砲"
-    },
-    {
-      "name": "10cm連裝高角砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.2,
-      "def_mult": 0.0,
-      "durability": 70,
-      "value": 130,
-      "nation": "日本",
-      "ship_class": "秋月型驅逐艦"
-    },
-    {
-      "name": "61cm四連裝魚雷",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.7,
-      "def_mult": -0.1,
-      "durability": 80,
-      "value": 400,
-      "nation": "日本",
-      "ship_class": "氧氣魚雷"
-    },
-    {
-      "name": "61cm五連裝魚雷",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.8,
-      "def_mult": -0.15,
-      "durability": 70,
-      "value": 500,
-      "nation": "日本",
-      "ship_class": "改修魚雷"
-    },
-    {
-      "name": "甲標的甲型",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.9,
-      "def_mult": -0.2,
-      "durability": 60,
-      "value": 600,
-      "nation": "日本",
-      "ship_class": "特殊潛航艇"
-    },
-    {
-      "name": "甲標的丙型",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.95,
-      "def_mult": -0.25,
-      "durability": 50,
-      "value": 700,
-      "nation": "日本",
-      "ship_class": "特殊潛航艇改"
-    },
-    {
-      "name": "彗星艦載轟炸機",
-      "type": "weapon",
-      "slot": "both_hands",
-      "atk_mult": 0.5,
-      "def_mult": 0.1,
-      "durability": 90,
-      "value": 300,
-      "nation": "日本",
-      "ship_class": "艦載轟炸機"
-    },
-    {
-      "name": "彗星一二型艦載轟炸機",
-      "type": "weapon",
-      "slot": "both_hands",
-      "atk_mult": 0.55,
-      "def_mult": 0.1,
-      "durability": 85,
-      "value": 340,
-      "nation": "日本",
-      "ship_class": "艦載轟炸機改良型"
-    },
-    {
-      "name": "天山艦載攻擊機",
-      "type": "weapon",
-      "slot": "both_hands",
-      "atk_mult": 0.4,
-      "def_mult": 0.15,
-      "durability": 100,
-      "value": 280,
-      "nation": "日本",
-      "ship_class": "艦載攻擊機"
-    },
-    {
-      "name": "流星艦載攻擊機",
-      "type": "weapon",
-      "slot": "both_hands",
-      "atk_mult": 0.45,
-      "def_mult": 0.15,
-      "durability": 95,
-      "value": 320,
-      "nation": "日本",
-      "ship_class": "攻擊機"
-    },
-    {
-      "name": "紫電改二戰鬥機",
-      "type": "weapon",
-      "slot": "both_hands",
-      "atk_mult": 0.45,
-      "def_mult": 0.2,
-      "durability": 85,
-      "value": 350,
-      "nation": "日本",
-      "ship_class": "局地戰鬥機"
-    },
-    {
-      "name": "烈風",
-      "type": "weapon",
-      "slot": "both_hands",
-      "atk_mult": 0.55,
-      "def_mult": 0.1,
-      "durability": 95,
-      "value": 380,
-      "nation": "日本",
-      "ship_class": "艦載戰鬥機"
-    },
-    {
-      "name": "紫電",
-      "type": "weapon",
-      "slot": "both_hands",
-      "atk_mult": 0.4,
-      "def_mult": 0.2,
-      "durability": 90,
-      "value": 310,
-      "nation": "日本",
-      "ship_class": "局地戰鬥機"
-    },
-    {
-      "name": "零式五二型戰鬥機",
-      "type": "weapon",
-      "slot": "both_hands",
-      "atk_mult": 0.35,
-      "def_mult": 0.15,
-      "durability": 100,
-      "value": 280,
-      "nation": "日本",
-      "ship_class": "艦載戰鬥機"
-    },
-    {
-      "name": "零式二一型戰鬥機",
-      "type": "weapon",
-      "slot": "both_hands",
-      "atk_mult": 0.3,
-      "def_mult": 0.1,
-      "durability": 110,
-      "value": 250,
-      "nation": "日本",
-      "ship_class": "艦載戰鬥機"
-    },
-    {
-      "name": "16inch三連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.75,
-      "def_mult": 0.0,
-      "durability": 210,
-      "value": 550,
-      "nation": "美國",
-      "ship_class": "Iowa型戰艦"
-    },
-    {
-      "name": "14inch三連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.55,
-      "def_mult": 0.05,
-      "durability": 190,
-      "value": 400,
-      "nation": "美國",
-      "ship_class": "NewMexico型戰艦"
-    },
-    {
-      "name": "12inch連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.45,
-      "def_mult": 0.05,
-      "durability": 170,
-      "value": 350,
-      "nation": "美國",
-      "ship_class": "標準型戰艦"
-    },
-    {
-      "name": "8inch三連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.38,
-      "def_mult": 0.05,
-      "durability": 130,
-      "value": 280,
-      "nation": "美國",
-      "ship_class": "重巡主砲"
-    },
-    {
-      "name": "6inch三連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.32,
-      "def_mult": 0.05,
-      "durability": 110,
-      "value": 220,
-      "nation": "美國",
-      "ship_class": "輕巡主砲"
-    },
-    {
-      "name": "5inch兩用砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.22,
-      "def_mult": 0.1,
-      "durability": 90,
-      "value": 160,
-      "nation": "美國",
-      "ship_class": "驅逐主砲"
-    },
-    {
-      "name": "40mm四連裝機關砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.18,
-      "def_mult": 0.15,
-      "durability": 70,
-      "value": 120,
-      "nation": "美國",
-      "ship_class": "博福斯高射砲"
-    },
-    {
-      "name": "20mm機關砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.12,
-      "def_mult": 0.1,
-      "durability": 60,
-      "value": 80,
-      "nation": "美國",
-      "ship_class": "厄利孔機關砲"
-    },
-    {
-      "name": "Mk13魚雷",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.45,
-      "def_mult": 0.0,
-      "durability": 70,
-      "value": 250,
-      "nation": "美國",
-      "ship_class": "航空魚雷"
-    },
-    {
-      "name": "F4U海盜式戰鬥機",
-      "type": "weapon",
-      "slot": "both_hands",
-      "atk_mult": 0.5,
-      "def_mult": 0.2,
-      "durability": 100,
-      "value": 360,
-      "nation": "美國",
-      "ship_class": "艦載戰鬥機"
-    },
-    {
-      "name": "F6F地獄貓戰鬥機",
-      "type": "weapon",
-      "slot": "both_hands",
-      "atk_mult": 0.48,
-      "def_mult": 0.15,
-      "durability": 110,
-      "value": 340,
-      "nation": "美國",
-      "ship_class": "艦載戰鬥機"
-    },
-    {
-      "name": "SBD無畏式轟炸機",
-      "type": "weapon",
-      "slot": "both_hands",
-      "atk_mult": 0.45,
-      "def_mult": 0.1,
-      "durability": 95,
-      "value": 300,
-      "nation": "美國",
-      "ship_class": "艦載轟炸機"
-    },
-    {
-      "name": "TBF復仇者攻擊機",
-      "type": "weapon",
-      "slot": "both_hands",
-      "atk_mult": 0.42,
-      "def_mult": 0.15,
-      "durability": 105,
-      "value": 290,
-      "nation": "美國",
-      "ship_class": "艦載攻擊機"
-    },
-    {
-      "name": "SB2C地獄俯衝轟炸機",
-      "type": "weapon",
-      "slot": "both_hands",
-      "atk_mult": 0.48,
-      "def_mult": 0.08,
-      "durability": 90,
-      "value": 310,
-      "nation": "美國",
-      "ship_class": "艦載轟炸機"
-    },
-    {
-      "name": "15inch連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.5,
-      "def_mult": 0.0,
-      "durability": 185,
-      "value": 380,
-      "nation": "英國",
-      "ship_class": "Nelson型戰艦"
-    },
-    {
-      "name": "14inch四連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.55,
-      "def_mult": 0.0,
-      "durability": 175,
-      "value": 390,
-      "nation": "英國",
-      "ship_class": "KingGeorgeV型戰艦"
-    },
-    {
-      "name": "16inch連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.7,
-      "def_mult": 0.0,
-      "durability": 200,
-      "value": 520,
-      "nation": "英國",
-      "ship_class": "Vanguard型戰艦"
-    },
-    {
-      "name": "6inch連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.3,
-      "def_mult": 0.05,
-      "durability": 100,
-      "value": 200,
-      "nation": "英國",
-      "ship_class": "輕巡主砲"
-    },
-    {
-      "name": "4.7inch砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.2,
-      "def_mult": 0.0,
-      "durability": 75,
-      "value": 130,
-      "nation": "英國",
-      "ship_class": "驅逐主砲"
-    },
-    {
-      "name": "21inch魚雷",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.5,
-      "def_mult": -0.05,
-      "durability": 65,
-      "value": 280,
-      "nation": "英國",
-      "ship_class": "魚雷"
-    },
-    {
-      "name": "超級馬林戰鬥機",
-      "type": "weapon",
-      "slot": "both_hands",
-      "atk_mult": 0.52,
-      "def_mult": 0.18,
-      "durability": 105,
-      "value": 370,
-      "nation": "英國",
-      "ship_class": "艦載戰鬥機"
-    },
-    {
-      "name": "費爾雷劍魚攻擊機",
-      "type": "weapon",
-      "slot": "both_hands",
-      "atk_mult": 0.38,
-      "def_mult": 0.12,
-      "durability": 100,
-      "value": 260,
-      "nation": "英國",
-      "ship_class": "艦載攻擊機"
-    },
-    {
-      "name": "38cm連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.6,
-      "def_mult": 0.0,
-      "durability": 175,
-      "value": 420,
-      "nation": "德國",
-      "ship_class": "俾斯麥型戰艦"
-    },
-    {
-      "name": "28cm三連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.45,
-      "def_mult": 0.0,
-      "durability": 160,
-      "value": 350,
-      "nation": "德國",
-      "ship_class": "沙恩霍斯特型戰艦"
-    },
-    {
-      "name": "20.3cm連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.4,
-      "def_mult": 0.0,
-      "durability": 125,
-      "value": 270,
-      "nation": "德國",
-      "ship_class": "希佩爾上將型重巡"
-    },
-    {
-      "name": "15cm連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.28,
-      "def_mult": 0.05,
-      "durability": 95,
-      "value": 190,
-      "nation": "德國",
-      "ship_class": "輕巡主砲"
-    },
-    {
-      "name": "12.7cm砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.22,
-      "def_mult": 0.05,
-      "durability": 80,
-      "value": 150,
-      "nation": "德國",
-      "ship_class": "驅逐主砲"
-    },
-    {
-      "name": "53.3cm魚雷",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.55,
-      "def_mult": -0.05,
-      "durability": 75,
-      "value": 320,
-      "nation": "德國",
-      "ship_class": "G7a魚雷"
-    },
-    {
-      "name": "G7e魚雷",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.6,
-      "def_mult": -0.1,
-      "durability": 70,
-      "value": 350,
-      "nation": "德國",
-      "ship_class": "電動魚雷"
-    },
-    {
-      "name": "Me262噴射戰鬥機",
-      "type": "weapon",
-      "slot": "both_hands",
-      "atk_mult": 0.65,
-      "def_mult": 0.25,
-      "durability": 60,
-      "value": 600,
-      "nation": "德國",
-      "ship_class": " jet戰鬥機"
-    },
-    {
-      "name": "381mm三連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.58,
-      "def_mult": 0.0,
-      "durability": 170,
-      "value": 400,
-      "nation": "義大利",
-      "ship_class": "利托里奧型戰艦"
-    },
-    {
-      "name": "320mm四連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.5,
-      "def_mult": 0.0,
-      "durability": 160,
-      "value": 350,
-      "nation": "義大利",
-      "ship_class": "多利亞型戰艦"
-    },
-    {
-      "name": "203mm連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.36,
-      "def_mult": 0.0,
-      "durability": 115,
-      "value": 260,
-      "nation": "義大利",
-      "ship_class": "札拉型重巡"
-    },
-    {
-      "name": "152mm三連裝砲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.3,
-      "def_mult": 0.05,
-      "durability": 95,
-      "value": 210,
-      "nation": "義大利",
-      "ship_class": "輕巡主砲"
-    },
-    {
-      "name": "533mm魚雷",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.45,
-      "def_mult": -0.05,
-      "durability": 70,
-      "value": 260,
-      "nation": "義大利",
-      "ship_class": "魚雷"
-    },
-    {
-      "name": "Reggiane2005戰鬥機",
-      "type": "weapon",
-      "slot": "both_hands",
-      "atk_mult": 0.55,
-      "def_mult": 0.2,
-      "durability": 85,
-      "value": 400,
-      "nation": "義大利",
-      "ship_class": "戰鬥機"
-    }
-  ],
-  "animal_data": [
-    {
-      "name": "狼王毛皮",
-      "type": "armor",
-      "slot": "torso",
-      "atk_mult": 0.0,
-      "def_mult": 0.35,
-      "spd_mult": 0.15,
-      "karma_mult": 0.0,
-      "durability": 120,
-      "value": 150,
-      "species": "狼",
-      "biome": "森林"
-    },
-    {
-      "name": "狼牙首飾",
-      "type": "accessory",
-      "slot": "neck",
-      "atk_mult": 0.15,
-      "def_mult": 0.0,
-      "spd_mult": 0.05,
-      "karma_mult": 0.05,
-      "durability": 80,
-      "value": 100,
-      "species": "狼",
-      "biome": "森林"
-    },
-    {
-      "name": "銀狼之尾",
-      "type": "armor",
-      "slot": "back",
-      "atk_mult": 0.0,
-      "def_mult": 0.1,
-      "spd_mult": 0.25,
-      "karma_mult": 0.05,
-      "durability": 70,
-      "value": 130,
-      "species": "銀狼",
-      "biome": "雪山"
-    },
-    {
-      "name": "狐之靈衣",
-      "type": "armor",
-      "slot": "torso",
-      "atk_mult": 0.0,
-      "def_mult": 0.2,
-      "spd_mult": 0.3,
-      "karma_mult": 0.1,
-      "durability": 110,
-      "value": 180,
-      "species": "狐",
-      "biome": "森林"
-    },
-    {
-      "name": "狐火之手環",
-      "type": "accessory",
-      "slot": "left_hand",
-      "atk_mult": 0.1,
-      "def_mult": 0.0,
-      "spd_mult": 0.1,
-      "karma_mult": 0.15,
-      "durability": 60,
-      "value": 140,
-      "species": "狐",
-      "biome": "森林"
-    },
-    {
-      "name": "柴犬之忠誠",
-      "type": "accessory",
-      "slot": "neck",
-      "atk_mult": 0.0,
-      "def_mult": 0.1,
-      "spd_mult": 0.05,
-      "karma_mult": 0.3,
-      "durability": 90,
-      "value": 110,
-      "species": "柴犬",
-      "biome": "村"
-    },
-    {
-      "name": "熊之鐵壁",
-      "type": "armor",
-      "slot": "torso",
-      "atk_mult": 0.0,
-      "def_mult": 0.5,
-      "spd_mult": 0.0,
-      "karma_mult": 0.0,
-      "durability": 200,
-      "value": 250,
-      "species": "熊",
-      "biome": "山岳"
-    },
-    {
-      "name": "熊之臂力",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.4,
-      "def_mult": -0.05,
-      "spd_mult": -0.05,
-      "karma_mult": 0.0,
-      "durability": 150,
-      "value": 220,
-      "species": "熊",
-      "biome": "山岳"
-    },
-    {
-      "name": "白熊之毛",
-      "type": "armor",
-      "slot": "legs",
-      "atk_mult": 0.0,
-      "def_mult": 0.35,
-      "spd_mult": 0.0,
-      "karma_mult": 0.05,
-      "durability": 180,
-      "value": 230,
-      "species": "白熊",
-      "biome": "極地"
-    },
-    {
-      "name": "熊貓之柔軟",
-      "type": "armor",
-      "slot": "torso",
-      "atk_mult": 0.0,
-      "def_mult": 0.2,
-      "spd_mult": 0.1,
-      "karma_mult": 0.15,
-      "durability": 100,
-      "value": 160,
-      "species": "熊猫",
-      "biome": "竹林"
-    },
-    {
-      "name": "虎之條紋鎧",
-      "type": "armor",
-      "slot": "torso",
-      "atk_mult": 0.0,
-      "def_mult": 0.4,
-      "spd_mult": 0.1,
-      "karma_mult": 0.0,
-      "durability": 160,
-      "value": 220,
-      "species": "虎",
-      "biome": "密林"
-    },
-    {
-      "name": "虎爪之手甲",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.35,
-      "def_mult": 0.0,
-      "spd_mult": 0.1,
-      "karma_mult": 0.0,
-      "durability": 100,
-      "value": 200,
-      "species": "虎",
-      "biome": "密林"
-    },
-    {
-      "name": "獅子之鬃毛",
-      "type": "armor",
-      "slot": "head",
-      "atk_mult": 0.0,
-      "def_mult": 0.25,
-      "spd_mult": 0.0,
-      "karma_mult": 0.15,
-      "durability": 130,
-      "value": 200,
-      "species": "獅子",
-      "biome": "草原"
-    },
-    {
-      "name": "豹之敏捷",
-      "type": "armor",
-      "slot": "feet",
-      "atk_mult": 0.0,
-      "def_mult": 0.1,
-      "spd_mult": 0.35,
-      "karma_mult": 0.0,
-      "durability": 80,
-      "value": 180,
-      "species": "豹",
-      "biome": "草原"
-    },
-    {
-      "name": "貓之輕靴",
-      "type": "armor",
-      "slot": "feet",
-      "atk_mult": 0.0,
-      "def_mult": 0.05,
-      "spd_mult": 0.3,
-      "karma_mult": 0.05,
-      "durability": 70,
-      "value": 100,
-      "species": "猫",
-      "biome": "市街"
-    },
-    {
-      "name": "貓之靈巧",
-      "type": "accessory",
-      "slot": "right_hand",
-      "atk_mult": 0.05,
-      "def_mult": 0.0,
-      "spd_mult": 0.15,
-      "karma_mult": 0.1,
-      "durability": 60,
-      "value": 90,
-      "species": "猫",
-      "biome": "市街"
-    },
-    {
-      "name": "黑貓之護符",
-      "type": "accessory",
-      "slot": "neck",
-      "atk_mult": 0.0,
-      "def_mult": 0.1,
-      "spd_mult": 0.1,
-      "karma_mult": 0.2,
-      "durability": 50,
-      "value": 120,
-      "species": "黑猫",
-      "biome": "市街"
-    },
-    {
-      "name": "鹿之角冠",
-      "type": "armor",
-      "slot": "head",
-      "atk_mult": 0.05,
-      "def_mult": 0.1,
-      "spd_mult": 0.05,
-      "karma_mult": 0.25,
-      "durability": 90,
-      "value": 120,
-      "species": "鹿",
-      "biome": "森林"
-    },
-    {
-      "name": "鹿之敏捷",
-      "type": "armor",
-      "slot": "feet",
-      "atk_mult": 0.0,
-      "def_mult": 0.0,
-      "spd_mult": 0.25,
-      "karma_mult": 0.1,
-      "durability": 70,
-      "value": 100,
-      "species": "鹿",
-      "biome": "森林"
-    },
-    {
-      "name": "大鹿之角",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.25,
-      "def_mult": 0.0,
-      "spd_mult": 0.0,
-      "karma_mult": 0.1,
-      "durability": 100,
-      "value": 130,
-      "species": "大鹿",
-      "biome": "森林"
-    },
-    {
-      "name": "馬之蹄鐵",
-      "type": "armor",
-      "slot": "feet",
-      "atk_mult": 0.0,
-      "def_mult": 0.15,
-      "spd_mult": 0.2,
-      "karma_mult": 0.0,
-      "durability": 120,
-      "value": 80,
-      "species": "馬",
-      "biome": "草原"
-    },
-    {
-      "name": "馬之雄姿",
-      "type": "armor",
-      "slot": "torso",
-      "atk_mult": 0.0,
-      "def_mult": 0.15,
-      "spd_mult": 0.15,
-      "karma_mult": 0.1,
-      "durability": 90,
-      "value": 110,
-      "species": "馬",
-      "biome": "草原"
-    },
-    {
-      "name": "野牛之剛角",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.3,
-      "def_mult": 0.0,
-      "spd_mult": -0.05,
-      "karma_mult": 0.0,
-      "durability": 150,
-      "value": 180,
-      "species": "野牛",
-      "biome": "草原"
-    },
-    {
-      "name": "山羊之輕功",
-      "type": "armor",
-      "slot": "legs",
-      "atk_mult": 0.0,
-      "def_mult": 0.05,
-      "spd_mult": 0.2,
-      "karma_mult": 0.05,
-      "durability": 70,
-      "value": 80,
-      "species": "山羊",
-      "biome": "山岳"
-    },
-    {
-      "name": "猿之靈巧",
-      "type": "accessory",
-      "slot": "left_hand",
-      "atk_mult": 0.05,
-      "def_mult": 0.0,
-      "spd_mult": 0.15,
-      "karma_mult": 0.05,
-      "durability": 60,
-      "value": 90,
-      "species": "猿",
-      "biome": "密林"
-    },
-    {
-      "name": "大猩猩之剛腕",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.45,
-      "def_mult": 0.0,
-      "spd_mult": -0.1,
-      "karma_mult": 0.0,
-      "durability": 180,
-      "value": 250,
-      "species": "大猩猩",
-      "biome": "密林"
-    },
-    {
-      "name": "海豚之流線",
-      "type": "armor",
-      "slot": "legs",
-      "atk_mult": 0.0,
-      "def_mult": 0.05,
-      "spd_mult": 0.25,
-      "karma_mult": 0.05,
-      "durability": 60,
-      "value": 140,
-      "species": "海豚",
-      "biome": "海"
-    },
-    {
-      "name": "鯨之強韌",
-      "type": "armor",
-      "slot": "torso",
-      "atk_mult": 0.0,
-      "def_mult": 0.45,
-      "spd_mult": 0.0,
-      "karma_mult": 0.05,
-      "durability": 250,
-      "value": 320,
-      "species": "鯨",
-      "biome": "海"
-    },
-    {
-      "name": "鯨之骨鎧",
-      "type": "armor",
-      "slot": "torso",
-      "atk_mult": 0.0,
-      "def_mult": 0.55,
-      "spd_mult": 0.0,
-      "karma_mult": 0.0,
-      "durability": 300,
-      "value": 400,
-      "species": "鯨",
-      "biome": "海"
-    },
-    {
-      "name": "海豹之滑行",
-      "type": "armor",
-      "slot": "feet",
-      "atk_mult": 0.0,
-      "def_mult": 0.0,
-      "spd_mult": 0.15,
-      "karma_mult": 0.1,
-      "durability": 50,
-      "value": 90,
-      "species": "海豹",
-      "biome": "海"
-    },
-    {
-      "name": "鷹之翼膜",
-      "type": "armor",
-      "slot": "back",
-      "atk_mult": 0.0,
-      "def_mult": 0.15,
-      "spd_mult": 0.35,
-      "karma_mult": 0.05,
-      "durability": 100,
-      "value": 160,
-      "species": "鷹",
-      "biome": "山岳"
-    },
-    {
-      "name": "鷹之爪",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.25,
-      "def_mult": 0.0,
-      "spd_mult": 0.15,
-      "karma_mult": 0.0,
-      "durability": 80,
-      "value": 140,
-      "species": "鷹",
-      "biome": "山岳"
-    },
-    {
-      "name": "梟之智慧",
-      "type": "accessory",
-      "slot": "head",
-      "atk_mult": 0.0,
-      "def_mult": 0.0,
-      "spd_mult": 0.05,
-      "karma_mult": 0.3,
-      "durability": 60,
-      "value": 150,
-      "species": "梟",
-      "biome": "森林"
-    },
-    {
-      "name": "烏鴉之羽",
-      "type": "armor",
-      "slot": "back",
-      "atk_mult": 0.0,
-      "def_mult": 0.1,
-      "spd_mult": 0.2,
-      "karma_mult": 0.1,
-      "durability": 70,
-      "value": 100,
-      "species": "鴉",
-      "biome": "市街"
-    },
-    {
-      "name": "天鵝之優雅",
-      "type": "accessory",
-      "slot": "neck",
-      "atk_mult": 0.0,
-      "def_mult": 0.05,
-      "spd_mult": 0.1,
-      "karma_mult": 0.25,
-      "durability": 50,
-      "value": 130,
-      "species": "白鳥",
-      "biome": "湖"
-    },
-    {
-      "name": "燕之敏捷",
-      "type": "armor",
-      "slot": "feet",
-      "atk_mult": 0.0,
-      "def_mult": 0.0,
-      "spd_mult": 0.3,
-      "karma_mult": 0.05,
-      "durability": 50,
-      "value": 110,
-      "species": "燕",
-      "biome": "空"
-    },
-    {
-      "name": "孔雀之華麗",
-      "type": "accessory",
-      "slot": "neck",
-      "atk_mult": 0.0,
-      "def_mult": 0.05,
-      "spd_mult": 0.05,
-      "karma_mult": 0.3,
-      "durability": 40,
-      "value": 160,
-      "species": "孔雀",
-      "biome": "森林"
-    },
-    {
-      "name": "鶴之長壽",
-      "type": "armor",
-      "slot": "legs",
-      "atk_mult": 0.0,
-      "def_mult": 0.1,
-      "spd_mult": 0.1,
-      "karma_mult": 0.2,
-      "durability": 80,
-      "value": 140,
-      "species": "鶴",
-      "biome": "湖"
-    },
-    {
-      "name": "候鳥之羽",
-      "type": "armor",
-      "slot": "back",
-      "atk_mult": 0.0,
-      "def_mult": 0.05,
-      "spd_mult": 0.2,
-      "karma_mult": 0.05,
-      "durability": 60,
-      "value": 90,
-      "species": "渡鳥",
-      "biome": "空"
-    },
-    {
-      "name": "蛇之鱗衣",
-      "type": "armor",
-      "slot": "torso",
-      "atk_mult": 0.0,
-      "def_mult": 0.3,
-      "spd_mult": 0.1,
-      "karma_mult": 0.2,
-      "durability": 110,
-      "value": 140,
-      "species": "蛇",
-      "biome": "森林"
-    },
-    {
-      "name": "蛇之毒牙",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.2,
-      "def_mult": 0.0,
-      "spd_mult": 0.1,
-      "karma_mult": 0.0,
-      "durability": 70,
-      "value": 120,
-      "species": "蛇",
-      "biome": "森林"
-    },
-    {
-      "name": "龜之甲殼盾",
-      "type": "weapon",
-      "slot": "left_hand",
-      "atk_mult": 0.0,
-      "def_mult": 0.6,
-      "spd_mult": 0.0,
-      "karma_mult": 0.05,
-      "durability": 250,
-      "value": 250,
-      "species": "亀",
-      "biome": "湖"
-    },
-    {
-      "name": "鱷魚之顎",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.35,
-      "def_mult": 0.0,
-      "spd_mult": -0.05,
-      "karma_mult": 0.0,
-      "durability": 140,
-      "value": 200,
-      "species": "鰐",
-      "biome": "水辺"
-    },
-    {
-      "name": "鱷魚之鱗",
-      "type": "armor",
-      "slot": "torso",
-      "atk_mult": 0.0,
-      "def_mult": 0.35,
-      "spd_mult": 0.0,
-      "karma_mult": 0.05,
-      "durability": 180,
-      "value": 220,
-      "species": "鰐",
-      "biome": "水辺"
-    },
-    {
-      "name": "蜥蜴之尾",
-      "type": "armor",
-      "slot": "back",
-      "atk_mult": 0.0,
-      "def_mult": 0.05,
-      "spd_mult": 0.2,
-      "karma_mult": 0.05,
-      "durability": 60,
-      "value": 80,
-      "species": "蜥蜴",
-      "biome": "砂漠"
-    },
-    {
-      "name": "壁虎之腳爪",
-      "type": "armor",
-      "slot": "feet",
-      "atk_mult": 0.0,
-      "def_mult": 0.0,
-      "spd_mult": 0.15,
-      "karma_mult": 0.1,
-      "durability": 50,
-      "value": 90,
-      "species": "壁虎",
-      "biome": "市街"
-    },
-    {
-      "name": "蛙之跳躍",
-      "type": "armor",
-      "slot": "legs",
-      "atk_mult": 0.0,
-      "def_mult": 0.0,
-      "spd_mult": 0.2,
-      "karma_mult": 0.05,
-      "durability": 40,
-      "value": 70,
-      "species": "蛙",
-      "biome": "水辺"
-    },
-    {
-      "name": "蝶之鱗粉",
-      "type": "accessory",
-      "slot": "neck",
-      "atk_mult": 0.0,
-      "def_mult": 0.1,
-      "spd_mult": 0.1,
-      "karma_mult": 0.2,
-      "durability": 50,
-      "value": 90,
-      "species": "蝶",
-      "biome": "花園"
-    },
-    {
-      "name": "蝶之翅",
-      "type": "armor",
-      "slot": "back",
-      "atk_mult": 0.0,
-      "def_mult": 0.05,
-      "spd_mult": 0.15,
-      "karma_mult": 0.15,
-      "durability": 40,
-      "value": 100,
-      "species": "蝶",
-      "biome": "花園"
-    },
-    {
-      "name": "蜂之針",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.2,
-      "def_mult": 0.0,
-      "spd_mult": 0.1,
-      "karma_mult": 0.0,
-      "durability": 30,
-      "value": 80,
-      "species": "蜂",
-      "biome": "花園"
-    },
-    {
-      "name": "蜘蛛之絲",
-      "type": "armor",
-      "slot": "legs",
-      "atk_mult": 0.0,
-      "def_mult": 0.15,
-      "spd_mult": 0.1,
-      "karma_mult": 0.0,
-      "durability": 70,
-      "value": 100,
-      "species": "蜘蛛",
-      "biome": "森林"
-    },
-    {
-      "name": "蠍之毒針",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.25,
-      "def_mult": 0.0,
-      "spd_mult": 0.0,
-      "karma_mult": 0.0,
-      "durability": 60,
-      "value": 110,
-      "species": "蠍",
-      "biome": "砂漠"
-    },
-    {
-      "name": "蠍之甲殼",
-      "type": "armor",
-      "slot": "torso",
-      "atk_mult": 0.0,
-      "def_mult": 0.25,
-      "spd_mult": 0.0,
-      "karma_mult": 0.05,
-      "durability": 130,
-      "value": 150,
-      "species": "蠍",
-      "biome": "砂漠"
-    },
-    {
-      "name": "蟻之力",
-      "type": "accessory",
-      "slot": "waist",
-      "atk_mult": 0.1,
-      "def_mult": 0.0,
-      "spd_mult": 0.0,
-      "karma_mult": 0.05,
-      "durability": 80,
-      "value": 70,
-      "species": "蟻",
-      "biome": "草原"
-    },
-    {
-      "name": "蜻蜓之複眼",
-      "type": "accessory",
-      "slot": "head",
-      "atk_mult": 0.0,
-      "def_mult": 0.0,
-      "spd_mult": 0.15,
-      "karma_mult": 0.1,
-      "durability": 40,
-      "value": 110,
-      "species": "蜻蛉",
-      "biome": "水辺"
-    },
-    {
-      "name": "蛟之逆鱗",
-      "type": "armor",
-      "slot": "torso",
-      "atk_mult": 0.1,
-      "def_mult": 0.3,
-      "spd_mult": 0.1,
-      "karma_mult": 0.05,
-      "durability": 200,
-      "value": 350,
-      "species": "蛟",
-      "biome": "深潭"
-    },
-    {
-      "name": "鳳凰之羽衣",
-      "type": "armor",
-      "slot": "back",
-      "atk_mult": 0.05,
-      "def_mult": 0.2,
-      "spd_mult": 0.2,
-      "karma_mult": 0.3,
-      "durability": 150,
-      "value": 500,
-      "species": "鳳凰",
-      "biome": "天"
-    },
-    {
-      "name": "麒麟之角",
-      "type": "accessory",
-      "slot": "head",
-      "atk_mult": 0.1,
-      "def_mult": 0.1,
-      "spd_mult": 0.1,
-      "karma_mult": 0.35,
-      "durability": 180,
-      "value": 450,
-      "species": "麒麟",
-      "biome": "仙境"
-    },
-    {
-      "name": "白澤之智慧",
-      "type": "accessory",
-      "slot": "neck",
-      "atk_mult": 0.0,
-      "def_mult": 0.05,
-      "spd_mult": 0.05,
-      "karma_mult": 0.5,
-      "durability": 100,
-      "value": 400,
-      "species": "白澤",
-      "biome": "仙境"
-    }
-  ],
-  "herbal_items": [
-    {
-      "name": "艾草",
-      "type": "consumable",
-      "weight": 0.2,
-      "value": 8,
-      "heal_hp": 15,
-      "heal_sp": 0,
-      "description": "以艾草製成的藥"
-    },
-    {
-      "name": "薄荷",
-      "type": "consumable",
-      "weight": 0.1,
-      "value": 5,
-      "heal_hp": 0,
-      "heal_sp": 10,
-      "description": "帶有清涼感的薄荷"
-    },
-    {
-      "name": "蒲公英",
-      "type": "consumable",
-      "weight": 0.1,
-      "value": 3,
-      "heal_hp": 5,
-      "heal_sp": 5,
-      "description": "蒲公英的根"
-    },
-    {
-      "name": "人参",
-      "type": "consumable",
-      "weight": 0.3,
-      "value": 25,
-      "heal_hp": 30,
-      "heal_sp": 0,
-      "description": "高麗人參"
-    },
-    {
-      "name": "靈芝",
-      "type": "consumable",
-      "weight": 0.2,
-      "value": 30,
-      "heal_hp": 20,
-      "heal_sp": 15,
-      "description": "千年靈芝"
-    },
-    {
-      "name": "金創藥",
-      "type": "consumable",
-      "weight": 0.3,
-      "value": 35,
-      "heal_hp": 45,
-      "heal_sp": 0,
-      "description": "治療外傷的藥"
-    },
-    {
-      "name": "醒神藥",
-      "type": "consumable",
-      "weight": 0.2,
-      "value": 20,
-      "heal_hp": 10,
-      "heal_sp": 20,
-      "description": "鎮定心神的藥"
-    },
-    {
-      "name": "萬靈藥",
-      "type": "consumable",
-      "weight": 0.4,
-      "value": 60,
-      "heal_hp": 60,
-      "heal_sp": 40,
-      "description": "萬用藥"
-    },
-    {
-      "name": "龍涎香",
-      "type": "consumable",
-      "weight": 0.3,
-      "value": 80,
-      "heal_hp": 50,
-      "heal_sp": 30,
-      "description": "龍之香氣"
-    },
-    {
-      "name": "七星丹",
-      "type": "consumable",
-      "weight": 0.3,
-      "value": 120,
-      "heal_hp": 80,
-      "heal_sp": 50,
-      "description": "七星之力"
-    },
-    {
-      "name": "還魂草",
-      "type": "consumable",
-      "weight": 0.2,
-      "value": 50,
-      "heal_hp": 100,
-      "heal_sp": 0,
-      "description": "能讓死者復活的草"
-    },
-    {
-      "name": "清心丸",
-      "type": "consumable",
-      "weight": 0.2,
-      "value": 40,
-      "heal_hp": 10,
-      "heal_sp": 40,
-      "description": "清心丸藥"
-    },
-    {
-      "name": "壯骨散",
-      "type": "consumable",
-      "weight": 0.3,
-      "value": 45,
-      "heal_hp": 60,
-      "heal_sp": 10,
-      "description": "強健骨骼的藥"
-    },
-    {
-      "name": "止血草",
-      "type": "consumable",
-      "weight": 0.2,
-      "value": 10,
-      "heal_hp": 25,
-      "heal_sp": 0,
-      "description": "能止血的藥草"
-    },
-    {
-      "name": "安眠茶",
-      "type": "consumable",
-      "weight": 0.2,
-      "value": 15,
-      "heal_hp": 5,
-      "heal_sp": 25,
-      "description": "引人安眠的茶"
-    },
-    {
-      "name": "精力劑",
-      "type": "consumable",
-      "weight": 0.3,
-      "value": 50,
-      "heal_hp": 10,
-      "heal_sp": 60,
-      "description": "湧現精力的藥"
-    },
-    {
-      "name": "解毒散",
-      "type": "consumable",
-      "weight": 0.2,
-      "value": 25,
-      "heal_hp": 20,
-      "heal_sp": 15,
-      "description": "解毒粉末"
-    },
-    {
-      "name": "保濕軟膏",
-      "type": "consumable",
-      "weight": 0.2,
-      "value": 18,
-      "heal_hp": 20,
-      "heal_sp": 10,
-      "description": "癒合肌膚的軟膏"
-    },
-    {
-      "name": "活力飲料",
-      "type": "consumable",
-      "weight": 0.3,
-      "value": 30,
-      "heal_hp": 15,
-      "heal_sp": 25,
-      "description": "即效性活力劑"
-    },
-    {
-      "name": "養生酒",
-      "type": "consumable",
-      "weight": 0.4,
-      "value": 60,
-      "heal_hp": 30,
-      "heal_sp": 40,
-      "description": "養生藥酒"
-    },
-    {
-      "name": "氣功丸",
-      "type": "consumable",
-      "weight": 0.3,
-      "value": 55,
-      "heal_hp": 20,
-      "heal_sp": 45,
-      "description": "調理氣息的丸藥"
-    },
-    {
-      "name": "百草丹",
-      "type": "consumable",
-      "weight": 0.3,
-      "value": 70,
-      "heal_hp": 55,
-      "heal_sp": 35,
-      "description": "以百草煉製的丹藥"
-    },
-    {
-      "name": "神水",
-      "type": "consumable",
-      "weight": 0.2,
-      "value": 200,
-      "heal_hp": 100,
-      "heal_sp": 80,
-      "description": "傳說中的神水"
-    },
-    {
-      "name": "神秘菇",
-      "type": "consumable",
-      "weight": 0.2,
-      "value": 50,
-      "heal_hp": 22,
-      "heal_sp": 29,
-      "description": "擁有神秘力量的菇類"
-    },
-    {
-      "name": "月之露",
-      "type": "consumable",
-      "weight": 0.1,
-      "value": 80,
-      "heal_hp": 40,
-      "heal_sp": 30,
-      "description": "凝縮月光的水滴"
-    },
-    {
-      "name": "時空之砂",
-      "type": "consumable",
-      "weight": 0.1,
-      "value": 0,
-      "heal_hp": 0,
-      "heal_sp": 0,
-      "description": "時空之砂（效果不明）"
-    }
-  ],
-  "elemental_items": [
-    {
-      "name": "炎帝之劍",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.6,
-      "def_mult": -0.1,
-      "description": "纏繞灼熱火焰的劍",
-      "value": 300,
-      "durability": 80
-    },
-    {
-      "name": "冰晶之杖",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.3,
-      "def_mult": 0.3,
-      "description": "以冰之結晶製成的法杖",
-      "value": 280,
-      "durability": 75
-    },
-    {
-      "name": "雷神之鎚",
-      "type": "weapon",
-      "slot": "right_hand",
-      "atk_mult": 0.7,
-      "def_mult": -0.15,
-      "description": "能呼喚雷電的戰鎚",
-      "value": 350,
-      "durability": 70
-    },
-    {
-      "name": "風靈之弓",
-      "type": "weapon",
-      "slot": "both_hands",
-      "atk_mult": 0.4,
-      "def_mult": 0.25,
-      "description": "寄宿風之精靈的弓",
-      "value": 260,
-      "durability": 85
-    },
-    {
-      "name": "大地之盾",
-      "type": "weapon",
-      "slot": "left_hand",
-      "atk_mult": 0.0,
-      "def_mult": 0.7,
-      "description": "寄宿大地之力的盾",
-      "value": 300,
-      "durability": 150
-    },
-    {
-      "name": "光輝之鎧",
-      "type": "armor",
-      "slot": "torso",
-      "atk_mult": 0.3,
-      "def_mult": 0.3,
-      "description": "散發聖光的鎧甲",
-      "value": 350,
-      "durability": 120
-    },
-    {
-      "name": "暗夜之斗篷",
-      "type": "armor",
-      "slot": "back",
-      "atk_mult": 0.2,
-      "def_mult": 0.4,
-      "description": "融入影子的暗黑斗篷",
-      "value": 280,
-      "durability": 80
-    },
-    {
-      "name": "精靈之指環",
-      "type": "accessory",
-      "slot": "left_hand",
-      "atk_mult": 0.2,
-      "def_mult": 0.3,
-      "description": "寄宿精靈之力的指環",
-      "value": 200,
-      "durability": 40
-    },
-    {
-      "name": "炎之精靈石",
-      "type": "accessory",
-      "slot": "neck",
-      "atk_mult": 0.3,
-      "def_mult": 0.1,
-      "description": "寄宿火之精靈的石頭",
-      "value": 180,
-      "durability": 50
-    },
-    {
-      "name": "冰之結晶",
-      "type": "armor",
-      "slot": "head",
-      "atk_mult": 0.1,
-      "def_mult": 0.3,
-      "description": "永遠不融化的冰",
-      "value": 160,
-      "durability": 60
-    },
-    {
-      "name": "雷之寶玉",
-      "type": "accessory",
-      "slot": "right_hand",
-      "atk_mult": 0.2,
-      "def_mult": 0.15,
-      "description": "綻放雷光的寶玉",
-      "value": 170,
-      "durability": 45
-    },
-    {
-      "name": "風之羽織",
-      "type": "armor",
-      "slot": "back",
-      "atk_mult": 0.15,
-      "def_mult": 0.25,
-      "description": "輕如風的羽織",
-      "value": 150,
-      "durability": 70
-    },
-    {
-      "name": "大地護石",
-      "type": "accessory",
-      "slot": "neck",
-      "atk_mult": 0.0,
-      "def_mult": 0.35,
-      "description": "受到大地加護的石頭",
-      "value": 200,
-      "durability": 65
-    },
-    {
-      "name": "太陽之輝",
-      "type": "armor",
-      "slot": "head",
-      "atk_mult": 0.25,
-      "def_mult": 0.25,
-      "description": "纏繞太陽之光的王冠",
-      "value": 250,
-      "durability": 100
-    },
-    {
-      "name": "星塵斗篷",
-      "type": "armor",
-      "slot": "back",
-      "atk_mult": 0.1,
-      "def_mult": 0.2,
-      "description": "寄宿星之力的斗篷",
-      "value": 190,
-      "durability": 90
-    },
-    {
-      "name": "虛空之碎片",
-      "type": "accessory",
-      "slot": "left_hand",
-      "atk_mult": 0.15,
-      "def_mult": 0.15,
-      "description": "寄宿虛空之力的碎片",
-      "value": 140,
-      "durability": 80
-    },
-    {
-      "name": "混沌之種",
-      "type": "accessory",
-      "slot": "neck",
-      "atk_mult": 0.2,
-      "def_mult": 0.1,
-      "description": "從混沌中誕生的種子",
-      "value": 160,
-      "durability": 95
-    },
-    {
-      "name": "秩序之天秤",
-      "type": "weapon",
-      "slot": "left_hand",
-      "atk_mult": 0.1,
-      "def_mult": 0.3,
-      "description": "司掌均衡的天秤",
-      "value": 200,
-      "durability": 120
-    }
-  ],
-  "junk_templates": [
-    {
-      "base_name": "生鏽的鐵釘",
-      "prefixes": [
-        "生鏽的",
-        "陳舊的",
-        "彎曲的",
-        "折斷的",
-        "缺角的"
-      ]
-    },
-    {
-      "base_name": "碎裂的瓶子",
-      "prefixes": [
-        "碎裂的",
-        "龜裂的",
-        "小小的",
-        "大大的"
-      ]
-    },
-    {
-      "base_name": "蒙塵的書本",
-      "prefixes": [
-        "蒙塵的",
-        "潮濕的",
-        "燒焦的",
-        "破損的"
-      ]
-    },
-    {
-      "base_name": "用舊的毛筆",
-      "prefixes": [
-        "用舊的",
-        "全新的",
-        "折斷的",
-        "乾涸的"
-      ]
-    },
-    {
-      "base_name": "折斷的樹枝",
-      "prefixes": [
-        "折斷的",
-        "粗壯的",
-        "纖細的",
-        "乾燥的"
-      ]
-    },
-    {
-      "base_name": "乾燥的樹葉",
-      "prefixes": [
-        "乾燥的",
-        "新鮮的",
-        "染色的",
-        "蟲蛀的"
-      ]
-    },
-    {
-      "base_name": "小石子",
-      "prefixes": [
-        "圓形的",
-        "尖銳的",
-        "扁平的",
-        "發光的",
-        "沉重的"
-      ]
-    },
-    {
-      "base_name": "褪色的布料",
-      "prefixes": [
-        "褪色的",
-        "鮮豔的",
-        "絹製的",
-        "麻製的"
-      ]
-    },
-    {
-      "base_name": "斷裂的繩子",
-      "prefixes": [
-        "斷裂的",
-        "耐用的",
-        "纖細的",
-        "粗壯的"
-      ]
-    },
-    {
-      "base_name": "空箱子",
-      "prefixes": [
-        "小小的",
-        "大大的",
-        "堅固的",
-        "單薄的"
-      ]
-    },
-    {
-      "base_name": "壞掉的時鐘",
-      "prefixes": [
-        "損壞的",
-        "舊的",
-        "金製的",
-        "銀製的"
-      ]
-    },
-    {
-      "base_name": "燒焦的紙張",
-      "prefixes": [
-        "燒焦的",
-        "潮濕的",
-        "皺巴巴的",
-        "破損的"
-      ]
-    },
-    {
-      "base_name": "缺角的寶石",
-      "prefixes": [
-        "缺角的",
-        "小小的",
-        "發光的",
-        "褪色的"
-      ]
-    },
-    {
-      "base_name": "歪斜的鏡子",
-      "prefixes": [
-        "歪斜的",
-        "碎裂的",
-        "圓形的",
-        "方形的"
-      ]
-    },
-    {
-      "base_name": "舊骰子",
-      "prefixes": [
-        "舊的",
-        "全新的",
-        "歪斜的",
-        "小巧的"
-      ]
-    },
-    {
-      "base_name": "空的墨水瓶",
-      "prefixes": [
-        "空空的",
-        "半個的",
-        "乾涸的",
-        "碎裂的"
-      ]
-    },
-    {
-      "base_name": "單隻手套",
-      "prefixes": [
-        "單隻的",
-        "毛線製的",
-        "皮製的",
-        "布製的"
-      ]
-    },
-    {
-      "base_name": "生鏽的湯匙",
-      "prefixes": [
-        "生鏽的",
-        "銀製的",
-        "木製的",
-        "彎曲的"
-      ]
-    },
-    {
-      "base_name": "彎曲的針",
-      "prefixes": [
-        "彎曲的",
-        "生鏽的",
-        "纖細的",
-        "折斷的"
-      ]
-    },
-    {
-      "base_name": "脫線的襪子",
-      "prefixes": [
-        "脫線的",
-        "全新的",
-        "破損的",
-        "褪色的"
-      ]
-    },
-    {
-      "base_name": "破爛的日記",
-      "prefixes": [
-        "破爛的",
-        "全新的",
-        "難辨的",
-        "帶鎖的"
-      ]
-    },
-    {
-      "base_name": "異國的郵票",
-      "prefixes": [
-        "異國的",
-        "舊的",
-        "美麗的",
-        "罕見的"
-      ]
-    },
-    {
-      "base_name": "免洗筷",
-      "prefixes": [
-        "拋棄式的",
-        "漆製的",
-        "竹製的",
-        "折斷的"
-      ]
-    },
-    {
-      "base_name": "未燒盡的木柴",
-      "prefixes": [
-        "未燒盡的",
-        "粗壯的",
-        "纖細的",
-        "乾涸的"
-      ]
-    },
-    {
-      "base_name": "字跡難辨的便條",
-      "prefixes": [
-        "難辨的",
-        "潦草的",
-        "工整的",
-        "潮濕的"
-      ]
-    },
-    {
-      "base_name": "蟲蛀的木片",
-      "prefixes": [
-        "蟲蛀的",
-        "光滑的",
-        "雕刻過的",
-        "腐爛的"
-      ]
-    },
-    {
-      "base_name": "舊鈕扣",
-      "prefixes": [
-        "舊的",
-        "黃銅製的",
-        "貝製的",
-        "木製的"
-      ]
-    },
-    {
-      "base_name": "褪色的緞帶",
-      "prefixes": [
-        "褪色的",
-        "紅色的",
-        "藍色的",
-        "絹製的"
-      ]
-    },
-    {
-      "base_name": "滿是灰塵的擺飾",
-      "prefixes": [
-        "滿是灰塵的",
-        "陶製的",
-        "木雕的",
-        "石製的"
-      ]
-    },
-    {
-      "base_name": "舊照片",
-      "prefixes": [
-        "舊的",
-        "褪色的",
-        "破損的",
-        "捲曲的"
-      ]
-    },
-    {
-      "base_name": "生鏽的鐵絲",
-      "prefixes": [
-        "生鏽的",
-        "黃銅製的",
-        "鐵製的",
-        "粗壯的"
-      ]
-    },
-    {
-      "base_name": "掉落的羽毛",
-      "prefixes": [
-        "掉落的",
-        "白色的",
-        "黑色的",
-        "帶花紋的"
-      ]
-    },
-    {
-      "base_name": "乾涸的泥土",
-      "prefixes": [
-        "乾涸的",
-        "潮濕的",
-        "凝固的",
-        "柔軟的"
-      ]
-    },
-    {
-      "base_name": "空瓶",
-      "prefixes": [
-        "小小的",
-        "大大的",
-        "棕色的",
-        "透明的",
-        "綠色的"
-      ]
-    },
-    {
-      "base_name": "狗尾草",
-      "prefixes": [
-        "枯萎的",
-        "乾涸的",
-        "長長的",
-        "短短的"
-      ]
-    },
-    {
-      "base_name": "用舊的皮包",
-      "prefixes": [
-        "用舊的",
-        "皮革製的",
-        "布製的",
-        "破損的"
-      ]
-    },
-    {
-      "base_name": "綻線的帽子",
-      "prefixes": [
-        "綻線的",
-        "全新的",
-        "稻草製的",
-        "布製的"
-      ]
-    },
-    {
-      "base_name": "折斷的鋼筆",
-      "prefixes": [
-        "折斷的",
-        "金製的",
-        "銀製的",
-        "塑膠製的"
-      ]
-    },
-    {
-      "base_name": "斷裂的手環",
-      "prefixes": [
-        "斷裂的",
-        "銀製的",
-        "木製的",
-        "皮革製的"
-      ]
-    },
-    {
-      "base_name": "纏結的毛線",
-      "prefixes": [
-        "纏結的",
-        "紅色的",
-        "藍色的",
-        "白色的",
-        "黃色的"
-      ]
-    },
-    {
-      "base_name": "吃剩的糖果",
-      "prefixes": [
-        "吃剩的",
-        "包裝紙的",
-        "融化的",
-        "凝固的"
-      ]
-    },
-    {
-      "base_name": "鳥巢的殘骸",
-      "prefixes": [
-        "鳥巢的",
-        "崩塌的",
-        "小小的",
-        "大大的"
-      ]
-    },
-    {
-      "base_name": "破洞的襪子",
-      "prefixes": [
-        "破洞的",
-        "毛線製的",
-        "棉製的",
-        "絹製的"
-      ]
-    },
-    {
-      "base_name": "生鏽的劍柄",
-      "prefixes": [
-        "生鏽的",
-        "木製的",
-        "皮革包覆的",
-        "銀製的"
-      ]
-    },
-    {
-      "base_name": "泛黃地圖的碎片",
-      "prefixes": [
-        "陳舊的",
-        "潮濕的",
-        "燒焦的",
-        "破損的"
-      ]
-    },
-    {
-      "base_name": "用舊的牙刷",
-      "prefixes": [
-        "用舊的",
-        "全新的",
-        "折斷的",
-        "彎曲的"
-      ]
-    },
-    {
-      "base_name": "乾燥的花瓣",
-      "prefixes": [
-        "乾燥的",
-        "褪色的",
-        "壓花的",
-        "碎散的"
-      ]
-    },
-    {
-      "base_name": "生鏽的自行車零件",
-      "prefixes": [
-        "生鏽的",
-        "損壞的",
-        "舊的",
-        "彎曲的"
-      ]
-    },
-    {
-      "base_name": "斷裂的鞋帶",
-      "prefixes": [
-        "斷裂的",
-        "全新的",
-        "潮濕的",
-        "凝固的"
-      ]
-    },
-    {
-      "base_name": "破碎的花瓶",
-      "prefixes": [
-        "損壞的",
-        "陶製的",
-        "玻璃製的",
-        "木製的"
-      ]
-    },
-    {
-      "base_name": "半枚硬幣",
-      "prefixes": [
-        "半個的",
-        "舊的",
-        "發光的",
-        "生鏽的"
-      ]
-    },
-    {
-      "base_name": "裝著不明液體的瓶子",
-      "prefixes": [
-        "神祕的",
-        "藍色的",
-        "紅色的",
-        "綠色的",
-        "冒泡的"
-      ]
-    },
-    {
-      "base_name": "小貝殼",
-      "prefixes": [
-        "螺旋狀的",
-        "扁平的",
-        "尖銳的",
-        "缺角的",
-        "白色的"
-      ]
-    },
-    {
-      "base_name": "生鏽的鈴鐺",
-      "prefixes": [
-        "生鏽的",
-        "小小的",
-        "損壞的",
-        "舊的"
-      ]
-    }
-  ],
-  "junk_items": [
-    "生鏽的生鏽的鐵釘",
-    "陳舊的生鏽的鐵釘",
-    "彎曲的生鏽的鐵釘",
-    "折斷的生鏽的鐵釘",
-    "缺角的生鏽的鐵釘",
-    "碎裂的碎裂的瓶子",
-    "龜裂的碎裂的瓶子",
-    "小小的碎裂的瓶子",
-    "大大的碎裂的瓶子",
-    "蒙塵的蒙塵的書本",
-    "潮濕的蒙塵的書本",
-    "燒焦的蒙塵的書本",
-    "破損的蒙塵的書本",
-    "用舊的用舊的毛筆",
-    "全新的用舊的毛筆",
-    "折斷的用舊的毛筆",
-    "乾涸的用舊的毛筆",
-    "折斷的折斷的樹枝",
-    "粗壯的折斷的樹枝",
-    "纖細的折斷的樹枝",
-    "乾燥的折斷的樹枝",
-    "乾燥的乾燥的樹葉",
-    "新鮮的乾燥的樹葉",
-    "染色的乾燥的樹葉",
-    "蟲蛀的乾燥的樹葉",
-    "圓形的小石子",
-    "尖銳的小石子",
-    "扁平的小石子",
-    "發光的小石子",
-    "沉重的小石子",
-    "褪色的褪色的布料",
-    "鮮豔的褪色的布料",
-    "絹製的褪色的布料",
-    "麻製的褪色的布料",
-    "斷裂的斷裂的繩子",
-    "耐用的斷裂的繩子",
-    "纖細的斷裂的繩子",
-    "粗壯的斷裂的繩子",
-    "小小的空箱子",
-    "大大的空箱子",
-    "堅固的空箱子",
-    "單薄的空箱子",
-    "損壞的壞掉的時鐘",
-    "舊的壞掉的時鐘",
-    "金製的壞掉的時鐘",
-    "銀製的壞掉的時鐘",
-    "燒焦的燒焦的紙張",
-    "潮濕的燒焦的紙張",
-    "皺巴巴的燒焦的紙張",
-    "破損的燒焦的紙張",
-    "缺角的缺角的寶石",
-    "小小的缺角的寶石",
-    "發光的缺角的寶石",
-    "褪色的缺角的寶石",
-    "歪斜的歪斜的鏡子",
-    "碎裂的歪斜的鏡子",
-    "圓形的歪斜的鏡子",
-    "方形的歪斜的鏡子",
-    "舊的舊骰子",
-    "全新的舊骰子",
-    "歪斜的舊骰子",
-    "小巧的舊骰子",
-    "空空的空的墨水瓶",
-    "半個的空的墨水瓶",
-    "乾涸的空的墨水瓶",
-    "碎裂的空的墨水瓶",
-    "單隻的單隻手套",
-    "毛線製的單隻手套",
-    "皮製的單隻手套",
-    "布製的單隻手套",
-    "生鏽的生鏽的湯匙",
-    "銀製的生鏽的湯匙",
-    "木製的生鏽的湯匙",
-    "彎曲的生鏽的湯匙",
-    "彎曲的彎曲的針",
-    "生鏽的彎曲的針",
-    "纖細的彎曲的針",
-    "折斷的彎曲的針",
-    "脫線的脫線的襪子",
-    "全新的脫線的襪子",
-    "破損的脫線的襪子",
-    "褪色的脫線的襪子",
-    "破爛的破爛的日記",
-    "全新的破爛的日記",
-    "難辨的破爛的日記",
-    "帶鎖的破爛的日記",
-    "異國的異國的郵票",
-    "舊的異國的郵票",
-    "美麗的異國的郵票",
-    "罕見的異國的郵票",
-    "拋棄式的免洗筷",
-    "漆製的免洗筷",
-    "竹製的免洗筷",
-    "折斷的免洗筷",
-    "未燒盡的未燒盡的木柴",
-    "粗壯的未燒盡的木柴",
-    "纖細的未燒盡的木柴",
-    "乾涸的未燒盡的木柴",
-    "難辨的字跡難辨的便條",
-    "潦草的字跡難辨的便條",
-    "工整的字跡難辨的便條",
-    "潮濕的字跡難辨的便條",
-    "蟲蛀的蟲蛀的木片",
-    "光滑的蟲蛀的木片",
-    "雕刻過的蟲蛀的木片",
-    "腐爛的蟲蛀的木片",
-    "舊的舊鈕扣",
-    "黃銅製的舊鈕扣",
-    "貝製的舊鈕扣",
-    "木製的舊鈕扣",
-    "褪色的褪色的緞帶",
-    "紅色的褪色的緞帶",
-    "藍色的褪色的緞帶",
-    "絹製的褪色的緞帶",
-    "滿是灰塵的滿是灰塵的擺飾",
-    "陶製的滿是灰塵的擺飾",
-    "木雕的滿是灰塵的擺飾",
-    "石製的滿是灰塵的擺飾",
-    "舊的舊照片",
-    "褪色的舊照片",
-    "破損的舊照片",
-    "捲曲的舊照片",
-    "生鏽的生鏽的鐵絲",
-    "黃銅製的生鏽的鐵絲",
-    "鐵製的生鏽的鐵絲",
-    "粗壯的生鏽的鐵絲",
-    "掉落的掉落的羽毛",
-    "白色的掉落的羽毛",
-    "黑色的掉落的羽毛",
-    "帶花紋的掉落的羽毛",
-    "乾涸的乾涸的泥土",
-    "潮濕的乾涸的泥土",
-    "凝固的乾涸的泥土",
-    "柔軟的乾涸的泥土",
-    "小小的空瓶",
-    "大大的空瓶",
-    "棕色的空瓶",
-    "透明的空瓶",
-    "綠色的空瓶",
-    "枯萎的狗尾草",
-    "乾涸的狗尾草",
-    "長長的狗尾草",
-    "短短的狗尾草",
-    "用舊的用舊的皮包",
-    "皮革製的用舊的皮包",
-    "布製的用舊的皮包",
-    "破損的用舊的皮包",
-    "綻線的綻線的帽子",
-    "全新的綻線的帽子",
-    "稻草製的綻線的帽子",
-    "布製的綻線的帽子",
-    "折斷的折斷的鋼筆",
-    "金製的折斷的鋼筆",
-    "銀製的折斷的鋼筆",
-    "塑膠製的折斷的鋼筆",
-    "斷裂的斷裂的手環",
-    "銀製的斷裂的手環",
-    "木製的斷裂的手環",
-    "皮革製的斷裂的手環",
-    "纏結的纏結的毛線",
-    "紅色的纏結的毛線",
-    "藍色的纏結的毛線",
-    "白色的纏結的毛線",
-    "黃色的纏結的毛線",
-    "吃剩的吃剩的糖果",
-    "包裝紙的吃剩的糖果",
-    "融化的吃剩的糖果",
-    "凝固的吃剩的糖果",
-    "鳥巢的鳥巢的殘骸",
-    "崩塌的鳥巢的殘骸",
-    "小小的鳥巢的殘骸",
-    "大大的鳥巢的殘骸",
-    "破洞的破洞的襪子",
-    "毛線製的破洞的襪子",
-    "棉製的破洞的襪子",
-    "絹製的破洞的襪子",
-    "生鏽的生鏽的劍柄",
-    "木製的生鏽的劍柄",
-    "皮革包覆的生鏽的劍柄",
-    "銀製的生鏽的劍柄",
-    "陳舊的泛黃地圖的碎片",
-    "潮濕的泛黃地圖的碎片",
-    "燒焦的泛黃地圖的碎片",
-    "破損的泛黃地圖的碎片",
-    "用舊的用舊的牙刷",
-    "全新的用舊的牙刷",
-    "折斷的用舊的牙刷",
-    "彎曲的用舊的牙刷",
-    "乾燥的乾燥的花瓣",
-    "褪色的乾燥的花瓣",
-    "壓花的乾燥的花瓣",
-    "碎散的乾燥的花瓣",
-    "生鏽的生鏽的自行車零件",
-    "損壞的生鏽的自行車零件",
-    "舊的生鏽的自行車零件",
-    "彎曲的生鏽的自行車零件",
-    "斷裂的斷裂的鞋帶",
-    "全新的斷裂的鞋帶",
-    "潮濕的斷裂的鞋帶",
-    "凝固的斷裂的鞋帶",
-    "損壞的破碎的花瓶",
-    "陶製的破碎的花瓶",
-    "玻璃製的破碎的花瓶",
-    "木製的破碎的花瓶",
-    "半個的半枚硬幣",
-    "舊的半枚硬幣",
-    "發光的半枚硬幣",
-    "生鏽的半枚硬幣",
-    "神祕的裝著不明液體的瓶子",
-    "藍色的裝著不明液體的瓶子",
-    "紅色的裝著不明液體的瓶子",
-    "綠色的裝著不明液體的瓶子",
-    "冒泡的裝著不明液體的瓶子",
-    "螺旋狀的小貝殼",
-    "扁平的小貝殼",
-    "尖銳的小貝殼",
-    "缺角的小貝殼",
-    "白色的小貝殼",
-    "生鏽的生鏽的鈴鐺",
-    "小小的生鏽的鈴鐺",
-    "損壞的生鏽的鈴鐺",
-    "舊的生鏽的鈴鐺"
-  ],
-  "enemy_templates": [],
-  "elemental_enemies": [
-    {
-      "name": "火靈",
-      "hp": 60,
-      "atk": 30,
-      "def": 8,
-      "spd": 5,
-      "exp": 65,
-      "gold": 30,
-      "loot": [
-        "火元素",
-        "魔法粉"
-      ],
-      "desc": "火焰的精靈"
-    },
-    {
-      "name": "水靈",
-      "hp": 50,
-      "atk": 18,
-      "def": 12,
-      "spd": 6,
-      "exp": 45,
-      "gold": 20,
-      "loot": [
-        "水晶碎片",
-        "貝殼"
-      ],
-      "desc": "水的精靈"
-    },
-    {
-      "name": "風靈",
-      "hp": 35,
-      "atk": 22,
-      "def": 5,
-      "spd": 12,
-      "exp": 55,
-      "gold": 25,
-      "loot": [
-        "羽毛",
-        "魔法粉"
-      ],
-      "desc": "風的精靈"
-    },
-    {
-      "name": "地靈",
-      "hp": 100,
-      "atk": 15,
-      "def": 25,
-      "spd": 2,
-      "exp": 60,
-      "gold": 35,
-      "loot": [
-        "黏土",
-        "靈木"
-      ],
-      "desc": "大地的精靈"
-    },
-    {
-      "name": "光靈",
-      "hp": 40,
-      "atk": 25,
-      "def": 10,
-      "spd": 8,
-      "exp": 70,
-      "gold": 40,
-      "loot": [
-        "護身符",
-        "靈木"
-      ],
-      "desc": "光的精靈"
-    },
-    {
-      "name": "暗靈",
-      "hp": 45,
-      "atk": 28,
-      "def": 8,
-      "spd": 9,
-      "exp": 65,
-      "gold": 35,
-      "loot": [
-        "魔法粉",
-        "破布"
-      ],
-      "desc": "暗的精靈"
-    },
-    {
-      "name": "雷靈",
-      "hp": 40,
-      "atk": 35,
-      "def": 6,
-      "spd": 10,
-      "exp": 80,
-      "gold": 45,
-      "loot": [
-        "水晶碎片",
-        "火元素"
-      ],
-      "desc": "雷的精靈"
-    },
-    {
-      "name": "冰靈",
-      "hp": 55,
-      "atk": 20,
-      "def": 15,
-      "spd": 5,
-      "exp": 50,
-      "gold": 28,
-      "loot": [
-        "空瓶",
-        "草藥"
-      ],
-      "desc": "冰的精靈"
-    },
-    {
-      "name": "森靈",
-      "hp": 70,
-      "atk": 14,
-      "def": 18,
-      "spd": 4,
-      "exp": 45,
-      "gold": 22,
-      "loot": [
-        "靈木",
-        "樹枝"
-      ],
-      "desc": "森林的精靈"
-    },
-    {
-      "name": "星靈",
-      "hp": 30,
-      "atk": 20,
-      "def": 8,
-      "spd": 14,
-      "exp": 90,
-      "gold": 50,
-      "loot": [
-        "星塵斗篷",
-        "記憶水晶"
-      ],
-      "desc": "星辰的精靈"
-    }
-  ],
-  "trade_catalog": {},
-  "locations_for_objects": [
-    "聖十字校園",
-    "鏡湖",
-    "鬱鬱山",
-    "卡洛夫角",
-    "霧海群島",
-    "秘密鐵工廠",
-    "便利店",
-    "英靈殿",
-    "廢棄礦坑",
-    "森林深處",
-    "煙雲溫泉湖",
-    "清溪河",
-    "鏡山"
-  ],
-  "animal_enemies_template": [
-    {
-      "name": "森狼",
-      "base_hp": 35,
-      "base_atk": 10,
-      "base_def": 4,
-      "base_spd": 7,
-      "exp_mod": 25,
-      "gold_mod": 8,
-      "loot": [
-        "皮革"
-      ],
-      "desc": "棲息於森林的狼",
-      "biome": "forest"
-    },
-    {
-      "name": "山熊",
-      "base_hp": 120,
-      "base_atk": 28,
-      "base_def": 12,
-      "base_spd": 3,
-      "exp_mod": 100,
-      "gold_mod": 50,
-      "loot": [
-        "熊之鐵壁",
-        "生命果"
-      ],
-      "desc": "巨大的山熊",
-      "biome": "mountain"
-    },
-    {
-      "name": "毒蛇",
-      "base_hp": 30,
-      "base_atk": 22,
-      "base_def": 3,
-      "base_spd": 9,
-      "exp_mod": 45,
-      "gold_mod": 15,
-      "loot": [
-        "解毒草",
-        "蛇之鱗衣"
-      ],
-      "desc": "擁有毒牙的蛇",
-      "biome": "forest"
-    },
-    {
-      "name": "猛禽",
-      "base_hp": 25,
-      "base_atk": 18,
-      "base_def": 2,
-      "base_spd": 12,
-      "exp_mod": 35,
-      "gold_mod": 12,
-      "loot": [
-        "鷹之翼膜",
-        "羽毛"
-      ],
-      "desc": "從空中狙擊的猛禽",
-      "biome": "sky"
-    },
-    {
-      "name": "野猪",
-      "base_hp": 70,
-      "base_atk": 15,
-      "base_def": 8,
-      "base_spd": 5,
-      "exp_mod": 40,
-      "gold_mod": 18,
-      "loot": [
-        "皮革",
-        "狼王毛皮"
-      ],
-      "desc": "狂暴的野豬",
-      "biome": "grassland"
-    },
-    {
-      "name": "大蜘蛛",
-      "base_hp": 40,
-      "base_atk": 12,
-      "base_def": 6,
-      "base_spd": 6,
-      "exp_mod": 30,
-      "gold_mod": 10,
-      "loot": [
-        "絲線",
-        "解毒草"
-      ],
-      "desc": "巨大的蜘蛛",
-      "biome": "cave"
-    },
-    {
-      "name": "虎",
-      "base_hp": 90,
-      "base_atk": 30,
-      "base_def": 10,
-      "base_spd": 7,
-      "exp_mod": 80,
-      "gold_mod": 35,
-      "loot": [
-        "虎之條紋鎧",
-        "皮革"
-      ],
-      "desc": "百獸之王",
-      "biome": "forest"
-    },
-    {
-      "name": "大鹿",
-      "base_hp": 50,
-      "base_atk": 8,
-      "base_def": 5,
-      "base_spd": 9,
-      "exp_mod": 25,
-      "gold_mod": 15,
-      "loot": [
-        "鹿之角冠",
-        "皮革"
-      ],
-      "desc": "森林的守護者",
-      "biome": "forest"
-    },
-    {
-      "name": "電鱗魚",
-      "base_hp": 35,
-      "base_atk": 25,
-      "base_def": 4,
-      "base_spd": 8,
-      "exp_mod": 50,
-      "gold_mod": 20,
-      "loot": [
-        "貓之輕靴",
-        "魔力藥水"
-      ],
-      "desc": "帶電的魚",
-      "biome": "water"
-    },
-    {
-      "name": "鎌鼬",
-      "base_hp": 28,
-      "base_atk": 20,
-      "base_def": 2,
-      "base_spd": 11,
-      "exp_mod": 40,
-      "gold_mod": 14,
-      "loot": [
-        "羽毛",
-        "草藥"
-      ],
-      "desc": "破風而行的鼬",
-      "biome": "grassland"
-    },
-    {
-      "name": "岩亀",
-      "base_hp": 200,
-      "base_atk": 8,
-      "base_def": 35,
-      "base_spd": 1,
-      "exp_mod": 120,
-      "gold_mod": 60,
-      "loot": [
-        "龜之甲殼盾",
-        "黏土"
-      ],
-      "desc": "如移動岩石般的巨龜",
-      "biome": "mountain"
-    },
-    {
-      "name": "吸血蝙蝠",
-      "base_hp": 20,
-      "base_atk": 15,
-      "base_def": 2,
-      "base_spd": 10,
-      "exp_mod": 30,
-      "gold_mod": 8,
-      "loot": [
-        "空瓶",
-        "破布"
-      ],
-      "desc": "夜間飛翔的蝙蝠",
-      "biome": "cave"
-    },
-    {
-      "name": "黄金蛇",
-      "base_hp": 40,
-      "base_atk": 18,
-      "base_def": 5,
-      "base_spd": 8,
-      "exp_mod": 55,
-      "gold_mod": 25,
-      "loot": [
-        "蛇之鱗衣",
-        "古代硬貨"
-      ],
-      "desc": "擁有黃金鱗片的蛇",
-      "biome": "ruins"
-    },
-    {
-      "name": "冰狼",
-      "base_hp": 50,
-      "base_atk": 15,
-      "base_def": 8,
-      "base_spd": 6,
-      "exp_mod": 60,
-      "gold_mod": 22,
-      "loot": [
-        "銀狼之尾",
-        "皮革"
-      ],
-      "desc": "冰雪地帶的狼",
-      "biome": "snow"
-    },
-    {
-      "name": "砂蝎",
-      "base_hp": 60,
-      "base_atk": 20,
-      "base_def": 12,
-      "base_spd": 4,
-      "exp_mod": 50,
-      "gold_mod": 28,
-      "loot": [
-        "蠍之甲殼",
-        "毒針"
-      ],
-      "desc": "潛伏於沙漠的蠍子",
-      "biome": "desert"
-    },
-    {
-      "name": "火蜥蜴",
-      "base_hp": 45,
-      "base_atk": 25,
-      "base_def": 6,
-      "base_spd": 5,
-      "exp_mod": 55,
-      "gold_mod": 20,
-      "loot": [
-        "火元素",
-        "皮革"
-      ],
-      "desc": "噴吐火焰的蜥蜴",
-      "biome": "volcano"
-    },
-    {
-      "name": "翠鳥",
-      "base_hp": 22,
-      "base_atk": 14,
-      "base_def": 3,
-      "base_spd": 13,
-      "exp_mod": 30,
-      "gold_mod": 10,
-      "loot": [
-        "羽毛",
-        "靈木"
-      ],
-      "desc": "被譽為森林寶石的鳥",
-      "biome": "forest"
-    },
-    {
-      "name": "鉄甲虫",
-      "base_hp": 80,
-      "base_atk": 10,
-      "base_def": 25,
-      "base_spd": 2,
-      "exp_mod": 45,
-      "gold_mod": 18,
-      "loot": [
-        "鐵礦",
-        "黏土"
-      ],
-      "desc": "擁有鋼鐵甲殼的蟲",
-      "biome": "cave"
-    },
-    {
-      "name": "水馬",
-      "base_hp": 55,
-      "base_atk": 12,
-      "base_def": 7,
-      "base_spd": 8,
-      "exp_mod": 35,
-      "gold_mod": 15,
-      "loot": [
-        "貝殼",
-        "絲線"
-      ],
-      "desc": "水邊的幻獸",
-      "biome": "water"
-    },
-    {
-      "name": "旋風狼",
-      "base_hp": 40,
-      "base_atk": 18,
-      "base_def": 5,
-      "base_spd": 9,
-      "exp_mod": 50,
-      "gold_mod": 22,
-      "loot": [
-        "狼王毛皮",
-        "魔法粉"
-      ],
-      "desc": "操縱風的狼",
-      "biome": "grassland"
-    }
-  ],
-  "cat_item_types": {
-    "energy": [
-      "accessory",
-      "neck",
-      0.1,
-      0.1,
-      0,
-      0.2,
-      60,
-      80
-    ],
-    "element": [
-      "accessory",
-      "neck",
-      0.1,
-      0.1,
-      0,
-      0.2,
-      60,
-      80
-    ],
-    "combat": [
-      "weapon",
-      "right_hand",
-      0.25,
-      0,
-      0.1,
-      0,
-      80,
-      100
-    ],
-    "skill": [
-      "weapon",
-      "right_hand",
-      0.25,
-      0,
-      0.1,
-      0,
-      80,
-      100
-    ],
-    "craft": [
-      "armor",
-      "torso",
-      0,
-      0.15,
-      0,
-      0.15,
-      70,
-      90
-    ],
-    "social": [
-      "armor",
-      "torso",
-      0,
-      0.15,
-      0,
-      0.15,
-      70,
-      90
-    ],
-    "lore": [
-      "armor",
-      "back",
-      0,
-      0.1,
-      0,
-      0.2,
-      50,
-      70
-    ],
-    "vitality": [
-      "armor",
-      "torso",
-      0,
-      0.2,
-      0,
-      0,
-      80,
-      85
-    ],
-    "exploration": [
-      "armor",
-      "feet",
-      0,
-      0,
-      0.15,
-      0.1,
-      60,
-      75
-    ],
-    "knowledge": [
-      "accessory",
-      "head",
-      0,
-      0,
-      0,
-      0.25,
-      50,
-      95
-    ]
+ "version": "2.0",
+ "description": "Supplement data for CLI RPG - items, equipment, enemies not in the card deck",
+ "naval_data": [
+  {
+   "name": "46cm連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.8,
+   "def_mult": 0.0,
+   "durability": 200,
+   "value": 500,
+   "nation": "日本",
+   "ship_class": "大和型戰艦"
+  },
+  {
+   "name": "41cm連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.6,
+   "def_mult": 0.0,
+   "durability": 180,
+   "value": 400,
+   "nation": "日本",
+   "ship_class": "長門型戰艦"
+  },
+  {
+   "name": "36.5cm連裝砲改",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.55,
+   "def_mult": 0.0,
+   "durability": 170,
+   "value": 380,
+   "nation": "日本",
+   "ship_class": "金剛型戰艦改"
+  },
+  {
+   "name": "41cm三連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.65,
+   "def_mult": 0.0,
+   "durability": 190,
+   "value": 420,
+   "nation": "日本",
+   "ship_class": "加賀型戰艦"
+  },
+  {
+   "name": "51cm連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.95,
+   "def_mult": -0.1,
+   "durability": 150,
+   "value": 700,
+   "nation": "日本",
+   "ship_class": "超大和型計畫"
+  },
+  {
+   "name": "20.3cm連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.35,
+   "def_mult": 0.0,
+   "durability": 120,
+   "value": 250,
+   "nation": "日本",
+   "ship_class": "重巡主砲"
+  },
+  {
+   "name": "15.5cm三連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.3,
+   "def_mult": 0.0,
+   "durability": 100,
+   "value": 200,
+   "nation": "日本",
+   "ship_class": "輕巡主砲"
+  },
+  {
+   "name": "12.7cm連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.25,
+   "def_mult": 0.0,
+   "durability": 80,
+   "value": 150,
+   "nation": "日本",
+   "ship_class": "驅逐主砲"
+  },
+  {
+   "name": "10cm連裝高角砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.2,
+   "def_mult": 0.0,
+   "durability": 70,
+   "value": 130,
+   "nation": "日本",
+   "ship_class": "秋月型驅逐艦"
+  },
+  {
+   "name": "61cm四連裝魚雷",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.7,
+   "def_mult": -0.1,
+   "durability": 80,
+   "value": 400,
+   "nation": "日本",
+   "ship_class": "氧氣魚雷"
+  },
+  {
+   "name": "61cm五連裝魚雷",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.8,
+   "def_mult": -0.15,
+   "durability": 70,
+   "value": 500,
+   "nation": "日本",
+   "ship_class": "改修魚雷"
+  },
+  {
+   "name": "甲標的甲型",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.9,
+   "def_mult": -0.2,
+   "durability": 60,
+   "value": 600,
+   "nation": "日本",
+   "ship_class": "特殊潛航艇"
+  },
+  {
+   "name": "甲標的丙型",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.95,
+   "def_mult": -0.25,
+   "durability": 50,
+   "value": 700,
+   "nation": "日本",
+   "ship_class": "特殊潛航艇改"
+  },
+  {
+   "name": "彗星艦載轟炸機",
+   "type": "weapon",
+   "slot": "both_hands",
+   "atk_mult": 0.5,
+   "def_mult": 0.1,
+   "durability": 90,
+   "value": 300,
+   "nation": "日本",
+   "ship_class": "艦載轟炸機"
+  },
+  {
+   "name": "彗星一二型艦載轟炸機",
+   "type": "weapon",
+   "slot": "both_hands",
+   "atk_mult": 0.55,
+   "def_mult": 0.1,
+   "durability": 85,
+   "value": 340,
+   "nation": "日本",
+   "ship_class": "艦載轟炸機改良型"
+  },
+  {
+   "name": "天山艦載攻擊機",
+   "type": "weapon",
+   "slot": "both_hands",
+   "atk_mult": 0.4,
+   "def_mult": 0.15,
+   "durability": 100,
+   "value": 280,
+   "nation": "日本",
+   "ship_class": "艦載攻擊機"
+  },
+  {
+   "name": "流星艦載攻擊機",
+   "type": "weapon",
+   "slot": "both_hands",
+   "atk_mult": 0.45,
+   "def_mult": 0.15,
+   "durability": 95,
+   "value": 320,
+   "nation": "日本",
+   "ship_class": "攻擊機"
+  },
+  {
+   "name": "紫電改二戰鬥機",
+   "type": "weapon",
+   "slot": "both_hands",
+   "atk_mult": 0.45,
+   "def_mult": 0.2,
+   "durability": 85,
+   "value": 350,
+   "nation": "日本",
+   "ship_class": "局地戰鬥機"
+  },
+  {
+   "name": "烈風",
+   "type": "weapon",
+   "slot": "both_hands",
+   "atk_mult": 0.55,
+   "def_mult": 0.1,
+   "durability": 95,
+   "value": 380,
+   "nation": "日本",
+   "ship_class": "艦載戰鬥機"
+  },
+  {
+   "name": "紫電",
+   "type": "weapon",
+   "slot": "both_hands",
+   "atk_mult": 0.4,
+   "def_mult": 0.2,
+   "durability": 90,
+   "value": 310,
+   "nation": "日本",
+   "ship_class": "局地戰鬥機"
+  },
+  {
+   "name": "零式五二型戰鬥機",
+   "type": "weapon",
+   "slot": "both_hands",
+   "atk_mult": 0.35,
+   "def_mult": 0.15,
+   "durability": 100,
+   "value": 280,
+   "nation": "日本",
+   "ship_class": "艦載戰鬥機"
+  },
+  {
+   "name": "零式二一型戰鬥機",
+   "type": "weapon",
+   "slot": "both_hands",
+   "atk_mult": 0.3,
+   "def_mult": 0.1,
+   "durability": 110,
+   "value": 250,
+   "nation": "日本",
+   "ship_class": "艦載戰鬥機"
+  },
+  {
+   "name": "16inch三連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.75,
+   "def_mult": 0.0,
+   "durability": 210,
+   "value": 550,
+   "nation": "美國",
+   "ship_class": "Iowa型戰艦"
+  },
+  {
+   "name": "14inch三連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.55,
+   "def_mult": 0.05,
+   "durability": 190,
+   "value": 400,
+   "nation": "美國",
+   "ship_class": "NewMexico型戰艦"
+  },
+  {
+   "name": "12inch連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.45,
+   "def_mult": 0.05,
+   "durability": 170,
+   "value": 350,
+   "nation": "美國",
+   "ship_class": "標準型戰艦"
+  },
+  {
+   "name": "8inch三連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.38,
+   "def_mult": 0.05,
+   "durability": 130,
+   "value": 280,
+   "nation": "美國",
+   "ship_class": "重巡主砲"
+  },
+  {
+   "name": "6inch三連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.32,
+   "def_mult": 0.05,
+   "durability": 110,
+   "value": 220,
+   "nation": "美國",
+   "ship_class": "輕巡主砲"
+  },
+  {
+   "name": "5inch兩用砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.22,
+   "def_mult": 0.1,
+   "durability": 90,
+   "value": 160,
+   "nation": "美國",
+   "ship_class": "驅逐主砲"
+  },
+  {
+   "name": "40mm四連裝機關砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.18,
+   "def_mult": 0.15,
+   "durability": 70,
+   "value": 120,
+   "nation": "美國",
+   "ship_class": "博福斯高射砲"
+  },
+  {
+   "name": "20mm機關砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.12,
+   "def_mult": 0.1,
+   "durability": 60,
+   "value": 80,
+   "nation": "美國",
+   "ship_class": "厄利孔機關砲"
+  },
+  {
+   "name": "Mk13魚雷",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.45,
+   "def_mult": 0.0,
+   "durability": 70,
+   "value": 250,
+   "nation": "美國",
+   "ship_class": "航空魚雷"
+  },
+  {
+   "name": "F4U海盜式戰鬥機",
+   "type": "weapon",
+   "slot": "both_hands",
+   "atk_mult": 0.5,
+   "def_mult": 0.2,
+   "durability": 100,
+   "value": 360,
+   "nation": "美國",
+   "ship_class": "艦載戰鬥機"
+  },
+  {
+   "name": "F6F地獄貓戰鬥機",
+   "type": "weapon",
+   "slot": "both_hands",
+   "atk_mult": 0.48,
+   "def_mult": 0.15,
+   "durability": 110,
+   "value": 340,
+   "nation": "美國",
+   "ship_class": "艦載戰鬥機"
+  },
+  {
+   "name": "SBD無畏式轟炸機",
+   "type": "weapon",
+   "slot": "both_hands",
+   "atk_mult": 0.45,
+   "def_mult": 0.1,
+   "durability": 95,
+   "value": 300,
+   "nation": "美國",
+   "ship_class": "艦載轟炸機"
+  },
+  {
+   "name": "TBF復仇者攻擊機",
+   "type": "weapon",
+   "slot": "both_hands",
+   "atk_mult": 0.42,
+   "def_mult": 0.15,
+   "durability": 105,
+   "value": 290,
+   "nation": "美國",
+   "ship_class": "艦載攻擊機"
+  },
+  {
+   "name": "SB2C地獄俯衝轟炸機",
+   "type": "weapon",
+   "slot": "both_hands",
+   "atk_mult": 0.48,
+   "def_mult": 0.08,
+   "durability": 90,
+   "value": 310,
+   "nation": "美國",
+   "ship_class": "艦載轟炸機"
+  },
+  {
+   "name": "15inch連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.5,
+   "def_mult": 0.0,
+   "durability": 185,
+   "value": 380,
+   "nation": "英國",
+   "ship_class": "Nelson型戰艦"
+  },
+  {
+   "name": "14inch四連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.55,
+   "def_mult": 0.0,
+   "durability": 175,
+   "value": 390,
+   "nation": "英國",
+   "ship_class": "KingGeorgeV型戰艦"
+  },
+  {
+   "name": "16inch連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.7,
+   "def_mult": 0.0,
+   "durability": 200,
+   "value": 520,
+   "nation": "英國",
+   "ship_class": "Vanguard型戰艦"
+  },
+  {
+   "name": "6inch連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.3,
+   "def_mult": 0.05,
+   "durability": 100,
+   "value": 200,
+   "nation": "英國",
+   "ship_class": "輕巡主砲"
+  },
+  {
+   "name": "4.7inch砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.2,
+   "def_mult": 0.0,
+   "durability": 75,
+   "value": 130,
+   "nation": "英國",
+   "ship_class": "驅逐主砲"
+  },
+  {
+   "name": "21inch魚雷",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.5,
+   "def_mult": -0.05,
+   "durability": 65,
+   "value": 280,
+   "nation": "英國",
+   "ship_class": "魚雷"
+  },
+  {
+   "name": "超級馬林戰鬥機",
+   "type": "weapon",
+   "slot": "both_hands",
+   "atk_mult": 0.52,
+   "def_mult": 0.18,
+   "durability": 105,
+   "value": 370,
+   "nation": "英國",
+   "ship_class": "艦載戰鬥機"
+  },
+  {
+   "name": "費爾雷劍魚攻擊機",
+   "type": "weapon",
+   "slot": "both_hands",
+   "atk_mult": 0.38,
+   "def_mult": 0.12,
+   "durability": 100,
+   "value": 260,
+   "nation": "英國",
+   "ship_class": "艦載攻擊機"
+  },
+  {
+   "name": "38cm連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.6,
+   "def_mult": 0.0,
+   "durability": 175,
+   "value": 420,
+   "nation": "德國",
+   "ship_class": "俾斯麥型戰艦"
+  },
+  {
+   "name": "28cm三連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.45,
+   "def_mult": 0.0,
+   "durability": 160,
+   "value": 350,
+   "nation": "德國",
+   "ship_class": "沙恩霍斯特型戰艦"
+  },
+  {
+   "name": "20.3cm連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.4,
+   "def_mult": 0.0,
+   "durability": 125,
+   "value": 270,
+   "nation": "德國",
+   "ship_class": "希佩爾上將型重巡"
+  },
+  {
+   "name": "15cm連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.28,
+   "def_mult": 0.05,
+   "durability": 95,
+   "value": 190,
+   "nation": "德國",
+   "ship_class": "輕巡主砲"
+  },
+  {
+   "name": "12.7cm砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.22,
+   "def_mult": 0.05,
+   "durability": 80,
+   "value": 150,
+   "nation": "德國",
+   "ship_class": "驅逐主砲"
+  },
+  {
+   "name": "53.3cm魚雷",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.55,
+   "def_mult": -0.05,
+   "durability": 75,
+   "value": 320,
+   "nation": "德國",
+   "ship_class": "G7a魚雷"
+  },
+  {
+   "name": "G7e魚雷",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.6,
+   "def_mult": -0.1,
+   "durability": 70,
+   "value": 350,
+   "nation": "德國",
+   "ship_class": "電動魚雷"
+  },
+  {
+   "name": "Me262噴射戰鬥機",
+   "type": "weapon",
+   "slot": "both_hands",
+   "atk_mult": 0.65,
+   "def_mult": 0.25,
+   "durability": 60,
+   "value": 600,
+   "nation": "德國",
+   "ship_class": " jet戰鬥機"
+  },
+  {
+   "name": "381mm三連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.58,
+   "def_mult": 0.0,
+   "durability": 170,
+   "value": 400,
+   "nation": "義大利",
+   "ship_class": "利托里奧型戰艦"
+  },
+  {
+   "name": "320mm四連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.5,
+   "def_mult": 0.0,
+   "durability": 160,
+   "value": 350,
+   "nation": "義大利",
+   "ship_class": "多利亞型戰艦"
+  },
+  {
+   "name": "203mm連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.36,
+   "def_mult": 0.0,
+   "durability": 115,
+   "value": 260,
+   "nation": "義大利",
+   "ship_class": "札拉型重巡"
+  },
+  {
+   "name": "152mm三連裝砲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.3,
+   "def_mult": 0.05,
+   "durability": 95,
+   "value": 210,
+   "nation": "義大利",
+   "ship_class": "輕巡主砲"
+  },
+  {
+   "name": "533mm魚雷",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.45,
+   "def_mult": -0.05,
+   "durability": 70,
+   "value": 260,
+   "nation": "義大利",
+   "ship_class": "魚雷"
+  },
+  {
+   "name": "Reggiane2005戰鬥機",
+   "type": "weapon",
+   "slot": "both_hands",
+   "atk_mult": 0.55,
+   "def_mult": 0.2,
+   "durability": 85,
+   "value": 400,
+   "nation": "義大利",
+   "ship_class": "戰鬥機"
   }
+ ],
+ "animal_data": [
+  {
+   "name": "狼王毛皮",
+   "type": "armor",
+   "slot": "torso",
+   "atk_mult": 0.0,
+   "def_mult": 0.35,
+   "spd_mult": 0.15,
+   "karma_mult": 0.0,
+   "durability": 120,
+   "value": 150,
+   "species": "狼",
+   "biome": "森林"
+  },
+  {
+   "name": "狼牙首飾",
+   "type": "accessory",
+   "slot": "neck",
+   "atk_mult": 0.15,
+   "def_mult": 0.0,
+   "spd_mult": 0.05,
+   "karma_mult": 0.05,
+   "durability": 80,
+   "value": 100,
+   "species": "狼",
+   "biome": "森林"
+  },
+  {
+   "name": "銀狼之尾",
+   "type": "armor",
+   "slot": "back",
+   "atk_mult": 0.0,
+   "def_mult": 0.1,
+   "spd_mult": 0.25,
+   "karma_mult": 0.05,
+   "durability": 70,
+   "value": 130,
+   "species": "銀狼",
+   "biome": "雪山"
+  },
+  {
+   "name": "狐之靈衣",
+   "type": "armor",
+   "slot": "torso",
+   "atk_mult": 0.0,
+   "def_mult": 0.2,
+   "spd_mult": 0.3,
+   "karma_mult": 0.1,
+   "durability": 110,
+   "value": 180,
+   "species": "狐",
+   "biome": "森林"
+  },
+  {
+   "name": "狐火之手環",
+   "type": "accessory",
+   "slot": "left_hand",
+   "atk_mult": 0.1,
+   "def_mult": 0.0,
+   "spd_mult": 0.1,
+   "karma_mult": 0.15,
+   "durability": 60,
+   "value": 140,
+   "species": "狐",
+   "biome": "森林"
+  },
+  {
+   "name": "柴犬之忠誠",
+   "type": "accessory",
+   "slot": "neck",
+   "atk_mult": 0.0,
+   "def_mult": 0.1,
+   "spd_mult": 0.05,
+   "karma_mult": 0.3,
+   "durability": 90,
+   "value": 110,
+   "species": "柴犬",
+   "biome": "村"
+  },
+  {
+   "name": "熊之鐵壁",
+   "type": "armor",
+   "slot": "torso",
+   "atk_mult": 0.0,
+   "def_mult": 0.5,
+   "spd_mult": 0.0,
+   "karma_mult": 0.0,
+   "durability": 200,
+   "value": 250,
+   "species": "熊",
+   "biome": "山岳"
+  },
+  {
+   "name": "熊之臂力",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.4,
+   "def_mult": -0.05,
+   "spd_mult": -0.05,
+   "karma_mult": 0.0,
+   "durability": 150,
+   "value": 220,
+   "species": "熊",
+   "biome": "山岳"
+  },
+  {
+   "name": "白熊之毛",
+   "type": "armor",
+   "slot": "legs",
+   "atk_mult": 0.0,
+   "def_mult": 0.35,
+   "spd_mult": 0.0,
+   "karma_mult": 0.05,
+   "durability": 180,
+   "value": 230,
+   "species": "白熊",
+   "biome": "極地"
+  },
+  {
+   "name": "熊貓之柔軟",
+   "type": "armor",
+   "slot": "torso",
+   "atk_mult": 0.0,
+   "def_mult": 0.2,
+   "spd_mult": 0.1,
+   "karma_mult": 0.15,
+   "durability": 100,
+   "value": 160,
+   "species": "熊猫",
+   "biome": "竹林"
+  },
+  {
+   "name": "虎之條紋鎧",
+   "type": "armor",
+   "slot": "torso",
+   "atk_mult": 0.0,
+   "def_mult": 0.4,
+   "spd_mult": 0.1,
+   "karma_mult": 0.0,
+   "durability": 160,
+   "value": 220,
+   "species": "虎",
+   "biome": "密林"
+  },
+  {
+   "name": "虎爪之手甲",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.35,
+   "def_mult": 0.0,
+   "spd_mult": 0.1,
+   "karma_mult": 0.0,
+   "durability": 100,
+   "value": 200,
+   "species": "虎",
+   "biome": "密林"
+  },
+  {
+   "name": "獅子之鬃毛",
+   "type": "armor",
+   "slot": "head",
+   "atk_mult": 0.0,
+   "def_mult": 0.25,
+   "spd_mult": 0.0,
+   "karma_mult": 0.15,
+   "durability": 130,
+   "value": 200,
+   "species": "獅子",
+   "biome": "草原"
+  },
+  {
+   "name": "豹之敏捷",
+   "type": "armor",
+   "slot": "feet",
+   "atk_mult": 0.0,
+   "def_mult": 0.1,
+   "spd_mult": 0.35,
+   "karma_mult": 0.0,
+   "durability": 80,
+   "value": 180,
+   "species": "豹",
+   "biome": "草原"
+  },
+  {
+   "name": "貓之輕靴",
+   "type": "armor",
+   "slot": "feet",
+   "atk_mult": 0.0,
+   "def_mult": 0.05,
+   "spd_mult": 0.3,
+   "karma_mult": 0.05,
+   "durability": 70,
+   "value": 100,
+   "species": "猫",
+   "biome": "市街"
+  },
+  {
+   "name": "貓之靈巧",
+   "type": "accessory",
+   "slot": "right_hand",
+   "atk_mult": 0.05,
+   "def_mult": 0.0,
+   "spd_mult": 0.15,
+   "karma_mult": 0.1,
+   "durability": 60,
+   "value": 90,
+   "species": "猫",
+   "biome": "市街"
+  },
+  {
+   "name": "黑貓之護符",
+   "type": "accessory",
+   "slot": "neck",
+   "atk_mult": 0.0,
+   "def_mult": 0.1,
+   "spd_mult": 0.1,
+   "karma_mult": 0.2,
+   "durability": 50,
+   "value": 120,
+   "species": "黑猫",
+   "biome": "市街"
+  },
+  {
+   "name": "鹿之角冠",
+   "type": "armor",
+   "slot": "head",
+   "atk_mult": 0.05,
+   "def_mult": 0.1,
+   "spd_mult": 0.05,
+   "karma_mult": 0.25,
+   "durability": 90,
+   "value": 120,
+   "species": "鹿",
+   "biome": "森林"
+  },
+  {
+   "name": "鹿之敏捷",
+   "type": "armor",
+   "slot": "feet",
+   "atk_mult": 0.0,
+   "def_mult": 0.0,
+   "spd_mult": 0.25,
+   "karma_mult": 0.1,
+   "durability": 70,
+   "value": 100,
+   "species": "鹿",
+   "biome": "森林"
+  },
+  {
+   "name": "大鹿之角",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.25,
+   "def_mult": 0.0,
+   "spd_mult": 0.0,
+   "karma_mult": 0.1,
+   "durability": 100,
+   "value": 130,
+   "species": "大鹿",
+   "biome": "森林"
+  },
+  {
+   "name": "馬之蹄鐵",
+   "type": "armor",
+   "slot": "feet",
+   "atk_mult": 0.0,
+   "def_mult": 0.15,
+   "spd_mult": 0.2,
+   "karma_mult": 0.0,
+   "durability": 120,
+   "value": 80,
+   "species": "馬",
+   "biome": "草原"
+  },
+  {
+   "name": "馬之雄姿",
+   "type": "armor",
+   "slot": "torso",
+   "atk_mult": 0.0,
+   "def_mult": 0.15,
+   "spd_mult": 0.15,
+   "karma_mult": 0.1,
+   "durability": 90,
+   "value": 110,
+   "species": "馬",
+   "biome": "草原"
+  },
+  {
+   "name": "野牛之剛角",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.3,
+   "def_mult": 0.0,
+   "spd_mult": -0.05,
+   "karma_mult": 0.0,
+   "durability": 150,
+   "value": 180,
+   "species": "野牛",
+   "biome": "草原"
+  },
+  {
+   "name": "山羊之輕功",
+   "type": "armor",
+   "slot": "legs",
+   "atk_mult": 0.0,
+   "def_mult": 0.05,
+   "spd_mult": 0.2,
+   "karma_mult": 0.05,
+   "durability": 70,
+   "value": 80,
+   "species": "山羊",
+   "biome": "山岳"
+  },
+  {
+   "name": "猿之靈巧",
+   "type": "accessory",
+   "slot": "left_hand",
+   "atk_mult": 0.05,
+   "def_mult": 0.0,
+   "spd_mult": 0.15,
+   "karma_mult": 0.05,
+   "durability": 60,
+   "value": 90,
+   "species": "猿",
+   "biome": "密林"
+  },
+  {
+   "name": "大猩猩之剛腕",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.45,
+   "def_mult": 0.0,
+   "spd_mult": -0.1,
+   "karma_mult": 0.0,
+   "durability": 180,
+   "value": 250,
+   "species": "大猩猩",
+   "biome": "密林"
+  },
+  {
+   "name": "海豚之流線",
+   "type": "armor",
+   "slot": "legs",
+   "atk_mult": 0.0,
+   "def_mult": 0.05,
+   "spd_mult": 0.25,
+   "karma_mult": 0.05,
+   "durability": 60,
+   "value": 140,
+   "species": "海豚",
+   "biome": "海"
+  },
+  {
+   "name": "鯨之強韌",
+   "type": "armor",
+   "slot": "torso",
+   "atk_mult": 0.0,
+   "def_mult": 0.45,
+   "spd_mult": 0.0,
+   "karma_mult": 0.05,
+   "durability": 250,
+   "value": 320,
+   "species": "鯨",
+   "biome": "海"
+  },
+  {
+   "name": "鯨之骨鎧",
+   "type": "armor",
+   "slot": "torso",
+   "atk_mult": 0.0,
+   "def_mult": 0.55,
+   "spd_mult": 0.0,
+   "karma_mult": 0.0,
+   "durability": 300,
+   "value": 400,
+   "species": "鯨",
+   "biome": "海"
+  },
+  {
+   "name": "海豹之滑行",
+   "type": "armor",
+   "slot": "feet",
+   "atk_mult": 0.0,
+   "def_mult": 0.0,
+   "spd_mult": 0.15,
+   "karma_mult": 0.1,
+   "durability": 50,
+   "value": 90,
+   "species": "海豹",
+   "biome": "海"
+  },
+  {
+   "name": "鷹之翼膜",
+   "type": "armor",
+   "slot": "back",
+   "atk_mult": 0.0,
+   "def_mult": 0.15,
+   "spd_mult": 0.35,
+   "karma_mult": 0.05,
+   "durability": 100,
+   "value": 160,
+   "species": "鷹",
+   "biome": "山岳"
+  },
+  {
+   "name": "鷹之爪",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.25,
+   "def_mult": 0.0,
+   "spd_mult": 0.15,
+   "karma_mult": 0.0,
+   "durability": 80,
+   "value": 140,
+   "species": "鷹",
+   "biome": "山岳"
+  },
+  {
+   "name": "梟之智慧",
+   "type": "accessory",
+   "slot": "head",
+   "atk_mult": 0.0,
+   "def_mult": 0.0,
+   "spd_mult": 0.05,
+   "karma_mult": 0.3,
+   "durability": 60,
+   "value": 150,
+   "species": "梟",
+   "biome": "森林"
+  },
+  {
+   "name": "烏鴉之羽",
+   "type": "armor",
+   "slot": "back",
+   "atk_mult": 0.0,
+   "def_mult": 0.1,
+   "spd_mult": 0.2,
+   "karma_mult": 0.1,
+   "durability": 70,
+   "value": 100,
+   "species": "鴉",
+   "biome": "市街"
+  },
+  {
+   "name": "天鵝之優雅",
+   "type": "accessory",
+   "slot": "neck",
+   "atk_mult": 0.0,
+   "def_mult": 0.05,
+   "spd_mult": 0.1,
+   "karma_mult": 0.25,
+   "durability": 50,
+   "value": 130,
+   "species": "白鳥",
+   "biome": "湖"
+  },
+  {
+   "name": "燕之敏捷",
+   "type": "armor",
+   "slot": "feet",
+   "atk_mult": 0.0,
+   "def_mult": 0.0,
+   "spd_mult": 0.3,
+   "karma_mult": 0.05,
+   "durability": 50,
+   "value": 110,
+   "species": "燕",
+   "biome": "空"
+  },
+  {
+   "name": "孔雀之華麗",
+   "type": "accessory",
+   "slot": "neck",
+   "atk_mult": 0.0,
+   "def_mult": 0.05,
+   "spd_mult": 0.05,
+   "karma_mult": 0.3,
+   "durability": 40,
+   "value": 160,
+   "species": "孔雀",
+   "biome": "森林"
+  },
+  {
+   "name": "鶴之長壽",
+   "type": "armor",
+   "slot": "legs",
+   "atk_mult": 0.0,
+   "def_mult": 0.1,
+   "spd_mult": 0.1,
+   "karma_mult": 0.2,
+   "durability": 80,
+   "value": 140,
+   "species": "鶴",
+   "biome": "湖"
+  },
+  {
+   "name": "候鳥之羽",
+   "type": "armor",
+   "slot": "back",
+   "atk_mult": 0.0,
+   "def_mult": 0.05,
+   "spd_mult": 0.2,
+   "karma_mult": 0.05,
+   "durability": 60,
+   "value": 90,
+   "species": "渡鳥",
+   "biome": "空"
+  },
+  {
+   "name": "蛇之鱗衣",
+   "type": "armor",
+   "slot": "torso",
+   "atk_mult": 0.0,
+   "def_mult": 0.3,
+   "spd_mult": 0.1,
+   "karma_mult": 0.2,
+   "durability": 110,
+   "value": 140,
+   "species": "蛇",
+   "biome": "森林"
+  },
+  {
+   "name": "蛇之毒牙",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.2,
+   "def_mult": 0.0,
+   "spd_mult": 0.1,
+   "karma_mult": 0.0,
+   "durability": 70,
+   "value": 120,
+   "species": "蛇",
+   "biome": "森林"
+  },
+  {
+   "name": "龜之甲殼盾",
+   "type": "weapon",
+   "slot": "left_hand",
+   "atk_mult": 0.0,
+   "def_mult": 0.6,
+   "spd_mult": 0.0,
+   "karma_mult": 0.05,
+   "durability": 250,
+   "value": 250,
+   "species": "亀",
+   "biome": "湖"
+  },
+  {
+   "name": "鱷魚之顎",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.35,
+   "def_mult": 0.0,
+   "spd_mult": -0.05,
+   "karma_mult": 0.0,
+   "durability": 140,
+   "value": 200,
+   "species": "鰐",
+   "biome": "水辺"
+  },
+  {
+   "name": "鱷魚之鱗",
+   "type": "armor",
+   "slot": "torso",
+   "atk_mult": 0.0,
+   "def_mult": 0.35,
+   "spd_mult": 0.0,
+   "karma_mult": 0.05,
+   "durability": 180,
+   "value": 220,
+   "species": "鰐",
+   "biome": "水辺"
+  },
+  {
+   "name": "蜥蜴之尾",
+   "type": "armor",
+   "slot": "back",
+   "atk_mult": 0.0,
+   "def_mult": 0.05,
+   "spd_mult": 0.2,
+   "karma_mult": 0.05,
+   "durability": 60,
+   "value": 80,
+   "species": "蜥蜴",
+   "biome": "砂漠"
+  },
+  {
+   "name": "壁虎之腳爪",
+   "type": "armor",
+   "slot": "feet",
+   "atk_mult": 0.0,
+   "def_mult": 0.0,
+   "spd_mult": 0.15,
+   "karma_mult": 0.1,
+   "durability": 50,
+   "value": 90,
+   "species": "壁虎",
+   "biome": "市街"
+  },
+  {
+   "name": "蛙之跳躍",
+   "type": "armor",
+   "slot": "legs",
+   "atk_mult": 0.0,
+   "def_mult": 0.0,
+   "spd_mult": 0.2,
+   "karma_mult": 0.05,
+   "durability": 40,
+   "value": 70,
+   "species": "蛙",
+   "biome": "水辺"
+  },
+  {
+   "name": "蝶之鱗粉",
+   "type": "accessory",
+   "slot": "neck",
+   "atk_mult": 0.0,
+   "def_mult": 0.1,
+   "spd_mult": 0.1,
+   "karma_mult": 0.2,
+   "durability": 50,
+   "value": 90,
+   "species": "蝶",
+   "biome": "花園"
+  },
+  {
+   "name": "蝶之翅",
+   "type": "armor",
+   "slot": "back",
+   "atk_mult": 0.0,
+   "def_mult": 0.05,
+   "spd_mult": 0.15,
+   "karma_mult": 0.15,
+   "durability": 40,
+   "value": 100,
+   "species": "蝶",
+   "biome": "花園"
+  },
+  {
+   "name": "蜂之針",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.2,
+   "def_mult": 0.0,
+   "spd_mult": 0.1,
+   "karma_mult": 0.0,
+   "durability": 30,
+   "value": 80,
+   "species": "蜂",
+   "biome": "花園"
+  },
+  {
+   "name": "蜘蛛之絲",
+   "type": "armor",
+   "slot": "legs",
+   "atk_mult": 0.0,
+   "def_mult": 0.15,
+   "spd_mult": 0.1,
+   "karma_mult": 0.0,
+   "durability": 70,
+   "value": 100,
+   "species": "蜘蛛",
+   "biome": "森林"
+  },
+  {
+   "name": "蠍之毒針",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.25,
+   "def_mult": 0.0,
+   "spd_mult": 0.0,
+   "karma_mult": 0.0,
+   "durability": 60,
+   "value": 110,
+   "species": "蠍",
+   "biome": "砂漠"
+  },
+  {
+   "name": "蠍之甲殼",
+   "type": "armor",
+   "slot": "torso",
+   "atk_mult": 0.0,
+   "def_mult": 0.25,
+   "spd_mult": 0.0,
+   "karma_mult": 0.05,
+   "durability": 130,
+   "value": 150,
+   "species": "蠍",
+   "biome": "砂漠"
+  },
+  {
+   "name": "蟻之力",
+   "type": "accessory",
+   "slot": "waist",
+   "atk_mult": 0.1,
+   "def_mult": 0.0,
+   "spd_mult": 0.0,
+   "karma_mult": 0.05,
+   "durability": 80,
+   "value": 70,
+   "species": "蟻",
+   "biome": "草原"
+  },
+  {
+   "name": "蜻蜓之複眼",
+   "type": "accessory",
+   "slot": "head",
+   "atk_mult": 0.0,
+   "def_mult": 0.0,
+   "spd_mult": 0.15,
+   "karma_mult": 0.1,
+   "durability": 40,
+   "value": 110,
+   "species": "蜻蛉",
+   "biome": "水辺"
+  },
+  {
+   "name": "蛟之逆鱗",
+   "type": "armor",
+   "slot": "torso",
+   "atk_mult": 0.1,
+   "def_mult": 0.3,
+   "spd_mult": 0.1,
+   "karma_mult": 0.05,
+   "durability": 200,
+   "value": 350,
+   "species": "蛟",
+   "biome": "深潭"
+  },
+  {
+   "name": "鳳凰之羽衣",
+   "type": "armor",
+   "slot": "back",
+   "atk_mult": 0.05,
+   "def_mult": 0.2,
+   "spd_mult": 0.2,
+   "karma_mult": 0.3,
+   "durability": 150,
+   "value": 500,
+   "species": "鳳凰",
+   "biome": "天"
+  },
+  {
+   "name": "麒麟之角",
+   "type": "accessory",
+   "slot": "head",
+   "atk_mult": 0.1,
+   "def_mult": 0.1,
+   "spd_mult": 0.1,
+   "karma_mult": 0.35,
+   "durability": 180,
+   "value": 450,
+   "species": "麒麟",
+   "biome": "仙境"
+  },
+  {
+   "name": "白澤之智慧",
+   "type": "accessory",
+   "slot": "neck",
+   "atk_mult": 0.0,
+   "def_mult": 0.05,
+   "spd_mult": 0.05,
+   "karma_mult": 0.5,
+   "durability": 100,
+   "value": 400,
+   "species": "白澤",
+   "biome": "仙境"
+  }
+ ],
+ "herbal_items": [
+  {
+   "name": "艾草",
+   "type": "consumable",
+   "weight": 0.2,
+   "value": 8,
+   "heal_hp": 15,
+   "heal_sp": 0,
+   "description": "以艾草製成的藥"
+  },
+  {
+   "name": "薄荷",
+   "type": "consumable",
+   "weight": 0.1,
+   "value": 5,
+   "heal_hp": 0,
+   "heal_sp": 10,
+   "description": "帶有清涼感的薄荷"
+  },
+  {
+   "name": "蒲公英",
+   "type": "consumable",
+   "weight": 0.1,
+   "value": 3,
+   "heal_hp": 5,
+   "heal_sp": 5,
+   "description": "蒲公英的根"
+  },
+  {
+   "name": "人参",
+   "type": "consumable",
+   "weight": 0.3,
+   "value": 25,
+   "heal_hp": 30,
+   "heal_sp": 0,
+   "description": "高麗人參"
+  },
+  {
+   "name": "靈芝",
+   "type": "consumable",
+   "weight": 0.2,
+   "value": 30,
+   "heal_hp": 20,
+   "heal_sp": 15,
+   "description": "千年靈芝"
+  },
+  {
+   "name": "金創藥",
+   "type": "consumable",
+   "weight": 0.3,
+   "value": 35,
+   "heal_hp": 45,
+   "heal_sp": 0,
+   "description": "治療外傷的藥"
+  },
+  {
+   "name": "醒神藥",
+   "type": "consumable",
+   "weight": 0.2,
+   "value": 20,
+   "heal_hp": 10,
+   "heal_sp": 20,
+   "description": "鎮定心神的藥"
+  },
+  {
+   "name": "萬靈藥",
+   "type": "consumable",
+   "weight": 0.4,
+   "value": 60,
+   "heal_hp": 60,
+   "heal_sp": 40,
+   "description": "萬用藥"
+  },
+  {
+   "name": "龍涎香",
+   "type": "consumable",
+   "weight": 0.3,
+   "value": 80,
+   "heal_hp": 50,
+   "heal_sp": 30,
+   "description": "龍之香氣"
+  },
+  {
+   "name": "七星丹",
+   "type": "consumable",
+   "weight": 0.3,
+   "value": 120,
+   "heal_hp": 80,
+   "heal_sp": 50,
+   "description": "七星之力"
+  },
+  {
+   "name": "還魂草",
+   "type": "consumable",
+   "weight": 0.2,
+   "value": 50,
+   "heal_hp": 100,
+   "heal_sp": 0,
+   "description": "能讓死者復活的草"
+  },
+  {
+   "name": "清心丸",
+   "type": "consumable",
+   "weight": 0.2,
+   "value": 40,
+   "heal_hp": 10,
+   "heal_sp": 40,
+   "description": "清心丸藥"
+  },
+  {
+   "name": "壯骨散",
+   "type": "consumable",
+   "weight": 0.3,
+   "value": 45,
+   "heal_hp": 60,
+   "heal_sp": 10,
+   "description": "強健骨骼的藥"
+  },
+  {
+   "name": "止血草",
+   "type": "consumable",
+   "weight": 0.2,
+   "value": 10,
+   "heal_hp": 25,
+   "heal_sp": 0,
+   "description": "能止血的藥草"
+  },
+  {
+   "name": "安眠茶",
+   "type": "consumable",
+   "weight": 0.2,
+   "value": 15,
+   "heal_hp": 5,
+   "heal_sp": 25,
+   "description": "引人安眠的茶"
+  },
+  {
+   "name": "精力劑",
+   "type": "consumable",
+   "weight": 0.3,
+   "value": 50,
+   "heal_hp": 10,
+   "heal_sp": 60,
+   "description": "湧現精力的藥"
+  },
+  {
+   "name": "解毒散",
+   "type": "consumable",
+   "weight": 0.2,
+   "value": 25,
+   "heal_hp": 20,
+   "heal_sp": 15,
+   "description": "解毒粉末"
+  },
+  {
+   "name": "保濕軟膏",
+   "type": "consumable",
+   "weight": 0.2,
+   "value": 18,
+   "heal_hp": 20,
+   "heal_sp": 10,
+   "description": "癒合肌膚的軟膏"
+  },
+  {
+   "name": "活力飲料",
+   "type": "consumable",
+   "weight": 0.3,
+   "value": 30,
+   "heal_hp": 15,
+   "heal_sp": 25,
+   "description": "即效性活力劑"
+  },
+  {
+   "name": "養生酒",
+   "type": "consumable",
+   "weight": 0.4,
+   "value": 60,
+   "heal_hp": 30,
+   "heal_sp": 40,
+   "description": "養生藥酒"
+  },
+  {
+   "name": "氣功丸",
+   "type": "consumable",
+   "weight": 0.3,
+   "value": 55,
+   "heal_hp": 20,
+   "heal_sp": 45,
+   "description": "調理氣息的丸藥"
+  },
+  {
+   "name": "百草丹",
+   "type": "consumable",
+   "weight": 0.3,
+   "value": 70,
+   "heal_hp": 55,
+   "heal_sp": 35,
+   "description": "以百草煉製的丹藥"
+  },
+  {
+   "name": "神水",
+   "type": "consumable",
+   "weight": 0.2,
+   "value": 200,
+   "heal_hp": 100,
+   "heal_sp": 80,
+   "description": "傳說中的神水"
+  },
+  {
+   "name": "神秘菇",
+   "type": "consumable",
+   "weight": 0.2,
+   "value": 50,
+   "heal_hp": 22,
+   "heal_sp": 29,
+   "description": "擁有神秘力量的菇類"
+  },
+  {
+   "name": "月之露",
+   "type": "consumable",
+   "weight": 0.1,
+   "value": 80,
+   "heal_hp": 40,
+   "heal_sp": 30,
+   "description": "凝縮月光的水滴"
+  },
+  {
+   "name": "時空之砂",
+   "type": "consumable",
+   "weight": 0.1,
+   "value": 0,
+   "heal_hp": 0,
+   "heal_sp": 0,
+   "description": "時空之砂（效果不明）"
+  }
+ ],
+ "elemental_items": [
+  {
+   "name": "炎帝之劍",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.6,
+   "def_mult": -0.1,
+   "description": "纏繞灼熱火焰的劍",
+   "value": 300,
+   "durability": 80
+  },
+  {
+   "name": "冰晶之杖",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.3,
+   "def_mult": 0.3,
+   "description": "以冰之結晶製成的法杖",
+   "value": 280,
+   "durability": 75
+  },
+  {
+   "name": "雷神之鎚",
+   "type": "weapon",
+   "slot": "right_hand",
+   "atk_mult": 0.7,
+   "def_mult": -0.15,
+   "description": "能呼喚雷電的戰鎚",
+   "value": 350,
+   "durability": 70
+  },
+  {
+   "name": "風靈之弓",
+   "type": "weapon",
+   "slot": "both_hands",
+   "atk_mult": 0.4,
+   "def_mult": 0.25,
+   "description": "寄宿風之精靈的弓",
+   "value": 260,
+   "durability": 85
+  },
+  {
+   "name": "大地之盾",
+   "type": "weapon",
+   "slot": "left_hand",
+   "atk_mult": 0.0,
+   "def_mult": 0.7,
+   "description": "寄宿大地之力的盾",
+   "value": 300,
+   "durability": 150
+  },
+  {
+   "name": "光輝之鎧",
+   "type": "armor",
+   "slot": "torso",
+   "atk_mult": 0.3,
+   "def_mult": 0.3,
+   "description": "散發聖光的鎧甲",
+   "value": 350,
+   "durability": 120
+  },
+  {
+   "name": "暗夜之斗篷",
+   "type": "armor",
+   "slot": "back",
+   "atk_mult": 0.2,
+   "def_mult": 0.4,
+   "description": "融入影子的暗黑斗篷",
+   "value": 280,
+   "durability": 80
+  },
+  {
+   "name": "精靈之指環",
+   "type": "accessory",
+   "slot": "left_hand",
+   "atk_mult": 0.2,
+   "def_mult": 0.3,
+   "description": "寄宿精靈之力的指環",
+   "value": 200,
+   "durability": 40
+  },
+  {
+   "name": "炎之精靈石",
+   "type": "accessory",
+   "slot": "neck",
+   "atk_mult": 0.3,
+   "def_mult": 0.1,
+   "description": "寄宿火之精靈的石頭",
+   "value": 180,
+   "durability": 50
+  },
+  {
+   "name": "冰之結晶",
+   "type": "armor",
+   "slot": "head",
+   "atk_mult": 0.1,
+   "def_mult": 0.3,
+   "description": "永遠不融化的冰",
+   "value": 160,
+   "durability": 60
+  },
+  {
+   "name": "雷之寶玉",
+   "type": "accessory",
+   "slot": "right_hand",
+   "atk_mult": 0.2,
+   "def_mult": 0.15,
+   "description": "綻放雷光的寶玉",
+   "value": 170,
+   "durability": 45
+  },
+  {
+   "name": "風之羽織",
+   "type": "armor",
+   "slot": "back",
+   "atk_mult": 0.15,
+   "def_mult": 0.25,
+   "description": "輕如風的羽織",
+   "value": 150,
+   "durability": 70
+  },
+  {
+   "name": "大地護石",
+   "type": "accessory",
+   "slot": "neck",
+   "atk_mult": 0.0,
+   "def_mult": 0.35,
+   "description": "受到大地加護的石頭",
+   "value": 200,
+   "durability": 65
+  },
+  {
+   "name": "太陽之輝",
+   "type": "armor",
+   "slot": "head",
+   "atk_mult": 0.25,
+   "def_mult": 0.25,
+   "description": "纏繞太陽之光的王冠",
+   "value": 250,
+   "durability": 100
+  },
+  {
+   "name": "星塵斗篷",
+   "type": "armor",
+   "slot": "back",
+   "atk_mult": 0.1,
+   "def_mult": 0.2,
+   "description": "寄宿星之力的斗篷",
+   "value": 190,
+   "durability": 90
+  },
+  {
+   "name": "虛空之碎片",
+   "type": "accessory",
+   "slot": "left_hand",
+   "atk_mult": 0.15,
+   "def_mult": 0.15,
+   "description": "寄宿虛空之力的碎片",
+   "value": 140,
+   "durability": 80
+  },
+  {
+   "name": "混沌之種",
+   "type": "accessory",
+   "slot": "neck",
+   "atk_mult": 0.2,
+   "def_mult": 0.1,
+   "description": "從混沌中誕生的種子",
+   "value": 160,
+   "durability": 95
+  },
+  {
+   "name": "秩序之天秤",
+   "type": "weapon",
+   "slot": "left_hand",
+   "atk_mult": 0.1,
+   "def_mult": 0.3,
+   "description": "司掌均衡的天秤",
+   "value": 200,
+   "durability": 120
+  }
+ ],
+ "junk_templates": [
+  {
+   "base_name": "生鏽的鐵釘",
+   "prefixes": [
+    "生鏽的",
+    "陳舊的",
+    "彎曲的",
+    "折斷的",
+    "缺角的"
+   ]
+  },
+  {
+   "base_name": "碎裂的瓶子",
+   "prefixes": [
+    "碎裂的",
+    "龜裂的",
+    "小小的",
+    "大大的"
+   ]
+  },
+  {
+   "base_name": "蒙塵的書本",
+   "prefixes": [
+    "蒙塵的",
+    "潮濕的",
+    "燒焦的",
+    "破損的"
+   ]
+  },
+  {
+   "base_name": "用舊的毛筆",
+   "prefixes": [
+    "用舊的",
+    "全新的",
+    "折斷的",
+    "乾涸的"
+   ]
+  },
+  {
+   "base_name": "折斷的樹枝",
+   "prefixes": [
+    "折斷的",
+    "粗壯的",
+    "纖細的",
+    "乾燥的"
+   ]
+  },
+  {
+   "base_name": "乾燥的樹葉",
+   "prefixes": [
+    "乾燥的",
+    "新鮮的",
+    "染色的",
+    "蟲蛀的"
+   ]
+  },
+  {
+   "base_name": "小石子",
+   "prefixes": [
+    "圓形的",
+    "尖銳的",
+    "扁平的",
+    "發光的",
+    "沉重的"
+   ]
+  },
+  {
+   "base_name": "褪色的布料",
+   "prefixes": [
+    "褪色的",
+    "鮮豔的",
+    "絹製的",
+    "麻製的"
+   ]
+  },
+  {
+   "base_name": "斷裂的繩子",
+   "prefixes": [
+    "斷裂的",
+    "耐用的",
+    "纖細的",
+    "粗壯的"
+   ]
+  },
+  {
+   "base_name": "空箱子",
+   "prefixes": [
+    "小小的",
+    "大大的",
+    "堅固的",
+    "單薄的"
+   ]
+  },
+  {
+   "base_name": "壞掉的時鐘",
+   "prefixes": [
+    "損壞的",
+    "舊的",
+    "金製的",
+    "銀製的"
+   ]
+  },
+  {
+   "base_name": "燒焦的紙張",
+   "prefixes": [
+    "燒焦的",
+    "潮濕的",
+    "皺巴巴的",
+    "破損的"
+   ]
+  },
+  {
+   "base_name": "缺角的寶石",
+   "prefixes": [
+    "缺角的",
+    "小小的",
+    "發光的",
+    "褪色的"
+   ]
+  },
+  {
+   "base_name": "歪斜的鏡子",
+   "prefixes": [
+    "歪斜的",
+    "碎裂的",
+    "圓形的",
+    "方形的"
+   ]
+  },
+  {
+   "base_name": "舊骰子",
+   "prefixes": [
+    "舊的",
+    "全新的",
+    "歪斜的",
+    "小巧的"
+   ]
+  },
+  {
+   "base_name": "空的墨水瓶",
+   "prefixes": [
+    "空空的",
+    "半個的",
+    "乾涸的",
+    "碎裂的"
+   ]
+  },
+  {
+   "base_name": "單隻手套",
+   "prefixes": [
+    "單隻的",
+    "毛線製的",
+    "皮製的",
+    "布製的"
+   ]
+  },
+  {
+   "base_name": "生鏽的湯匙",
+   "prefixes": [
+    "生鏽的",
+    "銀製的",
+    "木製的",
+    "彎曲的"
+   ]
+  },
+  {
+   "base_name": "彎曲的針",
+   "prefixes": [
+    "彎曲的",
+    "生鏽的",
+    "纖細的",
+    "折斷的"
+   ]
+  },
+  {
+   "base_name": "脫線的襪子",
+   "prefixes": [
+    "脫線的",
+    "全新的",
+    "破損的",
+    "褪色的"
+   ]
+  },
+  {
+   "base_name": "破爛的日記",
+   "prefixes": [
+    "破爛的",
+    "全新的",
+    "難辨的",
+    "帶鎖的"
+   ]
+  },
+  {
+   "base_name": "異國的郵票",
+   "prefixes": [
+    "異國的",
+    "舊的",
+    "美麗的",
+    "罕見的"
+   ]
+  },
+  {
+   "base_name": "免洗筷",
+   "prefixes": [
+    "拋棄式的",
+    "漆製的",
+    "竹製的",
+    "折斷的"
+   ]
+  },
+  {
+   "base_name": "未燒盡的木柴",
+   "prefixes": [
+    "未燒盡的",
+    "粗壯的",
+    "纖細的",
+    "乾涸的"
+   ]
+  },
+  {
+   "base_name": "字跡難辨的便條",
+   "prefixes": [
+    "難辨的",
+    "潦草的",
+    "工整的",
+    "潮濕的"
+   ]
+  },
+  {
+   "base_name": "蟲蛀的木片",
+   "prefixes": [
+    "蟲蛀的",
+    "光滑的",
+    "雕刻過的",
+    "腐爛的"
+   ]
+  },
+  {
+   "base_name": "舊鈕扣",
+   "prefixes": [
+    "舊的",
+    "黃銅製的",
+    "貝製的",
+    "木製的"
+   ]
+  },
+  {
+   "base_name": "褪色的緞帶",
+   "prefixes": [
+    "褪色的",
+    "紅色的",
+    "藍色的",
+    "絹製的"
+   ]
+  },
+  {
+   "base_name": "滿是灰塵的擺飾",
+   "prefixes": [
+    "滿是灰塵的",
+    "陶製的",
+    "木雕的",
+    "石製的"
+   ]
+  },
+  {
+   "base_name": "舊照片",
+   "prefixes": [
+    "舊的",
+    "褪色的",
+    "破損的",
+    "捲曲的"
+   ]
+  },
+  {
+   "base_name": "生鏽的鐵絲",
+   "prefixes": [
+    "生鏽的",
+    "黃銅製的",
+    "鐵製的",
+    "粗壯的"
+   ]
+  },
+  {
+   "base_name": "掉落的羽毛",
+   "prefixes": [
+    "掉落的",
+    "白色的",
+    "黑色的",
+    "帶花紋的"
+   ]
+  },
+  {
+   "base_name": "乾涸的泥土",
+   "prefixes": [
+    "乾涸的",
+    "潮濕的",
+    "凝固的",
+    "柔軟的"
+   ]
+  },
+  {
+   "base_name": "空瓶",
+   "prefixes": [
+    "小小的",
+    "大大的",
+    "棕色的",
+    "透明的",
+    "綠色的"
+   ]
+  },
+  {
+   "base_name": "狗尾草",
+   "prefixes": [
+    "枯萎的",
+    "乾涸的",
+    "長長的",
+    "短短的"
+   ]
+  },
+  {
+   "base_name": "用舊的皮包",
+   "prefixes": [
+    "用舊的",
+    "皮革製的",
+    "布製的",
+    "破損的"
+   ]
+  },
+  {
+   "base_name": "綻線的帽子",
+   "prefixes": [
+    "綻線的",
+    "全新的",
+    "稻草製的",
+    "布製的"
+   ]
+  },
+  {
+   "base_name": "折斷的鋼筆",
+   "prefixes": [
+    "折斷的",
+    "金製的",
+    "銀製的",
+    "塑膠製的"
+   ]
+  },
+  {
+   "base_name": "斷裂的手環",
+   "prefixes": [
+    "斷裂的",
+    "銀製的",
+    "木製的",
+    "皮革製的"
+   ]
+  },
+  {
+   "base_name": "纏結的毛線",
+   "prefixes": [
+    "纏結的",
+    "紅色的",
+    "藍色的",
+    "白色的",
+    "黃色的"
+   ]
+  },
+  {
+   "base_name": "吃剩的糖果",
+   "prefixes": [
+    "吃剩的",
+    "包裝紙的",
+    "融化的",
+    "凝固的"
+   ]
+  },
+  {
+   "base_name": "鳥巢的殘骸",
+   "prefixes": [
+    "鳥巢的",
+    "崩塌的",
+    "小小的",
+    "大大的"
+   ]
+  },
+  {
+   "base_name": "破洞的襪子",
+   "prefixes": [
+    "破洞的",
+    "毛線製的",
+    "棉製的",
+    "絹製的"
+   ]
+  },
+  {
+   "base_name": "生鏽的劍柄",
+   "prefixes": [
+    "生鏽的",
+    "木製的",
+    "皮革包覆的",
+    "銀製的"
+   ]
+  },
+  {
+   "base_name": "泛黃地圖的碎片",
+   "prefixes": [
+    "陳舊的",
+    "潮濕的",
+    "燒焦的",
+    "破損的"
+   ]
+  },
+  {
+   "base_name": "用舊的牙刷",
+   "prefixes": [
+    "用舊的",
+    "全新的",
+    "折斷的",
+    "彎曲的"
+   ]
+  },
+  {
+   "base_name": "乾燥的花瓣",
+   "prefixes": [
+    "乾燥的",
+    "褪色的",
+    "壓花的",
+    "碎散的"
+   ]
+  },
+  {
+   "base_name": "生鏽的自行車零件",
+   "prefixes": [
+    "生鏽的",
+    "損壞的",
+    "舊的",
+    "彎曲的"
+   ]
+  },
+  {
+   "base_name": "斷裂的鞋帶",
+   "prefixes": [
+    "斷裂的",
+    "全新的",
+    "潮濕的",
+    "凝固的"
+   ]
+  },
+  {
+   "base_name": "破碎的花瓶",
+   "prefixes": [
+    "損壞的",
+    "陶製的",
+    "玻璃製的",
+    "木製的"
+   ]
+  },
+  {
+   "base_name": "半枚硬幣",
+   "prefixes": [
+    "半個的",
+    "舊的",
+    "發光的",
+    "生鏽的"
+   ]
+  },
+  {
+   "base_name": "裝著不明液體的瓶子",
+   "prefixes": [
+    "神祕的",
+    "藍色的",
+    "紅色的",
+    "綠色的",
+    "冒泡的"
+   ]
+  },
+  {
+   "base_name": "小貝殼",
+   "prefixes": [
+    "螺旋狀的",
+    "扁平的",
+    "尖銳的",
+    "缺角的",
+    "白色的"
+   ]
+  },
+  {
+   "base_name": "生鏽的鈴鐺",
+   "prefixes": [
+    "生鏽的",
+    "小小的",
+    "損壞的",
+    "舊的"
+   ]
+  }
+ ],
+ "junk_items": [
+  "生鏽的生鏽的鐵釘",
+  "陳舊的生鏽的鐵釘",
+  "彎曲的生鏽的鐵釘",
+  "折斷的生鏽的鐵釘",
+  "缺角的生鏽的鐵釘",
+  "碎裂的碎裂的瓶子",
+  "龜裂的碎裂的瓶子",
+  "小小的碎裂的瓶子",
+  "大大的碎裂的瓶子",
+  "蒙塵的蒙塵的書本",
+  "潮濕的蒙塵的書本",
+  "燒焦的蒙塵的書本",
+  "破損的蒙塵的書本",
+  "用舊的用舊的毛筆",
+  "全新的用舊的毛筆",
+  "折斷的用舊的毛筆",
+  "乾涸的用舊的毛筆",
+  "折斷的折斷的樹枝",
+  "粗壯的折斷的樹枝",
+  "纖細的折斷的樹枝",
+  "乾燥的折斷的樹枝",
+  "乾燥的乾燥的樹葉",
+  "新鮮的乾燥的樹葉",
+  "染色的乾燥的樹葉",
+  "蟲蛀的乾燥的樹葉",
+  "圓形的小石子",
+  "尖銳的小石子",
+  "扁平的小石子",
+  "發光的小石子",
+  "沉重的小石子",
+  "褪色的褪色的布料",
+  "鮮豔的褪色的布料",
+  "絹製的褪色的布料",
+  "麻製的褪色的布料",
+  "斷裂的斷裂的繩子",
+  "耐用的斷裂的繩子",
+  "纖細的斷裂的繩子",
+  "粗壯的斷裂的繩子",
+  "小小的空箱子",
+  "大大的空箱子",
+  "堅固的空箱子",
+  "單薄的空箱子",
+  "損壞的壞掉的時鐘",
+  "舊的壞掉的時鐘",
+  "金製的壞掉的時鐘",
+  "銀製的壞掉的時鐘",
+  "燒焦的燒焦的紙張",
+  "潮濕的燒焦的紙張",
+  "皺巴巴的燒焦的紙張",
+  "破損的燒焦的紙張",
+  "缺角的缺角的寶石",
+  "小小的缺角的寶石",
+  "發光的缺角的寶石",
+  "褪色的缺角的寶石",
+  "歪斜的歪斜的鏡子",
+  "碎裂的歪斜的鏡子",
+  "圓形的歪斜的鏡子",
+  "方形的歪斜的鏡子",
+  "舊的舊骰子",
+  "全新的舊骰子",
+  "歪斜的舊骰子",
+  "小巧的舊骰子",
+  "空空的空的墨水瓶",
+  "半個的空的墨水瓶",
+  "乾涸的空的墨水瓶",
+  "碎裂的空的墨水瓶",
+  "單隻的單隻手套",
+  "毛線製的單隻手套",
+  "皮製的單隻手套",
+  "布製的單隻手套",
+  "生鏽的生鏽的湯匙",
+  "銀製的生鏽的湯匙",
+  "木製的生鏽的湯匙",
+  "彎曲的生鏽的湯匙",
+  "彎曲的彎曲的針",
+  "生鏽的彎曲的針",
+  "纖細的彎曲的針",
+  "折斷的彎曲的針",
+  "脫線的脫線的襪子",
+  "全新的脫線的襪子",
+  "破損的脫線的襪子",
+  "褪色的脫線的襪子",
+  "破爛的破爛的日記",
+  "全新的破爛的日記",
+  "難辨的破爛的日記",
+  "帶鎖的破爛的日記",
+  "異國的異國的郵票",
+  "舊的異國的郵票",
+  "美麗的異國的郵票",
+  "罕見的異國的郵票",
+  "拋棄式的免洗筷",
+  "漆製的免洗筷",
+  "竹製的免洗筷",
+  "折斷的免洗筷",
+  "未燒盡的未燒盡的木柴",
+  "粗壯的未燒盡的木柴",
+  "纖細的未燒盡的木柴",
+  "乾涸的未燒盡的木柴",
+  "難辨的字跡難辨的便條",
+  "潦草的字跡難辨的便條",
+  "工整的字跡難辨的便條",
+  "潮濕的字跡難辨的便條",
+  "蟲蛀的蟲蛀的木片",
+  "光滑的蟲蛀的木片",
+  "雕刻過的蟲蛀的木片",
+  "腐爛的蟲蛀的木片",
+  "舊的舊鈕扣",
+  "黃銅製的舊鈕扣",
+  "貝製的舊鈕扣",
+  "木製的舊鈕扣",
+  "褪色的褪色的緞帶",
+  "紅色的褪色的緞帶",
+  "藍色的褪色的緞帶",
+  "絹製的褪色的緞帶",
+  "滿是灰塵的滿是灰塵的擺飾",
+  "陶製的滿是灰塵的擺飾",
+  "木雕的滿是灰塵的擺飾",
+  "石製的滿是灰塵的擺飾",
+  "舊的舊照片",
+  "褪色的舊照片",
+  "破損的舊照片",
+  "捲曲的舊照片",
+  "生鏽的生鏽的鐵絲",
+  "黃銅製的生鏽的鐵絲",
+  "鐵製的生鏽的鐵絲",
+  "粗壯的生鏽的鐵絲",
+  "掉落的掉落的羽毛",
+  "白色的掉落的羽毛",
+  "黑色的掉落的羽毛",
+  "帶花紋的掉落的羽毛",
+  "乾涸的乾涸的泥土",
+  "潮濕的乾涸的泥土",
+  "凝固的乾涸的泥土",
+  "柔軟的乾涸的泥土",
+  "小小的空瓶",
+  "大大的空瓶",
+  "棕色的空瓶",
+  "透明的空瓶",
+  "綠色的空瓶",
+  "枯萎的狗尾草",
+  "乾涸的狗尾草",
+  "長長的狗尾草",
+  "短短的狗尾草",
+  "用舊的用舊的皮包",
+  "皮革製的用舊的皮包",
+  "布製的用舊的皮包",
+  "破損的用舊的皮包",
+  "綻線的綻線的帽子",
+  "全新的綻線的帽子",
+  "稻草製的綻線的帽子",
+  "布製的綻線的帽子",
+  "折斷的折斷的鋼筆",
+  "金製的折斷的鋼筆",
+  "銀製的折斷的鋼筆",
+  "塑膠製的折斷的鋼筆",
+  "斷裂的斷裂的手環",
+  "銀製的斷裂的手環",
+  "木製的斷裂的手環",
+  "皮革製的斷裂的手環",
+  "纏結的纏結的毛線",
+  "紅色的纏結的毛線",
+  "藍色的纏結的毛線",
+  "白色的纏結的毛線",
+  "黃色的纏結的毛線",
+  "吃剩的吃剩的糖果",
+  "包裝紙的吃剩的糖果",
+  "融化的吃剩的糖果",
+  "凝固的吃剩的糖果",
+  "鳥巢的鳥巢的殘骸",
+  "崩塌的鳥巢的殘骸",
+  "小小的鳥巢的殘骸",
+  "大大的鳥巢的殘骸",
+  "破洞的破洞的襪子",
+  "毛線製的破洞的襪子",
+  "棉製的破洞的襪子",
+  "絹製的破洞的襪子",
+  "生鏽的生鏽的劍柄",
+  "木製的生鏽的劍柄",
+  "皮革包覆的生鏽的劍柄",
+  "銀製的生鏽的劍柄",
+  "陳舊的泛黃地圖的碎片",
+  "潮濕的泛黃地圖的碎片",
+  "燒焦的泛黃地圖的碎片",
+  "破損的泛黃地圖的碎片",
+  "用舊的用舊的牙刷",
+  "全新的用舊的牙刷",
+  "折斷的用舊的牙刷",
+  "彎曲的用舊的牙刷",
+  "乾燥的乾燥的花瓣",
+  "褪色的乾燥的花瓣",
+  "壓花的乾燥的花瓣",
+  "碎散的乾燥的花瓣",
+  "生鏽的生鏽的自行車零件",
+  "損壞的生鏽的自行車零件",
+  "舊的生鏽的自行車零件",
+  "彎曲的生鏽的自行車零件",
+  "斷裂的斷裂的鞋帶",
+  "全新的斷裂的鞋帶",
+  "潮濕的斷裂的鞋帶",
+  "凝固的斷裂的鞋帶",
+  "損壞的破碎的花瓶",
+  "陶製的破碎的花瓶",
+  "玻璃製的破碎的花瓶",
+  "木製的破碎的花瓶",
+  "半個的半枚硬幣",
+  "舊的半枚硬幣",
+  "發光的半枚硬幣",
+  "生鏽的半枚硬幣",
+  "神祕的裝著不明液體的瓶子",
+  "藍色的裝著不明液體的瓶子",
+  "紅色的裝著不明液體的瓶子",
+  "綠色的裝著不明液體的瓶子",
+  "冒泡的裝著不明液體的瓶子",
+  "螺旋狀的小貝殼",
+  "扁平的小貝殼",
+  "尖銳的小貝殼",
+  "缺角的小貝殼",
+  "白色的小貝殼",
+  "生鏽的生鏽的鈴鐺",
+  "小小的生鏽的鈴鐺",
+  "損壞的生鏽的鈴鐺",
+  "舊的生鏽的鈴鐺"
+ ],
+ "enemy_templates": [],
+ "elemental_enemies": [
+  {
+   "name": "火靈",
+   "hp": 60,
+   "atk": 30,
+   "def": 8,
+   "spd": 5,
+   "exp": 65,
+   "gold": 30,
+   "loot": [
+    "火元素",
+    "魔法粉"
+   ],
+   "desc": "火焰的精靈"
+  },
+  {
+   "name": "水靈",
+   "hp": 50,
+   "atk": 18,
+   "def": 12,
+   "spd": 6,
+   "exp": 45,
+   "gold": 20,
+   "loot": [
+    "水晶碎片",
+    "貝殼"
+   ],
+   "desc": "水的精靈"
+  },
+  {
+   "name": "風靈",
+   "hp": 35,
+   "atk": 22,
+   "def": 5,
+   "spd": 12,
+   "exp": 55,
+   "gold": 25,
+   "loot": [
+    "羽毛",
+    "魔法粉"
+   ],
+   "desc": "風的精靈"
+  },
+  {
+   "name": "地靈",
+   "hp": 100,
+   "atk": 15,
+   "def": 25,
+   "spd": 2,
+   "exp": 60,
+   "gold": 35,
+   "loot": [
+    "黏土",
+    "靈木"
+   ],
+   "desc": "大地的精靈"
+  },
+  {
+   "name": "光靈",
+   "hp": 40,
+   "atk": 25,
+   "def": 10,
+   "spd": 8,
+   "exp": 70,
+   "gold": 40,
+   "loot": [
+    "護身符",
+    "靈木"
+   ],
+   "desc": "光的精靈"
+  },
+  {
+   "name": "暗靈",
+   "hp": 45,
+   "atk": 28,
+   "def": 8,
+   "spd": 9,
+   "exp": 65,
+   "gold": 35,
+   "loot": [
+    "魔法粉",
+    "破布"
+   ],
+   "desc": "暗的精靈"
+  },
+  {
+   "name": "雷靈",
+   "hp": 40,
+   "atk": 35,
+   "def": 6,
+   "spd": 10,
+   "exp": 80,
+   "gold": 45,
+   "loot": [
+    "水晶碎片",
+    "火元素"
+   ],
+   "desc": "雷的精靈"
+  },
+  {
+   "name": "冰靈",
+   "hp": 55,
+   "atk": 20,
+   "def": 15,
+   "spd": 5,
+   "exp": 50,
+   "gold": 28,
+   "loot": [
+    "空瓶",
+    "草藥"
+   ],
+   "desc": "冰的精靈"
+  },
+  {
+   "name": "森靈",
+   "hp": 70,
+   "atk": 14,
+   "def": 18,
+   "spd": 4,
+   "exp": 45,
+   "gold": 22,
+   "loot": [
+    "靈木",
+    "樹枝"
+   ],
+   "desc": "森林的精靈"
+  },
+  {
+   "name": "星靈",
+   "hp": 30,
+   "atk": 20,
+   "def": 8,
+   "spd": 14,
+   "exp": 90,
+   "gold": 50,
+   "loot": [
+    "星塵斗篷",
+    "記憶水晶"
+   ],
+   "desc": "星辰的精靈"
+  }
+ ],
+ "trade_catalog": {},
+ "locations_for_objects": [
+  "聖十字校園",
+  "鏡湖",
+  "鬱鬱山",
+  "卡洛夫角",
+  "霧海群島",
+  "秘密鐵工廠",
+  "便利店",
+  "英靈殿",
+  "廢棄礦坑",
+  "森林深處",
+  "煙雲溫泉湖",
+  "清溪河",
+  "鏡山",
+  "小吉鎮",
+  "大根莖村"
+ ],
+ "animal_enemies_template": [
+  {
+   "name": "森狼",
+   "base_hp": 35,
+   "base_atk": 10,
+   "base_def": 4,
+   "base_spd": 7,
+   "exp_mod": 25,
+   "gold_mod": 8,
+   "loot": [
+    "皮革"
+   ],
+   "desc": "棲息於森林的狼",
+   "biome": "forest"
+  },
+  {
+   "name": "山熊",
+   "base_hp": 120,
+   "base_atk": 28,
+   "base_def": 12,
+   "base_spd": 3,
+   "exp_mod": 100,
+   "gold_mod": 50,
+   "loot": [
+    "熊之鐵壁",
+    "生命果"
+   ],
+   "desc": "巨大的山熊",
+   "biome": "mountain"
+  },
+  {
+   "name": "毒蛇",
+   "base_hp": 30,
+   "base_atk": 22,
+   "base_def": 3,
+   "base_spd": 9,
+   "exp_mod": 45,
+   "gold_mod": 15,
+   "loot": [
+    "解毒草",
+    "蛇之鱗衣"
+   ],
+   "desc": "擁有毒牙的蛇",
+   "biome": "forest"
+  },
+  {
+   "name": "猛禽",
+   "base_hp": 25,
+   "base_atk": 18,
+   "base_def": 2,
+   "base_spd": 12,
+   "exp_mod": 35,
+   "gold_mod": 12,
+   "loot": [
+    "鷹之翼膜",
+    "羽毛"
+   ],
+   "desc": "從空中狙擊的猛禽",
+   "biome": "sky"
+  },
+  {
+   "name": "野猪",
+   "base_hp": 70,
+   "base_atk": 15,
+   "base_def": 8,
+   "base_spd": 5,
+   "exp_mod": 40,
+   "gold_mod": 18,
+   "loot": [
+    "皮革",
+    "狼王毛皮"
+   ],
+   "desc": "狂暴的野豬",
+   "biome": "grassland"
+  },
+  {
+   "name": "大蜘蛛",
+   "base_hp": 40,
+   "base_atk": 12,
+   "base_def": 6,
+   "base_spd": 6,
+   "exp_mod": 30,
+   "gold_mod": 10,
+   "loot": [
+    "絲線",
+    "解毒草"
+   ],
+   "desc": "巨大的蜘蛛",
+   "biome": "cave"
+  },
+  {
+   "name": "虎",
+   "base_hp": 90,
+   "base_atk": 30,
+   "base_def": 10,
+   "base_spd": 7,
+   "exp_mod": 80,
+   "gold_mod": 35,
+   "loot": [
+    "虎之條紋鎧",
+    "皮革"
+   ],
+   "desc": "百獸之王",
+   "biome": "forest"
+  },
+  {
+   "name": "大鹿",
+   "base_hp": 50,
+   "base_atk": 8,
+   "base_def": 5,
+   "base_spd": 9,
+   "exp_mod": 25,
+   "gold_mod": 15,
+   "loot": [
+    "鹿之角冠",
+    "皮革"
+   ],
+   "desc": "森林的守護者",
+   "biome": "forest"
+  },
+  {
+   "name": "電鱗魚",
+   "base_hp": 35,
+   "base_atk": 25,
+   "base_def": 4,
+   "base_spd": 8,
+   "exp_mod": 50,
+   "gold_mod": 20,
+   "loot": [
+    "貓之輕靴",
+    "魔力藥水"
+   ],
+   "desc": "帶電的魚",
+   "biome": "water"
+  },
+  {
+   "name": "鎌鼬",
+   "base_hp": 28,
+   "base_atk": 20,
+   "base_def": 2,
+   "base_spd": 11,
+   "exp_mod": 40,
+   "gold_mod": 14,
+   "loot": [
+    "羽毛",
+    "草藥"
+   ],
+   "desc": "破風而行的鼬",
+   "biome": "grassland"
+  },
+  {
+   "name": "岩亀",
+   "base_hp": 200,
+   "base_atk": 8,
+   "base_def": 35,
+   "base_spd": 1,
+   "exp_mod": 120,
+   "gold_mod": 60,
+   "loot": [
+    "龜之甲殼盾",
+    "黏土"
+   ],
+   "desc": "如移動岩石般的巨龜",
+   "biome": "mountain"
+  },
+  {
+   "name": "吸血蝙蝠",
+   "base_hp": 20,
+   "base_atk": 15,
+   "base_def": 2,
+   "base_spd": 10,
+   "exp_mod": 30,
+   "gold_mod": 8,
+   "loot": [
+    "空瓶",
+    "破布"
+   ],
+   "desc": "夜間飛翔的蝙蝠",
+   "biome": "cave"
+  },
+  {
+   "name": "黄金蛇",
+   "base_hp": 40,
+   "base_atk": 18,
+   "base_def": 5,
+   "base_spd": 8,
+   "exp_mod": 55,
+   "gold_mod": 25,
+   "loot": [
+    "蛇之鱗衣",
+    "古代硬貨"
+   ],
+   "desc": "擁有黃金鱗片的蛇",
+   "biome": "ruins"
+  },
+  {
+   "name": "冰狼",
+   "base_hp": 50,
+   "base_atk": 15,
+   "base_def": 8,
+   "base_spd": 6,
+   "exp_mod": 60,
+   "gold_mod": 22,
+   "loot": [
+    "銀狼之尾",
+    "皮革"
+   ],
+   "desc": "冰雪地帶的狼",
+   "biome": "snow"
+  },
+  {
+   "name": "砂蝎",
+   "base_hp": 60,
+   "base_atk": 20,
+   "base_def": 12,
+   "base_spd": 4,
+   "exp_mod": 50,
+   "gold_mod": 28,
+   "loot": [
+    "蠍之甲殼",
+    "毒針"
+   ],
+   "desc": "潛伏於沙漠的蠍子",
+   "biome": "desert"
+  },
+  {
+   "name": "火蜥蜴",
+   "base_hp": 45,
+   "base_atk": 25,
+   "base_def": 6,
+   "base_spd": 5,
+   "exp_mod": 55,
+   "gold_mod": 20,
+   "loot": [
+    "火元素",
+    "皮革"
+   ],
+   "desc": "噴吐火焰的蜥蜴",
+   "biome": "volcano"
+  },
+  {
+   "name": "翠鳥",
+   "base_hp": 22,
+   "base_atk": 14,
+   "base_def": 3,
+   "base_spd": 13,
+   "exp_mod": 30,
+   "gold_mod": 10,
+   "loot": [
+    "羽毛",
+    "靈木"
+   ],
+   "desc": "被譽為森林寶石的鳥",
+   "biome": "forest"
+  },
+  {
+   "name": "鉄甲虫",
+   "base_hp": 80,
+   "base_atk": 10,
+   "base_def": 25,
+   "base_spd": 2,
+   "exp_mod": 45,
+   "gold_mod": 18,
+   "loot": [
+    "鐵礦",
+    "黏土"
+   ],
+   "desc": "擁有鋼鐵甲殼的蟲",
+   "biome": "cave"
+  },
+  {
+   "name": "水馬",
+   "base_hp": 55,
+   "base_atk": 12,
+   "base_def": 7,
+   "base_spd": 8,
+   "exp_mod": 35,
+   "gold_mod": 15,
+   "loot": [
+    "貝殼",
+    "絲線"
+   ],
+   "desc": "水邊的幻獸",
+   "biome": "water"
+  },
+  {
+   "name": "旋風狼",
+   "base_hp": 40,
+   "base_atk": 18,
+   "base_def": 5,
+   "base_spd": 9,
+   "exp_mod": 50,
+   "gold_mod": 22,
+   "loot": [
+    "狼王毛皮",
+    "魔法粉"
+   ],
+   "desc": "操縱風的狼",
+   "biome": "grassland"
+  }
+ ],
+ "cat_item_types": {
+  "energy": [
+   "accessory",
+   "neck",
+   0.1,
+   0.1,
+   0,
+   0.2,
+   60,
+   80
+  ],
+  "element": [
+   "accessory",
+   "neck",
+   0.1,
+   0.1,
+   0,
+   0.2,
+   60,
+   80
+  ],
+  "combat": [
+   "weapon",
+   "right_hand",
+   0.25,
+   0,
+   0.1,
+   0,
+   80,
+   100
+  ],
+  "skill": [
+   "weapon",
+   "right_hand",
+   0.25,
+   0,
+   0.1,
+   0,
+   80,
+   100
+  ],
+  "craft": [
+   "armor",
+   "torso",
+   0,
+   0.15,
+   0,
+   0.15,
+   70,
+   90
+  ],
+  "social": [
+   "armor",
+   "torso",
+   0,
+   0.15,
+   0,
+   0.15,
+   70,
+   90
+  ],
+  "lore": [
+   "armor",
+   "back",
+   0,
+   0.1,
+   0,
+   0.2,
+   50,
+   70
+  ],
+  "vitality": [
+   "armor",
+   "torso",
+   0,
+   0.2,
+   0,
+   0,
+   80,
+   85
+  ],
+  "exploration": [
+   "armor",
+   "feet",
+   0,
+   0,
+   0.15,
+   0.1,
+   60,
+   75
+  ],
+  "knowledge": [
+   "accessory",
+   "head",
+   0,
+   0,
+   0,
+   0.25,
+   50,
+   95
+  ]
+ }
 }
