@@ -1089,7 +1089,7 @@ class AngelaLLMService:
                     from ai.meta.priority_negotiator import PriorityNegotiator
 
                     pn = PriorityNegotiator()
-                    pn_vote = pn.resolve(user_message, context)
+                    pn_vote = pn.resolve({**context, "user_message": user_message})
                     routing_mode = pn_vote.get("routing_mode", "neutral")
                 except Exception as e:
                     logger.warning("PriorityNegotiator resolve failed: %s", e, exc_info=True)

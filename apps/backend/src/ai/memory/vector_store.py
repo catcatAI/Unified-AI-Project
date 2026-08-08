@@ -264,7 +264,14 @@ class VectorMemoryStore:
         self._numpy_backend: Optional[_NumpyBackend] = None
         os.makedirs(self.persist_directory, exist_ok=True)
 
-        chromadb = _lazy_chromadb()
+        # Deployment flag: force the pure-numpy backend even when chromadb is
+        # installed. Some environments (e.g. Windows with onnxruntime-backed
+        # embeddings) make chromadb's PersistentClient pathologically slow
+        # (multi-second queries), and vector search here is enrichment-only —
+        # correctness never depends on chromadb, only on recall quality.
+        force_numpy = os.environ.get("ANGELA_VECTOR_BACKEND", "").strip().lower() == "numpy"
+
+        chromadb = None if force_numpy else _lazy_chromadb()
         if chromadb is not None:
             try:
                 _cb = _ChromadbBackend(self.persist_directory)

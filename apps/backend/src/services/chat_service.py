@@ -33,6 +33,8 @@ class ChatService:
             os.path.dirname(__file__), "..", "..", "..", "..", "data", "cl_state"
         )
         self._cultural_context = None
+        self._vector_store_disabled = False
+        self._vector_store_recent_fail = False
 
     @property
     def model_bus(self):
@@ -216,24 +218,36 @@ class ChatService:
         return merged_context
 
     async def _inject_memory_context(self, merged_context: dict, user_message: str) -> dict:
-        if self._vector_store is not None:
+        if self._vector_store is not None and not self._vector_store_disabled:
             try:
-                # Vector search is an enrichment only — never block the answer path.
-                # Some backends (e.g. chromadb PersistentClient) are pathologically
-                # slow to query in certain environments, so bound it tightly and
-                # degrade gracefully when it overruns.
+                # Vector search is an enrichment only — never block the answer
+                # path. Some backends (e.g. chromadb PersistentClient) are
+                # pathologically slow to query in certain environments, so bind
+                # it tightly and degrade gracefully when it overruns. On timeout
+                # the backend is permanently disabled for this process: the
+                # underlying thread keeps occupying the chromadb worker lock even
+                # after the awaited future is cancelled, so any later retry only
+                # queues behind it and wedges the answer path again.
                 vs_results = await asyncio.wait_for(
                     self._vector_store.semantic_search(user_message, 3),
                     timeout=1.0,
                 )
+                self._vector_store_recent_fail = False
                 docs = vs_results.get("documents", [[]])[0]
                 knowledge = [str(d)[:200] for d in docs if d and isinstance(d, str)]
                 if knowledge:
                     merged_context["dictionary_context"] = knowledge
             except asyncio.TimeoutError:
-                logger.debug("VectorStore query skipped (exceeded 1.0s budget)")
+                self._vector_store_disabled = True
+                self._vector_store_recent_fail = True
+                logger.warning(
+                    "VectorStore query exceeded 1.0s budget; disabling vector "
+                    "enrichment for this process to keep the answer path responsive"
+                )
             except Exception as e:
-                logger.warning("VectorStore query failed: %s", e, exc_info=True)
+                self._vector_store_disabled = True
+                self._vector_store_recent_fail = True
+                logger.warning("VectorStore query failed; disabling: %s", e, exc_info=True)
         if self._ham_memory is not None:
             try:
                 ham_results = await self._ham_memory.retrieve_response_templates(
