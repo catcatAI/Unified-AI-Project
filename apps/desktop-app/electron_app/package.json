@@ -19,8 +19,8 @@
     "node": ">=18.0.0"
   },
   "devDependencies": {
-    "electron": "^40.8.5",
-    "electron-builder": "^26.7.0"
+    "electron": "^41.10.3",
+    "electron-builder": "^26.15.3"
   },
   "dependencies": {
     "@pixi/utils": "^7.3.2",
