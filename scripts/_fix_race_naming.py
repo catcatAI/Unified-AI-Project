@@ -3,8 +3,9 @@ Fix 15 NPC_METADATA vs card race naming inconsistencies.
 Updates game_cards.json stats.race to the more detailed/correct version.
 """
 import json
+import os
 
-CARDS_PATH = 'data/game_cards.json'
+CARDS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "apps", "game-rpg", "data", "game_cards.json")
 
 # Mapping: (npc_name) -> correct_race
 # Based on analysis of card vs metadata differences

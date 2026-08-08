@@ -20,9 +20,10 @@ Token categories expected by game code:
   general      — default fallback
 """
 import json
+import os
 import re
 
-CARDS_PATH = 'data/game_cards.json'
+CARDS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "apps", "game-rpg", "data", "game_cards.json")
 
 # ── Category keyword rules ──────────────────────────────────────────────
 # Rules: (category, [list of keywords to match in token name or value])

@@ -230,7 +230,12 @@ npx pnpm dev:desktop
 
 # Option 4: Play the text adventure game (no LLM needed)
 pip install -e "apps/backend[tui]"   # Install TUI dependencies (textual + rich)
-python run_game.py                   # Launch game from project root
+
+# Textual TUI (apps/backend/src/game)
+cd apps/backend && python -m src.game.app
+
+# CLI RPG (apps/game-rpg)
+python apps/game-rpg/run_game.py
 ```
 
 **Prerequisites**: Python 3.10+, Node.js 16+, Ollama (LLM backend).
@@ -247,11 +252,14 @@ A text-based adventure game running on ED3N/GARDEN + deterministic engines — *
 # Install TUI dependencies
 pip install -e "apps/backend[tui]"
 
-# Launch from project root
-python run_game.py
+# Launch the Textual TUI from apps/backend
+cd apps/backend && python -m src.game.app
+
+# Or launch the standalone CLI RPG
+python apps/game-rpg/run_game.py
 ```
 
-**Features**: Three-column TUI layout (character stats / dialogue / scene info), D12 dice-based combat, scene exploration, inventory system. 211 cards loaded from `data/game_cards.json`. Refresh is event-driven (no polling).
+**Features**: Three-column TUI layout (character stats / dialogue / scene info), D12 dice-based combat, scene exploration, inventory system. 211 cards loaded from `apps/game-rpg/data/game_cards.json`. Refresh is event-driven (no polling).
 
 ---
 
@@ -260,7 +268,8 @@ python run_game.py
 | Category | Script | Description |
 |----------|--------|-------------|
 | **Launch** | `scripts/run_angela.py` | Primary launcher (recommended) |
-| **Launch** | `run_game.py` | Text adventure game TUI (no LLM needed) |
+| **Launch** | `apps/game-rpg/run_game.py` | CLI RPG (no LLM needed) |
+| **Launch** | `apps/backend/src/game/app.py` | Textual TUI (no LLM needed) |
 | **Launch** | `scripts/start_all.bat` | Start backend + frontend concurrently |
 | **Launch** | `scripts/start_backend.bat` | Start backend in dev mode |
 | **Launch** | `scripts/unified-ai.bat` | Comprehensive project launcher |
@@ -544,7 +553,12 @@ npx pnpm dev:desktop
 
 # 方式四：文字冒險遊戲（無需 LLM）
 pip install -e "apps/backend[tui]"   # 安裝 TUI 依賴（textual + rich）
-python run_game.py                   # 從專案根目錄啟動遊戲
+
+# Textual TUI（apps/backend/src/game）
+cd apps/backend && python -m src.game.app
+
+# CLI RPG（apps/game-rpg）
+python apps/game-rpg/run_game.py
 ```
 
 **環境需求**：Python 3.10+、Node.js 16+、Ollama（LLM 後端）
@@ -561,11 +575,14 @@ python run_game.py                   # 從專案根目錄啟動遊戲
 # 安裝 TUI 依賴
 pip install -e "apps/backend[tui]"
 
-# 從專案根目錄啟動
-python run_game.py
+# 啟動 Textual TUI（位於 apps/backend）
+cd apps/backend && python -m src.game.app
+
+# 或啟動獨立的 CLI RPG
+python apps/game-rpg/run_game.py
 ```
 
-**功能**：三欄 TUI 介面（角色狀態 / 對話區 / 場景資訊）、D12 骰點戰鬥、場景探索、背包系統。載入 211 張卡片（`data/game_cards.json`）。事件驅動刷新，不輪詢。
+**功能**：三欄 TUI 介面（角色狀態 / 對話區 / 場景資訊）、D12 骰點戰鬥、場景探索、背包系統。載入 211 張卡片（`apps/game-rpg/data/game_cards.json`）。事件驅動刷新，不輪詢。
 
 ---
 
@@ -574,7 +591,8 @@ python run_game.py
 | 類別 | 腳本 | 說明 |
 |------|------|------|
 | **啟動** | `scripts/run_angela.py` | 主要啟動器（推薦） |
-| **啟動** | `run_game.py` | 文字冒險遊戲 TUI（無需 LLM） |
+| **啟動** | `apps/game-rpg/run_game.py` | CLI 冒險遊戲（無需 LLM） |
+| **啟動** | `apps/backend/src/game/app.py` | Textual TUI（無需 LLM） |
 | **啟動** | `scripts/start_all.bat` | 同時啟動後端 + 桌面端 |
 | **啟動** | `scripts/start_backend.bat` | 開發模式啟動後端 |
 | **啟動** | `scripts/unified-ai.bat` | 綜合專案啟動器 |

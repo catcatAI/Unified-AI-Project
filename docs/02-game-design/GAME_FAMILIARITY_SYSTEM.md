@@ -73,6 +73,6 @@
 
 | 檔案 | 用途 |
 |------|------|
-| `game_familiarity.py` | 熟悉度核心邏輯（等級、XP、標籤生成、資訊揭露） |
-| `run_game.py` | 整合至 `print_status()`、`do_interact_npc()` |
-| `character_system.py` | 加入 `"familiarity"` 至空白角色資料 |
+| `apps/game-rpg/game_familiarity.py` | 熟悉度核心邏輯（等級、XP、標籤生成、資訊揭露） |
+| `apps/game-rpg/run_game.py` | 整合至 `print_status()`、`do_interact_npc()` |
+| `apps/game-rpg/character_system.py` | 加入 `"familiarity"` 至空白角色資料 |

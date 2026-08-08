@@ -13,7 +13,7 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'apps', 'backend', 'src'))
 
-CARD_PATH = "data/game_cards.json"
+CARD_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "apps", "game-rpg", "data", "game_cards.json")
 
 # =============================================================================
 # Ability type inference rules

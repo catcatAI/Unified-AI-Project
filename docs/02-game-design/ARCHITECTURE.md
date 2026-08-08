@@ -7,10 +7,23 @@
 `
 D:\\Projects\\Unified-AI-Project\\
 │
-├── game.py                          # 主遊戲引擎文字冒險模組（單一檔案）
-│                                    # 含全部場景、定義、角色狀態、CLI 呈現邏輯
-│
-├── run_game.py                      # 遊戲啟動器（import 並執行 game.py）
+├── apps/game-rpg/                  # 獨立 CLI RPG 冒險（app 結構自洽）
+│   ├── game.py                     # 主遊戲引擎文字冒險模組（單一檔案）
+│   ├── run_game.py                 # 遊戲啟動器（完整 RPG 迴圈）
+│   ├── sim_systems.py              # 模擬系統層（物品/敵/配方/地圖/任務）
+│   ├── game_data.py                # 資料展開（expand_game）
+│   ├── character_system.py         # 角色生成/存檔（讀 data/game_cards.json）
+│   ├── axis_system.py              # 軸譜系統
+│   ├── world_clock.py              # 多世界線時間引擎
+│   ├── game_familiarity.py         # 熟悉度系統
+│   ├── analyze_cards.py / check_content.py   # 卡稽核工具
+│   ├── conftest.py                 # pytest bootstrap
+│   ├── data/                       # 遊戲資料（唯一權威來源）
+│   │   ├── game_cards.json         # 主卡片資料
+│   │   ├── game_supplement.json    # 補充道具/世界資料
+│   │   ├── world_clock.json        # 世界時鐘資料
+│   │   └── gdrive_export/          # 卡原始文本
+│   └── tests/                      # 遊戲單元測試
 │
 ├── apps/backend/src/game/           # 遊戲後端模組（正式原始碼區）
 │   ├── __init__.py                  # 模組初始化
@@ -58,14 +71,16 @@ D:\\Projects\\Unified-AI-Project\\
 │       ├── json_exporter.py         # JSON 匯出
 │       └── pdf_exporter.py          # PDF 匯出
 │
-├── data/                            # 遊戲資料
-│   ├── game_cards.json              # 主卡片資料（347KB）
-│   ├── card_registry.json           # 卡片註冊表（93KB）
-│   ├── all_cards.json               # 整合卡片資料（169KB）
-│   ├── all_cards_final.json         # 最終整合卡片（381KB）
-│   ├── parsed_cards.json            # 解析後卡片（86KB）
-│   ├── card_deck_inventory.json     # 卡片堆庫存（44KB）
-│   └── npcs.json                    # NPC 資料（若存在）
+├── apps/game-rpg/data/              # 遊戲資料（唯一權威來源）
+│   ├── game_cards.json              # 主卡片資料
+│   ├── game_supplement.json         # 補充道具/敵人
+│   ├── world_clock.json             # 世界時鐘
+│   ├── card_registry.json           # 卡片註冊表（衍生）
+│   ├── all_cards.json               # 整合卡片資料（衍生）
+│   ├── all_cards_final.json         # 最終整合卡片（衍生）
+│   ├── parsed_cards.json            # 解析後卡片（衍生）
+│   ├── card_deck_inventory.json     # 卡片堆庫存（衍生）
+│   └── gdrive_export/               # 卡原始文本輸入
 │
 ├── scripts/                         # 工具腳本
 │   ├── import_card_deck.py          # 卡片堆匯入腳本
@@ -92,6 +107,8 @@ D:\\Projects\\Unified-AI-Project\\
 │   ├── npcs.json                    # NPC 資料
 │   └── knowledge_graph_mapping.json # 知識圖譜映射
 │
+├── apps/game-rpg/tests/             # 遊戲測試（test_axis_system / test_craft_repair）
+│
 ├── tests/                           # 測試
 │   ├── core/card/                   # 卡片系統測試
 │   └── ai/meta/                     # AI 元系統測試
@@ -102,7 +119,7 @@ D:\\Projects\\Unified-AI-Project\\
 ### 數據流向
 
 `
-卡片資料 (data/*.json)
+卡片資料 (apps/game-rpg/data/*.json)
     │
     ▼
 CardRegistry (apps/backend/src/core/card/card_store.py)

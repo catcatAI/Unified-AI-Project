@@ -19,7 +19,7 @@ from .token_effects import (
     get_token_descriptions,
 )
 
-DATA_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent / "data"
+DATA_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent / "apps" / "game-rpg" / "data"
 CARDS_PATH = DATA_DIR / "game_cards.json"
 
 WORLDS = {

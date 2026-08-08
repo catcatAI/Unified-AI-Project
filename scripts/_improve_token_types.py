@@ -3,9 +3,10 @@ Improve token type assignment by adding more keyword rules.
 Target: reduce general from ~32% to <20% by better matching.
 """
 import json
+import os
 import re
 
-CARDS_PATH = 'data/game_cards.json'
+CARDS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "apps", "game-rpg", "data", "game_cards.json")
 
 # ── Expanded type rules ─────────────────────────────────────────────
 # These are ADDITIONAL patterns found in the general analysis

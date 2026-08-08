@@ -48,8 +48,12 @@
 
 ```
 D:\Projects\Unified-AI-Project\
-├── game.py                          # 主遊戲引擎
-├── run_game.py                      # 遊戲啟動器
+├── apps/game-rpg/                   # 附屬 CLI RPG 遊戲（自洽 app）
+│   ├── game.py                      # 主遊戲引擎
+│   ├── run_game.py                  # 遊戲啟動器
+│   ├── data/                        # 遊戲資料（唯一權威來源）
+│   └── tests/                       # 遊戲單元測試
+├── apps/backend/src/game/           # Textual TUI 遊戲模組
 ├── docs/02-game-design/            # 設計文檔 (本文索引所在目錄)
 │   ├── README.md                    # ← 這份文件
 │   ├── GAME_OVERVIEW.md
@@ -62,9 +66,8 @@ D:\Projects\Unified-AI-Project\
 │   ├── MAP_AND_SCENES.md
 │   ├── SIMULATION_SYSTEMS.md
 │   └── FILE_INVENTORY.md
-├── apps/backend/src/game/          # 遊戲原始碼
 ├── apps/backend/src/core/card/     # 卡片系統
-├── data/                            # 遊戲資料
+├── apps/game-rpg/data/             # 遊戲資料（唯一權威來源）
 ├── scripts/                         # 工具腳本
 └── ANGELA_CARD_INTEGRATION_PLAN.md  # 整合計劃
 ```

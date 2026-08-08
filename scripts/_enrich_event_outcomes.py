@@ -1,7 +1,10 @@
 """Add favorable/unfavorable outcome descriptions to all world events."""
 import json
+import os
 
-with open('data/world_clock.json', 'r', encoding='utf-8') as f:
+WC_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "apps", "game-rpg", "data", "world_clock.json")
+
+with open(WC_PATH, 'r', encoding='utf-8') as f:
     wc = json.load(f)
 
 outcomes = {
@@ -89,7 +92,7 @@ for wl_id, line in wc.get('world_lines', {}).items():
             evt['unfavorable_outcome'] = outcomes[eid]['unfavorable_outcome']
             updated += 1
 
-with open('data/world_clock.json', 'w', encoding='utf-8') as f:
+with open(WC_PATH, 'w', encoding='utf-8') as f:
     json.dump(wc, f, ensure_ascii=False, indent=2)
 
 print(f"Updated {updated} events with outcome descriptions.")

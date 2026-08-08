@@ -10,7 +10,7 @@ import json
 import sys
 from pathlib import Path
 
-PATH = Path(__file__).resolve().parent.parent / "data" / "game_cards.json"
+PATH = Path(__file__).resolve().parent.parent / "apps" / "game-rpg" / "data" / "game_cards.json"
 SL06 = "SL-06 大正浪漫與鋼鐵殉葬"
 
 raw = PATH.read_text(encoding="utf-8")

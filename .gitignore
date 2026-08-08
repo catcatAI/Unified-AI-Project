@@ -65,12 +65,26 @@ apps/backend/system_status.json
 *.sqlite
 *.tmp
 *.temp
+# Backend runtime junk (untracked; regenerated at runtime)
+apps/backend/chroma_db/
+apps/backend/reports/
+apps/backend/collect_output.txt
+apps/backend/import_all_lines.txt
+apps/backend/import_profile.txt
+apps/backend/import_timing.txt
+apps/backend/test_output.mp3
+apps/backend/data/processed_data/
+apps/backend/data/atlassian_cache/
+apps/backend/data/task_queue/
+apps/backend/test_models/
 # Credentials
 credentials.json
 *credential*
 *secret*
 *token*
 !**/token_stream.py
+!apps/backend/src/game/token_effects.py
+!scripts/analyze_tokens.py
 *.key
 *.pem
 .env
@@ -114,6 +128,13 @@ tmp/
 .zenflow/
 # Test files in scripts/
 scripts/tests/
+# One-shot game-data maintenance/audit scripts (underscore prefix = throwaway)
+scripts/_*.py
+# Game project (apps/game-rpg) — track code, ignore runtime/backup data
+apps/game-rpg/data/*
+!apps/game-rpg/data/game_cards.json
+!apps/game-rpg/data/game_supplement.json
+!apps/game-rpg/data/world_clock.json
 # Root binary (Angela CLI)
 /acli.exe
 apps/backend/test_results/
@@ -127,6 +148,8 @@ apps\backend\angela_memory.json
 apps/models/
 apps/training/
 apps/logs/
+# Legacy orphan dataset dir (v6.0.0) — canonical data lives in apps/backend/data/raw_datasets/
+apps/data/
 # Binary model artifacts (training outputs)
 *.npy
 # User notes / runtime logs

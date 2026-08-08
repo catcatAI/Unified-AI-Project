@@ -4,10 +4,19 @@
 
 ### 根目錄遊戲檔案
 
+路由已整合至 `apps/game-rpg/`（獨立 CLI RPG app）：
+
 | 檔案 | 類型 | 說明 |
 |------|------|------|
-| `game.py` | Python | 主遊戲引擎文字冒險模組，單一檔案含全部場景、定義與 CLI 呈現邏輯 |
-| `run_game.py` | Python | 遊戲啟動器，import 並執行 game.py 的 run_game() |
+| `apps/game-rpg/game.py` | Python | 主遊戲引擎文字冒險模組，單一檔案含全部場景定義 |
+| `apps/game-rpg/run_game.py` | Python | 遊戲啟動器，完整 RPG 迴圈 |
+| `apps/game-rpg/sim_systems.py` | Python | 模擬系統層（物品/敵/配方/地圖/任務） |
+| `apps/game-rpg/game_data.py` | Python | 資料展開（expand_game） |
+| `apps/game-rpg/character_system.py` | Python | 角色生成/存檔 |
+| `apps/game-rpg/axis_system.py` | Python | 軸譜系統 |
+| `apps/game-rpg/world_clock.py` | Python | 多世界線時間引擎 |
+| `apps/game-rpg/game_familiarity.py` | Python | 熟悉度系統 |
+| `apps/game-rpg/data/` | JSON | 遊戲資料（唯一權威來源） |
 | `ANGELA_CARD_INTEGRATION_PLAN.md` | Markdown | 卡片系統整合計劃 |
 
 ### 設計文檔

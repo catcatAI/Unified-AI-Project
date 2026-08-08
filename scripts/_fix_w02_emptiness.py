@@ -12,8 +12,9 @@ LOCATION_ENEMIES 無鍵（0 種敵人）。玩家經迴廊到 W02 後什麼都�
    數量值均為普通等級（HP<120、ATK<30），符合《琥珀紀元》硬核中世紀語境
 """
 import json
+import os
 
-PATH = "data/game_supplement.json"
+PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "apps", "game-rpg", "data", "game_supplement.json")
 with open(PATH, "r", encoding="utf-8") as f:
     sup = json.load(f)
 

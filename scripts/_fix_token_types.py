@@ -4,8 +4,9 @@ Every token has type='?' — this script assigns meaningful types
 based on token name and value keyword matching.
 """
 import json
+import os
 
-CARDS_PATH = 'data/game_cards.json'
+CARDS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "apps", "game-rpg", "data", "game_cards.json")
 
 # ── Type assignment rules ──────────────────────────────────────────────
 # Rules: (type, [list of keywords to match in token name], [extra keywords in value])
