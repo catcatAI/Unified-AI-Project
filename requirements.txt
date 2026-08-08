@@ -34,7 +34,7 @@ sentence-transformers>=2.2.0
 scikit-learn>=1.3.0
 networkx>=3.1
 pandas>=2.0.0
-tqdm>=4.66.0
+tqdm>=4.68.4
 pyautogui>=0.9.54
 pyperclip>=1.8.0
 -e ./apps/backend
