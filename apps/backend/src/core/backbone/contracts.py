@@ -39,6 +39,7 @@ class EnvelopeKind:
     TOOL_CALL = "tool_call"
     EXTERNAL = "external"
     LEARNING = "learning"
+    RESPONSE = "response"
     EVENT = "event"
     QUERY = "query"
     STATE_WRITE = "state_write"

@@ -71,6 +71,10 @@ class Backbone:
 
         self.learning = LearningCoordinator(pair_scheduler=self.pairs)
 
+        from core.backbone.response import ResponseModeSelector
+
+        self.response = ResponseModeSelector(pair_scheduler=self.pairs)
+
         self._io_pairs_bound = False
 
         self.register_default_translators()
@@ -273,6 +277,22 @@ class Backbone:
     def trigger_learning(self, user_message: str, response: Any, context: Optional[dict] = None):
         """以 CNS 事件語意觸發所有 learners（fire-and-forget background task）。"""
         return self.learning.trigger(user_message, response, context)
+
+    # ------------------------------------------------------------------
+    # 響應模式（§5.6 response.py 選取器）
+    # ------------------------------------------------------------------
+    async def respond(
+        self,
+        user_message: str,
+        context: Optional[dict] = None,
+        mode: str = "1:1",
+        **kwargs: Any,
+    ):
+        """統一響應入口：請求層級選模式（1:1 / layered / stream / layered_stream）。
+
+        委派給 `self.response`（ResponseModeSelector）。
+        """
+        return await self.response.respond(user_message, context=context, mode=mode, **kwargs)
 
     def register_training(self, name: str, workflow: Callable) -> None:
         """註冊上層訓練工作流（掛載/釋放，§6 training.py）。"""
