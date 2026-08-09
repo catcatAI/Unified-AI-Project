@@ -182,7 +182,7 @@
 | **上層** | 矩陣/座標軸統一接線 + 自由矩陣掛載 | `neural_bridge.py` + `state_matrix_adapter.py` | 🆕 需新建 `core/backbone/` |
 | **中層** | 字典/模組/轉譯器註冊 | `PriorityNegotiator`（路由投票） | 🆕 需新建 registry |
 | **下層** | 入口/出口 + 配置傳遞 | `api/router.py` + `magic_numbers.compute_*` | 🆕 需新建接線層 |
-| 事件匯流排 | CNS 事件 | `core/event_loop_system.py` + `core/system/state_store/global_store.py` | ✅ 直接採用 |
+| 事件匯流排 | CNS 事件 | `core/system/state_store/global_store.py`（`GlobalStateStore`） | ✅ 直接採用（`core/event_loop_system.py` 自稱 DEPRECATED、零引用，見 §11.2 🔴）|
 
 ### 3.7 CLI / 前端 (Clients)
 
@@ -194,6 +194,21 @@
 | Web 儀表板 | `apps/web-dashboard/`（假資料 API，見 §X #204 後殘留） | 🔧 接真實後端 |
 | Live2D | `apps/web-live2d-viewer/` | ✅ |
 | MCP | `src/mcp/connector.py` | ✅ |
+
+### 3.8 全專案盤點索引（六路探索成果 → 詳見 §11 附錄）
+
+> 2026-08-09 對 `apps/backend/src/` 的六路完整盤點（記憶/執行/安全/core/services/
+> 前端），**詳細內容統一收斂在 §11 附錄**，此處只放索引與高頻需知，避免重複維護。
+
+| 盤點項目 | 內容 | 詳見 |
+|---|---|---|
+| 各子系統健康狀態 | 🟢 活躍 24 項 / 🟡 半活待接 17 項 / 🔴 死碼孤兒 19 項 | §11.2 |
+| 必須處理的「重複/斷點」 | 10 大項（雙矩陣來源、HAM 4+ 實例、θ 空參數等） | §11.3 |
+| StateMatrix 寫入者 | `update_*` 於 agent_manager / DLI / state_matrix_api；`.values[]` 直接 mutation 於 `math_ripple_engine`（L460-475, 911-922）與 `domain_ripple`（L149, 239） | §11.3 #5 + §8 |
+| CNS 事件匯流排 | 訂閱：DLI 3 + heartbeat 3；發送 46 筆；`event_loop_system.py` 零引用 | §11.2 |
+| chat 請求旅程 | Step 5a-h → 7 → 8 → 9 → 10 完整流程 | §11.1 |
+| 註冊中心現況 | ModelBus 7 handlers / PriorityNegotiator 8 voters / LLM 9 backends | §11.2 🟢 |
+| 學習/訓練/外部接線圖 | 三層資料流完整圖 | §11.4 |
 
 ---
 
@@ -250,9 +265,11 @@ DISK ───────────────▶ MEMORY ──────�
 
 ---
 
-## 5. 接線四大關切（輸入輸出 / 狀態 / 轉譯 / 配置）
+## 5. 接線關切與契約設計（Stability Core / IO / 狀態 / 轉譯 / 配置 / 資料流 / 響應模式）
 
-所有主幹線連接都必須明確處理這四件事。以下為每項的契約設計。
+> 主幹線的連接設計包含：**§5.0 成對排程（Stability Core）**、四大關切（§5.1 輸入輸出
+> / §5.2 狀態 / §5.3 轉譯 / §5.4 配置）、§5.5 學習/訓練/外部資料流、§5.6 響應模式。
+> 所有主幹線連接都必須明確處理以下契約。
 
 ### 5.0 成對排程 / 配對狀態（Stability Core，主幹線穩定性基石）
 
@@ -306,7 +323,7 @@ backbone.io.retry(pair_id)                       # 重排 → QUEUED
 - **管理**：retry / cancel / 調整 deadline。
 - **儲存**：配對日誌以 `correlation_id` 為索引，複用 `GlobalStateStore`（新 domain
   `io_pairs`）或獨立 domain，可持久化。
-- **可觀測**：狀態滿足 §3.8.2「能查排程與處理狀態並進行管理」——排程階段
+- **可觀測**：狀態滿足「能查排程與處理狀態並進行管理」——排程階段
   （QUEUED→RUNNING）、處理階段（RUNNING→PAIRED/ERROR）全程可見。
 
 #### 5.0.4 成對性不變式（Pairing Invariant）
@@ -548,7 +565,7 @@ backbone.respond(mode="1:1" | "layered" | "stream" | "layered_stream")
 
 # 1:1  — router.generate_response()（現有主路徑）
 # layered     — StreamingPipeline 逐層 emit（每層一完整片段）
-# stream      — LLM token 流（需先接 TokenStream 到 LLM provider，§11.5 可選項）
+# stream      — LLM token 流（需先接 TokenStream 到 LLM provider，§7 步驟 C 可選項）
 # layered_stream — StreamingPipeline 層內 token 送出（現有 pipeline 已具雛形）
 ```
 
@@ -566,7 +583,7 @@ backbone.respond(mode="1:1" | "layered" | "stream" | "layered_stream")
 | 層式組合 | `ResponseComposer` + `FragmentComposer` + `NeuroBlender`（`composer.py`） | 🔧 註冊為「層式組合器」 |
 | 層式 pipeline | `StreamingPipeline`（`pipeline.py`） | 🔧 註冊為「層式執行器」 |
 | 流式基礎 | `TokenStream` + `StreamSynthesizer` + `TokenProducer` 系列（`ai/streaming/*`） | ✅ 直接採用 |
-| 流式接 LLM | 無 | 🆕 主聊天接 stream（§11.5 可選項） |
+| 流式接 LLM | 無 | 🆕 主聊天接 stream（§7 步驟 C 可選項） |
 
 > 結論：專案**已有層式（StreamingPipeline / composer）與 1:1 傳統對話**；流式
 > `TokenStream` 基礎已在但主聊天未接。主幹線只做「模式選取器 + 統一信封 + 成對追蹤」，
@@ -613,7 +630,8 @@ apps/backend/src/core/backbone/
 ### 步驟 A — 建立主幹線骨架（不影響現有行為）
 1. 新建 `core/backbone/`（§6），實作註冊表 + 信封 + 掛載機制。
 2. 註冊現有單例：`StateMatrix4D`、`SharedLatentSpace`、`DictionaryLayer`、
-   `VectorDictionary`、CNS bus、`magic_numbers`。
+   `VectorDictionary`、CNS bus（`GlobalStateStore`）、`magic_numbers`、
+   `service_registry`、`get_lifecycle()`。
 3. **實作 `pairs.py`（§5.0 Stability Core）**：合併 `WaitingScheduler` slot 排程，
    新增 `IOPair`/`PairScheduler`/`PairState`（submit/resolve/cancel/retry +
    `status/pending/orphans` 查詢），先獨立可用、不改既有呼叫。
@@ -630,18 +648,32 @@ apps/backend/src/core/backbone/
    使既有呼叫獲得成對追蹤與 ORPHAN 診斷。
 5. **學習協調器**：把 `chat_service._process_continuous_learning()` /
    `_process_garden_learning()` 改為 CNS 事件驅動。
-6. 修 16 個失敗測試（`AutonomousLifeCycle` API drift 等）。
-7. 每個遷移一個 commit，跑對應測試。
+6. **響應模式選取器（§5.6）**：`response.py` 包 `router.generate_response`（1:1）+
+   `StreamingPipeline`（layered）+ `TokenStream`（stream），請求層級選模式、不中途切換。
+7. **記憶統一（§11.3 #2）**：`backbone.memory("ham")` 取代 4+ 個 `HAMMemoryManager()`
+   實例（router/chat_service/drive/DLI）。
+8. **修 3 個已知 bug（§11.3）**：`dynamic_threshold_manager.py:455` import 路徑、
+   HAM 缺 3 方法（`get_recent_memories`/`retrieve_emotional_memories`/`query_core_memory`）、
+   `DLI.memory_bridge = None`。
+9. **`ThetaRouter` 注入**（§11.3 #3）：state_adapter + port_registry，解鎖 θ 進 prompt。
+10. **CNS domain 訂閱**（§11.3 #4）：`backbone.state.subscribe("core")` 取代
+    composer/router 的 `update_state`。
+11. 修 16 個失敗測試（`AutonomousLifeCycle` API drift 等）。
+12. 每個遷移一個 commit，跑對應測試。
 
-### 步驟 C — 自由矩陣掛載 + 字典統一介面
+### 步驟 C — 自由矩陣掛載 + 字典統一介面 + 橫切掛載
 1. `SharedLatentSpace` 補 `save_weights` + `Mountable` 包裝。
 2. 定義 `MultimodalDictionary` 協定，ED3N/GARDEN 實作之。
 3. **訓練工作流**：`ED3NTrainer` / `FullTrainingPipeline` 接 `Mountable` 掛載/釋放。
 4. 音頻/圖像/物件/空間字典以協定為基礎逐步加入。
+5. **安全層掛載（§11.3 #10）**：`setup_middleware()` 掛 AuthMiddleware + ContentFilter
+   （下層入口）。
+6. **主聊天接 stream（§5.6.4）**：LLM provider 接 `TokenStream`，`mode="stream"`
+   才走——**可選**，不阻塞主線。
 
 ### 里程碑判定
 - 步驟 A 完成 ⟺ `pytest tests/` 全綠（現有 5,468 pass 不倒退）
-- 步驟 B 完成 ⟺ 16 個失敗測試歸零 + `call_external`/`learn` 有測試覆蓋
+- 步驟 B 完成 ⟺ 16 個失敗測試歸零 + `call_external`/`learn`/`backbone.io` 有測試覆蓋
 - 步驟 C 完成 ⟺ `backbone.mount/unmount` 有測試覆蓋，字典統一協定有 2+ 實作
 
 ---
@@ -667,6 +699,17 @@ apps/backend/src/core/backbone/
 | 無成對追蹤 | `ExecutionGate` 每次 new、工具呼叫無 pair 追蹤 | 包 `backbone.io.submit/resolve`（§5.0）|
 | 無成對追蹤 | CNS `emit_event` 不追蹤 subscriber 處理結果（count=0 靜默）| 事件→隱式配對，0 訂閱者→ORPHAN |
 | 無成對追蹤 | LLM/外部呼叫失敗 `except: pass` 靜默 | 未配對即異常狀態（§5.0.5）|
+| 死碼 | `core/engine/theta_router.py` + `port_channel.py` + `AxisOutputManager`（θ 三件套） | 接線或刪除；`prompt_builder.py:49` `ThetaRouter()` 空參數 → θ 永不進 prompt |
+| 孤兒 | `fragmenta/` 3 檔（orchestrator/engine/creativity） | 接線或刪除；空 `tests/fragmenta/` 一併處理 |
+| 孤兒 | `security/` 4 檔（audit_logger/content_filter/permission_control/safety_audit） | 掛載到主幹線（權限/過濾/審計）或移出 |
+| 孤兒 | `monitoring/{app_monitor,telemetry_monitor}` | 掛載到主幹線（telemetry）或刪除 |
+| 孤兒 | `data/collection_module.py` | 掛載或刪除 |
+| 孤兒 | `utils/{llm_tokenizer,uri_encoder}` | 掛載或刪除 |
+| 半接線 | `shared/key_manager.py` `UnifiedKeyManager`（預期注入但無人呼叫） | 接入主幹線或刪除注入點 |
+| 繞過 API | `ai/memory/math_ripple_engine.py` L460-475、L911-922 直接改 `.values[]` | 改經主幹線 `write_axis` |
+| 繞過 API | `ai/memory/domain_ripple.py` L149、L239 直接改 `.values[]` | 改經主幹線 `write_axis` |
+| 缺寫入者 | θ/zeta 維度無 production writer | 補 `theta_router` 接線或新增寫入者 |
+| 引用錯位 | §11.2 🔴 死碼/孤兒完整清單（19 項） | 見 §11.2，勿重複維護 |
 
 ---
 
@@ -856,22 +899,11 @@ POST /chat/unified (或 WS chat_message)
 └───────────────┴──────────────────────────────────────────────────┘
 ```
 
-### 11.5 盤點後新增的遷移項目（追加到 §7 步驟）
+### 11.5 遷移項目（已併入 §7 步驟）
 
-| 步驟 | 追加項目 |
-|---|---|
-| A | 建立 `Backbone` 時一併註冊：`GlobalStateStore`（CNS）、`service_registry`、`get_lifecycle()` |
-| A | 記憶統一：`backbone.memory("ham")` 取代 4+ 個 `HAMMemoryManager()` 實例 |
-| A | **成對排程核心（§5.0）**：`pairs.py` 合併 `WaitingScheduler` + `IOPair`/`PairScheduler`/`PairState` |
-| B | 修 3 個已知 bug：`dynamic_threshold_manager:455` import、HAM 缺 3 方法、`DLI.memory_bridge=None` |
-| B | `ThetaRouter` 注入 state_adapter + port_registry（解鎖 θ 狀態進 prompt） |
-| B | CNS domain 訂閱：`backbone.state.subscribe("core")` 取代 composer/router 的 update_state |
-| B | **成對追蹤套用**：`call_external`/CNS `emit_event`/`ExecutionGate` 工具呼叫包 `backbone.io`（§5.0.5）|
-| B | **響應模式選取器（§5.6）**：`response.py` 包 `router.generate_response`（1:1）+ `StreamingPipeline`（layered）+ `TokenStream`（stream），請求層級選模式、不中途切換 |
-| C | 安全層掛載：`setup_middleware()` 掛 AuthMiddleware + ContentFilter（下層入口） |
-| C | `StreamSynthesizer` 啟用（LLM 流式）——**可選**，不阻塞主線 |
-| C | **主聊天接 stream（§5.6.4）**：LLM provider 接 `TokenStream`，`mode="stream"` 才走——**可選** |
-| 清理 | 死碼移除：`game/`、`fragmenta/`、`models/api_models.py`、`mcp/connector.py`、`security/`（或重新掛載）、`core/event_loop_system.py`、4 個幽靈 stub |
+> 盤點後新增的遷移項目**已整合進 §7 步驟 A/B/C**（記憶統一、修 3 bug、ThetaRouter
+> 注入、CNS domain 訂閱、成對排程、響應模式選取器、安全層掛載、主聊天接 stream、
+> 死碼移除）。此處不再重複，避免雙源維護；執行時以 §7 為唯一清單。
 
 ### 11.6 盤點涵蓋範圍聲明
 
@@ -891,3 +923,29 @@ metacognition/metamorphosis/desktop/hardware/clock/feedback）、`services/`
 
 > **完整性結論**：核心主幹線所需元件（矩陣/軸/自由矩陣/字典/模組/學習/訓練/外部閘道/
 > 記憶/上下文/CNS/WS）**全部已盤點**。設計可直接進入 §7 步驟 A 實作。
+
+### 11.7 盤點覆蓋確認（動手前檢查清單）
+
+> 六路探索已覆蓋以下範圍，確認無遺漏後才進入 §7 步驟 A：
+
+- [x] `apps/backend/src/ai/`（231 檔：ed3n/garden/memory/meta/context/agents/alignment/
+      multimodal/lifecycle/response/streaming）
+- [x] `apps/backend/src/core/`（life/bio/engine/state/security/perception/autonomous/
+      tracing/allocation/card/i18n/plugin/ripple/influence/maturity/knowledge/evolution/
+      ethics/metacognition/metamorphosis/desktop/hardware/clock/feedback/hsp/system）
+- [x] `apps/backend/src/services/`（chat/llm/multimodal/vision/audio/document/weather/
+      atlassian/handlers/websocket/api_models）
+- [x] `apps/backend/src/api/`（routes 全 + v1/endpoints + lifespan + router）
+- [x] `apps/backend/src/{security,shared,mcp,integrations,monitoring,models,utils,data,
+      fragmenta,game,cli,stubs}`
+- [x] `apps/backend/tests/` + `tests/`（測試基線：5,468 pass 不倒退，見 §7 里程碑）
+- [x] `apps/{desktop-app,web-live2d-viewer,web-dashboard,pixel-angela,gemini-os-bridge,
+      game-rpg}`
+- [x] `packages/{shared-js,cli,biology-core}` + 根目錄 scripts/configs
+
+**刻意排除的獨立子系統**（非遺漏，不影響主幹線接線設計）：
+- `core/hardware/`（硬體調度，獨立橫切層，見 §3.1）
+- `apps/pixel-angela/`、`apps/gemini-os-bridge/`（獨立微服務/desktop 工具）
+- `apps/game-rpg/`（獨立遊戲，僅共用 `LanguageExtractor`）
+- `core/card/`（卡片整合計畫進行中，有獨立 `ANGELA_CARD_INTEGRATION_PLAN.md`）
+- `core/hsp/` 內部細節、`core/system/`、`core/config/` 等基礎設施（見 §11.6 未涵蓋）
