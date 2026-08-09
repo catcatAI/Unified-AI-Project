@@ -83,6 +83,10 @@ class Backbone:
 
         self.theta = ThetaBridge(matrix_provider=self.primary_matrix)
 
+        from core.backbone.subscriptions import CNSDomainSync
+
+        self.state_sync = CNSDomainSync(state=self.state, matrix=None)
+
         self._io_pairs_bound = False
 
         self.register_default_translators()
@@ -99,6 +103,8 @@ class Backbone:
             axis_registry=self.registries.axes,
         )
         self.io.state = self.state
+        self.state_sync.bind_state(self.state)
+        self.state_sync.bind_matrix(self.primary_matrix())
         if not self._io_pairs_bound:
             try:
                 state_store.update_state("io_pairs", {}, notify=False)

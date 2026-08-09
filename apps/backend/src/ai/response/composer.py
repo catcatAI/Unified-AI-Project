@@ -761,9 +761,9 @@ class NeuroVocabulary:
         self.decay_confidences()
         serialized = self.serialize_mappings()
         try:
-            from core.system.state_store.global_store import state_store
+            from core.backbone import get_backbone
 
-            state_store.update_state("neuro_vocabulary", {"mappings": serialized})
+            get_backbone().state.update("neuro_vocabulary", {"mappings": serialized})
         except Exception as e:
             # broad except acceptable: state store sync is non-critical, graceful degradation
             logger.warning(f"[NeuroVocabulary] sync_to_state_store failed: {e}", exc_info=True)
@@ -771,9 +771,9 @@ class NeuroVocabulary:
     def restore_from_state_store(self) -> None:
         """從 GlobalStateStore 恢復數值映射"""
         try:
-            from core.system.state_store.global_store import state_store
+            from core.backbone import get_backbone
 
-            data = state_store.get_state("neuro_vocabulary")
+            data = get_backbone().state.get("neuro_vocabulary")
             mappings = data.get("mappings") if data else None
             if mappings:
                 self.load_mappings_from_config(mappings)

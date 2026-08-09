@@ -99,6 +99,18 @@ class BackboneState:
         except Exception:
             return False
 
+    def unsubscribe(self, domain: str, callback: Callable = None) -> bool:
+        """取消訂閱 domain 變更。
+
+        依賴下層 GlobalStateStore 的 unsubscribe 支援；不支援則回傳 False。
+        """
+        if self._store is None or not hasattr(self._store, "unsubscribe"):
+            return False
+        try:
+            return bool(self._store.unsubscribe(domain, callback))
+        except Exception:
+            return False
+
     def emit_event(self, event_type: str, data: Dict[str, Any]) -> bool:
         """發送 CNS 事件。"""
         if self._store is None:
@@ -145,7 +157,7 @@ class BackboneState:
         update_method = getattr(m, f"update_{axis}", None)
         if callable(update_method):
             try:
-                update_method({key: value})
+                update_method(**{key: value})
                 return True
             except Exception:
                 return False
@@ -161,7 +173,7 @@ class BackboneState:
         update_method = getattr(m, f"update_{axis}", None)
         if callable(update_method):
             try:
-                update_method(data)
+                update_method(**data)
                 return True
             except Exception:
                 return False
