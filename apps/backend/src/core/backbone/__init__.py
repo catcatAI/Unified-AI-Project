@@ -31,6 +31,7 @@ from core.backbone.contracts import (
     PairStatus,
     TranslationRule,
 )
+from core.backbone.external import ExternalBackend, ExternalGateway
 from core.backbone.pairs import (
     PairConflictError,
     PairScheduler,
@@ -43,6 +44,8 @@ __all__ = [
     "Backbone",
     "Envelope",
     "EnvelopeKind",
+    "ExternalBackend",
+    "ExternalGateway",
     "IOPair",
     "Mountable",
     "PairConflictError",

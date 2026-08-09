@@ -63,6 +63,10 @@ class Backbone:
         self.translator = BackboneTranslator(self.registries.translators)
         self.config = BackboneConfig()
 
+        from core.backbone.external import ExternalGateway
+
+        self.external = ExternalGateway(pair_scheduler=self.pairs, io=self.io)
+
         self._io_pairs_bound = False
 
         self.register_default_translators()
@@ -123,6 +127,40 @@ class Backbone:
 
     def get_dictionary(self, key: str, default: Any = None) -> Any:
         return self.registries.dictionaries.get(key, default)
+
+    # ------------------------------------------------------------------
+    # 外部閘道（§5.5.1 步驟 B3/B4）
+    # ------------------------------------------------------------------
+    def register_external(self, name: str, provider: Any) -> None:
+        """註冊外部服務後端（包裝為 ExternalBackend）。"""
+        self.external.register(name, provider)
+
+    def register_external_backend(self, name: str, backend: Any) -> None:
+        """註冊已包裝的 ExternalBackend。"""
+        self.external.register_backend(name, backend)
+
+    def unregister_external(self, name: str) -> bool:
+        return self.external.unregister(name)
+
+    def external_names(self) -> list:
+        return self.external.names()
+
+    async def call_external(
+        self,
+        name: str,
+        method: str,
+        timeout: float = 8.0,
+        retries: Optional[int] = None,
+        **kwargs: Any,
+    ) -> Any:
+        """呼叫外部服務（§5.5.1）— 內建重試/熔斷/rate-limit + 成對追蹤。
+
+        依步驟 B4，`call_external` 內部經 `backbone.io.submit/resolve`，
+        每次呼叫獲得成對追蹤與 ORPHAN 診斷。
+        """
+        return await self.external.call_external(
+            name, method, timeout=timeout, retries=retries, **kwargs
+        )
 
     # ------------------------------------------------------------------
     # 掛載 / 釋放（§4.2）
