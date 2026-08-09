@@ -364,7 +364,13 @@ class AngelaLLMService:
             return
 
         try:
-            self.memory_manager = HAMMemoryManager()
+            try:
+                from core.backbone import get_backbone
+
+                self.memory_manager = get_backbone().memory("ham")
+            except Exception as e:
+                logger.warning("Backbone memory unified lookup failed: %s", e, exc_info=True)
+                self.memory_manager = HAMMemoryManager()
             self.enable_memory_enhancement = True
 
             try:

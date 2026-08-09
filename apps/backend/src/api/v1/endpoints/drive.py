@@ -369,9 +369,9 @@ async def sync_files(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_
 
             if store_memory:
                 try:
-                    from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+                    from core.backbone import get_backbone
 
-                    ham = HAMMemoryManager()
+                    ham = get_backbone().memory("ham")
                     content = parser.parse_document(str(dest_path))
                     ham.store_conversation(
                         {

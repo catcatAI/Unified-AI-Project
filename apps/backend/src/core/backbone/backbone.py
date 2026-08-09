@@ -75,6 +75,10 @@ class Backbone:
 
         self.response = ResponseModeSelector(pair_scheduler=self.pairs)
 
+        from core.backbone.memory import MemoryRegistry
+
+        self.memories = MemoryRegistry()
+
         self._io_pairs_bound = False
 
         self.register_default_translators()
@@ -293,6 +297,20 @@ class Backbone:
         委派給 `self.response`（ResponseModeSelector）。
         """
         return await self.response.respond(user_message, context=context, mode=mode, **kwargs)
+
+    # ------------------------------------------------------------------
+    # 記憶統一（§11.3 #2 memory.py 登錄器）
+    # ------------------------------------------------------------------
+    def memory(self, name: str) -> Any:
+        """取得統一記憶後端單例（`backbone.memory("ham")`）。
+
+        取代各元件自行 `HAMMemoryManager()` 的分片實例。
+        """
+        return self.memories.get(name)
+
+    def register_memory(self, name: str, backend: Any) -> bool:
+        """註冊記憶後端（類別/實例/factory）。"""
+        return self.memories.register(name, backend)
 
     def register_training(self, name: str, workflow: Callable) -> None:
         """註冊上層訓練工作流（掛載/釋放，§6 training.py）。"""

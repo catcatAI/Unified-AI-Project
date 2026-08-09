@@ -153,9 +153,9 @@ class ChatService:
             logger.warning("VectorStore init skipped: %s", e)
         # Initialize HAM memory for template-based retrieval (Phase 5.3)
         try:
-            from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+            from core.backbone import get_backbone
 
-            self._ham_memory = HAMMemoryManager()
+            self._ham_memory = get_backbone().memory("ham")
             stats = self._ham_memory.get_stats()
             logger.info(
                 "HAM memory initialized: %d templates, %d conversations",
