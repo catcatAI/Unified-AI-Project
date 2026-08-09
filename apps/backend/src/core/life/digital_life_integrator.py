@@ -405,6 +405,18 @@ class DigitalLifeIntegrator:
             # broad except acceptable: executor degradation is non-critical, graceful degradation
             logger.warning(f"  [Sensory] Executor degraded: {e}", exc_info=True)
 
+        # 2.5 Memory-Neuroplasticity Bridge (§11.3 #6: 修 DLI.memory_bridge = None)
+        # 建立並啟動 memory_bridge，讓 consolidation trigger 真正生效（GR/RESTING/DORMANT）。
+        try:
+            self.memory_bridge = MemoryNeuroplasticityBridge()
+            await self.memory_bridge.initialize()
+            logger.info("  [Foundation] Memory-neuroplasticity bridge online.")
+        except Exception as e:
+            # broad except acceptable: memory bridge is optional, graceful degradation
+            logger.warning(
+                f"  [Foundation] Memory-neuroplasticity bridge degraded: {e}", exc_info=True
+            )
+
         # 3. High-Level Cognition (Optional/Graceful)
         try:
             from ai.memory.ham_memory.ham_manager import HAMMemoryManager
@@ -664,7 +676,9 @@ class DigitalLifeIntegrator:
             )
         except Exception:
             # broad except acceptable: spatial math parse errors must not break maturity calc
-            logger.debug("spatial math parse failed for maturity calc, using fallback", exc_info=True)
+            logger.debug(
+                "spatial math parse failed for maturity calc, using fallback", exc_info=True
+            )
             maturity = (alpha_stability + beta_stability + gamma_stability + delta_stability) / 4
 
         return max(0.0, min(1.0, maturity))
@@ -745,7 +759,9 @@ class DigitalLifeIntegrator:
             try:
                 await self.user_monitor.start()
             except Exception as e:
-                logger.warning(f"[DigitalLife] AWAKENING: User monitor start skipped: {e}", exc_info=True)
+                logger.warning(
+                    f"[DigitalLife] AWAKENING: User monitor start skipped: {e}", exc_info=True
+                )
             # 生物系統覺醒
             await self.biological_integrator.process_relaxation_event(intensity=0.3)
             logger.info("🔆 [DigitalLife] AWAKENING: Systems awakening — exploration beginning.")
@@ -811,7 +827,9 @@ class DigitalLifeIntegrator:
                             f"💤 [DigitalLife] DORMANT: {len(drifted_params)} drifted params identified."
                         )
                 except Exception as e:
-                    logger.warning(f"[DigitalLife] DORMANT: Param check skipped: {e}", exc_info=True)
+                    logger.warning(
+                        f"[DigitalLife] DORMANT: Param check skipped: {e}", exc_info=True
+                    )
             logger.info("💤 [DigitalLife] DORMANT: Deep sleep — resource reclamation active.")
         else:
             logger.warning(f"[DigitalLife] Unknown state: {state}")
@@ -1012,7 +1030,7 @@ class DigitalLifeIntegrator:
         if significance >= 0.7:
             self._significant_events.append(event)
         if len(self._significant_events) > self._MAX_SIG_EVENTS:
-            self._significant_events = self._significant_events[-self._MAX_SIG_EVENTS:]
+            self._significant_events = self._significant_events[-self._MAX_SIG_EVENTS :]
 
     def get_awareness_injection(self) -> str:
         """
@@ -1039,7 +1057,7 @@ class DigitalLifeIntegrator:
         """Internal method to record an event"""
         self.life_events.append(event)
         if len(self.life_events) > self._MAX_LIFE_EVENTS:
-            self.life_events = self.life_events[-self._MAX_LIFE_EVENTS:]
+            self.life_events = self.life_events[-self._MAX_LIFE_EVENTS :]
 
         # Notify callbacks
         for callback in self._event_callbacks:

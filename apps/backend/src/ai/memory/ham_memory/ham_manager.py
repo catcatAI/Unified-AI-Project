@@ -8,7 +8,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from utils.text_utils import bigram_jaccard as _bigram_jaccard_util
 from utils.text_utils import char_bigrams as _char_bigrams_util
@@ -288,3 +288,84 @@ class HAMMemoryManager:
             "template_count": len(self._data["templates"]),
             "conversation_count": len(self._data["conversations"]),
         }
+
+    # ------------------------------------------------------------------
+    # §11.3 #8 — 補齊 LLMDecisionLoop / memory_integration_loop 需要的 3 方法
+    # （原先缺失 → hasattr 防護跳過，記憶上下文/情感記憶拿不到）
+    # ------------------------------------------------------------------
+    async def get_recent_memories(self, limit: int = 5) -> List[str]:
+        """回傳最近 conversations 的內容字串（最新優先）。"""
+        conversations = self._data.get("conversations", [])
+        recent = conversations[-limit:] if limit else conversations
+        return [str(c.get("content", "")) for c in recent if c.get("content")]
+
+    async def retrieve_emotional_memories(
+        self,
+        emotion: str = "",
+        min_intensity: float = 0.0,
+        limit: int = 3,
+    ) -> List[Any]:
+        """依 metadata.emotion / metadata.emotion_intensity 篩選情感記憶。
+
+        回傳含 `.content` 屬性的輕量物件（與既有 HAMRecallResult 相容）。
+        """
+        if not emotion:
+            return []
+        conversations = self._data.get("conversations", [])
+        results: List[Any] = []
+        for c in reversed(conversations):
+            meta = c.get("metadata") or {}
+            mem_emotion = str(meta.get("emotion", "")).lower()
+            mem_intensity = float(meta.get("emotion_intensity", 0.0) or 0.0)
+            if mem_emotion == str(emotion).lower() and mem_intensity >= min_intensity:
+                results.append(self._as_memory_object(c))
+                if len(results) >= limit:
+                    break
+        return results
+
+    async def query_core_memory(
+        self,
+        keywords: Optional[List[str]] = None,
+        data_type_filter: Optional[str] = None,
+        date_range: Optional[Tuple] = None,
+        min_importance: float = 0.0,
+        limit: int = 10,
+    ) -> List[Any]:
+        """依 keywords（任一命中）與 type/metadata 篩選核心記憶。
+
+        回傳含 `.content` 屬性的輕量物件。
+        """
+        conversations = self._data.get("conversations", [])
+        kws = [k.lower() for k in (keywords or []) if k]
+        results: List[Any] = []
+        for c in reversed(conversations):
+            content = str(c.get("content", ""))
+            if data_type_filter:
+                ctype = str(c.get("type", ""))
+                if ctype != data_type_filter:
+                    continue
+            if kws and not any(kw in content.lower() for kw in kws):
+                continue
+            importance = float((c.get("metadata") or {}).get("importance", 0.0) or 0.0)
+            if importance < min_importance:
+                continue
+            results.append(self._as_memory_object(c))
+            if len(results) >= limit:
+                break
+        return results
+
+    @staticmethod
+    def _as_memory_object(conversation: Dict[str, Any]) -> Any:
+        """包成含 `.content` 的輕量物件（相容 HAMRecallResult 的取用方）。"""
+
+        class _Mem:
+            def __init__(self, content, memory_id="", metadata=None):
+                self.content = content
+                self.memory_id = memory_id
+                self.metadata = metadata or {}
+
+        return _Mem(
+            str(conversation.get("content", "")),
+            memory_id=str(conversation.get("id", "")),
+            metadata=conversation.get("metadata") or {},
+        )

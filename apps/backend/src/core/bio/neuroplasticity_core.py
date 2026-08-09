@@ -303,6 +303,26 @@ class NeuroplasticitySystem:
         self._running = True
         self._update_task = asyncio.create_task(self._update_loop())
 
+    def trigger_consolidation(self) -> int:
+        """Trigger immediate memory consolidation for queued traces.
+
+        Consolidates all pending memory traces in the queue, boosting their
+        consolidation strength and marking them consolidated. Returns the
+        number of traces processed. Safe to call anytime (idempotent when the
+        queue is empty).
+        """
+        processed = 0
+        while self.consolidation_queue:
+            memory_id = self.consolidation_queue.pop(0)
+            trace = self.memory_traces.get(memory_id)
+            if trace is None:
+                continue
+            access_factor = min(1.0, trace.access_count / 10.0)
+            trace.consolidation_strength = 0.9 + (0.1 * access_factor)
+            trace.is_consolidated = True
+            processed += 1
+        return processed
+
     async def shutdown(self) -> None:
         """Shutdown the system"""
         self._running = False

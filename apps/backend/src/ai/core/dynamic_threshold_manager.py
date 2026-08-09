@@ -452,7 +452,7 @@ class DynamicThresholdManager:
     def _initialize_feedback_aggregator(self) -> None:
         """初始化反馈聚合器"""
         try:
-            from services.llm.llm_decision_loop import LLMDecisionLoop
+            from ai.lifecycle.llm_decision_loop import LLMDecisionLoop
 
             self.feedback_aggregator = LLMDecisionLoop()
             logger.debug("Feedback aggregator initialized")
