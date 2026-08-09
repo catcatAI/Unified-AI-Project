@@ -50,7 +50,7 @@ class TestBackboneTranslator:
     def test_names(self, translator):
         translator.register("upper", _UpperRule())
         translator.register_func("lower", lambda *a: False, lambda *a, **k: None)
-        assert set(translator.names()) == {"upper", "lower"}
+        assert {"upper", "lower"}.issubset(set(translator.names()))
 
 
 class TestBackboneTranslateIntegration:

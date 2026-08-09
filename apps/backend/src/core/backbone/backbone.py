@@ -65,6 +65,8 @@ class Backbone:
 
         self._io_pairs_bound = False
 
+        self.register_default_translators()
+
     # ==================================================================
     # 單例註冊（步驟 A #2）
     # ==================================================================
@@ -155,6 +157,19 @@ class Backbone:
     # ------------------------------------------------------------------
     def register_translator(self, name: str, rule: Any) -> None:
         self.translator.register(name, rule)
+
+    def register_default_translators(self) -> None:
+        """註冊內建轉譯器（§5.3 步驟 B2）。
+
+        惰性：`core/backbone/translators.py` 的 `register_default_translators`
+        僅註冊規則（neural_bridge / semantic_key_mapper），不實例化重元件。
+        """
+        try:
+            from core.backbone.translators import register_default_translators as _register
+
+            _register(self)
+        except Exception as exc:  # pragma: no cover - 轉譯器註冊永不中斷主幹線
+            logger.warning("failed to register default translators: %s", exc)
 
     def translate(
         self, source: str, target: str, data: Any, direction: str = "down", **kwargs: Any
