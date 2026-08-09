@@ -34,6 +34,26 @@ router = APIRouter()
 _background_tasks: set = set()
 
 
+def _backbone_module(module_key: str, factory: Any) -> Any:
+    """Resolve a shared module via the backbone registry, creating on first use.
+
+    Step B1: `_get_*` factories now delegate caching to `get_backbone()` so the
+    backbone registry is the single source of truth for shared singletons.
+    Falls back to `factory()` (the original creation logic) on first use and
+    registers the result back into the backbone registry.
+    """
+    from core.backbone import get_backbone
+
+    bb = get_backbone()
+    cached = bb.get_module(module_key)
+    if cached is not None:
+        return cached
+    instance = factory()
+    if instance is not None:
+        bb.register_module(module_key, instance)
+    return instance
+
+
 def _spawn_background_task(coro, description: str = "") -> asyncio.Task:
     """Create a tracked background task with error logging."""
     task = asyncio.create_task(coro)
@@ -116,63 +136,45 @@ sessions = TTLSessionManager()
 # Latest pipeline response, captured so _handle_chat_request can persist the turn.
 _latest_response: Dict[str, Any] = {}
 
-_ed3n_engine = None
-
-
 def _get_ed3n_engine():
-    global _ed3n_engine
-    if _ed3n_engine is None:
+    def _factory():
         from ai.ed3n.ed3n_engine import ED3NEngine
 
-        _ed3n_engine = ED3NEngine.get_shared()
-    return _ed3n_engine
+        return ED3NEngine.get_shared()
 
-
-_bio_integrator = None
+    return _backbone_module("chat.ed3n_engine", _factory)
 
 
 def _get_bio_integrator():
-    global _bio_integrator
-    if _bio_integrator is None:
+    def _factory():
         from core.bio.biological_integrator import BiologicalIntegrator
 
-        _bio_integrator = BiologicalIntegrator()
-    return _bio_integrator
+        return BiologicalIntegrator()
 
-
-_vision_service = None
+    return _backbone_module("chat.bio_integrator", _factory)
 
 
 def _get_vision_service():
-    global _vision_service
-    if _vision_service is None:
+    def _factory():
         try:
             from api.lifespan import get_vision_service
 
-            _vision_service = get_vision_service()
+            return get_vision_service()
         except ImportError:
             from services.vision_service import VisionService
 
-            _vision_service = VisionService()
-    return _vision_service
+            return VisionService()
 
-
-_dialogue_ctx_mgr = None
+    return _backbone_module("chat.vision_service", _factory)
 
 
 def _get_dialogue_ctx():
-    global _dialogue_ctx_mgr
-    if _dialogue_ctx_mgr is None:
+    def _factory():
         from ai.context.dialogue_context import DialogueContextManager
 
-        _dialogue_ctx_mgr = DialogueContextManager()
-    return _dialogue_ctx_mgr
+        return DialogueContextManager()
 
-
-_emotion_analyzer = None
-_emotion_system = None
-_lifecycle_fallback = None
-_modality_gateway = None
+    return _backbone_module("chat.dialogue_ctx", _factory)
 
 
 def _get_modality_gateway():
@@ -182,35 +184,37 @@ def _get_modality_gateway():
     by _health_check_loop() with live arousal + introspection data.
     Falls back to a standalone singleton when DLI is unavailable.
     """
+
+    def _factory():
+        from core.life.digital_life_integrator import ModalityGateway
+
+        return ModalityGateway()
+
     try:
         dli = get_digital_life()
         if dli and hasattr(dli, "modality_gateway"):
             return dli.modality_gateway
     except Exception:
         logger.warning("_get_modality_gateway: DLI unavailable, using standalone", exc_info=True)
-    global _modality_gateway
-    if _modality_gateway is None:
-        from core.life.digital_life_integrator import ModalityGateway
-
-        _modality_gateway = ModalityGateway()
-    return _modality_gateway
+    return _backbone_module("chat.modality_gateway", _factory)
 
 
 def _get_lifecycle():
     """Get the shared AutonomousLifeCycle singleton from lifespan."""
+
+    def _factory():
+        from core.life.autonomous_life_cycle import AutonomousLifeCycle
+
+        return AutonomousLifeCycle()
+
     try:
         from api.lifespan import get_lifecycle as _lifespan_get_lifecycle
 
         return _lifespan_get_lifecycle()
     except Exception:
         logger.warning("_get_lifecycle: lifespan unavailable, using fallback", exc_info=True)
-    # Fallback: create own singleton if lifespan not available
-    global _lifecycle_fallback
-    if _lifecycle_fallback is None:
-        from core.life.autonomous_life_cycle import AutonomousLifeCycle
-
-        _lifecycle_fallback = AutonomousLifeCycle()
-    return _lifecycle_fallback
+    # Fallback: backbone-cached singleton if lifespan not available
+    return _backbone_module("chat.lifecycle", _factory)
 
 
 def _get_intent_manager():
@@ -228,40 +232,38 @@ def _get_intent_manager():
 
 
 def _get_emotion_analyzer():
-    global _emotion_analyzer
-    if _emotion_analyzer is None:
+    def _factory():
         from services.llm.emotion_analyzer import EmotionAnalyzer
 
-        _emotion_analyzer = EmotionAnalyzer()
-    return _emotion_analyzer
+        return EmotionAnalyzer()
+
+    return _backbone_module("chat.emotion_analyzer", _factory)
 
 
 def _get_emotion_system():
-    global _emotion_system
-    if _emotion_system is None:
+    def _factory():
         from ai.alignment.emotion_system import EmotionSystem
 
-        _emotion_system = EmotionSystem()
-    return _emotion_system
+        return EmotionSystem()
 
-
-_state_matrix = None
+    return _backbone_module("chat.emotion_system", _factory)
 
 
 def _get_state_matrix():
     """Get live state matrix from DLI when available, fallback to standalone."""
+
+    def _factory():
+        from core.engine.state_matrix import StateMatrix4D
+
+        return StateMatrix4D()
+
     try:
         dli = get_digital_life()
         if dli and hasattr(dli, "state_matrix"):
             return dli.state_matrix
     except Exception:
         logger.warning("_get_state_matrix: DLI unavailable, using standalone", exc_info=True)
-    global _state_matrix
-    if _state_matrix is None:
-        from core.engine.state_matrix import StateMatrix4D
-
-        _state_matrix = StateMatrix4D()
-    return _state_matrix
+    return _backbone_module("chat.state_matrix", _factory)
 
 
 # Behavioral adjustments mapped by detected emotion
