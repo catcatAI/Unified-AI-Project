@@ -41,7 +41,20 @@ def _get_autonomous_lifecycle():
 
 
 def _get_theta_router():
-    """Return a cached ThetaRouter singleton."""
+    """Return a cached ThetaRouter singleton.
+
+    Priority 1: backbone 統一注入（§11.3 #3）— state_adapter 綁主幹線
+    StateMatrix4D + PortRegistry，解鎖 θ 值進 prompt。
+    Priority 2: fallback 到無參 ThetaRouter（θ 值為空但 API 相容）。
+    """
+    try:
+        from core.backbone import get_backbone
+
+        return get_backbone().theta.router()
+    except Exception:
+        logger.warning(
+            "_get_theta_router: backbone unavailable, using inline fallback", exc_info=True
+        )
     global _theta_router
     if _theta_router is None:
         from core.engine.theta_router import ThetaRouter
@@ -282,7 +295,10 @@ def get_autonomous_decisions() -> str:
 def get_theta_state() -> str:
     """Get theta router state for prompt context."""
     global _theta_state_cache, _theta_state_cache_time
-    if _theta_state_cache is not None and (time.time() - _theta_state_cache_time) < _STATE_CACHE_TTL:
+    if (
+        _theta_state_cache is not None
+        and (time.time() - _theta_state_cache_time) < _STATE_CACHE_TTL
+    ):
         return _theta_state_cache
     try:
         router = _get_theta_router()

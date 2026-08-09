@@ -79,6 +79,10 @@ class Backbone:
 
         self.memories = MemoryRegistry()
 
+        from core.backbone.theta import ThetaBridge
+
+        self.theta = ThetaBridge(matrix_provider=self.primary_matrix)
+
         self._io_pairs_bound = False
 
         self.register_default_translators()
