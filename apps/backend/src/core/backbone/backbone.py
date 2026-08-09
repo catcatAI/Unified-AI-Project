@@ -67,6 +67,10 @@ class Backbone:
 
         self.external = ExternalGateway(pair_scheduler=self.pairs, io=self.io)
 
+        from core.backbone.learning import LearningCoordinator
+
+        self.learning = LearningCoordinator(pair_scheduler=self.pairs)
+
         self._io_pairs_bound = False
 
         self.register_default_translators()
@@ -254,8 +258,21 @@ class Backbone:
     # 學習 / 訓練（§6 learning.py / training.py 預留接線）
     # ------------------------------------------------------------------
     def register_learning(self, name: str, coroutine_factory: Callable) -> None:
-        """註冊中層學習協調器（CNS 事件驅動，§6 learning.py）。"""
+        """註冊中層學習協調器（CNS 事件驅動，§6 learning.py）。
+
+        委派給 `self.learning`（LearningCoordinator），
+        統一經 CNS `routing.response_generated` 事件驅動。
+        """
+        self.learning.register_learning(name, coroutine_factory)
         self.registries.modules.register(f"learning:{name}", coroutine_factory)
+
+    def subscribe_learning(self, state_store: Any = None) -> bool:
+        """訂閱 CNS 事件驅動學習（§5.5.2）。"""
+        return self.learning.subscribe(state_store)
+
+    def trigger_learning(self, user_message: str, response: Any, context: Optional[dict] = None):
+        """以 CNS 事件語意觸發所有 learners（fire-and-forget background task）。"""
+        return self.learning.trigger(user_message, response, context)
 
     def register_training(self, name: str, workflow: Callable) -> None:
         """註冊上層訓練工作流（掛載/釋放，§6 training.py）。"""

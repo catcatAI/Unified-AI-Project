@@ -174,11 +174,23 @@ class ChatService:
             logger.warning("CulturalContextModule init skipped: %s", e, exc_info=True)
         self._initialized = True
         logger.info("ChatService initialized")
+        # 註冊中層學習協調器（§5.5.2）：CNS 事件驅動，取代內嵌觸發
+        try:
+            from core.backbone import get_backbone
+
+            backbone = get_backbone()
+            backbone.register_learning("continuous", self._process_continuous_learning)
+            backbone.register_learning("garden", self._process_garden_learning)
+            logger.info("Learning pipelines registered into backbone coordinator")
+        except Exception as exc:
+            logger.warning("Backbone learning registration skipped: %s", exc, exc_info=True)
         # Start periodic HAM sync background task (Phase 5.2)
         if self._ed3n_learning_integration:
             self._ham_sync_task = asyncio.create_task(self._ham_sync_loop())
 
-    async def generate_response(self, user_message: str, user_name: str = "", context: Optional[dict] = None):
+    async def generate_response(
+        self, user_message: str, user_name: str = "", context: Optional[dict] = None
+    ):
         """Generate Angela's response to a user message."""
         if not self._initialized:
             await self.initialize()
@@ -198,8 +210,7 @@ class ChatService:
         response = self._post_process_response(response, merged_context)
 
         await self._process_multimodal_output(response, merged_context, mm_adapter)
-        await self._process_continuous_learning(user_message, response, merged_context)
-        await self._process_garden_learning(user_message, response)
+        await self._process_learning(user_message, response, merged_context)
         self._schedule_grounded_learning(user_message, response)
         await self._store_interaction_memories(user_message, response)
 
@@ -290,7 +301,9 @@ class ChatService:
                         merged_context, image_data=image_data, top_k=3
                     )
                 except Exception as e:
-                    logger.warning("Multimodal retrieval failed (non-critical): %s", e, exc_info=True)
+                    logger.warning(
+                        "Multimodal retrieval failed (non-critical): %s", e, exc_info=True
+                    )
         return merged_context, mm_adapter
 
     def _inject_grounded_context(self, merged_context: dict, user_message: str) -> dict:
@@ -387,6 +400,25 @@ class ChatService:
                     response.metadata["generated_audio"] = decoded_wav[:16000]
         except Exception as e:
             logger.warning("Multimodal decode output failed (non-critical): %s", e, exc_info=True)
+
+    async def _process_learning(self, user_message: str, response, merged_context: dict) -> None:
+        """統一經中層 LearningCoordinator 觸發學習（§5.5.2）。
+
+        若 backbone 單例可用則經 `backbone.trigger_learning()` 依序執行
+        已註冊 learners；否則 fallback 到原本的內嵌觸發（保持行為不倒退）。
+        """
+        try:
+            from core.backbone import get_backbone
+
+            backbone = get_backbone()
+        except Exception as exc:
+            logger.debug("Backbone unavailable, using inline learning trigger: %s", exc)
+            backbone = None
+        if backbone is not None:
+            await backbone.trigger_learning(user_message, response, merged_context)
+            return
+        await self._process_continuous_learning(user_message, response, merged_context)
+        await self._process_garden_learning(user_message, response)
 
     async def _process_continuous_learning(
         self, user_message: str, response, merged_context: dict
