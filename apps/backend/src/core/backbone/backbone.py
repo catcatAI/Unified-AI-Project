@@ -215,6 +215,10 @@ class Backbone:
         """多模態字典統一編碼（步驟 C2），回傳 {name: [keys, ...]}。"""
         return self.registries.dictionaries.encode_all("__all__", input_data, **kwargs)
 
+    def dictionary_sources(self) -> list:
+        """列出所有已註冊字典來源（後續計畫 §2）：{name, modality, mountable}。"""
+        return self.registries.dictionaries.sources()
+
     # ------------------------------------------------------------------
     # 外部閘道（§5.5.1 步驟 B3/B4）
     # ------------------------------------------------------------------

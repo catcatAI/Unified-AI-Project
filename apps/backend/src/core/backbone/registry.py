@@ -192,6 +192,22 @@ class ModuleRegistry(_BaseRegistry):
         return True
 
 
+def _safe_modality(obj: Any) -> Optional[str]:
+    """解析字典物件的 modality（支援屬性或方法/property）。"""
+    for attr in ("modality", "modality_name"):
+        raw = getattr(obj, attr, None)
+        if raw is None:
+            continue
+        if callable(raw):
+            try:
+                raw = raw()
+            except Exception:
+                continue
+        if raw:
+            return str(raw)
+    return None
+
+
 class DictionaryRegistry(_BaseRegistry):
     """字典註冊表（DictionaryLayer / VectorDictionary / 其他語義字典）。
 
@@ -211,6 +227,48 @@ class DictionaryRegistry(_BaseRegistry):
 
     def get_mountable(self, key: str, default: Any = None) -> Any:
         return self._mountables.get(key, default)
+
+    def sources(self) -> List[Dict[str, Any]]:
+        """列出所有已註冊字典來源（後續計畫 §2）。
+
+        每項：{name, modality, mountable}。涵蓋一般註冊字典與 mountable 字典
+        （未掛載者仍列出，modality 取自包裝內實例）。modality 讀 `modality`
+        或 `modality_name` 屬性，皆無則 Unknown。
+        """
+        out: List[Dict[str, Any]] = []
+        seen: set = set()
+        for name, obj in self._items.items():
+            modality = _safe_modality(obj)
+            if modality is None:
+                resolved = self._resolve_unmounted(name, obj)
+                if resolved is not None:
+                    modality = _safe_modality(resolved)
+            out.append(
+                {
+                    "name": name,
+                    "modality": modality or "Unknown",
+                    "mountable": name in self._mountables,
+                }
+            )
+            seen.add(name)
+        for name, wrapper in self._mountables.items():
+            if name in seen:
+                continue
+            modality = None
+            try:
+                resolved = wrapper.access() if hasattr(wrapper, "access") else None
+                if resolved is not None:
+                    modality = _safe_modality(resolved)
+            except Exception:
+                modality = None
+            out.append(
+                {
+                    "name": name,
+                    "modality": modality or "Unknown",
+                    "mountable": True,
+                }
+            )
+        return out
 
     # ------------------------------------------------------------------
     # MultimodalDictionary 統一介面（步驟 C2）
@@ -238,6 +296,7 @@ class DictionaryRegistry(_BaseRegistry):
                 continue
             for hit in _normalize_hit(hits):
                 hit["name"] = name
+                hit["score"] = _normalize_score(hit.get("score"))
                 results.append(hit)
         # 依 score 降冪排序後截取 top_k
         results.sort(key=lambda r: float(r.get("score", 0.0)), reverse=True)
@@ -266,6 +325,21 @@ class DictionaryRegistry(_BaseRegistry):
         if wrapper is not None and hasattr(wrapper, "access"):
             return wrapper.access()
         return obj
+
+
+def _normalize_score(score: Any) -> float:
+    """把字典回傳的 score 標準化到 0..1（後續計畫 §2）。
+
+    - None/非數值 → 0.0
+    - 在 [0, 1] → 原值
+    - 大於 1 → clamp 到 1.0（可能為相似度百分比或無界相似度）
+    - 負數 → clamp 到 0.0
+    """
+    try:
+        value = float(score)
+    except (TypeError, ValueError):
+        return 0.0
+    return max(0.0, min(1.0, value))
 
 
 def _normalize_hit(hit: Any) -> List[Dict[str, Any]]:
