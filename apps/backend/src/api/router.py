@@ -175,3 +175,11 @@ try:
     logger.debug("Included state_matrix_routes")
 except ImportError as e:
     logger.warning(f"state_matrix_routes not available: {e}")
+
+try:
+    from api.routes.game_routes import router as game_router
+
+    router.include_router(game_router, prefix="/api/v1")
+    logger.debug("Included game_routes")
+except ImportError as e:
+    logger.warning(f"game_routes not available: {e}")
