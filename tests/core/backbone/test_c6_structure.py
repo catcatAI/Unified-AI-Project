@@ -38,6 +38,7 @@ BACKBONE_KEY_SECTIONS = (
     "pairs",
     "io_bound",
     "security",
+    "connections",
 )
 
 
@@ -80,6 +81,26 @@ class TestStructure:
         bb = get_backbone()
         s = bb.structure()
         assert isinstance(s["modules"], list)
+
+    def test_connections_detect_wired_attrs(self):
+        bb = get_backbone()
+
+        class FakeObj:
+            state_matrix = object()
+
+        bb.register_module("fake", FakeObj())
+        conns = bb.structure()["connections"]
+        assert any(c["from"] == "fake" and c["via"] == "state_matrix" for c in conns)
+
+    def test_connections_absent_for_plain_module(self):
+        bb = get_backbone()
+
+        class Plain:
+            pass
+
+        bb.register_module("plain", Plain())
+        conns = bb.structure()["connections"]
+        assert all(c["from"] != "plain" for c in conns)
 
 
 class TestDump:

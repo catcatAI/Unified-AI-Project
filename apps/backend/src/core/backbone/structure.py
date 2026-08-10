@@ -79,6 +79,42 @@ class BackboneStructure:
             out.append({"key": key})
         return out
 
+    # 知名內部接線屬性（「透過啥接著啥」的探測白名單）
+    _WIRED_ATTRS = (
+        "state_matrix",
+        "modality_gateway",
+        "memory_bridge",
+        "ham_memory",
+        "_ham_memory",
+        "vector_store",
+        "_vector_store",
+        "garden_engine",
+        "_garden_engine",
+        "intent_manager",
+        "action_executor",
+        "biological_integrator",
+        "model_bus",
+        "_llm_service",
+        "lifecycle",
+        "emotion_system",
+        "crisis_system",
+        "training_coordinator",
+    )
+
+    def connections(self) -> List[Dict[str, Any]]:
+        """探測已註冊模組的內部接線，生成{from, via, to_type}邊。"""
+        edges: List[Dict[str, Any]] = []
+        for key in self.bb.registries.modules.keys():
+            obj = self.bb.registries.modules.get(key)
+            if obj is None:
+                continue
+            for attr in self._WIRED_ATTRS:
+                value = getattr(obj, attr, None)
+                if value is None:
+                    continue
+                edges.append({"from": key, "via": attr, "to_type": type(value).__name__})
+        return edges
+
     def translators(self) -> List[Dict[str, Any]]:
         out = []
         for key in self.bb.registries.translators.keys():
@@ -180,6 +216,7 @@ class BackboneStructure:
             "pairs": self.pairs(),
             "io_bound": self.io_bound(),
             "security": self.security(),
+            "connections": self.connections(),
         }
 
     def _response_mode(self) -> str:
@@ -228,6 +265,7 @@ _DISPLAY = {
     "pairs": "成對排程",
     "io_bound": "IO 排程綁定",
     "security": "安全層",
+    "connections": "連接線（透過啥接著啥）",
 }
 
 
@@ -257,6 +295,14 @@ def dump(backbone: Any, *, title: str = "BACKBONE", detailed: bool = True) -> st
 
     for section_key, label in _DISPLAY.items():
         info = data.get(section_key)
+        if section_key == "connections":
+            if not info:
+                lines.append(f"▶ {label}: (無 mod，無邊)")
+                continue
+            lines.append(f"▶ {label}: {len(info)} 條")
+            for edge in info[:40]:
+                lines.append(f"    - {edge['from']} ─[{edge['via']}]→ {edge['to_type']}")
+            continue
         if isinstance(info, dict):
             meta = ", ".join(f"{k}={v}" for k, v in info.items() if k != "by_kind")
             lines.append(f"▶ {label}: {meta or '(none)'}")
