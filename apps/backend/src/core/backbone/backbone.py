@@ -282,6 +282,41 @@ class Backbone:
         return self.mounts.sweep()
 
     # ------------------------------------------------------------------
+    # 自由矩陣（後續計畫 §1）
+    # ------------------------------------------------------------------
+    def register_free_matrix(self, key: str, matrix: Any, idle_timeout: float = 300.0) -> None:
+        """註冊一個自由矩陣實例（SharedLatentSpace 或具 mount 協定者）。
+
+        經 Mountable 掛載：惰性建例、idle timeout 釋放、backbone.access 讀取。
+        與既有 `register_mountable` 相容，但語意聚焦「自由矩陣」。
+        """
+        self.register_mountable(key, matrix, idle_timeout=idle_timeout)
+
+    def free_matrices(self) -> list:
+        """列出所有已註冊自由矩陣的狀態與資訊（不觸發 lazy mount）。
+
+        每一項：{key, mounted, version, latent_dim, modalities, created_at}。
+        僅對存取後具 SharedLatentSpace 形狀的實例補全資訊。
+        """
+        out = []
+        for key, is_mounted in self.mounts.mounted().items():
+            try:
+                instance = self.mounts.access(key)
+                info: Dict[str, Any] = {"key": key, "mounted": is_mounted}
+                if instance is not None and hasattr(instance, "registered_modalities"):
+                    info["version"] = getattr(instance, "version", None)
+                    info["latent_dim"] = getattr(instance, "_latent_dim", None)
+                    info["modalities"] = instance.registered_modalities()
+                    info["created_at"] = getattr(instance, "created_at", None)
+                    info["is_free_matrix"] = True
+                else:
+                    info["is_free_matrix"] = False
+                out.append(info)
+            except Exception as exc:
+                logger.debug("free_matrices skipped %s: %s", key, exc)
+        return out
+
+    # ------------------------------------------------------------------
     # 轉譯器（§5.3）
     # ------------------------------------------------------------------
     def register_translator(self, name: str, rule: Any) -> None:

@@ -1,5 +1,6 @@
 """Shared latent space — projects modality vectors to a unified embedding space + contrastive learning."""
 
+import datetime
 import logging
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -20,10 +21,29 @@ class SharedLatentSpace:
 
     LATENT_DIM: int = 64
 
-    def __init__(self, latent_dim: Optional[int] = None):
+    def __init__(
+        self,
+        latent_dim: Optional[int] = None,
+        *,
+        version: int = 1,
+        created_at: Optional[str] = None,
+    ):
         self._latent_dim = latent_dim or self.LATENT_DIM
         self._projections: Dict[str, Dict[str, np.ndarray]] = {}
         self._embedding_cache: Dict[str, np.ndarray] = {}
+        self.version = version
+        self.created_at = created_at or self._now_iso()
+
+    @staticmethod
+    def _now_iso() -> str:
+        return datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
+
+    def _meta_epoch(self) -> int:
+        """System-clock epoch for persistable created_at (int, npz-safe)."""
+        try:
+            return int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+        except Exception:
+            return 0
 
     def register_modality(self, name: str, input_dim: int) -> None:
         """Register a modality with its expected input dimension."""
@@ -94,6 +114,8 @@ class SharedLatentSpace:
             for name, proj in self._projections.items():
                 save_data[f"{name}__W"] = proj["W"].copy()
                 save_data[f"{name}__b"] = proj["b"].copy()
+            save_data["__version"] = np.asarray(self.version)
+            save_data["__created_at"] = np.asarray(self._meta_epoch())
             np.savez(path, **save_data)
             logger.info(
                 "SharedLatentSpace weights saved to %s (%d modalities)",
@@ -133,6 +155,17 @@ class SharedLatentSpace:
                 proj["W"][:] = data[w_key]
                 proj["b"][:] = data[b_key]
                 loaded += 1
+            if "__version" in data and data["__version"].size:
+                self.version = int(data["__version"].flat[0])
+            if "__created_at" in data and data["__created_at"].size:
+                try:
+                    ts = int(data["__created_at"].flat[0])
+                    if ts > 0:
+                        self.created_at = datetime.datetime.fromtimestamp(
+                            ts, tz=datetime.timezone.utc
+                        ).isoformat(timespec="seconds")
+                except (OSError, ValueError, OverflowError):
+                    pass
             logger.info("SharedLatentSpace weights loaded from %s (%d modalities)", path, loaded)
             return loaded > 0
         except Exception as e:
