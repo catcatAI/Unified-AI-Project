@@ -117,11 +117,14 @@ class LearningCoordinator:
             logger.warning("learning event missing response, skipping")
             return
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
+            running = asyncio.get_running_loop()
+        except RuntimeError:
+            running = None
+        try:
+            if running is not None:
                 asyncio.create_task(self.trigger(user_message, response, context))
             else:  # pragma: no cover - 同步 context
-                loop.run_until_complete(self.trigger(user_message, response, context))
+                asyncio.run(self.trigger(user_message, response, context))
         except Exception as exc:
             logger.warning("learning event task creation failed: %s", exc)
 

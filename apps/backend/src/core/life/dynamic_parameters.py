@@ -25,6 +25,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
+from core.system.config.magic_numbers import loop_sleep
+
 logger = logging.getLogger(__name__)
 
 
@@ -88,7 +90,9 @@ class ParameterState:
             return 0.0
         return (sum(recent) / len(recent)) - (sum(earlier) / len(earlier))
 
-    def get_value(self, context: Optional[Dict[str, float]] = None, state_matrix: Any = None) -> float:
+    def get_value(
+        self, context: Optional[Dict[str, float]] = None, state_matrix: Any = None
+    ) -> float:
         """Return current value, influenced by spatial gravity or legacy context rules.
 
         Deterministic when no context/state_matrix is provided (pure query);
@@ -162,8 +166,7 @@ class DynamicThresholdManager:
         "rest_recovery_rate": 0.1,
     }
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None,
-                 state_matrix: Optional[Any] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None, state_matrix: Optional[Any] = None):
         self.config = config or {}
         self.state_matrix = state_matrix
         self.parameters: Dict[str, ParameterState] = {}
@@ -210,7 +213,7 @@ class DynamicThresholdManager:
                 break
             except Exception:
                 logger.error("DynamicParams update error", exc_info=True)
-                await asyncio.sleep(10)
+                await asyncio.sleep(loop_sleep("sleep_very_long", 10.0))
 
     def _build_context(self) -> Dict[str, float]:
         """Build a global context from current parameter values."""

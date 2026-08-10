@@ -22,6 +22,7 @@
 
 from __future__ import annotations
 
+import time
 import uuid
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass, field
@@ -69,7 +70,7 @@ class Envelope:
     correlation_id: Optional[str] = None
     source: str = ""
     target: str = ""
-    timestamp: float = field(default_factory=lambda: __import__("time").time())
+    timestamp: float = field(default_factory=lambda: time.time())
     meta: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
