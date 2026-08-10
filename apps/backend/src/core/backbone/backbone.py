@@ -214,7 +214,11 @@ class Backbone:
 
     def access(self, key: str) -> Any:
         """統一入口：回傳已掛載資源（未掛載則 lazy mount）。"""
-        return self.mounts.access(key)
+        resource = self.mounts.access(key)
+        # TrainingMount 為雙層包裝：穿透回傳底層工作流實例
+        if resource is not None and hasattr(resource, "access") and hasattr(resource, "_instance"):
+            return resource.access()
+        return resource
 
     def mounted(self) -> Dict[str, bool]:
         """查詢全部掛載狀態。"""
@@ -337,6 +341,49 @@ class Backbone:
     def register_training(self, name: str, workflow: Callable) -> None:
         """註冊上層訓練工作流（掛載/釋放，§6 training.py）。"""
         self.registries.modules.register(f"training:{name}", workflow)
+
+    def register_training_mount(
+        self,
+        name: str,
+        factory: Callable,
+        save_func: Optional[Callable] = None,
+        load_func: Optional[Callable] = None,
+        persistence_path: str = "",
+        idle_timeout: float = 600.0,
+    ) -> None:
+        """註冊可掛載的訓練工作流（§5.5.3 步驟 C3）。
+
+        包裝為 `TrainingMount`，註冊進 mounts（key `training:{name}`），
+        可經 `backbone.mount("training:...")` 掛載 / `unmount` 釋放，
+        `access` lazy 建立實例。
+        """
+        from core.backbone.training import TrainingMount
+
+        mount = TrainingMount(
+            name=name,
+            factory=factory,
+            save_func=save_func,
+            load_func=load_func,
+            persistence_path=persistence_path,
+            idle_timeout=idle_timeout,
+        )
+        self.mounts.register(f"training:{name}", mount, idle_timeout=idle_timeout)
+        self.registries.modules.register(f"training:{name}", lambda: mount.access())
+
+    def training_info(self) -> Dict[str, Any]:
+        """查詢全部已註冊訓練工作流的掛載狀態。"""
+        out: Dict[str, Dict[str, Any]] = {}
+        for key, wrapper in self.mounts._resources.items():
+            if key.startswith("training:"):
+                resource = getattr(wrapper, "resource", None)
+                if resource is not None and hasattr(resource, "info"):
+                    try:
+                        out[key] = resource.info()
+                        continue
+                    except Exception:
+                        pass
+                out[key] = {"name": key, "mounted": wrapper.is_mounted()}
+        return out
 
     # ------------------------------------------------------------------
     # 查詢 / 診斷
