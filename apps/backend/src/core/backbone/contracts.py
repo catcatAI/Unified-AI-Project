@@ -216,6 +216,32 @@ class Mountable(Protocol):
         ...
 
 
+@runtime_checkable
+class MultimodalDictionary(Protocol):
+    """多模態字典統一協定（§3.5 / 步驟 C2）。
+
+    跨模態字典（ED3N DictionaryLayer / GARDEN VectorDictionary / 圖像 /
+    音頻 / 物件 / 空間字典）的統一介面，讓主幹線 `register_dictionary` +
+    `query_dictionary` 可以一致地查詢任何字典。
+
+    - `modality()`：此字典服務的模態（"text"/"image"/"audio"/"object"/"space"）。
+    - `register_entry(key, payload)`：寫入辭條（key 為唯一字面鍵）。
+    - `encode(input)`：把輸入編碼為候選鍵（list[str]）。
+    - `decode(keys)`：把鍵解碼回酬載（list[payload]）。
+    - `query(input, top_k)`：相似性查詢，回傳 [(key, score, payload), ...]。
+    - `save(path)` / `load(path)`：持久化。
+    - `size()`：辭條數。
+
+    實作者不需一次實作全部；介面存取全程以 getattr fallback 進行，
+    缺方法時回傳 None / 空結果，不使主幹線崩潰。
+    """
+
+    def modality(self) -> str: ...
+    def encode(self, input: Any, **kwargs: Any) -> list: ...
+    def register_entry(self, key: str, payload: Any = None, **kwargs: Any) -> bool: ...
+    def query(self, input: Any, top_k: int = 5, **kwargs: Any) -> list: ...
+
+
 # ---------------------------------------------------------------------------
 # TranslationRule — 轉譯器協定（§5.3）
 # ---------------------------------------------------------------------------

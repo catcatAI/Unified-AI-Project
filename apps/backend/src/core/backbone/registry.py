@@ -212,6 +212,84 @@ class DictionaryRegistry(_BaseRegistry):
     def get_mountable(self, key: str, default: Any = None) -> Any:
         return self._mountables.get(key, default)
 
+    # ------------------------------------------------------------------
+    # MultimodalDictionary 統一介面（步驟 C2）
+    # ------------------------------------------------------------------
+    def query(self, theme: str, input_data: Any, top_k: int = 5, **kwargs: Any) -> list:
+        """對所有字典執行統一相似性查詢。
+
+        若字典已註冊為 `Mountable`（未掛載），先 lazy mount 再查詢；
+        否則直接查詢註冊的實例。實作缺 `query` 方法的字典會被跳過。
+
+        Returns:
+            list[{name, key, score, payload}] 排序後的前 top_k 結果。
+        """
+        results: List[Dict[str, Any]] = []
+        for name, obj in list(self._items.items()):
+            resolved = self._resolve_unmounted(name, obj)
+            if resolved is None:
+                continue
+            q = getattr(resolved, "query", None)
+            if not callable(q):
+                continue
+            try:
+                hits = q(input_data, top_k=top_k, **kwargs) or []
+            except Exception:
+                continue
+            for hit in _normalize_hit(hits):
+                hit["name"] = name
+                results.append(hit)
+        # 依 score 降冪排序後截取 top_k
+        results.sort(key=lambda r: float(r.get("score", 0.0)), reverse=True)
+        return results[:top_k]
+
+    def encode_all(self, theme: str, input_data: Any, **kwargs: Any) -> Dict[str, list]:
+        """對所有字典執行統一編碼，回傳 {name: keys}。"""
+        out: Dict[str, list] = {}
+        for name, obj in list(self._items.items()):
+            resolved = self._resolve_unmounted(name, obj)
+            if resolved is None:
+                continue
+            fn = getattr(resolved, "encode", None)
+            if not callable(fn):
+                continue
+            try:
+                keys = fn(input_data, **kwargs)
+                out[name] = keys if isinstance(keys, list) else [keys]
+            except Exception:
+                continue
+        return out
+
+    def _resolve_unmounted(self, name: str, obj: Any) -> Any:
+        """若該字典已註冊為 mountable wrapper，則 lazy mount 後回傳底層資源。"""
+        wrapper = self._mountables.get(name)
+        if wrapper is not None and hasattr(wrapper, "access"):
+            return wrapper.access()
+        return obj
+
+
+def _normalize_hit(hit: Any) -> List[Dict[str, Any]]:
+    """把字典統一 query 的各種回傳形態正規化為 {key, score, payload} dicts。"""
+    if isinstance(hit, dict):
+        return [dict(hit)]
+    if isinstance(hit, (tuple, list)) and len(hit) >= 1:
+        if all(isinstance(x, dict) for x in hit):
+            return [dict(x) for x in hit]
+        # (key,) / (key, score) / (key, score, payload)
+        norm: List[Dict[str, Any]] = []
+        for item in hit:
+            if isinstance(item, (tuple, list)):
+                row: Dict[str, Any] = {}
+                if len(item) >= 1:
+                    row["key"] = item[0]
+                if len(item) >= 2:
+                    row["score"] = item[1]
+                if len(item) >= 3:
+                    row["payload"] = item[2]
+                norm.append(row)
+        return norm
+    return []
+
 
 class TranslatorRegistry(_BaseRegistry):
     """轉譯器註冊表（§5.3）。

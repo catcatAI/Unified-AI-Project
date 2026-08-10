@@ -150,6 +150,18 @@ class Backbone:
     def get_dictionary(self, key: str, default: Any = None) -> Any:
         return self.registries.dictionaries.get(key, default)
 
+    def query_dictionary(self, input_data: Any, top_k: int = 5, **kwargs: Any) -> list:
+        """多模態字典統一相似性查詢（步驟 C2 / §3.5）。
+
+        對所有已註冊字典（含未掛載的 mountable）查詢，合併排序後回傳
+        [{name, key, score, payload}, ...]。
+        """
+        return self.registries.dictionaries.query("__all__", input_data, top_k=top_k, **kwargs)
+
+    def encode_dictionaries(self, input_data: Any, **kwargs: Any) -> Dict[str, list]:
+        """多模態字典統一編碼（步驟 C2），回傳 {name: [keys, ...]}。"""
+        return self.registries.dictionaries.encode_all("__all__", input_data, **kwargs)
+
     # ------------------------------------------------------------------
     # 外部閘道（§5.5.1 步驟 B3/B4）
     # ------------------------------------------------------------------
