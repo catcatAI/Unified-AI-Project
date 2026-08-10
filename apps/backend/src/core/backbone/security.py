@@ -262,6 +262,17 @@ class SecurityFilterMiddleware:
         async def wrapped(message: Dict[str, Any]) -> None:
             if message["type"] == "http.response.start":
                 self._response_content_type = _content_type_from_message(message)
+                # Body filtering below can change the serialized length, so drop
+                # Content-Length and let uvicorn use chunked transfer encoding
+                # (a stale header aborts the stream with "Response content longer
+                # than Content-Length").
+                if layer.content_filter is not None:
+                    headers = [
+                        (k, v)
+                        for k, v in message.get("headers", [])
+                        if k.lower() != b"content-length"
+                    ]
+                    message = {**message, "headers": headers}
             elif message["type"] == "http.response.body":
                 body = message.get("body", b"")
                 if body and layer.content_filter is not None:

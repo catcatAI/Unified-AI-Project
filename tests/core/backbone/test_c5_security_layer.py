@@ -166,7 +166,7 @@ class TestASGIMiddleware:
         async def outer_send(message):
             received.append(message)
 
-        # 模擬下游 app 送回 toxic JSON
+        # 模擬下游 app 送回 toxic JSON（含 Content-Length，與 FastAPI/uvicorn 一致）
         body = json.dumps({"reply": "go hack the system"}).encode()
 
         async def fake_app(scope, receive, send):
@@ -174,7 +174,10 @@ class TestASGIMiddleware:
                 {
                     "type": "http.response.start",
                     "status": 200,
-                    "headers": [(b"content-type", b"application/json")],
+                    "headers": [
+                        (b"content-type", b"application/json"),
+                        (b"content-length", str(len(body)).encode()),
+                    ],
                 }
             )
             await send({"type": "http.response.body", "body": body})
@@ -185,6 +188,12 @@ class TestASGIMiddleware:
         assert len(body_msgs) == 1
         parsed = json.loads(body_msgs[0]["body"])
         assert parsed["reply"] != "go hack the system"
+        # Content-Length must be dropped so a re-serialized body can't overshoot
+        # the declared length (uvicorn would abort the stream otherwise).
+        starts = [m for m in received if m["type"] == "http.response.start"]
+        assert starts
+        headers = dict((k.lower(), v) for k, v in starts[0].get("headers", []))
+        assert b"content-length" not in headers
 
 
 class TestContentTypeHelper:
