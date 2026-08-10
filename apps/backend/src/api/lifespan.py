@@ -553,6 +553,88 @@ async def _shutdown_services(broadcast_task, module_manager):
         logger.info("[Plugin] Shutdown — hook invocation counts: %s", metric_data["counts"])
 
 
+def _register_backbone() -> None:
+    """把已建好的核心單例註冊進主幹線（讓 backbone 直接連接到實際元件）。
+
+    每一項皆 try/except：元件缺失或建立失敗就跳過，絕不因單一失敗阻塞啟動。
+    註冊的元件讓 `python -m core.backbone dump` 的打印反映真實連接。
+    """
+    try:
+        from core.backbone import get_backbone
+    except Exception as exc:
+        logger.debug("[Backbone] unavailable, skip registration: %s", exc)
+        return
+
+    bb = get_backbone()
+
+    def _try(name: str, fn, *, kind: str = "module", key: str = None) -> None:
+        key = key or name
+        try:
+            obj = fn()
+            if obj is None:
+                logger.debug("[Backbone] %s None, skip", key)
+                return
+            if kind == "module":
+                bb.register_module(key, obj)
+            elif kind == "matrix":
+                bb.register_matrix(key, obj)
+            elif kind == "memory":
+                bb.register_memory(key, obj)
+            elif kind == "dictionary":
+                bb.register_dictionary(key, obj)
+            logger.debug("[Backbone] registered %s=%s", kind, key)
+        except Exception as exc:
+            logger.debug("[Backbone] skip %s=%s: %s", kind, key, exc)
+
+    # 核心矩陣（DLI 持有的 StateMatrix4D）
+    try:
+        dli = get_digital_life()
+        sm = getattr(dli, "state_matrix", None) or getattr(dli, "state", None)
+        if sm is not None:
+            _try("state_matrix", lambda: sm, kind="matrix")
+    except Exception as exc:
+        logger.debug("[Backbone] state_matrix unavailable: %s", exc)
+
+    # 模組（lifespan 單例）
+    _try("digital_life", get_digital_life, kind="module", key="digital_life")
+    _try("lifecycle", get_lifecycle, kind="module", key="lifecycle")
+    _try("heartbeat", get_metabolic_heartbeat, kind="module", key="metabolic_heartbeat")
+    _try("causal_reasoning", get_causal_reasoning, kind="module", key="causal_reasoning")
+    _try("crisis", get_crisis_system, kind="module", key="crisis_system")
+    _try("agent_manager", get_agent_manager, kind="module", key="agent_manager")
+    _try("desktop_interaction", get_desktop_interaction, kind="module", key="desktop_interaction")
+    _try(
+        "training_coordinator", get_training_coordinator, kind="module", key="training_coordinator"
+    )
+
+    # ChatService（重元件：含 model_bus / memory managers）
+    chat = globals().get("_chat_service_instance")
+    if chat is not None:
+        _try("chat_service", lambda: chat, kind="module", key="chat_service")
+
+    # 記憶（HAM / vector / memory_manager）
+    _try("ham", lambda: _memory_backend_from_chat(), kind="memory", key="ham")
+
+    logger.info(
+        "[Backbone] registration done; modules=%d matrices=%d memories=%d",
+        bb.registries.modules.count(),
+        bb.registries.matrices.count(),
+        bb.memories.names().__len__() if hasattr(bb.memories, "names") else 0,
+    )
+
+
+def _memory_backend_from_chat():
+    """從 ChatService 取出 HAM memory manager（惰性）。"""
+    chat = globals().get("_chat_service_instance")
+    if chat is None:
+        return None
+    for attr in ("ham_manager", "memory_manager", "ham"):
+        value = getattr(chat, attr, None)
+        if value is not None and not isinstance(value, bool):
+            return value
+    return None
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Application lifespan: initialize services on startup, shutdown on exit."""
@@ -599,6 +681,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         logger.warning(
             "[ChatService] Pre-init skipped — will lazily initialize on first use", exc_info=True
         )
+
+    # 把實際單例註冊進主幹線（backbone 直接連接核心元件）
+    try:
+        _register_backbone()
+    except Exception:
+        logger.warning("[Backbone] registration failed during startup", exc_info=True)
 
     yield
 

@@ -497,6 +497,18 @@ class Backbone:
             "io_pairs_domain_bound": self._io_pairs_bound,
         }
 
+    def structure(self) -> Dict[str, Any]:
+        """完整結構盤點（一棵樹，含各層註冊與連接狀態）。"""
+        from core.backbone.structure import inventory
+
+        return inventory(self)
+
+    def dump(self, *, title: str = "BACKBONE", detailed: bool = True) -> str:
+        """打印主幹線全覽（可讀文字樹）。"""
+        from core.backbone.structure import dump as _dump
+
+        return _dump(self, title=title, detailed=detailed)
+
     def clear(self) -> None:
         """清除全部註冊（測試隔離用）。"""
         self.registries.clear_all()
