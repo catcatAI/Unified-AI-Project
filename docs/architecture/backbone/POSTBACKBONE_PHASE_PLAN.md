@@ -18,7 +18,8 @@
 > **狀態**: 執行藍圖。主幹線步驟 A（`417d188f`）、B1-B11（`35e17ff5`…`0efc32b9`）、
 > C1-C5（`2ee25a66`/`36da6992`/`2b2f87b6`/`37345518`/C5 commit）已提交，里程碑達成
 > （`pytest tests/` 全綠：**5,085 passed, 82 skipped**）。
-> 本文件定義接下來的六大主題方向，每主題獨立推進、可合併、不互相阻塞。
+> 六大主題已全數落地（見各章「✅ 已落地」標記）。本文件作為接下來的
+> **深化/修補方向**藍圖。
 
 ---
 
@@ -51,6 +52,12 @@
 ### 驗收
 - 新增測試：權重版本 roundtrip、多實例隔離、`free_matrices()` 列出正確。
 
+### ✅ 已落地
+- `SharedLatentSpace` 加 `version`/`created_at`；`save_weights`/`load_weights` 透過
+  `__version`/`__created_at` npz key 持久化（舊格式相容）。
+- backbone 加 `register_free_matrix` + `free_matrices()`（列出 version/latent_dim/
+  modalities/created_at）。測試：`tests/core/backbone/test_c6_free_matrix.py`（8 tests）。
+
 ---
 
 ## 2. 多模態字典（Multimodal Dictionaries）語義化
@@ -72,6 +79,13 @@
 
 ### 驗收
 - 新增測試：跨字典 score 標準化、`sources()` 列出遊戲字典、遊戲卡片查詢回傳正確。
+
+### ✅ 已落地
+- `DictionaryRegistry.query` 對 score 做 `_normalize_score`（clamp 0..1，含 None/負值）。
+- `DictionaryRegistry.sources()` + `backbone.dictionary_sources()`：列出
+  {name, modality, mountable}，支援 modality 屬性/method、mountable 字典（未掛載仍列出）。
+- 遊戲卡片以 `InMemoryDictionary(modality="card")` 掛載並可經 `query_dictionary` 查詢。
+  測試：`tests/core/backbone/test_c6_dict_semantics.py`（7 tests）。
 
 ---
 
@@ -97,6 +111,15 @@
 ### 驗收
 - `backbone.axes("遊戲").axis("物種")` 讀到軸位；後端軸也能列出。新增測試。
 
+> 命名校正：最終以 `backbone.axes_registry("game")` 存取 AxesRegistry（含三層巢狀子
+> registry）。遊戲軸譜 `axis_system.AXIS_SYSTEMS`（四系譜）可直接 `register_axes` 註冊。
+
+### ✅ 已落地
+- `core/backbone/axes.py`：`AxesRegistry` + `AxisDefinition` + `get_axes_registry` 單例；
+  支援 positions / dimensions / 三層巢狀（譜系→軸→位置）註冊。
+- backbone 加 `register_axes_registry` / `axes_registry`（預設 `default`）。
+  測試：`tests/core/backbone/test_c6_axes.py`（11 tests，含真實遊戲軸譜驗證）。
+
 ---
 
 ## 4. 設置與配置（Config & Settings）可分級
@@ -116,6 +139,12 @@
 
 ### 驗收
 - 有 `game.default.yaml`；`compute_bool("game", True)` 讀到正確值。
+
+### ✅ 已落地
+- 新增 `configs/system/game.default.yaml`（enabled/data_path/mount 開關/max_cards）。
+- `configs/system/compute.default.yaml` 加 `game` feature block（mode: on）。
+- `compute_bool("game")` → True、`compute_mode("game")` → "on"、`get_config("system/game")`
+  讀到完整配置（已證實不依賴 global fallback）。
 
 ---
 
@@ -139,6 +168,14 @@
 ### 驗收
 - `DatasetRegistry` 列出遊戲卡片資料集、可載入 351 卡。
 
+### ✅ 已落地
+- `core/backbone/datasets.py`：`Dataset`（惰性 loader）/`DatasetRegistry`
+  （register/list/load）/`load_json_records`（cards→[{key,text,meta}]）/`register_game_cards`。
+- backbone 加 `register_dataset_records`/`register_dataset_loader`/`load_dataset`/
+  `datasets_list`。
+- 遊戲卡片真實載入測試（351+ 卡）通過。測試：`tests/core/backbone/test_c6_datasets.py`
+  （14 tests）。
+
 ---
 
 ## 6. 遊戲正式接入（矩陣/字典/座標軸）
@@ -161,6 +198,14 @@
 
 ### 驗收
 - 遊戲開機能經 backbone 讀到卡片與軸譜；`pytest apps/game-rpg/tests/` 全綠不倒退。
+
+### ✅ 已落地
+- `apps/game-rpg/backbone_bridge.py`：`GameBackboneBridge`（惰性，配置 `system/game`
+  `enabled` + backbone 可用才接入）。掛卡片字典（modality="card"）、軸譜 AxesRegistry、
+  遊戲專屬 SharedLatentSpace、資料集。`get_bridge()` 單例 / `reset_bridge()`。
+- `run_game.start_game()` 加入 bridge boot hook（try/except + 例外記錄，sin CLI 行為）。
+- 遊戲既有 132 tests + 新增 14 tests 全綠且不倒退。
+  測試：`apps/game-rpg/tests/test_backbone_bridge.py`（14 tests）。
 
 ---
 
