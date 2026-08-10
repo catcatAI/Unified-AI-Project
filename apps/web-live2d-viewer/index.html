@@ -650,6 +650,362 @@
         }
     </style>
 
+    <!-- Unified Shell Styles -->
+    <style>
+        #unified-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 0 10px;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.7) 100%);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            z-index: 190;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        #unified-nav button {
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            padding: 6px 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #unified-nav button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        #unified-nav button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+
+        .unified-backend-state {
+            margin-left: auto;
+            font-size: 11px;
+            color: var(--warning-color);
+            padding: 3px 8px;
+            border-radius: 10px;
+            background: rgba(255, 204, 0, 0.12);
+        }
+
+        .unified-backend-state.ok {
+            color: var(--success-color);
+            background: rgba(0, 255, 128, 0.12);
+        }
+
+        .shell-panel {
+            display: none;
+            position: fixed;
+            top: 44px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 170;
+            background: #16213e;
+            overflow-y: auto;
+            color: var(--text-primary);
+            padding: 16px;
+        }
+
+        .shell-panel.active {
+            display: block;
+        }
+
+        .shell-panel h2 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+
+        .panel-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .panel-card .card-title {
+            font-size: 13px;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .shell-panel select,
+        .shell-panel input[type="text"],
+        .shell-panel input[type="number"],
+        .shell-panel button,
+        .shell-panel textarea {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            color: var(--text-primary);
+            padding: 7px 10px;
+            font-size: 13px;
+        }
+
+        .shell-panel button {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .shell-panel button:hover {
+            background: rgba(79, 172, 254, 0.2);
+        }
+
+        .shell-panel button.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+
+        .panel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 13px;
+        }
+
+        .metric-row .metric-label {
+            color: var(--accent-color);
+        }
+
+        /* Chat panel */
+        #chat-messages {
+            height: calc(100vh - 220px);
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #chat-messages .message {
+            max-width: 80%;
+        }
+
+        #chat-input-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        #chat-input-row input {
+            flex: 1;
+        }
+
+        /* Game panel */
+        #game-console {
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 8px;
+            padding: 12px;
+            height: calc(100vh - 320px);
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #d0d0d0;
+        }
+
+        .game-line {
+            margin-bottom: 4px;
+            white-space: pre-wrap;
+        }
+
+        .game-line.system {
+            color: #888;
+            font-style: italic;
+        }
+
+        .game-line.narration {
+            color: #e0b0ff;
+        }
+
+        .game-line.player {
+            color: #7fd1ff;
+        }
+
+        .game-line.npc {
+            color: #a8f0a0;
+        }
+
+        #game-choices {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        #game-act-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        #game-act-row input {
+            flex: 1;
+        }
+
+        /* Multimodal scoped styles */
+        #panel-multimodal {
+            --bg: #16213e;
+            --bg-card: #1a2a4e;
+            --bg-hover: #0f3460;
+            --accent: #4facfe;
+            --accent2: #00f2fe;
+            --text: #e0e0e0;
+            --text-dim: #8899aa;
+            --success: #00ff80;
+            --warning: #ffcc00;
+            --danger: #ff4040;
+            --border: rgba(255, 255, 255, 0.08);
+            --radius: 12px;
+        }
+
+        #panel-multimodal .mm-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        #panel-multimodal .mm-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        #panel-multimodal .mm-grid .grid-full {
+            grid-column: 1 / -1;
+        }
+
+        #panel-multimodal .mm-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 14px;
+            border: 1px solid var(--border);
+        }
+
+        #panel-multimodal .mm-card .card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        #panel-multimodal .mm-tab-bar {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 12px;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 8px;
+            padding: 4px;
+        }
+
+        #panel-multimodal .mm-tab-bar .mm-tab {
+            padding: 7px 14px;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-dim);
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        #panel-multimodal .mm-tab-bar .mm-tab.active {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        #panel-multimodal .mm-tab-content {
+            display: none;
+        }
+
+        #panel-multimodal .mm-tab-content.active {
+            display: block;
+        }
+
+        #panel-multimodal .mm-upload-zone {
+            border: 2px dashed rgba(79, 172, 254, 0.3);
+            border-radius: 8px;
+            padding: 24px 12px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        #panel-multimodal .mm-upload-zone:hover,
+        #panel-multimodal .mm-upload-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(79, 172, 254, 0.08);
+        }
+
+        #panel-multimodal .mm-result {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 8px;
+            font-size: 12px;
+            max-height: 180px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        #panel-multimodal .mm-btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        #panel-multimodal .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            display: inline-block;
+        }
+
+        #panel-multimodal .status-dot.offline {
+            background: var(--danger);
+        }
+
+        #panel-multimodal .record-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 3px solid var(--danger);
+            background: transparent;
+            cursor: pointer;
+            margin: 0 auto;
+        }
+
+        #panel-multimodal .record-btn.recording {
+            background: var(--danger);
+        }
+    </style>
+
     <!-- Terminal Overlay Styles -->
     <style>
         #terminal-overlay {
@@ -773,9 +1129,11 @@
         </div>
 
         <!-- Canvas layers -->
-        <canvas id="live2d-canvas"></canvas>
-        <div class="canvas-wrapper" id="fallback-wrapper">
-            <canvas id="fallback-canvas" style="width: 100%; height: 100%;"></canvas>
+        <div id="character-container" class="canvas-wrapper">
+            <canvas id="live2d-canvas"></canvas>
+            <div id="fallback-wrapper" style="width: 100%; height: 100%;">
+                <canvas id="fallback-canvas" style="width: 100%; height: 100%;"></canvas>
+            </div>
         </div>
         <div id="click-layer"></div>
 
@@ -806,6 +1164,199 @@
 
     <div id="audio-visualizer"></div>
 
+    <!-- ==================== Unified Shell ==================== -->
+    <nav id="unified-nav">
+        <button data-panel="pet" class="active">🖼️ 寵物</button>
+        <button data-panel="chat">💬 對話</button>
+        <button data-panel="system">📊 系統</button>
+        <button data-panel="multimodal">🧠 多模態</button>
+        <button data-panel="game">🎮 遊戲</button>
+        <button data-panel="settings">⚙️ 設定</button>
+        <span id="unified-backend-state" class="unified-backend-state">Offline</span>
+    </nav>
+
+    <!-- Chat Panel -->
+    <section class="shell-panel" id="panel-chat">
+        <h2>💬 與 Angela 對話</h2>
+        <div id="chat-messages"></div>
+        <div id="chat-input-row">
+            <input type="text" id="chat-input" placeholder="輸入訊息..." />
+            <button class="primary" id="btn-chat-send">Send</button>
+        </div>
+    </section>
+
+    <!-- System Panel -->
+    <section class="shell-panel" id="panel-system">
+        <h2>📊 系統監控</h2>
+        <div class="panel-card">
+            <div class="card-title">Backend</div>
+            <div class="metric-row"><span class="metric-label">Status</span><span id="sys-status">—</span></div>
+            <div class="metric-row"><span class="metric-label">Service</span><span id="sys-service">—</span></div>
+            <div class="metric-row"><span class="metric-label">CPU</span><span id="sys-cpu">—</span></div>
+            <div class="metric-row"><span class="metric-label">Memory</span><span id="sys-mem">—</span></div>
+            <div class="metric-row"><span class="metric-label">Disk</span><span id="sys-disk">—</span></div>
+            <div class="metric-row"><span class="metric-label">Cluster Nodes</span><span id="sys-nodes">—</span></div>
+            <div class="metric-row"><span class="metric-label">Perf Tier</span><span id="sys-tier">—</span></div>
+            <div class="metric-row"><span class="metric-label">AI Score</span><span id="sys-ai">—</span></div>
+        </div>
+    </section>
+
+    <!-- Multimodal Panel -->
+    <section class="shell-panel" id="panel-multimodal">
+        <div class="mm-header">
+            <h2 style="margin:0">🧠 Multimodal Panel</h2>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim)">
+                <span class="status-dot" id="mm-status-dot"></span>
+                <span id="mm-status-text">Disconnected</span>
+            </div>
+        </div>
+        <div class="mm-tab-bar">
+            <button class="mm-tab active" data-mm-tab="encode">🎯 Encode</button>
+            <button class="mm-tab" data-mm-tab="compare">🔗 Compare</button>
+            <button class="mm-tab" data-mm-tab="generate">✨ Generate</button>
+            <button class="mm-tab" data-mm-tab="quality">📊 Quality</button>
+        </div>
+        <div class="mm-tab-content active" id="mm-tab-encode">
+            <div class="mm-grid">
+                <div class="mm-card">
+                    <div class="card-title">🖼️ Vision Encode</div>
+                    <div class="mm-upload-zone" id="mm-vision-upload">
+                        <div style="font-size:24px">🖼️</div>
+                        <div style="font-size:12px;color:var(--text-dim)">Upload or drop image</div>
+                        <input type="file" id="mm-vision-file" accept="image/png,image/jpeg" style="display:none">
+                    </div>
+                    <div class="mm-btn-group">
+                        <button class="primary" id="mm-btn-vision-encode">🔮 Encode</button>
+                        <button id="mm-btn-vision-decode">🔄 Decode</button>
+                    </div>
+                    <div id="mm-vision-preview"></div>
+                    <div class="mm-result" id="mm-vision-result"></div>
+                </div>
+                <div class="mm-card">
+                    <div class="card-title">🎵 Audio</div>
+                    <div class="mm-upload-zone" id="mm-audio-upload">
+                        <div style="font-size:24px">🎵</div>
+                        <div style="font-size:12px;color:var(--text-dim)">Upload WAV</div>
+                        <input type="file" id="mm-audio-file" accept="audio/wav" style="display:none">
+                    </div>
+                    <div style="text-align:center;margin-top:8px">
+                        <div class="record-btn" id="mm-record-btn"></div>
+                    </div>
+                    <div class="mm-btn-group">
+                        <button class="primary" id="mm-btn-audio-encode">🔮 Encode</button>
+                        <button id="mm-btn-audio-decode">🔄 Decode</button>
+                    </div>
+                    <div class="mm-result" id="mm-audio-result"></div>
+                </div>
+                <div class="mm-card" style="grid-column:1/-1">
+                    <div class="card-title">📋 Registered Items</div>
+                    <div id="mm-items-list" style="font-size:12px;color:var(--text-dim)">No items registered.</div>
+                    <div class="mm-btn-group">
+                        <button id="mm-btn-refresh">🔄 Refresh</button>
+                        <button id="mm-btn-clear">🗑️ Clear All</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mm-tab-content" id="mm-tab-compare">
+            <div class="mm-card">
+                <div class="card-title">🔗 Cross-Modal Comparison</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <select id="mm-compare-a" style="flex:1"><option value="">Item A...</option></select>
+                    <select id="mm-compare-b" style="flex:1"><option value="">Item B...</option></select>
+                    <button class="primary" id="mm-btn-compare">🔍 Compare</button>
+                </div>
+                <div class="mm-result" id="mm-compare-result"></div>
+            </div>
+        </div>
+        <div class="mm-tab-content" id="mm-tab-generate">
+            <div class="mm-card">
+                <div class="card-title">✨ Cross-Modal Generation</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <select id="mm-generate-source" style="flex:1"><option value="">Source...</option></select>
+                    <select id="mm-generate-target" style="flex:1">
+                        <option value="audio">→ Audio</option>
+                        <option value="vision">→ Vision</option>
+                    </select>
+                    <button class="primary" id="mm-btn-generate">✨ Generate</button>
+                </div>
+                <div class="mm-result" id="mm-generate-result"></div>
+            </div>
+        </div>
+        <div class="mm-tab-content" id="mm-tab-quality">
+            <div class="mm-grid">
+                <div class="mm-card">
+                    <div class="card-title">👁️ Vision</div>
+                    <div id="mm-quality">
+                        <div class="metric-row"><span class="metric-label">SSIM</span><span id="mm-q-ssim">—</span></div>
+                        <div class="metric-row"><span class="metric-label">PSNR</span><span id="mm-q-psnr">—</span></div>
+                        <div class="metric-row"><span class="metric-label">Calls</span><span id="mm-q-vision-calls">0</span></div>
+                    </div>
+                </div>
+                <div class="mm-card">
+                    <div class="card-title">🎵 Audio</div>
+                    <div class="metric-row"><span class="metric-label">SNR</span><span id="mm-q-snr">—</span></div>
+                    <div class="metric-row"><span class="metric-label">Calls</span><span id="mm-q-audio-calls">0</span></div>
+                </div>
+                <div class="mm-card" style="grid-column:1/-1">
+                    <div class="card-title">❤️ Overall Health</div>
+                    <div class="metric-row"><span class="metric-label">Health</span><span id="mm-q-health">—</span></div>
+                    <div class="metric-row"><span class="metric-label">Requests</span><span id="mm-q-requests">—</span></div>
+                    <button id="mm-btn-refresh-quality" style="margin-top:8px">🔄 Refresh</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Game Panel -->
+    <section class="shell-panel" id="panel-game">
+        <h2>🎮 遊戲</h2>
+        <div class="panel-card">
+            <div class="card-title">World</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <select id="game-world" style="flex:1"></select>
+                <select id="game-character" style="flex:1"></select>
+                <button class="primary" id="btn-game-start">▶ 開始遊戲</button>
+                <button id="btn-game-new">🔄 New</button>
+            </div>
+        </div>
+        <div id="game-state">
+            <div class="panel-card">
+                <div class="card-title" id="game-scene-title">未開始</div>
+                <div id="game-console"></div>
+                <div id="game-choices"></div>
+                <div id="game-act-row">
+                    <input type="text" id="game-act-input" placeholder="輸入指令（如 attack / 看 / 休息...）" />
+                    <button id="btn-game-act">➤</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Settings Panel -->
+    <section class="shell-panel" id="panel-settings">
+        <h2>⚙️ 設定</h2>
+        <div class="panel-card">
+            <div class="card-title">Backend</div>
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+                <input type="text" id="settings-backend-ip" placeholder="http://localhost:8000" style="flex:1" />
+                <button class="primary" id="btn-settings-save-ip">Save</button>
+            </div>
+            <div class="metric-row"><span class="metric-label">Current IP</span><span id="settings-current-ip">—</span></div>
+        </div>
+        <div class="panel-card">
+            <div class="card-title">Render</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <select id="settings-render-mode">
+                    <option value="auto">Auto</option>
+                    <option value="live2d">Live2D</option>
+                    <option value="fallback">Fallback 2D</option>
+                </select>
+                <button id="btn-settings-apply-render">Apply & Reload</button>
+            </div>
+        </div>
+    </section>
+
     <!-- Live2D Cubism Web SDK -->
     <script src="libs/live2dcubismcore.min.js?v=3"></script>
     <!-- Live2D Cubism Framework SDK 5 (bundled) -->
@@ -830,6 +1381,9 @@
     <script src="js/hardware-detection.js?v=3"></script>
 
     <script src="../../packages/shared-js/js/index.js"></script>
+<!-- Centralized Configuration & Profile -->
+    <script src="../../packages/shared-js/js/settings-manager.js"></script>
+    <script src="../../packages/shared-js/js/system-profile.js"></script>
 <!-- Security Utils -->
     <script src="../../packages/shared-js/js/security-utils.js"></script>
     <script src="js/storage-manager.js?v=3"></script>
@@ -892,6 +1446,12 @@
 
     <!-- Main App -->
     <script src="../../packages/shared-js/js/app.js"></script>
+
+    <!-- Multimodal shared client -->
+    <script src="../../packages/shared-js/js/multimodal-client.js"></script>
+
+    <!-- Unified Shell -->
+    <script src="js/unified-shell.js"></script>
 
     <!-- Initialize Angela App -->
     <script>
