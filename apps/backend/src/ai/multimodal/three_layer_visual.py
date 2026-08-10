@@ -112,7 +112,12 @@ class ThreeLayerVisual:
             model_dir: Directory to save/load models
         """
         self.model_dir = model_dir
-        os.makedirs(model_dir, exist_ok=True)
+        try:
+            os.makedirs(model_dir, exist_ok=True)
+        except OSError:
+            logger.warning(
+                "ThreeLayerVisual: unable to create model_dir=%s", model_dir, exc_info=True
+            )
 
         self._encoder = None  # PCA projection matrix
         self._decoder = None  # Neural network decoder
