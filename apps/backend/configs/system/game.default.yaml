@@ -1,0 +1,25 @@
+# =============================================================================
+# Game Configuration (apps/game-rpg integration)
+# Loaded via tiered_loader get_config("system/game").
+# ANGELA-MATRIX: [L2] [β] [C] [L1]
+# =============================================================================
+#
+# Controls whether the CLI role-playing game (apps/game-rpg/) mounts its
+# resources into the core backbone:
+#   - card dictionary   : apps/game-rpg/data/game_cards.json (351 cards)
+#   - free matrix       : game-specific SharedLatentSpace instance
+#   - axis registry     : game axis_system.AXIS_SYSTEMS (species/AI/cyborg/myth)
+#
+# The game CLI keeps running standalone even if the backbone is unavailable
+# (backbone_bridge is lazy); these flags only govern the bridge.
+
+game:
+  enabled: true
+  data_path: "apps/game-rpg/data/game_cards.json"
+  supplement_path: "apps/game-rpg/data/game_supplement.json"
+  mount_card_dictionary: true
+  mount_free_matrix: true
+  mount_axes: true
+  dictionary_modality: "card"
+  axis_registry_name: "game"
+  max_cards: 351

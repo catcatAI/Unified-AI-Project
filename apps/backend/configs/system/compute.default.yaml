@@ -102,6 +102,16 @@ compute:
     gpu_layers: -1                  # -1 = all layers on GPU
     main_gpu: 0
 
+  # Game (apps/game-rpg) integration
+  # Controls whether the CLI game mounts its free-matrix / card dictionary /
+  # axis registry into the backbone. Pure-IO, no heavy compute — kept "on".
+  game:
+    mode: "on"
+    mount_card_dictionary: true
+    mount_free_matrix: true
+    mount_axes: true
+    max_cards: 351
+
   # Per-hardware-profile overrides (merged with global)
   # These are applied based on hardware_profile.py detection
   profiles:
