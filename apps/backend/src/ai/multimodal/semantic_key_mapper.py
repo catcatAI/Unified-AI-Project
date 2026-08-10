@@ -67,7 +67,12 @@ class SemanticKeyMapper:
         *raw_semantic* stores the original high-dim CLIP/Whisper vector
         (512/384-dim) for more accurate similarity search when available.
         """
-        if structural_latent is None and semantic_latent is None and raw_semantic is None:
+        if (
+            structural_latent is None
+            and semantic_latent is None
+            and raw_semantic is None
+            and combined_latent is None
+        ):
             logger.warning("SemanticKeyMapper.index_key: no latents provided for '%s'", key)
             return
 

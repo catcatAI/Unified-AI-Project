@@ -275,9 +275,124 @@ class InMemoryDictionary(_BaseDictionaryAdapter):
             return False
 
 
+class KeyValueDictionary(_BaseDictionaryAdapter):
+    """通用模態鍵值字典（步驟 C4：物件 / 空間字典標籤）。
+
+    `modality` 以標籤指定（"object"/"space"/"audio"/"image"...），辭條為
+    key → 任意 payload（描述、嵌入、屬性 dict）。查詢以 substring/term 比對。
+    """
+
+    def __init__(self, modality: str = "object") -> None:
+        self.modality_name = modality
+        self._data: Dict[str, Any] = {}
+
+    def _inner_size(self) -> int:
+        return len(self._data)
+
+    def encode(self, input_data: Any, **kwargs: Any) -> List[str]:
+        text = str(input_data).strip().lower()
+        if not text:
+            return []
+        matched = []
+        for k, payload in self._data.items():
+            haystack = str(k).lower()
+            if isinstance(payload, dict):
+                haystack += " " + " ".join(str(v).lower() for v in payload.values())
+            elif isinstance(payload, (list, tuple, set)):
+                haystack += " " + " ".join(str(p).lower() for p in payload)
+            elif payload is not None:
+                haystack += " " + str(payload).lower()
+            terms = haystack.split()
+            if text in haystack or any(t in text for t in terms if t):
+                matched.append(k)
+        return matched
+
+    def _register(self, key: str, payload: Any, **kwargs: Any) -> bool:
+        self._data[key] = payload
+        return True
+
+    def _query_scored(self, input_data: Any, **kwargs: Any) -> List[Any]:
+        keys = self.encode(input_data, **kwargs)
+        return [(k, 1.0) for k in keys]
+
+    def _payload(self, key: str) -> Any:
+        return self._data.get(key)
+
+
+class SemanticKeyMapperAdapter(_BaseDictionaryAdapter):
+    """包 `SemanticKeyMapper` 的多模態語義字典（步驟 C4）。
+
+    `SemanticKeyMapper` 把 latent 向量（64-dim / raw CLIP/Whisper 512/384-dim）
+    對映到 ED3N 概念鍵。此適配層以 `query(latent, top_k)` 提供 cosine 相似度
+    查詢，回傳 `[{key, score}, ...]`（符合協定）。
+    """
+
+    modality_name = "semantic"
+
+    def __init__(self, inner: Any) -> None:
+        self.inner = inner
+
+    def _inner_size(self) -> int:
+        count = getattr(self.inner, "count", None)
+        if count is not None:
+            return int(count() if callable(count) else count)
+        return 0
+
+    def encode(self, input_data: Any, **kwargs: Any) -> List[str]:
+        # 語義字典以 latent 查詢為準；encode 視為 top-K 命中的鍵
+        scored = self._query_scored(input_data, **kwargs)
+        return [k for k, _s in scored]
+
+    def _register(self, key: str, payload: Any, **kwargs: Any) -> bool:
+        fn = getattr(self.inner, "index_key", None)
+        if not callable(fn):
+            return False
+        try:
+            latents = payload if isinstance(payload, dict) else kwargs
+            fn(
+                key,
+                structural_latent=latents.get("structural_latent", latents.get("structural")),
+                semantic_latent=latents.get("semantic_latent", latents.get("semantic")),
+                combined_latent=latents.get("combined_latent", latents.get("combined")),
+                raw_semantic=latents.get("raw_semantic", latents.get("raw")),
+            )
+            return True
+        except Exception as exc:
+            logger.debug("SemanticKeyMapperAdapter register failed: %s", exc, exc_info=True)
+            return False
+
+    def _query_scored(self, input_data: Any, **kwargs: Any) -> List[Any]:
+        import numpy as np
+
+        q = input_data
+        if isinstance(q, (list, tuple)):
+            try:
+                q = np.asarray(q, dtype=np.float32)
+            except Exception:
+                return []
+        if not isinstance(q, np.ndarray):
+            return []
+        fn = getattr(self.inner, "map_latent_to_keys", None)
+        if not callable(fn):
+            return []
+        try:
+            hits = fn(q, top_k=kwargs.get("top_k", 5), mode=kwargs.get("mode", "auto"))
+        except Exception:
+            return []
+        out: List[Any] = []
+        for h in hits or []:
+            if isinstance(h, dict):
+                out.append((h.get("key"), float(h.get("score", 0.0) or 0.0)))
+            elif isinstance(h, (tuple, list)) and len(h) >= 2:
+                out.append((h[0], float(h[1] or 0.0)))
+        return out
+
+
 __all__ = [
     "Ed3nDictionaryAdapter",
     "GardenDictionaryAdapter",
     "InMemoryDictionary",
+    "KeyValueDictionary",
+    "SemanticKeyMapperAdapter",
     "Hit",
 ]
