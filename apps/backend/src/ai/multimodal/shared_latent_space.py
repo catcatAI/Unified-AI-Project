@@ -78,6 +78,103 @@ class SharedLatentSpace:
         self._embedding_cache.clear()
 
     # ------------------------------------------------------------------
+    # Persistence (weights + Mountable protocol)
+    # ------------------------------------------------------------------
+
+    def save_weights(self, path: str) -> bool:
+        """Save all registered modality projection weights to a .npz file.
+
+        Keys are ``{modality}__W`` / ``{modality}__b`` so that arbitrary
+        modality names round-trip without naming collisions.
+
+        Returns True on success, False on failure.
+        """
+        try:
+            save_data: Dict[str, np.ndarray] = {}
+            for name, proj in self._projections.items():
+                save_data[f"{name}__W"] = proj["W"].copy()
+                save_data[f"{name}__b"] = proj["b"].copy()
+            np.savez(path, **save_data)
+            logger.info(
+                "SharedLatentSpace weights saved to %s (%d modalities)",
+                path,
+                len(self._projections),
+            )
+            return True
+        except Exception as e:
+            logger.warning(
+                "Failed to save SharedLatentSpace weights to %s: %s", path, e, exc_info=True
+            )
+            return False
+
+    def load_weights(self, path: str) -> bool:
+        """Load modality projection weights from a .npz file.
+
+        Only known (registered) modalities are updated; unknown keys are
+        ignored so the file can be a superset of the current registration.
+
+        Returns True on success, False if load was impossible.
+        """
+        try:
+            data = np.load(path, allow_pickle=False)
+        except Exception as e:
+            logger.warning(
+                "Failed to load SharedLatentSpace weights from %s: %s", path, e, exc_info=True
+            )
+            return False
+
+        try:
+            loaded = 0
+            for name, proj in self._projections.items():
+                w_key = f"{name}__W"
+                b_key = f"{name}__b"
+                if w_key not in data or b_key not in data:
+                    continue
+                proj["W"][:] = data[w_key]
+                proj["b"][:] = data[b_key]
+                loaded += 1
+            logger.info("SharedLatentSpace weights loaded from %s (%d modalities)", path, loaded)
+            return loaded > 0
+        except Exception as e:
+            logger.warning(
+                "Failed to apply SharedLatentSpace weights from %s: %s", path, e, exc_info=True
+            )
+            return False
+
+    def return_weights_path(self, path: Optional[str] = None) -> str:
+        """Resolve the persistence path (used by Mountable.protocol)."""
+        if path:
+            return str(path)
+        return "models/shared_latent_space.npz"
+
+    # Mountable protocol (backbone §4.2)
+    _mounted: bool = True
+
+    def mount(self) -> bool:
+        """Already in-memory (this component lives in RAM); no-op mount.
+
+        Returns True. Callers that expect a persisted mount will still get
+        the singleton instance via lazy-mount access.
+        """
+        self._mounted = True
+        return True
+
+    def unmount(self) -> bool:
+        """A process-wide singleton should not be freed while the server runs.
+
+        Flush is a no-op: weights are only persisted on explicit save_weights.
+        Kept True so MountManager sweep never tears down the shared space.
+        """
+        self._mounted = True
+        return True
+
+    def is_mounted(self) -> bool:
+        return self._mounted
+
+    def persistence_path(self) -> str:
+        return self.return_weights_path()
+
+    # ------------------------------------------------------------------
     # P43: Semantic modality support
     # ------------------------------------------------------------------
 

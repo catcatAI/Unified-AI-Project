@@ -35,6 +35,11 @@ from typing import Any, Dict, Optional
 from core.backbone.contracts import Mountable
 
 
+def _is_mountable_instance(obj: Any) -> bool:
+    """物件是否已實作 Mountable 協定（有 mount/unmount/is_mounted/persistence_path 方法）。"""
+    return all(hasattr(obj, m) for m in ("mount", "unmount", "is_mounted", "persistence_path"))
+
+
 class MountableWrapper:
     """包裝單一 `Mountable` 資源，加上 idle 追蹤。
 
@@ -45,7 +50,14 @@ class MountableWrapper:
     """
 
     def __init__(self, resource: Any, idle_timeout: float = 300.0) -> None:
-        self.resource = resource
+        # 支援 lazy factory：resource 為 callable（不具 mount/unmount 方法）時，
+        # 視為資源的創建工廠，mount() 才實例化（符合 §4.4 惰性載入原則）。
+        if callable(resource) and not _is_mountable_instance(resource):
+            self._factory = resource
+            self.resource: Any = None
+        else:
+            self._factory = None
+            self.resource = resource
         self.idle_timeout = idle_timeout
         self._lock = threading.RLock()
         self._mounted = False
@@ -60,6 +72,14 @@ class MountableWrapper:
             if self._mounted:
                 self.last_access = time.time()
                 return True
+            if self.resource is None and self._factory is not None:
+                try:
+                    self.resource = self._factory()
+                except Exception:
+                    self.resource = None
+                    return False
+            if self.resource is None:
+                return False
             mount = getattr(self.resource, "mount", None)
             if mount is not None:
                 ok = bool(mount())

@@ -19,9 +19,12 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Optional
 
 from core.backbone.backbone import Backbone
+
+logger = logging.getLogger("angela_backbone")
 from core.backbone.contracts import (
     Envelope,
     EnvelopeKind,
@@ -75,7 +78,24 @@ def get_backbone() -> Backbone:
     global _backbone_instance
     if _backbone_instance is None:
         _backbone_instance = Backbone()
+        _register_default_mountables(_backbone_instance)
     return _backbone_instance
+
+
+def _register_default_mountables(backbone: Backbone) -> None:
+    """註冊主幹線預設可掛載資源（§4.4 現有資源掛載點）。
+
+    惰性：只註冊 MountableWrapper（底層資源延遲建立），不實例化重元件。
+
+    目前已建置的掛載點：
+    - `shared_latent_space`：跨模態共享潛在空間（SaveMountable weights）。
+    """
+    try:
+        from ai.multimodal.shared_latent_space import get_shared_latent_space
+
+        backbone.register_mountable("shared_latent_space", get_shared_latent_space)
+    except Exception as exc:
+        logger.warning("failed to register default mountable shared_latent_space: %s", exc)
 
 
 def reset_backbone() -> None:

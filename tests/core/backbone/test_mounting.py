@@ -132,13 +132,14 @@ class TestMountManager:
 
 class TestBackboneMountIntegration:
     def test_backbone_register_mount(self):
-        from core.backbone import get_backbone
+        from core.backbone import get_backbone, reset_backbone
 
+        reset_backbone()
         bb = get_backbone()
         r = _FakeResource()
         bb.register_mountable("vision", r, idle_timeout=100)
         assert bb.mount("vision") is True
-        assert bb.mounted() == {"vision": True}
+        assert bb.mounted()["vision"] is True
         assert bb.access("vision") is r
         assert bb.unmount("vision") is True
-        assert bb.mounted() == {"vision": False}
+        assert bb.mounted()["vision"] is False
