@@ -2879,6 +2879,16 @@ def start_game():
     global _current_weather
     # Expand game data from game_data module (card-based content)
     expand_game()
+    # 主幹線接入（§6 後續計畫）：可選，缺 backbone 或配置關閉時遊戲照跑
+    import logging as _logging
+
+    _game_logger = _logging.getLogger("angela_game")
+    try:
+        from backbone_bridge import get_bridge
+
+        get_bridge()
+    except Exception as _bridge_exc:
+        _game_logger.debug("backbone bridge skipped: %s", _bridge_exc)
     print("")
     print(C.MAGENTA+C.BOLD+"╔"+"═"*58+"╗"+C.RESET)
     print(C.MAGENTA+C.BOLD+"║"+C.RESET+"  "+C.WHITE+C.BOLD+"CLI 角色扮演模擬 — CLI RPG Simulation"+C.RESET + " "*9 + C.MAGENTA+C.BOLD+"║"+C.RESET)
