@@ -79,6 +79,10 @@ class Backbone:
 
         self.memories = MemoryRegistry()
 
+        from core.backbone.axes import AxesRegistry
+
+        self.axes_registries: Dict[str, AxesRegistry] = {"default": AxesRegistry("default")}
+
         from core.backbone.theta import ThetaBridge
 
         self.theta = ThetaBridge(matrix_provider=self.primary_matrix)
@@ -123,6 +127,18 @@ class Backbone:
     def register_axis(self, axis: str, obj: Any) -> None:
         """註冊座標軸物件。"""
         self.registries.axes.register(axis, obj)
+
+    def register_axes_registry(self, name: str, axes_registry: Any) -> None:
+        """註冊一個結構化 AxesRegistry（後續計畫 §3）。
+
+        與 ``register_axis``（單軸物件）不同：AxesRegistry 是「多軸譜集合」，
+        每軸含維度/位置語意。``name`` 例如 "game"（遊戲軸譜）。
+        """
+        self.axes_registries[name] = axes_registry
+
+    def axes_registry(self, name: str = "default", default: Any = None) -> Any:
+        """取得指定名稱的 AxesRegistry；不存在回傳 default（或 None）。"""
+        return self.axes_registries.get(name, default)
 
     def primary_matrix(self) -> Any:
         return self.registries.matrices.primary()
