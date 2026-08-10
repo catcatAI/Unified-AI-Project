@@ -79,6 +79,10 @@ class Backbone:
 
         self.memories = MemoryRegistry()
 
+        from core.backbone.datasets import DatasetRegistry
+
+        self.datasets = DatasetRegistry()
+
         from core.backbone.axes import AxesRegistry
 
         self.axes_registries: Dict[str, AxesRegistry] = {"default": AxesRegistry("default")}
@@ -139,6 +143,39 @@ class Backbone:
     def axes_registry(self, name: str = "default", default: Any = None) -> Any:
         """取得指定名稱的 AxesRegistry；不存在回傳 default（或 None）。"""
         return self.axes_registries.get(name, default)
+
+    # ------------------------------------------------------------------
+    # 數據集（後續計畫 §5）
+    # ------------------------------------------------------------------
+    def register_dataset_records(
+        self,
+        name: str,
+        records: Any,
+        *,
+        path: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Any:
+        """註冊一個帶 records 的資料集。"""
+        return self.datasets.register_records(name, records, path=path, metadata=metadata)
+
+    def register_dataset_loader(
+        self,
+        name: str,
+        loader: Callable[[], Any],
+        *,
+        path: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Any:
+        """註冊一個惰性載入資料集。"""
+        return self.datasets.register_loader(name, loader, path=path, metadata=metadata)
+
+    def load_dataset(self, name: str) -> list:
+        """載入資料集 records；不存在回傳 []。"""
+        return self.datasets.load(name)
+
+    def datasets_list(self) -> list:
+        """列出所有已註冊資料集（name/path/size/loaded/metadata）。"""
+        return self.datasets.list()
 
     def primary_matrix(self) -> Any:
         return self.registries.matrices.primary()
