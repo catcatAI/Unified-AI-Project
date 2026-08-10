@@ -214,6 +214,18 @@ def setup_middleware(app: FastAPI) -> None:
         allow_headers=["*"],
     )
     app.add_middleware(APIVersionMiddleware)
+    # 安全層掛載（§11.3 #10 步驟 C5）：AuthMiddleware + ContentFilter 下層入口。
+    # enable_auth 預設關閉（公開模式），不破壞現有行為；內容過濾預設啟用。
+    try:
+        from core.backbone.security import SecurityFilterMiddleware, build_security_layer
+
+        layer = build_security_layer(enable_auth=False)
+        app.add_middleware(SecurityFilterMiddleware, layer=layer)
+    except Exception:
+        logger.warning(
+            "[Security] SecurityFilterMiddleware failed to mount; continuing without it",
+            exc_info=True,
+        )
 
 
 _metrics_handler = None
@@ -464,7 +476,7 @@ def _try_wire_dli_broadcast():
         # Wire BehaviorExecutor broadcast so autonomous lifecycle decisions reach users
         try:
             lc = get_lifecycle()
-            if lc and hasattr(lc, '_behavior_executor'):
+            if lc and hasattr(lc, "_behavior_executor"):
                 # Access _broadcast_callback directly — this is the sole wiring point
                 # from the application layer into the autonomy system's behavior dispatch.
                 lc._behavior_executor._broadcast_callback = _dli_broadcast
@@ -560,7 +572,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     try:
         _ = get_lifecycle()
     except Exception:
-        logger.warning("[LifeCycle] Pre-init skipped — will lazily initialize on first use", exc_info=True)
+        logger.warning(
+            "[LifeCycle] Pre-init skipped — will lazily initialize on first use", exc_info=True
+        )
 
     # Wire DLI broadcast_callback so LLMDecisionLoop proactive actions reach frontend
     _try_wire_dli_broadcast()
@@ -571,7 +585,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await hb.start()
         logger.info("[Heartbeat] MetabolicHeartbeat started during lifespan")
     except Exception:
-        logger.warning("[Heartbeat] Pre-init skipped — will lazily initialize on first use", exc_info=True)
+        logger.warning(
+            "[Heartbeat] Pre-init skipped — will lazily initialize on first use", exc_info=True
+        )
 
     # Pre-initialize ChatService at startup so its (potentially slow) memory
     # backends (e.g. chromadb PersistentClient) are warmed up before the first
@@ -580,7 +596,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         chat = await _get_chat_service()
         logger.info("[ChatService] Pre-initialized during lifespan")
     except Exception:
-        logger.warning("[ChatService] Pre-init skipped — will lazily initialize on first use", exc_info=True)
+        logger.warning(
+            "[ChatService] Pre-init skipped — will lazily initialize on first use", exc_info=True
+        )
 
     yield
 
