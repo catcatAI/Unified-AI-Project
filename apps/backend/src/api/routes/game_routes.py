@@ -191,6 +191,29 @@ def game_axes() -> dict:
         raise HTTPException(status_code=503, detail=f"Axis system unavailable: {err}")
 
 
+@router.get("/validate")
+def game_validate() -> dict:
+    """數理化/結構一致性驗證：跑完整卡片集（351）確定性規則，
+    回報硬錯誤（errors）與軟警告（warnings）。"""
+    try:
+        from game.card_validator import load_report
+
+        report = load_report()
+    except Exception as err:
+        logger.warning("Game card validation unavailable: %s", err, exc_info=True)
+        raise HTTPException(status_code=503, detail=f"Card validation unavailable: {err}")
+    return {
+        "ok": report.ok,
+        "total_cards": report.total_cards,
+        "errors": report.errors,
+        "warnings": report.warnings,
+        "issues": [
+            {"card_id": i.card_id, "rule": i.rule, "severity": i.severity, "message": i.message}
+            for i in report.issues
+        ],
+    }
+
+
 # ---------------------------------------------------------------------------
 # Session endpoints
 # ---------------------------------------------------------------------------
