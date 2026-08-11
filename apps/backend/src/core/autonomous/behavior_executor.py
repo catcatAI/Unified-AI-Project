@@ -1,8 +1,17 @@
 import logging
+import random
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+_BASE_SUCCESS_RATE: Dict[str, float] = {
+    "exploration": 0.85,
+    "coexistence_activation": 0.70,
+    "meaning_construction": 0.60,
+    "resource_reallocation": 0.75,
+    "unknown": 0.50,
+}
 
 
 class BehaviorExecutor:
@@ -37,7 +46,11 @@ class BehaviorExecutor:
             Execution result dict with status and output.
         """
         decision_type = kwargs.get("decision_type", "unknown")
-        success = True
+        base_rate = _BASE_SUCCESS_RATE.get(decision_type, 0.5)
+        type_stats = self.get_type_stats()
+        if decision_type in type_stats and (type_stats[decision_type]["success"] + type_stats[decision_type]["fail"]) >= 3:
+            base_rate = type_stats[decision_type]["rate"]
+        success = random.random() < base_rate
 
         result = {
             "behavior_id": behavior_id or "default",

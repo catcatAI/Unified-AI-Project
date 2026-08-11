@@ -1,7 +1,22 @@
+# =============================================================================
+# ANGELA-MATRIX: [L5-L6] [γδη] [A] [L2+]
+# =============================================================================
+#
+# 职责: WebSocket 连接管理 + 实时状态广播 + 子系統推送 API
+# 维度: 情感(γ) 精神(δ) 執行(η)
+# 安全: 使用 Key A (后端控制)
+# 成熟度: L2+ 等級
+#
+# =============================================================================
+
 """
-ANGELA-MATRIX: [L5-L6] [γδ] [A] [L2]
-WebSocket connection management and real-time state broadcast.
+WebSocket connection management, real-time state broadcast, and subsystem push API.
 Extracted from main_api_server.py (A3 god module split).
+
+Subsystem Push API:
+    from services.websocket_manager import push_to_all, push_to_session
+    await push_to_all({"type": "proactive_action", "data": {...}})
+    await push_to_session(session_id, {"type": "chat_token", "data": {...}})
 """
 
 import asyncio
@@ -135,6 +150,35 @@ class ConnectionManager:
 
 
 manager = ConnectionManager()
+
+_push_enabled: bool = True
+
+
+def set_push_enabled(enabled: bool) -> None:
+    global _push_enabled
+    _push_enabled = enabled
+
+
+def is_push_enabled() -> bool:
+    return _push_enabled
+
+
+async def push_to_all(message: dict) -> str:
+    if not _push_enabled:
+        return "disabled"
+    return await manager.broadcast(message)
+
+
+async def push_to_session(session_id: str, message: dict) -> str:
+    if not _push_enabled:
+        return "disabled"
+    return await manager.send_to_session(session_id, message)
+
+
+async def push_to_client(client_id: str, message: dict) -> bool:
+    if not _push_enabled:
+        return False
+    return await manager._sm.send_to_client(client_id, message)
 
 
 async def broadcast_state_updates() -> None:

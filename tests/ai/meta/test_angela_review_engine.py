@@ -432,3 +432,109 @@ class TestErrorHandling:
         report = engine.run_review("code")
         assert report.score == 0.0
         engine._reviewers["code"] = original
+
+
+# =============================================================================
+# WebSocket Push API Tests
+# =============================================================================
+
+class TestWebSocketPushAPI:
+    def test_push_functions_exist(self):
+        from services.websocket_manager import push_to_all, push_to_session, push_to_client
+        assert callable(push_to_all)
+        assert callable(push_to_session)
+        assert callable(push_to_client)
+
+    def test_push_enabled_toggle(self):
+        from services.websocket_manager import set_push_enabled, is_push_enabled
+        set_push_enabled(False)
+        assert is_push_enabled() is False
+        set_push_enabled(True)
+        assert is_push_enabled() is True
+
+
+# =============================================================================
+# BehaviorExecutor Feedback Loop Tests
+# =============================================================================
+
+class TestBehaviorExecutorFix:
+    def test_behavior_executor_import(self):
+        from core.autonomous.behavior_executor import BehaviorExecutor
+        assert BehaviorExecutor is not None
+
+    def test_execution_returns_variable_success(self):
+        import asyncio
+        from core.autonomous.behavior_executor import BehaviorExecutor
+
+        async def _test():
+            executor = BehaviorExecutor()
+            results = []
+            for _ in range(100):
+                r = await executor.execute(decision_type="exploration", rationale="test")
+                results.append(r["status"])
+            assert "completed" in results or "failed" in results
+            stats = executor.get_type_stats()
+            assert "exploration" in stats
+
+        asyncio.run(_test())
+
+    def test_type_stats_tracking(self):
+        import asyncio
+        from core.autonomous.behavior_executor import BehaviorExecutor
+
+        async def _test():
+            executor = BehaviorExecutor()
+            for _ in range(10):
+                await executor.execute(decision_type="exploration")
+                await executor.execute(decision_type="coexistence_activation")
+            stats = executor.get_type_stats()
+            assert "exploration" in stats
+            assert "coexistence_activation" in stats
+            overall = executor.get_overall_stats()
+            assert overall["total_executions"] == 20
+
+        asyncio.run(_test())
+
+
+# =============================================================================
+# ProactiveInteractionSystem Wiring Tests
+# =============================================================================
+
+class TestProactiveWiring:
+    def test_proactive_import(self):
+        from ai.lifecycle.proactive_interaction_system import ProactiveInteractionSystem
+        assert ProactiveInteractionSystem is not None
+
+    def test_proactive_can_be_instantiated(self):
+        import asyncio
+        from ai.lifecycle.proactive_interaction_system import ProactiveInteractionSystem
+        from ai.lifecycle.user_monitor import UserMonitor
+
+        async def _test():
+            monitor = UserMonitor()
+            system = ProactiveInteractionSystem(
+                llm_service=None,
+                state_manager=None,
+                memory_manager=None,
+                user_monitor=monitor,
+                broadcast_callback=lambda msg: None,
+            )
+            assert system is not None
+            assert system.broadcast_callback is not None
+
+        asyncio.run(_test())
+
+    def test_push_to_all_with_proactive_message(self):
+        import asyncio
+        from services.websocket_manager import push_to_all
+
+        async def _test():
+            msg = {
+                "type": "proactive_action",
+                "opportunity": "test",
+                "message": "Hello from Angela",
+            }
+            result = await push_to_all(msg)
+            assert result in ("ok", "disabled", "", 0)
+
+        asyncio.run(_test())

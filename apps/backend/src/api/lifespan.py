@@ -38,6 +38,7 @@ _training_coordinator_instance = None
 _lifecycle_instance = None
 _heartbeat_instance = None
 _brain_bridge_instance = None
+_proactive_instance = None
 
 
 # --- Config (lazy proxy) ---
@@ -183,6 +184,11 @@ def get_crisis_system():
 def get_causal_reasoning():
     """Get the CausalReasoningEngine singleton (initialized during lifespan startup)."""
     return _causal_reasoning_instance
+
+
+def get_proactive():
+    """Get the ProactiveInteractionSystem singleton (initialized during lifespan startup)."""
+    return _proactive_instance
 
 
 async def get_level5_asi():
@@ -635,6 +641,33 @@ def _memory_backend_from_chat():
     return None
 
 
+def _try_start_proactive() -> None:
+    global _proactive_instance
+    try:
+        from ai.lifecycle.proactive_interaction_system import ProactiveInteractionSystem
+        from ai.lifecycle.user_monitor import UserMonitor
+        from services.websocket_manager import push_to_all, is_push_enabled
+
+        async def _broadcast_proactive(message: dict) -> None:
+            message["timestamp"] = datetime.now().isoformat()
+            await push_to_all(message)
+
+        user_monitor = UserMonitor()
+        _proactive_instance = ProactiveInteractionSystem(
+            llm_service=None,
+            state_manager=None,
+            memory_manager=_memory_backend_from_chat(),
+            user_monitor=user_monitor,
+            broadcast_callback=_broadcast_proactive,
+        )
+        _proactive_instance_task = asyncio.create_task(_proactive_instance.start())
+        logger.info("[ProactiveInteractionSystem] Started with WebSocket broadcast")
+    except Exception:
+        logger.warning(
+            "[Proactive] Init skipped — will not run proactively", exc_info=True
+        )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Application lifespan: initialize services on startup, shutdown on exit."""
@@ -671,6 +704,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             "[Heartbeat] Pre-init skipped — will lazily initialize on first use", exc_info=True
         )
 
+    # Start ProactiveInteractionSystem (Angela can initiate conversations)
+    _try_start_proactive()
+
     # Pre-initialize ChatService at startup so its (potentially slow) memory
     # backends (e.g. chromadb PersistentClient) are warmed up before the first
     # user request, instead of blocking the first chat call for many seconds.
@@ -697,3 +733,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await hb_inst.stop()
     except Exception as err:
         logger.warning(f"Heartbeat stop on shutdown skipped: {err}", exc_info=True)
+    # Stop proactive interaction system on shutdown
+    if _proactive_instance is not None:
+        try:
+            await _proactive_instance.stop()
+            logger.info("[ProactiveInteractionSystem] Stopped during shutdown")
+        except Exception as err:
+            logger.warning(f"Proactive stop on shutdown skipped: {err}", exc_info=True)
