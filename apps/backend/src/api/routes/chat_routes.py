@@ -136,6 +136,7 @@ sessions = TTLSessionManager()
 # Latest pipeline response, captured so _handle_chat_request can persist the turn.
 _latest_response: Dict[str, Any] = {}
 
+
 def _get_ed3n_engine():
     def _factory():
         from ai.ed3n.ed3n_engine import ED3NEngine
@@ -591,6 +592,7 @@ async def _build_chat_context(
     # LifeEssence tendency injection: accumulated personality from historical traces
     try:
         from core.life.life_essence import get_life_essence
+
         le = get_life_essence()
         if le:
             summary = le.get_essence_summary()
@@ -1335,6 +1337,7 @@ async def _handle_chat_request(
     session_id: str,
     origin: str = "Human",
     extra_context: Optional[Dict[str, Any]] = None,
+    mode: str = "1:1",
 ) -> Dict[str, Any]:
     """Orchestrate the full chat pipeline and persist the turn to session memory.
 
@@ -1364,15 +1367,19 @@ async def _handle_chat_request(
     result = None
     try:
         result = await _run_chat_pipeline(
-            user_message, user_name, history, session_id, origin, extra_context
+            user_message,
+            user_name,
+            history,
+            session_id,
+            origin,
+            extra_context,
+            mode=mode,
         )
         return result
     finally:
         # Prefer the pipeline return value; fall back to the last captured
         # response so exceptions/partial failures still persist the turn.
-        response_text = (result or {}).get("response_text") or _latest_response.get(
-            "response_text"
-        )
+        response_text = (result or {}).get("response_text") or _latest_response.get("response_text")
         if session_id in sessions and user_message and response_text:
             try:
                 session = sessions.get(session_id)
@@ -1407,6 +1414,7 @@ async def _run_chat_pipeline(
     session_id: str,
     origin: str = "Human",
     extra_context: Optional[Dict[str, Any]] = None,
+    mode: str = "1:1",
 ) -> Dict[str, Any]:
     """Core chat pipeline: validate → math → context → emotion/crisis → execution gate → agent routing → LLM."""
     global _latest_response
@@ -1563,22 +1571,58 @@ async def _run_chat_pipeline(
     _inject_causal_predictions(context)
 
     # Step 10: Generate LLM response
-    try:
-        llm_response = await asyncio.wait_for(
-            chat_svc.generate_response(user_message, user_name, context=context),
-            timeout=timeout,
-        )
-    except asyncio.TimeoutError:
-        _latest_response = _handle_timeout(session_id, schema_ver)
-        return _latest_response
-    except asyncio.CancelledError:
-        logger.info("Client disconnected mid-response, cancelling")
-        raise
-    except Exception as e:
-        logger.error(f"Error in _handle_chat_request: {e}", exc_info=True)
-        raise RuntimeError(f"chat request failed: {e}")
+    if mode != "1:1":
+        # 響應模式選取器（§5.6 backbone.respond）：1:1 / layered / stream / layered_stream
+        try:
+            from core.backbone import get_backbone
 
-    response_text = llm_response.text if hasattr(llm_response, "text") else str(llm_response)
+            response_result = await asyncio.wait_for(
+                get_backbone().respond(user_message, context=context, mode=mode),
+                timeout=timeout,
+            )
+            llm_response = response_result
+        except asyncio.TimeoutError:
+            _latest_response = _handle_timeout(session_id, schema_ver)
+            return _latest_response
+        except asyncio.CancelledError:
+            logger.info("Client disconnected mid-response, cancelling")
+            raise
+        except Exception as e:
+            logger.warning(f"Response mode {mode} failed, falling back to 1:1: {e}")
+            try:
+                llm_response = await asyncio.wait_for(
+                    chat_svc.generate_response(user_message, user_name, context=context),
+                    timeout=timeout,
+                )
+            except asyncio.TimeoutError:
+                _latest_response = _handle_timeout(session_id, schema_ver)
+                return _latest_response
+            except asyncio.CancelledError:
+                raise
+            except Exception as e2:
+                logger.error(f"Error in _handle_chat_request: {e2}", exc_info=True)
+                raise RuntimeError(f"chat request failed: {e2}")
+    else:
+        try:
+            llm_response = await asyncio.wait_for(
+                chat_svc.generate_response(user_message, user_name, context=context),
+                timeout=timeout,
+            )
+        except asyncio.TimeoutError:
+            _latest_response = _handle_timeout(session_id, schema_ver)
+            return _latest_response
+        except asyncio.CancelledError:
+            logger.info("Client disconnected mid-response, cancelling")
+            raise
+        except Exception as e:
+            logger.error(f"Error in _handle_chat_request: {e}", exc_info=True)
+            raise RuntimeError(f"chat request failed: {e}")
+
+    response_text = (
+        llm_response.text
+        if hasattr(llm_response, "text")
+        else getattr(llm_response, "response", None) or str(llm_response)
+    )
     context["continuation_count"] = context.get("continuation_count", 0) + 1
     _fire_causal_learning(response_text, user_message, session_id)
 
@@ -1720,6 +1764,7 @@ async def send_message(session_id: str, request: Dict[str, Any] = Body(...)) -> 
 async def unified_chat(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """Execute the unified chat operation."""
     user_message = request.get("message", request.get("text", ""))
+    mode = request.get("mode", "1:1")
     context = {
         "user_id": request.get("user_name", request.get("user_id", "User")),
         "tenant_id": request.get("tenant_id", "default"),
@@ -1739,8 +1784,10 @@ async def unified_chat(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         history=history,
         session_id=session_id,
         origin=origin,
+        mode=mode,
     )
     response["context"] = context
+    response["mode"] = mode
     response["migration_note"] = (
         "Use /api/v1/chat/unified for multi-persona isolation; "
         "legacy /dialogue and /angela/chat removed in v7.5.0."
@@ -1924,6 +1971,7 @@ async def learn_document(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     from ai.document.learner import DocumentLearner
     from ai.garden.garden_engine import GARDENEngine
     from ai.ed3n.ed3n_engine import ED3NEngine
+
     try:
         garden = GARDENEngine()
         ed3n = ED3NEngine.get_shared(load_trained=False)
@@ -1947,6 +1995,7 @@ async def stream_document(request: Dict[str, Any] = Body(...)) -> StreamingRespo
     from ai.garden.garden_engine import GARDENEngine
     from ai.ed3n.ed3n_engine import ED3NEngine
     from ai.streaming import StreamingPipeline, TokenStream
+
     garden = GARDENEngine()
     garden.load_presets()
     ed3n = ED3NEngine.get_shared(load_trained=False)
@@ -1959,6 +2008,7 @@ async def stream_document(request: Dict[str, Any] = Body(...)) -> StreamingRespo
 async def _stream_doc_events(text: str, garden, ed3n) -> AsyncGenerator[str, None]:
     """Async generator yielding SSE-formatted events from the streaming pipeline."""
     from ai.streaming import StreamingPipeline, TokenStream
+
     stream = TokenStream()
     pipeline = StreamingPipeline(garden=garden, ed3n=ed3n)
     pipeline_task = asyncio.create_task(pipeline.stream(text, stream))

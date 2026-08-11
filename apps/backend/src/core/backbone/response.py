@@ -184,6 +184,26 @@ class ResponseModeSelector:
                 layers.append(token.content)
 
         text = "".join(tokens).strip()
+        if not text and self.router is not None:
+            logger.info(
+                "%s pipeline produced empty output (no engine inference); "
+                "falling back to router for consistent final text",
+                mode,
+            )
+            result = await self._fallback_result(mode, user_message, context)
+            if pair_id is not None and self.pairs is not None:
+                output = Envelope(
+                    payload={"text": result.text, "layers": [result.text]},
+                    kind=EnvelopeKind.RESPONSE,
+                    direction="up",
+                    correlation_id=envelope.correlation_id,
+                    source="response_selector",
+                )
+                try:
+                    self.pairs.resolve(pair_id, output)
+                except Exception:
+                    pass
+            return result
         if pair_id is not None and self.pairs is not None:
             output = Envelope(
                 payload={"text": text, "layers": layers},

@@ -187,6 +187,47 @@ class TestResponseModeSelector:
         r1, r2, r3, r4 = asyncio.run(run())
         assert r1.text == r2.text == r3.text == r4.text == "the quick brown fox"
 
+    def test_engine_free_pipeline_falls_back_to_router(self, router):
+        """無引擎 pipeline（只發 DONE）不再產空輸出，改走 router fallback。
+
+        §5.6.3 一致性要求：layered 模式在沒有 garden/ed3n 推論時，
+        仍應回傳與 1:1 相同的完整文本（修復空輸出 bug）。
+        """
+        from ai.streaming.token_stream import StreamToken, TokenType
+
+        class _EmptyPipeline:
+            async def stream(self, query, stream, timeout=5.0):
+                await stream.put(StreamToken.create_control("DONE"))
+
+        selector = ResponseModeSelector(router=router, pipeline=_EmptyPipeline())
+
+        async def run():
+            return await selector.respond("hi", {}, mode="layered")
+
+        result = asyncio.run(run())
+        assert result.route == "fallback"
+        assert result.text == "fixed answer"
+
+    def test_engine_free_pipeline_resolves_iopair(self, router):
+        """空輸出 fallback 路徑也要 resolve IOPair（不成對遺留）。"""
+        from ai.streaming.token_stream import StreamToken, TokenType
+
+        class _EmptyPipeline:
+            async def stream(self, query, stream, timeout=5.0):
+                await stream.put(StreamToken.create_control("DONE"))
+
+        pairs = _FakePairs()
+        selector = ResponseModeSelector(
+            router=router, pipeline=_EmptyPipeline(), pair_scheduler=pairs
+        )
+
+        async def run():
+            return await selector.respond("hi", {}, mode="layered")
+
+        asyncio.run(run())
+        assert pairs.submitted  # 輸入側已 submit
+        assert pairs.resolved  # fallback 也 resolve 輸出側
+
 
 class TestBackboneRespond:
     def test_backbone_respond_delegates(self, router, pipeline):
