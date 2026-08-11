@@ -172,6 +172,30 @@ class ChatService:
             logger.info("CulturalContextModule initialized")
         except Exception as e:
             logger.warning("CulturalContextModule init skipped: %s", e, exc_info=True)
+        # Initialize KnowledgePipeline for pre-LLM local data lookup (§X #268)
+        try:
+            from ai.meta.knowledge_pipeline import KnowledgePipeline
+            from services.math_verifier import MathVerifier
+            from services.weather_service import WeatherService
+
+            self._knowledge_pipeline = KnowledgePipeline(
+                math_verifier=MathVerifier(),
+                weather_service=WeatherService(),
+                ham_memory=self._ham_memory,
+            )
+            logger.info("KnowledgePipeline initialized for pre-LLM lookup")
+        except Exception as e:
+            self._knowledge_pipeline = None
+            logger.warning("KnowledgePipeline init skipped: %s", e)
+        # Warm up ED3N dictionary (loads 460k entries) in background
+        try:
+            import asyncio
+            from ai.ed3n.ed3n_engine import ED3NEngine
+            asyncio.create_task(asyncio.to_thread(lambda: ED3NEngine.get_shared(load_trained=True).warm_up()))
+            logger.info("ED3N dictionary warm-up scheduled (460k entries)")
+        except Exception as e:
+            logger.debug("ED3N warm-up skipped: %s", e)
+
         self._initialized = True
         logger.info("ChatService initialized")
         # 註冊中層學習協調器（§5.5.2）：CNS 事件驅動，取代內嵌觸發
@@ -205,6 +229,25 @@ class ChatService:
         )
         merged_context = self._inject_grounded_context(merged_context, user_message)
         merged_context = await self._maybe_search_and_ground(user_message, merged_context)
+
+        # Pre-LLM knowledge lookup (§X #268): try local data sources first
+        if self._knowledge_pipeline:
+            try:
+                local_answer = await self._knowledge_pipeline.query(user_message, merged_context)
+                if local_answer and local_answer.get("answer"):
+                    return {
+                        "response_text": local_answer["answer"],
+                        "source": local_answer.get("source", "knowledge_pipeline"),
+                        "confidence": local_answer.get("confidence", 0.9),
+                        "emotion": merged_context.get("emotion", "neutral"),
+                        "emotion_intensity": merged_context.get("emotion_intensity", 0.5),
+                        "backend": "knowledge_pipeline",
+                        "route": "local_data",
+                        "hit_score": local_answer.get("confidence", 0.9),
+                        "hit_source": local_answer.get("source", "local"),
+                    }
+            except Exception as e:
+                logger.debug("KnowledgePipeline query failed: %s", e)
 
         response = await self._llm_service.generate_response(user_message, merged_context)
         response = self._post_process_response(response, merged_context)
