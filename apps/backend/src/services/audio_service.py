@@ -28,7 +28,7 @@ except ImportError:
     _SYNC_AVAILABLE = False
 
 try:
-    from system.cluster_manager import cluster_manager
+    from core.system.cluster_manager import cluster_manager
 
     _CLUSTER_AVAILABLE = True
 except ImportError:

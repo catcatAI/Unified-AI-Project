@@ -336,6 +336,9 @@ function createMainWindow() {
 
   log.info('[Window] Creating window with bounds:', mainWindow.getBounds())
 
+  // Restore previous window position if available
+  restoreWindowPosition()
+
   // Set minimum size
   mainWindow.setMinimumSize(200, 300)
 
@@ -400,8 +403,25 @@ function createMainWindow() {
         {
           label: 'Toggle Frame',
           click: () => {
-            const current = mainWindow.isFrameless()
-            mainWindow.setFrameable(!current)
+            const { BrowserWindow } = require('electron')
+            const bounds = mainWindow.getBounds()
+            const wasFrameless = mainWindow.isFrameless()
+            mainWindow.destroy()
+            const newWin = new BrowserWindow({
+              x: bounds.x,
+              y: bounds.y,
+              width: bounds.width,
+              height: bounds.height,
+              frame: wasFrameless,
+              transparent: !wasFrameless,
+              webPreferences: {
+                preload: require('path').join(__dirname, 'preload.js'),
+                contextIsolation: true,
+                nodeIntegration: false,
+              },
+            })
+            newWin.loadFile(require('path').join(__dirname, 'index.html'))
+            mainWindow = newWin
           },
         },
         { type: 'separator' },
@@ -1449,7 +1469,7 @@ function connectWebSocket(url, sessionInfo) {
         type: 'connect',
         session_id: wsSessionInfo?.sessionId || null,
         client_type: wsSessionInfo?.clientType || 'desktop',
-        client_version: wsSessionInfo?.clientVersion || '6.2.1',
+        client_version: wsSessionInfo?.clientVersion || '7.5.0-dev',
         timestamp: new Date().toISOString()
       }
       log.info('[WebSocket] Sending handshake:', handshake)

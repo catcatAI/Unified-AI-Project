@@ -146,8 +146,8 @@ class TestBug6DLIMemoryBridge:
             # 只驗證 initialize 流程會嘗試建構 memory_bridge（部分失敗不中斷）
             try:
                 await dli.initialize()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("DLI init partial failure (expected in test): %s", e)
             return dli
 
         dli = asyncio.run(run())

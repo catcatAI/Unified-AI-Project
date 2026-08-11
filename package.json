@@ -24,7 +24,7 @@
     "format:js": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "check": "pre-commit run --all-files",
     "bootstrap": "cd apps/backend && python -c \"import sys; sys.path.insert(0, 'src'); from core.system.bootstrap.bootstrap_manager import get_bootstrap_manager; get_bootstrap_manager().run_full_bootstrap()\"",
-    "setup": "pnpm bootstrap && pip install -r apps/backend/requirements.txt && pnpm install",
+    "setup": "pnpm install && cd apps/backend && pip install -e \".[standard]\" && cd ../..",
     "build": "pnpm build:desktop",
     "build:desktop": "pnpm --filter angela-desktop-electron build",
     "health-check": "python scripts/utils/health_check.py"

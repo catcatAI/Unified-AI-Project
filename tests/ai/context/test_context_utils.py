@@ -2,6 +2,8 @@
 
 from cryptography.fernet import Fernet
 
+import pytest
+
 from apps.backend.src.ai.context.storage.base import Context, ContextStatus, ContextType
 from apps.backend.src.ai.context.utils import (
     calculate_context_hash,
@@ -66,12 +68,8 @@ class TestEncryptDecrypt:
         key1 = Fernet.generate_key()
         key2 = Fernet.generate_key()
         encrypted = encrypt_context_data(b"data", key1)
-        try:
+        with pytest.raises(Exception):
             decrypt_context_data(encrypted, key2)
-        except Exception:
-            pass
-        else:
-            raise AssertionError("decrypt with wrong key should fail")
 
 
 class TestCalculateContextHash:

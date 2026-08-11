@@ -47,7 +47,7 @@ class UnifiedKeyManager:
         # 1. 系統通訊密鑰 (Angela Secret Keys: A/B/C)
         # 用於內部組件、行動端、桌面端的加密與控制
         try:
-            from ..system.security_monitor import ABCKeyManager
+            from core.system.security_monitor import ABCKeyManager
 
             self.abc_km = ABCKeyManager()
         except ImportError:

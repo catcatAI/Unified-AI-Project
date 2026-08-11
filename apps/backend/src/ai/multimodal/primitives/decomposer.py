@@ -1,15 +1,12 @@
 """Spatial decomposer: extracts points, lines, planes, circles, arcs from images."""
 
 import math
-import os
-import sys
 from typing import List, Tuple
 
 import numpy as np
 from PIL import Image, ImageFilter
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
-from ai.multimodal.primitives.primitive_types import (
+from .primitive_types import (
     Arc,
     Circle,
     DrawingInstructions,

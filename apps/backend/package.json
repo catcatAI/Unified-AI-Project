@@ -3,14 +3,14 @@
   "version": "7.5.0-dev",
   "private": true,
   "scripts": {
-    "setup": "python -m venv venv && venv\\Scripts\\python -m pip install --upgrade pip && venv\\Scripts\\pip install -e .[dev]",
-    "dev": "echo \"Starting Python backend...\"; python scripts/smart_dev_runner.py",
+    "setup": "python -m venv venv && venv\\Scripts\\python -m pip install --upgrade pip && venv\\Scripts\\pip install -e \".[dev]\"",
+    "dev": "python -m uvicorn src.services.main_api_server:app --reload --host 127.0.0.1 --port 8000",
     "dev:api": "python -m uvicorn src.services.main_api_server:app --reload --host 127.0.0.1 --port 8000",
-    "test": "python scripts/workflow_controller.py",
-    "test:coverage": "python scripts/workflow_controller.py --cov=src --cov-report=html --cov-report=term-missing",
-    "test:watch": "python scripts/workflow_controller.py --tb=short -v --timeout=30 -f",
+    "test": "python -m pytest tests/ -x --tb=short -q",
+    "test:coverage": "python -m pytest tests/ --cov=src --cov-report=html --cov-report=term-missing",
+    "test:watch": "python -m pytest tests/ --tb=short -v --timeout=30 -f",
     "clean": "rmdir /s /q venv 2>nul || rm -rf venv",
-    "health": "python -c \"import sys; sys.path.insert(0, 'apps/backend/src'); import apps.backend.src.core_services; print('Backend imports OK')\"",
-    "validate": "python scripts/final_validation.py"
+    "health": "python -c \"import sys; sys.path.insert(0, 'src'); import core_services; print('Backend imports OK')\"",
+    "validate": "python -m pytest tests/ -x --tb=short -q"
   }
 }
