@@ -532,9 +532,9 @@ async with backbone.training("multimodal") as t:
 | 模式 | 基數 | 語意 | 現有實作 | 狀態 |
 |---|---|---|---|---|
 | **傳統對話** | 1:1 | 一輸入 → 一完整回應 | `router.generate_response()` → `ChatResponse`（`services/llm/router.py:799`） | 🟢 主路徑 |
-| **層式響應** | 1:N | 一輸入 → N 層語意片段（逐層填補） | `StreamingPipeline`（`ai/streaming/pipeline.py`：section→paragraph→sentence→token，fast+slow pass）；`ResponseComposer`/`FragmentComposer`/`NeuroBlender`（`ai/response/composer.py`） | 🟡 已存在但未進主聊天 |
-| **流式響應** | 1:N | 一輸入 → 單一文本 N 個 token 分批送達 | `TokenStream` + `StreamSynthesizer` + `TokenProducer` 系列（`ai/streaming/*`） | 🟡 旁路可用，**未接 LLM 主聊天** |
-| **層式 × 流式** | 1:N×N | 一輸入 → N 層，每層又以 N' token 送達 | `StreamingPipeline` 內已用 `TokenStream`（層間 emit 到同一個 stream） | 🟡 骨架存在，未正式化 |
+| **層式響應** | 1:N | 一輸入 → N 層語意片段（逐層填補） | `StreamingPipeline`（`ai/streaming/pipeline.py`：section→paragraph→sentence→token，fast+slow pass）；`ResponseComposer`/`FragmentComposer`/`NeuroBlender`（`ai/response/composer.py`）；`ResponseModeSelector`（`core/backbone/response.py`） | 🟢 已接主聊天（`mode` 參數） |
+| **流式響應** | 1:N | 一輸入 → 單一文本 N 個 token 分批送達 | `TokenStream` + `StreamSynthesizer` + `TokenProducer` 系列（`ai/streaming/*`） | 🟡 選取器支援；LLM token 流未接（旁路 `/document/stream`、`/multimodal/stream` 可用） |
+| **層式 × 流式** | 1:N×N | 一輸入 → N 層，每層又以 N' token 送達 | `StreamingPipeline` 內已用 `TokenStream`（層間 emit 到同一個 stream） | 🟢 以「層式 ⊃ 流式」包裝支援 |
 
 現有對應與差距：
 - ✅ **層式**：`StreamingPipeline`（四層 fast/slow pass + buffer `_merge` 填補）
@@ -542,11 +542,15 @@ async with backbone.training("multimodal") as t:
 - ✅ **流式**：`TokenStream`（async queue、backpressure、seq_id）+
   `StreamSynthesizer`（predicted/retrieved/generated 三源合成）+
   4 個 `*Producer`（section/paragraph/sentence/token）。
-- 🔧 **主聊天無 stream**：`router.generate_response()` 為同步單一回應；
-  流式能力只掛在 `/document/stream`（`chat_routes.py:1936`）與
-  `multimodal_ws_handler.py:115`（`chat_stream`），未進主 `chat` endpoint。
-- 🔧 **層式與流式未整合為統一模式**：目前 `StreamingPipeline` 把層式輸出 emit 到
-  `TokenStream`（層式⊂流式），但主 LLM 回應走 `_generate_with_llm` 不經 pipeline。
+- ✅ **主聊天已接模式切換**（2026-08-10）：`POST /api/v1/chat/unified` 接受
+  `mode` 參數（`"1:1" | "layered" | "stream" | "layered_stream"`），經
+  `_handle_chat_request` → `_run_chat_pipeline` Step 10 委派
+  `backbone.respond(mode=...)`。`mode != "1:1"` 失敗時 graceful fallback 到 1:1。
+  `/document/stream`（`chat_routes.py`）與 `multimodal_ws_handler.py:115`
+  （`chat_stream`）仍保留為逐 token 旁路。
+- 🔧 **空輸出保證**：無引擎 pipeline（無 garden/ed3n 推論）只發 DONE 時，
+  `ResponseModeSelector` 自動 fallback 到 router，確保四模式最終文本一致
+  （§5.6.3 驗收）並 resolve IOPair 不成對遺留。
 
 #### 5.6.2 衝突風險（用戶提問：1:N×N 是否可能衝突）
 
@@ -567,11 +571,15 @@ backbone.respond(mode="1:1" | "layered" | "stream" | "layered_stream")
 # layered     — StreamingPipeline 逐層 emit（每層一完整片段）
 # stream      — LLM token 流（需先接 TokenStream 到 LLM provider，§7 步驟 C 可選項）
 # layered_stream — StreamingPipeline 層內 token 送出（現有 pipeline 已具雛形）
+
+# 已接主聊天：POST /api/v1/chat/unified 帶 mode 參數即切換（2026-08-10）
 ```
 
 - 切換維度獨立於內容：同一輸入可任選模式，**不改變矩陣/字典/狀態**。
+- `ResponseModeSelector.current_mode` 記錄最近一次模式，`structure.dump()` 可打印
+  真實值（先前死參考 `current_mode` 已修正，`structure.py`）。
 - 與 §5.0 成對排程整合：每個輸出 token / 每層輸出都是一個 `IOPair` 的輸出側，
-  可追蹤、可查、可重試（§5.0.3）。
+  可追蹤、可查、可重試（§5.0.3）。空輸出 fallback 亦 resolve IOPair。
 - **驗收**：同一請求以四種模式各跑一次，最終組出的回應文本一致
   （1:1 == layered 疊合 == stream 拼接 == layered_stream 疊合拼接）。
 

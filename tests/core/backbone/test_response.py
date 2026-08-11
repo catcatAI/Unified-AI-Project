@@ -228,6 +228,27 @@ class TestResponseModeSelector:
         assert pairs.submitted  # 輸入側已 submit
         assert pairs.resolved  # fallback 也 resolve 輸出側
 
+    def test_current_mode_tracks_last_used_mode(self, router):
+        """structure.dump() 死參考回歸守衛：current_mode 記錄真實模式。
+
+        先前 `structure.py._response_mode()` 讀 `self.bb.response.current_mode`
+        不存在常數 → 永遠 fallback "default"。此測試確保 current_mode 更新真實值。
+        """
+        selector = ResponseModeSelector(router=router)
+        assert selector.current_mode == "default"
+
+        async def run():
+            await selector.respond("hi", {}, mode="layered")
+
+        asyncio.run(run())
+        assert selector.current_mode == "layered"
+
+        async def run2():
+            await selector.respond("hi", {}, mode="1:1")
+
+        asyncio.run(run2())
+        assert selector.current_mode == "1:1"
+
 
 class TestBackboneRespond:
     def test_backbone_respond_delegates(self, router, pipeline):

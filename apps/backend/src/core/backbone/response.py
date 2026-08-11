@@ -77,6 +77,7 @@ class ResponseModeSelector:
         self.router = router
         self.pipeline = pipeline
         self.pairs = pair_scheduler
+        self.current_mode = "default"
 
     # ------------------------------------------------------------------
     # 統一入口
@@ -97,6 +98,7 @@ class ResponseModeSelector:
             **kwargs: 傳遞給後端產生的額外參數。
         """
         mode = self._normalize_mode(mode)
+        self.current_mode = mode
         if mode == "1:1":
             return await self._respond_1to1(user_message, context)
         if mode == "layered":
