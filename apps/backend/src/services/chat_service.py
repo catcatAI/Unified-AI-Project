@@ -177,11 +177,15 @@ class ChatService:
             from ai.meta.knowledge_pipeline import KnowledgePipeline
             from services.math_verifier import MathVerifier
             from services.weather_service import WeatherService
+            from ai.memory.grounded_knowledge import GroundedKnowledgeStore
+            from ai.reasoning.planning_engine import PlanningEngine
 
             self._knowledge_pipeline = KnowledgePipeline(
                 math_verifier=MathVerifier(),
                 weather_service=WeatherService(),
                 ham_memory=self._ham_memory,
+                grounded_knowledge=GroundedKnowledgeStore(),
+                planning_engine=PlanningEngine(),
             )
             logger.info("KnowledgePipeline initialized for pre-LLM lookup")
         except Exception as e:

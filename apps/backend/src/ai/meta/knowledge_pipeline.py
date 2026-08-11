@@ -7,14 +7,17 @@
 # 安全: 使用 Key A (后端控制)
 # 成熟度: L3+ 等級
 #
-# 數據源優先級:
-#   1. MathVerifier — 數學計算
-#   2. KnowledgeBase — 顏色/動物/單位/化學
-#   3. WeatherService — 天氣查詢
-#   4. DictionaryLayer — 字典翻譯
-#   5. SymbolicReasoner — 符號推理
-#   6. WebSearchTool — 網絡搜索
-#   7. HAM Memory — 過去對話記憶
+# 數據源（使用現有模組，不重複實現）:
+#   1. MathVerifier — 數學計算 (services/math_verifier.py)
+#   2. KnowledgeBase — 顏色/動物/單位/化學 (ai/knowledge_base.py)
+#   3. WeatherService — 天氣查詢 (services/weather_service.py)
+#   4. DictionaryLayer — 字典翻譯 (ai/ed3n/dictionary_layer.py, 242k 詞條)
+#   5. KGImporter — 知識圖譜 (ai/garden/kg_import.py, IS_A 關係)
+#   6. GroundedKnowledgeStore — 已驗證事實 (ai/memory/grounded_knowledge.py)
+#   7. PlanningEngine — 步驟規劃 (ai/reasoning/planning_engine.py)
+#   8. RelationalChain — 多跳推理 (ai/reasoning/relational_chain.py)
+#   9. CausalReasoningEngine — 因果推論 (ai/reasoning/causal_reasoning_engine.py)
+#   10. HAM Memory — 過去對話記憶
 #
 # =============================================================================
 
@@ -28,13 +31,12 @@ logger = logging.getLogger(__name__)
 class KnowledgePipeline:
     """統一知識查詢管線 — 在 LLM 之前提供本地答案。
 
-    使用方式:
-        pipeline = KnowledgePipeline()
-        result = await pipeline.query(user_message, context)
-        if result:
-            # 使用本地答案，無需呼叫 LLM
-            return result
-        # 無可本地答案，繼續 LLM 管線
+    使用現有組件，不重複實現:
+        - KGImporter: 生成/載入知識圖譜（IS_A 關係）
+        - GroundedKnowledgeStore: 存儲已驗證事實
+        - PlanningEngine: 生成步驟序列
+        - RelationalChain: 多跳推理
+        - CausalReasoningEngine: 因果推論
     """
 
     def __init__(
@@ -46,6 +48,9 @@ class KnowledgePipeline:
         symbolic_reasoner=None,
         web_search_tool=None,
         ham_memory=None,
+        kg_importer=None,
+        grounded_knowledge=None,
+        planning_engine=None,
     ):
         self._math = math_verifier
         self._kb = knowledge_base
@@ -54,6 +59,9 @@ class KnowledgePipeline:
         self._symbolic = symbolic_reasoner
         self._web = web_search_tool
         self._ham = ham_memory
+        self._kg = kg_importer
+        self._grounded = grounded_knowledge
+        self._planner = planning_engine
 
     async def query(self, text: str, context: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
         """依序查詢所有數據源，返回第一個有效答案。
@@ -72,8 +80,8 @@ class KnowledgePipeline:
             ("math", self._try_math),
             ("weather", self._try_weather),
             ("knowledge", self._try_knowledge),
+            ("grounded", self._try_grounded_knowledge),
             ("dictionary_lookup", self._try_dictionary_lookup),
-            ("dictionary", self._try_dictionary),
             ("symbolic", self._try_symbolic),
             ("memory", self._try_memory),
         ]
@@ -135,6 +143,23 @@ class KnowledgePipeline:
                 return {"answer": answer, "confidence": 0.95}
         except Exception as e:
             logger.debug("_try_knowledge: %s", e)
+        return None
+
+    async def _try_grounded_knowledge(self, text: str, ctx: Dict) -> Optional[Dict]:
+        """Query GroundedKnowledgeStore for verified facts."""
+        if not self._grounded:
+            return None
+        try:
+            related = self._grounded.find_related(text, limit=3)
+            if related:
+                verified = [c for c in related if c.status.value == "verified"]
+                if verified:
+                    answers = []
+                    for claim in verified[:3]:
+                        answers.append(claim.text)
+                    return {"answer": "\n".join(answers), "confidence": 0.90, "source": "grounded_knowledge"}
+        except Exception as e:
+            logger.debug("_try_grounded_knowledge: %s", e)
         return None
 
     async def _try_dictionary_lookup(self, text: str, ctx: Dict) -> Optional[Dict]:
