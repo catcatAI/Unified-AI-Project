@@ -1,5 +1,7 @@
-"""
-Angela AI v6.0 - Event Loop System
+# =============================================================================
+# ANGELA-MATRIX: L6 [η] [A] L3+
+# =============================================================================
+"""Angela AI v7.5.0-dev - Event Loop System
 事件循环系统
 
 Asynchronous event processing with priority queue, event filtering,

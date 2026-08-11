@@ -1,3 +1,6 @@
+# =============================================================================
+# ANGELA-MATRIX: L6 [η] [A] L2+
+# =============================================================================
 """Global System Clock — unified time base with tick subscription.
 
 Provides a centralized clock that all system components can use

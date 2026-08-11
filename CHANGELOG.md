@@ -5,6 +5,26 @@ All notable changes to the Angela AI project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.5.0-dev] - 2026-08-11 — Angela 真實多模態學習與審核
+
+### Added
+- 📚 **多模態字典知識庫**：下載 CC-CEDICT（124,803 zh↔en）+ WordNet 3.0（117,658 en）→ `data/dictionaries/`，匯入 `DictionaryLayer` 242,461 條目。
+- 🧠 **Angela 專案學習**：`learn_from_conversation` 學習專案文檔概念 + grounding 1,221 個類別名 + 649 個 camelCase 代碼術語 → 字典擴至 **244,031 條目 / 53,850 relations**（`data/dictionaries/angela_knowledge.json`）。
+- 🖼️ **真實多模態數據集**：CIFAR-10（50,000 影像）+ ESC-50（2,000 音訊）→ `data/multimodal/`。
+- 🎯 **自由矩陣真實對比訓練**：SharedLatentSpace vision+audio 雙模態，CIFAR 300 樣本（vision loss→0.195）+ ESC-50 2,000 樣本（audio loss→0.26），權重存 `models/shared_latent_space.npz`。同類 vs 異類相似度驗證：視覺 0.285 vs 0.192、音訊 1.0 vs 0.929。
+- 🔍 **Angela 專案審核報告**：`docs/03-technical-architecture/ANGELA_LEARNING_AUDIT_2026-08-11.md`（字典涵蓋率、代碼重複類別、camelCase 覆蓋、中文繁簡混用）。
+- 🧩 **Angela 代碼模式學習**：`learn_reflex` 學習 6 個專案代碼慣例（service/route/test/module/命名/backbone），持久化至 `data/dictionaries/angela_code_patterns.json`，重載後精準回答。
+- 🧹 **pyflakes 全 src 掃描**：0 語法錯誤、545 警告（456 未使用 import、19 undefined name 全受 `__future__ import annotations` 保護）。
+
+### Fixed
+- 🐛 **`DictionaryLayer._assign_key` key 衝突覆寫 bug**：grow() 從 `_next_key_id=1` 計數，從 JSON 載入（含 `l1`-`l1221`）後覆寫既有 key `l1` 造成資料遺失。修復為迴圈跳過已存在 key。**+2 回歸測試**，6 tests 通過，flake8 乾淨。
+- 🧹 **未使用 import 清理**：`kg_import.py`（`math/re/Iterator/Set/entity_set`）、`producers.py`（`re/time/List`）、`synthesizer_core.py`（`re/time/field/Any/Deque`）——均為 pyflakes 確診、非惰性、非 shim，27/41 tests 通過，flake8 乾淨。
+- 📄 **`docs/03-technical-architecture/README.md` 最新審計指向修正**：6/25 audit（被 12 檔引用、非最新）→ 指向 8/08 分析 + V3 audit。
+
+### Known
+- ED3N 序列訓練（JointTrainer）對自造雙語對 accuracy=0.0——需真實 QA 大語料。
+- 46 個跨檔重複類別（`ErrorHandler`×3 等）記錄待人工決策合併。
+
 ## [7.5.0-dev] - 2026-07-19 — GPU/CPU Compute Configuration + Hardware-Aware Profiles
 
 ### Added

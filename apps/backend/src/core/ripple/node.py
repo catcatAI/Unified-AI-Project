@@ -1,3 +1,14 @@
+# =============================================================================
+# ANGELA-MATRIX: L2 [β] [A] L3+
+# =============================================================================
+#
+# 职责: 漣漪對象化 — 策略模式實現數學漣漪對狀態軸的影響
+# 维度: 認知(β) 用於漣漪對 focus/learning 的影響計算
+# 安全: 使用 Key A (后端控制)
+# 成熟度: L3+ 等級才能理解漣漪級聯策略
+#
+# =============================================================================
+
 """
 Ripple System — 漣漪對象化 Phase 5
 ===================================
@@ -16,8 +27,7 @@ Ripple System — 漣漪對象化 Phase 5
     cascade = LinearCascadeStrategy(decay=0.72)
     ripples = node.cascade(targets=['alpha', 'beta', 'gamma'], strategy=cascade)
 
-Author: Angela AI v6.2
-Version: 6.2.1
+Author: Angela AI v7.5.0-dev
 """
 
 from __future__ import annotations
@@ -76,6 +86,45 @@ class RippleNode:
         return mapping.get(axis, 0.0)
 
     def apply(self, **kwargs: float) -> RippleNode:
+        """計算漣漪對各狀態軸的影響。
+
+        根據 operator 類型與 result 大小，將 kwargs 中的軸值轉譯為
+        epsilon_delta / alpha_arousal / beta_focus / gamma_excitement。
+
+        Args:
+            epsilon: 數學維度輸入值
+            alpha: 生理維度輸入值
+            beta: 認知維度輸入值
+            gamma: 情感維度輸入值
+            delta: 精神維度輸入值
+            theta: 元認知維度輸入值
+
+        Returns:
+            self (支持鏈式調用)
+        """
+        magnitude = abs(self.result) if self.result != 0 else 1.0
+        scale = min(magnitude / 10.0, 2.0)
+
+        op_factor = {
+            MathOp.ADD: 1.0,
+            MathOp.SUB: -1.0,
+            MathOp.MUL: 0.5,
+            MathOp.DIV: -0.5,
+            MathOp.POW: 1.5,
+            MathOp.MOD: 0.3,
+        }.get(self.operator, 1.0)
+
+        self.epsilon_delta = kwargs.get("epsilon", 0.0) * scale * op_factor
+        self.alpha_arousal = kwargs.get("alpha", 0.0) * scale * 0.5
+        self.beta_focus = kwargs.get("beta", 0.0) * scale * 0.8
+        self.gamma_excitement = kwargs.get("gamma", 0.0) * scale * 0.6
+        self.result_magnitude = magnitude * abs(op_factor)
+
+        if self.epsilon_delta > 1.5:
+            self.overload_triggered = True
+        if self.epsilon_delta < -1.5:
+            self.fear_triggered = True
+
         return self
 
     def cascade(self, targets: List[str], strategy: CascadeStrategy) -> List[RippleNode]:

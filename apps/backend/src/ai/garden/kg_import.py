@@ -30,11 +30,9 @@ import csv
 import gzip
 import json
 import logging
-import math
 import os
 import random
-import re
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 if TYPE_CHECKING:
     from ai.garden.dictionary import VectorDictionary
@@ -305,7 +303,6 @@ class KGImporter:
         """
         open_func = gzip.open if csv_path.endswith(".gz") else open
         count = 0
-        entity_set: Set[str] = set()
 
         with open_func(csv_path, "rt", encoding="utf-8", errors="replace") as f:
             reader = csv.reader(f)

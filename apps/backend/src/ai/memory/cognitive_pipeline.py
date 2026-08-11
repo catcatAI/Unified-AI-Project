@@ -1,6 +1,7 @@
-"""
-Angela Unified Cognitive Pipeline v7.5.0-dev - 統一認知管線
-=====================================================
+# =============================================================================
+# ANGELA-MATRIX: L2 [βθ] [A] L3+
+# =============================================================================
+"""Angela Unified Cognitive Pipeline v7.5.0-dev - 統一認知管線
 
 核心流程：axis-first pathfinding + attractor hit + θ meta-allocation + code inspection
   1. 解析用戶輸入 → 定位當前狀態點 (αβγδεθ)

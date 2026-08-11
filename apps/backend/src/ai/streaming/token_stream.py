@@ -1,5 +1,7 @@
-"""
-Token Stream Infrastructure
+# =============================================================================
+# ANGELA-MATRIX: L6 [η] [A] L2+
+# =============================================================================
+"""Token Stream Infrastructure
 
 Core data structures for unified token streaming across all producers/consumers.
 """

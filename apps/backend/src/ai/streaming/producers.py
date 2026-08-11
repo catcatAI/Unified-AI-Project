@@ -1,5 +1,7 @@
-"""
-Stream Producers
+# =============================================================================
+# ANGELA-MATRIX: L6 [η] [A] L2+
+# =============================================================================
+"""Stream Producers
 
 Multi-level token producers for hierarchical document streaming.
 Section→Paragraph→Sentence→Token, each with fast+slow pass.
@@ -7,11 +9,9 @@ Section→Paragraph→Sentence→Token, each with fast+slow pass.
 from __future__ import annotations
 
 import logging
-import re
-import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import Any, Dict, Optional, TYPE_CHECKING
 
 logger = logging.getLogger(__name__)
 

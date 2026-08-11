@@ -1,5 +1,7 @@
-"""
-StreamingPipeline — sequential multi-level streaming orchestrator.
+# =============================================================================
+# ANGELA-MATRIX: L6 [η] [A] L2+
+# =============================================================================
+"""StreamingPipeline — sequential multi-level streaming orchestrator.
 
 Runs Section→Paragraph→Sentence→Token level-by-level.
 Each level: fast pass → emit → slow pass → emit.

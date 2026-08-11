@@ -6,11 +6,9 @@ Core synthesis logic for incremental multi-source token synthesis.
 from __future__ import annotations
 
 import asyncio
-import re
-import time
 from collections import deque
-from dataclasses import dataclass, field
-from typing import Any, Deque, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Dict, List, Optional
 
 from .token_stream import StreamToken, TokenStream, TokenType
 

@@ -70,6 +70,8 @@ class DictionaryLayer:
         self._encode_cache_max: int = cache_value("ai.dictionary_layer.encode_cache_max", 256)
 
     def _assign_key(self, prefix: str = "c") -> str:
+        while f"{prefix}{self._next_key_id}" in self.entries:
+            self._next_key_id += 1
         key = f"{prefix}{self._next_key_id}"
         self._next_key_id += 1
         return key

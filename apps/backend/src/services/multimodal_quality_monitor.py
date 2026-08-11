@@ -1,5 +1,7 @@
-"""
-MultimodalQualityMonitor — background quality monitoring for multimodal pipelines.
+# =============================================================================
+# ANGELA-MATRIX: L5 [ζ] [A] L3+
+# =============================================================================
+"""MultimodalQualityMonitor — background quality monitoring for multimodal pipelines.
 
 Analogous to ProactiveInteractionSystem background loop. Provides:
   - Periodic sampling (every 60s) of encoder/decoder quality

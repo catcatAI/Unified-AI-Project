@@ -199,23 +199,25 @@ class GameCardValidator:
                 report.add(CardIssue(cid, "stat_empty", f"stat '{key}' is empty string", "warning"))
 
     def _check_field_count(self, cid: str, card: Dict[str, Any], report: ValidationReport) -> None:
+        """raw_field_count 為來源 raw 欄位數（導入前），與處理後 token 數是
+        兩種不同度量——不做相等比較，只做數值健全性檢查。
+
+        修正歷史：先前規則比較 declared != len(tokens) 誤報 117 個假陽性
+        （raw_field_count 是來源資料量，非 token 數）。
+        """
         declared = card.get("raw_field_count")
         if declared is None:
             return
-        actual = len(self._tokens(card))
         if not isinstance(declared, int):
             report.add(
                 CardIssue(
                     cid, "field_count_type", f"raw_field_count not int: {declared!r}", "error"
                 )
             )
-        elif declared != actual:
+        elif declared < 0:
             report.add(
                 CardIssue(
-                    cid,
-                    "field_count_mismatch",
-                    f"raw_field_count={declared} but {actual} tokens present",
-                    "warning",
+                    cid, "field_count_negative", f"raw_field_count {declared} negative", "error"
                 )
             )
 

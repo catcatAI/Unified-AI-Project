@@ -70,13 +70,15 @@ class TestCardValidatorRules:
         )
         assert any(i.rule == "stat_percent" for i in report.issues)
 
-    def test_field_count_mismatch(self):
+    def test_field_count_sanity(self):
+        # raw_field_count 是來源欄位數，不與 token 數比較；
+        # 只查非負整數健全性。
         report = _run(
             [
                 {
                     "card_id": "E",
                     "card_type": "角色卡",
-                    "raw_field_count": 5,
+                    "raw_field_count": -3,
                     "tokens": [
                         {"name": "a", "strength": 0.5},
                         {"name": "b", "strength": 0.5},
@@ -84,7 +86,7 @@ class TestCardValidatorRules:
                 }
             ]
         )
-        assert any(i.rule == "field_count_mismatch" for i in report.issues)
+        assert any(i.rule == "field_count_negative" for i in report.issues)
 
     def test_duplicate_token_name(self):
         report = _run(
