@@ -200,6 +200,8 @@ Angela is built around **4 levels of genuine on-the-fly learning**, not just con
 
 Detailed guides: [Direct Start](docs/usage/QUICK_START.md) · [Train / Configure — optional](docs/usage/SCENARIOS.md)
 
+**Full first-time setup (optional)**: `python scripts/setup.py` runs the complete one-command setup — hardware detection → dataset download (`download_datasets.py`) → model training (`train_pipeline.py`) → verification. Pass `--skip-download` / `--skip-training` to skip those steps and only load existing models.
+
 ```bash
 # Clone
 git clone https://github.com/catcatAI/Unified-AI-Project.git
@@ -277,6 +279,7 @@ python apps/game-rpg/run_game.py
 | **Launch** | `scripts/start_all.bat` | Start backend + frontend concurrently |
 | **Launch** | `scripts/start_backend.bat` | Start backend in dev mode |
 | **Launch** | `scripts/unified-ai.bat` | Comprehensive project launcher |
+| **Setup** | `scripts/setup.py` | One-command setup: detect hardware → download datasets → train models → verify (`--skip-download` / `--skip-training` to skip) |
 | **Health** | `scripts/check_auth_status.py` | Check authentication status |
 | **Health** | `scripts/check_last_memories.py` | Inspect recent HAM memory entries |
 | **Health** | `scripts/check_vec_store.py` | Verify vector store integrity |
@@ -543,6 +546,8 @@ See dedicated docs for full diagrams:
 **一行指令即可開箱即用**：`python scripts/run_angela.py` 會啟動後端 + 桌面，並**依偵測到的硬體自動配置**（GPU/CPU、後端選擇）—— 無需手動下載資料或編輯配置。訓練為**選用**（SCENARIOS.zh.md 情境 B），僅提升輸出品質。
 
 詳細指南：[直接開始](docs/usage/QUICK_START.zh.md) · [訓練 / 配置 — 選用](docs/usage/SCENARIOS.zh.md)
+
+**首次完整安裝（選用）**：`python scripts/setup.py` 執行完整的一鍵安裝——硬體偵測 → 下載資料集（`download_datasets.py`）→ 訓練模型（`train_pipeline.py`）→ 驗證。加上 `--skip-download` / `--skip-training` 可跳過該步驟，僅載入已存在的模型。
 
 ```bash
 # 克隆專案
