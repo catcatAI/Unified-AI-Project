@@ -60,15 +60,15 @@
 | -------- | --------------------------------------------------------- | ------------ | ------ |
 | 项目状态 | `docs/06-project-management/status/organization-status.md`      | 当前组织状态 | 🟢 高  |
 | 成功标准 | `docs/06-project-management/status/success-criteria.md`                 | 项目成功指标 | 🟢 高  |
-| 内容组织 | `docs/06-project-management/planning/content-organization.md` | 内容组织方式 | 🟡 中  |
-| 状态摘要 | `docs/06-project-management/planning/project-status-summary.md`       | 项目状态总结 | 🟡 中  |
+| 内容组织 | `docs/09-archive/planning-2026-08-13/project-management/planning-docs/content-organization.md` | 内容组织方式 | 🗄️ 已歸檔 |
+| 状态摘要 | `docs/09-archive/planning-2026-08-13/project-management/planning-docs/project-status-summary.md`       | 项目状态总结 | 🗄️ 已歸檔 |
 
 ### 🚧 开发文档
 
 | 文档名称 | 位置                                             | 描述         | 时效性  |
 | -------- | ------------------------------------------------ | ------------ | ------- |
 | 重构计划 | `docs/06-project-management/reports/merge-restructure-plan.md` | 项目重构计划 | 🟡 历史 |
-| 待办事项 | `docs/06-project-management/planning/todo-placeholders.md`          | 开发待办列表 | 🟢 活跃 |
+| 待办事项 | `docs/09-archive/planning-2026-08-13/project-management/planning-docs/todo-placeholders.md`          | 开发待办列表 | 🗄️ 已歸檔 |
 
 ## 🎯 按使用场景分类
 
@@ -97,7 +97,7 @@
 
 1. `docs/06-project-management/status/organization-status.md` - 项目状态
 2. `docs/06-project-management/` - 管理文档目录
-3. `docs/06-project-management/planning/todo-placeholders.md` - 待办事项
+3. `docs/09-archive/planning-2026-08-13/project-management/planning-docs/todo-placeholders.md` - 待办事项（🗄️ 已歸檔）
 
 ## 🔍 文档质量评估
 

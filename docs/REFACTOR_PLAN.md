@@ -11,7 +11,7 @@
 > （error dataclasses / `TrainingExample` / `BaseAgent` 等）。詳見根 `README.md`
 > §2026-08-13 Internal Consolidation。測試數已同步至 **4,499**（0 errors）。
 > `ANGELA_FULL_ARCHITECTURE.md` 的已刪子系統標記已校正。`core_ai/` 舊結構已不存在，
-> 相關規劃文檔（`docs/06-project-management/planning/`）待歸檔。
+> 相關規劃文檔已歸檔至 `docs/09-archive/planning-2026-08-13/`（原 `docs/06-project-management/planning/`，描述舊 `core_ai/` 結構）。
 
 ## 1. 現狀診斷
 

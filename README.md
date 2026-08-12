@@ -435,8 +435,7 @@ Executed as part of the architecture-integration goal (see `docs/REFACTOR_PLAN.m
 - **Test count re-synced** to **4,499** (tests/, 0 errors) across README / QUICKSTART /
   FRAMEWORK_OVERVIEW / IMPROVEMENT_ROADMAP / tests/README / PROJECT_OVERVIEW / AGENTS.
 
-> ⚠️ `docs/06-project-management/planning/` still describes the obsolete `core_ai/` layout
-> and is pending archival (see the full-project doc audit).
+> 🗄️ `docs/06-project-management/planning/` 已歸檔至 `docs/09-archive/planning-2026-08-13/`（原描述已不存在的 `core_ai/` 佈局）。
 | **i18n Internationalization** | I18nManager, PromptManager, Handler/Prompt replacement, Locale files | ✅ **DONE** | 🟡 MEDIUM |
 | **YOLO Object Detection** | New feature | ⬜ | 🔴 HIGH |
 | **Auto-Repair Pathway** | run_angela.py auto-install on missing deps | ✅ **DONE** | 🔴 HIGH |
