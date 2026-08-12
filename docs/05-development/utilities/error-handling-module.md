@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides an overview of the `error.py` module (`src/shared/error.py`). Its primary function is to define custom exception classes for project-specific errors and to provide a central error handling function for the Unified-AI-Project.
+This document provides an overview of the `error.py` module (`src/shared/error.py`). Its primary function is to define custom exception classes for project-specific errors and to provide a central error handling function for the Unified-AI-Project. Since the 2026-08-13 error-hierarchy unification, this module also **re-exports** the base `AngelaError` hierarchy (`ErrorHandler`, `SecurityError`, `ResourceError`, `ServiceError`, `ValidationError`, `RecoveryStrategy`) from `core.angela_error`, which is the single source of truth; `ProjectError` / `HSPConnectionError` / `project_error_handler` remain defined here.
 
 This module is crucial for establishing a standardized and centralized mechanism for handling errors across the entire AI system. This approach ensures consistent error reporting, facilitates structured logging, and enables the implementation of robust recovery actions, thereby significantly improving the overall reliability and maintainability of the codebase.
 
@@ -32,3 +32,6 @@ When an error condition arises that is specific to the Unified-AI-Project's doma
 ## Code Location
 
 `src/shared/error.py`
+
+> Base `AngelaError` hierarchy lives in `core/angela_error` (single source of truth);
+> `src/shared/error.py` re-exports it for backward compatibility.
