@@ -3,9 +3,11 @@
 # =============================================================================
 
 import asyncio
+import heapq
 import json
 import logging
 import os
+import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -65,6 +67,13 @@ class TrainingCoordinator:
         self._max_examples = max_examples_per_domain
         self._max_hashes = max_hashes_per_domain
         self._lock = asyncio.Lock()
+        # D4 (REFACTOR_PLAN §13.4): priority queue for sorted training execution.
+        # Items are (priority, insertion_order, payload); higher priority drains
+        # first. Guarded by a threading lock so ingest-time enqueue never blocks
+        # the main response path.
+        self._train_queue: List[Tuple[float, int, Dict[str, Any]]] = []
+        self._queue_counter: int = 0
+        self._queue_lock = threading.Lock()
 
     async def assign_domain(self, domain: str) -> Optional[str]:
         if self.bus is not None:
@@ -128,6 +137,43 @@ class TrainingCoordinator:
         async with self._lock:
             domain_hashes = self._seen_hashes.get(domain, set())
             return h in domain_hashes
+
+    # ------------------------------------------------------------------
+    # D4 (REFACTOR_PLAN §13.4): priority-queued, sorted training execution.
+    # ------------------------------------------------------------------
+    def enqueue(
+        self, domain: str, sample: Dict[str, Any], priority: float = 0.0
+    ) -> None:
+        """Queue a training sample for sorted execution (highest priority first).
+
+        Non-blocking and cheap; safe to call on the main ingest path.
+        """
+        with self._queue_lock:
+            self._queue_counter += 1
+            heapq.heappush(
+                self._train_queue,
+                (-float(priority), self._queue_counter, {"domain": domain, "sample": sample}),
+            )
+
+    def drain_priority_queue(self) -> List[Dict[str, Any]]:
+        """Return queued training items ordered by priority (highest first).
+
+        The heap key is (-priority, counter), so the smallest tuple is the
+        highest-priority item; nsmallest therefore drains high-priority first.
+        """
+        with self._queue_lock:
+            items = [
+                payload
+                for _neg_prio, _order, payload in heapq.nsmallest(
+                    len(self._train_queue), self._train_queue
+                )
+            ]
+            self._train_queue.clear()
+        return items
+
+    def pending_training_count(self) -> int:
+        with self._queue_lock:
+            return len(self._train_queue)
 
     async def sync_reflex_patterns(
         self,

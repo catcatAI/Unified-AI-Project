@@ -1436,7 +1436,34 @@ async def _run_chat_pipeline(
     user_message = _validate_and_truncate_input(user_message, chat_cfg)
     _was_truncated = _raw_input_len > max_len
 
-    # Step 3: Math dual-rail verification — gate through IntentRegistry first
+    # Step 1.5: Adaptive main-line dispatch (REFACTOR_PLAN §13) — best effort.
+    # Judges, from content, whether this input is a generation request vs a
+    # learning signal vs training data, and (when a TrainingCoordinator is
+    # available) enqueues training with priority. Never raises into the
+    # response path; the decision is recorded on context for observability.
+    try:
+        from services.mainline_dispatcher import dispatch as _ml_dispatch
+
+        _tc = None
+        try:
+            from core.backbone import get_backbone
+
+            _tc = get_backbone().get_module("training_coordinator")
+        except Exception:
+            _tc = None
+        _dispatch_decision = _ml_dispatch(
+            {
+                "text": user_message,
+                "origin": origin,
+                "time": (extra_context or {}).get("time"),
+            },
+            training_coordinator=_tc,
+        )
+        context["_dispatch_intent"] = _dispatch_decision.intent.value
+    except Exception as _e:  # pragma: no cover - defensive
+        logger.debug("Main-line dispatch hook skipped: %s", _e)
+
+        # Step 3: Math dual-rail verification — gate through IntentRegistry first
     math_result = await _try_math_verification(
         user_message, user_name, session_id, schema_ver, trunc_msg, _was_truncated
     )
