@@ -38,7 +38,7 @@ Status: ✅ Fixed / 🟡 Persistent / ❌ Needs Fix / 🗑️ Deprecated
 |---|------|--------|--------|-------|
 | 21 | `core/ripple/node.py` | AxisRippleApplicator.apply() | 🟡 | Abstract base; subclasses override |
 | 22 | `core/allocation/policy.py` | Stage.matches() / .decide() | 🟡 | Abstract base; subclasses override |
-| 23 | `core/error/error_handler.py` | BaseErrorHandler.recover() | 🟡 | Abstract base; overridden |
+| 23 | ~~`core/error/error_handler.py`~~ | ~~BaseErrorHandler.recover()~~ | 🗑️ | File deleted in dedup (2026-08-13); error hierarchy unified into `core.angela_error` |
 
 ## Placeholder Classes (fallbacks for missing imports)
 
@@ -70,6 +70,6 @@ Status: ✅ Fixed / 🟡 Persistent / ❌ Needs Fix / 🗑️ Deprecated
 | Atlessian Bridge fully implemented (P1.2) | 15 methods | ✅ |
 | Logged stubs — Level5ASI inline (P1.1 pending) | 4 classes | 🟡 Await real alignment modules |
 | Fallback placeholder classes | 11 | 🗑️ Acceptable |
-| Abstract base stubs | 3 | 🟡 Subclass overrides |
+| Abstract base stubs | 2 | 🟡 Subclass overrides |
 | Dead code removed (meta_formulas, genesis, examples) | 3 packages | 🗑️ Cleaned in Px6 |
-| **Remaining persistent stubs** | **9** | 🟡 Requires external service/model backends or new modules |
+| **Remaining persistent stubs** | **8** | 🟡 Requires external service/model backends or new modules |
