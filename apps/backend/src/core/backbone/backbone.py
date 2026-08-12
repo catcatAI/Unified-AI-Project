@@ -229,6 +229,24 @@ class Backbone:
             "config_loaded": bool(self._config),
         }
 
+    def summary(self) -> Dict[str, Any]:
+        """Human-readable summary of registered components.
+
+        Backed by the CLI (`python -m core.backbone summary`) and used by
+        tooling that introspects the running system. Returns JSON-serializable
+        data only.
+        """
+        config_keys: list = []
+        if self._config:
+            config_keys = list(self._config.keys())
+        return {
+            "initialized": self._initialized,
+            "engines_loaded": list(self._engines.keys()),
+            "singletons_loaded": list(self._singletons.keys()),
+            "config_loaded": bool(self._config),
+            "config_sections": config_keys,
+        }
+
 
 _instance: Optional[Backbone] = None
 

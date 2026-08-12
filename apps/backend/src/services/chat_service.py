@@ -33,6 +33,7 @@ class ChatService:
             os.path.dirname(__file__), "..", "..", "..", "..", "data", "cl_state"
         )
         self._cultural_context = None
+        self._knowledge_pipeline = None
         self._vector_store_disabled = False
         self._vector_store_recent_fail = False
 
