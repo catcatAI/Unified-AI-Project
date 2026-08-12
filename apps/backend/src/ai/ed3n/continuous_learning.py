@@ -19,12 +19,10 @@ from .training_types import TrainingExample as TTTrainingExample
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class TrainingExample:
-    user_text: str
-    response_text: str
-    context: Dict[str, Any]
-    timestamp: str = ""
+# TrainingExample is the canonical example type from training_types. The pipeline
+# now stores conversational interactions directly as canonical TrainingExamples
+# (input_text/expected_output/metadata), unified into a single source of truth.
+TrainingExample = TTTrainingExample
 
 
 @dataclass
@@ -64,7 +62,7 @@ class ContinuousLearningPipeline:
 
         self._lock = threading.RLock()
         self._interaction_count: int = 0
-        self._training_buffer: List[TrainingExample] = []
+        self._training_buffer: List[TTTrainingExample] = []
         self._history: List[Dict[str, Any]] = []
         self._stats: Dict[str, Any] = {
             "total_interactions": 0,
@@ -171,11 +169,14 @@ class ContinuousLearningPipeline:
         return new_keys
 
     def _queue_training_example(self, user_text: str, response_text: str, context: Dict) -> None:
-        example = TrainingExample(
-            user_text=user_text,
-            response_text=response_text,
-            context=context,
-            timestamp=datetime.now().isoformat(),
+        example = TTTrainingExample(
+            input_text=user_text,
+            expected_output=response_text,
+            input_keys=[],
+            output_keys=[],
+            relation_pairs=[],
+            confidence=0.8,
+            metadata=context if isinstance(context, dict) else {},
         )
         self._training_buffer.append(example)
         if len(self._training_buffer) > self.max_buffer_size:
@@ -209,25 +210,18 @@ class ContinuousLearningPipeline:
             tt_examples = []
             for ex in examples:
                 input_keys = (
-                    self.engine.dictionary.encode(ex.user_text)
+                    self.engine.dictionary.encode(ex.input_text)
                     if self.engine and self.engine.dictionary
                     else []
                 )
                 output_keys = (
-                    self.engine.dictionary.encode(ex.response_text)
+                    self.engine.dictionary.encode(ex.expected_output)
                     if self.engine and self.engine.dictionary
                     else []
                 )
-                tt_ex = TTTrainingExample(
-                    input_text=ex.user_text,
-                    expected_output=ex.response_text,
-                    input_keys=input_keys,
-                    output_keys=output_keys,
-                    relation_pairs=[],
-                    confidence=0.8,
-                    metadata=ex.context if isinstance(ex.context, dict) else {},
-                )
-                tt_examples.append(tt_ex)
+                ex.input_keys = input_keys
+                ex.output_keys = output_keys
+                tt_examples.append(ex)
             batch = TrainingBatch(
                 examples=tt_examples,
                 batch_id=f"cl_{int(time.time())}_{self._interaction_count}",
@@ -324,10 +318,9 @@ class ContinuousLearningPipeline:
                 "history": self._history[-100:],
                 "buffer": [
                     {
-                        "user_text": ex.user_text,
-                        "response_text": ex.response_text,
-                        "context": ex.context,
-                        "timestamp": ex.timestamp,
+                        "input_text": ex.input_text,
+                        "expected_output": ex.expected_output,
+                        "metadata": ex.metadata,
                     }
                     for ex in self._training_buffer
                 ],
@@ -359,11 +352,14 @@ class ContinuousLearningPipeline:
         pipeline._history = state.get("history", [])
 
         for ex_data in state.get("buffer", []):
-            example = TrainingExample(
-                user_text=ex_data["user_text"],
-                response_text=ex_data["response_text"],
-                context=ex_data.get("context", {}),
-                timestamp=ex_data.get("timestamp", ""),
+            example = TTTrainingExample(
+                input_text=ex_data["input_text"],
+                expected_output=ex_data["expected_output"],
+                input_keys=[],
+                output_keys=[],
+                relation_pairs=[],
+                confidence=0.8,
+                metadata=ex_data.get("metadata", {}),
             )
             pipeline._training_buffer.append(example)
 

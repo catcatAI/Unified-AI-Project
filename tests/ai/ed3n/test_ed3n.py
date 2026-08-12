@@ -433,9 +433,13 @@ class TestContinuousLearningPipeline:
         )
         cl._training_buffer.append(
             CLTrainingExample(
-                user_text="hello",
-                response_text="hi",
-                context={"session": "t1"},
+                input_text="hello",
+                expected_output="hi",
+                input_keys=[],
+                output_keys=[],
+                relation_pairs=[],
+                confidence=0.8,
+                metadata={"session": "t1"},
             ),
         )
         metrics = cl.train_step()
