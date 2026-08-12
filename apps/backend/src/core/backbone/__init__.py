@@ -17,7 +17,7 @@ Usage:
     emotion = bb.emotion()
 """
 
-from .backbone import Backbone, get_backbone
+from .backbone import Backbone, get_backbone, reset_backbone
 from .hardware import HardwareProfile
 
-__all__ = ["Backbone", "get_backbone", "HardwareProfile"]
+__all__ = ["Backbone", "get_backbone", "reset_backbone", "HardwareProfile"]

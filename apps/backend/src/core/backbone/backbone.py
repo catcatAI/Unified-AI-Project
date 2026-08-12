@@ -241,4 +241,10 @@ def get_backbone(config_path: Optional[str] = None) -> Backbone:
     return _instance
 
 
-__all__ = ["Backbone", "get_backbone"]
+def reset_backbone() -> None:
+    """Reset the Backbone singleton (used by tests for isolation)."""
+    global _instance
+    _instance = None
+
+
+__all__ = ["Backbone", "get_backbone", "reset_backbone"]

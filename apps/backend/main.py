@@ -150,19 +150,9 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"实时同步系统初始化失败: {e}")
 
-    # 初始化知识图谱
-    try:
-        from src.core.knowledge.unified_knowledge_graph_impl import (
-            UnifiedKnowledgeGraph,
-        )
-
-        kg = UnifiedKnowledgeGraph({})
-        await kg.initialize()
-        logger.info("✅ 知识图谱系统初始化完成")
-    except ImportError as e:
-        logger.warning(f"知识图谱模块不可用: {e}")
-    except Exception as e:
-        logger.warning(f"知识图谱初始化失败: {e}")
+    # 知识图谱：原 UnifiedKnowledgeGraph 桩模块已移除（见 core/knowledge/__init__.py），
+    # 实际功能由 ai.garden.kg_import.KGImporter / ai.meta.knowledge_pipeline.KnowledgePipeline
+    # 提供，于查询时按需初始化，此处不再单独启动。
 
     # 初始化监控系统
     try:
