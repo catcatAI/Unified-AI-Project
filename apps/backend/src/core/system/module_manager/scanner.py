@@ -20,8 +20,8 @@ from .models import (
 logger = logging.getLogger(__name__)
 
 
-class ValidationError(Exception):
-    pass
+# ValidationError re-exports the canonical Angela error hierarchy's validation error.
+from core.angela_error import ValidationError  # noqa: F401
 
 
 class ModuleScanner:

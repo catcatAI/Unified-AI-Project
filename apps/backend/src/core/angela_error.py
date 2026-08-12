@@ -11,6 +11,15 @@ class ErrorSeverity(enum.Enum):
     DEBUG = "debug"
 
 
+class RecoveryStrategy(enum.Enum):
+    RETRY = "retry"
+    FALLBACK = "fallback"
+    CIRCUIT_BREAK = "circuit_break"
+    GRACEFUL_DEGRADE = "graceful_degrade"
+    MANUAL_INTERVENTION = "manual_intervention"
+    RESTART = "restart"
+
+
 class ErrorCategory(enum.Enum):
     UNKNOWN = "unknown"
     CONFIGURATION = "configuration"
@@ -228,6 +237,7 @@ class ErrorHandler:
 __all__ = [
     "AngelaError",
     "ErrorSeverity",
+    "RecoveryStrategy",
     "ErrorCategory",
     "ErrorContext",
     "ErrorHandler",

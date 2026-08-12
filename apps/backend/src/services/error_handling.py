@@ -14,8 +14,8 @@ from core.utils import safe_error as _safe_error
 __all__ = ["safe_error", "ServiceError"]
 
 
-class ServiceError(Exception):
-    """Base class for recoverable service-layer errors."""
+# ServiceError re-exports the canonical Angela error hierarchy's service error.
+from core.angela_error import ServiceError  # noqa: F401
 
 
 def safe_error(e: Exception, max_length: int = 200) -> str:

@@ -115,7 +115,7 @@ def test_plugin_manager_importable() -> None:
 
 def test_error_enums_have_required_values() -> None:
     """Verify error handling enums exposed via the compatibility shim."""
-    from core.error.error_handler import ErrorCategory, ErrorSeverity, RecoveryStrategy
+    from core.angela_error import ErrorCategory, ErrorSeverity, RecoveryStrategy
 
     assert ErrorCategory.SECURITY is not None
     assert ErrorSeverity.CRITICAL is not None
@@ -124,7 +124,7 @@ def test_error_enums_have_required_values() -> None:
 
 def test_circuit_breaker_stores_service_name() -> None:
     """Verify CircuitBreaker (canonical network_resilience) instantiation."""
-    from core.error.error_handler import CircuitBreaker
+    from shared.network_resilience import CircuitBreaker
 
     cb = CircuitBreaker(failure_threshold=3, recovery_timeout=10.0)
     assert cb is not None
@@ -134,7 +134,7 @@ def test_circuit_breaker_stores_service_name() -> None:
 
 def test_error_handler_instantiation() -> None:
     """Verify ErrorHandler can be instantiated."""
-    from core.error.error_handler import ErrorHandler
+    from core.angela_error import ErrorHandler
 
     eh = ErrorHandler()
     assert eh is not None
