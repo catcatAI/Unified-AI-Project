@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🧠 **Angela 專案學習**：`learn_from_conversation` 學習專案文檔概念 + grounding 1,221 個類別名 + 649 個 camelCase 代碼術語 → 字典擴至 **244,031 條目 / 53,850 relations**（`data/dictionaries/angela_knowledge.json`）。
 - 🖼️ **真實多模態數據集**：CIFAR-10（50,000 影像）+ ESC-50（2,000 音訊）→ `data/multimodal/`。
 - 🎯 **自由矩陣真實對比訓練**：SharedLatentSpace vision+audio 雙模態，CIFAR 300 樣本（vision loss→0.195）+ ESC-50 2,000 樣本（audio loss→0.26），權重存 `models/shared_latent_space.npz`。同類 vs 異類相似度驗證：視覺 0.285 vs 0.192、音訊 1.0 vs 0.929。
-- 🔍 **Angela 專案審核報告**：`docs/03-technical-architecture/ANGELA_LEARNING_AUDIT_2026-08-11.md`（字典涵蓋率、代碼重複類別、camelCase 覆蓋、中文繁簡混用）。
+- 🔍 **Angela 專案審核報告**：`docs/09-archive/ANGELA_LEARNING_AUDIT_2026-08-11.md`（字典涵蓋率、代碼重複類別、camelCase 覆蓋、中文繁簡混用；已完成，歸檔 2026-08-13）。
 - 🧩 **Angela 代碼模式學習**：`learn_reflex` 學習 6 個專案代碼慣例（service/route/test/module/命名/backbone），持久化至 `data/dictionaries/angela_code_patterns.json`，重載後精準回答。
 - 🧹 **pyflakes 全 src 掃描**：0 語法錯誤、545 警告（456 未使用 import、19 undefined name 全受 `__future__ import annotations` 保護）。
 

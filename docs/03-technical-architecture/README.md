@@ -130,7 +130,7 @@ The architecture is designed to scale both vertically and horizontally:
 ## Note on Analysis Documents
 
 The `analysis/` subdirectory contains ~51 documents dating from 2026-02 to 2026-06. Files from 2026-02 (test reports, fix reports, completion reports) are **historical records** — the issues they describe have been resolved. Files from 2026-05 (WIRING_MAP, MODULARITY_ANALYSIS, CODE_STATISTICS, etc.) are **partially outdated** — many self-identify as ~30% stale. For current architecture state, see:
-- `docs/COMPREHENSIVE_PROJECT_ANALYSIS_2026-08-08.md` (latest project analysis)
+- `docs/09-archive/COMPREHENSIVE_PROJECT_ANALYSIS_2026-08-08.md` (latest project analysis; superseded, archived 2026-08-13)
 - `docs/06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md` (latest phase audit)
 - `docs/IDEAL_ARCHITECTURE.md` (target architecture)
 - `AGENTS.md` (current code statistics and structure)
