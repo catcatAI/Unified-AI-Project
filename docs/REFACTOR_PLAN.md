@@ -34,7 +34,7 @@
 
 | 缺失組件 | 影響 | 來源 |
 |----------|------|------|
-| **Backbone 層** | ~130 個散落的單例工廠 | ARCHITECTURE_BACKBONE.md 設計但未實現 |
+| **Backbone 層** | ~130 個散落的單例工廠 | ✅ 已實現（`core/backbone/backbone.py` + `hardware.py`，見 ARCHITECTURE_BACKBONE.md） |
 | **統一配置切換** | 無法根據硬體自動選擇最佳實現 | 系統中沒有 |
 | **一鍵安裝/訓練** | 用戶需手動下載數據、訓練、配置 | 沒有統一入口 |
 | **自動硬體檢測** | 無法根據 GPU/CPU/記憶體自動調整 | 僅有 hardware_profile.py 但未被組件使用 |
@@ -389,25 +389,27 @@ python -m uvicorn ... # 啟動
 
 ### 改造後（目前實際可達成的流程）
 
-> ⚠️ 計畫中的「`setup.py` 一條指令完成 自動檢測+下載+訓練+配置+驗證」與 `start.py` 啟動器**尚未實作**。
+> ✅ `start.py` 啟動器**已實作**（`python start.py` 一鍵啟動後端 + Web Viewer）。
+> ✅ `setup.py` 一鍵流程**已實作**的子集：自動檢測 + Backbone 初始化 + 知識系統初始化 + 知識圖譜 + 驗證（3 項測試）。
+> ⚠️ 計畫中的「`setup.py` 自動**下載** + 自動**訓練**」仍**尚未實作**（Phase 5-10）；`setup.py` 目前僅載入已訓練模型，不會下載/訓練。
 > 目前真實的一鍵流程如下：
 
 ```bash
 # 1) 安裝依賴（二選一）：
-python setup.py                        # 僅安裝 requirements.txt 依賴 + 建立 Windows 捷徑（不會自動下載/訓練）
+python setup.py                        # 一鍵：硬體偵測 → Backbone 初始化 → 知識系統 + 知識圖譜 → 驗證（不會自動下載/訓練）
 #   或：pip install -e "apps/backend"  # 套件化安裝（推薦，見 README）
-# 2) 啟動（實際入口是 scripts/run_angela.py，不是 start.py）：
+# 2) 啟動（主要入口 scripts/run_angela.py；或 python start.py 一鍵啟動前後端）：
 python scripts/run_angela.py              # 啟動前後端
 python scripts/run_angela.py --api-only    # 只啟動後端
 python scripts/run_angela.py --health-check
 # 完成！Angela 已可用（後端依偵測到的硬體自動配置；訓練為選用，見 docs/usage/SCENARIOS.md）
 ```
 
-> 終極目標（`setup.py` 自動檢測+下載+訓練+配置+驗證 → `start.py` 啟動）屬 Phase 5-10 規劃，**尚未實作**。
+> 終極目標中的「自動檢測 + 配置 + 驗證 → 一鍵啟動」**已在 caaf9f8e 實作**（`setup.py` + `start.py`）；僅「自動下載 + 自動訓練」仍屬 Phase 5-10 規劃，**尚未實作**。
 
 ### 代碼改善
 
-> 下列為計畫目標值（設計對照），非全部已落地：其中「啟動步驟→1 命令」「硬體適配→自動」已由 `scripts/run_angela.py` + `hardware_profile.py` 部分實現；「`setup.py` 自動下載/訓練」尚未實作（見上方 ⚠️）。
+> 下列為計畫目標值（設計對照），非全部已落地：其中「啟動步驟→1 命令」「硬體適配→自動」已由 `scripts/run_angela.py` + `hardware_profile.py` 實現；`start.py` 亦提供一鍵啟動；「`setup.py` 自動下載/訓練」尚未實作（見上方 ⚠️）。
 
 | 指標 | 改造前 | 改造後 |
 |------|--------|--------|
