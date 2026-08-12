@@ -235,10 +235,13 @@ def select_config(hw):
 
 ### 5.1 統一訓練入口
 
-> ⚠️ 計畫中的 `scripts/train.py` **不存在**（已確認全倉無此檔）。實際的統一訓練入口是 `scripts/train_pipeline.py`，但**尚未接線成一鍵流程**，也未在 `setup.py` 中自動呼叫。下載資料集（`scripts/download_datasets.py`）+ 訓練（`scripts/train_pipeline.py` 等）的能力存在，但需手動執行。
+> ✅ 一鍵訓練已接線：`setup.py` 現會依序呼叫 `scripts/download_datasets.py`（下載詞典/資料集）與 `scripts/train_pipeline.py`（統一訓練管線），兩者皆可由 `--skip-download` / `--skip-training` 跳過。計畫原寫的 `scripts/train.py` **不存在**，實際入口為 `scripts/train_pipeline.py`。
 
 ```bash
-# 實際可用（手動）：
+# 一鍵（setup.py 內自動執行下載+訓練，可跳過）：
+python setup.py                                   # 自動：檢測→Backbone→下載→訓練→知識→知識圖譜→驗證
+python setup.py --skip-download --skip-training   # 僅載入已訓練模型並驗證（最快）
+# 手動單獨執行：
 python scripts/download_datasets.py      # 下載 CC-CEDICT/JMdict/WordNet 等
 python scripts/train_pipeline.py          # 統一訓練管線（確切引數請見該檔 main()）
 ```
@@ -394,13 +397,12 @@ python -m uvicorn ... # 啟動
 ### 改造後（目前實際可達成的流程）
 
 > ✅ `start.py` 啟動器**已實作**（`python start.py` 一鍵啟動後端 + Web Viewer）。
-> ✅ `setup.py` 一鍵流程**已實作**的子集：自動檢測 + Backbone 初始化 + 知識系統初始化 + 知識圖譜 + 驗證（3 項測試）。
-> ⚠️ 計畫中的「`setup.py` 自動**下載** + 自動**訓練**」仍**尚未實作**（Phase 5-10）；`setup.py` 目前僅載入已訓練模型，不會下載/訓練。
+> ✅ `setup.py` 一鍵流程**已實作**：自動檢測 + Backbone 初始化 → **下載資料集**（`download_datasets.py`，`--skip-download` 可跳過）→ **訓練模型**（`train_pipeline.py`，`--skip-training` 可跳過）→ 知識系統初始化 + 知識圖譜 + 驗證（3 項測試）。各步驟 best-effort（失敗僅警告，不中斷安裝）。
 > 目前真實的一鍵流程如下：
 
 ```bash
 # 1) 安裝依賴（二選一）：
-python setup.py                        # 一鍵：硬體偵測 → Backbone 初始化 → 知識系統 + 知識圖譜 → 驗證（不會自動下載/訓練）
+python setup.py                        # 一鍵：硬體偵測 → Backbone 初始化 → 下載 → 訓練 → 知識系統 + 知識圖譜 → 驗證
 #   或：pip install -e "apps/backend"  # 套件化安裝（推薦，見 README）
 # 2) 啟動（主要入口 scripts/run_angela.py；或 python start.py 一鍵啟動前後端）：
 python scripts/run_angela.py              # 啟動前後端
@@ -409,7 +411,7 @@ python scripts/run_angela.py --health-check
 # 完成！Angela 已可用（後端依偵測到的硬體自動配置；訓練為選用，見 docs/usage/SCENARIOS.md）
 ```
 
-> 終極目標中的「自動檢測 + 配置 + 驗證 → 一鍵啟動」**已在 caaf9f8e 實作**（`setup.py` + `start.py`）；僅「自動下載 + 自動訓練」仍屬 Phase 5-10 規劃，**尚未實作**。
+> 終極目標（自動檢測 + 下載 + 訓練 + 配置 + 驗證 → 一鍵啟動）**已在 `setup.py` + `start.py` 實作**（下載/訓練預設執行，`--skip-download` / `--skip-training` 可跳過）。
 
 ### 代碼改善
 

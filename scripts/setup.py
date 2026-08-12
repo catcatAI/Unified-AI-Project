@@ -24,6 +24,7 @@ import argparse
 import json
 import logging
 import os
+import subprocess
 import sys
 import time
 
@@ -241,6 +242,65 @@ def step_verify():
     return passed >= 2
 
 
+def _run_script(script_name, *extra_args, timeout=None):
+    """Best-effort subprocess runner for a script under scripts/.
+
+    Returns True on success, False on failure/timeout. Failures are logged as
+    warnings (never raised) so one-click setup still completes when data/models
+    already exist or a network step is temporarily unavailable.
+    """
+    script = os.path.join(ROOT, "scripts", script_name)
+    if not os.path.exists(script):
+        logger.warning("  %s not found — skipped", script_name)
+        return False
+    cmd = [sys.executable, script, *extra_args]
+    logger.info("=" * 60)
+    logger.info("Running %s ...", script_name)
+    logger.info("=" * 60)
+    try:
+        result = subprocess.run(
+            cmd, cwd=ROOT, capture_output=True, text=True, timeout=timeout
+        )
+        for line in result.stdout.strip().splitlines()[-15:]:
+            logger.info("  [%s] %s", script_name, line)
+        if result.returncode != 0:
+            for line in result.stderr.strip().splitlines()[-15:]:
+                logger.warning("  [%s] %s", script_name, line)
+            logger.warning("  %s exited with code %d", script_name, result.returncode)
+            return False
+        logger.info("  %s completed", script_name)
+        return True
+    except subprocess.TimeoutExpired:
+        logger.warning("  %s timed out after %ss", script_name, timeout)
+        return False
+    except Exception as e:  # noqa: BLE001
+        logger.warning("  %s failed: %s", script_name, e)
+        return False
+
+
+def step_download_datasets(args):
+    """Step 3: download required datasets (lexical by default)."""
+    if getattr(args, "skip_download", False):
+        logger.info("Step 3: Skip dataset download (--skip-download)")
+        return
+    logger.info("=" * 60)
+    logger.info("Step 3: Download Datasets")
+    logger.info("=" * 60)
+    # default "all" = lexical datasets (cedict/jmdict/wordnet/koedict)
+    _run_script("download_datasets.py", timeout=1800)
+
+
+def step_train_models(args):
+    """Step 4: train models via the unified training pipeline."""
+    if getattr(args, "skip_training", False):
+        logger.info("Step 4: Skip model training (--skip-training)")
+        return
+    logger.info("=" * 60)
+    logger.info("Step 4: Train Models")
+    logger.info("=" * 60)
+    _run_script("train_pipeline.py", timeout=7200)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Angela AI — One-Command Setup")
     parser.add_argument("--skip-training", action="store_true", help="Skip model training")
@@ -255,6 +315,8 @@ def main():
 
     hw, tier = step_detect_hardware()
     bb = step_initialize_backbone(hw, tier)
+    step_download_datasets(args)
+    step_train_models(args)
     pipeline = step_initialize_knowledge(bb)
     step_initialize_knowledge_graph()
     success = step_verify()
