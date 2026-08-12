@@ -185,6 +185,30 @@ class ThreeLayerVisual:
             if mask.any():
                 self._class_centers[c] = latent[mask].mean(axis=0)
 
+    def _build_decoder(self, nn_mod, latent_dim: int):
+        """Build the nonlinear decoder (shared by training and load).
+
+        Defined once to avoid duplicating the architecture; ``nn_mod`` is the
+        ``torch.nn`` module passed in so torch stays lazily imported.
+        """
+
+        class Decoder(nn_mod.Module):
+            def __init__(self):
+                super().__init__()
+                self.net = nn_mod.Sequential(
+                    nn_mod.Linear(latent_dim, 256),
+                    nn_mod.ReLU(),
+                    nn_mod.Linear(256, 512),
+                    nn_mod.ReLU(),
+                    nn_mod.Linear(512, 3072),
+                    nn_mod.Sigmoid(),
+                )
+
+            def forward(self, x):
+                return self.net(x)
+
+        return Decoder()
+
     def _train_decoder(self, latent, images, n_epochs, verbose):
         torch = self._torch
         nn = self._nn
@@ -192,22 +216,7 @@ class ThreeLayerVisual:
 
         latent_dim = latent.shape[1]
 
-        class Decoder(nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.net = nn.Sequential(
-                    nn.Linear(latent_dim, 256),
-                    nn.ReLU(),
-                    nn.Linear(256, 512),
-                    nn.ReLU(),
-                    nn.Linear(512, 3072),
-                    nn.Sigmoid(),
-                )
-
-            def forward(self, x):
-                return self.net(x)
-
-        self._decoder = Decoder()
+        self._decoder = self._build_decoder(nn, latent_dim)
         optimizer = torch.optim.Adam(self._decoder.parameters(), lr=0.001)
         criterion = nn.MSELoss()
 
@@ -457,22 +466,7 @@ class ThreeLayerVisual:
                 # Reconstruct decoder architecture
                 nn = self._nn
 
-                class Decoder(nn.Module):
-                    def __init__(self):
-                        super().__init__()
-                        self.net = nn.Sequential(
-                            nn.Linear(128, 256),
-                            nn.ReLU(),
-                            nn.Linear(256, 512),
-                            nn.ReLU(),
-                            nn.Linear(512, 3072),
-                            nn.Sigmoid(),
-                        )
-
-                    def forward(self, x):
-                        return self.net(x)
-
-                self._decoder = Decoder()
+                self._decoder = self._build_decoder(nn, self.LATENT_DIM)
                 self._decoder.load_state_dict(self._torch.load(decoder_path))
                 self._decoder.eval()
 
