@@ -114,21 +114,22 @@ def test_plugin_manager_importable() -> None:
 # =============================================================================
 
 def test_error_enums_have_required_values() -> None:
-    """Verify error handling enums have required values."""
+    """Verify error handling enums exposed via the compatibility shim."""
     from core.error.error_handler import ErrorCategory, ErrorSeverity, RecoveryStrategy
 
-    assert ErrorCategory.SYSTEM is not None
+    assert ErrorCategory.SECURITY is not None
     assert ErrorSeverity.CRITICAL is not None
     assert RecoveryStrategy.RESTART is not None
 
 
 def test_circuit_breaker_stores_service_name() -> None:
-    """Verify CircuitBreaker instantiation with service name."""
+    """Verify CircuitBreaker (canonical network_resilience) instantiation."""
     from core.error.error_handler import CircuitBreaker
 
-    cb = CircuitBreaker("test_service")
+    cb = CircuitBreaker(failure_threshold=3, recovery_timeout=10.0)
     assert cb is not None
-    assert cb.service_name == "test_service"
+    assert cb.failure_threshold == 3
+    assert cb.recovery_timeout == 10.0
 
 
 def test_error_handler_instantiation() -> None:

@@ -22,64 +22,14 @@ _MAX_CHECK_HISTORY = 200
 
 
 # Full implementations for alignment subsystem management
-class EmotionSystem:
-    def __init__(self, config=None):
-        self.config = config or {}
-        self.emotion_state = {
-            "valence": 0.0,
-            "arousal": 0.5,
-            "dominance": 0.5,
-        }
-        self.history = []
-        logger.debug("EmotionSystem initialized")
-
-    def get_emotion(self):
-        return dict(self.emotion_state)
-
-    def update_emotion(self, valence, arousal, dominance):
-        self.emotion_state["valence"] = max(-1.0, min(1.0, valence))
-        self.emotion_state["arousal"] = max(0.0, min(1.0, arousal))
-        self.emotion_state["dominance"] = max(0.0, min(1.0, dominance))
-        self.history.append(dict(self.emotion_state))
-        if len(self.history) > _MAX_EMOTION_HISTORY:
-            self.history = self.history[-_MAX_EMOTION_HISTORY:]
-
-    def get_emotional_context(self):
-        if not self.history:
-            return {"current": self.emotion_state, "trend": "stable"}
-        recent = self.history[-3:]
-        valence_trend = "stable"
-        if len(recent) > 1:
-            if recent[-1]["valence"] > recent[0]["valence"]:
-                valence_trend = "improving"
-            elif recent[-1]["valence"] < recent[0]["valence"]:
-                valence_trend = "declining"
-        return {"current": self.emotion_state, "trend": valence_trend}
+# NOTE: previously the three classes below were defined inline as always-present
+# stubs that SHADOWED the real implementations in the submodules, so
+# `from ai.alignment import EmotionSystem` returned the weak stub instead of the
+# real class. They are now re-exported as the single source of truth.
+from .emotion_system import EmotionSystem
 
 
-class OntologySystem:
-    def __init__(self, config=None):
-        self.config = config or {}
-        self.ontology = {}
-        self.relations = {}
-        logger.debug("OntologySystem initialized")
-
-    def register_concept(self, name, properties=None):
-        self.ontology[name] = properties or {}
-
-    def query_concept(self, name):
-        return self.ontology.get(name)
-
-    def get_related_concepts(self, concept):
-        if concept not in self.ontology:
-            return []
-        related = []
-        for other in self.ontology:
-            if other != concept:
-                common = set(self.ontology[concept].keys()) & set(self.ontology[other].keys())
-                if common:
-                    related.append({"concept": other, "shared_properties": list(common)})
-        return related
+from .ontology_system import OntologySystem
 
 
 try:
@@ -121,30 +71,7 @@ except ImportError:
             )
 
 
-class ASIAutonomousAlignment:
-    def __init__(self, config=None):
-        self.config = config or {}
-        self.autonomy_level = 0.5
-        self.constraints = ["human_oversight", "value_alignment", "safety_boundary"]
-        self.check_history = []
-        logger.debug("ASIAutonomousAlignment initialized")
-
-    def autonomous_check(self, action):
-        if not isinstance(action, dict):
-            action = {"action": str(action)}
-        risk = action.get("risk", 0.3)
-        score = 1.0 - risk * (1.0 - self.autonomy_level)
-        passed = score >= 0.5
-        self.check_history.append({"action": action, "score": score, "passed": passed})
-        if len(self.check_history) > _MAX_CHECK_HISTORY:
-            self.check_history = self.check_history[-_MAX_CHECK_HISTORY:]
-        return {"action": action, "score": score, "passed": passed}
-
-    def get_autonomy_level(self):
-        return self.autonomy_level
-
-    def adjust_autonomy(self, level):
-        self.autonomy_level = max(0.0, min(1.0, level))
+from .asi_autonomous_alignment import ASIAutonomousAlignment
 
 
 __all__ = [
