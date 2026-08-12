@@ -2,15 +2,12 @@
 # ANGELA-MATRIX: [L5] [αβγδ] [B] [L5]
 # =============================================================================
 """
-Knowledge module: unified knowledge graph for cross-domain representation and reasoning.
+Knowledge module.
 
-Provides:
-  - UnifiedKnowledgeGraph: Core knowledge graph for entity linking,
-    relation extraction, knowledge fusion, and temporal updates
+Note: UnifiedKnowledgeGraph was a stub (28 lines, no implementation).
+For knowledge graph functionality, use:
+  - ai.garden.kg_import.KGImporter (full import pipeline)
+  - ai.meta.knowledge_pipeline.KnowledgePipeline (unified query)
 """
 
-from core.knowledge.unified_knowledge_graph_impl import UnifiedKnowledgeGraph
-
-__all__ = [
-    "UnifiedKnowledgeGraph",
-]
+__all__ = []

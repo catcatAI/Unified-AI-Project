@@ -1,19 +1,9 @@
 # =============================================================================
 # ANGELA-MATRIX: L6[执行层] βδ [A] L4+
-# =============================================================================
 #
-# 职责: 任务规划、调度和项目管理代理
-# 维度: 涉及认知维度 (β) 的逻辑规划和精神维度 (δ) 的目标导向
-# 安全: 使用 Key A (后端控制) 进行任务权限管理
-# 成熟度: L4+ 等级可以进行复杂的任务规划和项目管理
-#
-# 能力:
-# - task_planning: 任务规划
-# - scheduling: 调度管理
-# - project_management: 项目管理
-# - goal_breakdown: 目标分解
-# - resource_allocation: 资源分配
-#
+# 职责: 任务规划代理 — 委托至 PlanningEngine
+# 维度: 认知(β) 逻辑规划 + 精神(δ) 目标导向
+# 安全: 使用 Key A (后端控制)
 # =============================================================================
 
 import logging
@@ -23,68 +13,54 @@ logger = logging.getLogger(__name__)
 
 
 class PlanningAgent:
-    """Agent for creating, optimizing, and tracking plans."""
+    """Agent wrapper around PlanningEngine for task planning.
+
+    Delegates all actual planning logic to PlanningEngine.
+    This class exists only to maintain the agent interface.
+    """
 
     def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         self.config = config or {}
         self.agent_id = kwargs.get("agent_id")
-        self._plans: Dict[str, Dict[str, Any]] = {}
-        logger.info(f"PlanningAgent initialized with config: {self.config}")
+        try:
+            from ai.reasoning.planning_engine import PlanningEngine
+            self._engine = PlanningEngine()
+        except ImportError:
+            self._engine = None
+            logger.warning("PlanningAgent: PlanningEngine not available")
 
     def create_plan(self, goal: str, constraints: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Create a plan with steps to achieve a goal."""
         if not goal:
             return {"status": "error", "message": "No goal provided"}
-        constraints = constraints or {}
-        plan_id = f"plan_{hash(goal) % 1000000}"
-        steps = (
-            [f"Step {i+1}: {phrase}" for i, phrase in enumerate(goal.split(". "))]
-            if ". " in goal
-            else [f"Step 1: {goal}"]
-        )
-        plan = {"goal": goal, "steps": steps, "constraints": constraints, "status": "created"}
-        self._plans[plan_id] = plan
-        logger.info(f"create_plan: goal='{goal}', {len(steps)} steps, id={plan_id}")
-        return {
-            "status": "success",
-            "message": f"Created plan with {len(steps)} steps",
-            "plan_id": plan_id,
-            "steps": steps,
-            "constraints": constraints,
-        }
+        if self._engine:
+            plan = self._engine.create_plan(goal, context=constraints)
+            return {
+                "status": "success",
+                "plan_id": plan.plan_id,
+                "steps": [s.description for s in plan.steps],
+                "message": f"Created plan with {len(plan.steps)} steps",
+            }
+        return {"status": "error", "message": "PlanningEngine not available"}
 
-    def optimize_plan(
-        self, plan_id: str, optimization_criteria: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """Optimize an existing plan based on criteria."""
-        if plan_id not in self._plans:
-            return {"status": "error", "message": f"Plan '{plan_id}' not found"}
-        optimization_criteria = optimization_criteria or {}
-        plan = self._plans[plan_id]
-        logger.info(f"optimize_plan: id={plan_id}, criteria={optimization_criteria}")
-        return {
-            "status": "success",
-            "message": f"Plan '{plan_id}' optimized",
-            "plan_id": plan_id,
-            "original_steps": len(plan["steps"]),
-            "optimized_steps": len(plan["steps"]),
-            "optimization_criteria": optimization_criteria,
-        }
+    def optimize_plan(self, plan_id: str, criteria: Optional[Dict] = None) -> Dict[str, Any]:
+        if self._engine:
+            status = self._engine.get_plan_status(plan_id)
+            if status:
+                return {"status": "success", "plan_id": plan_id, "optimized_steps": status.get("total_steps", 0)}
+        return {"status": "error", "message": f"Plan '{plan_id}' not found"}
 
     def track_progress(self, plan_id: str, completed_steps: List[str]) -> Dict[str, Any]:
-        """Track progress on a plan."""
-        if plan_id not in self._plans:
-            return {"status": "error", "message": f"Plan '{plan_id}' not found"}
-        plan = self._plans[plan_id]
-        total = len(plan["steps"])
-        done = len(completed_steps)
-        progress_pct = round((done / total) * 100, 2) if total > 0 else 0.0
-        logger.info(f"track_progress: id={plan_id}, {done}/{total} steps")
-        return {
-            "status": "success",
-            "message": f"Progress: {done}/{total} steps completed ({progress_pct}%)",
-            "plan_id": plan_id,
-            "total_steps": total,
-            "completed_steps": done,
-            "progress_percentage": progress_pct,
-        }
+        if self._engine:
+            status = self._engine.get_plan_status(plan_id)
+            if status:
+                total = status.get("total_steps", 0)
+                done = len(completed_steps)
+                pct = round((done / total) * 100, 2) if total > 0 else 0.0
+                return {
+                    "status": "success",
+                    "plan_id": plan_id,
+                    "total_steps": total,
+                    "completed_steps": done,
+                    "progress_percentage": pct,
+                }
+        return {"status": "error", "message": f"Plan '{plan_id}' not found"}
