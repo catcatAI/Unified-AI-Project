@@ -1,104 +1,23 @@
 # =============================================================================
-# ANGELA-MATRIX: L1-L6[全层] αβγδεθζη [A] L2+
+# ANGELA-MATRIX: [L3] [βγδ] [A] [L3+]
 # =============================================================================
-#
-# 職責: 主幹線套件匯出 — get_backbone() 單例（步驟 A #4，仿 get_shared_latent_space）
-# 維度: ζ 連通維度（跨模組統一入口）
-# 安全: 使用 Key A (後端控制)
-# 成熟度: L2+ 等級開始接觸主幹線概念
-#
-# =============================================================================
+"""
+Backbone — Unified registration, routing, configuration, and lifecycle.
 
-"""主幹線套件（§6 core/backbone/）。
+Replaces ~100 scattered singleton factories with a single access point.
 
-對外公開：
-- `get_backbone()`：進程級主幹線單例（延遲建立）。
-- `Backbone`：主幹線類。
-- 協定/結構：`Envelope`、`IOPair`、`PairStatus`、`PairPattern`、`Mountable`。
+Usage:
+    from core.backbone import get_backbone
+    bb = get_backbone()
+    bb.initialize()
+    
+    # Unified access
+    intent = bb.engine("intent")
+    memory = bb.memory()
+    emotion = bb.emotion()
 """
 
-from __future__ import annotations
+from .backbone import Backbone, get_backbone
+from .hardware import HardwareProfile
 
-import logging
-from typing import Optional
-
-from core.backbone.backbone import Backbone
-
-logger = logging.getLogger("angela_backbone")
-from core.backbone.contracts import (
-    Envelope,
-    EnvelopeKind,
-    IOPair,
-    Mountable,
-    PairPattern,
-    PairStatus,
-    TranslationRule,
-)
-from core.backbone.external import ExternalBackend, ExternalGateway
-from core.backbone.pairs import (
-    PairConflictError,
-    PairScheduler,
-    PairState,
-    get_pair_scheduler,
-    reset_pair_scheduler,
-)
-from core.backbone.response import ResponseModeSelector, ResponseResult
-
-__all__ = [
-    "Backbone",
-    "Envelope",
-    "EnvelopeKind",
-    "ExternalBackend",
-    "ExternalGateway",
-    "IOPair",
-    "Mountable",
-    "PairConflictError",
-    "PairPattern",
-    "PairScheduler",
-    "PairState",
-    "PairStatus",
-    "ResponseModeSelector",
-    "ResponseResult",
-    "TranslationRule",
-    "get_backbone",
-    "get_pair_scheduler",
-    "reset_backbone",
-    "reset_pair_scheduler",
-]
-
-_backbone_instance: Optional[Backbone] = None
-
-
-def get_backbone() -> Backbone:
-    """取得進程級主幹線單例（延遲建立）。
-
-    仿 `get_shared_latent_space` 模式：所有元件（chat_routes、router、
-    neural_bridge、lifecycle…）都應經此取得主幹線，而非自行實例化。
-    """
-    global _backbone_instance
-    if _backbone_instance is None:
-        _backbone_instance = Backbone()
-        _register_default_mountables(_backbone_instance)
-    return _backbone_instance
-
-
-def _register_default_mountables(backbone: Backbone) -> None:
-    """註冊主幹線預設可掛載資源（§4.4 現有資源掛載點）。
-
-    惰性：只註冊 MountableWrapper（底層資源延遲建立），不實例化重元件。
-
-    目前已建置的掛載點：
-    - `shared_latent_space`：跨模態共享潛在空間（SaveMountable weights）。
-    """
-    try:
-        from ai.multimodal.shared_latent_space import get_shared_latent_space
-
-        backbone.register_mountable("shared_latent_space", get_shared_latent_space)
-    except Exception as exc:
-        logger.warning("failed to register default mountable shared_latent_space: %s", exc)
-
-
-def reset_backbone() -> None:
-    """測試隔離用：重置主幹線單例。"""
-    global _backbone_instance
-    _backbone_instance = None
+__all__ = ["Backbone", "get_backbone", "HardwareProfile"]

@@ -1,0 +1,38 @@
+# Backbone Default Configuration
+# 自動根據硬體選擇最佳引擎實現
+
+backbone:
+  # 引擎配置（auto = 根據硬體自動選擇）
+  engines:
+    intent: query_classifier      # 意圖分類器
+    knowledge: hybrid             # 符號 + 向量 + 字典
+    emotion: pad                  # PAD 情緒模型
+    memory: ham                   # HAM 記憶
+    planning: default             # 規劃引擎
+    
+  # 需要保持單例的組件
+  singletons:
+    - memory
+    - state_matrix
+    - emotion
+    
+  # 自動切換規則
+  auto_select:
+    neural_backend:
+      torch: "gpu_memory >= 4GB"
+      numpy_fast: "cpu_cores >= 8"
+      numpy: "default"
+    knowledge_backend:
+      hybrid: "ram >= 8GB"
+      symbolic: "default"
+    memory_backend:
+      ham: "ram >= 4GB"
+      minimal: "default"
+      
+  # 訓練配置
+  training:
+    ed3n_reflex: true             # 快速反射訓練
+    ed3n_dictionary: true         # 字典加載
+    ed3n_snn: true               # SNN 權重訓練
+    garden_convergence: true      # GARDEN 收斂
+    knowledge_graph: true         # 知識圖譜初始化
