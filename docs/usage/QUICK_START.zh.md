@@ -163,6 +163,6 @@ npx pnpm dev:web
 
 ## 下一步
 
-- [使用場景](SCENARIOS.zh.md) — 先訓練、先設定、自定義 LLM
+- [使用場景](SCENARIOS.zh.md) — 訓練 / 設定（選用）、自定義 LLM
 - [腳本參考](../scripts/ACTIVE_SCRIPTS.md) — 完整命令目錄
 - [架構總覽](../architecture/ANGELA_FULL_ARCHITECTURE.md) — 系統設計

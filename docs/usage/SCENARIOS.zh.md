@@ -4,7 +4,7 @@
   FILE_HASH: Initial
   FILE_PATH: docs/usage/SCENARIOS.zh.md
   FILE_TYPE: documentation
-  PURPOSE: 使用場景 — 直接開始、先訓練、先設定
+  PURPOSE: 使用場景 — 直接開始（開箱即用預設）、先訓練（選用）、先設定（選用）
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw
@@ -15,7 +15,7 @@
 
 # 使用場景
 
-## 場景 A：直接開始（最快速）
+## 場景 A：直接開始 — 開箱即用預設（最快速）
 
 適合想立刻看到系統運作的用戶。
 

@@ -4,7 +4,7 @@
   FILE_HASH: Initial
   FILE_PATH: docs/usage/SCENARIOS.md
   FILE_TYPE: documentation
-  PURPOSE: Usage scenarios — direct start, train-first, configure-first
+  PURPOSE: Usage scenarios — direct start (out-of-box default), train-first (optional), configure-first (optional)
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: en
@@ -15,7 +15,7 @@
 
 # Usage Scenarios
 
-## Scenario A: Direct Start (Quickest Path)
+## Scenario A: Direct Start — Out-of-Box Default (Quickest Path)
 
 For users who want to see the system running immediately.
 

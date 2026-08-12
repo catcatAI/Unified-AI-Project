@@ -173,6 +173,7 @@ Angela is built around **4 levels of genuine on-the-fly learning**, not just con
 > The ML model weights are ~5% trained — output quality improves significantly with more training data.
 > With an external LLM connected (OpenAI/Anthropic/Ollama), Angela achieves **6.0/10** composite intelligence.
 > Pure offline mode (ED3N+GARDEN only) is **architecture-complete but weight-incomplete**.
+> **Usability**: despite the above, Angela is **out-of-box** — `run_angela.py` launches everything and **auto-configures to your detected hardware** (no manual config). Training (Scenario B in SCENARIOS.md) is **optional** and only improves output quality.
 
 ---
 
@@ -187,6 +188,7 @@ Angela is built around **4 levels of genuine on-the-fly learning**, not just con
 | **Bilingual i18n** | ✅ PromptManager + I18nManager (en/zh-CN, 45 tests) | ❌ English-first |
 | **6D emotional state** | ✅ Shared αβγδεθ context across all components | ❌ No shared state |
 | **460K+ dictionary** | ✅ Grows automatically from conversation | ❌ Static vocabulary |
+| **Out-of-box & config-driven** | ✅ One-command launch (`run_angela.py`); auto-detects hardware (GPU/CPU) and selects the best backend — no manual config editing | ❌ Most require manual setup / API keys |
 
 **The strongest single pitch**: *An AI that gets tired, gets hungry, lives on your desktop with a Live2D body, learns from every conversation, and runs completely offline.* — No existing open-source project delivers all five simultaneously.
 
@@ -194,7 +196,9 @@ Angela is built around **4 levels of genuine on-the-fly learning**, not just con
 
 ### Quick Start
 
-Detailed guides: [Direct Start](docs/usage/QUICK_START.md) · [Train First / Configure First](docs/usage/SCENARIOS.md)
+**Out-of-box in one command**: `python scripts/run_angela.py` launches the backend + desktop and **auto-configures to your hardware** (GPU/CPU, backend selection) — no manual data download or config editing. Training is **optional** (Scenario B in SCENARIOS.md) and only improves output quality.
+
+Detailed guides: [Direct Start](docs/usage/QUICK_START.md) · [Train / Configure — optional](docs/usage/SCENARIOS.md)
 
 ```bash
 # Clone
@@ -240,7 +244,7 @@ python apps/game-rpg/run_game.py
 
 **Prerequisites**: Python 3.10+, Node.js 16+, Ollama (LLM backend).
 
-> **New to the project?** See [QUICK_START.md](docs/usage/QUICK_START.md) for a step-by-step walkthrough, troubleshooting tips, and expected behavior. For training or custom configuration, see [SCENARIOS.md](docs/usage/SCENARIOS.md).
+> **New to the project?** See [QUICK_START.md](docs/usage/QUICK_START.md) for a step-by-step walkthrough, troubleshooting tips, and expected behavior. For optional training or custom configuration, see [SCENARIOS.md](docs/usage/SCENARIOS.md).
 
 ---
 
@@ -536,7 +540,9 @@ See dedicated docs for full diagrams:
 
 ### 快速啟動
 
-詳細指南：[直接開始](docs/usage/QUICK_START.zh.md) · [先訓練 / 先配置](docs/usage/SCENARIOS.zh.md)
+**一行指令即可開箱即用**：`python scripts/run_angela.py` 會啟動後端 + 桌面，並**依偵測到的硬體自動配置**（GPU/CPU、後端選擇）—— 無需手動下載資料或編輯配置。訓練為**選用**（SCENARIOS.zh.md 情境 B），僅提升輸出品質。
+
+詳細指南：[直接開始](docs/usage/QUICK_START.zh.md) · [訓練 / 配置 — 選用](docs/usage/SCENARIOS.zh.md)
 
 ```bash
 # 克隆專案
@@ -582,7 +588,7 @@ python apps/game-rpg/run_game.py
 
 **環境需求**：Python 3.10+、Node.js 16+、Ollama（LLM 後端）
 
-> **新用戶？** 查看 [QUICK_START.zh.md](docs/usage/QUICK_START.zh.md) 獲取逐步引導、故障排除與預期行為。如需訓練或自定義配置，請參考 [SCENARIOS.zh.md](docs/usage/SCENARIOS.zh.md)。
+> **新用戶？** 查看 [QUICK_START.zh.md](docs/usage/QUICK_START.zh.md) 獲取逐步引導、故障排除與預期行為。如需選用訓練或自定義配置，請參考 [SCENARIOS.zh.md](docs/usage/SCENARIOS.zh.md)。
 
 ---
 
