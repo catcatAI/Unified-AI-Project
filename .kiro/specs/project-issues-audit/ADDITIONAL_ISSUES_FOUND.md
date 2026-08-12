@@ -25,14 +25,14 @@ All critical issues have been resolved.
 
 **Priority**: HIGH
 
-### 2. Missing setup.py
-**Issue**: README mentions `setup.py` in project structure (line 497) but file doesn't exist
+### 2. setup.py (RESOLVED)
+**Issue**: README mentions `setup.py` in project structure; file now exists at project root.
 **Location**: Project root
-**Impact**: Cannot install backend as a Python package
+**Impact**: Resolved — setup.py created in caaf9f8e; backend installable via pip.
 
-**Recommendation**: Either:
-- Create setup.py for pip installation support
-- Remove from documentation if not needed
+**Recommendation**: RESOLVED — `setup.py` created (caaf9f8e) and now also wires dataset
+download (`download_datasets.py`) + model training (`train_pipeline.py`), gated by
+`--skip-download` / `--skip-training`.
 
 **Priority**: HIGH
 
@@ -197,7 +197,7 @@ All mentioned config files exist in `apps/backend/configs/`:
 
 ### Phase 2: Documentation Cleanup (2-3 hours)
 1. Fix configuration path references
-2. Clarify setup.py status (create or remove reference)
+2. setup.py status clarified (file created in caaf9f8e; now wires download+train)
 3. Add missing CHANGELOG.md
 4. Update README with accurate paths
 

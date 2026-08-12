@@ -415,7 +415,7 @@ python scripts/run_angela.py --health-check
 
 ### 代碼改善
 
-> 下列為計畫目標值（設計對照），非全部已落地：其中「啟動步驟→1 命令」「硬體適配→自動」已由 `scripts/run_angela.py` + `hardware_profile.py` 實現；`start.py` 亦提供一鍵啟動；「`setup.py` 自動下載/訓練」尚未實作（見上方 ⚠️）。
+> 下列為計畫目標值（設計對照），非全部已落地：其中「啟動步驟→1 命令」「硬體適配→自動」已由 `scripts/run_angela.py` + `hardware_profile.py` 實現；`start.py` 亦提供一鍵啟動；「`setup.py` 自動下載/訓練」**已實作**（預設執行，`--skip-download` / `--skip-training` 可跳過，見上方）。
 
 | 指標 | 改造前 | 改造後 |
 |------|--------|--------|

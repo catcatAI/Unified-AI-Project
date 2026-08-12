@@ -266,7 +266,7 @@ A comprehensive audit of the Angela AI v6.2.0 project has been completed. The pr
 - [ ] Add pull request template
 - [ ] Move CONTRIBUTING.md to root
 - [ ] Add automated version checking
-- [ ] Create setup.py if needed
+- [x] Create setup.py (done in caaf9f8e; now also wires download+train)
 
 ### Long-term (Future Enhancements)
 - [ ] Implement automated version bumping

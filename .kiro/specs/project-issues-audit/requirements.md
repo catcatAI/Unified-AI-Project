@@ -121,7 +121,7 @@ This spec documents critical issues found in the Angela AI project that need to 
 - **Current State**: 
   - `run_angela.py` - EXISTS ✅
   - `install_angela.py` - EXISTS ✅
-  - `setup.py` - Need to verify
+  - `setup.py` - EXISTS ✅ (caaf9f8e; now wires download+train)
 - **Expected**: All entry points documented in README must exist
 - **Priority**: HIGH
 - **Impact**: Cannot start application

@@ -49,9 +49,9 @@ Complete analysis of the Angela AI v6.2.0 project including:
    - Backend version_manifest.json: v0.1.0 ❌
    - **Action**: Synchronize all version numbers
 
-2. **Missing setup.py**
-   - Mentioned in README but doesn't exist
-   - **Action**: Create file or remove from documentation
+2. **setup.py (RESOLVED — created in caaf9f8e)**
+   - Mentioned in README; now exists at project root and also performs dataset download + model training
+   - **Action**: RESOLVED — setup.py created; download/train wired
 
 ### Medium Priority (3 issues)
 1. **Outdated version_manifest.json**
@@ -141,7 +141,7 @@ Complete analysis of the Angela AI v6.2.0 project including:
 
 ### Short-term (2-4 hours)
 1. Clarify configuration paths in README
-2. Decide on setup.py (create or remove reference)
+2. setup.py decided/created (caaf9f8e; now wires download+train)
 3. Add CHANGELOG.md
 4. Synchronize all version references
 

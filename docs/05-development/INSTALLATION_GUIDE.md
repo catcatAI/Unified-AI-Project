@@ -61,7 +61,7 @@ cd Unified-AI-Project
 # 2. 安装依赖
 pip install -r requirements.txt --user
 
-# 3. 创建快捷方式
+# 3. 一键初始化（硬件检测 → 下载数据集 → 训练模型 → 验证；--skip-download / --skip-training 可跳过）
 python setup.py
 
 # 4. 启动
