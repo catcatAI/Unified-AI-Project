@@ -27,5 +27,6 @@ class HAMRecallResult(TypedDict):
     metadata: Dict[str, Any]
 
 
-class HAMMemoryError(Exception):
-    """Custom exception for HAM memory operations."""
+# HAMMemoryError is defined canonically in ham_errors.py (its subclasses live
+# there); re-export to keep a single source of truth.
+from ai.memory.ham_memory.ham_errors import HAMMemoryError  # noqa: F401

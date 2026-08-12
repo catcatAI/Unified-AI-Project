@@ -28,16 +28,9 @@ from typing import Any, Callable, Dict, List, Optional
 # =============================================================================
 
 
-class ExpressionType(str, Enum):
-    """面部表情类型 / Facial expression types"""
-
-    NEUTRAL = "neutral"
-    HAPPY = "happy"
-    SAD = "sad"
-    ANGRY = "angry"
-    SURPRISED = "surprised"
-    DISGUSTED = "disgusted"
-    FEARFUL = "fearful"
+# ExpressionType is defined canonically in live2d_avatar_generator.py;
+# re-export to keep a single source of truth.
+from core.engine.live2d_avatar_generator import ExpressionType  # noqa: F401
 
 
 class Live2DIntegration:
