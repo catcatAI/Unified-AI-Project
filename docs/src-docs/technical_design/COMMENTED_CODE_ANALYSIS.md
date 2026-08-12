@@ -1,5 +1,7 @@
 # Commented Code Analysis
 
+> ⚠️ Note: file paths below that reference `src/core_ai/...` describe the removed legacy module layout and are kept only as historical illustration.
+
 This document details the analysis of commented-out code blocks found within the
 `Unified-AI-Project` codebase, particularly focusing on the `src` directory. The
 goal is to understand the purpose of these commented sections and infer the

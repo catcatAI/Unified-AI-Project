@@ -1,5 +1,7 @@
 # Execution Monitor - 執行監控系統
 
+> ⚠️ Note: the `from src.core_ai.execution_manager import ...` examples below reference the removed legacy module layout and are kept only as historical illustration.
+
 ## 概述 | Overview
 
 執行監控系統為統一AI專案提供智能的命令執行監控、超時控制和自動恢復功能。系統能夠檢測終端機響應性、監控系統資源使用情況，並根據歷史執行數據自動調整超時時間。

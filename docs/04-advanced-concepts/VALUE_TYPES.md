@@ -1,5 +1,7 @@
 # Value Types in the Unified AI Project
 
+> ⚠️ Note: example module paths below that reference `src/core_ai/...` describe the removed legacy module layout and are kept only as historical illustration.
+
 This document clarifies the different types of values used throughout this project: **Simulated**, **Actual**, and **Placeholder**. Understanding these distinctions is crucial for development, testing, and configuration.
 
 ## 1. Simulated Values
