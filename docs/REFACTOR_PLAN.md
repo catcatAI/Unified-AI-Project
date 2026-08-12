@@ -336,26 +336,32 @@ mod:
 
 ## 8. 執行計畫
 
-| 階段 | 任務 | 預計時間 | 完成後 |
-|------|------|----------|--------|
-| 1 | 刪除明顯的重复/stub | 2h | -300 行代碼 |
-| 2 | 合併 DictionaryClassifier → QueryClassifier | 1h | 統一意圖分類 |
-| 3 | 合併 TemplateMatcher → Composer | 1h | 統一生 |
-| 4 | 合併 EmotionAnalyzer → EmotionSystem | 1h | 統一是情緒輸入 |
-| 5 | 合併 PlanningAgent → PlanningEngine | 0.5h | 統一規劃 |
-| 6 | 建立 Backbone 骨架 | 4h | 統一代工廠 |
-| 7 | 實現自動硬體檢測 + 配置選擇 | 2h | 自動適配 |
-| 8 | 建立 setup.py 一鍵啟動 | 3h | 開箱即用 |
-| 9 | 建立統一訓練入口 | 2h | 一鍵訓練 |
-| 10 | 測試 + 驗證 + 文檔 | 3h | 完成 |
-| 11 | 字典概念身分層：佔位 / 生造 / 回填 / 批配 不衝突（詳 §10–§12） | — | 詞彙可成長、零外漏、跨重啟不撞號 |
-| 11.1 | P3 修正驗證契約（解除 C4：SNN 貢獻不再被丟棄） | 1h | `process_deep` 不再恆走 fallback |
-| 11.2 | P1 概念收斂 `resolve_concepts`（解除 C2：同概念不重複） | 2h | 輸入+字典合併去重 |
-| 11.3 | §10 Token Ontogenesis：`grow` 佔位 / `TokenComposer` / `backfill_placeholder` | 3h | 四階段管線完整 |
-| 11.4 | P2 佔位永不外漏 + P5 key 持久化/內容定址（解除 C1/C5） | 2h | 無 raw key 外漏、跨重啟穩定 |
-| 11.5 | 補 `tests/ai/ed3n/test_token_ontogeny.py`（量化 §11.4 指標） | 2h | 驗收指標可測 |
+| 階段 | 任務 | 預計時間 | 完成後會是啥樣（端到端樣貌） |
+|------|------|----------|--------------------------------|
+| 1 | 刪除明顯的重复/stub | 2h | 程式碼減少 ~300 行、無空殼封裝 |
+| 2 | 合併 DictionaryClassifier → QueryClassifier | 1h | 單一意圖分類入口，不再雙套邏輯 |
+| 3 | 合併 TemplateMatcher → Composer | 1h | 單一生器，模板與組合統一 |
+| 4 | 合併 EmotionAnalyzer → EmotionSystem | 1h | 單一情緒輸入來源 |
+| 5 | 合併 PlanningAgent → PlanningEngine | 0.5h | 統一規劃引擎 |
+| 6 | 建立 Backbone 骨架 | 4h | 共享單例工廠，模組統一取得 |
+| 7 | 實現自動硬體檢測 + 配置選擇 | 2h | 依硬體自動選配置，免手動調 |
+| 8 | 建立 setup.py 一鍵啟動 | 3h | 一條指令即開箱可用 |
+| 9 | 建立統一訓練入口 | 2h | 一鍵訓練，入口統一 |
+| 10 | 測試 + 驗證 + 文檔 | 3h | 全計畫可驗收 |
+| 11 | 字典概念身分層：佔位 / 生造 / 回填 / 批配 不衝突（詳 §10–§12） | — | 詞彙可成長、回應零外漏、跨重啟不撞號 |
+| 11.1 | P3 修正驗證契約（解除 C4：SNN 貢獻不再被丟棄） | 1h | SNN 生成內容不再被丟棄，`process_deep` 正常回傳 |
+| 11.2 | P1 概念收斂 `resolve_concepts`（解除 C2：同概念不重複） | 2h | 同概念輸入+字典合併去重，不再重複佔位 |
+| 11.3 | §10 Token Ontogenesis：`grow` 佔位標記 + grow 側去重（§10.6 呼叫點）/ `TokenComposer` / `backfill_placeholder` / 字典單例化 | 4h | 四階段管線完整、寫入即去重、佔位有標記 |
+| 11.4 | P2 佔位永不外漏 + P5 key 持久化/內容定址（解除 C1/C5） | 2h | 回應無 raw key 外漏、跨重啟 key 穩定 |
+| 11.5 | 補 `tests/ai/ed3n/test_token_ontogeny.py`（量化 §11.4 指標） | 2h | 量化指標有測試守護，避免回退 |
+| 13 | 主幹線自適應派遣層：輸入依內容判定去向（學習/訓練排序/傳遞） | — | 僅 `text`+`time` 的 mod 輸入也能正常處理並回應 |
+| 13.1 | D1 輸入標準化 + time 綁定（InputEnvelope；對齊 `/chat/unified`、`/session/{id}/send`） | 1h | `time` 成為可傳遞中繼資料，供學習/訓練排序 |
+| 13.2 | D2 內容驅動任務分類：擴充 `QueryClassifier`/新增 `DispatchIntent`（GENERATE/LEARN/TRAIN + 信心） | 2h | 創作類輸入被判 GENERATE 而非掉 fallback |
+| 13.3 | D3 派遣策略：依 (intent, 信心, 狀態) → 動作集 {LEARN, TRAIN(queue), FORWARD} | 2h | 一輸入可同時學習+生成（多動作集） |
+| 13.4 | D4 訓練排序執行：接 `TrainingCoordinator` 佇列 + 優先級（排序執行，不阻塞主線） | 2h | 訓練按優先級排隊，不阻塞主線 |
+| 13.5 | D5 FORWARD 保證正常輸出：接 §11 管線，創作類不塌縮 fallback | 2h | 僅 text+time 的 mod 輸入回正常生成 |
 
-**總計: ~19.5 + 10 = ~29.5 小時**
+**總計: ~19.5 + 10 + 9 = ~38.5 小時**
 
 ---
 
@@ -458,6 +464,23 @@ python start.py    # 啟動前後端
 - **智能上限提升**：未知概念在 SNN 算出語意當下即獲**穩定、不外露的槽位**；先以語意組合「生造」近似字形維持表達力，待真詞學到再**回填**；全程自動偵測並解決新增/佔位衝突 → 詞彙可持續成長、零 token 外漏、概念不自動重複。
 - **與現有架構相容**：沿用 `DictionaryLayer` / `output_anchor` / `continuous_learning` 的既有介面，建議掛在 Backbone 的統一字典/知識引擎之下（見第 3 節 `KnowledgeEngine`），不破壞現有 API。
 - **誠實備註**：此為「上限提升」設計，非當前可驗證指標；需在 ② 生造品質與 ④ 衝突召回率上以測試量化（建議補 `tests/ai/ed3n/test_token_ontogeny.py`）。
+
+### 10.6 學習期寫入側範圍：grow 呼叫點清單與去重缺口（實證補充）
+
+> 2026-08-12 經 `grep "\.grow("` 全專案掃描確認：衝突不只在解碼期（§11），**寫入期就是源頭**。
+
+- 全專案 `grow()` 呼叫點（7 處）：
+  - `ai/response/learning_loop.py:139`
+  - `ai/document/learner.py:90` → `grow(token, token)`（**garden 字典**）
+  - `ai/ed3n/ed3n_trainer.py:128`
+  - `ai/ed3n/dictionary_layer.py:586`（經 `learn_from_conversation` → `detect_new_concepts`，已有 **surface 字串級**去重）
+  - `ai/ed3n/continuous_learning.py:163` → `grow(text, token)`（僅 per-call `token in known_surfaces` 檢查）
+  - `ai/garden/garden_engine.py:1163`、`:1280` → `grow(token, token)`（**garden 字典**）
+- 關鍵缺口：
+  1. **`grow()` 本身無概念級去重**（`dictionary_layer.py:340-371`）：永遠 `_assign_key` 新 key，不檢查同概念是否已存在。除 `learn_from_conversation`（走 `detect_new_concepts` 的 surface 字串去重）外，其餘呼叫點直接呼叫 `grow`，同一概念跨文字/跨呼叫者會產生多個 `l##` 條目 → 正是「新增與佔位衝突」的**寫入側源頭**。
+  2. **`grow(text, token)` / `grow(token, token)` 把原始 token 當作 surface** → 即使用者描述的「佔位」：語意算出後先佔槽、以原始 token 充當 surface，待日後回填真詞。故這些條目建檔時即應標 `is_placeholder=True`。
+  3. **字典非單例**：garden（`self.garden.dictionary`）與 ed3n（`self.dictionary`）各有獨立 `DictionaryLayer` 實例，跨實例無法去重/回填；與 §3 Backbone 統一 `KnowledgeEngine` 目標衝突，須先收斂為共享實例。
+- **修正歸屬**：§10.4 的 `resolve_placeholder_conflict()` / `backfill_placeholder()` 必須**掛進 `grow()` 與 `add_entry()` 本身**（寫入即去重 + 標佔位），而非只於解碼期（§11 P1）處理；否則多呼叫點會持續產生重複佔位。納入 §8 Phase 11.3 執行（含 grow 側去重 + 佔位標記 + 字典單例化）。
 
 ---
 
@@ -578,3 +601,77 @@ python start.py    # 啟動前後端
 ### 12.4 下一步
 
 按 §8 Phase 11.1→11.5 順序落地；每步以 `tests/ai/ed3n/test_token_ontogeny.py` 鎖定對應指標，避免回退。
+
+---
+
+## 13. 主幹線自適應派遣層（輸入依內容判定去向）
+
+> 來源：2026-08-12 用戶需求——主幹線應「依據實際內容」自適應判定輸入去向：**學習 / 訓練(排序執行) / 傳遞**，使僅給 `text`+`time` 的 mod 輸入也能被適當處理並回傳正常輸出。本節為設計章（執行項見 §8 Phase 13 / §13.6）。
+
+### 13.1 現狀與缺口（實證）
+
+- 輸入入口已支援 `text`：`chat_routes.py:1763 unified_chat` 與 `chat_routes.py:1750 send_message` 皆 `request.get("message", request.get("text", ""))`。但 **`time` 欄位被完全忽略**（`_run_chat_pipeline` 不讀 `time`）。
+- 核心管線 `chat_routes.py:1410 _run_chat_pipeline` 固定流程：驗證→數學→情境→情緒/危機→執行閘→代理路由（`_try_agent_routing` `chat_routes.py:771`）→LLM。流程**假設輸入都是「要產生回應的對話」**，沒有「這是訓練資料 / 學習信號」的分支。
+- 分類器 `query_classifier.py:25 QueryType` 已有 `CREATIVE/KNOWLEDGE/...`，且在 `chat_routes.py:686` 與 `router.py:1235` 被呼叫——但**只拿來選模型/選代理**，不決定「要不要學習 / 要不要訓練 / 要不要只轉發」。
+- `ExecutionGate`（`execution_gate.py`）處理「可否執行動作（工具）」，不涵蓋 learn/train。
+- `TrainingCoordinator`（`training_coordinator.py:45`）已具 `asyncio.Lock` + `record_training`/`should_skip`/`assign_domain` + 記憶體上限，是「排序執行」的良好基座，但**尚無優先級排隊**，也未被主幹線在 ingest 時呼叫。
+
+**結論**：組件都在，但缺一個 **ingest-time 的統一派遣決策點**——輸入一進來先依內容判 `GENERATE/LEARN/TRAIN` 並決定動作集，而非直接灌進「產生回應」單一路徑。
+
+### 13.2 使用者範例（驅動需求）
+
+某 mod 只傳：
+
+```text
+text: [("你作為例中的用戶來編寫，寫一段故事")]
+time: ["xx/xx,xx:xx"]
+```
+
+期望：主幹線判斷這是**創作生成**（非問答/工具），走 FORWARD→生成管線，回傳正常故事；同時 `time` 可作為學習/訓練排序的時間序依據。若無法依內容判斷，就會掉進 fallback（"抱歉我沒理解"）或被迫走錯路徑。
+
+### 13.3 設計：MainLineDispatcher（主幹線派遣層）
+
+新增 `services/mainline_dispatcher.py`：
+
+- `InputEnvelope`：`{text, time, origin, metadata, raw}`，標準化所有入口（`unified_chat` / `send_message` / 未來 mod 介面）。
+- `DispatchIntent`：`GENERATE` / `LEARN` / `TRAIN`。
+- `classify_dispatch(text) -> DispatchDecision(intent, confidence, sub_type)`：
+  - 複用並擴充 `QueryClassifier`（creative/knowledge/opinion → `GENERATE`；command/execute/file → 仍走 `ExecutionGate` 動作）；
+  - 新增啟發式：含「學習/訓練/請記住/請學」等詞或結構化批次 → `LEARN`/`TRAIN`；
+  - 低信心或混合 → 多動作（如 `GENERATE`+`LEARN`）。
+- `dispatch(envelope) -> List[Action]`：
+  - `FORWARD` → 呼叫 `_run_chat_pipeline`（生成回應）；**接 §11 管線**，確保創作類不塌縮 fallback（P3 已解 C4 根因）。
+  - `LEARN` → 寫入連續學習 / HAM 記憶（帶 `time` 時間序）。
+  - `TRAIN` → `TrainingCoordinator.enqueue(domain, sample, priority=...)`（排序執行，不阻塞主線）。
+
+整合點：`_run_chat_pipeline` 開頭建 `InputEnvelope` 並 `dispatch`；`GENERATE` 續行既有流程，`LEARN`/`TRAIN` 附加於回應之前/之後非阻塞執行。
+
+### 13.4 排序執行（D4）
+
+`TrainingCoordinator` 增加優先級佇列（`heapq` 或有序插入），`enqueue(domain, sample, priority)` 依 priority 排序；主幹線呼叫非阻塞（`asyncio.create_task`）。與 §X #111 的 async + 記憶體上限相容。
+
+### 13.5 與 §10/§11 的銜接
+
+- FORWARD 路徑即 §11 的「輸入→字典→SNN→輸出」推論鏈；§10 的概念身分層提供 `LEARN`/`TRAIN` 的去重與回填依據（同一概念不重複佔位）。
+- 依賴：§13 的 FORWARD 正常輸出**依賴 §11 完成**（尤其 P3 已落地；P1/P2 提升去重與零外漏）。故執行順序：**先完成 Phase 11，再 Phase 13**。
+
+### 13.6 執行項（D1–D5，對應 §8 Phase 13）
+
+| 項 | 任務 | 依賴 |
+|----|------|------|
+| D1 | 輸入標準化 + time 綁定（InputEnvelope；text/time 對齊入口） | — |
+| D2 | 內容驅動任務分類：擴充 QueryClassifier / 新增 DispatchIntent（GENERATE/LEARN/TRAIN） | — |
+| D3 | 派遣策略：依 (intent, 信心, 狀態) → 動作集 {LEARN, TRAIN(queue), FORWARD} | D1,D2 |
+| D4 | 訓練排序執行：TrainingCoordinator 優先級佇列（排序執行） | D3 |
+| D5 | FORWARD 保證正常輸出：接 §11 管線，創作類不塌縮 | §11 完成 |
+
+### 13.7 驗收指標（可測）
+
+- 給 `text=["你作為例中的用戶來編寫，寫一段故事"]`+`time`，`classify_dispatch` 判為 `GENERATE`/`CREATIVE`，且 `dispatch` 產生 `FORWARD`（不 fallback）。
+- `time` 欄位被 `InputEnvelope` 綁定且傳遞至 LEARN/TRAIN。
+- 訓練請求依 priority 排序執行（單元測試驗證排序）。
+- 混合輸入（生成+學習）產生多動作集。
+
+### 13.8 下一步
+
+與 Phase 11 銜接：先以 `tests/ai/ed3n/test_token_ontogeny.py` 鎖定 §11，再於 `tests/` 新增 `test_mainline_dispatch.py` 鎖定 §13。
