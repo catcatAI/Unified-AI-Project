@@ -541,7 +541,7 @@ apps/
 │   │   │   ├── ChatPanel/
 │   │   │   ├── MemoryViewer/
 │   │   │   ├── LearningDashboard/
-│   │   │   ├── EconomyPanel/
+│   │   │   ├── EconomyPanel/ 🗑️ 前端保留，後端已刪除 (dead UI)
 │   │   │   ├── PetPanel/
 │   │   │   ├── SystemMonitor/
 │   │   │   └── AdminPanel/
@@ -1055,7 +1055,7 @@ No other system combines:
 | GET | `/economy/balance` | Get balance | 🗑️ 已刪除 (Phase 11) |
 | POST | `/economy/transaction` | Create transaction | 🗑️ 已刪除 (Phase 11) |
 | GET | `/economy/history` | Transaction history | 🗑️ 已刪除 (Phase 11) |
-| GET | `/economy/marketplace` | Browse marketplace | ❌ TO BE ADDED |
+| GET | `/economy/marketplace` | Browse marketplace | 🗑️ 已刪除 (Phase 11) |
 
 ### 9.4 Admin Endpoints (TO BE ADDED)
 
@@ -1150,7 +1150,7 @@ No other system combines:
 │  ├── ChatPanel/                              │
 │  ├── MemoryViewer/                           │
 │  ├── LearningDashboard/                      │
-│  ├── EconomyPanel/                           │
+│  ├── EconomyPanel/ 🗑️ 前端保留，後端已刪除 (dead UI)                           │
 │  ├── PetPanel/                               │
 │  ├── SystemMonitor/                          │
 │  └── AdminPanel/                             │
