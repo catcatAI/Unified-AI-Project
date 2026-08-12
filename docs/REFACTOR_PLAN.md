@@ -235,8 +235,12 @@ def select_config(hw):
 
 ### 5.1 統一訓練入口
 
+> ⚠️ 計畫中的 `scripts/train.py` **不存在**（已確認全倉無此檔）。實際的統一訓練入口是 `scripts/train_pipeline.py`，但**尚未接線成一鍵流程**，也未在 `setup.py` 中自動呼叫。下載資料集（`scripts/download_datasets.py`）+ 訓練（`scripts/train_pipeline.py` 等）的能力存在，但需手動執行。
+
 ```bash
-python scripts/train.py --profile auto --components all
+# 實際可用（手動）：
+python scripts/download_datasets.py      # 下載 CC-CEDICT/JMdict/WordNet 等
+python scripts/train_pipeline.py          # 統一訓練管線（確切引數請見該檔 main()）
 ```
 
 ### 5.2 訓練優先級
