@@ -25,7 +25,15 @@ logger = logging.getLogger(__name__)
 
 
 class DictionaryEntry:
-    __slots__ = ("key", "surface_forms", "contexts", "relations", "confidence")
+    __slots__ = (
+        "key",
+        "surface_forms",
+        "contexts",
+        "relations",
+        "confidence",
+        "is_placeholder",
+        "concept_token",
+    )
 
     def __init__(
         self,
@@ -34,17 +42,26 @@ class DictionaryEntry:
         contexts: Optional[List[Dict[str, Any]]] = None,
         relations: Optional[Dict[str, List[str]]] = None,
         confidence: float = 1.0,
+        is_placeholder: bool = False,
+        concept_token: str = "",
     ):
         self.key = key
         self.surface_forms = surface_forms
         self.contexts = contexts or []
         self.relations = relations or {}
         self.confidence = min(max(confidence, 0.0), 1.0)
+        # P2 (REFACTOR_PLAN §11.4): placeholder entries carry no real surface
+        # and must never leak their raw key into output (decode skips them).
+        self.is_placeholder = is_placeholder
+        # Concept token retained for placeholder entries so backfill_placeholder
+        # can later recover a real surface from relations.
+        self.concept_token = concept_token
 
     def __repr__(self) -> str:
         return (
             f"DictionaryEntry(key={self.key!r}, "
             f"surface={list(self.surface_forms.keys())}, "
+            f"placeholder={self.is_placeholder}, "
             f"confidence={self.confidence:.2f})"
         )
 
@@ -56,6 +73,10 @@ class DictionaryLayer:
         self.growth_threshold = growth_threshold
         self.max_entries = max_entries
         self._next_key_id: int = 1
+        # P5 (REFACTOR_PLAN §11.4): content-address index — normalized
+        # "text|surface" -> key — enables grow-side dedupe (§10.6) so the same
+        # concept never spawns multiple placeholder keys across callers.
+        self._content_index: Dict[str, str] = {}
         self._keyword_index: Dict[str, List[str]] = {}
         self._bigram_index: Dict[str, List[str]] = {}
         self._keyword_rank: Dict[str, int] = {}  # keyword -> insertion order (tie-break)
@@ -287,6 +308,10 @@ class DictionaryLayer:
             entry = self.entries.get(key)
             if entry is None:
                 continue
+            # P2 (REFACTOR_PLAN §11.4): placeholder entries carry no real
+            # surface — never leak the raw key; skip so output stays clean.
+            if entry.is_placeholder:
+                continue
             zh = entry.surface_forms.get("zh")
             en = entry.surface_forms.get("en")
             surface = zh or en or key
@@ -300,6 +325,8 @@ class DictionaryLayer:
         contexts: Optional[List[Dict[str, Any]]] = None,
         relations: Optional[Dict[str, List[str]]] = None,
         confidence: float = 1.0,
+        is_placeholder: bool = False,
+        concept_token: str = "",
     ) -> DictionaryEntry:
         if not key or not isinstance(key, str):
             raise ValueError(f"Invalid key: {key}")
@@ -311,6 +338,8 @@ class DictionaryLayer:
             contexts=contexts,
             relations=relations,
             confidence=confidence,
+            is_placeholder=is_placeholder,
+            concept_token=concept_token,
         )
         self.entries[key] = entry
         self._dirty = True
@@ -337,7 +366,13 @@ class DictionaryLayer:
         self._dirty = True
         return count
 
-    def grow(self, text: str, surface_form: str, confidence: float = 0.5) -> str:
+    def grow(
+        self,
+        text: str,
+        surface_form: str,
+        confidence: float = 0.5,
+        placeholder: bool = False,
+    ) -> str:
         if not text or not isinstance(text, str):
             logger.warning("Cannot grow entry from empty text")
             return ""
@@ -348,13 +383,28 @@ class DictionaryLayer:
                 self.growth_threshold,
             )
             return ""
+        # P5/§10.6 (REFACTOR_PLAN): content-address dedupe — the same concept
+        # must not spawn multiple placeholder keys across callers. Return the
+        # existing key when the (text, surface) signature already exists.
+        is_ph = placeholder or not (surface_form and surface_form.strip())
+        sig = self._concept_signature(
+            text=text,
+            surface_form=surface_form,
+            is_placeholder=is_ph,
+            concept_token=text,
+        )
+        if sig in self._content_index:
+            return self._content_index[sig]
         key = self._assign_key(prefix="l")
         entry = DictionaryEntry(
             key=key,
-            surface_forms={"zh": surface_form, "en": text},
+            surface_forms={} if is_ph else {"zh": surface_form, "en": text},
             confidence=confidence,
+            is_placeholder=is_ph,
+            concept_token=text if is_ph else "",
         )
         self.entries[key] = entry
+        self._content_index[sig] = key
         self._dirty = True
         self._growth_history.append(
             {
@@ -624,10 +674,91 @@ class DictionaryLayer:
         logger.info("Merged %s -> %s", source_key, target_key)
         return True
 
+    def resolve_concepts(self, keys: List[str]) -> List[str]:
+        """Concept convergence (P1 / REFACTOR_PLAN §11.2, C2).
+
+        Given a set of dictionary keys (input anchors + network output), merge
+        keys that are synonyms/mappings of each other into a single canonical
+        representative so the decoder never emits the same concept twice or
+        splits one concept across duplicate placeholder keys.
+
+        Returns canonical keys in first-seen order; entries not present in the
+        dictionary are dropped.
+        """
+        present = [k for k in keys if k in self.entries]
+        if not present:
+            return []
+        parent: Dict[str, str] = {k: k for k in present}
+
+        def _find(x: str) -> str:
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]
+                x = parent[x]
+            return x
+
+        def _union(a: str, b: str) -> None:
+            ra, rb = _find(a), _find(b)
+            if ra != rb:
+                parent[ra] = rb
+
+        for k in present:
+            entry = self.entries[k]
+            for rel in list(entry.relations.get("synonym", [])) + list(
+                entry.relations.get("mapping", [])
+            ):
+                if rel in parent:
+                    _union(k, rel)
+
+        groups: Dict[str, List[str]] = {}
+        for k in present:
+            groups.setdefault(_find(k), []).append(k)
+
+        resolved: List[str] = []
+        seen_roots: set = set()
+        for k in present:
+            root = _find(k)
+            if root in seen_roots:
+                continue
+            seen_roots.add(root)
+            grp = groups[root]
+            # Canonical = prefer a non-placeholder entry with a real surface;
+            # otherwise the lexicographically smallest key.
+            canon = min(
+                grp,
+                key=lambda kk: (0 if self.entries[kk].surface_forms else 1, kk),
+            )
+            resolved.append(canon)
+        return resolved
+
+    def backfill_placeholder(self, key: str) -> bool:
+        """Recover a real surface for a placeholder entry (§10.4 / 11.3).
+
+        Searches the entry's synonym/mapping relations for a non-placeholder
+        entry that has a surface, and adopts it (clearing the placeholder flag).
+        Returns True if a surface was recovered.
+        """
+        entry = self.entries.get(key)
+        if entry is None or not entry.is_placeholder:
+            return False
+        for rel in list(entry.relations.get("synonym", [])) + list(
+            entry.relations.get("mapping", [])
+        ):
+            other = self.entries.get(rel)
+            if other and not other.is_placeholder and other.surface_forms:
+                entry.surface_forms = dict(other.surface_forms)
+                entry.is_placeholder = False
+                entry.confidence = min(max(entry.confidence, other.confidence * 0.8), 1.0)
+                self._dirty = True
+                return True
+        return False
+
     def export_to_json(self, filepath: str) -> None:
         data = {
             "version": "1.0",
             "exported_at": datetime.datetime.now().isoformat(),
+            # P5 (REFACTOR_PLAN §11.4, C5): persist the key counter so a restart
+            # never reuses or collides ids; import restores the max.
+            "next_key_id": self._next_key_id,
             "entries": [
                 {
                     "key": e.key,
@@ -635,6 +766,8 @@ class DictionaryLayer:
                     "contexts": e.contexts,
                     "relations": e.relations,
                     "confidence": e.confidence,
+                    "is_placeholder": e.is_placeholder,
+                    "concept_token": e.concept_token,
                 }
                 for e in self.entries.values()
             ],
@@ -646,6 +779,11 @@ class DictionaryLayer:
     def import_from_json(self, filepath: str) -> int:
         with open(filepath, "r", encoding="utf-8") as f:
             data = json.load(f)
+        # P5 (C5): restore the persisted key counter (keep the larger of the
+        # two so in-memory growth and imported state never collide).
+        imported_next = data.get("next_key_id")
+        if isinstance(imported_next, int):
+            self._next_key_id = max(self._next_key_id, imported_next)
         count = 0
         for entry_data in data.get("entries", []):
             if entry_data["key"] not in self.entries:
@@ -655,11 +793,27 @@ class DictionaryLayer:
                     contexts=entry_data.get("contexts"),
                     relations=entry_data.get("relations"),
                     confidence=entry_data.get("confidence", 1.0),
+                    is_placeholder=entry_data.get("is_placeholder", False),
+                    concept_token=entry_data.get("concept_token", ""),
                 )
                 count += 1
         self._rebuild_index()
         logger.info("Imported %d entries from %s", count, filepath)
         return count
+
+    def _concept_signature(
+        self,
+        text: str,
+        surface_form: str,
+        is_placeholder: bool = False,
+        concept_token: str = "",
+    ) -> str:
+        """Normalized content-address for a concept (used for grow-side dedupe)."""
+        text_n = normalize_text(text).lower().strip()
+        surf_n = normalize_text(surface_form).lower().strip() if surface_form else ""
+        if is_placeholder or not surf_n:
+            return f"ph|{normalize_text(concept_token or text).lower().strip()}"
+        return f"{text_n}|{surf_n}"
 
     def _rebuild_index(self) -> None:
         if not self._dirty and self._rebuilt_index:
@@ -668,6 +822,7 @@ class DictionaryLayer:
             self._keyword_index.clear()
             self._bigram_index.clear()
             self._surface_norm_cache.clear()
+            self._content_index.clear()
             large_dict = len(self.entries) > 1000
             for key, entry in self.entries.items():
                 norm_surfaces = []
@@ -692,6 +847,13 @@ class DictionaryLayer:
                             if re.match(r"[\w]", bigram[0]) and re.match(r"[\w]", bigram[1]):
                                 self._bigram_index.setdefault(bigram, []).append(key)
                 self._surface_norm_cache[key] = norm_surfaces
+                sig = self._concept_signature(
+                    text=entry.surface_forms.get("en", ""),
+                    surface_form=entry.surface_forms.get("zh", ""),
+                    is_placeholder=entry.is_placeholder,
+                    concept_token=entry.concept_token,
+                )
+                self._content_index.setdefault(sig, key)
             if self._keyword_index:
                 self._max_kw_len = max(len(k) for k in self._keyword_index)
                 self._keyword_rank = {k: i for i, k in enumerate(self._keyword_index)}
@@ -1081,3 +1243,25 @@ class DictionaryLayer:
         result.extend(self._build_math_presets())
         result.extend(self._build_logic_presets())
         return result
+
+
+# ---------------------------------------------------------------------------
+# 11.3 (REFACTOR_PLAN): dictionary singleton. Garden and ED3N can share one
+# canonical instance so grow-side dedupe / content addressing is unified
+# across subsystems instead of per-instance.
+# ---------------------------------------------------------------------------
+_DICTIONARY_SINGLETON: Optional["DictionaryLayer"] = None
+
+
+def get_dictionary(*args: Any, **kwargs: Any) -> "DictionaryLayer":
+    """Return the process-wide DictionaryLayer singleton (lazy-created)."""
+    global _DICTIONARY_SINGLETON
+    if _DICTIONARY_SINGLETON is None:
+        _DICTIONARY_SINGLETON = DictionaryLayer(*args, **kwargs)
+    return _DICTIONARY_SINGLETON
+
+
+def reset_dictionary_singleton() -> None:
+    """Reset the singleton (test isolation only)."""
+    global _DICTIONARY_SINGLETON
+    _DICTIONARY_SINGLETON = None

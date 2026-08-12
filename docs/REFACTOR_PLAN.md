@@ -353,7 +353,7 @@ mod:
 | 11.2 | P1 概念收斂 `resolve_concepts`（解除 C2：同概念不重複） | 2h | 同概念輸入+字典合併去重，不再重複佔位 |
 | 11.3 | §10 Token Ontogenesis：`grow` 佔位標記 + grow 側去重（§10.6 呼叫點）/ `TokenComposer` / `backfill_placeholder` / 字典單例化 | 4h | 四階段管線完整、寫入即去重、佔位有標記 |
 | 11.4 | P2 佔位永不外漏 + P5 key 持久化/內容定址（解除 C1/C5） | 2h | 回應無 raw key 外漏、跨重啟 key 穩定 |
-| 11.5 | 補 `tests/ai/ed3n/test_token_ontogeny.py`（量化 §11.4 指標） | 2h | 量化指標有測試守護，避免回退 |
+| 11.5 | 補 `tests/ai/ed3n/test_dict_ontogenesis.py`（量化 §11.4 指標） | 2h | 量化指標有測試守護，避免回退 |
 | 13 | 主幹線自適應派遣層：輸入依內容判定去向（學習/訓練排序/傳遞） | — | 僅 `text`+`time` 的 mod 輸入也能正常處理並回應 |
 | 13.1 | D1 輸入標準化 + time 綁定（InputEnvelope；對齊 `/chat/unified`、`/session/{id}/send`） | 1h | `time` 成為可傳遞中繼資料，供學習/訓練排序 |
 | 13.2 | D2 內容驅動任務分類：擴充 `QueryClassifier`/新增 `DispatchIntent`（GENERATE/LEARN/TRAIN + 信心） | 2h | 創作類輸入被判 GENERATE 而非掉 fallback |
@@ -463,7 +463,7 @@ python start.py    # 啟動前後端
 
 - **智能上限提升**：未知概念在 SNN 算出語意當下即獲**穩定、不外露的槽位**；先以語意組合「生造」近似字形維持表達力，待真詞學到再**回填**；全程自動偵測並解決新增/佔位衝突 → 詞彙可持續成長、零 token 外漏、概念不自動重複。
 - **與現有架構相容**：沿用 `DictionaryLayer` / `output_anchor` / `continuous_learning` 的既有介面，建議掛在 Backbone 的統一字典/知識引擎之下（見第 3 節 `KnowledgeEngine`），不破壞現有 API。
-- **誠實備註**：此為「上限提升」設計，非當前可驗證指標；需在 ② 生造品質與 ④ 衝突召回率上以測試量化（建議補 `tests/ai/ed3n/test_token_ontogeny.py`）。
+- **誠實備註**：此為「上限提升」設計，非當前可驗證指標；需在 ② 生造品質與 ④ 衝突召回率上以測試量化（建議補 `tests/ai/ed3n/test_dict_ontogenesis.py`）。
 
 ### 10.6 學習期寫入側範圍：grow 呼叫點清單與去重缺口（實證補充）
 
@@ -600,7 +600,7 @@ python start.py    # 啟動前後端
 
 ### 12.4 下一步
 
-按 §8 Phase 11.1→11.5 順序落地；每步以 `tests/ai/ed3n/test_token_ontogeny.py` 鎖定對應指標，避免回退。
+按 §8 Phase 11.1→11.5 順序落地；每步以 `tests/ai/ed3n/test_dict_ontogenesis.py` 鎖定對應指標，避免回退。
 
 ---
 
@@ -674,4 +674,4 @@ time: ["xx/xx,xx:xx"]
 
 ### 13.8 下一步
 
-與 Phase 11 銜接：先以 `tests/ai/ed3n/test_token_ontogeny.py` 鎖定 §11，再於 `tests/` 新增 `test_mainline_dispatch.py` 鎖定 §13。
+與 Phase 11 銜接：先以 `tests/ai/ed3n/test_dict_ontogenesis.py` 鎖定 §11，再於 `tests/` 新增 `test_mainline_dispatch.py` 鎖定 §13。

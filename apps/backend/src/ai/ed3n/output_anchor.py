@@ -97,6 +97,10 @@ def anchored_decode(
     seen_surfaces: set = set()
     for item in scored:
         anchored_entry: DictionaryEntry = item["entry"]
+        # P2 (REFACTOR_PLAN §11.4): placeholder entries carry no real surface;
+        # never emit the raw key into the response — skip them.
+        if anchored_entry.is_placeholder:
+            continue
         zh = anchored_entry.surface_forms.get("zh")
         en = anchored_entry.surface_forms.get("en")
         surface = zh or en or item["key"]
@@ -148,6 +152,13 @@ class ResponseAnchorValidator:
             logger.warning("Empty response rejected.")
             return False
 
+        # P3 (REFACTOR_PLAN §11.3): derive response keys from the dictionary when
+        # the caller did not pass them. Without this, ``measure_drift`` received
+        # ``response_keys=None`` and unconditionally returned 1.0, so validation
+        # always failed and the SNN-anchored response was discarded (C4 root
+        # cause: the deep pipeline collapsed back to plain input-key decode).
+        if response_keys is None:
+            response_keys = self.dictionary.encode(response)
         drift = self.measure_drift(anchored_keys, response_keys)
         if drift > self.max_drift:
             logger.info(

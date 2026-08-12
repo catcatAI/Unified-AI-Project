@@ -791,6 +791,10 @@ class ED3NEngine:
         if not input_text:
             return self._fallback_str(input_text)
         keys = self.dictionary.encode(input_text)
+        # P1 (REFACTOR_PLAN §11.2, C2): converge duplicate/synonym concepts so
+        # the decoder emits one canonical concept instead of splitting a concept
+        # across repeated placeholder keys.
+        keys = self.dictionary.resolve_concepts(keys)
         if not keys:
             return self._fallback_str(input_text)
 
