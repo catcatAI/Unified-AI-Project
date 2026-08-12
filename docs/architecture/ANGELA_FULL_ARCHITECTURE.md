@@ -948,10 +948,10 @@ Level5ASISystem (Level 5 ASI 整合器)
 | **ASIAutonomousAlignment** | `asi_autonomous_alignment.py` | ~200 | ASI 自主對齊 |
 | **AdversarialGenerationSystem** | `adversarial_generation_system.py` | ~200 | 對抗樣本生成 |
 
-**統一控制中心**: `ai/integration/unified_control_center.py` (525 行)
+**統一控制中心**: `ai/integration/unified_control_center.py` (525 行) 🗑️ 已刪除 (Phase 9-12 / §X #204 — 整個 `ai/integration/` 子系統已移除)
 - 協調所有 Level 5 ASI 組件
 - 任務分發 + 環境模擬 + 評估 + 自適應學習
-- 整合: AlphaDeepModel, EnvironmentSimulator, TaskEvaluator, LIS, HAM, Economy
+- 整合（下列多數隨 `ai/integration/` 於 Phase 11b 刪除）: AlphaDeepModel 🗑️, EnvironmentSimulator 🗑️, TaskEvaluator 🗑️, LIS 🗑️, HAM, Economy 🗑️
 
 ---
 
@@ -1219,10 +1219,10 @@ AngelaLLMService (核心 LLM 路由)
 | EmotionalBlending | `core/bio/emotional_blending.py` | 953 | ✅ 真實 | 高 |
 | HSPConnector | `core/hsp/connector.py` | 1105 | ✅ 真實 | 高 |
 | ActionExecutor | `core/engine/action_executor.py` | 1028 | ✅ 真實 | 高 |
-| IntelligentOpsManager | `ai/ops/intelligent_ops_manager.py` | 958 | ✅ 真實 | 高 | 🗑️ 已刪除 (Phase 9-12 / §X #204)
+| IntelligentOpsManager | `ai/ops/intelligent_ops_manager.py` | 958 | 🗑️ 已刪除 | 高 | Phase 9-12 / §X #204
 | DesktopInteraction | `core/engine/desktop_interaction.py` | 1178 | ✅ 真實 | 高 |
 | RealTimeMonitor | `core/real_time_monitor.py` | 815 | ✅ 真實 | 高 |
-| CodeInspector | `ai/code_inspection/code_inspector.py` | 807 | ✅ 真實 | 高 | 🗑️ 已刪除 (Phase 9-12 / §X #204)
+| CodeInspector | `ai/code_inspection/code_inspector.py` | 807 | 🗑️ 已刪除 | 高 | Phase 9-12 / §X #204
 | DigitalLifeIntegrator | `core/life/digital_life_integrator.py` | 869 | ✅ 真實 | 高 |
 | BiologicalIntegrator | `core/bio/biological_integrator.py` | 852 | ✅ 真實 | 高 |
 | MathRippleEngine | `ai/memory/math_ripple_engine.py` | 892 | ✅ 真實 | 高 | 漣漪/狀態傳遞層（數值結果委託 MathVerifier 單一計算源） |

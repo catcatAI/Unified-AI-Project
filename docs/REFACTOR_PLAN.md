@@ -21,7 +21,7 @@
 |------|--------|------|------|
 | **意圖分類** | 3 | query_classifier.py (795L), dictionary_classifier.py (473L), intent_model.py (280L) | 三個系統做類似的事 |
 | **SNN 核心** | 3 | core_network.py (623L), snn_core.py (205L), garden/snn_core.py (738L) | SNNCore 聲稱替代 CoreNetwork 但兩者共存 |
-| **知識圖譜** | 3 | unified_knowledge_graph_impl.py (28L stub), kg_import.py (726L), knowledge_graph_agent.py (130L) | stub + 完整實作 + agent 包裝 |
+| **知識圖譜** | 1（僅剩 kg_import.py） | unified_knowledge_graph_impl.py、knowledge_graph_agent.py 已於 Phase 11b 刪除；kg_import.py (726L) 保留 | stub + 完整實作 + agent 包裝 |
 | **推理引擎** | 5 | reasoning_engines.py, causal_reasoning_engine.py, symbolic_reasoner.py, relational_chain.py, reasoning_system.py | 部分功能重疊 |
 | **情緒系統** | 4 | emotion_system.py (572L), emotional_blending.py (1141L), emotion_analyzer.py (549L), user_monitor.py (408L) | PAD 模型重複 |
 | **記憶系統** | 8+ | ham_manager.py, ham_core_storage.py, vector_store.py, multimodal_memory.py, perceptual_memory.py, trauma_memory.py 等 | HAM 有 4+ 獨立實例 |
