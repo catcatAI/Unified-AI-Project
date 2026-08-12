@@ -122,7 +122,7 @@ VisionService.analyze_image()
 
 ### 1.3 觸覺 — TactileService
 
-**檔案**: `services/tactile_service.py` (66 行)
+**檔案**: `services/tactile_service.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) (66 行)
 **狀態**: Stub，唯一真實邏輯在 `simulate_touch()`
 
 ```
@@ -446,7 +446,7 @@ DesktopInteraction
 
 ### 4.4 繪圖 — ImageGenerationAgent
 
-**檔案**: `ai/agents/specialized/image_generation_agent.py` (107 行)
+**檔案**: `ai/agents/specialized/image_generation_agent.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) (107 行)
 **狀態**: ❌ Stub (需要 Stable Diffusion API key)
 
 **Live2DAvatarGenerator** (`core/engine/live2d_avatar_generator.py`, 1256 行):
@@ -877,7 +877,7 @@ GARDEN-1G Engine (5 階段管線)
 
 ### 8.4 CodeInspector — 原生代碼檢查
 
-**檔案**: `ai/code_inspection/code_inspector.py` (807 行)
+**檔案**: `ai/code_inspection/code_inspector.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) (807 行)
 **狀態**: 🗑️ 已刪除 (Phase 9-12 / §X #204)
 
 ```
@@ -895,7 +895,7 @@ CodeInspector (純演算法, 0 LLM 依賴)
 
 ### 8.5 AIOps — 智能運維
 
-**檔案**: `ai/ops/intelligent_ops_manager.py` (958 行)
+**檔案**: `ai/ops/intelligent_ops_manager.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) (958 行)
 **狀態**: 🗑️ 已刪除 (Phase 9-12 / §X #204)
 
 ```
@@ -986,7 +986,7 @@ EventLoopSystem (非同步事件處理)
 
 ### 10.3 狀態持久化 — StatePersistence
 
-**檔案**: `core/engine/state_persistence.py` (415 行)
+**檔案**: `core/engine/state_persistence.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) (415 行)
 **狀態**: ✅ 完整真實實現
 
 ```
@@ -1044,12 +1044,12 @@ PluginManager
 | 模組 | 檔案 | 行數 | 功能 |
 |------|------|------|------|
 | **AgentManager** | `ai/agents/agent_manager.py` | 720 | 15 個專業子代理管理 |
-| **ExecutionManager** | `ai/execution/execution_manager.py` | 533 | 統一執行監控 |
-| **ProjectCoordinator** | `ai/dialogue/project_coordinator.py` | 403 | 複雜任務規劃 (DAG) |
-| **DocumentBuilder** | `ai/dialogue/document_builder.py` | 356 | 長文檔生成 |
+| **ExecutionManager** | `ai/execution/execution_manager.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 533 | 統一執行監控 |
+| **ProjectCoordinator** | `ai/dialogue/project_coordinator.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 403 | 複雜任務規劃 (DAG) |
+| **DocumentBuilder** | `ai/dialogue/document_builder.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 356 | 長文檔生成 |
 | **AlphaDeepModel** | `ai/compression/alpha_deep_model.py` | 336 | 多演算法壓縮 | 🗑️ 已刪除 (Phase 9-12 / §X #204)
-| **UnifiedSymbolicSpace** | `ai/symbolic_space/unified_symbolic_space.py` | 263 | 統一符號空間 |
-| **PersonalityManager** | `ai/personality/personality_manager.py` | 162 | 個性管理 |
+| **UnifiedSymbolicSpace** | `ai/symbolic_space/unified_symbolic_space.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 263 | 統一符號空間 |
+| **PersonalityManager** | `ai/personality/personality_manager.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 162 | 個性管理 |
 | **LearningManager** | `ai/learning/learning_manager.py` | 171 | 學習協調 | 🗑️ 已刪除 (Phase 9-12 / §X #204)
 | **EnsembleAI** | `ai/ensemble.py` | 345 | 集成 AI 系統 |
 | **CrisisSystem** | `ai/crisis/crisis_system.py` | 235 | 危機/緊急系統 |
@@ -1100,7 +1100,7 @@ AngelaLLMService (核心 LLM 路由)
 | **ConnectionSession** | `services/connection_session.py` | 457 | WebSocket Session 生命週期 |
 | **ExecutionMonitor** | `core/managers/execution_monitor.py` | 684 | 執行監控 + 終端機回應偵測 |
 | **AnchorLearning** | `core/engine/anchor_learning.py` | 420 | 語義錨點學習 |
-| **PetManager** | `pet/pet_manager.py` | 478 | 寵物管理系統 |
+| **PetManager** | `pet/pet_manager.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 478 | 寵物管理系統 |
 | **AuditLogger** | `security/audit_logger.py` | 455 | 安全審計日誌 |
 | **StateHashManager** | `core/state/state_hash_manager.py` | 329 | 狀態雜湊管理 |
 | **CardStore** | `core/card/card_store.py` | 214 | 卡片存儲系統 |
@@ -1112,7 +1112,7 @@ AngelaLLMService (核心 LLM 路由)
 | **CausalChain** | `core/tracing/causal_chain.py` | 173 | 因果鏈數據結構 |
 | **HardwareDetector** | `shared/utils/hardware_detector.py` | 402 | 硬體偵測 |
 | **GoogleDriveService** | `integrations/google_drive_service.py` | 306 | Google Drive 整合 |
-| **AtlassianBridge** | `integrations/atlassian_bridge.py` | 288 | Atlassian Jira/Confluence |
+| **AtlassianBridge** | `integrations/atlassian_bridge.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 288 | Atlassian Jira/Confluence |
 | **EconomyManager** | `economy/economy_manager.py` | 204 | 經濟系統 | 🗑️ 已刪除 (Phase 9-12 / §X #204)
 | **FormulaEngine** | `ai/formula_engine/__init__.py` | 309 | 公式引擎 |
 | **ED3N 內部** | `ai/ed3n/*.py` (16 files) | ~4328 | ED3N 完整子系統 |
@@ -1240,7 +1240,7 @@ AngelaLLMService (核心 LLM 路由)
 | AudioSystem | `core/engine/audio_system.py` | 630 | ⚠️ 狀態機真/音訊模擬 | 中 |
 | ThetaRouter | `core/engine/theta_router.py` | 441 | ✅ 真實 | 中 |
 | UserMonitor | `ai/lifecycle/user_monitor.py` | 407 | ✅ 真實 | 中 |
-| StatePersistence | `core/engine/state_persistence.py` | 415 | ✅ 真實 | 中 |
+| StatePersistence | `core/engine/state_persistence.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 415 | 🗑️ 已刪除 | 中 |
 | HSP Security | `core/hsp/security.py` | 244 | ✅ 真實 | 中 |
 | HSP Versioning | `core/hsp/versioning.py` | 417 | ✅ 真實 | 中 |
 | HSP Performance | `core/hsp/performance_optimizer.py` | 393 | ✅ 真實 | 中 |
@@ -1256,8 +1256,8 @@ AngelaLLMService (核心 LLM 路由)
 | 14 個 bio 子系統 | `core/bio/*.py` | ~4600 | ✅ 真實 | 高 |
 | VisionService | `services/vision_service.py` | 706 | ⚠️ 架構真/方法模擬 | 中 |
 | AudioService | `services/audio_service.py` | 41 | ❌ Stub | - |
-| TactileService | `services/tactile_service.py` | 66 | ❌ Stub | - |
-| ImageGeneration | `ai/agents/specialized/image_generation_agent.py` | 107 | ❌ Stub | - |
+| TactileService | `services/tactile_service.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 66 | 🗑️ 已刪除 | - |
+| ImageGeneration | `ai/agents/specialized/image_generation_agent.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 107 | 🗑️ 已刪除 | - |
 
 **總結**: 核心認知系統 ~31,000+ 行全部是真實實現。主要缺口在感知層（聽覺/觸覺 stub）和部分執行層（繪圖 stub、語音未串接）。
 
@@ -1279,21 +1279,21 @@ AngelaLLMService (核心 LLM 路由)
 
 | 文件 | 原因 |
 |------|------|
-| `services/ai_editor_config.py` | 自宣告 DEPRECATED，7 行 |
+| `services/ai_editor_config.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 自宣告 DEPRECATED，7 行 |
 | `services/ai_virtual_input_service.py` | 13 行 deprecated stub |
-| `services/angela_types.py` | 7 行，`__all__ = []` |
-| `services/cloud_api.py` | 2 行 stub |
-| `services/external_api.py` | 2 行 stub |
-| `services/os_context_service.py` | 自宣告 DEPRECATED |
-| `services/sync_queue.py` | 2 行 stub |
-| `core/feature_manager.py` | 3 行 stub |
-| `core/fault_isolation.py` | 2 行 stub |
-| `core/desktop_pet_controller.py` | 3 行 stub |
-| `core/demo_feedback_loop.py` | 132 行 demo script |
+| `services/angela_types.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 7 行，`__all__ = []` |
+| `services/cloud_api.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 2 行 stub |
+| `services/external_api.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 2 行 stub |
+| `services/os_context_service.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 自宣告 DEPRECATED |
+| `services/sync_queue.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 2 行 stub |
+| `core/feature_manager.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 3 行 stub |
+| `core/fault_isolation.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 2 行 stub |
+| `core/desktop_pet_controller.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 3 行 stub |
+| `core/demo_feedback_loop.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 132 行 demo script |
 | `core/feedback_processor.py` | 21 行空文件 |
-| `ai/security/ego_guard.py` | 6 行空 class |
-| `ai/context/verify_context_system.py` | 47 行 verification script |
-| `ai/reasoning/real_causal_reasoning_engine.py` | 與已接線 module 重複 |
+| `ai/security/ego_guard.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 6 行空 class |
+| `ai/context/verify_context_system.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 47 行 verification script |
+| `ai/reasoning/real_causal_reasoning_engine.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 與已接線 module 重複 |
 | `ai/deep_mapper/` (整個 package) | 自宣告 DEPRECATED |
 
 ### 保留但未接線（18 個 — 未來整合）
@@ -1307,14 +1307,14 @@ AngelaLLMService (核心 LLM 路由)
 | `ai/language_models/daily_language_model.py` | 181 | 日常對話 LM | 🗑️ 已刪除 (Phase 9-12 / §X #204)
 | `ai/language_models/router.py` | 195 | 策略型 LLM 路由 | 🗑️ 已刪除 (Phase 9-12 / §X #204)
 | `ai/language_models/registry.py` | 104 | 模型註冊/profile 管理 | 🗑️ 已刪除 (Phase 9-12 / §X #204)
-| `ai/translation/simultaneous_translation.py` | 108 | 即時翻譯 (GoogleTranslator) |
-| `ai/rag/rag_manager.py` | 63 | RAG + FAISS embeddings |
-| `ai/execution/execution_manager.py` | 646 | 執行監控/管理 |
+| `ai/translation/simultaneous_translation.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 108 | 即時翻譯 (GoogleTranslator) |
+| `ai/rag/rag_manager.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 63 | RAG + FAISS embeddings |
+| `ai/execution/execution_manager.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 646 | 執行監控/管理 |
 | `ai/evaluation/evaluation_db.py` | 128 | SQLite 評估資料庫 | 🗑️ 已刪除 (Phase 9-12 / §X #204)
 | `ai/meta/learning_orchestrator.py` | 72 | execute-evaluate-adapt 迴圈 |
 | `ai/meta/learning_log_db.py` | 105 | SQLite 學習日誌 |
-| `ai/integration/local_cluster_manager.py` | 48 | 本機集群模擬 |
-| `ai/service_discovery/service_discovery_module.py` | 64 | 能力廣告處理 |
+| `ai/integration/local_cluster_manager.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 48 | 本機集群模擬 |
+| `ai/service_discovery/service_discovery_module.py` 🗑️ 已刪除 (Phase 9-12 / §X #204) | 64 | 能力廣告處理 |
 | `ai/context/demo_context_system.py` | 43 | demo context 邏輯 |
 | `ai/context/manager_fixed.py` | 307 | context manager + storage |
 
