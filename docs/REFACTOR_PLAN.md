@@ -387,15 +387,28 @@ python scripts/train_pipeline.py
 python -m uvicorn ... # 啟動
 ```
 
-### 改造後
+### 改造後（目前實際可達成的流程）
+
+> ⚠️ 計畫中的「`setup.py` 一條指令完成 自動檢測+下載+訓練+配置+驗證」與 `start.py` 啟動器**尚未實作**。
+> 目前真實的一鍵流程如下：
+
 ```bash
-# 用戶只需：
-python setup.py    # 自動檢測 + 下載 + 訓練 + 配置 + 驗證
-python start.py    # 啟動前後端
-# 完成！Angela 已可用
+# 1) 安裝依賴（二選一）：
+python setup.py                        # 僅安裝 requirements.txt 依賴 + 建立 Windows 捷徑（不會自動下載/訓練）
+#   或：pip install -e "apps/backend"  # 套件化安裝（推薦，見 README）
+# 2) 啟動（實際入口是 scripts/run_angela.py，不是 start.py）：
+python scripts/run_angela.py              # 啟動前後端
+python scripts/run_angela.py --api-only    # 只啟動後端
+python scripts/run_angela.py --health-check
+# 完成！Angela 已可用（後端依偵測到的硬體自動配置；訓練為選用，見 docs/usage/SCENARIOS.md）
 ```
 
+> 終極目標（`setup.py` 自動檢測+下載+訓練+配置+驗證 → `start.py` 啟動）屬 Phase 5-10 規劃，**尚未實作**。
+
 ### 代碼改善
+
+> 下列為計畫目標值（設計對照），非全部已落地：其中「啟動步驟→1 命令」「硬體適配→自動」已由 `scripts/run_angela.py` + `hardware_profile.py` 部分實現；「`setup.py` 自動下載/訓練」尚未實作（見上方 ⚠️）。
+
 | 指標 | 改造前 | 改造後 |
 |------|--------|--------|
 | 重複程式碼 | ~5000 行 | ~0 行 |
