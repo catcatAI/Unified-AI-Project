@@ -1052,9 +1052,9 @@ No other system combines:
 
 | Method | Path | Description | Status |
 |--------|------|-------------|--------|
-| GET | `/economy/balance` | Get balance | ✅ |
-| POST | `/economy/transaction` | Create transaction | ✅ |
-| GET | `/economy/history` | Transaction history | ✅ |
+| GET | `/economy/balance` | Get balance | 🗑️ 已刪除 (Phase 11) |
+| POST | `/economy/transaction` | Create transaction | 🗑️ 已刪除 (Phase 11) |
+| GET | `/economy/history` | Transaction history | 🗑️ 已刪除 (Phase 11) |
 | GET | `/economy/marketplace` | Browse marketplace | ❌ TO BE ADDED |
 
 ### 9.4 Admin Endpoints (TO BE ADDED)

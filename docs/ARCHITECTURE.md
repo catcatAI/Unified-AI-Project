@@ -143,7 +143,7 @@ unified-ai-project/
 │   │       │   ├── multimodal/primitives/  GVV + composition image pipeline
 │   │       │   ├── ed3n/                  External Dictionary Decoupled Net
 │   │       │   └── garden/                Lightweight inference engine
-│   │       ├── economy/       Economy system
+│   │       ├── economy/       Economy system 🗑️ 已刪除 (Phase 11 / §X #204)
 │   │       ├── integrations/  External integrations (Google Drive, Atlassian)
 │   │       └── system/        System-level utilities
 │   ├── desktop-app/       Electron client with Live2D

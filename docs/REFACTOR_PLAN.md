@@ -6,6 +6,13 @@
 
 ---
 
+> **執行紀錄 (2026-08-13)**：本計畫的「去重」目標已在主幹執行 — 錯誤體系統一至
+> `core.angela_error`（移除 `core/error/error_handler.py`）、跨檔重複類別合併
+> （error dataclasses / `TrainingExample` / `BaseAgent` 等）。詳見根 `README.md`
+> §2026-08-13 Internal Consolidation。測試數已同步至 **4,499**（0 errors）。
+> `ANGELA_FULL_ARCHITECTURE.md` 的已刪子系統標記已校正。`core_ai/` 舊結構已不存在，
+> 相關規劃文檔（`docs/06-project-management/planning/`）待歸檔。
+
 ## 1. 現狀診斷
 
 ### 1.1 重複實作清單

@@ -417,6 +417,26 @@ python apps/game-rpg/run_game.py
 | **Bug Fixes** | 15 bugs fixed across ensemble, causal, crisis, level5, adapter | ✅ **DONE** | 🔴 CRITICAL |
 | **Architecture Doc** | `ANGELA_FULL_ARCHITECTURE.md` — 1183 lines, 35KB | ✅ **DONE** | 🟡 MEDIUM |
 | **Phase 0-6** | Foundation, Core, Intelligence, Safety, Embodiment, Infrastructure, Polish | ✅ **DONE** | 🔴 CRITICAL |
+
+### 2026-08-13 Internal Consolidation (cross-file dedup)
+
+Executed as part of the architecture-integration goal (see `docs/REFACTOR_PLAN.md`):
+
+- **Error hierarchy unified** into `apps/backend/src/core/angela_error.py`. The legacy
+  `core/error/error_handler.py` was removed; all submodules re-export the canonical
+  classes so no import breaks (compatibility shims verified).
+- **Cross-file duplicate classes merged**: error dataclasses, `TrainingExample`,
+  `BaseAgent`, autonomous-lifecycle / shared-latent-space singletons, etc. — duplicates
+  removed, single source of truth retained.
+- **`ANGELA_FULL_ARCHITECTURE.md` corrected**: subsystems deleted in Phase 9–12
+  (`economy/`, `ai/learning/`, `ai/ops/`, `ai/code_inspection/`, `ai/compression/`,
+  `ai/language_models/`, `ai/evaluation/`, plus the obsolete `core_ai/` tree) are now
+  marked 🗑️ deleted instead of ✅ present.
+- **Test count re-synced** to **4,499** (tests/, 0 errors) across README / QUICKSTART /
+  FRAMEWORK_OVERVIEW / IMPROVEMENT_ROADMAP / tests/README / PROJECT_OVERVIEW / AGENTS.
+
+> ⚠️ `docs/06-project-management/planning/` still describes the obsolete `core_ai/` layout
+> and is pending archival (see the full-project doc audit).
 | **i18n Internationalization** | I18nManager, PromptManager, Handler/Prompt replacement, Locale files | ✅ **DONE** | 🟡 MEDIUM |
 | **YOLO Object Detection** | New feature | ⬜ | 🔴 HIGH |
 | **Auto-Repair Pathway** | run_angela.py auto-install on missing deps | ✅ **DONE** | 🔴 HIGH |

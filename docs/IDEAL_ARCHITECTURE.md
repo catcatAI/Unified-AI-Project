@@ -508,7 +508,7 @@ apps/backend/src/core/
 ├── tools/            # ✅ 保留 — 工具
 ├── card/             # ✅ 保留 — 卡片系統
 │   └── resolver/pipeline_orchestrator.py # 管線
-├── economy/          # ✅ 保留 — 經濟
+├── economy/          # 🗑️ 已刪除 (Phase 11 / §X #204) — 見本文件 §刪除模組表
 ├── art/              # ✅ 保留 — 藝術
 ├── autonomous/       # ✅ 保留 — 自主別名（7 shims）
 ├── tracing/          # ✅ 保留 — 追蹤
