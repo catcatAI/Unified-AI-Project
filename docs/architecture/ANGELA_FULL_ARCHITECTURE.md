@@ -878,7 +878,7 @@ GARDEN-1G Engine (5 階段管線)
 ### 8.4 CodeInspector — 原生代碼檢查
 
 **檔案**: `ai/code_inspection/code_inspector.py` (807 行)
-**狀態**: ✅ 完整真實實現
+**狀態**: 🗑️ 已刪除 (Phase 9-12 / §X #204)
 
 ```
 CodeInspector (純演算法, 0 LLM 依賴)
@@ -896,7 +896,7 @@ CodeInspector (純演算法, 0 LLM 依賴)
 ### 8.5 AIOps — 智能運維
 
 **檔案**: `ai/ops/intelligent_ops_manager.py` (958 行)
-**狀態**: ✅ 完整真實實現
+**狀態**: 🗑️ 已刪除 (Phase 9-12 / §X #204)
 
 ```
 IntelligentOpsManager
@@ -1047,13 +1047,13 @@ PluginManager
 | **ExecutionManager** | `ai/execution/execution_manager.py` | 533 | 統一執行監控 |
 | **ProjectCoordinator** | `ai/dialogue/project_coordinator.py` | 403 | 複雜任務規劃 (DAG) |
 | **DocumentBuilder** | `ai/dialogue/document_builder.py` | 356 | 長文檔生成 |
-| **AlphaDeepModel** | `ai/compression/alpha_deep_model.py` | 336 | 多演算法壓縮 |
+| **AlphaDeepModel** | `ai/compression/alpha_deep_model.py` | 336 | 多演算法壓縮 | 🗑️ 已刪除 (Phase 9-12 / §X #204)
 | **UnifiedSymbolicSpace** | `ai/symbolic_space/unified_symbolic_space.py` | 263 | 統一符號空間 |
 | **PersonalityManager** | `ai/personality/personality_manager.py` | 162 | 個性管理 |
-| **LearningManager** | `ai/learning/learning_manager.py` | 171 | 學習協調 |
+| **LearningManager** | `ai/learning/learning_manager.py` | 171 | 學習協調 | 🗑️ 已刪除 (Phase 9-12 / §X #204)
 | **EnsembleAI** | `ai/ensemble.py` | 345 | 集成 AI 系統 |
 | **CrisisSystem** | `ai/crisis/crisis_system.py` | 235 | 危機/緊急系統 |
-| **DemoLearningManager** | `ai/learning/demo_learning_manager.py` | 620 | 學習管理器 |
+| **DemoLearningManager** | `ai/learning/demo_learning_manager.py` | 620 | 學習管理器 | 🗑️ 已刪除 (Phase 9-12 / §X #204)
 | **TemplateMatcher** | `ai/response/template_matcher.py` | 400 | 回應模板匹配 |
 | **DeviationTracker** | `ai/response/deviation_tracker.py` | 359 | 偏差追蹤 |
 
@@ -1113,7 +1113,7 @@ AngelaLLMService (核心 LLM 路由)
 | **HardwareDetector** | `shared/utils/hardware_detector.py` | 402 | 硬體偵測 |
 | **GoogleDriveService** | `integrations/google_drive_service.py` | 306 | Google Drive 整合 |
 | **AtlassianBridge** | `integrations/atlassian_bridge.py` | 288 | Atlassian Jira/Confluence |
-| **EconomyManager** | `economy/economy_manager.py` | 204 | 經濟系統 |
+| **EconomyManager** | `economy/economy_manager.py` | 204 | 經濟系統 | 🗑️ 已刪除 (Phase 9-12 / §X #204)
 | **FormulaEngine** | `ai/formula_engine/__init__.py` | 309 | 公式引擎 |
 | **ED3N 內部** | `ai/ed3n/*.py` (16 files) | ~4328 | ED3N 完整子系統 |
 | **GARDEN 內部** | `ai/garden/*.py` (4 files) | ~1842 | GARDEN 完整子系統 |
@@ -1219,10 +1219,10 @@ AngelaLLMService (核心 LLM 路由)
 | EmotionalBlending | `core/bio/emotional_blending.py` | 953 | ✅ 真實 | 高 |
 | HSPConnector | `core/hsp/connector.py` | 1105 | ✅ 真實 | 高 |
 | ActionExecutor | `core/engine/action_executor.py` | 1028 | ✅ 真實 | 高 |
-| IntelligentOpsManager | `ai/ops/intelligent_ops_manager.py` | 958 | ✅ 真實 | 高 |
+| IntelligentOpsManager | `ai/ops/intelligent_ops_manager.py` | 958 | ✅ 真實 | 高 | 🗑️ 已刪除 (Phase 9-12 / §X #204)
 | DesktopInteraction | `core/engine/desktop_interaction.py` | 1178 | ✅ 真實 | 高 |
 | RealTimeMonitor | `core/real_time_monitor.py` | 815 | ✅ 真實 | 高 |
-| CodeInspector | `ai/code_inspection/code_inspector.py` | 807 | ✅ 真實 | 高 |
+| CodeInspector | `ai/code_inspection/code_inspector.py` | 807 | ✅ 真實 | 高 | 🗑️ 已刪除 (Phase 9-12 / §X #204)
 | DigitalLifeIntegrator | `core/life/digital_life_integrator.py` | 869 | ✅ 真實 | 高 |
 | BiologicalIntegrator | `core/bio/biological_integrator.py` | 852 | ✅ 真實 | 高 |
 | MathRippleEngine | `ai/memory/math_ripple_engine.py` | 892 | ✅ 真實 | 高 | 漣漪/狀態傳遞層（數值結果委託 MathVerifier 單一計算源） |
@@ -1304,13 +1304,13 @@ AngelaLLMService (核心 LLM 路由)
 | `core/config_validator.py` | 88 | 環境/配置驗證 |
 | `core/real_time_monitor.py` | 1009 | 滑鼠 FS 追蹤、活動識別 |
 | `core/event_loop_system.py` | 796 | 異步事件循環 + 優先級佇列 |
-| `ai/language_models/daily_language_model.py` | 181 | 日常對話 LM |
-| `ai/language_models/router.py` | 195 | 策略型 LLM 路由 |
-| `ai/language_models/registry.py` | 104 | 模型註冊/profile 管理 |
+| `ai/language_models/daily_language_model.py` | 181 | 日常對話 LM | 🗑️ 已刪除 (Phase 9-12 / §X #204)
+| `ai/language_models/router.py` | 195 | 策略型 LLM 路由 | 🗑️ 已刪除 (Phase 9-12 / §X #204)
+| `ai/language_models/registry.py` | 104 | 模型註冊/profile 管理 | 🗑️ 已刪除 (Phase 9-12 / §X #204)
 | `ai/translation/simultaneous_translation.py` | 108 | 即時翻譯 (GoogleTranslator) |
 | `ai/rag/rag_manager.py` | 63 | RAG + FAISS embeddings |
 | `ai/execution/execution_manager.py` | 646 | 執行監控/管理 |
-| `ai/evaluation/evaluation_db.py` | 128 | SQLite 評估資料庫 |
+| `ai/evaluation/evaluation_db.py` | 128 | SQLite 評估資料庫 | 🗑️ 已刪除 (Phase 9-12 / §X #204)
 | `ai/meta/learning_orchestrator.py` | 72 | execute-evaluate-adapt 迴圈 |
 | `ai/meta/learning_log_db.py` | 105 | SQLite 學習日誌 |
 | `ai/integration/local_cluster_manager.py` | 48 | 本機集群模擬 |
