@@ -38,7 +38,7 @@
 
 ### Architecture & Design
 - `03-technical-architecture/communication/hsp-specification/` — HSP protocol spec
-- `03-technical-architecture/memory-systems/` — HAM memory design
+- `09-archive/03-technical-architecture-memory-systems/memory-systems/` — HAM memory design 🗑️ 已歸檔 (described obsolete `src/core_ai/` layout)
 - `03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md` — ModuleManager design
 - **[architecture/OVERVIEW.md](architecture/OVERVIEW.md)** — 架構概覽 (部分過時)
 

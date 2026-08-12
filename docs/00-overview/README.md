@@ -28,21 +28,21 @@
 | 文档名称       | 位置                                                                  | 描述                 | 复杂度 |
 | -------------- | --------------------------------------------------------------------- | -------------------- | ------ |
 | HSP 规范       | `docs/03-technical-architecture/communication/hsp-specification/01-overview-and-concepts.md`                          | 异构服务协议         | 🔴 高  |
-| HAM 设计       | `docs/03-technical-architecture/memory-systems/ham-design.md`               | 分层抽象记忆         | 🔴 高  |
+| HAM 设计       | `09-archive/03-technical-architecture-memory-systems/memory-systems/ham-design.md`               | 分层抽象记忆 🗑️ 已歸檔 | 🔴 高  |
 | Fragmenta 设计 | `docs/04-advanced-concepts/fragmenta-design.md`         | Fragmenta 架构       | 🔴 高  |
 | MCP 集成       | `docs/03-technical-architecture/communication/mcp-context7-connector.md`                   | Context7 集成        | 🟡 中  |
-| 数据标准       | `docs/03-technical-architecture/memory-systems/data-standards.md`                    | 内部数据格式         | 🟡 中  |
+| 数据标准       | `09-archive/03-technical-architecture-memory-systems/memory-systems/data-standards.md`                    | 内部数据格式 🗑️ 已歸檔 | 🟡 中  |
 | 代理协作       | `docs/04-advanced-concepts/agent-collaboration.md` | 代理协作框架         | 🔴 高  |
 | AVIS 规范      | `docs/04-advanced-concepts/ai-virtual-input.md`  | AI 虚拟输入系统      | 🔴 高  |
 | LIS 規範       | `docs/04-advanced-concepts/linguistic-immune-system.md` | 語言免疫系統         | 🔴 高  |
-| 核心服務概述   | `docs/03-technical-architecture/core-services/overview.md`                     | 核心服務初始化與管理 | 🟢 高  |
+| 核心服務概述   | `09-archive/03-technical-architecture-core-services/core-services/overview.md`                     | 核心服務初始化與管理 🗑️ 已歸檔 | 🟢 高  |
 
 ### 🔧 技术规范文档
 
 | 文档名称   | 位置                                               | 描述          | 实用性 |
 | ---------- | -------------------------------------------------- | ------------- | ------ |
 | 消息传输   | `docs/03-technical-architecture/communication/message-transport.md`        | 消息传输机制  | 🟢 高  |
-| 模型和工具 | `docs/03-technical-architecture/ai-components/models-and-tools.md`         | AI 模型工具集 | 🟢 高  |
+| 模型和工具 | `09-archive/03-technical-architecture-ai-components/ai-components/models-and-tools.md`         | AI 模型工具集 🗑️ 已歸檔 | 🟢 高  |
 | 执行监控   | `docs/05-development/debugging/execution-monitor.md` | 执行监控系统  | 🟡 中  |
 | 故障排除   | `docs/05-development/debugging/troubleshooting.md`          | 问题解决指南  | 🟢 高  |
 

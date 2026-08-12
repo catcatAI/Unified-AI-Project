@@ -420,11 +420,11 @@ ai/
 │   ├── content_generator.py       # Content generation
 │   └── art_generator.py           # Art generation (TO BE ADDED)
 │
-├── economy/                       # Economy systems
-│   ├── economy_manager.py         # Economy orchestrator
-│   ├── economy_db.py              # Economy database
-│   ├── marketplace.py             # Trading marketplace
-│   └── resource_manager.py        # Resource management
+├── economy/                       # Economy systems 🗑️ 已刪除 (Phase 11)
+│   ├── economy_manager.py         # Economy orchestrator 🗑️ 已刪除 (Phase 11)
+│   ├── economy_db.py              # Economy database 🗑️ 已刪除 (Phase 11)
+│   ├── marketplace.py             # Trading marketplace 🗑️ 已刪除 (Phase 11)
+│   └── resource_manager.py        # Resource management 🗑️ 已刪除 (Phase 11)
 │
 ├── pet/                           # Pet system
 │   ├── pet_manager.py             # Pet state management
@@ -507,7 +507,7 @@ api/
 │   ├── desktop_routes.py          # Desktop app endpoints
 │   ├── ops_routes.py              # Operations endpoints
 │   ├── pet_routes.py              # Pet endpoints
-│   ├── economy_routes.py          # Economy endpoints
+│   ├── economy_routes.py          # Economy endpoints 🗑️ 已刪除 (Phase 11)
 │   ├── admin_routes.py            # Admin endpoints (TO BE ADDED)
 │   └── health_routes.py           # Health endpoints (TO BE ADDED)
 │
