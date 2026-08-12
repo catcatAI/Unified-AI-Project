@@ -96,7 +96,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | **TrustManager** | ✅ COMPLETE | User trust scoring, permission control, violation tracking (Phase 3) |
 | **ContentFilter** | ✅ COMPLETE | Toxicity detection, PII filtering, safety classification (Phase 3) |
 | **SafetyAudit** | ✅ COMPLETE | Audit trail, compliance checks, alert system (Phase 3) |
-| **Web Dashboard** | ✅ COMPLETE | Next.js: ChatPanel, PetPanel, SystemMonitor, EconomyPanel, LearningDashboard (Phase 4) |
+| **Web Dashboard** | ✅ COMPLETE | Next.js: ChatPanel, PetPanel, SystemMonitor, MemoryViewer (Phase 4). ⚠️ `EconomyPanel`/`LearningDashboard` UI files remain but are non-functional — their backends were deleted in Phase 11 (see §X #204) |
 | **Docker/CI/CD** | ✅ COMPLETE | Dockerfile, docker-compose, Prometheus, Grafana, Nginx, GitHub Actions deploy (Phase 5) |
 | **OpenTelemetry** | ✅ COMPLETE | Tracing middleware (Phase 5) |
 | **API Versioning** | ✅ COMPLETE | Version routing middleware (Phase 5) |
@@ -349,7 +349,7 @@ python apps/game-rpg/run_game.py
 - **SafetyAudit** — Audit trail, compliance checks, alert system ✅
 
 **Phase 4 — Embodiment:**
-- **Web Dashboard** — Next.js: ChatPanel, PetPanel, SystemMonitor, EconomyPanel, LearningDashboard, MemoryViewer ✅
+- **Web Dashboard** — Next.js: ChatPanel, PetPanel, SystemMonitor, MemoryViewer ✅ (`EconomyPanel`/`LearningDashboard` UI remain but backends were deleted in Phase 11 — non-functional)
 
 **Phase 5 — Infrastructure:**
 - **Docker** — Multi-stage Dockerfile, docker-compose with Redis, PostgreSQL, Prometheus, Grafana, Nginx ✅
@@ -405,7 +405,7 @@ python apps/game-rpg/run_game.py
 |----------|-------|--------|
 | **Wired into pipeline** | 6 | CrisisSystem, CausalReasoning, Level5ASI, ModelEnsemble, 11 Agents, AgentManager |
 | **Deleted (stubs/duplicates)** | 18 | services/ai_editor_config.py, services/ai_virtual_input_service.py, plus Phase 11 deleted subsystems |
-| **Retained but unwired** | 18 | real_time_monitor, event_loop_system, execution_manager, language_models/, etc. |
+| **Retained but unwired** | 18 | real_time_monitor, event_loop_system, execution_manager, etc. |
 | **Deleted (Phase 1 cleanup)** | 12 | modules/ directory removed (12 wrapper files) |
 
 ### Roadmap / Future Phases
@@ -520,7 +520,7 @@ See dedicated docs for full diagrams:
 | **TrustManager** | ✅ 已完成 | 信任評分、權限控制、違規追蹤（Phase 3） |
 | **ContentFilter** | ✅ 已完成 | 毒性偵測、PII 過濾、安全分類（Phase 3） |
 | **SafetyAudit** | ✅ 已完成 | 審計追蹤、合規檢查、警報系統（Phase 3） |
-| **Web Dashboard** | ✅ 已完成 | Next.js: ChatPanel、PetPanel、SystemMonitor、EconomyPanel、LearningDashboard（Phase 4） |
+| **Web Dashboard** | ✅ 已完成 | Next.js: ChatPanel、PetPanel、SystemMonitor、MemoryViewer（Phase 4）。⚠️ `EconomyPanel`/`LearningDashboard` UI 仍存在但無功能 — 後端已於 Phase 11 刪除（見 §X #204） |
 | **Docker/CI/CD** | ✅ 已完成 | Dockerfile、docker-compose、Prometheus、Grafana、Nginx、GitHub Actions 部署（Phase 5） |
 | **OpenTelemetry** | ✅ 已完成 | 分散式追蹤中間件（Phase 5） |
 | **API Versioning** | ✅ 已完成 | 版本路由中間件（Phase 5） |
@@ -690,7 +690,7 @@ python apps/game-rpg/run_game.py
 - **SafetyAudit** — 審計追蹤、合規檢查、警報系統 ✅
 
 **Phase 4 — 具現化：**
-- **Web Dashboard** — Next.js: ChatPanel、PetPanel、SystemMonitor、EconomyPanel、LearningDashboard、MemoryViewer ✅
+- **Web Dashboard** — Next.js: ChatPanel、PetPanel、SystemMonitor、MemoryViewer ✅（`EconomyPanel`/`LearningDashboard` UI 仍存在但後端已刪除 Phase 11 — 無功能）
 
 **Phase 5 — 基礎設施：**
 - **Docker** — 多階段 Dockerfile、docker-compose 含 Redis、PostgreSQL、Prometheus、Grafana、Nginx ✅
