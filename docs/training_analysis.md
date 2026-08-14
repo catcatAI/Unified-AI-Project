@@ -652,3 +652,100 @@ Training correctness is verified through:
 3. **Direct engine tests**: `test_heldout.py`, `validate_three_column.py`
 4. **Pipeline dry-run** (`TRAIN_DRY_RUN=1`): Verifies imports, data loading, and deconfliction without actual training
 5. **Resume state**: `training_state.json` tracks completed steps and per-epoch progress
+
+---
+
+## 12. Proposed Matrix Architecture (§A2)
+
+### 12.1 Motivation
+
+The current dual-engine system represents knowledge through **dictionaries** (ED3N `DictionaryLayer`, GARDEN `VectorDictionary`) and **relation groups** (`synonym`, `mapping`, `analogy` in `CoreNetwork`) operating over **coordinate axes** (StateMatrix4D dimensions: α/β/γ/δ/ε/θ/ζ). This is effectively a flat key-value store with sparse connections.
+
+A **matrix-based unified representation** can subsume these disparate structures into a single algebraic framework:
+
+```
+Deterministic Engine (Math/Logic/Symbolic)
+      │  (computes ground truth)
+      ▼
+┌─────────────────────────────────────┐
+│        CORE MATRIX [4×2]            │
+│                                     │
+│  Row 1: Concept Space               │
+│  Row 2: Relation Space              │
+│  Row 3: Temporal Sequence           │
+│  Row 4: Confidence Weighting        │
+│                                     │
+│  Col 1: Primary (materialized)      │
+│  Col 2: Shadow (dual/inverse)       │
+└─────────────┬───────────────────────┘
+      │ trains/updates
+      ▼
+┌─────────────────────────────────────┐
+│  FREE MATRICES: [4×2] × N          │
+│  - Modality matrices (vision/audio/text)│
+│  - Domain-specific sub-spaces      │
+│  - Context-augmented matrices      │
+└─────────────┬───────────────────────┘
+      │ projects onto
+      ▼
+┌─────────────────────────────────────┐
+│  DICTIONARY MATRIX: [4×2] × N_mod  │
+│  Col 1: Term → Index               │
+│  Col 2: Surface → Key              │
+│  N_mod modalities (text/vision/audio)│
+└─────────────┬───────────────────────┘
+      │ residual to
+      ▼
+┌─────────────────────────────────────┐
+│  RESIDUAL MATRIX: [N×N]             │
+│  - Captures unmodeled interactions  │
+│  - Self-correcting via backprop      │
+│  - Dual: positive (growth) /        │
+│    negative (pruning)                │
+└─────────────────────────────────────┘
+```
+
+### 12.2 Matrix Layer Definitions
+
+| Matrix | Shape | Materiality | Description |
+|--------|-------|-------------|-------------|
+| **Core Matrix #1** | `[4×2]` | Material | Concept space + relation space + temporal + confidence |
+| **Core Matrix #2** | `[4×2]` | Shadow | Dual of #1 — inverse activations (pruning signals, negative evidence) |
+| **Core Matrix #3** | `[4×2]` | Shadow | Temporal delta (what changed this cycle) |
+| **Core Matrix #4** | `[4×2]` | Shadow | Confidence-adjusted residual from engine feedback |
+| **Free Matrices** | `[4×2] × N` | Material | Modality-specific, domain-specific, context-specific — instantiated per use case |
+| **Dictionary Matrix** | `[4×2] × N_mod` | Material | Multi-modal dictionary — text, vision, audio embeddings aligned to concept indices |
+| **Residual Matrix** | `[N×N]` | Material | Captures all unmodeled interactions; self-corrects via residual gradient |
+
+### 12.3 Matrix Interactions
+
+**2, 3, 4 ↔ 1 (verifiable)**:
+- All shadow matrices (#2/#3/#4) project onto Core Matrix #1 via **residual computation**
+- Shadow #2 (dual) feeds negative gradients to prune overactive concept links
+- Shadow #3 (temporal delta) drives Hebbian update magnitude — large deltas = low confidence
+- Shadow #4 (confidence residual) modulates learning rate per neuron
+
+**Cross-matrix operations**:
+1. **Projection**: Free matrices → Core Matrix #1 (concept activation)
+2. **Shadow resolution**: Core Matrix #1 → shadow matrices (compute residuals)
+3. **Residual backprop**: Residual Matrix → Core Matrix #1 (self-correction)
+4. **Dictionary alignment**: Dictionary Matrix → Core Matrix (key-to-concept mapping)
+
+### 12.4 What This Replaces
+
+| Current Component | Replaced By |
+|-------------------|-------------|
+| `CoreNetwork` groups (synonym/mapping/analogy) | Core Matrix #1 rows 1-3 |
+| `DictionaryLayer.entries` + `_content_index` | Dictionary Matrix |
+| StateMatrix4D dimensions (α/β/γ/δ/ε/θ/ζ) | Core Matrix #1 row 4 (confidence/temporal encoding) |
+| `hebbian_update()` in GARDEN SNN | Core Matrix #1 + Shadow #3 interaction |
+| `training_history` list in ED3NTrainer | Core Matrix #3 (temporal delta buffer) |
+| `reflex_patterns` dict | Core Matrix #1 Row 1 (direct concept→response) |
+
+### 12.5 Expected Improvements
+
+1. **Algebraic unification**: All operations become matrix multiplications — enables GPU acceleration, batch inference, and gradient-based learning in a unified framework
+2. **Self-correction**: Residual Matrix captures modeling errors and feeds corrections back automatically — no manual threshold tuning
+3. **Shadow duality**: Positive/negative evidence encoded in shadow matrices enables pruning without separate mechanisms
+4. **Temporal awareness**: Core Matrix #3 makes time an explicit dimension — enables better sequence learning
+5. **Reduced redundancy**: Replaces 5 separate dictionaries (ED3N, GARDEN, StateMatrix, CoreNetwork groups, reflex patterns) with a unified matrix representation
