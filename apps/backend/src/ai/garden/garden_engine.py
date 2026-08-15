@@ -98,6 +98,11 @@ class _ReflexTable:
     def add(self, pattern: str, response: str) -> None:
         self.patterns[pattern.lower().strip()] = response
 
+    def clear(self) -> None:
+        """Drop all patterns (used when restoring a saved reflex table)."""
+        self.patterns = {}
+        self._cache = {}
+
 
 # ---------------------------------------------------------------------------
 # Output anchoring (prevent semantic drift)
@@ -588,6 +593,29 @@ class GARDENEngine:
     # ------------------------------------------------------------------
     # Preset / init
     # ------------------------------------------------------------------
+
+    def _load_config_reflex_into(self, reflex_table) -> None:
+        """Merge reflex patterns from the config/ JSON files into a reflex table.
+
+        Used by ``load()`` to backfill patterns for checkpoints that predate
+        reflex persistence, so greeting/canned replies from config always
+        survive a checkpoint load.
+        """
+        config_dir = os.path.join(os.path.dirname(__file__), "config")
+        if not os.path.isdir(config_dir):
+            return
+        for fname in sorted(os.listdir(config_dir)):
+            if not fname.endswith(".json"):
+                continue
+            fpath = os.path.join(config_dir, fname)
+            try:
+                with open(fpath, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                for pattern, response in data.get("reflex_patterns", {}).items():
+                    if pattern not in reflex_table.patterns:
+                        reflex_table.add(pattern, response)
+            except Exception as e:
+                logger.warning("GARDEN: failed to read config %s: %s", fname, e)
 
     def load_presets(self) -> None:
         """Load built-in dictionary presets and wire their relations into the SNN.
@@ -1420,6 +1448,11 @@ class GARDENEngine:
             "model_name": self.model_name,
             "query_count": self._query_count,
             "learn_count": self._learn_count,
+            # Reflex patterns are engine state too: without this, a checkpoint
+            # load would silently drop the config-reflex patterns (e.g.
+            # "how are you" -> "I'm doing great...") and degrade the learned
+            # model to its constructor-time reflex table only.
+            "reflex_patterns": dict(self.reflex.patterns),
         }
         with open(os.path.join(directory, "engine_meta.json"), "w", encoding="utf-8") as f:
             json.dump(meta, f, ensure_ascii=False, indent=2)
@@ -1440,9 +1473,21 @@ class GARDENEngine:
                 meta = json.load(f)
             self._query_count = meta.get("query_count", 0)
             self._learn_count = meta.get("learn_count", 0)
+            # Restore the reflex table saved with the checkpoint. If the
+            # checkpoint predates reflex persistence (or stores none), fall
+            # back to the config-reflex presets so greeting/canned replies do
+            # not silently vanish from the loaded model.
+            saved_reflex = meta.get("reflex_patterns")
+            if saved_reflex:
+                self.reflex.clear()
+                for pattern, response in saved_reflex.items():
+                    self.reflex.add(pattern, response)
         self._presets_loaded = True
         # Apply updated preset surface forms (adds Arabic numerals, operator symbols)
         self._apply_preset_updates()
+        # Merge in any config-reflex patterns that are not already present
+        # (covers checkpoints saved before reflex persistence was added).
+        self._load_config_reflex_into(self.reflex)
         logger.info("GARDEN: engine loaded from %s", directory)
 
     def _apply_preset_updates(self) -> None:
