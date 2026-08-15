@@ -2,10 +2,16 @@
 # ANGELA-MATRIX: [L4] [αβγδ] [C] [L2-L4]
 # =============================================================================
 
+import hashlib
 import logging
 from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+
+def _stable_hash(text: str) -> int:
+    """Deterministic cross-process hash (Python's hash() is salted per process)."""
+    return int(hashlib.md5(text.encode("utf-8")).hexdigest()[:8], 16)
 
 
 class AudioEncoder:
@@ -163,7 +169,7 @@ class AudioEncoder:
             existing = self.dictionary.encode(concept_str)
             if existing:
                 return existing[0]
-            key = f"aud_{category}_{abs(hash(concept_str)) % 10000}"
+            key = f"aud_{category}_{_stable_hash(concept_str) % 10000}"
             self.dictionary.add_entry(
                 key=key,
                 surface_forms={"en": concept_str},
@@ -171,7 +177,7 @@ class AudioEncoder:
                 confidence=0.7,
             )
             return key
-        return f"aud_{category}_{abs(hash(concept_str)) % 10000}"
+        return f"aud_{category}_{_stable_hash(concept_str) % 10000}"
 
     def _fallback_encode(self, audio_data: bytes) -> List[str]:
         duration_sec = len(audio_data) / (16000 * 2)

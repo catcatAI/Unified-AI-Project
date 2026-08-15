@@ -1280,6 +1280,16 @@ class GARDENEngine:
             result_key = self.dictionary.grow(token, token, confidence=confidence)
             if result_key and result_key.startswith("l"):
                 grew_any = True
+                all_new_keys.append(result_key)
+
+        # Stage 2b: Register ALL new concepts into the SNN vocab in ONE
+        # pre-allocation instead of one _register_key() per token (each of
+        # which may trigger an O(V^2) matrix growth+copy).
+        if all_new_keys:
+            try:
+                self.snn._pre_allocate(all_new_keys)
+            except Exception as e:
+                logger.warning(f"SNN batch key registration failed: {e}", exc_info=True)
 
         # Stage 3: Rebuild index ONCE after all grows
         if grew_any and self.dictionary._dirty:
@@ -1296,12 +1306,28 @@ class GARDENEngine:
             target_str = confidence_value(
                 "ai.garden.engine.hebbian_target_strength", 0.35
             )
+
+            # Batch-level text dedup: identical input/output strings recur a
+            # lot inside a batch (common phrases, templates). Encode each
+            # unique string ONCE and reuse the key dict across samples —
+            # avoids re-running the O(V) TF-IDF query for every occurrence.
+            batch_texts: Dict[str, str] = {}
+            batch_text_keys: Dict[str, Dict[str, float]] = {}
             for idx in filtered_indices:
                 s = samples[idx]
-                user_text = s.get("input", "") or ""
-                response_text = s.get("output", "") or ""
-                input_keys = self.dictionary.encode(str(user_text))
-                output_keys = self.dictionary.encode(str(response_text))
+                for field in ("input", "output"):
+                    txt = str(s.get(field, "") or "")
+                    if txt and txt not in batch_texts:
+                        batch_texts[txt] = txt
+            for txt in batch_texts:
+                batch_text_keys[txt] = self.dictionary.encode(txt)
+
+            for idx in filtered_indices:
+                s = samples[idx]
+                user_text = str(s.get("input", "") or "")
+                response_text = str(s.get("output", "") or "")
+                input_keys = batch_text_keys.get(user_text) or {}
+                output_keys = batch_text_keys.get(response_text) or {}
                 self._record_learned(input_keys, output_keys)
                 if input_keys and output_keys:
                     # Pass 1: Direct association input -> output

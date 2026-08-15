@@ -157,9 +157,9 @@ class VisualEncoder:
         mag = np.sqrt(gx**2 + gy**2)
         ang = np.arctan2(gy, gx) + np.pi
         bin_idx = (ang / (2 * np.pi) * self.EDGE_BINS).astype(int) % self.EDGE_BINS
-        hist = np.zeros(self.EDGE_BINS, dtype=np.float32)
-        for b in range(self.EDGE_BINS):
-            hist[b] = mag[bin_idx == b].sum()
+        hist = np.bincount(
+            bin_idx.ravel(), weights=mag.ravel(), minlength=self.EDGE_BINS
+        ).astype(np.float32)
         total = hist.sum()
         if total > 0:
             hist = hist / total

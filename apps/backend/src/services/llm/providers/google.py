@@ -32,10 +32,20 @@ class GoogleAPIBackend(BaseLLMBackend):
         self.timeout = timeout
 
     async def check_health(self) -> bool:
-        """Check health."""
+        """Check health (verifies API key against the models endpoint)."""
         if not self.api_key:
             return False
-        return True
+        try:
+            session = self._get_session()
+            async with session.get(
+                f"{self.GEMINI_BASE}/models",
+                params={"key": self.api_key},
+                timeout=aiohttp.ClientTimeout(total=5),
+            ) as resp:
+                return resp.status == 200
+        except Exception as e:
+            logger.warning(f"Google health check failed: {e}", exc_info=True)
+        return False
 
     async def generate(self, prompt: str, **kwargs) -> LLMResponse:
         """Generate."""

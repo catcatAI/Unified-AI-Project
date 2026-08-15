@@ -392,14 +392,15 @@ def compute_int(feature: str, key: str, default: int = 0) -> int:
 
 
 def compute_float(feature: str, key: str, default: float = 0.0) -> float:
-    """Get float compute setting for a feature."""
+    """Get float compute setting for a feature.
+
+    Priority: profile-specific feature > profile global > global feature > default
+    (mirrors compute_int so hardware-profile overrides actually take effect).
+    """
     config = _get_compute_config()
-    feature_cfg = config.get(feature, {})
-    if isinstance(feature_cfg, dict):
-        val = feature_cfg.get(key)
-        if val is not None:
-            return _safe_float(val, default)
     profile = _get_hardware_profile()
+
+    # Check profile-specific first
     if profile is not None:
         profile_cfg = config.get("profiles", {}).get(profile.scenario.value, {})
         feature_profile = profile_cfg.get(feature, {})
@@ -410,6 +411,14 @@ def compute_float(feature: str, key: str, default: float = 0.0) -> float:
         val = global_profile.get(key)
         if val is not None:
             return _safe_float(val, default)
+
+    # Fall back to global feature config
+    feature_cfg = config.get(feature, {})
+    if isinstance(feature_cfg, dict):
+        val = feature_cfg.get(key)
+        if val is not None:
+            return _safe_float(val, default)
+
     return default
 
 

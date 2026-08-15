@@ -27,19 +27,40 @@ class LlamaCppBackend(BaseLLMBackend):
         self.timeout = timeout
 
     async def check_health(self) -> bool:
-        """Check health."""
+        """Check health.
+
+        llama.cpp server exposes /health (200 = ok) and /v1/models; /api/tags is
+        an Ollama-only endpoint. Using /health so the backend is actually
+        selected when a llama.cpp server is running.
+        """
         try:
             session = self._get_session()
             async with session.get(
-                f"{self.base_url}/api/tags", timeout=aiohttp.ClientTimeout(total=5)
+                f"{self.base_url}/health", timeout=aiohttp.ClientTimeout(total=5)
             ) as response:
                 if response.status == 200:
-                    data = await response.json()
-                    self.model = data.get("model_name", self.model)
+                    if not self.model:
+                        self.model = await self._fetch_model_name()
                     return True
         except Exception as e:
             logger.warning(f"llama.cpp health check failed: {e}", exc_info=True)
         return False
+
+    async def _fetch_model_name(self) -> Optional[str]:
+        """Best-effort model name from /v1/models (llama.cpp OpenAI-compatible)."""
+        try:
+            session = self._get_session()
+            async with session.get(
+                f"{self.base_url}/v1/models", timeout=aiohttp.ClientTimeout(total=5)
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    models = data.get("data") or []
+                    if models:
+                        return models[0].get("id") or models[0].get("model")
+        except Exception as e:
+            logger.warning(f"llama.cpp model fetch failed: {e}", exc_info=True)
+        return None
 
     async def generate(self, prompt: str, **kwargs) -> LLMResponse:
         """Generate."""

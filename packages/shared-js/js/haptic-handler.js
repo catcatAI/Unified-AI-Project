@@ -313,7 +313,11 @@ class HapticHandler {
 
             // 发送到后端
             const backendWs = window.angelaApp?.backendWebSocket;
-            if (backendWs && backendWs.readyState === WebSocket.OPEN) {
+            const isOpen =
+                backendWs &&
+                (backendWs.readyState === WebSocket.OPEN ||
+                    (backendWs.readyState === undefined && backendWs.connected === true));
+            if (isOpen) {
                 try {
                     backendWs.send(JSON.stringify(tactileEvent));
                     console.log('[HapticHandler] Tactile event sent:', touchInfo.bodyPart);

@@ -35,10 +35,23 @@ class AnthropicAPIBackend(BaseLLMBackend):
         self.timeout = timeout
 
     async def check_health(self) -> bool:
-        """Check health."""
+        """Check health (verifies API key against the models endpoint)."""
         if not self.api_key or "your_" in self.api_key or "PLACEHOLDER" in self.api_key:
             return False
-        return True
+        try:
+            session = self._get_session()
+            async with session.get(
+                f"{self.base_url}/v1/models",
+                headers={
+                    "x-api-key": self.api_key,
+                    "anthropic-version": "2023-06-01",
+                },
+                timeout=aiohttp.ClientTimeout(total=5),
+            ) as response:
+                return response.status == 200
+        except Exception as e:
+            logger.warning(f"Anthropic health check failed: {e}", exc_info=True)
+        return False
 
     async def generate(self, prompt: str, **kwargs) -> LLMResponse:
         """Generate."""

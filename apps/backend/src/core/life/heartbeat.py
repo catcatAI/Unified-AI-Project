@@ -38,6 +38,7 @@ class MetabolicHeartbeat:
 
         self._running = False
         self._task: Optional[asyncio.Task] = None
+        self._integration_task: Optional[asyncio.Task] = None
         self.start_time = datetime.now()
 
         # --- Spatial State (Angela's physical presence) ---
@@ -335,7 +336,7 @@ class MetabolicHeartbeat:
         import psutil
 
         hb_cfg = self._beh_cfg.get("heartbeat", {})
-        cpu_usage = psutil.cpu_percent(interval=hb_cfg.get("cpu_poll_interval", 1))
+        cpu_usage = psutil.cpu_percent(interval=None)
         fatigue_impact = (cpu_usage / 100.0) * hb_cfg.get("fatigue_scale", 0.1)
 
         # 2. Battery Level -> Energy/Hunger

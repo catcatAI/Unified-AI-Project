@@ -134,7 +134,7 @@ class TTLSessionManager:
 sessions = TTLSessionManager()
 
 # Latest pipeline response, captured so _handle_chat_request can persist the turn.
-_latest_response: Dict[str, Any] = {}
+_latest_responses: Dict[str, Dict[str, Any]] = {}
 
 
 def _get_ed3n_engine():
@@ -265,6 +265,20 @@ def _get_state_matrix():
     except Exception:
         logger.warning("_get_state_matrix: DLI unavailable, using standalone", exc_info=True)
     return _backbone_module("chat.state_matrix", _factory)
+
+
+def _get_eta_axis():
+    """Get shared EtaAxisState (execution/operation layer η)."""
+
+    def _factory():
+        from core.engine.eta_axis import EtaAxisState, create_default_modules
+
+        state = EtaAxisState()
+        for name, config in create_default_modules().items():
+            state.register_module(config)
+        return state
+
+    return _backbone_module("chat.eta_axis", _factory)
 
 
 # Behavioral adjustments mapped by detected emotion
@@ -406,7 +420,7 @@ async def _try_math_verification(
         verifier = MathVerifier(state_matrix=matrix)
         if verifier.is_math_message(user_message):
             logger.info("\U0001f9ee [DualRail] Math task detected")
-            verification = await verifier.verify(user_message, user_name)
+            verification = verifier.verify(user_message, user_name)
             # Apply bounded, meaningful-only cognition to the live state matrix.
             # Stateless arithmetic (e.g. "917 * 814") applies NOTHING; a meaningful
             # problem (e.g. "HP is 9999") nudges joy/high-value happiness. This is
@@ -523,6 +537,7 @@ async def _build_chat_context(
     # State matrix 4D axes
     try:
         sm = _get_state_matrix()
+        eta_state = _get_eta_axis()
         axes = {}
         for ax_name in ("alpha", "beta", "gamma", "delta", "epsilon", "zeta"):
             dim = sm.dimensions.get(ax_name)
@@ -537,7 +552,13 @@ async def _build_chat_context(
                 "creation_urge": th.get("creation_urge", 0.0),
                 "correction_urge": th.get("correction_urge", 0.0),
             },
-            "eta": {"module_count": 0, "success_rate": 0.0, "structural_drift": 0.0},
+            "eta": {
+                "module_count": len(eta_state.active_modules) if eta_state else 0,
+                "success_rate": round(eta_state.success_rate, 3) if eta_state else 0.0,
+                "structural_drift": (
+                    round(eta_state.structural_drift, 3) if eta_state else 0.0
+                ),
+            },
             "guidance": [],
         }
     except Exception as e:
@@ -576,10 +597,8 @@ async def _build_chat_context(
 
     # Memory context injection
     try:
-        from ai.context.memory_context import MemoryContextManager
-
-        memory_ctx = MemoryContextManager()
-        recent_memories = memory_ctx.get_memories_by_type("short_term", limit=5)
+        dialogue_ctx = _get_dialogue_ctx()
+        recent_memories = dialogue_ctx.get_recent_conversations(limit=5)
         if recent_memories:
             context["recent_memories"] = recent_memories
     except Exception as e:
@@ -620,8 +639,13 @@ async def _handle_execution_gate(
         from ai.core.execution_gate import ExecutionGate
         from ai.core.query_classifier import QueryClassifier
 
-        # Handle pending action from previous turn
+        # Handle pending action from previous turn (persisted on the session so
+        # confirm/cancel round-trips survive across requests).
         pending = context.pop("pending_action", None)
+        if pending is None:
+            session_data = sessions.get(session_id) or {}
+            pending = session_data.pop("pending_action", None)
+            sessions.set(session_id, session_data)  # clear persisted state
         if pending:
             msg_lower = user_message.strip().lower()
             confirm_words = {
@@ -734,11 +758,15 @@ async def _handle_execution_gate(
                 context["last_action_result"] = None
                 context["_gate_ir_mismatch"] = True
         elif decision.action == "confirm_then_execute":
-            context["pending_action"] = {
+            pending_action = {
                 "handler": decision.handler,
                 "action_type": decision.action_type,
                 "original_query": decision.original_query,
             }
+            context["pending_action"] = pending_action
+            session_data = sessions.get(session_id) or {}
+            session_data["pending_action"] = pending_action
+            sessions.set(session_id, session_data)
             return {
                 "response_text": decision.confirm_message,
                 "response": decision.confirm_message,
@@ -789,22 +817,33 @@ async def _try_agent_routing(
         except ImportError:
             _lifespan_get_agent_manager = None
 
-        classifier = QueryClassifier(ed3n_engine=_get_ed3n_engine())
-        classify_result = classifier.classify(user_message)
+        # Reuse the classification already computed by _handle_execution_gate
+        # (stored on context) to avoid classifying the same message twice per
+        # request — QueryClassifier construction + ED3N encode is not cheap.
+        cached_type = context.get("_classify_result_type")
+        cached_conf = context.get("_classify_result_confidence")
+        if cached_type is not None:
+            primary_type_name = str(cached_type)
+            confidence = float(cached_conf)
+        else:
+            classifier = QueryClassifier(ed3n_engine=_get_ed3n_engine())
+            classify_result = classifier.classify(user_message)
+            primary_type_name = classify_result.primary_type.value
+            confidence = classify_result.confidence
 
         # Only route non-actionable intents (execution gate handles actionable ones)
-        actionable = {
+        actionable = {t.value for t in (
             QueryType.FILE,
             QueryType.SEARCH,
             QueryType.CODE,
             QueryType.EXECUTE,
             QueryType.TASK,
-        }
-        if classify_result.primary_type in actionable:
+        )}
+        if primary_type_name in actionable:
             return None
 
         # Map QueryType to agent suitability threshold — route all non-actionable intents
-        agent_types = {
+        agent_types = {t.value for t in (
             QueryType.CREATIVE,
             QueryType.KNOWLEDGE,
             QueryType.OPINION,
@@ -812,8 +851,8 @@ async def _try_agent_routing(
             QueryType.AUDIO,
             QueryType.LOGIC,
             QueryType.COMMAND,
-        }
-        if classify_result.primary_type not in agent_types and classify_result.confidence < 0.3:
+        )}
+        if primary_type_name not in agent_types and confidence < 0.3:
             return None
 
         # Singleton: lazy-init agent manager + orchestrator once, reuse across requests.
@@ -1379,7 +1418,9 @@ async def _handle_chat_request(
     finally:
         # Prefer the pipeline return value; fall back to the last captured
         # response so exceptions/partial failures still persist the turn.
-        response_text = (result or {}).get("response_text") or _latest_response.get("response_text")
+        response_text = (result or {}).get("response_text") or _latest_responses.get(
+            session_id, {}
+        ).get("response_text")
         if session_id in sessions and user_message and response_text:
             try:
                 session = sessions.get(session_id)
@@ -1417,7 +1458,6 @@ async def _run_chat_pipeline(
     mode: str = "1:1",
 ) -> Dict[str, Any]:
     """Core chat pipeline: validate → math → context → emotion/crisis → execution gate → agent routing → LLM."""
-    global _latest_response
     logger.info(
         f"\U0001f4e9 [LIS] Raw message received: '{user_message}' from {origin} (Session: {session_id})"
     )
@@ -1437,10 +1477,16 @@ async def _run_chat_pipeline(
     _was_truncated = _raw_input_len > max_len
 
     # Step 1.5: Adaptive main-line dispatch (REFACTOR_PLAN §13) — best effort.
-    # Judges, from content, whether this input is a generation request vs a
-    # learning signal vs training data, and (when a TrainingCoordinator is
-    # available) enqueues training with priority. Never raises into the
-    # response path; the decision is recorded on context for observability.
+    # Step 2: Initialize base context (must exist before any hook writes to it)
+    context: Dict[str, Any] = {"user_name": user_name}
+    if extra_context:
+        context.update(extra_context)
+
+    # Step 2.5: Main-line dispatch hook — judges whether this input is a
+    # generation request vs a learning signal vs training data, and (when a
+    # TrainingCoordinator is available) enqueues training with priority. Never
+    # raises into the response path; the decision is recorded on context for
+    # observability.
     try:
         from services.mainline_dispatcher import dispatch as _ml_dispatch
 
@@ -1474,21 +1520,14 @@ async def _run_chat_pipeline(
             ir = IntentRegistry()
             ir_name, ir_conf = ir.detect(user_message)
             if ir_name == "math" and ir_conf >= 0.1:
-                _latest_response = math_result
+                _latest_responses[session_id] = math_result
                 return math_result  # IntentRegistry confirms → fast path
         except Exception as e:
             logger.warning("IntentRegistry math gate failed: %s", e, exc_info=True)
         # IntentRegistry didn't confirm → enrich context instead
-        math_result_context = math_result
-
-    # Step 4: Initialize base context + bio integrator
-    context: Dict[str, Any] = {"user_name": user_name}
-    if math_result:
         context["_math_result"] = math_result
-    if extra_context:
-        context.update(extra_context)
 
-    # Step 5: Emotion analysis + crisis assessment + biological stimulus
+    # Step 4: bio integrator
     bio = _get_bio_integrator()
     emotion_result, crisis_level = await _analyze_emotion_and_crisis(user_message, context, bio)
     if emotion_result:
@@ -1574,7 +1613,7 @@ async def _run_chat_pipeline(
         user_message, chat_svc, context, schema_ver, session_id
     )
     if gate_result:
-        _latest_response = gate_result
+        _latest_responses[session_id] = gate_result
         return gate_result
 
     # Step 8: Agent auto-routing (creative/knowledge/opinion/vision/audio — may short-circuit)
@@ -1591,7 +1630,7 @@ async def _run_chat_pipeline(
             "emotion_intensity": 0.4,
             "session_id": session_id,
         }
-        _latest_response = agent_response
+        _latest_responses[session_id] = agent_response
         return agent_response
 
     # Step 9: Inject causal predictions into context (learned from past interactions)
@@ -1609,8 +1648,8 @@ async def _run_chat_pipeline(
             )
             llm_response = response_result
         except asyncio.TimeoutError:
-            _latest_response = _handle_timeout(session_id, schema_ver)
-            return _latest_response
+            _latest_responses[session_id] = _handle_timeout(session_id, schema_ver)
+            return _latest_responses[session_id]
         except asyncio.CancelledError:
             logger.info("Client disconnected mid-response, cancelling")
             raise
@@ -1622,8 +1661,8 @@ async def _run_chat_pipeline(
                     timeout=timeout,
                 )
             except asyncio.TimeoutError:
-                _latest_response = _handle_timeout(session_id, schema_ver)
-                return _latest_response
+                _latest_responses[session_id] = _handle_timeout(session_id, schema_ver)
+                return _latest_responses[session_id]
             except asyncio.CancelledError:
                 raise
             except Exception as e2:
@@ -1636,8 +1675,8 @@ async def _run_chat_pipeline(
                 timeout=timeout,
             )
         except asyncio.TimeoutError:
-            _latest_response = _handle_timeout(session_id, schema_ver)
-            return _latest_response
+            _latest_responses[session_id] = _handle_timeout(session_id, schema_ver)
+            return _latest_responses[session_id]
         except asyncio.CancelledError:
             logger.info("Client disconnected mid-response, cancelling")
             raise
@@ -1645,11 +1684,19 @@ async def _run_chat_pipeline(
             logger.error(f"Error in _handle_chat_request: {e}", exc_info=True)
             raise RuntimeError(f"chat request failed: {e}")
 
-    response_text = (
-        llm_response.text
-        if hasattr(llm_response, "text")
-        else getattr(llm_response, "response", None) or str(llm_response)
-    )
+    if isinstance(llm_response, dict):
+        response_text = (
+            llm_response.get("text")
+            or llm_response.get("response")
+            or llm_response.get("response_text")
+            or ""
+        )
+    else:
+        response_text = (
+            llm_response.text
+            if hasattr(llm_response, "text")
+            else getattr(llm_response, "response", None) or str(llm_response)
+        )
     context["continuation_count"] = context.get("continuation_count", 0) + 1
     _fire_causal_learning(response_text, user_message, session_id)
 
@@ -1675,7 +1722,7 @@ async def _run_chat_pipeline(
     except Exception as e:
         logger.warning(f"Intent outcome recording unavailable: {e}", exc_info=True)
 
-    _latest_response = _format_chat_response(
+    _latest_responses[session_id] = _format_chat_response(
         response_text,
         llm_response,
         emotion_result,
@@ -1687,7 +1734,7 @@ async def _run_chat_pipeline(
         source=flow_source,
         was_truncated=_was_truncated,
     )
-    return _latest_response
+    return _latest_responses[session_id]
 
 
 def _build_math_response(

@@ -169,6 +169,8 @@ class ExecutionGate:
             "unknown",
             "logic",
             "math",
+            "command",
+            "audio",
         ):
             state_store.emit_event(
                 "execution.gate_decided",

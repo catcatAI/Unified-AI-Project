@@ -32,23 +32,41 @@ class GARDENBackend(BaseLLMBackend):
         # was actually trained (previously the engine loaded presets only,
         # orphaning the trained garden_checkpoint on disk).
         if not checkpoint:
-            # Resolve the real project root (dir containing apps/backend/src)
-            # and look for <root>/data/checkpoints/garden_checkpoint.
-            here = os.path.abspath(os.path.dirname(__file__))
-            root = here
-            for _ in range(10):
-                if os.path.isdir(os.path.join(root, "apps", "backend", "src")):
-                    break
-                parent = os.path.dirname(root)
-                if parent == root:
-                    break
-                root = parent
-            candidate = os.path.join(root, "data", "checkpoints", "garden_checkpoint")
-            if os.path.isdir(candidate):
-                checkpoint = candidate
+            checkpoint = self._resolve_default_checkpoint()
         self.checkpoint = checkpoint
         self.timeout = timeout
         self._engine: Optional[Any] = None
+
+    @staticmethod
+    def _resolve_default_checkpoint() -> str:
+        """Locate the trained ``data/checkpoints/garden_checkpoint`` dir.
+
+        Resolution order:
+          1. ``ANGELA_PROJECT_ROOT`` env override (explicit, unambiguous).
+          2. Walk up from this module's dir to the dir containing
+             ``apps/backend/src`` (bounded — this file lives at
+             apps/backend/src/services/llm/providers/, 6 levels below root).
+        """
+        env_root = os.environ.get("ANGELA_PROJECT_ROOT", "").strip()
+        if env_root:
+            candidate = os.path.join(env_root, "data", "checkpoints", "garden_checkpoint")
+            if os.path.isdir(candidate):
+                return candidate
+        here = os.path.abspath(os.path.dirname(__file__))
+        root = here
+        # Bounded walk: this module is exactly 6 levels below the project root
+        # (providers/llm/services/src/backend/apps). 8 covers symlink layouts.
+        for _ in range(8):
+            if os.path.isdir(os.path.join(root, "apps", "backend", "src")):
+                break
+            parent = os.path.dirname(root)
+            if parent == root:
+                break
+            root = parent
+        candidate = os.path.join(root, "data", "checkpoints", "garden_checkpoint")
+        if os.path.isdir(candidate):
+            return candidate
+        return ""
 
     def _get_engine(self):
         if self._engine is None:
@@ -96,7 +114,9 @@ class GARDENBackend(BaseLLMBackend):
                         state_matrix = None
                     if state_matrix is not None:
                         neural_context = build_neural_context(context, state_matrix)
-                        neural_context["_neural_bridge_active"] = True
+                        # The injected slot is ``neural_state`` (consumed by the
+                        # SNN forward); bridge activity is surfaced to callers via
+                        # the ``metadata["bridge"]`` flag below.
             except Exception as e:
                 logger.warning(f"NeuralBridge context build failed: {e}", exc_info=True)
 

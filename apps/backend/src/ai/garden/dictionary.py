@@ -435,6 +435,7 @@ class VectorDictionary:
         self.compatibility_mode = compatibility_mode
 
         self.entries: Dict[str, ConceptEntry] = {}
+        self._key_counter: int = 0  # monotonic key counter (survives pruning)
         self._surface_set: Dict[str, str] = {}  # {lower_surface: key} for O(1) dedup
         self._surface_to_key: Optional[Dict[str, str]] = None  # lazy reverse lookup cache
         self._prefix_first: Optional[Dict[str, List[Tuple[str, str]]]] = None  # first-3-char → [(lower_form, key)]
@@ -506,6 +507,47 @@ class VectorDictionary:
         self._prefix_first = None  # Invalidate prefix-bucket cache
         return entry
 
+    def _prune_for_growth(self) -> bool:
+        """Recycle low-value entries when the vocabulary cap is reached.
+
+        Evicts entries that have NO relations and the LOWEST confidence
+        (single-surface tokens learned from chat, never referenced again).
+        Core concepts — entries with relations (used as association targets)
+        — are always preserved.  Evicts at most 10% of the dictionary per call
+        so a growth burst degrades gracefully instead of churning the whole
+        table.
+
+        Returns True if at least one entry was evicted (caller may grow).
+        """
+        candidates = [
+            (entry.confidence, key)
+            for key, entry in self.entries.items()
+            if not entry.relations
+        ]
+        if not candidates:
+            return False
+        candidates.sort(key=lambda kv: kv[0])  # lowest confidence first
+        budget = max(1, int(len(self.entries) * 0.1))
+        evicted = 0
+        for _, key in candidates[:budget]:
+            entry = self.entries.pop(key, None)
+            if entry is None:
+                continue
+            for sf in entry.surface_forms.values():
+                self._surface_set.pop(sf.lower().strip(), None)
+            evicted += 1
+        if evicted:
+            self._surface_to_key = None
+            self._prefix_first = None
+            self._dirty = True
+            logger.info(
+                "GARDEN: pruned %d low-value entries for growth (cap=%d, now %d)",
+                evicted,
+                self.max_entries,
+                len(self.entries),
+            )
+        return evicted > 0
+
     def grow(self, text: str, surface_form: str, confidence: Optional[float] = None) -> str:
         """Add a new entry learned from conversation.
 
@@ -513,9 +555,14 @@ class VectorDictionary:
         When a prefix match is found, the new word is ALSO registered as a
         surface form on the existing entry, so encode() finds it via exact
         match and the original input is preserved for decode.
+
+        When the vocabulary has reached ``max_entries``, low-value entries are
+        recycled first (see :meth:`prune`) so new concepts can still be
+        learned instead of being permanently refused.
         """
         if not growth_cap_ok(len(self.entries), self.max_entries):
-            return ""  # Max entries reached
+            if not self._prune_for_growth():
+                return ""  # Max entries reached (nothing recyclable)
         confidence = (
             confidence
             if confidence is not None
@@ -557,10 +604,10 @@ class VectorDictionary:
                 self._prefix_first = None  # Invalidate prefix-bucket cache
                 self._dirty = True  # Rebuild TF-IDF index to include new forms
             return existing
-        idx = len(self.entries) + 1
-        key = f"l{idx}"
+        self._key_counter += 1
+        key = f"l{self._key_counter}"
         self.add_entry(key, {"en": text, "zh": surface_form or text}, confidence=confidence)
-        logger.info("GARDEN: grew new concept key=%s surface=%s", key, surface_form)
+        logger.debug("GARDEN: grew new concept key=%s surface=%s", key, surface_form)
         return key
 
     def grow_batch(self, texts: List[str], confidence: Optional[float] = None) -> List[str]:
@@ -574,15 +621,18 @@ class VectorDictionary:
         new_keys: List[str] = []
         for text in texts:
             if not growth_cap_ok(len(self.entries), self.max_entries):
-                logger.info("GARDEN: max entries reached (%d), stopping growth", self.max_entries)
-                break
+                if not self._prune_for_growth():
+                    logger.info(
+                        "GARDEN: max entries reached (%d), stopping growth", self.max_entries
+                    )
+                    break
             existing = self._find_similar_key(
                 text, threshold=threshold_value("ai.garden.dictionary.grow_dedup_threshold", 0.5)
             )
             if existing:
                 continue
-            idx = len(self.entries) + 1
-            key = f"l{idx}"
+            self._key_counter += 1
+            key = f"l{self._key_counter}"
             self.add_entry(key, {"en": text, "zh": text}, confidence=confidence)
             new_keys.append(key)
         if new_keys:
@@ -645,18 +695,34 @@ class VectorDictionary:
             return exact
         # Prefix-based dedup for word forms only
         try:
-            forms = (
-                (form.lower().strip(), key)
-                for key, entry in self.entries.items()
-                for form in entry.surface_forms.values()
-                if form
-            )
-            best_key, _best_score = prefix_dedup(lower, forms, threshold=0.8)
+            # Bucket candidates by first-3-chars so we only compare against
+            # words sharing the same prefix instead of scanning every entry
+            # (was O(V) per grow call — the dominant cost during batch
+            # training).  Buckets are rebuilt lazily whenever entries change.
+            if self._prefix_first is None:
+                self._build_prefix_buckets()
+            bucket = self._prefix_first.get(lower[:3])
+            best_key, _best_score = None, 0.0
+            if bucket:
+                best_key, _best_score = prefix_dedup(lower, bucket, threshold=0.8)
             if best_key:
                 return best_key
         except Exception:
             logger.warning("Prefix dedup failed", exc_info=True)
         return None
+
+    def _build_prefix_buckets(self) -> None:
+        """Rebuild the first-3-chars -> [(lower_form, key)] lookup table."""
+        buckets: Dict[str, List[Tuple[str, str]]] = {}
+        for key, entry in self.entries.items():
+            for form in entry.surface_forms.values():
+                if not form:
+                    continue
+                f_lower = form.lower().strip()
+                if not f_lower:
+                    continue
+                buckets.setdefault(f_lower[:3], []).append((f_lower, key))
+        self._prefix_first = buckets
 
     @staticmethod
     def _prefix_overlap(a: str, b: str, min_prefix: int = 3) -> float:
@@ -706,8 +772,18 @@ class VectorDictionary:
         # query vectors cached from before the re-fit have the OLD dimension
         # and would crash the batched np.stack/torch.stack in encode()
         # ("all input arrays must have the same shape") on the next query.
-        # Drop the cache so only current-dimension vectors are ever stacked.
-        self._embed_cache = None
+        # Only drop the cache when the dimension actually changed — keeping
+        # it when dim is stable avoids re-embedding every query after every
+        # batch rebuild (a major cost during training).
+        new_dim = self._matrix.shape[1]
+        if self._embed_cache:
+            first_vec = next(iter(self._embed_cache.values()))
+            cached_dim = getattr(first_vec, "shape", None)
+            cached_dim = cached_dim[-1] if cached_dim else None
+            if cached_dim != new_dim:
+                self._embed_cache = None
+        else:
+            self._embed_cache = None
 
         self._dirty = False
         logger.debug(
@@ -1057,8 +1133,25 @@ class VectorDictionary:
                     confidence=item.get("confidence", 1.0),
                 )
                 count += 1
+        self._sync_key_counter()
         logger.info("GARDEN: imported %d entries from %s", count, path)
         return count
+
+    def _sync_key_counter(self) -> None:
+        """Re-sync the monotonic key counter to the highest loaded key.
+
+        Entries added directly via :meth:`add_entry` (presets, JSON import)
+        never touch the counter, so after loading we must ensure the next
+        :meth:`grow`/:meth:`grow_batch` key cannot collide with an existing one.
+        """
+        max_idx = 0
+        for key in self.entries:
+            if key.startswith("l"):
+                try:
+                    max_idx = max(max_idx, int(key[1:]))
+                except ValueError:
+                    continue
+        self._key_counter = max(self._key_counter, max_idx)
 
     # ------------------------------------------------------------------
     # Presets
@@ -1072,6 +1165,7 @@ class VectorDictionary:
             self.add_entry(**p)
         self._dirty = True
         self._presets_loaded = True
+        self._sync_key_counter()
         logger.info("GARDEN: loaded %d preset entries", len(self.entries))
 
     def _build_presets(self) -> List[Dict[str, Any]]:

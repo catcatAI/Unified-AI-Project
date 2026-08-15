@@ -42,8 +42,16 @@ class MathExtractor:
         ast.UAdd: operator.pos,
     }
 
+    # Compute-bounding guards (DoS protection). These keep even adversarial
+    # inputs (e.g. "10**9999999", "factorial(10**9)") cheap to evaluate while
+    # preserving normal arithmetic for real queries.
+    MAX_POW_EXPONENT = 1000
+    MAX_FACTORIAL_ARG = 10000
+    MAX_EXPR_NODES = 200
+
     def __init__(self):
         self._ready = True
+        self._node_count = 0
 
     def extract(self, text: str) -> Optional[Tuple[str, Optional[float]]]:
         """Extract and evaluate a math expression from text."""
@@ -66,6 +74,7 @@ class MathExtractor:
             tree = ast.parse(expr.strip(), mode="eval")
             if not isinstance(tree.body, (ast.BinOp, ast.UnaryOp, ast.Constant, ast.Call)):
                 return None
+            self._node_count = 0
             result = self._eval_node(tree.body)
             return float(result) if result is not None else None
         except Exception:
@@ -73,6 +82,9 @@ class MathExtractor:
             return None
 
     def _eval_node(self, node) -> Optional[float]:
+        self._node_count += 1
+        if self._node_count > self.MAX_EXPR_NODES:
+            return None
         if isinstance(node, ast.Constant):
             if isinstance(node.value, bool):
                 return float(node.value)
@@ -96,8 +108,13 @@ class MathExtractor:
             if left is None or right is None:
                 return None
             try:
+                if isinstance(node.op, ast.Pow):
+                    # Bounding exponents avoids pathological huge-integer
+                    # computation (e.g. 10**9999999 → multi-MB int / OOM).
+                    if isinstance(right, int) and abs(right) > self.MAX_POW_EXPONENT:
+                        return None
                 return op(left, right)
-            except (ZeroDivisionError, OverflowError):
+            except (ZeroDivisionError, OverflowError, MemoryError):
                 return None
         if isinstance(node, ast.Call):
             if not isinstance(node.func, ast.Name):
@@ -110,8 +127,12 @@ class MathExtractor:
             if any(a is None for a in args):
                 return None
             try:
+                if fn_name == "factorial":
+                    arg = args[0]
+                    if isinstance(arg, int) and abs(arg) > self.MAX_FACTORIAL_ARG:
+                        return None
                 return float(fn(*args))
-            except (ValueError, OverflowError, ZeroDivisionError):
+            except (ValueError, OverflowError, ZeroDivisionError, MemoryError):
                 return None
         return None
 
@@ -516,6 +537,8 @@ def evaluate_math(text: str) -> Optional[str]:
     if extracted is None:
         return None
     math_expr, result = extracted
+    if result is None:
+        return None
     if isinstance(result, float) and result.is_integer():
         result = int(result)
     if isinstance(result, int):

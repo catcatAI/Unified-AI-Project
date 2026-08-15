@@ -45,12 +45,23 @@ def _check_torch_subprocess() -> bool:
     """Check if torch can be imported without hanging the process.
 
     On Windows/Python 3.14, torch import hangs indefinitely in-process.
-    Uses a subprocess probe that can be killed cleanly.
+    Uses a subprocess probe that can be killed cleanly. On other platforms
+    (Linux/macOS), import in-process directly — the subprocess probe is
+    unreliable under memory pressure in a combined test run.
     """
     global _TORCH_CHECKED, _TORCH_AVAILABLE
     if _TORCH_CHECKED:
         return _TORCH_AVAILABLE
     _TORCH_CHECKED = True
+    if not (sys.platform.startswith("win") or sys.version_info >= (3, 14)):
+        try:
+            import torch  # noqa: F401
+            _TORCH_AVAILABLE = True
+            return _TORCH_AVAILABLE
+        except ImportError:
+            logger.debug("torch not importable", exc_info=True)
+            _TORCH_AVAILABLE = False
+            return _TORCH_AVAILABLE
     try:
         result = subprocess.run(
             [sys.executable, "-c", "import torch; print('ok')"],

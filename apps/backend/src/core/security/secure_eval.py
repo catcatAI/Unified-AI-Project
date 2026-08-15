@@ -85,6 +85,15 @@ class UnsafeExpressionError(ValueError):
     pass
 
 
+# Compute-bounding guards. DoS protection: a small AST (few nodes) can still
+# trigger pathologically expensive work (e.g. pow(2, 9999999999), 10**9999999,
+# list(range(10**9)), "x" * 10**9). These caps bound that work without
+# affecting normal expressions.
+MAX_POW_EXPONENT = 10000
+MAX_RANGE_END = 10000000
+MAX_STRING_REPEAT = 1000000
+
+
 class _SafeEvalChecker(ast.NodeVisitor):
     """AST node checker using NodeVisitor pattern for safe expression validation."""
 
@@ -106,6 +115,19 @@ class _SafeEvalChecker(ast.NodeVisitor):
         if self._node_count > self.max_nodes:
             raise UnsafeExpressionError(f"表達式過於複雜 (超過 {self.max_nodes} 個節點)")
 
+    def _constant_int(self, node) -> Optional[int]:
+        """Return the integer value of a Constant node, else None."""
+        if isinstance(node, ast.Constant) and isinstance(node.value, int) and not isinstance(node.value, bool):
+            return node.value
+        return None
+
+    def _check_pow(self, base, exponent) -> None:
+        exp = self._constant_int(exponent)
+        if exp is not None and abs(exp) > MAX_POW_EXPONENT:
+            raise UnsafeExpressionError(
+                f"指數大小 {exp} 超過上限 {MAX_POW_EXPONENT}（防止計算量 DoS）"
+            )
+
     def visit_Expression(self, node: ast.Expression):
         self._check_node_limit()
         self.visit(node.body)
@@ -114,6 +136,22 @@ class _SafeEvalChecker(ast.NodeVisitor):
         self._check_node_limit()
         if type(node.op) not in self.safe_ops:
             raise UnsafeExpressionError(f"不允許的二進制操作符: {type(node.op).__name__}")
+        if isinstance(node.op, ast.Pow):
+            self._check_pow(node.left, node.right)
+        elif isinstance(node.op, ast.Mult):
+            # Bound string repetition: "x" * N (N huge → memory blowup)
+            if isinstance(node.left, ast.Constant) and isinstance(node.left.value, str):
+                n = self._constant_int(node.right)
+                if n is not None and abs(n) > MAX_STRING_REPEAT:
+                    raise UnsafeExpressionError(
+                        f"字串重複次數 {n} 超過上限 {MAX_STRING_REPEAT}（防止記憶體 DoS）"
+                    )
+            if isinstance(node.right, ast.Constant) and isinstance(node.right.value, str):
+                n = self._constant_int(node.left)
+                if n is not None and abs(n) > MAX_STRING_REPEAT:
+                    raise UnsafeExpressionError(
+                        f"字串重複次數 {n} 超過上限 {MAX_STRING_REPEAT}（防止記憶體 DoS）"
+                    )
         self.visit(node.left)
         self.visit(node.right)
 
@@ -178,6 +216,16 @@ class _SafeEvalChecker(ast.NodeVisitor):
             raise UnsafeExpressionError("僅支援簡單函數調用 (不支援方法調用)")
         if node.func.id not in self.safe_nms:
             raise UnsafeExpressionError(f"不允許的函數調用: '{node.func.id}'")
+        fn_name = node.func.id
+        if fn_name == "pow" and len(node.args) >= 2:
+            self._check_pow(node.args[0], node.args[1])
+        elif fn_name == "range" and node.args:
+            for arg in node.args:
+                val = self._constant_int(arg)
+                if val is not None and abs(val) > MAX_RANGE_END:
+                    raise UnsafeExpressionError(
+                        f"range 大小 {val} 超過上限 {MAX_RANGE_END}（防止迭代 DoS）"
+                    )
         for arg in node.args:
             self.visit(arg)
         for kw in node.keywords:

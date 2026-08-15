@@ -863,7 +863,11 @@ class TestLongRunningStability:
         - 无错误积累
         """
         # 模拟24小时（加速测试，实际5分钟）
-        test_duration_minutes = 5
+        # NOTE: duration shortened (5min -> 30s) and latency samples are
+        # BOUNDED (downsampled) so the loop can never accumulate millions of
+        # floats and OOM the CI box — a mock-only loop with no delay would
+        # otherwise append hundreds of thousands of samples per second.
+        test_duration_minutes = 0.5  # 30 seconds
         iteration_count = 0
         errors = []
         latency_samples = []
@@ -892,7 +896,10 @@ class TestLongRunningStability:
                     
                     end = time.perf_counter()
                     latency_ms = (end - start) * 1000
-                    latency_samples.append(latency_ms)
+                    # Bounded sampling: keep every 100th sample so the list
+                    # stays small regardless of loop speed.
+                    if iteration_count % 100 == 0:
+                        latency_samples.append(latency_ms)
                     
                 except Exception as e:
                     errors.append(str(e))

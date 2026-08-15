@@ -12,7 +12,7 @@ project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from core.autonomous.endocrine_system import EndocrineSystem, HormoneType
-from core.autonomous.state_matrix import StateMatrix4D
+from core.engine.state_matrix import StateMatrix4D
 
 
 async def test_sensory_overload():

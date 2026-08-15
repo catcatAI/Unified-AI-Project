@@ -1445,13 +1445,21 @@ let wsHeartbeatInterval = null
 const WS_MAX_RECONNECT_ATTEMPTS = 5
 const WS_RECONNECT_DELAY = 3000
 
+// WebSocketConnection (websocket-wrapper.js) exposes state constants only as
+// *instance* properties (this.OPEN = 1, ...), so there is no static
+// WebSocket.OPEN. Use module-level numeric constants for state checks.
+const WS_STATE_CONNECTING = 0
+const WS_STATE_OPEN = 1
+const WS_STATE_CLOSING = 2
+const WS_STATE_CLOSED = 3
+
 function connectWebSocket(url, sessionInfo) {
   log.info('[Main] connectWebSocket() called with:', url, 'session:', sessionInfo)
   
   // Store session info for potential reconnect
   wsSessionInfo = sessionInfo || { sessionId: null, clientType: 'desktop', clientVersion: '7.5.0-dev' }
   
-  if (wsClient && wsClient.readyState === WebSocket.OPEN) {
+  if (wsClient && wsClient.readyState === WS_STATE_OPEN) {
     log.info('[WebSocket] Already connected, skipping')
     return
   }
@@ -1493,7 +1501,7 @@ function connectWebSocket(url, sessionInfo) {
           // Start heartbeat now
           if (wsHeartbeatInterval) clearInterval(wsHeartbeatInterval)
           wsHeartbeatInterval = setInterval(() => {
-            if (wsClient && wsClient.readyState === WebSocket.OPEN) {
+            if (wsClient && wsClient.readyState === WS_STATE_OPEN) {
               wsClient.send(JSON.stringify({ type: 'heartbeat', timestamp: Date.now() }))
             }
           }, 30000)
@@ -1588,7 +1596,7 @@ function disconnectWebSocket() {
 }
 
 function sendWebSocketMessage(message) {
-  if (!wsClient || wsClient.readyState !== WebSocket.OPEN) {
+  if (!wsClient || wsClient.readyState !== WS_STATE_OPEN) {
     log.error('[WebSocket] Not connected')
     return false
   }
@@ -1619,7 +1627,7 @@ ipcMain.on('websocket-send', (event, message) => {
 
 ipcMain.handle('websocket-get-status', () => {
   return {
-    connected: wsClient && wsClient.readyState === WebSocket.OPEN,
+    connected: wsClient && wsClient.readyState === WS_STATE_OPEN,
     reconnectAttempts: wsReconnectAttempts,
   }
 })

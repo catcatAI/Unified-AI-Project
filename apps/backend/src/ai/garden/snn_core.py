@@ -50,13 +50,28 @@ _is_torch: bool = False  # True if using torch
 
 
 def _check_torch_subprocess() -> bool:
-    """Check if torch can be imported by spawning a subprocess with a strict timeout.
+    """Check if torch can be imported, with a strict timeout.
 
     On Windows/Python 3.14, torch import hangs indefinitely in-process,
     so we probe in a short-lived subprocess that can be killed cleanly.
+    On Linux (non-3.14) an in-process import is fast and reliable — the
+    subprocess probe spuriously fails under heavy parallel load (e.g. a
+    full pytest run), which would silently downgrade SNN to the numpy
+    backend and make torch-format checkpoints unloadable.
     """
-    import subprocess
+    import platform
     import sys
+
+    py_ver = sys.version_info
+    if sys.platform.startswith("linux") and not (py_ver.major == 3 and py_ver.minor >= 14):
+        try:
+            import torch  # noqa: F401
+
+            return True
+        except ImportError:
+            return False
+
+    import subprocess
 
     try:
         result = subprocess.run(
@@ -580,29 +595,72 @@ class TensorSNNCore:
         After updating, applies decay ONLY to rows that were modified
         (O(nnz_per_row) instead of O(V^2)).
 
+        Vectorized over the (|input| × |output|) block: the weight patch is
+        read once, updated in bulk, and written back — instead of a Python
+        double loop that crosses the torch/numpy scalar boundary once per
+        element (the dominant cost in batch training at V≈8k).
+
         Returns total weight delta applied.
         """
         if not input_keys or not target_keys:
             return 0.0
 
-        delta_total = 0.0
-        touched_rows = set()
-        for src, conf_i in input_keys.items():
-            i = self._register_key(src)
-            touched_rows.add(i)
-            for tgt, conf_j in target_keys.items():
-                j = self._register_key(tgt)
-                touched_rows.add(j)
-                old_w = float(self._W[i, j])
-                # Confidence-gated learning: low-conf → small update
-                gate = conf_i * conf_j
-                delta = lr * gate * (target_strength - old_w)
-                new_w = max(0.0, min(1.0, old_w + delta))
-                self._W[i, j] = new_w
-                self._W[j, i] = new_w  # symmetric
-                self._touch(i)
-                self._touch(j)
-                delta_total += abs(delta)
+        # Register any unseen keys first (preserves legacy auto-registration),
+        # then map to row/col indices, vectorized.
+        for k in input_keys:
+            self._register_key(k)
+        for k in target_keys:
+            self._register_key(k)
+        src_items = [(k, c) for k, c in input_keys.items() if k in self._key_to_idx]
+        tgt_items = [(k, c) for k, c in target_keys.items() if k in self._key_to_idx]
+        if not src_items or not tgt_items:
+            return 0.0
+        src_idx = [self._key_to_idx[k] for k, _ in src_items]
+        tgt_idx = [self._key_to_idx[k] for k, _ in tgt_items]
+        src_conf = [c for _, c in src_items]
+        tgt_conf = [c for _, c in tgt_items]
+
+        # Build the (len(src) × len(tgt)) confidence-gate matrix.
+        # gate[i, j] = conf_i * conf_j
+        xp = _zeros  # backend-agnostic helper; use numpy/torch arrays below
+        import numpy as np
+
+        is_torch = self._W.__class__.__module__.startswith("torch")
+        if is_torch:
+            xp, _ = _get_backend()
+            src_t = xp.as_tensor(src_idx, dtype=xp.int64)
+            tgt_t = xp.as_tensor(tgt_idx, dtype=xp.int64)
+            src_a = self._W.new_tensor(src_conf, dtype=self._W.dtype)
+            tgt_a = self._W.new_tensor(tgt_conf, dtype=self._W.dtype)
+            gate = src_a.unsqueeze(1) * tgt_a.unsqueeze(0)  # [S, T]
+            # index_select rows then columns: guaranteed [S, T].
+            old_patch = self._W.index_select(0, src_t).index_select(1, tgt_t)
+            delta_patch = lr * gate * (target_strength - old_patch)
+            new_patch = old_patch + delta_patch
+            new_patch = new_patch.clamp(min=0.0, max=1.0)
+            # Cartesian-pair write-back: broadcast src rows × tgt cols.
+            rr, cc = xp.meshgrid(src_t, tgt_t, indexing="ij")
+            self._W[rr, cc] = new_patch
+            self._W[cc, rr] = new_patch
+            delta_total = float(delta_patch.abs().sum())
+            touched_rows = set(src_idx) | set(tgt_idx)
+        else:
+            gate = (
+                np.asarray(src_conf, dtype=np.float32)[:, None]
+                * np.asarray(tgt_conf, dtype=np.float32)[None, :]
+            )
+            old_patch = self._W[np.ix_(src_idx, tgt_idx)]
+            delta_patch = lr * gate * (target_strength - old_patch)
+            new_patch = np.clip(old_patch + delta_patch, 0.0, 1.0)
+            self._W[np.ix_(src_idx, tgt_idx)] = new_patch
+            self._W[np.ix_(tgt_idx, src_idx)] = new_patch
+            delta_total = float(np.abs(delta_patch).sum())
+            touched_rows = set(src_idx) | set(tgt_idx)
+
+        for i in src_idx:
+            self._touch(i)
+        for j in tgt_idx:
+            self._touch(j)
 
         # Targeted decay: only decay rows that were touched (O(nnz_per_row))
         if weight_decay > 0:

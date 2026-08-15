@@ -70,6 +70,18 @@ class TestLifecycleConfigDriven:
 class TestBehaviorExecutorTypeStats:
     """Tests per-type execution tracking in BehaviorExecutor (C³ 4.0)."""
 
+    @pytest.fixture(autouse=True)
+    def _force_execution_success(self, monkeypatch):
+        """Deterministic execution outcomes: force all executions to succeed.
+
+        ``BehaviorExecutor.execute`` decides success via ``random.random() <
+        base_rate``, so assertions on per-type counters are inherently flaky
+        without a fixed random source. Mocking it to always return 0.0 makes
+        every execution succeed (0.0 < any base_rate), keeping the tests
+        deterministic.
+        """
+        monkeypatch.setattr("random.random", lambda: 0.0)
+
     async def test_get_type_stats_empty(self):
         be = BehaviorExecutor()
         assert be.get_type_stats() == {}

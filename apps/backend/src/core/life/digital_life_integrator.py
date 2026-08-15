@@ -551,6 +551,18 @@ class DigitalLifeIntegrator:
         if self.memory_bridge:
             await self.memory_bridge.shutdown()
 
+        # Stop background decision loop + user monitor (started in start();
+        # without this, their tasks leak across server restarts).
+        if self.llm_decision_loop is not None:
+            try:
+                await self.llm_decision_loop.stop()
+            except Exception as e:
+                logger.error(f"Error stopping LLMDecisionLoop: {e}", exc_info=True)
+        try:
+            await self.user_monitor.stop()
+        except Exception as e:
+            logger.error(f"Error stopping UserMonitor: {e}", exc_info=True)
+
         # Shutdown theoretical frameworks
         if self.autonomous_lifecycle:
             await self.autonomous_lifecycle.shutdown()

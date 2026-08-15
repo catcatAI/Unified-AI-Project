@@ -2,6 +2,11 @@
 
 Tests the full flow: image → CLIP classify → dict lookup → Chinese response.
 Uses real CLIP (not mocked).
+
+WARNING: Requires a real CLIP model (downloaded to HF cache on first run)
+and real external dictionaries. Takes ~90s standalone and stalls the full
+test suite under a combined run. Skipped by default; run explicitly when
+a CLIP-capable environment is available.
 """
 import io
 import os
@@ -19,6 +24,13 @@ from ai.multimodal.semantic_key_mapper import SemanticKeyMapper
 from ai.multimodal.semantic_visual import SemanticVisualEncoder
 from ai.multimodal.vision_response_generator import VisionResponseGenerator
 from PIL import Image, ImageDraw
+
+pytestmark = [
+    pytest.mark.skip(
+        reason="REAL-CLIP E2E: ~90s + HF model download, stalls full suite; run explicitly in a CLIP-capable env"
+    ),
+    pytest.mark.slow,
+]
 
 
 @pytest.fixture(scope="module")

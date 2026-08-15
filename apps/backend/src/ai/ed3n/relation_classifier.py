@@ -49,7 +49,7 @@ class RelationClassifier:
         dictionary: Optional["DictionaryLayer"] = None,
     ) -> Tuple[RelationType, float]:
         if not key1 or not key2:
-            return RelationType.UNRELATED
+            return RelationType.UNRELATED, 0.0
         d = dictionary or self.dictionary
 
         if d is None:

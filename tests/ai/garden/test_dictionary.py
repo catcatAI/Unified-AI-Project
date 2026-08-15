@@ -276,9 +276,82 @@ class TestVectorDictionaryEmpty:
         assert s["index_built"] is True or s["index_built"] is False
 
 
+class TestVectorDictionaryPruneForGrowth:
+    """Tests for recycling low-value entries when the vocab cap is reached."""
+
+    def test_prune_evicts_low_confidence_no_relations(self):
+        d = VectorDictionary(compatibility_mode=True)
+        d.max_entries = 3
+        # 3 entries fill the cap: two low-confidence leaf tokens, one core
+        # concept with relations (must be preserved).
+        d.grow("alpha token", "alpha", confidence=0.1)
+        d.grow("beta token", "beta", confidence=0.2)
+        core_key = d.grow("core concept", "core", confidence=0.9)
+        d.entries[core_key].relations["mapping"] = ["r1"]
+        assert len(d.entries) == 3
+
+        # At cap — next grow must evict the lowest-confidence leaf and succeed.
+        new_key = d.grow("gamma token", "gamma", confidence=0.9)
+        assert new_key.startswith("l")
+        assert len(d.entries) == 3
+        # The core concept with relations survives the recycle.
+        assert core_key in d.entries
+        # The lowest-confidence leaf ("alpha") was evicted.
+        assert "alpha token" not in [e.surface_forms.get("en") for e in d.entries.values()]
+
+    def test_prune_preserves_surface_set_consistency(self):
+        d = VectorDictionary(compatibility_mode=True)
+        d.max_entries = 2
+        d.grow("leaf one", "leaf_one", confidence=0.1)
+        d.grow("core keep", "core_keep", confidence=0.9)
+        assert len(d.entries) == 2
+
+        d.grow("leaf two", "leaf_two", confidence=0.9)
+        # Evicted leaf must no longer resolve via surface set (no stale mapping).
+        assert "leaf one" not in d._surface_set
+        assert d._surface_set.get("leaf one") is None
+
+    def test_prune_no_recyclable_entries_returns_false(self):
+        d = VectorDictionary(compatibility_mode=True)
+        d.max_entries = 1
+        key = d.grow("core only", "core_only", confidence=0.9)
+        d.entries[key].relations["mapping"] = ["r1"]
+        assert len(d.entries) == 1
+        # Nothing is recyclable (only entry has relations) -> grow refused.
+        result = d.grow("another token", "another", confidence=0.9)
+        assert result == ""
+        assert len(d.entries) == 1
+
+    def test_grow_keys_unique_after_import_and_prune(self, temp_dir):
+        """Pruning reduces len(entries) but key allocation must never collide."""
+        d = VectorDictionary(compatibility_mode=True)
+        d.max_entries = 2
+        d.grow("first word", "first", confidence=0.1)
+        d.grow("second word", "second", confidence=0.9)
+        # Fill cap: prune evicts first word (lowest confidence), then third
+        # grow allocates a key that must NOT reuse the evicted l1.
+        new_key = d.grow("third word", "third", confidence=0.9)
+        assert len(d.entries) == 2
+        assert new_key != "l1"  # evicted key is never reused
+        assert "l1" not in d.entries  # first word really evicted
+        assert "l2" in d.entries  # higher-confidence leaf survives
+
+    def test_import_from_json_syncs_key_counter(self, temp_dir):
+        import json
+
+        d = VectorDictionary(compatibility_mode=True)
+        path = os.path.join(temp_dir, "dict.json")
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({"entries": [{"key": "l7", "surface_forms": {"en": "loaded"}}]}, f)
+        d.import_from_json(path)
+        # Counter must have advanced past loaded key l7.
+        new_key = d.grow("fresh concept", "fresh", confidence=0.9)
+        assert new_key.startswith("l")
+        assert int(new_key[1:]) > 7
+
+
 class TestVectorDictionaryConfigLoading:
     """Tests for loading config from directory."""
-
     def test_config_files_exist(self):
         """Verify that config JSON files exist."""
         config_dir = os.path.join(

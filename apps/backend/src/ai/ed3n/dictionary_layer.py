@@ -395,6 +395,18 @@ class DictionaryLayer:
         )
         if sig in self._content_index:
             return self._content_index[sig]
+        # Enforce the growth cap: when at max_entries, first prune stale
+        # low-confidence entries; if still at cap, refuse to grow and log.
+        if self.max_entries and len(self.entries) >= self.max_entries:
+            pruned = self.prune()
+            if len(self.entries) >= self.max_entries:
+                logger.warning(
+                    "Dictionary at max_entries=%d; refusing to grow %r (pruned=%d)",
+                    self.max_entries,
+                    text,
+                    pruned,
+                )
+                return ""
         key = self._assign_key(prefix="l")
         entry = DictionaryEntry(
             key=key,

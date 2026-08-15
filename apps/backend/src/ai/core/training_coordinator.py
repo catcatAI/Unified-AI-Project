@@ -228,17 +228,25 @@ class TrainingCoordinator:
         return "\n".join(lines)
 
     async def deconflict_samples(self, samples: List[Dict]) -> Dict[str, List[Dict]]:
-        """Assign samples to ALL engines (not by domain).
+        """Assign samples to engines with domain-aware routing.
 
-        Both ED3N and GARDEN train on the full dataset:
-        - ED3N: coarse learning (deterministic rules, knowledge graph)
-        - GARDEN: fine learning (associations, pattern matching)
+        ED3N receives EVERY sample: its dictionary growth needs all tokens
+        (math/logic/reasoning/knowledge concepts must exist), while its SNN
+        association training filters internally to reflex/greeting/association.
+
+        GARDEN receives only non-deterministic samples: its ``learn_batch``
+        would filter deterministic math/logic facts out anyway, so skipping
+        them here avoids re-processing ~40K numeric/factual samples that the
+        engine can never learn from. Its SNN Hebbian + dictionary growth then
+        focuses on associative/knowledge content.
         """
-        batches: Dict[str, List[Dict]] = {}
+        batches: Dict[str, List[Dict]] = {"ed3n": list(samples), "garden": []}
         for sample in samples:
-            # Every sample goes to both engines
-            for model_id in ("ed3n", "garden"):
-                batches.setdefault(model_id, []).append(sample)
+            domain = str(sample.get("domain", "unknown")).lower()
+            # Pure computational facts are handled by deterministic engines
+            # (MathVerifier / symbolic reasoner) — GARDEN skips them.
+            if domain not in {"math", "logic"}:
+                batches["garden"].append(sample)
         return batches
 
     def save(self, path: str) -> None:

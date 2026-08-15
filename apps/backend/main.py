@@ -167,16 +167,6 @@ async def lifespan(app: FastAPI):
 
     logger.info("✅ Level 5 AGI后端系统启动成功")
 
-    # Hook PetManager specifically for Live2D sync (Phase 11)
-    try:
-        from src.api.v1.endpoints.pet import get_pet_manager
-
-        pet_manager = get_pet_manager()
-        pet_manager.broadcast_callback = broadcast_to_clients
-        logger.info("✅ Desktop Pet WebSocket bridge established")
-    except Exception as e:
-        logger.warning(f"Failed to hook Desktop Pet WebSocket: {e}")
-
     yield
 
     # 关闭时

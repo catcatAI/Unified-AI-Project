@@ -2,6 +2,7 @@
 # ANGELA-MATRIX: [L3] [γδ] [C] [L2]
 # =============================================================================
 
+import hashlib
 import json
 import logging
 import os
@@ -478,6 +479,25 @@ class ED3NEngine:
                 confidence=confidence,
                 is_fallback=(not output or output == FALLBACK_STR),
             )
+
+        # Deep path: context-aware anchored decode + SNN/CoreNetwork reasoning.
+        # This is the real production deep branch — previously the function
+        # fell through to an implicit None for context/deep requests, making
+        # ModelBus deep routing and streaming producers' depth="deep" calls
+        # silently no-op. Delegates to process_deep (the single source of the
+        # anchored-decode pipeline) so deep == shallow behaviour never diverges.
+        output = self.process_deep(input_text, context)
+        return self._telemetry_return(
+            query_id,
+            input_text,
+            stages,
+            reflex_match=None,
+            cache_hit=cache_hit,
+            matched_keys=keys,
+            output_text=output,
+            confidence=confidence,
+            is_fallback=(not output or output == FALLBACK_STR),
+        )
 
     def _stage_chain_reasoning(self, input_text, query_id, stages):
         """Offline relational-chain reasoning via CoreNetwork transitive closure.
@@ -962,7 +982,9 @@ class ED3NEngine:
                 # hash-based pseudo-embeddings provide consistent retrieval,
                 # adequate for the lower-bound path until full CLIP encodings
                 # are available for every dictionary entry)
-                rng = np.random.default_rng(hash(key) % (2**31))
+                rng = np.random.default_rng(
+                    int(hashlib.md5(key.encode("utf-8")).hexdigest()[:8], 16)
+                )
                 latent = rng.normal(0, 0.1, 64).astype(np.float32)
                 self._semantic_key_mapper.index_key(key, structural_latent=latent)
                 count += 1
@@ -1175,6 +1197,13 @@ class ED3NEngine:
         """Save full ED3N engine state."""
         import json
         import os
+
+        # Prune low-confidence/stale dictionary entries before persisting so
+        # checkpoint files stay bounded and don't accumulate dead concepts.
+        try:
+            self.dictionary.prune()
+        except Exception as e:
+            logger.debug("ED3N: prune before save failed: %s", e, exc_info=True)
 
         state = {
             "snn_mode": self.snn_mode,

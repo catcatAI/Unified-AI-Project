@@ -535,6 +535,12 @@ async def _shutdown_services(broadcast_task, module_manager):
             logger.info("[BrainBridge] BrainBridgeService stopped")
         except Exception as e:
             logger.warning(f"[BrainBridge] Shutdown error: {e}")
+    if _digital_life_instance is not None:
+        try:
+            await _digital_life_instance.shutdown()
+            logger.info("[DLI] DigitalLifeIntegrator shut down")
+        except Exception as e:
+            logger.warning(f"[DLI] DigitalLifeIntegrator shutdown error: {e}")
     if broadcast_task is not None:
         broadcast_task.cancel()
         try:

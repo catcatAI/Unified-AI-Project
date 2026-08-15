@@ -174,9 +174,13 @@ def test_real_data_provider_reconstruction_samples_empty():
     assert len(samples) == 0
 
 
-def test_real_data_provider_encode_all_no_data():
+def test_real_data_provider_encode_all_no_data(tmp_path):
     """RealDataProvider.encode_all should return empty counts when no data dirs."""
-    from ai.multimodal.data_loader import RealDataProvider
+    from ai.multimodal.data_loader import CIFAR10Loader, ESC50Loader, RealDataProvider
+    empty_cifar = tmp_path / "cifar10"
+    empty_esc50 = tmp_path / "esc50"
     provider = RealDataProvider()
+    provider.cifar10 = CIFAR10Loader(data_dir=empty_cifar)
+    provider.esc50 = ESC50Loader(data_dir=empty_esc50)
     counts = provider.encode_all()
     assert isinstance(counts, dict)

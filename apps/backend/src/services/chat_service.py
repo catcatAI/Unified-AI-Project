@@ -241,6 +241,8 @@ class ChatService:
                 local_answer = await self._knowledge_pipeline.query(user_message, merged_context)
                 if local_answer and local_answer.get("answer"):
                     return {
+                        "response": local_answer["answer"],
+                        "text": local_answer["answer"],
                         "response_text": local_answer["answer"],
                         "source": local_answer.get("source", "knowledge_pipeline"),
                         "confidence": local_answer.get("confidence", 0.9),

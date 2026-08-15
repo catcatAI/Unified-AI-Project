@@ -128,7 +128,7 @@ async def test_exception_still_persists_partial_turn(monkeypatch):
 
     # Set the module-level captured response via the module attribute so the
     # wrapper's fallback path reads it (from-import would shadow it locally).
-    cr._latest_response = {
+    cr._latest_responses["sess-memory-test-3"] = {
         "response_text": "partial response before crash",
         "response": "partial response before crash",
         "source": "angela_chat_service",

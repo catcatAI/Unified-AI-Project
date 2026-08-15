@@ -12,16 +12,21 @@ _HAS_TORCH_CACHE = None
 
 
 def _has_torch():
-    """Check if torch is importable without hanging (subprocess probe, cached)."""
+    """Check if torch is importable, in-process (cached).
+
+    The ThreeLayerVisual module loads torch via a subprocess probe to avoid
+    import hangs on Windows/Python 3.14. Under a combined full-suite run on
+    Linux, that subprocess probe can spuriously fail under memory/resource
+    pressure even though torch IS importable in-process — making these tests
+    flaky (skip standalone, fail in full runs). Probing in-process mirrors
+    what ``ThreeLayerVisual`` actually does after ``_lazy_init_torch``.
+    """
     global _HAS_TORCH_CACHE
     if _HAS_TORCH_CACHE is not None:
         return _HAS_TORCH_CACHE
     try:
-        result = subprocess.run(
-            [sys.executable, "-c", "import torch; print('ok')"],
-            capture_output=True, timeout=10,
-        )
-        _HAS_TORCH_CACHE = result.returncode == 0
+        import torch  # noqa: F401
+        _HAS_TORCH_CACHE = True
     except Exception:
         _HAS_TORCH_CACHE = False
     return _HAS_TORCH_CACHE

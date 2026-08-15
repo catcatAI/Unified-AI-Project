@@ -90,8 +90,26 @@ class TestTrainingCoordinator:
         batches = await tc.deconflict_samples(samples)
         assert "ed3n" in batches
         assert "garden" in batches
+        # ED3N gets every sample (dictionary growth needs all tokens).
         assert len(batches["ed3n"]) == len(samples)
-        assert len(batches["garden"]) == len(samples)
+        # GARDEN skips pure deterministic facts (math/logic) — its learn_batch
+        # filters them anyway, so they are routed away at deconflict time.
+        assert len(batches["garden"]) == 3
+        garden_domains = {s["domain"] for s in batches["garden"]}
+        assert "math" not in garden_domains
+
+    @pytest.mark.asyncio
+    async def test_deconflict_samples_routes_logic_to_garden(self):
+        from ai.core.training_coordinator import TrainingCoordinator
+        tc = TrainingCoordinator()
+        samples = [
+            {"domain": "logic", "input": "if A then B"},
+            {"domain": "association", "input": "sky blue"},
+        ]
+        batches = await tc.deconflict_samples(samples)
+        garden_domains = {s["domain"] for s in batches["garden"]}
+        assert "logic" not in garden_domains
+        assert "association" in garden_domains
 
     @pytest.mark.asyncio
     async def test_sync_reflex_patterns_no_method(self):
