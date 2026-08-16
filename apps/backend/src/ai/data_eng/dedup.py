@@ -45,6 +45,16 @@ def prefix_overlap(a: str, b: str, min_prefix: int = 3) -> float:
     Returns 1.0 for exact match, ~0.8 for 'happy'/'happiness', 0.0 for
     unrelated.  Used for word-form dedup (happy/happiness, run/running,
     big/bigger).  Single source of truth — was ``_prefix_overlap``.
+
+    When the shorter string is ENTIRELY contained as a prefix of the longer
+    one (``prefix_len == min_len``, e.g. 'con' vs 'consultant'), the score is
+    the shorter's fraction of the longer (3/10 = 0.3) — NOT 1.0.  The old
+    ``prefix_len / min_len`` returned 1.0 in that case, which made a short
+    word like 'con' or 'app' swallow EVERY longer word sharing that prefix
+    into one dictionary entry (l24 ended up with 840 unrelated surface
+    forms).  Word forms (happy/happiness) keep the high score via the
+    ``prefix_len / min_len`` branch because there the prefix is strictly
+    shorter than the shorter word.
     """
     if a == b:
         return 1.0
@@ -59,6 +69,10 @@ def prefix_overlap(a: str, b: str, min_prefix: int = 3) -> float:
     if prefix_len < min_prefix:
         return 0.0
     min_len = min(len(a), len(b))
+    if prefix_len >= min_len:
+        # Shorter string is a full prefix of the longer one.
+        max_len = max(len(a), len(b))
+        return prefix_len / max_len if max_len > 0 else 0.0
     return prefix_len / min_len if min_len > 0 else 0.0
 
 

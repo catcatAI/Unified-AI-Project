@@ -778,7 +778,12 @@ class NeuroAutoSelector:
                 if name == avail.value:
                     decision.backend = avail
                     break
-            if decision.backend != AutoBackendChoice.OLLAMA:
+            # Stop once a match is found.  The old ``!= OLLAMA`` guard
+            # evaluated against the initial NEUROBLENDER default, so it broke
+            # after the FIRST priority name regardless of whether that name was
+            # available — Anthropic/Google could never be selected unless
+            # OpenAI was present.
+            if decision.backend != AutoBackendChoice.NEUROBLENDER:
                 break
 
         if decision.backend == AutoBackendChoice.OPENAI:

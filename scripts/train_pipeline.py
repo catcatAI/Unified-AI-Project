@@ -411,6 +411,18 @@ def load_trpg_codex() -> List[Dict]:
 
 def load_secondary_raw() -> List[Dict]:
     """Load small secondary datasets (formula log, DummyModel)."""
+    # Junk markers: Ollama error-responses ("喵嗚... 暫時無法回應") and
+    # placeholder/DummyModel samples are NOT learning material — training on
+    # them planted the raw Ollama JSON-log strings into the GARDEN dictionary
+    # (a single entry ended up with 560 surface forms of raw JSON tokens).
+    _JUNK_MARKERS = (
+        "喵嗚",
+        "Ollama 暫時無法回應",
+        "dummy",
+        "DummyModel",
+        '"created_at"',
+        '"model":"',
+    )
     samples: List[Dict] = []
     for fname in ["ollama_cat_formulas_log.json", "DummyModel.json"]:
         fpath = os.path.join(RAW_DIR, fname)
@@ -421,6 +433,14 @@ def load_secondary_raw() -> List[Dict]:
             for item in data:
                 inp = item.get("prompt") or item.get("input") or ""
                 out = item.get("response") or item.get("output") or ""
+                joined = str(inp) + " " + str(out)
+                if any(marker in joined for marker in _JUNK_MARKERS):
+                    continue
+                # Purely numeric/placeholder samples (e.g. "1" -> "1") carry no
+                # learnable meaning.
+                stripped = joined.strip()
+                if not stripped or all(ch in "0123456789.+- " for ch in stripped):
+                    continue
                 if inp and out:
                     samples.append({"input": str(inp), "output": str(out), "domain": "knowledge"})
         logger.info(
@@ -1024,16 +1044,31 @@ def generate_knowledge_data() -> List[Dict]:
                 break
                 # Fill remaining with enumerated variants if still under target
     if len(pairs) < target:
+        # Avoid the previous ``concept_N is a conceptual unit`` noise filler:
+        # those 500+ semantically-empty samples created a high-frequency
+        # Hebbian association in the GARDEN SNN that surfaced as the fixed
+        # "consistent knowledge representations united" output for ANY open
+        # question.  Instead cycle real topics through lightweight phrasings
+        # (each is a genuine, varied sample the model can generalize from).
         remaining = target - len(pairs)
+        topics_pool = topics_en + topics_zh
+        phrasings = [
+            "tell me about {t}",
+            "explain {t} briefly",
+            "what do you know about {t}",
+            "{t} in simple terms",
+        ]
         for i in range(remaining + limit_value("train.generate.buffer_extra", 10)):
-            topic = f"concept_{i}"
-            inp = f"what is {topic}"
-            out = f"{topic} is a conceptual unit in knowledge representation"
-            if inp not in seen_inputs:
-                pairs.append({"input": inp, "output": out, "domain": "knowledge"})
-                seen_inputs.add(inp)
-                if len(pairs) >= target:
-                    break
+            topic = topics_pool[i % len(topics_pool)]
+            phrasing = phrasings[(i // len(topics_pool)) % len(phrasings)]
+            inp = phrasing.format(t=topic)
+            if inp in seen_inputs:
+                continue
+            out = f"{topic.capitalize()} is a domain concept in artificial intelligence."
+            pairs.append({"input": inp, "output": out, "domain": "knowledge"})
+            seen_inputs.add(inp)
+            if len(pairs) >= target:
+                break
 
     logger.info("  Generated %d knowledge samples", len(pairs))
     return pairs
@@ -1197,6 +1232,14 @@ def _step4_train_ed3n(coordinator, batches, resume_state=None, save_state=None):
     for s in ed3n_samples:
         pp = preprocess(s["input"]) + " " + preprocess(s["output"])
         for t in re.findall(r"[\w]+", pp):
+            # Skip single-char junk tokens (a/e/t, each digit, __).  The old
+            # ``len(t) >= 1`` grew every single character into the ED3N
+            # dictionary (19 single ASCII letters + junk in the trained
+            # checkpoint), mirroring GARDEN's vocabulary-pollution problem.
+            # ASCII tokens need >= 3 chars; CJK single chars are legal words
+            # and are kept.
+            if t.isascii() and len(t) < 3:
+                continue
             if len(t) >= 1:
                 all_tokens.add(t)
 

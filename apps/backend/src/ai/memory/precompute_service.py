@@ -36,6 +36,11 @@ class PrecomputeService:
         self.config = config or {}
         self._tasks: Dict[str, PrecomputeTask] = {}
         self._running = False
+        # Bound the task map: every chat turn enqueues a task here, and no
+        # worker ever consumes/removes them — without a cap this grows
+        # unboundedly for the process lifetime (dialogue memory leak).
+        self._max_tasks = int(self.config.get("max_tasks", 200))
+        self._task_order: List[str] = []  # insertion order for LRU eviction
 
     def start(self) -> None:
         self._running = True
@@ -46,7 +51,14 @@ class PrecomputeService:
         logger.info("PrecomputeService stopped")
 
     def enqueue(self, task: PrecomputeTask) -> None:
+        if task.task_id in self._tasks:
+            return
         self._tasks[task.task_id] = task
+        self._task_order.append(task.task_id)
+        # Evict oldest tasks beyond the cap so the map stays bounded.
+        while len(self._tasks) > self._max_tasks:
+            oldest = self._task_order.pop(0)
+            self._tasks.pop(oldest, None)
         logger.debug(f"Enqueued precompute task: {task.task_id}")
 
     def get_result(self, task_id: str) -> Optional[Any]:

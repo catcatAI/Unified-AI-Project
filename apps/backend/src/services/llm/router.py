@@ -1609,8 +1609,15 @@ class AngelaLLMService:
                 success=not response.error,
             )
 
-        if response.error:
-            logger.warning(f"LLM 回應錯誤: {response.error}", exc_info=True)
+        if response.error or not (getattr(response, "text", None) or "").strip():
+            # A backend may return text="" WITHOUT an error flag (ollama empty
+            # stream, ED3N no-match).  Treat empty as a failure so the fallback
+            # chain / _fallback_response still produces a user-facing answer
+            # instead of handing an empty string to the chat route.
+            if response.error:
+                logger.warning(f"LLM 回應錯誤: {response.error}", exc_info=True)
+            else:
+                logger.warning("LLM 回應為空，觸發 fallback")
             if self._angela_fallback_chain:
                 return await self._try_fallback_chain(
                     user_message, context, self._angela_fallback_chain
@@ -1662,6 +1669,21 @@ class AngelaLLMService:
         self, user_message: str, context: Dict[str, Any], chain: List[str]
     ) -> LLMResponse:
         """嘗試降級鏈中的後端"""
+        # The configured fallback_chain is a DICT mapping backend -> fallbacks
+        # (ed3n-v1: [garden-1g, ollama-llama3], ...).  Flatten all of its
+        # values into one ordered, deduped list so iterating it reaches the
+        # actual fallback backends (garden-1g etc.) instead of the dict keys
+        # (which would retry the just-failed backend and never reach garden).
+        if isinstance(chain, dict):
+            flattened: List[str] = []
+            seen: set = set()
+            for value in chain.values():
+                entries = [value] if isinstance(value, str) else list(value)
+                for entry in entries:
+                    if entry not in seen:
+                        seen.add(entry)
+                        flattened.append(entry)
+            chain = flattened
         for backend_name in chain:
             for btype, bobj in self.backends.items():
                 bname_str = btype.name.lower()
@@ -1677,9 +1699,21 @@ class AngelaLLMService:
                             ),
                             timeout=timeout_value("llm.fallback_chain", 30.0),
                         )
-                        self.active_backend = bobj
-                        logger.info(f"[Fallback] Switched to {btype.name}")
-                        return response
+                        # Backends signal failure by RETURNING an error
+                        # response, not by raising — so a non-empty success is
+                        # the only case worth returning.  Anything else must
+                        # fall through to the next backend, or the chain would
+                        # hand the caller an error/empty answer instead of a
+                        # real fallback.
+                        if not response.error and getattr(response, "text", None):
+                            self.active_backend = bobj
+                            logger.info(f"[Fallback] Switched to {btype.name}")
+                            return response
+                        logger.warning(
+                            "[Fallback] Backend %s returned error/empty, trying next",
+                            btype.name,
+                        )
+                        continue
                     except Exception:
                         logger.warning(
                             "[Fallback] Backend %s failed, trying next fallback",
@@ -2047,6 +2081,15 @@ async def get_llm_service(force_reload: bool = False) -> AngelaLLMService:
 
     if _llm_service_lock is None:
         _llm_service_lock = asyncio.Lock()
+
+    # Reentrancy guard: during auto-mode initialization, NeuroAutoSelector's
+    # _get_available_backends() calls back into get_llm_service() while the
+    # outer call still holds _llm_service_lock (asyncio.Lock is NOT
+    # reentrant) → the inner `async with` would wait forever on a lock held
+    # by the same task → startup deadlock.  If the instance is already
+    # (being) built, hand it back without re-acquiring the lock.
+    if not force_reload and _llm_service is not None:
+        return _llm_service
 
     async with _llm_service_lock:
         if _llm_service is None or force_reload:

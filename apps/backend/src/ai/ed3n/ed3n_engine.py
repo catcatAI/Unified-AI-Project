@@ -16,7 +16,6 @@ from ai.core.unicode_utils import is_english_dominant, normalize_text
 from core.system.config.magic_numbers import (
     batch_value,
     learning_rate,
-    limit_value,
 )
 
 from .core_network import CoreNetwork
@@ -56,26 +55,38 @@ class ReflexLayer:
             for pattern, response in self.patterns.items():
                 if len(pattern) < self.min_pattern_len:
                     continue
-                if pattern in normalized:
-                    if self.min_pattern_len >= limit_value(
-                        "ai.ed3n_engine.reflex_min_match_len", 3
-                    ) or len(pattern) >= limit_value("ai.ed3n_engine.reflex_min_match_len", 3):
-                        self._add_to_cache(normalized, response)
-                        return response
-                    if self._is_word_boundary_match(normalized, pattern):
-                        self._add_to_cache(normalized, response)
-                        return response
+                # Word-boundary match only.  The old ``if pattern in
+                # normalized`` + unconditional return for len>=3 meant
+                # "helping"/"helpful"/"unhelpful" all hit the "help" pattern,
+                # "goodness"/"goodnight" hit "good", "greatest" hit "great" —
+                # the reflex fired on any substring and preempted every later
+                # (possibly correct) stage.  Boundary check keeps real matches
+                # ("help me", "good morning") while letting word forms fall
+                # through to the dictionary/SNN stages.
+                if self._is_word_boundary_match(normalized, pattern):
+                    self._add_to_cache(normalized, response)
+                    return response
 
         return None
 
     @staticmethod
     def _is_word_boundary_match(text: str, pattern: str) -> bool:
-        idx = text.find(pattern)
-        if idx == -1:
+        # Scan ALL occurrences (not just the first via str.find): a pattern
+        # like "help" may occur inside "selfhelp" (no boundary) AND as a real
+        # word elsewhere in the sentence — the first .find() would report no
+        # boundary and reject a valid match.
+        if not pattern:
             return False
-        before = idx == 0 or not text[idx - 1].isalnum()
-        after = idx + len(pattern) >= len(text) or not text[idx + len(pattern)].isalnum()
-        return before and after
+        start = 0
+        while True:
+            idx = text.find(pattern, start)
+            if idx == -1:
+                return False
+            before = idx == 0 or not text[idx - 1].isalnum()
+            after = idx + len(pattern) >= len(text) or not text[idx + len(pattern)].isalnum()
+            if before and after:
+                return True
+            start = idx + 1
 
     def add_pattern(self, pattern: str, response: str) -> None:
         with self._lock:

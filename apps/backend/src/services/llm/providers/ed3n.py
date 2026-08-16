@@ -35,6 +35,18 @@ class ED3NBackend(BaseLLMBackend):
             "top_p": kwargs.get("top_p"),
             "stop": kwargs.get("stop"),
         }
+        # The shared prompt builder wraps the user message in
+        # <user_message>…</user_message> for LLM backends.  ED3N is a local
+        # matching engine — feeding it the raw XML wrapper made every query
+        # encode the tags themselves ("<user_message>…</user_message>"),
+        # breaking exact-match on the actual user words (e.g. a trained
+        # "明天见" concept failed to match when wrapped).  Strip the wrapper
+        # and match against the user's real text only.
+        import re as _re
+
+        m = _re.search(r"<user_message>(.*?)</user_message>", prompt, _re.DOTALL)
+        if m:
+            prompt = m.group(1)
         try:
             if self._engine is None:
                 from ai.ed3n.ed3n_engine import ED3NEngine

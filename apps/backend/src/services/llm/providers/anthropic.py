@@ -41,7 +41,7 @@ class AnthropicAPIBackend(BaseLLMBackend):
         try:
             session = self._get_session()
             async with session.get(
-                f"{self.base_url}/v1/models",
+                f"{self.base_url}/models",
                 headers={
                     "x-api-key": self.api_key,
                     "anthropic-version": "2023-06-01",

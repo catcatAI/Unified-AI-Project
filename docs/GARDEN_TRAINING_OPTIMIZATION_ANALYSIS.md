@@ -228,6 +228,60 @@ flake8: 0 errors on all modified source files.
   (ED3N all, GARDEN non-deterministic).
 - `scripts/sample_train_analysis.py`, `scripts/resume_garden_train.py`,
   `scripts/resume_garden_tail.py` — analysis + resume helpers.
+
+---
+
+## 8. Matching-pipeline step count & optimization limit (2026-08-16)
+
+`VectorDictionary.encode(text)` (`dictionary.py:799`) maps text → concept keys via
+**5 steps + 2 one-time preambles**:
+
+| Step | Loc | Action | Complexity | Hot-path cost |
+|------|-----|--------|-----------|---------------|
+| Preamble | :813 | `_rebuild_index()` if dirty (TF-IDF fit + full encode) | O(V·D) | **OOM when polluted**; ~13s once clean |
+| Preamble | :821 | build `_surface_to_key` + `_prefix_first` buckets (first call) | O(Σ forms) | 36k forms, once |
+| **1** | :884 | CJK run all-substring exact match | O(run²) | run≤8, negligible |
+| **2** | :912 | non-CJK exact match (hash lookup) | O(T) | **O(1)/token** |
+| **3** | :925 | unmatched → `_prefix_first[:3]` bucket scan | O(T·bucket) | polluted 840-bucket **1122 µs/token**; clean 5-bucket 7 µs |
+| **4** | :951 | unmatched → TF-IDF batched matmul | O(V·D) | polluted **95 ms**; clean 5 ms |
+| **5** | :1002 | whole-text TF-IDF (phrase catch-all) | O(V·D) | +1 matmul |
+
+Measured (this audit): polluted `[9799×26945]` matmul = **95 ms / 1056 MB**;
+clean-estimate `[5000×3000]` = **5 ms / 60 MB** — 5-45× and no longer OOM.
+
+**Optimization-limit verdict per step**: Step 2 (hash lookup) is already O(1) — no
+space. Step 3 (prefix buckets, §4.1) is near-optimal when clean (small buckets);
+only polluted buckets benefit from further sub-bucketing, and that would change
+matching semantics. Steps 4/5 are BLAS-bound — the only real lever is matrix
+**size**, which is driven by pollution, not by the algorithm. The one remaining
+algorithmic "optimization" (`_rebuild_index` incremental append instead of full
+re-fit) would skew global TF-IDF statistics and reduce match accuracy — i.e. it
+sits past the "optimizing hurts accuracy" line. **Verdict: the matching pipeline
+is at its algorithm limit; the remaining 95 ms→5 ms gain is a data-quality
+(retrain) win, not an algorithmic one.**
+
+## 9. Training-time optimization limit (2026-08-16)
+
+`learn_batch` full cost model (11,180 samples / 500 per batch / ~2.5 h wall):
+
+| Stage | Loc | Optimized? | Remaining space |
+|-------|-----|-----------|-----------------|
+| 1 token collect | :1276 | no (tiny) | negligible |
+| 2 `grow` prefix-dedup | :1304 | ✅ §4.1 | polluted-bucket bound; clean = small |
+| 2b `_pre_allocate` | :1316 | ✅ §4.3 | at limit |
+| 3 `_rebuild_index` | :1322 | partial §4.2 (cache) | **largest lever but accuracy-risk** (incremental re-fit skews TF-IDF) |
+| 4 batch-dedup encode | :1342 | ✅ §4.3 | remaining cost = polluted matmul |
+| 4 `hebbian_update` ×2 | :1362 | ✅ §4.4 vectorized | at limit |
+| 4 `forward` ×1 | :1371 | not specialized | small |
+
+All applied optimizations (vectorized Hebbian, batch dedup, prefix buckets,
+single pre-allocation, cache retention) are at their algorithm limit. The dominant
+remaining cost is the **polluted `[V×D]` TF-IDF matrix** (every encode + every
+rebuild), which is a data-quality artifact — a clean retrain removes it without
+touching the algorithm. Any further algorithmic change (incremental `_rebuild_index`,
+dropping the auto-regressive pass, shrinking `top_k`/threshold) crosses into
+accuracy loss. **Verdict: training time is at the optimization limit; only
+data-quality (retrain) yields the next large win.**
 - `apps/backend/tests/integration/test_performance_benchmarks.py` — OOM fix (§3.5).
 - `apps/backend/tests/integration/scenarios/test_sensory_overload.py` — import fix (§3.6).
 - `data/` — wiped and rebuilt (ED3N + GARDEN full, `training_state.json`).

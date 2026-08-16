@@ -203,6 +203,20 @@ def dispatch(
                     sample=action.payload.get("sample", {}),
                     priority=action.payload.get("priority", 0.0),
                 )
+                # drain_priority_queue() has no other caller in the codebase —
+                # without this the heap would accumulate queued training samples
+                # forever (unbounded memory growth + silently swallowed training
+                # requests).  Drain it inline and hand the samples to the LEARN
+                # path so a TRAIN request actually trains something.
+                for item in training_coordinator.drain_priority_queue():
+                    payload = item.get("sample") or {}
+                    if learn_fn is not None and payload:
+                        try:
+                            learn_fn(payload)
+                        except Exception as exc:  # pragma: no cover - defensive
+                            logger.warning(
+                                "Priority-queue learn failed (ignored): %s", exc, exc_info=True
+                            )
             elif action.action is ActionType.LEARN and learn_fn is not None:
                 learn_fn(action.payload)
     except Exception as exc:  # pragma: no cover - defensive
