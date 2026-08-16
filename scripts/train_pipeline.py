@@ -1497,7 +1497,9 @@ def _step5_train_garden(coordinator, batches, resume_state=None, save_state=None
         )
 
         # Use batch learning for speed (rebuilds index ONCE, not per sample)
-        BATCH_SIZE = 500
+        # Configurable so a clean retrain can trade memory for fewer rebuilds
+        # (GARDEN_TRAIN_BATCH_SIZE env).  Default 500 stays OOM-safe on 7.5GB.
+        BATCH_SIZE = int(os.environ.get("GARDEN_TRAIN_BATCH_SIZE", "500"))
         batch_done = int(resume_state.get("garden_batch_done", 0))
         total_learned = batch_done
         for i in range(batch_done, len(garden_samples), BATCH_SIZE):
