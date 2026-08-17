@@ -244,11 +244,30 @@ class TestCodeExecutionHandler:
         assert "print(42)" in code
 
     async def test_extract_code_empty(self):
-        """_extract_code returns original text when no code pattern matches."""
+        """_extract_code returns empty for prose without any code pattern."""
         from services.handlers.code_execution_handler import CodeExecutionHandler
         handler = CodeExecutionHandler()
         code = handler._extract_code("今天天氣真好")
-        assert code == "今天天氣真好"
+        assert code == ""
+
+    async def test_extract_code_from_natural_language_snippet(self):
+        """Inline snippet in natural language is extracted and executed."""
+        from services.handlers.code_execution_handler import CodeExecutionHandler
+        handler = CodeExecutionHandler()
+        code = handler._extract_code("執行 print(42)")
+        assert "print(42)" in code
+        result = await handler.handle("運行 print(42)", "code")
+        assert "42" in result
+
+    async def test_extract_code_multiline_compound_statement(self):
+        """Multi-line compound statements are extracted whole, not truncated."""
+        from services.handlers.code_execution_handler import CodeExecutionHandler
+        handler = CodeExecutionHandler()
+        code = handler._extract_code("for i in range(3):\n    print(i)")
+        assert "for i in range(3):" in code
+        assert "print(i)" in code
+        result = await handler.handle("for i in range(3):\n    print(i)", "code")
+        assert "0" in result and "1" in result and "2" in result
 
     async def test_execute_simple_print(self):
         """_execute runs simple print statement."""

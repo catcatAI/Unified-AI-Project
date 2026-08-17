@@ -169,6 +169,106 @@ class _SafetyChecker(ast.NodeVisitor):
         self.generic_visit(node)
 
 
+def _extract_inline_code(text: str) -> str:
+    """Extract a short Python snippet embedded in natural language.
+
+    Handles cases like ``執行 print(42)``, ``運行 1+1``, or nested calls such
+    as ``執行 print(getattr((), '__class__'))`` where the user did not use a
+    code fence. Scans for balanced-parenthesis call expressions and simple
+    arithmetic, keeping only candidates that are themselves valid Python so
+    prose is never fed to exec().
+    """
+    import re
+
+    if not text or not text.strip():
+        return ""
+    candidates = []
+    # 1. Call expressions with balanced parentheses (supports nesting).
+    for m in re.finditer(r"[A-Za-z_][A-Za-z0-9_]*\s*\(", text):
+        start = m.start()
+        depth = 0
+        i = m.end() - 1
+        while i < len(text):
+            ch = text[i]
+            if ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+                if depth == 0:
+                    break
+            i += 1
+        if depth != 0:
+            continue
+        cand = text[start : i + 1].strip()
+        try:
+            ast.parse(cand, mode="eval")
+        except SyntaxError:
+            continue
+        candidates.append(cand)
+    # 2. Simple arithmetic like ``1+1`` / ``3*7``.
+    for m in re.finditer(r"\d+(?:\.\d+)?\s*[+\-*/%^]\s*\d+(?:\.\d+)?", text):
+        cand = m.group(0).strip()
+        try:
+            ast.parse(cand, mode="eval")
+        except SyntaxError:
+            continue
+        candidates.append(cand)
+    if candidates:
+        # Prefer the longest parseable candidate (most likely the real snippet).
+        return max(candidates, key=len)
+    return ""
+
+
+def _looks_code_shaped(first_line: str, full_text: str) -> bool:
+    """Heuristic: is the text likely a raw Python snippet rather than prose?
+
+    Used only when no fence / inline-code / parseable expression was found,
+    to avoid feeding natural language (e.g. "你好嗎") to exec(). Accepts text
+    whose first line starts with a Python keyword, or a single short line that
+    is predominantly ASCII code characters.
+    """
+    import re
+
+    if not first_line:
+        return False
+    _KEYWORDS = (
+        "import ",
+        "from ",
+        "def ",
+        "class ",
+        "if ",
+        "elif ",
+        "else:",
+        "for ",
+        "while ",
+        "try:",
+        "except ",
+        "finally:",
+        "with ",
+        "return",
+        "yield",
+        "break",
+        "continue",
+        "pass",
+        "del ",
+        "global ",
+        "nonlocal ",
+        "async ",
+        "await ",
+        "print(",
+        "raise ",
+        "assert ",
+    )
+    if first_line.startswith(_KEYWORDS) or "=" in first_line:
+        return True
+    # Single-line fallback: mostly ASCII / code punctuation, no CJK prose.
+    if len(full_text.splitlines()) == 1 and len(first_line) <= 120:
+        ascii_chars = sum(1 for ch in first_line if ord(ch) < 128)
+        if ascii_chars >= len(first_line) * 0.8:
+            return True
+    return False
+
+
 def _validate_code_safety(code: str) -> None:
     """Parse code and reject sandbox-escape patterns via AST analysis."""
     try:
@@ -201,54 +301,78 @@ class CodeExecutionHandler:
         m = re.search(r"`([^`]+)`", text)
         if m:
             return m.group(1).strip()
-        lines = text.strip().splitlines()
-        code_lines = []
-        for line in lines:
-            stripped = line.strip()
-            if (
-                stripped.startswith(
-                    (
-                        "import ",
-                        "from ",
-                        "def ",
-                        "class ",
-                        "if ",
-                        "elif ",
-                        "else:",
-                        "for ",
-                        "while ",
-                        "try:",
-                        "except ",
-                        "finally:",
-                        "with ",
-                        "return",
-                        "yield",
-                        "break",
-                        "continue",
-                        "pass",
-                        "del ",
-                        "global ",
-                        "nonlocal ",
-                        "async ",
-                        "await ",
-                        "@",
-                        "print(",
-                        "#",
-                        "raise ",
-                        "assert ",
+        # No code fence / inline code. If the message itself is already
+        # multi-line code (or starts with a compound-statement keyword like
+        # ``for`` / ``if`` / ``def``), treat it as raw code — inline extraction
+        # would otherwise grab just ``range(3)`` out of ``for i in range(3):``.
+        stripped_first = text.strip().splitlines()[0].strip() if text.strip() else ""
+        if (
+            len(text.strip().splitlines()) > 1
+            or stripped_first.startswith(("for ", "if ", "while ", "def ", "class ", "try:", "with ", "async ", "@"))
+        ):
+            lines = text.strip().splitlines()
+            code_lines = []
+            for line in lines:
+                stripped = line.strip()
+                if (
+                    stripped.startswith(
+                        (
+                            "import ",
+                            "from ",
+                            "def ",
+                            "class ",
+                            "if ",
+                            "elif ",
+                            "else:",
+                            "for ",
+                            "while ",
+                            "try:",
+                            "except ",
+                            "finally:",
+                            "with ",
+                            "return",
+                            "yield",
+                            "break",
+                            "continue",
+                            "pass",
+                            "del ",
+                            "global ",
+                            "nonlocal ",
+                            "async ",
+                            "await ",
+                            "@",
+                            "print(",
+                            "#",
+                            "raise ",
+                            "assert ",
+                        )
                     )
-                )
-                or "=" in stripped
-                or "(" in stripped
-            ):
-                code_lines.append(line)
-            elif code_lines:
-                # A blank line inside a code block is a continuation, not a terminator
-                if not stripped:
+                    or "=" in stripped
+                    or "(" in stripped
+                ):
                     code_lines.append(line)
-                    continue
-                break
-        return "\n".join(code_lines).strip() if code_lines else text.strip()
+                elif code_lines:
+                    if not stripped:
+                        code_lines.append(line)
+                        continue
+                    break
+            return "\n".join(code_lines).strip() if code_lines else text.strip()
+        # Otherwise: short single-line message is natural language around a
+        # snippet (e.g. "執行 print(42)" / "運行 1+1"). Extract the longest
+        # parseable Python expression instead of feeding the whole sentence
+        # (with Chinese words) to exec().
+        code = _extract_inline_code(text)
+        if code:
+            return code
+        # Nothing parseable was found — treat the raw text as the snippet only
+        # if it is clearly code-shaped (starts with a Python keyword or is a
+        # single short line). Prose like "你好嗎" is not executable code.
+        stripped_text = text.strip()
+        first_line = stripped_text.splitlines()[0].strip() if stripped_text else ""
+        if not _looks_code_shaped(first_line, stripped_text):
+            return ""
+        # Single-line, code-shaped text (e.g. ``import os`` / ``x = 1``).
+        return stripped_text
 
     async def _execute(self, code: str) -> str:
         try:

@@ -199,6 +199,12 @@
 - **驗證**：全 src 658 模組 import 掃描 0 失敗（僅 5 個 `textual` 未安裝的環境性失敗，與修改無關）；`pytest tests/` 全量 **5,241 passed / 0 failed**（與刪除前一致）；flake8 0 errors。
 - **保留（保守不刪）**：bare `import x`（可能 side-effect）、TYPE_CHECKING 區塊、`__init__.py` re-export、所有 `noqa` 語句、lazy 字串引用名稱、屬性存取名稱。
 
+### L14. CodeExecutionHandler 無區塊指令處理缺陷 — **✅ 已修復**
+- **根因**: `_extract_code` 在無 ``` 區塊/反引號時,把**整句自然語言**(含中文,如「執行 1+1」「你好嗎」)當 Python 原始碼送進 `exec()` → 必然 `SyntaxError`(且散文被當程式碼執行)。
+- **✅ 已修復**: 新增 `_extract_inline_code()`(平衡括號掃描提取 `print(42)`/`1+1`/巢狀 `print(getattr((),'__class__'))`,候選須通過 `ast.parse` 才採用)與 `_looks_code_shaped()`(散文防護);多行/compound 語句(如 `for i in range(3):`)走完整原始碼提取,不再被括號掃描截成 `range(3)`。
+- **實證**: `運行 print(42)`→42、`for i in range(3): print(i)`→0/1/2、`執行 print(getattr((),'__class__'))`→**Blocked call: getattr()**(巢狀提取+沙箱都正常)、`你好嗎`→「請提供要執行的 Python 程式碼」(不再執行散文)、`import os`→**Blocked import: os**。更新 `test_extract_code_empty`(散文→空)並新增 2 個回歸測試。
+- 狀態：✅ 已修復
+
 ### L13. 4 個真實 `undefined name`（pyflakes,先前已存在）— **✅ 已修復**
 - `ai/symbolic_reasoner.py:438,461`：`Dict[str, List[str]]` 註解但 typing 未 import `Dict` → 補上。
 - `ai/multimodal/primitives/decomposer.py:263-280`：`if __name__ == "__main__"` 區塊用 `os` 但未 import → 補 `import os`（跑 `python decomposer.py` 原本會 NameError）。
