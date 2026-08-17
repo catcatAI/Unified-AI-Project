@@ -182,8 +182,13 @@ class ModelBus:
                     import inspect
 
                     sig = inspect.signature(self._handler.handle)
-                    params = list(sig.parameters.keys())
-                    if len(params) >= 2:
+                    pnames = list(sig.parameters.keys())
+                    if "params" in pnames:
+                        # Structured-params handler (e.g. handle(intent, params)).
+                        # Runtime dispatch only has the raw user text — pass it as
+                        # ``_text`` so the handler can parse action/path itself.
+                        result = await self._handler.handle(intent, {"_text": query})
+                    elif len(pnames) >= 2:
                         result = await self._handler.handle(query, intent)
                     else:
                         result = await self._handler.handle(query)
@@ -260,6 +265,15 @@ class ModelBus:
             query_type = classify_result.primary_type.value
 
         handler_name = self._ROUTE_HANDLERS.get(query_type, "_handle_fanout")
+        if query_type in self._handler_map:
+            # M2: handler-backed query types (file/search/code/execute/task/
+            # system/vision) must NOT dispatch handlers here. This route() path
+            # runs before the LLM without any user-confirmation / risk gate,
+            # which previously let a classified "execute" request reach
+            # CodeExecutionHandler and escape its sandbox (C3). Handlers are
+            # dispatched exclusively through the ExecutionGate's
+            # execute_handler() after gate approval.
+            handler_name = "_handle_fanout"
         handler = getattr(self, handler_name)
         start = time.perf_counter()
         results = await handler(query, context, query_type)

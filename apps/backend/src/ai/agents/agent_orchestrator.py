@@ -34,19 +34,24 @@ _INTENT_CAPABILITIES: Dict[str, List[str]] = {
     "image_generate": ["image_generation", "generate_image"],
 }
 
-# Intent → agent class name mapping
+# Intent → agent mapping.
+# Handler-backed intents map to the registered ModelBus handler ids (H10: the
+# previous class names never matched a registered handler, so every agent
+# dispatch returned "handler not found" and silently fell back to the LLM).
+# Remaining intents keep their (aspirational) agent class names until a real
+# agent is registered.
 _INTENT_AGENTS: Dict[str, str] = {
-    "file_read": "FileOperationHandler",
-    "file_write": "FileOperationHandler",
-    "file_delete": "FileOperationHandler",
-    "code_execute": "CodeExecutionHandler",
+    "file_read": "file_ops",
+    "file_write": "file_ops",
+    "file_delete": "file_ops",
+    "code_execute": "code_exec",
     "code_understand": "CodeUnderstandingAgent",
-    "web_search": "WebSearchAgent",
+    "web_search": "web_search",
     "knowledge_query": "KnowledgeGraphAgent",
     "creative_write": "CreativeWritingAgent",
     "data_analysis": "DataAnalysisAgent",
     "plan_create": "PlanningAgent",
-    "vision": "VisionProcessingAgent",
+    "vision": "vision",
     "audio": "AudioProcessingAgent",
     "nlp": "NLPProcessingAgent",
 }

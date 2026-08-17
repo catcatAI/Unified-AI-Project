@@ -78,7 +78,8 @@ class TestE2EFileRead:
 # ---------------------------------------------------------------------------
 
 class TestE2EFileDelete:
-    def test_gate_rejects_delete(self):
+    def test_gate_confirms_delete(self):
+        """H9: delete is irreversible — gate must ask for confirmation."""
         from ai.core.execution_gate import ExecutionGate
         gate = ExecutionGate()
         decision = gate.decide(
@@ -88,11 +89,12 @@ class TestE2EFileDelete:
             confidence=0.8,
             context={},
         )
-        assert decision.action == "reject"
-        # When gate rejects, handler is None (no handler assigned for rejected actions)
-        assert decision.handler is None
+        assert decision.action == "confirm_then_execute"
+        assert decision.handler == "file_ops"
+        assert decision.confirm_message
 
-    def test_gate_rejects_delete_all(self):
+    def test_gate_confirms_delete_all(self):
+        """H9: delete-all is irreversible — gate must ask for confirmation."""
         from ai.core.execution_gate import ExecutionGate
         gate = ExecutionGate()
         decision = gate.decide(
@@ -102,9 +104,9 @@ class TestE2EFileDelete:
             confidence=0.9,
             context={},
         )
-        assert decision.action == "reject"
-        # When gate rejects, handler is None (no handler assigned for rejected actions)
-        assert decision.handler is None
+        assert decision.action == "confirm_then_execute"
+        assert decision.handler == "file_ops"
+        assert decision.confirm_message
 
 
 # ---------------------------------------------------------------------------

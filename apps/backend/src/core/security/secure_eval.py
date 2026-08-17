@@ -325,7 +325,19 @@ def safe_eval(
         code = compile(tree, "<safe_eval>", "eval")
         result = eval(code, {"__builtins__": {}}, names)
         return EvalResult(success=True, result=result, expression=expression)
-    except (ValueError, TypeError, ZeroDivisionError) as e:
+    except (
+        ValueError,
+        TypeError,
+        ZeroDivisionError,
+        IndexError,
+        KeyError,
+        AttributeError,
+        OverflowError,
+        RecursionError,
+    ) as e:
+        # Subscript/attribute access on literals (e.g. [1][2], {"a":1}["b"],
+        # ().foo) raises these at eval time; they must be returned as a failed
+        # EvalResult, never propagated to callers (H8).
         return EvalResult(success=False, error=safe_error(e), expression=expression)
 
 

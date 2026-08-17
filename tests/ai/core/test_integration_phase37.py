@@ -430,10 +430,11 @@ class TestFullPipelineIntegration:
         assert d.action == "auto_execute"
         assert d.handler == "web_search"
 
-    def test_delete_rejects(self):
+    def test_delete_confirms(self):
+        """H9: delete (irreversible) now requires confirmation."""
         r = self.clf.classify("删除 temp.txt")
         d = self.gate.decide(r.primary_type.value, r.action_type, "删除 temp.txt", r.confidence, {})
-        assert d.action == "reject"
+        assert d.action == "confirm_then_execute"
 
     def test_negation_rejects(self):
         r = self.clf.classify("不要搜寻")
@@ -441,10 +442,11 @@ class TestFullPipelineIntegration:
         assert d.action == "reject"
         assert d.reason == "negation_detected"
 
-    def test_execute_system_rejects(self):
+    def test_execute_system_confirms(self):
+        """H9: execute (irreversible) now requires confirmation."""
         r = self.clf.classify("执行这个命令")
         d = self.gate.decide(r.primary_type.value, r.action_type, "执行这个命令", r.confidence, {})
-        assert d.action == "reject"
+        assert d.action == "confirm_then_execute"
 
     def test_file_read_auto_execute(self):
         r = self.clf.classify("读取 temp.txt")

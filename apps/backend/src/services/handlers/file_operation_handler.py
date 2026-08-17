@@ -9,6 +9,7 @@ Note: "move" moves a file INTO a target directory. "rename" renames within the s
 import asyncio
 import logging
 import os
+import re
 import shutil
 import tempfile
 from pathlib import Path
@@ -18,6 +19,40 @@ from core.i18n.i18n_manager import t
 from core.utils import safe_error as _safe_error
 
 logger = logging.getLogger(__name__)
+
+_ACTION_KEYWORDS = (
+    ("read", ("讀取", "读取", "打開", "打开", "查看", "read", "open")),
+    ("delete", ("刪除", "删除", "移除", "delete", "remove")),
+    ("create", ("建立", "創建", "创建", "新建", "create")),
+    ("write", ("寫入", "写入", "覆寫", "覆写", "保存", "write", "save")),
+    ("append", ("附加", "追加", "append")),
+    ("rename", ("重新命名", "重命名", "改名", "rename")),
+    ("move", ("移動", "移动", "搬移", "move")),
+    ("copy", ("複製", "复制", "copy")),
+    ("list", ("列出", "列表", "查看目錄", "查看目录", "list", "ls")),
+    ("size", ("大小", "size")),
+    ("exists", ("存在", "exists")),
+)
+
+
+def _looks_like_path(tok: str) -> bool:
+    """Heuristic: does this token look like a file path?"""
+    if not tok:
+        return False
+    lower = tok.lower()
+    if any(
+        lower.startswith(k)
+        for k in ("read", "write", "create", "delete", "remove", "copy", "move", "rename", "list", "append", "open", "save", "文件", "檔案", "目錄", "內容")
+    ):
+        return False
+    return (
+        "/" in tok
+        or "\\" in tok
+        or tok.startswith(".")
+        or tok.startswith("~")
+        or bool(re.search(r"\.\w{1,8}$", tok))
+    )
+
 
 _ALLOWED_ROOTS = [
     Path.home() / "Documents",
@@ -52,6 +87,14 @@ class FileOperationHandler:
 
     async def handle(self, intent: str, params: Optional[Dict[str, Any]] = None) -> str:
         operation = params or {}
+        # Runtime dispatch (ModelBus adapter) passes the raw user text as
+        # ``_text`` — parse action/path/content from it when no structured
+        # params were supplied (C5: previously this crashed with
+        # "'str' object has no attribute 'get'" on every chat dispatch).
+        if "_text" in operation:
+            parsed = self._parse_text_request(str(operation.get("_text", "")))
+            for k, v in parsed.items():
+                operation.setdefault(k, v)
         action = operation.get("action", intent.replace("file_op_", "")).lower()
         path_str = operation.get("path", operation.get("file", ""))
         content = operation.get("content", "")
@@ -92,6 +135,67 @@ class FileOperationHandler:
         except Exception as e:
             logger.error(f"FileOperationHandler error: {e}", exc_info=True)
             return t("file_ops.operation_failed", error=_safe_error(e))
+
+    # ------------------------------------------------------------------
+    # Natural-language request parsing (best-effort)
+    # ------------------------------------------------------------------
+
+    def _parse_text_request(self, text: str) -> Dict[str, str]:
+        """Parse a natural-language file request into structured params.
+
+        Understands common Chinese/English phrasings such as:
+          "刪除 /tmp/a.txt" / "讀取 test.txt" / "寫入 hello.txt 內容是 ..."
+          "建立 notes/hello.txt" / "重新命名 a.txt 為 b.txt" / "移動 a.txt 到 dir"
+        """
+        import re
+
+        params: Dict[str, str] = {}
+        if not text:
+            return params
+        lower = text.lower()
+
+        # 1. Action keywords
+        for action, kws in _ACTION_KEYWORDS:
+            if any(k in lower for k in kws):
+                params["action"] = action
+                break
+
+        # 2. Content (write/append): everything after a content marker
+        content = None
+        for sep in ("內容是", "内容是", "內容:", "内容:", "content:", "with content"):
+            if sep in lower:
+                _, after = text.split(sep, 1)
+                if after.strip():
+                    content = after.strip().strip('"\'')
+                break
+        if content is not None:
+            params["content"] = content
+
+        # 3. Path: first path-like token, excluding action keywords and the
+        #    content portion.
+        work = text
+        if content is not None:
+            for sep in ("內容是", "内容是", "內容:", "内容:", "content:", "with content"):
+                if sep in work:
+                    work = work.split(sep, 1)[0]
+                    break
+        for tok in re.findall(r"[^\s`'\"，。！？!?,;；]+(?:\.[^\s`'\"，。！？!?,;；]+)?", work):
+            t = tok.strip("`'\"")
+            if _looks_like_path(t):
+                params["path"] = t
+                break
+
+        # 4. Target name (rename/move): token after 為/为/成/到/to
+        if params.get("action") in ("rename", "move"):
+            for sep in ("為", "为", "成", "到", " to "):
+                if sep in text:
+                    rest = text.split(sep, 1)[1].strip()
+                    m = re.search(r"[^\s`'\"，。！？!?,;；]+", rest)
+                    if m:
+                        params["new_name"] = m.group(0).strip("`'\"")
+                        break
+
+        return params
 
     def _create(self, target: Path, **kw) -> str:
         if target.exists():

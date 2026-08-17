@@ -288,3 +288,10 @@ class TestSafeEvaluator:
         e1 = get_safe_evaluator()
         e2 = get_safe_evaluator()
         assert e1 is e2
+
+    def test_eval_runtime_exceptions_return_failed_result(self):
+        """H8 regression: subscript/attribute errors return EvalResult, never raise."""
+        for expr in ("[1][2]", '{"a": 1}["b"]', "1 / 0"):
+            result = safe_eval(expr)
+            assert result.success is False
+            assert result.error

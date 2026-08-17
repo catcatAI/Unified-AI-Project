@@ -51,6 +51,9 @@ _BLOCKED_DUNDER_ATTRS = frozenset({
 _BLOCKED_CALL_NAMES = frozenset({
     "exec", "eval", "compile", "__import__", "open", "input",
     "breakpoint", "exit", "quit", "help",
+    # Attribute-reflection builtins: getattr/setattr with a dunder string
+    # argument bypass the AST Attribute-node dunder check (C3 sandbox escape).
+    "getattr", "setattr", "vars", "globals", "locals",
 })
 
 _BLOCKED_IMPORT_MODULES = frozenset({
@@ -79,8 +82,6 @@ _BUILTINS_WHITELIST = {
     "float",
     "format",
     "frozenset",
-    "getattr",
-    "hasattr",
     "hash",
     "hex",
     "id",
@@ -103,7 +104,6 @@ _BUILTINS_WHITELIST = {
     "reversed",
     "round",
     "set",
-    "setattr",
     "slice",
     "sorted",
     "str",
@@ -213,16 +213,29 @@ class CodeExecutionHandler:
                         "def ",
                         "class ",
                         "if ",
+                        "elif ",
+                        "else:",
                         "for ",
                         "while ",
                         "try:",
+                        "except ",
+                        "finally:",
                         "with ",
-                        "return ",
+                        "return",
+                        "yield",
+                        "break",
+                        "continue",
+                        "pass",
+                        "del ",
+                        "global ",
+                        "nonlocal ",
+                        "async ",
+                        "await ",
+                        "@",
                         "print(",
                         "#",
                         "raise ",
                         "assert ",
-                        "yield ",
                     )
                 )
                 or "=" in stripped
@@ -230,6 +243,10 @@ class CodeExecutionHandler:
             ):
                 code_lines.append(line)
             elif code_lines:
+                # A blank line inside a code block is a continuation, not a terminator
+                if not stripped:
+                    code_lines.append(line)
+                    continue
                 break
         return "\n".join(code_lines).strip() if code_lines else text.strip()
 

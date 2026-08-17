@@ -51,9 +51,11 @@ class TestAgentOrchestratorIntegration:
         assert intent == "general"
 
     def test_select_agent_returns_correct_type(self):
+        """H10: handler-backed intents map to registered ModelBus handler ids."""
         ao = AgentOrchestrator()
-        agent = ao.select_agent("file_read")
-        assert agent == "FileOperationHandler"
+        assert ao.select_agent("file_read") == "file_ops"
+        assert ao.select_agent("code_execute") == "code_exec"
+        assert ao.select_agent("web_search") == "web_search"
 
     def test_decompose_multi_step_task(self):
         ao = AgentOrchestrator()

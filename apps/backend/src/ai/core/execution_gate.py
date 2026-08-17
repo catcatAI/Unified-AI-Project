@@ -33,6 +33,12 @@ REVERSIBILITY = {
     "none": 1.0,  # 无操作
 }
 
+# Actions that must never auto-execute — always require explicit user
+# confirmation regardless of exec score (see decide()). The score formula
+# (reversibility x impact x clarity) zeroes these out, making the normal
+# confirm branch unreachable, which defeats the gate's design intent.
+_IRREVERSIBLE_ACTIONS = frozenset({"system", "execute", "delete", "send"})
+
 
 @dataclass
 class GateDecision:
@@ -186,6 +192,34 @@ class ExecutionGate:
                 action="reject",
                 score=score,
                 reason=f"non_actionable_query_type_{query_type}",
+                original_query=user_message,
+            )
+
+        # Irreversible / high-impact actions (H9): the reversibility=0.0 term in
+        # the score formula makes these permanently score 0, so the confirm
+        # branch below is unreachable. Per the gate's design intent (confirm
+        # messages + impact warnings exist for exactly these), they must always
+        # require explicit user confirmation — never auto-execute.
+        if action_type in _IRREVERSIBLE_ACTIONS and handler_id:
+            state_store.emit_event(
+                "execution.gate_decided",
+                {
+                    "action": "confirm_then_execute",
+                    "score": round(score, 3),
+                    "handler": handler_id,
+                    "query_type": query_type,
+                    "action_type": action_type,
+                    "reason": "irreversible_action_requires_confirmation",
+                },
+            )
+            return GateDecision(
+                action="confirm_then_execute",
+                score=score,
+                handler=handler_id,
+                action_type=action_type,
+                reason=f"irreversible ({action_type}) requires confirmation",
+                confirm_message=self._build_confirm(action_type, user_message),
+                impact_info=self._describe_impact(action_type, user_message),
                 original_query=user_message,
             )
 

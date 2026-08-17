@@ -293,3 +293,26 @@ class TestModelBusRouting:
         self.bus.register("cloud", _MockEngine("fallback"), self.ModelCapability("cloud", "creative", 500.0, 0.6))
         decision = await self.bus.route("knowledge query", "knowledge")
         assert "cloud" in decision.results
+
+    async def test_route_does_not_dispatch_handlers(self):
+        """M2: handler-backed query types must route to models, not the handler.
+
+        Regression for the C3 RCE chain: route() previously dispatched
+        ``code_exec`` without any execution gate; handlers are now dispatched
+        exclusively via execute_handler() after gate approval.
+        """
+        calls = []
+
+        class _RecordingHandler:
+            async def handle(self, text: str, intent: str = "code") -> str:
+                calls.append(text)
+                return "HANDLER_RAN"
+
+        self.bus.register_handler("code_exec", _RecordingHandler(), ["code", "execute"])
+        self.register_all()
+        decision = await self.bus.route("執行 python", "execute")
+        assert calls == []
+        assert "code_exec" not in decision.results
+        # The handler is still reachable via execute_handler (gate path).
+        result = await self.bus.execute_handler("code_exec", "執行 python", {"query_type": "execute"})
+        assert result.get("result") == "HANDLER_RAN"

@@ -87,6 +87,24 @@ class TestFileOperationHandler:
         assert expected_dest.exists()
         assert expected_dest.read_text(encoding="utf-8") == "move test content"
 
+    async def test_handle_parses_natural_language_text(self):
+        """C5 regression: _text payload is parsed into action/path/content."""
+        from services.handlers.file_operation_handler import FileOperationHandler
+        handler = FileOperationHandler()
+        target = self.temp_dir / "nl_probe.txt"
+        # create via natural language
+        result = await handler.handle("file", {"_text": f"建立 {target}"})
+        assert target.exists()
+        # write via natural language
+        result = await handler.handle("file", {"_text": f"寫入 {target} 內容是 hello world"})
+        assert target.read_text(encoding="utf-8") == "hello world"
+        # read via natural language
+        result = await handler.handle("file", {"_text": f"讀取 {target}"})
+        assert "hello world" in result
+        # delete via natural language
+        result = await handler.handle("file", {"_text": f"刪除 {target}"})
+        assert not target.exists()
+
     async def test_move_nonexistent_source(self):
         """move returns error when source doesn't exist."""
         from services.handlers.file_operation_handler import FileOperationHandler
@@ -256,6 +274,36 @@ class TestCodeExecutionHandler:
         handler = CodeExecutionHandler()
         result = await handler._execute("print(2 + 3)")
         assert len(result) > 10
+
+    async def test_sandbox_blocks_getattr_escape(self):
+        """C3 regression: getattr-based dunder chain must be rejected."""
+        from services.handlers.code_execution_handler import CodeExecutionHandler
+        handler = CodeExecutionHandler()
+        payload = (
+            "wrap = next(c for c in getattr(getattr(getattr((), '__class__'), "
+            "'__mro__')[1], '__subclasses__')() if getattr(c, '__name__') == "
+            "'_wrap_close')\n"
+            "print('ESCAPED')\n"
+        )
+        result = await handler.handle(payload, "code")
+        assert "ESCAPED" not in result
+        assert "blocked" in result.lower() or "錯誤" in result or "error" in result.lower()
+
+    async def test_extract_code_keeps_break_lines(self):
+        """C4 regression: bare break/continue/pass must not truncate extraction."""
+        from services.handlers.code_execution_handler import CodeExecutionHandler
+        handler = CodeExecutionHandler()
+        code = (
+            "for i in range(3):\n"
+            "    if i == 1:\n"
+            "        break\n"
+            "print('DONE_AFTER_BREAK')\n"
+        )
+        extracted = handler._extract_code(code)
+        assert "break" in extracted
+        assert "DONE_AFTER_BREAK" in extracted
+        result = await handler.handle(code, "code")
+        assert "DONE_AFTER_BREAK" in result
 
 
 # =============================================================================

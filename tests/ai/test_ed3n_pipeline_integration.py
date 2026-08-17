@@ -76,9 +76,9 @@ def test_execution_gate_decisions():
     test_cases = [
         ("搜尋台北天氣", "auto_execute"),
         ("讀取 temp.txt", "auto_execute"),
-        ("刪除 temp.txt", "reject"),
+        ("刪除 temp.txt", "confirm_then_execute"),
         ("不要搜尋", "reject"),
-        ("執行這個命令", "reject"),
+        ("執行這個命令", "confirm_then_execute"),
     ]
 
     for text, expected in test_cases:

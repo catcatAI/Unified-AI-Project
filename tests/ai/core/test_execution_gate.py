@@ -82,14 +82,18 @@ class TestExecutionGateDecide:
         assert d.action == "auto_execute"
         assert d.handler == "file_ops"
 
-    def test_reject_delete(self):
+    def test_confirm_delete(self):
+        """H9: irreversible delete must reach confirmation, not reject."""
         d = self.gate.decide("file", "delete", "删除 temp.txt", 0.9, {})
-        assert d.action == "reject"
+        assert d.action == "confirm_then_execute"
+        assert d.handler == "file_ops"
         assert d.score < 0.2
 
-    def test_reject_delete_all(self):
+    def test_confirm_delete_all(self):
+        """H9: delete-all is also confirmable (never auto-executes)."""
         d = self.gate.decide("file", "delete", "删除全部文件", 0.9, {})
-        assert d.action == "reject"
+        assert d.action == "confirm_then_execute"
+        assert d.handler == "file_ops"
         assert d.score < 0.1
 
     def test_confirm_file_create(self):
@@ -97,10 +101,13 @@ class TestExecutionGateDecide:
         assert d.action == "auto_execute"
         assert d.handler == "file_ops"
 
-    def test_reject_system_operation(self):
+    def test_confirm_system_operation(self):
+        """H9: execute/system must require confirmation, never auto/reject."""
         d = self.gate.decide("execute", "system", "执行这个命令", 0.9, {})
-        assert d.action == "reject"
+        assert d.action == "confirm_then_execute"
+        assert d.handler == "code_exec"
         assert d.score == 0.0
+        assert "confirm" in d.reason or "irreversible" in d.reason
 
     def test_negation_forces_reject(self):
         d = self.gate.decide("search", "read", "不要搜寻", 0.9, {})
@@ -174,9 +181,10 @@ class TestExecutionGateConfirmMessage:
             assert "无法复原" in d.confirm_message or "无法" in d.confirm_message
 
     def test_system_confirm_has_warning(self):
+        """H9: system action confirms with impact warning."""
         d = self.gate.decide("execute", "system", "执行命令", 0.9, {})
-        # System always scores 0.0 (irreversibility=0), so always reject
-        assert d.action == "reject"
+        assert d.action == "confirm_then_execute"
+        assert "确认" in d.confirm_message or "執行" in d.confirm_message
 
 
 class TestExecutionGateImpact:
@@ -247,20 +255,23 @@ class TestExecutionGateIntegration:
         d = self.gate.decide(r.primary_type.value, r.action_type, "搜寻台北天气", r.confidence, {})
         assert d.action == "auto_execute"
 
-    def test_delete_rejects(self):
+    def test_delete_requires_confirmation(self):
+        """H9: delete must reach confirmation (irreversible), never reject/auto."""
         r = self.clf.classify("删除 temp.txt")
         d = self.gate.decide(r.primary_type.value, r.action_type, "删除 temp.txt", r.confidence, {})
-        assert d.action == "reject"
+        assert d.action == "confirm_then_execute"
 
     def test_negation_rejects(self):
         r = self.clf.classify("不要搜寻")
         d = self.gate.decide(r.primary_type.value, r.action_type, "不要搜寻", r.confidence, {})
         assert d.action == "reject"
 
-    def test_execute_system_rejects(self):
+    def test_execute_system_requires_confirmation(self):
+        """H9: execute must require confirmation (irreversible), never reject/auto."""
         r = self.clf.classify("执行这个命令")
         d = self.gate.decide(r.primary_type.value, r.action_type, "执行这个命令", r.confidence, {})
-        assert d.action == "reject"
+        assert d.action == "confirm_then_execute"
+        assert d.handler == "code_exec"
 
     def test_vision_confirm(self):
         r = self.clf.classify("看")
