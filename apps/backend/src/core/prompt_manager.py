@@ -8,10 +8,8 @@ import json
 import logging
 import os
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from core.i18n.i18n_manager import Language
 
 logger = logging.getLogger(__name__)
 

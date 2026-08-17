@@ -4,7 +4,6 @@ Defines formal communication contracts and shared types for the system.
 """
 
 import logging
-from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 

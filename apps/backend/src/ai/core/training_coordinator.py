@@ -10,7 +10,7 @@ import os
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from ai.data_eng.dedup import hash_domain_dedup, hash_input
 

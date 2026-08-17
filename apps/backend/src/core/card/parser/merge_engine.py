@@ -4,7 +4,6 @@ Merge engine — cross-file merge by qualified_id with timestamp ordering.
 """
 
 import logging
-from datetime import datetime
 from typing import Dict, Optional
 
 from core.card.card_types import Card, SourceFile, Token

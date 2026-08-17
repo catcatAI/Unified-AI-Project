@@ -12,7 +12,6 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
-from core.utils import _match_english_kw
 
 logger = logging.getLogger(__name__)
 

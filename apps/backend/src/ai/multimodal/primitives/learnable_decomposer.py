@@ -10,7 +10,6 @@ The renderer (PIL) is non-differentiable, so we use a straight-through estimator
 import json
 import logging
 import os
-from typing import Optional
 
 import numpy as np
 

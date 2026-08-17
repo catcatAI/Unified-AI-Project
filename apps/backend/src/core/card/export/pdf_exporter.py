@@ -6,7 +6,6 @@ PDF exporter — generates a print-ready HTML layout for PDF conversion.
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from core.card.card_types import Card
 

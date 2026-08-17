@@ -23,7 +23,7 @@ import logging
 import os
 import re
 from collections import deque
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from ai.core.unicode_utils import is_english_dominant
 from ai.data_eng.assemble import decode_slot_budget, select_anchored_keys

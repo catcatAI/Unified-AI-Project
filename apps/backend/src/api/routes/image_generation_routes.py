@@ -4,7 +4,6 @@ import base64
 import io
 import logging
 import os
-from typing import Optional
 
 import numpy as np
 from core.utils import safe_error

@@ -1,6 +1,5 @@
 """Encode primitive parameters to/from embeddings."""
 
-from typing import Optional
 
 import numpy as np
 

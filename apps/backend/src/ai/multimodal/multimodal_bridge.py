@@ -10,11 +10,9 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import numpy as np
-from ai.multimodal.audio_decoder import AudioWaveformDecoder
 from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
 from ai.multimodal.shared_latent_space import SharedLatentSpace, get_shared_latent_space
 from ai.multimodal.text_encoder import TextEncoder
-from ai.multimodal.visual_decoder import VisualDecoder
 from ai.multimodal.visual_encoder import VisualEncoder
 from PIL import Image
 

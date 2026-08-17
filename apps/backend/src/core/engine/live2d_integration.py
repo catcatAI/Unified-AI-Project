@@ -20,7 +20,6 @@ Date: 2026-02-02
 
 from __future__ import annotations
 
-from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 # =============================================================================

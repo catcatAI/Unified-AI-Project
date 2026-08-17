@@ -27,7 +27,7 @@ determinism classification of this module and the rest of the pipeline.
 from __future__ import annotations
 
 import re
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 # Comparators we understand (transitive). Keyed by canonical direction word.
 _GREATER = {

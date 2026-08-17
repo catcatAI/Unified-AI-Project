@@ -1,6 +1,7 @@
 """Spatial decomposer: extracts points, lines, planes, circles, arcs from images."""
 
 import math
+import os
 from typing import List, Tuple
 
 import numpy as np

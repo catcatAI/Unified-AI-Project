@@ -8,7 +8,6 @@ import numpy as np
 from ai.multimodal.audio_decoder import AudioWaveformDecoder, load_default_audio_decoder_weights
 from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
 from ai.multimodal.generator.sequence_generator import SequenceGenerator
-from ai.multimodal.quality_metrics import snr
 from ai.multimodal.reconstruction_cycle import ReconstructionCycle
 from ai.multimodal.shared_latent_space import SharedLatentSpace
 from ai.multimodal.visual_decoder import VisualDecoder

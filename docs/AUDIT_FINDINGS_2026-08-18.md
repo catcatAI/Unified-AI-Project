@@ -193,8 +193,18 @@
 - `except Exception: pass` 靜默吞例外；第二個 `try: import shutil; return None` 區塊永遠回傳 None（無意義殘留碼）。
 - **✅ 已修復**：改為 `except Exception as e: logger.debug(...); return None`，刪除無意義 shutil 殘留碼。狀態：✅
 
-### L8. 未使用 import ~40 處（pyflakes）
-- 集中於 `game/`、`services/api_models.py:6`（13 個未用名稱）、`document_router.py`、`text_utils.py` 等；flake8 忽略 F401 未攔截。狀態：⏳
+### L8. 未使用 import（pyflakes 450+ 處）— **✅ 已修復（安全子集）**
+- **方法**：以 4 層防護過濾後只刪「整句 from-import 且所有名稱皆 pyflakes 未使用」的頂層語句：① re-export 檢查（掃 src+tests，其他檔從同 basename module import 的名稱保留）；② lazy `__getattr__` 字串映射引用檢查（`("module.path", "Name")` 模式，如 `core/autonomous/__init__.py` 對 neuroplasticity 的動態引用）；③ `# noqa: F401` 語句保留（設計性 re-export，如 `angela_llm_service.py`/`core/bio/neuroplasticity.py` shim）；④ 屬性存取檢查（`module.Name` 出現於其他檔則保留）。
+- **刪除 36 句、31 檔**（`game/*`、`text_utils.py`、`prompt_manager.py`、`token_stream.py`、`dynamic_threshold_manager.py`、`protocols.py`、`physiological_tactile_system.py`、`pdf_exporter.py` 等），全為 `Optional`/`datetime`/`deque`/`dataclass`/`Enum`/`ABC` 等確實未使用的標準庫/型別 import。
+- **驗證**：全 src 658 模組 import 掃描 0 失敗（僅 5 個 `textual` 未安裝的環境性失敗，與修改無關）；`pytest tests/` 全量 **5,241 passed / 0 failed**（與刪除前一致）；flake8 0 errors。
+- **保留（保守不刪）**：bare `import x`（可能 side-effect）、TYPE_CHECKING 區塊、`__init__.py` re-export、所有 `noqa` 語句、lazy 字串引用名稱、屬性存取名稱。
+
+### L13. 4 個真實 `undefined name`（pyflakes,先前已存在）— **✅ 已修復**
+- `ai/symbolic_reasoner.py:438,461`：`Dict[str, List[str]]` 註解但 typing 未 import `Dict` → 補上。
+- `ai/multimodal/primitives/decomposer.py:263-280`：`if __name__ == "__main__"` 區塊用 `os` 但未 import → 補 `import os`（跑 `python decomposer.py` 原本會 NameError）。
+- `ai/core/training_coordinator.py:74` 與 `ai/garden/garden_engine.py:326`：`List[Tuple[...]]` 註解但 typing 未 import `Tuple` → 補上。
+- **已排除（誤報）**：`garden/dictionary.py`/`binary_store.py`/`snn_core.py` 的 `torch`（設計性 `_lazy_torch()`/`_xp` dual-backend guard + `from __future__ import annotations` 字串化註解）、`pixel_refiner.py` 的 `PIL`（字串註解 + 函數內 local import）、`training_pipeline.py:828` 的 `RealDataProvider`（字串註解 + line 842 local import）、`physiological_tactile.py`/`endocrine_system.py` 的 `import *`（shim 設計）。
+- 修復後 pyflakes 真實 undefined name 歸零；`pytest tests/` 全量 5,241 passed / 0 failed。
 
 ### L9. `core/backbone/hardware.py:70` 冗餘例外 — **✅ 已修復**
 - `except (FileNotFoundError, subprocess.TimeoutExpired, Exception)` — `Exception` 已涵蓋前兩者且完全靜默。

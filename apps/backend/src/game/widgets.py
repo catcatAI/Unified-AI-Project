@@ -1,7 +1,6 @@
 """Shared widgets for the game TUI."""
 from __future__ import annotations
 
-from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.widgets import Input, Label, Static
 
 

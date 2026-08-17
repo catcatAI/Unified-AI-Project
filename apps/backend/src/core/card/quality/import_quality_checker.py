@@ -5,7 +5,6 @@ Import quality checker — three-dimension scoring for card import quality.
 
 import logging
 from dataclasses import dataclass
-from typing import List
 
 from core.card.card_types import Card, ConflictType, IntentFlag
 
