@@ -31,6 +31,7 @@ class QueryType(Enum):
     CREATIVE = "creative"
     OPINION = "opinion"
     COMMAND = "command"
+    SYSTEM = "system"  # system-level operations (dictionary classifier emits this)
     UNKNOWN = "unknown"
     # Phase 2: extended types
     FILE = "file"

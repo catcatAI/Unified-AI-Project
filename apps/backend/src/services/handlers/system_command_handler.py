@@ -20,7 +20,6 @@ _MAX_OUTPUT = 4000
 
 _SAFE_COMMANDS = {
     "date",
-    "time",
     "whoami",
     "hostname",
     "pwd",
@@ -33,13 +32,8 @@ _SAFE_COMMANDS = {
     "ps",
     "ls",
     "dir",
-    "cat",
-    "head",
-    "tail",
     "wc",
     "echo",
-    "env",
-    "printenv",
     "which",
     "where",
     "tasklist",
@@ -47,8 +41,6 @@ _SAFE_COMMANDS = {
     "ipconfig",
     "ifconfig",
     "ping",
-    "git",
-    "pnpm",
 }
 
 

@@ -370,6 +370,23 @@ class TestSystemCommandHandler:
         assert isinstance(result, str)
         assert len(result) > 0
 
+    async def test_sensitive_commands_rejected(self):
+        """M1 regression: file-read / env-dump / package-run commands rejected."""
+        from services.handlers.system_command_handler import SystemCommandHandler
+        handler = SystemCommandHandler()
+        for msg in [
+            "cat /etc/passwd",
+            "head /etc/shadow",
+            "tail /var/log/syslog",
+            "env",
+            "printenv",
+            "git log",
+            "pnpm dlx cowsay hi",
+        ]:
+            result = await handler.handle(msg, "system")
+            low = result.lower()
+            assert "unsafe" in low or "不安全" in result or "allow" in low
+
 
 # =============================================================================
 # TaskManagerHandler tests

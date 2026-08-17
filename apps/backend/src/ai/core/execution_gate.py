@@ -200,6 +200,34 @@ class ExecutionGate:
         # branch below is unreachable. Per the gate's design intent (confirm
         # messages + impact warnings exist for exactly these), they must always
         # require explicit user confirmation — never auto-execute.
+        # System commands (cat/env/pnpm/...) are high-risk even when the
+        # classifier reports action_type="none" (e.g. dictionary hit emits
+        # type=system but action=none) — the action_type-based irreversibility
+        # check below would be bypassed and the handler could auto-execute.
+        # Always require explicit confirmation for the system_cmd handler.
+        if handler_id == "system_cmd" and handler_id:
+            state_store.emit_event(
+                "execution.gate_decided",
+                {
+                    "action": "confirm_then_execute",
+                    "score": round(score, 3),
+                    "handler": handler_id,
+                    "query_type": query_type,
+                    "action_type": action_type,
+                    "reason": "system_cmd_always_requires_confirmation",
+                },
+            )
+            return GateDecision(
+                action="confirm_then_execute",
+                score=score,
+                handler=handler_id,
+                action_type=action_type,
+                reason="system_cmd handler always requires confirmation",
+                confirm_message=self._build_confirm(action_type, user_message),
+                impact_info=self._describe_impact(action_type, user_message),
+                original_query=user_message,
+            )
+
         if action_type in _IRREVERSIBLE_ACTIONS and handler_id:
             state_store.emit_event(
                 "execution.gate_decided",

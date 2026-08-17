@@ -154,12 +154,14 @@
 - **實證**: `[親證]` 見 C3bis 兩段測試。
 - **狀態**: ⏳ 未修復
 
-### M1. SystemCommandHandler 白名單缺陷（目前 handler 不可達，若接線即爆）
+### M1. SystemCommandHandler 白名單缺陷 — **✅ 已修復（含連鎖新發現）**
 
 - **位置**: `apps/backend/src/services/handlers/system_command_handler.py:25-56`（`_SAFE_COMMANDS`）
-- **缺陷**: `cat`/`head`/`tail`/`ls` → 任意檔案讀取；`env`/`printenv` → **傾印環境變數（含 API keys）**；`pnpm` → `pnpm dlx/exec` 可下載並執行任意套件（RCE）；參數完全未驗證。
-- **可達性**: QueryType 無 `SYSTEM`（query_classifier.py:25-40），classifier 恆不產出 `"system"` → 目前經 chat 不可達；但 handler 已註冊（router.py:759），任何接線即暴露。與 `_SAFE_COMMANDS` 的「safe, non-destructive」設計意圖直接衝突。
-- **狀態**: ⏳ 未修復（潛在）
+- **缺陷**: `cat`/`head`/`tail`/`ls` → 任意檔案讀取；`env`/`printenv` → **傾印環境變數（含 API keys）**；`pnpm` → `pnpm dlx/exec` 可下載並執行任意套件（RCE）；`git` 可讀任意 repo；參數完全未驗證。
+- **連鎖新發現（修復 QueryType 後暴露）**: 本輪發現 `QueryType` enum **缺 `SYSTEM` 成員**（query_classifier.py:25-40），而 `dictionary_classifier.py:30` 的 `CONTEXT_TO_QUERY_TYPE` 會產出 `"system"` → `QueryType(dict_type)` 拋 `ValueError` 使整個字典分類失效（被 `except Exception` 吞）。修復 enum 後「執行 system info」正確分類為 `system`——但立即暴露 **gate 繞過**: 字典命中產出 `action_type="none"`(非 `system`)，繞過 `_IRREVERSIBLE_ACTIONS` 檢查 → score=1.0×1.0×0.95 ≥ auto → **system_cmd 免確認 auto_execute**（cat/env/pnpm 白名單缺陷可直達）。
+- **✅ 已修復（三層）**: ① `QueryType` 新增 `SYSTEM="system"` 成員（字典分類正常化）;② `ExecutionGate.decide()` 對 `handler_id=="system_cmd"` **恆回 `confirm_then_execute`**（獨立於 action_type，永不 auto）;③ `_SAFE_COMMANDS` 移除 `cat`/`head`/`tail`/`env`/`printenv`/`git`/`pnpm`（保留 `date`/`whoami`/`hostname`/`pwd`/`uname`/`uptime`/`df`/`du`/`free`/`top`/`ps`/`ls`/`dir`/`wc`/`echo`/`which`/`where`/`tasklist`/`systeminfo`/`ipconfig`/`ifconfig`/`ping` 等無害資訊型指令）。
+- **實證**: `執行 system info` → gate `confirm_then_execute`（不再 auto）;`cat /etc/passwd`/`env`/`printenv`/`pnpm dlx`/`git log` 全部被拒（「不安全的命令」）;`ls`/`echo` 正常執行。新增 2 個回歸測試（handler + gate）。
+- **狀態**: ✅ 已修復
 
 ---
 

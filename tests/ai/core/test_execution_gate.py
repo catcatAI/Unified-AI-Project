@@ -109,6 +109,13 @@ class TestExecutionGateDecide:
         assert d.score == 0.0
         assert "confirm" in d.reason or "irreversible" in d.reason
 
+    def test_system_cmd_handler_always_confirms(self):
+        """M1 regression: system_cmd never auto-executes, even with action=none."""
+        # Dictionary hit emits type=system but action=none — must still confirm.
+        d = self.gate.decide("system", "none", "執行 system info", 0.95, {})
+        assert d.action == "confirm_then_execute"
+        assert d.handler == "system_cmd"
+
     def test_negation_forces_reject(self):
         d = self.gate.decide("search", "read", "不要搜寻", 0.9, {})
         assert d.action == "reject"
