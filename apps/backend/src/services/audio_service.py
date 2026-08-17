@@ -95,6 +95,12 @@ class AudioService:
                 self.enabled = data.get("enabled", True)
                 logger.info(f"Audio Service enabled status changed to: {self.enabled}")
 
+    def set_enabled(self, enabled: bool) -> bool:
+        """Enable/disable the audio service. Returns the new enabled state."""
+        self.enabled = bool(enabled)
+        logger.info("Audio service %s", "enabled" if self.enabled else "disabled")
+        return self.enabled
+
     def _generate_processing_id(self, audio_data: bytes) -> str:
         """Generate a stable processing id (audio_<hash>_<time>)."""
         hash_object = hashlib.md5(audio_data if audio_data else b"")

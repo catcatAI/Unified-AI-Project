@@ -63,11 +63,13 @@ async def audio_register_user(
 @router.post("/control")
 async def audio_control(params: Dict[str, Any] = Body(...)) -> dict:
     """控制音頻模組開關"""
-    enabled = params.get("enabled", True)
-    return {"status": "success", "module": "audio", "enabled": enabled, "mode": "post_method"}
+    enabled = bool(params.get("enabled", True))
+    actual = get_audio_service().set_enabled(enabled)
+    return {"status": "success", "module": "audio", "enabled": actual, "requested": enabled}
 
 
 @router.get("/control")
 async def audio_control_get(enabled: bool = True) -> dict:
     """控制音頻模組開關（GET 方法支持）"""
-    return {"status": "success", "module": "audio", "enabled": enabled, "mode": "get_method"}
+    actual = get_audio_service().set_enabled(enabled)
+    return {"status": "success", "module": "audio", "enabled": actual, "requested": enabled}
