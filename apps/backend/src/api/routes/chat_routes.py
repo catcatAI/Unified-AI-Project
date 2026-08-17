@@ -838,6 +838,7 @@ async def _try_agent_routing(
             QueryType.CODE,
             QueryType.EXECUTE,
             QueryType.TASK,
+            QueryType.SYSTEM,
         )}
         if primary_type_name in actionable:
             return None
