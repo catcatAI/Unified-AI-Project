@@ -155,10 +155,34 @@ def _as_array(lst):
 
 
 def _save_checkpoint(path: str, state: dict) -> None:
-    """Save SNN checkpoint — handles both numpy and torch tensors."""
+    """Save SNN checkpoint — handles both numpy and torch tensors.
+
+    Torch path stores ``W`` as sparse COO when density is low (< 30%).
+    Hebbian updates only touch (src, tgt) pairs, so a trained matrix is
+    typically < 1% dense — COO collapses a 1.6 GB dense matrix to ~14 MB.
+    The old dense storage wrote the full strided allocation (a 20,573² live
+    matrix inside a 36,376² block saved 5.3 GB); Fix A already trims the
+    live slice, sparse COO compresses it a further ~100x.
+    """
     xp, is_torch = _get_backend()
     os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
     if is_torch:
+        W = state.get("W")
+        if W is not None and W.dim() == 2 and W.numel():
+            nnz = xp.count_nonzero(W)
+            total = W.shape[0] * W.shape[1]
+            if nnz / total < 0.30:
+                idx = xp.nonzero(W, as_tuple=False)
+                vals = W[idx[:, 0], idx[:, 1]]
+                state["W_format"] = "sparse_coo"
+                state["W_shape"] = list(W.shape)
+                state["W_indices"] = idx
+                state["W_values"] = vals
+                state.pop("W", None)
+        elif W is not None:
+            state["W_format"] = "dense"
+        else:
+            state["W_format"] = "empty"
         xp.save(state, path)
     else:
         W = state.pop("W")
@@ -173,24 +197,44 @@ def _load_checkpoint(path: str) -> dict:
 
     Auto-detects format: if .npy file exists, load as numpy regardless of
     current backend (training may have used torch, inference may use numpy).
+
+    Torch loads with ``mmap=True`` so a large checkpoint pages on demand
+    instead of materializing the whole matrix in RAM (a 4.9 GB storage pages
+    in only the live region during the compact realloc in :meth:`load`).
+    Sparse-COO checkpoints (``W_format == "sparse_coo"``) are densified here;
+    legacy dense checkpoints pass through as mmap'd strided views.
     """
     npy_path = path if path.endswith(".npy") else path + ".npy"
     json_path = path.rsplit(".", 1)[0] + ".json"
 
     # Prefer numpy format if .npy exists (cross-backend compatible)
     if os.path.exists(npy_path):
-        W = np.load(npy_path)
+        W = np.load(npy_path, mmap_mode="r")
         meta = {}
         if os.path.exists(json_path):
             with open(json_path, "r", encoding="utf-8") as f:
                 meta = json.load(f)
         meta["W"] = W
+        meta["W_format"] = "dense"
         return meta
 
     # Fall back to torch format
     xp, is_torch = _get_backend()
     if is_torch:
-        return xp.load(path, map_location="cpu", weights_only=True)
+        state = xp.load(path, map_location="cpu", weights_only=True, mmap=True)
+        fmt = state.get("W_format")
+        if fmt == "sparse_coo":
+            idx = state.pop("W_indices")
+            vals = state.pop("W_values")
+            shape = state.pop("W_shape")
+            W = xp.zeros(tuple(shape), dtype=vals.dtype)
+            W[idx[:, 0], idx[:, 1]] = vals
+            state["W"] = W
+            state.pop("W_format", None)
+        elif fmt == "empty":
+            state["W"] = None
+            state.pop("W_format", None)
+        return state
 
     # Neither format found
     raise FileNotFoundError(f"No checkpoint found at {path} (tried {npy_path} and torch format)")
@@ -275,7 +319,11 @@ class TensorSNNCore:
         self.decay = decay
         self.device = device
 
-        from core.system.config.magic_numbers import compute_int, limit_value, model_sizing_config
+        from core.system.config.magic_numbers import (
+            compute_int,
+            effective_capacity_bytes,
+            model_sizing_config,
+        )
 
         # Use compute config (profile-aware) unless explicit values passed.
         # Falls back to dynamic model sizing config (conservative/extended).
@@ -286,6 +334,33 @@ class TensorSNNCore:
             if connection_budget > 0
             else compute_int("garden_snn", "connection_budget", sizing["connection_budget"])
         )
+        # RAM clamp: never size max_vocab beyond what the live VxV float32
+        # matrix fits in memory.  Profile config may say 51,812 (→ 10 GB) but
+        # on a 7.5 GB box that OOMs every retrain — the matrix must fit RAM
+        # PLUS the training data + process overhead.  Clamp to the capacity
+        # cascade's joint bytes/% cap (same source as model_sizing_config's
+        # extended path: memory.dynamic_mb vs max_percent of physical RAM).
+        try:
+            from core.system.config.magic_numbers import _get_capacity_config, _probe_ram_total_gb
+
+            ram_total = _probe_ram_total_gb()
+            if ram_total and ram_total > 0:
+                dyn_mb = _get_capacity_config().get("memory", {}).get("dynamic_mb", 8192)
+                cap_bytes = effective_capacity_bytes(
+                    "memory", total_gb=ram_total, numeric_mb=dyn_mb
+                )
+                max_keys_by_ram = int((cap_bytes / 4.0) ** 0.5)
+                clamped = max(1, min(self.max_vocab, max_keys_by_ram))
+                logger.info(
+                    "SNN RAM clamp: max_vocab %d -> %d (%.2f GB RAM -> %.2f GB matrix cap)",
+                    self.max_vocab,
+                    clamped,
+                    ram_total,
+                    clamped * clamped * 4 / 1024**3,
+                )
+                self.max_vocab = clamped
+        except Exception:
+            logger.debug("SNN RAM clamp unavailable", exc_info=True)
         logger.info(
             "SNN sizing: max_vocab=%d, connection_budget=%d (%.1fMB matrix)",
             self.max_vocab,
@@ -754,10 +829,14 @@ class TensorSNNCore:
     def load(self, path: str) -> None:
         """Load weight matrix and key registry from a checkpoint.
 
-        The loaded matrix is reallocated compactly (live V with 1.25x headroom,
-        NOT the stored allocation) so a checkpoint saved at 36,376² (5 GB) loads
-        into V² + headroom (~1.6 GB at V=20,573) instead of pinning the dead
-        allocation back into RAM.
+        The loaded matrix is reallocated compactly: only the LIVE VxV region is
+        copied into a fresh contiguous matrix (V with 1.25x headroom), never
+        the stored allocation.  This handles three cases:
+        - legacy dense checkpoints written as a strided view of a 36,376²
+          block (5 GB file, W shaped 20,573²) → only 1.6 GB live is copied;
+        - torch ``mmap=True`` loads, whose backing pages drop once the compact
+          copy is made;
+        - sparse-COO checkpoints (already densified in ``_load_checkpoint``).
         """
         state = _load_checkpoint(path)
         W = state["W"]
@@ -770,16 +849,14 @@ class TensorSNNCore:
         self.total_steps = int(state.get("total_steps", 0))
         self.total_hebbian_updates = int(state.get("total_hebbian_updates", 0))
         V = self.vocab_size
-        if W is not None and W.shape[0] != V:
-            # Checkpoint carried a larger (or smaller) allocation than the live
-            # keys — trim/re-pad to the live region with headroom.
-            live = W[:V, :V]
+        if W is not None:
+            live_rows = min(W.shape[0], V)
+            live_cols = min(W.shape[1], V)
+            live = W[:live_rows, :live_cols]
             alloc = max(V, int(V * 1.25) + 64)
             new_W = _zeros((alloc, alloc))
-            new_W[:V, :V] = live
+            new_W[:live_rows, :live_cols] = live
             self._W = new_W
-        elif W is not None:
-            self._W = W
         else:
             self._W = None
         logger.info("GARDEN SNN: loaded checkpoint from %s (V=%d)", path, self.vocab_size)
