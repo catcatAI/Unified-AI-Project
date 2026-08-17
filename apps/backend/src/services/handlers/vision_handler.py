@@ -4,13 +4,11 @@ VisionHandler — processes image analysis intents.
 """
 
 import asyncio
-import base64
 import logging
 import mimetypes
-import os
 import re
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +18,7 @@ class VisionHandler:
 
     def __init__(self, model_bus: Any = None):
         self._model_bus = model_bus
+        self._vision_service = None
 
     async def handle(self, text: str, intent: str = "vision") -> str:
         image_path = self._extract_image_path(text)
@@ -35,15 +34,25 @@ class VisionHandler:
             return f"（視覺分析）不支援的圖片格式：{mime_type}"
         try:
             image_data = await asyncio.to_thread(target.read_bytes)
-            b64 = base64.b64encode(image_data).decode()
-            if self._model_bus and hasattr(self._model_bus, "execute_handler"):
-                result = await self._model_bus.execute_handler(
-                    "vision",
-                    text,
-                    {"image_path": str(target), "image_b64": b64, "mime_type": mime_type},
+            # Delegate to the shared VisionService for real analysis. The old
+            # model_bus.execute_handler("vision", ...) branch was dead code — it
+            # would recurse into this same handler, so production always fell
+            # back to _local_describe (file metadata only).
+            if self._vision_service is None:
+                try:
+                    from services.vision_service import VisionService
+
+                    self._vision_service = VisionService()
+                except Exception as e:
+                    logger.warning(f"VisionService unavailable: {e}", exc_info=True)
+                    self._vision_service = False  # don't retry every request
+            if self._vision_service:
+                result = await self._vision_service.analyze_image(
+                    image_data=image_data, context={"path": str(target), "mime_type": mime_type}
                 )
-                if result.get("success"):
-                    return f"（視覺分析）{result.get('result', '無結果')}"
+                caption = result.get("caption") or result.get("description")
+                if caption:
+                    return f"（視覺分析）{caption}"
             return self._local_describe(target, mime_type)
         except Exception as e:
             logger.error(f"VisionHandler error: {e}", exc_info=True)
