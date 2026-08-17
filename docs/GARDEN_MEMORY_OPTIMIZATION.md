@@ -168,4 +168,57 @@ def _get_engine(self):
 
 - [x] 使用者要求全部實作（A-E）
 - [x] 先分析寫 MD → 實作
-- [ ] 實作後重訓驗證
+- [x] 實作後重訓驗證
+
+---
+
+## 8. 實作結果（2026-08-17 實測）
+
+### 8.1 實作摘要（commits）
+
+| 修復 | 實作 | commit |
+|---|---|---|
+| A | `_grow_matrix` ×2→×1.25+64；`_compact` `alloc=max(new, 1.25×new+64)`（可縮小）；`save` 只存 live 切片；`load` 重新 compact 配置 | `d2d6a4f9` |
+| B | `dictionary._prune_for_growth` 記錄 `_pruned_keys` + `drain_pruned_keys()`；`learn_batch` Stage 2c 呼叫 `snn.compact_removed_keys()` | `d2d6a4f9` |
+| C1 | `_save_checkpoint` 稀疏 COO（density<30% 才轉）；`_load_checkpoint` 讀取稀疏並 densify | `643b9e59` |
+| D | `torch.load(mmap=True)` + `np.load(mmap_mode='r')`；`load()` 只複製 live VxV | `643b9e59` |
+| E | `TensorSNNCore.__init__` RAM clamp（capacity cascade，80% RAM）；51812→40131@7.5GB | `643b9e59` |
+| 工具 | `scripts/compact_garden_ckpt.py` 一次性遷移（mmap+dead-key 移除+sparse） | `643b9e59` |
+
+### 8.2 驗證數據
+
+**單元層（`_compact` 可縮小）：**
+- 2000 keys 訓練 → compact 到 500 keys → `_W` 從 2000² 縮到 **689²**（舊邏輯會固定 51,812²=10GB）
+- 1000→2000 keys 成長: 精確 2000²（×1.25，無 2× 死區）
+
+**Checkpoint 遷移（真實污染檔）：**
+- 543 MB 稠密 → **13.7 MB sparse COO**（峰值 1.7 GB）
+- 5.3 GB 大檔 mmap 載入成功（峰值 5.4 GB，未崩）— 舊邏輯載入即 OOM
+
+**重訓（10,917 乾淨樣本，全程無 OOM）：**
+| 里程碑 | V | RSS |
+|---|---|---|
+| 500 樣本 | 3,844 | 834 MB |
+| 2,000 | 7,406 | 1.28 GB |
+| 4,000 | 9,920 | 1.82 GB |
+| 6,000（首輪 prune+compact） | 9,994→9,103 | 1.61 GB |
+| 9,000 | 9,219 | 1.67 GB |
+| **10,917（完成）** | **9,473** | 峰值 ~1.8 GB |
+
+- **全程 RSS < 1.9 GB**（舊版 V≈9,200 即 OOM 6.4GB）
+- **Fix B 驗證**: prune 1000 條 → `snn.compact_removed_keys` 移除 1000-2000 keys → **字典=SNN=9,473 完全同步**（舊版 desync: 字典 9,573 vs SNN 20,573）
+- **Fix C1 驗證**: checkpoint snn.pt **4.4 MB**（舊版 543 MB，123× 壓縮）
+- 最終: dict 9,473 = SNN V 9,473，0 污染條目，reflex 36 patterns 正常
+- 訓練耗時: 11,116 s（~3.1 小時），22 batches
+
+### 8.3 意外損失（遷移腳本 bug）
+
+- 遷移腳本初次執行時 dictionary key 解析錯誤（`d["entries"]` 是 list 不是 dict），
+  導致把 5.3GB 的 9200-batch 乾淨進度 checkpoint 覆寫成 V=0 → 無法恢復。
+- 因此改採**全新乾淨重訓**（見 8.2），產物更乾淨（V 與字典同步、0 污染）。
+- 教訓: 遷移腳本預設不該覆寫輸入檔（已改為 `--out` 語義風險，正式使用需明確指定）。
+
+### 8.4 剩餘事項
+
+- [ ] C2 (runtime 稀疏 forward) — 大工程，暫緩
+- [ ] `forward` 推理品質本身（Hebbian 收斂 ≠ 理解，open-domain 仍 ≈0）— 非記憶體問題
