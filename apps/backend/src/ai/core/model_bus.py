@@ -524,6 +524,7 @@ class ModelBus:
             "task": ["ed3n", "garden", "cloud"],
             "vision": ["ed3n", "garden", "cloud"],
             "audio": ["ed3n", "garden", "cloud"],
+            "system": ["ed3n", "garden", "cloud"],
         }
         candidates = mapping.get(query_type, list(self._registry.keys()))
         return [mid for mid in candidates if mid in self._registry]
