@@ -161,7 +161,7 @@ class DeviationTracker:
 
         record_time = (time.time() - start_time) * 1000
         if record_time > 0.5:
-            logger.warning(f"Deviation tracking took {record_time:.2f}ms (slow)", exc_info=True)
+            logger.warning(f"Deviation tracking took {record_time:.2f}ms (slow)")
 
     def _update_stats(self, metrics: ResponseMetrics) -> None:
         """更新统计信息"""

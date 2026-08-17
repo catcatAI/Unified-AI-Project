@@ -103,7 +103,7 @@ def get_schema_uri(schema_name: str) -> str:
         # In a real-world scenario, a more robust solution might be needed
         # like using an environment variable or a configuration setting.
         logger.warning(
-            f"Schema file not found: {schema_name}. Path was: {schema_path}", exc_info=True
+            f"Schema file not found: {schema_name}. Path was: {schema_path}"
         )
         return f"file:///{schema_name}_not_found"
     return schema_path.as_uri()
@@ -751,7 +751,7 @@ class HSPConnector:
                 self.logger.info(f"Opinion {opinion_payload.get('id')} published successfully.")
             else:
                 logger.error(
-                    f"Failed to publish opinion {opinion_payload.get('id')}.", exc_info=True
+                    f"Failed to publish opinion {opinion_payload.get('id')}."
                 )
 
             return success
@@ -801,7 +801,7 @@ class HSPConnector:
         )
         if not is_valid:
             logger.warning(
-                f"消息安全验证失败: {message.get('message_id', 'unknown')}", exc_info=True
+                f"消息安全验证失败: {message.get('message_id', 'unknown')}"
             )
             return
 
@@ -863,7 +863,7 @@ class HSPConnector:
         )
         if not is_valid:
             logger.warning(
-                f"消息安全验证失败: {message.get('message_id', 'unknown')}", exc_info=True
+                f"消息安全验证失败: {message.get('message_id', 'unknown')}"
             )
             return
 
@@ -1029,7 +1029,7 @@ class HSPConnector:
                 await self.external_connector.publish(topic, payload, qos)
                 return True
 
-            logger.error("ExternalConnector has neither 'send' nor 'publish' method", exc_info=True)
+            logger.error("ExternalConnector has neither 'send' nor 'publish' method")
             return False
         except (
             Exception
@@ -1146,7 +1146,7 @@ class HSPConnector:
             )
             await asyncio.sleep(2**retry_count)
             return await self.publish_message(topic, envelope, qos)
-        self.logger.error(f"Max retries exceeded for message {correlation_id}.", exc_info=True)
+        self.logger.error(f"Max retries exceeded for message {correlation_id}.")
         self._cleanup_message(correlation_id, message_id, False)
         return False
 

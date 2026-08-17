@@ -41,7 +41,7 @@ class AgentManagerExtensions:
             是否成功啟動
         """
         if not agent_manager.enable_process_agents:
-            logger.error("Process agents are disabled", exc_info=True)
+            logger.error("Process agents are disabled")
             return False
 
         try:
@@ -76,7 +76,7 @@ class AgentManagerExtensions:
     async def start_health_monitoring(agent_manager) -> None:
         """啟動健康監控任務"""
         if agent_manager._health_monitor_task:
-            logger.warning("Health monitor already running", exc_info=True)
+            logger.warning("Health monitor already running")
             return
 
         agent_manager._health_monitor_task = asyncio.create_task(
@@ -111,7 +111,7 @@ class AgentManagerExtensions:
                     if not agent_info.process.is_alive():
                         logger.warning(
                             f"Agent {agent_id} is dead (PID: {agent_info.process.pid})",
-                            exc_info=True,
+
                         )
                         dead_agents.append(agent_id)
 
@@ -164,7 +164,7 @@ class AgentManagerExtensions:
                 agent_info.process.join(timeout=5.0)
 
                 if agent_info.process.is_alive():
-                    logger.warning(f"Force killing agent {agent_id}", exc_info=True)
+                    logger.warning(f"Force killing agent {agent_id}")
                     agent_info.process.kill()
 
         agent_manager.process_agents.clear()

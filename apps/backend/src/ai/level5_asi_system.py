@@ -118,7 +118,7 @@ class Level5ASISystem:
     async def start(self) -> bool:
         """启动Level 5 ASI系统"""
         if not self.is_initialized:
-            logger.error(f"[{self.system_id}] 系统未初始化", exc_info=True)
+            logger.error(f"[{self.system_id}] 系统未初始化")
             return False
 
         try:

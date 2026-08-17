@@ -152,7 +152,7 @@ class ToolContextManager:
         """记录工具使用"""
         try:
             if tool_id not in self.tools:
-                logger.error(f"Tool {tool_id} not found for usage recording", exc_info=True)
+                logger.error(f"Tool {tool_id} not found for usage recording")
                 return False
 
             tool = self.tools[tool_id]
@@ -192,7 +192,7 @@ class ToolContextManager:
         """获取工具上下文"""
         try:
             if tool_id not in self.tools:
-                logger.error(f"Tool {tool_id} not found", exc_info=True)
+                logger.error(f"Tool {tool_id} not found")
                 return None
 
             tool = self.tools[tool_id]
@@ -214,7 +214,7 @@ class ToolContextManager:
         """获取分类下的工具列表"""
         try:
             if category_id not in self.categories:
-                logger.error(f"Category {category_id} not found", exc_info=True)
+                logger.error(f"Category {category_id} not found")
                 return []
 
             category = self.categories[category_id]

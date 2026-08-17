@@ -65,7 +65,7 @@ class HookRegistry:
         """Register a handler function for a hook."""
         if hook_name not in self._hooks:
             logger.warning(
-                f"[HookRegistry] Unknown hook '{hook_name}', defining automatically", exc_info=True
+                f"[HookRegistry] Unknown hook '{hook_name}', defining automatically"
             )
             self.define_hook(hook_name)
         self._handlers[hook_name].append((handler_name, handler))

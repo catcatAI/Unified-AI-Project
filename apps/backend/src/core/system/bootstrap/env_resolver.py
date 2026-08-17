@@ -123,7 +123,7 @@ $sc.Save()
         ):
             logger.error(
                 f"Python version mismatch: {sys.version}. Required: {min_version[0]}.{min_version[1]}+",
-                exc_info=True,
+
             )
             return False
         return True

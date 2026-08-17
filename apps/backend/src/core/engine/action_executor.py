@@ -461,7 +461,7 @@ class ActionExecutor:
                 logger.warning(
                     f"[ActionExecutor] Action {action.name} failed due to "
                     f"dynamic success rate ({success_rate:.2%})",
-                    exc_info=True,
+
                 )
 
         except asyncio.TimeoutError:
@@ -545,7 +545,7 @@ class ActionExecutor:
                         # Non-critical check failed - log but continue
                         logger.warning(
                             f"Non-critical safety check failed: {check_name} - {message}",
-                            exc_info=True,
+
                         )
 
         return True, None

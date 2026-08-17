@@ -87,14 +87,14 @@ class HAMCoreStorage:
                 if getattr(self.resource_awareness_service, "is_disk_at_capacity", None) and self.resource_awareness_service.is_disk_at_capacity():
                     logger.warning(
                         "Disk at capacity — skipping core memory save (no truncation).",
-                        exc_info=True,
+
                     )
                     return False
                 available_space_gb = self.resource_awareness_service.get_available_disk_space_gb()
                 if available_space_gb < 0.1:  # safety floor: require at least 0.1 GB free
                     logger.warning(
                         "Insufficient disk space to save core memory. Skipping save.",
-                        exc_info=True,
+
                     )
                     return False
 

@@ -71,7 +71,7 @@ class FallbackConfigLoader:
             if os.path.exists(path):
                 return path
 
-        logger.warning("未找到配置文件, 将使用默认配置", exc_info=True)
+        logger.warning("未找到配置文件, 将使用默认配置")
         return None
 
     def load_config(self) -> Dict[str, Any]:
@@ -175,37 +175,37 @@ class FallbackConfigLoader:
             # 检查必要的配置项
             fallback_config = config.get("hsp_fallback")
             if not isinstance(fallback_config, dict):
-                logger.error("配置缺少 hsp_fallback 部分", exc_info=True)
+                logger.error("配置缺少 hsp_fallback 部分")
                 return False
 
             # 检查协议配置
             protocols = fallback_config.get("protocols")
             if not isinstance(protocols, dict):
-                logger.error("配置缺少 protocols 部分", exc_info=True)
+                logger.error("配置缺少 protocols 部分")
                 return False
             for protocol_name, protocol_config in protocols.items():
                 if not isinstance(protocol_config, dict):
-                    logger.error(f"协议 {protocol_name} 的配置格式错误", exc_info=True)
+                    logger.error(f"协议 {protocol_name} 的配置格式错误")
                     return False
                 if not isinstance(protocol_config.get("priority"), int):
-                    logger.error(f"协议 {protocol_name} 的优先级必须是整数", exc_info=True)
+                    logger.error(f"协议 {protocol_name} 的优先级必须是整数")
                     return False
 
                 if not isinstance(protocol_config.get("enabled"), bool):
-                    logger.error(f"协议 {protocol_name} 的enabled必须是布尔值", exc_info=True)
+                    logger.error(f"协议 {protocol_name} 的enabled必须是布尔值")
                     return False
 
             # 检查消息配置
             message_config = fallback_config.get("message")
             if not isinstance(message_config, dict):
-                logger.error("配置缺少 message 部分", exc_info=True)
+                logger.error("配置缺少 message 部分")
                 return False
             if message_config.get("default_max_retries") is not None:
                 if (
                     not isinstance(message_config["default_max_retries"], int)
                     or message_config["default_max_retries"] < 0
                 ):
-                    logger.error("default_max_retries必须是非负整数", exc_info=True)
+                    logger.error("default_max_retries必须是非负整数")
                     return False
 
             if message_config.get("default_ttl") is not None:
@@ -213,7 +213,7 @@ class FallbackConfigLoader:
                     not isinstance(message_config["default_ttl"], (int, float))
                     or message_config["default_ttl"] <= 0
                 ):
-                    logger.error("default_ttl必须是正数", exc_info=True)
+                    logger.error("default_ttl必须是正数")
                     return False
 
             logger.info("配置验证通过")

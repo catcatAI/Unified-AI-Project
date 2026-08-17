@@ -129,7 +129,7 @@ class ProactiveInteractionSystem:
     async def start(self) -> None:
         """啟動主動交互系統"""
         if self.is_running:
-            logger.warning("ProactiveInteractionSystem is already running", exc_info=True)
+            logger.warning("ProactiveInteractionSystem is already running")
             return
 
         self.is_running = True

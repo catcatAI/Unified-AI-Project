@@ -80,7 +80,7 @@ class KnowledgeGraphAgent:
         if self.hsp_connector is None:
             logger.warning(
                 f"KnowledgeGraphAgent hsp_connector not set; dropping task result for request {request_id}",
-                exc_info=True,
+
             )
             return
         await self.hsp_connector.send_task_result(result_payload, callback_address)

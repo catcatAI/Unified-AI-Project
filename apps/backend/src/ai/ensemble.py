@@ -209,7 +209,7 @@ class ModelEnsemble:
 
         for model_id, response in zip(model_ids, responses):
             if isinstance(response, Exception):
-                logger.warning(f"Model {model_id} failed: {response}", exc_info=True)
+                logger.warning(f"Model {model_id} failed: {response}")
                 failed_models.append(model_id)
             else:
                 valid_responses.append(response)

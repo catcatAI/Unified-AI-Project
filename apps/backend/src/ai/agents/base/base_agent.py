@@ -182,7 +182,7 @@ class BaseAgent:
         self.initialize_full()
 
         if not self.hsp_connector:
-            logger.error(f"[{self.agent_id}] Error: HSPConnector not available.", exc_info=True)
+            logger.error(f"[{self.agent_id}] Error: HSPConnector not available.")
             self.is_running = False
             return
 
@@ -240,7 +240,7 @@ class BaseAgent:
             if len(self.task_queue) >= self.max_queue_size:
                 logger.warning(
                     f"[{self.agent_id}] Task queue is full, rejecting task {queued_task.task_id}",
-                    exc_info=True,
+
                 )
                 await self._send_task_rejection(queued_task)
                 return
@@ -371,7 +371,7 @@ class BaseAgent:
         """Default task handler for unimplemented capabilities."""
         capability_id = task_payload.get("capability_id_filter", "")
         logger.warning(
-            f"[{self.agent_id}] No specific handler for capability '{capability_id}'", exc_info=True
+            f"[{self.agent_id}] No specific handler for capability '{capability_id}'"
         )
         return {
             "status": "failure",
@@ -428,7 +428,7 @@ class BaseAgent:
 
         logger.error(
             f"[{self.agent_id}] Critical error detected: {error}",
-            exc_info=True,
+
             extra={
                 "agent_id": self.agent_id,
                 "error_type": "critical_error",
@@ -551,7 +551,7 @@ class BaseAgent:
                     lambda t: (
                         logger.error(
                             f"[{self.agent_id}] Destructor cleanup failed: {t.exception()}",
-                            exc_info=True,
+
                         )
                         if not t.cancelled() and t.exception()
                         else None

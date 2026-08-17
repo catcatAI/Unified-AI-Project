@@ -169,9 +169,13 @@
 - 註解自承「Actual implementation would return pending events」；`status.get("等待中", 0)` 結果被丟棄（死陳述）。
 - 影響: 依賴此方法的呼叫端（如有）永遠拿到空 list。狀態：⏳
 
-### L11. import 時印出 `NoneType: None`
-- `services/main_api_server.py` import 期間輸出 `NoneType: None`（源自某模組的 `print()`，非 logging）——小瑕疵。
-- 位置：`core/security/` 加密金鑰初始化（「生成了新的加密密钥」警告旁的 print）。狀態：⏳
+### L11. 系統性 logging 誤用：無例外上下文卻帶 `exc_info=True`（假 `NoneType: None` 追蹤）— **✅ 已修復**
+- **根因（本輪定位）**：不是 `print()`——是 `logger.warning(..., exc_info=True)` 在**沒有活躍例外**時被呼叫。Python logging 對 `exc_info=True` 但 `sys.exc_info()==(None,None,None)` 的情況輸出假的 `NoneType: None` 追蹤行。
+- **位置**：`core/security/encryption.py:52`（「生成了新的加密密钥」）為啟動必經點；AST 全庫掃描（排除 `ExceptHandler` 語法內）找到 **61 檔、177 處**同型誤用（`ai/context/*`、`core/hsp/*`、`ai/agents/*`、`services/llm/router.py`、`core/managers/execution_monitor.py` 等）。
+- **實證** `[親證]`：`PYTHONPATH=apps/backend/src python -c "from core.security.encryption import EncryptionUtils"` 輸出 `NoneType: None`；修復後僅輸出乾淨 warning。
+- **✅ 已修復**：codemod 以 AST（UTF-8 byte 偏移,避開 CJK 誤差）移除全部 177 處無例外上下文的 `exc_info=True`；61 檔全部通過 `ast.parse` + `flake8` 驗證；`pytest tests/` 全量 **5,241 passed / 0 failed**。
+- **注意（已排除誤刪）**：`shared/error.py::project_error_handler` 無生產呼叫端；`base_agent._handle_critical_error` 經 `asyncio.create_task` 呼叫（任務執行時 except 上下文已結束）；其餘在 `except` 語法內的呼叫**全部保留**（AST 深度追蹤確認）。
+- 狀態：✅ 已修復
 
 ### L5. scripts/utils 真 stub
 - `scripts/utils/intelligent_test_generator.py`：`generate_tests_for_file()` 恆回 `[]`、`save_generated_tests()` 恆回 `True`（不寫檔）

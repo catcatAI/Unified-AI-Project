@@ -628,7 +628,7 @@ class StateMatrix4D:
         """
         if name in self.dimensions:
             logger.warning(
-                f"[Theta] Axis '{name}' already exists, returning existing", exc_info=True
+                f"[Theta] Axis '{name}' already exists, returning existing"
             )
             return self.dimensions[name]
 

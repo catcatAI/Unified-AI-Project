@@ -650,7 +650,7 @@ class AngelaLLMService:
                     return True
 
             logger.warning(
-                "[auto] NeuroAutoSelector 未能選擇可用後端，使用標準初始化", exc_info=True
+                "[auto] NeuroAutoSelector 未能選擇可用後端，使用標準初始化"
             )
         except Exception as e:
             logger.warning(
@@ -666,7 +666,7 @@ class AngelaLLMService:
                 logger.info(f"✓ {backend_type.value} 後端可用")
 
         if not available:
-            logger.warning("沒有可用的 LLM 後端，將使用備份回應機制", exc_info=True)
+            logger.warning("沒有可用的 LLM 後端，將使用備份回應機制")
             self.enable_memory_enhancement = (self.config.get("settings") or {}).get(
                 "enable_memory_enhancement", True
             )
@@ -1615,7 +1615,7 @@ class AngelaLLMService:
             # chain / _fallback_response still produces a user-facing answer
             # instead of handing an empty string to the chat route.
             if response.error:
-                logger.warning(f"LLM 回應錯誤: {response.error}", exc_info=True)
+                logger.warning(f"LLM 回應錯誤: {response.error}")
             else:
                 logger.warning("LLM 回應為空，觸發 fallback")
             if self._angela_fallback_chain:
@@ -2116,6 +2116,6 @@ async def angela_llm_response(
     response = await service.generate_response(user_message, context)
 
     if response.error:
-        logger.warning(f"LLM 響應錯誤: {response.error}", exc_info=True)
+        logger.warning(f"LLM 響應錯誤: {response.error}")
 
     return response.text

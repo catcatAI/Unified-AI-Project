@@ -62,7 +62,7 @@ class ContextManager:
             # 保存到磁盘存储 (失败不抛异常，仅警告)
             if not self.disk_storage.save_context(context):
                 logger.warning(
-                    f"Failed to save context {context_id} to disk storage", exc_info=True
+                    f"Failed to save context {context_id} to disk storage"
                 )
 
             # 添加到缓存
@@ -116,7 +116,7 @@ class ContextManager:
             # 获取现有上下文
             context = self.get_context(context_id)
             if not context:
-                logger.error(f"Context {context_id} not found for update", exc_info=True)
+                logger.error(f"Context {context_id} not found for update")
                 return False
 
             # 更新内容
@@ -125,13 +125,13 @@ class ContextManager:
             # 保存到内存存储
             if not self.memory_storage.save_context(context):
                 logger.error(
-                    f"Failed to save context {context_id} to memory storage", exc_info=True
+                    f"Failed to save context {context_id} to memory storage"
                 )
                 return False
 
             # 保存到磁盘存储
             if not self.disk_storage.save_context(context):
-                logger.error(f"Failed to save context {context_id} to disk storage", exc_info=True)
+                logger.error(f"Failed to save context {context_id} to disk storage")
                 return False
 
             # 更新缓存
@@ -162,7 +162,7 @@ class ContextManager:
             else:
                 logger.warning(
                     f"Failed to delete context {context_id} from one or more storage layers",
-                    exc_info=True,
+
                 )
 
             return success
@@ -226,13 +226,13 @@ class ContextManager:
             # 获取源上下文
             source_context = self.get_context(source_id)
             if not source_context:
-                logger.error(f"Source context {source_id} not found for transfer", exc_info=True)
+                logger.error(f"Source context {source_id} not found for transfer")
                 return False
 
             # 获取目标上下文
             target_context = self.get_context(target_id)
             if not target_context:
-                logger.error(f"Target context {target_id} not found for transfer", exc_info=True)
+                logger.error(f"Target context {target_id} not found for transfer")
                 return False
 
             # 根据过滤条件选择要传递的数据
@@ -253,13 +253,13 @@ class ContextManager:
             # 保存目标上下文
             if not self.memory_storage.save_context(target_context):
                 logger.error(
-                    f"Failed to save target context {target_id} to memory storage", exc_info=True
+                    f"Failed to save target context {target_id} to memory storage"
                 )
                 return False
 
             if not self.disk_storage.save_context(target_context):
                 logger.error(
-                    f"Failed to save target context {target_id} to disk storage", exc_info=True
+                    f"Failed to save target context {target_id} to disk storage"
                 )
                 return False
 
@@ -279,7 +279,7 @@ class ContextManager:
         try:
             context = self.get_context(context_id)
             if not context:
-                logger.error(f"Context {context_id} not found for summary", exc_info=True)
+                logger.error(f"Context {context_id} not found for summary")
                 return {}
 
             summary = {

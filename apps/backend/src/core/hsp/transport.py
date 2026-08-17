@@ -75,7 +75,7 @@ class LocalIPCTransport(HSPTransport):
     async def connect(self) -> bool:
         """建立連接（對於本地 IPC，主要是啟動監聽器）"""
         if self._connected:
-            logger.warning("Already connected", exc_info=True)
+            logger.warning("Already connected")
             return True
 
         self._connected = True
@@ -114,7 +114,7 @@ class LocalIPCTransport(HSPTransport):
             payload: 消息負載
         """
         if not self._connected or not self.send_queue:
-            logger.error("Not connected or send_queue not available", exc_info=True)
+            logger.error("Not connected or send_queue not available")
             return False
 
         message = {"topic": topic, "payload": payload}
@@ -253,7 +253,7 @@ class MQTTTransport(HSPTransport):
     async def publish(self, topic: str, payload: dict[str, Any]) -> bool:
         """發布 MQTT 消息"""
         if not self._external_connector:
-            logger.error("Not connected to MQTT broker", exc_info=True)
+            logger.error("Not connected to MQTT broker")
             return False
 
         return await self._external_connector.publish(topic, payload)
@@ -263,7 +263,7 @@ class MQTTTransport(HSPTransport):
         if not self._external_connector or not self._subscription_manager:
             logger.error(
                 "Not connected to MQTT broker or subscription manager not initialized",
-                exc_info=True,
+
             )
             return False
 
@@ -272,7 +272,7 @@ class MQTTTransport(HSPTransport):
             if result:
                 logger.info(f"Successfully subscribed to topic: {topic}")
             else:
-                logger.error(f"Failed to subscribe to topic: {topic}", exc_info=True)
+                logger.error(f"Failed to subscribe to topic: {topic}")
             return result
         except (
             Exception
@@ -283,7 +283,7 @@ class MQTTTransport(HSPTransport):
     async def unsubscribe(self, topic: str) -> bool:
         """取消訂閱 MQTT 主題"""
         if not self._subscription_manager:
-            logger.error("Subscription manager not initialized", exc_info=True)
+            logger.error("Subscription manager not initialized")
             return False
 
         try:
@@ -298,7 +298,7 @@ class MQTTTransport(HSPTransport):
     async def batch_subscribe(self, topics: list, callback: Callable, qos: int = 0) -> dict:
         """批量訂閱 MQTT 主題"""
         if not self._subscription_manager:
-            logger.error("Subscription manager not initialized", exc_info=True)
+            logger.error("Subscription manager not initialized")
             return {}
 
         try:

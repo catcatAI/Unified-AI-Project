@@ -139,7 +139,7 @@ def encrypt_context_data(data: bytes, key: Optional[bytes] = None) -> bytes:
     """
     try:
         if key is None:
-            logger.warning("No encryption key provided, returning raw data", exc_info=True)
+            logger.warning("No encryption key provided, returning raw data")
             return data
 
         if not FERNET_AVAILABLE:
@@ -165,7 +165,7 @@ def decrypt_context_data(data: bytes, key: Optional[bytes] = None) -> bytes:
     """
     try:
         if key is None:
-            logger.warning("No decryption key provided, returning raw data", exc_info=True)
+            logger.warning("No decryption key provided, returning raw data")
             return data
 
         if not FERNET_AVAILABLE:
@@ -213,23 +213,23 @@ def validate_context(context) -> bool:
     try:
         # 检查必需字段
         if not context.context_id:
-            logger.error("Context ID is required", exc_info=True)
+            logger.error("Context ID is required")
             return False
 
         if not context.context_type:
-            logger.error("Context type is required", exc_info=True)
+            logger.error("Context type is required")
             return False
 
         if context.created_at > datetime.now():
-            logger.error("Context created_at cannot be in the future", exc_info=True)
+            logger.error("Context created_at cannot be in the future")
             return False
 
         if context.updated_at > datetime.now():
-            logger.error("Context updated_at cannot be in the future", exc_info=True)
+            logger.error("Context updated_at cannot be in the future")
             return False
 
         if context.created_at > context.updated_at:
-            logger.error("Context created_at cannot be later than updated_at", exc_info=True)
+            logger.error("Context created_at cannot be later than updated_at")
             return False
 
         return True

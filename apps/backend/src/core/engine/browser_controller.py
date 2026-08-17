@@ -409,7 +409,7 @@ class BrowserController:
                     else:
                         logger.warning(
                             f"Extraction failed with status {response.status} for {url}",
-                            exc_info=True,
+
                         )
                         return None
         except (

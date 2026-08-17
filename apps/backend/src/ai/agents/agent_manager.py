@@ -346,7 +346,7 @@ class AgentManager:
                 logger.info(f"HSP Router started on port {self.router_port}")
                 self._wait_router_health()
             else:
-                logger.error("Failed to start HSP Router", exc_info=True)
+                logger.error("Failed to start HSP Router")
 
         except Exception as e:
             logger.error(f"Error starting router: {e}", exc_info=True)
@@ -597,7 +597,7 @@ class AgentManager:
 
             if not os.path.isdir(agents_dir):
                 logger.warning(
-                    f"[AgentManager] Agents directory not found: {agents_dir}", exc_info=True
+                    f"[AgentManager] Agents directory not found: {agents_dir}"
                 )
                 return agent_map
 
@@ -634,7 +634,7 @@ class AgentManager:
         with self.launch_lock:
             if agent_name not in self.agent_script_map:
                 logger.error(
-                    f"[AgentManager] Error: Agent '{agent_name}' not found.", exc_info=True
+                    f"[AgentManager] Error: Agent '{agent_name}' not found."
                 )
                 return None
 
@@ -731,7 +731,7 @@ class AgentManager:
             return True
         else:
             logger.warning(
-                f"[AgentManager] Agent '{agent_name}' not found or not running.", exc_info=True
+                f"[AgentManager] Agent '{agent_name}' not found or not running."
             )
             return False
 
@@ -805,7 +805,7 @@ class AgentManager:
 
         logger.warning(
             f"[AgentManager] Agent '{agent_name}' not ready within {timeout} seconds.",
-            exc_info=True,
+
         )
 
     def get_available_agents(self) -> List[str]:
@@ -844,7 +844,7 @@ class AgentManager:
                     else:
                         logger.warning(
                             f"[AgentManager] No {agent_class_name} class in {agent_name}",
-                            exc_info=True,
+
                         )
             except (
                 Exception
@@ -875,6 +875,6 @@ class AgentManager:
         Retrieves the capabilities of a specific agent.
         """
         if service_discovery is None:
-            logger.warning("[AgentManager] Service discovery not available.", exc_info=True)
+            logger.warning("[AgentManager] Service discovery not available.")
             return []
         return await service_discovery.get_all_capabilities_async()

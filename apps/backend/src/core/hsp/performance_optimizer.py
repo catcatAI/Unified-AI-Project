@@ -136,7 +136,7 @@ class HSPPerformanceOptimizer:
                 self.message_queue = self.message_queue[-_MAX_MESSAGE_QUEUE:]
             logger.debug(f"消息已添加到批处理队列, 当前队列大小: {len(self.message_queue)}")
         else:
-            logger.warning("批处理已禁用, 消息未添加到队列", exc_info=True)
+            logger.warning("批处理已禁用, 消息未添加到队列")
 
     def compress_message(self, message: Dict[str, Any]) -> bytes:
         """压缩消息"""

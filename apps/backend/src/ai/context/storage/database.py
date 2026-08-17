@@ -36,7 +36,7 @@ class DatabaseStorage(Storage):
         """保存上下文到数据库"""
         try:
             if not self._connected:
-                logger.warning("Database storage not connected, using mock storage", exc_info=True)
+                logger.warning("Database storage not connected, using mock storage")
                 # 模拟数据库存储
                 context_data = {
                     "context_id": context.context_id,
@@ -52,7 +52,7 @@ class DatabaseStorage(Storage):
                 self._db[context.context_id] = context_data
             else:
                 logger.debug(
-                    f"Context {context.context_id} 存储到数据库 (connected mode)", exc_info=True
+                    f"Context {context.context_id} 存储到数据库 (connected mode)"
                 )
                 context_data = {
                     "context_id": context.context_id,
@@ -80,7 +80,7 @@ class DatabaseStorage(Storage):
         """从数据库加载上下文"""
         try:
             if not self._connected:
-                logger.warning("Database storage not connected, using mock storage", exc_info=True)
+                logger.warning("Database storage not connected, using mock storage")
                 # 模拟数据库加载
                 if context_id in self._db:
                     context_data = self._db[context_id]
@@ -101,7 +101,7 @@ class DatabaseStorage(Storage):
                     logger.debug(f"Context {context_id} not found in mock database storage")
                     return None
             else:
-                logger.debug(f"Context {context_id} 从数据库加载 (connected mode)", exc_info=True)
+                logger.debug(f"Context {context_id} 从数据库加载 (connected mode)")
                 if context_id in self._db:
                     context_data = self._db[context_id]
                     context = Context(
@@ -130,7 +130,7 @@ class DatabaseStorage(Storage):
         """从数据库删除上下文"""
         try:
             if not self._connected:
-                logger.warning("Database storage not connected, using mock storage", exc_info=True)
+                logger.warning("Database storage not connected, using mock storage")
                 # 模拟数据库删除
                 if context_id in self._db:
                     del self._db[context_id]
@@ -142,7 +142,7 @@ class DatabaseStorage(Storage):
                     )
                     return False
             else:
-                logger.debug(f"Context {context_id} 从数据库删除 (connected mode)", exc_info=True)
+                logger.debug(f"Context {context_id} 从数据库删除 (connected mode)")
                 if context_id in self._db:
                     del self._db[context_id]
                     return True
@@ -158,7 +158,7 @@ class DatabaseStorage(Storage):
         """列出数据库中的上下文ID"""
         try:
             if not self._connected:
-                logger.warning("Database storage not connected, using mock storage", exc_info=True)
+                logger.warning("Database storage not connected, using mock storage")
                 # 模拟数据库查询
                 if context_type is None:
                     context_ids = list(self._db.keys())
@@ -171,7 +171,7 @@ class DatabaseStorage(Storage):
                 logger.debug(f"Listed {len(context_ids)} contexts from mock database storage")
                 return context_ids
             else:
-                logger.debug("从数据库列出上下文 (connected mode)", exc_info=True)
+                logger.debug("从数据库列出上下文 (connected mode)")
                 if context_type is None:
                     context_ids = list(self._db.keys())
                 else:
@@ -189,7 +189,7 @@ class DatabaseStorage(Storage):
         """更新上下文元数据"""
         try:
             if not self._connected:
-                logger.warning("Database storage not connected, using mock storage", exc_info=True)
+                logger.warning("Database storage not connected, using mock storage")
                 # 模拟数据库更新
                 if context_id in self._db:
                     self._db[context_id]["metadata"].update(metadata)
@@ -203,7 +203,7 @@ class DatabaseStorage(Storage):
                     return False
             else:
                 logger.debug(
-                    f"Context {context_id} 元数据更新到数据库 (connected mode)", exc_info=True
+                    f"Context {context_id} 元数据更新到数据库 (connected mode)"
                 )
                 if context_id in self._db:
                     self._db[context_id]["metadata"].update(metadata)
@@ -222,14 +222,14 @@ class DatabaseStorage(Storage):
         """获取存储信息"""
         try:
             if not self._connected:
-                logger.warning("Database storage not connected, using mock storage", exc_info=True)
+                logger.warning("Database storage not connected, using mock storage")
                 return {
                     "total_contexts": len(self._db),
                     "storage_type": "database",
                     "error": "not connected",
                 }
             else:
-                logger.debug("从数据库获取存储信息 (connected mode)", exc_info=True)
+                logger.debug("从数据库获取存储信息 (connected mode)")
                 return {"total_contexts": len(self._db), "storage_type": "connected_database"}
         except Exception as e:  # broad exception acceptable: graceful degradation on failure
             logger.error(f"Failed to get storage info, {e}", exc_info=True)

@@ -22,7 +22,7 @@ def read_gdoc_file(gdoc_path: str) -> Optional[str]:
     """
     path = Path(gdoc_path)
     if not path.exists():
-        logger.error(f".gdoc file not found: {gdoc_path}", exc_info=True)
+        logger.error(f".gdoc file not found: {gdoc_path}")
         return None
 
     try:
@@ -38,7 +38,7 @@ def read_gdoc_file(gdoc_path: str) -> Optional[str]:
         if "/d/" in url:
             doc_id = url.split("/d/")[1].split("/")[0]
     if not doc_id:
-        logger.error(f"No doc_id found in .gdoc file: {gdoc_path}", exc_info=True)
+        logger.error(f"No doc_id found in .gdoc file: {gdoc_path}")
         return None
 
     drive = get_drive_service()

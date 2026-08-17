@@ -19,7 +19,7 @@ def project_error_handler(error: ProjectError) -> None:
     import logging
 
     logger = logging.getLogger(__name__)
-    logger.error(f"Caught Project Error: {error}", exc_info=True)
+    logger.error(f"Caught Project Error: {error}")
 
 
 # ErrorHandler / SecurityError / ResourceError were previously duplicated here as

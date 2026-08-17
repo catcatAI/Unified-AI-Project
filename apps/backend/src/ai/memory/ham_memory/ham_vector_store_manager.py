@@ -66,7 +66,7 @@ class HAMVectorStoreManager:
                     else:
                         logger.warning(
                             "VectorMemoryStore client not available for direct ChromaDB collection access.",
-                            exc_info=True,
+
                         )
                 except (
                     Exception

@@ -151,7 +151,7 @@ class UnifiedKeyManager:
             if old_key and self._hash_key(old_key) == self.keys_data["key_hashes"].get(key_name):
                 logger.info(f"验证旧密钥 {key_name} 成功，生成新密钥")
             else:
-                logger.warning(f"验证旧密钥 {key_name} 失败，直接生成新密钥", exc_info=True)
+                logger.warning(f"验证旧密钥 {key_name} 失败，直接生成新密钥")
 
             # 更新密钥
             self.keys_data["keys"][key_name] = new_key

@@ -137,7 +137,7 @@ class BehaviorFeedbackLoop:
     async def start(self) -> None:
         """啟動反饋循環"""
         if self.is_running:
-            logger.warning("BehaviorFeedbackLoop is already running", exc_info=True)
+            logger.warning("BehaviorFeedbackLoop is already running")
             return
 
         self.is_running = True

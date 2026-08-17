@@ -354,7 +354,7 @@ class MetabolicHeartbeat:
             if energy_level < _hb("heartbeat.low_battery_threshold", 20):
                 logger.warning(
                     f"🔋 [Metabolism] Critical Energy Low: {energy_level}%. Angela is starving.",
-                    exc_info=True,
+
                 )
                 await self.bio_integrator.process_stress_event(
                     intensity=hb_cfg.get("low_battery_stress_intensity", 0.3),

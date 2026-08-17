@@ -126,7 +126,7 @@ class UserMonitor:
     async def start(self) -> None:
         """啟動監控"""
         if self.is_running:
-            logger.warning("UserMonitor is already running", exc_info=True)
+            logger.warning("UserMonitor is already running")
             return
 
         self.is_running = True

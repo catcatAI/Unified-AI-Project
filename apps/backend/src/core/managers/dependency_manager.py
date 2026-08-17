@@ -75,12 +75,12 @@ class DependencyManager:
                 else:
                     logger.warning(
                         f"YAML module not available, skipping config loading from {config_path}",
-                        exc_info=True,
+
                     )
                     self._config = {}
             else:
                 logger.warning(
-                    f"Dependency configuration file not found: {config_path}", exc_info=True
+                    f"Dependency configuration file not found: {config_path}"
                 )
                 self._config = {}
         except Exception as e:  # broad exception acceptable: config load fallback

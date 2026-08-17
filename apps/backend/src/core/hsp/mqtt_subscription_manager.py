@@ -101,13 +101,13 @@ class MQTTSubscriptionManager:
             是否订阅成功
         """
         if not self.mqtt_client:
-            logger.error("[MQTTSubManager] MQTT client not set", exc_info=True)
+            logger.error("[MQTTSubManager] MQTT client not set")
             return False
 
         async with self._lock:
             # 检查是否已订阅
             if topic in self._subscriptions:
-                logger.warning(f"[MQTTSubManager] Already subscribed to: {topic}", exc_info=True)
+                logger.warning(f"[MQTTSubManager] Already subscribed to: {topic}")
                 # 更新回调
                 if callback:
                     self._register_callback(topic, callback)
@@ -155,7 +155,7 @@ class MQTTSubscriptionManager:
                         self.mqtt_client.subscribe(topic, qos)
                 else:
                     logger.error(
-                        "[MQTTSubManager] MQTT client has no subscribe method", exc_info=True
+                        "[MQTTSubManager] MQTT client has no subscribe method"
                     )
                     return False
 
@@ -175,7 +175,7 @@ class MQTTSubscriptionManager:
                     await asyncio.sleep(1 * (attempt + 1))  # 指数退避
 
         logger.error(
-            f"[MQTTSubManager] Subscribe failed after {retry} attempts: {last_error}", exc_info=True
+            f"[MQTTSubManager] Subscribe failed after {retry} attempts: {last_error}"
         )
         return False
 
@@ -194,7 +194,7 @@ class MQTTSubscriptionManager:
 
         async with self._lock:
             if topic not in self._subscriptions:
-                logger.warning(f"[MQTTSubManager] Not subscribed to: {topic}", exc_info=True)
+                logger.warning(f"[MQTTSubManager] Not subscribed to: {topic}")
                 return False
 
             subscription = self._subscriptions[topic]
@@ -256,7 +256,7 @@ class MQTTSubscriptionManager:
             logger.info(f"[MQTTSubManager] Added callback for: {topic}")
         else:
             logger.warning(
-                f"[MQTTSubManager] Cannot add callback: not subscribed to {topic}", exc_info=True
+                f"[MQTTSubManager] Cannot add callback: not subscribed to {topic}"
             )
 
     def remove_callback(self, topic: str, callback: Callable) -> None:

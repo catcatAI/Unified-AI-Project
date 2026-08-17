@@ -1791,7 +1791,7 @@ async def sync_key_c(request: Request) -> dict:
     client_host = request.client.host
     if client_host not in ["127.0.0.1", "::1", "localhost"]:
         logger.warning(
-            f"Unauthorized access attempt to sync-key-c from {client_host}", exc_info=True
+            f"Unauthorized access attempt to sync-key-c from {client_host}"
         )
         raise HTTPException(status_code=403, detail="Access restricted to localhost")
     abc_key_manager = get_abc_key_manager()

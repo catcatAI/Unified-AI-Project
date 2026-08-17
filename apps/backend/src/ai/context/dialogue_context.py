@@ -182,7 +182,7 @@ class DialogueContextManager:
         """生成上下文摘要"""
         try:
             if conversation_id not in self.conversations:
-                logger.error(f"Conversation {conversation_id} not found", exc_info=True)
+                logger.error(f"Conversation {conversation_id} not found")
                 return None
 
             conversation = self.conversations[conversation_id]
@@ -235,7 +235,7 @@ class DialogueContextManager:
         """获取对话上下文"""
         try:
             if conversation_id not in self.conversations:
-                logger.error(f"Conversation {conversation_id} not found", exc_info=True)
+                logger.error(f"Conversation {conversation_id} not found")
                 return None
 
             conv = self.conversations[conversation_id]
@@ -306,13 +306,13 @@ class DialogueContextManager:
         try:
             if source_conversation_id not in self.conversations:
                 logger.error(
-                    f"Source conversation {source_conversation_id} not found", exc_info=True
+                    f"Source conversation {source_conversation_id} not found"
                 )
                 return False
 
             if target_conversation_id not in self.conversations:
                 logger.error(
-                    f"Target conversation {target_conversation_id} not found", exc_info=True
+                    f"Target conversation {target_conversation_id} not found"
                 )
                 return False
 

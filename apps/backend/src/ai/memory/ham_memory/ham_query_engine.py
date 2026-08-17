@@ -160,7 +160,7 @@ class HAMQueryEngine:
     async def retrieve_relevant_memories(self, query: str, limit: int = 10) -> List[HAMMemory]:
         if not self.vector_store_manager.vector_store:
             logger.warning(
-                "Vector store not initialized. Cannot perform semantic search.", exc_info=True
+                "Vector store not initialized. Cannot perform semantic search."
             )
             return await self._fallback_keyword_search(query, limit)
 
@@ -168,7 +168,7 @@ class HAMQueryEngine:
             query_embedding = await self.vector_store_manager.embed_text(query)
 
             if query_embedding is None:
-                logger.error("Failed to embed query for semantic search", exc_info=True)
+                logger.error("Failed to embed query for semantic search")
                 return await self._fallback_keyword_search(query, limit)
 
             results = await self.vector_store_manager.query_similar(

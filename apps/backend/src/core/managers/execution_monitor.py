@@ -279,18 +279,18 @@ class ExecutionMonitor:
 
                 # 檢查資源警告
                 if cpu_percent > self.config.cpu_threshold:
-                    logger.warning(f"High CPU usage: {cpu_percent:.1f}%", exc_info=True)
+                    logger.warning(f"High CPU usage: {cpu_percent:.1f}%")
 
                 if memory_percent > self.config.memory_threshold:
                     self.logger.warning(
                         f"High memory usage: {memory_percent:.1f}% ({memory_info.used / (1024 * 1024):.0f} MB used)",
-                        exc_info=True,
+
                     )
 
                 if disk_percent > self.config.disk_threshold:
                     self.logger.warning(
                         f"High disk usage: {disk_percent:.1f}% ({disk_info.used / (1024 * 1024 * 1024):.1f} GB used)",
-                        exc_info=True,
+
                     )
 
                 time.sleep(self.config.check_interval)
@@ -705,4 +705,4 @@ if __name__ == "__main__":
     if result.stderr:
         logger.info(f"STDERR:\n{result.stderr}")
     if result.error_message:
-        logger.error(f"Error: {result.error_message}", exc_info=True)
+        logger.error(f"Error: {result.error_message}")

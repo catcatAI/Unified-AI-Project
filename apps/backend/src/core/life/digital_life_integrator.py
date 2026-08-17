@@ -115,7 +115,7 @@ class ModalityGateway:
                 self.modalities[ModalityType.AUDIO].is_active = False
                 logger.warning(
                     f"⚠️ [Modality] High Dissonance ({dissonance:.2f}). Throttling energy-heavy modalities.",
-                    exc_info=True,
+
                 )
             else:
                 # 根據任務類型動態開啟
@@ -610,7 +610,7 @@ class DigitalLifeIntegrator:
                 if self.introspection_report.get("dissonance_detected"):
                     logger.warning(
                         f"[DigitalLife] Cognitive dissonance detected: {self.introspection_report['anomalies']}",
-                        exc_info=True,
+
                     )
 
                 # [Task N.20.2] 更新模態閘控

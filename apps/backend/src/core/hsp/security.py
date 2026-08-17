@@ -34,7 +34,7 @@ class HSPSecurityManager:
         self.encryption_key = os.environ.get("HSP_ENCRYPTION_KEY")
         if not self.encryption_key:
             self.encryption_key = Fernet.generate_key().decode("utf-8")
-            logger.warning("未找到环境变量HSP_ENCRYPTION_KEY, 生成新的密钥", exc_info=True)
+            logger.warning("未找到环境变量HSP_ENCRYPTION_KEY, 生成新的密钥")
         else:
             self.encryption_key = self.encryption_key
 
@@ -87,7 +87,7 @@ class HSPSecurityManager:
         testing_mode = os.environ.get("TESTING_MODE") == "true"
         if testing_mode:
             logger.warning(
-                "TESTING_MODE active: signatures will be verified with a test key", exc_info=True
+                "TESTING_MODE active: signatures will be verified with a test key"
             )
 
         try:
@@ -181,10 +181,10 @@ class HSPSecurityManager:
         testing_mode = os.environ.get("TESTING_MODE") == "true"
         if testing_mode:
             logger.warning(
-                "TESTING_MODE active: auth token will be verified with a test key", exc_info=True
+                "TESTING_MODE active: auth token will be verified with a test key"
             )
 
-        logger.warning(f"发送者身份验证失败: {sender_id} - 无认证令牌", exc_info=True)
+        logger.warning(f"发送者身份验证失败: {sender_id} - 无认证令牌")
         return False
 
     def generate_auth_token(self, sender_id: str) -> str:
@@ -230,7 +230,7 @@ class HSPSecurityContext:
             security_params = message.get("security_parameters", {}) or {}
             auth_token = security_params.get("auth_token")
             if not self.security_manager.authenticate_sender(sender_id, auth_token):
-                logger.warning(f"发送者身份验证失败: {sender_id}", exc_info=True)
+                logger.warning(f"发送者身份验证失败: {sender_id}")
                 return False, {"error": "Authentication failed"}
 
             # 将发送者添加到已验证列表
@@ -242,7 +242,7 @@ class HSPSecurityContext:
                 message, signature, sender_id
             ):
                 logger.warning(
-                    f"消息签名验证失败: {message.get('message_id', 'unknown')}", exc_info=True
+                    f"消息签名验证失败: {message.get('message_id', 'unknown')}"
                 )
                 return False, {"error": "Signature verification failed"}
 

@@ -95,7 +95,7 @@ class AngelaRealVoice:
                 logger.info(f"✅ 语音已保存: {save_path}")
                 return save_path
             else:
-                logger.error("❌ 语音文件未生成", exc_info=True)
+                logger.error("❌ 语音文件未生成")
                 return None
 
         except Exception as e:  # broad exception acceptable: TTS may fail for various reasons

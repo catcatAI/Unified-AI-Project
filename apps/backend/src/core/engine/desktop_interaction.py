@@ -238,7 +238,7 @@ class DesktopBrowserIntegration:
                 "timestamp": datetime.now(),
             }
         else:
-            logger.error("浏览器未初始化", exc_info=True)
+            logger.error("浏览器未初始化")
             return {}
 
     async def _extract_page_content(self) -> Dict:

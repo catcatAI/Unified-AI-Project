@@ -44,13 +44,13 @@ class ContextHAMIntegration:
         """
         try:
             if not self.ham_manager:
-                logger.warning("HAM manager not available, skipping sync", exc_info=True)
+                logger.warning("HAM manager not available, skipping sync")
                 return False
 
             # 获取上下文
             context = self.context_manager.get_context(context_id)
             if not context:
-                logger.error(f"Context {context_id} not found", exc_info=True)
+                logger.error(f"Context {context_id} not found")
                 return False
 
             # 将上下文内容转换为HAM conversation 记录并写入
@@ -68,7 +68,7 @@ class ContextHAMIntegration:
             }
             store = getattr(self.ham_manager, "store_conversation", None)
             if not store:
-                logger.warning("HAM store_conversation not available, skipping sync", exc_info=True)
+                logger.warning("HAM store_conversation not available, skipping sync")
                 return False
             store(conversation)
             logger.info(f"Synced context {context_id} to HAM memory")
@@ -89,13 +89,13 @@ class ContextHAMIntegration:
         """
         try:
             if not self.ham_manager:
-                logger.warning("HAM manager not available, skipping sync", exc_info=True)
+                logger.warning("HAM manager not available, skipping sync")
                 return None
 
             # 从 HAM conversations 中检索匹配记录
             data = getattr(self.ham_manager, "_data", None)
             if not data:
-                logger.warning("HAM data store not available, skipping sync", exc_info=True)
+                logger.warning("HAM data store not available, skipping sync")
                 return None
 
             conversation = None
@@ -104,7 +104,7 @@ class ContextHAMIntegration:
                     conversation = record
                     break
             if not conversation:
-                logger.error(f"HAM memory {ham_memory_id} not found", exc_info=True)
+                logger.error(f"HAM memory {ham_memory_id} not found")
                 return None
 
             context_id = f"ctx_ham_{ham_memory_id}"
@@ -131,7 +131,7 @@ class ContextHAMIntegration:
             if not create:
                 logger.warning(
                     "context_manager.create_context not available, cannot create memory context",
-                    exc_info=True,
+
                 )
                 return None
             from ai.context.storage.base import ContextType
@@ -161,12 +161,12 @@ class ContextHAMIntegration:
         """
         try:
             if not self.ham_manager:
-                logger.warning("HAM manager not available, skipping update", exc_info=True)
+                logger.warning("HAM manager not available, skipping update")
                 return False
 
             data = getattr(self.ham_manager, "_data", None)
             if not data:
-                logger.warning("HAM data store not available, skipping update", exc_info=True)
+                logger.warning("HAM data store not available, skipping update")
                 return False
 
             updated = False
@@ -179,7 +179,7 @@ class ContextHAMIntegration:
                     break
             if not updated:
                 logger.warning(
-                    f"HAM memory {memory_id} not found for update", exc_info=True
+                    f"HAM memory {memory_id} not found for update"
                 )
                 return False
 
@@ -209,7 +209,7 @@ class ContextHAMIntegration:
             # 获取源上下文
             source_context = self.context_manager.get_context(source_context_id)
             if not source_context:
-                logger.error(f"Source context {source_context_id} not found", exc_info=True)
+                logger.error(f"Source context {source_context_id} not found")
                 return False
 
             # 创建目标上下文并转移内容
@@ -217,7 +217,7 @@ class ContextHAMIntegration:
             if not create:
                 logger.warning(
                     "context_manager.create_context not available, cannot transfer",
-                    exc_info=True,
+
                 )
                 return False
             from ai.context.storage.base import ContextType

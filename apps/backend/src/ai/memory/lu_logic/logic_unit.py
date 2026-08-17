@@ -156,13 +156,13 @@ class LogicUnit:
             # 检查规则数量限制
             if len(self.rules) >= self.max_rules:
                 logger.warning(
-                    f"Cannot add rule {rule.rule_id}: max_rules limit reached", exc_info=True
+                    f"Cannot add rule {rule.rule_id}: max_rules limit reached"
                 )
                 return False
 
             # 检查规则ID是否已存在
             if rule.rule_id in self.rules:
-                logger.warning(f"Rule {rule.rule_id} already exists, updating...", exc_info=True)
+                logger.warning(f"Rule {rule.rule_id} already exists, updating...")
 
             # 添加规则
             self.rules[rule.rule_id] = rule
@@ -190,7 +190,7 @@ class LogicUnit:
         """
         try:
             if rule_id not in self.rules:
-                logger.warning(f"Rule {rule_id} not found", exc_info=True)
+                logger.warning(f"Rule {rule_id} not found")
                 return False
 
             del self.rules[rule_id]

@@ -54,7 +54,7 @@ class MemoryAdapter:
         if memory_id:
             logger.info(f"Stored card {card.qualified_id} as {memory_id}")
         else:
-            logger.warning(f"Failed to store card {card.qualified_id}", exc_info=True)
+            logger.warning(f"Failed to store card {card.qualified_id}")
         return memory_id
 
     async def store_batch(
