@@ -194,7 +194,6 @@ class ChatService:
             logger.warning("KnowledgePipeline init skipped: %s", e)
         # Warm up ED3N dictionary (loads 460k entries) in background
         try:
-            import asyncio
             from ai.ed3n.ed3n_engine import ED3NEngine
             asyncio.create_task(asyncio.to_thread(lambda: ED3NEngine.get_shared(load_trained=True).warm_up()))
             logger.info("ED3N dictionary warm-up scheduled (460k entries)")

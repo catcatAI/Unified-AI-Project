@@ -213,6 +213,11 @@
 - **實證**: `運行 print(42)`→42、`for i in range(3): print(i)`→0/1/2、`執行 print(getattr((),'__class__'))`→**Blocked call: getattr()**(巢狀提取+沙箱都正常)、`你好嗎`→「請提供要執行的 Python 程式碼」(不再執行散文)、`import os`→**Blocked import: os**。更新 `test_extract_code_empty`(散文→空)並新增 2 個回歸測試。
 - 狀態：✅ 已修復
 
+### L17. `chat_service.initialize()` UnboundLocalError 使連續學習(CLP)永遠初始化失敗 — **✅ 已修復**
+- **根因**: `initialize()` 內 line 197 的函數內 `import asyncio` 使 `asyncio` 在該函數內為**局部變數**,而 line 104 的 `asyncio.to_thread`(在 import 之前)先執行 → `UnboundLocalError: cannot access local variable 'asyncio'` → CLP 初始化每次被 except 吞成 None(連續學習功能全死,且完全靜默)。
+- **✅ 已修復**: 移除函數內多餘 `import asyncio`(頂層 line 8 已有)。實測 `_continuous_learning` 從 None → `ContinuousLearningPipeline`。
+- **全庫函數內 `import asyncio` 掃描(7 處)**: 其餘 6 處(cli/repl、vision_service、cross_modal_router ×2、multimodal_memory、image_encoder)皆 import 先於使用(無 UnboundLocalError 風險),`endocrine_system.py:31` 在 `__main__` 示範區塊(合法)。狀態：✅
+
 ### L15. DictionaryClassifier 產出非 QueryType type — **✅ 已修復**
 - `CONTEXT_TO_QUERY_TYPE` 的 `"system"`（已隨 M1 修復）與 `"negation"` 對應 QueryType 不存在。`negation` 實務上被 `_check_negation` 前置攔截（回 `("unknown","none",0.9)`）不會產出，但屬死映射；`"negation" → "unknown"` 消除潛在 `QueryType("negation")` ValueError。驗證：字典全部產出 type ⊆ QueryType 成員，行為不變。狀態：✅
 

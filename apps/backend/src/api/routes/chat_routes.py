@@ -874,8 +874,9 @@ async def _try_agent_routing(
         # per-request ChatService's ModelBus; the orchestrator singleton must
         # see it to route them (previously never wired → those intents were
         # dead and silently fell back to the LLM).
-        if chat_svc and chat_svc.model_bus:
-            orchestrator.model_bus = chat_svc.model_bus
+        agent_chat_svc = await _get_chat_service()
+        if agent_chat_svc and agent_chat_svc.model_bus:
+            orchestrator.model_bus = agent_chat_svc.model_bus
         route_result = await orchestrator.route_task(user_message, context)
 
         primary = route_result.get("results", [{}])[0] if route_result.get("results") else {}
