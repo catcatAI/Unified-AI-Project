@@ -38,22 +38,23 @@ _INTENT_CAPABILITIES: Dict[str, List[str]] = {
 # Handler-backed intents map to the registered ModelBus handler ids (H10: the
 # previous class names never matched a registered handler, so every agent
 # dispatch returned "handler not found" and silently fell back to the LLM).
-# Remaining intents keep their (aspirational) agent class names until a real
-# agent is registered.
+# Specialized-agent intents map to the AgentManager-registered ids (the
+# `_agent`-suffixed ids created by agent_adapter.register_specialized_agents),
+# executed through AgentManager when ModelBus has no such handler.
 _INTENT_AGENTS: Dict[str, str] = {
     "file_read": "file_ops",
     "file_write": "file_ops",
     "file_delete": "file_ops",
     "code_execute": "code_exec",
-    "code_understand": "CodeUnderstandingAgent",
     "web_search": "web_search",
-    "knowledge_query": "KnowledgeGraphAgent",
-    "creative_write": "CreativeWritingAgent",
-    "data_analysis": "DataAnalysisAgent",
-    "plan_create": "PlanningAgent",
     "vision": "vision",
-    "audio": "AudioProcessingAgent",
-    "nlp": "NLPProcessingAgent",
+    "code_understand": "code_understanding_agent",
+    "knowledge_query": "knowledge_graph_agent",
+    "creative_write": "creative_writing_agent",
+    "data_analysis": "data_analysis_agent",
+    "plan_create": "planning_agent",
+    "audio": "audio_processing_agent",
+    "nlp": "nlp_processing_agent",
 }
 
 
@@ -71,29 +72,25 @@ class AgentOrchestrator:
         self._model_bus = model_bus
         self._agent_cache: Dict[str, Any] = {}
 
-    def classify_intent(self, user_message: str) -> str:
-        """Classify user message into an intent category.
+    @property
+    def model_bus(self):
+        """ModelBus reference (wired after construction by chat_routes)."""
+        return self._model_bus
 
-        Gate: IntentRegistry density+anti+format check must pass first.
-        Only then do sub-classification regex patterns run.
-        """
+    @model_bus.setter
+    def model_bus(self, value) -> None:
+        self._model_bus = value
+
+    def classify_intent(self, user_message: str) -> str:
+        """Classify user message into an intent category via regex sub-classification."""
         lower = user_message.lower()
 
-        # IntentRegistry gate — density+anti+format scoring is canonical
-        try:
-            from core.intent_registry import IntentRegistry
-
-            ir = IntentRegistry()
-            ir_name, ir_conf = ir.detect(user_message)
-            # Only gate if IntentRegistry is confident enough (>= 0.3).
-            # Low-confidence hits (e.g. "分析這張圖片" → document at 0.12) fall through to regex.
-            if ir_name and ir_conf >= 0.3:
-                return "general"
-        except Exception as e:
-            logger.warning("IntentRegistry detection failed in classify_intent(): %s", e, exc_info=True)
-
-        # Sub-classification only runs after the gate passes
-        # (IntentRegistry didn't match → treat as general creative/conversational)
+        # NOTE: IntentRegistry is intentionally NOT used as a short-circuit
+        # gate here. Its density scoring is too coarse for routing (e.g. "搜尋
+        # python 歷史" → code at 0.50 because of the "python" keyword, "幫我
+        # 寫一首詩" → task at 0.33 because of "幫我"), and treating a hit as
+        # "general" silently killed every specialized agent path. Sub-
+        # classification below is the single source of truth for routing.
 
         # Code operations
         if re.search(r"(執行|運行|跑|execute|run|code|代碼|程式)", lower):
@@ -245,7 +242,12 @@ class AgentOrchestrator:
                 )
                 continue
 
-            # Try to execute via ModelBus if available
+            # Try to execute via ModelBus (handler-backed intents) first, then
+            # fall back to AgentManager (specialized agents registered by
+            # agent_adapter with `_agent`-suffixed ids). Previously this only
+            # consulted ModelBus, so specialized-agent intents (code_understand,
+            # knowledge_query, creative_write, ...) always returned None and
+            # silently fell back to the LLM — the whole agent path was dead.
             result = None
             if self._model_bus:
                 try:
@@ -254,6 +256,39 @@ class AgentOrchestrator:
                     )
                 except Exception as e:
                     logger.warning(f"ModelBus execution failed for {agent_name}: {e}", exc_info=True)
+            # AgentManager fallback only applies to specialized-agent ids (the
+            # `_agent`-suffixed ids from register_specialized_agents). ModelBus
+            # handler ids (file_ops/code_exec/web_search/vision) must NOT fall
+            # back — AgentManager doesn't register them and the attempt only
+            # produces a misleading "Agent not found" warning.
+            is_specialized_agent = agent_name.endswith("_agent")
+            if (result is None or (isinstance(result, dict) and not result.get("success")))\
+                    and is_specialized_agent and self._agent_manager is not None:
+                try:
+                    # Pass the raw message under every common parameter name so
+                    # the adapter's _fill_defaults can satisfy the agent method
+                    # signature (prompt/code/text/query/...). Without this the
+                    # adapter filled required params with empty defaults and
+                    # agents returned "No prompt provided" / "No code provided".
+                    agent_task = {
+                        "message": message,
+                        "query": message,
+                        "prompt": message,
+                        "code": message,
+                        "text": message,
+                        "content": message,
+                    }
+                    agent_result = await self._agent_manager.execute_agent(
+                        agent_name, agent_task
+                    )
+                    result = {
+                        "type": agent_name,
+                        "success": bool(getattr(agent_result, "success", False)),
+                        "result": getattr(agent_result, "result_data", None),
+                        "error": getattr(agent_result, "error", None),
+                    }
+                except Exception as e:
+                    logger.warning(f"AgentManager execution failed for {agent_name}: {e}", exc_info=True)
 
             results.append(
                 {

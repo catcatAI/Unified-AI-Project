@@ -201,6 +201,12 @@
 - **驗證**：全 src 658 模組 import 掃描 0 失敗（僅 5 個 `textual` 未安裝的環境性失敗，與修改無關）；`pytest tests/` 全量 **5,241 passed / 0 failed**（與刪除前一致）；flake8 0 errors。
 - **保留（保守不刪）**：bare `import x`（可能 side-effect）、TYPE_CHECKING 區塊、`__init__.py` re-export、所有 `noqa` 語句、lazy 字串引用名稱、屬性存取名稱。
 
+### L16. AgentOrchestrator agent 執行路徑全死 — **✅ 已修復**
+- **根因（三層斷裂）**: ① chat_routes 建立 orchestrator 時只傳 `agent_manager` **沒傳 `model_bus`** → `route_task` 的 `if self._model_bus:` 永遠 False → handler-backed intents(file/code/web_search)全死;② `_INTENT_AGENTS` 對 specialized intents 用類名(`CodeUnderstandingAgent`)非 AgentManager 註冊 id(`code_understanding_agent`,帶 `_agent` 後綴)→ 即使有 agent_manager 也找不到;③ `classify_intent` 的 IntentRegistry gate「IR 命中且 conf≥0.3 → 直接回 general」把「搜尋 python 歷史」(IR 誤判 code 0.50)、「幫我寫一首詩」(task 0.33)全吞成 general → regex 細分永不執行。
+- **✅ 已修復**: ① chat_routes 在 `_try_agent_routing` 補 `orchestrator.model_bus = chat_svc.model_bus`(並加 property);② `_INTENT_AGENTS` specialized intents 改映射到 `_agent` 後綴 id;③ `route_task` 加入 agent_manager fallback(僅 `_agent` 後綴 id,避免 model_bus handler id 誤 fallback),task 平鋪傳 `message/query/prompt/code/text/content`;④ `AgentAdapter` 接受平鋪 task 鍵且 `_fill_defaults` **只保留簽名內參數名**(避免 unexpected keyword);⑤ 移除 IntentRegistry 短路 gate(regex 為唯一分類來源)。
+- **實證**: `執行 python: print(...)`→model_bus 執行成功;`搜尋 python 歷史`→真實搜尋結果;`解釋 Python 語法`→code_understanding_agent 成功分析;`幫我寫一首詩`→creative_writing_agent 被正確呼叫(回「LLM backend not configured」=環境限制)。更新 1 個舊測試(原斷言 gate 吞掉搜尋)+ 新增 2 個回歸測試。
+- 狀態：✅ 已修復
+
 ### L14. CodeExecutionHandler 無區塊指令處理缺陷 — **✅ 已修復**
 - **根因**: `_extract_code` 在無 ``` 區塊/反引號時,把**整句自然語言**(含中文,如「執行 1+1」「你好嗎」)當 Python 原始碼送進 `exec()` → 必然 `SyntaxError`(且散文被當程式碼執行)。
 - **✅ 已修復**: 新增 `_extract_inline_code()`(平衡括號掃描提取 `print(42)`/`1+1`/巢狀 `print(getattr((),'__class__'))`,候選須通過 `ast.parse` 才採用)與 `_looks_code_shaped()`(散文防護);多行/compound 語句(如 `for i in range(3):`)走完整原始碼提取,不再被括號掃描截成 `range(3)`。

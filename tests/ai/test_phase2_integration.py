@@ -47,8 +47,10 @@ class TestAgentOrchestratorIntegration:
     def test_web_search_routes_correctly(self):
         ao = AgentOrchestrator()
         intent = ao.classify_intent("搜尋天氣")
-        # IntentRegistry gate (>= 0.3 confidence) returns "general" before regex
-        assert intent == "general"
+        # Regex sub-classification is the source of truth (the old IntentRegistry
+        # gate returned "general" for every confident hit, killing the agent path)
+        assert intent == "web_search"
+        assert ao.select_agent(intent) == "web_search"
 
     def test_select_agent_returns_correct_type(self):
         """H10: handler-backed intents map to registered ModelBus handler ids."""
@@ -56,6 +58,16 @@ class TestAgentOrchestratorIntegration:
         assert ao.select_agent("file_read") == "file_ops"
         assert ao.select_agent("code_execute") == "code_exec"
         assert ao.select_agent("web_search") == "web_search"
+        assert ao.select_agent("code_understand") == "code_understanding_agent"
+        assert ao.select_agent("creative_write") == "creative_writing_agent"
+
+    def test_classify_routes_specialized_intents(self):
+        """Regex sub-classification routes specialized-agent intents."""
+        ao = AgentOrchestrator()
+        assert ao.classify_intent("幫我寫一首詩") == "creative_write"
+        assert ao.classify_intent("解釋 Python 語法") == "code_understand"
+        assert ao.classify_intent("查詢知識圖譜") == "web_search"
+        assert ao.classify_intent("搜尋 python 歷史") == "web_search"
 
     def test_decompose_multi_step_task(self):
         ao = AgentOrchestrator()

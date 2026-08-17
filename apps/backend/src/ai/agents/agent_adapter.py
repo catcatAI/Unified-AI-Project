@@ -77,6 +77,11 @@ class AgentAdapter:
             return args
 
         filled = dict(args)
+        # Drop keys that are not actual method parameters (e.g. orchestrator
+        # passes message/query/code/prompt/text/content all at once) so we
+        # never hit "got an unexpected keyword argument".
+        param_names = {p for p in sig.parameters if p != "self"}
+        filled = {k: v for k, v in filled.items() if k in param_names}
         for param_name, param in sig.parameters.items():
             if param_name == "self":
                 continue
@@ -123,7 +128,14 @@ class AgentAdapter:
             Result from the delegated agent method.
         """
         method_name = task.get("method", self._primary_method)
-        args = task.get("args", {})
+        args = dict(task.get("args", {}))
+        # Accept flat task dicts (e.g. {"prompt": ..., "code": ...}) from
+        # AgentOrchestrator — previously only task["args"] was read, so agents
+        # always received empty defaults ("No prompt provided" / "No code
+        # provided") even when the orchestrator supplied the text.
+        for key, value in task.items():
+            if key not in ("method", "args"):
+                args.setdefault(key, value)
 
         if not method_name:
             logger.warning(f"[AgentAdapter] No method found for agent {self.agent_id}")
