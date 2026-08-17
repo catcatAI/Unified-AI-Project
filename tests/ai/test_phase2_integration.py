@@ -70,6 +70,15 @@ class TestAgentOrchestratorIntegration:
         assert ao.select_agent("knowledge_query") == "knowledge_graph_agent"
         assert ao.classify_intent("搜尋 python 歷史") == "web_search"
 
+    def test_classify_code_vs_analysis(self):
+        """Bare code mentions are analysis; execution needs an explicit verb."""
+        ao = AgentOrchestrator()
+        assert ao.classify_intent("分析這段程式碼") == "code_understand"
+        assert ao.classify_intent("解釋這段代碼") == "code_understand"
+        assert ao.classify_intent("執行這段程式碼") == "code_execute"
+        assert ao.classify_intent("分析這張圖片") == "vision"
+        assert ao.classify_intent("分析這份數據") == "data_analysis"
+
     def test_decompose_multi_step_task(self):
         ao = AgentOrchestrator()
         subtasks = ao.decompose_task("讀取文件然後寫入文件")

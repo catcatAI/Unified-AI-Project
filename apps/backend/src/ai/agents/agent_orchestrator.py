@@ -92,10 +92,16 @@ class AgentOrchestrator:
         # "general" silently killed every specialized agent path. Sub-
         # classification below is the single source of truth for routing.
 
-        # Code operations
-        if re.search(r"(執行|運行|跑|execute|run|code|代碼|程式)", lower):
+        # Code execution requires an explicit execution verb — bare code/程式
+        # mentions ("分析這段程式碼", "這段代碼什麼意思") are analysis, not
+        # execution requests.
+        if re.search(r"(執行|運行|跑一下|跑這個|execute|run this|run the|執行這個)", lower):
             return "code_execute"
-        if re.search(r"(理解|解釋|分析|understand|explain|analyze|review.*code)", lower):
+        # "分析" alone is too broad — 分析圖片/分析數據 belong to vision/data
+        # agents. Only treat it as code analysis when tied to code keywords.
+        if re.search(
+            r"(理解|解釋|分析|understand|explain|analyze|review.*code)", lower
+        ) and re.search(r"(code|代碼|程式|python|javascript|函數|function|syntax|語法|bug|debug)", lower):
             return "code_understand"
 
         # Knowledge graph queries are more specific than web search — check
