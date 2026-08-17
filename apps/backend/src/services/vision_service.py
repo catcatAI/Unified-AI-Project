@@ -94,6 +94,12 @@ class VisionService:
                 self.enabled = enabled
                 logger.info(f"Vision Service enabled status changed to: {enabled}")
 
+    def set_enabled(self, enabled: bool) -> bool:
+        """Enable/disable the vision service. Returns the new enabled state."""
+        self.enabled = bool(enabled)
+        logger.info("Vision service %s", "enabled" if self.enabled else "disabled")
+        return self.enabled
+
     def set_peer_services(self, peer_services: Dict[str, Any]) -> None:
         """設置其他多模態服務的引用"""
         self.peer_services = peer_services

@@ -64,22 +64,24 @@ async def vision_perceive(image_data: bytes = Body(...)) -> Dict[str, Any]:
 
 @router.post("/control")
 async def vision_control(params: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
-    """Toggle the vision module (POST method)."""
-    enabled = params.get("enabled", True)
+    """Enable/disable the vision module (POST method)."""
+    enabled = bool(params.get("enabled", True))
+    actual = _vision_service.set_enabled(enabled)
     return {
         "status": "success",
         "module": "vision",
-        "enabled": enabled,
-        "mode": "post_method",
+        "enabled": actual,
+        "requested": enabled,
     }
 
 
 @router.get("/control")
 async def vision_control_get(enabled: bool = True) -> Dict[str, Any]:
-    """Toggle the vision module (GET method)."""
+    """Enable/disable the vision module (GET method)."""
+    actual = _vision_service.set_enabled(enabled)
     return {
         "status": "success",
         "module": "vision",
-        "enabled": enabled,
-        "mode": "get_method",
+        "enabled": actual,
+        "requested": enabled,
     }
