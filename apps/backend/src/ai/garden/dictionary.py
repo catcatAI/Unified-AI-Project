@@ -436,6 +436,7 @@ class VectorDictionary:
 
         self.entries: Dict[str, ConceptEntry] = {}
         self._key_counter: int = 0  # monotonic key counter (survives pruning)
+        self._pruned_keys: List[str] = []  # keys evicted by _prune_for_growth, awaiting SNN sync
         self._surface_set: Dict[str, str] = {}  # {lower_surface: key} for O(1) dedup
         self._surface_to_key: Optional[Dict[str, str]] = None  # lazy reverse lookup cache
         self._prefix_first: Optional[Dict[str, List[Tuple[str, str]]]] = None  # first-3-char → [(lower_form, key)]
@@ -518,6 +519,8 @@ class VectorDictionary:
         table.
 
         Returns True if at least one entry was evicted (caller may grow).
+        Evicted keys are appended to ``self._pruned_keys`` so the engine can
+        sync the SNN (see :attr:`drain_pruned_keys`).
         """
         candidates = [
             (entry.confidence, key)
@@ -535,6 +538,7 @@ class VectorDictionary:
                 continue
             for sf in entry.surface_forms.values():
                 self._surface_set.pop(sf.lower().strip(), None)
+            self._pruned_keys.append(key)
             evicted += 1
         if evicted:
             self._surface_to_key = None
@@ -547,6 +551,18 @@ class VectorDictionary:
                 len(self.entries),
             )
         return evicted > 0
+
+    def drain_pruned_keys(self) -> List[str]:
+        """Return and clear the keys evicted by :meth:`_prune_for_growth`.
+
+        The engine calls this after a grow-burst to compact the SNN: pruned
+        dictionary keys are dead neurons in the SNN registry, and without this
+        the SNN V never shrinks (dictionary drops to 9,573 while the SNN keeps
+        20,573 live keys → a matrix up to 2x larger than needed).
+        """
+        keys = self._pruned_keys
+        self._pruned_keys = []
+        return keys
 
     def grow(self, text: str, surface_form: str, confidence: Optional[float] = None) -> str:
         """Add a new entry learned from conversation.

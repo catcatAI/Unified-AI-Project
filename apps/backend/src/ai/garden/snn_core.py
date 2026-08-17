@@ -365,9 +365,12 @@ class TensorSNNCore:
         memory footprint stays under budget while still having trained on all
         samples.
 
-        The new matrix is allocated at ``max_vocab`` capacity (when a budget is
-        set) rather than exactly ``len(keep)``, so subsequent registrations fill
-        existing rows instead of re-growing + copying the whole matrix each time.
+        The new matrix is allocated with a modest headroom over ``len(keep)``
+        (NOT at ``max_vocab`` capacity — sizing to the full budget meant an
+        eviction could *grow* the matrix to max_vocab² and never reclaim dead
+        allocation, so V=20k lived inside a 36k² = 5 GB block on a 7.5 GB box).
+        The 1.25× headroom lets subsequent registrations amortize without
+        re-copying the whole matrix on every key.
 
         The sub-matrix copy is done with vectorized advanced indexing (a single
         backend op), NOT a Python double loop, so compaction stays O(V**2) in C
@@ -378,8 +381,9 @@ class TensorSNNCore:
             return
         old_W = self._W
         new_size = len(keep_indices)
-        cap = self.max_vocab if self.max_vocab > 0 else new_size
-        alloc = max(new_size, cap, int(old_W.shape[0]))
+        # Allow shrinking: allocate only modest headroom over the live size so
+        # the matrix reclaims dead space instead of being pinned at max_vocab².
+        alloc = max(new_size, int(new_size * 1.25) + 64)
         idx_arr = _as_array(keep_indices)
         # Vectorized sub-matrix extraction: W[keep, keep]. Use the backend's
         # native index_select (torch) / ix_ (numpy) — a SINGLE op — because
@@ -389,9 +393,9 @@ class TensorSNNCore:
             sub = old_W.index_select(0, idx_arr).index_select(1, idx_arr)
         else:
             sub = old_W[np.ix_(idx_arr, idx_arr)]
-        # Allocate at the budget capacity (when set) so subsequent registrations
-        # fill existing rows instead of re-copying the whole matrix each time.
-        # The live region is new_size x new_size; forward() slices to it.
+        # Allocate with headroom so subsequent registrations fill existing
+        # rows instead of re-copying the whole matrix each time.  The live
+        # region is new_size x new_size; forward() slices to it.
         new_W = _zeros((alloc, alloc))
         new_W[:new_size, :new_size] = sub
         self._W = new_W
@@ -411,6 +415,33 @@ class TensorSNNCore:
         self._idx_to_key = new_idx_to_key
         self._last_used = new_last_used
 
+    def compact_removed_keys(self, removed_keys: List[str]) -> int:
+        """Remove keys evicted from the dictionary and compact ``_W``.
+
+        Dictionary pruning (:meth:`dictionary._prune_for_growth`) drops
+        low-value entries but the SNN registry keeps them as live neurons —
+        so dictionary V and SNN V drift apart (dict 9,573 vs SNN 20,573),
+        wasting up to 2x matrix memory.  This removes the given keys and
+        compacts ``_W`` to the surviving live region.
+
+        Returns the number of keys actually removed.
+        """
+        if not removed_keys or self._W is None:
+            return 0
+        to_remove = {k for k in removed_keys if k in self._key_to_idx}
+        if not to_remove:
+            return 0
+        keep_indices = [
+            i for i, key in enumerate(self._idx_to_key) if key not in to_remove
+        ]
+        self._compact(keep_indices)
+        logger.info(
+            "GARDEN SNN: compacted after prune (removed %d keys, V=%d)",
+            len(to_remove),
+            self.vocab_size,
+        )
+        return len(to_remove)
+
     def _pre_allocate(self, keys: List[str]) -> None:
         for key in keys:
             if key not in self._key_to_idx:
@@ -429,10 +460,13 @@ class TensorSNNCore:
         old_size = self._W.shape[0]
         if new_size <= old_size:
             return
-        # Amortized growth: over-allocate (doubling) so the total copy cost over
-        # V registrations is O(V**2) instead of O(V**3). The live region is the
-        # first ``vocab_size`` rows/cols; forward() slices to that region.
-        target = max(new_size, int(old_size * 2))
+        # Amortized growth: over-allocate modestly (1.25x, not 2x) so the total
+        # copy cost over V registrations is O(V**2) instead of O(V**3), WITHOUT
+        # leaving 2x dead space.  Doubling meant V=20,573 lived inside a
+        # 36,376² = 5 GB block (68% dead) that OOM'd training on a 7.5 GB box.
+        # The live region is the first ``vocab_size`` rows/cols; forward()
+        # slices to that region.
+        target = max(new_size, int(old_size * 1.25) + 64)
         new_W = _zeros((target, target))
         new_W[:old_size, :old_size] = self._W
         self._W = new_W
@@ -694,9 +728,17 @@ class TensorSNNCore:
     # ------------------------------------------------------------------
 
     def save(self, path: str) -> None:
-        """Save weight matrix and key registry to a checkpoint."""
+        """Save weight matrix and key registry to a checkpoint.
+
+        Only the LIVE region ``_W[:V,:V]`` is persisted — the growth headroom
+        (dead allocation) is dropped on disk so a checkpoint is V² bytes, not
+        alloc² (a V=20,573 live inside 36,376² allocation saved 5 GB before;
+        now it saves ~1.6 GB).  On load the matrix is reallocated compactly.
+        """
+        V = self.vocab_size
+        W = self._W[:V, :V] if self._W is not None else None
         state = {
-            "W": self._W,
+            "W": W,
             "key_to_idx": self._key_to_idx,
             "idx_to_key": self._idx_to_key,
             "leak": self.leak,
@@ -710,9 +752,15 @@ class TensorSNNCore:
         logger.info("GARDEN SNN: saved checkpoint to %s (V=%d)", path, self.vocab_size)
 
     def load(self, path: str) -> None:
-        """Load weight matrix and key registry from a checkpoint."""
+        """Load weight matrix and key registry from a checkpoint.
+
+        The loaded matrix is reallocated compactly (live V with 1.25x headroom,
+        NOT the stored allocation) so a checkpoint saved at 36,376² (5 GB) loads
+        into V² + headroom (~1.6 GB at V=20,573) instead of pinning the dead
+        allocation back into RAM.
+        """
         state = _load_checkpoint(path)
-        self._W = state["W"]
+        W = state["W"]
         self._key_to_idx = state["key_to_idx"]
         self._idx_to_key = state["idx_to_key"]
         self.leak = float(state.get("leak", DEFAULT_LEAK))
@@ -721,6 +769,19 @@ class TensorSNNCore:
         self.decay = float(state.get("decay", DEFAULT_DECAY))
         self.total_steps = int(state.get("total_steps", 0))
         self.total_hebbian_updates = int(state.get("total_hebbian_updates", 0))
+        V = self.vocab_size
+        if W is not None and W.shape[0] != V:
+            # Checkpoint carried a larger (or smaller) allocation than the live
+            # keys — trim/re-pad to the live region with headroom.
+            live = W[:V, :V]
+            alloc = max(V, int(V * 1.25) + 64)
+            new_W = _zeros((alloc, alloc))
+            new_W[:V, :V] = live
+            self._W = new_W
+        elif W is not None:
+            self._W = W
+        else:
+            self._W = None
         logger.info("GARDEN SNN: loaded checkpoint from %s (V=%d)", path, self.vocab_size)
 
     def reset_for_retrain(self) -> None:

@@ -1319,6 +1319,18 @@ class GARDENEngine:
             except Exception as e:
                 logger.warning(f"SNN batch key registration failed: {e}", exc_info=True)
 
+        # Stage 2c: Sync SNN with dictionary pruning.  If the dictionary hit
+        # its cap and evicted low-value entries, those are dead neurons in the
+        # SNN registry — compact them out so V doesn't drift (dict 9,573 vs
+        # SNN 20,573 wastes up to 2x matrix memory).
+        if getattr(self.dictionary, "drain_pruned_keys", None) is not None:
+            pruned = self.dictionary.drain_pruned_keys()
+            if pruned:
+                try:
+                    self.snn.compact_removed_keys(pruned)
+                except Exception as e:
+                    logger.warning(f"SNN prune compaction failed: {e}", exc_info=True)
+
         # Stage 3: Rebuild index ONCE after all grows
         if grew_any and self.dictionary._dirty:
             self.dictionary._rebuild_index()
