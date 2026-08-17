@@ -880,7 +880,22 @@ async def _try_agent_routing(
         primary = route_result.get("results", [{}])[0] if route_result.get("results") else {}
         agent_result = primary.get("result")
         if agent_result and isinstance(agent_result, dict) and agent_result.get("result"):
-            response_text = str(agent_result["result"])
+            inner = agent_result["result"]
+            # Specialized agents return dicts like {"status": "success"} — an
+            # error/unavailable status must not be presented as a successful
+            # response (fall through to the LLM instead).
+            if isinstance(inner, dict) and inner.get("status") in ("error", "unavailable", "failed"):
+                logger.debug(
+                    "Agent %s returned non-success status; falling back to LLM: %s",
+                    primary.get("agent", "unknown"),
+                    inner.get("status"),
+                )
+                return None
+            response_text = (
+                inner.get("message")
+                if isinstance(inner, dict) and inner.get("message")
+                else str(inner)
+            )
             context["_agent_result"] = response_text
             context["_agent_result_source"] = primary.get("agent", "unknown")
             return {
