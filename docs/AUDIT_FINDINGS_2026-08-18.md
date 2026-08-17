@@ -165,9 +165,10 @@
 
 ## LOW（已確認）
 
-### L10. `core/event_loop_system.py:755` `get_pending_events()` 為 stub
+### L10. `core/event_loop_system.py:755` `get_pending_events()` 為 stub — **✅ 已修復**
 - 註解自承「Actual implementation would return pending events」；`status.get("等待中", 0)` 結果被丟棄（死陳述）。
-- 影響: 依賴此方法的呼叫端（如有）永遠拿到空 list。狀態：⏳
+- 影響: 依賴此方法的呼叫端（如有）永遠拿到空 list。
+- **✅ 已修復**：改為從 `queue._queue` 過濾 PENDING 事件並依 (priority, timestamp) 排序回傳；實測 enqueue 2 個事件後回傳 `['e1', 'e2']`（HIGH 優先）。狀態：✅
 
 ### L11. 系統性 logging 誤用：無例外上下文卻帶 `exc_info=True`（假 `NoneType: None` 追蹤）— **✅ 已修復**
 - **根因（本輪定位）**：不是 `print()`——是 `logger.warning(..., exc_info=True)` 在**沒有活躍例外**時被呼叫。Python logging 對 `exc_info=True` 但 `sys.exc_info()==(None,None,None)` 的情況輸出假的 `NoneType: None` 追蹤行。
@@ -227,7 +228,7 @@
 ### 本輪新增 LOW
 
 ### L12. `packages/cli/cli/main.py:39,45` 與 `cli_runner.py:59,66` 的 mock fallback pass
-- CLI 模組不可用時的 fallback mock 空方法（CLI 工具，非生產）→ 低優先。狀態：⏳
+- **重新分類為「設計意圖內的 graceful degradation」而非 stub**：後端不可用時 `initialize_services` 空 body + `get_services` 回 `{}` 讓 CLI 仍能啟動並印出「not available」提示；`cli_runner._mock_response` 是完整實作。與 L5 的真 stub（宣稱功能實則不做事）不同。狀態：✅ 已審查（不改）
 
 ---
 

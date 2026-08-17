@@ -748,11 +748,15 @@ class EventLoopSystem:
         self.debounce_throttle.register_throttle(config)
 
     async def get_pending_events(self) -> List[Event]:
-        """Get list of pending events"""
-        # This is a snapshot for external access
-        status = await self.queue.get_status()
-        status.get("等待中", 0)
-        return []  # Actual implementation would return pending events
+        """Get list of pending events (snapshot for external access)."""
+        async with self.queue._lock:
+            pending = [
+                event
+                for _, _, event in self.queue._queue
+                if event.status == EventStatus.PENDING
+            ]
+        # Sort by (priority level, sequence) to mirror queue ordering
+        return sorted(pending, key=lambda e: (e.priority.level, e.timestamp))
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get current metrics"""
