@@ -518,6 +518,13 @@ class TensorSNNCore:
         return len(to_remove)
 
     def _pre_allocate(self, keys: List[str]) -> None:
+        # Honor the memory budget: a single batch of new keys must not push V
+        # arbitrarily past max_vocab (only _register_key enforced the cap
+        # before, so a burst window was unbounded).  Evict down to budget
+        # before growing when the incoming keys would overshoot.
+        new_keys = [k for k in keys if k not in self._key_to_idx]
+        if new_keys and self.max_vocab > 0 and len(self._idx_to_key) + len(new_keys) > self.max_vocab:
+            self._evict_batch()
         for key in keys:
             if key not in self._key_to_idx:
                 idx = len(self._idx_to_key)
@@ -822,6 +829,14 @@ class TensorSNNCore:
             "decay": self.decay,
             "total_steps": self.total_steps,
             "total_hebbian_updates": self.total_hebbian_updates,
+            # LRU bookkeeping persisted keyed by KEY NAME so it survives index
+            # remapping across compact/load (indices shift; key names don't).
+            "last_used_by_key": {
+                self._idx_to_key[i]: ts
+                for i, ts in self._last_used.items()
+                if i < len(self._idx_to_key)
+            },
+            "clock": self._clock,
         }
         _save_checkpoint(path, state)
         logger.info("GARDEN SNN: saved checkpoint to %s (V=%d)", path, self.vocab_size)
@@ -855,10 +870,27 @@ class TensorSNNCore:
             live = W[:live_rows, :live_cols]
             alloc = max(V, int(V * 1.25) + 64)
             new_W = _zeros((alloc, alloc))
+            # Cross-backend: a numpy checkpoint (saved by a torch-less box as
+            # .npy + .json) loading on a torch runtime must be converted —
+            # torch >= 2.0 rejects `tensor[...] = numpy_array` assignment.
+            if _is_torch and isinstance(live, np.ndarray):
+                live = torch.from_numpy(np.ascontiguousarray(live))
             new_W[:live_rows, :live_cols] = live
             self._W = new_W
         else:
             self._W = None
+        # Restore LRU bookkeeping (keyed by key name -> timestamp, mapped back
+        # to the current index).  Without this every key loads with
+        # _last_used==0 and the first eviction picks the LOWEST-indexed
+        # neurons — the oldest preset entries — instead of true LRU.
+        saved_lru = state.get("last_used_by_key") or {}
+        if isinstance(saved_lru, dict) and saved_lru:
+            self._last_used = {
+                self._key_to_idx[k]: ts
+                for k, ts in saved_lru.items()
+                if k in self._key_to_idx
+            }
+            self._clock = int(state.get("clock", max(self._last_used.values(), default=0) + 1))
         logger.info("GARDEN SNN: loaded checkpoint from %s (V=%d)", path, self.vocab_size)
 
     def reset_for_retrain(self) -> None:

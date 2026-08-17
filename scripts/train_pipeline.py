@@ -1471,6 +1471,10 @@ def _step5_train_garden(coordinator, batches, resume_state=None, save_state=None
 
     print("\n[5/8] Training GARDEN...")
     garden_engine: Optional[GARDENEngine] = None
+    # Defaults so the post-try marker below can never hit UnboundLocalError
+    # even when engine construction/load fails before the loop starts.
+    batch_done = int(resume_state.get("garden_batch_done", 0))
+    garden_samples: List[dict] = []
     try:
         garden_engine = GARDENEngine(compatibility_mode=True)
         garden_ckpt = os.path.join(CKPT_DIR, "garden_checkpoint")
@@ -1487,9 +1491,12 @@ def _step5_train_garden(coordinator, batches, resume_state=None, save_state=None
         )
 
         # 5b: Add knowledge entries to vector dictionary.
-        # Knowledge facts are ingested into the DICTIONARY ONLY — the SNN does
-        # NOT mirror input->output (train_associations=False), so facts are not
-        # baked into neural weights. The SNN stays specialized for associations.
+        # Knowledge facts are ingested into the DICTIONARY (concept registry).
+        # train_associations=True additionally mirrors input->output pairs as
+        # Hebbian associations so the SNN can recall the fact from its weights
+        # (deliberate since 2cd36600 — GARDEN logic/association support).  The
+        # dictionary remains the primary fact store; the SNN adds association
+        # recall on top.
         garden_samples = batches.get("garden", [])
         print(
             f"  Processing {len(garden_samples)} knowledge samples "

@@ -217,13 +217,19 @@ class CoreNetwork:
         if target_key not in group.neurons:
             group.add_neuron(Neuron(key=target_key, group_type="mapping"))
         old = group.neurons[source_key].connections.get(target_key, 0.0)
-        if target_key not in group.neurons[source_key].connections:
+        is_new = target_key not in group.neurons[source_key].connections
+        if is_new:
             self._conn_count += 1
         group.neurons[source_key].connections[target_key] = min(1.0, old + weight)
         if old > 0:
             group.neurons[target_key].connections[source_key] = max(
                 0.0, old - behavior_threshold("ai.core_network.reverse_decay", 0.05)
             )
+        # New directed edges grow memory — enforce the connection budget the
+        # same way adjust_connection() does, so the sequence path can't push
+        # the graph past max_connections (200k) with no eviction.
+        if is_new:
+            self._evict_weakest()
 
     def get_activation(self, key: str) -> float:
         max_act = 0.0
@@ -378,19 +384,25 @@ class CoreNetwork:
         self._conn_count = target
 
     def adjust_connection(self, key1: str, key2: str, delta: float) -> None:
-        # Check if connection already exists
-        exists = any(
-            key1 in group.neurons and key2 in group.neurons[key1].connections
-            for group in self.groups.values()
-        )
-        if not exists:
+        # Check if connection already exists — and in WHICH group.
+        # The update must touch only that group: writing every group that
+        # happens to contain both neurons pollutes other relation types
+        # (e.g. a "mapping" weight fired as a "synonym") and bypasses the
+        # connection-count/eviction bookkeeping for the created edges.
+        target_groups = [
+            gname
+            for gname, group in self.groups.items()
+            if key1 in group.neurons and key2 in group.neurons[key1].connections
+        ]
+        if not target_groups:
             # Create new connection via add_relation if neither exists.
             # add_relation maintains _conn_count incrementally (two new edges).
             self.add_relation(key1, RelationType.MAPPING, key2, weight=max(0.0, min(delta, 1.0)))
             # Only new connections grow memory, so only they can breach budget.
             self._evict_weakest()
             return
-        for group in self.groups.values():
+        for gname in target_groups:
+            group = self.groups[gname]
             n1 = group.neurons.get(key1)
             n2 = group.neurons.get(key2)
             if n1 is None or n2 is None:
