@@ -1240,7 +1240,13 @@ class ED3NEngine:
         logger.info("ED3NEngine saved to %s", path)
 
     def load(self, path: str) -> None:
-        """Load full ED3N engine state."""
+        """Load full ED3N engine state.
+
+        Defensive loading: a missing/corrupt section is logged clearly and
+        skipped rather than silently accepted — an engine must never look
+        "loaded" while carrying an untrained/preset network or an empty
+        dictionary from a partial checkpoint.
+        """
         import json
         import os
 
@@ -1251,28 +1257,63 @@ class ED3NEngine:
         except (FileNotFoundError, json.JSONDecodeError) as e:
             logger.error("ED3NEngine: failed to load checkpoint %s: %s", path, e)
             return
-        self.snn_mode = state.get("snn_mode", False)
+        if not isinstance(state, dict):
+            logger.error(
+                "ED3NEngine: checkpoint %s has invalid format (expected JSON object, got %s); "
+                "refusing to apply partial state",
+                path,
+                type(state).__name__,
+            )
+            return
+        self.snn_mode = bool(state.get("snn_mode", False))
         if "reflex_threshold" in state:
             self.reflex.threshold = state["reflex_threshold"]
         if "reflex_patterns" in state:
-            self.reflex.patterns.clear()
-            for pattern, response in state["reflex_patterns"]:
-                self.reflex.patterns[pattern] = response
-            logger.info("Loaded %d reflex patterns from checkpoint.", len(state["reflex_patterns"]))
+            raw_patterns = state["reflex_patterns"]
+            if not isinstance(raw_patterns, list):
+                logger.warning(
+                    "ED3NEngine: reflex_patterns malformed (%s), skipping", type(raw_patterns).__name__
+                )
+            else:
+                self.reflex.patterns.clear()
+                for pattern, response in raw_patterns:
+                    if isinstance(pattern, str) and isinstance(response, str):
+                        self.reflex.patterns[pattern] = response
+                logger.info("Loaded %d reflex patterns from checkpoint.", len(state["reflex_patterns"]))
         if "network" in state:
             from ai.ed3n.core_network import CoreNetwork
 
-            self.network = CoreNetwork.from_dict(state["network"], classifier=self.classifier)
-            logger.info("Loaded CoreNetwork from checkpoint.")
+            try:
+                self.network = CoreNetwork.from_dict(state["network"], classifier=self.classifier)
+                logger.info("Loaded CoreNetwork from checkpoint.")
+            except Exception as e:
+                logger.error(
+                    "ED3NEngine: checkpoint %s has corrupt 'network' section (%s); "
+                    "keeping preset network — engine is NOT fully restored",
+                    path,
+                    e,
+                    exc_info=True,
+                )
+        else:
+            logger.warning(
+                "ED3NEngine: checkpoint %s has no 'network' section; keeping preset network",
+                path,
+            )
         dict_path = path.replace(".json", "_dictionary.json")
         if os.path.exists(dict_path):
             self.dictionary.import_from_json(dict_path)
+        else:
+            logger.warning(
+                "ED3NEngine: dictionary file %s missing; dictionary NOT restored", dict_path
+            )
         if self._continuous_learning is not None:
             cl_path = path.replace(".json", "_continuous_learning.json")
             if os.path.exists(cl_path):
                 self._continuous_learning = type(self._continuous_learning).load(
                     cl_path, self, None
                 )
+            else:
+                logger.debug("ED3NEngine: no continuous-learning checkpoint at %s", cl_path)
         # Restore LatentReasoningNetwork only if latent space was enabled.
         lrn_path = path.replace(".json", "_lrn.npz")
         if os.path.exists(lrn_path) and self._latent_reasoning is not None:
