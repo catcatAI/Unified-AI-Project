@@ -207,6 +207,9 @@
 - **實證**: `運行 print(42)`→42、`for i in range(3): print(i)`→0/1/2、`執行 print(getattr((),'__class__'))`→**Blocked call: getattr()**(巢狀提取+沙箱都正常)、`你好嗎`→「請提供要執行的 Python 程式碼」(不再執行散文)、`import os`→**Blocked import: os**。更新 `test_extract_code_empty`(散文→空)並新增 2 個回歸測試。
 - 狀態：✅ 已修復
 
+### L15. DictionaryClassifier 產出非 QueryType type — **✅ 已修復**
+- `CONTEXT_TO_QUERY_TYPE` 的 `"system"`（已隨 M1 修復）與 `"negation"` 對應 QueryType 不存在。`negation` 實務上被 `_check_negation` 前置攔截（回 `("unknown","none",0.9)`）不會產出，但屬死映射；`"negation" → "unknown"` 消除潛在 `QueryType("negation")` ValueError。驗證：字典全部產出 type ⊆ QueryType 成員，行為不變。狀態：✅
+
 ### L13. 4 個真實 `undefined name`（pyflakes,先前已存在）— **✅ 已修復**
 - `ai/symbolic_reasoner.py:438,461`：`Dict[str, List[str]]` 註解但 typing 未 import `Dict` → 補上。
 - `ai/multimodal/primitives/decomposer.py:263-280`：`if __name__ == "__main__"` 區塊用 `os` 但未 import → 補 `import os`（跑 `python decomposer.py` 原本會 NameError）。

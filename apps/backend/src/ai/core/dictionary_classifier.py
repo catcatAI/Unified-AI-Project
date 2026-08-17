@@ -32,7 +32,10 @@ CONTEXT_TO_QUERY_TYPE: Dict[str, str] = {
     "knowledge": "knowledge",
     "creative": "creative",
     "opinion": "opinion",
-    "negation": "negation",
+    # negation is a modifier handled by _check_negation (returns unknown);
+    # mapping it to a non-existent QueryType would raise ValueError in the
+    # classifier. Keep it as a valid type to stay defensive.
+    "negation": "unknown",
 }
 
 # Map context_id + type to action_type
