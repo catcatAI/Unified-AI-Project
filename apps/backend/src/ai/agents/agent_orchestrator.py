@@ -98,13 +98,14 @@ class AgentOrchestrator:
         if re.search(r"(理解|解釋|分析|understand|explain|analyze|review.*code)", lower):
             return "code_understand"
 
+        # Knowledge graph queries are more specific than web search — check
+        # first so "查詢知識圖譜" routes to knowledge_query, not web_search.
+        if re.search(r"(知識圖譜|知識庫|knowledge graph|knowledge base|圖譜|knowledge)", lower):
+            return "knowledge_query"
+
         # Web search
         if re.search(r"(搜索|搜尋|查詢|search|find|lookup|google|web)", lower):
             return "web_search"
-
-        # Knowledge
-        if re.search(r"(知識|knowledge|graph|圖譜|關係)", lower):
-            return "knowledge_query"
 
         # File operations (checked before creative to catch "寫入" vs creative "寫")
         if re.search(

@@ -66,7 +66,8 @@ class TestAgentOrchestratorIntegration:
         ao = AgentOrchestrator()
         assert ao.classify_intent("幫我寫一首詩") == "creative_write"
         assert ao.classify_intent("解釋 Python 語法") == "code_understand"
-        assert ao.classify_intent("查詢知識圖譜") == "web_search"
+        assert ao.classify_intent("查詢知識圖譜") == "knowledge_query"
+        assert ao.select_agent("knowledge_query") == "knowledge_graph_agent"
         assert ao.classify_intent("搜尋 python 歷史") == "web_search"
 
     def test_decompose_multi_step_task(self):
