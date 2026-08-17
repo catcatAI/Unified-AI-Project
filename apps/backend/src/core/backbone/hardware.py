@@ -79,8 +79,8 @@ class HardwareProfile:
                 if len(parts) >= 2:
                     result["gpu"] = parts[0].strip()
                     result["gpu_memory_gb"] = float(parts[1].strip()) / 1024
-        except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
-            pass
+        except Exception as e:
+            logger.debug("nvidia-smi unavailable: %s", e)
         return result
 
     @staticmethod

@@ -486,13 +486,8 @@ def _probe_ram_total_gb() -> Optional[float]:
         import psutil  # type: ignore[import-untyped]
 
         return psutil.virtual_memory().total / (1024**3)
-    except Exception:
-        pass
-    try:
-        import shutil  # noqa: F401  (unused; kept for parity guard)
-
-        return None
-    except Exception:
+    except Exception as e:
+        logger.debug("psutil unavailable for RAM probe: %s", e)
         return None
 
 

@@ -177,22 +177,27 @@
 - **注意（已排除誤刪）**：`shared/error.py::project_error_handler` 無生產呼叫端；`base_agent._handle_critical_error` 經 `asyncio.create_task` 呼叫（任務執行時 except 上下文已結束）；其餘在 `except` 語法內的呼叫**全部保留**（AST 深度追蹤確認）。
 - 狀態：✅ 已修復
 
-### L5. scripts/utils 真 stub
+### L5. scripts/utils 真 stub — **✅ 已修復**
 - `scripts/utils/intelligent_test_generator.py`：`generate_tests_for_file()` 恆回 `[]`、`save_generated_tests()` 恆回 `True`（不寫檔）
 - `scripts/utils/smart_test_runner.py`：`setup_environment()` 空 body；`detect_test_errors()` 恆回空 list
-- 狀態：⏳ 未修復
+- **✅ 已修復**：生成器改為真 AST 分析（提取 import/class/function，sync+async 皆支援，生成可編譯的 pytest 骨架，`save_generated_tests` 實際寫檔）；runner 的 `setup_environment` 設定 PYTHONPATH、`detect_test_errors` 解析 pytest 輸出提取 FAIL/ERROR/EXC 行並回報。
+- 驗證：`document_router.py` 產生 2 個測試（含 async `handle_document_intent`）、生成碼可 compile、flake8 clean。
+- 狀態：✅ 已修復
 
-### L6. `services/document_router.py` 死變數
-- `:302-311` 建好的 `prompt` 從未使用（實際用 `full_prompt`）；`:139` `matched_kws` 未用（pyflakes 佐證）。狀態：⏳
+### L6. `services/document_router.py` 死變數 — **✅ 已修復**
+- `:302-311` 建好的 `prompt` 從未使用（實際用 `full_prompt`）；`:139` `matched_kws` 未用；`file_list_text` 隨 prompt 一起死。
+- **✅ 已修復**：刪除死 `prompt`/`matched_kws`/`file_list_text`（pyflakes 驗證無殘留）。狀態：✅
 
-### L7. `core/system/config/magic_numbers.py:_probe_ram_total_gb`（:483-496）
-- `except Exception: pass` 靜默吞例外；第二個 `try: import shutil; return None` 區塊永遠回傳 None（無意義殘留碼）。狀態：⏳
+### L7. `core/system/config/magic_numbers.py:_probe_ram_total_gb`（:483-496）— **✅ 已修復**
+- `except Exception: pass` 靜默吞例外；第二個 `try: import shutil; return None` 區塊永遠回傳 None（無意義殘留碼）。
+- **✅ 已修復**：改為 `except Exception as e: logger.debug(...); return None`，刪除無意義 shutil 殘留碼。狀態：✅
 
 ### L8. 未使用 import ~40 處（pyflakes）
 - 集中於 `game/`、`services/api_models.py:6`（13 個未用名稱）、`document_router.py`、`text_utils.py` 等；flake8 忽略 F401 未攔截。狀態：⏳
 
-### L9. `core/backbone/hardware.py:70` 冗餘例外
-- `except (FileNotFoundError, subprocess.TimeoutExpired, Exception)` — `Exception` 已涵蓋前兩者且完全靜默。狀態：⏳
+### L9. `core/backbone/hardware.py:70` 冗餘例外 — **✅ 已修復**
+- `except (FileNotFoundError, subprocess.TimeoutExpired, Exception)` — `Exception` 已涵蓋前兩者且完全靜默。
+- **✅ 已修復**：改為 `except Exception as e: logger.debug(...)`。狀態：✅
 
 ---
 

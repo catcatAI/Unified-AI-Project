@@ -132,11 +132,9 @@ def _parse_task_type(user_message: str) -> Optional[Tuple[str, str]]:
     msg_lower = user_message.lower()
 
     op_key = None
-    matched_kws = None
     for key, kws in _TASK_KWS:
         if any_keyword(msg_lower, kws):
             op_key = key
-            matched_kws = kws
             break
 
     if op_key is None:
@@ -300,19 +298,8 @@ async def _try_llm_processing(
     task_label = op["label"]
     retention_min, retention_max = op["retention"]
     retention_pct = f"{int(retention_min*100)}%～{int(retention_max*100)}%"
-    file_list_text = "\n".join(
-        f"{i+1}. {f.name} ({f.stat().st_size}B)" for i, f in enumerate(files)
-    )
 
     try:
-        prompt = (
-            f"請{task_label}以下目錄中的文件。目錄：{source_dir}\n\n"
-            f"文件清單（共 {len(files)} 個）：\n{file_list_text}\n\n"
-            f"操作類型：{task_label}（{op['desc']}）\n"
-            f"資訊保留率要求：原始內容的 {retention_pct} 必須保留。\n"
-            f"⚠ 請嚴格遵循保留率，不要和其他操作類型（整理/總結/優化）混用。\n\n"
-            f"請根據文件內容進行{task_label}，輸出結構化的 Markdown 報告。"
-        )
         file_contents = []
         for f in files:
             content = await _read_file_content(f)
