@@ -8,7 +8,7 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import AsyncIterator, Optional
+from typing import AsyncIterator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -652,7 +652,7 @@ def _try_start_proactive() -> None:
     try:
         from ai.lifecycle.proactive_interaction_system import ProactiveInteractionSystem
         from ai.lifecycle.user_monitor import UserMonitor
-        from services.websocket_manager import push_to_all, is_push_enabled
+        from services.websocket_manager import push_to_all
 
         async def _broadcast_proactive(message: dict) -> None:
             message["timestamp"] = datetime.now().isoformat()
