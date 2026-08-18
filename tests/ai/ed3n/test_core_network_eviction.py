@@ -110,6 +110,18 @@ class TestCoreNetworkEviction:
             "mapping group must not gain a spurious connection"
         )
 
+    def test_add_directed_fresh_pair_counts_one(self):
+        """add_directed() on a fresh pair creates a single one-sided edge
+        (no reverse-decay edge since old==0).  Regression: reverse_new was
+        referenced unbound when old==0 (UnboundLocalError)."""
+        core = _fresh_core(max_connections=1000)
+        core.add_directed("s0", "t0", weight=0.5)
+        assert "t0" in core.groups["mapping"].neurons["s0"].connections
+        assert "s0" not in core.groups["mapping"].neurons["t0"].connections, (
+            "fresh directed edge must NOT create a reverse edge"
+        )
+        assert core._conn_count == core._count_connections() == 1
+
     def test_from_dict_recomputes_conn_count(self):
         """Regression: CoreNetwork.from_dict() must recompute _conn_count from the
         restored graph. A stale 0 counter would make the memory-budget eviction

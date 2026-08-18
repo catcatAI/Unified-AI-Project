@@ -218,17 +218,21 @@ class CoreNetwork:
             group.add_neuron(Neuron(key=target_key, group_type="mapping"))
         old = group.neurons[source_key].connections.get(target_key, 0.0)
         is_new = target_key not in group.neurons[source_key].connections
+        reverse_new = False
         if is_new:
             self._conn_count += 1
         group.neurons[source_key].connections[target_key] = min(1.0, old + weight)
         if old > 0:
+            reverse_new = source_key not in group.neurons[target_key].connections
+            if reverse_new:
+                self._conn_count += 1
             group.neurons[target_key].connections[source_key] = max(
                 0.0, old - behavior_threshold("ai.core_network.reverse_decay", 0.05)
             )
         # New directed edges grow memory — enforce the connection budget the
         # same way adjust_connection() does, so the sequence path can't push
         # the graph past max_connections (200k) with no eviction.
-        if is_new:
+        if is_new or reverse_new:
             self._evict_weakest()
 
     def get_activation(self, key: str) -> float:
@@ -381,7 +385,12 @@ class CoreNetwork:
             grp.neurons[src].connections.pop(tgt, None)
             if tgt in grp.neurons:
                 grp.neurons[tgt].connections.pop(src, None)
-        self._conn_count = target
+        # Recount rather than assume ``target``: eviction removes each
+        # connection in BOTH directions, but add_directed() creates one-sided
+        # edges — so the removed count can differ from 2*to_remove.  A stale
+        # assumption made the running counter drift from the real graph
+        # (regression caught by test_add_directed_enforces_budget).
+        self._conn_count = self._count_connections()
 
     def adjust_connection(self, key1: str, key2: str, delta: float) -> None:
         # Check if connection already exists — and in WHICH group.
