@@ -374,6 +374,13 @@
 - **修復**: `get_config(...) or {}` 防護 + `AttributeError` 加入 except _tuple_。
 - **狀態**: ✅ 已修復
 
+### M19. router `_store_response_as_template` 拒絕模式只覆蓋英文
+- **位置**: `apps/backend/src/services/llm/router.py` `_store_response_as_template()`
+- **缺陷**: 拒絕/非答案回應的過濾器只檢查英文模式（"sorry"、"I don't know" 等），但系統主要為中文。中文拒絕回應（"對不起，我不明白"、"無法幫忙"、"不知道" 等）會被儲存為模板，之後被當作「真實」答案返還給使用者。
+- **修復**: 新增 11 個中文拒絕模式（"對不起"、"抱歉"、"不明白"、"不清楚"、"不知道"、"無法"、"幫不上忙"、"做不到"、"暫時無法"、"沒有答案"、"我不能"）。
+- **驗證**: pyflakes clean; `pytest tests/` 全量 5,291 passed / 0 failed。
+- **狀態**: ✅ 已修復
+
 ---
 
 ## 已排除（誤報）
