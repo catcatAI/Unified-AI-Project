@@ -1789,6 +1789,15 @@ class GARDENEngine:
             # the dictionary token keys).  Persisted so template recall
             # survives checkpoint reload.
             "templates": self._templates,
+            # Provenance store (composition layer): input-concept set ->
+            # output-concept set recovery targets.  Persisted as ordered lists
+            # so checkpoint reload restores exact learned recall behaviour
+            # (ids, inverted index and FIFO order are rebuilt on load).
+            "learned_recall": [
+                [list(concepts), dict(out_keys)]
+                for _rec_id, (concepts, out_keys) in self._learned_recall.items()
+            ],
+            "learned_next_id": self._learned_next_id,
             # Reflex patterns are engine state too: without this, a checkpoint
             # load would silently drop the config-reflex patterns (e.g.
             # "how are you" -> "I'm doing great...") and degrade the learned
@@ -1834,6 +1843,25 @@ class GARDENEngine:
                         "samples": int(entry.get("samples", 0)),
                         "confidence": float(entry.get("confidence", 0.0)),
                     }
+            # Restore the provenance store (composition layer).  If the
+            # checkpoint predates provenance persistence (or stores none),
+            # learned recall starts empty and rebuilds on the next learn pass.
+            saved_learned = meta.get("learned_recall")
+            if isinstance(saved_learned, list) and saved_learned:
+                self._learned_recall = {}
+                self._learned_index = {}
+                self._learned_order = deque()
+                for rec_id, (concepts, out_keys) in enumerate(saved_learned):
+                    if not concepts or not out_keys:
+                        continue
+                    self._learned_recall[rec_id] = (frozenset(concepts), out_keys)
+                    self._learned_order.append(rec_id)
+                    for c in concepts:
+                        self._learned_index.setdefault(c, set()).add(rec_id)
+                self._learned_next_id = max(
+                    self._learned_recall.keys(), default=-1
+                ) + 1
+            self._learned_next_id = meta.get("learned_next_id", self._learned_next_id)
             # Restore the reflex table saved with the checkpoint. If the
             # checkpoint predates reflex persistence (or stores none), fall
             # back to the config-reflex presets so greeting/canned replies do

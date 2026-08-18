@@ -374,3 +374,21 @@ class TestSNNDictionarySeparation:
         in_tpl, vars_ = _extract_query_template("The range is [1, 5].")
         assert in_tpl == "the range is [1, 5]."
         assert vars_ == []
+
+    def test_learned_recall_persists_save_load(self, engine: GARDENEngine, tmp_path):
+        """The provenance store (learned_recall) must survive checkpoint reload."""
+        engine.learn_batch(
+            [
+                {"input": "Alice is taller than Bob.", "output": "Bob is shorter than Alice."},
+                {"input": "Tom is older than Jerry.", "output": "Jerry is younger than Tom."},
+            ],
+            train_associations=True,
+        )
+        assert len(engine._learned_recall) == 2
+        engine.save(str(tmp_path))
+
+        fresh = GARDENEngine()
+        fresh.load(str(tmp_path))
+        assert len(fresh._learned_recall) == 2
+        assert sum(len(v) for v in fresh._learned_index.values()) > 0
+        assert fresh._learned_next_id == 2
