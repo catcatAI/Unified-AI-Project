@@ -223,7 +223,6 @@ class ThreeLayerVisual:
     def _train_decoder(self, latent, images, n_epochs, verbose):
         torch = self._torch
         nn = self._nn
-        F = self._F
 
         latent_dim = latent.shape[1]
 

@@ -13,7 +13,6 @@ Datasets are expected under data/multimodal/{cifar10, esc50}/.
 
 import json
 import logging
-import os
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -70,9 +69,6 @@ class CIFAR10Loader:
         if not idx_path.exists():
             logger.warning("CIFAR-10 not found at %s", self._data_dir)
             return
-
-        with open(idx_path, "r") as f:
-            idx = json.load(f)
 
         self._samples = []
         self._class_indices = {}
@@ -456,7 +452,6 @@ class RealDataProvider:
     ) -> Dict[str, List[np.ndarray]]:
         """Build reconstruction samples from real data."""
         result: Dict[str, List[np.ndarray]] = {}
-        rng = np.random.RandomState(seed)
         vision_samples = self.cifar10.build_reconstruction_samples(n_per_modality, seed)
         if vision_samples:
             result["vision"] = vision_samples
