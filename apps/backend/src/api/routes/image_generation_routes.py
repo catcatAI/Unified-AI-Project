@@ -178,7 +178,6 @@ async def image_generate(request: GenerateImageRequest):
     try:
         from ai.multimodal.primitives.primitive_renderer import render_primitives_from_vector
 
-        vocabulary = gvv["vocabulary"]
         concept_mapper = gvv["concept_mapper"]
         optimizer = gvv["optimizer"]
 

@@ -666,7 +666,7 @@ def _try_start_proactive() -> None:
             user_monitor=user_monitor,
             broadcast_callback=_broadcast_proactive,
         )
-        _proactive_instance_task = asyncio.create_task(_proactive_instance.start())
+        asyncio.create_task(_proactive_instance.start())
         logger.info("[ProactiveInteractionSystem] Started with WebSocket broadcast")
     except Exception:
         logger.warning(
@@ -680,12 +680,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     _module_manager = None
 
     _init_plugins()
-    _bio = await _try_start_bio()
+    await _try_start_bio()
     await _try_start_digital_life()
     await _try_start_brain_bridge()
-    _agents = await _try_start_agents()
-    _crisis = _try_init_crisis()
-    _causal = _try_init_causal_reasoning()
+    await _try_start_agents()
+    _try_init_crisis()
+    _try_init_causal_reasoning()
     _try_init_session_manager()
     _broadcast_task = _try_start_broadcast()
     _try_warm_ed3n()
@@ -717,7 +717,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # backends (e.g. chromadb PersistentClient) are warmed up before the first
     # user request, instead of blocking the first chat call for many seconds.
     try:
-        chat = await _get_chat_service()
+        await _get_chat_service()
         logger.info("[ChatService] Pre-initialized during lifespan")
     except Exception:
         logger.warning(
