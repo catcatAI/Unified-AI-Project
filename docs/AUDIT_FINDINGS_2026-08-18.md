@@ -355,11 +355,10 @@
 - **驗證**: pyflakes clean;`pytest tests/` 全量 **5,256 passed / 0 failed**。
 - **狀態**: ✅ 已修復
 
-### M11. chat_service `_detect_drive_intent` 死碼(0 呼叫端)
-- **位置**: `apps/backend/src/services/chat_service.py`(已刪)
-- **缺陷**: 方法完整實作(讀 config `google_drive` keywords 匹配),但**全專案無任何呼叫端**。drive 功能由獨立 `/api/v1/drive/*` 端點提供(`api/v1/endpoints/drive.py`,共 11+ 條),chat 路徑的 IntentRegistry gate(chat_routes.py:725-757)遇到 google_drive 命中時因 `handler_to_ir` 無對應 → 視為 mismatch 跳過執行 → 安全但功能不存在。設計殘留。
-- **修復**: 刪除死方法。驗證:pyflakes clean、`tests/services/test_chat_service.py` 12 passed。
-- **狀態**: ✅ 已修復
+### M11. ~~chat_service `_detect_drive_intent` 死碼~~ **撤回：誤報**
+- **撤回原因**: `apps/backend/tests/test_v63_config_driven.py:664` 有 4 行測試驗證此方法(`assert hasattr(svc, "_detect_drive_intent")`)——搜尋範圍僅含 `tests/` 而漏掉 `apps/backend/tests/`,導致錯誤判定為「0 callers」。
+- **修復**: 已恢復方法;測試通過。
+- **狀態**: ❌ 撤回（設計意圖正確：方法被測試驗證）
 
 ### 第三輪 dead-code 清理(~30 處,pyflakes 全驗證)
 - 未使用 import:game/(engine create_npc、widgets Input/Label、token_effects random、card_validator Optional/Tuple)、live2d_avatar_generator asyncio/json、core_services Optional、mcp_fallback_protocols Optional、chat_service Any/Dict、cultural_context Optional/Tuple、attractor_field asdict、vector_store struct、safety_audit json、content_filter field、text_utils re、prompt_builder get_prompt_manager、level5_asi loop_sleep、template_matcher bigram_jaccard、live2d seg_api_url(死變數)。
@@ -368,6 +367,12 @@
 
 ### L12. `packages/cli/cli/main.py:39,45` 與 `cli_runner.py:59,66` 的 mock fallback pass
 - **重新分類為「設計意圖內的 graceful degradation」而非 stub**：後端不可用時 `initialize_services` 空 body + `get_services` 回 `{}` 讓 CLI 仍能啟動並印出「not available」提示；`cli_runner._mock_response` 是完整實作。與 L5 的真 stub（宣稱功能實則不做事）不同。狀態：✅ 已審查（不改）
+
+### M18. prompt_builder `_get_llm_config` 缺 AttributeError 防護
+- **位置**: `apps/backend/src/services/llm/prompt_builder.py` `_get_llm_config()`
+- **缺陷**: `get_config("system/llm")` 可回傳 `None`（config 檔缺失/損壞時），但 `.get("settings", {})` 直接對 `None` 呼叫 → `AttributeError`。原有的 `except` 只捕捉 `(ImportError, FileNotFoundError, KeyError)`，未涵蓋 `AttributeError`，會往上層炸。
+- **修復**: `get_config(...) or {}` 防護 + `AttributeError` 加入 except _tuple_。
+- **狀態**: ✅ 已修復
 
 ---
 
