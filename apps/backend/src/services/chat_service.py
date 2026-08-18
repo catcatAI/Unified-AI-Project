@@ -615,6 +615,13 @@ class ChatService:
 
     async def shutdown(self) -> None:
         self._initialized = False
+        # Cancel tracked fire-and-forget background tasks (ED3N warm-up,
+        # memory writes) so nothing keeps running after shutdown.
+        for task in list(self._background_tasks):
+            task.cancel()
+        if self._background_tasks:
+            await asyncio.gather(*self._background_tasks, return_exceptions=True)
+            self._background_tasks.clear()
         # Stop HAM sync background task (Phase 5.2)
         if self._ham_sync_task:
             self._ham_sync_task.cancel()
