@@ -315,6 +315,12 @@
 - **修復**: 刪除錯誤的 `"頭": "豆"`,保留 `"頭": "頁"`;實測 `cjk_radical("頭") == "頁"` 不變。
 - **狀態**: ✅ 已修復
 
+### M11. chat_service `_detect_drive_intent` 死碼(0 呼叫端)
+- **位置**: `apps/backend/src/services/chat_service.py`(已刪)
+- **缺陷**: 方法完整實作(讀 config `google_drive` keywords 匹配),但**全專案無任何呼叫端**。drive 功能由獨立 `/api/v1/drive/*` 端點提供(`api/v1/endpoints/drive.py`,共 11+ 條),chat 路徑的 IntentRegistry gate(chat_routes.py:725-757)遇到 google_drive 命中時因 `handler_to_ir` 無對應 → 視為 mismatch 跳過執行 → 安全但功能不存在。設計殘留。
+- **修復**: 刪除死方法。驗證:pyflakes clean、`tests/services/test_chat_service.py` 12 passed。
+- **狀態**: ✅ 已修復
+
 ### 第三輪 dead-code 清理(~30 處,pyflakes 全驗證)
 - 未使用 import:game/(engine create_npc、widgets Input/Label、token_effects random、card_validator Optional/Tuple)、live2d_avatar_generator asyncio/json、core_services Optional、mcp_fallback_protocols Optional、chat_service Any/Dict、cultural_context Optional/Tuple、attractor_field asdict、vector_store struct、safety_audit json、content_filter field、text_utils re、prompt_builder get_prompt_manager、level5_asi loop_sleep、template_matcher bigram_jaccard、live2d seg_api_url(死變數)。
 - 保留:`core_services`/`api_models`/`angela_llm_service`/`services.llm.__init__` 等 re-export shim(`# noqa` 宣告,pyflakes 不認 noqa 但 flake8 認)。
