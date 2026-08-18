@@ -168,12 +168,22 @@ class EventQueue:
     async def dequeue(self) -> Optional[Event]:
         """Get highest priority event"""
         async with self._lock:
+            requeued: set = set()
             while self._queue:
                 _, _, event = heapq.heappop(self._queue)
 
                 # Check if deferred
                 if event.deferred_until and datetime.now() < event.deferred_until:
-                    # Re-queue with updated deferred time check
+                    # Re-queue so the event keeps its priority once un-deferred.
+                    # Use a fresh sequence so it does not immediately re-pop;
+                    # if the same event is popped twice in one call (e.g. the
+                    # whole queue is deferred), stop — otherwise this spins
+                    # forever holding the lock.
+                    if event.event_id in requeued:
+                        heapq.heappush(self._queue, (event.priority.level, self._sequence, event))
+                        return None
+                    requeued.add(event.event_id)
+                    self._sequence += 1
                     heapq.heappush(self._queue, (event.priority.level, self._sequence, event))
                     continue
 

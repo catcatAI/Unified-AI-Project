@@ -1378,12 +1378,23 @@ class ED3NEngine:
             config_dir = os.path.join(os.path.dirname(__file__), "config")
 
         # Load reflex patterns from JSON
+        if not os.path.isdir(config_dir):
+            logger.warning(
+                "ED3NEngine: preset config dir %s missing — skipping preset load", config_dir
+            )
+            return
         for fname in os.listdir(config_dir):
             if not fname.endswith(".json"):
                 continue
             fpath = os.path.join(config_dir, fname)
-            with open(fpath, "r", encoding="utf-8") as f:
-                data = json.load(f)
+            try:
+                with open(fpath, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+            except (OSError, json.JSONDecodeError) as e:
+                logger.warning("ED3NEngine: skipping unreadable preset file %s: %s", fpath, e)
+                continue
+            if not isinstance(data, dict):
+                continue
             if "reflex_patterns" in data:
                 for pattern, response in data["reflex_patterns"].items():
                     self.reflex.add_pattern(pattern, response)

@@ -508,6 +508,11 @@ class DictionaryLayer:
 
         if config_dir is None:
             config_dir = os.path.join(os.path.dirname(__file__), "config")
+        if not os.path.isdir(config_dir):
+            logger.warning(
+                "DictionaryLayer: preset config dir %s missing — skipping preset load", config_dir
+            )
+            return 0
         loaded = 0
         patterns_loaded = 0
 
@@ -516,8 +521,21 @@ class DictionaryLayer:
             if not fname.endswith(".json"):
                 continue
             fpath = os.path.join(config_dir, fname)
-            with open(fpath, "r", encoding="utf-8") as f:
-                data = json.load(f)
+            try:
+                with open(fpath, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+            except (OSError, json.JSONDecodeError) as e:
+                logger.warning(
+                    "DictionaryLayer: skipping unreadable preset file %s: %s", fpath, e
+                )
+                continue
+            if not isinstance(data, dict):
+                logger.warning(
+                    "DictionaryLayer: skipping preset file %s (expected JSON object, got %s)",
+                    fpath,
+                    type(data).__name__,
+                )
+                continue
             # Load reflex patterns if present
             if "reflex_patterns" in data:
                 # These are loaded into the engine's reflex layer separately

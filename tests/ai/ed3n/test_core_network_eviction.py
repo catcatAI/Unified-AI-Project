@@ -78,6 +78,38 @@ class TestCoreNetworkEviction:
         assert core._conn_count == after, "existing pair must not re-increment"
         assert core._conn_count == core._count_connections()
 
+    def test_add_directed_enforces_budget(self):
+        """Regression: add_directed() (the sequence-trainer path) must enforce
+        max_connections like adjust_connection() does.  Previously it grew the
+        graph past the 200k cap with no eviction."""
+        core = _fresh_core(max_connections=100)
+        for i in range(2000):
+            core.add_directed(f"s{i % 500}", f"t{i % 500}", weight=0.5)
+        assert core._conn_count <= 100, core._conn_count
+        assert core._conn_count == core._count_connections(), (
+            core._conn_count,
+            core._count_connections(),
+        )
+
+    def test_adjust_connection_does_not_pollute_other_groups(self):
+        """Regression: adjust_connection() must update only the group where the
+        connection exists.  The any-group existence check + every-group write
+        polluted other relation types (a mapping weight fired as a synonym)."""
+        core = _fresh_core(max_connections=1000)
+        # k1-k2 connected ONLY in the synonym group.
+        core.add_relation("k1", RelationType.SYNONYM, "k2", weight=0.5)
+        assert "k2" in core.groups["synonym"].neurons["k1"].connections
+        # k1 and k2 also exist as SEPARATE Neuron objects in mapping, unconnected.
+        from ai.ed3n.core_network import Neuron
+
+        core.groups["mapping"].add_neuron(Neuron(key="k1", group_type="mapping"))
+        core.groups["mapping"].add_neuron(Neuron(key="k2", group_type="mapping"))
+        core.adjust_connection("k1", "k2", 0.2)
+        assert core.groups["synonym"].neurons["k1"].connections["k2"] == 0.7
+        assert "k2" not in core.groups["mapping"].neurons["k1"].connections, (
+            "mapping group must not gain a spurious connection"
+        )
+
     def test_from_dict_recomputes_conn_count(self):
         """Regression: CoreNetwork.from_dict() must recompute _conn_count from the
         restored graph. A stale 0 counter would make the memory-budget eviction
