@@ -472,7 +472,7 @@ async def try_intent_routing(
 
         logger.info(f"IntentRegistry detected: {intent_name} (confidence={confidence:.2f})")
 
-        if intent_name in ("document", "character_card", "google_drive"):
+        if intent_name in ("document", "character_card"):
             if context:
                 context["_detected_intent"] = intent_name
                 context["_intent_confidence"] = confidence

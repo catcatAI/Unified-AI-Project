@@ -149,7 +149,8 @@ class MemoryIntegration:
     async def add_precompute_task(self, task: "PrecomputeTask") -> bool:
         """Add a precompute task to the queue."""
         if self._svc.enable_memory_enhancement and hasattr(self._svc, "precompute_service"):
-            return self._svc.precompute_service.add_precompute_task(task)
+            self._svc.precompute_service.enqueue(task)
+            return True
         return False
 
     def get_memory_stats(self) -> Dict[str, Any]:
