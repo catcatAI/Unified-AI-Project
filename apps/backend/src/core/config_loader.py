@@ -146,7 +146,7 @@ class AngelaConfig:
             from core.system.config.tiered_loader import get_config
 
             unified = get_config("system/llm")
-            backends = unified.get("backends", {})
+            backends = (unified or {}).get("backends", {})
             if isinstance(backends, dict) and backends:
                 merged["providers"] = {
                     bid: {
@@ -186,7 +186,7 @@ class AngelaConfig:
             from core.system.config.tiered_loader import get_config
 
             unified = get_config("system/llm")
-            routing = unified.get("routing", {})
+            routing = (unified or {}).get("routing", {})
             if isinstance(routing, dict) and routing.get("policy"):
                 policy = dict(routing.get("policy", {}))
                 if "fallback_chain" not in policy and routing.get("fallback_chain") is not None:

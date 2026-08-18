@@ -22,6 +22,7 @@ import json
 import logging
 import os
 import re
+import string
 from collections import deque
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -122,6 +123,116 @@ def _slot_budget(n_input: int) -> tuple:
     Single source of truth in ``ai.data_eng.assemble.decode_slot_budget``.
     """
     return decode_slot_budget(n_input)
+
+
+_TPL_STOPWORDS = frozenset(
+    {
+        "is", "the", "of", "than", "what", "in", "on", "at", "to", "for",
+        "a", "an", "and", "or", "this", "that", "was", "are", "be", "do",
+        "does", "did", "with", "from", "by", "it", "its", "as", "not",
+    }
+)
+
+
+def _extract_template_pair(
+    input_text: str, output_text: str
+) -> Optional[Tuple[str, str, List[str], List[str]]]:
+    """Extract a structural template pair from an (input, output) sample.
+
+    Implements the "dictionary stays a token store, SNN stays a structural
+    store" separation: the dictionary holds the concrete concept tokens
+    (1, 2, 3, +, =), while the SNN holds the *structure* those tokens fill
+    ([] + [] = [], [] is taller than []).  Tokens that play the role of
+    fill-in-the-blank variables — pure numbers, initial-capped entities, and
+    shared non-stopword tokens appearing on both sides — are replaced with the
+    slot marker ``[]``.
+
+    Returns ``(in_tpl, out_tpl, in_vars, out_vars)`` where ``in_tpl`` /
+    ``out_tpl`` are space-joined slot skeletons and ``in_vars`` / ``out_vars``
+    are the slot filler tokens in order of appearance.  ``None`` when either
+    side yields an empty skeleton (nothing structural to learn).
+    """
+    if not input_text or not output_text:
+        return None
+
+    in_raw = input_text.split()
+    out_raw = output_text.split()
+    in_toks = [t.lower() for t in in_raw]
+    out_toks = [t.lower() for t in out_raw]
+    in_set, out_set = set(in_toks), set(out_toks)
+    shared = in_set & out_set
+
+    variables: set = set()
+    for toks, raw in ((in_toks, in_raw), (out_toks, out_raw)):
+        for t, r in zip(toks, raw):
+            stripped = t.strip(string.punctuation)
+            if re.fullmatch(r"\d[\d,.]*", stripped):
+                variables.add(t)
+            elif r[:1].isupper() and r[:1].isalpha():
+                variables.add(t)
+    for t in shared:
+        if t.strip(string.punctuation) not in _TPL_STOPWORDS:
+            variables.add(t)
+
+    in_tpl = " ".join("[]" if t in variables else t for t in in_toks)
+    out_tpl = " ".join("[]" if t in variables else t for t in out_toks)
+    # Slot fillers are stored punctuation-stripped so out-slot -> in-slot
+    # mapping aligns ("bob." vs "bob" would otherwise never match).
+    in_vars = [t.strip(string.punctuation) for t in in_toks if t in variables]
+    out_vars = [t.strip(string.punctuation) for t in out_toks if t in variables]
+
+    if not in_tpl.strip() or not out_tpl.strip():
+        return None
+    return in_tpl, out_tpl, in_vars, out_vars
+
+
+def _fill_template(
+    out_tpl: str, slot_map: Dict[int, int], in_vars: List[str]
+) -> str:
+    """Fill an output template's slots from the input's slot fillers.
+
+    ``slot_map`` maps an output-slot index -> input-slot index (e.g. the
+    "Alice is taller than Bob -> Bob is shorter than Alice" reversal stores
+    out slot 0 <- in slot 1, out slot 1 <- in slot 0).  Unmapped slots stay
+    ``[]``.
+    """
+    pieces = out_tpl.split(" ")
+    out_idx = 0
+    out: List[str] = []
+    for piece in pieces:
+        if piece == "[]":
+            src = slot_map.get(out_idx)
+            out.append(in_vars[src] if src is not None and src < len(in_vars) else "[]")
+            out_idx += 1
+        else:
+            out.append(piece)
+    return " ".join(out)
+
+
+def _extract_query_template(input_text: str) -> Optional[Tuple[str, List[str]]]:
+    """Extract the structural skeleton of a *query* (input only).
+
+    The query-side counterpart of ``_extract_template_pair``: variables are
+    the initial-capped entities and pure numbers (shared-with-output detection
+    is impossible without a reference output), everything else stays as fixed
+    structure.  Returns ``(tpl, vars_in_order)`` or ``None`` when the query
+    yields no structural skeleton.
+    """
+    if not input_text:
+        return None
+    raw = input_text.split()
+    toks = [t.lower() for t in raw]
+    variables: set = set()
+    for t, r in zip(toks, raw):
+        stripped = t.strip(string.punctuation)
+        if re.fullmatch(r"\d[\d,.]*", stripped):
+            variables.add(t)
+        elif r[:1].isupper() and r[:1].isalpha():
+            variables.add(t)
+    tpl = " ".join("[]" if t in variables else t for t in toks)
+    if not tpl.strip():
+        return None
+    return tpl, [t.strip(string.punctuation) for t in toks if t in variables]
 
 
 def _anchored_decode(
@@ -579,6 +690,15 @@ class GARDENEngine:
         self._learned_next_id = 0
         self._learned_recall_cap = limit_value("ai.garden.engine.learned_recall_cap", 5000)
 
+        # Structural-template store (the SNN's own key space, separate from
+        # the dictionary's token keys).  "Dictionary is dictionary, SNN is
+        # SNN": the dictionary holds concrete concepts (1, 2, 3, +, =), the
+        # SNN holds the structures those tokens fill ([] + [] = []).
+        # in_tpl -> (out_tpl, slot_map) pairs learned from samples, plus a
+        # sample-count for confidence weighting.
+        self._templates: Dict[str, Dict[str, Any]] = {}
+        self._templates_cap = limit_value("ai.garden.engine.templates_cap", 500)
+
     def get_last_network_output(self) -> Dict[str, float]:
         """Return the most recent SNN forward() activation output (writeback source).
 
@@ -687,6 +807,114 @@ class GARDENEngine:
     # ------------------------------------------------------------------
     # Core processing pipeline
     # ------------------------------------------------------------------
+
+    def _learn_template(
+        self,
+        input_text: str,
+        output_text: str,
+        confidence: float = 1.0,
+    ) -> Optional[Tuple[str, str]]:
+        """Extract a structural template pair and register it in the SNN.
+
+        This is the "SNN learns structures, not tokens" entry point.  The
+        dictionary still owns the concrete tokens; the SNN learns that the
+        structure ``[] is taller than []`` maps to ``[] is shorter than []``.
+
+        Registers the template keys in the SNN (auto-registered on first
+        Hebbian touch too) and records the (out_tpl, slot_map) pair in the
+        engine-side template store.  Returns ``(in_tpl, out_tpl)`` or ``None``.
+        """
+        pair = _extract_template_pair(input_text, output_text)
+        if pair is None:
+            return None
+        in_tpl, out_tpl, in_vars, out_vars = pair
+
+        # slot_map: output-slot index -> input-slot index.  For the reversal
+        # "Alice is taller than Bob -> Bob is shorter than Alice" this is
+        # {0: 1, 1: 0} — output slot 0 (Bob) <- input slot 1 (Bob).
+        slot_map: Dict[int, int] = {}
+        for out_idx, ov in enumerate(out_vars):
+            if ov in in_vars:
+                slot_map[out_idx] = in_vars.index(ov)
+
+        entry = self._templates.setdefault(
+            in_tpl,
+            {"out_tpl": out_tpl, "slot_map": slot_map, "samples": 0, "confidence": 0.0},
+        )
+        entry["samples"] += 1
+        n = entry["samples"]
+        entry["confidence"] = entry["confidence"] * ((n - 1) / n) + confidence / n
+        # If the same in-template produced a different out-template, keep the
+        # more-frequent one (structure -> structure is the strongest signal).
+        if entry["out_tpl"] != out_tpl and entry["samples"] > 1:
+            entry["out_tpl"] = (
+                out_tpl if confidence > entry["confidence"] else entry["out_tpl"]
+            )
+
+        # Register the template keys into the SNN key space (not the
+        # dictionary's token keys — those stay in the dictionary).
+        try:
+            self.snn._register_key(f"tpl:{in_tpl}")
+            self.snn._register_key(f"tpl:{out_tpl}")
+        except Exception as e:
+            logger.debug("GARDEN: template key registration failed: %s", e)
+
+        # Enforce the template-store cap (FIFO by first-seen).
+        if len(self._templates) > self._templates_cap:
+            oldest = next(iter(self._templates))
+            self._templates.pop(oldest, None)
+
+        return in_tpl, out_tpl
+
+    def _learned_slots(
+        self, in_tpl: str, in_vars: List[str]
+    ) -> List[Tuple[str, Dict[int, int], float]]:
+        """Return (out_tpl, slot_map, confidence) candidates for a query template."""
+        entry = self._templates.get(in_tpl)
+        if entry is None:
+            return []
+        return [(entry["out_tpl"], entry["slot_map"], entry["confidence"])]
+
+    def _try_template_recall(self, text: str) -> Optional[str]:
+        """Structural-template recall for a query.
+
+        Extracts the query's skeleton (``[] is taller than []``), looks up the
+        learned output skeleton in the template store, optionally confirms via
+        the SNN weight matrix (template -> template Hebbian), and fills the
+        output skeleton's slots from the query's entities.  Returns ``None``
+        when no learned template matches — the caller falls through to the
+        token-level path.
+        """
+        if not self._templates:
+            return None
+        query = _extract_query_template(text)
+        if query is None:
+            return None
+        in_tpl, in_vars = query
+
+        candidates = self._learned_slots(in_tpl, in_vars)
+        if not candidates:
+            return None
+
+        # SNN cross-check: the learned template->template Hebbian weight
+        # (>= 0.3) confirms the association isn't a store-only artifact.
+        out_tpl, slot_map, _conf = candidates[0]
+        try:
+            tpl_out = self.snn.forward({f"tpl:{in_tpl}": 1.0})
+            snn_conf = tpl_out.get(f"tpl:{out_tpl}", 0.0)
+        except Exception as e:
+            logger.debug("GARDEN: template SNN cross-check failed: %s", e)
+            snn_conf = 0.0
+
+        filled = _fill_template(out_tpl, slot_map, in_vars)
+        if not filled or "[]" in filled:
+            return None
+
+        # Prefer the SNN-confirmed route; if the Hebbian weight is too weak
+        # (single-pass learning rarely reaches 0.3), still surface the
+        # engine-side template store with a lower confidence.
+        self._last_confidence = 0.85 if snn_conf >= 0.3 else 0.60
+        return filled
 
     def _record_learned(
         self, input_keys: Dict[str, float], output_keys: Dict[str, float]
@@ -837,6 +1065,17 @@ class GARDENEngine:
         if kb_result is not None:
             self._last_confidence = 0.80
             return _reconstruct_with_template(text, kb_result, "text")
+
+        # Stage 3.5: Structural template recall (SNN layer, separate key space
+        # from the dictionary).  The dictionary owns concrete tokens; the SNN
+        # owns the structures those tokens fill.  If the query's skeleton was
+        # learned (e.g. "[] is taller than []"), the SNN fires the paired
+        # output skeleton and the slot fillers from the query are substituted
+        # back in — pure structure, no token-key mirroring into the SNN.
+        template_answer = self._try_template_recall(text)
+        if template_answer is not None:
+            self._last_confidence = 0.85
+            return template_answer
 
         # Stage 4: Multi-step detection
         if self._is_multi_step(text):
@@ -1171,8 +1410,6 @@ class GARDENEngine:
             all_tokens.extend(tokens)
 
         # Clean punctuation from tokens
-        import string
-
         cleaned_tokens = []
         for token in all_tokens:
             cleaned = token.strip(string.punctuation)
@@ -1187,8 +1424,12 @@ class GARDENEngine:
             if not existing and confidence >= self.dictionary.growth_threshold:
                 new_key = self.dictionary.grow(token, token, confidence=confidence)
                 if new_key:
-                    self.snn._register_key(new_key)
                     new_keys.append(new_key)
+
+        # Structural learning: the dictionary grows tokens, the SNN learns the
+        # STRUCTURE those tokens fill.  Template keys live in the SNN's own key
+        # space (tpl:...) — dictionary token keys are NOT mirrored into the SNN.
+        self._learn_template(user_text, response_text, confidence=confidence)
 
         # Only rebuild index ONCE after all grows, not per token
         if new_keys and self.dictionary._dirty:
@@ -1268,8 +1509,6 @@ class GARDENEngine:
         all_tokens: List[str] = []
 
         # Stage 1: Collect all tokens from non-engine-handled samples
-        import string
-
         for idx in filtered_indices:
             s = samples[idx]
             user_text = s.get("input", "") or ""
@@ -1307,14 +1546,19 @@ class GARDENEngine:
                 grew_any = True
                 all_new_keys.append(result_key)
 
-        # Stage 2b: Register ALL new concepts into the SNN vocab in ONE
-        # pre-allocation instead of one _register_key() per token (each of
-        # which may trigger an O(V^2) matrix growth+copy).
-        if all_new_keys:
-            try:
-                self.snn._pre_allocate(all_new_keys)
-            except Exception as e:
-                logger.warning(f"SNN batch key registration failed: {e}", exc_info=True)
+        # Stage 2b: Learn STRUCTURES into the SNN.  The dictionary above grows
+        # concrete tokens; the SNN learns the structural skeleton each sample
+        # fills ([] + [] = [], [] is taller than []).  Dictionary token keys
+        # are NOT mirrored into the SNN — the two stay separate key spaces
+        # (dictionary is dictionary, SNN is SNN).
+        template_pairs: Dict[int, Optional[Tuple[str, str]]] = {}
+        for idx in filtered_indices:
+            s = samples[idx]
+            user_text = s.get("input", "") or ""
+            response_text = s.get("output", "") or ""
+            template_pairs[idx] = self._learn_template(
+                str(user_text), str(response_text), confidence=confidence
+            )
 
         # Stage 2c: Sync SNN with dictionary pruning.  If the dictionary hit
         # its cap and evicted low-value entries, those are dead neurons in the
@@ -1365,36 +1609,50 @@ class GARDENEngine:
                 response_text = str(s.get("output", "") or "")
                 input_keys = batch_text_keys.get(user_text) or {}
                 output_keys = batch_text_keys.get(response_text) or {}
+                # Token-level provenance (composition layer, NOT the SNN): lets
+                # process() recover learned output tokens that never reached
+                # the SNN spike threshold.  Dictionary keys never enter the
+                # SNN key space from here.
                 self._record_learned(input_keys, output_keys)
-                if input_keys and output_keys:
-                    # Pass 1: Direct association input -> output
-                    delta = self.snn.hebbian_update(
-                        input_keys, output_keys, lr=lr,
-                        target_strength=target_str,
-                    )
-                    hebbian_delta += delta
 
-                    # Pass 2: Auto-regressive — SNN forward, then teach
-                    # (input + intermediate) -> output.  This chains
-                    # associations so the SNN learns multi-hop reasoning.
-                    snn_intermediate = self.snn.forward(input_keys)
-                    intermediate: Dict[str, float] = {
-                        k: v for k, v in snn_intermediate.items()
-                        if v > 0.3
-                    }
-                    if intermediate:
-                        # Merge input and intermediate keys (keep max conf)
-                        combined: Dict[str, float] = dict(intermediate)
-                        for k, v in input_keys.items():
-                            if k not in combined or v > combined[k]:
-                                combined[k] = v
-                        delta_ar = self.snn.hebbian_update(
-                            combined, output_keys, lr=lr * 0.5,
+                # Structural Hebbian: the SNN learns template -> template
+                # ([] is taller than [] -> [] is shorter than []).  This is
+                # the ONLY weight write for learned data — dictionary token
+                # keys are not Hebbian targets (dictionary is dictionary,
+                # SNN is SNN).
+                tpl_pair = template_pairs.get(idx)
+                if tpl_pair is not None:
+                    in_tpl, out_tpl = tpl_pair
+                    if in_tpl and out_tpl:
+                        delta = self.snn.hebbian_update(
+                            {f"tpl:{in_tpl}": 1.0},
+                            {f"tpl:{out_tpl}": 1.0},
+                            lr=lr,
                             target_strength=target_str,
                         )
-                        auto_regressive_delta += delta_ar
+                        hebbian_delta += delta
 
-                    updates_performed += 1
+                        # Pass 2: Auto-regressive — SNN forward on the input
+                        # template, then teach (input + intermediate) ->
+                        # output.  Chains template associations so the SNN
+                        # learns multi-hop structural reasoning.
+                        snn_intermediate = self.snn.forward({f"tpl:{in_tpl}": 1.0})
+                        intermediate: Dict[str, float] = {
+                            k: v for k, v in snn_intermediate.items()
+                            if v > 0.3
+                        }
+                        if intermediate:
+                            combined: Dict[str, float] = dict(intermediate)
+                            combined[f"tpl:{in_tpl}"] = 1.0
+                            delta_ar = self.snn.hebbian_update(
+                                combined,
+                                {f"tpl:{out_tpl}": 1.0},
+                                lr=lr * 0.5,
+                                target_strength=target_str,
+                            )
+                            auto_regressive_delta += delta_ar
+
+                        updates_performed += 1
 
                 # Periodic global decay every 1000 Hebbian updates
                 if updates_performed > 0 and updates_performed % 1000 == 0:
@@ -1457,6 +1715,10 @@ class GARDENEngine:
             "model_name": self.model_name,
             "query_count": self._query_count,
             "learn_count": self._learn_count,
+            # Structural-template store (SNN's own key space, separate from
+            # the dictionary token keys).  Persisted so template recall
+            # survives checkpoint reload.
+            "templates": self._templates,
             # Reflex patterns are engine state too: without this, a checkpoint
             # load would silently drop the config-reflex patterns (e.g.
             # "how are you" -> "I'm doing great...") and degrade the learned
@@ -1484,6 +1746,10 @@ class GARDENEngine:
                 meta = json.load(f)
             self._query_count = meta.get("query_count", 0)
             self._learn_count = meta.get("learn_count", 0)
+            # Restore the structural-template store (SNN structural layer).
+            saved_templates = meta.get("templates")
+            if isinstance(saved_templates, dict):
+                self._templates = saved_templates
             # Restore the reflex table saved with the checkpoint. If the
             # checkpoint predates reflex persistence (or stores none), fall
             # back to the config-reflex presets so greeting/canned replies do

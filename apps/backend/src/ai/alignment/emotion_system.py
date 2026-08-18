@@ -283,7 +283,7 @@ class EmotionSystem:
             return EmotionType.JOY, sentiment
         from core.system.config.tiered_loader import get_config
 
-        _beh_conf = get_config("standard/behavior/behavior")
+        _beh_conf = get_config("standard/behavior/behavior") or {}
         _stress_class = _beh_conf.get("biological_thresholds", {}).get(
             "emotion_classification_stress", 0.7
         )

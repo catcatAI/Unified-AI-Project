@@ -322,7 +322,7 @@ class BiologicalIntegrator:
         # High arousal triggers adrenaline (From Config [Phase 7])
         from core.system.config.tiered_loader import get_config
 
-        beh_conf = get_config("standard/behavior/behavior")
+        beh_conf = get_config("standard/behavior/behavior") or {}
         stress_thresh = beh_conf.get("biological_thresholds", {}).get(
             "arousal_stress_trigger", 70.0
         )
@@ -470,7 +470,7 @@ class BiologicalIntegrator:
         # 3. Safety Fuse
         from core.system.config.tiered_loader import get_config
 
-        beh_conf = get_config("standard/behavior/behavior")
+        beh_conf = get_config("standard/behavior/behavior") or {}
         arousal_clamp_max = beh_conf.get("biological_thresholds", {}).get("arousal_clamp_max", 95)
         arousal_clamp_min = beh_conf.get("biological_thresholds", {}).get("arousal_clamp_min", 5)
         if current_arousal > arousal_clamp_max or current_arousal < arousal_clamp_min:

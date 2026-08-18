@@ -356,7 +356,7 @@ class AutonomicNervousSystem:
         # Physiological effects (Triggers from Config [Phase 7])
         from core.system.config.tiered_loader import get_config
 
-        beh_conf = get_config("standard/behavior/behavior")
+        beh_conf = get_config("standard/behavior/behavior") or {}
         bio_thresh = beh_conf.get("biological_thresholds", {})
 
         sweat_thresh = bio_thresh.get("sweat_trigger", 0.6)

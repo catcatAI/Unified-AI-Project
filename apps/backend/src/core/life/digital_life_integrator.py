@@ -96,7 +96,7 @@ class ModalityGateway:
         # 1. 基礎生理限制 (喚醒度低於 20 關閉耗能模態)
         from core.system.config.tiered_loader import get_config
 
-        _beh_conf = get_config("standard/behavior/behavior")
+        _beh_conf = get_config("standard/behavior/behavior") or {}
         _arousal_off = _beh_conf.get("biological_thresholds", {}).get("arousal_modality_off", 20)
         if arousal < _arousal_off:
             self.modalities[ModalityType.VISUAL_3D].is_active = False

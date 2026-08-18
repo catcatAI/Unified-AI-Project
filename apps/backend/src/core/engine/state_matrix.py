@@ -1559,7 +1559,7 @@ class StateMatrix4D:
         guidance = []
         from core.system.config.tiered_loader import get_config
 
-        _beh_conf = get_config("standard/behavior/behavior")
+        _beh_conf = get_config("standard/behavior/behavior") or {}
         _bio_thresh = _beh_conf.get("biological_thresholds", {})
         if avg_energy < _bio_thresh.get("energy_tone_low", 0.4):
             guidance.append("能量偏低，選擇溫柔安撫的語氣")

@@ -388,7 +388,8 @@ class ChatService:
             try:
                 from core.system.config.tiered_loader import get_config
 
-                ws_cfg = get_config("system/llm").get("web_search", {}) or {}
+                _llm_cfg = get_config("system/llm")
+                ws_cfg = (_llm_cfg or {}).get("web_search", {}) or {}
             except Exception as e:
                 logger.warning("Web search config not available: %s", e, exc_info=True)
             ws_timeout = float(ws_cfg.get("timeout", 2.5))

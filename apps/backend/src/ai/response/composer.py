@@ -1069,7 +1069,7 @@ class NeuroBlender:
         """Load behavior config."""
         from core.system.config.tiered_loader import get_config
 
-        return get_config("standard/behavior/behavior")
+        return get_config("standard/behavior/behavior") or {}
 
     def _compute_top_k_count(self, alpha_energy: float, _bio_thresh: Dict[str, Any]) -> int:
         """Compute top k count."""

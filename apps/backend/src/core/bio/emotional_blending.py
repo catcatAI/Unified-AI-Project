@@ -438,7 +438,7 @@ class EmotionalBlendingSystem:
         # High arousal + positive pleasure = excitement = mouth open slightly
         from core.system.config.tiered_loader import get_config
 
-        _beh_conf = get_config("standard/behavior/behavior")
+        _beh_conf = get_config("standard/behavior/behavior") or {}
         _bio_thresh = _beh_conf.get("biological_thresholds", {})
         if emotion.arousal > _bio_thresh.get("arousal_mouth_open", 0.5) and emotion.pleasure > 0:
             facial.mouth_open = (emotion.arousal + emotion.pleasure) / 2 * emotion.intensity * 0.5

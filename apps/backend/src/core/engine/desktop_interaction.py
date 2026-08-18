@@ -24,7 +24,6 @@ import logging
 import os
 import shutil
 import subprocess
-import sys
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -45,7 +44,7 @@ def _get_screen_size() -> tuple:
         from core.system.config.tiered_loader import get_config
 
         cfg = get_config("system/bootstrap")
-        screen = cfg.get("hardware_tiers", {}).get("default", {}).get("screen", {})
+        screen = (cfg or {}).get("hardware_tiers", {}).get("default", {}).get("screen", {})
         return (screen.get("width", 1920), screen.get("height", 1080))
     except Exception:
         logger.debug("Screen size config load failed, using defaults", exc_info=True)
