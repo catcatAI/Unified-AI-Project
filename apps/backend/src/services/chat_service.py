@@ -26,6 +26,9 @@ class ChatService:
         self._ed3n_learning_integration = None
         self._ham_sync_task: Optional[asyncio.Task] = None
         self._ham_sync_interval: int = 3600
+        # Strong references for fire-and-forget background tasks so they are
+        # never garbage-collected mid-execution (asyncio docs pattern).
+        self._background_tasks: set = set()
         self._vector_store = None
         self._ham_memory = None
         self._training_coordinator = None
@@ -36,6 +39,17 @@ class ChatService:
         self._knowledge_pipeline = None
         self._vector_store_disabled = False
         self._vector_store_recent_fail = False
+
+    def _spawn_background_task(self, coro) -> asyncio.Task:
+        """Create a fire-and-forget task while keeping a strong reference.
+
+        Un-referenced tasks may be garbage-collected mid-execution; the set
+        holds them until completion (asyncio docs pattern).
+        """
+        task = asyncio.create_task(coro)
+        self._background_tasks.add(task)
+        task.add_done_callback(self._background_tasks.discard)
+        return task
 
     @property
     def model_bus(self):
@@ -195,7 +209,7 @@ class ChatService:
         # Warm up ED3N dictionary (loads 460k entries) in background
         try:
             from ai.ed3n.ed3n_engine import ED3NEngine
-            asyncio.create_task(asyncio.to_thread(lambda: ED3NEngine.get_shared(load_trained=True).warm_up()))
+            self._spawn_background_task(asyncio.to_thread(lambda: ED3NEngine.get_shared(load_trained=True).warm_up()))
             logger.info("ED3N dictionary warm-up scheduled (460k entries)")
         except Exception as e:
             logger.debug("ED3N warm-up skipped: %s", e)
@@ -530,7 +544,7 @@ class ChatService:
 
             mgr = get_grounded_learning_manager()
             resp_text = getattr(response, "text", str(response))
-            asyncio.create_task(mgr.queue_claims(user_message, resp_text))
+            self._spawn_background_task(mgr.queue_claims(user_message, resp_text))
         except Exception as e:
             logger.warning("Grounded learning schedule skipped: %s", e, exc_info=True)
 
@@ -545,7 +559,7 @@ class ChatService:
 
                 memory_id = f"chat_{_uuid.uuid4().hex[:12]}"
                 content = f"User: {user_message}\nAngela: {response.text}"
-                asyncio.create_task(
+                self._spawn_background_task(
                     self._vector_store.add_memory(memory_id, content, {"type": "conversation"})
                 )
             except Exception as e:
@@ -554,7 +568,7 @@ class ChatService:
             try:
                 mm = getattr(self._llm_service, "memory_manager", None)
                 if mm:
-                    asyncio.create_task(
+                    self._spawn_background_task(
                         mm.store_experience(
                             raw_data={"user": user_message, "assistant": response.text},
                             data_type="conversation",
