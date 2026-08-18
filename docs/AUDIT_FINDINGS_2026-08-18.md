@@ -265,6 +265,18 @@
 - **修復**: `_initialize_standard_mode()` 中實作 `available` 過濾——健康檢查失敗的後端從 `self.backends` 移除（預設行為），`per-vendor` 保留全部。同時移除 `_init_backends` 的死 `selection` 變數。
 - **狀態**: ✅ 已修復（`available` 只保留健康後端 / `per-vendor` 保留全部，已驗證）
 
+### M4. AudioQualityMonitor.report() 滾動窗口形同虛設
+- **位置**: `apps/backend/src/ai/audio/quality_monitor.py` `report()`
+- **缺陷**: `window` 參數宣稱「Rolling window size (default: 50)」且計算了 `recent = self._records[-window:]`,但統計全用 `all_records`(整個歷史)——窗口永不生效,統計隨時間無限膨脹,`report(window=10)` 與 `report()` 回傳相同。
+- **修復**: 統計改用 `recent`;新增 `window_size` 欄位(實際窗口內筆數),`total_calls` 保留全歷史計數(相容既有測試)。
+- **狀態**: ✅ 已修復(驗證:100 筆記錄下 `report()` window=50、`report(window=10)` window=10,avg_time 正確反映窗口)
+
+### M5. HSPConnector 呼叫孤兒批次佇列(產出全丟棄)
+- **位置**: `apps/backend/src/core/hsp/connector.py` `publish_message()`
+- **缺陷**: `optimize_message_routing()` 的回傳(`compressed_data` 等)從未使用;其副作用把訊息塞進 optimizer 自己的 `message_queue`,但該佇列**從未被任何生產路徑 flush**(`batch_send_messages`/`decompress_message` 只在 `test_hsp_optimizer` 自測使用)——每次 publish 浪費 CPU 壓縮 + 訊息堆積孤兒佇列。connector 已有自己的 `self.message_batch` + `_cache_message` 體系,優化器呼叫是重複的廢物。
+- **修復**: 移除該呼叫(註解說明原因),保留 connector 自有批次/快取。
+- **狀態**: ✅ 已修復(HSP 59 tests passed)
+
 ### L12. `packages/cli/cli/main.py:39,45` 與 `cli_runner.py:59,66` 的 mock fallback pass
 - **重新分類為「設計意圖內的 graceful degradation」而非 stub**：後端不可用時 `initialize_services` 空 body + `get_services` 回 `{}` 讓 CLI 仍能啟動並印出「not available」提示；`cli_runner._mock_response` 是完整實作。與 L5 的真 stub（宣稱功能實則不做事）不同。狀態：✅ 已審查（不改）
 

@@ -1042,9 +1042,12 @@ class HSPConnector:
 
         message_id, correlation_id, requires_ack = self._publish_setup(envelope)
 
-        _optimized_message = await self.performance_optimizer.optimize_message_routing(
-            cast(Dict[str, Any], envelope)
-        )
+        # NOTE: optimize_message_routing() is intentionally NOT called here —
+        # its compressed output is never consumed (no decompression path in
+        # production) and it would queue messages into the optimizer's own
+        # batch queue that nothing ever flushes (batch_send_messages is only
+        # exercised by the self-test). Connector maintains its own message_batch
+        # + cache via _try_batch_send/_cache_message below.
 
         if not requires_ack:
             cached_result = self._get_cached_message(message_id)

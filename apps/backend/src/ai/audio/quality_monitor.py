@@ -81,12 +81,12 @@ class AudioQualityMonitor:
 
         window = window or self._rolling_window
         recent = self._records[-window:]
-        all_records = self._records
+        total = len(self._records)
 
-        snrs = [r["snr"] for r in all_records if r["snr"] is not None]
-        times = [r["time_ms"] for r in all_records]
-        cache_hits = sum(1 for r in all_records if r.get("cache_hit"))
-        errors = sum(1 for r in all_records if r.get("error"))
+        snrs = [r["snr"] for r in recent if r["snr"] is not None]
+        times = [r["time_ms"] for r in recent]
+        cache_hits = sum(1 for r in recent if r.get("cache_hit"))
+        errors = sum(1 for r in recent if r.get("error"))
 
         sorted_times = sorted(times)
         p95_idx = int(len(sorted_times) * 0.95)
@@ -97,12 +97,13 @@ class AudioQualityMonitor:
         )
 
         return {
-            "total_calls": len(all_records),
+            "total_calls": total,
+            "window_size": len(recent),
             "avg_snr": round(sum(snrs) / max(len(snrs), 1), 2),
             "p95_time_ms": round(p95_time, 1),
             "avg_time_ms": round(sum(times) / max(len(times), 1), 1),
-            "cache_hit_rate": round(cache_hits / max(len(all_records), 1), 4),
-            "error_rate": round(errors / max(len(all_records), 1), 4),
+            "cache_hit_rate": round(cache_hits / max(len(recent), 1), 4),
+            "error_rate": round(errors / max(len(recent), 1), 4),
         }
 
     def clear(self) -> None:
