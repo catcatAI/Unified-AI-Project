@@ -58,29 +58,6 @@ class ChatService:
             return self._llm_service.model_bus
         return None
 
-    def _detect_drive_intent(self, text: str) -> Optional[str]:
-        """Detect a Google Drive intent from user text via config keywords.
-
-        Returns ``"google_drive"`` when a configured drive keyword matches,
-        otherwise ``None``.
-        """
-        if not text:
-            return None
-        try:
-            from core.config_loader import get_angela_config
-
-            keywords = get_angela_config().get_intent_keywords("google_drive")
-        except Exception:
-            logger.debug("Failed to load Google Drive intent keywords", exc_info=True)
-            keywords = []
-        lowered = text.lower()
-        for kw in keywords:
-            if not kw:
-                continue
-            if kw.lower() in lowered:
-                return "google_drive"
-        return None
-
     async def _ham_sync_loop(self) -> None:
         """Background task: sync ED3N dictionary to HAM memory periodically."""
         while True:
