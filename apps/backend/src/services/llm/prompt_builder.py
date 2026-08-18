@@ -68,9 +68,9 @@ def _get_llm_config(key: str, default: Any = None) -> Any:
     try:
         from core.system.config.tiered_loader import get_config
 
-        settings = get_config("system/llm").get("settings", {})
+        settings = (get_config("system/llm") or {}).get("settings", {})
         return settings.get(key, default)
-    except (ImportError, FileNotFoundError, KeyError):
+    except (ImportError, FileNotFoundError, KeyError, AttributeError):
         logger.warning(f"_get_llm_config({key}) failed, using default", exc_info=True)
         return default
 
