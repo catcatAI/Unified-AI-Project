@@ -345,3 +345,32 @@ class TestSNNDictionarySeparation:
         fresh.load(str(tmp_path))
         assert fresh._templates.get("[] is taller than []") is not None
         assert fresh.process("Carol is taller than David.") == "david is shorter than carol"
+
+    def test_fifo_evict_compacts_orphan_snn_keys(self, engine: GARDENEngine):
+        """Evicted templates must not leave orphan tpl: neurons in the SNN."""
+        engine._templates_cap = 2
+        engine.learn_batch(
+            [
+                {"input": "Alice is taller than Bob.", "output": "Bob is shorter than Alice."},
+                {"input": "Tom is older than Jerry.", "output": "Jerry is younger than Tom."},
+                {"input": "Sam is bigger than Kim.", "output": "Kim is smaller than Sam."},
+                {"input": "Ann is faster than Dan.", "output": "Dan is slower than Ann."},
+            ],
+            confidence=0.9,
+        )
+        assert len(engine._templates) <= 2
+        live = set(engine._templates) | {
+            v["out_tpl"] for v in engine._templates.values()
+        }
+        snn_tpl = [
+            k for k in engine.snn._idx_to_key if k.startswith("tpl:")
+        ]
+        assert all(k[len("tpl:") :] in live for k in snn_tpl)
+
+    def test_bracket_interval_structure_preserved(self, engine: GARDENEngine):
+        """Bracket literals like [1, 5] must survive as verbatim structure, not slots."""
+        from ai.garden.garden_engine import _extract_query_template
+
+        in_tpl, vars_ = _extract_query_template("The range is [1, 5].")
+        assert in_tpl == "the range is [1, 5]."
+        assert vars_ == []

@@ -729,7 +729,7 @@ class GARDENEngine:
         self._learned_order = deque()
         self._learned_index: Dict[str, set] = {}
         self._learned_next_id = 0
-        self._learned_recall_cap = limit_value("ai.garden.engine.learned_recall_cap", 5000)
+        self._learned_recall_cap = limit_value("learned_recall_cap", 5000)
 
         # Structural-template store (the SNN's own key space, separate from
         # the dictionary's token keys).  "Dictionary is dictionary, SNN is
@@ -738,7 +738,7 @@ class GARDENEngine:
         # in_tpl -> (out_tpl, slot_map) pairs learned from samples, plus a
         # sample-count for confidence weighting.
         self._templates: Dict[str, Dict[str, Any]] = {}
-        self._templates_cap = limit_value("ai.garden.engine.templates_cap", 500)
+        self._templates_cap = limit_value("templates_cap", 500)
 
     def get_last_network_output(self) -> Dict[str, float]:
         """Return the most recent SNN forward() activation output (writeback source).
@@ -1686,6 +1686,13 @@ class GARDENEngine:
                 tpl_pair = template_pairs.get(idx)
                 if tpl_pair is not None:
                     in_tpl, out_tpl = tpl_pair
+                    # Skip templates that were evicted by the FIFO cap during
+                    # _learn_template — their tpl: keys are compacted out of
+                    # the SNN and must not be re-registered by a late Hebbian
+                    # write (that would recreate the orphan-neuron drift the
+                    # cap enforcement is meant to prevent).
+                    if in_tpl and in_tpl not in self._templates:
+                        continue
                     if in_tpl and out_tpl:
                         delta = self.snn.hebbian_update(
                             {f"tpl:{in_tpl}": 1.0},
