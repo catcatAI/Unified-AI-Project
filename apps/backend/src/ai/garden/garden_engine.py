@@ -1044,6 +1044,20 @@ class GARDENEngine:
             self._last_confidence = 0.85
             return _reconstruct_with_template(text, reasoning_result, "reasoning")
 
+        # Stage 1.6a: Structural template recall (SNN layer, separate key space
+        # from the dictionary).  The dictionary owns concrete tokens; the SNN
+        # owns the structures those tokens fill.  If the query's skeleton was
+        # learned (e.g. "[] is taller than []"), the SNN fires the paired
+        # output skeleton and the slot fillers from the query are substituted
+        # back in — pure structure, no token-key mirroring into the SNN.
+        # Runs before relational-chain so a learned comparison reversal (taller
+        # -> shorter) is not swallowed by the offline graph resolver (which
+        # would mis-answer a single comparison as "the greatest").
+        template_answer = self._try_template_recall(text)
+        if template_answer is not None:
+            self._last_confidence = 0.85
+            return template_answer
+
         # Stage 1.6b: Relational-chain reasoning (offline graph derivation).
         # Catches relational comparison questions the symbolic reasoner's regex
         # patterns miss (novel comparators / longer chains / paraphrases) by
@@ -1065,17 +1079,6 @@ class GARDENEngine:
         if kb_result is not None:
             self._last_confidence = 0.80
             return _reconstruct_with_template(text, kb_result, "text")
-
-        # Stage 3.5: Structural template recall (SNN layer, separate key space
-        # from the dictionary).  The dictionary owns concrete tokens; the SNN
-        # owns the structures those tokens fill.  If the query's skeleton was
-        # learned (e.g. "[] is taller than []"), the SNN fires the paired
-        # output skeleton and the slot fillers from the query are substituted
-        # back in — pure structure, no token-key mirroring into the SNN.
-        template_answer = self._try_template_recall(text)
-        if template_answer is not None:
-            self._last_confidence = 0.85
-            return template_answer
 
         # Stage 4: Multi-step detection
         if self._is_multi_step(text):
@@ -1749,7 +1752,21 @@ class GARDENEngine:
             # Restore the structural-template store (SNN structural layer).
             saved_templates = meta.get("templates")
             if isinstance(saved_templates, dict):
-                self._templates = saved_templates
+                self._templates = {}
+                for in_tpl, entry in saved_templates.items():
+                    if not isinstance(entry, dict):
+                        continue
+                    slot_map = entry.get("slot_map") or {}
+                    # JSON serialization stringifies int dict keys — restore.
+                    self._templates[in_tpl] = {
+                        "out_tpl": entry.get("out_tpl", ""),
+                        "slot_map": {
+                            int(k) if str(k).lstrip("-").isdigit() else k: v
+                            for k, v in slot_map.items()
+                        },
+                        "samples": int(entry.get("samples", 0)),
+                        "confidence": float(entry.get("confidence", 0.0)),
+                    }
             # Restore the reflex table saved with the checkpoint. If the
             # checkpoint predates reflex persistence (or stores none), fall
             # back to the config-reflex presets so greeting/canned replies do

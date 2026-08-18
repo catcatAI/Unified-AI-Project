@@ -8,7 +8,6 @@ import asyncio
 import io
 import logging
 import sys
-import threading
 import traceback
 from typing import Any, Dict
 
@@ -395,8 +394,6 @@ class CodeExecutionHandler:
         def _run_exec():
             exec(code, restricted_globals)
 
-        timeout_triggered = threading.Event()
-        timer = threading.Timer(_TIMEOUT, timeout_triggered.set)
         try:
             sys.stdout = captured_out
             sys.stderr = captured_err
@@ -430,7 +427,6 @@ class CodeExecutionHandler:
             safe_msg = safe_error(e) if isinstance(e, Exception) else str(e)
             return t("code_exec.execution_error", traceback=safe_msg)
         finally:
-            timer.cancel()
             sys.stdout = old_stdout
             sys.stderr = old_stderr
 

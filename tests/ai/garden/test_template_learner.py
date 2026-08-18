@@ -6,6 +6,7 @@
 import pytest
 
 from ai.garden.garden_engine import (
+    GARDENEngine,
     _TEMPLATES,
     _learn_template,
     _output_matches,
@@ -211,3 +212,136 @@ class TestReasoningTemplateReconstruct:
             "reasoning",
         )
         assert result == "6 chicken, 4 rabbit"
+
+
+class TestSNNDictionarySeparation:
+    """The "dictionary is dictionary, SNN is SNN" invariant.
+
+    The dictionary holds concrete concept tokens (1, 2, 3, +, =); the SNN
+    holds the structural templates those tokens fill ([] + [] = []).
+    Learning must never mirror dictionary token keys (``l*``) into the SNN
+    key space, so the two vocabularies diverge instead of matching.
+    """
+
+    def test_extract_template_pair(self):
+        from ai.garden.garden_engine import _extract_template_pair
+
+        pair = _extract_template_pair(
+            "Alice is taller than Bob.", "Bob is shorter than Alice."
+        )
+        assert pair is not None
+        in_tpl, out_tpl, in_vars, out_vars = pair
+        assert in_tpl == "[] is taller than []"
+        assert out_tpl == "[] is shorter than []"
+        assert in_vars == ["alice", "bob"]
+        assert out_vars == ["bob", "alice"]
+
+    def test_extract_template_pair_punctuation_stripped(self):
+        from ai.garden.garden_engine import _extract_template_pair
+
+        pair = _extract_template_pair(
+            "Alice won over Bob!", "Bob lost to Alice."
+        )
+        assert pair is not None
+        in_tpl, out_tpl, in_vars, out_vars = pair
+        # slot fillers come back punctuation-stripped so slot alignment works
+        assert in_tpl == "[] won over []"
+        assert out_tpl == "[] lost to []"
+        assert in_vars == ["alice", "bob"]
+        assert out_vars == ["bob", "alice"]
+
+    def test_extract_query_template(self):
+        from ai.garden.garden_engine import _extract_query_template
+
+        query = _extract_query_template("Carol is taller than David.")
+        assert query == ("[] is taller than []", ["carol", "david"])
+
+    def test_fill_template_reversal(self):
+        from ai.garden.garden_engine import _fill_template
+
+        filled = _fill_template("[] is shorter than []", {0: 1, 1: 0}, ["carol", "david"])
+        assert filled == "david is shorter than carol"
+
+    def test_learned_token_keys_not_in_snn(self, engine: GARDENEngine):
+        engine.learn_batch(
+            [
+                {"input": "Alice is taller than Bob.", "output": "Bob is shorter than Alice."},
+                {"input": "Tom is older than Jerry.", "output": "Jerry is younger than Tom."},
+            ],
+            confidence=0.9,
+        )
+        learned = [k for k in engine.dictionary.entries if k.startswith("l")]
+        assert learned, "learning should grow dictionary token keys"
+        snn_keys = set(engine.snn._idx_to_key)
+        leaked = [k for k in learned if k in snn_keys]
+        assert leaked == [], f"dictionary token keys leaked into SNN: {leaked}"
+
+    def test_snn_holds_templates_not_tokens(self, engine: GARDENEngine):
+        engine.learn_batch(
+            [
+                {"input": "Alice is taller than Bob.", "output": "Bob is shorter than Alice."},
+            ],
+            confidence=0.9,
+        )
+        tpl_keys = [k for k in engine.snn._idx_to_key if k.startswith("tpl:")]
+        assert "tpl:[] is taller than []" in tpl_keys
+        assert "tpl:[] is shorter than []" in tpl_keys
+
+    def test_vocabularies_diverge(self, engine: GARDENEngine):
+        engine.learn_batch(
+            [
+                {"input": "Alice is taller than Bob.", "output": "Bob is shorter than Alice."},
+                {"input": "Tom is older than Jerry.", "output": "Jerry is younger than Tom."},
+            ],
+            confidence=0.9,
+        )
+        dict_v = engine.dictionary.get_stats()["entry_count"]
+        snn_v = engine.snn.vocab_size
+        assert dict_v != snn_v, "dictionary and SNN should NOT share the same vocabulary"
+        assert dict_v > snn_v, "dictionary (tokens) should outgrow the SNN (templates)"
+
+    def test_template_recall_reversal(self, engine: GARDENEngine):
+        engine.learn_batch(
+            [
+                {"input": "Alice is taller than Bob.", "output": "Bob is shorter than Alice."},
+            ],
+            confidence=0.9,
+        )
+        answer = engine.process("Carol is taller than David.")
+        assert answer == "david is shorter than carol"
+
+    def test_template_recall_fill_older_younger(self, engine: GARDENEngine):
+        engine.learn_batch(
+            [
+                {"input": "Tom is older than Jerry.", "output": "Jerry is younger than Tom."},
+            ],
+            confidence=0.9,
+        )
+        answer = engine.process("Sam is older than Kim.")
+        assert answer == "kim is younger than sam"
+
+    def test_template_recall_unknown_skeleton_returns_none(self, engine: GARDENEngine):
+        engine.learn_batch(
+            [
+                {"input": "Alice is taller than Bob.", "output": "Bob is shorter than Alice."},
+            ],
+            confidence=0.9,
+        )
+        from ai.garden.garden_engine import _extract_query_template
+
+        answer = engine._try_template_recall("Who invented the telephone?")
+        assert answer is None
+
+    def test_templates_persist_save_load(self, engine: GARDENEngine, tmp_path):
+        engine.learn_batch(
+            [
+                {"input": "Alice is taller than Bob.", "output": "Bob is shorter than Alice."},
+            ],
+            confidence=0.9,
+        )
+        engine.save(str(tmp_path))
+
+        fresh = GARDENEngine()
+        fresh.load(str(tmp_path))
+        assert fresh._templates.get("[] is taller than []") is not None
+        assert fresh.process("Carol is taller than David.") == "david is shorter than carol"
