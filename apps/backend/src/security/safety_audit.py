@@ -11,7 +11,6 @@ Safety Audit — 安全決策審計系統
 - 異常檢測
 """
 
-import json
 import logging
 import time
 from dataclasses import dataclass, field

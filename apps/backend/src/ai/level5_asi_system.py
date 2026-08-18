@@ -17,7 +17,7 @@ from datetime import datetime
 from typing import Any, Optional
 
 from core.hsp.types import HSPMessageEnvelopeClass as HSPMessageEnvelope
-from core.system.config.magic_numbers import batch_value, loop_sleep
+from core.system.config.magic_numbers import batch_value
 
 from .alignment.adversarial_generation_system import AdversarialGenerationSystem
 from .alignment.aligned_base_agent import AlignedBaseAgent, AlignmentLevel

@@ -1,7 +1,7 @@
 """Shared widgets for the game TUI."""
 from __future__ import annotations
 
-from textual.widgets import Input, Label, Static
+from textual.widgets import Static
 
 
 class BarWidget(Static):

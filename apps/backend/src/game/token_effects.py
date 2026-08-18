@@ -1,7 +1,6 @@
 """Token effects system — tokens affect game mechanics."""
 from __future__ import annotations
 
-import random
 from dataclasses import dataclass, field
 
 

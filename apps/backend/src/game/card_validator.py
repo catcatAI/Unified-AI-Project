@@ -31,7 +31,7 @@ import json
 import math
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 DEFAULT_CARDS_PATH = (
     Path(__file__).resolve().parents[4] / "apps" / "game-rpg" / "data" / "game_cards.json"

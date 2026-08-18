@@ -5,7 +5,6 @@
 保留向後兼容：各文件的原方法轉接到這裡的函數。
 """
 
-import re
 
 
 def char_bigrams(text: str) -> set:

@@ -16,7 +16,7 @@ Content Filter — 內容安全過濾系統
 
 import logging
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple
 

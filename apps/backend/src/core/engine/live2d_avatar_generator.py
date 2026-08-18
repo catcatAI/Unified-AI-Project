@@ -20,8 +20,6 @@ Date: 2026-02-02
 
 from __future__ import annotations
 
-import asyncio
-import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -805,9 +803,6 @@ class Live2DAvatarGenerator:
         # 1. 嘗試呼叫外部去背/分層 API (如 rembg 或自定義的 segmentation API)
         try:
             from PIL import Image, ImageDraw
-
-            # API 端點 (預設使用本機 segmentation 服務)
-            seg_api_url = self.config.get("segmentation_api_url", "http://127.0.0.1:8000/segment")
 
             # NOTE: 待分層微服務上線後可開啟此段（當前使用 Pillow fallback）
             # async with aiohttp.ClientSession() as session:

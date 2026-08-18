@@ -8,7 +8,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from core.prompt_manager import get_prompt_manager, prompt
+from core.prompt_manager import prompt
 
 logger = logging.getLogger(__name__)
 

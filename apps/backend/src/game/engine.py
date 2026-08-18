@@ -8,7 +8,7 @@ from typing import Optional
 
 from .i18n import I18n
 from .models import Character, Scene, GameState, Message
-from .npc import NPC, create_npc, create_npcs_for_scene
+from .npc import NPC, create_npcs_for_scene
 from .quests import QuestLog
 from .token_effects import (
     apply_token_hp,

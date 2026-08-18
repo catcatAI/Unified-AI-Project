@@ -14,7 +14,6 @@ import importlib
 import json
 import logging
 import os
-import struct
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np

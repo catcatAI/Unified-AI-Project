@@ -23,7 +23,6 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
 from core.utils import any_keyword
-from utils.text_utils import bigram_jaccard as _bigram_jaccard_util
 from utils.text_utils import char_bigrams as _char_bigrams_util
 from utils.text_utils import normalize_text as _normalize_text_util
 
