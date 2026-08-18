@@ -33,7 +33,7 @@ class TerminalUI {
         <span class="terminal-title">Terminal — Angela AI</span>
         <div class="terminal-header-actions">
           <button class="terminal-clear" title="Clear">⌧</button>
-          <button class="terminal-close" title="Close (Ctrl+`)">✕</button>
+          <button class="terminal-close" title="Close (Ctrl+\`)">✕</button>
         </div>
       </div>
       <div class="terminal-output"></div>
