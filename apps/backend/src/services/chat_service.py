@@ -247,6 +247,9 @@ class ChatService:
                 logger.debug("KnowledgePipeline query failed: %s", e)
 
         response = await self._llm_service.generate_response(user_message, merged_context)
+        if response is None:
+            logger.warning("LLM generate_response returned None")
+            return None
         response = self._post_process_response(response, merged_context)
 
         await self._process_multimodal_output(response, merged_context, mm_adapter)
@@ -531,6 +534,8 @@ class ChatService:
         # chromadb PersistentClient.add can take several seconds in some
         # environments, so we offload it to a background task (fire-and-forget),
         # mirroring how grounded-learning verification is already decoupled.
+        if not response:
+            return
         if self._vector_store is not None:
             try:
                 import uuid as _uuid
