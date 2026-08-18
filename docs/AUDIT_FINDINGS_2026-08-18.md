@@ -283,6 +283,16 @@
 - **修復**: 改用 `xp, _ = _get_backend(); xp.from_numpy(...)`。
 - **狀態**: ✅ 已修復(端到端驗證:numpy ckpt + torch backend 成功載入,無 NameError)
 
+### M7. VisionQualityMonitor.report() 滾動窗口形同虛設(與 M4 同型)
+- **位置**: `apps/backend/src/ai/vision/quality_monitor.py` `report()`
+- **缺陷**: 與 M4 完全相同——`recent = self._records[-window:]` 計算了,但統計全用 `all_records`(窗口只在 `recent_quality` 的最後 10 筆用)。`report(window=N)` 與 `report()` 回傳相同,統計無限膨脹。
+- **修復**: 統計改用 `recent`;新增 `window_size` 欄位,`total_calls` 保留全歷史(相容既有消費者 `avg_ssim`/`avg_psnr`/`total_calls` 鍵)。
+- **狀態**: ✅ 已修復
+
+### 本輪大量 dead-code 清理(無行為改變,pyflakes 驗證)
+- 移除 ~60 個未使用 import / 死局部變數,包括:multimodal primitives(differentiable_renderer N_* 函數內重複 import、vocabulary_expander residual_arr/positions/colors、learnable_decomposer base_loss、game_materials w、sequence_generator stop_prob、data_loader idx/rng、three_layer_visual F)、garden(snn_core Set/Tuple、dictionary、garden_engine expr)、services(websocket_manager live_info、document_router asyncio/os、weather json、math_verifier List、multimodal_error_recovery Callable/List/Tuple、task_manager os/Optional)、handlers(system_command platform/shutil、code_execution re/Optional)、api(chat_routes streaming import + routing_mode、image_generation vocabulary、multimodal_routes base64/Any/Dict/List)、lifespan 啟動副作用賦值、agent_manager agent、ed3n_engine reflex_patterns、dynamic_threshold profile_name、angela_review_engine src_symbols + os、vision_response_generator confidence。
+- 全部 `from __future__ import annotations` 檔案中的 `undefined name`(torch/PIL/RealDataProvider)驗證為字串註解 false positive(非執行期錯誤)。
+
 ### L12. `packages/cli/cli/main.py:39,45` 與 `cli_runner.py:59,66` 的 mock fallback pass
 - **重新分類為「設計意圖內的 graceful degradation」而非 stub**：後端不可用時 `initialize_services` 空 body + `get_services` 回 `{}` 讓 CLI 仍能啟動並印出「not available」提示；`cli_runner._mock_response` 是完整實作。與 L5 的真 stub（宣稱功能實則不做事）不同。狀態：✅ 已審查（不改）
 
