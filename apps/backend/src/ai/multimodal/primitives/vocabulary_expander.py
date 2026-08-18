@@ -10,10 +10,8 @@ Algorithm:
 5. Add to vocabulary → re-learn concepts
 """
 
-import json
 import logging
-import os
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -69,8 +67,6 @@ class VocabularyExpander:
             return []
 
         # Analyze residuals
-        residual_arr = np.array(self._residuals)
-
         # Find common patterns in residuals
         candidates = []
 
@@ -111,9 +107,6 @@ class VocabularyExpander:
             return []
 
         # Simple clustering: group by position proximity
-        positions = np.array([c["position"] for c in candidates])
-        colors = np.array([c["color"] for c in candidates])
-
         # Find clusters (simple: grid-based)
         clusters = {}
         for i, c in enumerate(candidates):
