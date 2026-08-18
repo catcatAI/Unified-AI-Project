@@ -1,0 +1,140 @@
+"""
+Tests for the Three-Axis engine (UTF-8 x position x content).
+
+Covers the honest behaviour verified against real project datasets: exact
+full-context recall drives dialogue generation; short-window prefix recall is
+only a single-step fallback; generation stops at the end of a memorised answer
+instead of hallucinating trailing characters from ambiguous contexts.
+
+See docs/03-technical-architecture/THREE_AXIS_SYSTEM.md.
+"""
+
+# =============================================================================
+# ANGELA-MATRIX: [L2-L3] [βγδ] [C] [L2]
+# =============================================================================
+
+import os
+import sys
+
+import pytest
+
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apps", "backend", "src"))
+)
+
+from ai.three_axis.three_axis_engine import ThreeAxisEngine  # noqa: E402
+
+
+# =============================================================================
+# ANGELA-MATRIX: [L2-L3] [βγδ] [C] [L2]
+# =============================================================================
+
+
+@pytest.fixture()
+def engine() -> ThreeAxisEngine:
+    return ThreeAxisEngine(memory_cap_mb=2048)
+
+
+class TestTraining:
+    def test_learn_batch_stats(self, engine):
+        stats = engine.learn_batch(["178 + 101=279", "293 - 192=101", "917 * 814=746438"])
+        assert stats["samples"] == 3
+        assert stats["corpus_chars"] > 0
+        assert stats["positions"] > 0
+        assert stats["transitions"] > 0
+        assert stats["exact_completions"] > 0
+        assert stats["memory_ratio"] <= 1.0
+        assert stats["memory_bytes"] > 0
+
+    def test_memory_cap_respected(self, engine):
+        engine.learn_batch([f"{i}+{i}={i * 2}" for i in range(500)])
+        assert engine.memory_usage_ratio() <= 1.0
+
+    def test_freeze_prevents_training(self, engine):
+        engine.freeze()
+        engine.learn("2 + 2=4")
+        assert engine.corpus_chars == 0
+
+
+class TestExactCompletionDialogue:
+    def test_process_ends_with_question_mark(self, engine):
+        engine.learn_batch(["178 + 101=279"])
+        out = engine.process("178 + 101=?")
+        assert out == "178 + 101=279"
+
+    def test_generate_stops_at_end_of_answer(self, engine):
+        engine.learn_batch(["178 + 101=279"])
+        out = engine.generate("178 + 101=")
+        assert out == "178 + 101=279"
+
+    def test_multiple_training_samples(self, engine):
+        engine.learn_batch(["178 + 101=279", "293 - 192=101", "917 * 814=746438"])
+        assert engine.process("178 + 101=?") == "178 + 101=279"
+        assert engine.process("293 - 192=?") == "293 - 192=101"
+        assert engine.process("917 * 814=?") == "917 * 814=746438"
+
+    def test_ambiguous_short_window_does_not_corrupt_answer(self, engine):
+        # "92=101" is a shared truncated context: 293 - 192=101 vs 827 + 192=1019.
+        # The full-context exact path must win over the ambiguous short window.
+        engine.learn_batch(["293 - 192=101", "827 + 192=1019"])
+        assert engine.process("293 - 192=?") == "293 - 192=101"
+
+    def test_no_trailing_garbage(self, engine):
+        engine.learn_batch(["917 * 814=746438"])
+        out = engine.generate("917 * 814=")
+        assert out == "917 * 814=746438"
+        assert not out.endswith("=")
+
+
+class TestInlineUnknown:
+    def test_resolve_middle_unknown(self, engine):
+        engine.learn_batch(["ab=c", "de=f"])
+        out = engine.process("ab=?")
+        assert out.startswith("ab=")
+
+
+class TestPersistence:
+    def test_save_load_roundtrip(self, engine, tmp_path):
+        engine.learn_batch(["178 + 101=279", "293 - 192=101"])
+        path = os.path.join(tmp_path, "checkpoint.json")
+        engine.save(path)
+        loaded = ThreeAxisEngine(memory_cap_mb=2048)
+        assert loaded.load(path)
+        assert loaded.process("178 + 101=?") == "178 + 101=279"
+        assert loaded.process("293 - 192=?") == "293 - 192=101"
+
+    def test_load_missing_returns_false(self, engine, tmp_path):
+        assert engine.load(os.path.join(tmp_path, "nope.json")) is False
+
+
+class TestPrecedence:
+    def test_exact_beats_position_majority(self, engine):
+        engine.learn_batch(["999 + 111=1110", "999 + 222=222", "999 + 333=333"])
+        assert engine.process("999 + 111=?") == "999 + 111=1110"
+
+    def test_unknown_prompt(self, engine):
+        assert engine.process("") == ""
+        assert engine.process("no unknown here") == "no unknown here"
+
+
+class TestRealDatasetTraining:
+    def test_trains_on_real_arithmetic_within_cap(self):
+        root = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "apps", "backend", "data", "raw_datasets")
+        )
+        path = os.path.join(root, "arithmetic_train_dataset.json")
+        if not os.path.exists(path):
+            pytest.skip("real arithmetic dataset not present")
+        import json
+
+        with open(path, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+        samples = [f"{x['problem']}={x['answer']}" for x in data[:2000]]
+        engine = ThreeAxisEngine(memory_cap_mb=2048)
+        stats = engine.learn_batch(samples)
+        assert stats["memory_ratio"] <= 1.0
+        # A sample that appears verbatim in the training slice must be recalled.
+        probe_problem = data[0]["problem"]
+        probe_answer = data[0]["answer"]
+        out = engine.process(f"{probe_problem}=?")
+        assert out == f"{probe_problem}={probe_answer}"
