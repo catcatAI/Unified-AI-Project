@@ -1778,6 +1778,7 @@ class AngelaLLMService:
             if not _text or any(
                 p in _text
                 for p in (
+                    # English refusals
                     "sorry",
                     "i don't understand",
                     "i did not understand",
@@ -1787,6 +1788,18 @@ class AngelaLLMService:
                     "can't help",
                     "no answer",
                     "unknown",
+                    # Chinese refusals
+                    "對不起",
+                    "抱歉",
+                    "不明白",
+                    "不清楚",
+                    "不知道",
+                    "無法",
+                    "幫不上忙",
+                    "做不到",
+                    "暫時無法",
+                    "沒有答案",
+                    "我不能",
                 )
             ):
                 logger.debug("Skipped template storage for non-answer response")
