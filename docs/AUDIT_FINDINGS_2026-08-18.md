@@ -315,6 +315,31 @@
 - **修復**: 刪除錯誤的 `"頭": "豆"`,保留 `"頭": "頁"`;實測 `cjk_radical("頭") == "頁"` 不變。
 - **狀態**: ✅ 已修復
 
+### M12. google_drive intent 被 DocumentRouter 劫持成本地文件操作(誤導回覆)
+- **位置**: `apps/backend/src/services/document_router.py` `try_intent_routing()`
+- **缺陷**: IntentRegistry 將「列出雲端硬碟的檔案」分類為 `google_drive`(conf 0.67),但 `try_intent_routing` 把 `google_drive` 納入文件路由 tuple → `handle_document_intent` 解析成 `list` 任務 + 「檔案」格式閘通過 → 無 source_dir → 回傳「請指定要處理的目錄路徑」——對 Drive 請求是**誤導性回覆**。Drive 有獨立 `/api/v1/drive/*` 端點,chat 路徑不應攔截。
+- **修復**: 從路由 tuple 移除 `google_drive`(僅保留 document/character_card)。實測 drive 訊息改為 fall through 到正常聊天流程。
+- **驗證**: 新增 2 個回歸測試(`test_document_router_routing.py`)。全量 **5,255 passed / 0 failed**。
+- **狀態**: ✅ 已修復
+
+### M13. MemoryIntegration.add_precompute_task 委派不存在的方法
+- **位置**: `apps/backend/src/services/llm/memory_integration.py` `add_precompute_task()`
+- **缺陷**: 呼叫 `self._svc.precompute_service.add_precompute_task(task)`,但 `PrecomputeService` 只有 `enqueue()`——若被呼叫必定 AttributeError。目前 0 呼叫端(死方法),但方法宣稱「Add a precompute task to the queue」是公開 API。
+- **修復**: 改為委派 `enqueue(task)` 並回傳 True。實測 `PrecomputeService.enqueue` 正常。
+- **狀態**: ✅ 已修復
+
+### M14. terminal-ui.js 模板字串未跳脫反引號——整檔 SyntaxError(前端功能全死)
+- **位置**: `packages/shared-js/js/terminal-ui.js` line 36
+- **缺陷**: `title="Close (Ctrl+`)"` 在模板字串內含**裸反引號**,提前終止字串 → 整檔解析失敗(SyntaxError)。`node --check` 全 JS 掃描唯一命中。TerminalUI 被 desktop-app 與 web-live2d-viewer 的 index.html 引用——**兩個前端入口的 TerminalUI 從未載入過**。
+- **修復**: 跳脫為 `\``。`node --check` 通過;全 shared-js/desktop-app/web-live2d-viewer 掃描僅此一處。
+- **狀態**: ✅ 已修復
+
+### M15. chat_service.shutdown 未取消追蹤的背景任務
+- **位置**: `apps/backend/src/services/chat_service.py` `shutdown()`
+- **缺陷**: M9 修復引入 `_background_tasks` 追蹤,但 shutdown 只取消 `_ham_sync_task`,未取消 ED3N warm-up / memory 寫入等 fire-and-forget 任務——shutdown 後它們可能繼續跑。
+- **修復**: shutdown 時取消所有追蹤任務並 `asyncio.gather(..., return_exceptions=True)` 等待完成。與 lifecycle 系統的 stop() 模式一致。
+- **狀態**: ✅ 已修復
+
 ### M11. chat_service `_detect_drive_intent` 死碼(0 呼叫端)
 - **位置**: `apps/backend/src/services/chat_service.py`(已刪)
 - **缺陷**: 方法完整實作(讀 config `google_drive` keywords 匹配),但**全專案無任何呼叫端**。drive 功能由獨立 `/api/v1/drive/*` 端點提供(`api/v1/endpoints/drive.py`,共 11+ 條),chat 路徑的 IntentRegistry gate(chat_routes.py:725-757)遇到 google_drive 命中時因 `handler_to_ir` 無對應 → 視為 mismatch 跳過執行 → 安全但功能不存在。設計殘留。

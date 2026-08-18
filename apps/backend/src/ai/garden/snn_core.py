@@ -163,6 +163,12 @@ def _save_checkpoint(path: str, state: dict) -> None:
     The old dense storage wrote the full strided allocation (a 20,573² live
     matrix inside a 36,376² block saved 5.3 GB); Fix A already trims the
     live slice, sparse COO compresses it a further ~100x.
+
+    Cross-backend note: torch saves are pickles that a torch-less runtime
+    cannot unpickle, so the torch branch ALSO writes a numpy-compatible
+    sidecar (.npz sparse / .npy dense + .json metadata, same layout as the
+    numpy branch) next to the .pt — a numpy-only box can then load a
+    torch-trained checkpoint via :func:`_load_checkpoint`.
     """
     xp, is_torch = _get_backend()
     os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
@@ -184,12 +190,56 @@ def _save_checkpoint(path: str, state: dict) -> None:
         else:
             state["W_format"] = "empty"
         xp.save(state, path)
+        _write_numpy_sidecar(path, state)
     else:
         W = state.pop("W")
         np.save(path, W)
         json_path = path.rsplit(".", 1)[0] + ".json"
         with open(json_path, "w", encoding="utf-8") as f:
             json.dump(state, f, ensure_ascii=False)
+
+
+def _write_numpy_sidecar(path: str, state: dict) -> None:
+    """Mirror a torch-saved checkpoint into numpy-compatible files.
+
+    A torch ``.pt`` is a pickle only a torch runtime can read.  Writing a
+    parallel numpy sidecar (``.npz`` sparse COO / ``.npy`` dense + ``.json``
+    metadata) lets a torch-less runtime reconstruct the same engine state —
+    the layout matches the numpy save path so :func:`_load_checkpoint`'s
+    numpy branch reads it without changes.
+    """
+    import json
+    import os
+
+    fmt = state.get("W_format", "empty")
+    json_path = path.rsplit(".", 1)[0] + ".json"
+    meta = {
+        k: v
+        for k, v in state.items()
+        if k not in ("W", "W_format", "W_indices", "W_values", "W_shape")
+    }
+    if fmt == "sparse_coo":
+        idx = state["W_indices"]
+        vals = state["W_values"]
+        shape = state["W_shape"]
+        if hasattr(idx, "detach"):
+            idx = idx.detach().cpu().numpy()
+        if hasattr(vals, "detach"):
+            vals = vals.detach().cpu().numpy()
+        np.savez(path + ".npz", W_indices=idx, W_values=vals, W_shape=np.asarray(shape))
+        meta["W_format"] = "sparse_coo"
+        meta["W_shape"] = shape
+    elif fmt == "dense":
+        W = state.get("W")
+        if W is not None:
+            if hasattr(W, "detach"):
+                W = W.detach().cpu().numpy()
+            np.save(path + ".npy", W)
+        meta["W_format"] = "dense"
+    else:
+        meta["W_format"] = "empty"
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(meta, f, ensure_ascii=False)
 
 
 def _load_checkpoint(path: str) -> dict:
@@ -205,15 +255,24 @@ def _load_checkpoint(path: str) -> dict:
     legacy dense checkpoints pass through as mmap'd strided views.
     """
     npy_path = path if path.endswith(".npy") else path + ".npy"
+    npz_path = path + ".npz"
     json_path = path.rsplit(".", 1)[0] + ".json"
 
-    # Prefer numpy format if .npy exists (cross-backend compatible)
-    if os.path.exists(npy_path):
-        W = np.load(npy_path, mmap_mode="r")
+    # Prefer numpy format if present (cross-backend compatible).  This
+    # includes the numpy sidecar a torch save writes alongside its .pt, so a
+    # torch-less runtime can load a torch-trained checkpoint.
+    if os.path.exists(npz_path) or os.path.exists(npy_path):
         meta = {}
         if os.path.exists(json_path):
             with open(json_path, "r", encoding="utf-8") as f:
                 meta = json.load(f)
+        if os.path.exists(npz_path):
+            z = np.load(npz_path)
+            shape = tuple(int(s) for s in z["W_shape"])
+            W = np.zeros(shape, dtype=z["W_values"].dtype)
+            W[z["W_indices"][:, 0], z["W_indices"][:, 1]] = z["W_values"]
+        else:
+            W = np.load(npy_path, mmap_mode="r")
         meta["W"] = W
         meta["W_format"] = "dense"
         return meta
