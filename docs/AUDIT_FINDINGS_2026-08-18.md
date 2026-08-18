@@ -340,6 +340,14 @@
 - **修復**: shutdown 時取消所有追蹤任務並 `asyncio.gather(..., return_exceptions=True)` 等待完成。與 lifecycle 系統的 stop() 模式一致。
 - **狀態**: ✅ 已修復
 
+### M16. `get_config()` 11 個呼叫點缺 None 防護(config 缺失時 AttributeError)
+- **位置**: `chat_service.py`、`router.py`、`config_loader.py`、`biological_integrator.py`、`emotion_system.py`、`digital_life_integrator.py`、`emotional_blending.py`、`autonomic_nervous_system.py`、`state_matrix.py`、`composer.py`、`desktop_interaction.py`——共 11 處
+- **缺陷**: `tiered_loader.get_config()` 回傳 `Optional[Dict]`,但 11 個呼叫點直接對結果呼叫 `.get(key, default)` 而**未檢查 None**——若 config 檔案缺失/損壞/路徑錯誤,必然 `AttributeError: 'NoneType' object has no attribute 'get'`。其中 8 處（bio loop / emotion / DLI / emotional blending / autonomic / state matrix / composer）**不在 try/except 內**,會直接往上層炸。3 處（chat_service/router/config_loader）在 try/except 內但會產生雜亂的 AttributeError 日誌。
+- **修復**: 全部 11 處加 `or {}` guard（如 `cfg = get_config(...) or {}`）;
+`composer._load_behavior_config()` 改為回傳 `get_config(...) or {}`。
+- **驗證**: pyflakes clean;`pytest tests/` 全量 **5,256 passed / 0 failed**。
+- **狀態**: ✅ 已修復
+
 ### M11. chat_service `_detect_drive_intent` 死碼(0 呼叫端)
 - **位置**: `apps/backend/src/services/chat_service.py`(已刪)
 - **缺陷**: 方法完整實作(讀 config `google_drive` keywords 匹配),但**全專案無任何呼叫端**。drive 功能由獨立 `/api/v1/drive/*` 端點提供(`api/v1/endpoints/drive.py`,共 11+ 條),chat 路徑的 IntentRegistry gate(chat_routes.py:725-757)遇到 google_drive 命中時因 `handler_to_ir` 無對應 → 視為 mismatch 跳過執行 → 安全但功能不存在。設計殘留。
