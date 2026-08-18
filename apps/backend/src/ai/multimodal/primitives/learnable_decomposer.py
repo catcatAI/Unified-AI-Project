@@ -95,13 +95,6 @@ class LearnableDecomposer:
         Uses finite differences on a random subset of parameters.
         This is the key trick to handle the non-differentiable renderer.
         """
-        h, w = target_arr.shape[:2]
-        base_rendered = (
-            np.array(renderer.render(self.decode_to_instructions(pred_vec)), dtype=np.float32)
-            / 255.0
-        )
-        base_loss = np.mean((base_rendered - target_arr) ** 2)
-
         grad = np.zeros_like(pred_vec)
 
         # Probe random dimensions
