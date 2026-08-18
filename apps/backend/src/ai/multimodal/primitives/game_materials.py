@@ -26,8 +26,7 @@
 
 from __future__ import annotations
 
-import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Tuple
 
 from PIL import Image, ImageDraw
@@ -169,7 +168,6 @@ class Container:
     def _polygon(self) -> List[Tuple[float, float]]:
         """容器內部範圍（畫布 size×size，原點中心）。"""
         s = self.size
-        w = max(1, self.wall)
         if self.kind == "bottle":
             # 瓶：窄口、寬身
             return [
@@ -214,7 +212,6 @@ class Container:
         s = self.size
         img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
-        w = max(1, self.wall)
         # 內縮 wall 畫素，避免液體蓋住容器壁
         pts = [(x, y) for (x, y) in self._polygon()]
         # 縮小內壁：向中心收縮 wall

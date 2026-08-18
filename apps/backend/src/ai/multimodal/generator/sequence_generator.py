@@ -7,7 +7,7 @@ DrawingInstructions for PrimitiveRenderer to render.
 
 import json
 import logging
-from typing import List, Optional
+from typing import List
 
 import numpy as np
 
@@ -106,7 +106,6 @@ class SequenceGenerator:
 
             # Check stop condition
             stop_logit = float(np.dot(self._W_stop, h) + self._b_stop[0])
-            stop_prob = 1.0 / (1.0 + np.exp(-np.clip(stop_logit, -10, 10)))
 
             # Sample stop (at temperature)
             adjusted_logit = stop_logit / max(temperature, 0.01)
