@@ -293,6 +293,33 @@
 - 移除 ~60 個未使用 import / 死局部變數,包括:multimodal primitives(differentiable_renderer N_* 函數內重複 import、vocabulary_expander residual_arr/positions/colors、learnable_decomposer base_loss、game_materials w、sequence_generator stop_prob、data_loader idx/rng、three_layer_visual F)、garden(snn_core Set/Tuple、dictionary、garden_engine expr)、services(websocket_manager live_info、document_router asyncio/os、weather json、math_verifier List、multimodal_error_recovery Callable/List/Tuple、task_manager os/Optional)、handlers(system_command platform/shutil、code_execution re/Optional)、api(chat_routes streaming import + routing_mode、image_generation vocabulary、multimodal_routes base64/Any/Dict/List)、lifespan 啟動副作用賦值、agent_manager agent、ed3n_engine reflex_patterns、dynamic_threshold profile_name、angela_review_engine src_symbols + os、vision_response_generator confidence。
 - 全部 `from __future__ import annotations` 檔案中的 `undefined name`(torch/PIL/RealDataProvider)驗證為字串註解 false positive(非執行期錯誤)。
 
+### 第三輪（2026-08-18 下午）新增
+
+### M8. EventQueue.dequeue() 遇 deferred 隊首事件無限忙循環（100% CPU + 死鎖）
+- **位置**: `apps/backend/src/core/event_loop_system.py` `EventQueue.dequeue()`
+- **缺陷**: 隊首事件 deferred（`deferred_until` 在未來）時,`dequeue()` 以**相同** `(priority, sequence)` heap key 重新 push 後 `continue` → 下次 `heappop` 回傳同一個事件 → **無限循環**,持有 `self._lock` 100% CPU。全隊列皆 deferred 時(常見於批次 defer)必然觸發。
+- **修復**: re-queue 時 `self._sequence += 1`(新 key,不會立即 re-pop);同一事件在一次呼叫內第二次被 pop(代表全隊列皆 deferred)時停止掃描並回傳 `None`,事件保留在佇列中待 `deferred_until` 過期後照常交付。
+- **驗證**: 新增 3 個回歸測試(`test_event_queue_deferred.py`)——deferred 隊首回傳 None 不空轉、deferred 之後的 ready 事件仍可取、deferred 過期後正常交付。全量 **5,253 passed / 0 failed**。
+- **狀態**: ✅ 已修復
+
+### M9. chat_service 背景任務無強引用(可能被 GC 中途回收)
+- **位置**: `apps/backend/src/services/chat_service.py` `initialize()`/`_schedule_grounded_learning`/`_store_interaction_memories`
+- **缺陷**: 4 個 `asyncio.create_task(...)`(ED3N 460k 詞典 warm-up、grounded-learning claims、vector-store 寫入、memory-store experience)皆為裸 create_task,**無保留引用**——依 asyncio 文件,無引用任務可能在任何時刻被垃圾回收(即使執行中),460k 詞典 warm-up 等背景工作會被靜默丟棄。
+- **修復**: 新增 `_spawn_background_task()` 輔助(追蹤到 `self._background_tasks` set + `done_callback` discard,asyncio 官方模式),4 處改用它。
+- **驗證**: `initialize()` 後 `_background_tasks` 持有 warm-up 任務;`tests/ai/` 2528 passed。
+- **狀態**: ✅ 已修復
+
+### M10. unicode_utils `_RADICAL_TABLE` 重複鍵 `頭`(死資料)
+- **位置**: `apps/backend/src/ai/core/unicode_utils.py` `_RADICAL_TABLE`
+- **缺陷**: `"頭": "豆"`(錯誤)與 `"頭": "頁"`(正確,Kangxi radical 181)重複——dict literal 最後值勝出,執行期用 `頁`,但 `豆` 項是靜默死資料(先前 flake8 F601 因此被全域 ignore)。
+- **修復**: 刪除錯誤的 `"頭": "豆"`,保留 `"頭": "頁"`;實測 `cjk_radical("頭") == "頁"` 不變。
+- **狀態**: ✅ 已修復
+
+### 第三輪 dead-code 清理(~30 處,pyflakes 全驗證)
+- 未使用 import:game/(engine create_npc、widgets Input/Label、token_effects random、card_validator Optional/Tuple)、live2d_avatar_generator asyncio/json、core_services Optional、mcp_fallback_protocols Optional、chat_service Any/Dict、cultural_context Optional/Tuple、attractor_field asdict、vector_store struct、safety_audit json、content_filter field、text_utils re、prompt_builder get_prompt_manager、level5_asi loop_sleep、template_matcher bigram_jaccard、live2d seg_api_url(死變數)。
+- 保留:`core_services`/`api_models`/`angela_llm_service`/`services.llm.__init__` 等 re-export shim(`# noqa` 宣告,pyflakes 不認 noqa 但 flake8 認)。
+- 驗證:async-without-await 掃描(377 處)與 discarded-async-call 掃描(52 處)全部驗證為 interface-async 設計或 create_task/safe_create_task 包裝的 false positive——無真實漏 await 的 coroutine 丟棄。
+
 ### L12. `packages/cli/cli/main.py:39,45` 與 `cli_runner.py:59,66` 的 mock fallback pass
 - **重新分類為「設計意圖內的 graceful degradation」而非 stub**：後端不可用時 `initialize_services` 空 body + `get_services` 回 `{}` 讓 CLI 仍能啟動並印出「not available」提示；`cli_runner._mock_response` 是完整實作。與 L5 的真 stub（宣稱功能實則不做事）不同。狀態：✅ 已審查（不改）
 
