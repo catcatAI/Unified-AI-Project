@@ -277,6 +277,12 @@
 - **修復**: 移除該呼叫(註解說明原因),保留 connector 自有批次/快取。
 - **狀態**: ✅ 已修復(HSP 59 tests passed)
 
+### M6. GARDEN SNN cross-backend load NameError(torch 後端載入 numpy checkpoint)
+- **位置**: `apps/backend/src/ai/garden/snn_core.py` `TensorSNNCore.load()`
+- **缺陷**: `torch.from_numpy(...)` 使用未定義的 `torch`——該名稱只在 `_get_backend()` 內局部 import,模組層只有 `_xp`/`_is_torch`。當 torch 後端(`_is_torch=True`)載入由無 torch 機器儲存的 numpy checkpoint 時(註解明確支援此場景),`load()` 必然 NameError。pyflakes 的 `undefined name 'torch'` 精準標出。
+- **修復**: 改用 `xp, _ = _get_backend(); xp.from_numpy(...)`。
+- **狀態**: ✅ 已修復(端到端驗證:numpy ckpt + torch backend 成功載入,無 NameError)
+
 ### L12. `packages/cli/cli/main.py:39,45` 與 `cli_runner.py:59,66` 的 mock fallback pass
 - **重新分類為「設計意圖內的 graceful degradation」而非 stub**：後端不可用時 `initialize_services` 空 body + `get_services` 回 `{}` 讓 CLI 仍能啟動並印出「not available」提示；`cli_runner._mock_response` 是完整實作。與 L5 的真 stub（宣稱功能實則不做事）不同。狀態：✅ 已審查（不改）
 

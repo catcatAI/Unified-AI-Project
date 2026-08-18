@@ -70,7 +70,6 @@ class VisionResponseGenerator:
 
         top = classifications[0]
         label = top.get("label") or top.get("concept_name", "")
-        confidence = top.get("confidence", 0.0)
         dict_key = top.get("dict_key", "")
 
         surface = self._get_surface_form(dict_key, language) if dict_key else None

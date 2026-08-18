@@ -1378,7 +1378,6 @@ class ED3NEngine:
             config_dir = os.path.join(os.path.dirname(__file__), "config")
 
         # Load reflex patterns from JSON
-        reflex_patterns = {}
         for fname in os.listdir(config_dir):
             if not fname.endswith(".json"):
                 continue

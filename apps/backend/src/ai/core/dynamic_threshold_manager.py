@@ -317,8 +317,6 @@ class DynamicThresholdManager:
             if not self.hardware_profile:
                 return
 
-            profile_name = self.hardware_profile.scenario.value
-
             # 根据硬件配置加载约束
             hardware_configs = {
                 "high_performance_desktop": HardwareConstraint(

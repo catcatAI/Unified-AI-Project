@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import ast
 import operator
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, Optional
 
 from core.utils import safe_error
 
@@ -341,7 +341,7 @@ def safe_eval(
         return EvalResult(success=False, error=safe_error(e), expression=expression)
 
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass

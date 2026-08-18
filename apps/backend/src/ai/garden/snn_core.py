@@ -32,7 +32,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -874,7 +874,8 @@ class TensorSNNCore:
             # .npy + .json) loading on a torch runtime must be converted —
             # torch >= 2.0 rejects `tensor[...] = numpy_array` assignment.
             if _is_torch and isinstance(live, np.ndarray):
-                live = torch.from_numpy(np.ascontiguousarray(live))
+                xp, _ = _get_backend()
+                live = xp.from_numpy(np.ascontiguousarray(live))
             new_W[:live_rows, :live_cols] = live
             self._W = new_W
         else:
