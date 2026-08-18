@@ -96,13 +96,13 @@ class VisionQualityMonitor:
 
         window = window or self._rolling_window
         recent = self._records[-window:]
-        all_records = self._records
+        total = len(self._records)
 
-        ssims = [r["ssim"] for r in all_records if r["ssim"] is not None]
-        psnrs = [r["psnr"] for r in all_records if r["psnr"] is not None]
-        times = [r["time_ms"] for r in all_records]
-        cache_hits = sum(1 for r in all_records if r.get("cache_hit"))
-        errors = sum(1 for r in all_records if r.get("error"))
+        ssims = [r["ssim"] for r in recent if r["ssim"] is not None]
+        psnrs = [r["psnr"] for r in recent if r["psnr"] is not None]
+        times = [r["time_ms"] for r in recent]
+        cache_hits = sum(1 for r in recent if r.get("cache_hit"))
+        errors = sum(1 for r in recent if r.get("error"))
 
         # P95 calculation
         sorted_times = sorted(times)
@@ -114,13 +114,14 @@ class VisionQualityMonitor:
         )
 
         return {
-            "total_calls": len(all_records),
+            "total_calls": total,
+            "window_size": len(recent),
             "avg_ssim": round(sum(ssims) / max(len(ssims), 1), 6),
             "avg_psnr": round(sum(psnrs) / max(len(psnrs), 1), 2),
             "p95_time_ms": round(p95_time, 1),
             "avg_time_ms": round(sum(times) / max(len(times), 1), 1),
-            "cache_hit_rate": round(cache_hits / max(len(all_records), 1), 4),
-            "error_rate": round(errors / max(len(all_records), 1), 4),
+            "cache_hit_rate": round(cache_hits / max(len(recent), 1), 4),
+            "error_rate": round(errors / max(len(recent), 1), 4),
             "recent_quality": [
                 {
                     "ssim": r["ssim"],
