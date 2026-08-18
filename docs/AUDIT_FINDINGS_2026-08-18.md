@@ -340,6 +340,13 @@
 - **修復**: shutdown 時取消所有追蹤任務並 `asyncio.gather(..., return_exceptions=True)` 等待完成。與 lifecycle 系統的 stop() 模式一致。
 - **狀態**: ✅ 已修復
 
+### M17. chat_service `generate_response` 回傳 None 時後處理鏈炸裂
+- **位置**: `apps/backend/src/services/chat_service.py` `generate_response()`
+- **缺陷**: `_llm_service.generate_response()` 在多個路徑回傳 `None`(所有 LLM 後端不可用時),但後續 `_process_multimodal_output`/`_process_learning`/`_schedule_grounded_learning`/`_store_interaction_memories` 全部直接存取 `response.text` → `AttributeError: 'NoneType' has no attribute 'text'`。雖在 try/except 內不炸伺服器,但每次 LLM 不可用時產生大量雜亂錯誤日誌(4 處 Exception logging)。
+- **修復**: `generate_response` 在 `response is None` 時 early return + warning log;
+`_store_interaction_memories` 加 `if not response: return` 防線。
+- **狀態**: ✅ 已修復
+
 ### M16. `get_config()` 11 個呼叫點缺 None 防護(config 缺失時 AttributeError)
 - **位置**: `chat_service.py`、`router.py`、`config_loader.py`、`biological_integrator.py`、`emotion_system.py`、`digital_life_integrator.py`、`emotional_blending.py`、`autonomic_nervous_system.py`、`state_matrix.py`、`composer.py`、`desktop_interaction.py`——共 11 處
 - **缺陷**: `tiered_loader.get_config()` 回傳 `Optional[Dict]`,但 11 個呼叫點直接對結果呼叫 `.get(key, default)` 而**未檢查 None**——若 config 檔案缺失/損壞/路徑錯誤,必然 `AttributeError: 'NoneType' object has no attribute 'get'`。其中 8 處（bio loop / emotion / DLI / emotional blending / autonomic / state matrix / composer）**不在 try/except 內**,會直接往上層炸。3 處（chat_service/router/config_loader）在 try/except 內但會產生雜亂的 AttributeError 日誌。
