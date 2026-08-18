@@ -14,14 +14,12 @@ Operation types with distinct information retention rates:
   - list      (列出):   retain 100%   — enumerate files
 """
 
-import asyncio
 import datetime
 import json
 import logging
-import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from core.utils import any_keyword, safe_error
 

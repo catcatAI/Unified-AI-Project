@@ -24,7 +24,7 @@ import ast
 import math
 import operator
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 
 class MathExtractor:

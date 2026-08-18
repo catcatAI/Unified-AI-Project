@@ -6,8 +6,6 @@ Uses create_subprocess_exec (no shell) to prevent injection.
 
 import asyncio
 import logging
-import platform
-import shutil
 from typing import Optional
 
 from core.i18n.i18n_manager import t

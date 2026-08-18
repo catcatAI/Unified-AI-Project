@@ -19,7 +19,6 @@
 
 import ast
 import logging
-import os
 import re
 from dataclasses import dataclass, field
 from enum import Enum
@@ -718,7 +717,6 @@ class ConsistencyReviewer:
             return findings
 
         text = design_doc.read_text(encoding="utf-8", errors="ignore")
-        src_symbols = self._collect_src_symbols()
 
         component_patterns = [
             (r"\bStateMatrix4D\b", "core/engine/state_matrix.py"),

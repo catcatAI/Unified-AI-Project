@@ -12,7 +12,6 @@ Analogous to VisionQualityMonitor for the vision pipeline.
 
 import json
 import logging
-import os
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional

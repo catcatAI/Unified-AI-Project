@@ -22,14 +22,12 @@ Subsystem Push API:
 import asyncio
 import json
 import logging
-import sys
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional
 
 from core.system.config.magic_numbers import loop_sleep, timeout_value
 from core.system.live_logger import err as live_err
-from core.system.live_logger import info as live_info
 from core.system.live_logger import status_interval
 from core.utils import safe_error
 from fastapi import WebSocket, WebSocketDisconnect

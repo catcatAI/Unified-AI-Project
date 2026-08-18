@@ -6,10 +6,9 @@ TaskManagerHandler — manages a simple JSON-backed task list.
 import asyncio
 import json
 import logging
-import os
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from core.i18n.i18n_manager import t
 from core.utils import any_keyword

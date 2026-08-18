@@ -4,7 +4,6 @@ Uses wttr.in (free, no API key) with caching and graceful degradation.
 """
 
 import asyncio
-import json
 import logging
 import time
 from typing import Any, Dict, Optional

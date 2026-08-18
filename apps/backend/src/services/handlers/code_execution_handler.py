@@ -10,7 +10,7 @@ import logging
 import sys
 import threading
 import traceback
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from core.i18n.i18n_manager import t
 from core.utils import safe_error
@@ -227,8 +227,6 @@ def _looks_code_shaped(first_line: str, full_text: str) -> bool:
     whose first line starts with a Python keyword, or a single short line that
     is predominantly ASCII code characters.
     """
-    import re
-
     if not first_line:
         return False
     _KEYWORDS = (

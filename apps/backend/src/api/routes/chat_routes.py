@@ -868,7 +868,6 @@ async def _try_agent_routing(
             logger.info("AgentManager/AgentOrchestrator singletons initialized")
         elif _agent_orchestrator_instance is None:
             _agent_orchestrator_instance = AgentOrchestrator(agent_manager=_agent_manager_instance)
-        agent_mgr = _agent_manager_instance
         orchestrator = _agent_orchestrator_instance
         # Handler-backed intents (file/code/web_search) execute through the
         # per-request ChatService's ModelBus; the orchestrator singleton must
@@ -1231,7 +1230,6 @@ def _learn_from_classification_feedback(
     response_type = qc.classify(response_text)
 
     # Also check routing context for ground truth
-    routing_mode = context.get("_actual_routing_mode", "")
     lifecycle_adj = context.get("lifecycle_behavior", {})
     lc_mode = lifecycle_adj.get("routing_mode", "")
     intent_routing = context.get("intent_routing", {})
@@ -2091,7 +2089,6 @@ async def stream_document(request: Dict[str, Any] = Body(...)) -> StreamingRespo
         )
     from ai.garden.garden_engine import GARDENEngine
     from ai.ed3n.ed3n_engine import ED3NEngine
-    from ai.streaming import StreamingPipeline, TokenStream
 
     garden = GARDENEngine()
     garden.load_presets()

@@ -16,10 +16,9 @@ ANGELA-MATRIX: [L5] [βγδ] [B] [L4]
 
 import asyncio
 import logging
-import os
 import time
 from collections import deque
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional
 
 from core.crisis_log import append_quality_log as _append_quality_log
 from core.crisis_log import write_crisis_log as _write_crisis_log
