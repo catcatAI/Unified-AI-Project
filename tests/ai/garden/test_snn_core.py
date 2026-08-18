@@ -8,6 +8,7 @@ Tests for GARDEN TensorSNNCore.
 import os
 import tempfile
 
+import numpy as np
 import pytest
 from ai.garden.snn_core import (
     DEFAULT_DECAY,
@@ -16,6 +17,7 @@ from ai.garden.snn_core import (
     DEFAULT_TIMESTEPS,
     HormonalModulator,
     TensorSNNCore,
+    _get_backend,
 )
 
 
@@ -276,6 +278,38 @@ class TestTensorSNNCorePersistence:
             core2.load(path)
         assert core2.total_steps == 42
         assert core2.total_hebbian_updates >= 0
+
+    def test_torch_save_loads_on_torchless_runtime(self, snn_core: TensorSNNCore, monkeypatch):
+        """Regression (H1-a): a torch-saved .pt checkpoint must load on a
+        torch-less runtime via the numpy sidecar (.npz sparse / .json meta)
+        instead of raising FileNotFoundError."""
+        core = snn_core
+        xp, is_torch = _get_backend()
+        if not is_torch:
+            pytest.skip("torch backend not active; nothing to cross-backend test")
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "snn.pt")
+            core.hebbian_update({"g1": 1.0}, {"g2": 0.9}, lr=0.05)
+            core.save(path)
+            # Sidecar files must exist next to the .pt.
+            assert os.path.exists(path + ".npz"), "torch save must write .npz sidecar"
+            assert os.path.exists(tmp + "/snn.json"), "torch save must write .json meta"
+            # Simulate torch-less runtime: force the numpy backend for load.
+            import ai.garden.snn_core as S
+
+            orig = S._get_backend
+            S._get_backend = lambda: (np, False)
+            try:
+                state = S._load_checkpoint(path)
+            finally:
+                S._get_backend = orig
+            assert state["W"] is not None
+            assert "g1" in state["key_to_idx"] and "g2" in state["key_to_idx"]
+            assert "last_used_by_key" in state
+            # Weight values must survive the sparse densify roundtrip.
+            i = state["key_to_idx"]["g1"]
+            j = state["key_to_idx"]["g2"]
+            assert state["W"][i, j] > 0.0
 
 
 class TestTensorSNNCoreStats:
