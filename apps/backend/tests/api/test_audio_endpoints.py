@@ -60,10 +60,10 @@ def test_audio_control_post_and_get_agree_on_enabled_flag():
     resp_post = client.post("/api/v1/audio/control", json={"enabled": False})
     assert resp_post.status_code == 200
     jp = resp_post.json()
-    assert jp == {"status": "success", "module": "audio", "enabled": False, "mode": "post_method"}
+    assert jp == {"status": "success", "module": "audio", "enabled": False, "requested": False}
 
     # GET control
     resp_get = client.get("/api/v1/audio/control", params={"enabled": True})
     assert resp_get.status_code == 200
     jg = resp_get.json()
-    assert jg == {"status": "success", "module": "audio", "enabled": True, "mode": "get_method"}
+    assert jg == {"status": "success", "module": "audio", "enabled": True, "requested": True}

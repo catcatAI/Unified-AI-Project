@@ -51,6 +51,29 @@ class ChatService:
         task.add_done_callback(self._background_tasks.discard)
         return task
 
+    def _detect_drive_intent(self, text: str) -> Optional[str]:
+        """Detect a Google Drive intent from user text via config keywords.
+
+        Returns ``"google_drive"`` when a configured drive keyword matches,
+        otherwise ``None``.
+        """
+        if not text:
+            return None
+        try:
+            from core.config_loader import get_angela_config
+
+            keywords = get_angela_config().get_intent_keywords("google_drive")
+        except Exception:
+            logger.debug("Failed to load Google Drive intent keywords", exc_info=True)
+            keywords = []
+        lowered = text.lower()
+        for kw in keywords:
+            if not kw:
+                continue
+            if kw.lower() in lowered:
+                return "google_drive"
+        return None
+
     @property
     def model_bus(self):
         """Return the ModelBus from the underlying LLM router, if available."""

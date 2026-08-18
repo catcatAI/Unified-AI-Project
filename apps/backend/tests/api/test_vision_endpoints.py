@@ -50,8 +50,8 @@ def test_vision_control_post_get_match():
     client = TestClient(app)
     rp = client.post("/api/v1/vision/control", json={"enabled": False})
     assert rp.status_code == 200
-    assert rp.json() == {"status": "success", "module": "vision", "enabled": False, "mode": "post_method"}
+    assert rp.json() == {"status": "success", "module": "vision", "enabled": False, "requested": False}
 
     rg = client.get("/api/v1/vision/control", params={"enabled": True})
     assert rg.status_code == 200
-    assert rg.json() == {"status": "success", "module": "vision", "enabled": True, "mode": "get_method"}
+    assert rg.json() == {"status": "success", "module": "vision", "enabled": True, "requested": True}

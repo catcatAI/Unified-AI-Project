@@ -134,6 +134,43 @@ _TPL_STOPWORDS = frozenset(
 )
 
 
+def _unwrap_brackets(token: str) -> str:
+    """Strip one balanced pair of enclosing square brackets.
+
+    ``[Alice]`` -> ``Alice`` (a bracket-wrapped entity is still an entity);
+    ``[1,`` / ``5]`` are left intact (unbalanced — fragment of an interval or
+    array literal, not a bracketed token).  A bare ``[]`` unwraps to the empty
+    string, which keeps it out of number/entity variable detection (it is a
+    literal empty-value marker, equivalent by meaning to the SNN's ``[]`` slot).
+    """
+    if len(token) >= 2 and token[0] == "[" and token[-1] == "]":
+        return token[1:-1]
+    return token
+
+
+def _is_number_variable(tok: str) -> bool:
+    """True for a standalone numeric token (no bracket fragments).
+
+    ``[1,`` and ``5].`` must NOT count as numbers — they are fragments of an
+    interval/array literal whose structure should be preserved verbatim.
+    """
+    if "[" in tok or "]" in tok:
+        return False
+    return bool(re.fullmatch(r"\d[\d,.]*", tok.strip(string.punctuation)))
+
+
+def _is_entity_variable(tok: str, raw: str) -> bool:
+    """True for an initial-capped entity token (bracket-wrapped allowed).
+
+    Sentence-initial function words (``The``, ``This``) are excluded so a
+    capitalised ordinary word is not mistaken for a slot filler.
+    """
+    bare = _unwrap_brackets(raw)
+    if not bare or not (bare[0].isupper() and bare[0].isalpha()):
+        return False
+    return bare.strip(string.punctuation).lower() not in _TPL_STOPWORDS
+
+
 def _extract_template_pair(
     input_text: str, output_text: str
 ) -> Optional[Tuple[str, str, List[str], List[str]]]:
@@ -165,13 +202,18 @@ def _extract_template_pair(
     variables: set = set()
     for toks, raw in ((in_toks, in_raw), (out_toks, out_raw)):
         for t, r in zip(toks, raw):
-            stripped = t.strip(string.punctuation)
-            if re.fullmatch(r"\d[\d,.]*", stripped):
+            if _is_number_variable(t):
                 variables.add(t)
-            elif r[:1].isupper() and r[:1].isalpha():
+            elif _is_entity_variable(t, r):
                 variables.add(t)
     for t in shared:
-        if t.strip(string.punctuation) not in _TPL_STOPWORDS:
+        # Balanced bracket tokens ([Alice]) may still be entities; unbalanced
+        # bracket fragments ([1, / 5].) are interval/array-literal pieces whose
+        # structure must be preserved verbatim, never turned into slots.
+        if _unwrap_brackets(t) == t and ("[" in t or "]" in t):
+            continue
+        bare = _unwrap_brackets(t).strip(string.punctuation)
+        if bare and bare not in _TPL_STOPWORDS:
             variables.add(t)
 
     in_tpl = " ".join("[]" if t in variables else t for t in in_toks)
@@ -224,10 +266,9 @@ def _extract_query_template(input_text: str) -> Optional[Tuple[str, List[str]]]:
     toks = [t.lower() for t in raw]
     variables: set = set()
     for t, r in zip(toks, raw):
-        stripped = t.strip(string.punctuation)
-        if re.fullmatch(r"\d[\d,.]*", stripped):
+        if _is_number_variable(t):
             variables.add(t)
-        elif r[:1].isupper() and r[:1].isalpha():
+        elif _is_entity_variable(t, r):
             variables.add(t)
     tpl = " ".join("[]" if t in variables else t for t in toks)
     if not tpl.strip():
@@ -859,10 +900,29 @@ class GARDENEngine:
         except Exception as e:
             logger.debug("GARDEN: template key registration failed: %s", e)
 
-        # Enforce the template-store cap (FIFO by first-seen).
+        # Enforce the template-store cap (FIFO by first-seen).  When a template
+        # is evicted, its SNN keys must follow — otherwise the SNN keeps a dead
+        # tpl: neuron for every evicted template (unbounded drift, exactly the
+        # dict/SNN V divergence the separation forbids).  Only the out-tpl is
+        # compacted when it is no longer referenced by any surviving template
+        # (multiple in-tpls may share one out-tpl, e.g. taller/older -> X).
         if len(self._templates) > self._templates_cap:
             oldest = next(iter(self._templates))
+            evicted_out = self._templates[oldest].get("out_tpl")
             self._templates.pop(oldest, None)
+            try:
+                orphan_keys = [f"tpl:{oldest}"]
+                if evicted_out and evicted_out != oldest and not any(
+                    v.get("out_tpl") == evicted_out for v in self._templates.values()
+                ):
+                    orphan_keys.append(f"tpl:{evicted_out}")
+                removed = self.snn.compact_removed_keys(orphan_keys)
+                if removed:
+                    logger.debug(
+                        "GARDEN: compacted %d orphan template keys after FIFO evict", removed
+                    )
+            except Exception as e:
+                logger.debug("GARDEN: template orphan compaction failed: %s", e)
 
         return in_tpl, out_tpl
 

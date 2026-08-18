@@ -145,6 +145,16 @@ operational_configs:
     host: "127.0.0.1"
     port: 8000
 
+  # GARDEN engine structural-template layer.
+  # The dictionary grows concrete tokens; the SNN grows structural templates
+  # ([] + [] = []).  templates_cap bounds the engine-side template store (and
+  # with it the tpl: neurons in the SNN) — raised for more training data,
+  # lowered on memory-constrained devices.
+  garden:
+    engine:
+      templates_cap: 500
+      learned_recall_cap: 5000
+
 web_search_tool:
   search_url_template: "https://duckduckgo.com/html/?q={query}"
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
