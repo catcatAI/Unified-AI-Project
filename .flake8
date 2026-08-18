@@ -59,7 +59,7 @@ ignore =
     W504,
     E701,
     E704,
-    F601,
+
 per-file-ignores =
     __init__.py:F401,
     test_*.py:S101,
