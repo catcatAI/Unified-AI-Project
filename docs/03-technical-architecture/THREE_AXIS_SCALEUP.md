@@ -223,8 +223,9 @@ AnchorLearner 的輸入換成「含段落標記的語料」，EM 會自動學出
 | 符號推理 | 雞兔同籠、傳遞關係、日曆、質量陷阱 | `ai/symbolic_reasoner.py:600-629,495-597` |
 | 比較鏈 | 傳遞閉包求解 | `ai/reasoning/relational_chain.py:130-207` |
 | 知識查表 | 顏色/動物腿數/單位換算 | `ai/knowledge_base.py:247-358` |
-| 化學 | **只有查表** `_CHEMICAL_FORMULAS`（regex 配對） | `ai/knowledge_base.py:150-173,351-356` |
-| 物理 | **無 Q&A 求解器**（僅運動模擬約束 `kinetic_validator.py` 等） | `core/bio/kinetic_validator.py` |
+| 化學 | **查表** `_CHEMICAL_FORMULAS`（`knowledge_base.py:150-173,351-356`）+ **真實計量引擎** `ChemistryDomainEngine`（分子量 + 理想氣體，`_parse_formula` :565、`_molar_mass` :573） | `ai/memory/domain_ripple.py:558` |
+| 物理 | **數量分類引擎** `PhysicsDomainEngine`（關鍵字+數字偵測，`compute` 委派 `math_verifier.compute_arithmetic`） | `ai/memory/domain_ripple.py:459,478` |
+| 域路由 | `DOMAIN_REGISTRY` + `route_domain(text)` — 已存在的「域軸處理函數」選擇器 | `ai/memory/domain_ripple.py:609,638` |
 | 學習器 | 位元級 MLP cell（carry/borrow/mul），僅在確定性引擎雙雙 None 時 fallback | `ai/arithmetic/arithmetic_learner.py`, `ai/arithmetic/gate_router.py:4-23,53-85` |
 
 **關鍵事實**：`math_verifier.py:215-223` 註明它是**唯一算術引擎** —
@@ -246,8 +247,9 @@ ED3N/GARDEN 的 `route_math`（`dictionary_layer.py:452-472`,
 
 ### 4.3 物理/化學的正確接入（greenfield，遵循現有模式）
 
-物理/化學**沒有** Q&A 求解器（§4.1）— 接入 = 新增**確定性評估器 + route
-鉤子**，三軸只做語料對位。遵循 `math_verifier` 的「單一真相源」模式：
+物理/化學已有**最小 Q&A 引擎**（`domain_ripple.py`：分子量/理想氣體/數量分類，
+見 §4.1 修正）— 接入 = 擴充既有引擎 + route 鉤子，三軸只做語料對位。遵循
+`math_verifier` 的「單一真相源」模式：
 
 1. **新增 `physics_formulas.py` / `chem_verifier.py`**（或擴充
    `math_verifier` 的 SAFE_OPS/_SAFE_FUNCTIONS，`math_verifier.py:33-43,
@@ -265,8 +267,10 @@ ED3N/GARDEN 的 `route_math`（`dictionary_layer.py:452-472`,
 
 ### 4.4 誠實限制
 
-- **物理/化學是 greenfield**：現在只有化學查表、無物理 Q&A。任何「引擎已能
-  做物理」的宣稱都是假的（`level5_asi_system.py` 也無此能力 — 純對齊協調器）。
+- **物理/化學 Q&A 是部分既有**：`domain_ripple.py` 已有分子量/理想氣體/數量分類
+  （`PhysicsDomainEngine` :459、`ChemistryDomainEngine` :558），但**公式求解器**
+  （F=ma、動能、單位換算進階）仍缺。任何「引擎已能算公式」的宣稱都需先有
+  `math_verifier` 同級測試（`level5_asi_system.py` 也無此能力 — 純對齊協調器）。
 - **單位系統是硬骨頭**：`knowledge_base._UNIT_CONVERSIONS`（`:106-147`）只做
   長度/重量/體積/時間；溫度、複合單位需先補齊才能正確驗證。
 - **三軸的錨點不含單位推理**：`1kg 羽毛 vs 1kg 鋼鐵` 的質量陷阱是
@@ -337,7 +341,7 @@ ED3N/GARDEN 的 `route_math`（`dictionary_layer.py:452-472`,
 | **A. 段落錨點** | AnchorLearner 餵 wiki/alpaca 序列化樣本，學自然語言錨點 | 錨點收斂、換行/句點 terminality 碾壓；測試 `test_paragraph_alignment` | `anchor_learner.py`, `tests/` |
 | **B. 磁碟溫層** | SQLite suffix 索引取代 RAM `_anchor_suffixes`；熱層改為 LRU 快取 | 2GB 語料載入 < RAM cap；查詢命中率 > 90% | `three_axis_engine.py`, 新 `disk_index.py` |
 | **C. 模態對位** | `multimodal_memory` 樣本序列化 → 跨模態錨點；三軸對位 + `SharedLatentSpace` 語義確認 | 圖↔文、音↔文對位 probe | `AnchorLearner` 重用, `multimodal/` |
-| **D. 物理/化學** | `physics_formulas.py`/`chem_verifier.py` + `_try_physics`/`_try_chem` route；`knowledge_base` 單位擴充 | F=ma、分子量 probe；`math_verifier` 同級測試 | 新 verifier, `garden_engine.py:1092-1102` |
+| **D. 物理/化學** | 擴充 `domain_ripple.py` 既有引擎（`PhysicsDomainEngine`/`ChemistryDomainEngine`）→ `route_domain` 進 GARDEN Stage 1（`garden_engine.py:1092`）；補公式求解器（F=ma、動能）與 `knowledge_base` 單位擴充 | F=ma、分子量 probe；`math_verifier` 同級測試 | `domain_ripple.py`, `garden_engine.py:1092-1102` |
 | **E. 上界測試** | 滑動窗跨全語料召回 | 上下文上界 ≈ 磁碟預算；記憶體穩定 | §5 全 |
 
 ---
@@ -351,8 +355,9 @@ ED3N/GARDEN 的 `route_math`（`dictionary_layer.py:452-472`,
    但**不會瞎答**（這是優點）。
 3. **磁碟 I/O 延遲**：溫層 miss 讀冷層會慢 — 需要 LRU 命中率監控
    （比照 `performance_optimizer.py` 的 real hit/miss 追蹤）。
-4. **物理/化學 greenfield**：單位系統與公式驗證是**新工作**，不是「已有」；
-   任何「已能做物理」的宣稱必須先有 `math_verifier` 同級測試。
+4. **物理/化學公式求解器缺**：分子量/數量分類已存在（`domain_ripple.py`），
+   但 F=ma、動能、複合單位是**新工作**；任何「已能做物理公式」的宣稱必須
+   先有 `math_verifier` 同級測試。
 5. **模態位元組流需編碼器**：原始像素/波形不直接入三軸（§3.4）。
 
 ---
@@ -365,6 +370,27 @@ ED3N/GARDEN 的 `route_math`（`dictionary_layer.py:452-472`,
   的確定性對位，計算仍在確定性層，泛化/語義仍在 LLM 層。
 - 磁碟/記憶體預算全走 `magic_numbers.py` 容量級聯與 `capacity.default.yaml` —
   不新增平行容量系統。
+
+### 8.1 專案內既有「該加進來」的元件（Integration Audit）
+
+> 2026-08-18 全專案審計（對照本藍圖 §2-§6 各階段）— 找到**現成可重用的既有
+> 元件**，比藍圖「自己造」更省事，並修正一處事實錯誤（§4.1 物理/化學）。
+
+| 藍圖階段 | 既有元件（可直接用） | 位置 | 比藍圖原案省什麼 |
+|---|---|---|---|
+| A. 段落錨點 | `DocumentChunker.chunk()`（Section/Paragraph/Sentence 邊界） | `ai/document/chunker.py:55-66` | 不用自建段落切分，序列化即餵 AnchorLearner |
+| B. 磁碟溫層 | `context/storage/` 三後端（`MemoryStorage` LRU :30-60 / `DiskStorage` JSON :15-42）+ `VECTOR_STORE_PATH` 雙後端 | `ai/context/storage/`, `ai/memory/vector_store.py:26` | RAM↔磁碟分層抽象已存在，SQLite 只補 suffix 索引 |
+| C. 模態對位 | `SharedLatentSpace` + `cross_modal_router` + `multimodal_memory/retriever` | `ai/multimodal/` | 模態配對樣本已內建，序列化即餵錨點學習 |
+| D. 物理/化學 | `PhysicsDomainEngine` :459 / `ChemistryDomainEngine` :558 / `route_domain` :638 | `ai/memory/domain_ripple.py` | 引擎+路由已存在，只補公式求解器 |
+| 短軸(域軸) | `DOMAIN_REGISTRY`（math/chemistry/physics）| `ai/memory/domain_ripple.py:609` | §0.1 域軸的現成值域 |
+| 熱/冷分層 | `memory_integration_loop._promote_memories`（short→long-term 升溫） | `ai/lifecycle/memory_integration_loop.py:424-447` | §5.2「命中升溫」已實作 |
+| 一致性 | `ham_core_storage` 磁碟滿**跳過儲存不截斷**（與 §5.2 同策略） | `ai/memory/ham_memory/ham_core_storage.py:74-121` | 冷層策略複用 |
+| 對齊鉤子 | `core/hsp/bridge/data_aligner.py`（stub） | `connector.py:221-225` | 「align」名稱衝突處可掛真實錨點對位 |
+
+**審計結論**：藍圖各階段幾乎都有既有對應 — 實作優先序 = **先用現成的
+（`domain_ripple`、`document/chunker`、`context/storage`），再補缺口**
+（SQLite suffix 索引、公式求解器、段落錨點驗證）。這符合 ASI 工程標準
+「surgical / 不重造輪子」。
 
 ---
 
