@@ -488,7 +488,6 @@ class AngelaLLMService:
         """初始化可用的後端（依 deployment.mode 閘控類別）"""
         deployment = self.config.get("deployment") or {}
         mode = (deployment.get("mode") or self.config.get("llm_mode") or "local").lower()
-        selection = (deployment.get("selection") or "available").lower()
         allowed = self._allowed_types()
         if mode == "local":
             logger.info(
@@ -660,10 +659,21 @@ class AngelaLLMService:
 
     async def _initialize_standard_mode(self) -> bool:
         available = []
+        # deployment.selection: `available` (default) only keeps health-passing
+        # backends so the runtime fallback chain never tries an unhealthy one;
+        # `per-vendor` keeps every enabled backend and falls back at runtime.
+        deployment = self.config.get("deployment") or {}
+        selection = (deployment.get("selection") or "available").lower()
         for backend_type, backend in self.backends.items():
             if await backend.check_health():
                 available.append(backend_type)
                 logger.info(f"✓ {backend_type.value} 後端可用")
+            elif selection == "available":
+                logger.info(f"✗ {backend_type.value} 後端健康檢查失敗，從可用清單移除")
+        if selection == "available":
+            self.backends = {
+                bt: b for bt, b in self.backends.items() if bt in available
+            }
 
         if not available:
             logger.warning("沒有可用的 LLM 後端，將使用備份回應機制")
@@ -1472,8 +1482,6 @@ class AngelaLLMService:
 
         if self.llm_mode == "auto" and self.auto_selector is not None:
             try:
-                from ai.response.neuro_auto_selector import AutoBackendChoice, AutoDecision
-
                 ctx = {
                     "intent": context.get("intent", "general"),
                     "complexity": context.get("complexity", 0.5),

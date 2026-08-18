@@ -9,12 +9,10 @@ ANGELA-MATRIX: L3 [β] [A] [L0-L11]
 
 from __future__ import annotations
 
-import asyncio
 import logging
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 if TYPE_CHECKING:
-    from core.interfaces.protocols import ChatResponse
     from services.llm.router import AngelaLLMService, LLMResponse
 
 logger = logging.getLogger("angela_llm.memory")

@@ -257,7 +257,13 @@
 - ✅ **前端安全**：聊天文字 escape、XSS 白名單、CSP 注入
 - ✅ **API app 完整**：`_IncludedRouter` 為新版 FastAPI 巢狀掛載，所有 v1 路由俱在
 
-### 本輪新增 LOW
+### 本輪新增
+
+### M3. LLM router `deployment.selection` 配置死碼（設計意圖未實作）
+- **位置**: `apps/backend/src/services/llm/router.py` `_init_backends()`（舊 491 行）
+- **缺陷**: 註解宣稱 `selection` 支援 `available`（預設，只保留 health-passing 後端）與 `per-vendor`（註冊所有 enabled 後端、執行期 fallback），但 `selection` 變數計算後**從未使用**——`_init_backends` 一律註冊所有 enabled 後端，使執行期 fallback chain（`generate_response` 迭代 `self.backends`）可能選到初始化時已失敗的後端。全專案亦無任何 config 設定此鍵。
+- **修復**: `_initialize_standard_mode()` 中實作 `available` 過濾——健康檢查失敗的後端從 `self.backends` 移除（預設行為），`per-vendor` 保留全部。同時移除 `_init_backends` 的死 `selection` 變數。
+- **狀態**: ✅ 已修復（`available` 只保留健康後端 / `per-vendor` 保留全部，已驗證）
 
 ### L12. `packages/cli/cli/main.py:39,45` 與 `cli_runner.py:59,66` 的 mock fallback pass
 - **重新分類為「設計意圖內的 graceful degradation」而非 stub**：後端不可用時 `initialize_services` 空 body + `get_services` 回 `{}` 讓 CLI 仍能啟動並印出「not available」提示；`cli_runner._mock_response` 是完整實作。與 L5 的真 stub（宣稱功能實則不做事）不同。狀態：✅ 已審查（不改）

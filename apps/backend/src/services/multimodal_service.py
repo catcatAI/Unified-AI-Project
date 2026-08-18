@@ -20,7 +20,7 @@ import logging
 import os
 import threading
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 from core.utils import safe_error
@@ -394,7 +394,7 @@ class MultimodalService:
                     return {"modality": modality, "error": pipe_result["error"]}
                 vec = pipe_result.get("feature_vector")
                 latent = pipe_result.get("latent")
-                ssim_val = pipe_result.get("ssim", 0.0)
+                result["ssim"] = pipe_result.get("ssim", 0.0)
                 # Record quality
                 self._get_quality_monitor().record(pipe_result)
             elif modality == "audio":
@@ -405,7 +405,7 @@ class MultimodalService:
                     return {"modality": modality, "error": pipe_result["error"]}
                 vec = pipe_result.get("feature_vector")
                 latent = pipe_result.get("latent")
-                snr_val = pipe_result.get("snr", 0.0)
+                result["snr"] = pipe_result.get("snr", 0.0)
                 # Record quality
                 self._get_audio_quality_monitor().record(pipe_result)
             else:
@@ -528,8 +528,6 @@ class MultimodalService:
                     pil_img.save(buf, format="PNG")
                     b64 = base64.b64encode(buf.getvalue()).decode("ascii")
                     result["decoded"] = f"data:image/png;base64,{b64}"
-                from ai.multimodal.quality_metrics import ssim
-
                 original = item.get("feature_vector")
                 if original is not None:
                     result["quality"] = {"ssim": 0.0}  # feature-level no ssim
@@ -542,7 +540,6 @@ class MultimodalService:
                     result["decoded"] = wav.tolist()
                 else:
                     import base64
-                    import struct
 
                     sample_rate = 16000
                     int16 = (np.clip(wav, -1.0, 1.0) * 32767).astype(np.int16)
@@ -793,7 +790,6 @@ class MultimodalService:
             if source_modality == "vision" and target_modality == "audio":
                 audio = self._get_audio_decoder().decode(latent)
                 import base64
-                import struct
                 import wave
 
                 int16 = (np.clip(audio, -1.0, 1.0) * 32767).astype(np.int16)

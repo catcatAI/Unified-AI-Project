@@ -12,14 +12,12 @@ Analogous to ModelBus for the chat pipeline. Supports:
 P33: Cross-modal integration layer after P30-P32 single-modality pipelines.
 """
 
-import asyncio
 import hashlib
 import logging
 import time
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
-import numpy as np
 from core.utils import safe_error
 
 logger = logging.getLogger(__name__)

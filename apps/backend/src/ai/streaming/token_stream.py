@@ -287,7 +287,3 @@ class StreamConfig:
     @get_timeout.setter
     def get_timeout(self, value: float):
         self._get_timeout_val = max(0.1, value)
-
-
-# UUID import at module level
-import uuid

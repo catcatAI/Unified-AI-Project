@@ -97,7 +97,6 @@ class GARDENBackend(BaseLLMBackend):
             writeback_result = {}
             try:
                 from ai.bridge.neural_bridge import (
-                    apply_state_updates,
                     build_neural_context,
                     neural_bridge_enabled,
                 )

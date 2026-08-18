@@ -338,7 +338,6 @@ class GameEngine:
         return npc
 
     def _show_interaction_choices(self, npc: NPC) -> None:
-        s = self._state
         choices = [
             ("ask_info", self.i18n.t("choice_ask_info", name=npc.name)),
             ("ask_help", self.i18n.t("choice_ask_help", name=npc.name)),

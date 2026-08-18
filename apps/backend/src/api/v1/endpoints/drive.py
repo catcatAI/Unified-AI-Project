@@ -4,7 +4,6 @@ Google Drive 集成 API 端點
 """
 
 import logging
-import os
 import tempfile
 from datetime import datetime
 from pathlib import Path
@@ -312,9 +311,6 @@ async def get_file_metadata(file_id: str, svc=Depends(get_drive_service)) -> dic
 async def sync_files(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_service)) -> dict:
     """同步選定的文件到本地並存入記憶"""
     file_ids = request.get("file_ids", [])
-    default_folder = str(
-        Path(__file__).parent.parent.parent.parent.parent / "data" / "drive_downloads"
-    )
     folder_key = request.get("folder_alias", request.get("folder_path", "default"))
     store_memory = request.get("store_memory", True)
 
@@ -452,9 +448,6 @@ async def analyze_drive(
 ) -> dict:
     """分析 Drive 文件並總結內容（需下載 + 解析）"""
     limit = request.get("limit", 5)
-    default_folder = str(
-        Path(__file__).parent.parent.parent.parent.parent / "data" / "drive_downloads"
-    )
     folder_key = request.get("folder_alias", request.get("folder_path", "default"))
     # Early path validation — whitelist-based, CodeQL-safe
     folder = _get_safe_drive_folder(folder_key)
