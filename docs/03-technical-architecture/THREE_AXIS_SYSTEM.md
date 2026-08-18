@@ -364,8 +364,9 @@ Stage 0 Emotion → Stage 1 Math/Logic/Reasoning → Stage 1.6a Template recall
 
 > 2026-08-18：依用戶要求，概念驗證已落為**專案內的可訓練驗證引擎**。
 > 實作於 `apps/backend/src/ai/three_axis/three_axis_engine.py`（
-> `ThreeAxisEngine`），訓練腳本 `scripts/train_three_axis.py`，測試
-> `tests/ai/test_three_axis_engine.py`（14 tests）。Checkpoint 存
+> `ThreeAxisEngine`）+ `anchor_learner.py`（`AnchorLearner`），訓練腳本
+> `scripts/train_three_axis.py`，測試
+> `tests/ai/test_three_axis_engine.py`（21 tests）。Checkpoint 存
 > `data/checkpoints/three_axis/three_axis.json`。
 
 ### 8.1 與概念驗證的差異（誠實）
@@ -380,11 +381,13 @@ Stage 0 Emotion → Stage 1 Math/Logic/Reasoning → Stage 1.6a Template recall
 | `_position_content` | 位置×內容稀疏矩陣 | 該位置出現過的 UTF-8 值統計 |
 | `_transitions` | (左值,右值) bigram | 左鄰預測 |
 | `_prefix_recall` | 有界左文脈（≤6 字符）→ 下一值 | 單步消歧回退 |
-| `_exact_completions` | **完整已知前綴 → 下一值** | 對話生成的唯一續接路徑 |
+| `_exact_completions` | **完整已知前綴 → 下一值** | 對話生成的續接路徑（fallback） |
+| `_anchor_problems` | **學習錨點切分後的正規化問題 → 答案** | 對話的主路徑（滑動對位） |
+| `_anchor_suffixes` | 正規化問題後綴 → 答案統計 | 前綴不敏感的後綴查找 |
 
-**解析優先序**（`_resolve_position`）：`exact-completion`（完整前綴，conf
-0.95）→ `prefix-recall`（短窗口，conf 0.95）→ `position-exact` →
-`position-majority`（conf 0.60）→ `bigram`（conf 0.55）→ `global`。
+**解析優先序**（`process`）：`anchor-aligned`（學習錨點滑動對位，conf 0.95）
+→ 逐字符 `exact-completion` → `prefix-recall` → `position-exact` →
+`position-majority` → `bigram` → `global`。
 
 **對話生成**（`generate`）**只在 `exact-completion` 路徑續接**：逐字符把完整
 已知前綴查 `_exact_completions`，命中才續接；一旦完整前綴在語料中沒有後續
@@ -392,10 +395,11 @@ Stage 0 Emotion → Stage 1 Math/Logic/Reasoning → Stage 1.6a Template recall
 證實它會誤召回歧義後繼（`92=101` 同時屬於 `293 - 192=101` 與
 `827 + 192=1019`，產生尾隨垃圾字符），僅作單步回退。
 
-> ⚠️ **誠實註記**：已實作引擎的對話能力是**逐字符完整前綴召回**
-> （memorisation），**不是泛化**。probe 必須與訓練樣本逐字符一致才答得對；
-> 任何未見過的前綴（即使只差一個字符）會退到 position-majority 等統計回退，
-> 不保證正確。這與 §6 的「資料覆蓋依賴」一致，是三軸現階段的真實能力邊界。
+> ⚠️ **誠實註記（更新 2026-08-18）**：對話能力本質是**語料召回**（memorisation），
+> **不是泛化**。未見過的問題會退到統計回退，不保證正確。但 **§8.5 的學習錨點
+> 滑動對位**已擴展「召回」的範圍：空白變異、前置詞差異（`what is`）、長度
+> 偏移都不再需要逐字符一致 — 這是**對位自由度**，不是**數值泛化**（四則的
+> 答案仍是查回，非計算）。
 
 ### 8.2 真實數據集訓練結果（2026-08-18）
 
@@ -407,22 +411,25 @@ Stage 0 Emotion → Stage 1 Math/Logic/Reasoning → Stage 1.6a Template recall
 - `logic_train.json`：10,000 條 `{proposition, answer}`
 - （可選）`alpaca_data.json`：指令/輸出對
 
-訓練 40,000 樣本：**2.9s**、`chars=903,732`、`positions=89`、
-`transitions=590`、`exact_completions≈375k`、記憶體 **55 MiB / 2 GiB cap
-（ratio 0.027）** — 遠低於 2GB 限制。記憶體上限由項目容量設定
-（`capacity.default.yaml` 的 `memory.default_mb: 2048`）經
-`effective_capacity_bytes`（`magic_numbers.py`）解析。
+訓練 40,000 樣本：**4.1s**、`chars=903,732`、`positions=89`、
+`transitions=590`、`anchor_problems=36,150`、`anchor_suffixes=224,843`、
+記憶體 **69.8 MiB / 2 GiB cap（ratio 0.034）** — 遠低於 2GB 限制。記憶體
+上限由項目容量設定（`capacity.default.yaml` 的 `memory.default_mb: 2048`）
+經 `effective_capacity_bytes`（`magic_numbers.py`）解析。
 
-**對話驗證**（3 probe，皆在訓練集內）：
+**對話驗證**（6 probe，皆在訓練集內，含滑動變異）：
 
 ```
-OK  178 + 101=?  -> 178 + 101=279      (conf=0.60, route=position-majority)
-OK  293 - 192=?  -> 293 - 192=101      (conf=0.95, route=prefix-recall)
-OK  917 * 814=?  -> 917 * 814=746438   (conf=0.60, route=position-majority)
+OK  178 + 101=?        -> 178 + 101=279        (conf=0.95, route=anchor-aligned)
+OK  293 - 192=?        -> 293 - 192=101        (conf=0.95, route=anchor-aligned)
+OK  917 * 814=?        -> 917 * 814=746438     (conf=0.95, route=anchor-aligned)
+OK  178+101=?          -> 178+101=279          (conf=0.95, route=anchor-aligned)
+OK  what is 178 + 101=? -> what is 178 + 101=279 (conf=0.95, route=anchor-aligned)
+OK  178  +  101=?      -> 178  +  101=279      (conf=0.95, route=anchor-aligned)
 ```
 
-3/3 正確、無尾隨垃圾。正確性來自完整前綴在 `_exact_completions` 中逐字符
-命中；`generate` 在記憶答案結尾自動停止，不靠統計續接。
+6/6 正確、無尾隨垃圾。錨點對位解決了空白/前置詞/長度偏移；逐字符
+`exact-completion` 仍是記憶答案結尾的停止機制。
 
 ### 8.3 記憶體安全
 
@@ -430,17 +437,48 @@ OK  917 * 814=?  -> 917 * 814=746438   (conf=0.60, route=position-majority)
   約 50MB）— 與值對表（65,536）解耦：它追蹤語料前綴，不是 256² 值對空間。
 - `estimate_memory_bytes()` 是**維護式計數器**（學習時增量、修剪時減量），
   避免每次調用全表掃描（早期版本每次 O(N) 重算導致 5000 樣本超時 0.34s→
-  修正後 40k 樣本僅 2.9s）。
+  修正後 40k 樣本僅 4.1s）。
 - 若估算超 cap，`_enforce_memory_cap` 先逐出最舊的 bigram（LRU），從不 OOM。
 
 ### 8.4 已知限制
 
-1. **非泛化**：probe 需與訓練樣本逐字符一致（§8.1 誠實註記）。
+1. **非泛化**：未見問題退統計回退（§8.1 誠實註記）— 滑動對位補「形式」變異，
+   不補「內容」泛化。
 2. **`max_seq_len` 截斷**：超過 `max_seq_len`（預設 512）的樣本只學前段。
 3. **exact_completions LRU**：超大語料（>1M 前綴）逐出最舊前綴，老樣本
    的召回可能丟失 — 是可調的記憶體/召回取捨。
 4. **多字節 UTF-8**：CJK 字符以多字節數值序列處理，前綴表按「數值」而非
    「字符」切窗，CJK 消歧窗口效率較低（§6 風險 4）。
+
+### 8.5 學習錨點滑動對位（Learned Anchor Alignment）
+
+> 2026-08-18：位置軸的「滑動對位」自由度以 **EM 式學習**補上，非手寫規則。
+> 用戶指出：對位不該寫死（例如硬編「找 `=`」），應是**預設 + 訓練 + 迭代**。
+
+**AnchorLearner（`anchor_learner.py`）EM 循環**：
+
+```
+預設錨點(prior) = {= + - * / ? 空白 . , ! ( ) [ ] { } : ;}  ← 僅起點
+   ↓ E-step（對齊）: 每樣本找「終端分隔」= 最右側、其右區無其他錨點的錨點
+   ↓ M-step（重估）: 對曾當終端分隔的值評分
+         score = 0.8×terminality(該值作為分隔的占比) + 0.2×coverage(語料占比)
+   ↓ 取 top-K → 新錨點集 → 迭代直到收斂（錨點集不再變）
+```
+
+**實證收斂**（40k 真實樣本）：**2 輪收斂** → 錨點集 `{=, -, .}`，
+`=` 分數 **0.856** 碾壓（`-` 0.141、`.` 0.062）。資料自己發現 `=` 是答案
+分隔符、`-`/`.` 是運算子/小數點 — **非手寫**。
+
+**對位後的查找**：錨點切 `problem | delimiter | answer` → 問題做空白摺疊
+（`178  +  101` → `178+101`）→ 建「完整鍵 + 全部後綴」索引。probe 查詢：
+完整鍵優先，miss 則從最長後綴走查且**只接受唯一答案**（歧義後綴拒絕，
+避免 `101` 同屬多問題時的誤答）。
+
+**效果（實證）**：`178 + 101=?`、`178+101=?`、`what is 178 + 101=?`、
+`178  +  101=?` 全部對齊到 `279`。位置軸從「字串開頭絕對座標」獲得
+「**相對錨點的滑動**」自由度 — 這正是先前 §8.1 所述「逐字符一致」限制的
+結構性解法。誠實邊界：錨點與空白摺疊是**形式**自由度；`calculate 178 plus
+101 = ?` 的 `plus` 是**語義**變異，不在錨點學習範圍（需內容軸/辭典層）。
 
 ---
 

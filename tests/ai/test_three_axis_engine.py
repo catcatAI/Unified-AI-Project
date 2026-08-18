@@ -22,6 +22,7 @@ sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apps", "backend", "src"))
 )
 
+from ai.three_axis.anchor_learner import AnchorLearner  # noqa: E402
 from ai.three_axis.three_axis_engine import ThreeAxisEngine  # noqa: E402
 
 
@@ -138,3 +139,49 @@ class TestRealDatasetTraining:
         probe_answer = data[0]["answer"]
         out = engine.process(f"{probe_problem}=?")
         assert out == f"{probe_problem}={probe_answer}"
+
+
+class TestAnchorLearner:
+    def test_converges_to_answer_delimiter(self):
+        learner = AnchorLearner()
+        samples = ["178 + 101=279", "293 - 192=101", "917 * 814=746438", "5 * 5=25"]
+        learner.learn(samples)
+        assert ord("=") in learner.anchors
+        assert learner.converged
+
+    def test_align_splits_problem_answer(self):
+        learner = AnchorLearner()
+        learner.learn(["178 + 101=279", "293 - 192=101"])
+        problem, delimiter, answer = learner.align("178 + 101=279")
+        assert delimiter == "="
+        assert answer == "279"
+
+    def test_normalize_collapses_whitespace(self):
+        assert AnchorLearner.normalize("178  +  101") == "178+101"
+
+
+class TestSlidingAlignment:
+    def test_whitespace_variant_aligns(self, engine):
+        engine.learn_batch(["178 + 101=279"])
+        assert engine.process("178+101=?") == "178+101=279"
+        assert engine.process("178  +  101=?") == "178  +  101=279"
+
+    def test_leading_word_aligns(self, engine):
+        engine.learn_batch(["178 + 101=279"])
+        assert engine.process("what is 178 + 101=?") == "what is 178 + 101=279"
+
+    def test_suffix_unambiguous_lookup(self, engine):
+        engine.learn_batch(["178 + 101=279", "827 + 101=928"])
+        # Suffix "101" is ambiguous: both problems end with "+101" but map to
+        # different answers -> suffix lookup must refuse to fire.
+        assert engine._lookup_anchor("101") is None
+        # Full key (or a longer unambiguous suffix) still resolves.
+        assert engine._lookup_anchor("178 + 101") == "279"
+        assert engine._lookup_anchor("827 + 101") == "928"
+
+    def test_anchor_route_reported(self, engine):
+        engine.learn_batch(["178 + 101=279"])
+        out = engine.process("178+101=?")
+        assert engine.last_confidence == pytest.approx(0.95)
+        assert engine._last_route == "anchor-aligned"
+        assert out == "178+101=279"

@@ -12,26 +12,29 @@ Architecture (per docs/03-technical-architecture/THREE_AXIS_SYSTEM.md):
                during training (sparse position x content matrix).
   Content    : value-pair association learned from training data. For dialogue,
                resolution is precedence-ordered:
-                 1. exact-completion (full known prefix seen verbatim -> next)
-                 2. prefix-recall     (bounded left-context -> next)
-                 3. position-exact    (a position observed with a single value)
-                 4. position-majority (most frequent value at the position)
-                 5. bigram transition (most frequent right-value given left)
-                 6. global majority value
-               Generation (dialogue) continues ONLY on the exact-completion
-               path: each predicted char is looked up from the full prefix,
-               and stops as soon as the verbatim context has no continuation
-               in the corpus (the end of a memorised answer). This prevents
-               trailing garbage from ambiguous short-window recall.
+                 1. anchor-aligned  (learned EM anchor split + whitespace-fold +
+                                     suffix lookup; grants sliding alignment)
+                 2. exact-completion (full known prefix seen verbatim -> next)
+                 3. prefix-recall     (bounded left-context -> next)
+                 4. position-exact    (a position observed with a single value)
+                 5. position-majority (most frequent value at the position)
+                 6. bigram transition (most frequent right-value given left)
+                 7. global majority value
+               The anchor path is the primary dialogue route (see
+               AnchorLearner); exact-completion generation remains the fallback
+               for verbatim continuation, continuing only while the whole
+               prefix has a corpus continuation and stopping at the end of a
+               memorised answer.
 
 Memory is constrained by the project capacity config (2 GiB default via
 ``effective_capacity_bytes("memory", ...)``); the engine enforces the cap and
 degrades gracefully (drops oldest low-support value-pairs) rather than OOM.
 
-Honest note: this engine performs *verbatim-prefix recall*, not generalisation.
-A probe must match a training sample character-for-character to be answered
-correctly; any unseen prefix falls back to statistical heuristics. See the
-linearity-trap analysis (verify_linearity_trap.py) in the system document.
+Honest note: this engine performs corpus *recall*, not generalisation. The
+learned anchor alignment adds *formal* freedom (whitespace / leading-word /
+length-offset variants align to the same key) but not *semantic* generalisation
+(an unseen operand combination is still not computed). See the linearity-trap
+analysis (verify_linearity_trap.py) in the system document.
 """
 
 # =============================================================================
@@ -42,10 +45,12 @@ import json
 import logging
 import os
 import threading
-from collections import OrderedDict
+from collections import Counter, OrderedDict
 from typing import Any, Dict, List, Optional, Tuple
 
 from core.system.config.magic_numbers import _probe_ram_total_gb, effective_capacity_bytes
+
+from .anchor_learner import AnchorLearner
 
 logger = logging.getLogger(__name__)
 
@@ -116,6 +121,14 @@ class ThreeAxisEngine:
         # Resolves queries whose entire prefix was seen verbatim in training,
         # removing the short-window ambiguity of _prefix_recall.
         self._exact_completions: Dict[Tuple[int, ...], Dict[int, int]] = OrderedDict()
+        # Anchor alignment (learned, EM): normalized problem -> answer counts.
+        # Built after AnchorLearner converges; grants sliding alignment so
+        # whitespace/leading-word variants align to the same key.
+        self._anchor_problems: Dict[str, Dict[str, int]] = OrderedDict()
+        # Suffix index: normalized problem suffix -> aggregated answer counts,
+        # used for prefix-insensitive lookup when the full key is absent.
+        self._anchor_suffixes: Dict[str, Dict[str, int]] = OrderedDict()
+        self._anchor_learner = AnchorLearner()
         self._corpus_chars = 0
         self._last_confidence = 0.0
         self._last_route = ""
@@ -256,6 +269,7 @@ class ThreeAxisEngine:
         with self._lock:
             for text in samples:
                 self.learn(text)
+            self._learn_anchors(samples)
             return {
                 "samples": len(samples),
                 "corpus_chars": self._corpus_chars,
@@ -263,10 +277,80 @@ class ThreeAxisEngine:
                 "transitions": len(self._transitions),
                 "prefix_recall": len(self._prefix_recall),
                 "exact_completions": len(self._exact_completions),
+                "anchor_problems": len(self._anchor_problems),
+                "anchor_suffixes": len(self._anchor_suffixes),
                 "memory_bytes": self.estimate_memory_bytes(),
                 "memory_cap_bytes": self._cap_bytes,
                 "memory_ratio": round(self.memory_usage_ratio(), 3),
             }
+
+    # ------------------------------------------------------------------
+    # Anchor alignment (learned, EM)
+    # ------------------------------------------------------------------
+    def _learn_anchors(self, samples: List[str]) -> None:
+        """EM-learn the alignment anchor set, then build problem/answer tables.
+
+        The AnchorLearner converges on the delimiter set from data (on real
+        arithmetic data: ``{=, -, .}``). Using the converged anchors, every
+        sample is split into ``problem | delimiter | answer``; problems are
+        whitespace-collapsed and indexed by full key plus suffixes, giving the
+        position axis a *sliding alignment* freedom: queries differing by
+        whitespace or leading words align to the same answer.
+        """
+        self._anchor_learner.learn(samples)
+        anchors = self._anchor_learner.anchors
+        problem_counts: Dict[str, Dict[str, int]] = {}
+        suffix_counts: Dict[str, Dict[str, int]] = {}
+        for text in samples:
+            parts = self._anchor_learner.align(text)
+            if parts is None:
+                continue
+            problem, delimiter, answer = parts
+            key = AnchorLearner.normalize(problem)
+            if not key:
+                continue
+            cell = problem_counts.get(key)
+            if cell is None:
+                cell = {}
+                problem_counts[key] = cell
+            cell[answer] = cell.get(answer, 0) + 1
+            for L in range(len(key), 0, -1):
+                suf = key[len(key) - L :]
+                scell = suffix_counts.get(suf)
+                if scell is None:
+                    scell = {}
+                    suffix_counts[suf] = scell
+                scell[answer] = scell.get(answer, 0) + 1
+        self._anchor_problems = OrderedDict(problem_counts)
+        self._anchor_suffixes = OrderedDict(suffix_counts)
+        # Rough memory accounting for the new tables.
+        for key, cell in problem_counts.items():
+            self._est_bytes += len(key) * 4 + 24 * len(cell)
+        for suf in suffix_counts:
+            self._est_bytes += len(suf) * 4
+
+    def _lookup_anchor(self, query: str) -> Optional[str]:
+        """Look up an answer via learned anchor alignment.
+
+        Strategy: strip trailing ``?``/whitespace, whitespace-collapse the
+        problem, try the full key; if absent, walk the suffix index from the
+        longest suffix and require an *unambiguous* answer (single distinct
+        answer across all problems sharing that suffix) — otherwise keep
+        shortening. Returns the answer string or None.
+        """
+        q = query.rstrip("? ").rstrip("=").rstrip(" ")
+        key = AnchorLearner.normalize(q)
+        if not key:
+            return None
+        cell = self._anchor_problems.get(key)
+        if cell and len(cell) == 1:
+            return next(iter(cell))
+        for L in range(len(key), 0, -1):
+            suf = key[len(key) - L :]
+            scell = self._anchor_suffixes.get(suf)
+            if scell and len(scell) == 1:
+                return next(iter(scell))
+        return None
 
     # ------------------------------------------------------------------
     # Dialogue / inference
@@ -287,7 +371,13 @@ class ThreeAxisEngine:
                 self._last_route = "none"
                 return ""
             if text.endswith(self.UNKNOWN):
-                return self.generate(text[:-1])
+                prompt = text[:-1]
+                answer = self._lookup_anchor(prompt)
+                if answer is not None:
+                    self._last_confidence = self.CONF_EXACT
+                    self._last_route = "anchor-aligned"
+                    return f"{prompt.rstrip('=? ')}={answer}"
+                return self.generate(prompt)
             targets = [i for i, c in enumerate(text) if c == self.UNKNOWN]
             if not targets:
                 self._last_confidence = 1.0
@@ -417,6 +507,15 @@ class ThreeAxisEngine:
                 "exact_completions": {
                     ",".join(str(x) for x in k): v for k, v in self._exact_completions.items()
                 },
+                "anchor_problems": {
+                    k: v for k, v in self._anchor_problems.items()
+                },
+                "anchor_suffixes": {
+                    k: v for k, v in self._anchor_suffixes.items()
+                },
+                "anchor_set": sorted(self._anchor_learner.anchors),
+                "anchor_rounds": self._anchor_learner.rounds,
+                "anchor_converged": self._anchor_learner.converged,
             }
             with open(path, "w", encoding="utf-8") as fh:
                 json.dump(state, fh)
@@ -451,6 +550,17 @@ class ThreeAxisEngine:
                 )
                 for k, v in state.get("exact_completions", {}).items()
             )
+            self._anchor_problems = OrderedDict(
+                (k, dict(v)) for k, v in state.get("anchor_problems", {}).items()
+            )
+            self._anchor_suffixes = OrderedDict(
+                (k, dict(v)) for k, v in state.get("anchor_suffixes", {}).items()
+            )
+            anchor_set = state.get("anchor_set")
+            if anchor_set:
+                self._anchor_learner.anchors = set(anchor_set)
+                self._anchor_learner.rounds = state.get("anchor_rounds", 0)
+                self._anchor_learner.converged = state.get("anchor_converged", False)
             self._corpus_chars = state.get("corpus_chars", 0)
             self.max_seq_len = state.get("max_seq_len", self.max_seq_len)
             self.value_pair_cap = state.get("value_pair_cap", self.value_pair_cap)
@@ -461,6 +571,8 @@ class ThreeAxisEngine:
             self._transitions = OrderedDict()
             self._prefix_recall = OrderedDict()
             self._exact_completions = OrderedDict()
+            self._anchor_problems = OrderedDict()
+            self._anchor_suffixes = OrderedDict()
             self._corpus_chars = 0
             return False
 

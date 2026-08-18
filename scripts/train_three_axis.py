@@ -135,6 +135,11 @@ def main() -> int:
         ("178 + 101=?", "178 + 101=279"),
         ("293 - 192=?", "293 - 192=101"),
         ("917 * 814=?", "917 * 814=746438"),
+        # Sliding-alignment variants: whitespace / leading-word differences must
+        # still align to the same answer via the learned anchor tables.
+        ("178+101=?", "178+101=279"),
+        ("what is 178 + 101=?", "what is 178 + 101=279"),
+        ("178  +  101=?", "178  +  101=279"),
     ]
     for probe, truth in probes:
         out = engine.process(probe)
