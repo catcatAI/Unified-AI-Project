@@ -6,7 +6,6 @@ over STFT frames. Dimension increased from 32 to 128.
 
 import io
 import logging
-import struct
 from typing import Optional
 
 import numpy as np
@@ -51,7 +50,6 @@ class AudioSpectralEncoder:
         """Decode audio bytes to float samples [-1, 1]."""
         if audio_data[:4] == b"RIFF":
             return self._decode_wav(audio_data)
-        fmt = "<" + "h" * (len(audio_data) // 2)
         samples = (
             np.frombuffer(
                 audio_data[: len(audio_data) - len(audio_data) % 2], dtype=np.int16

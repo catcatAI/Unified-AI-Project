@@ -31,7 +31,6 @@ from core.system.config.magic_numbers import (
     cache_value,
     confidence_value,
     compute_bool,
-    compute_int,
     learning_rate,
     limit_value,
     threshold_value,
@@ -453,10 +452,8 @@ def _reconstruct_with_template(
 
     if engine_type == "math":
         parts = engine_result.split(" = ", 1)
-        expr = parts[0].strip() if len(parts) == 2 else ""
         result_val = parts[1].strip() if len(parts) == 2 else engine_result
     else:
-        expr = user_input.strip()
         result_val = engine_result.strip()
 
     if engine_type == "reasoning":
