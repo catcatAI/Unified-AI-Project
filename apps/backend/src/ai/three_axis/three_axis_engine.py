@@ -86,7 +86,7 @@ class ThreeAxisEngine:
     MAX_EXACT_COMPLETIONS = 1000000
     DEFAULT_MAX_SEQ = 512
     UNKNOWN = "?"
-    # Prefix recall context depth: how many left-context chars are used to
+    # Prefix recall context depth: how many left-context bytes are used to
     # disambiguate an unknown slot. A short window (6) keeps memory bounded;
     # the full-context exact recall path (exact_completions) handles the case
     # where the whole query prefix was seen verbatim in training.
@@ -113,7 +113,7 @@ class ThreeAxisEngine:
         self._position_content: Dict[int, Dict[int, int]] = {}
         # Bigram transition: (left_utf8, right_utf8) -> count.
         self._transitions: Dict[Tuple[int, int], int] = OrderedDict()
-        # Prefix recall: (left-context up to PREFIX_DEPTH chars) -> next utf8 value
+        # Prefix recall: (left-context up to PREFIX_DEPTH bytes) -> next utf8 value
         # -> count. This is the bounded neighbour-context disambiguation shown
         # in the chain-matrix verification experiment.
         self._prefix_recall: Dict[Tuple[int, ...], Dict[int, int]] = OrderedDict()
@@ -129,7 +129,7 @@ class ThreeAxisEngine:
         # used for prefix-insensitive lookup when the full key is absent.
         self._anchor_suffixes: Dict[str, Dict[str, int]] = OrderedDict()
         self._anchor_learner = AnchorLearner()
-        self._corpus_chars = 0
+        self._corpus_bytes = 0
         self._last_confidence = 0.0
         self._last_route = ""
         self._frozen = False
@@ -198,12 +198,12 @@ class ThreeAxisEngine:
     # Training
     # ------------------------------------------------------------------
     def learn(self, text: str) -> None:
-        """Learn one text sample (UTF-8 values at positions, bigram stats)."""
+        """Learn one text sample (UTF-8 byte values at positions, bigram stats)."""
         with self._lock:
             if self._frozen:
                 return
-            vals = [ord(c) for c in text]
-            self._corpus_chars += len(vals)
+            vals = list(text.encode("utf-8"))
+            self._corpus_bytes += len(vals)
             for pos, v in enumerate(vals[: self.max_seq_len]):
                 cells = self._position_content.get(pos)
                 if cells is None:
@@ -272,7 +272,7 @@ class ThreeAxisEngine:
             self._learn_anchors(samples)
             return {
                 "samples": len(samples),
-                "corpus_chars": self._corpus_chars,
+                "corpus_bytes": self._corpus_bytes,
                 "positions": len(self._position_content),
                 "transitions": len(self._transitions),
                 "prefix_recall": len(self._prefix_recall),
@@ -359,11 +359,12 @@ class ThreeAxisEngine:
         """Answer a query by resolving every ``?`` unknown position.
 
         When the query ends with ``?`` (result position), the engine recursively
-        generates the answer character-by-character using prefix recall, feeding
-        each predicted char back into the context (StepDecoder-style). This is
-        the three-axis equivalent of iterative decoding: the position axis is
+        generates the answer byte-by-byte using prefix recall, feeding each
+        predicted byte back into the context (StepDecoder-style). This is the
+        three-axis equivalent of iterative decoding: the position axis is
         traversed left-to-right, each step's value fixed by the content axis
-        association.
+        association. Values are UTF-8 bytes (0..255); the query is encoded to
+        bytes, positions resolved at byte indices, and the result decoded back.
         """
         with self._lock:
             if not text:
@@ -378,29 +379,30 @@ class ThreeAxisEngine:
                     self._last_route = "anchor-aligned"
                     return f"{prompt.rstrip('=? ')}={answer}"
                 return self.generate(prompt)
-            targets = [i for i, c in enumerate(text) if c == self.UNKNOWN]
+            raw = list(text.encode("utf-8"))
+            targets = [i for i, b in enumerate(raw) if b == ord(self.UNKNOWN)]
             if not targets:
                 self._last_confidence = 1.0
                 self._last_route = "no-unknown"
                 return text
 
-            out = list(text)
+            out = list(raw)
             best_conf = self.CONF_NONE
             best_route = "none"
             for t in targets:
-                pred, conf, route = self._resolve_position(text, t)
+                pred, conf, route = self._resolve_position(out, t)
                 if pred is not None:
-                    out[t] = chr(pred)
+                    out[t] = pred
                 if conf > best_conf:
                     best_conf, best_route = conf, route
             self._last_confidence = best_conf
             self._last_route = best_route
-            return "".join(out)
+            return bytes(out).decode("utf-8", errors="replace")
 
     def generate(self, prompt: str, max_new: int = 32) -> str:
         """Generate continuation from a prompt via recursive exact-completion.
 
-        Each step predicts the next char by looking up the *full* known context
+        Each step predicts the next byte by looking up the *full* known context
         in the exact-completion table (the verbatim-prefix recall path) and
         appends it. Generation continues only while the whole prefix was seen
         continued in training (route == ``exact-completion``). When the full
@@ -413,7 +415,7 @@ class ThreeAxisEngine:
         remains available for single-step ``resolve`` fallback.
         """
         with self._lock:
-            out = prompt
+            out = list(prompt.encode("utf-8"))
             last_conf = self.CONF_NONE
             last_route = "none"
             for _ in range(max_new):
@@ -421,17 +423,15 @@ class ThreeAxisEngine:
                 last_conf, last_route = conf, route
                 if pred is None or route != "exact-completion":
                     break
-                out += chr(pred)
+                out.append(pred)
             self._last_confidence = last_conf
             self._last_route = last_route
-            return out
+            return bytes(out).decode("utf-8", errors="replace")
 
-    def _resolve_position(
-        self, text: str, t: int
-    ) -> Tuple[Optional[int], float, str]:
-        """Resolve a single unknown position via precedence-ordered rules."""
+    def _resolve_position(self, raw: List[int], t: int) -> Tuple[Optional[int], float, str]:
+        """Resolve a single unknown byte position via precedence-ordered rules."""
         # 1. exact-completion: full known context seen verbatim -> next value.
-        full_prefix = tuple(ord(c) for c in text[:t])
+        full_prefix = tuple(raw[:t])
         if full_prefix:
             cell = self._exact_completions.get(full_prefix)
             if cell:
@@ -441,7 +441,7 @@ class ThreeAxisEngine:
         # 2. prefix-recall: bounded left-context seen in training -> next value.
         if t > 0:
             start = max(0, t - self.PREFIX_DEPTH)
-            prefix = tuple(ord(c) for c in text[start:t])
+            prefix = tuple(raw[start:t])
             cell = self._prefix_recall.get(prefix)
             if cell:
                 best = max(cell.items(), key=lambda kv: kv[1])
@@ -460,12 +460,8 @@ class ThreeAxisEngine:
 
         # 4. bigram transition: predict from the left neighbour value.
         if t > 0:
-            left = ord(text[t - 1])
-            candidates = {
-                right: cnt
-                for (l, right), cnt in self._transitions.items()
-                if l == left
-            }
+            left = raw[t - 1]
+            candidates = {right: cnt for (l, right), cnt in self._transitions.items() if l == left}
             if candidates:
                 best_right = max(candidates.items(), key=lambda kv: kv[1])[0]
                 return (best_right, self.CONF_BIGRAM, "bigram-transition")
@@ -493,26 +489,20 @@ class ThreeAxisEngine:
         with self._lock:
             os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
             state = {
-                "format": "three_axis/1",
+                "format": "three_axis/2",
                 "max_seq_len": self.max_seq_len,
                 "value_pair_cap": self.value_pair_cap,
-                "corpus_chars": self._corpus_chars,
+                "corpus_bytes": self._corpus_bytes,
                 "position_content": {str(p): cells for p, cells in self._position_content.items()},
-                "transitions": {
-                    f"{k[0]},{k[1]}": v for k, v in self._transitions.items()
-                },
+                "transitions": {f"{k[0]},{k[1]}": v for k, v in self._transitions.items()},
                 "prefix_recall": {
                     ",".join(str(x) for x in k): v for k, v in self._prefix_recall.items()
                 },
                 "exact_completions": {
                     ",".join(str(x) for x in k): v for k, v in self._exact_completions.items()
                 },
-                "anchor_problems": {
-                    k: v for k, v in self._anchor_problems.items()
-                },
-                "anchor_suffixes": {
-                    k: v for k, v in self._anchor_suffixes.items()
-                },
+                "anchor_problems": {k: v for k, v in self._anchor_problems.items()},
+                "anchor_suffixes": {k: v for k, v in self._anchor_suffixes.items()},
                 "anchor_set": sorted(self._anchor_learner.anchors),
                 "anchor_rounds": self._anchor_learner.rounds,
                 "anchor_converged": self._anchor_learner.converged,
@@ -528,6 +518,13 @@ class ThreeAxisEngine:
         try:
             with open(path, "r", encoding="utf-8") as fh:
                 state = json.load(fh)
+            if state.get("format") != "three_axis/2":
+                logger.warning(
+                    "three_axis: checkpoint %s has incompatible format %r; resetting",
+                    path,
+                    state.get("format"),
+                )
+                return False
             self._position_content = {
                 int(p): {int(k): int(v) for k, v in cells.items()}
                 for p, cells in state.get("position_content", {}).items()
@@ -561,7 +558,7 @@ class ThreeAxisEngine:
                 self._anchor_learner.anchors = set(anchor_set)
                 self._anchor_learner.rounds = state.get("anchor_rounds", 0)
                 self._anchor_learner.converged = state.get("anchor_converged", False)
-            self._corpus_chars = state.get("corpus_chars", 0)
+            self._corpus_bytes = state.get("corpus_bytes", 0)
             self.max_seq_len = state.get("max_seq_len", self.max_seq_len)
             self.value_pair_cap = state.get("value_pair_cap", self.value_pair_cap)
             return True
@@ -573,7 +570,7 @@ class ThreeAxisEngine:
             self._exact_completions = OrderedDict()
             self._anchor_problems = OrderedDict()
             self._anchor_suffixes = OrderedDict()
-            self._corpus_chars = 0
+            self._corpus_bytes = 0
             return False
 
     # ------------------------------------------------------------------
@@ -584,8 +581,8 @@ class ThreeAxisEngine:
         return self._last_confidence
 
     @property
-    def corpus_chars(self) -> int:
-        return self._corpus_chars
+    def corpus_bytes(self) -> int:
+        return self._corpus_bytes
 
     def freeze(self) -> None:
         """Freeze training (dialogue mode)."""

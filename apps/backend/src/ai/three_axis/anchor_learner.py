@@ -38,8 +38,10 @@ from typing import Dict, List, Optional, Set, Tuple
 class AnchorLearner:
     """EM-style learned anchor induction."""
 
-    # Prior anchors (defaults, overridden by learning).
-    DEFAULT_ANCHORS = {ord(c) for c in "=+-*/? .,!()[]{}:;"}
+    # Prior anchors (defaults, overridden by learning). Values are UTF-8 byte
+    # values (0..255): the three-axis content axis stores bytes, not Unicode
+    # code points (``ord()`` would exceed 255 for CJK).
+    DEFAULT_ANCHORS = {c.encode("utf-8")[0] for c in "=+-*/? .,!()[]{}:;"}
     MAX_ROUNDS = 8
     TOP_K = 6
     TERMINAL_WEIGHT = 0.8
@@ -67,7 +69,7 @@ class AnchorLearner:
 
     def learn(self, samples: List[str]) -> Set[int]:
         """Run the EM loop over samples. Returns the converged anchor set."""
-        all_vals = [tuple(ord(c) for c in s) for s in samples]
+        all_vals = [tuple(s.encode("utf-8")) for s in samples]
         prev: Optional[Set[int]] = None
         for r in range(self.MAX_ROUNDS):
             self.rounds = r + 1
@@ -81,13 +83,13 @@ class AnchorLearner:
             total = max(1, len(splits))
             scores: Dict[int, float] = {}
             for v, _ in splits:
-                scores[v] = (
-                    self.TERMINAL_WEIGHT * term[v] / total
-                    + self.COVERAGE_WEIGHT * coverage.get(v, 0) / max(1, len(all_vals))
-                )
+                scores[v] = self.TERMINAL_WEIGHT * term[
+                    v
+                ] / total + self.COVERAGE_WEIGHT * coverage.get(v, 0) / max(1, len(all_vals))
             self.scores = scores
             new_anchors = {
-                v for v, _ in sorted(scores.items(), key=lambda kv: kv[1], reverse=True)[: self.top_k]
+                v
+                for v, _ in sorted(scores.items(), key=lambda kv: kv[1], reverse=True)[: self.top_k]
             }
             if new_anchors == prev:
                 self.converged = True
@@ -100,12 +102,15 @@ class AnchorLearner:
         """Split ``text`` at its terminal anchor -> (problem, delimiter, answer).
 
         Returns None when no terminal anchor is found (anchor-less text).
+        Values are UTF-8 byte values (0..255); the split index is a byte
+        index, so slices are decoded back to text after the split.
         """
-        vals = tuple(ord(c) for c in text)
+        raw = text.encode("utf-8")
+        vals = tuple(raw)
         i = self.terminal_split(vals, self.anchors)
         if i is None:
             return None
-        return (text[:i], text[i], text[i + 1 :])
+        return (raw[:i].decode("utf-8"), chr(raw[i]), raw[i + 1 :].decode("utf-8"))
 
     @staticmethod
     def normalize(text: str) -> str:

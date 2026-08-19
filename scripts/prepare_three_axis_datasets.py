@@ -61,15 +61,16 @@ ARITHMETIC_PATH = os.path.join(DATA_DIR, "arithmetic_train_dataset.json")
 LOGIC_PATH = os.path.join(DATA_DIR, "logic_train.json")
 ALPACA_PATH = os.path.join(DATA_DIR, "alpaca_data.json")
 
-# Measured 2026-08-19 (engine memory accounting, 2 GiB cap context):
-#   exact-completions cost ~ O(sample_len^2), so long samples (alpaca) cost far
-#   more per char than short ones (arithmetic/logic).
-#   arithmetic: ~100 B/char  |  logic: ~100 B/char  |  alpaca: ~1,500 B/char
+# Measured 2026-08-19 (byte-based engine, 2 GiB cap context): exact-completions
+# cost ~ O(sample_len^2), so long samples (alpaca) cost far more per byte than
+# short ones (arithmetic/logic). Values are B per UTF-8 *byte* (the position
+# axis counts bytes, not chars — a CJK char is 3 bytes).
+#   arithmetic: ~110 B/byte  |  logic: ~120 B/byte  |  alpaca: ~2,000 B/byte
 # These are lower bounds; the per-dataset budget is the authoritative clamp.
 BYTES_PER_CHAR = {
-    "arithmetic": 100.0,
-    "logic": 100.0,
-    "alpaca": 1500.0,
+    "arithmetic": 110.0,
+    "logic": 120.0,
+    "alpaca": 2000.0,
 }
 
 # Fraction of the memory cap reserved per dataset (leaves ~10% headroom).
@@ -130,8 +131,9 @@ def decide_plan(
 
     Memory is the authoritative clamp: each dataset is budgeted a fraction of
     the memory cap, and the sample count is that budget divided by the
-    per-char cost times the measured average sample length. The hardware tier
-    is an upper bound (full/medium/small), not the deciding factor.
+    per-byte cost times the measured average sample length (UTF-8 bytes). The
+    hardware tier is an upper bound (full/medium/small), not the deciding
+    factor.
     """
     tier = TIER_BY_SCENARIO.get(profile_scenario, "medium")
     avg_lens = avg_lens or {}
@@ -162,7 +164,12 @@ def decide_plan(
 
 
 def measure_avg_lens() -> Dict[str, float]:
-    """Measure mean serialised sample length (chars) per dataset, best-effort."""
+    """Measure mean serialised sample length (UTF-8 bytes) per dataset.
+
+    The three-axis position axis counts UTF-8 *bytes* (0..255), not Unicode
+    code points; a CJK char occupies 3 positions, so lengths are measured in
+    encoded bytes to match the engine's memory model.
+    """
     result: Dict[str, float] = {}
     specs = {
         "arithmetic": (
@@ -181,7 +188,7 @@ def measure_avg_lens() -> Dict[str, float]:
             result[key] = 0.0
             continue
         sample = data[:2000]
-        lens = [len(ser(it)) for it in sample if it]
+        lens = [len(ser(it).encode("utf-8")) for it in sample if it]
         result[key] = sum(lens) / max(1, len(lens)) if lens else 0.0
     return result
 
@@ -305,7 +312,9 @@ def main() -> int:
 
     logger.info("Hardware profile: %s -> tier %s", profile, plan["tier"])
     logger.info("Memory cap: %.1f MiB", mem_cap / 1024 / 1024)
-    logger.info("Avg sample length (chars): %s", {k: round(v, 1) for k, v in avg_lens.items() if v})
+    logger.info(
+        "Avg sample length (UTF-8 bytes): %s", {k: round(v, 1) for k, v in avg_lens.items() if v}
+    )
     logger.info("Plan: %s", json.dumps(plan["caps"], ensure_ascii=False))
     logger.info("Rationale: %s", json.dumps(plan["rationale"], ensure_ascii=False))
 

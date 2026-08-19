@@ -105,7 +105,7 @@ class TestParagraphAnchorLearning:
     def test_trailing_period_is_not_terminal(self):
         # A delimiter with nothing after it is not a terminal split.
         i = AnchorLearner.terminal_split(
-            tuple(ord(c) for c in "Recursion is a loop. Every call reduces size."),
+            tuple("Recursion is a loop. Every call reduces size.".encode("utf-8")),
             AnchorLearner.DEFAULT_ANCHORS,
         )
         assert i is not None

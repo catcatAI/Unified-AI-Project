@@ -19,12 +19,12 @@ import sys
 import pytest
 
 sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apps", "backend", "src"))
+    0,
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apps", "backend", "src")),
 )
 
 from ai.three_axis.anchor_learner import AnchorLearner  # noqa: E402
 from ai.three_axis.three_axis_engine import ThreeAxisEngine  # noqa: E402
-
 
 # =============================================================================
 # ANGELA-MATRIX: [L2-L3] [βγδ] [C] [L2]
@@ -40,7 +40,7 @@ class TestTraining:
     def test_learn_batch_stats(self, engine):
         stats = engine.learn_batch(["178 + 101=279", "293 - 192=101", "917 * 814=746438"])
         assert stats["samples"] == 3
-        assert stats["corpus_chars"] > 0
+        assert stats["corpus_bytes"] > 0
         assert stats["positions"] > 0
         assert stats["transitions"] > 0
         assert stats["exact_completions"] > 0
@@ -54,7 +54,7 @@ class TestTraining:
     def test_freeze_prevents_training(self, engine):
         engine.freeze()
         engine.learn("2 + 2=4")
-        assert engine.corpus_chars == 0
+        assert engine.corpus_bytes == 0
 
 
 class TestExactCompletionDialogue:
@@ -118,10 +118,44 @@ class TestPrecedence:
         assert engine.process("no unknown here") == "no unknown here"
 
 
+class TestUtf8ByteSemantics:
+    def test_cjk_char_occupies_three_positions(self, engine):
+        # A CJK char is 3 UTF-8 bytes: 中 = [228, 184, 173]. The position axis
+        # must therefore count bytes, not Unicode code points.
+        engine.learn("中=中")
+        # '中' occupies positions 0..2; '=' at position 3; '中' at 4..6.
+        assert 228 in engine._position_content[0]
+        assert 184 in engine._position_content[1]
+        assert 173 in engine._position_content[2]
+        # ord('中') = 20013 must NOT appear anywhere (that was the old bug).
+        assert 20013 not in {v for cells in engine._position_content.values() for v in cells}
+
+    def test_learn_stats_count_bytes(self, engine):
+        engine.learn("中")  # 3 bytes, not 1 char
+        assert engine.corpus_bytes == 3
+
+    def test_cjk_query_roundtrip(self, engine):
+        engine.learn_batch(["太陽是熱的=true", "天空是藍的=true"])
+        assert engine.process("太陽是熱的=?") == "太陽是熱的=true"
+        assert engine.process("天空是藍的=?") == "天空是藍的=true"
+
+    def test_cjk_alignment_via_anchor(self, engine):
+        # Anchor split happens at the ASCII '=' byte; the CJK regions on both
+        # sides must decode cleanly (byte index != char index).
+        learner = AnchorLearner()
+        learner.learn(["太陽是熱的=true"])
+        problem, delimiter, answer = learner.align("太陽是熱的=true")
+        assert delimiter == "="
+        assert problem == "太陽是熱的"
+        assert answer == "true"
+
+
 class TestRealDatasetTraining:
     def test_trains_on_real_arithmetic_within_cap(self):
         root = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "..", "apps", "backend", "data", "raw_datasets")
+            os.path.join(
+                os.path.dirname(__file__), "..", "..", "apps", "backend", "data", "raw_datasets"
+            )
         )
         path = os.path.join(root, "arithmetic_train_dataset.json")
         if not os.path.exists(path):
@@ -148,6 +182,12 @@ class TestAnchorLearner:
         learner.learn(samples)
         assert ord("=") in learner.anchors
         assert learner.converged
+
+    def test_anchor_values_are_utf8_bytes(self):
+        # Anchors are UTF-8 byte values (0..255), not Unicode code points:
+        # ord("中") = 20013 > 255, so a CJK char can never be an anchor byte.
+        assert all(0 <= a <= 255 for a in AnchorLearner.DEFAULT_ANCHORS)
+        assert max(AnchorLearner.DEFAULT_ANCHORS) <= 127  # all ASCII single bytes
 
     def test_align_splits_problem_answer(self):
         learner = AnchorLearner()

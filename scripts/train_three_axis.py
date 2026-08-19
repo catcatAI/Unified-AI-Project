@@ -170,10 +170,10 @@ def main() -> int:
     stats = engine.learn_batch(samples)
     elapsed = time.time() - t0
     logger.info(
-        "Trained %d samples in %.1fs | chars=%d positions=%d transitions=%d",
+        "Trained %d samples in %.1fs | bytes=%d positions=%d transitions=%d",
         stats["samples"],
         elapsed,
-        stats["corpus_chars"],
+        stats["corpus_bytes"],
         stats["positions"],
         stats["transitions"],
     )

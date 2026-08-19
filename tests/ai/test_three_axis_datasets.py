@@ -71,7 +71,8 @@ class TestMemoryClamp:
         assert plan["caps"]["logic"] == TIER_CAPS["full"]["logic"]
 
     def test_long_samples_capped_by_memory(self):
-        # Alpaca avg 306 chars at 1500 B/char, 50% of 2 GiB -> ~2339 samples.
+        # Alpaca avg 306 bytes at 2000 B/byte, 50% of 2 GiB -> the memory
+        # budget clamps the tier cap.
         plan = decide_plan(
             "high_performance_desktop",
             CAP_2048,

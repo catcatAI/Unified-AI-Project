@@ -72,7 +72,7 @@
 |---|---|---|---|
 | `_position_content` | :113 | 位置 × 256 稀疏 | 該位置出現過的 UTF-8 值統計 |
 | `_transitions` | :115 | ≤ 65,536 | (左值,右值) bigram |
-| `_prefix_recall` | :119 | ≤ 2×65,536 | 有界左文脈（≤6 字符）→ 下一值 |
+| `_prefix_recall` | :119 | ≤ 2×65,536 | 有界左文脈（≤6 位元組）→ 下一值 |
 | `_exact_completions` | :123 | ≤ 1,000,000 | **完整前綴** → 下一值 |
 | `_anchor_problems` | :127 | 語料問題數 | 錨點切分後的正規化問題 → 答案 |
 | `_anchor_suffixes` | :130 | 語料後綴數 | 問題後綴 → 答案（滑動查找） |
@@ -110,7 +110,7 @@
 | 記憶體 cap | `memory.default_mb: 2048`（dynamic 8192） | `capacity.default.yaml:41-43` |
 | 磁碟 cap | `disk.max_percent: 0.80`（=「真正的硬上限」） | `capacity.default.yaml:49-50` |
 
-**瓶頸**：`MAX_SEQ_LEN`（三軸預設 512 字符，`three_axis_engine.py:87`）
+**瓶頸**：`MAX_SEQ_LEN`（三軸預設 512 位元組，`three_axis_engine.py:87`）
 是「單樣本學習長度」，但真正的對話上下文上界是 **RAM** — 因為熱索引
 （`_exact_completions`/`_anchor_problems`/`_anchor_suffixes`）全在記憶體。
 
