@@ -394,5 +394,8 @@ ED3N/GARDEN 的 `route_math`（`dictionary_layer.py:452-472`,
 
 ---
 
-*版本: 擴展設計藍圖（設計層級，未實作）· 基於 2026-08-18 `ThreeAxisEngine`
-與 `AnchorLearner` 實作 + 同日多模態/數理化學/記憶體子系統研究報告*
+*版本: 擴展設計藍圖（§0.1 短軸 + §8.1 審計為實作層級，其餘階段仍為設計層級）·
+基於 2026-08-18 `ThreeAxisEngine` 與 `AnchorLearner` 實作 + 同日多模態/數理
+化學/記憶體子系統研究報告 · 2026-08-19 訓練流程實作：`prepare_three_axis_datasets.py`
+（自動下載/自動決策）+ `train_three_axis.py --prepare`（一鍵訓練），指令見
+`THREE_AXIS_SYSTEM.md §8.6`*

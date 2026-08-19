@@ -480,6 +480,69 @@ OK  178  +  101=?      -> 178  +  101=279      (conf=0.95, route=anchor-aligned)
 結構性解法。誠實邊界：錨點與空白摺疊是**形式**自由度；`calculate 178 plus
 101 = ?` 的 `plus` 是**語義**變異，不在錨點學習範圍（需內容軸/辭典層）。
 
+### 8.6 訓練指令（Training Commands）
+
+> 2026-08-19：三軸模型的標準訓練流程。數據集**自動準備**（自動決定下載啥、
+> 下載多少）+ **自動訓練** + 記憶體安全 + 對話驗證。
+
+**一鍵流程（自動下載/生成數據集 → 訓練 → 驗證）**：
+
+```bash
+python scripts/train_three_axis.py --prepare
+```
+
+- `--prepare` 先跑 `scripts/prepare_three_axis_datasets.py`：依硬體等級
+  （full/medium/small）與記憶體上限自動決定每個數據集要多少樣本、哪些缺了
+  就自動補（arithmetic/logic 缺則合成生成、alpaca 缺則下載真實 Stanford
+  Alpaca 資料），再依 manifest 取樣本上限。
+- 生成 manifest：`data/checkpoints/three_axis/dataset_manifest.json`。
+
+**只準備數據集（不訓練）**：
+
+```bash
+python scripts/prepare_three_axis_datasets.py            # 依硬體+記憶體自動決定
+python scripts/prepare_three_axis_datasets.py --dry-run  # 只印決策計畫，不改任何東西
+python scripts/prepare_three_axis_datasets.py --force    # 無條件重新生成/下載
+python scripts/prepare_three_axis_datasets.py --with-corpus  # 額外續傳多語 wiki/tatoeba 語料（大）
+```
+
+**手動指定訓練參數**：
+
+```bash
+python scripts/train_three_axis.py --max-samples 30000 --max-seq 512
+python scripts/train_three_axis.py --max-samples 5000 --no-alpaca  # 只需算術/邏輯
+python scripts/train_three_axis.py --memory-cap-mb 4096            # 覆寫記憶體上限
+```
+
+**驗證**：訓練結束自動跑 6 個對話 probe（含滑動變異），輸出
+`data/checkpoints/three_axis/three_axis.json` 檢查點。
+
+**自動決策規則**（`prepare_three_axis_datasets.py::decide_plan`）：
+
+每數據集的樣本數 = **min(硬體等級上限, 記憶體預算/單字符成本/平均樣本長度)**。
+記憶體是**權威約束**，硬體等級只是上限 — 因為引擎 exact-completions 成本約為
+`O(樣本長度²)`，長樣本（alpaca 平均 ~306 字符）每字符成本 ~15× 高於短樣本
+（算術 ~14 字符）。實測成本（2026-08-19，引擎記憶體記帳）：
+
+| 數據集 | 平均樣本長度 | 每字符成本 | 記憶體預算佔比 |
+| --- | --- | --- | --- |
+| arithmetic | ~14 字符 | ~100 B/char | 15% |
+| logic | ~39 字符 | ~100 B/char | 25% |
+| alpaca | ~306 字符 | ~1,500 B/char | 50%（保留 10% 餘裕） |
+
+硬體等級上限（full/medium/small）：
+
+| 數據集 | full | medium | small |
+| --- | --- | --- | --- |
+| arithmetic | 30,000 | 15,000 | 5,000 |
+| logic | 10,000 | 5,000 | 2,000 |
+| alpaca | 20,000 | 10,000 | 5,000 |
+
+實測（本機 2 GiB 記憶體上限，HIGH_PERFORMANCE_DESKTOP）：alpaca 記憶體預算
+夾到 **2,339** 樣本（`min(20000, 1GiB/1500B/306char)`），實際訓練 42,335
+樣本、記憶體比例 **0.72**（安全）。決策輸出與理由記錄於 manifest
+（`data/checkpoints/three_axis/dataset_manifest.json`）。
+
 ---
 
 *版本: 概念驗證 + 已實作引擎 · 基於 2026-08-18 三軸實驗 (`verify_learned_matrix.py`) 與
