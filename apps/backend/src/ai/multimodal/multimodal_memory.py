@@ -294,6 +294,37 @@ class MultimodalMemoryStore:
 
     # --- Persistence ---
 
+    def _serialize_entries(self) -> tuple:
+        """Serialize entries under the lock (CPU-only, no I/O).
+
+        Returns (save_path, json_str) or (None, None) if no store_dir.
+        """
+        if not self.store_dir:
+            return None, None
+        path = Path(self.store_dir)
+        entries_to_save = dict(list(self._entries.items())[-10000:])
+        if len(self._entries) > 10000:
+            logger.warning(
+                "Memory store saving %d/%d entries (truncated at 10000)",
+                len(entries_to_save),
+                len(self._entries),
+            )
+        data = {
+            "entries": {
+                eid: {
+                    "modality": e["modality"],
+                    "latent": e["latent"],
+                    "metadata": e.get("metadata", {}),
+                    "timestamp": e.get("timestamp", 0),
+                    "compacted": e.get("compacted", False),
+                }
+                for eid, e in entries_to_save.items()
+            },
+            "saved_at": time.time(),
+        }
+        save_path = path / "multimodal_memory.json"
+        return save_path, json.dumps(data, ensure_ascii=False)
+
     def _save_impl(self) -> None:
         """Save all entries to JSON (lock must be held externally).
 
@@ -336,14 +367,26 @@ class MultimodalMemoryStore:
     async def save(self) -> Optional[str]:
         """Save entries to JSON file (async version).
 
+        Serializes under the lock, writes to disk off the event loop.
+
         Returns:
             Path to saved file, or None if save failed
         """
         if not self.store_dir:
             return None
+        import asyncio
+
         async with self._get_lock():
-            self._save_impl()
-            return str(Path(self.store_dir) / "multimodal_memory.json")
+            save_path, json_str = self._serialize_entries()
+        if save_path is None:
+            return None
+        try:
+            await asyncio.to_thread(save_path.parent.mkdir, parents=True, exist_ok=True)
+            await asyncio.to_thread(save_path.write_text, json_str, encoding="utf-8")
+        except Exception as e:
+            logger.warning("Memory save failed: %s", e)
+            return None
+        return str(save_path)
 
     async def load(self) -> bool:
         """Load entries from JSON file.
@@ -358,10 +401,14 @@ class MultimodalMemoryStore:
             if not load_path.exists():
                 return False
 
+            # Read file off the event loop to avoid blocking
+            import asyncio
+
+            raw = await asyncio.to_thread(load_path.read_text, encoding="utf-8")
+            data = json.loads(raw)
+            entries_data = data.get("entries", {})
+
             async with self._get_lock():
-                with open(load_path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                entries_data = data.get("entries", {})
                 self._entries = {}
                 for eid, entry in entries_data.items():
                     self._entries[eid] = {

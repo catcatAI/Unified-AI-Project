@@ -329,10 +329,12 @@ class AudioService:
         if not audio_data:
             return {"error": "Empty audio data"}
         try:
+            import asyncio
+
             from ai.audio.audio_pipeline import AudioPipeline
 
             pipeline = AudioPipeline()
-            result = pipeline.process(audio_data)
+            result = await asyncio.to_thread(pipeline.process, audio_data)
             return result
         except Exception as e:
             logger.warning("AudioPipeline failed: %s", e)

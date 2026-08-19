@@ -93,17 +93,21 @@ async def _list_text_files(directory: str) -> List[Path]:
 
 
 async def _read_file_content(file_path: Path) -> str:
+    import asyncio
+
     try:
-        return file_path.read_text(encoding="utf-8")
+        return await asyncio.to_thread(file_path.read_text, encoding="utf-8")
     except Exception as e:
         logger.warning(f"Failed to read {file_path}: {e}")
         return f"[Error reading {file_path.name}: {safe_error(e)}]"
 
 
 async def _write_output_file(file_path: Path, content: str) -> bool:
+    import asyncio
+
     try:
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.write_text(content, encoding="utf-8")
+        await asyncio.to_thread(file_path.parent.mkdir, parents=True, exist_ok=True)
+        await asyncio.to_thread(file_path.write_text, content, encoding="utf-8")
         logger.info(f"Written {len(content)} chars to {file_path}")
         return True
     except Exception as e:
