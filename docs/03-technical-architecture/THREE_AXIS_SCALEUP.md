@@ -339,6 +339,13 @@ ED3N/GARDEN 的 `route_math`（`dictionary_layer.py:452-472`,
 | 階段 | 內容 | 驗證標準 | 涉及 |
 |---|---|---|---|
 | **A. 段落錨點** | AnchorLearner 餵 wiki/alpaca 序列化樣本，學自然語言錨點 | 錨點收斂、換行/句點 terminality 碾壓；測試 `test_paragraph_alignment` | `anchor_learner.py`, `tests/` |
+
+> **A 已驗證（2026-08-19，`tests/ai/test_three_axis_paragraph.py`，7 測試）**：
+> 混和語料（arithmetic + alpaca 風格）收斂於 `=`，alpaca 樣本（答案含句點）仍
+> 正確對齊。**設計約束（誠實）**：`terminal_split` 取「最右側、右區無錨點」的錨點 —
+> 純自然文本（結尾標點）在 round 1 無終端分隔 → 安全收斂為空集（不瞎猜）；須由
+> 算術 `=`（答案側無錨點）**引導出**錨點集，wiki 段落錨點同樣需要保持「最右側」的
+> 分隔符（`=` 或哨兵）。
 | **B. 磁碟溫層** | SQLite suffix 索引取代 RAM `_anchor_suffixes`；熱層改為 LRU 快取 | 2GB 語料載入 < RAM cap；查詢命中率 > 90% | `three_axis_engine.py`, 新 `disk_index.py` |
 | **C. 模態對位** | `multimodal_memory` 樣本序列化 → 跨模態錨點；三軸對位 + `SharedLatentSpace` 語義確認 | 圖↔文、音↔文對位 probe | `AnchorLearner` 重用, `multimodal/` |
 | **D. 物理/化學** | 擴充 `domain_ripple.py` 既有引擎（`PhysicsDomainEngine`/`ChemistryDomainEngine`）→ `route_domain` 進 GARDEN Stage 1（`garden_engine.py:1092`）；公式求解器（F=ma、動能）已實作於 `ai/memory/formula_solver.py`；`knowledge_base` 單位擴充仍缺 | F=ma、分子量 probe；`math_verifier` 同級測試 | `domain_ripple.py`, `garden_engine.py:1092-1102` |
@@ -392,8 +399,9 @@ ED3N/GARDEN 的 `route_math`（`dictionary_layer.py:452-472`,
 **審計結論**：藍圖各階段幾乎都有既有對應 — 實作優先序 = **先用現成的
 （`domain_ripple`、`document/chunker`、`context/storage`），再補缺口**
 （SQLite suffix 索引、公式求解器、段落錨點驗證）。公式求解器缺口已閉合
-（`formula_solver.py`，2026-08-19）；剩餘缺口 = SQLite suffix 索引
-（Phase B）與段落錨點驗證（Phase A）。這符合 ASI 工程標準
+（`formula_solver.py`，2026-08-19）；段落錨點已驗證（`test_three_axis_paragraph.py`，
+同日期，含純文本收斂空集的設計約束）；剩餘缺口 = SQLite suffix 索引
+（Phase B，RAM→磁碟的 suffix 表）。這符合 ASI 工程標準
 「surgical / 不重造輪子」。
 
 ---
