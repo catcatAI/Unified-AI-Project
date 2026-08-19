@@ -561,6 +561,7 @@ class ThreeAxisEngine:
             self._corpus_bytes = state.get("corpus_bytes", 0)
             self.max_seq_len = state.get("max_seq_len", self.max_seq_len)
             self.value_pair_cap = state.get("value_pair_cap", self.value_pair_cap)
+            self._rebuild_est_bytes()
             return True
         except Exception as exc:  # pragma: no cover - defensive
             logger.warning("three_axis: failed to load %s: %s", path, exc)
@@ -571,7 +572,29 @@ class ThreeAxisEngine:
             self._anchor_problems = OrderedDict()
             self._anchor_suffixes = OrderedDict()
             self._corpus_bytes = 0
+            self._est_bytes = 1024
             return False
+
+    def _rebuild_est_bytes(self) -> None:
+        """Recompute the resident-memory estimate after loading a checkpoint.
+
+        ``_est_bytes`` is an incremental counter maintained only during
+        ``learn()``; after ``load()`` it must be rebuilt from the loaded tables
+        so ``estimate_memory_bytes()``/``memory_usage_ratio()`` stay truthful.
+        """
+        total = 1024
+        for pos, cells in self._position_content.items():
+            total += 40 + len(cells) * 24
+        total += len(self._transitions) * _estimate_entry_bytes()
+        for prefix, cell in self._prefix_recall.items():
+            total += 8 + 24 + len(cell) * 24
+        for prefix, cell in self._exact_completions.items():
+            total += 8 + len(prefix) * 4 + 24 + len(cell) * 24
+        for key, cell in self._anchor_problems.items():
+            total += len(key) * 4 + 24 * len(cell)
+        for suf in self._anchor_suffixes:
+            total += len(suf) * 4
+        self._est_bytes = total
 
     # ------------------------------------------------------------------
     # Internals

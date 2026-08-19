@@ -225,3 +225,24 @@ class TestSlidingAlignment:
         assert engine.last_confidence == pytest.approx(0.95)
         assert engine._last_route == "anchor-aligned"
         assert out == "178+101=279"
+
+
+class TestMemoryAccounting:
+    def test_est_bytes_grows_during_learning(self, engine):
+        engine.learn_batch(["178 + 101=279"])
+        assert engine.estimate_memory_bytes() > 1024
+
+    def test_load_rebuilds_est_bytes(self, engine, tmp_path):
+        engine.learn_batch(["178 + 101=279", "293 - 192=101"])
+        trained = engine.estimate_memory_bytes()
+        path = str(tmp_path / "ckpt.json")
+        engine.save(path)
+        fresh = ThreeAxisEngine(memory_cap_mb=2048)
+        assert fresh.estimate_memory_bytes() == 1024  # untouched baseline
+        assert fresh.load(path)
+        assert fresh.corpus_bytes == engine.corpus_bytes
+        # Rebuilt estimate must be in the same ballpark as at training time,
+        # not the stale 1024-byte baseline.
+        assert fresh.estimate_memory_bytes() > 1024
+        assert 0.5 < fresh.estimate_memory_bytes() / trained < 1.5
+        assert fresh.memory_usage_ratio() > 0.0
