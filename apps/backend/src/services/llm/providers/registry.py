@@ -14,5 +14,6 @@ class LLMBackend(Enum):
     GOOGLE = "google"
     ED3N = "ed3n"
     GARDEN = "garden"  # GARDEN-1G: Lightweight 1GB local model (PyTorch SNN + VectorDict)
+    UNIFIED = "unified"  # Unified Engine: fixed-size statistical core + deterministic layers
     LOCAL = "local"
     NONE = "none"

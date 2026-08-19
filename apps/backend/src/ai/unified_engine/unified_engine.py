@@ -118,9 +118,12 @@ class UnifiedEngine:
         try:
             from services.math_verifier import evaluate_logic
 
-            result = evaluate_logic(text.rstrip("? ").rstrip("=").rstrip(" "))
+            cleaned = text.rstrip("? ").rstrip("=").rstrip(" ")
+            result = evaluate_logic(cleaned)
             if result is not None:
-                return f"{text.rstrip('? ')}={result}"
+                if "=" in str(result):
+                    return str(result)
+                return f"{cleaned}={result}"
         except Exception:
             pass
         return None

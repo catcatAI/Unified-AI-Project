@@ -75,6 +75,15 @@ settings:
 #   local  -> never gated by deployment.mode (always allowed in local* modes)
 #   cloud  -> only allowed when mode is local+llm / llm / auto
 backends:
+  unified-1g:
+    type: local
+    provider: unified
+    enabled: true
+    model: unified-1g
+    priority: 1
+    timeout: 30.0
+    checkpoint: ""
+    note: "Unified Engine — fixed-size statistical core + deterministic math/logic. First local backend."
   ed3n-v1:
     type: local
     provider: ed3n
@@ -154,15 +163,18 @@ backends:
 # Routing policy + fallback chain (migrated from llm_providers.default.yaml).
 routing:
   policy:
-    math: "ed3n-v1"
+    math: "unified-1g"
     code: "ollama-llama3"
-    task: "ed3n-v1"
-    general: "ed3n-v1"
+    task: "unified-1g"
+    general: "unified-1g"
     complexity_high: "ollama-llama3"
-    complexity_medium: "ed3n-v1"
-    complexity_low: "ed3n-v1"
-    fallback: "ed3n-v1"
+    complexity_medium: "unified-1g"
+    complexity_low: "unified-1g"
+    fallback: "unified-1g"
   fallback_chain:
+    unified-1g:
+      - "ed3n-v1"
+      - "ollama-llama3"
     ed3n-v1:
       - "garden-1g"
       - "ollama-llama3"

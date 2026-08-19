@@ -74,6 +74,7 @@ from services.llm.providers.llamacpp import LlamaCppBackend
 from services.llm.providers.ollama import OllamaBackend
 from services.llm.providers.openai import OpenAIAPIBackend
 from services.llm.providers.registry import LLMBackend
+from services.llm.providers.unified import UnifiedBackend
 
 # PriorityNegotiator singleton — registered once at import time
 _negotiator = PriorityNegotiator()
@@ -112,6 +113,7 @@ _BACKEND_FACTORIES: Dict[str, str] = {
     "google": "_init_google",
     "ed3n": "_init_ed3n",
     "garden": "_init_garden",
+    "unified": "_init_unified",
 }
 
 
@@ -606,6 +608,16 @@ class AngelaLLMService:
             timeout=config.get("timeout", 30.0),
         )
         logger.info(f"已注冊 GARDEN 後端: {model_name or 'garden-1g'}")
+
+    def _init_unified(
+        self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict
+    ) -> None:
+        self.backends[LLMBackend.UNIFIED] = UnifiedBackend(
+            model=model_name or "unified-1g",
+            checkpoint=config.get("checkpoint", ""),
+            timeout=config.get("timeout", 30.0),
+        )
+        logger.info(f"已注冊 UNIFIED 後端: {model_name or 'unified-1g'}")
 
     async def initialize(self) -> bool:
         self._init_memory_enhancement()
