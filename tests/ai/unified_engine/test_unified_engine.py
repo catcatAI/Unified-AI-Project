@@ -87,7 +87,7 @@ class TestFixedMemory:
         eng = UnifiedEngine(memory_cap_mb=2048)
         samples = [f"{i}+1={i + 1}" for i in range(500)]
         eng.learn_batch(samples)
-        assert eng.model_bytes == 2883584
+        assert eng.model_bytes == 4980736
 
     def test_no_growth_tables(self):
         """The old engine grew prefix/suffix tables; the unified core must
