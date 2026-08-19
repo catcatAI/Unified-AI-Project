@@ -63,6 +63,10 @@ class FixedSizeCore:
     # Feature-hash table size (fixed, independent of corpus).
     FEATURE_SLOTS = 1 << 16
     FEATURE_NGRAM = 4  # character n-grams hashed into the feature table
+    # k-gram context order for next-byte prediction (fixed, independent of
+    # corpus). Longer context = better language modelling; the table stays a
+    # fixed number of slots regardless of how many distinct contexts appear.
+    GRAM_ORDER = 4
 
     def __init__(self, max_seq: int = MAX_SEQ) -> None:
         self.max_seq = max_seq
@@ -70,6 +74,11 @@ class FixedSizeCore:
         self._pos: List[List[float]] = [[0.0] * VOCAB for _ in range(max_seq)]
         # Transition: [256][256] float32 counts (left byte -> right byte).
         self._trans: List[List[float]] = [[0.0] * VOCAB for _ in range(VOCAB)]
+        # k-gram context layer: hashed (k-1)-byte prefix -> {next byte -> count}.
+        # This is the language-modelling layer: unlike the bigram table it
+        # conditions on GRAM_ORDER-1 context bytes, so generated language is
+        # coherent beyond adjacent characters. Fixed slots, never grows.
+        self._gram: List[Dict[int, float]] = [{} for _ in range(self.FEATURE_SLOTS)]
         # Feature hash: problem n-gram -> {answer STRING -> count}.
         # This learns the high-level PROBLEM -> ANSWER correlation (e.g.
         # a problem pattern containing 'nor' correlates with the answer
@@ -90,11 +99,14 @@ class FixedSizeCore:
     # ------------------------------------------------------------------
     @property
     def model_bytes(self) -> int:
-        # Position + transition matrices (float32) + feature table (bounded).
+        # Position + transition matrices (float32) + feature table (bounded)
+        # + k-gram context table (bounded, fixed slots).
         return (
             FIXED_MODEL_BYTES
-            + self.FEATURE_SLOTS * 8  # anchor bytes
-            + self.FEATURE_SLOTS * 24  # dict overhead estimate (bounded)
+            + self.FEATURE_SLOTS * 8  # feature anchor bytes
+            + self.FEATURE_SLOTS * 24  # feature dict overhead estimate
+            + self.FEATURE_SLOTS * 8  # gram anchor bytes
+            + self.FEATURE_SLOTS * 24  # gram dict overhead estimate
         )
 
     def estimate_memory_bytes(self) -> int:
@@ -111,19 +123,37 @@ class FixedSizeCore:
           - the PROBLEM -> ANSWER correlation in the feature hash table
         """
         raw = text.encode("utf-8")
+        self.learn_bytes(raw)
+        self._learn_feature_problem_answer(raw)
+
+    def learn_bytes(self, raw: bytes) -> None:
+        """Fold a raw byte sequence (text, image, or audio bytes) into the
+        fixed matrices — the shared foundation for every modality.
+
+        The position axis is a fixed context window (max_seq); sequences are
+        folded into it modulo the window, so the model handles arbitrary
+        length bytes while model_bytes stays constant. This is what lets one
+        fixed-size core learn language, images, and audio from their raw
+        byte streams (the compression + reproduction claim per modality).
+        """
         n = len(raw)
         if n == 0:
             return
         self._samples_seen += 1
         self._bytes_seen += n
-        for pos, b in enumerate(raw):
-            if pos >= self.max_seq:
-                break
-            self._pos[pos][b] += 1.0
+        for i, b in enumerate(raw):
+            self._pos[i % self.max_seq][b] += 1.0
         for i in range(n - 1):
             left, right = raw[i], raw[i + 1]
             self._trans[left][right] += 1.0
-        self._learn_feature_problem_answer(raw)
+        # k-gram context: hash the (k-1)-byte prefix preceding each byte and
+        # accumulate the next-byte distribution into that slot.
+        k = self.GRAM_ORDER
+        for i in range(k - 1, n):
+            ctx = raw[i - (k - 1) : i]
+            slot = self._hash_ngram(ctx)
+            cell = self._gram[slot]
+            cell[raw[i]] = cell.get(raw[i], 0.0) + 1.0
 
     def _hash_ngram(self, gram: bytes) -> int:
         h = 2166136261
@@ -270,8 +300,15 @@ class FixedSizeCore:
     # Inference (statistical generalisation)
     # ------------------------------------------------------------------
     def position_dist(self, pos: int) -> List[float]:
-        """Normalised distribution over bytes at a given position."""
-        row = self._pos[pos]
+        """Normalised distribution over bytes at a given position.
+
+        The position axis is a FIXED CONTEXT WINDOW (max_seq), so long
+        sequences (image/audio/text) are folded into it modulo the window.
+        This keeps model_bytes constant while supporting arbitrary-length
+        sequences — the same principle as a transformer's fixed context
+        length, here implemented as fixed-size statistics.
+        """
+        row = self._pos[pos % self.max_seq]
         total = sum(row)
         if total <= 0:
             return [1.0 / VOCAB] * VOCAB
@@ -285,12 +322,33 @@ class FixedSizeCore:
             return [1.0 / VOCAB] * VOCAB
         return [c / total for c in row]
 
+    def gram_dist(self, prefix: bytes) -> List[float]:
+        """Next-byte distribution conditioned on the last (k-1) bytes.
+
+        The k-gram language-modelling layer: hash the context prefix into a
+        fixed slot and read the learned next-byte distribution. Long-context
+        conditioning is what makes generated language coherent (vs the
+        bigram table's adjacent-byte-only view). Falls back to uniform when
+        the context was unseen in training.
+        """
+        if not prefix:
+            return [1.0 / VOCAB] * VOCAB
+        ctx = prefix[-(self.GRAM_ORDER - 1) :]
+        cell = self._gram[self._hash_ngram(ctx)]
+        if not cell:
+            return [1.0 / VOCAB] * VOCAB
+        total = sum(cell.values())
+        if total <= 0:
+            return [1.0 / VOCAB] * VOCAB
+        return [cell.get(b, 0.0) / total for b in range(VOCAB)]
+
     def next_byte_probs(self, prefix: bytes, position: int) -> List[float]:
         """Probability over the next byte given the prefix and its position.
 
-        Blends two fixed-size statistics for SEQUENCE modelling (generation):
+        Blends three fixed-size statistics for SEQUENCE modelling:
           - position layer: empirical byte distribution at this position
           - transition layer: byte->byte bigram of the last byte
+          - gram layer: k-gram context -> next byte (language modelling)
         The feature layer (problem n-grams -> answer) is a separate
         discriminative path used for problem->answer inference, NOT for
         next-byte generation — mixing them feeds problem-answer noise into
@@ -298,8 +356,17 @@ class FixedSizeCore:
         """
         p = self.position_dist(position)
         t = self.transition_dist(prefix[-1]) if prefix else [1.0 / VOCAB] * VOCAB
-        # Sequence blend: position 0.6, transition 0.4.
-        blended = [0.6 * p[i] + 0.4 * t[i] for i in range(VOCAB)]
+        g = self.gram_dist(prefix)
+        # Confidence-adaptive blend: the k-gram layer dominates only when it
+        # actually saw this context in training; otherwise fall back to the
+        # positional/bigram statistics (which are denser for small corpora).
+        g_entropy = sum(-q * math.log(q + 1e-9) for q in g)
+        max_entropy = math.log(VOCAB)
+        g_conf = 1.0 - g_entropy / max_entropy  # 0=uniform, 1=peaked
+        w_g = 0.6 * g_conf
+        w_p = 0.2 + 0.4 * (1.0 - g_conf)  # position gets the freed mass
+        w_t = 0.2
+        blended = [w_p * p[i] + w_t * t[i] + w_g * g[i] for i in range(VOCAB)]
         total = sum(blended) + SMOOTH * VOCAB
         return [(c + SMOOTH) / total for c in blended]
 
@@ -370,6 +437,11 @@ class FixedSizeCore:
             "max_seq": self.max_seq,
             "pos": self._pos,
             "trans": self._trans,
+            "gram": {
+                str(slot): {str(b): float(c) for b, c in cell.items()}
+                for slot, cell in enumerate(self._gram)
+                if cell
+            },
             "feat": {str(slot): cell for slot, cell in enumerate(self._feat) if cell},
             "feat_bool": {str(slot): cell for slot, cell in enumerate(self._feat_bool) if cell},
             "true_total": self._true_total,
@@ -383,6 +455,8 @@ class FixedSizeCore:
         core = cls(max_seq=d.get("max_seq", MAX_SEQ))
         core._pos = d.get("pos", core._pos)
         core._trans = d.get("trans", core._trans)
+        for slot, cell in d.get("gram", {}).items():
+            core._gram[int(slot)] = {int(b): float(c) for b, c in cell.items()}
         for slot, cell in d.get("feat", {}).items():
             core._feat[int(slot)] = {str(b): float(c) for b, c in cell.items()}
         for slot, cell in d.get("feat_bool", {}).items():
