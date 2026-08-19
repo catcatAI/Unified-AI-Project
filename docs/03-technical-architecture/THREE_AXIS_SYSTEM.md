@@ -224,6 +224,13 @@ GPT-4o / Llama3: 128,000 tokens
 knowledge、chain 的模板部分）；**演算法型**（雞兔同籠求解、閉包傳遞）應保留
 為確定性引擎，三軸負責學結構、引擎負責算。此即「矩陣學結構、函數算結果」的分工。
 
+> **2026-08-19 補充（公式求解器已實作）**：物理領域的「演算法型」缺口
+> （F=ma、動能 `½mv²`、`v=at`、動量、功、功率、重量 `F=mg`）已由
+> `ai/memory/formula_solver.py` 閉合，並接入 `PhysicsDomainEngine.compute`
+> （`domain_ripple.py`）— 解析單位錨點（kg/m/s²/N/J…）+ 問題子句目標偵測，
+> 求解單未知文字題。20 測試（`tests/ai/test_formula_solver.py`）。誠實邊界：
+> 這是符號演算（確定性引擎、域軸上的值），非「理解物理」。
+
 ### 4.2 取代 ED3N 引擎
 
 **現況**（`ed3n_engine.py`）：
@@ -546,4 +553,5 @@ python scripts/train_three_axis.py --memory-cap-mb 4096            # 覆寫記�
 ---
 
 *版本: 概念驗證 + 已實作引擎 · 基於 2026-08-18 三軸實驗 (`verify_learned_matrix.py`) 與
-`ThreeAxisEngine` 真實數據集訓練 · 三引擎架構現況來自同日研究報告*
+`ThreeAxisEngine` 真實數據集訓練 · 三引擎架構現況來自同日研究報告 ·
+2026-08-19 加入 `formula_solver.py`（物理公式求解）與 §8.6 訓練指令（自動下載/自動決策）*

@@ -476,6 +476,15 @@ class PhysicsDomainEngine(DomainRippleEngine):
         return has_kw and has_num
 
     def compute(self, text: str) -> Optional[float]:
+        # Formula solver first: F=ma, E=½mv², v=at, momentum, work/power are
+        # single-unknown word problems (the MD-identified gap). Falls back to
+        # plain arithmetic when no formula matches.
+        from ai.memory.formula_solver import solve as solve_formula
+
+        sol = solve_formula(text)
+        if sol is not None:
+            return float(sol["value"])
+
         from services.math_verifier import compute_arithmetic
 
         return compute_arithmetic(text)

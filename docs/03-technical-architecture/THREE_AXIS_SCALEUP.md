@@ -341,7 +341,7 @@ ED3N/GARDEN 的 `route_math`（`dictionary_layer.py:452-472`,
 | **A. 段落錨點** | AnchorLearner 餵 wiki/alpaca 序列化樣本，學自然語言錨點 | 錨點收斂、換行/句點 terminality 碾壓；測試 `test_paragraph_alignment` | `anchor_learner.py`, `tests/` |
 | **B. 磁碟溫層** | SQLite suffix 索引取代 RAM `_anchor_suffixes`；熱層改為 LRU 快取 | 2GB 語料載入 < RAM cap；查詢命中率 > 90% | `three_axis_engine.py`, 新 `disk_index.py` |
 | **C. 模態對位** | `multimodal_memory` 樣本序列化 → 跨模態錨點；三軸對位 + `SharedLatentSpace` 語義確認 | 圖↔文、音↔文對位 probe | `AnchorLearner` 重用, `multimodal/` |
-| **D. 物理/化學** | 擴充 `domain_ripple.py` 既有引擎（`PhysicsDomainEngine`/`ChemistryDomainEngine`）→ `route_domain` 進 GARDEN Stage 1（`garden_engine.py:1092`）；補公式求解器（F=ma、動能）與 `knowledge_base` 單位擴充 | F=ma、分子量 probe；`math_verifier` 同級測試 | `domain_ripple.py`, `garden_engine.py:1092-1102` |
+| **D. 物理/化學** | 擴充 `domain_ripple.py` 既有引擎（`PhysicsDomainEngine`/`ChemistryDomainEngine`）→ `route_domain` 進 GARDEN Stage 1（`garden_engine.py:1092`）；公式求解器（F=ma、動能）已實作於 `ai/memory/formula_solver.py`；`knowledge_base` 單位擴充仍缺 | F=ma、分子量 probe；`math_verifier` 同級測試 | `domain_ripple.py`, `garden_engine.py:1092-1102` |
 | **E. 上界測試** | 滑動窗跨全語料召回 | 上下文上界 ≈ 磁碟預算；記憶體穩定 | §5 全 |
 
 ---
@@ -355,9 +355,11 @@ ED3N/GARDEN 的 `route_math`（`dictionary_layer.py:452-472`,
    但**不會瞎答**（這是優點）。
 3. **磁碟 I/O 延遲**：溫層 miss 讀冷層會慢 — 需要 LRU 命中率監控
    （比照 `performance_optimizer.py` 的 real hit/miss 追蹤）。
-4. **物理/化學公式求解器缺**：分子量/數量分類已存在（`domain_ripple.py`），
-   但 F=ma、動能、複合單位是**新工作**；任何「已能做物理公式」的宣稱必須
-   先有 `math_verifier` 同級測試。
+4. **物理/化學公式求解器（已實作 2026-08-19）**：`ai/memory/formula_solver.py`
+   求解單未知物理文字題 — F=ma、動能 `½mv²`、`v=at`、動量、功、功率、重量
+   `F=mg`，已接入 `PhysicsDomainEngine.compute`（domain_ripple.py）。20 測試。
+   複合單位換算仍缺；任何「已能做物理公式」的宣稱必須有 `math_verifier`
+   同級測試（`tests/ai/test_formula_solver.py` 為此存在）。
 5. **模態位元組流需編碼器**：原始像素/波形不直接入三軸（§3.4）。
 
 ---
@@ -389,7 +391,9 @@ ED3N/GARDEN 的 `route_math`（`dictionary_layer.py:452-472`,
 
 **審計結論**：藍圖各階段幾乎都有既有對應 — 實作優先序 = **先用現成的
 （`domain_ripple`、`document/chunker`、`context/storage`），再補缺口**
-（SQLite suffix 索引、公式求解器、段落錨點驗證）。這符合 ASI 工程標準
+（SQLite suffix 索引、公式求解器、段落錨點驗證）。公式求解器缺口已閉合
+（`formula_solver.py`，2026-08-19）；剩餘缺口 = SQLite suffix 索引
+（Phase B）與段落錨點驗證（Phase A）。這符合 ASI 工程標準
 「surgical / 不重造輪子」。
 
 ---
