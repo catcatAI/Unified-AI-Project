@@ -417,6 +417,19 @@
 
 ---
 
+---
+
+## M22: ContinuousLearningPipeline.load() 無防禦性載入
+
+- **檔案**: `apps/backend/src/ai/ed3n/continuous_learning.py` L341-350
+- **問題**: `load()` 直接 `json.load(f)` 沒有任何 try/except。若 cl_state.json 損壞/格式錯誤，`json.JSONDecodeError` 會向上传播，導致 ED3N 引擎的 `load()` 方法在 CL checkpoint 恢復階段崩潰，整個引擎載入失敗。
+- **設計意圖**: checkpoint 損壞應降級到新 pipeline，不應阻止 ED3N 引擎載入。
+- **驗證**: [讀碼] ED3NEngine.load():L1312 直接呼叫 `type(self._continuous_learning).load()` 無 try/except。
+- **修復**: (1) CL.load() 增加 os.path.exists 檢查 + try/except (FileNotFoundError/JSONDecodeError/OSError) + isinstance(state, dict) 防護。(2) ED3NEngine.load() 增加 defense-in-depth try/except 包裹 CL.load() 呼叫。
+- **狀態**: ✅ 已修復
+
+---
+
 ## 已排除（誤報）
 
 - 測試套件 / flake8 基線健康（見上）
