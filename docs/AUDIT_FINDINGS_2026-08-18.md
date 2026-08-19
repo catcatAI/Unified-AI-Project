@@ -383,6 +383,40 @@
 
 ---
 
+---
+
+## M19: PriorityNegotiator 空實例 Bug
+
+- **檔案**: `apps/backend/src/services/llm/router.py` L1113-1118
+- **問題**: `_try_model_bus_match()` 中建立了新的 `PriorityNegotiator()` 實例但未註冊任何 voter。`resolve()` 始終返回 `routing_mode="neutral"`，導致保守模式閾值門控（`effective_threshold = max(0.9, direct_threshold)`）為死代碼——低信心 ModelBus 命中永遠不會被降級為草稿。
+- **設計意圖**: PriorityNegotiator 是有 8 個 voter 的全域單例（L80-88），應使用它而非新實例。
+- **驗證**: [親證] grep 確認只有 `router.py:80` 和 `priority_negotiator.py:11`（docstring）有新實例。
+- **修復**: 改用模組級 `_negotiator` 單例。
+- **狀態**: ✅ 已修復
+
+---
+
+## M20: UnifiedEngine _bool_confidence 硬編碼
+
+- **檔案**: `apps/backend/src/ai/unified_engine/unified_engine.py` L165-170
+- **問題**: `_bool_confidence()` 始終返回 `0.6`，忽略實際 log-odds score。
+- **設計意圖**: docstring 說明 "Score magnitude is re-derived cheaply; clamp to [0.5, 0.9]"，但實現為常數。
+- **驗證**: [讀碼] `_infer_from_core` 中 `boolean_answer()` 內部計算 score 但不暴露，新邏輯直接用 `boolean_score()` 避免雙重計算。
+- **修復**: 重構為從 `boolean_score()` 計算，刪除無用的 `_bool_confidence` 方法。
+- **狀態**: ✅ 已修復
+
+---
+
+## M21: test_registry.py LLMBackend 數量過時
+
+- **檔案**: `tests/services/test_registry.py`
+- **問題**: `test_members_count` 斷言 9 但 `UNIFIED` 後端已加入使總數為 10。
+- **驗證**: [親證] `pytest tests/services/test_registry.py` 1 failed → 14 passed。
+- **修復**: 更新為 10 並新增 `test_has_unified`。
+- **狀態**: ✅ 已修復
+
+---
+
 ## 已排除（誤報）
 
 - 測試套件 / flake8 基線健康（見上）
