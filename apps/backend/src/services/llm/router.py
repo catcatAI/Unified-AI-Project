@@ -1114,10 +1114,7 @@ class AngelaLLMService:
                 # Gate through PriorityNegotiator routing mode before returning
                 routing_mode = "neutral"
                 try:
-                    from ai.meta.priority_negotiator import PriorityNegotiator
-
-                    pn = PriorityNegotiator()
-                    pn_vote = pn.resolve({**context, "user_message": user_message})
+                    pn_vote = _negotiator.resolve({**context, "user_message": user_message})
                     routing_mode = pn_vote.get("routing_mode", "neutral")
                 except Exception as e:
                     logger.warning("PriorityNegotiator resolve failed: %s", e, exc_info=True)

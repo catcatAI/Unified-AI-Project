@@ -31,8 +31,11 @@ class TestLLMBackend:
     def test_has_none(self):
         assert LLMBackend.NONE.value == "none"
 
+    def test_has_unified(self):
+        assert LLMBackend.UNIFIED.value == "unified"
+
     def test_members_count(self):
-        assert len(LLMBackend) == 9
+        assert len(LLMBackend) == 10
 
     def test_from_value_valid(self):
         assert LLMBackend("ollama") == LLMBackend.OLLAMA

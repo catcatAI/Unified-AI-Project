@@ -146,9 +146,10 @@ class UnifiedEngine:
         if not q:
             return None
         # Boolean questions first: the discriminative layer is stronger.
-        bool_ans = self.core.boolean_answer(q)
-        if bool_ans is not None:
-            conf = self._bool_confidence(q, bool_ans)
+        score = self.core.boolean_score(q)
+        if score is not None:
+            bool_ans = "true" if score >= 0.0 else "false"
+            conf = min(0.9, max(0.5, 0.5 + 0.2 * min(1.0, abs(score) / 2.0)))
             result = f"{q}={bool_ans}"
             return result, conf, "statistical-core"
         best = self.core.best_answer(q)
@@ -160,14 +161,6 @@ class UnifiedEngine:
         conf = min(0.90, max(0.3, 0.3 + share))
         result = f"{q}={answer}"
         return result, conf, "statistical-core"
-
-    @staticmethod
-    def _bool_confidence(q: str, pred: str) -> float:
-        """Confidence proxy for the boolean layer: how far the log-odds sits
-        from the decision boundary. Computed via the score magnitude (clamped).
-        """
-        # Score magnitude is re-derived cheaply; clamp to [0.5, 0.9].
-        return 0.6
 
     # ------------------------------------------------------------------
     # Public process
