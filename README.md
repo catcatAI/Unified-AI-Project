@@ -3,7 +3,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: zh-tw/en
-    LAST_MODIFIED: 2026-07-18 (updated for §X #262b: full functional check + MD sync to 4,499 tests)
+    LAST_MODIFIED: 2026-08-20 (updated test count to 5,369)
   =============================================================================
 -->
 
@@ -57,7 +57,7 @@
 
 **Angela AI** is a digital life system with biological simulation and LLM integration capabilities.
 
-**Quick facts**: 610 Python files in backend src (~96K lines). Electron + Live2D desktop companion (136 JS/TS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~4,499 tests (tests/) — 0 errors. Security: 0 Dependabot + 0 CodeQL + 0 Secret Scanning = fully clean.**  
+**Quick facts**: 610 Python files in backend src (~96K lines). Electron + Live2D desktop companion (136 JS/TS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~5,369 tests (tests/) — 0 errors. Security: 0 Dependabot + 0 CodeQL + 0 Secret Scanning = fully clean.**  
 **Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · cli `7.5.0-dev` · biology-core `7.5.0-dev`.  
 **Architecture audit score**: **~95%** (2026-06-25; up from ~55-60% after Phases 0-5 repairs).  
 **Total project files**: ~3,500+ (610 Python in backend src · 295+ JS/TS · 1,021+ docs · 500+ config · 480+ test).  
@@ -102,7 +102,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | **API Versioning** | ✅ COMPLETE | Version routing middleware (Phase 5) |
 | **i18n System** | ✅ COMPLETE | I18nManager, PromptManager, 4 handlers + 4 LLM modules i18n'd, 45 tests (Phase 7) |
 | **Config system** | ✅ | `config_loader.py:get_config()` returns Config |
-| **Tests** | ✅ PASSING | ~4,499 tests collected (tests/), 0 collection errors, 2,212+ verified passing |
+| **Tests** | ✅ PASSING | ~5,369 tests collected (tests/), 0 collection errors, 2,212+ verified passing |
 | **JS Sharing** | ✅ COMPLETE | 33 shared files → `packages/shared-js/js/`, 0 duplicates remaining |
 | **SessionManager** | ✅ COMPLETE | 56 tests covering full lifecycle (Phase 5.8) |
 | **Skip Audit** | ✅ COMPLETE | Phase 5.9: 5 collection errors fixed, all skip reasons verified |
@@ -382,7 +382,7 @@ python apps/game-rpg/run_game.py
 - **Pixel art engine** — PyQt6 renderer, numpy voxel body ✅
 - **CLI** — Unified CLI with HTTP client ✅
 - **Gemini OS bridge** — pyautogui automation ✅
-- **Test suite** — 4,499 total ✅
+- **Test suite** — 5,369 total ✅
 
 ### What Does NOT Work / Needs Work
 
