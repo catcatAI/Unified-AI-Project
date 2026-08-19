@@ -134,7 +134,27 @@ class TTLSessionManager:
 sessions = TTLSessionManager()
 
 # Latest pipeline response, captured so _handle_chat_request can persist the turn.
+# Bounded to prevent unbounded memory growth (matches TTLSessionManager max_sessions).
+_MAX_LATEST_RESPONSES = 1000
 _latest_responses: Dict[str, Dict[str, Any]] = {}
+_latest_responses_order: List[str] = []  # insertion order for LRU eviction
+
+
+def _set_latest_response(session_id: str, data: Dict[str, Any]) -> None:
+    """Store a response with bounded eviction to prevent memory leaks."""
+    if session_id in _latest_responses:
+        # Update existing — move to end
+        _latest_responses[session_id] = data
+        if session_id in _latest_responses_order:
+            _latest_responses_order.remove(session_id)
+        _latest_responses_order.append(session_id)
+    else:
+        _latest_responses[session_id] = data
+        _latest_responses_order.append(session_id)
+    # Evict oldest entries if over limit
+    while len(_latest_responses) > _MAX_LATEST_RESPONSES:
+        oldest = _latest_responses_order.pop(0)
+        _latest_responses.pop(oldest, None)
 
 
 def _get_ed3n_engine():
@@ -1543,7 +1563,7 @@ async def _run_chat_pipeline(
             ir = IntentRegistry()
             ir_name, ir_conf = ir.detect(user_message)
             if ir_name == "math" and ir_conf >= 0.1:
-                _latest_responses[session_id] = math_result
+                _set_latest_response(session_id, math_result)
                 return math_result  # IntentRegistry confirms → fast path
         except Exception as e:
             logger.warning("IntentRegistry math gate failed: %s", e, exc_info=True)
@@ -1636,7 +1656,7 @@ async def _run_chat_pipeline(
         user_message, chat_svc, context, schema_ver, session_id
     )
     if gate_result:
-        _latest_responses[session_id] = gate_result
+        _set_latest_response(session_id, gate_result)
         return gate_result
 
     # Step 8: Agent auto-routing (creative/knowledge/opinion/vision/audio — may short-circuit)
@@ -1653,7 +1673,7 @@ async def _run_chat_pipeline(
             "emotion_intensity": 0.4,
             "session_id": session_id,
         }
-        _latest_responses[session_id] = agent_response
+        _set_latest_response(session_id, agent_response)
         return agent_response
 
     # Step 9: Inject causal predictions into context (learned from past interactions)
@@ -1671,7 +1691,7 @@ async def _run_chat_pipeline(
             )
             llm_response = response_result
         except asyncio.TimeoutError:
-            _latest_responses[session_id] = _handle_timeout(session_id, schema_ver)
+            _set_latest_response(session_id, _handle_timeout(session_id, schema_ver))
             return _latest_responses[session_id]
         except asyncio.CancelledError:
             logger.info("Client disconnected mid-response, cancelling")
@@ -1684,7 +1704,7 @@ async def _run_chat_pipeline(
                     timeout=timeout,
                 )
             except asyncio.TimeoutError:
-                _latest_responses[session_id] = _handle_timeout(session_id, schema_ver)
+                _set_latest_response(session_id, _handle_timeout(session_id, schema_ver))
                 return _latest_responses[session_id]
             except asyncio.CancelledError:
                 raise
@@ -1698,7 +1718,7 @@ async def _run_chat_pipeline(
                 timeout=timeout,
             )
         except asyncio.TimeoutError:
-            _latest_responses[session_id] = _handle_timeout(session_id, schema_ver)
+            _set_latest_response(session_id, _handle_timeout(session_id, schema_ver))
             return _latest_responses[session_id]
         except asyncio.CancelledError:
             logger.info("Client disconnected mid-response, cancelling")
@@ -1745,7 +1765,7 @@ async def _run_chat_pipeline(
     except Exception as e:
         logger.warning(f"Intent outcome recording unavailable: {e}", exc_info=True)
 
-    _latest_responses[session_id] = _format_chat_response(
+    _set_latest_response(session_id, _format_chat_response(
         response_text,
         llm_response,
         emotion_result,
@@ -1756,7 +1776,7 @@ async def _run_chat_pipeline(
         session_id,
         source=flow_source,
         was_truncated=_was_truncated,
-    )
+    ))
     return _latest_responses[session_id]
 
 
