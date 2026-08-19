@@ -343,8 +343,25 @@ class ContinuousLearningPipeline:
         import os
 
         path = os.path.join(save_dir, "cl_state.json")
-        with open(path, "r", encoding="utf-8") as f:
-            state = json.load(f)
+        if not os.path.exists(path):
+            logger.warning("ContinuousLearningPipeline: no CL checkpoint at %s", path)
+            return cls(engine=engine, trainer=trainer)
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                state = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError, OSError) as e:
+            logger.warning(
+                "ContinuousLearningPipeline: failed to load checkpoint %s: %s; "
+                "starting fresh",
+                path, e,
+            )
+            return cls(engine=engine, trainer=trainer)
+        if not isinstance(state, dict):
+            logger.warning(
+                "ContinuousLearningPipeline: invalid checkpoint format at %s; starting fresh",
+                path,
+            )
+            return cls(engine=engine, trainer=trainer)
 
         pipeline = cls(engine=engine, trainer=trainer)
         pipeline._interaction_count = state.get("interaction_count", 0)

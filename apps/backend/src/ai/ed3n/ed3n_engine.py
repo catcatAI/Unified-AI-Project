@@ -1309,9 +1309,17 @@ class ED3NEngine:
         if self._continuous_learning is not None:
             cl_path = path.replace(".json", "_continuous_learning.json")
             if os.path.exists(cl_path):
-                self._continuous_learning = type(self._continuous_learning).load(
-                    cl_path, self, None
-                )
+                try:
+                    self._continuous_learning = type(self._continuous_learning).load(
+                        cl_path, self, None
+                    )
+                except Exception as e:
+                    logger.warning(
+                        "ED3NEngine: failed to load CL checkpoint %s: %s; "
+                        "keeping fresh pipeline",
+                        cl_path,
+                        e,
+                    )
             else:
                 logger.debug("ED3NEngine: no continuous-learning checkpoint at %s", cl_path)
         # Restore LatentReasoningNetwork only if latent space was enabled.
