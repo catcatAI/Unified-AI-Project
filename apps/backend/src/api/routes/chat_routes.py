@@ -1355,6 +1355,7 @@ def _format_chat_response(
         "model_bus": "model_bus",
         "ed3n": "ed3n",
         "garden": "garden",
+        "unified": "unified",
         "neuro-blender": "fallback",
         "local-fallback": "fallback",
         "google": "llm",
@@ -1362,6 +1363,7 @@ def _format_chat_response(
         "anthropic": "llm",
         "ollama": "llm",
         "llamacpp": "llm",
+        "error": "error",
     }
     _derived_route = _route_map.get(_backend)
     if _derived_route is None:
