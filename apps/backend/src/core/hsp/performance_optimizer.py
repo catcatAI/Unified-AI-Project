@@ -69,6 +69,18 @@ class HSPPerformanceOptimizer:
             "timestamp": time.time(),
             "expires_at": time.time() + cache_ttl,
         }
+        # Lazy eviction: if cache grows beyond 2× the TTL-based clean target,
+        # purge expired entries and cap at _MAX_MESSAGE_QUEUE
+        if len(self.message_cache) > _MAX_MESSAGE_QUEUE * 2:
+            self.clean_expired_cache()
+            # If still over cap after expiry purge, evict oldest
+            if len(self.message_cache) > _MAX_MESSAGE_QUEUE:
+                oldest_keys = sorted(
+                    self.message_cache,
+                    key=lambda k: self.message_cache[k]["expires_at"]
+                )[:len(self.message_cache) - _MAX_MESSAGE_QUEUE]
+                for k in oldest_keys:
+                    del self.message_cache[k]
         logger.debug(f"消息已缓存: {message_id}")
 
     def get_cached_message(self, message_id: str) -> Optional[Any]:
