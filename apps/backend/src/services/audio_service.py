@@ -210,12 +210,16 @@ class AudioService:
                 _WHISPER_MODEL = WhisperModel("base", device="cpu", compute_type="int8")
             import tempfile
 
-            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-                f.write(audio_data)
-                tmp_path = f.name
-            segments, info = _WHISPER_MODEL.transcribe(tmp_path, language=language or "zh")
-            text = " ".join(seg.text for seg in segments)
-            os.unlink(tmp_path)
+            tmp_path = None
+            try:
+                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+                    f.write(audio_data)
+                    tmp_path = f.name
+                segments, info = _WHISPER_MODEL.transcribe(tmp_path, language=language or "zh")
+                text = " ".join(seg.text for seg in segments)
+            finally:
+                if tmp_path and os.path.exists(tmp_path):
+                    os.unlink(tmp_path)
             if text.strip():
                 return {
                     "text": text.strip(),
