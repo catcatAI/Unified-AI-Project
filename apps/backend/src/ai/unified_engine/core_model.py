@@ -404,7 +404,6 @@ class FixedSizeCore:
         out = bytearray(prefix)
         for step in range(max_len):
             pos = len(out) - 1
-            probs = self.next_byte_probs(bytes(out), pos)
             nxt = self.sample_next(bytes(out), pos, rng)
             out.append(nxt)
             if stop_on and bytes([nxt]) in stop_on:

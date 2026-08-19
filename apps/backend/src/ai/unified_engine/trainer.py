@@ -133,7 +133,6 @@ def measure_generation_fidelity(
 ) -> Dict[str, Any]:
     """Sample continuations from the model; measure distributional overlap
     with the training data (reproduction = by-product of generalisation)."""
-    rng = random.Random(7)
     starts = [s.encode("utf-8")[:6] for s in train_samples]
     generated = []
     for i in range(min(n, len(train_samples))):

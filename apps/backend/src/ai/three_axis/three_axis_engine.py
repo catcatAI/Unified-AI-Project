@@ -298,7 +298,6 @@ class ThreeAxisEngine:
         whitespace or leading words align to the same answer.
         """
         self._anchor_learner.learn(samples)
-        anchors = self._anchor_learner.anchors
         problem_counts: Dict[str, Dict[str, int]] = {}
         suffix_counts: Dict[str, Dict[str, int]] = {}
         for text in samples:
