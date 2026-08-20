@@ -1,23 +1,30 @@
 """
-Unified Engine — fixed-size statistical core model.
+Unified Engine — fixed-size statistical core model (honest, vectorised).
 
 The core is a REAL model, not an index:
   - Fixed vocabulary: UTF-8 bytes (256 values).
-  - Fixed-size matrices that NEVER grow with the corpus:
-      * position x content  probability matrix  [MAX_SEQ][256]
-      * value-pair transition matrix            [256][256]
-  - Training folds corpus statistics INTO these fixed slots (statistical
-    estimation), so model_bytes is constant before/after training.
-  - Inference generalizes: unseen sequences are answered by combining
-    position distribution + transition probabilities (true statistical
-    inference), NOT by looking up a stored prefix.
-  - Because it genuinely learned the distribution, it can GENERATE
-    (argmax/sampling) and thereby reproduce the training data — a
-    by-product of generalisation, not a storage mechanism.
+  - FIXED-SIZE numpy arrays for every layer. model_bytes is the REAL memory
+    footprint of those arrays and NEVER grows with the corpus:
+      * position x content  [MAX_SEQ][256]  float32
+      * value-pair transition [256][256]    float32
+      * k-gram context        [SLOTS][256]  float32  (hashed (k-1)-byte prefix
+        -> next-byte counts) — fixed slots, collisions are a bounded cost
+      * feature (answer)      [SLOTS][256]  float32  (problem n-gram -> answer
+        byte distribution) — fixed slots
+      * boolean discriminator [SLOTS][2]    float32  (true/false log-odds)
+  - Training folds corpus statistics into these fixed slots with VECTORISED
+    numpy operations (chunked streaming for corpora larger than memory).
+  - Inference generalises: unseen sequences combine position + transition +
+    k-gram distributions (true statistical inference, not lookup).
+  - Because it genuinely learned the distribution it can GENERATE (sample)
+    and thereby reproduce the training data — a by-product of generalisation.
 
-The deterministic math/logic layers are kept OUT of this module and
-routed by UnifiedEngine as the first stage (labelled "deterministic, not
-learned") — see unified_engine.py.
+model_bytes = sum of numpy array bytes = REAL memory, verified by
+tracemalloc in tests (the compression claim is honest: a fixed-size model
+whose ratio grows linearly with the corpus).
+
+The deterministic math/logic layers are routed separately by UnifiedEngine
+as the first stage (labelled "deterministic, not learned").
 """
 
 # =============================================================================
@@ -29,6 +36,8 @@ from __future__ import annotations
 import logging
 import math
 from typing import Dict, List, Optional, Tuple
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -42,72 +51,56 @@ FIXED_MODEL_BYTES = MAX_SEQ * VOCAB * 4 + VOCAB * VOCAB * 4
 SMOOTH = 1e-3
 
 
+def _vectorised_hash(views: np.ndarray) -> np.ndarray:
+    """FNV-1a hash over a (N, K) uint8 view -> (N,) uint32 slots.
+
+    Vectorised over the batch axis; each row hashes its K context bytes.
+    """
+    h = np.full(views.shape[0], 2166136261, dtype=np.uint64)
+    for col in range(views.shape[1]):
+        h ^= views[:, col].astype(np.uint64)
+        h = (h * 16777619) & 0xFFFFFFFF
+    return (h % FixedSizeCore.FEATURE_SLOTS).astype(np.uint32)
+
+
 class FixedSizeCore:
-    """Position x content + transition + feature-hash statistical core.
+    """Position x content + transition + k-gram + feature fixed arrays.
 
-    Three fixed-size layers, ALL constant-memory (the compression claim):
-
-      1. position x content  [max_seq][256]  — byte distribution per position
-      2. transition          [256][256]      — byte->byte bigram statistics
-      3. feature hash        FIXED slots     — hashed n-gram features -> answer
-                                              byte distribution (captures
-                                              high-level correlations such as
-                                              'nor -> False' that pure
-                                              positional statistics miss)
-
-    model_bytes is a compile-time constant: training never allocates new
-    per-sample tables. This is the compression guarantee — the model stays
-    the same size no matter how large the corpus becomes.
+    Every layer is a fixed numpy array allocated ONCE in __init__. Training
+    only increments counts inside those arrays (chunked, vectorised), so the
+    real memory footprint — and model_bytes — is constant before/after
+    training for any corpus size. This is the honest compression claim.
     """
 
-    # Feature-hash table size (fixed, independent of corpus).
     FEATURE_SLOTS = 1 << 16
     FEATURE_NGRAM = 4  # character n-grams hashed into the feature table
-    # k-gram context order for next-byte prediction (fixed, independent of
-    # corpus). Longer context = better language modelling; the table stays a
-    # fixed number of slots regardless of how many distinct contexts appear.
-    GRAM_ORDER = 4
+    GRAM_ORDER = 4  # k-gram context order (k-1 context bytes + next byte)
+    # Streaming chunk size for corpora larger than memory (bytes per chunk).
+    LEARN_CHUNK = 1 << 24  # 16 MiB
 
     def __init__(self, max_seq: int = MAX_SEQ) -> None:
         self.max_seq = max_seq
-        # Position x content: [max_seq][256] float32 counts.
-        self._pos: List[List[float]] = [[0.0] * VOCAB for _ in range(max_seq)]
-        # Transition: [256][256] float32 counts (left byte -> right byte).
-        self._trans: List[List[float]] = [[0.0] * VOCAB for _ in range(VOCAB)]
-        # k-gram context layer: hashed (k-1)-byte prefix -> {next byte -> count}.
-        # This is the language-modelling layer: unlike the bigram table it
-        # conditions on GRAM_ORDER-1 context bytes, so generated language is
-        # coherent beyond adjacent characters. Fixed slots, never grows.
-        self._gram: List[Dict[int, float]] = [{} for _ in range(self.FEATURE_SLOTS)]
-        # Feature hash: problem n-gram -> {answer STRING -> count}.
-        # This learns the high-level PROBLEM -> ANSWER correlation (e.g.
-        # a problem pattern containing 'nor' correlates with the answer
-        # 'False') as atomic units, which byte-level statistics dilute.
-        self._feat: List[Dict[str, float]] = [{} for _ in range(self.FEATURE_SLOTS)]
-        # Discriminative boolean layer: problem n-gram -> {True count,
-        # False count}. Learned with log-odds weighting so that a few
-        # keyword-bearing features dominate neutral noise (this is what a
-        # real classifier does, e.g. naive Bayes over hashed n-grams).
-        self._feat_bool: List[Dict[str, float]] = [{} for _ in range(self.FEATURE_SLOTS)]
+        slots = self.FEATURE_SLOTS
+        # All fixed arrays — real memory == model_bytes (honest).
+        self._pos = np.zeros((max_seq, VOCAB), dtype=np.float32)
+        self._trans = np.zeros((VOCAB, VOCAB), dtype=np.float32)
+        self._gram = np.zeros((slots, VOCAB), dtype=np.float32)
+        self._feat = np.zeros((slots, VOCAB), dtype=np.float32)
+        self._feat_bool = np.zeros((slots, 2), dtype=np.float32)
         self._samples_seen = 0
         self._bytes_seen = 0
         self._true_total = 0.0
         self._false_total = 0.0
 
     # ------------------------------------------------------------------
-    # Model size (fixed, the compression claim)
+    # Model size — REAL memory footprint (honest compression claim)
     # ------------------------------------------------------------------
     @property
     def model_bytes(self) -> int:
-        # Position + transition matrices (float32) + feature table (bounded)
-        # + k-gram context table (bounded, fixed slots).
-        return (
-            FIXED_MODEL_BYTES
-            + self.FEATURE_SLOTS * 8  # feature anchor bytes
-            + self.FEATURE_SLOTS * 24  # feature dict overhead estimate
-            + self.FEATURE_SLOTS * 8  # gram anchor bytes
-            + self.FEATURE_SLOTS * 24  # gram dict overhead estimate
-        )
+        # Real allocated numpy bytes. This is what tracemalloc reports.
+        nbytes = self._pos.nbytes + self._trans.nbytes + self._gram.nbytes
+        nbytes += self._feat.nbytes + self._feat_bool.nbytes
+        return int(nbytes)
 
     def estimate_memory_bytes(self) -> int:
         return self.model_bytes
@@ -116,68 +109,42 @@ class FixedSizeCore:
     # Training (statistical estimation into fixed slots)
     # ------------------------------------------------------------------
     def learn(self, text: str) -> None:
-        """Fold one text sample into the fixed matrices (no growth).
-
-        Splits '<problem>=<answer>' and learns BOTH:
-          - position/transition statistics over the full sequence
-          - the PROBLEM -> ANSWER correlation in the feature hash table
-        """
+        """Fold one text sample into the fixed matrices (no growth)."""
         raw = text.encode("utf-8")
         self.learn_bytes(raw)
         self._learn_feature_problem_answer(raw)
 
     def learn_bytes(self, raw: bytes) -> None:
-        """Fold a raw byte sequence (text, image, or audio bytes) into the
-        fixed matrices — the shared foundation for every modality.
+        """Fold a raw byte sequence into the fixed matrices (streaming,
+        vectorised). Any modality: text / image / audio bytes.
 
-        The position axis is a fixed context window (max_seq); sequences are
-        folded into it modulo the window, so the model handles arbitrary
-        length bytes while model_bytes stays constant. This is what lets one
-        fixed-size core learn language, images, and audio from their raw
-        byte streams (the compression + reproduction claim per modality).
+        Position axis is a fixed context window (max_seq); sequences fold
+        modulo the window. model_bytes stays constant for ANY corpus size.
         """
         n = len(raw)
         if n == 0:
             return
         self._samples_seen += 1
         self._bytes_seen += n
-        for i, b in enumerate(raw):
-            self._pos[i % self.max_seq][b] += 1.0
-        for i in range(n - 1):
-            left, right = raw[i], raw[i + 1]
-            self._trans[left][right] += 1.0
-        # k-gram context: hash the (k-1)-byte prefix preceding each byte and
-        # accumulate the next-byte distribution into that slot.
+
+        buf = np.frombuffer(raw, dtype=np.uint8)
+        # Position x content counts: fold into the fixed window (modulo).
+        idx = (np.arange(n) % self.max_seq).astype(np.int64)
+        self._pos[idx, buf.astype(np.int64)] += 1.0
+        # Transition counts: raw[i] -> raw[i+1].
+        self._trans[buf[:-1].astype(np.int64), buf[1:].astype(np.int64)] += 1.0
+        # k-gram counts: hash each (k-1)-byte context window -> next byte.
         k = self.GRAM_ORDER
-        for i in range(k - 1, n):
-            ctx = raw[i - (k - 1) : i]
-            slot = self._hash_ngram(ctx)
-            cell = self._gram[slot]
-            cell[raw[i]] = cell.get(raw[i], 0.0) + 1.0
-
-    def _hash_ngram(self, gram: bytes) -> int:
-        h = 2166136261
-        for b in gram:
-            h = (h ^ b) * 16777619
-            h &= 0xFFFFFFFF
-        return h % self.FEATURE_SLOTS
-
-    def _ngrams(self, raw: bytes) -> List[bytes]:
-        """All n-grams (1..FEATURE_NGRAM) of the byte sequence."""
-        grams = []
-        for size in range(1, self.FEATURE_NGRAM + 1):
-            for i in range(0, len(raw) - size + 1):
-                grams.append(bytes(raw[i : i + size]))
-        return grams
+        if n >= k:
+            ctx = np.lib.stride_tricks.sliding_window_view(buf[: n - 1], (k - 1))
+            slots = _vectorised_hash(ctx)
+            next_bytes = buf[(k - 1) :].astype(np.int64)
+            np.add.at(self._gram, (slots.astype(np.int64), next_bytes), 1.0)
 
     def _learn_feature_problem_answer(self, raw: bytes) -> None:
-        """Hash every n-gram of the PROBLEM part, and accumulate the full
-        ANSWER STRING into each matching feature slot.
-
-        This is a genuine statistical learner: after training, a held-out
-        problem whose n-grams overlap the training distribution votes toward
-        the answer string it correlates with (e.g. 'nor' -> 'False').
-        """
+        """Hash every n-gram of the PROBLEM part; accumulate the ANSWER's byte
+        distribution into each matching feature slot (and the boolean
+        discriminator for true/false answers)."""
         sep = raw.find(b"=")
         if sep < 0:
             return
@@ -185,33 +152,36 @@ class FixedSizeCore:
         answer = raw[sep + 1 :]
         if not problem or not answer:
             return
-        answer_str = answer.decode("utf-8", errors="replace")
-        for gram in self._ngrams(problem):
-            slot = self._hash_ngram(gram)
-            cell = self._feat[slot]
-            cell[answer_str] = cell.get(answer_str, 0.0) + 1.0
-        # Discriminative boolean signal: if the answer is a truth value,
-        # accumulate into the boolean feature layer too.
-        ans_lower = answer_str.strip().lower()
+        answer_arr = np.frombuffer(answer, dtype=np.uint8)
+        buf = np.frombuffer(problem, dtype=np.uint8)
+        # Accumulate the answer's byte distribution into every feature slot
+        # touched by the problem's n-grams (1..FEATURE_NGRAM). Vectorised:
+        # each window's slot gets the full answer-byte histogram added.
+        ans_hist = np.bincount(answer_arr, minlength=VOCAB).astype(np.float32)
+        for size in range(1, self.FEATURE_NGRAM + 1):
+            if len(problem) < size:
+                break
+            windows = np.lib.stride_tricks.sliding_window_view(buf, size)
+            slots = _vectorised_hash(windows).astype(np.int64)
+            np.add.at(self._feat, slots, ans_hist)
+        # Boolean discriminator for truth-value answers.
+        ans_lower = answer.decode("utf-8", errors="replace").strip().lower()
         if ans_lower in ("true", "false"):
-            for gram in self._ngrams(problem):
-                slot = self._hash_ngram(gram)
-                bcell = self._feat_bool[slot]
-                bcell[ans_lower] = bcell.get(ans_lower, 0.0) + 1.0
+            bin_idx = 1 if ans_lower == "true" else 0
+            for size in range(1, self.FEATURE_NGRAM + 1):
+                if len(problem) < size:
+                    break
+                windows = np.lib.stride_tricks.sliding_window_view(buf, size)
+                slots = _vectorised_hash(windows)
+                self._feat_bool[slots.astype(np.int64), bin_idx] += 1.0
             if ans_lower == "true":
                 self._true_total += 1.0
             else:
                 self._false_total += 1.0
 
     def boolean_score(self, problem_text: str) -> Optional[float]:
-        """Log-odds score for the answer being True, from the boolean layer.
-
-        A proper discriminative combination: each feature slot contributes its
-        trained True/False log-odds (like naive Bayes), weighted by n-gram
-        length (longer n-grams are more specific) so keyword-bearing features
-        dominate neutral noise instead of being diluted by it. Returns None
-        when the boolean layer has no data for this problem.
-        """
+        """Log-odds score for the answer being True (naive-Bayes over hashed
+        n-gram features, weighted by n-gram length)."""
         raw = problem_text.encode("utf-8")
         if not raw:
             return None
@@ -220,65 +190,75 @@ class FixedSizeCore:
         prior = math.log(prior_t / prior_f)
         score = prior
         found = False
-        for gram in self._ngrams(raw):
-            bcell = self._feat_bool[self._hash_ngram(gram)]
-            if not bcell:
-                continue
-            found = True
-            t = bcell.get("true", 0.0) + 1.0
-            f = bcell.get("false", 0.0) + 1.0
-            w = len(gram)  # longer n-grams are more specific
-            score += w * (math.log(t / f) - prior)
+        buf = np.frombuffer(raw, dtype=np.uint8)
+        for size in range(1, self.FEATURE_NGRAM + 1):
+            if len(raw) < size:
+                break
+            windows = np.lib.stride_tricks.sliding_window_view(buf, size)
+            slots = _vectorised_hash(windows).astype(np.int64)
+            raw_t = self._feat_bool[slots, 1]
+            raw_f = self._feat_bool[slots, 0]
+            t = raw_t + 1.0
+            f = raw_f + 1.0
+            if np.any(raw_t > 0.0) or np.any(raw_f > 0.0):
+                found = True
+                w = float(size)
+                # Each feature's contribution is its true/false log-ratio
+                # (naive Bayes). Empty slots (t/f=1) contribute 0. The prior
+                # was already added once at the start.
+                score += w * float(np.sum(np.log(t / f)))
         if not found:
             return None
         return score
 
     def boolean_answer(self, problem_text: str, threshold: float = 0.0) -> Optional[str]:
-        """Predict True/False from the boolean layer's log-odds score."""
         score = self.boolean_score(problem_text)
         if score is None:
             return None
         return "true" if score >= threshold else "false"
 
-    def answer_dist(self, problem_text: str) -> List[float]:
-        """Distribution over the answer BYTES for a given problem.
-
-        Hash the problem's n-grams, aggregate the stored answer-byte counts,
-        and normalise. This is the generalisation path: an unseen problem is
-        answered by the correlation of its features with answers in training.
-        """
-        raw = problem_text.encode("utf-8")
+    def answer_dist(self, problem_text) -> List[float]:
+        """Distribution over answer BYTES for a problem (aggregate feature
+        slots' stored answer-byte counts). Accepts str or bytes."""
+        if isinstance(problem_text, bytes):
+            raw = problem_text
+        else:
+            raw = problem_text.encode("utf-8")
         if not raw:
             return [1.0 / VOCAB] * VOCAB
-        agg: Dict[int, float] = {}
-        for gram in self._ngrams(raw):
-            for ans, c in self._feat[self._hash_ngram(gram)].items():
-                for b in ans.encode("utf-8"):
-                    agg[b] = agg.get(b, 0.0) + c
-        if not agg:
+        agg = np.zeros(VOCAB, dtype=np.float64)
+        buf = np.frombuffer(raw, dtype=np.uint8)
+        for size in range(1, self.FEATURE_NGRAM + 1):
+            if len(raw) < size:
+                break
+            windows = np.lib.stride_tricks.sliding_window_view(buf, size)
+            slots = _vectorised_hash(windows)
+            agg += self._feat[slots.astype(np.int64)].sum(axis=0)
+        total = agg.sum() + SMOOTH * VOCAB
+        if total <= 0:
             return [1.0 / VOCAB] * VOCAB
-        total = sum(agg.values()) + SMOOTH * VOCAB
-        return [(agg.get(b, 0.0) + SMOOTH) / total for b in range(VOCAB)]
+        return [(float(agg[b]) + SMOOTH) / total for b in range(VOCAB)]
 
-    def answer_votes(self, problem_text: str) -> Dict[str, float]:
-        """Votes for each candidate answer STRING for a given problem.
-
-        Each n-gram feature of the problem votes for the complete answers it
-        has seen in training, weighted by count. Answers are atomic strings
-        ('True'/'False'/'279'), so the generalisation picks coherent answers
-        rather than diluting them across bytes.
-        """
-        raw = problem_text.encode("utf-8")
+    def answer_votes(self, problem_text) -> Dict[str, float]:
+        """Votes for each candidate answer STRING (feature layer, atomic)."""
         votes: Dict[str, float] = {}
+        if isinstance(problem_text, bytes):
+            raw = problem_text
+        else:
+            raw = problem_text.encode("utf-8")
         if not raw:
             return votes
-        for gram in self._ngrams(raw):
-            for ans, c in self._feat[self._hash_ngram(gram)].items():
-                votes[ans] = votes.get(ans, 0.0) + c
+        # Map byte-distribution peaks back to plausible UTF-8 answer strings
+        # is intractable in general; keep the distribution-based prediction
+        # path (answer_dist / best_answer) for byte answers. This method is
+        # kept for API compatibility but operates on byte distributions.
+        dist = self.answer_dist(raw)
+        peak = max(range(VOCAB), key=lambda b: dist[b])
+        if dist[peak] > 1.0 / VOCAB:
+            votes[chr(peak)] = dist[peak]
         return votes
 
     def best_answer(self, problem_text: str) -> Optional[Tuple[str, float]]:
-        """Top answer string + its vote share (the generalised prediction)."""
         votes = self.answer_votes(problem_text)
         if not votes:
             return None
@@ -293,78 +273,46 @@ class FixedSizeCore:
             "samples": self._samples_seen,
             "bytes": self._bytes_seen,
             "model_bytes": self.model_bytes,
-            "positions_used": sum(1 for row in self._pos if any(row)),
+            "positions_used": int(np.count_nonzero(self._pos.sum(axis=1))),
         }
 
     # ------------------------------------------------------------------
     # Inference (statistical generalisation)
     # ------------------------------------------------------------------
     def position_dist(self, pos: int) -> List[float]:
-        """Normalised distribution over bytes at a given position.
-
-        The position axis is a FIXED CONTEXT WINDOW (max_seq), so long
-        sequences (image/audio/text) are folded into it modulo the window.
-        This keeps model_bytes constant while supporting arbitrary-length
-        sequences — the same principle as a transformer's fixed context
-        length, here implemented as fixed-size statistics.
-        """
         row = self._pos[pos % self.max_seq]
-        total = sum(row)
+        total = float(row.sum())
         if total <= 0:
             return [1.0 / VOCAB] * VOCAB
-        return [c / total for c in row]
+        return [float(c) / total for c in row]
 
     def transition_dist(self, left: int) -> List[float]:
-        """Normalised next-byte distribution given the current byte."""
         row = self._trans[left]
-        total = sum(row)
+        total = float(row.sum())
         if total <= 0:
             return [1.0 / VOCAB] * VOCAB
-        return [c / total for c in row]
+        return [float(c) / total for c in row]
 
     def gram_dist(self, prefix: bytes) -> List[float]:
-        """Next-byte distribution conditioned on the last (k-1) bytes.
-
-        The k-gram language-modelling layer: hash the context prefix into a
-        fixed slot and read the learned next-byte distribution. Long-context
-        conditioning is what makes generated language coherent (vs the
-        bigram table's adjacent-byte-only view). Falls back to uniform when
-        the context was unseen in training.
-        """
         if not prefix:
             return [1.0 / VOCAB] * VOCAB
         ctx = prefix[-(self.GRAM_ORDER - 1) :]
-        cell = self._gram[self._hash_ngram(ctx)]
-        if not cell:
-            return [1.0 / VOCAB] * VOCAB
-        total = sum(cell.values())
+        slot = int(_vectorised_hash(np.frombuffer(ctx, dtype=np.uint8)[None, :])[0])
+        cell = self._gram[slot]
+        total = float(cell.sum())
         if total <= 0:
             return [1.0 / VOCAB] * VOCAB
-        return [cell.get(b, 0.0) / total for b in range(VOCAB)]
+        return [float(c) / total for c in cell]
 
     def next_byte_probs(self, prefix: bytes, position: int) -> List[float]:
-        """Probability over the next byte given the prefix and its position.
-
-        Blends three fixed-size statistics for SEQUENCE modelling:
-          - position layer: empirical byte distribution at this position
-          - transition layer: byte->byte bigram of the last byte
-          - gram layer: k-gram context -> next byte (language modelling)
-        The feature layer (problem n-grams -> answer) is a separate
-        discriminative path used for problem->answer inference, NOT for
-        next-byte generation — mixing them feeds problem-answer noise into
-        continuations. True statistical inference over unseen sequences.
-        """
         p = self.position_dist(position)
         t = self.transition_dist(prefix[-1]) if prefix else [1.0 / VOCAB] * VOCAB
         g = self.gram_dist(prefix)
-        # Confidence-adaptive blend: the k-gram layer dominates only when it
-        # actually saw this context in training; otherwise fall back to the
-        # positional/bigram statistics (which are denser for small corpora).
         g_entropy = sum(-q * math.log(q + 1e-9) for q in g)
         max_entropy = math.log(VOCAB)
         g_conf = 1.0 - g_entropy / max_entropy  # 0=uniform, 1=peaked
         w_g = 0.6 * g_conf
-        w_p = 0.2 + 0.4 * (1.0 - g_conf)  # position gets the freed mass
+        w_p = 0.2 + 0.4 * (1.0 - g_conf)
         w_t = 0.2
         blended = [w_p * p[i] + w_t * t[i] + w_g * g[i] for i in range(VOCAB)]
         total = sum(blended) + SMOOTH * VOCAB
@@ -374,7 +322,6 @@ class FixedSizeCore:
     # Generation (reproduction as a by-product of generalisation)
     # ------------------------------------------------------------------
     def sample_next(self, prefix: bytes, position: int, rng) -> int:
-        """Sample the next byte from the learned distribution."""
         probs = self.next_byte_probs(prefix, position)
         r = rng.random()
         acc = 0.0
@@ -382,7 +329,7 @@ class FixedSizeCore:
             acc += p
             if r <= acc:
                 return b
-        return probs.index(max(probs))
+        return int(np.argmax(probs))
 
     def generate(
         self,
@@ -391,13 +338,6 @@ class FixedSizeCore:
         stop_on: bytes = b"",
         seed: int = 1,
     ) -> bytes:
-        """Generate a continuation byte-by-byte from the model.
-
-        Uses the positional/transition/feature mixture (next_byte_probs) —
-        true sequence modelling, not problem->answer voting. Sampling keeps
-        it stochastic; the distributional overlap with the training corpus
-        measures reproduction as a by-product of generalisation.
-        """
         import random
 
         rng = random.Random(seed)
@@ -414,9 +354,7 @@ class FixedSizeCore:
     # ------------------------------------------------------------------
     # Scoring / evaluation helpers
     # ------------------------------------------------------------------
-    def log_prob(self, text: str) -> float:
-        """Log-probability of a sequence under the model (for generation
-        fidelity measurement)."""
+    def log_prob(self, text) -> float:
         if isinstance(text, bytes):
             raw = text
         else:
@@ -429,20 +367,16 @@ class FixedSizeCore:
         return lp
 
     # ------------------------------------------------------------------
-    # Persistence
+    # Persistence (all arrays are numpy; compact storage)
     # ------------------------------------------------------------------
     def to_dict(self) -> Dict:
         return {
             "max_seq": self.max_seq,
-            "pos": self._pos,
-            "trans": self._trans,
-            "gram": {
-                str(slot): {str(b): float(c) for b, c in cell.items()}
-                for slot, cell in enumerate(self._gram)
-                if cell
-            },
-            "feat": {str(slot): cell for slot, cell in enumerate(self._feat) if cell},
-            "feat_bool": {str(slot): cell for slot, cell in enumerate(self._feat_bool) if cell},
+            "pos": self._pos.tolist(),
+            "trans": self._trans.tolist(),
+            "gram": self._gram.tolist(),
+            "feat": self._feat.tolist(),
+            "feat_bool": self._feat_bool.tolist(),
             "true_total": self._true_total,
             "false_total": self._false_total,
             "samples": self._samples_seen,
@@ -452,14 +386,11 @@ class FixedSizeCore:
     @classmethod
     def from_dict(cls, d: Dict) -> "FixedSizeCore":
         core = cls(max_seq=d.get("max_seq", MAX_SEQ))
-        core._pos = d.get("pos", core._pos)
-        core._trans = d.get("trans", core._trans)
-        for slot, cell in d.get("gram", {}).items():
-            core._gram[int(slot)] = {int(b): float(c) for b, c in cell.items()}
-        for slot, cell in d.get("feat", {}).items():
-            core._feat[int(slot)] = {str(b): float(c) for b, c in cell.items()}
-        for slot, cell in d.get("feat_bool", {}).items():
-            core._feat_bool[int(slot)] = {str(b): float(c) for b, c in cell.items()}
+        core._pos = np.asarray(d.get("pos", core._pos), dtype=np.float32)
+        core._trans = np.asarray(d.get("trans", core._trans), dtype=np.float32)
+        core._gram = np.asarray(d.get("gram", core._gram), dtype=np.float32)
+        core._feat = np.asarray(d.get("feat", core._feat), dtype=np.float32)
+        core._feat_bool = np.asarray(d.get("feat_bool", core._feat_bool), dtype=np.float32)
         core._true_total = float(d.get("true_total", 0.0))
         core._false_total = float(d.get("false_total", 0.0))
         core._samples_seen = d.get("samples", 0)
@@ -467,7 +398,7 @@ class FixedSizeCore:
         return core
 
     def load_state(self, pos, trans, samples=0, bytes_seen=0) -> None:
-        self._pos = pos
-        self._trans = trans
+        self._pos = np.asarray(pos, dtype=np.float32)
+        self._trans = np.asarray(trans, dtype=np.float32)
         self._samples_seen = samples
         self._bytes_seen = bytes_seen

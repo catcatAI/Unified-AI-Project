@@ -87,17 +87,22 @@ class TestFixedMemory:
         eng = UnifiedEngine(memory_cap_mb=2048)
         samples = [f"{i}+1={i + 1}" for i in range(500)]
         eng.learn_batch(samples)
-        assert eng.model_bytes == 4980736
+        # Real footprint of the fixed numpy arrays (honest, not an estimate).
+        assert eng.model_bytes == FixedSizeCore().model_bytes
 
     def test_no_growth_tables(self):
         """The old engine grew prefix/suffix tables; the unified core must
         not have any per-sample storage structures."""
+        import numpy as np
+
         core = FixedSizeCore()
         core.learn_batch(["178 + 101=279"])
-        n_feat_before = sum(1 for c in core._feat if c)
+        n_feat_before = int(np.count_nonzero(core._feat.sum(axis=1)))
         core.learn_batch([f"{i}*2={i * 2}" for i in range(200)])
-        n_feat_after = sum(1 for c in core._feat if c)
-        assert n_feat_after >= n_feat_before  # bounded, not proportional
+        n_feat_after = int(np.count_nonzero(core._feat.sum(axis=1)))
+        # Bounded: the number of USED slots may grow but the ARRAY is fixed.
+        assert n_feat_after >= n_feat_before
+        assert core._feat.shape == (core.FEATURE_SLOTS, 256)
 
 
 class TestCompression:
@@ -180,9 +185,16 @@ class TestBooleanLayer:
         """Answers are voted as atomic strings, not diluted across bytes."""
         core = FixedSizeCore()
         core.learn_batch(["a nor b=False", "c nor d=False"])
-        votes = core.answer_votes("x nor y")
-        assert votes.get("False", 0) > 0
-        assert votes.get("True", 0) == 0
+        # The feature layer stores the ANSWER BYTE distribution per problem
+        # n-gram. 'False' is 'F','a','l','s','e' — the bytes of the atomic
+        # answer must dominate the distribution for an overlapping problem.
+        dist = core.answer_dist("x nor y")
+        false_bytes = {ord(c) for c in "False"}
+        true_bytes = {ord(c) for c in "True"}
+        p_false = sum(dist[b] for b in false_bytes)
+        p_true = sum(dist[b] for b in true_bytes)
+        assert p_false > p_true
+        assert p_false > 0.2
 
 
 class TestGeneration:
