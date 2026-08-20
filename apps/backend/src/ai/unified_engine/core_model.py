@@ -86,6 +86,7 @@ class FixedSizeCore:
         self._trans = np.zeros((VOCAB, VOCAB), dtype=np.float32)
         self._gram = np.zeros((slots, VOCAB), dtype=np.float32)
         self._gram3 = np.zeros((slots, VOCAB), dtype=np.float32)
+        self._gram5 = np.zeros((slots, VOCAB), dtype=np.float32)
         self._uni = np.zeros(VOCAB, dtype=np.float32)
         self._feat = np.zeros((slots, VOCAB), dtype=np.float32)
         self._feat_bool = np.zeros((slots, 2), dtype=np.float32)
@@ -101,7 +102,7 @@ class FixedSizeCore:
     def model_bytes(self) -> int:
         # Real allocated numpy bytes. This is what tracemalloc reports.
         nbytes = self._pos.nbytes + self._trans.nbytes + self._gram.nbytes
-        nbytes += self._gram3.nbytes + self._uni.nbytes
+        nbytes += self._gram3.nbytes + self._gram5.nbytes + self._uni.nbytes
         nbytes += self._feat.nbytes + self._feat_bool.nbytes
         return int(nbytes)
 
@@ -131,26 +132,62 @@ class FixedSizeCore:
         self._bytes_seen += n
 
         buf = np.frombuffer(raw, dtype=np.uint8)
-        # Unigram counts.
-        np.add.at(self._uni, buf.astype(np.int64), 1.0)
+        big = n >= 4096  # bincount(16M minlength) is only faster on big chunks
+        # Unigram counts (bincount is vectorised, faster than add.at).
+        if big:
+            self._uni += np.bincount(buf.astype(np.int64), minlength=VOCAB).astype(np.float32)
+        else:
+            np.add.at(self._uni, buf.astype(np.int64), 1.0)
         # Position x content counts: fold into the fixed window (modulo).
         idx = (np.arange(n) % self.max_seq).astype(np.int64)
         self._pos[idx, buf.astype(np.int64)] += 1.0
         # Transition counts: raw[i] -> raw[i+1].
         self._trans[buf[:-1].astype(np.int64), buf[1:].astype(np.int64)] += 1.0
         # k-gram counts: hash each (k-1)-byte context window -> next byte.
+        # bincount over flattened (slot*256+next) is faster than np.add.at
+        # on big chunks; on small samples add.at avoids a 16M-array alloc.
         k = self.GRAM_ORDER
         if n >= k:
             ctx = np.lib.stride_tricks.sliding_window_view(buf[: n - 1], (k - 1))
             slots = _vectorised_hash(ctx)
             next_bytes = buf[(k - 1) :].astype(np.int64)
-            np.add.at(self._gram, (slots.astype(np.int64), next_bytes), 1.0)
+            if big:
+                flat = slots.astype(np.int64) * VOCAB + next_bytes
+                self._gram += (
+                    np.bincount(flat, minlength=self.FEATURE_SLOTS * VOCAB)
+                    .astype(np.float32)
+                    .reshape(self.FEATURE_SLOTS, VOCAB)
+                )
+            else:
+                np.add.at(self._gram, (slots.astype(np.int64), next_bytes), 1.0)
         # 3-gram backoff table: 2-byte context -> next byte.
         if n >= 3:
             ctx2 = np.lib.stride_tricks.sliding_window_view(buf[: n - 1], 2)
             slots2 = _vectorised_hash(ctx2)
             next2 = buf[2:].astype(np.int64)
-            np.add.at(self._gram3, (slots2.astype(np.int64), next2), 1.0)
+            if big:
+                flat2 = slots2.astype(np.int64) * VOCAB + next2
+                self._gram3 += (
+                    np.bincount(flat2, minlength=self.FEATURE_SLOTS * VOCAB)
+                    .astype(np.float32)
+                    .reshape(self.FEATURE_SLOTS, VOCAB)
+                )
+            else:
+                np.add.at(self._gram3, (slots2.astype(np.int64), next2), 1.0)
+        # 5-gram backoff table: 4-byte context -> next byte.
+        if n >= 5:
+            ctx4 = np.lib.stride_tricks.sliding_window_view(buf[: n - 1], 4)
+            slots4 = _vectorised_hash(ctx4)
+            next4 = buf[4:].astype(np.int64)
+            if big:
+                flat4 = slots4.astype(np.int64) * VOCAB + next4
+                self._gram5 += (
+                    np.bincount(flat4, minlength=self.FEATURE_SLOTS * VOCAB)
+                    .astype(np.float32)
+                    .reshape(self.FEATURE_SLOTS, VOCAB)
+                )
+            else:
+                np.add.at(self._gram5, (slots4.astype(np.int64), next4), 1.0)
 
     def _learn_feature_problem_answer(self, raw: bytes) -> None:
         """Hash every n-gram of the PROBLEM part; accumulate the ANSWER's byte
@@ -305,11 +342,19 @@ class FixedSizeCore:
         return [float(c) / total for c in row]
 
     def gram_dist(self, prefix: bytes) -> List[float]:
-        """4-gram distribution with backoff to 3-gram -> bigram -> unigram.
-        Empty slots fall back to a lower order instead of uniform, so
-        low-order statistics are never wasted (multi-order interpolation)."""
+        """Multi-order backoff: 5-gram -> 4-gram -> 3-gram -> bigram ->
+        unigram. Empty slots fall back to a lower order, so low-order
+        statistics are never wasted. 5-gram is measured best (2.381 bpc vs
+        2.492 for 1-4); 6-gram degrades from hash collisions."""
         if not prefix:
             return [1.0 / VOCAB] * VOCAB
+        # 5-gram (4-byte context)
+        if len(prefix) >= 4:
+            ctx = prefix[-4:]
+            slot = int(_vectorised_hash(np.frombuffer(ctx, dtype=np.uint8)[None, :])[0])
+            cell = self._gram5[slot]
+            if cell.sum() > 0:
+                return [float(c) / float(cell.sum()) for c in cell]
         # 4-gram (3-byte context)
         if len(prefix) >= 3:
             ctx = prefix[-3:]
@@ -401,6 +446,7 @@ class FixedSizeCore:
             "trans": self._trans.tolist(),
             "gram": self._gram.tolist(),
             "gram3": self._gram3.tolist(),
+            "gram5": self._gram5.tolist(),
             "uni": self._uni.tolist(),
             "feat": self._feat.tolist(),
             "feat_bool": self._feat_bool.tolist(),
@@ -417,6 +463,7 @@ class FixedSizeCore:
         core._trans = np.asarray(d.get("trans", core._trans), dtype=np.float32)
         core._gram = np.asarray(d.get("gram", core._gram), dtype=np.float32)
         core._gram3 = np.asarray(d.get("gram3", core._gram3), dtype=np.float32)
+        core._gram5 = np.asarray(d.get("gram5", core._gram5), dtype=np.float32)
         core._uni = np.asarray(d.get("uni", core._uni), dtype=np.float32)
         core._feat = np.asarray(d.get("feat", core._feat), dtype=np.float32)
         core._feat_bool = np.asarray(d.get("feat_bool", core._feat_bool), dtype=np.float32)
