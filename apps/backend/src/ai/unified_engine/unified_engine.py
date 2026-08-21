@@ -3,17 +3,15 @@ Unified Engine — the single AI engine replacing three_axis + ED3N + GARDEN
 for text/dialogue inference.
 
 Routing (first matching stage wins):
+  0. reflex / presets      — canned greetings (single source, not learned)
   1. deterministic math     — MathVerifier (Python ast); labelled "not AI"
   2. deterministic logic    — evaluate_logic truth tables; labelled "not AI"
-  3. deterministic reasoning — symbolic/relational; labelled "not AI"
-  4. statistical core       — FixedSizeCore generalisation + generation
+  3. statistical core       — FixedSizeCore generalisation + generation
      (REAL learned model: fixed memory, generalises to unseen inputs)
 
-The statistical core is the only "learned" component. Stages 1-3 are honest
-deterministic capabilities, kept separate and labelled, because they are real
-but not learned. This mirrors the project's own honest-assessment discipline:
-ED3N/GARDEN previously blurred this line by growing verbatim dictionaries and
-labelling them "learning" — that is what this engine removes.
+The statistical core is the only "learned" component. Stages 0-2 are honest
+deterministic/canned capabilities, kept separate and labelled, because they
+are real but not learned.
 """
 
 # =============================================================================
@@ -29,6 +27,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ai.arithmetic.deterministic_router import try_logic as _det_try_logic
 from ai.arithmetic.deterministic_router import try_math as _det_try_math
+from ai.core.unicode_utils import normalize_text
+from ai.data_eng.presets import REFLEX_PRESETS
 from ai.unified_engine.core_model import FixedSizeCore
 from core.system.config.magic_numbers import (
     _probe_ram_total_gb,
@@ -90,6 +90,41 @@ class UnifiedEngine:
         return stats
 
     # ------------------------------------------------------------------
+    # Reflex / presets (greetings, canned replies) — single source
+    # ------------------------------------------------------------------
+    def _try_reflex(self, text: str) -> Optional[str]:
+        """Fast exact-pattern greeting/reflex lookup from the single presets.
+
+        Uses word-boundary matching so "help" does not fire inside "helpful".
+        """
+        normalized = normalize_text(text).lower().strip().rstrip("?!=.。！？")
+        normalized = normalized.strip()
+        if not normalized:
+            return None
+        # Direct hit
+        if normalized in REFLEX_PRESETS:
+            return REFLEX_PRESETS[normalized]
+        # Word-boundary scan for multi-word presets like "good morning"
+        for pattern, response in REFLEX_PRESETS.items():
+            if len(pattern) < 2:
+                continue
+            # Quick substring check first
+            if pattern not in normalized:
+                continue
+            # Word-boundary check
+            start = 0
+            while True:
+                idx = normalized.find(pattern, start)
+                if idx == -1:
+                    break
+                before = idx == 0 or not normalized[idx - 1].isalnum()
+                after = idx + len(pattern) >= len(normalized) or not normalized[idx + len(pattern)].isalnum()
+                if before and after:
+                    return response
+                start = idx + 1
+        return None
+
+    # ------------------------------------------------------------------
     # Deterministic layers (real, but not learned)
     # ------------------------------------------------------------------
     def _try_math(self, text: str) -> Optional[str]:
@@ -138,6 +173,12 @@ class UnifiedEngine:
     # Public process
     # ------------------------------------------------------------------
     def process(self, text: str, context: Optional[Dict[str, Any]] = None) -> str:
+        # 0. Reflex / presets (greetings, canned replies) — single source.
+        r = self._try_reflex(text)
+        if r is not None:
+            self._last_route = "reflex"
+            self._last_confidence = 1.0
+            return r
         # 1. Deterministic (real, not learned).
         r = self._try_math(text)
         if r is not None:
