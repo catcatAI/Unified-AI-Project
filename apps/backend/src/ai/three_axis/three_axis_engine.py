@@ -1,9 +1,17 @@
 # =============================================================================
 # ANGELA-MATRIX: [L2-L3] [βγδ] [C] [L2]
 # =============================================================================
+import warnings
+
+warnings.warn(
+    "ai.three_axis is deprecated, use ai.unified_engine instead",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 """
-Three-Axis System engine.
+Three-Axis System engine — DEPRECATED. Retained for compat only; use
+ai.unified_engine (FixedSizeCore, 259MiB fixed). See UNIFIED_REFACTOR_PLAN.md §4.1.
 
 Architecture (per docs/03-technical-architecture/THREE_AXIS_SYSTEM.md):
 

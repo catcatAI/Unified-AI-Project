@@ -23,6 +23,14 @@ from core.system.config.magic_numbers import (
 
 logger = logging.getLogger(__name__)
 
+import warnings
+
+warnings.warn(
+    "ai.ed3n.dictionary_layer growth is deprecated, use ai.unified_engine.FixedSizeCore",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 
 class DictionaryEntry:
     __slots__ = (

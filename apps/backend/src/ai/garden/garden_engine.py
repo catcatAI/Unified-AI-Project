@@ -45,6 +45,14 @@ from .vector_decoder import VectorDecoder
 
 logger = logging.getLogger(__name__)
 
+import warnings
+
+warnings.warn(
+    "ai.garden recall/templates growth is deprecated, use ai.unified_engine.FixedSizeCore",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 # ---------------------------------------------------------------------------
 # Reflex layer (fast pattern table, same design as ED3N)
 # ---------------------------------------------------------------------------
