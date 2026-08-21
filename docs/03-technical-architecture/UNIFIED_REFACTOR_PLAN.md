@@ -92,8 +92,8 @@
                     ┌─────────────────────────────────────┐
      bytes ────────▶│  感知層 Perception                    │
                     │  UTF-8軸(V=256) → 內容碼本(Cq=1024)  │
-                    │  T_pos[P][Cq][W] (16MB)               │
-                    │  + T_gram[slots][V] gram3/5/uni      │  257 MiB→~273MiB 固定
+                    │  T_pos[P][Cq][W] (2MB, W=1)           │
+                    │  + T_gram[slots][V] gram3/5/uni      │  258.75 MiB 固定
                     │  learn_bytes / gram_dist / bpc      │
                     └──────────────┬──────────────────────┘
                                    │ 分布/熵
@@ -160,6 +160,13 @@
 - **不做**：為 `W` 引入大詞表/BPE——`W` 保持 4-16，語意容量由 `C` 碼本承擔。
 - **不做**：在固定核內堆神經層——`UNIFIED_AI_NEXT.md` 已證 `proto_ffn 4.70` 慘敗，神經層屬 `SharedLatentSpace` 正交模組。
 - **風險**：熵 halting 的 `ponder cost` 需調（`zzz:54`），否則「永遠多算一輪」；`C=1024` 的碼本需訓練/量化，否則退化為固定映射。
+
+---
+
+## 8. 實測結果（2026-08-21）
+
+- **Phase 2 Cq=1024**：`T_pos` 從 `[512][256]` 擴至 `[512][1024]`（`byte→Cq=b*4`），`model_bytes 257→258.75 MiB`（+1.5MB，安全）。10MB 訓練 `bpc 2.563→2.429`（改善），90MB `2.331→2.331`（持平）。`TestFixedMemory/Generalisation` 通過。
+- **Phase 3 熵 halting 遞迴**：原型 `max_iters=3, thresh=4.0`，同表復用再查，`bpc 2.429→2.541`（變差），與 `UNIFIED_AI_NEXT.md` 的熵插值 `2.564` 一致。**不整合**，保留 hard backoff 為正典。
 
 ---
 

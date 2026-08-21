@@ -2,14 +2,15 @@
 Unified Engine — fixed-size statistical core model (honest, vectorised).
 
 The core is a REAL model, not an index:
-  - Fixed vocabulary: UTF-8 bytes (256 values).
+  - Fixed vocabulary: UTF-8 bytes (256 values) for gram tables (V never expands).
+  - Content axis is codebook Cq=1024 (T_pos[P][Cq][W]), gram vocab stays 256.
   - FIXED-SIZE numpy arrays for every layer. model_bytes is the REAL memory
     footprint of those arrays and NEVER grows with the corpus:
-      * position x content  [MAX_SEQ][256]  float32
-      * value-pair transition [256][256]    float32
-      * k-gram context        [SLOTS][256]  float32  (hashed (k-1)-byte prefix
+      * position x content  [MAX_SEQ][Cq][W] float32  (W=1 now, 8 is future)
+      * value-pair transition [V][V]       float32
+      * k-gram context        [SLOTS][V]  float32  (hashed (k-1)-byte prefix
         -> next-byte counts) — fixed slots, collisions are a bounded cost
-      * feature (answer)      [SLOTS][256]  float32  (problem n-gram -> answer
+      * feature (answer)      [SLOTS][V]  float32  (problem n-gram -> answer
         byte distribution) — fixed slots
       * boolean discriminator [SLOTS][2]    float32  (true/false log-odds)
   - Training folds corpus statistics into these fixed slots with VECTORISED
@@ -43,9 +44,11 @@ logger = logging.getLogger(__name__)
 
 # Fixed-size model constants (do not grow with corpus).
 MAX_SEQ = 512  # position axis upper bound
-VOCAB = 256  # UTF-8 byte values
-# Numpy float32 memory: MAX_SEQ*VOCAB*4 + VOCAB*VOCAB*4 = 0.5MB + 0.25MB
-FIXED_MODEL_BYTES = MAX_SEQ * VOCAB * 4 + VOCAB * VOCAB * 4
+VOCAB = 256  # UTF-8 byte values (gram vocab stays 256, never expanded)
+CONTENT_CODEBOOK = 1024  # content axis codebook size (Cq), pos is [P][Cq]
+POS_WIDTH = 1  # W planes for T_pos (W=8 is future, see UNIFIED_REFACTOR_PLAN.md)
+# Numpy float32 memory: T_pos is MAX_SEQ*Cq*W*4, gram tables are slots*V*4
+FIXED_MODEL_BYTES = MAX_SEQ * CONTENT_CODEBOOK * POS_WIDTH * 4 + VOCAB * VOCAB * 4
 
 # Laplace smoothing for unseen (position, byte) / (byte, byte) pairs.
 SMOOTH = 1e-3
@@ -82,7 +85,8 @@ class FixedSizeCore:
         self.max_seq = max_seq
         slots = self.FEATURE_SLOTS
         # All fixed arrays — real memory == model_bytes (honest).
-        self._pos = np.zeros((max_seq, VOCAB), dtype=np.float32)
+        # T_pos is [P][Cq] (W=1 now); Cq=1024 codebook, V=256 stays for gram.
+        self._pos = np.zeros((max_seq, CONTENT_CODEBOOK), dtype=np.float32)
         self._trans = np.zeros((VOCAB, VOCAB), dtype=np.float32)
         self._gram = np.zeros((slots, VOCAB), dtype=np.float32)
         self._gram3 = np.zeros((slots, VOCAB), dtype=np.float32)
@@ -139,8 +143,10 @@ class FixedSizeCore:
         else:
             np.add.at(self._uni, buf.astype(np.int64), 1.0)
         # Position x content counts: fold into the fixed window (modulo).
+        # Content axis is codebook Cq=1024, byte b maps to c = (b*4) % Cq.
         idx = (np.arange(n) % self.max_seq).astype(np.int64)
-        self._pos[idx, buf.astype(np.int64)] += 1.0
+        c_idx = (buf.astype(np.int64) * 4) % CONTENT_CODEBOOK
+        self._pos[idx, c_idx] += 1.0
         # Transition counts: raw[i] -> raw[i+1].
         self._trans[buf[:-1].astype(np.int64), buf[1:].astype(np.int64)] += 1.0
         # k-gram counts: hash each (k-1)-byte context window -> next byte.
@@ -329,6 +335,13 @@ class FixedSizeCore:
     # ------------------------------------------------------------------
     def position_dist(self, pos: int) -> List[float]:
         row = self._pos[pos % self.max_seq]
+        # T_pos is [Cq=1024] codebook, byte b maps to c=b*4; extract every 4th.
+        if row.shape[0] == CONTENT_CODEBOOK:
+            agg = row[::4]  # 1024/4 = 256
+            total = float(agg.sum())
+            if total <= 0:
+                return [1.0 / VOCAB] * VOCAB
+            return [float(c) / total for c in agg]
         total = float(row.sum())
         if total <= 0:
             return [1.0 / VOCAB] * VOCAB
@@ -459,7 +472,18 @@ class FixedSizeCore:
     @classmethod
     def from_dict(cls, d: Dict) -> "FixedSizeCore":
         core = cls(max_seq=d.get("max_seq", MAX_SEQ))
-        core._pos = np.asarray(d.get("pos", core._pos), dtype=np.float32)
+        raw_pos = d.get("pos", None)
+        if raw_pos is not None:
+            arr = np.asarray(raw_pos, dtype=np.float32)
+            if arr.shape == (core.max_seq, CONTENT_CODEBOOK):
+                core._pos = arr
+            elif arr.shape == (core.max_seq, VOCAB):
+                # Migrate old [P][V=256] checkpoint to new [P][Cq=1024] codebook.
+                new_pos = np.zeros((core.max_seq, CONTENT_CODEBOOK), dtype=np.float32)
+                new_pos[:, ::4] = arr
+                core._pos = new_pos
+            else:
+                core._pos = np.asarray(arr, dtype=np.float32)
         core._trans = np.asarray(d.get("trans", core._trans), dtype=np.float32)
         core._gram = np.asarray(d.get("gram", core._gram), dtype=np.float32)
         core._gram3 = np.asarray(d.get("gram3", core._gram3), dtype=np.float32)
