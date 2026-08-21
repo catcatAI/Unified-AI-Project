@@ -28,6 +28,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ai.core.unicode_utils import is_english_dominant
 from ai.data_eng.assemble import decode_slot_budget, select_anchored_keys
+from ai.data_eng.presets import REFLEX_PRESETS
 from core.system.config.magic_numbers import (
     cache_value,
     confidence_value,
@@ -52,27 +53,7 @@ logger = logging.getLogger(__name__)
 class _ReflexTable:
     """O(1) exact-pattern lookup with LRU cache. Triggers before vector encoding."""
 
-    PRESETS: Dict[str, str] = {
-        "你好": "你好！很高兴见到你！",
-        "早上好": "早上好！祝你今天愉快！",
-        "晚上好": "晚上好！祝你今晚愉快！",
-        "欢迎": "欢迎！很高兴你能来！",
-        "再见": "再见！期待下次见面！",
-        "谢谢": "不客气！很高兴能帮到你！",
-        "对不起": "没关系，别放在心上。",
-        "没关系": "嗯，谢谢你理解！",
-        "开心": "开心真好！希望你一直保持好心情！",
-        "难过": "别难过，我在这里陪着你。",
-        "烦恼": "别烦恼了，我们一起想办法。",
-        "在忙吗": "不忙，随时为你服务！",
-        "名字": "我是Angela AI，很高兴认识你！",
-        "hello": "Hello! Nice to meet you!",
-        "hi": "Hi there! How can I help you today?",
-        "good morning": "Good morning! Hope you have a great day!",
-        "goodbye": "Goodbye! Take care!",
-        "thank you": "You're welcome! Happy to help!",
-        "help": "I'm here to help! What do you need?",
-    }
+    PRESETS: Dict[str, str] = dict(REFLEX_PRESETS)
 
     def __init__(self, max_cache: Optional[int] = None):
         max_cache = (
@@ -307,42 +288,44 @@ def _anchored_decode(
 
 
 def _try_math(text: str) -> Optional[str]:
-    """Evaluate math expression via VectorDictionary route_math."""
+    """Evaluate math via the single deterministic router."""
     try:
-        return VectorDictionary.route_math(text)
+        from ai.arithmetic.deterministic_router import try_math
+
+        return try_math(text)
     except Exception as e:
         logger.debug("GARDEN: math routing failed for %r: %s", text, e)
         return None
 
 
 def _try_logic(text: str) -> Optional[str]:
-    """Evaluate boolean logic via MathVerifier."""
+    """Evaluate boolean logic via the single deterministic router."""
     try:
-        from services.math_verifier import evaluate_logic
+        from ai.arithmetic.deterministic_router import try_logic
 
-        return evaluate_logic(text)
+        return try_logic(text)
     except Exception as e:
         logger.debug("GARDEN: logic eval failed for %r: %s", text, e)
         return None
 
 
 def _try_knowledge(text: str) -> Optional[str]:
-    """Answer factual question via knowledge base."""
+    """Answer factual question via the single deterministic router."""
     try:
-        from ai.knowledge_base import route_knowledge
+        from ai.arithmetic.deterministic_router import try_knowledge
 
-        return route_knowledge(text)
+        return try_knowledge(text)
     except Exception as e:
         logger.debug("GARDEN: knowledge routing failed for %r: %s", text, e)
         return None
 
 
 def _try_reasoning(text: str) -> Optional[str]:
-    """Apply symbolic reasoning via symbolic_reasoner."""
+    """Apply symbolic reasoning via the single deterministic router."""
     try:
-        from ai.symbolic_reasoner import route_reasoning
+        from ai.arithmetic.deterministic_router import try_reasoning
 
-        return route_reasoning(text)
+        return try_reasoning(text)
     except Exception as e:
         logger.debug("GARDEN: symbolic reasoning failed for %r: %s", text, e)
         return None

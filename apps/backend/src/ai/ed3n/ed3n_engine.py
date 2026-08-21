@@ -13,6 +13,7 @@ from collections import OrderedDict
 from typing import Any, Dict, List, Optional, Tuple
 
 from ai.core.unicode_utils import is_english_dominant, normalize_text
+from ai.data_eng.presets import REFLEX_PRESETS
 from core.system.config.magic_numbers import (
     batch_value,
     learning_rate,
@@ -107,38 +108,7 @@ class ReflexLayer:
 
     @staticmethod
     def _build_presets() -> Dict[str, str]:
-        return {
-            "你好": "你好！很高兴见到你！",
-            "早上好": "早上好！祝你今天愉快！",
-            "晚上好": "晚上好！祝你今晚愉快！",
-            "欢迎": "欢迎！很高兴你能来！",
-            "再见": "再见！期待下次见面！",
-            "明天见": "明天见！到时候聊！",
-            "谢谢": "不客气！很高兴能帮到你！",
-            "对不起": "没关系，别放在心上。",
-            "没关系": "嗯，谢谢你理解！",
-            "请": "请说，我在听。",
-            "在忙吗": "不忙，随时为你服务！",
-            "心情": "我心情不错！希望你也开心！",
-            "今天": "今天是个好日子！",
-            "名字": "我是Angela AI，很高兴认识你！",
-            "做什么": "我在这里帮助你完成各种任务！",
-            "开心": "开心真好！希望你一直保持好心情！",
-            "难过": "别难过，我在这里陪着你。",
-            "烦恼": "别烦恼了，我们一起想办法。",
-            "无聊": "无聊的话，我们可以聊聊天！",
-            "兴奋": "太棒了！你的热情感染了我！",
-            "嗯": "嗯嗯，在听。",
-            "好的": "好的，马上处理！",
-            "明白": "明白，交给我吧。",
-            "可以": "可以，没问题！",
-            "help": "I'm here to help! How can I assist you?",
-            "hello": "Hello! Nice to meet you!",
-            "hi": "Hi there! How can I help you today?",
-            "good morning": "Good morning! Hope you have a great day!",
-            "goodbye": "Goodbye! Take care!",
-            "thank you": "You're welcome! Happy to help!",
-        }
+        return dict(REFLEX_PRESETS)
 
 
 class ED3NEngine:
@@ -307,58 +277,43 @@ class ED3NEngine:
         return self.process_reflex(input_text)
 
     def _try_math_eval(self, text: str) -> Optional[str]:
-        """Evaluate math via the dictionary-layer compute-routing hook.
-
-        Math is delegated to MathVerifier (single source of truth) through
-        DictionaryLayer.route_math — ED3N no longer computes arithmetic itself.
-        """
+        """Evaluate math via the single deterministic router."""
         try:
-            from ai.ed3n.dictionary_layer import DictionaryLayer
+            from ai.arithmetic.deterministic_router import try_math
 
-            return DictionaryLayer.route_math(text)
+            return try_math(text)
         except Exception as e:
-            logger.warning("Math routing via dictionary layer failed: %s", e, exc_info=True)
+            logger.warning("Math routing via deterministic router failed: %s", e, exc_info=True)
             return None
 
     def _try_logic_eval(self, text: str) -> Optional[str]:
-        """Evaluate boolean logic expressions (true/false/AND/OR/NOT)."""
+        """Evaluate boolean logic via the single deterministic router."""
         try:
-            from services.math_verifier import evaluate_logic
+            from ai.arithmetic.deterministic_router import try_logic
 
-            return evaluate_logic(text)
+            return try_logic(text)
         except Exception as e:
             logger.debug("Logic evaluation failed: %s", e)
             return None
 
     def _try_knowledge(self, text: str) -> Optional[str]:
-        """Answer simple factual questions via the curated knowledge base.
-
-        Mirrors the math-routing design: trivial, high-certainty factual recall
-        is delegated to ``ai.knowledge_base.route_knowledge`` instead of being
-        squeezed through the network pipeline (which would hallucinate).
-        """
+        """Answer factual questions via the single deterministic router."""
         try:
-            from ai.knowledge_base import route_knowledge
+            from ai.arithmetic.deterministic_router import try_knowledge
 
-            return route_knowledge(text)
+            return try_knowledge(text)
         except Exception as e:
-            logger.warning("Knowledge routing via knowledge base failed: %s", e, exc_info=True)
+            logger.warning("Knowledge routing via deterministic router failed: %s", e, exc_info=True)
             return None
 
     def _try_reasoning(self, text: str) -> Optional[str]:
-        """Apply deterministic symbolic reasoning to structured questions.
-
-        Delegates transitive / syllogism / calendar / quantity / mass-trick
-        reasoning to ``ai.symbolic_reasoner.route_reasoning`` — a real,
-        high-certainty capability (valid inference over stated premises), scored
-        as such. Questions outside these patterns fall through to the network.
-        """
+        """Apply symbolic reasoning via the single deterministic router."""
         try:
-            from ai.symbolic_reasoner import route_reasoning
+            from ai.arithmetic.deterministic_router import try_reasoning
 
-            return route_reasoning(text)
+            return try_reasoning(text)
         except Exception as e:
-            logger.warning("Symbolic reasoning routing failed: %s", e, exc_info=True)
+            logger.warning("Symbolic reasoning routing via deterministic router failed: %s", e, exc_info=True)
             return None
 
     def _perform_encode(self, input_text: str) -> Tuple[List[str], bool]:

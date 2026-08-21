@@ -27,6 +27,8 @@ import logging
 import os
 from typing import Any, Dict, List, Optional, Tuple
 
+from ai.arithmetic.deterministic_router import try_logic as _det_try_logic
+from ai.arithmetic.deterministic_router import try_math as _det_try_math
 from ai.unified_engine.core_model import FixedSizeCore
 from core.system.config.magic_numbers import (
     _probe_ram_total_gb,
@@ -91,42 +93,12 @@ class UnifiedEngine:
     # Deterministic layers (real, but not learned)
     # ------------------------------------------------------------------
     def _try_math(self, text: str) -> Optional[str]:
-        """Deterministic math via the project's MathVerifier/evaluate_math.
-
-        Real arithmetic (Python ast), NOT learned. Labelled honestly as a
-        deterministic capability. Division results use full float precision
-        (e.g. 934/456 -> 2.0482456140350878), matching the project's ground
-        truth formatting.
-        """
-        try:
-            from services.math_verifier import evaluate_math
-
-            result = evaluate_math(text.rstrip("? ").rstrip("=").rstrip(" "))
-            if result is not None:
-                return result
-        except Exception:
-            pass
-        return None
+        """Deterministic math via the single deterministic router."""
+        return _det_try_math(text)
 
     def _try_logic(self, text: str) -> Optional[str]:
-        """Deterministic boolean logic via the project's evaluate_logic.
-
-        Handles English + Chinese nand/xor/nor/if-then over truth values —
-        a real truth-table evaluation, NOT learned. Labelled honestly as a
-        deterministic capability.
-        """
-        try:
-            from services.math_verifier import evaluate_logic
-
-            cleaned = text.rstrip("? ").rstrip("=").rstrip(" ")
-            result = evaluate_logic(cleaned)
-            if result is not None:
-                if "=" in str(result):
-                    return str(result)
-                return f"{cleaned}={result}"
-        except Exception:
-            pass
-        return None
+        """Deterministic boolean logic via the single deterministic router."""
+        return _det_try_logic(text)
 
     # ------------------------------------------------------------------
     # Statistical inference (the learned model)
