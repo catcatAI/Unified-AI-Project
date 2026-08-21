@@ -1,6 +1,7 @@
 # 統一重構總綱（UNIFIED_REFACTOR_PLAN）
 
-> 狀態：**設計定稿 · 未開工** — 只寫 MD，不改代碼
+> 狀態：**已審核 · 準備開工** — 本次更新已補因子分解與防爆約束
+> 審核：2026-08-21 補 `V` 不擴、`W` 僅屬 `T_pos`、熵 halting `max_iters=3` + `big` 分支
 > 日期：2026-08-21
 > 目標：把專案裡「什麼都有、多種版本」的狀態收斂為**一個整體且模組化**的實現；
 > 保留所有設計與原理，但**每種原理只留一個正典實現**，其餘標為刪除/委派。
@@ -34,15 +35,16 @@
 |---|---|---|---|---|
 | ① | **輸入** | `bytes` — 任何模態序列化後的位元組流 | `len ∈ [0,∞)` | 統一入口，不分文字/圖/音 |
 | ② | **UTF-8軸** | `token = byte ∈ [0,255]`，`text.encode("utf-8") → np.uint8` | `VOCAB=256` 固定 | 唯一 tokenizer（`UNIFIED_AI_ENGINE.md §4.1` 的計劃與現實統一：沒有 `tokenizer.py`，就是 `np.frombuffer`） |
-| ③ | **內容軸 × 位置軸 × 位寬** | 固定張量 `T[P][C][W]`，`P` 位置、`C` 內容碼本、`W` 位寬/通道 | `P=512, C=256→1024(碼本化後), W=8`（見下） | 感知的固定容器；`learn_bytes` 折進此張量，`gram_dist` 從此張量讀 |
+| ③ | **內容軸 × 位置軸 × 位寬** | 兩個正交固定張量：`T_pos[P][Cq]`（`Cq=1024` 碼本，16MB）+ `T_gram[slots][V]`（`V=256` 字節，`gram3/5` 各 64MB）；`W=8` 是 `T_pos` 的位平面/通道索引，不擴 `V` | `P=512, Cq=1024, W=8, V=256, slots=65k`（見下） | 感知的固定容器；`learn_bytes` 分別折進 `T_pos` 與 `T_gram`，`gram_dist` 從 `T_gram` 讀 |
 | ④ | **對位器 × 計算單元** | 對位器：`T` 上的**連續/統計對位**（把 `C×P×W` 對到典範座標）；計算單元：**離散/短小**的確定性函式（`ast`/`真值表`/`符號推理`） | 對位器：熵/分佈峰值作 halting 訊號；計算單元：`≤10` 步，無狀態 | 對位器解決 `zzz:141-145` 的「全有或全無」跌落；計算單元是 `deterministic, not learned` 的短路徑 |
 | ⑤ | **自主認知 × 記憶 × …** | 認知：`lifecycle/emotion/intent` 狀態機；記憶：`HAM + VectorStore` 誠實存儲；`…` = `response/meta/reasoning` 等 | 認知：狀態 `S`；記憶：`M`（可增長但**不叫模型**） | 主體層：`S×M` 決定路由與行為，與統計核解耦 |
 
 #### 為什麼位寬是 `×` 而不是 `+`
 
-- 若 `W` 是「語言/模態通道」，`C×P×W` 的樸素格子數 = `P·C·W`。
-- 實測：`P=512, C=1024, W=8 → 4M格 ×4B=16MB` 可承受；`W=256 → 512M格=2GB` 不可承受。
-- 結論：**`W` 必須小（4-16），且是 `C` 的位平面/通道因子，不是獨立大軸**。多語言/多模態不靠 `W` 線性擴，而靠 `C` 碼本的語意容量 + `T` 的哈希共享。
+- 若 `W` 是「語言/模態通道」，樸素 `P·C·W` 格子數 = `P·C·W`。
+- **因子分解正典**：`T_pos[P][Cq]`（`512×1024×4B=2MB`，`W=8` 時 `512×1024×8×4B=16MB`）+ `T_gram[slots][V]`（`65k×256×4B=64MB`），兩張正交表，不做 `P×C×W×V` 四維稠密（否則 `512×1024×8×256×4B=4GB` 爆）。
+- 實測：`P=512, Cq=1024, W=8 → T_pos=16MB` 可承受；`W=256 → 512M格=2GB` 不可承受。
+- 結論：**`W` 必須小（4-16），且是 `Cq` 的位平面/通道因子，不擴 `V`（`V` 恆 256 字節）**。多語言/多模態不靠 `W` 線性擴，而靠 `Cq` 碼本 + `T` 哈希共享。
 
 #### 為什麼對位器 × 計算單元是 `×` 而不是 `>`
 
@@ -89,9 +91,9 @@
 ```
                     ┌─────────────────────────────────────┐
      bytes ────────▶│  感知層 Perception                    │
-                    │  UTF-8軸(256) → 內容碼本(C=1024)     │
-                    │  × 位置軸(P=512) × 位寬(W=8)         │
-                    │  T[P][C][W] 固定張量 + gram3/5/uni  │  257 MiB 固定
+                    │  UTF-8軸(V=256) → 內容碼本(Cq=1024)  │
+                    │  T_pos[P][Cq][W] (16MB)               │
+                    │  + T_gram[slots][V] gram3/5/uni      │  257 MiB→~273MiB 固定
                     │  learn_bytes / gram_dist / bpc      │
                     └──────────────┬──────────────────────┘
                                    │ 分布/熵
@@ -121,13 +123,13 @@
 ### 4.1 感知層：`ai/unified_engine` 為正典
 
 - **保留**：`core_model.py` / `unified_engine.py` / `trainer.py`（唯一誠實評測）。
-- **改**：`content` 軸碼本化 `256→1024`（`zzz:101-110` 的 4MB 方案），`W=8` 位平面；`tokenizer.py` 不新建——就是 `np.frombuffer`，文檔與實現統一。
+- **改**：`content` 軸碼本化 `256→1024` 僅作用於 `T_pos`（`V` 恆 256，不擴 `gram` 表），`W=8` 僅為 `T_pos` 的位平面索引；`tokenizer.py` 不新建——就是 `np.frombuffer`，文檔與實現統一。
 - **刪**：`ai/three_axis/*` 全部 6張膨脹表（`§3.1` 已列），`ai/ed3n/dictionary_layer.grow` 的無界增長，`ai/garden/dictionary grow + learned_recall + templates`。
 
 ### 4.2 對位與計算：`ai/arithmetic` + `ai/bridge` 為正典
 
 - **新建**：`ai/arithmetic/deterministic_router.py`（單一路由）、`ai/bridge/decoder.py`（單一錨定解碼）、`ai/snn/`（統一 LIF）、`ai/data_eng/presets.py`（單一問候預設）。
-- **改**：`gram_dist` 的 `5→4→3→2→1` hard backoff 保留（`UNIFIED_AI_NEXT.md` 證最優），對位器在 `hard` 之外加**熵 halting 的遞迴復用**（同一張表再查一次，直到熵降或達 `max_iters`），不新增參數。
+- **改**：`gram_dist` 的 `5→4→3→2→1` hard backoff 保留（`UNIFIED_AI_NEXT.md` 證最優），對位器在 `hard` 之外加**熵 halting 的遞迴復用**（同一張 `T_gram` 再查一次，直到 `entropy < threshold` 或 `iters==max_iters(3)`，`ponder cost` 權重待 `enwik9 20KB` 上標定；`big` 分支：`n<4096` 用 `add.at` 避 `bincount(16M)` 64MB 暫存疊加）。
 - **刪**：`ed3n/garden` 各自的 `route_*` 拷貝、`_ReflexTable`、`_TEMPLATES L0`。
 
 ### 4.3 主體層：`ai/lifecycle + ai/memory + ai/meta` 保留並解耦
