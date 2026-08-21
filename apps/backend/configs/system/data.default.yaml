@@ -1,0 +1,30 @@
+# =============================================================================
+# Data location configuration — centralized dataset volume
+# =============================================================================
+# All dataset paths resolve through core.data_config.get_data_root().
+# Set $UNIFIED_DATA_ROOT to move the entire data volume (e.g. external disk).
+# See docs/03-technical-architecture/UNIFIED_REFACTOR_PLAN.md §1.2.
+
+data:
+  # Primary data root. Env var $UNIFIED_DATA_ROOT overrides this.
+  # Default auto-detects /media/covo/ZX if mounted, else <repo>/data.
+  root: ""  # empty = auto-detect
+
+  # Subdirectories (relative to root, or absolute paths)
+  subdirs:
+    dictionaries: "dictionaries"
+    corpus: "raw_datasets/corpus"
+    multimodal: "multimodal"
+    checkpoints: "checkpoints"
+    vector_store: "vector_store"
+    enwik: "enwik"
+
+  # Wiki datasets: zhwiki dump is mixed hans/hant; hans/hant are derived
+  # via OpenCC conversion post-download. No double download.
+  wiki:
+    zh_source: "https://dumps.wikimedia.org/zhwiki/latest/zhwiki-latest-pages-articles-multistream.xml.bz2"
+    ja_source: "https://dumps.wikimedia.org/jawiki/latest/jawiki-latest-pages-articles-multistream.xml.bz2"
+    en_source: "https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles-multistream.xml.bz2"
+    # Simplified/traditional are post-processed from the same zh dump
+    hans_from_zh: true
+    hant_from_zh: true

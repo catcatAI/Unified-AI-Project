@@ -53,33 +53,52 @@ logging.basicConfig(
 )
 logger = logging.getLogger("download_corpus")
 
-CORPUS_DIR = ROOT / "apps" / "backend" / "data" / "raw_datasets" / "corpus"
+try:
+    sys.path.insert(0, str(ROOT / "apps" / "backend" / "src"))
+    from core.data_config import get_corpus_dir  # noqa: E402
+
+    CORPUS_DIR = get_corpus_dir()
+except Exception:
+    CORPUS_DIR = ROOT / "apps" / "backend" / "data" / "raw_datasets" / "corpus"
 SEGMENT_BYTES = 1024 * 1024 * 1024  # 1 GB per on-disk segment file
 _DEFAULT_TARGET_GB = 10
 
+# wiki_zh dump is one file containing mixed hans/hant; hans/hant are derived
+# via OpenCC conversion post-download. They share the same source URL but are
+# tracked as separate logical datasets for the user's request.
 SOURCES = {
     "wiki_zh": (
-        "Wikipedia zh",
+        "Wikipedia zh (mixed hans/hant, 3.5G)",
+        "https://dumps.wikimedia.org/zhwiki/latest/zhwiki-latest-pages-articles-multistream.xml.bz2",
+        3_559_343_816,
+    ),
+    "wiki_zh_hans": (
+        "Wikipedia zh-Hans (simplified, derived from wiki_zh via OpenCC)",
+        "https://dumps.wikimedia.org/zhwiki/latest/zhwiki-latest-pages-articles-multistream.xml.bz2",
+        3_559_343_816,
+    ),
+    "wiki_zh_hant": (
+        "Wikipedia zh-Hant (traditional, derived from wiki_zh via OpenCC)",
         "https://dumps.wikimedia.org/zhwiki/latest/zhwiki-latest-pages-articles-multistream.xml.bz2",
         3_559_343_816,
     ),
     "wiki_ja": (
-        "Wikipedia ja",
+        "Wikipedia ja (4.8G)",
         "https://dumps.wikimedia.org/jawiki/latest/jawiki-latest-pages-articles-multistream.xml.bz2",
         4_827_732_824,
     ),
     "wiki_en": (
-        "Wikipedia en",
+        "Wikipedia en (26G)",
         "https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles-multistream.xml.bz2",
         26_668_484_995,
     ),
     "tatoeba": (
-        "Tatoeba",
+        "Tatoeba (0.2G)",
         "https://downloads.tatoeba.org/exports/sentences.tar.bz2",
         217_621_211,
     ),
 }
-_ALL_PRIORITY = ["wiki_zh", "wiki_ja", "wiki_en", "tatoeba"]
+_ALL_PRIORITY = ["wiki_zh", "wiki_zh_hans", "wiki_zh_hant", "wiki_ja", "wiki_en", "tatoeba"]
 
 
 def _default_target_bytes() -> int:
@@ -245,10 +264,33 @@ def main() -> int:
     CORPUS_DIR.mkdir(parents=True, exist_ok=True)
     report = []
     for slug in picks:
+        # wiki_zh_hans/hant share the same zh dump; don't double-download.
+        if slug in ("wiki_zh_hans", "wiki_zh_hant") and "wiki_zh" in picks:
+            continue
+        if slug in ("wiki_zh_hans", "wiki_zh_hant"):
+            # If standalone hans/hant requested, ensure zh is fetched first
+            if not (CORPUS_DIR / "wiki_zh").exists():
+                logger.info("%s: shared source with wiki_zh, fetching wiki_zh first", slug)
+                report.append(download_source("wiki_zh", target))
         report.append(download_source(slug, target))
         if sum(r["bytes"] for r in report) >= target:
             logger.info("Reached target volume (>=%d bytes); stopping.", target)
             break
+    # For hans/hant, create derived markers pointing to wiki_zh data
+    for slug in ("wiki_zh_hans", "wiki_zh_hant"):
+        if slug in picks:
+            src = CORPUS_DIR / "wiki_zh"
+            dst = CORPUS_DIR / slug
+            if src.exists() and not dst.exists():
+                try:
+                    dst.symlink_to(src, target_is_directory=True)
+                    logger.info("%s: linked to wiki_zh (post-process via OpenCC to derive)", slug)
+                except FileExistsError:
+                    pass
+            # Also ensure report has an entry for hans/hant derived from zh
+            if not any(r["slug"] == slug for r in report):
+                zh_bytes = next((r["bytes"] for r in report if r["slug"] == "wiki_zh"), 0)
+                report.append({"slug": slug, "name": SOURCES[slug][0], "bytes": zh_bytes, "segments": 0, "done": False})
 
     total = sum(r["bytes"] for r in report)
     print()

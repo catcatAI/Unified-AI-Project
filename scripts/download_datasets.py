@@ -46,7 +46,14 @@ logging.basicConfig(
 logger = logging.getLogger("download_datasets")
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT_DIR = ROOT / "data" / "dictionaries"
+# Configurable data root: $UNIFIED_DATA_ROOT or ZX auto-detect
+try:
+    sys.path.insert(0, str(ROOT / "apps" / "backend" / "src"))
+    from core.data_config import get_dictionaries_dir  # noqa: E402
+
+    OUT_DIR = get_dictionaries_dir()
+except Exception:
+    OUT_DIR = ROOT / "data" / "dictionaries"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 TIMEOUT=300  # generous timeout for weak connections
