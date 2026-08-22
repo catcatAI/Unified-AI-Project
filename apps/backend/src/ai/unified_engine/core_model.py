@@ -47,23 +47,36 @@ MAX_SEQ = 512  # position axis upper bound
 VOCAB = 256  # UTF-8 byte values (gram vocab stays 256, never expanded)
 CONTENT_CODEBOOK = 1024  # content axis codebook size (Cq), pos is [P][Cq]
 POS_WIDTH = 1  # W planes for T_pos (W=8 is future, see UNIFIED_REFACTOR_PLAN.md)
+UNI_WIDTH = 4  # language planes for _uni/_trans: 0=en, 1=zh, 2=zh-hant, 3=ja
 # Numpy float32 memory: T_pos is MAX_SEQ*Cq*W*4, gram tables are slots*V*4
 FIXED_MODEL_BYTES = MAX_SEQ * CONTENT_CODEBOOK * POS_WIDTH * 4 + VOCAB * VOCAB * 4
 
 # Laplace smoothing for unseen (position, byte) / (byte, byte) pairs.
 SMOOTH = 1e-3
 
+# Class-level defaults kept for backward compatibility (hash + tests read these).
+FEATURE_SLOTS = 1 << 16
+FEATURE_NGRAM = 4
+GRAM_ORDER = 4
+LEARN_CHUNK = 1 << 24
+
+# Empty proxies when use_feat=False (avoid 64.5MB of dead zeros).
+_EMPTY_FEAT = np.zeros((0, VOCAB), dtype=np.float32)
+_EMPTY_FEAT_BOOL = np.zeros((0, 2), dtype=np.float32)
+
 
 def _vectorised_hash(views: np.ndarray) -> np.ndarray:
     """FNV-1a hash over a (N, K) uint8 view -> (N,) uint32 slots.
 
     Vectorised over the batch axis; each row hashes its K context bytes.
+    Uses the class default slot count; per-instance slot counts are applied
+    by the caller via modulo (see FixedSizeCore._hash_ctx).
     """
     h = np.full(views.shape[0], 2166136261, dtype=np.uint64)
     for col in range(views.shape[1]):
         h ^= views[:, col].astype(np.uint64)
         h = (h * 16777619) & 0xFFFFFFFF
-    return (h % FixedSizeCore.FEATURE_SLOTS).astype(np.uint32)
+    return h.astype(np.uint64)
 
 
 class FixedSizeCore:
@@ -73,27 +86,42 @@ class FixedSizeCore:
     only increments counts inside those arrays (chunked, vectorised), so the
     real memory footprint — and model_bytes — is constant before/after
     training for any corpus size. This is the honest compression claim.
+
+    slots: hash-table size for gram tables. 65k (default) saturates at
+    ~100MB text; 128k halves collisions (-4% bpc measured), 256k -7%.
+    Memory scales linearly: slots*256*4 bytes * 3 tables.
+    use_feat: allocate the Q=A feature tables (65.5MB). Pure-text corpora
+    never fill them; set False to reclaim that memory for other uses.
     """
 
-    FEATURE_SLOTS = 1 << 16
-    FEATURE_NGRAM = 4  # character n-grams hashed into the feature table
-    GRAM_ORDER = 4  # k-gram context order (k-1 context bytes + next byte)
-    # Streaming chunk size for corpora larger than memory (bytes per chunk).
-    LEARN_CHUNK = 1 << 24  # 16 MiB
-
-    def __init__(self, max_seq: int = MAX_SEQ) -> None:
+    def __init__(
+        self,
+        max_seq: int = MAX_SEQ,
+        slots: int = None,
+        use_feat: bool = True,
+    ) -> None:
+        if slots is None:
+            slots = FEATURE_SLOTS
+        # enforce power of two for cheap modulo
+        if slots & (slots - 1) != 0:
+            raise ValueError(f"slots must be power of two, got {slots}")
+        self._slot_count = slots
         self.max_seq = max_seq
-        slots = self.FEATURE_SLOTS
         # All fixed arrays — real memory == model_bytes (honest).
         # T_pos is [P][Cq] (W=1 now); Cq=1024 codebook, V=256 stays for gram.
         self._pos = np.zeros((max_seq, CONTENT_CODEBOOK), dtype=np.float32)
-        self._trans = np.zeros((VOCAB, VOCAB), dtype=np.float32)
+        self._trans = np.zeros((UNI_WIDTH, VOCAB, VOCAB), dtype=np.float32)
         self._gram = np.zeros((slots, VOCAB), dtype=np.float32)
         self._gram3 = np.zeros((slots, VOCAB), dtype=np.float32)
         self._gram5 = np.zeros((slots, VOCAB), dtype=np.float32)
-        self._uni = np.zeros(VOCAB, dtype=np.float32)
-        self._feat = np.zeros((slots, VOCAB), dtype=np.float32)
-        self._feat_bool = np.zeros((slots, 2), dtype=np.float32)
+        self._uni = np.zeros((UNI_WIDTH, VOCAB), dtype=np.float32)
+        self.use_feat = use_feat
+        if use_feat:
+            self._feat = np.zeros((slots, VOCAB), dtype=np.float32)
+            self._feat_bool = np.zeros((slots, 2), dtype=np.float32)
+        else:
+            self._feat = _EMPTY_FEAT  # shared zero-size proxy (N,0) view trick
+            self._feat_bool = _EMPTY_FEAT_BOOL
         self._samples_seen = 0
         self._bytes_seen = 0
         self._true_total = 0.0
@@ -122,13 +150,15 @@ class FixedSizeCore:
         self.learn_bytes(raw)
         self._learn_feature_problem_answer(raw)
 
-    def learn_bytes(self, raw: bytes) -> None:
+    def learn_bytes(self, raw: bytes, w: int = 0) -> None:
         """Fold a raw byte sequence into the fixed matrices (streaming,
         vectorised). Any modality: text / image / audio bytes.
 
         Position axis is a fixed context window (max_seq); sequences fold
         modulo the window. model_bytes stays constant for ANY corpus size.
+        w selects the language plane for _uni/_trans isolation (0=en default).
         """
+        w = int(w) % UNI_WIDTH
         n = len(raw)
         if n == 0:
             return
@@ -139,58 +169,59 @@ class FixedSizeCore:
         big = n >= 4096  # bincount(16M minlength) is only faster on big chunks
         # Unigram counts (bincount is vectorised, faster than add.at).
         if big:
-            self._uni += np.bincount(buf.astype(np.int64), minlength=VOCAB).astype(np.float32)
+            self._uni[w] += np.bincount(buf.astype(np.int64), minlength=VOCAB).astype(np.float32)
         else:
-            np.add.at(self._uni, buf.astype(np.int64), 1.0)
+            np.add.at(self._uni[w], buf.astype(np.int64), 1.0)
         # Position x content counts: fold into the fixed window (modulo).
         # Content axis is codebook Cq=1024, byte b maps to c = (b*4) % Cq.
         idx = (np.arange(n) % self.max_seq).astype(np.int64)
         c_idx = (buf.astype(np.int64) * 4) % CONTENT_CODEBOOK
         self._pos[idx, c_idx] += 1.0
         # Transition counts: raw[i] -> raw[i+1].
-        self._trans[buf[:-1].astype(np.int64), buf[1:].astype(np.int64)] += 1.0
+        self._trans[w, buf[:-1].astype(np.int64), buf[1:].astype(np.int64)] += 1.0
         # k-gram counts: hash each (k-1)-byte context window -> next byte.
         # bincount over flattened (slot*256+next) is faster than np.add.at
-        # on big chunks; on small samples add.at avoids a 16M-array alloc.
-        k = self.GRAM_ORDER
+        # on big chunks; on small samples add.at avoids a big-array alloc.
+        mask = self._slot_count - 1  # power-of-two fast modulo
+        k = GRAM_ORDER
         if n >= k:
             ctx = np.lib.stride_tricks.sliding_window_view(buf[: n - 1], (k - 1))
-            slots = _vectorised_hash(ctx)
+            slots = (_vectorised_hash(ctx) + w * 2654435761) & mask
             next_bytes = buf[(k - 1) :].astype(np.int64)
             if big:
                 flat = slots.astype(np.int64) * VOCAB + next_bytes
                 self._gram += (
-                    np.bincount(flat, minlength=self.FEATURE_SLOTS * VOCAB)
+                    np.bincount(flat, minlength=self._slot_count * VOCAB)
                     .astype(np.float32)
-                    .reshape(self.FEATURE_SLOTS, VOCAB)
+                    .reshape(self._slot_count, VOCAB)
                 )
             else:
                 np.add.at(self._gram, (slots.astype(np.int64), next_bytes), 1.0)
         # 3-gram backoff table: 2-byte context -> next byte.
         if n >= 3:
             ctx2 = np.lib.stride_tricks.sliding_window_view(buf[: n - 1], 2)
-            slots2 = _vectorised_hash(ctx2)
+            slots2 = (_vectorised_hash(ctx2) + w * 2654435761) & mask
             next2 = buf[2:].astype(np.int64)
             if big:
                 flat2 = slots2.astype(np.int64) * VOCAB + next2
                 self._gram3 += (
-                    np.bincount(flat2, minlength=self.FEATURE_SLOTS * VOCAB)
+                    np.bincount(flat2, minlength=self._slot_count * VOCAB)
                     .astype(np.float32)
-                    .reshape(self.FEATURE_SLOTS, VOCAB)
+                    .reshape(self._slot_count, VOCAB)
                 )
             else:
                 np.add.at(self._gram3, (slots2.astype(np.int64), next2), 1.0)
         # 5-gram backoff table: 4-byte context -> next byte.
         if n >= 5:
             ctx4 = np.lib.stride_tricks.sliding_window_view(buf[: n - 1], 4)
-            slots4 = _vectorised_hash(ctx4)
+            slots4 = (_vectorised_hash(ctx4) + w * 2654435761) & mask
             next4 = buf[4:].astype(np.int64)
             if big:
                 flat4 = slots4.astype(np.int64) * VOCAB + next4
                 self._gram5 += (
-                    np.bincount(flat4, minlength=self.FEATURE_SLOTS * VOCAB)
+                    np.bincount(flat4, minlength=self._slot_count * VOCAB)
                     .astype(np.float32)
-                    .reshape(self.FEATURE_SLOTS, VOCAB)
+                    .reshape(self._slot_count, VOCAB)
                 )
             else:
                 np.add.at(self._gram5, (slots4.astype(np.int64), next4), 1.0)
@@ -198,7 +229,9 @@ class FixedSizeCore:
     def _learn_feature_problem_answer(self, raw: bytes) -> None:
         """Hash every n-gram of the PROBLEM part; accumulate the ANSWER's byte
         distribution into each matching feature slot (and the boolean
-        discriminator for true/false answers)."""
+        discriminator for true/false answers). No-op when use_feat=False."""
+        if not self.use_feat:
+            return
         sep = raw.find(b"=")
         if sep < 0:
             return
@@ -208,25 +241,26 @@ class FixedSizeCore:
             return
         answer_arr = np.frombuffer(answer, dtype=np.uint8)
         buf = np.frombuffer(problem, dtype=np.uint8)
+        mask = self._slot_count - 1
         # Accumulate the answer's byte distribution into every feature slot
         # touched by the problem's n-grams (1..FEATURE_NGRAM). Vectorised:
         # each window's slot gets the full answer-byte histogram added.
         ans_hist = np.bincount(answer_arr, minlength=VOCAB).astype(np.float32)
-        for size in range(1, self.FEATURE_NGRAM + 1):
+        for size in range(1, FEATURE_NGRAM + 1):
             if len(problem) < size:
                 break
             windows = np.lib.stride_tricks.sliding_window_view(buf, size)
-            slots = _vectorised_hash(windows).astype(np.int64)
+            slots = (_vectorised_hash(windows) & mask).astype(np.int64)
             np.add.at(self._feat, slots, ans_hist)
         # Boolean discriminator for truth-value answers.
         ans_lower = answer.decode("utf-8", errors="replace").strip().lower()
         if ans_lower in ("true", "false"):
             bin_idx = 1 if ans_lower == "true" else 0
-            for size in range(1, self.FEATURE_NGRAM + 1):
+            for size in range(1, FEATURE_NGRAM + 1):
                 if len(problem) < size:
                     break
                 windows = np.lib.stride_tricks.sliding_window_view(buf, size)
-                slots = _vectorised_hash(windows)
+                slots = _vectorised_hash(windows) & mask
                 self._feat_bool[slots.astype(np.int64), bin_idx] += 1.0
             if ans_lower == "true":
                 self._true_total += 1.0
@@ -235,7 +269,10 @@ class FixedSizeCore:
 
     def boolean_score(self, problem_text: str) -> Optional[float]:
         """Log-odds score for the answer being True (naive-Bayes over hashed
-        n-gram features, weighted by n-gram length)."""
+        n-gram features, weighted by n-gram length). None when the feature
+        layer is absent (use_feat=False) or no feature slot was ever filled."""
+        if not self.use_feat or self._feat_bool.size == 0:
+            return None
         raw = problem_text.encode("utf-8")
         if not raw:
             return None
@@ -245,11 +282,11 @@ class FixedSizeCore:
         score = prior
         found = False
         buf = np.frombuffer(raw, dtype=np.uint8)
-        for size in range(1, self.FEATURE_NGRAM + 1):
+        for size in range(1, FEATURE_NGRAM + 1):
             if len(raw) < size:
                 break
             windows = np.lib.stride_tricks.sliding_window_view(buf, size)
-            slots = _vectorised_hash(windows).astype(np.int64)
+            slots = (_vectorised_hash(windows) & (self._slot_count - 1)).astype(np.int64)
             raw_t = self._feat_bool[slots, 1]
             raw_f = self._feat_bool[slots, 0]
             t = raw_t + 1.0
@@ -282,12 +319,13 @@ class FixedSizeCore:
             return [1.0 / VOCAB] * VOCAB
         agg = np.zeros(VOCAB, dtype=np.float64)
         buf = np.frombuffer(raw, dtype=np.uint8)
-        for size in range(1, self.FEATURE_NGRAM + 1):
+        for size in range(1, FEATURE_NGRAM + 1):
             if len(raw) < size:
                 break
             windows = np.lib.stride_tricks.sliding_window_view(buf, size)
-            slots = _vectorised_hash(windows)
-            agg += self._feat[slots.astype(np.int64)].sum(axis=0)
+            slots = (_vectorised_hash(windows) & (self._slot_count - 1)).astype(np.int64)
+            if self._feat.size:
+                agg += self._feat[slots].sum(axis=0)
         total = agg.sum() + SMOOTH * VOCAB
         if total <= 0:
             return [1.0 / VOCAB] * VOCAB
@@ -347,14 +385,14 @@ class FixedSizeCore:
             return [1.0 / VOCAB] * VOCAB
         return [float(c) / total for c in row]
 
-    def transition_dist(self, left: int) -> List[float]:
-        row = self._trans[left]
+    def transition_dist(self, left: int, w: int = 0) -> List[float]:
+        row = self._trans[int(w) % UNI_WIDTH, left]
         total = float(row.sum())
         if total <= 0:
             return [1.0 / VOCAB] * VOCAB
         return [float(c) / total for c in row]
 
-    def gram_dist(self, prefix: bytes) -> List[float]:
+    def gram_dist(self, prefix: bytes, w: int = 0) -> List[float]:
         """Multi-order backoff: 5-gram -> 4-gram -> 3-gram -> bigram ->
         unigram. Empty slots fall back to a lower order, so low-order
         statistics are never wasted. 5-gram is measured best (2.381 bpc vs
@@ -364,55 +402,86 @@ class FixedSizeCore:
         # 5-gram (4-byte context)
         if len(prefix) >= 4:
             ctx = prefix[-4:]
-            slot = int(_vectorised_hash(np.frombuffer(ctx, dtype=np.uint8)[None, :])[0])
+            slot = (int(_vectorised_hash(np.frombuffer(ctx, dtype=np.uint8)[None, :])[0]) + int(w) * 2654435761) & (self._slot_count - 1)
             cell = self._gram5[slot]
             if cell.sum() > 0:
                 return [float(c) / float(cell.sum()) for c in cell]
         # 4-gram (3-byte context)
         if len(prefix) >= 3:
             ctx = prefix[-3:]
-            slot = int(_vectorised_hash(np.frombuffer(ctx, dtype=np.uint8)[None, :])[0])
+            slot = (int(_vectorised_hash(np.frombuffer(ctx, dtype=np.uint8)[None, :])[0]) + int(w) * 2654435761) & (self._slot_count - 1)
             cell = self._gram[slot]
             if cell.sum() > 0:
                 return [float(c) / float(cell.sum()) for c in cell]
         # 3-gram (2-byte context)
         if len(prefix) >= 2:
             ctx = prefix[-2:]
-            slot = int(_vectorised_hash(np.frombuffer(ctx, dtype=np.uint8)[None, :])[0])
+            slot = (int(_vectorised_hash(np.frombuffer(ctx, dtype=np.uint8)[None, :])[0]) + int(w) * 2654435761) & (self._slot_count - 1)
             cell = self._gram3[slot]
             if cell.sum() > 0:
                 return [float(c) / float(cell.sum()) for c in cell]
-        # bigram (transition)
+        # bigram (transition), language-plane isolated
+        w = int(w) % UNI_WIDTH
         if len(prefix) >= 1:
-            cell = self._trans[prefix[-1]]
+            cell = self._trans[w, prefix[-1]]
             if cell.sum() > 0:
                 return [float(c) / float(cell.sum()) for c in cell]
-        # unigram
-        u = self._uni
+        # unigram, language-plane isolated
+        u = self._uni[w]
         if u.sum() > 0:
             return [float(c) / float(u.sum()) for c in u]
         return [1.0 / VOCAB] * VOCAB
 
-    def next_byte_probs(self, prefix: bytes, position: int) -> List[float]:
+    def next_byte_probs(self, prefix: bytes, position: int, w: int = 0) -> List[float]:
         # Multi-order backoff (4-gram -> 3-gram -> bigram -> unigram) is the
         # strongest predictor. position_dist is NOT blended in: it dilutes
         # the peaked backoff distribution (measured bpc 3.16 vs 2.56).
         # Backoff already bottoms out at unigram (always non-zero), so no
         # extra Laplace smoothing is needed.
-        return list(self.gram_dist(prefix))
+        return list(self.gram_dist(prefix, w=w))
 
     # ------------------------------------------------------------------
     # Generation (reproduction as a by-product of generalisation)
     # ------------------------------------------------------------------
-    def sample_next(self, prefix: bytes, position: int, rng) -> int:
+    def sample_next(
+        self,
+        prefix: bytes,
+        position: int,
+        rng,
+        temperature: float = 1.0,
+        repetition_penalty: float = 1.0,
+        recent_window: int = 32,
+    ) -> int:
+        """Sample the next byte.
+
+        temperature <1 sharpens, >1 flattens. repetition_penalty >1 down-
+        weights bytes emitted inside the last *recent_window* bytes — fixes
+        greedy loops ("the states the states...") without touching the
+        learned distributions used for scoring.
+        """
         probs = self.next_byte_probs(prefix, position)
+        arr = np.asarray(probs, dtype=np.float64)
+        if temperature != 1.0 and temperature > 0:
+            # temper in log space then renormalise
+            with np.errstate(divide="ignore"):
+                logits = np.log(np.maximum(arr, 1e-12)) / temperature
+            logits -= logits.max()
+            arr = np.exp(logits)
+            arr /= arr.sum()
+        if repetition_penalty != 1.0 and len(prefix) > 0:
+            recent = set(prefix[-recent_window:])
+            for b in recent:
+                arr[b] /= repetition_penalty
+            s = arr.sum()
+            if s > 0:
+                arr /= s
         r = rng.random()
         acc = 0.0
-        for b, p in enumerate(probs):
+        for b, p in enumerate(arr):
             acc += p
             if r <= acc:
                 return b
-        return int(np.argmax(probs))
+        return int(np.argmax(arr))
 
     def generate(
         self,
@@ -420,18 +489,100 @@ class FixedSizeCore:
         max_len: int = 64,
         stop_on: bytes = b"",
         seed: int = 1,
+        temperature: float = 0.8,
+        repetition_penalty: float = 1.3,
     ) -> bytes:
+        """Generate bytes. Defaults add mild sharpening + repetition penalty.
+
+        UTF-8 safety (multibyte languages): never emit a continuation byte
+        (0x80-0xBF) unless the output currently has an unfinished multibyte
+        sequence; this prevents invalid byte soup in zh/ja output.
+        """
         import random
 
         rng = random.Random(seed)
         out = bytearray(prefix)
+
+        def _pending_multibyte(buf: bytearray) -> int:
+            """Number of continuation bytes still required to finish an open
+            multibyte sequence at the end of buf (0 = none open)."""
+            i = len(buf) - 1
+            back = 0
+            while i >= 0 and back < 4:
+                b = buf[i]
+                if b & 0xC0 == 0x80:  # continuation byte
+                    back += 1
+                    i -= 1
+                    continue
+                # lead byte found
+                if b & 0xE0 == 0xC0:
+                    need = 2
+                elif b & 0xF0 == 0xE0:
+                    need = 3
+                elif b & 0xF8 == 0xF0:
+                    need = 4
+                else:
+                    need = 1  # ascii (or stray) — complete
+                return max(0, need - 1 - back)
+            return 0
+
         for step in range(max_len):
             pos = len(out) - 1
-            nxt = self.sample_next(bytes(out), pos, rng)
+            pending = _pending_multibyte(out)
+            probs = np.asarray(self.next_byte_probs(bytes(out), pos), dtype=np.float64)
+            if pending == 0:
+                # no open multibyte sequence: forbid orphan continuation bytes
+                probs[0x80:0xC0] = 0.0
+                total = probs.sum()
+                if total <= 0:
+                    probs[:] = 1.0 / VOCAB
+                else:
+                    probs /= total
+            elif pending > 0:
+                # an open sequence MUST be completed: allow only continuations
+                mask = np.zeros(VOCAB, dtype=np.float64)
+                mask[0x80:0xC0] = probs[0x80:0xC0]
+                total = mask.sum()
+                if total > 0:
+                    probs = mask / total
+                # else: keep original (shouldn't happen with valid training)
+            # apply temperature + penalty manually here (probs already local)
+            if temperature != 1.0 and temperature > 0:
+                with np.errstate(divide="ignore"):
+                    logits = np.log(np.maximum(probs, 1e-12)) / temperature
+                logits -= logits.max()
+                probs = np.exp(logits)
+                probs /= probs.sum()
+            if repetition_penalty != 1.0 and len(out) > 0:
+                recent = set(out[-32:])
+                for b in recent:
+                    probs[b] /= repetition_penalty
+                s = probs.sum()
+                if s > 0:
+                    probs /= s
+            r = rng.random()
+            acc = 0.0
+            nxt = int(np.argmax(probs))
+            for b, p in enumerate(probs):
+                acc += p
+                if r <= acc:
+                    nxt = b
+                    break
             out.append(nxt)
             if stop_on and bytes([nxt]) in stop_on:
                 if len(out) > len(prefix):
                     break
+        # Trim any trailing incomplete multibyte sequence so the output is
+        # always valid UTF-8 when the prefix was valid.
+        for trim in range(1, 4):
+            try:
+                bytes(out).decode("utf-8")
+                break
+            except UnicodeDecodeError:
+                if trim == 3:
+                    out = out[:-3]
+                else:
+                    del out[-1:]
         return bytes(out)
 
     # ------------------------------------------------------------------

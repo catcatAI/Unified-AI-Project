@@ -102,7 +102,7 @@ class TestFixedMemory:
         n_feat_after = int(np.count_nonzero(core._feat.sum(axis=1)))
         # Bounded: the number of USED slots may grow but the ARRAY is fixed.
         assert n_feat_after >= n_feat_before
-        assert core._feat.shape == (core.FEATURE_SLOTS, 256)
+        assert core._feat.shape == (core._slot_count, 256)
 
 
 class TestCompression:
