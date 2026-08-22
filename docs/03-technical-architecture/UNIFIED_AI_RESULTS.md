@@ -63,6 +63,18 @@
 **判讀**：**乾淨 bpc 2.403 超過 gzip(2.951)**，輸 bz2(2.333) 差距 3%、
 lzma 差距 9%。「超過 bz2」的舊宣稱撤回（污染數字）。
 
+### 2.1.1 多語言 wiki（2026-08-23，500MB/語，`train_exact` 精確邊界 + `<text>` 乾淨抽取）
+
+| 語種 | 我們 bpc | gzip-ref（同分割同語料） | 判定 |
+|---|---|---|---|
+| **en (wiki_en)** | **2.505** | 4.152 | ✅ 贏 40% |
+| **ja (wiki_ja)** | **3.416** | 4.004 | ✅ 贏 15% |
+| **zh (wiki_zh)** | **4.192** | 5.229 | ✅ 贏 20% |
+
+> 三語全勝 gzip。checkpoint：`ZX/checkpoints/unified/wiki_{en,zh,ja}_500mb.npz`。
+> zh 的 4.192 高於 en 是 UTF-8 位元組熵本質（3 bytes/char），與同語料
+> gzip 對照比較才公平——三語皆贏。
+
 ### 2.2 壓縮比（corpus/model_bytes，越高越好）——本機實測
 
 | 語料 | corpus | model_bytes（真實） | 壓縮比 |
