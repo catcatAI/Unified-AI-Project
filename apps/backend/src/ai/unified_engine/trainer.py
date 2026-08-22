@@ -104,6 +104,46 @@ def _answers_match(out: str, truth: str, sample: str) -> bool:
     return False
 
 
+def train_exact_bytes(
+    core: FixedSizeCore, path: str, target_bytes: int, chunk: int = 4_000_000
+) -> int:
+    """Stream-train exactly *target_bytes* from *path* with NO overshoot.
+
+    The old `while read < target` + fixed-chunk loop over-read past the
+    boundary (4MiB alignment), silently training on what was later measured
+    as "held-out" — contaminating every bpc number (2.338 measured inside
+    the trained region; clean holdout is 2.403). This helper is the standard:
+    the last chunk is clipped to the remaining budget.
+
+    Returns bytes actually read (== target_bytes unless EOF).
+    """
+    read = 0
+    with open(path, "rb") as fh:
+        while read < target_bytes:
+            data = fh.read(min(chunk, target_bytes - read))
+            if not data:
+                break
+            core.learn_bytes(data)
+            read += len(data)
+    return read
+
+
+def heldout_bpc(
+    core: FixedSizeCore, path: str, offset: int, n: int = 20_000
+) -> float:
+    """bpc over n bytes starting at *offset* — MUST be > trained boundary."""
+    import math
+
+    with open(path, "rb") as fh:
+        fh.seek(offset)
+        held = fh.read(n)
+    lp = 0.0
+    for i in range(4, len(held)):
+        p = core.next_byte_probs(held[i - 4 : i], i)
+        lp += math.log(max(p[held[i]], 1e-9))
+    return -lp / ((len(held) - 4) * math.log(2))
+
+
 def evaluate_generalisation(
     engine: UnifiedEngine,
     test_samples: List[str],
