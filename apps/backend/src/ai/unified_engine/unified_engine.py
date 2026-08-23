@@ -50,6 +50,32 @@ class UnifiedEngine:
         self._last_route = ""
         self._frozen = False
         self.semantic_qa: Optional[SemanticQA] = None
+        self._load_default_qa_knowledge()
+
+    def _load_default_qa_knowledge(self) -> None:
+        """Auto-load the shipped QA knowledge file when present (ZX or repo)."""
+        try:
+            from core.data_config import get_checkpoints_dir
+
+            path = os.path.join(
+                str(get_checkpoints_dir()), "unified", "qa_knowledge.json"
+            )
+            if not os.path.exists(path):
+                return
+            import json as _json
+
+            with open(path, encoding="utf-8") as fh:
+                d = _json.load(fh)
+            self.semantic_qa = SemanticQA()
+            if not self.semantic_qa.load_dict(d):
+                self.semantic_qa = None
+                logger.info("semantic QA knowledge file invalid, skipped")
+            else:
+                logger.info(
+                    "semantic QA loaded %d facts", len(self.semantic_qa._questions)
+                )
+        except Exception as exc:  # noqa: BLE001 - optional boot feature
+            logger.debug("semantic QA auto-load skipped: %s", exc)
 
     def learn_semantic_qa(self, qa_pairs, epochs: int = 60) -> Dict[str, float]:
         """Teach the semantic QA layer (SLS gradient-trained retrieval)."""
@@ -199,7 +225,9 @@ class UnifiedEngine:
             self._last_confidence = 1.0
             return r
         # 2. Learned semantic QA (SLS gradient layer) — factual open questions.
-        if self.semantic_qa is not None:
+        # Skip proposition-style queries ("X nor Y=?"): those belong to the
+        # statistical boolean layer, not factual retrieval.
+        if self.semantic_qa is not None and "=" not in text and not text.rstrip().endswith("?="):
             hit = self.semantic_qa.answer(text)
             if hit is not None:
                 ans, sim = hit
@@ -227,6 +255,7 @@ class UnifiedEngine:
             "core": self.core.to_dict(),
             "cap_bytes": self._cap_bytes,
             "frozen": self._frozen,
+            "semantic_qa": self.semantic_qa.to_dict() if self.semantic_qa else None,
         }
         with open(path, "w", encoding="utf-8") as fh:
             json.dump(state, fh)
@@ -243,6 +272,11 @@ class UnifiedEngine:
             self.core = FixedSizeCore.from_dict(state["core"])
             self._cap_bytes = state.get("cap_bytes", self._cap_bytes)
             self._frozen = state.get("frozen", False)
+            sq = state.get("semantic_qa")
+            if sq:
+                if self.semantic_qa is None:
+                    self.semantic_qa = SemanticQA()
+                self.semantic_qa.load_dict(sq)
             return True
         except Exception as exc:  # pragma: no cover - defensive
             logger.warning("unified: failed to load %s: %s", path, exc)
