@@ -50,6 +50,9 @@ class UnifiedEngine:
         self._last_route = ""
         self._frozen = False
         self.semantic_qa: Optional[SemanticQA] = None
+        # Multi-turn context: last few user questions + our answers, for
+        # pronoun resolution ("it", "他") and topic continuation.
+        self._turns: List[Tuple[str, str]] = []
         self._load_default_qa_knowledge()
 
     def _load_default_qa_knowledge(self) -> None:
@@ -204,6 +207,57 @@ class UnifiedEngine:
         return result, conf, "statistical-core"
 
     # ------------------------------------------------------------------
+    # Multi-turn helpers
+    # ------------------------------------------------------------------
+    def _resolve_coreference(self, text: str) -> str:
+        """Minimal pronoun/topic resolution: replace 'it/他/她/它/這個' with
+        the topic entity from the previous turn when the raw question would
+        otherwise retrieve nothing."""
+        low = text.lower().strip()
+        has_pronoun = any(w in low for w in (" it ", " it?", "it ", "他", "她", "它", "這個", "那个"))
+        if not has_pronoun or not self._turns:
+            return text
+        prev_q = self._turns[-1][0]
+        # extract content words from previous question as the topic
+        import re as _re
+
+        words = [w for w in _re.findall(r"[A-Za-z\u4e00-\u9fff]+", prev_q)
+                 if len(w) > 2 and w.lower() not in
+                 ("what", "which", "who", "where", "when", "the", "is", "of",
+                  "capital", "city")]
+        if not words:
+            return text
+        topic = words[-1]
+        replaced = _re.sub(r"\b(it|this)\b", topic, low)
+        for zh in ("他", "她", "它", "這個", "那个"):
+            replaced = replaced.replace(zh, topic)
+        return replaced
+
+    def _wrap_answer(self, question: str, answer: str) -> str:
+        """Wrap a (possibly bare) answer into a natural sentence."""
+        """Natural sentence wrapping: if the stored answer is already a full
+        sentence, keep it; if bare (e.g. 'Paris'), embed a light frame."""
+        a = answer.strip()
+        if len(a) > 0 and (a[0].isupper() or "\u4e00" <= a[0] <= "\u9fff") and (
+            a.endswith((".", "!", "?", "。", "！"))
+        ):
+            return a
+        q = question.strip().rstrip("？?").strip()
+        lowq = q.lower()
+        if lowq.startswith(("what is", "what's", "which city is")):
+            return f"{q}: {a}."
+        if lowq.startswith(("who ",)):
+            return f"{q} — {a}."
+        if lowq.startswith(("how many", "how much", "how fast", "how long")):
+            return f"{q} — {a}."
+        return f"{q}: {a}." if len(q) < 60 else f"{a}."
+
+    def _remember_turn(self, question: str, answer: str) -> None:
+        self._turns.append((question, answer))
+        if len(self._turns) > 6:
+            self._turns.pop(0)
+
+    # ------------------------------------------------------------------
     # Public process
     # ------------------------------------------------------------------
     def process(self, text: str, context: Optional[Dict[str, Any]] = None) -> str:
@@ -228,12 +282,39 @@ class UnifiedEngine:
         # Skip proposition-style queries ("X nor Y=?"): those belong to the
         # statistical boolean layer, not factual retrieval.
         if self.semantic_qa is not None and "=" not in text and not text.rstrip().endswith("?="):
-            hit = self.semantic_qa.answer(text)
+            resolved = self._resolve_coreference(text)
+            # Pronoun-resolved queries must actually contain the resolved
+            # topic word, otherwise retrieval fires on unrelated garbage.
+            if resolved != text:
+                hit = self.semantic_qa.answer(resolved)
+                if hit is not None:
+                    import re as _re
+
+                    topic_words = [w.lower() for w in _re.findall(r"[A-Za-z]+", resolved)]
+                    ans_low = hit[0].lower()
+                    if not any(tw in ans_low or tw in resolved.lower() for tw in topic_words[:3]):
+                        hit = None
+            else:
+                hit = self.semantic_qa.answer(resolved)
+                if hit is not None:
+                    # content-word overlap guard: at least one non-stopword
+                    # from the query must appear in the answer, otherwise the
+                    # match is topical noise (e.g. "light speed" -> continents).
+                    import re as _re
+
+                    stop = {"what", "is", "the", "of", "are", "there", "a", "an",
+                            "to", "in", "on", "how", "does", "do", "many", "much"}
+                    qws = [w.lower() for w in _re.findall(r"[A-Za-z]{3,}", resolved)
+                           if w.lower() not in stop]
+                    if qws and not any(w in hit[0].lower() for w in qws):
+                        hit = None
             if hit is not None:
                 ans, sim = hit
                 self._last_route = "semantic-qa"
                 self._last_confidence = min(0.95, max(0.5, sim))
-                return f"{ans}"
+                wrapped = self._wrap_answer(resolved, ans)
+                self._remember_turn(text, wrapped)
+                return wrapped
         # 3. Learned statistical core.
         r = self._infer_from_core(text)
         if r is not None:

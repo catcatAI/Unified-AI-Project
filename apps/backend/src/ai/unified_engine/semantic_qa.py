@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 _DIM = 512
 _MODALITY = "unified_qa"
-_THRESHOLD = 0.75  # below this we admit "don't know" instead of guessing
+_THRESHOLD = 0.80  # below this we admit "don't know" instead of guessing
 
 
 def _tokens(s: str) -> List[str]:
