@@ -21,6 +21,7 @@ Date: 2026-02-02
 from __future__ import annotations
 
 import asyncio
+import os
 import logging
 from collections import deque
 from dataclasses import dataclass, field
@@ -445,10 +446,18 @@ class DigitalLifeIntegrator:
         # 3.5 Autonomous Life Cycle (Formula-driven decision system)
         if self._formula_integration_enabled:
             try:
-                self.autonomous_lifecycle = AutonomousLifeCycle(config=self.config)
+                # Reuse the shared singleton (api.lifespan.get_lifecycle) so
+                # chat-facing consumers read the RUNNING instance, not a
+                # second dormant copy (split-brain bug).
+                try:
+                    from api.lifespan import get_lifecycle
+
+                    self.autonomous_lifecycle = get_lifecycle()
+                except Exception:  # noqa: BLE001 - standalone mode fallback
+                    self.autonomous_lifecycle = AutonomousLifeCycle(config=self.config)
                 await self.autonomous_lifecycle.initialize()
                 self.autonomous_lifecycle.register_phase_callback(self._on_formula_decision)
-                logger.info("  [Autonomy] Autonomous Life Cycle active.")
+                logger.info("  [Autonomy] Autonomous Life Cycle active (shared).")
             except Exception as e:
                 logger.warning(f"  [Autonomy] Life cycle degraded: {e}")
 
@@ -563,8 +572,19 @@ class DigitalLifeIntegrator:
         except Exception as e:
             logger.error(f"Error stopping UserMonitor: {e}", exc_info=True)
 
-        # Shutdown theoretical frameworks
+        # Persist lifecycle state BEFORE shutdown (save_state had no caller,
+        # so lifecycle decisions never survived restarts).
         if self.autonomous_lifecycle:
+            try:
+                from core.data_config import get_checkpoints_dir
+
+                state_dir = os.path.join(str(get_checkpoints_dir()), "lifecycle")
+                os.makedirs(state_dir, exist_ok=True)
+                self.autonomous_lifecycle.save_state(
+                    os.path.join(state_dir, "lifecycle_state.json")
+                )
+            except Exception as e:
+                logger.warning(f"Lifecycle state save skipped: {e}")
             await self.autonomous_lifecycle.shutdown()
 
         # Shutdown dynamic parameters

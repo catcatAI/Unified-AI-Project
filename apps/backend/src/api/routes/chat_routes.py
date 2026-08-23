@@ -1516,7 +1516,10 @@ async def _run_chat_pipeline(
 
     # Step 1: Validate and truncate input
     _raw_input_len = len(user_message)
-    user_message = _validate_and_truncate_input(user_message, chat_cfg)
+    try:
+        user_message = _validate_and_truncate_input(user_message, chat_cfg)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     _was_truncated = _raw_input_len > max_len
 
     # Step 1.5: Adaptive main-line dispatch (REFACTOR_PLAN §13) — best effort.

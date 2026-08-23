@@ -189,13 +189,35 @@ class UnifiedEngine:
         q = text.rstrip("? ").rstrip("=").rstrip(" ")
         if not q:
             return None
-        # Boolean questions first: the discriminative layer is stronger.
-        score = self.core.boolean_score(q)
+        # Boolean layer ONLY for proposition-shaped queries: must contain a
+        # boolean connective or truth-value token. Open questions ("why is
+        # the sky blue?") previously got fabricated "=true/false" answers.
+        import re as _re
+
+        proposition_re = _re.compile(
+            r"\b(true|false|and|or|not|nor|nand|xor|xnor)\b"
+            r"|真|假|且|或|並非|是否成立|是否"
+            r"|既不是|也不是|互斥|都不成立|不都成立|不能同時成立|不能同时成立",
+            _re.IGNORECASE,
+        )
+        score = (
+            self.core.boolean_score(q)
+            if self.core.use_feat and proposition_re.search(q)
+            else None
+        )
         if score is not None:
             bool_ans = "true" if score >= 0.0 else "false"
             conf = min(0.9, max(0.5, 0.5 + 0.2 * min(1.0, abs(score) / 2.0)))
             result = f"{q}={bool_ans}"
             return result, conf, "statistical-core"
+        # Answer voting only for genuine questions. Statements ("please
+        # explain X") previously got fabricated "=e" answers.
+        is_question = text.rstrip().endswith(("?", "？")) or q.startswith(
+            ("what ", "who ", "when ", "where ", "why ", "how ",
+             "what'", "什麼", "什么", "誰", "谁", "為何", "为何", "如何")
+        )
+        if not is_question:
+            return None
         best = self.core.best_answer(q)
         if best is None:
             return None

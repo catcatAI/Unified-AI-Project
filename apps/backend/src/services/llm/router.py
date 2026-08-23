@@ -711,25 +711,9 @@ class AngelaLLMService:
             self.model_bus = ModelBus(meta_controller=self.meta_controller)
             self.query_classifier = QueryClassifier()
 
-            if LLMBackend.ED3N in self.backends:
-                ed3n_backend = self.backends[LLMBackend.ED3N]
-                if hasattr(ed3n_backend, "_engine") and ed3n_backend._engine:
-                    self.model_bus.register_ed3n(ed3n_backend._engine)
-                else:
-                    from ai.ed3n.ed3n_engine import ED3NEngine
-
-                    self.model_bus.register_ed3n(ED3NEngine.get_shared())
-
-            if LLMBackend.GARDEN in self.backends:
-                garden_backend = self.backends[LLMBackend.GARDEN]
-                if hasattr(garden_backend, "_engine") and garden_backend._engine:
-                    self.model_bus.register_garden(garden_backend._engine)
-                else:
-                    from ai.garden.garden_engine import GARDENEngine
-
-                    engine = GARDENEngine(compatibility_mode=True)
-                    engine.load_presets()
-                    self.model_bus.register_garden(engine)
+            # Legacy ED3N/GARDEN bus registration removed — those backends
+            # are no longer registered (see PROJECT_CLEANUP_PLAN §B). Only
+            # register what actually exists.
 
             if self.active_backend:
                 self.model_bus.register_cloud(self.active_backend)
@@ -1752,6 +1736,21 @@ class AngelaLLMService:
         try:
             # 只有当回應质量较高时才存储
             if response.confidence < 0.5:
+                return
+
+            # Never memorize statistical-core guesses: their confidence is
+            # heuristic, and fabricated answers (e.g. "…please=true") poison
+            # the template pool and get replayed verbatim later. Only
+            # deterministic/semantic-qa/reflex routes are trustworthy enough.
+            route = ""
+            md = getattr(response, "metadata", None)
+            if isinstance(md, dict):
+                route = str(md.get("route", ""))
+            if route in ("statistical-core", "none") or (
+                not route and "=" in (response.text or "")[:80]
+                and (response.text or "").strip().lower().endswith(("=true", "=false"))
+            ):
+                logger.debug("Skipped template storage for stat-core guess")
                 return
 
             # Never memorize non-answers (refusals / "I don't know" / empty).

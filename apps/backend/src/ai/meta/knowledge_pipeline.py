@@ -289,7 +289,21 @@ class KnowledgePipeline:
                 query = m.group(1).strip()
                 if query and len(query) >= 1:
                     return True, query
+        # Bare short-string translation only when it looks like a LOOKUP:
+        # single word / short noun phrase. Questions, greetings and
+        # chit-chat must NOT be hijacked (measured: "你好呀" -> "你好 = hello").
         if len(t) <= 10 and re.match(r"^[\w\s\-\u4e00-\u9fff]+$", t):
+            question_marks = ("?", "？", "吗", "嗎", "呢")
+            greetings = (
+                "你好", "您好", "hi", "hello", "hey", "嗨", "哈囉", "哈嘍",
+                "早安", "晚安", "午安", "謝謝", "谢谢", "再見", "再见",
+                "你好呀", "您好吗", "你好嗎", "你好吗",
+            )
+            if any(g in t for g in greetings) or any(mk in t for mk in question_marks):
+                return False, ""
+            words = t.split()
+            if len(words) > 3:      # a sentence, not a lookup
+                return False, ""
             return True, t
         return False, ""
 
