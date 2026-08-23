@@ -43,7 +43,9 @@ class TestED3NLogicRouting:
         ],
     )
     def test_logic_boolean(self, ed3n_engine: ED3NEngine, query: str, expected: str):
-        assert ed3n_engine.process(query) == expected
+        # deterministic_router now returns "expr=result" (unified canonical form)
+        out = ed3n_engine.process(query)
+        assert out == expected or out.endswith("=" + expected)
 
     @pytest.mark.parametrize(
         "query,expected",
@@ -54,7 +56,8 @@ class TestED3NLogicRouting:
         ],
     )
     def test_logic_chinese(self, ed3n_engine: ED3NEngine, query: str, expected: str):
-        assert ed3n_engine.process(query) == expected
+        out = ed3n_engine.process(query)
+        assert out == expected or out.endswith("=" + expected)
 
 
 class TestED3NKnowledgeRouting:

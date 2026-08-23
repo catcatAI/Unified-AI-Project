@@ -6,7 +6,7 @@
 > 目標：把專案裡「什麼都有、多種版本」的狀態收斂為**一個整體且模組化**的實現；
 > 保留所有設計與原理，但**每種原理只留一個正典實現**，其餘標為刪除/委派。
 > 基準：`UNIFIED_AI_ENGINE.md §8` + `UNIFIED_AI_RESULTS.md` + `UNIFIED_AI_NEXT.md` 的誠實測量；
-> `zzz` 三輪推演（哈希有損 → 遞迴複用 → ACT 熵停 → 三軸碼本）的結論。
+> `design/DESIGN_NOTES_fixed_core.md` 三輪推演（哈希有損 → 遞迴複用 → ACT 熵停 → 三軸碼本）的結論。
 
 ---
 

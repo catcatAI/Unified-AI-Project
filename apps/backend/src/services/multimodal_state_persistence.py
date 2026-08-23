@@ -15,6 +15,14 @@ ANGELA-MATRIX: [L5] [βγδ] [B] [L4]
 import json
 import logging
 import os
+
+def _multimodal_checkpoints_root():
+    try:
+        from core.data_config import get_multimodal_dir
+
+        return get_multimodal_dir()
+    except Exception:  # noqa: BLE001 - fallback to legacy relative path
+        return os.path.join("data", "multimodal")
 import shutil
 import time
 from datetime import datetime
@@ -50,7 +58,9 @@ class MultimodalStatePersistence:
       - Metadata (timestamp, label, component versions)
     """
 
-    DEFAULT_CHECKPOINT_DIR = os.path.join("data", "multimodal", "checkpoints")
+    DEFAULT_CHECKPOINT_DIR = os.path.join(
+        str(_multimodal_checkpoints_root()), "checkpoints"
+    )
     MAX_CHECKPOINTS = 10
 
     def __init__(self, service, checkpoint_dir: Optional[str] = None):

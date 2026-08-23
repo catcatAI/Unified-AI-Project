@@ -65,7 +65,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 
 > **STATUS (2026-07-14)**: §X #243-#247 — **Multi-perspective production-readiness** complete (9.5/10 for the *engineering/infra* layer — code, tests, security, deployment wiring). **§X #249-#256 — Security Sprint**: 44+ Dependabot + 18 CodeQL + 10 Secret Scanning = **72+ security alerts fixed** across 46 files; Next.js 14→16 upgrade, Vite 6.0, path traversal hardening, insecure randomness fixed, leaked API keys redacted. **Infra is deployable + security hardened.**
 >
-> ⚠️ **Honest capability note**: Version is `7.5.0-dev` (Alpha). The system needs an **external LLM API key** (OpenAI / Gemini / Ollama) for real conversational ability. Its *native* **deterministic engines work correctly and score high — math/physics/chemistry 9.5/10, factual knowledge 10/10, and symbolic reasoning 10/10 (real, high-certainty capability, not a defect)**; the **neural SNN's job is learning associations** (A>taller>B), NOT memorizing knowledge (that lives in the KB) — its measured **association capability = 1.0** (ED3N & GARDEN, see `docs/06-project-management/INTELLIGENCE_ASSESSMENT.md` §4.1.2). The SNN scoring low on knowledge/math tasks alone is *by design*, not a defect. Capability-readiness per dimension (high — infra is ready): architecture **9.5**, knowledge+reasoning **8.6**, query+learning **9.0**, multimodal **5.1**, autonomy **9.0**. Native benchmarks (no LLM, re-measured 2026-07-16 via `scripts/benchmark_ed3n_garden.py`): **ED3N 20/20 (100%)** and **GARDEN 20/20 (100%)** across 20 cases (math 5 + knowledge 5 + reasoning 5 + relational-chain 5). **Important**: these are all handled by *deterministic* engines — math→MathVerifier, knowledge→knowledge_base, reasoning→symbolic_reasoner, chain→CoreNetwork transitive closure — **NOT by the neural SNN**. This measures the deterministic-engine capability (real, 9.5/10), not open-domain neural generalization (≈0). See `docs/06-project-management/INTELLIGENCE_ASSESSMENT.md` §1 & §4.1. "Production-ready" means the **runtime/codebase is shippable**, not that the built-in AI is a finished product.
+> ⚠️ **Honest capability note**: Version is `7.5.0-dev` (Alpha). The system needs an **external LLM API key** (OpenAI / Gemini / Ollama) for real conversational ability. The **native text core is `ai/unified_engine`** (fixed-size statistical core + deterministic math/logic + semantic QA; see `docs/03-technical-architecture/UNIFIED_AI_RESULTS.md`) — it beats gzip on 3 languages (en 2.365 / ja 3.223 / zh 3.944 bpc) and answers factual questions with honest "don't know" fallback. Legacy ED3N/GARDEN are now *association/multimodal subsystems*, not the text path. The deterministic engines work correctly and score high — math/physics/chemistry 9.5/10, factual knowledge 10/10, and symbolic reasoning 10/10 (real, high-certainty capability, not a defect)**; the **neural SNN's job is learning associations** (A>taller>B), NOT memorizing knowledge (that lives in the KB) — its measured **association capability = 1.0** (legacy ED3N & GARDEN association layers, see `docs/06-project-management/INTELLIGENCE_ASSESSMENT.md` §4.1.2). The SNN scoring low on knowledge/math tasks alone is *by design*, not a defect. Capability-readiness per dimension (high — infra is ready): architecture **9.5**, knowledge+reasoning **8.6**, query+learning **9.0**, multimodal **5.1**, autonomy **9.0**. Native benchmarks (no LLM, re-measured 2026-07-16 via `scripts/benchmark_ed3n_garden.py`): **ED3N 20/20 (100%)** and **GARDEN 20/20 (100%)** across 20 cases (math 5 + knowledge 5 + reasoning 5 + relational-chain 5). **Important**: these are all handled by *deterministic* engines — math→MathVerifier, knowledge→knowledge_base, reasoning→symbolic_reasoner, chain→CoreNetwork transitive closure — **NOT by the neural SNN**. This measures the deterministic-engine capability (real, 9.5/10), not open-domain neural generalization (≈0). See `docs/06-project-management/INTELLIGENCE_ASSESSMENT.md` §1 & §4.1. "Production-ready" means the **runtime/codebase is shippable**, not that the built-in AI is a finished product.
 > **PIPELINE**: WebSocket → emotion → crisis gate → alignment gate → execution gate (IntentRegistry-gated) → agent routing (context enrichment) → **PriorityNegotiator** → LLM → causal learning → response.  
 > **See**: [MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md) (task provenance), [IMPROVEMENT_ROADMAP.md](docs/06-project-management/IMPROVEMENT_ROADMAP.md) (improvement roadmap), [CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md) (causal depth).
 
@@ -130,14 +130,14 @@ See **[COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md
 
 ### Intelligence Assessment (Code-Verified 2026-06-29)
 
-Upper bound (with LLM API: OpenAI/Anthropic/Ollama) vs lower bound (ED3N+GARDEN only):
+Upper bound (with LLM API: OpenAI/Anthropic/Ollama) vs lower bound (unified engine only):
 
 | Capability | Upper | Lower | Status |
 |:-----------|:-----:|:-----:|:-------|
-| **Text understanding** | 7/10 | 5/10 | ED3N 460K dictionary + GARDEN SNN, real multilingual |
+| **Text understanding** | 7/10 | 5/10 | unified engine (semantic QA + stat core), real multilingual |
 | **Image understanding** | 7/10 | 5/10 | CLIP 512-dim real, VisionService PIL-based |
 | **Speech understanding** | 5/10 | 3/10 | faster-whisper 1.2.1 int8 offline STT active via AudioService._stt_faster_whisper() |
-| **Text generation** | 7/10 | 4/10 | 7 LLM backends, ED3N reflex+shallow fallback |
+| **Text generation** | 7/10 | 4/10 | LLM backends; unified reflex+semantic-qa offline |
 | **Image generation** | 6/10 | 6/10 | GVV + ThreeLayerVisual, MSE 0.0042, no Stable Diffusion |
 | **Speech generation** | 4/10 | 2/10 | edge-tts works (reading only, no singing) |
 | **Memory** | 7/10 | 7/10 | VectorStore 460K + HAM templates + ED3N dictionaries |
@@ -172,7 +172,7 @@ Angela is built around **4 levels of genuine on-the-fly learning**, not just con
 > **Honest assessment**: The learning architecture is production-quality (framework 80-90% complete).
 > The ML model weights are ~5% trained — output quality improves significantly with more training data.
 > With an external LLM connected (OpenAI/Anthropic/Ollama), Angela achieves **6.0/10** composite intelligence.
-> Pure offline mode (ED3N+GARDEN only) is **architecture-complete but weight-incomplete**.
+> Pure offline mode (unified engine only) is **architecture-complete**: deterministic math/logic/reflex + semantic QA + trilingual compression all work without any API key.
 > **Usability**: despite the above, Angela is **out-of-box** — `run_angela.py` launches everything and **auto-configures to your detected hardware** (no manual config). Training (Scenario B in SCENARIOS.md) is **optional** and only improves output quality.
 
 ---
@@ -318,7 +318,7 @@ python apps/game-rpg/run_game.py
 - **Template matching** — 157 templates, 60s cached formula summaries ✅
 
 **AI Systems:**
-- **LLM providers** — All 8 providers: Anthropic, Google, OpenAI, Ollama, llama.cpp, ED3N, GARDEN ✅
+- **LLM providers** — Unified (native, priority 1), Ollama, llama.cpp, Anthropic, Google, OpenAI ✅ (legacy ED3N/GARDEN providers removed)
 - **QueryClassifier** — 16 QueryTypes (FILE, SEARCH, CODE, EXECUTE, TASK, VISION, AUDIO, OPINION, etc.) ✅
 - **ModelBus** — Handler registration + handler-first routing ✅
 - **11 Specialized Agents** — Registered via AgentAdapter, wrapped with `execute()` interface ✅

@@ -15,6 +15,13 @@ ANGELA-MATRIX: [L5] [βγδ] [B] [L4]
 import asyncio
 import logging
 import os
+
+try:
+    from core.data_config import get_multimodal_dir as _gmmd
+
+    _MM_DIR = str(_gmmd())
+except Exception:  # noqa: BLE001
+    _MM_DIR = os.path.join("data", "multimodal")
 import time
 from typing import Any, Dict, Optional
 
@@ -41,7 +48,7 @@ class MultimodalErrorRecovery:
     MAX_RETRIES = 3
     BASE_BACKOFF_SEC = 1.0
     MAX_BACKOFF_SEC = 10.0
-    CHECKPOINT_DIR = os.path.join("data", "multimodal", "checkpoints")
+    CHECKPOINT_DIR = os.path.join(_MM_DIR, "checkpoints")
 
     def __init__(self, service):
         """Initialize with a MultimodalService or compatible instance.

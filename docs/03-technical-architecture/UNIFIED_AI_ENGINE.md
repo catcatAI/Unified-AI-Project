@@ -367,6 +367,10 @@ bigram、unigram 都學過卻不用）。
 
 ### 8.4 最終誠實對比
 
+> ⚠️ **數字已過時**：本節 bpc 2.331/2.338 為留出集污染值，已被
+> `UNIFIED_AI_RESULTS.md` 乾淨基準（90MB=2.403）與 delta-fusion 更新取代。
+> 「超過 bz2」宣稱撤回。保留原文僅為歷史對照。
+
 **(a) 預測品質（bpc）——backoff 1-5 後，統一引擎超過 gzip 和 bz2**
 
 | 模型 | bpc | vs 我們 |

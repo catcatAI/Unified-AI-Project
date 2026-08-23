@@ -106,32 +106,37 @@ class ChatService:
             from services.llm.router import get_llm_service
 
             self._llm_service = await get_llm_service()
-        try:
-            from ai.ed3n.continuous_learning import ContinuousLearningPipeline
-            from ai.ed3n.ed3n_engine import ED3NEngine
+        # Legacy ED3N continuous-learning: OFF by default — the unified engine
+        # is the text core now. Set ANGELA_LEGACY_ED3N=1 to re-enable.
+        import os as _os
 
-            engine = ED3NEngine.get_shared()
-            from ai.ed3n.ed3n_trainer import ED3NTrainer
+        if _os.environ.get("ANGELA_LEGACY_ED3N") == "1":
+            try:
+                from ai.ed3n.continuous_learning import ContinuousLearningPipeline
+                from ai.ed3n.ed3n_engine import ED3NEngine
 
-            trainer = ED3NTrainer(engine)
-            state_path = os.path.join(self._cl_state_dir, "cl_state.json")
-            if await asyncio.to_thread(os.path.exists, state_path):
-                self._continuous_learning = ContinuousLearningPipeline.load(
-                    self._cl_state_dir, engine=engine, trainer=trainer
-                )
-                logger.info("Loaded CL state from %s", state_path)
-            else:
-                self._continuous_learning = ContinuousLearningPipeline(
-                    engine=engine,
-                    trainer=trainer,
-                    growth_interval=15,
-                    train_interval=50,
-                    min_examples_for_train=30,
-                )
-                engine._continuous_learning = self._continuous_learning
-            logger.info("CLP wired into ED3NEngine for _maybe_learn()")
-        except Exception as e:
-            logger.warning("Continuous learning init skipped: %s", e)
+                engine = ED3NEngine.get_shared()
+                from ai.ed3n.ed3n_trainer import ED3NTrainer
+
+                trainer = ED3NTrainer(engine)
+                state_path = os.path.join(self._cl_state_dir, "cl_state.json")
+                if await asyncio.to_thread(os.path.exists, state_path):
+                    self._continuous_learning = ContinuousLearningPipeline.load(
+                        self._cl_state_dir, engine=engine, trainer=trainer
+                    )
+                    logger.info("Loaded CL state from %s", state_path)
+                else:
+                    self._continuous_learning = ContinuousLearningPipeline(
+                        engine=engine,
+                        trainer=trainer,
+                        growth_interval=15,
+                        train_interval=50,
+                        min_examples_for_train=30,
+                    )
+                    engine._continuous_learning = self._continuous_learning
+                logger.info("CLP wired into ED3NEngine for _maybe_learn()")
+            except Exception as e:
+                logger.warning("Continuous learning init skipped: %s", e)
         # Initialize TrainingCoordinator for domain training orchestration
         try:
             from api.lifespan import get_training_coordinator
@@ -140,15 +145,16 @@ class ChatService:
             logger.info("TrainingCoordinator wired into ChatService")
         except Exception as e:
             logger.warning("TrainingCoordinator not available: %s", e, exc_info=True)
-        # Initialize GARDEN engine for continuous learning (Phase 4.5)
-        try:
-            from ai.garden.garden_engine import GARDENEngine
+        # Legacy GARDEN engine: OFF by default (see ANGELA_LEGACY_ED3N note).
+        if _os.environ.get("ANGELA_LEGACY_ED3N") == "1":
+            try:
+                from ai.garden.garden_engine import GARDENEngine
 
-            self._garden_engine = GARDENEngine(compatibility_mode=True)
-            self._garden_engine.load_presets()
-            logger.info("GARDEN engine initialized for continuous learning")
-        except Exception as e:
-            logger.warning("GARDEN engine init skipped: %s", e)
+                self._garden_engine = GARDENEngine(compatibility_mode=True)
+                self._garden_engine.load_presets()
+                logger.info("GARDEN engine initialized for continuous learning")
+            except Exception as e:
+                logger.warning("GARDEN engine init skipped: %s", e)
         # Initialize ED3N learning integration for HAM sync (Phase 5.2)
         try:
             from ai.ed3n.learning_integration import ED3NLearningIntegration
@@ -209,7 +215,8 @@ class ChatService:
         # Warm up ED3N dictionary (loads 460k entries) in background
         try:
             from ai.ed3n.ed3n_engine import ED3NEngine
-            self._spawn_background_task(asyncio.to_thread(lambda: ED3NEngine.get_shared(load_trained=True).warm_up()))
+            if _os.environ.get("ANGELA_LEGACY_ED3N") == "1":
+                self._spawn_background_task(asyncio.to_thread(lambda: ED3NEngine.get_shared(load_trained=True).warm_up()))
             logger.info("ED3N dictionary warm-up scheduled (460k entries)")
         except Exception as e:
             logger.debug("ED3N warm-up skipped: %s", e)

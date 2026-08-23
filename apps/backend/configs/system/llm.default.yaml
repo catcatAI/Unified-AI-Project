@@ -84,25 +84,6 @@ backends:
     timeout: 30.0
     checkpoint: ""
     note: "Unified Engine — fixed-size statistical core + deterministic math/logic. First local backend."
-  ed3n-v1:
-    type: local
-    provider: ed3n
-    enabled: true
-    model: ed3n-v1
-    priority: 5
-    timeout: 30.0
-    parameters:
-      depth: auto
-      reflex_threshold: 0.8
-  garden-1g:
-    type: local
-    provider: garden
-    enabled: false
-    model: garden-1g
-    priority: 6
-    timeout: 30.0
-    checkpoint: ""
-    note: "GARDEN-1G local lightweight model (PyTorch SNN + VectorDict). Needs torch."
   llamacpp-local:
     type: local
     provider: llama_cpp
@@ -173,13 +154,7 @@ routing:
     fallback: "unified-1g"
   fallback_chain:
     unified-1g:
-      - "ed3n-v1"
       - "ollama-llama3"
-    ed3n-v1:
-      - "garden-1g"
-      - "ollama-llama3"
-    ollama-llama3:
-      - "ed3n-v1"
     openai-gpt4:
       - "anthropic-claude"
       - "google-gemini"

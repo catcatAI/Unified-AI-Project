@@ -67,8 +67,6 @@ from services.llm.providers.anthropic import AnthropicAPIBackend
 
 # LLM provider backends
 from services.llm.providers.base import BaseLLMBackend
-from services.llm.providers.ed3n import ED3NBackend
-from services.llm.providers.garden import GARDENBackend
 from services.llm.providers.google import GoogleAPIBackend
 from services.llm.providers.llamacpp import LlamaCppBackend
 from services.llm.providers.ollama import OllamaBackend
@@ -111,8 +109,6 @@ _BACKEND_FACTORIES: Dict[str, str] = {
     "openai": "_init_openai",
     "anthropic": "_init_anthropic",
     "google": "_init_google",
-    "ed3n": "_init_ed3n",
-    "garden": "_init_garden",
     "unified": "_init_unified",
 }
 
@@ -588,26 +584,6 @@ class AngelaLLMService:
             timeout=config.get("timeout", LLM_REQUEST_TIMEOUT),
         )
         logger.info(f"已注冊 Google Gemini 後端: {model_name}")
-
-    def _init_ed3n(
-        self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict
-    ) -> None:
-        self.backends[LLMBackend.ED3N] = ED3NBackend(
-            base_url=base_url or "",
-            model=model_name or "ed3n-v1",
-            timeout=config.get("timeout", 30.0),
-        )
-        logger.info(f"已注冊 ED3N 後端: {model_name or 'ed3n-v1'}")
-
-    def _init_garden(
-        self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict
-    ) -> None:
-        self.backends[LLMBackend.GARDEN] = GARDENBackend(
-            model=model_name or "garden-1g",
-            checkpoint=config.get("checkpoint", ""),
-            timeout=config.get("timeout", 30.0),
-        )
-        logger.info(f"已注冊 GARDEN 後端: {model_name or 'garden-1g'}")
 
     def _init_unified(
         self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict
