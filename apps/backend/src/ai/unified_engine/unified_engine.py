@@ -30,6 +30,7 @@ from ai.arithmetic.deterministic_router import try_math as _det_try_math
 from ai.core.unicode_utils import normalize_text
 from ai.data_eng.presets import REFLEX_PRESETS
 from ai.unified_engine.core_model import FixedSizeCore
+from ai.unified_engine.semantic_qa import SemanticQA
 from core.system.config.magic_numbers import (
     _probe_ram_total_gb,
     effective_capacity_bytes,
@@ -48,6 +49,13 @@ class UnifiedEngine:
         self._last_confidence = 0.0
         self._last_route = ""
         self._frozen = False
+        self.semantic_qa: Optional[SemanticQA] = None
+
+    def learn_semantic_qa(self, qa_pairs, epochs: int = 60) -> Dict[str, float]:
+        """Teach the semantic QA layer (SLS gradient-trained retrieval)."""
+        if self.semantic_qa is None:
+            self.semantic_qa = SemanticQA()
+        return self.semantic_qa.learn(qa_pairs, epochs=epochs)
 
     @staticmethod
     def _resolve_cap(memory_cap_mb: Optional[float]) -> int:
@@ -190,7 +198,15 @@ class UnifiedEngine:
             self._last_route = "deterministic-logic"
             self._last_confidence = 1.0
             return r
-        # 2. Learned statistical core.
+        # 2. Learned semantic QA (SLS gradient layer) — factual open questions.
+        if self.semantic_qa is not None:
+            hit = self.semantic_qa.answer(text)
+            if hit is not None:
+                ans, sim = hit
+                self._last_route = "semantic-qa"
+                self._last_confidence = min(0.95, max(0.5, sim))
+                return f"{ans}"
+        # 3. Learned statistical core.
         r = self._infer_from_core(text)
         if r is not None:
             result, conf, route = r
