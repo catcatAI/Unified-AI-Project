@@ -79,3 +79,33 @@ POST /chat/* 或 WS chat_message
 - HAM 不再自毒
 - lifecycle 單例 + 持久化活
 - 離線智能誠實分級寫回 RESULTS.md
+
+---
+
+## 6. 修復結果（2026-08-24，全部實測）
+
+| Bug | 狀態 | 驗證 |
+|---|---|---|
+| D 空訊息 500 | ✅ 改 400 + detail | chat_routes.py:1522 |
+| E 詞典劫持 | ✅ 問候/問句/句子排除；`你好呀`→False, `dog`→True | _detect_dictionary_query 實測 |
+| G boolean 捏造 | ✅ 命題閘（連接詞+中文標記 8 種）+ 答案投票需疑問形 | `please explain…`=none、nor 命題正常 |
+| H HAM 自毒 | ✅ stat-core/none 不存模板 + 清除 2 筆毒模板 | router.py gate |
+| A lifecycle 分裂腦 | ✅ DLI 重用 lifespan singleton | dli.py initialize |
+| B save_state 死 | ✅ DLI shutdown 接上，存 checkpoints/lifecycle/ | data_config 路徑 |
+| I 死 bus 建構 | ✅ ModelBus ED3N/GARDEN 直構移除 | router.py |
+
+回歸：unified_engine 34/34 + ed3n routing 12/12 = **46 passed**。
+
+## 7. 離線智能誠實分級（修復後，無 LLM）
+
+| 能力 | 分級 | 說明 |
+|---|---|---|
+| 確定性數學/邏輯 | A | 精確，含複合閘與中文邏輯 |
+| 事實 QA（KB 內） | B+ | SLS 檢索+自然包裝+多輪指代；KB 外誠實拒答 |
+| 情緒/自主性運算 | B | 全棧運算正常但對輸出文本影響仍弱（NeuroBlender 少達）|
+| 小說閒聊生成 | C | 格式合法、UTF-8 保證、局部連貫、無語義——n-gram 架構本質 |
+| 開放域 WHY/HOW | F | 需外接 LLM 或大神經層 |
+
+**結論**：離線不再「亂答」——每個回答都可歸因到明確路由層，未知即誠實拒答。
+「快」（2.1M cached calls/s）、「省」（386MiB）、「穩」（46 測試）保持；
+「強」的邊界如實標註。
