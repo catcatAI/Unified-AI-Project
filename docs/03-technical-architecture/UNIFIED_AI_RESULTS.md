@@ -41,6 +41,23 @@
 | 13 | 影像泛化 | **23.9x** | 未見 ramp 型困惑度/已學型 |
 | 14 | 音訊泛化 | **83.8x** | 未見 220Hz 困惑度/已學頻率 |
 
+## ✅ 實際輸出能力（2026-08-23 實測，路由分層）
+
+| 能力 | 實測 | 路由 | 狀態 |
+|---|---|---|---|
+| 精確算術（任意位數） | `752*851=639952`、`(2+3)*4=20` | deterministic-math | ✅ 完美 |
+| 布林邏輯（含中綴 nand/nor/xor/xnor） | `false nand true=true`、`true xnor true=true` | deterministic-logic | ✅ 8/8 |
+| 問候反射 | hello/你好/good morning → 自然回覆 | reflex | ✅ |
+| **事實問答（新）** | `capital of France?`→Paris、`light speed?`→299,792 km/s、未知問題誠實答「不知道」 | **semantic-qa**（SLS 真梯度層） | ✅ 新增 |
+| 位元組結構生成 | 學 PNG 後 magic+IHDR 保留；三語生成 10/10 合法 UTF-8 | statistical-core | ✅ |
+| 格式補全 | 學加法表後 `12+`→`12+19=`（格式對、值不保證） | statistical-core | ⚠️ 只形不值 |
+| 文本風格續寫 | 局部詞組連貫，10+ bytes 後發散 | statistical-core | ⚠️ 架構限制 |
+
+> 路由優先級：reflex > math/logic > **semantic-qa** > statistical core。
+> 語義 QA 層為真學習組件（SharedLatentSpace 對比訓練，loss ~0.001，
+> cosine 閾值 0.75 低於即誠實承認不知道），補上了統計核架構性無法
+> 表示的「長程語義」缺口。
+
 ---
 
 ## 2. 與其他 AI 的全面對比
