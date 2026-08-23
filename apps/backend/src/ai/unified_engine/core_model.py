@@ -79,6 +79,20 @@ def _vectorised_hash(views: np.ndarray) -> np.ndarray:
     return h.astype(np.uint64)
 
 
+def _scalar_hash(ctx: bytes, wmix: int = 0) -> int:
+    """Pure-Python FNV-1a for single-context lookup.
+
+    numpy vectorisation pays off for batch learning but costs ~60us of
+    array overhead per single-row call; the loop below does it in ~3us.
+    Identical output to _vectorised_hash + slot mix.
+    """
+    h = 2166136261
+    for b in ctx:
+        h ^= b
+        h = (h * 16777619) & 0xFFFFFFFF
+    return ((h + wmix) & 0xFFFFFFFF)
+
+
 class FixedSizeCore:
     """Position x content + transition + k-gram + feature fixed arrays.
 
@@ -416,17 +430,17 @@ class FixedSizeCore:
 
         # 5-gram (4-byte context)
         if len(prefix) >= 4:
-            d = _norm(self._gram5[(int(_vectorised_hash(np.frombuffer(prefix[-4:], dtype=np.uint8)[None, :])[0]) + wmix) & mask])
+            d = _norm(self._gram5[(_scalar_hash(prefix[-4:], wmix)) & mask])
             if d is not None:
                 return d
         # 4-gram (3-byte context)
         if len(prefix) >= 3:
-            d = _norm(self._gram[(int(_vectorised_hash(np.frombuffer(prefix[-3:], dtype=np.uint8)[None, :])[0]) + wmix) & mask])
+            d = _norm(self._gram[(_scalar_hash(prefix[-3:], wmix)) & mask])
             if d is not None:
                 return d
         # 3-gram (2-byte context)
         if len(prefix) >= 2:
-            d = _norm(self._gram3[(int(_vectorised_hash(np.frombuffer(prefix[-2:], dtype=np.uint8)[None, :])[0]) + wmix) & mask])
+            d = _norm(self._gram3[(_scalar_hash(prefix[-2:], wmix)) & mask])
             if d is not None:
                 return d
         # bigram (transition), language-plane isolated
