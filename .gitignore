@@ -176,6 +176,7 @@ node_modules_old/
 !tests/**/*_analyzer.py
 fix_project_issues.py
 PROJECT_*.md
+!docs/03-technical-architecture/PROJECT_CLEANUP_PLAN.md
 PROJECT_*.json
 COMPLETE_FILE_HASH_MAP.md
 IMPLEMENTATION_*.md
