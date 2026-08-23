@@ -816,6 +816,24 @@ class AngelaLLMService:
         if neural_result is not None:
             return neural_result
 
+        # Honest gate: questions that reached here have exhausted semantic-QA,
+        # stat-core and templates. Emotion fragments would be non-answers.
+        import re as _re
+
+        if _re.search(
+            r"[?？]\s*$"
+            r"|^\s*(what|who|when|where|why|how|which|tell me|explain|please explain)",
+            user_message.strip(),
+            _re.IGNORECASE,
+        ):
+            return LLMResponse(
+                text="這個問題我目前還沒有足夠的知識能正確回答。你可以問我數學、邏輯，或我學過的事實。",
+                backend="local-fallback",
+                model="honest-no-answer",
+                confidence=0.4,
+                metadata={"fallback": True, "tier": "honest"},
+            )
+
         if not self.is_available or self.active_backend is None:
             bus_result = await self._try_model_bus(user_message, context)
             if bus_result is not None:
@@ -1237,30 +1255,38 @@ class AngelaLLMService:
         return None
 
     async def _fallback_response(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
-        """
-        備份回應機制
-        優先使用 Model Bus 路由，其次已註冊的 ED3N 或 GARDEN 後端，降級至 NeuroBlender，最後使用純模板。
-        """
+        """Offline fallback: Model Bus → NeuroBlender (emotion fragments) →
+        template. Question-shaped inputs that reached here have already been
+        through semantic-QA/stat-core; fragments would be non-answers, so
+        questions get an honest "don't know" instead."""
+        import re as _re
+
+        looks_like_question = bool(
+            _re.search(
+                r"[?？]\s*$"
+                r"|^\s*(what|who|when|where|why|how|which|tell me|explain|please explain)",
+                user_message.strip(),
+                _re.IGNORECASE,
+            )
+        )
+
         # Tier 0: Model Bus capability-based routing
         bus_result = await self._try_model_bus(user_message, context)
         if bus_result is not None:
             return bus_result
 
-        # Tier 1: Registered ED3N/GARDEN backends (reuse singleton to avoid redundant init)
-        for tier_backend, tier_name in [(LLMBackend.ED3N, "ed3n"), (LLMBackend.GARDEN, "garden")]:
-            backend = self.backends.get(tier_backend)
-            if backend:
-                try:
-                    result = await backend.generate(user_message, context=context)
-                    if result and result.text and result.text not in _KNOWN_FALLBACK_RESPONSES:
-                        result.metadata = result.metadata or {}
-                        result.metadata["fallback"] = True
-                        result.metadata["tier"] = tier_name
-                        return result
-                except Exception as e:
-                    logger.warning(f"{tier_name} fallback failed: {e}", exc_info=True)
+        # Questions must not be answered with emotion fragments or random
+        # templates — that was the "wrong layer answers" bug.
+        if looks_like_question:
+            return LLMResponse(
+                text="這個問題我目前還沒有足夠的知識能正確回答。你可以問我數學、邏輯，或我學過的事實。",
+                backend="local-fallback",
+                model="honest-no-answer",
+                confidence=0.4,
+                metadata={"fallback": True, "tier": "honest"},
+            )
 
-        # Tier 2: NeuroBlender
+        # Tier 2: NeuroBlender (smalltalk/emotional support only)
         try:
             result = await self._try_neuro_blender(user_message, context)
             if result:
@@ -1751,6 +1777,14 @@ class AngelaLLMService:
                 and (response.text or "").strip().lower().endswith(("=true", "=false"))
             ):
                 logger.debug("Skipped template storage for stat-core guess")
+                return
+
+            # Never memorize NeuroBlender fragments: they are emotion-glued
+            # sentence concatenations that would replay as fake answers to
+            # unrelated questions (measured live).
+            model_name = str(getattr(response, "model", "") or "")
+            if "neuro-blender" in model_name or response.backend == "local-fallback":
+                logger.debug("Skipped template storage for NeuroBlender fragment")
                 return
 
             # Never memorize non-answers (refusals / "I don't know" / empty).

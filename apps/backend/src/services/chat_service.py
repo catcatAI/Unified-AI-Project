@@ -518,7 +518,7 @@ class ChatService:
         except Exception as e:
             logger.warning("Continuous learning interaction failed: %s", e)
 
-    async def _process_garden_learning(self, user_message: str, response) -> None:
+    async def _process_garden_learning(self, user_message: str, response, context: dict = None) -> None:
         if not self._garden_engine:
             return
         try:
