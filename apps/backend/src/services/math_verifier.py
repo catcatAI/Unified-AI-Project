@@ -412,7 +412,7 @@ def evaluate_logic(text: str) -> Optional[str]:
     if not text:
         return None
 
-    t = text.strip().lower().rstrip("？?！!。.")
+    t = text.strip().lower().rstrip("？?！!。.=")
 
     # ---- Chinese path ----
     if any(kw in t for kw in ("或", "且", "既不是", "並非", "不成立", "矛盾", "衝突", "真", "假")):
@@ -464,6 +464,19 @@ def evaluate_logic(text: str) -> Optional[str]:
     expr = re.sub(r"\bnor\s+(True|False)\s+(True|False)\b", _expand_nor, expr)
     expr = re.sub(r"\bnand\s+(True|False)\s+(True|False)\b", _expand_nand, expr)
     expr = re.sub(r"\bxor\s+(True|False)\s+(True|False)\b", _expand_xor, expr)
+    # Infix order (operand BEFORE operator): "false nand true", "true xor false"
+    expr = re.sub(r"\b(True|False)\s+nor\s+(True|False)\b", _expand_nor, expr)
+    expr = re.sub(r"\b(True|False)\s+nand\s+(True|False)\b", _expand_nand, expr)
+    expr = re.sub(r"\b(True|False)\s+xor\s+(True|False)\b", _expand_xor, expr)
+    # xnor: both prefix and infix orders
+    def _expand_xnor(m):
+        parts = re.findall(r"(True|False)", m.group(0))
+        if len(parts) == 2:
+            return f"({parts[0]} and {parts[1]}) or (not {parts[0]} and not {parts[1]})"
+        return m.group(0)
+
+    expr = re.sub(r"\bxnor\s+(True|False)\s+(True|False)\b", _expand_xnor, expr)
+    expr = re.sub(r"\b(True|False)\s+xnor\s+(True|False)\b", _expand_xnor, expr)
 
     expr = re.sub(r"\band\b", "and", expr)
     expr = re.sub(r"\bor\b", "or", expr)
