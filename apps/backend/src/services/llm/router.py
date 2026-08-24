@@ -852,8 +852,11 @@ class AngelaLLMService:
                         except Exception:
                             healthy = False
                         if healthy:
+                            msgs = self._construct_angela_prompt(user_message, context)
                             resp = await self.backends[bt].generate(
-                                user_message, context=context
+                                prompt=msgs[-1]["content"],
+                                messages=msgs,
+                                context=context,
                             )
                             if resp and resp.text and resp.text.strip():
                                 resp.metadata = resp.metadata or {}
@@ -1070,7 +1073,10 @@ class AngelaLLMService:
             if await _rank(bt):
                 logger.info(f"[fusion] open-domain → {bt.value} (unified context carried)")
                 try:
-                    resp = await self.backends[bt].generate(user_message, context=context)
+                    msgs = self._construct_angela_prompt(user_message, context)
+                    resp = await self.backends[bt].generate(
+                        prompt=msgs[-1]["content"], messages=msgs, context=context
+                    )
                     if resp and resp.text and resp.text.strip():
                         resp.metadata = resp.metadata or {}
                         resp.metadata["fusion"] = "unified-context+llm"
