@@ -37,53 +37,108 @@ class UnifiedBackend(BaseLLMBackend):
 
     @staticmethod
     def _resolve_default_checkpoint() -> str:
-        """Locate the trained ``data/checkpoints/unified/unified.json``.
+        """Locate the best trained checkpoint.
 
-        Resolution order:
-          1. ``ANGELA_PROJECT_ROOT`` env override (explicit, unambiguous).
-          2. Walk up from this module's dir to the dir containing
-             ``apps/backend/src`` (bounded — this file lives at
-             apps/backend/src/services/llm/providers/, 6 levels below root).
+        Preference order: 128k-slot npz (best quality) > legacy unified.json.
+        Searches data_config root then repo-local fallback.
         """
+        candidates = []
+
+        # 1. env override
         env_root = os.environ.get("ANGELA_PROJECT_ROOT", "").strip()
+        search_roots = []
         if env_root:
-            candidate = os.path.join(env_root, "data", "checkpoints", "unified", "unified.json")
-            if os.path.isfile(candidate):
-                return candidate
+            search_roots.append(os.path.join(env_root, "data", "checkpoints", "unified"))
+        # 2. walk up from module dir
         here = os.path.abspath(os.path.dirname(__file__))
         root = here
         for _ in range(8):
-            if os.path.isdir(os.path.join(root, "apps", "backend", "src")):
+            cp = os.path.join(root, "data", "checkpoints", "unified")
+            if os.path.isdir(cp):
+                search_roots.append(cp)
                 break
-            parent = os.path.dirname(root)
-            if parent == root:
+            root = os.path.dirname(root)
+        # 3. data_config
+        try:
+            from core.data_config import get_checkpoints_dir
+
+            search_roots.append(os.path.join(str(get_checkpoints_dir()), "unified"))
+        except Exception:  # noqa: BLE001
+            pass
+
+        for d in search_roots:
+            # Prefer 128k npz (best quality, delta-fusion ready)
+            for f in sorted(os.listdir(d)) if os.path.isdir(d) else []:
+                if f.endswith("_128k.npz"):
+                    candidates.append(os.path.join(d, f))
+            if not candidates:
+                for f in sorted(os.listdir(d)) if os.path.isdir(d) else []:
+                    if f.endswith(".npz") and "full_train" in f:
+                        candidates.append(os.path.join(d, f))
+            legacy = os.path.join(d, "unified.json")
+            if os.path.isfile(legacy):
+                candidates.append(legacy)
+            if candidates:
                 break
-            root = parent
-        candidate = os.path.join(root, "data", "checkpoints", "unified", "unified.json")
-        if os.path.isfile(candidate):
-            return candidate
-        return ""
+
+        resolved = candidates[0] if candidates else ""
+        logger.info("[UnifiedBackend] checkpoint resolved to %s", resolved or "(none)")
+        return resolved
 
     def _get_engine(self) -> Any:
-        if self._engine is None:
+        """Lazy-init UnifiedEngine from resolved checkpoint."""
+        if self._engine is not None:
+            return self._engine
+        try:
             from ai.unified_engine.unified_engine import UnifiedEngine
 
-            engine = UnifiedEngine(memory_cap_mb=2048)
+            engine = UnifiedEngine()
             if self.checkpoint and os.path.isfile(self.checkpoint):
-                engine.load(self.checkpoint)
-                logger.info("unified backend: loaded checkpoint from %s", self.checkpoint)
+                if self.checkpoint.endswith(".npz"):
+                    import numpy as np
+
+                    z = np.load(self.checkpoint)
+                    core = engine.core
+                    for attr in ("pos", "trans", "gram", "gram3", "gram5", "uni"):
+                        if attr in z:
+                            setattr(core, f"_{attr}", z[attr])
+                else:
+                    engine.load(self.checkpoint)
+            # Load QA knowledge
+            qa_dir = os.path.dirname(self.checkpoint) if self.checkpoint else ""
+            qa_path = os.path.join(qa_dir, "qa_knowledge.json") if qa_dir else ""
+            if not qa_path or not os.path.isfile(qa_path):
+                try:
+                    from core.data_config import get_checkpoints_dir
+
+                    qa_path = os.path.join(
+                        str(get_checkpoints_dir()), "unified", "qa_knowledge.json"
+                    )
+                except Exception:  # noqa: BLE001
+                    qa_path = ""
+            if qa_path and os.path.isfile(qa_path):
+                try:
+                    import json as _json
+
+                    from ai.unified_engine.semantic_qa import SemanticQA
+
+                    engine.semantic_qa = SemanticQA()
+                    engine.semantic_qa.load_dict(_json.load(open(qa_path, encoding="utf-8")))
+                except Exception:  # noqa: BLE001
+                    pass
             self._engine = engine
-        return self._engine
+            return engine
+        except Exception as exc:
+            logger.error("Failed to init unified engine: %s", exc, exc_info=True)
+            from ai.unified_engine.unified_engine import UnifiedEngine
+
+            self._engine = UnifiedEngine()
+            return self._engine
 
     @staticmethod
     def _strip_wrapper(prompt: str) -> str:
-        """Strip the <user_message>…</user_message> XML wrapper the shared
-        prompt builder adds for LLM backends, so the statistical core matches
-        against the user's real text (same issue ED3N had)."""
         m = re.search(r"<user_message>(.*?)</user_message>", prompt, re.DOTALL)
-        if m:
-            return m.group(1)
-        return prompt
+        return m.group(1) if m else prompt
 
     async def generate(self, prompt: str, **kwargs) -> LLMResponse:
         start = time.time()
@@ -92,8 +147,6 @@ class UnifiedBackend(BaseLLMBackend):
             user_text = self._strip_wrapper(prompt)
             text = await self._run_in_thread(engine, user_text)
             if not text or text == user_text:
-                # No deterministic rule matched and the statistical core had
-                # nothing to say — let the caller fall through to a real LLM.
                 return LLMResponse(
                     text="",
                     backend="unified",

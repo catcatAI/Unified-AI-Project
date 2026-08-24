@@ -81,6 +81,10 @@ class TestUnifiedBackendInference:
     async def test_statistical_core_route(self, backend):
         # A logic-style proposition (not pure truth-table) routes to the
         # learned statistical core and returns a True/False answer.
+        # Train some boolean data first (fresh backend has no stat data).
+        backend._get_engine().learn_batch(
+            ["water is wet nor hydrogen is flammable=false"] * 5
+        )
         r = await backend.generate("water is wet nor hydrogen is flammable=?")
         assert r.metadata.get("route") == "statistical-core"
         assert r.text.lower() in (
