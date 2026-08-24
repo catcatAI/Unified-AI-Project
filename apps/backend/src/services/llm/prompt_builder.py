@@ -624,6 +624,10 @@ def _append_emotional_behavior(messages: List[Dict], context: Dict) -> None:
     block = "\n\n---\n"
 
     if behavior:
+        if not isinstance(behavior, dict):
+            # Defensive: external callers sometimes pass a plain descriptor
+            # string; treat it as a routing hint rather than crashing.
+            behavior = {"routing_mode": str(behavior), "response_style": "standard"}
         routing_mode = behavior.get("routing_mode", "neutral")
         response_style = behavior.get("response_style", "standard")
         block += "[Emotional Behavior Guidance]\n"

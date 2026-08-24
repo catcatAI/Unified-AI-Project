@@ -852,10 +852,15 @@ class AngelaLLMService:
                         except Exception:
                             healthy = False
                         if healthy:
+                            _, fparams = await self._prepare_generation_context(
+                                user_message, context
+                            )
                             msgs = self._construct_angela_prompt(user_message, context)
                             resp = await self.backends[bt].generate(
                                 prompt=msgs[-1]["content"],
                                 messages=msgs,
+                                temperature=fparams.temperature,
+                                max_tokens=fparams.max_tokens,
                                 context=context,
                             )
                             if resp and resp.text and resp.text.strip():
@@ -1075,7 +1080,11 @@ class AngelaLLMService:
                 try:
                     msgs = self._construct_angela_prompt(user_message, context)
                     resp = await self.backends[bt].generate(
-                        prompt=msgs[-1]["content"], messages=msgs, context=context
+                        prompt=msgs[-1]["content"],
+                        messages=msgs,
+                        temperature=gen_params.temperature,
+                        max_tokens=gen_params.max_tokens,
+                        context=context,
                     )
                     if resp and resp.text and resp.text.strip():
                         resp.metadata = resp.metadata or {}
