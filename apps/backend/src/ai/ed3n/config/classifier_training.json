@@ -3119,6 +3119,20 @@
       ],
       "relations": {},
       "confidence": 0.5
+    },
+    {
+      "key": "cls_learn_195",
+      "surface_forms": {
+        "zh": "我好難過"
+      },
+      "contexts": [
+        {
+          "context_id": "conservative",
+          "type": "read"
+        }
+      ],
+      "relations": {},
+      "confidence": 0.5
     }
   ]
 }

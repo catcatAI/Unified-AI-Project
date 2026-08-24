@@ -326,9 +326,17 @@ class UnifiedEngine:
 
                     stop = {"what", "is", "the", "of", "are", "there", "a", "an",
                             "to", "in", "on", "how", "does", "do", "many", "much"}
+                    # Latin words (>=3 chars) AND CJK runs (>=2 chars) both count
+                    # as content words — CJK-only queries previously skipped the
+                    # guard entirely and matched cross-language noise.
                     qws = [w.lower() for w in _re.findall(r"[A-Za-z]{3,}", resolved)
                            if w.lower() not in stop]
-                    if qws and not any(w in hit[0].lower() for w in qws):
+                    qws += [c for c in _re.findall(r"[\u4e00-\u9fff]{2,}", resolved)]
+                    if qws and not any(
+                        w in hit[0].lower()
+                        or any(c in hit[0] for c in w if "\u4e00" <= c <= "\u9fff")
+                        for w in qws
+                    ):
                         hit = None
             if hit is not None:
                 ans, sim = hit

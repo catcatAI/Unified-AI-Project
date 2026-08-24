@@ -1396,7 +1396,69 @@ class AngelaLLMService:
                 metadata={"fallback": True, "tier": "honest"},
             )
 
-        # Tier 2: NeuroBlender (smalltalk/emotional support only)
+        # Emotional non-question input (e.g. "I feel sad") deserves an
+        # empathetic SUPPORT template, not mood-glue fragments. Detect via
+        # bio_state dominant emotion + feeling verbs.
+        import re as _re
+
+        bio_state = context.get("bio_state") or {}
+        dominant = str(bio_state.get("dominant_emotion", "")).lower()
+        feels = _re.search(
+            r"\b(i feel|i'm feeling|i am feeling|我覺得|我好|很難過|難過|傷心)",
+            user_message,
+            _re.IGNORECASE,
+        )
+        negative = dominant in ("sad", "fear", "angry", "disgust")
+        if feels or (negative and not looks_like_question):
+            try:
+                from ai.memory.memory_template import ResponseCategory
+                from ai.memory.template_library import get_template_library
+
+                library = get_template_library()
+                templates = library.get_by_category(ResponseCategory.EMOTIONAL)
+                if not templates:
+                    templates = library.get_by_category(ResponseCategory.SUPPORT)
+                if templates:
+                    # keyword-relevant pick instead of blind random: match
+                    # template content against the user's own words first
+                    import re as _re2
+
+                    # Traditional→Simplified for cross-script template matching
+                    # (templates are simplified; user may write traditional)
+                    _T2S = str.maketrans(
+                        "難過與時這麼們對開關門點說話學覺體聽寫愛錯讓質勵圓滿壓力歡樂憂傷",
+                        "难过与时这么们对开关门点说话学觉体听写爱错让质励圆满压力欢乐忧伤",
+                    )
+                    normalized_msg = user_message.translate(_T2S).lower()
+                    # CJK: single-char granularity (难 vs 别难过 share 难+过)
+                    user_words = set(_re2.findall(
+                        r"[\u4e00-\u9fff]|[A-Za-z]{3,}", normalized_msg,
+                    ))
+                    scored = []
+                    for t in templates:
+                        c = str(getattr(t, "content", ""))
+                        tw = set(_re2.findall(
+                            r"[\u4e00-\u9fff]|[A-Za-z]{3,}", c.lower()
+                        ))
+                        overlap = len(user_words & tw)
+                        scored.append((overlap, c))
+                    scored.sort(key=lambda x: -x[0])
+                    best_text = scored[0][1] if scored and scored[0][0] > 0 else random.choice(
+                        [c for _, c in scored]
+                    )
+                    text = best_text.replace("{user_name}", context.get("user_name", "朋友"))
+                    return LLMResponse(
+                        text=text,
+                        backend="local-fallback",
+                        model="support-template",
+                        confidence=0.5,
+                        metadata={"fallback": True, "tier": "support",
+                                  "emotion": dominant},
+                    )
+            except Exception as exc:
+                logger.warning(f"Support template fallback failed: {exc}")
+
+        # Tier 2: NeuroBlender (smalltalk only — never for negative emotion)
         try:
             result = await self._try_neuro_blender(user_message, context)
             if result:
