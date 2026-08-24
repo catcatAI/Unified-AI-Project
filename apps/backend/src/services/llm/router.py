@@ -826,6 +826,41 @@ class AngelaLLMService:
             user_message.strip(),
             _re.IGNORECASE,
         ):
+            # unified+LLM fusion: cloud available → let it answer open-domain.
+            # Deterministic shapes (math/logic) NEVER fuse — unified owns them.
+            import re as _re2
+
+            if _re2.search(r"\d\s*[+\-*/^%]|\b(true|false|nor|nand|xor|xnor)\b", user_message):
+                return LLMResponse(
+                    text="這個問題我目前還沒有足夠的知識能正確回答。",
+                    backend="local-fallback",
+                    model="honest-no-answer",
+                    confidence=0.4,
+                    metadata={"fallback": True, "tier": "honest"},
+                )
+            if self.active_backend_type == LLMBackend.UNIFIED:
+                mode = (self.config.get("deployment") or {}).get("mode", "local")
+                others = [bt for bt in self.backends if bt != LLMBackend.UNIFIED]
+                if mode in ("local+llm", "llm", "auto") and others:
+                    for bt in sorted(others, key=lambda x: int(
+                        (self.config.get("backends") or {}).get(
+                            next((bid for bid, c in (self.config.get("backends") or {}).items()
+                                  if str(c.get("provider")) == x.value), {}),
+                            {}).get("priority", 99))):
+                        try:
+                            healthy = await self.backends[bt].check_health()
+                        except Exception:
+                            healthy = False
+                        if healthy:
+                            resp = await self.backends[bt].generate(
+                                user_message, context=context
+                            )
+                            if resp and resp.text and resp.text.strip():
+                                resp.metadata = resp.metadata or {}
+                                resp.metadata["fusion"] = "unified+llm"
+                                logger.info(f"[fusion] open-domain → {bt.value}")
+                                return resp
+                        break  # only try the best-ranked one
             return LLMResponse(
                 text="這個問題我目前還沒有足夠的知識能正確回答。你可以問我數學、邏輯，或我學過的事實。",
                 backend="local-fallback",
@@ -984,6 +1019,66 @@ class AngelaLLMService:
             self.stats["total_response_time"] / self.stats["total_requests"]
         )
         self.stats["memory_hit_rate"] = self.stats["memory_hits"] / self.stats["total_requests"]
+
+    async def _maybe_cloud_fusion(self, user_message: str, context: Dict[str, Any], gen_params):
+        """unified+LLM fusion gate.
+
+        Returns an LLMResponse from the best cloud/LLM backend when ALL of:
+          - deployment.mode includes llm (local+llm / llm / auto)
+          - active_backend is unified (offline core handled deterministic/QA already)
+          - query is open-domain: NOT math, NOT logic proposition, NOT a KB hit
+          - a non-unified backend is registered and healthy
+        Returns None to stay on the unified path otherwise.
+        """
+        import re as _re
+
+        if self.active_backend_type != LLMBackend.UNIFIED:
+            return None
+        mode = (self.config.get("deployment") or {}).get("mode", "local")
+        if mode not in ("local+llm", "llm", "auto"):
+            return None
+        text = user_message.strip()
+        # deterministic layers / QA shapes stay on unified
+        if _re.search(r"\d\s*[+\-*/^]|(true|false)\b|=", text):
+            return None
+        if getattr(self, "semantic_qa", None) is not None:
+            try:
+                if self.semantic_qa.answer(text.rstrip("?？= ")) is not None:
+                    return None
+            except Exception:
+                pass
+        # pick best non-unified backend
+        candidates = [
+            bt for bt in self.backends
+            if bt != LLMBackend.UNIFIED and bt in (self._allowed_types() and self.backends or ())
+        ]
+        if not candidates:
+            return None
+
+        async def _rank(bt):
+            try:
+                ok = await self.backends[bt].check_health()
+            except Exception:
+                ok = False
+            return ok
+
+        for bt in sorted(candidates, key=lambda x: int(
+                (self.config.get("backends") or {})
+                .get(next((bid for bid, c in (self.config.get("backends") or {}).items()
+                           if c.get("provider") == x.value), {}),
+                    {}).get("priority", 99))):
+            if await _rank(bt):
+                logger.info(f"[fusion] open-domain → {bt.value} (unified context carried)")
+                try:
+                    resp = await self.backends[bt].generate(user_message, context=context)
+                    if resp and resp.text and resp.text.strip():
+                        resp.metadata = resp.metadata or {}
+                        resp.metadata["fusion"] = "unified-context+llm"
+                        return resp
+                except Exception as exc:
+                    logger.warning(f"[fusion] {bt.value} failed: {exc}")
+                return None
+        return None
 
     async def _try_neural_bridge(
         self, user_message: str, context: Dict[str, Any]
@@ -1635,6 +1730,16 @@ class AngelaLLMService:
         early, gen_params = await self._prepare_generation_context(user_message, context)
         if early is not None:
             return early
+
+        # unified+LLM fusion: when a cloud/LLM backend is available AND the
+        # query is open-domain (beyond math/logic/QA/reflex), delegate to it
+        # carrying unified's rich context (emotion/state/causal). Unified
+        # keeps everything it is good at; LLM covers what n-grams cannot.
+        cloud_resp = await self._maybe_cloud_fusion(user_message, context, gen_params)
+        if cloud_resp is not None:
+            return await self._post_process_response(
+                cloud_resp, user_message, context, start_time
+            )
 
         try:
             response = await self._call_llm_backend(user_message, context, gen_params)
