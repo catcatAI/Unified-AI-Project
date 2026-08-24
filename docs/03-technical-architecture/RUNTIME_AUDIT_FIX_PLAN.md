@@ -93,6 +93,7 @@ POST /chat/* 或 WS chat_message
 | A lifecycle 分裂腦 | ✅ DLI 重用 lifespan singleton | dli.py initialize |
 | B save_state 死 | ✅ DLI shutdown 接上，存 checkpoints/lifecycle/ | data_config 路徑 |
 | I 死 bus 建構 | ✅ ModelBus ED3N/GARDEN 直構移除 | router.py |
+| N **WS 對話全死**（深查發現）| main.py 自帶無 chat_message 的迷你 /ws 處理器，遮蔽了完整版 websocket_handler；且 handshake 走 SessionManager.register 不填 `_sessions_by_ws` → send_personal_message 靜默失敗 | ✅ main.py 委派 websocket_handler + 握手後補映射；真實 uvicorn 端到端驗證（handshake→chat→response）|
 
 回歸：unified_engine 34/34 + ed3n routing 12/12 = **46 passed**。
 
