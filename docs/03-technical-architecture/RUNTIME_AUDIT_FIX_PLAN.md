@@ -105,7 +105,7 @@ POST /chat/* 或 WS chat_message
 | 事實 QA（KB 內） | B+ | SLS 檢索+自然包裝+多輪指代；KB 外誠實拒答 |
 | 情緒/自主性運算 | B | 全棧運算正常但對輸出文本影響仍弱（NeuroBlender 少達）|
 | 小說閒聊生成 | C | 格式合法、UTF-8 保證、局部連貫、無語義——n-gram 架構本質 |
-| 開放域 WHY/HOW | F | 需外接 LLM 或大神經層 |
+| 開放域 WHY/HOW | F → **B+（含 LLM 時）** | `local+llm` 模式下開放域問題自動委派最佳 LLM（攜帶 unified 上下文，metadata.fusion='unified+llm'）；數學/邏輯永不外流。無 LLM 時維持誠實拒答 |
 
 **結論**：離線不再「亂答」——每個回答都可歸因到明確路由層，未知即誠實拒答。
 「快」（2.1M cached calls/s）、「省」（386MiB）、「穩」（46 測試）保持；
