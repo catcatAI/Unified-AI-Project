@@ -405,12 +405,15 @@ async def _handle_chat_message(websocket: WebSocket, data: dict, session_id: str
     try:
         async with _session_history_lock:
             history = _session_history.get(session_id, [])[-_MAX_HISTORY:]
-        chat_res = await _handle_chat_request(
-            user_message=user_message,
-            user_name=user_name,
-            history=history,
-            session_id=session_id,
-            origin="Human",
+        chat_res = await asyncio.wait_for(
+            _handle_chat_request(
+                user_message=user_message,
+                user_name=user_name,
+                history=history,
+                session_id=session_id,
+                origin="Human",
+            ),
+            timeout=90,
         )
         # Store both user message and assistant response in history
         async with _session_history_lock:
@@ -593,6 +596,12 @@ async def websocket_handler(websocket: WebSocket) -> str:
     if result is None:
         return
     client_id, session_id = result
+    # Map ws -> client_id for send_personal_message. The handshake used
+    # SessionManager.register directly, which does NOT populate this map
+    # (only WebSocketManager.register does) — without it every
+    # send_personal_message silently returned False and desktop WS chat
+    # never received answers.
+    manager._sessions_by_ws[id(websocket)] = client_id
 
     while True:
         try:
