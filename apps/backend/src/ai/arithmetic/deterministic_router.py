@@ -36,8 +36,8 @@ def try_math(text: str) -> Optional[str]:
         result = evaluate_math(text.rstrip("? ").rstrip("=").rstrip(" "))
         if result is not None:
             return result
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("evaluate_math failed: %s", _e)
     try:
         from ai.arithmetic.gate_router import try_logic_gate
 

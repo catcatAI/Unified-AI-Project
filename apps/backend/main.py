@@ -17,6 +17,7 @@ Level 5 AGI 后端服务主程序 - 生产就绪版本
 
 import uvicorn
 import logging
+import os
 import sys
 import asyncio
 from pathlib import Path
@@ -243,10 +244,14 @@ def create_app() -> FastAPI:
         logger.error(f"Failed to initialize signed communication middleware: {e}")
         raise
 
-    # CORS配置
+    # CORS配置 — restricted by default; set ANGELA_CORS_ORIGINS to override
+    _cors = os.environ.get("ANGELA_CORS_ORIGINS", "http://localhost:*")
+    _origins = [o.strip() for o in _cors.split(",")] if "," in _cors else [_cors]
+    if "none" in _origins or "" in _origins:
+        _origins = []
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

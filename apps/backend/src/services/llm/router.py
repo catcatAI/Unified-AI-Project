@@ -1053,8 +1053,8 @@ class AngelaLLMService:
             try:
                 if self.semantic_qa.answer(text.rstrip("?？= ")) is not None:
                     return None
-            except Exception:
-                pass
+            except Exception as _e:
+                logger.debug("semantic_qa check failed: %s", _e)
         # pick best non-unified backend
         candidates = [
             bt for bt in self.backends
