@@ -371,7 +371,7 @@ def main():
     if isinstance(numeric_level, int):
         logging.getLogger().setLevel(numeric_level)
 
-    logger.info(f"🚀 启动Level 5 AGI后端服务...")
+    logger.info("🚀 启动Level 5 AGI后端服务...")
     logger.info(f"📋 配置: host={args.host} port={args.port} reload={args.reload}")
 
     app = create_app()
