@@ -1439,3 +1439,54 @@ class DynamicThresholdManager:
     def __repr__(self) -> str:
         return self.__str__()
 
+
+    def _collect_current_thresholds(self) -> Dict[str, Any]:
+        """Collect current threshold values for before/after comparison."""
+        result: Dict[str, Any] = {}
+        for name, config in self.thresholds.items():
+            result[name] = getattr(config, "current_value", 0.0)
+        for name, config in self.performance_thresholds.items():
+            result[name] = getattr(config, "current_value", 0.0)
+        return result
+
+    def _calculate_optimized_threshold(self, name: str, config: Any, system_state: Any) -> float:
+        """Calculate the optimized threshold for a named parameter."""
+        base = getattr(config, "base_value", getattr(config, "current_value", 0.5))
+        rate = getattr(config, "adaptation_rate", 0.1)
+        state_val = 0.5
+        if isinstance(system_state, dict):
+            axes = system_state.get("axes", {})
+            alpha = axes.get("alpha", {}).get("values", {})
+            state_val = float(alpha.get("energy", 0.5))
+        return max(0.0, min(1.0, base + rate * (state_val - 0.5)))
+
+    def _calculate_optimization_confidence(self) -> float:
+        """Return confidence score for the current optimization cycle."""
+        return 0.5
+
+    def _get_default_thresholds(self) -> Dict[str, Any]:
+        """Return default thresholds when optimization fails."""
+        thresholds: Dict[str, Any] = {}
+        for name, config in self.thresholds.items():
+            thresholds[name] = {
+                "name": name,
+                "value": getattr(config, "base_value", 0.5),
+                "is_critical": getattr(config, "is_critical", False),
+                "constraint_type": getattr(config, "constraint_type", ""),
+                "adaptation_rate": getattr(config, "adaptation_rate", 0.1),
+                "optimized": False,
+            }
+        return {
+            "timestamp": time.time(),
+            "thresholds": thresholds,
+            "optimization_source": "default",
+            "confidence": 0.0,
+        }
+
+    def _calculate_adaptation_efficiency(self) -> float:
+        """Return adaptation efficiency metric."""
+        return 0.5
+
+    def _calculate_optimization_effectiveness(self) -> float:
+        """Return optimization effectiveness metric."""
+        return 0.5

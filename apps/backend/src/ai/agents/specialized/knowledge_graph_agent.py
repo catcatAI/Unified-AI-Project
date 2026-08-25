@@ -71,7 +71,7 @@ class KnowledgeGraphAgent:
             result_payload["status"] = "success"
             result_payload["payload"] = {"relationships": result}
         elif cap_name == "graph_query":
-            result = self._query_knowledge_graph(params.get("query", ""))
+            result = self.query_graph(params.get("query", ""))
             result_payload["status"] = "success"
             result_payload["payload"] = {"result": result}
         else:
