@@ -23,6 +23,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import threading
 from typing import Any, Dict, List, Optional, Tuple
 
 from ai.arithmetic.deterministic_router import try_logic as _det_try_logic
@@ -49,6 +50,7 @@ class UnifiedEngine:
         self._last_confidence = 0.0
         self._last_route = ""
         self._frozen = False
+        self._process_lock = threading.Lock()
         self.semantic_qa: Optional[SemanticQA] = None
         # Multi-turn context: last few user questions + our answers, for
         # pronoun resolution ("it", "他") and topic continuation.
@@ -283,6 +285,13 @@ class UnifiedEngine:
     # Public process
     # ------------------------------------------------------------------
     def process(self, text: str, context: Optional[Dict[str, Any]] = None) -> str:
+        # Serialize concurrent calls: _last_route/_last_confidence are instance
+        # state read immediately after this call by the provider. Without the
+        # lock, concurrent requests would race and read each other's metadata.
+        with self._process_lock:
+            return self._process_inner(text, context)
+
+    def _process_inner(self, text: str, context: Optional[Dict[str, Any]] = None) -> str:
         # 0. Reflex / presets (greetings, canned replies) — single source.
         r = self._try_reflex(text)
         if r is not None:
