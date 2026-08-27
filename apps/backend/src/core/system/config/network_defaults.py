@@ -19,6 +19,59 @@ OPENAI_API_BASE: str = "https://api.openai.com/v1"
 ANTHROPIC_API_BASE: str = "https://api.anthropic.com/v1"
 GOOGLE_API_BASE: str = "https://generativelanguage.googleapis.com/v1beta"
 
+# Server bind address/port (ANGELA_SERVER_HOST / ANGELA_SERVER_PORT override).
+# Single source of truth for every uvicorn.run() entry point so CLI, REPL and
+# __main__ can never drift apart.
+SERVER_BIND_HOST: str = "0.0.0.0"
+SERVER_PORT: int = 8000
+
+# Loopback hosts trusted for security-sensitive local-only endpoints.
+# Configurable because behind a reverse proxy the client host may be a
+# trusted proxy IP instead of a literal loopback address.
+LOCAL_TRUSTED_HOSTS: tuple = ("127.0.0.1", "::1", "localhost")
+
+# Internal agent-router port (agent_manager). Previously hardcoded twice in
+# two different spots which could drift apart; defined once here.
+AGENT_ROUTER_PORT: int = 11435
+
+# CORS allowed origins (ANGELA_CORS_ORIGINS env overrides).
+# Comma-separated list, e.g. "https://app.example.com,https://admin.example.com".
+# Default "*" is permissive for local dev but MUST be restricted in production.
+# When allow_credentials=True, browsers reject wildcard "*", so explicit origins
+# are required in that mode.
+DEFAULT_CORS_ORIGINS: list = ["*"]
+
+
+def get_cors_origins() -> list:
+    """Resolve CORS allowed origins.
+
+    Priority: ANGELA_CORS_ORIGINS env (comma-separated) > DEFAULT_CORS_ORIGINS.
+    Strips whitespace and drops empty entries.
+    """
+    import os
+
+    raw = os.getenv("ANGELA_CORS_ORIGINS", "")
+    if raw.strip():
+        origins = [o.strip() for o in raw.split(",") if o.strip()]
+        if origins:
+            return origins
+    return DEFAULT_CORS_ORIGINS
+
+
+def get_server_bind() -> tuple:
+    """Resolve (host, port) for server entry points.
+
+    Priority: ANGELA_SERVER_HOST / ANGELA_SERVER_PORT env > defaults above.
+    """
+    import os
+
+    host = os.getenv("ANGELA_SERVER_HOST", SERVER_BIND_HOST)
+    try:
+        port = int(os.getenv("ANGELA_SERVER_PORT", str(SERVER_PORT)))
+    except ValueError:
+        port = SERVER_PORT
+    return host, port
+
 # ED3N runs in-process; no external host needed
 ED3N_HOST: str = "http://127.0.0.1:0"
 DEFAULT_ED3N_MODEL: str = "ed3n-v1"
@@ -54,6 +107,13 @@ BACKEND_PRIORITY: Dict[str, int] = {
 
 __all__ = [
     "DEFAULT_HOST",
+    "SERVER_BIND_HOST",
+    "SERVER_PORT",
+    "LOCAL_TRUSTED_HOSTS",
+    "AGENT_ROUTER_PORT",
+    "get_server_bind",
+    "DEFAULT_CORS_ORIGINS",
+    "get_cors_origins",
     "COMFYUI_PORT",
     "COMFYUI_URL",
     "OLLAMA_HOST",

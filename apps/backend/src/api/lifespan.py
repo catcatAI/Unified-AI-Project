@@ -212,10 +212,19 @@ def setup_middleware(app: FastAPI) -> None:
     """Configure application middleware."""
     from core.api.versioning import APIVersionMiddleware
 
+    try:
+        from core.system.config.network_defaults import get_cors_origins
+
+        _origins = get_cors_origins()
+    except Exception:
+        _origins = ["*"]
+    # Browsers reject wildcard with credentials; fall back to no-credentials
+    # when wildcard is in use so the header is spec-compliant.
+    _allow_credentials = "*" not in _origins
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
+        allow_origins=_origins,
+        allow_credentials=_allow_credentials,
         allow_methods=["*"],
         allow_headers=["*"],
     )

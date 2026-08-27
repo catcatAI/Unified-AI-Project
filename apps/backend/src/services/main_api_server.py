@@ -97,19 +97,18 @@ from api.router import router as api_v1_router  # noqa: E402
 from fastapi import FastAPI  # noqa: E402
 # get_llm_service is imported lazily by ChatService during lifespan startup
 
+from api.lifespan import lifespan  # noqa: E402
+
 app = FastAPI(
     title="Angela AI API",
     description="Backend API for Angela AI Desktop Companion",
     version="7.5.0-dev",
+    lifespan=lifespan,
 )
 
-from api.lifespan import (  # noqa: E402
-    lifespan,
-    setup_middleware,
-)
+from api.lifespan import setup_middleware  # noqa: E402
 
 setup_middleware(app)
-app.router.lifespan_context = lifespan
 
 
 from services.websocket_manager import websocket_handler
@@ -148,4 +147,7 @@ if __name__ == "__main__":
     else:
         import uvicorn
 
-        uvicorn.run(app, host="0.0.0.0", port=8000)
+        from core.system.config.network_defaults import get_server_bind
+
+        bind_host, bind_port = get_server_bind()
+        uvicorn.run(app, host=bind_host, port=bind_port)
