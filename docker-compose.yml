@@ -15,7 +15,7 @@ services:
       - "8000:8000"
     environment:
       - APP_ENV=production
-      - DATABASE_URL=postgresql://angela:angela@postgres:5432/angela
+      - DATABASE_URL=postgresql://angela:${POSTGRES_PASSWORD:-angela}@postgres:5432/angela
       - REDIS_URL=redis://redis:6379/0
       - PROMETHEUS_ENABLED=true
     volumes:
@@ -92,7 +92,8 @@ services:
       - '--storage.tsdb.retention.time=200h'
       - '--web.enable-lifecycle'
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - angela-network
     restart: unless-stopped

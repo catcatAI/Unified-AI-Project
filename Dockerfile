@@ -16,12 +16,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy dependency files first (for caching)
 COPY apps/backend/pyproject.toml ./
 COPY apps/backend/src ./src
+COPY configs ./configs
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --prefix=/install .[standard]
 
 # Stage 2: Production stage
 FROM python:3.11-slim as production
+
+# Install curl for HEALTHCHECK (builder curl not copied to production)
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
 RUN groupadd -r angela && useradd -r -g angela -d /app -s /sbin/nologin angela
@@ -34,6 +39,7 @@ COPY --from=builder /install /usr/local
 # Copy application code
 COPY apps/backend/src ./src
 COPY apps/backend/pyproject.toml ./
+COPY configs ./configs
 
 # Create necessary directories
 RUN mkdir -p /app/logs /app/data /app/configs && \
