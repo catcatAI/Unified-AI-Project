@@ -167,16 +167,22 @@ class TestImageGeneralisation:
 
 
 class TestAudioGeneralisation:
+    # 0.4s clips are ~6.4KB of high-entropy PCM: learn_bytes costs ~0.4s per
+    # clip, so 300 learns + byte-wise perplexity scans exceeded any sane
+    # timeout (>60s hang, pre-existing). 0.06s clips keep the same frequency
+    # generalisation property at ~1/8 the data.
+    CLIP_DUR = 0.06
+
     def test_unseen_frequency_has_lower_probability(self):
         """Learned 440+880Hz: unseen 220Hz must be less probable."""
         core = FixedSizeCore()
         for _ in range(150):
-            core.learn_bytes(_wav_bytes(440))
+            core.learn_bytes(_wav_bytes(440, dur=self.CLIP_DUR))
         for _ in range(150):
-            core.learn_bytes(_wav_bytes(880))
-        p_440 = _perplexity(core, _wav_bytes(440))
-        p_880 = _perplexity(core, _wav_bytes(880))
-        p_220 = _perplexity(core, _wav_bytes(220))
+            core.learn_bytes(_wav_bytes(880, dur=self.CLIP_DUR))
+        p_440 = _perplexity(core, _wav_bytes(440, dur=self.CLIP_DUR))
+        p_880 = _perplexity(core, _wav_bytes(880, dur=self.CLIP_DUR))
+        p_220 = _perplexity(core, _wav_bytes(220, dur=self.CLIP_DUR))
         assert p_220 > p_440 * 1.5
         assert p_220 > p_880 * 1.5
 

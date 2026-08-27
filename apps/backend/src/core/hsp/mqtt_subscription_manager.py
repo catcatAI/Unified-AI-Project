@@ -172,7 +172,11 @@ class MQTTSubscriptionManager:
                     f"[MQTTSubManager] Subscribe attempt {attempt + 1} failed: {e}", exc_info=True
                 )
                 if attempt < retry - 1:
-                    await asyncio.sleep(1 * (attempt + 1))  # 指数退避
+                    # Config-driven linear backoff (was a bare `1 * (attempt+1)`).
+                    from core.system.config.magic_numbers import timing_value
+
+                    backoff_step = timing_value("hsp.mqtt.subscribe_backoff_step", 1.0)
+                    await asyncio.sleep(backoff_step * (attempt + 1))
 
         logger.error(
             f"[MQTTSubManager] Subscribe failed after {retry} attempts: {last_error}"

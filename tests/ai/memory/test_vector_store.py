@@ -66,7 +66,11 @@ class TestNumpyBackendCRUD:
     @pytest.mark.asyncio
     async def test_persist_numpy(self, backend):
         await backend.add_memory("id1", "hello world")
-        assert backend._dirty is False  # auto-saved
+        # Debounced durability: inside the save window the write is pending…
+        assert backend._dirty is True
+        # …and persist() forces it to disk.
+        backend.persist()
+        assert backend._dirty is False
 
     @pytest.mark.asyncio
     async def test_persist_and_reload(self):
@@ -74,12 +78,41 @@ class TestNumpyBackendCRUD:
             b1 = _NumpyBackend(tmpdir)
             await b1.add_memory("id1", "hello world", {"k": "v"})
             await b1.add_memory("id2", "goodbye world")
+            b1.persist()
             del b1
 
             b2 = _NumpyBackend(tmpdir)
             assert len(b2) == 2
             results = await b2.semantic_search("hello", limit=5)
             assert len(results["ids"][0]) == 2
+
+    @pytest.mark.asyncio
+    async def test_embed_stable_across_instances(self):
+        """Embeddings must be deterministic across processes (no salted hash).
+
+        Built-in hash() is salted per process via PYTHONHASHSEED, which made
+        persisted vectors incompatible with query vectors after a restart.
+        """
+        import subprocess
+        import sys as _sys
+        import os as _os
+
+        code = (
+            "import sys; sys.path.insert(0, 'apps/backend/src'); "
+            "from ai.memory.vector_store import _NumpyBackend; "
+            "v = _NumpyBackend._embed('quantum entanglement'); "
+            "print(int(v.nonzero()[0].sum()))"
+        )
+        outs = set()
+        for seed in ("1", "777"):
+            r = subprocess.run(
+                [_sys.executable, "-c", code],
+                capture_output=True,
+                text=True,
+                env={**_os.environ, "PYTHONHASHSEED": seed},
+            )
+            outs.add(r.stdout.strip())
+        assert len(outs) == 1 and "" not in outs
 
 
 # =============================================================================

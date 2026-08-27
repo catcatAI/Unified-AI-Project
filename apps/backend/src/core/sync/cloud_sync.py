@@ -115,11 +115,17 @@ class SyncProgress:
 
 @dataclass
 class CloudSyncConfig:
-    """云同步配置 / Cloud sync configuration"""
+    """云同步配置 / Cloud sync configuration
 
-    server_url: str = "https://cloud.angela.ai"
+    ``server_url`` defaults to empty: no cloud backend ships with the
+    project, so sync stays disabled until a real endpoint is configured.
+    (The previous default pointed at a non-existent placeholder domain,
+    which caused guaranteed connection failures when sync was enabled.)
+    """
+
+    server_url: str = ""
     api_key: str = ""
-    auto_sync: bool = True
+    auto_sync: bool = False
     sync_interval: int = 300
     conflict_resolution: ConflictResolution = ConflictResolution.LATEST_WINS
     max_retries: int = 3
@@ -127,6 +133,11 @@ class CloudSyncConfig:
     use_compression: bool = True
     use_encryption: bool = True
     offline_first: bool = True
+
+    @property
+    def is_configured(self) -> bool:
+        """True when a real cloud endpoint has been configured."""
+        return bool(self.server_url.strip())
 
 
 class SyncQueue:

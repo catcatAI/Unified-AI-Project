@@ -26,6 +26,17 @@ def mock_dependencies():
     mock_ham = MagicMock()
     mock_ham.store_conversation = MagicMock()
 
+    # The drive endpoint resolves HAM via the cached backbone singleton, so a
+    # HAMMemoryManager created by an earlier test would shadow this test's
+    # patch (store_conversation counts land on the stale instance). Unregister
+    # it so each test builds a fresh manager under its own patch.
+    try:
+        from core.backbone import get_backbone
+
+        get_backbone().memories.unregister("ham")
+    except Exception:
+        pass
+
     with patch("ai.memory.ham_memory.ham_manager.HAMMemoryManager", return_value=mock_ham), \
          patch(f"{drive_module}.DriveDeduplication") as MockDriveDeduplication, \
          patch(f"{drive_module}.DocumentParser") as MockDocumentParser:

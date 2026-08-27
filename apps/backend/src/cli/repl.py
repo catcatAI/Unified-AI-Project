@@ -22,9 +22,12 @@ logger = logging.getLogger(__name__)
 
 def run_repl_mode() -> None:
     """Execute the run repl mode operation."""
+    from core.system.config.network_defaults import DEFAULT_HOST, get_server_bind
+
+    bind_host, bind_port = get_server_bind()
     server_thread = threading.Thread(target=_run_uvicorn_in_thread, daemon=True)
     server_thread.start()
-    print("[REPL] Backend starting on http://127.0.0.1:8000 ...")
+    print(f"[REPL] Backend starting on http://{DEFAULT_HOST}:{bind_port} ...")
     time.sleep(_cfg_get("cli.repl.startup_delay", 3.0))
     asyncio.run(_run_repl())
 
@@ -32,9 +35,12 @@ def run_repl_mode() -> None:
 def _run_uvicorn_in_thread() -> None:
     """Run uvicorn in thread."""
     import uvicorn
+
+    from core.system.config.network_defaults import get_server_bind
     from services.main_api_server import app
 
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning")
+    bind_host, bind_port = get_server_bind()
+    uvicorn.run(app, host=bind_host, port=bind_port, log_level="warning")
 
 
 async def _run_repl() -> None:
@@ -473,7 +479,12 @@ _DRIVE_HELP = (
 def _handle_drive_command(args: str) -> str:
     """Handle drive command request."""
     import httpx
+
     from core.config_loader import get_angela_config
+    from core.system.config.network_defaults import (
+        DEFAULT_HOST,
+        get_server_bind,
+    )
 
     parts = args.strip().split(maxsplit=1)
     subcmd = parts[0].lower() if parts else "status"
@@ -487,7 +498,10 @@ def _handle_drive_command(args: str) -> str:
     if handler is None:
         return _DRIVE_HELP
 
-    base = os.getenv("ANGELA_DRIVE_API_URL", "http://127.0.0.1:8000/api/v1/drive")
+    base = os.getenv(
+        "ANGELA_DRIVE_API_URL",
+        f"http://{DEFAULT_HOST}:{get_server_bind()[1]}/api/v1/drive",
+    )
     try:
         return handler(subarg, base)
     except httpx.ConnectError:

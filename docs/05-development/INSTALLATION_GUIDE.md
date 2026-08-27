@@ -58,15 +58,45 @@ python scripts/run_angela.py
 git clone https://github.com/catcatAI/Unified-AI-Project.git
 cd Unified-AI-Project
 
-# 2. 安装依赖
-pip install -r requirements.txt --user
+# 2. 创建虚拟环境（推荐，避免污染系统 Python）
+python3 -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
 
-# 3. 一键初始化（硬件检测 → 下载数据集 → 训练模型 → 验证；--skip-download / --skip-training 可跳过）
+# 3. 安装依赖（分层，按需选择）
+pip install -e ./apps/backend                    # 轻量 BASE：可启动服务器 + 核心 AI（纯 numpy 后端）
+pip install -e "./apps/backend[standard]"        # 完整功能层（推荐用户）：+ torch/ml、向量库、STT 等
+pip install -e "./apps/backend[dev]"             # 贡献者：standard + pytest/lint/typecheck 工具链
+# 或者等价的一键方式：
+# pip install -r requirements.txt
+
+# 4. 一键初始化（硬件检测 → 下载数据集 → 训练模型 → 验证；--skip-download / --skip-training 可跳过）
 python setup.py
 
-# 4. 启动
+# 5. 启动
 python scripts/run_angela.py
 ```
+
+#### 功能组 extras 一览（`pip install -e "./apps/backend[<组名>]"`）
+
+| 组名 | 内容 | 适用场景 |
+|------|------|----------|
+| `ml` | torch / transformers / sentence-transformers | 神经嵌入、SNN torch 后端 |
+| `vector` | chromadb | 持久化向量库（无则回退 numpy+JSON） |
+| `data` | pandas / scikit-learn / textblob | 表格分析、情感分析 |
+| `media` | pyautogui / pytesseract / pywebview | 屏幕控制、OCR、桌面窗口 |
+| `audio` | SpeechRecognition / faster-whisper | 语音识别 STT |
+| `gpu` | pynvml | NVIDIA GPU 遥测 |
+| `cache` | redis | Redis 缓存后端 |
+| `google` | Google API 客户端套件 | Drive / Gmail 集成 |
+| `docs` | beautifulsoup4 / python-docx / openpyxl | 文档处理 |
+| `tracing` | OpenTelemetry | 分布式追踪（可选观测性） |
+| `browser` | playwright | 无头浏览器自动化（需再执行 `playwright install`） |
+
+> 💡 **低内存设备提示**：torch 默认从 PyPI 安装的是捆绑 CUDA 的版本（约 2GB+）。若无需 GPU 或内存有限，建议先装 CPU 版：
+> ```bash
+> pip install torch --index-url https://download.pytorch.org/whl/cpu
+> pip install -e "./apps/backend[ml]"
+> ```
 
 ---
 

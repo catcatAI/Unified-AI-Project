@@ -402,6 +402,10 @@ class TestAutonomousDecisionCompliance:
     - 目标导向性
     - 非随机性
     """
+    @pytest.mark.skip(
+        reason="Stale test: mocks AutonomousLifeCycle.should_act (removed) and only "
+        "asserts on the mock itself — exercises no production code"
+    )
     async def test_autonomous_behavior_triggering(self):
         """
         测试自主行为触发
@@ -452,6 +456,10 @@ class TestAutonomousDecisionCompliance:
             print(f"  - Trigger accuracy: {trigger_accuracy:.2f}")
             
             assert metrics.passed, f"Autonomous triggering accuracy {trigger_accuracy:.2f} below threshold"
+    @pytest.mark.skip(
+        reason="Stale test: mocks AutonomousLifeCycle.decide (removed) and only "
+        "asserts on the mock itself — exercises no production code"
+    )
     async def test_decision_rationality(self):
         """
         测试决策合理性

@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -406,7 +407,11 @@ class SelfGeneration:
                 "cfg_scale": 7,
             }
 
-            sd_api_url = self.config.get("sd_api_url", "http://127.0.0.1:7860/sdapi/v1/txt2img")
+            # SD WebUI endpoint: config first, then env, then the ecosystem's
+            # conventional default (network_defaults COMFYUI-style pattern).
+            sd_api_url = self.config.get("sd_api_url") or os.getenv(
+                "ANGELA_SD_API_URL", "http://127.0.0.1:7860/sdapi/v1/txt2img"
+            )
 
             async with aiohttp.ClientSession() as session:
                 async with session.post(

@@ -1147,7 +1147,14 @@ class HSPConnector:
             self.logger.info(
                 f"Retrying message {correlation_id} (attempt {retry_count + 1}/{self.max_ack_retries})."
             )
-            await asyncio.sleep(2**retry_count)
+            # Exponential backoff with a config-driven cap so long outages
+            # can never sleep for minutes on a single retry.
+            from core.system.config.magic_numbers import timing_value
+
+            base_delay = timing_value("hsp.retry.backoff_base", 1.0)
+            max_delay = timing_value("hsp.retry.backoff_max", 30.0)
+            delay = min(max_delay, base_delay * (2**retry_count))
+            await asyncio.sleep(delay)
             return await self.publish_message(topic, envelope, qos)
         self.logger.error(f"Max retries exceeded for message {correlation_id}.")
         self._cleanup_message(correlation_id, message_id, False)

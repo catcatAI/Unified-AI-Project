@@ -435,7 +435,7 @@ class TestTickleReflexSystem:
         """持續刺激時 γ軸 被入侵（恐懼+）"""
         import asyncio
 
-        from core.autonomous.state_matrix import StateMatrix4D
+        from core.engine.state_matrix import StateMatrix4D
         from core.life.tickle_reflex_system import get_reflex_system
 
         reflex = get_reflex_system()
@@ -458,7 +458,7 @@ class TestTickleReflexSystem:
         """敏感部位觸發時 γ軸 被入侵"""
         import asyncio
 
-        from core.autonomous.state_matrix import StateMatrix4D
+        from core.engine.state_matrix import StateMatrix4D
         from core.life.tickle_reflex_system import get_reflex_system
 
         reflex = get_reflex_system()

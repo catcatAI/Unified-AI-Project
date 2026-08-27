@@ -766,6 +766,8 @@ class TestScenarioAutonomousBehavior:
             'feedback_collector': Mock(),
             'learning_system': Mock(),
         }
+
+    @pytest.mark.skip(reason="Stale test: mocks AutonomousLifeCycle.evaluate_state (removed); asserts on the mock itself")
     async def test_scenario_state_evaluation(self, autonomous_setup):
         """
         步骤1：内在状态评估
@@ -805,6 +807,7 @@ class TestScenarioAutonomousBehavior:
         
         metrics.complete(success=True)
         return metrics
+    @pytest.mark.skip(reason="Stale test: mocks AutonomousLifeCycle.decide_behavior (removed); asserts on the mock itself")
     async def test_scenario_behavior_decision(self, autonomous_setup):
         """
         步骤2：行为决策
@@ -979,6 +982,7 @@ class TestScenarioAutonomousBehavior:
         
         metrics.complete(success=True)
         return metrics
+    @pytest.mark.skip(reason="Stale test: orchestrates AutonomousLifeCycle mock steps for removed APIs")
     async def test_complete_autonomous_scenario(self, autonomous_setup):
         """
         完整场景测试：自主行为触发
@@ -1177,6 +1181,7 @@ class TestScenarioFileOrganization:
         
         metrics.complete(success=True)
         return metrics
+    @pytest.mark.skip(reason="Stale test: tools.file_system_tool.FileSystemTool module removed")
     async def test_scenario_file_operation_execution(self, file_org_setup):
         """
         步骤3：文件操作执行
@@ -1314,6 +1319,7 @@ class TestScenarioFileOrganization:
         
         metrics.complete(success=True)
         return metrics
+    @pytest.mark.skip(reason="Stale test: tools.file_system_tool.FileSystemTool module removed")
     async def test_complete_file_organization_scenario(self, file_org_setup):
         """
         完整场景测试：文件整理请求

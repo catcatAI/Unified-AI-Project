@@ -923,6 +923,7 @@ class TestLongRunningStability:
         print(f"  - Errors: {len(errors)} ({error_rate:.3f}%)")
         print(f"  - Avg latency: {avg_latency:.2f}ms")
         print(f"  ✓ System stable over time")
+    @pytest.mark.skip(reason="Stale mock-only test: patches non-existent perception/cognitive engines and measures mock-call latency")
     async def test_recovery_from_stress(self):
         """
         压力后恢复测试

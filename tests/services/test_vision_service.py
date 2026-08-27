@@ -23,9 +23,18 @@ _MOCK_MODULES = {
     'system.cluster_manager': MagicMock(),
     'integrations.os_bridge_adapter': MagicMock(),
 }
+# Only inject a mock when the REAL module cannot be imported. A blind
+# sys.modules[name] = mock here permanently shadowed real modules for every
+# later test in the same process (smoke instantiate tests then received a
+# MagicMock where a class was expected).
+import importlib
+
 for name, mock in _MOCK_MODULES.items():
     if name not in sys.modules:
-        sys.modules[name] = mock
+        try:
+            importlib.import_module(name)
+        except Exception:
+            sys.modules[name] = mock
 
 
 @pytest.fixture

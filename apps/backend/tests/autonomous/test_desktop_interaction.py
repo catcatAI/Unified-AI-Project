@@ -438,20 +438,25 @@ class TestDesktopInteraction:
 class TestCrossPlatformCompatibility:
     """Tests for cross-platform compatibility using mocks."""
     @patch("platform.system")
-    @patch("ctypes.windll.user32.SystemParametersInfoW")
-    async def test_set_wallpaper_windows(self, mock_spi, mock_platform, temp_desktop_dir: Path) -> None:
+    async def test_set_wallpaper_windows(self, mock_platform, temp_desktop_dir: Path) -> None:
         """Test wallpaper setting on Windows (mocked)."""
+        # NOTE: ctypes.windll cannot be referenced via @patch on non-Windows
+        # (decorator resolves the target at collection time), so the SPI
+        # patch is applied inline and only reached on Windows.
+        if sys.platform != "win32":
+            pytest.skip("Windows-only test (ctypes.windll unavailable elsewhere)")
         mock_platform.return_value = "Windows"
-        mock_spi.return_value = True
-        
+
         desktop = DesktopInteraction(config={"desktop_path": str(temp_desktop_dir)})
-        
+
         # Create fake wallpaper file
         wallpaper = temp_desktop_dir / "test_wallpaper.jpg"
         wallpaper.write_bytes(b"fake image data")
-        
-        result = await desktop.set_wallpaper(wallpaper)
-        
+
+        with patch("ctypes.windll.user32.SystemParametersInfoW") as mock_spi:
+            mock_spi.return_value = True
+            result = await desktop.set_wallpaper(wallpaper)
+
         assert result is True
         mock_spi.assert_called_once()
     @patch("platform.system")
