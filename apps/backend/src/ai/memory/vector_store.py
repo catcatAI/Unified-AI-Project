@@ -10,13 +10,18 @@ Handles vector storage and retrieval with automatic backend selection:
 # =============================================================================
 
 import asyncio
+import atexit
 import importlib
 import json
 import logging
 import os
+import time
+import zlib
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
+
+from core.system.config.magic_numbers import cache_value, timing_value
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +32,13 @@ _DEFAULT_PERSIST_DIR = os.path.join(os.environ.get("VECTOR_STORE_PATH", "data/ve
 
 # Embedding dimension for numpy backend (hashing trick)
 _NUMPY_EMBED_DIM = 512
+
+# Bump when _embed() changes: persisted vectors computed with a different
+# embedding are incompatible (similarity would be garbage) and are discarded
+# on load instead of silently poisoning retrieval.
+# v2: crc32 stable hashing (was salted hash()).
+# v3: added word-level unigram signal (weight 2.0) on top of char bigrams.
+_EMBED_VERSION = 3
 
 # =============================================================================
 # Lazy chromadb import (60s timeout, existing behavior)
@@ -60,25 +72,72 @@ class _NumpyBackend:
         self.documents: List[str] = []
         self.metadatas: List[Dict[str, Any]] = []
         self._dirty = False
+        # Amortized-O(1) inserts: new vectors queue in a small buffer and are
+        # compacted into the matrix in bulk (was: full np.vstack per insert).
+        self._pending_vecs: List[np.ndarray] = []
+        self._flush_interval = max(1, cache_value("vector_store.flush_interval", 32))
+        # Debounced durability: add_memory marks dirty and only hits disk when
+        # the debounce window has elapsed; persist() always forces a save.
+        self._save_debounce = timing_value("vector_store.save_debounce", 30.0)
+        self._last_save_ts = time.time()
+        # Durability backstop: no production code calls persist() on a
+        # schedule, so without this a clean exit inside the debounce window
+        # would silently drop recently learned memories.
+        self._atexit_registered = False
         os.makedirs(persist_dir, exist_ok=True)
         self._load()
+        self._register_atexit()
+
+    def _register_atexit(self) -> None:
+        if self._atexit_registered:
+            return
+        atexit.register(self._atexit_save)
+        self._atexit_registered = True
+
+    def _atexit_save(self) -> None:
+        try:
+            if self._dirty and os.path.isdir(self.persist_dir):
+                self._save()
+        except Exception as e:  # pragma: no cover - best-effort on shutdown
+            logger.warning("Vector store atexit save failed: %s", e)
 
     # ------------------------------------------------------------------
-    # Embedding: character bigram hashing trick
+    # Embedding: character bigram hashing trick (STABLE across processes)
     # ------------------------------------------------------------------
 
     @staticmethod
     def _embed(text: str) -> np.ndarray:
         text = text.lower().strip()
         vec = np.zeros(_NUMPY_EMBED_DIM, dtype=np.float32)
-        if len(text) < 2:
+        if not text:
             return vec
-        seen = set()
+        seen_bg = set()
+        # Word-level unigrams first: char bigrams smear across Latin word
+        # boundaries ("quantum" ↔ "antum"), exact-word hits restore that
+        # signal at negligible cost. CJK has no whitespace words, so this
+        # only fires on Latin/digit runs.
+        import re as _re
+
+        seen_word = set()
+        for w in _re.split(r"[^a-z0-9]+", text):
+            if len(w) >= 2 and w not in seen_word:
+                seen_word.add(w)
+                idx = zlib.crc32(("w:" + w).encode("utf-8")) % _NUMPY_EMBED_DIM
+                vec[idx] += 2.0
+        if len(text) < 2:
+            norm = np.linalg.norm(vec)
+            if norm > 0:
+                vec /= norm
+            return vec
         for i in range(len(text) - 1):
             bg = text[i : i + 2]
-            if bg not in seen:
-                seen.add(bg)
-                idx = hash(bg) % _NUMPY_EMBED_DIM
+            if bg not in seen_bg:
+                seen_bg.add(bg)
+                # zlib.crc32 is deterministic across processes. Built-in
+                # hash() is salted per process (PYTHONHASHSEED), which made
+                # persisted vectors permanently incompatible with query
+                # embeddings after every restart.
+                idx = zlib.crc32(bg.encode("utf-8")) % _NUMPY_EMBED_DIM
                 vec[idx] += 1.0
         norm = np.linalg.norm(vec)
         if norm > 0:
@@ -89,24 +148,39 @@ class _NumpyBackend:
     # Public API
     # ------------------------------------------------------------------
 
+    def _flush_pending(self) -> None:
+        """Compact queued rows into the vector matrix in one operation."""
+        if not self._pending_vecs:
+            return
+        new_vecs = np.stack(self._pending_vecs)
+        self._pending_vecs.clear()
+        base = self.vectors.shape[0]
+        grown = np.zeros((base + new_vecs.shape[0], _NUMPY_EMBED_DIM), dtype=np.float32)
+        grown[:base] = self.vectors
+        grown[base:] = new_vecs
+        self.vectors = grown
+
     async def add_memory(
         self,
         memory_id: str,
         content: str,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> None:
-        vec = self._embed(content)
-        self.vectors = np.vstack([self.vectors, vec.reshape(1, -1)])
+        self._pending_vecs.append(self._embed(content))
+        if len(self._pending_vecs) >= self._flush_interval:
+            self._flush_pending()
         self.ids.append(memory_id)
         self.documents.append(content)
         self.metadatas.append(metadata or {})
         if len(self.ids) > 10000:
+            self._flush_pending()
             self.ids.pop(0)
             self.documents.pop(0)
             self.metadatas.pop(0)
             self.vectors = self.vectors[1:]
         self._dirty = True
-        if self._dirty:
+        now = time.time()
+        if now - self._last_save_ts >= self._save_debounce:
             self._save()
 
     def bulk_add_memories(
@@ -127,12 +201,15 @@ class _NumpyBackend:
             self.ids.append(mid)
             self.documents.append(content)
             self.metadatas.append(meta or {})
-        self.vectors = (
-            np.vstack([self.vectors, new_vecs]) if self.vectors.shape[0] > 0 else new_vecs
-        )
+        base = self.vectors.shape[0]
+        grown = np.zeros((base + n, _NUMPY_EMBED_DIM), dtype=np.float32)
+        grown[:base] = self.vectors
+        grown[base:] = new_vecs
+        self.vectors = grown
         self._dirty = True
 
     async def semantic_search(self, query: str, limit: int = 10) -> Dict[str, Any]:
+        self._flush_pending()
         if len(self.ids) == 0:
             return {}
         qvec = self._embed(query)
@@ -160,11 +237,13 @@ class _NumpyBackend:
             self._save()
 
     def _save(self) -> None:
+        self._flush_pending()
         np.save(os.path.join(self.persist_dir, "vectors.npy"), self.vectors)
         meta_path = os.path.join(self.persist_dir, "metadata.json")
         with open(meta_path, "w", encoding="utf-8") as f:
             json.dump(
                 {
+                    "embed_version": _EMBED_VERSION,
                     "ids": self.ids,
                     "documents": self.documents,
                     "metadatas": self.metadatas,
@@ -173,15 +252,29 @@ class _NumpyBackend:
                 ensure_ascii=False,
             )
         self._dirty = False
+        self._last_save_ts = time.time()
 
     def _load(self) -> None:
         vec_path = os.path.join(self.persist_dir, "vectors.npy")
         meta_path = os.path.join(self.persist_dir, "metadata.json")
         if os.path.exists(vec_path) and os.path.exists(meta_path):
             try:
-                self.vectors = np.load(vec_path)
                 with open(meta_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
+                stored_version = int(data.get("embed_version", 1))
+                if stored_version != _EMBED_VERSION:
+                    # Vectors from an incompatible embedding would match
+                    # queries only by accident — discard rather than poison
+                    # retrieval (pre-salt-fix stores are garbage anyway).
+                    logger.warning(
+                        "Vector store embed_version mismatch (stored=%d, current=%d) "
+                        "at %s; discarding stale vectors",
+                        stored_version,
+                        _EMBED_VERSION,
+                        self.persist_dir,
+                    )
+                    return
+                self.vectors = np.load(vec_path)
                 self.ids = data.get("ids", [])
                 self.documents = data.get("documents", [])
                 self.metadatas = data.get("metadatas", [])

@@ -26,6 +26,8 @@ import os
 import threading
 from typing import Any, Dict, List, Optional, Tuple
 
+import numpy as np
+
 from ai.arithmetic.deterministic_router import try_logic as _det_try_logic
 from ai.arithmetic.deterministic_router import try_math as _det_try_math
 from ai.core.unicode_utils import normalize_text
@@ -38,6 +40,10 @@ from core.system.config.magic_numbers import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _np_as_float32(arr) -> "np.ndarray":
+    return np.asarray(arr, dtype=np.float32)
 
 
 class UnifiedEngine:
@@ -369,20 +375,109 @@ class UnifiedEngine:
     # Persistence
     # ------------------------------------------------------------------
     def save(self, path: str) -> None:
-        os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-        state = {
-            "format": "unified/1",
-            "core": self.core.to_dict(),
+        """Persist engine state.
+
+        Format ``unified/2`` = npz: the four (65536, 256) float32 gram tables
+        are stored as raw ndarrays instead of JSON lists. Measured on a
+        2-example engine: JSON was 325 MB, 64 s to write and ~2.3 GB of
+        Python objects to parse back (list-of-lists ≈ 36 B/float vs 4 B in
+        binary) — enough to OOM-kill the process on load. npz keeps the
+        matrices at their native 256 MB total with zero parse inflation.
+        Legacy ``unified/1`` JSON files remain readable via load().
+        """
+        os.makedirs(os.path.dirname(os.path.abspath(path)) or ".", exist_ok=True)
+        meta = {
+            "format": "unified/2",
             "cap_bytes": self._cap_bytes,
             "frozen": self._frozen,
             "semantic_qa": self.semantic_qa.to_dict() if self.semantic_qa else None,
         }
-        with open(path, "w", encoding="utf-8") as fh:
-            json.dump(state, fh)
+        core_arrays = {
+            "core_pos": self.core._pos,
+            "core_trans": self.core._trans,
+            "core_gram": self.core._gram,
+            "core_gram3": self.core._gram3,
+            "core_gram5": self.core._gram5,
+            "core_uni": self.core._uni,
+            "core_feat": self.core._feat,
+            "core_feat_bool": self.core._feat_bool,
+        }
+        scalars = np.array(
+            [
+                self.core.max_seq,
+                self.core._true_total,
+                self.core._false_total,
+                self.core._samples_seen,
+                self.core._bytes_seen,
+            ],
+            dtype=np.float64,
+        )
+        try:
+            with open(path, "wb") as fh:
+                np.savez(
+                    fh,
+                    # <U… string array (NOT object dtype) so load() can use
+                    # allow_pickle=False.
+                    meta=np.array(json.dumps(meta)),
+                    scalars=scalars,
+                    **core_arrays,
+                )
+        except Exception as e:
+            logger.error("unified: npz save failed (%s); falling back to json", e)
+            state = {
+                "format": "unified/1",
+                "core": self.core.to_dict(),
+                "cap_bytes": self._cap_bytes,
+                "frozen": self._frozen,
+                "semantic_qa": self.semantic_qa.to_dict() if self.semantic_qa else None,
+            }
+            with open(path, "w", encoding="utf-8") as fh:
+                json.dump(state, fh)
 
     def load(self, path: str) -> bool:
         if not os.path.exists(path):
             return False
+        # unified/2 (npz) — sniff the zip magic before json parsing.
+        with open(path, "rb") as fh:
+            magic = fh.read(2)
+        if magic == b"PK":
+            return self._load_npz(path)
+        return self._load_json(path)
+
+    def _load_npz(self, path: str) -> bool:
+        try:
+            with np.load(path, allow_pickle=False) as data:
+                meta = json.loads(str(data["meta"]))
+                if meta.get("format") != "unified/2":
+                    logger.warning("unified: incompatible format %r", meta.get("format"))
+                    return False
+                sc = data["scalars"]
+                self.core._true_total = float(sc[1])
+                self.core._false_total = float(sc[2])
+                self.core._samples_seen = int(sc[3])
+                self.core._bytes_seen = int(sc[4])
+                self.core._pos = _np_as_float32(data["core_pos"])
+                self.core._trans = _np_as_float32(data["core_trans"])
+                self.core._gram = _np_as_float32(data["core_gram"])
+                self.core._gram3 = _np_as_float32(data["core_gram3"])
+                self.core._gram5 = _np_as_float32(data["core_gram5"])
+                self.core._uni = _np_as_float32(data["core_uni"])
+                self.core._feat = _np_as_float32(data["core_feat"])
+                self.core._feat_bool = _np_as_float32(data["core_feat_bool"])
+            self._cap_bytes = meta.get("cap_bytes", self._cap_bytes)
+            self._frozen = meta.get("frozen", False)
+            sq = meta.get("semantic_qa")
+            if sq:
+                if self.semantic_qa is None:
+                    self.semantic_qa = SemanticQA()
+                self.semantic_qa.load_dict(sq)
+            logger.info("unified: loaded npz state from %s", path)
+            return True
+        except Exception as e:
+            logger.warning("unified: npz load failed: %s", e, exc_info=True)
+            return False
+
+    def _load_json(self, path: str) -> bool:
         try:
             with open(path, "r", encoding="utf-8") as fh:
                 state = json.load(fh)

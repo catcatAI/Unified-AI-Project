@@ -23,6 +23,7 @@ import logging
 import os
 import re
 import string
+import threading
 from collections import deque
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -36,6 +37,7 @@ from core.system.config.magic_numbers import (
     learning_rate,
     limit_value,
     threshold_value,
+    timing_value,
 )
 from core.utils import any_keyword
 
@@ -658,6 +660,25 @@ class GARDENEngine:
         print(reply)
     """
 
+    # Process-wide shared instance (mirrors ED3NEngine.get_shared): the heavy
+    # sentence-transformers model is class-cached anyway, and a single engine
+    # lets learned associations accumulate across callers instead of being
+    # written into throwaway instances.
+    _shared_instance: Optional["GARDENEngine"] = None
+    _shared_lock = threading.Lock()
+
+    @classmethod
+    def get_shared(cls, load_presets: bool = True) -> "GARDENEngine":
+        """Return the process-wide shared engine (created on first use)."""
+        if cls._shared_instance is None:
+            with cls._shared_lock:
+                if cls._shared_instance is None:
+                    inst = cls()
+                    if load_presets:
+                        inst.load_presets()
+                    cls._shared_instance = inst
+        return cls._shared_instance
+
     def __init__(
         self,
         model_name: str = "paraphrase-multilingual-MiniLM-L12-v2",
@@ -1188,9 +1209,18 @@ class GARDENEngine:
             self._last_confidence = 0.0
             return self._fallback_str(text)
 
-        # Stage 6: Cycling — iterative refinement if response is weak
-        MAX_CYCLES = getattr(self, "max_cycles", 3)
-        MIN_RESPONSE_LEN = 5
+        # Stage 6: Cycling — iterative refinement if response is weak.
+        #
+        # NOTE (measured): snn.forward() only reads context["neural_state"];
+        # "previous_output"/"cycle" are IGNORED and the forward is
+        # deterministic, so every cycle replays an identical computation and
+        # can never improve the response. The loop therefore defaults OFF
+        # (ai.garden.engine.max_cycles=0) — re-enable only once forward()
+        # actually consumes the refinement context.
+        MAX_CYCLES = getattr(
+            self, "max_cycles", limit_value("ai.garden.engine.max_cycles", 0)
+        )
+        MIN_RESPONSE_LEN = limit_value("ai.garden.engine.min_response_len", 5)
         current_output = response
         cycles_used = 0
 
@@ -1212,10 +1242,22 @@ class GARDENEngine:
 
         # Compute confidence: key coverage × response quality × cycle penalty
         key_ratio = min(1.0, len(input_keys) / limit_value("ai.garden.engine.top_k", 8))
-        resp_quality = min(1.0, len(current_output) / 50.0)
-        cycle_penalty = 1.0 - (cycles_used * 0.1)
+        resp_quality = min(
+            1.0, len(current_output) / limit_value("ai.garden.engine.quality_ref_len", 50)
+        )
+        cycle_penalty_weight = confidence_value("ai.garden.engine.cycle_penalty_weight", 0.2)
+        key_ratio_weight = confidence_value("ai.garden.engine.key_ratio_weight", 0.5)
+        quality_weight = confidence_value("ai.garden.engine.quality_weight", 0.3)
+        base_confidence = limit_value("ai.garden.engine.confidence_base", 20) / 100.0
+        cycle_penalty = 1.0 - (cycles_used * timing_value("ai.garden.engine.cycle_penalty_step", 0.1))
         self._last_confidence = round(
-            max(0.0, key_ratio * 0.5 + resp_quality * 0.3 + 0.2 * cycle_penalty), 3
+            max(
+                0.0,
+                key_ratio * key_ratio_weight
+                + resp_quality * quality_weight
+                + base_confidence * cycle_penalty,
+            ),
+            3,
         )
 
         return current_output

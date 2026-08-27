@@ -21,6 +21,7 @@ import logging
 import math
 import os
 import zlib
+from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -39,6 +40,136 @@ from core.system.config.magic_numbers import (
 from ._import_utils import subprocess_check
 
 logger = logging.getLogger(__name__)
+
+
+def _cfg_get(key: str, default=None):
+    """Tiered-config accessor (import-lazy to keep module import light)."""
+    try:
+        from core.system.config.magic_numbers import _get
+
+        return _get(key, default)
+    except Exception:
+        return default
+
+
+def _default_onnx_path(model_name: str) -> str:
+    """Canonical location of the quantized ONNX export for a model.
+
+    cwd-independent: anchored at apps/backend/ (found by walking up from this
+    file), with env override ANGELA_MODELS_DIR for custom deployments.
+    """
+    safe = model_name.replace("/", "__")
+    root = os.environ.get("ANGELA_MODELS_DIR")
+    if not root:
+        anchor = Path(__file__).resolve().parent  # .../apps/backend/src/ai/garden
+        for _ in range(6):
+            if anchor.name == "backend":
+                break
+            anchor = anchor.parent
+        else:
+            anchor = Path.cwd()
+        root = str(anchor / "data" / "models")
+    return os.path.join(root, f"{safe}_int8.onnx")
+
+
+def _onnx_model_path(model_name: str):
+    """Return the quantized ONNX path for this model if it exists, else None.
+
+    Checks the canonical location first, then legacy sibling names.
+    """
+    candidates = [_default_onnx_path(model_name)]
+    if "/" not in model_name:
+        candidates.append(_default_onnx_path(f"sentence-transformers/{model_name}"))
+    for c in candidates:
+        if os.path.exists(c):
+            return c
+    return None
+
+
+class _OnnxEncoder:
+    """ONNX int8 inference backend for sentence embeddings (~2.1x faster than
+    torch fp32 on CPU; nearest-neighbour ranking verified identical by the
+    export tool's fidelity gate). Produces L2-normalized float32 [N, D]."""
+
+    def __init__(self, onnx_path: str, max_length: int = 32):
+        import onnxruntime as ort
+        from transformers import AutoTokenizer
+
+        so = ort.SessionOptions()
+        # Two threads: matches the measured baseline; more threads raised
+        # latency variance without throughput wins on small batches.
+        so.intra_op_num_threads = 2
+        self._sess = ort.InferenceSession(
+            onnx_path, so, providers=["CPUExecutionProvider"]
+        )
+        # Tokenizer ships beside the model (exported by
+        # scripts/export_minilm_onnx.py) — fully offline, no hub lookups.
+        tok_dir = onnx_path.replace(".onnx", "-tokenizer")
+        self._tok = AutoTokenizer.from_pretrained(tok_dir, local_files_only=True)
+        self._max_length = max_length
+        self.input_names = {i.name for i in self._sess.get_inputs()}
+
+    def encode(self, texts: List[str]) -> np.ndarray:
+        if not texts:
+            return np.zeros((0, self._sess.get_outputs()[0].shape[-1]), dtype=np.float32)
+        batch = self._tok(
+            list(texts),
+            padding=True,
+            truncation=True,
+            return_tensors="np",
+            max_length=self._max_length,
+        )
+        feed = {
+            "input_ids": batch["input_ids"].astype(np.int64),
+            "attention_mask": batch["attention_mask"].astype(np.int64),
+        }
+        out = self._sess.run(None, feed)[0]  # last_hidden_state [B, S, H]
+        m = feed["attention_mask"].astype(np.float32)[:, :, None]
+        emb = (out * m).sum(1) / np.clip(m.sum(1), 1e-9, None)
+        norms = np.linalg.norm(emb, axis=1, keepdims=True)
+        return (emb / np.clip(norms, 1e-9, None)).astype(np.float32)
+
+
+def _model_in_hf_cache(model_name: str) -> bool:
+    """True when a sentence-transformers model is fully present in the local
+    HuggingFace hub cache (~/.cache/huggingface/hub/models--<org>--<name>)."""
+    hub = os.path.join(
+        os.environ.get("HF_HOME", os.path.expanduser("~/.cache/huggingface")), "hub"
+    )
+    if not os.path.isdir(hub):
+        return False
+
+    def _has_weights(model_dir: str) -> bool:
+        # "Fully present" heuristic: has snapshots with actual weight files.
+        snapshots = os.path.join(model_dir, "snapshots")
+        if not os.path.isdir(snapshots):
+            return False
+        for root, _dirs, files in os.walk(snapshots):
+            if any(f.endswith((".safetensors", ".bin")) for f in files):
+                return True
+        return False
+
+    # Exact repo-id form first ("org/name" → models--org--name).
+    parts = model_name.split("/")
+    candidates = ["models--" + "--".join(parts)]
+    # Bare names ("minilm-x") are stored under their resolving org —
+    # sentence-transformers ships most models under that org.
+    if len(parts) == 1:
+        candidates.append(f"models--sentence-transformers--{parts[0]}")
+    for cand in candidates:
+        model_dir = os.path.join(hub, cand)
+        if os.path.isdir(model_dir) and _has_weights(model_dir):
+            return True
+    # Last resort: unique substring match (handles custom orgs).
+    tail = parts[-1]
+    matches = [
+        d
+        for d in os.listdir(hub)
+        if d.startswith("models--") and d.endswith("--" + tail)
+    ]
+    if len(matches) == 1:
+        return _has_weights(os.path.join(hub, matches[0]))
+    return False
 
 # ---------------------------------------------------------------------------
 # Lazy torch import (compatible with Python 3.14 where torch may be absent)
@@ -252,18 +383,71 @@ class _STEncoder:
         if not subprocess_check("sentence_transformers"):
             raise ImportError("sentence_transformers not available (import check failed)")
         try:
+            # Backend selection: "onnx" (int8, ~2.1x faster CPU inference),
+            # "torch" (reference), "auto" = onnx when a quantized export
+            # exists, else torch. See scripts/export_minilm_onnx.py.
+            backend = str(_cfg_get("ai.garden.st_backend", "auto")).lower()
+            if backend in ("onnx", "auto"):
+                onnx_path = _onnx_model_path(model_name)
+                if onnx_path:
+                    try:
+                        self._model = _OnnxEncoder(onnx_path)
+                        self._backend = "onnx"
+                        self._model_cache[model_name] = self
+                        logger.info(
+                            "GARDEN: loaded ONNX int8 encoder '%s' (%s)",
+                            model_name,
+                            onnx_path,
+                        )
+                        return
+                    except Exception as onnx_err:
+                        if backend == "onnx":
+                            raise
+                        logger.warning(
+                            "ONNX encoder unavailable (%s); falling back to torch",
+                            onnx_err,
+                        )
+                elif backend == "onnx":
+                    raise ImportError(
+                        f"st_backend=onnx but no quantized model at {_default_onnx_path(model_name)}; "
+                        "run scripts/export_minilm_onnx.py first"
+                    )
+
             from sentence_transformers import SentenceTransformer
 
-            self._model = SentenceTransformer(model_name)
+            # Offline-first: when the model is already in the local HF cache,
+            # skip the hub revision check entirely. This removes a network
+            # dependency (and multi-second stall on flaky connections) from
+            # first engine construction, and makes air-gapped deployments work
+            # without HF_HUB_OFFLINE env vars.
+            kwargs: Dict[str, Any] = {}
+            try:
+                if _model_in_hf_cache(model_name):
+                    kwargs["local_files_only"] = True
+            except Exception as cache_err:  # cache probing must never block load
+                logger.debug("HF cache probe failed (%s); loading normally", cache_err)
+            self._model = SentenceTransformer(model_name, **kwargs)
+            self._backend = "torch"
             # Cache once loaded successfully
             self._model_cache[model_name] = self
         except (ImportError, Exception) as e:
             raise ImportError(f"sentence_transformers not available: {e}")
-        logger.info("GARDEN: loaded SentenceTransformer model '%s'", model_name)
+        logger.info(
+            "GARDEN: loaded SentenceTransformer model '%s' (backend=%s)",
+            model_name,
+            getattr(self, "_backend", "torch"),
+        )
 
-    def encode(self, texts: List[str]) -> torch.Tensor:
+    def encode(self, texts: List[str]):
+        """Encode texts to L2-normalized embeddings.
+
+        Returns numpy float32 [N, D] — downstream consumers already handle
+        both numpy (TF-IDF fallback) and torch transparently.
+        """
+        if isinstance(self._model, _OnnxEncoder):
+            return self._model.encode(texts)
         embeddings = self._model.encode(texts, convert_to_tensor=True, normalize_embeddings=True)
-        return embeddings.cpu()
+        return embeddings.cpu().numpy()
 
 
 def _safe_chromadb_client(timeout: int = 45):
