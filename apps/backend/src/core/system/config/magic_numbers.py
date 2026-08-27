@@ -439,6 +439,14 @@ def compute_log_fallback() -> bool:
 # target_keys). The matrix the model allocates is then ALSO bounded by the
 # joint [bytes, %ram] capacity cascade (min of the two), so vocab can reach
 # 10 GB only when physical RAM allows; otherwise app runs precision-loss.
+#
+# Extended-mode RAM reserve: subtracted from physical RAM BEFORE the percent
+# cap, so the matrix never crowds out OS + interpreter + torch runtime.
+# Measured runtime baseline (torch + MiniLM + app) ≈ 1.2 GB; 2 GB gives
+# headroom for working set and page-cache pressure. Override via
+# capacity.default.yaml → memory.extended_reserve_gb.
+
+_EXTENDED_RAM_RESERVE_GB: float = 2.0
 
 def model_sizing_config() -> Dict[str, int]:
     """Return (max_vocab, connection_budget) based on the sizing mode.
@@ -461,7 +469,16 @@ def model_sizing_config() -> Dict[str, int]:
         ram_total = _probe_ram_total_gb()
         if ram_total and ram_total > 0:
             dynamic_mb = _get_capacity_config().get("memory", {}).get("dynamic_mb", 8192)
-            cap_bytes = effective_capacity_bytes("memory", total_gb=ram_total, numeric_mb=dynamic_mb)
+            # Reserve headroom for OS + interpreter + torch runtime + working
+            # set before applying the percent cap. Without this, the clamp
+            # could hand e.g. 80% of a 7.7GB box to the matrix alone
+            # (measured: +1.2GB runtime on top → guaranteed OOM).
+            reserve_gb = _safe_float(
+                _get_capacity_config().get("memory", {}).get("extended_reserve_gb"),
+                _EXTENDED_RAM_RESERVE_GB,
+            )
+            usable_gb = max(0.0, ram_total - reserve_gb)
+            cap_bytes = effective_capacity_bytes("memory", total_gb=usable_gb, numeric_mb=dynamic_mb)
             max_keys_by_ram = int((cap_bytes / 4.0) ** 0.5)
             target_keys = max(1, min(target_keys, max_keys_by_ram))
         else:

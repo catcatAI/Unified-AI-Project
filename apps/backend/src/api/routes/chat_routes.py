@@ -166,6 +166,79 @@ def _get_ed3n_engine():
     return _backbone_module("chat.ed3n_engine", _factory)
 
 
+def _get_query_classifier():
+    """Shared QueryClassifier singleton.
+
+    Construction wires the ED3N engine + compiles pattern tables — not cheap,
+    and the classifier is stateless across requests, so one instance serves
+    all call sites (was previously rebuilt per request in 3 places).
+    """
+    def _factory():
+        from ai.core.query_classifier import QueryClassifier
+
+        return QueryClassifier(ed3n_engine=_get_ed3n_engine())
+
+    return _backbone_module("chat.query_classifier", _factory)
+
+
+def _get_shared_garden():
+    """Shared GARDENEngine singleton for document-learning endpoints.
+
+    Delegates to GARDENEngine.get_shared() — one process-wide engine so
+    learned associations accumulate (mirrors ED3NEngine.get_shared()).
+    """
+
+    from ai.garden.garden_engine import GARDENEngine
+
+    return GARDENEngine.get_shared()
+
+
+def _invalidate_router_cache(reason: str) -> None:
+    """Drop the LLM router's response cache after a learning event.
+
+    Prevents freshly-learned knowledge from being masked by stale cached
+    answers (intelligence must never regress behind the cache).
+    """
+    try:
+        from services.llm.router import _llm_service as svc
+
+        if svc is not None and hasattr(svc, "invalidate_response_cache"):
+            dropped = svc.invalidate_response_cache()
+            if dropped:
+                logger.info("Response cache invalidated (%d entries) after %s", dropped, reason)
+    except Exception as e:
+        logger.debug("Response cache invalidation skipped (%s): %s", reason, e)
+
+
+# Stopwords excluded from keyword-learning cycles (function-word greetings,
+# politeness and pronouns carry no learnable content). Named constant — was
+# an inline tuple with a duplicate "什麼" entry.
+_LEARNING_STOPWORDS = frozenset(
+    {
+        "你好",
+        "請問",
+        "可以",
+        "幫我",
+        "想要",
+        "這個",
+        "那個",
+        "什麼",
+        "怎麼",
+        "為什麼",
+        "如何",
+        "我們",
+        "你們",
+        "他們",
+        "hello",
+        "help",
+        "please",
+        "can",
+        "you",
+        "the",
+    }
+)
+
+
 def _get_bio_integrator():
     def _factory():
         from core.bio.biological_integrator import BiologicalIntegrator
@@ -727,7 +800,7 @@ async def _handle_execution_gate(
                 }
 
         # Intent classification + Execution gate decision
-        classifier = QueryClassifier(ed3n_engine=_get_ed3n_engine())
+        classifier = _get_query_classifier()
         classify_result = classifier.classify(user_message)
         context["_classify_result_type"] = classify_result.primary_type.value
         context["_classify_result_confidence"] = classify_result.confidence
@@ -846,7 +919,7 @@ async def _try_agent_routing(
             primary_type_name = str(cached_type)
             confidence = float(cached_conf)
         else:
-            classifier = QueryClassifier(ed3n_engine=_get_ed3n_engine())
+            classifier = _get_query_classifier()
             classify_result = classifier.classify(user_message)
             primary_type_name = classify_result.primary_type.value
             confidence = classify_result.confidence
@@ -1240,13 +1313,12 @@ def _learn_from_classification_feedback(
         return
 
     from ai.core.dictionary_classifier import get_dictionary_classifier
-    from ai.core.query_classifier import QueryClassifier
 
     dc = get_dictionary_classifier()
 
     # Step 1: Classify the LLM response to infer the user's true intent
     # (response usually contains content matching the intended type)
-    qc = QueryClassifier()
+    qc = _get_query_classifier()
     response_type = qc.classify(response_text)
 
     # Also check routing context for ground truth
@@ -1270,35 +1342,7 @@ def _learn_from_classification_feedback(
     import re
 
     tokens = re.findall(r"[\w\u4e00-\u9fff]+", user_message)
-    keywords = [
-        t
-        for t in tokens
-        if 2 <= len(t) <= 12
-        and t
-        not in (
-            "你好",
-            "請問",
-            "可以",
-            "幫我",
-            "想要",
-            "這個",
-            "那個",
-            "什麼",
-            "什麼",
-            "怎麼",
-            "為什麼",
-            "如何",
-            "我們",
-            "你們",
-            "他們",
-            "hello",
-            "help",
-            "please",
-            "can",
-            "you",
-            "the",
-        )
-    ]
+    keywords = [t for t in tokens if 2 <= len(t) <= 12 and t not in _LEARNING_STOPWORDS]
     keywords = keywords[:3]  # Max 3 keywords per learning cycle
 
     if not keywords:
@@ -1834,8 +1878,19 @@ def _build_math_response(
 @router.get("/security/sync-key-c")
 async def sync_key_c(request: Request) -> dict:
     """Log a diagnostic message."""
-    client_host = request.client.host
-    if client_host not in ["127.0.0.1", "::1", "localhost"]:
+    from core.system.config.network_defaults import LOCAL_TRUSTED_HOSTS
+
+    client_host = request.client.host if request.client else ""
+    # Loopback whitelist is configurable (ANGELA_TRUSTED_HOSTS env, comma
+    # separated) so deployments behind a trusted reverse proxy can extend it.
+    import os
+
+    trusted = tuple(
+        h.strip()
+        for h in os.getenv("ANGELA_TRUSTED_HOSTS", ",".join(LOCAL_TRUSTED_HOSTS)).split(",")
+        if h.strip()
+    )
+    if client_host not in trusted:
         logger.warning(
             f"Unauthorized access attempt to sync-key-c from {client_host}"
         )
@@ -2089,14 +2144,15 @@ async def learn_document(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     if not text:
         return {"status": "error", "message": "No text provided"}
     from ai.document.learner import DocumentLearner
-    from ai.garden.garden_engine import GARDENEngine
     from ai.ed3n.ed3n_engine import ED3NEngine
 
     try:
-        garden = GARDENEngine()
+        garden = _get_shared_garden()
         ed3n = ED3NEngine.get_shared(load_trained=False)
         learner = DocumentLearner(garden_engine=garden, ed3n_engine=ed3n)
         result = learner.learn(text, source=source)
+        # New knowledge must not be masked by stale cached answers.
+        _invalidate_router_cache("document learn")
         return {"status": result.get("status", "ok"), "sections": result.get("sections", 0)}
     except Exception as e:
         logger.warning("Document learn failed: %s", e, exc_info=True)
@@ -2112,12 +2168,13 @@ async def stream_document(request: Dict[str, Any] = Body(...)) -> StreamingRespo
             _sse_events([{"type": "error", "content": "No text provided"}]),
             media_type="text/event-stream",
         )
-    from ai.garden.garden_engine import GARDENEngine
     from ai.ed3n.ed3n_engine import ED3NEngine
 
-    garden = GARDENEngine()
-    garden.load_presets()
+    garden = _get_shared_garden()
     ed3n = ED3NEngine.get_shared(load_trained=False)
+    # Streaming learns progressively — invalidate upfront so concurrent
+    # questions during/after the stream never see pre-learn stale answers.
+    _invalidate_router_cache("document stream")
     return StreamingResponse(
         _stream_doc_events(text, garden, ed3n),
         media_type="text/event-stream",

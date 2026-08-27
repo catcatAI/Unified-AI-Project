@@ -318,9 +318,31 @@ class ChatService:
                 )
                 self._vector_store_recent_fail = False
                 docs = vs_results.get("documents", [[]])[0]
+                distances = vs_results.get("distances", [[]])[0]
                 knowledge = [str(d)[:200] for d in docs if d and isinstance(d, str)]
                 if knowledge:
                     merged_context["dictionary_context"] = knowledge
+                    # RAG wiring: surface the SAME long-term semantic hits as
+                    # structured retrieved_context entries so prompt_builder
+                    # injects them for the LLM (previously they only reached
+                    # dictionary_context and open-domain answers could not
+                    # cite accumulated knowledge).
+                    rag_entries = []
+                    for i, d in enumerate(docs):
+                        if not d or not isinstance(d, str):
+                            continue
+                        distance = distances[i] if i < len(distances) else 1.0
+                        relevance = max(0.0, 1.0 - float(distance))
+                        rag_entries.append(
+                            {
+                                "role": "long_term_memory",
+                                "content": str(d)[:200],
+                                "relevance": round(relevance, 3),
+                            }
+                        )
+                    if rag_entries:
+                        existing = merged_context.get("retrieved_context") or []
+                        merged_context["retrieved_context"] = existing + rag_entries
             except asyncio.TimeoutError:
                 self._vector_store_disabled = True
                 self._vector_store_recent_fail = True

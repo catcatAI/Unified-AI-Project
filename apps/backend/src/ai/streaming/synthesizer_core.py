@@ -184,10 +184,13 @@ class StreamSynthesizer:
     
     async def run(self) -> None:
         """Run synthesis loop."""
+        from core.system.config.magic_numbers import loop_sleep
+
+        idle_interval = loop_sleep("ai.streaming.synthesizer_idle", 0.01)
         while True:
             flushed = await self.process_cycle()
             if flushed == 0:
-                await asyncio.sleep(0.01)
+                await asyncio.sleep(idle_interval)
     
     def get_stats(self) -> Dict[str, int]:
         return dict(self._stats)

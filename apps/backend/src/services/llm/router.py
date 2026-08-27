@@ -12,16 +12,19 @@ Angela LLM Service - Angela 的智能對話引擎
 """
 
 import asyncio
+import hashlib
+import json
 import logging
 import os
 import random
 import re
 import time
+from collections import OrderedDict
 from typing import Any, Dict, List, NamedTuple, Optional
 
 from core.interfaces.protocols import ChatMessage, ChatResponse, LLMResponse
 from core.interfaces.service_registry import get_registry
-from core.system.config.magic_numbers import timeout_value
+from core.system.config.magic_numbers import llm_param, timeout_value
 from core.system.config.network_defaults import (
     ANTHROPIC_API_BASE,
     DEFAULT_ANTHROPIC_MODEL,
@@ -256,6 +259,10 @@ class AngelaLLMService:
         self.config = config or self._get_default_config()
         self.backends: Dict[LLMBackend, BaseLLMBackend] = {}
         self.active_backend: Optional[BaseLLMBackend] = None
+        # Initialize alongside active_backend: _maybe_cloud_fusion and other
+        # paths read this before any backend selection has assigned it
+        # (AttributeError on first request otherwise).
+        self.active_backend_type: Optional[LLMBackend] = None
 
         self.enable_memory_enhancement = (self.config.get("settings") or {}).get(
             "enable_memory_enhancement", True
@@ -315,6 +322,145 @@ class AngelaLLMService:
         self._angela_routing = routing.get("policy", {})
         self._angela_fallback_chain = routing.get("fallback_chain", [])
         self._angela_intent_routing = routing.get("intent_routing", {})
+
+        # ========== LLM response cache (expensive-generation only) ==========
+        # Caches ONLY responses that required a real LLM generation call.
+        # Deterministic retrieval paths (templates / memory / knowledge /
+        # honest-fallback) are NEVER cached: their sources grow continuously,
+        # so caching them would freeze intelligence and break the learning
+        # loop. See _is_cacheable_response().
+        self._response_cache: "OrderedDict[str, tuple]" = OrderedDict()
+
+    # ------------------------------------------------------------------
+    # Response cache helpers
+    # ------------------------------------------------------------------
+
+    def invalidate_response_cache(self) -> int:
+        """Drop all cached responses (call after learning/KB/template updates).
+
+        Returns the number of entries evicted.
+        """
+        n = len(self._response_cache)
+        self._response_cache.clear()
+        return n
+
+    @staticmethod
+    def _normalize_for_cache(message: str) -> str:
+        """Canonical form of a user message for cache identity."""
+        return " ".join((message or "").lower().split())
+
+    @staticmethod
+    def _is_cacheable_response(response: LLMResponse) -> bool:
+        """Only generative LLM responses are cacheable.
+
+        Deterministic retrievals are excluded because their underlying
+        sources keep growing (templates learned per-turn, HAM memories,
+        knowledge base) — a cached copy would go stale the moment the
+        system learns something new. Fallbacks are cheap + state-dependent,
+        so they are excluded too.
+        """
+        if response is None or not (response.text or "").strip():
+            return False
+        meta = getattr(response, "metadata", None) or {}
+        if meta.get("knowledge") or meta.get("fallback") or meta.get("cached"):
+            return False
+        if getattr(response, "hit_source", None) in ("template", "memory"):
+            return False
+        non_generative_models = {"template-based", "honest-no-answer", "ensemble"}
+        return (response.model or "") not in non_generative_models
+
+    def _response_cache_enabled(self) -> bool:
+        """Config-gated (routing.response_cache.enabled, default on).
+
+        Deliberately NOT compute_bool(): the cache saves CPU on low-power
+        hardware too, so a battery-saver profile must not disable it.
+        """
+        from core.system.config.magic_numbers import _get as _cfg
+
+        return bool(_cfg("routing.response_cache.enabled", True))
+
+    def _response_cache_key(self, user_message: str, context: Dict[str, Any]) -> Optional[str]:
+        """Cache identity: normalized message + routing-relevant context keys.
+
+        Contextual conversations (explicit history) are NEVER cached — their
+        responses depend on state outside the key.
+        """
+        if not self._response_cache_enabled():
+            return None
+        for history_key in ("messages", "history", "conversation"):
+            if context.get(history_key):
+                return None
+        relevant = {
+            k: context.get(k)
+            for k in ("routing_mode", "fusion_strategy", "language", "use_ensemble")
+            if context.get(k) is not None
+        }
+        try:
+            ctx_hash = hashlib.md5(
+                json.dumps(relevant, sort_keys=True, default=str).encode("utf-8")
+            ).hexdigest()[:8]
+        except Exception:
+            ctx_hash = "noc"
+        return f"{self._normalize_for_cache(user_message)}|{ctx_hash}"
+
+    def _response_cache_get(self, key: str) -> Optional[LLMResponse]:
+        """TTL-aware lookup; returns None on miss/expiry."""
+        if not key:
+            return None
+        entry = self._response_cache.get(key)
+        if entry is None:
+            return None
+        expires_at, response = entry
+        if time.time() > expires_at:
+            del self._response_cache[key]
+            return None
+        self._response_cache.move_to_end(key)
+        return response
+
+    def _response_cache_put(self, key: str, response: LLMResponse) -> None:
+        """Store a *cacheable* response with short TTL + size cap.
+
+        Short-by-design TTL keeps staleness bounded even without explicit
+        invalidation; learning endpoints call invalidate_response_cache().
+        """
+        if not key or not self._is_cacheable_response(response):
+            return
+        from core.system.config.magic_numbers import (
+            cache_value,
+            timing_value,
+        )
+
+        ttl = timing_value("ai.router.response_cache_ttl", 90.0)
+        max_size = cache_value("ai.router.response_cache_size", 64)
+        meta = dict(getattr(response, "metadata", None) or {})
+        meta["cached"] = True
+        try:
+            response.metadata = meta
+        except Exception:
+            pass
+        self._response_cache[key] = (time.time() + ttl, response)
+        self._response_cache.move_to_end(key)
+        while len(self._response_cache) > max_size:
+            self._response_cache.popitem(last=False)
+
+    async def generate_response(
+        self, user_message: str, context: Dict[str, Any] = None
+    ) -> LLMResponse:
+        """Cached entry point — delegates to generate_response_full.
+
+        Cache hits are marked via metadata["cached"]=True so callers/tests
+        can detect them.
+        """
+        context = context or {}
+        cache_key = self._response_cache_key(user_message, context)
+        cached = self._response_cache_get(cache_key)
+        if cached is not None:
+            self.stats["cache_hits"] = self.stats.get("cache_hits", 0) + 1
+            logger.debug("[Router] Response cache hit for: %.60s", user_message)
+            return cached
+        response = await self.generate_response_full(user_message, context)
+        self._response_cache_put(cache_key, response)
+        return response
 
     def _init_response_system(self) -> None:
         """初始化 P0-2 响应组合与匹配系统"""
@@ -784,7 +930,7 @@ class AngelaLLMService:
             nv = self.__class__._neuro_vocab_instance[0]
         return construct_angela_prompt(user_message, context, neuro_vocabulary=nv)
 
-    async def generate_response(
+    async def generate_response_full(
         self, user_message: str, context: Dict[str, Any] = None
     ) -> LLMResponse:
         context = context or {}
@@ -971,17 +1117,10 @@ class AngelaLLMService:
         if not (context and context.get("use_ensemble")):
             return None
         try:
-            from ai.ensemble import ModelEnsemble, ModelWeight
+            from ai.ensemble import ModelEnsemble, get_default_weights
 
             ensemble = ModelEnsemble(self)
-            weights = context.get(
-                "ensemble_weights",
-                [
-                    ModelWeight("gpt-4o", 0.4),
-                    ModelWeight("claude-3-opus", 0.4),
-                    ModelWeight("mixtral-local", 0.2),
-                ],
-            )
+            weights = context.get("ensemble_weights", get_default_weights())
             ensemble.configure_ensemble(weights)
             result = await ensemble.ensemble_generate(
                 user_message,
@@ -1879,7 +2018,7 @@ class AngelaLLMService:
                             bobj.generate(
                                 prompt=full_prompt[-1]["content"],
                                 messages=full_prompt,
-                                temperature=0.7,
+                                temperature=llm_param("llm.generation.temperature", 0.7),
                                 max_tokens=512,
                             ),
                             timeout=timeout_value("llm.fallback_chain", 30.0),

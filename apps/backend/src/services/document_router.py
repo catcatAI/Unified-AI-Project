@@ -265,7 +265,7 @@ async def _try_local_processing(
     try:
         from ai.garden.garden_engine import GARDENEngine
 
-        engine = GARDENEngine()
+        engine = GARDENEngine.get_shared()
         file_summaries = []
         for f in files[:5]:
             content = await _read_file_content(f)
@@ -371,7 +371,9 @@ async def _learn_from_llm_output(
     try:
         from ai.garden.garden_engine import GARDENEngine
 
-        engine = GARDENEngine()
+        # Shared instance: learned associations accumulate across documents
+        # (was: learned into a throwaway engine and discarded).
+        engine = GARDENEngine.get_shared()
         for f in files[:3]:
             content = await _read_file_content(f)
             engine.learn_from_interaction(content[:1000], llm_output[:1000], confidence=0.5)
