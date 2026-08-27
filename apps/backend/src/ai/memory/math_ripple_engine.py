@@ -495,6 +495,70 @@ class MathRippleEngine:
     OVERLOAD_THRESHOLD_CHAIN = 3
     FEAR_DIVISOR_NEAR_ZERO = 0.0002
 
+    # =========================================================================
+    # Emotional ripple gain table — per-operator signature (named constants;
+    # were bare literals scattered through _compute_ripple/_apply_*). Tune the
+    # personality HERE, never inline.
+    # =========================================================================
+    # ADD（簡單位移）
+    GAIN_ADD_EPSILON_RATIO = 0.05      # ε = |b|/(|a|+ε_DENOM) × this
+    GAIN_ADD_EPSILON_DENOM = 0.1
+    GAIN_ADD_BETA_CAP = 0.2
+    GAIN_ADD_BETA_SCALE = 0.01         # β = min(cap, |b| × scale)
+    GAIN_ADD_DELTA = 0.1
+    # SUB（減法非交換）
+    GAIN_SUB_EPSILON = -0.05
+    GAIN_SUB_GAMMA_SMALLER = 0.05      # b ≤ a：意外較小
+    GAIN_SUB_GAMMA_LARGER = 0.1        # b > a：意外較大
+    GAIN_SUB_BETA = 0.15
+    GAIN_SUB_DELTA = 0.15
+    # MUL（乘法放大）— 軸 = min(cap, base + log1p(mag)×slope)
+    GAIN_MUL_EPSILON_SLOPE = 0.1
+    GAIN_MUL_ALPHA_BASE = 0.1
+    GAIN_MUL_ALPHA_SLOPE = 0.05
+    GAIN_MUL_ALPHA_CAP = 0.8
+    GAIN_MUL_BETA_BASE = 0.3
+    GAIN_MUL_BETA_SLOPE = 0.04
+    GAIN_MUL_BETA_CAP = 0.9
+    GAIN_MUL_GAMMA_BASE = 0.1
+    GAIN_MUL_GAMMA_SLOPE = 0.03
+    GAIN_MUL_GAMMA_CAP = 0.7
+    GAIN_MUL_DELTA_BASE = 0.1
+    GAIN_MUL_DELTA_SLOPE = 0.02
+    GAIN_MUL_DELTA_CAP = 0.6
+    # DIV（除法分割 / 近零恐懼）
+    GAIN_DIV_FEAR_EPSILON = 1.0
+    GAIN_DIV_FEAR_GAMMA = 0.3
+    GAIN_DIV_EPSILON_BASE = 0.1
+    GAIN_DIV_EPSILON_SCALE = 0.02      # ε = base + |a/b| × scale
+    GAIN_DIV_ALPHA = 0.15
+    GAIN_DIV_BETA = 0.25
+    GAIN_DIV_GAMMA = 0.1
+    GAIN_DIV_OVERLOAD_RESULT = 1000.0  # |result| above → overload
+    GAIN_DIV_NEARZERO_RESULT = 0.01    # |result| below → "趨近零"
+    # POW（指數爆炸）
+    GAIN_POW_EPSILON_SLOPE = 0.15
+    GAIN_POW_ALPHA_BASE = 0.2
+    GAIN_POW_ALPHA_SLOPE = 0.06
+    GAIN_POW_ALPHA_CAP = 0.9
+    GAIN_POW_BETA_BASE = 0.4
+    GAIN_POW_BETA_SLOPE = 0.05
+    GAIN_POW_BETA_CAP = 0.95
+    GAIN_POW_GAMMA_BASE = 0.15
+    GAIN_POW_GAMMA_SLOPE = 0.04
+    GAIN_POW_GAMMA_CAP = 0.8
+    # 認知過載 (_apply_cognitive_overload)
+    OVERLOAD_FATIGUE_GAIN = 0.2
+    OVERLOAD_CERTAINTY_LOSS = 0.3
+    OVERLOAD_SURPRISE_GAIN = 0.2
+    OVERLOAD_FEAR_GAIN = 0.15
+    OVERLOAD_FOCUS_LOSS = 0.2
+    OVERLOAD_CONFUSION_GAIN = 0.3
+    # 除法恐懼 (_apply_division_fear)
+    FEAR_CERTAINTY_LOSS = 0.4
+    FEAR_FEAR_GAIN = 0.35
+    FEAR_SURPRISE_GAIN = 0.2
+
     # Chinese number mapping
     ZH_NUM = {
         "零": 0,
@@ -805,18 +869,24 @@ class MathRippleEngine:
         if op == "+":
             op_enum = MathOp.ADD
             result = a + b
-            ripple.epsilon_delta = abs(b) / (abs(a) + 0.1) * 0.05
-            ripple.beta_focus = min(0.2, abs(b) / 100)
-            ripple.delta_engagement = 0.1
+            ripple.epsilon_delta = (
+                abs(b) / (abs(a) + self.GAIN_ADD_EPSILON_DENOM) * self.GAIN_ADD_EPSILON_RATIO
+            )
+            ripple.beta_focus = min(
+                self.GAIN_ADD_BETA_CAP, abs(b) * self.GAIN_ADD_BETA_SCALE
+            )
+            ripple.delta_engagement = self.GAIN_ADD_DELTA
             ripple.description = f"{a} + {b} = {result}（簡單位移）"
 
         elif op == "-":
             op_enum = MathOp.SUB
             result = a - b
-            ripple.epsilon_delta = -0.05
-            ripple.gamma_excitement = 0.05 if b > a else 0.1
-            ripple.beta_focus = 0.15
-            ripple.delta_engagement = 0.15
+            ripple.epsilon_delta = self.GAIN_SUB_EPSILON
+            ripple.gamma_excitement = (
+                self.GAIN_SUB_GAMMA_SMALLER if b > a else self.GAIN_SUB_GAMMA_LARGER
+            )
+            ripple.beta_focus = self.GAIN_SUB_BETA
+            ripple.delta_engagement = self.GAIN_SUB_DELTA
             if a < b:
                 ripple.confusion_triggered = True
             ripple.description = f"{a} - {b} = {result}（減法非交換）"
@@ -825,12 +895,24 @@ class MathRippleEngine:
             op_enum = MathOp.MUL
             result = a * b
             mag = abs(a * b)
-            ripple.epsilon_delta = math.log1p(mag) * 0.1
+            ripple.epsilon_delta = math.log1p(mag) * self.GAIN_MUL_EPSILON_SLOPE
 
-            ripple.alpha_arousal = min(0.8, 0.1 + math.log1p(mag) * 0.05)
-            ripple.beta_focus = min(0.9, 0.3 + math.log1p(mag) * 0.04)
-            ripple.gamma_excitement = min(0.7, 0.1 + math.log1p(mag) * 0.03)
-            ripple.delta_engagement = min(0.6, 0.1 + math.log1p(mag) * 0.02)
+            ripple.alpha_arousal = min(
+                self.GAIN_MUL_ALPHA_CAP,
+                self.GAIN_MUL_ALPHA_BASE + math.log1p(mag) * self.GAIN_MUL_ALPHA_SLOPE,
+            )
+            ripple.beta_focus = min(
+                self.GAIN_MUL_BETA_CAP,
+                self.GAIN_MUL_BETA_BASE + math.log1p(mag) * self.GAIN_MUL_BETA_SLOPE,
+            )
+            ripple.gamma_excitement = min(
+                self.GAIN_MUL_GAMMA_CAP,
+                self.GAIN_MUL_GAMMA_BASE + math.log1p(mag) * self.GAIN_MUL_GAMMA_SLOPE,
+            )
+            ripple.delta_engagement = min(
+                self.GAIN_MUL_DELTA_CAP,
+                self.GAIN_MUL_DELTA_BASE + math.log1p(mag) * self.GAIN_MUL_DELTA_SLOPE,
+            )
 
             if mag > self.OVERLOAD_THRESHOLD_MAGNITUDE:
                 ripple.overload_triggered = True
@@ -842,20 +924,22 @@ class MathRippleEngine:
             op_enum = MathOp.DIV
             if abs(b) < self.FEAR_DIVISOR_NEAR_ZERO:
                 result = float("inf") * (-1 if a * b < 0 else 1)
-                ripple.epsilon_delta = 1.0
-                ripple.gamma_excitement = 0.3
+                ripple.epsilon_delta = self.GAIN_DIV_FEAR_EPSILON
+                ripple.gamma_excitement = self.GAIN_DIV_FEAR_GAMMA
                 ripple.fear_triggered = True
                 ripple.description = f"{a} ÷ {b}（近零除數！恐懼）"
             else:
                 result = a / b
-                ripple.epsilon_delta = 0.1 + abs(a / b) * 0.02
-                ripple.alpha_arousal = 0.15
-                ripple.beta_focus = 0.25
-                ripple.gamma_excitement = 0.1
-                if abs(result) > 1000:
+                ripple.epsilon_delta = (
+                    self.GAIN_DIV_EPSILON_BASE + abs(a / b) * self.GAIN_DIV_EPSILON_SCALE
+                )
+                ripple.alpha_arousal = self.GAIN_DIV_ALPHA
+                ripple.beta_focus = self.GAIN_DIV_BETA
+                ripple.gamma_excitement = self.GAIN_DIV_GAMMA
+                if abs(result) > self.GAIN_DIV_OVERLOAD_RESULT:
                     ripple.overload_triggered = True
                     ripple.description = f"{a} ÷ {b} = {result:.1f}（結果巨大）"
-                elif abs(result) < 0.01:
+                elif abs(result) < self.GAIN_DIV_NEARZERO_RESULT:
                     ripple.description = f"{a} ÷ {b} = {result:.4f}（趨近零）"
                 else:
                     ripple.description = f"{a} ÷ {b} = {result}（除法分割）"
@@ -864,11 +948,20 @@ class MathRippleEngine:
             op_enum = MathOp.POW
             result = a**b
             mag = abs(result)
-            ripple.epsilon_delta = math.log1p(mag) * 0.15
+            ripple.epsilon_delta = math.log1p(mag) * self.GAIN_POW_EPSILON_SLOPE
 
-            ripple.alpha_arousal = min(0.9, 0.2 + math.log1p(mag) * 0.06)
-            ripple.beta_focus = min(0.95, 0.4 + math.log1p(mag) * 0.05)
-            ripple.gamma_excitement = min(0.8, 0.15 + math.log1p(mag) * 0.04)
+            ripple.alpha_arousal = min(
+                self.GAIN_POW_ALPHA_CAP,
+                self.GAIN_POW_ALPHA_BASE + math.log1p(mag) * self.GAIN_POW_ALPHA_SLOPE,
+            )
+            ripple.beta_focus = min(
+                self.GAIN_POW_BETA_CAP,
+                self.GAIN_POW_BETA_BASE + math.log1p(mag) * self.GAIN_POW_BETA_SLOPE,
+            )
+            ripple.gamma_excitement = min(
+                self.GAIN_POW_GAMMA_CAP,
+                self.GAIN_POW_GAMMA_BASE + math.log1p(mag) * self.GAIN_POW_GAMMA_SLOPE,
+            )
 
             if mag > self.OVERLOAD_THRESHOLD_MAGNITUDE:
                 ripple.overload_triggered = True
@@ -909,26 +1002,26 @@ class MathRippleEngine:
 
         if hasattr(self.state_matrix, "epsilon"):
             self.state_matrix.epsilon.values["fatigue"] = min(
-                1.0, self.state_matrix.epsilon.values.get("fatigue", 0.0) + 0.2
+                1.0, self.state_matrix.epsilon.values.get("fatigue", 0.0) + self.OVERLOAD_FATIGUE_GAIN
             )
             self.state_matrix.epsilon.values["certainty"] = max(
-                0.0, self.state_matrix.epsilon.values.get("certainty", 0.5) - 0.3
+                0.0, self.state_matrix.epsilon.values.get("certainty", 0.5) - self.OVERLOAD_CERTAINTY_LOSS
             )
 
         if hasattr(self.state_matrix, "gamma"):
             self.state_matrix.gamma.values["surprise"] = min(
-                1.0, self.state_matrix.gamma.values.get("surprise", 0.0) + 0.2
+                1.0, self.state_matrix.gamma.values.get("surprise", 0.0) + self.OVERLOAD_SURPRISE_GAIN
             )
             self.state_matrix.gamma.values["fear"] = min(
-                1.0, self.state_matrix.gamma.values.get("fear", 0.0) + 0.15
+                1.0, self.state_matrix.gamma.values.get("fear", 0.0) + self.OVERLOAD_FEAR_GAIN
             )
 
         if hasattr(self.state_matrix, "beta"):
             self.state_matrix.beta.values["focus"] = max(
-                0.0, self.state_matrix.beta.values.get("focus", 0.5) - 0.2
+                0.0, self.state_matrix.beta.values.get("focus", 0.5) - self.OVERLOAD_FOCUS_LOSS
             )
             self.state_matrix.beta.values["confusion"] = min(
-                1.0, self.state_matrix.beta.values.get("confusion", 0.0) + 0.3
+                1.0, self.state_matrix.beta.values.get("confusion", 0.0) + self.OVERLOAD_CONFUSION_GAIN
             )
 
         logger.info("[MathRipple] Cognitive overload triggered")
@@ -940,15 +1033,15 @@ class MathRippleEngine:
 
         if hasattr(self.state_matrix, "epsilon"):
             self.state_matrix.epsilon.values["certainty"] = max(
-                0.0, self.state_matrix.epsilon.values.get("certainty", 0.5) - 0.4
+                0.0, self.state_matrix.epsilon.values.get("certainty", 0.5) - self.FEAR_CERTAINTY_LOSS
             )
 
         if hasattr(self.state_matrix, "gamma"):
             self.state_matrix.gamma.values["fear"] = min(
-                1.0, self.state_matrix.gamma.values.get("fear", 0.0) + 0.35
+                1.0, self.state_matrix.gamma.values.get("fear", 0.0) + self.FEAR_FEAR_GAIN
             )
             self.state_matrix.gamma.values["surprise"] = min(
-                1.0, self.state_matrix.gamma.values.get("surprise", 0.0) + 0.2
+                1.0, self.state_matrix.gamma.values.get("surprise", 0.0) + self.FEAR_SURPRISE_GAIN
             )
 
         if hasattr(self.state_matrix, "alpha"):

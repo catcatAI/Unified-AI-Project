@@ -33,6 +33,18 @@ class ModelWeight:
     priority: int = 1  # Higher = more important
 
 
+# Single source of truth for the default Extended-mode ensemble. Previously
+# duplicated in ModelEnsemble.__init__, ensemble_query() and router.py —
+# three copies guaranteed to drift. Override via context["ensemble_weights"].
+def get_default_weights() -> List[ModelWeight]:
+    """Fresh copy of the default ensemble weights (safe to mutate per call)."""
+    return [
+        ModelWeight("claude-3-opus", 0.4, priority=1),
+        ModelWeight("gpt-4o", 0.4, priority=1),
+        ModelWeight("mixtral-local", 0.2, priority=2),
+    ]
+
+
 @dataclass
 class EnsembleResult:
     """Result from ensemble voting"""
@@ -47,6 +59,21 @@ class EnsembleResult:
 
 class ResponseFusionEngine:
     """Fuses responses from multiple models into coherent output"""
+
+    # Quality-score rubric (named constants — were bare literals).
+    QS_LEN_IDEAL_MIN = 50        # chars; below = terse
+    QS_LEN_IDEAL_MAX = 2000      # chars; above = rambling
+    QS_LEN_FULL_SCORE = 1.0
+    QS_LEN_SOME_SCORE = 0.5
+    QS_LEN_NONE_SCORE = 0.0
+    QS_MARKER_COUNT_MIN = 5      # punctuation/newline markers for coherence
+    QS_COHERENT_SCORE = 1.0
+    QS_PARTIAL_SCORE = 0.7
+    QS_LATENCY_FAST_SEC = 1.0
+    QS_LATENCY_FAST_SCORE = 1.0
+    QS_LATENCY_OK_SEC = 3.0
+    QS_LATENCY_OK_SCORE = 0.8
+    QS_LATENCY_SLOW_SCORE = 0.6
 
     def __init__(self):
         self.fusion_strategies = {
@@ -109,29 +136,29 @@ class ResponseFusionEngine:
 
         # Length appropriateness (not too short, not too long)
         content_len = len(response.text or "")
-        if 50 < content_len < 2000:
-            scores.append(1.0)
+        if self.QS_LEN_IDEAL_MIN < content_len < self.QS_LEN_IDEAL_MAX:
+            scores.append(self.QS_LEN_FULL_SCORE)
         elif content_len > 0:
-            scores.append(0.5)
+            scores.append(self.QS_LEN_SOME_SCORE)
         else:
-            scores.append(0.0)
+            scores.append(self.QS_LEN_NONE_SCORE)
 
         # Coherence markers (presence of good structure)
         coherence_markers = [".", "!", "?", "\n", ","]
         marker_count = sum((response.text or "").count(m) for m in coherence_markers)
-        if marker_count > 5:
-            scores.append(1.0)
+        if marker_count > self.QS_MARKER_COUNT_MIN:
+            scores.append(self.QS_COHERENT_SCORE)
         else:
-            scores.append(0.7)
+            scores.append(self.QS_PARTIAL_SCORE)
 
         # Latency penalty (faster is better) — response_time_ms is in milliseconds
         latency_sec = (response.response_time_ms or 0) / 1000
-        if latency_sec < 1.0:
-            scores.append(1.0)
-        elif latency_sec < 3.0:
-            scores.append(0.8)
+        if latency_sec < self.QS_LATENCY_FAST_SEC:
+            scores.append(self.QS_LATENCY_FAST_SCORE)
+        elif latency_sec < self.QS_LATENCY_OK_SEC:
+            scores.append(self.QS_LATENCY_OK_SCORE)
         else:
-            scores.append(0.6)
+            scores.append(self.QS_LATENCY_SLOW_SCORE)
 
         return sum(scores) / len(scores)
 
@@ -151,12 +178,9 @@ class ModelEnsemble:
         self.fusion_engine = ResponseFusionEngine()
         self.weights: Dict[str, float] = {}
 
-        # Default weights for Extended mode
-        self.default_models = [
-            ModelWeight("claude-3-opus", 0.4, priority=1),
-            ModelWeight("gpt-4o", 0.4, priority=1),
-            ModelWeight("mixtral-local", 0.2, priority=2),
-        ]
+        # Default weights for Extended mode (single source of truth —
+        # get_default_weights() below; do not redefine inline elsewhere).
+        self.default_models = get_default_weights()
 
     def configure_ensemble(self, models: List[ModelWeight]) -> None:
         """Configure ensemble with specific models and weights"""
@@ -310,13 +334,7 @@ class ModelEnsemble:
 async def ensemble_query(prompt: str, llm_service: Any, strategy: str = "best_single") -> str:
     """Quick ensemble query returning just the text response"""
     ensemble = ModelEnsemble(llm_service)
-    ensemble.configure_ensemble(
-        [
-            ModelWeight("gpt-4o", 0.4),
-            ModelWeight("claude-3-opus", 0.4),
-            ModelWeight("mixtral-local", 0.2),
-        ]
-    )
+    ensemble.configure_ensemble(get_default_weights())
 
     result = await ensemble.ensemble_generate(prompt, fusion_strategy=strategy)
     return result.content

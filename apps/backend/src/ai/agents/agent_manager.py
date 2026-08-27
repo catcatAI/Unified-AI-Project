@@ -22,7 +22,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 from core.system.config.magic_numbers import loop_sleep, retry_value, timeout_value
-from core.system.config.network_defaults import DEFAULT_HOST
+from core.system.config.network_defaults import AGENT_ROUTER_PORT, DEFAULT_HOST
 from core.utils import safe_error
 
 # =============================================================================
@@ -311,7 +311,9 @@ class AgentManager:
         self.enable_router = enable_router
         self.router_process: Optional[subprocess.Popen] = None
         self._router_path: Optional[str] = None
-        self.router_port = 11435
+        # Single source of truth in network_defaults (was hardcoded here and
+        # inside the embedded router template docstring below).
+        self.router_port = AGENT_ROUTER_PORT
         self.router_url = f"http://{DEFAULT_HOST}:{self.router_port}"
 
         # P0-3: 状态管理器和结果评估器

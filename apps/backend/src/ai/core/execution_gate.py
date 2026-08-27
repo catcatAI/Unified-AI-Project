@@ -32,6 +32,43 @@ REVERSIBILITY = {
     "execute": 0.0,  # 执行类：不可逆
     "none": 1.0,  # 无操作
 }
+REVERSIBILITY_DEFAULT = 0.5
+
+# 影响度基线表。范围 0.0(影响大) ~ 1.0(无影响)
+IMPACT_BASE = {
+    "read": 1.0,
+    "search": 1.0,
+    "create": 0.9,
+    "modify": 0.7,
+    "delete": 0.4,
+    "send": 0.3,
+    "system": 0.2,
+    "execute": 0.2,
+    "none": 1.0,
+}
+IMPACT_DEFAULT = 0.5
+
+# Scope / clarity adjustments (named — were bare literals in _estimate_*).
+IMPACT_MAX_SCOPE_PENALTY = 0.3   # 全部/所有 → much bigger blast radius
+IMPACT_MIN_IMPACT_FLOOR = 0.1
+IMPACT_MIN_SCOPE_BONUS = 0.1     # 单一/一个 → smaller blast radius
+CLARITY_VERB_BONUS = 0.1         # explicit action verb present
+CLARITY_OBJECT_PATH_BONUS = 0.1  # file path present
+CLARITY_URL_BONUS = 0.1          # URL present
+CLARITY_VAGUE_PENALTY = 0.2      # vague wording
+CLARITY_VAGUE_FLOOR = 0.1
+CLARITY_TOO_SHORT = 5            # chars; below = unclear
+CLARITY_SHORT_PENALTY = 0.1
+CLARITY_SHORT_FLOOR = 0.2
+
+# Feedback-loop thresholds (C³): when historical success rate earns a
+# threshold adjustment.
+FB_MIN_SAMPLES = 3
+FB_RELIABLE_RATE = 0.9
+FB_RELIABLE_MIN_SAMPLES = 5
+FB_RELIABLE_ADJUSTMENT = 0.05
+FB_UNRELIABLE_RATE = 0.3
+FB_UNRELIABLE_ADJUSTMENT = -0.05
 
 # Actions that must never auto-execute — always require explicit user
 # confirmation regardless of exec score (see decide()). The score formula
@@ -339,32 +376,22 @@ class ExecutionGate:
         self, action_type: str, user_message: str, query_type: str, confidence: float
     ) -> float:
         """执行分数 = 可逆性 × 影响度 × 明确度"""
-        reversibility = REVERSIBILITY.get(action_type, 0.5)
+        reversibility = REVERSIBILITY.get(action_type, REVERSIBILITY_DEFAULT)
         impact = self._estimate_impact(action_type, user_message)
         clarity = self._estimate_clarity(user_message, query_type, confidence)
         return round(reversibility * impact * clarity, 3)
 
     def _estimate_impact(self, action_type: str, user_message: str) -> float:
         """根据操作类型和范围估计影响度。范围 0.0(影响大) ~ 1.0(无影响)"""
-        base = {
-            "read": 1.0,
-            "search": 1.0,
-            "create": 0.9,
-            "modify": 0.7,
-            "delete": 0.4,
-            "send": 0.3,
-            "system": 0.2,
-            "execute": 0.2,
-            "none": 1.0,
-        }.get(action_type, 0.5)
+        base = IMPACT_BASE.get(action_type, IMPACT_DEFAULT)
 
         scope = self._config.get("scope_words", {})
         # 全部/所有 → 影响更大
         if any_keyword(user_message, tuple(scope.get("max_impact", []))):
-            base = max(0.1, base - 0.3)
+            base = max(IMPACT_MIN_IMPACT_FLOOR, base - IMPACT_MAX_SCOPE_PENALTY)
         # 单一/一个 → 影响较小
         if any_keyword(user_message, tuple(scope.get("min_impact", []))):
-            base = min(1.0, base + 0.1)
+            base = min(1.0, base + IMPACT_MIN_SCOPE_BONUS)
 
         return base
 
@@ -376,22 +403,22 @@ class ExecutionGate:
         # 包含明确动作动词 → 更清晰
         clear_verbs = clarity_cfg.get("clear_verbs", [])
         if any_keyword(text, tuple(clear_verbs)):
-            clarity = min(1.0, clarity + 0.1)
+            clarity = min(1.0, clarity + CLARITY_VERB_BONUS)
 
         # 包含明确对象（文件路径、URL）→ 更清晰
         if re.search(r"[\w/\\]+\.\w+", text):
-            clarity = min(1.0, clarity + 0.1)
+            clarity = min(1.0, clarity + CLARITY_OBJECT_PATH_BONUS)
         if re.search(r"https?://", text):
-            clarity = min(1.0, clarity + 0.1)
+            clarity = min(1.0, clarity + CLARITY_URL_BONUS)
 
         # 模糊词 → 不清晰
         vague_words = clarity_cfg.get("vague_words", [])
         if any_keyword(text, tuple(vague_words)):
-            clarity = max(0.1, clarity - 0.2)
+            clarity = max(CLARITY_VAGUE_FLOOR, clarity - CLARITY_VAGUE_PENALTY)
 
         # 太短 → 不清晰
-        if len(text) < 5:
-            clarity = max(0.2, clarity - 0.1)
+        if len(text) < CLARITY_TOO_SHORT:
+            clarity = max(CLARITY_SHORT_FLOOR, clarity - CLARITY_SHORT_PENALTY)
 
         return clarity
 
@@ -452,11 +479,11 @@ class ExecutionGate:
             return 0.0
         r = self._results[handler]
         total = r["success"] + r["fail"]
-        if total < 3:
+        if total < FB_MIN_SAMPLES:
             return 0.0
         rate = r["success"] / total
-        if rate >= 0.9 and total >= 5:
-            return 0.05  # Proven reliable → slightly lower threshold
-        if rate <= 0.3 and total >= 3:
-            return -0.05  # Often fails → slightly higher threshold
+        if rate >= FB_RELIABLE_RATE and total >= FB_RELIABLE_MIN_SAMPLES:
+            return FB_RELIABLE_ADJUSTMENT  # Proven reliable → slightly lower threshold
+        if rate <= FB_UNRELIABLE_RATE and total >= FB_MIN_SAMPLES:
+            return FB_UNRELIABLE_ADJUSTMENT  # Often fails → slightly higher threshold
         return 0.0

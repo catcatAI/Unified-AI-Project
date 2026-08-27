@@ -47,6 +47,19 @@ class CalibrationReport:
 
 
 class MetaController:
+    # ------------------------------------------------------------------
+    # Calibration thresholds (named constants — were bare literals in
+    # _compute_calibration). Tune the calibration sensitivity HERE.
+    # ------------------------------------------------------------------
+    MIN_SAMPLES_FOR_REPORT = 3        # below → no calibration report
+    OVERCONFIDENT_THRESHOLD = 0.7     # confidence above + wrong = overconfident sample
+    UNDERCONFIDENT_THRESHOLD = 0.3    # confidence below + correct = underconfident sample
+    MISCALIBRATION_RATIO = 0.2        # ratio above → apply adjustment
+    ADJUSTMENT_STEP = 0.05            # magnitude of each threshold nudge
+    RELIABLE_MAX_CAL_ERROR = 0.2      # calibration error below → reliable
+    RELIABLE_MIN_CORRECT = 10         # labeled samples needed for reliability
+    MULTIPLIER_DECAY = 0.8            # closed-loop multiplier decay per negative cycle
+
     def __init__(
         self,
         window_size: int = _WINDOW_SIZE,
@@ -126,7 +139,7 @@ class MetaController:
         elif len(hist) >= 3 and all(h == "under" for h in hist[-3:]):
             self._adjustment_multipliers[source] = min(3.0, old_mult * 1.5)
         elif len(hist) >= 2 and all(h == "stable" for h in hist[-2:]):
-            self._adjustment_multipliers[source] = max(1.0, old_mult * 0.8)
+            self._adjustment_multipliers[source] = max(1.0, old_mult * self.MULTIPLIER_DECAY)
         new_mult = self._adjustment_multipliers.get(source, 1.0)
         if abs(new_mult - old_mult) > 0.01:
             state_store.emit_event(
@@ -156,7 +169,7 @@ class MetaController:
             return _dc_replace(report, suggested_threshold_adjustment=adjusted)
 
         samples = list(self._samples.get(source, []))
-        if len(samples) < 3:
+        if len(samples) < self.MIN_SAMPLES_FOR_REPORT:
             return None
 
         avg_conf = sum(s.confidence for s in samples) / len(samples)
@@ -170,18 +183,22 @@ class MetaController:
         if known_correct:
             accuracy = sum(1 for s in known_correct if s.correct) / len(known_correct)
             calibration_error = abs(ewma_conf - accuracy)
-            overconfident = [s for s in known_correct if s.confidence > 0.7 and not s.correct]
-            underconfident = [s for s in known_correct if s.confidence < 0.3 and s.correct]
+            overconfident = [
+                s for s in known_correct if s.confidence > self.OVERCONFIDENT_THRESHOLD and not s.correct
+            ]
+            underconfident = [
+                s for s in known_correct if s.confidence < self.UNDERCONFIDENT_THRESHOLD and s.correct
+            ]
             overconfidence_ratio = len(overconfident) / len(known_correct) if known_correct else 0.0
             underconfidence_ratio = (
                 len(underconfident) / len(known_correct) if known_correct else 0.0
             )
 
         raw_adjustment = 0.0
-        if overconfidence_ratio > 0.2:
-            raw_adjustment = -0.05
-        elif underconfidence_ratio > 0.2:
-            raw_adjustment = 0.05
+        if overconfidence_ratio > self.MISCALIBRATION_RATIO:
+            raw_adjustment = -self.ADJUSTMENT_STEP
+        elif underconfidence_ratio > self.MISCALIBRATION_RATIO:
+            raw_adjustment = self.ADJUSTMENT_STEP
 
         # Store raw adjustment for future cache-hit recomputation
         self._raw_adjustments[source] = raw_adjustment
@@ -192,7 +209,10 @@ class MetaController:
         multiplier = self._adjustment_multipliers.get(source, 1.0)
         adjustment = round(raw_adjustment * multiplier, 3)
 
-        is_reliable = calibration_error < 0.2 and len(known_correct) > 10
+        is_reliable = (
+            calibration_error < self.RELIABLE_MAX_CAL_ERROR
+            and len(known_correct) > self.RELIABLE_MIN_CORRECT
+        )
 
         # Cache the adjustment for auto-apply
         self._threshold_adjustments[source] = adjustment

@@ -167,6 +167,16 @@ class PriorityNegotiator:
 
 # ── Default Voter Functions ──────────────────────────────────────────
 
+# heartbeat_voter signature constants (named — were bare literals):
+# health below HB_UNHEALTHY forces conservative routing; the bias around
+# HB_NEUTRAL scales temperature/tokens by the factors below.
+HB_NEUTRAL = 0.5
+HB_BIAS_SCALE = 2.0
+HB_UNHEALTHY = 0.3
+HB_TEMP_SCALE = 0.5
+HB_TOKENS_SCALE = 50
+HB_BASE_CONFIDENCE = 0.3
+
 
 def lifecycle_voter(context: Dict[str, Any]) -> Optional[VoterVote]:
     """Extract lifecycle routing preference from context."""
@@ -260,21 +270,21 @@ def meta_calibration_voter(context: Dict[str, Any]) -> Optional[VoterVote]:
 def heartbeat_voter(context: Dict[str, Any]) -> Optional[VoterVote]:
     """Extract Heartbeat system health as a confidence multiplier.
 
-    When system health is low (<0.3), biases toward conservative routing
-    (the system is stressed/unstable). When health is high (>0.7), allows
-    more exploratory routing. The effect scales proportionally.
+    When system health is low (<HB_UNHEALTHY), biases toward conservative
+    routing (the system is stressed/unstable). When health is high (>0.7),
+    allows more exploratory routing. The effect scales proportionally.
     """
     hb = context.get("heartbeat_health")
     if not hb:
         return None
     health = hb.get("system_health", 0.5)
-    health_bias = round((health - 0.5) * 2.0, 3)
+    health_bias = round((health - HB_NEUTRAL) * HB_BIAS_SCALE, 3)
     return VoterVote(
-        routing_mode="conservative" if health < 0.3 else None,
+        routing_mode="conservative" if health < HB_UNHEALTHY else None,
         response_style=None,
-        temperature_bias=health_bias * 0.5,
-        tokens_bias=int(health_bias * 50),
-        confidence=abs(health_bias) + 0.3,
+        temperature_bias=health_bias * HB_TEMP_SCALE,
+        tokens_bias=int(health_bias * HB_TOKENS_SCALE),
+        confidence=abs(health_bias) + HB_BASE_CONFIDENCE,
     )
 
 

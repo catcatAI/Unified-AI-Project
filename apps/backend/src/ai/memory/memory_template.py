@@ -218,14 +218,21 @@ class MemoryTemplate:
             metadata=data.get("metadata", {}),
         )
 
+    # EMA smoothing for success_rate: weight of history vs new feedback.
+    # (Named constants — was a bare 0.8/0.2 pair inside record_usage.)
+    SUCCESS_EMA_HISTORY_WEIGHT = 0.8
+    SUCCESS_EMA_NEW_WEIGHT = 0.2
+
     def record_usage(self, success: bool = True) -> None:
         """记录使用"""
         self.usage_count += 1
         self.last_used = datetime.now()
 
-        # 更新成功率（移动平均：80% 历史 + 20% 新反馈）
+        # 更新成功率（移动平均）
         current_success = 1.0 if success else 0.0
-        self.success_rate = (self.success_rate * 0.8) + (current_success * 0.2)
+        self.success_rate = (
+            self.success_rate * self.SUCCESS_EMA_HISTORY_WEIGHT
+        ) + (current_success * self.SUCCESS_EMA_NEW_WEIGHT)
 
         self.updated_at = datetime.now(timezone.utc)
 

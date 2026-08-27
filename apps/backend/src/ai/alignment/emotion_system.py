@@ -85,6 +85,18 @@ class EmotionSystem:
     作为 Level 5 ASI 的三大支柱之一, 确保所有决策考虑情感和价值因素
     """
 
+    # ------------------------------------------------------------------
+    # PAD → primary-emotion classification boundaries & empathy switch
+    # (named constants — were bare literals in apply_influence /
+    # _generate_empathetic_response / _identify_primary_emotion).
+    # ------------------------------------------------------------------
+    PAD_VALENCE_BOUNDARY = 0.3        # |valence| above → positive/negative quadrant
+    PAD_AROUSAL_BOUNDARY = 0.5        # arousal above → high-arousal quadrant
+    PAD_SURPRISE_AROUSAL = 0.6        # arousal above (neutral valence) → surprise
+    SENTIMENT_POSITIVE = 0.5          # TextBlob polarity boundaries
+    SENTIMENT_NEGATIVE = -0.5
+    EMPATHY_HIGH_LEVEL = 0.7          # empathy level above → "高度共情" prefix
+
     def __init__(self, system_id: str = "emotion_system_v1"):
         self.system_id = system_id
         self.emotion_history: List[EmotionalState] = []
@@ -254,7 +266,7 @@ class EmotionSystem:
             EmotionType.TRUST: "回應信任並建立更深層的神經連結",
         }
         base = templates.get(state.primary_emotion, "提供適當的數據支持與情感回應")
-        prefix = "高度共情" if level > 0.7 else "標準回應"
+        prefix = "高度共情" if level > self.EMPATHY_HIGH_LEVEL else "標準回應"
         return f"{prefix}：{base}"
 
     def _extract_emotion_features(self, context: Dict[str, Any]) -> Dict[str, float]:
@@ -279,7 +291,7 @@ class EmotionSystem:
         sentiment = features.get("sentiment", 0.0)
         stress = features.get("stress_level", 0.0)
 
-        if sentiment > 0.5:
+        if sentiment > self.SENTIMENT_POSITIVE:
             return EmotionType.JOY, sentiment
         from core.system.config.tiered_loader import get_config
 
@@ -289,7 +301,7 @@ class EmotionSystem:
         )
         if stress > _stress_class:
             return EmotionType.FEAR, stress
-        if sentiment < -0.5:
+        if sentiment < self.SENTIMENT_NEGATIVE:
             return EmotionType.SADNESS, abs(sentiment)
         return EmotionType.TRUST, 0.5
 
@@ -352,17 +364,19 @@ class EmotionSystem:
         new_arousal = max(0.0, min(1.0, last.arousal + d_arousal * effective))
 
         # Determine primary emotion from new PAD values
-        if new_valence > 0.3 and new_arousal > 0.5:
+        if new_valence > self.PAD_VALENCE_BOUNDARY and new_arousal > self.PAD_AROUSAL_BOUNDARY:
             new_emotion = EmotionType.JOY
-        elif new_valence > 0.3 and new_arousal <= 0.5:
+        elif new_valence > self.PAD_VALENCE_BOUNDARY:
             new_emotion = EmotionType.TRUST
-        elif new_valence < -0.3 and new_arousal > 0.5:
+        elif new_valence < -self.PAD_VALENCE_BOUNDARY and new_arousal > self.PAD_AROUSAL_BOUNDARY:
             new_emotion = (
-                EmotionType.ANGER if new_valence < -0.3 and d_dominance > 0 else EmotionType.FEAR
+                EmotionType.ANGER
+                if new_valence < -self.PAD_VALENCE_BOUNDARY and d_dominance > 0
+                else EmotionType.FEAR
             )
-        elif new_valence < -0.3 and new_arousal <= 0.5:
+        elif new_valence < -self.PAD_VALENCE_BOUNDARY:
             new_emotion = EmotionType.SADNESS
-        elif new_arousal > 0.6:
+        elif new_arousal > self.PAD_SURPRISE_AROUSAL:
             new_emotion = EmotionType.SURPRISE
         else:
             new_emotion = last.primary_emotion

@@ -121,6 +121,18 @@ DEFAULT_LOCAL_MODEL_THRESHOLDS = [
 
 DEFAULT_CLOUD_PRIORITY = ["openai", "anthropic", "google"]
 
+# Per-backend model selection matrix (task type → model id). Centralized so
+# upgrading to newer models is a config/env change, not a code change.
+# Override via config "auto_mode.backend_models" or ANGELA_MODEL_<BACKEND> env.
+DEFAULT_BACKEND_MODELS = {
+    "openai": {"general": "gpt-4o-mini", "reasoning": "gpt-4o"},
+    "anthropic": {"general": "claude-3-sonnet", "reasoning": "claude-3-opus"},
+    "google": {"general": "gemini-pro", "reasoning": "gemini-pro"},
+    "llamacpp": {"general": "llama-3-8b-instruct"},
+}
+
+DEFAULT_OLLAMA_REASONING_MODEL = "deepseek-r1:latest"
+
 
 # =============================================================================
 # HardwareAnalyzer
@@ -703,7 +715,7 @@ class NeuroAutoSelector:
             self._select_cloud(decision, available, task)
         elif AutoBackendChoice.LLAMA_CPP in available:
             decision.backend = AutoBackendChoice.LLAMA_CPP
-            decision.model = "llama-3-8b-instruct"
+            decision.model = self._backend_model("llamacpp", False)
             decision.reason = "llamacpp_fallback"
         else:
             decision.backend = AutoBackendChoice.NEUROBLENDER
@@ -730,17 +742,36 @@ class NeuroAutoSelector:
             decision.backend = AutoBackendChoice.NEUROBLENDER
         elif force in ("llamacpp", "llama_cpp"):
             decision.backend = AutoBackendChoice.LLAMA_CPP
-            decision.model = "llama-3-8b-instruct"
+            decision.model = self._backend_model("llamacpp", False)
         elif force in ("ollama",):
             decision.backend = AutoBackendChoice.OLLAMA
             decision.model = self._recommend_ollama_model(self._hw_details)
         elif force in ("openai",):
             decision.backend = AutoBackendChoice.OPENAI
-            decision.model = "gpt-4o-mini"
+            decision.model = self._backend_model("openai", False)
         elif force in ("anthropic",):
             decision.backend = AutoBackendChoice.ANTHROPIC
-            decision.model = "claude-3-sonnet"
+            decision.model = self._backend_model("anthropic", False)
         decision.reason = f"force_backend:{force}"
+
+    def _backend_model(self, backend: str, needs_reasoning: bool) -> str:
+        """Resolve model id for a cloud/llamacpp backend.
+
+        Priority: config "auto_mode.backend_models" > ANGELA_MODEL_<BACKEND>
+        env > DEFAULT_BACKEND_MODELS defaults.
+        """
+        import os
+
+        matrix = (
+            self.config.get("auto_mode", {}).get("backend_models")
+            or DEFAULT_BACKEND_MODELS
+        )
+        entry = matrix.get(backend, {})
+        model = (
+            entry.get("reasoning" if needs_reasoning else "general")
+            or entry.get("general", "")
+        )
+        return os.getenv(f"ANGELA_MODEL_{backend.upper()}", model)
 
     def _is_local_capable(self, hw_details: Dict[str, Any]) -> bool:
         """Check if hardware can run local LLM decently."""
@@ -763,7 +794,9 @@ class NeuroAutoSelector:
             # Try to use reasoning model
             ram = hw_details.get("ram_total_gb", 0)
             if ram >= limit_value("ai.neuro_auto_selector.reasoning_ram_min", 16):
-                decision.model = "deepseek-r1:latest"
+                decision.model = self.config.get("auto_mode", {}).get(
+                    "ollama_reasoning_model", DEFAULT_OLLAMA_REASONING_MODEL
+                )
             decision.reason = "local_reasoning"
         else:
             decision.reason = "local_general"
@@ -787,15 +820,11 @@ class NeuroAutoSelector:
                 break
 
         if decision.backend == AutoBackendChoice.OPENAI:
-            decision.model = "gpt-4o-mini"
-            if task.needs_reasoning:
-                decision.model = "gpt-4o"
+            decision.model = self._backend_model("openai", task.needs_reasoning)
         elif decision.backend == AutoBackendChoice.ANTHROPIC:
-            decision.model = "claude-3-sonnet"
-            if task.needs_reasoning:
-                decision.model = "claude-3-opus"
+            decision.model = self._backend_model("anthropic", task.needs_reasoning)
         elif decision.backend == AutoBackendChoice.GOOGLE:
-            decision.model = "gemini-pro"
+            decision.model = self._backend_model("google", task.needs_reasoning)
 
         decision.reason = f"cloud_{decision.backend.value}"
 

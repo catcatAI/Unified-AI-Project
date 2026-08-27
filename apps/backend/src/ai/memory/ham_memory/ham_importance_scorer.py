@@ -77,9 +77,59 @@ class ImportanceScorer:
         "谁",
     }
 
+    # -------------------------------------------------------------------------
+    # Sub-score coefficients — named constants (previously bare literals inside
+    # the _calculate_* helpers). Calibrated 2026-07-15 (§X #260); recalibrate
+    # HERE, never inline, so the four-dimension weights above stay meaningful.
+    # -------------------------------------------------------------------------
+    # Keyword sub-scores: (per-match step, cap)
+    KW_URGENT_STEP = 0.15
+    KW_URGENT_CAP = 0.4
+    KW_ERROR_STEP = 0.10
+    KW_ERROR_CAP = 0.3
+    KW_POSITIVE_STEP = 0.05
+    KW_POSITIVE_CAP = 0.15
+    KW_QUESTION_STEP = 0.08
+    KW_QUESTION_CAP = 0.15
+    # Content sub-scores
+    CONTENT_LONG_LEN = 200
+    CONTENT_LONG_SCORE = 0.2
+    CONTENT_MEDIUM_LEN = 100
+    CONTENT_MEDIUM_SCORE = 0.1
+    CONTENT_CODE_BLOCK_SCORE = 0.3
+    CONTENT_CONTROL_FLOW_SCORE = 0.2
+    CONTENT_NUMERIC_SCORE = 0.1
+    CONTENT_URL_SCORE = 0.15
+    CONTENT_CAP = 0.5
+    # Metadata sub-scores
+    META_USER_SPEAKER_SCORE = 0.2
+    META_SYSTEM_SPEAKER_SCORE = 0.1
+    META_PROTECTED_SCORE = 0.3
+    META_IMPORTANCE_HIGH_SCORE = 0.25
+    META_IMPORTANCE_MED_SCORE = 0.1
+    META_TAG_STEP = 0.05
+    META_TAG_CAP = 0.15
+    META_EMOTION_SCORE = 0.1
+    META_CAP = 0.5
+    # Access sub-scores
+    ACCESS_RECENT_WINDOW_HOURS = 24
+    ACCESS_FREQ_STEP = 0.05
+    ACCESS_FREQ_CAP = 0.5
+    ACCESS_RECENT_STEP = 0.1
+    ACCESS_RECENT_CAP = 0.3
+
+    # Time-decay sub-scores (named — were bare literals in _calculate_time_score
+    # / record_access / cleanup_old_history).
+    TIME_DECAY_FACTOR = 0.95        # daily exponential decay factor
+    TIME_DECAY_FLOOR = 0.3          # minimum recency score for old memories
+    TIME_FRESH_DAYS = 1             # no decay within this many days
+    TIME_ERROR_FALLBACK = 0.5       # score when timestamp is unparseable
+    ACCESS_HISTORY_MAX = 100        # per-memory access entries kept
+    HISTORY_RETENTION_DAYS = 30     # default cleanup window
+
     def __init__(self):
         self._access_history: Dict[str, List[datetime]] = {}
-        self._time_decay_factor = 0.95  # Daily decay factor
+        self._time_decay_factor = self.TIME_DECAY_FACTOR
         # Dimension weights (must sum to 1.0).
         self._keyword_weight = 0.30  # Weight for keyword analysis
         self._content_weight = 0.05  # Weight for content characteristics
@@ -133,22 +183,22 @@ class ImportanceScorer:
         # Urgent keywords - highest weight
         urgent_count = sum(1 for kw in self.URGENT_KEYWORDS if kw in content_lower)
         if urgent_count > 0:
-            score += min(0.4, urgent_count * 0.15)
+            score += min(self.KW_URGENT_CAP, urgent_count * self.KW_URGENT_STEP)
 
         # Error keywords - high weight
         error_count = sum(1 for kw in self.ERROR_KEYWORDS if kw in content_lower)
         if error_count > 0:
-            score += min(0.3, error_count * 0.10)
+            score += min(self.KW_ERROR_CAP, error_count * self.KW_ERROR_STEP)
 
         # Positive keywords - medium weight
         positive_count = sum(1 for kw in self.POSITIVE_KEYWORDS if kw in content_lower)
         if positive_count > 0:
-            score += min(0.15, positive_count * 0.05)
+            score += min(self.KW_POSITIVE_CAP, positive_count * self.KW_POSITIVE_STEP)
 
         # Question keywords - questions are often important
         question_count = sum(1 for kw in self.QUESTION_KEYWORDS if kw in content_lower)
         if question_count > 0:
-            score += min(0.15, question_count * 0.08)
+            score += min(self.KW_QUESTION_CAP, question_count * self.KW_QUESTION_STEP)
 
         return score
 
@@ -158,26 +208,26 @@ class ImportanceScorer:
         content_length = len(content)
 
         # Longer content tends to be more substantial
-        if content_length > 200:
-            score += 0.2
-        elif content_length > 100:
-            score += 0.1
+        if content_length > self.CONTENT_LONG_LEN:
+            score += self.CONTENT_LONG_SCORE
+        elif content_length > self.CONTENT_MEDIUM_LEN:
+            score += self.CONTENT_MEDIUM_SCORE
 
         # Code or structured content (has specific patterns)
         if re.search(r"\b(function|class|def|import|from)\b", content):
-            score += 0.3
+            score += self.CONTENT_CODE_BLOCK_SCORE
         elif re.search(r"\b(if|for|while|return)\b", content):
-            score += 0.2
+            score += self.CONTENT_CONTROL_FLOW_SCORE
 
         # Contains numbers or measurements (factual data)
         if re.search(r"\b\d+(\.\d+)?\b", content):
-            score += 0.1
+            score += self.CONTENT_NUMERIC_SCORE
 
         # Contains URLs or references
         if re.search(r"https?://\S+", content):
-            score += 0.15
+            score += self.CONTENT_URL_SCORE
 
-        return min(0.5, score)
+        return min(self.CONTENT_CAP, score)
 
     def _calculate_metadata_score(self, metadata: Dict[str, Any]) -> float:
         """Calculate score based on metadata factors"""
@@ -185,31 +235,31 @@ class ImportanceScorer:
 
         # User messages are more important
         if metadata.get("speaker") == "user":
-            score += 0.2
+            score += self.META_USER_SPEAKER_SCORE
         elif metadata.get("speaker") == "system":
-            score += 0.1
+            score += self.META_SYSTEM_SPEAKER_SCORE
 
         # Protected memories are highly important
         if metadata.get("protected", False):
-            score += 0.3
+            score += self.META_PROTECTED_SCORE
 
         # Custom importance tag
         if metadata.get("importance") == "high":
-            score += 0.25
+            score += self.META_IMPORTANCE_HIGH_SCORE
         elif metadata.get("importance") == "medium":
-            score += 0.1
+            score += self.META_IMPORTANCE_MED_SCORE
 
         # Memories with tags might be more important
         tags = metadata.get("tags", [])
         if tags:
-            score += min(0.15, len(tags) * 0.05)
+            score += min(self.META_TAG_CAP, len(tags) * self.META_TAG_STEP)
 
         # Memories with emotional context
         emotion = metadata.get("emotion", {})
         if emotion:
-            score += 0.1
+            score += self.META_EMOTION_SCORE
 
-        return min(0.5, score)
+        return min(self.META_CAP, score)
 
     def _calculate_access_score(self, memory_id: str) -> float:
         """Calculate score based on access frequency and recency"""
@@ -220,15 +270,16 @@ class ImportanceScorer:
         if not accesses:
             return 0.0
 
-        # Recent accesses (last 24 hours) get higher score
+        # Recent accesses (last N hours) get higher score
         now = datetime.now()
-        recent_accesses = [a for a in accesses if (now - a) < timedelta(hours=24)]
+        recent_window = timedelta(hours=self.ACCESS_RECENT_WINDOW_HOURS)
+        recent_accesses = [a for a in accesses if (now - a) < recent_window]
 
         # Base score from access frequency
-        score = min(0.5, len(accesses) * 0.05)
+        score = min(self.ACCESS_FREQ_CAP, len(accesses) * self.ACCESS_FREQ_STEP)
 
         # Bonus for recent accesses
-        score += min(0.3, len(recent_accesses) * 0.1)
+        score += min(self.ACCESS_RECENT_CAP, len(recent_accesses) * self.ACCESS_RECENT_STEP)
 
         return score
 
@@ -245,19 +296,19 @@ class ImportanceScorer:
             now = datetime.now()
             age_days = (now - timestamp).days
 
-            # No decay for very recent memories (< 1 day)
-            if age_days < 1:
+            # No decay for very recent memories
+            if age_days < self.TIME_FRESH_DAYS:
                 return 1.0
 
             # Apply exponential decay
             decay = self._time_decay_factor**age_days
-            return max(0.3, decay)  # Minimum score of 0.3
+            return max(self.TIME_DECAY_FLOOR, decay)
 
         except (
             Exception
         ) as e:  # broad exception acceptable: time score fallback should return default
             logger.warning(f"Error calculating time score: {e}", exc_info=True)
-            return 0.5
+            return self.TIME_ERROR_FALLBACK
 
     def record_access(self, memory_id: str) -> None:
         """Record that a memory was accessed"""
@@ -266,11 +317,13 @@ class ImportanceScorer:
 
         self._access_history[memory_id].append(datetime.now())
 
-        # Keep only recent history (last 100 accesses)
-        if len(self._access_history[memory_id]) > 100:
-            self._access_history[memory_id] = self._access_history[memory_id][-100:]
+        # Keep only recent history
+        if len(self._access_history[memory_id]) > self.ACCESS_HISTORY_MAX:
+            self._access_history[memory_id] = self._access_history[memory_id][
+                -self.ACCESS_HISTORY_MAX :
+            ]
 
-    def cleanup_old_history(self, days: int = 30) -> None:
+    def cleanup_old_history(self, days: int = HISTORY_RETENTION_DAYS) -> None:
         """Remove access history older than specified days"""
         cutoff = datetime.now() - timedelta(days=days)
 

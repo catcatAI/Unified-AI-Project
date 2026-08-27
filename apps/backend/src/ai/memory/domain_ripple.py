@@ -126,6 +126,25 @@ _AXIS_SCHEMA = {
 }
 
 
+# Ripple → axis application gains (named constants — were bare literals in
+# apply_ripple_to_state). Tune the ripple influence strength HERE.
+GAIN_EPSILON_LOGIC = 0.10
+GAIN_EPSILON_COMPLEXITY = 0.05
+GAIN_DELTA_BOND_RATIO = 0.5         # bond moves at half the engagement rate
+
+# Negative-valence trigger magnitudes (confusion / fear / overload)
+TRIGGER_CONFUSION_GAIN = 0.20
+TRIGGER_CLARITY_LOSS = 0.15
+TRIGGER_SURPRISE_SMALL = 0.10
+TRIGGER_FEAR_GAIN = 0.30
+TRIGGER_CERTAINTY_LOSS = 0.30
+TRIGGER_TENSION_GAIN = 0.20
+TRIGGER_OVERLOAD_FATIGUE = 0.20
+TRIGGER_OVERLOAD_SURPRISE = 0.20
+TRIGGER_OVERLOAD_FOCUS_LOSS = 0.20
+TRIGGER_OVERLOAD_CONFUSION = 0.30
+
+
 def apply_ripple_to_state(state_matrix: Any, ripple: Dict[str, Any], scale: float = 1.0) -> None:
     """Apply a single ripple dict onto the real StateMatrix4D, fully.
 
@@ -150,8 +169,8 @@ def apply_ripple_to_state(state_matrix: Any, ripple: Dict[str, Any], scale: floa
 
     ed = ripple.get("epsilon_delta") or 0.0
     if ed:
-        _add("epsilon", "logic", min(ed, 1.0) * 0.10)
-        _add("epsilon", "complexity", min(ed, 1.0) * 0.05)
+        _add("epsilon", "logic", min(ed, 1.0) * GAIN_EPSILON_LOGIC)
+        _add("epsilon", "complexity", min(ed, 1.0) * GAIN_EPSILON_COMPLEXITY)
 
     if ripple.get("alpha_arousal"):
         _add("alpha", "arousal", ripple["alpha_arousal"])
@@ -178,22 +197,22 @@ def apply_ripple_to_state(state_matrix: Any, ripple: Dict[str, Any], scale: floa
 
     if ripple.get("delta_engagement"):
         _add("delta", "engagement", ripple["delta_engagement"])
-        _add("delta", "bond", ripple["delta_engagement"] * 0.5)
+        _add("delta", "bond", ripple["delta_engagement"] * GAIN_DELTA_BOND_RATIO)
 
     # --- Negative-valence triggers (real cognitive-affective responses) ---
     if ripple.get("confusion"):
-        _add("beta", "confusion", 0.20)
-        _add("beta", "clarity", -0.15)
-        _add("gamma", "surprise", 0.10)
+        _add("beta", "confusion", TRIGGER_CONFUSION_GAIN)
+        _add("beta", "clarity", -TRIGGER_CLARITY_LOSS)
+        _add("gamma", "surprise", TRIGGER_SURPRISE_SMALL)
     if ripple.get("fear"):
-        _add("gamma", "fear", 0.30)
-        _add("epsilon", "certainty", -0.30)
-        _add("alpha", "tension", 0.20)
+        _add("gamma", "fear", TRIGGER_FEAR_GAIN)
+        _add("epsilon", "certainty", -TRIGGER_CERTAINTY_LOSS)
+        _add("alpha", "tension", TRIGGER_TENSION_GAIN)
     if ripple.get("overload"):
-        _add("epsilon", "fatigue", 0.20)
-        _add("gamma", "surprise", 0.20)
-        _add("beta", "focus", -0.20)
-        _add("beta", "confusion", 0.30)
+        _add("epsilon", "fatigue", TRIGGER_OVERLOAD_FATIGUE)
+        _add("gamma", "surprise", TRIGGER_OVERLOAD_SURPRISE)
+        _add("beta", "focus", -TRIGGER_OVERLOAD_FOCUS_LOSS)
+        _add("beta", "confusion", TRIGGER_OVERLOAD_CONFUSION)
 
 
 # Mapping from cognition-delta key -> (axis, valid StateMatrix key). Only keys

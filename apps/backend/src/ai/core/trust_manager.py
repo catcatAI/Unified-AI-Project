@@ -101,6 +101,24 @@ class TrustManager:
     安全: 使用 Key A (后端控制) 进行安全信任评估和风险控制
     """
 
+    # ------------------------------------------------------------------
+    # Scoring coefficients & level cutoffs (named constants — were bare
+    # literals scattered through _calculate_* / _classify_trust_level).
+    # ------------------------------------------------------------------
+    CONF_CONSISTENCY_WEIGHT = 0.7     # confidence = consistency×w + data×w
+    CONF_DATA_VOLUME_WEIGHT = 0.3
+    CONF_DATA_FULL_SAMPLES = 10.0     # sample count at which data_factor=1.0
+    CONF_INITIAL = 0.8                # confidence with <2 evidence points
+    CONF_FLOOR = 0.1
+    TRUST_LEVEL_VERY_HIGH = 0.8       # _classify_trust_level cutoffs
+    TRUST_LEVEL_HIGH = 0.6
+    TRUST_LEVEL_MEDIUM = 0.4
+    TRUST_LEVEL_LOW = 0.2
+    RISK_TRUST_IMPACT_STEP = 0.3      # per-dimension (1-score) × this
+    RISK_TRUST_IMPACT_WEIGHT = 0.3    # overall risk fusion weights below
+    RISK_HISTORY_WEIGHT = 0.5
+    RISK_FEATURE_WEIGHT = 0.2
+
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or self._get_default_config()
 
@@ -577,7 +595,7 @@ class TrustManager:
             # 获取历史评分
             history = self.trust_history[entity_id][dimension]
             if len(history) < 2:
-                return 0.8  # 初始评分置信度较高
+                return self.CONF_INITIAL  # 初始评分置信度较高
 
             # 计算方差（评分一致性）
             scores = [s.score for s in history]
@@ -587,10 +605,13 @@ class TrustManager:
 
             # 根据一致性和数据量计算置信度
             consistency_factor = max(0.0, 1.0 - std_dev)
-            data_factor = min(1.0, len(scores) / 10.0)
-            confidence = (consistency_factor * 0.7 + data_factor * 0.3)
+            data_factor = min(1.0, len(scores) / self.CONF_DATA_FULL_SAMPLES)
+            confidence = (
+                consistency_factor * self.CONF_CONSISTENCY_WEIGHT
+                + data_factor * self.CONF_DATA_VOLUME_WEIGHT
+            )
 
-            return max(0.1, min(1.0, confidence))
+            return max(self.CONF_FLOOR, min(1.0, confidence))
 
         except Exception as e:
             logger.warning("Evidence confidence calculation failed: %s", e, exc_info=True)
@@ -623,13 +644,13 @@ class TrustManager:
 
     def _classify_trust_level(self, score: float) -> TrustLevel:
         """根据评分分类信任等级"""
-        if score >= 0.8:
+        if score >= self.TRUST_LEVEL_VERY_HIGH:
             return TrustLevel.VERY_HIGH
-        elif score >= 0.6:
+        elif score >= self.TRUST_LEVEL_HIGH:
             return TrustLevel.HIGH
-        elif score >= 0.4:
+        elif score >= self.TRUST_LEVEL_MEDIUM:
             return TrustLevel.MEDIUM
-        elif score >= 0.2:
+        elif score >= self.TRUST_LEVEL_LOW:
             return TrustLevel.LOW
         else:
             return TrustLevel.VERY_LOW
@@ -726,7 +747,7 @@ class TrustManager:
             trust_impact = 0.0
             if "detailed_scores" in trust_info:
                 for dim_name, score_info in trust_info["detailed_scores"].items():
-                    trust_impact += (1.0 - score_info["score"]) * 0.3
+                    trust_impact += (1.0 - score_info["score"]) * self.RISK_TRUST_IMPACT_STEP
 
             # 基于历史评分波动计算风险
             history_risk = self._calculate_category_history_risk(entity_id, category)
@@ -738,9 +759,9 @@ class TrustManager:
 
             # 综合风险计算
             overall_risk = (
-                trust_impact * 0.3
-                + history_risk * 0.5
-                + feature_risk * 0.2
+                trust_impact * self.RISK_TRUST_IMPACT_WEIGHT
+                + history_risk * self.RISK_HISTORY_WEIGHT
+                + feature_risk * self.RISK_FEATURE_WEIGHT
             )
 
             return max(0.0, min(1.0, overall_risk))

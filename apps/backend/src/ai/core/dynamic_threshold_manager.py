@@ -260,8 +260,15 @@ class DynamicThresholdManager:
             },
             # 集成配置
             "integration": {
-                "enable_feedback_aggregation": True,
-                "enable_prediction_engine": True,
+                # OFF by default: the zero-arg LLMDecisionLoop() call here has
+                # always failed with TypeError (needs 4 required args) and no
+                # consumer reads feedback_aggregator anyway.
+                "enable_feedback_aggregation": False,
+                # Default OFF: the prediction engine reference has zero
+                # consumers in the codebase, and building it eagerly pulls in
+                # the ~1GB torch/MiniLM stack. Flip to true (now cheap — it
+                # reuses GARDENEngine.get_shared()) only if a consumer lands.
+                "enable_prediction_engine": False,
                 "integration_timeout_ms": 500,
             },
             # 日志记录配置
@@ -441,7 +448,15 @@ class DynamicThresholdManager:
         }
 
     def _initialize_feedback_aggregator(self) -> None:
-        """初始化反馈聚合器"""
+        """初始化反馈聚合器
+
+        NOTE: LLMDecisionLoop requires 4 mandatory constructor args
+        (llm_service, state_manager, memory_manager, user_monitor); the
+        historical zero-arg call here ALWAYS raised TypeError and was
+        swallowed by the except below — this path has never succeeded.
+        Nothing in the codebase reads self.feedback_aggregator, so the
+        default config keeps it off. Wire real dependencies before enabling.
+        """
         try:
             from ai.lifecycle.llm_decision_loop import LLMDecisionLoop
 
@@ -458,7 +473,11 @@ class DynamicThresholdManager:
         try:
             from ai.garden.garden_engine import GARDENEngine
 
-            self.prediction_engine = GARDENEngine()
+            # Shared instance: constructing a fresh GARDENEngine here triggers
+            # the ~1GB torch/MiniLM load, and nothing in the codebase ever
+            # reads self.prediction_engine (verified: zero consumers), so at
+            # minimum it must not duplicate the process-wide engine.
+            self.prediction_engine = GARDENEngine.get_shared()
             logger.debug("Prediction engine initialized")
 
         except ImportError:

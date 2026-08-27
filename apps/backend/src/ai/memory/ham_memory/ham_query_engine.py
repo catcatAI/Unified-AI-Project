@@ -1,8 +1,11 @@
 import json
 import logging
 import re
+from collections import OrderedDict
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple, Union
+
+from core.system.config.magic_numbers import cache_value
 
 from .ham_data_processor import HAMDataProcessor
 from .ham_types import HAMDataPackageInternal, HAMMemory, HAMRecallResult
@@ -12,6 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 class HAMQueryEngine:
+    # Score fusion: live keyword relevance vs stored importance weight.
+    SCORE_RELEVANCE_WEIGHT = 0.7
+    SCORE_STORED_WEIGHT = 0.3
+
     def __init__(
         self,
         core_memory_store: Dict[str, HAMDataPackageInternal],
@@ -23,6 +30,29 @@ class HAMQueryEngine:
         self.chroma_collection = chroma_collection
         self.vector_store_manager = vector_store_manager
         self.data_processor = data_processor
+        # Plaintext (gist, full_text) LRU — decrypt+decompress per candidate
+        # per query is O(N × crypto); repeats become dict lookups.
+        self._plaintext_cache: "OrderedDict[str, Tuple[str, str]]" = OrderedDict()
+        self._plaintext_cache_max = cache_value("ham.plaintext_cache_size", 256)
+
+    def _plaintext_cache_get(self, mem_id: str) -> Optional[Tuple[str, str]]:
+        entry = self._plaintext_cache.get(mem_id)
+        if entry is None:
+            return None
+        self._plaintext_cache.move_to_end(mem_id)
+        return entry
+
+    def _plaintext_cache_put(self, mem_id: str, gist: str, full_text: str) -> None:
+        if not mem_id:
+            return
+        self._plaintext_cache[mem_id] = (gist, full_text)
+        self._plaintext_cache.move_to_end(mem_id)
+        while len(self._plaintext_cache) > self._plaintext_cache_max:
+            self._plaintext_cache.popitem(last=False)
+
+    def _invalidate_plaintext(self, mem_id: str) -> None:
+        """Drop cached plaintext when the underlying package changes."""
+        self._plaintext_cache.pop(mem_id, None)
 
     def _normalize_date(self, date_input: Union[str, datetime]) -> datetime:
         """Normalize date."""
@@ -68,9 +98,19 @@ class HAMQueryEngine:
         return True
 
     def _search_keywords_in_memory(
-        self, data_package: Dict[str, Any], keywords: List[str]
+        self,
+        data_package: Dict[str, Any],
+        keywords: List[str],
+        mem_id: str = "",
     ) -> tuple:
-        """Search keywords in memory."""
+        """Search keywords in memory (with plaintext cache)."""
+        # Fast path: cached plaintext from a previous query.
+        cached = self._plaintext_cache_get(mem_id)
+        if cached is not None:
+            gist_content, decompressed_data_str = cached
+            keyword_match = any(keyword.lower() in gist_content.lower() for keyword in keywords)
+            return decompressed_data_str, keyword_match
+
         decompressed_data_str = ""
         try:
             decrypted_data = self.data_processor._decrypt(data_package["encrypted_package"])
@@ -78,6 +118,7 @@ class HAMQueryEngine:
             decompressed_data_str = decompressed_data_bytes.decode("utf-8")
             gist_content = self._extract_gist(data_package, decompressed_data_str)
             keyword_match = any(keyword.lower() in gist_content.lower() for keyword in keywords)
+            self._plaintext_cache_put(mem_id, gist_content, decompressed_data_str)
             return decompressed_data_str, keyword_match
         except Exception:
             logger.warning(
@@ -92,6 +133,7 @@ class HAMQueryEngine:
                 decompressed_data_str = decompressed_data_bytes.decode("utf-8")
                 gist_content = self._extract_gist(data_package, decompressed_data_str)
                 keyword_match = any(keyword.lower() in gist_content.lower() for keyword in keywords)
+                self._plaintext_cache_put(mem_id, gist_content, decompressed_data_str)
                 return decompressed_data_str, keyword_match
             except Exception as e:
                 logger.error(
@@ -129,7 +171,7 @@ class HAMQueryEngine:
 
             if keywords and match:
                 decompressed_data_str, keyword_match = self._search_keywords_in_memory(
-                    data_package, keywords
+                    data_package, keywords, mem_id=mem_id
                 )
                 if not keyword_match:
                     match = False
@@ -294,7 +336,12 @@ class HAMQueryEngine:
                 return None
             content, relevance = result
             stored_relevance = data_package.get("relevance", 0.5)
-            final_score = (relevance * 0.7) + (stored_relevance * 0.3)
+            # Fusion weights: live keyword relevance vs stored importance.
+            # Named constants (were bare 0.7/0.3 literals).
+            final_score = (
+                relevance * self.SCORE_RELEVANCE_WEIGHT
+                + stored_relevance * self.SCORE_STORED_WEIGHT
+            )
             return HAMMemory(
                 memory_id=mem_id,
                 content=(

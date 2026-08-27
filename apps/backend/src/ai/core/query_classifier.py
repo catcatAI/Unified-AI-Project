@@ -56,6 +56,47 @@ class QueryResult:
     reason: str = ""
 
 
+# =============================================================================
+# Confidence tuning coefficients — named constants (previously scattered as
+# bare literals through _adjust_confidence / _calc_actionability). Centralized
+# here so recalibration never requires hunting through matching logic.
+# =============================================================================
+_CONF_ANCHORED_BONUS = 0.05        # anchored keyword match reliability bonus
+_CONF_DENSE_KEYWORD_BONUS = 0.05   # keyword density above _DENSITY_HIGH
+_CONF_SPARSE_KEYWORD_PENALTY = 0.10  # keyword density below _DENSITY_LOW
+_CONF_SHORT_INPUT_PENALTY = 0.05   # input shorter than _INPUT_SHORT
+_CONF_LONG_INPUT_BONUS = 0.03      # input longer than _INPUT_LONG
+_CONF_NEGATION_PENALTY = 0.15      # negation present
+_DENSITY_HIGH = 0.5
+_DENSITY_LOW = 0.2
+_INPUT_SHORT = 5
+_INPUT_LONG = 50
+_CONF_FLOOR = 0.1
+_CONF_CEILING = 0.95
+
+# Actionability baseline per query type (how executable a confident hit is).
+_ACTIONABILITY_BASE = {
+    QueryType.EXECUTE: 0.9,
+    QueryType.FILE: 0.85,
+    QueryType.SEARCH: 0.8,
+    QueryType.CODE: 0.75,
+    QueryType.TASK: 0.7,
+    QueryType.VISION: 0.6,
+    QueryType.AUDIO: 0.6,
+    QueryType.COMMAND: 0.5,
+    QueryType.KNOWLEDGE: 0.1,
+    QueryType.OPINION: 0.1,
+    QueryType.CREATIVE: 0.1,
+    QueryType.GREETING: 0.0,
+    QueryType.REFLEX: 0.0,
+    QueryType.UNKNOWN: 0.0,
+    QueryType.MATH: 0.1,
+    QueryType.LOGIC: 0.1,
+}
+_ACTIONABILITY_DEFAULT = 0.3
+_ACTIONABILITY_VERB_BONUS = 0.1
+
+
 # 操作类型推断用的关键字
 _CREATE_VERBS = {"建立", "新增", "创建", "新增", "建立", "創建", "create", "new", "add"}
 _MODIFY_VERBS = {
@@ -640,50 +681,33 @@ class QueryClassifier:
 
         # 锚定匹配更可靠
         if anchored:
-            conf += 0.05
+            conf += _CONF_ANCHORED_BONUS
 
         # 关键字密度
         words = text.split()
         if len(words) > 0:
             matching_keywords = sum(1 for w in words if len(w) >= 2)
             density = matching_keywords / len(words)
-            if density > 0.5:
-                conf += 0.05
-            elif density < 0.2:
-                conf -= 0.10
+            if density > _DENSITY_HIGH:
+                conf += _CONF_DENSE_KEYWORD_BONUS
+            elif density < _DENSITY_LOW:
+                conf -= _CONF_SPARSE_KEYWORD_PENALTY
 
         # 输入长度
-        if len(text) < 5:
-            conf -= 0.05
-        elif len(text) > 50:
-            conf += 0.03
+        if len(text) < _INPUT_SHORT:
+            conf -= _CONF_SHORT_INPUT_PENALTY
+        elif len(text) > _INPUT_LONG:
+            conf += _CONF_LONG_INPUT_BONUS
 
         # 否定词
         if has_negation:
-            conf -= 0.15
+            conf -= _CONF_NEGATION_PENALTY
 
-        return max(0.1, min(0.95, conf))
+        return max(_CONF_FLOOR, min(_CONF_CEILING, conf))
 
     def _calc_actionability(self, query_type: QueryType, text: str, confidence: float) -> float:
         """计算可执行性分数"""
-        type_base = {
-            QueryType.EXECUTE: 0.9,
-            QueryType.FILE: 0.85,
-            QueryType.SEARCH: 0.8,
-            QueryType.CODE: 0.75,
-            QueryType.TASK: 0.7,
-            QueryType.VISION: 0.6,
-            QueryType.AUDIO: 0.6,
-            QueryType.COMMAND: 0.5,
-            QueryType.KNOWLEDGE: 0.1,
-            QueryType.OPINION: 0.1,
-            QueryType.CREATIVE: 0.1,
-            QueryType.GREETING: 0.0,
-            QueryType.REFLEX: 0.0,
-            QueryType.UNKNOWN: 0.0,
-            QueryType.MATH: 0.1,
-            QueryType.LOGIC: 0.1,
-        }.get(query_type, 0.3)
+        type_base = _ACTIONABILITY_BASE.get(query_type, _ACTIONABILITY_DEFAULT)
 
         # 明确动作动词 → 提高
         all_action_verbs = (
@@ -695,7 +719,7 @@ class QueryClassifier:
             + list(_WRITE_VERBS)
         )
         if any_keyword(text, tuple(all_action_verbs)):
-            type_base = min(1.0, type_base + 0.1)
+            type_base = min(1.0, type_base + _ACTIONABILITY_VERB_BONUS)
 
         # 模糊词 → 降低
         vague_words = ["一下", "看看", "处理", "弄", "搞", "整", "试试"]
