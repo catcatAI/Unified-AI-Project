@@ -51,6 +51,10 @@ dependencies = [
   # Required by FastAPI `Form(...)` routes; without it the server raises at boot
   # ("Form data requires python-multipart"). Part of the runtime BASE tier.
   "python-multipart>=0.0.20",
+  # Optional JSON accelerator used by ED3N engine core path (~250KB wheel).
+  # Graceful fallback to stdlib json when absent — declared here so the fast
+  # path is on by default instead of depending on a transitive pull.
+  "orjson>=3.8.0",
 ]
 
 [[project.authors]]
@@ -89,6 +93,31 @@ data = [
 media = [
   "pyautogui>=0.9.54",
   "pytesseract>=0.3.10",
+  # Desktop background browser windows (lazy-imported by
+  # core/engine/desktop_interaction.py with graceful fallback).
+  "pywebview>=5.0",
+]
+
+# Speech-to-text backends (guarded-eager in services/audio_service.py; the
+# service degrades gracefully and reports "pip install SpeechRecognition"
+# when absent, so declare it to make STT actually work out of the box).
+audio = [
+  "SpeechRecognition>=3.10.0",
+  "faster-whisper>=1.0.0",
+]
+
+# OpenTelemetry tracing (core/tracing/opentelemetry_middleware.py, guarded
+# eager → tracing disabled when absent). Opt-in observability.
+tracing = [
+  "opentelemetry-api>=1.20.0",
+  "opentelemetry-sdk>=1.20.0",
+  "opentelemetry-instrumentation-fastapi>=0.41b0",
+]
+
+# Headless browser automation (core/art/real_playwright_browser.py, lazy).
+# After install, browser binaries must be fetched once: `playwright install`.
+browser = [
+  "playwright>=1.40.0",
 ]
 
 # Google integrations (Drive / Gmail). Imported eagerly by the server's
@@ -140,9 +169,9 @@ tui = [
 # ===========================================================================
 
 # 有需求的用戶 / Feature user: full-feature runtime (real embeddings, vector
-# DB, media, GPU, cache). Everything to actually use the product, no dev tools.
+# DB, media, GPU, cache, STT). Everything to actually use the product, no dev tools.
 standard = [
-  "unified-ai-project[ml,vector,data,media,gpu,cache,google,docs]",
+  "unified-ai-project[ml,vector,data,media,audio,gpu,cache,google,docs]",
 ]
 
 # 專業工程師 / Contributor: standard features + the full dev/test toolchain
@@ -169,9 +198,10 @@ testing = [
   "unified-ai-project[dev]",
 ]
 
-# Everything, including optional spaCy NLP, installer and game extras.
+# Everything, including optional spaCy NLP, tracing, browser automation,
+# installer and game extras.
 full = [
-  "unified-ai-project[dev,nlp,installer,game]",
+  "unified-ai-project[dev,nlp,tracing,browser,installer,game]",
 ]
 
 [project.urls]
