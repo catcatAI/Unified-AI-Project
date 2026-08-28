@@ -1206,8 +1206,7 @@ class AngelaLLMService:
                     tokens_used=0,
                     response_time_ms=response_time,
                     confidence=0.95,
-                    route=self.ResponseRoute.KNOWLEDGE,
-                    metadata={"knowledge": True},
+                    metadata={"knowledge": True, "route": "knowledge"},
                 )
         except Exception as e:
             logger.warning(f"Knowledge lookup failed: {e}", exc_info=True)
@@ -1688,11 +1687,11 @@ class AngelaLLMService:
                         tokens_used=0,
                         response_time_ms=result.latency_ms,
                         confidence=result.confidence,
-                        route=self.ResponseRoute.MODEL_BUS,
                         metadata={
                             "bus_route": True,
                             "query_type": query_type,
                             "route_reason": decision.reason,
+                            "route": "model_bus",
                         },
                     )
             except Exception as e:
