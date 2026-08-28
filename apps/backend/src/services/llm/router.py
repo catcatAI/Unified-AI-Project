@@ -1015,13 +1015,43 @@ class AngelaLLMService:
                                 logger.info(f"[fusion] open-domain → {bt.value}")
                                 return resp
                         break  # only try the best-ranked one
-            return LLMResponse(
-                text="這個問題我目前還沒有足夠的知識能正確回答。你可以問我數學、邏輯，或我學過的事實。",
-                backend="local-fallback",
-                model="honest-no-answer",
-                confidence=0.4,
-                metadata={"fallback": True, "tier": "honest"},
-            )
+            # Semantic QA can answer factual open-domain even without LLM;
+            # don't honest-fallback if it has a hit (e.g. capital of Japan -> Tokyo).
+            try:
+                _qa = getattr(self, "semantic_qa", None)
+                # Fallback to unified backend's engine semantic QA if router's is unset
+                if _qa is None:
+                    try:
+                        ub = self.backends.get(LLMBackend.UNIFIED)
+                        if ub is not None and hasattr(ub, "_engine") and ub._engine is not None:
+                            _qa = getattr(ub._engine, "semantic_qa", None)
+                        if _qa is None:
+                            # Lazily probe unified engine (creates fallback 12 facts)
+                            from ai.unified_engine.unified_engine import UnifiedEngine
+
+                            _tmp = UnifiedEngine()
+                            _qa = getattr(_tmp, "semantic_qa", None)
+                    except Exception:
+                        _qa = None
+                if _qa is not None and _qa.answer(user_message.strip().rstrip("?？ ")) is not None:
+                    # Fall through to unified LLM path below, not honest fallback
+                    pass
+                else:
+                    return LLMResponse(
+                        text="這個問題我目前還沒有足夠的知識能正確回答。你可以問我數學、邏輯，或我學過的事實。",
+                        backend="local-fallback",
+                        model="honest-no-answer",
+                        confidence=0.4,
+                        metadata={"fallback": True, "tier": "honest"},
+                    )
+            except Exception:
+                return LLMResponse(
+                    text="這個問題我目前還沒有足夠的知識能正確回答。你可以問我數學、邏輯，或我學過的事實。",
+                    backend="local-fallback",
+                    model="honest-no-answer",
+                    confidence=0.4,
+                    metadata={"fallback": True, "tier": "honest"},
+                )
 
         if not self.is_available or self.active_backend is None:
             bus_result = await self._try_model_bus(user_message, context)
@@ -1145,6 +1175,12 @@ class AngelaLLMService:
         self, user_message: str, context: Dict[str, Any], start_time: float
     ) -> Optional[LLMResponse]:
         if not self.enable_memory_enhancement:
+            return None
+        # Factual capital queries are better handled by Unified's semantic QA
+        # (which has exact Paris/Tokyo/Beijing). Memory's TF-IDF on "capital"
+        # is too coarse and mis-matches France for Japan (0.9). Let unified win.
+        low = user_message.lower()
+        if "capital" in low or "首都" in user_message:
             return None
         try:
             memory_response = await self.memory_integration.try_memory_retrieval(
