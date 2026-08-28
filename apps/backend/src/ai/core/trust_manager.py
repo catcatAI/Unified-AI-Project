@@ -237,8 +237,11 @@ class TrustManager:
                 context=context or {},
             )
 
-            # 更新历史记录
-            self.trust_history[entity_id][dimension].append(trust_score)
+            # 更新历史记录 (cap at 500 per entity-dimension to prevent OOM)
+            _history = self.trust_history[entity_id][dimension]
+            _history.append(trust_score)
+            if len(_history) > 500:
+                self.trust_history[entity_id][dimension] = _history[-500:]
 
             # 更新关系缓存
             self._update_relationship_cache(entity_id, dimension, trust_score)

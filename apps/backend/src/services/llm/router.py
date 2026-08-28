@@ -1006,8 +1006,8 @@ class AngelaLLMService:
             _qr = _qc.classify(user_message)
             # Knowledge/creative/opinion/search are question-like; greeting/reflex are not
             _is_question_like = _qr.primary_type not in (QueryType.UNKNOWN, QueryType.GREETING, QueryType.REFLEX) and _qr.confidence > 0.35
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("QueryClassifier failed, falling back to regex: %s", exc)
         if not _is_question_like:
             try:
                 import re as _re_q

@@ -337,7 +337,11 @@ function createMainWindow() {
   log.info('[Window] Creating window with bounds:', mainWindow.getBounds())
 
   // Restore previous window position if available
-  restoreWindowPosition()
+  const savedBounds = restoreWindowPosition()
+  if (savedBounds && savedBounds.width && savedBounds.height) {
+    mainWindow.setBounds(savedBounds)
+    log.info('[Window] Restored saved position:', savedBounds)
+  }
 
   // Set minimum size
   mainWindow.setMinimumSize(200, 300)

@@ -8,6 +8,7 @@ interface Message {
 }
 
 export default function ChatPanel() {
+  const MAX_MESSAGES = 200
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [connected, setConnected] = useState(false)
@@ -36,12 +37,15 @@ export default function ChatPanel() {
       try {
         const data = JSON.parse(event.data)
         if (data.type === 'chat_response') {
-          setMessages(prev => [...prev, {
-            id: Date.now().toString(),
-            role: 'assistant',
-            content: data.content,
-            timestamp: Date.now()
-          }])
+          setMessages(prev => {
+            const next = [...prev, {
+              id: Date.now().toString(),
+              role: 'assistant',
+              content: data.content,
+              timestamp: Date.now()
+            }]
+            return next.length > MAX_MESSAGES ? next.slice(-MAX_MESSAGES) : next
+          })
         }
       } catch {
         console.error('Failed to parse WebSocket message:', event.data)
@@ -62,12 +66,15 @@ export default function ChatPanel() {
   const sendMessage = () => {
     if (!input.trim() || !wsRef.current) return
     
-    setMessages(prev => [...prev, {
-      id: Date.now().toString(),
-      role: 'user',
-      content: input,
-      timestamp: Date.now()
-    }])
+    setMessages(prev => {
+      const next = [...prev, {
+        id: Date.now().toString(),
+        role: 'user',
+        content: input,
+        timestamp: Date.now()
+      }]
+      return next.length > MAX_MESSAGES ? next.slice(-MAX_MESSAGES) : next
+    })
     
     wsRef.current.send(JSON.stringify({
       type: 'chat',
