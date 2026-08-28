@@ -290,6 +290,8 @@ class UnifiedEngine:
         # Boolean layer ONLY for proposition-shaped queries: must contain a
         # boolean connective or truth-value token. Open questions ("why is
         # the sky blue?") previously got fabricated "=true/false" answers.
+        # Single words like "true"/"false" are NOT propositions — reject them
+        # to prevent fabricated "true=true" responses.
         import re as _re
 
         proposition_re = _re.compile(
@@ -298,11 +300,16 @@ class UnifiedEngine:
             r"|既不是|也不是|互斥|都不成立|不都成立|不能同時成立|不能同时成立",
             _re.IGNORECASE,
         )
-        score = (
-            self.core.boolean_score(q)
-            if self.core.use_feat and proposition_re.search(q)
-            else None
-        )
+        if self.core.use_feat and proposition_re.search(q):
+            # Reject single-word or very short queries — they are not
+            # real propositions ("true" alone is not a boolean question).
+            words = q.split()
+            if len(words) <= 2:
+                score = None
+            else:
+                score = self.core.boolean_score(q)
+        else:
+            score = None
         if score is not None:
             bool_ans = "true" if score >= 0.0 else "false"
             conf = min(0.9, max(0.5, 0.5 + 0.2 * min(1.0, abs(score) / 2.0)))

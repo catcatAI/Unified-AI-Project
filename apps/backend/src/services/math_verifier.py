@@ -415,27 +415,39 @@ def evaluate_logic(text: str) -> Optional[str]:
     t = text.strip().lower().rstrip("？?！!。.=")
 
     # ---- Chinese path ----
-    if any(kw in t for kw in ("或", "且", "既不是", "並非", "不成立", "矛盾", "衝突", "真", "假")):
-        expr = t
-        expr = expr.replace("真的", "True").replace("假的", "False")
-        expr = expr.replace("真", "True").replace("假", "False")
-        expr = expr.replace("或", " or ")
-        expr = expr.replace("且", " and ")
-        expr = expr.replace("既不是", " not ")
-        expr = expr.replace("並非", " not ")
-        expr = expr.replace("不成立", " not True ")
-        expr = expr.replace("矛盾", " False ").replace("衝突", " False ")
-        tokens = re.findall(r"\b\w+\b", expr)
-        if all(t in ("True", "False", "and", "or", "not") for t in tokens):
-            try:
-                result = eval(expr, {"__builtins__": {}}, {})  # noqa: S307
-                return "true" if result else "false"
-            except Exception:
-                return None
-        return None
+    # Bare "真"/"假" without operators are NOT logic expressions.
+    _HAS_OPERATOR = any(kw in t for kw in ("或", "且", "既不是", "並非", "不成立", "矛盾", "衝突"))
+    if _HAS_OPERATOR or any(kw in t for kw in ("真", "假")):
+        if not _HAS_OPERATOR:
+            # Only bare 真/假 — not a logic expression, skip.
+            pass
+        else:
+            expr = t
+            expr = expr.replace("真的", "True").replace("假的", "False")
+            expr = expr.replace("真", "True").replace("假", "False")
+            expr = expr.replace("或", " or ")
+            expr = expr.replace("且", " and ")
+            expr = expr.replace("既不是", " not ")
+            expr = expr.replace("並非", " not ")
+            expr = expr.replace("不成立", " not True ")
+            expr = expr.replace("矛盾", " False ").replace("衝突", " False ")
+            tokens = re.findall(r"\b\w+\b", expr)
+            if all(t in ("True", "False", "and", "or", "not") for t in tokens):
+                try:
+                    result = eval(expr, {"__builtins__": {}}, {})  # noqa: S307
+                    return "true" if result else "false"
+                except Exception:
+                    return None
+            return None
 
     # ---- English path ----
     if not re.search(r"\b(true|false|and|or|not|nor|nand|xor)\b", t):
+        return None
+
+    # Bare boolean keywords ("true", "false") without operators are NOT
+    # logic expressions — they are user input that should be handled by
+    # other layers.  Return None so the caller falls through.
+    if re.fullmatch(r"\s*(true|false)\s*", t):
         return None
 
     expr = t
