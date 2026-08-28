@@ -159,6 +159,7 @@ VERBS_NOT_REFLEX = {
 
 # 明确知识查询模式（用于 `?` override 修正）
 KNOWLEDGE_QUESTION_PATTERNS = [
+    # Start-of-string question words (anchored)
     r"^什么是",
     r"^是什么",
     r"^是什麼",
@@ -167,6 +168,7 @@ KNOWLEDGE_QUESTION_PATTERNS = [
     r"^为什么",
     r"^為什麼",
     r"^為什么",
+    r"^如何",
     r"^how\b",
     r"^what\b",
     r"^why\b",
@@ -182,12 +184,31 @@ KNOWLEDGE_QUESTION_PATTERNS = [
     r"^明天",
     r"^明日",
     r"^昨天",
+    # Anywhere-in-sentence question words (for Chinese end-position questions)
+    r"哪裡",
+    r"哪里",
+    r"哪裏",
+    r"誰是",
+    r"谁是",
+    r"為什麼",
+    r"为什么",
+    r"為何",
+    r"为何",
+    r"什麼是",
+    r"什么是",
+    r"怎麼",
+    r"怎么",
+    r"解釋",
+    r"解释",
+    # Weather / factual topics
     r"天氣",
+    r"天气",
     r"天気",
     r"weather",
     r"温度",
     r"temperature",
     r"氣溫",
+    # Memory-related
     r"記得",
     r"記憶",
     r"remember",
@@ -222,6 +243,9 @@ class QueryClassifier:
 
     @staticmethod
     def _build_reflex_words() -> set:
+        # Single characters used for reflex_all_chars_override: each char
+        # in the input must be in this set. Multi-char strings like "哈哈"
+        # are handled by REFLEX_PRESETS, not here.
         return {
             "hi",
             "ok",
@@ -230,6 +254,10 @@ class QueryClassifier:
             "yo",
             "oh",
             "ah",
+            "lol",
+            "hmm",
+            "huh",
+            "wow",
             "嗯",
             "好",
             "是",
@@ -239,10 +267,14 @@ class QueryClassifier:
             "喂",
             "嗨",
             "噢",
+            "哈",
+            "呵",
+            "嘿",
             "喵",
             "咪",
             "咕",
             "呜",
+            "嘻",
         }
 
     @staticmethod
@@ -253,7 +285,8 @@ class QueryClassifier:
                 re.compile(
                     r"(?:^|[\s，。！？,.\s])"
                     r"(你好|早安|早上好|上午好|中午好|下午好|午安|晚上好|晚安|"
-                    r"再见|拜拜|谢谢|感谢|"
+                    r"再见|拜拜|谢谢|感謝|感谢|謝謝你|谢谢你|謝謝|谢谢您|"
+                    r"不客氣|不客气|沒關係|没关系|不客气|别客气|"
                     r"\b(hello|hi|hey|good\s*morning|good\s*afternoon|good\s*evening|good\s*bye|thanks?|bye)\b)",
                     re.IGNORECASE,
                 ),
@@ -305,6 +338,9 @@ class QueryClassifier:
 
     @staticmethod
     def _build_knowledge_patterns() -> List[Tuple[QueryType, Pattern, float]]:
+        # Chinese question words can appear ANYWHERE in a sentence without
+        # preceding word boundary (e.g. "首都是哪裡", "解釋量子力學"), so
+        # Chinese keywords must NOT be gated by (?:^|[\s...]) word boundary.
         return [
             (
                 QueryType.KNOWLEDGE,
@@ -313,7 +349,35 @@ class QueryClassifier:
                     r"(什么是|是什么|是什麼|what\s+is|how\s+(does|do|can|to)|"
                     r"why\s+(is|does|do|can)|"
                     r"\b(define|explain)\b|"
-                    r"怎麼回|怎么回|多少|how\s+many|what\s+are)|"
+                    r"怎麼回|怎么回|多少|how\s+many|what\s+are)",
+                    re.IGNORECASE,
+                ),
+                0.7,
+            ),
+            # Chinese question words match ANYWHERE (no word boundary gate)
+            (
+                QueryType.KNOWLEDGE,
+                re.compile(
+                    r"解釋一下|解释一下|解釋|解释|"
+                    r"誰是|谁是|哪裡|哪里|哪裏|怎麼|怎么|"
+                    r"為什麼|为什么|為何|为何|什麼是|什么是|哪些|幾|几",
+                    re.IGNORECASE,
+                ),
+                0.65,
+            ),
+            (
+                QueryType.KNOWLEDGE,
+                re.compile(
+                    r"(?:^|[\s，。！？,.\s])"
+                    r"(天氣|天气|氣溫|气温|温度|溫度|weather|temperature)",
+                    re.IGNORECASE,
+                ),
+                0.7,
+            ),
+            (
+                QueryType.KNOWLEDGE,
+                re.compile(
+                    r"(?:^|[\s，。！？,.\s])"
                     r"(能做|可以做|可以幫|能幫|可以帮|能幫我|可以幫我|"
                     r"你的能力|你的功能|你會什麼|你会什么|你能做|你可以做|"
                     r"介紹你的|介绍你的|能做什麼|能做什么|可以做什么|可以做什麼|"

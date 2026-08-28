@@ -29,7 +29,7 @@ class AcceleratorType(Enum):
     FPGA = "fpga"
 
 
-from core.hardware.precision_matrix import PrecisionLevel  # noqa: F401
+from core.hardware.precision_matrix import PrecisionLevel, PrecisionManager  # noqa: F401
 
 
 class PerformanceMode(Enum):
@@ -98,17 +98,6 @@ class HardwareDetector:
             platform="win32",
             os_version="10.0.0",
         )
-
-
-class PrecisionManager:
-    def __init__(self):
-        self._precision_map: Dict[str, PrecisionLevel] = {}
-
-    def register_precision(self, resource_id: str, precision: PrecisionLevel) -> None:
-        self._precision_map[resource_id] = precision
-
-    def get_precision(self, resource_id: str) -> Optional[PrecisionLevel]:
-        return self._precision_map.get(resource_id)
 
 
 class CodeTranspiler:

@@ -980,9 +980,15 @@ class AngelaLLMService:
             try:
                 import re as _re_q
 
+                # Chinese question words can appear at the START or END of a
+                # sentence (e.g. "天氣如何" / "如何是好" / "你是誰"), so they
+                # must match ANYWHERE — anchoring them to ^ breaks detection.
+                # Include BOTH Simplified and Traditional forms.
                 _is_question_like = bool(
                     _re_q.search(
-                        r"[?？]\s*$|^\s*(what|who|when|where|why|how|which|tell me|explain|please explain|多少|什么|哪些|如何|为什么|哪里|是不是|能否|是否)",
+                        r"[?？]\s*$"
+                        r"|^\s*(what|who|when|where|why|how|which|tell me|explain|please explain)\b"
+                        r"|(?:什么|什麼|哪些|如何|為何|为何|为什么|為什麼|哪里|哪裏|哪裡|是不是|能否|是否|多少|誰|谁|怎麼|怎么|幾|几)",
                         user_message.strip(),
                         _re_q.IGNORECASE,
                     )
@@ -1035,41 +1041,9 @@ class AngelaLLMService:
                         break  # only try the best-ranked one
             # Semantic QA can answer factual open-domain even without LLM;
             # don't honest-fallback if it has a hit (e.g. capital of Japan -> Tokyo).
-            try:
-                _qa = getattr(self, "semantic_qa", None)
-                # Fallback to unified backend's engine semantic QA if router's is unset
-                if _qa is None:
-                    try:
-                        ub = self.backends.get(LLMBackend.UNIFIED)
-                        if ub is not None and hasattr(ub, "_engine") and ub._engine is not None:
-                            _qa = getattr(ub._engine, "semantic_qa", None)
-                        if _qa is None:
-                            # Lazily probe unified engine (creates fallback 12 facts)
-                            from ai.unified_engine.unified_engine import UnifiedEngine
-
-                            _tmp = UnifiedEngine()
-                            _qa = getattr(_tmp, "semantic_qa", None)
-                    except Exception:
-                        _qa = None
-                if _qa is not None and _qa.answer(user_message.strip().rstrip("?？ ")) is not None:
-                    # Fall through to unified LLM path below, not honest fallback
-                    pass
-                else:
-                    return LLMResponse(
-                        text="這個問題我目前還沒有足夠的知識能正確回答。你可以問我數學、邏輯，或我學過的事實。",
-                        backend="local-fallback",
-                        model="honest-no-answer",
-                        confidence=0.4,
-                        metadata={"fallback": True, "tier": "honest"},
-                    )
-            except Exception:
-                return LLMResponse(
-                    text="這個問題我目前還沒有足夠的知識能正確回答。你可以問我數學、邏輯，或我學過的事實。",
-                    backend="local-fallback",
-                    model="honest-no-answer",
-                    confidence=0.4,
-                    metadata={"fallback": True, "tier": "honest"},
-                )
+            # When semantic QA has no answer, fall through to the LLM/
+            # fallback path instead of returning early — this allows the
+            # ModelBus draft (if any) to be refined by the LLM backend.
 
         if not self.is_available or self.active_backend is None:
             bus_result = await self._try_model_bus(user_message, context)
@@ -1585,10 +1559,12 @@ class AngelaLLMService:
         questions get an honest "don't know" instead."""
         import re as _re
 
+        # Chinese question words can appear at END of sentence too
         looks_like_question = bool(
             _re.search(
                 r"[?？]\s*$"
-                r"|^\s*(what|who|when|where|why|how|which|tell me|explain|please explain)",
+                r"|^\s*(what|who|when|where|why|how|which|tell me|explain|please explain)\b"
+                r"|(?:什么|什麼|哪些|如何|為何|为何|为什么|為什麼|哪里|哪裏|哪裡|是不是|能否|是否|多少|誰|谁|怎麼|怎么|幾|几)",
                 user_message.strip(),
                 _re.IGNORECASE,
             )

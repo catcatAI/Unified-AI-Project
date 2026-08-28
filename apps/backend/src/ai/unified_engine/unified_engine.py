@@ -240,7 +240,11 @@ class UnifiedEngine:
             # Quick substring check first
             if pattern not in normalized:
                 continue
-            # Word-boundary check
+            # Word-boundary check — CJK chars don't use spaces, so
+            # only enforce boundary for ASCII/Latin patterns.
+            import re as _re_boundary
+
+            _cjk_re = _re_boundary.compile(r"[\u4e00-\u9fff]")
             start = 0
             while True:
                 idx = normalized.find(pattern, start)
@@ -248,7 +252,9 @@ class UnifiedEngine:
                     break
                 before = idx == 0 or not normalized[idx - 1].isalnum()
                 after = idx + len(pattern) >= len(normalized) or not normalized[idx + len(pattern)].isalnum()
-                if before and after:
+                # For CJK patterns: skip word-boundary check (CJK has no spaces)
+                is_cjk = bool(_cjk_re.search(pattern))
+                if is_cjk or (before and after):
                     return response
                 start = idx + 1
         return None
