@@ -83,9 +83,13 @@ class ChatService:
 
     async def _ham_sync_loop(self) -> None:
         """Background task: sync ED3N dictionary to HAM memory periodically."""
+        import random
+
+        # Jitter prevents thundering herd when multiple instances start together
         while True:
             try:
-                await asyncio.sleep(self._ham_sync_interval)
+                jitter = random.uniform(0, min(300, self._ham_sync_interval * 0.1))
+                await asyncio.sleep(self._ham_sync_interval + jitter)
                 if self._ed3n_learning_integration:
                     result = self._ed3n_learning_integration.synchronize_knowledge()
                     synced = result.get("synced", 0)

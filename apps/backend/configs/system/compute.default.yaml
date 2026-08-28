@@ -46,6 +46,8 @@ compute:
   # GARDEN TensorSNNCore — max_vocab targets the 10 GB trained-model size
   # (vocab≈51812 → V²×4B ≈ 10 GB). The joint memory/% capacity cascade
   # (capacity.default.yaml) reduces this on weaker RAM; these are ceilings.
+  # Effective allocation = min(vocab ceiling, sqrt(usable_GB*1024³*max_percent/4)).
+  # On 16GB machines usable_GB≈14 (2GB reserve) → max ~40960 keys (~6.4GB).
   garden_snn:
     mode: "auto"
     max_vocab: 51812                # → ~10 GB matrix (10 GB model target)

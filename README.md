@@ -57,7 +57,7 @@
 
 **Angela AI** is a digital life system with biological simulation and LLM integration capabilities.
 
-**Quick facts**: 610 Python files in backend src (~96K lines). Electron + Live2D desktop companion (136 JS/TS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~5,369 tests (tests/) — 0 errors. Security: 0 Dependabot + 0 CodeQL + 0 Secret Scanning = fully clean.**  
+**Quick facts**: 610 Python files in backend src (~96K lines). Electron + Live2D desktop companion (136 JS/TS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~5,432 tests (tests/) — 0 errors. Security: 0 Dependabot + 0 CodeQL + 0 Secret Scanning = fully clean.**  
 **Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · cli `7.5.0-dev` · biology-core `7.5.0-dev`.  
 **Architecture audit score**: **~95%** (2026-06-25; up from ~55-60% after Phases 0-5 repairs).  
 **Total project files**: ~3,500+ (610 Python in backend src · 295+ JS/TS · 1,021+ docs · 500+ config · 480+ test).  

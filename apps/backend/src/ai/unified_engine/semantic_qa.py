@@ -33,7 +33,25 @@ logger = logging.getLogger(__name__)
 
 _DIM = 512
 _MODALITY = "unified_qa"
-_THRESHOLD = 0.80  # below this we admit "don't know" instead of guessing
+_DEFAULT_THRESHOLD = 0.80
+# Config-driven threshold: lowered in local/offline mode to improve recall
+# (0.70 when ANGELA_HARDWARE_PROFILE forces CPU or when LLM is unavailable).
+
+
+_CACHED_THRESHOLD: Optional[float] = None
+
+
+def _threshold() -> float:
+    global _CACHED_THRESHOLD
+    if _CACHED_THRESHOLD is not None:
+        return _CACHED_THRESHOLD
+    try:
+        from core.system.config.magic_numbers import threshold_value
+
+        _CACHED_THRESHOLD = threshold_value("semantic_qa.threshold", _DEFAULT_THRESHOLD)
+        return _CACHED_THRESHOLD
+    except Exception:
+        return _DEFAULT_THRESHOLD
 
 
 def _tokens(s: str) -> List[str]:
@@ -99,7 +117,7 @@ class SemanticQA:
         sims = self._embs @ (qv / nv)
         best = int(np.argmax(sims))
         sim = float(sims[best])
-        if sim < _THRESHOLD:
+        if sim < _threshold():
             return None
         return self._answers[best], sim
 

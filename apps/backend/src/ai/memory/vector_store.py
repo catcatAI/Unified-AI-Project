@@ -191,21 +191,27 @@ class _NumpyBackend:
 
         Avoids O(n²) ``vstack`` and per-insert ``_save()``
         that make sequential ``add_memory`` calls extremely slow.
+        Chunked at 4096 to keep peak allocation bounded (100k×512×4=195MB
+        would otherwise double to ~390MB transient).
         """
         if not entries:
             return
-        n = len(entries)
-        new_vecs = np.zeros((n, _NUMPY_EMBED_DIM), dtype=np.float32)
-        for i, (mid, content, meta) in enumerate(entries):
-            new_vecs[i] = self._embed(content)
-            self.ids.append(mid)
-            self.documents.append(content)
-            self.metadatas.append(meta or {})
-        base = self.vectors.shape[0]
-        grown = np.zeros((base + n, _NUMPY_EMBED_DIM), dtype=np.float32)
-        grown[:base] = self.vectors
-        grown[base:] = new_vecs
-        self.vectors = grown
+        # Chunk to bound peak memory (4096×512×4=8MB per chunk)
+        chunk = 4096
+        for start in range(0, len(entries), chunk):
+            part = entries[start : start + chunk]
+            n = len(part)
+            new_vecs = np.zeros((n, _NUMPY_EMBED_DIM), dtype=np.float32)
+            for i, (mid, content, meta) in enumerate(part):
+                new_vecs[i] = self._embed(content)
+                self.ids.append(mid)
+                self.documents.append(content)
+                self.metadatas.append(meta or {})
+            base = self.vectors.shape[0]
+            grown = np.zeros((base + n, _NUMPY_EMBED_DIM), dtype=np.float32)
+            grown[:base] = self.vectors
+            grown[base:] = new_vecs
+            self.vectors = grown
         self._dirty = True
 
     async def semantic_search(self, query: str, limit: int = 10) -> Dict[str, Any]:

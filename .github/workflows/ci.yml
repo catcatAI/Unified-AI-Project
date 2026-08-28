@@ -60,12 +60,16 @@ jobs:
           if [ $ERR -eq 1 ]; then exit 1; else echo "✅ All version locations consistent ($EXPECTED)"; fi
       - name: Install backend (editable with extras)
         run: pip install -e "./apps/backend[dev]"
+        env:
+          ANGELA_HARDWARE_PROFILE: high_performance_desktop
       - name: Lint/Type (Python)
         run: |
           black --check apps/backend/src tests/
           isort --check-only apps/backend/src tests/
           flake8 apps/backend/src tests/
           mypy apps/backend/src
+        env:
+          ANGELA_HARDWARE_PROFILE: high_performance_desktop
       - name: Security scan (bandit)
         run: |
           pip install bandit
@@ -77,6 +81,8 @@ jobs:
       - name: Tests (Python)
         run: |
           pytest tests/ --timeout=60 --cov=apps/backend/src --cov-report=term-missing -q
+        env:
+          ANGELA_HARDWARE_PROFILE: high_performance_desktop
 
   secrets_scan:
     runs-on: ubuntu-latest

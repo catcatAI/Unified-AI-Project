@@ -1,0 +1,11 @@
+# =============================================================================
+# Standard tier compute overrides (optional)
+# =============================================================================
+# This layer is intentionally empty — system/compute.default.yaml already
+# defines all 9 features + 6 hardware profiles with production-tuned ceilings.
+# Add per-tier overrides here only if standard users need different defaults
+# than the system baseline (e.g. force mode: "off" for a heavy feature to save
+# base install footprint).
+# =============================================================================
+
+compute: {}
