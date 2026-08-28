@@ -36,6 +36,8 @@ class ExperienceTracker:
     experience_history: List[Dict[str, Any]] = field(default_factory=list)
     level_history: List[Dict[str, Any]] = field(default_factory=list)
 
+    _MAX_HISTORY = 1000
+
     def add_experience(self, amount: int, source: str = "") -> None:
         self.total_experience += amount
         self.level_experience += amount
@@ -46,6 +48,8 @@ class ExperienceTracker:
                 "timestamp": datetime.now().isoformat(),
             }
         )
+        if len(self.experience_history) > self._MAX_HISTORY:
+            self.experience_history = self.experience_history[-self._MAX_HISTORY // 2:]
         logger.debug(f"Added {amount} experience from {source}")
 
     def get_level(self) -> MaturityLevel:

@@ -45,6 +45,7 @@ class StateHashManager:
         self.precision_matrix = PrecisionProjectionMatrix(auto_detect=auto_adapt)
 
         self.change_log: List[Dict[str, Any]] = []
+        self._max_change_log = 5000
         self._key_manager = None
 
         self._stats = {"total_operations": 0, "integer_operations": 0, "decimal_operations": 0}
@@ -93,6 +94,8 @@ class StateHashManager:
                 "timestamp": timestamp,
             }
         )
+        if len(self.change_log) > self._max_change_log:
+            self.change_log = self.change_log[-self._max_change_log // 2:]
 
         self._stats["total_operations"] += 1
 
