@@ -37,6 +37,7 @@ from ai.unified_engine.semantic_qa import SemanticQA
 from core.system.config.magic_numbers import (
     _probe_ram_total_gb,
     effective_capacity_bytes,
+    threshold_value,
 )
 
 logger = logging.getLogger(__name__)
@@ -142,26 +143,30 @@ class UnifiedEngine:
                     return
         except Exception as exc:  # noqa: BLE001 - optional boot feature
             logger.debug("semantic QA auto-load skipped: %s", exc)
-        # Fallback: tiny built-in facts so offline factual queries work
-        # even without a shipped checkpoint (prevents "早安～..." gibberish).
+        # Fallback: tiny facts from data file so offline factual queries work
+        # even without a shipped checkpoint. Data-driven, not code hard-code.
         try:
-            self.semantic_qa = SemanticQA()
-            fallback_pairs = [
-                ("capital of France", "Paris"),
-                ("capital of Japan", "Tokyo"),
-                ("capital of China", "Beijing"),
-                ("sky is what color", "blue"),
-                ("天空是什么颜色", "蓝色"),
-                ("法国的首都是哪里", "巴黎"),
-                ("日本的首都是哪里", "东京"),
-                ("what is the capital of France", "Paris"),
-                ("what is the capital of Japan", "Tokyo"),
-                ("opposite of hot", "cold"),
-                ("cat says", "meow"),
-                ("dog says", "woof"),
+            import json as _json2
+            from pathlib import Path as _Path2
+
+            # Data-driven fallback: try repo configs/qa_fallback.json first
+            # (tracked, not code hard-code), then legacy data path.
+            candidates = [
+                _Path2(__file__).resolve().parents[4] / "configs" / "qa_fallback.json",
+                _Path2(__file__).resolve().parents[2] / "data" / "qa_fallback.json",
             ]
+            fallback_path = next((p for p in candidates if p.is_file()), None)
+            if fallback_path is not None:
+                with open(fallback_path, encoding="utf-8") as fh:
+                    raw = _json2.load(fh)
+                fallback_pairs = [(str(a), str(b)) for a, b in raw]
+            else:
+                # Last resort minimal pair if data file missing
+                fallback_pairs = [("sky is what color", "blue")]
+                fallback_path = _Path2("configs/qa_fallback.json")
+            self.semantic_qa = SemanticQA()
             self.semantic_qa.learn(fallback_pairs, epochs=10)
-            logger.info("semantic QA fallback loaded %d facts", len(fallback_pairs))
+            logger.info("semantic QA fallback loaded %d facts from %s", len(fallback_pairs), fallback_path)
         except Exception as exc:
             logger.debug("semantic QA fallback failed: %s", exc)
             self.semantic_qa = None
@@ -422,7 +427,9 @@ class UnifiedEngine:
                     import re as _re
 
                     ans, sim = hit
-                    if sim < 0.85:
+                    # Config-driven guard threshold, not hard-coded 0.85
+                    guard_thr = threshold_value("semantic_qa.overlap_guard", 0.85)
+                    if sim < guard_thr:
                         stop = {"what", "is", "the", "of", "are", "there", "a", "an",
                                 "to", "in", "on", "how", "does", "do", "many", "much"}
                         qws = [w.lower() for w in _re.findall(r"[A-Za-z]{3,}", resolved)

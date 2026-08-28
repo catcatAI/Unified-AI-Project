@@ -962,16 +962,34 @@ class AngelaLLMService:
         if neural_result is not None:
             return neural_result
 
-        # Honest gate: questions that reached here have exhausted semantic-QA,
-        # stat-core and templates. Emotion fragments would be non-answers.
-        import re as _re
+        # Honest gate: use QueryClassifier generically (covers CJK/多語言),
+        # not a hard-coded English regex. Falls back to regex only if classifier
+        # unavailable. This avoids the "hard-code short board" where new
+        # languages or phrasings route incorrectly.
+        _is_question_like = False
+        try:
+            from ai.core.query_classifier import QueryClassifier, QueryType
 
-        if _re.search(
-            r"[?？]\s*$"
-            r"|^\s*(what|who|when|where|why|how|which|tell me|explain|please explain)",
-            user_message.strip(),
-            _re.IGNORECASE,
-        ):
+            _qc = QueryClassifier()
+            _qr = _qc.classify(user_message)
+            # Knowledge/creative/opinion/search are question-like; greeting/reflex are not
+            _is_question_like = _qr.primary_type not in (QueryType.UNKNOWN, QueryType.GREETING, QueryType.REFLEX) and _qr.confidence > 0.35
+        except Exception:
+            pass
+        if not _is_question_like:
+            try:
+                import re as _re_q
+
+                _is_question_like = bool(
+                    _re_q.search(
+                        r"[?？]\s*$|^\s*(what|who|when|where|why|how|which|tell me|explain|please explain|多少|什么|哪些|如何|为什么|哪里|是不是|能否|是否)",
+                        user_message.strip(),
+                        _re_q.IGNORECASE,
+                    )
+                )
+            except Exception:
+                _is_question_like = False
+        if _is_question_like:
             # unified+LLM fusion: cloud available → let it answer open-domain.
             # Deterministic shapes (math/logic) NEVER fuse — unified owns them.
             import re as _re2
@@ -1176,12 +1194,33 @@ class AngelaLLMService:
     ) -> Optional[LLMResponse]:
         if not self.enable_memory_enhancement:
             return None
-        # Factual capital queries are better handled by Unified's semantic QA
-        # (which has exact Paris/Tokyo/Beijing). Memory's TF-IDF on "capital"
-        # is too coarse and mis-matches France for Japan (0.9). Let unified win.
-        low = user_message.lower()
-        if "capital" in low or "首都" in user_message:
-            return None
+        # General gate: if Unified's semantic QA can answer with high
+        # confidence, let it win over memory's TF-IDF (which is coarse and
+        # mis-matches "capital of Japan" -> France). No keyword hard-code.
+        try:
+            _qa = getattr(self, "semantic_qa", None)
+            if _qa is None:
+                try:
+                    ub = self.backends.get(LLMBackend.UNIFIED)
+                    if ub is not None and hasattr(ub, "_engine") and ub._engine is not None:
+                        _qa = getattr(ub._engine, "semantic_qa", None)
+                    if _qa is None:
+                        from ai.unified_engine.unified_engine import UnifiedEngine
+
+                        _tmp = UnifiedEngine()
+                        _qa = getattr(_tmp, "semantic_qa", None)
+                except Exception:
+                    _qa = None
+            if _qa is not None:
+                try:
+                    hit = _qa.answer(user_message.strip().rstrip("?？ "))
+                    if hit is not None and hit[1] >= 0.80:
+                        # High-confidence semantic QA -> skip memory, let unified handle
+                        return None
+                except Exception:
+                    pass
+        except Exception:
+            pass
         try:
             memory_response = await self.memory_integration.try_memory_retrieval(
                 user_message, context
