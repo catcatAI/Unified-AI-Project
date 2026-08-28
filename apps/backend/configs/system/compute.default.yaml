@@ -43,15 +43,15 @@ compute:
     batch_size_multiplier: 1.0      # Scale batch size for GPU memory
     timestep_parallel: false        # Parallelize timesteps (GPU only)
 
-  # GARDEN TensorSNNCore — max_vocab targets the 10 GB trained-model size
-  # (vocab≈51812 → V²×4B ≈ 10 GB). The joint memory/% capacity cascade
-  # (capacity.default.yaml) reduces this on weaker RAM; these are ceilings.
-  # Effective allocation = min(vocab ceiling, sqrt(usable_GB*1024³*max_percent/4)).
-  # On 16GB machines usable_GB≈14 (2GB reserve) → max ~40960 keys (~6.4GB).
+  # GARDEN TensorSNNCore — vocab matrix is V²×4B (10k→0.38GB, 20k→1.5GB,
+  # 51k→10GB). Default 10k is the lean conservative target (fits 8GB boxes);
+  # 51k is the extended 10GB target (needs 16GB+ and ANGELA_EXTENDED_MODEL=1).
+  # The joint memory/% capacity cascade clamps any ceiling to RAM:
+  # effective = min(ceiling, sqrt(usable_GB*1024³*max_percent/4)).
   garden_snn:
     mode: "auto"
-    max_vocab: 51812                # → ~10 GB matrix (10 GB model target)
-    connection_budget: 100000       # Auto-reduced on CPU
+    max_vocab: 10000                # lean default 0.38GB; 51812 for extended 10GB
+    connection_budget: 50000        # lean default; 500k/1M for extended
 
   # NeuralBridge — StateMatrix ↔ GARDEN/ED3N SNN direct numeric connection.
   # When "on", state axis values are injected into the SNN as input
@@ -151,8 +151,8 @@ compute:
       ed3n_snn:
         batch_size_multiplier: 1.0
       garden_snn:
-        max_vocab: 51812
-        connection_budget: 100000
+        max_vocab: 10000
+        connection_budget: 50000
 
     desktop_igpu:
       global:
@@ -160,8 +160,8 @@ compute:
       ed3n_snn:
         batch_size_multiplier: 1.0
       garden_snn:
-        max_vocab: 51812
-        connection_budget: 100000
+        max_vocab: 10000
+        connection_budget: 50000
       three_layer_visual:
         training_batch_size: 32
       semantic_visual:

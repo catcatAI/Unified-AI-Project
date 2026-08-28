@@ -111,6 +111,43 @@ N_PLANES = 5
 N_CIRCLES = 4
 N_ARCS = 3
 
+# ── Dynamic slot helpers (vvv 坑1) ─────────────────────────────────
+# TOTAL_DIM is fixed 263 for backward compat, but vvv calls for dynamic
+# slots (few objects -> few slots, crowded scenes -> more). This helper
+# estimates needed slots from region count so callers can clamp K and avoid
+# wasting 263 dims on empty primitives or fragmenting single objects.
+# Three-level split: background (planes) / subject (circles+arcs) / detail (points+lines).
+
+
+def estimate_slots(n_regions: int) -> int:
+    """Heuristic: regions -> suggested visual words K (3..20, clamped).
+
+    Keeps K small for simple scenes (saves compute) and larger for crowded
+    scenes (preserves decoupling). Caller should do
+    ``k = min(estimate_slots(n_regions), len(instructions))``.
+    """
+    if n_regions <= 2:
+        return 5
+    if n_regions <= 6:
+        return 10
+    if n_regions <= 12:
+        return 15
+    return 20
+
+
+def level_slot_counts(n_regions: int) -> dict:
+    """Three-level split for vvv multi-level slots.
+
+    Returns dict with background/subject/detail K budgets that sum to
+    estimate_slots(). Keeps single-object scenes from over-fragmenting.
+    """
+    total = estimate_slots(n_regions)
+    # background ~30%, subject ~40%, detail ~30%
+    bg = max(2, int(total * 0.3))
+    subj = max(2, int(total * 0.4))
+    detail = max(1, total - bg - subj)
+    return {"background": bg, "subject": subj, "detail": detail, "total": total}
+
 
 @dataclass
 class DrawingInstructions:
