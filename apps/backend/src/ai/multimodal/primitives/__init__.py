@@ -15,6 +15,7 @@ GVV architecture (correct):
 
 from .concept_mapper import ConceptMapper
 from .differentiable_renderer import DifferentiableRenderer
+from .primitive_diffusion import PrimitiveDiffusion, TwoLevelDiffusion, get_diffusion
 
 # GVV architecture
 from .geometric_vocabulary import GeometricVocabulary
@@ -37,6 +38,9 @@ __all__ = [
     "PrimitiveRenderer",
     "PrimitiveEncoder",
     "DifferentiableRenderer",
+    "PrimitiveDiffusion",
+    "TwoLevelDiffusion",
+    "get_diffusion",
     # GVV
     "GeometricVocabulary",
     "ConceptMapper",
