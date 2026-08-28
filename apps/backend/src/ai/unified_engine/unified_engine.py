@@ -152,6 +152,7 @@ class UnifiedEngine:
             # Data-driven fallback: try repo configs/qa_fallback.json first
             # (tracked, not code hard-code), then legacy data path.
             candidates = [
+                _Path2(__file__).resolve().parents[5] / "configs" / "qa_fallback.json",
                 _Path2(__file__).resolve().parents[4] / "configs" / "qa_fallback.json",
                 _Path2(__file__).resolve().parents[2] / "data" / "qa_fallback.json",
             ]
