@@ -3,7 +3,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: zh-tw/en
-    LAST_MODIFIED: 2026-08-20 (updated test count to 5,369)
+    LAST_MODIFIED: 2026-08-28 (updated test count to 5,432, open-domain 1.0)
   =============================================================================
 -->
 
@@ -102,7 +102,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | **API Versioning** | ✅ COMPLETE | Version routing middleware (Phase 5) |
 | **i18n System** | ✅ COMPLETE | I18nManager, PromptManager, 4 handlers + 4 LLM modules i18n'd, 45 tests (Phase 7) |
 | **Config system** | ✅ | `config_loader.py:get_config()` returns Config |
-| **Tests** | ✅ PASSING | ~5,369 tests collected (tests/), 0 collection errors, 2,212+ verified passing |
+| **Tests** | ✅ PASSING | ~5,432 tests collected (tests/), 0 collection errors, 2,212+ verified passing |
 | **JS Sharing** | ✅ COMPLETE | 33 shared files → `packages/shared-js/js/`, 0 duplicates remaining |
 | **SessionManager** | ✅ COMPLETE | 56 tests covering full lifecycle (Phase 5.8) |
 | **Skip Audit** | ✅ COMPLETE | Phase 5.9: 5 collection errors fixed, all skip reasons verified |
@@ -382,7 +382,7 @@ python apps/game-rpg/run_game.py
 - **Pixel art engine** — PyQt6 renderer, numpy voxel body ✅
 - **CLI** — Unified CLI with HTTP client ✅
 - **Gemini OS bridge** — pyautogui automation ✅
-- **Test suite** — 5,369 total ✅
+- **Test suite** — 5,432 total ✅
 
 ### What Does NOT Work / Needs Work
 
@@ -439,7 +439,7 @@ Executed as part of the architecture-integration goal (see `docs/REFACTOR_PLAN.m
   (`economy/`, `ai/learning/`, `ai/ops/`, `ai/code_inspection/`, `ai/compression/`,
   `ai/language_models/`, `ai/evaluation/`, plus the obsolete `core_ai/` tree) are now
   marked 🗑️ deleted instead of ✅ present.
-- **Test count re-synced** to **4,499** (tests/, 0 errors) across README / QUICKSTART /
+- **Test count re-synced** to **5,432** (tests/, 0 errors) across README / QUICKSTART /
   FRAMEWORK_OVERVIEW / IMPROVEMENT_ROADMAP / tests/README / PROJECT_OVERVIEW / AGENTS.
 
 > 🗄️ `docs/06-project-management/planning/` 已歸檔至 `docs/09-archive/planning-2026-08-13/`（原描述已不存在的 `core_ai/` 佈局）。
@@ -532,8 +532,8 @@ See dedicated docs for full diagrams:
 | **OpenTelemetry** | ✅ 已完成 | 分散式追蹤中間件（Phase 5） |
 | **API Versioning** | ✅ 已完成 | 版本路由中間件（Phase 5） |
 | **i18n 系統** | ✅ 已完成 | I18nManager、PromptManager、4 個 handler + 4 個 LLM 模組 i18n、45 個測試（Phase 7） |
-| **測試** | ✅ 通過 | ~4,499 (tests/) — 0 collection errors |
-| **智能分數** | ✅ 已評分 (多維) | 6.0/10 (有 LLM) / 0/10 (純原生 神經開放域推理泛化); 確定性引擎: 數理化9.5/知識10; 準備度: 架構9.5/知識推理8.6/查詢學習9.0/多模態5.1/自主9.0 |
+| **測試** | ✅ 通過 | ~5,432 (tests/) — 0 collection errors |
+| **智能分數** | ✅ 已評分 (多維) | 6.0/10 (有 LLM) / 1.0/10 (純原生 神經開放域推理泛化); 確定性引擎: 數理化9.5/知識10; 準備度: 架構9.5/知識推理8.6/查詢學習9.0/多模態5.1/自主9.0 |
 | **Master Task Map** | ✅ 已建立 | 23 份計畫全部交叉參照、144 項 claim 驗證、26 個 DO-NOT-REIMPLEMENT |
 | **因果鏈完成度** | ✅ 已建立 | `docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md` — §0 無 stub 原則、真實深度分數、時脈審計 |
 | **EmotionSystem 行為驅動** | ✅ **已完成** | `apply_influence()` 現在修改 PAD 狀態，`get_behavioral_adjustment()` 映射情緒→routing_mode/response_style，已接入管線第5步 |
@@ -822,7 +822,7 @@ python apps/game-rpg/run_game.py
 
 ---
 
-**Version**: 7.5.0-dev | **Code Stats**: 610 Python files, ~96K lines | **Tests**: ~4,499 (tests/) — 0 errors | **Security**: 72+ alerts fixed → 0 remaining (Dependabot/CodeQL/Secret Scanning all clean) | **Intelligence**: 6.0/10 (upper, with LLM) / native: 數理化引擎 9.5 · 神經開放域 0 (re-measured 2026-07-15; see INTELLIGENCE_ASSESSMENT.md §1) | **Architecture**: ~95% | **Learning Architecture**: 80-90% (weights ~5% trained) | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)
+**Version**: 7.5.0-dev | **Code Stats**: 610 Python files, ~96K lines | **Tests**: ~5,432 (tests/) — 0 errors | **Security**: 72+ alerts fixed → 0 remaining (Dependabot/CodeQL/Secret Scanning all clean) | **Intelligence**: 6.0/10 (upper, with LLM) / native: 數理化引擎 9.5 · 神經開放域 1.0 (re-measured 2026-08-28; see INTELLIGENCE_ASSESSMENT.md §1) | **Architecture**: ~95% | **Learning Architecture**: 80-90% (weights ~5% trained) | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)
 
 
 ## 附屬遊戲 (Ancillary Game)

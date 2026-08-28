@@ -91,6 +91,6 @@
     }
   ],
   "author": "Angela AI Development Team (Original MikoAI: Uo Cx)",
-  "last_updated": "2026-02-07",
-  "notes": "This manifest tracks major versions and component states for the Angela AI (Unified-AI-Project). Current production version is v6.2.0 (Phase 14 Complete, 99.2% completion). The project has evolved from early MikoAI and Fragmenta prototypes into a production-ready cross-platform digital life system."
+  "last_updated": "2026-08-28",
+  "notes": "This manifest tracks major versions and component states for the Angela AI (Unified-AI-Project). Current production version is v7.5.0-dev (§X #270, 2026-08-28). The project has evolved from early MikoAI and Fragmenta prototypes into a production-ready cross-platform digital life system."
 }

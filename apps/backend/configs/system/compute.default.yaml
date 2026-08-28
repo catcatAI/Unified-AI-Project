@@ -86,6 +86,7 @@ compute:
     contrastive_epochs: 10
     recon_epochs: 10
     batch_size: 20
+    rlaif_enabled: false            # opt-in: 90% pixel + 10% DPO async (rlaif_buffer)
 
   # Primitive Diffusion — structure/color -> strokes -> composition (vvv 兩級擴散)
   # Level1: 結構/色彩 -> 筆觸/色塊 (內生物件), Level2: 物件內二次擴散 -> 組合

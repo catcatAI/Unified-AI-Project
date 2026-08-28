@@ -1,0 +1,9 @@
+# =============================================================================
+# Standard tier capacity overrides (optional)
+# =============================================================================
+# This layer is intentionally empty — system/capacity.default.yaml defines
+# all memory/disk ceilings with joint bytes/% caps and reserve handling.
+# Add per-tier overrides here only if standard users need different limits.
+# =============================================================================
+
+capacity: {}
