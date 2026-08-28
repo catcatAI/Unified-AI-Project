@@ -1657,9 +1657,17 @@ ipcMain.handle('plugins-list', () => {
   }
 })
 
+function safePluginName(name) {
+  // Path traversal guard: reject names with slashes, backslashes, dots, or non-ASCII
+  if (!name || typeof name !== 'string') return null
+  if (/[\\/\.\x00-\x1f]/.test(name) || !/^\w[\w-]*$/.test(name)) return null
+  return path.join(pluginDir, `${name}.js`)
+}
+
 ipcMain.handle('plugins-load', (event, { name, code }) => {
   try {
-    const p = path.join(pluginDir, `${name}.js`)
+    const p = safePluginName(name)
+    if (!p) return { success: false, error: 'Invalid plugin name' }
     if (code) {
       fs.writeFileSync(p, code, 'utf-8')
     }
@@ -1669,7 +1677,8 @@ ipcMain.handle('plugins-load', (event, { name, code }) => {
 
 ipcMain.handle('plugins-save', (event, { name, code }) => {
   try {
-    const p = path.join(pluginDir, `${name}.js`)
+    const p = safePluginName(name)
+    if (!p) return { success: false, error: 'Invalid plugin name' }
     fs.writeFileSync(p, code, 'utf-8')
     return { success: true, path: p }
   } catch (e) { return { success: false, error: e.message } }
@@ -1677,7 +1686,8 @@ ipcMain.handle('plugins-save', (event, { name, code }) => {
 
 ipcMain.handle('plugins-delete', (event, name) => {
   try {
-    const p = path.join(pluginDir, `${name}.js`)
+    const p = safePluginName(name)
+    if (!p) return { success: false, error: 'Invalid plugin name' }
     if (fs.existsSync(p)) fs.unlinkSync(p)
     return { success: true }
   } catch (e) { return { success: false, error: e.message } }

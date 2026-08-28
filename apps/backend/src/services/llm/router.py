@@ -974,6 +974,31 @@ class AngelaLLMService:
         if template_result is not None:
             return template_result
 
+        # Deterministic math/logic: resolve immediately without any LLM or memory.
+        # This runs early so pure arithmetic never falls through to NeuroBlender.
+        import re as _re_math
+        if _re_math.search(r"\d\s*[+\-*/^%()\s]+\d|\b(true|false|nor|nand|xor|xnor)\b", user_message):
+            try:
+                from services.math_verifier import MathVerifier
+                mv = MathVerifier()
+                verify_result = mv.verify(user_message)
+                if verify_result.is_correct:
+                    response_time = (time.time() - start_time) * 1000
+                    self._update_stats(response_time)
+                    self.stats["memory_hits"] += 1
+                    logger.info(f"Deterministic math hit: {response_time:.0f}ms")
+                    return LLMResponse(
+                        text=verify_result.explanation,
+                        backend="deterministic-math",
+                        model="math-verifier",
+                        tokens_used=0,
+                        response_time_ms=response_time,
+                        confidence=0.95,
+                        metadata={"math": True},
+                    )
+            except Exception as exc:
+                logger.debug(f"Deterministic math early route failed: {exc}")
+
         ensemble_result = await self._try_ensemble(user_message, context)
         if ensemble_result is not None:
             return ensemble_result
@@ -1033,9 +1058,9 @@ class AngelaLLMService:
             import re as _re2
 
             if _re2.search(r"\d\s*[+\-*/^%]|\b(true|false|nor|nand|xor|xnor)\b", user_message):
-                # Math/logic detected — skip fusion, let _generate_with_llm
-                # route through the unified engine's deterministic layers.
-                pass
+                # Math/logic detected — skip fusion, go directly to unified engine
+                # deterministic layers via _generate_with_llm.
+                pass  # falls through to LLM generation below which routes to unified
             if self.active_backend_type == LLMBackend.UNIFIED and not _re2.search(
                 r"\d\s*[+\-*/^%]", user_message
             ):
@@ -1147,7 +1172,6 @@ class AngelaLLMService:
                 self._update_stats(response_time)
                 self.stats["memory_hits"] += 1
                 logger.info(f"Knowledge hit: {response_time:.0f}ms")
-                from core.interfaces.protocols import LLMResponse
 
                 return LLMResponse(
                     text=str(answer),
@@ -1178,7 +1202,6 @@ class AngelaLLMService:
                 user_message,
                 fusion_strategy=context.get("fusion_strategy", "best_single"),
             )
-            from core.interfaces.protocols import LLMResponse
 
             if self.meta_controller is not None:
                 self.meta_controller.record_confidence("llm:ensemble", result.confidence)
@@ -1241,10 +1264,11 @@ class AngelaLLMService:
 
     def _update_stats(self, response_time: float) -> None:
         self.stats["total_response_time"] += response_time
-        self.stats["average_response_time"] = (
-            self.stats["total_response_time"] / self.stats["total_requests"]
-        )
-        self.stats["memory_hit_rate"] = self.stats["memory_hits"] / self.stats["total_requests"]
+        if self.stats["total_requests"] > 0:
+            self.stats["average_response_time"] = (
+                self.stats["total_response_time"] / self.stats["total_requests"]
+            )
+            self.stats["memory_hit_rate"] = self.stats["memory_hits"] / self.stats["total_requests"]
 
     async def _maybe_cloud_fusion(self, user_message: str, context: Dict[str, Any], gen_params):
         """unified+LLM fusion gate.
@@ -1583,8 +1607,9 @@ class AngelaLLMService:
         return None
 
     async def _fallback_response(self, user_message: str, context: Dict[str, Any]) -> LLMResponse:
-        """Offline fallback: Model Bus → NeuroBlender (emotion fragments) →
-        template. Question-shaped inputs that reached here have already been
+        """Offline fallback: Model Bus → Deterministic math → Reflex →
+        Support template → NeuroBlender → honest "don't know".
+        Question-shaped inputs that reached here have already been
         through semantic-QA/stat-core; fragments would be non-answers, so
         questions get an honest "don't know" instead."""
         import re as _re
@@ -1604,6 +1629,56 @@ class AngelaLLMService:
         bus_result = await self._try_model_bus(user_message, context)
         if bus_result is not None:
             return bus_result
+
+        # Tier 0.1: Deterministic math/logic — always try BEFORE fallback,
+        # even when no LLM backend is available. MathVerifier handles these
+        # without any external API (fast, no torch dependency).
+        if _re.search(r"\d\s*[+\-*/^%()\s]+\d|\b(true|false|nor|nand|xor|xnor)\b", user_message):
+            try:
+                from services.math_verifier import MathVerifier
+                mv = MathVerifier()
+                verify_result = mv.verify(user_message)
+                if verify_result.is_correct:
+                    return LLMResponse(
+                        text=verify_result.explanation,
+                        backend="deterministic-math",
+                        model="math-verifier",
+                        tokens_used=0,
+                        confidence=0.95,
+                        metadata={"fallback": True, "tier": "deterministic-math"},
+                    )
+            except Exception as exc:
+                logger.debug(f"Deterministic math fallback failed: {exc}")
+
+        # Tier 0.2: Reflex responses — social niceties, greetings, farewells
+        _lower = user_message.strip().lower()
+        _REFLEX_MAP = {
+            "謝謝": "不客氣～有需要再跟我說喔！",
+            "谢谢你": "不客气～有需要再跟我说喔！",
+            "謝謝你": "不客氣～有需要再跟我說喔！",
+            "thank you": "You're welcome! Let me know if you need anything else.",
+            "thanks": "You're welcome! 😊",
+            "goodbye": "再見！期待下次見面！",
+            "再見": "再見！期待下次見面！",
+            "再见": "再见！期待下次见面！",
+            "bye": "再見啦！👋",
+            "早安": "早安！今天天氣真不錯呢~",
+            "晚安": "晚安～好好休息！",
+            "ok": "好的～", "okay": "好的～",
+            "好": "嗯嗯～", "嗯": "嗯嗯～",
+            "哈哈": "哈哈！😊 有什麼開心的事嗎？",
+            "hello": "你好呀！見到你真開心~",
+            "hi": "你好呀！見到你真開心~",
+        }
+        # Try exact match first, then check if the message is purely a reflex
+        if _lower in _REFLEX_MAP:
+            return LLMResponse(
+                text=_REFLEX_MAP[_lower],
+                backend="composed-template",
+                model="reflex-map",
+                confidence=0.8,
+                metadata={"fallback": True, "tier": "reflex"},
+            )
 
         # Emotional input (e.g. "I feel sad") deserves an empathetic
         # SUPPORT template, not mood-glue fragments. Detect via
