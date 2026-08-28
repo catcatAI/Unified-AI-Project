@@ -1257,11 +1257,9 @@ class AngelaLLMService:
                     ub = self.backends.get(LLMBackend.UNIFIED)
                     if ub is not None and hasattr(ub, "_engine") and ub._engine is not None:
                         _qa = getattr(ub._engine, "semantic_qa", None)
-                    if _qa is None:
-                        from ai.unified_engine.unified_engine import UnifiedEngine
-
-                        _tmp = UnifiedEngine()
-                        _qa = getattr(_tmp, "semantic_qa", None)
+                    # NOTE: do NOT create a new UnifiedEngine() here —
+                    # torch initialization hangs or OOMs.  If the existing
+                    # engine's semantic_qa is unavailable, skip the gate.
                 except Exception:
                     _qa = None
             if _qa is not None:
@@ -1326,7 +1324,7 @@ class AngelaLLMService:
         # pick best non-unified backend
         candidates = [
             bt for bt in self.backends
-            if bt != LLMBackend.UNIFIED and bt in (self._allowed_types() and self.backends or ())
+            if bt != LLMBackend.UNIFIED and bt.value in self._allowed_types()
         ]
         if not candidates:
             return None
@@ -2346,6 +2344,21 @@ class AngelaLLMService:
             model_name = str(getattr(response, "model", "") or "")
             if "neuro-blender" in model_name or response.backend == "local-fallback":
                 logger.debug("Skipped template storage for NeuroBlender fragment")
+                return
+
+            # Never memorize trivial/garbage responses that would poison the
+            # template pool: single-token answers, echo-answers ("X=X"),
+            # pure numbers, or very short responses.
+            import re as _re_trash
+            _text_raw = (response.text or "").strip()
+            if (
+                len(_text_raw) < 5
+                or _re_trash.match(r"^[\w\s.=/+\-*]+$", _text_raw)
+                or _re_trash.match(r"^[\d.\s]+$", _text_raw)
+                or "=" in _text_raw and len(_text_raw.split("=")) == 2
+                and _text_raw.split("=")[0].strip() == _text_raw.split("=")[1].strip()
+            ):
+                logger.debug("Skipped template storage for trivial/garbage response")
                 return
 
             # Never memorize non-answers (refusals / "I don't know" / empty).

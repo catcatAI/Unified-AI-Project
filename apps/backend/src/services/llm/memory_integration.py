@@ -89,7 +89,7 @@ class MemoryIntegration:
             results = await self._svc.memory_manager.retrieve_response_templates(
                 query=user_message,
                 limit=5,
-                min_score=0.3,
+                min_score=0.5,
             )
 
             if results and len(results) > 0:
@@ -98,8 +98,7 @@ class MemoryIntegration:
                 # Conversation/interaction logs are stored in the same `templates`
                 # bucket by store_experience(data_type="conversation"), but they are
                 # NOT answer templates — returning one as the response would leak a
-                # raw interaction record (e.g. '{"user": ..., "assistant": ...}')
-                # instead of a real answer. Only genuine template types are usable.
+                # raw interaction record. Only genuine template types are usable.
                 tpl_type = best_template.get("data_type", "")
                 if tpl_type == "conversation":
                     return None

@@ -141,13 +141,42 @@ class HAMMemoryManager:
                 if not kw_lower or kw_lower in _STOPWORDS:
                     continue
                 query_lower = query.lower()
-                # Exact substring match on a content word
+                # Substring match — but reject single-char or symbol keywords
+                # that would match any query containing that character
+                # (e.g. "*" in "SELECT * FROM users").  For short keywords
+                # (≤2 chars) we require word-boundary adjacency to avoid
+                # false positives like "5" matching "123456".
                 if kw_lower in query_lower:
-                    best_score = max(best_score, 0.9)
+                    if len(kw_lower) <= 1:
+                        # Single-char keywords (operators, digits) are too
+                        # noisy — never treat them as a match.
+                        pass
+                    elif len(kw_lower) <= 2:
+                        # Require word-boundary context for short keywords
+                        import re as _kw_re
+                        pattern = r'(?<![\w])' + _kw_re.escape(kw_lower) + r'(?![\w])'
+                        if _kw_re.search(pattern, query_lower):
+                            best_score = max(best_score, 0.9)
+                    else:
+                        best_score = max(best_score, 0.9)
                 else:
                     # Bigram Jaccard
                     best_score = max(best_score, _bigram_jaccard_util(kw_lower, query_lower))
             if best_score >= min_score:
+                # Relevance gate: for short queries (≤3 tokens), a single
+                # keyword match is often a false positive (e.g. "ai" in
+                # "What is AI?" matching "我是Angela AI").  Reject when
+                # only one non-stopword keyword matched.
+                query_tokens = query_lower.split()
+                if len(query_tokens) <= 3:
+                    # Count unique non-stopword keywords that matched
+                    matched_kws = set()
+                    for kw in keywords:
+                        k = kw.lower().strip()
+                        if k and k not in _STOPWORDS and k in query_lower:
+                            matched_kws.add(k)
+                    if len(matched_kws) <= 1:
+                        continue
                 scored.append((tpl, best_score))
 
         scored.sort(key=lambda x: x[1], reverse=True)
@@ -272,11 +301,15 @@ class HAMMemoryManager:
         if filtered:
             return filtered[:max_keywords]
 
-        # Fallback: first N non-stopword chars from text
+        # Fallback: first N meaningful 2-char fragments from text.
+        # Skip single-char or pure-symbol fragments ("*", " ", etc.).
+        import re as _re_fallback
         return [
-            text[i : i + 2]
-            for i in range(0, min(len(text), max_keywords * 2), 2)
-            if text[i : i + 2].lower() not in _STOPWORDS
+            frag.strip()
+            for frag in (text[i : i + 2] for i in range(0, min(len(text), max_keywords * 2), 2))
+            if len(frag.strip()) >= 2
+            and frag.strip().lower() not in _STOPWORDS
+            and _re_fallback.search(r'[\w]', frag)  # must contain at least one word char
         ][:max_keywords]
 
     def store_conversation(self, conversation: Dict[str, Any]) -> None:
