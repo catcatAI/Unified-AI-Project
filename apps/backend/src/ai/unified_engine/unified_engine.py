@@ -50,8 +50,63 @@ class UnifiedEngine:
     """Single engine: deterministic routing first, then the fixed-size
     statistical core. model_bytes is constant across training."""
 
-    def __init__(self, memory_cap_mb: Optional[float] = None, max_seq: int = 512) -> None:
-        self.core = FixedSizeCore(max_seq=max_seq)
+    def __init__(
+        self,
+        memory_cap_mb: Optional[float] = None,
+        max_seq: int = 512,
+        slots: Optional[int] = None,
+        use_feat: Optional[bool] = None,
+        use_delta: Optional[bool] = None,
+    ) -> None:
+        # slots/use_feat/use_delta: config-driven via compute.unified, explicit
+        # args win over config. Keeps 65k default (259MB) unless hardware
+        # profile or ANGELA_EXTENDED_MODEL opts into 128k.
+        if slots is None:
+            try:
+                from core.system.config.magic_numbers import compute_int
+
+                slots = compute_int("unified", "slots", 65536)
+            except Exception:
+                slots = 65536
+        if use_feat is None:
+            try:
+                from core.system.config.magic_numbers import compute_bool as _cb
+
+                # unified.use_feat is not a mode flag; read via _get directly
+                from core.system.config.magic_numbers import _get
+
+                v = _get("unified.use_feat", None)
+                use_feat = bool(v) if v is not None else True
+            except Exception:
+                use_feat = True
+        if use_delta is None:
+            try:
+                from core.system.config.magic_numbers import _get as _g2
+
+                v2 = _g2("unified.use_delta", None)
+                use_delta = bool(v2) if v2 is not None else True
+            except Exception:
+                use_delta = True
+        # Clamp slots by RAM on extended (128k) to avoid OOM on 8GB boxes:
+        # effective cap is the same cascade that guards GARDEN (usable-2GB).
+        if slots is not None and slots > 65536:
+            try:
+                from core.system.config.magic_numbers import _probe_ram_total_gb, effective_capacity_bytes
+
+                ram = _probe_ram_total_gb()
+                if ram and ram > 0:
+                    # unified tables: 4 gram tables + delta + feat ≈ 5*slots*256*4
+                    # ~= slots*5120 bytes. Clamp so unified alone fits in cap.
+                    cap = effective_capacity_bytes("memory", total_gb=max(0, ram - 2.0), numeric_mb=8192)
+                    max_slots = int(cap / 5120)
+                    # round down to power of two
+                    max_pow2 = 1 << (max_slots.bit_length() - 1) if max_slots > 0 else 65536
+                    if slots > max_pow2:
+                        logger.info("Unified slots %d clamped to %d by RAM cap", slots, max_pow2)
+                        slots = max(32768, max_pow2)
+            except Exception:
+                pass
+        self.core = FixedSizeCore(max_seq=max_seq, slots=slots, use_feat=use_feat, use_delta=use_delta)
         self._cap_bytes = self._resolve_cap(memory_cap_mb)
         self._last_confidence = 0.0
         self._last_route = ""

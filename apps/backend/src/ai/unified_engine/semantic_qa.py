@@ -54,12 +54,50 @@ def _threshold() -> float:
         return _DEFAULT_THRESHOLD
 
 
+# ONNX int8 encoder (reuses garden/dictionary export, 2.1x CPU, multilingual).
+# Lazy singleton: None = not probed, False = unavailable (fallback to hash).
+_ONNX_ENCODER: Optional[object] = None
+_ONNX_TRIED = False
+
+
+def _get_onnx_encoder():
+    global _ONNX_ENCODER, _ONNX_TRIED
+    if _ONNX_TRIED:
+        return _ONNX_ENCODER
+    _ONNX_TRIED = True
+    try:
+        from ai.garden.dictionary import _OnnxEncoder, _onnx_model_path
+
+        path = _onnx_model_path("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+        if path is None:
+            path = _onnx_model_path("paraphrase-multilingual-MiniLM-L12-v2")
+        if path is not None:
+            _ONNX_ENCODER = _OnnxEncoder(path, max_length=32)
+            logger.info("SemanticQA: ONNX encoder active (%s)", path)
+            return _ONNX_ENCODER
+    except Exception as e:
+        logger.debug("SemanticQA ONNX unavailable, using hash fallback: %s", e)
+    _ONNX_ENCODER = False  # type: ignore[assignment]
+    return None
+
+
 def _tokens(s: str) -> List[str]:
     stop = {"what", "is", "the", "of", "are", "there", "a", "an", "to", "in", "on"}
     return [w for w in re.findall(r"[a-z]+", s.lower()) if w not in stop]
 
 
 def _features(s: str, dim: int = _DIM) -> np.ndarray:
+    # Prefer ONNX multilingual embedding (int8, 2.1x CPU, handles CJK) when
+    # the quantized model is present; otherwise hash fallback (zero extra deps).
+    enc = _get_onnx_encoder()
+    if enc is not None:
+        try:
+            # _OnnxEncoder.encode returns L2-normalized [1, H]; squeeze to [H]
+            arr = enc.encode([s])
+            if arr is not None and arr.shape[0] > 0:
+                return arr[0].astype(np.float32)
+        except Exception:
+            pass
     v = np.zeros(dim, dtype=np.float32)
     ws = _tokens(s)
     for w in ws:
@@ -69,6 +107,19 @@ def _features(s: str, dim: int = _DIM) -> np.ndarray:
             v[hash(w[i : i + 3]) % dim] += 0.6
     n = np.linalg.norm(v)
     return v / n if n > 0 else v
+
+
+def _embedding_dim() -> int:
+    enc = _get_onnx_encoder()
+    if enc is not None:
+        try:
+            # probe output dim without allocating large batch
+            probe = enc.encode(["hello"])
+            if probe is not None and probe.ndim == 2:
+                return int(probe.shape[1])
+        except Exception:
+            pass
+    return _DIM
 
 
 class SemanticQA:
@@ -83,8 +134,9 @@ class SemanticQA:
         self._embs: Optional[np.ndarray] = None
 
     def learn(self, qa_pairs: List[Tuple[str, str]], epochs: int = 60) -> Dict[str, float]:
+        dim = _embedding_dim()
         self._sls.reset()
-        self._sls.register_modality(_MODALITY, _DIM)
+        self._sls.register_modality(_MODALITY, dim)
         self._questions = [q for q, _ in qa_pairs]
         self._answers = [a for _, a in qa_pairs]
         qs = [_features(q) for q in self._questions]

@@ -104,6 +104,17 @@ compute:
     gpu_layers: -1                  # -1 = all layers on GPU
     main_gpu: 0
 
+  # Unified Engine — fixed-size statistical core (text)
+  # slots: hash table size (power of two). 65k saturates at ~100MB text
+  # (+127MB per doubling to 128k gives -5.6% bpc measured on wiki_en).
+  # use_feat: allocate Q=A feature tables (65.5MB). Pure-text corpora never
+  # fill them; set false to reclaim memory.
+  unified:
+    mode: "auto"
+    slots: 65536                 # 65k default; 131072 for -5.6% bpc on 8GB+
+    use_feat: true              # set false to save 65.5MB on pure-text
+    use_delta: true
+
   # Game (apps/game-rpg) integration
   # Controls whether the CLI game mounts its free-matrix / card dictionary /
   # axis registry into the backbone. Pure-IO, no heavy compute — kept "on".
@@ -131,6 +142,8 @@ compute:
         batch_size: 32
       semantic_audio:
         batch_size: 16
+      unified:
+        slots: 65536              # keep 65k default; set 131072 to trade +127MB for -5.6% bpc
 
     laptop_normal:
       global:
@@ -177,6 +190,9 @@ compute:
     low_power_device:
       global:
         mode: "off"
+      unified:
+        slots: 32768              # 32k saves ~96MB vs 65k (loss ~+3% bpc)
+        use_feat: false           # saves extra 32MB feature table
       # All features forced to CPU/off
 
     server_cloud:
