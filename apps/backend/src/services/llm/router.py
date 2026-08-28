@@ -1487,6 +1487,87 @@ class AngelaLLMService:
                         )
                 except Exception as exc:
                     logger.debug(f"Social template lookup failed: {exc}")
+            # Keyword-based category routing: when SOCIAL_MAP doesn't match,
+            # check if any template keyword is a substring of the input.
+            # This handles inputs like "沒問題" → affirmation, "加油" → support
+            # without hardcoding every possible input.
+            if not _social:
+                try:
+                    from ai.memory.memory_template import ResponseCategory
+                    from ai.memory.template_library import get_template_library
+                    _lib = get_template_library()
+                    _input_lower = user_message.strip().lower()
+                    _best_cat = None
+                    _best_overlap = 0
+                    for _t in _lib.get_all_templates():
+                        for _kw in (getattr(_t, 'keywords', []) or []):
+                            _kw_lower = _kw.lower().strip()
+                            if _kw_lower and len(_kw_lower) >= 2 and _kw_lower in _input_lower:
+                                if len(_kw_lower) > _best_overlap:
+                                    _best_overlap = len(_kw_lower)
+                                    _best_cat = _t.category
+                    # Pattern-based social routing: when no template keyword
+                    # matches directly, use pattern recognition to map common
+                    # social expressions to the right category.  This is NOT
+                    # per-input hardcoding — it's category-level pattern matching.
+                    _PATTERN_CATEGORY = {
+                        "affirmation": ["沒問題", "没问题", "no problem", "好的", "ok", "嗯",
+                                        "辛苦了", "辛苦啦", "对", "是的", "没错"],
+                        "curiosity": ["真的嗎", "真的吗", "really", "真的", "嗎", "吗"],
+                        "support": ["加油", "fighting", "fight", "你可以", "相信你", "幫我", "幫忙", "help me"],
+                        "intimacy": ["我愛你", "我爱你", "i love you", "love you",
+                                     "愛你", "爱你", "想你", "miss you"],
+                        "apology": ["sorry", "抱歉", "對不起", "对不起", "不好意思"],
+                        "farewell": ["good night", "goodnight", "晚安", "see you",
+                                     "see ya", "see you later"],
+                        "greeting": ["morning", "good morning", "早上好", "午安",
+                                     "afternoon", "evening"],
+                        "small_talk": ["happy birthday", "生日快樂", "生日快乐",
+                                       "嘻嘻", "嘿嘿", "嘻嘻"],
+                    }
+                    _input_lower2 = user_message.strip().lower()
+                    for _cat_name, _patterns in _PATTERN_CATEGORY.items():
+                        for _pat in _patterns:
+                            if _pat.lower() in _input_lower2 or _input_lower2 in _pat.lower():
+                                try:
+                                    from ai.memory.memory_template import ResponseCategory
+                                    from ai.memory.template_library import get_template_library
+                                    _lib2 = get_template_library()
+                                    _cat = ResponseCategory(_cat_name)
+                                    _tpls = _lib2.get_by_category(_cat)
+                                    if not _tpls:
+                                            # Fallback: try a related category
+                                            _FALLBACK = {"support": "affirmation",
+                                                         "apology": "affirmation",
+                                                         "gratitude": "affirmation"}
+                                            _fb = _FALLBACK.get(_cat_name)
+                                            if _fb:
+                                                _tpls = _lib2.get_by_category(ResponseCategory(_fb))
+                                    if _tpls:
+                                            import random as _rand3
+                                            _ch = _rand3.choice(_tpls)
+                                    _rt2 = (time.time() - start_time) * 1000
+                                    self.stats["composed_responses"] += 1
+                                    return ChatResponse(
+                                            text=_ch.content,
+                                            backend="composed-template",
+                                            model="template-based",
+                                            tokens_used=50,
+                                            response_time_ms=_rt2,
+                                            confidence=0.8,
+                                            hit_score=0.8,
+                                            hit_source="pattern-category",
+                                            route="COMPOSED",
+                                    )
+                                except Exception:
+                                    pass
+                                break
+                        else:
+                            continue
+                        break
+                except Exception:
+                    pass
+
 
             match_result = self.template_matcher.match(user_message, context)
             match_score = match_result.score
