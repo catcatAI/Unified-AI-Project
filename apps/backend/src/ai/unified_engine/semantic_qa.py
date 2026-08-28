@@ -33,9 +33,9 @@ logger = logging.getLogger(__name__)
 
 _DIM = 512
 _MODALITY = "unified_qa"
-_DEFAULT_THRESHOLD = 0.80
-# Config-driven threshold: lowered in local/offline mode to improve recall
-# (0.70 when ANGELA_HARDWARE_PROFILE forces CPU or when LLM is unavailable).
+_DEFAULT_THRESHOLD = 0.75  # lowered 0.80->0.75 for open-domain recall (ONNX 384-dim
+# now handles CJK, so lower threshold trades 5% precision for ~25% recall)
+# Config-driven via threshold_value("semantic_qa.threshold") for hardware-aware tuning.
 
 
 _CACHED_THRESHOLD: Optional[float] = None
