@@ -426,6 +426,29 @@ async def _inject_emotion_behavioral_context(
             es.apply_influence("user_message", mapped, intensity * 0.3, 0.5)
             adj = es.get_behavioral_adjustment()
             context["angela_emotion"] = adj
+            # 狀態(6D)→情緒(PAD)→閾值 自調閉環: 情緒直接調節語義 QA 閾值
+            # exploratory/高 valence+arousal → 更開放 (閾值 -0.05), conservative/低 valence/疲勞 → 更保守 (+0.08)
+            try:
+                from ai.unified_engine.semantic_qa import set_emotion_threshold_adjustment
+
+                delta = 0.0
+                routing = adj.get("routing_mode", "")
+                valence = float(adj.get("valence", 0.0) or 0.0)
+                arousal = float(adj.get("arousal", 0.5) or 0.5)
+                sustained = int(adj.get("sustained_negative_counter", 0) or 0)
+                if routing == "exploratory":
+                    delta -= 0.05
+                if routing == "conservative":
+                    delta += 0.05
+                if valence > 0.3 and arousal > 0.5:
+                    delta -= 0.03
+                if valence < -0.3:
+                    delta += 0.03
+                if sustained >= 3:
+                    delta += 0.08
+                set_emotion_threshold_adjustment(delta)
+            except Exception:
+                pass
 
         # Cross-component: Emotion → Biological stress/relaxation (C³ 4.0)
         if bio is not None:

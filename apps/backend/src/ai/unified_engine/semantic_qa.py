@@ -41,17 +41,99 @@ _DEFAULT_THRESHOLD = 0.75  # lowered 0.80->0.75 for open-domain recall (ONNX 384
 _CACHED_THRESHOLD: Optional[float] = None
 
 
+def _emotion_threshold_adjustment() -> float:
+    """情緒→閾值的自調整增量 (AI 自調, 閉環).
+
+    優先讀 _EMOTION_ADJ (由 chat_routes 每輪注入), 其次回退到 state_store 探測.
+    狀態(αβγ)經 EmotionSystem 映射為 PAD，再映射為反應風格:
+    - JOY/TRUST/高 arousal → 更探索 → 閾值 -0.05 (更願意回答, 提高召回)
+    - FEAR/SADNESS/低 valence 或 sustained_negative≥3 → 更保守 → 閾值 +0.08
+    - 中性 → 0
+    增量限幅 ±0.10，最終閾值限幅 [0.60, 0.85] 防幻覺/過度沉默.
+    """
+    # Path 0: 直接注入 (最可靠, 無循環 import, 無 state_store 依賴)
+    if _EMOTION_ADJ != 0.0:
+        return max(-0.10, min(0.10, _EMOTION_ADJ))
+    adj = 0.0
+    # Path 1: state_store 上的 emotion 事件 (chat_routes 每輪 emit)
+    try:
+        from core.system.state_store.global_store import state_store  # type: ignore
+
+        emo = None
+        for key in ("emotion.behavioral_adjustment", "emotion.current", "angela_emotion"):
+            try:
+                emo = state_store.get(key, None)  # type: ignore[attr-defined]
+                if emo:
+                    break
+            except Exception:
+                continue
+        if isinstance(emo, dict):
+            routing = emo.get("routing_mode", "")
+            valence = float(emo.get("valence", 0.0) or 0.0)
+            arousal = float(emo.get("arousal", 0.5) or 0.5)
+            sustained = int(emo.get("sustained_negative_counter", 0) or 0)
+            if routing in ("exploratory",):
+                adj -= 0.05
+            if routing in ("conservative",):
+                adj += 0.05
+            if valence > 0.3 and arousal > 0.5:
+                adj -= 0.03
+            if valence < -0.3:
+                adj += 0.03
+            if sustained >= 3:
+                adj += 0.08
+    except Exception:
+        pass
+    if adj == 0.0:
+        try:
+            import importlib
+
+            mod = importlib.import_module("api.lifespan")
+            get_es = getattr(mod, "get_emotion_system", None) or getattr(mod, "_get_emotion_system", None)
+            if get_es is not None:
+                try:
+                    es = get_es()
+                except Exception:
+                    es = None
+                if es is not None and hasattr(es, "get_emotion_summary"):
+                    summary = es.get_emotion_summary()
+                    dom = summary.get("dominant_emotion", "neutral")
+                    if dom in ("joy", "trust", "surprise", "anticipation"):
+                        adj -= 0.04
+                    if dom in ("fear", "sadness", "anger", "disgust"):
+                        adj += 0.05
+        except Exception:
+            pass
+    return max(-0.10, min(0.10, adj))
+
+
 def _threshold() -> float:
     global _CACHED_THRESHOLD
-    if _CACHED_THRESHOLD is not None:
-        return _CACHED_THRESHOLD
-    try:
-        from core.system.config.magic_numbers import threshold_value
+    if _CACHED_THRESHOLD is None:
+        try:
+            from core.system.config.magic_numbers import threshold_value
 
-        _CACHED_THRESHOLD = threshold_value("semantic_qa.threshold", _DEFAULT_THRESHOLD)
-        return _CACHED_THRESHOLD
-    except Exception:
-        return _DEFAULT_THRESHOLD
+            _CACHED_THRESHOLD = threshold_value("semantic_qa.threshold", _DEFAULT_THRESHOLD)
+        except Exception:
+            _CACHED_THRESHOLD = _DEFAULT_THRESHOLD
+    base = float(_CACHED_THRESHOLD)  # type: ignore[arg-type]
+    adj = _emotion_threshold_adjustment()
+    # 最終限幅 [0.60, 0.85] — 既防幻覺 (>0.85 過嚴) 也防過度沉默 (<0.60 過松)
+    return max(0.60, min(0.85, base + adj))
+
+
+# Emotion-driven threshold adjustment (AI 自調, 閉環).
+# chat_routes 每輪 _inject_emotion_behavioral_context 後調用 set_emotion_threshold_adjustment()
+# 把當前 PAD 推導的 routing/style 轉為閾值增量，下一輪 semantic_qa.answer() 即生效.
+# 狀態(6D) -> 情緒(PAD) -> 閾值 -> 反應(文本) -> 回饋 -> 情緒，完成閉環.
+_EMOTION_ADJ: float = 0.0
+
+
+def set_emotion_threshold_adjustment(adj: float) -> None:
+    """由 chat_routes 注入當前情緒推導的閾值增量 (AI 自調, 執行緒安全)."""
+    global _EMOTION_ADJ
+    # 限幅 ±0.10
+    _EMOTION_ADJ = max(-0.10, min(0.10, float(adj)))
 
 
 # ONNX int8 encoder (reuses garden/dictionary export, 2.1x CPU, multilingual).
