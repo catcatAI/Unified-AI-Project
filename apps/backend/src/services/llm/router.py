@@ -1033,14 +1033,12 @@ class AngelaLLMService:
             import re as _re2
 
             if _re2.search(r"\d\s*[+\-*/^%]|\b(true|false|nor|nand|xor|xnor)\b", user_message):
-                return LLMResponse(
-                    text="這個問題我目前還沒有足夠的知識能正確回答。",
-                    backend="local-fallback",
-                    model="honest-no-answer",
-                    confidence=0.4,
-                    metadata={"fallback": True, "tier": "honest"},
-                )
-            if self.active_backend_type == LLMBackend.UNIFIED:
+                # Math/logic detected — skip fusion, let _generate_with_llm
+                # route through the unified engine's deterministic layers.
+                pass
+            if self.active_backend_type == LLMBackend.UNIFIED and not _re2.search(
+                r"\d\s*[+\-*/^%]", user_message
+            ):
                 mode = (self.config.get("deployment") or {}).get("mode", "local")
                 others = [bt for bt in self.backends if bt != LLMBackend.UNIFIED]
                 if mode in ("local+llm", "llm", "auto") and others:
@@ -1607,19 +1605,8 @@ class AngelaLLMService:
         if bus_result is not None:
             return bus_result
 
-        # Questions must not be answered with emotion fragments or random
-        # templates — that was the "wrong layer answers" bug.
-        if looks_like_question:
-            return LLMResponse(
-                text="這個問題我目前還沒有足夠的知識能正確回答。你可以問我數學、邏輯，或我學過的事實。",
-                backend="local-fallback",
-                model="honest-no-answer",
-                confidence=0.4,
-                metadata={"fallback": True, "tier": "honest"},
-            )
-
-        # Emotional non-question input (e.g. "I feel sad") deserves an
-        # empathetic SUPPORT template, not mood-glue fragments. Detect via
+        # Emotional input (e.g. "I feel sad") deserves an empathetic
+        # SUPPORT template, not mood-glue fragments. Detect via
         # bio_state dominant emotion + feeling verbs.
         import re as _re
 
@@ -1679,6 +1666,17 @@ class AngelaLLMService:
                     )
             except Exception as exc:
                 logger.warning(f"Support template fallback failed: {exc}")
+
+        # Tier 1.5: For questions that survived all layers, return honest
+        # "don't know" instead of NeuroBlender random fragments.
+        if looks_like_question:
+            return LLMResponse(
+                text="這個問題我目前還沒有足夠的知識能正確回答。你可以問我數學、邏輯，或我學過的事實。",
+                backend="local-fallback",
+                model="honest-no-answer",
+                confidence=0.4,
+                metadata={"fallback": True, "tier": "honest"},
+            )
 
         # Tier 2: NeuroBlender (smalltalk only — never for negative emotion)
         try:
