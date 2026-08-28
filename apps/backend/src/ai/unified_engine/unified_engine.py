@@ -414,34 +414,20 @@ class UnifiedEngine:
             return r
         # 2. Learned semantic QA (SLS gradient layer) — factual open questions.
         # Skip proposition-style queries ("X nor Y=?"): those belong to the
-        # statistical boolean layer, not factual retrieval.
         if self.semantic_qa is not None and "=" not in text and not text.rstrip().endswith("?="):
-            resolved = self._resolve_coreference(text)
-            # Pronoun-resolved queries must actually contain the resolved
-            # topic word, otherwise retrieval fires on unrelated garbage.
-            if resolved != text:
+            # Reject very short queries (< 3 chars) — they produce false
+            # positives like "a" -> "cold" from embedding similarity noise.
+            if len(text.strip()) >= 3:
+                resolved = self._resolve_coreference(text)
                 hit = self.semantic_qa.answer(resolved)
                 if hit is not None:
-                    import re as _re
-
-                    topic_words = [w.lower() for w in _re.findall(r"[A-Za-z]+", resolved)]
-                    ans_low = hit[0].lower()
-                    if not any(tw in ans_low or tw in resolved.lower() for tw in topic_words[:3]):
-                        hit = None
-            else:
-                hit = self.semantic_qa.answer(resolved)
-                if hit is not None:
-                    # content-word overlap guard: at least one non-stopword
-                    # from the query must appear in the answer, otherwise the
-                    # match is topical noise (e.g. "light speed" -> continents).
-                    # For factual QA the answer is a city name ("Paris") that
-                    # never contains the query word ("capital"/"France"), so
-                    # high-similarity hits bypass the guard (sim is 0.98 for
-                    # capital queries via ONNX). Guard only fires when sim <0.85.
                     import re as _re
 
                     ans, sim = hit
-                    # Config-driven guard threshold, not hard-coded 0.85
+                    # Content-word overlap guard: at least one non-stopword
+                    # from the query must appear in the answer, otherwise the
+                    # match is topical noise (e.g. "light speed" -> continents).
+                    # High-similarity hits (sim >= 0.85) bypass the guard.
                     guard_thr = threshold_value("semantic_qa.overlap_guard", 0.85)
                     if sim < guard_thr:
                         stop = {"what", "is", "the", "of", "are", "there", "a", "an",
@@ -451,17 +437,17 @@ class UnifiedEngine:
                         qws += [c for c in _re.findall(r"[\u4e00-\u9fff]{2,}", resolved)]
                         if qws and not any(
                             w in hit[0].lower()
-                            or any(c in hit[0] for c in w if "\u4e00" <= c <= "\u9fff")
+                            or any(c in hit[0] for c in w if "\u4e00" <= c <= "\u4e9f")
                             for w in qws
                         ):
                             hit = None
-            if hit is not None:
-                ans, sim = hit
-                self._last_route = "semantic-qa"
-                self._last_confidence = min(0.95, max(0.5, sim))
-                wrapped = self._wrap_answer(resolved, ans)
-                self._remember_turn(text, wrapped)
-                return wrapped
+                if hit is not None:
+                    ans, sim = hit
+                    self._last_route = "semantic-qa"
+                    self._last_confidence = min(0.95, max(0.5, sim))
+                    wrapped = self._wrap_answer(resolved, ans)
+                    self._remember_turn(text, wrapped)
+                    return wrapped
         # 3. Learned statistical core.
         r = self._infer_from_core(text)
         if r is not None:
