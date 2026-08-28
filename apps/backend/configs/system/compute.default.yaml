@@ -87,6 +87,16 @@ compute:
     recon_epochs: 10
     batch_size: 20
 
+  # Primitive Diffusion — structure/color -> strokes -> composition (vvv 兩級擴散)
+  # Level1: 結構/色彩 -> 筆觸/色塊 (內生物件), Level2: 物件內二次擴散 -> 組合
+  # 263維向量空間擴散 (vs 49k 像素省 187 倍), 0.33M/級, T=100, DDIM 10步, 純 numpy CPU
+  primitive_diffusion:
+    mode: "auto"                    # auto | on | off (low_power -> off)
+    timesteps: 100
+    hidden_dim: 256                 # 256 lean (1.3MB), 512 for quality
+    ddim_steps: 10
+    two_level: true                 # true = 級1佈局 + 級2筆觸, false = 單級
+
   # Vector Store (ChromaDB embeddings)
   vector_store:
     mode: "auto"
@@ -184,6 +194,8 @@ compute:
         mode: "off"
       multimodal_train:
         mode: "off"
+      primitive_diffusion:
+        mode: "off"
       llm_local_gpu:
         mode: "off"
 
@@ -193,6 +205,8 @@ compute:
       unified:
         slots: 32768              # 32k saves ~96MB vs 65k (loss ~+3% bpc)
         use_feat: false           # saves extra 32MB feature table
+      primitive_diffusion:
+        mode: "off"
       # All features forced to CPU/off
 
     server_cloud:
