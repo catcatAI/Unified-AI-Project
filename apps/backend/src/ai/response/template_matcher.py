@@ -221,6 +221,28 @@ class TemplateMatcher:
                         },
                     )
 
+        # Short-input fallback: for inputs ≤ 4 chars, try direct substring
+        # match against template content. This handles greetings/farewells
+        # like "你好" matching "你好呀！见到你真开心~" where keyword extraction
+        # strips stopwords and fuzzy scoring is too low.
+        stripped = user_input.strip()
+        if len(stripped) <= 4 and stripped:
+            for tid, tmpl in self.templates.items():
+                if stripped in tmpl.content:
+                    match_time = (time.time() - start_time) * 1000
+                    self._update_stats(MatchLevel.FUZZY, match_time)
+                    return MatchResult(
+                        score=0.85,
+                        level=MatchLevel.FUZZY,
+                        template_id=tid,
+                        template_content=tmpl.content,
+                        match_time_ms=match_time,
+                        metadata={
+                            "match_type": "short_input_substring",
+                            "usage_count": tmpl.usage_count,
+                        },
+                    )
+
         match_time = (time.time() - start_time) * 1000
         self._update_stats(MatchLevel.NO_MATCH, match_time)
 

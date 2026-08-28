@@ -974,30 +974,46 @@ class AngelaLLMService:
         if template_result is not None:
             return template_result
 
-        # Deterministic math/logic: resolve immediately without any LLM or memory.
-        # This runs early so pure arithmetic never falls through to NeuroBlender.
+        # Deterministic math: prefer Pipeline's pre-verified result;
+        # fall back to MathVerifier when Pipeline context is unavailable
+        # (e.g. direct Router calls without Pipeline).
+        math_result = context.get("_math_result")
+        if math_result and isinstance(math_result, dict) and math_result.get("response_text"):
+            response_time = (time.time() - start_time) * 1000
+            self._update_stats(response_time)
+            self.stats["memory_hits"] += 1
+            logger.info(f"Pipeline math result used: {response_time:.0f}ms")
+            return LLMResponse(
+                text=math_result["response_text"],
+                backend="deterministic-math",
+                model="pipeline-math",
+                tokens_used=0,
+                response_time_ms=response_time,
+                confidence=0.95,
+                metadata={"math": True, "source": "pipeline"},
+            )
+        # Backup: if no Pipeline context, try MathVerifier directly
         import re as _re_math
-        if _re_math.search(r"\d\s*[+\-*/^%()\s]+\d|\b(true|false|nor|nand|xor|xnor)\b", user_message):
+        if _re_math.search(r"\d\s*[+\-*/^%()\s]+\d", user_message):
             try:
                 from services.math_verifier import MathVerifier
                 mv = MathVerifier()
-                verify_result = mv.verify(user_message)
-                if verify_result.is_correct:
+                vr = mv.verify(user_message)
+                if vr.is_correct:
                     response_time = (time.time() - start_time) * 1000
                     self._update_stats(response_time)
                     self.stats["memory_hits"] += 1
-                    logger.info(f"Deterministic math hit: {response_time:.0f}ms")
                     return LLMResponse(
-                        text=verify_result.explanation,
+                        text=vr.explanation,
                         backend="deterministic-math",
                         model="math-verifier",
                         tokens_used=0,
                         response_time_ms=response_time,
                         confidence=0.95,
-                        metadata={"math": True},
+                        metadata={"math": True, "source": "backup"},
                     )
             except Exception as exc:
-                logger.debug(f"Deterministic math early route failed: {exc}")
+                logger.debug(f"MathVerifier backup failed: {exc}")
 
         ensemble_result = await self._try_ensemble(user_message, context)
         if ensemble_result is not None:
@@ -1396,6 +1412,73 @@ class AngelaLLMService:
         if not hasattr(self, "template_matcher") or not self.template_matcher:
             return None
         try:
+            # Social input detection: common greetings/farewells/thanks that
+            # TemplateMatcher can't match (input text ≠ response text).
+            # Route directly to TemplateLibrary by category.
+            _lower = user_message.strip().lower()
+            # Map social inputs to preferred template IDs for precise responses.
+            # Falls back to category if preferred ID not found.
+            _SOCIAL_MAP = {
+                "你好": ("greeting_general", "greeting"),
+                "hello": ("greeting_general", "greeting"),
+                "hi": ("greeting_general", "greeting"),
+                "早安": ("greeting_morning", "greeting"),
+                "早上好": ("greeting_morning", "greeting"),
+                "晚安": ("farewell_sleep", "farewell"),
+                "再見": ("farewell_general", "farewell"),
+                "再见": ("farewell_general", "farewell"),
+                "goodbye": ("farewell_general", "farewell"),
+                "bye": ("farewell_general", "farewell"),
+                "拜拜": ("farewell_general", "farewell"),
+                "謝謝": ("affirmation_thanks", "affirmation"),
+                "谢谢": ("affirmation_thanks", "affirmation"),
+                "謝謝你": ("affirmation_thanks", "affirmation"),
+                "谢谢你": ("affirmation_thanks", "affirmation"),
+                "thank you": ("affirmation_thanks", "affirmation"),
+                "thanks": ("affirmation_thanks", "affirmation"),
+                "ok": (None, "affirmation"),
+                "好": (None, "affirmation"),
+                "嗯": (None, "affirmation"),
+            }
+            _social = _SOCIAL_MAP.get(_lower)
+            if _social:
+                _preferred_id, _cat_name = _social
+                try:
+                    from ai.memory.memory_template import ResponseCategory
+                    from ai.memory.template_library import get_template_library
+                    lib = get_template_library()
+                    chosen = None
+                    # Try preferred template ID first
+                    if _preferred_id:
+                        all_t = lib.get_all_templates()
+                        for t in all_t:
+                            if t.id == _preferred_id:
+                                chosen = t
+                                break
+                    # Fall back to category
+                    if not chosen:
+                        cat = ResponseCategory(_cat_name)
+                        templates = lib.get_by_category(cat)
+                        if templates:
+                            import random as _rand
+                            chosen = _rand.choice(templates)
+                    if chosen:
+                        response_time = (time.time() - start_time) * 1000
+                        self.stats["composed_responses"] += 1
+                        return ChatResponse(
+                            text=chosen.content,
+                            backend="composed-template",
+                            model="template-based",
+                            tokens_used=50,
+                            response_time_ms=response_time,
+                            confidence=0.85,
+                            hit_score=0.9,
+                            hit_source="social",
+                            route="COMPOSED",
+                        )
+                except Exception as exc:
+                    logger.debug(f"Social template lookup failed: {exc}")
+
             match_result = self.template_matcher.match(user_message, context)
             match_score = match_result.score
 
@@ -1630,55 +1713,44 @@ class AngelaLLMService:
         if bus_result is not None:
             return bus_result
 
-        # Tier 0.1: Deterministic math/logic — always try BEFORE fallback,
-        # even when no LLM backend is available. MathVerifier handles these
-        # without any external API (fast, no torch dependency).
-        if _re.search(r"\d\s*[+\-*/^%()\s]+\d|\b(true|false|nor|nand|xor|xnor)\b", user_message):
-            try:
-                from services.math_verifier import MathVerifier
-                mv = MathVerifier()
-                verify_result = mv.verify(user_message)
-                if verify_result.is_correct:
-                    return LLMResponse(
-                        text=verify_result.explanation,
-                        backend="deterministic-math",
-                        model="math-verifier",
-                        tokens_used=0,
-                        confidence=0.95,
-                        metadata={"fallback": True, "tier": "deterministic-math"},
-                    )
-            except Exception as exc:
-                logger.debug(f"Deterministic math fallback failed: {exc}")
-
-        # Tier 0.2: Reflex responses — social niceties, greetings, farewells
-        _lower = user_message.strip().lower()
-        _REFLEX_MAP = {
-            "謝謝": "不客氣～有需要再跟我說喔！",
-            "谢谢你": "不客气～有需要再跟我说喔！",
-            "謝謝你": "不客氣～有需要再跟我說喔！",
-            "thank you": "You're welcome! Let me know if you need anything else.",
-            "thanks": "You're welcome! 😊",
-            "goodbye": "再見！期待下次見面！",
-            "再見": "再見！期待下次見面！",
-            "再见": "再见！期待下次见面！",
-            "bye": "再見啦！👋",
-            "早安": "早安！今天天氣真不錯呢~",
-            "晚安": "晚安～好好休息！",
-            "ok": "好的～", "okay": "好的～",
-            "好": "嗯嗯～", "嗯": "嗯嗯～",
-            "哈哈": "哈哈！😊 有什麼開心的事嗎？",
-            "hello": "你好呀！見到你真開心~",
-            "hi": "你好呀！見到你真開心~",
-        }
-        # Try exact match first, then check if the message is purely a reflex
-        if _lower in _REFLEX_MAP:
+        # Tier 0.1: If Pipeline already confirmed math, use its result
+        math_result = context.get("_math_result")
+        if math_result and isinstance(math_result, dict) and math_result.get("response_text"):
             return LLMResponse(
-                text=_REFLEX_MAP[_lower],
-                backend="composed-template",
-                model="reflex-map",
-                confidence=0.8,
-                metadata={"fallback": True, "tier": "reflex"},
+                text=math_result["response_text"],
+                backend="deterministic-math",
+                model="pipeline-math",
+                tokens_used=0,
+                confidence=0.95,
+                metadata={"fallback": True, "tier": "pipeline-math"},
             )
+
+        # Tier 0.2: If Pipeline classified as reflex/greeting, use TemplateLibrary
+        dispatch_intent = context.get("_dispatch_intent", "")
+        if dispatch_intent in ("generate", "GENERATE"):
+            # Check if QueryClassifier in Pipeline already identified this as greeting/farewell
+            intent_result = context.get("_intent_result")
+            if intent_result and isinstance(intent_result, dict):
+                sub_type = intent_result.get("sub_type", "")
+                if sub_type in ("greeting", "farewell"):
+                    try:
+                        from ai.memory.template_library import get_template_library
+                        from ai.memory.memory_template import ResponseCategory
+                        lib = get_template_library()
+                        cat = ResponseCategory.GREETING if sub_type == "greeting" else ResponseCategory.FAREWELL
+                        templates = lib.get_by_category(cat)
+                        if templates:
+                            import random as _rand
+                            text = _rand.choice(templates).content
+                            return LLMResponse(
+                                text=text,
+                                backend="composed-template",
+                                model="template-library",
+                                confidence=0.8,
+                                metadata={"fallback": True, "tier": "template-library"},
+                            )
+                    except Exception as exc:
+                        logger.debug(f"Template library greeting/farewell failed: {exc}")
 
         # Emotional input (e.g. "I feel sad") deserves an empathetic
         # SUPPORT template, not mood-glue fragments. Detect via
