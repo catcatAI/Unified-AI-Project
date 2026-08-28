@@ -970,6 +970,16 @@ class AngelaLLMService:
 
         self.stats["total_requests"] += 1
 
+        # Empty/whitespace-only input: return honest response, not NeuroBlender garbage
+        if not user_message or not user_message.strip():
+            return LLMResponse(
+                text="嗯？你好像沒有說話呢，有什麼想跟我聊的嗎？",
+                backend="local-fallback",
+                model="empty-input",
+                confidence=0.5,
+                metadata={"fallback": True, "tier": "empty-input"},
+            )
+
         template_result = await self._try_template_match(user_message, context, start_time)
         if template_result is not None:
             return template_result
@@ -1436,9 +1446,11 @@ class AngelaLLMService:
                 "谢谢你": ("affirmation_thanks", "affirmation"),
                 "thank you": ("affirmation_thanks", "affirmation"),
                 "thanks": ("affirmation_thanks", "affirmation"),
-                "ok": (None, "affirmation"),
-                "好": (None, "affirmation"),
-                "嗯": (None, "affirmation"),
+                "哈哈": (None, "small_talk"),
+                "呵呵": (None, "small_talk"),
+                "ok": ("affirmation_yes", "affirmation"),
+                "好": ("affirmation_yes", "affirmation"),
+                "嗯": ("affirmation_yes", "affirmation"),
             }
             _social = _SOCIAL_MAP.get(_lower)
             if _social:
