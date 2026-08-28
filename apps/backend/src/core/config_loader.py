@@ -383,6 +383,26 @@ class AngelaConfig:
             },
         }
 
+    def get_route_performance(self, provider_class: str, intent: str = "") -> Dict[str, Any]:
+        """Return learned route performance for a provider+intent pair.
+
+        Returns dict with 'success_count', 'fail_count', 'success_rate',
+        'avg_latency_ms'.  Empty dict when no data exists.
+        """
+        routes = self.get_learned("routes", {})
+        key = f"{provider_class}:{intent}"
+        succ = routes.get("successful_routes", {}).get(key, {})
+        fail = routes.get("failed_routes", {}).get(key, {})
+        sc = int(succ.get("count", 0))
+        fc = int(fail.get("count", 0))
+        total = sc + fc
+        return {
+            "success_count": sc,
+            "fail_count": fc,
+            "success_rate": sc / total if total > 0 else 0.5,
+            "avg_latency_ms": succ.get("last_latency_ms", 0),
+        }
+
     # ------------------------------------------------------------------ #
     # Hot reload
     # ------------------------------------------------------------------ #

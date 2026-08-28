@@ -830,6 +830,8 @@ class AngelaLLMService:
         # Priority is driven by each backend's `priority` in config
         # (backends.*.priority), falling back to network_defaults.BACKEND_PRIORITY
         # keyed by provider name. Lower number = higher priority.
+        # Additionally, learned route stats penalise providers with low success
+        # rates — the broken feedback loop is now closed.
         from core.system.config.network_defaults import BACKEND_PRIORITY
 
         # provider string for each LLMBackend enum member.
@@ -839,12 +841,42 @@ class AngelaLLMService:
             if v.startswith("_init_")
         }
 
-        def _rank(btype: "LLMBackend") -> int:
+        # Read learned route performance to penalise unreliable providers.
+        try:
+            from core.config_loader import get_angela_config
+
+            _angela_cfg = get_angela_config()
+        except Exception:
+            _angela_cfg = None
+
+        def _rank(btype: "LLMBackend") -> float:
             provider = provider_for.get(btype)
+            # Base priority from config
+            base = 99
             for bid, bcfg in (self.config.get("backends") or {}).items():
                 if isinstance(bcfg, dict) and (bcfg.get("provider") or "") == provider:
-                    return int(bcfg.get("priority", BACKEND_PRIORITY.get(provider, 99)))
-            return BACKEND_PRIORITY.get(provider, 99)
+                    base = int(bcfg.get("priority", BACKEND_PRIORITY.get(provider, 99)))
+                    break
+            if base == 99:
+                base = BACKEND_PRIORITY.get(provider, 99)
+            # Learn penalty: providers with <60% success rate over >=5 attempts
+            # get +20 priority (pushed back). Providers with >80% get -5 (boost).
+            if _angela_cfg is not None and provider:
+                perf = _angela_cfg.get_route_performance(provider)
+                total = perf.get("success_count", 0) + perf.get("fail_count", 0)
+                if total >= 5:
+                    rate = perf.get("success_rate", 0.5)
+                    if rate < 0.6:
+                        base += 20
+                        logger.info(
+                            f"[learned] {provider} success_rate={rate:.0%} ({total} samples) -> penalty +20"
+                        )
+                    elif rate > 0.8:
+                        base = max(0, base - 5)
+                        logger.info(
+                            f"[learned] {provider} success_rate={rate:.0%} ({total} samples) -> boost -5"
+                        )
+            return base
 
         ranked = sorted(available, key=_rank)
         for backend_type in ranked:
