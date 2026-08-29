@@ -2,7 +2,7 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -25,6 +25,7 @@ def mock_dependencies():
 
     mock_ham = MagicMock()
     mock_ham.store_conversation = MagicMock()
+    mock_ham.store_conversation_async = AsyncMock()
 
     # The drive endpoint resolves HAM via the cached backbone singleton, so a
     # HAMMemoryManager created by an earlier test would shadow this test's
@@ -97,7 +98,7 @@ def test_sync_files_new_file_success(mock_dependencies, sample_file_metadata):
     mock_svc.download_file.assert_called()
     mock_dependencies["mock_deduplication_instance"].record_sync.assert_called()
     mock_dependencies["mock_document_parser_instance"].parse_document.assert_called()
-    mock_dependencies["mock_ham"].store_conversation.assert_called()
+    mock_dependencies["mock_ham"].store_conversation_async.assert_called()
 
 
 async def test_sync_files_skip_unchanged_file(mock_dependencies, sample_file_metadata):
@@ -119,7 +120,7 @@ async def test_sync_files_skip_unchanged_file(mock_dependencies, sample_file_met
 
     mock_dependencies["mock_deduplication_instance"].should_download.assert_called_with(sample_file_metadata)
     mock_dependencies["mock_drive_service"].download_file.assert_not_called()
-    mock_dependencies["mock_ham"].store_conversation.assert_not_called()
+    mock_dependencies["mock_ham"].store_conversation_async.assert_not_called()
 
 
 async def test_sync_files_download_failure(mock_dependencies, sample_file_metadata):
@@ -141,7 +142,7 @@ async def test_sync_files_download_failure(mock_dependencies, sample_file_metada
     assert data["files"][0]["error"] == "Download failed"
 
     mock_dependencies["mock_drive_service"].download_file.assert_called()
-    mock_dependencies["mock_ham"].store_conversation.assert_not_called()
+    mock_dependencies["mock_ham"].store_conversation_async.assert_not_called()
 
 
 async def test_sync_files_memorize_different_types(mock_dependencies, sample_file_metadata):
@@ -165,4 +166,4 @@ async def test_sync_files_memorize_different_types(mock_dependencies, sample_fil
     assert data["synced"] == 2
     assert data["memorized_count"] == 2
 
-    assert mock_dependencies["mock_ham"].store_conversation.call_count == 2
+    assert mock_dependencies["mock_ham"].store_conversation_async.call_count == 2

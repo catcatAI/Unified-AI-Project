@@ -14,6 +14,7 @@ Operation types with distinct information retention rates:
   - list      (列出):   retain 100%   — enumerate files
 """
 
+import asyncio
 import datetime
 import json
 import logging
@@ -190,13 +191,18 @@ def _load_examples() -> Dict[str, List[Dict]]:
     return _examples_cache
 
 
-def _save_examples(examples: Dict[str, List[Dict]]) -> None:
+def _save_examples_sync(examples: Dict[str, List[Dict]]) -> None:
     try:
         _EXAMPLES_DIR.mkdir(parents=True, exist_ok=True)
         with open(_EXAMPLES_PATH, "w", encoding="utf-8") as f:
             json.dump(examples, f, ensure_ascii=False, indent=2)
     except Exception as e:
         logger.warning(f"Failed to save document examples: {e}")
+
+
+async def _save_examples(examples: Dict[str, List[Dict]]) -> None:
+    """Async wrapper to avoid blocking the event loop on file I/O."""
+    await asyncio.to_thread(_save_examples_sync, examples)
 
 
 def _find_local_match(task_type: str, source_dir: str, files: List[Path]) -> Optional[Dict]:
@@ -358,7 +364,7 @@ async def _learn_from_llm_output(
     )
     if len(examples[task_type]) > 20:
         examples[task_type] = examples[task_type][-20:]
-    _save_examples(examples)
+    await _save_examples(examples)
 
     try:
         from ai.ed3n.ed3n_engine import ED3NEngine

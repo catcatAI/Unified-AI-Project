@@ -369,7 +369,7 @@ async def sync_files(request: Dict[str, Any] = Body(...), svc=Depends(get_drive_
 
                     ham = get_backbone().memory("ham")
                     content = parser.parse_document(str(dest_path))
-                    ham.store_conversation(
+                    await ham.store_conversation_async(
                         {
                             "role": "system",
                             "content": content[:5000] if content else f"[File: {dest_path.name}]",

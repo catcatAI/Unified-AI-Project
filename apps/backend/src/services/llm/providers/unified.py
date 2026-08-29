@@ -123,7 +123,8 @@ class UnifiedBackend(BaseLLMBackend):
                     from ai.unified_engine.semantic_qa import SemanticQA
 
                     engine.semantic_qa = SemanticQA()
-                    engine.semantic_qa.load_dict(_json.load(open(qa_path, encoding="utf-8")))
+                    with open(qa_path, encoding="utf-8") as _f:
+                        engine.semantic_qa.load_dict(_json.load(_f))
                 except Exception:  # noqa: BLE001
                     pass
             self._engine = engine

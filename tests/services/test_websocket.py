@@ -102,9 +102,9 @@ async def test_chat_response_includes_session_id():
     assert len(sent) == 1
     payload = sent[0]
     assert payload["type"] == "chat_response"
-    assert payload["data"]["content"] == "Hello via websocket"
-    assert payload["data"]["message_id"] == "m1"
-    assert payload["data"]["session_id"] == "sess-ws-1"
+    assert payload["content"] == "Hello via websocket"
+    assert payload["session_id"] == "sess-ws-1"
+    assert payload["message_id"] == "m1"
 
 
 if __name__ == "__main__":

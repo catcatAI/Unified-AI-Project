@@ -1709,11 +1709,12 @@ async def _run_chat_pipeline(
 
     # Step 5h: Wire DesktopInteraction into context for generic file operations
     try:
-        from core.engine.desktop_interaction import DesktopInteraction
+        from api.lifespan import get_desktop_interaction
 
-        _desktop = DesktopInteraction()
-        context["desktop_interaction"] = _desktop
-        logger.info("DesktopInteraction wired into chat context")
+        _desktop = get_desktop_interaction()
+        if _desktop is not None:
+            context["desktop_interaction"] = _desktop
+            logger.info("DesktopInteraction wired into chat context")
     except Exception as e:
         logger.warning(f"DesktopInteraction wiring failed: {e}", exc_info=True)
 

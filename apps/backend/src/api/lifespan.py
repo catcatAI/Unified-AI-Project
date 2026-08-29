@@ -125,23 +125,37 @@ def get_digital_life():
     return _digital_life_instance
 
 
+_desktop_interaction_instance = None
+
+
 def get_desktop_interaction():
-    """Lazy import for desktop interaction."""
+    """Lazy import for desktop interaction (cached singleton)."""
+    global _desktop_interaction_instance
+    if _desktop_interaction_instance is not None:
+        return _desktop_interaction_instance
     try:
         from core.engine.desktop_interaction import DesktopInteraction
 
-        return DesktopInteraction()
+        _desktop_interaction_instance = DesktopInteraction()
+        return _desktop_interaction_instance
     except Exception as e:
         logger.warning(f"DesktopInteraction not available: {e}")
         return None
 
 
+_action_executor_instance = None
+
+
 def get_action_executor():
-    """Lazy import for action executor."""
+    """Lazy import for action executor (cached singleton)."""
+    global _action_executor_instance
+    if _action_executor_instance is not None:
+        return _action_executor_instance
     try:
         from core.engine.action_executor import ActionExecutor
 
-        return ActionExecutor()
+        _action_executor_instance = ActionExecutor()
+        return _action_executor_instance
     except Exception as e:
         logger.warning(f"ActionExecutor not available: {e}")
         return None

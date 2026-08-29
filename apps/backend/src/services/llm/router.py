@@ -928,6 +928,18 @@ class AngelaLLMService:
 
     def _init_meta_controller(self):
         try:
+            # Prefer the shared singleton from meta_routes (if available) so the
+            # REST API /meta/confidence/summary and the router share the same
+            # calibration history.  Fall back to creating a fresh instance.
+            try:
+                from api.routes.meta_routes import _get_controller
+
+                shared = _get_controller()
+                if shared is not None:
+                    self.meta_controller = shared
+                    return
+            except Exception:
+                pass
             from ai.meta.meta_controller import MetaController
 
             self.meta_controller = MetaController()
@@ -1083,10 +1095,6 @@ class AngelaLLMService:
             # Deterministic shapes (math/logic) NEVER fuse — unified owns them.
             import re as _re2
 
-            if _re2.search(r"\d\s*[+\-*/^%]|\b(true|false|nor|nand|xor|xnor)\b", user_message):
-                # Math/logic detected — skip fusion, go directly to unified engine
-                # deterministic layers via _generate_with_llm.
-                pass  # falls through to LLM generation below which routes to unified
             if self.active_backend_type == LLMBackend.UNIFIED and not _re2.search(
                 r"\d\s*[+\-*/^%]", user_message
             ):
@@ -1188,6 +1196,11 @@ class AngelaLLMService:
         (ED3N/GARDEN are associations/reflex only). Routing factual queries to the
         SNN/LLM generation path wastes seconds and returns low-quality output, so we
         resolve them here first and short-circuit before any expensive generation.
+
+        NOTE: chat_service.py queries the full KnowledgePipeline (10 sources)
+        BEFORE calling this LLM service. This method only handles the case where
+        the LLM router is called directly (e.g. via desktop API). The bare
+        route_knowledge() is the lightweight fallback for that path.
         """
         try:
             from ai.knowledge_base import route_knowledge
@@ -1506,35 +1519,63 @@ class AngelaLLMService:
                                 if len(_kw_lower) > _best_overlap:
                                     _best_overlap = len(_kw_lower)
                                     _best_cat = _t.category
-                    # Pattern-based social routing: when no template keyword
-                    # matches directly, use pattern recognition to map common
-                    # social expressions to the right category.  This is NOT
-                    # per-input hardcoding — it's category-level pattern matching.
+                    # AI-driven social routing: use EmotionAnalyzer for emotional
+                    # content, keep structural patterns for greeting/farewell only.
+                    _emotion_to_category = {
+                        "sad": "support",
+                        "fear": "support",
+                        "angry": "support",
+                        "happy": "small_talk",
+                        "surprise": "curiosity",
+                        "curious": "curiosity",
+                        "calm": "small_talk",
+                    }
+                    _emotion_cat = None
+                    try:
+                        _ea = EmotionAnalyzer()
+                        _ea_result = _ea.analyze_emotion(user_message)
+                        _detected = _ea_result.get("emotion", "")
+                        _intensity = _ea_result.get("intensity", 0.0)
+                        if _detected and _intensity > 0.3:
+                            _emotion_cat = _emotion_to_category.get(_detected)
+                    except Exception:
+                        pass
+                    if _emotion_cat:
+                        try:
+                            _cat_e = ResponseCategory(_emotion_cat)
+                            _tpls_e = _lib.get_by_category(_cat_e)
+                            if _tpls_e:
+                                import random as _rand_e
+                                _ch_e = _rand_e.choice(_tpls_e)
+                                _rt_e = (time.time() - start_time) * 1000
+                                self.stats["composed_responses"] += 1
+                                return ChatResponse(
+                                    text=_ch_e.content,
+                                    backend="composed-template",
+                                    model="template-based",
+                                    tokens_used=50,
+                                    response_time_ms=_rt_e,
+                                    confidence=0.8,
+                                    hit_score=0.8,
+                                    hit_source="emotion-analyzer",
+                                    route="COMPOSED",
+                                )
+                        except Exception:
+                            pass
+                    # Structural pattern fallback for greeting/farewell only
                     _PATTERN_CATEGORY = {
-                        "affirmation": ["沒問題", "没问题", "no problem", "好的", "ok", "嗯",
-                                        "辛苦了", "辛苦啦", "对", "是的", "没错"],
-                        "curiosity": ["真的嗎", "真的吗", "really", "真的", "嗎", "吗"],
-                        "support": ["加油", "fighting", "fight", "你可以", "相信你", "幫我", "幫忙", "help me"],
-                        "intimacy": ["我愛你", "我爱你", "i love you", "love you",
-                                     "愛你", "爱你", "想你", "miss you"],
-                        "apology": ["sorry", "抱歉", "對不起", "对不起", "不好意思"],
                         "farewell": ["good night", "goodnight", "晚安", "see you",
                                      "see ya", "see you later"],
                         "greeting": ["morning", "good morning", "早上好", "午安",
                                      "afternoon", "evening"],
-                        "small_talk": ["happy birthday", "生日快樂", "生日快乐",
-                                       "嘻嘻", "嘿嘿", "嘻嘻"],
                     }
                     _input_lower2 = user_message.strip().lower()
                     for _cat_name, _patterns in _PATTERN_CATEGORY.items():
                         for _pat in _patterns:
                             if _pat.lower() in _input_lower2 or _input_lower2 in _pat.lower():
                                 try:
-                                    from ai.memory.memory_template import ResponseCategory
-                                    from ai.memory.template_library import get_template_library
-                                    _lib2 = get_template_library()
                                     _cat = ResponseCategory(_cat_name)
-                                    _tpls = _lib2.get_by_category(_cat)
+                                    _tpls = _lib.get_by_category(_cat)
                                     if not _tpls:
                                             # Fallback: try a related category
                                             _FALLBACK = {"support": "affirmation",
@@ -1542,10 +1583,11 @@ class AngelaLLMService:
                                                          "gratitude": "affirmation"}
                                             _fb = _FALLBACK.get(_cat_name)
                                             if _fb:
-                                                _tpls = _lib2.get_by_category(ResponseCategory(_fb))
-                                    if _tpls:
-                                            import random as _rand3
-                                            _ch = _rand3.choice(_tpls)
+                                                _tpls = _lib.get_by_category(ResponseCategory(_fb))
+                                    if not _tpls:
+                                        break  # no templates for this category, try next pattern
+                                    import random as _rand3
+                                    _ch = _rand3.choice(_tpls)
                                     _rt2 = (time.time() - start_time) * 1000
                                     self.stats["composed_responses"] += 1
                                     return ChatResponse(
@@ -1758,7 +1800,9 @@ class AngelaLLMService:
                 query_type = classify_result.primary_type.value
                 decision = await self.model_bus.route(user_message, query_type, context)
                 if decision.selected_model != "none":
-                    result = decision.results[decision.selected_model]
+                    result = decision.results.get(decision.selected_model)
+                    if result is None:
+                        return None
                     if not result.text or result.text in _KNOWN_FALLBACK_RESPONSES:
                         return None
                     return LLMResponse(
@@ -1908,7 +1952,7 @@ class AngelaLLMService:
         # "don't know" instead of NeuroBlender random fragments.
         if looks_like_question:
             return LLMResponse(
-                text="這個問題我目前還沒有足夠的知識能正確回答。你可以問我數學、邏輯，或我學過的事實。",
+                text=f"{context.get('user_name', '你')}，這個問題我目前還沒有足夠的知識能正確回答。你可以問我數學、邏輯，或我學過的事實。",
                 backend="local-fallback",
                 model="honest-no-answer",
                 confidence=0.4,
@@ -1943,6 +1987,21 @@ class AngelaLLMService:
             }
 
             target_category = category_map.get(emotion, ResponseCategory.SMALL_TALK)
+
+            # EmotionSystem temporal awareness: sustained negative → force SUPPORT;
+            # declining trend → prefer empathy over casual.
+            try:
+                from core.backbone import get_backbone
+
+                _es = get_backbone().emotion
+                if _es is not None and _es._sustained_negative_counter >= 3:
+                    target_category = ResponseCategory.SUPPORT
+                elif _es._feedback_history and len(_es._feedback_history) >= 2:
+                    _recent = list(_es._feedback_history)
+                    if _recent[-1].get("engagement_ratio", 1.0) < _recent[0].get("engagement_ratio", 1.0):
+                        target_category = ResponseCategory.SUPPORT
+            except Exception:
+                pass
             templates = library.get_by_category(target_category)
 
             if not templates:
@@ -2032,19 +2091,37 @@ class AngelaLLMService:
             },
         }
 
-        # Build intent_vec dynamically from user_message keywords
-        intent_vec = {"casual": 0.5}
+        # Build intent_vec from QueryClassifier (AI-driven) instead of hardcoded keywords
+        intent_vec: Dict[str, float] = {"casual": 0.5}
         emotion = bio.get("dominant_emotion", "").lower()
         if emotion in ("sad", "fear", "angry"):
             intent_vec["support"] = 0.7
         if emotion in ("happy", "surprise"):
             intent_vec["excited"] = 0.6
-        math_kws = ("計算", "數學", "積分", "微分", "math", "calculate")
-        code_kws = ("代碼", "程式", "python", "function", "code", "program")
-        if any_keyword(user_message, math_kws):
-            intent_vec["math"] = 0.8
-        if any_keyword(user_message, code_kws):
-            intent_vec["code"] = 0.8
+        try:
+            _qc = QueryClassifier()
+            _qr = _qc.classify(user_message)
+            _type_to_intent = {
+                QueryType.MATH: ("math", 0.8),
+                QueryType.LOGIC: ("math", 0.6),
+                QueryType.CODE: ("code", 0.8),
+                QueryType.CREATIVE: ("creative", 0.7),
+                QueryType.KNOWLEDGE: ("knowledge", 0.7),
+                QueryType.OPINION: ("casual", 0.6),
+                QueryType.COMMAND: ("command", 0.7),
+                QueryType.FILE: ("command", 0.7),
+                QueryType.SEARCH: ("search", 0.7),
+                QueryType.GREETING: ("casual", 0.9),
+                QueryType.REFLEX: ("casual", 0.8),
+            }
+            if _qr.primary_type in _type_to_intent:
+                _key, _base = _type_to_intent[_qr.primary_type]
+                intent_vec[_key] = max(_base * _qr.confidence, intent_vec.get(_key, 0.0))
+            if _qr.secondary_type and _qr.secondary_type in _type_to_intent:
+                _key2, _base2 = _type_to_intent[_qr.secondary_type]
+                intent_vec[_key2] = max(_base2 * _qr.secondary_confidence * 0.5, intent_vec.get(_key2, 0.0))
+        except Exception as exc:
+            logger.debug("QueryClassifier intent_vec fallback: %s", exc)
 
         empathy_valence = bio.get("valence", 0.0)
         user_name = context.get("user_name", "朋友")
@@ -2233,15 +2310,16 @@ class AngelaLLMService:
     async def _post_process_response(
         self, response: LLMResponse, user_message: str, context: Dict[str, Any], start_time: float
     ) -> LLMResponse:
+        _has_text = bool((getattr(response, "text", None) or "").strip())
         if self.llm_mode == "auto" and self.auto_selector is not None and AutoDecision is not None:
             elapsed = (time.time() - start_time) * 1000
             self.auto_selector.record_result(
                 AutoDecision(backend=AutoBackendChoice(self.active_backend_type.value)),
                 actual_ms=elapsed,
-                success=not response.error,
+                success=not response.error and _has_text,
             )
 
-        if response.error or not (getattr(response, "text", None) or "").strip():
+        if response.error or not _has_text:
             # A backend may return text="" WITHOUT an error flag (ollama empty
             # stream, ED3N no-match).  Treat empty as a failure so the fallback
             # chain / _fallback_response still produces a user-facing answer

@@ -31,7 +31,7 @@ class TestTemplateLibraryInit:
         lib = TemplateLibrary()
         count = lib.get_template_count()
         assert count > 0
-        assert count == 45
+        assert count == 51
 
     def test_init_contains_known_ids(self):
         lib = TemplateLibrary()
@@ -48,7 +48,7 @@ class TestTemplateLibraryGet:
 
     def test_get_all_templates(self, lib):
         templates = lib.get_all_templates()
-        assert len(templates) == 45
+        assert len(templates) == 51
         ids = [t.id for t in templates]
         assert 'greeting_morning' in ids
         assert 'farewell_general' in ids
@@ -77,7 +77,7 @@ class TestTemplateLibraryGet:
         assert templates == []
 
     def test_get_template_count(self, lib):
-        assert lib.get_template_count() == 45
+        assert lib.get_template_count() == 51
 
 
 class TestTemplateLibraryCategoryCounts:
@@ -88,7 +88,7 @@ class TestTemplateLibraryCategoryCounts:
 
     def test_get_category_counts(self, lib):
         counts = lib.get_category_counts()
-        assert sum(counts.values()) == 45
+        assert sum(counts.values()) == 51
         assert ResponseCategory.GREETING in counts
         assert ResponseCategory.FAREWELL in counts
         assert ResponseCategory.EMOTIONAL in counts
@@ -161,4 +161,4 @@ class TestTemplateLibrarySingleton:
 
     def test_singleton_is_template_library(self):
         lib = get_template_library()
-        assert lib.get_template_count() == 45
+        assert lib.get_template_count() == 51

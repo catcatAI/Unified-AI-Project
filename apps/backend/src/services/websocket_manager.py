@@ -432,20 +432,21 @@ async def _handle_chat_message(websocket: WebSocket, data: dict, session_id: str
         logger.info(
             f"[WebSocket] Chat response sent ({_src}, score={_hit:.2f}): {_resp_preview}..."
         )
+        # NOTE: Frontend reads data.content and data.type directly, NOT
+        # data.data.content. The envelope carries content at the top level
+        # alongside 'type' so consumers don't need to dig into a nested 'data'.
         await manager.send_personal_message(
             {
                 "type": "chat_response",
-                "data": {
-                    "message_id": message_id,
-                    "content": chat_res["response_text"],
-                    "sender": "angela",
-                    "session_id": session_id,
-                    "hit_score": chat_res.get("hit_score", 0.0),
-                    "hit_source": chat_res.get("hit_source", "none"),
-                    "route": chat_res.get("route", "llm"),
-                    "emotion": chat_res.get("emotion", "happy"),
-                    "emotion_intensity": chat_res.get("emotion_intensity", 0.5),
-                },
+                "content": chat_res["response_text"],
+                "sender": "angela",
+                "session_id": session_id,
+                "message_id": message_id,
+                "hit_score": chat_res.get("hit_score", 0.0),
+                "hit_source": chat_res.get("hit_source", "none"),
+                "route": chat_res.get("route", "llm"),
+                "emotion": chat_res.get("emotion", "happy"),
+                "emotion_intensity": chat_res.get("emotion_intensity", 0.5),
                 "timestamp": datetime.now().isoformat(),
             },
             websocket,
@@ -455,13 +456,11 @@ async def _handle_chat_message(websocket: WebSocket, data: dict, session_id: str
         await manager.send_personal_message(
             {
                 "type": "chat_response",
-                "data": {
-                    "message_id": message_id,
-                    "content": "（我的大腦似乎遇到了一點點小干擾，能再說一次嗎？）",
-                    "sender": "angela",
-                    "session_id": session_id,
-                    "error": safe_error(chat_err),
-                },
+                "content": "（我的大腦似乎遇到了一點點小干擾，能再說一次嗎？）",
+                "sender": "angela",
+                "session_id": session_id,
+                "message_id": message_id,
+                "error": safe_error(chat_err),
                 "timestamp": datetime.now().isoformat(),
             },
             websocket,

@@ -293,6 +293,17 @@ class StateInterpreter:
     def _ensure_loaded(self) -> None:
         """Ensure loaded."""
         if self._state_matrix is None:
+            # Prefer the live state matrix from the backbone/DLI singleton
+            # so we read actual axis values, not fresh defaults.
+            try:
+                from api.lifespan import get_digital_life
+
+                dli = get_digital_life()
+                if dli and hasattr(dli, "state_matrix"):
+                    self._state_matrix = dli.state_matrix
+                    return
+            except Exception:
+                pass
             try:
                 from core.engine.state_matrix import StateMatrix4D
 

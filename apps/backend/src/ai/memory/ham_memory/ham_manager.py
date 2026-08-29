@@ -59,15 +59,32 @@ class HAMMemoryManager:
             except (json.JSONDecodeError, FileNotFoundError, IOError):
                 self._data = {"templates": [], "conversations": [], "metadata": {}}
 
+    def _write_to_disk(self) -> None:
+        """Synchronous disk write — called from _save or save_async."""
+        self.memory_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.memory_file, "w", encoding="utf-8") as f:
+            json.dump(self._data, f, ensure_ascii=False, indent=2)
+
     def _save(self) -> None:
         if not self.auto_save or not self.memory_file:
             return
         try:
-            self.memory_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.memory_file, "w", encoding="utf-8") as f:
-                json.dump(self._data, f, ensure_ascii=False, indent=2)
+            self._write_to_disk()
         except (IOError, OSError, TypeError) as e:
             logger.warning(f"HAMMemoryManager save failed: {e}")
+
+    async def save_async(self) -> None:
+        """Non-blocking save — offloads disk I/O to a worker thread.
+
+        Callers in async contexts (FastAPI endpoints, integration loops)
+        should prefer this over _save() to avoid blocking the event loop.
+        """
+        if not self.auto_save or not self.memory_file:
+            return
+        try:
+            await asyncio.to_thread(self._write_to_disk)
+        except (IOError, OSError, TypeError) as e:
+            logger.warning(f"HAMMemoryManager async save failed: {e}")
 
     async def store_template(self, template: Any) -> None:
         self._data["templates"].append(
@@ -163,19 +180,30 @@ class HAMMemoryManager:
                     # Bigram Jaccard
                     best_score = max(best_score, _bigram_jaccard_util(kw_lower, query_lower))
             if best_score >= min_score:
-                # Relevance gate: for short queries (≤3 tokens), a single
-                # keyword match is often a false positive (e.g. "ai" in
-                # "What is AI?" matching "我是Angela AI").  Reject when
-                # only one non-stopword keyword matched.
+                # Relevance gate: count how many non-stopword keywords
+                # matched.  A single keyword match on a long query is often
+                # a false positive (e.g. "capital" in "capital of Italy"
+                # matching the "capital of France" template).
                 query_tokens = query_lower.split()
+                matched_kws = set()
+                total_non_stop = 0
+                for kw in keywords:
+                    k = kw.lower().strip()
+                    if not k or k in _STOPWORDS:
+                        continue
+                    total_non_stop += 1
+                    if k in query_lower:
+                        matched_kws.add(k)
+                # Short query: reject if only 1 keyword matched
                 if len(query_tokens) <= 3:
-                    # Count unique non-stopword keywords that matched
-                    matched_kws = set()
-                    for kw in keywords:
-                        k = kw.lower().strip()
-                        if k and k not in _STOPWORDS and k in query_lower:
-                            matched_kws.add(k)
                     if len(matched_kws) <= 1:
+                        continue
+                # Long query: penalize single-keyword match proportionally
+                # so unrelated templates don't win over honest fallback.
+                # 1/N match → score × (1/N), e.g. 0.9 × 1/3 = 0.3 < 0.5
+                elif len(matched_kws) <= 1 and total_non_stop > 1:
+                    best_score *= (1.0 / max(total_non_stop, 2))
+                    if best_score < min_score:
                         continue
                 scored.append((tpl, best_score))
 
@@ -315,6 +343,16 @@ class HAMMemoryManager:
     def store_conversation(self, conversation: Dict[str, Any]) -> None:
         self._data["conversations"].append(conversation)
         self._save()
+
+    async def store_conversation_async(self, conversation: Dict[str, Any]) -> None:
+        """Non-blocking store — offloads disk write to a worker thread.
+
+        Callers in async contexts (FastAPI endpoints, integration loops)
+        should prefer this over store_conversation() to avoid blocking
+        the event loop with synchronous JSON file I/O.
+        """
+        self._data["conversations"].append(conversation)
+        await self.save_async()
 
     def get_stats(self) -> Dict[str, Any]:
         return {

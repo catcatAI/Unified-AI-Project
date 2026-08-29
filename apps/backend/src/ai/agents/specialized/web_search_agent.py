@@ -37,6 +37,7 @@ class WebSearchAgent:
         self.config = config or {}
         self.agent_id = kwargs.get("agent_id")
         self._search_history: List[Dict[str, Any]] = []
+        self._MAX_SEARCH_HISTORY = 100
         self._session: Optional[requests.Session] = None
         if REQUESTS_AVAILABLE:
             self._session = requests.Session()
@@ -87,6 +88,8 @@ class WebSearchAgent:
                     "timestamp": datetime.now().isoformat(),
                 }
             )
+            if len(self._search_history) > self._MAX_SEARCH_HISTORY:
+                self._search_history = self._search_history[-self._MAX_SEARCH_HISTORY:]
             logger.info(f"search: '{query}' -> {len(results)} results")
             return {
                 "status": "success",

@@ -62,6 +62,7 @@ class AudioService:
         self.enabled = True
         self.peer_services: dict = {}
         self.processing_history: List[Dict[str, Any]] = []
+        self._MAX_PROCESSING_HISTORY = 500
 
         # 聽覺注意力組件 (sampler → memory → attention)
         self.sampler = AuditorySampler(self.config.get("sampler_config"))
