@@ -166,10 +166,10 @@ def _demo_state_persistence(sm: StateMatrixAdapter) -> None:
     """Demonstrate state persistence."""
     banner("9. State Persistence")
     sm.update_beta(focus=0.95)
-    state = sm.save_state()
+    state = sm.snapshot()
     print(f"  Saved: {len(state['dimensions'])} dimensions, update_count={state['update_count']}")
     sm2 = StateMatrixAdapter()
-    sm2.load_state(state)
+    sm2.restore(state)
     print(f"  Loaded: beta.focus = {sm2._sm.beta.values.get('focus', 0):.2f}")
 
 

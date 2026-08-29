@@ -49,11 +49,10 @@ class TestServiceRegistry:
         svc = self.r.get('num', expected_type=int)
         assert svc == 42
 
-    @pytest.mark.skip("ServiceRegistry type_check validation returns different result than test expects")
     def test_type_check_mismatch(self):
         self.r.register('text', 'hello')
-        svc = self.r.get('text', expected_type=int)
-        assert svc == 'hello'  # returns value despite mismatch (only warns)
+        with pytest.raises(TypeError):
+            self.r.get('text', expected_type=int)
 
     def test_get_registry_returns_singleton(self):
         from core.interfaces.service_registry import get_registry

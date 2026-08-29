@@ -322,15 +322,20 @@ class StateMatrixAdapter(JsonFileStateStore):
         ]
         return before - len(self._attractors)
 
-    # --- Persistence ---
+    # --- Snapshot (in-memory serialize/deserialize) ---
+    # NOTE: These are intentionally named snapshot/restore to avoid
+    # shadowing the inherited StatePersistence protocol methods
+    # (save_state(key, data) / load_state(key) for JSON-file persistence).
 
-    def save_state(self) -> Dict[str, Any]:
+    def snapshot(self) -> Dict[str, Any]:
+        """Serialize current state to an in-memory dict."""
         return {
             "dimensions": dict(self._state),
             "update_count": self._update_count,
         }
 
-    def load_state(self, data: Dict[str, Any]) -> None:
+    def restore(self, data: Dict[str, Any]) -> None:
+        """Restore state from an in-memory dict."""
         dims = data.get("dimensions", {})
         if isinstance(dims, dict):
             self._state.update(dims)
