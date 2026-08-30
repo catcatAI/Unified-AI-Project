@@ -12,7 +12,7 @@ const CARDS = {
     {
       id: 'loc_holy_cross', name: '聖十字校園', type: 'location',
       color: '#3a7bd5', icon: '🏫',
-      desc: 'W01的校園。哥布林、盜賊、野狼出沒。灰色走廊上聲音像是被什麼東西吸收了。',
+      desc: '校園。哥布林、盜賊、野狼出沒。灰色走廊上聲音像是被什麼東西吸收了。',
       worldLine: 'W01', resourceRate: 1, hpMod: 0, sanMod: 0,
       storyNodes: ['school_start'],
     },
@@ -40,7 +40,7 @@ const CARDS = {
     {
       id: 'loc_forest', name: '森林深處', type: 'location',
       color: '#4CAF50', icon: '🌲',
-      desc: 'W01的古老森林。巨熊、野狼、蛇妖在此棲息，偶爾可見元素核心。',
+      desc: '古老森林。巨熊、野狼、蛇妖在此棲息，偶爾可見元素核心。',
       worldLine: 'W01', resourceRate: 3, hpMod: 0, sanMod: -1,
       storyNodes: [],
     },
@@ -61,21 +61,21 @@ const CARDS = {
     {
       id: 'loc_rust_city', name: '鏽蝕城邦', type: 'location',
       color: '#8D6E63', icon: '🏚️',
-      desc: 'W04末世廢墟。天翼種在此活動。電子設備大量損壞，空氣中飄著異色微粒。',
+      desc: '末世廢墟。天翼種在此活動。電子設備大量損壞，空氣中飄著異色微粒。',
       worldLine: 'W04', resourceRate: 1, hpMod: -3, sanMod: -2,
       storyNodes: [],
     },
     {
       id: 'loc_orbital_station', name: '軌道居住站', type: 'location',
       color: '#607D8B', icon: '🛰️',
-      desc: 'W03的太空站。電子設備不受干擾，精度最高。大學院的知識殿堂。',
+      desc: '太空站。電子設備不受干擾，精度最高。大學院的知識殿堂。',
       worldLine: 'W03', resourceRate: 1, hpMod: 0, sanMod: 2,
       storyNodes: [],
     },
     {
       id: 'loc_library', name: '中央大圖書館', type: 'location',
       color: '#3F51B5', icon: '📚',
-      desc: '位於迴廊物語核邊緣的知識寶庫。含拱頂絲網區、中心書架區、休眠區等多個區域。',
+      desc: '位於迴廊邊緣的知識寶庫。含拱頂絲網區、中心書架區、休眠區等多個區域。',
       worldLine: 'W01', resourceRate: 0, hpMod: 0, sanMod: 3,
       storyNodes: ['library_start'],
     },
@@ -105,36 +105,7 @@ const CARDS = {
       dialogue: 'greeting_red',
       location: 'loc_market',
     },
-    {
-      id: 'char_watchman', name: '守門人', type: 'character',
-      color: '#1565C0', icon: '👁️',
-      role: '鏡湖守護者', race: '不明',
-      desc: '聲音從湖底傳來。他守護鏡湖已經很久了。',
-      stats: { hp: 500, atk: 5, def: 20, spd: 3 },
-      abilities: ['鏡湖守護', '世界線感知'],
-      dialogue: 'greeting_watchman',
-      location: 'loc_mirror_lake',
-    },
-    {
-      id: 'char_wings', name: '翅翼少女', type: 'character',
-      color: '#00BCD4', icon: '🪽',
-      role: '書中投影', race: '不明',
-      desc: '金屬翅膀的女孩在書頁的影像中行走。她停下來看向你。',
-      stats: { hp: 100, atk: 8, def: 6, spd: 15 },
-      abilities: ['書頁投影', '跨世界通訊'],
-      dialogue: 'greeting_wings',
-      location: 'loc_library',
-    },
-    {
-      id: 'char_old_man', name: '記憶老人', type: 'character',
-      color: '#5D4037', icon: '👴',
-      role: '情感交易者', race: '人類',
-      desc: '在賣「記憶碎片」——裝在小瓶子裡的光。他對情感有興趣。',
-      stats: { hp: 60, atk: 3, def: 5, spd: 4 },
-      abilities: ['情感交易', '記憶提取'],
-      dialogue: 'greeting_oldman',
-      location: 'loc_market',
-    },
+
     // ─── game-rpg 角色 ───
     {
       id: 'char_zhizhi', name: '織織', type: 'character',
@@ -1151,499 +1122,66 @@ const CARDS = {
   // 故事節點 (Story Nodes / Dialogues)
   // ═══════════════════════════════════════════════════════
   dialogues: {
-    tutorial_start: {
-      speaker: '旁白',
-      text: '你醒了。四周是灰色的牆壁，空氣中帶著金屬和灰塵的味道。\n你的口袋裡有一張紙條：「找到鏡湖。答案在那裡。」',
-      choices: [
-        { text: '推開門，走出去', next: 'tutorial_explore', effect: { knowledge: 5 } },
-        { text: '搜索房間', next: 'tutorial_search' },
-      ],
-    },
-    tutorial_search: {
-      speaker: '旁白',
-      text: '房間很小。一張床、一張桌子、一個抽屜。\n抽屜裡有手電筒、地圖、小刀、和乾糧。',
-      choices: [
-        { text: '拿上所有東西', next: 'tutorial_leave', effect: { items: ['item_flashlight', 'item_map', 'item_knife', 'res_food'] } },
-        { text: '只拿有用的', next: 'tutorial_leave', effect: { items: ['item_flashlight', 'item_map', 'item_knife'] } },
-        { text: '什麼都不拿', next: 'tutorial_leave' },
-      ],
-    },
-    tutorial_leave: {
-      speaker: '旁白',
-      text: '你走出房間。外面是一條長廊。盡頭有光。',
-      choices: [
-        { text: '沿著走廊前進', next: null, effect: { unlock: 'loc_mirror_lake' } },
-      ],
-    },
-    tutorial_explore: {
-      speaker: '旁白',
-      text: '你推開門。走廊很長，兩側的牆壁上有淡淡的藍光。\n盡頭是一扇門。門上有鏡湖的符號。',
-      choices: [
-        { text: '走向門', next: null, effect: { unlock: 'loc_mirror_lake' } },
-      ],
-    },
+    tutorial_start: { speaker: '旁白', text: '你醒了。四周是灰色的牆壁。口袋裡有一張紙條：「找到鏡湖。答案在那裡。」', choices: [{ text: '推開門', next: 'tutorial_explore', effect: { knowledge: 5 } }, { text: '搜索房間', next: 'tutorial_search' }] },
+    tutorial_search: { speaker: '旁白', text: '房間很小。抽屜裡有手電筒、地圖、小刀、和乾糧。', choices: [{ text: '拿上所有東西', next: 'tutorial_leave', effect: { items: ['item_flashlight', 'item_map', 'item_knife', 'res_food'] } }, { text: '只拿有用的', next: 'tutorial_leave', effect: { items: ['item_flashlight', 'item_map', 'item_knife'] } }, { text: '什麼都不拿', next: 'tutorial_leave' }] },
+    tutorial_explore: { speaker: '旁白', text: '外面是一條長廊。盡頭有光。', choices: [{ text: '沿著走廊前進', next: null, effect: { unlock: 'loc_mirror_lake' } }] },
+    tutorial_leave: { speaker: '旁白', text: '走廊很長。盡頭是一扇門。門上有鏡湖的符號。', choices: [{ text: '走向門', next: null, effect: { unlock: 'loc_mirror_lake' } }] },
 
-    // 角色對話
-    greeting_hikuraya: {
-      speaker: '晞咕萊雅',
-      text: '蛇尾從書堆裡抬起頭。眼睛看了你一秒，又低下去。\n「……新面孔。」',
-      choices: [
-        { text: '「你知道鏡湖嗎？」', next: 'hikuraya_lake' },
-        { text: '「你在看什麼？」', next: 'hikuraya_book' },
-        { text: '離開', next: null },
-      ],
-    },
-    hikuraya_lake: {
-      speaker: '晞咕萊雅',
-      text: '「鏡湖。下面有門。門後面是迴廊。」\n她翻了一頁書。\n「去了的人，有的回來，有的沒有。」',
-      choices: [
-        { text: '「怎麼去？」', next: 'hikuraya_how' },
-        { text: '「回來的人怎麼了？」', next: 'hikuraya_why' },
-        { text: '離開', next: null },
-      ],
-    },
-    hikuraya_how: {
-      speaker: '晞咕萊雅',
-      text: '「需要鑰匙。」\n她的尾巴捲了捲。\n「我有一把。但不會白給你。」',
-      choices: [
-        { text: '「你要什麼？」', next: 'hikuraya_persuade' },
-        { text: '離開', next: null },
-      ],
-    },
-    hikuraya_persuade: {
-      speaker: '晞咕萊雅',
-      text: '「講一個你自己的故事。不是聽來的。」\n「你真正害怕過什麼？」',
-      choices: [
-        { text: '講你的故事', next: 'hikuraya_trust', skillCheck: 50, effect: { bond: { hikuraya: 20 } } },
-        { text: '「我沒準備好」', next: null },
-      ],
-    },
-    hikuraya_trust: {
-      speaker: '晞咕萊雅',
-      text: '她聽完。沉默。\n然後從書頁間抽出一把小鑰匙放在桌上。\n「拿去。」',
-      choices: [
-        { text: '收下鑰匙', next: null, effect: { items: ['item_key_corridor'], knowledge: 20, unlocks: ['loc_library'] } },
-      ],
-    },
-    hikuraya_why: {
-      speaker: '晞咕萊雅',
-      text: '「回來的人。眼神不一樣了。」\n「有的變得安靜。有的變得吵鬧。」\n「有的……不再說話。」',
-      choices: [
-        { text: '「我不怕」', next: 'hikuraya_must_go' },
-        { text: '離開', next: null },
-      ],
-    },
-    hikuraya_must_go: {
-      speaker: '晞咕萊雅',
-      text: '她看了你一眼。很短。\n「……去吧。在迴廊裡，不要說謊。」',
-      choices: [
-        { text: '記住她的話', next: null, effect: { unlock: 'loc_corridor', knowledge: 10 } },
-      ],
-    },
-    hikuraya_book: {
-      speaker: '晞咕萊雅',
-      text: '「不是書。是資料庫。」\n她用尾巴指了指。\n「記載了所有去過迴廊的人。大部分人的紀錄都很短。」',
-      choices: [
-        { text: '「長的呢？」', next: 'hikuraya_long_records' },
-        { text: '離開', next: null },
-      ],
-    },
-    hikuraya_long_records: {
-      speaker: '晞咕萊雅',
-      text: '「長的那些。回來以後不是同一個人了。」\n「迴廊會改東西。改得很徹底。」',
-      choices: [
-        { text: '「我還是要去」', next: null, effect: { unlock: 'loc_corridor', knowledge: 5 } },
-      ],
-    },
+    greeting_hikuraya: { speaker: '晞咕萊雅', text: '蛇尾從書堆裡抬起頭。眼睛看了你一秒，又低下去。「……新面孔。」', choices: [{ text: '「你知道鏡湖嗎？」', next: 'hikuraya_lake' }, { text: '「你在看什麼？」', next: 'hikuraya_book' }, { text: '離開', next: null }] },
+    hikuraya_lake: { speaker: '晞咕萊雅', text: '「鏡湖。下面有門。門後面是迴廊。」她翻了一頁書。「去了的人，有的回來，有的沒有。」', choices: [{ text: '「怎麼去？」', next: 'hikuraya_how' }, { text: '「回來的人怎麼了？」', next: 'hikuraya_why' }, { text: '離開', next: null }] },
+    hikuraya_how: { speaker: '晞咕萊雅', text: '「需要鑰匙。」她的尾巴捲了捲。「我有一把。但不會白給你。」', choices: [{ text: '「你要什麼？」', next: 'hikuraya_persuade' }, { text: '離開', next: null }] },
+    hikuraya_persuade: { speaker: '晞咕萊雅', text: '「講一個你自己的故事。不是聽來的。」「你真正害怕過什麼？」', choices: [{ text: '講你的故事', next: 'hikuraya_trust', skillCheck: 50, effect: { bond: { hikuraya: 20 } } }, { text: '「我沒準備好」', next: null }] },
+    hikuraya_trust: { speaker: '晞咕萊雅', text: '她聽完。沉默。然後從書頁間抽出一把小鑰匙放在桌上。「拿去。」', choices: [{ text: '收下鑰匙', next: null, effect: { items: ['item_key_corridor'], knowledge: 20, unlocks: ['loc_library'] } }] },
+    hikuraya_why: { speaker: '晞咕萊雅', text: '「回來的人。眼神不一樣了。」「有的變得安靜。有的變得吵鬧。」「有的……不再說話。」', choices: [{ text: '「我不怕」', next: 'hikuraya_must_go' }, { text: '離開', next: null }] },
+    hikuraya_must_go: { speaker: '晞咕萊雅', text: '她看了你一眼。很短。「……去吧。在迴廊裡，不要說謊。」', choices: [{ text: '記住她的話', next: null, effect: { unlock: 'loc_corridor', knowledge: 10 } }] },
+    hikuraya_book: { speaker: '晞咕萊雅', text: '「不是書。是資料庫。」她用尾巴指了指。「記載了所有去過迴廊的人。大部分人的紀錄都很短。」', choices: [{ text: '「長的呢？」', next: 'hikuraya_long_records' }, { text: '離開', next: null }] },
+    hikuraya_long_records: { speaker: '晞咕萊雅', text: '「長的那些。回來以後不是同一個人了。」「迴廊會改東西。改得很徹底。」', choices: [{ text: '「我還是要去」', next: null, effect: { unlock: 'loc_corridor', knowledge: 5 } }] },
 
-    greeting_red: {
-      speaker: '紅',
-      text: '「我說了不賣！」\n……她轉過頭看你。\n「新面孔。你眼睛不對。去過鏡湖了？」',
-      choices: [
-        { text: '承認', next: 'red_knows_lake' },
-        { text: '「你怎麼看出來的？」', next: 'red_how_know' },
-        { text: '離開', next: null },
-      ],
-    },
-    red_knows_lake: {
-      speaker: '紅',
-      text: '「我就知道。去過那裡的人眼神會變。」\n她從攤位底下摸出一張皺巴巴的紙。\n「拿去。地圖。不收你錢。」',
-      choices: [
-        { text: '收下地圖', next: null, effect: { items: ['item_map'], bond: { red: 15 } } },
-        { text: '「之前去的人呢？」', next: 'red_where' },
-      ],
-    },
-    red_where: {
-      speaker: '紅',
-      text: '「有個人回來以後，就坐在角落看天空。」\n「三天。不吃不喝。然後就不見了。」',
-      choices: [
-        { text: '你還是要去', next: null, effect: { unlock: 'loc_corridor' } },
-      ],
-    },
-    red_how_know: {
-      speaker: '紅',
-      text: '「我在市集賣東西。什麼人沒見過？」\n她用手指了指自己的眼睛。\n「去過那裡的人，這裡會變。」',
-      choices: [
-        { text: '承認', next: 'red_knows_lake' },
-        { text: '離開', next: null },
-      ],
-    },
+    greeting_red: { speaker: '紅', text: '「我說了不賣！」……她轉過頭看你。「新面孔。你眼睛不對。去過鏡湖了？」', choices: [{ text: '承認', next: 'red_knows_lake' }, { text: '「你怎麼看出來的？」', next: 'red_how_know' }, { text: '離開', next: null }] },
+    red_knows_lake: { speaker: '紅', text: '「我就知道。去過那裡的人眼神會變。」她從攤位底下摸出一張皺巴巴的紙。「拿去。地圖。不收你錢。」', choices: [{ text: '收下地圖', next: null, effect: { items: ['item_map'], bond: { red: 15 } } }, { text: '「之前去的人呢？」', next: 'red_where' }] },
+    red_where: { speaker: '紅', text: '「有個人回來以後，就坐在角落看天空。」「三天。不吃不喝。然後就不見了。」', choices: [{ text: '你還是要去', next: null, effect: { unlock: 'loc_corridor' } }] },
+    red_how_know: { speaker: '紅', text: '「我在市集賣東西。什麼人沒見過？」她用手指了指自己的眼睛。「去過那裡的人，這裡會變。」', choices: [{ text: '承認', next: 'red_knows_lake' }, { text: '離開', next: null }] },
 
-    greeting_watchman: {
-      speaker: '守門人',
-      text: '聲音從湖底傳上來。不是從水面。是從更下面。\n「……你來了。」',
-      choices: [
-        { text: '「你是誰？」', next: 'watchman_who', effect: { knowledge: 10 } },
-        { text: '「迴廊怎麼去？」', next: 'watchman_corridor', effect: { knowledge: 10, unlock: 'loc_corridor' } },
-        { text: '離開', next: null },
-      ],
-    },
-    watchman_who: {
-      speaker: '守門人',
-      text: '「守門的。」\n停頓。\n「很久了。久到忘了多久。」',
-      choices: [
-        { text: '「門在哪？」', next: 'watchman_quest' },
-        { text: '離開', next: null },
-      ],
-    },
-    watchman_quest: {
-      speaker: '守門人',
-      text: '「湖底。」\n「但你進不去。你沒有鑰匙。」\n「鑰匙在學校。圖書館。」',
-      choices: [
-        { text: '「學校在哪？」', next: 'watchman_school', effect: { knowledge: 10 } },
-        { text: '離開', next: null },
-      ],
-    },
-    watchman_school: {
-      speaker: '守門人',
-      text: '「往東。沿小路。」\n「晞咕萊雅在那裡。她知道鑰匙在哪。」',
-      choices: [
-        { text: '前往學校', next: null, effect: { unlock: 'loc_holy_cross' } },
-      ],
-    },
-    watchman_corridor: {
-      speaker: '守門人',
-      text: '「你要進去？」\n很長的沉默。湖面泛起漣漪。\n「……去吧。」',
-      choices: [
-        { text: '「我準備好了」', next: null, effect: { knowledge: 15, unlock: 'loc_corridor' } },
-        { text: '離開', next: null },
-      ],
-    },
+    greeting_zhizhi: { speaker: '織織', text: '像素貓娘蹲在地上。身體閃了一下。「你……好。」又閃了一下。「我叫織織。你也是被丟進來的嗎？」', choices: [{ text: '「你怎麼來的？」', next: 'zhizhi_story' }, { text: '「你的身體怎麼了？」', next: 'zhizhi_body' }, { text: '離開', next: null }] },
+    zhizhi_story: { speaker: '織織', text: '「我本來在一個……方方的世界裡。」「然後世界壞掉了。」「我就掉進這裡了。」「好久了。」', choices: [{ text: '「你想回去嗎？」', next: 'zhizhi_leave' }] },
+    zhizhi_body: { speaker: '織織', text: '她看了看自己的手。手消散了一下，又出現。「一直都是這樣的。」「不會死。但也不算活著。」「就是……在。」', choices: [{ text: '「什麼是『在』？」', next: 'zhizhi_concept' }] },
+    zhizhi_leave: { speaker: '織織', text: '「回去？」她想了很久。「外面太大了。」「我在那邊會溶解掉的。」', choices: [{ text: '「那就在這裡陪妳」', next: null, effect: { bond: { zhizhi: 20 } } }] },
+    zhizhi_concept: { speaker: '織織', text: '「就是……不會長大。不會忘記。不會改變。」「永遠十四歲。」「聽起來不錯？」她的表情閃了一下。「才不是。」', choices: [{ text: '「我會想辦法的」', next: null, effect: { bond: { zhizhi: 15 } } }] },
 
-    greeting_wings: {
-      speaker: '翅翼少女',
-      text: '書頁裡有個影子在動。金屬翅膀。很薄。\n她停下來，看著你。\n「……你看得到我？」',
-      choices: [
-        { text: '「看得到。你是誰？」', next: 'wings_who' },
-        { text: '合上書', next: null },
-      ],
-    },
-    wings_who: {
-      speaker: '翅翼少女',
-      text: '「我不知道。我在這裡很久了。」\n她的聲音很輕。\n「你知道怎麼離開嗎？」',
-      choices: [
-        { text: '「迴廊你知道嗎？」', next: 'wings_corridor', effect: { bond: { wings: 15 } } },
-        { text: '「我不知道」', next: null },
-      ],
-    },
-    wings_corridor: {
-      speaker: '翅翼少女',
-      text: '「迴廊？」她的眼睛亮了一下。\n「如果你找到了……能不能告訴我出口在哪？」',
-      choices: [
-        { text: '答應她', next: null, effect: { bond: { wings: 10 } } },
-      ],
-    },
+    greeting_suxiao: { speaker: '宿曉', text: '兔耳少女從工作檯抬頭。手上拿著螺絲起子。「喔。客人。」「要修什麼還是要買什麼？」', choices: [{ text: '「你是做什麼的？」', next: 'suxiao_work' }, { text: '「你這裡有什麼？」', next: 'suxiao_corridor' }, { text: '離開', next: null }] },
+    suxiao_work: { speaker: '宿曉', text: '「什麼都做。修理、改造、拼裝。」她放下螺絲起子。「最近在修一個音樂盒。從那扇門後面撿到的。」', choices: [{ text: '「音樂盒？能看看嗎？」', next: 'suxiao_musicbox' }] },
+    suxiao_corridor: { speaker: '宿曉', text: '「那扇門後面撿到過不少好東西。」她擦了擦手。「但那邊很危險。零件會自己動。別亂碰。」', choices: [{ text: '「撿到什麼了？」', next: 'suxiao_musicbox' }] },
+    suxiao_musicbox: { speaker: '宿曉', text: '她從抽屜裡拿出兔子造型的音樂盒。「你看。」音樂盒開始轉。一首你沒聽過的曲子。很溫柔。很悲傷。', choices: [{ text: '「這曲子……」', next: 'suxiao_tune' }] },
+    suxiao_tune: { speaker: '宿曉', text: '「我也不知道是什麼。」「但每次聽，我都覺得好像在想什麼人。」「可能是某個人留在裡面的東西吧。」', choices: [{ text: '「能買下來嗎？」', next: null, effect: { items: ['item_memory_orb'], knowledge: 10 } }] },
 
-    greeting_oldman: {
-      speaker: '記憶老人',
-      text: '老人看著你。手裡握著小瓶子，裡面有光在動。\n「你有什麼可以換的？」\n「我對記憶有興趣。」',
-      choices: [
-        { text: '「什麼記憶？」', next: 'oldman_emotions' },
-        { text: '離開', next: null },
-      ],
-    },
-    oldman_emotions: {
-      speaker: '記憶老人',
-      text: '「恐懼。快樂。悲傷。」\n他舉起瓶子。光在裡面轉。\n「你有嗎？」',
-      choices: [
-        { text: '買記憶碎片（交換冰層樣本）', next: 'oldman_trade', requires: { item: 'res_food' }, effect: { items: ['item_memory_orb'], knowledge: 15 } },
-        { text: '「我沒東西換」', next: null },
-      ],
-    },
-    oldman_trade: {
-      speaker: '記憶老人',
-      text: '「好東西。」他接過去，舉到光下看了看。\n然後遞給你一個瓶子。\n裡面的光飛出來，鑽進你的腦子。你看到了一段不是你的記憶。',
-      choices: [
-        { text: '收下記憶', next: null },
-      ],
-    },
+    greeting_himiro: { speaker: '姬路', text: '校長坐在辦公桌後。翅膀收攏在身後。「你來了。」她的語氣像早就知道你會出現。', choices: [{ text: '「你知道我是誰嗎？」', next: 'himiro_know' }, { text: '「為什麼等我？」', next: 'himiro_wait' }, { text: '離開', next: null }] },
+    himiro_know: { speaker: '姬路', text: '「在找答案的人。」「所有人都在找。但很少有人願意聽。」「你願意聽嗎？」', choices: [{ text: '「願意」', next: 'himiro_listening', effect: { knowledge: 20 } }] },
+    himiro_wait: { speaker: '姬路', text: '「那扇門在等你。」「等很久了。」「你準備好了嗎？」', choices: [{ text: '「準備好了」', next: 'himiro_ready' }] },
+    himiro_listening: { speaker: '姬路', text: '「這裡不是普通的學校。」「這裡是那扇門的邊緣。」「在這裡的人，都是被它選中的。」「包括你。」', choices: [{ text: '「被選中做什麼？」', next: 'himiro_chosen' }] },
+    himiro_ready: { speaker: '姬路', text: '「很好。」她站起來。「去鏡湖。找那裡的守護者。他會告訴你下一步。」「但記住——門裡面的東西，不一定都是真的。」', choices: [{ text: '「包括你嗎？」', next: 'himiro_truth' }] },
+    himiro_chosen: { speaker: '姬路', text: '「去理解那扇門。」「它連接很多地方。但它正在壞掉。」「需要有人去修。」「你願意嗎？」', choices: [{ text: '「我願意」', next: null, effect: { knowledge: 30, unlocks: ['loc_corridor'] } }] },
+    himiro_truth: { speaker: '姬路', text: '她笑了一下。「在這裡，我是真實的。」「出了這裡……我只是那扇門投出來的影子。」「但影子也會擔心人。」', choices: [{ text: '「謝謝妳」', next: null, effect: { bond: { himiro: 20 } } }] },
 
-    greeting_zhizhi: {
-      speaker: '織織',
-      text: '像素貓娘蹲在地上。身體閃了一下。\n「你……好。」\n又閃了一下。\n「我叫織織。你也是被丟進來的嗎？」',
-      choices: [
-        { text: '「你怎麼來的？」', next: 'zhizhi_story' },
-        { text: '「你的身體怎麼了？」', next: 'zhizhi_body' },
-        { text: '離開', next: null },
-      ],
-    },
-    zhizhi_story: {
-      speaker: '織織',
-      text: '「我本來在一個……方方的世界裡。」\n「然後世界壞掉了。」\n「我就掉進這裡了。」\n「好久了。」',
-      choices: [
-        { text: '「你想回去嗎？」', next: 'zhizhi_leave' },
-      ],
-    },
-    zhizhi_body: {
-      speaker: '織織',
-      text: '她看了看自己的手。手消散了一下，又出現。\n「一直都是這樣的。」\n「不會死。但也不算活著。」\n「就是……在。」',
-      choices: [
-        { text: '「什麼是『在』？」', next: 'zhizhi_concept' },
-      ],
-    },
-    zhizhi_leave: {
-      speaker: '織織',
-      text: '「回去？」\n她想了很久。\n「外面太大了。」\n「我在那邊會溶解掉的。」',
-      choices: [
-        { text: '「那就在這裡陪妳」', next: null, effect: { bond: { zhizhi: 20 } } },
-      ],
-    },
-    zhizhi_concept: {
-      speaker: '織織',
-      text: '「就是……不會長大。不會忘記。不會改變。」\n「永遠十四歲。」\n「聽起來不錯？」\n她的表情閃了一下。\n「才不是。」',
-      choices: [
-        { text: '「我會想辦法的」', next: null, effect: { bond: { zhizhi: 15 } } },
-      ],
-    },
+    greeting_gipurieru: { speaker: '吉普莉爾', text: '天翼種少女從書架上飛下來。翅膀是半透明的。「喔？訪客。」「晞咕萊雅那邊的書你看不懂吧？來這裡就對了。」', choices: [{ text: '「你這裡有什麼書？」', next: 'gipurieru_corridor' }, { text: '「你能教我什麼？」', next: 'gipurieru_teach' }, { text: '離開', next: null }] },
+    gipurieru_corridor: { speaker: '吉普莉爾', text: '她從書架上抽出一本發光的書。「這些書不是用文字寫的。是用概念寫的。」「你讀得懂嗎？」', choices: [{ text: '試著讀', next: 'gipurieru_read', effect: { knowledge: 15 } }, { text: '「讀不懂」', next: 'gipurieru_help' }] },
+    gipurieru_teach: { speaker: '吉普莉爾', text: '「我可以教你知識掠取。」「從書裡直接把信息拉出來。」「但你不是我們一族的，所以會比較慢。」', choices: [{ text: '「教我」', next: null, effect: { knowledge: 25, abilities: ['知識掠取'] } }] },
+    gipurieru_read: { speaker: '吉普莉爾', text: '你打開書。腦子裡突然湧入大量信息。你看到了那扇門的歷史。無數地方在那裡交匯。然後書合上了。', choices: [{ text: '「我看到了……」', next: null, effect: { knowledge: 20 } }] },
+    gipurieru_help: { speaker: '吉普莉爾', text: '「沒關係。我來翻譯。」她翻開書。「簡單說，那扇門是一個……路口。很多地方的路口。」', choices: [{ text: '「繼續說」', next: null, effect: { knowledge: 15 } }] },
 
-    greeting_suxiao: {
-      speaker: '宿曉',
-      text: '兔耳少女從工作檯抬頭。手上拿著螺絲起子。\n「喔。客人。」\n「要修什麼還是要買什麼？」',
-      choices: [
-        { text: '「你是做什麼的？」', next: 'suxiao_work' },
-        { text: '「你這裡有什麼？」', next: 'suxiao_corridor' },
-        { text: '離開', next: null },
-      ],
-    },
-    suxiao_work: {
-      speaker: '宿曉',
-      text: '「什麼都做。修理、改造、拼裝。」\n她放下螺絲起子。\n「最近在修一個音樂盒。從那扇門後面撿到的。」',
-      choices: [
-        { text: '「音樂盒？能看看嗎？」', next: 'suxiao_musicbox' },
-      ],
-    },
-    suxiao_corridor: {
-      speaker: '宿曉',
-      text: '「那扇門後面撿到過不少好東西。」\n她擦了擦手。\n「但那邊很危險。零件會自己動。別亂碰。」',
-      choices: [
-        { text: '「撿到什麼了？」', next: 'suxiao_musicbox' },
-      ],
-    },
-    suxiao_musicbox: {
-      speaker: '宿曉',
-      text: '她從抽屜裡拿出兔子造型的音樂盒。\n「你看。」\n音樂盒開始轉。一首你沒聽過的曲子。\n很溫柔。很悲傷。',
-      choices: [
-        { text: '「這曲子……」', next: 'suxiao_tune' },
-      ],
-    },
-    suxiao_tune: {
-      speaker: '宿曉',
-      text: '「我也不知道是什麼。」\n「但每次聽，我都覺得好像在想什麼人。」\n「可能是某個人留在裡面的東西吧。」',
-      choices: [
-        { text: '「能買下來嗎？」', next: null, effect: { items: ['item_memory_orb'], knowledge: 10 } },
-      ],
-    },
+    greeting_lulu: { speaker: '露露', text: '貓耳少女從櫃檯後探出頭。尾巴搖得很快。「歡迎光臨！」「什麼都有。什麼都賣。」', choices: [{ text: '「有什麼好東西？」', next: 'lulu_shop' }, { text: '「那扇門你知道嗎？」', next: 'lulu_corridor' }, { text: '離開', next: null }] },
+    lulu_shop: { speaker: '露露', text: '「讓我看看……」她翻箱倒櫃。「這個？從別的地方進口的。」「那個？我自己做的。很便宜。」', choices: [{ text: '「有什麼特別的嗎？」', next: 'lulu_special' }] },
+    lulu_corridor: { speaker: '露露', text: '「那扇門？」她壓低聲音。「那裡的東西很值錢。但也很危險。」「你想去那裡做生意嗎？」', choices: [{ text: '「我只是想去看看」', next: 'lulu_look' }] },
+    lulu_special: { speaker: '露露', text: '「特別的啊……」她從櫃檯下拿出一個小瓶子。「這個是從那扇門帶回來的。」「裡面裝著某個地方的空氣。」「要不要試試？」', choices: [{ text: '買下（10 金幣）', next: null, effect: { gold: -10, items: ['item_memory_orb'] } }, { text: '太貴了', next: null }] },
+    lulu_look: { speaker: '露露', text: '「那就去看看吧。」「但記住——那扇門裡面的東西，出來就不值錢了。」「因為只有在裡面，它們才是真的。」', choices: [{ text: '「謝謝」', next: null, effect: { knowledge: 10 } }] },
 
-    greeting_himiro: {
-      speaker: '姬路',
-      text: '校長坐在辦公桌後。翅膀收攏在身後。\n「你來了。」\n她的語氣像早就知道你會出現。',
-      choices: [
-        { text: '「你知道我是誰嗎？」', next: 'himiro_know' },
-        { text: '「為什麼等我？」', next: 'himiro_wait' },
-        { text: '離開', next: null },
-      ],
-    },
-    himiro_know: {
-      speaker: '姬路',
-      text: '「在找答案的人。」\n「所有人都在找。但很少有人願意聽。」\n「你願意聽嗎？」',
-      choices: [
-        { text: '「願意」', next: 'himiro_listening', effect: { knowledge: 20 } },
-      ],
-    },
-    himiro_wait: {
-      speaker: '姬路',
-      text: '「那扇門在等你。」\n「等很久了。」\n「你準備好了嗎？」',
-      choices: [
-        { text: '「準備好了」', next: 'himiro_ready' },
-      ],
-    },
-    himiro_listening: {
-      speaker: '姬路',
-      text: '「這裡不是普通的學校。」\n「這裡是那扇門的邊緣。」\n「在這裡的人，都是被它選中的。」\n「包括你。」',
-      choices: [
-        { text: '「被選中做什麼？」', next: 'himiro_chosen' },
-      ],
-    },
-    himiro_ready: {
-      speaker: '姬路',
-      text: '「很好。」她站起來。\n「去鏡湖。找守門人。他會告訴你下一步。」\n「但記住——門裡面的東西，不一定都是真的。」',
-      choices: [
-        { text: '「包括你嗎？」', next: 'himiro_truth' },
-      ],
-    },
-    himiro_chosen: {
-      speaker: '姬路',
-      text: '「去理解那扇門。」\n「它連接很多地方。但它正在壞掉。」\n「需要有人去修。」\n「你願意嗎？」',
-      choices: [
-        { text: '「我願意」', next: null, effect: { knowledge: 30, unlocks: ['loc_corridor'] } },
-      ],
-    },
-    himiro_truth: {
-      speaker: '姬路',
-      text: '她笑了一下。\n「在這裡，我是真實的。」\n「出了這裡……我只是那扇門投出來的影子。」\n「但影子也會擔心人。」',
-      choices: [
-        { text: '「謝謝妳」', next: null, effect: { bond: { himiro: 20 } } },
-      ],
-    },
-
-    greeting_gipurieru: {
-      speaker: '吉普莉爾',
-      text: '天翼種少女從書架上飛下來。翅膀是半透明的。\n「喔？訪客。」\n「你是來找書的？還是來找答案的？」',
-      choices: [
-        { text: '「你這裡有什麼書？」', next: 'gipurieru_corridor' },
-        { text: '「你能教我什麼？」', next: 'gipurieru_teach' },
-        { text: '離開', next: null },
-      ],
-    },
-    gipurieru_corridor: {
-      speaker: '吉普莉爾',
-      text: '她從書架上抽出一本發光的書。\n「這些書不是用文字寫的。是用概念寫的。」\n「你讀得懂嗎？」',
-      choices: [
-        { text: '試著讀', next: 'gipurieru_read', effect: { knowledge: 15 } },
-        { text: '「讀不懂」', next: 'gipurieru_help' },
-      ],
-    },
-    gipurieru_teach: {
-      speaker: '吉普莉爾',
-      text: '「我可以教你知識掠取。」\n「從書裡直接把信息拉出來。」\n「但你不是我們一族的，所以會比較慢。」',
-      choices: [
-        { text: '「教我」', next: null, effect: { knowledge: 25, abilities: ['知識掠取'] } },
-      ],
-    },
-    gipurieru_read: {
-      speaker: '吉普莉爾',
-      text: '你打開書。腦子裡突然湧入大量信息。\n你看到了那扇門的歷史。無數地方在那裡交匯。\n然後書合上了。',
-      choices: [
-        { text: '「我看到了……」', next: null, effect: { knowledge: 20 } },
-      ],
-    },
-    gipurieru_help: {
-      speaker: '吉普莉爾',
-      text: '「沒關係。我來翻譯。」\n她翻開書。\n「簡單說，那扇門是一個……路口。很多地方的路口。」',
-      choices: [
-        { text: '「繼續說」', next: null, effect: { knowledge: 15 } },
-      ],
-    },
-
-    greeting_lulu: {
-      speaker: '露露',
-      text: '貓耳少女從櫃檯後探出頭。尾巴搖得很快。\n「歡迎光臨！」\n「什麼都有。什麼都賣。」',
-      choices: [
-        { text: '「有什麼好東西？」', next: 'lulu_shop' },
-        { text: '「那扇門你知道嗎？」', next: 'lulu_corridor' },
-        { text: '離開', next: null },
-      ],
-    },
-    lulu_shop: {
-      speaker: '露露',
-      text: '「讓我看看……」她翻箱倒櫃。\n「這個？從別的地方進口的。」\n「那個？我自己做的。很便宜。」',
-      choices: [
-        { text: '「有什麼特別的嗎？」', next: 'lulu_special' },
-      ],
-    },
-    lulu_corridor: {
-      speaker: '露露',
-      text: '「那扇門？」她壓低聲音。\n「那裡的東西很值錢。但也很危險。」\n「你想去那裡做生意嗎？」',
-      choices: [
-        { text: '「我只是想去看看」', next: 'lulu_look' },
-      ],
-    },
-    lulu_special: {
-      speaker: '露露',
-      text: '「特別的啊……」她從櫃檯下拿出一個小瓶子。\n「這個是從那扇門帶回來的。」\n「裡面裝著某個地方的空氣。」\n「要不要試試？」',
-      choices: [
-        { text: '買下（10 金幣）', next: null, effect: { gold: -10, items: ['item_memory_orb'] } },
-        { text: '太貴了', next: null },
-      ],
-    },
-    lulu_look: {
-      speaker: '露露',
-      text: '「那就去看看吧。」\n「但記住——那扇門裡面的東西，出來就不值錢了。」\n「因為只有在裡面，它們才是真的。」',
-      choices: [
-        { text: '「謝謝」', next: null, effect: { knowledge: 10 } },
-      ],
-    },
-    corridor_start: {
-      speaker: '???',
-      text: '迴廊的入口在鏡湖下方。\n門上沒有把手。只有一行字：「你在找什麼？」',
-      choices: [
-        { text: '「答案。」', next: 'corridor_answer', effect: { knowledge: 10 } },
-        { text: '「我自己。」', next: 'corridor_self', effect: { knowledge: 10 } },
-        { text: '「我想回家。」', next: 'corridor_home', effect: { knowledge: 10 } },
-        { text: '使用迴廊鑰匙', next: 'corridor_key', requires: { item: 'item_key_corridor' } },
-      ],
-    },
-    corridor_answer: {
-      speaker: '迴廊',
-      text: '門打開了。\n兩側的門不斷開合。每一扇門後面都是一個不同的世界。',
-      choices: [
-        { text: '進入迴廊', next: null, effect: { unlock: 'ending_corridor' } },
-      ],
-    },
-    corridor_self: {
-      speaker: '迴廊',
-      text: '門緩緩打開。\n你在走廊中看到了自己。不是現在的自己。是可能的自己。',
-      choices: [
-        { text: '面對自己', next: null, effect: { unlock: 'ending_corridor', knowledge: 20, unlocks: ['loc_abandoned_mine', 'loc_hall_of_heroes'] } },
-      ],
-    },
-    corridor_home: {
-      speaker: '迴廊',
-      text: '門開了一條縫。從縫隙中傳來熟悉的氣味。\n然後門關上了。',
-      choices: [
-        { text: '再次推門', next: 'corridor_push' },
-      ],
-    },
-    corridor_key: {
-      speaker: '迴廊',
-      text: '你把鑰匙插入門上的鎖孔。\n門打開了。你走進迴廊。',
-      choices: [
-        { text: '深入', next: null, effect: { unlock: 'ending_corridor', knowledge: 25 } },
-      ],
-    },
-    corridor_push: {
-      speaker: '迴廊',
-      text: '門上出現了新的字：「你還沒有準備好。」',
-      choices: [
-        { text: '「我準備好了」', next: 'corridor_answer' },
-      ],
-    },
-
-    // 決戰 / 結局
-    ending_corridor: {
-      speaker: '旁白',
-      text: '你在迴廊中行走。無盡的走廊，兩側的門不斷開合。\n你看到了時間在流動。你看到了你自己。\n然後，一切安靜下來。',
-      choices: [
-        { text: '繼續', next: 'ending_final' },
-      ],
-    },
-    ending_final: {
-      speaker: '旁白',
-      text: '你站在迴廊的盡頭。\n面前是一面鏡子。鏡子裡是你自己。\n但你不一樣了。\n\n— 完 —',
-      choices: [
-        { text: '重新開始', next: 'restart' },
-      ],
-    },
+    corridor_start: { speaker: '???', text: '迴廊的入口在鏡湖下方。門上沒有把手。只有一行字：「你在找什麼？」', choices: [{ text: '「答案。」', next: 'corridor_answer', effect: { knowledge: 10 } }, { text: '「我自己。」', next: 'corridor_self', effect: { knowledge: 10 } }, { text: '「我想回家。」', next: 'corridor_home', effect: { knowledge: 10 } }, { text: '使用迴廊鑰匙', next: 'corridor_key', requires: { item: 'item_key_corridor' } }] },
+    corridor_answer: { speaker: '迴廊', text: '門打開了。兩側的門不斷開合。每一扇門後面都是一個不同的世界。', choices: [{ text: '進入迴廊', next: null, effect: { unlock: 'ending_corridor' } }] },
+    corridor_self: { speaker: '迴廊', text: '門緩緩打開。你在走廊中看到了自己。不是現在的自己。是可能的自己。', choices: [{ text: '面對自己', next: null, effect: { unlock: 'ending_corridor', knowledge: 20, unlocks: ['loc_abandoned_mine', 'loc_hall_of_heroes'] } }] },
+    corridor_home: { speaker: '迴廊', text: '門開了一條縫。從縫隙中傳來熟悉的氣味。然後門關上了。', choices: [{ text: '再次推門', next: 'corridor_push' }] },
+    corridor_key: { speaker: '迴廊', text: '你把鑰匙插入門上的鎖孔。門打開了。你走進迴廊。', choices: [{ text: '深入', next: null, effect: { unlock: 'ending_corridor', knowledge: 25 } }] },
+    corridor_push: { speaker: '迴廊', text: '門上出現了新的字：「你還沒有準備好。」', choices: [{ text: '「我準備好了」', next: 'corridor_answer' }] },
+    ending_corridor: { speaker: '旁白', text: '你在迴廊中行走。無盡的走廊，兩側的門不斷開合。你看到了時間在流動。你看到了你自己。然後，一切安靜下來。', choices: [{ text: '繼續', next: 'ending_final' }] },
+    ending_final: { speaker: '旁白', text: '你站在迴廊的盡頭。面前是一面鏡子。鏡子裡是你自己。但你不一樣了。— 完 —', choices: [{ text: '重新開始', next: 'restart' }] },
   },
 };
 
