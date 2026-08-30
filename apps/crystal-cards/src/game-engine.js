@@ -518,7 +518,7 @@ function initNewGame() {
 
   // Starting characters near their locations
   createBoardCard('char_hikuraya', 200, 300);
-  createBoardCard('char_watchman', 500, 200);
+  createBoardCard('char_red', 500, 200);
 
   // Initial resources
   addToSidebar('item_flashlight', 1);
