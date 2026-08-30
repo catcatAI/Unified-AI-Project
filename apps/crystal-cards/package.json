@@ -24,7 +24,8 @@
     "files": [
       "src/**/*",
       "assets/**/*",
-      "data/**/*"
+      "data/**/*",
+      "game-data/**/*"
     ],
     "linux": {
       "target": [
