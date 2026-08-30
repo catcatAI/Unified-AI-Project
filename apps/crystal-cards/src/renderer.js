@@ -540,6 +540,19 @@
     sanDisplay.textContent = `🧠 ${s.sanity}`;
     goldDisplay.textContent = `💰 ${s.gold}`;
 
+    // Equipment bonus display
+    const bonus = E.getEquipmentBonus();
+    if (bonus.atk > 0 || bonus.def > 0) {
+      const eq = s.equipment;
+      const eqText = [eq.weapon ? '⚔️' : '', eq.armor ? '🛡️' : '', eq.accessory ? '💍' : ''].filter(Boolean).join('');
+      if (eqText) goldDisplay.title = `裝備: ${eqText} ATK+${bonus.atk} DEF+${bonus.def}`;
+    }
+
+    // Knowledge display
+    if (s.knowledge > 0) {
+      hpDisplay.title = `知識: ${s.knowledge}`;
+    }
+
     // Color coding
     hpDisplay.style.color = s.hp < 30 ? '#f85149' : s.hp < 60 ? '#d29922' : '';
     sanDisplay.style.color = s.sanity < 30 ? '#f85149' : s.sanity < 60 ? '#d29922' : '';
