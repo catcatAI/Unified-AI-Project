@@ -134,8 +134,18 @@ function decideAction(state) {
   const exploredLocs = boardLocs.map(c => c.templateId);
   for (const locId of state.unlockedLocations) {
     if (!exploredLocs.includes(locId)) {
-      if (totalPlaceDecisions < 15) decisions.push({ action: 'place_card', templateId: locId, priority: 9, reason: `Place new location ${E.getCardTemplate(locId)?.name}` });
+      if (totalPlaceDecisions < 30) decisions.push({ action: 'place_card', templateId: locId, priority: 9, reason: `Place new location ${E.getCardTemplate(locId)?.name}` });
     }
+  }
+
+  // ── Priority 9: Place characters on board ──
+  const boardCharIds = boardChars.map(c => c.templateId);
+  const charsInSidebar = state.sidebarCards.filter(s => {
+    const t = E.getCardTemplate(s.templateId);
+    return t && t.type === 'character' && s.count > 0 && !boardCharIds.includes(s.templateId);
+  });
+  for (const ch of charsInSidebar) {
+    if (totalPlaceDecisions < 30) decisions.push({ action: 'place_card', templateId: ch.templateId, priority: 9, reason: `Place character ${E.getCardTemplate(ch.templateId)?.name}` });
   }
 
   // ── Priority 8: Draw cards (if we have gold) ──
@@ -162,7 +172,7 @@ function decideAction(state) {
         const onBoard = boardResources.filter(r => r.templateId === resId).length;
         const inSidebar = state.sidebarCards.find(s => s.templateId === resId && s.count > 0);
         if (inSidebar && onBoard < needed) {
-          if (totalPlaceDecisions < 15) decisions.push({ action: 'place_card', templateId: resId, priority: 6, reason: `Place ${E.getCardTemplate(resId)?.name} for crafting` });
+          if (totalPlaceDecisions < 30) decisions.push({ action: 'place_card', templateId: resId, priority: 6, reason: `Place ${E.getCardTemplate(resId)?.name} for crafting` });
           break;
         }
       }
@@ -201,7 +211,7 @@ function decideAction(state) {
   if (state._placeCount < 20 && state.boardCards.length < 12) {
     const itemsInSidebar = state.sidebarCards.filter(s => E.getCardType(s.templateId) === 'item');
     if (itemsInSidebar.length > 0) {
-      if (totalPlaceDecisions < 15) decisions.push({ action: 'place_card', templateId: itemsInSidebar[0].templateId, priority: 3, reason: 'Place item on board' });
+      if (totalPlaceDecisions < 30) decisions.push({ action: 'place_card', templateId: itemsInSidebar[0].templateId, priority: 3, reason: 'Place item on board' });
     }
   }
 
@@ -378,7 +388,7 @@ async function angelaNPCDialogue(characterName, context) {
 let dialogueDepth = 0;
 const completedDialogues = new Set();
 let balanceIssueLogged = false;
-let totalPlaceDecisions = 0; // Global counter for place_card decisions
+let totalPlaceDecisions = 0; // Global counter for place_card decisions (raised to 30 to allow more characters)
 function autoAdvanceDialogue(dialogueId, state) {
   if (dialogueDepth > 10) { dialogueDepth = 0; return; }
   dialogueDepth++;

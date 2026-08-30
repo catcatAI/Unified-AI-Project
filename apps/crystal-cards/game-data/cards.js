@@ -135,6 +135,57 @@ const CARDS = {
       dialogue: 'greeting_oldman',
       location: 'loc_market',
     },
+    // ─── game-rpg 角色 ───
+    {
+      id: 'char_zhizhi', name: '織織', type: 'character',
+      color: '#E040FB', icon: '🐱',
+      role: '像素貓娘', race: '像素貓娘（概念共鳴體）',
+      desc: '灰色走廊的盡頭，一個像素化的貓娘蹲在地上。她的身體像壞掉的螢幕——閃爍、跳幀、偶爾消失。',
+      stats: { hp: 80, atk: 5, def: 3, spd: 20 },
+      abilities: ['概念共鳴', '像素化', '迴廊感知'],
+      dialogue: 'greeting_zhizhi',
+      location: 'loc_corridor',
+    },
+    {
+      id: 'char_suxiao', name: '宿曉', type: 'character',
+      color: '#FF8A65', icon: '🐰',
+      role: '兔娘工匠', race: '兔娘（月兔血統）',
+      desc: '工作檯前坐著一個兔耳少女。她的手很穩，眼神專注。桌上散落著各種零件。',
+      stats: { hp: 100, atk: 3, def: 4, spd: 7 },
+      abilities: ['手作', '感知', '交涉'],
+      dialogue: 'greeting_suxiao',
+      location: 'loc_holy_cross',
+    },
+    {
+      id: 'char_himiro', name: '姬路', type: 'character',
+      color: '#FFD54F', icon: '👩‍🏫',
+      role: '校長', race: '智天使',
+      desc: '聖十字校園的校長。她的眼神溫和但銳利。你覺得她什麼都知道。',
+      stats: { hp: 300, atk: 10, def: 15, spd: 6 },
+      abilities: ['智慧', '領導', '治癒'],
+      dialogue: 'greeting_himiro',
+      location: 'loc_holy_cross',
+    },
+    {
+      id: 'char_gipurieru', name: '吉普莉爾', type: 'character',
+      color: '#CE93D8', icon: '📚',
+      role: '圖書管理員', race: '天翼種',
+      desc: '天翼種少女在書架間飛行。她的翅膀是半透明的，像玻璃。',
+      stats: { hp: 150, atk: 8, def: 10, spd: 12 },
+      abilities: ['知識掠取', '飛行', '跨世界通訊'],
+      dialogue: 'greeting_gipurieru',
+      location: 'loc_library',
+    },
+    {
+      id: 'char_lulu', name: '露露', type: 'character',
+      color: '#4DB6AC', icon: '🏪',
+      role: '五金店店主', race: '貓娘',
+      desc: '貓耳少女坐在五金店櫃檯後。她什麼都賣，什麼都有。',
+      stats: { hp: 80, atk: 6, def: 8, spd: 10 },
+      abilities: ['交易', '情報收集', '跨世界貿易'],
+      dialogue: 'greeting_lulu',
+      location: 'loc_market',
+    },
   ],
 
   // ═══════════════════════════════════════════════════════
@@ -535,6 +586,213 @@ const CARDS = {
       text: '「好東西。」他接過樣本，舉到光線下。\n他遞給你一個小瓶子。\n裡面的光飛出來，鑽進你的腦子。你看到了一段記憶。',
       choices: [
         { text: '收下記憶', next: null },
+      ],
+    },
+
+    // ─── game-rpg 角色對話 ───
+    greeting_zhizhi: {
+      speaker: '織織',
+      text: '像素貓娘蹲在地上，身體閃爍著。\n「你好。我叫織織。」\n「你也是被丟進迴廊的嗎？」',
+      choices: [
+        { text: '「你是怎麼來到這裡的？」', next: 'zhizhi_story' },
+        { text: '「你的身體怎麼了？」', next: 'zhizhi_body' },
+        { text: '離開', next: null },
+      ],
+    },
+    zhizhi_story: {
+      speaker: '織織',
+      text: '「我本來在一個像素世界裡。」\n「然後世界壞掉了。我就掉進迴廊了。」\n「已經……很久了。」',
+      choices: [
+        { text: '「你不想離開嗎？」', next: 'zhizhi_leave' },
+      ],
+    },
+    zhizhi_body: {
+      speaker: '織織',
+      text: '「像素身體本來就是這樣的。」\n「概念共鳴體不會死。但也不算活著。」\n「就是……在。」',
+      choices: [
+        { text: '「什麼是概念共鳴體？」', next: 'zhizhi_concept' },
+      ],
+    },
+    zhizhi_leave: {
+      speaker: '織織',
+      text: '「離開？去哪裡呢？」\n「外面的世界對我來說太大了。」\n「像素在真實世界裡會溶解的。」',
+      choices: [
+        { text: '「那就在迴廊裡陪妳」', next: null, effect: { bond: { zhizhi: 20 } } },
+      ],
+    },
+    zhizhi_concept: {
+      speaker: '織織',
+      text: '「就是……我不會死。」\n「但也不會長大。不會忘記。不會改變。」\n「永遠是十四歲。」\n「聽起來不錯？才不是。」',
+      choices: [
+        { text: '「我會想辦法幫妳的」', next: null, effect: { bond: { zhizhi: 15 } } },
+      ],
+    },
+
+    greeting_suxiao: {
+      speaker: '宿曉',
+      text: '兔耳少女從工作檯抬起頭。\n「喔，客人。」\n「要修什麼？還是要買什麼？」',
+      choices: [
+        { text: '「你是做什麼的？」', next: 'suxiao_work' },
+        { text: '「你知道迴廊嗎？」', next: 'suxiao_corridor' },
+        { text: '離開', next: null },
+      ],
+    },
+    suxiao_work: {
+      speaker: '宿曉',
+      text: '「什麼都做。修理、改造、發明。」\n「最近在研究一個音樂盒。從迴廊撿到的。」\n「它偶爾會自己響。」',
+      choices: [
+        { text: '「音樂盒？能讓我看看嗎？」', next: 'suxiao_musicbox' },
+      ],
+    },
+    suxiao_corridor: {
+      speaker: '宿曉',
+      text: '「迴廊啊……」她擦了擦手。\n「我從那裡撿到過好東西。」\n「但那裡很危險。別亂跑。」',
+      choices: [
+        { text: '「撿到什麼了？」', next: 'suxiao_musicbox' },
+      ],
+    },
+    suxiao_musicbox: {
+      speaker: '宿曉',
+      text: '她從抽屜裡拿出一個兔子造型的音樂盒。\n「你看。」\n音樂盒開始播放一首你沒聽過的曲子。\n很溫柔。很悲伤。',
+      choices: [
+        { text: '「這首曲子……」', next: 'suxiao_tune' },
+      ],
+    },
+    suxiao_tune: {
+      speaker: '宿曉',
+      text: '「我也不知道是什麼。」\n「但每次播放，我都覺得……好像在想什麼人。」\n「可能這是某個人的記憶吧。」',
+      choices: [
+        { text: '「我能買下來嗎？」', next: null, effect: { items: ['item_memory_orb'], knowledge: 10 } },
+      ],
+    },
+
+    greeting_himiro: {
+      speaker: '姬路',
+      text: '校長坐在辦公桌後。她的翅膀收攏在身後。\n「你來了。」\n「我等你很久了。」',
+      choices: [
+        { text: '「你知道我是誰嗎？」', next: 'himiro_know' },
+        { text: '「為什麼等我？」', next: 'himiro_wait' },
+        { text: '離開', next: null },
+      ],
+    },
+    himiro_know: {
+      speaker: '姬路',
+      text: '「你是那個在找答案的人。」\n「所有人都在找答案。但很少有人願意聽。」\n「你願意聽嗎？」',
+      choices: [
+        { text: '「願意」', next: 'himiro_listening', effect: { knowledge: 20 } },
+      ],
+    },
+    himiro_wait: {
+      speaker: '姬路',
+      text: '「因為迴廊在等你。」\n「它已經等了很久了。」\n「你準備好了嗎？」',
+      choices: [
+        { text: '「準備好了」', next: 'himiro_ready' },
+      ],
+    },
+    himiro_listening: {
+      speaker: '姬路',
+      text: '「聖十字校園不是普通的學校。」\n「這裡是迴廊的邊緣。」\n「每個在這裡的人，都是被迴廊選中的。」\n「包括你。」',
+      choices: [
+        { text: '「被選中做什麼？」', next: 'himiro_chosen' },
+      ],
+    },
+    himiro_ready: {
+      speaker: '姬路',
+      text: '「很好。」她站起來。\n「去鏡湖。找守門人。他會告訴你下一步。」\n「但記住——迴廊裡的東西，不一定都是真的。」',
+      choices: [
+        { text: '「包括你嗎？」', next: 'himiro_truth' },
+      ],
+    },
+    himiro_chosen: {
+      speaker: '姬路',
+      text: '「被選中去理解迴廊。」\n「迴廊連接所有世界線。但它正在崩潰。」\n「需要有人去修復它。」\n「你願意嗎？」',
+      choices: [
+        { text: '「我願意」', next: null, effect: { knowledge: 30, unlocks: ['loc_corridor'] } },
+      ],
+    },
+    himiro_truth: {
+      speaker: '姬路',
+      text: '她笑了一下。\n「我是智天使。在聖十字校園裡，我是真實的。」\n「出了這裡……我只是迴廊的投影。」\n「但這不代表我不在乎。」',
+      choices: [
+        { text: '「謝謝妳」', next: null, effect: { bond: { himiro: 20 } } },
+      ],
+    },
+
+    greeting_gipurieru: {
+      speaker: '吉普莉爾',
+      text: '天翼種少女在書架間飛行。她的翅膀是半透明的。\n「喔？有訪客。」\n「你是來找書的嗎？還是來找答案的？」',
+      choices: [
+        { text: '「你知道迴廊的書嗎？」', next: 'gipurieru_corridor' },
+        { text: '「你能教我什麼？」', next: 'gipurieru_teach' },
+        { text: '離開', next: null },
+      ],
+    },
+    gipurieru_corridor: {
+      speaker: '吉普莉爾',
+      text: '「迴廊的書啊……」她從書架上抽出一本發光的書。\n「這些書不是用文字寫的。是用概念寫的。」\n「你讀得懂嗎？」',
+      choices: [
+        { text: '試著讀', next: 'gipurieru_read', effect: { knowledge: 15 } },
+        { text: '「讀不懂」', next: 'gipurieru_help' },
+      ],
+    },
+    gipurieru_teach: {
+      speaker: '吉普莉爾',
+      text: '「我可以教你知識掠取。」\n「這是天翼種的技能——從書中直接提取信息。」\n「但你不是天翼種，所以會比較慢。」',
+      choices: [
+        { text: '「沒關係，教我」', next: null, effect: { knowledge: 25, abilities: ['知識掠取'] } },
+      ],
+    },
+    gipurieru_read: {
+      speaker: '吉普莉爾',
+      text: '你打開書。腦子裡突然湧入大量信息。\n你看到了迴廊的歷史。看到了無數世界線的交匯。\n然後書合上了。',
+      choices: [
+        { text: '「我看到了……」', next: null, effect: { knowledge: 20 } },
+      ],
+    },
+    gipurieru_help: {
+      speaker: '吉普莉爾',
+      text: '「沒關係。我來翻譯。」\n她翻開書，開始用你能理解的語言解釋。\n「迴廊是一個……空間的十字路口。」',
+      choices: [
+        { text: '「繼續說」', next: null, effect: { knowledge: 15 } },
+      ],
+    },
+
+    greeting_lulu: {
+      speaker: '露露',
+      text: '貓耳少女從櫃檯後探出頭。\n「歡迎光臨！」\n「什麼都有。什麼都賣。什麼都不奇怪。」',
+      choices: [
+        { text: '「你有什麼好東西？」', next: 'lulu_shop' },
+        { text: '「你知道迴廊嗎？」', next: 'lulu_corridor' },
+        { text: '離開', next: null },
+      ],
+    },
+    lulu_shop: {
+      speaker: '露露',
+      text: '「讓我看看……」她翻箱倒櫃。\n「這個？從另一個世界線進口的。」\n「那個？我自己做的。很便宜。」',
+      choices: [
+        { text: '「有什麼特別的嗎？」', next: 'lulu_special' },
+      ],
+    },
+    lulu_corridor: {
+      speaker: '露露',
+      text: '「迴廊？」她壓低聲音。\n「那裡的東西很值錢。但也很危險。」\n「你想去那裡做生意嗎？」',
+      choices: [
+        { text: '「我只是想去看看」', next: 'lulu_look' },
+      ],
+    },
+    lulu_special: {
+      speaker: '露露',
+      text: '「特別的啊……」她從櫃檯下拿出一個小瓶子。\n「這個是從迴廊帶回來的。」\n「裡面裝著某個世界的空氣。」\n「要不要試試？」',
+      choices: [
+        { text: '買下（10 金幣）', next: null, effect: { gold: -10, items: ['item_memory_orb'] } },
+        { text: '太貴了', next: null },
+      ],
+    },
+    lulu_look: {
+      speaker: '露露',
+      text: '「那就去看看吧。」\n「但記住——迴廊裡的東西，出了迴廊就不值錢了。」\n「因為只有在那裡，它們才是真的。」',
+      choices: [
+        { text: '「謝謝提醒」', next: null, effect: { knowledge: 10 } },
       ],
     },
 

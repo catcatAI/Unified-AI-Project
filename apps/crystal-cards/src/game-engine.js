@@ -391,6 +391,7 @@ function drawCard() {
   const pool = [
     ...CARDS.resources.map(r => ({ id: r.id, weight: 5 })),
     ...CARDS.items.map(i => ({ id: i.id, weight: 2 })),
+    ...CARDS.characters.map(c => ({ id: c.id, weight: 3 })),
     ...CARDS.enemies.map(e => ({ id: e.id, weight: 1 })),
   ];
 
