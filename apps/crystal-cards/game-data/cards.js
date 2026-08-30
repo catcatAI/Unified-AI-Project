@@ -142,10 +142,10 @@ const CARDS = {
   // ═══════════════════════════════════════════════════════
   items: [
     {
-      id: 'item_flashlight', name: '手電筒', type: 'item',
-      color: '#FFC107', icon: '🔦',
+      id: 'item_flashlight', name: '火把', type: 'item',
+      color: '#FFC107', icon: '🔥',
       category: 'tool', value: 30,
-      desc: '普通但實用的手電筒。在黑暗中是唯一的依靠。',
+      desc: '木頭綑綁製成的火把。簡單但有效的光源。',
     },
     {
       id: 'item_map', name: '地圖', type: 'item',
@@ -236,6 +236,10 @@ const CARDS = {
       color: '#B0BEC5', icon: '⚙️',
       category: 'tech', stackable: true, maxStack: 15,
       desc: '蘊含靈子能量的金屬。製作義體與武器的材料。',
+    },
+    {
+      id: 'res_water', name: '水', type: 'resource', color: '#2196F3', icon: '💧', category: 'material', stackable: true, maxStack: 20,
+      desc: '乾淨的水。藥水調配的基本溶劑。',
     },
     {
       id: 'res_food', name: '乾糧', type: 'resource',

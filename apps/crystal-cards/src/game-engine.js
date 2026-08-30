@@ -434,6 +434,7 @@ function initNewGame() {
   addToSidebar('res_food', 3);
   addToSidebar('res_wood', 2);
   addToSidebar('res_stone', 1);
+  addToSidebar('res_water', 2);
 
   // Starting characters near their locations
   createBoardCard('char_hikuraya', 200, 300);
