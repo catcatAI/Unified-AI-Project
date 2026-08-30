@@ -43,8 +43,12 @@ const GameState = {
   flags: {},
   discoveredDialogues: [],
 
-  // Crafting
-  recipes: CARDS.recipes,
+  // Crafting (merge basic + rpg recipes)
+  recipes: [...(CARDS.recipes || []), ...(CARDS.rpgRecipes || []).map(r => ({
+    inputs: (r.ingredients || []).map(i => 'rpg_item_' + i.item),
+    output: 'rpg_item_' + (r.resultItem || r.name), count: r.resultQty || 1,
+    name: r.name,
+  }))],
 
   // Event log
   log: [],
@@ -368,7 +372,7 @@ function advanceTime() {
 
   // Enemy spawns (rare)
   if (GameState.day > 1 && Math.random() < 0.02) {
-    const enemyPool = CARDS.enemies;
+    const enemyPool = [...(CARDS.enemies || []), ...(CARDS.rpgEnemies || [])];
     const enemy = enemyPool[Math.floor(Math.random() * enemyPool.length)];
     const x = 100 + Math.random() * 600;
     const y = 100 + Math.random() * 400;
@@ -391,8 +395,16 @@ function drawCard() {
   const pool = [
     ...CARDS.resources.map(r => ({ id: r.id, weight: 5 })),
     ...CARDS.items.map(i => ({ id: i.id, weight: 2 })),
+    ...(CARDS.rpgItems || []).map(i => ({ id: i.id, weight: 2 })),
+    ...(CARDS.rpgHerbalItems || []).map(i => ({ id: i.id, weight: 3 })),
+    ...(CARDS.rpgAnimalItems || []).map(i => ({ id: i.id, weight: 1 })),
+    ...(CARDS.rpgNpcShopItems || []).map(i => ({ id: i.id, weight: 1 })),
     ...CARDS.characters.map(c => ({ id: c.id, weight: 3 })),
     ...CARDS.enemies.map(e => ({ id: e.id, weight: 1 })),
+    ...(CARDS.rpgEnemies || []).map(e => ({ id: e.id, weight: 1 })),
+    ...(CARDS.rpgNavalItems || []).map(i => ({ id: i.id, weight: 1 })),
+    ...(CARDS.rpgNavalItemsMore || []).map(i => ({ id: i.id, weight: 1 })),
+    ...(CARDS.rpgElementalItems || []).map(i => ({ id: i.id, weight: 1 })),
   ];
 
   // Only include items that are unlocked
