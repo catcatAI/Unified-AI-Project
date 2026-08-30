@@ -350,6 +350,7 @@
         if (newUnlocks.length) showNotification('🗺️ 發現：' + newUnlocks.join('、'));
         else showNotification('已經探索過了');
         renderSidebar();
+        playerTick();
       }});
     }
     if (template.type === 'character' && template.dialogue) {
@@ -364,6 +365,7 @@
         const r = E.sellItem(card.templateId, prices.sell);
         showNotification(r.message);
         refreshAllCards();
+        playerTick();
       }});
     }
     if (template.type === 'item') {
@@ -409,6 +411,7 @@
     if (template.type === 'character' && template.dialogue) {
       S.dialogOpen();
       window.DialogSystem.showDialogue(template.dialogue);
+      playerTick();
     }
     // Location → show adjacent locations + unlock
     else if (template.type === 'location') {
@@ -420,6 +423,7 @@
         S.cardPlace();
       }
       renderSidebar();
+      playerTick();
     }
     // Item with value → show buy/sell
     else if ((template.type === 'item' || template.type === 'resource') && template.value) {
@@ -700,6 +704,7 @@
       const template = E.getCardTemplate(result.templateId);
       showNotification(`📦 獲得 ${template?.name || result.templateId}`);
       S.collect();
+      playerTick();
     } else {
       showNotification(result.message);
       S.warning();
@@ -707,39 +712,28 @@
   });
 
   // ═══════════════════════════════════════════════════════
-  // Game Loop
   // ═══════════════════════════════════════════════════════
-  let lastTick = 0;
-  const TICK_INTERVAL = 2000; // 2 seconds per tick at 1x
+  // Time advances only when player takes action
+  // ═══════════════════════════════════════════════════════
+  function playerTick() {
+    const prevTime = E.state.timeOfDay;
+    E.advanceTime();
 
-  function gameLoop(timestamp) {
-    if (!lastTick) lastTick = timestamp;
-
-    const interval = TICK_INTERVAL / E.state.speed;
-    if (timestamp - lastTick >= interval) {
-      lastTick = timestamp;
-
-      const prevTime = E.state.timeOfDay;
-      E.advanceTime();
-
-      // Time transition effects
-      if (E.state.timeOfDay !== prevTime) {
-        if (E.state.timeOfDay === 'night') {
-          S.startNightAmbience();
-          showNotification('🌙 夜晚降臨...');
-        } else if (prevTime === 'night') {
-          S.stopNightAmbience();
-          S.dayTransition();
-          showNotification(`🌅 新的一天！Day ${E.state.day}`);
-        } else if (E.state.timeOfDay === 'evening') {
-          showNotification('🌇 傍晚...');
-        }
+    // Time transition effects
+    if (E.state.timeOfDay !== prevTime) {
+      if (E.state.timeOfDay === 'night') {
+        S.startNightAmbience();
+        showNotification('🌙 夜晚降臨...');
+      } else if (prevTime === 'night') {
+        S.stopNightAmbience();
+        S.dayTransition();
+        showNotification(`🌅 新的一天！Day ${E.state.day}`);
+      } else if (E.state.timeOfDay === 'evening') {
+        showNotification('🌇 傍晚...');
       }
-
-      refreshAllCards();
     }
 
-    requestAnimationFrame(gameLoop);
+    refreshAllCards();
   }
 
   // ═══════════════════════════════════════════════════════
@@ -771,8 +765,7 @@
     E.initNewGame();
     refreshAllCards();
 
-    // Start game loop
-    requestAnimationFrame(gameLoop);
+    // Time advances on player actions (no auto-timer)
 
     // Show tutorial dialog
     if (E.state.showTutorial) {
@@ -788,6 +781,7 @@
     showNotification,
     updateHUD,
     renderSidebar,
+    playerTick,
   };
 
   // Start when DOM ready
