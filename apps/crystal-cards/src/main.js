@@ -1,7 +1,9 @@
 const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const path = require('path');
+const { AIPlayerServer } = require('./ai-player-server');
 
 let mainWindow;
+const aiServer = new AIPlayerServer();
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -22,8 +24,10 @@ function createWindow() {
 
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
-  // Remove default menu bar
   Menu.setApplicationMenu(null);
+
+  // Connect AI player server to game window
+  aiServer.setGameWindow(mainWindow);
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -32,18 +36,22 @@ function createWindow() {
 
 app.whenReady().then(() => {
   createWindow();
+
+  // Start AI player server
+  aiServer.start();
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
 
 app.on('window-all-closed', () => {
+  aiServer.stop();
   if (process.platform !== 'darwin') app.quit();
 });
 
 // IPC handlers
 ipcMain.handle('get-settings', async () => {
-  // Default settings
   return {
     volume: 0.7,
     language: 'zh-TW',
@@ -53,11 +61,10 @@ ipcMain.handle('get-settings', async () => {
 });
 
 ipcMain.handle('save-settings', async (_event, settings) => {
-  // In production, persist to userData
   console.log('Settings saved:', settings);
   return true;
 });
 
 ipcMain.handle('get-data-path', async () => {
-  return path.join(__dirname, '..', 'data');
+  return path.join(__dirname, '..', 'game-data');
 });

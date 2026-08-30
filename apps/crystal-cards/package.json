@@ -27,16 +27,25 @@
       "data/**/*"
     ],
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "category": "Game",
       "maintainer": "Angela AI Project <angela@angela-ai.dev>"
     },
     "win": {
-      "target": ["nsis", "portable"]
+      "target": [
+        "nsis",
+        "portable"
+      ]
     }
   },
   "devDependencies": {
     "electron": "^28.0.0",
     "electron-builder": "^24.9.1"
+  },
+  "dependencies": {
+    "ws": "^8.21.0"
   }
 }
