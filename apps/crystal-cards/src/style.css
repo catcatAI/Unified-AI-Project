@@ -202,6 +202,22 @@ body {
   background: radial-gradient(circle at 30% 30%, var(--card-color), transparent 70%);
 }
 
+.card[data-type="recipe"] {
+  --card-color: #FF8F00;
+  border-color: rgba(255, 143, 0, 0.35);
+}
+.card[data-type="recipe"]::after {
+  background: radial-gradient(circle at 30% 30%, var(--card-color), transparent 70%);
+}
+
+.card[data-type="shopCatalog"] {
+  --card-color: #00838F;
+  border-color: rgba(0, 131, 143, 0.35);
+}
+.card[data-type="shopCatalog"]::after {
+  background: radial-gradient(circle at 30% 30%, var(--card-color), transparent 70%);
+}
+
 /* ── Card Content ── */
 .card-icon {
   font-size: 32px;
