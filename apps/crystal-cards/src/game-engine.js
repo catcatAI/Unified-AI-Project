@@ -3,10 +3,11 @@
  * Stacklands-style mechanics: time, cards, crafting, combat
  */
 
-// Card data loaded via <script src="../game-data/cards.js"> — sets window.CARDS_DATA
-const CARDS = window.CARDS_DATA?.CARDS || {};
-const WORLD_LINES = window.CARDS_DATA?.WORLD_LINES || {};
-const NPC_SCHEDULES = window.CARDS_DATA?.NPC_SCHEDULES || {};
+// Card data loaded via <script src="../game-data/cards.js">
+// cards.js declares const CARDS, WORLD_LINES, NPC_SCHEDULES in global scope
+// and sets window.CARDS_DATA = { CARDS, WORLD_LINES, NPC_SCHEDULES }
+// We reference the global const directly (no redeclaration).
+// These are already available as globals from cards.js.
 
 // ═══════════════════════════════════════════════════════
 // Game State
