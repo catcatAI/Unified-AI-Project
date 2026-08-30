@@ -44,11 +44,20 @@ const GameState = {
   discoveredDialogues: [],
 
   // Crafting (merge basic + rpg recipes)
-  recipes: [...(CARDS.recipes || []), ...(CARDS.rpgRecipes || []).map(r => ({
-    inputs: (r.ingredients || []).map(i => 'rpg_item_' + i.item),
-    output: 'rpg_item_' + (r.resultItem || r.name), count: r.resultQty || 1,
-    name: r.name,
-  }))],
+  recipes: [...(CARDS.recipes || []), ...(CARDS.rpgRecipes || []).map(r => {
+    // Build a map of { templateId: quantity } for each ingredient
+    const ingredientMap = {};
+    for (const ing of (r.ingredients || [])) {
+      const tid = 'rpg_item_' + ing.item;
+      ingredientMap[tid] = (ingredientMap[tid] || 0) + (ing.quantity || 1);
+    }
+    return {
+      inputs: (r.ingredients || []).map(i => 'rpg_item_' + i.item),
+      ingredientMap,
+      output: 'rpg_item_' + (r.resultItem || r.name), count: r.resultQty || 1,
+      name: r.name,
+    };
+  })],
 
   // Event log
   log: [],
@@ -200,22 +209,80 @@ function tryStack(draggedCard, targetCard) {
     return { type: 'stack', message: `${dragTemplate.name} ×${targetCard.count}` };
   }
 
-  // Recipe matching
+  // Recipe matching — check if these two cards satisfy any recipe
+  const dragId = draggedCard.templateId;
+  const targetId = targetCard.templateId;
+
   for (const recipe of GameState.recipes) {
-    const inputs = [...recipe.inputs].sort();
-    const candidates = [draggedCard.templateId, targetCard.templateId].sort();
+    // If recipe has ingredientMap (from rpgRecipes), use quantity-aware matching
+    if (recipe.ingredientMap) {
+      const map = { ...recipe.ingredientMap };
+      // Count how many of each card we're combining
+      const combined = {};
+      combined[dragId] = (combined[dragId] || 0) + draggedCard.count;
+      combined[targetId] = (combined[targetId] || 0) + targetCard.count;
 
-    if (inputs.length === 2 && inputs[0] === candidates[0] && inputs[1] === candidates[1]) {
-      // Craft!
-      removeBoardCard(draggedCard.id);
-      removeBoardCard(targetCard.id);
+      // Check if combined cards satisfy all ingredients
+      let canCraft = true;
+      for (const [tid, needed] of Object.entries(map)) {
+        if ((combined[tid] || 0) < needed) { canCraft = false; break; }
+      }
 
-      if (recipe.output.startsWith('item_') || recipe.output.startsWith('res_')) {
-        addToInventory(recipe.output, recipe.count);
-        return { type: 'craft', message: `✅ ${recipe.name}！獲得 ${getCardTemplate(recipe.output)?.name || recipe.output}` };
-      } else {
-        const newCard = createBoardCard(recipe.output, targetCard.x, targetCard.y);
-        return { type: 'craft', message: `✅ ${recipe.name}！`, card: newCard };
+      if (canCraft) {
+        // Consume cards (remove dragged, reduce target)
+        const consumeFromTarget = {};
+        const consumeFromDragged = {};
+        for (const [tid, needed] of Object.entries(map)) {
+          const fromDrag = Math.min(needed, combined[tid] === targetId ? 0 : 0);
+          // Simple: consume from dragged first, then target
+          let remaining = needed;
+          if (tid === dragId) {
+            const take = Math.min(remaining, draggedCard.count);
+            consumeFromDragged[tid] = take;
+            remaining -= take;
+          }
+          if (tid === targetId) {
+            const take = Math.min(remaining, targetCard.count);
+            consumeFromTarget[tid] = take;
+            remaining -= take;
+          }
+          if (remaining > 0 && tid !== dragId && tid !== targetId) {
+            canCraft = false; break;
+          }
+          if (remaining > 0) canCraft = false;
+        }
+
+        if (!canCraft) continue;
+
+        removeBoardCard(draggedCard.id);
+        // Reduce target card count
+        targetCard.count -= Object.values(consumeFromTarget).reduce((a, b) => a + b, 0);
+        if (targetCard.count <= 0) removeBoardCard(targetCard.id);
+
+        if (recipe.output.startsWith('item_') || recipe.output.startsWith('res_')) {
+          addToInventory(recipe.output, recipe.count);
+          return { type: 'craft', message: `✅ ${recipe.name}！獲得 ${getCardTemplate(recipe.output)?.name || recipe.output}` };
+        } else {
+          const newCard = createBoardCard(recipe.output, targetCard.x, targetCard.y);
+          return { type: 'craft', message: `✅ ${recipe.name}！`, card: newCard };
+        }
+      }
+    } else {
+      // Legacy 2-input exact match (base recipes)
+      const inputs = [...recipe.inputs].sort();
+      const candidates = [draggedCard.templateId, targetCard.templateId].sort();
+
+      if (inputs.length === 2 && inputs[0] === candidates[0] && inputs[1] === candidates[1]) {
+        removeBoardCard(draggedCard.id);
+        removeBoardCard(targetCard.id);
+
+        if (recipe.output.startsWith('item_') || recipe.output.startsWith('res_')) {
+          addToInventory(recipe.output, recipe.count);
+          return { type: 'craft', message: `✅ ${recipe.name}！獲得 ${getCardTemplate(recipe.output)?.name || recipe.output}` };
+        } else {
+          const newCard = createBoardCard(recipe.output, targetCard.x, targetCard.y);
+          return { type: 'craft', message: `✅ ${recipe.name}！`, card: newCard };
+        }
       }
     }
   }
