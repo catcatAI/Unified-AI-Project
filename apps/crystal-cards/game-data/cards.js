@@ -1276,8 +1276,6 @@ const WORLD_LINES = {
 const NPC_SCHEDULES = {
   char_hikuraya: { morning: 'loc_library', afternoon: 'loc_library', evening: 'loc_library' },
   char_red: { morning: 'loc_market', afternoon: 'loc_market', evening: 'loc_market' },
-  char_watchman: { morning: 'loc_mirror_lake', afternoon: 'loc_mirror_lake', evening: 'loc_mirror_lake' },
-  char_old_man: { morning: 'loc_market', afternoon: 'loc_market', evening: 'loc_market' },
 };
 
 // Export as global for browser and Electron
