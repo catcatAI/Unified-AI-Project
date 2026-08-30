@@ -12,7 +12,7 @@ const CARDS = {
     {
       id: 'loc_holy_cross', name: '聖十字校園', type: 'location',
       color: '#3a7bd5', icon: '🏫',
-      desc: '校園。哥布林、盜賊、野狼出沒。灰色走廊上聲音像是被什麼東西吸收了。',
+      desc: '校園。哥布林、盜賊、野狼出沒。灰色走廊很安靜，安靜得不正常。',
       worldLine: 'W01', resourceRate: 1, hpMod: 0, sanMod: 0,
       storyNodes: ['school_start'],
     },
@@ -68,7 +68,7 @@ const CARDS = {
     {
       id: 'loc_orbital_station', name: '軌道居住站', type: 'location',
       color: '#607D8B', icon: '🛰️',
-      desc: '太空站。電子設備不受干擾，精度最高。大學院的知識殿堂。',
+      desc: '太空站。大學院的知識殿堂。精密儀器在這裡運作得最好。',
       worldLine: 'W03', resourceRate: 1, hpMod: 0, sanMod: 2,
       storyNodes: [],
     },
@@ -79,6 +79,13 @@ const CARDS = {
       worldLine: 'W01', resourceRate: 0, hpMod: 0, sanMod: 3,
       storyNodes: ['library_start'],
     },
+    {
+      id: 'loc_convenience_store', name: '便利店', type: 'location',
+      color: '#8BC34A', icon: '🏪',
+      desc: '明亮整潔的小店，應有盡有。紅在這裡值班。',
+      worldLine: 'W01', resourceRate: 1, hpMod: 0, sanMod: 1,
+      storyNodes: [],
+    },
   ],
 
   // ═══════════════════════════════════════════════════════
@@ -88,22 +95,22 @@ const CARDS = {
     {
       id: 'char_hikuraya', name: '晞咕萊雅', type: 'character',
       color: '#7B1FA2', icon: '🐍',
-      role: '圖書館管理員', race: '蛇尾',
-      desc: '蛇尾蜷縮在椅子上。她的眼睛沒有情感——不是冷漠，是「低耗能」。',
-      stats: { hp: 200, atk: 15, def: 12, spd: 8 },
-      abilities: ['迴廊通訊', '知識掠取', '概念解析'],
+      role: '中央大圖書館見習生', race: '拉米雅（蛇尾亞種）',
+      desc: '白皙皮膚，青色長髮帶墨綠光澤。淡金色豎瞳。面無表情，語速緩慢。蛇尾蜷在椅子上，尾尖偶爾輕輕點地——正在記錄數據。',
+      stats: { hp: 120, atk: 5, def: 8, spd: 6 },
+      abilities: ['結構化編目', '震動感知', '低耗能認知', '古籍修復'],
       dialogue: 'greeting_hikuraya',
       location: 'loc_library',
     },
     {
       id: 'char_red', name: '紅', type: 'character',
       color: '#D32F2F', icon: '🔥',
-      role: '市集商販', race: '人類',
-      desc: '紅髮女孩正在和客人吵架。她的眼神銳利而直接。',
+      role: '便利店員（彩虹戰隊）', race: '人類（彩虹戰隊）',
+      desc: '紅髮女孩正在整理貨架。她的眼神銳利而直接，觀察力比任何人都敏銳。',
       stats: { hp: 80, atk: 10, def: 8, spd: 12 },
-      abilities: ['談判', '情報收集'],
+      abilities: ['談判', '情報收集', '觀察力'],
       dialogue: 'greeting_red',
-      location: 'loc_market',
+      location: 'loc_convenience_store',
     },
 
     // ─── game-rpg 角色 ───
@@ -140,18 +147,18 @@ const CARDS = {
     {
       id: 'char_gipurieru', name: '吉普莉爾', type: 'character',
       color: '#CE93D8', icon: '📚',
-      role: '圖書管理員', race: '天翼種',
-      desc: '天翼種少女在書架間飛行。她的翅膀是半透明的，像玻璃。',
+      role: '天翼種，天空神殿圖書管理員', race: '天翼種（高階靈體，神話級異常）',
+      desc: '天翼種少女。翅膀是半透明的，像玻璃。她收集情報，記錄歷史。',
       stats: { hp: 150, atk: 8, def: 10, spd: 12 },
-      abilities: ['知識掠取', '飛行', '跨世界通訊'],
+      abilities: ['高速閱讀', '資訊仲介', '天翼防衛'],
       dialogue: 'greeting_gipurieru',
       location: 'loc_library',
     },
     {
       id: 'char_lulu', name: '露露', type: 'character',
       color: '#4DB6AC', icon: '🏪',
-      role: '五金店店主', race: '貓娘',
-      desc: '貓耳少女坐在五金店櫃檯後。她什麼都賣，什麼都有。',
+      role: '五金店店主，跨世界交易商', race: '貓娘',
+      desc: '貓耳少女坐在五金店櫃檯後。尾巴搖得很快。她什麼都賣，什麼都有——包括從別的世界帶回來的東西。',
       stats: { hp: 80, atk: 6, def: 8, spd: 10 },
       abilities: ['交易', '情報收集', '跨世界貿易'],
       dialogue: 'greeting_lulu',
@@ -1188,9 +1195,9 @@ const CARDS = {
 // World line descriptions for card tooltips
 const WORLD_LINES = {
   W01: { name: '主世界線', desc: '正常的時間流動。魔法與科技並存的世界。' },
-  W02: { name: '琥珀紀元', desc: '沒有魔法的世界。只有物理法則。' },
-  W03: { name: '軌道居住站', desc: '太空站。電子設備不受干擾，精度最高。' },
-  W04: { name: '灰燼紀元', desc: '末世廢墟。電子設備損壞嚴重，空氣中飄著異色微粒。' },
+  W02: { name: '琥珀紀元', desc: '一切都遵循物理法則。沒有例外。' },
+  W03: { name: '軌道居住站', desc: '太空站。精密儀器在這裡運作得最好。' },
+  W04: { name: '灰燼紀元', desc: '廢墟。空氣中飄著異色微粒，電子設備大量損壞。' },
   '迴廊': { name: '迴廊', desc: '連接所有世界線的橋樑。' },
   '夢境層': { name: '夢境層', desc: '跨世界共享的夢境空間。' },
 };
