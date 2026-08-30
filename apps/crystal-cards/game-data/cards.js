@@ -12,7 +12,7 @@ const CARDS = {
     {
       id: 'loc_holy_cross', name: '聖十字校園', type: 'location',
       color: '#3a7bd5', icon: '🏫',
-      desc: '灰色走廊上人來人往，但沒有人在說話。聲音像是被什麼東西吸收了。',
+      desc: '灰色走廊上人來人往，但沒有人在說話。迴廊邊緣的靈子場吸收了聲波振動。',
       worldLine: 'W01', resourceRate: 1, hpMod: 0, sanMod: 0,
       storyNodes: ['school_start'],
     },
@@ -1645,8 +1645,8 @@ const CARDS = {
 // World line descriptions for card tooltips
 const WORLD_LINES = {
   W01: { name: '主世界線', desc: '正常的時間流動。靈子與電子共存。' },
-  W02: { name: '琥珀紀元', desc: '絕對無魔的中世紀村落。物理法則統治一切。' },
-  W03: { name: '軌道居住站', desc: '低靈子環境，電子設備精度最高。' },
+  W02: { name: '琥珀紀元', desc: '物理常量使靈子無法穩定存在的世界線。無靈子環境，純粹的物理法則統治一切。' },
+  W03: { name: '軌道居住站', desc: '太空環境靈子密度極低（類似大氣稀薄），電子設備精度最高。大學院的知識殿堂。' },
   W04: { name: '灰燼紀元', desc: '不穩定的靈子。電子設備大量損壞。' },
   '迴廊': { name: '迴廊', desc: '連接所有世界線的橋樑。' },
   '夢境層': { name: '夢境層', desc: '跨世界共享的夢境空間。' },
