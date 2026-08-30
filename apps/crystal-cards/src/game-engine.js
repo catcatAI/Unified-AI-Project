@@ -331,8 +331,11 @@ function tryStack(draggedCard, targetCard) {
 function executeCombat(attackerTemplate, defenderTemplate, attackerCard, defenderCard) {
   const atkStats = attackerTemplate ? attackerTemplate.stats : { hp: 50, atk: 8, def: 5, spd: 10 };
   const defStats = defenderTemplate.stats;
+  // Apply equipment bonus
+  const eqBonus = getEquipmentBonus();
+  const finalAtk = { ...atkStats, atk: (atkStats.atk || 0) + eqBonus.atk, def: (atkStats.def || 0) + eqBonus.def, spd: (atkStats.spd || 0) + eqBonus.spd };
 
-  const atkDmg = Math.max(1, atkStats.atk - defStats.def / 2 + Math.floor(Math.random() * 5));
+  const atkDmg = Math.max(1, finalAtk.atk - defStats.def / 2 + Math.floor(Math.random() * 5));
   const defDmg = Math.max(1, defStats.atk - atkStats.def / 2 + Math.floor(Math.random() * 3));
 
   const results = [];
@@ -646,6 +649,55 @@ function getEquipmentBonus() {
 }
 
 // ═══════════════════════════════════════════════════════
+// Save / Load
+// ═══════════════════════════════════════════════════════
+function saveGame() {
+  try {
+    const data = JSON.stringify({
+      ...GameState,
+      equipment: GameState.equipment,
+      boardCards: GameState.boardCards.map(c => ({ templateId: c.templateId, x: c.x, y: c.y, hp: c.hp, maxHp: c.maxHp })),
+    });
+    localStorage.setItem('crystal-cards-save', data);
+    return true;
+  } catch (e) {
+    console.error('Save failed:', e);
+    return false;
+  }
+}
+
+function loadGame() {
+  try {
+    const raw = localStorage.getItem('crystal-cards-save');
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    Object.assign(GameState, data);
+    // Recreate board cards from saved data
+    GameState.boardCards = [];
+    GameState.cardIdCounter = 0;
+    (data.boardCards || []).forEach(saved => {
+      const card = {
+        id: ++GameState.cardIdCounter,
+        templateId: saved.templateId,
+        x: saved.x, y: saved.y,
+        stackId: null,
+        hp: saved.hp, maxHp: saved.maxHp, count: 1,
+      };
+      GameState.boardCards.push(card);
+    });
+    return true;
+  } catch (e) {
+    console.error('Load failed:', e);
+    return false;
+  }
+}
+
+// Auto-save every action
+function autoSave() {
+  try { saveGame(); } catch (e) {}
+}
+
+// ═══════════════════════════════════════════════════════
 // Public API
 // ═══════════════════════════════════════════════════════
 window.GameEngine = {
@@ -674,4 +726,7 @@ window.GameEngine = {
   equipItem,
   unequipItem,
   getEquipmentBonus,
+  saveGame,
+  loadGame,
+  autoSave,
 };

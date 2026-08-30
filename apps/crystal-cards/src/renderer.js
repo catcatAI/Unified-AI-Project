@@ -734,6 +734,7 @@
     }
 
     refreshAllCards();
+    E.autoSave();
   }
 
   // ═══════════════════════════════════════════════════════
@@ -761,8 +762,10 @@
       }
     }
 
-    // Start new game
-    E.initNewGame();
+    // Try loading saved game, otherwise start new
+    if (!E.loadGame()) {
+      E.initNewGame();
+    }
     refreshAllCards();
 
     // Time advances on player actions (no auto-timer)
