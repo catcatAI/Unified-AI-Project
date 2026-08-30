@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crystal Cards</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- ═══════════ TOP BAR ═══════════ -->
+  <header id="top-bar">
+    <div class="top-left">
+      <span id="day-display" class="hud-item">☀️ Day 1</span>
+      <span id="time-display" class="hud-item">🌅 Morning</span>
+    </div>
+    <div class="top-center">
+      <button id="btn-pause" class="hud-btn" title="暫停/繼續">⏸</button>
+      <button id="btn-speed" class="hud-btn" title="速度">▶️</button>
+    </div>
+    <div class="top-right">
+      <span id="hp-display" class="hud-item">❤️ 100</span>
+      <span id="san-display" class="hud-item">🧠 100</span>
+      <span id="gold-display" class="hud-item">💰 10</span>
+      <button id="btn-settings" class="hud-btn" title="設定">⚙️</button>
+    </div>
+  </header>
+
+  <!-- ═══════════ GAME BOARD ═══════════ -->
+  <main id="game-container">
+    <div id="board">
+      <div id="board-bg"></div>
+      <!-- Cards are rendered here dynamically -->
+    </div>
+
+    <!-- ═══════════ SIDEBAR ═══════════ -->
+    <aside id="sidebar">
+      <div class="sidebar-tabs">
+        <button class="tab active" data-tab="available">可用卡片</button>
+        <button class="tab" data-tab="inventory">背包</button>
+      </div>
+      <div id="sidebar-content">
+        <div id="available-cards" class="tab-content active"></div>
+        <div id="inventory-cards" class="tab-content"></div>
+      </div>
+      <div id="sidebar-footer">
+        <button id="btn-draw" class="action-btn">📦 抽取卡片</button>
+        <div id="draw-cost">花費 <span id="draw-cost-value">3</span> 💰</div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ═══════════ DIALOG OVERLAY ═══════════ -->
+  <div id="dialog-overlay" class="hidden">
+    <div id="dialog-box">
+      <div id="dialog-speaker"></div>
+      <div id="dialog-text"></div>
+      <div id="dialog-choices"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ CARD TOOLTIP ═══════════ -->
+  <div id="card-tooltip" class="hidden">
+    <div id="tooltip-name"></div>
+    <div id="tooltip-desc"></div>
+    <div id="tooltip-stats"></div>
+  </div>
+
+  <!-- ═══════════ SETTINGS PANEL ═══════════ -->
+  <div id="settings-overlay" class="hidden">
+    <div id="settings-panel">
+      <h2>⚙️ 設定</h2>
+      <div class="setting-group">
+        <label>🔊 音量</label>
+        <input type="range" id="setting-volume" min="0" max="100" value="70">
+        <span id="volume-value">70%</span>
+      </div>
+      <div class="setting-group">
+        <label>🌐 語言</label>
+        <select id="setting-language">
+          <option value="zh-TW" selected>繁體中文</option>
+          <option value="zh-CN">简体中文</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+      <div class="setting-group">
+        <label>🎨 畫質</label>
+        <select id="setting-quality">
+          <option value="high" selected>高</option>
+          <option value="medium">中</option>
+          <option value="low">低</option>
+        </select>
+      </div>
+      <div class="setting-group">
+        <label>📖 教學</label>
+        <input type="checkbox" id="setting-tutorial" checked>
+      </div>
+      <div class="setting-actions">
+        <button id="settings-close" class="action-btn">確定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ COMBAT POPUP ═══════════ -->
+  <div id="combat-overlay" class="hidden">
+    <div id="combat-panel">
+      <h2 id="combat-title">⚔️ 戰鬥</h2>
+      <div id="combat-info"></div>
+      <div id="combat-actions">
+        <button class="action-btn" id="btn-attack">⚔️ 攻擊</button>
+        <button class="action-btn" id="btn-flee">🏃 逃跑</button>
+      </div>
+      <div id="combat-log"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ NOTIFICATION ═══════════ -->
+  <div id="notification" class="hidden"></div>
+
+  <!-- Scripts: data first, then engine, then UI -->
+  <script src="../game-data/cards.js"></script>
+  <script src="sounds.js"></script>
+  <script src="angela-api.js"></script>
+  <script src="game-engine.js"></script>
+  <script src="renderer.js"></script>
+  <script src="dialog.js"></script>
+</body>
+</html>

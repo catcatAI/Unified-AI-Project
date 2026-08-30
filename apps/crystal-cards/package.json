@@ -1,0 +1,42 @@
+{
+  "name": "crystal-cards",
+  "version": "1.0.0",
+  "description": "Stacklands-style crystal card game set in the Angela Matrix world",
+  "author": {
+    "name": "Angela AI Project",
+    "email": "angela@angela-ai.dev"
+  },
+  "homepage": "https://github.com/Angela-AI/Crystal-Cards",
+  "license": "MIT",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron . --no-sandbox",
+    "build:linux": "electron-builder --linux",
+    "build:win": "electron-builder --win",
+    "build:all": "electron-builder --linux --win"
+  },
+  "build": {
+    "appId": "com.angela.crystal-cards",
+    "productName": "Crystal Cards",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "data/**/*"
+    ],
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Game",
+      "maintainer": "Angela AI Project <angela@angela-ai.dev>"
+    },
+    "win": {
+      "target": ["nsis", "portable"]
+    }
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  }
+}

@@ -1,0 +1,8918 @@
+{
+  "startTime": "2026-08-30T01:25:39.550Z",
+  "angelaConnected": false,
+  "totalDays": 30,
+  "events": [
+    {
+      "day": 1,
+      "time": "morning",
+      "type": "place",
+      "detail": "Placed 聖十字校園"
+    },
+    {
+      "day": 1,
+      "time": "morning",
+      "type": "place",
+      "detail": "Placed 鏡湖"
+    },
+    {
+      "day": 1,
+      "time": "morning",
+      "type": "draw",
+      "detail": "Drew 腐化體"
+    },
+    {
+      "day": 1,
+      "time": "morning",
+      "type": "draw",
+      "detail": "Drew 石材"
+    },
+    {
+      "day": 1,
+      "time": "morning",
+      "type": "draw",
+      "detail": "Drew 乾糧"
+    },
+    {
+      "day": 1,
+      "time": "morning",
+      "type": "dialogue",
+      "detail": "Dialogue: greeting_watchman"
+    },
+    {
+      "day": 1,
+      "time": "morning",
+      "type": "unlock",
+      "detail": "Unlocked 迴廊"
+    },
+    {
+      "day": 1,
+      "time": "morning",
+      "type": "dialogue_choice",
+      "detail": "守門人: \"「迴廊怎麼去？」\" → watchman_corridor"
+    },
+    {
+      "day": 1,
+      "time": "morning",
+      "type": "dialogue_end",
+      "detail": "守門人: \"「我準備好了」\""
+    },
+    {
+      "day": 2,
+      "time": "morning",
+      "type": "draw",
+      "detail": "Drew 舊照片"
+    },
+    {
+      "day": 2,
+      "time": "morning",
+      "type": "craft",
+      "detail": "Crafted 製作火把 → 手電筒"
+    },
+    {
+      "day": 2,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 2,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 2,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 2,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 2,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 2,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 3,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 3,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 3,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 3,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 3,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 3,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 3,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 3,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 3,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 3,
+      "time": "morning",
+      "type": "combat",
+      "detail": "Combat with 腐化體"
+    },
+    {
+      "day": 3,
+      "time": "morning",
+      "type": "combat",
+      "detail": "Combat with 腐化體"
+    },
+    {
+      "day": 3,
+      "time": "morning",
+      "type": "combat",
+      "detail": "Combat with 腐化體"
+    },
+    {
+      "day": 3,
+      "time": "morning",
+      "type": "combat",
+      "detail": "Combat with 腐化體"
+    },
+    {
+      "day": 3,
+      "time": "morning",
+      "type": "combat",
+      "detail": "Combat with 腐化體"
+    },
+    {
+      "day": 3,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 3,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 3,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 3,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 3,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 4,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 4,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 4,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 4,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 4,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 4,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 4,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 4,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 4,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 4,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 4,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 4,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 4,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 4,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 4,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 5,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 5,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 5,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 5,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 5,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 5,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 5,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 5,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 5,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 5,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 5,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 5,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 5,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 5,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 6,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 6,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 6,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 6,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 6,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 6,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 6,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 6,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 6,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 6,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 6,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 6,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 6,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 6,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 6,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 6,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 6,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 6,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 6,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 7,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 7,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 7,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 7,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 7,
+      "time": "night",
+      "type": "craft",
+      "detail": "Crafted 培育發光果實 → 發光果實"
+    },
+    {
+      "day": 7,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 7,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 7,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 7,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 7,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 7,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 7,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 7,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 7,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 7,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 7,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 7,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 7,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 8,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 8,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 8,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 8,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 8,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 8,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 8,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 8,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 8,
+      "time": "morning",
+      "type": "draw",
+      "detail": "Drew 記憶球"
+    },
+    {
+      "day": 8,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 8,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 8,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 8,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 8,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 8,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 8,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 9,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 9,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 9,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 9,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 9,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 9,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 9,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 9,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 9,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 9,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 9,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 9,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 9,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 9,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 9,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 9,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 9,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 9,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 10,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 10,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 10,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 10,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 10,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 10,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 10,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 10,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 10,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 10,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 10,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 10,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 10,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 10,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 10,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 10,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 10,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 10,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 10,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 10,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 11,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 11,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 11,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 11,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 11,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 11,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 11,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 11,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 11,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 11,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 11,
+      "time": "morning",
+      "type": "combat",
+      "detail": "Combat with 腐化體"
+    },
+    {
+      "day": 11,
+      "time": "morning",
+      "type": "combat",
+      "detail": "Combat with 腐化體"
+    },
+    {
+      "day": 11,
+      "time": "afternoon",
+      "type": "combat",
+      "detail": "Combat with 腐化體"
+    },
+    {
+      "day": 11,
+      "time": "afternoon",
+      "type": "combat",
+      "detail": "Combat with 腐化體"
+    },
+    {
+      "day": 11,
+      "time": "afternoon",
+      "type": "combat",
+      "detail": "Combat with 腐化體"
+    },
+    {
+      "day": 11,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 12,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 12,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 12,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 12,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 12,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 12,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 12,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 12,
+      "time": "night",
+      "type": "draw",
+      "detail": "Drew 金幣"
+    },
+    {
+      "day": 12,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 12,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 12,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 12,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 12,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 12,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 12,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 12,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 12,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 12,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 12,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 13,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 13,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 13,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 13,
+      "time": "night",
+      "type": "craft",
+      "detail": "Crafted 培育發光果實 → 發光果實"
+    },
+    {
+      "day": 13,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 13,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 13,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 13,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 13,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 13,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 13,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 13,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 13,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 13,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 13,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 13,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 13,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 14,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 14,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 14,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 14,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 14,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 14,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 14,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 14,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 14,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 14,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 14,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 14,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 14,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 14,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 14,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 14,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 14,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 14,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 14,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 14,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 15,
+      "time": "evening",
+      "type": "combat",
+      "detail": "Combat with 迴音"
+    },
+    {
+      "day": 15,
+      "time": "evening",
+      "type": "combat",
+      "detail": "Combat with 迴音"
+    },
+    {
+      "day": 15,
+      "time": "evening",
+      "type": "combat",
+      "detail": "Combat with 迴音"
+    },
+    {
+      "day": 15,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 15,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 15,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 15,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 15,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 15,
+      "time": "morning",
+      "type": "craft",
+      "detail": "Crafted 培育發光果實 → 發光果實"
+    },
+    {
+      "day": 15,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 15,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 15,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 15,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 15,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 15,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 16,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 16,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 16,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 16,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 16,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 16,
+      "time": "night",
+      "type": "craft",
+      "detail": "Crafted 培育發光果實 → 發光果實"
+    },
+    {
+      "day": 16,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 16,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 16,
+      "time": "night",
+      "type": "combat",
+      "detail": "Combat with 迴音"
+    },
+    {
+      "day": 16,
+      "time": "night",
+      "type": "combat",
+      "detail": "Combat with 迴音"
+    },
+    {
+      "day": 16,
+      "time": "morning",
+      "type": "combat",
+      "detail": "Combat with 迴音"
+    },
+    {
+      "day": 16,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 16,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 16,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 16,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 16,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 16,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 16,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 17,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 17,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 17,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 17,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 17,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 17,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 17,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 17,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 17,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 17,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 17,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 17,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 17,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 17,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 18,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 18,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 18,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 18,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 18,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 18,
+      "time": "night",
+      "type": "combat",
+      "detail": "Combat with 暗影"
+    },
+    {
+      "day": 18,
+      "time": "night",
+      "type": "combat",
+      "detail": "Combat with 暗影"
+    },
+    {
+      "day": 18,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 18,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 18,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 18,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 18,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 18,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 18,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 18,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 18,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 18,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 19,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 19,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 19,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 19,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 19,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 19,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 19,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 19,
+      "time": "night",
+      "type": "draw",
+      "detail": "Drew 草藥"
+    },
+    {
+      "day": 19,
+      "time": "morning",
+      "type": "craft",
+      "detail": "Crafted 培育發光果實 → 發光果實"
+    },
+    {
+      "day": 19,
+      "time": "morning",
+      "type": "combat",
+      "detail": "Combat with 鏽行者"
+    },
+    {
+      "day": 19,
+      "time": "morning",
+      "type": "combat",
+      "detail": "Combat with 鏽行者"
+    },
+    {
+      "day": 19,
+      "time": "morning",
+      "type": "combat",
+      "detail": "Combat with 鏽行者"
+    },
+    {
+      "day": 19,
+      "time": "morning",
+      "type": "combat",
+      "detail": "Combat with 鏽行者"
+    },
+    {
+      "day": 19,
+      "time": "afternoon",
+      "type": "combat",
+      "detail": "Combat with 鏽行者"
+    },
+    {
+      "day": 19,
+      "time": "afternoon",
+      "type": "combat",
+      "detail": "Combat with 鏽行者"
+    },
+    {
+      "day": 19,
+      "time": "afternoon",
+      "type": "combat",
+      "detail": "Combat with 鏽行者"
+    },
+    {
+      "day": 19,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 19,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 19,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 20,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 20,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 20,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 20,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 20,
+      "time": "night",
+      "type": "craft",
+      "detail": "Crafted 培育發光果實 → 發光果實"
+    },
+    {
+      "day": 20,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 20,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 20,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 20,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 20,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 20,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 20,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 20,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 20,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 20,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 20,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 20,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 20,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 20,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 21,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 21,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 21,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 21,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 21,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 21,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 21,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 21,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 21,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 21,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 21,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 21,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 21,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 21,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 21,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 21,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 21,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 21,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 21,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 22,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 22,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 22,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 22,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 22,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 22,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 22,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 22,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 22,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 22,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 22,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 22,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 22,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 22,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 22,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 22,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 22,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 22,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 22,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 23,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 23,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 23,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 23,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 23,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 23,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 23,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 23,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 23,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 23,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 23,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 23,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 23,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 23,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 23,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 23,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 23,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 23,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 24,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 24,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 24,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 24,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 24,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 24,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 24,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 24,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 24,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 24,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 24,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 24,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 24,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 24,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 24,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 24,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 24,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 24,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 24,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 25,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 25,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 25,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 25,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 25,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 25,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 25,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 25,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 25,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 25,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 25,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 25,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 25,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 25,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 25,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 25,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 25,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 25,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 25,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 26,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 26,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 26,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 26,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 26,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 26,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 26,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 26,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 26,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 26,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 26,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 26,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 26,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 26,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 26,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 26,
+      "time": "afternoon",
+      "type": "combat",
+      "detail": "Combat with 暗影"
+    },
+    {
+      "day": 26,
+      "time": "afternoon",
+      "type": "combat",
+      "detail": "Combat with 暗影"
+    },
+    {
+      "day": 26,
+      "time": "afternoon",
+      "type": "combat",
+      "detail": "Combat with 暗影"
+    },
+    {
+      "day": 26,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 27,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 27,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 27,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 27,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 27,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 27,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 27,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 27,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 27,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 27,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 27,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 27,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 27,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 27,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 27,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 27,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 27,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 27,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 27,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 28,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 28,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 28,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 28,
+      "time": "evening",
+      "type": "draw",
+      "detail": "Drew 知識碎片"
+    },
+    {
+      "day": 28,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 28,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 28,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 28,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 28,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 28,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 28,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 28,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 28,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 28,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 28,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 28,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 28,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 28,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 28,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 29,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 29,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 29,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 29,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 29,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 29,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 29,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 29,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 29,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 29,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 29,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 29,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 30,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 30,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 30,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 30,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 30,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 30,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 30,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 30,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 30,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 30,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 30,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 30,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 30,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 30,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 30,
+      "time": "morning",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 30,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 30,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 30,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 30,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 30,
+      "time": "afternoon",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 31,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 31,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 31,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 31,
+      "time": "evening",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 31,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 31,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 31,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 31,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    },
+    {
+      "day": 31,
+      "time": "night",
+      "type": "rest",
+      "detail": "Rested (+15 SAN, +5 HP)"
+    }
+  ],
+  "combatLog": [
+    {
+      "day": 3,
+      "text": "晞咕萊雅 攻擊 腐化體，造成 13 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 3,
+      "text": "腐化體 反擊，造成 8 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 3,
+      "text": "晞咕萊雅 攻擊 腐化體，造成 15 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 3,
+      "text": "腐化體 反擊，造成 6 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 3,
+      "text": "晞咕萊雅 攻擊 腐化體，造成 15 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 3,
+      "text": "腐化體 反擊，造成 6 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 3,
+      "text": "晞咕萊雅 攻擊 腐化體，造成 12 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 3,
+      "text": "腐化體 反擊，造成 6 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 3,
+      "text": "晞咕萊雅 攻擊 腐化體，造成 16 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 3,
+      "text": "腐化體 被擊敗！",
+      "type": "heal"
+    },
+    {
+      "day": 3,
+      "text": "獲得 水晶碎片",
+      "type": "heal"
+    },
+    {
+      "day": 3,
+      "text": "獲得 知識碎片",
+      "type": "heal"
+    },
+    {
+      "day": 11,
+      "text": "晞咕萊雅 攻擊 腐化體，造成 12 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 11,
+      "text": "腐化體 反擊，造成 6 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 11,
+      "text": "晞咕萊雅 攻擊 腐化體，造成 12 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 11,
+      "text": "腐化體 反擊，造成 6 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 11,
+      "text": "晞咕萊雅 攻擊 腐化體，造成 15 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 11,
+      "text": "腐化體 反擊，造成 6 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 11,
+      "text": "晞咕萊雅 攻擊 腐化體，造成 12 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 11,
+      "text": "腐化體 反擊，造成 7 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 11,
+      "text": "晞咕萊雅 攻擊 腐化體，造成 16 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 11,
+      "text": "腐化體 被擊敗！",
+      "type": "heal"
+    },
+    {
+      "day": 11,
+      "text": "獲得 水晶碎片",
+      "type": "heal"
+    },
+    {
+      "day": 11,
+      "text": "獲得 知識碎片",
+      "type": "heal"
+    },
+    {
+      "day": 15,
+      "text": "晞咕萊雅 攻擊 迴音，造成 15 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 15,
+      "text": "迴音 反擊，造成 11 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 15,
+      "text": "晞咕萊雅 攻擊 迴音，造成 17 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 15,
+      "text": "迴音 反擊，造成 11 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 15,
+      "text": "晞咕萊雅 攻擊 迴音，造成 18 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 15,
+      "text": "迴音 被擊敗！",
+      "type": "heal"
+    },
+    {
+      "day": 15,
+      "text": "獲得 記憶球",
+      "type": "heal"
+    },
+    {
+      "day": 16,
+      "text": "晞咕萊雅 攻擊 迴音，造成 16 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 16,
+      "text": "迴音 反擊，造成 9 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 16,
+      "text": "晞咕萊雅 攻擊 迴音，造成 18 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 16,
+      "text": "迴音 反擊，造成 11 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 16,
+      "text": "晞咕萊雅 攻擊 迴音，造成 18 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 16,
+      "text": "迴音 被擊敗！",
+      "type": "heal"
+    },
+    {
+      "day": 16,
+      "text": "獲得 記憶球",
+      "type": "heal"
+    },
+    {
+      "day": 18,
+      "text": "晞咕萊雅 攻擊 暗影，造成 14.5 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 18,
+      "text": "暗影 反擊，造成 3 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 18,
+      "text": "晞咕萊雅 攻擊 暗影，造成 16.5 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 18,
+      "text": "暗影 被擊敗！",
+      "type": "heal"
+    },
+    {
+      "day": 18,
+      "text": "獲得 水晶碎片",
+      "type": "heal"
+    },
+    {
+      "day": 19,
+      "text": "晞咕萊雅 攻擊 鏽行者，造成 10 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 19,
+      "text": "鏽行者 反擊，造成 5 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 19,
+      "text": "晞咕萊雅 攻擊 鏽行者，造成 14 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 19,
+      "text": "鏽行者 反擊，造成 5 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 19,
+      "text": "晞咕萊雅 攻擊 鏽行者，造成 14 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 19,
+      "text": "鏽行者 反擊，造成 4 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 19,
+      "text": "晞咕萊雅 攻擊 鏽行者，造成 11 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 19,
+      "text": "鏽行者 反擊，造成 6 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 19,
+      "text": "晞咕萊雅 攻擊 鏽行者，造成 12 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 19,
+      "text": "鏽行者 反擊，造成 6 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 19,
+      "text": "晞咕萊雅 攻擊 鏽行者，造成 14 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 19,
+      "text": "鏽行者 反擊，造成 6 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 19,
+      "text": "晞咕萊雅 攻擊 鏽行者，造成 14 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 19,
+      "text": "鏽行者 被擊敗！",
+      "type": "heal"
+    },
+    {
+      "day": 19,
+      "text": "獲得 靈子金屬",
+      "type": "heal"
+    },
+    {
+      "day": 19,
+      "text": "獲得 靈子金屬",
+      "type": "heal"
+    },
+    {
+      "day": 26,
+      "text": "晞咕萊雅 攻擊 暗影，造成 13.5 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 26,
+      "text": "暗影 反擊，造成 3 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 26,
+      "text": "晞咕萊雅 攻擊 暗影，造成 15.5 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 26,
+      "text": "暗影 反擊，造成 4 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 26,
+      "text": "晞咕萊雅 攻擊 暗影，造成 13.5 傷害！",
+      "type": "damage"
+    },
+    {
+      "day": 26,
+      "text": "暗影 被擊敗！",
+      "type": "heal"
+    },
+    {
+      "day": 26,
+      "text": "獲得 水晶碎片",
+      "type": "heal"
+    }
+  ],
+  "dialogueLog": [
+    {
+      "day": 1,
+      "character": "守門人",
+      "dialogueId": "greeting_watchman"
+    }
+  ],
+  "craftingLog": [
+    {
+      "day": 2,
+      "recipe": "製作火把",
+      "output": "手電筒"
+    },
+    {
+      "day": 7,
+      "recipe": "培育發光果實",
+      "output": "發光果實"
+    },
+    {
+      "day": 13,
+      "recipe": "培育發光果實",
+      "output": "發光果實"
+    },
+    {
+      "day": 15,
+      "recipe": "培育發光果實",
+      "output": "發光果實"
+    },
+    {
+      "day": 16,
+      "recipe": "培育發光果實",
+      "output": "發光果實"
+    },
+    {
+      "day": 19,
+      "recipe": "培育發光果實",
+      "output": "發光果實"
+    },
+    {
+      "day": 20,
+      "recipe": "培育發光果實",
+      "output": "發光果實"
+    }
+  ],
+  "discoveries": [],
+  "bugs": [],
+  "balanceIssues": [],
+  "finalState": {
+    "hp": 100,
+    "maxHp": 100,
+    "sanity": 99.8,
+    "gold": 4,
+    "knowledge": 100,
+    "bonds": {},
+    "day": 32,
+    "timeOfDay": "morning",
+    "tickCount": 720,
+    "ticksPerDay": 12,
+    "paused": false,
+    "speed": 1,
+    "boardCards": [
+      {
+        "id": 1,
+        "templateId": "char_hikuraya",
+        "x": 200,
+        "y": 300,
+        "stackId": null,
+        "hp": 200,
+        "maxHp": 200,
+        "count": 1
+      },
+      {
+        "id": 2,
+        "templateId": "char_watchman",
+        "x": 500,
+        "y": 200,
+        "stackId": null,
+        "hp": 500,
+        "maxHp": 500,
+        "count": 1
+      },
+      {
+        "id": 3,
+        "templateId": "loc_holy_cross",
+        "x": 467.55705013174236,
+        "y": 279.0032750358565,
+        "stackId": null,
+        "hp": null,
+        "maxHp": null,
+        "count": 1
+      },
+      {
+        "id": 4,
+        "templateId": "loc_mirror_lake",
+        "x": 115.2375640219615,
+        "y": 235.13776176361895,
+        "stackId": null,
+        "hp": null,
+        "maxHp": null,
+        "count": 1
+      }
+    ],
+    "cardIdCounter": 11,
+    "sidebarCards": [
+      {
+        "templateId": "loc_market",
+        "count": 1
+      },
+      {
+        "templateId": "res_stone",
+        "count": 14
+      },
+      {
+        "templateId": "item_flashlight",
+        "count": 1
+      },
+      {
+        "templateId": "item_map",
+        "count": 1
+      },
+      {
+        "templateId": "enemy_corrupted",
+        "count": 1
+      },
+      {
+        "templateId": "item_photo",
+        "count": 1
+      },
+      {
+        "templateId": "item_memory_orb",
+        "count": 3
+      },
+      {
+        "templateId": "res_gold",
+        "count": 1
+      },
+      {
+        "templateId": "res_herb",
+        "count": 2
+      },
+      {
+        "templateId": "res_knowledge",
+        "count": 1
+      }
+    ],
+    "inventory": [
+      {
+        "templateId": "item_flashlight",
+        "count": 1
+      },
+      {
+        "templateId": "res_crystal_shard",
+        "count": 4
+      },
+      {
+        "templateId": "res_knowledge",
+        "count": 2
+      },
+      {
+        "templateId": "item_glow_fruit",
+        "count": 1
+      },
+      {
+        "templateId": "res_iron",
+        "count": 2
+      }
+    ],
+    "unlockedLocations": [
+      "loc_holy_cross",
+      "loc_mirror_lake",
+      "loc_corridor"
+    ],
+    "flags": {
+      "loc_corridor": true
+    },
+    "discoveredDialogues": [],
+    "recipes": [
+      {
+        "inputs": [
+          "res_wood",
+          "res_wood"
+        ],
+        "output": "item_flashlight",
+        "count": 1,
+        "name": "製作火把"
+      },
+      {
+        "inputs": [
+          "res_herb",
+          "res_herb",
+          "res_water"
+        ],
+        "output": "item_courage",
+        "count": 1,
+        "name": "調製藥水"
+      },
+      {
+        "inputs": [
+          "res_crystal_shard",
+          "res_crystal_shard"
+        ],
+        "output": "item_crystal",
+        "count": 1,
+        "name": "合成水晶"
+      },
+      {
+        "inputs": [
+          "res_iron",
+          "res_iron",
+          "res_wood"
+        ],
+        "output": "item_knife",
+        "count": 1,
+        "name": "鍛造工具"
+      },
+      {
+        "inputs": [
+          "item_key_corridor",
+          "item_crystal"
+        ],
+        "output": "item_corridor_pearl",
+        "count": 1,
+        "name": "封印迴廊之力"
+      },
+      {
+        "inputs": [
+          "res_food",
+          "res_food",
+          "res_herb"
+        ],
+        "output": "item_glow_fruit",
+        "count": 2,
+        "name": "培育發光果實"
+      }
+    ],
+    "log": [],
+    "volume": 0.7,
+    "language": "zh-TW",
+    "quality": "high",
+    "showTutorial": true,
+    "_placeCount": 0
+  },
+  "decisions": [
+    {
+      "day": 1,
+      "time": "morning",
+      "decision": {
+        "action": "draw",
+        "priority": 8,
+        "reason": "Draw card (3 gold)"
+      }
+    },
+    {
+      "day": 1,
+      "time": "morning",
+      "decision": {
+        "action": "draw",
+        "priority": 8,
+        "reason": "Draw card (3 gold)"
+      }
+    },
+    {
+      "day": 1,
+      "time": "morning",
+      "decision": {
+        "action": "draw",
+        "priority": 8,
+        "reason": "Draw card (3 gold)"
+      }
+    },
+    {
+      "day": 1,
+      "time": "morning",
+      "decision": {
+        "action": "stack",
+        "cardA": 2,
+        "cardB": 4,
+        "priority": 8,
+        "reason": "Talk to 守門人"
+      }
+    },
+    {
+      "day": 1,
+      "time": "afternoon",
+      "decision": {
+        "action": "place_card",
+        "templateId": "loc_corridor",
+        "priority": 9,
+        "reason": "Place new location 迴廊"
+      }
+    },
+    {
+      "day": 1,
+      "time": "afternoon",
+      "decision": {
+        "action": "place_card",
+        "templateId": "loc_corridor",
+        "priority": 9,
+        "reason": "Place new location 迴廊"
+      }
+    },
+    {
+      "day": 1,
+      "time": "afternoon",
+      "decision": {
+        "action": "place_card",
+        "templateId": "loc_corridor",
+        "priority": 9,
+        "reason": "Place new location 迴廊"
+      }
+    },
+    {
+      "day": 1,
+      "time": "afternoon",
+      "decision": {
+        "action": "place_card",
+        "templateId": "loc_corridor",
+        "priority": 9,
+        "reason": "Place new location 迴廊"
+      }
+    },
+    {
+      "day": 1,
+      "time": "afternoon",
+      "decision": {
+        "action": "place_card",
+        "templateId": "loc_corridor",
+        "priority": 9,
+        "reason": "Place new location 迴廊"
+      }
+    },
+    {
+      "day": 2,
+      "time": "evening",
+      "decision": {
+        "action": "place_card",
+        "templateId": "loc_corridor",
+        "priority": 9,
+        "reason": "Place new location 迴廊"
+      }
+    },
+    {
+      "day": 2,
+      "time": "evening",
+      "decision": {
+        "action": "place_card",
+        "templateId": "loc_corridor",
+        "priority": 9,
+        "reason": "Place new location 迴廊"
+      }
+    },
+    {
+      "day": 2,
+      "time": "evening",
+      "decision": {
+        "action": "place_card",
+        "templateId": "loc_corridor",
+        "priority": 9,
+        "reason": "Place new location 迴廊"
+      }
+    },
+    {
+      "day": 2,
+      "time": "evening",
+      "decision": {
+        "action": "place_card",
+        "templateId": "loc_corridor",
+        "priority": 9,
+        "reason": "Place new location 迴廊"
+      }
+    },
+    {
+      "day": 2,
+      "time": "evening",
+      "decision": {
+        "action": "place_card",
+        "templateId": "loc_corridor",
+        "priority": 9,
+        "reason": "Place new location 迴廊"
+      }
+    },
+    {
+      "day": 2,
+      "time": "night",
+      "decision": {
+        "action": "place_card",
+        "templateId": "loc_corridor",
+        "priority": 9,
+        "reason": "Place new location 迴廊"
+      }
+    },
+    {
+      "day": 2,
+      "time": "night",
+      "decision": {
+        "action": "place_card",
+        "templateId": "loc_corridor",
+        "priority": 9,
+        "reason": "Place new location 迴廊"
+      }
+    },
+    {
+      "day": 2,
+      "time": "night",
+      "decision": {
+        "action": "place_card",
+        "templateId": "loc_corridor",
+        "priority": 9,
+        "reason": "Place new location 迴廊"
+      }
+    },
+    {
+      "day": 2,
+      "time": "night",
+      "decision": {
+        "action": "place_card",
+        "templateId": "loc_corridor",
+        "priority": 9,
+        "reason": "Place new location 迴廊"
+      }
+    },
+    {
+      "day": 2,
+      "time": "morning",
+      "decision": {
+        "action": "place_card",
+        "templateId": "loc_corridor",
+        "priority": 9,
+        "reason": "Place new location 迴廊"
+      }
+    },
+    {
+      "day": 2,
+      "time": "morning",
+      "decision": {
+        "action": "draw",
+        "priority": 8,
+        "reason": "Draw card (3 gold)"
+      }
+    },
+    {
+      "day": 2,
+      "time": "morning",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_wood",
+            "res_wood"
+          ],
+          "output": "item_flashlight",
+          "count": 1,
+          "name": "製作火把"
+        },
+        "priority": 7,
+        "reason": "Craft 製作火把"
+      }
+    },
+    {
+      "day": 2,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 2,
+      "time": "afternoon",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_wood",
+            "res_wood"
+          ],
+          "output": "item_flashlight",
+          "count": 1,
+          "name": "製作火把"
+        },
+        "priority": 7,
+        "reason": "Craft 製作火把"
+      }
+    },
+    {
+      "day": 2,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 2,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 2,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 2,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 2,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 3,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 3,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 3,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 3,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 3,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 3,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 3,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 3,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 3,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 3,
+      "time": "morning",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_wood",
+            "res_wood"
+          ],
+          "output": "item_flashlight",
+          "count": 1,
+          "name": "製作火把"
+        },
+        "priority": 7,
+        "reason": "Craft 製作火把"
+      }
+    },
+    {
+      "day": 3,
+      "time": "morning",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 5,
+        "priority": 5,
+        "reason": "Fight 腐化體"
+      }
+    },
+    {
+      "day": 3,
+      "time": "morning",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 5,
+        "priority": 5,
+        "reason": "Fight 腐化體"
+      }
+    },
+    {
+      "day": 3,
+      "time": "morning",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 5,
+        "priority": 5,
+        "reason": "Fight 腐化體"
+      }
+    },
+    {
+      "day": 3,
+      "time": "morning",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 5,
+        "priority": 5,
+        "reason": "Fight 腐化體"
+      }
+    },
+    {
+      "day": 3,
+      "time": "morning",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 5,
+        "priority": 5,
+        "reason": "Fight 腐化體"
+      }
+    },
+    {
+      "day": 3,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 3,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 3,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 3,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 3,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 4,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 4,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 4,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 4,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 4,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 4,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 4,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 4,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 4,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 4,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 4,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 4,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 4,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 4,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 4,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 5,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 5,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 5,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 5,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 5,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 5,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 5,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 5,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 5,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 5,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 5,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 5,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 5,
+      "time": "afternoon",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_wood",
+            "res_wood"
+          ],
+          "output": "item_flashlight",
+          "count": 1,
+          "name": "製作火把"
+        },
+        "priority": 7,
+        "reason": "Craft 製作火把"
+      }
+    },
+    {
+      "day": 5,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 5,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 6,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 6,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 6,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 6,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 6,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 6,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 6,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 6,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 6,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 6,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 6,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 6,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 6,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 6,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 6,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 6,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 6,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 6,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 6,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 7,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 7,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 7,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 7,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 7,
+      "time": "night",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_food",
+            "res_food",
+            "res_herb"
+          ],
+          "output": "item_glow_fruit",
+          "count": 2,
+          "name": "培育發光果實"
+        },
+        "priority": 7,
+        "reason": "Craft 培育發光果實"
+      }
+    },
+    {
+      "day": 7,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 7,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 7,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 7,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 7,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 7,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 7,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 7,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 7,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 7,
+      "time": "afternoon",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_wood",
+            "res_wood"
+          ],
+          "output": "item_flashlight",
+          "count": 1,
+          "name": "製作火把"
+        },
+        "priority": 7,
+        "reason": "Craft 製作火把"
+      }
+    },
+    {
+      "day": 7,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 7,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 7,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 7,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 8,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 8,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 8,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 8,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 8,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 8,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 8,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 8,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 8,
+      "time": "morning",
+      "decision": {
+        "action": "draw",
+        "priority": 8,
+        "reason": "Draw card (5 gold)"
+      }
+    },
+    {
+      "day": 8,
+      "time": "morning",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_wood",
+            "res_wood"
+          ],
+          "output": "item_flashlight",
+          "count": 1,
+          "name": "製作火把"
+        },
+        "priority": 7,
+        "reason": "Craft 製作火把"
+      }
+    },
+    {
+      "day": 8,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 8,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 8,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 8,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 8,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 8,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 8,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 9,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 9,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 9,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 9,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 9,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 9,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 9,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 9,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 9,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 9,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 9,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 9,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 9,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 9,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 9,
+      "time": "afternoon",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_wood",
+            "res_wood"
+          ],
+          "output": "item_flashlight",
+          "count": 1,
+          "name": "製作火把"
+        },
+        "priority": 7,
+        "reason": "Craft 製作火把"
+      }
+    },
+    {
+      "day": 9,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 9,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 9,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 9,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 10,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 10,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 10,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 10,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 10,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 10,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 10,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 10,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 10,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 10,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 10,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 10,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 10,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 10,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 10,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 10,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 10,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 10,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 10,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 10,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 11,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 11,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 11,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 11,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 11,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 11,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 11,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 11,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 11,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 11,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 11,
+      "time": "morning",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 6,
+        "priority": 5,
+        "reason": "Fight 腐化體"
+      }
+    },
+    {
+      "day": 11,
+      "time": "morning",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 6,
+        "priority": 5,
+        "reason": "Fight 腐化體"
+      }
+    },
+    {
+      "day": 11,
+      "time": "afternoon",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 6,
+        "priority": 5,
+        "reason": "Fight 腐化體"
+      }
+    },
+    {
+      "day": 11,
+      "time": "afternoon",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 6,
+        "priority": 5,
+        "reason": "Fight 腐化體"
+      }
+    },
+    {
+      "day": 11,
+      "time": "afternoon",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 6,
+        "priority": 5,
+        "reason": "Fight 腐化體"
+      }
+    },
+    {
+      "day": 11,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 12,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 12,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 12,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 12,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 12,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 12,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 12,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 12,
+      "time": "night",
+      "decision": {
+        "action": "draw",
+        "priority": 8,
+        "reason": "Draw card (7 gold)"
+      }
+    },
+    {
+      "day": 12,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 12,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 12,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 12,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 12,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 12,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 12,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 12,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 12,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 12,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 12,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 13,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 13,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 13,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 13,
+      "time": "night",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_food",
+            "res_food",
+            "res_herb"
+          ],
+          "output": "item_glow_fruit",
+          "count": 2,
+          "name": "培育發光果實"
+        },
+        "priority": 7,
+        "reason": "Craft 培育發光果實"
+      }
+    },
+    {
+      "day": 13,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 13,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 13,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 13,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 13,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 13,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 13,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 13,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 13,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 13,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 13,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 13,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 13,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 14,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 14,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 14,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 14,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 14,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 14,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 14,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 14,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 14,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 14,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 14,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 14,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 14,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 14,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 14,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 14,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 14,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 14,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 14,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 14,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 15,
+      "time": "evening",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 7,
+        "priority": 5,
+        "reason": "Fight 迴音"
+      }
+    },
+    {
+      "day": 15,
+      "time": "evening",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 7,
+        "priority": 5,
+        "reason": "Fight 迴音"
+      }
+    },
+    {
+      "day": 15,
+      "time": "evening",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 7,
+        "priority": 5,
+        "reason": "Fight 迴音"
+      }
+    },
+    {
+      "day": 15,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 15,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 15,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 15,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 15,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 15,
+      "time": "morning",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_food",
+            "res_food",
+            "res_herb"
+          ],
+          "output": "item_glow_fruit",
+          "count": 2,
+          "name": "培育發光果實"
+        },
+        "priority": 7,
+        "reason": "Craft 培育發光果實"
+      }
+    },
+    {
+      "day": 15,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 15,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 15,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 15,
+      "time": "afternoon",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_wood",
+            "res_wood"
+          ],
+          "output": "item_flashlight",
+          "count": 1,
+          "name": "製作火把"
+        },
+        "priority": 7,
+        "reason": "Craft 製作火把"
+      }
+    },
+    {
+      "day": 15,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 15,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 15,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 16,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 16,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 16,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 16,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 16,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 16,
+      "time": "night",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_food",
+            "res_food",
+            "res_herb"
+          ],
+          "output": "item_glow_fruit",
+          "count": 2,
+          "name": "培育發光果實"
+        },
+        "priority": 7,
+        "reason": "Craft 培育發光果實"
+      }
+    },
+    {
+      "day": 16,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 16,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 16,
+      "time": "night",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 8,
+        "priority": 5,
+        "reason": "Fight 迴音"
+      }
+    },
+    {
+      "day": 16,
+      "time": "night",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 8,
+        "priority": 5,
+        "reason": "Fight 迴音"
+      }
+    },
+    {
+      "day": 16,
+      "time": "morning",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 8,
+        "priority": 5,
+        "reason": "Fight 迴音"
+      }
+    },
+    {
+      "day": 16,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 16,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 16,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 16,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 16,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 16,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 16,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 17,
+      "time": "evening",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_wood",
+            "res_wood"
+          ],
+          "output": "item_flashlight",
+          "count": 1,
+          "name": "製作火把"
+        },
+        "priority": 7,
+        "reason": "Craft 製作火把"
+      }
+    },
+    {
+      "day": 17,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 17,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 17,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 17,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 17,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 17,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 17,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 17,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 17,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 17,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 17,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 17,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 17,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 17,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 18,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 18,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 18,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 18,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 18,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 18,
+      "time": "night",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 9,
+        "priority": 5,
+        "reason": "Fight 暗影"
+      }
+    },
+    {
+      "day": 18,
+      "time": "night",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 9,
+        "priority": 5,
+        "reason": "Fight 暗影"
+      }
+    },
+    {
+      "day": 18,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 18,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 18,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 18,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 18,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 18,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 18,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 18,
+      "time": "afternoon",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_wood",
+            "res_wood"
+          ],
+          "output": "item_flashlight",
+          "count": 1,
+          "name": "製作火把"
+        },
+        "priority": 7,
+        "reason": "Craft 製作火把"
+      }
+    },
+    {
+      "day": 18,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 18,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 18,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 19,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 19,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 19,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 19,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 19,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 19,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 19,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 19,
+      "time": "night",
+      "decision": {
+        "action": "draw",
+        "priority": 8,
+        "reason": "Draw card (9 gold)"
+      }
+    },
+    {
+      "day": 19,
+      "time": "morning",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_food",
+            "res_food",
+            "res_herb"
+          ],
+          "output": "item_glow_fruit",
+          "count": 2,
+          "name": "培育發光果實"
+        },
+        "priority": 7,
+        "reason": "Craft 培育發光果實"
+      }
+    },
+    {
+      "day": 19,
+      "time": "morning",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 10,
+        "priority": 5,
+        "reason": "Fight 鏽行者"
+      }
+    },
+    {
+      "day": 19,
+      "time": "morning",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 10,
+        "priority": 5,
+        "reason": "Fight 鏽行者"
+      }
+    },
+    {
+      "day": 19,
+      "time": "morning",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 10,
+        "priority": 5,
+        "reason": "Fight 鏽行者"
+      }
+    },
+    {
+      "day": 19,
+      "time": "morning",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 10,
+        "priority": 5,
+        "reason": "Fight 鏽行者"
+      }
+    },
+    {
+      "day": 19,
+      "time": "afternoon",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 10,
+        "priority": 5,
+        "reason": "Fight 鏽行者"
+      }
+    },
+    {
+      "day": 19,
+      "time": "afternoon",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 10,
+        "priority": 5,
+        "reason": "Fight 鏽行者"
+      }
+    },
+    {
+      "day": 19,
+      "time": "afternoon",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 10,
+        "priority": 5,
+        "reason": "Fight 鏽行者"
+      }
+    },
+    {
+      "day": 19,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 19,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 19,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 20,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 20,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 20,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 20,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 20,
+      "time": "night",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_food",
+            "res_food",
+            "res_herb"
+          ],
+          "output": "item_glow_fruit",
+          "count": 2,
+          "name": "培育發光果實"
+        },
+        "priority": 7,
+        "reason": "Craft 培育發光果實"
+      }
+    },
+    {
+      "day": 20,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 20,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 20,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 20,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 20,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 20,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 20,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 20,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 20,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 20,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 20,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 20,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 20,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 20,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 21,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 21,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 21,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 21,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 21,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 21,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 21,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 21,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 21,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 21,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 21,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 21,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 21,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 21,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 21,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 21,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 21,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 21,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 21,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 22,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 22,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 22,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 22,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 22,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 22,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 22,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 22,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 22,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 22,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 22,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 22,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 22,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 22,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 22,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 22,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 22,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 22,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 22,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 23,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 23,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 23,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 23,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 23,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 23,
+      "time": "night",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_wood",
+            "res_wood"
+          ],
+          "output": "item_flashlight",
+          "count": 1,
+          "name": "製作火把"
+        },
+        "priority": 7,
+        "reason": "Craft 製作火把"
+      }
+    },
+    {
+      "day": 23,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 23,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 23,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 23,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 23,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 23,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 23,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 23,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 23,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 23,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 23,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 23,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 23,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 24,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 24,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 24,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 24,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 24,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 24,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 24,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 24,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 24,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 24,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 24,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 24,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 24,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 24,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 24,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 24,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 24,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 24,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 24,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 25,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 25,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 25,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 25,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 25,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 25,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 25,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 25,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 25,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 25,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 25,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 25,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 25,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 25,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 25,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 25,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 25,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 25,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 25,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 26,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 26,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 26,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 26,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 26,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 26,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 26,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 26,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 26,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 26,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 26,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 26,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 26,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 26,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 26,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 26,
+      "time": "afternoon",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 11,
+        "priority": 5,
+        "reason": "Fight 暗影"
+      }
+    },
+    {
+      "day": 26,
+      "time": "afternoon",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 11,
+        "priority": 5,
+        "reason": "Fight 暗影"
+      }
+    },
+    {
+      "day": 26,
+      "time": "afternoon",
+      "decision": {
+        "action": "stack",
+        "cardA": 1,
+        "cardB": 11,
+        "priority": 5,
+        "reason": "Fight 暗影"
+      }
+    },
+    {
+      "day": 26,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 27,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 27,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 27,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 27,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 27,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 27,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 27,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 27,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 27,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 27,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 27,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 27,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 27,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 27,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 27,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 27,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 27,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 27,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 27,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 28,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 28,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 28,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 28,
+      "time": "evening",
+      "decision": {
+        "action": "draw",
+        "priority": 8,
+        "reason": "Draw card (12 gold)"
+      }
+    },
+    {
+      "day": 28,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 28,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 28,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 28,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 28,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 28,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 28,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 28,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 28,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 28,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 28,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 28,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 28,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 28,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 28,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 29,
+      "time": "evening",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_food",
+            "res_food",
+            "res_herb"
+          ],
+          "output": "item_glow_fruit",
+          "count": 2,
+          "name": "培育發光果實"
+        },
+        "priority": 7,
+        "reason": "Craft 培育發光果實"
+      }
+    },
+    {
+      "day": 29,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 29,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 29,
+      "time": "night",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_wood",
+            "res_wood"
+          ],
+          "output": "item_flashlight",
+          "count": 1,
+          "name": "製作火把"
+        },
+        "priority": 7,
+        "reason": "Craft 製作火把"
+      }
+    },
+    {
+      "day": 29,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 29,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 29,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 29,
+      "time": "morning",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_food",
+            "res_food",
+            "res_herb"
+          ],
+          "output": "item_glow_fruit",
+          "count": 2,
+          "name": "培育發光果實"
+        },
+        "priority": 7,
+        "reason": "Craft 培育發光果實"
+      }
+    },
+    {
+      "day": 29,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 29,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 29,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 29,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 29,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 29,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 29,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 30,
+      "time": "evening",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_wood",
+            "res_wood"
+          ],
+          "output": "item_flashlight",
+          "count": 1,
+          "name": "製作火把"
+        },
+        "priority": 7,
+        "reason": "Craft 製作火把"
+      }
+    },
+    {
+      "day": 30,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 30,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 30,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 30,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 30,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 30,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 30,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 30,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 30,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 30,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 30,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 30,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 30,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 30,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 30,
+      "time": "morning",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 30,
+      "time": "afternoon",
+      "decision": {
+        "action": "craft",
+        "recipe": {
+          "inputs": [
+            "res_food",
+            "res_food",
+            "res_herb"
+          ],
+          "output": "item_glow_fruit",
+          "count": 2,
+          "name": "培育發光果實"
+        },
+        "priority": 7,
+        "reason": "Craft 培育發光果實"
+      }
+    },
+    {
+      "day": 30,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 30,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 30,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 30,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 30,
+      "time": "afternoon",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 31,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 31,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 31,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 31,
+      "time": "evening",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 31,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 31,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 31,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 31,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    },
+    {
+      "day": 31,
+      "time": "night",
+      "decision": {
+        "action": "rest",
+        "priority": 2,
+        "reason": "Free rest"
+      }
+    }
+  ]
+}
