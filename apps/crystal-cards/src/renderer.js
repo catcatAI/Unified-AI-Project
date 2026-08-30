@@ -75,6 +75,7 @@
     el.addEventListener('mouseenter', onCardMouseEnter);
     el.addEventListener('mouseleave', onCardMouseLeave);
     el.addEventListener('dblclick', onCardDblClick);
+    el.addEventListener('contextmenu', onCardContextMenu);
 
     board.appendChild(el);
     cardElements.set(card.id, el);
@@ -320,6 +321,82 @@
   // ═══════════════════════════════════════════════════════
   // Card Double-Click (Info / Place from sidebar)
   // ═══════════════════════════════════════════════════════
+  // ── Context Menu ──
+  let activeContextMenu = null;
+
+  function closeContextMenu() {
+    if (activeContextMenu) { activeContextMenu.remove(); activeContextMenu = null; }
+  }
+
+  function onCardContextMenu(e) {
+    e.preventDefault();
+    closeContextMenu();
+    const cardId = parseInt(e.currentTarget.dataset.cardId);
+    const card = E.state.boardCards.find(c => c.id === cardId);
+    if (!card) return;
+    const template = E.getCardTemplate(card.templateId);
+    if (!template) return;
+
+    const menu = document.createElement('div');
+    menu.className = 'context-menu';
+    menu.style.left = e.clientX + 'px';
+    menu.style.top = e.clientY + 'px';
+
+    // Build actions based on card type
+    const actions = [];
+    if (template.type === 'location') {
+      actions.push({ text: '🗺️ 探索（解鎖鄰近地點）', fn: () => {
+        const newUnlocks = E.unlockAdjacentLocations(card.templateId);
+        if (newUnlocks.length) showNotification('🗺️ 發現：' + newUnlocks.join('、'));
+        else showNotification('已經探索過了');
+        renderSidebar();
+      }});
+    }
+    if (template.type === 'character' && template.dialogue) {
+      actions.push({ text: '💬 對話', fn: () => { S.dialogOpen(); window.DialogSystem.showDialogue(template.dialogue); }});
+    }
+    if (template.type === 'enemy') {
+      actions.push({ text: '⚔️ 戰鬥（將角色拖過來）', fn: () => showNotification('將角色拖到敵人身上！')});
+    }
+    if (template.type === 'item' || template.type === 'resource') {
+      const prices = E.getShopPrices(card.templateId);
+      actions.push({ text: '💰 賣出 (' + prices.sell + '金幣)', fn: () => {
+        const r = E.sellItem(card.templateId, prices.sell);
+        showNotification(r.message);
+        refreshAllCards();
+      }});
+    }
+    if (template.type === 'item') {
+      actions.push({ text: '🎒 放入背包', fn: () => {
+        E.removeFromSidebar(card.templateId);
+        E.addToInventory(card.templateId);
+        removeCardElement(card.id);
+        refreshAllCards();
+      }});
+    }
+    if (template.type === 'recipe') {
+      actions.push({ text: '📖 查看配方', fn: () => showNotification(template.desc || template.name) });
+    }
+
+    if (actions.length === 0) {
+      actions.push({ text: template.desc ? template.desc.slice(0, 40) : '無可用動作', fn: () => {} });
+    }
+
+    actions.forEach(a => {
+      const btn = document.createElement('div');
+      btn.className = 'context-menu-item';
+      btn.textContent = a.text;
+      btn.addEventListener('click', () => { a.fn(); closeContextMenu(); });
+      menu.appendChild(btn);
+    });
+
+    document.body.appendChild(menu);
+    activeContextMenu = menu;
+  }
+
+  // Close context menu on click elsewhere
+  document.addEventListener('click', closeContextMenu);
+
   function onCardDblClick(e) {
     const cardId = parseInt(e.currentTarget.dataset.cardId);
     const card = E.state.boardCards.find(c => c.id === cardId);
@@ -328,10 +405,38 @@
     const template = E.getCardTemplate(card.templateId);
     if (!template) return;
 
-    // If character + has dialogue, show dialogue
+    // Character → dialogue
     if (template.type === 'character' && template.dialogue) {
       S.dialogOpen();
       window.DialogSystem.showDialogue(template.dialogue);
+    }
+    // Location → show adjacent locations + unlock
+    else if (template.type === 'location') {
+      const adjacent = E.getAdjacentLocations(card.templateId);
+      const locked = adjacent.filter(id => !E.state.unlockedLocations.includes(id));
+      const newUnlocks = E.unlockAdjacentLocations(card.templateId);
+      if (newUnlocks.length > 0) {
+        showNotification(`🗺️ 發現了：${newUnlocks.join('、')}`);
+        S.cardPlace();
+      }
+      renderSidebar();
+    }
+    // Item with value → show buy/sell
+    else if ((template.type === 'item' || template.type === 'resource') && template.value) {
+      const prices = E.getShopPrices(card.templateId);
+      showNotification(`${template.icon} ${template.name} | 賣出: ${prices.sell}💰 | 價值: ${template.value}g`);
+    }
+    // RPG item → show info
+    else if (template.type === 'item' || template.type === 'resource') {
+      showNotification(`${template.icon} ${template.name}: ${template.desc || ''}`);
+    }
+    // Recipe → show crafting info
+    else if (template.type === 'recipe') {
+      showNotification(`📖 ${template.name}: ${template.desc || ''}`);
+    }
+    // Enemy → initiate combat
+    else if (template.type === 'enemy') {
+      showNotification(`⚔️ 將角色拖到敵人身上進行戰鬥！`);
     }
   }
 

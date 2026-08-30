@@ -529,6 +529,123 @@ function initNewGame() {
 }
 
 // ═══════════════════════════════════════════════════════
+// World Map — Location Navigation
+// ═══════════════════════════════════════════════════════
+const WORLD_MAP = {
+  'loc_holy_cross': ['loc_mirror_lake', 'loc_yuyu_mountain', 'loc_clear_stream', 'loc_convenience_store'],
+  'loc_mirror_lake': ['loc_holy_cross', 'loc_mirror_mountain'],
+  'loc_yuyu_mountain': ['loc_holy_cross', 'loc_hot_spring', 'loc_market'],
+  'loc_market': ['loc_yuyu_mountain', 'loc_fog_islands', 'loc_west_market'],
+  'loc_fog_islands': ['loc_market'],
+  'loc_convenience_store': ['loc_holy_cross', 'loc_forest'],
+  'loc_forest': ['loc_convenience_store'],
+  'loc_hot_spring': ['loc_yuyu_mountain'],
+  'loc_clear_stream': ['loc_holy_cross', 'loc_abandoned_mine'],
+  'loc_mirror_mountain': ['loc_mirror_lake', 'loc_hall_of_heroes'],
+  'loc_abandoned_mine': ['loc_clear_stream', 'loc_rust_city'],
+  'loc_hall_of_heroes': ['loc_mirror_mountain'],
+  'loc_rust_city': ['loc_abandoned_mine'],
+  'loc_library': ['loc_holy_cross'],
+  'loc_corridor': ['loc_library', 'loc_witch_academy'],
+  'loc_witch_academy': ['loc_yuyu_mountain', 'loc_corridor'],
+  'loc_orbital_station': ['loc_frozen_wastes'],
+  'loc_frozen_wastes': ['loc_orbital_station', 'loc_fog_islands'],
+  'loc_secret_ironworks': ['loc_holy_cross'],
+  'loc_west_market': ['loc_market'],
+};
+
+function getAdjacentLocations(locationId) {
+  return WORLD_MAP[locationId] || [];
+}
+
+function unlockAdjacentLocations(locationId) {
+  const adjacent = getAdjacentLocations(locationId);
+  const newUnlocks = [];
+  adjacent.forEach(locId => {
+    if (!GameState.unlockedLocations.includes(locId)) {
+      GameState.unlockedLocations.push(locId);
+      const template = getCardTemplate(locId);
+      if (template) newUnlocks.push(template.name);
+    }
+  });
+  return newUnlocks;
+}
+
+// ═══════════════════════════════════════════════════════
+// Shop System — Buy/Sell with Gold
+// ═══════════════════════════════════════════════════════
+function buyItem(templateId, cost) {
+  if (GameState.gold < cost) return { success: false, message: '金幣不足！' };
+  const template = getCardTemplate(templateId);
+  if (!template) return { success: false, message: '物品不存在！' };
+  GameState.gold -= cost;
+  if (template.type === 'resource' || template.type === 'item') {
+    addToSidebar(templateId);
+  } else {
+    createBoardCard(templateId, 300 + Math.random() * 400, 200 + Math.random() * 300);
+  }
+  return { success: true, message: `購買了 ${template.name}！` };
+}
+
+function sellItem(templateId, price) {
+  if (removeFromSidebar(templateId) || removeFromInventory(templateId)) {
+    GameState.gold += price;
+    return { success: true, message: `賣出了 ${getCardTemplate(templateId)?.name || templateId}！` };
+  }
+  return { success: false, message: '沒有可賣的物品！' };
+}
+
+function getShopPrices(templateId) {
+  const template = getCardTemplate(templateId);
+  if (!template) return null;
+  const baseValue = template.value || 10;
+  return { buy: Math.ceil(baseValue * 1.5), sell: Math.floor(baseValue * 0.5) };
+}
+
+// ═══════════════════════════════════════════════════════
+// Equipment System
+// ═══════════════════════════════════════════════════════
+GameState.equipment = { weapon: null, armor: null, accessory: null };
+
+function equipItem(cardId, slot) {
+  const card = GameState.boardCards.find(c => c.id === cardId);
+  if (!card) return { success: false };
+  const template = getCardTemplate(card.templateId);
+  if (!template) return { success: false };
+  // Unequip current item in slot
+  if (GameState.equipment[slot]) {
+    addToSidebar(GameState.equipment[slot]);
+  }
+  GameState.equipment[slot] = card.templateId;
+  removeBoardCard(cardId);
+  return { success: true, message: `裝備了 ${template.name}！` };
+}
+
+function unequipItem(slot) {
+  if (GameState.equipment[slot]) {
+    addToSidebar(GameState.equipment[slot]);
+    const name = getCardTemplate(GameState.equipment[slot])?.name || '';
+    GameState.equipment[slot] = null;
+    return { success: true, message: `卸下了 ${name}！` };
+  }
+  return { success: false };
+}
+
+function getEquipmentBonus() {
+  const bonus = { atk: 0, def: 0, spd: 0 };
+  Object.values(GameState.equipment).forEach(templateId => {
+    if (!templateId) return;
+    const t = getCardTemplate(templateId);
+    if (t && t.stats) {
+      bonus.atk += t.stats.atk || 0;
+      bonus.def += t.stats.def || 0;
+      bonus.spd += t.stats.spd || 0;
+    }
+  });
+  return bonus;
+}
+
+// ═══════════════════════════════════════════════════════
 // Public API
 // ═══════════════════════════════════════════════════════
 window.GameEngine = {
@@ -549,4 +666,12 @@ window.GameEngine = {
   hasItem,
   getCardTemplate,
   getCardType,
+  getAdjacentLocations,
+  unlockAdjacentLocations,
+  buyItem,
+  sellItem,
+  getShopPrices,
+  equipItem,
+  unequipItem,
+  getEquipmentBonus,
 };
