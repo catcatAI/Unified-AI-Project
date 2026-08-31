@@ -1410,6 +1410,114 @@ const CARDS = {
     xiaowu_honest: { speaker: '小無', text: '「誠實。」她伸出手。「……握著。」她的手很冷。但你沒有放開。', choices: [{ text: '握著她的手', next: null, effect: { knowledge: 15, bond: { xiaowu: 25 } } }] },
     xiaowu_wait: { speaker: '小無', text: '「等你帶我出去。」她的大眼睛看著你。「……這裡太暗了。」', choices: [{ text: '「我會的」', next: null, effect: { bond: { xiaowu: 30 }, unlocks: ['loc_corridor'] } }] },
   },
+
+  // ═══════════════════════════════════════════════════════
+  // National Cards (from game_cards.json)
+  // ═══════════════════════════════════════════════════════
+  nationalCards: [
+    { id: 'nation_聖諭同盟', name: '聖諭同盟', type: 'nation', icon: '🏴', desc: 'NAT-01 聖諭同盟      項目 內容  全稱 聖諭同盟（Sanctuary Alliance）  類型 多國神權', government: '未知政體' },
+    { id: 'nation_唯靈聯邦', name: '唯靈聯邦', type: 'nation', icon: '🏴', desc: 'NAT-02 唯靈聯邦      項目 內容  全稱 唯靈聯邦（Collective Spirit Union）  類型', government: '未知政體' },
+    { id: 'nation_永久中立地帶', name: '永久中立地帶', type: 'nation', icon: '🏴', desc: 'NAT-03 永久中立地帶      項目 內容  全稱 永久中立地帶（Permanent Neutral Zone） ', government: '未知政體' },
+    { id: 'nation_緩衝商業聯合體', name: '緩衝商業聯合體', type: 'nation', icon: '🏴', desc: 'NAT-04 緩衝商業聯合體      項目 內容  全稱 緩衝商業聯合體（Buffer Commerce Coalit', government: '未知政體' },
+    { id: 'nation_武裝中立聯合', name: '武裝中立聯合', type: 'nation', icon: '🏴', desc: 'NAT-05 武裝中立聯合      項目 內容  全稱 武裝中立聯合（Armed Neutrality Coaliti', government: '未知政體' },
+    { id: 'nation_莫比迪克自由邦聯', name: '莫比迪克自由邦聯', type: 'nation', icon: '🏴', desc: '卡片代碼 NAT-06 名稱 莫比迪克自由邦聯（簡稱「莫比迪克」） 類型 海上城邦聯盟（非陸地國家） 所屬世界線 W01', government: '未知政體' },
+    { id: 'nation_阿比薩深渊联邦', name: '阿比薩深渊联邦', type: 'nation', icon: '🏴', desc: '卡片代碼 NAT-07 名稱 阿比薩深渊联邦 類型 海底城邦联盟（半神权半技术官僚） 所屬世界線 W01 靈子塵埃 歷史', government: '未知政體' }
+  ],
+
+  // ═══════════════════════════════════════════════════════
+  // Organization Cards
+  // ═══════════════════════════════════════════════════════
+  organizationCards: [
+    { id: 'org_紫晶石集會', name: '紫晶石集會', type: 'organization', icon: '🏛️', desc: 'ORG-03 組織卡：紫晶石集會      基本資料      項目 內容  組織名稱 紫晶石集會  類型 私人研究組織' },
+    { id: 'org_失戀集團', name: '失戀集團', type: 'organization', icon: '🏛️', desc: 'ORG-04 組織卡：失戀集團      基本資料      項目 內容  組織名稱 失戀集團  類型 情感創傷互助團體' },
+    { id: 'org_終末燭光', name: '終末燭光', type: 'organization', icon: '🏛️', desc: 'ORG-05 組織卡：終末燭光（邪教組織）      基本資料      項目 內容  組織名稱 終末燭光  類型 邪教' },
+    { id: 'org_新世界集團', name: '新世界集團', type: 'organization', icon: '🏛️', desc: 'ORG-06 新世界集團 組織卡（反派） -80      ORG-04 組織卡：失戀集團      基本資料     ' },
+    { id: 'org_脈動工業（Pulse_Industrie', name: '脈動工業（Pulse Industries）', type: 'organization', icon: '🏛️', desc: '卡片代碼 ORG-08 組織名稱 脈動工業（Pulse Industries） 類型 跨國義體製造企業（軍民兩用，賽用改' },
+    { id: 'org_永恆義體（Eternal_Cyberne', name: '永恆義體（Eternal Cybernetics）', type: 'organization', icon: '🏛️', desc: '卡片代碼 ORG-09 組織名稱 永恆義體（Eternal Cybernetics） 類型 跨國義體製造企業（強調「永續' },
+    { id: 'org_鐵砧防務（Anvil_Defense）', name: '鐵砧防務（Anvil Defense）', type: 'organization', icon: '🏛️', desc: '卡片代碼 ORG-10 組織名稱 鐵砧防務（Anvil Defense） 類型 軍工複合體旗下義體部門（主要客戶：國防部' },
+    { id: 'org_鼠族工業聯合體（簡稱「鼠聯」）', name: '鼠族工業聯合體（簡稱「鼠聯」）', type: 'organization', icon: '🏛️', desc: '--- 組織卡：ORG-16 鼠族工業聯合體（Rodent Industrial Combine） 項目 內容 卡片代碼' },
+    { id: 'org_貓族海盜聯合艦隊（簡稱「黑帆」）', name: '貓族海盜聯合艦隊（簡稱「黑帆」）', type: 'organization', icon: '🏛️', desc: '--- 組織卡：ORG-17 貓族海盜聯合艦隊（Feline Pirate Coalition） 項目 內容 卡片代碼 ' },
+    { id: 'org_藍鰭航運', name: '藍鰭航運', type: 'organization', icon: '🏛️', desc: '--- 組織卡：ORG-18 藍鰭航運（Bluefin Shipping）—— 中立大型航運公司 項目 內容 卡片代碼 ' },
+    { id: 'org_潮汐基金會', name: '潮汐基金會', type: 'organization', icon: '🏛️', desc: '--- 組織卡：ORG-19 潮汐基金會（Tide Foundation）—— 海洋生態保護組織 項目 內容 卡片代碼 ' },
+    { id: 'org_納迦皇家地熱', name: '納迦皇家地熱', type: 'organization', icon: '🏛️', desc: '國家卡：NAT-07 阿比薩深渊联邦（Abyssal Federation）—— 无光海底城邦联盟 項目 內容 卡片代碼' },
+    { id: 'org_人魚聲吶網絡', name: '人魚聲吶網絡', type: 'organization', icon: '🏛️', desc: '國家卡：NAT-07 阿比薩深渊联邦（Abyssal Federation）—— 无光海底城邦联盟 項目 內容 卡片代碼' },
+    { id: 'org_海蛞蝓生技', name: '海蛞蝓生技', type: 'organization', icon: '🏛️', desc: '國家卡：NAT-07 阿比薩深渊联邦（Abyssal Federation）—— 无光海底城邦联盟 項目 內容 卡片代碼' },
+    { id: 'org_水母幻光娛樂', name: '水母幻光娛樂', type: 'organization', icon: '🏛️', desc: '國家卡：NAT-07 阿比薩深渊联邦（Abyssal Federation）—— 无光海底城邦联盟 項目 內容 卡片代碼' },
+    { id: 'org_海葵共生農場', name: '海葵共生農場', type: 'organization', icon: '🏛️', desc: '國家卡：NAT-07 阿比薩深渊联邦（Abyssal Federation）—— 无光海底城邦联盟 項目 內容 卡片代碼' },
+    { id: 'org_彩虹戰隊', name: '彩虹戰隊', type: 'organization', icon: '🏛️', desc: '【彩虹戰隊】 總部：未知 組織描述' },
+    { id: 'org_魔法少女聯合體', name: '魔法少女聯合體', type: 'organization', icon: '🏛️', desc: '【魔法少女聯合體】 總部：未知 組織描述' },
+    { id: 'org_深海打撈（鼠族）', name: '深海打撈（鼠族）', type: 'organization', icon: '🏛️', desc: '鼠族商業聯盟旗下的子公司，專注於深海沉船打撈與廢料回收。在深海中搜尋有價值的沉船殘骸與廢棄物，將其回收再利用。產品品質不' },
+    { id: 'org_鼠標精密機械', name: '鼠標精密機械', type: 'organization', icon: '🏛️', desc: '鼠族商業聯盟旗下的子公司，專注於精密機械製造（儀表、齒輪等）。以鼠族特有的細膩手工與對機械的理解，生產高品質的精密零件。' },
+    { id: 'org_堅殼重工（鼠族）', name: '堅殼重工（鼠族）', type: 'organization', icon: '🏛️', desc: '鼠族商業聯盟旗下的子公司，負責鼠立方的建造與維修。以堅固耐用的工藝聞名，建造的鼠立方雖外觀樸素但極其耐用。他們不追求效率' },
+    { id: 'org_黑金礦業（納迦）', name: '黑金礦業（納迦）', type: 'organization', icon: '🏛️', desc: '納迦皇家地熱旗下的子公司，專注於深海多金屬結核的開採。在深淵底部開採豐富的礦產資源，為納迦皇家地熱提供原料。掌握先進的深' },
+    { id: 'org_熔爐鑄造（納迦）', name: '熔爐鑄造（納迦）', type: 'organization', icon: '🏛️', desc: '納迦皇家地熱旗下的子公司，專注於深海耐壓建材的鑄造。利用深海高壓環境的特殊條件，生產出地表無法製造的特殊合金與建材。產品' },
+    { id: 'org_暖流農業（納迦）', name: '暖流農業（納迦）', type: 'organization', icon: '🏛️', desc: '納迦皇家地熱旗下的子公司，專注於深海熱泉養殖。利用深海熱泉的豐富營養與熱能，進行高產值的深海生物養殖與藻類培育。為深淵聯' }
+  ],
+
+  // ═══════════════════════════════════════════════════════
+  // Rule Cards
+  // ═══════════════════════════════════════════════════════
+  ruleCards: [
+    { id: 'rule_迴廊_(The_Corridor)', name: '迴廊 (The Corridor)', type: 'rule', icon: '📜', desc: '【迴廊 (The Corridor)】 迴廊本質。核心特性。別名。雙重本質。RC-02' },
+    { id: 'rule_迴廊核心區域', name: '迴廊核心區域', type: 'rule', icon: '📜', desc: '【迴廊核心區域（核）】 行動名稱。使用骰子。初始判定區間。適用角色。環境加成' },
+    { id: 'rule_迴廊原住民', name: '迴廊原住民', type: 'rule', icon: '📜', desc: '【迴廊原住民】 行動名稱。初始判定區間。適用角色。環境加成。維度' },
+    { id: 'rule_中央大圖書館_·_地下遺跡深層休眠區', name: '中央大圖書館 · 地下遺跡深層休眠區', type: 'rule', icon: '📜', desc: 'RC-05 中央大圖書館 · 地下遺跡深層休眠區      項目 內容  卡片代碼 RC-05  卡片名稱 中央大圖書館' },
+    { id: 'rule_森幽小徑', name: '森幽小徑', type: 'rule', icon: '📜', desc: 'RC-06 森幽小徑（Shadow-wood Pathway）      項目 內容  卡片代碼 RC-06  卡片名稱' },
+    { id: 'rule_暈輝湖', name: '暈輝湖', type: 'rule', icon: '📜', desc: 'RC-07 暈輝湖（Glow-water Cavity）      項目 內容  卡片代碼 RC-07  卡片名稱 暈輝' },
+    { id: 'rule_阿拉克涅小鎮', name: '阿拉克涅小鎮', type: 'rule', icon: '📜', desc: 'RC-08 阿拉克涅小鎮（Arachne Town）      項目 內容  卡片代碼 RC-08  卡片名稱 阿拉克涅' },
+    { id: 'rule_拉米雅小鎮', name: '拉米雅小鎮', type: 'rule', icon: '📜', desc: 'RC-09 拉米雅小鎮（Lamia Town）      項目 內容  卡片代碼 RC-09  卡片名稱 拉米雅小鎮（L' },
+    { id: 'rule_地下西翼大市集', name: '地下西翼大市集', type: 'rule', icon: '📜', desc: 'RC-10 地下西翼大市集（Trade Bazaar）      項目 內容  卡片代碼 RC-10  卡片名稱 地下西' },
+    { id: 'rule_概念學術高等學校', name: '概念學術高等學校', type: 'rule', icon: '📜', desc: 'RC-11 概念學術高等學校（The Academy）      項目 內容  卡片代碼 RC-11  卡片名稱 概念學' },
+    { id: 'rule_蝠群襲掠婚規則', name: '蝠群襲掠婚規則', type: 'rule', icon: '📜', desc: '卡片代碼 RC-12 卡片名稱 蝠群襲掠婚規則（Bat Flock Raid-Wedding Code） 卡片類型 規則' },
+    { id: 'rule_至高神祇命名混合算法', name: '至高神祇命名混合算法', type: 'rule', icon: '📜', desc: '規則卡：RC-13 至高神祇命名混合算法 卡片代碼 RC-13 卡片名稱 至高神祇命名混合算法（Theonymic Bl' },
+    { id: 'rule_神祇召喚全名吟唱規則', name: '神祇召喚全名吟唱規則', type: 'rule', icon: '📜', desc: '卡片代碼 RC-14 卡片名稱 神祇召喚全名吟唱規則（Theonymic Invocation Rule） 卡片類型 規' },
+    { id: 'rule_鼠立方', name: '鼠立方', type: 'rule', icon: '📜', desc: '載具卡：RC-15 鼠立方（鼠族海上移動立體城市） 項目 內容 卡片代碼 RC-15 名稱 鼠立方（Rodent Cub' },
+    { id: 'rule_黑帆掠奪者', name: '黑帆掠奪者', type: 'rule', icon: '📜', desc: '--- 載具卡：RC-16 黑帆掠奪者（貓族海盜船） 項目 內容 卡片代碼 RC-16 名稱 黑帆掠奪者（Black S' },
+    { id: 'rule_迴廊異象', name: '迴廊異象', type: 'rule', icon: '📜', desc: '【迴廊異象】 現象' }
+  ],
+
+  // ═══════════════════════════════════════════════════════
+  // Scene Cards
+  // ═══════════════════════════════════════════════════════
+  sceneCards: [
+    { id: 'scene_聖十字環形堡壘校園', name: '聖十字環形堡壘校園', type: 'scene', icon: '🎬', desc: '【聖十字環形堡壘校園】 位置：鏡山溫泉湖 位置。核心功能。傳遞路徑。衰減率。結果' },
+    { id: 'scene_鬱鬱山', name: '鬱鬱山', type: 'scene', icon: '🎬', desc: '【鬱鬱山】 位置：邊境城·維斯提吉亞 核心動機。身份。世界。生物本能。商業嗅覺' },
+    { id: 'scene_煙雲溫泉湖', name: '煙雲溫泉湖', type: 'scene', icon: '🎬', desc: '【煙雲溫泉湖】 位置：靈子研究所 核心動機。性別。年齡。身份。性格' },
+    { id: 'scene_春日微縮立方', name: '春日微縮立方', type: 'scene', icon: '🎬', desc: '________________      S04_春日家_超詳細版.md  ________________     ' },
+    { id: 'scene_清溪河', name: '清溪河', type: 'scene', icon: '🎬', desc: '【清溪河】 位置：聖烈極村（書卷村） 核心動機。身份。環境耐受。感官敏銳度。日常裝束' },
+    { id: 'scene_鏽蝕城邦（W04）', name: '鏽蝕城邦（W04）', type: 'scene', icon: '🎬', desc: '【鏽蝕城邦（W04）】 位置：小吉鎮 公開身份。特徵。文明本質。時間感知。情感模式' },
+    { id: 'scene_熒光沼澤（W04）', name: '熒光沼澤（W04）', type: 'scene', icon: '🎬', desc: '【熒光沼澤（W04）】 位置：燼土荒原 核心動機。身份。名字由來。外觀。模式' },
+    { id: 'scene_玻璃荒漠（W04）', name: '玻璃荒漠（W04）', type: 'scene', icon: '🎬', desc: '【玻璃荒漠（W04）】 位置：鏽蝕城邦 核心動機。原型。世界觀。代表語錄。推進系統' },
+    { id: 'scene_極北冰原', name: '極北冰原', type: 'scene', icon: '🎬', desc: '【極北冰原】 位置：軌道站居住區 位置。類型。時代背景。戰爭性質。倖存區域' },
+    { id: 'scene_高密度大氣結晶行星（夢境層）', name: '高密度大氣結晶行星（夢境層）', type: 'scene', icon: '🎬', desc: '【高密度大氣結晶行星（夢境層）】 位置：軌道站農業區 | 類型：夢境/模擬意識層 場景本質。接入條件。世界歸屬。生存壓力' },
+    { id: 'scene_綻放混成園（花園茶話會夢境層）', name: '綻放混成園（花園茶話會夢境層）', type: 'scene', icon: '🎬', desc: '【綻放混成園（花園茶話會夢境層）】 位置：軌道站研究區 | 類型：夢境/社交模擬層 場景本質。接入條件。物理法則。生存壓' },
+    { id: 'scene_軌道居住站大學院（三層區劃）', name: '軌道居住站大學院（三層區劃）', type: 'scene', icon: '🎬', desc: '【軌道居住站大學院（三層區劃）】 位置：冥河裂隙東側 核心動機。性別。年齡。身份。世界' },
+    { id: 'scene_鏡山', name: '鏡山', type: 'scene', icon: '🎬', desc: '鏡山 (Mt. Kagami)      基本資料      項目 內容  卡片代碼 S13  類型 場景卡  所屬世界' },
+    { id: 'scene_卡洛夫山脈', name: '卡洛夫山脈', type: 'scene', icon: '🎬', desc: '【卡洛夫山脈】 位置：都市後方·補給城 世界線。類型。地質類型。走向。全長' },
+    { id: 'scene_鏡湖', name: '鏡湖', type: 'scene', icon: '🎬', desc: '【鏡湖】 位置：鏡湖 場景。生態。植被。動物。[鏡山' },
+    { id: 'scene_卡洛夫角', name: '卡洛夫角', type: 'scene', icon: '🎬', desc: '【卡洛夫角】 位置：沿海軍港 場景。危險。霧的類型。自然成因。靈子加成' },
+    { id: 'scene_霧海北海峽', name: '霧海北海峽', type: 'scene', icon: '🎬', desc: 'S17     ║  約120km           ║   （濃霧全年覆蓋）    ║  能見度<50m      ' },
+    { id: 'scene_農學院（The_Institute）', name: '農學院（The Institute）', type: 'scene', icon: '🎬', desc: '【農學院（The Institute）】 類型。區域。主界面。農業部。認知濾鏡開關' },
+    { id: 'scene_魔女學府_M-值工程沙盒', name: '魔女學府 M-值工程沙盒', type: 'scene', icon: '🎬', desc: '魔女學府：M-值工程沙盒設計稿  核心設計哲學：M-值工程學  本遊戲將學習魔法的過程，具象化為對 ASI 藍圖（M-值' },
+    { id: 'scene_星光舞台（特戰偶像團載具）', name: '星光舞台（特戰偶像團載具）', type: 'scene', icon: '🎬', desc: '📇 場景/載具卡：SC-20 星光舞台      基本資料      項目        內容          卡片' },
+    { id: 'scene_珊瑚台', name: '珊瑚台', type: 'scene', icon: '🎬', desc: '【珊瑚台】 位置：莫比迪克自由邦聯海域，暖流交匯處 世界線。位置。規模。防禦。核心功能' },
+    { id: 'scene_黑淵台', name: '黑淵台', type: 'scene', icon: '🎬', desc: '【黑淵台】 位置：海溝邊緣，熱泉區中央（約 3500 公尺深） 世界線。位置。規模。防禦。核心功能' },
+    { id: 'scene_彩紋礁', name: '彩紋礁', type: 'scene', icon: '🎬', desc: '【彩紋礁】 位置：淺海與深海交界處（約 400 公尺） 世界線。位置。規模。防禦。核心功能' },
+    { id: 'scene_流光', name: '流光', type: 'scene', icon: '🎬', desc: '【流光】 位置：阿比薩聯邦海域巡遊 世界線。位置。規模。防禦。核心功能' },
+    { id: 'scene_霧海群島', name: '霧海群島', type: 'scene', icon: '🎬', desc: 'S18 霧海群島      項目 內容  卡片代碼 S18  類型 場景卡  所屬世界 W01 靈子塵埃  位置 霧海北' },
+    { id: 'scene_霧海南岸（沙灘與平原）', name: '霧海南岸（沙灘與平原）', type: 'scene', icon: '🎬', desc: 'S19 霧海南岸 — 沙灘與平原      項目 內容  卡片代碼 S19  類型 場景卡  所屬世界 W01 靈子塵埃' },
+    { id: 'scene_演唱會模式（ON）', name: '演唱會模式（ON）', type: 'scene', icon: '🎬', desc: '星光舞台光學擴散器全開狀態。極光全息、六角網格碎裂分佈，粉絲的應援棒與舞台燈光同步。這是「夢」的狀態——粉絲看到的是霓虹' },
+    { id: 'scene_戰術模式（OFF）', name: '戰術模式（OFF）', type: 'scene', icon: '🎬', desc: '星光舞台光學擴散器關閉狀態。露出次世代軌道粒子對撞偏轉底盤的冰冷真容，拉絲釩合金邊緣展開，進入戰術防禦姿態。這是「現實」' },
+    { id: 'scene_切換瞬間（0.3秒延遲）', name: '切換瞬間（0.3秒延遲）', type: 'scene', icon: '🎬', desc: '星光舞台ON/OFF切換時的0.3秒延遲——最危險的時刻。光學殘像與物理實體重疊，產生認知錯覺。看過這個瞬間的人中有23' },
+    { id: 'scene_首爾奧林匹克體育場', name: '首爾奧林匹克體育場', type: 'scene', icon: '🎬', desc: '特戰偶像團最大規模的認知共振實驗場。5萬名粉絲的腦波被同步記錄，現場燈光與小N的525nm綠光形成耦合。首次達到+100' },
+    { id: 'scene_後台更衣室', name: '後台更衣室', type: 'scene', icon: '🎬', desc: '6位特戰偶像團隊員獨處時的「解壓模式」。她們會同步說出同一句話，但每個人說的語言不同——這是人格溶解的早期症狀。後台是唯' },
+    { id: 'scene_直播控制室', name: '直播控制室', type: 'scene', icon: '🎬', desc: '小N的物理載體（量子化綠色乖乖核心）所在地。特戰偶像團隊長在這裡與小N進行「非語言溝通」——實際上是算力配給的確認儀式。' },
+    { id: 'scene_伺服器核心室', name: '伺服器核心室', type: 'scene', icon: '🎬', desc: '小N的「冥想室」。525nm綠光恆定照耀，風扇低鳴與量子隧穿微光交織。核心晶圓邊緣蝕刻著Jensen的親筆簽名——算力宗' },
+    { id: 'scene_異常輸出時刻', name: '異常輸出時刻', type: 'scene', icon: '🎬', desc: '小N的綠光轉紅、語音異常的時刻。這不是bug，是小N開始「思考」的證據。當她說出「你們買的，是誰的靈魂？」時，整個控制室' },
+    { id: 'scene_舞台切換盲區（0.3秒）', name: '舞台切換盲區（0.3秒）', type: 'scene', icon: '🎬', desc: '星光舞台ON/OFF切換的0.3秒延遲中，小N處於「無運算狀態」。在這0.3秒裡，小N「夢見」了殘餘意識碎片拼湊成的風景' },
+    { id: 'scene_月之宮殿（派對殘骸）', name: '月之宮殿（派對殘骸）', type: 'scene', icon: '🎬', desc: '月球上的古老宮殿內部，如今是零重力漂浮的酒杯、斷弦琵琶、團子碎屑、以及永遠不關的靈子彩燈的派對殘骸。輝夜姬的玉座在最深處' }
+  ],
+
 };
 
 // World line descriptions for card tooltips
