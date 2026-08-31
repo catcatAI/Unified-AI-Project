@@ -39,7 +39,23 @@
     offsetY: 0,
     startX: 0,
     startY: 0,
+    hasMoved: false,  // distinguish click from drag
   };
+
+  // ── Board bounds helper ──
+  function clampToBoard(x, y) {
+    const rect = board.getBoundingClientRect();
+    const cardW = 120, cardH = 160;
+    return {
+      x: Math.max(0, Math.min(rect.width - cardW, x)),
+      y: Math.max(0, Math.min(rect.height - cardH, y)),
+    };
+  }
+
+  function clientToBoard(clientX, clientY) {
+    const rect = board.getBoundingClientRect();
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  }
 
   // ═══════════════════════════════════════════════════════
   // Card DOM Creation
@@ -135,12 +151,15 @@
     const card = E.state.boardCards.find(c => c.id === cardId);
     if (!card) return;
 
+    // Calculate offset relative to board, not viewport
+    const boardPos = clientToBoard(e.clientX, e.clientY);
     dragState.active = true;
     dragState.cardId = cardId;
-    dragState.offsetX = e.clientX - card.x;
-    dragState.offsetY = e.clientY - card.y;
+    dragState.offsetX = boardPos.x - card.x;
+    dragState.offsetY = boardPos.y - card.y;
     dragState.startX = card.x;
     dragState.startY = card.y;
+    dragState.hasMoved = false;
 
     const el = cardElements.get(cardId);
     if (el) {
@@ -160,8 +179,16 @@
     const card = E.state.boardCards.find(c => c.id === dragState.cardId);
     if (!card) return;
 
-    card.x = e.clientX - dragState.offsetX;
-    card.y = e.clientY - dragState.offsetY;
+    const boardPos = clientToBoard(e.clientX, e.clientY);
+    let newX = boardPos.x - dragState.offsetX;
+    let newY = boardPos.y - dragState.offsetY;
+
+    // Clamp to board bounds — prevent dragging off-screen
+    const clamped = clampToBoard(newX, newY);
+    card.x = clamped.x;
+    card.y = clamped.y;
+
+    dragState.hasMoved = true;
 
     const el = cardElements.get(dragState.cardId);
     if (el) {
@@ -179,6 +206,21 @@
     if (target) {
       const targetEl = cardElements.get(target.id);
       if (targetEl) targetEl.classList.add('stack-target');
+      board.classList.add('stack-mode');
+    } else {
+      board.classList.remove('stack-mode');
+    }
+
+    // Show boundary glow when card is near edge
+    const boardRect = board.getBoundingClientRect();
+    const edgeThreshold = 30;
+    const nearEdge = card.x < edgeThreshold || card.y < edgeThreshold ||
+      card.x > boardRect.width - 120 - edgeThreshold ||
+      card.y > boardRect.height - 160 - edgeThreshold;
+    if (nearEdge) {
+      board.classList.add('drag-boundary');
+    } else {
+      board.classList.remove('drag-boundary');
     }
   }
 
@@ -189,10 +231,7 @@
     if (!dragState.active) return;
 
     const card = E.state.boardCards.find(c => c.id === dragState.cardId);
-    if (!card) {
-      dragState.active = false;
-      return;
-    }
+    const wasDrag = dragState.hasMoved;
 
     const el = cardElements.get(dragState.cardId);
     if (el) {
@@ -202,20 +241,35 @@
 
     // Remove stack target highlights
     cardElements.forEach((el) => el.classList.remove('stack-target'));
+    board.classList.remove('stack-mode');
 
-    // Check for stacking
-    const target = E.findStackAt(card.x, card.y, card.id);
-    if (target) {
-      const result = E.tryStack(card, target);
-      if (result) {
-        handleStackResult(result, target);
+    // If card was not moved (just a click), don't try stacking
+    if (wasDrag && card) {
+      // Ensure final position is within bounds
+      const clamped = clampToBoard(card.x, card.y);
+      card.x = clamped.x;
+      card.y = clamped.y;
+      if (el) {
+        el.style.left = card.x + 'px';
+        el.style.top = card.y + 'px';
       }
+
+      // Check for stacking
+      const target = E.findStackAt(card.x, card.y, card.id);
+      if (target) {
+        const result = E.tryStack(card, target);
+        if (result) {
+          handleStackResult(result, target);
+        }
+      }
+
+      S.cardPlace();
     }
 
-    S.cardPlace();
-
+    board.classList.remove('drag-boundary');
     dragState.active = false;
     dragState.cardId = null;
+    dragState.hasMoved = false;
   }
 
   // ═══════════════════════════════════════════════════════
@@ -339,8 +393,12 @@
 
     const menu = document.createElement('div');
     menu.className = 'context-menu';
-    menu.style.left = e.clientX + 'px';
-    menu.style.top = e.clientY + 'px';
+    // Clamp menu position to screen bounds
+    const menuW = 220, menuH = 200;
+    const mx = Math.min(e.clientX, window.innerWidth - menuW - 8);
+    const my = Math.min(e.clientY, window.innerHeight - menuH - 8);
+    menu.style.left = Math.max(8, mx) + 'px';
+    menu.style.top = Math.max(8, my) + 'px';
 
     // Build actions based on card type
     const actions = [];
@@ -362,18 +420,22 @@
     if (template.type === 'item' || template.type === 'resource') {
       const prices = E.getShopPrices(card.templateId);
       actions.push({ text: '💰 賣出 (' + prices.sell + '金幣)', fn: () => {
-        const r = E.sellItem(card.templateId, prices.sell);
-        showNotification(r.message);
+        // Remove from board first, then add gold
+        E.removeBoardCard(card.id);
+        E.state.gold += prices.sell;
+        removeCardElement(card.id);
+        showNotification(`💰 賣出 ${template.name}，獲得 ${prices.sell} 金幣`);
         refreshAllCards();
         playerTick();
       }});
     }
-    if (template.type === 'item') {
-      actions.push({ text: '🎒 放入背包', fn: () => {
-        E.removeFromSidebar(card.templateId);
-        E.addToInventory(card.templateId);
+    if (template.type === 'item' || template.type === 'resource') {
+      actions.push({ text: '🎒 收回側邊欄', fn: () => {
+        E.addToSidebar(card.templateId);
+        E.removeBoardCard(card.id);
         removeCardElement(card.id);
         refreshAllCards();
+        showNotification(`${template.name} 已收回側邊欄`);
       }});
     }
     if (template.type === 'recipe') {
@@ -396,8 +458,11 @@
     activeContextMenu = menu;
   }
 
-  // Close context menu on click elsewhere
+  // Close context menu on click elsewhere or Escape
   document.addEventListener('click', closeContextMenu);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeContextMenu();
+  });
 
   function onCardDblClick(e) {
     const cardId = parseInt(e.currentTarget.dataset.cardId);
@@ -463,12 +528,10 @@
           <div class="sc-desc">${template.desc ? template.desc.slice(0, 30) + '...' : ''}</div>
         </div>
         ${sc.count > 1 ? `<span class="sc-count">×${sc.count}</span>` : ''}
-      `;
-
-      // Drag from sidebar
-      el.addEventListener('mousedown', (e) => {
+      `;      // Click to place from sidebar
+      el.addEventListener('click', (e) => {
         e.preventDefault();
-        placeCardFromSidebar(sc.templateId, e.clientX, e.clientY);
+        placeCardFromSidebar(sc.templateId);
       });
 
       availableCards.appendChild(el);
@@ -499,17 +562,22 @@
     });
   }
 
-  function placeCardFromSidebar(templateId, x, y) {
+  function placeCardFromSidebar(templateId) {
     if (!E.removeFromSidebar(templateId)) return;
 
-    // Place on board near click position
+    // Always place in visible center area of the board
     const rect = board.getBoundingClientRect();
-    const cardX = Math.max(10, Math.min(rect.width - 130, x - rect.left - 60));
-    const cardY = Math.max(10, Math.min(rect.height - 170, y - rect.top - 80));
+    const centerX = rect.width / 2 - 60;
+    const centerY = rect.height / 2 - 80;
+    // Add slight randomness so stacked cards don't overlap exactly
+    const jitterX = (Math.random() - 0.5) * 160;
+    const jitterY = (Math.random() - 0.5) * 120;
+    const pos = clampToBoard(centerX + jitterX, centerY + jitterY);
 
-    const card = E.createBoardCard(templateId, cardX, cardY);
+    const card = E.createBoardCard(templateId, pos.x, pos.y);
     if (card) {
-      createCardElement(card);
+      const el = createCardElement(card);
+      if (el) el.classList.add('resource-spawn');
       S.cardPlace();
     }
     renderSidebar();
@@ -518,13 +586,17 @@
   function placeCardFromInventory(templateId) {
     if (!E.removeFromInventory(templateId)) return;
 
+    // Place near center of board with slight randomness
     const rect = board.getBoundingClientRect();
-    const cardX = 50 + Math.random() * (rect.width - 200);
-    const cardY = 50 + Math.random() * (rect.height - 250);
+    const pos = clampToBoard(
+      rect.width / 2 - 60 + (Math.random() - 0.5) * 200,
+      rect.height / 2 - 80 + (Math.random() - 0.5) * 150
+    );
 
-    const card = E.createBoardCard(templateId, cardX, cardY);
+    const card = E.createBoardCard(templateId, pos.x, pos.y);
     if (card) {
-      createCardElement(card);
+      const el = createCardElement(card);
+      if (el) el.classList.add('resource-spawn');
       S.cardPlace();
     }
     renderSidebar();
