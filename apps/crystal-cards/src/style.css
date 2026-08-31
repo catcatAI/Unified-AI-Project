@@ -253,6 +253,14 @@ body {
   background: radial-gradient(circle at 30% 30%, var(--card-color), transparent 70%);
 }
 
+.card[data-type="story"] {
+  --card-color: #E65100;
+  border-color: rgba(230, 81, 0, 0.35);
+}
+.card[data-type="story"]::after {
+  background: radial-gradient(circle at 30% 30%, var(--card-color), transparent 70%);
+}
+
 /* ── Card Content ── */
 .card-icon {
   font-size: 32px;

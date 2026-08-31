@@ -473,6 +473,7 @@ function drawCard() {
     ...(CARDS.rpgNavalItems || []).map(i => ({ id: i.id, weight: 1 })),
     ...(CARDS.rpgNavalItemsMore || []).map(i => ({ id: i.id, weight: 1 })),
     ...(CARDS.rpgElementalItems || []).map(i => ({ id: i.id, weight: 1 })),
+    ...(CARDS.storyEvents || []).map(e => ({ id: e.id, weight: 1 })),
   ];
 
   // Only include items that are unlocked and have valid templates

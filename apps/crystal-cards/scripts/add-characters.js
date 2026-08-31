@@ -101,16 +101,17 @@ for (let i = 0; i < lines.length; i++) {
   }
 }
 
-// 2. Dialogues: find the }, before };
-// The dialogues object ends with }, followed by };
+// 2. Dialogues: find end of dialogues section
+// Search for the last dialogue entry (ending with },) before the first }; 
 for (let i = 0; i < lines.length; i++) {
-  if (lines[i].trim() === '};') {
-    // Check if previous non-empty line ends with },
-    for (let j = i - 1; j >= 0; j--) {
-      if (lines[j].trim() !== '') {
-        if (lines[j].trim() === '},') {
-          dlgInsertIdx = j;  // Insert BEFORE the },
-        }
+  if (lines[i].includes('dialogues: {')) {
+    // Found dialogues start — go forward to find the }, that closes it
+    let depth = 1;
+    for (let j = i + 1; j < lines.length; j++) {
+      if (lines[j].includes('{')) depth++;
+      if (lines[j].includes('}')) depth--;
+      if (depth === 0) {
+        dlgInsertIdx = j;  // This is the }, closing dialogues
         break;
       }
     }

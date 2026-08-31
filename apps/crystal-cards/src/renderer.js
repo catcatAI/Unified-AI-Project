@@ -554,7 +554,7 @@
       }
     }
     // Nation / Organization / Rule / Scene → show info
-    else if (['nation', 'organization', 'rule', 'scene'].includes(template.type)) {
+    else if (['nation', 'organization', 'rule', 'scene', 'story'].includes(template.type)) {
       showNotification(`${template.icon} ${template.name}: ${template.desc || ''}`);
     }
   }
