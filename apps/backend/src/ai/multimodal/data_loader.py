@@ -117,7 +117,7 @@ class CIFAR10Loader:
         # Resume from checkpoint if it exists
         if checkpoint_path.exists():
             try:
-                ckpt = np.load(checkpoint_path, allow_pickle=True)
+                ckpt = np.load(checkpoint_path, allow_pickle=False)
                 saved_indices = ckpt.get("indices", [])
                 saved_features = ckpt.get("features", [])
                 if len(saved_indices) > 0:

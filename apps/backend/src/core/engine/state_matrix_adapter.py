@@ -27,6 +27,9 @@ class _TemporalProxy:
 
     def record(self, axis: str, field: str, value: float) -> None:
         self._records.append({"axis": axis, "field": field, "value": value})
+        # Bound to prevent unbounded growth (long-running sessions)
+        if len(self._records) > 500:
+            self._records = self._records[-250:]
 
     @property
     def trend(self) -> Optional[float]:

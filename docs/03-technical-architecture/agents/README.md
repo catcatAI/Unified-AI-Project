@@ -20,38 +20,38 @@ Unified AI Project的AI代理系统是一个模块化的多代理架构，基于
 ### 专门化代理
 
 #### 1. Creative Writing Agent
-- **文件**: [creative_writing_agent.py](../../../apps/backend/src/agents/creative_writing_agent.py)
+- **文件**: [creative_writing_agent.py](../../../apps/backend/src/ai/agents/specialized/creative_writing_agent.py)
 - **文档**: [creative-writing-agent.md](creative-writing-agent.md)
 - **功能**: 创意写作任务，如生成营销文案、润色文本
 
 #### 2. Image Generation Agent
-- **文件**: [image_generation_agent.py](../../../apps/backend/src/agents/image_generation_agent.py)
+- **文件**: [image_generation_agent.py](../../../apps/backend/src/ai/agents/specialized/image_generation_agent.py)
 - **文档**: [image-generation-agent.md](image-generation-agent.md)
 - **功能**: 根据文本提示生成图像
 
 #### 3. Web Search Agent
-- **文件**: [web_search_agent.py](../../../apps/backend/src/agents/web_search_agent.py)
+- **文件**: [web_search_agent.py](../../../apps/backend/src/ai/agents/specialized/web_search_agent.py)
 - **文档**: [web-search-agent.md](web-search-agent.md)
 - **功能**: 网络搜索和信息检索
 
 #### 4. Data Analysis Agent
-- **文件**: [data_analysis_agent.py](../../../apps/backend/src/agents/data_analysis_agent.py)
+- **文件**: [data_analysis_agent.py](../../../apps/backend/src/ai/agents/specialized/data_analysis_agent.py)
 - **功能**: 数据统计分析和处理
 
 #### 5. Code Understanding Agent
-- **文件**: [code_understanding_agent.py](../../../apps/backend/src/agents/code_understanding_agent.py)
+- **文件**: [code_understanding_agent.py](../../../apps/backend/src/ai/agents/specialized/code_understanding_agent.py)
 - **功能**: 代码分析、文档生成和代码审查
 
 #### 6. Audio Processing Agent
-- **文件**: [audio_processing_agent.py](../../../apps/backend/src/agents/audio_processing_agent.py)
+- **文件**: [audio_processing_agent.py](../../../apps/backend/src/ai/agents/specialized/audio_processing_agent.py)
 - **功能**: 语音识别、音频分类和音频增强
 
 #### 7. Vision Processing Agent
-- **文件**: [vision_processing_agent.py](../../../apps/backend/src/agents/vision_processing_agent.py)
+- **文件**: [vision_processing_agent.py](../../../apps/backend/src/ai/agents/specialized/vision_processing_agent.py)
 - **功能**: 图像分类、物体检测和图像增强
 
 #### 8. Knowledge Graph Agent
-- **文件**: [knowledge_graph_agent.py](../../../apps/backend/src/agents/knowledge_graph_agent.py)
+- **文件**: [knowledge_graph_agent.py](../../../apps/backend/src/ai/agents/specialized/knowledge_graph_agent.py)
 - **功能**: 实体链接、关系提取和知识图谱查询
 
 ## 代理协作

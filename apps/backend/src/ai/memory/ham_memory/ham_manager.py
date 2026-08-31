@@ -32,6 +32,7 @@ class HAMMemoryManager:
         self.memory_file = Path(memory_file)
         self.auto_save = auto_save
         self._data: Dict[str, Any] = {"templates": [], "conversations": [], "metadata": {}}
+        self._max_entries_per_bucket = 5000
         self._load()
 
     @staticmethod
@@ -86,6 +87,13 @@ class HAMMemoryManager:
         except (IOError, OSError, TypeError) as e:
             logger.warning(f"HAMMemoryManager async save failed: {e}")
 
+    def _enforce_cap(self, bucket: str) -> None:
+        """Keep bucket bounded to prevent unbounded growth (long-running server)."""
+        bucket_data = self._data.get(bucket, [])
+        if len(bucket_data) > self._max_entries_per_bucket:
+            self._data[bucket] = bucket_data[-int(self._max_entries_per_bucket * 0.8) :]
+            logger.debug(f"HAM {bucket} capped to {len(self._data[bucket])} entries")
+
     async def store_template(self, template: Any) -> None:
         self._data["templates"].append(
             {
@@ -94,6 +102,7 @@ class HAMMemoryManager:
                 "keywords": getattr(template, "keywords", []),
             }
         )
+        self._enforce_cap("templates")
         await asyncio.to_thread(self._save)
 
     async def retrieve_response_templates(
@@ -250,6 +259,7 @@ class HAMMemoryManager:
             bucket = "templates" if data_type in self._data else "conversations"
             bucket = self._data.get(bucket) is not None and bucket or "conversations"
         self._data.setdefault(bucket, []).append(entry)
+        self._enforce_cap(bucket)
         await asyncio.to_thread(self._save)
         return f"exp_{len(self._data.get(bucket, []))}"
 
@@ -342,6 +352,7 @@ class HAMMemoryManager:
 
     def store_conversation(self, conversation: Dict[str, Any]) -> None:
         self._data["conversations"].append(conversation)
+        self._enforce_cap("conversations")
         self._save()
 
     async def store_conversation_async(self, conversation: Dict[str, Any]) -> None:
@@ -352,6 +363,7 @@ class HAMMemoryManager:
         the event loop with synchronous JSON file I/O.
         """
         self._data["conversations"].append(conversation)
+        self._enforce_cap("conversations")
         await self.save_async()
 
     def get_stats(self) -> Dict[str, Any]:

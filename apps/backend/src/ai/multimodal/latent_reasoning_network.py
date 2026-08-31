@@ -774,7 +774,7 @@ class LatentReasoningNetwork:
             b2=self._b2,
             W3=self._W3,
             b3=self._b3,
-            vocab=np.array(self._vocab, dtype=object),
+            vocab=np.array(self._vocab, dtype=np.str_),
             trained=np.array([self._trained]),
         )
         logger.info("LatentReasoningNetwork saved to %s", path)
@@ -782,7 +782,19 @@ class LatentReasoningNetwork:
     @classmethod
     def load(cls, path: str) -> "LatentReasoningNetwork":
         """Load weights + vocab from a .npz file produced by save()."""
-        data = np.load(path, allow_pickle=True)
+        # New saves use unicode dtype (no pickle needed); legacy saves used object dtype.
+        try:
+            data = np.load(path, allow_pickle=False)
+            # Trigger actual load of vocab array (lazy); will raise if pickle required
+            _ = data["vocab"]
+        except ValueError as e:
+            if "Object arrays" in str(e) or "allow_pickle" in str(e):
+                logger.warning(
+                    "Legacy checkpoint %s requires pickle (object dtype) — loading with allow_pickle=True", path
+                )
+                data = np.load(path, allow_pickle=True)
+            else:
+                raise
         vocab = list(data["vocab"])
         net = cls(
             latent_dim=data["W1"].shape[1], hidden_dim=data["W1"].shape[0], vocab_size=len(vocab)

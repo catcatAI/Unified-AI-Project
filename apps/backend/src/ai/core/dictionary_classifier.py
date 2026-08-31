@@ -80,6 +80,7 @@ class DictionaryClassifier:
         self._keyword_index: Dict[str, List[str]] = {}  # keyword -> list of entry keys
         self._match_tables: Optional[Tuple[Dict[str, List[str]], List[Tuple[str, List[str]]], Dict[str, int]]] = None  # inverted lookup cache
         self._cache: Dict[str, Tuple[str, str, float]] = {}  # text -> (type, action, conf)
+        self._cache_max = 500  # LRU bound to prevent unbounded growth
 
     def _ensure_loaded(self):
         if self._loaded:
@@ -160,11 +161,15 @@ class DictionaryClassifier:
 
         if best_score < 0.15 or not best_key:
             result = ("unknown", "none", 0.0)
+            if len(self._cache) >= self._cache_max:
+                self._cache.pop(next(iter(self._cache)))
             self._cache[text] = result
             return result
 
         query_type, action_type = self._resolve_entry(best_key)
         result = (query_type, action_type, round(best_score, 3))
+        if len(self._cache) >= self._cache_max:
+            self._cache.pop(next(iter(self._cache)))
         self._cache[text] = result
         return result
 
@@ -176,6 +181,8 @@ class DictionaryClassifier:
     def _check_negation(self, text: str) -> Optional[Tuple[str, str, float]]:
         if any_keyword(text, NEGATION_KEYWORDS):
             result = ("unknown", "none", 0.9)
+            if len(self._cache) >= self._cache_max:
+                self._cache.pop(next(iter(self._cache)))
             self._cache[text] = result
             return result
         return None

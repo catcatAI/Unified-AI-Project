@@ -57,11 +57,11 @@
 
 **Angela AI** is a digital life system with biological simulation and LLM integration capabilities.
 
-**Quick facts**: 610 Python files in backend src (~96K lines). Electron + Live2D desktop companion (136 JS/TS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~5,432 tests (tests/) — 0 errors. Security: 0 Dependabot + 0 CodeQL + 0 Secret Scanning = fully clean.**  
+**Quick facts**: 667 Python files in backend src (~96K lines). Electron + Live2D desktop companion (136 JS/TS files across shared-js/desktop/web). Pixel art engine (PyQt6 renderer). **~5,432 tests (tests/) — 0 errors. Security: 0 Dependabot + 0 CodeQL + 0 Secret Scanning = fully clean.**  
 **Component versions**: backend `7.5.0-dev` · desktop `7.5.0-dev` · cli `7.5.0-dev` · biology-core `7.5.0-dev`.  
 **Architecture audit score**: **~95%** (2026-06-25; up from ~55-60% after Phases 0-5 repairs).  
-**Total project files**: ~3,500+ (610 Python in backend src · 295+ JS/TS · 1,021+ docs · 500+ config · 480+ test).  
-See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md) for latest audit.
+**Total project files**: ~3,500+ (667 Python in backend src · 295+ JS/TS · 1,021+ docs · 500+ config · 480+ test).  
+See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGELOG.md) for version history, and [ARCHITECTURE_AUDIT.md](docs/ARCHITECTURE_AUDIT.md) for latest audit.
 
 > **STATUS (2026-07-14)**: §X #243-#247 — **Multi-perspective production-readiness** complete (9.5/10 for the *engineering/infra* layer — code, tests, security, deployment wiring). **§X #249-#256 — Security Sprint**: 44+ Dependabot + 18 CodeQL + 10 Secret Scanning = **72+ security alerts fixed** across 46 files; Next.js 14→16 upgrade, Vite 6.0, path traversal hardening, insecure randomness fixed, leaked API keys redacted. **Infra is deployable + security hardened.**
 >
@@ -106,9 +106,9 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | **JS Sharing** | ✅ COMPLETE | 33 shared files → `packages/shared-js/js/`, 0 duplicates remaining |
 | **SessionManager** | ✅ COMPLETE | 56 tests covering full lifecycle (Phase 5.8) |
 | **Skip Audit** | ✅ COMPLETE | Phase 5.9: 5 collection errors fixed, all skip reasons verified |
-| **Architecture Audit** | ✅ CREATED | `docs/COMPREHENSIVE_AUDIT_2026-06-25.md` — ~55-60% → ~85-90% at audit time; current code-verified architecture **~95%** (see line 60 / INTELLIGENCE_ASSESSMENT §1) |
+| **Architecture Audit** | ✅ CREATED | `docs/ARCHITECTURE_AUDIT.md` — ~55-60% → ~85-90% at audit time; current code-verified architecture **~95%** (see line 60 / INTELLIGENCE_ASSESSMENT §1) |
 | **Target Blueprint** | ✅ CREATED | `docs/IDEAL_ARCHITECTURE.md` — 16-section target architecture |
-| **Repair Roadmap** | ✅ COMPLETE | `docs/COMPREHENSIVE_REPAIR_ROADMAP.md` — all 6 phases executed, 0 remaining tasks |
+| **Repair Roadmap** | ✅ COMPLETE | `docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_REPAIR_ROADMAP.md` — all 6 phases executed, 0 remaining tasks |
 | **Master Task Map** | ✅ CREATED | `docs/06-project-management/MASTER_TASK_MAP.md` — all 23 plans cross-referenced with git/code |
 | **Causal Chain Completeness** | ✅ CREATED | `docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md` — §0 no-stub principle, real depth scores, timing audit |
 | **EmotionSystem Behavioral Driving** | ✅ **DONE** | `apply_influence()` now modifies PAD state, `get_behavioral_adjustment()` maps emotion→routing_mode/response_style, wired into pipeline Step 5 → prompt builder reads it |
@@ -126,7 +126,7 @@ See [AGENTS.md](AGENTS.md) for developer/agent guidelines, [CHANGELOG.md](CHANGE
 | **HardwareProfile → loop_sleep()** | ✅ **DONE** | `magic_numbers.py` now loads HardwareProfile lazily and applies multiplier to all 32+ loops. All loops now hardware-aware (§8.6 #4 BASIC) |
 | **time.sleep() Audit** | ✅ **DONE** | All remaining `time.sleep()` calls verified in sync/thread contexts only. §8.6 #6 effectively complete |
 
-See **[COMPREHENSIVE_AUDIT_2026-06-25.md](docs/COMPREHENSIVE_AUDIT_2026-06-25.md)** (latest audit), **[IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md)** (target), **[COMPREHENSIVE_REPAIR_ROADMAP.md](docs/COMPREHENSIVE_REPAIR_ROADMAP.md)** (plan), **[MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md)** (task provenance), **[CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md)** (causal depth), **[IMPROVEMENT_ROADMAP.md](docs/06-project-management/IMPROVEMENT_ROADMAP.md)** (improvement roadmap).
+See **[ARCHITECTURE_AUDIT.md](docs/ARCHITECTURE_AUDIT.md)** (latest audit), **[IDEAL_ARCHITECTURE.md](docs/IDEAL_ARCHITECTURE.md)** (target), **[COMPREHENSIVE_REPAIR_ROADMAP.md](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_REPAIR_ROADMAP.md)** (plan), **[MASTER_TASK_MAP.md](docs/06-project-management/MASTER_TASK_MAP.md)** (task provenance), **[CAUSAL_CHAIN_COMPLETENESS.md](docs/06-project-management/CAUSAL_CHAIN_COMPLETENESS.md)** (causal depth), **[IMPROVEMENT_ROADMAP.md](docs/06-project-management/IMPROVEMENT_ROADMAP.md)** (improvement roadmap).
 
 ### Intelligence Assessment (Code-Verified 2026-06-29)
 
@@ -146,7 +146,7 @@ Upper bound (with LLM API: OpenAI/Anthropic/Ollama) vs lower bound (unified engi
 | **Meta-cognition** | 5/10 | 4/10 | MetaController: confidence calibration + LLM thresholds |
 | **Composite** | **6.0/10** | — (no single native total) | Architecture ~95% complete. Native capability is multi-dimensional: deterministic engines strong (math 9.5 / knowledge 10 / symbolic reasoning 10 / autonomy 9.0); neural SNN's job is **associations** (capability 1.0, §4.1.2), not knowledge. Do not sum heterogeneous dimensions into one "actual" number. |
 
-**Key**: Upper bound = connected to external LLM (realistic full-power scenario). Lower bound = ED3N+GARDEN only (no-cost fallback). See [PHASE_REVIEW6.md §4](docs/06-project-management/plans/PHASE_REVIEW6.md) for full methodology.
+**Key**: Upper bound = connected to external LLM (realistic full-power scenario). Lower bound = ED3N+GARDEN only (no-cost fallback). See [PHASE_REVIEW6.md §4](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW6.md) for full methodology.
 
 ---
 
@@ -467,29 +467,29 @@ See dedicated docs for full diagrams:
 | [PROJECT_CHARTER](docs/00-overview/PROJECT_CHARTER.md) | Project mission, scope, principles |
 | [GLOSSARY](docs/00-overview/GLOSSARY.md) | Full project terminology reference |
 | [UNIFIED_DOC_INDEX](docs/09-archive/UNIFIED_DOCUMENTATION_INDEX.md) | Comprehensive doc inventory (archived) |
-| [WIRING_MAP](docs/03-technical-architecture/analysis/WIRING_MAP_2026-05-21.md) | Server lifecycle, factory chains, subtle wiring, dead code registry |
-| [CODE_STATISTICS](docs/03-technical-architecture/analysis/CODE_STATISTICS_2026-05-21.md) | Live vs dead vs semi-finished code by directory |
-| [MODULARITY_ANALYSIS](docs/03-technical-architecture/analysis/MODULARITY_ANALYSIS_2026-05-21.md) | God modules, central hub coupling, 20+ singletons |
-| [PROBLEM_ANALYSIS](docs/03-technical-architecture/analysis/PROBLEM_ANALYSIS_2026-05-21.md) | 3-perspective audit, security issues, CTO roadmap |
-| [FORENSIC_AUDIT](docs/03-technical-architecture/analysis/FORENSIC_AUDIT_2026-05-22.md) | 3-perspective audit: execution paths, TCS migration, security + dead code |
-| [MASTER_CONSOLIDATED_PLAN](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md) | **Active task plan**: 53 items, S/A/B/C tiers, 53/53 complete |
-| [CARD_INTEGRATION_PLAN](docs/06-project-management/plans/ANGELA_CARD_INTEGRATION_PLAN.md) | Card pipeline → ChatService wiring: 4 phases, 10 disconnection points |
-| [MODULE_MANAGER_DESIGN](docs/03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md) | ✅ **Implemented** — M0-M5 (6 files + 100 tests) + 6 modules (card_pipeline, intent_registry, vision, audio, tactile, drive) |
-| [CARD_INTEGRATION_REVIEW](docs/06-project-management/plans/CARD_INTEGRATION_PLAN_REVIEW.md) | Proactive audit: 25 issues found before implementation, 8 HIGH |
-| [PHASE6_NEXT_PLAN](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md) | Quality finishing: Plugin deployment, Config handlers, Magic number migration, Stub cleanup |
-| [MASTER_FINALIZATION_PLAN](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md) | Final push to 0: Remaining handlers, orphaned services, NotImplementedErrors, docs, tests |
-| [REMAINING_ISSUES_PLAN](docs/06-project-management/plans/REMAINING_ISSUES_PLAN.md) | Placeholder cleanup, unittest→pytest migration |
-| [TEST_RESTRUCTURE_PLAN](docs/06-project-management/plans/TEST_RESTRUCTURE_PLAN.md) | Test layer architecture, conftest layering, CI integration |
-| [COMPREHENSIVE_AUDIT_REPORT](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | **Audit V1 (05-31)**: Plans, docs, code, tests, config, apps — original completion audit |
-| [COMPREHENSIVE_AUDIT_REPORT_V2](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md) | **Audit V2 (06-06)**: H5 post-sprint full scan — 3 true stubs, 20 intentional excepts, 132 long files |
-| [COMPREHENSIVE_AUDIT_V3](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md) | **Audit V3 (06-07)**: ED3N/GARDEN/Model Bus/Router 深度審計，16 HIGH + 16 MEDIUM 問題，P0-P4 修復計畫 |
-| [PHASE_REVIEW](docs/06-project-management/plans/PHASE_REVIEW.md) | **Phase Review 1 (06-02)**: First 3-agent parallel audit, 10-dimension assessment |
-| [PHASE_REVIEW2](docs/06-project-management/plans/PHASE_REVIEW2.md) | **Phase Review 2 (06-03)**: 17-session tracking audit, ~96% composite |
-| [PHASE_REVIEW3](docs/06-project-management/plans/PHASE_REVIEW3.md) | **Phase Review 3 (06-04)**: 3-agent comprehensive audit, 10-dimension assessment |
-| [PHASE_REVIEW4](docs/06-project-management/plans/PHASE_REVIEW4.md) | **Phase Review 4 (06-05, v5)**: H5 stub sprint, 36/37 stubs done, 24 empty excepts fixed, ~62% |
-| [PHASE_REVIEW5](docs/06-project-management/plans/PHASE_REVIEW5.md) | **Phase Review 5 (06-06, NEW)**: H5 sprint final, 0 HIGH vulns, H7 roadmap |
-| [ANGELA_LLM_SNN_ARCHITECTURE_PLAN](docs/06-project-management/plans/ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md) | **ED3N Architecture Plan (06-06, NEW)**: External Dictionary Decoupled Neural Network — LLM + SNN design, training pipeline, 4-phase roadmap |
-| [GARDEN_MODEL_PLAN](docs/06-project-management/plans/GARDEN_MODEL_PLAN.md) | **GARDEN Scale Plan (06-06, NEW)**: Giant Associative Relation Decoupled Evolutionary Network — Lightweight 1GB model and 5-tier scaling plan |
+| [WIRING_MAP](docs/09-archive/auto-archived-2026-08-11/_analysis_WIRING_MAP_2026-05-21.md) | Server lifecycle, factory chains, subtle wiring, dead code registry |
+| [CODE_STATISTICS](docs/09-archive/auto-archived-2026-08-11/_analysis_CODE_STATISTICS_2026-05-21.md) | Live vs dead vs semi-finished code by directory |
+| [MODULARITY_ANALYSIS](docs/09-archive/auto-archived-2026-08-11/_analysis_MODULARITY_ANALYSIS_2026-05-21.md) | God modules, central hub coupling, 20+ singletons |
+| [PROBLEM_ANALYSIS](docs/09-archive/auto-archived-2026-08-11/_analysis_PROBLEM_ANALYSIS_2026-05-21.md) | 3-perspective audit, security issues, CTO roadmap |
+| [FORENSIC_AUDIT](docs/09-archive/auto-archived-2026-08-11/_analysis_FORENSIC_AUDIT_2026-05-22.md) | 3-perspective audit: execution paths, TCS migration, security + dead code |
+| [MASTER_CONSOLIDATED_PLAN](docs/09-archive/auto-archived-2026-08-11/MASTER_CONSOLIDATED_PLAN.md) | **Active task plan**: 53 items, S/A/B/C tiers, 53/53 complete |
+| [CARD_INTEGRATION_PLAN](docs/09-archive/auto-archived-2026-08-11/ANGELA_CARD_INTEGRATION_PLAN.md) | Card pipeline → ChatService wiring: 4 phases, 10 disconnection points |
+| [MODULE_MANAGER_DESIGN](docs/09-archive/auto-archived-2026-08-11/MODULE_MANAGER_SYSTEM.md) | ✅ **Implemented** — M0-M5 (6 files + 100 tests) + 6 modules (card_pipeline, intent_registry, vision, audio, tactile, drive) |
+| [CARD_INTEGRATION_REVIEW](docs/09-archive/auto-archived-2026-08-11/CARD_INTEGRATION_PLAN_REVIEW.md) | Proactive audit: 25 issues found before implementation, 8 HIGH |
+| [PHASE6_NEXT_PLAN](docs/09-archive/auto-archived-2026-08-11/PHASE6_NEXT_PLAN.md) | Quality finishing: Plugin deployment, Config handlers, Magic number migration, Stub cleanup |
+| [MASTER_FINALIZATION_PLAN](docs/09-archive/auto-archived-2026-08-11/MASTER_FINALIZATION_PLAN.md) | Final push to 0: Remaining handlers, orphaned services, NotImplementedErrors, docs, tests |
+| [REMAINING_ISSUES_PLAN](docs/09-archive/auto-archived-2026-08-11/REMAINING_ISSUES_PLAN.md) | Placeholder cleanup, unittest→pytest migration |
+| [TEST_RESTRUCTURE_PLAN](docs/09-archive/auto-archived-2026-08-11/TEST_RESTRUCTURE_PLAN.md) | Test layer architecture, conftest layering, CI integration |
+| [COMPREHENSIVE_AUDIT_REPORT](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_REPORT.md) | **Audit V1 (05-31)**: Plans, docs, code, tests, config, apps — original completion audit |
+| [COMPREHENSIVE_AUDIT_REPORT_V2](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_REPORT_V2.md) | **Audit V2 (06-06)**: H5 post-sprint full scan — 3 true stubs, 20 intentional excepts, 132 long files |
+| [COMPREHENSIVE_AUDIT_V3](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_V3.md) | **Audit V3 (06-07)**: ED3N/GARDEN/Model Bus/Router 深度審計，16 HIGH + 16 MEDIUM 問題，P0-P4 修復計畫 |
+| [PHASE_REVIEW](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW.md) | **Phase Review 1 (06-02)**: First 3-agent parallel audit, 10-dimension assessment |
+| [PHASE_REVIEW2](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW2.md) | **Phase Review 2 (06-03)**: 17-session tracking audit, ~96% composite |
+| [PHASE_REVIEW3](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW3.md) | **Phase Review 3 (06-04)**: 3-agent comprehensive audit, 10-dimension assessment |
+| [PHASE_REVIEW4](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW4.md) | **Phase Review 4 (06-05, v5)**: H5 stub sprint, 36/37 stubs done, 24 empty excepts fixed, ~62% |
+| [PHASE_REVIEW5](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW5.md) | **Phase Review 5 (06-06, NEW)**: H5 sprint final, 0 HIGH vulns, H7 roadmap |
+| [ANGELA_LLM_SNN_ARCHITECTURE_PLAN](docs/09-archive/auto-archived-2026-08-11/ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md) | **ED3N Architecture Plan (06-06, NEW)**: External Dictionary Decoupled Neural Network — LLM + SNN design, training pipeline, 4-phase roadmap |
+| [GARDEN_MODEL_PLAN](docs/09-archive/auto-archived-2026-08-11/GARDEN_MODEL_PLAN.md) | **GARDEN Scale Plan (06-06, NEW)**: Giant Associative Relation Decoupled Evolutionary Network — Lightweight 1GB model and 5-tier scaling plan |
 | [ED3N_TRAINING_GUIDE](docs/06-project-management/guides/ED3N_TRAINING_GUIDE.md) | **ED3N Training Guide (06-06, NEW)**: How to train, evaluate, and deploy ED3N with real data — terminal commands, data format, troubleshooting |
 
 ---
@@ -500,7 +500,7 @@ See dedicated docs for full diagrams:
 
 **Angela AI** 是一個數位生命系統，具備生物模擬、LLM 整合與完整聊天管線。
 
-**Quick facts**：610 個 Python 檔案 (backend src)、~96K 行。Electron + Live2D 桌面端、33 shared JS。  
+**Quick facts**：667 個 Python 檔案 (backend src)、~96K 行。Electron + Live2D 桌面端、33 shared JS。  
 **實際狀態**: Phase 0-7 全部完成。聊天管線完整接線、孤兒系統整合、Phase 9-12 刪除 26 個死代碼子系統、~5,920 行死代碼移除。AgentOrchestrator、PlanningEngine、ReasoningEngines、TrustManager、ContentFilter、SafetyAudit、Web Dashboard、Docker/CI/CD、OpenTelemetry 全部運作。Phase 11-12 已清理 learning/ops/dialogue/evaluation/execution 等 11 個未使用子系統。  
 **管線**: WebSocket → 情緒分析 → 危機閘門 → 對齊閘門 → 執行閘門 → **代理路由** → LLM → 因果學習 → 回應。
 
@@ -786,7 +786,7 @@ python apps/game-rpg/run_game.py
 | [統一文件索引](docs/09-archive/UNIFIED_DOCUMENTATION_INDEX.md) | 所有文件導覽（已封存） |
 | [完整架構圖](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | **Angela 感知・認知・執行完整架構** — 如何視、聽、觸、說、畫、移、思考、感受、自主 |
 | [技術架構概覽](docs/03-technical-architecture/README.md) | HSP、HAM、NGR、8D Matrix、多模態代理、通訊層、安全性 |
-| [ARCHITECTURE_MAP](docs/03-technical-architecture/analysis/ARCHITECTURE_MAP_2026-05-20.md) | 伺服器拓撲、port 衝突、路由對照 |
+| [ARCHITECTURE_MAP](docs/09-archive/auto-archived-2026-08-11/_analysis_ARCHITECTURE_MAP_2026-05-20.md) | 伺服器拓撲、port 衝突、路由對照 |
 | [全量架構分析](docs/09-archive/FULL_ARCHITECTURE_ANALYSIS.md) | 完整架構圖譜、版本溯源、六層一致性評分 |
 | [AGENTS.md](AGENTS.md) | 代理開發指南 — 構建/測試/代碼規範 |
 | [CHANGELOG.md](CHANGELOG.md) | 版本歷史與變更記錄 |
@@ -795,34 +795,34 @@ python apps/game-rpg/run_game.py
 
 | 文件 | 內容 |
 |------|------|
-| [WIRING_MAP](docs/03-technical-architecture/analysis/WIRING_MAP_2026-05-21.md) | 接線圖、工廠鏈、死代碼 |
-| [CODE_STATISTICS](docs/03-technical-architecture/analysis/CODE_STATISTICS_2026-05-21.md) | 代碼統計、活/死/半成品 |
-| [MODULARITY_ANALYSIS](docs/03-technical-architecture/analysis/MODULARITY_ANALYSIS_2026-05-21.md) | God module、耦合、singleton |
-| [PROBLEM_ANALYSIS](docs/03-technical-architecture/analysis/PROBLEM_ANALYSIS_2026-05-21.md) | 三重視角審計、安全問題、優先級 |
-| [FORENSIC_AUDIT](docs/03-technical-architecture/analysis/FORENSIC_AUDIT_2026-05-22.md) | 三輪獨立審計：執行路徑、TCS 遷移、安全性 + 死代碼 |
-| [MASTER_CONSOLIDATED_PLAN](docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md) | **進行中任務總計畫**：53 項、S/A/B/C 分級、53/53 完成 |
-| [CARD_INTEGRATION_PLAN](docs/06-project-management/plans/ANGELA_CARD_INTEGRATION_PLAN.md) | 卡片管道 → ChatService 接線 v2：ModuleManager 驅動 |
-| [MODULE_MANAGER_DESIGN](docs/03-technical-architecture/design/MODULE_MANAGER_SYSTEM.md) | ✅ **已實作** — M0-M5 (6 files + 100 tests) + 6 模組 |
-| [CARD_INTEGRATION_REVIEW](docs/06-project-management/plans/CARD_INTEGRATION_PLAN_REVIEW.md) | 事前審計：執行前發現 25 問題（8 HIGH） |
-| [PHASE6_NEXT_PLAN](docs/06-project-management/plans/PHASE6_NEXT_PLAN.md) | Quality finishing: Plugin 部署, Config handler, Magic number 遷移 |
-| [MASTER_FINALIZATION_PLAN](docs/06-project-management/plans/MASTER_FINALIZATION_PLAN.md) | Final push to 0: 殘留 handler, 孤立服務, NotImplementedError |
-| [REMAINING_ISSUES_PLAN](docs/06-project-management/plans/REMAINING_ISSUES_PLAN.md) | placeholder 清除、unittest→pytest 遷移 |
-| [TEST_RESTRUCTURE_PLAN](docs/06-project-management/plans/TEST_RESTRUCTURE_PLAN.md) | 測試層級架構、conftest 分層、CI 整合 |
-| [COMPREHENSIVE_AUDIT_REPORT](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT.md) | **全面審計報告 V1**: 計畫、文檔、代碼、測試、配置、應用 |
-| [COMPREHENSIVE_AUDIT_REPORT_V2](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_REPORT_V2.md) | **全面審計報告 V2**: H5 後冲刺全面扫描 — 3 個真 stub、20 個有意義 except |
-| [COMPREHENSIVE_AUDIT_V3](docs/06-project-management/plans/COMPREHENSIVE_AUDIT_V3.md) | **全面審計報告 V3**: ED3N/GARDEN/Model Bus/Router 深度審計 |
-| [PHASE_REVIEW](docs/06-project-management/plans/PHASE_REVIEW.md) | **階段審查 1 (06-02)**: 首次3代理並行審計，10維度評分 |
-| [PHASE_REVIEW2](docs/06-project-management/plans/PHASE_REVIEW2.md) | **階段審查 2 (06-03)**: 17會話後追蹤審計，~96% 綜合分數 |
-| [PHASE_REVIEW3](docs/06-project-management/plans/PHASE_REVIEW3.md) | **階段審查 3 (06-04)**: 3代理綜合審計，10維度判定 |
-| [PHASE_REVIEW4](docs/06-project-management/plans/PHASE_REVIEW4.md) | **階段審查 4 (06-05)**: H5 stub 冲刺，36/37 stubs 完成 |
-| [PHASE_REVIEW5](docs/06-project-management/plans/PHASE_REVIEW5.md) | **階段審查 5 (06-06)**: H5 sprint final，2837 測試，0 HIGH 漏洞 |
-| [ANGELA_LLM_SNN_ARCHITECTURE_PLAN](docs/06-project-management/plans/ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md) | **ED3N 架構計畫**: 外部字典解耦神經網路 — LLM + SNN 設計、訓練管線、4 階段路線圖 |
-| [GARDEN_MODEL_PLAN](docs/06-project-management/plans/GARDEN_MODEL_PLAN.md) | **GARDEN 擴展計畫**: 1GB 輕量級本地模型與五級擴展架構 |
+| [WIRING_MAP](docs/09-archive/auto-archived-2026-08-11/_analysis_WIRING_MAP_2026-05-21.md) | 接線圖、工廠鏈、死代碼 |
+| [CODE_STATISTICS](docs/09-archive/auto-archived-2026-08-11/_analysis_CODE_STATISTICS_2026-05-21.md) | 代碼統計、活/死/半成品 |
+| [MODULARITY_ANALYSIS](docs/09-archive/auto-archived-2026-08-11/_analysis_MODULARITY_ANALYSIS_2026-05-21.md) | God module、耦合、singleton |
+| [PROBLEM_ANALYSIS](docs/09-archive/auto-archived-2026-08-11/_analysis_PROBLEM_ANALYSIS_2026-05-21.md) | 三重視角審計、安全問題、優先級 |
+| [FORENSIC_AUDIT](docs/09-archive/auto-archived-2026-08-11/_analysis_FORENSIC_AUDIT_2026-05-22.md) | 三輪獨立審計：執行路徑、TCS 遷移、安全性 + 死代碼 |
+| [MASTER_CONSOLIDATED_PLAN](docs/09-archive/auto-archived-2026-08-11/MASTER_CONSOLIDATED_PLAN.md) | **進行中任務總計畫**：53 項、S/A/B/C 分級、53/53 完成 |
+| [CARD_INTEGRATION_PLAN](docs/09-archive/auto-archived-2026-08-11/ANGELA_CARD_INTEGRATION_PLAN.md) | 卡片管道 → ChatService 接線 v2：ModuleManager 驅動 |
+| [MODULE_MANAGER_DESIGN](docs/09-archive/auto-archived-2026-08-11/MODULE_MANAGER_SYSTEM.md) | ✅ **已實作** — M0-M5 (6 files + 100 tests) + 6 模組 |
+| [CARD_INTEGRATION_REVIEW](docs/09-archive/auto-archived-2026-08-11/CARD_INTEGRATION_PLAN_REVIEW.md) | 事前審計：執行前發現 25 問題（8 HIGH） |
+| [PHASE6_NEXT_PLAN](docs/09-archive/auto-archived-2026-08-11/PHASE6_NEXT_PLAN.md) | Quality finishing: Plugin 部署, Config handler, Magic number 遷移 |
+| [MASTER_FINALIZATION_PLAN](docs/09-archive/auto-archived-2026-08-11/MASTER_FINALIZATION_PLAN.md) | Final push to 0: 殘留 handler, 孤立服務, NotImplementedError |
+| [REMAINING_ISSUES_PLAN](docs/09-archive/auto-archived-2026-08-11/REMAINING_ISSUES_PLAN.md) | placeholder 清除、unittest→pytest 遷移 |
+| [TEST_RESTRUCTURE_PLAN](docs/09-archive/auto-archived-2026-08-11/TEST_RESTRUCTURE_PLAN.md) | 測試層級架構、conftest 分層、CI 整合 |
+| [COMPREHENSIVE_AUDIT_REPORT](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_REPORT.md) | **全面審計報告 V1**: 計畫、文檔、代碼、測試、配置、應用 |
+| [COMPREHENSIVE_AUDIT_REPORT_V2](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_REPORT_V2.md) | **全面審計報告 V2**: H5 後冲刺全面扫描 — 3 個真 stub、20 個有意義 except |
+| [COMPREHENSIVE_AUDIT_V3](docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_V3.md) | **全面審計報告 V3**: ED3N/GARDEN/Model Bus/Router 深度審計 |
+| [PHASE_REVIEW](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW.md) | **階段審查 1 (06-02)**: 首次3代理並行審計，10維度評分 |
+| [PHASE_REVIEW2](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW2.md) | **階段審查 2 (06-03)**: 17會話後追蹤審計，~96% 綜合分數 |
+| [PHASE_REVIEW3](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW3.md) | **階段審查 3 (06-04)**: 3代理綜合審計，10維度判定 |
+| [PHASE_REVIEW4](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW4.md) | **階段審查 4 (06-05)**: H5 stub 冲刺，36/37 stubs 完成 |
+| [PHASE_REVIEW5](docs/09-archive/auto-archived-2026-08-11/PHASE_REVIEW5.md) | **階段審查 5 (06-06)**: H5 sprint final，2837 測試，0 HIGH 漏洞 |
+| [ANGELA_LLM_SNN_ARCHITECTURE_PLAN](docs/09-archive/auto-archived-2026-08-11/ANGELA_LLM_SNN_ARCHITECTURE_PLAN.md) | **ED3N 架構計畫**: 外部字典解耦神經網路 — LLM + SNN 設計、訓練管線、4 階段路線圖 |
+| [GARDEN_MODEL_PLAN](docs/09-archive/auto-archived-2026-08-11/GARDEN_MODEL_PLAN.md) | **GARDEN 擴展計畫**: 1GB 輕量級本地模型與五級擴展架構 |
 | [ED3N_TRAINING_GUIDE](docs/06-project-management/guides/ED3N_TRAINING_GUIDE.md) | **ED3N 訓練指南**: 訓練、評估、部署 ED3N |
 
 ---
 
-**Version**: 7.5.0-dev | **Code Stats**: 610 Python files, ~96K lines | **Tests**: ~5,432 (tests/) — 0 errors | **Security**: 72+ alerts fixed → 0 remaining (Dependabot/CodeQL/Secret Scanning all clean) | **Intelligence**: 6.0/10 (upper, with LLM) / native: 數理化引擎 9.5 · 神經開放域 1.0 (re-measured 2026-08-28; see INTELLIGENCE_ASSESSMENT.md §1) | **Architecture**: ~95% | **Learning Architecture**: 80-90% (weights ~5% trained) | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)
+**Version**: 7.5.0-dev | **Code Stats**: 667 Python files, ~96K lines | **Tests**: ~5,432 (tests/) — 0 errors | **Security**: 72+ alerts fixed → 0 remaining (Dependabot/CodeQL/Secret Scanning all clean) | **Intelligence**: 6.0/10 (upper, with LLM) / native: 數理化引擎 9.5 · 神經開放域 1.0 (re-measured 2026-08-28; see INTELLIGENCE_ASSESSMENT.md §1) | **Architecture**: ~95% | **Learning Architecture**: 80-90% (weights ~5% trained) | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)
 
 
 ## 附屬遊戲 (Ancillary Game)

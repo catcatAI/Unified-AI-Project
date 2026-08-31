@@ -230,7 +230,8 @@ def setup_middleware(app: FastAPI) -> None:
         from core.system.config.network_defaults import get_cors_origins
 
         _origins = get_cors_origins()
-    except Exception:
+    except Exception as e:
+        logger.warning(f"CORS config failed, falling back to wildcard: {e}", exc_info=True)
         _origins = ["*"]
     # Browsers reject wildcard with credentials; fall back to no-credentials
     # when wildcard is in use so the header is spec-compliant.

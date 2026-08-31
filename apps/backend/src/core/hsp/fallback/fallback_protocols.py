@@ -23,9 +23,21 @@ class FileBasedProtocol:
         self.base_path = base_path
         os.makedirs(base_path, exist_ok=True)
 
+    def _sanitize_key(self, key: str) -> str:
+        import re
+
+        sanitized = re.sub(r"[^a-zA-Z0-9._-]", "_", key)
+        return sanitized.replace("..", "_")
+
     def save(self, key: str, value: Any) -> bool:
         try:
+            key = self._sanitize_key(key)
             file_path = os.path.join(self.base_path, f"{key}.json")
+            if os.path.commonpath([os.path.abspath(file_path), os.path.abspath(self.base_path)]) != os.path.abspath(
+                self.base_path
+            ):
+                logger.warning(f"Invalid key for FileBasedProtocol.save: {key}")
+                return False
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(value, f, ensure_ascii=False, indent=2)
             return True
@@ -35,7 +47,13 @@ class FileBasedProtocol:
 
     def load(self, key: str) -> Optional[Any]:
         try:
+            key = self._sanitize_key(key)
             file_path = os.path.join(self.base_path, f"{key}.json")
+            if os.path.commonpath([os.path.abspath(file_path), os.path.abspath(self.base_path)]) != os.path.abspath(
+                self.base_path
+            ):
+                logger.warning(f"Invalid key for FileBasedProtocol.load: {key}")
+                return None
             if not os.path.exists(file_path):
                 return None
             with open(file_path, "r", encoding="utf-8") as f:

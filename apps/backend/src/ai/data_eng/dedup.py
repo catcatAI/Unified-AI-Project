@@ -22,8 +22,11 @@ existing key) — never destructive truncation.  Bounds live in the caller.
 from __future__ import annotations
 
 import hashlib
+import logging
 import re
 from typing import Dict, Iterable, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "count_suffix_key",
@@ -143,7 +146,8 @@ def semantic_dedup(
             idx = int(scores.argmax()) if hasattr(scores, "argmax") else 0
             if idx < len(key_order):
                 return key_order[idx], max_score
-    except Exception:
+    except Exception as e:
+        logger.debug(f"dedup semantic search failed: {e}", exc_info=True)
         return None, 0.0
     return None, 0.0
 

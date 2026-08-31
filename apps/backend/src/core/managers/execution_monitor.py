@@ -22,6 +22,7 @@ import asyncio
 import logging
 import os
 import signal
+import shlex
 import subprocess
 import threading
 import time
@@ -130,6 +131,7 @@ class ExecutionMonitor:
         # 自適應超時
         self._execution_history: List[float] = []
         self._adaptive_timeout_cache: Dict[str, float] = {}
+        self._adaptive_timeout_cache_max = 200  # LRU bound to prevent unbounded growth
 
     def _setup_logging(self) -> None:
         """設置日誌"""
@@ -191,7 +193,11 @@ class ExecutionMonitor:
             self.config.min_timeout, min(adaptive_timeout, self.config.max_timeout)
         )
 
-        # 緩存結果
+        # 緩存結果 (LRU eviction to prevent unbounded growth)
+        if len(self._adaptive_timeout_cache) >= self._adaptive_timeout_cache_max:
+            # Evict oldest entry (dict preserves insertion order in Python 3.7+)
+            oldest_key = next(iter(self._adaptive_timeout_cache))
+            del self._adaptive_timeout_cache[oldest_key]
         self._adaptive_timeout_cache[cache_key] = adaptive_timeout
 
         self.logger.info(f"Calculated adaptive timeout: {adaptive_timeout}s")
@@ -361,7 +367,7 @@ class ExecutionMonitor:
         try:
             # 創建進程
             if isinstance(command, str) and not shell:
-                command = command.split()
+                command = shlex.split(command)
 
             self._current_process = subprocess.Popen(
                 command,
@@ -502,7 +508,7 @@ class ExecutionMonitor:
                     )
                 else:
                     process = await asyncio.create_subprocess_exec(
-                        *command.split(),
+                        *shlex.split(command),
                         stdout=asyncio.subprocess.PIPE,
                         stderr=asyncio.subprocess.PIPE,
                         cwd=cwd,

@@ -60,7 +60,8 @@ class HardwareProfile:
         try:
             import shutil
             return shutil.disk_usage("/").free / (1024 ** 3)
-        except Exception:
+        except Exception as e:
+            logger.debug(f"disk_usage failed: {e}", exc_info=True)
             return 0.0
 
     @staticmethod

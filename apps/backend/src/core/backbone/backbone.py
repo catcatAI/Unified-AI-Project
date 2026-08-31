@@ -340,8 +340,8 @@ class Backbone:
                 regs.translators.register_rule(
                     "semantic_key_mapper", SemanticKeyMapperTranslator()
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Backbone registries init failed: {e}", exc_info=True)
             self._registries = regs
         return self._registries
 
@@ -419,8 +419,8 @@ class Backbone:
 
                 if not self._mounts.has("shared_latent_space"):
                     self._mounts.register("shared_latent_space", get_shared_latent_space())
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Backbone mounts shared_latent_space failed: {e}", exc_info=True)
         return self._mounts
 
     @property
@@ -648,8 +648,8 @@ class Backbone:
         self._free_matrices[name] = matrix
         try:
             self.mounts.register(name, matrix)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Backbone mount {name} failed: {e}", exc_info=True)
 
     def _free_matrix_entry(self, key: str, matrix: Any) -> Dict[str, Any]:
         raw = (
@@ -687,10 +687,10 @@ class Backbone:
                 self._free_matrices["shared_latent_space"] = space
                 try:
                     self.mounts.register("shared_latent_space", space)
-                except Exception:
-                    pass
-            except Exception:
-                pass
+                except Exception as e:
+                    logger.debug(f"Backbone free_matrices mount failed: {e}", exc_info=True)
+            except Exception as e:
+                logger.debug(f"Backbone shared_latent_space get failed: {e}", exc_info=True)
         return [self._free_matrix_entry(k, m) for k, m in self._free_matrices.items()]
 
     def get_free_matrix(self, name: str) -> Optional[Any]:

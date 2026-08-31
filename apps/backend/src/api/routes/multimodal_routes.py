@@ -28,6 +28,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["multimodal"])
 
+# Upload size guard — prevents OOM from attacker-controlled large files
+_MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
+
 _SERVICE = None
 
 
@@ -67,6 +70,10 @@ async def encode_endpoint(
     data = await file.read()
     if not data:
         raise HTTPException(status_code=400, detail="Empty file data")
+    if len(data) > _MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=413, detail=f"File too large: {len(data)} bytes > {_MAX_UPLOAD_BYTES} limit"
+        )
     result = await svc.encode(data, modality, item_id)
     if result.get("error"):
         raise HTTPException(status_code=400, detail=result["error"])
@@ -129,6 +136,8 @@ async def retrieve_endpoint(
 
     Returns list of {key, score, modality, metadata}.
     """
+    if top_k < 1 or top_k > 100:
+        raise HTTPException(status_code=400, detail="top_k must be between 1 and 100")
     svc = _get_service()
     if svc is None:
         raise HTTPException(status_code=503, detail="MultimodalService not available")
@@ -151,6 +160,12 @@ async def train_endpoint(
     Modes: 'full' (contrastive + reconstruction), 'contrastive', 'recon'.
     Returns status and final loss metrics.
     """
+    if mode not in ("full", "contrastive", "recon"):
+        raise HTTPException(status_code=400, detail="mode must be one of: full, contrastive, recon")
+    if epochs < 1 or epochs > 50:
+        raise HTTPException(status_code=400, detail="epochs must be between 1 and 50")
+    if lr <= 0 or lr > 1.0:
+        raise HTTPException(status_code=400, detail="lr must be between 0 and 1.0")
     svc = _get_service()
     if svc is None:
         raise HTTPException(status_code=503, detail="MultimodalService not available")
@@ -172,6 +187,8 @@ async def evaluate_endpoint(
     If item_id is provided, evaluates on that item; otherwise uses synthetic.
     Returns quality metrics (SSIM/PSNR/SNR).
     """
+    if n_samples < 1 or n_samples > 100:
+        raise HTTPException(status_code=400, detail="n_samples must be between 1 and 100")
     svc = _get_service()
     if svc is None:
         raise HTTPException(status_code=503, detail="MultimodalService not available")
@@ -241,6 +258,10 @@ async def cross_infer_endpoint(
     data = b""
     if file:
         data = await file.read()
+        if len(data) > _MAX_UPLOAD_BYTES:
+            raise HTTPException(
+                status_code=413, detail=f"File too large: {len(data)} bytes > {_MAX_UPLOAD_BYTES} limit"
+            )
     if not data and not item_id:
         # If no data and no item_id, still can do cross-modal comparison
         if source_modality == "cross" and mode in ("auto", "compare"):
@@ -277,6 +298,8 @@ async def visualize_endpoint(
     item_ids: Optional[str] = Form(None),
     n_latents: int = Form(20),
 ):
+    if n_latents < 1 or n_latents > 200:
+        raise HTTPException(status_code=400, detail="n_latents must be between 1 and 200")
     """Generate 2D projection coordinates of latent space for visualization.
 
     Accepts a list of item IDs (JSON array) or n_latents random samples.
@@ -367,6 +390,8 @@ async def cml_trend_endpoint():
 @router.post("/multimodal/cml/train")
 async def cml_train_endpoint(epochs: int = Form(3)):
     """Manually trigger CML micro-training cycle."""
+    if epochs < 1 or epochs > 50:
+        raise HTTPException(status_code=400, detail="epochs must be between 1 and 50")
     svc = _get_service()
     if svc is None:
         raise HTTPException(status_code=503, detail="MultimodalService not available")
@@ -396,6 +421,8 @@ async def memory_search_endpoint(
     modality_filter: Optional[str] = Form(None),
 ):
     """Search memory by latent similarity to a registered item."""
+    if top_k < 1 or top_k > 100:
+        raise HTTPException(status_code=400, detail="top_k must be between 1 and 100")
     svc = _get_service()
     if svc is None:
         return {"success": False, "results": [], "count": 0}

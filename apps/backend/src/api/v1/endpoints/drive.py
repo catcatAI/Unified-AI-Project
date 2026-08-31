@@ -501,16 +501,34 @@ async def upload_file(
 
     suffix = Path(file.filename).suffix if file.filename else ".tmp"
     fd, tmp_path = tempfile.mkstemp(suffix=suffix)
+    _fd_closed = False
     try:
         content = await file.read()
+        # Upload size guard — prevent OOM (mirrors multimodal/chat limits)
+        _MAX_DRIVE_UPLOAD = 20 * 1024 * 1024  # 20 MB
+        if len(content) > _MAX_DRIVE_UPLOAD:
+            os.close(fd)
+            _fd_closed = True
+            raise HTTPException(
+                status_code=413, detail=f"File too large: {len(content)} bytes > {_MAX_DRIVE_UPLOAD} limit"
+            )
         with os.fdopen(fd, "wb") as f:
+            _fd_closed = True
             f.write(content)
         result = svc.upload_file(tmp_path, folder_id)
         if result is None:
             raise HTTPException(status_code=400, detail="Upload failed")
         return result
     finally:
-        os.unlink(tmp_path)
+        if not _fd_closed:
+            try:
+                os.close(fd)
+            except Exception:
+                pass
+        try:
+            os.unlink(tmp_path)
+        except Exception:
+            pass
 
 
 @router.post("/files/create")
@@ -524,6 +542,9 @@ async def create_file(
     """建立文字檔案並上傳到 Drive"""
     if not svc.is_authenticated():
         raise HTTPException(status_code=401, detail="Not authenticated")
+    # Size guard — prevent unbounded Drive upload
+    if len(content.encode("utf-8")) > 20 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Content too large (>20MB limit)")
     result = svc.create_file_from_text(file_name, content, mime_type, folder_id)
     if result is None:
         raise HTTPException(status_code=400, detail="File creation failed")

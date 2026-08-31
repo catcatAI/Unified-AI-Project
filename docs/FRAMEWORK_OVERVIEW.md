@@ -10,7 +10,7 @@
 # Angela AI Framework Overview
 
 > **Framework positioning**: A modular, extensible framework for building digital life systems with hybrid AI (LLM + SNN + biological simulation).
-> **Codebase**: 610 Python files (~96K lines) in `apps/backend/src/` + 136 JS/TS files across 3 apps + 5,369 tests.
+> **Codebase**: 667 Python files (~96K lines) in `apps/backend/src/` + 136 JS/TS files across 3 apps + 5,432 tests.
 > **Intelligence**: Upper bound 6.0/10 (with LLM API), **native deterministic-engine capability strong** (math/physics/chemistry 9.5, knowledge 10, symbolic reasoning 10 — real, high-certainty, scored as capability); **neural SNN's job = learning associations** (A>taller>B), NOT memorizing knowledge — its measured **association capability = 1.0** (ED3N & GARDEN, per [INTELLIGENCE_ASSESSMENT.md](06-project-management/INTELLIGENCE_ASSESSMENT.md) §4.1.2). Native capability is multi-dimensional — there is no single "actual" total. See linked doc for the scoring standard.
 > **Architecture completeness**: ~95% (framework structure exists, but ML model weights are 5% trained).
 > **Version**: 7.5.0-dev | **License**: MIT
@@ -212,7 +212,7 @@ python scripts/run_angela.py           # Full stack
 python scripts/run_angela.py --api-only # Backend only
 
 # Test
-pytest tests/                           # 5,369 tests
+pytest tests/                           # 5,432 tests
 pytest tests/path/to/test_file.py -v    # Single file
 
 # Lint & Type-check
@@ -465,7 +465,7 @@ Unlike other AI agent frameworks (see §6.1), Angela has **actual weight-based l
 | **ML content < framework** | User experience far below architecture promise | Decoder random weights, unwired Whisper, untrained SNN |
 | **Complexity/function ratio** | 610 files but less functionality than expected | Tries to be too many things at once |
 | **Unclear user positioning** | Fails to attract any single audience clearly | Is it a developer framework? User product? Research platform? |
-| **No standard benchmarks** | MMLU, HumanEval, etc. all missing | Focus on infra tests (5,369) over quality tests |
+| **No standard benchmarks** | MMLU, HumanEval, etc. all missing | Focus on infra tests (5,432) over quality tests |
 | **Agents registered but not called** | 11 agents exist but pipeline never invokes them | Architectural decision pending |
 | **Auto-routing missing** | QueryClassifier + ModelBus exist but are bypassed by direct LLM calls | Pipeline shortcuts reduce effectiveness |
 
@@ -504,8 +504,8 @@ These features have infrastructure but need implementation work:
 | [ANGELA_FULL_ARCHITECTURE.md](architecture/ANGELA_FULL_ARCHITECTURE.md) | **Full component deep dive** (1330 lines, Chinese) |
 | [IDEAL_ARCHITECTURE.md](IDEAL_ARCHITECTURE.md) | **Target architecture blueprint** (1115 lines) |
 | [QUICK_START.md](QUICK_START.md) | **Getting started guide** (commands verified) |
-| [COMPREHENSIVE_AUDIT_2026-06-25.md](COMPREHENSIVE_AUDIT_2026-06-25.md) | **Latest full project audit** |
-| [COMPREHENSIVE_REPAIR_ROADMAP.md](COMPREHENSIVE_REPAIR_ROADMAP.md) | **Repair roadmap** (Phase A-F, all complete) |
+| [COMPREHENSIVE_AUDIT_2026-06-25.md](09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_2026-06-25.md) | **Latest full project audit** |
+| [COMPREHENSIVE_REPAIR_ROADMAP.md](09-archive/auto-archived-2026-08-11/COMPREHENSIVE_REPAIR_ROADMAP.md) | **Repair roadmap** (Phase A-F, all complete) |
 | [MASTER_TASK_MAP.md](06-project-management/MASTER_TASK_MAP.md) | **Full provenance** for 144 claims across 23 docs |
 | [SERVICE_CATALOG.md](development/SERVICE_CATALOG.md) | **Service directory** with import status |
 | [GLOSSARY.md](00-overview/GLOSSARY.md) | **Terminology reference** |
@@ -722,9 +722,9 @@ Angela AI 有 **4 個學習層級**，每個建立在前者之上。這比標準
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 6 層架構總覽 |
 | [完整架構圖](architecture/ANGELA_FULL_ARCHITECTURE.md) | 完整元件深度說明（1330 行） |
 | [QUICK_START.md](QUICK_START.md) | 快速啟動指南 |
-| [最新審計報告](COMPREHENSIVE_AUDIT_2026-06-25.md) | 全專案審計 |
+| [最新審計報告](09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_2026-06-25.md) | 全專案審計 |
 | [MASTER_TASK_MAP.md](06-project-management/MASTER_TASK_MAP.md) | 144 項 claim 完整溯源 |
 
 ---
 
-**Version**: 7.5.0-dev | **Code**: 610 Python files, ~96K lines | **Tests**: 5,369 (tests/; 0 errors) | **Intelligence**: 6.0/3.0 (with LLM / native) | **Architecture**: ~95% | **Training**: ~5%
+**Version**: 7.5.0-dev | **Code**: 667 Python files, ~96K lines | **Tests**: 5,432 (tests/; 0 errors) | **Intelligence**: 6.0/3.0 (with LLM / native) | **Architecture**: ~95% | **Training**: ~5%

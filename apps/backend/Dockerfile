@@ -13,7 +13,13 @@ COPY . .
 
 # Ensure the package source is importable (src/ layout)
 ENV PYTHONPATH=/app
+
+# Create non-root user (CIS hardening — mirrors root Dockerfile)
+RUN groupadd -r angela && useradd -r -g angela -d /app -s /sbin/nologin angela \
+    && chown -R angela:angela /app
+
 WORKDIR /app/src
+USER angela
 
 # Expose port 8000 to the outside world
 EXPOSE 8000

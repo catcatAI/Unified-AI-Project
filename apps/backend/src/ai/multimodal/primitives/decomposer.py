@@ -273,7 +273,8 @@ if __name__ == "__main__":
         "multimodal",
         "cifar10",
     )
-    idx = json.load(open(os.path.join(data_dir, "index.json")))
+    with open(os.path.join(data_dir, "index.json"), "r", encoding="utf-8") as _f:
+        idx = json.load(_f)
 
     for cls in idx["classes"][:5]:
         cls_dir = os.path.join(data_dir, cls)

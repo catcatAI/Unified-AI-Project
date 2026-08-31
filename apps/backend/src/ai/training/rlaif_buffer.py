@@ -54,8 +54,8 @@ class RLAIFBuffer:
             from core.system.config.magic_numbers import _get
 
             self.enabled = bool(_get("multimodal_train.rlaif_enabled", False))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"RLAIF config load failed: {e}", exc_info=True)
 
     def maybe_enqueue(self, prompt: str, vec: np.ndarray) -> bool:
         """主訓練循環調用: 10% 抽樣入隊，返回是否入隊."""

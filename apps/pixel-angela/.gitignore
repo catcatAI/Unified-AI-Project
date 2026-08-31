@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 *.npy
+!angela_dna_v1.npy
 *.png
 context_storage/
 .env

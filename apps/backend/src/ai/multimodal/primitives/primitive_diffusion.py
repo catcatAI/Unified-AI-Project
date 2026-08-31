@@ -315,8 +315,8 @@ class TwoLevelDiffusion:
             if not compute_bool("primitive_diffusion", True):
                 # Fallback to single-level (stage2 only)
                 return self.stage2.sample(cond, steps=steps, seed=seed)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"primitive_diffusion compute gate failed: {e}", exc_info=True)
         coarse = self.stage1.sample(cond, steps=max(5, steps // 2), seed=seed)
         # Stage2 refines coarse: use coarse as extra conditioning via simple blend
         # (add 0.1*coarse to cond's first 263 dims projection — cheap FiLM-like)

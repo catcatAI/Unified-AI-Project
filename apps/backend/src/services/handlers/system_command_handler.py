@@ -6,6 +6,7 @@ Uses create_subprocess_exec (no shell) to prevent injection.
 
 import asyncio
 import logging
+import shlex
 from typing import Optional
 
 from core.i18n.i18n_manager import t
@@ -49,7 +50,7 @@ class SystemCommandHandler:
         cmd = self._extract_command(text)
         if not cmd:
             return t("sys_cmd.specify_command")
-        parts = cmd.split()
+        parts = shlex.split(cmd)
         base_cmd = parts[0].lower() if parts else ""
         if base_cmd not in _SAFE_COMMANDS:
             return t(

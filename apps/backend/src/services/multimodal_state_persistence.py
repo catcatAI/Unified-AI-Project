@@ -76,9 +76,26 @@ class MultimodalStatePersistence:
 
     # --- Save ---
 
+    def _sanitize_label(self, label: str) -> str:
+        """Sanitize checkpoint label to prevent path traversal."""
+        # Only allow alphanumeric, dash, underscore; replace others
+        import re
+
+        sanitized = re.sub(r"[^a-zA-Z0-9._-]", "_", label)
+        # Prevent directory traversal via .. or absolute paths
+        sanitized = sanitized.replace("..", "_")
+        if not sanitized or sanitized in (".", ".."):
+            sanitized = f"cp_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        return sanitized
+
     async def save_checkpoint(self, label: Optional[str] = None) -> Dict[str, Any]:
-        label = label or f"cp_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        label = self._sanitize_label(label or f"cp_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
         cp_dir = os.path.join(self._checkpoint_dir, label)
+        # Verify cp_dir is within checkpoint_dir to prevent traversal
+        if os.path.commonpath([os.path.abspath(cp_dir), os.path.abspath(self._checkpoint_dir)]) != os.path.abspath(
+            self._checkpoint_dir
+        ):
+            raise ValueError(f"Invalid checkpoint label: {label}")
         os.makedirs(cp_dir, exist_ok=True)
 
         components_saved: List[str] = []
@@ -185,7 +202,12 @@ class MultimodalStatePersistence:
         Returns:
             dict with {label, path, components_loaded, status}
         """
+        label = self._sanitize_label(label)
         cp_dir = os.path.join(self._checkpoint_dir, label)
+        if os.path.commonpath([os.path.abspath(cp_dir), os.path.abspath(self._checkpoint_dir)]) != os.path.abspath(
+            self._checkpoint_dir
+        ):
+            return {"status": "error", "error": f"Invalid checkpoint label: {label}"}
         if not os.path.isdir(cp_dir):
             return {"status": "error", "error": f"Checkpoint not found: {label}"}
 
@@ -333,5 +355,10 @@ class MultimodalStatePersistence:
 
         Returns None if the checkpoint doesn't exist.
         """
+        label = self._sanitize_label(label)
         cp_dir = os.path.join(self._checkpoint_dir, label)
+        if os.path.commonpath([os.path.abspath(cp_dir), os.path.abspath(self._checkpoint_dir)]) != os.path.abspath(
+            self._checkpoint_dir
+        ):
+            return None
         return cp_dir if os.path.isdir(cp_dir) else None

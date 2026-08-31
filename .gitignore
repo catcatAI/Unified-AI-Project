@@ -183,3 +183,14 @@ IMPLEMENTATION_*.md
 tmp_src_files.txt
 coverage.json
 tests/utils/text_utils.py
+# Crystal-cards runtime artifacts (regenerated every run)
+apps/crystal-cards/play-report.json
+apps/crystal-cards/dist/
+# Codebuff / freebuff local artifacts
+.freebuff/
+# Test output artifacts (regenerated, should not be tracked)
+tests/test_output_data/
+# Pixel-angela runtime model (49KB DNA vector — small, intentional tracking)
+# *.npy is globally ignored; this file is an explicit exception
+!apps/pixel-angela/angela_dna_v1.npy
+# Test output artifacts should stay ignored (see below)

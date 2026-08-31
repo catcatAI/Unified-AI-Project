@@ -193,7 +193,8 @@ class GardenDictionaryAdapter(_BaseDictionaryAdapter):
         if callable(fn):
             try:
                 out = fn(input_data, **kwargs)
-            except Exception:
+            except Exception as e:
+                logger.debug(f"dict _query_scored failed: {e}", exc_info=True)
                 return []
         scored = []
         if hasattr(out, "items"):
@@ -368,7 +369,8 @@ class SemanticKeyMapperAdapter(_BaseDictionaryAdapter):
         if isinstance(q, (list, tuple)):
             try:
                 q = np.asarray(q, dtype=np.float32)
-            except Exception:
+            except Exception as e:
+                logger.debug(f"dict q convert failed: {e}", exc_info=True)
                 return []
         if not isinstance(q, np.ndarray):
             return []
@@ -377,7 +379,8 @@ class SemanticKeyMapperAdapter(_BaseDictionaryAdapter):
             return []
         try:
             hits = fn(q, top_k=kwargs.get("top_k", 5), mode=kwargs.get("mode", "auto"))
-        except Exception:
+        except Exception as e:
+            logger.debug(f"dict map_latent_to_keys failed: {e}", exc_info=True)
             return []
         out: List[Any] = []
         for h in hits or []:

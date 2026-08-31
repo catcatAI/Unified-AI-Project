@@ -980,6 +980,10 @@ class HSPConnector:
     def _cache_message(self, message_id: str, result: bool) -> None:
         """Cache a message result with TTL."""
         if message_id:
+            # LRU eviction to prevent unbounded growth
+            if len(self.message_cache) >= 1000:
+                oldest = next(iter(self.message_cache))
+                del self.message_cache[oldest]
             self.message_cache[message_id] = {"result": result, "timestamp": time.time()}
 
     def _get_cached_message(self, message_id: str) -> Optional[bool]:

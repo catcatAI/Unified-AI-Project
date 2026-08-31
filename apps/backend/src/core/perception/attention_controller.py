@@ -49,6 +49,11 @@ class AttentionController:
         self.current_target_id = target_id
         self._fixation_history.append((pos[0], pos[1], self._current_time, 0.3))
         self._scan_path.append((pos[0], pos[1], self._current_time))
+        # Bound histories to prevent unbounded growth (long-running sessions)
+        if len(self._fixation_history) > self.scan_path_length * 20:
+            self._fixation_history = self._fixation_history[-self.scan_path_length * 10 :]
+        if len(self._scan_path) > self.scan_path_length * 20:
+            self._scan_path = self._scan_path[-self.scan_path_length * 10 :]
         self.last_saccade_time = self._current_time
         return True
 

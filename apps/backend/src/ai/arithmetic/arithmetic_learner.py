@@ -85,7 +85,8 @@ def _parse_task_accuracy(raw: bytes) -> Dict[str, float]:
     """Parse the serialised ``task_accuracy`` mapping from a checkpoint."""
     try:
         value = ast.literal_eval(raw.decode("utf-8"))
-    except Exception:
+    except Exception as e:
+        logger.debug(f"task_accuracy parse failed: {e}", exc_info=True)
         return {}
     if not isinstance(value, dict):
         return {}

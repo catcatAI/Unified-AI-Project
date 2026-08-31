@@ -120,9 +120,11 @@ class HabitFormation:
             # Failed repetition doesn't count toward habit
             return habit
 
-        # Record repetition
+        # Record repetition (bounded to prevent unbounded growth)
         habit.repetition_count += 1
         self.repetition_history[habit_id].append((context, datetime.now()))
+        if len(self.repetition_history[habit_id]) > 200:
+            self.repetition_history[habit_id] = self.repetition_history[habit_id][-100:]
 
         # Calculate context stability
         contexts = [c for c, _ in self.repetition_history[habit_id][-20:]]

@@ -72,23 +72,23 @@ pytest tests/path/to/test_file.py -v
 
 | Directory | Purpose |
 |-----------|---------|
-| `apps/backend/src/` | Python FastAPI backend (610 files, ~96K lines) |
+| `apps/backend/src/` | Python FastAPI backend (667 files, ~96K lines) |
 | `apps/desktop-app/` | Electron + Live2D desktop companion |
 | `apps/web-live2d-viewer/` | Web-based Live2D viewer |
 | `apps/pixel-angela/` | PyQt6 pixel art engine |
 | `packages/shared-js/` | Shared JS library (33 files) |
 | `packages/cli/` | Python CLI tools |
-| `tests/` | Test suite (~4,499 tests) |
+| `tests/` | Test suite (~5,432 tests) |
 | `docs/` | Documentation (50+ MD files) |
 
 ## Key Facts
 
-- **610 Python files** in backend src (~96K lines)
-- **~4,499 tests** across 480+ test files, 0 errors
-- **Architecture health**: ~95% (2026-07-18 verified) - [see audit](COMPREHENSIVE_AUDIT_2026-06-25.md)
+- **667 Python files** in backend src (~96K lines)
+- **~5,432 tests** across 480+ test files, 0 errors
+- **Architecture health**: ~95% (2026-07-18 verified) - [see audit](09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_2026-06-25.md)
 - **Repair phases**: All 6 phases (0-5 + C/D/E/F) complete
-- **See**: `docs/COMPREHENSIVE_REPAIR_ROADMAP.md` for full repair status
+- **See**: `docs/09-archive/auto-archived-2026-08-11/COMPREHENSIVE_REPAIR_ROADMAP.md` for full repair status
 
 ---
 
-*For detailed developer guidelines, see [AGENTS.md](../AGENTS.md). For version history, see [CHANGELOG.md](../CHANGELOG.md). For full audit, see [COMPREHENSIVE_AUDIT_2026-06-25.md](COMPREHENSIVE_AUDIT_2026-06-25.md).*
+*For detailed developer guidelines, see [AGENTS.md](../AGENTS.md). For version history, see [CHANGELOG.md](../CHANGELOG.md). For full audit, see [COMPREHENSIVE_AUDIT_2026-06-25.md](09-archive/auto-archived-2026-08-11/COMPREHENSIVE_AUDIT_2026-06-25.md).*

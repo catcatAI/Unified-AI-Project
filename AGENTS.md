@@ -7,7 +7,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: en
-    LAST_MODIFIED: 2026-07-13 (updated for §X #257: MD sync + security sprint)
+    LAST_MODIFIED: 2026-08-31 (audit fixes: .gitignore + pickle + Dockerfile + concurrency + upload limits)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -73,7 +73,7 @@ mypy apps/backend/src                    # Type check
 pre-commit run --all-files
 ```
 
-> 📌 **NOTE CHAIN IS A HISTORICAL CHANGELOG**: Every test count embedded below (5,085 / 4,717 / 4,734 / …) is a dated milestone at the time of that NOTE. The current authoritative count is **5,369 collected (tests/), 0 errors** (re-verified 2026-08-20).
+> 📌 **NOTE CHAIN IS A HISTORICAL CHANGELOG**: Every test count embedded below (5,085 / 4,717 / 4,734 / …) is a dated milestone at the time of that NOTE. The current authoritative count is **5,432 collected (tests/), 0 errors** (re-verified 2026-08-31).
 
 > ✅ **NOTE (Updated 2026-06-29)**: Extended session now **158+ commits** (Jun 25–29). Includes §X #34-#54: save_visual_decoder_weights, TemporalState↔CausalReasoningEngine bridge, U5 security, all stub eliminations (R1-R3, §X #27), T1-T5 training DONE, 5 real stub modules (§X #49), ripple/node+influence/space stubs (§X #50), magic number migration (§X #51), test_final.py fix (§X #52), 4 Level5ASI STUB→real modules (§X #53), formula coefficient migration (§X #54). **All stubs eliminated** (0 stubs). **5,085 tests collected** (full testpaths), 4,578 (tests/), 0 errors.
 > 
@@ -332,7 +332,7 @@ try {
 
 1. **No AI self-assigned MAJOR versions**: Any version bump to MAJOR or MINOR must be explicitly approved by a human. AI agents may increment PATCH only.
 2. **CHANGELOG must match real versions**: Every CHANGELOG entry must correspond to a real git tag or source code version change. Fictional/unreleased versions must be marked `Internal/Unreleased`.
-3. **All 14 version locations must stay in sync**: Before any commit that changes `package.json` version, run a consistency check across all version files. See `docs/06-project-management/plans/MASTER_CONSOLIDATED_PLAN.md` for the full file list.
+3. **All 14 version locations must stay in sync**: Before any commit that changes `package.json` version, run a consistency check across all version files. See `docs/06-project-management/MASTER_TASK_MAP.md` for the full file list.
 4. **No bare "Fix and update" commits**: Every commit that touches a version field must explain WHY in the commit message body.
 
 ## Git Workflow
@@ -349,7 +349,7 @@ black apps/backend/src tests/ && flake8 apps/backend/src tests/
 
 ```
 apps/
-  backend/           # Python FastAPI + AI systems (610 Python files, ~96K lines)
+  backend/           # Python FastAPI + AI systems (667 Python files, ~96K lines)
     ai/core/         # QueryClassifier, ExecutionGate, ModelBus, unicode_utils
     ai/ed3n/         # ED3N engine (reflex → SNN → decode → cycle)
     ai/garden/       # GARDEN lightweight inference engine

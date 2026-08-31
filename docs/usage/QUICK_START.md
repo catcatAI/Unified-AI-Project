@@ -165,5 +165,5 @@ Ensure you're running from the project root (`Unified-AI-Project/`), not from in
 ## Next Steps
 
 - [Usage Scenarios](SCENARIOS.md) — train / configure (optional), custom LLM
-- [Scripts Reference](../scripts/ACTIVE_SCRIPTS.md) — full command catalog
+- [Scripts Reference](../../scripts/ACTIVE_SCRIPTS.md) — full command catalog
 - [Architecture Overview](../architecture/ANGELA_FULL_ARCHITECTURE.md) — system design

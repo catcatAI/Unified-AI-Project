@@ -19,7 +19,9 @@ middleware:
     allow_origins: ["*"]
     allow_methods: ["*"]
     allow_headers: ["*"]
-    allow_credentials: true
+    # MUST be false when allow_origins is ["*"] — browsers reject wildcard with credentials
+    # lifespan.py enforces: allow_credentials = "*" not in origins
+    allow_credentials: false
 
 # ── Session Manager ──────────────────────────────────────────────────────────
 session_manager:

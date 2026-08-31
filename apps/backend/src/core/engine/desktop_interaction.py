@@ -432,8 +432,8 @@ class DesktopInteraction:
         self._file_cache: Dict[str, Dict[str, Any]] = {}
         self._watched_files: Set[str] = set()
 
-        # Thread safety
-        self._lock = threading.Lock()
+        # Thread safety — asyncio.Lock for async _scan_desktop
+        self._lock = asyncio.Lock()
 
         # Running state
         self._running = False
@@ -521,7 +521,7 @@ class DesktopInteraction:
                     "mtime": fstat.st_mtime if fstat else 0,
                 }
 
-        with self._lock:
+        async with self._lock:
             # Check for deleted files
             for cached_file in list(self._file_cache.keys()):
                 if cached_file not in current_files:
@@ -776,7 +776,8 @@ class DesktopInteraction:
             system = platform.system()
 
             if system == "Windows":
-                self._set_wallpaper_windows(image_path)
+                loop = asyncio.get_running_loop()
+                await loop.run_in_executor(None, lambda: self._set_wallpaper_windows(image_path))
                 return True
 
             elif system == "Darwin":  # macOS

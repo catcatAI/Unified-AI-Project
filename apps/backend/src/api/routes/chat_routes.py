@@ -138,23 +138,25 @@ sessions = TTLSessionManager()
 _MAX_LATEST_RESPONSES = 1000
 _latest_responses: Dict[str, Dict[str, Any]] = {}
 _latest_responses_order: List[str] = []  # insertion order for LRU eviction
+_latest_responses_lock = threading.Lock()
 
 
 def _set_latest_response(session_id: str, data: Dict[str, Any]) -> None:
     """Store a response with bounded eviction to prevent memory leaks."""
-    if session_id in _latest_responses:
-        # Update existing — move to end
-        _latest_responses[session_id] = data
-        if session_id in _latest_responses_order:
-            _latest_responses_order.remove(session_id)
-        _latest_responses_order.append(session_id)
-    else:
-        _latest_responses[session_id] = data
-        _latest_responses_order.append(session_id)
-    # Evict oldest entries if over limit
-    while len(_latest_responses) > _MAX_LATEST_RESPONSES:
-        oldest = _latest_responses_order.pop(0)
-        _latest_responses.pop(oldest, None)
+    with _latest_responses_lock:
+        if session_id in _latest_responses:
+            # Update existing — move to end
+            _latest_responses[session_id] = data
+            if session_id in _latest_responses_order:
+                _latest_responses_order.remove(session_id)
+            _latest_responses_order.append(session_id)
+        else:
+            _latest_responses[session_id] = data
+            _latest_responses_order.append(session_id)
+        # Evict oldest entries if over limit
+        while len(_latest_responses) > _MAX_LATEST_RESPONSES:
+            oldest = _latest_responses_order.pop(0)
+            _latest_responses.pop(oldest, None)
 
 
 def _get_ed3n_engine():
@@ -447,8 +449,8 @@ async def _inject_emotion_behavioral_context(
                 if sustained >= 3:
                     delta += 0.08
                 set_emotion_threshold_adjustment(delta)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Emotion threshold adjustment failed: {e}", exc_info=True)
 
         # Cross-component: Emotion → Biological stress/relaxation (C³ 4.0)
         if bio is not None:
@@ -1172,6 +1174,7 @@ def _inject_causal_predictions(context: Dict[str, Any]) -> None:
 # causality can fire (requires >= 5 samples per variable).
 _CAUSAL_BUFFERS: Dict[str, Dict[str, List[float]]] = {}
 _CAUSAL_BUFFER_MAX_SESSIONS = 200  # Evict oldest when exceeded
+_CAUSAL_BUFFERS_LOCK = threading.Lock()
 
 # TemporalState bridge for causal ingest_temporal_state() (C³ 4.0)
 _CAUSAL_TEMPORAL_STATE = None
@@ -1188,16 +1191,17 @@ def _get_causal_temporal_state():
 
 def _get_causal_buffer(session_id: str) -> Dict[str, List[float]]:
     """Get or create a temporal buffer for the given session."""
-    if session_id not in _CAUSAL_BUFFERS:
-        if len(_CAUSAL_BUFFERS) >= _CAUSAL_BUFFER_MAX_SESSIONS:
-            oldest = next(iter(_CAUSAL_BUFFERS))
-            del _CAUSAL_BUFFERS[oldest]
-        _CAUSAL_BUFFERS[session_id] = {
-            "msg_lengths": [],
-            "resp_lengths": [],
-            "engagement_ratios": [],
-        }
-    return _CAUSAL_BUFFERS[session_id]
+    with _CAUSAL_BUFFERS_LOCK:
+        if session_id not in _CAUSAL_BUFFERS:
+            if len(_CAUSAL_BUFFERS) >= _CAUSAL_BUFFER_MAX_SESSIONS:
+                oldest = next(iter(_CAUSAL_BUFFERS))
+                del _CAUSAL_BUFFERS[oldest]
+            _CAUSAL_BUFFERS[session_id] = {
+                "msg_lengths": [],
+                "resp_lengths": [],
+                "engagement_ratios": [],
+            }
+        return _CAUSAL_BUFFERS[session_id]
 
 
 def _fire_causal_learning(response_text: str, user_message: str, session_id: str) -> None:
@@ -1972,6 +1976,10 @@ async def unified_chat(request: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     }
     user_name = request.get("user_name", context["user_id"])
     history = request.get("history", [])
+    # Bound history to prevent OOM from attacker-controlled large arrays
+    if isinstance(history, list) and len(history) > 100:
+        history = history[-100:]
+        logger.warning("History truncated to last 100 entries for session")
     session_id = request.get(
         "session_id",
         f"{context['tenant_id']}::{context['persona_id']}::{uuid.uuid4().hex[:8]}",
@@ -2014,6 +2022,8 @@ async def chat_with_image(
     if file and file.content_type and file.content_type.startswith("image/"):
         try:
             image_data = await file.read()
+            if len(image_data) > 10 * 1024 * 1024:
+                raise HTTPException(status_code=413, detail="Image too large (>10MB limit)")
 
             from ai.ed3n.ed3n_engine import ED3NEngine
             from ai.multimodal.concept_library import ConceptLibrary
@@ -2122,6 +2132,8 @@ async def chat_with_audio(
     ):
         try:
             audio_data = await file.read()
+            if len(audio_data) > 20 * 1024 * 1024:
+                raise HTTPException(status_code=413, detail="Audio too large (>20MB limit)")
             from services.audio_service import AudioService
 
             audio_svc = AudioService()

@@ -730,13 +730,12 @@ class ActionExecutionBridge:
         # Search for information
         if source in ["web", "mixed"] and self.web_search_tool:
             try:
-                search_results = await self.web_search_tool.search(
-                    query=topic,
-                    num_results=(
-                        _DEFAULT_SEARCH_RESULTS
-                        if depth == "shallow"
-                        else _DEFAULT_MEDIUM_LIMIT if depth == "medium" else _DEFAULT_DEEP_LIMIT
-                    ),
+                search_results = await asyncio.to_thread(
+                    self.web_search_tool.search,
+                    topic,
+                    _DEFAULT_SEARCH_RESULTS
+                    if depth == "shallow"
+                    else _DEFAULT_MEDIUM_LIMIT if depth == "medium" else _DEFAULT_DEEP_LIMIT,
                 )
                 result["exploration_data"]["search_results"] = search_results
             except Exception as e:  # broad exception acceptable: optional search, handle gracefully
@@ -1032,8 +1031,8 @@ class ActionExecutionBridge:
 
         try:
             if hasattr(self.web_search_tool, "search"):
-                search_results = await self.web_search_tool.search(
-                    query=query, num_results=num_results
+                search_results = await asyncio.to_thread(
+                    self.web_search_tool.search, query, num_results
                 )
                 result["results"] = search_results
                 result["success"] = True

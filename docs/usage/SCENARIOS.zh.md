@@ -254,5 +254,5 @@ docker run -p 8000:8000 --gpus all -e OLLAMA_HOST=http://ollama:11434 angela-ai
 ## 相關文件
 
 - [快速開始](QUICK_START.zh.md) — 基本安裝
-- [ACTIVE_SCRIPTS.md](../scripts/ACTIVE_SCRIPTS.md) — 命令參考
+- [ACTIVE_SCRIPTS.md](../../scripts/ACTIVE_SCRIPTS.md) — 命令參考
 - [MASTER_TASK_MAP.md](../06-project-management/MASTER_TASK_MAP.md) — 開發路線圖

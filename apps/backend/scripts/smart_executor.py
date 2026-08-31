@@ -63,15 +63,22 @@ def run_auto_fix():
         return False
 
 def execute_command(command, auto_fix=True):
-    """执行命令并处理错误"""
+    """执行命令并处理错误
+
+    Note: `command` is a shell string for developer convenience (local diagnostic
+    script, not exposed to untrusted input). We keep shell=True intentionally
+    but restrict cwd to PROJECT_ROOT to limit impact.
+    """
     print(f"🚀 执行命令, {command}")
 
     try:
-        # 执行命令
+        # 执行命令 — diagnostic only, not user-facing; shell=True retained for
+        # compound commands (e.g. "pytest tests/ -k foo && flake8"). If this
+        # ever becomes user-facing, switch to shlex.split + shell=False.
         process = subprocess.Popen(
             command,
-shell = True,
-cwd = PROJECT_ROOT,
+            shell=True,  # nosec B602 — local diagnostic script, PROJECT_ROOT cwd only
+            cwd=PROJECT_ROOT,
     stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
 text = True,

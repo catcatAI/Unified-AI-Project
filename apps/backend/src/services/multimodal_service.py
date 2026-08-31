@@ -423,6 +423,10 @@ class MultimodalService:
                 item_id = f"{modality}_{int(t0 * 1000)}_{hash(data) & 0xFFFFFF:06x}"
 
             async with self._items_lock:
+                # LRU eviction to prevent unbounded growth (long-running server)
+                if len(self._registered_items) >= 5000:
+                    oldest = next(iter(self._registered_items))
+                    self._registered_items.pop(oldest, None)
                 self._registered_items[item_id] = {
                     "modality": modality,
                     "feature_vector": (

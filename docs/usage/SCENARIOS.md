@@ -93,7 +93,7 @@ python -c "import numpy as np; data=np.load('data/multimodal/weights/p29_trained
 | GARDEN SNN | 0.50 | ~0.65 | ~0.70 |
 | SSIM | 0.85 | 0.90 | 0.95+ |
 
-> **Note**: ED3N accuracy (0.91) is training-set accuracy. Real-world performance may be lower due to distribution shift. See [PHASE_REVIEW6.md](../06-project-management/plans/PHASE_REVIEW6.md) for methodology.
+> **Note**: ED3N accuracy (0.91) is training-set accuracy. Real-world performance may be lower due to distribution shift. See [PHASE_REVIEW6.md](../09-archive/auto-archived-2026-08-11/PHASE_REVIEW6.md) for methodology.
 
 ### B5. Evaluation After Training
 
@@ -266,5 +266,5 @@ docker run -p 8000:8000 --gpus all -e OLLAMA_HOST=http://ollama:11434 angela-ai
 ## See Also
 
 - [Quick Start](QUICK_START.md) — basic installation
-- [ACTIVE_SCRIPTS.md](../scripts/ACTIVE_SCRIPTS.md) — command reference
+- [ACTIVE_SCRIPTS.md](../../scripts/ACTIVE_SCRIPTS.md) — command reference
 - [MASTER_TASK_MAP.md](../06-project-management/MASTER_TASK_MAP.md) — development roadmap

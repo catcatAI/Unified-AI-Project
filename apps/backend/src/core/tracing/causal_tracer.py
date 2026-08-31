@@ -101,6 +101,10 @@ class CausalTracer:
                 timestamp=datetime.now(),
             )
 
+            # Bound _active_traces to prevent leak if end_trace never called
+            if len(self._active_traces) >= 500:
+                oldest = next(iter(self._active_traces))
+                self._active_traces.pop(oldest, None)
             self._active_traces[node.id] = node
 
             root_id = self._find_root_id(parent_id) if parent_id is not None else None

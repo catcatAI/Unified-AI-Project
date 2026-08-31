@@ -17,7 +17,10 @@ synchronous facade over it so callers that need a plain ``float`` (no
 from __future__ import annotations
 
 import asyncio
+import logging
 from typing import Any, Dict
+
+logger = logging.getLogger(__name__)
 
 from ai.memory.ham_memory.ham_importance_scorer import (
     ImportanceScorer as _HamImportanceScorer,
@@ -53,7 +56,8 @@ class ImportanceScorer:
             if hasattr(result, "__await__"):
                 result = asyncio.run(result)
             score = float(result)
-        except Exception:
+        except Exception as e:
+            logger.debug(f"ImportanceScorer calculate failed: {e}", exc_info=True)
             return 0.0
         if score < 0.0:
             return 0.0

@@ -34,9 +34,12 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import threading
 import time
 from typing import Any, Callable, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 from core.backbone.contracts import (
     Envelope,
@@ -99,8 +102,8 @@ class PairScheduler:
                 current = dict(self._state_store.get_state(_IO_PAIRS_DOMAIN) or {})
                 current[pair.pair_id] = pair.to_dict()
                 self._state_store.update_state(_IO_PAIRS_DOMAIN, current, notify=False)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Pair store persist failed for {pair.pair_id}: {e}", exc_info=True)
 
     def _transition(self, pair: IOPair, new_status: str) -> None:
         allowed = {
@@ -170,6 +173,12 @@ class PairScheduler:
             pair.schedule["slot"] = int(time.time() * 1000) % max(1, self._max_wait_seconds)
             self._pairs[pair.pair_id] = pair
             self._record_to_store(pair)
+            # Auto-prune if over limit to prevent unbounded growth
+            if len(self._pairs) > 2000:
+                try:
+                    self.prune(max_pairs=2000)
+                except Exception as e:
+                    logger.debug(f"Auto-prune failed: {e}", exc_info=True)
             return pair.pair_id
 
     def resolve(self, pair_id: str, output_envelope: Envelope) -> None:
@@ -327,8 +336,8 @@ class PairScheduler:
             except Exception as exc:  # noqa: BLE001 - 成對錯誤必須追蹤，不靜默
                 try:
                     self.fail(pair_id, reason=str(exc))
-                except Exception:
-                    pass
+                except Exception as e2:
+                    logger.debug(f"Pair fail fallback failed for {pair_id}: {e2}", exc_info=True)
             finally:
                 lock.release()
 
