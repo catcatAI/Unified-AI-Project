@@ -221,6 +221,38 @@ body {
   background: radial-gradient(circle at 30% 30%, var(--card-color), transparent 70%);
 }
 
+.card[data-type="nation"] {
+  --card-color: #B71C1C;
+  border-color: rgba(183, 28, 28, 0.35);
+}
+.card[data-type="nation"]::after {
+  background: radial-gradient(circle at 30% 30%, var(--card-color), transparent 70%);
+}
+
+.card[data-type="organization"] {
+  --card-color: #1565C0;
+  border-color: rgba(21, 101, 192, 0.35);
+}
+.card[data-type="organization"]::after {
+  background: radial-gradient(circle at 30% 30%, var(--card-color), transparent 70%);
+}
+
+.card[data-type="rule"] {
+  --card-color: #6A1B9A;
+  border-color: rgba(106, 27, 154, 0.35);
+}
+.card[data-type="rule"]::after {
+  background: radial-gradient(circle at 30% 30%, var(--card-color), transparent 70%);
+}
+
+.card[data-type="scene"] {
+  --card-color: #00695C;
+  border-color: rgba(0, 105, 92, 0.35);
+}
+.card[data-type="scene"]::after {
+  background: radial-gradient(circle at 30% 30%, var(--card-color), transparent 70%);
+}
+
 /* ── Card Content ── */
 .card-icon {
   font-size: 32px;
