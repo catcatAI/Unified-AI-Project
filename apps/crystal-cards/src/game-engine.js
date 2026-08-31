@@ -475,6 +475,7 @@ function drawCard() {
     ...(CARDS.rpgEnemies || []).map(e => ({ id: e.id, weight: 1 })),
     ...(CARDS.rpgNavalItems || []).map(i => ({ id: i.id, weight: 1 })),
     ...(CARDS.rpgNavalItemsMore || []).map(i => ({ id: i.id, weight: 1 })),
+    ...(CARDS.rpgNavalItemsMore || []).map(i => ({ id: i.id, weight: 1 })),
     ...(CARDS.rpgElementalItems || []).map(i => ({ id: i.id, weight: 1 })),
   ];
 

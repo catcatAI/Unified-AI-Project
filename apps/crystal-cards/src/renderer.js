@@ -794,6 +794,11 @@
     init();
   }
 
-  // Expose CARDS data for tooltip
-  window.CARDS_DATA = { CARDS, WORLD_LINES };
+  // Expose CARDS data for tooltip — preserve full object including NPC_SCHEDULES
+  if (window.CARDS_DATA) {
+    window.CARDS_DATA.CARDS = CARDS;
+    window.CARDS_DATA.WORLD_LINES = WORLD_LINES;
+  } else {
+    window.CARDS_DATA = { CARDS, WORLD_LINES };
+  }
 })();
