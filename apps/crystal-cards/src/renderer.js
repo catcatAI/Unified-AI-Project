@@ -420,7 +420,6 @@
     if (template.type === 'item' || template.type === 'resource') {
       const prices = E.getShopPrices(card.templateId);
       actions.push({ text: '💰 賣出 (' + prices.sell + '金幣)', fn: () => {
-        // Remove from board first, then add gold
         E.removeBoardCard(card.id);
         E.state.gold += prices.sell;
         removeCardElement(card.id);
@@ -436,6 +435,19 @@
         removeCardElement(card.id);
         refreshAllCards();
         showNotification(`${template.name} 已收回側邊欄`);
+      }});
+    }
+    if (template.type === 'item' && (template.category === 'weapon' || (template.stats && (template.stats.atk || template.stats.def)))) {
+      const slot = (template.stats?.atk || 0) > (template.stats?.def || 0) ? 'weapon' : 'armor';
+      actions.push({ text: `🗡️ 裝備到${slot === 'weapon' ? '武器' : '防具'}欄`, fn: () => {
+        const result = E.equipItem(card.id, slot);
+        if (result.success) {
+          removeCardElement(card.id);
+          showNotification(result.message);
+          refreshAllCards();
+        } else {
+          showNotification(result.message || '裝備失敗');
+        }
       }});
     }
     if (template.type === 'recipe') {
@@ -480,12 +492,21 @@
     }
     // Location → show adjacent locations + unlock
     else if (template.type === 'location') {
-      const adjacent = E.getAdjacentLocations(card.templateId);
-      const locked = adjacent.filter(id => !E.state.unlockedLocations.includes(id));
       const newUnlocks = E.unlockAdjacentLocations(card.templateId);
       if (newUnlocks.length > 0) {
         showNotification(`🗺️ 發現了：${newUnlocks.join('、')}`);
         S.cardPlace();
+      } else {
+        const adjacent = E.getAdjacentLocations(card.templateId);
+        const locked = adjacent.filter(id => !E.state.unlockedLocations.includes(id));
+        if (locked.length > 0) {
+          showNotification(`🔒 未探索: ${locked.map(id => {
+            const t = E.getCardTemplate(id);
+            return t?.name || id;
+          }).join('、')}`);
+        } else {
+          showNotification('🗺️ 所有鄰近地點已解鎖');
+        }
       }
       renderSidebar();
       playerTick();
@@ -503,9 +524,10 @@
     else if (template.type === 'recipe') {
       showNotification(`📖 ${template.name}: ${template.desc || ''}`);
     }
-    // Enemy → initiate combat
+    // Enemy → show enemy info
     else if (template.type === 'enemy') {
-      showNotification(`⚔️ 將角色拖到敵人身上進行戰鬥！`);
+      const stats = template.stats;
+      showNotification(`${template.icon} ${template.name} | HP:${stats?.hp || '?'} ATK:${stats?.atk || '?'} DEF:${stats?.def || '?'}`);
     }
   }
 
@@ -629,6 +651,10 @@
       hpDisplay.title = `知識: ${s.knowledge}`;
     }
 
+    // Update draw cost display
+    const drawCost = 3 + Math.floor(s.day / 3);
+    if (drawCostValue) drawCostValue.textContent = drawCost;
+
     // Color coding
     hpDisplay.style.color = s.hp < 30 ? '#f85149' : s.hp < 60 ? '#d29922' : '';
     sanDisplay.style.color = s.sanity < 30 ? '#f85149' : s.sanity < 60 ? '#d29922' : '';
@@ -675,8 +701,13 @@
     tooltipStats.textContent = statsHtml;
 
     const rect = e.currentTarget.getBoundingClientRect();
-    tooltip.style.left = (rect.right + 10) + 'px';
-    tooltip.style.top = rect.top + 'px';
+    // Clamp tooltip to screen bounds
+    let tx = rect.right + 10;
+    let ty = rect.top;
+    if (tx + 250 > window.innerWidth) tx = rect.left - 260;
+    if (ty + 100 > window.innerHeight) ty = window.innerHeight - 110;
+    tooltip.style.left = Math.max(4, tx) + 'px';
+    tooltip.style.top = Math.max(4, ty) + 'px';
     tooltip.classList.remove('hidden');
   }
 

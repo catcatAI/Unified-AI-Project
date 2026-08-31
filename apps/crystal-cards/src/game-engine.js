@@ -74,6 +74,7 @@ const GameState = {
 // Card Template Lookup
 // ═══════════════════════════════════════════════════════
 function getCardTemplate(templateId) {
+  if (!templateId) return null;
   for (const category of Object.values(CARDS)) {
     if (Array.isArray(category)) {
       const found = category.find(c => c.id === templateId);
@@ -86,6 +87,12 @@ function getCardTemplate(templateId) {
 function getCardType(templateId) {
   const t = getCardTemplate(templateId);
   return t ? t.type : null;
+}
+
+// Get the actual game board dimensions
+function getBoardDimensions() {
+  // Default dimensions, overridden by renderer
+  return { width: 900, height: 600 };
 }
 
 // ═══════════════════════════════════════════════════════
@@ -335,8 +342,8 @@ function executeCombat(attackerTemplate, defenderTemplate, attackerCard, defende
   const eqBonus = getEquipmentBonus();
   const finalAtk = { ...atkStats, atk: (atkStats.atk || 0) + eqBonus.atk, def: (atkStats.def || 0) + eqBonus.def, spd: (atkStats.spd || 0) + eqBonus.spd };
 
-  const atkDmg = Math.max(1, finalAtk.atk - defStats.def / 2 + Math.floor(Math.random() * 5));
-  const defDmg = Math.max(1, defStats.atk - atkStats.def / 2 + Math.floor(Math.random() * 3));
+  const atkDmg = Math.max(1, finalAtk.atk - (defStats.def || 0) / 2 + Math.floor(Math.random() * 5));
+  const defDmg = Math.max(1, (defStats.atk || 0) - atkStats.def / 2 + Math.floor(Math.random() * 3));
 
   const results = [];
   results.push({ text: `${attackerTemplate?.name || '你'} 攻擊 ${defenderTemplate.name}，造成 ${atkDmg} 傷害！`, type: 'damage' });
@@ -444,9 +451,10 @@ function advanceTime() {
   // Enemy spawns (rare)
   if (GameState.day > 1 && Math.random() < 0.02) {
     const enemyPool = [...(CARDS.enemies || []), ...(CARDS.rpgEnemies || [])];
+    if (enemyPool.length === 0) return;
     const enemy = enemyPool[Math.floor(Math.random() * enemyPool.length)];
-    const x = 100 + Math.random() * 600;
-    const y = 100 + Math.random() * 400;
+    const x = 100 + Math.random() * 500;
+    const y = 80 + Math.random() * 350;
     createBoardCard(enemy.id, x, y);
   }
 }
@@ -478,12 +486,16 @@ function drawCard() {
     ...(CARDS.rpgElementalItems || []).map(i => ({ id: i.id, weight: 1 })),
   ];
 
-  // Only include items that are unlocked
+  // Only include items that are unlocked and have valid templates
   const filteredPool = pool.filter(p => {
     const template = getCardTemplate(p.id);
+    if (!template) return false;
     if (template.type === 'location') return GameState.unlockedLocations.includes(p.id);
     return true;
   });
+  if (filteredPool.length === 0) {
+    return { success: false, message: '沒有可抽取的卡片！' };
+  }
 
   const totalWeight = filteredPool.reduce((sum, p) => sum + p.weight, 0);
   let roll = Math.random() * totalWeight;
@@ -501,7 +513,7 @@ function drawCard() {
 // Initialize New Game
 // ═══════════════════════════════════════════════════════
 function initNewGame() {
-  // Reset state
+  // Reset state completely
   Object.assign(GameState, {
     hp: 100, maxHp: 100, sanity: 100, gold: 10, knowledge: 0,
     bonds: {}, day: 1, timeOfDay: 'morning', tickCount: 0,
@@ -509,6 +521,7 @@ function initNewGame() {
     sidebarCards: [], inventory: [],
     unlockedLocations: ['loc_holy_cross', 'loc_mirror_lake'],
     flags: {}, discoveredDialogues: [], log: [],
+    equipment: { weapon: null, armor: null, accessory: null },
   });
 
   // Starting cards in sidebar
@@ -535,7 +548,7 @@ function initNewGame() {
 // World Map — Location Navigation
 // ═══════════════════════════════════════════════════════
 const WORLD_MAP = {
-  'loc_holy_cross': ['loc_mirror_lake', 'loc_yuyu_mountain', 'loc_clear_stream', 'loc_convenience_store'],
+  'loc_holy_cross': ['loc_mirror_lake', 'loc_yuyu_mountain', 'loc_clear_stream', 'loc_convenience_store', 'loc_agriculture', 'loc_library', 'loc_secret_ironworks'],
   'loc_mirror_lake': ['loc_holy_cross', 'loc_mirror_mountain'],
   'loc_yuyu_mountain': ['loc_holy_cross', 'loc_hot_spring', 'loc_market'],
   'loc_market': ['loc_yuyu_mountain', 'loc_fog_islands', 'loc_west_market'],
@@ -548,12 +561,13 @@ const WORLD_MAP = {
   'loc_abandoned_mine': ['loc_clear_stream', 'loc_rust_city'],
   'loc_hall_of_heroes': ['loc_mirror_mountain'],
   'loc_rust_city': ['loc_abandoned_mine'],
-  'loc_library': ['loc_holy_cross'],
+  'loc_library': ['loc_holy_cross', 'loc_corridor'],
   'loc_corridor': ['loc_library', 'loc_witch_academy'],
   'loc_witch_academy': ['loc_yuyu_mountain', 'loc_corridor'],
   'loc_orbital_station': ['loc_frozen_wastes'],
   'loc_frozen_wastes': ['loc_orbital_station', 'loc_fog_islands'],
   'loc_secret_ironworks': ['loc_holy_cross'],
+  'loc_agriculture': ['loc_holy_cross', 'loc_witch_academy'],
   'loc_west_market': ['loc_market'],
 };
 
@@ -611,10 +625,14 @@ function getShopPrices(templateId) {
 GameState.equipment = { weapon: null, armor: null, accessory: null };
 
 function equipItem(cardId, slot) {
+  if (!['weapon', 'armor', 'accessory'].includes(slot)) return { success: false, message: '無效的裝備欄位' };
   const card = GameState.boardCards.find(c => c.id === cardId);
-  if (!card) return { success: false };
+  if (!card) return { success: false, message: '卡片不存在' };
   const template = getCardTemplate(card.templateId);
-  if (!template) return { success: false };
+  if (!template) return { success: false, message: '模板不存在' };
+  if (template.type !== 'item' && template.type !== 'resource') {
+    return { success: false, message: '只能裝備物品或資源' };
+  }
   // Unequip current item in slot
   if (GameState.equipment[slot]) {
     addToSidebar(GameState.equipment[slot]);
@@ -654,9 +672,16 @@ function getEquipmentBonus() {
 function saveGame() {
   try {
     const data = JSON.stringify({
-      ...GameState,
-      equipment: GameState.equipment,
-      boardCards: GameState.boardCards.map(c => ({ templateId: c.templateId, x: c.x, y: c.y, hp: c.hp, maxHp: c.maxHp })),
+      hp: GameState.hp, maxHp: GameState.maxHp, sanity: GameState.sanity,
+      gold: GameState.gold, knowledge: GameState.knowledge,
+      bonds: GameState.bonds, day: GameState.day, timeOfDay: GameState.timeOfDay,
+      tickCount: GameState.tickCount, sidebarCards: GameState.sidebarCards,
+      inventory: GameState.inventory, unlockedLocations: GameState.unlockedLocations,
+      flags: GameState.flags, discoveredDialogues: GameState.discoveredDialogues,
+      equipment: GameState.equipment, volume: GameState.volume,
+      boardCards: GameState.boardCards.map(c => ({
+        templateId: c.templateId, x: c.x, y: c.y, hp: c.hp, maxHp: c.maxHp,
+      })),
     });
     localStorage.setItem('crystal-cards-save', data);
     return true;
@@ -671,15 +696,37 @@ function loadGame() {
     const raw = localStorage.getItem('crystal-cards-save');
     if (!raw) return false;
     const data = JSON.parse(raw);
-    Object.assign(GameState, data);
+    // Validate required fields
+    if (typeof data.hp !== 'number' || !Array.isArray(data.boardCards)) {
+      localStorage.removeItem('crystal-cards-save');
+      return false;
+    }
+    // Restore all state fields
+    GameState.hp = data.hp ?? 100;
+    GameState.maxHp = data.maxHp ?? 100;
+    GameState.sanity = data.sanity ?? 100;
+    GameState.gold = data.gold ?? 10;
+    GameState.knowledge = data.knowledge ?? 0;
+    GameState.bonds = data.bonds ?? {};
+    GameState.day = data.day ?? 1;
+    GameState.timeOfDay = data.timeOfDay ?? 'morning';
+    GameState.tickCount = data.tickCount ?? 0;
+    GameState.sidebarCards = data.sidebarCards ?? [];
+    GameState.inventory = data.inventory ?? [];
+    GameState.unlockedLocations = data.unlockedLocations ?? ['loc_holy_cross', 'loc_mirror_lake'];
+    GameState.flags = data.flags ?? {};
+    GameState.discoveredDialogues = data.discoveredDialogues ?? [];
+    GameState.equipment = data.equipment ?? { weapon: null, armor: null, accessory: null };
+    GameState.volume = data.volume ?? 0.7;
     // Recreate board cards from saved data
     GameState.boardCards = [];
     GameState.cardIdCounter = 0;
     (data.boardCards || []).forEach(saved => {
+      if (!saved.templateId) return; // skip invalid entries
       const card = {
         id: ++GameState.cardIdCounter,
         templateId: saved.templateId,
-        x: saved.x, y: saved.y,
+        x: saved.x || 0, y: saved.y || 0,
         stackId: null,
         hp: saved.hp, maxHp: saved.maxHp, count: 1,
       };
@@ -688,6 +735,7 @@ function loadGame() {
     return true;
   } catch (e) {
     console.error('Load failed:', e);
+    localStorage.removeItem('crystal-cards-save');
     return false;
   }
 }

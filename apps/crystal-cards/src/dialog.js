@@ -231,10 +231,10 @@
     currentDialogueId = null;
   }
 
-  // Close on clicking overlay background
+  // Close on clicking overlay background (only for non-required dialogues)
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) {
-      // Only close if no next dialogue required
+    if (e.target === overlay && !overlay.classList.contains('hidden')) {
+      closeDialog();
     }
   });
 
@@ -249,7 +249,7 @@
         }
       }
       if (e.key === 'Escape') {
-        // Can't escape story dialogues
+        closeDialog();
       }
     }
   });

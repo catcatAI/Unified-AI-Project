@@ -117,7 +117,12 @@ class AngelaGameAPI {
       const voiceMap = {
         '晞咕萊雅': 'zh-CN-XiaoxiaoNeural',
         '紅': 'zh-CN-YunxiNeural',
-        '守門人': 'zh-CN-YunjianNeural',
+        '織織': 'zh-CN-XiaoxiaoNeural',
+        '宿曉': 'zh-CN-XiaoyiNeural',
+        '姬路': 'zh-CN-XiaoxiaoNeural',
+        '吉普莉爾': 'zh-CN-YunxiNeural',
+        '露露': 'zh-CN-XiaoyiNeural',
+        '暈咔繆露': 'zh-CN-XiaoxiaoNeural',
         '旁白': 'zh-CN-XiaoxiaoNeural',
       };
 
@@ -146,9 +151,12 @@ class AngelaGameAPI {
     const responses = {
       '晞咕萊雅': '她看著你，沒有說話。',
       '紅': '「嗯？」',
-      '守門人': '聲音從遠處傳來。',
-      '翅翼少女': '書頁翻動了。',
-      '記憶老人': '老人微笑著。',
+      '織織': '貓耳動了動。',
+      '宿曉': '她推了推眼鏡。',
+      '姬路': '她點了點頭。',
+      '吉普莉爾': '翅膀微微張開。',
+      '露露': '她翻看手邊的帳本。',
+      '暈咔繆露': '她的表情有些恍惚。',
     };
     return {
       text: responses[characterName] || '對方沉默了一會兒。',
@@ -161,6 +169,8 @@ class AngelaGameAPI {
       '聖十字校園': { morning: '走廊裡開始有人走動。', afternoon: '安靜得不正常。', evening: '走廊空了。', night: '完全的黑暗。' },
       '鏡湖': { morning: '湖面映著晨光。', afternoon: '湖水清澈見底。', evening: '水面泛著夕陽。', night: '湖底有微光閃爍。' },
       '卡洛夫角': { morning: '攤位開始營業。', afternoon: '叫賣聲此起彼落。', evening: '市集漸漸安靜。', night: '只剩下幾盞燈。' },
+      '迴廊': { morning: '概念流開始活躍。', afternoon: '數據交織得更快。', evening: '迴廊安靜下來。', night: '只剩下低頻嗡鳴。' },
+      '便利店': { morning: '自動門打開。', afternoon: '冷氣嗡嗡作響。', evening: '霓虹燈亮了。', night: '只有值班燈。' },
     };
     const loc = ambiances[locationName] || {};
     return loc[timeOfDay] || '一片寂靜。';
