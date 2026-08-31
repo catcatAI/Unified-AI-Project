@@ -539,19 +539,7 @@
     }
     // Shop catalog → buy menu
     else if (template.type === 'shopCatalog') {
-      const prices = E.getShopPrices(card.templateId);
-      const buyCost = prices ? prices.buy : (template.value || 10);
-      if (E.state.gold >= buyCost) {
-        E.state.gold -= buyCost;
-        const bought = E.addToSidebar(card.templateId);
-        showNotification(`🛒 購買 ${template.name}（${buyCost}💰）`);
-        S.collect();
-        refreshAllCards();
-        playerTick();
-      } else {
-        showNotification(`💰 金幣不足！需要 ${buyCost}💰`);
-        S.warning();
-      }
+      showNotification(`${template.icon} ${template.name}: ${template.desc || '商店目錄'}`);
     }
     // Nation / Organization / Rule / Scene → show info
     else if (['nation', 'organization', 'rule', 'scene', 'story'].includes(template.type)) {
