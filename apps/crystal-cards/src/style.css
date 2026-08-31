@@ -403,6 +403,64 @@ body {
   color: var(--text-dim);
 }
 
+/* ── Equipment Section ── */
+#equipment-section {
+  padding: 8px 12px;
+  border-top: 1px solid var(--glass-border);
+  background: rgba(13, 17, 23, 0.5);
+}
+.eq-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.eq-slot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  margin-bottom: 3px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+}
+.eq-slot .eq-icon { font-size: 16px; }
+.eq-slot .eq-name { flex: 1; font-weight: 600; }
+.eq-unequip {
+  width: 20px;
+  height: 20px;
+  border: 1px solid rgba(248, 81, 73, 0.3);
+  border-radius: 4px;
+  background: rgba(248, 81, 73, 0.1);
+  color: var(--accent-red);
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.eq-unequip:hover {
+  background: rgba(248, 81, 73, 0.3);
+  border-color: var(--accent-red);
+}
+.eq-bonus {
+  font-size: 10px;
+  color: var(--accent-green);
+  margin-top: 4px;
+  text-align: center;
+}
+.eq-empty {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: center;
+  padding: 4px 0;
+}
+
 #sidebar-footer {
   padding: 12px;
   border-top: 1px solid var(--glass-border);

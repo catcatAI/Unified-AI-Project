@@ -237,34 +237,23 @@ function tryStack(draggedCard, targetCard) {
       }
 
       if (canCraft) {
-        // Consume cards (remove dragged, reduce target)
-        const consumeFromTarget = {};
-        const consumeFromDragged = {};
+        // Calculate how much to consume from each card
+        let draggedNeeded = 0;
+        let targetNeeded = 0;
         for (const [tid, needed] of Object.entries(map)) {
-          const fromDrag = Math.min(needed, combined[tid] === targetId ? 0 : 0);
-          // Simple: consume from dragged first, then target
-          let remaining = needed;
-          if (tid === dragId) {
-            const take = Math.min(remaining, draggedCard.count);
-            consumeFromDragged[tid] = take;
-            remaining -= take;
-          }
-          if (tid === targetId) {
-            const take = Math.min(remaining, targetCard.count);
-            consumeFromTarget[tid] = take;
-            remaining -= take;
-          }
-          if (remaining > 0 && tid !== dragId && tid !== targetId) {
-            canCraft = false; break;
-          }
-          if (remaining > 0) canCraft = false;
+          if (tid === dragId) draggedNeeded += needed;
+          else if (tid === targetId) targetNeeded += needed;
+          else { canCraft = false; break; }
         }
-
         if (!canCraft) continue;
 
-        removeBoardCard(draggedCard.id);
-        // Reduce target card count
-        targetCard.count -= Object.values(consumeFromTarget).reduce((a, b) => a + b, 0);
+        // Consume from dragged card (partial or full)
+        draggedCard.count -= draggedNeeded;
+        if (draggedCard.count <= 0) {
+          removeBoardCard(draggedCard.id);
+        }
+        // Consume from target card
+        targetCard.count -= targetNeeded;
         if (targetCard.count <= 0) removeBoardCard(targetCard.id);
 
         if (recipe.output.startsWith('item_') || recipe.output.startsWith('res_')) {
@@ -343,7 +332,7 @@ function executeCombat(attackerTemplate, defenderTemplate, attackerCard, defende
   const finalAtk = { ...atkStats, atk: (atkStats.atk || 0) + eqBonus.atk, def: (atkStats.def || 0) + eqBonus.def, spd: (atkStats.spd || 0) + eqBonus.spd };
 
   const atkDmg = Math.max(1, finalAtk.atk - (defStats.def || 0) / 2 + Math.floor(Math.random() * 5));
-  const defDmg = Math.max(1, (defStats.atk || 0) - atkStats.def / 2 + Math.floor(Math.random() * 3));
+  const defDmg = Math.max(1, (defStats.atk || 0) - finalAtk.def / 2 + Math.floor(Math.random() * 3));
 
   const results = [];
   results.push({ text: `${attackerTemplate?.name || '你'} 攻擊 ${defenderTemplate.name}，造成 ${atkDmg} 傷害！`, type: 'damage' });

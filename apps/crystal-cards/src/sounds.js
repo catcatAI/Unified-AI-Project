@@ -13,6 +13,16 @@ class SoundEngine {
   init() {
     try {
       this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      // Resume on first user gesture (Chrome autoplay policy)
+      const resume = () => {
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+        document.removeEventListener('click', resume);
+        document.removeEventListener('keydown', resume);
+      };
+      document.addEventListener('click', resume);
+      document.addEventListener('keydown', resume);
     } catch (e) {
       console.warn('Web Audio not available');
       this.enabled = false;
@@ -160,9 +170,11 @@ class SoundEngine {
   }
 
   stopNightAmbience() {
-    if (this._nightLoop) {
-      this._nightLoop.gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.5);
-      this._nightLoop.osc.stop(this.ctx.currentTime + 0.6);
+    if (this._nightLoop && this.ctx) {
+      try {
+        this._nightLoop.gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.5);
+        this._nightLoop.osc.stop(this.ctx.currentTime + 0.6);
+      } catch (e) {}
       this._nightLoop = null;
     }
   }

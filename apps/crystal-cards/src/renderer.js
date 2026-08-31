@@ -638,12 +638,44 @@
     sanDisplay.textContent = `🧠 ${s.sanity}`;
     goldDisplay.textContent = `💰 ${s.gold}`;
 
-    // Equipment bonus display
-    const bonus = E.getEquipmentBonus();
-    if (bonus.atk > 0 || bonus.def > 0) {
+    // Equipment section
+    const eqSection = document.getElementById('equipment-section');
+    if (eqSection) {
       const eq = s.equipment;
-      const eqText = [eq.weapon ? '⚔️' : '', eq.armor ? '🛡️' : '', eq.accessory ? '💍' : ''].filter(Boolean).join('');
-      if (eqText) goldDisplay.title = `裝備: ${eqText} ATK+${bonus.atk} DEF+${bonus.def}`;
+      const bonus = E.getEquipmentBonus();
+      const slots = [
+        { key: 'weapon', icon: '⚔️', label: '武器' },
+        { key: 'armor', icon: '🛡️', label: '防具' },
+        { key: 'accessory', icon: '💍', label: '飾品' },
+      ];
+      let html = '<div class="eq-title">裝備欄</div>';
+      let hasEquip = false;
+      for (const slot of slots) {
+        const tid = eq[slot.key];
+        if (tid) {
+          const t = E.getCardTemplate(tid);
+          hasEquip = true;
+          html += `<div class="eq-slot" title="點擊卸下"><span class="eq-icon">${slot.icon}</span> <span class="eq-name">${t?.name || tid}</span> <button class="eq-unequip" data-slot="${slot.key}">✕</button></div>`;
+        }
+      }
+      if (hasEquip) {
+        html += `<div class="eq-bonus">ATK+${bonus.atk} DEF+${bonus.def}</div>`;
+      } else {
+        html += '<div class="eq-empty">無裝備</div>';
+      }
+      eqSection.innerHTML = html;
+      // Wire unequip buttons
+      eqSection.querySelectorAll('.eq-unequip').forEach(btn => {
+        btn.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          const slot = btn.dataset.slot;
+          const result = E.unequipItem(slot);
+          if (result.success) {
+            showNotification(result.message);
+            refreshAllCards();
+          }
+        });
+      });
     }
 
     // Knowledge display
@@ -785,19 +817,27 @@
   // ═══════════════════════════════════════════════════════
   // Controls
   // ═══════════════════════════════════════════════════════
+  // Pause: freezes enemy spawning and sanity drain
   btnPause.addEventListener('click', () => {
     E.state.paused = !E.state.paused;
     btnPause.textContent = E.state.paused ? '▶️' : '⏸';
     btnPause.classList.toggle('active', E.state.paused);
+    showNotification(E.state.paused ? '⏸ 遊戲暫停（敵人不會出現）' : '▶️ 遊戲繼續');
     S.click();
   });
 
+  // Speed button → New Game (since time is action-based)
   btnSpeed.addEventListener('click', () => {
-    E.state.speed = (E.state.speed % 3) + 1;
-    const labels = { 1: '▶️', 2: '⏩', 3: '⏭️' };
-    btnSpeed.textContent = labels[E.state.speed];
+    if (confirm('開始新遊戲？存檔會被覆蓋。')) {
+      E.initNewGame();
+      refreshAllCards();
+      showNotification('🆕 新遊戲開始！');
+      S.craft();
+    }
     S.click();
   });
+  btnSpeed.textContent = '🆕';
+  btnSpeed.title = '新遊戲';
 
   btnDraw.addEventListener('click', () => {
     const result = E.drawCard();
@@ -898,10 +938,6 @@
   }
 
   // Expose CARDS data for tooltip — preserve full object including NPC_SCHEDULES
-  if (window.CARDS_DATA) {
-    window.CARDS_DATA.CARDS = CARDS;
-    window.CARDS_DATA.WORLD_LINES = WORLD_LINES;
-  } else {
-    window.CARDS_DATA = { CARDS, WORLD_LINES };
-  }
+  const npcSchedules = window.CARDS_DATA?.NPC_SCHEDULES || (typeof NPC_SCHEDULES !== 'undefined' ? NPC_SCHEDULES : {});
+  window.CARDS_DATA = { CARDS, WORLD_LINES, NPC_SCHEDULES: npcSchedules };
 })();
