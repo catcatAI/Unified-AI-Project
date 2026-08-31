@@ -1353,10 +1353,10 @@ const CARDS = {
     lulu_look: { speaker: '露露', text: '「那就去看看吧。」「但記住——那扇門裡面的東西，出來就不值錢了。」「因為只有在裡面，它們才是真的。」', choices: [{ text: '「謝謝」', next: null, effect: { knowledge: 10 } }] },
 
     corridor_start: { speaker: '???', text: '迴廊的入口在鏡湖下方。門上沒有把手。只有一行字：「你在找什麼？」', choices: [{ text: '「答案。」', next: 'corridor_answer', effect: { knowledge: 10 } }, { text: '「我自己。」', next: 'corridor_self', effect: { knowledge: 10 } }, { text: '「我想回家。」', next: 'corridor_home', effect: { knowledge: 10 } }, { text: '使用迴廊鑰匙', next: 'corridor_key', requires: { item: 'item_key_corridor' } }] },
-    corridor_answer: { speaker: '迴廊', text: '門打開了。兩側的門不斷開合。每一扇門後面都是一個不同的世界。', choices: [{ text: '進入迴廊', next: null, effect: { unlock: 'ending_corridor' } }] },
-    corridor_self: { speaker: '迴廊', text: '門緩緩打開。你在走廊中看到了自己。不是現在的自己。是可能的自己。', choices: [{ text: '面對自己', next: null, effect: { unlock: 'ending_corridor', knowledge: 20, unlocks: ['loc_abandoned_mine', 'loc_hall_of_heroes'] } }] },
+    corridor_answer: { speaker: '迴廊', text: '門打開了。兩側的門不斷開合。每一扇門後面都是一個不同的世界。', choices: [{ text: '進入迴廊', next: 'ending_corridor', effect: { unlock: 'ending_corridor', knowledge: 10 } }] },
+    corridor_self: { speaker: '迴廊', text: '門緩緩打開。你在走廊中看到了自己。不是現在的自己。是可能的自己。', choices: [{ text: '面對自己', next: 'ending_corridor', effect: { unlock: 'ending_corridor', knowledge: 20, unlocks: ['loc_abandoned_mine', 'loc_hall_of_heroes'] } }] },
     corridor_home: { speaker: '迴廊', text: '門開了一條縫。從縫隙中傳來熟悉的氣味。然後門關上了。', choices: [{ text: '再次推門', next: 'corridor_push' }] },
-    corridor_key: { speaker: '迴廊', text: '你把鑰匙插入門上的鎖孔。門打開了。你走進迴廊。', choices: [{ text: '深入', next: null, effect: { unlock: 'ending_corridor', knowledge: 25 } }] },
+    corridor_key: { speaker: '迴廊', text: '你把鑰匙插入門上的鎖孔。門打開了。你走進迴廊。', choices: [{ text: '深入', next: 'ending_corridor', effect: { unlock: 'ending_corridor', knowledge: 25 } }] },
     corridor_push: { speaker: '迴廊', text: '門上出現了新的字：「你還沒有準備好。」', choices: [{ text: '「我準備好了」', next: 'corridor_answer' }] },
     ending_corridor: { speaker: '旁白', text: '你在迴廊中行走。無盡的走廊，兩側的門不斷開合。你看到了時間在流動。你看到了你自己。然後，一切安靜下來。', choices: [{ text: '繼續', next: 'ending_final' }] },
     ending_final: { speaker: '旁白', text: '你站在迴廊的盡頭。面前是一面鏡子。鏡子裡是你自己。但你不一樣了。— 完 —', choices: [{ text: '重新開始', next: 'restart' }] },

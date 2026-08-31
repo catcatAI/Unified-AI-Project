@@ -492,6 +492,14 @@
     }
     // Location → show adjacent locations + unlock
     else if (template.type === 'location') {
+      // Special location story triggers
+      if (card.templateId === 'loc_corridor' && !E.state.flags.corridor_visited) {
+        E.state.flags.corridor_visited = true;
+        S.dialogOpen();
+        window.DialogSystem.showDialogue('corridor_start');
+        playerTick();
+        return;
+      }
       const newUnlocks = E.unlockAdjacentLocations(card.templateId);
       if (newUnlocks.length > 0) {
         showNotification(`🗺️ 發現了：${newUnlocks.join('、')}`);
