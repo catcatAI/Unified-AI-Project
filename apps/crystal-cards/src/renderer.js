@@ -72,7 +72,7 @@
     el.innerHTML = `
       <div class="card-icon">${template.icon || '❓'}</div>
       <div class="card-name">${template.name}</div>
-      <div class="card-subtitle">${template.type === 'character' ? (template.role || '') : (template.category || '')}</div>
+      <div class="card-subtitle">${template.type === 'character' ? (template.role || '') : (template.category || template.itemType || '')}</div>
       ${card.hp !== null ? `<div class="card-hp-bar"><div class="card-hp-fill" style="width:${(card.hp / card.maxHp) * 100}%; background:${template.color || '#4CAF50'}"></div></div>` : ''}
       ${card.count > 1 ? `<div class="card-stack-count">${card.count}</div>` : ''}
     `;
@@ -437,7 +437,7 @@
         showNotification(`${template.name} 已收回側邊欄`);
       }});
     }
-    if (template.type === 'item' && (template.category === 'weapon' || (template.stats && (template.stats.atk || template.stats.def)))) {
+    if (template.type === 'item' && ((template.category || template.itemType) === 'weapon' || (template.stats && (template.stats.atk || template.stats.def)))) {
       const slot = (template.stats?.atk || 0) > (template.stats?.def || 0) ? 'weapon' : 'armor';
       actions.push({ text: `🗡️ 裝備到${slot === 'weapon' ? '武器' : '防具'}欄`, fn: () => {
         const result = E.equipItem(card.id, slot);
@@ -735,8 +735,8 @@
     } else if (template.worldLine) {
       const wl = window.CARDS_DATA?.WORLD_LINES?.[template.worldLine];
       statsHtml = wl ? `世界線: ${wl.name}` : '';
-    } else if (template.category) {
-      statsHtml = `類型: ${template.category}`;
+    } else if (template.category || template.itemType) {
+      statsHtml = `類型: ${template.category || template.itemType}`;
     }
     tooltipStats.textContent = statsHtml;
 
