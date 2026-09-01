@@ -407,6 +407,12 @@
         const newUnlocks = E.unlockAdjacentLocations(card.templateId);
         if (newUnlocks.length) showNotification('🗺️ 發現：' + newUnlocks.join('、'));
         else showNotification('已經探索過了');
+        // Try to find a reward card
+        const reward = E.exploreLocationRewards(card.templateId);
+        if (reward) {
+          showNotification(`${reward.icon} 在${template.name}發現了 ${reward.name}！`);
+          S.cardPlace();
+        }
         renderSidebar();
         playerTick();
       }});

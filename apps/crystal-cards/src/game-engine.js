@@ -43,6 +43,7 @@ const GameState = {
   unlockedLocations: ['loc_holy_cross', 'loc_mirror_lake'],
   flags: {},
   discoveredDialogues: [],
+  discoveredCards: [],
 
   // Crafting (merge basic + rpg recipes)
   recipes: [...(CARDS.recipes || []), ...(CARDS.rpgRecipes || []).map(r => {
@@ -510,7 +511,7 @@ function initNewGame() {
     paused: false, speed: 1, boardCards: [], cardIdCounter: 0,
     sidebarCards: [], inventory: [],
     unlockedLocations: ['loc_holy_cross', 'loc_mirror_lake'],
-    flags: {}, discoveredDialogues: [], log: [],
+    flags: {}, discoveredDialogues: [], discoveredCards: [], log: [],
     equipment: { weapon: null, armor: null, accessory: null },
   });
 
@@ -576,6 +577,53 @@ function unlockAdjacentLocations(locationId) {
     }
   });
   return newUnlocks;
+}
+
+// Location → reward card type mapping for exploration
+const LOCATION_REWARDS = {
+  loc_library: { type: 'rule', pool: (CARDS.ruleCards || []) },
+  loc_corridor: { type: 'story', pool: (CARDS.storyEvents || []).filter(s => s.trigger) },
+  loc_holy_cross: { type: 'scene', pool: (CARDS.sceneCards || []).filter(s => s.name.includes('聖十字') || s.name.includes('校園')) },
+  loc_mirror_lake: { type: 'scene', pool: (CARDS.sceneCards || []).filter(s => s.name.includes('鏡')) },
+  loc_market: { type: 'shopCatalog', pool: (CARDS.rpgShopCatalogs || []) },
+  loc_west_market: { type: 'shopCatalog', pool: (CARDS.rpgShopCatalogs || []) },
+  loc_convenience_store: { type: 'shopCatalog', pool: (CARDS.rpgShopCatalogs || []).filter(s => s.name.includes('便利') || s.name.includes('雜貨')) },
+  loc_witch_academy: { type: 'rule', pool: (CARDS.ruleCards || []).filter(s => s.name.includes('魔') || s.name.includes('迴廊')) },
+  loc_fog_islands: { type: 'nation', pool: (CARDS.nationalCards || []).filter(s => s.name.includes('莫比') || s.name.includes('阿比')) },
+  loc_frozen_wastes: { type: 'nation', pool: (CARDS.nationalCards || []).filter(s => s.name.includes('聖諭') || s.name.includes('冰')) },
+  loc_yuyu_mountain: { type: 'scene', pool: (CARDS.sceneCards || []).filter(s => s.name.includes('鬱鬱') || s.name.includes('山')) },
+  loc_mirror_mountain: { type: 'scene', pool: (CARDS.sceneCards || []).filter(s => s.name.includes('鏡山') || s.name.includes('卡洛夫')) },
+  loc_abandoned_mine: { type: 'organization', pool: (CARDS.organizationCards || []).filter(s => s.name.includes('鐵') || s.name.includes('鼠') || s.name.includes('深海')) },
+  loc_secret_ironworks: { type: 'organization', pool: (CARDS.organizationCards || []).filter(s => s.name.includes('工業') || s.name.includes('義體') || s.name.includes('防務')) },
+  loc_hot_spring: { type: 'scene', pool: (CARDS.sceneCards || []).filter(s => s.name.includes('溫泉') || s.name.includes('煙雲')) },
+  loc_clear_stream: { type: 'scene', pool: (CARDS.sceneCards || []).filter(s => s.name.includes('清溪')) },
+  loc_agriculture: { type: 'organization', pool: (CARDS.organizationCards || []).filter(s => s.name.includes('農') || s.name.includes('海葵')) },
+  loc_hall_of_heroes: { type: 'nation', pool: (CARDS.nationalCards || []) },
+  loc_rust_city: { type: 'scene', pool: (CARDS.sceneCards || []).filter(s => s.name.includes('鏽蝕') || s.name.includes('W04')) },
+  loc_orbital_station: { type: 'scene', pool: (CARDS.sceneCards || []).filter(s => s.name.includes('軌道') || s.name.includes('大學院')) },
+  loc_forest: { type: 'organization', pool: (CARDS.organizationCards || []).filter(s => s.name.includes('貓') || s.name.includes('海盜') || s.name.includes('藍鰭')) },
+};
+
+// Try to find a reward card from exploring a location
+function exploreLocationRewards(locationId) {
+  const reward = LOCATION_REWARDS[locationId];
+  if (!reward || !reward.pool || reward.pool.length === 0) return null;
+
+  // 40% chance to find something
+  if (Math.random() > 0.4) return null;
+
+  // Find cards not yet discovered
+  const undiscovered = reward.pool.filter(c => !GameState.discoveredCards.includes(c.id));
+  const pool = undiscovered.length > 0 ? undiscovered : reward.pool;
+
+  const found = pool[Math.floor(Math.random() * pool.length)];
+  if (!found) return null;
+
+  if (!GameState.discoveredCards.includes(found.id)) {
+    GameState.discoveredCards.push(found.id);
+  }
+  addToSidebar(found.id);
+  return { name: found.name, type: reward.type, icon: found.icon || '📋' };
 }
 
 // ═══════════════════════════════════════════════════════
@@ -667,7 +715,7 @@ function saveGame() {
       bonds: GameState.bonds, day: GameState.day, timeOfDay: GameState.timeOfDay,
       tickCount: GameState.tickCount, sidebarCards: GameState.sidebarCards,
       inventory: GameState.inventory, unlockedLocations: GameState.unlockedLocations,
-      flags: GameState.flags, discoveredDialogues: GameState.discoveredDialogues,
+      flags: GameState.flags, discoveredDialogues: GameState.discoveredDialogues, discoveredCards: GameState.discoveredCards,
       equipment: GameState.equipment, volume: GameState.volume,
       boardCards: GameState.boardCards.map(c => ({
         templateId: c.templateId, x: c.x, y: c.y, hp: c.hp, maxHp: c.maxHp,
@@ -706,6 +754,7 @@ function loadGame() {
     GameState.unlockedLocations = data.unlockedLocations ?? ['loc_holy_cross', 'loc_mirror_lake'];
     GameState.flags = data.flags ?? {};
     GameState.discoveredDialogues = data.discoveredDialogues ?? [];
+    GameState.discoveredCards = data.discoveredCards ?? [];
     GameState.equipment = data.equipment ?? { weapon: null, armor: null, accessory: null };
     GameState.volume = data.volume ?? 0.7;
     // Recreate board cards from saved data
@@ -758,6 +807,7 @@ window.GameEngine = {
   getCardType,
   getAdjacentLocations,
   unlockAdjacentLocations,
+  exploreLocationRewards,
   buyItem,
   sellItem,
   getShopPrices,
