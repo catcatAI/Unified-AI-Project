@@ -93,11 +93,89 @@ class ModelRequirement:
 
 
 class HardwareDetector:
+    """Truly hardware-driven detector — spec first, not stub.
+
+    Delegates to backbone/hardware.py for actual spec (CPU/GPU/RAM/disk),
+    and maps to this center's dataclass. Same hardware -> same profile
+    regardless of laptop/desktop label.
+    """
+
     def detect(self) -> HardwareProfile:
-        return HardwareProfile(
-            platform="win32",
-            os_version="10.0.0",
-        )
+        try:
+            # Use backbone as source of truth for actual hardware spec
+            from core.backbone.hardware import HardwareProfile as BHw
+            spec = BHw.detect()
+            # Map to this center's dataclass (spec-driven)
+            cpu_name = ""
+            try:
+                import platform as _plat
+                cpu_name = _plat.processor() or _plat.machine()
+                # Try to get detailed CPU name on Linux
+                if _plat.system() == "Linux":
+                    with open("/proc/cpuinfo", "r") as f:
+                        for line in f:
+                            if line.startswith("model name"):
+                                cpu_name = line.split(":", 1)[-1].strip()
+                                break
+            except Exception:
+                pass
+
+            # GPU mapping
+            gpu_name = spec.get("gpu") or ""
+            gpu_vendor = (spec.get("gpu_vendor") or "").lower()
+            vendor_map = {"nvidia": "nvidia", "intel": "intel", "amd": "amd", "unknown": "unknown"}
+            vendor = vendor_map.get(gpu_vendor, "unknown")
+            # Try to map vendor string if not provided
+            if not vendor or vendor == "unknown":
+                low = gpu_name.lower()
+                if "nvidia" in low:
+                    vendor = "nvidia"
+                elif "intel" in low:
+                    vendor = "intel"
+                elif "amd" in low or "radeon" in low:
+                    vendor = "amd"
+
+            # Memory via psutil or spec
+            total_mb = int((spec.get("ram_gb", 0) or 0) * 1024)
+            avail_mb = 0
+            percent = 0.0
+            try:
+                import psutil
+                vm = psutil.virtual_memory()
+                total_mb = int(vm.total / 1024 / 1024)
+                avail_mb = int(vm.available / 1024 / 1024)
+                percent = vm.percent
+            except Exception:
+                pass
+
+            return HardwareProfile(
+                cpu=CPUInfo(
+                    name=cpu_name,
+                    cores=spec.get("cpu_cores", 0) or 0,
+                    threads=spec.get("cpu_cores", 0) or 0,
+                    architecture=spec.get("arch", "") or "",
+                ),
+                gpu=GPUInfo(
+                    name=gpu_name,
+                    vendor=vendor,
+                    memory_mb=int((spec.get("gpu_memory_gb", 0) or 0) * 1024),
+                    compute_units=spec.get("cpu_cores", 0) or 0,
+                ),
+                memory=MemoryInfo(
+                    total_mb=total_mb,
+                    available_mb=avail_mb,
+                    percent_used=percent,
+                ),
+                platform=spec.get("os", "") or "linux",
+                os_version=spec.get("os_version", "") or "",
+            )
+        except Exception as e:
+            logger.debug(f"HardwareDetector spec-driven failed, fallback stub: {e}", exc_info=True)
+            # Fallback stub (never hardware-adaptive, but prevents crash)
+            return HardwareProfile(
+                platform="linux",
+                os_version="unknown",
+            )
 
 
 class CodeTranspiler:

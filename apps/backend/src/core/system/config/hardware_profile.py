@@ -267,18 +267,20 @@ class HardwareProfile:
 
     @staticmethod
     def _detect_scenario() -> HardwareScenario:
-        """Auto-detect hardware scenario from runtime environment.
+        """Truly hardware-driven scenario — spec first, chassis label second.
 
-        Detection priority:
-        1. ANGELA_HARDWARE_PROFILE env var (explicit override)
-        2. CI environment → LOW_POWER_DEVICE
-        3. Headless Linux → SERVER_CLOUD
-        4. ARM Linux → LOW_POWER_DEVICE
-        5. Battery discharging (laptop) → power mode
-        6. Desktop with iGPU only → DESKTOP_IGPU
-        7. Default → HIGH_PERFORMANCE_DESKTOP
+        Hardware is hardware: the same RAM/VRAM/CPU gets the same tier whether
+        it is called 'desktop' or 'laptop'. Detection is:
+          1. Env override (ANGELA_HARDWARE_PROFILE)
+          2. CI / ARM special cases (still spec-driven)
+          3. Actual RAM/VRAM/CPU spec via backbone/hardware.py (primary)
+          4. Battery as secondary modifier (not primary tier)
+          5. Fallback to defaults
+
+        This makes ASUS BR1100FKA vs desktop-with-same-RAM get identical adaptive
+        compute; only the physical hardware matters.
         """
-        # 1. Env override
+        # 1. Env override (explicit user choice wins)
         env_override = os.environ.get("ANGELA_HARDWARE_PROFILE")
         if env_override:
             try:
@@ -291,39 +293,58 @@ class HardwareProfile:
         system = platform.system()
         machine = platform.machine()
 
-        # 2. CI
+        # 2. CI / ARM — still spec-driven but forced low for safety
         if os.environ.get("CI") == "true":
             logger.info("HardwareProfile: CI detected → LOW_POWER_DEVICE")
             return HardwareScenario.LOW_POWER_DEVICE
-
-        # 3. Headless Linux (no display, no SSH) → likely cloud server
-        has_display = bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
-        is_ssh = "SSH_CLIENT" in os.environ or "SSH_TTY" in os.environ
-        if system == "Linux" and not has_display and not is_ssh:
-            logger.info("HardwareProfile: headless Linux → SERVER_CLOUD")
-            return HardwareScenario.SERVER_CLOUD
-
-        # 4. ARM Linux → RPi / low-power
         if system == "Linux" and machine in ("armv7l", "aarch64"):
             logger.info("HardwareProfile: ARM Linux → LOW_POWER_DEVICE")
             return HardwareScenario.LOW_POWER_DEVICE
 
-        # 5. Laptop battery check
-        if system in ("Windows", "Darwin"):
-            battery_status = _check_battery(system)
-            if battery_status == "power_saver":
-                logger.info("HardwareProfile: battery discharging <30%% → LAPTOP_POWER_SAVER")
-                return HardwareScenario.LAPTOP_POWER_SAVER
-            if battery_status == "laptop":
-                logger.info("HardwareProfile: battery discharging → LAPTOP_NORMAL")
-                return HardwareScenario.LAPTOP_NORMAL
+        # 3. Primary: actual hardware spec via backbone/hardware.py (RAM/VRAM/CPU)
+        # This is the hardware-adaptive core: same spec -> same tier, regardless of chassis
+        try:
+            from core.backbone.hardware import HardwareProfile as BHw
+            spec = BHw.detect()
+            tier = BHw.get_tier(spec)
+            # Map backbone tier -> this module's scenario (names align, but handle high_performance_gpu)
+            mapping = {
+                "server_cloud": HardwareScenario.SERVER_CLOUD,
+                "high_performance_gpu": HardwareScenario.HIGH_PERFORMANCE_DESKTOP,
+                "high_performance_desktop": HardwareScenario.HIGH_PERFORMANCE_DESKTOP,
+                "desktop_igpu": HardwareScenario.DESKTOP_IGPU,
+                "laptop_normal": HardwareScenario.LAPTOP_NORMAL,
+                "laptop_power_saver": HardwareScenario.LAPTOP_POWER_SAVER,
+                "low_power_device": HardwareScenario.LOW_POWER_DEVICE,
+            }
+            if tier in mapping:
+                # Battery as secondary modifier: if on battery and low, downgrade one step
+                # (Windows/Darwin only, best-effort)
+                if system in ("Windows", "Darwin"):
+                    bat = _check_battery(system)
+                    if bat == "power_saver" and tier in ("high_performance_desktop", "laptop_normal"):
+                        logger.info("HardwareProfile: battery discharging <30%% downgrade %s -> LAPTOP_POWER_SAVER (spec: RAM %.1fGB VRAM %.1fGB)", tier, spec.get("ram_gb",0), spec.get("gpu_memory_gb",0))
+                        return HardwareScenario.LAPTOP_POWER_SAVER
+                logger.info("HardwareProfile: spec-driven %s (RAM %.1fGB VRAM %.1fGB CPU %s, chassis-agnostic)",
+                            mapping[tier].value, spec.get("ram_gb",0), spec.get("gpu_memory_gb",0), spec.get("cpu_cores",0))
+                return mapping[tier]
+            logger.debug("HardwareProfile: spec tier %s not in mapping, fallback", tier)
+        except Exception as e:
+            logger.debug("HardwareProfile: spec-driven detect failed, fallback to chassis check: %s", e)
 
-        # 6. Desktop with iGPU only (no discrete GPU) → DESKTOP_IGPU
+        # 4. Fallback: headless / chassis checks (secondary, for when spec detect fails)
+        has_display = bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+        is_ssh = "SSH_CLIENT" in os.environ or "SSH_TTY" in os.environ
+        if system == "Linux" and not has_display and not is_ssh:
+            logger.info("HardwareProfile: headless Linux → SERVER_CLOUD (fallback)")
+            return HardwareScenario.SERVER_CLOUD
         if system == "Windows" and _has_intel_igpu_only():
-            logger.info("HardwareProfile: Intel iGPU detected (no dGPU) → DESKTOP_IGPU")
+            logger.info("HardwareProfile: Intel iGPU detected (no dGPU) → DESKTOP_IGPU (fallback)")
             return HardwareScenario.DESKTOP_IGPU
 
-        # 7. Default
+        # 5. Default (still hardware-agnostic fallback, but spec path should have handled 15GB+Arc case)
+        logger.info("HardwareProfile: default → HIGH_PERFORMANCE_DESKTOP (fallback)")
+        return HardwareScenario.HIGH_PERFORMANCE_DESKTOP
         logger.info("HardwareProfile: default → HIGH_PERFORMANCE_DESKTOP")
         return HardwareScenario.HIGH_PERFORMANCE_DESKTOP
 
