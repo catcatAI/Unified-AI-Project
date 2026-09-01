@@ -202,8 +202,8 @@ class ResponseModeSelector:
                 )
                 try:
                     self.pairs.resolve(pair_id, output)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"pairs resolve {pair_id} failed: {e}", exc_info=True)
             return result
         if pair_id is not None and self.pairs is not None:
             output = Envelope(
@@ -215,8 +215,8 @@ class ResponseModeSelector:
             )
             try:
                 self.pairs.resolve(pair_id, output)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"pairs resolve {pair_id} failed: {e}", exc_info=True)
         return ResponseResult(
             mode=mode,
             text=text,

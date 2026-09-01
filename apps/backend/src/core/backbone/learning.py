@@ -171,8 +171,8 @@ class LearningCoordinator:
             if pair_id is not None and self.pairs is not None:
                 try:
                     self.pairs.fail(pair_id, reason=str(exc))
-                except Exception:
-                    pass
+                except Exception as e2:
+                    logger.debug(f"pairs fail {pair_id} failed: {e2}", exc_info=True)
             return {"status": "ERROR", "error": str(exc)}
         else:
             if pair_id is not None and self.pairs is not None:
@@ -185,8 +185,8 @@ class LearningCoordinator:
                 )
                 try:
                     self.pairs.resolve(pair_id, output)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"pairs resolve {pair_id} failed: {e}", exc_info=True)
             return {"status": "PAIRED"}
 
     def clear(self) -> None:

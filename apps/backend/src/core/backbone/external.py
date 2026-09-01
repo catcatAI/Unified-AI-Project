@@ -182,8 +182,8 @@ class ExternalGateway:
                 )
                 try:
                     self.pairs.resolve(pair_id, output)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"pairs resolve {pair_id} failed: {e}", exc_info=True)
             return result
 
     async def _run_with_resilience(
