@@ -97,7 +97,7 @@ class UnifiedBackend(BaseLLMBackend):
                 if self.checkpoint.endswith(".npz"):
                     import numpy as np
 
-                    z = np.load(self.checkpoint)
+                    z = np.load(self.checkpoint, allow_pickle=False)
                     core = engine.core
                     for attr in ("pos", "trans", "gram", "gram3", "gram5", "uni"):
                         if attr in z:

@@ -195,7 +195,7 @@ def load_default_visual_decoder_weights(
         logger.debug("No pre-trained visual decoder weights at %s", wpath)
         return False
     try:
-        data = np.load(wpath)
+        data = np.load(wpath, allow_pickle=False)
         if "visual_decoder_W" in data:
             decoder._W = data["visual_decoder_W"]
             decoder._b = data.get("visual_decoder_b", decoder._b)

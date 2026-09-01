@@ -267,12 +267,12 @@ def _load_checkpoint(path: str) -> dict:
             with open(json_path, "r", encoding="utf-8") as f:
                 meta = json.load(f)
         if os.path.exists(npz_path):
-            z = np.load(npz_path)
+            z = np.load(npz_path, allow_pickle=False)
             shape = tuple(int(s) for s in z["W_shape"])
             W = np.zeros(shape, dtype=z["W_values"].dtype)
             W[z["W_indices"][:, 0], z["W_indices"][:, 1]] = z["W_values"]
         else:
-            W = np.load(npy_path, mmap_mode="r")
+            W = np.load(npy_path, allow_pickle=False, mmap_mode="r")
         meta["W"] = W
         meta["W_format"] = "dense"
         return meta

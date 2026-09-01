@@ -280,7 +280,7 @@ class _NumpyBackend:
                         self.persist_dir,
                     )
                     return
-                self.vectors = np.load(vec_path)
+                self.vectors = np.load(vec_path, allow_pickle=False)
                 self.ids = data.get("ids", [])
                 self.documents = data.get("documents", [])
                 self.metadatas = data.get("metadatas", [])
