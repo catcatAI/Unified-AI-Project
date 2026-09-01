@@ -94,7 +94,8 @@ class VisionProcessingAgent:
         if not PYTESSERACT_AVAILABLE:
             return {"status": "unavailable", "message": "pytesseract not installed"}
         try:
-            text = pytesseract.image_to_string(Image.open(image_path))
+            with Image.open(image_path) as img:
+                text = pytesseract.image_to_string(img)
             logger.info(f"extract_text: {image_path} -> {len(text)} chars")
             return {
                 "status": "success",

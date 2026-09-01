@@ -28,6 +28,10 @@
 
 from __future__ import annotations
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 import threading
 import time
 from typing import Any, Dict, Optional
@@ -112,8 +116,8 @@ class MountableWrapper:
         if path is not None:
             try:
                 return str(path())
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"persistence_path failed: {e}", exc_info=True)
         return getattr(self.resource, "persistence_path", "")
 
     # ------------------------------------------------------------------
