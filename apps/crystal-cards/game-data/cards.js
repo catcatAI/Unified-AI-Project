@@ -561,11 +561,11 @@ const CARDS = {
   // ═══════════════════════════════════════════════════════
   recipes: [
     { id: 'recipe_torch', type: 'recipe', icon: '🔥', name: '製作火把', desc: '木材×2 → 火把', inputs: ['res_wood', 'res_wood'], output: 'item_flashlight', count: 1 },
-    { id: 'recipe_potion', type: 'recipe', icon: '⚗️', name: '調製藥水', desc: '草藥×2 + 水×1 → 勇氣液', inputs: ['res_herb', 'res_herb', 'res_water'], output: 'item_courage', count: 1 },
+    { id: 'recipe_potion', type: 'recipe', icon: '⚗️', name: '調製藥水', desc: '草藥×2 + 水×1 → 勇氣液', inputs: ['res_herb', 'res_water'], output: 'item_courage', count: 1 },
     { id: 'recipe_crystal', type: 'recipe', icon: '💎', name: '合成水晶', desc: '水晶碎片×2 → 迴廊之水晶', inputs: ['res_crystal_shard', 'res_crystal_shard'], output: 'item_crystal', count: 1 },
-    { id: 'recipe_knife', type: 'recipe', icon: '🔪', name: '鍛造工具', desc: '特殊合金×2 + 木材×1 → 小刀', inputs: ['res_iron', 'res_iron', 'res_wood'], output: 'item_knife', count: 1 },
+    { id: 'recipe_knife', type: 'recipe', icon: '🔪', name: '鍛造工具', desc: '特殊合金×1 + 木材×1 → 小刀', inputs: ['res_iron', 'res_wood'], output: 'item_knife', count: 1 },
     { id: 'recipe_pearl', type: 'recipe', icon: '📿', name: '封印迴廊之力', desc: '迴廊鑰匙 + 迴廊之水晶 → 迴廊之珠', inputs: ['item_key_corridor', 'item_crystal'], output: 'item_corridor_pearl', count: 1 },
-    { id: 'recipe_glowfruit', type: 'recipe', icon: '🍎', name: '培育發光果實', desc: '乾糧×2 + 草藥×1 → 發光果實×2', inputs: ['res_food', 'res_food', 'res_herb'], output: 'item_glow_fruit', count: 2 },
+    { id: 'recipe_glowfruit', type: 'recipe', icon: '🍎', name: '培育發光果實', desc: '乾糧×1 + 草藥×1 → 發光果實×2', inputs: ['res_food', 'res_herb'], output: 'item_glow_fruit', count: 2 },
   ],
 
   // ═══════════════════════════════════════════════════════
@@ -968,7 +968,7 @@ const CARDS = {
       ingredients: [{"item": "鐵礦", "quantity": 2, stats: { atk: 5, def: 0, spd: 3 }}, {"item": "木柄", "quantity": 1}], resultItem: "匕首", resultQty: 1, failureChance: 0.1 },
     { id: "rpg_recipe_R15", name: "水晶法杖", type: "recipe", icon: "📖",
       desc: "靈木×2 + 水晶碎片×2 + 魔法粉×1 → 水晶法杖×1", category: "鍛造",
-      ingredients: [{"item": "靈木", "quantity": 2, stats: { atk: 10, def: 0, spd: 2 }}, {"item": "水晶碎片", "quantity": 2}, {"item": "魔法粉", "quantity": 1}], resultItem: "水晶法杖", resultQty: 1, failureChance: 0.4 },
+      ingredients: [{"item": "靈木", "quantity": 3}, {"item": "水晶碎片", "quantity": 3}], resultItem: "水晶法杖", resultQty: 1, failureChance: 0.4 },
     { id: "rpg_recipe_R16", name: "生命果", type: "recipe", icon: "📖",
       desc: "龍鱗×1 + 治療藥水×1 → 生命果×1", category: "煉金",
       ingredients: [{"item": "龍鱗", "quantity": 1}, {"item": "治療藥水", "quantity": 1}], resultItem: "生命果", resultQty: 1, failureChance: 0.4 },
