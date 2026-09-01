@@ -20,7 +20,10 @@ compute_int/compute_float`，提供主幹線統一的配置存取入口。所有
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 try:  # 延遲導入
     from core.system.config.magic_numbers import compute_bool as _mb_compute_bool
@@ -49,8 +52,8 @@ class BackboneConfig:
         if _mb_compute_mode is not None:
             try:
                 return _mb_compute_mode(feature, default)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"compute_mode {feature} failed: {e}", exc_info=True)
         return default
 
     def compute_bool(self, feature: str, default: bool = True) -> bool:
@@ -59,8 +62,8 @@ class BackboneConfig:
         if _mb_compute_bool is not None:
             try:
                 return _mb_compute_bool(feature, default)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"compute_bool {feature} failed: {e}", exc_info=True)
         return default
 
     def compute_int(self, feature: str, key: str, default: int = 0) -> int:
@@ -72,8 +75,8 @@ class BackboneConfig:
         if _mb_compute_int is not None:
             try:
                 return _mb_compute_int(feature, key, default)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"compute_int {feature}.{key} failed: {e}", exc_info=True)
         return default
 
     def compute_float(self, feature: str, key: str, default: float = 0.0) -> float:
@@ -86,8 +89,8 @@ class BackboneConfig:
             try:
                 result = _mb_compute_float(feature, key, default)
                 return float(result)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"compute_float {feature}.{key} failed: {e}", exc_info=True)
         return default
 
     def get(self, key: str, default: Any = None) -> Any:
@@ -98,5 +101,6 @@ class BackboneConfig:
             from core.system.config.magic_numbers import cache_value
 
             return cache_value(key, default=default)
-        except Exception:
+        except Exception as e:
+            logger.debug(f"config get {key} failed: {e}", exc_info=True)
             return default

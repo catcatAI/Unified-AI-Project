@@ -28,7 +28,10 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, List
+
+logger = logging.getLogger(__name__)
 
 
 def _safe_len(obj: Any) -> int:
@@ -130,7 +133,8 @@ class BackboneStructure:
     def trainings(self) -> List[Dict[str, Any]]:
         try:
             return self.bb.training_info() or []
-        except Exception:
+        except Exception as e:
+            logger.debug(f"trainings failed: {e}", exc_info=True)
             return []
 
     def memories(self) -> List[Dict[str, Any]]:
@@ -161,7 +165,8 @@ class BackboneStructure:
     def _domain_keys_from(self, ss: Any) -> List[str]:
         try:
             return list(ss.domain_keys() if callable(ss.domain_keys) else (ss.domain_keys or []))
-        except Exception:
+        except Exception as e:
+            logger.debug(f"_domain_keys_from failed: {e}", exc_info=True)
             return []
 
     def pairs(self) -> Dict[str, Any]:
@@ -225,7 +230,8 @@ class BackboneStructure:
             if callable(mode):
                 return str(mode())
             return str(mode) if mode else "default"
-        except Exception:
+        except Exception as e:
+            logger.debug(f"_response_mode failed: {e}", exc_info=True)
             return "default"
 
 

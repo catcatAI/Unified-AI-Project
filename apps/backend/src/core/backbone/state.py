@@ -24,6 +24,10 @@
 
 from __future__ import annotations
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 from typing import Any, Callable, Dict, List, Optional
 
 try:  # 延遲導入，避免啟動時硬依賴
@@ -60,7 +64,8 @@ class BackboneState:
             return default
         try:
             data = self._store.get_state(domain) or {}
-        except Exception:
+        except Exception as e:
+            logger.debug(f"state get {domain} failed: {e}", exc_info=True)
             return default
         if key is None:
             return data
