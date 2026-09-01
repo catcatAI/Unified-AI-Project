@@ -181,7 +181,7 @@ class _NumpyBackend:
         self._dirty = True
         now = time.time()
         if now - self._last_save_ts >= self._save_debounce:
-            self._save()
+            await asyncio.to_thread(self._save)
 
     def bulk_add_memories(
         self,

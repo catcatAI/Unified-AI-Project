@@ -237,7 +237,7 @@ async def _try_local_processing(
     retention_pct = f"{int(retention_min*100)}%～{int(retention_max*100)}%"
     retention_note = f"（保留率：{retention_pct}，{op['desc']}）"
 
-    matched = _find_local_match(task_type, source_dir, files)
+    matched = await asyncio.to_thread(_find_local_match, task_type, source_dir, files)
     if matched:
         return {
             "response_text": matched.get(

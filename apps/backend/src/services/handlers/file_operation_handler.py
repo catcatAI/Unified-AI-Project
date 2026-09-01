@@ -279,16 +279,16 @@ class FileOperationHandler:
         dest_dir = Path(new_name)
         if not dest_dir.is_dir():
             # Maybe the user gave a destination filename, not a directory
-            # Try creating parent directories and treat as full destination path
-            dest_dir.parent.mkdir(parents=True, exist_ok=True)
             dest = dest_dir
         else:
             dest = dest_dir / target.name
         if dest.exists():
             return t("file_ops.target_name_exists", path=str(dest))
-        # Validate both source and destination are safe
+        # Validate both source and destination are safe BEFORE creating dirs
         if not _is_safe_path(dest):
             return t("file_ops.unsafe_path", path=str(dest))
+        # Only create parent dirs after validation
+        dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(target), str(dest))
         return t("file_ops.moved", src=str(target), dst=str(dest))
 

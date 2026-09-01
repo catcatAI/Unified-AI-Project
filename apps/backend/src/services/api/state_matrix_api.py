@@ -110,9 +110,29 @@ class LoadStateRequest(BaseModel):
 
 
 # Sync helpers for file I/O (called via asyncio.to_thread to avoid blocking the event loop)
+def _sanitize_state_path(filepath: str) -> str:
+    import os
+    import re
+
+    # Allow only safe characters, prevent traversal
+    # Keep basename only if traversal detected
+    if ".." in filepath or filepath.startswith("/") or ":" in filepath:
+        filepath = os.path.basename(filepath)
+    # Only allow alphanumeric, dash, underscore, dot, slash (for relative)
+    filepath = re.sub(r"[^a-zA-Z0-9._\-/]", "_", filepath)
+    # Force within data/state/ dir
+    base = os.path.abspath("data/state")
+    os.makedirs(base, exist_ok=True)
+    abs_path = os.path.abspath(os.path.join(base, os.path.basename(filepath)))
+    if os.path.commonpath([abs_path, base]) != base:
+        raise ValueError(f"Invalid filepath: {filepath}")
+    return abs_path
+
+
 def _write_state_sync(filepath: str, state: dict) -> None:
     import json
 
+    filepath = _sanitize_state_path(filepath)
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(state, f)
 
@@ -120,6 +140,7 @@ def _write_state_sync(filepath: str, state: dict) -> None:
 def _read_state_sync(filepath: str) -> dict:
     import json
 
+    filepath = _sanitize_state_path(filepath)
     with open(filepath, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -325,7 +346,7 @@ async def get_negativity():
 async def save_state(request: SaveStateRequest) -> dict:
     """Save state to file."""
     matrix = get_state_matrix()
-    filepath = request.filepath or "state_matrix_save.json"
+    filepath = _sanitize_state_path(request.filepath or "state_matrix_save.json")
     try:
         if hasattr(matrix, "save_state"):
             matrix.save_state(filepath)
@@ -349,7 +370,7 @@ async def save_state(request: SaveStateRequest) -> dict:
 async def load_state(request: LoadStateRequest) -> dict:
     """Load state from file."""
     matrix = get_state_matrix()
-    filepath = request.filepath or "state_matrix_save.json"
+    filepath = _sanitize_state_path(request.filepath or "state_matrix_save.json")
     try:
         if hasattr(matrix, "load_state"):
             matrix.load_state(filepath)
