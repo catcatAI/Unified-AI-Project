@@ -186,6 +186,9 @@ tests/utils/text_utils.py
 # Crystal-cards runtime artifacts (regenerated every run)
 apps/crystal-cards/play-report.json
 apps/crystal-cards/dist/
+# Crystal-cards one-shot maintenance scripts (throwaway, regenerated via fix-*.js)
+apps/crystal-cards/scripts/fix-*.js
+apps/crystal-cards/game-data/extracted-content.js
 # Codebuff / freebuff local artifacts
 .freebuff/
 # Test output artifacts (regenerated, should not be tracked)

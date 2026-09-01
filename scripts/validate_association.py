@@ -66,7 +66,8 @@ class AssocAdapter:
     def query(self, keys: List[str]) -> Dict[str, float]:
         if self.kind == "ed3n":
             return self.net.forward(keys)
-        return self.net.forward(keys)
+        # GARDEN expects Dict[str, float] (key->confidence); convert list with 1.0
+        return self.net.forward({k: 1.0 for k in keys})
 
     def reset(self) -> None:
         if self.kind == "ed3n":
@@ -173,7 +174,7 @@ def metric_perturbation(builder, a: str, b: str) -> float:
 # ---------------------------------------------------------------------------
 
 
-def run_engine(builder, label: str) -> Dict[str, float]:
+def run_engine(builder, label: str, deep: bool = False) -> Dict[str, float]:
     # Use a 3-node chain (A>B>C) for the structural metrics: this tests
     # WHETHER transitive/ranking association works, independent of each engine's
     # raw propagation depth (a separate concern, not the association ability).
@@ -196,12 +197,55 @@ def run_engine(builder, label: str) -> Dict[str, float]:
           f"perturbation={results['perturbation']} "
           f"=> association_capability={results['association_capability']} "
           f"({results['elapsed_s']}s)")
+
+    # L1-2 deep metrics (optional, for 2→4 out-gate: deep_chain ≥90%)
+    if deep:
+        print(f"  [{label}] deep metrics (L1-2, resource-guarded):")
+        # Deep chain 50 hops — tests long transitive propagation
+        deep_chain = [f"N{i}" for i in range(50)]
+        t1 = time.time()
+        deep_score = metric_transitive(builder, deep_chain)
+        print(f"    deep_chain(50) transitive={deep_score:.3f} ({time.time()-t1:.2f}s)")
+        results["deep_chain"] = round(deep_score, 3)
+        # Branching: A->B, A->C, B->D, C->D — diamond
+        try:
+            adj = builder()
+            for k in ["A", "B", "C", "D"]:
+                adj.register(k)
+            adj.add_edge("A", "B", 1.0)
+            adj.add_edge("A", "C", 1.0)
+            adj.add_edge("B", "D", 1.0)
+            adj.add_edge("C", "D", 1.0)
+            acts = adj.query(["A"])
+            branch_ok = 1.0 if acts.get("D", 0.0) > 0 else 0.0
+            print(f"    branching(A->B/C->D) reach D={branch_ok:.1f}")
+            results["branching"] = branch_ok
+        except Exception as e:
+            print(f"    branching failed: {e}")
+            results["branching"] = 0.0
+        # Noisy: 10% random extra edges should not break transitive
+        import random as _rnd
+        _rnd.seed(42)
+        adj2 = builder()
+        for i in range(len(deep_chain) - 1):
+            adj2.register(deep_chain[i])
+            adj2.register(deep_chain[i+1])
+            adj2.add_edge(deep_chain[i], deep_chain[i+1], 1.0)
+        # add 5 noisy random edges
+        for _ in range(5):
+            a, b = _rnd.sample(deep_chain, 2)
+            adj2.add_edge(a, b, 0.3)
+        noisy = 1.0 if adj2.query([deep_chain[0]]).get(deep_chain[-1], 0.0) > 0 else 0.0
+        print(f"    noisy(10%) transitive still={noisy:.1f}")
+        results["noisy"] = noisy
+
     return results
 
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Neural association validation harness")
     ap.add_argument("--engine", choices=["ed3n", "garden", "both"], default="both")
+    ap.add_argument("--deep", action="store_true", help="Include L1-2 deep_chain/branching/noisy (slow, ~10s for GARDEN)")
     ap.add_argument("--output", "-o", default="",
                     help="Write JSON report to this path")
     args = ap.parse_args()
@@ -215,10 +259,10 @@ def main() -> None:
     report: Dict[str, object] = {}
     if args.engine in ("ed3n", "both"):
         print("\n  ED3N CoreNetwork:")
-        report["ed3n"] = run_engine(build_ed3n, "ed3n")
+        report["ed3n"] = run_engine(build_ed3n, "ed3n", deep=args.deep)
     if args.engine in ("garden", "both"):
         print("\n  GARDEN TensorSNNCore:")
-        report["garden"] = run_engine(build_garden, "garden")
+        report["garden"] = run_engine(build_garden, "garden", deep=args.deep)
 
     print("\n" + "=" * 70)
     print("  INTERPRETATION")

@@ -3,7 +3,7 @@
 > Version: 7.5.0-dev
 > Last Updated: 2026-08-31
 > Total Python files: ~667 in apps/backend/src/
-> Total test files: ~5,432 collected
+> Total test files: ~5,448 collected (6,111 full)
 
 ## Legend
 

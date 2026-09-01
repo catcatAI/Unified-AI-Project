@@ -10,7 +10,7 @@
 # Angela AI Framework Overview
 
 > **Framework positioning**: A modular, extensible framework for building digital life systems with hybrid AI (LLM + SNN + biological simulation).
-> **Codebase**: 667 Python files (~96K lines) in `apps/backend/src/` + 136 JS/TS files across 3 apps + 5,432 tests.
+> **Codebase**: 667 Python files (~96K lines) in `apps/backend/src/` + 136 JS/TS files across 3 apps + 5,448 tests (tests/; 6,111 full).
 > **Intelligence**: Upper bound 6.0/10 (with LLM API), **native deterministic-engine capability strong** (math/physics/chemistry 9.5, knowledge 10, symbolic reasoning 10 — real, high-certainty, scored as capability); **neural SNN's job = learning associations** (A>taller>B), NOT memorizing knowledge — its measured **association capability = 1.0** (ED3N & GARDEN, per [INTELLIGENCE_ASSESSMENT.md](06-project-management/INTELLIGENCE_ASSESSMENT.md) §4.1.2). Native capability is multi-dimensional — there is no single "actual" total. See linked doc for the scoring standard.
 > **Architecture completeness**: ~95% (framework structure exists, but ML model weights are 5% trained).
 > **Version**: 7.5.0-dev | **License**: MIT
@@ -212,7 +212,7 @@ python scripts/run_angela.py           # Full stack
 python scripts/run_angela.py --api-only # Backend only
 
 # Test
-pytest tests/                           # 5,432 tests
+pytest tests/                           # 5,448 tests (6,111 full)
 pytest tests/path/to/test_file.py -v    # Single file
 
 # Lint & Type-check
@@ -727,4 +727,4 @@ Angela AI 有 **4 個學習層級**，每個建立在前者之上。這比標準
 
 ---
 
-**Version**: 7.5.0-dev | **Code**: 667 Python files, ~96K lines | **Tests**: 5,432 (tests/; 0 errors) | **Intelligence**: 6.0/3.0 (with LLM / native) | **Architecture**: ~95% | **Training**: ~5%
+**Version**: 7.5.0-dev | **Code**: 667 Python files, ~96K lines | **Tests**: 5,448 (tests/; 6,111 full) | **Intelligence**: 6.0/3.0 (with LLM / native) | **Architecture**: ~95% | **Training**: ~5%

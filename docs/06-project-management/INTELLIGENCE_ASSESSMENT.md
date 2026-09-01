@@ -2,11 +2,11 @@
 
 > **Purpose**: Honest, verifiable assessment of Angela AI's actual capabilities.
 > **Created**: 2026-07-04
-> **Updated**: 2026-08-28 (§X #272: 實戰對話修復, 5432 tests)
+> **Updated**: 2026-09-01 (§X #272: 實戰對話修復 + L0 16 tests, 5448 tests/ + 6111 full)
 > **Principle**: No LLM API calls in benchmarks — scores reflect native engine only.
 > **Test command**: `python scripts/benchmark_ed3n_garden.py --engine ed3n`
 > **Test command**: `python scripts/benchmark_ed3n_garden.py --engine garden`
-> **Test count**: 5,432 collected (tests/), 0 errors (re-verified 2026-08-28)
+> **Test count**: 5,448 collected (tests/; 6,111 full), 0 errors (re-verified 2026-09-01)
 
 ---
 

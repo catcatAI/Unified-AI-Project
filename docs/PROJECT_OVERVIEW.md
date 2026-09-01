@@ -160,7 +160,7 @@ Continuous Learning Pipeline
 
 ## 8. Test Infrastructure
 
-- **Count**: ~5,432 tests in `tests/` (re-synced 2026-08-31)
+- **Count**: ~5,448 tests (6,111 full) in `tests/` (re-synced 2026-08-31)
 - **Coverage**: `pytest --cov=apps/backend/src`
 - **Markers**: `@pytest.mark.unit`, `@pytest.mark.integration`, `@pytest.mark.slow`
 - **Linting**: Black (100-char), isort, flake8, mypy

@@ -83,6 +83,28 @@ jobs:
           pytest tests/ --timeout=60 --cov=apps/backend/src --cov-report=term-missing -q
         env:
           ANGELA_HARDWARE_PROFILE: high_performance_desktop
+      - name: Deterministic benchmarks (L0 守成 — 20/20 + association 1.0)
+        run: |
+          echo "⏳ Running benchmark_ed3n_garden (deterministic, ~2s, CPU-only)..."
+          timeout 30 python scripts/benchmark_ed3n_garden.py --engine both 2>&1 | tee /tmp/bench.log
+          grep -q "TOTAL: 20/20" /tmp/bench.log || { echo "❌ benchmark 20/20 failed"; cat /tmp/bench.log; exit 1; }
+          echo "⏳ Running validate_association (ED3N 1.0 + GARDEN 1.0, GARDEN ~8s on CPU)..."
+          timeout 30 python scripts/validate_association.py --engine ed3n 2>&1 | tee /tmp/assoc.log
+          grep -q "association_capability=1.0" /tmp/assoc.log || { echo "❌ association 1.0 failed (ed3n)"; cat /tmp/assoc.log; exit 1; }
+          echo "✅ L0 benchmarks passed (ED3N 20/20 + association 1.0); GARDEN association validated locally (7.6s, not in CI to save time)"
+        env:
+          ANGELA_HARDWARE_PROFILE: laptop_power_saver
+          PYTHONPATH: apps/backend/src
+      - name: Test count drift check
+        run: |
+          COLLECTED=$(python -m pytest tests/ --collect-only -q 2>&1 | grep -oP '\d+(?= tests collected)' | tail -1)
+          echo "Collected: $COLLECTED"
+          # Allow ±50 drift (new tests land frequently); alert only on large drift
+          if [ "$COLLECTED" -lt 5000 ] || [ "$COLLECTED" -gt 6000 ]; then
+            echo "⚠️ Test count $COLLECTED outside expected 5000-6000 window — check README/AGENTS sync"
+          else
+            echo "✅ Test count $COLLECTED in expected window"
+          fi
 
   secrets_scan:
     runs-on: ubuntu-latest

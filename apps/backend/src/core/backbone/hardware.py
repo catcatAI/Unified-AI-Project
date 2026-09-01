@@ -67,6 +67,7 @@ class HardwareProfile:
     @staticmethod
     def _detect_gpu() -> Dict[str, Any]:
         result = {"gpu": None, "gpu_memory_gb": 0}
+        # 1) NVIDIA via nvidia-smi
         try:
             import subprocess
             out = subprocess.check_output(
@@ -75,13 +76,82 @@ class HardwareProfile:
                 timeout=5,
             )
             lines = out.decode().strip().split("\n")
-            if lines:
+            if lines and lines[0].strip():
                 parts = lines[0].split(",")
                 if len(parts) >= 2:
                     result["gpu"] = parts[0].strip()
                     result["gpu_memory_gb"] = float(parts[1].strip()) / 1024
+                    return result
+                elif parts[0].strip():
+                    result["gpu"] = parts[0].strip()
+                    return result
         except Exception as e:
             logger.debug("nvidia-smi unavailable: %s", e)
+
+        # 2) Intel Arc / AMD via lspci or glxinfo (no nvidia-smi)
+        try:
+            import subprocess
+            # Try lspci for Intel Arc / AMD
+            try:
+                out = subprocess.check_output(
+                    ["lspci"], stderr=subprocess.DEVNULL, timeout=5
+                ).decode()
+                for line in out.splitlines():
+                    low = line.lower()
+                    if "arc" in low and "intel" in low:
+                        # e.g. "VGA: Intel Corporation Arc B570 Graphics (BMG G21)"
+                        result["gpu"] = line.split(":")[-1].strip()
+                        # Arc B570 = 10GB, B580 = 12GB; default 10 if unknown
+                        if "b580" in low:
+                            result["gpu_memory_gb"] = 12
+                        elif "b570" in low:
+                            result["gpu_memory_gb"] = 10
+                        else:
+                            result["gpu_memory_gb"] = 8
+                        logger.debug(f"Detected Intel Arc via lspci: {result}")
+                        return result
+                    if "amd" in low and ("radeon" in low or "vga" in low):
+                        result["gpu"] = line.split(":")[-1].strip()
+                        result["gpu_memory_gb"] = 8
+                        return result
+            except Exception:
+                pass
+
+            # Fallback: glxinfo renderer string (Mesa)
+            try:
+                out = subprocess.check_output(
+                    ["glxinfo"], stderr=subprocess.DEVNULL, timeout=5
+                ).decode()
+                for line in out.splitlines():
+                    if "OpenGL renderer string" in line:
+                        renderer = line.split(":", 1)[-1].strip()
+                        low = renderer.lower()
+                        if "arc" in low:
+                            result["gpu"] = renderer
+                            if "b580" in low:
+                                result["gpu_memory_gb"] = 12
+                            elif "b570" in low:
+                                result["gpu_memory_gb"] = 10
+                            else:
+                                result["gpu_memory_gb"] = 8
+                            return result
+                        if "intel" in low or "amd" in low:
+                            result["gpu"] = renderer
+                            result["gpu_memory_gb"] = 4
+                            return result
+            except Exception:
+                pass
+
+            # Fallback: /dev/dri existence (Intel/AMD present but no info)
+            import os
+            if os.path.exists("/dev/dri"):
+                # At least one GPU exists, try to infer via render name
+                if os.path.exists("/dev/dri/renderD128"):
+                    result["gpu"] = "Intel/AMD GPU (renderD128)"
+                    result["gpu_memory_gb"] = 4
+                    # Don't return yet — keep as fallback if nothing else matched
+        except Exception as e:
+            logger.debug(f"Intel/AMD GPU detect failed: {e}", exc_info=True)
         return result
 
     @staticmethod
@@ -102,13 +172,21 @@ class HardwareProfile:
 
     @staticmethod
     def get_tier(hw: Dict[str, Any]) -> str:
-        if hw.get("gpu") and hw.get("gpu_memory_gb", 0) >= 8 and hw.get("ram_gb", 0) >= 16:
-            return "high_performance_gpu"
-        if hw.get("ram_gb", 0) >= 16:
+        # Intel Arc B570 (10GB) + 15GB RAM -> high_performance_desktop (desktop, not laptop)
+        # Respect explicit env ANGELA_HARDWARE_PROFILE if set (handled in Backbone)
+        has_gpu = bool(hw.get("gpu"))
+        gpu_gb = hw.get("gpu_memory_gb", 0) or 0
+        ram_gb = hw.get("ram_gb", 0) or 0
+        # Desktop with discrete GPU (Arc/NVIDIA) + ≥12GB RAM -> high_performance_desktop
+        if has_gpu and gpu_gb >= 8 and ram_gb >= 12:
             return "high_performance_desktop"
-        if hw.get("ram_gb", 0) >= 8:
+        if has_gpu and gpu_gb >= 8 and ram_gb >= 16:
+            return "high_performance_gpu"
+        if ram_gb >= 16:
+            return "high_performance_desktop"
+        if ram_gb >= 8:
             return "laptop_normal"
-        if hw.get("ram_gb", 0) >= 4:
+        if ram_gb >= 4:
             return "laptop_power_saver"
         return "low_power_device"
 
