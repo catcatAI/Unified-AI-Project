@@ -7,20 +7,20 @@
 
 ---
 
-## 1. 最小單位與硬件自適應 (已 `auto` 5檔)
+## 1. 最小單位 = 模型驗證, 驗收 = 智能報告 (更正)
 
-**Source:** `apps/backend/src/core/system/config/hardware_profile.py:152` `apps/backend/configs/system/compute.default.yaml`
+**最小單位:** 每模型獨立驗證 `ED3N / GARDEN / multimodal / HAM` 各自 `validate_association / benchmark 20/20` 為一單位, 非硬件檔
 
-| 硬件檔 | 檢測條件 | `ed3n_snn` | `garden_snn max_vocab` | `threads` | 體積/算力策略 |
-|---|---|---|---|---|---|
-| `HIGH_PERFORMANCE_DESKTOP` | `GPU + 16GB RAM` | `on` | `50000` | `8` | `fp32` 全量, `HAM 5000` |
-| `LAPTOP_NORMAL` | `GPU 可用` | `auto` | `10000` | `4` | `int8 9.6K` `SNN 0.75` |
-| `LAPTOP_POWER_SAVER` | `電池 + 無 GPU` | `off` | `2000` | `2` | `SNN off` 保 `CPU<70%` |
-| `LOW_POWER_DEVICE` | `RAM<4GB` | `off` | `500` | `1` | `KB only` `體積 120K` |
-| `SERVER_CLOUD` | `GPU + 大 RAM` | `on` | `100000` | `16` | `full` |
+**硬件自適應 (全覆蓋):** `hardware_profile.py:152` 5檔 `HIGH_PERF→LOW_POWER` 決定 `ed3n_snn on/off` `max_vocab` `threads`, 但驗收仍以 `模型驗證` 為最小單位, 硬件僅決定 `何智能可在何硬件跑`
 
-- 取值皆 `compute_bool("ed3n_snn")` `compute_int("garden_snn.max_vocab")` 非硬編碼, `ANGELA_HARDWARE_PROFILE` 可覆蓋
-- 限值: `CPU 70%` `RAM 80%` `disk 90%` 超即 `SNN off` 回退 `HAM` 召回
+| 模型 | 最小單位驗證 | 硬件自適應 |
+|---|---|---|
+| `ED3N` | `validate_association 4指標 1.0` | `LOW_POWER off` `DESKTOP int8` `SERVER fp32` |
+| `GARDEN` | `benchmark 20/20` | `max_vocab 500→100k` |
+| `multimodal` | `SSIM/PSNR` `snn 9.6K` | `threshold 0.80` 稀疏 |
+| `HAM` | `5000 cap` `5000` | `5000` 限 |
+
+- 限值: `CPU 70%` `RAM 80%` `disk 90%` 超即 `SNN off` 回退 `HAM` 召回, 但驗證仍以模型為單位
 
 ---
 
@@ -41,7 +41,7 @@
 1. **探測:** `hardware_profile.detect()` → 寫 `compute.default.yaml` 對應檔, `LOW_POWER` 自動 `ed3n_snn off`
 2. **知識:** `train_pipeline --knowledge-only` 離線補 `KB` 星期/月份接續 → `benchmark` 守門 `20/20`
 3. **壓縮:** `snn.pt int8` 量化 + `HAM/multimodal 5000` 限 → `pytest 5432` 守門
-4. **證明:** `validate_association.py` 四指標 + `snn_int8` 誤差 → 自動生成 `INTELLIGENCE_ASSESSMENT` 附錄 `最小單位: LOW_POWER 1.0 (9.6K) / DESKTOP 1.0 (9.6K) / SERVER 1.0 (9.6K)` 何硬件何智能
+4. **證明 (驗收):** `validate_association.py` 四指標 (模型驗證為最小單位) + `benchmark 20/20` → 自動生成 `INTELLIGENCE_ASSESSMENT` 智能報告為驗收, 證明 `何硬件何模型何智能` (如 `LOW_POWER ED3N off→KB only / DESKTOP 1.0 int8 / SERVER 1.0 fp32`)
 
 **回滾:** 任一門檻跌 `git restore` + `cp snn.pt.bak snn.pt`, 無假數據 — 僅 `commonpath` 圍欄 + `allow_pickle False` 真測
 
