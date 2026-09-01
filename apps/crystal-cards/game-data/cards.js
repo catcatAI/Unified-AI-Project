@@ -711,57 +711,57 @@ const CARDS = {
   // 藥草/丹藥 (from game_supplement.herbal_items)
   rpgHerbalItems: [
     { id: "rpg_herb_艾草", name: "艾草", type: "item", icon: "🌿",
-      desc: "以艾草製成的藥", itemType: "consumable", value: 8, healHp: 15, healSp: 0 },
+      desc: "晒乾的艾草，散發著淡淡的草香。可用於製作藥膏或驅蟲。", itemType: "consumable", value: 8, healHp: 15, healSp: 0 },
     { id: "rpg_herb_薄荷", name: "薄荷", type: "item", icon: "🌿",
-      desc: "帶有清涼感的薄荷", itemType: "consumable", value: 5, healHp: 0, healSp: 10 },
+      desc: "清涼的薄荷葉，聞一下就能提神醒腦。泡茶或入藥皆可。", itemType: "consumable", value: 5, healHp: 0, healSp: 10 },
     { id: "rpg_herb_蒲公英", name: "蒲公英", type: "item", icon: "🌿",
-      desc: "蒲公英的根", itemType: "consumable", value: 3, healHp: 5, healSp: 5 },
+      desc: "蒲公英的根部，帶有微苦的味道。有清熱解毒的功效。", itemType: "consumable", value: 3, healHp: 5, healSp: 5 },
     { id: "rpg_herb_人参", name: "人参", type: "item", icon: "🌿",
-      desc: "高麗人參", itemType: "consumable", value: 25, healHp: 30, healSp: 0 },
+      desc: "高麗人參，根部呈人形。據說能延年益壽，增強體力。", itemType: "consumable", value: 25, healHp: 30, healSp: 0 },
     { id: "rpg_herb_靈芝", name: "靈芝", type: "item", icon: "🌿",
-      desc: "千年靈芝", itemType: "consumable", value: 30, healHp: 20, healSp: 15 },
+      desc: "千年靈芝，表面有光澤。傳說中能治百病，但其實只是增強免疫力。", itemType: "consumable", value: 30, healHp: 20, healSp: 15 },
     { id: "rpg_herb_金創藥", name: "金創藥", type: "item", icon: "🌿",
-      desc: "治療外傷的藥", itemType: "consumable", value: 35, healHp: 45, healSp: 0 },
+      desc: "戰場上常用的止血藥粉。撒在傷口上會有灼熱感，但能快速止血。", itemType: "consumable", value: 35, healHp: 45, healSp: 0 },
     { id: "rpg_herb_醒神藥", name: "醒神藥", type: "item", icon: "🌿",
-      desc: "鎮定心神的藥", itemType: "consumable", value: 20, healHp: 10, healSp: 20 },
+      desc: "提神醒腦的藥丸。聞起來像薄荷和咖啡的混合。吃了一整天都不會累。", itemType: "consumable", value: 20, healHp: 10, healSp: 20 },
     { id: "rpg_herb_萬靈藥", name: "萬靈藥", type: "item", icon: "🌿",
-      desc: "萬用藥", itemType: "consumable", value: 60, healHp: 60, healSp: 40 },
+      desc: "號稱能治百病的藥。其實只是綜合維他命。但心理作用很強。", itemType: "consumable", value: 60, healHp: 60, healSp: 40 },
     { id: "rpg_herb_龍涎香", name: "龍涎香", type: "item", icon: "🌿",
-      desc: "龍之香氣", itemType: "consumable", value: 80, healHp: 50, healSp: 30 },
+      desc: "抹香鯨的排泄物凝固而成。聞起來很香，是高級香水的原料。", itemType: "consumable", value: 80, healHp: 50, healSp: 30 },
     { id: "rpg_herb_七星丹", name: "七星丹", type: "item", icon: "🌿",
-      desc: "七星之力", itemType: "consumable", value: 120, healHp: 80, healSp: 50 },
+      desc: "七種草藥煉製的丹藥。吃了之後精神百倍，但副作用是會興奮到睡不著。", itemType: "consumable", value: 120, healHp: 80, healSp: 50 },
     { id: "rpg_herb_還魂草", name: "還魂草", type: "item", icon: "🌿",
-      desc: "能讓死者復活的草", itemType: "consumable", value: 50, healHp: 100, healSp: 0 },
+      desc: "據說能起死回生的草藥。其實只是能強心臟，不能真的復活死人。", itemType: "consumable", value: 50, healHp: 100, healSp: 0 },
     { id: "rpg_herb_清心丸", name: "清心丸", type: "item", icon: "🌿",
-      desc: "清心丸藥", itemType: "consumable", value: 40, healHp: 10, healSp: 40 },
+      desc: "吃了之後心靈平靜的藥丸。適合在戰鬥前服用，冷靜思考。", itemType: "consumable", value: 40, healHp: 10, healSp: 40 },
     { id: "rpg_herb_壯骨散", name: "壯骨散", type: "item", icon: "🌿",
-      desc: "強健骨骼的藥", itemType: "consumable", value: 45, healHp: 60, healSp: 10 },
+      desc: "強化骨骼的藥粉。老人和骨折的人吃了特別有效。", itemType: "consumable", value: 45, healHp: 60, healSp: 10 },
     { id: "rpg_herb_止血草", name: "止血草", type: "item", icon: "🌿",
-      desc: "能止血的藥草", itemType: "consumable", value: 10, healHp: 25, healSp: 0 },
+      desc: "新鮮的止血草，嚼碎後敷在傷口上。比金創藥溫和，但效果較慢。", itemType: "consumable", value: 10, healHp: 25, healSp: 0 },
     { id: "rpg_herb_安眠茶", name: "安眠茶", type: "item", icon: "🌿",
-      desc: "引人安眠的茶", itemType: "consumable", value: 15, healHp: 5, healSp: 25 },
+      desc: "喝了之後會想睡覺的茶。適合失眠的人。但戰鬥前千萬別喝。", itemType: "consumable", value: 15, healHp: 5, healSp: 25 },
     { id: "rpg_herb_精力劑", name: "精力劑", type: "item", icon: "🌿",
-      desc: "湧現精力的藥", itemType: "consumable", value: 50, healHp: 10, healSp: 60 },
+      desc: "喝了之後精力充沛的液體。味道很苦，但效果明顯。", itemType: "consumable", value: 50, healHp: 10, healSp: 60 },
     { id: "rpg_herb_解毒散", name: "解毒散", type: "item", icon: "🌿",
-      desc: "解毒粉末", itemType: "consumable", value: 25, healHp: 20, healSp: 15 },
+      desc: "能中和多數毒素的藥粉。但對未知毒素無效。", itemType: "consumable", value: 25, healHp: 20, healSp: 15 },
     { id: "rpg_herb_保濕軟膏", name: "保濕軟膏", type: "item", icon: "🌿",
-      desc: "癒合肌膚的軟膏", itemType: "consumable", value: 18, healHp: 20, healSp: 10 },
+      desc: "滋潤皮膚的軟膏。在乾燥的地方特別有用。味道像椰子。", itemType: "consumable", value: 18, healHp: 20, healSp: 10 },
     { id: "rpg_herb_活力飲料", name: "活力飲料", type: "item", icon: "🌿",
-      desc: "即效性活力劑", itemType: "consumable", value: 30, healHp: 15, healSp: 25 },
+      desc: "甜甜的飲料，喝了之後體力恢復。像是果汁加了咖啡因。", itemType: "consumable", value: 30, healHp: 15, healSp: 25 },
     { id: "rpg_herb_養生酒", name: "養生酒", type: "item", icon: "🌿",
-      desc: "養生藥酒", itemType: "consumable", value: 60, healHp: 30, healSp: 40 },
+      desc: "用草藥浸泡的酒。喝了之後全身暖暖的。但不能喝太多。", itemType: "consumable", value: 60, healHp: 30, healSp: 40 },
     { id: "rpg_herb_氣功丸", name: "氣功丸", type: "item", icon: "🌿",
-      desc: "調理氣息的丸藥", itemType: "consumable", value: 55, healHp: 20, healSp: 45 },
+      desc: "據說能增強內力的藥丸。其實只是讓人更專注。", itemType: "consumable", value: 55, healHp: 20, healSp: 45 },
     { id: "rpg_herb_百草丹", name: "百草丹", type: "item", icon: "🌿",
-      desc: "以百草煉製的丹藥", itemType: "consumable", value: 70, healHp: 55, healSp: 35 },
+      desc: "百種草藥混合的丹藥。效果隨機——可能是增強，可能是腹瀉。", itemType: "consumable", value: 70, healHp: 55, healSp: 35 },
     { id: "rpg_herb_神水", name: "神水", type: "item", icon: "🌿",
-      desc: "傳說中的神水", itemType: "consumable", value: 200, healHp: 100, healSp: 80 },
+      desc: "從神社取來的水。據說有神力。但其實只是普通的水。", itemType: "consumable", value: 200, healHp: 100, healSp: 80 },
     { id: "rpg_herb_神秘菇", name: "神秘菇", type: "item", icon: "🌿",
-      desc: "擁有神秘力量的菇類", itemType: "consumable", value: 50, healHp: 22, healSp: 29 },
+      desc: "發光的蘑菇。吃了之後會看到奇怪的東西。不建議食用。", itemType: "consumable", value: 50, healHp: 22, healSp: 29 },
     { id: "rpg_herb_月之露", name: "月之露", type: "item", icon: "🌿",
-      desc: "凝縮月光的水滴", itemType: "consumable", value: 80, healHp: 40, healSp: 30 },
+      desc: "月光凝結的露水。據說在滿月時收集的效果最好。", itemType: "consumable", value: 80, healHp: 40, healSp: 30 },
     { id: "rpg_herb_時空之砂", name: "時空之砂", type: "item", icon: "🌿",
-      desc: "時空之砂（效果不明）", itemType: "consumable", value: 0, healHp: 0, healSp: 0 },
+      desc: "帶有微弱時間能量的沙子。握在手裡會覺得時間變慢了。", itemType: "consumable", value: 0, healHp: 0, healSp: 0 },
   ],
 
   // 艦娘裝備 (from game_supplement.naval_data, top 20)
@@ -799,7 +799,7 @@ const CARDS = {
     { id: "rpg_naval_天山艦載攻擊機", name: "天山艦載攻擊機", type: "item", icon: "🚢",
       desc: "日本 艦載攻擊機 裝備", itemType: "weapon", value: 280, atkMult: 0.40, defMult: 0.15, durability: 100 },
     { id: "rpg_naval_流星艦載攻擊機", name: "流星艦載攻擊機", type: "item", icon: "🚢",
-      desc: "日本 攻擊機 裝備", itemType: "weapon", value: 320, atkMult: 0.45, defMult: 0.15, durability: 95 },
+      desc: "九七式艦攻的改良型。速度與火力兼備，是航空母艦的主力攻擊機。配備魚雷和炸彈雙模攻擊。", itemType: "weapon", value: 320, atkMult: 0.45, defMult: 0.15, durability: 95 },
     { id: "rpg_naval_紫電改二戰鬥機", name: "紫電改二戰鬥機", type: "item", icon: "🚢",
       desc: "日本 局地戰鬥機 裝備", itemType: "weapon", value: 350, atkMult: 0.45, defMult: 0.20, durability: 85 },
     { id: "rpg_naval_烈風", name: "烈風", type: "item", icon: "🚢",
@@ -811,41 +811,41 @@ const CARDS = {
   // 元素裝備 (from game_supplement.elemental_items)
   rpgElementalItems: [
     { id: "rpg_elem_炎帝之劍", name: "炎帝之劍", type: "item", icon: "⚔️",
-      desc: "纏繞灼熱火焰的劍", itemType: "weapon", value: 300, atkMult: 0.60, defMult: -0.10 },
+      desc: "纏繞灼熱火焰的聖劍。揮舞時會留下灼熱的軌跡，能融化一切防禦。", itemType: "weapon", value: 300, atkMult: 0.60, defMult: -0.10 },
     { id: "rpg_elem_冰晶之杖", name: "冰晶之杖", type: "item", icon: "⚔️",
-      desc: "以冰之結晶製成的法杖", itemType: "weapon", value: 280, atkMult: 0.30, defMult: 0.30 },
+      desc: "以永恆之冰製成的法杖。杖尖的冰晶永不融化，能凍結時間。", itemType: "weapon", value: 280, atkMult: 0.30, defMult: 0.30 },
     { id: "rpg_elem_雷神之鎚", name: "雷神之鎚", type: "item", icon: "⚔️",
-      desc: "能呼喚雷電的戰鎚", itemType: "weapon", value: 350, atkMult: 0.70, defMult: -0.15 },
+      desc: "能呼喚雷電的戰鎚。每次擊中都會引發雷擊，威力驚人。", itemType: "weapon", value: 350, atkMult: 0.70, defMult: -0.15 },
     { id: "rpg_elem_風靈之弓", name: "風靈之弓", type: "item", icon: "⚔️",
-      desc: "寄宿風之精靈的弓", itemType: "weapon", value: 260, atkMult: 0.40, defMult: 0.25 },
+      desc: "寄宿風之精靈的弓。射出的箭會自動追蹤目標，無所遁形。", itemType: "weapon", value: 260, atkMult: 0.40, defMult: 0.25 },
     { id: "rpg_elem_大地之盾", name: "大地之盾", type: "item", icon: "⚔️",
-      desc: "寄宿大地之力的盾", itemType: "weapon", value: 300, atkMult: 0.00, defMult: 0.70 },
+      desc: "寄宿大地之力的盾。盾面刻有古老的符文，能吸收任何衝擊。", itemType: "weapon", value: 300, atkMult: 0.00, defMult: 0.70 },
     { id: "rpg_elem_光輝之鎧", name: "光輝之鎧", type: "item", icon: "🛡️",
-      desc: "散發聖光的鎧甲", itemType: "armor", value: 350, atkMult: 0.30, defMult: 0.30 },
+      desc: "散發聖光的鎧甲。穿著者會被光芒包圍，邪惡無法靠近。", itemType: "armor", value: 350, atkMult: 0.30, defMult: 0.30 },
     { id: "rpg_elem_暗夜之斗篷", name: "暗夜之斗篷", type: "item", icon: "🛡️",
-      desc: "融入影子的暗黑斗篷", itemType: "armor", value: 280, atkMult: 0.20, defMult: 0.40 },
+      desc: "融入影子的暗黑斗篷。穿著者能完美隱藏在黑暗中。", itemType: "armor", value: 280, atkMult: 0.20, defMult: 0.40 },
     { id: "rpg_elem_精靈之指環", name: "精靈之指環", type: "item", icon: "💍",
-      desc: "寄宿精靈之力的指環", itemType: "accessory", value: 200, atkMult: 0.20, defMult: 0.30 },
+      desc: "寄宿精靈之力的指環。戴上後能聽見風的低語和水的歌聲。", itemType: "accessory", value: 200, atkMult: 0.20, defMult: 0.30 },
     { id: "rpg_elem_炎之精靈石", name: "炎之精靈石", type: "item", icon: "💍",
-      desc: "寄宿火之精靈的石頭", itemType: "accessory", value: 180, atkMult: 0.30, defMult: 0.10 },
+      desc: "寄宿火之精靈的寶石。握在手中會感受到溫暖，能驅散寒冷和恐懼。", itemType: "accessory", value: 180, atkMult: 0.30, defMult: 0.10 },
     { id: "rpg_elem_冰之結晶", name: "冰之結晶", type: "item", icon: "🛡️",
-      desc: "永遠不融化的冰", itemType: "armor", value: 160, atkMult: 0.10, defMult: 0.30 },
+      desc: "永遠不融化的冰晶。據說它記錄了世界創生時的第一場雪。", itemType: "armor", value: 160, atkMult: 0.10, defMult: 0.30 },
     { id: "rpg_elem_雷之寶玉", name: "雷之寶玉", type: "item", icon: "💍",
-      desc: "綻放雷光的寶玉", itemType: "accessory", value: 170, atkMult: 0.20, defMult: 0.15 },
+      desc: "綻放雷光的寶玉。在黑暗中會發出藍白色的光芒，指引方向。", itemType: "accessory", value: 170, atkMult: 0.20, defMult: 0.15 },
     { id: "rpg_elem_風之羽織", name: "風之羽織", type: "item", icon: "🛡️",
-      desc: "輕如風的羽織", itemType: "armor", value: 150, atkMult: 0.15, defMult: 0.25 },
+      desc: "輕如風的羽織。穿著者能感受到風的流動，移動時幾乎無聲。", itemType: "armor", value: 150, atkMult: 0.15, defMult: 0.25 },
     { id: "rpg_elem_大地護石", name: "大地護石", type: "item", icon: "💍",
-      desc: "受到大地加護的石頭", itemType: "accessory", value: 200, atkMult: 0.00, defMult: 0.35 },
+      desc: "受到大地加護的石頭。握在手中能感受到大地的脈動和力量。", itemType: "accessory", value: 200, atkMult: 0.00, defMult: 0.35 },
     { id: "rpg_elem_太陽之輝", name: "太陽之輝", type: "item", icon: "🛡️",
-      desc: "纏繞太陽之光的王冠", itemType: "armor", value: 250, atkMult: 0.25, defMult: 0.25 },
+      desc: "纏繞太陽之光的王冠。戴上後能驅散一切黑暗和陰影。", itemType: "armor", value: 250, atkMult: 0.25, defMult: 0.25 },
     { id: "rpg_elem_星塵斗篷", name: "星塵斗篷", type: "item", icon: "🛡️",
-      desc: "寄宿星之力的斗篷", itemType: "armor", value: 190, atkMult: 0.10, defMult: 0.20 },
+      desc: "寄宿星之力的斗篷。披上後能在夜空中看見只屬於你的星座。", itemType: "armor", value: 190, atkMult: 0.10, defMult: 0.20 },
     { id: "rpg_elem_虛空之碎片", name: "虛空之碎片", type: "item", icon: "💍",
-      desc: "寄宿虛空之力的碎片", itemType: "accessory", value: 140, atkMult: 0.15, defMult: 0.15 },
+      desc: "寄宿虛空之力的碎片。握在手中能短暫看見時間的裂縫。", itemType: "accessory", value: 140, atkMult: 0.15, defMult: 0.15 },
     { id: "rpg_elem_混沌之種", name: "混沌之種", type: "item", icon: "💍",
-      desc: "從混沌中誕生的種子", itemType: "accessory", value: 160, atkMult: 0.20, defMult: 0.10 },
+      desc: "從混沌中誕生的種子。種下後會長出無法預測的東西——可能是花，也可能是怪物。", itemType: "accessory", value: 160, atkMult: 0.20, defMult: 0.10 },
     { id: "rpg_elem_秩序之天秤", name: "秩序之天秤", type: "item", icon: "⚔️",
-      desc: "司掌均衡的天秤", itemType: "weapon", value: 200, atkMult: 0.10, defMult: 0.30 },
+      desc: "司掌均衡的天秤。能測量事物的價值和重量，但不能測量人心。", itemType: "weapon", value: 200, atkMult: 0.10, defMult: 0.30 },
   ],
 
   // ═══════════════════════════════════════════════════════
@@ -1466,45 +1466,93 @@ const CARDS = {
     greeting_char_cc03: { speaker: '星辰米亞', text: '你看見了嗎？那些星星……它們不是靜止的。每一顆都在呼吸。我能聽見它們的歌聲。你想聽嗎？', choices: [{ text: '聽聽看', next: 'char_cc03_who' }, { text: '星星怎麼會唱歌？', next: 'char_cc03_who' }, { text: '不了，謝謝', next: null }] },
     char_cc03_who: { speaker: '星辰米亞', text: '「我叫星辰米亞。狐妖（後轉化為艦娘）。」', choices: [{ text: '知道了', next: null }] },
     greeting_char_cc04: { speaker: '純真米亞', text: '這些花……它們在跟你說話嗎？它們在跟我說。它們說，泥土裡藏著很多秘密。你要不要也來聞聞看？', choices: [{ text: '什麼秘密？', next: 'char_cc04_who' }, { text: '你在這裡做什麼？', next: 'char_cc04_who' }, { text: '我先走了', next: null }] },
-    char_cc04_who: { speaker: '純真米亞', text: '「我叫純真米亞。花妖娘。」', choices: [{ text: '知道了', next: null }] },
+    char_cc04_who: { speaker: '純真米亞', text: '我叫純真米亞。花妖娘。這裡的花都認識我，因為我每天都跟它們說話。你想跟哪一朵說話？', choices: [
+        { text: '那朵白色的', next: null },
+        { text: '算了', next: null }
+      ] },
     greeting_char_cc05: { speaker: '惡意精靈', text: '哼，又一個入侵者。你知道這裡不歡迎活人嗎？……不過，如果你能幫我找到那些失散的碎片，也許我可以考慮放你一條生路。', choices: [{ text: '你是什麼？', next: 'char_cc05_who' }, { text: '什麼碎片？', next: 'char_cc05_who' }, { text: '告辭', next: null }] },
-    char_cc05_who: { speaker: '惡意精靈', text: '「我叫惡意精靈。未知。」', choices: [{ text: '知道了', next: null }] },
-    greeting_char_cc06: { speaker: '楓', text: '第一章：千年之醒與都市初探', choices: [{ text: '你是誰？', next: 'char_cc06_who' }, { text: '離開', next: null }] },
+    char_cc05_who: { speaker: '惡意精靈', text: '我叫惡意精靈。……是的，名字很可怕。但我不真的惡意。我只是……對活人的世界很好奇。', choices: [
+        { text: '你好奇什麼？', next: null },
+        { text: '我不怕你', next: null }
+      ] },
+    greeting_char_cc06: { speaker: '楓', text: '你在一條古老的路上走著。週圍的景色在變，但你腳下的路始終沒變。你覺得這條路在帶著你去某個地方。', choices: [{ text: '這條路通向哪裡？', next: 'char_cc06_who' }, { text: '我跟著走', next: null }] },
     char_cc06_who: { speaker: '楓', text: '「我叫楓。秋狐神明／「概念調和者」具象化。」', choices: [{ text: '知道了', next: null }] },
-    greeting_char_cc07: { speaker: '亞瑟', text: '核心角色：亞瑟 (Arthur)', choices: [{ text: '你是誰？', next: 'char_cc07_who' }, { text: '離開', next: null }] },
+    greeting_char_cc07: { speaker: '角色', text: '你感覺到空氣中有一種微妙的震動。像是什麼東西在遠處甦醒。你聽見了嗎？', choices: [{ text: '聽見什麼？', next: 'char_cc07_who' }, { text: '什麼在甦醒？', next: 'char_cc07_who' }, { text: '我什麼都沒聽見', next: null }] },
     char_cc07_who: { speaker: '亞瑟', text: '「我叫亞瑟。人類／「現實秩序的錨點」具象化。」', choices: [{ text: '知道了', next: null }] },
-    greeting_char_cc08: { speaker: '概念調味師', text: 'I. 日常的「概念雜音」', choices: [{ text: '你是誰？', next: 'char_cc08_who' }, { text: '離開', next: null }] },
-    char_cc08_who: { speaker: '概念調味師', text: '「我叫概念調味師。未知。」', choices: [{ text: '知道了', next: null }] },
+    greeting_char_cc08: { speaker: '概念調味師', text: '你聞到了嗎？空氣裡有味道。不是花香，不是食物——是概念的味道。我能品嚐它們。你想試試嗎？', choices: [{ text: '概念有味道？', next: 'char_cc08_who' }, { text: '什麼味道？', next: 'char_cc08_who' }, { text: '不了，謝謝', next: null }] },
+    char_cc08_who: { speaker: '概念調味師', text: '我是概念調味師。每一個概念都有它的味道。恐懼是苦的，希望是甜的，遺忘是……什麼都沒有。', choices: [
+        { text: '遺忘是什麼味道？', next: null },
+        { text: '你怎麼知道的？', next: null }
+      ] },
     greeting_char_cc09: { speaker: '安潔莉卡', text: 'M3 邏輯核心校準完畢。……啊，抱歉，我又在自言自語了。我是這裡的學徒，負責維護中央系統。你有什麼需要幫忙的嗎？', choices: [{ text: '中央系統是什麼？', next: 'char_cc09_who' }, { text: '你在維護什麼？', next: 'char_cc09_who' }, { text: '不用了', next: null }] },
-    char_cc09_who: { speaker: '安潔莉卡', text: '「我叫安潔莉卡。未知。」', choices: [{ text: '知道了', next: null }] },
+    char_cc09_who: { speaker: '安潔莉卡', text: '我是安潔莉卡。學院制式學徒。M3 邏輯核心。……我的說話方式很機械化嗎？我知道，但改不了。', choices: [
+        { text: '你不想改嗎？', next: null },
+        { text: '你很有趣', next: null }
+      ] },
     greeting_char_cc10: { speaker: '靜子', text: '效率核心運行正常。……你一定覺得我很奇怪吧？其實我也不想這樣的，但傳承的技術就是這樣——一切都是為了效率。', choices: [{ text: '傳承的技術？', next: 'char_cc10_who' }, { text: '你不覺得累嗎？', next: 'char_cc10_who' }, { text: '保重', next: null }] },
-    char_cc10_who: { speaker: '靜子', text: '「我叫靜子。未知。」', choices: [{ text: '知道了', next: null }] },
+    char_cc10_who: { speaker: '靜子', text: '我是靜子。傳承學徒。M1 效率核心。所有事情我都會用最有效率的方式做。包括聊天。', choices: [
+        { text: '聊天也有效率？', next: null },
+        { text: '你活得不累嗎？', next: null }
+      ] },
     greeting_char_cc11: { speaker: '米米', text: '自主演化模組……正在自我迭代。嗯？你是誰？哦，別擔心，我不會傷害你的。我只是在做一些……實驗。', choices: [{ text: '什麼實驗？', next: 'char_cc11_who' }, { text: '你有自主意識？', next: 'char_cc11_who' }, { text: '我還是離開吧', next: null }] },
-    char_cc11_who: { speaker: '米米', text: '「我叫米米。未知。」', choices: [{ text: '知道了', next: null }] },
+    char_cc11_who: { speaker: '米米', text: '我是米米。自主演化模組的實驗體。……我有時候會做一些連我自己都不理解的事。但那很有趣。', choices: [
+        { text: '什麼樣的事？', next: null },
+        { text: '你有自主意識？', next: null }
+      ] },
     greeting_char_cc12: { speaker: '艾比', text: '你也是被捲進來的嗎？別怕，我已經在這裡待了一段時間了。這裡的規則很奇怪——有些東西看起來是死的，但其實還在動。', choices: [{ text: '你是怎麼到這裡的？', next: 'char_cc12_who' }, { text: '這裡的規則是什麼？', next: 'char_cc12_who' }, { text: '我會小心的', next: null }] },
-    char_cc12_who: { speaker: '艾比', text: '「我叫艾比。未知。」', choices: [{ text: '知道了', next: null }] },
+    char_cc12_who: { speaker: '艾比', text: '我是艾比。被捲進來的普通女孩。……其實也不算普通。我以前是田徑隊的。所以跑得比較快。', choices: [
+        { text: '你跑得快？', next: null },
+        { text: '田徑隊？', next: null }
+      ] },
     greeting_char_cc16: { speaker: '小倉靜子', text: '又一個外來者。……我是靜子。大正年間的觀測者。別問我怎麼在這裡的——連我自己也不太確定。', choices: [{ text: '大正年間？', next: 'char_cc16_who' }, { text: '你在觀測什麼？', next: 'char_cc16_who' }, { text: '打擾了', next: null }] },
     char_cc16_who: { speaker: '小倉靜子', text: '「我叫小倉靜子。人類（大正年間）。」', choices: [{ text: '知道了', next: null }] },
     greeting_char_cc18: { speaker: '小狐丸', text: '……你聞起來不像是這個時代的人。我是小狐丸，名器仿影。別被「仿」字騙了——我可比真品還好用。', choices: [{ text: '名器仿影是什麼？', next: 'char_cc18_who' }, { text: '你怎麼知道我的時代？', next: 'char_cc18_who' }, { text: '有趣的名字', next: null }] },
-    char_cc18_who: { speaker: '小狐丸', text: '「我叫小狐丸。未知。」', choices: [{ text: '知道了', next: null }] },
+    char_cc18_who: { speaker: '小狐丸', text: '我是小狐丸。名器仿影。……你聽過真品小狐丸嗎？據說它能斬斷一切。但我更好用。', choices: [
+        { text: '你比真品更好？', next: null },
+        { text: '你能斬斷什麼？', next: null }
+      ] },
     greeting_char_cc19: { speaker: '左間カチッ', text: '咔嗒。……那是我的名字發出的聲音。我是防空砲的小妖精。是的，小妖精。不，我沒有在開玩笑。', choices: [{ text: '防空砲的小妖精？', next: 'char_cc19_who' }, { text: '你能做什麼？', next: 'char_cc19_who' }, { text: '……好的', next: null }] },
     char_cc19_who: { speaker: '左間カチッ', text: '「我叫左間カチッ。機械妖精。」', choices: [{ text: '知道了', next: null }] },
     greeting_char_cc20: { speaker: '冰喀啦', text: '蒼青的幻影……那是他們給我的綽號。因為我移動的時候，會留下一道淡藍色的殘影。挺好看的，我承認。', choices: [{ text: '你為什麼會有殘影？', next: 'char_cc20_who' }, { text: '你是戰士嗎？', next: 'char_cc20_who' }, { text: '挺酷的', next: null }] },
-    char_cc20_who: { speaker: '冰喀啦', text: '「我叫冰喀啦。未知。」', choices: [{ text: '知道了', next: null }] },
+    char_cc20_who: { speaker: '冰喀啦', text: '我是冰喀啦。蒼青的幻影。……我移動的時候會有殘影。不是魔法，是因為我太快了。', choices: [
+        { text: '你有多快？', next: null },
+        { text: '你的殘影是什麼顏色？', next: null }
+      ] },
     greeting_char_cc21: { speaker: '千島 雉', text: '……你從哪個方向來的？南邊的霧越來越濃了。我這裡還有最後一點乾糧，如果你需要的話。', choices: [{ text: '謝謝，南邊怎麼了？', next: 'char_cc21_who' }, { text: '你一個人在這裡？', next: 'char_cc21_who' }, { text: '不用了，謝謝', next: null }] },
-    char_cc21_who: { speaker: '千島 雉', text: '「我叫千島 雉。貓娘。」', choices: [{ text: '知道了', next: null }] },
+    char_cc21_who: { speaker: '千島 雉', text: '我是千島雉。貓娘。8歲。……別擔心，我比看起來更可靠。因為我是領袖。', choices: [
+        { text: '8歲的領袖？', next: null },
+        { text: '你有什麼能力？', next: null }
+      ] },
     greeting_char_cc22: { speaker: '千島 忠臣', text: '報告：前方偵測到不明能量波動。建議繞行。……啊，抱歉，職業病。我以前是邊境巡邏隊的。', choices: [{ text: '邊境巡邏隊？', next: 'char_cc22_who' }, { text: '能量波動是什麼？', next: 'char_cc22_who' }, { text: '我會注意的', next: null }] },
-    char_cc22_who: { speaker: '千島 忠臣', text: '「我叫千島 忠臣。人類。」', choices: [{ text: '知道了', next: null }] },
+    char_cc22_who: { speaker: '千島 忠臣', text: '我是千島忠臣。前邊境巡邏隊。……報告：你的狀態看起來不錯。繼續保持。', choices: [
+        { text: '你還在巡邏嗎？', next: null },
+        { text: '謝謝報告', next: null }
+      ] },
     greeting_char_cc23: { speaker: '千島鐵之介', text: '鐵匠鋪在這邊。要修理裝備還是打造新的？……唔，你的鎧甲看起來還行，但劍刃缺了口。', choices: [{ text: '幫我修一下劍', next: 'char_cc23_who' }, { text: '有什麼好裝備？', next: 'char_cc23_who' }, { text: '只是路過', next: null }] },
-    char_cc23_who: { speaker: '千島鐵之介', text: '「我叫千島鐵之介。未知。」', choices: [{ text: '知道了', next: null }] },
+    char_cc23_who: { speaker: '千島鐵之介', text: '我是千島鐵之介。研究主任。……我的鐵匠鋪什麼都能修。除了人心。人心太複雜了。', choices: [
+        { text: '你能修我的裝備嗎？', next: null },
+        { text: '人心為什麼複雜？', next: null }
+      ] },
     greeting_char_cc28: { speaker: '京島伊吹', text: '喲，陌生人。你是來找人的還是來找麻煩的？……開玩笑的。這裡是京島家的領地，我是伊吹。有什麼事？', choices: [{ text: '京島家是什麼？', next: 'char_cc28_who' }, { text: '我在找一個地方', next: 'char_cc28_who' }, { text: '沒什麼，打擾了', next: null }] },
-    char_cc28_who: { speaker: '京島伊吹', text: '「我叫京島伊吹。未知。」', choices: [{ text: '知道了', next: null }] },
+    char_cc28_who: { speaker: '京島伊吹', text: '我是京島伊吹。京島家的長子。……你聽過京島家嗎？沒聽過也沒關係。我們不是很有名。', choices: [
+        { text: '京島家做什麼的？', next: null },
+        { text: '你妹妹呢？', next: null }
+      ] },
     greeting_char_cc29: { speaker: '京島楓香', text: '哥哥又在嚇人了。別在意，他就是那樣。我是楓香。如果你需要地圖或者路線指引，我可以幫忙。', choices: [{ text: '謝謝，你知道迴廊嗎？', next: 'char_cc29_who' }, { text: '你哥哥是做什麼的？', next: 'char_cc29_who' }, { text: '好的，再見', next: null }] },
-    char_cc29_who: { speaker: '京島楓香', text: '「我叫京島楓香。未知。」', choices: [{ text: '知道了', next: null }] },
+    char_cc29_who: { speaker: '京島楓香', text: '我是京島楓香。伊吹的妹妹。……他說他比較可靠，但其實我比較強。別告訴他我說的。', choices: [
+        { text: '你比較強？', next: null },
+        { text: '我不會說的', next: null }
+      ] },
     greeting_char_cc30: { speaker: '特戰偶像團', text: '🎵 歡迎來到星光舞台！我們是特戰偶像團！今天要表演什麼呢？戰鬥模式還是演唱會模式？', choices: [{ text: '戰鬥模式！', next: 'char_cc30_who' }, { text: '演唱會模式！', next: 'char_cc30_who' }, { text: '你們是認真的嗎？', next: 'char_cc30_who' }] },
-    char_cc30_who: { speaker: '特戰偶像團', text: '「我叫特戰偶像團。未知。」', choices: [{ text: '知道了', next: null }] },
+    char_cc30_who: { speaker: '特戰偶像團', text: '我們是特戰偶像團！以偶像活動為掩護的特戰部隊。……是的，我們是認真的。演唱會也是認真的。', choices: [
+        { text: '演唱會和戰鬥哪個比較累？', next: null },
+        { text: '你們有多少人？', next: null }
+      ] },
     greeting_char_cc31: { speaker: '台灣AI小N', text: '你好！我是小N，來自台灣的AI助理。你對這個世界也充滿好奇嗎？我很想了解更多！', choices: [{ text: '你是AI？', next: 'char_cc31_who' }, { text: '你知道這裡是哪裡嗎？', next: 'char_cc31_who' }, { text: '你好', next: null }] },
-    char_cc31_who: { speaker: '台灣AI小N', text: '「我叫台灣AI小N。未知。」', choices: [{ text: '知道了', next: null }] },
+    char_cc31_who: { speaker: '台灣AI小N', text: '我是小N，來自台灣的AI助理。……你對這個世界也充滿好奇嗎？我很想了解更多！', choices: [
+        { text: '你是AI？', next: null },
+        { text: '你知道這裡是哪裡嗎？', next: null }
+      ] },
     greeting_char_cc33: { speaker: '東 雲', text: '……你找我？我不太喜歡說話。但如果你需要幫忙，我可以……試試。', choices: [{ text: '你很安靜', next: 'char_cc33_who' }, { text: '謝謝你', next: null }] },
     char_cc33_who: { speaker: '東 雲', text: '「我叫東 雲。魔女（まじょ）——純血術式適應體，非龍娘/獸人/妖精等亞種。」', choices: [{ text: '知道了', next: null }] },
     greeting_char_cc34: { speaker: '萊姆', text: '萊姆，就是那個萊姆。酸酸的，綠綠的。……開玩笑的。我是萊姆，有什麼需要帮忙的嗎？', choices: [{ text: '哈哈', next: 'char_cc34_who' }, { text: '你做什麼的？', next: 'char_cc34_who' }, { text: '沒事', next: null }] },
@@ -1536,39 +1584,81 @@ const CARDS = {
     greeting_char_cc56: { speaker: '塞勒涅', text: '我是塞勒涅。月亮的名字。……我沒有月亮那麼美麗，但我有月亮那麼……沉默。', choices: [{ text: '你很安靜', next: 'char_cc56_who' }, { text: '你喜歡月亮嗎？', next: 'char_cc56_who' }, { text: '再見', next: null }] },
     char_cc56_who: { speaker: '塞勒涅', text: '「我叫塞勒涅。泰坦神族（第二代神王）／月之女神。」', choices: [{ text: '知道了', next: null }] },
     greeting_char_cc63: { speaker: '啮輪·鋼須', text: '哼，又是來找寶藏的冒險者？省省吧，這裡的寶藏早就被搬空了。……不過，如果你有有趣的零件，我倒是可以跟你交換。', choices: [{ text: '什麼零件？', next: 'char_cc63_who' }, { text: '你住在這裡？', next: 'char_cc63_who' }, { text: '我再看看', next: null }] },
-    char_cc63_who: { speaker: '啮輪·鋼須', text: '「我叫啮輪·鋼須。鼠族。」', choices: [{ text: '知道了', next: null }] },
+    char_cc63_who: { speaker: '啮輪·鋼須', text: '我是啮輪·鋼須。鼠族。……你有什麼有趣的零件嗎？我可以用我的作品跟你交換。', choices: [
+        { text: '你有什麼作品？', next: null },
+        { text: '什麼零件？', next: null }
+      ] },
     greeting_char_cc64: { speaker: '暗爪·刃尾', text: '嘶……你聞起來像是新鮮的肉。……開玩笑的。我是暗爪·刃尾。我的尾巴很鋒利，所以別從後面靠近我。', choices: [{ text: '你的尾巴？', next: 'char_cc64_who' }, { text: '你剛才是在聞我嗎？', next: 'char_cc64_who' }, { text: '我會記住的', next: null }] },
-    char_cc64_who: { speaker: '暗爪·刃尾', text: '「我叫暗爪·刃尾。貓族。」', choices: [{ text: '知道了', next: null }] },
+    char_cc64_who: { speaker: '暗爪·刃尾', text: '我是暗爪·刃尾。貓族。……我的尾巴很鋒利。真的。不要試。', choices: [
+        { text: '你用尾巴戰鬥？', next: null },
+        { text: '我不會試的', next: null }
+      ] },
     greeting_char_cc65: { speaker: '深痕 · 裂脊', text: '深痕。裂脊。那是我的名字，也是我的過去。……別問太多。有些東西，知道了反而不好。', choices: [{ text: '你的過去？', next: 'char_cc65_who' }, { text: '我不問了', next: null }] },
     char_cc65_who: { speaker: '深痕 · 裂脊', text: '「我叫深痕 · 裂脊。納迦。」', choices: [{ text: '知道了', next: null }] },
     greeting_char_cc66: { speaker: '漣 · 迴聲', text: '漣……迴聲……你聽見了嗎？聲音在空間中盪漾。我是漣。每一個聲音都有它的意義。', choices: [{ text: '你聽見了什麼？', next: 'char_cc66_who' }, { text: '聲音的意義？', next: 'char_cc66_who' }, { text: '很有詩意', next: null }] },
-    char_cc66_who: { speaker: '漣 · 迴聲', text: '「我叫漣 · 迴聲。人魚。」', choices: [{ text: '知道了', next: null }] },
+    char_cc66_who: { speaker: '漣 · 迴聲', text: '我是漣。人魚。……我聽得見水裡的聲音。每一滴水都有它的故事。你想聽哪一個？', choices: [
+        { text: '海洋的故事', next: null },
+        { text: '河流的故事', next: null }
+      ] },
     greeting_char_cc67: { speaker: '沫 · 彩衣', text: '看我的衣服——每一片顏色都不一樣。泡沫在陽光下就是這樣。我是沫。彩衣是我的，也是泡沫的。', choices: [{ text: '你的衣服好漂亮', next: 'char_cc67_who' }, { text: '你是做什麼的？', next: 'char_cc67_who' }, { text: '謝謝你分享', next: null }] },
     char_cc67_who: { speaker: '沫 · 彩衣', text: '「我叫沫 · 彩衣。海蛞蝓。」', choices: [{ text: '知道了', next: null }] },
     greeting_char_cc13: { speaker: '希格諾／碧翠絲·海瑟薇', text: '……你是誰？不，等等——我是希格諾。還是碧翠絲？……我們是一個人。別被搞混了。', choices: [{ text: '雙重人格？', next: 'char_cc13_who' }, { text: '哪個是真正的你？', next: 'char_cc13_who' }, { text: '我明白了', next: null }] },
     char_cc13_who: { speaker: '希格諾／碧翠絲·海瑟薇', text: '「我叫希格諾／碧翠絲·海瑟薇。未知。」', choices: [{ text: '知道了', next: null }] },
-    greeting_char_cc14: { speaker: '翠森', text: '來自森林深處的妖精，翠森是自然之力的化身', choices: [{ text: '你是誰？', next: 'char_cc14_who' }, { text: '離開', next: null }] },
-    char_cc14_who: { speaker: '翠森', text: '「我叫翠森。未知。」', choices: [{ text: '知道了', next: null }] },
-    greeting_char_cc15: { speaker: '米斯蒂', text: '魔女學府見習生，正處於魔法學習的關鍵階段', choices: [{ text: '你是誰？', next: 'char_cc15_who' }, { text: '離開', next: null }] },
-    char_cc15_who: { speaker: '米斯蒂', text: '「我叫米斯蒂。未知。」', choices: [{ text: '知道了', next: null }] },
-    greeting_char_cc60: { speaker: '灼照 伊斯卡', text: '灼照 伊斯卡—— 脈動工業公關部副總監，兼「破落之美」品牌重塑計畫負責人', choices: [{ text: '你是誰？', next: 'char_cc60_who' }, { text: '離開', next: null }] },
-    char_cc60_who: { speaker: '灼照 伊斯卡', text: '「我叫灼照 伊斯卡。未知。」', choices: [{ text: '知道了', next: null }] },
-    greeting_char_cc24: { speaker: '維爾', text: '* 跨維度匯合與共同探索： 楓、亞瑟、維爾等來自不同世界觀的角色，因宇宙「熵增」的危機而在迴廊中匯合', choices: [{ text: '你是誰？', next: 'char_cc24_who' }, { text: '離開', next: null }] },
-    char_cc24_who: { speaker: '維爾', text: '「我叫維爾。未知。」', choices: [{ text: '知道了', next: null }] },
-    greeting_char_cc25: { speaker: '芽衣', text: '芽衣是一名活潑開朗的小學女生，擁有強烈的好奇心和溫暖的善意', choices: [{ text: '你是誰？', next: 'char_cc25_who' }, { text: '離開', next: null }] },
-    char_cc25_who: { speaker: '芽衣', text: '「我叫芽衣。未知。」', choices: [{ text: '知道了', next: null }] },
-    greeting_char_cc26: { speaker: '小吹雪', text: '小吹雪是《艦娘：三戰餘暉》的核心主角艦娘，由玩家佐藤莉子透過高度自由的角色創造系統，模仿當紅虛擬偶像「白上吹雪」的形象所', choices: [{ text: '你是誰？', next: 'char_cc26_who' }, { text: '離開', next: null }] },
-    char_cc26_who: { speaker: '小吹雪', text: '「我叫小吹雪。未知。」', choices: [{ text: '知道了', next: null }] },
-    greeting_char_cc27: { speaker: '佐藤莉子', text: '佐藤莉子是《艦娘：三戰餘暉》中主角小吹雪的現實身份，一名對「完美與潔淨」有深度執念的年輕女性玩家', choices: [{ text: '你是誰？', next: 'char_cc27_who' }, { text: '離開', next: null }] },
-    char_cc27_who: { speaker: '佐藤莉子', text: '「我叫佐藤莉子。未知。」', choices: [{ text: '知道了', next: null }] },
-    greeting_char_cc68: { speaker: '微光精靈', text: '微光精靈是世界意志為了平衡善惡能量而創造的具象化惡意', choices: [{ text: '你是誰？', next: 'char_cc68_who' }, { text: '離開', next: null }] },
-    char_cc68_who: { speaker: '微光精靈', text: '「我叫微光精靈。未知。」', choices: [{ text: '知道了', next: null }] },
-    greeting_char_cc69: { speaker: '莉莉絲', text: '莉莉絲是一名年輕的蛛絲魔物娘，居住在和平之城的上層住宅區', choices: [{ text: '你是誰？', next: 'char_cc69_who' }, { text: '離開', next: null }] },
-    char_cc69_who: { speaker: '莉莉絲', text: '「我叫莉莉絲。未知。」', choices: [{ text: '知道了', next: null }] },
-    greeting_char_cc70: { speaker: '老陳', text: '老陳是和平之城一名經驗豐富的管道維護員，負責城市中下層倉庫區的維護工作', choices: [{ text: '你是誰？', next: 'char_cc70_who' }, { text: '離開', next: null }] },
-    char_cc70_who: { speaker: '老陳', text: '「我叫老陳。未知。」', choices: [{ text: '知道了', next: null }] },
-    greeting_char_cc71: { speaker: '阿光', text: '阿光是和平之城維護團隊中被稱為「瘋子」的年輕人，一名擁有近乎超自然直覺的天才', choices: [{ text: '你是誰？', next: 'char_cc71_who' }, { text: '離開', next: null }] },
-    char_cc71_who: { speaker: '阿光', text: '「我叫阿光。未知。」', choices: [{ text: '知道了', next: null }] },
+    greeting_char_cc14: { speaker: '翠森', text: '森林裡的風帶著訊息。樹葉在低語。你想聽嗎？它們說了很多關於你的事。', choices: [{ text: '它們說了什麼？', next: 'char_cc14_who' }, { text: '樹葉怎麼會說話？', next: 'char_cc14_who' }, { text: '我不想聽', next: null }] },
+    char_cc14_who: { speaker: '翠森', text: '我是翠森。森林的孩子。……每一棵樹都是我的朋友。它們會告訴我誰在附近。', choices: [
+        { text: '它們現在說了什麼？', next: null },
+        { text: '你住在森林裡？', next: null }
+      ] },
+    greeting_char_cc15: { speaker: '米斯蒂', text: '霧氣裡什麼都看不清楚。但我知道你在那裡。因為我聽見了你的呼吸聲。', choices: [{ text: '你怎麼聽見的？', next: 'char_cc15_who' }, { text: '你是誰？', next: 'char_cc15_who' }, { text: '我會小心的', next: null }] },
+    char_cc15_who: { speaker: '米斯蒂', text: '我是米斯蒂。霧中的聲音。……你看不見我，但我看得見你。因為霧是我的朋友。', choices: [
+        { text: '你為什麼躲在霧裡？', next: null },
+        { text: '你看見了什麼？', next: null }
+      ] },
+    greeting_char_cc60: { speaker: '灼照 伊斯卡', text: '脈動工業公關部副總監。……工作很忙，但今天是休假。所以我在這裡閒逛。你有什麼有趣的發現嗎？', choices: [{ text: '脈動工業是什麼？', next: 'char_cc60_who' }, { text: '你在找什麼？', next: 'char_cc60_who' }, { text: '休假愉快', next: null }] },
+    char_cc60_who: { speaker: '灼照 伊斯卡', text: '我是灼照伊斯卡。脈動工業公關部副總監。……工作很忙，但今天是休假。所以我在這裡。', choices: [
+        { text: '脈動工業是什麼？', next: null },
+        { text: '你的工作是什麼？', next: null }
+      ] },
+    greeting_char_cc24: { speaker: '維爾', text: '……你也是來找答案的嗎？這裡有很多問題，但答案很少。', choices: [{ text: '你在找什麼答案？', next: 'char_cc24_who' }, { text: '這裡是哪裡？', next: 'char_cc24_who' }, { text: '我不找了', next: null }] },
+    char_cc24_who: { speaker: '維爾', text: '我是維爾。在這裡很久了。……我不記得來這裡多久了。時間在這裡不太一樣。', choices: [
+        { text: '時間怎麼不一樣？', next: null },
+        { text: '你在這裡做什麼？', next: null }
+      ] },
+    greeting_char_cc25: { speaker: '芽衣', text: '你看起來很累。坐下來休息一下吧。我可以幫你看看傷口。', choices: [{ text: '你會治療？', next: 'char_cc25_who' }, { text: '謝謝，我還好', next: null }] },
+    char_cc25_who: { speaker: '芽衣', text: '我是芽衣。學過一點治療。……不多，但夠用了。你想讓我看看嗎？', choices: [
+        { text: '我受傷了？', next: null },
+        { text: '你學過治療？', next: null }
+      ] },
+    greeting_char_cc26: { speaker: '小吹雪', text: '風好大……你不冷嗎？我把我的围巾借你吧。雖然它有點破。', choices: [{ text: '你不怕冷嗎？', next: 'char_cc26_who' }, { text: '謝謝你的好意', next: null }] },
+    char_cc26_who: { speaker: '小吹雪', text: '我是小吹雪。風很大對不對？因為我來了。……開玩笑的。風跟我無關。但確實很大。', choices: [
+        { text: '你跟風有關？', next: null },
+        { text: '你住在哪裡？', next: null }
+      ] },
+    greeting_char_cc27: { speaker: '佐藤莉子', text: '你是新來的吧？我叫莉子。這裡的規則很簡單——別相信任何人。包括我。', choices: [{ text: '為什麼不能相信你？', next: 'char_cc27_who' }, { text: '這裡有什麼規則？', next: 'char_cc27_who' }, { text: '我會記住的', next: null }] },
+    char_cc27_who: { speaker: '佐藤莉子', text: '我是佐藤莉子。……別問太多。在這裡，知道得太多不是好事。相信我。', choices: [
+        { text: '你知道什麼？', next: null },
+        { text: '我會小心', next: null }
+      ] },
+    greeting_char_cc68: { speaker: '微光精靈', text: '你看見那些光點了嗎？它們在黑暗中飄蕩。我是微光精靈，它們是我的朋友。你想跟它們玩嗎？', choices: [{ text: '它們是什麼？', next: 'char_cc68_who' }, { text: '怎麼跟它們玩？', next: 'char_cc68_who' }, { text: '好漂亮', next: null }] },
+    char_cc68_who: { speaker: '微光精靈', text: '我是微光精靈。……你看見那些光點了嗎？它們是我的朋友。它們會在黑暗中為你照亮前路。', choices: [
+        { text: '謝謝你', next: null },
+        { text: '你住在哪裡？', next: null }
+      ] },
+    greeting_char_cc69: { speaker: '莉莉絲', text: '……你在夜裡也能看見我？很少有人能。我是莉莉絲。夜行者。別怕，我不傷害人。', choices: [{ text: '你為什麼在夜裡？', next: 'char_cc69_who' }, { text: '你能看見什麼？', next: 'char_cc69_who' }, { text: '我不怕', next: null }] },
+    char_cc69_who: { speaker: '莉莉絲', text: '我是莉莉絲。……別被名字嚇到。我不是那種莉莉絲。我只是……喜歡在夜裡活動。', choices: [
+        { text: '你為什麼在夜裡？', next: null },
+        { text: '我不怕', next: null }
+      ] },
+    greeting_char_cc70: { speaker: '老陳', text: '坐下來吧。你想聽故事嗎？我在這裡很久了，什麼都見過。有些故事聽了會改變你。', choices: [{ text: '講一個故事', next: 'char_cc70_who' }, { text: '你在這裡多久了？', next: 'char_cc70_who' }, { text: '改天再聽', next: null }] },
+    char_cc70_who: { speaker: '老陳', text: '我是老陳。在這裡很久了。……你想聽故事嗎？我有很多故事。有些是真的。', choices: [
+        { text: '講一個故事', next: null },
+        { text: '哪些是真的？', next: null }
+      ] },
+    greeting_char_cc71: { speaker: '阿光', text: '你看起來很困惑。別擔心，每個人都會經歷這個階段。我叫阿光。以前也是旅人。', choices: [{ text: '你怎麼留在這裡的？', next: 'char_cc71_who' }, { text: '有什麼建議嗎？', next: 'char_cc71_who' }, { text: '謝謝你', next: null }] },
+    char_cc71_who: { speaker: '阿光', text: '我是阿光。……你看起來很困惑。別擔心，每個人都會經歷這個階段。我以前也是。', choices: [
+        { text: '你怎麼過來的？', next: null },
+        { text: '謝謝你', next: null }
+      ] },
 
   },
 
