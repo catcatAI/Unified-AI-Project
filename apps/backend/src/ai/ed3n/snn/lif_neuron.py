@@ -89,3 +89,11 @@ class LIFNeuron:
 
     def connect(self, post_key: str, weight: float) -> None:
         self.output_synapses[post_key] = weight
+
+    def stdp_update(self, pre_spike: float, post_spike: float, weight: float, a_plus: float = 0.01, a_minus: float = 0.012, tau: float = 20.0) -> float:
+        """STDP: pre before post → LTP, post before pre → LTD. Minimal unit."""
+        dt = post_spike - pre_spike
+        if dt > 0:
+            return weight + a_plus * (2.718 ** (-dt / tau))
+        else:
+            return weight - a_minus * (2.718 ** (dt / tau))
