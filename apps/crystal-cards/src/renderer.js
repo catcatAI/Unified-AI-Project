@@ -453,6 +453,25 @@
     if (template.type === 'recipe') {
       actions.push({ text: '📖 查看配方', fn: () => showNotification(template.desc || template.name) });
     }
+    if (template.type === 'nation' || template.type === 'organization' || template.type === 'rule' || template.type === 'scene') {
+      actions.push({ text: '📋 查看詳情', fn: () => { showDialogDetail(template); }});
+      actions.push({ text: '🎒 收回側邊欄', fn: () => {
+        E.addToSidebar(card.templateId);
+        E.removeBoardCard(card.id);
+        removeCardElement(card.id);
+        refreshAllCards();
+        showNotification(`${template.name} 已收回側邊欄`);
+      }});
+    }
+    if (template.type === 'story') {
+      const triggerMet = checkStoryTrigger(template.trigger);
+      if (template.dialogue && triggerMet) {
+        actions.push({ text: '📖 觸發事件', fn: () => { S.dialogOpen(); window.DialogSystem.showDialogue(template.dialogue); }});
+      } else if (template.trigger) {
+        actions.push({ text: `🔒 條件: ${template.trigger}`, fn: () => showNotification(`條件未滿足：${template.trigger}`) });
+      }
+      actions.push({ text: '📋 查看詳情', fn: () => { showDialogDetail(template); }});
+    }
 
     if (actions.length === 0) {
       actions.push({ text: template.desc ? template.desc.slice(0, 40) : '無可用動作', fn: () => {} });
@@ -541,9 +560,24 @@
     else if (template.type === 'shopCatalog') {
       showNotification(`${template.icon} ${template.name}: ${template.desc || '商店目錄'}`);
     }
-    // Nation / Organization / Rule / Scene → show info
-    else if (['nation', 'organization', 'rule', 'scene', 'story'].includes(template.type)) {
-      showNotification(`${template.icon} ${template.name}: ${template.desc || ''}`);
+    // Nation / Organization / Rule / Scene → show detail dialog
+    else if (['nation', 'organization', 'rule', 'scene'].includes(template.type)) {
+      showDialogDetail(template);
+    }
+    // Story event → check trigger and show dialogue
+    else if (template.type === 'story') {
+      if (template.dialogue && window.DialogSystem && window.DialogSystem.showDialogue) {
+        // Check trigger condition
+        const triggerMet = checkStoryTrigger(template.trigger);
+        if (triggerMet) {
+          S.dialogOpen();
+          window.DialogSystem.showDialogue(template.dialogue);
+        } else {
+          showNotification(`🔒 條件未滿足：${template.trigger || '尚未觸發'}`);
+        }
+      } else {
+        showDialogDetail(template);
+      }
     }
   }
 
@@ -935,6 +969,72 @@
         window.DialogSystem.showDialogue('tutorial_start');
       }, 500);
     }
+  }
+
+  // Check if a story event trigger condition is met
+  function checkStoryTrigger(trigger) {
+    if (!trigger) return true; // no trigger = always available
+    try {
+      const state = E.state;
+      // day >= N
+      const dayMatch = trigger.match(/day\s*>=\s*(\d+)/);
+      if (dayMatch) return (state.day || 1) >= parseInt(dayMatch[1]);
+      // level >= N
+      const levelMatch = trigger.match(/level\s*>=\s*(\d+)/);
+      if (levelMatch) return (state.level || 1) >= parseInt(levelMatch[1]);
+      // hp < N or hp <= N
+      const hpLowMatch = trigger.match(/hp\s*[<]=?\s*(\S+)/);
+      if (hpLowMatch) {
+        const threshold = eval(hpLowMatch[1].replace(/maxHp/g, '(' + (state.maxHp || 100) + ')'));
+        return (state.hp || 100) < threshold;
+      }
+      // unlocked_loc_xxx
+      const unlockMatch = trigger.match(/unlocked_loc_(\w+)/);
+      if (unlockMatch) return (state.unlockedLocations || []).includes('loc_' + unlockMatch[1]);
+      // corridor_visited
+      if (trigger === 'corridor_visited') return !!state.flags?.corridor_visited;
+      // has_item_xxx
+      const hasItemMatch = trigger.match(/has_item_(\w+)/);
+      if (hasItemMatch) {
+        const itemId = 'item_' + hasItemMatch[1];
+        return (state.sidebarCards || []).some(c => c.templateId === itemId) || (state.boardCards || []).some(c => c.templateId === itemId);
+      }
+      // defeated_rpg_enemy_xxx
+      const defeatedMatch = trigger.match(/defeated_rpg_enemy_(.+)/);
+      if (defeatedMatch) return (state.flags || {})['defeated_' + defeatedMatch[1]];
+      return true; // unknown trigger, allow
+    } catch (e) {
+      return true; // on error, allow
+    }
+  }
+
+  // Show full detail dialog for nation/org/rule/scene/story cards
+  function showDialogDetail(template) {
+    const overlay = document.createElement('div');
+    overlay.className = 'dialog-overlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:10000;';
+    
+    const panel = document.createElement('div');
+    panel.style.cssText = 'background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:24px;max-width:500px;max-height:70vh;overflow-y:auto;color:#e0e0e0;font-size:14px;';
+    
+    const typeLabel = { nation: '🏴 國家', organization: '🏛️ 組織', rule: '📜 規則', scene: '🎬 場景', story: '📖 劇情' };
+    panel.innerHTML = `
+      <div style="font-size:18px;font-weight:bold;margin-bottom:8px;">${template.icon} ${template.name}</div>
+      <div style="color:#90CAF9;margin-bottom:12px;font-size:12px;">${typeLabel[template.type] || template.type}</div>
+      <div style="line-height:1.6;white-space:pre-wrap;">${(template.desc || '無描述').replace(/\n/g, '<br>')}</div>
+      <div style="margin-top:16px;text-align:right;">
+        <button id="detail-close-btn" style="background:#5C6BC0;border:none;color:white;padding:8px 16px;border-radius:6px;cursor:pointer;">關閉</button>
+      </div>
+    `;
+    
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+    
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    panel.querySelector('#detail-close-btn').addEventListener('click', () => overlay.remove());
+    document.addEventListener('keydown', function onKey(e) {
+      if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', onKey); }
+    });
   }
 
   // Expose for dialog system
