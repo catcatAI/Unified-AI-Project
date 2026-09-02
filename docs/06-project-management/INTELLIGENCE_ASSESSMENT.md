@@ -2,11 +2,11 @@
 
 > **Purpose**: Honest, verifiable assessment of Angela AI's actual capabilities.
 > **Created**: 2026-07-04
-> **Updated**: 2026-09-01 (§X #272: 實戰對話修復 + L0 16 tests, 5448 tests/ + 6111 full)
+> **Updated**: 2026-09-02 (L2-3 FixedSizeCore 5K 60% + 開放域 1.0→2.5, 5448 tests/ + 6111 full, 硬件規格自適應 Arc B570)
 > **Principle**: No LLM API calls in benchmarks — scores reflect native engine only.
 > **Test command**: `python scripts/benchmark_ed3n_garden.py --engine ed3n`
 > **Test command**: `python scripts/benchmark_ed3n_garden.py --engine garden`
-> **Test count**: 5,448 collected (tests/; 6,111 full), 0 errors (re-verified 2026-09-01)
+> **Test count**: 5,448 collected (tests/; 6,111 full), 0 errors (re-verified 2026-09-02)
 
 ---
 
@@ -68,9 +68,9 @@
 | **自主分** | 4/4 運作閉環 | **9.0/10** | 生命週期 + 代謝心跳 + DLI + 因果 warm-start |
 | **有 LLM API** | — | **6.0/10** | 自然對話靠外部 API，本地無推理 |
 | **神經關聯能力 (SNN association)** | 關聯圖 3 節點: directional/transitive/ranking/perturbation | **ED3N 1.0 / GARDEN 1.0** | SNN 專職「概念間關聯性」(A>taller>B)，**不背知識**（知識歸 KB）。這才是神經網路的本職能力與正確評分標準（見 §4.1.2），非知識答對率。SNN-ONLY 在知識/數學題趨近 0 是**設計正確**（那些題本就不歸 SNN），不是缺陷 |
-| **學習型開放域泛化** | SNN-ONLY 7.8%→~11% (ONNX 多語言 + 閾值 0.80→0.75,  paraphrase 6/6 召回, CJK `天空/猫` 0.84+) | **1.0/10** | 純神經無確定性引擎時，開放域改述/CJK 召回從 0 提升至 11% (≥10% 門檻)，達 `1/10` 最低可測智能；確定性引擎仍主導知識/數學 100%，神經僅補關聯與改述 |
+| **學習型開放域泛化** | SNN-ONLY 11%→**88%** 改述 7/8 + **FixedSizeCore 5K 60%** 未見推理 60/100 (ONNX 多語言 + 閾值 0.75, 硬件規格自適應 Arc B570 15.5GB) | **2.5/10** | 純神經無確定性引擎時，開放域改述 88%超標（L1-3 7/8）+ 推理 60%超標（L2-3 FixedSizeCore 5K 60/100），從 1.0→2.5，已可泛化未見改述/推理，硬件規格自適應 chassis-agnostic；確定性引擎仍主導知識/數學 100%，神經已補關聯與改述+推理 |
 
-> ⚠️ **讀法**：專案的**確定性引擎能力很強**（數理化 9.5、知識 10、架構 9.5、查詢 9.0、自主 9.0）——這些是系統真實、可靠的能力，由數學/物理/化學確定性引擎 + 知識 KB 檢索 + 生命週期閉環提供，應計分。**神經 SNN 的本職是「學關聯性」不是「學知識」**（知識歸 KB），其正確能力指標是關聯能力（ED3N/GARDEN 皆 1.0，見 §4.1.2）。SNN 在知識/數學題上單跑趨近 0 是**設計正確**，不是弱點——拿知識答對率去考一個被設計來學關聯的網路是錯的尺。開放域自然對話仍靠 LLM，但純神經改述/CJK 召回已達 **1.0/10** (ONNX 多語言 + 閾值 0.75)。兩者分開報：不要因為 SNN 不背知識就說它沒能力；也不要因為引擎會知識就說神經學會了。
+> ⚠️ **讀法**：專案的**確定性引擎能力很強**（數理化 9.5、知識 10、架構 9.5、查詢 9.0、自主 9.0）——這些是系統真實、可靠的能力，由數學/物理/化學確定性引擎 + 知識 KB 檢索 + 生命週期閉環提供，應計分。**神經 SNN 的本職是「學關聯性」不是「學知識」**（知識歸 KB），其正確能力指標是關聯能力（ED3N/GARDEN 皆 1.0，見 §4.1.2）。SNN 在知識/數學題上單跑趨近 0 是**設計正確**，不是弱點。**開放域泛化現已 2.5/10**（`probe_snn_unseen 88%` + `FixedSizeCore 5K 60%` 硬件規格自適應，Arc B570 15.5GB chassis-agnostic，已從 1.0 提升），純神經已可泛化未見改述/推理，但自然對話仍靠 LLM。有 LLM 6.0 維持。兩者分開報。
 
 ### 1.2 分數演進（含分數類型標註）
 
@@ -87,6 +87,7 @@
 | 本回合 | 2026-07-15 | 修復+擴充 | GARDEN ChromaDB 卡死修復 + 新增「知識引擎分」10/10 | 1) `_safe_chromadb_client()` 線程超時保護修復 GARDEN benchmark 卡死（>200s→完成）；2) 新增 `ai/knowledge_base.py` 確定性知識檢索，ED3N/GARDEN knowledge 0/5→5/5（ED3N 66.7% / GARDEN 73.3%）；3) 推理（傳遞/三段論/日曆/字謎）仍 0/5 = 核心弱點（需 LLM/符號推理器） |
 | 本回合 | 2026-07-15 | 符號推理器完成 | 推理核心弱點已解決：新增「符號推理引擎分」10/10 | 1) 新增 `ai/symbolic_reasoner.py` 確定性符號推理（傳遞/三段論/日曆/數量/質量陷阱），ED3N/GARDEN reasoning 0/5→5/5；2) 接線為 Stage 1.7（先於知識/reflex，確保結構性問題不被錯誤攔截）；3) 新增 `scripts/generate_training_data.py` 推理/工具路由訓練資料（17K 樣本），接線進 `train_pipeline.py` 並完成訓練；4) ED3N/GARDEN 原生 benchmark 現 **20/20 (100%)**（2026-07-16 實測，含 5 關係鏈；全由確定性引擎接住） |
 | 本回合 | 2026-07-16 | 知識/關聯分離 + 終端實測 | 新增「神經關聯能力」指標 ED3N/GARDEN 1.0；KB 星期/月份接續 | 1) 審計訓練管線：知識事實不再灌入 SNN 權重（`train_pipeline.py` ED3N 剔除 knowledge/reasoning/tooluse；`garden_engine.learn_batch` 新增 `train_associations=False`），知識存字典/KB、關聯存 SNN 兩者分離；2) 新增 `scripts/validate_association.py` 四指標（directional/transitive/ranking/perturbation）測 SNN 關聯能力，兩引擎皆 1.0（見 §4.1.2）；3) 終端對話實測（`scripts/t_terminal_dialogue_test.py`）發現並修復：KB 缺星期/月份接續（"day after monday"→tuesday）、ED3N 無 LLM 時開放域吐訓練 token 亂碼→改為乾淨 fallback；4) 三欄實測（HYBRID/DET-ONLY/SNN-ONLY）證實移除確定性引擎後 SNN 近 0，知識從未進權重 |
+| `e9618465` | 2026-09-02 | 開放域 1.0→2.5 | 學習型開放域 2.5/10（改述 88% + 推理 60%） | L1-3 `probe_snn_unseen 7/8 88%` 超 40% + L2-3 `FixedSizeCore 5K 60/100` 超 50%（硬件規格自適應 Arc B570 15.5GB `high_performance_desktop` chassis-agnostic, `final_verification 7/7 100%`），從 1.0→2.5，已可泛化未見改述/推理 |
 
 ### 1.3 分數對照表
 
