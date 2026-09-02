@@ -197,6 +197,38 @@ class SystemHardwareProbe:
         except Exception:
             logger.warning("rocm-smi not available or failed", exc_info=True)
 
+        # 3b. Intel Arc (Linux, spec-driven via PCI device ID + glxinfo VRAM)
+        if self.platform_name == "linux":
+            try:
+                import re
+
+                arc_ids = {"e20b": ("Arc B580", 12288), "e20c": ("Arc B570", 10240),
+                           "e20d": ("Arc B570", 10240)}
+                result = subprocess.run(
+                    ["lspci", "-nn"], capture_output=True, text=True, timeout=5
+                )
+                if result.returncode == 0:
+                    for line in result.stdout.splitlines():
+                        m = re.search(r"\[8086:([0-9a-f]{4})\]", line.lower())
+                        if m and m.group(1) in arc_ids:
+                            model, vram = arc_ids[m.group(1)]
+                            name = f"Intel Arc {model} ({m.group(1)})"
+                            try:
+                                glx = subprocess.run(
+                                    ["glxinfo"], capture_output=True, text=True, timeout=5
+                                )
+                                for gl in glx.stdout.splitlines():
+                                    if "Video memory:" in gl or "Dedicated video memory:" in gl:
+                                        m2 = re.search(r"(\d+)\s*MB", gl)
+                                        if m2:
+                                            vram = int(m2.group(1))
+                                            break
+                            except Exception:
+                                logger.warning("glxinfo VRAM query failed", exc_info=True)
+                            return AcceleratorType.INTEL, name, vram
+            except Exception:
+                logger.warning("Intel Arc detection failed", exc_info=True)
+
         # 4. Windows WMIC Fallback
         if self.platform_name == "windows":
             try:
