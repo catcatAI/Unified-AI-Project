@@ -109,6 +109,17 @@ class HardwareManager:
                     "compute_units": caps.compute_units,
                 },
             }
+            try:
+                from core.backbone.hardware import HardwareProfile as _BBProfile
+
+                _spec = _BBProfile.detect()
+                self._profile["tier"] = _BBProfile.get_tier(_spec)
+                self._profile["ram_gb"] = _spec.get("ram_gb")
+                self._profile["gpu"] = _spec.get("gpu")
+                self._profile["gpu_memory_gb"] = _spec.get("gpu_memory_gb")
+                self._profile["cpu_cores"] = _spec.get("cpu_cores")
+            except Exception as e:
+                logger.debug("hal backbone spec unavailable, keeping stub profile: %s", e)
         return self._profile
 
 
