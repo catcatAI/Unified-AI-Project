@@ -671,27 +671,59 @@ class AngelaLLMService:
             factory_name = _BACKEND_FACTORIES[provider]
             getattr(self, factory_name)(backend_id, base_url, model_name, api_key, backend_config)
 
+    def _is_local_model_feasible(self, need_gb: float = 1.0) -> bool:
+        """Hardware-driven check for local small models (L2-5, chassis-agnostic).
+
+        Uses actual RAM/VRAM spec, not laptop/desktop label. Same hardware
+        (e.g., Arc B570 10GB + 15.5GB) gets same result on desktop or BR1100FKA.
+        """
+        try:
+            from core.backbone.hardware import HardwareProfile
+            hw = HardwareProfile.detect()
+            adaptive = HardwareProfile.get_adaptive_compute(hw)
+            usable = adaptive["usable_ram_gb"]
+            # Qwen2-0.5B Q4 ~0.8GB, Phi-3-mini 2.2GB, need +2GB OS reserve already in usable
+            feasible = usable >= need_gb
+            if not feasible:
+                logger.info(f"本地模型需 {need_gb}GB 可用 RAM，當前 {usable}GB 不足 → 跳過註冊（硬件自適應，{hw['gpu']} tier={HardwareProfile.get_tier(hw)}）")
+            return feasible
+        except Exception as e:
+            logger.debug(f"硬件自適應檢查失敗，允許註冊（fallback）: {e}")
+            return True
+
     def _init_llamacpp(
         self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict
     ) -> None:
+        # L2-5: Qwen2-0.5B Q4 ~0.8GB, Phi-3-mini 3.8B Q4 ~2.2GB；硬件自適應門檻
+        # 模型名含 0.5b/7b 時分別檢查 0.8/4.5 GB，默認 1.0GB
+        need = 0.8 if "0.5" in model_name else (4.5 if "7b" in model_name.lower() else 1.0)
+        # Allow explicit ANGELA_FORCE_LOCAL=1 to bypass hardware check
+        if os.environ.get("ANGELA_FORCE_LOCAL") != "1" and not self._is_local_model_feasible(need):
+            logger.info(f"跳過 llama.cpp {model_name}（硬件不足，需 {need}GB）")
+            return
         self.backends[LLMBackend.LLAMA_CPP] = LlamaCppBackend(
             base_url=base_url or LLAMACPP_HOST,
             model=model_name,
             timeout=config.get("timeout", LLM_REQUEST_TIMEOUT),
         )
-        logger.info(f"已注冊 llama.cpp 後端: {model_name}")
+        logger.info(f"已注冊 llama.cpp 後端: {model_name} (硬件自適應 need={need}GB)")
 
     def _init_ollama(
         self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict
     ) -> None:
         if LLMBackend.OLLAMA not in self.backends:
+            # Ollama 本地模型同樣硬件自適應（L2-5）
+            need = 0.8 if "0.5" in (model_name or "") else 1.0
+            if os.environ.get("ANGELA_FORCE_LOCAL") != "1" and not self._is_local_model_feasible(need):
+                logger.info(f"跳過 Ollama {model_name}（硬件不足，需 {need}GB）")
+                return
             self.backends[LLMBackend.OLLAMA] = OllamaBackend(
                 base_url=base_url or OLLAMA_HOST,
                 model=model_name or DEFAULT_OLLAMA_MODEL,
                 api_key=api_key,
                 timeout=config.get("timeout", LLM_REQUEST_TIMEOUT),
             )
-            logger.info(f"已注冊 Ollama 後端: {model_name}")
+            logger.info(f"已注冊 Ollama 後端: {model_name} (硬件自適應 need={need}GB)")
 
     def _init_openai(
         self, backend_id: str, base_url: str, model_name: str, api_key: str, config: dict
