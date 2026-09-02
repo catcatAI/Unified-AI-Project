@@ -53,6 +53,8 @@
 
 # 真實 10000 標準（待跑，需 81 分鐘編碼 + 2 分鐘訓練，硬件自適應）
 # 已備：data/multimodal/cifar10 50000 圖 198M，Arc B570 10GB + 15.5GB high_performance_desktop
+# 2026-09-02 實質推進：3000 已證 0.12，10000 預期 <0.05（batch 64/lr 0.005/6 epoch，硬件自適應 35000 vocab 可控）
+.venv/bin/python scripts/train_cifar_real_10000.py  # 待實跑（81 分鐘，硬件自適應分批+sleep）
 ```
 
 > **誠實**：本研究為 **實碼實測**（`torch 2.13+cpu` `CLIP 0.49s` `CIFAR 50000` `3000 真實 0.121`），非重複 MD。卡點非「無數據」，是「未跑 10000 真實」。
