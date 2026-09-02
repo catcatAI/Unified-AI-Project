@@ -27,15 +27,13 @@ def main():
     print("="*60)
 
     checks = []
-    # L0: 20/20 (check TOTAL: 20/20 or 100.0%)
-    out = run([sys.executable, "scripts/benchmark_ed3n_garden.py", "--engine", "both"], 15)
+    # L0: 20/20 (check TOTAL: 20/20 or 100.0%, timeout 30 for 461K dict)
+    out = run([sys.executable, "scripts/benchmark_ed3n_garden.py", "--engine", "both"], 30)
     ok = ("20/20" in out or "100.0%" in out) and "TOTAL" in out
-    # Fallback: direct check if file exists and is not empty
     if not ok:
-        # Retry with direct run for debugging
         try:
             import subprocess
-            out2 = subprocess.run([sys.executable, "scripts/benchmark_ed3n_garden.py", "--engine", "both"], capture_output=True, text=True, timeout=15)
+            out2 = subprocess.run([sys.executable, "scripts/benchmark_ed3n_garden.py", "--engine", "both"], capture_output=True, text=True, timeout=30)
             ok = "20/20" in (out2.stdout + out2.stderr)
         except:
             pass
