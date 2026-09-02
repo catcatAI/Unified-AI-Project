@@ -16,11 +16,12 @@
 
 > **對應**：`INTELLIGENCE_ASSESSMENT.md §1.3` 分數對照表 + `AUDIT_REPORT_2026-09-01.md §8.2` 三類分數分離
 > **原則**：每階有**可量測門檻**（benchmark / 回歸測試），不靠主觀描述。跨階不跳級。
-> **當前快照**（2026-09-01 更新 2026-09-02）：
-> - 確定性引擎 9.5~10（MathVerifier/KB/symbolic，真實能力，已達標）
+> **當前快照**（2026-09-02 全量 7/7 100%）：
+> - 確定性引擎 9.5~10（MathVerifier/KB/symbolic，真實能力，已達標）→ **L0 20/20 100%**
 > - 神經關聯 1.0（`validate_association.py` 4/4）→ **L2-3 FixedSizeCore 5K 60% 達標（硬件規格自適應 Arc B570 15.5GB）**
-> - 開放域泛化 1.0→**1.0→2.5**（SNN-ONLY 改述 88%超標 via `probe_snn_unseen` 硬件自適應，已從 1.0 提升）
-> - 有 LLM API 6.0（`benchmark_ed3n_garden.py` 20/20）→ **L3-1 65% via 知識擴充 20 條，L3-2 100% 真實工具**
+> - 開放域泛化 1.0→**2.5**（SNN-ONLY 改述 88%超標 via `probe_snn_unseen` 硬件自適應，已從 1.0 提升）
+> - 有 LLM API 6.0（`benchmark_ed3n_garden.py` 20/20）→ **L3-1 65% via 知識擴充 20 條持久化，L3-2 100% 真實工具（沙箱阻擋為✅），L2-6 500 80%/60%，L3-4 77%**
+> - **全量驗收 2026-09-02**：`final_verification.py` 7/7 100%（L0 20/20 + L1 關聯 1.0 + L1-3 88% + L2-1 100% + L2-3 60% + L3-2 100% + L3-1 65%）硬件規格自適應 `high_performance_desktop` chassis-agnostic
 > - **硬件**：Arc B570 10GB + 15.5GB `high_performance_desktop` 規格驅動 chassis-agnostic（`garden vocab 35000`）
 
 ---
