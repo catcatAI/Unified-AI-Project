@@ -465,7 +465,7 @@ Unlike other AI agent frameworks (see §6.1), Angela has **actual weight-based l
 | **ML content < framework** | User experience far below architecture promise | Decoder random weights, unwired Whisper, untrained SNN |
 | **Complexity/function ratio** | 610 files but less functionality than expected | Tries to be too many things at once |
 | **Unclear user positioning** | Fails to attract any single audience clearly | Is it a developer framework? User product? Research platform? |
-| **No standard benchmarks** | MMLU, HumanEval, etc. all missing | Focus on infra tests (5,432) over quality tests |
+| **No standard benchmarks** | MMLU, HumanEval, etc. all missing | Focus on infra tests (5,448) over quality tests |
 | **Agents registered but not called** | 11 agents exist but pipeline never invokes them | Architectural decision pending |
 | **Auto-routing missing** | QueryClassifier + ModelBus exist but are bypassed by direct LLM calls | Pipeline shortcuts reduce effectiveness |
 

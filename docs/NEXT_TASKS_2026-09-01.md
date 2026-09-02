@@ -30,7 +30,7 @@
 
 ### T-DOC-1 — 測試數漂移 CI 門檻
 
-- **背景**: 歷史曾 `4,499 vs 5,361` 漂移（`AUDIT_FINDINGS_2026-08-18:27`），現已收斂至 5,432±2，但無自動校驗。
+- **背景**: 歷史曾 `4,499 vs 5,361` 漂移（`AUDIT_FINDINGS_2026-08-18:27`），現已收斂至 5,448 tests/ (6,111 full)，`ci` 已加 drift check (5000-6000 窗口)。
 - **動作**: 新增 `scripts/check_test_count.py`（`pytest --collect-only -q` vs `README.md`/`AGENTS.md` 宣稱值），加入 `.github/workflows/ci.yml`。
 - **驗收**: 測試數漂移時 CI 失敗。
 - **工作量**: S
