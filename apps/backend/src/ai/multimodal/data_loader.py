@@ -334,7 +334,11 @@ class ESC50Loader:
                 ref_path = Path(ref_path_str)
                 if not ref_path.exists():
                     continue
-                with open(ref_path, "rb") as f:
+                # .ref files hold the WAV path as text, not audio bytes
+                wav_path = Path(ref_path.read_text(encoding="utf-8").strip())
+                if not wav_path.exists():
+                    continue
+                with open(wav_path, "rb") as f:
                     wav_bytes = f.read()
                 features = self._encoder.encode(wav_bytes)
                 if features.sum() != 0:
