@@ -822,7 +822,7 @@ python apps/game-rpg/run_game.py
 
 ---
 
-**Version**: 7.5.0-dev | **Code Stats**: 667 Python files, ~96K lines | **Tests**: ~5,432 (tests/) — 0 errors | **Security**: 72+ alerts fixed → 0 remaining (Dependabot/CodeQL/Secret Scanning all clean) | **Intelligence**: 6.0/10 (upper, with LLM) / native: 數理化引擎 9.5 · 神經開放域 1.0 (re-measured 2026-08-28; see INTELLIGENCE_ASSESSMENT.md §1) | **Architecture**: ~95% | **Learning Architecture**: 80-90% (weights ~5% trained) | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)
+**Version**: 7.5.0-dev | **Code Stats**: 667 Python files, ~96K lines | **Tests**: ~5,448 (tests/; 6,111 full) — 0 errors | **Security**: 72+ alerts fixed → 0 remaining | **Intelligence**: 6.0/10 (upper, with LLM) / native: 數理化 9.5 · 神經 1.0 → L2-3 60% via FixedSizeCore 5K (re-measured 2026-09-01; see INTELLIGENCE_ASSESSMENT.md §1 + PROGRESS) | **Hardware**: Arc B570 10GB + 15.5GB spec-driven chassis-agnostic (high_performance_desktop) | **Architecture**: ~95% | [Architecture](docs/architecture/ANGELA_FULL_ARCHITECTURE.md) | [Task Map](docs/06-project-management/MASTER_TASK_MAP.md) | [Improvement Roadmap](docs/06-project-management/IMPROVEMENT_ROADMAP.md) | [Changelog](CHANGELOG.md)
 
 
 ## 附屬遊戲 (Ancillary Game)
