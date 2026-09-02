@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+Deprecated: Use probe_snn_unseen.py (strict unseen generalization). This file kept for history.
 L1-3 輕量探針 — SNN-ONLY 改述/CJK 召回（CPU-only, <100MB, <5s, 批量處理）
 
 不做重型訓練，僅探測當前召回基線（对应 INTELLIGENCE_ASSESSMENT §1.1 1.0/10）。

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+Deprecated: Use train_contrastive_pilot.py (same engine, consolidated). This file kept for history.
 L2-4 試點 — 300→1000 對比訓練（硬件規格自適應，分批+sleep，<300MB）
 
 目的：將 probe_multimodal_grounding 的 MSE 0.271 向 <0.05 推進一步（試點 1000）。
