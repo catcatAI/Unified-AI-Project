@@ -431,7 +431,7 @@ class ModeRecommender:
 
     def get_cluster_capability(self) -> Dict[str, Any]:
         """Assess node's capability for cluster participation (Ported from legacy HardwareProbe)"""
-        profile = self.detect()
+        profile = self.detector.detect()
         score = profile.ai_capability_score
 
         # Logic to determine preferred role

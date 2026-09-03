@@ -76,3 +76,14 @@ class TestSharedProbe:
 
         profile = get_profile()
         assert profile.performance_tier in {"Low", "Medium", "High", "Extreme"}
+
+
+class TestModeRecommender:
+    def test_get_cluster_capability(self):
+        """Regression: used self.detect() (AttributeError); must use detector."""
+        from shared.utils.hardware_detector import ModeRecommender
+
+        result = ModeRecommender(config={}).get_cluster_capability()
+        assert result["preferred_role"] in {"master", "worker"}
+        assert isinstance(result["can_participate"], bool)
+        assert result["max_tasks"] >= 1
