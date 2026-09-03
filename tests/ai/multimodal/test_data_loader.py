@@ -184,3 +184,36 @@ def test_real_data_provider_encode_all_no_data(tmp_path):
     provider.esc50 = ESC50Loader(data_dir=empty_esc50)
     counts = provider.encode_all()
     assert isinstance(counts, dict)
+
+
+def test_esc50_loader_encode_all_reads_wav_not_ref(tmp_path):
+    """Regression: encode_all must encode WAV bytes, not .ref path text."""
+    import io
+    import json
+    import wave
+
+    from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
+    from ai.multimodal.data_loader import ESC50Loader
+
+    esc_dir = tmp_path / "esc50"
+    cat_dir = esc_dir / "dog"
+    cat_dir.mkdir(parents=True)
+    samples = (np.arange(160, dtype=np.int16) * 100).tobytes()
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(16000)
+        wf.writeframes(samples)
+    wav_bytes = buf.getvalue()
+    wav_path = cat_dir / "clip_0.wav"
+    wav_path.write_bytes(wav_bytes)
+    (cat_dir / "clip_0.ref").write_text(str(wav_path), encoding="utf-8")
+    with open(esc_dir / "index.json", "w") as f:
+        json.dump({"total": 1, "categories": ["dog"], "category_counts": {"dog": 1}}, f)
+
+    loader = ESC50Loader(data_dir=esc_dir)
+    assert loader.encode_all() == 1
+    expected = AudioSpectralEncoder().encode(wav_bytes)
+    assert expected.sum() != 0
+    assert np.allclose(loader.get_features(0), expected)
