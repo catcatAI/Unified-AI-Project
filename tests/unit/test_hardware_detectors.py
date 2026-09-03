@@ -87,3 +87,11 @@ class TestModeRecommender:
         assert result["preferred_role"] in {"master", "worker"}
         assert isinstance(result["can_participate"], bool)
         assert result["max_tasks"] >= 1
+
+    def test_get_hardware_profile_shim(self):
+        """Regression: shim used self.detect(); must delegate to detector."""
+        from shared.utils.hardware_detector import HardwareProfile, ModeRecommender
+
+        profile = ModeRecommender(config={}).get_hardware_profile()
+        assert isinstance(profile, HardwareProfile)
+        assert profile.performance_tier in {"Low", "Medium", "High", "Extreme"}

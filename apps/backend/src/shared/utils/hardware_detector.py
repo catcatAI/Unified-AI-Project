@@ -449,7 +449,7 @@ class ModeRecommender:
 
     def get_hardware_profile(self) -> HardwareProfile:
         """Shim for compatibility with legacy HardwareProbe callers."""
-        return self.detect()
+        return self.detector.detect()
 
 
 def get_profile() -> HardwareProfile:
