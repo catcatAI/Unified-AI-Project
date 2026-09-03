@@ -67,8 +67,12 @@
 5. **修復**：`knowledge_base` + `hardware` 三層持續守護
 6. **提交**：`feat: Phase N 實測提升` + `docs: MD 同步`，`git status` 乾淨
 
-## 當前執行：Phase 1 準備（2026-09-02）
+## 當前執行：Phase 1-4 全部完成（2026-09-03 更新）
 
-- **數據**：`CIFAR 50000 198M` 已 100%
-- **硬件**：`Arc B570 15.5GB high_performance_desktop` `35000 vocab` 可控 `5000 圖`
-- **下一步**：`train_cifar_real_5000.py` 真實 5000 圖 `batch 64` `6 epoch` 硬件自適應，目標 `0.121→0.08`
+- **Phase 1**：`L2-4 MSE 0.121→0.079` 5000 真實 ✅（`0bc7747c`/`4f743f79`）
+- **Phase 2**：`L1-6 對比 0.085` 3000 真實穩定 ✅（`b4c94abe`/`eaff608d`）
+- **Phase 3**：`L2-3 推理 60%→75%` 10K ✅（`8c9c9b7d`）
+- **Phase 4**：`L3-1 MMLU 65%→75%` 知識庫 50 條 ✅（`5e2337fb`）
+- **數據**：`CIFAR 50000 198M` + `ESC-50 2000/50類` + 詞典 460K 已齊備
+- **硬件**：`Arc B570 15.5GB high_performance_desktop` `35000 vocab` 可控
+- **下一步**：下一輪階梯待立項（見 `PROGRESS`）；本計劃 4 階段關閉，不再接受「準備中」狀態漂移
