@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-L2-6 500 題真實評測 — 硬件規格自適應（分批+sleep，<300MB）
+L2-6 500 題評測（含模擬分支） — 硬件規格自適應（分批+sleep，<300MB）
 
-測 500 題（5 域各 100）HYBRID vs SNN-ONLY，
+測 500 題（5 域各 100）HYBRID vs SNN-ONLY，其中 math/dialogue 分支與
+SNN-ONLY 數值為模擬/引用（見行內註記），knowledge/reasoning/chain 為實測；
 硬件自適應：batch 75×7 批（high）/ 20×25 批（low），桌機/筆電同硬件同結果。
 
 資源：500 題 × 確定性引擎（<15s）+ FixedSizeCore 100 題抽檢（<5s），分批+sleep，<300MB。
@@ -72,7 +73,7 @@ def main():
                 hybrid_hits += 1
         time.sleep(0.02)
     hybrid_rate = hybrid_hits / len(data)
-    print(f"  HYBRID 500: {hybrid_hits}/{len(data)} = {hybrid_rate:.0%}（目標 ≥60%） {time.time()-t0:.1f}s batch {batch}")
+    print(f"  HYBRID 500: {hybrid_hits}/{len(data)} = {hybrid_rate:.0%}（目標 ≥60%，含模擬分支：math/dialogue 直接計命中） {time.time()-t0:.1f}s batch {batch}")
 
     # SNN-ONLY 100 抽檢（FixedSizeCore 5K 已訓 60%）
     snn_hits = 60  # 來自 train_fixedcore 60%
