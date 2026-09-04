@@ -395,12 +395,14 @@ def route_knowledge(text: str) -> Optional[str]:
                 _answer_fallback = attrs["answer"]
             # prim covers only legacy attrs; author/capital/ended/answer have
             # explicit branches above (or the deferred fallback), so an early
-            # incidental subject must not shadow via prim either.
+            # incidental subject must not shadow via prim either. `days` is
+            # excluded: day-questions are handled by the specific branch and
+            # section 4; via prim it shadowed later subjects ("What year WW2
+            # ended?" → year/days 365 instead of ww2/ended 1945).
             prim = (
                 attrs.get("color")
                 or attrs.get("known_as")
                 or attrs.get("sound")
-                or attrs.get("days")
                 or attrs.get("type")
                 or attrs.get("sides")
             )
