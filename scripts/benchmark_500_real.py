@@ -52,7 +52,7 @@ def main():
                     else:
                         # 若為 math 域，期望即為答案，算命中（確定性引擎）
                         hit = True
-                except:
+                except Exception:
                     hit = False
             elif dom in ("knowledge","reasoning","chain"):
                 if route_knowledge(q) or route_reasoning(q):
