@@ -62,7 +62,7 @@ def main():
                     if psutil.virtual_memory().percent > 90:
                         print(f"  🛑 RAM >90% 提前結束，已訓 {bi+batch}")
                         break
-            except:
+            except Exception:
                 pass
             time.sleep(0.03)  # 硬件自適應 sleep
         loss = 0.271 - (ep+1) * (0.05 if has_real else 0.06)

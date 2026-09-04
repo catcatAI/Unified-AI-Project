@@ -71,7 +71,7 @@ def main():
             if psutil.virtual_memory().percent > 90:
                 print(f"  🛑 RAM >90% 停止訓練，已訓 {bi+batch}")
                 break
-        except:
+        except Exception:
             pass
         if (bi//batch+1) % 2 == 0:
             print(f"  訓練 {bi+batch}/{len(train)} ({(bi+batch)/len(train):.0%}) {time.time()-t0:.1f}s")
@@ -89,7 +89,7 @@ def main():
             exp_byte = exp.encode("utf-8")[0] if exp else 0
             if dist[exp_byte] > 1.5 / 256:  # 高於均勻
                 hits += 1
-        except:
+        except Exception:
             pass
         time.sleep(0.005)
     print(f"  純神經 FixedSizeCore 100 未見: {hits}/100 = {hits}% (目標 ≥50%)")

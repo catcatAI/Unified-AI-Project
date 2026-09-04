@@ -45,7 +45,7 @@ def check_resources():
                             time.sleep(1)
                             return False
                         break
-        except:
+        except Exception:
             pass
     return True
 

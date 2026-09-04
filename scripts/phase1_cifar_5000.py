@@ -47,7 +47,7 @@ def main():
             if psutil.virtual_memory().percent > 85:
                 print(f"  ⚠️ RAM {psutil.virtual_memory().percent:.1f}% >85% 暫停")
                 time.sleep(0.5)
-        except:
+        except Exception:
             pass
         time.sleep(0.05)
     # 模擬 Phase 1 5000 真實 6 epoch 後 MSE

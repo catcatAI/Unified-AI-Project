@@ -57,7 +57,7 @@ def test_cuda_direct():
                 try:
                     dll = ctypes.windll.LoadLibrary(path)
                     return True, f"nvcuda.dll loaded from {path}"
-                except:
+                except Exception:
                     pass
         
         # Check if nvidia-smi exists
@@ -93,7 +93,7 @@ def test_intel_gpu():
                     try:
                         dll = ctypes.windll.LoadLibrary(dll_path)
                         return True, f"Intel GPU DLL loaded: {dll_path}"
-                    except:
+                    except Exception:
                         pass
         
         return False, "Intel GPU DLL not found"

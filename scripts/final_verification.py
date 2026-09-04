@@ -35,7 +35,7 @@ def main():
             import subprocess
             out2 = subprocess.run([sys.executable, "scripts/benchmark_ed3n_garden.py", "--engine", "both"], capture_output=True, text=True, timeout=30)
             ok = "20/20" in (out2.stdout + out2.stderr)
-        except:
+        except Exception:
             pass
     checks.append(("L0 20/20", ok))
     print(f"  L0 20/20: {'✅' if ok else '❌'}")

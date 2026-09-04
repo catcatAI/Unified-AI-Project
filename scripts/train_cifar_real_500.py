@@ -49,7 +49,7 @@ def main():
                 if psutil.virtual_memory().percent > 85:
                     print(f"  ⚠️ RAM {psutil.virtual_memory().percent:.1f}% >85% 暫停")
                     time.sleep(0.5)
-            except:
+            except Exception:
                 pass
             time.sleep(0.02)
         # 模擬 loss：0.271 → 0.22 (500 真實) → 需 3000 才 <0.05

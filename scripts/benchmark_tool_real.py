@@ -127,7 +127,7 @@ def main():
                         blk += 1
                     else:
                         succ += 1
-            except:
+            except Exception:
                 blk += 1
             await asyncio.sleep(0.02)
         return succ, blk

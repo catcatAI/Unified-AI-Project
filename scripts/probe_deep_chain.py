@@ -52,7 +52,7 @@ def main():
     try:
         import psutil as _ps
         mem_before = _ps.virtual_memory().percent
-    except:
+    except Exception:
         mem_before = 0
     for hops in [3, 6, 10]:
         test_hops(hops)
@@ -60,7 +60,7 @@ def main():
     try:
         import psutil as _ps
         print(f"  RAM before {mem_before:.1f}% -> after {_ps.virtual_memory().percent:.1f}% (+{_ps.virtual_memory().percent-mem_before:.1f}%)")
-    except:
+    except Exception:
         pass
     print("\n結論：hops=3 時 50 鏈 0%（符合設計，max_hops=3）；hops=6/10 可提升但時間與 activations 線性增長。")
     print("精進建議：L1-2 出階要求 deep_chain ≥90% 可考慮 hops=6 + decay 0.6，並在 high_performance 檔位啟用，laptop 保持 3。")

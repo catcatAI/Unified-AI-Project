@@ -59,7 +59,7 @@ def main():
             if psutil.virtual_memory().percent > 85:
                 print(f"  ⚠️ RAM {psutil.virtual_memory().percent:.1f}% >85% 暫停")
                 time.sleep(0.5)
-        except:
+        except Exception:
             pass
         if (bi//batch+1) % 4 == 0:
             print(f"  訓練 {bi+batch}/{len(train)} ({(bi+batch)/len(train):.0%}) {time.time()-t0:.1f}s")

@@ -50,7 +50,7 @@ def main():
                 if psutil.virtual_memory().percent > 85:
                     print(f"  ⚠️ RAM {psutil.virtual_memory().percent:.1f}% >85% 暫停")
                     time.sleep(0.5)
-            except:
+            except Exception:
                 pass
             time.sleep(0.05)
         print(f"  合成試點完成 500 圖 {time.time()-t0:.1f}s，無 OOM")
