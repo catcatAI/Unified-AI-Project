@@ -40,7 +40,9 @@ class TestKnowledgeBoundaries:
         assert route_knowledge("汽車幾個輪子") == "4"
 
     def test_unknown_returns_none_no_hallucination(self):
-        assert route_knowledge("What is the capital of France?") is None
+        # France is covered since Phase 4 knowledge expansion (france→Paris);
+        # use a fictional place to assert unknown→None behavior.
+        assert route_knowledge("What is the capital of Atlantis?") is None
         assert route_knowledge("Explain quantum entanglement") is None
 
     def test_empty_and_none(self):
