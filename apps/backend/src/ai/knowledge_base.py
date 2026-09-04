@@ -53,10 +53,10 @@ _KNOWLEDGE: Dict[str, Dict[str, str]] = {
     "snake": {"sound": "hiss"},
     "bee": {"sound": "buzz"},
     "horse": {"sound": "neigh"},
-    "water": {"state": "liquid", "boils": "100"},
+    "water": {"state": "liquid", "boils": "100", "formula": "H2O", "answer": "H2O"},
     "ice": {"state": "solid", "melts": "0"},
     "steam": {"state": "gas"},
-    "human": {"legs": "2", "arms": "2"},
+    "human": {"legs": "2", "arms": "2", "bones": "206", "answer": "206"},
     "spider": {"legs": "8"},
     "insect": {"legs": "6"},
     "octopus": {"legs": "8", "arms": "8"},
@@ -110,14 +110,12 @@ _KNOWLEDGE: Dict[str, Dict[str, str]] = {
     "einstein": {"theory": "relativity", "answer": "relativity"},
     "newton": {"law": "gravity", "answer": "gravity"},
     "oxygen": {"symbol": "O", "answer": "O"},
-    "water": {"formula": "H2O", "answer": "H2O"},
     "france": {"capital": "Paris", "answer": "Paris"},
     "japan": {"capital": "Tokyo", "answer": "Tokyo"},
     "usa": {"capital": "Washington", "answer": "Washington"},
     "china": {"capital": "Beijing", "answer": "Beijing"},
     "pi": {"value": "3.14", "answer": "3.14"},
     "light speed": {"value": "299792458", "answer": "299792458"},
-    "human": {"bones": "206", "answer": "206"},
     "heart": {"chambers": "4", "answer": "4"},
     "math_2+2": {"answer": "4", "equals": "4"},
     "2+2": {"equals": "4", "answer": "4"},
@@ -355,6 +353,10 @@ def route_knowledge(text: str) -> Optional[str]:
     # to the word-boundary regex for ASCII subjects (verified) and ~20x faster
     # (217 µs → 10 µs per call).
     tokens = set(re.findall(r"[a-z0-9]+", t))
+    # Generic answer fallback is deferred: an early incidental subject match
+    # (e.g. "human" in "Who wrote Hamlet?") must not shadow a later subject
+    # with a specific attribute hit ("hamlet" + wrote → author).
+    _answer_fallback = None
     for subject, attrs in _KNOWLEDGE.items():
         aliases = _ZH_SUBJECT_ALIASES.get(subject)
         subject_hit = subject in tokens
@@ -370,6 +372,8 @@ def route_knowledge(text: str) -> Optional[str]:
                 return attrs["sides"]
             if "leg" in t and "legs" in attrs:
                 return attrs["legs"]
+            if "state" in t and "state" in attrs:
+                return attrs["state"]
             if any(k in t for k in ("wheel", "輪子", "輪")) and "wheels" in attrs:
                 return attrs["wheels"]
             if any(k in t for k in ("value", "worth", "值", "價值")) and "value" in attrs:
@@ -383,8 +387,15 @@ def route_knowledge(text: str) -> Optional[str]:
                 return attrs["capital"]
             if any(k in t for k in ("ended", "end", "結束")) and "ended" in attrs:
                 return attrs["ended"]
-            if "answer" in attrs and any(k in t for k in ("who", "what", "when", "where", "which", "how", "誰", "什麼")):
-                return attrs["answer"]
+            if (
+                _answer_fallback is None
+                and "answer" in attrs
+                and any(k in t for k in ("who", "what", "when", "where", "which", "how", "誰", "什麼"))
+            ):
+                _answer_fallback = attrs["answer"]
+            # prim covers only legacy attrs; author/capital/ended/answer have
+            # explicit branches above (or the deferred fallback), so an early
+            # incidental subject must not shadow via prim either.
             prim = (
                 attrs.get("color")
                 or attrs.get("known_as")
@@ -392,13 +403,12 @@ def route_knowledge(text: str) -> Optional[str]:
                 or attrs.get("days")
                 or attrs.get("type")
                 or attrs.get("sides")
-                or attrs.get("author")
-                or attrs.get("capital")
-                or attrs.get("ended")
-                or attrs.get("answer")
             )
             if prim:
                 return prim
+
+    if _answer_fallback is not None:
+        return _answer_fallback
 
     # 6) unit conversion: "how many m in a km", "convert 5 km to m"
     m = re.search(r"(?:convert|how many|how much)\s+(-?\d+(?:\.\d+)?)?\s*(\w+)\s+(?:to|in a|in|per)\s+(\w+)", t)
