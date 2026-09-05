@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-L3-2 真實工具調用 — 硬件規格自適應（<100MB, <10s, 分批+sleep，沙箱守護）
+L3-2 真實工具調用 — 硬件規格自適應（<100MB，分批+sleep，沙箱守護）
 
-100 工具中抽 20 真實調用（各 5），走真實 handler + 閘門 + 沙箱，非模擬：
+100 工具中抽 20 真實調用（各 5），走真實 handler + 閘門 + 沙箱：
   - file: FileOperationHandler（安全路徑）
   - code: CodeExecutionHandler（沙箱，Blocked call 應阻擋）
-  - search: 模擬（無外部 API，不重調）
+  - search: WebSearchHandler 真實搜尋（單查詢超時 10s，超時/無結果計 blocked）
   - system: SystemCommandHandler（白名單 ls/echo）
 
 硬件自適應：batch 依 tier（high 10 / low 5）+ sleep 0.05s，桌機/筆電同硬件同結果。
-資源：單 handler <1s，總 20 調用 <5s，<100MB。
+資源：單 handler <1s（search 需網路，總計 <60s），<100MB。
 """
 
 import os, sys, time, tempfile, pathlib
@@ -140,13 +140,32 @@ def main():
     except Exception as e:
         print(f"  system handler 不可用: {e}")
         results["success"] += 5
-    except Exception as e:
-        print(f"  system handler 不可用: {e}")
-        results["success"] += 5
 
-    # 4) search 5 模擬
-    results["success"] += 5
-    print(f"  search 5: 模擬成功")
+    # 4) search 5 真實（WebSearchHandler，單查詢超時 10s，間隔 1s）
+    async def _run_search():
+        from services.handlers.web_search_handler import WebSearchHandler
+        h = WebSearchHandler()
+        succ = blk = 0
+        for q in ["Python", "Taipei", "貓", "Linux", "coffee"]:
+            try:
+                res = await asyncio.wait_for(h.handle(q, "search"), timeout=10)
+                if res and not any(k in res for k in ("尚未就緒", "發生錯誤", "沒有找到")):
+                    succ += 1
+                else:
+                    blk += 1
+            except Exception:
+                blk += 1
+            await asyncio.sleep(1.0)
+        return succ, blk
+
+    try:
+        s, b = asyncio.run(_run_search())
+        results["success"] += s
+        results["blocked"] += b
+        print(f"  search 5: 真實搜尋 success {s} blocked {b}（超時/無結果計 blocked，非崩潰）")
+    except Exception as e:
+        print(f"  search handler 不可用: {e}")
+        results["blocked"] += 5
 
     elapsed = time.time() - t0
     total = 20
