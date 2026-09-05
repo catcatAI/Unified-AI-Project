@@ -163,8 +163,6 @@ _UNIT_CONVERSIONS: Dict[Tuple[str, str], Tuple[float, str]] = {
     ("m", "cm"): (100.0, "meter"),
     ("mm", "m"): (0.001, "millimeter"),
     ("m", "mm"): (1000.0, "meter"),
-    ("mm", "m"): (0.001, "millimeter"),
-    ("m", "mm"): (1000.0, "meter"),
     ("km", "mile"): (0.621371, "kilometer"),
     ("mile", "km"): (1.60934, "mile"),
     ("m", "yard"): (1.09361, "meter"),
