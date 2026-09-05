@@ -7,8 +7,6 @@
 確保 L0 20/20 不回退。全部為純函數呼叫，無重型模型載入，單檔 <0.5s。
 """
 
-import pytest
-
 from ai.knowledge_base import route_knowledge
 from ai.symbolic_reasoner import route_reasoning
 
