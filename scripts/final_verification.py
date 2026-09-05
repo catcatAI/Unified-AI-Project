@@ -67,8 +67,8 @@ def main():
     checks.append(("L2-3 FixedSizeCore 60%", ok))
     print(f"  L2-3 FixedSizeCore 60%: {'✅' if ok else '❌'}")
 
-    # L3-2: tool 100%
-    out = run([sys.executable, "scripts/benchmark_tool_real.py"], 15)
+    # L3-2: tool 100% (90s budget: real network search needs ~12s)
+    out = run([sys.executable, "scripts/benchmark_tool_real.py"], 90)
     ok = "100%" in out and "0 崩潰" in out
     checks.append(("L3-2 工具 100%", ok))
     print(f"  L3-2 工具 100%: {'✅' if ok else '❌'}")
