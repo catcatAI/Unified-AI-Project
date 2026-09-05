@@ -43,15 +43,11 @@ def main():
     adaptive = HardwareProfile.get_adaptive_compute(hw)
     print(f"硬件規格自適應（L3-1 知識擴充 20 條）: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f} tier={tier}")
 
-    # 模擬擴充後 MMLU 重測
-    # 原 100 題中 25 其他（sky）已命中，75 STEM/人文/社科中 20 新增可命中
-    before_no_rag = 25
-    before_rag = 45
-    # 新增 20 條後，有 RAG 應 +20 → 65%（超 50%）
-    after_rag = min(100, before_rag + 20)
-    print(f"  擴充前: 無 RAG {before_no_rag}% / 有 RAG {before_rag}% 未達 50%")
-    print(f"  新增 20 條（Hamlet/Shakespeare, WW2 1945, 2+2 4, 首都等）")
-    print(f"  擴充後: 有 RAG {after_rag}% → {'✅ 達標 ≥50%' if after_rag>=50 else '❌'}")
+    # 歷史投影（僅供對照，不再更新）：試點當時無 RAG 25% / 有 RAG 45%，+20 條 → 65%
+    # 現狀以 benchmark_mmlu_subset.py 實測為準（20 條已持久化進源碼）。
+    print("  歷史投影（試點當時）: 無 RAG 25% / 有 RAG 45%，+20 條 → 65%（僅對照）")
+    print("  現狀請看 benchmark_mmlu_subset.py 實測輸出（20 條已持久化）")
+    print("  新增 20 條（Hamlet/Shakespeare, WW2 1945, 2+2 4, 首都等）")
     # 硬件自適應 batch
     batch = 25 if tier in ("high_performance_desktop","server_cloud") else 10
     batch = int(batch * adaptive['ed3n_batch_multiplier'] / 1.5)
