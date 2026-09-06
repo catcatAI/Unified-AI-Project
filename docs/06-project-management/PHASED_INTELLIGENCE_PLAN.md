@@ -24,7 +24,7 @@
 | `L1-6 對比` | 0.087 合成模擬 | `train_contrastive_pilot` 合成 1000（腳本自標模擬） |
 | `L3-1 MMLU` 有 RAG | 65% | `expand_knowledge` 20 條持久化 |
 | `L3-2 工具` 真實 20 | 100% 0 崩潰 | `benchmark_tool_real` 沙箱阻擋為✅ |
-| `L2-6 500` HYBRID/SNN | 80%/60% | `benchmark_500_real` |
+| `L2-6 500` HYBRID/SNN | HYBRID 80% 構造作廢 / SNN 60% 真實 | `benchmark_500_real` |
 
 ## 階段定義（每階段實測提升，硬指標）
 
