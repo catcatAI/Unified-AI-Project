@@ -59,6 +59,7 @@ def main():
     ap.add_argument("--count", type=int, default=5000, help="samples to train")
     ap.add_argument("--batch", type=int, default=500, help="batch size")
     ap.add_argument("--weight", type=float, default=0.7, help="Hebbian step per co-occurrence (engine caps at 1.0; small values preserve frequency differences)")
+    ap.add_argument("--max-pairs", type=int, default=0, help="cap unique entity pairs admitted (0 = unlimited; for sparsity/generalization experiments)")
     ap.add_argument("--checkpoint", default=None, help="save trained engine state (default: data/checkpoints/association_pilot.json; empty string disables)")
     args = ap.parse_args()
 
@@ -87,6 +88,7 @@ def main():
     t0 = time.time()
     probe_pair = ("?", "?")
     total_parsed, total_skipped = 0, 0
+    admitted: set = set()
     for bi in range(batches):
         if not check_resources():
             print("  ⏸️ Resource guard paused")
@@ -111,6 +113,10 @@ def main():
                 if not a or not b or a == b:
                     skipped += 1
                     continue
+                if args.max_pairs and (a, b) not in admitted and len(admitted) >= args.max_pairs:
+                    skipped += 1
+                    continue
+                admitted.add((a, b))
                 eng.network.add_directed(a, b, weight=args.weight)
                 parsed += 1
                 if bi == 0 and parsed == 1:
