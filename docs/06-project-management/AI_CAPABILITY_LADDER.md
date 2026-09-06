@@ -19,7 +19,7 @@
 > **當前快照**（2026-09-03 全量 7/7：6 實測+1 框架）：
 > - 確定性引擎 9.5~10（MathVerifier/KB/symbolic，真實能力，已達標）→ **L0 20/20 100%**
 > - 神經關聯 1.0（`validate_association.py` 4/4）→ **L2-3 FixedSizeCore 5K 軟 80%（字節峰，模板增補；硬泛化仍 0）**
-> - 開放域泛化 1.0→**3.0**（SNN-ONLY 改述 88% + 確定性未見推理 83/100 精確匹配超 75；純神經泛化仍 0，見 `INTELLIGENCE_ASSESSMENT` 讀法）
+> - 開放域泛化 1.0→**3.0**（SNN-ONLY 改述 88% + 確定性未見推理 100/100 精確匹配（W 歧義修復）；純神經泛化仍 0，見 `INTELLIGENCE_ASSESSMENT` 讀法）
 > - 有 LLM API 6.0（`benchmark_ed3n_garden.py` 20/20）→ **L3-1 無RAG 75/100 實測（知識 50 條持久化；舊 65% 為歷史投影已退役），L3-2 100% 真實工具（沙箱阻擋為✅），L2-6 500（HYBRID 80% 構造值作廢，SNN-ONLY 60% 真實），L3-4 77% 模擬作廢**
 > - **全量驗收 2026-09-03**：`final_verification.py` 7/7（L0 20/20 實測 + L1 關聯 1.0 實測 + L1-3 88% 實測嚴門 + L2-1 100% 框架 + L2-3 5K 實測 60% + L3-2 100% 實測 + L3-1 無RAG 75/100 實測）硬件規格自適應 `high_performance_desktop` chassis-agnostic
 > - **硬件**：Arc B570 10GB + 15.5GB `high_performance_desktop` 規格驅動 chassis-agnostic（`garden vocab 35000`）

@@ -18,7 +18,7 @@ random.seed(123)
 UNSEEN_REASONING = [
     ("The first is higher than second, second higher than third, which is top?", "first"),
     ("若 A 比 B 強，B 比 C 強，誰最強？", "A"),
-    ("X > Y > Z, Y > W, 誰最小？", "W"),
+    ("X > Y > Z, Z > W, 誰最小？", "W"),  # 2026-09-03: 舊題 "Y > W" 使 Z/W 並列最小（歧義），改 Z > W 保 4 跳難度且唯一解
     ("Alice, Bob, Carol 中 Alice 最聰明，Bob 次之，誰最笨？", "Carol"),
     ("If Tom is older than Jerry, Jerry older than Spike, is Tom older than Spike? yes/no", "yes"),
     ("A is not as short as B, B not as short as C, who shortest?", "C"),
