@@ -58,6 +58,7 @@ def main():
     ap = argparse.ArgumentParser(description="L1-1 pilot: ED3N Hebbian 5K (resource-guarded)")
     ap.add_argument("--count", type=int, default=5000, help="samples to train")
     ap.add_argument("--batch", type=int, default=500, help="batch size")
+    ap.add_argument("--weight", type=float, default=0.7, help="Hebbian step per co-occurrence (engine caps at 1.0; small values preserve frequency differences)")
     ap.add_argument("--checkpoint", default=None, help="save trained engine state (default: data/checkpoints/association_pilot.json; empty string disables)")
     args = ap.parse_args()
 
@@ -110,7 +111,7 @@ def main():
                 if not a or not b or a == b:
                     skipped += 1
                     continue
-                eng.network.add_directed(a, b, weight=0.7)
+                eng.network.add_directed(a, b, weight=args.weight)
                 parsed += 1
                 if bi == 0 and parsed == 1:
                     probe_pair = (a, b)
