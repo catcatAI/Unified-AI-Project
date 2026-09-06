@@ -102,6 +102,25 @@ def main():
                 bool_hits += 1
     print(f"  Boolean 子集命中: {bool_hits} (yes/no 類)")
 
+    # 硬指標：位置精確解碼（答案每字節皆為該序列位置 argmax；offset=問題字節長）
+    # 與字節峰軟指標對照，探測已訓權重的真實位置記憶
+    try:
+        from probe_reasoning_unseen import UNSEEN_REASONING
+        pos_hits = 0
+        for pq, pexp in UNSEEN_REASONING:
+            eb = pexp.encode("utf-8")
+            off = len(pq.encode("utf-8")) + 1  # 訓練格式為 "q=ans"，答案起於問後+1（跳過 '='）
+            ok = True
+            for j, bb in enumerate(eb):
+                d = core.position_dist((off + j) % core.max_seq)
+                if max(range(256), key=lambda x: d[x]) != bb:
+                    ok = False
+                    break
+            pos_hits += 1 if ok else 0
+        print(f"  位置精確(硬): {pos_hits}/{len(UNSEEN_REASONING)} = {pos_hits/len(UNSEEN_REASONING):.0%}")
+    except Exception as e:
+        print(f"  位置精確(硬) 跳過: {e}")
+
     if hits >= 30:
         print(f"  ✅ 提升至 {hits}%（硬件自適應）")
     else:

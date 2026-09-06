@@ -63,7 +63,7 @@ def main():
     # 舊門僅檢查文件存在已退役；以腳本自定目標 ≥50% 為通過線）
     import re
     out = run([sys.executable, "scripts/train_fixedcore_reasoning.py"], 150)
-    m = re.search(r"(\d+)/100\s*=\s*(\d+)%", out)
+    m = re.search(r"純神經 FixedSizeCore 100 未見:\s*(\d+)/100\s*=\s*(\d+)%", out)
     ok = bool(m and int(m.group(1)) >= 50)
     checks.append(("L2-3 FixedSizeCore≥50%", ok))
     print(f"  L2-3 FixedSizeCore實測 {m.group(0) if m else '無輸出'}: {'✅' if ok else '❌'}")
