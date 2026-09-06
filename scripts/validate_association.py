@@ -248,6 +248,8 @@ def main() -> None:
     ap.add_argument("--deep", action="store_true", help="Include L1-2 deep_chain/branching/noisy (slow, ~10s for GARDEN)")
     ap.add_argument("--output", "-o", default="",
                     help="Write JSON report to this path")
+    ap.add_argument("--checkpoint", default="",
+                    help="ED3N checkpoint from train_pilot_association to verify trained-edge reachability (default: data/checkpoints/association_pilot.json if present; missing file skips)")
     args = ap.parse_args()
 
     print("=" * 70)
@@ -273,6 +275,28 @@ def main() -> None:
     print("  what it should; a low one means the association path needs training.")
     print("  NOTE: this uses the relation API (add_relation), NOT Q->A text")
     print("  mirroring, so no knowledge is baked into the weights.")
+
+    # 門消費存檔：若 P1 訓練存檔存在，加載後驗證訓練邊可達（缺檔跳過，不影響既有指標）
+    ckpt = args.checkpoint or os.path.join(os.path.dirname(__file__), "..", "data/checkpoints/association_pilot.json")
+    data_path = os.path.join(os.path.dirname(__file__), "..", "apps/backend/data/raw_datasets/association_train.json")
+    if os.path.exists(ckpt) and os.path.exists(data_path):
+        try:
+            with open(data_path, "r", encoding="utf-8") as f:
+                s0 = json.load(f)[0]
+            w = s0["input"].split()
+            pa, pb = w[0], w[-1].rstrip(".")
+            from ai.ed3n.ed3n_engine import ED3NEngine
+            feng = ED3NEngine()
+            feng.load(ckpt)
+            facts = feng.network.forward([pa]) if hasattr(feng, "network") else []
+            hit = pb in facts if isinstance(facts, dict) else (pb in list(facts))
+            print(f"  checkpoint_trained_edge: {pa}->{pb} reachable={hit} {'✅' if hit else '❌'} ({os.path.getsize(ckpt)//1024}KB)")
+            report["checkpoint_trained_edge"] = bool(hit)
+        except Exception as e:
+            print(f"  checkpoint_trained_edge ❌: {e}")
+            report["checkpoint_trained_edge"] = False
+    else:
+        print("  checkpoint_trained_edge: skipped (no P1 checkpoint/data on disk)")
 
     if args.output:
         os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
