@@ -301,15 +301,15 @@ class FixedSizeCore:
             np.add.at(self._feat, slots, ans_hist)
         # Boolean discriminator for truth-value answers.
         ans_lower = answer.decode("utf-8", errors="replace").strip().lower()
-        if ans_lower in ("true", "false"):
-            bin_idx = 1 if ans_lower == "true" else 0
+        if ans_lower in ("true", "false", "yes", "y", "no", "n"):
+            bin_idx = 1 if ans_lower in ("true", "yes", "y") else 0
             for size in range(1, FEATURE_NGRAM + 1):
                 if len(problem) < size:
                     break
                 windows = np.lib.stride_tricks.sliding_window_view(buf, size)
                 slots = _vectorised_hash(windows) & mask
                 self._feat_bool[slots.astype(np.int64), bin_idx] += 1.0
-            if ans_lower == "true":
+            if ans_lower in ("true", "yes", "y"):
                 self._true_total += 1.0
             else:
                 self._false_total += 1.0

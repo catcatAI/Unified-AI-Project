@@ -97,12 +97,12 @@ def main():
             pass
         time.sleep(0.005)
     print(f"  純神經 FixedSizeCore 100 未見: {hits}/100 = {hits}% (目標 ≥50%)")
-    # 也測 boolean 類（yes/no）
+    # 也測 boolean 類（yes/no；boolean_answer 回 true/false，需映射比對）
     bool_hits = 0
     for q, exp in TEST_100:
-        if exp in ("yes","no"):
+        if exp in ("yes", "no"):
             ans = core.boolean_answer(q)
-            if ans and ans == exp:
+            if ans and {"true": "yes", "false": "no"}.get(ans) == exp:
                 bool_hits += 1
     print(f"  Boolean 子集命中: {bool_hits} (yes/no 類)")
 
