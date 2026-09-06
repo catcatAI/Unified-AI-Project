@@ -26,6 +26,16 @@ system:
 
 ai_name: Miko # Or a new unified name, TBD
 
+# ED3N core_network propagation knobs actually read by core_network.py
+# (2026-09-03: ed3n.default.yaml's max_spike_hops/spike_decay do NOT match
+# code key names; these mirror code defaults so behavior is unchanged)
+ai:
+  core_network:
+    propagation_hops: 3
+    propagation_decay: 0.5
+    neuron_threshold: 0.3
+    propagation_cutoff: 0.05
+
 # Settings from MikoAI's config.yaml
 memory_manager:
   short_term_memory_limit: 10 # Short-term memory limit in conversation turns
