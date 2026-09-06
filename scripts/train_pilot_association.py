@@ -54,6 +54,7 @@ def main():
     ap = argparse.ArgumentParser(description="L1-1 pilot: ED3N Hebbian 5K (resource-guarded)")
     ap.add_argument("--count", type=int, default=5000, help="samples to train")
     ap.add_argument("--batch", type=int, default=500, help="batch size")
+    ap.add_argument("--checkpoint", default=None, help="save trained engine state (default: data/checkpoints/association_pilot.json; empty string disables)")
     args = ap.parse_args()
 
     if not os.path.exists(DATA_PATH):
@@ -112,6 +113,21 @@ def main():
     # 快驗：3 跳 transitive 是否仍 1.0（直接用 eng.network.forward）
     acts = eng.network.forward(["P0_0_A"])
     print(f"   Quick check: forward(['P0_0_A']) -> {len(acts)} activations (pilot built {eng.network._conn_count} edges)")
+
+    # 存檔接線：訓後存引擎狀態，新引擎加載後 forward 驗證（斷連閉環第一步；內容仍為合成鏈，見上）
+    ckpt = args.checkpoint
+    if ckpt is None:
+        ckpt = os.path.join(os.path.dirname(__file__), "..", "data/checkpoints/association_pilot.json")
+    if ckpt:
+        try:
+            eng.save(ckpt)
+            from ai.ed3n.ed3n_engine import ED3NEngine as _Fresh
+            fresh = _Fresh()
+            fresh.load(ckpt)
+            vacts = fresh.network.forward(["P0_0_A"]) if hasattr(fresh, "network") else []
+            print(f"   Checkpoint: saved {ckpt} ({os.path.getsize(ckpt)//1024}KB), fresh-load forward -> {len(vacts)} activations {'✅' if len(vacts) else '❌'}")
+        except Exception as e:
+            print(f"   Checkpoint ❌: {e}")
 
     return 0
 
