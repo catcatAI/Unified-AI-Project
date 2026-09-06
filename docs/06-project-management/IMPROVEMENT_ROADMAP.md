@@ -7,7 +7,7 @@
   VERSION: 1.0.0
   STATUS: active
   LANGUAGE: zh-tw
-    LAST_MODIFIED: 2026-08-28 (updated test count to 5,448 (6,111 full), open-domain 1.0)
+    LAST_MODIFIED: 2026-09-03 (open-domain 3.0: deterministic unseen-reasoning 83/100; neural generalization still ~0)
   AUDIENCE: developers, agents
   =============================================================================
 -->
