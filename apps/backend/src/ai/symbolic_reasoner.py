@@ -127,18 +127,57 @@ def _extract_entities(text: str) -> List[str]:
     ]
 
 
+# Base-form adjectives for "not as <adj> as" (normalized before _LESSER/_GREATER check)
+_BASE_TO_COMP = {
+    "short": "shorter", "tall": "taller", "big": "bigger", "small": "smaller",
+    "long": "longer", "old": "older", "young": "younger", "fast": "faster",
+    "slow": "slower", "high": "higher", "low": "lower", "strong": "stronger",
+    "weak": "weaker", "heavy": "heavier", "light": "lighter",
+}
+
+
 def _solve_transitive(text: str) -> Optional[str]:
     """A > B, B > C  =>  A is the greatest / tallest / etc."""
     # Find comparator statements:  "X is <comp> than Y"  or  "X <comp> Y"
     # Chinese: "X 比 Y <comp>"
     pairs: List[Tuple[str, str, str]] = []  # (subject, object, comparator)
-    # English "X is taller than Y" / "X taller than Y"
-    for m in re.finditer(r"\b([A-Za-z])\b\s+(?:is\s+)?(\w+?)\s+than\s+\b([A-Za-z])\b", text):
+    # Trailing yes/no question "…, is A older than B?" — cut before fact
+    # parsing (else the question pollutes the graph and every answer is "yes")
+    q_match = re.search(
+        r",\s*is\s+([A-Za-z一-鿿]+)\s+(\w+?)\s+than\s+([A-Za-z一-鿿]+)\s*\??\s*(?:yes/no)?\s*$",
+        text,
+    )
+    q_triple = None
+    facts_text = text
+    if q_match:
+        q_triple = (q_match.group(1).upper(), q_match.group(2).lower(), q_match.group(3).upper())
+        facts_text = text[: q_match.start()]
+    # English "X is taller than Y" / "X taller than Y" (multi-letter entities:
+    # "Tom is older than Jerry", "first is higher than second")
+    for m in re.finditer(r"\b([A-Za-z]+)\b\s+(?:is\s+)?(\w+?)\s+than\s+\b([A-Za-z]+)\b", facts_text):
         subj, comp, obj = m.group(1).upper(), m.group(2).lower(), m.group(3).upper()
         pairs.append((subj, obj, comp))
+    # Symbol chains "X > Y > Z" (consecutive pairs; finditer would skip overlaps)
+    for seg in re.split(r"[,;，；]", facts_text):
+        if ">" in seg:
+            ents = [e.strip() for e in seg.split(">")]
+            ents = [e for e in ents if re.fullmatch(r"[A-Za-z一-鿿]+", e or "")]
+            for i in range(len(ents) - 1):
+                pairs.append((ents[i].upper(), ents[i + 1].upper(), "taller"))
+    # Negation "A is not as short as B" / "B not as short as C" (lesser-comp => A > B)
+    for m in re.finditer(
+        r"\b([A-Za-z一-鿿]+)\b\s+(?:is\s+)?not\s+as\s+(\w+)\s+as\s+\b([A-Za-z一-鿿]+)\b",
+        facts_text,
+    ):
+        subj, comp, obj = m.group(1).upper(), m.group(2).lower(), m.group(3).upper()
+        comp = _BASE_TO_COMP.get(comp, comp)
+        if comp in _LESSER:
+            pairs.append((subj, obj, "taller"))
+        elif comp in _GREATER:
+            pairs.append((obj, subj, "taller"))
     # Chinese "X 比 Y 高"
     for m in re.finditer(
-        r"([\w一-鿿]{1,8})\s*比\s*([\w一-鿿]{1,8})\s*(高|大|重|快|多|長|強)", text
+        r"([\w一-鿿]{1,8})\s*比\s*([\w一-鿿]{1,8})\s*(高|大|重|快|多|長|強)", facts_text
     ):
         pairs.append((m.group(1), m.group(2), "taller"))
 
@@ -182,6 +221,46 @@ def _solve_transitive(text: str) -> Optional[str]:
             _record(b, a)
 
     if not greater:
+        return None
+
+    # Precedence guard: bare statements ("Sam is older than Kim.") belong to the
+    # template/SNN path — symbolic answers only questions (else it hijacks
+    # GARDEN template generalization, see test_template_recall_*).
+    if q_triple is None and not re.search(
+        r"\?|？|who|which|whom|whose|誰|嗎|是否|^\s*is\s+[A-Za-z一-鿿]+",
+        text,
+        re.IGNORECASE,
+    ):
+        return None
+
+    # Yes/no entailment "…, is A older than B?" — answer from transitive closure
+    # (facts_text already excludes the question, so no self-fulfilling "yes").
+    if q_triple is not None:
+        qa, qcomp, qb = q_triple
+
+        def _dominates(src: str, dst: str) -> bool:
+            seen = {src}
+            stack = [src]
+            while stack:
+                n = stack.pop()
+                for m in greater.get(n, ()):
+                    if m == dst:
+                        return True
+                    if m not in seen:
+                        seen.add(m)
+                        stack.append(m)
+            return False
+
+        if qcomp in _GREATER:
+            if _dominates(qa, qb):
+                return "yes"
+            if _dominates(qb, qa):
+                return "no"
+        elif qcomp in _LESSER:
+            if _dominates(qb, qa):
+                return "yes"
+            if _dominates(qa, qb):
+                return "no"
         return None
 
     # The "tallest / biggest / ...est" entity is one that is greater than all
