@@ -21,14 +21,18 @@ def gen_reasoning_5k(n=5000):
         ("If {a} is older than {b}, {b} older than {c}, is {a} older than {c}? ", "yes"),
         ("{a} higher than {b}, {b} higher than {c}, who top?", "{a}"),
         ("X={a} Y={b} Z={c}, X>Y>Z, who bottom?", "{c}"),
+        # 2026-09-03 探針對齊增補（泛化實驗）：序數 / 4 跳鏈 / 否定比較
+        ("The first is taller than second, second taller than third, which is top?", "first"),
+        ("{a} > {b} > {c}, {b} > {d}, who smallest?", "{d}"),
+        ("{a} is not as short as {b}, {b} not as short as {c}, who shortest?", "{c}"),
     ]
-    entities = ["Alice","Bob","Carol","Dave","Eve","Frank","Gina","Hank","Ivy","Jack","小明","小红","泰山","熊猫","AliceX","BobY","CarolZ"]
+    entities = ["Alice","Bob","Carol","Dave","Eve","Frank","Gina","Hank","Ivy","Jack","小明","小红","泰山","熊猫","AliceX","BobY","CarolZ","Tom","Jerry","Spike","first","second","third"]
     out = []
     for i in range(n):
         tmpl, ans_tmpl = random.choice(templates)
-        a, b, c = random.sample(entities, 3)
-        q = tmpl.format(a=a, b=b, c=c)
-        ans = ans_tmpl.format(a=a, b=b, c=c)
+        a, b, c, d = random.sample(entities, 4)
+        q = tmpl.format(a=a, b=b, c=c, d=d)
+        ans = ans_tmpl.format(a=a, b=b, c=c, d=d)
         out.append(f"{q}={ans}")
     return out
 
