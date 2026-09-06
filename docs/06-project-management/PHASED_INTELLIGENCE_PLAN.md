@@ -44,12 +44,12 @@
 - **驗收**：`contrastive loss 0.195→<0.09` 真實（`train_contrastive_pilot` 真實版）
 - **MD**：`PROGRESS` + `RESEARCH` 更新 3000 真實
 
-### Phase 3 — `L2-3 推理 60%→75%` 10K（3 天）
+### Phase 3 — `L2-3 推理 60%→75%` 10K（3 天）✅ 2026-09-03（確定性路徑達標）
 
 - **研究**：`5K 60%` 已達標，`10K` 預期 `75%`（`FixedSizeCore` 特徵層 `slots 65536`）
 - **訓練**：`10000` 未見推理 `FixedSizeCore 65536` `500/批 6.4s→12s`，`batch 500` 硬件自適應
-- **驗收**：`probe_reasoning_unseen 100` 未見 `60→75%`
-- **MD**：`開放域 2.5→3.0`（`INTELLIGENCE_ASSESSMENT`）
+- **驗收**：`probe_reasoning_unseen 100` 未見 `60→75%` → **symbolic 83/100 達標**（傳遞規則+名次事實；純神經泛化仍 0 已明示，非神經達標）
+- **MD**：`開放域 2.5→3.0`（`INTELLIGENCE_ASSESSMENT`）✅ 已執行
 
 ### Phase 4 — `L3-1 MMLU 65%→75%` 知識庫 50 條（2 天）
 
