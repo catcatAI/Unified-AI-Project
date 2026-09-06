@@ -363,6 +363,41 @@ def _superlative(comp: str, least: bool = False) -> str:
     return table.get(comp, "the greatest")
 
 
+_INFERIOR_ASK = (
+    "最笨", "最差", "最末", "最弱", "最慢", "最矮", "最小",
+    "dumbest", "stupidest", "worst", "weakest", "slowest", "shortest", "smallest",
+)
+
+
+def _solve_ranking_facts(text: str) -> Optional[str]:
+    """Ordinal facts "X 最聰明，Y 次之" => ranking X > Y > (the one left).
+
+    Only fires on explicit interrogatives (precision: never hijack statements).
+    Needs an explicit top-fact (X最<adj>), an explicit second (Y次之|Y第二),
+    and exactly one remaining mentioned entity as bottom.
+    """
+    if not re.search(r"\?|？|誰|who|which", text, re.IGNORECASE):
+        return None
+    cands = re.findall(r"[A-Z][a-z]+|[一-鿿]{2,4}", text)
+    # Drop fact/question fragments ("最聰明", "次之", "誰最笨") — only entities rank
+    cands = [c for c in cands if not re.search(r"[最次第誰之]", c)]
+    if len(set(cands)) < 3:
+        return None
+    top_m = re.search(r"([A-Za-z]+|[一-鿿]{2,4})\s*最[\u4e00-\u9fffA-Za-z]", text)
+    sec_m = re.search(r"([A-Za-z]+|[一-鿿]{2,4})\s*(?:次之|第二)", text)
+    if not top_m or not sec_m:
+        return None
+    top, second = top_m.group(1), sec_m.group(1)
+    rest = [c for c in dict.fromkeys(cands) if c not in (top, second)]
+    if len(rest) != 1:
+        return None
+    bottom = rest[0]
+    low = text.lower()
+    if any(k in low for k in _INFERIOR_ASK):
+        return f"{bottom} is the least"
+    return f"{top} is the greatest"
+
+
 def _solve_syllogism(text: str) -> Optional[str]:
     """All X are Y. Z is an X. Does Z have property Y?
 
@@ -703,6 +738,9 @@ def route_reasoning(text: str) -> Optional[str]:
     if result is not None:
         return result
     result = _solve_transitive(t)
+    if result is not None:
+        return result
+    result = _solve_ranking_facts(t)
     if result is not None:
         return result
     return None
