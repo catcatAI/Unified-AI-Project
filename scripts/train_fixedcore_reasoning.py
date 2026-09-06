@@ -121,6 +121,25 @@ def main():
     except Exception as e:
         print(f"  位置精確(硬) 跳過: {e}")
 
+    # 自回歸解碼探測：gram_dist 貪心逐字節（prefix=q+"="，步數=len(答案)），精確比對
+    try:
+        from probe_reasoning_unseen import UNSEEN_REASONING as _U2
+        import numpy as _np
+        dec_hits = 0
+        for pq, pexp in _U2:
+            eb = pexp.encode("utf-8")
+            prefix = pq.encode("utf-8") + b"="
+            out = bytearray()
+            for _ in range(len(eb)):
+                d = core.gram_dist(bytes(prefix))
+                out.append(int(_np.argmax(d)))
+                prefix += bytes([out[-1]])
+            if bytes(out) == eb:
+                dec_hits += 1
+        print(f"  自回歸解碼(硬): {dec_hits}/{len(_U2)} = {dec_hits/len(_U2):.0%}")
+    except Exception as e:
+        print(f"  自回歸解碼(硬) 跳過: {e}")
+
     if hits >= 30:
         print(f"  ✅ 提升至 {hits}%（硬件自適應）")
     else:
