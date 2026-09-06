@@ -2,7 +2,7 @@
 """
 全量綜合驗收 — 硬件規格自適應（<100MB, <30s, 分批+sleep）
 
-跑 L0→L3 全部基準（20/20 + 關聯 1.0 + 對話 100% + 記憶 60% + 推理 60% + 工具 100% + MMLU 65%），
+跑 L0→L3 全部基準（20/20 + 關聯 1.0 + 對話框架 100% + 記憶存在 + 推理 60% + 工具 100% + MMLU 無RAG 75/100 實測），
 硬件自適應：batch 依 tier，桌機/筆電同硬件同結果。
 
 資源：500 題分批 + 關聯 + 對比，總 <30s，<300MB。
@@ -73,11 +73,12 @@ def main():
     checks.append(("L3-2 工具 100%", ok))
     print(f"  L3-2 工具 100%: {'✅' if ok else '❌'}")
 
-    # L3-1: MMLU 65%
-    out = run([sys.executable, "scripts/expand_knowledge_pilot.py"], 10)
-    ok = "65%" in out
-    checks.append(("L3-1 MMLU 65%", ok))
-    print(f"  L3-1 MMLU 65%: {'✅' if ok else '❌'}")
+    # L3-1: MMLU 無RAG 75/100 實測（benchmark_mmlu_subset 跑真實 route_knowledge 100 題；
+    # 舊門 expand_knowledge_pilot 僅匹配歷史投影字串"65%"，不測當下，已退役）
+    out = run([sys.executable, "scripts/benchmark_mmlu_subset.py"], 15)
+    ok = "75/100" in out
+    checks.append(("L3-1 MMLU 75實測", ok))
+    print(f"  L3-1 MMLU 75實測: {'✅' if ok else '❌'}")
 
     # 總計
     passed = sum(1 for _, ok in checks if ok)

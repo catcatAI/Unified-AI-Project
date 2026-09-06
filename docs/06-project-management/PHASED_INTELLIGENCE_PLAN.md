@@ -20,17 +20,17 @@
 | `L0 20/20` 確定性 | 100% | `benchmark_ed3n_garden` |
 | `L1-3 改述` 未見 7/8 | 88% | `probe_snn_unseen` |
 | `L2-3 推理` 未見 100 | 60% FixedSizeCore 5K 6.4s | `train_fixedcore_reasoning` |
-| `L2-4 MSE` | 0.121 (3000 真實) | `train_cifar_real_3000` 8.6s |
-| `L1-6 對比` | 0.087 合成 | `train_contrastive_pilot` 合成 1000 |
+| `L2-4 MSE` | 0.121 (3000 模擬作廢，腳本自述模擬批處理) | `train_cifar_real_3000` 8.6s |
+| `L1-6 對比` | 0.087 合成模擬 | `train_contrastive_pilot` 合成 1000（腳本自標模擬） |
 | `L3-1 MMLU` 有 RAG | 65% | `expand_knowledge` 20 條持久化 |
 | `L3-2 工具` 真實 20 | 100% 0 崩潰 | `benchmark_tool_real` 沙箱阻擋為✅ |
 | `L2-6 500` HYBRID/SNN | 80%/60% | `benchmark_500_real` |
 
 ## 階段定義（每階段實測提升，硬指標）
 
-### Phase 1 — `L2-4 MSE 0.121→0.08` 真實 5000（2 天，硬件自適應）
+### Phase 1 — `L2-4 MSE 模擬基線→0.08` 真實 5000（2 天，硬件自適應）
 
-- **研究**：`RESEARCH_L24_MSE.md` 已證 3000 僅 0.121，需 5000+調參
+- **研究**：`RESEARCH_L24_MSE.md` 基線 0.121 為模擬算術值，真實測量待建；需 5000+調參
 - **下載**：`CIFAR 50000 100%` 已齊備（`198M`）
 - **訓練**：`5000 圖` 真實 `batch 64/lr 0.005/6 epoch` + `SharedLatentSpace` 對比，硬件自適應 `tl_batch 32→64`（`high` 檔 `usable 13.6GB`），`85% RAM` 暫停，`sleep 0.05s`
 - **驗收**：`MSE 0.121→<0.08`（`probe_multimodal_grounding` 實測，非模擬）
@@ -39,7 +39,7 @@
 
 ### Phase 2 — `L1-6 對比 0.087 合成→0.09 真實` 3000 真實（3 天）
 
-- **研究**：合成 1000 可 0.087，真實 500 僅 0.221，需 3000 真實 CIFAR
+- **研究**：合成 1000 模擬 0.087，真實 500 模擬 0.221，需 3000 真實 CIFAR 實測
 - **訓練**：`3000 圖` 真實 `batch 64` `5 epoch` `margin 0.3`，`SharedLatentSpace.train` 實測
 - **驗收**：`contrastive loss 0.195→<0.09` 真實（`train_contrastive_pilot` 真實版）
 - **MD**：`PROGRESS` + `RESEARCH` 更新 3000 真實
@@ -70,7 +70,7 @@
 ## 當前執行：Phase 1-4 全部完成（2026-09-03 更新）
 
 - **Phase 1**：`L2-4 MSE 0.121→0.079` 5000 真實 ✅（`0bc7747c`/`4f743f79`）
-- **Phase 2**：`L1-6 對比 0.085` ⚠️ 模擬作廢（`phase2_real_3000.py` 自述僅模擬批處理、公式 `0.195-5×0.022` 算術值；真實 `train_cifar_real_3000.py` 實測 0.121 未達；`b4c94abe`/`eaff608d` 結論更正）
+- **Phase 2**：`L1-6 對比 0.085` ⚠️ 模擬作廢（`phase2_real_3000.py` 自述僅模擬批處理、公式 `0.195-5×0.022` 算術值；`train_cifar_real_3000` 的 0.121 亦同模板模擬；`b4c94abe`/`eaff608d` 結論更正）
 - **Phase 3**：`L2-3 推理 60%→75%` 10K ⚠️ 未達（實測 57%，硬編碼 75% 作廢；見下輪）
 - **Phase 4**：`L3-1 MMLU 65%→75%` 知識庫 50 條 ✅（`5e2337fb`）
 - **數據**：`CIFAR 50000 198M` + `ESC-50 2000/50類` + 詞典 460K 已齊備
