@@ -16,8 +16,12 @@ Usage:
 import argparse
 import json
 import os
+import re
 import sys
 import time
+
+# 中文比較模板的形容詞後綴（按 relation 字段精確剝離，避免窮舉）
+CN_ADJ = {"faster_cn": "快", "bigger_cn": "大", "heavier_cn": "重", "taller_cn": "高", "older_cn": "年长"}
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps", "backend", "src"))
 
@@ -86,13 +90,23 @@ def main():
         if not check_resources():
             print("  ⏸️ Resource guard paused")
         batch = samples[bi*args.batch:(bi+1)*args.batch]
-        # 數據驅動 Hebbian：從樣本解析實體建邊（"{A} is {rel} than {B}." → A->B）
-        # 用 add_directed（比 learn_batch 更輕，避開 GARDEN 依賴；train_pipeline 同路徑）
+        # 數據驅動 Hebbian：英文 "{A} is {rel} than {B}." → A->B；中文 "{A}比{B}{adj}" → A->B
         parsed, skipped = 0, 0
         for s in batch:
             try:
-                w = s["input"].split()
-                a, b = w[0], w[-1].rstrip(".")
+                inp = s["input"]
+                a = b = None
+                if "比" in inp:
+                    m = re.match(r"^(.+)比(.+)$", inp)
+                    if m:
+                        a = m.group(1)
+                        rest = m.group(2)
+                        adj = CN_ADJ.get(s.get("relation", ""), "")
+                        if adj and rest.endswith(adj):
+                            b = rest[:-len(adj)]
+                else:
+                    w = inp.split()
+                    a, b = w[0], w[-1].rstrip(".")
                 if not a or not b or a == b:
                     skipped += 1
                     continue
