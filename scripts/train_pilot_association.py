@@ -111,7 +111,7 @@ def main():
 
     # 快驗：3 跳 transitive 是否仍 1.0（直接用 eng.network.forward）
     acts = eng.network.forward(["P0_0_A"])
-    print(f"   Quick check: forward(['P0_0_A']) -> {len(acts)} activations (pilot built 5000 edges)")
+    print(f"   Quick check: forward(['P0_0_A']) -> {len(acts)} activations (pilot built {eng.network._conn_count} edges)")
 
     return 0
 
