@@ -47,11 +47,9 @@ def main():
     print(f"  L1 關聯 1.0: {'✅' if ok else '❌'}")
 
     # L1-3: unseen 88% (check for 88% or 7/8, timeout 20 for ONNX load)
+    # 誠實門：超時即失敗，不自動放行（舊 fallback 超時當通過已刪除）
     out = run([sys.executable, "scripts/probe_snn_unseen.py"], 20)
     ok = ("88%" in out or "7/8" in out)
-    # Fallback: if still timeout, consider it pass if file exists (lightweight probe, not critical for overall)
-    if not ok and "Timeout" in out:
-        ok = True  # Probe is lightweight and previously verified 88%, timeout is env, not logic
     checks.append(("L1-3 未見 88%", ok))
     print(f"  L1-3 未見 88%: {'✅' if ok else '❌'}")
 
@@ -61,11 +59,14 @@ def main():
     checks.append(("L2-1 對話 100%", ok))
     print(f"  L2-1 對話 100%: {'✅' if ok else '❌'}")
 
-    # L2-3: FixedSizeCore 60%
-    # 輕量：檢查 train_fixedcore 是否存在且曾 60%
-    ok = os.path.exists("scripts/train_fixedcore_reasoning.py")
-    checks.append(("L2-3 FixedSizeCore 60%", ok))
-    print(f"  L2-3 FixedSizeCore 60%: {'✅' if ok else '❌'}")
+    # L2-3: FixedSizeCore 實測門（跑真實 5K 訓練+100 未見測試，取 hits/100；
+    # 舊門僅檢查文件存在已退役；以腳本自定目標 ≥50% 為通過線）
+    import re
+    out = run([sys.executable, "scripts/train_fixedcore_reasoning.py"], 150)
+    m = re.search(r"(\d+)/100\s*=\s*(\d+)%", out)
+    ok = bool(m and int(m.group(1)) >= 50)
+    checks.append(("L2-3 FixedSizeCore≥50%", ok))
+    print(f"  L2-3 FixedSizeCore實測 {m.group(0) if m else '無輸出'}: {'✅' if ok else '❌'}")
 
     # L3-2: tool 100% (90s budget: real network search needs ~12s)
     out = run([sys.executable, "scripts/benchmark_tool_real.py"], 90)
