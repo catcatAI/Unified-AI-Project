@@ -81,6 +81,7 @@ def main():
     batches = (total + args.batch - 1) // args.batch
     t0 = time.time()
     probe_pair = ("?", "?")
+    total_parsed, total_skipped = 0, 0
     for bi in range(batches):
         if not check_resources():
             print("  ⏸️ Resource guard paused")
@@ -103,6 +104,8 @@ def main():
                 skipped += 1
         if bi == 0:
             print(f"  解析樣本例: {batch[0]['input']!r} → 邊 {probe_pair[0]}->{probe_pair[1]} (parsed={parsed} skipped={skipped})")
+        total_parsed += parsed
+        total_skipped += skipped
 
         elapsed = time.time() - t0
         conn = eng.network._conn_count
@@ -110,6 +113,7 @@ def main():
         time.sleep(0.1)  # 避免 CPU 佔滿
 
     print(f"\n✅ Pilot done: {total} samples, conn={eng.network._conn_count}, time={time.time()-t0:.1f}s")
+    print(f"   解析品質: parsed={total_parsed} skipped={total_skipped} ({total_parsed/total:.1%} 樣本成邊)")
     print(f"   Vocab neurons ~{sum(len(g.neurons) for g in eng.network.groups.values())}")
 
     # 快驗：用真實訓練邊的源實體查 forward（數據驅動驗證）
