@@ -80,27 +80,29 @@ def main():
     total = len(samples)
     batches = (total + args.batch - 1) // args.batch
     t0 = time.time()
+    probe_pair = ("?", "?")
     for bi in range(batches):
         if not check_resources():
             print("  ⏸️ Resource guard paused")
         batch = samples[bi*args.batch:(bi+1)*args.batch]
-        # 用 add_directed 模擬 Hebbian（比 learn_batch 更輕，避開 GARDEN 依賴）
-        # 實際 train_pipeline 用 eng.network.add_directed
+        # 數據驅動 Hebbian：從樣本解析實體建邊（"{A} is {rel} than {B}." → A->B）
+        # 用 add_directed（比 learn_batch 更輕，避開 GARDEN 依賴；train_pipeline 同路徑）
+        parsed, skipped = 0, 0
         for s in batch:
-            # 解析 input: "{a} is taller than {b}." → 抽 a,b
-            # 簡化：直接將 input 作為概念 key 建邊（關聯層面）
-            # 真實訓練會用 dictionary encode，此處用直接概念建邊演示 Hebbian
-            inp = s["input"]
-            out = s["output"]
-            # 取實體名（簡化：用 input 前兩個詞）
-            # 實際 pilot 用固定 A->B 鏈，避免解析複雜
-            pass  # 下面用合成鏈演示
-
-        # 合成鏈演示：每批建 500 條 A->B 關聯（貼近真實 Hebbian 路徑）
-        for j in range(len(batch)):
-            a = f"P{bi}_{j}_A"
-            b = f"P{bi}_{j}_B"
-            eng.network.add_directed(a, b, weight=0.7)
+            try:
+                w = s["input"].split()
+                a, b = w[0], w[-1].rstrip(".")
+                if not a or not b or a == b:
+                    skipped += 1
+                    continue
+                eng.network.add_directed(a, b, weight=0.7)
+                parsed += 1
+                if bi == 0 and parsed == 1:
+                    probe_pair = (a, b)
+            except Exception:
+                skipped += 1
+        if bi == 0:
+            print(f"  解析樣本例: {batch[0]['input']!r} → 邊 {probe_pair[0]}->{probe_pair[1]} (parsed={parsed} skipped={skipped})")
 
         elapsed = time.time() - t0
         conn = eng.network._conn_count
@@ -110,11 +112,11 @@ def main():
     print(f"\n✅ Pilot done: {total} samples, conn={eng.network._conn_count}, time={time.time()-t0:.1f}s")
     print(f"   Vocab neurons ~{sum(len(g.neurons) for g in eng.network.groups.values())}")
 
-    # 快驗：3 跳 transitive 是否仍 1.0（直接用 eng.network.forward）
-    acts = eng.network.forward(["P0_0_A"])
-    print(f"   Quick check: forward(['P0_0_A']) -> {len(acts)} activations (pilot built {eng.network._conn_count} edges)")
+    # 快驗：用真實訓練邊的源實體查 forward（數據驅動驗證）
+    acts = eng.network.forward([probe_pair[0]])
+    print(f"   Quick check: forward(['{probe_pair[0]}']) -> {len(acts)} activations (expect '{probe_pair[1]}' reachable)")
 
-    # 存檔接線：訓後存引擎狀態，新引擎加載後 forward 驗證（斷連閉環第一步；內容仍為合成鏈，見上）
+    # 存檔接線：訓後存引擎狀態，新引擎加載後 forward 驗證
     ckpt = args.checkpoint
     if ckpt is None:
         ckpt = os.path.join(os.path.dirname(__file__), "..", "data/checkpoints/association_pilot.json")
@@ -124,7 +126,7 @@ def main():
             from ai.ed3n.ed3n_engine import ED3NEngine as _Fresh
             fresh = _Fresh()
             fresh.load(ckpt)
-            vacts = fresh.network.forward(["P0_0_A"]) if hasattr(fresh, "network") else []
+            vacts = fresh.network.forward([probe_pair[0]]) if hasattr(fresh, "network") else []
             print(f"   Checkpoint: saved {ckpt} ({os.path.getsize(ckpt)//1024}KB), fresh-load forward -> {len(vacts)} activations {'✅' if len(vacts) else '❌'}")
         except Exception as e:
             print(f"   Checkpoint ❌: {e}")
