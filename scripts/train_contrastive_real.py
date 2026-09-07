@@ -15,16 +15,71 @@ import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/src"))
 
-CACHE = "/tmp/clip_emb_500.npz"
+CACHE = {"visual": "/tmp/clip_emb_500.npz", "audio": "/tmp/whisper_emb_400.npz"}
 
 
-def get_embeddings():
+def get_embeddings(modality="visual"):
     import numpy as np
 
-    if os.path.exists(CACHE):
-        z = np.load(CACHE)
-        print(f"  embedding 快取命中 {CACHE} ({os.path.getsize(CACHE)//1024}KB)")
+    cache = CACHE[modality]
+    if os.path.exists(cache):
+        z = np.load(cache)
+        print(f"  embedding 快取命中 {cache} ({os.path.getsize(cache)//1024}KB)")
         return z["X"], z["y"]
+    if modality == "audio":
+        return _encode_audio(cache)
+    return _encode_visual(cache)
+
+
+def _encode_audio(cache):
+    import csv
+
+    import numpy as np
+
+    import torch
+    from scipy.io import wavfile
+    from scipy.signal import resample
+    from transformers import WhisperModel, WhisperProcessor
+
+    model_id = "openai/whisper-tiny"
+    model = WhisperModel.from_pretrained(model_id, local_files_only=True)
+    proc = WhisperProcessor.from_pretrained(model_id, local_files_only=True)
+    model.eval()
+    rows = list(csv.DictReader(open("data/multimodal/ESC-50-master/meta/esc50.csv")))
+    cats = sorted(set(r["category"] for r in rows))[:10]
+    embs, labels = [], []
+    t0 = time.time()
+    for ci, cat in enumerate(cats):
+        files = [r["filename"] for r in rows if r["category"] == cat][:40]
+        for fp in files:
+            try:
+                import psutil
+                if psutil.virtual_memory().percent > 85:
+                    print("  ⚠️ RAM >85% 暫停 1s")
+                    time.sleep(1)
+            except Exception:
+                pass
+            sr, y = wavfile.read(os.path.join("data/multimodal/ESC-50-master/audio", fp))
+            y = y.astype(np.float64)
+            if y.ndim > 1:
+                y = y.mean(axis=1)
+            y16 = resample(y, int(len(y) * 16000 / sr)).astype(np.float32)
+            inp = proc(y16, sampling_rate=16000, return_tensors="pt")
+            with torch.no_grad():
+                h = model.encoder(inp.input_features).last_hidden_state.mean(dim=1).numpy()
+            embs.append(h[0])
+            labels.append(ci)
+            time.sleep(0.02)
+    X = np.array(embs).astype(np.float64)
+    y = np.array(labels)
+    np.savez(cache, X=X, y=y)
+    print(f"  音頻編碼 {X.shape} ({time.time()-t0:.1f}s)，已快取")
+    return X, y
+
+
+def _encode_visual(cache):
+    import numpy as np
+
     import torch
     from transformers import CLIPModel, CLIPProcessor
     import PIL.Image
@@ -58,7 +113,7 @@ def get_embeddings():
             time.sleep(0.05)
     X = np.concatenate(embs).astype(np.float64)
     y = np.array(labels)
-    np.savez(CACHE, X=X, y=y)
+    np.savez(cache, X=X, y=y)
     print(f"  編碼 {X.shape} ({time.time()-t0:.1f}s)，已快取")
     return X, y
 
@@ -80,24 +135,31 @@ def metrics(Z, y):
 
 
 def main():
+    import argparse
+
     import numpy as np
+
+    ap = argparse.ArgumentParser(description="real contrastive training (visual/audio)")
+    ap.add_argument("--modality", choices=["visual", "audio"], default="visual")
+    args = ap.parse_args()
 
     from core.backbone.hardware import HardwareProfile
     hw = HardwareProfile.detect()
-    print(f"真實對比訓練 硬件規格自適應: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f}")
+    print(f"真實對比訓練[{args.modality}] 硬件規格自適應: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f}")
 
-    X, y = get_embeddings()
+    X, y = get_embeddings(args.modality)
     Xn = X / (np.linalg.norm(X, axis=1, keepdims=True) + 1e-9)
     rng = np.random.RandomState(42)
     idx = rng.permutation(len(X))
-    tr, te = idx[:400], idx[400:]
+    nte = len(X) // 5
+    tr, te = idx[:-nte], idx[-nte:]
     Xtr, ytr, Xte, yte = Xn[tr], y[tr], Xn[te], y[te]
 
     s0, c0, r0 = metrics(Xte, yte)
-    print(f"  訓練前 held-out(100)：同類距 {s0:.3f} 跨類距 {c0:.3f} top1 召回 {r0:.0%}")
+    print(f"  訓練前 held-out({len(te)})：同類距 {s0:.3f} 跨類距 {c0:.3f} top1 召回 {r0:.0%}")
 
-    # 線性 512→64 + triplet margin（錨/正/負三元組，numpy 梯度）
-    W = rng.randn(512, 64) * 0.05
+    # 線性 D→64 + triplet margin（錨/正/負三元組，numpy 梯度）
+    W = rng.randn(X.shape[1], 64) * 0.05
     lr, margin, iters = 0.5, 0.5, 200
     t0 = time.time()
     for it in range(iters):
@@ -125,7 +187,7 @@ def main():
                         loss += mgn
                         ga = 2 * (Zn[n_] - Zn[p]) / (dan + dap + 1e-9)
                         grad += np.outer(Xtr[i + k], ga) / len(a)
-        W -= lr * grad / 400.0
+        W -= lr * grad / len(Xtr)
         if (it + 1) % 50 == 0:
             print(f"  iter {it+1}/{iters} loss {loss:.1f} ({time.time()-t0:.1f}s)")
     print(f"  訓練 {iters} 步 ({time.time()-t0:.1f}s)")
@@ -133,7 +195,7 @@ def main():
     Zte = (Xte @ W)
     Zte /= np.linalg.norm(Zte, axis=1, keepdims=True) + 1e-9
     s1, c1, r1 = metrics(Zte, yte)
-    print(f"  訓練後 held-out(100)：同類距 {s1:.3f} 跨類距 {c1:.3f} top1 召回 {r1:.0%}")
+    print(f"  訓練後 held-out({len(te)})：同類距 {s1:.3f} 跨類距 {c1:.3f} top1 召回 {r1:.0%}")
     print(f"  間隔 {c0-s0:.3f} → {c1-s1:.3f}，召回 {r0:.0%} → {r1:.0%}")
     return 0
 
