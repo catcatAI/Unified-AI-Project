@@ -9,7 +9,9 @@ CLIP ViT-B/32（本地快取，CPU）編碼真實 CIFAR-10 500 圖（10 類各 5
 資源：500 圖分批編碼 + sleep 0.05/批 + 85% RAM 暫停，模型常駐 ~350MB。
 """
 
-import os, sys, time
+import os
+import sys
+import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/src"))
 
 
@@ -77,7 +79,7 @@ def main():
     var = float(((Xte - mu) ** 2).mean())
     print(f"  訓練重建 MSE(400): {mse_tr:.4f}")
     print(f"  Held-out 重建 MSE(100): {mse_te:.4f}（基線方差 {var:.4f}，保留 {1 - mse_te/var:.1%}）")
-    print(f"  ✅ 首個真實 held-out MSE（非模擬算術值）")
+    print("  ✅ 首個真實 held-out MSE（非模擬算術值）")
     return 0
 
 
