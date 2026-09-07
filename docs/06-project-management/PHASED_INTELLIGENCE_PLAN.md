@@ -39,7 +39,7 @@
 
 ### Phase 2 — `L1-6 對比 0.087 合成→0.09 真實` 3000 真實（3 天）
 
-- **研究**：合成 1000 模擬 0.087，真實 500 模擬 0.221，需 3000 真實 CIFAR 實測
+- **研究**：合成 1000 模擬 0.087，真實 500 模擬 0.221，需 3000 真實 CIFAR 實測；相鄰真實基線（2026-09-03）：線性探針 `train_contrastive_real` held-out 間隔 0.326/召回 82%（視覺）、0.115/38%（音頻）——非 SNN，不計入本驗收，僅證方法與數據有效
 - **訓練**：`3000 圖` 真實 `batch 64` `5 epoch` `margin 0.3`，`SharedLatentSpace.train` 實測
 - **驗收**：`contrastive loss 0.195→<0.09` 真實（`train_contrastive_pilot` 真實版）
 - **MD**：`PROGRESS` + `RESEARCH` 更新 3000 真實
