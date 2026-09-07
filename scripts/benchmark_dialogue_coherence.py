@@ -26,34 +26,36 @@ def main():
     adaptive = HardwareProfile.get_adaptive_compute(hw)
     print(f"硬件規格自適應（L2-1 5輪一致性）: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f} tier={tier} batch×{adaptive['ed3n_batch_multiplier']}")
 
-    # 用 DialogueContext + 知識庫模擬（輕量，不調 LLM）
+    # 真實注入：DialogueContextManager 存取 + 上下文內容斷言（2026-09-03 接線）
+    from ai.context.dialogue_context import DialogueContextManager
+    import json as _json
+    dcm = DialogueContextManager()
+    dcm.start_conversation("l21probe", ["小明"])
     ok = 0
     total = len(DIALOGUE_5)
-    mem = {}  # 模擬記憶
     for i, (q, note) in enumerate(DIALOGUE_5):
         # 簡單規則：前 3 輪存記憶，後 2 輪測指代
         if i < 3:
-            mem[f"turn{i}"] = q
-            ok += 1
-            print(f"  輪{i+1}: '{q}' → 存記憶 ✅ ({note})")
+            stored = dcm.add_message("l21probe", "小明", q)
+            ok += 1 if stored else 0
+            print(f"  輪{i+1}: '{q}' → 存記憶 {'✅' if stored else '❌'} ({note})")
         else:
-            # 測指代：檢查記憶中是否有人設/事實
-            if "自行車" in str(mem) and "藍色" in q or "它" in q:
-                # 指代消解：應 recall 藍色/自行車
-                hit = "藍色" in str(mem.values()) or "自行車" in str(mem.values())
+            # 指代消解：從真實上下文取回斷言（它→自行車+藍色人設 / 住哪→北京）
+            ctx = dcm.get_conversation_context("l21probe") or {}
+            blob = _json.dumps(ctx.get("messages", []), ensure_ascii=False)
+            if "它" in q:
+                hit = "自行車" in blob and "藍色" in blob
             elif "住哪" in q:
-                hit = "北京" in str(mem.values())
+                hit = "北京" in blob
             else:
                 hit = False
-            # 簡化：認為後 2 輪若記憶完整即算命中（模擬上下文注入）
-            hit = True  # 輕量框架：只要記憶未丟即算命中，待接 DialogueContext 真實注入後嚴格
             ok += 1 if hit else 0
             print(f"  輪{i+1}: '{q}' → 指代 {'✅' if hit else '❌'} ({note})")
         time.sleep(0.02)
 
     recall = ok / total
     print(f"\n5輪一致性: {ok}/{total} = {recall:.0%}（硬件自適應 batch 1 輪/次，sleep 0.02s）")
-    print(f"  目標 L2-1 ≥80% 人設不漂移 + 指代 ≥70% → {'✅ 框架就緒' if recall>=0.8 else '❌'}")
+    print(f"  目標 L2-1 ≥80% 人設不漂移 + 指代 ≥70% → {'✅ 實測達標' if recall>=0.8 else '❌'}")
     # 硬件無關驗證
     hw_same = {'gpu': 'Intel Arc B570', 'gpu_memory_gb': 10, 'ram_gb': 15.5, 'cpu_cores': 4, 'gpu_vendor': 'intel'}
     tier_same = HardwareProfile.get_tier(hw_same)
