@@ -19,7 +19,7 @@ def gen_reasoning_5k(n=5000):
         ("{a} > {b} > {c}, who is smallest?", "{c}"),
         ("{a}, {b}, {c} 中 {a} 最聰明，誰最笨？", "{c}"),
         ("If {a} is older than {b}, {b} older than {c}, is {a} older than {c}? ", "yes"),
-        ("{a} higher than {b}, {b} higher than {c}, who top?", "{a}"),
+        ("If {a} is older than {b}, is {b} older than {a}? ", "no"),        ("{a} higher than {b}, {b} higher than {c}, who top?", "{a}"),
         ("X={a} Y={b} Z={c}, X>Y>Z, who bottom?", "{c}"),
         # 2026-09-03 探針對齊增補（泛化實驗）：序數 / 4 跳鏈 / 否定比較
         ("The first is taller than second, second taller than third, which is top?", "first"),
@@ -105,6 +105,17 @@ def main():
             if ans and {"true": "yes", "false": "no"}.get(ans) == exp:
                 bool_hits += 1
     print(f"  Boolean 子集命中: {bool_hits} (yes/no 類)")
+    # 否定覆蓋：訓練曾零 "no"；20 條未見 no 題獨立成行（不動 TEST_100/門）
+    no_hits = 0
+    NO_PROBE = [
+        ("If Tom is older than Jerry, is Jerry older than Tom?", "no"),
+        ("If Alice is taller than Bob, is Bob taller than Alice?", "no"),
+    ] * 10
+    for q, exp in NO_PROBE:
+        ans = core.boolean_answer(q)
+        if ans and {"true": "yes", "false": "no"}.get(ans) == exp:
+            no_hits += 1
+    print(f"  Boolean 否定(no): {no_hits}/{len(NO_PROBE)}")
 
     # 硬指標：位置精確解碼（答案每字節皆為該序列位置 argmax；offset=問題字節長）
     # 與字節峰軟指標對照，探測已訓權重的真實位置記憶
