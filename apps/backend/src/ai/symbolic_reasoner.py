@@ -147,11 +147,20 @@ def _solve_transitive(text: str) -> Optional[str]:
         r",\s*is\s+([A-Za-z一-鿿]+)\s+(\w+?)\s+than\s+([A-Za-z一-鿿]+)\s*\??\s*(?:yes/no)?\s*$",
         text,
     )
+    q_cn_match = None
+    if q_match is None:
+        q_cn_match = re.search(
+            r"，\s*([A-Za-z一-鿿]+?)\s*比\s*([A-Za-z一-鿿]+?)\s*(強|高|大|重|快|多|長)\s*(?:嗎|吗)\s*？?\s*$",
+            text,
+        )
     q_triple = None
     facts_text = text
     if q_match:
         q_triple = (q_match.group(1).upper(), q_match.group(2).lower(), q_match.group(3).upper())
         facts_text = text[: q_match.start()]
+    elif q_cn_match:
+        q_triple = (q_cn_match.group(1).upper(), "taller", q_cn_match.group(2).upper())
+        facts_text = text[: q_cn_match.start()]
     # English "X is taller than Y" / "X taller than Y" (multi-letter entities:
     # "Tom is older than Jerry", "first is higher than second")
     for m in re.finditer(r"\b([A-Za-z]+)\b\s+(?:is\s+)?(\w+?)\s+than\s+\b([A-Za-z]+)\b", facts_text):
@@ -175,11 +184,13 @@ def _solve_transitive(text: str) -> Optional[str]:
             pairs.append((subj, obj, "taller"))
         elif comp in _GREATER:
             pairs.append((obj, subj, "taller"))
-    # Chinese "X 比 Y 高"
+    # Chinese "X 比 Y 高" (strip 若/如果 prefixes: "若A比B強" => A)
     for m in re.finditer(
         r"([\w一-鿿]{1,8})\s*比\s*([\w一-鿿]{1,8})\s*(高|大|重|快|多|長|強)", facts_text
     ):
-        pairs.append((m.group(1), m.group(2), "taller"))
+        subj = re.sub(r"^(若|如果)+", "", m.group(1))
+        obj = re.sub(r"^(若|如果)+", "", m.group(2))
+        pairs.append((subj, obj, "taller"))
 
     if not pairs:
         return None
