@@ -1,6 +1,7 @@
 """Shared latent space — projects modality vectors to a unified embedding space + contrastive learning."""
 
 import datetime
+import hashlib
 import logging
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -47,7 +48,10 @@ class SharedLatentSpace:
 
     def register_modality(self, name: str, input_dim: int) -> None:
         """Register a modality with its expected input dimension."""
-        rng = np.random.default_rng(hash(name) % (2**31))
+        # Stable seed: builtin hash() is process-randomized (PYTHONHASHSEED),
+        # which made W init nondeterministic across runs — use md5 instead.
+        seed = int(hashlib.md5(name.encode("utf-8")).hexdigest(), 16) % (2**31)
+        rng = np.random.default_rng(seed)
         self._projections[name] = {
             "W": rng.normal(0, 1 / np.sqrt(input_dim), (self._latent_dim, input_dim)).astype(
                 np.float32
