@@ -15,46 +15,54 @@ import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/src"))
 
-CACHE = "/tmp/clip_emb_500.npz"
+CACHE = {"visual": "/tmp/clip_emb_500.npz", "audio": "/tmp/whisper_emb_400.npz"}
 
 
 def main():
+    import argparse
+
     import numpy as np
+
+    ap = argparse.ArgumentParser(description="SLS real contrastive (visual/audio)")
+    ap.add_argument("--modality", choices=["visual", "audio"], default="visual")
+    args = ap.parse_args()
+    mod = "vision" if args.modality == "visual" else "audio"
 
     from core.backbone.hardware import HardwareProfile
     hw = HardwareProfile.detect()
-    print(f"SLS 真實對比 硬件規格自適應: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f}")
+    print(f"SLS 真實對比[{args.modality}] 硬件規格自適應: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f}")
 
     from ai.multimodal.shared_latent_space import get_shared_latent_space
 
-    z = np.load(CACHE)
+    z = np.load(CACHE[args.modality])
     X, y = z["X"].astype(np.float64), z["y"]
     rng = np.random.RandomState(42)
     idx = rng.permutation(len(X))
-    tr, te = idx[:400], idx[400:]
+    nte = len(X) // 5
+    tr, te = idx[:-nte], idx[-nte:]
     Xtr, ytr, Xte, yte = X[tr], y[tr], X[te], y[te]
 
     sls = get_shared_latent_space()
     sls.reset()
-    sls.register_modality("vision", X.shape[1])
+    sls.register_modality(mod, X.shape[1])
 
     # 正對（同類）/負對（跨類）各 2000
     pos, neg = [], []
     while len(pos) < 2000:
-        i, j = rng.randint(400), rng.randint(400)
+        i, j = rng.randint(len(tr)), rng.randint(len(tr))
         if ytr[i] == ytr[j] and i != j:
-            pos.append(("vision", Xtr[i], "vision", Xtr[j]))
+            pos.append((mod, Xtr[i], mod, Xtr[j]))
     while len(neg) < 2000:
-        i, j = rng.randint(400), rng.randint(400)
+        i, j = rng.randint(len(tr)), rng.randint(len(tr))
         if ytr[i] != ytr[j]:
-            neg.append(("vision", Xtr[i], "vision", Xtr[j]))
+            neg.append((mod, Xtr[i], mod, Xtr[j]))
     print(f"  正對 {len(pos)} 負對 {len(neg)}")
 
     t0 = time.time()
     rep = sls.train(pos, neg, epochs=10, lr=0.01, margin=0.5)
     print(f"  SLS 訓練 10 epoch ({time.time()-t0:.1f}s) final_loss {rep.get('final_loss')}")
 
-    Zte = np.array([sls.project("vision", v) for v in Xte])
+    Zte = np.array([sls.project(mod, v) for v in Xte])
     Zte /= np.linalg.norm(Zte, axis=1, keepdims=True) + 1e-9
     n = len(yte)
     same, cross, hits = [], [], 0
@@ -67,7 +75,7 @@ def main():
             (same if yte[i] == yte[j2] else cross).append(float(d[j2]))
     import statistics
     s, c, r = statistics.mean(same), statistics.mean(cross), hits / n
-    print(f"  SLS held-out(100)：同類距 {s:.3f} 跨類距 {c:.3f} top1 召回 {r:.0%}（線性基線 0.326/82%）")
+    print(f"  SLS held-out({len(te)})：同類距 {s:.3f} 跨類距 {c:.3f} top1 召回 {r:.0%}（線性基線 0.326/82%）")
     return 0
 
 
