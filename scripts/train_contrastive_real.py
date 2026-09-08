@@ -18,17 +18,19 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/s
 CACHE = {"visual": "/tmp/clip_emb_500.npz", "audio": "/tmp/whisper_emb_400.npz"}
 
 
-def get_embeddings(modality="visual"):
+def get_embeddings(modality="visual", per_class=50):
     import numpy as np
 
     cache = CACHE[modality]
+    if modality == "visual":
+        cache = f"/tmp/clip_emb_{10 * per_class}.npz"
     if os.path.exists(cache):
         z = np.load(cache)
         print(f"  embedding 快取命中 {cache} ({os.path.getsize(cache)//1024}KB)")
         return z["X"], z["y"]
     if modality == "audio":
         return _encode_audio(cache)
-    return _encode_visual(cache)
+    return _encode_visual(cache, per_class)
 
 
 def _encode_audio(cache):
@@ -77,7 +79,7 @@ def _encode_audio(cache):
     return X, y
 
 
-def _encode_visual(cache):
+def _encode_visual(cache, per_class=50):
     import numpy as np
 
     import torch
@@ -94,7 +96,7 @@ def _encode_visual(cache):
     t0 = time.time()
     for ci, cls in enumerate(classes):
         cdir = os.path.join(data_root, cls)
-        names = sorted(f for f in os.listdir(cdir) if f.endswith(".npy"))[:50]
+        names = sorted(f for f in os.listdir(cdir) if f.endswith(".npy"))[:per_class]
         for bi in range(0, len(names), 16):
             try:
                 import psutil
@@ -142,13 +144,14 @@ def main():
     ap = argparse.ArgumentParser(description="real contrastive training (visual/audio)")
     ap.add_argument("--modality", choices=["visual", "audio"], default="visual")
     ap.add_argument("--iters", type=int, default=200)
+    ap.add_argument("--per-class", type=int, default=50, help="visual samples per class")
     args = ap.parse_args()
 
     from core.backbone.hardware import HardwareProfile
     hw = HardwareProfile.detect()
     print(f"真實對比訓練[{args.modality}] 硬件規格自適應: GPU={hw['gpu']} RAM={hw['ram_gb']:.1f}")
 
-    X, y = get_embeddings(args.modality)
+    X, y = get_embeddings(args.modality, getattr(args, "per_class", 50))
     Xn = X / (np.linalg.norm(X, axis=1, keepdims=True) + 1e-9)
     rng = np.random.RandomState(42)
     idx = rng.permutation(len(X))
