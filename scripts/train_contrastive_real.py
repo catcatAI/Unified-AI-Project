@@ -141,6 +141,7 @@ def main():
 
     ap = argparse.ArgumentParser(description="real contrastive training (visual/audio)")
     ap.add_argument("--modality", choices=["visual", "audio"], default="visual")
+    ap.add_argument("--iters", type=int, default=200)
     args = ap.parse_args()
 
     from core.backbone.hardware import HardwareProfile
@@ -160,7 +161,7 @@ def main():
 
     # 線性 D→64 + triplet margin（錨/正/負三元組，numpy 梯度）
     W = rng.randn(X.shape[1], 64) * 0.05
-    lr, margin, iters = 0.5, 0.5, 200
+    lr, margin, iters = 0.5, 0.5, args.iters
     t0 = time.time()
     for it in range(iters):
         Z = Xtr @ W
