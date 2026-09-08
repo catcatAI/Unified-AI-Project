@@ -25,6 +25,8 @@ def main():
 
     ap = argparse.ArgumentParser(description="SLS real contrastive (visual/audio)")
     ap.add_argument("--modality", choices=["visual", "audio"], default="visual")
+    ap.add_argument("--checkpoint", default=None,
+                    help="save trained SLS weights (default: data/checkpoints/sls_<modality>.npz; empty string disables)")
     args = ap.parse_args()
     mod = "vision" if args.modality == "visual" else "audio"
 
@@ -76,6 +78,25 @@ def main():
     import statistics
     s, c, r = statistics.mean(same), statistics.mean(cross), hits / n
     print(f"  SLS held-out({len(te)})：同類距 {s:.3f} 跨類距 {c:.3f} top1 召回 {r:.0%}（線性基線 0.326/82%）")
+
+    # 存檔接線：訓後存權重，重置後加載驗往返（P1 模式；存檔在忽略區）
+    ckpt = args.checkpoint
+    if ckpt is None:
+        ckpt = os.path.join(os.path.dirname(__file__), "..", "data/checkpoints",
+                            f"sls_{args.modality}.npz")
+    if ckpt:
+        try:
+            ok_save = sls.save_weights(ckpt)
+            sls.reset()
+            sls.register_modality(mod, X.shape[1])
+            ok_load = sls.load_weights(ckpt)
+            v0 = sls.project(mod, Xte[0])
+            v0n = v0 / (np.linalg.norm(v0) + 1e-9)  # Zte 存的是歸一後，對齊再比
+            same_proj = bool(np.allclose(v0n, Zte[0], atol=1e-5))
+            print(f"   Checkpoint: save={ok_save} load={ok_load} "
+                  f"({os.path.getsize(ckpt)//1024}KB) roundtrip={'✅' if same_proj else '❌'}")
+        except Exception as e:
+            print(f"   Checkpoint ❌: {e}")
     return 0
 
 
