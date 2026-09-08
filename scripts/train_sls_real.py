@@ -27,6 +27,7 @@ def main():
     ap.add_argument("--modality", choices=["visual", "audio"], default="visual")
     ap.add_argument("--checkpoint", default=None,
                     help="save trained SLS weights (default: data/checkpoints/sls_<modality>.npz; empty string disables)")
+    ap.add_argument("--epochs", type=int, default=10)
     args = ap.parse_args()
     mod = "vision" if args.modality == "visual" else "audio"
 
@@ -61,8 +62,8 @@ def main():
     print(f"  正對 {len(pos)} 負對 {len(neg)}")
 
     t0 = time.time()
-    rep = sls.train(pos, neg, epochs=10, lr=0.01, margin=0.5)
-    print(f"  SLS 訓練 10 epoch ({time.time()-t0:.1f}s) final_loss {rep.get('final_loss')}")
+    rep = sls.train(pos, neg, epochs=args.epochs, lr=0.01, margin=0.5)
+    print(f"  SLS 訓練 {args.epochs} epoch ({time.time()-t0:.1f}s) final_loss {rep.get('final_loss')}")
 
     Zte = np.array([sls.project(mod, v) for v in Xte])
     Zte /= np.linalg.norm(Zte, axis=1, keepdims=True) + 1e-9
