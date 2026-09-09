@@ -156,8 +156,19 @@ class SharedLatentSpace:
                 b_key = f"{name}__b"
                 if w_key not in data or b_key not in data:
                     continue
-                proj["W"][:] = data[w_key]
-                proj["b"][:] = data[b_key]
+                try:
+                    proj["W"][:] = data[w_key]
+                    proj["b"][:] = data[b_key]
+                except ValueError:
+                    # Shape mismatch (e.g. stale/foreign modality key in a shared
+                    # checkpoint): skip this modality, keep loading the rest.
+                    logger.warning(
+                        "SharedLatentSpace: skipping %s (shape %s vs %s)",
+                        name,
+                        getattr(data[w_key], "shape", "?"),
+                        getattr(proj["W"], "shape", "?"),
+                    )
+                    continue
                 loaded += 1
             if "__version" in data and data["__version"].size:
                 self.version = int(data["__version"].flat[0])
