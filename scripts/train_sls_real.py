@@ -30,6 +30,7 @@ def main():
     ap.add_argument("--epochs", type=int, default=10)
     ap.add_argument("--hard-pairs", default="", help="e.g. '3,5': extra pairs focused on these classes")
     ap.add_argument("--hard-extra", type=int, default=1000)
+    ap.add_argument("--margin", type=float, default=0.5)
     ap.add_argument("--cache", default="", help="embedding cache path override")
     args = ap.parse_args()
     mod = "vision" if args.modality == "visual" else "audio"
@@ -86,7 +87,7 @@ def main():
         print(f"  hard 加料 +{extra_p} 正 +{extra_n} 負（類 {hp}）")
 
     t0 = time.time()
-    rep = sls.train(pos, neg, epochs=args.epochs, lr=0.01, margin=0.5)
+    rep = sls.train(pos, neg, epochs=args.epochs, lr=0.01, margin=args.margin)
     print(f"  SLS 訓練 {args.epochs} epoch ({time.time()-t0:.1f}s) final_loss {rep.get('final_loss')}")
 
     Zte = np.array([sls.project(mod, v) for v in Xte])
