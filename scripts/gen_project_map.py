@@ -88,6 +88,65 @@ def block_dependencies(root, files):
     for mod, n in sorted(first.items(), key=lambda kv: -kv[1])[:15]:
         lines.append(f"  - `{mod}`：{n}")
     lines.append("")
+    lines.extend(block_orphans(root, files))
+    return lines
+
+
+def block_orphans(root, files):
+    """疑似孤兒檔：無任何靜態 import 指向（候選，非判決）。
+
+    方法局限（已驗證）：相對導入已解析、`__init__` 基已修正；但懶
+    `__getattr__`、importlib、字串路由、端點聚合器天生隱身；入口檔
+    （cli/desktop/game）按性質即根，不算賬。
+    """
+    from collections import defaultdict
+
+    imported = defaultdict(set)
+    trees = {}
+    for rel, _, _ in files:
+        if not rel.endswith(".py"):
+            continue
+        try:
+            with open(os.path.join(root, rel), encoding="utf-8") as f:
+                trees[rel] = ast.parse(f.read())
+        except (OSError, SyntaxError, ValueError):
+            continue
+    for rel, tree in trees.items():
+        parts = rel[:-3].split("/")
+        base = parts[:-1]  # __init__ 與模組皆去尾一層（包路徑）
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for a in node.names:
+                    if a.name:
+                        imported[a.name].add(rel)
+            elif isinstance(node, ast.ImportFrom):
+                if node.level:
+                    pre = base[:len(base) - node.level + 1] if node.level > 1 else base
+                    full = ".".join(pre + (node.module.split(".") if node.module else []))
+                    if full:
+                        imported[full].add(rel)
+                elif node.module:
+                    imported[node.module].add(rel)
+    orphans = []
+    for rel in trees:
+        if os.path.basename(rel) in ("__init__.py", "__main__.py"):
+            continue
+        if rel.startswith(("scripts/", "tests/", "apps/backend/tests/")):
+            continue
+        if not rel.startswith(("apps/backend/src/", "packages/")):
+            continue
+        parts = rel[:-3].split("/")
+        dots = [".".join(parts[i:]) for i in range(len(parts))]
+        tails = [".".join(parts[-2:]), parts[-1]]
+        if not any(d in imported for d in dots) and not any(t in imported for t in tails):
+            orphans.append(rel)
+    lines = ["### 疑似孤兒檔（候選）", ""]
+    lines.append(f"- 共 {len(orphans)} 檔（動態加載盲區見上，個案定性前不刪）")
+    for rel in sorted(orphans)[:40]:
+        lines.append(f"  - `{rel}`")
+    if len(orphans) > 40:
+        lines.append(f"  - …{len(orphans) - 40} 未展開")
+    lines.append("")
     return lines
 
 
