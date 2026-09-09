@@ -347,6 +347,17 @@ def _superlative(comp: str, least: bool = False) -> str:
             "多": "the least",
             "長": "the shortest",
             "強": "the weakest",
+            # lesser comparators (chain direction already normalized; word form matters)
+            "shorter": "the shortest",
+            "smaller": "the smallest",
+            "lighter": "the lightest",
+            "younger": "the youngest",
+            "slower": "the slowest",
+            "lower": "the lowest",
+            "less": "the least",
+            "colder": "the coldest",
+            "weaker": "the weakest",
+            "poorer": "the poorest",
         }
         return table.get(comp, "the least")
     table = {

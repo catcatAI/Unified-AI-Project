@@ -22,7 +22,11 @@ UNSEEN_REASONING = [
     ("Alice, Bob, Carol 中 Alice 最聰明，Bob 次之，誰最笨？", "Carol"),
     ("If Tom is older than Jerry, Jerry older than Spike, is Tom older than Spike? yes/no", "yes"),
     ("A is not as short as B, B not as short as C, who shortest?", "C"),
-] * 17  # 102 → 取 100
+    # 2026-09-03 覆蓋缺口：lesser 方向鏈 + coldest/slowest 超級詞此前零覆蓋
+    # 注意：lesser 鏈首名即最小（Tom<Jerry<Spike → youngest=Tom），期望值勿寫反
+    ("Tom is younger than Jerry, Jerry younger than Spike, who youngest?", "Tom"),
+    ("X is colder than Y, Y colder than Z, who coldest?", "X"),
+] * 13  # 104 → 取 100
 UNSEEN_REASONING = UNSEEN_REASONING[:100]
 
 def main():
