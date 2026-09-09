@@ -122,9 +122,15 @@ def block_orphans(root, files):
             elif isinstance(node, ast.ImportFrom):
                 if node.level:
                     pre = base[:len(base) - node.level + 1] if node.level > 1 else base
-                    full = ".".join(pre + (node.module.split(".") if node.module else []))
-                    if full:
-                        imported[full].add(rel)
+                    if node.module:
+                        full = ".".join(pre + node.module.split("."))
+                        if full:
+                            imported[full].add(rel)
+                    else:
+                        # from . import a, b（函數級延遲聚合常見式）— 成員即子模組
+                        for a in node.names:
+                            if a.name and a.name != "*":
+                                imported[".".join(pre + [a.name])].add(rel)
                 elif node.module:
                     imported[node.module].add(rel)
     orphans = []
