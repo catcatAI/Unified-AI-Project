@@ -7,7 +7,7 @@
   VERSION: 7.5.0-dev
   STATUS: active
   LANGUAGE: en
-    LAST_MODIFIED: 2026-08-31 (audit fixes: .gitignore + pickle + Dockerfile + concurrency + upload limits)
+    LAST_MODIFIED: 2026-09-10 (project map tool section)
   AUDIENCE: developers, agents
   =============================================================================
 -->
@@ -376,6 +376,14 @@ tests/
   ai/multimodal/primitives/  # Primitives tests (38 tests, NEW)
   ai/                # ED3N/Lifecycle/Meta 測試 (37+ tests)
 ```
+
+## Project Map Tool (Do Not Delete)
+
+- **Generator**: `scripts/gen_project_map.py` (stdlib only) → `docs/PROJECT_MAP_GENERATED.md`
+- **Contract**: 區塊一依賴 / 區塊二碰撞索引（深→淺） / 區塊三行為核心+依賴使用；`--budget 10000` 超標 exit 1
+- **Rules**: generated file is git-ignored and regenerated in seconds — never hand-edit it,
+  never delete the generator; consult the map before refactoring across directories
+  (233 collision groups as of 2026-09-10)
 
 ## Technology Stack
 

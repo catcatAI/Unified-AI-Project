@@ -4,6 +4,9 @@
 > Last Updated: 2026-08-31
 > Total Python files: ~667 in apps/backend/src/
 > Total test files: ~5,448 collected (6,111 full)
+> Generator: `scripts/gen_project_map.py` → `docs/PROJECT_MAP_GENERATED.md`
+> (auto three-block map: dependencies / deep-first collision index / behavior core;
+> this hand-maintained map stays authoritative for status annotations)
 
 ## Legend
 
