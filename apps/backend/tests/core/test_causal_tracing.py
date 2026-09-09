@@ -5,7 +5,6 @@ Unit tests for Causal Tracing System
 import asyncio
 from datetime import datetime
 
-import pytest
 from core.tracing import (
     CausalChain,
     CausalNode,
@@ -175,8 +174,7 @@ class TestCausalTracer:
         
         assert node.data["key1"] == "value1"
         assert node.data["key2"] == 42
-    
-    @pytest.mark.xfail(reason="causal tracer chain API semantics; pending fix", strict=False)
+
     def test_finish_trace(self):
         tracer = get_tracer()
         
@@ -194,8 +192,7 @@ class TestCausalTracer:
         node = chain.get_node(trace_id)
         
         assert node.data["result"] == "success"
-    
-    @pytest.mark.xfail(reason="causal tracer chain API semantics; pending fix", strict=False)
+
     def test_parent_child_linking(self):
         tracer = get_tracer()
         
