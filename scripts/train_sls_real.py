@@ -2,7 +2,7 @@
 """
 SLS 真實對比訓練（項目原生 SharedLatentSpace，吃稠密向量）— 硬件規格自適應
 
-本地 CLIP 500 真實圖（快取 /tmp，未命中 91s）→ SLS register vision/512
+本地 CLIP 500 真實圖（快取 data/.cache，未命中 91s）→ SLS register vision/512
 → 同類正對 + 跨類負對 → semantic_contrastive_train → held-out 100 驗收
 （與線性探針 0.326/82% 同口徑對照）。
 

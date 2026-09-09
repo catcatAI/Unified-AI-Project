@@ -2,7 +2,7 @@
 """
 真實對比訓練（退役模擬 `train_contrastive_pilot` 的真替身）— 硬件規格自適應
 
-真實 CIFAR-10 500 圖（10 類各 50）→ 本地 CLIP 編碼（快取 /tmp，未命中則編碼 91s）
+真實 CIFAR-10 500 圖（10 類各 50）→ 本地 CLIP 編碼（快取 data/.cache，未命中則編碼 91s）
 → 線性 512→64 + triplet margin（numpy 全批量梯度，~200 步，秒級）
 → held-out 100 驗收：同/跨類間隔 + top-1 同類檢索召回。
 
