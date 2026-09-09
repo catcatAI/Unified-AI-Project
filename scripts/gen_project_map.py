@@ -1,0 +1,209 @@
+#!/usr/bin/env python3
+"""專案地圖生成器 — 依賴排錯 + 碰撞定位 + 行為理解，萬行預算封頂。
+
+三區塊：
+  1. 依賴（AST 掃 import，第三方/倉內分開，排錯用）
+  2. 碰撞索引（同檔名多路徑，深→淺；重名全展開，其餘按目錄捲）
+  3. 行為核心（驗收門 + 配置鍵 + 大檔，半自動指標）
+
+預算即診斷：輸出超 `--budget` 行即 exit 1 + 兇手排行（超標=專案有病）。
+只用 stdlib。產物標 Generated，手不改。
+"""
+
+import argparse
+import ast
+import datetime
+import hashlib
+import os
+import sys
+
+EXCLUDE_DIRS = {
+    ".git", ".venv", "node_modules", "__pycache__", ".pytest_cache",
+    "data", ".cache", "checkpoints", ".hypothesis", "dist", "build",
+    ".mypy_cache", ".ruff_cache",
+}
+SKIP_EXT = {".pyc", ".pyo", ".pyd", ".so", ".o"}
+
+
+def walk_files(root):
+    out = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = sorted(
+            d for d in dirnames if d not in EXCLUDE_DIRS and not d.startswith(".")
+        )
+        for fn in sorted(filenames):
+            if os.path.splitext(fn)[1] in SKIP_EXT:
+                continue
+            fp = os.path.join(dirpath, fn)
+            try:
+                st = os.stat(fp)
+            except OSError:
+                continue
+            rel = os.path.relpath(fp, root)
+            out.append((rel, st.st_size, st.st_mtime))
+    return out
+
+
+def block_dependencies(root, files):
+    import sys as _sys
+
+    stdlib = set(getattr(_sys, "stdlib_module_names", ()))
+    third, first, edges = {}, {}, 0
+    roots = ("apps", "packages", "core", "ai", "api", "hsp",
+             "services", "tests", "scripts", "tools")
+    for rel, _, _ in files:
+        if not rel.endswith(".py"):
+            continue
+        try:
+            with open(os.path.join(root, rel), encoding="utf-8") as f:
+                tree = ast.parse(f.read())
+        except (OSError, SyntaxError, ValueError):
+            continue
+        seen = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for a in node.names:
+                    seen.add((a.name or "").split(".")[0])
+            elif isinstance(node, ast.ImportFrom):
+                if node.level:
+                    seen.add(".relative")
+                elif node.module:
+                    seen.add(node.module.split(".")[0])
+        for top in seen:
+            if not top:
+                continue
+            edges += 1
+            if top in stdlib or top == "__future__":
+                continue
+            elif top == ".relative" or top in roots:
+                first[top] = first.get(top, 0) + 1
+            else:
+                third[top] = third.get(top, 0) + 1
+    lines = ["## 區塊一：依賴（排錯用）", ""]
+    lines.append(f"- Python 檔掃描：{sum(1 for r, _, _ in files if r.endswith('.py'))}，import 邊：{edges}")
+    lines.append("- 第三方 Top（引用檔數）：")
+    for mod, n in sorted(third.items(), key=lambda kv: -kv[1])[:15]:
+        lines.append(f"  - `{mod}`：{n}")
+    lines.append("- 倉內根 Top：")
+    for mod, n in sorted(first.items(), key=lambda kv: -kv[1])[:15]:
+        lines.append(f"  - `{mod}`：{n}")
+    lines.append("")
+    return lines
+
+
+def block_collisions(root, files):
+    from collections import defaultdict
+
+    by_name = defaultdict(list)
+    for rel, size, mt in files:
+        by_name[os.path.basename(rel)].append((rel, size, mt))
+    coll = {k: v for k, v in by_name.items() if len(v) > 1}
+    lines = ["## 區塊二：碰撞索引（深→淺，定位用）", ""]
+    lines.append(f"- 重名檔：{len(coll)} 組，共 {sum(len(v) for v in coll.values())} 條路徑")
+    for name in sorted(coll):
+        hits = sorted(coll[name], key=lambda t: (-t[0].count(os.sep), t[0]))
+        lines.append(f"### `{name}` ×{len(hits)}")
+        md5s = set()
+        for rel, size, mt in hits:
+            try:
+                with open(os.path.join(root, rel), "rb") as f:
+                    md5s.add(hashlib.md5(f.read()).hexdigest()[:8])
+            except OSError:
+                md5s.add("????????")
+            day = datetime.datetime.fromtimestamp(mt).strftime("%Y-%m-%d")
+            lines.append(f"- `{rel}`（{size // 1024}KB，{day}）")
+        if len(md5s) == 1:
+            lines.append(f"- ⚠️ 內容完全相同（一字不差雙胞胎，{sorted(md5s)[0]}）")
+        lines.append("")
+    # 全量兜底：按目錄捲（深→淺），小目錄列檔名
+    dirs = defaultdict(list)
+    for rel, size, _ in files:
+        dirs[os.path.dirname(rel)].append((rel, size))
+    lines.append(f"- 全量兜底：{len(files)} 檔 / {len(dirs)} 目錄")
+    for d in sorted(dirs, key=lambda x: (-x.count(os.sep), x)):
+        items = dirs[d]
+        tot = sum(s for _, s in items)
+        label = d if d else "(根)"
+        if len(items) <= 25:
+            lines.append(f"  - `{label}`：{len(items)} 檔，{tot // 1024}KB")
+            for rel, size in sorted(items):
+                lines.append(f"    - `{os.path.basename(rel)}`（{size // 1024}KB）")
+        else:
+            lines.append(f"  - `{label}`：{len(items)} 檔，{tot // 1024}KB（…{len(items)} 未展開，用工具查）")
+    lines.append("")
+    return lines
+
+
+def block_behavior(root, files):
+    lines = ["## 區塊三：行為核心（理解用）", ""]
+    fv = os.path.join(root, "scripts/final_verification.py")
+    gates = []
+    try:
+        import re
+
+        src = open(fv, encoding="utf-8").read()
+        gates = re.findall(r'checks\.append\(\("([^"]+)"', src)
+    except OSError:
+        pass
+    lines.append(f"- 驗收門（{len(gates)}）：")
+    for g in gates:
+        lines.append(f"  - {g}")
+    ymls = [r for r, _, _ in files if r.endswith((".yaml", ".yml"))]
+    lines.append(f"- 配置檔：{len(ymls)}")
+    for rel in sorted(ymls)[:20]:
+        lines.append(f"  - `{rel}`")
+    pys = []
+    for rel, _, _ in files:
+        if rel.endswith(".py") and not rel.startswith("tests/"):
+            try:
+                with open(os.path.join(root, rel), encoding="utf-8") as f:
+                    pys.append((rel, sum(1 for _ in f)))
+            except OSError:
+                continue
+    lines.append("- 最大源碼檔 Top 10（行數）：")
+    for rel, n in sorted(pys, key=lambda t: -t[1])[:10]:
+        lines.append(f"  - `{rel}`：{n}")
+    lines.append("")
+    return lines
+
+
+def main():
+    ap = argparse.ArgumentParser(description="專案地圖生成器（三區塊+萬行預算門）")
+    ap.add_argument("--root", default=".")
+    ap.add_argument("--output", default="docs/PROJECT_MAP_GENERATED.md")
+    ap.add_argument("--budget", type=int, default=10000)
+    args = ap.parse_args()
+    root = os.path.abspath(args.root)
+
+    files = walk_files(root)
+    b1 = block_dependencies(root, files)
+    b2 = block_collisions(root, files)
+    b3 = block_behavior(root, files)
+    body = b1 + b2 + b3
+    counts = {"區塊一依賴": len(b1), "區塊二碰撞": len(b2), "區塊三行為": len(b3)}
+    total = len(body)
+
+    head = [
+        "<!-- Generated by scripts/gen_project_map.py — 手不改，重跑覆蓋 -->",
+        f"# 專案地圖（生成於 {datetime.date.today()}，{len(files)} 檔）",
+        "",
+    ]
+    if total > args.budget:
+        head.append(f"> ⛔ 超預算：{total} > {args.budget} 行——專案有病，先治病。吃行大戶：")
+        for k, v in sorted(counts.items(), key=lambda kv: -kv[1]):
+            head.append(f"> - {k}：{v} 行")
+        head.append("")
+        out = head + body
+        with open(args.output, "w", encoding="utf-8") as f:
+            f.write("\n".join(out))
+        print(f"OVER BUDGET: {total} > {args.budget} {counts}")
+        return 1
+    out = head + [f"> ✅ {total}/{args.budget} 行，預算內。", ""] + body
+    with open(args.output, "w", encoding="utf-8") as f:
+        f.write("\n".join(out))
+    print(f"OK: {total}/{args.budget} lines {counts}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
