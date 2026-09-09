@@ -28,6 +28,8 @@ def main():
     ap.add_argument("--checkpoint", default=None,
                     help="save trained SLS weights (default: data/checkpoints/sls_<modality>.npz; empty string disables)")
     ap.add_argument("--epochs", type=int, default=10)
+    ap.add_argument("--hard-pairs", default="", help="e.g. '3,5': extra pairs focused on these classes")
+    ap.add_argument("--hard-extra", type=int, default=1000)
     ap.add_argument("--cache", default="", help="embedding cache path override")
     args = ap.parse_args()
     mod = "vision" if args.modality == "visual" else "audio"
@@ -61,6 +63,27 @@ def main():
         if ytr[i] != ytr[j]:
             neg.append((mod, Xtr[i], mod, Xtr[j]))
     print(f"  正對 {len(pos)} 負對 {len(neg)}")
+    # hard-negative 加料：指定類內正對 + 類間負對（難類聚焦）
+    if args.hard_pairs:
+        hp = [int(c) for c in args.hard_pairs.split(",")]
+        pools = {c: [k for k in range(len(tr)) if ytr[k] == c] for c in hp}
+        extra_p, extra_n = 0, 0
+        guard = 0
+        while (extra_p < args.hard_extra or extra_n < args.hard_extra) and guard < args.hard_extra * 20:
+            guard += 1
+            c1, c2 = hp[rng.randint(len(hp))], hp[rng.randint(len(hp))]
+            if not pools[c1] or not pools[c2]:
+                continue
+            i, j = pools[c1][rng.randint(len(pools[c1]))], pools[c2][rng.randint(len(pools[c2]))]
+            if i == j:
+                continue
+            if c1 == c2 and extra_p < args.hard_extra:
+                pos.append((mod, Xtr[i], mod, Xtr[j]))
+                extra_p += 1
+            elif c1 != c2 and extra_n < args.hard_extra:
+                neg.append((mod, Xtr[i], mod, Xtr[j]))
+                extra_n += 1
+        print(f"  hard 加料 +{extra_p} 正 +{extra_n} 負（類 {hp}）")
 
     t0 = time.time()
     rep = sls.train(pos, neg, epochs=args.epochs, lr=0.01, margin=0.5)
