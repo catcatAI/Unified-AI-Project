@@ -164,6 +164,110 @@ def block_behavior(root, files):
     for rel, n in sorted(pys, key=lambda t: -t[1])[:10]:
         lines.append(f"  - `{rel}`：{n}")
     lines.append("")
+    lines.extend(block_dep_usage(root, files))
+    return lines
+
+
+HEAVY_DEPS = {
+    "torch", "transformers", "chromadb", "sentence_transformers", "pandas",
+    "sklearn", "scipy", "redis", "spacy", "tensorflow", "cv2", "PIL",
+}
+
+
+def block_dep_usage(root, files):
+    """各檔依賴使用情況：有參與演算 vs 寫而不用（特別標記）。
+
+    只列有未使用 import 的檔（乾淨的不佔預算）；__init__.py 跳過
+    （重導出語義，誤報重災區）。星號/動態導入無法判定，不列。
+    """
+    lines = ["### 依賴使用（演算參與）", ""]
+    bad_files, bad_total, heavy_hits = 0, 0, []
+    probe_files = 0
+    shown = 0
+    for rel, _, _ in sorted(files):
+        if not rel.endswith(".py") or os.path.basename(rel) == "__init__.py":
+            continue
+        try:
+            with open(os.path.join(root, rel), encoding="utf-8") as f:
+                tree = ast.parse(f.read())
+        except (OSError, SyntaxError, ValueError):
+            continue
+        bound = {}  # 本地名 -> 來源模組
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for a in node.names:
+                    name = (a.asname or (a.name or "").split(".")[0])
+                    if name and name != "*":
+                        bound[name] = a.name
+            elif isinstance(node, ast.ImportFrom):
+                if any(a.name == "*" for a in node.names):
+                    continue
+                for a in node.names:
+                    if a.name and a.name != "*":
+                        bound[a.asname or a.name] = node.module or ""
+        if not bound:
+            continue
+        used = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+                used.add(node.id)
+        # 可用性探針：try 內僅 import + return True（except ImportError）——有意為之，不算未使用
+        probes = set()
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Try):
+                continue
+            if len(node.body) != 2:
+                continue
+            imp, ret = node.body
+            if not isinstance(imp, ast.Import):
+                continue
+            if not (isinstance(ret, ast.Return) and isinstance(ret.value, ast.Constant)
+                    and ret.value.value is True):
+                continue
+            if not any(isinstance(h.type, ast.Name) and h.type.id == "ImportError"
+                       for h in node.handlers):
+                continue
+            for a in imp.names:
+                if a.asname:
+                    probes.add(a.asname)
+                elif a.name:
+                    probes.add(a.name.split(".")[0])
+        # 按頂層模組聚合：同模組任一名被用即算參與（殺 deferred-import 噪音）
+        from collections import defaultdict
+        mod_names = defaultdict(list)
+        for k, v in bound.items():
+            mod_names[(v or "").split(".")[0]].append(k)
+        unused = []
+        probed = []
+        for top, names in mod_names.items():
+            if top and not any(n in used for n in names):
+                if all(n in probes for n in names):
+                    probed.append(top)
+                else:
+                    unused.extend((n, next(v for k, v in bound.items() if k == n)) for n in names)
+        if not unused:
+            if probed:
+                probe_files += 1
+            continue
+        bad_files += 1
+        bad_total += len(unused)
+        marks = []
+        for k, v in sorted(unused):
+            top = (v or "").split(".")[0]
+            tag = " 🔥重依賴" if top in HEAVY_DEPS else ""
+            marks.append(f"{k}←{v}{tag}")
+            if tag:
+                heavy_hits.append(rel)
+        if probed:
+            probe_files += 1
+            marks.append(f"可用性探針:{','.join(sorted(set(probed)))}")
+        if shown < 200:
+            lines.append(f"- `{rel}`：未使用 {len(unused)}（{'; '.join(marks)}）")
+            shown += 1
+    lines.append(f"- 有未使用 import 的檔：{bad_files}，共 {bad_total} 項（僅列前 200）")
+    lines.append(f"- 其中重依賴未使用：{len(set(heavy_hits))} 檔")
+    lines.append(f"- 可用性探針檔（有意為之，不計入）：{probe_files}")
+    lines.append("")
     return lines
 
 
