@@ -101,7 +101,9 @@ def test_garden_chain_stage():
     assert "Z" in engine.process(
         "X is richer than Y. Y is richer than Z. Who is the poorest?"
     )
-    # Novel proper-noun comparators (Alpha/Beta/Gamma) the regex reasoner misses.
-    assert "Gamma" in engine.process(
+    # Novel proper-noun comparators (Alpha/Beta/Gamma): resolved by the regex
+    # reasoner since multi-letter entities (2026-09-03) or by template recall —
+    # either routing must land on Gamma (case-insensitive).
+    assert "gamma" in engine.process(
         "Alpha is faster than Beta. Beta is faster than Gamma. Who is slowest?"
-    )
+    ).lower()
