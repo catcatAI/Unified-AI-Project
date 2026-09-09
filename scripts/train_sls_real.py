@@ -28,6 +28,7 @@ def main():
     ap.add_argument("--checkpoint", default=None,
                     help="save trained SLS weights (default: data/checkpoints/sls_<modality>.npz; empty string disables)")
     ap.add_argument("--epochs", type=int, default=10)
+    ap.add_argument("--cache", default="", help="embedding cache path override")
     args = ap.parse_args()
     mod = "vision" if args.modality == "visual" else "audio"
 
@@ -37,7 +38,7 @@ def main():
 
     from ai.multimodal.shared_latent_space import get_shared_latent_space
 
-    z = np.load(CACHE[args.modality])
+    z = np.load(args.cache or CACHE[args.modality])
     X, y = z["X"].astype(np.float64), z["y"]
     rng = np.random.RandomState(42)
     idx = rng.permutation(len(X))
