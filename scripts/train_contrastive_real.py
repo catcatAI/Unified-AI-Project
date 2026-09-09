@@ -22,19 +22,22 @@ CACHE = {"visual": "data/.cache/clip_emb_500.npz", "audio": "data/.cache/whisper
 def get_embeddings(modality="visual", per_class=50):
     import numpy as np
 
-    cache = CACHE[modality]
-    if modality == "visual":
-        cache = f"data/.cache/clip_emb_{10 * per_class}.npz"
+    cache = f"data/.cache/clip_emb_{10 * per_class}.npz" if modality == "visual" else CACHE[modality]
+    if modality == "audio":
+        # 音頻恆全 50 類；per_class 截每類條數（ESC 每類僅 40）
+        pc = max(1, min(per_class, 40))
+        cache = f"data/.cache/whisper_emb_50cx{pc}pc.npz"
+        per_class = pc
     if os.path.exists(cache):
         z = np.load(cache)
         print(f"  embedding 快取命中 {cache} ({os.path.getsize(cache)//1024}KB)")
         return z["X"], z["y"]
     if modality == "audio":
-        return _encode_audio(cache)
+        return _encode_audio(cache, per_class)
     return _encode_visual(cache, per_class)
 
 
-def _encode_audio(cache):
+def _encode_audio(cache, per_class=40):
     import csv
 
     import numpy as np
@@ -49,11 +52,11 @@ def _encode_audio(cache):
     proc = WhisperProcessor.from_pretrained(model_id, local_files_only=True)
     model.eval()
     rows = list(csv.DictReader(open("data/multimodal/ESC-50-master/meta/esc50.csv")))
-    cats = sorted(set(r["category"] for r in rows))[:10]
+    cats = sorted(set(r["category"] for r in rows))
     embs, labels = [], []
     t0 = time.time()
     for ci, cat in enumerate(cats):
-        files = [r["filename"] for r in rows if r["category"] == cat][:40]
+        files = [r["filename"] for r in rows if r["category"] == cat][:per_class]
         for fp in files:
             try:
                 import psutil
