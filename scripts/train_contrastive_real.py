@@ -15,7 +15,8 @@ import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/src"))
 
-CACHE = {"visual": "/tmp/clip_emb_500.npz", "audio": "/tmp/whisper_emb_400.npz"}
+# embedding 快取：data/.cache/（git 忽略，/tmp 易失不用）
+CACHE = {"visual": "data/.cache/clip_emb_500.npz", "audio": "data/.cache/whisper_emb_400.npz"}
 
 
 def get_embeddings(modality="visual", per_class=50):
@@ -23,7 +24,7 @@ def get_embeddings(modality="visual", per_class=50):
 
     cache = CACHE[modality]
     if modality == "visual":
-        cache = f"/tmp/clip_emb_{10 * per_class}.npz"
+        cache = f"data/.cache/clip_emb_{10 * per_class}.npz"
     if os.path.exists(cache):
         z = np.load(cache)
         print(f"  embedding 快取命中 {cache} ({os.path.getsize(cache)//1024}KB)")

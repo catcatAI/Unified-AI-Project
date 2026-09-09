@@ -15,7 +15,8 @@ import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/src"))
 
-CACHE = {"visual": "/tmp/clip_emb_500.npz", "audio": "/tmp/whisper_emb_400.npz"}
+# embedding 快取：data/.cache/（git 忽略，/tmp 易失不用）
+CACHE = {"visual": "data/.cache/clip_emb_500.npz", "audio": "data/.cache/whisper_emb_400.npz"}
 
 
 def main():
