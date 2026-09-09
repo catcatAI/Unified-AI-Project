@@ -61,29 +61,6 @@ command_triggers:
   manual_delegation: "!delegate_to"
   context_analysis: "!analyze:"
 
-# Settings from Fragmenta's config.yaml
-fragmenta_settings:
-  modules: # Controls for Fragmenta-specific modules
-    echoShell: true
-    sillScan: true
-    toneFragment: true
-    tailStitch: true
-    # Note: Original Fragmenta config had duplicate keys with different casing.
-    # Kept the camelCase versions as they are more common in JS.
-    # EchoShell: false # Example of duplicated key
-    # SillScan: false
-    # ToneFragment: false
-    # TailStitch: false
-  tone_vector: # Specific to Fragmenta's tone processing
-    V1: 0.03
-    V2: 0.5
-    V3: 0.4
-  # persona_chain from Fragmenta's config.yaml will be considered during
-  # the migration of personality_profiles in step 3.
-  # persona_chain:
-  #   - neutral
-  #   - reflective
-
 # Placeholder for future global settings
 # global_settings:
 #   feature_flags:
