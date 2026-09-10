@@ -98,8 +98,19 @@ def block_orphans(root, files):
     方法局限（已驗證）：相對導入已解析、`__init__` 基已修正；但懶
     `__getattr__`、importlib、字串路由、端點聚合器天生隱身；入口檔
     （cli/desktop/game）按性質即根，不算賬。
+    配置門控識別：檔名幹出現在 configs/* 即標註（rlaif 教訓：靜態孤兒
+    可能是有意關閉的功能，不可亂判死刑）。
     """
     from collections import defaultdict
+
+    cfg_text = ""
+    for rel, _, _ in files:
+        if "/configs/" in rel and rel.endswith((".yaml", ".yml", ".json")):
+            try:
+                with open(os.path.join(root, rel), encoding="utf-8") as f:
+                    cfg_text += f.read() + "\n"
+            except OSError:
+                continue
 
     imported = defaultdict(set)
     trees = {}
@@ -149,7 +160,12 @@ def block_orphans(root, files):
     lines = ["### 疑似孤兒檔（候選）", ""]
     lines.append(f"- 共 {len(orphans)} 檔（動態加載盲區見上，個案定性前不刪）")
     for rel in sorted(orphans)[:40]:
-        lines.append(f"  - `{rel}`")
+        stem = os.path.splitext(os.path.basename(rel))[0]
+        norm = lambda s: s.replace("_", "").replace("-", "")
+        # 短通用詞（app/config）在配置文本恆命中——只信長特徵名
+        gated = len(norm(stem)) >= 10 and norm(stem) in norm(cfg_text)
+        tag = "（配置門控候選）" if gated else ""
+        lines.append(f"  - `{rel}`{tag}")
     if len(orphans) > 40:
         lines.append(f"  - …{len(orphans) - 40} 未展開")
     lines.append("")
