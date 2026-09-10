@@ -15,6 +15,7 @@ import ast
 import datetime
 import hashlib
 import os
+import re
 import sys
 
 EXCLUDE_DIRS = {
@@ -277,6 +278,11 @@ def block_dep_usage(root, files):
         except (OSError, SyntaxError, ValueError):
             continue
         bound = {}  # 本地名 -> 來源模組
+        noqa_lines = set()
+        try:
+            srclines = open(os.path.join(root, rel), encoding="utf-8").read().split("\n")
+        except OSError:
+            srclines = []
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for a in node.names:
@@ -284,17 +290,38 @@ def block_dep_usage(root, files):
                     if name and name != "*":
                         bound[name] = a.name
             elif isinstance(node, ast.ImportFrom):
+                if node.module == "__future__":
+                    continue  # 編譯期 pragma，非依賴
                 if any(a.name == "*" for a in node.names):
                     continue
                 for a in node.names:
                     if a.name and a.name != "*":
                         bound[a.asname or a.name] = node.module or ""
+        # noqa 意圖重導出 + 字串註解用量一併視為使用（僅註解位置字串，
+        # 不含 docstring——否則"Uses transformers"之類文案會洗白真未用）
+        ann_strs = []
+        for node in ast.walk(tree):
+            for field in ("annotation", "returns"):
+                v = getattr(node, field, None)
+                if isinstance(v, ast.Constant) and isinstance(v.value, str):
+                    ann_strs.append(v.value)
+            if isinstance(node, ast.AnnAssign) and isinstance(node.annotation, ast.Constant):
+                if isinstance(node.annotation.value, str):
+                    ann_strs.append(node.annotation.value)
+        str_used = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", " ".join(ann_strs)))
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Import, ast.ImportFrom)) and hasattr(node, "lineno"):
+                if any("noqa" in (srclines[node.lineno - 1] if 0 < node.lineno <= len(srclines) else "")
+                       for _ in [0]):
+                    for a in node.names:
+                        str_used.add(a.asname or a.name)
         if not bound:
             continue
         used = set()
         for node in ast.walk(tree):
             if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
                 used.add(node.id)
+        used |= str_used
         # 可用性探針：try 內僅 import + return True（except ImportError）——有意為之，不算未使用
         probes = set()
         for node in ast.walk(tree):
