@@ -1354,7 +1354,7 @@ class EthicsManager:
                         "description": rule.description,
                         "recommended_action": rule.action,
                     }
-                violations.append(violation)
+                    violations.append(violation)
             except Exception as e:  # broad exception acceptable: rule evaluation in review may fail with various errors
                 logger.warning(f"⚠️ 规则评估失败 {rule_id}: {e}", exc_info=True)
 
