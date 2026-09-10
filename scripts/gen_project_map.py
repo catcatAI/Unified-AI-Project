@@ -253,6 +253,9 @@ HEAVY_DEPS = {
     "torch", "transformers", "chromadb", "sentence_transformers", "pandas",
     "sklearn", "scipy", "redis", "spacy", "tensorflow", "cv2", "PIL",
 }
+# Eager-check subset: base-tier members (Pillow/scipy per pyproject) excluded —
+# only non-base heavies (ml/vector tiers) must stay lazy (§X #259).
+EAGER_HEAVY = HEAVY_DEPS - {"PIL", "scipy"}
 
 
 def block_dep_usage(root, files):
@@ -348,6 +351,42 @@ def block_dep_usage(root, files):
     lines.append(f"- 有未使用 import 的檔：{bad_files}，共 {bad_total} 項（僅列前 200）")
     lines.append(f"- 其中重依賴未使用：{len(set(heavy_hits))} 檔")
     lines.append(f"- 可用性探針檔（有意為之，不計入）：{probe_files}")
+    lines.append("")
+    lines.extend(block_eager_heavy(root, files))
+    return lines
+
+
+def block_eager_heavy(root, files):
+    """頂層 eager 重依賴（§X #259 懶加載紀律）：模組層 `import torch` 即違規。
+
+    只認 tree.body 直屬 Import（try/函數內延遲不算）；`__init__` 單列。
+    """
+    lines = ["### 頂層 eager 重依賴（違規即列）", ""]
+    bad = []
+    for rel, _, _ in sorted(files):
+        if not rel.endswith(".py"):
+            continue
+        if not rel.startswith("apps/backend/src/"):
+            continue
+        try:
+            with open(os.path.join(root, rel), encoding="utf-8") as f:
+                tree = ast.parse(f.read())
+        except (OSError, SyntaxError, ValueError):
+            continue
+        for node in tree.body:
+            mods = []
+            if isinstance(node, ast.Import):
+                mods = [(a.asname or a.name.split(".")[0], a.name) for a in node.names]
+            elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                mods = [(a.asname or a.name, node.module) for a in node.names]
+            for local, mod in mods:
+                if (mod or "").split(".")[0] in EAGER_HEAVY:
+                    bad.append((rel, (mod or "").split(".")[0], local))
+    lines.append(f"- 違規：{len(bad)} 項")
+    for rel, top, local in bad[:30]:
+        lines.append(f"  - `{rel}`：`{top}`（as {local}）")
+    if len(bad) > 30:
+        lines.append(f"  - …{len(bad) - 30} 未展開")
     lines.append("")
     return lines
 
