@@ -58,7 +58,7 @@ def jparse(t):
 def main():
     from llama_cpp import Llama
 
-    m = Llama(MODEL, n_ctx=2048, n_threads=4, verbose=False)
+    m = Llama(MODEL, n_ctx=2048, n_threads=2, verbose=False)
     log = []
 
     def loop(qid, prompt, check, rounds=3):
