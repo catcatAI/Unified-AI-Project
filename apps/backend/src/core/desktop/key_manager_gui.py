@@ -15,12 +15,10 @@ Requirements: tkinter (built-in)
 """
 
 import os
-import sys
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from pathlib import Path
 from typing import Dict, Optional, List
-import json
 import logging
 
 logger = logging.getLogger(__name__)

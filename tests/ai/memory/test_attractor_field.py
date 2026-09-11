@@ -130,7 +130,6 @@ class TestGradientField:
         assert 0.0 < decay_2 < decay_1
 
     def test_load_and_save_attractors(self, field):
-        import json
         import os
         import tempfile
 

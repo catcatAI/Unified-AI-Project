@@ -16,15 +16,6 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple, Set
 from dataclasses import dataclass, asdict
 from collections import defaultdict
-from pathlib import Path
-
-# 尝试导入可选的AI库
-try:
-    import numpy as np
-
-    TORCH_AVAILABLE = True
-except ImportError:
-    TORCH_AVAILABLE = False
 
 try:
     from sklearn.feature_extraction.text import TfidfVectorizer
