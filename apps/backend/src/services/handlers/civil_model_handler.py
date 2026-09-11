@@ -19,7 +19,8 @@ PY = sys.executable
 
 def _num(text, keys, default):
     for k in keys:
-        m = re.search(k + r"\s*[=：:]\s*(\d+(?:\.\d+)?)", text)
+        # 單字母鍵防子串誤撞（如 M_Ed=400 中的 d=）：鍵前須非字母/下劃線
+        m = re.search(r"(?<![A-Za-z_])" + k + r"\s*[=：:]\s*(\d+(?:\.\d+)?)", text)
         if m:
             return float(m.group(1))
     return default
@@ -43,6 +44,8 @@ class CivilModelHandler:
             if any(k in t for k in ("DXF", "圖紙", "图纸", "截面", "出圖", "drawing")):
                 return await self._dxf_section(t)
             comp = self._detect_component(t)
+            if any(k in t for k in ("配多少", "配筋多少", "需要多少", "設計", "设计", "size", "sizing")):
+                return await self._size(t, comp)
             if comp != "beam":
                 return await self._calc_component(t, comp)
             return await self._calc(t)
@@ -97,7 +100,28 @@ class CivilModelHandler:
                 f"M_Rd={r.get('M_Rd_kNm')}kNm，x={r.get('x_mm')}mm"
                 + (f"，彎矩{'✅' if r.get('bending_ok') else '❌'}" if "bending_ok" in r else ""))
 
+    SIZE_VARY = {"beam": "As", "column": "As", "slab": "As", "box": "As",
+                 "tbeam": "As", "steel": "A", "prestressed": "P_kN"}
+
+    async def _size(self, text, comp):
+        vary = self.SIZE_VARY.get(comp, "As")
+        p = {k: v for k, v in self._all_vals(text).items() if k in self.COMP_KEYS[comp]}
+        code, out = await self._run(
+            [PY, os.path.join(SCRIPTS, "civil_autosize.py"), "--component", comp,
+             "--vary", vary, "--json", json.dumps(p)], 120,
+        )
+        if code != 0:
+            return f"（定尺寸）失敗：{out[-300:]}"
+        try:
+            r = json.loads(out[out.index("{"):out.rindex("}") + 1])
+        except Exception:
+            return f"（定尺寸）解析失敗：{out[-300:]}"
+        if not r.get("ok"):
+            return f"（定尺寸）不可達：{r.get('reason', '')[:120]}"
+        return f"（定尺寸）{comp} {vary}={r.get(vary)} ✅"
+
     COMP_KEYS = {
+        "beam": ["b", "d", "As", "M_Ed_kNm", "V_Ed_kN", "Asw_s", "L"],
         "column": ["b", "h", "As", "N_Ed_kN"],
         "slab": ["h", "cover", "As", "M_Ed_kNm"],
         "box": ["B", "H", "tw", "tf_top", "tf_bot", "As", "M_Ed_kNm"],
@@ -109,9 +133,10 @@ class CivilModelHandler:
                      "bw", "hf", "l0", "bi", "A", "Iy", "N_Ed_kN", "M_Ed_kNm",
                      "M_kNm", "P_kN", "e_mm", "cover", "Asw_s", "V_Ed_kN"]
 
-    async def _calc_component(self, text, comp):
+    @staticmethod
+    def _all_vals(text):
         num = lambda keys, default: _num(text, keys, default)
-        vals = {
+        return {
             "b": num(["b", "寬", "宽"], 300.0), "h": num(["h"], 300.0),
             "d": num(["d", "高"], 450.0), "L": num(["L", "跨", "長", "长"], 6000.0),
             "As": num(["As", "配筋"], 1256.0), "B": num(["B"], 8000.0),
@@ -126,7 +151,9 @@ class CivilModelHandler:
             "e_mm": num(["e_mm", "偏心"], 500.0), "cover": num(["cover"], 40.0),
             "Asw_s": 0.0, "V_Ed_kN": 0.0,
         }
-        p = {k: vals[k] for k in self.COMP_KEYS[comp]}
+
+    async def _calc_component(self, text, comp):
+        p = {k: v for k, v in self._all_vals(text).items() if k in self.COMP_KEYS[comp]}
         code, out = await self._run(
             [PY, os.path.join(SCRIPTS, "civil_components.py"),
              "--component", comp, "--json", json.dumps(p)], 60,
