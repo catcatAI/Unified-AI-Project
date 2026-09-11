@@ -149,6 +149,7 @@ def main():
         "        p.name = 'Bent'\n"
         "        nb += 1\n"
         "bpy.ops.export_mesh.stl(filepath='/tmp/footbridge.stl', use_selection=False)\n"
+        "bpy.ops.wm.save_as_mainfile(filepath='/tmp/footbridge.blend')\n"
         "print('FOOTBRIDGE:', nb, 'objects')\n"
     )
     with open("/tmp/footbridge.py", "w", encoding="utf-8") as f:
