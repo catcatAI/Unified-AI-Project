@@ -956,7 +956,9 @@ class AngelaLLMService:
             self.model_bus.register_handler(
                 "civil", CivilModelHandler(),
                 ["beam", "bridge", "column", "slab", "concrete", "CAD", "STEP", "STL",
-                 "DXF", "梁", "柱", "板", "橋", "混凝土", "建模", "出圖", "計算"],
+                 "DXF", "box", "tbeam", "steel", "truss", "prestress",
+                 "梁", "柱", "板", "橋", "箱", "鋼", "桁架", "預力", "预力",
+                 "護欄", "支座", "混凝土", "建模", "出圖", "計算"],
             )
             logger.info(
                 "Model Bus handlers registered: file_ops, web_search, code_exec, system_cmd, task_mgr, vision, learning, civil"

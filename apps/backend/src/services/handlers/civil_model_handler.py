@@ -34,7 +34,7 @@ class CivilModelHandler:
     async def handle(self, text: str, intent: str = "civil") -> str:
         t = text or ""
         try:
-            if any(k in t for k in ("FEM", "有限元", "分析", "撓度", "应力", "應力")):
+            if any(k in t for k in ("FEM", "有限元", "撓度", "挠度")):
                 return await self._fem_beam(t)
             if any(k in t for k in ("STEP", "FreeCAD", "freecad")):
                 return await self._freecad_beam(t)
@@ -42,10 +42,27 @@ class CivilModelHandler:
                 return await self._blender_beam(t)
             if any(k in t for k in ("DXF", "圖紙", "图纸", "截面", "出圖", "drawing")):
                 return await self._dxf_section(t)
+            comp = self._detect_component(t)
+            if comp != "beam":
+                return await self._calc_component(t, comp)
             return await self._calc(t)
         except Exception as e:
             logger.error(f"CivilModelHandler error: {e}", exc_info=True)
             return f"（結構建模）執行失敗：{e}"
+
+    @staticmethod
+    def _detect_component(text):
+        for comp, keys in [
+            ("column", ["柱", "column", "墩", "pier"]),
+            ("slab", ["板", "slab", "樓板"]),
+            ("box", ["箱", "box", "箱梁"]),
+            ("tbeam", ["T梁", "T梁", "tbeam", "t-beam"]),
+            ("steel", ["鋼", "钢", "steel", "桁架", "truss", "桿件"]),
+            ("prestressed", ["預力", "预力", "prestress", "預應力", "预应力"]),
+        ]:
+            if any(k in text for k in keys):
+                return comp
+        return "beam"
 
     def _beam_params(self, text):
         return {
@@ -79,6 +96,55 @@ class CivilModelHandler:
         return (f"（結構計算）梁 b={p['b']:.0f} d={p['d']:.0f} As={p['As']:.0f}："
                 f"M_Rd={r.get('M_Rd_kNm')}kNm，x={r.get('x_mm')}mm"
                 + (f"，彎矩{'✅' if r.get('bending_ok') else '❌'}" if "bending_ok" in r else ""))
+
+    COMP_KEYS = {
+        "column": ["b", "h", "As", "N_Ed_kN"],
+        "slab": ["h", "cover", "As", "M_Ed_kNm"],
+        "box": ["B", "H", "tw", "tf_top", "tf_bot", "As", "M_Ed_kNm"],
+        "tbeam": ["bw", "hf", "l0", "bi", "d", "As", "M_Ed_kNm"],
+        "steel": ["A", "Iy", "L", "N_Ed_kN"],
+        "prestressed": ["b", "h", "P_kN", "e_mm", "M_kNm"],
+    }
+    COMP_NUM_KEYS = ["b", "h", "d", "L", "As", "B", "H", "tw", "tf_top", "tf_bot",
+                     "bw", "hf", "l0", "bi", "A", "Iy", "N_Ed_kN", "M_Ed_kNm",
+                     "M_kNm", "P_kN", "e_mm", "cover", "Asw_s", "V_Ed_kN"]
+
+    async def _calc_component(self, text, comp):
+        num = lambda keys, default: _num(text, keys, default)
+        vals = {
+            "b": num(["b", "寬", "宽"], 300.0), "h": num(["h"], 300.0),
+            "d": num(["d", "高"], 450.0), "L": num(["L", "跨", "長", "长"], 6000.0),
+            "As": num(["As", "配筋"], 1256.0), "B": num(["B"], 8000.0),
+            "H": num(["H"], 2000.0), "tw": num(["tw"], 300.0),
+            "tf_top": num(["tf_top"], 250.0), "tf_bot": num(["tf_bot"], 250.0),
+            "bw": num(["bw"], 300.0), "hf": num(["hf"], 150.0),
+            "l0": num(["l0"], 20000.0), "bi": num(["bi"], 2000.0),
+            "A": num(["A"], 7600.0), "Iy": num(["Iy"], 45.9e6),
+            "N_Ed_kN": num(["N_Ed", "軸力", "轴力"], 0.0),
+            "M_Ed_kNm": num(["M_Ed", "彎矩", "弯矩"], 0.0),
+            "M_kNm": num(["M_kNm"], 8000.0), "P_kN": num(["P_kN", "預力", "预力"], 12000.0),
+            "e_mm": num(["e_mm", "偏心"], 500.0), "cover": num(["cover"], 40.0),
+            "Asw_s": 0.0, "V_Ed_kN": 0.0,
+        }
+        p = {k: vals[k] for k in self.COMP_KEYS[comp]}
+        code, out = await self._run(
+            [PY, os.path.join(SCRIPTS, "civil_components.py"),
+             "--component", comp, "--json", json.dumps(p)], 60,
+        )
+        if code != 0:
+            return f"（結構計算）失敗：{out[-300:]}"
+        try:
+            r = json.loads(out[out.index("{"):out.rindex("}") + 1])
+        except Exception:
+            return f"（結構計算）解析失敗：{out[-300:]}"
+        keys = [k for k in ("M_Rd_kNm", "N_Rd_kN", "N_t_Rd_kN", "N_b_Rd_kN",
+                            "M_Rd_kNm_per_m", "sigma_top_MPa", "self_weight_kN_m",
+                            "beff_mm") if k in r]
+        oks = [k for k in ("bending_ok", "axial_ok", "tension_ok", "buckling_ok",
+                           "stress_ok") if k in r]
+        detail = "，".join(f"{k}={r[k]}" for k in keys[:4])
+        verdict = "".join(f"{'✅' if r[k] else '❌'}" for k in oks)
+        return f"（結構計算）{comp}：{detail}{verdict}"
 
     async def _dxf_section(self, text):
         p = self._beam_params(text)
