@@ -32,6 +32,19 @@ bpy.ops.mesh.primitive_cube_add(size=1, location=(1,2,3))
 bpy.context.object.dimensions = (2,3,4)
 任务：清空场景；A路盒30x8x0.5放原点取名RoadA；B路盒8x30x0.5放原点取名RoadB；4个2x2x0.5匝道盒放(15,15,0)、(-15,15,0)、(15,-15,0)、(-15,-15,0)取名Ramp。只输出代码，第一行是import bpy。"""
 
+PROMPT_ICH = """Blender Python只许用这几行（X长Y宽Z高），第一行必須是 import bpy：
+import bpy
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+bpy.ops.mesh.primitive_cube_add(size=1, location=(x,y,z))
+o = bpy.context.object
+o.dimensions = (dx,dy,dz)
+例：2x3x4盒放(1,2,3)：
+import bpy
+bpy.ops.mesh.primitive_cube_add(size=1, location=(1,2,3))
+bpy.context.object.dimensions = (2,3,4)
+任务：清空场景；A路盒30x8x0.5放原点取名RoadA；B路盒8x30x0.5放原点取名RoadB；8个4x2x0.5匝道盒放(±15,±15,0)四角各2个（x偏移±2）取名Ramp。只输出代码，第一行是import bpy。"""
+
 
 def run(cmd, timeout):
     try:
@@ -41,7 +54,7 @@ def run(cmd, timeout):
         return 124, "超時"
 
 
-def grade(name, model_path, threads, toks, prompt=None):
+def grade(name, model_path, threads, toks, prompt=None, need=6):
     from llama_cpp import Llama
 
     m = Llama(model_path, n_ctx=2048, n_threads=threads, verbose=False)
@@ -77,7 +90,7 @@ def grade(name, model_path, threads, toks, prompt=None):
                 pass
     if nobjs == 0:
         return {"model": name, "score": 20, "note": "可解析不可運行"}
-    s_obj = 25 if nobjs >= 6 else round(25 * nobjs / 6)
+    s_obj = 25 if nobjs >= need else round(25 * nobjs / need)
     road_ok = any(abs(d[0] - 30) < 1 and abs(d[1] - 8) < 1 for d in dims.values())
     s_dim = 25 if road_ok else 0
     return {"model": name, "score": 20 + 30 + s_obj + s_dim,
@@ -90,16 +103,23 @@ def main():
     ap = argparse.ArgumentParser(description="modeling exam")
     ap.add_argument("--who", default="both", choices=["qwen", "gemma", "both"])
     ap.add_argument("--prompt", default="bare", choices=["bare", "scaff"])
+    ap.add_argument("--task", default="roads", choices=["roads", "ich"])
     args = ap.parse_args()
     out = []
-    pr = PROMPT_SCAFFOLDED if args.prompt == "scaff" else None
-    tag = "-scaff" if args.prompt == "scaff" else ""
+    if args.task == "ich":
+        pr = PROMPT_ICH
+        tag = "-ich"
+        need = 10
+    else:
+        pr = PROMPT_SCAFFOLDED if args.prompt == "scaff" else None
+        tag = "-scaff" if args.prompt == "scaff" else ""
+        need = 6
     if args.who in ("qwen", "both"):
-        r = grade("qwen", QWEN, 2, 400, pr)
+        r = grade("qwen", QWEN, 2, 600 if args.task == "ich" else 400, pr, need)
         r["model"] += tag
         out.append(r)
     if args.who in ("gemma", "both"):
-        r = grade("gemma", GEMMA, 2, 500, pr)
+        r = grade("gemma", GEMMA, 2, 800 if args.task == "ich" else 500, pr, need)
         r["model"] += tag
         out.append(r)
     for r in out:
