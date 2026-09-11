@@ -32,6 +32,11 @@ def beam(db, conc="C30/37", steel="B500B", b=300.0, d=450.0, As=1256.0,
     MRd = As * fyd * z / 1e6
     out = {"M_Rd_kNm": round(MRd, 1), "x_mm": round(x, 1), "z_mm": round(z, 1),
            "assumptions": ["rect stress block λ=0.8", "singly reinforced"]}
+    if L and d:
+        out["span_depth_ratio"] = round(L / d, 1)
+        out["span_feasible_rc"] = bool(L / d <= 25)
+        if L / d > 25:
+            out["assumptions"].append("⚠️ L/d>25：RC 簡支梁不可行（改連續梁/鋼構/預力）")
     if M_Ed_kNm:
         As_req = M_Ed_kNm * 1e6 / (0.9 * d * fyd)
         out["As_req_mm2"] = round(As_req, 0)
