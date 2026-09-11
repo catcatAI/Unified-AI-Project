@@ -77,16 +77,61 @@ def slab(db, conc="C30/37", steel="B500B", h=150.0, cover=25.0,
     return out
 
 
+def box_girder(db, conc="C30/37", steel="B500B", B=8000.0, H=2000.0,
+               tw=300.0, tf_top=250.0, tf_bot=250.0, As=20000.0, M_Ed_kNm=0.0):
+    """空心箱梁（橋面本體）：截面特性 + 自重 + 彎矩概算。"""
+    C, S, K = db["concrete"][conc], db["rebar"][steel], db["constants"]
+    fcd, fyd = C["fck_MPa"] / K["gamma_c"], S["fyk_MPa"] / K["gamma_s"]
+    bi, hi = B - 2 * tw, H - tf_top - tf_bot
+    A = B * H - bi * hi
+    I = (B * H ** 3 - bi * hi ** 3) / 12.0
+    W = I / (H / 2.0)
+    self_w = A * K["concrete_unit_weight_kN_m3"] / 1e6
+    d = H - tf_bot - 100.0
+    z = 0.9 * d
+    MRd = As * fyd * z / 1e6
+    out = {"A_mm2": round(A, 0), "I_mm4": round(I, 0), "W_mm3": round(W, 0),
+           "self_weight_kN_m": round(self_w, 1), "M_Rd_kNm": round(MRd, 0),
+           "assumptions": ["thin-wall box", "z=0.9d approx", "no shear lag/torsion"]}
+    if M_Ed_kNm:
+        out["bending_ok"] = bool(MRd >= M_Ed_kNm)
+    return out
+
+
+def t_beam(db, conc="C30/37", steel="B500B", bw=300.0, hf=150.0, l0=20000.0,
+           bi=2000.0, d=500.0, As=2000.0, M_Ed_kNm=0.0):
+    """T 梁（含 EC2 有效翼緣 beff）：中性軸在翼緣內按矩形計，否則告警。"""
+    C, S, K = db["concrete"][conc], db["rebar"][steel], db["constants"]
+    fcd, fyd = C["fck_MPa"] / K["gamma_c"], S["fyk_MPa"] / K["gamma_s"]
+    beff_i = min(0.2 * bi + 0.1 * l0, 0.2 * l0, bi)
+    beff = bw + 2 * beff_i
+    x = As * fyd / (0.8 * beff * fcd)
+    out = {"beff_mm": round(beff, 0), "x_mm": round(x, 1),
+           "assumptions": ["EC2 beff", "NA-in-flange only"]}
+    if x > hf:
+        out["warning"] = "中性軸出翼緣，真T梁另算（排隊）"
+        out["M_Rd_kNm"] = 0.0
+    else:
+        z = d - 0.4 * x
+        MRd = As * fyd * z / 1e6
+        out["M_Rd_kNm"] = round(MRd, 1)
+        if M_Ed_kNm:
+            out["bending_ok"] = bool(MRd >= M_Ed_kNm)
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser(description="civil component templates × materials DB")
-    ap.add_argument("--component", choices=["beam", "column", "slab"], required=True)
+    ap.add_argument("--component", choices=["beam", "column", "slab", "box", "tbeam"],
+                    required=True)
     ap.add_argument("--conc", default="C30/37")
     ap.add_argument("--steel", default="B500B")
     ap.add_argument("--json", default="", help="extra inputs as JSON (b,d,As,M_Ed_kNm,...)")
     args = ap.parse_args()
     db = load_db()
     kw = json.loads(args.json) if args.json else {}
-    fn = {"beam": beam, "column": column, "slab": slab}[args.component]
+    fn = {"beam": beam, "column": column, "slab": slab,
+          "box": box_girder, "tbeam": t_beam}[args.component]
     print(json.dumps(fn(db, conc=args.conc, steel=args.steel, **kw),
                      ensure_ascii=False, indent=1))
     return 0
