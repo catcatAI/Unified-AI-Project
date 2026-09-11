@@ -25,6 +25,15 @@ EXCLUDE_DIRS = {
 }
 SKIP_EXT = {".pyc", ".pyo", ".pyd", ".so", ".o"}
 
+# 已知有意鏡像根：組內路徑全落此即壓成一行（雙端資產/test 產物，定性過）
+MIRROR_ROOTS = (
+    "apps/desktop-app/electron_app/resources",
+    "apps/desktop-app/electron_app/models",
+    "apps/web-live2d-viewer/",
+    "resources/",
+    "test_models/",
+)
+
 
 def walk_files(root):
     out = []
@@ -184,6 +193,10 @@ def block_collisions(root, files):
     lines.append(f"- 重名檔：{len(coll)} 組，共 {sum(len(v) for v in coll.values())} 條路徑")
     for name in sorted(coll):
         hits = sorted(coll[name], key=lambda t: (-t[0].count(os.sep), t[0]))
+        if all(h[0].startswith(MIRROR_ROOTS) for h in hits):
+            lines.append(f"### `{name}` ×{len(hits)}（已知鏡像，壓縮）")
+            lines.append("")
+            continue
         lines.append(f"### `{name}` ×{len(hits)}")
         md5s = set()
         for rel, size, mt in hits:
