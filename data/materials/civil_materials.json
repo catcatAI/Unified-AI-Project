@@ -1,1 +1,101 @@
-{"notes_zh": "土木基本面（公開資料）：混凝土 EN 1992-1-1 Table 3.1，鋼筋 BS 4449/EC2。fcm=fck+8；Ecm=22*(fcm/10)^0.3 GPa；fcd=αcc*fck/γc；fyd=fyk/γs。", "rebar": {"B500A": {"Agt_percent": 2.5, "Rm_Re_min": 1.05, "ductility": "low", "fyk_MPa": 500}, "B500B": {"Agt_percent": 5.0, "Rm_Re_min": 1.08, "ductility": "medium", "fyk_MPa": 500, "use": "bridges/foundations/walls"}, "B500C": {"Agt_percent": 7.5, "Rm_Re_max": 1.35, "Rm_Re_min": 1.15, "ductility": "high", "fyk_MPa": 500}}, "concrete": {"C20/25": {"Ecm_MPa": 29962, "fck_MPa": 20, "fcm_MPa": 28, "fctm_MPa": 2.21}, "C25/30": {"Ecm_MPa": 31476, "fck_MPa": 25, "fcm_MPa": 33, "fctm_MPa": 2.56}, "C30/37": {"Ecm_MPa": 32837, "fck_MPa": 30, "fcm_MPa": 38, "fctm_MPa": 2.9, "use": "bridges default"}, "C35/45": {"Ecm_MPa": 34077, "fck_MPa": 35, "fcm_MPa": 43, "fctm_MPa": 3.21}, "C40/50": {"Ecm_MPa": 35220, "fck_MPa": 40, "fcm_MPa": 48, "fctm_MPa": 3.51}, "C50/60": {"Ecm_MPa": 37278, "fck_MPa": 50, "fcm_MPa": 58, "fctm_MPa": 4.07}}, "constants": {"concrete_density_kg_m3": 2500, "concrete_unit_weight_kN_m3": 25.0, "gamma_c": 1.5, "gamma_s": 1.15, "steel_Es_MPa": 200000}, "sources": ["EN 1992-1-1 Table 3.1 (eurocodeapplied.com, calcpad.eu)", "BS 4449:2005+A3:2016 grades B500A/B/C", "EC2 fyk range 400-600 MPa"]}
+{
+ "notes_zh": "土木基本面（公開資料）：混凝土 EN 1992-1-1 Table 3.1，鋼筋 BS 4449/EC2。fcm=fck+8；Ecm=22*(fcm/10)^0.3 GPa；fcd=αcc*fck/γc；fyd=fyk/γs。",
+ "rebar": {
+  "B500A": {
+   "Agt_percent": 2.5,
+   "Rm_Re_min": 1.05,
+   "ductility": "low",
+   "fyk_MPa": 500
+  },
+  "B500B": {
+   "Agt_percent": 5.0,
+   "Rm_Re_min": 1.08,
+   "ductility": "medium",
+   "fyk_MPa": 500,
+   "use": "bridges/foundations/walls"
+  },
+  "B500C": {
+   "Agt_percent": 7.5,
+   "Rm_Re_max": 1.35,
+   "Rm_Re_min": 1.15,
+   "ductility": "high",
+   "fyk_MPa": 500
+  }
+ },
+ "concrete": {
+  "C20/25": {
+   "Ecm_MPa": 29962,
+   "fck_MPa": 20,
+   "fcm_MPa": 28,
+   "fctm_MPa": 2.21
+  },
+  "C25/30": {
+   "Ecm_MPa": 31476,
+   "fck_MPa": 25,
+   "fcm_MPa": 33,
+   "fctm_MPa": 2.56
+  },
+  "C30/37": {
+   "Ecm_MPa": 32837,
+   "fck_MPa": 30,
+   "fcm_MPa": 38,
+   "fctm_MPa": 2.9,
+   "use": "bridges default"
+  },
+  "C35/45": {
+   "Ecm_MPa": 34077,
+   "fck_MPa": 35,
+   "fcm_MPa": 43,
+   "fctm_MPa": 3.21
+  },
+  "C40/50": {
+   "Ecm_MPa": 35220,
+   "fck_MPa": 40,
+   "fcm_MPa": 48,
+   "fctm_MPa": 3.51
+  },
+  "C50/60": {
+   "Ecm_MPa": 37278,
+   "fck_MPa": 50,
+   "fcm_MPa": 58,
+   "fctm_MPa": 4.07
+  }
+ },
+ "constants": {
+  "concrete_density_kg_m3": 2500,
+  "concrete_unit_weight_kN_m3": 25.0,
+  "gamma_c": 1.5,
+  "gamma_s": 1.15,
+  "steel_Es_MPa": 200000,
+  "steel_E_MPa": 210000,
+  "gamma_M0": 1.0,
+  "gamma_M1": 1.0
+ },
+ "sources": [
+  "EN 1992-1-1 Table 3.1 (eurocodeapplied.com, calcpad.eu)",
+  "BS 4449:2005+A3:2016 grades B500A/B/C",
+  "EC2 fyk range 400-600 MPa"
+ ],
+ "structural_steel": {
+  "S235": {
+   "fy_MPa": 235,
+   "fu_MPa": 360
+  },
+  "S275": {
+   "fy_MPa": 275,
+   "fu_MPa": 430
+  },
+  "S355": {
+   "fy_MPa": 355,
+   "fu_MPa": 510,
+   "use": "bridges default"
+  }
+ },
+ "prestress_steel": {
+  "Y1860": {
+   "fpk_MPa": 1860,
+   "fp01k_MPa": 1640,
+   "E_MPa": 195000
+  }
+ }
+}

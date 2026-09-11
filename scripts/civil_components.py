@@ -120,9 +120,48 @@ def t_beam(db, conc="C30/37", steel="B500B", bw=300.0, hf=150.0, l0=20000.0,
     return out
 
 
+def steel_member(db, grade="S355", A=7600.0, Iy=45.9e6, L=5000.0,
+                 N_Ed_kN=0.0, curve_alpha=0.49):
+    """鋼桁桿件（EC3）：受拉 A·fy/γM0；受壓歐拉+χ 折減（曲線 c，α=0.49）。"""
+    S, K = db["structural_steel"][grade], db["constants"]
+    fy, E = S["fy_MPa"], K["steel_E_MPa"]
+    Nt = A * fy / K["gamma_M0"] / 1000.0
+    Ncr = (3.14159265 ** 2) * E * Iy / L ** 2 / 1000.0
+    lam = (A * fy / (Ncr * 1000.0)) ** 0.5
+    phi = 0.5 * (1 + curve_alpha * (lam - 0.2) + lam ** 2)
+    chi = 1.0 / (phi + (phi ** 2 - lam ** 2) ** 0.5)
+    Nb = chi * A * fy / K["gamma_M1"] / 1000.0
+    out = {"N_t_Rd_kN": round(Nt, 0), "N_b_Rd_kN": round(Nb, 0),
+           "lambda_bar": round(lam, 3), "chi": round(chi, 3),
+           "assumptions": ["EC3 curve c", "pinned-pinned", "single axis"]}
+    if N_Ed_kN:
+        out["tension_ok"] = bool(Nt >= abs(N_Ed_kN))
+        out["buckling_ok"] = bool(Nb >= abs(N_Ed_kN))
+    return out
+
+
+def prestressed(db, conc="C40/50", b=1000.0, h=1500.0, P_kN=12000.0,
+                e_mm=500.0, M_kNm=8000.0):
+    """預力梁使用階段應力（P/A ± (M−P·e)/W；壓<0.6fck，拉<fctm）。"""
+    C, K = db["concrete"][conc], db["constants"]
+    fck, fctm = C["fck_MPa"], C["fctm_MPa"]
+    A = b * h
+    W = b * h ** 2 / 6.0
+    pm = P_kN * 1000.0 / A
+    bm = (M_kNm * 1e6 - P_kN * 1000.0 * e_mm) / W
+    s_top, s_bot = -pm + bm, -pm - bm
+    out = {"sigma_top_MPa": round(s_top, 2), "sigma_bot_MPa": round(s_bot, 2),
+           "lim_comp_MPa": round(0.6 * fck, 1), "lim_tens_MPa": round(fctm, 2),
+           "assumptions": ["uncracked", "no losses split (use effective P)"]}
+    out["stress_ok"] = bool(s_top <= fctm and s_bot <= fctm
+                            and s_top >= -0.6 * fck and s_bot >= -0.6 * fck)
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser(description="civil component templates × materials DB")
-    ap.add_argument("--component", choices=["beam", "column", "slab", "box", "tbeam"],
+    ap.add_argument("--component", choices=["beam", "column", "slab", "box", "tbeam",
+                                            "steel", "prestressed"],
                     required=True)
     ap.add_argument("--conc", default="C30/37")
     ap.add_argument("--steel", default="B500B")
@@ -130,10 +169,20 @@ def main():
     args = ap.parse_args()
     db = load_db()
     kw = json.loads(args.json) if args.json else {}
+    kw.pop("grade", None)
+    kw.pop("conc", None)
+    kw.pop("steel", None)
     fn = {"beam": beam, "column": column, "slab": slab,
-          "box": box_girder, "tbeam": t_beam}[args.component]
-    print(json.dumps(fn(db, conc=args.conc, steel=args.steel, **kw),
-                     ensure_ascii=False, indent=1))
+          "box": box_girder, "tbeam": t_beam,
+          "steel": steel_member, "prestressed": prestressed}[args.component]
+    if args.component == "steel":
+        grade = args.steel if args.steel in db["structural_steel"] else "S355"
+        print(json.dumps(fn(db, grade=grade, **kw), ensure_ascii=False, indent=1))
+    elif args.component == "prestressed":
+        print(json.dumps(fn(db, conc=args.conc, **kw), ensure_ascii=False, indent=1))
+    else:
+        print(json.dumps(fn(db, conc=args.conc, steel=args.steel, **kw),
+                         ensure_ascii=False, indent=1))
     return 0
 
 
