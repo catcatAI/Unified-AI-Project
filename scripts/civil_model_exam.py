@@ -19,6 +19,19 @@ PROMPT = ("写Blender Python脚本：清空场景，建两个相交的盒子当�
           "（A路30长8宽0.5高放原点，B路8长30宽0.5高放原点），"
           "再建4个小盒子当匝道放四角(15,15,0)等。只输出代码，不要解释")
 
+PROMPT_SCAFFOLDED = """Blender Python只许用这几行（X长Y宽Z高），第一行必須是 import bpy：
+import bpy
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+bpy.ops.mesh.primitive_cube_add(size=1, location=(x,y,z))
+o = bpy.context.object
+o.dimensions = (dx,dy,dz)
+例：2x3x4盒放(1,2,3)：
+import bpy
+bpy.ops.mesh.primitive_cube_add(size=1, location=(1,2,3))
+bpy.context.object.dimensions = (2,3,4)
+任务：清空场景；A路盒30x8x0.5放原点取名RoadA；B路盒8x30x0.5放原点取名RoadB；4个2x2x0.5匝道盒放(15,15,0)、(-15,15,0)、(15,-15,0)、(-15,-15,0)取名Ramp。只输出代码，第一行是import bpy。"""
+
 
 def run(cmd, timeout):
     try:
@@ -28,11 +41,11 @@ def run(cmd, timeout):
         return 124, "超時"
 
 
-def grade(name, model_path, threads, toks):
+def grade(name, model_path, threads, toks, prompt=None):
     from llama_cpp import Llama
 
     m = Llama(model_path, n_ctx=2048, n_threads=threads, verbose=False)
-    r = m.create_chat_completion([{"role": "user", "content": PROMPT}],
+    r = m.create_chat_completion([{"role": "user", "content": prompt or PROMPT}],
                                  max_tokens=toks)
     code = re.sub(r"```[a-z]*", "", r["choices"][0]["message"]["content"])
     with open(f"/tmp/model_exam_{name}.py", "w", encoding="utf-8") as f:
@@ -76,12 +89,19 @@ def main():
 
     ap = argparse.ArgumentParser(description="modeling exam")
     ap.add_argument("--who", default="both", choices=["qwen", "gemma", "both"])
+    ap.add_argument("--prompt", default="bare", choices=["bare", "scaff"])
     args = ap.parse_args()
     out = []
+    pr = PROMPT_SCAFFOLDED if args.prompt == "scaff" else None
+    tag = "-scaff" if args.prompt == "scaff" else ""
     if args.who in ("qwen", "both"):
-        out.append(grade("qwen", QWEN, 2, 400))
+        r = grade("qwen", QWEN, 2, 400, pr)
+        r["model"] += tag
+        out.append(r)
     if args.who in ("gemma", "both"):
-        out.append(grade("gemma", GEMMA, 2, 500))
+        r = grade("gemma", GEMMA, 2, 500, pr)
+        r["model"] += tag
+        out.append(r)
     for r in out:
         print(f"{r['model']}: {r['score']}/100（{r['note']}）")
     return 0
