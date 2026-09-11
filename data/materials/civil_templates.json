@@ -1,0 +1,95 @@
+{
+ "templates": [
+  {
+   "assumptions": [
+    "懸臂牆",
+    "F 為等效靜力（車撞需另按規範動力放大）"
+   ],
+   "checks": [
+    {
+     "expr": "M_Rd >= M_Ed",
+     "name": "bending_ok"
+    }
+   ],
+   "inputs": {
+    "F_kN": 20.0,
+    "H": 1100.0,
+    "cover": 40.0,
+    "t": 250.0,
+    "h_F": 800.0
+   },
+   "materials": {
+    "conc": "C30/37",
+    "steel": "B500B"
+   },
+   "name": "parapet",
+   "outputs": [
+    "M_Ed",
+    "As_req",
+    "M_Rd"
+   ],
+   "steps": [
+    {
+     "M_Ed": "F_kN*h_F/1000"
+    },
+    {
+     "fcd": "db('concrete',conc,'fck_MPa')/db('constants','gamma_c')"
+    },
+    {
+     "fyd": "db('rebar',steel,'fyk_MPa')/db('constants','gamma_s')"
+    },
+    {
+     "d": "t-cover"
+    },
+    {
+     "As_req": "M_Ed*1000000/(0.9*d*fyd)"
+    },
+    {
+     "x": "As_req*fyd/(0.8*1000*fcd)"
+    },
+    {
+     "z": "d-0.4*x"
+    },
+    {
+     "M_Rd": "As_req*fyd*z/1000000"
+    }
+   ]
+  },
+  {
+   "assumptions": [
+    "均布假設",
+    "不計偏心/滑動（另算）"
+   ],
+   "checks": [
+    {
+     "expr": "sigma <= fcd",
+     "name": "bearing_ok"
+    }
+   ],
+   "inputs": {
+    "N_kN": 500.0,
+    "a": 200.0,
+    "b": 200.0
+   },
+   "materials": {
+    "conc": "C30/37"
+   },
+   "name": "bearing",
+   "outputs": [
+    "sigma",
+    "fcd_MPa"
+   ],
+   "steps": [
+    {
+     "fcd": "db('concrete',conc,'fck_MPa')/db('constants','gamma_c')"
+    },
+    {
+     "sigma": "N_kN*1000/(a*b)"
+    },
+    {
+     "fcd_MPa": "fcd"
+    }
+   ]
+  }
+ ]
+}
