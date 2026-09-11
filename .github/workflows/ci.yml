@@ -106,6 +106,18 @@ jobs:
             echo "✅ Test count $COLLECTED in expected window"
           fi
 
+  map-budget:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Project map budget gate (gen_project_map.py, stdlib only)
+        run: |
+          python scripts/gen_project_map.py --budget 10000
+          echo "✅ Project map within 10000-line budget (over = project smell)"
+
   secrets_scan:
     runs-on: ubuntu-latest
     steps:
