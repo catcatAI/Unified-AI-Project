@@ -43,6 +43,11 @@ try:
 except ImportError:
     LearningHandler = None
 
+try:
+    from services.handlers.civil_model_handler import CivilModelHandler
+except ImportError:
+    CivilModelHandler = None
+
 __all__ = [
     "FileOperationHandler",
     "GoogleDriveHandler",
@@ -52,4 +57,5 @@ __all__ = [
     "TaskManagerHandler",
     "VisionHandler",
     "LearningHandler",
+    "CivilModelHandler",
 ]

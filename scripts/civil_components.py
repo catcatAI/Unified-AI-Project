@@ -24,7 +24,7 @@ def load_db():
 
 
 def beam(db, conc="C30/37", steel="B500B", b=300.0, d=450.0, As=1256.0,
-         M_Ed_kNm=0.0, V_Ed_kN=0.0, Asw_s=0.0):
+         M_Ed_kNm=0.0, V_Ed_kN=0.0, Asw_s=0.0, L=6000.0):
     C, S, K = db["concrete"][conc], db["rebar"][steel], db["constants"]
     fcd, fyd = C["fck_MPa"] / K["gamma_c"], S["fyk_MPa"] / K["gamma_s"]
     x = As * fyd / (0.8 * b * fcd)

@@ -936,6 +936,7 @@ class AngelaLLMService:
     def _register_model_bus_handlers(self):
         try:
             from services.handlers.code_execution_handler import CodeExecutionHandler
+            from services.handlers.civil_model_handler import CivilModelHandler
             from services.handlers.file_operation_handler import FileOperationHandler
             from services.handlers.learning_handler import LearningHandler
             from services.handlers.system_command_handler import SystemCommandHandler
@@ -952,8 +953,13 @@ class AngelaLLMService:
             self.model_bus.register_handler("task_mgr", TaskManagerHandler(), ["task"])
             self.model_bus.register_handler("vision", VisionHandler(), ["vision"])
             self.model_bus.register_handler("learning", LearningHandler(), ["learn", "remember"])
+            self.model_bus.register_handler(
+                "civil", CivilModelHandler(),
+                ["beam", "bridge", "column", "slab", "concrete", "CAD", "STEP", "STL",
+                 "DXF", "梁", "柱", "板", "橋", "混凝土", "建模", "出圖", "計算"],
+            )
             logger.info(
-                "Model Bus handlers registered: file_ops, web_search, code_exec, system_cmd, task_mgr, vision, learning"
+                "Model Bus handlers registered: file_ops, web_search, code_exec, system_cmd, task_mgr, vision, learning, civil"
             )
         except Exception as e:
             logger.warning(f"Model Bus handler registration skipped: {e}")
