@@ -3,6 +3,7 @@ ANGELA-MATRIX: [L3-L4] [β] [B] [L2]
 网络搜索工具 — 使用 DuckDuckGo Lite 或 Wikipedia API。
 """
 
+import html
 import json
 import logging
 import re
@@ -70,14 +71,23 @@ class WebSearchTool:
                 },
             )
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-                html = resp.read().decode("utf-8", errors="replace")
+                html_text = resp.read().decode("utf-8", errors="replace")
             results: List[Dict[str, Any]] = []
+            # R29：舊正則要求 rel="nofollow"+<span> 標題，實測 DDG Lite
+            # 回傳是裸 <a href>文字</a>（0 命中 → 誤掉進英文 wiki 出歌手）。
+            # 寬容解析：取所有外部 http 連結，剝標籤取標題，站內/短標題丟棄。
             for m in re.finditer(
-                r'<a[^>]+rel="nofollow"[^>]+href="([^"]+)"[^>]*>\s*<span>([^<]+)</span>',
-                html,
+                r'<a\s[^>]*?href="([^"]+)"[^>]*>(.*?)</a>',
+                html_text,
+                re.DOTALL | re.IGNORECASE,
             ):
-                url, title = m.group(1), m.group(2).strip()
-                if url.startswith("/"):
+                url, inner = m.group(1), m.group(2)
+                if url.startswith("/") or "duckduckgo.com" in url:
+                    continue
+                if not url.startswith("http"):
+                    continue
+                title = html.unescape(re.sub(r"<[^>]+>", "", inner)).strip()
+                if len(title) < 2:
                     continue
                 results.append({"title": title, "url": url, "snippet": ""})
                 if len(results) >= num_results:
