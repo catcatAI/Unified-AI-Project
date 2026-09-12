@@ -12,6 +12,7 @@ export default [
       "**/__pycache__/**",
       "**/*.min.js",
       "**/*.bundle.js",
+      "**/extracted-content.js",
       "**/coverage/**",
       "**/.cache/**",
       "**/temp/**",

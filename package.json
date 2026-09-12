@@ -18,7 +18,7 @@
     "test:coverage": "pytest --cov=apps/backend/src --cov-report=html",
     "lint": "pnpm lint:python && pnpm lint:js",
     "lint:python": "flake8 apps/backend/src tests/ && mypy apps/backend/src",
-    "lint:js": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint:js": "eslint .",
     "format": "pnpm format:python && pnpm format:js",
     "format:python": "black apps/backend/src tests/ && isort apps/backend/src tests/",
     "format:js": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
