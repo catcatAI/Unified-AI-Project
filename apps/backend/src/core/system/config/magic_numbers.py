@@ -5,7 +5,10 @@ All values loaded from TieredConfigLoader with inline fallback defaults.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union, cast
+
+if TYPE_CHECKING:
+    from core.system.config.hardware_profile import HardwareProfile
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +17,7 @@ _HARDWARE_PROFILE: Optional[Any] = None  # lazy-loaded HardwareProfile singleton
 _SUFFIX_LEAF_INDEX: Optional[Tuple[int, Dict[str, Any]]] = None  # (id(config), {key: value})
 
 
-def _get_hardware_profile() -> Optional[Any]:
+def _get_hardware_profile() -> Optional["HardwareProfile"]:
     """Lazy-load and cache HardwareProfile singleton.
 
     Returns None if import fails (graceful degradation).
@@ -35,7 +38,10 @@ def _get_hardware_profile() -> Optional[Any]:
             logger = logging.getLogger(__name__)
             logger.debug("HardwareProfile unavailable, using defaults: %s", e)
             _HARDWARE_PROFILE = False  # sentinel: don't retry
-    return _HARDWARE_PROFILE if _HARDWARE_PROFILE is not False else None
+    profile = _HARDWARE_PROFILE
+    if profile is False or profile is None:
+        return None
+    return cast("HardwareProfile", profile)
 
 
 def _load_config() -> Optional[Dict[str, Any]]:
@@ -159,18 +165,21 @@ def _suffix_matches_indexed(node: Dict[str, Any], key: str) -> list:
     return result
 
 
-def _safe_float(value: Any, default: Any = None) -> Any:
+def _safe_float(value: Any, default: float = 0.0) -> float:
+    """嚴格浮點：轉換失敗回 default（R23 收緊：舊簽名 default=None 會在
+    極端路徑回傳原值，污染全部 typed 包裝函數為 Any）。"""
     try:
         return float(value)
     except (TypeError, ValueError):
-        return default if default is not None else value
+        return default
 
 
-def _safe_int(value: Any, default: Any = None) -> Any:
+def _safe_int(value: Any, default: int = 0) -> int:
+    """嚴格整數：同上。"""
     try:
         return int(value)
     except (TypeError, ValueError):
-        return default if default is not None else value
+        return default
 
 
 def loop_sleep(key: str, default: float = 1.0) -> float:
@@ -269,7 +278,8 @@ def lifecycle_value(key: str, default: float = 0.5) -> float:
 
 def _get_capacity_config() -> Dict[str, Any]:
     """Get the capacity cascade from tiered config: system.capacity.capacity."""
-    return _get("system.capacity.capacity", {})
+    cfg = _get("system.capacity.capacity", {})
+    return cfg if isinstance(cfg, dict) else {}
 
 
 def capacity_bytes(key: str, default: Optional[float] = None) -> Optional[float]:
@@ -284,7 +294,11 @@ def capacity_percent(key: str, default: Optional[float] = None) -> Optional[floa
 
 def capacity_loss_model(key: str, default: str = "precision") -> str:
     """Loss model on cap-hit: 'precision' (graceful) vs 'truncate' (hard)."""
-    return _get_capacity_config().get(key, {}).get("loss_model", default)
+    leaf = _get_capacity_config().get(key, {})
+    if not isinstance(leaf, dict):
+        return default
+    mode = leaf.get("loss_model", default)
+    return mode if isinstance(mode, str) else default
 
 
 def effective_capacity_bytes(
@@ -320,7 +334,8 @@ def effective_capacity_bytes(
 def _get_compute_config() -> Dict[str, Any]:
     """Get compute configuration from tiered config."""
     # Config is nested: system.compute.compute
-    return _get("system.compute.compute", {})
+    cfg = _get("system.compute.compute", {})
+    return cfg if isinstance(cfg, dict) else {}
 
 
 def compute_mode(feature: str, default: str = "auto") -> str:
@@ -329,10 +344,14 @@ def compute_mode(feature: str, default: str = "auto") -> str:
     # Check feature-specific mode first
     feature_cfg = config.get(feature, {})
     if isinstance(feature_cfg, dict) and "mode" in feature_cfg:
-        return feature_cfg["mode"]
+        mode = feature_cfg["mode"]
+        return mode if isinstance(mode, str) else default
     # Fall back to global mode
     global_cfg = config.get("global", {})
-    return global_cfg.get("mode", default)
+    if not isinstance(global_cfg, dict):
+        return default
+    mode = global_cfg.get("mode", default)
+    return mode if isinstance(mode, str) else default
 
 
 def compute_bool(feature: str, default: bool = True) -> bool:
@@ -349,11 +368,11 @@ def compute_bool(feature: str, default: bool = True) -> bool:
         profile_cfg = _get_compute_config().get("profiles", {}).get(profile.scenario.value, {})
         feature_profile = profile_cfg.get(feature, {})
         if "mode" in feature_profile:
-            return feature_profile["mode"] != "off"
+            return bool(feature_profile["mode"] != "off")
         # Check global profile override
         global_profile = profile_cfg.get("global", {})
         if "mode" in global_profile:
-            return global_profile["mode"] != "off"
+            return bool(global_profile["mode"] != "off")
         # Check force_cpu_on_low_power
         if profile_cfg.get("force_cpu_on_low_power", True):
             if profile.scenario in (HardwareScenario.LAPTOP_POWER_SAVER, HardwareScenario.LOW_POWER_DEVICE):
@@ -426,7 +445,10 @@ def compute_log_fallback() -> bool:
     """Whether to log GPU->CPU fallback events."""
     config = _get_compute_config()
     global_cfg = config.get("global", {})
-    return global_cfg.get("log_fallback", True)
+    if not isinstance(global_cfg, dict):
+        return True
+    # bool() 保真：呼叫方皆作 truthiness 用，與舊 raw 回傳一致。
+    return bool(global_cfg.get("log_fallback", True))
 
 
 # =============================================================================
@@ -500,7 +522,7 @@ def model_sizing_config() -> Dict[str, int]:
 def _probe_ram_total_gb() -> Optional[float]:
     """Total physical RAM in GB (best-effort), else None."""
     try:
-        import psutil  # type: ignore[import-untyped]
+        import psutil
 
         return psutil.virtual_memory().total / (1024**3)
     except Exception as e:

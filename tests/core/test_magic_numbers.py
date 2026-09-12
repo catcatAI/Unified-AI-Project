@@ -86,3 +86,31 @@ class TestMagicNumbersSuffixLookup:
         cfg = _get("system.compute.compute", {})
         assert isinstance(cfg, dict)
         assert "ed3n_snn" in cfg
+
+
+class TestStrictNumericContracts:
+    """R23: _safe_float/int 收緊後仍回 default（不透傳原值），且型別誠實。"""
+
+    def test_safe_float_bad_value_returns_default(self):
+        from core.system.config.magic_numbers import _safe_float
+        assert _safe_float("abc", 1.5) == 1.5
+        assert _safe_float(None, 2.0) == 2.0
+        assert isinstance(_safe_float("12.5", 0.0), float)
+
+    def test_safe_int_bad_value_returns_default(self):
+        from core.system.config.magic_numbers import _safe_int
+        assert _safe_int("abc", 7) == 7
+        assert _safe_int(None, 3) == 3
+        assert isinstance(_safe_int("12", 0), int)
+
+    def test_wrappers_return_typed_values(self):
+        from core.system.config.magic_numbers import (
+            cache_value,
+            compute_log_fallback,
+            limit_value,
+            timeout_value,
+        )
+        assert isinstance(timeout_value("nonexistent.key.xyz", 30.0), float)
+        assert isinstance(cache_value("nonexistent.key.xyz", 100), int)
+        assert isinstance(limit_value("nonexistent.key.xyz", 100), int)
+        assert isinstance(compute_log_fallback(), bool)
