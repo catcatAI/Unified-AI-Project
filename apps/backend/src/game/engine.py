@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import random
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from .i18n import I18n
 from .models import Character, Scene, GameState, Message
@@ -22,7 +22,7 @@ from .token_effects import (
 DATA_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent / "apps" / "game-rpg" / "data"
 CARDS_PATH = DATA_DIR / "game_cards.json"
 
-WORLDS = {
+WORLDS: Dict[str, Dict[str, Any]] = {
     "W01": {
         "name_key": "world_w01",
         "desc_key": "world_w01_desc",
@@ -67,7 +67,9 @@ NPC_LINES = {
 
 def load_cards(path: Path = CARDS_PATH) -> dict:
     with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+        # 損毀的合法 JSON 非 dict 會污染呼叫方（同 task 備援 R15 模式）。
+        return data if isinstance(data, dict) else {}
 
 
 def _find_card(cards: list[dict], card_id: str) -> Optional[dict]:
@@ -77,7 +79,7 @@ def _find_card(cards: list[dict], card_id: str) -> Optional[dict]:
     return None
 
 
-def _extract_stat(card: dict, *keys: str, default="") -> str:
+def _extract_stat(card: dict, *keys: str, default: str = "") -> str:
     stats = card.get("stats", {})
     for k in keys:
         if k in stats:
@@ -114,7 +116,7 @@ class GameEngine:
         self.npcs: list[NPC] = []
         self.hour: int = 12  # current game hour
         self._showing_interaction: bool = False
-        self._pending_npc = None
+        self._pending_npc: Optional[NPC] = None
         self._interaction_choices: list = []
 
     @property
@@ -399,7 +401,9 @@ class GameEngine:
             self._check_quest_progress("ask_info", npc_name=npc.name)
 
         elif action_key == "ask_help":
-            if npc.disposition > 0.6:
+            # disposition 為 NPC 模型的 0-100 整數尺度（曾誤寫 0.6/1.0/0.1，
+            # 使高低判幾乎恆真且一次求助就把值壓成 1.0）。
+            if npc.disposition > 60:
                 heal = random.randint(10, 25)
                 s.pc.hp = min(s.pc.max_hp, s.pc.hp + heal)
                 spirit = random.randint(5, 15)
@@ -421,7 +425,7 @@ class GameEngine:
             if s.pc.inventory:
                 item = s.pc.inventory[0]
                 s.pc.inventory.pop(0)
-                npc.disposition = min(1.0, npc.disposition + 0.1)
+                npc.disposition = min(100, npc.disposition + 10)
                 s.messages.append(Message(
                     speaker=npc.name,
                     text=self.i18n.t("npc_item_received", name=npc.name, item=item),
@@ -461,7 +465,7 @@ class GameEngine:
             ("nothing", 0.50),
         ]
         roll = random.random()
-        cumulative = 0
+        cumulative = 0.0
         event_type = "nothing"
         for etype, prob in travel_events:
             cumulative += prob

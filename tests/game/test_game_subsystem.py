@@ -91,6 +91,35 @@ class TestGameEngine:
         engine = GameEngine()
         assert engine is not None
 
+    def test_give_item_preserves_disposition_scale(self):
+        """R22: 送禮不得把 0-100 壓成 1.0（曾 min(1.0, +0.1) 毀值）。"""
+        engine = GameEngine()
+        engine.new_game()
+        npc = engine.npcs[0]
+        npc.disposition = 50
+        engine._pending_npc = npc
+        engine._interaction_choices = [("give_item", "送禮")]
+        engine._handle_interaction_choice(0)
+        assert npc.disposition == 60
+
+    def test_ask_help_gated_by_disposition_scale(self):
+        """R22: 好感門限走 0-100 尺度（曾 >0.6 恆真）；低好感不回血。"""
+        engine = GameEngine()
+        state = engine.new_game()
+        npc = engine.npcs[0]
+        engine._pending_npc = npc
+        engine._interaction_choices = [("ask_help", "求助")]
+        npc.disposition = 10
+        hp_before = state.pc.hp
+        engine._handle_interaction_choice(0)
+        assert state.pc.hp == hp_before
+        npc.disposition = 90
+        state.pc.hp = 1
+        engine._pending_npc = npc
+        engine._interaction_choices = [("ask_help", "求助")]
+        engine._handle_interaction_choice(0)
+        assert state.pc.hp > 1
+
     def test_i18n_translates(self):
         i18n = I18n("zh")
         assert hasattr(i18n, "t") or hasattr(i18n, "translate")
