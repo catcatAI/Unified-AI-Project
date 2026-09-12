@@ -97,7 +97,13 @@ _ACTIONABILITY_BASE = {
 _ACTIONABILITY_DEFAULT = 0.3
 _ACTIONABILITY_VERB_BONUS = 0.1
 
-# 土木防誤判門控（本輪新增）：「板」單字誤傷電腦主板類；強複合詞則為真土木信號。
+# 文件實體信號（R13 任務領域優先用）：有此才信 file 命中，
+# 否則通用動詞（建立/刪除/新建/修改）讓位給 task。
+_FILE_SPECIFIC = re.compile(
+    r"(文件|檔案|資料夾|文件夹|目錄|目录|路徑|路径|備份|备份|\.\w{1,8}|/)",
+    re.IGNORECASE,
+)
+# 土木防誤判門控（R1）：「板」單字誤傷電腦主板類；強複合詞則為真土木信號。
 _CIVIL_FALSE_POSITIVE = re.compile(
     r"(主板|主機板|主机板|電路板|电路板|\bB\d{3,4}[A-Z]*\b|PCB|黑板|平板|面板)",
     re.IGNORECASE,
@@ -657,7 +663,15 @@ class QueryClassifier:
             # _classify_by_regex 內部處理，主板類不受影響。
             # 否定句除外（不要搜尋）：否定翻轉意圖，不疊加匹配加成，
             # 且閘門本就會 negation_reject。
-            if result.confidence < 0.7 and not has_negation:
+            cede = result.confidence < 0.7 and not has_negation
+            # 任務領域優先（R13）：字典 file + task 命中 + 無文件實體信號時
+            # 同樣讓位（「建立任務：買牛奶」字典 file 0.70 卡邊界）。
+            if not cede and not has_negation and result.primary_type == QueryType.FILE:
+                cede = not _FILE_SPECIFIC.search(text) and any(
+                    qt == QueryType.TASK and pattern.search(text)
+                    for qt, pattern, _ in self._patterns
+                )
+            if cede:
                 regex_result = self._classify_by_regex(text, has_negation)
                 if (
                     regex_result is not None
@@ -750,6 +764,11 @@ class QueryClassifier:
                     )
                 )
         matches.sort(key=lambda x: (x[1], x[2]), reverse=True)
+        # 任務領域優先（R13）：task 與 file 同中時，若無文件實體信號
+        # （文件/路徑/副檔名/備份），file 屬通用動詞（建立/刪除）誤中——
+        # 「建立任務：買牛奶」曾判 file/create 走檔案操作要路徑。
+        if any(m[0] == QueryType.TASK for m in matches) and not _FILE_SPECIFIC.search(text):
+            matches = [m for m in matches if m[0] != QueryType.FILE]
         if matches:
             primary = matches[0]
             secondary = (

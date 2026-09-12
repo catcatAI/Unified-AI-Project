@@ -6,17 +6,23 @@ handler 註冊複用 AngelaLLMService._register_model_bus_handlers（單一真�
 不另寫鏡像）。只執行 auto_execute 且本地安全項；confirm 項驗 verdict +
 handler 可解（模擬用戶確認前不執行）；網路項（search）只驗 verdict。
 
-退出碼：0 全過 / 1 任一失敗（ Baselines: 正式版 RELEASE_CRITERIA.md）。
+退出碼：0 全過 / 1 任一失敗（判定基線：正式版 RELEASE_CRITERIA.md）。
+task 寫入已隔離（HOME 指向 tmp，見上），其餘皆唯讀或本地安全項。
 """
 
 import asyncio
 import os
 import sys
+import tempfile
 import types
+
+# task 寫入隔離：必須在 backend 模組 import 前設定，否則
+# TaskManagerHandler 的 _TASKS_DIR 已綁定真實家目錄（R13）。
+os.environ["HOME"] = tempfile.mkdtemp(prefix="e2e-fakehome-")
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/src"))
 
-# auto + 本地執行（ Garbage-free, 無網路、無寫入用戶態）
+# auto + 本地執行（ Garbage-free, 無網路、用戶態寫入限隔離 HOME）
 EXEC_CASES = [
     # (用戶文本, 期望 type, 期望 gate, 期望 handler, 回應必須含)
     ("梁計算 b=300 d=450 As=1256", "civil", "auto_execute", "civil", "M_Rd="),
@@ -28,6 +34,9 @@ EXEC_CASES = [
         "vision",
         "（視覺分析）",
     ),
+    ("建立任務：買牛奶", "task", "auto_execute", "task_mgr", "買牛奶"),
+    ("任務列表", "task", "auto_execute", "task_mgr", "買牛奶"),
+    ("完成任務 #1", "task", "auto_execute", "task_mgr", "完成"),
 ]
 
 # confirm：只驗 verdict + handler 可解（不模擬用戶按確認）
@@ -35,6 +44,7 @@ CONFIRM_CASES = [
     ("執行 pwd", "execute", "confirm_then_execute", "code_exec"),
     ("提交報告", "system", "confirm_then_execute", "system_cmd"),
     ("整理桌面文件", "file", "confirm_then_execute", "file_ops"),
+    ("刪除任務 #1", "task", "confirm_then_execute", "task_mgr"),
 ]
 
 # 非動作：閘門應拒絕（交 LLM），不打擾用戶

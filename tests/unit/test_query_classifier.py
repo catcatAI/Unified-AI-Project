@@ -205,3 +205,17 @@ class TestWiringSweepAntiMisjudgment:
         from ai.core.query_classifier import QueryClassifier, QueryType
 
         assert QueryClassifier().classify("B550M主板").primary_type != QueryType.CIVIL
+
+    def test_task_domain_beats_generic_file_verbs(self):
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        for s in ("建立任務：買牛奶", "刪除任務 #1"):
+            result = QueryClassifier().classify(s)
+            assert result.primary_type == QueryType.TASK, s
+
+    def test_file_with_entity_signal_stays_file(self):
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        for s in ("刪除桌面文件", "建立 notes.md", "整理桌面文件"):
+            result = QueryClassifier().classify(s)
+            assert result.primary_type == QueryType.FILE, s

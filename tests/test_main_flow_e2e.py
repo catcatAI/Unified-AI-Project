@@ -19,4 +19,4 @@ def test_main_flow_e2e_passes():
         cwd=repo_root,
     )
     assert p.returncode == 0, p.stdout[-1500:] + p.stderr[-500:]
-    assert "9/9 通過" in p.stdout
+    assert "13/13 通過" in p.stdout
