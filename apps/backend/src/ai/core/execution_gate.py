@@ -146,6 +146,59 @@ class ExecutionGate:
         "civil": "civil",
     }
 
+    # 末端反代契約（雙向判定的反向）：handler 聲明自己接受的動作詞彙。
+    # 順向（classify→HANDLER_MAP）只管「意圖是哪類」；反向管「此動作本工具
+    # 做不做」。覆蓋 = classifier（regex _infer + dictionary）可發出的全集；
+    # 未來新增動作預設是「不接受」——顯式 reject（理由指名），而非掉進
+    # 0.5 預設分靜默誤判（R3 file/organize 0.18 教訓）。增減時同步改測試
+    # TestDictionaryActionVocabulary + TestHandlerReverseContract。
+    HANDLER_ACTION_CONTRACT = {
+        "file_ops": frozenset(
+            {
+                "read",
+                "create",
+                "modify",
+                "delete",
+                "write",
+                "move",
+                "copy",
+                "rename",
+                "organize",
+                "clean",
+                "list",
+            }
+        ),
+        "web_search": frozenset({"search", "read", "modify"}),
+        "code_exec": frozenset(
+            {
+                "system",
+                "execute",
+                "modify",
+                "read",
+                "create",
+                "open",
+                "close",
+                "start",
+                "stop",
+                "pause",
+                "download",
+                "upload",
+            }
+        ),
+        "system_cmd": frozenset({"system", "send", "none"}),
+        "task_mgr": frozenset({"create", "delete", "modify", "read"}),
+        "vision": frozenset({"read", "modify"}),
+        "civil": frozenset({"none"}),
+    }
+
+    @classmethod
+    def handler_accepts(cls, handler_id: str, action_type: str) -> bool:
+        """末端反代判定：handler 是否接受此動作。未知 handler 保守拒絕。"""
+        accepted = cls.HANDLER_ACTION_CONTRACT.get(handler_id)
+        if accepted is None:
+            return False
+        return action_type in accepted
+
     # C³ 6.0: Class-level shared results dict for cross-instance feedback persistence.
     # Was instance-level (self._results) — feedback was lost every turn because
     # each _handle_execution_gate() call creates a new ExecutionGate instance.
@@ -268,6 +321,33 @@ class ExecutionGate:
                 action="reject",
                 score=score,
                 reason=f"non_actionable_query_type_{query_type}",
+                original_query=user_message,
+            )
+
+        # 末端反代（雙向判定的反向）：順向選出的 handler 若聲明不接受此動作，
+        # 顯式拒絕並指名——不讓未知動作掉進分數公式靜默處理。
+        if (
+            handler_id
+            and action_type != "none"
+            and not self.handler_accepts(handler_id, action_type)
+        ):
+            state_store.emit_event(
+                "execution.gate_decided",
+                {
+                    "action": "reject",
+                    "score": round(score, 3),
+                    "handler": handler_id,
+                    "query_type": query_type,
+                    "action_type": action_type,
+                    "reason": f"action_not_supported_by_{handler_id}",
+                },
+            )
+            return GateDecision(
+                action="reject",
+                score=score,
+                handler=handler_id,
+                action_type=action_type,
+                reason=(f"action '{action_type}' not supported by handler '{handler_id}'"),
                 original_query=user_message,
             )
 

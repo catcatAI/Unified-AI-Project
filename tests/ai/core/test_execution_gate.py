@@ -431,3 +431,43 @@ class TestDictionaryActionVocabulary:
         ):
             assert verb in REVERSIBILITY, verb
             assert verb in IMPACT_BASE, verb
+
+
+class TestHandlerReverseContract:
+    """雙向判定的反向（末端反代）：順向選出 handler 後，handler 再驗動作。
+    順向（意圖樹）解決「找誰」，反向（工具契約）解決「做不做」——
+    單向鍵錯位（如 R3 的 organize 缺席）在此層顯式報出，不靜默。」"""
+
+    def setup_method(self):
+        self.gate = ExecutionGate()
+
+    def test_known_combos_pass_through(self):
+        cases = [
+            ("file", "organize", "整理桌面文件", 0.92),
+            ("file", "list", "列出桌面文件", 0.92),
+            ("file", "clean", "清理下載文件夾", 0.79),
+            ("search", "search", "搜尋台北天氣", 0.92),
+            ("code", "system", "寫個Python快排函數", 0.90),
+            ("execute", "execute", "執行磁碟檢查", 0.92),
+            ("task", "create", "提醒我明早九點開會", 0.65),
+            ("vision", "read", "這張圖片裡有什麼", 0.65),
+            ("civil", "none", "梁跨度8米配筋多少", 0.90),
+            ("system", "send", "system action", 0.80),
+        ]
+        for qt, at, msg, cf in cases:
+            d = self.gate.decide(qt, at, msg, cf, {})
+            assert "not_supported" not in d.reason, (qt, at, d.reason)
+
+    def test_unsupported_action_rejected_explicitly(self):
+        d = self.gate.decide("file", "teleport", "傳送文件到火星", 0.9, {})
+        assert d.action == "reject"
+        assert d.reason == "action 'teleport' not supported by handler 'file_ops'"
+
+    def test_handler_accepts_unknown_handler_closed(self):
+        assert ExecutionGate.handler_accepts("file_ops", "organize") is True
+        assert ExecutionGate.handler_accepts("file_ops", "teleport") is False
+        assert ExecutionGate.handler_accepts("no_such_handler", "read") is False
+
+    def test_contract_covers_all_handler_map_types(self):
+        for qt, handler in ExecutionGate.HANDLER_MAP.items():
+            assert handler in ExecutionGate.HANDLER_ACTION_CONTRACT, (qt, handler)
