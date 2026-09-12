@@ -10,7 +10,7 @@ Hardware Profile — 硬體檢測與自適應配置。
 import logging
 import os
 import platform
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class HardwareProfile:
     def _get_ram_gb() -> float:
         try:
             import psutil
-            return psutil.virtual_memory().total / (1024 ** 3)
+            return float(psutil.virtual_memory().total / (1024 ** 3))
         except ImportError:
             pass
         try:
@@ -83,7 +83,14 @@ class HardwareProfile:
         glxinfo renderer + Video memory -> /dev/dri fallback.
         Returns actual specs, not form-factor labels.
         """
-        result = {"gpu": None, "gpu_memory_gb": 0, "gpu_vendor": None, "gpu_device_id": None}
+        # 顯式註記：字面量 {None, 0} 會被推斷為 int|None，後續 str/float
+        # 賦值全報錯（R19 一行清 25 個）；與 declared Dict[str, Any] 對齊。
+        result: Dict[str, Any] = {
+            "gpu": None,
+            "gpu_memory_gb": 0,
+            "gpu_vendor": None,
+            "gpu_device_id": None,
+        }
         import subprocess
 
         # 1) NVIDIA via nvidia-smi (most precise for NVIDIA)
@@ -92,8 +99,8 @@ class HardwareProfile:
                 ["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader,nounits"],
                 stderr=subprocess.DEVNULL,
                 timeout=5,
-            )
-            lines = out.decode().strip().split("\n")
+            ).decode()
+            lines = out.strip().split("\n")
             if lines and lines[0].strip():
                 parts = lines[0].split(",")
                 if len(parts) >= 2:
@@ -189,21 +196,22 @@ class HardwareProfile:
             out = subprocess.check_output(
                 ["glxinfo"], stderr=subprocess.DEVNULL, timeout=5
             ).decode()
-            vram_mb = None
-            renderer = None
+            # 與第 2) 段同名變量隔離（同函數三段各用各的；曾致 Optional 交叉污染）。
+            vram3_mb: Optional[int] = None
+            renderer3: Optional[str] = None
             for line in out.splitlines():
                 if "Video memory:" in line or "Dedicated video memory:" in line:
                     import re
                     m = re.search(r"(\d+)\s*MB", line)
                     if m:
-                        vram_mb = int(m.group(1))
+                        vram3_mb = int(m.group(1))
                 if "OpenGL renderer string" in line:
-                    renderer = line.split(":", 1)[-1].strip()
-            if renderer:
-                low = renderer.lower()
-                result["gpu"] = renderer
-                if vram_mb:
-                    result["gpu_memory_gb"] = round(vram_mb / 1024, 1)
+                    renderer3 = line.split(":", 1)[-1].strip()
+            if renderer3:
+                low = renderer3.lower()
+                result["gpu"] = renderer3
+                if vram3_mb:
+                    result["gpu_memory_gb"] = round(vram3_mb / 1024, 1)
                 elif "arc" in low:
                     if "b580" in low:
                         result["gpu_memory_gb"] = 12
