@@ -140,6 +140,89 @@ def test_main_over_budget_returns_1_with_diag(tmp_path, monkeypatch):
     assert "## DIAG" in body and "status: fail" in body
 
 
+def _run_map(mod, monkeypatch, root, out, *extra):
+    import sys
+
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "gen_project_map.py",
+            "--root",
+            str(root),
+            "--output",
+            str(out),
+            "--history",
+            str(out) + ".hist.jsonl",
+            *extra,
+        ],
+    )
+    return mod.main()
+
+
+def test_trend_insufficient_then_stable(tmp_path, monkeypatch):
+    mod = load_tool()
+    tiny = tmp_path / "t"
+    (tiny / "scripts").mkdir(parents=True)
+    (tiny / "scripts" / "a.py").write_text("X = 1\n", encoding="utf-8")
+    out = tmp_path / "map.md"
+    assert _run_map(mod, monkeypatch, tiny, out) == 0
+    assert "insufficient history" in out.read_text(encoding="utf-8")
+    assert _run_map(mod, monkeypatch, tiny, out) == 0
+    body = out.read_text(encoding="utf-8")
+    assert "verdict: stable" in body
+
+
+def test_trend_degrading_on_growth(tmp_path, monkeypatch):
+    mod = load_tool()
+    tiny = tmp_path / "t"
+    (tiny / "scripts").mkdir(parents=True)
+    out = tmp_path / "map.md"
+    for round_ in range(3):
+        d = tiny / "scripts" / f"batch{round_}"
+        d.mkdir(parents=True)
+        for i in range(30):
+            (d / f"f{i}.py").write_text("X = 1\n", encoding="utf-8")
+        assert _run_map(mod, monkeypatch, tiny, out) == 0
+    assert "verdict: degrading" in out.read_text(encoding="utf-8")
+
+
+def test_no_history_flag(tmp_path, monkeypatch):
+    mod = load_tool()
+    tiny = tmp_path / "t"
+    (tiny / "scripts").mkdir(parents=True)
+    (tiny / "scripts" / "a.py").write_text("X = 1\n", encoding="utf-8")
+    out = tmp_path / "map.md"
+    assert _run_map(mod, monkeypatch, tiny, out, "--no-history") == 0
+    body = out.read_text(encoding="utf-8")
+    assert "history disabled" in body and "## DIAG" in body
+    assert not (tmp_path / "map.md.hist.jsonl").exists()
+
+
+def test_history_corrupt_tolerated(tmp_path, monkeypatch):
+    mod = load_tool()
+    tiny = tmp_path / "t"
+    (tiny / "scripts").mkdir(parents=True)
+    (tiny / "scripts" / "a.py").write_text("X = 1\n", encoding="utf-8")
+    out = tmp_path / "map.md"
+    hist = tmp_path / "map.md.hist.jsonl"
+    hist.write_text("NOT JSON{{{\n", encoding="utf-8")
+    assert _run_map(mod, monkeypatch, tiny, out) == 0
+    assert "insufficient history" in out.read_text(encoding="utf-8")
+
+
+def test_self_artifacts_excluded_from_scan(tmp_path):
+    mod = load_tool()
+    tiny = tmp_path / "t"
+    (tiny / "docs").mkdir(parents=True)
+    (tiny / "docs" / "PROJECT_MAP_GENERATED.md").write_text("old\n", encoding="utf-8")
+    (tiny / "docs" / ".project_map_history.jsonl").write_text("{}\n", encoding="utf-8")
+    (tiny / "docs" / "NOTE.md").write_text("n\n", encoding="utf-8")
+    rels = [rel for rel, _, _ in mod.walk_files(str(tiny))]
+    assert "docs/NOTE.md" in rels
+    assert not any("PROJECT_MAP_GENERATED.md" in r for r in rels)
+    assert not any(".project_map_history.jsonl" in r for r in rels)
+
+
 def test_dep_usage_unused_and_noqa(tmp_path):
     mod = load_tool()
     d = tmp_path / "s"

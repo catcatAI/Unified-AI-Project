@@ -11,12 +11,14 @@
 
 P0：分域檔案預算（超任一域亦 exit 1）+ `## DIAG` 機器可讀尾段 +
 孤兒 L1/L2/L3 分級（僅 L1 展開）。退出碼：0 內 / 1 超標 / 2 工具錯。
+P1：`## TREND` 快照（jsonl 輪轉 20 次，只報告不進門；--no-history 可關）。
 """
 
 import argparse
 import ast
 import datetime
 import hashlib
+import json
 import os
 import re
 import sys
@@ -27,6 +29,10 @@ EXCLUDE_DIRS = {
     ".mypy_cache", ".ruff_cache",
 }
 SKIP_EXT = {".pyc", ".pyo", ".pyd", ".so", ".o"}
+# 工具自身產物不量（自量衛生）：生成地圖 + 歷史快照若被掃入，
+# 每次跑步都會因「多了上次的自己」而漂移（實測：歷史檔使 docs/ 25→26 檔，
+# 觸發 25 檔折疊懸崖，總數擺動 25 行）。
+SKIP_NAMES = {"PROJECT_MAP_GENERATED.md", ".project_map_history.jsonl"}
 
 # 已知有意鏡像根：組內路徑全落此即壓成一行（雙端資產/test 產物，定性過）
 MIRROR_ROOTS = (
@@ -128,6 +134,71 @@ def render_diag(status, total, budget, usage, over_domains, counts, top_block):
     return lines
 
 
+# 趨勢快照（P1）：只報告、不進門（惡化也不 exit 1，不斷 CI）。
+# 歷史檔 gitignored（本地趨勢）；損毀/缺失一律視為空，不拖累主流程。
+HISTORY_KEEP = 20
+
+
+def load_history(path):
+    try:
+        with open(path, encoding="utf-8") as f:
+            rows = [json.loads(line) for line in f if line.strip()]
+        return [r for r in rows if isinstance(r, dict) and "total" in r][-HISTORY_KEEP:]
+    except (OSError, ValueError):
+        return []
+
+
+def append_history(path, record):
+    """附加一筆並輪轉；失敗回 False（呼叫方繼續，不影響退出碼）。"""
+    try:
+        hist = load_history(path)
+        hist.append(record)
+        hist = hist[-HISTORY_KEEP:]
+        parent = os.path.dirname(os.path.abspath(path))
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            for r in hist:
+                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        return True
+    except OSError:
+        return False
+
+
+def render_trend(hist):
+    """由舊→新算 verdict：連 3 次上升=degrading；只看快照，不看單次噪聲。"""
+    lines = ["## TREND", ""]
+    if len(hist) < 2:
+        lines += ["runs: %d" % len(hist), "verdict: insufficient history", ""]
+        return lines
+    prev, cur = hist[-2], hist[-1]
+    d_total = cur["total"] - prev["total"]
+    d_l1 = cur.get("L1", 0) - prev.get("L1", 0)
+    # 尾段連續上升步數（由新往舊數，斷即停）
+    rises = 0
+    for i in range(len(hist) - 1, 0, -1):
+        if hist[i]["total"] > hist[i - 1]["total"]:
+            rises += 1
+        else:
+            break
+    if rises >= 2:
+        verdict = f"degrading ({rises + 1} consecutive rises)"
+    elif d_total < 0:
+        verdict = "improving"
+    elif d_total == 0 and d_l1 <= 0:
+        verdict = "stable"
+    else:
+        verdict = "watch (up once)"
+    lines += [
+        f"runs: {len(hist)}",
+        f"prev_total: {prev['total']} / delta: {d_total:+d}",
+        f"prev_L1: {prev.get('L1', 0)} / delta: {d_l1:+d}",
+        f"verdict: {verdict}",
+        "",
+    ]
+    return lines
+
+
 def walk_files(root):
     out = []
     for dirpath, dirnames, filenames in os.walk(root):
@@ -136,6 +207,8 @@ def walk_files(root):
         )
         for fn in sorted(filenames):
             if os.path.splitext(fn)[1] in SKIP_EXT:
+                continue
+            if fn in SKIP_NAMES:
                 continue
             fp = os.path.join(dirpath, fn)
             try:
@@ -329,6 +402,8 @@ def block_collisions(root, files):
         items = dirs[d]
         tot = sum(s for _, s in items)
         label = d if d else "(根)"
+        # 已知限制：25 檔折疊是懸崖（某域 25→26 檔時總數擺動 ~25 行）；
+        # TREND 只認「連 3 次上升」，單次懸崖不判 degrading。
         if len(items) <= 25:
             lines.append(f"  - `{label}`：{len(items)} 檔，{tot // 1024}KB")
             for rel, size in sorted(items):
@@ -547,6 +622,8 @@ def main():
     ap.add_argument("--root", default=".")
     ap.add_argument("--output", default="docs/PROJECT_MAP_GENERATED.md")
     ap.add_argument("--budget", type=int, default=10000)
+    ap.add_argument("--history", default="docs/.project_map_history.jsonl")
+    ap.add_argument("--no-history", action="store_true")
     args = ap.parse_args()
     root = os.path.abspath(args.root)
 
@@ -591,7 +668,26 @@ def main():
         dict(_LAST_ORPHAN_COUNTS),
         top_block if failed else "",
     )
-    out = head + body + diag
+    # 趨勢：歷史只記三區塊行數+孤兒+分域（與預算同口徑）；TREND 段不計入預算。
+    trend = []
+    if not args.no_history:
+        record = {
+            "date": str(datetime.date.today()),
+            "total": total,
+            "L1": _LAST_ORPHAN_COUNTS.get("L1", 0),
+            "L2": _LAST_ORPHAN_COUNTS.get("L2", 0),
+            "L3": _LAST_ORPHAN_COUNTS.get("L3", 0),
+            "backend": usage.get("apps/backend/src", 0),
+            "scripts": usage.get("scripts", 0),
+            "desktop": usage.get("apps/desktop-app", 0),
+            "packages": usage.get("packages/", 0),
+        }
+        ok_hist = append_history(args.history, record)
+        hist = load_history(args.history) if ok_hist else []
+        trend = render_trend(hist if hist else [record])
+    else:
+        trend = ["## TREND", "", "runs: 0", "verdict: history disabled", ""]
+    out = head + body + trend + diag
     try:
         with open(args.output, "w", encoding="utf-8") as f:
             f.write("\n".join(out))
