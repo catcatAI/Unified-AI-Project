@@ -19,9 +19,17 @@ Author: Angela AI v6.2
 Version: 6.2.1
 """
 
+from typing import Any
+
 from core.state.axis import Axis
 from core.state.axis_field import AxisField, AxisFieldRegistry
 
+# 延遲降級綁定先預聲明（R16；同 handlers/__init__ R14 模式）。
+AnomalyResult: Any
+CorrelationResult: Any
+SnapshotQuery: Any
+TemporalState: Any
+TrendResult: Any
 try:
     from core.state.temporal import (
         AnomalyResult,
@@ -33,6 +41,10 @@ try:
 except ImportError:
     TemporalState = SnapshotQuery = TrendResult = AnomalyResult = CorrelationResult = None
 
+AxisConfig: Any
+AxisFieldConfig: Any
+StateConfig: Any
+StateMatrixConfig: Any
 try:
     from core.state.config_loader import AxisConfig, AxisFieldConfig, StateConfig, StateMatrixConfig
 except ImportError:

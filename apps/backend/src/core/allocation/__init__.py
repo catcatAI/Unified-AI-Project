@@ -11,6 +11,12 @@ Author: Angela AI v6.2
 Version: 6.2.1
 """
 
+from typing import Any
+
+# 延遲降級綁定先預聲明（R16；同 handlers/__init__ R14 模式）。
+ResonanceEngine: Any
+ResonanceProfile: Any
+ResonanceResult: Any
 try:
     from core.allocation.resonance import (
         ResonanceEngine,
@@ -20,13 +26,20 @@ try:
 except ImportError:
     ResonanceEngine = ResonanceResult = ResonanceProfile = None
 
+AllocationAction: Any
+AllocationContext: Any
+AllocationDecision: Any
+AllocationPolicy: Any
+AssignStage: Any
+CompositeStage: Any
+CreateStage: Any
+DeferStage: Any
 try:
     from core.allocation.policy import (
         AllocationAction,
         AllocationContext,
         AllocationDecision,
         AllocationPolicy,
-        AllocationStage,
         AssignStage,
         CompositeStage,
         CreateStage,
@@ -34,8 +47,11 @@ try:
     )
 except ImportError:
     AllocationPolicy = AllocationAction = AllocationContext = AllocationDecision = None
-    AllocationStage = AssignStage = CompositeStage = CreateStage = DeferStage = None
+    AssignStage = CompositeStage = CreateStage = DeferStage = None
 
+CorrectionResult: Any
+DetectionResult: Any
+NegativityDetector: Any
 try:
     from core.allocation.negativity import (
         CorrectionResult,
@@ -53,7 +69,6 @@ __all__ = [
     "AllocationAction",
     "AllocationContext",
     "AllocationDecision",
-    "AllocationStage",
     "AssignStage",
     "CompositeStage",
     "CreateStage",

@@ -2,6 +2,26 @@
 Core Ripple Module — Phase 5
 """
 
+from typing import Any
+
+# 延遲降級綁定先預聲明（R16；同 handlers/__init__ R14 模式）。
+RippleNode: Any
+RippleDepth: Any
+AlgorithmDepth: Any
+MathOp: Any
+CascadeStrategy: Any
+LinearCascade: Any
+ExponentialCascade: Any
+AdaptiveCascade: Any
+AxisRippleApplicator: Any
+AlphaRippleApplicator: Any
+BetaRippleApplicator: Any
+GammaRippleApplicator: Any
+DeltaRippleApplicator: Any
+ThetaRippleApplicator: Any
+EpsilonRippleApplicator: Any
+RippleApplicatorRegistry: Any
+RippleAccumulator: Any
 try:
     from core.ripple.node import (
         AdaptiveCascade,
