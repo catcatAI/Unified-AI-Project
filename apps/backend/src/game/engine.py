@@ -240,7 +240,7 @@ class GameEngine:
         return self._state.pc.hp <= 0 or self._state.turn >= 50
 
     def process_input(self, text: str) -> GameState:
-        s = self._state
+        s = self.state
         text = text.strip()
         if not text:
             return s
@@ -266,7 +266,7 @@ class GameEngine:
         return s
 
     def _handle_choice(self, idx: int) -> None:
-        s = self._state
+        s = self.state
 
         # Interaction mode: different choices when talking to NPC
         if self._showing_interaction:
@@ -319,7 +319,7 @@ class GameEngine:
             self._npc_respond("action")
 
     def _npc_respond(self, mode: str):
-        s = self._state
+        s = self.state
         if not self.npcs:
             lines = self.i18n.t("no_one_nearby", default="這裡沒有人。")
             s.messages.append(Message(speaker="system", text=lines, kind="system"))
@@ -363,9 +363,12 @@ class GameEngine:
         self._showing_interaction = True
 
     def _handle_interaction_choice(self, idx: int) -> None:
-        s = self._state
+        s = self.state
         action_key, label = self._interaction_choices[idx]
         npc = self._pending_npc
+        # 交互對象可能已清空（離開後）：無對象即無操作，不崩潰。
+        if npc is None:
+            return
         s.messages.append(Message(speaker="你", text=label, kind="action"))
 
         if action_key == "accept_quest":
@@ -444,7 +447,7 @@ class GameEngine:
         self._interaction_choices = []
 
     def _advance_scene(self) -> None:
-        s = self._state
+        s = self.state
         world = WORLDS.get(self.selected_world, WORLDS["W01"])
         scene_ids = world["scenes"]
         current_idx = scene_ids.index(s.scene.card_id) if s.scene.card_id in scene_ids else 0
@@ -527,7 +530,7 @@ class GameEngine:
                 s.messages.append(Message(speaker="system", text=self.i18n.t("narration_no_npcs"), kind="narration"))
 
     def _rest(self) -> None:
-        s = self._state
+        s = self.state
         heal = min(20, s.pc.max_hp - s.pc.hp)
         spirit_restore = min(15, s.pc.max_spirit - s.pc.spirit)
         s.pc.hp += heal
@@ -570,7 +573,7 @@ class GameEngine:
             ))
 
     def _combat(self, text: str) -> None:
-        s = self._state
+        s = self.state
         # Generate a real enemy
         enemies = {
             "zh": [
@@ -652,7 +655,7 @@ class GameEngine:
             ))
 
     def _observe(self) -> None:
-        s = self._state
+        s = self.state
         # Find something specific in the scene
         discoveries = [
             self.i18n.t("observe_footprints"),
@@ -715,13 +718,13 @@ class GameEngine:
             ))
 
     def _show_inventory(self) -> None:
-        s = self._state
+        s = self.state
         items = ", ".join(s.pc.inventory) if s.pc.inventory else self.i18n.t("empty")
         msg = self.i18n.t("inventory_msg", items=items)
         s.messages.append(Message(speaker="system", text=msg, kind="system"))
 
     def _show_status(self) -> None:
-        s = self._state
+        s = self.state
         lines = [
             s.pc.name,
             f"HP:  {s.pc.hp_bar} {s.pc.hp}/{s.pc.max_hp}",
@@ -736,7 +739,7 @@ class GameEngine:
         s.messages.append(Message(speaker="system", text="\n".join(lines), kind="system"))
 
     def _show_quests(self) -> None:
-        s = self._state
+        s = self.state
         active = self.quest_log.get_active()
         completed = self.quest_log.get_completed()
         if not active and not completed:
@@ -753,7 +756,7 @@ class GameEngine:
         s.messages.append(Message(speaker="system", text="\n".join(lines), kind="system"))
 
     def _show_npc_info(self) -> None:
-        s = self._state
+        s = self.state
         if not self.npcs:
             s.messages.append(Message(speaker="system", text=self.i18n.t("no_npcs_here"), kind="system"))
             return
@@ -765,7 +768,7 @@ class GameEngine:
         s.messages.append(Message(speaker="system", text="\n".join(lines), kind="system"))
 
     def _refresh_choices(self) -> None:
-        s = self._state
+        s = self.state
         if self._showing_interaction:
             s.choices = [label for _, label in self._interaction_choices]
         else:
@@ -782,7 +785,7 @@ class GameEngine:
 
     def _check_quest_progress(self, action: str, npc_name: str = "") -> None:
         """Check if any quest objectives should be completed by the given action."""
-        s = self._state
+        s = self.state
         scene_id = s.scene.card_id
 
         # Map interaction actions to base actions for quest matching
