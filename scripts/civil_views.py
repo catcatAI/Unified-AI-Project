@@ -6,10 +6,8 @@
 """
 
 import argparse
-import math
 import os
 import subprocess
-import sys
 
 
 def run(cmd, timeout):

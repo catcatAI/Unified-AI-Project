@@ -11,7 +11,6 @@
 import argparse
 import json
 import os
-import sys
 
 DB = os.path.join(
     os.path.dirname(__file__), "..", "data", "materials", "civil_materials.json"

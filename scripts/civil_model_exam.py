@@ -6,7 +6,6 @@
 
 import re
 import subprocess
-import sys
 
 QWEN = ("/home/cxuo/.cache/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct-GGUF"
         "/snapshots/9217f5db79a29953eb74d5343926648285ec7e67"

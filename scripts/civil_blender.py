@@ -1,7 +1,6 @@
 # 在 Blender 內執行：blender --background --python civil_blender.py -- --b 300 --d 450 --L 6000
 # 參數化梁：箱體 + 角部縱筋（圓柱）→ 導出 STL。單位：mm 轉 m。
 import argparse
-import os
 import sys
 
 import bpy

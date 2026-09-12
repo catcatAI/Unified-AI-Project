@@ -8,7 +8,6 @@
 import argparse
 import os
 import subprocess
-import sys
 
 FC_MACRO = "/tmp/fc_beam.py"
 

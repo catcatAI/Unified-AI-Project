@@ -14,7 +14,6 @@
 
 import argparse
 import json
-import sys
 
 SPEC = {
     "groups": {

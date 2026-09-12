@@ -7,7 +7,6 @@
 
 import argparse
 import os
-import sys
 
 OUT = os.path.join(os.path.dirname(__file__), "..", "data", ".cache", "beam_section.dxf")
 
