@@ -170,17 +170,16 @@ class TaskManagerHandler:
         tasks = _load_tasks()
         task_id = payload.get("id")
         new_title = payload.get("title", "")
+        # 無編號時拒絕：曾把首個待辦任意改名為輸入全文（如「更新任務」），
+        # 屬破壞性誤操作，必須指名編號（complete/delete 無 id 只會查無，不寫入）。
+        if not task_id:
+            return t("task_ops.specify_id")
         for task in tasks:
-            if task_id and task.get("id") == task_id:
+            if task.get("id") == task_id:
                 old_title = task["title"]
                 task["title"] = new_title
                 _save_tasks(tasks)
                 return t("task_ops.task_updated", id=task_id, old=old_title, new=new_title)
-            if new_title and task.get("title") != new_title and task.get("status") == "pending":
-                old_title = task["title"]
-                task["title"] = new_title
-                _save_tasks(tasks)
-                return t("task_ops.task_updated", id=task["id"], old=old_title, new=new_title)
         return t("task_ops.task_not_found")
 
 

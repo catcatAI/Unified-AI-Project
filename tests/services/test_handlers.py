@@ -498,8 +498,9 @@ class TestHandlersInit:
     """Test handlers/__init__.py exports."""
 
     def test_all_handlers_exported(self):
-        """__init__.py exports all 8 handler classes."""
+        """__init__.py exports all handler classes."""
         from services.handlers import (
+            CivilModelHandler,
             CodeExecutionHandler,
             FileOperationHandler,
             GoogleDriveHandler,
@@ -517,11 +518,13 @@ class TestHandlersInit:
         assert TaskManagerHandler is not None
         assert VisionHandler is not None
         assert LearningHandler is not None
+        assert CivilModelHandler is not None
 
     def test_all_exports_match(self):
         """__all__ matches exported names."""
         from services.handlers import __all__
         expected = [
+            "CivilModelHandler",
             "FileOperationHandler",
             "GoogleDriveHandler",
             "WebSearchHandler",
@@ -532,3 +535,78 @@ class TestHandlersInit:
             "LearningHandler",
         ]
         assert sorted(__all__) == sorted(expected)
+
+
+# =============================================================================
+# R6 regression: vision path routing + task update guard (live verified)
+# =============================================================================
+
+
+@pytest.mark.asyncio
+class TestVisionPathRouting:
+    """看看 <existing-txt> 必須走「不支援格式」，而非誤報「不存在」。"""
+
+    async def test_existing_txt_reports_unsupported_format(self, tmp_path):
+        from services.handlers.vision_handler import VisionHandler
+
+        target = tmp_path / "note.txt"
+        target.write_text("hello", encoding="utf-8")
+        out = await VisionHandler().handle(f"看看 {target}")
+        assert "不支援的圖片格式" in out
+
+    async def test_no_dot_requests_path(self):
+        from services.handlers.vision_handler import VisionHandler
+
+        out = await VisionHandler().handle("看看梁的配筋圖")
+        assert "請提供圖片路徑" in out
+
+    async def test_extract_strips_leading_verb(self, tmp_path):
+        from services.handlers.vision_handler import VisionHandler
+
+        target = tmp_path / "a.txt"
+        target.write_text("x", encoding="utf-8")
+        path = VisionHandler()._extract_image_path(f"看看 {target}")
+        assert path is not None and path.endswith("a.txt")
+
+
+@pytest.mark.asyncio
+class TestTaskUpdateGuard:
+    """無編號更新必須拒絕（曾任意改名首個待辦），有編號才寫入。"""
+
+    @pytest.fixture(autouse=True)
+    def _isolated(self, tmp_path, monkeypatch):
+        import services.handlers.task_manager_handler as tm
+
+        d = tmp_path / "tasks"
+        monkeypatch.setattr(tm, "_TASKS_DIR", d)
+        monkeypatch.setattr(tm, "_TASKS_FILE", d / "tasks.json")
+
+    async def test_update_without_id_refused_without_mutation(self):
+        from services.handlers.task_manager_handler import TaskManagerHandler
+        import services.handlers.task_manager_handler as tm
+
+        handler = TaskManagerHandler()
+        await handler.handle("建立任務：買牛奶", "task")
+        out = await handler.handle("更新任務", "task")
+        assert "編號" in out
+        listed = await handler.handle("任務列表", "task")
+        assert "買牛奶" in listed and "更新任務" not in listed
+        assert tm._load_tasks()[0]["title"] == "買牛奶"
+
+    async def test_update_with_id_writes(self):
+        from services.handlers.task_manager_handler import TaskManagerHandler
+
+        handler = TaskManagerHandler()
+        await handler.handle("建立任務：買牛奶", "task")
+        out = await handler.handle("更新任務 #1：買豆漿", "task")
+        assert "買豆漿" in out
+        listed = await handler.handle("任務列表", "task")
+        assert "買豆漿" in listed
+
+    async def test_update_unknown_id_not_found(self):
+        from services.handlers.task_manager_handler import TaskManagerHandler
+
+        handler = TaskManagerHandler()
+        await handler.handle("建立任務：買牛奶", "task")
+        out = await handler.handle("更新任務 #99：買豆漿", "task")
+        assert "找不到" in out

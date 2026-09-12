@@ -149,6 +149,7 @@
   "task_ops": {
     "available_ops": "Available operations: create task, task list, complete task, delete task.",
     "specify_title": "Please provide a task title.",
+    "specify_id": "Please specify the task ID, e.g.: update task #2: new title.",
     "task_created": "Task #{id} created: {title}",
     "no_tasks": "No tasks currently.",
     "task_list": "Task list:",

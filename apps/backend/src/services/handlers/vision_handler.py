@@ -84,7 +84,12 @@ class VisionHandler:
                 rest = text[len(p) :].strip().strip(":：").strip()
                 if rest:
                     return rest
-        return text.strip() if "." in text else None
+        # 兜底：剝掉句首動詞再取路徑（「看看 /tmp/a.txt」→ 存在但非圖片，
+        # 應走「不支援格式」而非「圖片不存在」；無點號則無法定位，回 None）。
+        rest = re.sub(r"^(?:看看|分析|描述|識別|辨識)\s*", "", text).strip()
+        if "." in rest:
+            return rest
+        return None
 
     def _local_describe(self, target: Path, mime_type: str) -> str:
         size = target.stat().st_size
