@@ -387,6 +387,38 @@ class TestSystemCommandHandler:
             low = result.lower()
             assert "unsafe" in low or "不安全" in result or "allow" in low
 
+    async def test_unclosed_quote_returns_parse_error(self):
+        """R8: shlex ValueError must not escape handle()."""
+        from services.handlers.system_command_handler import SystemCommandHandler
+        handler = SystemCommandHandler()
+        result = await handler.handle("執行 echo 'unclosed", "system")
+        assert "解析失敗" in result or "parse failed" in result.lower()
+
+    async def test_absolute_path_bypass_rejected(self):
+        """R8: /bin/ls must not bypass the allowlist via path."""
+        from services.handlers.system_command_handler import SystemCommandHandler
+        handler = SystemCommandHandler()
+        result = await handler.handle("/bin/ls /", "system")
+        assert "不安全" in result or "unsafe" in result.lower()
+
+    async def test_system_chain_classify_gate_execute(self):
+        """R8: 發送類輸入走完 classify→gate(confirm)→execute 全鏈。"""
+        from ai.core.execution_gate import ExecutionGate
+        from ai.core.model_bus import ModelBus
+        from ai.core.query_classifier import QueryClassifier
+        from services.handlers.system_command_handler import SystemCommandHandler
+
+        r = QueryClassifier().classify("提交報告")
+        assert r.primary_type.value == "system"
+        d = ExecutionGate().decide(
+            r.primary_type.value, r.action_type, "提交報告", r.confidence, {}
+        )
+        assert d.action == "confirm_then_execute" and d.handler == "system_cmd"
+        bus = ModelBus()
+        bus.register_handler("system_cmd", SystemCommandHandler(), ["system"])
+        out = await bus.execute_handler("system_cmd", "執行 pwd", {"query_type": "system"})
+        assert out["success"] is True
+
 
 # =============================================================================
 # TaskManagerHandler tests

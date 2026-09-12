@@ -50,7 +50,12 @@ class SystemCommandHandler:
         cmd = self._extract_command(text)
         if not cmd:
             return t("sys_cmd.specify_command")
-        parts = shlex.split(cmd)
+        try:
+            parts = shlex.split(cmd)
+        except ValueError:
+            # 未閉合引號等解析失敗： handler 層內收斂，不向呼叫方拋異常
+            # （execute_handler 雖有兜底，但明確的解析錯誤訊息更利於除錯）。
+            return t("sys_cmd.parse_error", cmd=cmd[:80])
         base_cmd = parts[0].lower() if parts else ""
         if base_cmd not in _SAFE_COMMANDS:
             return t(

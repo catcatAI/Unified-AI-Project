@@ -162,6 +162,7 @@
   },
   "sys_cmd": {
     "specify_command": "Please provide a command to execute.",
+    "parse_error": "Command parse failed (unclosed quote?): {cmd}",
     "unsafe_command": "Unsafe command: {cmd}. Allowed commands: {allowed}",
     "exit_code": "Exit code: {code}",
     "output": "Output:\n{output}",

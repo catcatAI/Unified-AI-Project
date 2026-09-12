@@ -162,6 +162,7 @@
   },
   "sys_cmd": {
     "specify_command": "（系統命令）請提供要執行的命令。",
+    "parse_error": "（系統命令）命令解析失敗（引號未閉合？）：{cmd}",
     "unsafe_command": "（系統命令）不安全的命令：{cmd}。允許的命令：{allowed}",
     "exit_code": "退出碼：{code}",
     "output": "輸出：\n{output}",
