@@ -3,6 +3,7 @@ Tests for the AudioProcessingAgent.
 """
 
 import asyncio
+import importlib.util
 import uuid
 from unittest.mock import AsyncMock, MagicMock
 
@@ -167,3 +168,48 @@ async def test_handle_unsupported_capability(audio_agent: AudioProcessingAgent):
     assert result_payload["status"] == "failure"
     assert result_payload["error_details"]["error_code"] == "CAPABILITY_NOT_SUPPORTED"
     assert result_payload["request_id"] == "test_request_002"
+
+
+def test_transcribe_missing_file(audio_agent: AudioProcessingAgent):
+    """Missing file → error shape (no engine needed)."""
+    out = audio_agent.transcribe_audio("/tmp/opencode-test-nope.wav")
+    assert out["status"] == "error"
+    assert "transcription" not in out or out.get("transcription", "") == ""
+
+
+def test_transcribe_no_path(audio_agent: AudioProcessingAgent):
+    out = audio_agent.transcribe_audio("")
+    assert out["status"] == "error"
+
+
+def test_detect_language_missing_file(audio_agent: AudioProcessingAgent):
+    out = audio_agent.detect_language("/tmp/opencode-test-nope.wav")
+    assert out["status"] == "error"
+
+
+@pytest.mark.skipif(
+    importlib.util.find_spec("faster_whisper") is None,
+    reason="faster-whisper not installed",
+)
+def test_transcribe_silence_graceful(audio_agent: AudioProcessingAgent, tmp_path):
+    """Silence → engine runs but yields no text → unavailable shape (no crash)."""
+    import wave
+
+    wav = tmp_path / "silence.wav"
+    with wave.open(str(wav), "w") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(16000)
+        w.writeframes(b"\x00" * 16000)
+    out = audio_agent.transcribe_audio(str(wav))
+    assert out["status"] in ("success", "unavailable")
+    assert "transcription" in out
+
+
+@pytest.mark.skipif(
+    importlib.util.find_spec("faster_whisper") is None,
+    reason="faster-whisper not installed",
+)
+def test_is_available_with_offline_engine(audio_agent: AudioProcessingAgent):
+    """Offline faster-whisper counts as available (R26, no config needed)."""
+    assert audio_agent.is_available() is True

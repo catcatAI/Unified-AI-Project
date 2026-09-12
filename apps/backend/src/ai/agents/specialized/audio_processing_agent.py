@@ -15,6 +15,7 @@
 #
 # =============================================================================
 
+import asyncio
 import logging
 import os
 from typing import Any, Dict, List, Optional
@@ -22,6 +23,49 @@ from typing import Any, Dict, List, Optional
 from core.utils import safe_error
 
 logger = logging.getLogger(__name__)
+
+
+def _run_coro_sync(coro):
+    """在同步方法內跑協程：有運行中 loop 時用獨立線程，避免嵌套。"""
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+    import concurrent.futures
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        return pool.submit(asyncio.run, coro).result(timeout=180)
+
+
+def _stt_text(audio_path: str) -> Optional[Dict[str, Any]]:
+    """真實轉錄 via AudioService（延遲 import；引擎缺失/失敗回 None）。
+
+     R26 接線：faster-whisper 已緩存時走離線引擎，否則回 None
+    （呼叫方保持舊的 unavailable/空轉錄形狀，不崩潰）。
+    """
+    try:
+        with open(audio_path, "rb") as f:
+            data = f.read()
+    except OSError:
+        return None
+    if not data:
+        return None
+    try:
+        from services.audio_service import AudioService
+    except ImportError:
+        return None
+
+    async def _go():
+        return await AudioService().speech_to_text(data)
+
+    try:
+        result = _run_coro_sync(_go())
+    except Exception as e:
+        logger.warning(f"STT engine failed: {e}", exc_info=True)
+        return None
+    if not isinstance(result, dict) or not result.get("text"):
+        return None
+    return result
 
 
 class AudioProcessingAgent:
@@ -93,7 +137,14 @@ class AudioProcessingAgent:
     def _perform_speech_recognition(self, params: dict) -> dict:
         if "audio_file" not in params:
             raise ValueError("No audio file provided")
-        return {"transcription": "", "language": "zh", "confidence": 0.0}
+        stt = _stt_text(str(params["audio_file"]))
+        if stt is None:
+            return {"transcription": "", "language": "zh", "confidence": 0.0}
+        return {
+            "transcription": stt.get("text", ""),
+            "language": stt.get("language", "zh"),
+            "confidence": stt.get("confidence", 0.85),
+        }
 
     def _classify_audio(self, params: dict) -> dict:
         if "audio_file" not in params:
@@ -106,8 +157,16 @@ class AudioProcessingAgent:
         return {"enhanced_file": "", "improvement_score": 0.0}
 
     def is_available(self) -> bool:
-        """Check if audio processing backend (e.g. whisper) is configured."""
-        return bool(self.config.get("model_path") or self.config.get("api_key"))
+        """Check if audio processing backend is usable.
+
+        R26: 除配置外，離線 faster-whisper 可用也算可用（已緩存即免配置）。
+        find_spec 探測（不直接 import，避免無 stubs 誤報）。
+        """
+        if self.config.get("model_path") or self.config.get("api_key"):
+            return True
+        import importlib.util
+
+        return importlib.util.find_spec("faster_whisper") is not None
 
     def transcribe_audio(self, audio_path: str) -> Dict[str, Any]:
         """Transcribe audio file to text."""
@@ -125,10 +184,20 @@ class AudioProcessingAgent:
                 "audio_format": ext,
             }
         logger.info(f"transcribe_audio: {audio_path} ({ext})")
+        stt = _stt_text(audio_path)
+        if stt is None:
+            return {
+                "status": "unavailable",
+                "message": "Speech-to-text engine failed or produced no text",
+                "transcription": "",
+                "audio_format": ext,
+            }
         return {
             "status": "success",
             "message": f"Transcribed audio ({ext})",
-            "transcription": "",
+            "transcription": stt.get("text", ""),
+            "language": stt.get("language", "zh"),
+            "confidence": stt.get("confidence", 0.85),
             "audio_format": ext,
         }
 
@@ -167,9 +236,17 @@ class AudioProcessingAgent:
                 "confidence": 0.0,
             }
         logger.info(f"detect_language: {audio_path}")
+        stt = _stt_text(audio_path)
+        if stt is None:
+            return {
+                "status": "unavailable",
+                "message": "Language detection engine failed or produced no text",
+                "detected_language": "unknown",
+                "confidence": 0.0,
+            }
         return {
             "status": "success",
             "message": "Language detected",
-            "detected_language": "unknown",
-            "confidence": 0.0,
+            "detected_language": stt.get("language", "unknown"),
+            "confidence": stt.get("confidence", 0.0),
         }
