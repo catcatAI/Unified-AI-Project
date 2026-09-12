@@ -8,6 +8,9 @@
 
 預算即診斷：輸出超 `--budget` 行即 exit 1 + 兇手排行（超標=專案有病）。
 只用 stdlib。產物標 Generated，手不改。
+
+P0：分域檔案預算（超任一域亦 exit 1）+ `## DIAG` 機器可讀尾段 +
+孤兒 L1/L2/L3 分級（僅 L1 展開）。退出碼：0 內 / 1 超標 / 2 工具錯。
 """
 
 import argparse
@@ -33,6 +36,96 @@ MIRROR_ROOTS = (
     "resources/",
     "test_models/",
 )
+
+# 分域檔案預算（P0）：總輸出預算之外，按子系統點名。超任一域即 exit 1。
+# 基準 2026-09-12：backend 706 / scripts 257 / desktop 435 / packages 58（約 2x 寬限）。
+# 域外其餘只報告、不設限。調整時同步更新此註解的基準日期與數值。
+DOMAIN_FILE_BUDGETS = {
+    "apps/backend/src": 1400,
+    "scripts": 600,
+    "apps/desktop-app": 900,
+    "packages/": 300,
+}
+
+# 孤兒置信度分級（P0）：L1 高疑才展開；L2 疑似入口 / L3 配置門控只折疊計數。
+ENTRY_LIKE_STEMS = {
+    "main",
+    "app",
+    "server",
+    "cli",
+    "manage",
+    "wsgi",
+    "asgi",
+    "desktop",
+    "game",
+    "launcher",
+    "bootstrap",
+    "daemon",
+    "worker",
+    "scheduler",
+    "setup",
+    "conftest",
+}
+ENTRY_LIKE_PREFIXES = ("run_", "serve_", "start_", "launch_")
+
+# block_orphans 每次調用後在此留下分級計數（main 組 DIAG 用；函數簽名不變）。
+_LAST_ORPHAN_COUNTS = {"L1": 0, "L2": 0, "L3": 0}
+
+
+def domain_file_usage(root, files):
+    """各域檔案數（輸入規模，非輸出 Responsibility 行數）。未列域歸 rest（只報告）。"""
+    usage = {d: 0 for d in DOMAIN_FILE_BUDGETS}
+    usage["rest"] = 0
+    for rel, _, _ in files:
+        for dom in DOMAIN_FILE_BUDGETS:
+            prefix = dom if dom.endswith("/") else dom + "/"
+            if rel.startswith(prefix):
+                usage[dom] += 1
+                break
+        else:
+            usage["rest"] += 1
+    return usage
+
+
+def check_domain_budgets(usage, budgets=None):
+    """回傳 [(domain, used, budget)] 超標清單；空即全域內。"""
+    budgets = DOMAIN_FILE_BUDGETS if budgets is None else budgets
+    return [(d, usage.get(d, 0), b) for d, b in budgets.items() if usage.get(d, 0) > b]
+
+
+def grade_orphan(rel, gated):
+    """孤兒置信度：L3 配置門控 > L2 疑似入口 > L1 高疑。"""
+    if gated:
+        return "L3"
+    stem = os.path.splitext(os.path.basename(rel))[0]
+    if stem in ENTRY_LIKE_STEMS or stem.startswith(ENTRY_LIKE_PREFIXES):
+        return "L2"
+    return "L1"
+
+
+def render_diag(status, total, budget, usage, over_domains, counts, top_block):
+    """固定機器可讀尾段（CI 只依賴退出碼 + 本段鍵名；鍵名穩定，勿改）。"""
+    lines = ["## DIAG", "", f"status: {status}", f"total: {total}", f"budget: {budget}"]
+    lines.append("domains:")
+    for dom in list(DOMAIN_FILE_BUDGETS) + ["rest"]:
+        b = DOMAIN_FILE_BUDGETS.get(dom)
+        lines.append(f"  {dom}: {usage.get(dom, 0)}/{b if b is not None else 'unlimited'}")
+    lines.append(
+        f"orphans: L1={counts.get('L1', 0)} L2={counts.get('L2', 0)} L3={counts.get('L3', 0)}"
+    )
+    lines.append("actions:")
+    acts = []
+    if over_domains:
+        acts += [f"reduce_domain: {d} ({u} > {b})" for d, u, b in over_domains]
+    if status == "fail" and top_block:
+        acts.append(f"reduce_output: {top_block}")
+    if counts.get("L1", 0):
+        acts.append(f"review_L1_orphans: {counts['L1']}")
+    lines.append(f"  - {acts[0]}" if acts else "  - none")
+    for a in acts[1:]:
+        lines.append(f"  - {a}")
+    lines.append("")
+    return lines
 
 
 def walk_files(root):
@@ -167,17 +260,34 @@ def block_orphans(root, files):
         tails = [".".join(parts[-2:]), parts[-1]]
         if not any(d in imported for d in dots) and not any(t in imported for t in tails):
             orphans.append(rel)
-    lines = ["### 疑似孤兒檔（候選）", ""]
-    lines.append(f"- 共 {len(orphans)} 檔（動態加載盲區見上，個案定性前不刪）")
-    for rel in sorted(orphans)[:40]:
+    lines = ["### 疑似孤兒檔（候選，分級）", ""]
+    graded = {"L1": [], "L2": 0, "L3": 0}
+    for rel in sorted(orphans):
         stem = os.path.splitext(os.path.basename(rel))[0]
         norm = lambda s: s.replace("_", "").replace("-", "")
         # 短通用詞（app/config）在配置文本恆命中——只信長特徵名
         gated = len(norm(stem)) >= 10 and norm(stem) in norm(cfg_text)
-        tag = "（配置門控候選）" if gated else ""
-        lines.append(f"  - `{rel}`{tag}")
-    if len(orphans) > 40:
-        lines.append(f"  - …{len(orphans) - 40} 未展開")
+        level = grade_orphan(rel, gated)
+        if level == "L1":
+            graded["L1"].append(rel)
+        elif level == "L2":
+            graded["L2"] += 1
+        else:
+            graded["L3"] += 1
+    _LAST_ORPHAN_COUNTS.update(
+        {"L1": len(graded["L1"]), "L2": graded["L2"], "L3": graded["L3"]}
+    )
+    lines.append(
+        f"- 共 {len(orphans)} 檔（L1={len(graded['L1'])} 高疑 / "
+        f"L2={graded['L2']} 疑似入口 / L3={graded['L3']} 配置門控；"
+        "動態加載盲區見上，個案定性前不刪）"
+    )
+    for rel in graded["L1"][:40]:
+        lines.append(f"  - `{rel}`（L1 高疑）")
+    if len(graded["L1"]) > 40:
+        lines.append(f"  - …{len(graded['L1']) - 40} L1 未展開")
+    lines.append(f"  - L2 疑似入口 ×{graded['L2']}（折疊，不展開）")
+    lines.append(f"  - L3 配置門控 ×{graded['L3']}（折疊，不展開）")
     lines.append("")
     return lines
 
@@ -432,6 +542,7 @@ def block_eager_heavy(root, files):
 
 
 def main():
+    """契約：0 預算內 / 1 超預算（總行數或任一分域）/ 2 工具自身錯誤。"""
     ap = argparse.ArgumentParser(description="專案地圖生成器（三區塊+萬行預算門）")
     ap.add_argument("--root", default=".")
     ap.add_argument("--output", default="docs/PROJECT_MAP_GENERATED.md")
@@ -439,32 +550,58 @@ def main():
     args = ap.parse_args()
     root = os.path.abspath(args.root)
 
-    files = walk_files(root)
-    b1 = block_dependencies(root, files)
-    b2 = block_collisions(root, files)
-    b3 = block_behavior(root, files)
+    try:
+        files = walk_files(root)
+        usage = domain_file_usage(root, files)
+        over_domains = check_domain_budgets(usage)
+        b1 = block_dependencies(root, files)
+        b2 = block_collisions(root, files)
+        b3 = block_behavior(root, files)
+    except Exception as e:
+        print(f"TOOL ERROR: {e}")
+        return 2
     body = b1 + b2 + b3
     counts = {"區塊一依賴": len(b1), "區塊二碰撞": len(b2), "區塊三行為": len(b3)}
     total = len(body)
+    # 預算只計三區塊行數；頁首與 ## DIAG 尾段不計（門檻穩定）。
+    top_block = max(counts.items(), key=lambda kv: kv[1])[0]
+    failed = total > args.budget or bool(over_domains)
 
     head = [
         "<!-- Generated by scripts/gen_project_map.py — 手不改，重跑覆蓋 -->",
         f"# 專案地圖（生成於 {datetime.date.today()}，{len(files)} 檔）",
         "",
     ]
-    if total > args.budget:
+    if failed:
         head.append(f"> ⛔ 超預算：{total} > {args.budget} 行——專案有病，先治病。吃行大戶：")
         for k, v in sorted(counts.items(), key=lambda kv: -kv[1]):
             head.append(f"> - {k}：{v} 行")
+        for d, u, b in over_domains:
+            head.append(f"> - 分域超標 `{d}`：{u} > {b} 檔")
         head.append("")
-        out = head + body
+    else:
+        head.append(f"> ✅ {total}/{args.budget} 行，預算內。")
+        head.append("")
+    diag = render_diag(
+        "fail" if failed else "ok",
+        total,
+        args.budget,
+        usage,
+        over_domains,
+        dict(_LAST_ORPHAN_COUNTS),
+        top_block if failed else "",
+    )
+    out = head + body + diag
+    try:
         with open(args.output, "w", encoding="utf-8") as f:
             f.write("\n".join(out))
-        print(f"OVER BUDGET: {total} > {args.budget} {counts}")
+    except OSError as e:
+        print(f"TOOL ERROR: {e}")
+        return 2
+    print("\n".join(diag))
+    if failed:
+        print(f"OVER BUDGET: {total} > {args.budget} {counts} domains={over_domains}")
         return 1
-    out = head + [f"> ✅ {total}/{args.budget} 行，預算內。", ""] + body
-    with open(args.output, "w", encoding="utf-8") as f:
-        f.write("\n".join(out))
     print(f"OK: {total}/{args.budget} lines {counts}")
     return 0
 

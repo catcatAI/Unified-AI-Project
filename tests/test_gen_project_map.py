@@ -61,15 +61,83 @@ def test_orphan_relative_import_resolves(tiny_tree):
     assert not any("used.py" in line for line in rels)
 
 
-def test_orphan_config_gate_tagged(tiny_tree):
+def test_orphan_config_gate_is_L3_folded(tiny_tree):
     mod = load_tool()
     # rlaif_buffer fake module to trigger the gate path
     base = os.path.join(tiny_tree, "apps", "backend", "src", "pkg")
     with open(os.path.join(base, "rlaif_buffer.py"), "w", encoding="utf-8") as f:
         f.write("Z = 4\n")
+    files = mod.walk_files(tiny_tree)
+    lines = mod.block_orphans(tiny_tree, files)
+    text = "\n".join(lines)
+    # L3 只折疊計數：檔名不展開，但 L3 計數必須 ≥1
+    assert not any("rlaif_buffer.py" in line for line in _orphan_lines(mod, tiny_tree))
+    assert "L3=" in text
+    import re
+
+    m = re.search(r"L3=(\d+)", text)
+    assert m and int(m.group(1)) >= 1
+
+
+def test_orphan_entry_like_is_L2_folded(tiny_tree):
+    mod = load_tool()
+    base = os.path.join(tiny_tree, "apps", "backend", "src", "pkg")
+    with open(os.path.join(base, "cli.py"), "w", encoding="utf-8") as f:
+        f.write("Q = 5\n")
     rels = _orphan_lines(mod, tiny_tree)
-    gated = [line for line in rels if "rlaif_buffer.py" in line]
-    assert gated and "配置門控候選" in gated[0]
+    # 疑似入口不進 L1 展開；普通孤兒仍展開並帶 L1 標記
+    assert not any("cli.py" in line for line in rels)
+    assert any("orphan.py" in line and "L1" in line for line in rels)
+
+
+def test_domain_budgets_ok_and_over(tiny_tree):
+    mod = load_tool()
+    files = mod.walk_files(tiny_tree)
+    usage = mod.domain_file_usage(tiny_tree, files)
+    assert usage["apps/backend/src"] >= 5
+    assert mod.check_domain_budgets(usage, {"apps/backend/src": 10000}) == []
+    over = mod.check_domain_budgets(usage, {"apps/backend/src": 1})
+    assert over and over[0][0] == "apps/backend/src"
+
+
+def test_render_diag_stable_keys(tmp_path):
+    mod = load_tool()
+    usage = {
+        "apps/backend/src": 10,
+        "scripts": 5,
+        "apps/desktop-app": 1,
+        "packages/": 0,
+        "rest": 3,
+    }
+    diag = mod.render_diag("ok", 100, 10000, usage, [], {"L1": 0, "L2": 0, "L3": 0}, "")
+    text = "\n".join(diag)
+    assert diag[0] == "## DIAG"
+    for key in (
+        "status: ok",
+        "total: 100",
+        "budget: 10000",
+        "domains:",
+        "apps/backend/src: 10/1400",
+        "orphans: L1=0 L2=0 L3=0",
+        "actions:",
+    ):
+        assert key in text, key
+
+
+def test_main_over_budget_returns_1_with_diag(tmp_path, monkeypatch):
+    mod = load_tool()
+    tiny = tmp_path / "t"
+    (tiny / "scripts").mkdir(parents=True)
+    (tiny / "scripts" / "a.py").write_text("X = 1\n", encoding="utf-8")
+    out = str(tmp_path / "map.md")
+    monkeypatch.setattr(
+        "sys.argv",
+        ["gen_project_map.py", "--root", str(tiny), "--output", out, "--budget", "1"],
+    )
+    rc = mod.main()
+    assert rc == 1
+    body = open(out, encoding="utf-8").read()
+    assert "## DIAG" in body and "status: fail" in body
 
 
 def test_dep_usage_unused_and_noqa(tmp_path):
