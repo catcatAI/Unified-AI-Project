@@ -65,7 +65,7 @@ Status: ✅ Active | 🟡 Partial Stub | ❌ Orphaned | 🗑️ Deprecated
 
 | Service | File | Status | Imported By |
 |---------|------|--------|-------------|
-| `StateMatrixAPI` | `services/api/state_matrix_api.py` | ✅ | `main_api_server.py`, `core/autonomous/playground.py` |
+| `StateMatrixAPI` | `services/api/state_matrix_api.py` | ✅ | `main_api_server.py`（`core/autonomous/playground.py` 已退役 R17，不再消費） |
 
 ### services/node_services/ — Node.js Services
 

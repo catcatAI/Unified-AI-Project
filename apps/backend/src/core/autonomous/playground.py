@@ -2,15 +2,22 @@
 Angela AI v7.5.0-dev — StateMatrix 能力展示場 / Capability Playground
 ===============================================================
 
+.. deprecated::
+    本腳本的目標 API 已不存在（adapter 改寫為 proxy 介面：axis/temporal/
+    influence_space/allocation_policy/resonance_engine/gradient_field…；
+    舊 `_sm`/`_temporal`/trigger_theta_negativity 等全部失效）。
+    直接運行只會崩潰，故 main() 顯式退役（exit 2 + 指路，不拋 traceback）。
+    現行用法請看 StateMatrixAdapter 公開屬性與 tests/ 下 adapter 測試。
+
 Standalone development script (not imported by production code).
 
-展示 StateMatrixAdapter 所有能力。
-
-運行方式:
-    python apps/backend/src/core/autonomous/playground.py
+運行方式（已退役，僅留歷史）:
+    python apps/backend/src/core/autonomous/playground.py  # → deprecation + exit 2
 
 Author: Angela AI v7.5.0-dev
 """
+
+import sys
 
 from core.engine.state_matrix_adapter import StateMatrixAdapter
 from core.ripple.node import MathOp
@@ -247,34 +254,14 @@ def _demo_fastapi_endpoints() -> None:
 
 
 def main() -> None:
-    """Main entry point."""
-    banner("Angela AI v7.5.0-dev — StateMatrix Capability Playground")
-
-    print("\n初始化 StateMatrixAdapter...")
-    sm = StateMatrixAdapter()
-    print(f"  → OK (temporal={sm._temporal.size()} snapshots)")
-
-    _demo_state_matrix(sm)
-    _demo_theta_meta_cognition(sm)
-    _demo_temporal_queries(sm)
-    _demo_influence_computation(sm)
-    _demo_allocation_decision(sm)
-    _demo_ripple_cascade(sm)
-    _demo_attractor_field_navigation(sm)
-    _demo_axis_port_routing(sm)
-    _demo_state_persistence(sm)
-    _demo_code_inspector_integration(sm)
-    _demo_attractor_management(sm)
-    _demo_full_report(sm)
-    _demo_fastapi_endpoints()
-
-    banner("Playground Complete")
-    print("\n所有能力展示完成。")
-    print("\n下一步：")
-    print("  1. 啟動服務: python -m uvicorn src.services.main_api_server:app --port 8000")
-    print("  2. 查看 API:  GET /api/v1/state/summary")
-    print('  3. 測試路由: POST /api/v1/state/navigate  {"max_steps": 3}')
-    print("  4. 學習系統: 多次 allocation_decide() 後 AnchorLearningEngine 會自優化")
+    """Main entry point (retired: explicit deprecation instead of traceback)."""
+    print("playground 已退役（Deprecated R17）：目標 API 已改寫為 proxy 介面，")
+    print("  舊演示（_sm/_temporal/trigger_theta_negativity…）全部失效。")
+    print("現行用法：")
+    print("  - StateMatrixAdapter 公開屬性：axis/temporal/influence_space/")
+    print("    allocation_policy/resonance_engine/gradient_field/snapshot/full_report")
+    print("  - tests/ 下 StateMatrixAdapter 相關測試即活範例。")
+    raise SystemExit(2)
 
 
 if __name__ == "__main__":

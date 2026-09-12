@@ -20,7 +20,7 @@
 - 開放域智能仍依外部／本地 LLM；原生引擎僅確定性＋試點泛化——分數見 INTELLIGENCE_ASSESSMENT（誠實拆分）。
 - 地圖 25 檔折疊懸崖：TREND 只認三連升（已註記）。
 - 非單調 autosize（如預力窗外）：終驗報錯（已落實）。
-- mypy 類型覆蓋債：1693 errors（R16 四包預聲明＋刪死亡名後；R15 1748／R14 1761／曾 2627，內 1028 為包基誤判假簇）——結構性，需多輪分域收斂；`python_version` 保持 3.10（倉庫支援下限），不為降數字而改。
+- mypy 類型覆蓋債：1692 errors（R17 playground 退役 -1；R16 1693／R15 1748／R14 1761／曾 2627，內 1028 為包基誤判假簇）——結構性，需多輪分域收斂；`python_version` 保持 3.10（倉庫支援下限），不為降數字而改。
 - TS/TSX 無 parser（typescript-eslint 未安裝）：`lint:js` 僅覆蓋 JS；JS 側 0 errors（1348 warnings 既有，不追）。
 - JS warnings 1348（多為 no-console）：既有噪聲，不列入門檻；新增代碼不增 warning 為紀律。
 
