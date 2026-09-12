@@ -123,3 +123,43 @@ class TestQueryClassifier:
         result = classifier.classify("xyzabc")
         assert result.primary_type == QueryType.UNKNOWN
         assert result.confidence == 0.3
+
+
+class TestCivilAntiMisjudgment:
+    """土木分類防誤判（本輪）：漏判修復 + 主板類誤傷修復，主流程接線守衛。"""
+
+    def test_civil_compound_with_liang_peijin(self):
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        classifier = QueryClassifier()
+        result = classifier.classify("梁跨度8米配筋多少")
+        assert result.primary_type == QueryType.CIVIL
+
+    def test_civil_zhu_hunningtu(self):
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        classifier = QueryClassifier()
+        result = classifier.classify("柱截面400x400混凝土C30")
+        assert result.primary_type == QueryType.CIVIL
+
+    def test_motherboard_not_civil(self):
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        classifier = QueryClassifier()
+        for s in ("B550M主板", "電腦主板壞了", "黑板上寫字", "平板電腦推薦"):
+            result = classifier.classify(s)
+            assert result.primary_type != QueryType.CIVIL, s
+
+    def test_civil_routes_to_handler_based(self):
+        from ai.core.model_bus import ModelBus
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        classifier = QueryClassifier()
+        result = classifier.classify("梁跨度8米配筋多少")
+        assert result.primary_type == QueryType.CIVIL
+        assert ModelBus._ROUTE_HANDLERS["civil"] == "_handle_handler_based"
+
+    def test_civil_gate_maps_to_civil_handler(self):
+        from ai.core.execution_gate import ExecutionGate
+
+        assert ExecutionGate.HANDLER_MAP["civil"] == "civil"

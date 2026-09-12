@@ -97,6 +97,16 @@ _ACTIONABILITY_BASE = {
 _ACTIONABILITY_DEFAULT = 0.3
 _ACTIONABILITY_VERB_BONUS = 0.1
 
+# 土木防誤判門控（本輪新增）：「板」單字誤傷電腦主板類；強複合詞則為真土木信號。
+_CIVIL_FALSE_POSITIVE = re.compile(
+    r"(主板|主機板|主机板|電路板|电路板|\bB\d{3,4}[A-Z]*\b|PCB|黑板|平板|面板)",
+    re.IGNORECASE,
+)
+_CIVIL_STRONG_COMPOUND = re.compile(
+    r"(配筋|跨度|混凝土|钢筋|鋼筋|彎矩|弯矩|剪力|軸力|轴力|箱梁|桁架|預力|预力|"
+    r"支座|圖紙|图纸|墩|橋|桥|梁|柱)",
+)
+
 
 # 操作类型推断用的关键字
 _CREATE_VERBS = {"建立", "新增", "创建", "新增", "建立", "創建", "create", "new", "add"}
@@ -568,6 +578,8 @@ class QueryClassifier:
     @staticmethod
     def _build_civil_patterns() -> List[Tuple[QueryType, Pattern, float]]:
         # 中文無空格：單字鍵允許 CJK 左鄰（黑板類誤傷已評估：handler 無破壞性操作）
+        # 防誤判補充（本輪）：「板」單字極易誤傷電腦主板/黑板/平板，故在
+        # _classify_by_regex 對 CIVIL 加 false-positive 門控（見下）。
         return [
             (
                 QueryType.CIVIL,
@@ -641,7 +653,25 @@ class QueryClassifier:
         # Step 2: ED3N Dictionary classification (primary path)
         result = self._classify_by_dictionary(text, has_negation)
         if result is not None:
-            return result
+            # 防誤判：字典 KNOWLEDGE 低置信時，若土木強信號存在則讓位給 regex
+            # （例：「梁跨度8米配筋多少」字典給 knowledge 0.6，regex CIVIL 0.8 更準）
+            if result.primary_type == QueryType.KNOWLEDGE and result.confidence < 0.7:
+                if _CIVIL_STRONG_COMPOUND.search(text) and not _CIVIL_FALSE_POSITIVE.search(text):
+                    pass  # fall through to regex
+                elif _CIVIL_FALSE_POSITIVE.search(text):
+                    return result
+                else:
+                    # 無土木強信號時仍檢查：若 regex 有 CIVIL 強命中則讓位
+                    _civil_hit = any(
+                        qt == QueryType.CIVIL and pattern.search(text)
+                        for qt, pattern, _ in self._patterns
+                    )
+                    if _civil_hit and _CIVIL_STRONG_COMPOUND.search(text):
+                        pass  # fall through to regex
+                    else:
+                        return result
+            else:
+                return result
 
         # Steps 3-5: Regex pattern matching (fallback)
         result = self._classify_by_regex(text, has_negation)
@@ -698,6 +728,10 @@ class QueryClassifier:
         for qt, pattern, base_conf in self._patterns:
             m = pattern.search(text)
             if m:
+                # 土木防誤判門控：主板/黑板/平板類 + 無強土木複合詞時，跳過 CIVIL 命中
+                if qt == QueryType.CIVIL and _CIVIL_FALSE_POSITIVE.search(text):
+                    if not _CIVIL_STRONG_COMPOUND.search(text):
+                        continue
                 anchored = m.start() == 0 or m.end() == len(text)
                 conf = self._adjust_confidence(qt, text, base_conf, anchored, has_negation)
                 matches.append(
