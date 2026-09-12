@@ -20,13 +20,49 @@ import logging
 import os
 import threading
 import time
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 
 import numpy as np
 from core.utils import safe_error
 from PIL import Image
 
+if TYPE_CHECKING:
+    from ai.audio.audio_pipeline import AudioPipeline
+    from ai.audio.quality_monitor import AudioQualityMonitor
+    from ai.multimodal.audio_decoder import AudioWaveformDecoder
+    from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
+    from ai.multimodal.continuous_multimodal_learning import ContinuousMultimodalLearning
+    from ai.multimodal.dual_encoder_router import DualEncoderRouter
+    from ai.multimodal.multimodal_bridge import MultimodalBridge
+    from ai.multimodal.multimodal_memory import MultimodalMemoryStore
+    from ai.multimodal.multimodal_rag_engine import MultimodalRAGEngine
+    from ai.multimodal.shared_latent_space import SharedLatentSpace
+    from ai.multimodal.training_pipeline import FullTrainingPipeline
+    from ai.multimodal.visual_decoder import VisualDecoder
+    from ai.multimodal.visual_encoder import VisualEncoder
+    from ai.vision.quality_monitor import VisionQualityMonitor
+    from ai.vision.vision_pipeline import VisionPipeline
+    from services.multimodal_error_recovery import MultimodalErrorRecovery
+    from services.multimodal_quality_monitor import MultimodalQualityMonitor
+    from services.multimodal_state_persistence import MultimodalStatePersistence
+
 logger = logging.getLogger(__name__)
+
+
+def _as_float_list(v: Any) -> list:
+    """Normalize vector-like values to a plain list（Any 邊界收斂處）。
+
+    舊寫法 `v.tolist() if hasattr else v` 會把非 list 垃圾原樣傳進
+    record_encode 緩衝；此處收成 []，下游訓練不受污染。
+    """
+    if hasattr(v, "tolist"):
+        try:
+            out = v.tolist()
+            return list(out) if isinstance(out, (list, tuple)) else []
+        except Exception:
+            return []
+    return list(v) if isinstance(v, (list, tuple)) else []
+
 
 # Lazy imports for heavy modules
 
@@ -52,45 +88,46 @@ class MultimodalService:
     def __init__(self):
         self._encoders: Dict[str, Any] = {}
         self._decoders: Dict[str, Any] = {}
-        self._latent_space = None
-        self._bridge = None
-        self._rag_engine = None
-        self._pipeline = None
-        self._vision_pipeline = None
-        self._quality_monitor = None
-        self._audio_pipeline = None
-        self._audio_quality_monitor = None
+        # 延遲單例先預聲明（R24）：否則 getter 回傳全是 Any，污染全部調用方。
+        self._latent_space: Optional["SharedLatentSpace"] = None
+        self._bridge: Optional["MultimodalBridge"] = None
+        self._rag_engine: Optional["MultimodalRAGEngine"] = None
+        self._pipeline: Optional["FullTrainingPipeline"] = None
+        self._vision_pipeline: Optional["VisionPipeline"] = None
+        self._quality_monitor: Optional["VisionQualityMonitor"] = None
+        self._audio_pipeline: Optional["AudioPipeline"] = None
+        self._audio_quality_monitor: Optional["AudioQualityMonitor"] = None
         self._registered_items: Dict[str, Dict[str, Any]] = {}
         self._items_lock = asyncio.Lock()
         # P36: Continuous multimodal learning + memory
-        self._cml = None
-        self._memory_store = None
+        self._cml: Optional["ContinuousMultimodalLearning"] = None
+        self._memory_store: Optional["MultimodalMemoryStore"] = None
         # P37: Production hardening
-        self._error_recovery = None
-        self._state_persistence = None
-        self._mm_quality_monitor = None
+        self._error_recovery: Optional["MultimodalErrorRecovery"] = None
+        self._state_persistence: Optional["MultimodalStatePersistence"] = None
+        self._mm_quality_monitor: Optional["MultimodalQualityMonitor"] = None
         # P42: Dual encoder router (structural + semantic)
-        self._dual_encoder = None
+        self._dual_encoder: Optional["DualEncoderRouter"] = None
         self._initial_training_started = False
         self._training_lock = threading.Lock()
 
     # --- Lazy initialization ---
 
-    def _get_visual_encoder(self):
+    def _get_visual_encoder(self) -> "VisualEncoder":
         if "vision" not in self._encoders:
             from ai.multimodal.visual_encoder import VisualEncoder
 
             self._encoders["vision"] = VisualEncoder(feature_dim=self.VISION_DIM)
-        return self._encoders["vision"]
+        return cast("VisualEncoder", self._encoders["vision"])
 
-    def _get_audio_encoder(self):
+    def _get_audio_encoder(self) -> "AudioSpectralEncoder":
         if "audio" not in self._encoders:
             from ai.multimodal.audio_encoder_spectral import AudioSpectralEncoder
 
             self._encoders["audio"] = AudioSpectralEncoder(feature_dim=self.AUDIO_DIM)
-        return self._encoders["audio"]
+        return cast("AudioSpectralEncoder", self._encoders["audio"])
 
-    def _get_visual_decoder(self):
+    def _get_visual_decoder(self) -> "VisualDecoder":
         if "vdecoder" not in self._decoders:
             from ai.multimodal.visual_decoder import (
                 VisualDecoder,
@@ -99,9 +136,9 @@ class MultimodalService:
 
             self._decoders["vdecoder"] = VisualDecoder()
             load_default_visual_decoder_weights(self._decoders["vdecoder"])
-        return self._decoders["vdecoder"]
+        return cast("VisualDecoder", self._decoders["vdecoder"])
 
-    def _get_audio_decoder(self):
+    def _get_audio_decoder(self) -> "AudioWaveformDecoder":
         if "adecoder" not in self._decoders:
             from ai.multimodal.audio_decoder import (
                 AudioWaveformDecoder,
@@ -110,30 +147,30 @@ class MultimodalService:
 
             self._decoders["adecoder"] = AudioWaveformDecoder()
             load_default_audio_decoder_weights(self._decoders["adecoder"])
-        return self._decoders["adecoder"]
+        return cast("AudioWaveformDecoder", self._decoders["adecoder"])
 
-    def _get_latent_space(self):
+    def _get_latent_space(self) -> "SharedLatentSpace":
         if self._latent_space is None:
             from ai.multimodal.shared_latent_space import get_shared_latent_space
 
             self._latent_space = get_shared_latent_space(latent_dim=self.LATENT_DIM)
         return self._latent_space
 
-    def _get_bridge(self):
+    def _get_bridge(self) -> "MultimodalBridge":
         if self._bridge is None:
             from ai.multimodal.multimodal_bridge import MultimodalBridge
 
             self._bridge = MultimodalBridge()
         return self._bridge
 
-    def _get_rag_engine(self):
+    def _get_rag_engine(self) -> "MultimodalRAGEngine":
         if self._rag_engine is None:
             from ai.multimodal.multimodal_rag_engine import MultimodalRAGEngine
 
             self._rag_engine = MultimodalRAGEngine()
         return self._rag_engine
 
-    def _get_vision_pipeline(self):
+    def _get_vision_pipeline(self) -> "VisionPipeline":
         """Get or create the VisionPipeline (P31)."""
         if self._vision_pipeline is None:
             from ai.vision.vision_pipeline import VisionPipeline
@@ -141,7 +178,7 @@ class MultimodalService:
             self._vision_pipeline = VisionPipeline()
         return self._vision_pipeline
 
-    def _get_quality_monitor(self):
+    def _get_quality_monitor(self) -> "VisionQualityMonitor":
         """Get or create the VisionQualityMonitor (P31)."""
         if self._quality_monitor is None:
             from ai.vision.quality_monitor import VisionQualityMonitor
@@ -149,7 +186,7 @@ class MultimodalService:
             self._quality_monitor = VisionQualityMonitor()
         return self._quality_monitor
 
-    def _get_audio_pipeline(self):
+    def _get_audio_pipeline(self) -> "AudioPipeline":
         """Get or create the AudioPipeline (P32)."""
         if self._audio_pipeline is None:
             from ai.audio.audio_pipeline import AudioPipeline
@@ -157,7 +194,7 @@ class MultimodalService:
             self._audio_pipeline = AudioPipeline()
         return self._audio_pipeline
 
-    def _get_audio_quality_monitor(self):
+    def _get_audio_quality_monitor(self) -> "AudioQualityMonitor":
         """Get or create the AudioQualityMonitor (P32)."""
         if self._audio_quality_monitor is None:
             from ai.audio.quality_monitor import AudioQualityMonitor
@@ -167,7 +204,7 @@ class MultimodalService:
 
     # --- P36: Continuous learning ---
 
-    def _get_cml(self):
+    def _get_cml(self) -> "ContinuousMultimodalLearning":
         """Get or create the ContinuousMultimodalLearning instance."""
         if self._cml is None:
             from ai.multimodal.continuous_multimodal_learning import ContinuousMultimodalLearning
@@ -180,7 +217,7 @@ class MultimodalService:
             )
         return self._cml
 
-    def _get_memory_store(self):
+    def _get_memory_store(self) -> "MultimodalMemoryStore":
         """Get or create the MultimodalMemoryStore instance."""
         if self._memory_store is None:
             from ai.multimodal.multimodal_memory import MultimodalMemoryStore
@@ -193,7 +230,7 @@ class MultimodalService:
 
     # --- P42: Dual encoder router ---
 
-    def _get_dual_encoder(self):
+    def _get_dual_encoder(self) -> "DualEncoderRouter":
         """Get or create the DualEncoderRouter (P42)."""
         if self._dual_encoder is None:
             from ai.multimodal.dual_encoder_router import DualEncoderRouter
@@ -245,17 +282,19 @@ class MultimodalService:
             # Extract quality score from the pipeline run
             quality_score = 0.0
             if modality == "vision":
-                qm = self._get_quality_monitor()
-                report = qm.report()
-                quality_score = report.get("avg_ssim", 0.0)
+                vision_qm = self._get_quality_monitor()
+                report = vision_qm.report()
+                raw_q = report.get("avg_ssim", 0.0)
+                quality_score = float(raw_q) if isinstance(raw_q, (int, float)) else 0.0
             elif modality == "audio":
-                qm = self._get_audio_quality_monitor()
-                report = qm.report()
-                quality_score = report.get("avg_snr", 0.0) / 30.0  # Normalize [0,1]
+                audio_qm = self._get_audio_quality_monitor()
+                report = audio_qm.report()
+                raw_q = report.get("avg_snr", 0.0)
+                quality_score = float(raw_q) / 30.0 if isinstance(raw_q, (int, float)) else 0.0
             cml.record_encode(
                 modality=modality,
-                feature_vector=result.get("feature_vector", []),
-                latent=result["latent"],
+                feature_vector=_as_float_list(result.get("feature_vector", [])),
+                latent=_as_float_list(result["latent"]),
                 quality_score=quality_score,
             )
             # Check if CML should auto-train
@@ -335,11 +374,15 @@ class MultimodalService:
                 return
             try:
                 from ai.multimodal.training_pipeline import DEFAULT_WEIGHTS_PATH
+
                 weights_path = DEFAULT_WEIGHTS_PATH
                 if not os.path.exists(weights_path):
                     self._initial_training_started = True
+                    pipeline = self._pipeline
+                    if pipeline is None:
+                        return
                     t = threading.Thread(
-                        target=self._pipeline.run,
+                        target=pipeline.run,
                         kwargs={
                             "contrastive_epochs": 10,
                             "recon_epochs": 10,
@@ -388,8 +431,8 @@ class MultimodalService:
         try:
             if modality == "vision":
                 # P33: Use VisionPipeline for full pipeline (encode→latent→decode→ssim)
-                pipeline = self._get_vision_pipeline()
-                pipe_result = await asyncio.to_thread(pipeline.process, data)
+                vision_pipeline = self._get_vision_pipeline()
+                pipe_result = await asyncio.to_thread(vision_pipeline.process, data)
                 if pipe_result.get("error"):
                     return {"modality": modality, "error": pipe_result["error"]}
                 vec = pipe_result.get("feature_vector")
@@ -399,8 +442,8 @@ class MultimodalService:
                 self._get_quality_monitor().record(pipe_result)
             elif modality == "audio":
                 # P33: Use AudioPipeline for full pipeline
-                pipeline = self._get_audio_pipeline()
-                pipe_result = await asyncio.to_thread(pipeline.process, data)
+                audio_pipeline = self._get_audio_pipeline()
+                pipe_result = await asyncio.to_thread(audio_pipeline.process, data)
                 if pipe_result.get("error"):
                     return {"modality": modality, "error": pipe_result["error"]}
                 vec = pipe_result.get("feature_vector")
@@ -450,23 +493,19 @@ class MultimodalService:
             # Feed into continuous multimodal learning
             try:
                 cml = self._get_cml()
+                # last_score() 兩邊監控器皆不存在（死防禦恆走 else）；
+                # 改用 report()（同 cml_encode 上方 avg_ssim/avg_snr 口徑）。
                 quality = 0.0
                 if modality == "vision":
-                    quality = (
-                        self._get_quality_monitor().last_score()
-                        if hasattr(self._get_quality_monitor(), "last_score")
-                        else 0.0
-                    )
+                    raw_q = self._get_quality_monitor().report().get("avg_ssim", 0.0)
+                    quality = float(raw_q) if isinstance(raw_q, (int, float)) else 0.0
                 elif modality == "audio":
-                    quality = (
-                        self._get_audio_quality_monitor().last_score()
-                        if hasattr(self._get_audio_quality_monitor(), "last_score")
-                        else 0.0
-                    )
+                    raw_q = self._get_audio_quality_monitor().report().get("avg_snr", 0.0)
+                    quality = float(raw_q) / 30.0 if isinstance(raw_q, (int, float)) else 0.0
                 cml.record_encode(
                     modality,
-                    vec.tolist() if hasattr(vec, "tolist") else vec,
-                    latent.tolist() if hasattr(latent, "tolist") else latent,
+                    _as_float_list(vec),
+                    _as_float_list(latent),
                     quality,
                 )
                 if cml.should_train():
@@ -518,8 +557,8 @@ class MultimodalService:
             latent = np.array(item["latent"], dtype=np.float32)
 
             if modality == "vision":
-                decoder = self._get_visual_decoder()
-                decoded = decoder.decode(latent)  # numpy uint8 array (128,128,3)
+                vision_decoder = self._get_visual_decoder()
+                decoded = vision_decoder.decode(latent)  # numpy uint8 array (128,128,3)
                 if decoded is None or decoded.size == 0:
                     return {"error": "Decoding returned empty image"}
                 pil_img = Image.fromarray(decoded)
@@ -536,8 +575,8 @@ class MultimodalService:
                 if original is not None:
                     result["quality"] = {"ssim": 0.0}  # feature-level no ssim
             elif modality == "audio":
-                decoder = self._get_audio_decoder()
-                wav = decoder.decode(latent)  # numpy float32 array
+                audio_decoder = self._get_audio_decoder()
+                wav = audio_decoder.decode(latent)  # numpy float32 array
                 if wav is None or len(wav) == 0:
                     return {"error": "Decoding returned empty audio"}
                 if output_format == "raw":
@@ -734,8 +773,8 @@ class MultimodalService:
                     return {"error": f"Item not found: {item_id}"}
                 # P33: Use quality monitors for real evaluation
                 if item["modality"] == "vision":
-                    qm = self._get_quality_monitor()
-                    report = qm.report()
+                    vision_qm = self._get_quality_monitor()
+                    report = vision_qm.report()
                     result["metrics"] = {
                         "ssim": report.get("avg_ssim", 0.0),
                         "psnr": report.get("avg_psnr", 0.0),
@@ -743,8 +782,8 @@ class MultimodalService:
                         "source": "vision_pipeline_quality_monitor",
                     }
                 elif item["modality"] == "audio":
-                    qm = self._get_audio_quality_monitor()
-                    report = qm.report()
+                    audio_qm = self._get_audio_quality_monitor()
+                    report = audio_qm.report()
                     result["metrics"] = {
                         "snr": report.get("avg_snr", 0.0),
                         "total_encoded": report.get("total_calls", 0),
@@ -870,7 +909,7 @@ class MultimodalService:
 
     # --- P37: Error recovery ---
 
-    def _get_error_recovery(self):
+    def _get_error_recovery(self) -> "MultimodalErrorRecovery":
         """Get or create the MultimodalErrorRecovery instance."""
         if self._error_recovery is None:
             from services.multimodal_error_recovery import MultimodalErrorRecovery
@@ -878,7 +917,7 @@ class MultimodalService:
             self._error_recovery = MultimodalErrorRecovery(self)
         return self._error_recovery
 
-    def _get_state_persistence(self):
+    def _get_state_persistence(self) -> "MultimodalStatePersistence":
         """Get or create the MultimodalStatePersistence instance."""
         if self._state_persistence is None:
             from services.multimodal_state_persistence import MultimodalStatePersistence
@@ -886,7 +925,7 @@ class MultimodalService:
             self._state_persistence = MultimodalStatePersistence(self)
         return self._state_persistence
 
-    def _get_multimodal_quality_monitor(self):
+    def _get_multimodal_quality_monitor(self) -> "MultimodalQualityMonitor":
         """Get or create the MultimodalQualityMonitor instance (P37).
 
         NOTE: Different from _get_quality_monitor() (P31, VisionQualityMonitor).
