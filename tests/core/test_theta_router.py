@@ -110,3 +110,53 @@ def test_theta_router_report():
     assert "recent_decisions" in report
 
 
+def _registry_with_port():
+    from core.engine.axis_port_registry import AxisPortRegistry
+
+    reg = AxisPortRegistry()
+    reg.register_port("alpha", {"direction": "IO", "semantic_vector": make_vector()})
+    return reg
+
+
+def test_re_evaluate_with_dict_ports_no_crash():
+    """R20: registry 回 dict ports 時不得 AttributeError（曾崩潰）。"""
+    router = ThetaRouter(state_adapter=None, port_registry=_registry_with_port())
+    assert router.re_evaluate_routing() == []
+
+
+def test_auto_allocate_no_binding_api_no_crash():
+    """R20: 綁定系 API 缺失時顯式 no-op（曾 TypeError/AttributeError）。"""
+    from unittest.mock import MagicMock
+
+    router = ThetaRouter(state_adapter=MagicMock(), port_registry=_registry_with_port())
+    assert router._binding_api_ready() is False
+    assert router.auto_allocate() == []
+
+
+def test_apply_routing_decisions_no_binding_api_no_crash():
+    """R20: REBIND/UNBIND 無綁定 API 時回 0 且不拋錯。"""
+    from unittest.mock import MagicMock
+
+    router = ThetaRouter(state_adapter=MagicMock(), port_registry=_registry_with_port())
+    d = RouteDecision(
+        action=RouteAction.REBIND,
+        port_name="alpha",
+        target_axis="beta",
+        confidence=0.9,
+        reasoning="t",
+    )
+    assert router.apply_routing_decisions([d]) == 0
+
+
+def test_port_name_extraction_dict_and_object():
+    """R20: dict 用 .get，物件用屬性，缺名回 None。"""
+    assert ThetaRouter._port_name({"name": "p1"}) == "p1"
+    assert ThetaRouter._port_name({"axis": "alpha"}) is None
+
+    class FakePort:
+        name = "p2"
+
+    assert ThetaRouter._port_name(FakePort()) == "p2"
+    assert ThetaRouter._port_name(object()) is None
+
+

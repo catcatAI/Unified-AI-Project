@@ -213,6 +213,42 @@ class ThetaRouter:
             reasoning=f"中等相似度 {max_sim:.3f}，綁定到現有軸 {best_axis}",
         )
 
+    def _binding_api_ready(self) -> bool:
+        """綁定系 registry API 是否就緒（R20 生存守衛）。
+
+        auto_allocate / apply_routing_decisions 依賴的
+        bind_port_to_axis / unbind_port / list_ports(bound=) 尚未實作；
+        未就緒時呼叫方顯式短路（log + 空回傳），不拋 AttributeError。
+        綁定模型一旦定案，實作 registry 側後刪此守衛。
+        """
+        import inspect
+
+        reg = self._port_registry
+        if reg is None:
+            return False
+        if not all(hasattr(reg, n) for n in ("bind_port_to_axis", "unbind_port")):
+            return False
+        try:
+            params = inspect.signature(reg.list_ports).parameters
+        except (TypeError, ValueError):
+            return False
+        return "bound" in params
+
+    @staticmethod
+    def _port_name(port: Any) -> Optional[str]:
+        """端口名安全提取：registry 回 dict（.get），物件才用屬性。"""
+        if isinstance(port, dict):
+            name = port.get("name")
+            return str(name) if name is not None else None
+        return getattr(port, "name", None)
+
+    @staticmethod
+    def _port_axis(port: Any) -> Optional[str]:
+        if isinstance(port, dict):
+            axis = port.get("axis")
+            return str(axis) if axis is not None else None
+        return getattr(port, "axis", None)
+
     def auto_allocate(self) -> List[AxisBinding]:
         """
         自動為所有未綁定的端口分配軸
@@ -224,6 +260,9 @@ class ThetaRouter:
             新增的軸綁定列表
         """
         if not self._port_registry or not self._state_adapter:
+            return []
+        if not self._binding_api_ready():
+            logger.warning("[ThetaRouter] auto_allocate no-op: port-binding API 未實作")
             return []
 
         sm = self._state_adapter._sm
@@ -389,9 +428,12 @@ class ThetaRouter:
         all_ports = self._port_registry.list_ports()
 
         for port in all_ports:
-            decision = self.resolve_route(port.name)
+            pname = self._port_name(port)
+            if pname is None:
+                continue
+            decision = self.resolve_route(pname)
             if decision.action in (RouteAction.BIND, RouteAction.REBIND):
-                if decision.target_axis != port.axis:
+                if decision.target_axis != self._port_axis(port):
                     decisions.append(decision)
 
         if decisions:
@@ -410,6 +452,9 @@ class ThetaRouter:
             成功應用的數量
         """
         if not self._port_registry or not self._state_adapter:
+            return 0
+        if not self._binding_api_ready():
+            logger.warning("[ThetaRouter] apply_routing_decisions no-op: port-binding API 未實作")
             return 0
 
         count = 0
