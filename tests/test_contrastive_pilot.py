@@ -7,6 +7,7 @@ Determinism is pinned by seed 42 + md5 W init inside the engine.
 
 import importlib.util
 import os
+import sys
 
 
 def load_pilot():
@@ -61,3 +62,38 @@ def test_pilot_deterministic_history():
         )
     assert histories[0] == histories[1]
     assert histories[0][-1] < histories[0][0]
+
+
+def _run_script(name, *args, timeout=120):
+    import subprocess
+
+    repo_root = os.path.join(os.path.dirname(__file__), "..")
+    return subprocess.run(
+        [sys.executable, os.path.join(repo_root, "scripts", name), *args],
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        cwd=repo_root,
+    )
+
+
+def test_multimodal_forwarder_runs_real():
+    """R10: deprecated multimodal 試點轉發真實版，不再吐模擬算術。"""
+    import sys
+
+    p = _run_script("train_multimodal_pilot.py")
+    assert p.returncode == 0, p.stderr[-500:]
+    assert "真實 loss" in p.stdout
+    assert "模擬 loss" not in p.stdout
+
+
+def test_association_pilot_small_real():
+    """R10: association 試點真訓練（Hebbian 成邊 + 回環），小量驗證。"""
+    import sys
+
+    p = _run_script(
+        "train_pilot_association.py", "--count", "100", "--batch", "50", "--checkpoint", ""
+    )
+    assert p.returncode == 0, p.stderr[-500:]
+    assert "Pilot done" in p.stdout
+    assert "parsed=" in p.stdout
