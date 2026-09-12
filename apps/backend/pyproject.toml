@@ -191,6 +191,7 @@ dev = [
   "flake8",
   "mypy",
   "types-psutil",
+  "types-PyYAML",
   "pre-commit",
 ]
 

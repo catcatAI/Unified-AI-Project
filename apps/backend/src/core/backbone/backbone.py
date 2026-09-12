@@ -28,7 +28,16 @@ import logging
 import os
 import threading
 import types
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
+
+if TYPE_CHECKING:
+    from core.backbone.config import BackboneConfig
+    from core.backbone.external import ExternalGateway
+    from core.backbone.io import BackboneIO
+    from core.backbone.learning import LearningCoordinator
+    from core.backbone.mountable import MountManager
+    from core.backbone.pairs import PairScheduler
+    from core.backbone.registry import BackboneRegistries
 
 logger = logging.getLogger(__name__)
 
@@ -61,16 +70,17 @@ class Backbone:
         self._lock = threading.RLock()
         self._initialized = False
         # 組合式子系統（core/backbone/* mixin 元件）— 惰性實例化
-        self._registries: Optional[Any] = None
-        self._pairs: Optional[Any] = None
+        # 延遲屬性先預聲明（R28）：否則委派方法回傳全是 Any。
+        self._registries: Optional["BackboneRegistries"] = None
+        self._pairs: Optional["PairScheduler"] = None
         self._io: Optional[Any] = None
         self._state: Optional[Any] = None
-        self._config_obj: Optional[Any] = None
+        self._config_obj: Optional["BackboneConfig"] = None
         self._memory_registry: Optional[Any] = None
         self._translator: Optional[Any] = None
         self._learning: Optional[Any] = None
         self._mounts: Optional[Any] = None
-        self._external: Optional[Any] = None
+        self._external: Optional["ExternalGateway"] = None
         self._theta: Optional[Any] = None
         self._response: Optional[Any] = None
         self._state_sync: Optional[Any] = None
@@ -225,7 +235,7 @@ class Backbone:
         return EmotionSystem()
 
     @property
-    def config(self) -> Any:
+    def config(self) -> "BackboneConfig":
         """配置門面（BackboneConfig）。"""
         if self._config_obj is None:
             from core.backbone.config import BackboneConfig
@@ -321,7 +331,7 @@ class Backbone:
     # 組合式子系統：註冊與生命週期（core/backbone/* mixin 元件）
     # ------------------------------------------------------------------
     @property
-    def registries(self) -> Any:
+    def registries(self) -> "BackboneRegistries":
         """統一註冊中心（matrix/axis/module/dictionary/translator）。"""
         if self._registries is None:
             from core.backbone.registry import BackboneRegistries
@@ -346,7 +356,7 @@ class Backbone:
         return self._registries
 
     @property
-    def pairs(self) -> Any:
+    def pairs(self) -> "PairScheduler":
         """成對排程器（§5.0 Stability Core）。"""
         if self._pairs is None:
             from core.backbone.pairs import PairScheduler
@@ -367,7 +377,7 @@ class Backbone:
         return self._state
 
     @property
-    def io(self) -> Any:
+    def io(self) -> "BackboneIO":
         """信封路由 + 成對入口（BackboneIO）。"""
         if self._io is None:
             from core.backbone.io import BackboneIO
@@ -398,7 +408,7 @@ class Backbone:
         return self._translator
 
     @property
-    def learning(self) -> Any:
+    def learning(self) -> "LearningCoordinator":
         """學習協調器（LearningCoordinator）。"""
         if self._learning is None:
             from core.backbone.learning import LearningCoordinator
@@ -407,7 +417,7 @@ class Backbone:
         return self._learning
 
     @property
-    def mounts(self) -> Any:
+    def mounts(self) -> "MountManager":
         """掛載管理器（MountManager）。"""
         if self._mounts is None:
             from core.backbone.mountable import MountManager
@@ -428,7 +438,7 @@ class Backbone:
         return self._axes_registries
 
     @property
-    def external(self) -> Any:
+    def external(self) -> "ExternalGateway":
         """外部閘道（ExternalGateway）。"""
         if self._external is None:
             from core.backbone.external import ExternalGateway
