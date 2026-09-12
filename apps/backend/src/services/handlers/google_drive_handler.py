@@ -48,7 +48,11 @@ class GoogleDriveHandler:
 
         if self.drive_service and hasattr(self.drive_service, "execute"):
             try:
-                return await self.drive_service.execute(action, operation)
+                result = await self.drive_service.execute(action, operation)
+                # 非 dict 回傳違反 declared 契約：記警告後走本地兜底，而非原樣外洩。
+                if isinstance(result, dict):
+                    return result
+                logger.warning("GoogleDriveService returned non-dict, falling back to local fs")
             except Exception as e:
                 logger.warning(f"GoogleDriveService execute failed, falling back to local fs: {e}")
                 # Fall through to local fs fallback

@@ -367,7 +367,7 @@ class TrustManager:
             if not force_reassessment and cache_key in self._risk_computation_cache:
                 cached_result = self._risk_computation_cache[cache_key]
                 if time.time() - cached_result["timestamp"] < 300.0:  # 5分钟缓存
-                    return cached_result
+                    return dict(cached_result)
 
             # 获取当前状态信息
             trust_info = self.get_overall_trust_score(entity_id, min_confidence=0.0)
@@ -614,7 +614,7 @@ class TrustManager:
                 + data_factor * self.CONF_DATA_VOLUME_WEIGHT
             )
 
-            return max(self.CONF_FLOOR, min(1.0, confidence))
+            return float(max(self.CONF_FLOOR, min(1.0, confidence)))
 
         except Exception as e:
             logger.warning("Evidence confidence calculation failed: %s", e, exc_info=True)

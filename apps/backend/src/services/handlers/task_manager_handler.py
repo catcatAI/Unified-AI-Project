@@ -30,7 +30,10 @@ def _load_tasks() -> List[Dict[str, Any]]:
             backup = _TASKS_DIR / "tasks.json.bak"
             if backup.exists():
                 try:
-                    return json.loads(backup.read_text(encoding="utf-8"))
+                    data = json.loads(backup.read_text(encoding="utf-8"))
+                    # 主路徑有 isinstance 守衛，備援路徑補齊（否則損毀的合法 JSON
+                    # 非 list 會以外形污染呼叫方）。
+                    return data if isinstance(data, list) else []
                 except Exception as e:
                     logger.warning(f"Task backup read failed: {e}", exc_info=True)
     return []

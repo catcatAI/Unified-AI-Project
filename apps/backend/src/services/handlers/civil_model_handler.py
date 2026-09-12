@@ -99,7 +99,7 @@ class CivilModelHandler:
         except subprocess.TimeoutExpired:
             return 124, "超時"
 
-    async def _calc(self, text):
+    async def _calc(self, text) -> str:
         p = self._beam_params(text)
         code, out = await self._run(
             [PY, os.path.join(SCRIPTS, "civil_components.py"), "--component", "beam",
@@ -118,7 +118,7 @@ class CivilModelHandler:
     SIZE_VARY = {"beam": "As", "column": "As", "slab": "As", "box": "As",
                  "tbeam": "As", "steel": "A", "prestressed": "P_kN"}
 
-    async def _size(self, text, comp):
+    async def _size(self, text, comp) -> str:
         vary = self.SIZE_VARY.get(comp, "As")
         p = {k: v for k, v in self._all_vals(text).items() if k in self.COMP_KEYS[comp]}
         code, out = await self._run(
@@ -168,7 +168,7 @@ class CivilModelHandler:
             "Asw_s": 0.0, "V_Ed_kN": 0.0,
         }
 
-    async def _calc_component(self, text, comp):
+    async def _calc_component(self, text, comp) -> str:
         p = {k: v for k, v in self._all_vals(text).items() if k in self.COMP_KEYS[comp]}
         code, out = await self._run(
             [PY, os.path.join(SCRIPTS, "civil_components.py"),
@@ -189,7 +189,7 @@ class CivilModelHandler:
         verdict = "".join(f"{'✅' if r[k] else '❌'}" for k in oks)
         return f"（結構計算）{comp}：{detail}{verdict}"
 
-    async def _dxf_section(self, text):
+    async def _dxf_section(self, text) -> str:
         p = self._beam_params(text)
         code, out = await self._run(
             [PY, os.path.join(SCRIPTS, "civil_dxf.py"), "--b", str(p["b"]),
@@ -198,7 +198,7 @@ class CivilModelHandler:
         ok = "✅" in out
         return f"（出圖）梁截面 DXF {'✅ 已生成（data/.cache/beam_section.dxf）' if ok else '❌ ' + out[-200:]}"
 
-    async def _blender_beam(self, text):
+    async def _blender_beam(self, text) -> str:
         p = self._beam_params(text)
         code, out = await self._run(
             ["blender", "--background", "--python",
@@ -209,7 +209,7 @@ class CivilModelHandler:
         ok = "BLENDER:" in out
         return f"（3D 建模）Blender 梁 STL {'✅ /tmp/girder_chat.stl' if ok else '❌ ' + out[-200:]}"
 
-    async def _freecad_beam(self, text):
+    async def _freecad_beam(self, text) -> str:
         p = self._beam_params(text)
         code, out = await self._run(
             [PY, os.path.join(SCRIPTS, "civil_freecad.py"),
@@ -220,7 +220,7 @@ class CivilModelHandler:
         tail = [ln.strip()[:80] for ln in out.splitlines() if "FC-BBOX" in ln]
         return f"（CAD 建模）FreeCAD STEP {'✅ ' + (tail[0] if tail else '') if ok else '❌ ' + out[-200:]}"
 
-    async def _fem_beam(self, text):
+    async def _fem_beam(self, text) -> str:
         return ("（有限元）完整 FEM 需約 10 分鐘交互會話（flatpak 多次啟動）；"
                 "已驗證鏈路：求解器可跑、結果可讀、線性成立（單位標定排隊）。"
                 "請先用「梁計算」定參數，再指定載荷工況。")

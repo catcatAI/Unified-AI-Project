@@ -548,8 +548,8 @@ class ExecutionGate:
         msg = f"你想要{desc}吗？"
         warnings = self._config.get("warnings", {})
         if action_type in warnings:
-            msg += warnings[action_type]
-        msg += self._config.get("confirm_suffix", "\n确认后我会执行。")
+            msg += str(warnings[action_type])
+        msg += str(self._config.get("confirm_suffix", "\n确认后我会执行。"))
         return msg
 
     def _describe_impact(self, action_type: str, user_message: str) -> str:

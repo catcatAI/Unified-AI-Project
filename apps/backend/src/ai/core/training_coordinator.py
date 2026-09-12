@@ -79,8 +79,9 @@ class TrainingCoordinator:
         if self.bus is not None:
             try:
                 result = self.bus.get_training_assignment(domain)
+                # bus 未類型化：回傳值先判空再 str 化，守住 Optional[str] 契約。
                 if result is not None:
-                    return result
+                    return str(result)
             except (AttributeError, TypeError, ValueError):
                 logger.warning(
                     "ModelBus.get_training_assignment failed for %s, falling back", domain
