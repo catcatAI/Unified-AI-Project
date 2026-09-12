@@ -22,7 +22,9 @@ os.environ["HOME"] = tempfile.mkdtemp(prefix="e2e-fakehome-")
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "apps/backend/src"))
 
-# auto + 本地執行（ Garbage-free, 無網路、用戶態寫入限隔離 HOME）
+# auto + 本地執行（ Garbage-free, 用戶態寫入限隔離 HOME）
+# search 需真實網路（R18）：結構斷言（成功旗標＋前綴），不逐字斷言內容
+# （檢索排序品質另案追蹤；此處只證鏈路通）。
 EXEC_CASES = [
     # (用戶文本, 期望 type, 期望 gate, 期望 handler, 回應必須含)
     ("梁計算 b=300 d=450 As=1256", "civil", "auto_execute", "civil", "M_Rd="),
@@ -37,6 +39,7 @@ EXEC_CASES = [
     ("建立任務：買牛奶", "task", "auto_execute", "task_mgr", "買牛奶"),
     ("任務列表", "task", "auto_execute", "task_mgr", "買牛奶"),
     ("完成任務 #1", "task", "auto_execute", "task_mgr", "完成"),
+    ("搜尋台北天氣", "search", "auto_execute", "web_search", "（網路搜尋）"),
 ]
 
 # confirm：只驗 verdict + handler 可解（不模擬用戶按確認）

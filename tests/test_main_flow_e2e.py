@@ -19,4 +19,5 @@ def test_main_flow_e2e_passes():
         cwd=repo_root,
     )
     assert p.returncode == 0, p.stdout[-1500:] + p.stderr[-500:]
-    assert "13/13 通過" in p.stdout
+    # 不鎖死用例數（加案只改腳本）：以「通過」結尾且零 ❌ 為準。
+    assert "通過" in p.stdout and "❌" not in p.stdout
