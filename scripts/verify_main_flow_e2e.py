@@ -106,6 +106,10 @@ def main():
             )
             if not ok:
                 fails.append(text)
+        err = await run_confirm_exec(qc, gate, mb)
+        print(f"  {'✅' if not err else '❌'} CONFIRM-EXEC 刪除任務全周期      {err}")
+        if err:
+            fails.append("CONFIRM-EXEC 刪除任務全周期")
         for text in REJECT_CASES:
             r = qc.classify(text)
             d = gate.decide(r.primary_type.value, r.action_type, text, r.confidence, {})
@@ -119,11 +123,38 @@ def main():
 
     print("主流程 e2e（classify→gate→execute 真接線）：")
     asyncio.run(amain())
-    print(
-        f"結果：{len(EXEC_CASES) + len(CONFIRM_CASES) + len(REJECT_CASES) - len(fails)}/"
-        f"{len(EXEC_CASES) + len(CONFIRM_CASES) + len(REJECT_CASES)} 通過"
-    )
+    total = len(EXEC_CASES) + len(CONFIRM_CASES) + len(REJECT_CASES) + 1
+    print(f"結果：{total - len(fails)}/{total} 通過")
     return 1 if fails else 0
+
+
+async def run_confirm_exec(qc, gate, mb):
+    """Confirm 路徑真執行（R27）：模擬用戶按確認。
+
+    只選隔離 HOME 下的 task 刪除（零風險）；code/system 永不代按。
+    流程：建待刪任務 → 驗 confirm verdict → 代按執行 → 列表驗消失。
+    任一步不符即回錯誤字串（空字串=通過）。
+    """
+    import re
+
+    out = await mb.execute_handler("task_mgr", "建立任務：待刪任務", {"query_type": "task"})
+    m = re.search(r"#(\d+)", str(out.get("result")))
+    if not out.get("success") or not m:
+        return f"建任務失敗：{str(out.get('result'))[:80]}"
+    tid = m.group(1)
+    text = f"刪除任務 #{tid}"
+    r = qc.classify(text)
+    d = gate.decide(r.primary_type.value, r.action_type, text, r.confidence, {})
+    if r.primary_type.value != "task" or d.action != "confirm_then_execute":
+        return f"verdict 走偏：cls={r.primary_type.value} gate={d.action}"
+    # —— 模擬用戶確認（生產中由此處轉 execute_handler） ——
+    out = await mb.execute_handler(d.handler, text, {"query_type": "task"})
+    if not out.get("success"):
+        return f"確認執行失敗：{str(out.get('result'))[:80]}"
+    out = await mb.execute_handler("task_mgr", "任務列表", {"query_type": "task"})
+    if "待刪任務" in str(out.get("result")):
+        return "刪除後仍在列表"
+    return ""
 
 
 if __name__ == "__main__":
