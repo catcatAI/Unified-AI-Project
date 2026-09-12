@@ -250,6 +250,7 @@ class ModelBus:
         "system": "_handle_handler_based",
         "vision": "_handle_handler_based",
         "audio": "_handle_fanout",
+        "civil": "_handle_handler_based",
     }
 
     async def route(

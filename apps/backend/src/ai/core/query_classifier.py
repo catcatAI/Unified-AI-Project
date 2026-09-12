@@ -41,6 +41,7 @@ class QueryType(Enum):
     TASK = "task"
     VISION = "vision"
     AUDIO = "audio"
+    CIVIL = "civil"  # 土木建模（梁柱板/鋼/預力/圖紙/建模）
 
 
 @dataclass
@@ -565,6 +566,24 @@ class QueryClassifier:
         ]
 
     @staticmethod
+    def _build_civil_patterns() -> List[Tuple[QueryType, Pattern, float]]:
+        # 中文無空格：單字鍵允許 CJK 左鄰（黑板類誤傷已評估：handler 無破壞性操作）
+        return [
+            (
+                QueryType.CIVIL,
+                re.compile(
+                    r"(?:^|[\s，。！？,.\s一-鿿])"
+                    r"(梁|柱|板|桥|橋|墩|混凝土|钢筋|鋼筋|弯矩|彎矩|剪力|"
+                    r"轴力|軸力|配筋|箱梁|桁架|预力|預力|护栏|護欄|"
+                    r"支座|图纸|圖紙|建模|"
+                    r"\b(beam|column|slab|bridge|pier|concrete|rebar|CAD|STEP|STL|DXF|truss)\b)",
+                    re.IGNORECASE,
+                ),
+                0.8,
+            ),
+        ]
+
+    @staticmethod
     def _build_command_patterns() -> List[Tuple[QueryType, Pattern, float]]:
         return [
             (
@@ -594,6 +613,7 @@ class QueryClassifier:
             QueryClassifier._build_task_patterns,
             QueryClassifier._build_vision_patterns,
             QueryClassifier._build_audio_patterns,
+            QueryClassifier._build_civil_patterns,
             QueryClassifier._build_command_patterns,
         ]
         result: List[Tuple[QueryType, Pattern, float]] = []
@@ -866,6 +886,8 @@ class QueryClassifier:
             QueryType.SEARCH: {"搜寻", "查找", "搜索", "search", "find", "google"},
             QueryType.CODE: {"程式", "代码", "函数", "code", "program", "function"},
             QueryType.VISION: {"图片", "照片", "影像", "image", "photo", "vision"},
+            QueryType.CIVIL: {"梁", "柱", "板", "橋", "桥", "混凝土", "建模", "出圖",
+                              "beam", "bridge", "column", "concrete", "CAD"},
             QueryType.AUDIO: {"语音", "音乐", "录音", "audio", "voice", "music"},
             QueryType.TASK: {"任务", "工作", "待辦", "task", "todo", "schedule"},
         }

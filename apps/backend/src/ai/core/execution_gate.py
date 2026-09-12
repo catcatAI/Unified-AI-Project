@@ -108,6 +108,7 @@ class ExecutionGate:
         "system": "system_cmd",
         "task": "task_mgr",
         "vision": "vision",
+        "civil": "civil",
     }
 
     # C³ 6.0: Class-level shared results dict for cross-instance feedback persistence.
