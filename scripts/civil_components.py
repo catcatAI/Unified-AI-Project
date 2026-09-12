@@ -36,14 +36,15 @@ def beam(db, conc="C30/37", steel="B500B", b=300.0, d=450.0, As=1256.0,
         out["span_feasible_rc"] = bool(L / d <= 25)
         if L / d > 25:
             out["assumptions"].append("⚠️ L/d>25：RC 簡支梁不可行（改連續梁/鋼構/預力）")
-    if M_Ed_kNm:
-        As_req = M_Ed_kNm * 1e6 / (0.9 * d * fyd)
-        out["As_req_mm2"] = round(As_req, 0)
-        out["bending_ok"] = bool(MRd >= M_Ed_kNm)
+    # verdict 鍵無條件發射：零需求時空真（MRd>=0 恆成立）。曾以 if M_Ed 包裝，
+    # autosize 以 .get(ok, False) 判讀 → 零需求永遠「不可達」的誤判。
+    As_req = M_Ed_kNm * 1e6 / (0.9 * d * fyd)
+    out["As_req_mm2"] = round(As_req, 0)
+    out["bending_ok"] = bool(MRd >= M_Ed_kNm)
+    VRds = 0.9 * d * Asw_s * fyd / 1e3 if Asw_s else 0.0
+    out["V_Rds_kN"] = round(VRds, 1)
+    out["shear_ok"] = bool(VRds >= V_Ed_kN)
     if V_Ed_kN:
-        VRds = 0.9 * d * Asw_s * fyd / 1e3 if Asw_s else 0.0
-        out["V_Rds_kN"] = round(VRds, 1)
-        out["shear_ok"] = bool(VRds >= V_Ed_kN)
         out["assumptions"].append("shear θ=45° conservative")
     return out
 
@@ -55,8 +56,7 @@ def column(db, conc="C30/37", steel="B500B", b=300.0, h=300.0, As=1608.0, N_Ed_k
     NRd = (0.8 * Ac * fcd + As * fyd) / 1e3
     out = {"N_Rd_kN": round(NRd, 0),
            "assumptions": ["short braced column", "0.8 sustained-load factor"]}
-    if N_Ed_kN:
-        out["axial_ok"] = bool(NRd >= N_Ed_kN)
+    out["axial_ok"] = bool(NRd >= N_Ed_kN)
     return out
 
 
@@ -71,8 +71,7 @@ def slab(db, conc="C30/37", steel="B500B", h=150.0, cover=25.0,
     As_min = max(0.26 * C["fctm_MPa"] / S["fyk_MPa"] * b * d, 0.0013 * b * d)
     out = {"M_Rd_kNm_per_m": round(MRd, 1), "As_min_mm2_per_m": round(As_min, 0),
            "assumptions": ["1m strip", "EC2 9.2.1 min steel"]}
-    if M_Ed_kNm:
-        out["bending_ok"] = bool(MRd >= M_Ed_kNm)
+    out["bending_ok"] = bool(MRd >= M_Ed_kNm)
     return out
 
 
@@ -92,8 +91,7 @@ def box_girder(db, conc="C30/37", steel="B500B", B=8000.0, H=2000.0,
     out = {"A_mm2": round(A, 0), "I_mm4": round(I, 0), "W_mm3": round(W, 0),
            "self_weight_kN_m": round(self_w, 1), "M_Rd_kNm": round(MRd, 0),
            "assumptions": ["thin-wall box", "z=0.9d approx", "no shear lag/torsion"]}
-    if M_Ed_kNm:
-        out["bending_ok"] = bool(MRd >= M_Ed_kNm)
+    out["bending_ok"] = bool(MRd >= M_Ed_kNm)
     return out
 
 
@@ -110,12 +108,12 @@ def t_beam(db, conc="C30/37", steel="B500B", bw=300.0, hf=150.0, l0=20000.0,
     if x > hf:
         out["warning"] = "中性軸出翼緣，真T梁另算（排隊）"
         out["M_Rd_kNm"] = 0.0
+        out["bending_ok"] = False
     else:
         z = d - 0.4 * x
         MRd = As * fyd * z / 1e6
         out["M_Rd_kNm"] = round(MRd, 1)
-        if M_Ed_kNm:
-            out["bending_ok"] = bool(MRd >= M_Ed_kNm)
+        out["bending_ok"] = bool(MRd >= M_Ed_kNm)
     return out
 
 
@@ -133,9 +131,8 @@ def steel_member(db, grade="S355", A=7600.0, Iy=45.9e6, L=5000.0,
     out = {"N_t_Rd_kN": round(Nt, 0), "N_b_Rd_kN": round(Nb, 0),
            "lambda_bar": round(lam, 3), "chi": round(chi, 3),
            "assumptions": ["EC3 curve c", "pinned-pinned", "single axis"]}
-    if N_Ed_kN:
-        out["tension_ok"] = bool(Nt >= abs(N_Ed_kN))
-        out["buckling_ok"] = bool(Nb >= abs(N_Ed_kN))
+    out["tension_ok"] = bool(Nt >= abs(N_Ed_kN))
+    out["buckling_ok"] = bool(Nb >= abs(N_Ed_kN))
     return out
 
 

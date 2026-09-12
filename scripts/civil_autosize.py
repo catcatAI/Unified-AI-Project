@@ -29,6 +29,10 @@ FUNCS = {
     "slab": (cc.slab, "bending_ok"),
     "box": (cc.box_girder, "bending_ok"),
     "tbeam": (cc.t_beam, "bending_ok"),
+    # steel：以受壓穩定控制（拉壓雙驗中壓通常先到）；prestressed：應力窗
+    # 非單調（區間可行），二分收斂到下界，終驗不通過即報錯不猜。
+    "steel": (cc.steel_member, "buckling_ok"),
+    "prestressed": (cc.prestressed, "stress_ok"),
 }
 
 
@@ -62,9 +66,17 @@ def size(db, component, vary, lo, hi, fixed, check=None, iters=25):
             hi = mid
         else:
             lo = mid
+    # 終驗（文檔「非單調即報錯不猜」的落實）：二分不變量保證 ok(hi)，
+    # 但非單調 check（如預力應力窗）可能在內部翻轉，複驗失敗即報錯。
     r = fn(db, **{**fixed, vary: hi})
-    return {"ok": True, vary: round(hi, 1), "check": r.get(check),
-            "detail": {k: r[k] for k in list(r)[:6] if k != "assumptions"}}
+    if not bool(r.get(check, False)):
+        return {"ok": False, "reason": f"{vary}={round(hi, 1)} 終驗不通過（非單調？）"}
+    return {
+        "ok": True,
+        vary: round(hi, 1),
+        "check": r.get(check),
+        "detail": {k: r[k] for k in list(r)[:6] if k != "assumptions"},
+    }
 
 
 def main():

@@ -16,6 +16,15 @@ REPO_ROOT = os.path.abspath(
 SCRIPTS = os.path.join(REPO_ROOT, "scripts")
 PY = sys.executable
 
+# 非結構守衛（與 classifier _CIVIL_FALSE_POSITIVE 同源）：主板/電路板/黑板
+# 含「板」字但非土木構件；主流程分類器已攔，此為末端直調的第二道門。
+# 注意：裸「板」（樓板/板配筋）是合法土木輸入，不得攔。
+_NON_STRUCTURAL = re.compile(
+    r"(主板|主機板|主机板|電路板|电路板|\bPCB\b|黑板|平板電腦|平板电脑|"
+    r"\bB\d{3,4}[A-Z]*\b)",
+    re.IGNORECASE,
+)
+
 
 def _num(text, keys, default):
     for k in keys:
@@ -34,6 +43,8 @@ class CivilModelHandler:
 
     async def handle(self, text: str, intent: str = "civil") -> str:
         t = text or ""
+        if _NON_STRUCTURAL.search(t):
+            return "（結構建模）非結構構件請求：主板/電路板/黑板不在土木範圍。"
         try:
             if any(k in t for k in ("FEM", "有限元", "撓度", "挠度")):
                 return await self._fem_beam(t)
@@ -41,9 +52,13 @@ class CivilModelHandler:
                 return await self._freecad_beam(t)
             if any(k in t for k in ("STL", "3D", "三維", "立體", "渲染", "模型")):
                 return await self._blender_beam(t)
-            if any(k in t for k in ("DXF", "圖紙", "图纸", "截面", "出圖", "drawing")):
-                return await self._dxf_section(t)
             comp = self._detect_component(t)
+            # 出圖器只會畫梁截面：非梁構件（如柱截面計算）不得進 DXF，
+            # 否則柱查詢會拿到一張梁圖（曾實測誤入）。
+            if comp == "beam" and any(
+                k in t for k in ("DXF", "圖紙", "图纸", "截面", "出圖", "drawing")
+            ):
+                return await self._dxf_section(t)
             if any(k in t for k in ("配多少", "配筋多少", "需要多少", "設計", "设计", "size", "sizing")):
                 return await self._size(t, comp)
             if comp != "beam":
@@ -118,7 +133,8 @@ class CivilModelHandler:
             return f"（定尺寸）解析失敗：{out[-300:]}"
         if not r.get("ok"):
             return f"（定尺寸）不可達：{r.get('reason', '')[:120]}"
-        return f"（定尺寸）{comp} {vary}={r.get(vary)} ✅"
+        # autosize 下界直通時鍵為 value 而非 vary 名（如 As），兩鍵兼容。
+        return f"（定尺寸）{comp} {vary}={r.get(vary, r.get('value'))} ✅"
 
     COMP_KEYS = {
         "beam": ["b", "d", "As", "M_Ed_kNm", "V_Ed_kN", "Asw_s", "L"],
