@@ -163,3 +163,45 @@ class TestCivilAntiMisjudgment:
         from ai.core.execution_gate import ExecutionGate
 
         assert ExecutionGate.HANDLER_MAP["civil"] == "civil"
+
+
+class TestWiringSweepAntiMisjudgment:
+    """主流程接線掃描（本輪）：句中關鍵詞 + 字典低置信讓位 + 否定封頂。"""
+
+    def test_knowledge_mid_sentence_what_is(self):
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        result = QueryClassifier().classify("什麼是光合作用")
+        assert result.primary_type == QueryType.KNOWLEDGE
+        assert result.reason == "regex_pattern_match"
+
+    def test_opinion_mid_sentence_feel(self):
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        result = QueryClassifier().classify("你覺得哪款手機好")
+        assert result.primary_type == QueryType.OPINION
+
+    def test_code_mid_sentence_function(self):
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        result = QueryClassifier().classify("寫個Python快排函數")
+        assert result.primary_type == QueryType.CODE
+
+    def test_logic推理_mid_sentence(self):
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        result = QueryClassifier().classify("這個推理有問題嗎")
+        assert result.primary_type == QueryType.LOGIC
+
+    def test_negation_caps_actionable_confidence(self):
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        for s, want in (("不要搜寻", QueryType.SEARCH), ("不要刪除文件", QueryType.FILE)):
+            result = QueryClassifier().classify(s)
+            assert result.primary_type == want, s
+            assert result.confidence < 0.5, s
+
+    def test_motherboard_still_not_civil(self):
+        from ai.core.query_classifier import QueryClassifier, QueryType
+
+        assert QueryClassifier().classify("B550M主板").primary_type != QueryType.CIVIL

@@ -381,3 +381,53 @@ class TestExecutionGateFeedbackLoop:
         # The key is that reason contains fb_adj
         d = self.gate.decide("file", "read", "读取文件", 0.8, {})
         assert "fb_adj=-0.05" in d.reason
+
+
+class TestDictionaryActionVocabulary:
+    """閘門必須認識 dictionary 發出的細分動作（本輪）：缺失會掉進 0.5 預設
+    把 file/organize 壓到 0.18 誤 reject。"""
+
+    def setup_method(self):
+        self.gate = ExecutionGate()
+
+    def test_organize_reaches_confirm_not_reject(self):
+        d = self.gate.decide("file", "organize", "整理桌面文件", 0.92, {})
+        assert d.action == "confirm_then_execute"
+        assert d.handler == "file_ops"
+
+    def test_list_read_only_auto_executes(self):
+        d = self.gate.decide("file", "list", "列出桌面文件", 0.92, {})
+        assert d.action == "auto_execute"
+        assert d.handler == "file_ops"
+
+    def test_clean_requires_confirmation_like_delete(self):
+        d = self.gate.decide("file", "clean", "清理下載文件夾", 0.79, {})
+        assert d.action == "confirm_then_execute"
+        assert d.handler == "file_ops"
+
+    def test_reflex_rejected_like_greeting(self):
+        d = self.gate.decide("reflex", "none", "哦", 0.95, {})
+        assert d.action == "reject"
+
+    def test_action_tables_cover_dictionary_verbs(self):
+        from ai.core.execution_gate import IMPACT_BASE, REVERSIBILITY
+
+        for verb in (
+            "write",
+            "move",
+            "copy",
+            "rename",
+            "organize",
+            "clean",
+            "list",
+            "open",
+            "close",
+            "start",
+            "stop",
+            "pause",
+            "download",
+            "upload",
+            "calculate",
+        ):
+            assert verb in REVERSIBILITY, verb
+            assert verb in IMPACT_BASE, verb

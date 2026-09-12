@@ -31,6 +31,23 @@ REVERSIBILITY = {
     "system": 0.0,  # 系统类：不可逆且影响大
     "execute": 0.0,  # 执行类：不可逆
     "none": 1.0,  # 无操作
+    # dictionary_classifier 可發出的細分動作（缺失會掉進 0.5 預設，
+    # 如 file/organize 得分 0.18 被誤 reject；按同系類別對齊）：
+    "write": 0.6,  # 同 modify（可覆寫回來但有成本）
+    "move": 0.6,  # 同 modify（可移回來）
+    "copy": 0.9,  # 同 create（副本可刪）
+    "rename": 0.6,  # 同 modify（可改回來）
+    "organize": 0.6,  # 同 modify（整理可還原）
+    "clean": 0.2,  # 同 delete（清理可能刪檔）
+    "list": 1.0,  # 同 read（唯讀）
+    "open": 0.9,  # 同 create（可關閉還原）
+    "close": 0.6,  # 同 modify（可重開，但未存檔狀態會丟）
+    "start": 0.9,  # 同 create（可停止還原）
+    "stop": 0.6,  # 同 modify（可重啟）
+    "pause": 0.6,  # 同 modify（可恢復）
+    "download": 0.9,  # 同 create（下行物可刪）
+    "upload": 0.1,  # 同 send（上行外洩不可逆）
+    "calculate": 1.0,  # 同 read（純運算無副作用）
 }
 REVERSIBILITY_DEFAULT = 0.5
 
@@ -45,6 +62,22 @@ IMPACT_BASE = {
     "system": 0.2,
     "execute": 0.2,
     "none": 1.0,
+    # 同上：dictionary 細分動作對齊（鍵必須與 REVERSIBILITY 同步增減）：
+    "write": 0.7,
+    "move": 0.7,
+    "copy": 0.9,
+    "rename": 0.7,
+    "organize": 0.7,
+    "clean": 0.4,
+    "list": 1.0,
+    "open": 0.9,
+    "close": 0.7,
+    "start": 0.9,
+    "stop": 0.7,
+    "pause": 0.7,
+    "download": 0.7,
+    "upload": 0.3,
+    "calculate": 1.0,
 }
 IMPACT_DEFAULT = 0.5
 
@@ -74,7 +107,9 @@ FB_UNRELIABLE_ADJUSTMENT = -0.05
 # confirmation regardless of exec score (see decide()). The score formula
 # (reversibility x impact x clarity) zeroes these out, making the normal
 # confirm branch unreachable, which defeats the gate's design intent.
-_IRREVERSIBLE_ACTIONS = frozenset({"system", "execute", "delete", "send"})
+_IRREVERSIBLE_ACTIONS = frozenset({"system", "execute", "delete", "send", "clean"})
+# clean（清理）同 delete：可能刪檔，必須走確認分支而非分數拒絕
+# （否則 file/clean 0.08 分永遠 reject，清理能力在主流程等於死亡）。
 
 
 @dataclass
@@ -205,10 +240,13 @@ class ExecutionGate:
         effective_confirm = round(self.CONFIRM_THRESHOLD - fb_adj, 3)
 
         # For non-actionable queries, skip confirmation and let LLM handle
+        # （reflex 缺席是疏漏：classifier 給 REFLEX actionability 0.0 同 GREETING，
+        # 卻曾走 confirm/no_handler 向用戶道歉；現與 greeting 同等對待）
         if query_type in (
             "knowledge",
             "creative",
             "greeting",
+            "reflex",
             "opinion",
             "unknown",
             "logic",

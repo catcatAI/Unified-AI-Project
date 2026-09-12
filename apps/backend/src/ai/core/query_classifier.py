@@ -234,6 +234,12 @@ _NEGATION_WORDS = {"不要", "别", "取消", "停止", "stop", "cancel", "don't
 _WORD_BOUNDARY = r"(?:^|[\s，。！？,.\s])"
 _WORD_BOUNDARY_END = r"(?:[\s，。！？,.\s]|$)"
 
+# 中文句中關鍵詞邊界（本輪）：中文無空格，分隔符邊界會讓句中關鍵詞
+# （你覺得/快排函數/台北天氣）永遠看不見；civil 已先行驗證此做法。
+# 單字鍵誤傷高的類型維持原邊界：creative（寫/作）、vision（看）、
+# audio（聽）、command（祈使句首設計）、greeting（你好誤傷「跟你好朋友」）。
+_WORD_BOUNDARY_CJK = r"(?:^|[\s，。！？,.\s一-鿿])"
+
 # Static tables are pure data (never mutated) — build once per process and share
 # across instances instead of recompiling ~25 regexes per construction.
 _CLASSIFIER_PATTERNS: Optional[List[Tuple[QueryType, Pattern, float]]] = None
@@ -338,8 +344,7 @@ class QueryClassifier:
             (
                 QueryType.LOGIC,
                 re.compile(
-                    r"(?:^|[\s，。！？,.\s])"
-                    r"(\b(true|false|and|or|not|if|bool|nor|xor|neither)\b|"
+                    _WORD_BOUNDARY_CJK + r"(\b(true|false|and|or|not|if|bool|nor|xor|neither)\b|"
                     r"if\s+then|逻辑|推理|boolean|proposition)",
                     re.IGNORECASE,
                 ),
@@ -356,8 +361,7 @@ class QueryClassifier:
             (
                 QueryType.KNOWLEDGE,
                 re.compile(
-                    r"(?:^|[\s，。！？,.\s])"
-                    r"(什么是|是什么|是什麼|what\s+is|how\s+(does|do|can|to)|"
+                    _WORD_BOUNDARY_CJK + r"(什么是|是什么|是什麼|what\s+is|how\s+(does|do|can|to)|"
                     r"why\s+(is|does|do|can)|"
                     r"\b(define|explain)\b|"
                     r"怎麼回|怎么回|多少|how\s+many|what\s+are)",
@@ -379,8 +383,7 @@ class QueryClassifier:
             (
                 QueryType.KNOWLEDGE,
                 re.compile(
-                    r"(?:^|[\s，。！？,.\s])"
-                    r"(天氣|天气|氣溫|气温|温度|溫度|weather|temperature)",
+                    _WORD_BOUNDARY_CJK + r"(天氣|天气|氣溫|气温|温度|溫度|weather|temperature)",
                     re.IGNORECASE,
                 ),
                 0.7,
@@ -388,8 +391,7 @@ class QueryClassifier:
             (
                 QueryType.KNOWLEDGE,
                 re.compile(
-                    r"(?:^|[\s，。！？,.\s])"
-                    r"(能做|可以做|可以幫|能幫|可以帮|能幫我|可以幫我|"
+                    _WORD_BOUNDARY_CJK + r"(能做|可以做|可以幫|能幫|可以帮|能幫我|可以幫我|"
                     r"你的能力|你的功能|你會什麼|你会什么|你能做|你可以做|"
                     r"介紹你的|介绍你的|能做什麼|能做什么|可以做什么|可以做什麼|"
                     r"能做啥|能幹嘛|能幹什麼|能干什么|可以幹嘛|可以干什么)",
@@ -431,8 +433,7 @@ class QueryClassifier:
             (
                 QueryType.OPINION,
                 re.compile(
-                    r"(?:^|[\s，。！？,.\s])"
-                    r"(觉得|认为|看法|意见|评价|建议|"
+                    _WORD_BOUNDARY_CJK + r"(觉得|认为|看法|意见|评价|建议|"
                     r"推荐|喜欢|不喜欢|优点|缺点|比较|"
                     r"覺得|認為|看法|意見|評價|建議|"
                     r"推薦|喜歡|不喜歡|優點|缺點|比較|"
@@ -450,7 +451,7 @@ class QueryClassifier:
             (
                 QueryType.FILE,
                 re.compile(
-                    r"(?:^|[\s，。！？,.\s/])"
+                    r"(?:^|[\s，。！？,.\s/一-鿿])"  # 同 _WORD_BOUNDARY_CJK，另容路徑斜線
                     r"(整理|清理|删除|移动|移至|移到|复制|重命名|读取|写入|列出|建立|新建|修改|编辑|"
                     r"文件|文件夹|目录|路径|"
                     r"整理|清理|刪除|移動|移至|移到|複製|重命名|讀取|寫入|列出|建立|新建|修改|編輯|"
@@ -482,8 +483,7 @@ class QueryClassifier:
             (
                 QueryType.SEARCH,
                 re.compile(
-                    r"(?:^|[\s，。！？,.\s])"
-                    r"(搜寻|搜索|查找|找|查询|搜|"
+                    _WORD_BOUNDARY_CJK + r"(搜寻|搜索|查找|找|查询|搜|"
                     r"搜尋|搜索|查找|找|查詢|搜|"
                     r"\b(search|find|look\s*for|google|query|lookup)\b)",
                     re.IGNORECASE,
@@ -498,8 +498,7 @@ class QueryClassifier:
             (
                 QueryType.CODE,
                 re.compile(
-                    r"(?:^|[\s，。！？,.\s])"
-                    r"(程序|代码|函数|变量|循环|数组|对象|"
+                    _WORD_BOUNDARY_CJK + r"(程序|代码|函数|变量|循环|数组|对象|"
                     r"调试|重构|优化|实现|"
                     r"程式|代碼|函數|變數|迴圈|陣列|物件|"
                     r"除錯|重構|優化|實作|"
@@ -517,8 +516,7 @@ class QueryClassifier:
             (
                 QueryType.EXECUTE,
                 re.compile(
-                    r"(?:^|[\s，。！？,.\s])"
-                    r"(执行|运行|开启|关闭|启动|停止|暂停|"
+                    _WORD_BOUNDARY_CJK + r"(执行|运行|开启|关闭|启动|停止|暂停|"
                     r"執行|運行|開啟|關閉|啟動|停止|暫停|"
                     r"\b(execute|run|open|close|start|stop|launch|kill)\b)",
                     re.IGNORECASE,
@@ -533,8 +531,7 @@ class QueryClassifier:
             (
                 QueryType.TASK,
                 re.compile(
-                    r"(?:^|[\s，。！？,.\s])"
-                    r"(任务|工作|待办|行程|排程|提醒|建立任务|删除任务|"
+                    _WORD_BOUNDARY_CJK + r"(任务|工作|待办|行程|排程|提醒|建立任务|删除任务|"
                     r"任務|工作|待辦|行程|排程|提醒|建立任務|刪除任務|"
                     r"\b(task|todo|schedule|reminder|plan|planned)\b)",
                     re.IGNORECASE,
@@ -653,25 +650,22 @@ class QueryClassifier:
         # Step 2: ED3N Dictionary classification (primary path)
         result = self._classify_by_dictionary(text, has_negation)
         if result is not None:
-            # 防誤判：字典 KNOWLEDGE 低置信時，若土木強信號存在則讓位給 regex
-            # （例：「梁跨度8米配筋多少」字典給 knowledge 0.6，regex CIVIL 0.8 更準）
-            if result.primary_type == QueryType.KNOWLEDGE and result.confidence < 0.7:
-                if _CIVIL_STRONG_COMPOUND.search(text) and not _CIVIL_FALSE_POSITIVE.search(text):
-                    pass  # fall through to regex
-                elif _CIVIL_FALSE_POSITIVE.search(text):
-                    return result
-                else:
-                    # 無土木強信號時仍檢查：若 regex 有 CIVIL 強命中則讓位
-                    _civil_hit = any(
-                        qt == QueryType.CIVIL and pattern.search(text)
-                        for qt, pattern, _ in self._patterns
-                    )
-                    if _civil_hit and _CIVIL_STRONG_COMPOUND.search(text):
-                        pass  # fall through to regex
-                    else:
-                        return result
-            else:
-                return result
+            # 防誤判（本輪由土木特例升級為通用規則）：字典低置信（<0.7）時，
+            # 若 regex 更有把握則讓位。例：字典 creative 0.45 vs regex
+            # knowledge 0.75（什麼是光合作用）；字典 knowledge 0.6 vs
+            # regex CIVIL 0.9（梁跨度8米配筋多少）。CIVIL 誤傷門控在
+            # _classify_by_regex 內部處理，主板類不受影響。
+            # 否定句除外（不要搜尋）：否定翻轉意圖，不疊加匹配加成，
+            # 且閘門本就會 negation_reject。
+            if result.confidence < 0.7 and not has_negation:
+                regex_result = self._classify_by_regex(text, has_negation)
+                if (
+                    regex_result is not None
+                    and regex_result.primary_type != result.primary_type
+                    and regex_result.confidence > result.confidence
+                ):
+                    return regex_result
+            return result
 
         # Steps 3-5: Regex pattern matching (fallback)
         result = self._classify_by_regex(text, has_negation)
@@ -734,6 +728,19 @@ class QueryClassifier:
                         continue
                 anchored = m.start() == 0 or m.end() == len(text)
                 conf = self._adjust_confidence(qt, text, base_conf, anchored, has_negation)
+                # 否定句（不要搜尋）：保留類型信號但置信度封頂 0.45——
+                # 否定翻轉意圖，高置信會誤導路由；閘門本就會 negation_reject。
+                if has_negation and qt in (
+                    QueryType.FILE,
+                    QueryType.SEARCH,
+                    QueryType.CODE,
+                    QueryType.EXECUTE,
+                    QueryType.TASK,
+                    QueryType.SYSTEM,
+                    QueryType.VISION,
+                    QueryType.CIVIL,
+                ):
+                    conf = min(conf, 0.45)
                 matches.append(
                     (
                         qt,
