@@ -19,6 +19,24 @@ from PIL import Image
 logger = logging.getLogger(__name__)
 
 
+def _tolist_or_none(vec: Any) -> Optional[List[float]]:
+    """ndarray-ish → List[float]（R25：encode 家族 7 處同一根因）。
+
+    無 tolist 能力的垃圾回 None（舊寫法直接 AttributeError 崩潰）；
+    元素逐個 float 化，非數值同樣回 None 而非半截 list。
+    """
+    try:
+        out = vec.tolist() if hasattr(vec, "tolist") else vec
+    except Exception:
+        return None
+    if not isinstance(out, (list, tuple)):
+        return None
+    try:
+        return [float(x) for x in out]
+    except (TypeError, ValueError):
+        return None
+
+
 class MultimodalBridge:
     """Unified bridge between multimodal system and ED3N/service layer.
 
@@ -53,14 +71,14 @@ class MultimodalBridge:
         vec = self._visual_encoder.encode(image_data)
         if np.all(vec == 0):
             return None
-        return vec.tolist()
+        return _tolist_or_none(vec)
 
     def encode_audio_bytes(self, audio_data: bytes) -> Optional[List[float]]:
         """Encode raw audio bytes to 128-dim feature vector."""
         vec = self._audio_encoder.encode(audio_data)
         if np.all(vec == 0):
             return None
-        return vec.tolist()
+        return _tolist_or_none(vec)
 
     def encode_image_to_latent(self, image_data: bytes) -> Optional[List[float]]:
         """Encode image all the way to 64-dim latent vector."""
@@ -68,7 +86,7 @@ class MultimodalBridge:
         if np.all(vec == 0):
             return None
         latent = self._latent_space.project("vision", vec)
-        return latent.tolist()
+        return _tolist_or_none(latent)
 
     def encode_audio_to_latent(self, audio_data: bytes) -> Optional[List[float]]:
         """Encode audio all the way to 64-dim latent vector."""
@@ -76,7 +94,7 @@ class MultimodalBridge:
         if np.all(vec == 0):
             return None
         latent = self._latent_space.project("audio", vec)
-        return latent.tolist()
+        return _tolist_or_none(latent)
 
     def encode_text_to_latent(self, text: str) -> Optional[List[float]]:
         """Encode text all the way to 64-dim latent vector.
@@ -91,14 +109,14 @@ class MultimodalBridge:
         if np.all(vec == 0):
             return None
         latent = self._latent_space.project("text", vec)
-        return latent.tolist()
+        return _tolist_or_none(latent)
 
     def encode_text_to_features(self, text: str) -> Optional[List[float]]:
         """Encode text to 512-dim CLIP feature vector (before projection)."""
         vec = self._text_encoder.encode(text)
         if np.all(vec == 0):
             return None
-        return vec.tolist()
+        return _tolist_or_none(vec)
 
     # --- Decoding (latent → modality) ---
 
@@ -115,7 +133,7 @@ class MultimodalBridge:
         if len(arr) != self.LATENT_DIM:
             return None
         wav = self._audio_decoder.decode(arr)
-        return wav.tolist()
+        return _tolist_or_none(wav)
 
     # --- Cross-modal ---
 
@@ -123,8 +141,8 @@ class MultimodalBridge:
         """Cosine similarity between two feature vectors in latent space, mapped to [0,1]."""
         a = np.array(feat_a, dtype=np.float32)
         b = np.array(feat_b, dtype=np.float32)
-        a_norm = a / max(np.linalg.norm(a), 1e-8)
-        b_norm = b / max(np.linalg.norm(b), 1e-8)
+        a_norm = a / max(float(np.linalg.norm(a)), 1e-8)
+        b_norm = b / max(float(np.linalg.norm(b)), 1e-8)
         dot = float(np.dot(a_norm, b_norm))
         return max(0.0, min(1.0, (dot + 1.0) / 2.0))
 

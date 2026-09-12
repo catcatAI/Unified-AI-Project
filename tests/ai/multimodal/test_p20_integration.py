@@ -177,3 +177,29 @@ class TestMultimodalBridge:
         assert entry["key"].startswith("mm_latent_")
         assert entry["value"] == "test"
         assert entry["vector"] == latent
+
+
+class TestBridgeTolistContract:
+    """R25: _tolist_or_none 契約 — 垃圾進 None 出，不崩潰；映射關係守恆。"""
+
+    def test_garbage_returns_none(self):
+        from ai.multimodal.multimodal_bridge import _tolist_or_none
+
+        assert _tolist_or_none(None) is None
+        assert _tolist_or_none(123) is None
+        assert _tolist_or_none("abc") is None
+
+    def test_ndarray_and_list_roundtrip(self):
+        from ai.multimodal.multimodal_bridge import _tolist_or_none
+
+        out = _tolist_or_none(np.array([0.5, 0.25], dtype=np.float32))
+        assert out == [0.5, 0.25] and all(isinstance(x, float) for x in out)
+        assert _tolist_or_none([1, 2]) == [1.0, 2.0]
+
+    def test_similarity_mapping(self):
+        from ai.multimodal.multimodal_bridge import MultimodalBridge
+
+        b = MultimodalBridge()
+        assert b.similarity([0.5] * 64, [0.5] * 64) == 1.0
+        assert b.similarity([0.5] * 64, [-0.5] * 64) == 0.0
+        assert b.similarity([1.0] + [0.0] * 63, [0.0] * 63 + [1.0]) == 0.5
