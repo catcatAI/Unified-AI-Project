@@ -33,10 +33,10 @@ from core.system.config.magic_numbers import (
 from core.utils import any_keyword
 
 # Module-level ED3N cache (avoids creating new instances on every fallback)
-_ed3n_engine = None
+_ed3n_engine: Optional[_ED3NEngine_cls] = None
 
 
-def _get_ed3n():
+def _get_ed3n() -> _ED3NEngine_cls:
     global _ed3n_engine
     if _ed3n_engine is None:
         _ed3n_engine = _ED3NEngine_cls()
@@ -352,7 +352,7 @@ class FragmentComposer:
         if not fragments:
             return _get_ed3n().process("compose_fallback", context=context or {}, depth="shallow")
 
-        parts = []
+        parts: List[str] = []
         for fragment in fragments:
             parts.append(fragment.content)
 
@@ -1062,8 +1062,10 @@ class NeuroBlender:
         """Extract alpha energy."""
         alpha_state = state_dict.get("alpha", {})
         if isinstance(alpha_state, dict):
-            return alpha_state.get("energy", 0.5)
-        return getattr(alpha_state, "energy", 0.5)
+            val = alpha_state.get("energy", 0.5)
+            return float(val) if isinstance(val, (int, float)) else 0.5
+        val = getattr(alpha_state, "energy", 0.5)
+        return float(val) if isinstance(val, (int, float)) else 0.5
 
     def _load_behavior_config(self) -> Dict[str, Any]:
         """Load behavior config."""
@@ -1131,8 +1133,10 @@ class NeuroBlender:
         """Extract beta curiosity."""
         beta_state = state_dict.get("beta", {})
         if isinstance(beta_state, dict):
-            return beta_state.get("curiosity", 0.5)
-        return getattr(beta_state, "curiosity", 0.5)
+            val = beta_state.get("curiosity", 0.5)
+            return float(val) if isinstance(val, (int, float)) else 0.5
+        val = getattr(beta_state, "curiosity", 0.5)
+        return float(val) if isinstance(val, (int, float)) else 0.5
 
     def _build_target_vector(
         self,
@@ -1184,18 +1188,20 @@ class NeuroBlender:
         ]
 
     def _dict_val(self, d: Any, key: str, default: float) -> float:
-        """Dict val."""
+        """Dict val (non-numeric → default, honest coercion)."""
         if isinstance(d, dict):
-            return d.get(key, default)
-        return getattr(d, key, default)
+            val = d.get(key, default)
+        else:
+            val = getattr(d, key, default)
+        return float(val) if isinstance(val, (int, float)) else default
 
     def _cosine_similarity(self, v1: List[float], v2: List[float]) -> float:
         """Cosine similarity."""
         if len(v1) != len(v2) or not v1:
             return 0.0
-        dot = sum(a * b for a, b in zip(v1, v2))
-        n1 = sum(a * a for a in v1) ** 0.5
-        n2 = sum(b * b for b in v2) ** 0.5
+        dot: float = sum(a * b for a, b in zip(v1, v2))
+        n1: float = sum(a * a for a in v1) ** 0.5
+        n2: float = sum(b * b for b in v2) ** 0.5
         if n1 == 0 or n2 == 0:
             return 0.0
         return dot / (n1 * n2)
@@ -1237,7 +1243,7 @@ class NeuroBlender:
 
         import re as _re
 
-        parts = []
+        parts: List[str] = []
         prev_type = None
 
         for i, frag in enumerate(fragments):
