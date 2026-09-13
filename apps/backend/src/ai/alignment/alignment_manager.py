@@ -45,5 +45,16 @@ class AlignmentManager:
     def get_constraints(self) -> Dict[str, Any]:
         return dict(self.constraints)
 
+    def get_status(self) -> Dict[str, Any]:
+        """获取对齐管理器状态"""
+        return {
+            "system_id": self.config.get("system_id", "unknown"),
+            "has_reasoning": self.config.get("reasoning_system") is not None,
+            "has_emotion": self.config.get("emotion_system") is not None,
+            "has_ontology": self.config.get("ontology_system") is not None,
+            "constraints_count": len(self.constraints),
+            "alignment_history_count": len(self.alignment_history),
+        }
+
 
 __all__ = ["AlignmentManager"]

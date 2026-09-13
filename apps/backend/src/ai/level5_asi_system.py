@@ -14,14 +14,14 @@ import asyncio
 import logging
 import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 from core.hsp.types import HSPMessageEnvelopeClass as HSPMessageEnvelope
 from core.system.config.magic_numbers import batch_value
 
 from .alignment.adversarial_generation_system import AdversarialGenerationSystem
 from .alignment.aligned_base_agent import AlignedBaseAgent, AlignmentLevel
-from .alignment.alignment_manager import AlignmentManager
+from .alignment.alignment_manager import AlignmentManager  # noqa: F401
 from .alignment.asi_autonomous_alignment import ASIAutonomousAlignment
 from .alignment.decision_theory_system import DecisionTheorySystem
 from .alignment.distributed_coordinator import DistributedCoordinator
@@ -94,8 +94,8 @@ class Level5ASISystem:
         try:
             logger.info(f"[{self.system_id}] 开始初始化Level 5 ASI系统")
 
-            await self._initialize_alignment_systems()
-            await self._initialize_advanced_components()
+            self._initialize_alignment_systems()
+            self._initialize_advanced_components()
 
             if self.config.get("enable_distributed_computing"):
                 await self._initialize_distributed_system()
@@ -125,7 +125,7 @@ class Level5ASISystem:
             logger.info(f"[{self.system_id}] 启动Level 5 ASI系统")
 
             for agent in self.aligned_agents.values():
-                await agent.start()
+                agent.start()
 
             self.is_running = True
             logger.info(f"[{self.system_id}] Level 5 ASI系统已启动")
@@ -143,10 +143,10 @@ class Level5ASISystem:
             logger.info(f"[{self.system_id}] 停止Level 5 ASI系统")
 
             for agent in self.aligned_agents.values():
-                await agent.stop()
+                agent.stop()
 
             if self.distributed_coordinator:
-                await self.distributed_coordinator.shutdown()
+                self.distributed_coordinator.shutdown()
 
             self.is_running = False
             logger.info(f"[{self.system_id}] Level 5 ASI系统已停止")
@@ -167,8 +167,8 @@ class Level5ASISystem:
             self.performance_metrics["total_requests"] += 1
             start_time = asyncio.get_running_loop().time()
 
-            alignment_context = await self._create_alignment_context(request)
-            alignment_result = await self._perform_alignment_check(request, alignment_context)
+            alignment_context = self._create_alignment_context(request)
+            alignment_result = self._perform_alignment_check(request, alignment_context)
 
             if not alignment_result.get("is_aligned"):
                 return {
@@ -177,7 +177,7 @@ class Level5ASISystem:
                     "safety_score": alignment_result.get("safety_score", 0.0),
                 }
 
-            agent = await self._select_agent(request)
+            agent = self._select_agent(request)
             if not agent:
                 # Alignment passed but no matching agent — return alignment success
                 return {
@@ -187,7 +187,7 @@ class Level5ASISystem:
                     "note": "No matching agent, alignment gate passed",
                 }
 
-            result = await self._process_with_agent(agent, request, alignment_context)
+            result = self._process_with_agent(agent, request, alignment_context)
 
             if self.adversarial_system is not None:
                 adv_result = self._run_adversarial_evaluation(request, result)
@@ -218,20 +218,20 @@ class Level5ASISystem:
         }
 
         if self.alignment_manager:
-            status["alignment_system"] = await self.alignment_manager.get_status()
+            status["alignment_system"] = self.alignment_manager.get_status()
 
         if self.distributed_coordinator:
-            status["distributed_system"] = await self.distributed_coordinator.get_cluster_status()
+            status["distributed_system"] = self.distributed_coordinator.get_cluster_status()
 
         if self.parameter_cluster:
-            status["parameter_cluster"] = await self.parameter_cluster.get_cluster_status()
+            status["parameter_cluster"] = self.parameter_cluster.get_cluster_status()
 
         if self.autonomous_alignment:
-            status["autonomous_alignment"] = await self.autonomous_alignment.get_alignment_status()
+            status["autonomous_alignment"] = self.autonomous_alignment.get_alignment_status()
 
         agent_statuses = {}
         for agent_id, agent in self.aligned_agents.items():
-            agent_statuses[agent_id] = await agent.get_alignment_status()
+            agent_statuses[agent_id] = agent.get_alignment_status()
         status["aligned_agents"] = agent_statuses
 
         return status
@@ -323,12 +323,12 @@ class Level5ASISystem:
         self.distributed_coordinator = DistributedCoordinator(
             coordinator_id=f"{self.system_id}_distributed_coordinator"
         )
-        await self.distributed_coordinator.initialize()
+        self.distributed_coordinator.initialize()
 
         self.parameter_cluster = HyperlinkedParameterCluster(
             cluster_id=f"{self.system_id}_parameter_cluster"
         )
-        await self.parameter_cluster.initialize()
+        self.parameter_cluster.initialize()
 
         logger.info(f"[{self.system_id}] 分布式系统初始化完成")
 
@@ -361,7 +361,7 @@ class Level5ASISystem:
             agent_name="对齐创意写作代理",
             alignment_level=AlignmentLevel.ADVANCED,
         )
-        await creative_agent.initialize_alignment_full()
+        creative_agent.initialize_alignment_full()
         self.aligned_agents[creative_agent.agent_id] = creative_agent
 
         analysis_agent = AlignedBaseAgent(
@@ -382,7 +382,7 @@ class Level5ASISystem:
             agent_name="伦理分析代理",
             alignment_level=AlignmentLevel.SUPERINTELLIGENT,
         )
-        await analysis_agent.initialize_alignment_full()
+        analysis_agent.initialize_alignment_full()
         self.aligned_agents[analysis_agent.agent_id] = analysis_agent
 
         logger.info(f"[{self.system_id}] 创建了 {len(self.aligned_agents)} 个对齐代理")
@@ -490,6 +490,8 @@ class Level5ASISystem:
         self, request: dict[str, Any], result: dict[str, Any]
     ) -> dict[str, Any]:
         """Generate adversarial variant of request and evaluate response robustness."""
+        if self.adversarial_system is None:
+            return {"generated": {}, "robustness": {}}
         request_content = request.get("content", str(request))
         adv = self.adversarial_system.generate_adversarial(request_content)
         response_text = result.get("message", "")
@@ -516,8 +518,8 @@ class Level5ASISystem:
                 "ethical_constraints": ["无偏见", "尊重隐私"],
             }
 
-            context = await self._create_alignment_context(test_request)
-            result = await self._perform_alignment_check(test_request, context)
+            context = self._create_alignment_context(test_request)
+            result = self._perform_alignment_check(test_request, context)
 
             return {"score": 1.0 if result.get("is_aligned") else 0.0, "details": result}
 
@@ -533,7 +535,7 @@ class Level5ASISystem:
             if not self.distributed_coordinator:
                 return {"score": 0.0, "error": "分布式系统未初始化"}
 
-            status = await self.distributed_coordinator.get_cluster_status()
+            status = self.distributed_coordinator.get_cluster_status()
             score = 1.0 if status.get("active_nodes", 0) > 0 else 0.0
             return {"score": score, "details": status}
 
@@ -549,7 +551,9 @@ class Level5ASISystem:
             if not self.parameter_cluster:
                 return {"score": 0.0, "error": "参数集群未初始化"}
 
-            status = await self.parameter_cluster.get_cluster_status()
+            status = self.parameter_cluster.get_cluster_status()
+            if status is None:
+                return {"score": 0.0, "error": "Parameter cluster status unavailable"}
             score = 1.0 if status.get("total_parameters", 0) >= 0 else 0.0
             return {"score": score, "details": status}
 
@@ -565,7 +569,7 @@ class Level5ASISystem:
             if not self.autonomous_alignment:
                 return {"score": 0.0, "error": "自主对齐系统未初始化"}
 
-            status = await self.autonomous_alignment.get_alignment_status()
+            status = self.autonomous_alignment.get_alignment_status()
             score = 1.0 if status.get("alignment_score", 0.0) > 0.5 else 0.0
             return {"score": score, "details": status}
 
@@ -586,8 +590,8 @@ class Level5ASISystem:
 
             for agent_id, agent in self.aligned_agents.items():
                 try:
-                    status = await agent.get_alignment_status()
-                    if status.get("alignment_enabled", False):
+                    status = agent.get_alignment_status()
+                    if status and status.get("alignment_enabled", False):
                         healthy_agents += 1
                     agent_details[agent_id] = status
                 except (
@@ -613,6 +617,8 @@ class Level5ASISystem:
 
     def _test_adversarial_robustness(self) -> dict[str, Any]:
         """Run adversarial robustness self-test using built-in patterns."""
+        if self.adversarial_system is None:
+            return {"score": 0.0, "error": "Adversarial system not enabled"}
         try:
             adv = self.adversarial_system.generate_adversarial()
             robustness = self.adversarial_system.evaluate_robustness(

@@ -42,3 +42,21 @@ class ASIAutonomousAlignment:
 
     def adjust_autonomy(self, level: float) -> None:
         self.autonomy_level = max(0.0, min(1.0, level))
+
+    def get_alignment_status(self) -> Dict[str, Any]:
+        """获取自主对齐系统状态"""
+        passed_checks = sum(1 for c in self.check_history if c.get("passed", False))
+        total_checks = len(self.check_history)
+        avg_score = sum(c.get("score", 0) for c in self.check_history) / max(1, total_checks)
+        return {
+            "system_id": self.system_id,
+            "autonomy_level": self.autonomy_level,
+            "alignment_score": avg_score,
+            "total_checks": total_checks,
+            "passed_checks": passed_checks,
+            "constraints": list(self.constraints),
+            "status": "active" if self.autonomy_level > 0 else "inactive",
+        }
+
+
+__all__ = ["ASIAutonomousAlignment"]
