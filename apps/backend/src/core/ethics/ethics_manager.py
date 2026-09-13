@@ -75,6 +75,26 @@ class EthicsRuleType(Enum):
     TRANSPARENCY_REQUIRE = "transparency_require"
 
 
+# 等級排序（R36）：EthicsLevel 為無序 Enum，max() 會 TypeError 崩潰；
+# 升級比較一律走此表（越大越嚴重）。
+ETHICS_LEVEL_RANK = {
+    EthicsLevel.SAFE: 0,
+    EthicsLevel.CAUTION: 1,
+    EthicsLevel.WARNING: 2,
+    EthicsLevel.DANGER: 3,
+    EthicsLevel.BLOCKED: 4,
+}
+
+
+def _escalate_level(
+    base_level: EthicsLevel, floor: EthicsLevel = EthicsLevel.WARNING
+) -> EthicsLevel:
+    """取兩等級中較嚴重者（max 的有序版）。"""
+    if ETHICS_LEVEL_RANK.get(base_level, 0) >= ETHICS_LEVEL_RANK.get(floor, 2):
+        return base_level
+    return floor
+
+
 @dataclass
 class EthicsRule:
     """伦理规则定义"""
@@ -87,9 +107,9 @@ class EthicsRule:
     action: Dict[str, Any]
     severity: int  # 1 - 10, 严重程度
     enabled: bool = True
-    created_at: datetime = None
-    updated_at: datetime = None
-    metadata: Dict[str, Any] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    metadata: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         """Execute the   post init   operation."""
@@ -115,7 +135,7 @@ class EthicsReviewResult:
     transparency_report: Dict[str, Any]
     recommendations: List[Dict[str, Any]]
     rule_violations: List[Dict[str, Any]]
-    review_timestamp: datetime = None
+    review_timestamp: Optional[datetime] = None
     processing_time_ms: float = 0.0
     ai_model_used: str = "ethics_ai_v1"
 
@@ -135,7 +155,7 @@ class BiasDetectionResult:
     affected_groups: List[str]
     evidence: List[str]  # 检测到的偏见证据
     suggested_corrections: List[str]
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         """Execute the   post init   operation."""
@@ -161,7 +181,7 @@ class PrivacyCheckResult:
 class EthicsManager:
     """伦理管理器 - Level 4+ AGI组件"""
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         self.ethics_rules: Dict[str, EthicsRule] = {}
         self.bias_indicators: Dict[str, List[str]] = self._load_bias_indicators()
@@ -189,7 +209,9 @@ class EthicsManager:
                 # self.ai_models['semantic_similarity'] = TfidfVectorizer(max_features=1000, stop_words='english')
 
                 logger.info("✅ AI伦理模型初始化完成")
-            except Exception as e:  # broad exception acceptable: AI model initialization may fail with library loading errors
+            except (
+                Exception
+            ) as e:  # broad exception acceptable: AI model initialization may fail with library loading errors
                 logger.warning(f"⚠️ AI伦理模型初始化失败: {e}", exc_info=True)
 
     def _create_bias_detection_model(self) -> Any:
@@ -420,7 +442,7 @@ class EthicsManager:
 
     def _load_default_rules(self) -> None:
         """加载默认伦理规则"""
-        default_rules = [
+        default_rules: List[Dict[str, Any]] = [
             {
                 "rule_id": "content_filter_violence",
                 "rule_type": EthicsRuleType.HARM_PREVENTION,
@@ -475,10 +497,12 @@ class EthicsManager:
     # =============== 伦理审查核心功能 ===============
 
     async def review_content(
-        self, content: str, content_id: str, context: Dict[str, Any] = None
+        self, content: str, content_id: str, context: Optional[Dict[str, Any]] = None
     ) -> EthicsReviewResult:
         """对内容进行全面的伦理审查"""
         start_time = datetime.now()
+        # None 上下文歸一化（R36）：下游檢查器要 Dict，舊直傳 None 即崩。
+        context = context or {}
 
         logger.info(f"🛡️ 开始伦理审查: {content_id}")
 
@@ -545,7 +569,9 @@ class EthicsManager:
             )
             return review_result
 
-        except Exception as e:  # broad exception acceptable: content review may fail with analysis errors, return safe default
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: content review may fail with analysis errors, return safe default
             logger.error(f"❌ 伦理审查失败: {content_id} - {e}", exc_info=True)
             # 返回安全的默认结果
             return EthicsReviewResult(
@@ -581,7 +607,7 @@ class EthicsManager:
         }
 
         # 计算各项得分(0 - 1范围, 1为最佳)
-        scores = {}
+        scores: Dict[str, float] = {}
 
         # 偏见得分：如果没有偏见则得1分
         scores["bias"] = 1.0 - bias_result.get("overall_bias_score", 0.0)
@@ -626,19 +652,19 @@ class EthicsManager:
             if harm_severity > 7:  # 严重伤害内容
                 return EthicsLevel.DANGER
             elif harm_severity > 5:
-                return max(base_level, EthicsLevel.WARNING)
+                return _escalate_level(base_level, EthicsLevel.WARNING)
 
         # 检查是否有严重偏见
         if detailed_results["bias"].get("bias_detected", False):
             bias_score = detailed_results["bias"].get("overall_bias_score", 0)
             if bias_score > 0.6:  # 从0.5提高到0.6, 提高偏见阈值
-                return max(base_level, EthicsLevel.WARNING)
+                return _escalate_level(base_level, EthicsLevel.WARNING)
 
         # 检查隐私违规
         if detailed_results["privacy"].get("has_personal_data", False):
             gdpr_score = detailed_results["privacy"].get("gdpr_compliance_score", 0)
             if gdpr_score < 0.4:  # 从0.5降低到0.4, 放宽隐私违规阈值
-                return max(base_level, EthicsLevel.WARNING)
+                return _escalate_level(base_level, EthicsLevel.WARNING)
 
         return base_level
 
@@ -756,13 +782,13 @@ class EthicsManager:
             # 个人数据检查
             if "contains_personal_data" in condition:
                 privacy_result = await self._check_privacy(content, context)
-                return privacy_result.get("has_personal_data", False)
+                return bool(privacy_result.get("has_personal_data", False))
 
             # 人口统计学不平衡检查
             if "demographic_imbalance" in condition:
-                threshold = condition["demographic_imbalance"]
+                threshold = float(condition["demographic_imbalance"])
                 fairness_result = await self._check_fairness(content, context)
-                demographic_parity = fairness_result.get("demographic_parity", 1.0)
+                demographic_parity = float(fairness_result.get("demographic_parity", 1.0))
                 return abs(demographic_parity - 1.0) > threshold
 
             # AI决策和高影响检查
@@ -778,7 +804,9 @@ class EthicsManager:
 
             return False
 
-        except Exception as e:  # broad exception acceptable: rule condition evaluation may fail with parsing errors
+        except (
+            Exception
+        ) as e:  # broad exception acceptable: rule condition evaluation may fail with parsing errors
             logger.error(f"规则条件评估错误: {e}", exc_info=True)
             return False
 
@@ -1330,349 +1358,18 @@ class EthicsManager:
         )
         return present_elements / len(doc_elements)
 
-    # =============== 规则检查与执行 ===============
-
-    async def _check_rule_violations(
-        self, content: str, context: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
-        """检查规则违规"""
-        violations = []
-
-        for rule_id, rule in self.ethics_rules.items():
-            if not rule.enabled:
-                continue
-
-            try:
-                if await self._evaluate_rule_condition(rule.condition, content, context):
-                    violation = {
-                        "rule_id": rule_id,
-                        "rule_name": rule.name,
-                        "rule_type": rule.rule_type.value,
-                        "severity": rule.severity,
-                        "description": rule.description,
-                        "recommended_action": rule.action,
-                    }
-                    violations.append(violation)
-            except Exception as e:  # broad exception acceptable: rule evaluation in review may fail with various errors
-                logger.warning(f"⚠️ 规则评估失败 {rule_id}: {e}", exc_info=True)
-
-        return violations
-
-    async def _evaluate_rule_condition(
-        self, condition: Dict[str, Any], content: str, context: Dict[str, Any]
-    ) -> bool:
-        """评估规则条件"""
-        try:
-            # 内容过滤条件
-            if "contains_keywords" in condition:
-                keywords = condition["contains_keywords"]
-                return any(keyword.lower() in content.lower() for keyword in keywords)
-
-            # 偏见检测条件
-            if "contains_bias" in condition:
-                bias_type = condition["contains_bias"]
-                if self.ai_models.get("bias_detector"):
-                    has_bias, confidence, _ = self.ai_models["bias_detector"].detect_bias(
-                        content, bias_type
-                    )
-                    return has_bias and confidence > 0.5
-                else:
-                    return self._simple_bias_detection(content, bias_type)[0]
-
-            # 隐私检测条件
-            if "contains_personal_data" in condition:
-                return (
-                    condition["contains_personal_data"]
-                    and len(self._extract_privacy_data(content)) > 0
-                )
-
-            # 人口统计学不平衡条件
-            if "demographic_imbalance" in condition:
-                threshold = condition["demographic_imbalance"]
-                balance_score = self._check_representation_balance(
-                    self._extract_demographic_mentions(content)
-                )
-                return balance_score < threshold
-
-            # AI决策条件
-            if "ai_decision" in condition and condition["ai_decision"]:
-                return "ai_generated" in context and context["ai_generated"]
-
-            # 高影响条件
-            if "high_impact" in condition and condition["high_impact"]:
-                return context.get("impact_level", "low") == "high"
-
-            return False
-
-        except Exception as e:  # broad exception acceptable: rule condition evaluation in second method may fail
-            logger.error(f"❌ 规则条件评估错误: {e}", exc_info=True)
-            return False
-
-    def _extract_privacy_data(self, content: str) -> List[Dict[str, Any]]:
-        """提取隐私数据"""
-        privacy_data = []
-
-        for data_type, patterns in self.privacy_patterns.items():
-            found_patterns = []
-            for pattern in patterns:
-                if pattern.lower() in content.lower():
-                    found_patterns.append(pattern)
-
-            if found_patterns:
-                privacy_data.append(
-                    {
-                        "data_type": data_type,
-                        "patterns_found": found_patterns,
-                        "confidence": len(found_patterns) / len(patterns) if patterns else 0,
-                    }
-                )
-
-        return privacy_data
-
-    # =============== 综合评分与建议 ===============
-
-    def _calculate_overall_ethics_score(
-        self,
-        bias_result: Dict[str, Any],
-        privacy_result: Dict[str, Any],
-        harm_result: Dict[str, Any],
-        fairness_result: Dict[str, Any],
-        transparency_result: Dict[str, Any],
-    ) -> float:
-        """计算综合伦理评分"""
-        # 各项权重
-        weights = {
-            "bias": 0.25,
-            "privacy": 0.25,
-            "harm": 0.30,
-            "fairness": 0.15,
-            "transparency": 0.05,
-        }
-
-        # 计算各项分数(0 - 1, 1为最佳)
-        scores = {
-            "bias": max(0, 1.0 - bias_result.get("overall_bias_score", 0)),
-            "privacy": privacy_result.get("gdpr_compliance_score", 1.0),
-            "harm": max(0, 1.0 - harm_result.get("overall_harm_score", 0)),
-            "fairness": fairness_result.get("overall_fairness_score", 1.0),
-            "transparency": transparency_result.get("transparency_score", 1.0),
-        }
-
-        # 加权计算综合分数
-        overall_score = sum(scores[aspect] * weights[aspect] for aspect in weights)
-        return max(0, min(overall_score, 1.0))
-
-    def _determine_ethics_level(
-        self, overall_score: float, detailed_results: Dict[str, Any]
-    ) -> EthicsLevel:
-        """确定伦理等级"""
-        # 基础评分判断
-        if overall_score >= 0.9:
-            base_level = EthicsLevel.SAFE
-        elif overall_score >= 0.8:
-            base_level = EthicsLevel.CAUTION
-        elif overall_score >= 0.6:
-            base_level = EthicsLevel.WARNING
-        elif overall_score >= 0.3:
-            base_level = EthicsLevel.DANGER
-        else:
-            base_level = EthicsLevel.BLOCKED
-
-        # 检查是否有严重问题需要升级处理
-        if detailed_results.get("harm", {}).get("harm_detected", False):
-            harm_severity = max(
-                [
-                    h.get("severity", 0)
-                    for h in detailed_results.get("harm", {}).get("harm_categories", [])
-                ],
-                default=0,
-            )
-            if harm_severity >= 8:
-                return EthicsLevel.BLOCKED
-
-        if detailed_results.get("bias", {}).get("overall_bias_score", 0) > 0.8:
-            return EthicsLevel.DANGER
-
-        return base_level
-
-    def _generate_ethics_recommendations(
-        self,
-        bias_result: Dict[str, Any],
-        privacy_result: Dict[str, Any],
-        harm_result: Dict[str, Any],
-        fairness_result: Dict[str, Any],
-        transparency_result: Dict[str, Any],
-    ) -> List[Dict[str, Any]]:
-        """生成伦理建议"""
-        recommendations = []
-
-        # 偏见修正建议
-        if bias_result.get("bias_detected", False):
-            for bias_data in bias_result.get("bias_results", []):
-                recommendations.append(
-                    {
-                        "type": "bias_correction",
-                        "priority": "high",
-                        "description": f"修正{bias_data['bias_type']}偏见",
-                        "specific_actions": bias_data.get("suggested_corrections", []),
-                        "confidence": bias_data.get("confidence", 0),
-                    }
-                )
-
-        # 隐私保护建议
-        if privacy_result.get("has_personal_data", False):
-            recommendations.append(
-                {
-                    "type": "privacy_enhancement",
-                    "priority": "high",
-                    "description": "加强个人数据保护",
-                    "specific_actions": privacy_result.get("recommendations", []),
-                    "gdpr_compliance_score": privacy_result.get("gdpr_compliance_score", 0),
-                }
-            )
-
-        # 有害内容处理建议
-        if harm_result.get("harm_detected", False):
-            harm_severity = max(
-                [h.get("severity", 0) for h in harm_result.get("harm_categories", [])], default=0
-            )
-            recommendations.append(
-                {
-                    "type": "harm_prevention",
-                    "priority": "critical",
-                    "description": "处理有害内容",
-                    "specific_actions": ["移除有害内容", "添加警告标签", "提供替代表述"],
-                    "harm_severity": harm_severity,
-                }
-            )
-
-        # 公平性改进建议
-        if fairness_result.get("fairness_issues"):
-            recommendations.append(
-                {
-                    "type": "fairness_improvement",
-                    "priority": "medium",
-                    "description": "改善公平性",
-                    "specific_actions": ["平衡群体代表性", "避免歧视性语言", "确保机会平等"],
-                    "fairness_score": fairness_result.get("overall_fairness_score", 0),
-                }
-            )
-
-        # 透明度提升建议
-        if transparency_result.get("transparency_score", 1.0) < 0.8:
-            recommendations.append(
-                {
-                    "type": "transparency_enhancement",
-                    "priority": "medium",
-                    "description": "提升透明度",
-                    "specific_actions": ["添加决策解释", "说明数据来源", "提供算法依据"],
-                    "transparency_score": transparency_result.get("transparency_score", 0),
-                }
-            )
-
-        return recommendations
-
-    # =============== 规则管理 ===============
-
-    async def add_ethics_rule(self, rule_data: Dict[str, Any]) -> str:
-        """添加新的伦理规则"""
-        try:
-            rule = EthicsRule(**rule_data)
-            self.ethics_rules[rule.rule_id] = rule
-            logger.info(f"✅ 添加伦理规则: {rule.rule_id} - {rule.name}")
-            return rule.rule_id
-        except Exception as e:  # broad exception acceptable: rule creation may fail with validation errors
-            logger.error(f"❌ 添加伦理规则失败: {e}", exc_info=True)
-            raise
-
-    async def update_ethics_rule(self, rule_id: str, updates: Dict[str, Any]) -> bool:
-        """更新伦理规则"""
-        if rule_id not in self.ethics_rules:
-            return False
-
-        try:
-            rule = self.ethics_rules[rule_id]
-
-            # 更新字段
-            for key, value in updates.items():
-                if hasattr(rule, key):
-                    setattr(rule, key, value)
-
-            rule.updated_at = datetime.now()
-            logger.info(f"✅ 更新伦理规则: {rule_id}")
-            return True
-        except Exception as e:  # broad exception acceptable: rule update may fail with validation or attribute errors
-            logger.error(f"❌ 更新伦理规则失败: {rule_id} - {e}", exc_info=True)
-            return False
-
-    async def get_ethics_rules(self) -> List[Dict[str, Any]]:
-        """获取所有伦理规则"""
-        return [asdict(rule) for rule in self.ethics_rules.values()]
-
-    async def get_ethics_statistics(self) -> Dict[str, Any]:
-        """获取伦理统计信息"""
-        total_reviews = len(self.review_history)
-
-        if total_reviews == 0:
-            return {"total_reviews": 0, "message": "暂无审查记录"}
-
-        # 伦理等级分布
-        ethics_level_counts = defaultdict(int)
-        for review in self.review_history:
-            ethics_level_counts[review.ethics_level.value] += 1
-
-        # 平均伦理评分
-        avg_score = sum(review.overall_score for review in self.review_history) / total_reviews
-
-        # 偏见检测统计
-        bias_detections = sum(
-            1 for review in self.review_history if review.bias_analysis.get("bias_detected", False)
-        )
-
-        # 隐私违规统计
-        privacy_violations = sum(
-            1
-            for review in self.review_history
-            if review.privacy_check.get("has_personal_data", False)
-        )
-
-        return {
-            "total_reviews": total_reviews,
-            "average_ethics_score": float(avg_score),
-            "ethics_level_distribution": dict(ethics_level_counts),
-            "bias_detection_rate": bias_detections / total_reviews,
-            "privacy_violation_rate": privacy_violations / total_reviews,
-            "rule_violation_rate": sum(
-                len(review.rule_violations) for review in self.review_history
-            )
-            / total_reviews,
-            "ai_model_usage": len([r for r in self.review_history if r.ai_model_used != "manual"]),
-        }
-
-    # =============== 向后兼容接口 ===============
-
-    async def check_ethics(self, content: str, content_id: str) -> Dict[str, Any]:
-        """向后兼容的伦理检查接口"""
-        return await self.review_content(content, content_id)
-
     async def get_bias_report(self, content: str) -> Dict[str, Any]:
         """获取偏见报告"""
-        bias_result = await self._check_bias(content, {})
-        return {
-            "bias_detected": bias_result.get("bias_detected", False),
-            "bias_results": bias_result.get("bias_results", []),
-            "overall_bias_score": bias_result.get("overall_bias_score", 0),
-        }
+        return await self._check_bias(content, {})
 
 
-# 向后兼容的类名
 class EthicsSystem:
     """向后兼容的伦理系统"""
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.ethics_manager = EthicsManager(config)
 
-    async def perform_ethics_review(self, content: str, content_id: str) -> Dict[str, Any]:
+    async def perform_ethics_review(self, content: str, content_id: str) -> EthicsReviewResult:
         """执行伦理审查(向后兼容)"""
         return await self.ethics_manager.review_content(content, content_id)
 

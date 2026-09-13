@@ -23,7 +23,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TypedDict
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +60,17 @@ class ResponseMetrics:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
+class StatsDict(TypedDict):
+    total_responses: int
+    route_counts: Dict[str, int]
+    total_tokens_used: int
+    total_tokens_saved: float
+    average_match_score: float
+    average_response_time: float
+    average_quality_score: float
+    token_savings_rate: float
+
+
 class DeviationTracker:
     """
     偏差追踪器
@@ -83,7 +94,7 @@ class DeviationTracker:
         self.log_dir = Path(log_dir) if log_dir else Path("logs/deviation")
         self.log_dir.mkdir(parents=True, exist_ok=True)
 
-        self.stats = {
+        self.stats: StatsDict = {
             "total_responses": 0,
             "route_counts": {
                 ResponseRoute.COMPOSED.value: 0,
@@ -210,7 +221,7 @@ class DeviationTracker:
             else:
                 self.metrics_history[metrics_index].quality_score = 0.0
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> StatsDict:
         """获取统计信息"""
         return self.stats.copy()
 
