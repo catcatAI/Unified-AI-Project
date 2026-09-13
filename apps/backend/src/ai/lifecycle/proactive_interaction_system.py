@@ -12,7 +12,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 from core.system.config.magic_numbers import cache_value, loop_sleep
 from core.utils import safe_error
@@ -20,12 +20,19 @@ from services.weather_service import WeatherService
 
 from .user_monitor import UserMonitor
 
+if TYPE_CHECKING:
+    from ai.ed3n.ed3n_engine import ED3NEngine
+
 # =============================================================================
 # ANGELA-MATRIX: [L3] [βγδ] [B] [L2]
 # =============================================================================
 
 
 logger = logging.getLogger(__name__)
+
+# 進程級 ED3N 單例（R34）：原先掛在類屬性上動態創建，mypy 不可見；
+# 改模組全局，語義等價（跨實例共享），型別可見。
+_ed3n_engine_singleton: Optional["ED3NEngine"] = None
 
 
 class InteractionOpportunity(Enum):
@@ -88,7 +95,7 @@ class ProactiveInteractionSystem:
         check_interval: float = loop_sleep("proactive_check", 15.0),  # 檢查間隔（秒）
         min_check_interval: float = loop_sleep("proactive_min_check", 10.0),
         max_check_interval: float = loop_sleep("proactive_max_check", 30.0),
-        broadcast_callback: Optional[callable] = None,
+        broadcast_callback: Optional[Callable[..., Any]] = None,
     ):
         self.llm_service = llm_service
         self.state_manager = state_manager
@@ -108,7 +115,9 @@ class ProactiveInteractionSystem:
         self.max_queue_size = cache_value("proactive_queue", 20)
 
         # 統計信息
-        self.stats = {
+        # 混合值字典先預聲明（R34）：否則推斷 Dict[str, object]，
+        # 全部計數/索引操作連環報錯。
+        self.stats: Dict[str, Any] = {
             "total_opportunities": 0,
             "planned_actions": 0,
             "executed_actions": 0,
@@ -441,12 +450,13 @@ class ProactiveInteractionSystem:
             logger.error(f"Error planning proactive action: {e}", exc_info=True)
             return None
 
-    def _get_ed3n_engine(self) -> Any:
-        if not hasattr(self.__class__, "_ed3n_engine"):
+    def _get_ed3n_engine(self) -> "ED3NEngine":
+        global _ed3n_engine_singleton
+        if _ed3n_engine_singleton is None:
             from ai.ed3n.ed3n_engine import ED3NEngine
 
-            self.__class__._ed3n_engine = ED3NEngine.get_shared()
-        return self.__class__._ed3n_engine
+            _ed3n_engine_singleton = ED3NEngine.get_shared()
+        return _ed3n_engine_singleton
 
     async def _generate_return_message(self, opportunity: Dict[str, Any]) -> str:
         """生成返回消息"""
