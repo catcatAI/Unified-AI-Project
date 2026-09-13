@@ -22,9 +22,12 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, Dict, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 
 from core.backbone.contracts import Envelope
+
+if TYPE_CHECKING:
+    from core.backbone.pairs import PairScheduler
 
 logger = logging.getLogger("angela_backbone_io")
 
@@ -44,7 +47,7 @@ class BackboneIO:
 
     def __init__(
         self,
-        pair_scheduler: Any = None,
+        pair_scheduler: Optional["PairScheduler"] = None,
         registries: Any = None,
         state: Any = None,
     ) -> None:
