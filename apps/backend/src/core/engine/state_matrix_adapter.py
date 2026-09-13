@@ -5,7 +5,7 @@ State Matrix Adapter — Phase 7 整合適配器
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 from core.interfaces.persistence import JsonFileStateStore
 
@@ -38,8 +38,8 @@ class _TemporalProxy:
         recent = self._records[-10:]
         values = [r["value"] for r in recent]
         if len(values) < 2:
-            return 0.0
-        return sum(values[-1] - values[0] for _ in [0]) / (len(values) - 1)
+            return None
+        return cast(float, sum(values[-1] - values[0] for _ in [0]) / (len(values) - 1))
 
     @property
     def anomalies(self) -> List[Dict[str, Any]]:
@@ -195,12 +195,12 @@ class StateMatrixAdapter(JsonFileStateStore):
             r for r in self._temporal_proxy._records if r["axis"] == axis and r["field"] == field
         ]
         if len(matching) < 2:
-            return 0.0
+            return None
         recent = matching[-window:]
         values = [r["value"] for r in recent]
         if len(values) < 2:
-            return 0.0
-        return round((values[-1] - values[0]) / (len(values) - 1), 4)
+            return None
+        return cast(float, round((values[-1] - values[0]) / (len(values) - 1), 4))
 
     # --- New API properties ---
 

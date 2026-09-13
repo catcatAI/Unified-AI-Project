@@ -87,6 +87,9 @@ class TestTemporalQueries:
     """New API: temporal trend / anomalies."""
 
     def test_temporal_trend_returns_value(self, adapter):
+        # Add some records first to have data for trend computation
+        for v in [0.1, 0.2, 0.3, 0.4, 0.5]:
+            adapter.temporal.record("alpha", "focus", v)
         result = adapter.temporal_trend("alpha", "focus", window=5)
         assert result is not None
 
@@ -103,7 +106,7 @@ class TestTemporalQueries:
         from core.engine.state_matrix_adapter import StateMatrixAdapter
         sm = StateMatrixAdapter()
         trend = sm.temporal_trend("alpha", "energy")
-        assert trend == 0.0
+        assert trend is None
 
     def test_temporal_anomalies_detects_outliers(self):
         from core.engine.state_matrix_adapter import StateMatrixAdapter

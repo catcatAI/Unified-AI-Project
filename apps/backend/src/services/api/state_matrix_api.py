@@ -33,7 +33,7 @@ from __future__ import annotations
 import asyncio
 import datetime
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from core.engine.state_matrix import StateMatrix4D
 from core.utils import safe_error
@@ -142,7 +142,7 @@ def _read_state_sync(filepath: str) -> dict:
 
     filepath = _sanitize_state_path(filepath)
     with open(filepath, "r", encoding="utf-8") as f:
-        return json.load(f)
+        return cast(dict, json.load(f))
 
 
 # Create router
@@ -242,7 +242,7 @@ async def navigate(request: Dict[str, Any]):
     
     axis = axis_map[target_axis]
     if hasattr(axis, "update") and target_values:
-        axis.update(target_values)
+        axis.update(**target_values)
         logger.info("Navigated axis '%s' to values: %s", target_axis, target_values)
     
     axis_values = getattr(axis, "values", None)
@@ -279,7 +279,7 @@ async def register_port(request: Dict[str, Any]) -> dict:
     """Register a port."""
     matrix = get_state_matrix()
     if hasattr(matrix, "register_port"):
-        return matrix.register_port(request.get("name"), request.get("config", {}))
+        return cast(dict, matrix.register_port(request.get("name"), request.get("config", {})))
     logger.warning("register_port not implemented on StateMatrix4D")
     return {"status": "not_implemented", "note": "Port registration not available"}
 
@@ -289,7 +289,7 @@ async def unregister_port(name: str) -> dict:
     """Unregister a port."""
     matrix = get_state_matrix()
     if hasattr(matrix, "unregister_port"):
-        return matrix.unregister_port(name)
+        return cast(dict, matrix.unregister_port(name))
     logger.warning("unregister_port not implemented on StateMatrix4D")
     return {"status": "not_implemented"}
 
@@ -377,12 +377,12 @@ async def load_state(request: LoadStateRequest) -> dict:
         else:
             # Fallback: deserialize manually
             state = await asyncio.to_thread(_read_state_sync, filepath)
-            matrix.alpha.update(state.get("alpha", {}))
-            matrix.beta.update(state.get("beta", {}))
-            matrix.gamma.update(state.get("gamma", {}))
-            matrix.delta.update(state.get("delta", {}))
-            matrix.epsilon.update(state.get("epsilon", {}))
-            matrix.theta.update(state.get("theta", {}))
+            matrix.alpha.update(**state.get("alpha", {}))
+            matrix.beta.update(**state.get("beta", {}))
+            matrix.gamma.update(**state.get("gamma", {}))
+            matrix.delta.update(**state.get("delta", {}))
+            matrix.epsilon.update(**state.get("epsilon", {}))
+            matrix.theta.update(**state.get("theta", {}))
         return {"status": "loaded", "filepath": filepath}
     except Exception as e:
         raise HTTPException(status_code=500, detail=safe_error(e))

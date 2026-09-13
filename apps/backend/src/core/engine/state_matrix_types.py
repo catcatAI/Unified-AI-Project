@@ -99,7 +99,7 @@ class DimensionState:
         try:
             from app_config_loader import get_formula_config
         except ImportError:
-            get_formula_config = lambda d: {}
+            get_formula_config = lambda domain: {}
 
         proj_conf = get_formula_config("spatial").get("projection_weights", {}).get(self.name, {})
 
