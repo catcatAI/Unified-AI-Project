@@ -22,7 +22,7 @@ import json
 import logging
 import math
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 from core.engine.cognitive_operations import CognitiveOp as _CognitiveOp
 from core.engine.cognitive_operations import (
@@ -33,6 +33,7 @@ from core.engine.cognitive_operations import (
 from core.engine.cognitive_operations import get_dimension_value as _gdv
 from core.engine.cognitive_operations import get_position as _gp
 from core.engine.cognitive_operations import perform_spatial_reasoning as _psr
+from core.state.temporal import TemporalState
 from core.engine.cognitive_operations import (
     set_intent_target,
 )
@@ -114,12 +115,12 @@ class StateMatrix4D:
         try:
             from app_config_loader import get_formula_config
         except ImportError:
-            get_formula_config = lambda d: {}
+            get_formula_config = lambda domain: {}
 
         self.formula_config = get_formula_config("spatial")
         self.config = config or {}
         self._precision = 1.0
-        self._temporal_state: Optional[Any] = None
+        self._temporal_state: Optional[TemporalState] = None
         self._temporal_synced = False
 
         self._setup_dimensions()
@@ -139,7 +140,7 @@ class StateMatrix4D:
         try:
             from app_config_loader import get_formula_config
         except ImportError:
-            get_formula_config = lambda d: {}
+            get_formula_config = lambda domain: {}
 
         matrix_conf = get_formula_config("matrix")
         dim_defs = matrix_conf.get("dimensions", {})
@@ -211,16 +212,25 @@ class StateMatrix4D:
             },
         }
 
+        from typing import cast
+
         # 動態初始化所有定義在配置中的維度
         self.dimensions = {}
         source = dim_defs if dim_defs else DEFAULT_DIMENSIONS
         for name, d_cfg in source.items():
+            cn_name: str = cast(str, d_cfg.get("cn_name", name))
+            initial_values: Dict[str, float] = cast(
+                Dict[str, float], d_cfg.get("initial_values", {})
+            )
+            weight: float = cast(float, d_cfg.get("weight", 1.0))
+            coordinate_list = d_cfg.get("initial_coordinate", [0.0, 0.0, 0.0])
+            coordinate: Tuple[float, float, float] = tuple(coordinate_list)
             state = DimensionState(
                 name=name,
-                cn_name=d_cfg.get("cn_name", name),
-                values=d_cfg.get("initial_values", {}).copy(),
-                weight=d_cfg.get("weight", 1.0),
-                coordinate=tuple(d_cfg.get("initial_coordinate", [0.0, 0.0, 0.0])),
+                cn_name=cn_name,
+                values=initial_values.copy(),
+                weight=weight,
+                coordinate=coordinate,
             )
             setattr(self, name, state)  # 保持 self.alpha 等屬性兼容性
             self.dimensions[name] = state
@@ -230,18 +240,18 @@ class StateMatrix4D:
         try:
             from app_config_loader import get_formula_config
         except ImportError:
-            get_formula_config = lambda d: {}
+            get_formula_config = lambda domain: {}
 
         matrix_conf = get_formula_config("matrix")
         limits = matrix_conf.get("system_limits", {})
 
-        self.misallocation_log = []
-        self.correction_audit_trail = []
+        self.misallocation_log: List[Dict[str, Any]] = []
+        self.correction_audit_trail: List[Dict[str, Any]] = []
         self.max_misallocation_log = limits.get("max_misallocation_log", 100)
         self.max_audit_trail = limits.get("max_audit_trail", 50)
-        self.unclassified_buffer = []
-        self.buffer_tracking = {}
-        self.axis_creation_log = []
+        self.unclassified_buffer: List[Dict[str, Any]] = []
+        self.buffer_tracking: Dict[str, Any] = {}
+        self.axis_creation_log: List[Dict[str, Any]] = []
 
         # 加載影響矩陣 (Influence Matrix)
         spatial_conf = get_formula_config("spatial")
@@ -259,7 +269,7 @@ class StateMatrix4D:
                 "zeta": {"theta": 0.3, "delta": 0.2},
             }
 
-        self.semantic_anchors = {}
+        self.semantic_anchors: Dict[str, AxisSemanticAnchor] = {}
         self._init_semantic_anchors()
 
     def _setup_history(self) -> None:
@@ -267,18 +277,18 @@ class StateMatrix4D:
         try:
             from app_config_loader import get_formula_config
         except ImportError:
-            get_formula_config = lambda d: {}
+            get_formula_config = lambda domain: {}
 
         matrix_conf = get_formula_config("matrix")
         limits = matrix_conf.get("system_limits", {})
 
-        self.history = []
+        self.history: List[Dict[str, Any]] = []
         self.max_history = self.config.get("max_history", limits.get("max_history", 1000))
         self.update_count = 0
         self.created_at = datetime.now()
         self.last_update = datetime.now()
-        self._change_callbacks = []
-        self._threshold_callbacks = {}
+        self._change_callbacks: List[Callable[..., None]] = []
+        self._threshold_callbacks: Dict[str, List[Tuple[float, Callable[..., None]]]] = {}
 
     def update_alpha(self, **kwargs) -> None:
         """更新α维度 / Update alpha dimension (physiological)"""
@@ -506,7 +516,11 @@ class StateMatrix4D:
             axis_similarities[axis_name] = sim
 
         max_sim = max(axis_similarities.values()) if axis_similarities else 0.0
-        best_axis = max(axis_similarities, key=axis_similarities.get) if axis_similarities else None
+        best_axis = (
+            max(axis_similarities, key=lambda k: axis_similarities[k])
+            if axis_similarities
+            else None
+        )
         num_high_sim = sum(1 for s in axis_similarities.values() if s > 0.5)
         active_dims = sum(1 for v in axis_similarities.values() if v > 0.1)
 
@@ -627,9 +641,7 @@ class StateMatrix4D:
             新创建的 DimensionState
         """
         if name in self.dimensions:
-            logger.warning(
-                f"[Theta] Axis '{name}' already exists, returning existing"
-            )
+            logger.warning(f"[Theta] Axis '{name}' already exists, returning existing")
             return self.dimensions[name]
 
         new_dim = DimensionState(
@@ -671,7 +683,11 @@ class StateMatrix4D:
         Returns:
             执行结果摘要
         """
-        results = {"action": decision.action, "applied_to": [], "new_axis_created": None}
+        results: Dict[str, Any] = {
+            "action": decision.action,
+            "applied_to": [],
+            "new_axis_created": None,
+        }
 
         if decision.action == "assign_to_axis" and decision.target:
             if decision.target in self.dimensions:
@@ -735,6 +751,8 @@ class StateMatrix4D:
             "theta": "creation_urge",
             "zeta": "narrative_flow",
         }
+        if best_axis is None:
+            return "value"
         return key_map.get(best_axis, "value")
 
     def get_theta_analysis(self) -> Dict[str, Any]:
@@ -1039,7 +1057,7 @@ class StateMatrix4D:
             similarities[axis_name] = sim
 
         if similarities:
-            return max(similarities, key=similarities.get)
+            return max(similarities, key=lambda k: similarities[k])
         return current_axis
 
     def _key_to_vector(self, key: str, size: int) -> List[float]:
@@ -1146,18 +1164,16 @@ class StateMatrix4D:
         if len(self.history) > self.max_history:
             self.history.pop(0)
 
-    def _get_temporal_state(self) -> Any:
+    def _get_temporal_state(self) -> TemporalState:
         """獲取關聯的 TemporalState（用於雙軌整合）"""
-        if not hasattr(self, "_temporal_state"):
-            from core.state.temporal import TemporalState
-
+        if not hasattr(self, "_temporal_state") or self._temporal_state is None:
             self._temporal_state = TemporalState(max_size=self.max_history)
             self._temporal_synced = False
         return self._temporal_state
 
     def _sync_to_temporal(self) -> None:
         """將最新快照同步到 TemporalState（延遲初始化）"""
-        if not hasattr(self, "_temporal_state"):
+        if not hasattr(self, "_temporal_state") or self._temporal_state is None:
             return
         if self._temporal_synced:
             return
@@ -1201,8 +1217,8 @@ class StateMatrix4D:
         softening = 10.0
         # Normalize so that average distances yield ~1.0, closer > 1.0, further < 1.0
         influence_factor = 25.0 / (distance**2 + softening)
-
-        return max(0.5, min(2.0, influence_factor))
+        result: float = max(0.5, min(2.0, influence_factor))
+        return result
 
     def compute_influences(self) -> Dict[str, Dict[str, float]]:
         """
@@ -1525,7 +1541,7 @@ class StateMatrix4D:
 
     def export_for_llm(self, eta_state: Optional[Any] = None) -> Dict[str, Any]:
         """導出完整 7 維狀態 + θ + η，供 LLM prompt 使用。"""
-        axes_data = {}
+        axes_data: Dict[str, Dict[str, Any]] = {}
         for name in ("alpha", "beta", "gamma", "delta", "epsilon", "theta", "zeta"):
             dim = self.dimensions.get(name)
             if dim:
@@ -1582,7 +1598,7 @@ class StateMatrix4D:
             },
             "eta": eta_data,
             "temporal_trend": (
-                self._get_temporal_state().get_trend()
+                self._get_temporal_state().trend("alpha", "energy")
                 if hasattr(self, "_temporal_state") and self._temporal_state
                 else "stable"
             ),
