@@ -10,7 +10,10 @@ import re
 import threading
 import time
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+
+if TYPE_CHECKING:
+    from ai.ed3n.input_enricher import EnrichedInput
 
 from ai.core.unicode_utils import is_english_dominant, normalize_text
 from ai.data_eng.presets import REFLEX_PRESETS
@@ -337,8 +340,10 @@ class ED3NEngine:
         return network_output
 
     def _output_anchor_decode(self, network_output: object, keys: List[str], enriched=None) -> str:
+        # callee 只接受 dict；非 dict 輸入走它自己的空處理分支（R33 誠實收斂）。
+        output_map = network_output if isinstance(network_output, dict) else {}
         return anchored_decode(
-            network_output=network_output,
+            network_output=output_map,
             original_input_keys=keys,
             dictionary=self.dictionary,
             top_k_anchors=batch_value("ai.ed3n_engine.top_k_anchors", 3),
@@ -465,7 +470,7 @@ class ED3NEngine:
             is_fallback=(not output or output == FALLBACK_STR),
         )
 
-    def _stage_chain_reasoning(self, input_text, query_id, stages):
+    def _stage_chain_reasoning(self, input_text, query_id, stages) -> Optional[str]:
         """Offline relational-chain reasoning via CoreNetwork transitive closure.
 
         Parses explicit comparison statements in the query, builds directed
@@ -507,10 +512,10 @@ class ED3NEngine:
         reflex_match,
         cache_hit,
         matched_keys,
-        output_text,
+        output_text: str,
         confidence,
         is_fallback,
-    ):
+    ) -> str:
         self.telemetry.record_query(
             query_id=query_id,
             input_text=input_text,
@@ -525,7 +530,7 @@ class ED3NEngine:
         self._last_confidence = confidence
         return output_text
 
-    def _stage_reflex(self, input_text, query_id, stages):
+    def _stage_reflex(self, input_text, query_id, stages) -> Optional[str]:
         t0 = time.perf_counter()
         result = self._reflex_match(input_text)
         stages["reflex"] = (time.perf_counter() - t0) * 1000
@@ -543,7 +548,7 @@ class ED3NEngine:
             )
         return None
 
-    def _stage_math(self, input_text, query_id, stages):
+    def _stage_math(self, input_text, query_id, stages) -> Optional[str]:
         t0 = time.perf_counter()
         result = self._try_math_eval(input_text)
         stages["math"] = (time.perf_counter() - t0) * 1000
@@ -561,7 +566,7 @@ class ED3NEngine:
             )
         return None
 
-    def _stage_knowledge(self, input_text, query_id, stages):
+    def _stage_knowledge(self, input_text, query_id, stages) -> Optional[str]:
         t0 = time.perf_counter()
         result = self._try_knowledge(input_text)
         stages["knowledge"] = (time.perf_counter() - t0) * 1000
@@ -579,7 +584,7 @@ class ED3NEngine:
             )
         return None
 
-    def _stage_reasoning(self, input_text, query_id, stages):
+    def _stage_reasoning(self, input_text, query_id, stages) -> Optional[str]:
         t0 = time.perf_counter()
         result = self._try_reasoning(input_text)
         stages["reasoning"] = (time.perf_counter() - t0) * 1000
@@ -597,7 +602,7 @@ class ED3NEngine:
             )
         return None
 
-    def _stage_encode(self, input_text, query_id, stages):
+    def _stage_encode(self, input_text, query_id, stages) -> Tuple[List[str], bool]:
         t0 = time.perf_counter()
         keys, cache_hit = self._perform_encode(input_text)
         stages["encode"] = (time.perf_counter() - t0) * 1000
@@ -663,7 +668,7 @@ class ED3NEngine:
             stages["latent"] = 0.0
         return additional_keys
 
-    def _stage_enrich(self, input_text, keys, query_id, stages):
+    def _stage_enrich(self, input_text, keys, query_id, stages) -> Tuple["EnrichedInput", float]:
         t0 = time.perf_counter()
         enriched = self.input_enricher.enrich(input_text, keys, self.dictionary)
         stages["enrichment"] = (time.perf_counter() - t0) * 1000
@@ -671,8 +676,8 @@ class ED3NEngine:
         return enriched, confidence
 
     def _stage_shallow_decode(
-        self, keys, context, query_id, stages, cache_hit, FALLBACK_STR, input_text=""
-    ):
+        self, keys, context, query_id, stages, cache_hit, FALLBACK_STR: str, input_text=""
+    ) -> str:
         t0 = time.perf_counter()
         decoded = self.dictionary.decode(keys, context)
         stages["decode"] = (time.perf_counter() - t0) * 1000
@@ -1305,15 +1310,16 @@ class ED3NEngine:
         training_examples = []
         for ex in examples:
             if isinstance(ex, dict):
+                meta = ex.get("context", ex.get("conversation_id", {}))
                 training_examples.append(
                     TrainingExample(
-                        input_text=ex.get("input", ex.get("user_text", "")),
-                        expected_output=ex.get("output", ex.get("response_text", "")),
+                        input_text=str(ex.get("input", ex.get("user_text", ""))),
+                        expected_output=str(ex.get("output", ex.get("response_text", ""))),
                         input_keys=ex.get("input_keys", []),
                         output_keys=ex.get("output_keys", []),
                         relation_pairs=ex.get("relation_pairs", []),
                         confidence=ex.get("confidence", 0.8),
-                        metadata=ex.get("context", ex.get("conversation_id", {})),
+                        metadata=meta if isinstance(meta, dict) else {},
                     )
                 )
             else:
