@@ -8,7 +8,7 @@ import enum
 import logging
 import math
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from core.security.secure_eval import safe_eval
 
@@ -67,7 +67,7 @@ class RouterType(enum.Enum):
 class ModuleConfig:
     name: str
     module_type: AtomicModuleType
-    sub_type: enum.Enum
+    sub_type: Union[LogicGateType, ArithmeticOpType, AggregatorType, RouterType]
     parameters: Dict[str, Any] = field(default_factory=dict)
     tags: List[str] = field(default_factory=list)
 
@@ -93,8 +93,10 @@ class ModuleConfig:
         )
 
 
-def _resolve_sub_type(mt: AtomicModuleType, value: str) -> enum.Enum:
-    mapping = {
+def _resolve_sub_type(
+    mt: AtomicModuleType, value: str
+) -> Union[LogicGateType, ArithmeticOpType, AggregatorType, RouterType]:
+    mapping: Dict[AtomicModuleType, type] = {
         AtomicModuleType.LOGIC_GATE: LogicGateType,
         AtomicModuleType.ARITHMETIC_OP: ArithmeticOpType,
         AtomicModuleType.AGGREGATOR: AggregatorType,
@@ -103,9 +105,10 @@ def _resolve_sub_type(mt: AtomicModuleType, value: str) -> enum.Enum:
     enum_cls = mapping.get(mt)
     if enum_cls is None:
         raise ValueError(f"Unknown module type: {mt}")
-    for member in enum_cls:
+    # enum_cls is a type (e.g., LogicGateType), iterate over its members
+    for member in enum_cls:  # type: ignore[attr-defined]
         if member.value == value:
-            return member
+            return cast(Union[LogicGateType, ArithmeticOpType, AggregatorType, RouterType], member)
     raise ValueError(f"Unknown sub_type {value} for {mt}")
 
 
@@ -118,32 +121,32 @@ class AtomicModule:
         st = self.config.sub_type
         params = self.config.parameters
         if mt == AtomicModuleType.LOGIC_GATE:
-            return self._exec_logic(st, kwargs, params)
+            return self._exec_logic(st, kwargs, params)  # type: ignore[arg-type]
         if mt == AtomicModuleType.ARITHMETIC_OP:
-            return self._exec_arithmetic(st, kwargs, params)
+            return self._exec_arithmetic(st, kwargs, params)  # type: ignore[arg-type]
         if mt == AtomicModuleType.AGGREGATOR:
-            return self._exec_aggregator(st, kwargs, params)
+            return self._exec_aggregator(st, kwargs, params)  # type: ignore[arg-type]
         if mt == AtomicModuleType.ROUTER:
-            return self._exec_router(st, kwargs, params)
+            return self._exec_router(st, kwargs, params)  # type: ignore[arg-type]
         raise ValueError(f"Unknown module type: {mt}")
 
     def _exec_logic(self, st: LogicGateType, kwargs: Dict, params: Dict) -> bool:
         if st == LogicGateType.AND:
             vals = kwargs.get("values", [])
-            return all(v > 0 for v in vals)
+            return bool(all(v > 0 for v in vals))
         if st == LogicGateType.OR:
             vals = kwargs.get("values", [])
-            return any(v > 0 for v in vals)
+            return bool(any(v > 0 for v in vals))
         if st == LogicGateType.NOT:
-            val = kwargs.get("value", 0.0)
+            val = float(kwargs.get("value", 0.0))
             return val <= 0
         if st == LogicGateType.XOR:
             vals = kwargs.get("values", [])
-            return sum(1 for v in vals if v > 0) % 2 == 1
+            return bool(sum(1 for v in vals if v > 0) % 2 == 1)
         if st == LogicGateType.THRESHOLD:
-            val = kwargs.get("value", 0.0)
-            threshold = params.get("threshold", 0.5)
-            operator = params.get("operator", ">")
+            val = float(kwargs.get("value", 0.0))
+            threshold = float(params.get("threshold", 0.5))
+            operator = str(params.get("operator", ">"))
             if operator == ">":
                 return val > threshold
             return val >= threshold
@@ -152,51 +155,57 @@ class AtomicModule:
     def _exec_arithmetic(self, st: ArithmeticOpType, kwargs: Dict, params: Dict) -> float:
         if st == ArithmeticOpType.ADD:
             vals = kwargs.get("values", [])
-            return sum(vals)
+            return float(sum(vals))
         if st == ArithmeticOpType.SUB:
-            a = kwargs.get("a", 0.0)
-            b = kwargs.get("b", 0.0)
+            a = float(kwargs.get("a", 0.0))
+            b = float(kwargs.get("b", 0.0))
             return a - b
         if st == ArithmeticOpType.MUL:
             vals = kwargs.get("values", [])
             result = 1.0
             for v in vals:
-                result *= v
+                result *= float(v)
             return result
         if st == ArithmeticOpType.DIV:
-            a = kwargs.get("a", 0.0)
-            b = kwargs.get("b", 1.0)
+            a = float(kwargs.get("a", 0.0))
+            b = float(kwargs.get("b", 1.0))
             if b == 0.0:
                 return 0.0
             return a / b
         if st == ArithmeticOpType.CUSTOM_EXPR:
             expr = params.get("expr", "0")
-            local_vars = dict(kwargs)
-            result = safe_eval(expr, context=local_vars)
-            if result.success:
-                return float(result.result)
-            logger.debug("Custom expression eval failed (%s): %s", expr, result.error)
+            local_vars = {k: float(v) for k, v in kwargs.items()}
+            eval_result = safe_eval(expr, context=local_vars)
+            if eval_result.success and eval_result.result is not None:
+                try:
+                    return float(eval_result.result)
+                except (TypeError, ValueError):
+                    logger.debug(
+                        "Custom expression result not convertible to float: %s", eval_result.result
+                    )
+                    return 0.0
+            logger.debug("Custom expression eval failed (%s): %s", expr, eval_result.error)
             return 0.0
         return 0.0
 
     def _exec_aggregator(self, st: AggregatorType, kwargs: Dict, params: Dict) -> float:
-        vals = kwargs.get("values", [])
+        vals = [float(v) for v in kwargs.get("values", [])]
         if not vals:
             return 0.0
         if st == AggregatorType.SUM:
-            return sum(vals)
+            return float(sum(vals))
         if st == AggregatorType.MEAN:
-            return sum(vals) / len(vals)
+            return float(sum(vals) / len(vals))
         if st == AggregatorType.MAX:
-            return max(vals)
+            return float(max(vals))
         if st == AggregatorType.MIN:
-            return min(vals)
+            return float(min(vals))
         if st == AggregatorType.WEIGHTED_AVG:
             weights = params.get("weights", [1.0 / len(vals)] * len(vals))
-            return sum(v * w for v, w in zip(vals, weights))
+            return float(sum(v * w for v, w in zip(vals, weights)))
         return 0.0
 
-    def _exec_router(self, st: RouterType, kwargs: Dict, params: Dict) -> Any:
+    def _exec_router(self, st: RouterType, kwargs: Dict, params: Dict) -> List[Any]:
         targets = params.get("targets", [])
         if st == RouterType.DIRECT:
             return [targets[0]] if targets else []
@@ -393,7 +402,14 @@ class EtaAxisState:
 
 def create_default_modules() -> Dict[str, ModuleConfig]:
     modules = {}
-    configs = [
+    configs: List[
+        Tuple[
+            str,
+            AtomicModuleType,
+            Union[LogicGateType, ArithmeticOpType, AggregatorType, RouterType],
+            Dict[str, Any],
+        ]
+    ] = [
         ("and_gate", AtomicModuleType.LOGIC_GATE, LogicGateType.AND, {}),
         ("or_gate", AtomicModuleType.LOGIC_GATE, LogicGateType.OR, {}),
         ("not_gate", AtomicModuleType.LOGIC_GATE, LogicGateType.NOT, {}),
