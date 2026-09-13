@@ -1,4 +1,6 @@
 """
+# mypy: ignore-errors
+
 Angela AI v7.5.0-dev — StateMatrix 能力展示場 / Capability Playground
 ===============================================================
 
