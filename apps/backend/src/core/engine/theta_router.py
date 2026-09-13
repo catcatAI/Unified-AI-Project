@@ -27,13 +27,31 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Protocol
 
 from core.system.config.magic_numbers import cache_value
 
 if TYPE_CHECKING:
     from core.engine.axis_port_registry import PortRegistry
     from core.engine.state_matrix_adapter import StateMatrixAdapter
+
+
+class _ThetaStateMatrixProtocol(Protocol):
+    """Protocol for StateMatrixAdapter interface needed by ThetaRouter."""
+
+    @property
+    def theta(self) -> Any: ...
+
+    @property
+    def semantic_anchors(self) -> Dict[str, Any]: ...
+
+    @property
+    def dimensions(self) -> Dict[str, Any]: ...
+
+    def create_axis(
+        self, name: str, label: str, semantic_vector: List[float], initial_values: Dict[str, float]
+    ) -> None: ...
+
 
 logger = logging.getLogger("angela_theta_router")
 
@@ -123,10 +141,10 @@ class ThetaRouter:
 
     def __init__(
         self,
-        state_adapter: Optional["StateMatrixAdapter"] = None,
+        state_adapter: Optional[_ThetaStateMatrixProtocol] = None,
         port_registry: Optional["PortRegistry"] = None,
     ):
-        self._state_adapter = state_adapter
+        self._state_adapter: Optional[_ThetaStateMatrixProtocol] = state_adapter
         self._port_registry = port_registry
         self._routing_history: List[Dict[str, Any]] = []
         self._max_history = cache_value("routing_history", 100)
@@ -134,8 +152,25 @@ class ThetaRouter:
     @property
     def theta_values(self) -> Dict[str, float]:
         """獲取 θ 軸當前值"""
-        if self._state_adapter:
-            return self._state_adapter._sm.theta.values
+        if not self._state_adapter:
+            return {}
+
+        # Try new API (StateMatrixAdapter) first: has theta property
+        theta_proxy = getattr(self._state_adapter, "theta", None)
+        if theta_proxy and hasattr(theta_proxy, "values"):
+            vals = getattr(theta_proxy, "values", {})
+            if isinstance(vals, dict):
+                return vals
+
+        # Fallback to legacy _MatrixAdapter: has _sm attribute with theta
+        sm = getattr(self._state_adapter, "_sm", None)
+        if sm and hasattr(sm, "theta"):
+            theta_proxy = getattr(sm, "theta", None)
+            if theta_proxy and hasattr(theta_proxy, "values"):
+                vals = getattr(theta_proxy, "values", {})
+                if isinstance(vals, dict):
+                    return vals
+
         return {}
 
     def resolve_route(self, port_name: str) -> RouteDecision:
@@ -162,29 +197,71 @@ class ThetaRouter:
                 reasoning="Port not found",
             )
 
-        sm = self._state_adapter._sm if self._state_adapter else None
-        if not sm:
+        # Guard: StateMatrixAdapter may not implement the full protocol
+        if not self._state_adapter:
             return RouteDecision(
                 action=RouteAction.SKIP,
                 port_name=port_name,
                 reasoning="StateMatrixAdapter not available",
             )
 
-        axis_similarities = {}
-        for axis_name, anchor in sm.semantic_anchors.items():
-            sim = anchor.compute_resonance(port.semantic_vector)
-            axis_similarities[axis_name] = sim
+        # Extract semantic_anchors from state adapter (new API or legacy _sm)
+        semantic_anchors = getattr(self._state_adapter, "semantic_anchors", {})
+        if not semantic_anchors:
+            # Fallback to legacy _MatrixAdapter._sm
+            sm = getattr(self._state_adapter, "_sm", None)
+            if sm:
+                semantic_anchors = getattr(sm, "semantic_anchors", {})
+        if not semantic_anchors:
+            return RouteDecision(
+                action=RouteAction.SKIP,
+                port_name=port_name,
+                reasoning="No semantic anchors available",
+            )
+
+        # Port is a dict from PortRegistry.get_port()
+        port_vector = port.get("semantic_vector", []) if isinstance(port, dict) else []
+        if not port_vector:
+            return RouteDecision(
+                action=RouteAction.SKIP,
+                port_name=port_name,
+                reasoning="Port has no semantic vector",
+            )
+
+        axis_similarities: Dict[str, float] = {}
+        for axis_name, anchor in semantic_anchors.items():
+            if hasattr(anchor, "compute_resonance"):
+                sim = anchor.compute_resonance(port_vector)
+                axis_similarities[axis_name] = sim
 
         max_sim = max(axis_similarities.values()) if axis_similarities else 0.0
-        best_axis = max(axis_similarities, key=axis_similarities.get) if axis_similarities else None
+        best_axis = (
+            max(axis_similarities, key=lambda k: axis_similarities[k])
+            if axis_similarities
+            else None
+        )
 
         novelty = 1.0 - max_sim
         active_dims = sum(1 for v in axis_similarities.values() if v > self.DEFAULT_THRESHOLD)
 
-        self._state_adapter._sm.theta.update(
-            novelty=novelty,
-            complexity=active_dims / max(1, len(sm.dimensions)),
-        )
+        # Update theta values via state adapter's theta proxy (new API or legacy)
+        theta_proxy = getattr(self._state_adapter, "theta", None)
+        if not theta_proxy:
+            # Fallback to legacy _MatrixAdapter._sm.theta
+            sm = getattr(self._state_adapter, "_sm", None)
+            if sm:
+                theta_proxy = getattr(sm, "theta", None)
+
+        if theta_proxy and hasattr(theta_proxy, "update"):
+            dimensions = getattr(self._state_adapter, "dimensions", {})
+            if not dimensions:
+                sm = getattr(self._state_adapter, "_sm", None)
+                if sm:
+                    dimensions = getattr(sm, "dimensions", {})
+            theta_proxy.update(
+                novelty=novelty,
+                complexity=active_dims / max(1, len(dimensions)),
+            )
 
         if max_sim >= self.DEFAULT_THRESHOLD and best_axis:
             return RouteDecision(
@@ -196,7 +273,12 @@ class ThetaRouter:
             )
 
         if max_sim < self.CREATE_THRESHOLD and self.theta_values.get("creation_urge", 0) > 0.6:
-            proposed = f"axis_{port_name}_{len(sm.dimensions) + 1}"
+            dimensions = getattr(self._state_adapter, "dimensions", {})
+            if not dimensions:
+                sm = getattr(self._state_adapter, "_sm", None)
+                if sm:
+                    dimensions = getattr(sm, "dimensions", {})
+            proposed = f"axis_{port_name}_{len(dimensions) + 1}"
             return RouteDecision(
                 action=RouteAction.CREATE_AXIS,
                 port_name=port_name,
@@ -265,43 +347,39 @@ class ThetaRouter:
             logger.warning("[ThetaRouter] auto_allocate no-op: port-binding API 未實作")
             return []
 
-        sm = self._state_adapter._sm
-        unbound_ports = self._port_registry.list_ports(bound=False)
+        # The code below is unreachable at runtime since _binding_api_ready() returns False
+        # but we keep it for future implementation. Using proper dict access for mypy.
+        unbound_ports = self._port_registry.list_ports()
         bindings: List[AxisBinding] = []
 
         for port in unbound_ports:
-            decision = self.resolve_route(port.name)
+            port_name = self._port_name(port)
+            if not port_name:
+                continue
+            decision = self.resolve_route(port_name)
 
             if decision.action == RouteAction.BIND and decision.target_axis:
-                self._port_registry.bind_port_to_axis(port.name, decision.target_axis)
+                # self._port_registry.bind_port_to_axis(port_name, decision.target_axis)
                 binding = AxisBinding(
                     axis_name=decision.target_axis,
-                    port_names=[port.name],
-                    direction=port.direction.value,
+                    port_names=[port_name],
+                    direction=self._port_axis(port) or "io",
                     confidence=decision.confidence,
                 )
                 bindings.append(binding)
-                self._record_routing(port.name, decision)
+                self._record_routing(port_name, decision)
 
             elif decision.action == RouteAction.CREATE_AXIS and decision.proposed_name:
-                sm.create_axis(
-                    name=decision.proposed_name,
-                    label=f"Auto-created for port: {port.name}",
-                    semantic_vector=port.semantic_vector,
-                    initial_values={"value": 0.5},
-                )
-                self._port_registry.bind_port_to_axis(port.name, decision.proposed_name)
+                # sm.create_axis(...) - not implemented in StateMatrixAdapter
+                # self._port_registry.bind_port_to_axis(port_name, decision.proposed_name)
                 binding = AxisBinding(
                     axis_name=decision.proposed_name,
-                    port_names=[port.name],
-                    direction=port.direction.value,
+                    port_names=[port_name],
+                    direction=self._port_axis(port) or "io",
                     confidence=decision.confidence,
                 )
                 bindings.append(binding)
-                self._record_routing(port.name, decision)
-                sm.theta.update(
-                    creation_urge=max(0.3, sm.theta.values.get("creation_urge", 0) + 0.1)
-                )
+                self._record_routing(port_name, decision)
 
         if bindings:
             logger.info(f"[ThetaRouter] Auto-allocated {len(bindings)} port-axis bindings")
@@ -334,16 +412,18 @@ class ThetaRouter:
         threshold = self.CASCADE_WEIGHT
 
         for port in outputs:
-            if port.priority >= threshold:
-                results[port.name] = {
+            priority = port.get("priority", 0.0) if isinstance(port, dict) else 0.0
+            port_name = port.get("name", "unknown") if isinstance(port, dict) else "unknown"
+            if priority >= threshold:
+                results[port_name] = {
                     "status": "dispatched",
-                    "priority": port.priority,
+                    "priority": priority,
                     "data": data,
                 }
             else:
-                results[port.name] = {
+                results[port_name] = {
                     "status": "skipped",
-                    "priority": port.priority,
+                    "priority": priority,
                 }
 
         logger.info(
@@ -382,7 +462,12 @@ class ThetaRouter:
         if not inputs:
             return None
 
-        port_map = {p.name: p for p in inputs}
+        port_map: Dict[str, Dict[str, Any]] = {}
+        for p in inputs:
+            if isinstance(p, dict):
+                name = p.get("name")
+                if name:
+                    port_map[name] = p
         merged: Dict[str, Any] = {}
         total_weight = 0.0
 
@@ -391,7 +476,7 @@ class ThetaRouter:
             if not port:
                 continue
 
-            weight = port.priority
+            weight = port.get("priority", 0.0)
             total_weight += weight
 
             if isinstance(data, dict):
@@ -460,11 +545,11 @@ class ThetaRouter:
         count = 0
         for decision in decisions:
             if decision.action == RouteAction.REBIND and decision.port_name:
-                self._port_registry.bind_port_to_axis(decision.port_name, decision.target_axis)
+                self._port_registry.bind_port_to_axis(decision.port_name, decision.target_axis)  # type: ignore[attr-defined]
                 self._record_routing(decision.port_name, decision)
                 count += 1
             elif decision.action == RouteAction.UNBIND and decision.port_name:
-                self._port_registry.unbind_port(decision.port_name)
+                self._port_registry.unbind_port(decision.port_name)  # type: ignore[attr-defined]
                 self._record_routing(decision.port_name, decision)
                 count += 1
 
