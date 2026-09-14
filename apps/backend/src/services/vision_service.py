@@ -5,12 +5,12 @@ import io
 import logging
 import random
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 from core.perception.attention_controller import AttentionController
-from core.perception.perceptual_memory import PerceptualMemory
+from core.perception.perceptual_memory import PerceptualMemory, PerceivedObject
 from core.perception.visual_sampler import SamplingDistribution, VisualSampler
-from core.sync.realtime_sync import SyncEvent, sync_manager
+from core.sync.realtime_sync import SyncEvent, SyncEventType, sync_manager
 from core.system.cluster_manager import cluster_manager
 from core.system.config.magic_numbers import timing_value
 from core.utils import safe_error
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 _MAX_PROCESSING_HISTORY = 500
 
 try:
-    import pytesseract
+    import pytesseract  # type: ignore[import-untyped]
 
     PYTESSERACT_AVAILABLE = True
 except ImportError:
@@ -44,6 +44,9 @@ class VisionService:
         self.sampler = VisualSampler(self.config.get("sampler_config"))
         self.memory = PerceptualMemory(capacity=self.config.get("memory_capacity", 1000))
         self.attention = AttentionController()
+
+        # VisionPipeline will be lazily initialized
+        self._vision_pipeline: Optional[Any] = None
 
         # 初始化視覺模型 / API
         self.model_config = self.config.get(
@@ -87,11 +90,11 @@ class VisionService:
 
     async def _handle_sync_event(self, event: SyncEvent) -> None:
         """處理同步事件"""
-        if event.type == "module_control":
+        if event.event_type == SyncEventType("module_control"):
             module = event.data.get("module")
             enabled = event.data.get("enabled")
-            if module == "vision":
-                self.enabled = enabled
+            if module == "vision" and enabled is not None:
+                self.enabled = bool(enabled)
                 logger.info(f"Vision Service enabled status changed to: {enabled}")
 
     def set_enabled(self, enabled: bool) -> bool:
@@ -118,12 +121,13 @@ class VisionService:
         if err:
             return err
 
-        analysis_results, requested_features = self._setup_analysis(image_data, features, context)
         if not image_data:
             return {
                 "error": "No image data provided",
-                "processing_id": analysis_results.get("processing_id"),
+                "processing_id": None,
             }
+
+        analysis_results, requested_features = self._setup_analysis(image_data, features, context)
 
         try:
             await self._extract_features(
@@ -132,16 +136,16 @@ class VisionService:
                 analysis_results.get("context", {}),
                 analysis_results,
             )
-            self._record_processing(analysis_results.get("processing_id"), requested_features, True)
+            processing_id = analysis_results.get("processing_id") or ""
+            self._record_processing(processing_id, requested_features, True)
             return analysis_results
         except Exception as e:
             logger.error(
                 f"Error analyzing image {analysis_results.get('processing_id')}: {e}", exc_info=True
             )
-            error_result = self._build_error_result(e, analysis_results.get("processing_id"))
-            self._record_processing(
-                analysis_results.get("processing_id"), requested_features, False, safe_error(e)
-            )
+            processing_id = analysis_results.get("processing_id") or ""
+            error_result = self._build_error_result(e, processing_id)
+            self._record_processing(processing_id, requested_features, False, safe_error(e))
             return error_result
 
     async def _auto_capture(
@@ -153,7 +157,7 @@ class VisionService:
         try:
             from io import BytesIO
 
-            import pyautogui
+            import pyautogui  # type: ignore[import-untyped]
 
             screenshot = pyautogui.screenshot()
             img_byte_arr = BytesIO()
@@ -166,7 +170,7 @@ class VisionService:
 
     def _setup_analysis(
         self, image_data: bytes, features: Optional[List[str]], context: Optional[Dict]
-    ) -> tuple:
+    ) -> Tuple[Dict[str, Any], List[str]]:
         """Initialize analysis results dict and feature list."""
         processing_id = self._generate_processing_id(image_data)
         requested_features = features or ["captioning", "object_detection", "scene_analysis"]
@@ -223,7 +227,7 @@ class VisionService:
         if len(self.processing_history) > _MAX_PROCESSING_HISTORY:
             self.processing_history = self.processing_history[-_MAX_PROCESSING_HISTORY:]
 
-    def _build_error_result(self, error: Exception, processing_id: str) -> Dict[str, Any]:
+    def _build_error_result(self, error: Exception, processing_id: Optional[str]) -> Dict[str, Any]:
         return {
             "error": safe_error(error),
             "processing_id": processing_id,
@@ -285,13 +289,13 @@ class VisionService:
                     import numpy as np
                     from PIL import Image
 
-                    img1 = np.array(
+                    img1_np: np.ndarray = np.array(
                         Image.open(BytesIO(image_data1)).convert("RGB").resize((64, 64))
                     )
-                    img2 = np.array(
+                    img2_np: np.ndarray = np.array(
                         Image.open(BytesIO(image_data2)).convert("RGB").resize((64, 64))
                     )
-                    diff = np.abs(img1.astype(int) - img2.astype(int))
+                    diff = np.abs(img1_np.astype(int) - img2_np.astype(int))
                     diff_score = float(np.mean(diff) / 255.0)
                     comparison_result["difference_score"] = round(diff_score, 3)
                 except Exception as err:
@@ -401,7 +405,7 @@ class VisionService:
         detected = await self._detect_objects(image_data)
 
         # 2. 存入記憶
-        perceived_objs = []
+        perceived_objs: List[PerceivedObject] = []
         for obj in detected:
             # 轉換為座標格式 (取中心點)
             bbox = obj.get("bounding_box")  # [xmin, ymin, xmax, ymax]
@@ -440,18 +444,18 @@ class VisionService:
 
         # 5. 自動建模到桌布：如果置信度高且是感興趣的物體
         wallpaper_injections = []
-        for obj in perceived_objs:
-            if obj.confidence > 0.8:  # 高置信度閾值
+        for perceived_obj in perceived_objs:  # type: PerceivedObject
+            if perceived_obj.confidence > 0.8:  # 高置信度閾值
                 injection_data = {
                     "type": "wallpaper_object_injection",
                     "data": {
-                        "name": obj.label,
+                        "name": perceived_obj.label,
                         "position": {
-                            "x": obj.position[0],
-                            "y": obj.position[1],
+                            "x": perceived_obj.position[0],
+                            "y": perceived_obj.position[1],
                             "z": 0,
                         },
-                        "scale": obj.confidence,
+                        "scale": perceived_obj.confidence,
                         "metadata": {
                             "source": "vision_service",
                             "detection_time": datetime.now().isoformat(),
@@ -467,12 +471,12 @@ class VisionService:
                     await sync_manager.broadcast_event(
                         SyncEvent(
                             id=str(uuid.uuid4()),
-                            event_type="wallpaper_object_injection",
-                            data=injection_data["data"],
+                            event_type=SyncEventType("wallpaper_object_injection"),
+                            data=cast(Dict[str, Any], injection_data["data"]),
                             source="vision_service",
                         )
                     )
-                    logger.info(f"Broadcasted wallpaper injection for: {obj.label}")
+                    logger.info(f"Broadcasted wallpaper injection for: {perceived_obj.label}")
                 except (
                     Exception
                 ) as e:  # broad exception acceptable: broadcast is optional, should not block
@@ -768,7 +772,7 @@ class VisionService:
             if len(diff_coords) == 0:
                 return []
             # Report up to 3 difference regions
-            differences = []
+            differences: List[Dict[str, Any]] = []
             seen = set()
             for y, x in diff_coords[:100]:
                 region_key = (x // 8, y // 8)
@@ -842,7 +846,7 @@ class VisionService:
 
         return {"error": "Invalid input format for vision processing"}
 
-    async def encode_image(self, image_data: bytes) -> list:
+    async def encode_image(self, image_data: bytes) -> List[float]:
         """Encode image into a feature vector using VisualEncoder (P15)."""
         if not image_data:
             return []
@@ -851,7 +855,7 @@ class VisionService:
 
             encoder = VisualEncoder()
             vec = encoder.encode(image_data)
-            return vec.tolist()
+            return cast(List[float], vec.tolist())
         except Exception as e:
             logger.warning("VisualEncoder failed: %s", e)
             return []
@@ -899,7 +903,7 @@ if __name__ == "__main__":
 
     async def main() -> None:
         """Main entry point (CLI test)."""
-        vision_config = {}  # Will be populated from config file in production
+        vision_config: Dict[str, Any] = {}  # Will be populated from config file in production
         service = VisionService(config=vision_config)
 
         # Test image analysis (with dummy bytes)
