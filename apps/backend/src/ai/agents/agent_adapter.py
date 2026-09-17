@@ -9,7 +9,7 @@ wraps any specialized agent and routes task dicts to the correct method.
 
 import inspect
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 from core.utils import safe_error
 
@@ -187,8 +187,8 @@ class AgentAdapter:
         return status
 
 
-# --- Agent ID → class mapping ---
-_AGENT_CLASSES: Dict[str, str] = {
+# --- Agent ID → (module path, class name) mapping ---
+_AGENT_CLASSES: Dict[str, Tuple[str, str]] = {
     "creative_writing_agent": (
         "ai.agents.specialized.creative_writing_agent",
         "CreativeWritingAgent",

@@ -371,7 +371,7 @@ class Live2DAvatarGenerator:
     }
 
     # 18 body parts to Live2D parameter mapping
-    BODY_PART_MAPPING = {
+    BODY_PART_MAPPING: Dict[str, Any] = {
         "top_of_head": {
             "parameters": ["ParamAngleX", "ParamAngleY", "ParamHairSwing"],
             "touch_response": {
@@ -657,7 +657,7 @@ class Live2DAvatarGenerator:
         self,
         model_name: str,
         attributes: Optional[Dict[str, Any]] = None,
-        angles: List[ViewAngle] = None,
+        angles: Optional[List[ViewAngle]] = None,
         style_preferences: Optional[Dict[str, Any]] = None,
     ) -> GeneratedAvatar:
         """
@@ -732,7 +732,7 @@ class Live2DAvatarGenerator:
                 if hasattr(image_result, "save"):
                     image_result.save(base_image_path)
                 elif isinstance(image_result, str):
-                    base_image_path = image_result
+                    base_image_path = Path(image_result)
 
                 avatar.texture_paths.append(str(base_image_path))
         except (
@@ -821,6 +821,7 @@ class Live2DAvatarGenerator:
             draw.text((150, 250), layer.layer_name, fill=(0, 0, 0, 255))
 
             # Derive output path from the layer's original path (set by _create_layers)
+            assert layer.image_path is not None, "layer image path must be set by _create_layers"
             output_path = Path(layer.image_path)
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -861,7 +862,7 @@ class Live2DAvatarGenerator:
 
     async def _configure_model(self, avatar: GeneratedAvatar) -> None:
         """Generate model3.json configuration"""
-        model_config = {
+        model_config: Dict[str, Any] = {
             "Version": 3,
             "FileReferences": {
                 "Moc": f"{avatar.model_name}.moc3",
@@ -920,6 +921,7 @@ class Live2DAvatarGenerator:
             layer = avatar.get_layer_by_name(layer_name)
             if layer:
                 # Update image path for angle
+                assert layer.image_path is not None, "layer image path must be set"
                 base_path = Path(layer.image_path)
                 angle_path = base_path.parent / f"{base_path.stem}{angle_suffix}{base_path.suffix}"
                 layer.image_path = str(angle_path)
@@ -1021,7 +1023,7 @@ class Live2DAvatarGenerator:
 
     async def _generate_display_info(self, avatar: GeneratedAvatar) -> None:
         """Generate cdi3.json (Cubism Display Information)"""
-        display_info = {"Version": 3, "Parameters": [], "Parts": []}
+        display_info: Dict[str, Any] = {"Version": 3, "Parameters": [], "Parts": []}
 
         # Add parameter display info
         for param_id, param in avatar.parameters.items():
@@ -1059,7 +1061,8 @@ class Live2DAvatarGenerator:
 
     def get_body_parameter_mapping(self, body_part: str) -> Dict[str, Any]:
         """Get Live2D parameter mapping for a body part"""
-        return self.BODY_PART_MAPPING.get(body_part, {})
+        mapping: Dict[str, Any] = self.BODY_PART_MAPPING.get(body_part, {})
+        return mapping
 
     def get_touch_response(
         self, body_part: str, touch_type: str, intensity: float = 0.5
