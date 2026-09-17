@@ -350,13 +350,18 @@ class SelfGeneration:
         self._fallback_generation(avatar)
 
     async def _try_learning_workflow(self, avatar: GeneratedAvatar) -> bool:
+        # NOTE: ArtLearningWorkflow currently exposes no run_complete_workflow
+        # method, so this path still falls through to SD/fallback below.
+        # Kept (not deleted) as the documented integration point.
+        if self.learning_workflow is None:
+            return False
         try:
             from core.engine.art_learning_workflow import LearningObjective
 
             result = await self.learning_workflow.run_complete_workflow(
                 learning_objectives=[
-                    LearningObjective.ANIME_BASICS,
-                    LearningObjective.LIVE2D_TECHNIQUES,
+                    LearningObjective("anime_basics"),
+                    LearningObjective("live2d_techniques"),
                 ],
                 target_mastery=0.7,
                 cyber_identity_attrs=self._attributes_to_dict(avatar.attributes),
@@ -371,6 +376,8 @@ class SelfGeneration:
             return False
 
     async def _try_live2d_generator(self, avatar: GeneratedAvatar) -> bool:
+        if self.live2d_generator is None:
+            return False
         try:
             from core.engine.live2d_avatar_generator import ViewAngle
 
@@ -409,13 +416,16 @@ class SelfGeneration:
 
             # SD WebUI endpoint: config first, then env, then the ecosystem's
             # conventional default (network_defaults COMFYUI-style pattern).
-            sd_api_url = self.config.get("sd_api_url") or os.getenv(
-                "ANGELA_SD_API_URL", "http://127.0.0.1:7860/sdapi/v1/txt2img"
+            sd_api_url = str(
+                self.config.get("sd_api_url")
+                or os.getenv("ANGELA_SD_API_URL", "http://127.0.0.1:7860/sdapi/v1/txt2img")
             )
 
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    sd_api_url, json=payload, timeout=timeout_value("sd_api", 5.0)
+                    sd_api_url,
+                    json=payload,
+                    timeout=aiohttp.ClientTimeout(total=timeout_value("sd_api", 5.0)),
                 ) as response:
                     if response.status == 200:
                         data = await response.json()
@@ -468,14 +478,15 @@ class SelfGeneration:
             Generated avatar with Live2D model
         """
         if enable_learning and self.learning_workflow:
-            # Use complete workflow with learning
+            # Use complete workflow with learning (see NOTE in
+            # _try_learning_workflow: method pending on ArtLearningWorkflow)
             from core.engine.art_learning_workflow import LearningObjective
 
             result = await self.learning_workflow.run_complete_workflow(
                 learning_objectives=[
-                    LearningObjective.ANIME_BASICS,
-                    LearningObjective.LIVE2D_TECHNIQUES,
-                    LearningObjective.BODY_RIGGING,
+                    LearningObjective("anime_basics"),
+                    LearningObjective("live2d_techniques"),
+                    LearningObjective("body_rigging"),
                 ],
                 target_mastery=target_mastery,
                 cyber_identity_attrs=self._attributes_to_dict(attributes) if attributes else None,

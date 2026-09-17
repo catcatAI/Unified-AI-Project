@@ -39,6 +39,6 @@
 
 ## 已知品質邊界（誠實清單）
 
-- mypy 類型覆蓋債：650 errors（2026-09-17 實測；結構性，分域收斂中）——見 `RELEASE_CRITERIA.md`。
+- mypy 類型覆蓋債：632 errors（2026-09-17 實測；結構性，分域收斂中）——見 `RELEASE_CRITERIA.md`。
 - TS/TSX 無 parser：`lint:js` 僅覆蓋 JS。
 - 開放域泛化（純神經路徑）目前為低分能力；確定性能力為強項。

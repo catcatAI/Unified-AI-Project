@@ -14,10 +14,10 @@ from core.interfaces.service_registry import get_registry
 from core.system.config.magic_numbers import batch_value
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore[import-untyped]
+from googleapiclient.discovery import build  # type: ignore[import-untyped]
+from googleapiclient.errors import HttpError  # type: ignore[import-untyped]
+from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload  # type: ignore[import-untyped]
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,8 @@ class GoogleDriveService:
         try:
             with open(TOKEN_PATH, "r", encoding="utf-8") as f:
                 token_data = json.load(f)
-            return Credentials.from_authorized_user_info(token_data, SCOPES)
+            creds: Credentials = Credentials.from_authorized_user_info(token_data, SCOPES)
+            return creds
         except Exception as e:
             logger.warning(f"Failed to load token: {e}", exc_info=True)
             return None
@@ -84,7 +85,7 @@ class GoogleDriveService:
                 "Please download from Google Cloud Console and place it there."
             )
         flow = InstalledAppFlow.from_client_secrets_file(str(CREDENTIALS_PATH), SCOPES)
-        auth_url, _ = flow.authorization_url(access_type="offline", prompt="consent")
+        auth_url: str = flow.authorization_url(access_type="offline", prompt="consent")[0]
         return auth_url
 
     def exchange_code(self, code: str) -> bool:
@@ -151,7 +152,7 @@ class GoogleDriveService:
     def get_file_metadata(self, file_id: str) -> Dict[str, Any]:
         """Get the file metadata by self."""
         service = self._get_service()
-        return (
+        meta: Dict[str, Any] = (
             service.files()
             .get(
                 fileId=file_id,
@@ -159,6 +160,7 @@ class GoogleDriveService:
             )
             .execute()
         )
+        return meta
 
     def download_file(self, file_id: str, dest_path: str) -> bool:
         """Log a diagnostic message."""
@@ -245,7 +247,7 @@ class GoogleDriveService:
                 return None
             guessed_mime = mime_type or self._guess_mime(path.suffix)
             media = MediaFileUpload(str(path), mimetype=guessed_mime, resumable=True)
-            file_metadata = {"name": path.name}
+            file_metadata: Dict[str, Any] = {"name": path.name}
             if drive_folder_id:
                 file_metadata["parents"] = [drive_folder_id]
             uploaded = (
@@ -256,7 +258,8 @@ class GoogleDriveService:
                 .execute()
             )
             logger.info(f"Uploaded {path.name} to Drive (id={uploaded.get('id')})")
-            return uploaded
+            result: Optional[Dict[str, Any]] = uploaded
+            return result
         except Exception as e:
             logger.error(f"Upload failed: {e}", exc_info=True)
             return None
