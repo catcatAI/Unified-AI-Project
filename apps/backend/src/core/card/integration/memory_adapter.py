@@ -44,7 +44,7 @@ class MemoryAdapter:
         card_keywords = [card.qualified_id, card.core_trait or ""]
         if card.card_type:
             card_keywords.append(card.card_type.name)
-        memory_id = await self.ham.store_experience(
+        memory_id: Optional[str] = await self.ham.store_experience(
             raw_data=card_dict,
             data_type="character_card",
             metadata=metadata,

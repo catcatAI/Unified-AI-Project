@@ -16,12 +16,12 @@ class TimelineResolver:
     Resolves which version of a card wins based on source file timestamps.
     """
 
-    def resolve(self, cards: list) -> Card:
+    def resolve(self, cards: list[Card]) -> Card:
         """Pick the card with the most recent source_file timestamp."""
         if not cards:
             raise ValueError("No cards to resolve")
 
-        best = cards[0]
+        best: Card = cards[0]
         best_time: Optional[float] = None
         if best.source_files:
             best_time = max(sf.last_write_time.timestamp() for sf in best.source_files)

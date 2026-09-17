@@ -16,7 +16,10 @@ import asyncio
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, AsyncGenerator, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Dict, List, Optional
+
+if TYPE_CHECKING:
+    from services.angela_llm_service import AngelaLLMService
 
 from core.interfaces.protocols import ChatMessage, LLMResponse
 from core.system.config.magic_numbers import llm_param
@@ -173,8 +176,8 @@ class ModelEnsemble:
     - 20% Local model (Mixtral or similar)
     """
 
-    def __init__(self, llm_service: Any):
-        self.llm_service = llm_service
+    def __init__(self, llm_service: "AngelaLLMService"):
+        self.llm_service: "AngelaLLMService" = llm_service
         self.fusion_engine = ResponseFusionEngine()
         self.weights: Dict[str, float] = {}
 
@@ -228,21 +231,22 @@ class ModelEnsemble:
         total_latency = (datetime.now() - start_time).total_seconds()
 
         # Filter successful responses
-        valid_responses = []
-        failed_models = []
+        valid_responses: list[LLMResponse] = []
+        failed_models: list[str] = []
 
         for model_id, response in zip(model_ids, responses):
             if isinstance(response, Exception):
                 logger.warning(f"Model {model_id} failed: {response}")
                 failed_models.append(model_id)
             else:
+                assert isinstance(response, LLMResponse)
                 valid_responses.append(response)
 
         if not valid_responses:
             raise Exception("All models in ensemble failed to respond")
 
         # Calculate votes
-        model_votes = {}
+        model_votes: dict[str, float] = {}
         token_usage = {"total_tokens": 0, "prompt_tokens": 0, "completion_tokens": 0}
 
         for resp in valid_responses:
@@ -304,21 +308,24 @@ class ModelEnsemble:
 
         # Try models in priority order until one responds
         for model_id in self.weights.keys():
+            stream_method = getattr(self.llm_service, "stream_completion", None)
+            if stream_method is None:
+                logger.warning(
+                    f"Streaming not available for {model_id}, falling back to non-streaming"
+                )
+                continue
             try:
-                async for chunk in self.llm_service.stream_completion(
-                    messages=messages, model_id=model_id
-                ):
+                async for chunk in stream_method(messages=messages, model_id=model_id):
                     yield chunk
                 return  # Successful streaming
             except (
                 Exception
             ) as e:  # broad exception acceptable: streaming ensemble wraps all model stream failures
                 logger.warning(f"Streaming failed for {model_id}: {e}", exc_info=True)
-                logger.warning(f"Streaming failed for {model_id}: {e}", exc_info=True)
                 continue
 
         # If all fail
-        yield "[Ensemble Error: All models unavailable]"
+        yield "[Ensemble Error: All models unavailable or streaming not supported]"
 
     def get_ensemble_status(self) -> Dict[str, Any]:
         """Get current ensemble configuration and health"""
@@ -348,7 +355,6 @@ if __name__ == "__main__":
     logger.info("This test requires configured API keys in environment:")
     logger.info("  - OPENAI_API_KEY")
     logger.info("  - ANTHROPIC_API_KEY")
-    logger.info()
 
     # Check for API keys
     has_openai = bool(os.getenv("OPENAI_API_KEY"))
@@ -361,7 +367,6 @@ if __name__ == "__main__":
 
     logger.info(f"✓ OpenAI: {'Available' if has_openai else 'Not configured'}")
     logger.info(f"✓ Anthropic: {'Available' if has_anthropic else 'Not configured'}")
-    logger.info()
 
     # Initialize service (would need proper config in production)
     logger.info("Note: Full test requires running Angela with config.yaml")

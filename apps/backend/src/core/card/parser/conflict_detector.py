@@ -81,7 +81,7 @@ class ConflictDetector:
 
     def _detect_tone(self, card: Card) -> List[Conflict]:
         """Detect tone."""
-        conflicts = []
+        conflicts: List[Conflict] = []
         if card.source_files and len(card.source_files) > 1:
             core_traits = set()
             if card.core_trait:

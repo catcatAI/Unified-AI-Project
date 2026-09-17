@@ -55,10 +55,7 @@ class GravityCalibrator:
         for g in G_CANDIDATES:
             for s in SOFTENING_CANDIDATES:
                 for r in REPULSION_CANDIDATES:
-                    test_field = TextGravityField(g=g, softening=s)
-                    test_field._TextGravityField__repulsion_factor = lambda c, r=r: self._repulsion(
-                        c, r
-                    )
+                    test_field = TextGravityField(g=g, softening=s, repulsion_decay=r)
                     aligned = 0
                     for c in chosen:
                         scored = test_field.compute_gravity(core_trait, candidates)
@@ -70,9 +67,6 @@ class GravityCalibrator:
                         best_params = {"g": g, "softening": s, "repulsion_decay": r}
 
         return {"params": best_params, "effectiveness": best_score}
-
-    def _repulsion(self, candidate: str, decay: float) -> float:
-        return 0.0
 
 
 __all__ = ["GravityCalibrator"]

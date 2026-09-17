@@ -59,7 +59,7 @@ class LLMFallback:
         def _run() -> Any:
             result = method(prompt)
             if inspect.isawaitable(result):
-                result = asyncio.run(result)
+                result = asyncio.run(result)  # type: ignore[arg-type]
             return result
 
         try:
